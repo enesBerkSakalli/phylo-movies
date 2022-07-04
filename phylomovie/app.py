@@ -21,11 +21,15 @@ def about():
         return render_template('about.html')
 
 def handle_order_list(request):
-    order_file = request.files['orderFile']
-    order_file_text = order_file.read().decode("utf-8")
-    order_file_text = order_file_text.replace('\r','').strip()
-    order_file_list = order_file_text.split("\n")
-    return order_file_list
+
+    if request.files['orderFile'].filename == '':
+        return None
+    else:
+        order_file = request.files['orderFile']
+        order_file_text = order_file.read().decode("utf-8")
+        order_file_text = order_file_text.replace('\r','').strip()
+        order_file_list = order_file_text.split("\n")
+        return order_file_list
 
 
 @app.route('/', methods=["GET", "POST"])
@@ -43,8 +47,6 @@ def index():
         order_file_list = handle_order_list(request)
 
         front_end_input = handle_uploaded_file(leaf_order=order_file_list, f=request.files['treeFile'])
-
-        print(front_end_input['weighted_rfd_list'])
 
         return render_template(
             'index.html',

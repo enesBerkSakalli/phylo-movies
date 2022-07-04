@@ -202,7 +202,8 @@ class Treere:
         sorted_nod = set(sorted_nodes)
 
         if given != sorted_nod:
-            difference = given.symmetric_difference(sorted_nod)
+            difference = given.symmetric_difference(
+                sorted_nod)
             print("Unvalid leaf order. Check leaf(s): ", difference)  # temp, needs better way of displaying the error
             return sorted_nodes
         else:
@@ -504,7 +505,6 @@ class Treere:
 
         if self.given_leaforder:
             self.sorted_nodes = self.check_order_validity(self.given_leaforder, self.sorted_nodes)
-
         sorted_consensus_json_treelist = self.tree_traversal(json_treelist)[0]
         return sorted_consensus_json_treelist
 

@@ -71,8 +71,6 @@ def make_test_algo(path, description, algorithm, expected_results, generate_figu
         desc = f"{description} \n\n works: {worked}"
         desc = desc + f" Expected: {expected_results}\n Algorithm: {highlighted_taxa}\n"
 
-        print(title)
-
         if generate_figures:
             path1 = generate_figure(newick1, l+"1", PATH_PICTURES,
                                 highlighted_taxa, expected_results, algorithm.__name__, text="FT1")
