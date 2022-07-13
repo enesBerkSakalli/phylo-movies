@@ -182,8 +182,6 @@ export class TreeDrawer {
             .exit()
             .remove();
 
-        console.log(TreeDrawer.sizeMap.strokeWidth)
-
         // ENTER new elements present in new data.
         links
             .enter()
@@ -227,13 +225,13 @@ export class TreeDrawer {
             .duration(this.drawDuration)
             .attrTween("d", this.getArcInterpolationFunction());
 
+        //links.sort((a, b) => { console.log(a)});
 
     }
 
     colorInternalBranches(currentBranchLeafSet, d) {
         for (const taxon of this.marked) {
             if (currentBranchLeafSet.has(this.leaveOrder.indexOf(taxon)) || this.marked.has(d.target.data.name.toString())) {
-                d3.select(this.getLinkId(d)).raise();
                 return TreeDrawer.colorMap.markedColor;
             }
         }
@@ -299,6 +297,7 @@ export class TreeDrawer {
             return d.data.name;
         });
 
+
         // UPDATE old elements present in new data
         textLabels
             .transition()
@@ -307,8 +306,8 @@ export class TreeDrawer {
             .text((d) => {
                 return `${d.data.name}`;
             })
-            //.attrTween("transform", this.getOrientTextInterpolator(currentMaxRadius))
-            .attr("transform", (d) => this.orientText(d, currentMaxRadius))
+            .attrTween("transform", this.getOrientTextInterpolator(currentMaxRadius))
+            //.attr("transform", (d) => this.orientText(d, currentMaxRadius))
             .attr("text-anchor", (d) => this.anchorCalc(d))
             .style("font-size", TreeDrawer.sizeMap.fontSize);
 
@@ -560,32 +559,46 @@ export class TreeDrawer {
 
     getOrientTextInterpolator(currentMaxRadius) {
         const self = this;
-        return function(d, i, a) {
+        return function(d,i) {
             // previous svg instance
             let prev_d = d3.select(this).attr("transform");
 
             let re = /rotate\((?<angle>.+)\) translate\((?<oldMaxRadius>.+), 0\) rotate\((?<otherangle>.+)\)/
+
             let match = re.exec(prev_d)
 
             let old_angle = parseFloat(match.groups.angle);
-            let old_MaxRadius = parseFloat(match.groups.oldMaxRadius);
             let old_otherAngle = parseFloat(match.groups.otherangle);
 
+            let old_MaxRadius = parseFloat(match.groups.oldMaxRadius);
+
             const new_angle = (d.angle * 180) / Math.PI;
+
             const new_otherAngle = new_angle < 270 && new_angle > 90 ? 180 : 0;
 
-            const angleDiff = self.shortestAngle(old_angle, new_angle);
-            const otherangleDiff = self.shortestAngle(old_otherAngle / 360 * 2 * Math.PI, new_otherAngle / 360 * 2 * Math.PI);
+            const angleDiff = 360*self.shortestAngle(Math.PI*2*old_angle/360, Math.PI*2*new_angle/360) / (2*Math.PI);
+
+            const otherAngleDiff = self.shortestAngle(old_otherAngle, new_otherAngle);
+
             const radiusDiff = currentMaxRadius - old_MaxRadius;
 
             return function(t) {
                 const tweenAngle = angleDiff * t + old_angle;
                 const tweenRadius = radiusDiff * t + old_MaxRadius;
-                const tweenOtherAngle = otherangleDiff * t + old_otherAngle;
-                return `rotate(${tweenAngle}) translate(${tweenRadius}, 0) rotate(${new_otherAngle})`;
+                const tweenOtherAngle = otherAngleDiff * t + old_otherAngle;
+
+                if(angleDiff > 2|| angleDiff < -2){
+                    return `rotate(${tweenAngle}) translate(${tweenRadius + tweenRadius * (0.01 * i)}, 0) rotate(${tweenOtherAngle})`;    
+                }else{
+                    return `rotate(${tweenAngle}) translate(${tweenRadius}, 0) rotate(${tweenOtherAngle})`;    
+                }
+
             };
 
         };
+
+
+
 
     }
 
