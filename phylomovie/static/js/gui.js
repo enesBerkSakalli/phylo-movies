@@ -34,8 +34,8 @@ export default class Gui {
 
         this.maxScale = Math.max.apply(Math, this.scaleList.map(o => o.value));
 
-        this.index = 0;
-        this.factor = 1;
+        this.index  = 0;
+        this.factor = parseInt(document.getElementById('factor').value);
 
         this.playing = true;
     }
@@ -49,7 +49,7 @@ export default class Gui {
     getIntervalDuration() {
         let treeTimeList = [200, 200, 200, 500, 200];
         let type = this.index % 5
-        return treeTimeList[type] * this.factor;
+        return treeTimeList[type] *  parseInt(document.getElementById('factor').value);
     }
 
     play() {
@@ -170,7 +170,7 @@ export default class Gui {
 
         let colorIndex = this.index % 5 === 0 && this.firstFull === 0 ? Math.floor(this.index / 5) - 1 : Math.floor(this.index / 5);
 
-        d3.select("#topology-change-detection-view").text(`Taxa Highlighted: ${this.toBeHighlighted[colorIndex]}`, ).style('font-size', '0.5em')
+        //d3.select("#topology-change-detection-view").text(`Taxa Highlighted: ${this.toBeHighlighted[colorIndex]}`, ).style('font-size', '0.5em')
 
         drawTree(d3tree, this.toBeHighlighted[colorIndex], drawDuration, this.leaveOrder, this.fontSize, this.strokeWidth);
     }
