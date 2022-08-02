@@ -13,6 +13,8 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo">
 
     <script type="text/javascript" src="{{ url_for('static', filename='js/ohm.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/record.js') }}"></script>
+
     <script type="module" src="{{ url_for('static', filename='js/calc.js') }}"></script>
     <script type="module" src="{{ url_for('static', filename='js/gui.js') }}"></script>
 
@@ -161,8 +163,16 @@
                         <i class="fa fa-step-forward"></i>
                     </button>
 
-                    <button id="saveButton" type="button" class="customButton right" aria-hidden="true">
+                    <button id="saveButton" type="button" class="customButton" aria-hidden="true">
                         <i class="fa fa-save"></i>
+                    </button>
+
+                    <button id="startRecord" type="button" class="customButton " aria-hidden="true">
+                        <i class="fa fa-video-camera"></i>
+                    </button>
+
+                    <button id="stopRecord" type="button" class="customButton right" aria-hidden="true">
+                        <i class="fa fa-stop-circle"></i>
                     </button>
 
                 </div>
@@ -256,7 +266,7 @@
 
         let toBeHighlighted = {{to_be_highlighted | safe}};
 
-        //toBeHighlighted = []
+        toBeHighlighted = []
 
         let leaveOrder = {{sorted_leaves | safe}};
         let windowSize = parseInt({{window_size | safe}});
@@ -344,6 +354,27 @@
         //document.querySelector('#color-internal-branch-length').addEventListener('click', () => { // gui.color_internal_branches = document.getElementById("color-internal-branch-length").checked;
         // gui.update(); //}); document.querySelector('#positionValue').addEventListener('change', () => { gui.stop(); }); document.querySelector('#factor').addEventListener('change', () => { gui.factor = parseFloat(document.getElementById("factor").value);
         //});
+
+        let start = document.getElementById('startRecord');
+        let stop = document.getElementById('stopRecord'); 
+        let mediaRecorder;
+  
+        start.addEventListener('click', async function () {
+            let stream = await recordScreen();
+            let mimeType = 'video/webm';
+            mediaRecorder = createRecorder(stream, mimeType);
+            let node = document.createElement("p");
+            node.textContent = "Started recording";
+            document.body.appendChild(node);
+          })
+      
+          stop.addEventListener('click', function () {
+            mediaRecorder.stop();
+            let node = document.createElement("p");
+            node.textContent = "Stopped recording";
+            document.body.appendChild(node);
+          })
+      
         
         window.onresize = function () {
             gui.resize();
