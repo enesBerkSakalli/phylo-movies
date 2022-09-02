@@ -266,8 +266,6 @@
 
         let toBeHighlighted = {{to_be_highlighted | safe}};
 
-        toBeHighlighted = []
-
         let leaveOrder = {{sorted_leaves | safe}};
         let windowSize = parseInt({{window_size | safe}});
         let windowStepSize = parseInt({{window_step_size | safe}});
@@ -355,25 +353,31 @@
         // gui.update(); //}); document.querySelector('#positionValue').addEventListener('change', () => { gui.stop(); }); document.querySelector('#factor').addEventListener('change', () => { gui.factor = parseFloat(document.getElementById("factor").value);
         //});
 
-        let start = document.getElementById('startRecord');
-        let stop = document.getElementById('stopRecord'); 
+        let startButton = document.getElementById('startRecord');
+        let stopButton = document.getElementById('stopRecord'); 
+
+        stopButton.disabled = true; 
+
         let mediaRecorder;
   
-        start.addEventListener('click', async function () {
+        startButton.addEventListener('click', async function () {
             let stream = await recordScreen();
             let mimeType = 'video/webm';
             mediaRecorder = createRecorder(stream, mimeType);
             let node = document.createElement("p");
             node.textContent = "Started recording";
             document.body.appendChild(node);
+            stopButton.disabled = false;
           })
       
-          stop.addEventListener('click', function () {
+        stopButton.addEventListener('click', function () {
             mediaRecorder.stop();
             let node = document.createElement("p");
             node.textContent = "Stopped recording";
             document.body.appendChild(node);
-          })
+
+
+        })
       
         
         window.onresize = function () {
