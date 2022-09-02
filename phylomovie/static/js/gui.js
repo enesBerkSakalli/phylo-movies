@@ -677,19 +677,35 @@ export default class Gui {
     }
 
 
+    setModalShip(index, value){
+        let xAxis = document.getElementById("xAxis-modal");
+
+        let x = ((index + 1) * xAxis.getBBox().width) / (value);
+
+        d3.select("#ship-modal").attr("transform", `translate(${x},${0})`);
+    }
+
     generateModalChart() {
+
         if (this.barOptionValue === "rfd") {
             this.generateDistanceChartModal(this.robinsonFouldsDistances);
+            this.setModalShip(Math.floor(this.index / 5), this.robinsonFouldsDistances.length);   
         }
         if (this.barOptionValue === "w-rfd") {
             this.generateWeightedDistanceChartModal(this.weightedRobinsonFouldsDistances);
+            this.setModalShip(Math.floor(this.index / 5), this.robinsonFouldsDistances.length);   
         }
 
         if (this.barOptionValue === "scale") {
             this.generateScaleChartModal(this.scaleList);
+            this.setModalShip(Math.floor(this.index / 5), this.robinsonFouldsDistances.length);   
         }
+
+
     }
 
+
+    
     /**
      * This function is generating the RFE Line Graph.
      * @return {void}
@@ -747,13 +763,13 @@ export default class Gui {
         svg.append("g")
             .attr("transform", "translate(0," + height + ")")
             .call(d3.axisBottom(x))
-            .attr("id", "xAxis")
+            .attr("id", "xAxis-modal")
 
         svg.append("g")
             .attr("id", "rd")
             .attr("transform", "translate(0," + (height - 5) + ")")
             .append("g")
-            .attr("id", "modal-ship-distance")
+            .attr("id", "ship-modal")
             .attr("transform", "translate(1.5," + 0 + ")")
             .append("line")
             .attr("stroke", "red")
@@ -768,6 +784,7 @@ export default class Gui {
 
                 let position = (parseInt(e.target.innerHTML) - 1);
                 this.goToPosition(position);
+                this.setModalShip(position, this.robinsonFouldsDistances.length);
 
             })
             .style('color', 'black');
@@ -820,6 +837,8 @@ export default class Gui {
             .style("font-size", "0.8em");
 
     }
+
+
 
 
     /**
@@ -879,13 +898,13 @@ export default class Gui {
         svg.append("g")
             .attr("transform", "translate(0," + height + ")")
             .call(d3.axisBottom(x))
-            .attr("id", "xAxis")
+            .attr("id", "xAxis-modal")
 
         svg.append("g")
             .attr("id", "rd")
             .attr("transform", "translate(0," + (height - 5) + ")")
             .append("g")
-            .attr("id", "modal-ship-distance")
+            .attr("id", "ship-modal")
             .attr("transform", "translate(1.5," + 0 + ")")
             .append("line")
             .attr("stroke", "red")
@@ -900,6 +919,8 @@ export default class Gui {
 
                 let position = (parseInt(e.target.innerHTML) - 1);
                 this.goToPosition(position);
+                this.setModalShip(position,this.robinsonFouldsDistances.length);
+
 
             })
             .style('color', 'black');
@@ -1008,13 +1029,13 @@ export default class Gui {
         svg.append("g")
             .attr("transform", "translate(0," + height + ")")
             .call(d3.axisBottom(x))
-            .attr("id", "xAxis");
+            .attr("id", "xAxis-modal");
 
         svg.append("g")
             .attr("id", "rd")
             .attr("transform", "translate(0," + (height - 5) + ")")
             .append("g")
-            .attr("id", "modal-ship-scale")
+            .attr("id", "ship-modal")
             .attr("transform", "translate(1.5," + 0 + ")")
             .append("line")
             .attr("stroke", "red")
@@ -1028,6 +1049,7 @@ export default class Gui {
 
                 let position = (parseInt(e.target.innerHTML) - 1);
                 this.goToPosition(position);
+                this.setModalShip(position,this.robinsonFouldsDistances.length);
 
             })
             .style('cursor', 'pointer')
@@ -1080,6 +1102,7 @@ export default class Gui {
             .style("font-size", "0.8em");
 
     }
+
 
 
 }
