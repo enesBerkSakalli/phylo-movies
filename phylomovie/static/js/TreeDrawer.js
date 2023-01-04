@@ -28,14 +28,12 @@ export class TreeDrawer {
         this.root = _currentRoot;
         this.marked = [];
         this.leaveOrder = [];
-
-
         this._drawDuration = 1000;
+        this._treeSpaceId = "";
     }
 
     //getting the application container
-    static svg_container = TreeDrawer.getSVG();
-    //marked labels list
+    // marked labels list
     static markedLabelList = [];
 
     static parser = new ParseUtil();
@@ -44,8 +42,10 @@ export class TreeDrawer {
      * getter for the svg application container.
      * @return {Object}
      */
-    static getSVG() {
-        return d3.select("#application");
+    getSVG() {
+        let selectId = '#' + this._treeSpaceId;
+        console.log(selectId)
+        return d3.select(selectId);
     }
 
     /**
@@ -170,7 +170,7 @@ export class TreeDrawer {
 
         // JOIN new data with old svg elements.
         // Data Binding
-        let links = TreeDrawer.svg_container
+        let links = this.getSVG()
             .selectAll(".links")
             .data(this.root.links(), (d) => {
                 return this.getLinkId(d);
@@ -253,7 +253,7 @@ export class TreeDrawer {
      */
     updateLinkExtension(currentMaxRadius) {
         // JOIN new data with old elements.
-        const linkExtension = TreeDrawer.svg_container
+        const linkExtension = this.getSVG()
             .selectAll(".link-extension") //updates the links
             .data(this.root.leaves(), (link) => {
                 return link.data.name;
@@ -293,7 +293,7 @@ export class TreeDrawer {
         const nodes = this.root.leaves();
 
         // JOIN new data with old svg elements
-        const textLabels = TreeDrawer.svg_container.selectAll(".label").data(nodes, (d) => {
+        const textLabels = this.getSVG().selectAll(".label").data(nodes, (d) => {
             return d.data.name;
         });
 
@@ -339,10 +339,9 @@ export class TreeDrawer {
      */
     updateNodeCircles(currentMaxRadius) {
         const leaves = this.root.leaves();
-
         //getting leave names for creating legend
         // JOIN new data with old svg elements
-        const leaf_circles = TreeDrawer.svg_container.selectAll(".leaf").data(leaves, (d) => {
+        const leaf_circles = this.getSVG().selectAll(".leaf").data(leaves, (d) => {
             return d.data.name;
         });
 
@@ -838,6 +837,19 @@ export class TreeDrawer {
         return this._drawDuration;
     }
 
+    set treeSpaceId(id){
+        this._treeSpaceId = id;
+    }
+
+       /**
+     * Get the time duration how one tree transforms to another.
+     * @return {String}
+     */
+       get treeSpaceId() {
+        return this._treeSpaceId;
+    }
+
+ 
 }
 
 export default function drawTree(
@@ -846,7 +858,8 @@ export default function drawTree(
     drawDurationFrontend,
     leaveOrder,
     fontSize,
-    strokeWidth
+    strokeWidth,
+    treeSpaceId
 ) {
 
     let currentRoot = treeConstructor['tree'];
@@ -860,7 +873,11 @@ export default function drawTree(
     currentTreeDrawer.drawDuration = drawDurationFrontend;
     currentTreeDrawer.marked = new Set(toBeHighlighted);
     currentTreeDrawer.leaveOrder = leaveOrder;
-    
+    currentTreeDrawer._treeSpaceId = treeSpaceId;
+
+    console.log(currentTreeDrawer.treeSpaceId)
+    console.log(treeSpaceId)
+
     currentTreeDrawer.updateLinks();
     currentTreeDrawer.updateLinkExtension(currentMaxRadius);
     currentTreeDrawer.updateLabels(currentMaxRadius);

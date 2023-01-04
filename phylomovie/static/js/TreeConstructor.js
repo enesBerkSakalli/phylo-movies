@@ -206,13 +206,13 @@ export class TreeConstructor {
 
 }
 
-export default function constructTree(tree, ignore_branch_lengths) {
+export default function constructTree(tree, ignore_branch_lengths, svgContainerId) {
 
     let d3tree = d3.hierarchy(tree);
 
     let treeConstructor = new TreeConstructor(d3tree, ignore_branch_lengths);
 
-    let applicationContainer = document.getElementById("applicationContainer");
+    let applicationContainer = document.getElementById(svgContainerId);
 
     let width = applicationContainer.clientWidth;
     let height = applicationContainer.clientHeight;

@@ -166,13 +166,13 @@ export default class Gui {
 
         let tree = this.treeList[this.index];
 
-        let d3tree = constructTree(tree, this.ignoreBranchLengths);
+        let d3tree = constructTree(tree, this.ignoreBranchLengths, 'applicationContainer');
 
         let colorIndex = this.index % 5 === 0 && this.firstFull === 0 ? Math.floor(this.index / 5) - 1 : Math.floor(this.index / 5);
 
         //d3.select("#topology-change-detection-view").text(`Taxa Highlighted: ${this.toBeHighlighted[colorIndex]}`, ).style('font-size', '0.5em')
 
-        drawTree(d3tree, this.toBeHighlighted[colorIndex], drawDuration, this.leaveOrder, this.fontSize, this.strokeWidth);
+        drawTree(d3tree, this.toBeHighlighted[colorIndex], drawDuration, this.leaveOrder, this.fontSize, this.strokeWidth, 'application');
     }
 
     goToPosition(position) {

@@ -39,12 +39,12 @@
 
             <!-- beginning of menu header -->
             {#
-                <div class="menu-header">
-                    <div class="header">
-                        <p>Phylo-Movies</p>
-                    </div>
-                    <p class="commitmessage"> {{ commit }} </p>
+            <div class="menu-header">
+                <div class="header">
+                    <p>Phylo-Movies</p>
                 </div>
+                <p class="commitmessage"> {{ commit }} </p>
+            </div>
             #}
 
             <!-- end of menu header -->
@@ -122,6 +122,18 @@
                         </div>
                     </div>
 
+                    <!-- Klaus - adding option for "irregular alignment position" -->
+                    <div class="row">
+                        <div class="menuItem stepSizeLabel"><label for="alignmentStart">Start of Alignment
+                                Sequence:</label></div>
+                        <div class="bubble">
+                            <input id="alignmentStart" class="stepSizeInput left right" type="number"
+                                name="alignmentStart" value="1" disabled>
+                            <div style="width: 30px; height: 10px;"></div>
+                        </div>
+                    </div>
+                    <!-- Klaus - End of additional input fields for irregular alignement positions -->
+
                     <div class="row">
                         <div class="menuItem stepSizeLabel"><label for="barPlotOption">Bar plot Option</label>:</div>
                         <div class="bubble">
@@ -196,7 +208,8 @@
 
                 <div>
                     <div>Stroke Width</div>
-                    <input class="uk-range" type="range" id="stroke-width" name="font-size" min="0.5" max="10" step="0.01">
+                    <input class="uk-range" type="range" id="stroke-width" name="font-size" min="0.5" max="10"
+                        step="0.01">
                 </div>
 
                 <!-- end of button section-->
@@ -226,10 +239,14 @@
 
             </div>
 
-            <!-- This is a button toggling the modal -->
-            <button id="chart-modal" class="uk-button uk-button-default uk-margin-small-right uk-button-danger" type="button"
-                uk-toggle="target: #modal-example">Open</button>
-
+            <!-- This is a button showing the graph -->
+            <button id="chart-modal" class="uk-button uk-button-default uk-margin-small-right uk-button-danger"
+                type="button" uk-toggle="target: #modal-example">Open</button>
+            <!-- This is a button for split-screen -->
+            <button id="compare-trees-button" uk-toggle="target: #compare-trees-modal"
+                class="uk-button uk-button-default uk-margin-small-right uk-button-primary" type="button">
+                compare trees
+            </button>
 
         </div>
         <!-- end of toolbar-->
@@ -245,43 +262,67 @@
             </div>
         </div>
 
+        <!-- This is the modal -->
+        <div id="compare-trees-modal" class="uk-modal-full" uk-modal>
+            <div class="uk-modal-dialog">
+                <button class="uk-modal-close-full uk-close-large" type="button" uk-close></button>
+                <div class="uk-grid-collapse uk-child-width-1-2@s uk-flex-middle" uk-grid>
+
+                    <div id="compare-tree-modal-left" class="uk-padding-large">
+                        <svg id="left-svg-tree" width="100%" height="100%"></svg>
+                        {#
+                        <div class="verticalcenter">
+                            <img src="{{url_for('static', filename='splitscreen_tree_dummy.svg')}}"
+                                alt="SVG als platzhalter für End-Tree" width="100%" height="auto"
+                                class="verticalcenter">
+                        </div>
+                        #}
+                    </div>
+
+                    <div id="compare-tree-modal-right" class="uk-padding-large">
+                        <svg id="right-svg-tree" width="100%" height="100%"></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <div style="width: 100%; height: 100%;">
             <svg id="applicationContainer" width="100%" height="95%">
                 <g id="application"></g>
-                <!--<text id="topology-change-detection-view" x="20" y="35" class="small">Taxa Highlighted:</text>-->
+                <text id="topology-change-detection-view" x="20" y="35" class="small">Final Tree:</text>
             </svg>
         </div>
-
     </div>
 
     <script type="module">
-        import Gui from "{{ url_for('static', filename='js/gui.js') }}"; 
-        //================================================================================ // Properties //================================================================================ let treeList
-        let treeList = {{tree_list | safe}};
+        import constructTree from "{{ url_for('static', filename='js/TreeConstructor.js') }}";        
+        import drawTree from "{{ url_for('static', filename='js/TreeDrawer.js') }}";        
+        import Gui from "{{ url_for('static', filename='js/gui.js') }}";
 
-        let robinsonFouldsDistances = {{rfe_list | safe}};
+        //================================================================================ // Properties //================================================================================ let treeList
+        let treeList = {{ tree_list | safe}};
+
+        let robinsonFouldsDistances = {{ rfe_list | safe}};
 
         let weightedRobinsonFouldsDistances = {{ weighted_robinson_foulds_distance_list | safe}};
 
-        let toBeHighlighted = {{to_be_highlighted | safe}};
+        let toBeHighlighted = {{ to_be_highlighted | safe}};
 
-        let leaveOrder = {{sorted_leaves | safe}};
-        let windowSize = parseInt({{window_size | safe}});
-        let windowStepSize = parseInt({{window_step_size | safe}});
+        let leaveOrder = {{ sorted_leaves | safe}};
+        let windowSize = parseInt({{ window_size | safe}});
+        let windowStepSize = parseInt({{ window_step_size | safe}});
 
         document.getElementById("windowSize").value = windowSize;
         document.getElementById("windowStepSize").value = windowStepSize;
-    
+
         let fileName = "{{file_name | safe}}";
-    
         let ignore_branch_lengths = false;
         let color_internal_branches = true;
-        const gui = new Gui(treeList,weightedRobinsonFouldsDistances, robinsonFouldsDistances, windowSize, windowStepSize, toBeHighlighted, leaveOrder, color_internal_branches,fileName);
-    
+        const gui = new Gui(treeList, weightedRobinsonFouldsDistances, robinsonFouldsDistances, windowSize, windowStepSize, toBeHighlighted, leaveOrder, color_internal_branches, fileName);
+
         gui.initializeMovie();
         gui.play();
-    
+
         document.querySelector('#startButton').addEventListener('click', () => {
             gui.start();
         });
@@ -291,62 +332,77 @@
         document.querySelector('#forwardButton').addEventListener('click',
             () => {
                 gui.forward();
-        });
-    
+            });
+
         document.querySelector('#backwardButton').addEventListener('click', () => {
             gui.backward();
         });
-    
+
         document.querySelector('#saveButton').addEventListener('click', () => {
             gui.saveSVG();
         });
-    
+
         document.querySelector('#positionButton').addEventListener('click',
             () => {
-    
-                let position = Math.max(1 , document.getElementById("positionValue").value);
-                document.getElementById("positionValue").value  = position; 
+
+                let position = Math.max(1, document.getElementById("positionValue").value);
+                document.getElementById("positionValue").value = position;
                 gui.goToPosition(position - 1);
-    
+
             });
-    
+
         document.querySelector('#forwardStepButton').addEventListener('click', () => {
             gui.nextTree();
         });
-        
+
         document.querySelector('#backwardStepButton').addEventListener('click',
             () => {
                 gui.prevTree();
             });
-    
+
         document.querySelector('#barPlotOption').addEventListener('click', () => {
             gui.barOptionValue = document.getElementById("barPlotOption").value;
             gui.update();
         });
-    
+
         document.querySelector('#branch-length').addEventListener('click',
             () => {
                 gui.ignoreBranchLengths = document.getElementById("branch-length").checked;
                 gui.update();
+            });
+
+        document.querySelector('#font-size').addEventListener('input', () => {
+            gui.fontSize = document.getElementById("font-size").value;
+            gui.updateMain();
         });
 
-        document.querySelector('#font-size').addEventListener('input',() => {
-            gui.fontSize = document.getElementById("font-size").value; 
-            gui.updateMain();
-        });
-        
-        document.querySelector('#stroke-width').addEventListener('input',() => {
+        document.querySelector('#stroke-width').addEventListener('input', () => {
             gui.strokeWidth = document.getElementById("stroke-width").value;
-            
+
             gui.updateMain();
         });
-        
-        document.querySelector('#chart-modal').addEventListener('click',() => {
-                
+
+        document.querySelector('#chart-modal').addEventListener('click', () => {
+
             gui.stop();
             document.getElementById('modal-graph-chart');
             gui.generateModalChart();
 
+        });
+
+        document.querySelector('#compare-trees-button').addEventListener('click', () => {
+            gui.stop();
+            let treefirst  = constructTree(treeList[0], false, "left-svg-tree")
+            drawTree(treefirst, [], 1, leaveOrder, 1.8, 1, "left-svg-tree");
+
+            
+            let modalWindowLeft = document.getElementById('compare-tree-modal-left');
+            let modalWindowRight = document.getElementById('compare-tree-modal-right');
+
+            // generieren der Bilder:
+
+            modalWindowLeft.innerHTML=modalWindowLeft.innerHTML+"ich bin das linke Fenster (Tree vorher)"
+            modalWindowRight.innerHTML="ich bin das rechte Fenster (Tree nachher)"
         });
 
         //document.querySelector('#color-internal-branch-length').addEventListener('click', () => { // gui.color_internal_branches = document.getElementById("color-internal-branch-length").checked;
@@ -354,12 +410,12 @@
         //});
 
         let startButton = document.getElementById('startRecord');
-        let stopButton = document.getElementById('stopRecord'); 
+        let stopButton = document.getElementById('stopRecord');
 
-        stopButton.disabled = true; 
+        stopButton.disabled = true;
 
         let mediaRecorder;
-  
+
         startButton.addEventListener('click', async function () {
             let stream = await recordScreen();
             let mimeType = 'video/webm';
@@ -368,18 +424,16 @@
             node.textContent = "Started recording";
             document.body.appendChild(node);
             stopButton.disabled = false;
-          })
-      
+        })
+
         stopButton.addEventListener('click', function () {
             mediaRecorder.stop();
             let node = document.createElement("p");
             node.textContent = "Stopped recording";
             document.body.appendChild(node);
-
-
         })
-      
-        
+
+
         window.onresize = function () {
             gui.resize();
             gui.update();
