@@ -1,10 +1,20 @@
 import sys
-from typing import List, Callable, TypeVar, Union, NewType, Optional, Collection, Collection
-from .main.main_find_highlights import decode_highList_one_tree, Node, NodeName
+from typing import (
+    List,
+    Callable,
+    TypeVar,
+    Union,
+    NewType,
+    Optional,
+    Collection,
+    Collection,
+)
+from .main.main_find_highlights import decode_indices, Node, NodeName
 from ete3 import Tree
 import numpy as np
 from phylomovie.services.tree.Treere import Treere
 from icecream import ic
+from collections import Counter
 
 sys.path.append("..")
 # --------- algo  ----------
@@ -19,12 +29,12 @@ ic.disable()
 
 def calculate_component_set_tree(node: Node) -> ComponentSet:
     components: list[Component] = []
-    if(node.length != 0):
+    if node.length != 0:
         components.append(NodeName(node.name))
         return tuple(components)
 
     if len(node.children) == 0:
-        return (Component(node.name), )
+        return (Component(node.name),)
 
     for child in node.children:
         components += sorted(calculate_component_set_tree(child))
@@ -33,8 +43,13 @@ def calculate_component_set_tree(node: Node) -> ComponentSet:
 
 
 class FunctionalTree:
-
-    def __init__(self, all_sedges: list[Node], edge_types: dict[NodeName, EdgeType], ancestor_edges: dict[ComponentSet, Node], arms: dict[NodeName, list[ComponentSet]]):
+    def __init__(
+        self,
+        all_sedges: list[Node],
+        edge_types: dict[NodeName, EdgeType],
+        ancestor_edges: dict[ComponentSet, Node],
+        arms: dict[NodeName, list[ComponentSet]],
+    ):
         self._all_sedges: list[Node] = all_sedges
         self._edge_types: dict[NodeName, EdgeType] = edge_types
         self._ancestor_edges: dict[ComponentSet, Node] = ancestor_edges
@@ -87,8 +102,7 @@ def traverse(node: Node) -> FunctionalTree:
 
     # Set[Set[Components]]
 
-    edge_arms = [calculate_component_set_tree(
-        child) for child in node.children]
+    edge_arms = [calculate_component_set_tree(child) for child in node.children]
 
     arms[node.name] = edge_arms
 
@@ -112,36 +126,37 @@ def traverse(node: Node) -> FunctionalTree:
     return t1
 
 
-def delete_tree_leaves_for_coloring_newick(to_be_deleted_leaves=[], newick_list=[]):
-
+def prune_leaves(to_be_deleted_leaves=[], newick_list=[]):
     t1 = Tree(newick_list[0])
     t2 = Tree(newick_list[1])
-
     for leave in to_be_deleted_leaves:
-
         to_be_deleted_node_one = t1.search_nodes(name=leave)[0]
         to_be_deleted_node_two = t2.search_nodes(name=leave)[0]
-
         to_be_deleted_node_one.delete()
         to_be_deleted_node_two.delete()
 
     treeReInstance = Treere()
-
     newick_string_1 = t1.write()
     newick_string_2 = t2.write()
 
     newick_list = "\n".join([newick_string_1, newick_string_2])
 
     json_treelist = treeReInstance.json_list(newick_list)
-    treelist = treeReInstance.jsonTreelist_to_sortedConsensusTreelist(
-        json_treelist)
+
+    treelist = treeReInstance.jsonTreelist_to_sortedConsensusTreelist(json_treelist)
 
     a = [newick_string_1, newick_string_2]
 
-    return Node.from_dict(treelist[1], treeReInstance.sorted_nodes), Node.from_dict(treelist[4], treeReInstance.sorted_nodes), treeReInstance.sorted_nodes, a
+    return (
+        Node.from_dict(treelist[1], treeReInstance.sorted_nodes),
+        Node.from_dict(treelist[4], treeReInstance.sorted_nodes),
+        treeReInstance.sorted_nodes,
+        a,
+    )
 
 
 # === Helpers ===
+
 
 def print_component_map(component_set, sorted_nodes, title=None):
     if title:
@@ -151,7 +166,8 @@ def print_component_map(component_set, sorted_nodes, title=None):
         components_converted = []
         for components in component_set:
             components_converted.append(
-                [sorted_nodes[subcomponent] for subcomponent in components])
+                [sorted_nodes[subcomponent] for subcomponent in components]
+            )
         ic(components_converted)
 
 
@@ -159,8 +175,11 @@ def print_component_map(component_set, sorted_nodes, title=None):
 #
 # -- Functions --
 
-def remove_last_component_if_longer_than_one(component_set: ComponentSet) -> ComponentSet:
-    if(len(component_set) != 1):
+
+def remove_last_component_if_longer_than_one(
+    component_set: ComponentSet,
+) -> ComponentSet:
+    if len(component_set) != 1:
         return component_set[:-1]
     else:
         return component_set
@@ -250,10 +269,6 @@ def filter_(f: Callable[[X], bool], l: Collection[X]):
 
 
 def get_ancestor_edge(t: FunctionalTree, c: ComponentSet) -> Node:
-
-    # for key,value in t._ancestor_edges.items():
-    #     print(key,value,f"Searched for {c}","\n")
-
     return t._ancestor_edges[tuple(c)]
 
 
@@ -295,7 +310,7 @@ def filter_components_from_arms(cond, arms):
         for component in component_set:
             if cond(component):
                 filtered_component_set.append(component)
-        if(filtered_component_set):
+        if filtered_component_set:
             filtered_arms.append(tuple(filtered_component_set))
     return filtered_arms
 
@@ -313,6 +328,7 @@ def algo5_partial_partial_cond(t1, t2):
         anti2 = is_anti_s_edge(t2, ancestor_edge2)
 
         return (partial1 and anti2) or (anti1 and partial2)
+
     return cond
 
 
@@ -374,15 +390,15 @@ def case_partial_partial(sedge, t1, t2, sorted_nodes):
 
     symmetric_differences = map2(symm, c12)
 
-    print_component_map(symmetric_differences,
-                        sorted_nodes, "Symmetric Differences")
+    print_component_map(symmetric_differences, sorted_nodes, "Symmetric Differences")
 
     voting_map = intersections + symmetric_differences
 
     voting_map_filtered = filter_(lambda x: x, voting_map)
 
     m: list[Component] = argmax(
-        voting_map_filtered, lambda x: count(voting_map_filtered, x))
+        voting_map_filtered, lambda x: count(voting_map_filtered, x)
+    )
 
     m = argmin(m, size)
 
@@ -401,6 +417,7 @@ def algo5_partial_none_only_partial(t1):
         partial1 = is_partial_s_edge(t1, ancestor_edge1)
 
         return partial1
+
     return cond
 
 
@@ -411,6 +428,7 @@ def algo5_partial_none_only_anti_sedge(t1):
         anti1 = is_anti_s_edge(t1, ancestor_edge1)
 
         return anti1
+
     return cond
 
 
@@ -422,10 +440,12 @@ def case_partial_none(sedge, t1, t2, sorted_nodes):
     print_component_map(c2, sorted_nodes, "C2")
 
     cf1_anti_s_edge = filter_components_from_arms(
-        algo5_partial_none_only_anti_sedge(t1), c1)
+        algo5_partial_none_only_anti_sedge(t1), c1
+    )
 
     cf1_partial_s_edge = filter_components_from_arms(
-        algo5_partial_none_only_partial(t1), c1)
+        algo5_partial_none_only_partial(t1), c1
+    )
 
     print_component_map(cf1_anti_s_edge, sorted_nodes, "CF1 Anti S-edge")
 
@@ -433,10 +453,9 @@ def case_partial_none(sedge, t1, t2, sorted_nodes):
 
     cf1_partial_s_edge = [reduce(union, cf1_partial_s_edge)]
 
-    print_component_map(cf1_partial_s_edge, sorted_nodes,
-                        "Reduced partial s-edges")
+    print_component_map(cf1_partial_s_edge, sorted_nodes, "Reduced partial s-edges")
 
-    combined = (cf1_partial_s_edge + cf1_anti_s_edge)
+    combined = cf1_partial_s_edge + cf1_anti_s_edge
 
     print_component_map(combined, sorted_nodes, "Combined")
 
@@ -450,47 +469,22 @@ def case_partial_none(sedge, t1, t2, sorted_nodes):
 
 
 def algorithm_5_for_sedge(sedge, t1, t2, sorted_nodes):
-
     if is_full_s_edge(t1, sedge) and is_full_s_edge(t2, sedge):
-
-        ic("Full Full")
-
         return case_full_full(sedge, t1, t2)
-
     if is_full_s_edge(t1, sedge) and is_partial_s_edge(t2, sedge):
-
-        ic("Full Partial")
-
         return case_full_full(sedge, t1, t2)
-
     if is_partial_s_edge(t1, sedge) and is_full_s_edge(t2, sedge):
-
-        ic("Partial Full")
-
         return case_full_full(sedge, t2, t1)
-
     if is_partial_s_edge(t1, sedge) and is_partial_s_edge(t2, sedge):
-
-        ic("Partial Partial")
-
         return case_partial_partial(sedge, t1, t2, sorted_nodes)
-
     if is_partial_s_edge(t1, sedge) and is_none_edge(t2, sedge):
-        ic("PARTIAL NONE")
         return case_partial_none(sedge, t1, t2, sorted_nodes)
-
     if is_none_edge(t1, sedge) and is_partial_s_edge(t2, sedge):
-
-        ic("NONE PARTIAL")
-
         return case_partial_none(sedge, t2, t1, sorted_nodes)
-
-    if(is_full_s_edge(t1, sedge)):
+    if is_full_s_edge(t1, sedge):
         return case_full_full(sedge, t1, t2)
-
-    if(is_full_s_edge(t2, sedge)):
+    if is_full_s_edge(t2, sedge):
         return case_full_full(sedge, t1, t2)
-
     else:
         raise Exception("We forgot one case")
 
@@ -509,80 +503,72 @@ def merge_sedges(edge_set_one, edge_set_two):
 
 
 def algorithm_5(tree_list, sorted_nodes: List, file_name=None, newick_list=[]):
-
-    it1, it2, sorted_nodes, newick_list = delete_tree_leaves_for_coloring_newick(
-        newick_list=newick_list)
+    temp_sorted_nodes = sorted_nodes
+    temp_newick_list = newick_list
+    it1, it2, temp_sorted_nodes, newick_list = prune_leaves([], temp_newick_list)
 
     t1 = traverse(it1)
     t2 = traverse(it2)
 
-    global_decoded_result_list: list[str] = []
-
-    all_sedges = set(t1._all_sedges + t2._all_sedges)
-
     all_sedges = merge_sedges(t1._all_sedges, t2._all_sedges)
+    detected_nodes_count_map = {} 
 
-    while True:
+    decoded_list = []
 
+    while len(all_sedges) != 0:
         decoded_list = []
-
         for s_edge in all_sedges:
-
             # execute algorithm
-            jumping_taxas = algorithm_5_for_sedge(s_edge, t1, t2, sorted_nodes)
-
+            jumping_taxa = algorithm_5_for_sedge(s_edge, t1, t2, temp_sorted_nodes)
             # translate taxa to indices
-            taxa = list(set([y for x in jumping_taxas for y in x]))
+            jumping_taxa = list(set([y for x in jumping_taxa for y in x]))
+            tmp_decoded_list = decode_indices(jumping_taxa, temp_sorted_nodes)
 
-            decoded_list = decode_highList_one_tree(taxa, sorted_nodes)
+            for taxa in tmp_decoded_list:
+                if taxa not in detected_nodes_count_map.keys():
+                    detected_nodes_count_map[taxa] = 1
+                else:
+                    detected_nodes_count_map[taxa] = detected_nodes_count_map[taxa] + 1
 
-            global_decoded_result_list += decoded_list
+            decoded_list += tmp_decoded_list
 
-        # Stop condition for Pruning
-        if(len(decoded_list) > 0 and (len(sorted_nodes) - len(decoded_list) > 3)):
+        (
+            prunned_tree_one,
+            prunned_tree_two,
+            temp_sorted_nodes,
+            temp_newick_list,
+        ) = prune_leaves(list(set(decoded_list)), temp_newick_list)
 
-            prunned_intermediate_tree_one, prunned_intermediate_tree_two, sorted_nodes, newick_list = delete_tree_leaves_for_coloring_newick(
-                decoded_list, newick_list)
+        t1 = traverse(prunned_tree_one)
+        t2 = traverse(prunned_tree_two)
+        all_sedges = merge_sedges(t1._all_sedges, t2._all_sedges)
 
-            t1 = traverse(prunned_intermediate_tree_one)
-
-            t2 = traverse(prunned_intermediate_tree_two)
-
-            all_sedges = set(t1._all_sedges + t2._all_sedges)
-
-        else:
+        if(len(decoded_list) == 0):
             break
 
-    return list(set(global_decoded_result_list))
+        
+    return  detected_nodes_count_map
+    # return  [k for k, v in detected_nodes_count_map.items() if float(v) > 0]
 
 
 def algorithm1(tree_list, sorted_nodes, file_name, newick_list):
 
-    it1, it2, sorted_nodes, newick_list = delete_tree_leaves_for_coloring_newick(
-        newick_list=newick_list)
+    it1, it2, sorted_nodes, newick_list = prune_leaves(newick_list=newick_list)
 
     t1 = traverse(it1)
-
     t2 = traverse(it2)
 
     global_decode_result_list = []
-
     all_sedges = set(t1._all_sedges + t2._all_sedges)
-
     taxa_jumping_map = {leave: 0 for leave in sorted_nodes}
 
     for sedge in all_sedges:
-
         jumping_taxas = algo1(sedge, t1, t2)
-
         taxa = list([y for x in jumping_taxas for y in x])
-        decoded_list = decode_highList_one_tree(taxa, sorted_nodes)
-
+        decoded_list = decode_indices(taxa, sorted_nodes)
         for leave in decoded_list:
             taxa_jumping_map[leave] = taxa_jumping_map[leave] + 1
-
-        global_decode_result_list += [k for k,
-                                      v in taxa_jumping_map.items() if v > 0]
+        global_decode_result_list += [k for k, v in taxa_jumping_map.items() if v > 0]
 
     return set(global_decode_result_list)
 

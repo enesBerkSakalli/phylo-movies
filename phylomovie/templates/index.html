@@ -35,7 +35,7 @@
 
         <!-- beginning of menu -->
 
-        <div class="menu">
+        <div  id='menu' class="menu">
 
             <!-- beginning of menu header -->
             {#
@@ -226,16 +226,13 @@
 
             </div>
 
-            <!-- This is a button toggling the modal -->
-            <button id="chart-modal" class="uk-button uk-button-default uk-margin-small-right uk-button-danger" type="button"
-                uk-toggle="target: #modal-example">Open</button>
 
 
         </div>
         <!-- end of toolbar-->
 
         <!-- This is the modal -->
-        <div id="modal-example" uk-modal class="uk-modal-container">
+        <div id="chart-modal" uk-modal class="uk-modal-container">
             <div class="uk-modal-dialog uk-modal-body">
                 <h2 class="uk-modal-title">Headline</h2>
                 <p class="uk-text-right">
@@ -249,35 +246,38 @@
         <div style="width: 100%; height: 100%;">
             <svg id="applicationContainer" width="100%" height="95%">
                 <g id="application"></g>
-                <!--<text id="topology-change-detection-view" x="20" y="35" class="small">Taxa Highlighted:</text>-->
             </svg>
         </div>
 
     </div>
 
     <script type="module">
+        
         import Gui from "{{ url_for('static', filename='js/gui.js') }}"; 
         //================================================================================ // Properties //================================================================================ let treeList
         let treeList = {{tree_list | safe}};
-
         let robinsonFouldsDistances = {{rfe_list | safe}};
-
         let weightedRobinsonFouldsDistances = {{ weighted_robinson_foulds_distance_list | safe}};
-
-        let toBeHighlighted = {{to_be_highlighted | safe}};
-
+        let hightLightTaxaMap = {{to_be_highlighted | safe}};
         let leaveOrder = {{sorted_leaves | safe}};
         let windowSize = parseInt({{window_size | safe}});
         let windowStepSize = parseInt({{window_step_size | safe}});
 
         document.getElementById("windowSize").value = windowSize;
         document.getElementById("windowStepSize").value = windowStepSize;
-    
+
+        if(treeList.length <= 2){
+            document.getElementById('menu').innerHTML = document.getElementById('menu').innerHTML + `
+            <button id="chart-modal" class="uk-button uk-button-default uk-margin-small-right uk-button-danger" type="button"uk-toggle="target: #chart-modal">
+                Open Chart 
+            </button>`    
+        }
+
         let fileName = "{{file_name | safe}}";
     
         let ignore_branch_lengths = false;
         let color_internal_branches = true;
-        const gui = new Gui(treeList,weightedRobinsonFouldsDistances, robinsonFouldsDistances, windowSize, windowStepSize, toBeHighlighted, leaveOrder, color_internal_branches,fileName);
+        const gui = new Gui(treeList,weightedRobinsonFouldsDistances, robinsonFouldsDistances, windowSize, windowStepSize, hightLightTaxaMap, leaveOrder, color_internal_branches,fileName);
     
         gui.initializeMovie();
         gui.play();
@@ -336,22 +336,15 @@
         });
         
         document.querySelector('#stroke-width').addEventListener('input',() => {
-            gui.strokeWidth = document.getElementById("stroke-width").value;
-            
+            gui.strokeWidth = document.getElementById("stroke-width").value; 
             gui.updateMain();
         });
         
         document.querySelector('#chart-modal').addEventListener('click',() => {
-                
             gui.stop();
             document.getElementById('modal-graph-chart');
             gui.generateModalChart();
-
         });
-
-        //document.querySelector('#color-internal-branch-length').addEventListener('click', () => { // gui.color_internal_branches = document.getElementById("color-internal-branch-length").checked;
-        // gui.update(); //}); document.querySelector('#positionValue').addEventListener('change', () => { gui.stop(); }); document.querySelector('#factor').addEventListener('change', () => { gui.factor = parseFloat(document.getElementById("factor").value);
-        //});
 
         let startButton = document.getElementById('startRecord');
         let stopButton = document.getElementById('stopRecord'); 
@@ -375,8 +368,6 @@
             let node = document.createElement("p");
             node.textContent = "Stopped recording";
             document.body.appendChild(node);
-
-
         })
       
         

@@ -52,7 +52,7 @@ def read_file(path):
     l = [s.strip() for s in l]
     return l
 
-def decode_highList_one_tree(high_list: List, sorted_nodes: List):
+def decode_indices(high_list: List, sorted_nodes: List):
     for_one_tree_decoded = []
     for leave_index in high_list:
         for_one_tree_decoded.append(sorted_nodes[leave_index])

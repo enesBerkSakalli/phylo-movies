@@ -1,4 +1,4 @@
-from ete3 import Tree, TextFace, TreeStyle, NodeStyle
+# from ete3 import Tree, TextFace #, TreeStyle, NodeStyle
 import datetime
 import os.path
 import traceback
@@ -71,16 +71,15 @@ def make_test_algo(path, description, algorithm, expected_results, generate_figu
         desc = f"{description} \n\n works: {worked}"
         desc = desc + f" Expected: {expected_results}\n Algorithm: {highlighted_taxa}\n"
 
-        if generate_figures:
-            path1 = generate_figure(newick1, l+"1", PATH_PICTURES,
-                                highlighted_taxa, expected_results, algorithm.__name__, text="FT1")
-            path2 = generate_figure(newick2, l+"2", PATH_PICTURES, highlighted_taxa,  expected_results, algorithm.__name__, "FT2")
-
-            section = (make_section_with_figure(title, f"./tree_pictures/{os.path.basename(path1)}",
-                                  f"./tree_pictures/{os.path.basename(path2)}", desc, "Tree1", "Tree2"))
-        else:
-            section = make_section_without_figure(title, desc, newick1, newick2)
-
+        # if generate_figures:
+        #    path1 =  "";# generate_figure(newick1, l+"1", PATH_PICTURES,
+                        #        highlighted_taxa, expected_results, algorithm.__name__, text="FT1")
+        #    path2 = "" # generate_figure(newick2, l+"2", PATH_PICTURES, highlighted_taxa,  expected_results, algorithm.__name__, "FT2")
+        #    section = (make_section_with_figure(title, f"./tree_pictures/{os.path.basename(path1)}",
+        #                          f"./tree_pictures/{os.path.basename(path2)}", desc, "Tree1", "Tree2"))
+        # else:
+            
+        section = make_section_without_figure(title, desc, newick1, newick2)
         result = ([algorithm.__name__, f"{path}", worked, title])
 
         return section, result

@@ -6,7 +6,7 @@ import * as d3 from "https://cdn.skypack.dev/d3@7";
 
 export default class Gui {
 
-    constructor(treeList, weightedRobinsonFouldsDistances, robinsonFouldsDistances, windowSize, windowStepSize, toBeHighlighted, leaveOrder, colorInternalBranches, fileName) {
+    constructor(treeList, weightedRobinsonFouldsDistances, robinsonFouldsDistances, windowSize, windowStepSize, hightLightTaxaMap, leaveOrder, colorInternalBranches, fileName) {
         this.treeList = treeList;
         this.treeNameList = ["Full. ", "Intermediate ", "Consensus 1 ", "Consensus 2 ", "Intermedidate "];
         this.robinsonFouldsDistances = robinsonFouldsDistances;
@@ -14,7 +14,7 @@ export default class Gui {
         this.scaleList = calculateScales(treeList);
         this.windowSize = windowSize;
         this.windowStepSize = windowStepSize;
-        this.toBeHighlighted = toBeHighlighted;
+        this.hightLightTaxaMap = hightLightTaxaMap;
         this.leaveOrder = leaveOrder;
         this.firstFull = 0;
         this.fontSize = 1.8;
@@ -27,16 +27,11 @@ export default class Gui {
 
 
         this.colorInternalBranches = colorInternalBranches;
-
         this.barOptionValue = "rfd";
-
         this.ignoreBranchLengths = false;
-
         this.maxScale = Math.max.apply(Math, this.scaleList.map(o => o.value));
-
-        this.index  = 0;
+        this.index = 0;
         this.factor = parseInt(document.getElementById('factor').value);
-
         this.playing = true;
     }
 
@@ -49,7 +44,7 @@ export default class Gui {
     getIntervalDuration() {
         let treeTimeList = [200, 200, 200, 500, 200];
         let type = this.index % 5
-        return treeTimeList[type] *  parseInt(document.getElementById('factor').value);
+        return treeTimeList[type] * parseInt(document.getElementById('factor').value);
     }
 
     play() {
@@ -135,6 +130,7 @@ export default class Gui {
         document.getElementById("currentScaleText").innerText = " " + this.scaleList[Math.floor(this.index / 5)].value;
 
         let window = this.calculateWindow();
+
         document.getElementById("windowArea").innerHTML = `${window['startPosition']} - ${window['endPosition']}`
     }
 
@@ -163,24 +159,29 @@ export default class Gui {
 
     updateMain() {
         let drawDuration = this.getIntervalDuration();
-
         let tree = this.treeList[this.index];
-
         let d3tree = constructTree(tree, this.ignoreBranchLengths);
+        //let colorIndex = this.index % 5;
+        let colorIndex = 0;
 
-        let colorIndex = this.index % 5 === 0 && this.firstFull === 0 ? Math.floor(this.index / 5) - 1 : Math.floor(this.index / 5);
+        if (this.index === 0) {
+            this.colorIndex = 0;
+        } else {
+            if (this.index % 5 === 0 && this.firstFull === 0) {
+                this.colorIndex = Math.floor(this.index / 5) - 1
+            } else {
+                this.colorIndex = Math.floor(this.index / 5)
+            }
+        }
 
-        //d3.select("#topology-change-detection-view").text(`Taxa Highlighted: ${this.toBeHighlighted[colorIndex]}`, ).style('font-size', '0.5em')
 
-        drawTree(d3tree, this.toBeHighlighted[colorIndex], drawDuration, this.leaveOrder, this.fontSize, this.strokeWidth);
+        drawTree(d3tree, this.hightLightTaxaMap[colorIndex], drawDuration, this.leaveOrder, this.fontSize, this.strokeWidth);
     }
 
     goToPosition(position) {
-
         this.firstFull = 1
         this.index = Math.min(Math.max(0, position * 5), this.treeList.length);
         this.update();
-
     }
 
     resize() {
@@ -393,8 +394,8 @@ export default class Gui {
             .style('cursor', 'pointer')
             .style('color', 'white');
 
-            
-        
+
+
         let maxValue = Math.max(...data);
 
 
@@ -414,7 +415,7 @@ export default class Gui {
             .attr("stroke", "white")
             .attr("stroke-width", 1.5)
             .attr("d", d3.line()
-                .x(function (d,i) {
+                .x(function (d, i) {
                     return x(i + 1)
                 })
                 .y(function (d) {
@@ -677,7 +678,7 @@ export default class Gui {
     }
 
 
-    setModalShip(index, value){
+    setModalShip(index, value) {
         let xAxis = document.getElementById("xAxis-modal");
 
         let x = ((index + 1) * xAxis.getBBox().width) / (value);
@@ -689,29 +690,29 @@ export default class Gui {
 
         if (this.barOptionValue === "rfd") {
             this.generateDistanceChartModal(this.robinsonFouldsDistances);
-            this.setModalShip(Math.floor(this.index / 5), this.robinsonFouldsDistances.length);   
+            this.setModalShip(Math.floor(this.index / 5), this.robinsonFouldsDistances.length);
         }
         if (this.barOptionValue === "w-rfd") {
             this.generateWeightedDistanceChartModal(this.weightedRobinsonFouldsDistances);
-            this.setModalShip(Math.floor(this.index / 5), this.robinsonFouldsDistances.length);   
+            this.setModalShip(Math.floor(this.index / 5), this.robinsonFouldsDistances.length);
         }
 
         if (this.barOptionValue === "scale") {
             this.generateScaleChartModal(this.scaleList);
-            this.setModalShip(Math.floor(this.index / 5), this.robinsonFouldsDistances.length);   
+            this.setModalShip(Math.floor(this.index / 5), this.robinsonFouldsDistances.length);
         }
 
 
     }
 
 
-    
+
     /**
      * This function is generating the RFE Line Graph.
      * @return {void}
      * @param data
      */
-     generateWeightedDistanceChartModal(data) {
+    generateWeightedDistanceChartModal(data) {
 
         document.getElementById('modal-example').innerHTML =
             `
@@ -919,7 +920,7 @@ export default class Gui {
 
                 let position = (parseInt(e.target.innerHTML) - 1);
                 this.goToPosition(position);
-                this.setModalShip(position,this.robinsonFouldsDistances.length);
+                this.setModalShip(position, this.robinsonFouldsDistances.length);
 
 
             })
@@ -1049,7 +1050,7 @@ export default class Gui {
 
                 let position = (parseInt(e.target.innerHTML) - 1);
                 this.goToPosition(position);
-                this.setModalShip(position,this.robinsonFouldsDistances.length);
+                this.setModalShip(position, this.robinsonFouldsDistances.length);
 
             })
             .style('cursor', 'pointer')

@@ -1,13 +1,12 @@
 from .services.tree.treeMain import calculate_rfd_along_tracjectories, calculate_weighted_robinson_foulds_distance_along_trajectory
-
 from .services.coloring_algorithm.algorithm_5 import algorithm_5
 from .services.tree.Treere import Treere
 from typing import Dict, List
 import math
 
-from flask import Flask
-from flask import request, abort, render_template
 
+from flask import Flask
+from flask import request, abort, render_template, jsonify
 app = Flask(__name__)
 
 try:
@@ -21,7 +20,6 @@ def about():
         return render_template('about.html')
 
 def handle_order_list(request):
-
     if request.files['orderFile'].filename == '':
         return None
     else:
@@ -39,6 +37,8 @@ def index():
         return render_template('form.html', commit=commit)
 
     elif request.method == "POST":
+
+        # return jsonify(request.form)
 
         window_size = int(request.form['windowSize'])
 
@@ -107,7 +107,7 @@ def find_to_be_highlighted_leaves_delete(json_consensus_tree_list: List, sorted_
     for i in range(0, len(json_consensus_tree_list) - 5, 5):
         first_tree_index = math.floor(i / 5)
         second_tree_index = math.floor(i / 5) + 1
-
+        print(first_tree_index,second_tree_index)
         pair_of_newick_string = [
             newick_string_list[first_tree_index], newick_string_list[second_tree_index]]
 
@@ -115,5 +115,4 @@ def find_to_be_highlighted_leaves_delete(json_consensus_tree_list: List, sorted_
 
         highlights_every_tree_list.append(algorithm_5(
             set_of_trees, sorted_nodes, file_name, pair_of_newick_string))
-
     return highlights_every_tree_list
