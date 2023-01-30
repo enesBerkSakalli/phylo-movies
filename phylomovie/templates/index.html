@@ -47,12 +47,13 @@
     <!-- UIkit CSS -->
     <link
       rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/uikit@3.14.1/dist/css/uikit.min.css"
+      href="https://cdn.jsdelivr.net/npm/uikit@3.15.22/dist/css/uikit.min.css"
     />
 
     <!-- UIkit JS -->
-    <script src="https://cdn.jsdelivr.net/npm/uikit@3.14.1/dist/js/uikit.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/uikit@3.14.1/dist/js/uikit-icons.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/uikit@3.15.22/dist/js/uikit.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/uikit@3.15.22/dist/js/uikit-icons.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
 
   <body>
@@ -370,7 +371,6 @@
         style="padding-top: 20px; display: none !important"
       >
         <div class="uk-modal-dialog uk-modal-body">
-          <h2 class="uk-modal-title">Headline</h2>
           <p class="uk-text-right">
             <button
               class="uk-button uk-button-default uk-modal-close"
@@ -393,126 +393,144 @@
     </div>
 
     <script type="module">
+        import Gui from "{{ url_for('static', filename='js/gui.js') }}";
 
-      import Gui from "{{ url_for('static', filename='js/gui.js') }}";
-      //================================================================================ // Properties //================================================================================ let treeList
-      let treeList = {{tree_list | safe}};
-      let robinsonFouldsDistances = {{rfe_list | safe}};
-      let weightedRobinsonFouldsDistances = {{ weighted_robinson_foulds_distance_list | safe}};
-      let hightLightTaxaMap = {{to_be_highlighted | safe}};
-      let leaveOrder = {{sorted_leaves | safe}};
-      let windowSize = parseInt({{window_size | safe}});
-      let windowStepSize = parseInt({{window_step_size | safe}});
+        function ready(fn) {
+          if (typeof fn !== 'function') {
+            throw new Error('Argument passed to ready should be a function');
+          }
 
-      document.getElementById("windowSize").value = windowSize;
-      document.getElementById("windowStepSize").value = windowStepSize;
+          if (document.readyState != 'loading') {
+            fn();
+          } else if (document.addEventListener) {
+            document.addEventListener('DOMContentLoaded', fn, {
+              once: true // A boolean value indicating that the listener should be invoked at most once after being added. If true, the listener would be automatically removed when invoked.
+            });
+          } else {
+            document.attachEvent('onreadystatechange', function() {
+              if (document.readyState != 'loading')
+                fn();
+            });
+          }
+        }
 
-      if(treeList.length <= 2){
-          document.getElementById('menu').innerHTML = document.getElementById('menu').innerHTML + `
-          <button id="chart-modal" class="uk-button uk-button-default uk-margin-small-right uk-button-danger" type="button"uk-toggle="target: #chart-modal">
-              Open Chart
-          </button>`
-      }
+        function assignEventHandler(){
 
-      let fileName = "{{file_name | safe}}";
-
-      let ignore_branch_lengths = false;
-      let color_internal_branches = true;
-      const gui = new Gui(treeList,weightedRobinsonFouldsDistances, robinsonFouldsDistances, windowSize, windowStepSize, hightLightTaxaMap, leaveOrder, color_internal_branches,fileName);
-
-      gui.initializeMovie();
-      gui.play();
-
-      document.querySelector('#startButton').addEventListener('click', () => {
-          gui.start();
-      });
-      document.querySelector('#stopButton').addEventListener('click', () => {
-          gui.stop();
-      });
-      document.querySelector('#forwardButton').addEventListener('click',
-          () => {
-              gui.forward();
-      });
-
-      document.querySelector('#backwardButton').addEventListener('click', () => {
-          gui.backward();
-      });
-
-      document.querySelector('#saveButton').addEventListener('click', () => {
-          gui.saveSVG();
-      });
-
-      document.querySelector('#positionButton').addEventListener('click',
-          () => {
-
-              let position = Math.max(1 , document.getElementById("positionValue").value);
-              document.getElementById("positionValue").value  = position;
-              gui.goToPosition(position - 1);
-
+          document.querySelector('#startButton').addEventListener('click', () => {
+              gui.start();
           });
 
-      document.querySelector('#forwardStepButton').addEventListener('click', () => {
-          gui.nextTree();
-      });
-
-      document.querySelector('#backwardStepButton').addEventListener('click',
-          () => {
-              gui.prevTree();
+          document.querySelector('#stopButton').addEventListener('click', () => {
+              gui.stop();
           });
 
-      document.querySelector('#barPlotOption').addEventListener('click', () => {
-          gui.barOptionValue = document.getElementById("barPlotOption").value;
-          gui.update();
-      });
+          document.querySelector('#forwardButton').addEventListener('click',
+              () => {
+                  gui.forward();
+          });
 
-      document.querySelector('#branch-length').addEventListener('click',
-          () => {
-              gui.ignoreBranchLengths = document.getElementById("branch-length").checked;
+          document.querySelector('#backwardButton').addEventListener('click', () => {
+              gui.backward();
+          });
+
+          document.querySelector('#saveButton').addEventListener('click', () => {
+              gui.saveSVG();
+          });
+
+          document.querySelector('#positionButton').addEventListener('click',
+              () => {
+                  let position = Math.max(1 , document.getElementById("positionValue").value);
+                  document.getElementById("positionValue").value  = position;
+                  gui.goToPosition(position - 1);
+              });
+
+
+          document.querySelector('#forwardStepButton').addEventListener('click', () => {
+              gui.nextTree();
+          });
+
+          document.querySelector('#backwardStepButton').addEventListener('click',
+              () => {
+                  gui.prevTree();
+              });
+
+          document.querySelector('#barPlotOption').addEventListener('click', () => {
+              gui.barOptionValue = document.getElementById("barPlotOption").value;
               gui.update();
-      });
+          });
 
-      document.querySelector('#font-size').addEventListener('input',() => {
-          gui.fontSize = document.getElementById("font-size").value;
-          gui.updateMain();
-      });
+          document.querySelector('#branch-length').addEventListener('click',
+              () => {
+                  gui.ignoreBranchLengths = document.getElementById("branch-length").checked;
+                  gui.update();
+          });
 
-      document.querySelector('#stroke-width').addEventListener('input',() => {
-          gui.strokeWidth = document.getElementById("stroke-width").value;
-          gui.updateMain();
-      });
+          document.querySelector('#font-size').addEventListener('input',() => {
+              gui.fontSize = document.getElementById("font-size").value;
+              gui.updateMain();
+          });
 
-      document.querySelector('#chart-modal').addEventListener('click',() => {
-          gui.stop();
-          document.getElementById('modal-graph-chart');
-          gui.generateModalChart();
-      });
+          document.querySelector('#stroke-width').addEventListener('input',() => {
+              gui.strokeWidth = document.getElementById("stroke-width").value;
+              gui.updateMain();
+          });
 
-      let startButton = document.getElementById('startRecord');
-      let stopButton = document.getElementById('stopRecord');
+          document.querySelector('#chart-modal-button').addEventListener('click',() => {
+              gui.stop();
+              document.getElementById('chart-modal');
+              gui.generateModalChart();
+          });
 
-      stopButton.disabled = true;
+          startButton.addEventListener('click', async function () {
+              let stream = await recordScreen();
+              let mimeType = 'video/webm';
+              mediaRecorder = createRecorder(stream, mimeType);
+              let node = document.createElement("p");
+              node.textContent = "Started recording";
+              document.body.appendChild(node);
+              stopButton.disabled = false;
+            });
 
-      let mediaRecorder;
+          stopButton.addEventListener('click', function () {
+              mediaRecorder.stop();
+              let node = document.createElement("p");
+              node.textContent = "Stopped recording";
+              document.body.appendChild(node);
+          });
+          }
 
-      startButton.addEventListener('click', async function () {
-          let stream = await recordScreen();
-          let mimeType = 'video/webm';
-          mediaRecorder = createRecorder(stream, mimeType);
-          let node = document.createElement("p");
-          node.textContent = "Started recording";
-          document.body.appendChild(node);
-          stopButton.disabled = false;
-        })
+        //================================================================================ // Properties //================================================================================ let treeList
+        let treeList = {{tree_list | safe}};
+        let robinsonFouldsDistances = {{rfe_list | safe}};
+        let weightedRobinsonFouldsDistances = {{ weighted_robinson_foulds_distance_list |safe}};
+        let hightLightTaxaMap = {{to_be_highlighted | safe}};
+        let leaveOrder = {{sorted_leaves | safe}};
+        let windowSize = parseInt({{window_size | safe}});
+        let windowStepSize = parseInt({{window_step_size | safe}});
+        let fileName = "{{file_name | safe}}";
+        let ignore_branch_lengths = false;
+        let color_internal_branches = true;
+        const gui = new Gui(treeList,weightedRobinsonFouldsDistances, robinsonFouldsDistances, windowSize, windowStepSize, hightLightTaxaMap, leaveOrder, color_internal_branches,fileName);
+        document.getElementById("windowSize").value = windowSize;
+        document.getElementById("windowStepSize").value = windowStepSize;
+        gui.initializeMovie();
+        gui.play();
+        let startButton = document.getElementById('startRecord');
+        let stopButton = document.getElementById('stopRecord');
+        stopButton.disabled = true;
+        let mediaRecorder;
 
-      stopButton.addEventListener('click', function () {
-          mediaRecorder.stop();
-          let node = document.createElement("p");
-          node.textContent = "Stopped recording";
-          document.body.appendChild(node);
-      })
+        ready(function() {
+            if(treeList.length>2){
+              document.getElementById('menu').innerHTML += `
+              <button id="chart-modal-button" class="uk-button uk-button-default uk-margin-small-right uk-button-danger" type="button"uk-toggle="target: #chart-modal">
+                  Open Chart
+              </button>`
+            }
+            assignEventHandler()
+        });
 
-
-      window.onresize = function () {
+        window.onresize = function () {
           gui.resize();
           gui.update();
       };

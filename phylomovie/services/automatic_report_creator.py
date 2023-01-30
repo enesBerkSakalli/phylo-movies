@@ -30,7 +30,7 @@ TEXT_WITHOUT_FIGURE = """
 {description}
 """
 
-PREAMBLE=f"""
+PREAMBLE = f"""
 ---
 title: "Report"
 author: "Enes Sakalli"
@@ -55,6 +55,7 @@ sys.path.append(".")
 
 # converting command pandoc report.md -o report.html --standalone
 
+
 def make_test_algo(path, description, algorithm, expected_results, generate_figures):
     r = _test_highlighting_algorithm(
         path, description, algorithm, expected_results, strict=False, output=False)
@@ -73,12 +74,12 @@ def make_test_algo(path, description, algorithm, expected_results, generate_figu
 
         # if generate_figures:
         #    path1 =  "";# generate_figure(newick1, l+"1", PATH_PICTURES,
-                        #        highlighted_taxa, expected_results, algorithm.__name__, text="FT1")
+        #        highlighted_taxa, expected_results, algorithm.__name__, text="FT1")
         #    path2 = "" # generate_figure(newick2, l+"2", PATH_PICTURES, highlighted_taxa,  expected_results, algorithm.__name__, "FT2")
         #    section = (make_section_with_figure(title, f"./tree_pictures/{os.path.basename(path1)}",
         #                          f"./tree_pictures/{os.path.basename(path2)}", desc, "Tree1", "Tree2"))
         # else:
-            
+
         section = make_section_without_figure(title, desc, newick1, newick2)
         result = ([algorithm.__name__, f"{path}", worked, title])
 
@@ -248,10 +249,11 @@ def make_section_with_figure(title, figure1, figure2, description, fig1desc, fig
                        description=description,
                        fig1desc=fig1desc, fig2desc=fig2desc)
 
+
 def make_section_without_figure(title, description, newick1, newick2):
-    return TEXT_WITHOUT_FIGURE.format(title=title, 
-                       description=description,
-                       newick1=newick1, newick2=newick2)
+    return TEXT_WITHOUT_FIGURE.format(title=title,
+                                      description=description,
+                                      newick1=newick1, newick2=newick2)
 
 
 def generate_data(generate_figures=True, algorithm_filter=lambda x: True, path_filter=lambda x: True):
@@ -271,7 +273,7 @@ def generate_data(generate_figures=True, algorithm_filter=lambda x: True, path_f
             if not path_filter(path):
                 continue
 
-            r =  make_test_algo(path, description, algorithm, expected_results, generate_figures)
+            r = make_test_algo(path, description, algorithm, expected_results, generate_figures)
             if r:
                 section, result = r
 
@@ -280,11 +282,13 @@ def generate_data(generate_figures=True, algorithm_filter=lambda x: True, path_f
 
     return results_for_table, list_of_things
 
+
 def main(make_figures=True, outpath=None, algorithm_filter=lambda x: True, path_filter=lambda x: True):
     if outpath is None:
         outpath = join(PATH, "report.md")
 
-    results_for_table, list_of_things = generate_data(make_figures, algorithm_filter=algorithm_filter, path_filter=path_filter)
+    results_for_table, list_of_things = generate_data(
+        make_figures, algorithm_filter=algorithm_filter, path_filter=path_filter)
     list_of_things.insert(0, PREAMBLE)
 
     table = make_table(results_for_table)
@@ -292,6 +296,7 @@ def main(make_figures=True, outpath=None, algorithm_filter=lambda x: True, path_
 
     with open(outpath, mode="w") as f:
         f.write("\n\n".join(list_of_things))
+
 
 if __name__ == "__main__":
     main()

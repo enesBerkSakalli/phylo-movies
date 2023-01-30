@@ -21,6 +21,13 @@
         integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3" crossorigin="anonymous">
     </script>
 
+    <!-- UIkit CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.15.22/dist/css/uikit.min.css" />
+
+    <!-- UIkit JS -->
+    <script src="https://cdn.jsdelivr.net/npm/uikit@3.15.22/dist/js/uikit.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/uikit@3.15.22/dist/js/uikit-icons.min.js"></script>
+
 </head>
 
 <body>
@@ -60,9 +67,8 @@
         </div>
 
         <form method="post" enctype="multipart/form-data">
-
             <div class="form-group row">
-                <label class="form-label col-form-label-lg" for="windowSize">Window-Size</label>
+                <label class="" for="windowSize">Window-Size</label>
                 <input type="number" name="windowSize" id="windowSize" placeholder="1" value="1"
                     class="form-control form-control-lg">
             </div>
@@ -73,9 +79,9 @@
                     class="form-control form-control-lg">
             </div>
 
-            <div class="row js-upload">
+            <div class="form-group row">
                 <label for="form-file-tree" class="form-label col-form-label-lg">Tree-File</label>
-                <input type="file" class="form-control form-control-lg" id="input-file-tree" name="treeFile" required>
+                <input onchange="createColorArray(event)" type="file" class="form-control form-control-lg" id="input-file-tree" name="treeFile" required >
             </div>
 
             <div class="form-group row">
@@ -83,16 +89,16 @@
                 <input type="file" class="form-control form-control-lg" id="form-file-order" name="orderFile">
             </div>
 
-            <div class="pt-5" id="colour-section"></div>
+            <div id="colour-section" class="uk-text-center pt-2" uk-grid></div>
 
-            <div class="form-group row pt-4">
+            <div class="form-group row pt-2">
                 <div class="col p-0">
-                    <button type="submit" class="btn btn-outline-primary btn-lg"><i class="fa fa-play"></i>
+                    <button type="submit" class="uk-button uk-button-primary">
+                        <i class="fa fa-play"></i>
                         Play
                     </button>
                 </div>
             </div>
-
     </div>
 
     </form>
@@ -104,7 +110,6 @@
 </html>
 
 <script>
-    main();
 
     // https://github.com/jasondavies/newick.js
     function parseNewick(a) {
@@ -133,74 +138,34 @@
 
     }
 
-    function generateColorInput() {
-
-        var fileToLoad = document.getElementById("input-file-tree").files[0];
-        var fileReader = new FileReader();
-
-        fileReader.onload = function (fileLoadedEvent) {
-
-            var textFromFileLoaded = fileLoadedEvent.target.result;
-            let newickTrees = textFromFileLoaded.split("\n");
-            let firstNewickTree = newickTrees[0];
-            let tree = parseNewick(firstNewickTree)
-
-            const root = d3.hierarchy(tree, d => d.branchset);
-            let colorContainer = document.getElementById("color-assignment-input");
-
-            root.leaves().forEach(element => {
-
-                let formGroup = document.createElement("div");
-                formGroup.classList.add('col');
-
-                let inputLabel = document.createElement("label");
-                inputLabel.classList.add("form-check-label")
-                inputLabel.innerHTML = element.data.name;
-                inputLabel.setAttribute("for", `taxa-color-${element.data.name}`);
-
-                let input = document.createElement("input");
-                input.type = "color";
-                input.name = `taxa-color-${element.data.name}`;
-                input.id = `taxa-${element.data.name}`
-                input.classList.add('form-control', 'form-control-color');
-
-                formGroup.appendChild(inputLabel);
-                formGroup.appendChild(input);
-
-                // Append a line break 
-                colorContainer.appendChild(formGroup);
-            })
-
-        };
-
-        fileReader.readAsText(fileToLoad, "UTF-8");
-    }
-
-    function main() {
-
-        document.getElementById('input-file-tree').addEventListener('change', (e) => {
-
-            document.getElementById('colour-section').innerHTML =
-                `           
-                    <div class="form-row align-items-center">
-                        <div class="col-auto my-1">
-                            <label class="mr-sm-2" for="inlineFormCustomSelect">Preference</label>
-                            <select class="form-control mr-sm-2" id="select-coloring-option">
-                              <option selected value="1">Taxa</option>
-                            </select>
+    function generateColorArray(leaves) {
+        let leaveContainer = "";
+            leaves.forEach(leave => {
+                leaveContainer += `
+                    <div class="uk-width-auto@m">
+                        <div class="uk-card uk-card-default uk-card-body">
+                            ${leave.data.name}
+                            <input id="taxa-${leave.data.name}" type="color" name="taxa-color-${leave.data.name}">
                         </div>
                     </div>
-    
-                    <div id="load-colours-button" class="btn btn-outline-primary btn-lg">
-                        Assign Colours
-                    </div>
-        
-                    <div id="color-assignment-input" class="row"></div>
-                    `
-            document.getElementById('load-colours-button').addEventListener('click', generateColorInput())
-
-        });
+                `; 
+            });
+        return leaveContainer;
     }
+
+
+    async function createColorArray(event) {
+        const file = event.target.files.item(0)
+        const text = await file.text();        
+        // document.getElementById("output").innerText = text;
+        let newickTrees = text.split("\n");
+        let firstNewickTree = newickTrees[0];
+        let tree = parseNewick(firstNewickTree);
+        let root = d3.hierarchy(tree, d => d.branchset);
+        let leaves = root.leaves();
+        document.getElementById('colour-section').innerHTML = generateColorArray(leaves);            
+    }
+
 </script>
 
 <style>

@@ -297,7 +297,7 @@ class Treere:
                     for i in range(
                             len(new_trees)):  # assign each constree their root, to obtain the same data structure as before the build_constree
                         new_trees[i] = {"name": item["name"], "length": item["length"], "children": new_trees[i]}
-                    
+
                     split[count:count] = new_trees  # add the two consesus trees derived from tree 1
                     count += len(new_trees)
 
@@ -508,7 +508,6 @@ class Treere:
         sorted_consensus_json_treelist = self.tree_traversal(json_treelist)[0]
         return sorted_consensus_json_treelist
 
-
     def from_nexus_to_sorted_treelist(self, txt: str) -> List[dict]:
         """Transforms a nexus string list to a list of json objects"""
         purified_newick_strings = self.nexus_parser(txt)
@@ -519,9 +518,7 @@ class Treere:
 
         return interpolated_tree_list
 
-
     def from_newick_to_sorted_treelist(self, newick_string):
-        
         """Transforms a newline delimited newick string list to a list of json objects"""
         purified_newick_strings = self.newick_purification(newick_string)
 
@@ -539,14 +536,13 @@ class Treere:
     def denote_leaves_with_order(self, node, i=0):
         if('children' in node.keys()):
             for child in node['children']:
-                self.denote_leaves_with_order(child, i )
+                self.denote_leaves_with_order(child, i)
             node['leave_order_index'] = 99999
             node['tree_order_index'] = 99999
         else:
             node['leave_order_index'] = self.sorted_nodes.index(node['name'])
             node['tree_order_index'] = i
             i = i + 1
-
 
     def input_manager(self, text, filename):
         """Transforms a tree as an input string (newick or nexus) to json tree"""
@@ -555,9 +551,6 @@ class Treere:
         else:
             return self.from_newick_to_sorted_treelist(text)
 
-
-       
-    
 
 # for backend testing purposes: enables one to execute code when calling the script directly
 # if __name__ == "__main__":

@@ -15,6 +15,8 @@ import numpy as np
 from phylomovie.services.tree.Treere import Treere
 from icecream import ic
 from collections import Counter
+# import package
+
 
 sys.path.append("..")
 # --------- algo  ----------
@@ -511,7 +513,7 @@ def algorithm_5(tree_list, sorted_nodes: List, file_name=None, newick_list=[]):
     t2 = traverse(it2)
 
     all_sedges = merge_sedges(t1._all_sedges, t2._all_sedges)
-    detected_nodes_count_map = {} 
+    detected_nodes_count_map = dict.fromkeys(sorted_nodes, 0)
 
     decoded_list = []
 
@@ -525,10 +527,7 @@ def algorithm_5(tree_list, sorted_nodes: List, file_name=None, newick_list=[]):
             tmp_decoded_list = decode_indices(jumping_taxa, temp_sorted_nodes)
 
             for taxa in tmp_decoded_list:
-                if taxa not in detected_nodes_count_map.keys():
-                    detected_nodes_count_map[taxa] = 1
-                else:
-                    detected_nodes_count_map[taxa] = detected_nodes_count_map[taxa] + 1
+                detected_nodes_count_map[taxa] = detected_nodes_count_map[taxa] + 1
 
             decoded_list += tmp_decoded_list
 
@@ -537,18 +536,16 @@ def algorithm_5(tree_list, sorted_nodes: List, file_name=None, newick_list=[]):
             prunned_tree_two,
             temp_sorted_nodes,
             temp_newick_list,
-        ) = prune_leaves(list(set(decoded_list)), temp_newick_list)
+        ) = prune_leaves(list(set(tmp_decoded_list)), temp_newick_list)
 
         t1 = traverse(prunned_tree_one)
         t2 = traverse(prunned_tree_two)
         all_sedges = merge_sedges(t1._all_sedges, t2._all_sedges)
 
-        if(len(decoded_list) == 0):
+        if(len(tmp_decoded_list) == 0):
             break
 
-        
-    return  detected_nodes_count_map
-    # return  [k for k, v in detected_nodes_count_map.items() if float(v) > 0]
+    return detected_nodes_count_map
 
 
 def algorithm1(tree_list, sorted_nodes, file_name, newick_list):

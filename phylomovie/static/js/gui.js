@@ -202,8 +202,6 @@ export default class Gui {
     let drawDuration = this.getIntervalDuration();
     let tree = this.treeList[this.index];
     let d3tree = constructTree(tree, this.ignoreBranchLengths);
-    //let colorIndex = this.index % 5;
-    let colorIndex = 0;
 
     if (this.index === 0) {
       this.colorIndex = 0;
@@ -217,7 +215,7 @@ export default class Gui {
 
     drawTree(
       d3tree,
-      this.hightLightTaxaMap[colorIndex],
+      this.hightLightTaxaMap[this.colorIndex],
       drawDuration,
       this.leaveOrder,
       this.fontSize,
@@ -748,29 +746,32 @@ export default class Gui {
   }
 
   generateModalChart() {
+    document.getElementById("chart-modal").innerHTML = `
+    <div class="uk-modal-dialog uk-modal-body">
+        <canvas id="graph-chart"></canvas>
+        <p class="uk-text-right">
+            <button class="uk-button uk-button-default uk-modal-close" type="button">Cancel</button>
+            <button id="save-chart-button" class="uk-button uk-button-primary" type="button">Save</button>
+        </p>
+    </div>
+    `;
+
     if (this.barOptionValue === "rfd") {
-      this.generateDistanceChartModal(this.robinsonFouldsDistances);
-      this.setModalShip(
-        Math.floor(this.index / 5),
-        this.robinsonFouldsDistances.length
+      let x = this.robinsonFouldsDistances.map((row) => row.tree);
+      let y = this.robinsonFouldsDistances.map(
+        (row) => row["robinson_foulds"]["relative"]
       );
+      this.generateChart(x, y, "Relative Robinson Foulds Distance");
     }
     if (this.barOptionValue === "w-rfd") {
-      this.generateWeightedDistanceChartModal(
-        this.weightedRobinsonFouldsDistances
-      );
-      this.setModalShip(
-        Math.floor(this.index / 5),
-        this.robinsonFouldsDistances.length
-      );
+      let x = this.robinsonFouldsDistances.map((row) => row.tree);
+      let y = this.weightedRobinsonFouldsDistances;
+      this.generateChart(x, y, "Weighted Robinson Foulds Distance");
     }
-
     if (this.barOptionValue === "scale") {
-      this.generateScaleChartModal(this.scaleList);
-      this.setModalShip(
-        Math.floor(this.index / 5),
-        this.robinsonFouldsDistances.length
-      );
+      let x = this.robinsonFouldsDistances.map((row) => row.tree);
+      let y = this.scaleList.map((row) => row.value);
+      this.generateChart(x, y, "Scale of the longest edge");
     }
   }
 
@@ -779,402 +780,19 @@ export default class Gui {
    * @return {void}
    * @param data
    */
-  generateWeightedDistanceChartModal(data) {
-    document.getElementById("modal-example").innerHTML = `
-        <div class="uk-modal-dialog uk-modal-body">
-            <h2 class="uk-modal-title">Weighted Relative Robinson Foulds Distance</h2>
-            <div id="modal-graph-chart"></div>
-            <p class="uk-text-right">
-                <button class="uk-button uk-button-default uk-modal-close" type="button">Cancel</button>
-                <button id="save-chart-button" class="uk-button uk-button-primary" type="button">Save</button>
-            </p>
-        </div>
-        `;
-
-    document
-      .getElementById("save-chart-button")
-      .addEventListener("click", (e) => {
-        this.saveChart();
-      });
-
-    let width = 1000;
-    let height = 500;
-
-    // set the dimensions and margins of the graph
-    let margin = {
-      right: 25,
-      left: 40,
-      bottom: 60,
-      top: 10,
-    };
-
-    // append the svg object to the body of the page
-    let svg = d3
-      .select("#modal-graph-chart")
-      .append("svg")
-      .attr("id", "chart-container")
-      .attr("width", width)
-      .attr("height", height)
-      .attr("back", "black")
-      .append("g")
-      .attr("id", "chart")
-      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-    width = width - margin.left - margin.right;
-    height = height - margin.top - margin.bottom;
-
-    // Read the data
-    // Add X axis --> it is a date format
-    let x = d3.scaleSequential().domain([1, data.length]).range([1, width]);
-
-    svg
-      .append("g")
-      .attr("transform", "translate(0," + height + ")")
-      .call(d3.axisBottom(x))
-      .attr("id", "xAxis-modal");
-
-    svg
-      .append("g")
-      .attr("id", "rd")
-      .attr("transform", "translate(0," + (height - 5) + ")")
-      .append("g")
-      .attr("id", "ship-modal")
-      .attr("transform", "translate(1.5," + 0 + ")")
-      .append("line")
-      .attr("stroke", "red")
-      .attr("stroke-width", "1.5%")
-      .attr("y2", 12);
-
-    svg
-      .selectAll("text")
-      .attr("transform", "translate(-12,18) rotate(-90)")
-      .style("font-size", "1.2em")
-      .style("cursor", "pointer")
-      .on("click", (e) => {
-        let position = parseInt(e.target.innerHTML) - 1;
-        this.goToPosition(position);
-        this.setModalShip(position, this.robinsonFouldsDistances.length);
-      })
-      .style("color", "black");
-
-    let maxValue = Math.max(...data);
-
-    // Add Y axis
-    let y = d3.scaleLinear().domain([0, maxValue]).range([height, 0]);
-
-    svg.append("g").call(d3.axisLeft(y));
-
-    // Add the line
-    svg
-      .append("path")
-      .datum(data)
-      .attr("fill", "none")
-      .attr("stroke", "black")
-      .attr("stroke-width", 1.5)
-      .attr(
-        "d",
-        d3
-          .line()
-          .x(function (d, i) {
-            return x(i + 1);
-          })
-          .y(function (d) {
-            return y(d);
-          })
-      );
-
-    svg
-      .append("text")
-      .attr("class", "x-label")
-      .attr("text-anchor", "end")
-      .attr("x", width / 2)
-      .attr("y", height + 50)
-      .attr("dy", ".35em")
-      .attr("fill", "black")
-      .text("Tree Index")
-      .style("font-size", "0.8em");
-
-    svg
-      .append("text")
-      .attr("class", "y-label")
-      .attr("text-anchor", "end")
-      .attr("x", -120)
-      .attr("y", -35)
-      .attr("dy", ".35em")
-      .attr("transform", "rotate(-90)")
-      .attr("fill", "black")
-      .text("W. Rel. RFD.")
-      .style("font-size", "0.8em");
-  }
-
-  /**
-   * This function is generating the RFE Line Graph.
-   * @return {void}
-   * @param data
-   */
-  generateDistanceChartModal(data) {
-    document.getElementById("modal-example").innerHTML = `
-        <div class="uk-modal-dialog uk-modal-body">
-            <h2 class="uk-modal-title">Relative Robinson Foulds Distance</h2>
-            <div id="modal-graph-chart"></div>
-            <p class="uk-text-right">
-                <button class="uk-button uk-button-default uk-modal-close" type="button">Cancel</button>
-                <button id="save-chart-button" class="uk-button uk-button-primary" type="button">Save</button>
-            </p>
-        </div>
-        `;
-
-    document
-      .getElementById("save-chart-button")
-      .addEventListener("click", (e) => {
-        this.saveChart();
-      });
-
-    let width = 1000;
-    let height = 500;
-
-    // set the dimensions and margins of the graph
-    let margin = {
-      right: 25,
-      left: 40,
-      bottom: 60,
-      top: 10,
-    };
-
-    // append the svg object to the body of the page
-    let svg = d3
-      .select("#modal-graph-chart")
-      .append("svg")
-      .attr("id", "chart-container")
-      .attr("width", width)
-      .attr("height", height)
-      .attr("back", "black")
-      .append("g")
-      .attr("id", "chart")
-      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-    width = width - margin.left - margin.right;
-    height = height - margin.top - margin.bottom;
-
-    // Read the data
-    // Add X axis --> it is a date format
-    let x = d3
-      .scaleLinear()
-      .domain([1, Math.floor(this.treeList.length / 5)])
-      .range([1, width]);
-
-    svg
-      .append("g")
-      .attr("transform", "translate(0," + height + ")")
-      .call(d3.axisBottom(x))
-      .attr("id", "xAxis-modal");
-
-    svg
-      .append("g")
-      .attr("id", "rd")
-      .attr("transform", "translate(0," + (height - 5) + ")")
-      .append("g")
-      .attr("id", "ship-modal")
-      .attr("transform", "translate(1.5," + 0 + ")")
-      .append("line")
-      .attr("stroke", "red")
-      .attr("stroke-width", "1.5%")
-      .attr("y2", 12);
-
-    svg
-      .selectAll("text")
-      .attr("transform", "translate(-12,18) rotate(-90)")
-      .style("font-size", "1.2em")
-      .style("cursor", "pointer")
-      .on("click", (e) => {
-        let position = parseInt(e.target.innerHTML) - 1;
-        this.goToPosition(position);
-        this.setModalShip(position, this.robinsonFouldsDistances.length);
-      })
-      .style("color", "black");
-
-    // Add Y axis
-    let y = d3.scaleLinear().domain([0, 1]).range([height, 0]);
-
-    svg.append("g").call(d3.axisLeft(y));
-
-    // Add the line
-    svg
-      .append("path")
-      .datum(data)
-      .attr("fill", "none")
-      .attr("stroke", "black")
-      .attr("stroke-width", 1.5)
-      .attr(
-        "d",
-        d3
-          .line()
-          .x(function (d) {
-            return x(d.tree + 1);
-          })
-          .y(function (d) {
-            return y(d.robinson_foulds.relative);
-          })
-      );
-
-    svg
-      .append("text")
-      .attr("class", "x-label")
-      .attr("text-anchor", "end")
-      .attr("x", width / 2)
-      .attr("y", height + 50)
-      .attr("dy", ".35em")
-      .attr("fill", "black")
-      .text("Tree Index")
-      .style("font-size", "0.8em");
-
-    svg
-      .append("text")
-      .attr("class", "y-label")
-      .attr("text-anchor", "end")
-      .attr("x", -120)
-      .attr("y", -35)
-      .attr("dy", ".35em")
-      .attr("transform", "rotate(-90)")
-      .attr("fill", "black")
-      .text("Rel. RFD.")
-      .style("font-size", "0.8em");
-  }
-
-  /**
-   * This function is generating the Scale Line Graph.
-   * @return {void}
-   * @param data
-   */
-  generateScaleChartModal(data) {
-    let applicationContainer = document.getElementById("modal-example");
-
-    document.getElementById("modal-example").innerHTML = `
-                <div class="uk-modal-dialog uk-modal-body">
-                    <h2 class="uk-modal-title">Scale Chart</h2>
-                    <div id="modal-graph-chart"></div>
-                    <p class="uk-text-right">
-                        <button class="uk-button uk-button-default uk-modal-close" type="button">Cancel</button>
-                        <button class="uk-button uk-button-primary" type="button"  onclick="this.saveChart()">Save</button>
-                    </p>
-                </div>
-            `;
-
-    let width = 1000;
-    let height = 500;
-
-    // set the dimensions and margins of the graph
-    let margin = {
-      right: 25,
-      left: 40,
-      bottom: 60,
-      top: 10,
-    };
-
-    // append the svg object to the body of the page
-    let svg = d3
-      .select("#modal-graph-chart")
-      .append("svg")
-      .attr("id", "chart-container")
-      .attr("width", width)
-      .attr("height", height)
-      .attr("back", "black")
-      .append("g")
-      .attr("id", "chart")
-      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-    width = width - margin.left - margin.right;
-    height = height - margin.top - margin.bottom;
-
-    // Read the data
-    // Add X axis --> it is a date format
-    let x = d3
-      .scaleLinear()
-      .domain([1, Math.floor(this.treeList.length / 5)])
-      .range([1, width]);
-
-    svg
-      .append("g")
-      .attr("transform", "translate(0," + height + ")")
-      .call(d3.axisBottom(x))
-      .attr("id", "xAxis-modal");
-
-    svg
-      .append("g")
-      .attr("id", "rd")
-      .attr("transform", "translate(0," + (height - 5) + ")")
-      .append("g")
-      .attr("id", "ship-modal")
-      .attr("transform", "translate(1.5," + 0 + ")")
-      .append("line")
-      .attr("stroke", "red")
-      .attr("stroke-width", "1.5%")
-      .attr("y2", 12);
-
-    svg
-      .selectAll("text")
-      .attr("transform", "translate(-12,18) rotate(-90)")
-      .style("font-size", "1.2em")
-      .on("click", (e) => {
-        let position = parseInt(e.target.innerHTML) - 1;
-        this.goToPosition(position);
-        this.setModalShip(position, this.robinsonFouldsDistances.length);
-      })
-      .style("cursor", "pointer")
-      .style("color", "black");
-
-    // Add Y axis
-    let y = d3
-      .scaleLinear()
-      .domain([
-        0,
-        d3.max(data, function (d) {
-          return +d.value;
-        }),
-      ])
-      .range([height, 0]);
-
-    svg.append("g").call(d3.axisLeft(y));
-
-    // Add the line
-    svg
-      .append("path")
-      .datum(data)
-      .attr("fill", "none")
-      .attr("stroke", "black")
-      .attr("stroke-width", 1.5)
-      .attr(
-        "d",
-        d3
-          .line()
-          .x(function (d) {
-            return x(d.index);
-          })
-          .y(function (d) {
-            return y(d.value);
-          })
-      );
-
-    svg
-      .append("text")
-      .attr("class", "x-label")
-      .attr("text-anchor", "end")
-      .attr("x", width / 2)
-      .attr("y", height + 50)
-      .attr("fill", "black")
-      .text("Tree Index")
-      .style("font-size", "0.8em");
-
-    svg
-      .append("text")
-      .attr("class", "y-label")
-      .attr("text-anchor", "end")
-      .attr("x", -25)
-      .attr("y", -35)
-      .attr("dy", ".50em")
-      .attr("transform", "rotate(-90)")
-      .attr("fill", "black")
-      .text("Max. Branch Length")
-      .style("font-size", "0.8em");
+  generateChart(x, y, chartTitle) {
+    const ctx = document.getElementById("graph-chart");
+    new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: x,
+        datasets: [
+          {
+            label: chartTitle,
+            data: y,
+          },
+        ],
+      },
+    });
   }
 }

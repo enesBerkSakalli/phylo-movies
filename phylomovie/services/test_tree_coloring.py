@@ -52,7 +52,7 @@ def find_to_be_highlighted_leaves(
             newick_string_list[second_tree_index],
         ]
 
-        set_of_trees = json_consensus_tree_list[i : i + 6]
+        set_of_trees = json_consensus_tree_list[i: i + 6]
 
         highlights_every_tree_list.append(
             find_highlight_tax(

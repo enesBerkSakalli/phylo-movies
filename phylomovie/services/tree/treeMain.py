@@ -72,46 +72,46 @@ def traverse_for_construcuting_edge_Length_map(node, treeList):
 
     return treeList
 
+
 def calculate_weighted_robinson_foulds_distance_along_trajectory(json_consensus_tree_list):
-        distance_list = []
-        for i in range(0, len(json_consensus_tree_list) - 5, 5):
-            partitioned_tree_list = json_consensus_tree_list[i: i + 6]
-            first_tree = partitioned_tree_list[0]
-            second_tree = partitioned_tree_list[-1]
-            weighted_robinson_foulds_distance = calculate_weighted_robinson_foulds_distance(first_tree, second_tree)
-            distance_list.append(weighted_robinson_foulds_distance)        
-        return distance_list
+    distance_list = []
+    for i in range(0, len(json_consensus_tree_list) - 5, 5):
+        partitioned_tree_list = json_consensus_tree_list[i: i + 6]
+        first_tree = partitioned_tree_list[0]
+        second_tree = partitioned_tree_list[-1]
+        weighted_robinson_foulds_distance = calculate_weighted_robinson_foulds_distance(first_tree, second_tree)
+        distance_list.append(weighted_robinson_foulds_distance)
+    return distance_list
 
 
 def calculate_weighted_robinson_foulds_distance(first_tree, second_tree):
-        edge_length_map_first = traverse_for_construcuting_edge_Length_map(first_tree,{})
-        edge_length_map_second = traverse_for_construcuting_edge_Length_map(second_tree,{})
+    edge_length_map_first = traverse_for_construcuting_edge_Length_map(first_tree, {})
+    edge_length_map_second = traverse_for_construcuting_edge_Length_map(second_tree, {})
 
-        edge_length_map_summed = {}
+    edge_length_map_summed = {}
 
-        for edge in edge_length_map_first:
-            if(edge not in edge_length_map_second):
-                edge_length_map_second[edge] = 0
-                
-        for edge in edge_length_map_second:
-            if(edge not in edge_length_map_first):
-                edge_length_map_first[edge] = 0
-                
-        for edge in edge_length_map_second:
-            edge_length_map_summed[edge] = abs(edge_length_map_second[edge] - edge_length_map_first[edge] )
+    for edge in edge_length_map_first:
+        if(edge not in edge_length_map_second):
+            edge_length_map_second[edge] = 0
 
-        return sum(edge_length_map_summed.values())
+    for edge in edge_length_map_second:
+        if(edge not in edge_length_map_first):
+            edge_length_map_first[edge] = 0
 
-        
+    for edge in edge_length_map_second:
+        edge_length_map_summed[edge] = abs(edge_length_map_second[edge] - edge_length_map_first[edge])
+
+    return sum(edge_length_map_summed.values())
+
 
 if __name__ == '__main__':
     stepSize = 1
     startPosition = 1
-    frontend_input = "alltrees.tree";
+    frontend_input = "alltrees.tree"
 
-    with open(frontend_input) as f:    
+    with open(frontend_input) as f:
 
-        f = open(frontend_input,"r")
+        f = open(frontend_input, "r")
 
         newick_string = f.read()
 

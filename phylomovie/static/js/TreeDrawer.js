@@ -31,7 +31,7 @@ export class TreeDrawer {
     this.markedColorInterpolator = d3
       .scaleLinear()
       .domain([1, 3])
-      .range(["red", "darkRed"])
+      .range(["red", "black"])
       .interpolate(d3.interpolateRgb.gamma(2.2));
   }
 
@@ -200,7 +200,7 @@ export class TreeDrawer {
     edges
       .attr("stroke-width", TreeDrawer.sizeMap.strokeWidth)
       .style("stroke", (d) => {
-        return this.colorInternalBranches(d);
+        return this.colorInternalEdges(d);
       })
       .transition()
       .ease(d3.easeExpInOut)
@@ -208,17 +208,27 @@ export class TreeDrawer {
       .attrTween("d", this.getArcInterpolationFunction());
   }
 
-  colorInternalBranches(d) {
-    let leafSet =
-      d.target.data.name !== "string"
-        ? new Set(d.target.data.name)
-        : new Set([d.target.data.name]);
+  colorInternalEdges(d) {
+    let leafSet = d.target.data.name;
 
-    for (let taxa in this.marked) {
-      if (leafSet.has(this.leaveOrder.indexOf(taxa)) || leafSet.has(taxa)) {
-        return this.markedColorInterpolator(this.marked[taxa]);
+    if (String(leafSet) === leafSet) {
+      if (this.marked[leafSet] > 0) {
+        return this.markedColorInterpolator(this.marked[leafSet]);
+      }
+    } else {
+      let minimalColorGrade = 1000;
+      leafSet.forEach((leafIndex) => {
+        let colorGrade = this.marked[this.leaveOrder[leafIndex]];
+        if (minimalColorGrade > colorGrade) {
+          minimalColorGrade = colorGrade;
+        }
+      });
+
+      if (minimalColorGrade > 0) {
+        return this.markedColorInterpolator(minimalColorGrade);
       }
     }
+
     return TreeDrawer.colorMap.defaultColor;
   }
 
@@ -362,8 +372,6 @@ export class TreeDrawer {
    * @return {string}
    */
   buildSvgString(d) {
-    //var sweepFlag = d.target.angle > d.source.angle ? 1 : 0;
-
     const mx = d.source.x;
     const my = d.source.y;
 
@@ -675,8 +683,9 @@ export class TreeDrawer {
     if (TreeDrawer.markedLabelList.includes(d.data.name)) {
       color = TreeDrawer.colorMap.userMarkedColor;
     }
-    if (d.data.name in this.marked) {
-      color = this.markedColorInterpolator(this.marked[d.data.name]);
+    let colorGrade = this.marked[d.data.name];
+    if (colorGrade > 0) {
+      color = this.markedColorInterpolator(colorGrade);
     }
 
     d3.selectAll(selector).style("fill", color);
