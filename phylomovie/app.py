@@ -5,8 +5,6 @@ from typing import Dict, List
 import math
 from flask import Flask
 from flask import request, abort, render_template
-from wtforms import StringField, FieldList
-from flask_wtf import FlaskForm
 
 app = Flask(__name__)
 
@@ -16,9 +14,6 @@ try:
 except:
     commit = "no"
 
-
-class TaxaColorForm(FlaskForm):
-    movies = FieldList(StringField('Taxa Color'), min_entries=1, max_entries=5)
 
 
 @app.route('/about', methods=["GET"])
