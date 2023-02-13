@@ -28,6 +28,7 @@ export class TreeDrawer {
     this.marked = [];
     this.leaveOrder = [];
     this._drawDuration = 1000;
+    this._treeSpaceId = "";
     this.markedColorInterpolator = d3
       .scaleLinear()
       .domain([1, 3])
@@ -45,7 +46,7 @@ export class TreeDrawer {
    * @return {Object}
    */
   getSvgContainer() {
-    return d3.select("#application");
+    return d3.select(`#${this._treeSpaceId}`);
   }
 
   /**
@@ -788,7 +789,8 @@ export default function drawTree(
   drawDurationFrontend,
   leaveOrder,
   fontSize,
-  strokeWidth
+  strokeWidth,
+  treeSpaceId
 ) {
   let currentRoot = treeConstructor["tree"];
   let currentMaxRadius = treeConstructor["max_radius"] + 30;
@@ -801,6 +803,7 @@ export default function drawTree(
   currentTreeDrawer.drawDuration = drawDurationFrontend;
   currentTreeDrawer.marked = hightLightTaxaMap;
   currentTreeDrawer.leaveOrder = leaveOrder;
+  currentTreeDrawer._treeSpaceId = treeSpaceId;
 
   currentTreeDrawer.updateEdges();
   currentTreeDrawer.updateExternalEdges(currentMaxRadius);

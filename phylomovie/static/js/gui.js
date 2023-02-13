@@ -102,7 +102,10 @@ export default class Gui {
 
     if (this.robinsonFouldsDistances.length !== 1) {
       if (this.barOptionValue === "rfd") {
-        this.generateDistanceChart(this.robinsonFouldsDistances);
+        let x = this.robinsonFouldsDistances.map(
+          (row) => row["robinson_foulds"]["relative"]
+        );
+        this.generateWeightedRobinsonFouldsChart(x);
       }
       if (this.barOptionValue === "w-rfd") {
         this.generateWeightedRobinsonFouldsChart(
@@ -110,7 +113,8 @@ export default class Gui {
         );
       }
       if (this.barOptionValue === "scale") {
-        this.generateScaleChart(this.scaleList);
+        let x = this.scaleList.map((row) => row["value"]);
+        this.generateWeightedRobinsonFouldsChart(x);
       }
       this.setShipPosition(Math.floor(this.index / 5));
     } else {
@@ -219,7 +223,8 @@ export default class Gui {
       drawDuration,
       this.leaveOrder,
       this.fontSize,
-      this.strokeWidth
+      this.strokeWidth,
+      "application"
     );
   }
 
@@ -230,7 +235,7 @@ export default class Gui {
   }
 
   resize() {
-    let applicationContainer = document.getElementById("applicationContainer");
+    let applicationContainer = document.getElementById("application-container");
     let width = applicationContainer.clientWidth;
     let height = applicationContainer.clientHeight;
     d3.select("#application").attr(
@@ -295,7 +300,9 @@ export default class Gui {
     containerWidth += containerWidth * 0.05;
     containerHeight += containerHeight * 0.05;
 
-    const svg = document.getElementById("applicationContainer").cloneNode(true); // clone your original svg
+    const svg = document
+      .getElementById("application-container")
+      .cloneNode(true); // clone your original svg
 
     svg.setAttribute("id", "imageExport");
 
@@ -493,247 +500,6 @@ export default class Gui {
       .attr("transform", "rotate(-90)")
       .attr("fill", "white")
       .text("W. Rel. RFD.")
-      .style("font-size", "0.8em");
-  }
-
-  /**
-   * This function is generating the Scale Line Graph.
-   * @return {void}
-   * @param data
-   */
-  generateScaleChart(data) {
-    let applicationContainer = document.getElementById("lineChart");
-    let width = applicationContainer.clientWidth;
-    let height = applicationContainer.clientHeight;
-
-    // set the dimensions and margins of the graph
-    let margin = {
-      right: 25,
-      left: 40,
-      bottom: 60,
-      top: 10,
-    };
-
-    // append the svg object to the body of the page
-    let svg = d3
-      .select("#lineChart")
-      .append("svg")
-      .attr("width", width)
-      .attr("height", height)
-      .attr("back", "black")
-      .append("g")
-      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-    width = width - margin.left - margin.right;
-    height = height - margin.top - margin.bottom;
-
-    // Read the data
-    // Add X axis --> it is a date format
-    let x = d3
-      .scaleLinear()
-      .domain([1, Math.floor(this.treeList.length / 5)])
-      .range([1, width]);
-
-    svg
-      .append("g")
-      .attr("transform", "translate(0," + height + ")")
-      .call(d3.axisBottom(x))
-      .attr("id", "xAxis");
-
-    svg
-      .append("g")
-      .attr("id", "rd")
-      .attr("transform", "translate(0," + (height - 5) + ")")
-      .append("g")
-      .attr("id", "ship")
-      .attr("transform", "translate(1.5," + 0 + ")")
-      .append("line")
-      .attr("stroke", "red")
-      .attr("stroke-width", "1.5%")
-      .attr("y2", 12);
-
-    svg
-      .selectAll("text")
-      .attr("transform", "translate(-12,18) rotate(-90)")
-      .style("font-size", "1.2em")
-      .on("click", (e) => {
-        let position = parseInt(e.target.innerHTML) - 1;
-        this.goToPosition(position);
-      })
-      .style("cursor", "pointer")
-      .style("color", "white");
-
-    // Add Y axis
-    let y = d3
-      .scaleLinear()
-      .domain([
-        0,
-        d3.max(data, function (d) {
-          return +d.value;
-        }),
-      ])
-      .range([height, 0]);
-
-    svg.append("g").call(d3.axisLeft(y));
-
-    // Add the line
-    svg
-      .append("path")
-      .datum(data)
-      .attr("fill", "none")
-      .attr("stroke", "white")
-      .attr("stroke-width", 1.5)
-      .attr(
-        "d",
-        d3
-          .line()
-          .x(function (d) {
-            return x(d.index);
-          })
-          .y(function (d) {
-            return y(d.value);
-          })
-      );
-
-    svg
-      .append("text")
-      .attr("class", "x-label")
-      .attr("text-anchor", "end")
-      .attr("x", width / 2)
-      .attr("y", height + 50)
-      .attr("fill", "white")
-      .text("Tree Index")
-      .style("font-size", "0.8em");
-
-    svg
-      .append("text")
-      .attr("class", "y-label")
-      .attr("text-anchor", "end")
-      .attr("x", -25)
-      .attr("y", -35)
-      .attr("dy", ".50em")
-      .attr("transform", "rotate(-90)")
-      .attr("fill", "white")
-      .text("Max. Branch Length")
-      .style("font-size", "0.8em");
-  }
-
-  /**
-   * This function is generating the RFE Line Graph.
-   * @return {void}
-   * @param data
-   */
-  generateDistanceChart(data) {
-    let applicationContainer = document.getElementById("lineChart");
-
-    let width = applicationContainer.clientWidth;
-    let height = applicationContainer.clientHeight;
-
-    // set the dimensions and margins of the graph
-    let margin = {
-      right: 25,
-      left: 40,
-      bottom: 60,
-      top: 10,
-    };
-
-    // append the svg object to the body of the page
-    let svg = d3
-      .select("#lineChart")
-      .append("svg")
-      .attr("width", width)
-      .attr("height", height)
-      .attr("back", "black")
-      .append("g")
-      .attr("id", "chart")
-      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-    width = width - margin.left - margin.right;
-    height = height - margin.top - margin.bottom;
-
-    // Read the data
-    // Add X axis --> it is a date format
-    let x = d3
-      .scaleLinear()
-      .domain([1, Math.floor(this.treeList.length / 5)])
-      .range([1, width]);
-
-    svg
-      .append("g")
-      .attr("transform", "translate(0," + height + ")")
-      .call(d3.axisBottom(x))
-      .attr("id", "xAxis");
-
-    svg
-      .append("g")
-      .attr("id", "rd")
-      .attr("transform", "translate(0," + (height - 5) + ")")
-      .append("g")
-      .attr("id", "ship")
-      .attr("transform", "translate(1.5," + 0 + ")")
-      .append("line")
-      .attr("stroke", "red")
-      .attr("stroke-width", "1.5%")
-      .attr("y2", 12);
-
-    svg
-      .selectAll("text")
-      .attr("transform", "translate(-12,18) rotate(-90)")
-      .style("font-size", "1.2em")
-      .on("click", (e) => {
-        let position = parseInt(e.target.innerHTML) - 1;
-
-        this.goToPosition(position);
-      })
-
-      .style("cursor", "pointer")
-      .style("color", "white");
-
-    // Add Y axis
-    let y = d3.scaleLinear().domain([0, 1]).range([height, 0]);
-
-    svg.append("g").call(d3.axisLeft(y));
-
-    // Add the line
-    svg
-      .append("path")
-      .datum(data)
-      .attr("fill", "none")
-      .attr("stroke", "white")
-      .attr("stroke-width", 1.5)
-      .attr(
-        "d",
-        d3
-          .line()
-          .x(function (d) {
-            return x(d.tree + 1);
-          })
-          .y(function (d) {
-            return y(d.robinson_foulds.relative);
-          })
-      );
-
-    svg
-      .append("text")
-      .attr("class", "x-label")
-      .attr("text-anchor", "end")
-      .attr("x", width / 2)
-      .attr("y", height + 50)
-      .attr("dy", ".35em")
-      .attr("fill", "white")
-      .text("Tree Index")
-      .style("font-size", "0.8em");
-
-    svg
-      .append("text")
-      .attr("class", "y-label")
-      .attr("text-anchor", "end")
-      .attr("x", -60)
-      .attr("y", -35)
-      .attr("dy", ".35em")
-      .attr("transform", "rotate(-90)")
-      .attr("fill", "white")
-      .text("Rel. RFD.")
       .style("font-size", "0.8em");
   }
 

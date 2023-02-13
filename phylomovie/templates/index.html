@@ -62,16 +62,6 @@
 
       <div id="menu" class="menu">
         <!-- beginning of menu header -->
-        {#
-        <div class="menu-header">
-          <div class="header">
-            <p>Phylo-Movies</p>
-          </div>
-          <p class="commitmessage">{{ commit }}</p>
-        </div>
-        #}
-
-        <!-- end of menu header -->
         <div>
           <div>File: {{file_name | safe}}</div>
         </div>
@@ -292,74 +282,78 @@
             >
               Appearance
             </button>
-
-            <div uk-dropdown="mode: click">
-              <div>
-                <div>
-                  Ignore Lengths
-                  <input
-                    class="uk-checkbox"
-                    id="branch-length"
-                    type="checkbox"
-                  />
-                </div>
-
-                <div>Leaf-Label Size</div>
-                <input
-                  class="uk-range"
-                  type="range"
-                  id="font-size"
-                  name="font-size"
-                  min="0"
-                  max="10"
-                  step="0.01"
-                />
-              </div>
-
-              <div>
-                <div>Stroke Width</div>
-                <input
-                  class="uk-range"
-                  type="range"
-                  id="stroke-width"
-                  name="font-size"
-                  min="0.5"
-                  max="10"
-                  step="0.01"
-                />
-              </div>
-            </div>
           </div>
 
-          <!-- end of button section-->
-          <div style="padding-top: 20px; display: none !important">
-            <div class="currentScaleContainer">
-              <div style="padding-bottom: 15px">
-                Current Scale:<span id="currentScaleText"></span>
+          <div uk-dropdown="mode: click">
+            <div>
+              <div>
+                Ignore Lengths
+                <input class="uk-checkbox" id="branch-length" type="checkbox" />
               </div>
-              <div class="scaleContainer">
-                <div id="currentScale" style="height: 10px"></div>
-              </div>
+
+              <div>Leaf-Label Size</div>
+              <input
+                class="uk-range"
+                type="range"
+                id="font-size"
+                name="font-size"
+                min="0"
+                max="10"
+                step="0.01"
+              />
             </div>
 
-            <div style="padding-top: 20px">
-              <div class="currentScaleContainer">
-                <div class="rating-bar" style="padding-bottom: 15px">
-                  <div>Maximal Scale:<span id="maxScaleText"></span></div>
-                </div>
-                <div
-                  id="maxScale"
-                  style="background-color: white; height: 10px"
-                ></div>
-              </div>
+            <div>
+              <div>Stroke Width</div>
+              <input
+                class="uk-range"
+                type="range"
+                id="stroke-width"
+                name="font-size"
+                min="0.5"
+                max="10"
+                step="0.01"
+              />
             </div>
           </div>
-
-          <div
-            id="lineChart"
-            style="width: 300px; height: 220px; background-color: #373747"
-          ></div>
         </div>
+
+        <!-- end of button section-->
+        <div style="padding-top: 20px; display: none !important">
+          <div class="currentScaleContainer">
+            <div style="padding-bottom: 15px">
+              Current Scale:<span id="currentScaleText"></span>
+            </div>
+            <div class="scaleContainer">
+              <div id="currentScale" style="height: 10px"></div>
+            </div>
+          </div>
+
+          <div style="padding-top: 20px">
+            <div class="currentScaleContainer">
+              <div class="rating-bar" style="padding-bottom: 15px">
+                <div>Maximal Scale:<span id="maxScaleText"></span></div>
+              </div>
+              <div
+                id="maxScale"
+                style="background-color: white; height: 10px"
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          id="lineChart"
+          style="width: 300px; height: 220px; background-color: #373747"
+        ></div>
+        <button
+          id="compare-trees-button"
+          uk-toggle="target: #compare-trees-modal"
+          class="uk-button uk-button-default uk-margin-small-right uk-button-primary"
+          type="button"
+        >
+          Compare
+        </button>
       </div>
       <!-- end of toolbar-->
 
@@ -383,10 +377,30 @@
             </button>
           </p>
         </div>
+
+        <!-- This is a button for split-screen -->
+      </div>
+
+      <!-- This is the modal -->
+      <div id="compare-trees-modal" class="uk-modal-full" uk-modal>
+        <div class="uk-modal-dialog">
+          <button
+            class="uk-modal-close-full uk-close-large"
+            type="button"
+            uk-close
+          ></button>
+
+          <div id="compare-tree-modal-left" style="width: 100%; height: 100%">
+            <svg id="application-compare-container" width="100%" height="95%">
+              <g id="application-compare-up"></g>
+              <g id="application-compare-down"></g>
+            </svg>
+          </div>
+        </div>
       </div>
 
       <div style="width: 100%; height: 100%">
-        <svg id="applicationContainer" width="100%" height="95%">
+        <svg id="application-container" width="100%" height="95%">
           <g id="application"></g>
         </svg>
       </div>
@@ -394,6 +408,8 @@
 
     <script type="module">
         import Gui from "{{ url_for('static', filename='js/gui.js') }}";
+        import constructTree from "{{ url_for('static', filename='js/TreeConstructor.js') }}";
+        import drawTree from "{{ url_for('static', filename='js/TreeDrawer.js') }}";
 
         function ready(fn) {
           if (typeof fn !== 'function') {
@@ -497,7 +513,53 @@
               node.textContent = "Stopped recording";
               document.body.appendChild(node);
           });
+
+          document.querySelector('#compare-trees-button').addEventListener('click', () => {
+            gui.stop();
+
+            let applicationContainer = document.getElementById("application-compare-container");
+            var width = window.innerWidth - 80;
+            var height = window.innerHeight - 80;
+            applicationContainer.setAttribute("width",`${width}px`);
+            applicationContainer.setAttribute("height",`${height}px`);
+
+            d3.select("#application-compare-up").attr(
+              "transform",
+              `translate(${(width * 0.25)},${height / 2})`
+            );
+
+            d3.select("#application-compare-down").attr(
+              "transform",
+              `translate(${(width * 0.75)},${height / 2})`
+            );
+
+              let treeIndexUp = (Math.floor(gui.index / 5) * 5)
+              let treeIndexDown = (Math.floor(gui.index / 5) * 5) + 5
+
+              let treeOne = treeList[treeIndexUp];
+              let treeTwo = treeList[treeIndexDown];
+
+              let colorIndex =
+              gui.index % 5 === 0 ? Math.floor(gui.index / 5) - 1 : Math.floor(gui.index / 5);
+
+            let treeUpward = constructTree(
+              treeOne,
+              false,
+              "application-container"
+            );
+
+            let treeDownwards = constructTree(
+              treeTwo,
+              false,
+              "application-container"
+            );
+
+            drawTree(treeUpward, hightLightTaxaMap[colorIndex], 0, leaveOrder, gui.fontSize, gui.strokeWidth, "application-compare-up");
+            drawTree(treeDownwards, hightLightTaxaMap[colorIndex], 0, leaveOrder, gui.fontSize, gui.strokeWidth, "application-compare-down");
+        });
+
           }
+
 
         //================================================================================ // Properties //================================================================================ let treeList
         let treeList = {{tree_list | safe}};
@@ -511,14 +573,16 @@
         let ignore_branch_lengths = false;
         let color_internal_branches = true;
         const gui = new Gui(treeList,weightedRobinsonFouldsDistances, robinsonFouldsDistances, windowSize, windowStepSize, hightLightTaxaMap, leaveOrder, color_internal_branches,fileName);
+        let startButton = document.getElementById('startRecord');
+        let stopButton = document.getElementById('stopRecord');
+        let mediaRecorder;
+
         document.getElementById("windowSize").value = windowSize;
         document.getElementById("windowStepSize").value = windowStepSize;
         gui.initializeMovie();
         gui.play();
-        let startButton = document.getElementById('startRecord');
-        let stopButton = document.getElementById('stopRecord');
         stopButton.disabled = true;
-        let mediaRecorder;
+
 
         ready(function() {
             if(treeList.length>2){

@@ -54,18 +54,18 @@ def compute_robinson_foulds(json_consensus_tree_list):
 
 
 def traverse(node: Dict[str, Any], treeList: List[Tuple[str, str]]) -> List[Tuple[str, str]]:
-    if('children' in node.keys()):
+    if 'children' in node.keys():
         for child in node['children']:
-            if('children' in child.keys()):
+            if 'children' in child.keys():
                 traverse(child, treeList)
                 treeList.append((node['name'], child['name']))
     return treeList
 
 
 def traverse_for_construcuting_edge_Length_map(node, treeList):
-    if('children' in node.keys()):
+    if 'children' in node.keys():
         for child in node['children']:
-            if('children' in child.keys()):
+            if 'children' in child.keys():
                 traverse_for_construcuting_edge_Length_map(child, treeList)
 
         treeList[str(node['name'])] = node['length']

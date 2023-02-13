@@ -209,7 +209,7 @@ export default function constructTree(tree, ignore_branch_lengths) {
 
   let treeConstructor = new TreeConstructor(d3tree, ignore_branch_lengths);
 
-  let applicationContainer = document.getElementById("applicationContainer");
+  let applicationContainer = document.getElementById("application-container");
 
   let width = applicationContainer.clientWidth;
   let height = applicationContainer.clientHeight;
