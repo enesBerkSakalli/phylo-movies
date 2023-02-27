@@ -12,7 +12,7 @@ from typing import (
 from .main.main_find_highlights import decode_indices, Node, NodeName
 from ete3 import Tree
 import numpy as np
-from phylomovie.services.tree.Treere import Treere
+from services.tree.Treere import Treere
 from icecream import ic
 from collections import Counter
 # import package
