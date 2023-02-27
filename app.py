@@ -1,6 +1,5 @@
-from .services.tree.treeMain import calculate_rfd_along_tracjectories, calculate_weighted_robinson_foulds_distance_along_trajectory
 from .services.coloring_algorithm.algorithm_5 import algorithm_5
-from .services.tree.Treere import Treere
+from .services.tree.Treere import Treere, calculate_rfd_along_tracjectories, calculate_weighted_robinson_foulds_distance_along_trajectory
 from typing import Dict, List
 import math
 from flask import Flask
