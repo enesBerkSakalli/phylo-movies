@@ -90,16 +90,14 @@ export class TreeDrawer {
   }
 
   attr2TweenCircleX(currentMaxRadius) {
-    let self = this;
-
     return function (d) {
       let cx = d3.select(this).attr("cx");
       let cy = d3.select(this).attr("cy");
 
-      let polarCoordinates = self.kar2pol(cx, cy);
+      let polarCoordinates = TreeMathUtils.kar2pol(cx, cy);
       const newAngle = d.angle;
       const oldAngle = polarCoordinates.angle;
-      const diff = self.shortestAngle(oldAngle, newAngle);
+      const diff = TreeMathUtils.shortestAngle(oldAngle, newAngle);
 
       return function (t) {
         const tweenAngle = diff * t + oldAngle;
@@ -109,17 +107,15 @@ export class TreeDrawer {
   }
 
   attr2TweenCircleY(currentMaxRadius) {
-    let self = this;
-
     return function (d) {
       let cx = d3.select(this).attr("cx");
       let cy = d3.select(this).attr("cy");
 
-      let polarCoordinates = self.kar2pol(cx, cy);
+      let polarCoordinates = TreeMathUtils.kar2pol(cx, cy);
 
       let newAngle = d.angle;
       let oldAngle = polarCoordinates.angle;
-      let diff = self.shortestAngle(oldAngle, newAngle);
+      let diff = TreeMathUtils.shortestAngle(oldAngle, newAngle);
 
       return function (t) {
         const tween_startAngle = diff * t + oldAngle;
@@ -406,11 +402,11 @@ export class TreeDrawer {
     let old_endAngle = 0;
 
     if (!!pathArray) {
-      let old_start = this.kar2pol(pathArray[0].x, pathArray[0].y);
+      let old_start = TreeMathUtils.kar2pol(pathArray[0].x, pathArray[0].y);
       old_startRadius = old_start.r;
       old_startAngle = old_start.angle;
       let last = pathArray[pathArray.length - 1];
-      let old_end = this.kar2pol(last.x, last.y);
+      let old_end = TreeMathUtils.kar2pol(last.x, last.y);
       old_endRadius = old_end.r;
       old_endAngle = old_end.angle;
     }
@@ -420,8 +416,8 @@ export class TreeDrawer {
     let new_startRadius = d.source.radius;
     let new_endRadius = d.target.radius;
 
-    let startDiff = this.shortestAngle(old_startAngle, new_startAngle);
-    let endDiff = this.shortestAngle(old_endAngle, new_endAngle);
+    let startDiff = TreeMathUtils.shortestAngle(old_startAngle, new_startAngle);
+    let endDiff = TreeMathUtils.shortestAngle(old_endAngle, new_endAngle);
 
     let tween_startAngle = startDiff * t + old_startAngle;
     let tween_endAngle = endDiff * t + old_endAngle;
@@ -446,7 +442,7 @@ export class TreeDrawer {
     let ly = tween_endRadius * Math.sin(tween_endAngle);
 
     let sweepFlag = 0;
-    if (this.shortestAngle(tween_startAngle, tween_endAngle) > 0) {
+    if (TreeMathUtils.shortestAngle(tween_startAngle, tween_endAngle) > 0) {
       sweepFlag = 1;
     }
 
@@ -472,11 +468,11 @@ export class TreeDrawer {
     let old_endAngle = 0;
 
     if (!!pathArray) {
-      let old_start = this.kar2pol(pathArray[0].x, pathArray[0].y);
+      let old_start = TreeMathUtils.kar2pol(pathArray[0].x, pathArray[0].y);
       old_startRadius = old_start.r;
       old_startAngle = old_start.angle;
       let last = pathArray[pathArray.length - 1];
-      let old_end = this.kar2pol(last.x, last.y);
+      let old_end = TreeMathUtils.kar2pol(last.x, last.y);
       old_endRadius = old_end.r;
       old_endAngle = old_end.angle;
     }
@@ -487,8 +483,8 @@ export class TreeDrawer {
     let new_startRadius = d.radius;
     let new_endRadius = currentMaxRadius;
 
-    let startDiff = this.shortestAngle(old_startAngle, new_startAngle);
-    let endDiff = this.shortestAngle(old_endAngle, new_endAngle);
+    let startDiff = TreeMathUtils.shortestAngle(old_startAngle, new_startAngle);
+    let endDiff = TreeMathUtils.shortestAngle(old_endAngle, new_endAngle);
 
     let tween_startAngle = startDiff * t + old_startAngle;
     let tween_endAngle = endDiff * t + old_endAngle;
@@ -537,7 +533,6 @@ export class TreeDrawer {
   }
 
   getOrientTextInterpolator(currentMaxRadius) {
-    const self = this;
     return function (d, i) {
       // previous svg instance
       let prev_d = d3.select(this).attr("transform");
@@ -558,13 +553,16 @@ export class TreeDrawer {
 
       const angleDiff =
         (360 *
-          self.shortestAngle(
+          TreeMathUtils.shortestAngle(
             (Math.PI * 2 * old_angle) / 360,
             (Math.PI * 2 * new_angle) / 360
           )) /
         (2 * Math.PI);
 
-      const otherAngleDiff = self.shortestAngle(old_otherAngle, new_otherAngle);
+      const otherAngleDiff = TreeMathUtils.shortestAngle(
+        old_otherAngle,
+        new_otherAngle
+      );
 
       const radiusDiff = currentMaxRadius - old_MaxRadius;
 
@@ -727,12 +725,55 @@ export class TreeDrawer {
   }
 
   /**
+   * Set the time duration how one tree transforms to another.
+   * @param  {Number} duration
+   * @return {void}
+   */
+  set drawDuration(duration) {
+    this._drawDuration = duration;
+  }
+
+  /**
+   * Get the time duration how one tree transforms to another.
+   * @return {Number}
+   */
+  get drawDuration() {
+    return this._drawDuration;
+  }
+
+  drawTree(
+    currentRoot,
+    hightLightTaxaMap,
+    leaveOrder,
+    fontSize,
+    strokeWidth,
+    treeSpaceId
+  ) {
+    TreeDrawer.sizeMap.fontSize = `${fontSize}em`;
+    TreeDrawer.sizeMap.strokeWidth = strokeWidth;
+  
+    currentTreeDrawer.drawDuration = drawDurationFrontend;
+    currentTreeDrawer.marked = hightLightTaxaMap;
+    currentTreeDrawer.leaveOrder = leaveOrder;
+    currentTreeDrawer._treeSpaceId = treeSpaceId;
+
+    currentTreeDrawer.updateEdges();
+    currentTreeDrawer.updateExternalEdges(currentMaxRadius);
+    currentTreeDrawer.updateLabels(currentMaxRadius);
+    currentTreeDrawer.updateLeaveCircles(currentMaxRadius);
+ 
+  }
+
+}
+
+export class TreeMathUtils {
+  /**
    * Converting cartesion Coordinates to Polar Coordinates
    * @param  {Number} x -
    * @param  {Number} y -
    * @return {Object} Object with element r for radius and angle.
    */
-  kar2pol(x, y) {
+  static kar2pol(x, y) {
     const radius = Math.sqrt(x ** 2 + y ** 2);
     let angle = Math.atan(y / x);
     if (x < 0) {
@@ -754,7 +795,7 @@ export class TreeDrawer {
    * @param  {Number} b -
    * @return {Number}.
    */
-  shortestAngle(a, b) {
+  static shortestAngle(a, b) {
     let v1 = b - a;
     let v2 = b - a - Math.sign(v1) * 2 * Math.PI;
 
@@ -763,23 +804,6 @@ export class TreeDrawer {
     } else {
       return v2;
     }
-  }
-
-  /**
-   * Set the time duration how one tree transforms to another.
-   * @param  {Number} duration
-   * @return {void}
-   */
-  set drawDuration(duration) {
-    this._drawDuration = duration;
-  }
-
-  /**
-   * Get the time duration how one tree transforms to another.
-   * @return {Number}
-   */
-  get drawDuration() {
-    return this._drawDuration;
   }
 }
 
