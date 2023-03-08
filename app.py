@@ -3,7 +3,7 @@ from .services.tree.Treere import Treere, calculate_rfd_along_tracjectories, cal
 from typing import Dict, List
 import math
 from flask import Flask
-from flask import request, abort, render_template
+from flask import request, abort, render_template, jsonify
 
 app = Flask(__name__)
 
@@ -36,14 +36,13 @@ def index():
         return render_template('form.html', commit=commit)
     elif request.method == "POST":
 
-        # return jsonify(request.form)
+        request_map = request.form
+        taxa_color_map = parse_form_taxa_color(request_map)
+        print(taxa_color_map)
 
-        window_size = int(request.form['windowSize'])
-
-        window_step_size = int(request.form['windowStepSize'])
-
+        window_size = int(request_map['windowSize'])
+        window_step_size = int(request_map['windowStepSize'])
         order_file_list = handle_order_list(request)
-
         front_end_input = handle_uploaded_file(leaf_order=order_file_list, f=request.files['treeFile'])
 
         return render_template(
@@ -54,6 +53,7 @@ def index():
             to_be_highlighted=front_end_input["to_be_highlighted"],
             sorted_leaves=front_end_input["sorted_leaves"],
             file_name=front_end_input["file_name"],
+            taxa_color_map=taxa_color_map,
             window_size=window_size,
             window_step_size=window_step_size,
         )
@@ -61,6 +61,13 @@ def index():
     else:
         abort(401)
 
+def parse_form_taxa_color(request_map):
+    taxa_color_map = {}
+    for entry in request.form.keys():
+        if str(entry).startswith('taxa'):
+            form_name = entry.split("-")
+            taxa_color_map[form_name[2]] = request_map[entry]
+    return taxa_color_map
 
 def handle_uploaded_file(leaf_order, f):
 

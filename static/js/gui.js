@@ -13,7 +13,8 @@ export default class Gui {
     hightLightTaxaMap,
     leaveOrder,
     colorInternalBranches,
-    fileName
+    fileName,
+    taxaColorMap
   ) {
     this.treeList = treeList;
     this.treeNameList = [
@@ -33,6 +34,7 @@ export default class Gui {
     this.firstFull = 0;
     this.fontSize = 1.8;
     this.strokeWidth = 3;
+    this.taxaColorMap = taxaColorMap;
     this.weightedRobinsonFouldsDistances = weightedRobinsonFouldsDistances;
 
     document.getElementById("maxScaleText").innerText =
@@ -185,10 +187,6 @@ export default class Gui {
     let startPosition = midPosition - leftWindow;
     let endPosition = midPosition + rightWindow;
 
-    //if(startPosition < 1){
-    //    startPosition = 1;
-    //}
-
     startPosition = Math.max(1, startPosition);
     endPosition = Math.min(
       endPosition,
@@ -224,7 +222,8 @@ export default class Gui {
       this.leaveOrder,
       this.fontSize,
       this.strokeWidth,
-      "application"
+      "application",
+      this.taxaColorMap
     );
   }
 

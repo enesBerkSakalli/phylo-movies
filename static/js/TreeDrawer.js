@@ -135,9 +135,9 @@ export class TreeDrawer {
    */
   getLinkId(link) {
     if (typeof link.target.data.name === "string") {
-      return `link-${link.target.data.name}`;
+      return `link-${this._treeSpaceId}-${link.target.data.name}`;
     } else {
-      return `link-${link.target.data.name.join("-")}`;
+      return `link-${this._treeSpaceId}-${link.target.data.name.join("-")}`;
     }
   }
 
@@ -149,9 +149,9 @@ export class TreeDrawer {
   generateLinkIdForLeave(ancestor) {
     if (ancestor.parent) {
       if (typeof ancestor.data.name === "string") {
-        return `#link-${ancestor.data.name}`;
+        return `#link-${this._treeSpaceId}-${ancestor.data.name}`;
       } else {
-        return `#link-${ancestor.data.name.join("-")}`;
+        return `#link-${this._treeSpaceId}-${ancestor.data.name.join("-")}`;
       }
     } else {
       return null;
@@ -258,7 +258,14 @@ export class TreeDrawer {
       .enter()
       .append("path")
       .attr("class", "link-extension")
-      .style("stroke", TreeDrawer.colorMap.extensionLinkColor)
+      .style("stroke", (d) => {
+        console.log(
+          d.data.name,
+          TreeDrawer.colorMap[d.data.name],
+          TreeDrawer.colorMap
+        );
+        return TreeDrawer.colorMap[d.data.name];
+      })
       .attr("stroke-width", TreeDrawer.sizeMap.strokeWidth)
       .attr("stroke-dasharray", () => {
         return 5 + ",5";
@@ -346,7 +353,7 @@ export class TreeDrawer {
       .enter()
       .append("circle")
       .attr("id", (d) => {
-        return `circle-${d.data.name}`;
+        return `circle-${this._treeSpaceId}-${d.data.name}`;
       })
       .attr("class", "leaf")
       .attr("cx", (d) => {
@@ -678,7 +685,7 @@ export class TreeDrawer {
    * @return {void}
    */
   colorCircle(d) {
-    let selector = `#circle-${d.data.name}, #label-${d.data.name}`;
+    let selector = `#circle-${this._treeSpaceId}-${d.data.name}, #label-${this._treeSpaceId}-${d.data.name}`;
     let color = TreeDrawer.colorMap.defaultLabelColor;
 
     if (TreeDrawer.markedLabelList.includes(d.data.name)) {
@@ -790,7 +797,8 @@ export default function drawTree(
   leaveOrder,
   fontSize,
   strokeWidth,
-  treeSpaceId
+  treeSpaceId,
+  taxaColorMap
 ) {
   let currentRoot = treeConstructor["tree"];
   let currentMaxRadius = treeConstructor["max_radius"] + 30;
@@ -799,6 +807,7 @@ export default function drawTree(
 
   TreeDrawer.sizeMap.fontSize = `${fontSize}em`;
   TreeDrawer.sizeMap.strokeWidth = strokeWidth;
+  TreeDrawer.colorMap = { ...TreeDrawer.colorMap, ...taxaColorMap };
 
   currentTreeDrawer.drawDuration = drawDurationFrontend;
   currentTreeDrawer.marked = hightLightTaxaMap;

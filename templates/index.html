@@ -6,49 +6,21 @@
     <meta charset="utf-8" />
     <title>Phylo-Movies</title>
 
-    <link
-      href="https://fonts.googleapis.com/css?family=Roboto&display=swap"
-      rel="stylesheet"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
-    />
+    <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
     <script src="https://d3js.org/d3.v7.min.js"></script>
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css?family=Heebo"
-    />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo" />
 
-    <script
-      type="text/javascript"
-      src="{{ url_for('static', filename='js/ohm.min.js') }}"
-    ></script>
-    <script
-      type="text/javascript"
-      src="{{ url_for('static', filename='js/record.js') }}"
-    ></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/ohm.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/record.js') }}"></script>
 
-    <script
-      type="module"
-      src="{{ url_for('static', filename='js/calc.js') }}"
-    ></script>
-    <script
-      type="module"
-      src="{{ url_for('static', filename='js/gui.js') }}"
-    ></script>
+    <script type="module" src="{{ url_for('static', filename='js/calc.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/gui.js') }}"></script>
 
-    <link
-      rel="stylesheet"
-      type="text/css"
-      href="{{ url_for('static', filename='css/style.css') }}"
-    />
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}" />
 
     <!-- UIkit CSS -->
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/uikit@3.15.22/dist/css/uikit.min.css"
-    />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.15.22/dist/css/uikit.min.css" />
 
     <!-- UIkit JS -->
     <script src="https://cdn.jsdelivr.net/npm/uikit@3.15.22/dist/js/uikit.min.js"></script>
@@ -99,18 +71,8 @@
                 <label for="positionValue">Position:</label>
               </div>
               <div class="bubble">
-                <input
-                  type="number"
-                  id="positionValue"
-                  class="left positionInput"
-                  name="pos"
-                  value="1"
-                /><input
-                  type="button"
-                  id="positionButton"
-                  class="right mybutton"
-                  value="Go"
-                />
+                <input type="number" id="positionValue" class="left positionInput" name="pos" value="1" /><input
+                  type="button" id="positionButton" class="right mybutton" value="Go" />
               </div>
             </div>
 
@@ -119,22 +81,14 @@
                 <label for="factor">Factor:</label>
               </div>
               <div class="bubble">
-                <input
-                  id="factor"
-                  class="stepSizeInput left right"
-                  type="number"
-                  name="stepSize"
-                  value="1"
-                />
+                <input id="factor" class="stepSizeInput left right" type="number" name="stepSize" value="1" />
                 <div style="width: 30px; height: 10px"></div>
               </div>
             </div>
 
             <div class="row">
               <div class="menuItem">Window-Area:</div>
-              <span style="align-self: end"
-                ><span id="windowArea"> </span
-              ></span>
+              <span style="align-self: end"><span id="windowArea"> </span></span>
             </div>
 
             <div class="row">
@@ -142,14 +96,8 @@
                 <label for="windowSize">Window Size:</label>
               </div>
               <div class="bubble">
-                <input
-                  id="windowSize"
-                  class="stepSizeInput left right"
-                  type="number"
-                  value="1"
-                  disabled
-                  readonly="readonly"
-                />
+                <input id="windowSize" class="stepSizeInput left right" type="number" value="1" disabled
+                  readonly="readonly" />
                 <div style="width: 30px; height: 10px"></div>
               </div>
             </div>
@@ -159,14 +107,8 @@
                 <label for="windowStepSize">Window Step Size:</label>
               </div>
               <div class="bubble">
-                <input
-                  id="windowStepSize"
-                  class="stepSizeInput left right"
-                  type="number"
-                  name="stepSize"
-                  value="1"
-                  disabled
-                />
+                <input id="windowStepSize" class="stepSizeInput left right" type="number" name="stepSize" value="1"
+                  disabled />
                 <div style="width: 30px; height: 10px"></div>
               </div>
             </div>
@@ -176,11 +118,7 @@
                 <label for="barPlotOption">Bar plot Option</label>:
               </div>
               <div class="bubble">
-                <select
-                  name="barPlotOption"
-                  id="barPlotOption"
-                  class="plotPercentSelect left right"
-                >
+                <select name="barPlotOption" id="barPlotOption" class="plotPercentSelect left right">
                   <option value="rfd">Rel. RFD</option>
                   <option value="w-rfd">Weighted RFD</option>
                   <option value="scale">Scale</option>
@@ -192,94 +130,45 @@
 
           <!-- beginning of button section-->
           <div class="allbuttons">
-            <button
-              id="startButton"
-              type="button"
-              class="customButton left"
-              aria-hidden="true"
-            >
+            <button id="startButton" type="button" class="customButton left" aria-hidden="true">
               <i class="fa fa-play"></i>
             </button>
 
-            <button
-              id="stopButton"
-              type="button"
-              class="customButton"
-              aria-hidden="true"
-            >
+            <button id="stopButton" type="button" class="customButton" aria-hidden="true">
               <i class="fa fa-stop"></i>
             </button>
 
-            <button
-              id="backwardStepButton"
-              type="button"
-              class="customButton"
-              aria-hidden="true"
-            >
+            <button id="backwardStepButton" type="button" class="customButton" aria-hidden="true">
               <i class="fa fa-step-backward"></i>
             </button>
 
-            <button
-              id="backwardButton"
-              type="button"
-              class="customButton"
-              aria-hidden="true"
-            >
+            <button id="backwardButton" type="button" class="customButton" aria-hidden="true">
               <i class="fa fa-backward"></i>
             </button>
 
-            <button
-              id="forwardButton"
-              type="button"
-              class="customButton"
-              aria-hidden="true"
-            >
+            <button id="forwardButton" type="button" class="customButton" aria-hidden="true">
               <i class="fa fa-forward"></i>
             </button>
 
-            <button
-              id="forwardStepButton"
-              type="button"
-              class="customButton"
-              aria-hidden="true"
-            >
+            <button id="forwardStepButton" type="button" class="customButton" aria-hidden="true">
               <i class="fa fa-step-forward"></i>
             </button>
 
-            <button
-              id="saveButton"
-              type="button"
-              class="customButton"
-              aria-hidden="true"
-            >
+            <button id="saveButton" type="button" class="customButton" aria-hidden="true">
               <i class="fa fa-save"></i>
             </button>
 
-            <button
-              id="startRecord"
-              type="button"
-              class="customButton"
-              aria-hidden="true"
-            >
+            <button id="startRecord" type="button" class="customButton" aria-hidden="true">
               <i class="fa fa-video-camera"></i>
             </button>
 
-            <button
-              id="stopRecord"
-              type="button"
-              class="customButton right"
-              aria-hidden="true"
-            >
+            <button id="stopRecord" type="button" class="customButton right" aria-hidden="true">
               <i class="fa fa-stop-circle"></i>
             </button>
           </div>
 
           <div class="uk-inline" style="padding-top: 10px">
-            <button
-              class="uk-button uk-button-default"
-              type="button"
-              style="color: white"
-            >
+            <button class="uk-button uk-button-default" type="button" style="color: white">
               Appearance
             </button>
           </div>
@@ -292,28 +181,12 @@
               </div>
 
               <div>Leaf-Label Size</div>
-              <input
-                class="uk-range"
-                type="range"
-                id="font-size"
-                name="font-size"
-                min="0"
-                max="10"
-                step="0.01"
-              />
+              <input class="uk-range" type="range" id="font-size" name="font-size" min="0" max="10" step="0.01" />
             </div>
 
             <div>
               <div>Stroke Width</div>
-              <input
-                class="uk-range"
-                type="range"
-                id="stroke-width"
-                name="font-size"
-                min="0.5"
-                max="10"
-                step="0.01"
-              />
+              <input class="uk-range" type="range" id="stroke-width" name="font-size" min="0.5" max="10" step="0.01" />
             </div>
           </div>
         </div>
@@ -334,42 +207,24 @@
               <div class="rating-bar" style="padding-bottom: 15px">
                 <div>Maximal Scale:<span id="maxScaleText"></span></div>
               </div>
-              <div
-                id="maxScale"
-                style="background-color: white; height: 10px"
-              ></div>
+              <div id="maxScale" style="background-color: white; height: 10px"></div>
             </div>
           </div>
         </div>
 
-        <div
-          id="lineChart"
-          style="width: 300px; height: 220px; background-color: #373747"
-        ></div>
-        <button
-          id="compare-trees-button"
-          uk-toggle="target: #compare-trees-modal"
-          class="uk-button uk-button-default uk-margin-small-right uk-button-primary"
-          type="button"
-        >
+        <div id="lineChart" style="width: 300px; height: 220px; background-color: #373747"></div>
+        <button id="compare-trees-button" uk-toggle="target: #compare-trees-modal"
+          class="uk-button uk-button-default uk-margin-small-right uk-button-primary" type="button">
           Compare
         </button>
       </div>
       <!-- end of toolbar-->
 
       <!-- This is the modal -->
-      <div
-        id="chart-modal"
-        uk-modal
-        class="uk-modal-container"
-        style="padding-top: 20px; display: none !important"
-      >
+      <div id="chart-modal" uk-modal class="uk-modal-container" style="padding-top: 20px; display: none !important">
         <div class="uk-modal-dialog uk-modal-body">
           <p class="uk-text-right">
-            <button
-              class="uk-button uk-button-default uk-modal-close"
-              type="button"
-            >
+            <button class="uk-button uk-button-default uk-modal-close" type="button">
               Cancel
             </button>
             <button class="uk-button uk-button-primary" type="button">
@@ -384,11 +239,7 @@
       <!-- This is the modal -->
       <div id="compare-trees-modal" class="uk-modal-full" uk-modal>
         <div class="uk-modal-dialog">
-          <button
-            class="uk-modal-close-full uk-close-large"
-            type="button"
-            uk-close
-          ></button>
+          <button class="uk-modal-close-full uk-close-large" type="button" uk-close></button>
 
           <div id="compare-tree-modal-left" style="width: 100%; height: 100%">
             <svg id="application-compare-container" width="100%" height="95%">
@@ -407,197 +258,200 @@
     </div>
 
     <script type="module">
-        import Gui from "{{ url_for('static', filename='js/gui.js') }}";
-        import constructTree from "{{ url_for('static', filename='js/TreeConstructor.js') }}";
-        import drawTree from "{{ url_for('static', filename='js/TreeDrawer.js') }}";
+      import Gui from "{{ url_for('static', filename='js/gui.js') }}";
+      import constructTree from "{{ url_for('static', filename='js/TreeConstructor.js') }}";
+      import drawTree from "{{ url_for('static', filename='js/TreeDrawer.js') }}";
 
-        function ready(fn) {
-          if (typeof fn !== 'function') {
-            throw new Error('Argument passed to ready should be a function');
-          }
-
-          if (document.readyState != 'loading') {
-            fn();
-          } else if (document.addEventListener) {
-            document.addEventListener('DOMContentLoaded', fn, {
-              once: true // A boolean value indicating that the listener should be invoked at most once after being added. If true, the listener would be automatically removed when invoked.
-            });
-          } else {
-            document.attachEvent('onreadystatechange', function() {
-              if (document.readyState != 'loading')
-                fn();
-            });
-          }
+      function ready(fn) {
+        if (typeof fn !== 'function') {
+          throw new Error('Argument passed to ready should be a function');
         }
 
-        function assignEventHandler(){
-
-          document.querySelector('#startButton').addEventListener('click', () => {
-              gui.start();
+        if (document.readyState != 'loading') {
+          fn();
+        } else if (document.addEventListener) {
+          document.addEventListener('DOMContentLoaded', fn, {
+            once: true // A boolean value indicating that the listener should be invoked at most once after being added. If true, the listener would be automatically removed when invoked.
           });
-
-          document.querySelector('#stopButton').addEventListener('click', () => {
-              gui.stop();
+        } else {
+          document.attachEvent('onreadystatechange', function () {
+            if (document.readyState != 'loading')
+              fn();
           });
+        }
+      }
 
-          document.querySelector('#forwardButton').addEventListener('click',
-              () => {
-                  gui.forward();
-          });
+      function assignEventHandler() {
 
-          document.querySelector('#backwardButton').addEventListener('click', () => {
-              gui.backward();
-          });
-
-          document.querySelector('#saveButton').addEventListener('click', () => {
-              gui.saveSVG();
-          });
-
-          document.querySelector('#positionButton').addEventListener('click',
-              () => {
-                  let position = Math.max(1 , document.getElementById("positionValue").value);
-                  document.getElementById("positionValue").value  = position;
-                  gui.goToPosition(position - 1);
-              });
-
-
-          document.querySelector('#forwardStepButton').addEventListener('click', () => {
-              gui.nextTree();
-          });
-
-          document.querySelector('#backwardStepButton').addEventListener('click',
-              () => {
-                  gui.prevTree();
-              });
-
-          document.querySelector('#barPlotOption').addEventListener('click', () => {
-              gui.barOptionValue = document.getElementById("barPlotOption").value;
-              gui.update();
-          });
-
-          document.querySelector('#branch-length').addEventListener('click',
-              () => {
-                  gui.ignoreBranchLengths = document.getElementById("branch-length").checked;
-                  gui.update();
-          });
-
-          document.querySelector('#font-size').addEventListener('input',() => {
-              gui.fontSize = document.getElementById("font-size").value;
-              gui.updateMain();
-          });
-
-          document.querySelector('#stroke-width').addEventListener('input',() => {
-              gui.strokeWidth = document.getElementById("stroke-width").value;
-              gui.updateMain();
-          });
-
-          document.querySelector('#chart-modal-button').addEventListener('click',() => {
-              gui.stop();
-              document.getElementById('chart-modal');
-              gui.generateModalChart();
-          });
-
-          startButton.addEventListener('click', async function () {
-              let stream = await recordScreen();
-              let mimeType = 'video/webm';
-              mediaRecorder = createRecorder(stream, mimeType);
-              let node = document.createElement("p");
-              node.textContent = "Started recording";
-              document.body.appendChild(node);
-              stopButton.disabled = false;
-            });
-
-          stopButton.addEventListener('click', function () {
-              mediaRecorder.stop();
-              let node = document.createElement("p");
-              node.textContent = "Stopped recording";
-              document.body.appendChild(node);
-          });
-
-          document.querySelector('#compare-trees-button').addEventListener('click', () => {
-            gui.stop();
-
-            let applicationContainer = document.getElementById("application-compare-container");
-            var width = window.innerWidth - 80;
-            var height = window.innerHeight - 80;
-            applicationContainer.setAttribute("width",`${width}px`);
-            applicationContainer.setAttribute("height",`${height}px`);
-
-            d3.select("#application-compare-up").attr(
-              "transform",
-              `translate(${(width * 0.25)},${height / 2})`
-            );
-
-            d3.select("#application-compare-down").attr(
-              "transform",
-              `translate(${(width * 0.75)},${height / 2})`
-            );
-
-              let treeIndexUp = (Math.floor(gui.index / 5) * 5)
-              let treeIndexDown = (Math.floor(gui.index / 5) * 5) + 5
-
-              let treeOne = treeList[treeIndexUp];
-              let treeTwo = treeList[treeIndexDown];
-
-              let colorIndex =
-              gui.index % 5 === 0 ? Math.floor(gui.index / 5) - 1 : Math.floor(gui.index / 5);
-
-            let treeUpward = constructTree(
-              treeOne,
-              false,
-              "application-container"
-            );
-
-            let treeDownwards = constructTree(
-              treeTwo,
-              false,
-              "application-container"
-            );
-
-            drawTree(treeUpward, hightLightTaxaMap[colorIndex], 0, leaveOrder, gui.fontSize, gui.strokeWidth, "application-compare-up");
-            drawTree(treeDownwards, hightLightTaxaMap[colorIndex], 0, leaveOrder, gui.fontSize, gui.strokeWidth, "application-compare-down");
+        document.querySelector('#startButton').addEventListener('click', () => {
+          gui.start();
         });
 
-          }
+        document.querySelector('#stopButton').addEventListener('click', () => {
+          gui.stop();
+        });
+
+        document.querySelector('#forwardButton').addEventListener('click',
+          () => {
+            gui.forward();
+          });
+
+        document.querySelector('#backwardButton').addEventListener('click', () => {
+          gui.backward();
+        });
+
+        document.querySelector('#saveButton').addEventListener('click', () => {
+          gui.saveSVG();
+        });
+
+        document.querySelector('#positionButton').addEventListener('click',
+          () => {
+            let position = Math.max(1, document.getElementById("positionValue").value);
+            document.getElementById("positionValue").value = position;
+            gui.goToPosition(position - 1);
+          });
 
 
-        //================================================================================ // Properties //================================================================================ let treeList
-        let treeList = {{tree_list | safe}};
-        let robinsonFouldsDistances = {{rfe_list | safe}};
-        let weightedRobinsonFouldsDistances = {{ weighted_robinson_foulds_distance_list |safe}};
-        let hightLightTaxaMap = {{to_be_highlighted | safe}};
-        let leaveOrder = {{sorted_leaves | safe}};
-        let windowSize = parseInt({{window_size | safe}});
-        let windowStepSize = parseInt({{window_step_size | safe}});
-        let fileName = "{{file_name | safe}}";
-        let ignore_branch_lengths = false;
-        let color_internal_branches = true;
-        const gui = new Gui(treeList,weightedRobinsonFouldsDistances, robinsonFouldsDistances, windowSize, windowStepSize, hightLightTaxaMap, leaveOrder, color_internal_branches,fileName);
-        let startButton = document.getElementById('startRecord');
-        let stopButton = document.getElementById('stopRecord');
-        let mediaRecorder;
+        document.querySelector('#forwardStepButton').addEventListener('click', () => {
+          gui.nextTree();
+        });
 
-        document.getElementById("windowSize").value = windowSize;
-        document.getElementById("windowStepSize").value = windowStepSize;
-        gui.initializeMovie();
-        gui.play();
-        stopButton.disabled = true;
+        document.querySelector('#backwardStepButton').addEventListener('click',
+          () => {
+            gui.prevTree();
+          });
+
+        document.querySelector('#barPlotOption').addEventListener('click', () => {
+          gui.barOptionValue = document.getElementById("barPlotOption").value;
+          gui.update();
+        });
+
+        document.querySelector('#branch-length').addEventListener('click',
+          () => {
+            gui.ignoreBranchLengths = document.getElementById("branch-length").checked;
+            gui.update();
+          });
+
+        document.querySelector('#font-size').addEventListener('input', () => {
+          gui.fontSize = document.getElementById("font-size").value;
+          gui.updateMain();
+        });
+
+        document.querySelector('#stroke-width').addEventListener('input', () => {
+          gui.strokeWidth = document.getElementById("stroke-width").value;
+          gui.updateMain();
+        });
+
+        document.querySelector('#chart-modal-button').addEventListener('click', () => {
+          gui.stop();
+          document.getElementById('chart-modal');
+          gui.generateModalChart();
+        });
+
+        startButton.addEventListener('click', async function () {
+          let stream = await recordScreen();
+          let mimeType = 'video/webm';
+          mediaRecorder = createRecorder(stream, mimeType);
+          let node = document.createElement("p");
+          node.textContent = "Started recording";
+          document.body.appendChild(node);
+          stopButton.disabled = false;
+        });
+
+        stopButton.addEventListener('click', function () {
+          mediaRecorder.stop();
+          let node = document.createElement("p");
+          node.textContent = "Stopped recording";
+          document.body.appendChild(node);
+        });
+
+        document.querySelector('#compare-trees-button').addEventListener('click', () => {
+          gui.stop();
+
+          let applicationContainer = document.getElementById("application-compare-container");
+          var width = window.innerWidth - 80;
+          var height = window.innerHeight - 80;
+          applicationContainer.setAttribute("width", `${width}px`);
+          applicationContainer.setAttribute("height", `${height}px`);
+
+          d3.select("#application-compare-up").attr(
+            "transform",
+            `translate(${(width * 0.25)},${height / 2})`
+          );
+
+          d3.select("#application-compare-down").attr(
+            "transform",
+            `translate(${(width * 0.75)},${height / 2})`
+          );
+
+          let treeIndexUp = (Math.floor(gui.index / 5) * 5)
+          let treeIndexDown = (Math.floor(gui.index / 5) * 5) + 5
+
+          let treeOne = treeList[treeIndexUp];
+          let treeTwo = treeList[treeIndexDown];
+
+          let colorIndex =
+            gui.index % 5 === 0 ? Math.floor(gui.index / 5) - 1 : Math.floor(gui.index / 5);
+
+          let treeUpward = constructTree(
+            treeOne,
+            false,
+            "application-container"
+          );
+
+          let treeDownwards = constructTree(
+            treeTwo,
+            false,
+            "application-container"
+          );
+
+          drawTree(treeUpward, hightLightTaxaMap[colorIndex], 0, leaveOrder, gui.fontSize, gui.strokeWidth, "application-compare-up", taxaColorMap);
+          drawTree(treeDownwards, hightLightTaxaMap[colorIndex], 0, leaveOrder, gui.fontSize, gui.strokeWidth, "application-compare-down", taxaColorMap);
+        });
+
+      }
 
 
-        ready(function() {
-            if(treeList.length>2){
-              document.getElementById('menu').innerHTML += `
+      //================================================================================ // Properties //================================================================================ let treeList
+      let treeList = {{ tree_list | safe}};
+      let robinsonFouldsDistances = {{ rfe_list | safe}};
+      let weightedRobinsonFouldsDistances = {{ weighted_robinson_foulds_distance_list | safe}};
+      let hightLightTaxaMap = {{ to_be_highlighted | safe}};
+      let leaveOrder = {{ sorted_leaves | safe}};
+      let windowSize = parseInt({{ window_size | safe}});
+      let windowStepSize = parseInt({{ window_step_size | safe}});
+      let taxaColorMap = {{ taxa_color_map | safe}};
+
+      let fileName = "{{file_name | safe}}";
+      let ignore_branch_lengths = false;
+      let color_internal_branches = true;
+      const gui = new Gui(treeList, weightedRobinsonFouldsDistances, robinsonFouldsDistances, windowSize, windowStepSize, hightLightTaxaMap, leaveOrder, color_internal_branches, fileName, taxaColorMap);
+      let startButton = document.getElementById('startRecord');
+      let stopButton = document.getElementById('stopRecord');
+      let mediaRecorder;
+
+      document.getElementById("windowSize").value = windowSize;
+      document.getElementById("windowStepSize").value = windowStepSize;
+      gui.initializeMovie();
+      gui.play();
+      stopButton.disabled = true;
+
+
+      ready(function () {
+        if (treeList.length > 2) {
+          document.getElementById('menu').innerHTML += `
               <button id="chart-modal-button" class="uk-button uk-button-default uk-margin-small-right uk-button-danger" type="button"uk-toggle="target: #chart-modal">
                   Open Chart
               </button>`
-            }
-            assignEventHandler()
-        });
+        }
+        assignEventHandler()
+      });
 
-        window.onresize = function () {
-          gui.resize();
-          gui.update();
+      window.onresize = function () {
+        gui.resize();
+        gui.update();
       };
     </script>
   </body>
+
 </html>
