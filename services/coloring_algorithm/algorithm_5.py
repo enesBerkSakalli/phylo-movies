@@ -14,7 +14,6 @@ from ete3 import Tree
 import numpy as np
 from services.tree.Treere import Treere
 from icecream import ic
-from collections import Counter
 # import package
 
 
@@ -515,34 +514,39 @@ def algorithm_5(tree_list, sorted_nodes: List, file_name=None, newick_list=[]):
     all_sedges = merge_sedges(t1._all_sedges, t2._all_sedges)
     detected_nodes_count_map = dict.fromkeys(sorted_nodes, 0)
 
-    decoded_list = []
-
+    DELETED_TAXA = []
+    end_algoithm = False
     while len(all_sedges) != 0:
-        decoded_list = []
         for s_edge in all_sedges:
-            # execute algorithm
+
             jumping_taxa = algorithm_5_for_sedge(s_edge, t1, t2, temp_sorted_nodes)
             # translate taxa to indices
             jumping_taxa = list(set([y for x in jumping_taxa for y in x]))
-            tmp_decoded_list = decode_indices(jumping_taxa, temp_sorted_nodes)
+            tmp_delete_taxa = decode_indices(jumping_taxa, temp_sorted_nodes)
 
-            for taxa in tmp_decoded_list:
+            for taxa in tmp_delete_taxa:
                 detected_nodes_count_map[taxa] = detected_nodes_count_map[taxa] + 1
 
-            decoded_list += tmp_decoded_list
+            DELETED_TAXA += tmp_delete_taxa
+            DELETED_TAXA = list(set(DELETED_TAXA))
+
+        if len(DELETED_TAXA) >= len(sorted_nodes):
+            end_algoithm = True
+            break
 
         (
             prunned_tree_one,
             prunned_tree_two,
             temp_sorted_nodes,
             temp_newick_list,
-        ) = prune_leaves(list(set(tmp_decoded_list)), temp_newick_list)
+        ) = prune_leaves(list(set(tmp_delete_taxa)), temp_newick_list)
 
         t1 = traverse(prunned_tree_one)
         t2 = traverse(prunned_tree_two)
+        
         all_sedges = merge_sedges(t1._all_sedges, t2._all_sedges)
 
-        if(len(tmp_decoded_list) == 0):
+        if(len(tmp_delete_taxa) == 0 or end_algoithm):
             break
 
     return detected_nodes_count_map

@@ -1,6 +1,8 @@
 import calculateScales from "./calc.js";
 import constructTree from "./TreeConstructor.js";
-import drawTree from "./TreeDrawer.js";
+import drawTree from "./TreeDrawer.js"
+import TreeDrawer from "./TreeDrawer.js"
+
 import * as d3 from "https://cdn.skypack.dev/d3@7";
 
 export default class Gui {

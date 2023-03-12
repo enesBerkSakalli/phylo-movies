@@ -15,7 +15,7 @@ export class TreeDrawer {
 
   static sizeMap = {
     strokeWidth: "1",
-    fontSize: "1.7em",
+    fontSize: "1.2em",
   };
 
   /**

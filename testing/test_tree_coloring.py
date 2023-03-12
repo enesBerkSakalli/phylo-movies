@@ -1,26 +1,23 @@
-from phylomovie.services.tree.Treere import Treere
 from typing import Dict, List
 import math
 from os.path import join
 import itertools
 import pytest
+import sys
+  
+# append the path of the parent directory
+sys.path.append("..")
 
-
-from phylomovie.services.coloring_algorithm.algorithm_5 import (
+from services.tree.Treere import Treere
+from services.coloring_algorithm.algorithm_5 import (
     algorithm_5,
-    algorithm1 as functional_alg1,
 )
 
-DATA_ROOT = "./phylomovie/services/test-data/"
-
-
-def all_combinations(a, b):
-    return [sorted(l) for l in itertools.product(a, b)]
-
+DATA_ROOT = "./test-data/"
 
 test_data_list = [
     [
-        join(DATA_ROOT, "alltrees-2-3.tree"),
+        join(DATA_ROOT, "rerun-iqtree-AE+AGonly_500_25-GTR-midpoint-rooted-17-18.trees"),
         "C1/C2 jumps into A2, E1/E2 jumps into",
         algorithm_5,
         [[["C1", "C2", "E1", "E2"]]],
@@ -28,9 +25,10 @@ test_data_list = [
 ]
 
 # discus
-
 algorithms = [algorithm_5]
 
+def all_combinations(a, b):
+    return [sorted(l) for l in itertools.product(a, b)]
 
 def find_to_be_highlighted_leaves(
     json_consensus_tree_list: List,
@@ -45,7 +43,10 @@ def find_to_be_highlighted_leaves(
     for i in range(0, len(json_consensus_tree_list) - 5, 5):
 
         first_tree_index = math.floor(i / 5)
+        print(first_tree_index)
         second_tree_index = math.floor(i / 5) + 1
+        print(second_tree_index)
+        
 
         pair_of_newick_string = [
             newick_string_list[first_tree_index],
@@ -61,7 +62,6 @@ def find_to_be_highlighted_leaves(
         )
 
     return highlights_every_tree_list
-
 
 def _test_highlighting_algorithm(
     file_name,
@@ -118,18 +118,21 @@ def _test_highlighting_algorithm(
 
     # assert to_be_highlighted_leaves == results,  ("Expected Results %", "".join(results))
 
-
 @pytest.fixture()
 def latest_algorithm():
     return algorithms[-1]
-
 
 @pytest.fixture(params=test_data_list)
 def test_data(request):
     return request.param
 
-
 def test_algorithms(test_data, latest_algorithm):
     filepath, description, function, result = test_data
     function = latest_algorithm
     _test_highlighting_algorithm(filepath, description, function, result)
+
+
+if __name__ == "__main__":
+     for path, description, _, expected_results in test_data_list:    
+        r = _test_highlighting_algorithm(
+        path, description, algorithm_5, expected_results, strict=False, output=False)

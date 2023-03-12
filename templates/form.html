@@ -177,51 +177,42 @@
     leaves = root.leaves();
 
     document.getElementById("colour-section").innerHTML = `
-        <!-- This is a button toggling the modal with the default close button -->
-         <!-- This is the modal with the default close button -->
-        <div id="modal-close-default" uk-modal>
+    <div id="color-selection-modal" uk-modal container="colour-section">
+        <div class="uk-modal-dialog uk-modal-body">
+            <h2 class="uk-modal-title"></h2>
+            <button class="uk-modal-close" type="button"></button>
 
-            <div class="uk-modal-dialog uk-modal-body">
-                <button class="uk-modal-close-default" type="button" uk-close></button>
-                <div class="uk-child-width-1-3@s uk-grid-small uk-text-center" uk-grid>
-                    <div class="uk-tile uk-tile-default uk-padding-remove">
-                        <div class="uk-margin">
-                            <div uk-form-custom="target: > * > span:last-child">
-                                <select id="coloring-mode-selector" aria-label="Custom controls">
-                                    <option value="1">Taxa</option>
-                                    <option value="2">Groups</option>
-                                </select>
-                                <span class="uk-link">
-                                    <span uk-icon="icon: pencil"></span>
-                                    <span></span>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
+            <div class="uk-child-width-1-3@s uk-grid-small uk-text-center" uk-grid>
+              <div class="uk-tile uk-tile-default uk-padding-remove">
+                  <div class="uk-margin">
+                      <div uk-form-custom="target: > * > span:last-child">
+                          <select id="coloring-mode-selector" aria-label="Custom controls">
+                              <option value="1">Taxa</option>
+                              <option value="2">Groups</option>
+                          </select>
+                          <span class="uk-link">
+                              <span uk-icon="icon: pencil"></span>
+                              <span></span>
+                          </span>
+                      </div>
+                  </div>
+              </div>
+              <div id="seperator-select" class="uk-tile uk-tile-default uk-padding-remove"></div>
+              <div id="group-button" class="uk-tile uk-tile-default uk-padding-remove"></div>
+          </div>
 
-                    <div id="seperator-select" class="uk-tile uk-tile-default uk-padding-remove"></div>
-                    <div id="group-button" class="uk-tile uk-tile-default uk-padding-remove"></div>
-
-                </div>
-
-
-                <div id="color-array-container" class="uk-child-width-1-3@s uk-grid-small uk-text-center" uk-grid>
-                    ${generateColorArray(
-                      leaves.map((leave) => {
-                        return leave.data.name;
-                      })
-                    )}
-                </div>
-
-            </div>
-
+          <div id="color-array-container" class="uk-child-width-1-3@s uk-grid-small uk-text-center" uk-grid>
+              ${generateColorArray(
+                leaves.map((leave) => {
+                  return leave.data.name;
+                })
+              )}
+          </div>
         </div>
-        `;
+    </div>
+    `
 
-    document.getElementById("button-row").innerHTML += `
-    <button class="uk-button uk-button-primary uk-margin-remove" type="button" uk-toggle="target: #modal-close-default">
-        Assign Colors
-    </button>`;
+    document.getElementById("button-row").innerHTML += `<button uk-toggle="target: #color-selection-modal" type="button">Hall</button>`;
 
     document.getElementById("coloring-mode-selector").addEventListener(
       "change",
@@ -298,7 +289,7 @@
                         ${element}
                     </div>
                     <div>
-                        <input id="taxa-${element}" type="color" name="taxa-color-${element}" value="#0000FF">
+                        <input id="taxa-${element}" type="color" name="taxa-color-${element}" value="#000000">
                     </div>
                 </div>
                     `;
