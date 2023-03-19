@@ -292,9 +292,6 @@ export class TreeDrawer {
       .transition()
       .ease(d3.easeExpInOut)
       .duration(this.drawDuration)
-      .text((d) => {
-        return `${d.data.name}`;
-      })
       .attrTween("transform", this.getOrientTextInterpolator(currentMaxRadius))
       .attr("text-anchor", (d) => this.anchorCalc(d))
       .style("font-size", TreeDrawer.sizeMap.fontSize);

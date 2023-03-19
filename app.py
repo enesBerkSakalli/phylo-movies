@@ -38,16 +38,14 @@ def index():
 
         request_map = request.form
 
-        taxa_color_map = parse_form_taxa_color(request_map)
-
         window_size = int(request_map['windowSize'])
 
         window_step_size = int(request_map['windowStepSize'])
 
         order_file_list = handle_order_list(request)
 
-
         front_end_input = handle_uploaded_file(leaf_order=order_file_list, f=request.files['treeFile'])
+        taxa_color_map = parse_form_taxa_color(request_map, front_end_input["sorted_leaves"])
 
         return render_template(
             'index.html',
@@ -65,12 +63,28 @@ def index():
     else:
         abort(401)
 
-def parse_form_taxa_color(request_map):
+def parse_form_taxa_color(request_map, order_file_list):
     taxa_color_map = {}
-    for entry in request.form.keys():
-        if str(entry).startswith('taxa'):
-            form_name = entry.split("-")
-            taxa_color_map[form_name[2]] = request_map[entry]
+
+    if 'seperator' in request_map:
+
+        group_colors = {}
+
+        for entry in request_map.keys():
+            if str(entry).startswith('group'):
+                form_name = entry.split("-")
+                group_colors[form_name[2]] = request_map[entry]
+   
+        for leave in order_file_list:
+            taxa_color_map[leave] = "#000000"
+
+    else:
+        for entry in request_map.keys():
+            if str(entry).startswith('taxa'):
+                form_name = entry.split("-")
+                taxa_color_map[form_name[2]] = request_map[entry]
+
+    print(taxa_color_map)
     return taxa_color_map
 
 def handle_uploaded_file(leaf_order, f):
@@ -103,12 +117,10 @@ def handle_uploaded_file(leaf_order, f):
 
     return phylo_move_data
 
-
 def write_robinson_foulds_file(file_name, rfd_list):
     f = open(f"{file_name}.rfe", "w")
     f.write("\n".join(str(e['robinson_foulds']['relative']) for e in rfd_list))
     f.close()
-
 
 def find_jumping_taxa_list(json_consensus_tree_list: List, sorted_nodes: List,
                                          newick_list: List = []) -> List[Dict]:

@@ -20,7 +20,7 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
     />
     <!-- JavaScript Bundle with Popper -->
-  
+
     <script src="https://d3js.org/d3.v7.min.js"></script>
 
     <!-- JavaScript Bundle with Popper -->
@@ -42,7 +42,6 @@
   </head>
 
   <body>
-
     <div class="container" style="margin-top: 50px">
       <div class="row">
         <div class="header p-0">
@@ -169,6 +168,7 @@
   async function createColorArray(event) {
     const file = event.target.files.item(0);
     const text = await file.text();
+
     // document.getElementById("output").innerText = text;
     let newickTrees = text.split("\n");
     let firstNewickTree = newickTrees[0];
@@ -178,109 +178,119 @@
 
     document.getElementById("colour-section").innerHTML = `
     <div id="color-selection-modal" uk-modal container="colour-section">
-        <div class="uk-modal-dialog uk-modal-body">
-            <h2 class="uk-modal-title"></h2>
-            <button class="uk-modal-close" type="button"></button>
 
+        <div class="uk-modal-dialog uk-modal-body">
+            
             <div class="uk-child-width-1-3@s uk-grid-small uk-text-center" uk-grid>
               <div class="uk-tile uk-tile-default uk-padding-remove">
+
                   <div class="uk-margin">
-                      <div uk-form-custom="target: > * > span:last-child">
-                          <select id="coloring-mode-selector" aria-label="Custom controls">
-                              <option value="1">Taxa</option>
-                              <option value="2">Groups</option>
-                          </select>
-                          <span class="uk-link">
-                              <span uk-icon="icon: pencil"></span>
-                              <span></span>
-                          </span>
-                      </div>
+
+                      <select id="coloring-mode-selector" aria-label="Custom controls">
+                          <option value="1">Taxa</option>
+                          <option value="2">Groups</option>
+                      </select>
+
                   </div>
+
               </div>
+
               <div id="seperator-select" class="uk-tile uk-tile-default uk-padding-remove"></div>
               <div id="group-button" class="uk-tile uk-tile-default uk-padding-remove"></div>
+
           </div>
 
           <div id="color-array-container" class="uk-child-width-1-3@s uk-grid-small uk-text-center" uk-grid>
-              ${generateColorArray(
-                leaves.map((leave) => {
-                  return leave.data.name;
-                })
-              )}
+              ${generateTaxaColorArray(accessLeaveNames(leaves))}
           </div>
         </div>
     </div>
-    `
+    `;
 
-    document.getElementById("button-row").innerHTML += `<button uk-toggle="target: #color-selection-modal" type="button">Hall</button>`;
+    document.getElementById("button-row").innerHTML += `<button uk-toggle="target: #color-selection-modal" type="button">Assign Colors</button>`;
 
-    document.getElementById("coloring-mode-selector").addEventListener(
-      "change",
-      (event) => {
+    document.getElementById("coloring-mode-selector").addEventListener("change", (event) => {
+        
         if (event.target.value == 1) {
-          document.getElementById("color-array-container").innerHTML =
-            generateColorArray(
-              leaves.map((leave) => {
-                return leave.data.name;
-              })
-            );
+
+          document.getElementById("color-array-container").innerHTML = generateTaxaColorArray(accessLeaveNames(leaves));
           document.getElementById("seperator-select").innerHTML = ``;
           document.getElementById("group-button").innerHTML = ``;
+          
         }
+      
         if (event.target.value == 2) {
-          document.getElementById(
-            "seperator-select"
-          ).innerHTML = `<div uk-form-custom="target: > * > span:last-child">
+
+          document.getElementById("seperator-select").innerHTML += `
+                    <div class='button-container'">
+
                         <select id="seperator-select-button" aria-label="Custom controls" name="seperator">
                             <option value="-">-</option>
                             <option value="_">Underscore</option>
                             <option value="+">+</option>
                         </select>
-                        <span class="uk-link">
-                            <span uk-icon="icon: pencil"></span>
-                            <span></span>
-                        </span>
+
                     </div>
                     `;
 
-          document.getElementById("group-button").innerHTML = `
+          document.getElementById("group-button").innerHTML += `
                     <div class="form-group row py-2">
                         <div class="col p-0">
-                            <button id="group-button" type="submit" class="uk-button uk-button-primary uk-margin-remove">
+                            <a href="#" id="group-button" class="uk-button uk-button-primary uk-margin-remove">
                                 Group
-                            </button>
+                            </a>
                         </div>
                     </div>
                     `;
 
-          document
-            .getElementById("group-button")
-            .addEventListener("click", (e) => {
-              let seperator = document.getElementById(
-                "seperator-select-button"
-              ).value;
-              let group = groupLeaves(leaves, seperator);
-              let colorContainer = generateColorArray(group);
+          document.getElementById("group-button").addEventListener("click", (e) => {
 
-              document.getElementById("color-array-container").innerHTML =
-                colorContainer;
+                let seperator = document.getElementById("seperator-select-button").value;
+                let group = groupLeaves(leaves, seperator);
+                let groupColorContainer = generateGroupArray(group);
+                document.getElementById("color-array-container").innerHTML = groupColorContainer;
+
             });
+
         }
       },
       false
     );
+
+  }
+
+  function accessLeaveNames(leaves){
+    return leaves.map((leave) => {return leave.data.name;});
   }
 
   function groupLeaves(leaves, seperator) {
     subtypes = new Set();
     leaves.forEach((leave) => {
-      subtype = leave.data.name.split("+");
+      subtype = leave.data.name.split(seperator);
       subtypes.add(subtype[0]);
     });
     return subtypes;
   }
 
-  function generateColorArray(elements) {
+  function generateGroupArray(elements) {
+    let elementContainer = "";
+    elements.forEach((element) => {
+      elementContainer += `
+                <div class="uk-tile uk-tile-default uk-padding-remove">
+                    <div>
+                        ${element}
+                    </div>
+                    <div>
+                        <input id="group-${element}" type="color" name="group-color-${element}" value="#000000">
+                    </div>
+                </div>
+                    `;
+    });
+    return elementContainer;
+  }
+
+
+  function generateTaxaColorArray(elements) {
     let elementContainer = "";
     elements.forEach((element) => {
       elementContainer += `
