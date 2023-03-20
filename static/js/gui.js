@@ -1,7 +1,7 @@
 import calculateScales from "./calc.js";
 import constructTree from "./TreeConstructor.js";
-import drawTree from "./TreeDrawer.js"
-import TreeDrawer from "./TreeDrawer.js"
+import drawTree from "./TreeDrawer.js";
+import TreeDrawer from "./TreeDrawer.js";
 
 import * as d3 from "https://cdn.skypack.dev/d3@7";
 
@@ -34,7 +34,7 @@ export default class Gui {
     this.hightLightTaxaMap = hightLightTaxaMap;
     this.leaveOrder = leaveOrder;
     this.firstFull = 0;
-    this.fontSize = 1.8;
+    this.fontSize = 1;
     this.strokeWidth = 3;
     this.taxaColorMap = taxaColorMap;
     this.weightedRobinsonFouldsDistances = weightedRobinsonFouldsDistances;

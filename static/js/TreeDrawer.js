@@ -15,7 +15,7 @@ export class TreeDrawer {
 
   static sizeMap = {
     strokeWidth: "1",
-    fontSize: "1.2em",
+    fontSize: "1em",
   };
 
   /**
@@ -755,7 +755,7 @@ export class TreeDrawer {
   ) {
     TreeDrawer.sizeMap.fontSize = `${fontSize}em`;
     TreeDrawer.sizeMap.strokeWidth = strokeWidth;
-  
+
     currentTreeDrawer.drawDuration = drawDurationFrontend;
     currentTreeDrawer.marked = hightLightTaxaMap;
     currentTreeDrawer.leaveOrder = leaveOrder;
@@ -765,9 +765,7 @@ export class TreeDrawer {
     currentTreeDrawer.updateExternalEdges(currentMaxRadius);
     currentTreeDrawer.updateLabels(currentMaxRadius);
     currentTreeDrawer.updateLeaveCircles(currentMaxRadius);
- 
   }
-
 }
 
 export class TreeMathUtils {

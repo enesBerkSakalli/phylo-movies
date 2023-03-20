@@ -36,6 +36,8 @@ def index():
         return render_template('form.html', commit=commit)
     elif request.method == "POST":
 
+        print(request.files)
+        
         request_map = request.form
 
         window_size = int(request_map['windowSize'])
@@ -68,16 +70,21 @@ def parse_form_taxa_color(request_map, order_file_list):
 
     if 'seperator' in request_map:
 
+        seperator = request_map['seperator']
         group_colors = {}
 
         for entry in request_map.keys():
+            print(entry)
             if str(entry).startswith('group'):
-                form_name = entry.split("-")
-                group_colors[form_name[2]] = request_map[entry]
-   
-        for leave in order_file_list:
-            taxa_color_map[leave] = "#000000"
-
+                form_name = entry.split('-')
+                print(form_name)
+                group_colors[form_name[2]] = request_map[entry]                   
+        for taxon in order_file_list:
+            if taxon.split(seperator)[0] in group_colors:
+                group_name = taxon.split(seperator)[0]
+                taxa_color_map[taxon] = group_colors[group_name]
+            else:
+                taxa_color_map[taxon] = "#000000"
     else:
         for entry in request_map.keys():
             if str(entry).startswith('taxa'):
@@ -123,7 +130,7 @@ def write_robinson_foulds_file(file_name, rfd_list):
     f.close()
 
 def find_jumping_taxa_list(json_consensus_tree_list: List, sorted_nodes: List,
-                                         newick_list: List = []) -> List[Dict]:
+                                                      newick_list: List = []) -> List[Dict]:
     jumping_taxa_lists = []
 
     for i in range(0, len(json_consensus_tree_list) - 5, 5):

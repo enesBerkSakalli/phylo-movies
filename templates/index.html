@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
   <!-- Base HTML File written by Enes Berk Sakalli-->
+
   <head>
     <meta charset="utf-8" />
     <title>Phylo-Movies</title>
 
     <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}" />    
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo" />
 
     <script src="https://d3js.org/d3.v7.min.js"></script>
@@ -178,12 +179,14 @@
               </div>
 
               <div>Leaf-Label Size</div>
-              <input class="uk-range" type="range" id="font-size" name="font-size" min="0" max="3" step="0.01"  value="1.2"/>
+              <input class="uk-range" type="range" id="font-size" name="font-size" min="0" max="3" step="0.01"
+                value="1.2" />
             </div>
 
             <div>
               <div>Stroke Width</div>
-              <input class="uk-range" type="range" id="stroke-width" name="stroke-width" min="0.5" max="10" step="0.01" />
+              <input class="uk-range" type="range" id="stroke-width" name="stroke-width" min="0.5" max="10"
+                step="0.01" />
             </div>
           </div>
         </div>
@@ -421,8 +424,6 @@
       let windowStepSize = parseInt({{ window_step_size | safe}});
       let taxaColorMap = {{ taxa_color_map | safe}};
 
-      console.log(taxaColorMap)
-      
       let fileName = "{{file_name | safe}}";
       let ignore_branch_lengths = false;
       let color_internal_branches = true;
@@ -436,7 +437,6 @@
       gui.initializeMovie();
       gui.play();
       stopButton.disabled = true;
-
 
       ready(function () {
         if (treeList.length > 2) {
