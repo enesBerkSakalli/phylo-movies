@@ -90,8 +90,6 @@ def parse_form_taxa_color(request_map, order_file_list):
             if str(entry).startswith('taxa'):
                 form_name = entry.split("-")
                 taxa_color_map[form_name[2]] = request_map[entry]
-
-    print(taxa_color_map)
     return taxa_color_map
 
 def handle_uploaded_file(leaf_order, f):

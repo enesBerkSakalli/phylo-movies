@@ -205,7 +205,12 @@ export default class Gui {
   updateMain() {
     let drawDuration = this.getIntervalDuration();
     let tree = this.treeList[this.index];
-    let d3tree = constructTree(tree, this.ignoreBranchLengths);
+
+    let d3tree = constructTree(
+        tree, 
+        this.ignoreBranchLengths, 
+        'application-container'
+      );
 
     if (this.index === 0) {
       this.colorIndex = 0;
@@ -227,6 +232,7 @@ export default class Gui {
       "application",
       this.taxaColorMap
     );
+
   }
 
   goToPosition(position) {
@@ -335,46 +341,6 @@ export default class Gui {
       `${this.fileName}-${Math.floor(this.index / 5) + 1}-${
         treeNameList[this.index % 5]
       }.svg`
-    );
-
-    link.click();
-
-    document.getElementById("imageExport").remove();
-  }
-
-  saveChart() {
-    let containerWidth = 2000;
-
-    let containerHeight = 800;
-
-    containerWidth += containerWidth * 0.05;
-    containerHeight += containerHeight * 0.05;
-
-    const svg = document.getElementById("chart-container").cloneNode(true); // clone your original svg
-
-    svg.setAttribute("id", "imageExport");
-
-    document.body.appendChild(svg); // append element to document
-
-    const g = svg.querySelector("g"); // select the parent g
-
-    svg.setAttribute("width", containerWidth); // set svg to be the g dimensions
-
-    svg.setAttribute("height", containerHeight);
-
-    const svgAsXML = new XMLSerializer().serializeToString(svg);
-
-    const svgData = `data:image/svg+xml,${encodeURIComponent(svgAsXML)}`;
-
-    const link = document.createElement("a");
-
-    document.body.appendChild(link);
-
-    link.setAttribute("href", svgData);
-
-    link.setAttribute(
-      "download",
-      `${this.fileName}-${this.barOptionValue}.svg`
     );
 
     link.click();
@@ -523,6 +489,7 @@ export default class Gui {
     </div>
     `;
 
+
     if (this.barOptionValue === "rfd") {
       let x = this.robinsonFouldsDistances.map((row) => row.tree);
       let y = this.robinsonFouldsDistances.map(
@@ -549,7 +516,7 @@ export default class Gui {
    */
   generateChart(x, y, chartTitle) {
     const ctx = document.getElementById("graph-chart");
-    new Chart(ctx, {
+    let chart = new Chart(ctx, {
       type: "line",
       data: {
         labels: x,
@@ -561,5 +528,16 @@ export default class Gui {
         ],
       },
     });
+
+    document.getElementById('save-chart-button').addEventListener('click',(e) =>
+    {
+      var a = document.createElement('a');
+      a.href = chart.toBase64Image();
+      a.download = `${chartTitle}.png`;      
+      // Trigger the download
+      a.click();
+    })
+
   }
+  
 }

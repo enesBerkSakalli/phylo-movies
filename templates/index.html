@@ -313,7 +313,6 @@
             gui.goToPosition(position - 1);
           });
 
-
         document.querySelector('#forwardStepButton').addEventListener('click', () => {
           gui.nextTree();
         });
@@ -392,27 +391,29 @@
           let treeOne = treeList[treeIndexUp];
           let treeTwo = treeList[treeIndexDown];
 
-          let colorIndex =
-            gui.index % 5 === 0 ? Math.floor(gui.index / 5) - 1 : Math.floor(gui.index / 5);
+          let colorIndex = Math.floor(gui.index / 5);
 
           let treeUpward = constructTree(
             treeOne,
             false,
-            "application-container"
+            'application-container',
+            {
+              'margin' : width * 0.25,
+            }
           );
 
           let treeDownwards = constructTree(
             treeTwo,
             false,
-            "application-container"
+            'application-container',
+            {
+              'margin' : width * 0.25,
+            }
           );
-
           drawTree(treeUpward, hightLightTaxaMap[colorIndex], 0, leaveOrder, gui.fontSize, gui.strokeWidth, "application-compare-up", taxaColorMap);
           drawTree(treeDownwards, hightLightTaxaMap[colorIndex], 0, leaveOrder, gui.fontSize, gui.strokeWidth, "application-compare-down", taxaColorMap);
         });
-
       }
-
 
       //================================================================================ // Properties //================================================================================ let treeList
       let treeList = {{ tree_list | safe}};

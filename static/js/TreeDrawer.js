@@ -255,11 +255,6 @@ export class TreeDrawer {
       .append("path")
       .attr("class", "link-extension")
       .style("stroke", (d) => {
-        console.log(
-          d.data.name,
-          TreeDrawer.colorMap[d.data.name],
-          TreeDrawer.colorMap
-        );
         return TreeDrawer.colorMap[d.data.name];
       })
       .attr("stroke-width", TreeDrawer.sizeMap.strokeWidth)
@@ -359,12 +354,12 @@ export class TreeDrawer {
       .attr("stroke-width", "0.1em")
       .attr("r", "0.4em");
 
-    this.calculatePath(this.root);
-    this.colorPath(this.root);
+    // this.calculatePath(this.root);
+    // this.colorPath(this.root);
+    //d3.selectAll(".leaf").on("click", (event, d) => {
+    //  this.flipNode(d);
+    //});
 
-    d3.selectAll(".leaf").on("click", (event, d) => {
-      this.flipNode(d);
-    });
   }
 
   /**
@@ -576,9 +571,7 @@ export class TreeDrawer {
         const tweenOtherAngle = otherAngleDiff * t + old_otherAngle;
 
         if (angleDiff > 2 || angleDiff < -2) {
-          return `rotate(${tweenAngle}) translate(${
-            tweenRadius + tweenRadius * (0.01 * i)
-          }, 0) rotate(${tweenOtherAngle})`;
+          return `rotate(${tweenAngle}) translate(${tweenRadius}, 0) rotate(${tweenOtherAngle})`;
         } else {
           return `rotate(${tweenAngle}) translate(${tweenRadius}, 0) rotate(${tweenOtherAngle})`;
         }
@@ -746,7 +739,6 @@ export class TreeDrawer {
   }
 
   drawTree(
-    currentRoot,
     hightLightTaxaMap,
     leaveOrder,
     fontSize,

@@ -204,19 +204,30 @@ export class TreeConstructor {
   }
 }
 
-export default function constructTree(tree, ignore_branch_lengths) {
-  let d3tree = d3.hierarchy(tree);
+export default function constructTree(tree, ignore_branch_lengths, container, options = {}) {
 
-  let treeConstructor = new TreeConstructor(d3tree, ignore_branch_lengths);
+  let treeConstructor = new TreeConstructor(d3.hierarchy(tree), ignore_branch_lengths);
 
-  let applicationContainer = document.getElementById("application-container");
+  //  "for the main application we use the "application-container" 
+  let applicationContainer = document.getElementById(container);
 
   let width = applicationContainer.clientWidth;
-  let height = applicationContainer.clientHeight;
-  let margin = width < height ? width * 0.125 : height * 0.125;
+  if('width' in options){
+    width = options['width'];
+  }
 
+  let height = applicationContainer.clientHeight;
+  if('height' in options){
+    height = options['height'];
+  }
+
+  let margin = width < height ? width * 0.20 : height * 0.20;  
+  if('margin' in options){
+    margin = options['margin'];
+  }
+  
   treeConstructor.setDimension(width, height);
-  treeConstructor.setMargin(margin + 200);
+  treeConstructor.setMargin(margin);
 
   let root_ = treeConstructor.constructRadialTree();
 
