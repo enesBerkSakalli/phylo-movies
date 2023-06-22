@@ -521,7 +521,7 @@ export class TreeDrawer {
   /**
    * Orienting to the right direction.
    * @param  {Object} d  ths link itself which itself stores the data
-   * @param  {Number} currentMaxRadius maximal radius, of one tree, so that labels are in the right outterrange
+   * @param  {Number} currentMaxRadius maximal radius, of one tree, so that labels are in the right outer range
    * @return {string}
    */
   orientText(d, currentMaxRadius) {
@@ -762,7 +762,7 @@ export class TreeDrawer {
 
 export class TreeMathUtils {
   /**
-   * Converting cartesion Coordinates to Polar Coordinates
+   * Converting cartesian Coordinates to Polar Coordinates
    * @param  {Number} x -
    * @param  {Number} y -
    * @return {Object} Object with element r for radius and angle.

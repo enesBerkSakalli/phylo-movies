@@ -13,7 +13,6 @@ try:
 except:
     commit = "no"
 
-
 @app.route('/about', methods=["GET"])
 def about():
     return render_template('about.html')
@@ -68,9 +67,9 @@ def index():
 def parse_form_taxa_color(request_map, order_file_list):
     taxa_color_map = {}
 
-    if 'seperator' in request_map:
+    if 'separator' in request_map:
 
-        seperator = request_map['seperator']
+        separator = request_map['separator']
         group_colors = {}
 
         for entry in request_map.keys():
@@ -80,8 +79,8 @@ def parse_form_taxa_color(request_map, order_file_list):
                 print(form_name)
                 group_colors[form_name[2]] = request_map[entry]                   
         for taxon in order_file_list:
-            if taxon.split(seperator)[0] in group_colors:
-                group_name = taxon.split(seperator)[0]
+            if taxon.split(separator)[0] in group_colors:
+                group_name = taxon.split(separator)[0]
                 taxa_color_map[taxon] = group_colors[group_name]
             else:
                 taxa_color_map[taxon] = "#000000"
@@ -132,12 +131,14 @@ def find_jumping_taxa_list(json_consensus_tree_list: List, sorted_nodes: List,
     jumping_taxa_lists = []
 
     for i in range(0, len(json_consensus_tree_list) - 5, 5):
-
         first_tree_index = math.floor(i / 5)
         second_tree_index = first_tree_index + 1
-
         pair_of_newick_string = [newick_list[first_tree_index], newick_list[second_tree_index]]
         set_of_trees = json_consensus_tree_list[i: i + 6]
         jumping_taxa_lists.append(algorithm_5(set_of_trees, sorted_nodes, "phylo-movies-web-call", pair_of_newick_string))
         
     return jumping_taxa_lists
+
+
+if __name__ == "__main__":
+    app.run(debug=True)

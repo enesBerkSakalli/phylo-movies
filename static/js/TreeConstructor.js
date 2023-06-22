@@ -176,14 +176,14 @@ export class TreeConstructor {
 
     this.calcAngle(this.root, Math.PI * 2, this.root.leaves().length);
 
-    const minWindowSize = this.getMinDimension(
+    const minDimension = this.getMinDimension(
       this.containerWidth,
       this.containerHeight
     );
 
     const maxRadius = this.getMaxRadius(this.root);
-
-    this.scale = this.calcScale(minWindowSize, maxRadius, 2);
+    
+    this.scale = this.calcScale(minDimension, maxRadius, 2);
 
     this.scaleRadius(this.root, this.scale);
 
