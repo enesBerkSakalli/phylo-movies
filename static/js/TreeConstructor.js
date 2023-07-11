@@ -182,7 +182,7 @@ export class TreeConstructor {
     );
 
     const maxRadius = this.getMaxRadius(this.root);
-    
+
     this.scale = this.calcScale(minDimension, maxRadius, 2);
 
     this.scaleRadius(this.root, this.scale);
@@ -212,20 +212,20 @@ export default function constructTree(tree, ignore_branch_lengths, container, op
   let applicationContainer = document.getElementById(container);
 
   let width = applicationContainer.clientWidth;
-  if('width' in options){
+  if ('width' in options) {
     width = options['width'];
   }
 
   let height = applicationContainer.clientHeight;
-  if('height' in options){
+  if ('height' in options) {
     height = options['height'];
   }
 
-  let margin = width < height ? width * 0.20 : height * 0.20;  
-  if('margin' in options){
+  let margin = width < height ? width * 0.20 : height * 0.20;
+  if ('margin' in options) {
     margin = options['margin'];
   }
-  
+
   treeConstructor.setDimension(width, height);
   treeConstructor.setMargin(margin);
 

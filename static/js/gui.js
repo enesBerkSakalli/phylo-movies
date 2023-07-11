@@ -1,64 +1,34 @@
 import calculateScales from "./calc.js";
 import constructTree from "./TreeConstructor.js";
 import drawTree from "./TreeDrawer.js";
-import TreeDrawer from "./TreeDrawer.js";
 
 import * as d3 from "https://cdn.skypack.dev/d3@7";
 
 export default class Gui {
-  constructor(
-    treeList,
-    weightedRobinsonFouldsDistances,
-    robinsonFouldsDistances,
-    windowSize,
-    windowStepSize,
-    hightLightTaxaMap,
-    leaveOrder,
-    colorInternalBranches,
-    fileName,
-    taxaColorMap
-  ) {
-    this.treeList = treeList;
+  constructor(phyloMovieStateObject) {
     this.treeNameList = [
       "Full. ",
       "Intermediate ",
       "Consensus 1 ",
       "Consensus 2 ",
-      "Intermedidate ",
+      "Intermediate ",
     ];
-    this.robinsonFouldsDistances = robinsonFouldsDistances;
-    this.fileName = fileName;
-    this.scaleList = calculateScales(treeList);
-    this.windowSize = windowSize;
-    this.windowStepSize = windowStepSize;
-    this.hightLightTaxaMap = hightLightTaxaMap;
-    this.leaveOrder = leaveOrder;
-    this.firstFull = 0;
-    this.fontSize = 1;
-    this.strokeWidth = 3;
-    this.taxaColorMap = taxaColorMap;
-    this.weightedRobinsonFouldsDistances = weightedRobinsonFouldsDistances;
+    this.state = phyloMovieStateObject;
+    this.scaleList = calculateScales(phyloMovieStateObject.treeList);
 
-    document.getElementById("maxScaleText").innerText =
-      " " +
-      Math.max.apply(
-        Math,
-        this.scaleList.map(function (o) {
-          return o.value;
-        })
-      );
+    const scaleListValues = this.scaleList.map(o => o.value);
+    const maxScale = Math.max(...scaleListValues);
 
-    this.colorInternalBranches = colorInternalBranches;
+    document.getElementById("maxScaleText").textContent = ` ${maxScale}`;
+
     this.barOptionValue = "rfd";
     this.ignoreBranchLengths = false;
-    this.maxScale = Math.max.apply(
-      Math,
-      this.scaleList.map((o) => o.value)
-    );
+    this.maxScale = maxScale;
     this.index = 0;
     this.factor = parseInt(document.getElementById("factor").value);
     this.playing = true;
   }
+
 
   initializeMovie() {
     this.resize();
@@ -104,30 +74,32 @@ export default class Gui {
   updateLineChart() {
     d3.select("#lineChart svg").remove();
 
-    if (this.robinsonFouldsDistances.length !== 1) {
+    if (this.state.robinsonFouldsDistances.length !== 1) {
       if (this.barOptionValue === "rfd") {
-        let x = this.robinsonFouldsDistances.map(
+        let x = this.state.robinsonFouldsDistances.map(
           (row) => row["robinson_foulds"]["relative"]
         );
-        this.generateWeightedRobinsonFouldsChart(x);
+        this.generateLeftWindowChart(x, 'RFD');
       }
       if (this.barOptionValue === "w-rfd") {
-        this.generateWeightedRobinsonFouldsChart(
-          this.weightedRobinsonFouldsDistances
-        );
+        this.generateLeftWindowChart(this.state.weightedRobinsonFouldsDistances, 'WRFD');
       }
       if (this.barOptionValue === "scale") {
         let x = this.scaleList.map((row) => row["value"]);
-        this.generateWeightedRobinsonFouldsChart(x);
+        this.generateLeftWindowChart(x, 'Scale');
       }
       this.setShipPosition(Math.floor(this.index / 5));
     } else {
-      document.getElementById("lineChart").innerHTML = `
-            <p>Relative Robinson-Foulds Distance ${
-              this.robinsonFouldsDistances[0].robinson_foulds.relative
-            }</p>
-            <p>Scale ${this.scaleList[Math.floor(this.index / 5)].value}</p>
-            `;
+
+      document.getElementById("lineChart").innerHTML =
+        `
+        <p>
+          Relative Robinson-Foulds Distance ${this.state.robinsonFouldsDistances[0].robinson_foulds.relative}
+        </p>
+        <p>
+          Scale ${this.scaleList[Math.floor(this.index / 5)].value}
+        </p>
+      `;
     }
   }
 
@@ -144,100 +116,102 @@ export default class Gui {
   }
 
   updateControls() {
-    document.getElementById("currentFullTree").innerHTML = (
-      Math.floor(this.index / 5) + 1
-    ).toString();
+    const indexFloorDiv5 = Math.floor(this.index / 5);
+    const treeListLengthDiv5 = Math.floor(this.state.treeList.length / 5);
+    const currentTree = Math.max(1, this.index + 1);
+    const numberOfTrees = this.state.treeList.length;
+    const treeLabel = this.treeNameList[this.index % 5];
+    const maxScale = Math.max(...this.scaleList.map(o => o.value));
+    const currentScale = this.scaleList[indexFloorDiv5].value;
+    const window = this.calculateSlidingWindowPositions();
 
-    document.getElementById("numberOfFullTrees").innerHTML = (
-      Math.floor(this.treeList.length / 5) + 1
-    ).toString();
-
-    document.getElementById("currentTree").innerHTML = Math.max(
-      1,
-      this.index + 1
-    );
-
-    document.getElementById("numberOfTrees").innerHTML = this.treeList.length;
-
-    document.getElementById("treeLabel").innerHTML =
-      this.treeNameList[this.index % 5];
-
-    document.getElementById("maxScaleText").innerText =
-      " " +
-      Math.max.apply(
-        Math,
-        this.scaleList.map(function (o) {
-          return o.value;
-        })
-      );
-
-    document.getElementById("currentScaleText").innerText =
-      " " + this.scaleList[Math.floor(this.index / 5)].value;
-
-    let window = this.calculateWindow();
-
-    document.getElementById(
-      "windowArea"
-    ).innerHTML = `${window["startPosition"]} - ${window["endPosition"]}`;
+    document.getElementById("currentFullTree").textContent = (indexFloorDiv5 + 1).toString();
+    document.getElementById("numberOfFullTrees").textContent = (treeListLengthDiv5 + 1).toString();
+    document.getElementById("currentTree").textContent = currentTree;
+    document.getElementById("numberOfTrees").textContent = numberOfTrees;
+    document.getElementById("treeLabel").textContent = treeLabel;
+    document.getElementById("maxScaleText").textContent = " " + maxScale;
+    document.getElementById("currentScaleText").textContent = " " + currentScale;
+    document.getElementById("windowArea").textContent = `${window.startPosition} - ${window.endPosition}`;
   }
 
-  calculateWindow() {
-    let midPosition = (Math.floor(this.index / 5) + 1) * this.windowStepSize;
-    let leftWindow = Math.trunc(this.windowSize / 2);
-    let rightWindow = Math.trunc((this.windowSize - 1) / 2);
 
-    let startPosition = midPosition - leftWindow;
-    let endPosition = midPosition + rightWindow;
+  /**
+   * Calculates the positions for the sliding window.
+   * The sliding window approach is commonly used in the field of phylogeny to analyze evolutionary trees.
+   * It involves defining a window of a certain size that moves along the tree, allowing the examination of different sections of the tree at each step.
+   * @return {Object} The sliding window positions.
+   */
+  calculateSlidingWindowPositions() {
+    /**
+     * The midPosition represents the central position of the sliding window.
+     * It is calculated based on the current index and the window step size.
+     */
+    const midPosition = (Math.floor(this.index / 5) + 1) * this.windowStepSize;
 
-    startPosition = Math.max(1, startPosition);
-    endPosition = Math.min(
-      endPosition,
-      this.treeList.length * this.windowStepSize
+    /**
+     * The leftWindow represents the number of positions to the left of the midPosition.
+     * It is calculated as half of the window size.
+     */
+    const leftWindow = Math.trunc(this.windowSize / 2);
+
+    /**
+     * The startPosition represents the starting position of the sliding window.
+     * It is calculated by subtracting the leftWindow from the midPosition and ensuring it is not less than 1.
+     */
+    const startPosition = Math.max(1, midPosition - leftWindow);
+
+    /**
+     * The endPosition represents the ending position of the sliding window.
+     * It is calculated by adding the remaining positions (windowSize - leftWindow - 1) to the midPosition,
+     * ensuring it does not exceed the total number of positions in the tree.
+     */
+    const endPosition = Math.min(
+      midPosition + (this.windowSize - leftWindow - 1),
+      this.state.treeList.length * this.windowStepSize
     );
 
     return {
-      startPosition: startPosition,
-      "mid-Position": midPosition,
-      endPosition: endPosition,
+      startPosition,
+      midPosition,
+      endPosition,
     };
   }
 
-  updateMain() {
-    let drawDuration = this.getIntervalDuration();
-    let tree = this.treeList[this.index];
 
-    let d3tree = constructTree(
-        tree, 
-        this.ignoreBranchLengths, 
-        'application-container'
-      );
+  /**
+   * Updates the main tree visualization.
+   * @return {void}
+   */
+  updateMain() {
+    const drawDuration = this.getIntervalDuration();
+    const tree = this.state.treeList[this.index];
+    const d3tree = constructTree(tree, this.ignoreBranchLengths, 'application-container');
 
     if (this.index === 0) {
       this.colorIndex = 0;
+    } else if (this.index % 5 === 0 && this.firstFull === 0) {
+      this.colorIndex = Math.floor(this.index / 5) - 1;
     } else {
-      if (this.index % 5 === 0 && this.firstFull === 0) {
-        this.colorIndex = Math.floor(this.index / 5) - 1;
-      } else {
-        this.colorIndex = Math.floor(this.index / 5);
-      }
+      this.colorIndex = Math.floor(this.index / 5);
     }
 
     drawTree(
       d3tree,
-      this.hightLightTaxaMap[this.colorIndex],
+      this.state.toBeHighlighted[this.colorIndex],
       drawDuration,
-      this.leaveOrder,
+      this.state.sortedLeaves,
       this.fontSize,
       this.strokeWidth,
       "application",
-      this.taxaColorMap
+      this.state.taxaColorMap
     );
-
   }
+
 
   goToPosition(position) {
     this.firstFull = 1;
-    this.index = Math.min(Math.max(0, position * 5), this.treeList.length);
+    this.index = Math.min(Math.max(0, position * 5), this.state.treeList.length);
     this.update();
   }
 
@@ -275,7 +249,7 @@ export default class Gui {
       this.firstFull = 1;
     } else {
       this.firstFull = 0;
-      this.index = Math.min(this.index + 1, this.treeList.length - 1);
+      this.index = Math.min(this.index + 1, this.state.treeList.length - 1);
     }
     this.update();
   }
@@ -290,7 +264,7 @@ export default class Gui {
     this.firstFull = 1;
     this.index = Math.min(
       (Math.floor(this.index / 5) + 1) * 5,
-      this.treeList.length - 1
+      this.state.treeList.length - 1
     );
     this.update();
   }
@@ -338,8 +312,7 @@ export default class Gui {
 
     link.setAttribute(
       "download",
-      `${this.fileName}-${Math.floor(this.index / 5) + 1}-${
-        treeNameList[this.index % 5]
+      `${this.fileName}-${Math.floor(this.index / 5) + 1}-${treeNameList[this.index % 5]
       }.svg`
     );
 
@@ -353,12 +326,12 @@ export default class Gui {
 
     let x =
       ((fullTreeIndex + 1) * xAxis.getBBox().width) /
-      this.robinsonFouldsDistances.length;
+      this.state.robinsonFouldsDistances.length;
 
     d3.select("#ship").attr("transform", `translate(${x},${0})`);
   }
 
-  generateWeightedRobinsonFouldsChart(data) {
+  generateLeftWindowChart(data, yTitle) {
     let applicationContainer = document.getElementById("lineChart");
 
     let width = applicationContainer.clientWidth;
@@ -466,7 +439,7 @@ export default class Gui {
       .attr("dy", ".35em")
       .attr("transform", "rotate(-90)")
       .attr("fill", "white")
-      .text("W. Rel. RFD.")
+      .text(yTitle)
       .style("font-size", "0.8em");
   }
 
@@ -478,8 +451,16 @@ export default class Gui {
     d3.select("#ship-modal").attr("transform", `translate(${x},${0})`);
   }
 
+  /**
+   * Generates a modal chart based on the selected bar option value.
+   * @return {void}
+   */
   generateModalChart() {
-    document.getElementById("chart-modal").innerHTML = `
+    /**
+     * Generate the chart modal HTML structure.
+     */
+    const chartModal = document.getElementById("chart-modal");
+    chartModal.innerHTML = `
     <div class="uk-modal-dialog uk-modal-body">
         <canvas id="graph-chart"></canvas>
         <p class="uk-text-right">
@@ -487,57 +468,62 @@ export default class Gui {
             <button id="save-chart-button" class="uk-button uk-button-primary" type="button">Save</button>
         </p>
     </div>
-    `;
+  `;
 
+    let x, y, chartTitle;
 
     if (this.barOptionValue === "rfd") {
-      let x = this.robinsonFouldsDistances.map((row) => row.tree);
-      let y = this.robinsonFouldsDistances.map(
-        (row) => row["robinson_foulds"]["relative"]
-      );
-      this.generateChart(x, y, "Relative Robinson Foulds Distance");
+      x = this.state.robinsonFouldsDistances.map((row) => row.tree);
+      y = this.state.robinsonFouldsDistances.map((row) => row["robinson_foulds"]["relative"]);
+      chartTitle = "Relative Robinson Foulds Distance";
+    } else if (this.barOptionValue === "w-rfd") {
+      x = this.state.robinsonFouldsDistances.map((row) => row.tree);
+      y = this.state.weightedRobinsonFouldsDistances;
+      chartTitle = "Weighted Robinson Foulds Distance";
+    } else if (this.barOptionValue === "scale") {
+      x = this.state.robinsonFouldsDistances.map((row) => row.tree);
+      y = this.scaleList.map((row) => row.value);
+      chartTitle = "Scale of the longest edge";
     }
-    if (this.barOptionValue === "w-rfd") {
-      let x = this.robinsonFouldsDistances.map((row) => row.tree);
-      let y = this.weightedRobinsonFouldsDistances;
-      this.generateChart(x, y, "Weighted Robinson Foulds Distance");
-    }
-    if (this.barOptionValue === "scale") {
-      let x = this.robinsonFouldsDistances.map((row) => row.tree);
-      let y = this.scaleList.map((row) => row.value);
-      this.generateChart(x, y, "Scale of the longest edge");
-    }
+
+    this.generateChart(x, y, chartTitle);
   }
 
+
   /**
-   * This function is generating the RFE Line Graph.
-   * @return {void}
-   * @param data
+   * This function generates the RFE Line Graph.
+   * @param {Array} x - The x-axis data.
+   * @param {Array} y - The y-axis data.
+   * @param {string} chartTitle - The title of the chart.
+   * @returns {void}
    */
   generateChart(x, y, chartTitle) {
     const ctx = document.getElementById("graph-chart");
+    const chartData = {
+      labels: x,
+      datasets: [
+        {
+          label: chartTitle,
+          data: y,
+        },
+      ],
+    };
+
+    const saveChartButton = document.getElementById('save-chart-button');
+
     let chart = new Chart(ctx, {
       type: "line",
-      data: {
-        labels: x,
-        datasets: [
-          {
-            label: chartTitle,
-            data: y,
-          },
-        ],
-      },
+      data: chartData,
     });
 
-    document.getElementById('save-chart-button').addEventListener('click',(e) =>
-    {
-      var a = document.createElement('a');
-      a.href = chart.toBase64Image();
-      a.download = `${chartTitle}.png`;      
-      // Trigger the download
-      a.click();
-    })
-
+    saveChartButton.addEventListener('click', () => {
+      const dataUrl = chart.toBase64Image();
+      const downloadLink = document.createElement('a');
+      downloadLink.href = dataUrl;
+      downloadLink.download = `${chartTitle}.png`;
+      downloadLink.click();
+    });
   }
-  
+
+
 }

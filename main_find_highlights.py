@@ -3,7 +3,6 @@ from dataclasses import dataclass
 
 NodeName = NewType("NodeName", tuple[int])
 
-
 @dataclass
 class Node:
     full_name: str

@@ -24,6 +24,8 @@
   <script src="https://cdn.jsdelivr.net/npm/uikit@3.15.22/dist/js/uikit.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/uikit@3.15.22/dist/js/uikit-icons.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
 </head>
 
 <body>
@@ -155,11 +157,11 @@
             <i class="fa fa-save"></i>
           </button>
 
-          <button id="startRecord" type="button" class="customButton" aria-hidden="true">
+          <button id="start-record" type="button" class="customButton" aria-hidden="true">
             <i class="fa fa-video-camera"></i>
           </button>
 
-          <button id="stopRecord" type="button" class="customButton right" aria-hidden="true">
+          <button id="stop-record" type="button" class="customButton right" aria-hidden="true">
             <i class="fa fa-stop-circle"></i>
           </button>
         </div>
@@ -236,6 +238,11 @@
       <div class="uk-modal-dialog">
         <button class="uk-modal-close-full uk-close-large" type="button" uk-close></button>
 
+        <button id="save-compare-trees" class="uk-button uk-button-secondary">
+          <span uk-icon="download"></span>
+        </button>
+
+
         <div id="compare-tree-modal-left" style="width: 100%; height: 100%">
           <svg id="application-compare-container" width="100%" height="95%">
             <g id="application-compare-up"></g>
@@ -277,175 +284,213 @@
       }
     }
 
-    function assignEventHandler() {
+    function downloadSVG(svgContainer, fileName) {
+      // Get the SVG element
+      const svgElement = document.getElementById(svgContainer);
 
-      document.querySelector('#startButton').addEventListener('click', () => {
+      // Convert SVG element to XML string
+      const serializer = new XMLSerializer();
+      const svgString = serializer.serializeToString(svgElement);
+
+      // Create a download link
+      const downloadLink = document.createElement('a');
+      downloadLink.href = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgString);
+      downloadLink.download = fileName;
+
+      // Trigger the download
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+    }
+
+    /**
+     * Compare trees based on the current GUI index.
+     * @returns {void}
+     */
+    function compareTrees() {
+      gui.stop();
+
+      // Get the application container and adjust its width and height
+      const applicationContainer = document.getElementById("application-compare-container");
+      const width = window.innerWidth - 80;
+      const height = window.innerHeight - 80;
+      applicationContainer.setAttribute("width", `${width}px`);
+      applicationContainer.setAttribute("height", `${height}px`);
+
+      // Calculate translateX and translateY values for positioning the trees
+      const translateX = width * 0.25;
+      const translateY = height / 2;
+
+      // Position the application-compare-up and application-compare-down trees
+      d3.select("#application-compare-up").attr("transform", `translate(${translateX},${translateY})`);
+      d3.select("#application-compare-down").attr("transform", `translate(${translateX * 3},${translateY})`);
+
+      // Calculate tree indexes for the upward and downward trees
+      const treeIndexUp = Math.floor(gui.index / 5) * 5;
+      const treeIndexDown = treeIndexUp + 5;
+
+      // Get the trees to be compared
+      const treeOne = phyloMoviesStateObject.treeList[treeIndexUp];
+      const treeTwo = phyloMoviesStateObject.treeList[treeIndexDown];
+
+      // Calculate the color index
+      const colorIndex = Math.floor(gui.index / 5);
+
+      // Construct the upward and downward trees
+      const treeUpward = constructTree(treeOne, false, 'application-container', { margin: translateX });
+      const treeDownwards = constructTree(treeTwo, false, 'application-container', { margin: translateX });
+
+      // Draw the trees with the specified parameters
+      drawTree(treeUpward, phyloMoviesStateObject.toBeHighlighted[colorIndex], 0, phyloMoviesStateObject.sortedLeaves, gui.fontSize, gui.strokeWidth, "application-compare-up", phyloMoviesStateObject.taxaColorMap);
+      drawTree(treeDownwards, phyloMoviesStateObject.toBeHighlighted[colorIndex], 0, phyloMoviesStateObject.sortedLeaves, gui.fontSize, gui.strokeWidth, "application-compare-down", phyloMoviesStateObject.taxaColorMap);
+    }
+
+    function attachEventHandlers() {
+      const saveCompareTreesButton = document.querySelector('#save-compare-trees');
+      const startMovieButton = document.querySelector('#startButton');
+      const stopMovieButton = document.querySelector('#stopButton');
+      const startRecordButton = document.querySelector('#start-record');
+      const stopRecordButton = document.querySelector('#stop-record');
+      const forwardButton = document.querySelector('#forwardButton');
+      const backwardButton = document.querySelector('#backwardButton');
+      const saveButton = document.querySelector('#saveButton');
+      const positionButton = document.querySelector('#positionButton');
+      const forwardStepButton = document.querySelector('#forwardStepButton');
+      const backwardStepButton = document.querySelector('#backwardStepButton');
+      const barPlotOption = document.querySelector('#barPlotOption');
+      const branchLength = document.querySelector('#branch-length');
+      const fontSizeInput = document.querySelector('#font-size');
+      const strokeWidthInput = document.querySelector('#stroke-width');
+      const chartModalButton = document.querySelector('#chart-modal-button');
+      const compareTreesButton = document.querySelector('#compare-trees-button');
+
+      saveCompareTreesButton.addEventListener('click', () => {
+        const fileName = `${gui.fileName}-${Math.floor(gui.index / 5) + 1}.svg`;
+        downloadSVG("application-compare-container", fileName);
+      });
+
+      startButton.addEventListener('click', () => {
         gui.start();
       });
 
-      document.querySelector('#stopButton').addEventListener('click', () => {
+      stopButton.addEventListener('click', () => {
         gui.stop();
       });
 
-      document.querySelector('#forwardButton').addEventListener('click',
-        () => {
-          gui.forward();
-        });
+      forwardButton.addEventListener('click', () => {
+        gui.forward();
+      });
 
-      document.querySelector('#backwardButton').addEventListener('click', () => {
+      backwardButton.addEventListener('click', () => {
         gui.backward();
       });
 
-      document.querySelector('#saveButton').addEventListener('click', () => {
+      saveButton.addEventListener('click', () => {
         gui.saveSVG();
       });
 
-      document.querySelector('#positionButton').addEventListener('click',
-        () => {
-          let position = Math.max(1, document.getElementById("positionValue").value);
-          document.getElementById("positionValue").value = position;
-          gui.goToPosition(position - 1);
-        });
+      positionButton.addEventListener('click', () => {
+        const position = Math.max(1, document.getElementById("positionValue").value);
+        document.getElementById("positionValue").value = position;
+        gui.goToPosition(position - 1);
+      });
 
-      document.querySelector('#forwardStepButton').addEventListener('click', () => {
+      forwardStepButton.addEventListener('click', () => {
         gui.nextTree();
       });
 
-      document.querySelector('#backwardStepButton').addEventListener('click',
-        () => {
-          gui.prevTree();
-        });
+      backwardStepButton.addEventListener('click', () => {
+        gui.prevTree();
+      });
 
-      document.querySelector('#barPlotOption').addEventListener('click', () => {
+      barPlotOption.addEventListener('click', () => {
         gui.barOptionValue = document.getElementById("barPlotOption").value;
         gui.update();
       });
 
-      document.querySelector('#branch-length').addEventListener('click',
-        () => {
-          gui.ignoreBranchLengths = document.getElementById("branch-length").checked;
-          gui.update();
-        });
+      branchLength.addEventListener('click', () => {
+        gui.ignoreBranchLengths = document.getElementById("branch-length").checked;
+        gui.update();
+      });
 
-      document.querySelector('#font-size').addEventListener('input', () => {
+      fontSizeInput.addEventListener('input', () => {
         gui.fontSize = document.getElementById("font-size").value;
         gui.updateMain();
       });
 
-      document.querySelector('#stroke-width').addEventListener('input', () => {
+      strokeWidthInput.addEventListener('input', () => {
         gui.strokeWidth = document.getElementById("stroke-width").value;
         gui.updateMain();
       });
 
-      document.querySelector('#chart-modal-button').addEventListener('click', () => {
+      chartModalButton.addEventListener('click', () => {
         gui.stop();
         document.getElementById('chart-modal');
         gui.generateModalChart();
       });
 
-      startButton.addEventListener('click', async function () {
-        let stream = await recordScreen();
-        let mimeType = 'video/webm';
+      compareTreesButton.addEventListener('click', compareTrees);
+
+      var mediaRecorder;
+
+      startMovieButton.addEventListener('click', () => {
+        gui.start();
+      })
+
+      stopMovieButton.addEventListener('click', () => {
+        gui.stop();
+      })
+
+      startRecordButton.addEventListener('click', async function () {
+        const stream = await recordScreen();
+        const mimeType = 'video/webm';
         mediaRecorder = createRecorder(stream, mimeType);
-        let node = document.createElement("p");
+        const node = document.createElement("p");
         node.textContent = "Started recording";
         document.body.appendChild(node);
         stopButton.disabled = false;
       });
 
-      stopButton.addEventListener('click', function () {
+      stopRecordButton.addEventListener('click', function () {
         mediaRecorder.stop();
-        let node = document.createElement("p");
+        const node = document.createElement("p");
         node.textContent = "Stopped recording";
         document.body.appendChild(node);
       });
-
-      document.querySelector('#compare-trees-button').addEventListener('click', () => {
-        gui.stop();
-        let applicationContainer = document.getElementById("application-compare-container");
-        var width = window.innerWidth - 80;
-        var height = window.innerHeight - 80;
-        applicationContainer.setAttribute("width", `${width}px`);
-        applicationContainer.setAttribute("height", `${height}px`);
-
-        d3.select("#application-compare-up").attr(
-          "transform",
-          `translate(${(width * 0.25)},${height / 2})`
-        );
-
-        d3.select("#application-compare-down").attr(
-          "transform",
-          `translate(${(width * 0.75)},${height / 2})`
-        );
-
-        let treeIndexUp = (Math.floor(gui.index / 5) * 5)
-        let treeIndexDown = (Math.floor(gui.index / 5) * 5) + 5
-
-        let treeOne = treeList[treeIndexUp];
-        let treeTwo = treeList[treeIndexDown];
-
-        let colorIndex = Math.floor(gui.index / 5);
-
-        let treeUpward = constructTree(
-          treeOne,
-          false,
-          'application-container',
-          {
-            'margin': width * 0.25,
-          }
-        );
-
-        let treeDownwards = constructTree(
-          treeTwo,
-          false,
-          'application-container',
-          {
-            'margin': width * 0.25,
-          }
-        );
-        drawTree(treeUpward, hightLightTaxaMap[colorIndex], 0, leaveOrder, gui.fontSize, gui.strokeWidth, "application-compare-up", taxaColorMap);
-        drawTree(treeDownwards, hightLightTaxaMap[colorIndex], 0, leaveOrder, gui.fontSize, gui.strokeWidth, "application-compare-down", taxaColorMap);
-      });
     }
 
-    //================================================================================ // Properties //================================================================================ let treeList
-    let treeList = {{ tree_list | safe}};
-    let robinsonFouldsDistances = {{ rfe_list | safe}};
-    let weightedRobinsonFouldsDistances = {{ weighted_robinson_foulds_distance_list | safe}};
-    let hightLightTaxaMap = {{ to_be_highlighted | safe}};
-    let leaveOrder = {{ sorted_leaves | safe}};
+    document.querySelector('#compare-trees-button').addEventListener('click', () => compareTrees);
+
+    //================================================================================ // Properties //================================================================================ let treeList        // let leaveOrder = {{ sorted_leaves | safe}};
     let windowSize = parseInt({{ window_size | safe}});
     let windowStepSize = parseInt({{ window_step_size | safe}});
-    let taxaColorMap = {{ taxa_color_map | safe}};
-
     let fileName = "{{file_name | safe}}";
-    let ignore_branch_lengths = false;
-    let color_internal_branches = true;
-    const gui = new Gui(treeList, weightedRobinsonFouldsDistances, robinsonFouldsDistances, windowSize, windowStepSize, hightLightTaxaMap, leaveOrder, color_internal_branches, fileName, taxaColorMap);
-    let startButton = document.getElementById('startRecord');
-    let stopButton = document.getElementById('stopRecord');
-    let mediaRecorder;
-
+    // let ignore_branch_lengths = false;
+    // let color_internal_branches = true;
+    let phyloMoviesStateObject = {{ phylo_movie_state | safe}};
+    const gui = new Gui(phyloMoviesStateObject);
     document.getElementById("windowSize").value = windowSize;
     document.getElementById("windowStepSize").value = windowStepSize;
     gui.initializeMovie();
     gui.play();
-    stopButton.disabled = true;
 
     ready(function () {
-      if (treeList.length > 2) {
+      if (phyloMoviesStateObject.treeList.length > 2) {
         document.getElementById('menu').innerHTML += `
               <button id="chart-modal-button" class="uk-button uk-button-default uk-margin-small-right uk-button-danger" type="button"uk-toggle="target: #chart-modal">
                   Open Chart
               </button>`
       }
-      assignEventHandler()
+
+      attachEventHandlers()
+
+      window.onresize = function () {
+        gui.resize();
+        gui.update();
+      };
+
     });
 
-    window.onresize = function () {
-      gui.resize();
-      gui.update();
-    };
   </script>
 </body>
 

@@ -19,10 +19,21 @@ export class TreeDrawer {
   };
 
   /**
+   * Set the TreeSpace ID for the tree to be drawn.
+   * @param _treeSpaceId
+   */
+  setTreeSpaceId(_treeSpaceId) {
+    this._treeSpaceId = _treeSpaceId;
+  }
+
+  /**
    * Create a TreeDrawer.
    * @param _currentRoot
    */
   constructor(_currentRoot) {
+    if (!_currentRoot) {
+      throw new Error("missing root");
+    }
     this._colorInternalBranches = true;
     this.root = _currentRoot;
     this.marked = [];
@@ -125,7 +136,7 @@ export class TreeDrawer {
   }
 
   /**
-   * Generarting id for an edge by combining the name of the source node name and the target name
+   * Generating id for an edge by combining the name of the source node name and the target name
    * @param  {Object} link
    * @return {string}
    */
@@ -155,70 +166,83 @@ export class TreeDrawer {
   }
 
   /**
-   * This function is drawing the branches of the trees.
-   * @return {void}
+   * Updates the edges in the tree visualization.
+   * @returns {void}
    */
   updateEdges() {
-    // JOIN new data with old svg elements.
+    /** @type {Selection} */
+    const svgContainer = this.getSvgContainer();
+
     // Data Binding
-    let edges = this.getSvgContainer()
+    /** @type {Selection} */
+    const edges = svgContainer
       .selectAll(".links")
-      .data(this.root.links(), (d) => {
-        return this.getLinkId(d);
-      });
+      .data(this.root.links(), d => this.getLinkId(d));
 
     // EXIT old elements not present in new data.
     edges.exit().remove();
 
     // ENTER new elements present in new data.
-    edges
+    /** @type {Selection} */
+    const enteredEdges = edges
       .enter()
       .append("path")
-      .style("stroke", TreeDrawer.colorMap.strokeColor)
       .attr("class", "links")
-      .attr("stroke-width", TreeDrawer.sizeMap.strokeWidth)
       .attr("fill", "none")
-      .attr("id", (d) => {
-        return this.getLinkId(d);
-      })
-      .attr("source", (d) => {
-        return d.source.data.name;
-      })
-      .attr("target", (d) => {
-        return d.target.data.name;
-      })
-      .attr("d", (d) => {
-        return this.buildSvgString(d);
-      })
+      .attr("id", d => this.getLinkId(d))
+      .attr("source", d => d.source.data.name)
+      .attr("target", d => d.target.data.name)
+      .attr("d", d => this.buildSvgString(d))
       .style("stroke-opacity", 1)
       .attr("neededHighlightingTaxa", 0);
 
-    // UPDATE old elements present in new data.
-    edges
+    enteredEdges
+      .style("stroke", TreeDrawer.colorMap.strokeColor)
+      .attr("stroke-width", TreeDrawer.sizeMap.strokeWidth);
+
+    // UPDATE old and new elements.
+    edges.merge(enteredEdges)
       .attr("stroke-width", TreeDrawer.sizeMap.strokeWidth)
-      .style("stroke", (d) => {
-        return this.colorInternalEdges(d);
-      })
+      .style("stroke", d => this.colorInternalEdges(d))
       .transition()
       .ease(d3.easeExpInOut)
       .duration(this.drawDuration)
       .attrTween("d", this.getArcInterpolationFunction());
   }
 
-  colorInternalEdges(d) {
-    let leafSet = d.target.data.name;
 
-    if (String(leafSet) === leafSet) {
-      if (this.marked[leafSet] > 0) {
-        return this.markedColorInterpolator(this.marked[leafSet]);
+  colorExternalEdgesLabelCircle(d) {
+    const leafName = d.data.name;
+
+    if (this.marked[leafName] > 0) {
+      return this.markedColorInterpolator(this.marked[leafName]);
+    } else {
+      return TreeDrawer.colorMap[d.data.name];
+    }
+  }
+
+  /**
+   * Determines the color for internal edges in the tree visualization.
+   * @param {object} d - The data object representing the edge.
+   * @returns {string} - The color value for the internal edge.
+   */
+  colorInternalEdges(d) {
+    /** @type {string|string[]} */
+    const leafSet = d.target.data.name;
+
+    if (typeof leafSet === "string") {
+      /** @type {number} */
+      const colorGrade = this.marked[leafSet];
+      if (colorGrade > 0) {
+        return this.markedColorInterpolator(colorGrade);
       }
     } else {
-      let minimalColorGrade = 1000;
-      leafSet.forEach((leafIndex) => {
-        let colorGrade = this.marked[this.leaveOrder[leafIndex]];
-        if (minimalColorGrade > colorGrade) {
-          minimalColorGrade = colorGrade;
-        }
+      /** @type {number} */
+      let minimalColorGrade = Infinity;
+
+      leafSet.forEach(leafIndex => {
+        const colorGrade = this.marked[this.leaveOrder[leafIndex]];
+        minimalColorGrade = Math.min(minimalColorGrade, colorGrade);
       });
 
       if (minimalColorGrade > 0) {
@@ -229,48 +253,43 @@ export class TreeDrawer {
     return TreeDrawer.colorMap.defaultColor;
   }
 
+
   /**
-   * This function is drawing the extension of the branches in the trees.
-   * @return {void}
-   */
+  * Draws the extension of the branches in the trees.
+  * @param {number} currentMaxRadius - The current maximum radius.
+  * @returns {void}
+  */
   updateExternalEdges(currentMaxRadius) {
     // JOIN new data with old elements.
     const colorExternalEdges = this.getSvgContainer()
-      .selectAll(".link-extension") //updates the links
-      .data(this.root.leaves(), (link) => {
-        return link.data.name;
-      });
+      .selectAll(".link-extension")
+      .data(this.root.leaves(), link => link.data.name);
 
     // UPDATE old elements present in new data.
     colorExternalEdges
       .transition()
-      .attr("stroke-width", TreeDrawer.sizeMap.strokeWidth)
       .ease(d3.easeExpInOut)
       .duration(this.drawDuration)
-      .attrTween("d", this.getLinkExtensionInterpolator(currentMaxRadius - 40));
+      .attr("stroke-width", TreeDrawer.sizeMap.strokeWidth)
+      .attrTween("d", this.getLinkExtensionInterpolator(currentMaxRadius - 40))
+      .style("stroke", d => this.colorExternalEdgesLabelCircle(d));
 
     // ENTER new elements present in new data.
     colorExternalEdges
       .enter()
       .append("path")
       .attr("class", "link-extension")
-      .style("stroke", (d) => {
-        return TreeDrawer.colorMap[d.data.name];
-      })
+      .style("stroke", d => this.colorExternalEdgesLabelCircle(d))
       .attr("stroke-width", TreeDrawer.sizeMap.strokeWidth)
-      .attr("stroke-dasharray", () => {
-        return 5 + ",5";
-      })
+      .attr("stroke-dasharray", "5,5")
       .attr("fill", "none")
-      .attr("d", (d) => {
-        return this.buildSvgLinkExtension(d, currentMaxRadius - 40);
-      });
+      .attr("d", d => this.buildSvgLinkExtension(d, currentMaxRadius - 40));
   }
 
   /**
-   * Creates leave labels and update the position and the color of them.
-   * @param  {Number} currentMaxRadius
-   * @return {void}
+   * Creates and updates the position and color of leaf labels.
+   * @param {number} currentMaxRadius - The current maximum radius.
+   * @returns {void}
    */
   updateLabels(currentMaxRadius) {
     const nodes = this.root.leaves();
@@ -278,9 +297,7 @@ export class TreeDrawer {
     // JOIN new data with old svg elements
     const textLabels = this.getSvgContainer()
       .selectAll(".label")
-      .data(nodes, (d) => {
-        return d.data.name;
-      });
+      .data(nodes, d => d.data.name);
 
     // UPDATE old elements present in new data
     textLabels
@@ -288,27 +305,27 @@ export class TreeDrawer {
       .ease(d3.easeExpInOut)
       .duration(this.drawDuration)
       .attrTween("transform", this.getOrientTextInterpolator(currentMaxRadius))
-      .attr("text-anchor", (d) => this.anchorCalc(d))
+      .attr("text-anchor", d => this.anchorCalc(d))
+      .style("fill", d => this.colorExternalEdgesLabelCircle(d))
       .style("font-size", TreeDrawer.sizeMap.fontSize);
 
     // ENTER new elements present in new data
-    textLabels
+    const enteredLabels = textLabels
       .enter()
       .append("text")
       .attr("class", "label")
-      .attr("id", (d) => {
-        return `label-${d.data.name}`;
-      })
+      .attr("id", d => `label-${d.data.name}`)
       .attr("dy", ".31em")
       .style("font-size", TreeDrawer.sizeMap.fontSize)
-      .text((d) => {
-        return `${d.data.name}`;
-      })
-      .attr("transform", (d) => this.orientText(d, currentMaxRadius))
-      .attr("text-anchor", (d) => this.anchorCalc(d))
+      .text(d => d.data.name)
+      .attr("transform", d => this.orientText(d, currentMaxRadius))
+      .attr("text-anchor", d => this.anchorCalc(d))
       .attr("font-weight", "bold")
       .attr("font-family", "Courier New")
       .style("fill", TreeDrawer.colorMap.defaultLabelColor);
+
+    // UPDATE and ENTER combined
+    enteredLabels.merge(textLabels);
   }
 
   /**
@@ -317,7 +334,8 @@ export class TreeDrawer {
    * @param  {Number} currentMaxRadius
    * @return {void}
    */
-  updateLeaveCircles(currentMaxRadius) {
+  updateLeafCircles(currentMaxRadius) {
+
     const leaves = this.root.leaves();
 
     //getting leave names for creating legend
@@ -333,6 +351,10 @@ export class TreeDrawer {
       .transition()
       .ease(d3.easeExpInOut)
       .duration(this.drawDuration)
+      .attr("r", "0.4em")
+      .attr("fill", (d) => {
+        return this.colorExternalEdgesLabelCircle(d);
+      })
       .attrTween("cx", this.attr2TweenCircleX(currentMaxRadius))
       .attrTween("cy", this.attr2TweenCircleY(currentMaxRadius));
 
@@ -352,14 +374,14 @@ export class TreeDrawer {
       })
       .style("stroke", TreeDrawer.colorMap.strokeColor)
       .attr("stroke-width", "0.1em")
-      .attr("r", "0.4em");
+      .attr("r", "0.4em")
+      .merge(leafCircles) // Merge the enter and update selection
+      .attr("fill", (d) => {
+        return this.colorExternalEdgesLabelCircle(d);
+      })
 
-    // this.calculatePath(this.root);
-    // this.colorPath(this.root);
-    //d3.selectAll(".leaf").on("click", (event, d) => {
-    //  this.flipNode(d);
-    //});
-
+    // EXIT old elements not present in new data
+    leafCircles.exit().remove();
   }
 
   /**
@@ -382,9 +404,8 @@ export class TreeDrawer {
     const sweepFlag =
       Math.abs(d.source.angle) < Math.abs(d.target.angle) ? 1 : 0;
 
-    return `M ${mx}, ${my} A${d.source.radius}, ${
-      d.source.radius
-    } ${0} ${arcFlag} ${sweepFlag} ${curveX}, ${curveY} L ${lx}, ${ly}`;
+    return `M ${mx}, ${my} A${d.source.radius}, ${d.source.radius
+      } ${0} ${arcFlag} ${sweepFlag} ${curveX}, ${curveY} L ${lx}, ${ly}`;
   }
 
   /**
@@ -526,9 +547,8 @@ export class TreeDrawer {
    */
   orientText(d, currentMaxRadius) {
     const angle = (d.angle * 180) / Math.PI;
-    return `rotate(${angle}) translate(${currentMaxRadius}, 0) rotate(${
-      angle < 270 && angle > 90 ? 180 : 0
-    })`;
+    return `rotate(${angle}) translate(${currentMaxRadius}, 0) rotate(${angle < 270 && angle > 90 ? 180 : 0
+      })`;
   }
 
   getOrientTextInterpolator(currentMaxRadius) {
@@ -584,27 +604,6 @@ export class TreeDrawer {
     return angle < 270 && angle > 90 ? "end" : "start";
   }
 
-  /**
-   * Coloring the path when one leave is clicked. When the node is clicked it will be pushed into markedLabelList
-   * If the leave is clicked second time it will be deleted from the markedLabelList.
-   * @param  {Object} d
-   * @return {void}
-   */
-  flipNode(d) {
-    if (!TreeDrawer.markedLabelList.includes(d.data.name)) {
-      TreeDrawer.markedLabelList.push(d.data.name);
-    } else {
-      TreeDrawer.markedLabelList.splice(
-        TreeDrawer.markedLabelList.indexOf(d.data.name),
-        1
-      );
-    }
-
-    this.calculatePath(this.root);
-
-    this.colorPath(this.root, true);
-  }
-
   calculateHighlightingTaxa(ancestor) {
     const linkId = this.generateLinkIdForLeave(ancestor);
 
@@ -629,99 +628,6 @@ export class TreeDrawer {
   }
 
   /**
-   * For each vertices in the path to this taxa, change the number of taxa appropriately.
-   * @return {void}
-   * @param tree
-   */
-  calculatePath(tree) {
-    tree.each((d) => {
-      d3.select(this.generateLinkIdForLeave(d)).attr(
-        "neededHighlightingTaxa",
-        0
-      );
-    });
-
-    tree.leaves().forEach((d, i) => {
-      d.ancestors().forEach((ancestor) => {
-        const linkId = this.generateLinkIdForLeave(ancestor);
-
-        if (!linkId) {
-          return;
-        }
-
-        const svgElement = d3.select(linkId);
-
-        let neededHighlightingTaxa = svgElement.attr("neededHighlightingTaxa");
-
-        if (neededHighlightingTaxa == null) {
-          neededHighlightingTaxa = 0;
-        } else {
-          neededHighlightingTaxa = parseInt(neededHighlightingTaxa);
-        }
-
-        if (TreeDrawer.markedLabelList.includes(d.data.name)) {
-          neededHighlightingTaxa += 1;
-        }
-
-        svgElement.attr("neededHighlightingTaxa", neededHighlightingTaxa);
-      });
-    });
-  }
-
-  /**
-   * Coloring node and label when it is marked.
-   * @return {void}
-   */
-  colorCircle(d) {
-    let selector = `#circle-${this._treeSpaceId}-${d.data.name}, #label-${this._treeSpaceId}-${d.data.name}`;
-    let color = TreeDrawer.colorMap.defaultLabelColor;
-
-    if (TreeDrawer.markedLabelList.includes(d.data.name)) {
-      color = TreeDrawer.colorMap.userMarkedColor;
-    }
-    let colorGrade = this.marked[d.data.name];
-    if (colorGrade > 0) {
-      color = this.markedColorInterpolator(colorGrade);
-    }
-
-    d3.selectAll(selector).style("fill", color);
-  }
-
-  /**
-   * Color the path until these taxa correctly
-   * @return {void}
-   * @param {Object}  tree
-   * @param {boolean} force
-   */
-  colorPath(tree, force = false) {
-    tree.leaves().forEach((d) => {
-      this.colorCircle(d);
-
-      d.ancestors().forEach((ancestor) => {
-        const linkId = this.generateLinkIdForLeave(ancestor);
-
-        if (!linkId) {
-          return;
-        }
-
-        const svgElement = d3.select(linkId);
-
-        const neededHighlightingTaxa = parseInt(
-          svgElement.attr("neededHighlightingTaxa")
-        );
-
-        if (neededHighlightingTaxa > 0) {
-          svgElement
-            .style("stroke", TreeDrawer.colorMap.userMarkedColor)
-            .raise();
-        } else if (force) {
-          svgElement.style("stroke", TreeDrawer.colorMap.defaultColor).lower();
-        }
-      });
-    });
-  }
-
-  /**
    * Set the time duration how one tree transforms to another.
    * @param  {Number} duration
    * @return {void}
@@ -738,26 +644,6 @@ export class TreeDrawer {
     return this._drawDuration;
   }
 
-  drawTree(
-    hightLightTaxaMap,
-    leaveOrder,
-    fontSize,
-    strokeWidth,
-    treeSpaceId
-  ) {
-    TreeDrawer.sizeMap.fontSize = `${fontSize}em`;
-    TreeDrawer.sizeMap.strokeWidth = strokeWidth;
-
-    currentTreeDrawer.drawDuration = drawDurationFrontend;
-    currentTreeDrawer.marked = hightLightTaxaMap;
-    currentTreeDrawer.leaveOrder = leaveOrder;
-    currentTreeDrawer._treeSpaceId = treeSpaceId;
-
-    currentTreeDrawer.updateEdges();
-    currentTreeDrawer.updateExternalEdges(currentMaxRadius);
-    currentTreeDrawer.updateLabels(currentMaxRadius);
-    currentTreeDrawer.updateLeaveCircles(currentMaxRadius);
-  }
 }
 
 export class TreeMathUtils {
@@ -828,5 +714,5 @@ export default function drawTree(
   currentTreeDrawer.updateEdges();
   currentTreeDrawer.updateExternalEdges(currentMaxRadius);
   currentTreeDrawer.updateLabels(currentMaxRadius);
-  currentTreeDrawer.updateLeaveCircles(currentMaxRadius);
+  currentTreeDrawer.updateLeafCircles(currentMaxRadius);
 }

@@ -3,18 +3,16 @@ from typing import (
     List,
     Callable,
     TypeVar,
-    Union,
     NewType,
     Optional,
     Collection,
     Collection,
 )
-from .main.main_find_highlights import decode_indices, Node, NodeName
+from main_find_highlights import decode_indices, Node, NodeName
 from ete3 import Tree
 import numpy as np
-from services.tree.Treere import Treere
+from TreeInterpolator import TreeInterpolator
 from icecream import ic
-# import package
 
 
 sys.path.append("..")
@@ -88,7 +86,6 @@ def get_type(node: Node) -> EdgeType:
 
 
 def traverse(node: Node) -> FunctionalTree:
-
     all_sedges = []
     edge_types = {}
     ancestor_edges = {}
@@ -136,22 +133,22 @@ def prune_leaves(to_be_deleted_leaves=[], newick_list=[]):
         to_be_deleted_node_one.delete()
         to_be_deleted_node_two.delete()
 
-    treeReInstance = Treere()
+    tree_interpolator = TreeInterpolator()
     newick_string_1 = t1.write()
     newick_string_2 = t2.write()
 
     newick_list = "\n".join([newick_string_1, newick_string_2])
 
-    json_treelist = treeReInstance.json_list(newick_list)
+    json_tree_list = tree_interpolator.json_list(newick_list)
 
-    treelist = treeReInstance.jsonTreelist_to_sortedConsensusTreelist(json_treelist)
+    tree_list = tree_interpolator.jsonTreelist_to_sortedConsensusTreelist(json_tree_list)
 
     a = [newick_string_1, newick_string_2]
 
     return (
-        Node.from_dict(treelist[1], treeReInstance.sorted_nodes),
-        Node.from_dict(treelist[4], treeReInstance.sorted_nodes),
-        treeReInstance.sorted_nodes,
+        Node.from_dict(tree_list[1], tree_interpolator.sorted_nodes),
+        Node.from_dict(tree_list[4], tree_interpolator.sorted_nodes),
+        tree_interpolator.sorted_nodes,
         a,
     )
 
@@ -306,7 +303,6 @@ def symm(a: list[X], b: list[X]) -> list[X]:
 def filter_components_from_arms(cond, arms):
     filtered_arms = []
     for component_set in arms:
-
         filtered_component_set = []
         for component in component_set:
             if cond(component):
@@ -318,7 +314,6 @@ def filter_components_from_arms(cond, arms):
 
 def algo5_partial_partial_cond(t1, t2):
     def cond(component):
-
         ancestor_edge1 = get_ancestor_edge(t1, component)
         ancestor_edge2 = get_ancestor_edge(t2, component)
 
@@ -334,10 +329,7 @@ def algo5_partial_partial_cond(t1, t2):
 
 
 # -- Algorithms --
-
-
 def algo1(sedge: Node, t1: FunctionalTree, t2: FunctionalTree) -> list[Component]:
-
     c1: list[ComponentSet] = calculate_component_set(t1, sedge)
     c2: list[ComponentSet] = calculate_component_set(t2, sedge)
     c12: list[tuple[ComponentSet, ComponentSet]] = cartesian(c1, c2)
@@ -365,7 +357,6 @@ def case_full_none(sedge, t1, t2):
 
 
 def case_partial_partial(sedge, t1, t2, sorted_nodes):
-
     c1 = calculate_component_set(t1, sedge)
     c2 = calculate_component_set(t2, sedge)
 
@@ -412,7 +403,6 @@ def case_partial_partial(sedge, t1, t2, sorted_nodes):
 
 def algo5_partial_none_only_partial(t1):
     def cond(component):
-
         ancestor_edge1 = get_ancestor_edge(t1, component)
 
         partial1 = is_partial_s_edge(t1, ancestor_edge1)
@@ -491,7 +481,6 @@ def algorithm_5_for_sedge(sedge, t1, t2, sorted_nodes):
 
 
 def merge_sedges(edge_set_one, edge_set_two):
-
     d = {}
 
     for e in edge_set_one:
@@ -515,10 +504,9 @@ def algorithm_5(tree_list, sorted_nodes: List, file_name=None, newick_list=[]):
     detected_nodes_count_map = dict.fromkeys(sorted_nodes, 0)
 
     DELETED_TAXA = []
-    end_algoithm = False
+    end_algorithm = False
     while len(all_sedges) != 0:
         for s_edge in all_sedges:
-
             jumping_taxa = algorithm_5_for_sedge(s_edge, t1, t2, temp_sorted_nodes)
             # translate taxa to indices
             jumping_taxa = list(set([y for x in jumping_taxa for y in x]))
@@ -531,29 +519,28 @@ def algorithm_5(tree_list, sorted_nodes: List, file_name=None, newick_list=[]):
             DELETED_TAXA = list(set(DELETED_TAXA))
 
         if len(DELETED_TAXA) >= len(sorted_nodes):
-            end_algoithm = True
+            end_algorithm = True
             break
 
         (
-            prunned_tree_one,
-            prunned_tree_two,
+            pruned_tree_one,
+            pruned_tree_two,
             temp_sorted_nodes,
             temp_newick_list,
         ) = prune_leaves(list(set(tmp_delete_taxa)), temp_newick_list)
 
-        t1 = traverse(prunned_tree_one)
-        t2 = traverse(prunned_tree_two)
-        
+        t1 = traverse(pruned_tree_one)
+        t2 = traverse(pruned_tree_two)
+
         all_sedges = merge_sedges(t1._all_sedges, t2._all_sedges)
 
-        if(len(tmp_delete_taxa) == 0 or end_algoithm):
+        if len(tmp_delete_taxa) == 0 or end_algorithm:
             break
 
     return detected_nodes_count_map
 
 
 def algorithm1(tree_list, sorted_nodes, file_name, newick_list):
-
     it1, it2, sorted_nodes, newick_list = prune_leaves(newick_list=newick_list)
 
     t1 = traverse(it1)

@@ -147,9 +147,8 @@
     }
 
     function generateSelectGroupSeperator() {
-      return;
-      `
-    <div uk-form-custom="target: > * > span:last-child">
+      return 
+    `<div uk-form-custom="target: > * > span:last-child">
       <select id="coloring-mode-selector" aria-label="Custom controls">
           <option value="1">Taxa</option>
           <option value="2">Groups</option>
@@ -224,9 +223,8 @@
                         <select id="seperator-select-button" aria-label="Custom controls" name="seperator">
                             <option value="-">-</option>
                             <option value="_">Underscore</option>
-                            <option value="+">+</option>
-                        </select>
-
+                            <option value="first_letter">First Letter</option>
+                            </select>
                     </div>
                     `;
 
@@ -242,8 +240,8 @@
 
           document.getElementById("group-button").addEventListener("click", (e) => {
 
-            let seperator = document.getElementById("seperator-select-button").value;
-            let group = groupLeaves(leaves, seperator);
+            let separator = document.getElementById("seperator-select-button").value;
+            let group = groupLeaves(leaves, separator);
             let groupColorContainer = generateGroupArray(group);
             document.getElementById("color-array-container").innerHTML = groupColorContainer;
 
@@ -259,12 +257,17 @@
     function accessLeaveNames(leaves) {
       return leaves.map((leave) => { return leave.data.name; });
     }
-
+    
     function groupLeaves(leaves, seperator) {
-      subtypes = new Set();
+      let subtypes = new Set();
       leaves.forEach((leave) => {
-        subtype = leave.data.name.split(seperator);
-        subtypes.add(subtype[0]);
+        if(seperator === "first_letter"){
+          let subtype = leave.data.name[0];
+          subtypes.add(subtype);
+        }else{
+          let subtype = leave.data.name.split(seperator);
+          subtypes.add(subtype[0]);
+        }
       });
       return subtypes;
     }
@@ -272,16 +275,15 @@
     function generateGroupArray(elements) {
       let elementContainer = "";
       elements.forEach((element) => {
-        elementContainer += `
-                <div class="uk-tile uk-tile-default uk-padding-remove">
-                    <div>
-                        ${element}
-                    </div>
-                    <div>
-                        <input id="group-${element}" type="color" name="group-color-${element}" value="#000000">
-                    </div>
-                </div>
-                    `;
+        elementContainer += 
+        `<div class="uk-tile uk-tile-default uk-padding-remove">
+            <div>
+                ${element}
+            </div>
+            <div>
+                <input id="group-${element}" type="color" name="group-color-${element}" value="#000000">
+            </div>
+        </div>`;
       });
       return elementContainer;
     }
