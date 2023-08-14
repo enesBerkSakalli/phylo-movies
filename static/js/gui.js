@@ -72,9 +72,11 @@ export default class Gui {
    * @return {void}
    */
   updateLineChart() {
+
     d3.select("#lineChart svg").remove();
 
     if (this.state.robinsonFouldsDistances.length !== 1) {
+
       if (this.barOptionValue === "rfd") {
         let x = this.state.robinsonFouldsDistances.map(
           (row) => row["robinson_foulds"]["relative"]
@@ -89,6 +91,7 @@ export default class Gui {
         this.generateLeftWindowChart(x, 'Scale');
       }
       this.setShipPosition(Math.floor(this.index / 5));
+
     } else {
 
       document.getElementById("lineChart").innerHTML =
@@ -99,17 +102,16 @@ export default class Gui {
         <p>
           Scale ${this.scaleList[Math.floor(this.index / 5)].value}
         </p>
+
       `;
     }
   }
 
   updateScale() {
     let width = document.getElementById("maxScale").offsetWidth;
-    let currentScaleWidth =
-      (width * this.scaleList[Math.floor(this.index / 5)].value) /
-      this.maxScale;
+    let currentScaleWidth = (width * this.scaleList[Math.floor(this.index / 5)].value) / this.maxScale;
 
-    d3.select("#currentScale")
+    d3.select("#current-scale")
       .transition()
       .duration(1000)
       .style("width", currentScaleWidth + "px");
@@ -118,20 +120,18 @@ export default class Gui {
   updateControls() {
     const indexFloorDiv5 = Math.floor(this.index / 5);
     const treeListLengthDiv5 = Math.floor(this.state.treeList.length / 5);
-    const currentTree = Math.max(1, this.index + 1);
-    const numberOfTrees = this.state.treeList.length;
     const treeLabel = this.treeNameList[this.index % 5];
     const maxScale = Math.max(...this.scaleList.map(o => o.value));
     const currentScale = this.scaleList[indexFloorDiv5].value;
     const window = this.calculateSlidingWindowPositions();
+    this.updateScale();
+
 
     document.getElementById("currentFullTree").textContent = (indexFloorDiv5 + 1).toString();
     document.getElementById("numberOfFullTrees").textContent = (treeListLengthDiv5 + 1).toString();
-    document.getElementById("currentTree").textContent = currentTree;
-    document.getElementById("numberOfTrees").textContent = numberOfTrees;
     document.getElementById("treeLabel").textContent = treeLabel;
     document.getElementById("maxScaleText").textContent = " " + maxScale;
-    document.getElementById("currentScaleText").textContent = " " + currentScale;
+    document.getElementById("current-scale-text").textContent = " " + currentScale;
     document.getElementById("windowArea").textContent = `${window.startPosition} - ${window.endPosition}`;
   }
 
@@ -488,7 +488,6 @@ export default class Gui {
 
     this.generateChart(x, y, chartTitle);
   }
-
 
   /**
    * This function generates the RFE Line Graph.

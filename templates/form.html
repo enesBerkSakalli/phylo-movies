@@ -146,9 +146,10 @@
       return r;
     }
 
-    function generateSelectGroupSeperator() {
-      return 
-    `<div uk-form-custom="target: > * > span:last-child">
+
+    function generateSelectGroupSeparator() {
+      return
+      `<div uk-form-custom="target: > * > span:last-child">
       <select id="coloring-mode-selector" aria-label="Custom controls">
           <option value="1">Taxa</option>
           <option value="2">Groups</option>
@@ -188,7 +189,7 @@
 
               </div>
 
-              <div id="seperator-select" class="uk-tile uk-tile-default uk-padding-remove"></div>
+              <div id="separator-select" class="uk-tile uk-tile-default uk-padding-remove"></div>
               <div id="group-button" class="uk-tile uk-tile-default uk-padding-remove"></div>
 
           </div>
@@ -201,8 +202,8 @@
     `;
 
       document.getElementById("button-row").innerHTML = `
-    <button class="uk-button uk-button-default" uk-toggle="target: #color-selection-modal" type="button">Assign Colors</button>
-    <button class="uk-button uk-button-default" type="submit" class="uk-button uk-button-default"><i class="fa fa-play"></i>Play</button>
+      <button class="uk-button uk-button-default" uk-toggle="target: #color-selection-modal" type="button">Assign Colors</button>
+      <button class="uk-button uk-button-default" type="submit" class="uk-button uk-button-default"><i class="fa fa-play"></i>Play</button>
     `;
 
       document.getElementById("coloring-mode-selector").addEventListener("change", (event) => {
@@ -210,17 +211,17 @@
         if (event.target.value == 1) {
 
           document.getElementById("color-array-container").innerHTML = generateTaxaColorArray(accessLeaveNames(leaves));
-          document.getElementById("seperator-select").innerHTML = ``;
+          document.getElementById("separator-select").innerHTML = ``;
           document.getElementById("group-button").innerHTML = ``;
 
         }
 
         if (event.target.value == 2) {
 
-          document.getElementById("seperator-select").innerHTML += `
+          document.getElementById("separator-select").innerHTML += `
                     <div class='button-container'">
 
-                        <select id="seperator-select-button" aria-label="Custom controls" name="seperator">
+                        <select id="separator-select-button" aria-label="Custom controls" name="separator">
                             <option value="-">-</option>
                             <option value="_">Underscore</option>
                             <option value="first_letter">First Letter</option>
@@ -240,7 +241,7 @@
 
           document.getElementById("group-button").addEventListener("click", (e) => {
 
-            let separator = document.getElementById("seperator-select-button").value;
+            let separator = document.getElementById("separator-select-button").value;
             let group = groupLeaves(leaves, separator);
             let groupColorContainer = generateGroupArray(group);
             document.getElementById("color-array-container").innerHTML = groupColorContainer;
@@ -257,15 +258,15 @@
     function accessLeaveNames(leaves) {
       return leaves.map((leave) => { return leave.data.name; });
     }
-    
-    function groupLeaves(leaves, seperator) {
+
+    function groupLeaves(leaves, separator) {
       let subtypes = new Set();
       leaves.forEach((leave) => {
-        if(seperator === "first_letter"){
+        if (separator === "first_letter") {
           let subtype = leave.data.name[0];
           subtypes.add(subtype);
-        }else{
-          let subtype = leave.data.name.split(seperator);
+        } else {
+          let subtype = leave.data.name.split(separator);
           subtypes.add(subtype[0]);
         }
       });
@@ -275,8 +276,8 @@
     function generateGroupArray(elements) {
       let elementContainer = "";
       elements.forEach((element) => {
-        elementContainer += 
-        `<div class="uk-tile uk-tile-default uk-padding-remove">
+        elementContainer +=
+          `<div class="uk-tile uk-tile-default uk-padding-remove">
             <div>
                 ${element}
             </div>

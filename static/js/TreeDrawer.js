@@ -358,6 +358,8 @@ export class TreeDrawer {
       .attrTween("cx", this.attr2TweenCircleX(currentMaxRadius))
       .attrTween("cy", this.attr2TweenCircleY(currentMaxRadius));
 
+
+
     // ENTER new elements present in new data
     leafCircles
       .enter()
@@ -548,7 +550,8 @@ export class TreeDrawer {
   orientText(d, currentMaxRadius) {
     const angle = (d.angle * 180) / Math.PI;
     return `rotate(${angle}) translate(${currentMaxRadius}, 0) rotate(${angle < 270 && angle > 90 ? 180 : 0
-      })`;
+      
+    })`;
   }
 
   getOrientTextInterpolator(currentMaxRadius) {

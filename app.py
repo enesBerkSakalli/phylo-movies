@@ -33,10 +33,6 @@ def handle_order_list(request):
         order_file_text = order_file.read().decode("utf-8")
         order_file_list = order_file_text.strip().split("\n")
 
-        # Clean up the file (optional)
-        # order_file.close()
-        # order_file.unlink()
-
         return order_file_list
 
     except KeyError:
@@ -53,23 +49,16 @@ def index():
     if request.method == "GET":
         return render_template("form.html", commit=commit)
     elif request.method == "POST":
-        request_map = request.form
-
-        window_size = int(request_map["windowSize"])
-
-        window_step_size = int(request_map["windowStepSize"])
-
+        window_size = int(request.form["windowSize"])
+        window_step_size = int(request.form["windowStepSize"])
         order_file_list = handle_order_list(request)
-
         phylo_movie_state = handle_uploaded_file(
             leaf_order=order_file_list, f=request.files["treeFile"]
         )
-
-        phylo_movie_state['taxaColorMap'] = parse_form_taxa_color(
-            request_map, phylo_movie_state["sortedLeaves"]
+        phylo_movie_state["taxaColorMap"] = parse_form_taxa_color(
+            request.form, phylo_movie_state["sortedLeaves"]
         )
 
-    
         return render_template(
             "index.html",
             window_size=window_size,
@@ -86,35 +75,27 @@ def parse_form_taxa_color(request_map, order_file_list):
 
     if "separator" in request_map:
         separator = request_map["separator"]
-        group_colors = {}
-
-        print("######### I am here ######")
-
-        for entry in request_map.keys():
-            if str(entry).startswith("group"):
-                form_name = entry.split("-")
-                group_colors[form_name[2]] = request_map[entry]
+        group_colors = {
+            entry.split("-")[2]: request_map[entry]
+            for entry in request_map
+            if str(entry).startswith("group")
+        }
 
         for taxon in order_file_list:
             if separator != "first_letter":
-                if taxon.split(separator)[0] in group_colors:
-                    group_name = taxon.split(separator)[0]
-                    taxa_color_map[taxon] = group_colors[group_name]
-                else:
-                    taxa_color_map[taxon] = "#000000"
-
+                group_name = taxon.split(separator)[0]
             else:
-                if taxon[0] in group_colors:
-                    group_name = taxon[0]
-                    taxa_color_map[taxon] = group_colors[group_name]
-                else:
-                    taxa_color_map[taxon] = "#000000"
+                group_name = taxon[0]
+
+            taxa_color_map[taxon] = group_colors.get(group_name, "#000000")
 
     else:
-        for entry in request_map.keys():
-            if str(entry).startswith("taxa"):
-                form_name = entry.split("-")
-                taxa_color_map[form_name[2]] = request_map[entry]
+        taxa_color_map = {
+            entry.split("-")[2]: request_map[entry]
+            for entry in request_map
+            if str(entry).startswith("taxa")
+        }
+
     return taxa_color_map
 
 

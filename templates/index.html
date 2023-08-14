@@ -23,8 +23,13 @@
   <!-- UIkit JS -->
   <script src="https://cdn.jsdelivr.net/npm/uikit@3.15.22/dist/js/uikit.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/uikit@3.15.22/dist/js/uikit-icons.min.js"></script>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+
+  <script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.js@3.0.16/dist/svg.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/svg2pdf.js@1.5.0/dist/svg2pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-yworks@2.1.1/dist/jspdf.min.js"></script>
 
 </head>
 
@@ -32,10 +37,6 @@
   <div class="container">
     <!-- beginning of menu -->
     <div id="menu" class="menu">
-      <!-- beginning of menu header -->
-      <div>
-        <div>File: {{file_name | safe}}</div>
-      </div>
 
       <!-- beginning of toolbar-->
       <div class="toolbar">
@@ -46,16 +47,6 @@
               <span id="currentFullTree">0</span>/
               <span id="numberOfFullTrees"></span>
             </span>
-          </div>
-
-          <div class="row">
-            <div class="menuItem">Trees Intermediate</div>
-            <div class="treeNavigation">
-              <span style="align-self: end">
-                <span id="currentTree"></span> /
-                <span id="numberOfTrees">5</span>
-              </span>
-            </div>
           </div>
 
           <div class="row">
@@ -114,10 +105,10 @@
 
           <div class="row">
             <div class="menuItem stepSizeLabel">
-              <label for="barPlotOption">Bar plot Option</label>:
+              <label for="bar-plot-option">Bar plot Option</label>:
             </div>
             <div class="bubble">
-              <select name="barPlotOption" id="barPlotOption" class="plotPercentSelect left right">
+              <select id="bar-plot-option" name="bar-plot-option" class="plotPercentSelect left right">
                 <option value="rfd">Rel. RFD</option>
                 <option value="w-rfd">Weighted RFD</option>
                 <option value="scale">Scale</option>
@@ -129,31 +120,32 @@
 
         <!-- beginning of button section-->
         <div class="allbuttons">
-          <button id="startButton" type="button" class="customButton left" aria-hidden="true">
+
+          <button id="start-button" type="button" class="customButton left" aria-hidden="true">
             <i class="fa fa-play"></i>
           </button>
 
-          <button id="stopButton" type="button" class="customButton" aria-hidden="true">
+          <button id="stop-button" type="button" class="customButton" aria-hidden="true">
             <i class="fa fa-stop"></i>
           </button>
 
-          <button id="backwardStepButton" type="button" class="customButton" aria-hidden="true">
+          <button id="backward-step-button" type="button" class="customButton" aria-hidden="true">
             <i class="fa fa-step-backward"></i>
           </button>
 
-          <button id="backwardButton" type="button" class="customButton" aria-hidden="true">
+          <button id="backward-button" type="button" class="customButton" aria-hidden="true">
             <i class="fa fa-backward"></i>
           </button>
 
-          <button id="forwardButton" type="button" class="customButton" aria-hidden="true">
+          <button id="forward-button" type="button" class="customButton" aria-hidden="true">
             <i class="fa fa-forward"></i>
           </button>
 
-          <button id="forwardStepButton" type="button" class="customButton" aria-hidden="true">
+          <button id="forward-step-button" type="button" class="customButton" aria-hidden="true">
             <i class="fa fa-step-forward"></i>
           </button>
 
-          <button id="saveButton" type="button" class="customButton" aria-hidden="true">
+          <button id="save-button" type="button" class="customButton" aria-hidden="true">
             <i class="fa fa-save"></i>
           </button>
 
@@ -165,13 +157,41 @@
             <i class="fa fa-stop-circle"></i>
           </button>
         </div>
+        <!-- end of button section-->
 
-        <div class="uk-inline" style="padding-top: 10px">
-          <button class="uk-button uk-button-default" type="button" style="color: white">
-            Appearance
-          </button>
+
+        <div style="padding-top: 20px; display: none !important">
+          <div class="current-scale-container">
+            <div style="padding-bottom: 15px">
+              Current Scale:<span id="current-scale-text"></span>
+            </div>
+            <div class="scaleContainer">
+              <div id="current-scale" style="height: 10px">
+              </div>
+            </div>
+          </div>
+
+          <div style="padding-top: 20px">
+            <div class="current-scale-container">
+              <div class="rating-bar" style="padding-bottom: 15px">
+                <div>Maximal Scale:<span id="maxScaleText"></span></div>
+              </div>
+              <div id="maxScale" style="background-color: white; height: 10px">
+              </div>
+            </div>
+          </div>
         </div>
 
+        <div id="lineChart" style="width: 300px; height: 220px; background-color: #373747"></div>
+
+        <button id="compare-trees-button" uk-toggle="target: #compare-trees-modal"
+          class="uk-button uk-button-default uk-margin-small-right uk-button-primary uk-width-1-1" type="button">
+          Compare
+        </button>
+
+        <button class="uk-button uk-button-default uk-width-1-1" type="button" style="color: white">
+          Appearance
+        </button>
         <div uk-dropdown="mode: click">
           <div>
             <div>
@@ -189,34 +209,11 @@
             <input class="uk-range" type="range" id="stroke-width" name="stroke-width" min="0.5" max="10" step="0.01" />
           </div>
         </div>
+
+
       </div>
 
-      <!-- end of button section-->
-      <div style="padding-top: 20px; display: none !important">
-        <div class="currentScaleContainer">
-          <div style="padding-bottom: 15px">
-            Current Scale:<span id="currentScaleText"></span>
-          </div>
-          <div class="scaleContainer">
-            <div id="currentScale" style="height: 10px"></div>
-          </div>
-        </div>
 
-        <div style="padding-top: 20px">
-          <div class="currentScaleContainer">
-            <div class="rating-bar" style="padding-bottom: 15px">
-              <div>Maximal Scale:<span id="maxScaleText"></span></div>
-            </div>
-            <div id="maxScale" style="background-color: white; height: 10px"></div>
-          </div>
-        </div>
-      </div>
-
-      <div id="lineChart" style="width: 300px; height: 220px; background-color: #373747"></div>
-      <button id="compare-trees-button" uk-toggle="target: #compare-trees-modal"
-        class="uk-button uk-button-default uk-margin-small-right uk-button-primary" type="button">
-        Compare
-      </button>
     </div>
     <!-- end of toolbar-->
     <!-- This the beginning of the Chart Modal -->
@@ -241,7 +238,6 @@
         <button id="save-compare-trees" class="uk-button uk-button-secondary">
           <span uk-icon="download"></span>
         </button>
-
 
         <div id="compare-tree-modal-left" style="width: 100%; height: 100%">
           <svg id="application-compare-container" width="100%" height="95%">
@@ -347,17 +343,17 @@
 
     function attachEventHandlers() {
       const saveCompareTreesButton = document.querySelector('#save-compare-trees');
-      const startMovieButton = document.querySelector('#startButton');
-      const stopMovieButton = document.querySelector('#stopButton');
+      const startMovieButton = document.querySelector('#start-button');
+      const stopMovieButton = document.querySelector('#stop-button');
       const startRecordButton = document.querySelector('#start-record');
       const stopRecordButton = document.querySelector('#stop-record');
-      const forwardButton = document.querySelector('#forwardButton');
-      const backwardButton = document.querySelector('#backwardButton');
-      const saveButton = document.querySelector('#saveButton');
+      const forwardButton = document.querySelector('#forward-button');
+      const backwardButton = document.querySelector('#backward-button');
+      const saveButton = document.querySelector('#save-button');
       const positionButton = document.querySelector('#positionButton');
-      const forwardStepButton = document.querySelector('#forwardStepButton');
-      const backwardStepButton = document.querySelector('#backwardStepButton');
-      const barPlotOption = document.querySelector('#barPlotOption');
+      const forwardStepButton = document.querySelector('#forward-step-button');
+      const backwardStepButton = document.querySelector('#backward-step-button');
+      const barPlotOption = document.querySelector('#bar-plot-option');
       const branchLength = document.querySelector('#branch-length');
       const fontSizeInput = document.querySelector('#font-size');
       const strokeWidthInput = document.querySelector('#stroke-width');
@@ -366,14 +362,24 @@
 
       saveCompareTreesButton.addEventListener('click', () => {
         const fileName = `${gui.fileName}-${Math.floor(gui.index / 5) + 1}.svg`;
-        downloadSVG("application-compare-container", fileName);
+
+        let svgContainer = document.getElementById("application-compare-container");
+        let pdf = new jsPDF();
+
+        svg2pdf(svgContainer, pdf, {
+          scale: 1
+        });
+
+        pdf.save('myPDF.pdf');
+
+        // downloadSVG("application-compare-container", fileName);
       });
 
-      startButton.addEventListener('click', () => {
+      startMovieButton.addEventListener('click', () => {
         gui.start();
       });
 
-      stopButton.addEventListener('click', () => {
+      stopMovieButton.addEventListener('click', () => {
         gui.stop();
       });
 
@@ -404,7 +410,7 @@
       });
 
       barPlotOption.addEventListener('click', () => {
-        gui.barOptionValue = document.getElementById("barPlotOption").value;
+        gui.barOptionValue = document.getElementById("bar-plot-option").value;
         gui.update();
       });
 
@@ -461,14 +467,17 @@
 
     document.querySelector('#compare-trees-button').addEventListener('click', () => compareTrees);
 
-    //================================================================================ // Properties //================================================================================ let treeList        // let leaveOrder = {{ sorted_leaves | safe}};
+    //================================================================================ // Properties //===<<============================================================================= let treeList        // let leaveOrder = {{ sorted_leaves | safe}};
     let windowSize = parseInt({{ window_size | safe}});
     let windowStepSize = parseInt({{ window_step_size | safe}});
     let fileName = "{{file_name | safe}}";
+
     // let ignore_branch_lengths = false;
     // let color_internal_branches = true;
+
     let phyloMoviesStateObject = {{ phylo_movie_state | safe}};
     const gui = new Gui(phyloMoviesStateObject);
+
     document.getElementById("windowSize").value = windowSize;
     document.getElementById("windowStepSize").value = windowStepSize;
     gui.initializeMovie();
@@ -477,7 +486,7 @@
     ready(function () {
       if (phyloMoviesStateObject.treeList.length > 2) {
         document.getElementById('menu').innerHTML += `
-              <button id="chart-modal-button" class="uk-button uk-button-default uk-margin-small-right uk-button-danger" type="button"uk-toggle="target: #chart-modal">
+              <button id="chart-modal-button" class="uk-button uk-button-default uk-margin-small-right uk-button-danger uk-width-1-1" type="button"uk-toggle="target: #chart-modal">
                   Open Chart
               </button>`
       }
