@@ -85,7 +85,7 @@
           <span uk-icon="play"></span> Play</button>
       </div>
 
-      <div id="colour-section"></div>
+      <div id="color-section"></div>
 
     </form>
   </div>
@@ -146,7 +146,6 @@
       return r;
     }
 
-
     function generateSelectGroupSeparator() {
       return
       `<div uk-form-custom="target: > * > span:last-child">
@@ -170,8 +169,8 @@
       let root = d3.hierarchy(tree, (d) => d.branchset);
       leaves = root.leaves();
 
-      document.getElementById("colour-section").innerHTML = `
-    <div id="color-selection-modal" uk-modal container="colour-section">
+      document.getElementById("color-section").innerHTML = `
+    <div id="color-selection-modal" uk-modal container="color-section">
 
         <div class="uk-modal-dialog uk-modal-body">
             
@@ -197,6 +196,12 @@
           <div id="color-array-container" class="uk-child-width-1-3@s uk-grid-small uk-text-center" uk-grid>
               ${generateTaxaColorArray(accessLeaveNames(leaves))}
           </div>
+          
+          <div class="uk-modal-footer uk-text-right">
+              <button id="interpolate-color-group" class="uk-button uk-button-default" type="button">Interpolate Color</button>
+              <button class="uk-button uk-button-default uk-modal-close" type="button">Save</button>
+          </div>
+
         </div>
     </div>
     `;
@@ -225,18 +230,16 @@
                             <option value="-">-</option>
                             <option value="_">Underscore</option>
                             <option value="first_letter">First Letter</option>
-                            </select>
+                          </select>
                     </div>
                     `;
 
           document.getElementById("group-button").innerHTML += `
-                    <div class="form-group row py-2">
                         <div class="col p-0">
-                            <a href="#" id="group-button" class="uk-button uk-button-primary uk-margin-remove">
-                                Group
+                            <a href="#" id="group-button" class="uk-button uk-button-secondary uk-button-small uk-margin-remove">
+                              <span uk-icon="icon: git-fork;"></span> Group
                             </a>
                         </div>
-                    </div>
                     `;
 
           document.getElementById("group-button").addEventListener("click", (e) => {
@@ -252,6 +255,8 @@
       },
         false
       );
+
+      document.getElementById("interpolate-color-group").addEventListener("click", interpolateGroupTiles, false)
 
     }
 
@@ -282,7 +287,7 @@
                 ${element}
             </div>
             <div>
-                <input id="group-${element}" type="color" name="group-color-${element}" value="#000000">
+                <input id="group-${element}" class="color-tile" type="color" name="group-color-${element}" value="#000000">
             </div>
         </div>`;
       });
@@ -298,13 +303,42 @@
                         ${element}
                     </div>
                     <div>
-                        <input id="taxa-${element}" type="color" name="taxa-color-${element}" value="#000000">
+                        <input id="taxa-${element}" class="color-tile" type="color" name="taxa-color-${element}" value="#000000">
                     </div>
                 </div>
                     `;
       });
       return elementContainer;
     }
+
+    function interpolateGroupTiles(e) {
+      let colorTiles = document.querySelectorAll(".color-tile");
+      let tileValues = [];
+
+      colorTiles.forEach((tile) => {
+        tileValues.push(tile.id);
+      });
+
+      // Define your color scale and interpolate based on tile values
+      let colorScale = d3.scaleSequential(d3.interpolateSinebow)
+        .domain([0, tileValues.length - 1]);
+
+      // Function to convert RGB values to hexadecimal
+      function rgbToHex(r, g, b) {
+        return "#" + ((1 << 24) | ((r << 16) | (g << 8) | b)).toString(16).slice(1);
+      }
+
+      // Iterate through the color tiles and assign interpolated color (hexadecimal) to input value
+      colorTiles.forEach((tile, index) => {
+        let interpolatedColor = d3.rgb(colorScale(index));
+        let hexColor = rgbToHex(interpolatedColor.r, interpolatedColor.g, interpolatedColor.b);
+        let inputField = document.getElementById(tile.id); // Assuming tile.id is the same as input id
+        inputField.value = hexColor;
+      });
+    }
+
+
+
   </script>
 </body>
 
