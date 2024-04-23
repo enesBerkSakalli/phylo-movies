@@ -1,20 +1,17 @@
-# phylo-movies
-Phylo-Movies
+# PhyloMovies
 
-# Combined-Developement-Master
+Interactive phylogenetic tree viewer with a focus on tree trajectories and visualising the difference between two trees.
 
-The main project focus is to build a tool for dynamic visualisation of phylogenetic trees like a media player, which enables browsing dynamically through a list of trees. Primarily the wish is to visualise a trajectory of trees along an alignment, by helping the human eye to catch changes between trees with the same leaves but different hierarchies.
+## Installation
 
-Dependencies: flask and Biopython 
+Download the source code from [github](https://github.com/enesBerkSakalli/phylo-movies) and have python in version 3.9 or newer installed. Create a python virtual environment `python -m venv phylomovies_environment` and activate it `source phylomovies_environment/bin/activate`. Install all requirements from the `requirements.txt` file with pip `python -m pip install -r requirements.txt`. To temporarily run phylomovies use the flask development server:
 
-Then install gunicorn with
+    export FLASK_APP=phylomovie.app
+    export FLASK_ENV=phylomovies_environment
+    python -m flask run
 
-```bash
-sudo apt-get install gunicorn3
-```
+which starts a server on `http://localhost:5000`. For a more permanent installation use the gunicorn WSGI server (install gunicorn into the virtual environment `python -m pip install gunicorn`):
 
-Then direct into the first combinedProjects Folder and call
+    python -m gunicorn phylomovie.app:app
 
-```bash
-gunicorn3 combinedProject.wsgi
-```
+It is recommended to use a reverse-proxy like nginx for instances that are reachable from the public internet.
