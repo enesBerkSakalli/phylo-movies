@@ -119,26 +119,28 @@ def delete_tree_leaves_for_coloring_newick(to_be_deleted_leaves=[], newick_list=
 
     for leave in to_be_deleted_leaves:
 
+        leave = leave.replace("-", ".")
+
         to_be_deleted_node_one = t1.search_nodes(name=leave)[0]
         to_be_deleted_node_two = t2.search_nodes(name=leave)[0]
 
         to_be_deleted_node_one.delete()
         to_be_deleted_node_two.delete()
 
-    treeReInstance = Treere()
+    tree_interpolator = Treere()
 
     newick_string_1 = t1.write()
     newick_string_2 = t2.write()
 
     newick_list = "\n".join([newick_string_1, newick_string_2])
 
-    json_treelist = treeReInstance.json_list(newick_list)
-    treelist = treeReInstance.jsonTreelist_to_sortedConsensusTreelist(
+    json_treelist = tree_interpolator.json_list(newick_list)
+    treelist = tree_interpolator.jsonTreelist_to_sortedConsensusTreelist(
         json_treelist)
 
     a = [newick_string_1, newick_string_2]
 
-    return Node.from_dict(treelist[1], treeReInstance.sorted_nodes), Node.from_dict(treelist[4], treeReInstance.sorted_nodes), treeReInstance.sorted_nodes, a
+    return Node.from_dict(treelist[1], tree_interpolator.sorted_nodes), Node.from_dict(treelist[4], tree_interpolator.sorted_nodes), tree_interpolator.sorted_nodes, a
 
 
 # === Helpers ===

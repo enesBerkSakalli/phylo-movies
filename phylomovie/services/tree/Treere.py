@@ -118,9 +118,18 @@ class Treere:
         t = tree.strip()
         if t.find(":") == -1:
             label = t
+            
+            label = label.replace(".","-")                    
+
+            print(label)
+            
             dist = ""
-        else:
+        else:            
             label = t[:t.find(":")]
+            
+            label = label.replace(".","-")                    
+
+            
             dist = t[t.find(":") + 1:]
 
         return (label, dist, data)
@@ -133,13 +142,20 @@ class Treere:
                     label = nwString
                     dist = ""
                 else:
+                    
                     label = nwString[:nwString.find(":")]
+                    
+                    label = label.replace(".","-")                    
+                                        
                     dist = float(nwString[nwString.find(":") + 1:])
+                    
                 return {"name": label, "length": dist}
             else:
                 return nwString.split(',')
         else:
             label, dist, data = self.parseNode(nwString)
+
+            label = label.replace(".","-")                    
 
             dataArray = []
             for item in data:
@@ -186,7 +202,10 @@ class Treere:
             try:
                 self.get_nodes(node["children"])  # We are at an inner node. Jump into the next split if possible
             except KeyError:  # if there is no next split, we are at an outer node and can add a nodelabel to the list.
-                self.sorted_nodes.append(node["name"])
+
+                label = node["name"].replace(".","-")                            
+                
+                self.sorted_nodes.append(label)
 
     def check_order_validity(self, given_leaforder, sorted_nodes):
         """Function for checking whether the leaf order that was specified fits with the existing leafs.
@@ -555,9 +574,6 @@ class Treere:
         else:
             return self.from_newick_to_sorted_treelist(text)
 
-
-       
-    
 
 # for backend testing purposes: enables one to execute code when calling the script directly
 # if __name__ == "__main__":
