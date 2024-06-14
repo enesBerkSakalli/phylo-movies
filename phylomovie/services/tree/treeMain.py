@@ -102,12 +102,21 @@ def calculate_weighted_robinson_foulds_distance(first_tree, second_tree):
 
         return sum(edge_length_map_summed.values())
 
-        
+
+def count_splits(json_consensus_tree_list: List) -> List[Dict]:
+    distance_list = []
+    for i in range(0, len(json_consensus_tree_list) - 5, 5):
+        partitioned_tree_list = json_consensus_tree_list[i: i + 6]
+        distance_dict = compute_robinson_foulds(partitioned_tree_list)
+        distance_list.append(
+            {"tree": int(i / 5), "consensus_index": i, "robinson_foulds": distance_dict})
+    return distance_list
+
 
 if __name__ == '__main__':
     stepSize = 1
     startPosition = 1
-    frontend_input = "alltrees.tree";
+    frontend_input = "alltrees.tree"
 
     with open(frontend_input) as f:    
 
@@ -120,6 +129,8 @@ if __name__ == '__main__':
         json_consensus_tree_list = t_interpolator.input_manager(newick_string, frontend_input)
 
         w_list = calculate_weighted_robinson_foulds_distance_along_trajectory(json_consensus_tree_list)
+
+
 
 
 """

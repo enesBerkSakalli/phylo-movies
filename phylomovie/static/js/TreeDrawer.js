@@ -588,7 +588,7 @@ export class TreeDrawer {
                 const tweenOtherAngle = otherAngleDiff * t + old_otherAngle;
 
                 if(angleDiff > 2|| angleDiff < -2){
-                    return `rotate(${tweenAngle}) translate(${tweenRadius + tweenRadius * (0.01 * i)}, 0) rotate(${tweenOtherAngle})`;    
+                    return `rotate(${tweenAngle}) translate(${tweenRadius}, 0) rotate(${tweenOtherAngle})`;    
                 }else{
                     return `rotate(${tweenAngle}) translate(${tweenRadius}, 0) rotate(${tweenOtherAngle})`;    
                 }
@@ -596,10 +596,6 @@ export class TreeDrawer {
             };
 
         };
-
-
-
-
     }
 
     anchorCalc(d) {
