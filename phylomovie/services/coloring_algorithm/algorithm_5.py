@@ -354,9 +354,7 @@ def case_partial_partial(sedge, t1, t2, sorted_nodes):
     c1 = calculate_component_set(t1, sedge)
     c2 = calculate_component_set(t2, sedge)
 
-    print_component_map(c1, sorted_nodes, "C1")
-    print_component_map(c2, sorted_nodes, "C2")
-
+    
     cf1 = filter_components_from_arms(algo5_partial_partial_cond(t1, t2), c1)
     cf2 = filter_components_from_arms(algo5_partial_partial_cond(t2, t1), c2)
 

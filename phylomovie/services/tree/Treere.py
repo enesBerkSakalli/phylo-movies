@@ -118,11 +118,7 @@ class Treere:
         t = tree.strip()
         if t.find(":") == -1:
             label = t
-            
-            label = label.replace(".","-")                    
-
-            print(label)
-            
+            label = label.replace(".","-")                                
             dist = ""
         else:            
             label = t[:t.find(":")]
@@ -219,14 +215,21 @@ class Treere:
 
         given = set(given_leaforder)
         sorted_nod = set(sorted_nodes)
+        
+        cleaned_give_taxa_order = []
+        
+        for taxon in sorted_nodes:
+            filtered_taxa = taxon.replace(".","-")                                
+            cleaned_give_taxa_order.append(filtered_taxa)
 
-        if given != sorted_nod:
-            difference = given.symmetric_difference(
-                sorted_nod)
+        cleaned_give_taxa_order = set(cleaned_give_taxa_order)
+
+        if cleaned_give_taxa_order != sorted_nod:
+            difference = given.symmetric_difference(sorted_nod)
             print("Unvalid leaf order. Check leaf(s): ", difference)  # temp, needs better way of displaying the error
             return sorted_nodes
         else:
-            return given_leaforder
+            return list(cleaned_give_taxa_order)
 
     # called by jsonTreelist_to_sortedConsensusTreelist. Does the iteration through the trees and the splits of each tree.
     # returns tuple with two entries: [0] = list, [1] = list
@@ -523,6 +526,7 @@ class Treere:
         self.get_nodes(firsttree)
 
         if self.given_leaforder:
+            print(self.check_order_validity(self.given_leaforder, self.sorted_nodes))
             self.sorted_nodes = self.check_order_validity(self.given_leaforder, self.sorted_nodes)
         sorted_consensus_json_treelist = self.tree_traversal(json_treelist)[0]
         return sorted_consensus_json_treelist
@@ -575,18 +579,3 @@ class Treere:
             return self.from_newick_to_sorted_treelist(text)
 
 
-# for backend testing purposes: enables one to execute code when calling the script directly
-# if __name__ == "__main__":
-#    pass
-    # f = open("alltrees-order.txt", "r")
-    # orderFileText = f.read()
-    # orderFileList = orderFileText.split(",")
-
-    # with open("./test-data/tree_reconstructed_test_3.txt") as f:
-    #    txt = f.read()
-    #
-    #treeRe = Treere()
-    #
-    #tree_list = treeRe.input_manager(txt, "tree_reconstructed_test_3.txt")
-    #
-    #to_be_highlighted_leaves = find_to_be_highlighted_leaves(tree_list, treeRe.sorted_nodes, find_tree_highlights_test_3)
