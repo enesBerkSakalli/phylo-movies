@@ -1,5 +1,7 @@
 """Main data management file by Maximilian Christian von der Linde, 29.02.2020"""
+
 import io
+
 # import Bio
 # from Bio import Phylo
 # import Bio.Nexus.Nexus
@@ -64,8 +66,10 @@ class Treere:
         returns:
             cleaned newick string
         """
-        result = re.sub("(\[).*?(\])+", "", newick_txt)        # delete all squared brackets with their content
-        result = result.rstrip()                               # delete all empty newlines at the end of the file
+        result = re.sub(
+            "(\[).*?(\])+", "", newick_txt
+        )  # delete all squared brackets with their content
+        result = result.rstrip()  # delete all empty newlines at the end of the file
         return result
 
     # --------------------------------------------------------------------------------
@@ -83,8 +87,8 @@ class Treere:
     def parseNode(self, nwString):
         parenCount = 0
 
-        tree = ''
-        processed = ''
+        tree = ""
+        processed = ""
         index = 0
         for char in nwString:
             if char == "(":
@@ -97,7 +101,7 @@ class Treere:
                     if index + 2 > len(nwString):
                         break
                     else:
-                        tree = nwString[index + 2:]
+                        tree = nwString[index + 2 :]
                         break
 
             if char == ",":
@@ -110,48 +114,46 @@ class Treere:
 
             index += 1
 
-        data = processed.split(',')
+        data = processed.split(",")
 
         for i in range(len(data)):
-            data[i] = data[i].replace('|', ',')
+            data[i] = data[i].replace("|", ",")
 
         t = tree.strip()
         if t.find(":") == -1:
             label = t
-            label = label.replace(".","-")                                
+            label = label.replace(".", "-")
             dist = ""
-        else:            
-            label = t[:t.find(":")]
-            
-            label = label.replace(".","-")                    
+        else:
+            label = t[: t.find(":")]
 
-            
-            dist = t[t.find(":") + 1:]
+            label = label.replace(".", "-")
+
+            dist = t[t.find(":") + 1 :]
 
         return (label, dist, data)
 
     def recurseBuild(self, nwString):
         nwString = nwString.replace(";", "")
-        if nwString.find('(') == -1:
-            if len(nwString.split(',')) == 1:
+        if nwString.find("(") == -1:
+            if len(nwString.split(",")) == 1:
                 if nwString.find(":") == -1:
                     label = nwString
                     dist = ""
                 else:
-                    
-                    label = nwString[:nwString.find(":")]
-                    
-                    label = label.replace(".","-")                    
-                                        
-                    dist = float(nwString[nwString.find(":") + 1:])
-                    
+                    label = nwString[: nwString.find(":")]
+
+                    label = label.replace(".", "-")
+
+                    dist = float(nwString[nwString.find(":") + 1 :])
+
                 return {"name": label, "length": dist}
             else:
-                return nwString.split(',')
+                return nwString.split(",")
         else:
             label, dist, data = self.parseNode(nwString)
 
-            label = label.replace(".","-")                    
+            label = label.replace(".", "-")
 
             dataArray = []
             for item in data:
@@ -180,9 +182,11 @@ class Treere:
 
         for i in range(self.start - 1, len(lines)):
             # iterate over only the trees that are in the step or if it is the last tree
-            if (((i - self.start - 1) % (self.step) == 0) or (i == len(lines) - 1)):
+            if ((i - self.start - 1) % (self.step) == 0) or (i == len(lines) - 1):
                 tree = lines[i]
-                result = self.recurseBuild(tree)  # call the function that parses a newick tree and gives a json tree
+                result = self.recurseBuild(
+                    tree
+                )  # call the function that parses a newick tree and gives a json tree
                 if len(result["children"]) == 1:
                     result = result["children"][0]
                 json_treelist.append(result)
@@ -196,11 +200,12 @@ class Treere:
         """
         for node in split:
             try:
-                self.get_nodes(node["children"])  # We are at an inner node. Jump into the next split if possible
+                self.get_nodes(
+                    node["children"]
+                )  # We are at an inner node. Jump into the next split if possible
             except KeyError:  # if there is no next split, we are at an outer node and can add a nodelabel to the list.
+                label = node["name"].replace(".", "-")
 
-                label = node["name"].replace(".","-")                            
-                
                 self.sorted_nodes.append(label)
 
     def check_order_validity(self, given_leaforder, sorted_nodes):
@@ -212,24 +217,30 @@ class Treere:
             sorted_nodes: see above. OR.
             given_leaforder: see above.
         """
+        print("This is the given leaf order", given_leaforder)
 
-        given = set(given_leaforder)
-        sorted_nod = set(sorted_nodes)
-        
+        given = set(given_leaforder)  # Set for comparison
+        sorted_nod = set(sorted_nodes)  # Set for comparison
+
         cleaned_give_taxa_order = []
-        
-        for taxon in sorted_nodes:
-            filtered_taxa = taxon.replace(".","-")                                
+
+        # Clean taxa names, but keep the original order
+        for taxon in given_leaforder:
+            filtered_taxa = taxon.replace(".", "-")
             cleaned_give_taxa_order.append(filtered_taxa)
 
-        cleaned_give_taxa_order = set(cleaned_give_taxa_order)
+        # Now, compare using sets, but keep the list for returning
+        cleaned_give_taxa_order_set = set(cleaned_give_taxa_order)
 
-        if cleaned_give_taxa_order != sorted_nod:
+        if cleaned_give_taxa_order_set != sorted_nod:
             difference = given.symmetric_difference(sorted_nod)
-            print("Unvalid leaf order. Check leaf(s): ", difference)  # temp, needs better way of displaying the error
+            print(
+                "Invalid leaf order. Check leaf(s): ", difference
+            )  # temp, needs better way of displaying the error
             return sorted_nodes
         else:
-            return list(cleaned_give_taxa_order)
+            print("This is the used order:", cleaned_give_taxa_order)
+            return cleaned_give_taxa_order  # Return the list with preserved order
 
     # called by jsonTreelist_to_sortedConsensusTreelist. Does the iteration through the trees and the splits of each tree.
     # returns tuple with two entries: [0] = list, [1] = list
@@ -266,7 +277,7 @@ class Treere:
             item = split[count]
 
             # fault in the newick to json parser: sometimes length are saved as strings.
-            if (type(item["length"] == str and item["length"]) != ''):
+            if type(item["length"] == str and item["length"]) != "":
                 try:
                     item["length"] = float(item["length"])  # this is fixed here.
                 except ValueError:  # if no length is given, it is set to 1 (not sure if that's correct!)
@@ -275,11 +286,17 @@ class Treere:
             if "children" in item:
                 # look into each item of the split list. If the item has a "children", first sort the split inside that key.
                 tmp = self.tree_traversal(item["children"])
-                split[count]["children"] = tmp[0]  # update the key (branchset) to the sorted version of itself.
+                split[count]["children"] = tmp[
+                    0
+                ]  # update the key (branchset) to the sorted version of itself.
                 child_leaflist = tmp[1]  # get the leaf names included in that child
                 child_leaflist.sort()  # key = lambda i : sorted_nodes.index(i)
-                split[count]["name"] = child_leaflist  # rename the inner node to a collection of its leafes
-                leaflist.extend(child_leaflist)  # extend the leaflist by all collected leafes
+                split[count]["name"] = (
+                    child_leaflist  # rename the inner node to a collection of its leafes
+                )
+                leaflist.extend(
+                    child_leaflist
+                )  # extend the leaflist by all collected leafes
                 self.splitlist2.append(split[count]["name"])
                 # save the name and length of the current node in the dict
                 self.splitdict2[f'{item["name"]}'] = item["length"]
@@ -288,39 +305,68 @@ class Treere:
                 leaflist.append(self.sorted_nodes.index(item["name"]))
                 # change the leaf name to its index number for sorting
                 item["name"] = self.sorted_nodes.index(item["name"])
-                self.splitlist2.append([split[count]["name"]])  # append the nodename in the splitlist as list obj
+                self.splitlist2.append(
+                    [split[count]["name"]]
+                )  # append the nodename in the splitlist as list obj
                 # save the name and length of the current node in the dict
                 self.splitdict2[f'{[item["name"]]}'] = item["length"]
 
             # Consensus code
-            if type(
-                    item["name"]) != int and len(
-                    item["name"]) == len(
-                    self.sorted_nodes):  # if we are at the ROOT NODE (after the tree traversal took place)
-                if self.splitlist1 != []:  # if we already have a old splitlist (= if we are not at the very first tree)
-                    self.compare_splitlists(self.splitlist1, self.splitlist2, self.splitdict1, self.splitdict2)
+            if type(item["name"]) != int and len(item["name"]) == len(
+                self.sorted_nodes
+            ):  # if we are at the ROOT NODE (after the tree traversal took place)
+                if (
+                    self.splitlist1 != []
+                ):  # if we already have a old splitlist (= if we are not at the very first tree)
+                    self.compare_splitlists(
+                        self.splitlist1,
+                        self.splitlist2,
+                        self.splitdict1,
+                        self.splitdict2,
+                    )
 
-                    previous_tree = split[count - 1]  # = the previous tree, where the the transition starts
+                    previous_tree = split[
+                        count - 1
+                    ]  # = the previous tree, where the the transition starts
                     # build the input for build_constree12 (needs branchset lists as input)
                     tree1 = previous_tree["children"]
-                    constree1 = copy.deepcopy(tree1)  # deepcopies are time consuming, but have to be made
+                    constree1 = copy.deepcopy(
+                        tree1
+                    )  # deepcopies are time consuming, but have to be made
                     constree2 = copy.deepcopy(tree1)
-                    new_trees = self.build_constree12(tree1, constree1, constree2)[1:3]  # get the two constrees
+                    new_trees = self.build_constree12(tree1, constree1, constree2)[
+                        1:3
+                    ]  # get the two constrees
 
                     current_tree = split[count]
                     tree2 = current_tree["children"]
                     constree3 = copy.deepcopy(tree2)
                     constree4 = copy.deepcopy(tree2)
-                    if count == len(split)-1:  # if we are at the last tree of the tree list, the leaf names of that tree need to be renamed now
-                        new_trees.extend(self.build_constree34(tree2, constree3, constree4, lasttree=True)[1:3])
+                    if (
+                        count == len(split) - 1
+                    ):  # if we are at the last tree of the tree list, the leaf names of that tree need to be renamed now
+                        new_trees.extend(
+                            self.build_constree34(
+                                tree2, constree3, constree4, lasttree=True
+                            )[1:3]
+                        )
                     else:
-                        new_trees.extend(self.build_constree34(tree2, constree3, constree4)[1:3])
+                        new_trees.extend(
+                            self.build_constree34(tree2, constree3, constree4)[1:3]
+                        )
 
                     for i in range(
-                            len(new_trees)):  # assign each constree their root, to obtain the same data structure as before the build_constree
-                        new_trees[i] = {"name": item["name"], "length": item["length"], "children": new_trees[i]}
-                    
-                    split[count:count] = new_trees  # add the two consesus trees derived from tree 1
+                        len(new_trees)
+                    ):  # assign each constree their root, to obtain the same data structure as before the build_constree
+                        new_trees[i] = {
+                            "name": item["name"],
+                            "length": item["length"],
+                            "children": new_trees[i],
+                        }
+
+                    split[count:count] = (
+                        new_trees  # add the two consesus trees derived from tree 1
+                    )
                     count += len(new_trees)
 
                     not_listoftrees = False  # we want no sorting after the iteration
@@ -357,16 +403,20 @@ class Treere:
         """
 
         splitlist2.sort()  # sort by the integers included in the item
-        splitlist2.sort(key=len, reverse=True)  # sort by length of the item (has priority)
+        splitlist2.sort(
+            key=len, reverse=True
+        )  # sort by length of the item (has priority)
         splitlist1.sort()  # sort by the integers included in the item
-        splitlist1.sort(key=len, reverse=True)  # sort by length of the item (has priority)
+        splitlist1.sort(
+            key=len, reverse=True
+        )  # sort by length of the item (has priority)
 
         self.consdict1 = {}
         self.consdict2 = {}
         self.consdict3 = {}
         self.consdict4 = {}
         for i in splitlist1:
-            i_str = f'{i}'
+            i_str = f"{i}"
             if i in splitlist2:
                 self.consdict1[i_str] = (splitdict1[i_str] + splitdict2[i_str]) / 2
                 self.consdict2[i_str] = (splitdict1[i_str] + splitdict2[i_str]) / 2
@@ -375,7 +425,7 @@ class Treere:
                 self.consdict2[i_str] = False
 
         for i in splitlist2:
-            i_str = f'{i}'
+            i_str = f"{i}"
             if i in splitlist1:
                 self.consdict4[i_str] = (splitdict1[i_str] + splitdict2[i_str]) / 2
                 self.consdict3[i_str] = (splitdict1[i_str] + splitdict2[i_str]) / 2
@@ -383,7 +433,9 @@ class Treere:
                 self.consdict4[i_str] = 0
                 self.consdict3[i_str] = False
 
-    def build_constree12(self, tree1, constree1, constree2):  # rename leafs of tree1, build constree1 and constree2
+    def build_constree12(
+        self, tree1, constree1, constree2
+    ):  # rename leafs of tree1, build constree1 and constree2
         """Goes through tree 1, constree 1 and constree 2 recursively and adapts the consensus trees according to the cons dicts.
 
         This function works similar to tree_traversal, but it traverses through tree 1 and the two intermediate trees derived from tree 1 at the same time.
@@ -411,7 +463,8 @@ class Treere:
                 temp_subtreelist = self.build_constree12(
                     tree1[i]["children"],
                     constree1[i]["children"],
-                    constree2[count_constree2]["children"])
+                    constree2[count_constree2]["children"],
+                )
                 tree1[i]["children"] = temp_subtreelist[0]
                 constree1[i]["children"] = temp_subtreelist[1]
                 constree2[count_constree2]["children"] = temp_subtreelist[2]
@@ -422,24 +475,33 @@ class Treere:
                 if self.consdict2[f'{constree2[count_constree2]["name"]}'] == False:
                     insert_nodes = len(constree2[count_constree2]["children"])
                     # insert the branchset behind the position where the inner node will be deleted
-                    constree2[count_constree2 + 1: count_constree2 + 1] = constree2[count_constree2]["children"]
+                    constree2[count_constree2 + 1 : count_constree2 + 1] = constree2[
+                        count_constree2
+                    ]["children"]
                     del constree2[count_constree2]  # delete the inner node
 
                     # adapt the count of constree2 so that it does not iterate over the inserted nodes
                     count_constree2 = count_constree2 + insert_nodes - 1
                 else:
                     # if the inner node is still there, get the consensus length
-                    constree2[count_constree2]["length"] = self.consdict1[f'{tree1[i]["name"]}']
+                    constree2[count_constree2]["length"] = self.consdict1[
+                        f'{tree1[i]["name"]}'
+                    ]
 
             else:
-
                 # adapt the length of the consensus nodes
                 constree1[i]["length"] = self.consdict1[f'[{constree1[i]["name"]}]']
-                constree2[count_constree2]["length"] = self.consdict1[f'[{constree2[count_constree2]["name"]}]']
+                constree2[count_constree2]["length"] = self.consdict1[
+                    f'[{constree2[count_constree2]["name"]}]'
+                ]
 
-                tree1[i]["name"] = self.sorted_nodes[tree1[i]["name"]]  # give the leaf its proper name back
+                tree1[i]["name"] = self.sorted_nodes[
+                    tree1[i]["name"]
+                ]  # give the leaf its proper name back
                 constree1[i]["name"] = self.sorted_nodes[constree1[i]["name"]]
-                constree2[count_constree2]["name"] = self.sorted_nodes[constree2[count_constree2]["name"]]
+                constree2[count_constree2]["name"] = self.sorted_nodes[
+                    constree2[count_constree2]["name"]
+                ]
                 # print("leaf END", tree1[i]["name"], constree2[count_constree2]["name"]) # temp
 
             count_constree2 += 1
@@ -476,7 +538,8 @@ class Treere:
                     tree2[i]["children"],
                     constree4[i]["children"],
                     constree3[count_constree3]["children"],
-                    lasttree=lasttree)
+                    lasttree=lasttree,
+                )
                 tree2[i]["children"] = temp_subtreelist[0]
                 constree3[count_constree3]["children"] = temp_subtreelist[1]
                 constree4[i]["children"] = temp_subtreelist[2]
@@ -487,26 +550,33 @@ class Treere:
                 if self.consdict3[f'{constree3[count_constree3]["name"]}'] == False:
                     insert_nodes = len(constree3[count_constree3]["children"])
                     # insert the branchset behind the position where the inner node will be deleted
-                    constree3[count_constree3+1:count_constree3+1] = constree3[count_constree3]["children"]
+                    constree3[count_constree3 + 1 : count_constree3 + 1] = constree3[
+                        count_constree3
+                    ]["children"]
                     del constree3[count_constree3]  # delete the inner node
 
                     # adapt the count of constree3 so that it does not iterate over the inserted nodes
                     count_constree3 = count_constree3 + insert_nodes - 1
                 else:
                     # if the inner node is still there, get the consensus length
-                    constree3[count_constree3]["length"] = self.consdict4[f'{tree2[i]["name"]}']
+                    constree3[count_constree3]["length"] = self.consdict4[
+                        f'{tree2[i]["name"]}'
+                    ]
 
             else:
-
                 # adapt the length of the consensus nodes
                 constree4[i]["length"] = self.consdict4[f'[{constree4[i]["name"]}]']
-                constree3[count_constree3]["length"] = self.consdict4[f'[{constree3[count_constree3]["name"]}]']
+                constree3[count_constree3]["length"] = self.consdict4[
+                    f'[{constree3[count_constree3]["name"]}]'
+                ]
 
                 if lasttree:
                     # give the leaf of the last tree in the tree list its proper name back
                     tree2[i]["name"] = self.sorted_nodes[tree2[i]["name"]]
                 constree4[i]["name"] = self.sorted_nodes[constree4[i]["name"]]
-                constree3[count_constree3]["name"] = self.sorted_nodes[constree3[count_constree3]["name"]]
+                constree3[count_constree3]["name"] = self.sorted_nodes[
+                    constree3[count_constree3]["name"]
+                ]
                 # print("leaf END", tree2[i]["name"], constree3[count_constree3]["name"])
 
             count_constree3 += 1
@@ -527,10 +597,11 @@ class Treere:
 
         if self.given_leaforder:
             print(self.check_order_validity(self.given_leaforder, self.sorted_nodes))
-            self.sorted_nodes = self.check_order_validity(self.given_leaforder, self.sorted_nodes)
+            self.sorted_nodes = self.check_order_validity(
+                self.given_leaforder, self.sorted_nodes
+            )
         sorted_consensus_json_treelist = self.tree_traversal(json_treelist)[0]
         return sorted_consensus_json_treelist
-
 
     def from_nexus_to_sorted_treelist(self, txt: str) -> List[dict]:
         """Transforms a nexus string list to a list of json objects"""
@@ -538,38 +609,39 @@ class Treere:
 
         json_tree_list = self.json_list(purified_newick_strings)
 
-        interpolated_tree_list = self.jsonTreelist_to_sortedConsensusTreelist(json_tree_list)
+        interpolated_tree_list = self.jsonTreelist_to_sortedConsensusTreelist(
+            json_tree_list
+        )
 
         return interpolated_tree_list
 
-
     def from_newick_to_sorted_treelist(self, newick_string):
-        
         """Transforms a newline delimited newick string list to a list of json objects"""
         purified_newick_strings = self.newick_purification(newick_string)
 
         json_tree_list = self.json_list(purified_newick_strings)
-        interpolated_tree_list = self.jsonTreelist_to_sortedConsensusTreelist(json_tree_list)
+        interpolated_tree_list = self.jsonTreelist_to_sortedConsensusTreelist(
+            json_tree_list
+        )
 
         return interpolated_tree_list
 
     def initiate_leave_order(self, node):
-        if('children' in node.keys()):
-            for child in node['children']:
+        if "children" in node.keys():
+            for child in node["children"]:
                 self.denote_leaves_with_order(child)
-            node['children'].sort(key=operator.itemgetter('leave_order_index'))
+            node["children"].sort(key=operator.itemgetter("leave_order_index"))
 
     def denote_leaves_with_order(self, node, i=0):
-        if('children' in node.keys()):
-            for child in node['children']:
-                self.denote_leaves_with_order(child, i )
-            node['leave_order_index'] = 99999
-            node['tree_order_index'] = 99999
+        if "children" in node.keys():
+            for child in node["children"]:
+                self.denote_leaves_with_order(child, i)
+            node["leave_order_index"] = 99999
+            node["tree_order_index"] = 99999
         else:
-            node['leave_order_index'] = self.sorted_nodes.index(node['name'])
-            node['tree_order_index'] = i
+            node["leave_order_index"] = self.sorted_nodes.index(node["name"])
+            node["tree_order_index"] = i
             i = i + 1
-
 
     def input_manager(self, text, filename):
         """Transforms a tree as an input string (newick or nexus) to json tree"""
@@ -577,5 +649,3 @@ class Treere:
             return self.from_nexus_to_sorted_treelist(text)
         else:
             return self.from_newick_to_sorted_treelist(text)
-
-
