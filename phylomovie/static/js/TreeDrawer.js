@@ -25,9 +25,8 @@ export class TreeDrawer {
   constructor(_currentRoot) {
     this._colorInternalBranches = true;
     this.root = _currentRoot;
-    this.marked = [];
+    this.marked = new Set();
     this.leaveOrder = [];
-
     this._drawDuration = 1000;
   }
 
@@ -198,10 +197,8 @@ export class TreeDrawer {
     links
       .attr("stroke-width", TreeDrawer.sizeMap.strokeWidth)
       .style("stroke", (d) => {
-        let currentBranchLeafSet = new Set(d.target.data.name);
-
         if (this._colorInternalBranches) {
-          return this.colorInternalBranches(currentBranchLeafSet, d);
+          return this.colorInternalBranches(d);
         } else {
           return this.colorExternalBranches(this.marked, d);
         }
@@ -210,33 +207,67 @@ export class TreeDrawer {
       .ease(d3.easeExpInOut)
       .duration(this.drawDuration)
       .attrTween("d", this.getArcInterpolationFunction());
-
-    //links.sort((a, b) => { console.log(a)});
   }
 
-  colorInternalBranches(currentBranchLeafSet, d) {
-    const taxa_indices = new Set();
+  colorInternalBranches(d) {
+    const leafNames = d.target.data.name;
+    const taxaIndices = [];
 
-    for (const taxon of currentBranchLeafSet) {
-      if (typeof taxon === "number") {
-        taxa_indices.add(taxon);
+    // Determine if leafNames is an array
+    if (Array.isArray(leafNames)) {
+      for (const taxon of leafNames) {
+        if (typeof taxon === "number") {
+          // Directly add numerical indices
+          taxaIndices.push(taxon);
+        } else if (typeof taxon === "string") {
+          // Find the index of the taxon in leaveOrder
+          const index = this.leaveOrder.indexOf(taxon);
+          if (index !== -1) {
+            taxaIndices.push(index);
+          } else {
+            console.warn(`Taxon "${taxon}" not found in leaveOrder.`);
+          }
+        } else {
+          console.warn(`Unexpected taxon type: ${typeof taxon}`);
+        }
       }
+    } else if (typeof leafNames === "number") {
+      // If leafNames is a single number, add it directly
+      taxaIndices.push(leafNames);
+    } else if (typeof leafNames === "string") {
+      // If leafNames is a single string, find its index
+      const index = this.leaveOrder.indexOf(leafNames);
+      if (index !== -1) {
+        taxaIndices.push(index);
+      } else {
+        console.warn(`Taxon "${leafNames}" not found in leaveOrder.`);
+      }
+    } else {
+      console.warn(
+        `Unexpected type for d.target.data.name: ${typeof leafNames}`
+      );
+    }
 
-      if (typeof taxon === "string") {
-        taxa_indices.add(this.leaveOrder.indexOf(taxon));
+    // If no valid taxa indices are found, return the default color
+    if (taxaIndices.length === 0) {
+      console.warn("No valid taxa indices found. Using defaultColor.");
+      return TreeDrawer.colorMap.defaultColor;
+    }
+
+    // Check if every taxon in taxaIndices is marked
+    for (const taxonIndex of taxaIndices) {
+      const taxonName = this.leaveOrder[taxonIndex];
+
+      if (!this.marked.has(taxonName)) {
+        return TreeDrawer.colorMap.defaultColor;
       }
     }
 
-    for (const taxon of this.marked) {
-      if (taxa_indices.has(this.leaveOrder.indexOf(taxon))) {
-        return TreeDrawer.colorMap.markedColor;
-      }
-    }
-
-    return TreeDrawer.colorMap.defaultColor;
+    return TreeDrawer.colorMap.markedColor;
   }
 
   colorExternalBranches(marked, branch) {
+    console.log(marked);
     if (marked.has(branch.target.data.name.toString())) {
       return TreeDrawer.colorMap.markedColor;
     } else {
@@ -252,9 +283,12 @@ export class TreeDrawer {
     // JOIN new data with old elements.
     const linkExtension = TreeDrawer.svg_container
       .selectAll(".link-extension") //updates the links
-      .data(this.root.leaves(), (link) => {
-        return link.data.name;
+      .data(this.root.leaves(), (linkExtension) => {
+        return linkExtension.data.name;
       });
+
+    // EXIT old elements not present in new data.
+    linkExtension.exit().remove();
 
     // UPDATE old elements present in new data.
     linkExtension
@@ -262,17 +296,38 @@ export class TreeDrawer {
       .attr("stroke-width", TreeDrawer.sizeMap.strokeWidth)
       .ease(d3.easeExpInOut)
       .duration(this.drawDuration)
-      .attrTween("d", this.getLinkExtensionInterpolator(currentMaxRadius - 40));
+      .attrTween("d", this.getLinkExtensionInterpolator(currentMaxRadius - 40))
+      .style("stroke", (d) => {
+        if (this.marked.has(d.data.name.toString())) {
+          return TreeDrawer.colorMap.markedColor; // Algorithm-detected taxa
+        } else if (
+          TreeDrawer.markedLabelList.includes(d.data.name.toString())
+        ) {
+          return TreeDrawer.colorMap.userMarkedColor; // User-clicked nodes
+        } else {
+          return TreeDrawer.colorMap.defaultColor;
+        }
+      });
 
     // ENTER new elements present in new data.
     linkExtension
       .enter()
       .append("path")
       .attr("class", "link-extension")
-      .style("stroke", TreeDrawer.colorMap.extensionLinkColor)
+      .style("stroke", (d) => {
+        if (this.marked.has(d.data.name.toString())) {
+          return TreeDrawer.colorMap.markedColor; // Algorithm-detected taxa
+        } else if (
+          TreeDrawer.markedLabelList.includes(d.data.name.toString())
+        ) {
+          return TreeDrawer.colorMap.userMarkedColor; // User-clicked nodes
+        } else {
+          return TreeDrawer.colorMap.defaultColor;
+        }
+      })
       .attr("stroke-width", TreeDrawer.sizeMap.strokeWidth)
       .attr("stroke-dasharray", () => {
-        return 5 + ",5";
+        return "5,5";
       })
       .attr("fill", "none")
       .attr("d", (d) => {
