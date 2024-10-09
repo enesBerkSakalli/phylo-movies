@@ -1,127 +1,176 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<!-- Base HTML File written by Enes Berk Sakalli-->
-
-<head>
-    <meta charset="utf-8" />
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Phylo-Movies</title>
-
-    <!-- CSS only -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Heebo">
-    <!-- JavaScript Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf" crossorigin="anonymous">
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css?family=Heebo"
+    />
+    <link
+      href="https://unpkg.com/filepond/dist/filepond.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/filepond/dist/filepond.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "@material/web/": "https://esm.run/@material/web/"
+        }
+      }
     </script>
-</head>
+    <script type="module">
+      import "@material/web/all.js";
+      import { styles as typescaleStyles } from "@material/web/typography/md-typescale-styles.js";
 
-<body>
-
-    <div>
-        <nav class="navbar navbar-expand-lg navbar-light bg-light">
-            <div class="container-fluid">´
-
-                <a class="navbar-brand" href="/">
-                    Phylo-Movies
-                </a>
-
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
-                    aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        <li class="nav-item">
-                            <a class="nav-link active" aria-current="page" href="./about">About</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link active" aria-current="page" href="#">Help</a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </nav>
-    </div>
-
-    <div class="container" style="margin-top:50px">
-        <div class="row">
-            <div class="header p-0">
-                <h1>Phylo-Movies</h1><i class="fa fa-film logo icon-right"></i>
-            </div>
+      document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
+    </script>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="/">Phylo-Movies</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarSupportedContent"
+          aria-controls="navbarSupportedContent"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="./about"
+                >About</a
+              >
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" href="#">Help</a>
+            </li>
+          </ul>
         </div>
+      </div>
+    </nav>
 
-
-        <form method="post" enctype="multipart/form-data">
-
-                
-                <div class="form-group row">
-                    <label class="form-label col-form-label-lg" for="windowSize">Window Size</label>
-                    <input type="number" name="windowSize" id="windowSize" placeholder="1" value="1"
-                        class="form-control form-control-lg">
-                </div>
-
-                <div class="form-group row">
-                    <label class="form-label col-form-label-lg" for="window-step-size">Window-Step-Size</label>
-                    <input type="number" id="window-step-size" name="windowStepSize" placeholder="1" value="1"
-                        class="form-control form-control-lg">
-                </div>
-
-                <div class="row js-upload">
-                    <label for="form-file-tree" class="form-label col-form-label-lg">Tree File</label>
-                    <input type="file" class="form-control form-control-lg" id="form-file-tree" name="treeFile" required>
-                </div>
-
-                <div class="form-group row">
-                    <label for="form-file-order" class="form-label col-form-label-lg">Order File</label>
-                    <input type="file" class="form-control form-control-lg" id="form-file-order" name="orderFile">
-                </div>
-
-                <div class="form-group row pt-2">
-                    <div class="col p-0">
-                        <button type="submit" class="btn btn-outline-primary btn-lg"><i class="fa fa-play"></i> Play</button>
-                    </div>
-                </div>
-
+    <div class="container mt-5">
+      <div class="row">
+        <div class="col-lg-8 mx-auto">
+          <h1 class="mb-4">Phylo-Movies <i class="fa fa-film"></i></h1>
+          <form
+            id="phylo-form"
+            action="/"
+            method="post"
+            enctype="multipart/form-data"
+          >
+            <div class="mb-3">
+              <label for="trees" class="form-label">Tree File</label>
+              <input
+                id="trees"
+                type="file"
+                class="filepond"
+                name="treeFile"
+                required
+              />
             </div>
-           
-        </form>
-
+            <div class="mb-3">
+              <label for="order" class="form-label">Order File</label>
+              <input type="file" class="filepond" id="order" name="orderFile" />
+            </div>
+            <div class="mb-3">
+              <label for="windowSize" class="form-label">Window Size</label>
+              <input
+                type="number"
+                class="form-control"
+                id="windowSize"
+                name="windowSize"
+                placeholder="1"
+                value="1"
+              />
+            </div>
+            <div class="mb-3">
+              <label for="window-step-size" class="form-label"
+                >Window-Step-Size</label
+              >
+              <input
+                type="number"
+                class="form-control"
+                id="window-step-size"
+                name="windowStepSize"
+                placeholder="1"
+                value="1"
+              />
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg">
+              <i class="fa fa-play"></i> Play
+            </button>
+          </form>
+        </div>
+      </div>
     </div>
 
-</body>
+    <script>
+      FilePond.registerPlugin();
+      const treesInput = document.getElementById("trees");
+      const orderInput = document.getElementById("order");
+      FilePond.create(treesInput, {
+        allowMultiple: false,
+        storeAsFile: true,
+      });
+      FilePond.create(orderInput, {
+        allowMultiple: false,
+        storeAsFile: true,
+      });
+    </script>w
 
-</html>
+    <style>
+      body {
+        font-family: "Heebo", sans-serif;
+      }
 
-<script>
-    
-</script>
+      .navbar-brand,
+      .nav-link {
+        font-weight: 500;
+      }
 
-<style>
-
-    * {
-        font-family: Heebo, sans-serif;
-    }
-
-    .icon-right{
-        top: calc(50% - 22px);
-        font-size: 35px;
-        position: relative;
-        padding-left: 20px;
-    }
-
-    input {
-        padding: 0.2em;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-    }
-
-    .header {
+      h1 {
+        font-size: 2.5em;
         display: flex;
-    }
+        align-items: center;
+        gap: 0.5rem;
+      }
 
-    
-</style>
+      .form-label {
+        font-weight: bold;
+      }
+
+      .btn-primary {
+        padding: 0.75rem 1.5rem;
+        font-size: 1.2rem;
+      }
+
+      .form-control,
+      .filepond--root {
+        border-radius: 0.5rem;
+      }
+
+      .filepond--drop-label {
+        font-size: 1rem;
+        color: #495057;
+      }
+    </style>
+  </body>
+</html>
