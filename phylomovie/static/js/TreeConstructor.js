@@ -210,6 +210,8 @@ export default function constructTree(tree, ignore_branch_lengths) {
 
     let d3tree = d3.hierarchy(tree);
 
+    console.log(d3tree);
+
     let treeConstructor = new TreeConstructor(d3tree, ignore_branch_lengths);
 
     let applicationContainer = document.getElementById("applicationContainer");

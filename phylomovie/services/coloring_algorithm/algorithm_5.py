@@ -1,5 +1,5 @@
 import sys
-from typing import List, Callable, TypeVar, Union, NewType, Optional, Collection, Collection
+from typing import List, Callable, TypeVar, NewType, Optional, Collection
 from .main.main_find_highlights import decode_highList_one_tree, Node, NodeName
 from ete3 import Tree
 import numpy as np

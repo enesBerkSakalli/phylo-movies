@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-  <!-- Base HTML File written by Enes Berk Sakalli-->
+  <!-- Base HTML File -->
 
   <head>
     <meta charset="utf-8" />
@@ -46,15 +46,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.1.0/dist/chartjs-plugin-annotation.min.js"></script>
 
-    <script
-      type="module"
-      src="{{ url_for('static', filename='js/calc.js') }}"
-    ></script>
-
-    <script
-      type="module"
-      src="{{ url_for('static', filename='js/gui.js') }}"
-    ></script>
   </head>
 
   <body>
@@ -63,15 +54,14 @@
 
       <div class="menu">
         <!-- beginning of menu header -->
-        {#
+        <!-- Header commented out
         <div class="menu-header">
           <div class="header">
             <p>Phylo-Movies</p>
           </div>
           <p class="commitmessage">{{ commit }}</p>
         </div>
-        #}
-
+        -->
         <!-- end of menu header -->
         <div>
           <div>File: {{file_name | safe}}</div>
@@ -85,23 +75,6 @@
               <span style="align-self: end">
                 <span id="currentFullTree">0</span>/
                 <span id="numberOfFullTrees"></span>
-              </span>
-            </div>
-
-            <div class="row">
-              <div class="menuItem">Trees Intermediate</div>
-              <div class="treeNavigation">
-                <span style="align-self: end">
-                  <span id="currentTree"></span> /
-                  <span id="numberOfTrees">5</span>
-                </span>
-              </div>
-            </div>
-
-            <div class="row">
-              <div class="menuItem">Tree Type:</div>
-              <span style="align-self: end">
-                <span id="treeLabel"></span>
               </span>
             </div>
 
@@ -125,20 +98,27 @@
               </div>
             </div>
 
+
             <div class="row">
-              <div class="menuItem stepSizeLabel">
-                <label for="factor">Factor:</label>
+              <div class="menuItem">Trees Intermediate</div>
+              <div class="treeNavigation">
+                <span style="align-self: end">
+                  <span id="currentTree"></span> /
+                  <span id="numberOfTrees">5</span>
+                </span>
               </div>
-              <div class="bubble">
-                <input
-                  id="factor"
-                  class="stepSizeInput left right"
-                  type="number"
-                  name="stepSize"
-                  value="1"
-                />
-                <div style="width: 30px; height: 10px"></div>
-              </div>
+            </div>
+
+            <div class="row">
+              <div class="menuItem">Tree Type:</div>
+              <span style="align-self: end">
+                <span id="treeLabel"></span>
+              </span>
+            </div>
+
+
+            <div class="row">
+              <span>Window-Size: {{window_size | safe}} / Step-Size: {{window_step_size | safe}}</span>
             </div>
 
             <div class="row">
@@ -148,39 +128,6 @@
               ></span>
             </div>
 
-            <div class="row">
-              <div class="menuItem stepSizeLabel">
-                <label for="windowSize">Window Size:</label>
-              </div>
-              <div class="bubble">
-                <input
-                  id="windowSize"
-                  class="stepSizeInput left right"
-                  type="number"
-                  value="1"
-                  disabled
-                  readonly="readonly"
-                />
-                <div style="width: 30px; height: 10px"></div>
-              </div>
-            </div>
-
-            <div class="row">
-              <div class="menuItem stepSizeLabel">
-                <label for="windowStepSize">Window Step Size:</label>
-              </div>
-              <div class="bubble">
-                <input
-                  id="windowStepSize"
-                  class="stepSizeInput left right"
-                  type="number"
-                  name="stepSize"
-                  value="1"
-                  disabled
-                />
-                <div style="width: 30px; height: 10px"></div>
-              </div>
-            </div>
 
             <div class="row">
               <div class="menuItem stepSizeLabel">
@@ -240,40 +187,59 @@
             </button>
           </div>
 
-          <div></div>
+          <div class="row">
+            <div class="menuItem stepSizeLabel">
+              <label for="factor">Factor:</label>
+            </div>
+            <div class="bubble">
+              <input
+                id="factor"
+                class="stepSizeInput left right"
+                type="number"
+                name="stepSize"
+                value="1"
+              />
+              <div style="width: 30px; height: 10px"></div>
+            </div>
+          </div>
 
-          <div style="padding-top: 20px; padding-bottom: 20px">
-            <div>Ignore Branch Lengths</div>
-            <label class="switch" style="padding-top: 20px">
+
+          <!-- Ignore Branch Lengths Switch -->
+          <div class="row" style="padding-top: 20px; padding-bottom: 20px">
+            <div class="menuItem">Ignore Branch Lengths</div>
+            <label class="switch">
               <input id="branch-length" type="checkbox" />
               <span class="slider round"></span>
             </label>
           </div>
 
-          <div>
-            <div>Leaf-Label Size</div>
-            <input
-              class="uk-range"
-              type="range"
-              id="font-size"
-              name="font-size"
-              min="0"
-              max="10"
-              step="0.01"
-            />
-          </div>
+          <!-- Sliders Row -->
+          <div class="row">
+            <div class="slider-container">
+              <div class="menuItem">Leaf-Label Size</div>
+              <input
+                class="uk-range"
+                type="range"
+                id="font-size"
+                name="font-size"
+                min="0"
+                max="10"
+                step="0.01"
+              />
+            </div>
 
-          <div>
-            <div>Stroke Width</div>
-            <input
-              class="uk-range"
-              type="range"
-              id="stroke-width"
-              name="font-size"
-              min="0.5"
-              max="10"
-              step="0.01"
-            />
+            <div class="slider-container">
+              <div class="menuItem">Stroke Width</div>
+              <input
+                class="uk-range"
+                type="range"
+                id="stroke-width"
+                name="stroke-width"
+                min="0.5"
+                max="10"
+                step="0.01"
+              />
+            </div>
           </div>
 
           <!-- end of button section-->
@@ -321,10 +287,9 @@
     </div>
 
     <script type="module">
+      import Gui from "/static/js/gui.js";
 
-      import Gui from "{{ url_for('static', filename='js/gui.js') }}";
-
-      //================================================================================ // Properties //================================================================================ let treeList
+      // Properties
       let treeList = {{tree_list | safe}};
 
       let robinsonFouldsDistances = {{rfe_list | safe}};
@@ -334,19 +299,19 @@
       let toBeHighlighted = {{to_be_highlighted | safe}};
 
       let leaveOrder = {{sorted_leaves | safe}};
-      let windowSize = parseInt({{window_size | safe}});
-      let windowStepSize = parseInt({{window_step_size | safe}});
 
-      document.getElementById("windowSize").value = windowSize;
-      document.getElementById("windowStepSize").value = windowStepSize;
+      let windowSize = parseInt("{{window_size | safe}}", 10);
+      
+      let windowStepSize = parseInt("{{window_step_size | safe}}", 10);
 
       let fileName = "{{file_name | safe}}";
 
-      let ignore_branch_lengths = false;
-      let color_internal_branches = true;
-      const gui = new Gui(treeList,weightedRobinsonFouldsDistances, robinsonFouldsDistances, windowSize, windowStepSize, toBeHighlighted, leaveOrder, color_internal_branches,fileName);
+      let colorInternalBranches = true;
+
+      const gui = new Gui(treeList, weightedRobinsonFouldsDistances, robinsonFouldsDistances, windowSize, windowStepSize, toBeHighlighted, leaveOrder, colorInternalBranches, fileName);
 
       gui.initializeMovie();
+
       gui.play();
 
       document.querySelector('#startButton').addEventListener('click', () => {
@@ -359,21 +324,18 @@
           () => {
               gui.forward();
       });
-
       document.querySelector('#backwardButton').addEventListener('click', () => {
           gui.backward();
       });
-
       document.querySelector('#saveButton').addEventListener('click', () => {
           gui.saveSVG();
       });
-
       document.querySelector('#positionButton').addEventListener('click',
           () => {
               let position = Math.max(1 , document.getElementById("positionValue").value);
               document.getElementById("positionValue").value  = position;
               gui.goToPosition(position - 1);
-          });
+      });
 
       document.querySelector('#forwardStepButton').addEventListener('click', () => {
           gui.nextTree();
@@ -382,17 +344,18 @@
       document.querySelector('#backwardStepButton').addEventListener('click',
           () => {
               gui.prevTree();
-          });
-
-      document.querySelector('#barPlotOption').addEventListener('click', () => {
-          gui.barOptionValue = document.getElementById("barPlotOption").value;
-          gui.update();
       });
 
-      document.querySelector('#branch-length').addEventListener('click',
-          () => {
-              gui.ignoreBranchLengths = document.getElementById("branch-length").checked;
-              gui.update();
+      // For the select element
+      document.querySelector('#barPlotOption').addEventListener('change', () => {
+        gui.barOptionValue = document.getElementById("barPlotOption").value;
+        gui.update();
+      });
+
+      // For the checkbox
+      document.querySelector('#branch-length').addEventListener('change', () => {
+        gui.ignoreBranchLengths = document.getElementById("branch-length").checked;
+        gui.update();
       });
 
       document.querySelector('#font-size').addEventListener('input',() => {
@@ -411,9 +374,13 @@
           gui.generateModalChart();
       });
 
-      //document.querySelector('#color-internal-branch-length').addEventListener('click', () => { // gui.color_internal_branches = document.getElementById("color-internal-branch-length").checked;
-      // gui.update(); //}); document.querySelector('#positionValue').addEventListener('change', () => { gui.stop(); }); document.querySelector('#factor').addEventListener('change', () => { gui.factor = parseFloat(document.getElementById("factor").value);
-      //});
+      document.querySelector('#positionValue').addEventListener('change', () => {
+        gui.stop();
+      });
+
+      document.querySelector('#factor').addEventListener('change', () => {
+        gui.factor = parseFloat(document.getElementById("factor").value);
+      });
 
       let startButton = document.getElementById('startRecord');
       let stopButton = document.getElementById('stopRecord');
@@ -423,21 +390,25 @@
       let mediaRecorder;
 
       startButton.addEventListener('click', async function () {
-          let stream = await recordScreen();
-          let mimeType = 'video/webm';
-          mediaRecorder = createRecorder(stream, mimeType);
-          let node = document.createElement("p");
-          node.textContent = "Started recording";
-          document.body.appendChild(node);
-          stopButton.disabled = false;
-        })
+          try {
+              let stream = await recordScreen();
+              let mimeType = 'video/webm';
+              mediaRecorder = createRecorder(stream, mimeType);
+              let node = document.createElement("p");
+              node.textContent = "Started recording";
+              document.body.appendChild(node);
+              stopButton.disabled = false;
+          } catch (error) {
+              console.error('Error starting screen recording:', error);
+          }
+      });
 
       stopButton.addEventListener('click', function () {
           mediaRecorder.stop();
           let node = document.createElement("p");
           node.textContent = "Stopped recording";
           document.body.appendChild(node);
-      })
+      });
 
       window.onresize = function () {
           gui.resize();

@@ -130,11 +130,7 @@ export class TreeDrawer {
    * @return {string}
    */
   getLinkId(link) {
-    if (typeof link.target.data.name === "string") {
-      return `link-${link.target.data.name}`;
-    } else {
-      return `link-${link.target.data.name.join("-")}`;
-    }
+    return `link-${link.target.data.split_indices.join("-")}`;
   }
 
   /**
@@ -426,8 +422,8 @@ export class TreeDrawer {
       .attr("stroke-width", "0.1em")
       .attr("r", "0.4em");
 
-    this.calculatePath(this.root);
-    this.colorPath(this.root);
+    // this.calculatePath(this.root);
+    // this.colorPath(this.root);
 
     d3.selectAll(".leaf").on("click", (event, d) => {
       this.flipNode(d);

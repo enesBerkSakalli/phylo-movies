@@ -1,6 +1,8 @@
 import calculateScales from "./calc.js";
 import constructTree from "./TreeConstructor.js";
 import drawTree from "./TreeDrawer.js";
+import { generateDistanceChart } from "./distanceChart.js";
+
 import {
   generateChartModal,
   saveChart as exportSaveChart,
@@ -109,25 +111,47 @@ export default class Gui {
     d3.select("#lineChart svg").remove();
 
     if (this.robinsonFouldsDistances.length !== 1) {
-      if (this.barOptionValue === "rfd") {
-        this.generateDistanceChart(this.robinsonFouldsDistances);
+      const chartConfigurations = {
+        rfd: {
+          data: this.robinsonFouldsDistances,
+          xLabel: "Tree Index",
+          yLabel: "Relative RFD",
+          yMax: 1,
+        },
+        "w-rfd": {
+          data: this.weightedRobinsonFouldsDistances,
+          xLabel: "Tree Index",
+          yLabel: "Weighted RFD",
+          yMax: d3.max(this.weightedRobinsonFouldsDistances),
+        },
+        scale: {
+          data: this.scaleList.map((s) => s.value),
+          xLabel: "Tree Index",
+          yLabel: "Scale",
+          yMax: d3.max(this.scaleList, (s) => s.value),
+        },
+      };
+
+      const config = chartConfigurations[this.barOptionValue];
+      if (config) {
+        generateDistanceChart({ containerId: "lineChart" }, config.data, {
+          xLabel: config.xLabel,
+          yLabel: config.yLabel,
+          yMax: config.yMax,
+          onClick: (position) => this.goToPosition(position),
+        });
+      } else {
+        console.warn("Invalid barOptionValue:", this.barOptionValue);
       }
-      if (this.barOptionValue === "w-rfd") {
-        this.generateWeightedRobinsonFouldsChart(
-          this.weightedRobinsonFouldsDistances
-        );
-      }
-      if (this.barOptionValue === "scale") {
-        this.generateScaleChart(this.scaleList);
-      }
+
       this.setShipPosition(Math.floor(this.index / 5));
     } else {
       document.getElementById("lineChart").innerHTML = `
-            <p>Relative Robinson-Foulds Distance ${
-              this.robinsonFouldsDistances[0].robinson_foulds.relative
-            }</p>
-            <p>Scale ${this.scaleList[Math.floor(this.index / 5)].value}</p>
-            `;
+        <p>Relative Robinson-Foulds Distance ${
+          this.robinsonFouldsDistances[0]
+        }</p>
+        <p>Scale ${this.scaleList[Math.floor(this.index / 5)].value}</p>
+      `;
     }
   }
 
@@ -258,372 +282,18 @@ export default class Gui {
     d3.select("#ship").attr("transform", `translate(${x},${0})`);
   }
 
-  generateWeightedRobinsonFouldsChart(data) {
-    let applicationContainer = document.getElementById("lineChart");
-
-    let width = applicationContainer.clientWidth;
-    let height = applicationContainer.clientHeight;
-
-    // set the dimensions and margins of the graph
-    let margin = {
-      right: 25,
-      left: 40,
-      bottom: 60,
-      top: 10,
-    };
-
-    // append the svg object to the body of the page
-    let svg = d3
-      .select("#lineChart")
-      .append("svg")
-      .attr("width", width)
-      .attr("height", height)
-      .attr("back", "black")
-      .append("g")
-      .attr("id", "chart")
-      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-    width = width - margin.left - margin.right;
-    height = height - margin.top - margin.bottom;
-
-    // Read the data
-    // Add X axis --> it is a date format
-    let x = d3.scaleLinear().domain([1, data.length]).range([1, width]);
-
-    svg
-      .append("g")
-      .attr("transform", "translate(0," + height + ")")
-      .call(d3.axisBottom(x))
-      .attr("id", "xAxis");
-
-    svg
-      .append("g")
-      .attr("id", "rd")
-      .attr("transform", "translate(0," + (height - 5) + ")")
-      .append("g")
-      .attr("id", "ship")
-      .attr("transform", "translate(1.5," + 0 + ")")
-      .append("line")
-      .attr("stroke", "red")
-      .attr("stroke-width", "1.5%")
-      .attr("y2", 12);
-
-    svg
-      .selectAll("text")
-      .attr("transform", "translate(-12,18) rotate(-90)")
-      .style("font-size", "1.2em")
-      .on("click", (e) => {
-        let position = parseInt(e.target.innerHTML) - 1;
-
-        this.goToPosition(position);
-      })
-      .style("cursor", "pointer")
-      .style("color", "white");
-
-    let maxValue = Math.max(...data);
-
-    // Add Y axis
-    let y = d3.scaleLinear().domain([0, maxValue]).range([height, 0]);
-
-    svg.append("g").call(d3.axisLeft(y));
-
-    // Add the line
-    svg
-      .append("path")
-      .datum(data)
-      .attr("fill", "none")
-      .attr("stroke", "white")
-      .attr("stroke-width", 1.5)
-      .attr(
-        "d",
-        d3
-          .line()
-          .x(function (d, i) {
-            return x(i + 1);
-          })
-          .y(function (d) {
-            return y(d);
-          })
-      );
-
-    svg
-      .append("text")
-      .attr("class", "x-label")
-      .attr("text-anchor", "end")
-      .attr("x", width / 2)
-      .attr("y", height + 50)
-      .attr("dy", ".35em")
-      .attr("fill", "white")
-      .text("Tree Index")
-      .style("font-size", "0.8em");
-
-    svg
-      .append("text")
-      .attr("class", "y-label")
-      .attr("text-anchor", "end")
-      .attr("x", -60)
-      .attr("y", -35)
-      .attr("dy", ".35em")
-      .attr("transform", "rotate(-90)")
-      .attr("fill", "white")
-      .text("W. Rel. RFD.")
-      .style("font-size", "0.8em");
-  }
-
-  /**
-   * This function is generating the Scale Line Graph.
-   * @return {void}
-   * @param data
-   */
-  generateScaleChart(data) {
-    let applicationContainer = document.getElementById("lineChart");
-    let width = applicationContainer.clientWidth;
-    let height = applicationContainer.clientHeight;
-
-    // set the dimensions and margins of the graph
-    let margin = {
-      right: 25,
-      left: 40,
-      bottom: 60,
-      top: 10,
-    };
-
-    // append the svg object to the body of the page
-    let svg = d3
-      .select("#lineChart")
-      .append("svg")
-      .attr("width", width)
-      .attr("height", height)
-      .attr("back", "black")
-      .append("g")
-      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-    width = width - margin.left - margin.right;
-    height = height - margin.top - margin.bottom;
-
-    // Read the data
-    // Add X axis --> it is a date format
-    let x = d3
-      .scaleLinear()
-      .domain([1, Math.floor(this.treeList.length / 5)])
-      .range([1, width]);
-
-    svg
-      .append("g")
-      .attr("transform", "translate(0," + height + ")")
-      .call(d3.axisBottom(x))
-      .attr("id", "xAxis");
-
-    svg
-      .append("g")
-      .attr("id", "rd")
-      .attr("transform", "translate(0," + (height - 5) + ")")
-      .append("g")
-      .attr("id", "ship")
-      .attr("transform", "translate(1.5," + 0 + ")")
-      .append("line")
-      .attr("stroke", "red")
-      .attr("stroke-width", "1.5%")
-      .attr("y2", 12);
-
-    svg
-      .selectAll("text")
-      .attr("transform", "translate(-12,18) rotate(-90)")
-      .style("font-size", "1.2em")
-      .on("click", (e) => {
-        let position = parseInt(e.target.innerHTML) - 1;
-        this.goToPosition(position);
-      })
-      .style("cursor", "pointer")
-      .style("color", "white");
-
-    // Add Y axis
-    let y = d3
-      .scaleLinear()
-      .domain([
-        0,
-        d3.max(data, function (d) {
-          return +d.value;
-        }),
-      ])
-      .range([height, 0]);
-
-    svg.append("g").call(d3.axisLeft(y));
-
-    // Add the line
-    svg
-      .append("path")
-      .datum(data)
-      .attr("fill", "none")
-      .attr("stroke", "white")
-      .attr("stroke-width", 1.5)
-      .attr(
-        "d",
-        d3
-          .line()
-          .x(function (d) {
-            return x(d.index);
-          })
-          .y(function (d) {
-            return y(d.value);
-          })
-      );
-
-    svg
-      .append("text")
-      .attr("class", "x-label")
-      .attr("text-anchor", "end")
-      .attr("x", width / 2)
-      .attr("y", height + 50)
-      .attr("fill", "white")
-      .text("Tree Index")
-      .style("font-size", "0.8em");
-
-    svg
-      .append("text")
-      .attr("class", "y-label")
-      .attr("text-anchor", "end")
-      .attr("x", -25)
-      .attr("y", -35)
-      .attr("dy", ".50em")
-      .attr("transform", "rotate(-90)")
-      .attr("fill", "white")
-      .text("Max. Branch Length")
-      .style("font-size", "0.8em");
-  }
-
-  /**
-   * This function is generating the RFE Line Graph.
-   * @return {void}
-   * @param data
-   */
-  generateDistanceChart(data) {
-    let applicationContainer = document.getElementById("lineChart");
-
-    let width = applicationContainer.clientWidth;
-    let height = applicationContainer.clientHeight;
-
-    // set the dimensions and margins of the graph
-    let margin = {
-      right: 25,
-      left: 40,
-      bottom: 60,
-      top: 10,
-    };
-
-    // append the svg object to the body of the page
-    let svg = d3
-      .select("#lineChart")
-      .append("svg")
-      .attr("width", width)
-      .attr("height", height)
-      .attr("back", "black")
-      .append("g")
-      .attr("id", "chart")
-      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-    width = width - margin.left - margin.right;
-    height = height - margin.top - margin.bottom;
-
-    // Read the data
-    // Add X axis --> it is a date format
-    let x = d3
-      .scaleLinear()
-      .domain([1, Math.floor(this.treeList.length / 5)])
-      .range([1, width]);
-
-    svg
-      .append("g")
-      .attr("transform", "translate(0," + height + ")")
-      .call(d3.axisBottom(x))
-      .attr("id", "xAxis");
-
-    svg
-      .append("g")
-      .attr("id", "rd")
-      .attr("transform", "translate(0," + (height - 5) + ")")
-      .append("g")
-      .attr("id", "ship")
-      .attr("transform", "translate(1.5," + 0 + ")")
-      .append("line")
-      .attr("stroke", "red")
-      .attr("stroke-width", "1.5%")
-      .attr("y2", 12);
-
-    svg
-      .selectAll("text")
-      .attr("transform", "translate(-12,18) rotate(-90)")
-      .style("font-size", "1.2em")
-      .on("click", (e) => {
-        let position = parseInt(e.target.innerHTML) - 1;
-        this.goToPosition(position);
-      })
-
-      .style("cursor", "pointer")
-      .style("color", "white");
-
-    // Add Y axis
-    let y = d3.scaleLinear().domain([0, 1]).range([height, 0]);
-
-    svg.append("g").call(d3.axisLeft(y));
-
-    // Add the line
-    svg
-      .append("path")
-      .datum(data)
-      .attr("fill", "none")
-      .attr("stroke", "white")
-      .attr("stroke-width", 1.5)
-      .attr(
-        "d",
-        d3
-          .line()
-          .x(function (d) {
-            return x(d.tree + 1);
-          })
-          .y(function (d) {
-            return y(d.robinson_foulds.relative);
-          })
-      );
-
-    svg
-      .append("text")
-      .attr("class", "x-label")
-      .attr("text-anchor", "end")
-      .attr("x", width / 2)
-      .attr("y", height + 50)
-      .attr("dy", ".35em")
-      .attr("fill", "white")
-      .text("Tree Index")
-      .style("font-size", "0.8em");
-
-    svg
-      .append("text")
-      .attr("class", "y-label")
-      .attr("text-anchor", "end")
-      .attr("x", -60)
-      .attr("y", -35)
-      .attr("dy", ".35em")
-      .attr("transform", "rotate(-90)")
-      .attr("fill", "white")
-      .text("Rel. RFD.")
-      .style("font-size", "0.8em");
-  }
-
   generateModalChart() {
     if (this.barOptionValue === "rfd") {
       console.log(this.robinsonFouldsDistances);
       const config = {
         title: "Relative Robinson-Foulds Distance",
-        xAccessor: (d, i) => d.tree,
-        yAccessor: (d) => d.robinson_foulds.relative,
+        xAccessor: (d, i) => i,
+        yAccessor: (d) => d,
         xLabel: "Tree Index",
         yLabel: "Relative RFD",
         tooltipFormatter: (d, i) => `
           <strong>Tree Index:</strong> ${i + 1}<br/>
-          <strong>Relative RFD:</strong> ${d.robinson_foulds.relative.toFixed(
-            3
-          )}
+          <strong>Relative RFD:</strong> ${d.toFixed(3)}
         `,
       };
       this.currentPosition = this.index;
