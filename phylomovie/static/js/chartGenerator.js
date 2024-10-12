@@ -385,43 +385,30 @@ function drawDataPoints(svg, data, xScale, yScale, guiInstance, config) {
     .attr("stroke", "#fff")
     .attr("stroke-width", 1.5)
     .style("cursor", "pointer")
-    .on("mouseover", function () {
+    // Attach the index to the element as a custom attribute
+    .attr("data-index", (d, i) => i)
+    // Event handlers
+    .on("mouseover", function (event, d) {
       d3.select(this)
         .transition()
         .duration(100)
         .attr("r", 6)
         .attr("fill", "#FF6347");
     })
-    .on("mouseout", function () {
+    .on("mouseout", function (event, d) {
       d3.select(this)
         .transition()
         .duration(100)
         .attr("r", 4)
         .attr("fill", "#4682B4");
     })
-    .on("click", function (event, d, i) {
-      let position;
+    .on("click", function (event, d) {
+      // Retrieve the index from the element's attribute
+      const index = parseInt(d3.select(this).attr("data-index"), 10);
 
-      if (guiInstance.barOptionValue === "scale") {
-        if (d && typeof d.index === "number") {
-          position = d.index; // Adjust as necessary
-          console.log(`Scale Click: index=${d.index}, position=${position}`);
-        } else {
-          console.warn(`Scale Click: d.index is undefined for d=`, d);
-          position = undefined;
-        }
-      } else {
-        position = config.xAccessor(d, i);
-      }
-
-      if (typeof position !== "undefined") {
-        guiInstance.goToPosition(position);
-        // Calculate ship position using xAccessor
-        const shipPosition = config.xAccessor(d, i) - 1; // Adjust if necessary
-        setModalShip(shipPosition, guiInstance, config);
-      } else {
-        console.warn("Cannot go to position because position is undefined.");
-      }
+      guiInstance.currentPosition = index;
+      guiInstance.goToPosition(index);
+      setModalShip(index, guiInstance, config, data);
     });
 
   return circles;

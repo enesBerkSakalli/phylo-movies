@@ -1,17 +1,8 @@
+/* Reset and Base Styles */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-}
-
-.blink_me {
-  animation: blinker 1s linear infinite;
-}
-
-@keyframes blinker {
-  50% {
-    opacity: 0;
-  }
 }
 
 html,
@@ -19,11 +10,34 @@ body {
   height: 100%;
   width: 100%;
   font-family: Heebo, sans-serif;
-  /*overflow: hidden;*/
 }
 
-.treeNavigation {
-  font-size: 0.8em;
+/* General Styles */
+.container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  margin: 0;
+}
+
+.menu {
+  width: 350px;
+  height: 100%;
+  padding: 15px;
+  background-color: #373747;
+  color: white;
+}
+
+#applicationContainer {
+  width: 100%;
+  height: 100%;
+  align-self: stretch;
+}
+
+/* Header and Menu */
+.menu-header {
+  padding-top: 5%;
+  padding-bottom: 5%;
 }
 
 .header {
@@ -39,13 +53,24 @@ body {
   color: #ffff;
 }
 
-.menu-header {
-  padding-top: 5%;
-  padding-bottom: 5%;
-}
-
+/* Tools and Controls */
 .tools div {
   margin-top: 3px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.row .menuItem {
+  margin-right: 10px;
+  min-width: 120px;
+}
+
+.bubble {
+  width: 100px;
 }
 
 .positionInput {
@@ -68,60 +93,44 @@ body {
   width: 30px;
 }
 
-.container {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  margin: 0;
+.treeNavigation {
+  font-size: 0.8em;
 }
 
-.row {
+/* Buttons */
+.allbuttons {
+  width: 100%;
   display: flex;
   justify-content: space-between;
+  margin-bottom: 20px;
 }
 
-.menu {
-  width: 350px;
-  height: 100%;
-  padding: 15px;
-  background-color: #373747;
+.customButton {
+  background-color: #ff3e00;
+  border: none;
   color: white;
-}
-
-#applicationContainer {
-  width: 100%;
-  height: 100%;
-  align-self: stretch;
-}
-
-.index-rect {
-  fill: #a2cbfa;
-  stroke-width: 1px;
-  stroke: #4390e1;
-}
-
-.index-rect:hover {
-  fill: #4390e1;
+  padding: 8px 12px;
+  text-align: center;
+  text-decoration: none;
+  font-size: 15px;
   cursor: pointer;
 }
 
-.barContainer {
-  width: 100%;
-  height: 100%;
-  align-self: stretch;
-  justify-content: center;
-  text-align: center;
-  padding-left: 300px;
+.customButton:hover {
+  background-color: #d33f0d;
 }
 
-h1 {
-  font-size: 1.5em;
+.customButton.left {
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
 }
 
-.commitmessage {
-  font-size: 0.5em;
+.customButton.right {
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
 }
 
+/* Inputs and Selects */
 input {
   padding: 0.2em;
   border: 1px solid #ccc;
@@ -152,53 +161,78 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
-.bubble {
-  width: 100px;
-}
-
-.allbuttons {
+/* Sliders and Switches */
+.uk-range {
   width: 100%;
+}
+
+.slider-container {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  flex: 1;
+  margin-right: 10px;
 }
 
-.allbuttons button {
-  display: block;
+.slider-container:last-child {
+  margin-right: 0;
 }
 
-#scaleBar {
-  margin-top: 10px;
+.slider-container .menuItem {
+  margin-bottom: 5px;
 }
 
-.customButton {
-  background-color: #ff3e00;
-  border: none;
-  color: white;
-  padding: 8px 12px;
-  text-align: center;
-  text-decoration: none;
+.switch {
+  position: relative;
   display: inline-block;
-  font-size: 15px;
+  width: 40px;
+  height: 20px;
 }
 
-.customButton:hover {
-  background-color: #d33f0d;
-  /* Green */
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
 }
 
-#currentScale {
-  border-radius: 5px;
+.switch .slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 20px;
+}
+
+.switch .slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
   background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
 }
 
-#currentScale {
-  border-radius: 5px;
+input:checked + .slider {
+  background-color: #2196f3;
 }
 
-#maxScale {
-  border-radius: 5px;
-  margin-top: 10px;
-  margin-bottom: 10px;
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196f3;
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+/* Scale Bars */
+.currentScaleContainer {
+  margin-top: 20px;
 }
 
 .scaleContainer {
@@ -211,76 +245,65 @@ input[type="number"] {
   );
 }
 
-.plotOptionSelect {
-  width: 95px;
-}
-
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 60px;
-  height: 34px;
-}
-
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #ccc;
-  -webkit-transition: 0.4s;
-  transition: 0.4s;
-}
-
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 26px;
-  width: 26px;
-  left: 4px;
-  bottom: 4px;
+#currentScale {
+  border-radius: 5px;
   background-color: white;
-  -webkit-transition: 0.4s;
-  transition: 0.4s;
+  height: 10px;
 }
 
-input:checked + .slider {
-  background-color: #2196f3;
+#maxScale {
+  border-radius: 5px;
+  background-color: white;
+  height: 10px;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
-input:focus + .slider {
-  box-shadow: 0 0 1px #2196f3;
+/* Chart and Line Chart */
+#lineChart {
+  width: 300px;
+  height: 220px;
+  background-color: #373747;
 }
 
-input:checked + .slider:before {
-  -webkit-transform: translateX(26px);
-  -ms-transform: translateX(26px);
-  transform: translateX(26px);
-}
-
-/* Rounded sliders */
-
-.slider.round {
-  border-radius: 34px;
-}
-
-.slider.round:before {
-  border-radius: 50%;
-}
-
-#modal-graph-chart {
-  flex: 1;
-  height: 100%;
+.barContainer {
   width: 100%;
-  position: relative;
+  height: 100%;
+  align-self: stretch;
+  justify-content: center;
+  text-align: center;
+  padding-left: 300px;
+}
+
+.index-rect {
+  fill: #a2cbfa;
+  stroke-width: 1px;
+  stroke: #4390e1;
+}
+
+.index-rect:hover {
+  fill: #4390e1;
+  cursor: pointer;
+}
+
+/* Text and Headers */
+h1 {
+  font-size: 1.5em;
+}
+
+.commitmessage {
+  font-size: 0.5em;
+}
+
+/* Blinking Animation */
+.blink_me {
+  animation: blinker 1s linear infinite;
+}
+
+@keyframes blinker {
+  50% {
+    opacity: 0;
+  }
 }
 
 /* Tooltip Styles */
@@ -297,6 +320,14 @@ input:checked + .slider:before {
   pointer-events: none;
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
   white-space: nowrap;
-  z-index: 1000; /* Ensure tooltip appears above other elements */
+  z-index: 1000;
   transition: opacity 0.3s;
+}
+
+/* Modal Chart */
+#modal-graph-chart {
+  flex: 1;
+  height: 100%;
+  width: 100%;
+  position: relative;
 }

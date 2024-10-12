@@ -1,19 +1,29 @@
-from .services.tree.treeMain import (
-    calculate_rfd_along_tracjectories,
-    calculate_weighted_robinson_foulds_distance_along_trajectory,
-)
-
-from .services.coloring_algorithm.algorithm_5 import algorithm_5
-from .services.tree.Treere import Treere
-from typing import Dict, List
 import math
+from typing import Dict, List
 
+import json
 from flask import Flask
 from flask import request, abort, render_template
 
+from brancharchitect.io import parse_newick
+from brancharchitect.io import serialize_tree_list_to_json
+from brancharchitect.jumping_taxa.tree_interpolation import (
+    interpolate_adjacent_tree_pairs,
+)
+from brancharchitect.distances import (
+    calculate_along_trajectory,
+    weighted_robinson_foulds_distance,
+    relative_robinson_foulds_distance,
+)
+
+
+from .services.coloring_algorithm.algorithm_5 import algorithm_5
+
+
+
 app = Flask(__name__)
-app.config['DEBUG'] = True
-app.config['TEMPLATES_AUTO_RELOAD'] = True
+app.config["DEBUG"] = True
+app.config["TEMPLATES_AUTO_RELOAD"] = True
 
 try:
     with open("commithash", mode="r") as f:
@@ -45,7 +55,6 @@ def index():
 
     elif request.method == "POST":
         window_size = int(request.form["windowSize"])
-
         window_step_size = int(request.form["windowStepSize"])
 
         order_file_list = handle_order_list(request)
@@ -54,9 +63,11 @@ def index():
             leaf_order=order_file_list, f=request.files["treeFile"]
         )
 
+        json_tree_list = json.dumps(front_end_input["tree_list"])
+
         return render_template(
             "index.html",
-            tree_list=front_end_input["tree_list"],
+            tree_list=json_tree_list,
             rfe_list=front_end_input["rfd_list"],
             weighted_robinson_foulds_distance_list=front_end_input["weighted_rfd_list"],
             to_be_highlighted=front_end_input["to_be_highlighted"],
@@ -71,48 +82,31 @@ def index():
 
 
 def handle_uploaded_file(leaf_order, f):
-    
-    print(leaf_order)
-    
-    t_interpolator = Treere(given_leaforder=leaf_order)
-
-    newick_string = t_interpolator.newick_purification(f.read().decode("utf-8"))
-
-    newick_string_list = newick_string.strip("\r").split("\n")
-
-    json_consensus_tree_list = t_interpolator.input_manager(newick_string, f.filename)
-
-    rfd_list = calculate_rfd_along_tracjectories(json_consensus_tree_list)
-    weighted_robinson_foulds_list = (
-        calculate_weighted_robinson_foulds_distance_along_trajectory(
-            json_consensus_tree_list
-        )
-    )
-
+    # t_interpolator = Treere(given_leaforder=leaf_order)
+    # newick_string = t_interpolator.newick_purification(f.read().decode("utf-8"))
+    newick_string = f.read().decode("utf-8")
+    newick_string_list = newick_string.strip("\r")
+    trees = parse_newick(newick_string_list)
+    interpolated_trees = interpolate_adjacent_tree_pairs(trees)
     filename = f.filename
 
-    to_be_highlighted = find_to_be_highlighted_leaves_delete(
-        json_consensus_tree_list=json_consensus_tree_list,
-        sorted_nodes=t_interpolator.sorted_nodes,
-        newick_string_list=newick_string_list,
-    )
+    to_be_highlighted = []
+
+    rfds = calculate_along_trajectory(trees, relative_robinson_foulds_distance)
+    wrfds = calculate_along_trajectory(trees, weighted_robinson_foulds_distance)
+
+    interpolated_tree_list = serialize_tree_list_to_json(interpolated_trees)
 
     phylo_move_data = {
-        "rfd_list": rfd_list,
-        "weighted_rfd_list": weighted_robinson_foulds_list,
+        "rfd_list": rfds,
+        "weighted_rfd_list": wrfds,
         "to_be_highlighted": to_be_highlighted,
-        "sorted_leaves": t_interpolator.sorted_nodes,
-        "tree_list": json_consensus_tree_list,
+        "sorted_leaves": trees[0]._order,
+        "tree_list": interpolated_tree_list,
         "file_name": filename,
     }
 
     return phylo_move_data
-
-
-def write_robinson_foulds_file(file_name, rfd_list):
-    f = open(f"{file_name}.rfe", "w")
-    f.write("\n".join(str(e["robinson_foulds"]["relative"]) for e in rfd_list))
-    f.close()
 
 
 def find_to_be_highlighted_leaves_delete(
