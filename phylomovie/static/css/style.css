@@ -114,6 +114,7 @@ body {
   text-decoration: none;
   font-size: 15px;
   cursor: pointer;
+  margin-bottom: 10px;
 }
 
 .customButton:hover {

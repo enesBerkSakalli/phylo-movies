@@ -1,8 +1,10 @@
 import calculateScales from "./calc.js";
 import constructTree from "./TreeConstructor.js";
-import drawTree from "./TreeDrawer.js";
+import drawTree, { TreeDrawer } from "./TreeDrawer.js";
 import { generateDistanceChart } from "./distanceChart.js";
 import { openComparisonModal } from "./treeComparision.js";
+import TaxaColoring from "./taxaColoring.js";
+
 import {
   generateChartModal,
   saveChart as exportSaveChart,
@@ -66,6 +68,30 @@ export default class Gui {
     this.playing = true;
     this.svgUp = null;
     this.svgDown = null;
+
+    const taxaColorMap = {};
+
+    this.leaveOrder.forEach((taxon) => {
+      taxaColorMap[taxon] = TreeDrawer.colorMap.defaultColor;
+    });
+    // Check if taxaColorMap is a Map and extend TreeDrawer.colorMap accordingly
+    if (taxaColorMap instanceof Map) {
+      // Convert Map to an object and merge it with TreeDrawer.colorMap
+      const extendedColorMap = {
+        ...TreeDrawer.colorMap, // Existing colorMap in TreeDrawer
+        ...Object.fromEntries(taxaColorMap), // Convert Map to object and merge it
+      };
+
+      TreeDrawer.colorMap = extendedColorMap;
+    } else if (typeof taxaColorMap === "object") {
+      // Directly merge the object if taxaColorMap is already an object
+      const extendedColorMap = {
+        ...TreeDrawer.colorMap, // Existing colorMap in TreeDrawer
+        ...taxaColorMap, // Directly spread the object if taxaColorMap is not a Map
+      };
+
+      TreeDrawer.colorMap = extendedColorMap;
+    }
   }
 
   initializeMovie() {
@@ -459,5 +485,33 @@ export default class Gui {
 
   async openComparisonModal() {
     openComparisonModal(this);
+  }
+
+  openTaxaColoringModal() {
+    // Assuming `this.currentRoot` is your D3 hierarchy data
+    let tree = this.treeList[this.index];
+
+    // Assuming constructTree is a function that returns a tree object
+    let d3tree = constructTree(tree, this.ignoreBrancwhLengths);
+
+    // Create a new TaxaColoring instance and handle the resulting color map
+    const taxaColoring = new TaxaColoring(d3tree.tree, (taxaColorMap) => {
+      // Debugging: Check the type of taxaColorMap
+      console.log("Type of taxaColorMap:", typeof taxaColorMap);
+      console.log("Instance of Map:", taxaColorMap instanceof Map);
+      console.log("TaxaColorMap content:", taxaColorMap);
+
+      // If taxaColorMap is an object, iterate using Object.entries()
+      if (typeof taxaColorMap === "object") {
+        for (let [taxon, color] of Object.entries(taxaColorMap)) {
+          TreeDrawer.colorMap[taxon] = color;
+        }
+      }
+
+      this.updateMain()
+
+      // Optional: Call a method to update the tree colors visually (if you have such a method)
+      // this.updateTreeColors();
+    });
   }
 }
