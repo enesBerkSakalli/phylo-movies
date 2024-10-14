@@ -250,56 +250,14 @@ export class TreeDrawer {
       .ease(d3.easeExpInOut)
       .duration(this.drawDuration)
       .attrTween("d", this.getLinkExtensionInterpolator(currentMaxRadius - 40))
-      .style("stroke", (d) => {
-        if (this.marked.size == 0) {
-          return TreeDrawer.colorMap.defaultColor;
-        } else if (
-          TreeDrawer.markedLabelList.includes(d.data.name.toString())
-        ) {
-          return TreeDrawer.colorMap.userMarkedColor; // User-clicked nodes
-        }
-
-        for (let markedTaxa of this.marked) {
-          let setMarkedTaxa = new Set(markedTaxa);
-          if (setMarkedTaxa.has(d.data.name.toString())) {
-            return TreeDrawer.colorMap.markedColor; // Algorithm-detected taxa
-          } else if (
-            TreeDrawer.markedLabelList.includes(d.data.name.toString())
-          ) {
-            return TreeDrawer.colorMap.userMarkedColor; // User-clicked nodes
-          } else {
-            return TreeDrawer.colorMap.defaultColor;
-          }
-        }
-      });
+      .style("stroke", (d) => this.updateLinkExtensionColor(d));
 
     // ENTER new elements present in new data.
     linkExtension
       .enter()
       .append("path")
       .attr("class", "link-extension")
-      .style("stroke", (d) => {
-        if (this.marked.size == 0) {
-          return TreeDrawer.colorMap.defaultColor;
-        } else if (
-          TreeDrawer.markedLabelList.includes(d.data.name.toString())
-        ) {
-          return TreeDrawer.colorMap.userMarkedColor; // User-clicked nodes
-        }
-
-        for (let markedTaxa of this.marked) {
-          let setMarkedTaxa = new Set(markedTaxa);
-          if (setMarkedTaxa.has(d.data.name.toString())) {
-            return TreeDrawer.colorMap.markedColor; // Algorithm-detected taxa
-          } else if (
-            TreeDrawer.markedLabelList.includes(d.data.name.toString())
-          ) {
-            return TreeDrawer.colorMap.userMarkedColor; // User-clicked nodes
-          } else {
-            return TreeDrawer.colorMap.defaultColor;
-          }
-        }
-      })
+      .style("stroke", (d) => this.updateLinkExtensionColor(d))
       .attr("stroke-width", TreeDrawer.sizeMap.strokeWidth)
       .attr("stroke-dasharray", () => {
         return "5,5";
@@ -308,6 +266,25 @@ export class TreeDrawer {
       .attr("d", (d) => {
         return this.buildSvgLinkExtension(d, currentMaxRadius - 40);
       });
+  }
+
+  updateLinkExtensionColor(d) {
+    if (this.marked.size == 0) {
+      return TreeDrawer.colorMap[d.data.name];
+    } else if (TreeDrawer.markedLabelList.includes(d.data.name.toString())) {
+      return TreeDrawer.colorMap.userMarkedColor; // User-clicked nodes
+    }
+
+    for (let markedTaxa of this.marked) {
+      let setMarkedTaxa = new Set(markedTaxa);
+      if (setMarkedTaxa.has(d.data.name.toString())) {
+        return TreeDrawer.colorMap.markedColor; // Algorithm-detected taxa
+      } else if (TreeDrawer.markedLabelList.includes(d.data.name.toString())) {
+        return TreeDrawer.colorMap.userMarkedColor; // User-clicked nodes
+      } else {
+        return TreeDrawer.colorMap[d.data.name];
+      }
+    }
   }
 
   /**
@@ -355,7 +332,7 @@ export class TreeDrawer {
       .attr("text-anchor", (d) => this.anchorCalc(d))
       .attr("font-weight", "bold")
       .attr("font-family", "Courier New")
-      .style("fill", TreeDrawer.colorMap.defaultLabelColor);
+      .style("fill", (d) => TreeDrawer.colorMap[d.data.name]);
   }
 
   /**
@@ -734,12 +711,12 @@ export class TreeDrawer {
       if (this.marked.size == 0) {
         d3.select(`#circle-${d.data.name}`).style(
           "fill",
-          TreeDrawer.colorMap.defaultColor
+          TreeDrawer.colorMap[d.data.name]
         );
 
         d3.select(`#label-${d.data.name}`).style(
           "fill",
-          TreeDrawer.colorMap.defaultLabelColor
+          TreeDrawer.colorMap[d.data.name]
         );
       }
 
@@ -759,12 +736,12 @@ export class TreeDrawer {
         } else {
           d3.select(`#circle-${d.data.name}`).style(
             "fill",
-            TreeDrawer.colorMap.defaultColor
+            TreeDrawer.colorMap[d.data.name]
           );
 
           d3.select(`#label-${d.data.name}`).style(
             "fill",
-            TreeDrawer.colorMap.defaultLabelColor
+            TreeDrawer.colorMap[d.data.name]
           );
         }
       }
@@ -799,7 +776,7 @@ export class TreeDrawer {
             .style("stroke", TreeDrawer.colorMap.userMarkedColor)
             .raise();
         } else if (force) {
-          svgElement.style("stroke", TreeDrawer.colorMap.defaultColor).lower();
+          svgElement.style("stroke", TreeDrawer.colorMap[d.data.name]).lower();
         }
       });
     });
