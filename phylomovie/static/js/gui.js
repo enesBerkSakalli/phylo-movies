@@ -2,7 +2,7 @@ import calculateScales from "./calc.js";
 import constructTree from "./TreeConstructor.js";
 import drawTree from "./TreeDrawer.js";
 import { generateDistanceChart } from "./distanceChart.js";
-
+import { openComparisonModal } from "./treeComparision.js";
 import {
   generateChartModal,
   saveChart as exportSaveChart,
@@ -64,6 +64,8 @@ export default class Gui {
     this.factor = parseInt(document.getElementById("factor").value);
 
     this.playing = true;
+    this.svgUp = null;
+    this.svgDown = null;
   }
 
   initializeMovie() {
@@ -103,6 +105,14 @@ export default class Gui {
     this.updateMain();
   }
 
+  handleDrag(position) {
+    // Update the index based on the dragged position
+    this.index = position * 5; // Adjust if necessary based on your data structure
+
+    // Update the application state
+    this.update();
+  }
+
   /**
    * This function is updating the Line Chart if the user want to see the RFE Distance Graph or the Scale list graph.
    * @return {void}
@@ -138,7 +148,9 @@ export default class Gui {
           xLabel: config.xLabel,
           yLabel: config.yLabel,
           yMax: config.yMax,
+          currentPosition: Math.floor(this.index / 5), // Use the appropriate index
           onClick: (position) => this.goToPosition(position),
+          onDrag: (position) => this.handleDrag(position), // Handle drag events
         });
       } else {
         console.warn("Invalid barOptionValue:", this.barOptionValue);
@@ -443,5 +455,9 @@ export default class Gui {
     const treeNameList = ["full", "inter", "cons", "cons", "inter"];
     const index = typeof this.index === "number" ? this.index : 0;
     return treeNameList[index % treeNameList.length] || "unknown";
+  }
+
+  async openComparisonModal() {
+    openComparisonModal(this);
   }
 }

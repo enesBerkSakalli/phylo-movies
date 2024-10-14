@@ -45,7 +45,6 @@
     <!-- Chart.js Annotation Plugin CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.1.0/dist/chartjs-plugin-annotation.min.js"></script>
-
   </head>
 
   <body>
@@ -98,7 +97,6 @@
               </div>
             </div>
 
-
             <div class="row">
               <div class="menuItem">Trees Intermediate</div>
               <div class="treeNavigation">
@@ -116,9 +114,11 @@
               </span>
             </div>
 
-
             <div class="row">
-              <span>Window-Size: {{window_size | safe}} / Step-Size: {{window_step_size | safe}}</span>
+              <span
+                >Window-Size: {{window_size | safe}} / Step-Size:
+                {{window_step_size | safe}}</span
+              >
             </div>
 
             <div class="row">
@@ -127,7 +127,6 @@
                 ><span id="windowArea"> </span
               ></span>
             </div>
-
 
             <div class="row">
               <div class="menuItem stepSizeLabel">
@@ -203,7 +202,6 @@
             </div>
           </div>
 
-
           <!-- Ignore Branch Lengths Switch -->
           <div class="row" style="padding-top: 20px; padding-bottom: 20px">
             <div class="menuItem">Ignore Branch Lengths</div>
@@ -275,6 +273,10 @@
 
         <!-- This is a button toggling the modal -->
         <button id="chart-modal" class="" type="button">Open</button>
+        <!-- Compare Trees Button -->
+        <button id="compareButton" type="button" class="customButton">
+          Compare Trees
+        </button>
       </div>
       <!-- end of toolbar-->
 
@@ -296,12 +298,12 @@
 
       let weightedRobinsonFouldsDistances = {{ weighted_robinson_foulds_distance_list | safe}};
 
-      let toBeHighlighted = {{to_be_highlighted | safe}};
+      let toBeHighlighted = {{to_be_highlighted | tojson}};
 
       let leaveOrder = {{sorted_leaves | safe}};
 
       let windowSize = parseInt("{{window_size | safe}}", 10);
-      
+
       let windowStepSize = parseInt("{{window_step_size | safe}}", 10);
 
       let fileName = "{{file_name | safe}}";
@@ -376,6 +378,10 @@
 
       document.querySelector('#positionValue').addEventListener('change', () => {
         gui.stop();
+      });
+
+      document.getElementById("compareButton").addEventListener("click", () => {
+        gui.openComparisonModal();
       });
 
       document.querySelector('#factor').addEventListener('change', () => {

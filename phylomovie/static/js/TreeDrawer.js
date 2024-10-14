@@ -22,28 +22,23 @@ export class TreeDrawer {
    * Create a TreeDrawer.
    * @param _currentRoot
    */
-  constructor(_currentRoot) {
+  constructor(_currentRoot, svgContainerId = "application") {
     this._colorInternalBranches = true;
     this.root = _currentRoot;
     this.marked = new Set();
     this.leaveOrder = [];
     this._drawDuration = 1000;
+    this.svg_container = TreeDrawer.getSVG(svgContainerId);
   }
 
-  //getting the application container
-  static svg_container = TreeDrawer.getSVG();
+  static getSVG(svgContainerId) {
+    return d3.select(`#${svgContainerId}`);
+  }
+
   //marked labels list
   static markedLabelList = [];
 
   static parser = new ParseUtil();
-
-  /**
-   * getter for the svg application container.
-   * @return {Object}
-   */
-  static getSVG() {
-    return d3.select("#application");
-  }
 
   /**
    *
@@ -140,11 +135,7 @@ export class TreeDrawer {
    */
   generateLinkIdForLeave(ancestor) {
     if (ancestor.parent) {
-      if (typeof ancestor.data.name === "string") {
-        return `#link-${ancestor.data.name}`;
-      } else {
-        return `#link-${ancestor.data.name.join("-")}`;
-      }
+      return `#link-${ancestor.data.split_indices.join("-")}`;
     } else {
       return null;
     }
@@ -157,7 +148,7 @@ export class TreeDrawer {
   updateLinks() {
     // JOIN new data with old svg elements.
     // Data Binding
-    let links = TreeDrawer.svg_container
+    let links = this.svg_container
       .selectAll(".links")
       .data(this.root.links(), (d) => {
         return this.getLinkId(d);
@@ -170,7 +161,13 @@ export class TreeDrawer {
     links
       .enter()
       .append("path")
-      .style("stroke", TreeDrawer.colorMap.strokeColor)
+      .style("stroke", (d) => {
+        if (this._colorInternalBranches) {
+          return this.colorInternalBranches(d);
+        } else {
+          return this.colorExternalBranches(this.marked, d);
+        }
+      })
       .attr("class", "links")
       .attr("stroke-width", TreeDrawer.sizeMap.strokeWidth)
       .attr("fill", "none")
@@ -206,56 +203,20 @@ export class TreeDrawer {
   }
 
   colorInternalBranches(d) {
-    const leafNames = d.target.data.name;
-    const taxaIndices = [];
-
-    // Determine if leafNames is an array
-    if (Array.isArray(leafNames)) {
-      for (const taxon of leafNames) {
-        if (typeof taxon === "number") {
-          // Directly add numerical indices
-          taxaIndices.push(taxon);
-        } else if (typeof taxon === "string") {
-          // Find the index of the taxon in leaveOrder
-          const index = this.leaveOrder.indexOf(taxon);
-          if (index !== -1) {
-            taxaIndices.push(index);
-          } else {
-            console.warn(`Taxon "${taxon}" not found in leaveOrder.`);
-          }
-        } else {
-          console.warn(`Unexpected taxon type: ${typeof taxon}`);
-        }
-      }
-    } else if (typeof leafNames === "number") {
-      // If leafNames is a single number, add it directly
-      taxaIndices.push(leafNames);
-    } else if (typeof leafNames === "string") {
-      // If leafNames is a single string, find its index
-      const index = this.leaveOrder.indexOf(leafNames);
-      if (index !== -1) {
-        taxaIndices.push(index);
-      } else {
-        console.warn(`Taxon "${leafNames}" not found in leaveOrder.`);
-      }
-    } else {
-      console.warn(
-        `Unexpected type for d.target.data.name: ${typeof leafNames}`
-      );
-    }
-
-    // If no valid taxa indices are found, return the default color
-    if (taxaIndices.length === 0) {
-      console.warn("No valid taxa indices found. Using defaultColor.");
+    if (this.marked.size == 0) {
       return TreeDrawer.colorMap.defaultColor;
     }
 
     // Check if every taxon in taxaIndices is marked
-    for (const taxonIndex of taxaIndices) {
+    for (const taxonIndex of d.target.data.split_indices) {
       const taxonName = this.leaveOrder[taxonIndex];
 
-      if (!this.marked.has(taxonName)) {
-        return TreeDrawer.colorMap.defaultColor;
+      for (let markedTaxa of this.marked) {
+        let setMarkedTaxa = new Set(markedTaxa);
+
+        if (!setMarkedTaxa.has(taxonName)) {
+          return TreeDrawer.colorMap.defaultColor;
+        }
       }
     }
 
@@ -263,8 +224,7 @@ export class TreeDrawer {
   }
 
   colorExternalBranches(marked, branch) {
-    console.log(marked);
-    if (marked.has(branch.target.data.name.toString())) {
+    if (marked.has(branch.target.data.split_indices)) {
       return TreeDrawer.colorMap.markedColor;
     } else {
       return TreeDrawer.colorMap.defaultColor;
@@ -277,14 +237,11 @@ export class TreeDrawer {
    */
   updateLinkExtension(currentMaxRadius) {
     // JOIN new data with old elements.
-    const linkExtension = TreeDrawer.svg_container
+    const linkExtension = this.svg_container
       .selectAll(".link-extension") //updates the links
-      .data(this.root.leaves(), (linkExtension) => {
-        return linkExtension.data.name;
+      .data(this.root.leaves(), (leaf) => {
+        return leaf.data.name.toString();
       });
-
-    // EXIT old elements not present in new data.
-    linkExtension.exit().remove();
 
     // UPDATE old elements present in new data.
     linkExtension
@@ -294,14 +251,25 @@ export class TreeDrawer {
       .duration(this.drawDuration)
       .attrTween("d", this.getLinkExtensionInterpolator(currentMaxRadius - 40))
       .style("stroke", (d) => {
-        if (this.marked.has(d.data.name.toString())) {
-          return TreeDrawer.colorMap.markedColor; // Algorithm-detected taxa
+        if (this.marked.size == 0) {
+          return TreeDrawer.colorMap.defaultColor;
         } else if (
           TreeDrawer.markedLabelList.includes(d.data.name.toString())
         ) {
           return TreeDrawer.colorMap.userMarkedColor; // User-clicked nodes
-        } else {
-          return TreeDrawer.colorMap.defaultColor;
+        }
+
+        for (let markedTaxa of this.marked) {
+          let setMarkedTaxa = new Set(markedTaxa);
+          if (setMarkedTaxa.has(d.data.name.toString())) {
+            return TreeDrawer.colorMap.markedColor; // Algorithm-detected taxa
+          } else if (
+            TreeDrawer.markedLabelList.includes(d.data.name.toString())
+          ) {
+            return TreeDrawer.colorMap.userMarkedColor; // User-clicked nodes
+          } else {
+            return TreeDrawer.colorMap.defaultColor;
+          }
         }
       });
 
@@ -311,14 +279,25 @@ export class TreeDrawer {
       .append("path")
       .attr("class", "link-extension")
       .style("stroke", (d) => {
-        if (this.marked.has(d.data.name.toString())) {
-          return TreeDrawer.colorMap.markedColor; // Algorithm-detected taxa
+        if (this.marked.size == 0) {
+          return TreeDrawer.colorMap.defaultColor;
         } else if (
           TreeDrawer.markedLabelList.includes(d.data.name.toString())
         ) {
           return TreeDrawer.colorMap.userMarkedColor; // User-clicked nodes
-        } else {
-          return TreeDrawer.colorMap.defaultColor;
+        }
+
+        for (let markedTaxa of this.marked) {
+          let setMarkedTaxa = new Set(markedTaxa);
+          if (setMarkedTaxa.has(d.data.name.toString())) {
+            return TreeDrawer.colorMap.markedColor; // Algorithm-detected taxa
+          } else if (
+            TreeDrawer.markedLabelList.includes(d.data.name.toString())
+          ) {
+            return TreeDrawer.colorMap.userMarkedColor; // User-clicked nodes
+          } else {
+            return TreeDrawer.colorMap.defaultColor;
+          }
         }
       })
       .attr("stroke-width", TreeDrawer.sizeMap.strokeWidth)
@@ -340,7 +319,7 @@ export class TreeDrawer {
     const nodes = this.root.leaves();
 
     // JOIN new data with old svg elements
-    const textLabels = TreeDrawer.svg_container
+    const textLabels = this.svg_container
       .selectAll(".label")
       .data(nodes, (d) => {
         return d.data.name;
@@ -381,19 +360,19 @@ export class TreeDrawer {
 
   /**
    * Creates leaf circle nodes for the tree.
-   *
+   *s
    * @param  {Number} currentMaxRadius
    * @return {void}
    */
-  updateNodeCircles(currentMaxRadius) {
+  updateLeafCircles(currentMaxRadius) {
     const leaves = this.root.leaves();
 
     //getting leave names for creating legend
     // JOIN new data with old svg elements
-    const leaf_circles = TreeDrawer.svg_container
+    const leaf_circles = this.svg_container
       .selectAll(".leaf")
       .data(leaves, (d) => {
-        return d.data.name;
+        return d.data.split_indices;
       });
 
     // UPDATE old elements present in new data
@@ -422,8 +401,8 @@ export class TreeDrawer {
       .attr("stroke-width", "0.1em")
       .attr("r", "0.4em");
 
-    // this.calculatePath(this.root);
-    // this.colorPath(this.root);
+    this.calculatePath(this.root);
+    this.colorPath(this.root);
 
     d3.selectAll(".leaf").on("click", (event, d) => {
       this.flipNode(d);
@@ -752,19 +731,7 @@ export class TreeDrawer {
         TreeDrawer.colorMap.userMarkedColor
       );
     } else {
-      let marked = new Set(this.marked);
-
-      if (marked.has(d.data.name)) {
-        d3.select(`#circle-${d.data.name}`).style(
-          "fill",
-          TreeDrawer.colorMap.markedColor
-        );
-
-        d3.select(`#label-${d.data.name}`).style(
-          "fill",
-          TreeDrawer.colorMap.markedColor
-        );
-      } else {
+      if (this.marked.size == 0) {
         d3.select(`#circle-${d.data.name}`).style(
           "fill",
           TreeDrawer.colorMap.defaultColor
@@ -774,6 +741,32 @@ export class TreeDrawer {
           "fill",
           TreeDrawer.colorMap.defaultLabelColor
         );
+      }
+
+      for (let markedSubTree of this.marked) {
+        let setMarkedTaxa = new Set(markedSubTree);
+
+        if (setMarkedTaxa.has(d.data.name)) {
+          d3.select(`#circle-${d.data.name}`).style(
+            "fill",
+            TreeDrawer.colorMap.markedColor
+          );
+
+          d3.select(`#label-${d.data.name}`).style(
+            "fill",
+            TreeDrawer.colorMap.markedColor
+          );
+        } else {
+          d3.select(`#circle-${d.data.name}`).style(
+            "fill",
+            TreeDrawer.colorMap.defaultColor
+          );
+
+          d3.select(`#label-${d.data.name}`).style(
+            "fill",
+            TreeDrawer.colorMap.defaultLabelColor
+          );
+        }
       }
     }
   }
@@ -872,12 +865,13 @@ export default function drawTree(
   drawDurationFrontend,
   leaveOrder,
   fontSize,
-  strokeWidth
+  strokeWidth,
+  svgContainerId = "application"
 ) {
   let currentRoot = treeConstructor["tree"];
   let currentMaxRadius = treeConstructor["max_radius"] + 30;
 
-  let currentTreeDrawer = new TreeDrawer(currentRoot);
+  let currentTreeDrawer = new TreeDrawer(currentRoot, svgContainerId);
 
   TreeDrawer.sizeMap.fontSize = `${fontSize}em`;
   TreeDrawer.sizeMap.strokeWidth = strokeWidth;
@@ -889,5 +883,7 @@ export default function drawTree(
   currentTreeDrawer.updateLinks();
   currentTreeDrawer.updateLinkExtension(currentMaxRadius);
   currentTreeDrawer.updateLabels(currentMaxRadius);
-  currentTreeDrawer.updateNodeCircles(currentMaxRadius);
+  currentTreeDrawer.updateLeafCircles(currentMaxRadius);
+
+  return true;
 }
