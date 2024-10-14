@@ -116,8 +116,8 @@ function renderChart(guiInstance, data, config) {
   const margin = {
     top: containerHeight * 0.05, // 5% of container height
     right: containerWidth * 0.05, // 5% of container width
-    bottom: containerHeight * 0.05, // 10% of container height
-    left: containerWidth * 0.05, // 10% of container width
+    bottom: containerHeight * 0.1, // 10% of container height
+    left: containerWidth * 0.1, // 10% of container width
   };
 
   // Step 2: Calculate chart dimensions
@@ -163,8 +163,8 @@ function renderChart(guiInstance, data, config) {
   // Step 9: Add tooltips
   addTooltips(circles, config);
 
-  // Step 10: Add the "ship" vertical line indicating the current position
-  setModalShip(guiInstance.currentPosition, guiInstance, config);
+  // Step 10: Add the "ship" vertical line indicating the current position with drag behavior
+  setModalShip(guiInstance.currentPosition, guiInstance, config, data);
 }
 
 /**
@@ -214,7 +214,6 @@ function createSvg(containerId, width, height, margin) {
     .append("svg")
     .attr("width", "100%") // Make SVG responsive
     .attr("height", "100%") // Make SVG responsive
-    //.attr("preserveAspectRatio", "xMidYMid meet")
     .attr(
       "viewBox",
       `0 0 ${width + margin.left + margin.right} ${
@@ -440,7 +439,7 @@ function addTooltips(circles, config) {
   circles
     .on("mouseover", function (event, d) {
       // Use d3.select(this).datum() to get the index if needed
-      const index = d3.select(this).datum().index || 0; // Adjust as necessary
+      const index = parseInt(d3.select(this).attr("data-index"), 10);
       tooltip.transition().duration(200).style("opacity", 0.9);
       tooltip
         .html(config.tooltipFormatter(d, index))
@@ -458,14 +457,15 @@ function addTooltips(circles, config) {
 }
 
 /**
- * Adds a vertical "ship" line to indicate the current position.
+ * Adds a draggable vertical "ship" line to indicate the current position.
  * @param {number} position - The position to indicate.
  * @param {Gui} guiInstance - The instance of the Gui class.
  * @param {Object} config - Configuration object for the chart.
+ * @param {Array} data - The data to visualize.
  */
-function setModalShip(position, guiInstance, config) {
+function setModalShip(position, guiInstance, config, data) {
   // Remove existing ship line if any
-  d3.select("#ship-modal").remove();
+  d3.select("#ship-modal-group").remove();
 
   // Access the SVG group containing the chart
   const svg = d3.select("#modal-graph-chart").select("svg").select("g");
@@ -485,8 +485,11 @@ function setModalShip(position, guiInstance, config) {
     return;
   }
 
+  // Create a group for the draggable ship line and label
+  const shipGroup = svg.append("g").attr("id", "ship-modal-group");
+
   // Append the ship line
-  svg
+  const shipLine = shipGroup
     .append("line")
     .attr("id", "ship-modal")
     .attr("x1", shipX)
@@ -496,7 +499,65 @@ function setModalShip(position, guiInstance, config) {
     .attr("stroke", "red")
     .attr("stroke-width", 2)
     .attr("stroke-dasharray", "5,5")
+    .style("cursor", "pointer")
     .style("transition", "stroke 0.3s, stroke-width 0.3s");
+
+  // Add label near the bottom of the line
+  const lineLabel = shipGroup
+    .append("text")
+    .attr("class", "current-position-label")
+    .attr("x", shipX)
+    .attr("y", guiInstance.modalHeight + 20) // Adjusted position for the label
+    .attr("text-anchor", "middle")
+    .attr("fill", "red")
+    .style("font-size", "0.8em")
+    .text(`${position + 1}`)
+    .style("pointer-events", "none");
+
+  // Add drag behavior
+  const dragBehavior = d3
+    .drag()
+    .on("start", dragStarted)
+    .on("drag", dragged)
+    .on("end", dragEnded);
+
+  shipLine.call(dragBehavior);
+
+  function dragStarted(event) {
+    d3.select(this).raise().attr("stroke-width", 3);
+  }
+
+  function dragged(event) {
+    let xPos = event.x;
+
+    // Constrain xPos within chart bounds
+    xPos = Math.max(0, Math.min(guiInstance.modalWidth, xPos));
+
+    // Update line position
+    shipLine.attr("x1", xPos).attr("x2", xPos);
+
+    // Update label position
+    lineLabel.attr("x", xPos);
+
+    // Calculate new position index based on xPos
+    let newPosition = Math.round(guiInstance.modalXScale.invert(xPos)) - 1; // Zero-based index
+    newPosition = Math.max(0, Math.min(data.length - 1, newPosition));
+
+    // Update label text
+    lineLabel.text(`${newPosition + 1}`);
+
+    // Update current position in guiInstance
+    guiInstance.currentPosition = newPosition;
+
+    // Update the application state
+    guiInstance.goToPosition(newPosition);
+
+    // Optional: Update any other elements if necessary
+  }
+
+  function dragEnded(event) {
+    d3.select(this).attr("stroke-width", 2);
+  }
 }
 
 /**
@@ -588,7 +649,7 @@ function updateModalChart(guiInstance, data, config) {
     .attr("cy", (d) => guiInstance.modalYScale(config.yAccessor(d)));
 
   // Update ship position
-  setModalShip(guiInstance.currentPosition, guiInstance, config);
+  setModalShip(guiInstance.currentPosition, guiInstance, config, data);
 }
 
 /**
