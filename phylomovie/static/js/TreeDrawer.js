@@ -174,12 +174,6 @@ export class TreeDrawer {
       .attr("id", (d) => {
         return this.getLinkId(d);
       })
-      .attr("source", (d) => {
-        return d.source.data.name;
-      })
-      .attr("target", (d) => {
-        return d.target.data.name;
-      })
       .attr("d", (d) => {
         return this.buildSvgString(d);
       })
@@ -203,20 +197,23 @@ export class TreeDrawer {
   }
 
   colorInternalBranches(d) {
+
     if (this.marked.size == 0) {
       return TreeDrawer.colorMap.defaultColor;
     }
 
     // Check if every taxon in taxaIndices is marked
     for (const taxonIndex of d.target.data.split_indices) {
+
       const taxonName = this.leaveOrder[taxonIndex];
 
       for (let markedTaxa of this.marked) {
+        
         let setMarkedTaxa = new Set(markedTaxa);
-
         if (!setMarkedTaxa.has(taxonName)) {
           return TreeDrawer.colorMap.defaultColor;
         }
+
       }
     }
 
@@ -321,7 +318,7 @@ export class TreeDrawer {
       .append("text")
       .attr("class", "label")
       .attr("id", (d) => {
-        return `label-${d.data.name}`;
+        return `label-${d.data.split_indices}`;
       })
       .attr("dy", ".31em")
       .style("font-size", TreeDrawer.sizeMap.fontSize)
@@ -365,7 +362,7 @@ export class TreeDrawer {
       .enter()
       .append("circle")
       .attr("id", (d) => {
-        return `circle-${d.data.name}`;
+        return `circle-${d.data.split_indices}`;
       })
       .attr("class", "leaf")
       .attr("cx", (d) => {
@@ -698,25 +695,25 @@ export class TreeDrawer {
    */
   colorCircle(d) {
     if (TreeDrawer.markedLabelList.includes(d.data.name)) {
-      d3.select(`#label-${d.data.name}`).style(
+      d3.select(`#label-${d.data.split_indices}`).style(
         "fill",
         TreeDrawer.colorMap.userMarkedColor
       );
 
-      d3.select(`#circle-${d.data.name}`).style(
+      d3.select(`#circle-${d.data.split_indices}`).style(
         "fill",
         TreeDrawer.colorMap.userMarkedColor
       );
     } else {
       if (this.marked.size == 0) {
-        d3.select(`#circle-${d.data.name}`).style(
+        d3.select(`#circle-${d.data.split_indices}`).style(
           "fill",
-          TreeDrawer.colorMap[d.data.name]
+          TreeDrawer.colorMap[d.data.split_indices]
         );
 
-        d3.select(`#label-${d.data.name}`).style(
+        d3.select(`#label-${d.data.split_indices}`).style(
           "fill",
-          TreeDrawer.colorMap[d.data.name]
+          TreeDrawer.colorMap[d.data.split_indices]
         );
       }
 
@@ -724,24 +721,24 @@ export class TreeDrawer {
         let setMarkedTaxa = new Set(markedSubTree);
 
         if (setMarkedTaxa.has(d.data.name)) {
-          d3.select(`#circle-${d.data.name}`).style(
+          d3.select(`#circle-${d.data.split_indices}`).style(
             "fill",
             TreeDrawer.colorMap.markedColor
           );
 
-          d3.select(`#label-${d.data.name}`).style(
+          d3.select(`#label-${d.data.split_indices}`).style(
             "fill",
             TreeDrawer.colorMap.markedColor
           );
         } else {
-          d3.select(`#circle-${d.data.name}`).style(
+          d3.select(`#circle-${d.data.split_indices}`).style(
             "fill",
-            TreeDrawer.colorMap[d.data.name]
+            TreeDrawer.colorMap[d.data.split_indices]
           );
 
-          d3.select(`#label-${d.data.name}`).style(
+          d3.select(`#label-${d.data.split_indices}`).style(
             "fill",
-            TreeDrawer.colorMap[d.data.name]
+            TreeDrawer.colorMap[d.data.split_indices]
           );
         }
       }

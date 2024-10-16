@@ -301,8 +301,6 @@
     <script type="module">
       import Gui from "/static/js/gui.js";
       import TreeDrawer from "/static/js/TreeDrawer.js";
-
-
       // Properties
       let treeList = {{tree_list | safe}};
 
@@ -311,6 +309,8 @@
       let weightedRobinsonFouldsDistances = {{ weighted_robinson_foulds_distance_list | safe}};
 
       let toBeHighlighted = {{to_be_highlighted | tojson}};
+
+      console.log(toBeHighlighted)
 
       let leaveOrder = {{sorted_leaves | safe}};
 
