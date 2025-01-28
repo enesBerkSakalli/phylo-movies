@@ -22,19 +22,6 @@
     />
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/filepond/dist/filepond.js"></script>
-    <script type="importmap">
-      {
-        "imports": {
-          "@material/web/": "https://esm.run/@material/web/"
-        }
-      }
-    </script>
-    <script type="module">
-      import "@material/web/all.js";
-      import { styles as typescaleStyles } from "@material/web/typography/md-typescale-styles.js";
-
-      document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
-    </script>
   </head>
   <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -122,8 +109,13 @@
       </div>
     </div>
 
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="{{ url_for('static', filename='css/form.css') }}"
+    />
+
     <script>
-      FilePond.registerPlugin();
       const treesInput = document.getElementById("trees");
       const orderInput = document.getElementById("order");
       FilePond.create(treesInput, {
@@ -134,43 +126,6 @@
         allowMultiple: false,
         storeAsFile: true,
       });
-    </script>w
-
-    <style>
-      body {
-        font-family: "Heebo", sans-serif;
-      }
-
-      .navbar-brand,
-      .nav-link {
-        font-weight: 500;
-      }
-
-      h1 {
-        font-size: 2.5em;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-      }
-
-      .form-label {
-        font-weight: bold;
-      }
-
-      .btn-primary {
-        padding: 0.75rem 1.5rem;
-        font-size: 1.2rem;
-      }
-
-      .form-control,
-      .filepond--root {
-        border-radius: 0.5rem;
-      }
-
-      .filepond--drop-label {
-        font-size: 1rem;
-        color: #495057;
-      }
-    </style>
+    </script>
   </body>
 </html>

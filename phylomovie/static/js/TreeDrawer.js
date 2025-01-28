@@ -1,5 +1,6 @@
-import ParseUtil from "./ParseUtil.js";
 import * as d3 from "https://cdn.skypack.dev/d3@7";
+import ParseUtil from "./ParseUtil.js";
+import { kar2pol, shortestAngle } from "./phyoMoviesMath.js";
 
 /** Class For drawing Hierarchical Trees. */
 export class TreeDrawer {
@@ -67,8 +68,6 @@ export class TreeDrawer {
     let self = this;
 
     return function (d) {
-      // previous svg instance
-
       // parse SVG to current positions/angles
       let pathArray = TreeDrawer.parser.parsePathData(
         d3.select(this).attr("d")
@@ -87,10 +86,10 @@ export class TreeDrawer {
       let cx = d3.select(this).attr("cx");
       let cy = d3.select(this).attr("cy");
 
-      let polarCoordinates = self.kar2pol(cx, cy);
+      let polarCoordinates = kar2pol(cx, cy);
       const newAngle = d.angle;
       const oldAngle = polarCoordinates.angle;
-      const diff = self.shortestAngle(oldAngle, newAngle);
+      const diff = shortestAngle(oldAngle, newAngle);
 
       return function (t) {
         const tweenAngle = diff * t + oldAngle;
@@ -100,17 +99,15 @@ export class TreeDrawer {
   }
 
   attr2TweenCircleY(currentMaxRadius) {
-    let self = this;
-
     return function (d) {
       let cx = d3.select(this).attr("cx");
       let cy = d3.select(this).attr("cy");
 
-      let polarCoordinates = self.kar2pol(cx, cy);
+      let polarCoordinates = kar2pol(cx, cy);
 
       let newAngle = d.angle;
       let oldAngle = polarCoordinates.angle;
-      let diff = self.shortestAngle(oldAngle, newAngle);
+      let diff = shortestAngle(oldAngle, newAngle);
 
       return function (t) {
         const tween_startAngle = diff * t + oldAngle;
@@ -120,7 +117,7 @@ export class TreeDrawer {
   }
 
   /**
-   * Generarting id for a link by combining the name of the source node name and the target name
+   * Generating id for a link by combining the name of the source node name and the target name
    * @param  {Object} link
    * @return {string}
    */
@@ -133,9 +130,9 @@ export class TreeDrawer {
    * @param  {Object} ancestor
    * @return {string|null}
    */
-  generateLinkIdForLeave(ancestor) {
-    if (ancestor.parent) {
-      return `#link-${ancestor.data.split_indices.join("-")}`;
+  generateLinkIdForLeave(node) {
+    if (node.parent) {
+      return `#link-${node.data.split_indices.join("-")}`;
     } else {
       return null;
     }
@@ -162,11 +159,7 @@ export class TreeDrawer {
       .enter()
       .append("path")
       .style("stroke", (d) => {
-        if (this._colorInternalBranches) {
-          return this.colorInternalBranches(d);
-        } else {
-          return this.colorExternalBranches(this.marked, d);
-        }
+        return this.colorInternalBranches(d);
       })
       .attr("class", "links")
       .attr("stroke-width", TreeDrawer.sizeMap.strokeWidth)
@@ -184,11 +177,7 @@ export class TreeDrawer {
     links
       .attr("stroke-width", TreeDrawer.sizeMap.strokeWidth)
       .style("stroke", (d) => {
-        if (this._colorInternalBranches) {
-          return this.colorInternalBranches(d);
-        } else {
-          return this.colorExternalBranches(this.marked, d);
-        }
+        return this.colorInternalBranches(d);
       })
       .transition()
       .ease(d3.easeExpInOut)
@@ -197,35 +186,28 @@ export class TreeDrawer {
   }
 
   colorInternalBranches(d) {
-
     if (this.marked.size == 0) {
       return TreeDrawer.colorMap.defaultColor;
     }
 
     // Check if every taxon in taxaIndices is marked
     for (const taxonIndex of d.target.data.split_indices) {
-
       const taxonName = this.leaveOrder[taxonIndex];
-
-      for (let markedTaxa of this.marked) {
-        
-        let setMarkedTaxa = new Set(markedTaxa);
-        if (!setMarkedTaxa.has(taxonName)) {
-          return TreeDrawer.colorMap.defaultColor;
-        }
-
+      if (!this.marked.has(taxonName)) {
+        return TreeDrawer.colorMap.defaultColor;
       }
     }
-
     return TreeDrawer.colorMap.markedColor;
   }
 
-  colorExternalBranches(marked, branch) {
-    if (marked.has(branch.target.data.split_indices)) {
-      return TreeDrawer.colorMap.markedColor;
-    } else {
-      return TreeDrawer.colorMap.defaultColor;
+  colorExternalBranches(branch) {
+    if (TreeDrawer.markedLabelList.has(branch.target.data.name)) {
+      return TreeDrawer.colorMap.userMarkedColor;
     }
+    if (this.marked.has(branch.target.data.name)) {
+      return TreeDrawer.colorMap.markedColor;
+    }
+    return TreeDrawer.colorMap.defaultColor;
   }
 
   /**
@@ -266,21 +248,16 @@ export class TreeDrawer {
   }
 
   updateLinkExtensionColor(d) {
-    if (this.marked.size == 0) {
-      return TreeDrawer.colorMap[d.data.name];
-    } else if (TreeDrawer.markedLabelList.includes(d.data.name.toString())) {
+    if (TreeDrawer.markedLabelList.includes(d.data.name.toString())) {
       return TreeDrawer.colorMap.userMarkedColor; // User-clicked nodes
     }
 
-    for (let markedTaxa of this.marked) {
-      let setMarkedTaxa = new Set(markedTaxa);
-      if (setMarkedTaxa.has(d.data.name.toString())) {
-        return TreeDrawer.colorMap.markedColor; // Algorithm-detected taxa
-      } else if (TreeDrawer.markedLabelList.includes(d.data.name.toString())) {
-        return TreeDrawer.colorMap.userMarkedColor; // User-clicked nodes
-      } else {
-        return TreeDrawer.colorMap[d.data.name];
-      }
+    if (this.marked.has(d.data.name)) {
+      return TreeDrawer.colorMap.markedColor; // Algorithm-detected taxa
+    } else if (TreeDrawer.markedLabelList.includes(d.data.name.toString())) {
+      return TreeDrawer.colorMap.userMarkedColor; // User-clicked nodes
+    } else {
+      return TreeDrawer.colorMap[d.data.name];
     }
   }
 
@@ -290,12 +267,10 @@ export class TreeDrawer {
    * @return {void}
    */
   updateLabels(currentMaxRadius) {
-    const nodes = this.root.leaves();
-
     // JOIN new data with old svg elements
     const textLabels = this.svg_container
       .selectAll(".label")
-      .data(nodes, (d) => {
+      .data(this.root.leaves(), (d) => {
         return d.data.name;
       });
 
@@ -339,13 +314,10 @@ export class TreeDrawer {
    * @return {void}
    */
   updateLeafCircles(currentMaxRadius) {
-    const leaves = this.root.leaves();
-
-    //getting leave names for creating legend
     // JOIN new data with old svg elements
     const leaf_circles = this.svg_container
       .selectAll(".leaf")
-      .data(leaves, (d) => {
+      .data(this.root.leaves(), (d) => {
         return d.data.split_indices;
       });
 
@@ -424,11 +396,11 @@ export class TreeDrawer {
     let old_endAngle = 0;
 
     if (!!pathArray) {
-      let old_start = this.kar2pol(pathArray[0].x, pathArray[0].y);
+      let old_start = kar2pol(pathArray[0].x, pathArray[0].y);
       old_startRadius = old_start.r;
       old_startAngle = old_start.angle;
       let last = pathArray[pathArray.length - 1];
-      let old_end = this.kar2pol(last.x, last.y);
+      let old_end = kar2pol(last.x, last.y);
       old_endRadius = old_end.r;
       old_endAngle = old_end.angle;
     }
@@ -438,8 +410,8 @@ export class TreeDrawer {
     let new_startRadius = d.source.radius;
     let new_endRadius = d.target.radius;
 
-    let startDiff = this.shortestAngle(old_startAngle, new_startAngle);
-    let endDiff = this.shortestAngle(old_endAngle, new_endAngle);
+    let startDiff = shortestAngle(old_startAngle, new_startAngle);
+    let endDiff = shortestAngle(old_endAngle, new_endAngle);
 
     let tween_startAngle = startDiff * t + old_startAngle;
     let tween_endAngle = endDiff * t + old_endAngle;
@@ -464,7 +436,7 @@ export class TreeDrawer {
     let ly = tween_endRadius * Math.sin(tween_endAngle);
 
     let sweepFlag = 0;
-    if (this.shortestAngle(tween_startAngle, tween_endAngle) > 0) {
+    if (shortestAngle(tween_startAngle, tween_endAngle) > 0) {
       sweepFlag = 1;
     }
 
@@ -490,11 +462,11 @@ export class TreeDrawer {
     let old_endAngle = 0;
 
     if (!!pathArray) {
-      let old_start = this.kar2pol(pathArray[0].x, pathArray[0].y);
+      let old_start = kar2pol(pathArray[0].x, pathArray[0].y);
       old_startRadius = old_start.r;
       old_startAngle = old_start.angle;
       let last = pathArray[pathArray.length - 1];
-      let old_end = this.kar2pol(last.x, last.y);
+      let old_end = kar2pol(last.x, last.y);
       old_endRadius = old_end.r;
       old_endAngle = old_end.angle;
     }
@@ -505,8 +477,8 @@ export class TreeDrawer {
     let new_startRadius = d.radius;
     let new_endRadius = currentMaxRadius;
 
-    let startDiff = this.shortestAngle(old_startAngle, new_startAngle);
-    let endDiff = this.shortestAngle(old_endAngle, new_endAngle);
+    let startDiff = shortestAngle(old_startAngle, new_startAngle);
+    let endDiff = shortestAngle(old_endAngle, new_endAngle);
 
     let tween_startAngle = startDiff * t + old_startAngle;
     let tween_endAngle = endDiff * t + old_endAngle;
@@ -555,7 +527,6 @@ export class TreeDrawer {
   }
 
   getOrientTextInterpolator(currentMaxRadius) {
-    const self = this;
     return function (d, i) {
       // previous svg instance
       let prev_d = d3.select(this).attr("transform");
@@ -576,13 +547,13 @@ export class TreeDrawer {
 
       const angleDiff =
         (360 *
-          self.shortestAngle(
+          shortestAngle(
             (Math.PI * 2 * old_angle) / 360,
             (Math.PI * 2 * new_angle) / 360
           )) /
         (2 * Math.PI);
 
-      const otherAngleDiff = self.shortestAngle(old_otherAngle, new_otherAngle);
+      const otherAngleDiff = shortestAngle(old_otherAngle, new_otherAngle);
 
       const radiusDiff = currentMaxRadius - old_MaxRadius;
 
@@ -663,29 +634,33 @@ export class TreeDrawer {
     });
 
     tree.leaves().forEach((d, i) => {
-      d.ancestors().forEach((ancestor) => {
-        const linkId = this.generateLinkIdForLeave(ancestor);
+      if (d.parent) {
+        d.ancestors().forEach((ancestor) => {
+          const linkId = this.generateLinkIdForLeave(ancestor);
 
-        if (!linkId) {
-          return;
-        }
+          if (!linkId) {
+            return;
+          }
 
-        const svgElement = d3.select(linkId);
+          const svgElement = d3.select(linkId);
 
-        let neededHighlightingTaxa = svgElement.attr("neededHighlightingTaxa");
+          let neededHighlightingTaxa = svgElement.attr(
+            "neededHighlightingTaxa"
+          );
 
-        if (neededHighlightingTaxa == null) {
-          neededHighlightingTaxa = 0;
-        } else {
-          neededHighlightingTaxa = parseInt(neededHighlightingTaxa);
-        }
+          if (neededHighlightingTaxa == null) {
+            neededHighlightingTaxa = 0;
+          } else {
+            neededHighlightingTaxa = parseInt(neededHighlightingTaxa);
+          }
 
-        if (TreeDrawer.markedLabelList.includes(d.data.name)) {
-          neededHighlightingTaxa += 1;
-        }
+          if (TreeDrawer.markedLabelList.includes(d.data.name)) {
+            neededHighlightingTaxa += 1;
+          }
 
-        svgElement.attr("neededHighlightingTaxa", neededHighlightingTaxa);
-      });
+          svgElement.attr("neededHighlightingTaxa", neededHighlightingTaxa);
+        });
+      }
     });
   }
 
@@ -705,7 +680,17 @@ export class TreeDrawer {
         TreeDrawer.colorMap.userMarkedColor
       );
     } else {
-      if (this.marked.size == 0) {
+      if (this.marked.has(d.data.name)) {
+        d3.select(`#circle-${d.data.split_indices}`).style(
+          "fill",
+          TreeDrawer.colorMap.markedColor
+        );
+
+        d3.select(`#label-${d.data.split_indices}`).style(
+          "fill",
+          TreeDrawer.colorMap.markedColor
+        );
+      } else {
         d3.select(`#circle-${d.data.split_indices}`).style(
           "fill",
           TreeDrawer.colorMap[d.data.split_indices]
@@ -715,32 +700,6 @@ export class TreeDrawer {
           "fill",
           TreeDrawer.colorMap[d.data.split_indices]
         );
-      }
-
-      for (let markedSubTree of this.marked) {
-        let setMarkedTaxa = new Set(markedSubTree);
-
-        if (setMarkedTaxa.has(d.data.name)) {
-          d3.select(`#circle-${d.data.split_indices}`).style(
-            "fill",
-            TreeDrawer.colorMap.markedColor
-          );
-
-          d3.select(`#label-${d.data.split_indices}`).style(
-            "fill",
-            TreeDrawer.colorMap.markedColor
-          );
-        } else {
-          d3.select(`#circle-${d.data.split_indices}`).style(
-            "fill",
-            TreeDrawer.colorMap[d.data.split_indices]
-          );
-
-          d3.select(`#label-${d.data.split_indices}`).style(
-            "fill",
-            TreeDrawer.colorMap[d.data.split_indices]
-          );
-        }
       }
     }
   }
@@ -777,42 +736,6 @@ export class TreeDrawer {
         }
       });
     });
-  }
-
-  /**
-   * Converting cartesion Coordinates to Polar Coordinates
-   * @param  {Number} x -
-   * @param  {Number} y -
-   * @return {Object} Object with element r for radius and angle.
-   */
-  kar2pol(x, y) {
-    const radius = Math.sqrt(x ** 2 + y ** 2);
-    let angle = Math.atan(y / x);
-    if (x < 0) {
-      angle += Math.PI;
-    }
-    if (x === 0) {
-      angle = 0;
-    }
-
-    return { r: radius, angle: angle };
-  }
-
-  /**
-   * Get shortest angle between two points
-   * @param  {Number} a -
-   * @param  {Number} b -
-   * @return {Number}.
-   */
-  shortestAngle(a, b) {
-    let v1 = b - a;
-    let v2 = b - a - Math.sign(v1) * 2 * Math.PI;
-
-    if (Math.abs(v1) < Math.abs(v2)) {
-      return v1;
-    } else {
-      return v2;
-    }
   }
 
   /**
