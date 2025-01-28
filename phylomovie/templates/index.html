@@ -262,11 +262,11 @@
                 <select
                   name="barPlotOption"
                   id="barPlotOption"
-                  class="plotPercentSelect left right">
+                  class="plotPercentSelect left right"
+                >
                   <option value="rfd">Rel. RFD</option>
                   <option value="w-rfd">Weighted RFD</option>
                   <option value="scale">Scale</option>
-
                 </select>
                 <div style="width: 30px; height: 10px"></div>
               </div>
@@ -309,8 +309,6 @@
       let weightedRobinsonFouldsDistances = {{ weighted_robinson_foulds_distance_list | safe}};
 
       let toBeHighlighted = {{to_be_highlighted | tojson}};
-
-      console.log(toBeHighlighted)
 
       let leaveOrder = {{sorted_leaves | safe}};
 
@@ -425,12 +423,11 @@
           }
       });
 
-
       stopButton.addEventListener('click', function () {
           mediaRecorder.stop();
           let node = document.createElement("p");
           node.textContent = "Stopped recording";
-          document.body.appendChild(node);
+          document.body.appendChild(node)
       });
 
       window.onresize = function () {

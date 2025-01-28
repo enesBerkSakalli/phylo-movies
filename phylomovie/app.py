@@ -22,7 +22,7 @@ app.config["TEMPLATES_AUTO_RELOAD"] = True
 try:
     with open("commithash", mode="r") as f:
         commit = f.read()
-except:
+except FileNotFoundError:
     commit = "no"
 
 
@@ -82,10 +82,18 @@ def handle_uploaded_file(leaf_order, f):
     newick_string_list = newick_string.strip("\r")
     trees = parse_newick(newick_string_list)
 
-    jumping_taxa = []
+    jumping_taxa_for_trajectories = []
 
     for i in range(0, len(trees) - 1, 1):
-        jumping_taxa.append(call_jumping_taxa(tree1=trees[i], tree2=trees[i + 1]))
+        jumping_taxa = call_jumping_taxa(tree1=trees[i], tree2=trees[i + 1])
+        combined_unique_list = [
+            seen.add(item) or item
+            for seen in [set()]
+            for sublist in jumping_taxa
+            for item in sublist
+            if item not in seen
+        ]
+        jumping_taxa_for_trajectories.append(combined_unique_list)
 
     interpolated_trees = interpolate_adjacent_tree_pairs(trees)
     filename = f.filename
@@ -98,7 +106,7 @@ def handle_uploaded_file(leaf_order, f):
     phylo_move_data = {
         "rfd_list": rfds,
         "weighted_rfd_list": wrfds,
-        "to_be_highlighted": jumping_taxa,
+        "to_be_highlighted": jumping_taxa_for_trajectories,
         "sorted_leaves": trees[0]._order,
         "tree_list": interpolated_tree_list,
         "file_name": filename,
