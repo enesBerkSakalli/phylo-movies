@@ -1,0 +1,128 @@
+/* Submenu and navigation panel styles */
+.submenu-container {
+  margin: 10px 0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #3a3a4a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.submenu-header {
+  padding: 12px 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #444454;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  transition: background-color 0.2s ease;
+}
+
+.submenu-header:hover {
+  background-color: #4a4a5a;
+}
+
+.submenu-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.submenu-icon {
+  color: #4390e1;
+  font-size: 16px;
+}
+
+.toggle-icon {
+  font-size: 12px;
+  color: #aaa;
+  transition: transform 0.3s ease;
+}
+
+/* Toggle icon rotation based on data-collapsed attribute */
+.submenu-container[data-collapsed="true"] .toggle-icon {
+  transform: rotate(-90deg);
+}
+.submenu-container[data-collapsed="false"] .toggle-icon {
+  transform: rotate(0deg);
+}
+
+
+.submenu {
+  background-color: #3a3a4a;
+  padding-left: 12px;
+  padding-right: 12px;
+  padding-top: 24px;
+  padding-bottom: 24px;
+  overflow: hidden;
+  max-height: 1000px; /* expanded height */
+}
+
+.submenu-container[data-collapsed="true"] .submenu {
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 12px;
+  padding-right: 12px;
+
+}
+.submenu-container[data-collapsed="false"] .submenu {
+  max-height: 1000px;
+  padding: 16px;
+}
+
+.tool-controls {
+  justify-content: center;
+  width: auto;
+  margin-bottom: 12px;
+}
+
+/* Submenu Section Styling */
+.submenu-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-left: 12px;
+  padding-right: 12px;
+
+  margin: 0;
+}
+
+.submenu-section:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.submenu-section:last-child {
+  padding-bottom: 0;
+}
+
+.submenu-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: #7daaff;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.submenu-section-title .mdc-icon {
+  font-size: 14px;
+  color: #7daaff;
+  opacity: 0.8;
+}
+
+/* Control spacing within sections */
+.submenu-section .mdc-form-control,
+.submenu-section .mdc-input-with-button,
+.submenu-section .viz-tools {
+  margin-bottom: 10px;
+}
+
+.submenu-section .mdc-form-control:last-child,
+.submenu-section .mdc-input-with-button:last-child,
+.submenu-section .viz-tools:last-child {
+  margin-bottom: 0;
+}
