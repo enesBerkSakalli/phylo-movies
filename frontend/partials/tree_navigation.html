@@ -1,0 +1,95 @@
+<!-- navigation.html -->
+<div class="submenu-container" data-collapsed="false">
+  <div class="submenu-header">
+    <div class="submenu-title">
+      <i class="fa fa-compass submenu-icon"></i>
+      <h2 class="mdc-section-title">Tree Navigation</h2>
+    </div>
+    <span class="toggle-icon" id="toggle-navigation-submenu">▼</span>
+  </div>
+  
+  <div class="submenu" id="navigation-submenu">
+    <!-- Tree Status Panel -->
+    <div class="tree-status-panel">
+      <div class="status-grid">
+        <div class="status-item">
+          <span class="status-label">Full Tree</span>
+          <span class="status-value"><span id="currentFullTree">0</span>/<span id="numberOfFullTrees"></span></span>
+        </div>
+        <div class="status-item">
+          <span class="status-label">Intermediate</span>
+          <span class="status-value"><span id="currentTree"></span>/<span id="numberOfTrees">5</span></span>
+        </div>
+        <div class="status-item">
+          <span class="status-label">Tree Type</span>
+          <span class="status-value"><span id="treeLabel"></span></span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Window Parameters Panel -->
+    <div class="nav-panel">
+      <div class="panel-header">
+        <i class="fa fa-window-restore panel-icon"></i>
+        <span class="panel-title">Window Parameters</span>
+      </div>
+      <div class="param-list">
+        <div class="param-item">
+          <span class="param-name">Size:</span>
+          <span class="param-value" id="windowSize">-</span>
+        </div>
+        <div class="param-item">
+          <span class="param-name">Step:</span>
+          <span class="param-value" id="windowStepSize">-</span>
+        </div>
+        <div class="param-item">
+          <span class="param-name">Area:</span>
+          <span class="param-value" id="windowArea">-</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Navigation Controls -->
+    <div class="nav-panel">
+      <div class="panel-header">
+        <i class="fa fa-map-marker panel-icon"></i>
+        <span class="panel-title">Navigation Controls</span>
+      </div>
+      <div class="position-control">
+        <div class="mdc-input-with-button">
+          <input 
+            type="number" 
+            id="positionValue" 
+            class="mdc-input" 
+            name="pos" 
+            value="1" 
+            min="1" 
+            placeholder="Position"
+          />
+          <button id="positionButton" class="md-button primary">
+            <i class="fa fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Tree Visualization Tools -->
+    <div class="nav-panel">
+      <div class="panel-header">
+        <i class="fa fa-cubes panel-icon"></i>
+        <span class="panel-title">Tree Space Visualization</span>
+      </div>
+      <div class="viz-tools">
+        <div class="viz-tool-select">
+          <select id="scatter-plot-mode" class="mdc-select">
+            <option value="umap">UMAP Projection</option>
+            <option value="fallback">Fallback View</option>
+          </select>
+        </div>
+        <button id="open-scatter-plot" class="md-button viz-button">
+          <i class="fa fa-cube"></i> Open Tree Space
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

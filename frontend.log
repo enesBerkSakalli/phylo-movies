@@ -1,0 +1,24 @@
+
+> phylo-movies-frontend@0.1.0 dev
+> vite --port 5173 --host 127.0.0.1 --no-open --clearScreen false
+
+
+✘ vite v6.3.5 is not yet supported in the Community edition of Console Ninja.
+We are working hard on it for you https://tinyurl.com/3h9mtwra.
+
+Estimated release dates:
+  - Community users: around 5th July, 2025 (subject to team availability)
+  - PRO users:       priority access is available now
+
+
+  VITE v4.5.14  ready in 301 ms
+
+  ➜  Local:   http://127.0.0.1:5173/
+12:43:56 AM [vite] page reload js/record/record.js
+12:43:57 AM [vite] page reload js/record/record.js
+12:44:36 AM [vite] page reload js/record/record.js
+12:44:56 AM [vite] page reload js/partial/eventHandlers/recorderHandlers.js
+12:45:00 AM [vite] page reload js/record/record.js
+12:45:01 AM [vite] page reload js/partial/eventHandlers/recorderHandlers.js
+12:45:03 AM [vite] page reload js/partial/eventHandlers/recorderHandlers.js
+12:48:02 AM [vite] page reload js/partial/eventHandlers/recorderHandlers.js

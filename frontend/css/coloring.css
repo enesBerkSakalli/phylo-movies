@@ -1,0 +1,390 @@
+/*
+ * Coloring.js - CSS for TaxaColoring and Color Scheme Preset Selector UI
+ * This file contains all styles previously in color-scheme.css and any inline styles for the selector UI.
+ */
+
+/* --- Modal Layout Improvements for Dashboard UX --- */
+
+.coloring-modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2vw;
+  min-width: 0;
+  max-width: 100vw;
+  width: 100%;
+  background: #23242b;
+  padding: clamp(8px, 2vw, 24px);
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.color-scheme-card {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin-bottom: 0;
+  padding: clamp(12px, 4vw, 32px) clamp(8px, 3vw, 32px) clamp(8px, 2vw, 18px) clamp(8px, 3vw, 32px);
+  display: flex;
+  flex-direction: column;
+  background: #23242b;
+  border-radius: 10px;
+  border: 1px solid #2c2c3a;
+  box-sizing: border-box;
+}
+
+.color-scheme-heading {
+  font-size: 17px;
+  margin-bottom: 10px;
+  font-weight: 600;
+  color: #7bb6fa;
+}
+
+.color-scheme-selector-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 0;
+}
+
+.color-scheme-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: 12px;
+}
+
+.color-preview-grid {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 0;
+  flex-wrap: wrap;
+}
+
+.scheme-button {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  width: 70px;
+  height: 40px;
+  overflow: hidden;
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+.scheme-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.scheme-button div {
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  margin: 2px;
+  float: left;
+  transition: border 0.2s;
+}
+
+.group-count-badge {
+  background-color: rgba(0, 0, 0, 0.3);
+  color: #fff;
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 12px;
+  margin-left: 8px;
+}
+
+.apply-btn {
+  background: linear-gradient(90deg, #4390e1, #5da0e4);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 24px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  width: auto;
+  min-width: 120px;
+  transition: background 0.2s, border 0.2s;
+  box-shadow: none;
+}
+.apply-btn:hover {
+  background: linear-gradient(90deg, #5da0e4, #4390e1);
+  border: 1.5px solid #ff3e00;
+}
+
+.coloring-grid-panel {
+  background: #23242b;
+  border-radius: 10px;
+  padding: clamp(8px, 2vw, 24px);
+  margin-bottom: 0;
+  border: 1px solid #2c2c3a;
+  box-sizing: border-box;
+  overflow-x: auto;
+}
+
+.modal-footer {
+  position: sticky;
+  bottom: 0;
+  background: #23242b;
+  padding: clamp(8px, 2vw, 16px) 0 0 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  border-top: 1px solid #333;
+  z-index: 10;
+  box-sizing: border-box;
+}
+
+/* --- End Modal Layout Improvements --- */
+
+/* Error and info messages */
+.color-scheme-error, .color-scheme-info {
+  margin: 10px 0;
+  font-weight: bold;
+}
+.color-scheme-error {
+  color: red;
+}
+
+/* Modal overlay for fallback when WinBox is not available */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-close-button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+/* --- Material Design-inspired Coloring UI (DARK ONLY) --- */
+
+.color-assignment-container,
+.color-assignment-wrapper {
+  background: #23242b;
+  color: #e3eaf2;
+  border-radius: 12px;
+  box-shadow: none;
+  max-width: 650px;
+  width: 90%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.color-assignment-header {
+  margin: 0 0 clamp(8px, 2vw, 18px) 0;
+  font-size: 20px;
+  font-weight: 500;
+  color: #e3eaf2;
+  letter-spacing: 0.2px;
+}
+
+.dynamic-content {
+  flex-grow: 1;
+  overflow-y: auto;
+  margin: 0 0 clamp(8px, 2vw, 18px) 0;
+  color: #e3eaf2;
+}
+
+.coloring-mode-selector {
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #e3eaf2;
+}
+
+.mode-label {
+  font-weight: 500;
+  margin-right: 10px;
+  color: #4390e1;
+  font-size: 15px;
+}
+
+.mode-select, .separator-select {
+  padding: 8px 12px;
+  font-size: 15px;
+  border-radius: 6px;
+  border: 1px solid #3a4a5d;
+  background: #373747;
+  color: #e3eaf2;
+  transition: border-color 0.2s;
+  outline: none;
+  box-shadow: none;
+  flex-grow: 1;
+}
+.mode-select:focus, .separator-select:focus {
+  border-color: #4390e1;
+}
+
+.coloring-btn {
+  padding: 10px 28px;
+  background: linear-gradient(90deg, #4390e1, #5da0e4);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: none;
+  transition: background 0.2s, opacity 0.2s;
+}
+.coloring-btn-apply-button {
+  background: linear-gradient(90deg, #43e1b0, #4390e1);
+}
+.coloring-btn-cancel-button {
+  background: linear-gradient(90deg, #e14390, #f44336);
+}
+.coloring-btn:hover {
+  opacity: 0.96;
+  border: 1.5px solid #ff3e00;
+}
+
+.color-input-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  margin-bottom: 5px;
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+.color-input-label {
+  margin-right: 12px;
+  font-size: 15px;
+  flex-grow: 1;
+  color: #e3eaf2;
+  display: flex;
+  align-items: center;
+}
+.color-input, .color-input-editor {
+  width: 44px;
+  height: 32px;
+  border: 2px solid #4390e1;
+  padding: 0;
+  cursor: pointer;
+  background: #373747;
+  border-radius: 6px;
+  box-shadow: none;
+  transition: border 0.2s;
+}
+.color-input:focus, .color-input-editor:focus {
+  border: 2px solid #ff3e00;
+}
+
+.separator-container {
+  margin-bottom: 22px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.separator-label {
+  font-weight: 600;
+  margin-right: 12px;
+  color: #4390e1;
+  font-size: 15px;
+  min-width: 70px;
+}
+
+.color-assignment-grid {
+  height: 400px;
+  width: 100%;
+  background: #23242b;
+  border-radius: 8px;
+  box-shadow: none;
+  padding: 10px 0;
+  color: #e3eaf2;
+}
+
+.color-input-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: clamp(4px, 1vw, 8px);
+}
+
+.color-input-container {
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 8px;
+  border-radius: 6px;
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #e3eaf2;
+  box-shadow: none;
+}
+
+/* Taxa coloring specific styles */
+.taxa-color-modal {
+  height: 100%;
+  overflow-y: auto;
+  padding: 20px;
+  font-family: 'Heebo', sans-serif;
+}
+
+/* Responsive Design */
+@media (min-width: 768px) {
+  .color-input-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .coloring-modal-content,
+  .color-scheme-card,
+  .coloring-grid-panel {
+    padding: 10px 4vw !important;
+  }
+  .color-scheme-card {
+    padding: 10px 4vw 10px 4vw !important;
+  }
+  .color-input-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .coloring-modal-content,
+  .color-scheme-card,
+  .coloring-grid-panel {
+    padding: 4px 2vw !important;
+  }
+  .color-scheme-card {
+    padding: 4px 2vw 4px 2vw !important;
+  }
+  .color-assignment-header {
+    font-size: 16px;
+  }
+  .apply-btn, .coloring-btn {
+    font-size: 13px;
+    padding: 6px 10px;
+    min-width: 80px;
+  }
+}

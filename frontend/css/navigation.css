@@ -1,0 +1,301 @@
+/* navigation.css - Enhanced Navigation Design */
+
+/* Modern Navigation Sidebar */
+.menu {
+  width: 280px;
+  min-width: 260px;
+  max-width: 320px;
+  flex-shrink: 0;
+  height: 100vh;
+  overflow-y: auto;
+  background: linear-gradient(180deg, #2a2d3a 0%, #373747 100%);
+  color: white;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Custom scrollbar for menu */
+.menu::-webkit-scrollbar {
+  width: 6px;
+}
+.menu::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+}
+.menu::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+.menu::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Compact Menu Header */
+.menu-header {
+  padding: 12px 16px 8px;
+  background: rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 0;
+}
+
+/* Compact App Branding */
+.app-branding {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.branding-icon {
+  font-size: 20px;
+  color: #4390e1;
+  margin-right: 10px;
+}
+
+.app-titles {
+  flex: 1;
+}
+
+.app-titles h1 {
+  font-size: 16px;
+  margin: 0;
+  font-weight: 600;
+  color: #fff;
+}
+
+.app-titles .subtitle {
+  font-size: 11px;
+  color: #aaa;
+  margin: 0;
+  opacity: 0.8;
+}
+
+/* Compact File Info */
+.file-info-container {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin: 12px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.file-icon {
+  font-size: 14px;
+  color: #4390e1;
+  margin-right: 8px;
+  opacity: 0.9;
+}
+
+.file-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-label {
+  font-size: 9px;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: block;
+  margin-bottom: 2px;
+  font-weight: 500;
+}
+
+.file-name {
+  font-size: 12px;
+  color: white;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  font-weight: 500;
+}
+
+/* Enhanced Toolbar with Better Spacing */
+.toolbar {
+  padding: 0;
+}
+
+
+.tools {
+  padding: 0 10px 10px;
+}
+
+.tools > div {
+  margin-bottom: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 5px;
+  padding: 6px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  transition: background-color 0.2s ease;
+}
+
+.tools > div:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.tools > div:last-child {
+  margin-bottom: 0;
+}
+
+/* Compact Control Rows */
+.row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+  gap: 8px;
+}
+
+.row:last-child {
+  margin-bottom: 0;
+}
+
+.row .menuItem {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Section Headers */
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.section-icon {
+  font-size: 12px;
+  color: #4390e1;
+  opacity: 0.8;
+}
+
+.section-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #ccc;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Navigation Panel Components */
+.nav-panel {
+  padding: 12px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.panel-icon {
+  color: #4390e1;
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.panel-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #ccc;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* Compact Parameter List */
+.param-list {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  padding: 6px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.param-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.param-item:last-child {
+  border-bottom: none;
+}
+
+.param-name {
+  font-size: 10px;
+  color: #aaa;
+  font-weight: 500;
+}
+
+.param-value {
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+}
+
+/* Modal Action Buttons */
+.modal-actions {
+  padding: 12px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modal-button {
+  background: linear-gradient(135deg, #4390e1 0%, #357abd 100%);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(67, 144, 225, 0.2);
+}
+
+.modal-button:hover {
+  background: linear-gradient(135deg, #5da0e4 0%, #4390e1 100%);
+  box-shadow: 0 4px 8px rgba(67, 144, 225, 0.3);
+  transform: translateY(-1px);
+}
+
+.modal-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(67, 144, 225, 0.2);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .menu {
+    width: 260px;
+    min-width: 240px;
+  }
+}
+
+@media (max-width: 768px) {
+  .menu {
+    width: 240px;
+    min-width: 220px;
+  }
+  
+  .tools > div {
+    padding: 6px 8px;
+    margin-bottom: 8px;
+  }
+  
+  .file-info-container {
+    padding: 6px 8px;
+    margin: 8px 12px;
+  }
+}

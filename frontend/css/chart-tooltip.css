@@ -1,0 +1,24 @@
+/* chart-tooltip.css - Tooltip-specific styles split from chart.css */
+
+.chart-tooltip {
+  position: absolute;
+  background-color: rgba(35, 36, 43, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 5px;
+  padding: 10px 15px;
+  font-size: 13px;
+  font-family: 'Heebo', sans-serif;
+  color: white;
+  pointer-events: none;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  transition: opacity 0.2s ease;
+  max-width: 300px;
+}
+
+.chart-tooltip strong {
+  color: #4390e1;
+  font-weight: 500;
+  display: inline-block;
+  min-width: 90px;
+}

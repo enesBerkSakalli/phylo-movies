@@ -1,0 +1,412 @@
+/* Reset and Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+  font-family: Heebo, sans-serif;
+  background: #fff;
+  color: #222;
+}
+
+/* General Styles */
+.container {
+  display: flex;
+  flex-direction: row;
+  width: 100vw;
+  height: 100vh;
+  min-height: 0;
+  min-width: 0;
+}
+
+.menu {
+  width: 320px;
+  min-width: 250px;
+  max-width: 400px;
+  flex-shrink: 0;
+  height: 100vh;
+  overflow-y: auto;
+  background-color: #373747;
+  color: white;
+}
+
+.full-size-container {
+  flex: 1 1 0%;
+  min-width: 0;
+  min-height: 0;
+  background: #fff;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+#application-container {
+  width: 100%;
+  height: 100%;
+  align-self: stretch;
+  display: block;
+}
+
+/* Custom horizontal scrollbar for the menu */
+.menu::-webkit-scrollbar {
+  height: 10px;
+}
+.menu::-webkit-scrollbar-track {
+  background: #373747; /* Match menu background */
+}
+.menu::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 5px;
+  border: 2px solid #373747;
+}
+.menu::-webkit-scrollbar-thumb:hover {
+  background: #777;
+}
+
+/* Header and Menu */
+.menu-header {
+  padding-top: 5%;
+  padding-bottom: 5%;
+}
+
+.header {
+  display: flex;
+}
+
+.logo {
+  padding-top: 5px;
+  padding-inline: 20px;
+}
+
+.fa-film {
+  color: #ffff;
+}
+
+/* Tools and Controls */
+.tools div {
+  margin-top: 3px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.row .menuItem {
+  margin-right: 10px;
+  min-width: 120px;
+}
+
+
+/* Inputs and Selects */
+input {
+  padding: 0.2em;
+  border: 1px solid #ccc;
+}
+
+select {
+  padding: 0.2em;
+  border: 1px solid #ccc;
+}
+
+
+/* Sliders and Switches */
+.uk-range {
+  width: 100%;
+}
+
+/* Text and Headers */
+h1 {
+  font-size: 1.5em;
+}
+
+
+/* Blinking Animation */
+.blink_me {
+  animation: blinker 1s linear infinite;
+}
+
+@keyframes blinker {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Tooltip Styles */
+.tooltip {
+  position: absolute;
+  opacity: 0;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 8px;
+  font-size: 12px;
+  font-family: Arial, sans-serif;
+  color: #333;
+  pointer-events: none;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+  white-space: nowrap;
+  z-index: 1000;
+  transition: opacity 0.3s;
+}
+
+/* Modal Chart */
+#modal-graph-chart {
+  flex: 1;
+  height: 100%;
+  width: 100%;
+  position: relative;
+}
+
+
+
+.toggle-icon {
+  font-size: 12px;
+  color: #aaa;
+  transition: transform 0.3s;
+}
+
+
+
+.position-control, .factor-control {
+  margin-top: 16px;
+}
+
+.position-control label, .factor-control label {
+  display: block;
+  font-size: 12px;
+  color: #aaa;
+  margin-bottom: 6px;
+}
+
+/* Enhanced Branding Styles */
+.menu-header {
+  padding: 20px 15px 10px;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.app-branding {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.branding-icon {
+  font-size: 24px;
+  color: #4390e1;
+  margin-right: 12px;
+}
+
+.app-titles {
+  flex: 1;
+}
+
+
+.commitmessage {
+  font-size: 11px;
+  color: #aaa;
+  margin-top: 3px;
+}
+
+.commit-hash {
+  font-family: monospace;
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+
+.brand-separator {
+  height: 3px;
+  background: linear-gradient(to right, rgba(67, 144, 225, 0.8), rgba(67, 144, 225, 0.1));
+  border-radius: 3px;
+  margin-bottom: 15px;
+}
+
+.select-arrow {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(255, 255, 255, 0.6);
+  pointer-events: none;
+}
+
+.playback-controls {
+  flex-grow: 2;
+  justify-content: center;
+}
+
+.tool-controls {
+  flex-grow: 1;
+  justify-content: flex-end;
+}
+
+/* Material Design Button Controls */
+.control-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 8px 0;
+}
+
+.button-row {
+  display: flex;
+  justify-content: center;
+}
+
+.button-group {
+  display: flex;
+  gap: 4px;
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 5px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.option-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  padding: 8px 10px;
+}
+
+.option-row label {
+  font-size: 12px;
+  color: #ddd;
+}
+
+.option-row select {
+  background-color: rgba(0, 0, 0, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+#group-separator-container {
+  display: none;
+}
+
+/* Show group separator when groups method is selected */
+.coloring-method-groups #group-separator-container {
+  display: flex;
+}
+
+/* Chart Modal Styling */
+.winbox.modern.modal {
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.winbox.modern.modal .wb-body {
+  background: #23242b;
+}
+
+.winbox.modern.modal .wb-title {
+  font-family: 'Heebo', sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  color: #e3eaf2;
+}
+
+
+/* Tree Status Panel */
+.tree-status-panel {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  padding: 15px;
+  margin: 15px;
+}
+
+
+
+.status-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.status-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #aaa;
+  margin-bottom: 4px;
+}
+
+.status-value {
+  font-size: 15px;
+  font-weight: 500;
+  color: #fff;
+}
+
+/* Navigation Panel Components */
+.nav-panel {
+  padding: 15px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.panel-icon {
+  color: #4390e1;
+  font-size: 14px;
+}
+
+.panel-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #ccc;
+}
+
+/* Parameter List */
+.param-list {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.param-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.param-item:last-child {
+  border-bottom: none;
+}
+
+.param-name {
+  font-size: 12px;
+  color: #aaa;
+}
+
+.param-value {
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+}
+
+/* Position Control */
+.position-control {
+  margin-top: 0;
+}

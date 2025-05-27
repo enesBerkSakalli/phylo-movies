@@ -1,0 +1,34 @@
+<div class="submenu-container" data-collapsed="false">
+  <div class="submenu-header">
+    <div class="submenu-title">
+      <i class="fa fa-bar-chart submenu-icon"></i>
+      <h2 class="mdc-section-title">Chart Options</h2>
+    </div>
+    <span class="toggle-icon" id="toggle-chart-submenu">▼</span>
+  </div>
+  
+  <div class="submenu" id="chart-submenu">
+    <div class="row">
+      <div class="menuItem stepSizeLabel">
+        <label for="barPlotOption">Data Series</label>
+      </div>
+      <div class="select-wrapper" style="width: 100%;">
+        <select
+          name="barPlotOption"
+          id="barPlotOption"
+          class="mdc-select"
+        >
+          <option value="rfd">Relative Robinson-Foulds Distance</option>
+          <option value="w-rfd">Weighted Robinson-Foulds Distance</option>
+          <option value="scale">Scale Changes</option>
+        </select>
+        <i class="fa fa-chevron-down select-arrow"></i>
+      </div>
+    </div>
+    
+    <!-- Chart container -->
+    <div class="chart-container" style="margin-top: 15px;">
+      <div id="lineChart" class="chart-canvas"></div>
+    </div>
+  </div>
+</div>

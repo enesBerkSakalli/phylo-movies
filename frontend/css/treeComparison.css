@@ -1,0 +1,161 @@
+/* Tree Comparison Styles */
+
+/* Containers */
+.tree-comparison-modal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.tree-comparison-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 2vw;
+  width: 100%;
+  height: 80%;
+}
+
+.tree-container {
+  flex: 1 1 0;
+  height: 100%;
+  background: #f8f8fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Interpolation Modal */
+.tree-interpolation-modal {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 2vw;
+  width: 100%;
+  height: 100%;
+}
+
+.interpolation-tree {
+  flex: 1 1 0;
+  height: 90%;
+  background: #f8f8fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Buttons */
+.show-interpolation-btn {
+  margin: 2vh auto 0 auto;
+  padding: 0.7em 2em;
+  font-size: 1.1em;
+  border-radius: 6px;
+  background: #4a90e2;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.13);
+}
+
+.show-interpolation-btn:hover {
+  background: #3a80d2;
+}
+
+/* Traditional Tree Comparison View */
+.tree-comparison {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+.svg-container {
+  flex: 1;
+  min-height: 40%;
+}
+
+.svg-container:first-child {
+  margin-bottom: 10px;
+}
+
+.svg-container:last-child {
+  margin-top: 10px;
+}
+
+/* Tree Elements */
+.links {
+  fill: none;
+  stroke-opacity: 1;
+}
+
+.leaf {
+  stroke: black;
+  stroke-width: 0.1em;
+  r: 0.4em;
+}
+
+.label {
+  font-weight: bold;
+  font-family: "Courier New", monospace;
+}
+
+.link-extension {
+  fill: none;
+  stroke-dasharray: 5,5;
+}
+
+/* Theme Colors - can be overridden via JS */
+:root {
+  --default-color: black;
+  --marked-color: red;
+  --stroke-color: black;
+  --changing-color: orange;
+  --default-label-color: black;
+  --extension-link-color: black;
+  --user-marked-color: magenta;
+}
+
+/* 3D Tree Comparison Modal */
+.tree3d-modal-content {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  position: relative;
+  box-sizing: border-box;
+  background: #fff;
+}
+
+.tree3d-row-container {
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  overflow: hidden;
+  position: relative;
+}
+
+.tree3d-error-message {
+  color: red;
+  padding: 20px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.tree3d-gui-container {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  z-index: 10;
+  background: rgba(30, 30, 30, 0.95);
+  border-radius: 6px;
+}

@@ -1,0 +1,146 @@
+<!-- buttons.html -->
+<div class="submenu-container" data-collapsed="false">
+
+
+    <div class="control-panel">
+      <div class="button-row">
+        <div class="button-group tool-controls">
+          <button
+            id="start-record"
+            type="button"
+            class="md-button record-start"
+            title="Start Recording"
+          >
+            <i class="fa fa-video-camera"></i> Record
+          </button>
+          <button
+            id="stop-record"
+            type="button"
+            class="md-button record-stop"
+            title="Stop Recording"
+            disabled
+          >
+            <i class="fa fa-stop-circle"></i> Stop
+          </button>
+        </div>
+      </div>
+
+      <div class="button-row">
+        <div class="button-group playback-controls">
+          <button
+            id="start-button"
+            type="button"
+            class="md-button primary"
+            title="Play"
+          >
+            <i class="fa fa-play"></i>
+          </button>
+          <button id="stop-button" type="button" class="md-button" title="Stop">
+            <i class="fa fa-stop"></i>
+          </button>
+
+          <button
+            id="backward-button"
+            type="button"
+            class="md-button"
+            title="Previous Frame"
+          >
+            <i class="fa fa-backward"></i>
+          </button>
+
+          <button
+            id="forward-button"
+            type="button"
+            class="md-button"
+            title="Next Frame"
+          >
+            <i class="fa fa-forward"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="button-row">
+        <div class="button-group playback-controls">
+          <button
+            id="backwardStepButton"
+            type="button"
+            class="md-button"
+            title="Previous Tree"
+          >
+            <i class="fa fa-step-backward"></i>
+          </button>
+          <button
+            id="forwardStepButton"
+            type="button"
+            class="md-button"
+            title="Next Tree"
+          >
+            <i class="fa fa-step-forward"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Animation Speed Factor -->
+      <div class="factor-control">
+        <label for="factor">Animation Speed</label>
+        <div class="mdc-input-with-button">
+          <input
+            type="number"
+            id="factor"
+            class="mdc-input"
+            min="1"
+            max="10"
+            value="2"
+          />
+          <span class="info-value">× speed</span>
+        </div>
+      </div>
+    </div>
+</div>
+
+<!-- Tools section in a separate submenu -->
+<div class="submenu-container" data-collapsed="false">
+  <div class="submenu-header">
+    <div class="submenu-title">
+      <i class="fa fa-wrench submenu-icon"></i>
+      <h2 class="mdc-section-title">Tools</h2>
+    </div>
+    <span class="toggle-icon" id="toggle-tools-submenu">▼</span>
+  </div>
+
+  <div class="submenu" id="tools-submenu">
+    <div class="button-row">
+      <div class="button-group tool-controls">
+        <button
+          id="save-button"
+          type="button"
+          class="md-button"
+          title="Save SVG"
+        >
+          <i class="fa fa-save"></i> Save SVG
+        </button>
+        <button
+          id="chart-modal"
+          type="button"
+          class="md-button"
+          title="Open Chart"
+        >
+          <i class="fa fa-bar-chart"></i> Chart
+        </button>
+      </div>
+    </div>
+
+    <div class="button-row">
+      <div class="button-group tool-controls">
+        <button
+          id="compare-sequence-button"
+          type="button"
+          class="md-button"
+          title="Compare Trees"
+        >
+          <i class="fa fa-exchange"></i> Compare
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,27 @@
+/* chart-button.css - Button-specific styles split from chart.css */
+
+.chart-controls .mdc-button {
+  background-color: #4390e1;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: normal;
+}
+
+.chart-controls .mdc-button:hover {
+  background-color: #5da0e4;
+}
+
+.chart-controls .button-text {
+  display: none;
+}
+
+@media (min-width: 380px) {
+  .chart-controls .button-text {
+    display: inline;
+  }
+}

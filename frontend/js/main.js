@@ -1,0 +1,360 @@
+import "./msaViewer/index.jsx";
+import Gui from "./gui.js";
+import { ScreenRecorder } from "./record/record.js";
+import {
+  attachGuiEventHandlers,
+  attachRecorderEventHandlers,
+  toggleSubmenu,
+  attachMSAButtonHandler,
+} from "./partial/evenHandlers.js";
+import { loadAllPartials } from "./partial/loadPartials.js";
+import { logEmbeddingEnhanced } from "./log/log.js";
+import { fetchTreeData } from "./fetch.js";
+
+window.toggleSubmenu = toggleSubmenu;
+let eventHandlersAttached = false;
+
+// New function to load all partials before GUI initialization
+async function loadAllRequiredPartials() {
+  console.log("[phylo-movies] Loading all required HTML partials");
+
+  try {
+    await loadAllPartials([
+      {
+        url: "/partials/line-chart.html",
+        containerId: "line-chart-container",
+      },
+      {
+        url: "/partials/buttons.html",
+        containerId: "buttons-container",
+      },
+      {
+        url: "/partials/tree_navigation.html",
+        containerId: "navigation-container",
+      },
+      {
+        url: "/partials/appearance.html",
+        containerId: "appearance-container",
+      },
+      {
+        url: "/partials/scaleBar.html",
+        containerId: "scale-bar-container",
+      },
+      {
+        url: "/partials/msa-button.html",
+        containerId: "msa-button-container",
+      },
+    ]);
+
+    // Verify important elements exist
+    const requiredElements = [
+      "start-button",
+      "stop-button",
+      "forward-button",
+      "backward-button",
+      "save-button",
+      "forwardStepButton",
+      "backwardStepButton",
+      "compare-sequence-button",
+      "chart-modal",
+      "taxa-coloring-button",
+      "factor",
+      "branch-length",
+      "font-size",
+      "stroke-width",
+      "barPlotOption",
+      "positionButton",
+      "positionValue",
+    ];
+
+    const missingElements = requiredElements.filter(
+      (id) => !document.getElementById(id)
+    );
+
+    if (missingElements.length > 0) {
+      // Fail if any required element is missing
+      console.warn(
+        "Missing UI elements after loading partials:",
+        missingElements
+      );
+      return false;
+    }
+
+    console.log("[phylo-movies] All partials loaded successfully");
+    return true;
+  } catch (err) {
+    console.error("[phylo-movies] Failed to load partials:", err);
+    return false;
+  }
+}
+
+function initializeAppFromParsedData(parsedData) {
+  try {
+    console.log("[DEBUG] Starting deep inspection of parsedData:");
+
+    // Ensure syncMSAViewer is always available with a safe fallback
+    if (!window.syncMSAViewer) {
+      window.syncMSAViewer = (
+        highlightedTaxa = [],
+        position = 0,
+        windowInfo = null
+      ) => {
+        // Only dispatch event, no debug log
+        window.dispatchEvent(
+          new CustomEvent("msa-sync-request", {
+            detail: { highlightedTaxa, position, windowInfo },
+          })
+        );
+      };
+    }
+
+    // Process embedding data
+    let processedEmbedding = [];
+    if (parsedData.embedding && Array.isArray(parsedData.embedding)) {
+      if (parsedData.embedding.length > 0) {
+        if (Array.isArray(parsedData.embedding[0])) {
+          console.log(
+            "[Embedding] Transforming list-of-lists to list-of-objects for embedding."
+          );
+          processedEmbedding = parsedData.embedding.map((point) => ({
+            x: point[0],
+            y: point[1],
+            z: point.length > 2 ? point[2] : 0,
+          }));
+        } else if (
+          typeof parsedData.embedding[0] === "object" &&
+          parsedData.embedding[0] !== null &&
+          "x" in parsedData.embedding[0] &&
+          "y" in parsedData.embedding[0]
+        ) {
+          console.log(
+            "[Embedding] Embedding is already in list-of-objects format."
+          );
+          processedEmbedding = parsedData.embedding;
+        } else {
+          console.warn(
+            "[Embedding] Unrecognized format for non-empty embedding data."
+          );
+        }
+      }
+    }
+
+    logEmbeddingEnhanced(processedEmbedding);
+
+    // Load all partials first, then initialize the GUI
+    loadAllRequiredPartials().then((success) => {
+      if (!success) {
+        console.error("[phylo-movies] Failed to load required partials");
+        alert(
+          "Error: Failed to load interface elements. Please refresh the page."
+        );
+        return;
+      }
+
+      console.log("[DEBUG] All partials loaded, now initializing GUI");
+
+      try {
+        // Destructure data and create GUI
+        const {
+          tree_list = [],
+          weighted_robinson_foulds_distance_list = [],
+          rfd_list = [],
+          window_size = 0,
+          window_step_size = 0,
+          to_be_highlighted = [],
+          sorted_leaves = [],
+          file_name = "",
+        } = parsedData;
+
+        let colorInternalBranches = true;
+
+        const factorInput = document.getElementById("factor");
+        const factorValue = factorInput ? parseInt(factorInput.value, 10) : 0.5;
+
+        // Create GUI instance after all partials are loaded
+        const gui = new Gui(
+          tree_list,
+          weighted_robinson_foulds_distance_list,
+          rfd_list,
+          window_size,
+          window_step_size,
+          to_be_highlighted,
+          sorted_leaves,
+          colorInternalBranches,
+          file_name,
+          factorValue
+        );
+
+        console.log("[DEBUG] Gui instance created successfully");
+        window.gui = gui;
+        window.emb = processedEmbedding;
+
+        // Add safe MSA sync method to GUI
+        gui.syncMSAIfOpen = function () {
+          if (typeof window.syncMSAViewer === "function") {
+            try {
+              const highlightedTaxa = Array.from(this.marked || []);
+              const treeIndex = Math.floor(this.index / 5);
+              const currentPosition = (treeIndex + 1) * this.windowStepSize;
+
+              // Calculate window info safely
+              let windowInfo = null;
+              if (this.windowStart && this.windowEnd) {
+                windowInfo = {
+                  windowStart: this.windowStart,
+                  windowEnd: this.windowEnd,
+                };
+              }
+
+              window.syncMSAViewer(
+                highlightedTaxa,
+                currentPosition,
+                windowInfo
+              );
+            } catch (error) {
+              console.warn("Error syncing MSA viewer:", error);
+            }
+          }
+        };
+
+        // Attach MSA button handler ONCE after GUI is created
+        attachMSAButtonHandler(gui);
+
+        // Initialize screen recorder
+        const recorder = new ScreenRecorder({
+          onStart: () => {
+            console.log("Recording started...");
+            document.getElementById("start-record").disabled = true;
+            document.getElementById("stop-record").disabled = false;
+          },
+          onStop: (blob) => {
+            console.log("Recording stopped.");
+            const downloadLink = recorder.createDownloadLink();
+            document.body.appendChild(downloadLink);
+            document.getElementById("start-record").disabled = false;
+            document.getElementById("stop-record").disabled = true;
+          },
+          onError: (error) => {
+            console.error("Recording error:", error);
+            alert("Recording error: " + error.message);
+            document.getElementById("start-record").disabled = false;
+            document.getElementById("stop-record").disabled = true;
+          },
+        });
+
+        attachRecorderEventHandlers(recorder);
+
+        window.addEventListener("resize", () => {
+          gui.resize();
+          gui.update();
+        });
+
+        // Attach event handlers and initialize movie
+        if (!eventHandlersAttached && gui) {
+          attachGuiEventHandlers(gui);
+          eventHandlersAttached = true;
+          gui.initializeMovie();
+          gui.play();
+        }
+      } catch (guiError) {
+        console.error("[DEBUG] Error creating Gui instance:", guiError);
+        alert(`Error creating visualization: ${guiError.message}`);
+      }
+    });
+  } catch (err) {
+    console.error(
+      "[DEBUG] Top-level error in initializeAppFromParsedData:",
+      err
+    );
+    alert(`Initialization error: ${err.message}`);
+  }
+}
+
+// MAIN EXECUTION BLOCK
+const isVisualizationPage =
+  document.getElementById("application-container") !== null;
+console.log("[phylo-movies] Is visualization page:", isVisualizationPage);
+
+if (isVisualizationPage) {
+  const storedData = localStorage.getItem("phyloMovieData");
+  console.log(
+    "[phylo-movies] localStorage phyloMovieData:",
+    storedData ? "Data found" : "No data"
+  );
+
+  if (!storedData) {
+    console.warn(
+      "[phylo-movies] No phyloMovieData in localStorage, redirecting to index.html"
+    );
+    alert(
+      "Error: No visualization data found in browser storage.\n\nRedirecting to the upload form."
+    );
+    window.location.href = "/index.html";
+  } else {
+    try {
+      const parsedData = JSON.parse(storedData);
+      console.log("[phylo-movies] Successfully parsed phyloMovieData");
+
+      const requiredFields = [
+        "tree_list",
+        "weighted_robinson_foulds_distance_list",
+        "rfd_list",
+        "window_size",
+        "window_step_size",
+        "to_be_highlighted",
+        "sorted_leaves",
+        "file_name",
+        "embedding",
+      ];
+      const missingFields = requiredFields.filter((f) => !(f in parsedData));
+
+      if (missingFields.length > 0) {
+        console.error("[phylo-movies] Missing required fields:", missingFields);
+        localStorage.removeItem("phyloMovieData");
+        alert(
+          `Error: Missing required data fields: ${missingFields.join(
+            ", "
+          )}\n\nRedirecting to the upload form.`
+        );
+        window.location.href = "/index.html";
+      } else {
+        const fileNameDisplay = document.getElementById("fileNameDisplay");
+        if (fileNameDisplay) {
+          fileNameDisplay.textContent = `File: ${parsedData.file_name || ""}`;
+        }
+
+        const windowSizeDisplay = document.getElementById("windowSizeDisplay");
+        if (windowSizeDisplay) {
+          windowSizeDisplay.textContent = `Window-Size: ${
+            parsedData.window_size || ""
+          } / Step-Size: ${parsedData.window_step_size || ""}`;
+        }
+
+        console.log("[phylo-movies] Initializing visualization");
+        initializeAppFromParsedData(parsedData);
+      }
+    } catch (e) {
+      console.error("[phylo-movies] Failed to parse phyloMovieData:", e);
+      localStorage.removeItem("phyloMovieData");
+      alert(
+        `Error: Failed to parse visualization data: ${e.message}\n\nRedirecting to the upload form.`
+      );
+      window.location.href = "/index.html";
+    }
+  }
+} else {
+  // On index.html page, set up form handling
+  console.log("[phylo-movies] Setting up form handlers on index page");
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("phylo-form");
+    if (form) {
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const formData = new FormData(form);
+        await fetchTreeData(formData);
+      });
+      console.log("[phylo-movies] Form submission handler attached");
+    }
+  });
+}
