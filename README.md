@@ -4,9 +4,21 @@ An interactive phylogenetic tree viewer focused on visualizing tree trajectories
 
 ## 🎥 Demo Video
 
-[Demo Video](./movies/phylo-movie-recording-2025-05-27T22-47-50.webm
+<!-- Option 1: If video is in repository -->
+![PhyloMovies Demo](./demo/phylo-movie-recording-2025-05-27T22-47-50.webm)
 
-### Watch PhyloMovies in action: tree morphing, MSA integration, and interactive analysis tools
+<!-- Option 2: HTML5 video element (better browser support) -->
+<video width="800" controls>
+  <source src="./demo/phylo-movie-recording-2025-05-27T22-47-50.webm" type="video/webm">
+  <source src="./demo/phylo-movie-recording-2025-05-27T22-47-50.mp4" type="video/mp4">
+  Your browser does not support the video tag. 
+  <a href="./demo/phylo-movie-recording-2025-05-27T22-47-50.webm">Download the demo video</a>
+</video>
+
+<!-- Option 3: Link to GitHub release (recommended for large files) -->
+📹 **[Download Demo Video](https://github.com/enesBerkSakalli/phylo-movies/releases/download/v1.0/phylo-movie-recording-2025-05-27T22-47-50.webm)**
+
+*Watch PhyloMovies in action: tree morphing, MSA integration, and interactive analysis tools*
 
 ## ✨ Features
 
