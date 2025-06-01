@@ -5,6 +5,10 @@ export class RecorderHandlers {
   constructor(recorder) {
     this.recorder = recorder;
     this.isRecording = false;
+
+    // Bind methods
+    this.handleStartRecordingBound = this.handleStartRecording.bind(this);
+    this.handleStopRecordingBound = this.handleStopRecording.bind(this);
   }
 
   /**
@@ -13,12 +17,12 @@ export class RecorderHandlers {
   attachAll() {
     const startRecordBtn = document.getElementById("start-record");
     if (startRecordBtn) {
-      startRecordBtn.onclick = () => this.handleStartRecording();
+      startRecordBtn.addEventListener('click', this.handleStartRecordingBound);
     }
 
     const stopRecordBtn = document.getElementById("stop-record");
     if (stopRecordBtn) {
-      stopRecordBtn.onclick = () => this.handleStopRecording();
+      stopRecordBtn.addEventListener('click', this.handleStopRecordingBound);
     }
 
     // Set up recorder callbacks
@@ -191,5 +195,29 @@ export class RecorderHandlers {
         saveBtn.style.display = "inline-block";
       }
     };
+  }
+
+  /**
+   * Clean up event listeners and recorder callbacks
+   */
+  cleanup() {
+    const startRecordBtn = document.getElementById("start-record");
+    if (startRecordBtn) {
+      startRecordBtn.removeEventListener('click', this.handleStartRecordingBound);
+    }
+
+    const stopRecordBtn = document.getElementById("stop-record");
+    if (stopRecordBtn) {
+      stopRecordBtn.removeEventListener('click', this.handleStopRecordingBound);
+    }
+
+    // Clear recorder callbacks
+    if (this.recorder) {
+      this.recorder.onStart = null;
+      this.recorder.onStop = null;
+      this.recorder.onError = null;
+    }
+
+    console.log("RecorderHandlers cleaned up");
   }
 }

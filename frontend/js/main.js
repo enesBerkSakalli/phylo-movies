@@ -13,7 +13,6 @@ import { ScreenRecorder } from "./record/record.js";
 import localforage from 'localforage';
 import { fetchTreeData } from "./fetch.js";
 
-window.toggleSubmenu = toggleSubmenu;
 let eventHandlersAttached = false;
 
 // New function to load all partials before GUI initialization
@@ -93,28 +92,6 @@ async function loadAllRequiredPartials() {
 function initializeAppFromParsedData(parsedData) {
   try {
     console.log("[DEBUG] Starting deep inspection of parsedData:");
-
-    // Ensure syncMSAViewer is always available with a safe fallback
-    if (!window.syncMSAViewer) {
-      window.syncMSAViewer = (
-        highlightedTaxa = [],
-        position = 0,
-        windowInfo = null
-      ) => {
-
-        console.log(highlightedTaxa)
-
-
-        // Only dispatch event, no debug log
-        window.dispatchEvent(
-          new CustomEvent("msa-sync-request", {
-            detail: { highlightedTaxa, position, windowInfo },
-          })
-        );
-      };
-    }
-
-
 
     // Process embedding data
     let processedEmbedding = [];
@@ -200,33 +177,9 @@ function initializeAppFromParsedData(parsedData) {
           window.gui = gui;
           window.emb = processedEmbedding;
 
-          // Add safe MSA sync method to GUI
-          gui.syncMSAIfOpen = function () {
-            if (typeof window.syncMSAViewer === "function") {
-              try {
-                const highlightedTaxa = Array.from(this.marked || []);
-                const treeIndex = Math.floor(this.index / 5);
-                const currentPosition = (treeIndex + 1) * this.windowStepSize;
-
-                // Calculate window info safely
-                let windowInfo = null;
-                if (this.windowStart && this.windowEnd) {
-                  windowInfo = {
-                    windowStart: this.windowStart,
-                    windowEnd: this.windowEnd,
-                  };
-                }
-
-                window.syncMSAViewer(
-                  highlightedTaxa,
-                  currentPosition,
-                  windowInfo
-                );
-              } catch (error) {
-                console.warn("Error syncing MSA viewer:", error);
-              }
-            }
-          };
+          // The Gui class instance (gui) now has its own syncMSAIfOpen method
+          // that dispatches the 'msa-sync-request' event.
+          // No need to override it here. The call within gui.update() will use the class method.
 
           // Attach MSA button handler ONCE after GUI is created
           attachMSAButtonHandler(gui);

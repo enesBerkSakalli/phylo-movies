@@ -56,56 +56,6 @@ function createMSAModel(msaString, dimensions) {
 }
 
 /**
- * Sets up simplified global sync function
- */
-function setupGlobalSync(modelRef, syncEnabledRef) {
-  const newSyncFunction = (taxa = [], column = 0, windowInfo = null) => {
-    if (!syncEnabledRef.current || !modelRef.current) {
-      return; // Simply skip if not ready
-    }
-    
-    try {
-      const model = modelRef.current;
-      
-      // Set highlighted sequences
-      if (model.setHighlightedSequences) {
-        model.setHighlightedSequences(taxa);
-      }
-      
-      // Handle column highlighting based on window info or single column
-      let cols = [];
-      if (windowInfo?.windowStart && windowInfo?.windowEnd) {
-        for (let i = windowInfo.windowStart - 1; i < windowInfo.windowEnd; ++i) {
-          cols.push(i);
-        }
-      } else if (column > 0) {
-        cols = [column - 1];
-      }
-      
-      if (model.setHighlightedColumns) {
-        model.setHighlightedColumns(cols);
-      }
-
-      // Scroll to position
-      if (windowInfo?.windowStart && typeof model.setScrollX === 'function') {
-        const colWidth = model.colWidth || 20;
-        model.setScrollX(-(windowInfo.windowStart - 1) * colWidth);
-      } else if (column > 0 && typeof model.setScrollX === 'function') {
-        const colWidth = model.colWidth || 20;
-        model.setScrollX(-(column - 1) * colWidth);
-      }
-    } catch (syncError) {
-      console.error("Error during MSA sync:", syncError);
-    }
-  };
-  
-  window.syncMSAViewer = newSyncFunction;
-  window.msaModelRef = modelRef;
-  
-  return newSyncFunction;
-}
-
-/**
  * Creates fallback theme if JBrowse theme fails
  */
 function createSafeTheme() {
@@ -162,25 +112,66 @@ export default function MSAViewerContent({ msaString, containerWidth = 1200, con
       try {
         // Create new model
         modelRef.current = createMSAModel(msaString, initialDimensions);
-        
-        // Setup global sync
-        setupGlobalSync(modelRef, syncEnabledRef);
-        
         setModelCreated(true);
         setError(null);
+
+        // Event handler for sync requests
+        const handleSyncRequest = (event) => {
+          if (!syncEnabledRef.current || !modelRef.current) {
+            console.log("MSA sync request skipped: Sync not enabled or model not ready.");
+            return;
+          }
+
+          const { highlightedTaxa, position, windowInfo } = event.detail;
+          const model = modelRef.current;
+
+          try {
+            // Set highlighted sequences
+            if (model.setHighlightedSequences) {
+              model.setHighlightedSequences(highlightedTaxa || []);
+            }
+
+            // Handle column highlighting
+            let cols = [];
+            if (windowInfo?.windowStart && windowInfo?.windowEnd) {
+              for (let i = windowInfo.windowStart - 1; i < windowInfo.windowEnd; ++i) {
+                cols.push(i);
+              }
+            } else if (position > 0) {
+              cols = [position - 1]; // Assuming position is 1-based
+            }
+
+            if (model.setHighlightedColumns) {
+              model.setHighlightedColumns(cols);
+            }
+
+            // Scroll to position
+            if (windowInfo?.windowStart && typeof model.setScrollX === 'function') {
+              const colWidth = model.colWidth || 20; // Default colWidth if not available
+              model.setScrollX(-(windowInfo.windowStart - 1) * colWidth);
+            } else if (position > 0 && typeof model.setScrollX === 'function') {
+              const colWidth = model.colWidth || 20;
+              model.setScrollX(-(position - 1) * colWidth);
+            }
+          } catch (syncError) {
+            console.error("Error processing msa-sync-request:", syncError, event.detail);
+          }
+        };
+
+        window.addEventListener('msa-sync-request', handleSyncRequest);
+
+        // Cleanup function
+        return () => {
+          window.removeEventListener('msa-sync-request', handleSyncRequest);
+          if (modelRef.current && typeof modelRef.current.destroy === 'function') {
+            modelRef.current.destroy();
+          }
+        };
+
       } catch (err) {
         setError(err.message);
         setModelCreated(false);
       }
-
-      // Cleanup function
-      return () => {
-        if (window.syncMSAViewer) delete window.syncMSAViewer;
-        if (window.msaModelRef) delete window.msaModelRef;
-        if (modelRef.current && typeof modelRef.current.destroy === 'function') {
-          modelRef.current.destroy();
-        }
-      };
     }, [msaString, containerWidth, containerHeight]);
 
   // Setup resize listener
