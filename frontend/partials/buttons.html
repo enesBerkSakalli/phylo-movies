@@ -1,10 +1,17 @@
-<!-- buttons.html -->
+<!-- Recording Controls -->
 <div class="submenu-container" data-collapsed="false">
+  <div class="submenu-header">
+    <div class="submenu-title">
+      <i class="fa fa-video-camera submenu-icon"></i>
+      <h2 class="mdc-section-title">Recording</h2>
+    </div>
+    <span class="toggle-icon" id="toggle-recording-submenu">▼</span>
+  </div>
 
-
+  <div class="submenu" id="recording-submenu">
     <div class="control-panel">
       <div class="button-row">
-        <div class="button-group tool-controls">
+        <div class="button-group">
           <button
             id="start-record"
             type="button"
@@ -24,9 +31,24 @@
           </button>
         </div>
       </div>
+    </div>
+  </div>
+</div>
 
+<!-- Playback Controls -->
+<div class="submenu-container" data-collapsed="false">
+  <div class="submenu-header">
+    <div class="submenu-title">
+      <i class="fa fa-play submenu-icon"></i>
+      <h2 class="mdc-section-title">Playback</h2>
+    </div>
+    <span class="toggle-icon" id="toggle-playback-submenu">▼</span>
+  </div>
+
+  <div class="submenu" id="playback-submenu">
+    <div class="control-panel">
       <div class="button-row">
-        <div class="button-group playback-controls">
+        <div class="button-group">
           <button
             id="start-button"
             type="button"
@@ -38,7 +60,11 @@
           <button id="stop-button" type="button" class="md-button" title="Stop">
             <i class="fa fa-stop"></i>
           </button>
+        </div>
+      </div>
 
+      <div class="button-row">
+        <div class="button-group">
           <button
             id="backward-button"
             type="button"
@@ -47,7 +73,6 @@
           >
             <i class="fa fa-backward"></i>
           </button>
-
           <button
             id="forward-button"
             type="button"
@@ -60,7 +85,7 @@
       </div>
 
       <div class="button-row">
-        <div class="button-group playback-controls">
+        <div class="button-group">
           <button
             id="backwardStepButton"
             type="button"
@@ -80,7 +105,7 @@
         </div>
       </div>
 
-      <!-- Animation Speed Factor -->
+      <!-- Animation Speed -->
       <div class="factor-control">
         <label for="factor">Animation Speed</label>
         <div class="mdc-input-with-button">
@@ -96,9 +121,10 @@
         </div>
       </div>
     </div>
+  </div>
 </div>
 
-<!-- Tools section in a separate submenu -->
+<!-- Tools -->
 <div class="submenu-container" data-collapsed="false">
   <div class="submenu-header">
     <div class="submenu-title">
@@ -109,37 +135,39 @@
   </div>
 
   <div class="submenu" id="tools-submenu">
-    <div class="button-row">
-      <div class="button-group tool-controls">
-        <button
-          id="save-button"
-          type="button"
-          class="md-button"
-          title="Save SVG"
-        >
-          <i class="fa fa-save"></i> Save SVG
-        </button>
-        <button
-          id="chart-modal"
-          type="button"
-          class="md-button"
-          title="Open Chart"
-        >
-          <i class="fa fa-bar-chart"></i> Chart
-        </button>
+    <div class="control-panel">
+      <div class="button-row">
+        <div class="button-group">
+          <button
+            id="save-button"
+            type="button"
+            class="md-button"
+            title="Save SVG"
+          >
+            <i class="fa fa-save"></i> Save
+          </button>
+          <button
+            id="chart-modal"
+            type="button"
+            class="md-button"
+            title="Open Chart"
+          >
+            <i class="fa fa-bar-chart"></i> Chart
+          </button>
+        </div>
       </div>
-    </div>
 
-    <div class="button-row">
-      <div class="button-group tool-controls">
-        <button
-          id="compare-sequence-button"
-          type="button"
-          class="md-button"
-          title="Compare Trees"
-        >
-          <i class="fa fa-exchange"></i> Compare
-        </button>
+      <div class="button-row">
+        <div class="button-group">
+          <button
+            id="compare-sequence-button"
+            type="button"
+            class="md-button"
+            title="Compare Trees"
+          >
+            <i class="fa fa-exchange"></i> Compare
+          </button>
+        </div>
       </div>
     </div>
   </div>

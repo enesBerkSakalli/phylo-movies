@@ -1,22 +1,29 @@
 """Core tree processing functionality."""
 
+from logging import Logger
 from typing import Union, Optional
 from werkzeug.utils import secure_filename
 from flask import current_app
-
+from brancharchitect.tree import Node
+from brancharchitect.io import parse_newick, serialize_tree_list_to_json
 from .types import PhyloMovieData, TreeList
 from .tree_operations import TreeProcessor
 from .msa_utils import get_alignment_length, infer_window_parameters
-from .debug_utils import DebugPersister
 from ..config import Config
 from ..utils import perform_umap
+from typing import Any, Dict
+from werkzeug.datastructures import FileStorage
 
-from brancharchitect.tree import Node
-from brancharchitect.io import parse_newick, serialize_tree_list_to_json
+from numpy.typing import ArrayLike
 
 
 def handle_uploaded_file(
-    file_storage, msa_content: Optional[str] = None, enable_rooting: bool = True
+    file_storage: FileStorage,
+    msa_content: Optional[str] = None,
+    enable_rooting: bool = True,
+    enable_embedding: bool = True,
+    window_size: int = 1,
+    window_step: int = 1,
 ) -> PhyloMovieData:
     """
     Process an uploaded Newick file and compute visualization data.
@@ -25,12 +32,15 @@ def handle_uploaded_file(
         file_storage: The uploaded tree file (werkzeug.datastructures.FileStorage)
         msa_content: Optional MSA content for window inference
         enable_rooting: Whether to enable midpoint rooting
+        enable_embedding: Whether to enable UMAP embedding or use geometrical
+        window_size: Window size for tree processing
+        window_step: Window step size for tree processing
 
     Returns:
         Dictionary containing all data needed for front-end visualization
     """
-    filename = secure_filename(file_storage.filename)
-    logger = current_app.logger
+    filename: str = secure_filename(file_storage.filename)
+    logger: Logger = current_app.logger
     logger.info(f"Processing uploaded file: {filename}")
 
     # Parse trees from uploaded file
@@ -44,20 +54,18 @@ def handle_uploaded_file(
     processor = TreeProcessor(trees, enable_rooting)
     processed_data = _process_trees(processor, logger)
 
-    # Generate UMAP embedding
-    embedding = _generate_embedding(processed_data["distance_matrix"], logger)
+    # Generate UMAP embedding or geometrical embedding
+    embedding = _generate_embedding(
+        processed_data["distance_matrix"], logger, enable_embedding
+    )
 
     # Process MSA data if available
     msa_data = _process_msa_data(msa_content, len(trees), logger)
 
     # Serialize trees for frontend
-    interpolated_json = serialize_tree_list_to_json(
+    interpolated_json: TreeList = serialize_tree_list_to_json(
         processed_data["interpolated_trees"]
     )
-
-    # Debug persistence
-    DebugPersister.persist_distance_matrix(processed_data["distance_matrix"])
-    DebugPersister.persist_interpolated_trees(interpolated_json)
 
     # Extract leaf order
     sorted_leaves = getattr(trees[0], "_order", []) if trees else []
@@ -91,7 +99,7 @@ def _parse_newick_file(file_storage, logger) -> TreeList:
         return []
 
 
-def _process_trees(processor: TreeProcessor, logger) -> dict:
+def _process_trees(processor: TreeProcessor, logger: Logger) -> Dict[str, Any]:
     """Process trees through the complete pipeline."""
     # Root trees if enabled
     trees = processor.root_trees()
@@ -116,10 +124,10 @@ def _process_trees(processor: TreeProcessor, logger) -> dict:
         }
 
     # Optimize tree order
-    trees = processor.optimize_tree_order(trees)
+    trees: TreeList = processor.optimize_tree_order(trees)
 
     # Generate interpolated trees
-    interpolated_trees = processor.interpolate_trees(trees)
+    interpolated_trees: TreeList = processor.interpolate_trees(trees)
 
     # Calculate distances
     rfd_list, wrfd_list, distance_matrix = processor.calculate_distances(trees)
@@ -136,11 +144,17 @@ def _process_trees(processor: TreeProcessor, logger) -> dict:
     }
 
 
-def _generate_embedding(distance_matrix, logger) -> list:
-    """Generate UMAP embedding from distance matrix."""
+def _generate_embedding(
+    distance_matrix: "ArrayLike", logger, enable_embedding: bool = True
+) -> list:
+    """Generate UMAP or geometrical embedding from distance matrix."""
     if distance_matrix.size == 0:
-        logger.warning("Distance matrix is empty, skipping UMAP")
+        logger.warning("Distance matrix is empty, skipping embedding")
         return []
+
+    # If embedding is disabled, generate geometrical patterns
+    if not enable_embedding:
+        return _generate_geometrical_embedding(distance_matrix, logger)
 
     # Get UMAP parameters from config
     umap_params = {
@@ -156,10 +170,56 @@ def _generate_embedding(distance_matrix, logger) -> list:
         return embedding.tolist()
     except Exception as e:
         logger.error(f"UMAP embedding failed: {e}")
+        logger.info("Falling back to geometrical embedding")
+        return _generate_geometrical_embedding(distance_matrix, logger)
+
+
+def _generate_geometrical_embedding(distance_matrix, logger) -> list:
+    """Generate simple geometrical embedding patterns."""
+    import numpy as np
+
+    n_samples = distance_matrix.shape[0]
+    if n_samples == 0:
+        logger.warning(
+            "Distance matrix is empty, returning empty geometrical embedding"
+        )
         return []
 
+    logger.info(f"Generating geometrical embedding for {n_samples} samples")
 
-def _process_msa_data(msa_content: Optional[str], num_trees: int, logger) -> dict:
+    # Create simple geometrical patterns based on sample count
+    if n_samples == 1:
+        # Single point at origin
+        embedding = [[0.0, 0.0]]
+    elif n_samples == 2:
+        # Two points on x-axis
+        embedding = [[-1.0, 0.0], [1.0, 0.0]]
+    elif n_samples <= 10:
+        # Circular arrangement for small datasets
+        angles = np.linspace(0, 2 * np.pi, n_samples, endpoint=False)
+        radius = 2.0
+        embedding = [
+            [radius * np.cos(angle), radius * np.sin(angle)] for angle in angles
+        ]
+    else:
+        # Grid arrangement for larger datasets
+        grid_size = int(np.ceil(np.sqrt(n_samples)))
+        embedding = []
+        for i in range(n_samples):
+            row = i // grid_size
+            col = i % grid_size
+            # Center the grid around origin
+            x = (col - grid_size / 2) * 2.0
+            y = (row - grid_size / 2) * 2.0
+            embedding.append([x, y])
+
+    logger.info(f"Generated {len(embedding)} geometrical embedding points")
+    return embedding
+
+
+def _process_msa_data(
+    msa_content: Optional[str], num_trees: int, window_size=1, step_size=1, logger=None
+) -> Dict[str, Optional[int]]:
     """Process MSA content and infer window parameters."""
     if not msa_content:
         return {
@@ -171,7 +231,8 @@ def _process_msa_data(msa_content: Optional[str], num_trees: int, logger) -> dic
 
     alignment_length = get_alignment_length(msa_content)
     if not alignment_length:
-        logger.warning("Could not determine alignment length from MSA content")
+        if logger:
+            logger.warning("Could not determine alignment length from MSA content")
         return {
             "inferred_window_size": None,
             "inferred_step_size": None,
@@ -179,17 +240,22 @@ def _process_msa_data(msa_content: Optional[str], num_trees: int, logger) -> dic
             "alignment_length": None,
         }
 
-    logger.info(f"MSA alignment length: {alignment_length}")
+    if logger:
+        logger.info(f"MSA alignment length: {alignment_length}")
 
-    # Infer window parameters
-    window_params = infer_window_parameters(num_trees, alignment_length)
-
-    logger.info(f"Inferred window parameters: {window_params.to_dict()}")
+    window_params = None
+    if window_size == 1 and step_size == 1:
+        # Infer window parameters
+        window_params = infer_window_parameters(num_trees, alignment_length)
+        if logger:
+            logger.info(f"Inferred window parameters: {window_params.to_dict()}")
 
     return {
-        "inferred_window_size": window_params.window_size,
-        "inferred_step_size": window_params.step_size,
-        "windows_are_overlapping": window_params.is_overlapping,
+        "inferred_window_size": window_params.window_size if window_params else None,
+        "inferred_step_size": window_params.step_size if window_params else None,
+        "windows_are_overlapping": (
+            window_params.is_overlapping if window_params else None
+        ),
         "alignment_length": alignment_length,
     }
 

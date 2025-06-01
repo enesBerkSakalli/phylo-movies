@@ -91,28 +91,4 @@ export class GuiEventHandlers {
     this.registry.detachAll();
   }
 
-  // Legacy methods for backward compatibility
-  attachPlaybackControls() {
-    return this.attachGroup('basicButtons');
-  }
-
-  attachNavigationControls() {
-    return this.attachGroup('navigationControls');
-  }
-
-  attachAppearanceControls() {
-    return this.attachGroup('appearanceControls');
-  }
-
-  attachModalControls() {
-    return this.attachGroup('modalControls');
-  }
-
-  attachSpecialFeatures() {
-    return this.attachGroup('dynamicControls');
-  }
-
-  attachWindowHandlers() {
-    return this.attachGroup('windowEvents');
-  }
 }

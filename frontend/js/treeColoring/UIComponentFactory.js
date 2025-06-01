@@ -11,7 +11,6 @@ export class UIComponentFactory {
   static createColorAssignmentModal(onClose) {
     // Create modal content container
     const modalContent = document.createElement('div');
-    modalContent.className = 'color-assignment-modal';
     modalContent.style.padding = '20px';
     modalContent.style.height = '100%';
     modalContent.style.overflowY = 'auto';
@@ -24,7 +23,7 @@ export class UIComponentFactory {
 
     // Create WinBox modal if available, otherwise use a simple div
     let colorWin;
-    
+
     if (window.WinBox) {
       colorWin = new window.WinBox({
         title: 'Taxa Coloring',
@@ -50,18 +49,18 @@ export class UIComponentFactory {
       modalContainer.style.boxShadow = '0 4px 20px rgba(0,0,0,0.5)';
       modalContainer.style.zIndex = '1000';
       modalContainer.style.overflowY = 'auto';
-      
+
       const modalHeader = document.createElement('div');
       modalHeader.style.padding = '15px 20px';
       modalHeader.style.borderBottom = '1px solid rgba(255,255,255,0.1)';
       modalHeader.style.display = 'flex';
       modalHeader.style.justifyContent = 'space-between';
       modalHeader.style.alignItems = 'center';
-      
+
       const modalTitle = document.createElement('h3');
       modalTitle.textContent = 'Taxa Coloring';
       modalTitle.style.margin = '0';
-      
+
       const closeButton = document.createElement('button');
       closeButton.innerHTML = '&times;';
       closeButton.style.background = 'none';
@@ -73,15 +72,15 @@ export class UIComponentFactory {
         document.body.removeChild(modalContainer);
         if (onClose) onClose();
       };
-      
+
       modalHeader.appendChild(modalTitle);
       modalHeader.appendChild(closeButton);
-      
+
       modalContainer.appendChild(modalHeader);
       modalContainer.appendChild(modalContent);
-      
+
       document.body.appendChild(modalContainer);
-      
+
       // Implement a minimal WinBox-like interface
       colorWin = {
         dom: modalContainer,
@@ -111,36 +110,36 @@ export class UIComponentFactory {
     const modeContainer = document.createElement('div');
     modeContainer.className = 'mode-selector';
     modeContainer.style.marginBottom = '20px';
-    
+
     const modeLabel = document.createElement('label');
     modeLabel.textContent = 'Coloring Mode:';
     modeLabel.htmlFor = 'coloring-mode-selector';
     modeLabel.style.marginRight = '10px';
-    
+
     const modeSelect = document.createElement('select');
     modeSelect.id = 'coloring-mode-selector';
     modeSelect.className = 'mdc-select';
-    
+
     const taxaOption = document.createElement('option');
     taxaOption.value = 'taxa';
     taxaOption.textContent = 'Individual Taxa';
-    
+
     const groupsOption = document.createElement('option');
     groupsOption.value = 'groups';
     groupsOption.textContent = 'Taxa Groups';
-    
+
     modeSelect.appendChild(taxaOption);
     modeSelect.appendChild(groupsOption);
-    
+
     modeContainer.appendChild(modeLabel);
     modeContainer.appendChild(modeSelect);
     container.appendChild(modeContainer);
-    
+
     // Create dynamic content area
     const dynamicContent = document.createElement('div');
     dynamicContent.id = 'dynamic-content';
     container.appendChild(dynamicContent);
-    
+
     // Create button container
     const buttonContainer = document.createElement('div');
     buttonContainer.className = 'button-container';
@@ -148,19 +147,19 @@ export class UIComponentFactory {
     buttonContainer.style.justifyContent = 'flex-end';
     buttonContainer.style.marginTop = '20px';
     buttonContainer.style.gap = '10px';
-    
+
     const cancelButton = document.createElement('button');
     cancelButton.textContent = 'Cancel';
     cancelButton.className = 'md-button';
-    
+
     const applyButton = document.createElement('button');
     applyButton.textContent = 'Apply';
     applyButton.className = 'md-button primary';
-    
+
     buttonContainer.appendChild(cancelButton);
     buttonContainer.appendChild(applyButton);
     container.appendChild(buttonContainer);
-    
+
     return {
       modeSelect,
       dynamicContent,
@@ -181,23 +180,23 @@ export class UIComponentFactory {
     container.style.padding = '15px';
     container.style.backgroundColor = 'rgba(0,0,0,0.15)';
     container.style.borderRadius = '6px';
-    
+
     const title = document.createElement('h4');
     title.textContent = 'Color Schemes';
     title.style.marginTop = '0';
     title.style.marginBottom = '10px';
-    
+
     const schemes = document.createElement('div');
     schemes.style.display = 'flex';
     schemes.style.gap = '10px';
     schemes.style.flexWrap = 'wrap';
-    
+
     const schemeOptions = [
       { id: 'default', name: 'Default', colors: ['#3498db', '#9b59b6', '#2ecc71', '#f1c40f', '#e74c3c'] },
       { id: 'rainbow', name: 'Rainbow', colors: ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0000FF'] },
       { id: 'viridis', name: 'Viridis', colors: ['#440154', '#414487', '#2a788e', '#22a884', '#7ad151'] }
     ];
-    
+
     schemeOptions.forEach(scheme => {
       const schemeButton = document.createElement('button');
       schemeButton.className = 'scheme-button';
@@ -209,31 +208,31 @@ export class UIComponentFactory {
       schemeButton.style.border = '1px solid rgba(255,255,255,0.2)';
       schemeButton.style.borderRadius = '4px';
       schemeButton.style.cursor = 'pointer';
-      
+
       const colorBar = document.createElement('div');
       colorBar.style.width = '60px';
       colorBar.style.height = '8px';
       colorBar.style.marginBottom = '5px';
       colorBar.style.borderRadius = '4px';
       colorBar.style.background = `linear-gradient(to right, ${scheme.colors.join(', ')})`;
-      
+
       const schemeName = document.createElement('span');
       schemeName.textContent = scheme.name;
       schemeName.style.fontSize = '12px';
-      
+
       schemeButton.appendChild(colorBar);
       schemeButton.appendChild(schemeName);
-      
+
       schemeButton.addEventListener('click', () => {
         if (onSchemeChange) onSchemeChange(scheme.id);
       });
-      
+
       schemes.appendChild(schemeButton);
     });
-    
+
     container.appendChild(title);
     container.appendChild(schemes);
-    
+
     return container;
   }
 
@@ -276,7 +275,7 @@ export class UIComponentFactory {
     inputDiv.style.padding = '5px';
     inputDiv.style.backgroundColor = 'rgba(0,0,0,0.1)';
     inputDiv.style.borderRadius = '4px';
-    
+
     const label = document.createElement('label');
     label.textContent = name;
     label.style.flex = '1';
@@ -284,19 +283,19 @@ export class UIComponentFactory {
     label.style.overflow = 'hidden';
     label.style.textOverflow = 'ellipsis';
     label.style.marginRight = '10px';
-    
+
     const input = document.createElement('input');
     input.type = 'color';
     input.value = color || '#000000';
     input.id = `taxa-${name}`;
-    
+
     if (onChange) {
       input.addEventListener('change', (e) => onChange(e.target.value));
     }
-    
+
     inputDiv.appendChild(label);
     inputDiv.appendChild(input);
-    
+
     return inputDiv;
   }
 }

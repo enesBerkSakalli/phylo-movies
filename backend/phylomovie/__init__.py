@@ -8,6 +8,9 @@ from .logging_config import configure_logging
 from .routes import bp as main_bp
 from pathlib import Path
 
+# Inject config into Jinja globals so templates can access constants
+from typing import cast
+
 __all__ = ["create_app"]
 
 
@@ -27,7 +30,7 @@ def create_app() -> Flask:
     # Register blueprints (keeps route definitions in *one* place)
     app.register_blueprint(main_bp)
 
-    # Inject config into Jinja globals so templates can access constants
+    app.jinja_env.globals = cast(dict[str, object], app.jinja_env.globals)  # type: ignore
     app.jinja_env.globals.update(config=app.config)
 
     # Expose short *commit* string if present (useful in sentry etc.)

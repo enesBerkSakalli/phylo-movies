@@ -6,8 +6,7 @@ An interactive phylogenetic tree viewer focused on visualizing tree trajectories
 
 <!-- Direct link to video in repository root -->
 🎬 [Demo Video on YouTube](https://www.youtube.com/watch?v=zf_UNh2EjUg)
-   See the example on the norovirus dataset, showcasing the interactive features and tree morphing capabilities.
-   [Edit this video on YouTube Studio](https://studio.youtube.com/video/lqur97hfok0/edit)
+   See the example on the norovirus dataset, showcasing the interactive features and tree morphing capabilities: [Watch on YouTube](https://www.youtube.com/watch?v=lqur97hfok0)
 <!-- Alternative: GitHub raw link if you want direct streaming -->
 ## ✨ Features
 
@@ -80,6 +79,7 @@ An interactive phylogenetic tree viewer focused on visualizing tree trajectories
 ### Running the Application
 
 #### Development Server (Recommended for testing)
+
 ```bash
 export FLASK_APP=phylomovie.app
 export FLASK_ENV=phylomovies_environment
@@ -159,7 +159,6 @@ For public-facing deployments, use a reverse proxy like nginx for better securit
 - Progressive loading for large tree series
 - Memory-efficient rendering pipeline
 - Responsive design for various screen sizes
-
 ## 📁 Project Structure
 
 ```
@@ -173,9 +172,29 @@ phylo-movies/
 │   ├── css/                 # Stylesheets
 │   └── partials/            # HTML components
 ├── phylomovie/              # Python backend
+├── data/                    # Example datasets and sample files
 ├── requirements.txt         # Python dependencies
-└── README.md               # This file
+└── README.md                # This file
 ```
+
+### 📂 The `data/` Folder
+
+The `data/` directory contains example datasets and sample files, including those from the original PhyloMovies publication. This folder is useful for:
+
+- **Reproducing Publication Results**: Includes datasets such as `norovirus_200_20/` and `simulation_trees/` used in the original paper, allowing you to replicate published analyses and figures.
+- **Quick Start & Demos**: Provides ready-to-use tree and alignment files so you can try out PhyloMovies features without needing to supply your own data.
+- **Testing**: Contains small and large example files to test performance and compatibility.
+- **Format Reference**: Includes files in supported formats (e.g., Newick for trees, FASTA for alignments) to serve as templates for your own data.
+
+**Typical contents:**
+
+- `norovirus_200_20/` – Dataset from the publication for norovirus phylogenies.
+- `simulation_trees/` – Simulated tree datasets as used in the paper.
+- `example_tree.nwk` – Example phylogenetic tree in Newick format.
+- `example_alignment.fasta` – Example multiple sequence alignment in FASTA format.
+- `README.txt` – (Optional) Describes the datasets included in the folder.
+
+You can add your own data files here for local testing, or use these samples to explore the application's capabilities and reproduce results from the publication.
 
 ## 🤝 Contributing
 
