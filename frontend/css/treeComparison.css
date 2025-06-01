@@ -1,34 +1,55 @@
 /* Tree Comparison Styles */
 
 /* Containers */
-.tree-comparison-modal {
+.tree-comparison-modal { /* This class applies to the content *within* the WinBox body */
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
   width: 100%;
   height: 100%;
+  font-family: var(--font-family-sans-serif); /* Fallback removed, should be defined in style.css */
+  background-color: var(--dialog-background-color);
+  color: var(--text-color-dark-theme-main); /* General text color for the dialog */
+  overflow-y: auto;
 }
+
+/* Header within the modal content */
+.comparison-header {
+  padding: var(--spacing-medium) var(--spacing-large);
+  border-bottom: 1px solid var(--border-color-dark-theme);
+  flex-shrink: 0;
+}
+
+.comparison-header h3 {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-color-dark-theme-emphasis);
+}
+
 
 .tree-comparison-row {
   display: flex;
   flex-direction: row;
   justify-content: center;
-  align-items: center;
-  gap: 2vw;
+  align-items: stretch;
+  gap: var(--spacing-large);
   width: 100%;
-  height: 80%;
+  flex-grow: 1;
+  padding: var(--spacing-large);
+  min-height: 0;
 }
 
 .tree-container {
   flex: 1 1 0;
-  height: 100%;
-  background: #f8f8fa;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background-color: var(--card-background-dark-panel, var(--input-background-dark)); /* Use specific panel bg or fallback */
+  border-radius: var(--standard-border-radius);
+  box-shadow: var(--shadow-sm); /* Changed from elevation-dp1 to shadow-sm for consistency */
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: var(--spacing-medium);
+  overflow: hidden;
 }
 
 /* Interpolation Modal */
@@ -42,33 +63,21 @@
   height: 100%;
 }
 
-.interpolation-tree {
+.interpolation-tree { /* Assuming this is similar to tree-container */
   flex: 1 1 0;
-  height: 90%;
-  background: #f8f8fa;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background-color: var(--card-background-dark-panel, var(--input-background-dark));
+  border-radius: var(--standard-border-radius);
+  box-shadow: var(--shadow-sm);
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: var(--spacing-medium);
+  overflow: hidden;
 }
 
 /* Buttons */
-.show-interpolation-btn {
-  margin: 2vh auto 0 auto;
-  padding: 0.7em 2em;
-  font-size: 1.1em;
-  border-radius: 6px;
-  background: #4a90e2;
-  color: #fff;
-  border: none;
-  cursor: pointer;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.13);
-}
-
-.show-interpolation-btn:hover {
-  background: #3a80d2;
-}
+/* .show-interpolation-btn styles removed, assume .btn or .md-button class will be used in HTML */
 
 /* Traditional Tree Comparison View */
 .tree-comparison {
@@ -79,50 +88,142 @@
 }
 
 .svg-container {
-  flex: 1;
-  min-height: 40%;
+  flex: 1; /* Grow to fill tree-container */
+  display: flex; /* To center SVG if it's smaller */
+  align-items: center;
+  justify-content: center;
+  min-height: 100px; /* Minimum height for the SVG area */
+  overflow: hidden; /* Ensure SVG doesn't break layout */
+  width: 100%;
 }
 
-.svg-container:first-child {
-  margin-bottom: 10px;
-}
-
-.svg-container:last-child {
-  margin-top: 10px;
-}
+/* No specific margins needed if .tree-container has padding */
 
 /* Tree Elements */
 .links {
   fill: none;
   stroke-opacity: 1;
+  /* stroke is set by JS or other CSS vars */
 }
 
 .leaf {
-  stroke: black;
-  stroke-width: 0.1em;
-  r: 0.4em;
+  /* stroke is set by JS or other CSS vars */
+  stroke-width: 0.1em; /* This might be too small, consider relative units or larger fixed */
+  r: 0.4em; /* Consider rem or px */
 }
 
 .label {
-  font-weight: bold;
-  font-family: "Courier New", monospace;
+  font-weight: var(--font-weight-normal);
+  font-family: var(--font-family-sans-serif);
+  fill: var(--text-color-dark-theme-emphasis);
+  font-size: var(--font-size-sm); /* Added a default size */
 }
 
 .link-extension {
   fill: none;
   stroke-dasharray: 5,5;
+  /* stroke is set by JS or other CSS vars */
 }
 
-/* Theme Colors - can be overridden via JS */
-:root {
-  --default-color: black;
-  --marked-color: red;
-  --stroke-color: black;
-  --changing-color: orange;
-  --default-label-color: black;
-  --extension-link-color: black;
-  --user-marked-color: magenta;
+/* Theme Colors - These are local fallbacks or component-specific overrides. */
+/* Global theme variables from style.css will take precedence if !important is not used. */
+/* It's generally better if JS directly uses global theme variables when applying styles. */
+.tree-comparison-modal { /* Scoping variables to the modal if needed, or remove this :root */
+  --default-color: var(--text-color-dark-theme-faded, var(--text-color-dark-theme-muted)); /* For tree lines */
+  --marked-color: var(--accent-color);
+  --stroke-color: var(--text-color-dark-theme-faded, var(--text-color-dark-theme-muted)); /* For tree lines */
+  --changing-color: var(--warning-color);
+  --default-label-color: var(--text-color-dark-theme-emphasis);
+  --extension-link-color: var(--text-color-dark-theme-muted);
+  --user-marked-color: var(--secondary-color);
 }
+
+/* Footer within the modal content */
+.comparison-footer {
+  padding: var(--spacing-medium) var(--spacing-large);
+  border-top: 1px solid var(--border-color-dark-theme);
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+/* Controls Styling */
+.comparison-controls {
+  display: flex;
+  flex-direction: column; /* Stack control groups vertically */
+  gap: var(--spacing-medium, 12px);
+  padding: var(--spacing-medium, 12px) var(--spacing-large, 16px);
+  border-top: 1px solid var(--border-color-dark-theme, rgba(255,255,255,0.1));
+  /* margin-bottom: var(--spacing-medium, 12px); */ /* No bottom margin, footer is next */
+  background-color: var(--dialog-background-color); /* Match modal background */
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm, 8px);
+}
+
+.control-label {
+  font-size: var(--font-size-sm, 12px);
+  color: var(--text-color-dark-theme-muted, #aaa);
+  flex-shrink: 0; /* Prevent label from shrinking */
+  margin-right: var(--spacing-xs, 4px); /* Add some space if label is long */
+}
+
+input[type="range"].themed-slider {
+  flex-grow: 1;
+  accent-color: var(--primary-color); /* Styles the track/thumb for modern browsers */
+  /* Add more specific track/thumb styling if needed for cross-browser consistency */
+}
+
+.control-value-display {
+  font-size: var(--font-size-sm, 12px);
+  color: var(--text-color-dark-theme-main, #e0e0e0);
+  min-width: 2.5em; /* To prevent layout shifts when value changes */
+  text-align: right;
+  background-color: var(--input-background-dark, rgba(255,255,255,0.05));
+  padding: var(--spacing-xs, 4px) var(--spacing-sm, 8px);
+  border-radius: var(--standard-border-radius, 4px);
+  border: 1px solid var(--border-color-dark-theme, rgba(255,255,255,0.1));
+}
+
+/* Basic styling for checkbox if no global switch style is applied */
+#compare-ignore-branches {
+  accent-color: var(--primary-color);
+}
+
+
+/* Styling for the secondary button in the footer */
+/* .md-button base styles are in navigation.css and use global vars */
+/* This provides the .secondary variant specific to this modal's context */
+.comparison-footer .md-button.secondary {
+  background: transparent;
+  border: 1px solid var(--primary-color-lighter, #79b6f2); /* Use a lighter shade of primary for border */
+  color: var(--primary-color-lighter, #79b6f2); /* Text color matches border */
+  box-shadow: none; /* No shadow for a less prominent look */
+}
+
+.comparison-footer .md-button.secondary:hover {
+  background: rgba(var(--primary-color-rgb, 67, 144, 225), 0.1); /* Subtle background on hover */
+  color: var(--primary-color-lighter, #79b6f2);
+  border-color: var(--primary-color-lighter, #79b6f2); /* Keep border color consistent on hover */
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,0.07)); /* Add subtle shadow on hover */
+  transform: translateY(-1px);
+}
+
+.comparison-footer .md-button.secondary:focus {
+  outline: none;
+  /* Focus ring specific for this secondary button, ensuring visibility on dark dialog */
+  box-shadow: 0 0 0 var(--focus-ring-offset, 2px) var(--dialog-background-color, #23242b), 0 0 0 calc(var(--focus-ring-offset, 2px) + var(--focus-ring-width, 3px)) var(--primary-color-lighter, #79b6f2);
+}
+
+.comparison-footer .md-button.secondary:active {
+  background: rgba(var(--primary-color-rgb, 67, 144, 225), 0.15); /* Slightly darker background on active */
+  transform: translateY(0);
+  box-shadow: none;
+}
+
 
 /* 3D Tree Comparison Modal */
 .tree3d-modal-content {
@@ -133,29 +234,30 @@
   overflow: hidden;
   position: relative;
   box-sizing: border-box;
-  background: #fff;
+  background: var(--dialog-background-color);
 }
 
 .tree3d-row-container {
   width: 100%;
   height: 100%;
-  background: #fff;
+  background: var(--dialog-background-color);
   overflow: hidden;
   position: relative;
 }
 
 .tree3d-error-message {
-  color: red;
-  padding: 20px;
+  color: var(--error-color);
+  padding: var(--spacing-large); /* Was 20px */
   text-align: center;
-  font-weight: bold;
+  font-weight: var(--font-weight-bold); /* Was bold */
 }
 
 .tree3d-gui-container {
   position: absolute;
-  left: 16px;
-  bottom: 16px;
+  left: var(--spacing-large);
+  bottom: var(--spacing-large);
   z-index: 10;
-  background: rgba(30, 30, 30, 0.95);
-  border-radius: 6px;
+  background: var(--card-background-dark-panel);
+  border-radius: var(--standard-border-radius);
+  padding: var(--spacing-medium);
 }

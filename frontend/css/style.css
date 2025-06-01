@@ -1,36 +1,76 @@
 :root {
-  --primary-color: #4390e1;
-  --primary-color-darker: #357abd; /* For button hover gradient */
-  --text-on-primary: #ffffff;
+  /* Colors */
+  --primary-color-hex: #4390e1; /* Hex version for direct use */
+  --primary-color-rgb: 67, 144, 225; /* RGB version for rgba() */
+  --primary-color: var(--primary-color-hex); /* Default alias */
+  --primary-color-darker: #357abd;
+  --primary-color-lighter: #79b6f2; /* Lighter shade for hovers etc. */
 
+  --secondary-color-hex: #ffa500; /* Example: orange */
+  --secondary-color-rgb: 255, 165, 0;
+  --secondary-color: var(--secondary-color-hex);
+
+  --accent-color-hex: #e143b0;   /* Example: magenta/pink */
+  --accent-color-rgb: 225, 67, 176;
+  --accent-color: var(--accent-color-hex);
+
+  --warning-color: orange;
+  --error-color: #f44336;  /* Material Design Red */
+  --success-color: #4caf50; /* Material Design Green */
+
+  --text-on-primary: #ffffff;
   --text-color-main: #222; /* For light backgrounds */
   --text-color-light-theme-muted: #555;
-
   --text-color-dark-theme-main: #e0e0e0; /* For dark backgrounds */
-  --text-color-dark-theme-muted: #aaa;   /* For less important text on dark backgrounds */
+  --text-color-dark-theme-muted: #aaa;
+  --text-color-dark-theme-emphasis: #ffffff;
 
+  /* Backgrounds */
   --background-color-main: #ffffff;
-  --background-color-menu: #373747; /* From .menu */
+  --background-color-menu: #373747;
+  --dialog-background-color: #23242b; /* From WinBox body */
+  --card-background-dark-panel: var(--input-background-dark); /* For consistency */
 
+  /* Inputs & Borders (Dark context is default for many components in this app) */
   --input-background-dark: rgba(255, 255, 255, 0.05);
   --input-background-dark-focus: rgba(255, 255, 255, 0.08);
-  --input-border-dark: rgba(255, 255, 255, 0.2);
+  --border-color-dark-theme: rgba(255, 255, 255, 0.2); /* General border for dark theme */
 
   --input-background-light: #ffffff;
   --input-background-light-focus: #ffffff;
   --input-border-light: #ccc;
   --input-border-light-focus: var(--primary-color);
 
+  /* Typography */
+  --font-family-sans-serif: 'Heebo', sans-serif;
+  --font-family-monospace: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  --font-size-sm: 12px;
+  --font-size-md: 13px; /* Base for inputs, body text */
+  --font-size-lg: 18px; /* For h3 or similar headers */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+
+  /* Spacing Unit & Radii */
+  --spacing-unit: 4px;
+  --spacing-xs: var(--spacing-unit);                /* 4px */
+  --spacing-sm: calc(var(--spacing-unit) * 2);      /* 8px */
+  --spacing-medium: calc(var(--spacing-unit) * 3);  /* 12px */
+  --spacing-large: calc(var(--spacing-unit) * 4);   /* 16px */
+  --spacing-xl: calc(var(--spacing-unit) * 6);      /* 24px */
+
   --standard-border-radius: 4px;
   --large-border-radius: 8px;
 
-  --focus-ring-color: rgba(67, 144, 225, 0.5); /* --primary-color with alpha */
-  --focus-ring-width: 3px; /* For inputs/buttons focus */
-  --focus-ring-offset: 2px; /* For inputs/buttons focus */
+  /* Focus Ring */
+  --focus-ring-color: rgba(var(--primary-color-rgb), 0.5);
+  --focus-ring-width: 3px;
+  --focus-ring-offset: 2px;
 
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.07);
-  --shadow-md: 0 2px 4px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
-  --shadow-lg: 0 4px 12px rgba(0,0,0,0.15), 0 2px 4px rgba(0,0,0,0.1);
+  /* Shadows - Elevation */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.07); /* dp1 */
+  --shadow-md: 0 2px 4px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06); /* dp2-3 */
+  --shadow-lg: 0 4px 12px rgba(0,0,0,0.15), 0 2px 4px rgba(0,0,0,0.1); /* dp4-6 */
 }
 
 /* Reset and Base Styles */
@@ -44,9 +84,11 @@ html,
 body {
   height: 100%;
   width: 100%;
-  font-family: Heebo, sans-serif;
-  background: #fff;
-  color: #222;
+  font-family: var(--font-family-sans-serif, 'Heebo', sans-serif);
+  background: var(--background-color-main, #fff);
+  color: var(--text-color-main, #222);
+  font-size: var(--font-size-md, 13px); /* Base font size for the app */
+  line-height: 1.6; /* Improved readability */
 }
 
 /* General Styles */
@@ -155,8 +197,8 @@ select {
   border-radius: var(--standard-border-radius);
   background-color: var(--input-background-light);
   color: var(--text-color-main);
-  font-family: inherit;
-  font-size: 13px;
+  font-family: inherit; /* Already set by body */
+  font-size: inherit; /* Inherit from body or parent */
   line-height: 1.5;
   transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -181,7 +223,7 @@ select:focus {
 .menu textarea, .menu select,
 /* Add other dark container selectors if necessary */
 .dark-container input[type="text"], .dark-container textarea, .dark-container select {
-  border-color: var(--input-border-dark);
+  border-color: var(--border-color-dark-theme);
   background-color: var(--input-background-dark);
   color: var(--text-color-dark-theme-main);
 }
@@ -218,9 +260,9 @@ button,
   border-radius: var(--standard-border-radius);
   color: var(--text-on-primary);
   background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-darker) 100%);
-  font-weight: 500;
-  font-size: 13px;
-  line-height: 1.5; /* Ensure text vertical centering */
+  font-weight: var(--font-weight-medium, 500);
+  font-size: var(--font-size-md, 13px);
+  line-height: 1.5;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   cursor: pointer;
@@ -322,20 +364,25 @@ h1 {
 
 .toggle-icon { /* Generally styled in navigation.css for menu context */
   font-size: 12px;
-  color: var(--text-color-dark-theme-muted); /* Was #aaa */
+  color: var(--text-color-dark-theme-muted);
   transition: transform 0.3s;
 }
 
-/* .position-control and .factor-control are specific to menu, styled there or if needed, more specifically here. */
+/* .position-control and .factor-control are specific to menu. */
 /* Their current margins (16px top, 6px bottom for label) are reasonable. */
+/* If they need variable colors: */
+.position-control label, .factor-control label {
+  color: var(--text-color-dark-theme-muted); /* Already set this way */
+}
 
 
-/* Enhanced Branding Styles (mostly for .menu context, styled in navigation.css or here if general) */
+/* Enhanced Branding Styles (mostly for .menu context, potentially overridden by navigation.css) */
+/* This .menu-header seems to be a general one, while navigation.css has a more specific one */
 .menu-header {
-  padding: 20px 15px 10px;
-  background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 8px;
-  margin-bottom: 15px;
+  padding: var(--spacing-large, 16px) var(--spacing-medium, 12px) var(--spacing-sm, 8px); /* Was 20px 15px 10px */
+  background-color: rgba(0, 0, 0, 0.2); /* Keep as is or use a variable */
+  border-radius: var(--large-border-radius, 8px);
+  margin-bottom: var(--spacing-large, 16px); /* Was 15px */
 }
 
 .app-branding {
@@ -346,8 +393,8 @@ h1 {
 
 .branding-icon {
   font-size: 24px;
-  color: var(--primary-color); /* Was #4390e1 */
-  margin-right: 12px;
+  color: var(--primary-color);
+  margin-right: var(--spacing-medium, 12px);
 }
 
 .app-titles {
@@ -362,18 +409,18 @@ h1 {
 }
 
 .commit-hash {
-  font-family: monospace;
-  background-color: rgba(255, 255, 255, 0.1);
-  padding: 1px 4px;
-  border-radius: 3px;
+  font-family: var(--font-family-monospace, monospace);
+  background-color: var(--input-background-dark, rgba(255, 255, 255, 0.1));
+  padding: var(--spacing-xs, 4px) var(--spacing-sm, 8px); /* Was 1px 4px */
+  border-radius: var(--standard-border-radius, 4px); /* Was 3px */
 }
 
 
 .brand-separator {
-  height: 3px; /* Keep as is, it's a visual element */
-  background: linear-gradient(to right, var(--primary-color) 0%, rgba(var(--primary-color), 0.1) 100%); /* Use var for color consistency */
-  border-radius: 3px; /* Fine */
-  margin-bottom: 16px; /* Was 15px */
+  height: 3px;
+  background: linear-gradient(to right, var(--primary-color) 0%, rgba(var(--primary-color-rgb), 0.1) 100%);
+  border-radius: 3px;
+  margin-bottom: var(--spacing-large, 16px);
 }
 
 /* .select-arrow is for a custom non-standardized select. Standardized 'select' has its own SVG arrow. */
@@ -415,20 +462,20 @@ h1 {
 .button-group { /* This is a specific component, likely in the menu */
   display: flex;
   gap: 4px;
-  background-color: var(--input-background-dark); /* Was rgba(255, 255, 255, 0.05) */
-  padding: 4px; /* Was 5px */
-  border-radius: var(--large-border-radius); /* Was 8px */
-  box-shadow: var(--shadow-sm); /* Was 0 1px 3px rgba(0,0,0,0.12) */
+  background-color: var(--input-background-dark);
+  padding: var(--spacing-xs, 4px);
+  border-radius: var(--large-border-radius);
+  box-shadow: var(--shadow-sm);
 }
 
-.option-row { /* Specific component, likely in menu */
+.option-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
-  background-color: rgba(0,0,0,0.1); /* A bit darker than standard input, can keep or align */
-  border-radius: var(--standard-border-radius); /* Was 4px */
-  padding: 8px 12px; /* Was 8px 10px */
+  margin-bottom: var(--spacing-sm, 8px);
+  background-color: rgba(0,0,0,0.1);
+  border-radius: var(--standard-border-radius);
+  padding: var(--spacing-sm, 8px) var(--spacing-medium, 12px);
 }
 
 .option-row label {
@@ -438,11 +485,11 @@ h1 {
 
 .option-row select { /* This is a specific select, possibly to be replaced by standard select styling if applicable */
   background-color: rgba(0,0,0,0.2); /* Darker than standard menu input */
-  color: var(--text-color-dark-theme-main); /* Was white */
-  border: 1px solid var(--input-border-dark); /* Was rgba(255,255,255,0.1) */
-  border-radius: var(--standard-border-radius); /* Was 4px */
-  padding: 6px 10px; /* Custom padding, global select has more for arrow */
-  font-size: 12px;
+  color: var(--text-color-dark-theme-main);
+  border: 1px solid var(--border-color-dark-theme);
+  border-radius: var(--standard-border-radius);
+  padding: var(--spacing-sm, 8px) var(--spacing-medium, 12px); /* Adjusted to match standardized inputs, check select arrow */
+  font-size: var(--font-size-sm, 12px);
 }
 
 #group-separator-container {
@@ -456,19 +503,19 @@ h1 {
 
 /* Chart Modal Styling */
 .winbox.modern.modal {
-  border-radius: 8px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  border-radius: var(--large-border-radius, 8px);
+  box-shadow: var(--shadow-lg, 0 10px 30px rgba(0, 0, 0, 0.3));
 }
 
 .winbox.modern.modal .wb-body {
-  background: #23242b;
+  background: var(--dialog-background-color, #23242b);
 }
 
 .winbox.modern.modal .wb-title {
-  font-family: 'Heebo', sans-serif;
-  font-weight: 500;
-  font-size: 16px;
-  color: #e3eaf2;
+  font-family: var(--font-family-sans-serif, 'Heebo', sans-serif);
+  font-weight: var(--font-weight-medium, 500);
+  font-size: var(--font-size-lg, 18px); /* Was 16px */
+  color: var(--text-color-dark-theme-emphasis, #e3eaf2); /* More emphasis for title */
 }
 
 
@@ -503,28 +550,28 @@ h1 {
 }
 
 .panel-icon {
-  color: var(--primary-color); /* Was #4390e1 */
-  font-size: 14px;
+  color: var(--primary-color);
+  font-size: var(--font-size-md, 14px); /* Adjusted to md */
 }
 
 .panel-title {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-color-dark-theme-main); /* Was #ccc */
+  font-size: var(--font-size-md, 13px);
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--text-color-dark-theme-main);
 }
 
 /* Parameter List */
-.param-list { /* Specific component in menu */
-  background-color: rgba(0,0,0,0.1); /* Darker than standard card, can keep or align */
-  border-radius: var(--standard-border-radius); /* Was 6px */
-  padding: 12px; /* Was 10px */
+.param-list {
+  background-color: rgba(0,0,0,0.1);
+  border-radius: var(--standard-border-radius);
+  padding: var(--spacing-medium, 12px);
 }
 
 .param-item {
   display: flex;
   justify-content: space-between;
-  padding: 8px 0; /* Was 6px 0 */
-  border-bottom: 1px solid var(--input-border-dark); /* Was rgba(255,255,255,0.05), making it consistent with other dark borders */
+  padding: var(--spacing-sm, 8px) 0;
+  border-bottom: 1px solid var(--border-color-dark-theme);
 }
 
 .param-item:last-child {
