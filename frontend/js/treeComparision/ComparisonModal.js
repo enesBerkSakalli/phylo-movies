@@ -1,29 +1,53 @@
 import { TreeRenderer } from "./TreeRenderer.js";
 
+// Debounce utility function
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
 /**
  * Handles modal creation and UI interactions for tree comparisons
  */
 export class ComparisonModal {
   constructor() {
     this.renderer = new TreeRenderer();
+    // Initialize debounced rerender function
+    this.debouncedRerender = debounce(() => this.rerenderTreesWithCurrentOptions(), 250);
   }
 
   async createSideBySideModal(options) {
+    // Store options for later use in event handlers and re-rendering
+    this.viewOptions = { ...options };
+    this.treeList = options.treeList;
+    this.tree1Index = options.tree1Index;
+    this.tree2Index = options.tree2Index;
+
     const {
-      treeList,
-      tree1Index,
-      tree2Index,
-      leaveOrder = [],
-      ignoreBranchLengths = false,
-      fontSize = 1.7,
-      strokeWidth = 1,
-      toBeHighlighted1 = [],
-      toBeHighlighted2 = [],
-    } = options;
+      treeList, // Already on this.treeList
+      tree1Index, // Already on this.tree1Index
+      tree2Index, // Already on this.tree2Index
+      leaveOrder = [], // Part of this.viewOptions.leaveOrder
+      ignoreBranchLengths = false, // Part of this.viewOptions.ignoreBranchLengths
+      fontSize = 1.7, // Part of this.viewOptions.fontSize
+      strokeWidth = 1, // Part of this.viewOptions.strokeWidth
+      toBeHighlighted1 = [], // Part of this.viewOptions.toBeHighlighted1
+      toBeHighlighted2 = [], // Part of this.viewOptions.toBeHighlighted2
+    } = this.viewOptions;
 
-    this.validateInputs(treeList, tree1Index, tree2Index);
+    this.validateInputs(this.treeList, this.tree1Index, this.tree2Index);
 
-    const container = this.createModalContainer(tree1Index, tree2Index);
+    // Pass initial options to createModalContainer to set initial values for controls
+    const container = this.createModalContainer(this.tree1Index, this.tree2Index, this.viewOptions);
+    this.modalContainer = container; // Store container reference
+
     let winboxInstance = null;
     if (window.WinBox) {
       winboxInstance = new window.WinBox({
@@ -43,31 +67,38 @@ export class ComparisonModal {
     }
 
     const { svg1Id, svg2Id } = this.setupSvgContainers(container);
-    this.attachEventHandlers(container);
+    this.svg1Id = svg1Id; // Store for re-rendering
+    this.svg2Id = svg2Id; // Store for re-rendering
 
-    const svg1 = document.getElementById(svg1Id);
-    const svg2 = document.getElementById(svg2Id);
+    // Get references to control elements
+    this.fontSizeSlider = container.querySelector('#compare-font-size');
+    this.fontSizeValueDisplay = container.querySelector('#compare-font-size-value');
+    this.strokeWidthSlider = container.querySelector('#compare-stroke-width');
+    this.strokeWidthValueDisplay = container.querySelector('#compare-stroke-width-value');
+    this.ignoreBranchesCheckbox = container.querySelector('#compare-ignore-branches');
+
+    this.attachEventHandlers(container); // Pass container to attachEventHandlers
+
+    const svg1 = document.getElementById(this.svg1Id);
+    const svg2 = document.getElementById(this.svg2Id);
     if (svg1 && svg2) {
       try {
+        // Pass the initial viewOptions directly
         await this.renderComparisonTrees(
-          treeList,
-          tree1Index,
-          tree2Index,
-          svg1Id,
-          svg2Id,
-          {
-            leaveOrder,
-            ignoreBranchLengths,
-            fontSize,
-            strokeWidth,
-            toBeHighlighted1,
-            toBeHighlighted2,
-          }
+          this.treeList,
+          this.tree1Index,
+          this.tree2Index,
+          this.svg1Id,
+          this.svg2Id,
+          this.viewOptions
         );
+        // Center the trees after rendering
+        this.renderer.centerTree(this.svg1Id);
+        this.renderer.centerTree(this.svg2Id);
       } catch (error) {
         this.showError(container, error);
       }
-      return;
+      // Removed return; to ensure consistent return value
     }
 
     return winboxInstance || container;
@@ -85,14 +116,12 @@ export class ComparisonModal {
     }
   }
 
-  createModalContainer(tree1Index, tree2Index) {
+  createModalContainer(tree1Index, tree2Index, initialOptions) {
     const container = document.createElement("div");
     container.className = "tree-comparison-modal";
     container.innerHTML = `
       <div class="comparison-header">
-        <h3>Tree Comparison: Tree ${tree1Index + 1} vs Tree ${
-      tree2Index + 1
-    }</h3>
+        <h3>Tree Comparison: Tree ${tree1Index + 1} vs Tree ${tree2Index + 1}</h3>
       </div>
       <div class="tree-comparison-row">
         <div class="tree-container">
@@ -101,6 +130,22 @@ export class ComparisonModal {
         <div class="tree-container">
           <div class="svg-container" data-tree-container="2"></div>
         </div>
+      </div>
+      <div class="comparison-controls">
+        <div class="control-group">
+          <label for="compare-font-size" class="control-label">Font Size:</label>
+          <input type="range" id="compare-font-size" class="themed-slider" min="0.5" max="3" step="0.1" value="${initialOptions.fontSize || 1.7}">
+          <span id="compare-font-size-value" class="control-value-display">${initialOptions.fontSize || 1.7}</span>
+        </div>
+        <div class="control-group">
+          <label for="compare-stroke-width" class="control-label">Stroke Width:</label>
+          <input type="range" id="compare-stroke-width" class="themed-slider" min="0.5" max="5" step="0.1" value="${initialOptions.strokeWidth || 1}">
+          <span id="compare-stroke-width-value" class="control-value-display">${initialOptions.strokeWidth || 1}</span>
+        </div>
+        <div class="control-group">
+          <label for="compare-ignore-branches" class="control-label">Ignore Branch Lengths:</label>
+          <input type="checkbox" id="compare-ignore-branches" ${initialOptions.ignoreBranchLengths ? 'checked' : ''}>
+          </div>
       </div>
       <div class="comparison-footer">
         <button class="md-button secondary" data-action="close">
@@ -124,17 +169,86 @@ export class ComparisonModal {
     return { svg1Id, svg2Id };
   }
 
-  attachEventHandlers(container) {
-    container.addEventListener("click", (event) => {
-      const action = event.target.dataset.action;
-      if (action === "close") {
+  attachEventHandlers(container) { // container is this.modalContainer
+    // Close button handler
+    const closeButton = container.querySelector('[data-action="close"]');
+    if (closeButton) {
+      closeButton.addEventListener("click", () => {
         if (container.winboxInstance) {
           container.winboxInstance.close();
         } else if (container.parentNode) {
           container.parentNode.removeChild(container);
         }
+      });
+    }
+
+    // Font size slider
+    if (this.fontSizeSlider) {
+      this.fontSizeSlider.addEventListener('input', (event) => {
+        const newValue = parseFloat(event.target.value);
+        this.viewOptions.fontSize = newValue;
+        if (this.fontSizeValueDisplay) {
+          this.fontSizeValueDisplay.textContent = newValue.toFixed(1);
+        }
+        console.log("Updated viewOptions fontSize to:", newValue);
+        this.debouncedRerender();
+      });
+    }
+
+    // Stroke width slider
+    if (this.strokeWidthSlider) {
+      this.strokeWidthSlider.addEventListener('input', (event) => {
+        const newValue = parseFloat(event.target.value);
+        this.viewOptions.strokeWidth = newValue;
+        if (this.strokeWidthValueDisplay) {
+          this.strokeWidthValueDisplay.textContent = newValue.toFixed(1);
+        }
+        console.log("Updated viewOptions strokeWidth to:", newValue);
+        this.debouncedRerender();
+      });
+    }
+
+    // Ignore branch lengths checkbox
+    if (this.ignoreBranchesCheckbox) {
+      this.ignoreBranchesCheckbox.addEventListener('change', (event) => {
+        this.viewOptions.ignoreBranchLengths = event.target.checked;
+        console.log("Updated viewOptions ignoreBranchLengths to:", event.target.checked);
+        this.rerenderTreesWithCurrentOptions(); // Direct call for checkbox
+      });
+    }
+  }
+
+  async rerenderTreesWithCurrentOptions() {
+    if (!this.svg1Id || !this.svg2Id || !this.treeList) {
+      console.error("Cannot re-render trees: missing essential data.", this);
+      return;
+    }
+    console.log("Re-rendering trees with options:", this.viewOptions);
+    try {
+      // Clear existing SVGs before re-rendering
+      const svg1Element = document.getElementById(this.svg1Id);
+      if (svg1Element) svg1Element.innerHTML = '';
+      const svg2Element = document.getElementById(this.svg2Id);
+      if (svg2Element) svg2Element.innerHTML = '';
+
+      await this.renderComparisonTrees(
+        this.treeList,
+        this.tree1Index,
+        this.tree2Index,
+        this.svg1Id,
+        this.svg2Id,
+        this.viewOptions // Pass the updated viewOptions
+      );
+      // Center the trees again after re-rendering
+      this.renderer.centerTree(this.svg1Id);
+      this.renderer.centerTree(this.svg2Id);
+    } catch (error) {
+      console.error("Error re-rendering comparison trees:", error);
+      // Optionally, display this error in the modal using this.showError or similar
+      if (this.modalContainer) { // Check if modalContainer is available
+        this.showError(this.modalContainer, error); // Simplified error display
       }
-    });
+    }
   }
 
   async renderComparisonTrees(
