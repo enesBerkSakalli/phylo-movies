@@ -216,10 +216,8 @@ export default class Gui {
     this.updateScale();
     this.updateMain();
 
-    // Safely sync MSA viewer if it's open
-    if (this.syncMSAIfOpen && typeof this.syncMSAIfOpen === "function") {
-      this.syncMSAIfOpen();
-    }
+    // Sync MSA viewer if it's open and sync is enabled (internal check in syncMSAIfOpen)
+    this.syncMSAIfOpen();
   }
 
   // ===== UI Event Handlers =====
@@ -233,31 +231,49 @@ export default class Gui {
 
   // ===== MSA Viewer Sync =====
   syncMSAIfOpen() {
-    if (!this.syncMSAEnabled) return;
-    if (typeof window.syncMSAViewer === "function") {
-      let highlightedTaxa = [];
-      if (this.marked && this.marked.size > 0) {
-        highlightedTaxa = Array.from(this.marked);
-      } else if (this.toBeHighlighted && this.toBeHighlighted[Math.floor(this.index / 5)]) {
-        for (const cluster of this.toBeHighlighted[Math.floor(this.index / 5)]) {
-          for (const taxon_index of cluster) {
-            highlightedTaxa.push(taxon_index);
-          }
-        }
-      }
-      console.log("Syncing MSA Viewer with highlighted taxa:", highlightedTaxa);
-
-      const treeIndex = Math.floor(this.index / 5);
-      const currentPosition = (treeIndex + 1) * this.windowStepSize;
-      let windowInfo = null;
-      if (this.windowStart && this.windowEnd) {
-        windowInfo = {
-          windowStart: this.windowStart,
-          windowEnd: this.windowEnd,
-        };
-      }
-      window.syncMSAViewer(highlightedTaxa, currentPosition, windowInfo);
+    if (!this.syncMSAEnabled) {
+      console.log("MSA sync skipped: Sync not enabled.");
+      return;
     }
+
+    let highlightedTaxa = [];
+    if (this.marked && this.marked.size > 0) {
+      highlightedTaxa = Array.from(this.marked);
+    } else if (this.toBeHighlighted && this.toBeHighlighted[Math.floor(this.index / 5)]) {
+      // Ensure toBeHighlighted is treated as a flat list if it's not already
+      const currentHighlights = this.toBeHighlighted[Math.floor(this.index / 5)];
+      if (Array.isArray(currentHighlights)) {
+        currentHighlights.forEach(item => {
+          if (Array.isArray(item)) { // Handles nested arrays if structure is [ [...], [...] ]
+            item.forEach(taxon => highlightedTaxa.push(taxon));
+          } else { // Handles flat list or mixed list [ item, [...], item ]
+            highlightedTaxa.push(item);
+          }
+        });
+      }
+    }
+    // Remove duplicates that might arise from toBeHighlighted logic
+    highlightedTaxa = [...new Set(highlightedTaxa)];
+
+    const treeIndex = Math.floor(this.index / 5);
+    // Ensure windowStepSize is a positive number to avoid NaN or zero position if data is missing
+    const stepSize = this.windowStepSize > 0 ? this.windowStepSize : 1;
+    const currentPosition = (treeIndex + 1) * stepSize;
+
+    let windowInfo = null;
+    // Ensure windowStart and windowEnd are valid numbers before creating windowInfo
+    if (typeof this.windowStart === 'number' && typeof this.windowEnd === 'number' &&
+        !isNaN(this.windowStart) && !isNaN(this.windowEnd)) {
+      windowInfo = {
+        windowStart: this.windowStart,
+        windowEnd: this.windowEnd,
+      };
+    }
+
+    const eventDetail = { highlightedTaxa, position: currentPosition, windowInfo };
+
+    console.log("Dispatching msa-sync-request with detail:", eventDetail);
+    window.dispatchEvent(new CustomEvent('msa-sync-request', { detail: eventDetail }));
   }
 
   enableMSASync() {
@@ -273,10 +289,8 @@ export default class Gui {
   // Add method to update highlighted taxa (call this when taxa are selected/highlighted)
   setHighlightedTaxa(taxa) {
     this.marked = new Set(taxa);
-    // Trigger MSA sync if available
-    if (this.syncMSAIfOpen && typeof this.syncMSAIfOpen === 'function') {
-      this.syncMSAIfOpen();
-    }
+    // Trigger MSA sync (internal check in syncMSAIfOpen)
+    this.syncMSAIfOpen();
   }
 
   // Add method to get current window information

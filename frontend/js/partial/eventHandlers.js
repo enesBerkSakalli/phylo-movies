@@ -209,8 +209,5 @@ export function attachMSAButtonHandler(gui) {
 // Export notification system for use by other modules
 export { notifications };
 
-// Backwards compatibility - make toggle function available globally
-window.toggleSubmenu = toggleSubmenu;
-
 // Initialize toggles when this module loads
 initializeToggles();
