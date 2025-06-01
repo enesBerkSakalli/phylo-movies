@@ -134,18 +134,21 @@ export class ComparisonModal {
       <div class="comparison-controls">
         <div class="control-group">
           <label for="compare-font-size" class="control-label">Font Size:</label>
-          <input type="range" id="compare-font-size" class="themed-slider" min="0.5" max="3" step="0.1" value="${initialOptions.fontSize || 1.7}">
+          <input type="range" id="compare-font-size" class="mdc-slider" min="0.5" max="3" step="0.1" value="${initialOptions.fontSize || 1.7}">
           <span id="compare-font-size-value" class="control-value-display">${initialOptions.fontSize || 1.7}</span>
         </div>
         <div class="control-group">
           <label for="compare-stroke-width" class="control-label">Stroke Width:</label>
-          <input type="range" id="compare-stroke-width" class="themed-slider" min="0.5" max="5" step="0.1" value="${initialOptions.strokeWidth || 1}">
+          <input type="range" id="compare-stroke-width" class="mdc-slider" min="0.5" max="5" step="0.1" value="${initialOptions.strokeWidth || 1}">
           <span id="compare-stroke-width-value" class="control-value-display">${initialOptions.strokeWidth || 1}</span>
         </div>
-        <div class="control-group">
-          <label for="compare-ignore-branches" class="control-label">Ignore Branch Lengths:</label>
-          <input type="checkbox" id="compare-ignore-branches" ${initialOptions.ignoreBranchLengths ? 'checked' : ''}>
-          </div>
+        <div class="control-group switch-row">
+          <label class="control-label" for="compare-ignore-branches">Ignore Branch Lengths:</label>
+          <label class="switch">
+            <input type="checkbox" id="compare-ignore-branches" ${initialOptions.ignoreBranchLengths ? 'checked' : ''}>
+            <span class="slider round"></span>
+          </label>
+        </div>
       </div>
       <div class="comparison-footer">
         <button class="md-button secondary" data-action="close">
