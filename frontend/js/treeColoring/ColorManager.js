@@ -1,5 +1,7 @@
 // File: ColorManager.js
 // Responsible for mapping and applying color data to the tree. No UI logic.
+import { COLOR_MAP } from "../treeVisualisation/ColorMap.js";
+
 
 export const ColorManager = {
   /**
@@ -37,16 +39,16 @@ export const ColorManager = {
    * @param {Object} colorMap - Object mapping taxa names to colors
    * @param {Object} TreeDrawer - The TreeDrawer class or instance
    */
-  setTaxaColors(colorMap, TreeDrawer) {
+  setTaxaColors(colorMap) {
     // Remove all previous color assignments except special keys
-    Object.keys(TreeDrawer.colorMap).forEach(key => {
+    Object.keys(COLOR_MAP.colorMap).forEach(key => {
       if (!["defaultColor", "markedColor", "strokeColor", "changingColor", "defaultLabelColor", "extensionLinkColor", "userMarkedColor"].includes(key)) {
-        delete TreeDrawer.colorMap[key];
+        delete COLOR_MAP.colorMap[key];
       }
     });
     // Assign new colors
     Object.entries(colorMap).forEach(([taxon, color]) => {
-      TreeDrawer.colorMap[taxon] = color;
+      COLOR_MAP.colorMap[taxon] = color;
     });
   }
 };

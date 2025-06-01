@@ -1,16 +1,17 @@
+
+import localforage from 'localforage';
 import { parseMSA } from './msaViewer/parsers.js';
 
 export async function fetchMSAFromBackend() {
   try {
     let msa_id = null;
-    const movieData = localStorage.getItem("phyloMovieData");
+    const movieData = await localforage.getItem("phyloMovieData");
     if (movieData) {
       try {
-        const parsed = JSON.parse(movieData);
-        if (parsed.msa_id) msa_id = parsed.msa_id;
+        if (movieData.msa_id) msa_id = movieData.msa_id;
       } catch {}
     }
-    if (!msa_id) msa_id = localStorage.getItem("phyloMovieMSAId");
+    if (!msa_id) msa_id = await localforage.getItem("phyloMovieMSAId");
     let url = "/msa";
     if (msa_id) url += `?msa_id=${encodeURIComponent(msa_id)}`;
     const response = await fetch(url);
@@ -18,11 +19,9 @@ export async function fetchMSAFromBackend() {
     const msaRaw = await response.json();
     const msaData = parseMSA(msaRaw.content);
     if (msaData) {
-      localStorage.setItem("phyloMovieMSAData", JSON.stringify(msaData));
-      
+      await localforage.setItem("phyloMovieMSAData", msaData);
       // Dispatch custom event to notify MSA viewer of data update
       window.dispatchEvent(new CustomEvent('msa-data-updated'));
-      
       return msaData;
     }
     return null;
@@ -54,12 +53,12 @@ export async function fetchTreeData(formData) {
       throw new Error(`Server error: ${data.error}`);
     }
 
-    // Save to localStorage BEFORE redirecting
-    localStorage.setItem("phyloMovieData", JSON.stringify(data));
+    // Save to IndexedDB (localForage) BEFORE redirecting
+    await localforage.setItem("phyloMovieData", data);
     if (data.msa_id) {
-      localStorage.setItem("phyloMovieMSAId", data.msa_id);
+      await localforage.setItem("phyloMovieMSAId", data.msa_id);
     }
-    console.log("[fetchTreeData] Data saved to localStorage");
+    console.log("[fetchTreeData] Data saved to IndexedDB (localForage)");
 
     // Save MSA data if provided
     const msaFile = formData.get("msaFile");
@@ -68,9 +67,8 @@ export async function fetchTreeData(formData) {
         const msaText = await msaFile.text();
         const msaData = parseMSA(msaText);
         if (msaData) {
-          localStorage.setItem("phyloMovieMSAData", JSON.stringify(msaData));
-          console.log("[fetchTreeData] MSA data saved to localStorage");
-          
+          await localforage.setItem("phyloMovieMSAData", msaData);
+          console.log("[fetchTreeData] MSA data saved to IndexedDB (localForage)");
           // Dispatch custom event to notify MSA viewer of data update
           window.dispatchEvent(new CustomEvent('msa-data-updated'));
         }

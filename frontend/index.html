@@ -106,6 +106,17 @@
               >Enable Midpoint Rooting</label
             >
           </div>
+          <div class="form-check form-switch mb-3">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              id="deactivateEmbedding"
+              name="deactivateEmbedding"
+            />
+            <label class="form-check-label" for="deactivateEmbedding"
+              >Deactivate Embedding (Use Geometric Patterns)</label
+            >
+          </div>
           <div class="text-center">
             <button type="submit" class="btn btn-primary btn-lg">
               <i class="fa fa-play"></i> Play
@@ -186,6 +197,7 @@
         formData.append("windowSize", document.getElementById("windowSize").value);
         formData.append("windowStepSize", document.getElementById("window-step-size").value);
         formData.append("midpointRooting", document.getElementById("midpointRooting").checked ? "on" : "");
+        formData.append("deactivateEmbedding", document.getElementById("deactivateEmbedding").checked ? "on" : "");
 
         try {
           const response = await fetch("/treedata", {
@@ -211,23 +223,21 @@
             return;
           }
           const data = await response.json();
-          localStorage.setItem("phyloMovieData", JSON.stringify(data));
-          
+          // Save main data to IndexedDB/localForage
+          await window.localforage.setItem("phyloMovieData", data);
+
           // Handle MSA data saving and notification (like in fetch.js)
           const msaFiles = msaPond.getFiles();
           if (msaFiles.length > 0) {
             try {
               const msaFile = msaFiles[0].file;
               const msaText = await msaFile.text();
-              
               // Import parseMSA function dynamically
               const { parseMSA } = await import('./js/msaViewer/parsers.js');
               const msaData = parseMSA(msaText);
-              
               if (msaData) {
-                localStorage.setItem("phyloMovieMSAData", JSON.stringify(msaData));
-                console.log("[index.html] MSA data saved to localStorage");
-                
+                await window.localforage.setItem("phyloMovieMSAData", msaData);
+                console.log("[index.html] MSA data saved to localForage");
                 // Dispatch custom event to notify MSA viewer of data update
                 window.dispatchEvent(new CustomEvent('msa-data-updated'));
               }
@@ -244,8 +254,8 @@
                 const { parseMSA } = await import('./js/msaViewer/parsers.js');
                 const msaData = parseMSA(msaRaw.content);
                 if (msaData) {
-                  localStorage.setItem("phyloMovieMSAData", JSON.stringify(msaData));
-                  console.log("[index.html] MSA data fetched and saved to localStorage");
+                  await window.localforage.setItem("phyloMovieMSAData", msaData);
+                  console.log("[index.html] MSA data fetched and saved to localForage");
                   window.dispatchEvent(new CustomEvent('msa-data-updated'));
                 }
               }
@@ -253,7 +263,7 @@
               console.error("[index.html] Error fetching MSA data:", fetchErr);
             }
           }
-          
+
           window.location.href = "/vis.html";
         } catch (err) {
           showFormAlert("Network error: " + err, 'danger');
@@ -261,6 +271,10 @@
           if (submitButton) submitButton.disabled = false;
           overlay.style.display = "none";
         }
+      });
+      // Ensure localForage is available on window
+      import("localforage").then((mod) => {
+        window.localforage = mod.default || mod;
       });
     </script>
   </body>

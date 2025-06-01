@@ -114,7 +114,7 @@ export default class TaxaColoring {
         height: "80%",
         x: "center",
         y: "center",
-        class: ["modern", "modal"],
+        class: ["modern"],
         background: "#373747",
         border: 1,
         onclose: () => {

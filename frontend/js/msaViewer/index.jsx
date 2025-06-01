@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import MSAViewerContent from "./MSAViewerModal";
+import localforage from "localforage";
 
 function App() {
   console.log("React MSA modal loaded");
@@ -8,79 +9,56 @@ function App() {
   const [msaModalOpen, setMsaModalOpen] = useState(false);
   const [winboxInstance, setWinboxInstance] = useState(null);
 
-  // Function to load MSA data from localStorage
-  const loadMSAData = () => {
-    const local = localStorage.getItem("phyloMovieMSAData");
-    console.log("Raw localStorage data:", local);
+  // Function to load MSA data from localForage (IndexedDB)
+  const loadMSAData = async () => {
+    try {
+      const local = await localforage.getItem("phyloMovieMSAData");
+      console.log("[MSAViewer] Raw localForage data:", local);
 
-    if (local) {
-      try {
-        const parsed = JSON.parse(local);
-        console.log("Parsed MSA data:", parsed);
-
-        if (parsed.rawData && typeof parsed.rawData === "string") {
-          console.log("Using rawData from parsed MSA object");
-          setMsaString(parsed.rawData);
-        } else if (parsed.sequences && Array.isArray(parsed.sequences)) {
-          console.log("Converting sequences array back to FASTA format");
-          const fastaString = parsed.sequences
+      if (local) {
+        if (local.rawData && typeof local.rawData === "string") {
+          console.log("[MSAViewer] Using rawData from parsed MSA object");
+          setMsaString(local.rawData);
+        } else if (local.sequences && Array.isArray(local.sequences)) {
+          console.log("[MSAViewer] Converting sequences array back to FASTA format");
+          const fastaString = local.sequences
             .map((seq) => `>${seq.id}\n${seq.sequence}`)
             .join("\n");
           setMsaString(fastaString);
-        } else if (typeof parsed === "string") {
-          console.log("Using parsed string directly");
-          setMsaString(parsed);
+        } else if (typeof local === "string") {
+          console.log("[MSAViewer] Using string directly");
+          setMsaString(local);
         } else {
-          console.warn("Unrecognized MSA data format:", parsed);
+          console.warn("[MSAViewer] Unrecognized MSA data format:", local);
         }
-      } catch (e) {
-        console.log("Data is not JSON, treating as plain string");
-        setMsaString(local);
+      } else {
+        console.log("[MSAViewer] No MSA data found in localForage");
+        setMsaString("");
       }
-    } else {
-      console.log("No MSA data found in localStorage");
+    } catch (e) {
+      console.error("[MSAViewer] Error loading MSA data from localForage:", e);
+      setMsaString("");
     }
   };
 
-  // Load MSA data from localStorage on mount
+  // Load MSA data from localForage on mount
   useEffect(() => {
     loadMSAData();
   }, []);
 
-  // Listen for localStorage changes and reload MSA data
+  // Listen for custom msa-data-updated events and reload MSA data
   useEffect(() => {
-    const handleStorageChange = (e) => {
-      if (e.key === "phyloMovieMSAData" || e.key === null) {
-        console.log("MSA data changed in localStorage, reloading...");
-        loadMSAData();
-
-        // If MSA viewer is open, close it so it can be reopened with new data
-        if (winboxInstance) {
-          console.log("Closing existing MSA viewer to refresh with new data");
-          winboxInstance.close();
-        }
-      }
-    };
-
-    // Listen for storage events from other tabs/windows
-    window.addEventListener("storage", handleStorageChange);
-
-    // Listen for custom events from same tab (since storage events don't fire in same tab)
     const handleCustomStorageChange = () => {
-      console.log("Custom MSA data update event received, reloading...");
+      console.log("[MSAViewer] Custom MSA data update event received, reloading...");
       loadMSAData();
-
       // If MSA viewer is open, close it so it can be reopened with new data
       if (winboxInstance) {
-        console.log("Closing existing MSA viewer to refresh with new data");
+        console.log("[MSAViewer] Closing existing MSA viewer to refresh with new data");
         winboxInstance.close();
       }
     };
-
     window.addEventListener("msa-data-updated", handleCustomStorageChange);
-
     return () => {
-      window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener("msa-data-updated", handleCustomStorageChange);
     };
   }, [winboxInstance]);
@@ -184,17 +162,17 @@ function App() {
   return null;
 }
 
-// Ensure syncMSAViewer is always available, even before the modal is opened
-window.syncMSAViewer =
-  window.syncMSAViewer ||
-  ((highlightedTaxa, position, windowInfo) => {
-    console.warn("MSA viewer not ready yet, dispatching event instead");
+// Initialize a fallback sync function only if none exists
+if (!window.syncMSAViewer) {
+  window.syncMSAViewer = (highlightedTaxa, position, windowInfo) => {
+    console.log("MSA viewer not ready, opening viewer with sync data");
     window.dispatchEvent(
       new CustomEvent("open-msa-viewer", {
         detail: { highlightedTaxa, position, windowInfo },
       })
     );
-  });
+  };
+}
 
 // Create root container if it doesn't exist
 let root = document.getElementById("msa-react-root");

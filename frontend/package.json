@@ -6,8 +6,11 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "mocha --require @babel/register '../test/fileUpload.test.js' '../test/parser.test.js' '../test/integration.test.js' '../test/fileUploadTests.js' '../test/msaViewerIntegrationTests.js' '../test/msaViewerRefreshTest.js' '../test/tree-centering-verification.test.js' '../test/chart-resizing-verification.test.js'",
-    "test:watch": "mocha --require @babel/register --watch '../test/fileUpload.test.js' '../test/parser.test.js' '../test/integration.test.js' '../test/fileUploadTests.js' '../test/msaViewerIntegrationTests.js' '../test/msaViewerRefreshTest.js'"
+    "test": "mocha --require @babel/register 'test/fileUpload.test.js' 'test/parser.test.js' 'test/integration.test.js' 'test/fileUploadTests.js' 'test/msaViewerIntegrationTests.js' 'test/msaViewerRefreshTest.js' 'test/tree-centering-verification.test.js' 'test/chart-resizing-verification.test.js' 'test/msa-workflow.test.js'",
+    "test:watch": "mocha --require @babel/register --watch 'test/fileUpload.test.js' 'test/parser.test.js' 'test/integration.test.js' 'test/fileUploadTests.js' 'test/msaViewerIntegrationTests.js' 'test/msaViewerRefreshTest.js' 'test/msa-workflow.test.js'",
+    "test:msa": "mocha --require @babel/register 'test/msa-workflow.test.js'",
+    "test:backend-required": "mocha --require @babel/register 'test/integration.test.js' 'test/msa-workflow.test.js'",
+    "test:unit": "mocha --require @babel/register 'test/parser.test.js' 'test/fileUpload.test.js'"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -19,6 +22,7 @@
     "d3": "^7.9.0",
     "filepond": "^4.32.7",
     "jbrowse-plugin-msaview": "^2.1.0",
+    "localforage": "^1.10.0",
     "lodash": "^4.17.21",
     "mobx": "^6.13.7",
     "mobx-react": "^9.2.0",
@@ -33,7 +37,17 @@
     "winbox": "^0.2.82"
   },
   "devDependencies": {
+    "@babel/core": "^7.27.4",
+    "@babel/preset-env": "^7.27.2",
+    "@babel/preset-react": "^7.26.3",
+    "@babel/register": "^7.27.1",
+    "axios": "^1.9.0",
+    "chai": "^4.5.0",
+    "form-data": "^4.0.2",
     "jsdom": "^26.1.0",
+    "mocha": "^10.8.2",
+    "node-fetch": "^3.3.2",
+    "sinon": "^17.0.1",
     "vite": "^4.0.0"
   }
 }

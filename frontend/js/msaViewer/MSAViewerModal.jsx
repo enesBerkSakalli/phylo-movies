@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { MSAView, MSAModelF } from "react-msaview";
 import { createJBrowseTheme } from "@jbrowse/core/ui/theme";
 import { ThemeProvider } from "@mui/material/styles";
+import drawTree from "../treeVisualisation/TreeDrawer";
 
 /**
  * Calculates responsive dimensions for MSA viewer
@@ -31,7 +32,9 @@ function calculateMSADimensions(containerRef, containerWidth, containerHeight) {
  */
 function createMSAModel(msaString, dimensions) {
   try {
-    const MSAModel = MSAModelF();
+    const MSAModel = MSAModelF(
+        
+    );
     const modelData = {
       id: `msa-${Date.now()}`,
       type: "MsaView",
@@ -53,11 +56,13 @@ function createMSAModel(msaString, dimensions) {
 }
 
 /**
- * Sets up global sync function with consistent interface
+ * Sets up simplified global sync function
  */
 function setupGlobalSync(modelRef, syncEnabledRef) {
-  window.syncMSAViewer = (taxa = [], column = 0, windowInfo = null) => {
-    if (!syncEnabledRef.current || !modelRef.current) return;
+  const newSyncFunction = (taxa = [], column = 0, windowInfo = null) => {
+    if (!syncEnabledRef.current || !modelRef.current) {
+      return; // Simply skip if not ready
+    }
     
     try {
       const model = modelRef.current;
@@ -67,7 +72,7 @@ function setupGlobalSync(modelRef, syncEnabledRef) {
         model.setHighlightedSequences(taxa);
       }
       
-      // Handle column highlighting
+      // Handle column highlighting based on window info or single column
       let cols = [];
       if (windowInfo?.windowStart && windowInfo?.windowEnd) {
         for (let i = windowInfo.windowStart - 1; i < windowInfo.windowEnd; ++i) {
@@ -82,24 +87,22 @@ function setupGlobalSync(modelRef, syncEnabledRef) {
       }
 
       // Scroll to position
-      let scrollToCol = null;
-      if (windowInfo?.windowStart) {
-        scrollToCol = windowInfo.windowStart - 1;
-      } else if (column > 0) {
-        scrollToCol = column - 1;
-      }
-      
-      if (scrollToCol !== null && typeof model.setScrollX === 'function') {
+      if (windowInfo?.windowStart && typeof model.setScrollX === 'function') {
         const colWidth = model.colWidth || 20;
-        model.setScrollX(-scrollToCol * colWidth);
+        model.setScrollX(-(windowInfo.windowStart - 1) * colWidth);
+      } else if (column > 0 && typeof model.setScrollX === 'function') {
+        const colWidth = model.colWidth || 20;
+        model.setScrollX(-(column - 1) * colWidth);
       }
     } catch (syncError) {
       console.error("Error during MSA sync:", syncError);
     }
   };
   
-  // Store model reference globally
+  window.syncMSAViewer = newSyncFunction;
   window.msaModelRef = modelRef;
+  
+  return newSyncFunction;
 }
 
 /**
@@ -145,48 +148,40 @@ export default function MSAViewerContent({ msaString, containerWidth = 1200, con
     if (typeof modelRef.current.setWidth === 'function') {
       modelRef.current.setWidth(newDimensions.width);
     }
-  }, [containerWidth, containerHeight]);
-
-  // Initialize model and setup
-  useEffect(() => {
-    if (!msaString) {
-      setError("No MSA string provided");
-      return;
-    }
-
-    // Calculate initial dimensions
-    const initialDimensions = calculateMSADimensions(containerRef, containerWidth, containerHeight);
-    setDimensions(initialDimensions);
-
-    try {
-      // Clean up previous model
-      if (modelRef.current && typeof modelRef.current.destroy === 'function') {
-        modelRef.current.destroy();
+  }, [containerWidth, containerHeight]);    // Initialize model and setup
+    useEffect(() => {
+      if (!msaString) {
+        setError("No MSA string provided");
+        return;
       }
-      
-      // Create new model
-      modelRef.current = createMSAModel(msaString, initialDimensions);
-      
-      // Setup global sync
-      setupGlobalSync(modelRef, syncEnabledRef);
-      
-      setModelCreated(true);
-      setError(null);
-      
-    } catch (err) {
-      setError(err.message);
-      setModelCreated(false);
-    }
 
-    // Cleanup function
-    return () => {
-      if (window.syncMSAViewer) delete window.syncMSAViewer;
-      if (window.msaModelRef) delete window.msaModelRef;
-      if (modelRef.current && typeof modelRef.current.destroy === 'function') {
-        modelRef.current.destroy();
+      // Calculate initial dimensions
+      const initialDimensions = calculateMSADimensions(containerRef, containerWidth, containerHeight);
+      setDimensions(initialDimensions);
+      
+      try {
+        // Create new model
+        modelRef.current = createMSAModel(msaString, initialDimensions);
+        
+        // Setup global sync
+        setupGlobalSync(modelRef, syncEnabledRef);
+        
+        setModelCreated(true);
+        setError(null);
+      } catch (err) {
+        setError(err.message);
+        setModelCreated(false);
       }
-    };
-  }, [msaString, containerWidth, containerHeight]);
+
+      // Cleanup function
+      return () => {
+        if (window.syncMSAViewer) delete window.syncMSAViewer;
+        if (window.msaModelRef) delete window.msaModelRef;
+        if (modelRef.current && typeof modelRef.current.destroy === 'function') {
+          modelRef.current.destroy();
+        }
+      };
+    }, [msaString, containerWidth, containerHeight]);
 
   // Setup resize listener
   useEffect(() => {
@@ -296,12 +291,15 @@ export default function MSAViewerContent({ msaString, containerWidth = 1200, con
           background: "#fff",
           overflow: "hidden"
         }}>
-          <MSAView 
+          <MSAView
+            drawTree= {true}
+
             model={modelRef.current} 
             style={{ 
               width: "100%", 
               height: "100%",
-              minHeight: `${dimensions.height}px`
+              minHeight: `${dimensions.height}px`,
+              
             }}
           />
         </div>

@@ -1,56 +1,100 @@
-// Loads a single HTML partial into its container
-export async function loadPartial({ url, containerId, callback, errorCallback }) {
-  const container = document.getElementById(containerId);
-  if (!container) {
-    console.error(`Container not found: ${containerId}`);
-    if (errorCallback) errorCallback(new Error(`Container not found: ${containerId}`));
-    return;
-  }
-  
-  try {
-    console.log(`[loadPartial] Loading ${url} into ${containerId}`);
-    const resp = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Accept': 'text/html',
-        'Cache-Control': 'no-cache'
-      },
-      signal: AbortSignal.timeout(5000) // 5 second timeout
-    });
-    
-    if (!resp.ok) {
-      throw new Error(`Failed to load partial: ${url} (${resp.status} ${resp.statusText})`);
-    }
-    
-    const content = await resp.text();
-    console.log(`[loadPartial] Successfully loaded ${url}, content length: ${content.length}`);
-    container.innerHTML = content;
-    
-    if (callback) callback();
-  } catch (err) {
-    console.error(`Error loading partial ${url}:`, err);
-    // Provide fallback content instead of error message
-    container.innerHTML = `<div class="partial-error"><!-- ${containerId} partial failed to load --></div>`;
-    if (errorCallback) errorCallback(err);
+/**
+ * Simplified partial loader
+ */
+
+/**
+ * Announce partial loading status to ARIA live region (if present)
+ */
+function announcePartialStatus(message) {
+  const liveRegion = document.getElementById('aria-partial-status');
+  if (liveRegion) {
+    liveRegion.textContent = message;
   }
 }
 
-// Loads multiple HTML partials in parallel with better error handling
-export async function loadAllPartials(partials) {
-  try {
-    console.log(`[loadAllPartials] Starting to load ${partials.length} partials`);
-    const results = await Promise.allSettled(partials.map(loadPartial));
-    
-    const failed = results.filter(result => result.status === 'rejected');
-    if (failed.length > 0) {
-      console.warn(`[loadAllPartials] ${failed.length} partials failed to load:`, failed.map(f => f.reason?.message));
-      // Continue anyway - don't block the app for missing partials
-    }
-    
-    console.log(`[loadAllPartials] Completed loading partials: ${results.length - failed.length}/${results.length} successful`);
-    return true; // Always return true to allow app to continue
-  } catch (err) {
-    console.error("Error loading partials:", err);
-    return true; // Still return true - app should work even without partials
+/**
+ * Load a single HTML partial
+ */
+export async function loadPartial({ url, containerId, callback, errorCallback }) {
+  const container = document.getElementById(containerId);
+  if (!container) {
+    const error = new Error(`Container not found: ${containerId}`);
+    console.error(error.message);
+    setTimeout(() => {
+      if (errorCallback) errorCallback(error);
+    }, 0);
+    announcePartialStatus(`Failed to load content: ${containerId}`);
+    return false;
   }
+
+  try {
+    console.log(`Loading partial: ${url} -> ${containerId}`);
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Accept': 'text/html' },
+      cache: 'no-cache'
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const content = await response.text();
+    container.innerHTML = content;
+
+    console.log(`✅ Loaded partial: ${url}`);
+    setTimeout(() => {
+      if (callback) callback();
+    }, 0);
+    announcePartialStatus(`Loaded content: ${containerId}`);
+    return true;
+
+  } catch (error) {
+    console.error(`❌ Failed to load partial ${url}:`, error);
+
+    // Provide minimal fallback
+    container.innerHTML = `<!-- Failed to load ${containerId} -->`;
+
+    setTimeout(() => {
+      if (errorCallback) errorCallback(error);
+    }, 0);
+    announcePartialStatus(`Failed to load content: ${containerId}`);
+    return false;
+  }
+}
+
+/**
+ * Load multiple partials
+ */
+export async function loadAllPartials(partials) {
+  if (!Array.isArray(partials) || partials.length === 0) {
+    console.warn("No partials to load");
+    return true;
+  }
+
+  console.log(`Loading ${partials.length} partials...`);
+  
+  const results = await Promise.allSettled(
+    partials.map(partial => loadPartial(partial))
+  );
+  
+  const successful = results.filter(r => r.status === 'fulfilled' && r.value === true).length;
+  const failed = results.length - successful;
+  
+  console.log(`Partials loaded: ${successful}/${results.length} successful`);
+  
+  if (failed > 0) {
+    console.warn(`${failed} partials failed to load`);
+  }
+  
+  // Always return true - app should continue even if some partials fail
+  return true;
+}
+
+/**
+ * Simple utility to check if element exists
+ */
+export function elementExists(id) {
+  return document.getElementById(id) !== null;
 }

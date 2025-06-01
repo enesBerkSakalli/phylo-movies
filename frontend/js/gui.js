@@ -1,29 +1,22 @@
 import * as d3 from "d3";
+import { generateChartModal } from "./charts/chartGenerator.js";
+import { generateDistanceChart } from "./charts/distanceChart.js";
+import * as scatterPlotModule from "./space/scatterPlot.js";
+import TaxaColoring from "./taxaColoring.js";
+import { createSideBySideComparisonModal } from "./treeComparision/treeComparision.js";
 import calculateScales from "./treeVisualisation/calc.js";
 import constructTree from "./treeVisualisation/TreeConstructor.js";
 import drawTree, { TreeDrawer } from "./treeVisualisation/TreeDrawer.js";
-import { generateDistanceChart } from "./charts/distanceChart.js";
-import { generateChartModal } from "./charts/chartGenerator.js";
-import { createSideBySideComparisonModal } from "./treeComparision/treeComparision.js";
-import TaxaColoring from "./taxaColoring.js";
-import * as scatterPlotModule from "./space/scatterPlot.js";
-import { initializeZoom, handleZoomResize } from "./zoom/zoomUtils.js";
 import { exportSaveChart } from "./utils/svgExporter.js";
+import { handleZoomResize, initializeZoom } from "./zoom/zoomUtils.js";
+import { COLOR_MAP } from "./treeVisualisation/ColorMap.js";
 
-function flattenDeep(arr) {
-  return Array.isArray(arr)
-    ? arr.reduce(
-        (acc, val) => acc.concat(Array.isArray(val) ? flattenDeep(val) : val),
-        []
-      )
-    : [arr];
-}
 
 // ===== GUI Class =====
 export default class Gui {
   // ===== MSA Sync Toggle =====
   syncMSAEnabled = true;
-  // ===== Constructor & Initialization =====
+  // ===== Constructor & Initialization =====x
   constructor(
     treeList,
     weightedRobinsonFouldsDistances,
@@ -53,15 +46,25 @@ export default class Gui {
     this.scaleList = calculateScales(treeList);
     this.windowSize = windowSize;
     this.windowStepSize = windowStepSize;
-    this.marked = new Set();
     this.windowStart = null;
     this.windowEnd = null;
 
     // Flatten toBeHighlighted entries to handle potential deep nesting
-    this.toBeHighlighted = Array.isArray(toBeHighlighted)
-      ? toBeHighlighted.map((item) => flattenDeep(item))
-      : [];
+    this.toBeHighlighted = toBeHighlighted
 
+    console.log(
+      "[gui] toBeHighlighted:",
+      this.toBeHighlighted,
+      "leaveOrder:",
+      leaveOrder
+    );
+
+    console.log(
+      "[gui] Initializing GUI with treeList length:",
+      this.treeList.length,
+      "and toBeHighlighted length:",
+      this.toBeHighlighted.length
+    );
     this.leaveOrder = leaveOrder;
     this.firstFull = 0;
     this.fontSize = 1.8;
@@ -99,13 +102,7 @@ export default class Gui {
     const taxaColorMap = {};
     if (this.leaveOrder && Array.isArray(this.leaveOrder)) {
       this.leaveOrder.forEach((taxon) => {
-        // Ensure TreeDrawer.colorMap exists and has defaultColor
-        if (TreeDrawer.colorMap && TreeDrawer.colorMap.defaultColor) {
-          taxaColorMap[taxon] = TreeDrawer.colorMap.defaultColor;
-        } else {
-          // Fallback if TreeDrawer.colorMap.defaultColor is not defined
-          taxaColorMap[taxon] = "#000000"; // Default to black or some other sensible default
-        }
+          taxaColorMap[taxon] = COLOR_MAP.colorMap.defaultColor;
       });
     }
 
@@ -114,9 +111,9 @@ export default class Gui {
       this.zoom = initializeZoom(this);
     });
 
-    // Update TreeDrawer.colorMap with the initial default colors
+    // Update COLORMAP.colorMap with the initial default colors
     if (Object.keys(taxaColorMap).length > 0) {
-      TreeDrawer.colorMap = { ...TreeDrawer.colorMap, ...taxaColorMap };
+      COLOR_MAP.colorMap = { ...COLOR_MAP.colorMap, ...taxaColorMap };
     }
   }
 
@@ -436,10 +433,6 @@ export default class Gui {
     handleZoomResize();
   }
 
-  start() {
-    this.playing = true;
-    this.keepPlaying();
-  }
 
   backward() {
     if (this.index % 5 === 0 && this.firstFull === 0) {
@@ -637,7 +630,7 @@ export default class Gui {
     const fileName = `${this.fileName || "chart"}-${
       Math.floor(this.index / 5) + 1
     }-${this.getTreeName()}.svg`;
-    
+
     exportSaveChart(this, "application-container", fileName)
       .then((message) => {
         console.log(message);
@@ -741,25 +734,25 @@ export default class Gui {
           } else {
             // Retain existing color or default if group/color not found
             newColorMap[taxon] =
-              TreeDrawer.colorMap[taxon] ||
-              TreeDrawer.colorMap.defaultColor ||
+              COLORMAP.colorMap[taxon] ||
+              COLORMAP.colorMap.defaultColor ||
               "#000000";
           }
         });
       }
 
-      // Merge with existing TreeDrawer.colorMap, prioritizing new colors
-      TreeDrawer.colorMap = { ...TreeDrawer.colorMap, ...newColorMap };
+      // Merge with existing COLORMAP.colorMap, prioritizing new colors
+      COLOR_MAP.colorMap = { ...COLOR_MAP.colorMap, ...newColorMap };
       this.updateMain(); // Redraw the tree
-      console.log("Taxa colors updated:", TreeDrawer.colorMap);
+      console.log("Taxa colors updated:", COLOR_MAP.colorMap);
     };
 
     // Assuming groupNames are not explicitly managed in Gui, pass empty or derive if needed.
-    // Pass the current TreeDrawer.colorMap as originalColorMap.
+    // Pass the current COLOR_MAP.colorMap as originalColorMap.
     new TaxaColoring(
       this.leaveOrder,
       [], // groupNames - can be empty if TaxaColoring derives them or not strictly needed for its init
-      { ...TreeDrawer.colorMap }, // originalColorMap - pass a copy
+      { ...COLOR_MAP.colorMap }, // originalColorMap - pass a copy
       onCompleteCallback
     );
   }
@@ -784,7 +777,7 @@ export default class Gui {
   openMSAViewer() {
     // Trigger MSA viewer to open with dark theme
     window.dispatchEvent(new CustomEvent("open-msa-viewer", {
-      detail: { 
+      detail: {
         source: 'gui',
         currentPosition: Math.floor(this.index / 5),
         windowInfo: this.getCurrentWindow(),

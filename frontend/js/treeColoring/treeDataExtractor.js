@@ -18,7 +18,7 @@ export const TreeDataExtractor = {
         if (firstTree && firstTree.children) {
           this.extractLeafNames(firstTree, taxaNames);
         }
-      } 
+      }
       // Check if it's a d3 hierarchy or similar structure
       else if (typeof treeData.leaves === 'function') {
         // Get leave order from the global leaveOrder array if available
@@ -56,7 +56,7 @@ export const TreeDataExtractor = {
       }
       return taxaNames;
     },
-  
+
     /**
      * Helper function to recursively extract leaf names from a tree structure
      * @param {Object} node - Current tree node
@@ -82,7 +82,7 @@ export const TreeDataExtractor = {
         }
         return;
       }
-  
+
       // Recursively process children
       for (const child of node.children) {
         this.extractLeafNames(child, taxaNames);

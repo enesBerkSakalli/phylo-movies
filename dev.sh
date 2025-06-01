@@ -44,7 +44,6 @@ if ! curl -s http://127.0.0.1:5002/ >/dev/null 2>&1; then
   exit 1
 fi
 
-
 echo "[dev.sh] Starting Vite frontend dev server..."
 if [ ! -d "frontend/node_modules" ]; then
   echo "[dev.sh] node_modules not found in frontend/, running npm install..."
@@ -53,7 +52,7 @@ else
   echo "[dev.sh] node_modules found in frontend/, skipping npm install."
 fi
 
-npm run dev --prefix frontend -- --port 5173 --host 127.0.0.1 --no-open --clearScreen false > frontend.log 2>&1 < /dev/null &
+npm run dev --prefix frontend -- --port 5173 --host 127.0.0.1 --no-open --clearScreen false >frontend.log 2>&1 </dev/null &
 FRONTEND_PID=$!
 
 # Wait for frontend to be ready
@@ -82,6 +81,7 @@ if ! curl -s http://127.0.0.1:5173/ >/dev/null 2>&1; then
 fi
 
 # Trap to kill both background processes on exit (Ctrl+C or error)
+
 cleanup() {
   echo "[dev.sh] Cleaning up..."
   if kill -0 $FRONTEND_PID 2>/dev/null; then kill $FRONTEND_PID 2>/dev/null; fi
@@ -89,7 +89,8 @@ cleanup() {
   wait $FRONTEND_PID 2>/dev/null
   wait $BACKEND_PID 2>/dev/null
 }
-trap cleanup EXIT
+# Trap cleanup on SIGINT (Ctrl+C), SIGTERM, and EXIT
+trap cleanup SIGINT SIGTERM EXIT
 
 echo "[dev.sh] Frontend PID: $FRONTEND_PID, Backend PID: $BACKEND_PID"
 echo "[dev.sh] Both servers are running. Press Ctrl+C to stop."

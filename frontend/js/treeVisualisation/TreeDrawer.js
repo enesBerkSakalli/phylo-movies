@@ -1,6 +1,7 @@
 import * as d3 from "d3";
 import ParseUtil from "./ParseUtil.js";
 import {} from "./treeSvgGenerator.js";
+import{COLOR_MAP} from "./ColorMap.js";
 
 import {
   buildSvgString,
@@ -16,15 +17,7 @@ import {
 
 /** Class For drawing Hierarchical Trees. */
 export class TreeDrawer {
-  static colorMap = {
-    defaultColor: "black",
-    markedColor: "red",
-    strokeColor: "black",
-    changingColor: "orange",
-    defaultLabelColor: "black",
-    extensionLinkColor: "black",
-    userMarkedColor: "magenta",
-  };
+
 
   static sizeMap = {
     strokeWidth: "1",
@@ -351,7 +344,7 @@ export class TreeDrawer {
    */
   colorBranches(d) {
     if (this.marked.size === 0) {
-      return TreeDrawer.colorMap.defaultColor;
+      return COLOR_MAP.colorMap.defaultColor;
     } else {
       // Create a Set from the current leave split indices
       const treeSplit = new Set(d.target.data.split_indices);
@@ -362,35 +355,10 @@ export class TreeDrawer {
         // Check if treeSplit is subset of markedSet
         const isSubset = [...treeSplit].every((x) => markedSet.has(x));
         if (isSubset) {
-          return TreeDrawer.colorMap.markedColor;
+          return COLOR_MAP.colorMap.markedColor;
         }
       }
-      return TreeDrawer.colorMap.defaultColor;
-    }
-  }
-
-  /**
-   * Determines the color for an internal branch based on marked taxa.
-   * @param {Object} d - The branch data object.
-   * @returns {string} The color for the internal branch.
-   */
-  colorInternalBranches(d) {
-    if (this.marked.size === 0) {
-      return TreeDrawer.colorMap.defaultColor;
-    } else {
-      // Create a Set from the current leave split indices
-      const treeSplit = new Set(d.target.data.split_indices);
-      // Iterate over each marked components
-      for (const components of this.marked) {
-        // Assume 'components' is iterable (e.g., an array)
-        const markedSet = new Set(components);
-        // Check if treeSplit is subset of markedSet
-        const isSubset = [...treeSplit].every((x) => markedSet.has(x));
-        if (isSubset) {
-          return TreeDrawer.colorMap.markedColor;
-        }
-      }
-      return TreeDrawer.colorMap.defaultColor;
+      return COLOR_MAP.colorMap.defaultColor;
     }
   }
 
@@ -519,36 +487,13 @@ export class TreeDrawer {
       .attr("cy", (d) => {
         return (currentMaxRadius - 30) * Math.sin(d.angle);
       })
-      .style("stroke", TreeDrawer.colorMap.strokeColor)
+      .style("stroke", COLOR_MAP.colorMap.strokeColor)
       .attr("stroke-width", "0.1em")
       .attr("r", "0.4em");
-
-    this.calculatePath(this.root);
-    this.colorPath(this.root);
 
     d3.selectAll(".leaf").on("click", (event, d) => {
       this.flipNode(d);
     });
-  }
-
-  /**
-   * Toggles the marked state of a leaf node when clicked.
-   * @param {Object} d - The node data object.
-   * @returns {void}
-   */
-  flipNode(d) {
-    if (!TreeDrawer.markedLabelList.includes(d.data.name)) {
-      TreeDrawer.markedLabelList.push(d.data.name);
-    } else {
-      TreeDrawer.markedLabelList.splice(
-        TreeDrawer.markedLabelList.indexOf(d.data.name),
-        1
-      );
-    }
-
-    this.calculatePath(this.root);
-
-    this.colorPath(this.root, true);
   }
 
   /**
@@ -572,31 +517,6 @@ export class TreeDrawer {
   }
 
   /**
-   * Updates the highlighting taxa count for all paths in the tree.
-   * @param {Object} tree - The root node of the tree.
-   * @returns {void}
-   */
-  calculatePath(tree) {
-    tree.each((d) => {
-      const linkId = this.generateLinkIdForLeave(d);
-      if (linkId) {
-        const svgElement = d3.select(linkId);
-        if (!svgElement.empty()) {
-          svgElement.attr("neededHighlightingTaxa", 0);
-        }
-      }
-    });
-
-    tree.leaves().forEach((d) => {
-      if (d.parent) {
-        d.ancestors().forEach((ancestor) => {
-          this.calculateHighlightingTaxa(ancestor, d.data.name);
-        });
-      }
-    });
-  }
-
-  /**
    * Determines the color for a leaf node or label based on marked taxa.
    * @param {Object} d - The node data object.
    * @returns {string} The color for the node or label.
@@ -609,44 +529,10 @@ export class TreeDrawer {
       // Check if treeSplit is subset of markedSet
       const isSubset = [...treeSplit].every((x) => markedSet.has(x));
       if (isSubset) {
-        return TreeDrawer.colorMap.markedColor;
+        return COLOR_MAP.colorMap.markedColor;
       }
     }
-    return TreeDrawer.colorMap[d.data.name];
-  }
-
-  /**
-   * Updates the color of all paths in the tree based on highlighting taxa.
-   * @param {Object} tree - The root node of the tree.
-   * @param {boolean} [force=false] - Whether to force update all paths.
-   * @returns {void}
-   */
-  colorPath(tree, force = false) {
-    tree.leaves().forEach((d) => {
-      this.colorCircle(d);
-
-      d.ancestors().forEach((ancestor) => {
-        const linkId = this.generateLinkIdForLeave(ancestor);
-
-        if (!linkId) {
-          return;
-        }
-
-        const svgElement = d3.select(linkId);
-
-        const neededHighlightingTaxa = parseInt(
-          svgElement.attr("neededHighlightingTaxa")
-        );
-
-        if (neededHighlightingTaxa > 0) {
-          svgElement
-            .style("stroke", TreeDrawer.colorMap.userMarkedColor)
-            .raise();
-        } else if (force) {
-          svgElement.style("stroke", TreeDrawer.colorMap[d.data.name]).lower();
-        }
-      });
-    });
+    return COLOR_MAP.colorMap[d.data.name];
   }
 
   /**
@@ -663,210 +549,6 @@ export class TreeDrawer {
    */
   get drawDuration() {
     return this._drawDuration;
-  }
-
-  /**
-   * Helper: Group nodes by depth for staged animations
-   * @param {Object} root
-   * @returns {Map<number, Array>}
-   */
-  static getNodesByDepth(root) {
-    const nodesByDepth = new Map();
-    root.each((node) => {
-      if (!nodesByDepth.has(node.depth)) nodesByDepth.set(node.depth, []);
-      nodesByDepth.get(node.depth).push(node);
-    });
-    return nodesByDepth;
-  }
-
-  /**
-   * Helper: Group links by depth (target node's depth)
-   * @param {Object} root
-   * @returns {Map<number, Array>}
-   */
-  static getLinksByDepth(root) {
-    const linksByDepth = new Map();
-    root.links().forEach((link) => {
-      const depth = link.target.depth;
-      if (!linksByDepth.has(depth)) linksByDepth.set(depth, []);
-      linksByDepth.get(depth).push(link);
-    });
-    return linksByDepth;
-  }
-
-  /**
-   * Enhanced leaf ID generation with defensive checks
-   */
-  generateLeaveID(d) {
-    if (!d || !d.data || !d.data.split_indices) {
-      console.warn("Invalid node structure", d);
-      return `leaf-unknown-${Math.random().toString(36).substring(2, 9)}`;
-    }
-    return d.data.split_indices.join("-");
-  }
-
-  /**
-   * Staged transition animation - animate tree changes layer by layer
-   * (Optional advanced API, does not affect drawTree)
-   * @param {Object} newRoot - The new tree structure
-   * @param {Object} options - Animation options
-   * @returns {Promise}
-   */
-  async stagedTransition(newRoot, options = {}) {
-    // Use factor from #factor input if available, otherwise default to 1
-    let factor = 1;
-    try {
-      const factorInput = document.getElementById("factor");
-      if (factorInput && factorInput.value) {
-        const parsedFactor = parseFloat(factorInput.value);
-        if (!isNaN(parsedFactor) && parsedFactor > 0) {
-          factor = parsedFactor;
-        }
-      }
-    } catch (e) {
-      // fallback to 1
-    }
-
-    // Make the animation even slower overall, and scale by factor
-    const baseDuration = (options.duration || this.drawDuration) * 6 * factor; // much slower
-    const stageDelay = 600 * factor; // much longer delay between stages (was 250)
-    const breakDelay = 1200 * factor; // even longer break/pause between each depth animation
-    const maxRadius = options.maxRadius || 200;
-
-    this.root = newRoot;
-    const nodesByDepth = TreeDrawer.getNodesByDepth(newRoot);
-    const linksByDepth = TreeDrawer.getLinksByDepth(newRoot);
-    const maxDepth = Math.max(...nodesByDepth.keys());
-
-    let completedStages = 0;
-    const totalStages = maxDepth + 1;
-
-    return new Promise((resolve) => {
-      const animateDepth = (depth) => {
-        if (depth < 0) {
-          resolve();
-          return;
-        }
-        const nodes = nodesByDepth.get(depth) || [];
-        const links = linksByDepth.get(depth) || [];
-        // Deeper layers get much longer duration
-        const depthFactor = 1 + (maxDepth - depth) * 1.2;
-        const depthDuration = (baseDuration * depthFactor) / totalStages;
-        this._animateDepthStage(nodes, links, depthDuration, maxRadius).then(
-          () => {
-            completedStages++;
-            // Add a break/pause before animating the next depth
-            d3.timeout(() => {
-              animateDepth(depth - 1);
-            }, breakDelay);
-          }
-        );
-      };
-      // Start with the deepest depth
-      d3.timeout(() => animateDepth(maxDepth), stageDelay);
-    });
-  }
-
-  /**
-   * Animate elements at a specific depth (helper for stagedTransition)
-   */
-  async _animateDepthStage(nodes, links, duration, maxRadius) {
-    return new Promise((resolve) => {
-      let animationsComplete = 0;
-      let totalAnimations = 0;
-
-      const linkSelection = this.svg_container
-        .selectAll(".links")
-        .filter((d) => links.includes(d));
-      if (!linkSelection.empty()) totalAnimations++;
-
-      const circleSelection = this.svg_container
-        .selectAll(".leaf")
-        .filter((d) => nodes.includes(d));
-      if (!circleSelection.empty()) totalAnimations++;
-
-      const labelSelection = this.svg_container
-        .selectAll(".label")
-        .filter((d) => nodes.includes(d));
-      if (!labelSelection.empty()) totalAnimations++;
-
-      const checkComplete = () => {
-        animationsComplete++;
-        if (animationsComplete >= totalAnimations || totalAnimations === 0)
-          resolve();
-      };
-
-      if (!linkSelection.empty()) {
-        linkSelection
-          .transition()
-          .duration(duration)
-          .ease(d3.easePolyInOut) // changed from d3.easeCubic
-          .attrTween("d", this.getArcInterpolationFunction())
-          .style("stroke", (d) => this.colorBranches(d))
-          .on("end", checkComplete);
-      }
-      if (!circleSelection.empty()) {
-        circleSelection
-          .transition()
-          .duration(duration)
-          .ease(d3.easeSinInOut) // changed from d3.easeExpInOut
-          .attrTween("cx", attr2TweenCircleX(maxRadius))
-          .attrTween("cy", attr2TweenCircleY(maxRadius))
-          .style("fill", (d) => this.colorCircle(d))
-          .on("end", checkComplete);
-      }
-      if (!labelSelection.empty()) {
-        labelSelection
-          .transition()
-          .duration(duration)
-          .ease(d3.easeSinInOut) // changed from d3.easeExpInOut
-          .attrTween("transform", getOrientTextInterpolator(maxRadius))
-          .style("stroke", (d) => this.colorCircle(d))
-          .on("end", checkComplete);
-      }
-      if (totalAnimations === 0) resolve();
-    });
-  }
-
-  /**
-   * Static: Map nodes by ID for tree-to-tree transitions
-   */
-  static mapNodesById(tree) {
-    const nodeMap = new Map();
-    tree.each((node) => {
-      if (node.data && node.data.split_indices) {
-        const id = node.data.split_indices.join("-");
-        nodeMap.set(id, node);
-      }
-    });
-    return nodeMap;
-  }
-
-  /**
-   * Enhanced color checking for taxa components
-   */
-  check_occurrence_of_taxa_in_components(leaf) {
-    if (!leaf || !leaf.data || !leaf.data.split_indices) return false;
-    const leafSplit = new Set(leaf.data.split_indices);
-    for (const components of this.marked) {
-      if (!Array.isArray(components)) continue;
-      const markedSet = new Set(components);
-      if ([...leafSplit].every((x) => markedSet.has(x))) return true;
-    }
-    return false;
-  }
-
-  /**
-   * Enhanced link extension color management
-   */
-  updateLinkExtensionColor(d) {
-    if (this.check_occurrence_of_taxa_in_components(d)) {
-      return TreeDrawer.colorMap.markedColor;
-    }
-    if (TreeDrawer.colorMap[d.data.name]) {
-      return TreeDrawer.colorMap[d.data.name];
-    }
-    return TreeDrawer.colorMap.extensionLinkColor;
   }
 }
 
@@ -900,25 +582,20 @@ export default function drawTree(
   TreeDrawer.sizeMap.strokeWidth = strokeWidth;
 
   currentTreeDrawer.drawDuration = drawDurationFrontend;
-  currentTreeDrawer.marked = new Set([toBeHighlighted]);
-  currentTreeDrawer.leaveOrder = leaveOrder;
 
-  // Always create the elements first
+  // Set up highlighting for jumping taxa
+
+  console.log("TreeDrawer: Marked taxa for highlighting:", currentTreeDrawer.marked);
+  console.log(toBeHighlighted);
+
+  currentTreeDrawer.leaveOrder = leaveOrder;
+  currentTreeDrawer.marked = new Set(toBeHighlighted);
+
+  // Draw all tree elements
   currentTreeDrawer.updateLinks();
   currentTreeDrawer.updateLinkExtension(currentMaxRadius);
   currentTreeDrawer.updateLabels(currentMaxRadius);
   currentTreeDrawer.updateLeafCircles(currentMaxRadius);
 
-  // Then animate if not instant
-  if (options.instant === true) {
-    // No staged animation, just show the result
-    return true;
-  } else {
-    // Animate from the just-created state to the target state
-    currentTreeDrawer.stagedTransition(currentRoot, {
-      duration: drawDurationFrontend,
-      maxRadius: currentMaxRadius,
-    });
-    return true;
-  }
+  return true;
 }

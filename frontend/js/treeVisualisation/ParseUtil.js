@@ -1,29 +1,28 @@
 import ohm from "ohm-js";
 
-// @ts-check
 /**
  * This class is providing us the service for parsing the path string of the branch elements.
  * This class uses ohm.js. Ohm is a parser generator for JavaScript.
- * .
+ *
  */
 export default class ParseUtil {
   constructor() {
     this.myGrammar = ohm.grammar(
       `MyGrammar {
               D = Command+
-            
+
               Command = L | M | A
-            
+
               L = "L" float "," float
-            
+
               M = "M" float "," float
-            
+
               A = "A" float "," float float float float float "," float
-            
+
               float = "-" ? digit + afterdecimal ? exponent ?
-            
+
               afterdecimal = "." digit +
-            
+
               exponent = "e" "-"? digit +
             }`
     );
