@@ -208,6 +208,3 @@ export function attachMSAButtonHandler(gui) {
 
 // Export notification system for use by other modules
 export { notifications };
-
-// Initialize toggles when this module loads
-initializeToggles();

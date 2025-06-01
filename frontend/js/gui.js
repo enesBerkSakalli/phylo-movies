@@ -486,11 +486,53 @@ export default class Gui {
   // ===== Chart Positioning =====
 
   setShipPosition(fullTreeIndex) {
-    let xAxis = document.getElementById("xAxis");
+    const xAxis = document.getElementById("xAxis");
+    if (!xAxis) {
+      console.warn("setShipPosition: xAxis element not found.");
+      return;
+    }
 
-    let x =
-      ((fullTreeIndex + 1) * xAxis.getBBox().width) /
-      this.robinsonFouldsDistances.length;
+    const xAxisBBox = xAxis.getBBox();
+    if (!xAxisBBox || typeof xAxisBBox.width === 'undefined') {
+      console.warn("setShipPosition: xAxisBBox or its width is not available.");
+      return;
+    }
+
+    if (!this.robinsonFouldsDistances || typeof this.robinsonFouldsDistances.length === 'undefined') {
+      console.warn("setShipPosition: robinsonFouldsDistances is not available.");
+      return;
+    }
+
+    const numDistances = this.robinsonFouldsDistances.length;
+
+    // Ensure fullTreeIndex is within bounds (0 to numDistances - 1)
+    let safeIndex = Math.max(0, Math.min(fullTreeIndex, numDistances - 1));
+
+    let x;
+    if (numDistances <= 0) {
+      console.warn("setShipPosition: numDistances is zero or negative.");
+      x = 0;
+    } else if (numDistances === 1) {
+      // For a single point, position it at the start of the axis (e.g., first tick).
+      // Or, if it represents a single data point that should align with a scale,
+      // it might be xAxisBBox.width / 2 if centered, or 0 if aligned to the start.
+      // Using 0 to align with how scales typically start.
+      x = 0;
+    } else {
+      // currentVal is 1-based for this calculation logic
+      const currentVal = safeIndex + 1;
+      // This maps a 1-based index (currentVal, from 1 to numDistances)
+      // to a 0-based position on the axis [0, width].
+      // (currentVal - 1) makes it 0-based (0 to numDistances - 1)
+      // (numDistances - 1) is the number of intervals/segments in the data series
+      x = ((currentVal - 1) / (numDistances - 1)) * xAxisBBox.width;
+    }
+
+    // Ensure x is not NaN if any calculation went wrong (e.g. division by zero if numDistances was 1 before check)
+    if (isNaN(x)) {
+        console.warn("setShipPosition: Calculated x is NaN. Defaulting to 0.", {fullTreeIndex, safeIndex, numDistances, xAxisBBoxWidth: xAxisBBox.width});
+        x = 0;
+    }
 
     d3.select("#ship").attr("transform", `translate(${x},${0})`);
   }

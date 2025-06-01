@@ -166,6 +166,3 @@ export class SubmenuHandlers {
     return container;
   }
 }
-
-// Make toggle function available globally for backwards compatibility
-window.toggleSubmenu = SubmenuHandlers.toggle;

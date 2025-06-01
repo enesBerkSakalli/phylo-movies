@@ -380,7 +380,43 @@ function renderChart(guiInstance, data, config) {
 
   drawAxesAndGrid(svg, scales, dimensions, config);
   drawChart(svg, data, scales, config);
-  drawDataPoints(svg, data, scales, guiInstance, config);
+
+  // Add background rectangle for click events
+  svg.append("rect")
+    .attr("class", "modal-chart-background")
+    .attr("width", dimensions.width)
+    .attr("height", dimensions.height)
+    .attr("fill", "transparent")
+    .style("cursor", "pointer")
+    .on("click", function(event) {
+      const mouseX = d3.pointer(event, this)[0];
+      let rawIndex = scales.xScale.invert(mouseX);
+      let closestIndex = Math.round(rawIndex);
+
+      // If the xScale domain starts at 1 (e.g., for 1-based indexing from xAccessor like i+1),
+      // adjust closestIndex to be 0-based for array indexing and goToPosition.
+      if (scales.xScale.domain()[0] === 1) {
+        closestIndex = closestIndex - 1;
+      }
+
+      // Ensure closestIndex is bounded within [0, data.length - 1]
+      closestIndex = Math.max(0, Math.min(data.length - 1, closestIndex));
+
+      if (guiInstance && typeof guiInstance.goToPosition === 'function') {
+        guiInstance.goToPosition(closestIndex);
+      }
+
+      // Update visual feedback in the modal chart
+      // Highlight the clicked point (similar to drawDataPoints click)
+      svg.selectAll(".data-points circle")
+         .attr("fill", "#4390e1").attr("r", 4) // Reset all points
+         .filter((d, i) => i === closestIndex)
+         .attr("fill", "#FF4500").attr("r", 6); // Highlight selected
+
+      updateShipPosition(closestIndex, guiInstance, scales, config, data);
+    });
+
+  drawDataPoints(svg, data, scales, guiInstance, config); // Draw points on top of background
   updateShipPosition(guiInstance.currentPosition, guiInstance, scales, config, data);
 }
 

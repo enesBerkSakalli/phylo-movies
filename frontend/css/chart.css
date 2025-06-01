@@ -49,10 +49,7 @@
   overflow: hidden;
 }
 
-.drag-indicator {
-  transition: transform 0.1s ease;
-}
-
+/* Removed 'transition: transform 0.1s ease;' for direct JS manipulation */
 .drag-indicator .touch-target:hover,
 .drag-indicator:hover .current-position-line {
   stroke: #ff6347;

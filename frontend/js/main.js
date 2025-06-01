@@ -6,6 +6,7 @@ import {
   attachMSAButtonHandler,
   attachRecorderEventHandlers,
   toggleSubmenu,
+  initializeToggles,
 } from "./partial/eventHandlers.js";
 import { loadAllPartials } from "./partial/loadPartials.js";
 import { ScreenRecorder } from "./record/record.js";
@@ -216,6 +217,7 @@ function initializeAppFromParsedData(parsedData) {
           // Attach event handlers and initialize movie
           if (!eventHandlersAttached && gui) {
             attachGuiEventHandlers(gui);
+            initializeToggles(); // Initialize submenu toggles after main GUI handlers
             eventHandlersAttached = true;
             gui.initializeMovie();
             gui.play();
