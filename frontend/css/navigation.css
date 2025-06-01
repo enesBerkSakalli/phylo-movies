@@ -222,6 +222,139 @@
   padding-bottom: 0;
 }
 
+/* Appearance Submenu Specific Styles */
+.submenu-section {
+  margin-bottom: var(--spacing-large, 16px);
+}
+.submenu-section:last-child {
+  margin-bottom: 0;
+}
+
+.slider-group,
+.switch-group {
+  margin-bottom: var(--spacing-xl, 20px); /* More space for these distinct groups, using 20px as per prompt, could be 24px for strict 4px grid */
+}
+.slider-group:last-child,
+.switch-group:last-child {
+  margin-bottom: var(--spacing-xs, 4px); /* Less if it's the last group */
+}
+
+.slider-row, /* Contains label and value */
+.switch-row { /* Contains label and switch */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.slider-row { /* Label and value are above the slider input itself */
+  margin-bottom: var(--spacing-xs, 4px);
+}
+
+.slider-label,
+.switch-label {
+  font-size: var(--font-size-sm, 12px);
+  color: var(--text-color-dark-theme-main, #e0e0e0);
+  display: flex; /* To align icon and text if icon is ::before or child */
+  align-items: center;
+  gap: var(--spacing-sm, 8px);
+}
+
+.slider-value {
+  font-size: var(--font-size-sm, 12px);
+  color: var(--text-color-dark-theme-emphasis, #ffffff);
+  background-color: var(--input-background-dark, rgba(255,255,255,0.05));
+  padding: var(--spacing-xs, 4px) var(--spacing-sm, 8px);
+  border-radius: var(--standard-border-radius, 4px);
+  min-width: 3em; /* e.g., "1.0" or "100" */
+  text-align: right;
+  border: 1px solid var(--border-color-dark-theme, rgba(255,255,255,0.1)); /* Subtle border */
+}
+
+/* Styling for range sliders within .menu */
+.menu input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: var(--spacing-sm, 8px); /* Track height */
+  background: var(--input-background-dark-focus, rgba(255,255,255,0.1)); /* Darker track */
+  border-radius: var(--spacing-xs, 4px);
+  outline: none;
+  margin-top: var(--spacing-xs, 4px); /* Space from label row */
+  accent-color: var(--primary-color); /* For modern browsers that support it simply */
+}
+
+.menu input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: var(--spacing-large, 16px); /* Thumb size */
+  height: var(--spacing-large, 16px);
+  background: var(--primary-color);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid var(--input-background-dark-focus, rgba(255,255,255,0.1));
+}
+
+.menu input[type="range"]::-moz-range-thumb {
+  width: var(--spacing-large, 16px);
+  height: var(--spacing-large, 16px);
+  background: var(--primary-color);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid var(--input-background-dark-focus, rgba(255,255,255,0.1));
+}
+
+/* CSS Toggle Switch Styling */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switch .slider { /* This is the track */
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--input-background-dark-focus, rgba(255,255,255,0.2));
+  transition: .4s;
+  border-radius: 20px;
+}
+
+.switch .slider:before { /* This is the knob */
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;   /* (Track height - Knob height) / 2 + border (if any) */
+  bottom: 3px; /* (Track height - Knob height) / 2 + border (if any) */
+  background-color: var(--text-color-dark-theme-main, #e0e0e0); /* Knob color when off */
+  transition: .4s;
+  border-radius: 50%;
+}
+
+.switch input:checked + .slider {
+  background-color: var(--primary-color);
+}
+
+.switch input:focus + .slider {
+  box-shadow: 0 0 1px var(--primary-color); /* Optional focus style for track */
+}
+
+.switch input:checked + .slider:before {
+  transform: translateX(16px); /* (Track width - Knob width - 2*knob_margin_left) roughly */
+  background-color: var(--text-on-primary, white); /* Knob color when active */
+}
+
+
 /* Tree Navigation Panels - Card Styling */
 .tree-status-panel {
   background-color: var(--input-background-dark, rgba(255, 255, 255, 0.05));
