@@ -1,3 +1,38 @@
+:root {
+  --primary-color: #4390e1;
+  --primary-color-darker: #357abd; /* For button hover gradient */
+  --text-on-primary: #ffffff;
+
+  --text-color-main: #222; /* For light backgrounds */
+  --text-color-light-theme-muted: #555;
+
+  --text-color-dark-theme-main: #e0e0e0; /* For dark backgrounds */
+  --text-color-dark-theme-muted: #aaa;   /* For less important text on dark backgrounds */
+
+  --background-color-main: #ffffff;
+  --background-color-menu: #373747; /* From .menu */
+
+  --input-background-dark: rgba(255, 255, 255, 0.05);
+  --input-background-dark-focus: rgba(255, 255, 255, 0.08);
+  --input-border-dark: rgba(255, 255, 255, 0.2);
+
+  --input-background-light: #ffffff;
+  --input-background-light-focus: #ffffff;
+  --input-border-light: #ccc;
+  --input-border-light-focus: var(--primary-color);
+
+  --standard-border-radius: 4px;
+  --large-border-radius: 8px;
+
+  --focus-ring-color: rgba(67, 144, 225, 0.5); /* --primary-color with alpha */
+  --focus-ring-width: 3px; /* For inputs/buttons focus */
+  --focus-ring-offset: 2px; /* For inputs/buttons focus */
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.07);
+  --shadow-md: 0 2px 4px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-lg: 0 4px 12px rgba(0,0,0,0.15), 0 2px 4px rgba(0,0,0,0.1);
+}
+
 /* Reset and Base Styles */
 * {
   margin: 0;
@@ -95,24 +130,141 @@ body {
 .row {
   display: flex;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 8px; /* Standardized margin */
 }
 
 .row .menuItem {
-  margin-right: 10px;
-  min-width: 120px;
+  margin-right: 8px; /* Standardized margin */
+  min-width: 120px; /* Keeping specific min-width */
 }
 
 
-/* Inputs and Selects */
-input {
-  padding: 0.2em;
-  border: 1px solid #ccc;
+/* Inputs and Selects - Standardized */
+/* Default to light theme context, can be overridden for dark areas like menu */
+input[type="text"],
+input[type="number"],
+input[type="password"],
+input[type="email"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+textarea,
+select {
+  padding: 8px 12px;
+  border: 1px solid var(--input-border-light);
+  border-radius: var(--standard-border-radius);
+  background-color: var(--input-background-light);
+  color: var(--text-color-main);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
 }
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus,
+input[type="search"]:focus,
+input[type="tel"]:focus,
+input[type="url"]:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--input-border-light-focus);
+  background-color: var(--input-background-light-focus);
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+}
+
+/* Dark theme context for inputs (e.g., within .menu or other dark containers) */
+.menu input[type="text"], .menu input[type="number"], .menu input[type="password"],
+.menu textarea, .menu select,
+/* Add other dark container selectors if necessary */
+.dark-container input[type="text"], .dark-container textarea, .dark-container select {
+  border-color: var(--input-border-dark);
+  background-color: var(--input-background-dark);
+  color: var(--text-color-dark-theme-main);
+}
+
+.menu input[type="text"]:focus, .menu input[type="number"]:focus, .menu input[type="password"]:focus,
+.menu textarea:focus, .menu select:focus,
+.dark-container input[type="text"]:focus, .dark-container textarea:focus, .dark-container select:focus {
+  border-color: var(--primary-color);
+  background-color: var(--input-background-dark-focus);
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+}
+
 
 select {
-  padding: 0.2em;
-  border: 1px solid #ccc;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23555'%3E%3Cpath d='M8 11.207L2.396 5.604l.707-.707L8 9.793l4.896-4.896.707.707z'/%3E%3C/svg%3E"); /* Arrow for light theme */
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px;
+  padding-right: 36px; /* Ensure space for arrow */
+}
+
+.menu select, .dark-container select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23aaa'%3E%3Cpath d='M8 11.207L2.396 5.604l.707-.707L8 9.793l4.896-4.896.707.707z'/%3E%3C/svg%3E"); /* Arrow for dark theme */
+}
+
+
+/* Standardized Button Styling */
+/* Base button style - can be extended with classes like .btn-primary, .btn-secondary */
+button,
+.btn {
+  padding: 8px 16px;
+  border: 1px solid transparent; /* For border-based variants if needed */
+  border-radius: var(--standard-border-radius);
+  color: var(--text-on-primary);
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-darker) 100%);
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 1.5; /* Ensure text vertical centering */
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  text-align: center;
+  vertical-align: middle;
+  user-select: none;
+  text-decoration: none; /* For <a> elements styled as buttons */
+}
+
+button:hover,
+.btn:hover {
+  background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+button:focus,
+.btn:focus {
+  outline: none;
+  /* Create a focus ring using box-shadow. Offset by 2px from element, 3px wide. */
+  box-shadow: 0 0 0 var(--focus-ring-offset) var(--background-color-main), 0 0 0 calc(var(--focus-ring-offset) + var(--focus-ring-width)) var(--primary-color);
+}
+/* For dark backgrounds, the focus ring's first shadow should match that background */
+.menu button:focus, .menu .btn:focus,
+.dark-container button:focus, .dark-container .btn:focus {
+  box-shadow: 0 0 0 var(--focus-ring-offset) var(--background-color-menu), 0 0 0 calc(var(--focus-ring-offset) + var(--focus-ring-width)) var(--primary-color);
+}
+
+
+button:active,
+.btn:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+button:disabled,
+.btn:disabled {
+  background: #aeaeae; /* More standard disabled color */
+  color: #757575;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  opacity: 0.65;
 }
 
 
@@ -123,7 +275,9 @@ select {
 
 /* Text and Headers */
 h1 {
-  font-size: 1.5em;
+  font-size: 1.5em; /* Typically 24px if base is 16px */
+  margin-bottom: 16px; /* Added some default spacing */
+  color: var(--text-color-main); /* Ensure h1 uses theme text color */
 }
 
 
@@ -142,9 +296,9 @@ h1 {
 .tooltip {
   position: absolute;
   opacity: 0;
-  background-color: #fff;
-  border: 1px solid #ccc;
-  border-radius: 5px;
+  background-color: var(--background-color-main);
+  border: 1px solid var(--input-border-light); /* Was #ccc */
+  border-radius: var(--standard-border-radius); /* Was 5px */
   padding: 8px;
   font-size: 12px;
   font-family: Arial, sans-serif;
@@ -166,26 +320,17 @@ h1 {
 
 
 
-.toggle-icon {
+.toggle-icon { /* Generally styled in navigation.css for menu context */
   font-size: 12px;
-  color: #aaa;
+  color: var(--text-color-dark-theme-muted); /* Was #aaa */
   transition: transform 0.3s;
 }
 
+/* .position-control and .factor-control are specific to menu, styled there or if needed, more specifically here. */
+/* Their current margins (16px top, 6px bottom for label) are reasonable. */
 
 
-.position-control, .factor-control {
-  margin-top: 16px;
-}
-
-.position-control label, .factor-control label {
-  display: block;
-  font-size: 12px;
-  color: #aaa;
-  margin-bottom: 6px;
-}
-
-/* Enhanced Branding Styles */
+/* Enhanced Branding Styles (mostly for .menu context, styled in navigation.css or here if general) */
 .menu-header {
   padding: 20px 15px 10px;
   background-color: rgba(0, 0, 0, 0.2);
@@ -201,7 +346,7 @@ h1 {
 
 .branding-icon {
   font-size: 24px;
-  color: #4390e1;
+  color: var(--primary-color); /* Was #4390e1 */
   margin-right: 12px;
 }
 
@@ -212,8 +357,8 @@ h1 {
 
 .commitmessage {
   font-size: 11px;
-  color: #aaa;
-  margin-top: 3px;
+  color: var(--text-color-dark-theme-muted); /* Was #aaa */
+  margin-top: 4px; /* Align to 4px grid */
 }
 
 .commit-hash {
@@ -225,18 +370,21 @@ h1 {
 
 
 .brand-separator {
-  height: 3px;
-  background: linear-gradient(to right, rgba(67, 144, 225, 0.8), rgba(67, 144, 225, 0.1));
-  border-radius: 3px;
-  margin-bottom: 15px;
+  height: 3px; /* Keep as is, it's a visual element */
+  background: linear-gradient(to right, var(--primary-color) 0%, rgba(var(--primary-color), 0.1) 100%); /* Use var for color consistency */
+  border-radius: 3px; /* Fine */
+  margin-bottom: 16px; /* Was 15px */
 }
 
+/* .select-arrow is for a custom non-standardized select. Standardized 'select' has its own SVG arrow. */
+/* This can be removed if all selects are standardized, or kept for specific legacy cases. */
+/* For now, I'll adjust its color. */
 .select-arrow {
   position: absolute;
   right: 8px;
   top: 50%;
   transform: translateY(-50%);
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-color-dark-theme-muted); /* Was rgba(255, 255, 255, 0.6) */
   pointer-events: none;
 }
 
@@ -254,9 +402,9 @@ h1 {
 .control-panel {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 20px;
-  padding: 8px 0;
+  gap: 8px; /* Was 10px */
+  margin-bottom: 16px; /* Was 20px */
+  padding: 8px 0; /* Vertical padding is fine */
 }
 
 .button-row {
@@ -264,36 +412,36 @@ h1 {
   justify-content: center;
 }
 
-.button-group {
+.button-group { /* This is a specific component, likely in the menu */
   display: flex;
   gap: 4px;
-  background-color: rgba(255, 255, 255, 0.05);
-  padding: 5px;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  background-color: var(--input-background-dark); /* Was rgba(255, 255, 255, 0.05) */
+  padding: 4px; /* Was 5px */
+  border-radius: var(--large-border-radius); /* Was 8px */
+  box-shadow: var(--shadow-sm); /* Was 0 1px 3px rgba(0,0,0,0.12) */
 }
 
-.option-row {
+.option-row { /* Specific component, likely in menu */
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
-  background-color: rgba(0, 0, 0, 0.1);
-  border-radius: 4px;
-  padding: 8px 10px;
+  background-color: rgba(0,0,0,0.1); /* A bit darker than standard input, can keep or align */
+  border-radius: var(--standard-border-radius); /* Was 4px */
+  padding: 8px 12px; /* Was 8px 10px */
 }
 
 .option-row label {
   font-size: 12px;
-  color: #ddd;
+  color: var(--text-color-dark-theme-main); /* Was #ddd */
 }
 
-.option-row select {
-  background-color: rgba(0, 0, 0, 0.2);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  padding: 4px 8px;
+.option-row select { /* This is a specific select, possibly to be replaced by standard select styling if applicable */
+  background-color: rgba(0,0,0,0.2); /* Darker than standard menu input */
+  color: var(--text-color-dark-theme-main); /* Was white */
+  border: 1px solid var(--input-border-dark); /* Was rgba(255,255,255,0.1) */
+  border-radius: var(--standard-border-radius); /* Was 4px */
+  padding: 6px 10px; /* Custom padding, global select has more for arrow */
   font-size: 12px;
 }
 
@@ -324,15 +472,7 @@ h1 {
 }
 
 
-/* Tree Status Panel */
-.tree-status-panel {
-  background-color: rgba(0, 0, 0, 0.1);
-  border-radius: 6px;
-  padding: 15px;
-  margin: 15px;
-}
-
-
+/* Tree Status Panel styles moved to navigation.css */
 
 .status-item {
   display: flex;
@@ -343,23 +483,19 @@ h1 {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #aaa;
+  color: var(--text-color-dark-theme-muted); /* Was #aaa */
   margin-bottom: 4px;
 }
 
 .status-value {
   font-size: 15px;
   font-weight: 500;
-  color: #fff;
+  color: var(--text-color-dark-theme-main); /* Was #fff */
 }
 
-/* Navigation Panel Components */
-.nav-panel {
-  padding: 15px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-}
+/* Navigation Panel Components styles moved to navigation.css */
 
-.panel-header {
+.panel-header { /* Likely in menu context */
   display: flex;
   align-items: center;
   gap: 8px;
@@ -367,28 +503,28 @@ h1 {
 }
 
 .panel-icon {
-  color: #4390e1;
+  color: var(--primary-color); /* Was #4390e1 */
   font-size: 14px;
 }
 
 .panel-title {
   font-size: 13px;
   font-weight: 500;
-  color: #ccc;
+  color: var(--text-color-dark-theme-main); /* Was #ccc */
 }
 
 /* Parameter List */
-.param-list {
-  background-color: rgba(0, 0, 0, 0.1);
-  border-radius: 6px;
-  padding: 10px;
+.param-list { /* Specific component in menu */
+  background-color: rgba(0,0,0,0.1); /* Darker than standard card, can keep or align */
+  border-radius: var(--standard-border-radius); /* Was 6px */
+  padding: 12px; /* Was 10px */
 }
 
 .param-item {
   display: flex;
   justify-content: space-between;
-  padding: 6px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 8px 0; /* Was 6px 0 */
+  border-bottom: 1px solid var(--input-border-dark); /* Was rgba(255,255,255,0.05), making it consistent with other dark borders */
 }
 
 .param-item:last-child {
@@ -407,6 +543,22 @@ h1 {
 }
 
 /* Position Control */
-.position-control {
-  margin-top: 0;
+.position-control { /* Specific layout class */
+  margin-top: 0; /* Overrides a previous margin, specific use */
+}
+
+/* Utility class for Material-style cards (Optional Step 4) */
+.material-card {
+  background-color: var(--background-color-main); /* Light theme card */
+  border-radius: var(--large-border-radius); /* Or var(--standard-border-radius) for smaller cards */
+  box-shadow: var(--shadow-md);
+  padding: 16px;
+  margin-bottom: 16px; /* Default spacing for cards */
+}
+
+.dark-theme .material-card, /* If you have a body.dark-theme class */
+.menu .material-card { /* Cards inside the menu */
+  background-color: var(--background-color-menu); /* Or a slightly lighter shade like var(--input-background-dark) */
+  color: var(--text-color-dark-theme-main);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 1px 1px rgba(0,0,0,0.14), 0 2px 1px -1px rgba(0,0,0,0.12); /* More subtle shadow for dark themes often works well */
 }
