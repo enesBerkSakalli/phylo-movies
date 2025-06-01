@@ -45,7 +45,7 @@
 
 .branding-icon {
   font-size: 24px;
-  color: #4390e1;
+  color: var(--primary-color, #4390e1);
   margin-right: 12px;
 }
 
@@ -58,7 +58,7 @@
 
 .app-titles .subtitle {
   font-size: 12px;
-  color: #aaa;
+  color: var(--text-color-dark-theme-muted, #aaa);
   margin: 2px 0 0 0;
   opacity: 0.8;
 }
@@ -76,7 +76,7 @@
 
 .file-icon {
   font-size: 16px;
-  color: #4390e1;
+  color: var(--primary-color, #4390e1);
   margin-right: 10px;
 }
 
@@ -87,7 +87,7 @@
 
 .file-label {
   font-size: 10px;
-  color: #b0b0b0; /* improved contrast */
+  color: var(--text-color-dark-theme-muted, #b0b0b0); /* improved contrast */
   text-transform: uppercase;
   letter-spacing: 0.5px;
   display: block;
@@ -115,7 +115,7 @@
 
 .embedding-label {
   font-size: 10px;
-  color: #b0b0b0;
+  color: var(--text-color-dark-theme-muted, #b0b0b0);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 500;
@@ -132,9 +132,9 @@
 }
 
 .embedding-umap {
-  background: rgba(67, 144, 225, 0.2);
-  color: #4390e1;
-  border: 1px solid rgba(67, 144, 225, 0.3);
+  background: rgba(var(--primary-color), 0.2);
+  color: var(--primary-color, #4390e1);
+  border: 1px solid rgba(var(--primary-color), 0.3);
 }
 
 .embedding-geometric {
@@ -147,7 +147,7 @@
 .submenu-container {
   margin: 8px 0;
   background: rgba(255, 255, 255, 0.02);
-  border-radius: 6px;
+  border-radius: 4px;
   border: 1px solid rgba(255, 255, 255, 0.04);
   overflow: hidden;
 }
@@ -157,7 +157,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 16px;
+  padding: 8px 16px;
   background: rgba(255, 255, 255, 0.04);
   cursor: pointer;
   user-select: none;
@@ -167,9 +167,9 @@
 
 /* Accessibility: visible focus state for submenu headers */
 .submenu-header:focus-visible {
-  background: #4390e1;
-  color: #fff;
-  box-shadow: 0 0 0 3px #fff, 0 0 0 6px #4390e1;
+  background: var(--primary-color, #4390e1);
+  color: var(--text-on-primary, #fff);
+  box-shadow: 0 0 0 var(--focus-ring-offset, 2px) var(--background-color-menu, #373747), 0 0 0 calc(var(--focus-ring-offset, 2px) + var(--focus-ring-width, 3px)) var(--primary-color, #4390e1);
   z-index: 2;
 }
 
@@ -185,14 +185,14 @@
 
 .submenu-icon {
   font-size: 14px;
-  color: #4390e1;
+  color: var(--primary-color, #4390e1);
   opacity: 0.8;
 }
 
 .mdc-section-title {
   font-size: 12px;
   font-weight: 600;
-  color: #b0c4de; /* improved contrast */
+  color: var(--text-color-dark-theme-main, #b0c4de); /* improved contrast */
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin: 0;
@@ -200,7 +200,7 @@
 
 .toggle-icon {
   font-size: 12px;
-  color: #aaa;
+  color: var(--text-color-dark-theme-muted, #aaa);
   transition: transform 0.2s ease;
 }
 
@@ -222,6 +222,27 @@
   padding-bottom: 0;
 }
 
+/* Tree Navigation Panels - Card Styling */
+.tree-status-panel {
+  background-color: var(--input-background-dark, rgba(255, 255, 255, 0.05));
+  border-radius: var(--standard-border-radius, 4px);
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,0.07));
+  margin: 0 0 12px 0;
+  padding: 12px;
+}
+
+.nav-panel {
+  background-color: var(--input-background-dark, rgba(255, 255, 255, 0.05));
+  border-radius: var(--standard-border-radius, 4px);
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,0.07));
+  margin-bottom: 12px;
+  padding: 12px;
+}
+
+/* Ensure .panel-header within .nav-panel has appropriate spacing */
+/* .nav-panel .panel-header { margin-bottom: 12px; } */ /* This is already default for .panel-header, should be fine */
+
+
 /* Button Controls */
 .control-panel {
   display: flex;
@@ -242,12 +263,12 @@
 
 /* MD Buttons */
 .md-button {
-  background: linear-gradient(135deg, #4390e1 0%, #357abd 100%);
+  background: linear-gradient(135deg, var(--primary-color, #4390e1) 0%, var(--primary-color-darker, #357abd) 100%);
   border: none;
-  border-radius: 6px;
-  color: white;
-  padding: 8px 12px;
-  font-size: 12px;
+  border-radius: var(--standard-border-radius, 4px); /* Was 6px, standardizing */
+  color: var(--text-on-primary, white);
+  padding: 8px 12px; /* Keeping this specific padding for md-button */
+  font-size: 12px; /* Keeping specific font size */
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -262,14 +283,16 @@
 
 /* Accessibility: visible focus state for keyboard navigation */
 .md-button:focus-visible {
-  box-shadow: 0 0 0 3px #fff, 0 0 0 6px #4390e1;
+  /* Using the global button focus style for consistency, but md-button is more specific */
+  /* For now, let's keep its own more prominent focus, or adapt global one */
+  box-shadow: 0 0 0 var(--focus-ring-offset, 2px) var(--background-color-menu, #373747), 0 0 0 calc(var(--focus-ring-offset, 2px) + var(--focus-ring-width, 3px)) var(--primary-color, #4390e1);
   z-index: 2;
 }
 
 .md-button:hover {
-  background: linear-gradient(135deg, #5da0e4 0%, #4390e1 100%);
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-darker) 100%); /* Adjusted hover to be consistent with global button */
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(67, 144, 225, 0.3);
+  box-shadow: var(--shadow-md, 0 2px 4px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06)); /* Using standard shadow */
 }
 
 .md-button:active {
@@ -277,7 +300,8 @@
 }
 
 .md-button:disabled {
-  background: #555;
+  background: #555; /* This is fine, or use a variable if defined for disabled states */
+  color: var(--text-color-dark-theme-muted, #aaa); /* Ensure text color also changes */
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
@@ -331,25 +355,26 @@
   gap: 8px;
 }
 
-.mdc-input {
+.mdc-input { /* This is a specific input style within navigation, already uses variables effectively */
   flex: 1;
-  padding: 6px 8px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.05);
-  color: white;
-  font-size: 12px;
+  padding: 6px 8px; /* Specific padding */
+  border: 1px solid var(--input-border-dark, rgba(255, 255, 255, 0.2));
+  border-radius: var(--standard-border-radius, 4px);
+  background: var(--input-background-dark, rgba(255, 255, 255, 0.05));
+  color: var(--text-color-dark-theme-main, white);
+  font-size: 12px; /* Specific font size */
 }
 
 .mdc-input:focus {
   outline: none;
-  border-color: #4390e1;
-  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--primary-color, #4390e1);
+  background: var(--input-background-dark-focus, rgba(255, 255, 255, 0.08));
+  box-shadow: 0 0 0 var(--focus-ring-width, 3px) var(--focus-ring-color, rgba(67,144,225,0.5)); /* Added focus ring */
 }
 
 .info-value {
   font-size: 11px;
-  color: #e0e0e0; /* improved contrast */
+  color: var(--text-color-dark-theme-main, #e0e0e0); /* improved contrast */
   font-weight: 500;
 }
 
