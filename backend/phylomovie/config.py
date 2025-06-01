@@ -24,3 +24,10 @@ class Config:
 
     # Number of PCA components sent to the 3‑D viewer in the front‑end
     PCA_COMPONENTS: int = 3
+
+    # UMAP parameters
+    UMAP_N_COMPONENTS: int = 2
+    UMAP_RANDOM_STATE: int = 42
+    UMAP_N_NEIGHBORS: int = 15
+    UMAP_MIN_DIST: float = 0.1
+# Ensuring a newline at the end of the file with a re-addition

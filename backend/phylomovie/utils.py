@@ -1,18 +1,26 @@
+"""
+Utility functions for the PhyloMovie backend.
+
+This module provides helper functions for various tasks such as handling
+file uploads, performing dimensionality reduction with UMAP, and other
+common operations.
+"""
 from __future__ import annotations
 
-import json
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+# import json # Not currently used
+# import pathlib # Not currently used
+from typing import Any, List, Optional
 
 import numpy as np
 from flask import current_app
-from brancharchitect.tree import Node
+# from brancharchitect.tree import Node # Node not directly used after alias removal
 from flask import Request
+from werkzeug.datastructures import FileStorage # For type hinting request.files
 
-# Type aliases – make the business‐logic signatures compact and explicit
-TreeList = List[Node]
-TreeListDict = Dict[str, Any]
-PhyloMovieData = Dict[str, Any]
+# Type aliases previously here (TreeList, TreeListDict, PhyloMovieData)
+# have been removed to centralize them in tree_processing.types.py
+# If any types are needed specifically for this module, they can be imported
+# from .tree_processing.types or defined here if truly local.
 
 # ------------------------------------------------------------------
 # Disk persistence for debugging (optional)
@@ -26,8 +34,8 @@ def handle_order_list(request: Request) -> Optional[List[str]]:
     present or empty we simply return ``None`` so downstream code can use its
     default behavior.
     """
-    order_file = request.files.get("orderFile")
-    if not order_file or order_file.filename == "":
+    order_file: Optional[FileStorage] = request.files.get("orderFile")
+    if not order_file or not order_file.filename: # Check filename as well
         return None
 
     order_text = order_file.read().decode("utf-8").replace("\r", "").strip()

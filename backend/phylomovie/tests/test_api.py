@@ -70,32 +70,37 @@ def test_treedata_valid_file(client):
 
 def test_treedata_alltree_57_58(client):
     # Use the provided alltree_57_58.newick file for a realistic test
-    newick_path = os.path.join(
-        os.path.dirname(__file__),
-        "services",
-        "test-data",
-        "alltrees",
-        "alltree_57_58.newick",
-    )
-    with open(newick_path, "rb") as f:
-        data = {
-            "treeFile": (f, "alltree_57_58.newick"),
-            "windowSize": "2",
-            "windowStepSize": "1",
-        }
-        rv = client.post("/treedata", data=data, content_type="multipart/form-data")
-        assert rv.status_code == 200
-        result = rv.get_json()
-        for key in [
-            "tree_list", "rfd_list", "to_be_highlighted", "sorted_leaves",
-            "file_name", "window_size", "window_step_size", "embedding"
-        ]:
-            assert key in result
-        assert (
-            "weighted_robinson_foulds_distance_list" in result
-            or "weighted_rfd_list" in result
+        # Path relative to backend directory: phylomovie/services/test-data/alltrees/alltree_57_58.newick
+        # __file__ is /app/backend/phylomovie/tests/test_api.py
+        # os.path.dirname(__file__) is /app/backend/phylomovie/tests
+        # Move up one to phylomovie/, then services/test-data...
+        base_dir = os.path.dirname(os.path.dirname(__file__)) # /app/backend/phylomovie/
+        newick_path = os.path.join(
+            base_dir,
+            "services",
+            "test-data",
+            "alltrees",
+            "alltree_57_58.newick",
         )
-        assert result["file_name"] == "alltree_57_58.newick"
+        with open(newick_path, "rb") as f:
+            data = {
+                "treeFile": (f, "alltree_57_58.newick"),
+                "windowSize": "2",
+                "windowStepSize": "1",
+            }
+            rv = client.post("/treedata", data=data, content_type="multipart/form-data")
+            assert rv.status_code == 200
+            result = rv.get_json()
+            for key in [
+                "tree_list", "rfd_list", "to_be_highlighted", "sorted_leaves",
+                "file_name", "window_size", "window_step_size", "embedding"
+            ]:
+                assert key in result
+            assert (
+                "weighted_robinson_foulds_distance_list" in result
+                or "weighted_rfd_list" in result
+            )
+            assert result["file_name"] == "alltree_57_58.newick"
 
 def test_treedata_bigger_tree(client):
     # Create a bigger Newick tree with 20 leaves
@@ -126,8 +131,5 @@ def test_cause_error(client):
     assert resp.status_code == 500
     data = resp.get_json()
     assert "error" in data
-    assert (
-        "Test error logging" in data["error"]
-        or "Intentional test error" in data["error"]
-    )
+    assert "An unexpected server error occurred." in data["error"]
     
