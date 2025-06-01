@@ -19,7 +19,6 @@
     <link rel="stylesheet" type="text/css" href="/css/chart-modal.css" />
     <link rel="stylesheet" type="text/css" href="/css/chart-button.css" />
 
-    <link rel="stylesheet" type="text/css" href="/css/submenu.css" />
     <link rel="stylesheet" type="text/css" href="/css/scale-container.css" />
     <link rel="stylesheet" type="text/css" href="/css/coloring.css" />
     <link rel="stylesheet" href="https://unpkg.com/winbox@0.2.82/dist/css/winbox.min.css" />
@@ -31,7 +30,7 @@
     <script src="https://unpkg.com/winbox@0.2.82/dist/js/winbox.min.js"></script>
 
   </head>
-
+  
   <body>
     <div class="container">
       <!-- Navigation Menu -->
@@ -53,6 +52,10 @@
           <div class="file-details">
             <span class="file-label">Current File</span>
             <h3 class="file-name">Loading...</h3>
+            <div class="embedding-status">
+              <span id="embeddingStatusLabel" class="embedding-label">Embedding: </span>
+              <span id="embeddingStatusText" class="embedding-type">Loading...</span>
+            </div>
           </div>
         </div>
 
