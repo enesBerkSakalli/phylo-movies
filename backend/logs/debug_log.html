@@ -3692,3 +3692,266 @@ ValueError: Failed to initialize split indices: '\rO1'
 <pre>2025‑05‑31 15:02:26 [INFO] phylomovie: Processing uploaded file: best_trees.newick</pre>
 <pre>2025‑05‑31 15:02:26 [INFO] phylomovie: Successfully parsed 26 trees</pre>
 <pre>2025‑05‑31 15:02:34 [INFO] phylomovie: UMAP embedding generated successfully</pre>
+<pre>2025‑06‑01 20:03:32 [ERROR] phylomovie: [global] Unhandled exception: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</pre>
+Traceback (most recent call last):
+  File "/home/swebot/.local/lib/python3.10/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/swebot/.local/lib/python3.10/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "/app/backend/phylomovie/routes.py", line 63, in favicon
+    return send_from_directory(
+  File "/home/swebot/.local/lib/python3.10/site-packages/flask/helpers.py", line 565, in send_from_directory
+    return werkzeug.utils.send_from_directory(  # type: ignore[return-value]
+  File "/home/swebot/.local/lib/python3.10/site-packages/werkzeug/utils.py", line 575, in send_from_directory
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+<pre>2025‑06‑01 20:03:32 [INFO] phylomovie: [treedata] POST /treedata from 127.0.0.1</pre>
+<pre>2025‑06‑01 20:03:32 [INFO] phylomovie: [treedata] POST /treedata from 127.0.0.1</pre>
+<pre>2025‑06‑01 20:03:32 [INFO] phylomovie: [treedata] POST /treedata from 127.0.0.1</pre>
+<pre>2025‑06‑01 20:03:32 [INFO] phylomovie: [treedata] Midpoint rooting: False</pre>
+<pre>2025‑06‑01 20:03:32 [INFO] phylomovie: [treedata] Enable embedding: True</pre>
+<pre>2025‑06‑01 20:03:32 [INFO] phylomovie: [treedata] No MSA file or filename provided.</pre>
+<pre>2025‑06‑01 20:03:32 [INFO] phylomovie: Processing uploaded file: test.newick</pre>
+<pre>2025‑06‑01 20:03:32 [ERROR] phylomovie: Newick parsing failed: typing.Any cannot be used with isinstance()</pre>
+Traceback (most recent call last):
+  File "/app/backend/phylomovie/tree_processing/msa_utils.py", line 121, in parse_newick_from_filestorage
+    if isinstance(trees, Node):
+  File "/usr/lib/python3.10/typing.py", line 396, in __instancecheck__
+    raise TypeError(f"{self} cannot be used with isinstance()")
+TypeError: typing.Any cannot be used with isinstance()
+<pre>2025‑06‑01 20:03:32 [INFO] phylomovie: [treedata] POST /treedata from 127.0.0.1</pre>
+<pre>2025‑06‑01 20:03:32 [INFO] phylomovie: [treedata] Midpoint rooting: False</pre>
+<pre>2025‑06‑01 20:03:32 [INFO] phylomovie: [treedata] Enable embedding: True</pre>
+<pre>2025‑06‑01 20:03:32 [INFO] phylomovie: [treedata] No MSA file or filename provided.</pre>
+<pre>2025‑06‑01 20:03:32 [INFO] phylomovie: Processing uploaded file: bigger.tree</pre>
+<pre>2025‑06‑01 20:03:32 [ERROR] phylomovie: Newick parsing failed: typing.Any cannot be used with isinstance()</pre>
+Traceback (most recent call last):
+  File "/app/backend/phylomovie/tree_processing/msa_utils.py", line 121, in parse_newick_from_filestorage
+    if isinstance(trees, Node):
+  File "/usr/lib/python3.10/typing.py", line 396, in __instancecheck__
+    raise TypeError(f"{self} cannot be used with isinstance()")
+TypeError: typing.Any cannot be used with isinstance()
+<pre>2025‑06‑01 20:03:32 [ERROR] phylomovie: [global] Unhandled exception: Intentional test error - handled by global error handler</pre>
+Traceback (most recent call last):
+  File "/home/swebot/.local/lib/python3.10/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/swebot/.local/lib/python3.10/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "/app/backend/phylomovie/routes.py", line 191, in cause_error
+    raise Exception("Intentional test error - handled by global error handler")
+Exception: Intentional test error - handled by global error handler
+<pre>2025‑06‑01 20:05:33 [ERROR] phylomovie: [global] Unhandled exception: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</pre>
+Traceback (most recent call last):
+  File "/home/swebot/.local/lib/python3.10/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/swebot/.local/lib/python3.10/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "/app/backend/phylomovie/routes.py", line 63, in favicon
+    return send_from_directory(
+  File "/home/swebot/.local/lib/python3.10/site-packages/flask/helpers.py", line 565, in send_from_directory
+    return werkzeug.utils.send_from_directory(  # type: ignore[return-value]
+  File "/home/swebot/.local/lib/python3.10/site-packages/werkzeug/utils.py", line 575, in send_from_directory
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+<pre>2025‑06‑01 20:05:33 [INFO] phylomovie: [treedata] POST /treedata from 127.0.0.1</pre>
+<pre>2025‑06‑01 20:05:33 [INFO] phylomovie: [treedata] POST /treedata from 127.0.0.1</pre>
+<pre>2025‑06‑01 20:05:33 [INFO] phylomovie: [treedata] POST /treedata from 127.0.0.1</pre>
+<pre>2025‑06‑01 20:05:33 [INFO] phylomovie: [treedata] Midpoint rooting: False</pre>
+<pre>2025‑06‑01 20:05:33 [INFO] phylomovie: [treedata] Enable embedding: True</pre>
+<pre>2025‑06‑01 20:05:33 [INFO] phylomovie: [treedata] No MSA file or filename provided.</pre>
+<pre>2025‑06‑01 20:05:33 [INFO] phylomovie: Processing uploaded file: test.newick</pre>
+<pre>2025‑06‑01 20:05:33 [ERROR] phylomovie: Newick parsing failed: typing.Any cannot be used with isinstance()</pre>
+Traceback (most recent call last):
+  File "/app/backend/phylomovie/tree_processing/msa_utils.py", line 121, in parse_newick_from_filestorage
+    if isinstance(trees, Node):
+  File "/usr/lib/python3.10/typing.py", line 396, in __instancecheck__
+    raise TypeError(f"{self} cannot be used with isinstance()")
+TypeError: typing.Any cannot be used with isinstance()
+<pre>2025‑06‑01 20:05:33 [INFO] phylomovie: [treedata] POST /treedata from 127.0.0.1</pre>
+<pre>2025‑06‑01 20:05:33 [INFO] phylomovie: [treedata] Midpoint rooting: False</pre>
+<pre>2025‑06‑01 20:05:33 [INFO] phylomovie: [treedata] Enable embedding: True</pre>
+<pre>2025‑06‑01 20:05:33 [INFO] phylomovie: [treedata] No MSA file or filename provided.</pre>
+<pre>2025‑06‑01 20:05:33 [INFO] phylomovie: Processing uploaded file: bigger.tree</pre>
+<pre>2025‑06‑01 20:05:33 [ERROR] phylomovie: Newick parsing failed: typing.Any cannot be used with isinstance()</pre>
+Traceback (most recent call last):
+  File "/app/backend/phylomovie/tree_processing/msa_utils.py", line 121, in parse_newick_from_filestorage
+    if isinstance(trees, Node):
+  File "/usr/lib/python3.10/typing.py", line 396, in __instancecheck__
+    raise TypeError(f"{self} cannot be used with isinstance()")
+TypeError: typing.Any cannot be used with isinstance()
+<pre>2025‑06‑01 20:05:33 [ERROR] phylomovie: [global] Unhandled exception: Intentional test error - handled by global error handler</pre>
+Traceback (most recent call last):
+  File "/home/swebot/.local/lib/python3.10/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/swebot/.local/lib/python3.10/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "/app/backend/phylomovie/routes.py", line 191, in cause_error
+    raise Exception("Intentional test error - handled by global error handler")
+Exception: Intentional test error - handled by global error handler
+<pre>2025‑06‑01 20:07:24 [ERROR] phylomovie: [global] Unhandled exception: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</pre>
+Traceback (most recent call last):
+  File "/home/swebot/.local/lib/python3.10/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/swebot/.local/lib/python3.10/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "/app/backend/phylomovie/routes.py", line 63, in favicon
+    return send_from_directory(
+  File "/home/swebot/.local/lib/python3.10/site-packages/flask/helpers.py", line 565, in send_from_directory
+    return werkzeug.utils.send_from_directory(  # type: ignore[return-value]
+  File "/home/swebot/.local/lib/python3.10/site-packages/werkzeug/utils.py", line 575, in send_from_directory
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+<pre>2025‑06‑01 20:07:24 [INFO] phylomovie: [treedata] POST /treedata from 127.0.0.1</pre>
+<pre>2025‑06‑01 20:07:24 [INFO] phylomovie: [treedata] POST /treedata from 127.0.0.1</pre>
+<pre>2025‑06‑01 20:07:24 [INFO] phylomovie: [treedata] POST /treedata from 127.0.0.1</pre>
+<pre>2025‑06‑01 20:07:24 [INFO] phylomovie: [treedata] Midpoint rooting: False</pre>
+<pre>2025‑06‑01 20:07:24 [INFO] phylomovie: [treedata] Enable embedding: True</pre>
+<pre>2025‑06‑01 20:07:24 [INFO] phylomovie: [treedata] No MSA file or filename provided.</pre>
+<pre>2025‑06‑01 20:07:24 [INFO] phylomovie: Processing uploaded file: test.newick</pre>
+<pre>2025‑06‑01 20:07:24 [ERROR] phylomovie: Newick parsing failed: typing.Any cannot be used with isinstance()</pre>
+Traceback (most recent call last):
+  File "/app/backend/phylomovie/tree_processing/msa_utils.py", line 121, in parse_newick_from_filestorage
+    if isinstance(trees, Node):
+  File "/usr/lib/python3.10/typing.py", line 396, in __instancecheck__
+    raise TypeError(f"{self} cannot be used with isinstance()")
+TypeError: typing.Any cannot be used with isinstance()
+<pre>2025‑06‑01 20:07:24 [INFO] phylomovie: [treedata] POST /treedata from 127.0.0.1</pre>
+<pre>2025‑06‑01 20:07:24 [INFO] phylomovie: [treedata] Midpoint rooting: False</pre>
+<pre>2025‑06‑01 20:07:24 [INFO] phylomovie: [treedata] Enable embedding: True</pre>
+<pre>2025‑06‑01 20:07:24 [INFO] phylomovie: [treedata] No MSA file or filename provided.</pre>
+<pre>2025‑06‑01 20:07:24 [INFO] phylomovie: Processing uploaded file: alltree_57_58.newick</pre>
+<pre>2025‑06‑01 20:07:24 [ERROR] phylomovie: Newick parsing failed: typing.Any cannot be used with isinstance()</pre>
+Traceback (most recent call last):
+  File "/app/backend/phylomovie/tree_processing/msa_utils.py", line 121, in parse_newick_from_filestorage
+    if isinstance(trees, Node):
+  File "/usr/lib/python3.10/typing.py", line 396, in __instancecheck__
+    raise TypeError(f"{self} cannot be used with isinstance()")
+TypeError: typing.Any cannot be used with isinstance()
+<pre>2025‑06‑01 20:07:24 [INFO] phylomovie: [treedata] POST /treedata from 127.0.0.1</pre>
+<pre>2025‑06‑01 20:07:24 [INFO] phylomovie: [treedata] Midpoint rooting: False</pre>
+<pre>2025‑06‑01 20:07:24 [INFO] phylomovie: [treedata] Enable embedding: True</pre>
+<pre>2025‑06‑01 20:07:24 [INFO] phylomovie: [treedata] No MSA file or filename provided.</pre>
+<pre>2025‑06‑01 20:07:24 [INFO] phylomovie: Processing uploaded file: bigger.tree</pre>
+<pre>2025‑06‑01 20:07:24 [ERROR] phylomovie: Newick parsing failed: typing.Any cannot be used with isinstance()</pre>
+Traceback (most recent call last):
+  File "/app/backend/phylomovie/tree_processing/msa_utils.py", line 121, in parse_newick_from_filestorage
+    if isinstance(trees, Node):
+  File "/usr/lib/python3.10/typing.py", line 396, in __instancecheck__
+    raise TypeError(f"{self} cannot be used with isinstance()")
+TypeError: typing.Any cannot be used with isinstance()
+<pre>2025‑06‑01 20:07:24 [ERROR] phylomovie: [global] Unhandled exception: Intentional test error - handled by global error handler</pre>
+Traceback (most recent call last):
+  File "/home/swebot/.local/lib/python3.10/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/swebot/.local/lib/python3.10/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "/app/backend/phylomovie/routes.py", line 191, in cause_error
+    raise Exception("Intentional test error - handled by global error handler")
+Exception: Intentional test error - handled by global error handler
+<pre>2025‑06‑01 20:08:24 [ERROR] phylomovie: [global] Unhandled exception: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</pre>
+Traceback (most recent call last):
+  File "/home/swebot/.local/lib/python3.10/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/swebot/.local/lib/python3.10/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "/app/backend/phylomovie/routes.py", line 63, in favicon
+    return send_from_directory(
+  File "/home/swebot/.local/lib/python3.10/site-packages/flask/helpers.py", line 565, in send_from_directory
+    return werkzeug.utils.send_from_directory(  # type: ignore[return-value]
+  File "/home/swebot/.local/lib/python3.10/site-packages/werkzeug/utils.py", line 575, in send_from_directory
+    raise NotFound()
+werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+<pre>2025‑06‑01 20:08:24 [INFO] phylomovie: [treedata] POST /treedata from 127.0.0.1</pre>
+<pre>2025‑06‑01 20:08:24 [INFO] phylomovie: [treedata] POST /treedata from 127.0.0.1</pre>
+<pre>2025‑06‑01 20:08:24 [INFO] phylomovie: [treedata] POST /treedata from 127.0.0.1</pre>
+<pre>2025‑06‑01 20:08:24 [INFO] phylomovie: [treedata] Midpoint rooting: False</pre>
+<pre>2025‑06‑01 20:08:24 [INFO] phylomovie: [treedata] Enable embedding: True</pre>
+<pre>2025‑06‑01 20:08:24 [INFO] phylomovie: [treedata] No MSA file or filename provided.</pre>
+<pre>2025‑06‑01 20:08:24 [INFO] phylomovie: Processing uploaded file: test.newick</pre>
+<pre>2025‑06‑01 20:08:24 [ERROR] phylomovie: Newick parsing failed: typing.Any cannot be used with isinstance()</pre>
+Traceback (most recent call last):
+  File "/app/backend/phylomovie/tree_processing/msa_utils.py", line 121, in parse_newick_from_filestorage
+    if isinstance(trees, Node):
+  File "/usr/lib/python3.10/typing.py", line 396, in __instancecheck__
+    raise TypeError(f"{self} cannot be used with isinstance()")
+TypeError: typing.Any cannot be used with isinstance()
+<pre>2025‑06‑01 20:08:24 [INFO] phylomovie: [treedata] POST /treedata from 127.0.0.1</pre>
+<pre>2025‑06‑01 20:08:24 [INFO] phylomovie: [treedata] Midpoint rooting: False</pre>
+<pre>2025‑06‑01 20:08:24 [INFO] phylomovie: [treedata] Enable embedding: True</pre>
+<pre>2025‑06‑01 20:08:24 [INFO] phylomovie: [treedata] No MSA file or filename provided.</pre>
+<pre>2025‑06‑01 20:08:24 [INFO] phylomovie: Processing uploaded file: alltree_57_58.newick</pre>
+<pre>2025‑06‑01 20:08:24 [ERROR] phylomovie: Newick parsing failed: typing.Any cannot be used with isinstance()</pre>
+Traceback (most recent call last):
+  File "/app/backend/phylomovie/tree_processing/msa_utils.py", line 121, in parse_newick_from_filestorage
+    if isinstance(trees, Node):
+  File "/usr/lib/python3.10/typing.py", line 396, in __instancecheck__
+    raise TypeError(f"{self} cannot be used with isinstance()")
+TypeError: typing.Any cannot be used with isinstance()
+<pre>2025‑06‑01 20:08:24 [INFO] phylomovie: [treedata] POST /treedata from 127.0.0.1</pre>
+<pre>2025‑06‑01 20:08:24 [INFO] phylomovie: [treedata] Midpoint rooting: False</pre>
+<pre>2025‑06‑01 20:08:24 [INFO] phylomovie: [treedata] Enable embedding: True</pre>
+<pre>2025‑06‑01 20:08:24 [INFO] phylomovie: [treedata] No MSA file or filename provided.</pre>
+<pre>2025‑06‑01 20:08:24 [INFO] phylomovie: Processing uploaded file: bigger.tree</pre>
+<pre>2025‑06‑01 20:08:24 [ERROR] phylomovie: Newick parsing failed: typing.Any cannot be used with isinstance()</pre>
+Traceback (most recent call last):
+  File "/app/backend/phylomovie/tree_processing/msa_utils.py", line 121, in parse_newick_from_filestorage
+    if isinstance(trees, Node):
+  File "/usr/lib/python3.10/typing.py", line 396, in __instancecheck__
+    raise TypeError(f"{self} cannot be used with isinstance()")
+TypeError: typing.Any cannot be used with isinstance()
+<pre>2025‑06‑01 20:08:24 [ERROR] phylomovie: [global] Unhandled exception: Intentional test error - handled by global error handler</pre>
+Traceback (most recent call last):
+  File "/home/swebot/.local/lib/python3.10/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/swebot/.local/lib/python3.10/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "/app/backend/phylomovie/routes.py", line 191, in cause_error
+    raise Exception("Intentional test error - handled by global error handler")
+Exception: Intentional test error - handled by global error handler
+<pre>2025‑06‑01 20:11:06 [INFO] phylomovie: [treedata] POST /treedata from 127.0.0.1</pre>
+<pre>2025‑06‑01 20:11:06 [INFO] phylomovie: [treedata] POST /treedata from 127.0.0.1</pre>
+<pre>2025‑06‑01 20:11:06 [INFO] phylomovie: [treedata] POST /treedata from 127.0.0.1</pre>
+<pre>2025‑06‑01 20:11:06 [INFO] phylomovie: [treedata] Midpoint rooting: False</pre>
+<pre>2025‑06‑01 20:11:06 [INFO] phylomovie: [treedata] Enable embedding: True</pre>
+<pre>2025‑06‑01 20:11:06 [INFO] phylomovie: [treedata] No MSA file or filename provided.</pre>
+<pre>2025‑06‑01 20:11:06 [INFO] phylomovie: Processing uploaded file: test.newick</pre>
+<pre>2025‑06‑01 20:11:06 [ERROR] phylomovie: Newick parsing failed: typing.Any cannot be used with isinstance()</pre>
+Traceback (most recent call last):
+  File "/app/backend/phylomovie/tree_processing/msa_utils.py", line 121, in parse_newick_from_filestorage
+    if isinstance(trees, Node):
+  File "/usr/lib/python3.10/typing.py", line 396, in __instancecheck__
+    raise TypeError(f"{self} cannot be used with isinstance()")
+TypeError: typing.Any cannot be used with isinstance()
+<pre>2025‑06‑01 20:11:06 [INFO] phylomovie: [treedata] POST /treedata from 127.0.0.1</pre>
+<pre>2025‑06‑01 20:11:06 [INFO] phylomovie: [treedata] Midpoint rooting: False</pre>
+<pre>2025‑06‑01 20:11:06 [INFO] phylomovie: [treedata] Enable embedding: True</pre>
+<pre>2025‑06‑01 20:11:06 [INFO] phylomovie: [treedata] No MSA file or filename provided.</pre>
+<pre>2025‑06‑01 20:11:06 [INFO] phylomovie: Processing uploaded file: alltree_57_58.newick</pre>
+<pre>2025‑06‑01 20:11:06 [ERROR] phylomovie: Newick parsing failed: typing.Any cannot be used with isinstance()</pre>
+Traceback (most recent call last):
+  File "/app/backend/phylomovie/tree_processing/msa_utils.py", line 121, in parse_newick_from_filestorage
+    if isinstance(trees, Node):
+  File "/usr/lib/python3.10/typing.py", line 396, in __instancecheck__
+    raise TypeError(f"{self} cannot be used with isinstance()")
+TypeError: typing.Any cannot be used with isinstance()
+<pre>2025‑06‑01 20:11:06 [INFO] phylomovie: [treedata] POST /treedata from 127.0.0.1</pre>
+<pre>2025‑06‑01 20:11:06 [INFO] phylomovie: [treedata] Midpoint rooting: False</pre>
+<pre>2025‑06‑01 20:11:06 [INFO] phylomovie: [treedata] Enable embedding: True</pre>
+<pre>2025‑06‑01 20:11:06 [INFO] phylomovie: [treedata] No MSA file or filename provided.</pre>
+<pre>2025‑06‑01 20:11:06 [INFO] phylomovie: Processing uploaded file: bigger.tree</pre>
+<pre>2025‑06‑01 20:11:06 [ERROR] phylomovie: Newick parsing failed: typing.Any cannot be used with isinstance()</pre>
+Traceback (most recent call last):
+  File "/app/backend/phylomovie/tree_processing/msa_utils.py", line 121, in parse_newick_from_filestorage
+    if isinstance(trees, Node):
+  File "/usr/lib/python3.10/typing.py", line 396, in __instancecheck__
+    raise TypeError(f"{self} cannot be used with isinstance()")
+TypeError: typing.Any cannot be used with isinstance()
+<pre>2025‑06‑01 20:11:06 [ERROR] phylomovie: [global] Unhandled exception: Intentional test error - handled by global error handler</pre>
+Traceback (most recent call last):
+  File "/home/swebot/.local/lib/python3.10/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/swebot/.local/lib/python3.10/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "/app/backend/phylomovie/routes.py", line 191, in cause_error
+    raise Exception("Intentional test error - handled by global error handler")
+Exception: Intentional test error - handled by global error handler

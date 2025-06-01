@@ -1,6 +1,10 @@
-# --------------------------------------------------------------
-#  logging_config.py
-# --------------------------------------------------------------
+"""
+Logging Configuration for the PhyloMovie Application.
+
+This module provides the `configure_logging` function to set up
+application-wide logging, including file-based rotating logs (HTML formatted)
+and console logs. It uses settings from the main application Config.
+"""
 import logging
 from logging.handlers import RotatingFileHandler
 from flask import Flask
