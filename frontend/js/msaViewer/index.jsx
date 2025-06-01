@@ -96,21 +96,6 @@ function App() {
         x: "center",
         y: "center",
         mount: container,
-        onresize: (width, height) => {
-          // Update MSA model width when window is resized
-          if (window.syncMSAViewer && window.msaModelRef) {
-            setTimeout(() => {
-              // Actually update the model's width when the window is resized
-              if (
-                window.msaModelRef.current &&
-                typeof window.msaModelRef.current.setWidth === "function"
-              ) {
-                window.msaModelRef.current.setWidth(width - 40); // Account for padding
-                console.log("Updated MSA model width to:", width - 40);
-              }
-            }, 100);
-          }
-        },
         onclose: () => {
           // Cleanup React root on close
           if (container.__reactRoot) {
@@ -160,18 +145,6 @@ function App() {
 
   // This component doesn't render anything visible - it just manages the WinBox
   return null;
-}
-
-// Initialize a fallback sync function only if none exists
-if (!window.syncMSAViewer) {
-  window.syncMSAViewer = (highlightedTaxa, position, windowInfo) => {
-    console.log("MSA viewer not ready, opening viewer with sync data");
-    window.dispatchEvent(
-      new CustomEvent("open-msa-viewer", {
-        detail: { highlightedTaxa, position, windowInfo },
-      })
-    );
-  };
 }
 
 // Create root container if it doesn't exist
