@@ -183,7 +183,7 @@ export class TreeConstructor {
 
     const maxRadius = this.getMaxRadius(this.root);
 
-    this.scale = this.calcScale(minWindowSize, maxRadius, 2);
+    this.scale = this.calcScale(minWindowSize, maxRadius, 1.0);
 
     this.scaleRadius(this.root, this.scale);
 
@@ -252,7 +252,7 @@ export default function constructTree(
   margin = options.margin || (width < height ? width * 0.125 : height * 0.125);
 
   treeConstructor.setDimension(width, height);
-  treeConstructor.setMargin(margin + 200);
+  treeConstructor.setMargin(margin + 40); // Reduced fixed margin addition
 
   let root_ = treeConstructor.constructRadialTree();
 

@@ -171,11 +171,8 @@
   margin-right: var(--spacing-xs, 4px); /* Add some space if label is long */
 }
 
-input[type="range"].themed-slider {
-  flex-grow: 1;
-  accent-color: var(--primary-color); /* Styles the track/thumb for modern browsers */
-  /* Add more specific track/thumb styling if needed for cross-browser consistency */
-}
+/* Styling for input[type="range"].mdc-slider is now expected to be handled by global styles in navigation.css */
+/* input[type="range"].themed-slider class and its styles are removed. */
 
 .control-value-display {
   font-size: var(--font-size-sm, 12px);
@@ -188,10 +185,7 @@ input[type="range"].themed-slider {
   border: 1px solid var(--border-color-dark-theme, rgba(255,255,255,0.1));
 }
 
-/* Basic styling for checkbox if no global switch style is applied */
-#compare-ignore-branches {
-  accent-color: var(--primary-color);
-}
+/* Styling for #compare-ignore-branches checkbox is now handled by the global .switch styles in navigation.css */
 
 
 /* Styling for the secondary button in the footer */
