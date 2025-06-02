@@ -58,7 +58,7 @@ function createScales(data, width, height, config) {
  */
 function createSVG(containerId, dimensions) {
   const { width, height, margin } = dimensions;
-  
+
   d3.select(`#${containerId}`).select("svg").remove();
 
   const svg = d3.select(`#${containerId}`)
@@ -207,7 +207,7 @@ function drawDataPoints(svg, data, scales, guiInstance, config) {
 
   // Data points
   const pointsContainer = svg.append("g").attr("class", "data-points");
-  
+
   const circles = pointsContainer.selectAll("circle")
     .data(data)
     .enter()
@@ -223,7 +223,7 @@ function drawDataPoints(svg, data, scales, guiInstance, config) {
     .on("mouseover", function (event, d) {
       const index = parseInt(d3.select(this).attr("data-index"), 10);
       d3.select(this).transition().duration(100).attr("r", 6).attr("fill", "#FF4500");
-      
+
       tooltip.transition().duration(200).style("opacity", 1);
       tooltip.html(config.tooltipFormatter(d, index))
         .style("left", `${event.pageX + 15}px`)
@@ -239,7 +239,7 @@ function drawDataPoints(svg, data, scales, guiInstance, config) {
     })
     .on("click", function (event, d) {
       const index = parseInt(d3.select(this).attr("data-index"), 10);
-      
+
       pointsContainer.selectAll("circle").attr("fill", "#4390e1").attr("r", 4);
       d3.select(this).attr("fill", "#FF4500").attr("r", 6).attr("stroke-width", 2);
 
@@ -257,7 +257,7 @@ function drawDataPoints(svg, data, scales, guiInstance, config) {
 function updateShipPosition(position, guiInstance, scales, config, data) {
   const { xScale, yScale } = scales;
   const svg = d3.select("#modal-graph-chart").select("svg").select("g");
-  
+
   d3.select("#ship-modal-group").remove();
 
   const shipX = xScale(config.xAccessor(data[position], position));
@@ -330,11 +330,11 @@ function updateShipPosition(position, guiInstance, scales, config, data) {
     })
     .on("drag", function(event) {
       let xPos = Math.max(0, Math.min(xScale.range()[1], event.x));
-      
+
       // Find closest data point
       let closestIndex = 0;
       let minDistance = Infinity;
-      
+
       data.forEach((d, i) => {
         const dataX = xScale(config.xAccessor(d, i));
         const distance = Math.abs(dataX - xPos);
@@ -343,11 +343,11 @@ function updateShipPosition(position, guiInstance, scales, config, data) {
           closestIndex = i;
         }
       });
-      
+
       guiInstance.currentPosition = closestIndex;
       guiInstance.goToPosition(closestIndex);
       updateShipPosition(closestIndex, guiInstance, scales, config, data);
-      
+
       // Update data point highlight
       svg.selectAll(".data-points circle").attr("fill", "#4390e1").attr("r", 4);
       svg.selectAll(".data-points circle")
@@ -448,7 +448,7 @@ function createModalWindow(title, onCloseCallback) {
     height: "60%",
     x: "center",
     y: "center",
-    class: ["no-full"],
+    class: ["no-full, chart-modal-container, chart-modal-controls"],
     background: "#373747",
     border: 2,
     html: `
@@ -466,34 +466,10 @@ function createModalWindow(title, onCloseCallback) {
     `,
     onclose: onCloseCallback,
   });
-  
+
   // Add custom styles for the modal
   const style = document.createElement('style');
-  style.textContent = `
-    .chart-modal-container {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      background-color: #23242b;
-      color: #e3eaf2;
-      padding: 20px;
-    }
-    .chart-modal-content {
-      flex: 1;
-      width: 100%;
-      position: relative;
-      background-color: #2c2c3a;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    }
-    .chart-modal-controls {
-      padding-top: 15px;
-      text-align: right;
-    }
-  `;
   document.head.appendChild(style);
-  
   return winbox;
 }
 
@@ -503,19 +479,19 @@ function setupEventListeners(winbox, guiInstance) {
     .querySelector("#save-chart-button")
     .addEventListener("click", () => {
       const button = winbox.body.querySelector("#save-chart-button");
-      
+
       // Disable button and show loading state
       button.disabled = true;
       const originalText = button.innerHTML;
       button.innerHTML = '<i class="fa fa-circle-o-notch fa-spin"></i> Saving...';
-      
+
       saveChart(guiInstance, "modal-graph-chart", "chart.svg")
         .then((message) => {
           console.log(message);
           // Show success state briefly
           button.innerHTML = '<i class="fa fa-check"></i> Saved!';
           button.style.backgroundColor = "#43e1b0";
-          
+
           // Reset button after delay
           setTimeout(() => {
             button.innerHTML = originalText;
@@ -528,7 +504,7 @@ function setupEventListeners(winbox, guiInstance) {
           // Show error state
           button.innerHTML = '<i class="fa fa-times"></i> Failed';
           button.style.backgroundColor = "#e14390";
-          
+
           // Reset button after delay
           setTimeout(() => {
             button.innerHTML = originalText;

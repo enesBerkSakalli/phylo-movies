@@ -2,7 +2,7 @@ import * as d3 from "d3";
 import { generateChartModal } from "./charts/chartGenerator.js";
 import { generateDistanceChart } from "./charts/distanceChart.js";
 import * as scatterPlotModule from "./space/scatterPlot.js";
-import TaxaColoring from "./taxaColoring.js";
+import TaxaColoring from "./taxaColoring.jsx";
 import { createSideBySideComparisonModal } from "./treeComparision/treeComparision.js";
 import calculateScales from "./treeVisualisation/calc.js";
 import constructTree from "./treeVisualisation/TreeConstructor.js";
