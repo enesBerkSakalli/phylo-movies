@@ -22,12 +22,12 @@ export class TreeRenderer {
   createSvgContainer(id, parentElement) {
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute("id", id);
-    
+
     // Set explicit width/height based on parent container's size
     const parentRect = parentElement.getBoundingClientRect();
-    const width = parentRect.width || 400;
-    const height = parentRect.height || 400;
-    
+    const width = "100%";
+    const height = "100%";
+
     svg.setAttribute("width", width);
     svg.setAttribute("height", height);
     svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
@@ -64,8 +64,8 @@ export class TreeRenderer {
           }
 
           // Construct tree layout
-          const treeLayout = constructTree(treeData, ignoreBranchLengths, { 
-            containerId: svgId 
+          const treeLayout = constructTree(treeData, ignoreBranchLengths, {
+            containerId: svgId
           });
 
           // Use the SVG ID directly - TreeDrawer.getSVG() will handle container creation
@@ -110,7 +110,7 @@ export class TreeRenderer {
       const svgRect = svg.getBoundingClientRect();
       const width = svgRect.width || +svg.getAttribute('width') || 400;
       const height = svgRect.height || +svg.getAttribute('height') || 400;
-      
+
       // Update container centering if needed
       treeContainer.setAttribute('transform', `translate(${width / 2}, ${height / 2})`);
       return;
@@ -148,7 +148,7 @@ export class TreeRenderer {
       const width = maxX - minX + padding * 2;
       const height = maxY - minY + padding * 2;
       const viewBox = `${minX - padding} ${minY - padding} ${width} ${height}`;
-      
+
       svg.setAttribute('viewBox', viewBox);
       svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
     }

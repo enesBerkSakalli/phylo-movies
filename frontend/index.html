@@ -17,11 +17,11 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css?family=Heebo"
     />
-    
+
     <!-- Custom CSS -->
     <link rel="stylesheet" type="text/css" href="/css/index.css" />
     <!-- Only load specific modules needed for the landing page -->
-    
+
     <!-- Bootstrap JS Bundle (optional, for modal/popover support) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"></script>
   </head>
@@ -56,7 +56,7 @@
               id="order"
             />
           </div>
-          
+
           <!-- Add MSA file upload field -->
           <div class="mb-3">
             <label for="msa" class="form-label">Multiple Sequence Alignment (Optional)</label>
@@ -70,7 +70,7 @@
               Supported formats: FASTA, CLUSTAL, PHYLIP
             </div>
           </div>
-          
+
           <div class="mb-3">
             <label for="windowSize" class="form-label">Window Size</label>
             <input
@@ -187,7 +187,7 @@
         if (orderFiles.length > 0) {
           formData.append("orderFile", orderFiles[0].file);
         }
-        
+
         // Add MSA file if provided
         const msaFiles = msaPond.getFiles();
         if (msaFiles.length > 0) {

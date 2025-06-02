@@ -447,7 +447,6 @@ export default class Gui {
     handleZoomResize();
   }
 
-
   backward() {
     if (this.index % 5 === 0 && this.firstFull === 0) {
       this.firstFull = 1;
