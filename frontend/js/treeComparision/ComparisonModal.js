@@ -55,8 +55,8 @@ export class ComparisonModal {
           tree2Index + 1
         }`,
         class: ["tree-comparison-winbox"],
-        width: 1100,
-        height: 600,
+        width: "100%",
+        height: "100%",
         x: "center",
         y: "center",
         mount: container,
@@ -125,9 +125,11 @@ export class ComparisonModal {
       </div>
       <div class="tree-comparison-row">
         <div class="tree-container">
+          <div class="tree-label">Tree ${tree1Index + 1}</div>
           <div class="svg-container" data-tree-container="1"></div>
         </div>
         <div class="tree-container">
+          <div class="tree-label">Tree ${tree2Index + 1}</div>
           <div class="svg-container" data-tree-container="2"></div>
         </div>
       </div>
