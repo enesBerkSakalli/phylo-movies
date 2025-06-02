@@ -26,3 +26,4 @@ pnpm-debug.log*
 phylomovie/services/reports/auto
 phylo-io
 frontend.log
+backend/logs/debug_log.html
