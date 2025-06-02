@@ -6,7 +6,8 @@ import { notifications } from "./notificationSystem.js";
 export class EventHandlerRegistry {
   constructor(gui) {
     this.gui = gui;
-    this.attachedHandlers = new Set();
+    // Store objects with {id, type, element, boundAction} to allow for proper removal
+    this.attachedHandlers = [];
   }
 
   /**
@@ -247,8 +248,8 @@ export class EventHandlerRegistry {
   async attachSingleHandler(handler, config) {
     const {
       id,
-      event,
-      type = config.type,
+      event, // Specific event type for this handler
+      type = config.type, // Default event type from group config (e.g., "click", "change")
       action,
       fallbackCreation,
       description,
@@ -256,43 +257,51 @@ export class EventHandlerRegistry {
 
     try {
       let element = null;
+      const isWindowHandler = type === "window" || id === "window"; // Clarify window handler check
 
-      if (id) {
+      if (id && !isWindowHandler) {
         element = document.getElementById(id);
-
-        // Try fallback creation if element not found
         if (!element && fallbackCreation) {
+          console.log(`Attempting fallback creation for element: ${id}`);
           element = fallbackCreation();
         }
+      } else if (isWindowHandler) {
+        element = window; // Use window object for window events
       }
 
-      if (element || type === "window") {
-        const eventType = event || type || "click";
-        const wrappedAction = async (event) => {
+      if (element) {
+        const eventTypeToListen = event || type || "click"; // Determine the actual event type
+
+        // Create a bound action that includes error handling
+        const boundAction = async (e) => { // Renamed event to 'e' to avoid conflict
           try {
             if (config.async) {
-              await action(event);
+              await action(e);
             } else {
-              action(event);
+              action(e);
             }
           } catch (error) {
             this.handleError(error, config, handler);
           }
         };
 
-        if (type === "window") {
-          window.addEventListener(eventType, wrappedAction);
-        } else {
-          element.addEventListener(eventType, wrappedAction);
-        }
+        element.addEventListener(eventTypeToListen, boundAction);
 
-        this.attachedHandlers.add(`${id || "window"}-${eventType}`);
+        // Store details needed for detachment
+        this.attachedHandlers.push({
+          elementId: id || "window", // Store the original ID for logging/debugging
+          element: element,
+          type: eventTypeToListen,
+          handler: boundAction,
+          description: description || `Handler for ${id || "window"} on ${eventTypeToListen}`
+        });
+
         console.log(
-          `✓ Attached handler: ${description} (${id || "window"}:${eventType})`
+          `✓ Attached handler: ${description} (${id || "window"}:${eventTypeToListen})`
         );
         return true;
       } else {
-        console.warn(`⚠ Element not found: ${id} for ${description}`);
+        console.warn(`⚠ Element not found (or not created by fallback) for ID: ${id} for ${description}`);
         return false;
       }
     } catch (error) {
@@ -368,7 +377,7 @@ export class EventHandlerRegistry {
       `   Handlers: ${summary.successfulHandlers}/${summary.totalHandlers} successful`
     );
     console.log(
-      `   Attached handlers: [${Array.from(this.attachedHandlers).join(", ")}]`
+      `   Attached handlers: [${this.attachedHandlers.map(h => `${h.elementId}-${h.type}`).join(", ")}]`
     );
 
     if (summary.successfulHandlers === summary.totalHandlers) {
@@ -382,9 +391,17 @@ export class EventHandlerRegistry {
    * Detach all attached handlers (cleanup)
    */
   detachAll() {
-    console.log("🧹 Cleaning up event handlers...");
-    // Implementation for cleanup if needed
-    this.attachedHandlers.clear();
+    console.log(`🧹 Cleaning up ${this.attachedHandlers.length} event handlers...`);
+    this.attachedHandlers.forEach(handlerInfo => {
+      try {
+        handlerInfo.element.removeEventListener(handlerInfo.type, handlerInfo.handler);
+        console.log(`✓ Detached handler: ${handlerInfo.description} (${handlerInfo.elementId}:${handlerInfo.type})`);
+      } catch (error) {
+        console.error(`Error detaching handler ${handlerInfo.description} (${handlerInfo.elementId}:${handlerInfo.type}):`, error);
+      }
+    });
+    this.attachedHandlers = []; // Clear the array after removing listeners
+    console.log("✅ Event handler cleanup complete.");
   }
 
   /**
@@ -392,8 +409,9 @@ export class EventHandlerRegistry {
    */
   getStats() {
     return {
-      attachedCount: this.attachedHandlers.size,
-      attachedHandlers: Array.from(this.attachedHandlers),
+      attachedCount: this.attachedHandlers.length,
+      // Return descriptions or IDs for stats, not full elements/handlers
+      attachedHandlers: this.attachedHandlers.map(h => `${h.description} (${h.elementId}:${h.type})`),
     };
   }
 }
