@@ -6,7 +6,19 @@ export default class ClustalMSA {
   private MSA: ReturnType<typeof parse>
 
   constructor(text: string) {
-    this.MSA = parse(text)
+    const msa = parse(text)
+
+    if (!msa || !msa.alns || !Array.isArray(msa.alns)) {
+      console.warn("Failed to parse CLUSTAL data. Displaying empty MSA.")
+      this.MSA = {
+        header: { desc: 'Failed to parse CLUSTAL data' },
+        alns: [],
+        consensus: '',
+        version: '',
+      }
+    } else {
+      this.MSA = msa
+    }
   }
 
   getMSA() {
@@ -18,7 +30,10 @@ export default class ClustalMSA {
   }
 
   getWidth() {
-    return this.MSA.alns[0]!.seq.length
+    if (!this.MSA.alns || this.MSA.alns.length === 0 || !this.MSA.alns[0]) {
+      return 0
+    }
+    return this.MSA.alns[0].seq.length
   }
 
   getRowData() {
