@@ -11,7 +11,7 @@ function calculateMSADimensions(containerRef, containerWidth, containerHeight) {
   const defaultWidth = 1200;
   const defaultHeight = 500;
   const padding = 20;
-  const headerHeight = 48;
+  const headerHeight = 0; // Changed from 48 to 0
 
   let width, height;
 
@@ -46,6 +46,9 @@ function createMSAModel(msaString, dimensions) {
     // Set initial responsive width
     if (model && typeof model.setWidth === 'function') {
       model.setWidth(dimensions.width);
+    }
+    if (model && typeof model.setHeight === 'function') {
+      model.setHeight(dimensions.height);
     }
     
     return model;
@@ -97,6 +100,9 @@ export default function MSAViewerContent({ msaString, containerWidth = 1200, con
     
     if (typeof modelRef.current.setWidth === 'function') {
       modelRef.current.setWidth(newDimensions.width);
+    }
+    if (typeof modelRef.current.setHeight === 'function') {
+      modelRef.current.setHeight(newDimensions.height);
     }
   }, [containerWidth, containerHeight]);    // Initialize model and setup
     useEffect(() => {
@@ -244,14 +250,15 @@ export default function MSAViewerContent({ msaString, containerWidth = 1200, con
           flexDirection: "column"
         }}
       >
-        {/* Header with controls */}
+        {/*
+        // Header with controls - Commented out to prioritize react-msaview's native header
         <div style={{ 
           padding: "8px 12px", 
           borderBottom: "1px solid #ccc", 
           display: "flex", 
           justifyContent: "space-between", 
           alignItems: "center",
-          minHeight: `${dimensions.headerHeight - 16}px`,
+          minHeight: `${dimensions.headerHeight - 16}px`, // This will now be based on headerHeight = 0
           background: "#f8f9fa",
           flexShrink: 0
         }}>
@@ -274,6 +281,7 @@ export default function MSAViewerContent({ msaString, containerWidth = 1200, con
             />
           </div>
         </div>
+        */}
         
         {/* MSA viewer container */}
         <div style={{ 
