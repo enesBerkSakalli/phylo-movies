@@ -3,6 +3,7 @@ import { RecorderHandlers } from "./eventHandlers/recorderHandlers.js";
 import { SubmenuHandlers } from "./eventHandlers/submenuHandlers.js";
 import { notifications } from "./eventHandlers/notificationSystem.js";
 import "./eventHandlers/buttonStyles.js";
+import { getMSAData } from "../../dataManager.js"; // Import getMSAData
 
 /**
  * Main event handler coordination
@@ -18,9 +19,12 @@ let guiHandlersInstance = null;
 let recorderHandlersInstance = null;
 
 /**
- * Attach GUI event handlers (buttons, sliders, etc) to the main GUI instance.
- * Cleans up previous handlers before attaching new ones.
- * @param {Gui} gui
+ * Attaches GUI event handlers (buttons, sliders, etc.) to the main GUI instance.
+ * This function ensures that any previously attached GUI handlers are cleaned up
+ * before new ones are attached, preventing duplicate listeners.
+ * @param {Gui} gui - The main GUI instance to which event handlers will be attached.
+ *                    It should provide methods that handlers can call (e.g., `gui.play()`).
+ * @returns {void}
  */
 export function attachGuiEventHandlers(gui) {
   if (!gui) {
@@ -46,9 +50,11 @@ export function attachGuiEventHandlers(gui) {
 
 
 /**
- * Attach event handlers for the screen recorder controls.
- * Cleans up previous handlers before attaching new ones.
- * @param {ScreenRecorder} recorder
+ * Attaches event handlers for the screen recorder controls.
+ * This function ensures that any previously attached recorder handlers are cleaned up
+ * before new ones are attached.
+ * @param {ScreenRecorder} recorder - The ScreenRecorder instance.
+ * @returns {void}
  */
 export function attachRecorderEventHandlers(recorder) {
   if (!recorder) {
@@ -73,16 +79,21 @@ export function attachRecorderEventHandlers(recorder) {
 }
 
 /**
- * Toggle a submenu open/closed by id.
- * @param {string} submenuId
- * @param {string} toggleIconId
+ * Toggles the display state of a submenu (collapses or expands it).
+ * It delegates the action to `SubmenuHandlers.toggle`.
+ * @param {string} submenuId - The ID of the submenu element to toggle.
+ * @param {string} toggleIconId - The ID of the icon element that indicates the submenu's state.
+ * @returns {void}
  */
 export function toggleSubmenu(submenuId, toggleIconId) {
   SubmenuHandlers.toggle(submenuId, toggleIconId);
 }
 
 /**
- * Initialize all toggleable elements on the page
+ * Initializes all toggleable submenu elements on the page.
+ * It schedules `SubmenuHandlers.initializeAll` to run after a short delay,
+ * allowing the DOM to fully render, especially for dynamically loaded content.
+ * @returns {void}
  */
 export function initializeToggles() {
   try {
@@ -105,6 +116,15 @@ export function initializeToggles() {
   }
 }
 
+/**
+ * Attaches an event handler to the MSA (Multiple Sequence Alignment) viewer button.
+ * This handler, when clicked, attempts to retrieve MSA data using `getMSAData`
+ * and then dispatches an event to open the MSA viewer with relevant context
+ * (highlighted taxa, current position, window information from the GUI).
+ * It also updates a status element to indicate if MSA data is available.
+ * @param {Gui} gui - The main GUI instance, used to get context for the MSA viewer.
+ * @returns {void}
+ */
 export function attachMSAButtonHandler(gui) {
   const msaBtn = document.getElementById("msa-viewer-btn");
   const msaStatus = document.getElementById("msa-status");
@@ -118,39 +138,15 @@ export function attachMSAButtonHandler(gui) {
   const newMsaBtn = msaBtn.cloneNode(true);
   msaBtn.parentNode.replaceChild(newMsaBtn, msaBtn);
 
-
-  // Ensure localforage is loaded and available (robust for all module systems)
-  function getLocalForage() {
-    if (window.localforage) return Promise.resolve(window.localforage);
-    // Try to import if not present (support both ESM and CJS)
-    if (typeof require === 'function') {
-      try {
-        const lf = require('localforage');
-        window.localforage = lf.default || lf;
-        return Promise.resolve(window.localforage);
-      } catch (e) {}
-    }
-    // fallback to dynamic import
-    return import('localforage').then((mod) => {
-      window.localforage = mod.default || mod;
-      return window.localforage;
-    });
-  }
-
   // Attach single event handler
   newMsaBtn.addEventListener("click", async () => {
     console.log("MSA button clicked");
 
-    // Get MSA data from localForage
-    let msaData = null;
-    let localforageInstance = await getLocalForage();
-    try {
-      msaData = await localforageInstance.getItem("phyloMovieMSAData");
-    } catch (e) {
-      console.error("Error reading MSA data from localForage:", e);
-    }
+    // Get MSA data using dataManager
+    const msaData = await getMSAData();
     
     if (!msaData) {
+      console.warn("[attachMSAButtonHandler] No MSA data found via getMSAData.");
       alert("No alignment data available. Please upload an MSA file.");
       return;
     }
@@ -188,9 +184,7 @@ export function attachMSAButtonHandler(gui) {
 
   // Update the status text (async, but don't use await at top level)
   if (msaStatus) {
-    getLocalForage().then((localforageInstance) => {
-      return localforageInstance.getItem("phyloMovieMSAData");
-    }).then((data) => {
+    getMSAData().then(data => { // Use getMSAData here as well
       const hasMSAData = !!data;
       const statusElement = msaStatus.querySelector(".info-value");
       if (statusElement) {
@@ -198,8 +192,9 @@ export function attachMSAButtonHandler(gui) {
           ? "Alignment data available"
           : "No alignment data loaded";
       }
-    }).catch((e) => {
-      console.error("Error checking MSA data in localForage:", e);
+    }).catch(e => {
+      // getMSAData already logs errors, but we can log a specific context error if needed
+      console.error("[attachMSAButtonHandler] Error updating MSA status text:", e);
     });
   }
 
