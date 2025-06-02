@@ -94,11 +94,6 @@ export async function createComparisonContent(gui) {
   return document.createElement("div");
 }
 
-export async function centerTree(svgId) {
-  // Use the TreeComparisonManager's centering method
-  return treeComparisonManager.centerTree(svgId);
-}
-
 export async function createInterpolationModal(options) {
   console.warn(
     "createInterpolationModal will be implemented in ComparisonModal"
@@ -106,7 +101,3 @@ export async function createInterpolationModal(options) {
   return null;
 }
 
-export async function initializeComparison(container, gui) {
-  console.warn("initializeComparison is deprecated");
-  return container;
-}

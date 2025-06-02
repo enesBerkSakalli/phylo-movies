@@ -11,11 +11,20 @@ Estimated release dates:
   - PRO users:       priority access is available now
 
 
-  VITE v4.5.14  ready in 389 ms
+  VITE v4.5.14  ready in 323 ms
 
   ➜  Local:   http://127.0.0.1:5173/
-2:54:29 PM [vite] page reload js/gui.js
-2:55:18 PM [vite] page reload js/gui.js
-2:55:31 PM [vite] page reload js/treeVisualisation/TreeDrawer.js
-2:58:25 PM [vite] page reload js/gui.js
-4:37:38 PM [vite] page reload js/treeVisualisation/ParseUtil.js
+node:internal/process/promises:289
+            triggerUncaughtException(err, true /* fromPromise */);
+            ^
+
+Error: connect ECONNREFUSED 127.0.0.1:65210
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1595:16) {
+  errno: -61,
+  code: 'ECONNREFUSED',
+  syscall: 'connect',
+  address: '127.0.0.1',
+  port: 65210
+}
+
+Node.js v20.9.0

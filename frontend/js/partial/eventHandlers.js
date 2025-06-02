@@ -3,7 +3,7 @@ import { RecorderHandlers } from "./eventHandlers/recorderHandlers.js";
 import { SubmenuHandlers } from "./eventHandlers/submenuHandlers.js";
 import { notifications } from "./eventHandlers/notificationSystem.js";
 import "./eventHandlers/buttonStyles.js";
-import { getMSAData } from "../../dataManager.js"; // Import getMSAData
+import { getMSAData } from "../dataManager.js"; // Import getMSAData
 
 /**
  * Main event handler coordination
@@ -144,7 +144,7 @@ export function attachMSAButtonHandler(gui) {
 
     // Get MSA data using dataManager
     const msaData = await getMSAData();
-    
+
     if (!msaData) {
       console.warn("[attachMSAButtonHandler] No MSA data found via getMSAData.");
       alert("No alignment data available. Please upload an MSA file.");
