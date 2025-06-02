@@ -14,9 +14,14 @@
 
 /* Header within the modal content */
 .comparison-header {
-  padding: var(--spacing-medium) var(--spacing-large);
+  padding: var(--spacing-large) var(--spacing-xl); /* Increased horizontal padding for consistency */
   border-bottom: 1px solid var(--border-color-dark-theme);
   flex-shrink: 0;
+  background: linear-gradient(
+    135deg,
+    var(--dialog-background-color),
+    rgba(255, 255, 255, 0.02)
+  ); /* Subtle gradient for visual interest */
 }
 
 .comparison-header h3 {
@@ -24,6 +29,7 @@
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-medium);
   color: var(--text-color-dark-theme-emphasis);
+  text-align: center; /* Center the title for better visual balance */
 }
 
 
@@ -32,11 +38,31 @@
   flex-direction: row;
   justify-content: center;
   align-items: stretch;
-  gap: var(--spacing-large);
+  gap: var(--spacing-xl); /* Increased gap from 16px to 24px for better separation */
   width: 100%;
   flex-grow: 1;
-  padding: var(--spacing-large);
+  padding: var(--spacing-large) var(--spacing-xl); /* Added horizontal padding for better side margins */
   min-height: 0;
+  position: relative; /* For positioning the visual separator */
+}
+
+/* Visual separator between trees */
+.tree-comparison-row::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: var(--spacing-large);
+  bottom: var(--spacing-large);
+  width: 1px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--border-color-dark-theme),
+    var(--border-color-dark-theme),
+    transparent
+  );
+  transform: translateX(-50%);
+  opacity: 0.5;
 }
 
 .tree-container {
@@ -48,8 +74,33 @@
   flex-direction: column;
   align-items: stretch;
   justify-content: flex-start;
-  padding: var(--spacing-medium);
+  padding: var(--spacing-large); /* Increased padding from medium to large for better breathing room */
   overflow: hidden;
+  border: 1px solid var(--border-color-dark-theme); /* Added subtle border for better definition */
+}
+
+/* Tree label styling */
+.tree-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-color-dark-theme-emphasis);
+  text-align: center;
+  padding: var(--spacing-sm) 0;
+  margin-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--border-color-dark-theme);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--standard-border-radius);
+}
+
+/* Subtle hover effect for tree containers */
+.tree-container:hover {
+  box-shadow: var(--shadow-md);
+  border-color: rgba(255, 255, 255, 0.3);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.tree-container {
+  transition: box-shadow 0.2s ease, border-color 0.2s ease; /* Smooth transitions */
 }
 
 /* Interpolation Modal */
@@ -92,9 +143,11 @@
   display: flex; /* To center SVG if it's smaller */
   align-items: center;
   justify-content: center;
-  min-height: 100px; /* Minimum height for the SVG area */
+  min-height: 200px; /* Increased minimum height for better tree visibility */
   overflow: hidden; /* Ensure SVG doesn't break layout */
   width: 100%;
+  border-radius: var(--standard-border-radius); /* Add border radius for consistency */
+  background-color: rgba(255, 255, 255, 0.02); /* Very subtle background tint for SVG area */
 }
 
 /* No specific margins needed if .tree-container has padding */
@@ -152,10 +205,11 @@
   display: flex;
   flex-direction: column; /* Stack control groups vertically */
   gap: var(--spacing-medium, 12px);
-  padding: var(--spacing-medium, 12px) var(--spacing-large, 16px);
+  padding: var(--spacing-large, 16px) var(--spacing-xl, 24px); /* Increased horizontal padding for consistency */
   border-top: 1px solid var(--border-color-dark-theme, rgba(255,255,255,0.1));
   /* margin-bottom: var(--spacing-medium, 12px); */ /* No bottom margin, footer is next */
   background-color: var(--dialog-background-color); /* Match modal background */
+  border-radius: 0 0 var(--standard-border-radius) var(--standard-border-radius); /* Rounded bottom corners */
 }
 
 .control-group {

@@ -79,7 +79,7 @@ export function handleZoomResize() {
 
   // Get current zoom transform
   const currentTransform = d3.zoomTransform(domContainer);
-  
+
   // If at identity transform, recenter
   if (currentTransform.k === 1 && currentTransform.x === 0 && currentTransform.y === 0) {
     const centerTransform = d3.zoomIdentity.translate(width / 2, height / 2);
