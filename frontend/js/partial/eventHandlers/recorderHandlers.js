@@ -1,18 +1,28 @@
 /**
- * Screen recorder event handlers
+ * Manages event handlers related to the screen recording functionality.
+ * It interacts with a `ScreenRecorder` instance and updates UI elements
+ * based on the recording state.
+ * @export
+ * @class RecorderHandlers
  */
 export class RecorderHandlers {
+  /**
+   * Creates an instance of RecorderHandlers.
+   * @param {ScreenRecorder} recorder - The ScreenRecorder instance to manage.
+   */
   constructor(recorder) {
     this.recorder = recorder;
     this.isRecording = false;
 
-    // Bind methods
+    // Bind methods to ensure 'this' context is correct when used as event handlers
     this.handleStartRecordingBound = this.handleStartRecording.bind(this);
     this.handleStopRecordingBound = this.handleStopRecording.bind(this);
   }
 
   /**
-   * Attach all recorder event handlers
+   * Attaches all necessary event listeners for recorder controls (start/stop buttons)
+   * and sets up callbacks on the ScreenRecorder instance.
+   * @returns {void}
    */
   attachAll() {
     const startRecordBtn = document.getElementById("start-record");
@@ -25,14 +35,17 @@ export class RecorderHandlers {
       stopRecordBtn.addEventListener('click', this.handleStopRecordingBound);
     }
 
-    // Set up recorder callbacks
+    // Set up recorder callbacks to update UI and state
     this.recorder.onStart = () => this.onRecordingStart();
     this.recorder.onStop = (blob) => this.onRecordingStop(blob);
     this.recorder.onError = (error) => this.onRecordingError(error);
   }
 
   /**
-   * Handle start recording button click
+   * Handles the click event for the "Start Recording" button.
+   * Initiates screen recording if not already recording.
+   * @async
+   * @returns {Promise<void>}
    */
   async handleStartRecording() {
     if (this.isRecording) {
@@ -49,7 +62,9 @@ export class RecorderHandlers {
   }
 
   /**
-   * Handle stop recording button click
+   * Handles the click event for the "Stop Recording" button.
+   * Stops the screen recording if currently active.
+   * @returns {void}
    */
   handleStopRecording() {
     if (!this.isRecording) {
@@ -61,7 +76,9 @@ export class RecorderHandlers {
   }
 
   /**
-   * Called when recording starts
+   * Callback function executed when the ScreenRecorder starts recording.
+   * Updates UI elements (buttons) and internal recording state.
+   * @returns {void}
    */
   onRecordingStart() {
     this.isRecording = true;
@@ -84,7 +101,10 @@ export class RecorderHandlers {
   }
 
   /**
-   * Called when recording stops
+   * Callback function executed when the ScreenRecorder stops recording.
+   * Updates UI elements, internal state, and prompts for manual save if auto-save is off.
+   * @param {Blob} blob - The recorded media data as a Blob.
+   * @returns {void}
    */
   onRecordingStop(blob) {
     this.isRecording = false;
@@ -112,7 +132,10 @@ export class RecorderHandlers {
   }
 
   /**
-   * Called when recording encounters an error
+   * Callback function executed when the ScreenRecorder encounters an error.
+   * Updates UI, resets state, and alerts the user.
+   * @param {Error} error - The error object from the ScreenRecorder.
+   * @returns {void}
    */
   onRecordingError(error) {
     this.isRecording = false;
@@ -137,7 +160,9 @@ export class RecorderHandlers {
   }
 
   /**
-   * Prompt user to manually save the recording
+   * Prompts the user to manually save the recording if auto-save is not enabled.
+   * Uses a confirm dialog and then calls `this.recorder.performAutoSave()`.
+   * @returns {void}
    */
   promptManualSave() {
     const saveChoice = confirm("Recording complete! Would you like to save it now?");
@@ -153,7 +178,11 @@ export class RecorderHandlers {
   }
 
   /**
-   * Set up advanced save options
+   * Sets up an advanced/manual save button for recordings.
+   * This button is typically shown when auto-save is disabled, allowing the user
+   * to trigger a save explicitly.
+   * Note: This method manipulates the DOM to create and manage the save button.
+   * @returns {void}
    */
   setupAdvancedSave() {
     // Add a custom save button if it doesn't exist
@@ -198,7 +227,10 @@ export class RecorderHandlers {
   }
 
   /**
-   * Clean up event listeners and recorder callbacks
+   * Cleans up all attached event listeners and nullifies callbacks on the
+   * ScreenRecorder instance to prevent memory leaks.
+   * This should be called when the recorder UI is being removed or re-initialized.
+   * @returns {void}
    */
   cleanup() {
     const startRecordBtn = document.getElementById("start-record");
