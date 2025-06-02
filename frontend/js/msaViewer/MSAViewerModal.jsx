@@ -33,16 +33,16 @@ function calculateMSADimensions(containerRef, containerWidth, containerHeight) {
 function createMSAModel(msaString, dimensions) {
   try {
     const MSAModel = MSAModelF(
-        
+
     );
     const modelData = {
       id: `msa-${Date.now()}`,
       type: "MsaView",
       data: { msa: msaString },
     };
-    
+
     const model = MSAModel.create(modelData);
-    
+
     // Set initial responsive width
     if (model && typeof model.setWidth === 'function') {
       model.setWidth(dimensions.width);
@@ -50,7 +50,7 @@ function createMSAModel(msaString, dimensions) {
     if (model && typeof model.setHeight === 'function') {
       model.setHeight(dimensions.height);
     }
-    
+
     return model;
   } catch (error) {
     console.error("MSA MODEL CREATION FAILED:", error);
@@ -80,7 +80,7 @@ export default function MSAViewerContent({ msaString, containerWidth = 1200, con
   const [modelCreated, setModelCreated] = useState(false);
   const [error, setError] = useState(null);
   const [dimensions, setDimensions] = useState(null);
-  
+
   // Refs
   const syncEnabledRef = useRef(syncEnabled);
   const modelRef = useRef();
@@ -94,10 +94,10 @@ export default function MSAViewerContent({ msaString, containerWidth = 1200, con
   // Handle model resize with debouncing
   const handleResize = useCallback(() => {
     if (!containerRef.current || !modelRef.current) return;
-    
+
     const newDimensions = calculateMSADimensions(containerRef, containerWidth, containerHeight);
     setDimensions(newDimensions);
-    
+
     if (typeof modelRef.current.setWidth === 'function') {
       modelRef.current.setWidth(newDimensions.width);
     }
@@ -114,7 +114,7 @@ export default function MSAViewerContent({ msaString, containerWidth = 1200, con
       // Calculate initial dimensions
       const initialDimensions = calculateMSADimensions(containerRef, containerWidth, containerHeight);
       setDimensions(initialDimensions);
-      
+
       try {
         // Create new model
         modelRef.current = createMSAModel(msaString, initialDimensions);
@@ -235,7 +235,7 @@ export default function MSAViewerContent({ msaString, containerWidth = 1200, con
 
   return (
     <ThemeProvider theme={theme}>
-      <div 
+      <div
         ref={containerRef}
         style={{
           width: "100%",
@@ -252,11 +252,11 @@ export default function MSAViewerContent({ msaString, containerWidth = 1200, con
       >
         {/*
         // Header with controls - Commented out to prioritize react-msaview's native header
-        <div style={{ 
-          padding: "8px 12px", 
-          borderBottom: "1px solid #ccc", 
-          display: "flex", 
-          justifyContent: "space-between", 
+        <div style={{
+          padding: "8px 12px",
+          borderBottom: "1px solid #ccc",
+          display: "flex",
+          justifyContent: "space-between",
           alignItems: "center",
           minHeight: `${dimensions.headerHeight - 16}px`, // This will now be based on headerHeight = 0
           background: "#f8f9fa",
@@ -282,23 +282,23 @@ export default function MSAViewerContent({ msaString, containerWidth = 1200, con
           </div>
         </div>
         */}
-        
+
         {/* MSA viewer container */}
-        <div style={{ 
+        <div style={{
           flex: 1,
-          padding: "4px", 
+          padding: "4px",
           background: "#fff",
           overflow: "hidden"
         }}>
           <MSAView
             drawTree= {true}
 
-            model={modelRef.current} 
-            style={{ 
-              width: "100%", 
+            model={modelRef.current}
+            style={{
+              width: "100%",
               height: "100%",
               minHeight: `${dimensions.height}px`,
-              
+
             }}
           />
         </div>

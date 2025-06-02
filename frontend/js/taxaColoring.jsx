@@ -321,9 +321,6 @@ export default class TaxaColoring {
     let count = 0;
     this.taxaNames.forEach((taxon) => {
       if (this.getTaxonGroup(taxon) === groupName) {
-    let count = 0;
-    this.taxaNames.forEach((taxon) => {
-      if (this.getTaxonGroup(taxon) === groupName) {
         count++;
       }
     });
@@ -364,8 +361,8 @@ export default class TaxaColoring {
       });
 
       // Rerender the taxa inputs to show the new colors
-      this.clearContainer(this.dynamicContent);
-      this.renderTaxaColorInputs(this.dynamicContent);
+      this.clearContainer(this.dynamicContentPlaceholder);
+      this.renderTaxaColorInputs(this.dynamicContentPlaceholder);
     } else {
       // For group mode, assign a color to each group
       const groups = this.detectGroups();
@@ -375,8 +372,8 @@ export default class TaxaColoring {
       });
 
       // Rerender the group inputs to show the new colors
-      this.clearContainer(this.dynamicContent);
-      this.renderGroupOptions(this.dynamicContent);
+      this.clearContainer(this.dynamicContentPlaceholder);
+      this.renderGroupOptions(this.dynamicContentPlaceholder);
     }
   }
 

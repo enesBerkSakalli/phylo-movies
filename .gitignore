@@ -25,3 +25,4 @@ pnpm-debug.log*
 *.sw?
 phylomovie/services/reports/auto
 phylo-io
+frontend.log

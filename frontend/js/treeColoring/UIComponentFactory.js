@@ -32,7 +32,8 @@ export class UIComponentFactory {
         x: 'center',
         y: 'center',
         mount: modalContent,
-        onclose: onClose
+        onclose: onClose,
+        class: ["no-full, chart-modal-container, chart-modal-controls"],
       });
     } else {
       // Fallback if WinBox is not available
