@@ -1,11 +1,23 @@
 /**
- * Submenu toggle functionality
+ * Provides static methods for managing the toggle functionality of submenus.
+ * Submenus are expected to have a specific HTML structure with a header and content area.
+ * The state (collapsed/expanded) is managed via a `data-collapsed` attribute and stored in localStorage.
+ * @export
+ * @class SubmenuHandlers
  */
 export class SubmenuHandlers {
   /**
-   * Toggle a submenu open/closed by id
+   * Toggles the visibility of a submenu.
+   * It reads the current state from the `data-collapsed` attribute of the submenu's container,
+   * flips the state, updates the attribute, and saves the new state to localStorage.
+   * @static
+   * @param {string} submenuId - The ID of the submenu element (the content area).
+   * @param {string} toggleIconId - The ID of the toggle icon element (often a chevron).
+   *                                This parameter is currently not used within the method for toggling
+   *                                but might be intended for future visual state changes of the icon.
+   * @returns {void}
    */
-  static toggle(submenuId, toggleIconId) {
+  static toggle(submenuId, toggleIconId) { // toggleIconId is passed but not used for icon state change here
     const submenu = document.getElementById(submenuId);
     if (!submenu) return;
     const container = submenu.closest('.submenu-container');
@@ -20,7 +32,12 @@ export class SubmenuHandlers {
   }
 
   /**
-   * Initialize all toggleable elements on the page
+   * Initializes all submenu containers found on the page.
+   * It attaches click and keydown (Enter/Space) event listeners to each submenu header
+   * to enable toggling. It also restores the toggle state (collapsed/expanded) from localStorage.
+   * Each initialized container gets a `data-initialized="true"` attribute to prevent re-initialization.
+   * @static
+   * @returns {void}
    */
   static initializeAll() {
     const submenuContainers = document.querySelectorAll('.submenu-container');

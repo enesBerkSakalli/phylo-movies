@@ -12,11 +12,17 @@ import { loadAllPartials } from "./partial/loadPartials.js";
 import { ScreenRecorder } from "./record/record.js";
 
 import localforage from 'localforage';
-import { fetchTreeData } from "./fetch.js";
+import { getPhyloMovieData, fetchTreeData } from "./dataManager.js"; // Updated import
 
 let eventHandlersAttached = false;
 
-// New function to load all partials before GUI initialization
+/**
+ * Asynchronously loads all required HTML partials into their designated containers.
+ * It also verifies that critical UI elements are present after loading.
+ * @async
+ * @function loadAllRequiredPartials
+ * @returns {Promise<boolean>} True if all partials are loaded and elements verified, false otherwise.
+ */
 async function loadAllRequiredPartials() {
   console.log("[phylo-movies] Loading all required HTML partials");
 
@@ -74,9 +80,12 @@ async function loadAllRequiredPartials() {
     );
 
     if (missingElements.length > 0) {
-      // Fail if any required element is missing
+      // If any required element is missing, log a warning and return false.
+      // This indicates a potential issue with the HTML partials or the expected page structure.
       console.warn(
-        "Missing UI elements after loading partials:",
+        `[phylo-movies] Critical UI elements are missing after attempting to load partials.
+        The application may not function correctly. Missing elements: ${missingElements.join(", ")}.
+        Please check the HTML partial files and their container IDs.`,
         missingElements
       );
       return false;
@@ -90,252 +99,259 @@ async function loadAllRequiredPartials() {
   }
 }
 
-function initializeAppFromParsedData(parsedData) {
-  try {
-    console.log("[DEBUG] Starting deep inspection of parsedData:");
-
-    // Process embedding data
-    let processedEmbedding = [];
-    if (parsedData.embedding && Array.isArray(parsedData.embedding)) {
-      if (parsedData.embedding.length > 0) {
-        if (Array.isArray(parsedData.embedding[0])) {
-          console.log(
-            "[Embedding] Transforming list-of-lists to list-of-objects for embedding."
-          );
-          processedEmbedding = parsedData.embedding.map((point) => ({
-            x: point[0],
-            y: point[1],
-            z: point.length > 2 ? point[2] : 0,
-          }));
-        } else if (
-          typeof parsedData.embedding[0] === "object" &&
-          parsedData.embedding[0] !== null &&
-          "x" in parsedData.embedding[0] &&
-          "y" in parsedData.embedding[0]
-        ) {
-          console.log(
-            "[Embedding] Embedding is already in list-of-objects format."
-          );
-          processedEmbedding = parsedData.embedding;
-        } else {
-          console.warn(
-            "[Embedding] Unrecognized format for non-empty embedding data."
-          );
-        }
+/**
+ * Processes the embedding data from the parsed phyloMovieData.
+ * Transforms list-of-lists embedding to list-of-objects if necessary.
+ * @param {Array<Array<number>>|Array<Object>} embeddingData - The embedding data.
+ * @returns {Array<Object>} Processed embedding data (list-of-objects).
+ */
+function processEmbeddingData(embeddingData) {
+  let processedEmbedding = [];
+  if (embeddingData && Array.isArray(embeddingData)) {
+    if (embeddingData.length > 0) {
+      if (Array.isArray(embeddingData[0])) {
+        console.log(
+          "[Embedding] Transforming list-of-lists to list-of-objects for embedding."
+        );
+        processedEmbedding = embeddingData.map((point) => ({
+          x: point[0],
+          y: point[1],
+          z: point.length > 2 ? point[2] : 0,
+        }));
+      } else if (
+        typeof embeddingData[0] === "object" &&
+        embeddingData[0] !== null &&
+        "x" in embeddingData[0] &&
+        "y" in embeddingData[0]
+      ) {
+        console.log(
+          "[Embedding] Embedding is already in list-of-objects format."
+        );
+        processedEmbedding = embeddingData;
+      } else {
+        console.warn(
+          "[Embedding] Unrecognized format for non-empty embedding data."
+        );
       }
     }
+  }
+  logEmbeddingEnhanced(processedEmbedding);
+  return processedEmbedding;
+}
 
-    logEmbeddingEnhanced(processedEmbedding);
+/**
+ * Initializes the GUI, attaches event handlers, and starts the movie.
+ * This function assumes that all required HTML partials have been loaded.
+ * @param {Object} parsedData - The validated phyloMovieData.
+ * @param {Array<Object>} processedEmbedding - The processed embedding data.
+ */
+async function initializeGuiAndEvents(parsedData, processedEmbedding) {
+  try {
+    console.log("[DEBUG] Initializing GUI and attaching event handlers.");
 
-    // Load all partials first, then initialize the GUI
-    loadAllRequiredPartials().then((success) => {
-      if (!success) {
-        console.error("[phylo-movies] Failed to load required partials");
-        alert(
-          "Error: Failed to load interface elements. Please refresh the page."
-        );
-        return;
-      }
+    // Always fetch latest data from IndexedDB/localForage for all major fields
+    // This ensures consistency if data was updated elsewhere, though typically parsedData should be fresh.
+    const dbData = await localforage.getItem("phyloMovieData");
+    const {
+      tree_list = [],
+      weighted_robinson_foulds_distance_list = [],
+      rfd_list = [],
+      window_size = 0,
+      window_step_size = 0,
+      to_be_highlighted = [],
+      sorted_leaves = [],
+      file_name = "",
+    } = dbData || parsedData; // Fallback to initially parsedData if dbData is somehow null
 
-      console.log("[DEBUG] All partials loaded, now initializing GUI");
+    let colorInternalBranches = true; // Default or configurable setting
 
+    const factorInput = document.getElementById("factor");
+    const factorValue = factorInput ? parseInt(factorInput.value, 10) : 0.5;
 
-      try {
-        // Always fetch latest data from IndexedDB/localForage for all major fields
-        (async () => {
-          const dbData = await localforage.getItem("phyloMovieData");
-          const {
-            tree_list = [],
-            weighted_robinson_foulds_distance_list = [],
-            rfd_list = [],
-            window_size = 0,
-            window_step_size = 0,
-            to_be_highlighted = [],
-            sorted_leaves = [],
-            file_name = "",
-          } = dbData || parsedData;
+    // Create GUI instance
+    const gui = new Gui(
+      tree_list,
+      weighted_robinson_foulds_distance_list,
+      rfd_list,
+      window_size,
+      window_step_size,
+      to_be_highlighted,
+      sorted_leaves,
+      colorInternalBranches,
+      file_name,
+      factorValue
+    );
 
-          let colorInternalBranches = true;
+    console.log("[DEBUG] Gui instance created successfully");
+    window.gui = gui;
+    window.emb = processedEmbedding; // Make processed embedding globally available
 
-          const factorInput = document.getElementById("factor");
-          const factorValue = factorInput ? parseInt(factorInput.value, 10) : 0.5;
-          console.log(to_be_highlighted);
-          // Create GUI instance after all partials are loaded
-          const gui = new Gui(
-            tree_list,
-            weighted_robinson_foulds_distance_list,
-            rfd_list,
-            window_size,
-            window_step_size,
-            to_be_highlighted,
-            sorted_leaves,
-            colorInternalBranches,
-            file_name,
-            factorValue
-          );
+    attachMSAButtonHandler(gui);
 
-          console.log("[DEBUG] Gui instance created successfully");
-          window.gui = gui;
-          window.emb = processedEmbedding;
-
-          // The Gui class instance (gui) now has its own syncMSAIfOpen method
-          // that dispatches the 'msa-sync-request' event.
-          // No need to override it here. The call within gui.update() will use the class method.
-
-          // Attach MSA button handler ONCE after GUI is created
-          attachMSAButtonHandler(gui);
-
-          // Initialize screen recorder
-          const recorder = new ScreenRecorder({
-            onStart: () => {
-              console.log("Recording started...");
-              document.getElementById("start-record").disabled = true;
-              document.getElementById("stop-record").disabled = false;
-            },
-            onStop: (blob) => {
-              console.log("Recording stopped.");
-              const downloadLink = recorder.createDownloadLink();
-              document.body.appendChild(downloadLink);
-              document.getElementById("start-record").disabled = false;
-              document.getElementById("stop-record").disabled = true;
-            },
-            onError: (error) => {
-              console.error("Recording error:", error);
-              alert("Recording error: " + error.message);
-              document.getElementById("start-record").disabled = false;
-              document.getElementById("stop-record").disabled = true;
-            },
-          });
-
-          attachRecorderEventHandlers(recorder);
-
-          window.addEventListener("resize", () => {
-            gui.resize();
-            gui.update();
-          });
-
-          // Attach event handlers and initialize movie
-          if (!eventHandlersAttached && gui) {
-            attachGuiEventHandlers(gui);
-            initializeToggles(); // Initialize submenu toggles after main GUI handlers
-            eventHandlersAttached = true;
-            gui.initializeMovie();
-            gui.play();
-          }
-        })();
-      } catch (guiError) {
-        console.error("[DEBUG] Error creating Gui instance:", guiError);
-        alert(`Error creating visualization: ${guiError.message}`);
-      }
+    const recorder = new ScreenRecorder({
+      onStart: () => {
+        console.log("Recording started...");
+        document.getElementById("start-record").disabled = true;
+        document.getElementById("stop-record").disabled = false;
+      },
+      onStop: (blob) => {
+        console.log("Recording stopped.");
+        const downloadLink = recorder.createDownloadLink();
+        document.body.appendChild(downloadLink);
+        document.getElementById("start-record").disabled = false;
+        document.getElementById("stop-record").disabled = true;
+      },
+      onError: (error) => {
+        console.error("Recording error:", error);
+        alert("Recording error: " + error.message);
+        document.getElementById("start-record").disabled = false;
+        document.getElementById("stop-record").disabled = true;
+      },
     });
+    attachRecorderEventHandlers(recorder);
+
+    window.addEventListener("resize", () => {
+      gui.resize();
+      gui.update();
+    });
+
+    if (!eventHandlersAttached) {
+      attachGuiEventHandlers(gui);
+      initializeToggles();
+      eventHandlersAttached = true;
+      gui.initializeMovie();
+      gui.play();
+      console.log("[DEBUG] Event handlers attached and movie initialized.");
+    }
+  } catch (guiError) {
+    console.error("[DEBUG] Error during GUI initialization or event handling:", guiError);
+    alert(`Error creating visualization or attaching events: ${guiError.message}`);
+    // Depending on the error, might want to throw it to be caught by initializeAppFromParsedData
+    throw guiError;
+  }
+}
+
+
+/**
+ * Main function to initialize the application after data is parsed.
+ * It processes data, loads partials, and then initializes the GUI and event handlers.
+ * @param {Object} parsedData - The validated phyloMovieData from dataManager.
+ */
+async function initializeAppFromParsedData(parsedData) {
+  try {
+    console.log("[DEBUG] Starting initializeAppFromParsedData with:", parsedData);
+
+    const processedEmbedding = processEmbeddingData(parsedData.embedding);
+
+    const partialsLoaded = await loadAllRequiredPartials();
+    if (!partialsLoaded) {
+      console.error("[phylo-movies] Failed to load required HTML partials.");
+      alert(
+        "Error: Failed to load essential interface components. Please refresh the page or check the console."
+      );
+      return; // Stop further execution if partials failed
+    }
+
+    console.log("[DEBUG] All partials loaded, proceeding to initialize GUI and events.");
+    await initializeGuiAndEvents(parsedData, processedEmbedding);
+    console.log("[phylo-movies] GUI and events initialization complete.");
+
   } catch (err) {
     console.error(
-      "[DEBUG] Top-level error in initializeAppFromParsedData:",
+      "[DEBUG] Error in initializeAppFromParsedData execution flow:",
       err
     );
-    alert(`Initialization error: ${err.message}`);
+    // Ensure user is alerted about critical failures during app initialization.
+    alert(`Critical application initialization error: ${err.message}. Please try refreshing the page.`);
+    // Optionally, redirect or attempt recovery if applicable.
   }
 }
 
 // MAIN EXECUTION BLOCK
+// Determines if the current page is the visualization page or the index/upload page.
 const isVisualizationPage =
   document.getElementById("application-container") !== null;
 console.log("[phylo-movies] Is visualization page:", isVisualizationPage);
 
 if (isVisualizationPage) {
+  // Initialization logic for the visualization page (vis.html)
+  // This IIFE (Immediately Invoked Function Expression) is async to use await for data loading.
   (async () => {
-    const storedData = await localforage.getItem("phyloMovieData");
-    console.log(
-      "[phylo-movies] IndexedDB phyloMovieData:",
-      storedData ? "Data found" : "No data"
-    );
-
-    if (!storedData) {
-      console.warn(
-        "[phylo-movies] No phyloMovieData in IndexedDB, redirecting to index.html"
-      );
-      alert(
-        "Error: No visualization data found in browser storage.\n\nRedirecting to the upload form."
-      );
-      window.location.href = "/index.html";
-    } else {
-      try {
-        const parsedData = storedData;
-        console.log("[phylo-movies] Successfully loaded phyloMovieData from IndexedDB");
-
-        const requiredFields = [
-          "tree_list",
-          "weighted_robinson_foulds_distance_list",
-          "rfd_list",
-          "window_size",
-          "window_step_size",
-          "to_be_highlighted",
-          "sorted_leaves",
-          "file_name",
-          "embedding",
-        ];
-        const missingFields = requiredFields.filter((f) => !(f in parsedData));
-
-        if (missingFields.length > 0) {
-          console.error("[phylo-movies] Missing required fields:", missingFields);
-          await localforage.removeItem("phyloMovieData");
-          alert(
-            `Error: Missing required data fields: ${missingFields.join(", ")}\n\nRedirecting to the upload form.`
-          );
-          window.location.href = "/index.html";
-        } else {
-          // Update file name in the dedicated element
-          const fileNameElement = document.querySelector("#fileNameDisplay .file-name");
-          if (fileNameElement) {
-            fileNameElement.textContent = parsedData.file_name || "Unknown File";
-          }
-
-          // Update embedding status
-          const embeddingStatusText = document.getElementById("embeddingStatusText");
-          if (embeddingStatusText) {
-            const embeddingEnabled = parsedData.enable_embedding !== false; // Default to true if not specified
-            if (embeddingEnabled) {
-              embeddingStatusText.textContent = "UMAP Embedding";
-              embeddingStatusText.className = "embedding-type embedding-umap";
-            } else {
-              embeddingStatusText.textContent = "Geometric Patterns";
-              embeddingStatusText.className = "embedding-type embedding-geometric";
-            }
-          }
-
-          const windowSizeDisplay = document.getElementById("windowSizeDisplay");
-          if (windowSizeDisplay) {
-            windowSizeDisplay.textContent = `Window-Size: ${
-              parsedData.window_size || ""
-            } / Step-Size: ${parsedData.window_step_size || ""}`;
-          }
-
-          console.log("[phylo-movies] Initializing visualization");
-          initializeAppFromParsedData(parsedData);
-        }
-      } catch (e) {
-        console.error("[phylo-movies] Failed to load phyloMovieData from IndexedDB:", e);
-        await localforage.removeItem("phyloMovieData");
+    try {
+      // Attempt to get validated phyloMovieData using the dataManager
+      const parsedData = await getPhyloMovieData();
+      if (!parsedData) {
+        // If no data or data is invalid, alert the user and redirect to the upload page.
+        console.warn(
+          "[phylo-movies] No valid phyloMovieData found, redirecting to index.html"
+        );
         alert(
-          `Error: Failed to parse visualization data: ${e.message}\n\nRedirecting to the upload form.`
+          "Error: No visualization data found or data is invalid.\n\nRedirecting to the upload form."
         );
         window.location.href = "/index.html";
+        return; // Stop further execution on this page
       }
+
+      console.log("[phylo-movies] Successfully loaded and validated phyloMovieData via dataManager.");
+
+      // Update UI elements with loaded data (file name, embedding status, window size)
+      const fileNameElement = document.querySelector("#fileNameDisplay .file-name");
+      if (fileNameElement) {
+        fileNameElement.textContent = parsedData.file_name || "Unknown File";
+      }
+
+      const embeddingStatusText = document.getElementById("embeddingStatusText");
+      if (embeddingStatusText) {
+        const embeddingEnabled = parsedData.enable_embedding !== false; // Default to true
+        embeddingStatusText.textContent = embeddingEnabled ? "UMAP Embedding" : "Geometric Patterns";
+        embeddingStatusText.className = `embedding-type ${embeddingEnabled ? "embedding-umap" : "embedding-geometric"}`;
+      }
+
+      const windowSizeDisplay = document.getElementById("windowSizeDisplay");
+      if (windowSizeDisplay) {
+        windowSizeDisplay.textContent = `Window-Size: ${
+          parsedData.window_size || "N/A"
+        } / Step-Size: ${parsedData.window_step_size || "N/A"}`;
+      }
+
+      // Proceed with the main application initialization
+      console.log("[phylo-movies] Initializing visualization via initializeAppFromParsedData");
+      await initializeAppFromParsedData(parsedData);
+      console.log("[phylo-movies] Visualization initialization process completed.");
+
+    } catch (e) {
+      // Catch any critical errors during the startup process
+      console.error("[phylo-movies] Critical error during page load and data initialization:", e);
+      alert(
+        `Error during application startup: ${e.message}\n\nAttempting to redirect to the upload form.`
+      );
+      // As a fallback, try to clear potentially corrupted data and redirect to index.html
+      try {
+        await localforage.removeItem("phyloMovieData");
+      } catch (removeError) {
+        console.error("[phylo-movies] Failed to remove phyloMovieData from localForage:", removeError);
+      }
+      window.location.href = "/index.html";
     }
   })();
 } else {
-  // On index.html page, set up form handling
-  console.log("[phylo-movies] Setting up form handlers on index page");
+  // Setup for the index.html page (upload form)
+  console.log("[phylo-movies] Setting up form handlers on index page.");
 
+  // Attach event listener to the phylo-form once the DOM is fully loaded.
   document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("phylo-form");
     if (form) {
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault(); // Prevent default form submission
         const formData = new FormData(form);
+        // Call fetchTreeData from dataManager to process the form and redirect.
+        // Errors are handled within fetchTreeData.
         await fetchTreeData(formData);
       });
-      console.log("[phylo-movies] Form submission handler attached");
+      console.log("[phylo-movies] Form submission handler attached to #phylo-form.");
+    } else {
+      console.warn("[phylo-movies] #phylo-form not found on this page.");
     }
   });
 }
