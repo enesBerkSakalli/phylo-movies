@@ -3,18 +3,31 @@ import { EventHandlerIterator } from './eventHandlerIterator.js';
 import { notifications } from './notificationSystem.js';
 
 /**
- * Modern GUI event handler system using data-driven approach
+ * Manages the attachment and detachment of GUI event handlers.
+ * It uses an `EventHandlerRegistry` to define and manage handler configurations
+ * and an `EventHandlerIterator` (though its usage seems to have been replaced by direct registry calls).
+ * @export
+ * @class GuiEventHandlers
  */
 export class GuiEventHandlers {
+  /**
+   * Creates an instance of GuiEventHandlers.
+   * @param {Gui} gui - The main GUI instance that handlers will interact with.
+   */
   constructor(gui) {
     this.gui = gui;
     this.registry = new EventHandlerRegistry(gui);
+    // iterator might be deprecated or its role changed, as attachAll directly uses registry.
     this.iterator = new EventHandlerIterator(this.registry);
-    this.attachmentStats = null;
+    this.attachmentStats = null; // Stores statistics from the last attachAll call.
   }
 
   /**
-   * Attach all GUI event handlers using the iterator pattern
+   * Attaches all configured GUI event handlers defined in the `EventHandlerRegistry`.
+   * It delegates the attachment logic to `this.registry.attachAll()`.
+   * @async
+   * @returns {Promise<Object>} A promise that resolves to an object containing statistics about the attachment process.
+   * @throws {Error} If there's a critical failure during the handler attachment process.
    */
   async attachAll() {
     console.log('🎮 Initializing GUI event handler system...');
@@ -28,18 +41,21 @@ export class GuiEventHandlers {
     } catch (error) {
       console.error('❌ Failed to attach GUI event handlers:', error);
       notifications.show('Failed to initialize interface controls: ' + error.message, 'error');
-      throw error;
+      throw error; // Re-throw the error to be handled by the caller if necessary.
     }
   }
 
   /**
-   * Get detailed statistics about attached handlers
+   * Retrieves detailed statistics about the attached event handlers.
+   * This includes stats from the registry, the last attachment operation, and the iterator.
+   * @returns {Object} An object containing various statistics.
+   * Example: { registry: {...}, attachment: {...}, iterator: {...} }
    */
   getDetailedStats() {
     return {
       registry: this.registry.getStats(),
       attachment: this.attachmentStats,
-      iterator: {
+      iterator: { // Iterator stats might be less relevant if not directly used by attachAll
         totalHandlers: this.iterator.getTotalCount(),
         groupCount: this.iterator.groupNames.length
       }
@@ -47,7 +63,12 @@ export class GuiEventHandlers {
   }
 
   /**
-   * Attach specific handler group only
+   * Attaches a specific group of event handlers by its name.
+   * Handler groups are defined in `EventHandlerRegistry.getEventHandlerConfigs()`.
+   * @async
+   * @param {string} groupName - The name of the handler group to attach.
+   * @returns {Promise<Object>} A promise that resolves to statistics about the attachment of this group.
+   * @throws {Error} If the specified group name is not found in the configurations.
    */
   async attachGroup(groupName) {
     const configs = this.registry.getEventHandlerConfigs();
@@ -58,7 +79,10 @@ export class GuiEventHandlers {
   }
 
   /**
-   * Re-attach handlers that failed
+   * Attempts to re-attach event handlers that may have failed during a previous `attachAll` or `attachGroup` call.
+   * It identifies failed handlers by checking which configured handlers are not currently marked as attached in the registry.
+   * @async
+   * @returns {Promise<Object>} A promise that resolves to an object with `attempted` and `successful` retry counts.
    */
   async retryFailedHandlers() {
     console.log('🔄 Retrying failed handler attachments...');
@@ -85,10 +109,15 @@ export class GuiEventHandlers {
   }
 
   /**
-   * Cleanup all handlers
+   * Detaches all event handlers that were previously attached by this instance
+   * through the `EventHandlerRegistry`.
+   * This is crucial for preventing memory leaks when the GUI is re-initialized or destroyed.
+   * @returns {void}
    */
   cleanup() {
+    console.log('🧹 GuiEventHandlers: Cleaning up attached GUI handlers...');
     this.registry.detachAll();
+    console.log('✅ GuiEventHandlers: Cleanup complete.');
   }
 
 }
