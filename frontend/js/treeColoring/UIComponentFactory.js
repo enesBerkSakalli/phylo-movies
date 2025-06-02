@@ -1,4 +1,6 @@
 // File: UIComponentFactory.js
+import { ColorSchemePresets, getColorScheme } from './ColorSchemePresets.js';
+
 /**
  * Factory for creating UI components for tree coloring
  */
@@ -11,14 +13,12 @@ export class UIComponentFactory {
   static createColorAssignmentModal(onClose) {
     // Create modal content container
     const modalContent = document.createElement('div');
-    modalContent.style.padding = '20px';
-    modalContent.style.height = '100%';
-    modalContent.style.overflowY = 'auto';
+    modalContent.classList.add('factory-modal-content'); // New class
 
     // Create heading
     const heading = document.createElement('h2');
     heading.textContent = 'Taxa Color Assignment';
-    heading.style.marginBottom = '20px';
+    heading.classList.add('factory-modal-heading'); // New class
     modalContent.appendChild(heading);
 
     // Create WinBox modal if available, otherwise use a simple div
@@ -37,37 +37,18 @@ export class UIComponentFactory {
     } else {
       // Fallback if WinBox is not available
       const modalContainer = document.createElement('div');
-      modalContainer.style.position = 'fixed';
-      modalContainer.style.top = '10%';
-      modalContainer.style.left = '50%';
-      modalContainer.style.transform = 'translateX(-50%)';
-      modalContainer.style.width = '600px';
-      modalContainer.style.maxHeight = '80%';
-      modalContainer.style.backgroundColor = '#373747';
-      modalContainer.style.color = 'white';
-      modalContainer.style.borderRadius = '8px';
-      modalContainer.style.boxShadow = '0 4px 20px rgba(0,0,0,0.5)';
-      modalContainer.style.zIndex = '1000';
-      modalContainer.style.overflowY = 'auto';
+      modalContainer.classList.add('factory-fallback-modal-container'); // New class
 
       const modalHeader = document.createElement('div');
-      modalHeader.style.padding = '15px 20px';
-      modalHeader.style.borderBottom = '1px solid rgba(255,255,255,0.1)';
-      modalHeader.style.display = 'flex';
-      modalHeader.style.justifyContent = 'space-between';
-      modalHeader.style.alignItems = 'center';
+      modalHeader.classList.add('factory-fallback-modal-header'); // New class
 
       const modalTitle = document.createElement('h3');
       modalTitle.textContent = 'Taxa Coloring';
-      modalTitle.style.margin = '0';
+      modalTitle.classList.add('factory-fallback-modal-title'); // New class
 
       const closeButton = document.createElement('button');
       closeButton.innerHTML = '&times;';
-      closeButton.style.background = 'none';
-      closeButton.style.border = 'none';
-      closeButton.style.color = 'white';
-      closeButton.style.fontSize = '24px';
-      closeButton.style.cursor = 'pointer';
+      closeButton.classList.add('factory-fallback-modal-close-button'); // New class
       closeButton.onclick = () => {
         document.body.removeChild(modalContainer);
         if (onClose) onClose();
@@ -77,7 +58,7 @@ export class UIComponentFactory {
       modalHeader.appendChild(closeButton);
 
       modalContainer.appendChild(modalHeader);
-      modalContainer.appendChild(modalContent);
+      modalContainer.appendChild(modalContent); // modalContent already styled or given class
 
       document.body.appendChild(modalContainer);
 
@@ -108,13 +89,13 @@ export class UIComponentFactory {
   static createMainUI(container, renderTaxaFn, renderGroupsFn) {
     // Create mode selector
     const modeContainer = document.createElement('div');
-    modeContainer.className = 'mode-selector';
-    modeContainer.style.marginBottom = '20px';
+    modeContainer.className = 'mode-selector'; // Existing class
+    modeContainer.classList.add('factory-mode-container'); // New class for margin
 
     const modeLabel = document.createElement('label');
     modeLabel.textContent = 'Coloring Mode:';
     modeLabel.htmlFor = 'coloring-mode-selector';
-    modeLabel.style.marginRight = '10px';
+    modeLabel.classList.add('factory-mode-label'); // New class for margin
 
     const modeSelect = document.createElement('select');
     modeSelect.id = 'coloring-mode-selector';
@@ -142,11 +123,8 @@ export class UIComponentFactory {
 
     // Create button container
     const buttonContainer = document.createElement('div');
-    buttonContainer.className = 'button-container';
-    buttonContainer.style.display = 'flex';
-    buttonContainer.style.justifyContent = 'flex-end';
-    buttonContainer.style.marginTop = '20px';
-    buttonContainer.style.gap = '10px';
+    buttonContainer.className = 'button-container'; // Existing class
+    buttonContainer.classList.add('factory-button-container'); // New class for flex properties
 
     const cancelButton = document.createElement('button');
     cancelButton.textContent = 'Cancel';
@@ -173,58 +151,39 @@ export class UIComponentFactory {
    * @param {Object} options - Configuration options
    * @returns {HTMLElement} The preset selector element
    */
-  static createColorSchemePresetSelector({ onSchemeChange, onApply }) {
+  static createColorSchemePresetSelector({ onSchemeChange }) {
     const container = document.createElement('div');
-    container.className = 'color-scheme-presets';
-    container.style.marginBottom = '20px';
-    container.style.padding = '15px';
-    container.style.backgroundColor = 'rgba(0,0,0,0.15)';
-    container.style.borderRadius = '6px';
+    container.className = 'color-scheme-presets'; // Existing class
+    container.classList.add('factory-csp-container'); // New class for specific factory styling
 
     const title = document.createElement('h4');
     title.textContent = 'Color Schemes';
-    title.style.marginTop = '0';
-    title.style.marginBottom = '10px';
+    title.classList.add('factory-csp-title'); // New class
 
     const schemes = document.createElement('div');
-    schemes.style.display = 'flex';
-    schemes.style.gap = '10px';
-    schemes.style.flexWrap = 'wrap';
+    schemes.classList.add('factory-csp-schemes-wrapper'); // New class
 
-    const schemeOptions = [
-      { id: 'default', name: 'Default', colors: ['#3498db', '#9b59b6', '#2ecc71', '#f1c40f', '#e74c3c'] },
-      { id: 'rainbow', name: 'Rainbow', colors: ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0000FF'] },
-      { id: 'viridis', name: 'Viridis', colors: ['#440154', '#414487', '#2a788e', '#22a884', '#7ad151'] }
-    ];
-
-    schemeOptions.forEach(scheme => {
+    Object.entries(ColorSchemePresets).forEach(([schemeId, schemeColors]) => {
       const schemeButton = document.createElement('button');
-      schemeButton.className = 'scheme-button';
-      schemeButton.style.display = 'flex';
-      schemeButton.style.flexDirection = 'column';
-      schemeButton.style.alignItems = 'center';
-      schemeButton.style.padding = '8px';
-      schemeButton.style.backgroundColor = 'rgba(255,255,255,0.1)';
-      schemeButton.style.border = '1px solid rgba(255,255,255,0.2)';
-      schemeButton.style.borderRadius = '4px';
-      schemeButton.style.cursor = 'pointer';
+      schemeButton.className = 'scheme-button'; // Existing class, CSS covers most styles
+      // Add any factory-specific overrides or additional classes if .scheme-button is not sufficient
+      // For now, assuming .scheme-button from coloring.css is mostly sufficient.
+      // The inline styles for .scheme-button were similar to the CSS.
+      // If differences are needed, add a new class like 'factory-scheme-button-override'
 
       const colorBar = document.createElement('div');
-      colorBar.style.width = '60px';
-      colorBar.style.height = '8px';
-      colorBar.style.marginBottom = '5px';
-      colorBar.style.borderRadius = '4px';
-      colorBar.style.background = `linear-gradient(to right, ${scheme.colors.join(', ')})`;
+      colorBar.classList.add('factory-csp-color-bar'); // New class
+      colorBar.style.background = `linear-gradient(to right, ${schemeColors.join(', ')})`; // Dynamic, stays inline
 
-      const schemeName = document.createElement('span');
-      schemeName.textContent = scheme.name;
-      schemeName.style.fontSize = '12px';
+      const schemeNameElement = document.createElement('span');
+      schemeNameElement.textContent = schemeId;
+      schemeNameElement.classList.add('factory-csp-scheme-name'); // New class
 
       schemeButton.appendChild(colorBar);
-      schemeButton.appendChild(schemeName);
+      schemeButton.appendChild(schemeNameElement);
 
       schemeButton.addEventListener('click', () => {
-        if (onSchemeChange) onSchemeChange(scheme.id);
+        if (onSchemeChange) onSchemeChange(schemeId);
       });
 
       schemes.appendChild(schemeButton);
@@ -244,7 +203,7 @@ export class UIComponentFactory {
   static createColorContainer(id) {
     const container = document.createElement('div');
     container.id = id;
-    container.style.marginTop = '15px';
+    container.classList.add('factory-color-container'); // New class
     return container;
   }
 
@@ -254,9 +213,11 @@ export class UIComponentFactory {
    */
   static createColorInputGrid() {
     const grid = document.createElement('div');
-    grid.style.display = 'grid';
-    grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(180px, 1fr))';
-    grid.style.gap = '10px';
+    // Reusing .color-input-grid from existing CSS if its single column is acceptable,
+    // otherwise, use a new class for the factory's specific grid layout.
+    // The existing .color-input-grid becomes 1fr 1fr at @media (min-width: 768px).
+    // The factory style is more general.
+    grid.classList.add('factory-color-input-grid'); // New class
     return grid;
   }
 
@@ -269,20 +230,25 @@ export class UIComponentFactory {
    */
   static createColorInput(name, color, onChange) {
     const inputDiv = document.createElement('div');
-    inputDiv.className = 'color-input';
-    inputDiv.style.display = 'flex';
-    inputDiv.style.alignItems = 'center';
-    inputDiv.style.padding = '5px';
-    inputDiv.style.backgroundColor = 'rgba(0,0,0,0.1)';
-    inputDiv.style.borderRadius = '4px';
+    // .color-input-row from coloring.css already defines:
+    // display: flex; align-items: center; padding: 7px 12px;
+    // border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 5px;
+    // border-radius: 4px; background-color: rgba(0,0,0,0.1);
+    // The factory used padding: 5px. We can add a new class or accept .color-input-row's padding.
+    inputDiv.className = 'color-input-row'; // Using existing class
+    // If specific padding '5px' is crucial and different from '7px 12px', add a modifier class.
+    // For now, assume .color-input-row is acceptable.
+    // inputDiv.classList.add('factory-color-input-custom-padding');
+
 
     const label = document.createElement('label');
     label.textContent = name;
-    label.style.flex = '1';
-    label.style.whiteSpace = 'nowrap';
-    label.style.overflow = 'hidden';
-    label.style.textOverflow = 'ellipsis';
-    label.style.marginRight = '10px';
+    // .color-input-label from coloring.css has:
+    // margin-right: 12px; font-size: 15px; flex-grow: 1; color: #e3eaf2; display: flex; align-items: center;
+    // The factory styles are mostly covered or compatible.
+    label.className = 'color-input-label'; // Using existing class
+    // Add specific factory overrides if needed:
+    label.classList.add('factory-color-input-label-overrides'); // For white-space, overflow, text-overflow, flex:1
 
     const input = document.createElement('input');
     input.type = 'color';
