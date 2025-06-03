@@ -210,7 +210,9 @@
 
 
 /* --- Select and Input Styling --- */
-.mode-select, .separator-select { /* For <select> elements */
+select.mdc-select, /* Target mode select with its actual class */
+.mode-select,      /* Keep if other elements might use this class */
+.separator-select { /* For <select> elements */
   padding: 8px 12px;
   font-size: 0.9em;
   border-radius: 6px;
@@ -222,9 +224,19 @@
   box-shadow: none;
   flex-grow: 1;
 }
-.mode-select:focus, .separator-select:focus {
+select.mdc-select:focus,
+.mode-select:focus,
+.separator-select:focus {
   border-color: #00aeff; /* Accent Color for focus */
   box-shadow: 0 0 0 2px rgba(0, 174, 255, 0.3); /* Focus ring */
+}
+
+/* Best-effort styling for select options */
+select.mdc-select option,
+.mode-select option,
+.separator-select option {
+  background-color: #2c2c2c;
+  color: #e0e0e0;
 }
 
 .color-input-row {
@@ -245,17 +257,34 @@
 
 .color-input, .color-input-editor { /* For <input type="color"> */
   width: 40px; /* Swatch size */
-  height: 28px;
+  height: 25px; /* Example fixed size */
   border: 1px solid #444444; /* Border Color */
-  padding: 0;
+  padding: 0; /* Override user agent padding */
   cursor: pointer;
-  background: #2c2c2c; /* Secondary Background for swatch area */
+  background-color: #2c2c2c; /* Explicit dark background for the swatch button */
   border-radius: 4px;
   transition: border-color 0.2s, box-shadow 0.2s;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+.color-input::-webkit-color-swatch-wrapper,
+.color-input-editor::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+.color-input::-webkit-color-swatch,
+.color-input-editor::-webkit-color-swatch {
+  border: none;
+  border-radius: 3px; /* Slightly smaller than parent for inset look */
+}
+.color-input::-moz-color-swatch, /* For Firefox */
+.color-input-editor::-moz-color-swatch {
+    border: none;
+    border-radius: 3px;
 }
 .color-input:focus, .color-input-editor:focus {
   border-color: #00aeff; /* Accent Color for focus */
-  box-shadow: 0 0 0 2px rgba(0, 174, 255, 0.3);
+  box-shadow: 0 0 0 2px rgba(0, 174, 255, 0.3); /* Focus ring */
 }
 
 .separator-container {
@@ -296,6 +325,124 @@
   /* These selectors from the old structure might be unused or need careful merging. */
   /* For now, assume their intent is covered by .factory- classes or new base styles. */
   /* display: none; /* Safest way to check if they are used, then remove */
+}
+
+
+/* --- Suggested Separator UI --- */
+.suggested-separators-container {
+  margin-top: 15px;
+  padding: 10px;
+  border: 1px dashed #555555; /* Dashed to differentiate from other sections */
+  border-radius: 6px;
+  background-color: rgba(0,0,0,0.1); /* Subtle background */
+}
+
+.suggested-separators-title {
+  font-size: 1em;
+  color: #00aeff; /* Accent color */
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.suggested-separators-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* Space between suggestion buttons */
+}
+
+.suggested-separator-btn {
+  display: block; /* Make button take full width of li */
+  width: 100%;
+  background-color: #3a3a3a; /* Tertiary background */
+  color: #e0e0e0; /* Primary text */
+  border: 1px solid #555555;
+  border-radius: 4px;
+  padding: 8px 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.suggested-separator-btn:hover {
+  background-color: #4a4a4a;
+  border-color: #00aeff;
+}
+
+.suggested-separator-btn:active {
+  background-color: #5a5a5a;
+}
+
+.suggestion-description {
+  display: block; /* Make description take full line */
+  font-weight: bold;
+  font-size: 0.9em;
+  margin-bottom: 4px;
+}
+
+.suggestion-preview {
+  display: block; /* Make preview take full line */
+  font-size: 0.8em;
+  color: #b0b0b0; /* Dimmer text for preview */
+}
+
+.separator-suggestion-info { /* For "No suggestions available" message */
+  font-size: 0.9em;
+  color: #b0b0b0;
+  padding: 10px;
+  text-align: center;
+}
+
+
+/* --- Manual Separator Controls UI --- */
+.manual-separator-controls {
+  margin-top: 20px; /* Space above this section */
+  padding-top: 15px; /* Space below the border */
+  border-top: 1px solid #555555; /* Solid line to differentiate */
+}
+
+.manual-separator-title { /* This is a <label> in JS, but styled like a title */
+  font-size: 1em; /* Match suggested title size */
+  color: #00aeff;   /* Accent color */
+  margin-bottom: 12px; /* Space after title */
+  font-weight: 600;
+  display: block; /* Ensure it takes its own line */
+}
+
+.manual-separator-control-group {
+  display: flex;
+  flex-wrap: wrap; /* Allow wrapping on small screens */
+  align-items: center;
+  gap: 15px; /* Space between dropdown and radio group */
+  background-color: rgba(0,0,0,0.1); /* Subtle background for the group */
+  padding: 10px;
+  border-radius: 6px;
+}
+
+.manual-dropdown-wrapper,
+.manual-first-letter-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Space between label and control */
+}
+
+/* Ensure existing select styling applies to #manual-separator-dropdown */
+/* (select.mdc-select, .mode-select, .separator-select) */
+
+/* Styling for radio button and its label */
+.manual-first-letter-wrapper input[type="radio"] {
+  /* Modern browsers are hard to style directly for the radio button itself.
+     Focus on making it accessible and the label clear. */
+  margin-right: 5px; /* Space between radio and its text label */
+  accent-color: #00aeff; /* Styles the checkmark/dot in modern browsers */
+}
+.manual-first-letter-wrapper label {
+  font-size: 0.9em;
+  color: #e0e0e0; /* Primary text */
+  cursor: pointer;
 }
 
 
