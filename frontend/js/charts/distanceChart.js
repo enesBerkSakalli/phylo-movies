@@ -281,7 +281,7 @@ export function generateDistanceChart(config, data, options = {}) {
     // Add click event to the background
     chartState.chartGroup.select(".chart-background").on("click", function(event) {
       if (!onClick) return;
-      
+
       const mouseX = d3.pointer(event)[0];
       const position = Math.round(chartState.scales.x.invert(mouseX)) - 1;
       const validPosition = Math.max(0, Math.min(data.length - 1, position));
@@ -297,12 +297,12 @@ export function generateDistanceChart(config, data, options = {}) {
           .duration(100)
           .attr("r", 5)
           .attr("fill", "#FF4500");
-          
+
         tooltip
           .transition()
           .duration(200)
           .style("opacity", 0.9);
-          
+
         tooltip
           .html(`<div class="tooltip-title">Position ${i + 1}</div><div class="tooltip-value">Value: ${d.toFixed(4)}</div>`)
           .style("left", (event.pageX + 10) + "px")
@@ -314,7 +314,7 @@ export function generateDistanceChart(config, data, options = {}) {
           .duration(200)
           .attr("r", 3)
           .attr("fill", "#4682B4");
-          
+
         tooltip
           .transition()
           .duration(500)
@@ -340,7 +340,7 @@ export function generateDistanceChart(config, data, options = {}) {
     // Remove existing SVG content but preserve the container
     d3.select(`#${containerId} svg`).remove();
     d3.select(`#${containerId} .chart-tooltip`).remove();
-    
+
     // Re-render the chart
     renderChart();
   }
@@ -351,7 +351,7 @@ export function generateDistanceChart(config, data, options = {}) {
       chartState.resizeObserver = new ResizeObserver(debounce(() => {
         updateChart();
       }, 250));
-      
+
       chartState.resizeObserver.observe(document.getElementById(containerId));
     } else {
       // Fallback for browsers without ResizeObserver
@@ -394,10 +394,10 @@ function createPositionIndicator(chartGroup, data, x, y, height, currentPosition
   const dragGroup = chartGroup.append("g")
     .attr("class", "drag-indicator")
     .attr("cursor", "grab");
-  
+
   // Calculate the initial position
   const lineX = x(currentPosition + 1);
-  
+
   // Add a transparent touch target (wide rectangle) for better touch interaction
   const touchTarget = dragGroup.append("rect")
     .attr("class", "touch-target")
@@ -407,7 +407,7 @@ function createPositionIndicator(chartGroup, data, x, y, height, currentPosition
     .attr("height", height)
     .attr("fill", "transparent")
     .style("cursor", "grab");
-  
+
   // Add vertical line
   const dragLine = dragGroup.append("line")
     .attr("class", "current-position-line")
@@ -428,7 +428,7 @@ function createPositionIndicator(chartGroup, data, x, y, height, currentPosition
     .attr("stroke", "white")
     .attr("stroke-width", 1)
     .style("cursor", "grab");
-    
+
   // Add a label at the top of the line
   const lineLabel = dragGroup.append("text")
     .attr("class", "current-position-label")
@@ -439,46 +439,46 @@ function createPositionIndicator(chartGroup, data, x, y, height, currentPosition
     .attr("font-weight", "bold")
     .text(`${currentPosition + 1}`)
     .style("pointer-events", "none");
-  
+
   // Define drag behavior
   const drag = d3.drag()
     .on("start", dragStarted)
     .on("drag", dragged)
     .on("end", dragEnded);
-  
+
   // Apply drag behavior to all indicator elements
   dragGroup.call(drag);
-  
+
   function dragStarted() {
     // Visual feedback when starting drag
     dragLine.attr("stroke-width", 3);
     dragHandle.attr("r", 10);
     d3.select(this).style("cursor", "grabbing");
   }
-  
+
   function dragged(event) {
     // Calculate new position
     const xPos = Math.max(0, Math.min(event.x, x.range()[1]));
-    
+
     // Update indicator positions
     dragLine.attr("x1", xPos).attr("x2", xPos);
     dragHandle.attr("cx", xPos);
     touchTarget.attr("x", xPos - 15);
     lineLabel.attr("x", xPos);
-    
+
     // Calculate the new index position
     const newPos = Math.round(x.invert(xPos)) - 1;
     const validPosition = Math.max(0, Math.min(data.length - 1, newPos));
-    
+
     // Update the label
     lineLabel.text(`${validPosition + 1}`);
-    
+
     // Call the callback with the new position
     if (onDrag) {
       onDrag(validPosition);
     }
   }
-  
+
   function dragEnded() {
     // Restore the visual appearance
     dragLine.attr("stroke-width", 2);
