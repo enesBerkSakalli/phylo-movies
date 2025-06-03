@@ -227,4 +227,80 @@ export class UIComponentFactory {
 
     return inputDiv;
   }
+
+  /**
+   * Creates a UI component to display suggested separator strategies for grouping taxa.
+   * Each suggestion is presented as a clickable button, detailing the strategy
+   * and a preview of the groups it would create.
+   *
+   * @param {Array<Object>} suggestedStrategies - An array of strategy objects. Each object should contain:
+   *   - `description` (string): A human-readable description of the strategy.
+   *   - `groupsPreview` (Array<Object>): An array of objects, where each object has `groupName` (string) and `count` (number),
+   *     representing a sample of groups created by this strategy.
+   *   - `totalGroups` (number): The total number of unique groups this strategy would create.
+   *   - `separator` (string): The separator character (e.g., '-', '_') or identifier (e.g., 'first-letter').
+   *   - `strategyType` (string): The type of strategy (e.g., 'first', 'last', 'first-letter').
+   * @param {Function} onSuggestionSelectCallback - A callback function that is invoked when a
+   *   suggestion button is clicked. The full strategy object corresponding to the clicked suggestion is passed
+   *   as an argument to this callback.
+   * @returns {HTMLElement} A div element containing the UI for suggested separators.
+   *   Returns a container with a message if no strategies are provided or if the array is empty.
+   */
+  static createSuggestedSeparatorUI(suggestedStrategies, onSuggestionSelectCallback) {
+    const mainContainer = document.createElement('div');
+    mainContainer.className = 'suggested-separators-container'; // Main container class for styling
+    // Note: Inline style mainContainer.style.marginTop = '10px' was previously here, assuming it's handled by CSS now or not strictly needed.
+
+    if (!suggestedStrategies || suggestedStrategies.length === 0) {
+      const noSuggestionsMessage = document.createElement('p');
+      noSuggestionsMessage.textContent = 'No separator suggestions available for the current taxa names.';
+      noSuggestionsMessage.className = 'separator-suggestion-info'; // Class for styling the message
+      mainContainer.appendChild(noSuggestionsMessage);
+      return mainContainer;
+    }
+
+    const title = document.createElement('h5'); // Using h5 for semantic structure
+    title.textContent = 'Suggested Groupings:';
+    title.className = 'suggested-separators-title'; // Class for styling the title
+    mainContainer.appendChild(title);
+
+    const listElement = document.createElement('ul');
+    listElement.className = 'suggested-separators-list'; // Class for styling the list (e.g., remove bullets)
+
+    suggestedStrategies.forEach(strategy => {
+      const listItem = document.createElement('li'); // Each suggestion in a list item
+      const button = document.createElement('button');
+      button.className = 'suggested-separator-btn'; // Class for styling the suggestion button
+
+      // Display the strategy description (e.g., "Prefix before first '-'")
+      const descriptionSpan = document.createElement('span');
+      descriptionSpan.className = 'suggestion-description';
+      descriptionSpan.textContent = strategy.description;
+      button.appendChild(descriptionSpan);
+
+      // Display a preview of groups (e.g., "GroupA (10), GroupB (5), ...")
+      const previewSpan = document.createElement('span');
+      previewSpan.className = 'suggestion-preview';
+      let previewText = ` (e.g., `;
+      previewText += strategy.groupsPreview.map(g => `${g.groupName} (${g.count})`).join(', ');
+      if (strategy.groupsPreview.length < strategy.totalGroups) { // Indicate if more groups exist than shown
+        previewText += `, ...`;
+      }
+      previewText += `) - Total ${strategy.totalGroups} groups`;
+      previewSpan.textContent = previewText;
+      button.appendChild(previewSpan);
+
+      // Attach click handler to the button
+      button.onclick = () => {
+        if (onSuggestionSelectCallback) {
+          onSuggestionSelectCallback(strategy); // Pass the full strategy object
+        }
+      };
+      listItem.appendChild(button);
+      listElement.appendChild(listItem);
+    });
+
+    mainContainer.appendChild(listElement);
+    return mainContainer;
+  }
 }
