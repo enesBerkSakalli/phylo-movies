@@ -54,15 +54,7 @@ export default class TaxaColoring {
     this.modalContent.appendChild(schemeSelectorUI);
 
     // 2. Main UI (Mode Selector, Dynamic Content Area, Buttons)
-    // Note: createMainUI in the provided factory file doesn't return buttonContainer.
-    // We will create our own button container.
-    const mainUIComponents = UIComponentFactory.createMainUI(
-      this.modalContent,
-      // Passing functions to render content later is not how createMainUI is structured.
-      // It directly appends modeSelect and dynamicContent to the passed container.
-      // So, we pass this.modalContent and it will append to it.
-      // The renderTaxaFn and renderGroupsFn are not used by the factory's createMainUI.
-    );
+    const mainUIComponents = UIComponentFactory.createMainUI(this.modalContent);
 
     this.dynamicContentPlaceholder = mainUIComponents.dynamicContent; // Store the placeholder for content
 
@@ -85,24 +77,10 @@ export default class TaxaColoring {
     mainUIComponents.modeSelect.value = this.currentMode; // Set initial mode
     mainUIComponents.modeSelect.onchange = () => this.handleModeChange(mainUIComponents.modeSelect.value);
 
-
-    // 5. Action Buttons
-    const actionButtonContainer = document.createElement("div");
-    actionButtonContainer.className = "modal-footer"; // Use existing CSS class if suitable
-
-    const resetButton = document.createElement("button");
-    resetButton.className = "coloring-btn"; // Use existing CSS class
-    resetButton.textContent = "Reset";
-    resetButton.onclick = () => this.resetColors();
-
-    // Append factory buttons and reset button to our new container
-    actionButtonContainer.appendChild(resetButton);
-    actionButtonContainer.appendChild(mainUIComponents.cancelButton); // From factory
-    actionButtonContainer.appendChild(mainUIComponents.applyButton);   // From factory
-
-    this.modalContent.appendChild(actionButtonContainer);
-
-    // Attach handlers to factory-created buttons
+    // 5. Action Buttons (now created by UIComponentFactory.createMainUI)
+    // The actionButtonContainer is already appended to modalContent by the factory.
+    // We just need to attach handlers to the buttons.
+    mainUIComponents.resetButton.onclick = () => this.resetColors();
     mainUIComponents.cancelButton.onclick = () => this.colorWin.close();
     mainUIComponents.applyButton.onclick = () => {
       this.applyChanges();
@@ -118,7 +96,7 @@ export default class TaxaColoring {
     separatorContainer.className = "separator-container"; // Match existing style
     separatorContainer.id = "separator-container";
     separatorContainer.style.display = this.currentMode === "groups" ? "flex" : "none"; // Initial visibility
-    separatorContainer.style.marginTop = '10px'; // Add some spacing
+    // marginTop will be handled by CSS
 
     const separatorLabel = document.createElement("label");
     separatorLabel.className = "separator-label"; // Match existing style
@@ -187,14 +165,6 @@ export default class TaxaColoring {
       document.head.appendChild(link);
     }
   }
-
-  // createModal() and buildModalContent() are removed as their functionality is
-  // now handled by launchModal() using UIComponentFactory.
-
-  // addColorSchemePresets(container) is removed (was already a no-op).
-
-  // addModeSelector(container) is removed; its core logic (separator dropdown) is
-  // now in createSeparatorDropdown() and event handling in launchModal() & handleModeChange().
 
   renderTaxaColorInputs(placeholder) {
     this.clearContainer(placeholder);
@@ -427,11 +397,11 @@ export default class TaxaColoring {
     }
 
     // Rerender the content to show reset colors
-    this.clearContainer(this.dynamicContent);
+    this.clearContainer(this.dynamicContentPlaceholder);
     if (this.currentMode === "taxa") {
-      this.renderTaxaColorInputs(this.dynamicContent);
+      this.renderTaxaColorInputs(this.dynamicContentPlaceholder);
     } else {
-      this.renderGroupOptions(this.dynamicContent);
+      this.renderGroupOptions(this.dynamicContentPlaceholder);
     }
   }
 

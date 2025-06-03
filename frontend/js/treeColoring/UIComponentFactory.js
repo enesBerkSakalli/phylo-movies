@@ -21,61 +21,17 @@ export class UIComponentFactory {
     heading.classList.add('factory-modal-heading'); // New class
     modalContent.appendChild(heading);
 
-    // Create WinBox modal if available, otherwise use a simple div
-    let colorWin;
-
-    if (window.WinBox) {
-      colorWin = new window.WinBox({
-        title: 'Taxa Coloring',
-        width: '600px',
-        height: '80%',
-        x: 'center',
-        y: 'center',
-        mount: modalContent,
-        onclose: onClose,
-        class: ["no-full, chart-modal-container, chart-modal-controls"],
-      });
-    } else {
-      // Fallback if WinBox is not available
-      const modalContainer = document.createElement('div');
-      modalContainer.classList.add('factory-fallback-modal-container'); // New class
-
-      const modalHeader = document.createElement('div');
-      modalHeader.classList.add('factory-fallback-modal-header'); // New class
-
-      const modalTitle = document.createElement('h3');
-      modalTitle.textContent = 'Taxa Coloring';
-      modalTitle.classList.add('factory-fallback-modal-title'); // New class
-
-      const closeButton = document.createElement('button');
-      closeButton.innerHTML = '&times;';
-      closeButton.classList.add('factory-fallback-modal-close-button'); // New class
-      closeButton.onclick = () => {
-        document.body.removeChild(modalContainer);
-        if (onClose) onClose();
-      };
-
-      modalHeader.appendChild(modalTitle);
-      modalHeader.appendChild(closeButton);
-
-      modalContainer.appendChild(modalHeader);
-      modalContainer.appendChild(modalContent); // modalContent already styled or given class
-
-      document.body.appendChild(modalContainer);
-
-      // Implement a minimal WinBox-like interface
-      colorWin = {
-        dom: modalContainer,
-        resize: (width, height) => {
-          modalContainer.style.width = width;
-          modalContainer.style.maxHeight = height;
-        },
-        close: () => {
-          document.body.removeChild(modalContainer);
-          if (onClose) onClose();
-        }
-      };
-    }
+    // Create WinBox modal
+    const colorWin = new window.WinBox({
+      title: 'Taxa Coloring',
+      width: '600px',
+      height: '80%',
+      x: 'center',
+      y: 'center',
+      mount: modalContent,
+      onclose: onClose,
+      class: ["no-full, chart-modal-container, chart-modal-controls"],
+    });
 
     return { modalContent, colorWin };
   }
@@ -83,11 +39,9 @@ export class UIComponentFactory {
   /**
    * Creates the main UI structure for the color assignment modal
    * @param {HTMLElement} container - The container element
-   * @param {Function} renderTaxaFn - Function to render taxa inputs
-   * @param {Function} renderGroupsFn - Function to render group inputs
-   * @returns {Object} UI components
+   * @returns {Object} UI components including modeSelect, dynamicContent, actionButtonContainer, resetButton, cancelButton, applyButton
    */
-  static createMainUI(container, renderTaxaFn, renderGroupsFn) {
+  static createMainUI(container) {
     // Create mode selector
     const modeContainer = document.createElement('div');
     modeContainer.className = 'mode-selector'; // Existing class
@@ -122,26 +76,34 @@ export class UIComponentFactory {
     dynamicContent.id = 'dynamic-content';
     container.appendChild(dynamicContent);
 
-    // Create button container
-    const buttonContainer = document.createElement('div');
-    buttonContainer.className = 'button-container'; // Existing class
-    buttonContainer.classList.add('factory-button-container'); // New class for flex properties
+    // Create action button container
+    const actionButtonContainer = document.createElement('div');
+    actionButtonContainer.className = 'modal-footer'; // Use existing CSS class or a new specific one
+    // actionButtonContainer.classList.add('factory-action-button-container'); // Example if new class needed
+
+    const resetButton = document.createElement("button");
+    resetButton.className = "coloring-btn"; // Use existing CSS class
+    resetButton.textContent = "Reset";
+    // Note: onClick for resetButton will be set by the caller (TaxaColoring.jsx)
 
     const cancelButton = document.createElement('button');
     cancelButton.textContent = 'Cancel';
-    cancelButton.className = 'md-button';
+    cancelButton.className = 'md-button'; // Use existing CSS class or 'coloring-btn'
 
     const applyButton = document.createElement('button');
     applyButton.textContent = 'Apply';
-    applyButton.className = 'md-button primary';
+    applyButton.className = 'md-button primary'; // Use existing CSS class or 'coloring-btn primary'
 
-    buttonContainer.appendChild(cancelButton);
-    buttonContainer.appendChild(applyButton);
-    container.appendChild(buttonContainer);
+    actionButtonContainer.appendChild(resetButton);
+    actionButtonContainer.appendChild(cancelButton);
+    actionButtonContainer.appendChild(applyButton);
+    container.appendChild(actionButtonContainer);
 
     return {
       modeSelect,
       dynamicContent,
+      actionButtonContainer, // Container for all buttons
+      resetButton,           // Individual buttons also returned for easier handler attachment
       cancelButton,
       applyButton
     };
