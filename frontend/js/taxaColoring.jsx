@@ -21,6 +21,7 @@ export default class TaxaColoring {
     this.separator = "-";
     this.currentMode = "taxa";
     this.originalColorMap = originalColorMap || {};
+    this.selectedStrategyType = null; // To store if grouping is by 'first', 'last', 'first-letter', or 'manual_char'
 
     // Initialize with colors from original color map
     if (originalColorMap) {
@@ -34,6 +35,10 @@ export default class TaxaColoring {
     // this.colorSchemes = { ... }; // Removed
 
     this.initialize();
+
+    // Analyze and suggest separator strategies
+    this.suggestedSeparatorStrategies = this.analyzeTaxaSeparators(this.taxaNames);
+    console.log("Suggested Separator Strategies:", this.suggestedSeparatorStrategies);
   }
 
   initialize() {
@@ -64,12 +69,45 @@ export default class TaxaColoring {
     // Assuming modeSelect is directly in modalContent or in a specific container.
     // For robustness, UIComponentFactory.createMainUI should return the modeContainer.
     // Given current factory, we'll assume mainUIComponents.modeSelect.parentNode is usable.
-    this.separatorSelect = this.createSeparatorDropdown();
-    // Append separatorSelect next to or below mainUIComponents.modeSelect
-    // This might require mainUIComponents.modeSelect.parentNode or a dedicated container from factory.
-    // For now, let's assume mainUIComponents.modeSelect.parentNode is the modeContainer.
+
+    // Comment out old separator dropdown (now replaced by manualSeparatorControls)
+    // this.separatorSelect = this.createManualSeparatorControls(); // Old call was createSeparatorDropdown
+    // if (mainUIComponents.modeSelect && mainUIComponents.modeSelect.parentNode) {
+    //   mainUIComponents.modeSelect.parentNode.appendChild(this.separatorSelect.container);
+    // }
+
+    // Add new suggested separator UI
+    this.suggestedSeparatorUI = UIComponentFactory.createSuggestedSeparatorUI(
+        this.suggestedSeparatorStrategies,
+        (selectedStrategy) => {
+            console.log("Selected suggestion:", selectedStrategy);
+            this.separator = selectedStrategy.separator;
+            this.selectedStrategyType = selectedStrategy.strategyType;
+
+            // Update UI of manual controls to reflect this selection
+            if (this.manualSeparatorControls) { // Check if manual controls are initialized
+                if (this.selectedStrategyType === 'first-letter' || this.separator === 'first-letter') {
+                    if (this.manualSeparatorControls.firstLetterRadio) this.manualSeparatorControls.firstLetterRadio.checked = true;
+                     if(this.manualSeparatorControls.dropdown && this.manualSeparatorControls.dropdown.options.length > 0) {
+                        this.manualSeparatorControls.dropdown.value = this.manualSeparatorControls.dropdown.options[0].value; // Reset dropdown
+                     }
+                } else {
+                    if (this.manualSeparatorControls.dropdown) this.manualSeparatorControls.dropdown.value = selectedStrategy.separator;
+                    if (this.manualSeparatorControls.firstLetterRadio) this.manualSeparatorControls.firstLetterRadio.checked = false;
+                }
+            }
+            this.clearContainer(this.dynamicContentPlaceholder);
+            this.renderGroupOptions(this.dynamicContentPlaceholder);
+        }
+    );
     if (mainUIComponents.modeSelect && mainUIComponents.modeSelect.parentNode) {
-      mainUIComponents.modeSelect.parentNode.appendChild(this.separatorSelect.container);
+        mainUIComponents.modeSelect.parentNode.appendChild(this.suggestedSeparatorUI);
+    }
+
+    // Create and append manual separator controls
+    this.manualSeparatorControls = this.createManualSeparatorControls(); // Renamed method
+    if (mainUIComponents.modeSelect && mainUIComponents.modeSelect.parentNode) {
+        mainUIComponents.modeSelect.parentNode.appendChild(this.manualSeparatorControls.container);
     }
 
 
@@ -91,55 +129,136 @@ export default class TaxaColoring {
     this.handleModeChange(this.currentMode);
   }
 
-  createSeparatorDropdown() {
-    const separatorContainer = document.createElement("div");
-    separatorContainer.className = "separator-container"; // Match existing style
-    separatorContainer.id = "separator-container";
-    separatorContainer.style.display = this.currentMode === "groups" ? "flex" : "none"; // Initial visibility
-    // marginTop will be handled by CSS
+  /**
+   * Creates manual controls for selecting a separator character or 'First Letter' grouping.
+   * This includes a dropdown for specific characters ('-', '_', '.', ' ') and a radio
+   * button for 'First Letter' grouping. Changes here update `this.separator` and
+   * `this.selectedStrategyType`, then refresh the group options display.
+   *
+   * @returns {Object} An object containing the main container element, the dropdown select element,
+   * and the first letter radio button element.
+   *   - `container` (HTMLElement): The main div holding these manual controls.
+   *   - `dropdown` (HTMLSelectElement): The dropdown for selecting a separator character.
+   *   - `firstLetterRadio` (HTMLInputElement): The radio button for 'First Letter' option.
+   */
+  createManualSeparatorControls() {
+    const container = document.createElement("div");
+    container.className = "manual-separator-controls"; // For CSS styling
+    // Basic styling for layout, ideally enhanced by CSS.
+    // container.style.marginTop = '15px'; // CSS: .manual-separator-controls
+    // container.style.borderTop = '1px solid #ccc'; // CSS: .manual-separator-controls
+    // container.style.paddingTop = '10px'; // CSS: .manual-separator-controls
 
-    const separatorLabel = document.createElement("label");
-    separatorLabel.className = "separator-label"; // Match existing style
-    separatorLabel.textContent = "Group By:";
-    separatorLabel.htmlFor = "separator-selector";
+    const titleLabel = document.createElement("label");
+    titleLabel.textContent = "Or, define grouping manually:";
+    titleLabel.className = "manual-separator-title"; // For CSS styling
+    // titleLabel.style.display = 'block'; // CSS: .manual-separator-title
+    // titleLabel.style.marginBottom = '8px'; // CSS: .manual-separator-title
+    container.appendChild(titleLabel);
 
-    const separatorSelectElement = document.createElement("select");
-    separatorSelectElement.className = "separator-select"; // Match existing style
-    separatorSelectElement.id = "separator-selector";
+    const controlGroup = document.createElement('div');
+    controlGroup.className = "manual-separator-control-group"; // For CSS styling (e.g., flex)
 
-    [
-      { value: "-", label: "Dash (-)" },
-      { value: "_", label: "Underscore (_)" },
-      { value: ".", label: "Dot (.)" },
-      { value: " ", label: "Space" },
-      { value: "first-letter", label: "First Letter" },
-    ].forEach((opt) => {
+    // Dropdown for specific separator characters
+    const dropdownWrapper = document.createElement('div');
+    dropdownWrapper.className = "manual-dropdown-wrapper";
+    const dropdownLabel = document.createElement("label");
+    dropdownLabel.textContent = "Separator Character:";
+    dropdownLabel.htmlFor = "manual-separator-dropdown";
+    dropdownLabel.style.marginRight = "5px"; // Spacing between label and dropdown
+    dropdownWrapper.appendChild(dropdownLabel);
+
+    const dropdown = document.createElement("select"); // The actual dropdown element
+    dropdown.id = "manual-separator-dropdown";
+    dropdown.className = "separator-select"; // Reuse existing class for styling
+
+    const defaultSeparators = ['-', '_', '.', ' ']; // 'first-letter' is handled by radio
+    defaultSeparators.forEach(sepChar => {
       const option = document.createElement("option");
-      option.value = opt.value;
-      option.textContent = opt.label;
-      separatorSelectElement.appendChild(option);
+      option.value = sepChar;
+      option.textContent = sepChar === ' ' ? 'Space' : sepChar;
+      dropdown.appendChild(option);
     });
-    separatorSelectElement.value = this.separator;
+    // Set initial value carefully based on current state, excluding 'first-letter'
+    dropdown.value = defaultSeparators.includes(this.separator) && this.separator !== 'first-letter'
+                     ? this.separator
+                     : defaultSeparators[0]; // Default to the first separator if current is 'first-letter' or not in list
 
-    separatorSelectElement.onchange = () => {
-      this.separator = separatorSelectElement.value;
-      if (this.currentMode === "groups") {
+    dropdown.onchange = () => {
+      this.separator = dropdown.value;
+      this.selectedStrategyType = 'manual_char'; // Indicate manual character selection
+      if (firstLetterRadio) firstLetterRadio.checked = false; // Uncheck radio if dropdown is used
+      this.clearContainer(this.dynamicContentPlaceholder);
+      this.renderGroupOptions(this.dynamicContentPlaceholder);
+    };
+    dropdownWrapper.appendChild(dropdown);
+    controlGroup.appendChild(dropdownWrapper);
+
+    // Radio button for "First Letter"
+    const firstLetterWrapper = document.createElement('div');
+    firstLetterWrapper.className = "manual-first-letter-wrapper";
+    const firstLetterRadio = document.createElement("input");
+    firstLetterRadio.type = "radio";
+    firstLetterRadio.id = "first-letter-radio";
+    firstLetterRadio.name = "manualGroupStrategyRadio"; // Name for the radio group
+    firstLetterRadio.value = "first-letter";
+    // Initial check based on this.separator or this.selectedStrategyType
+    firstLetterRadio.checked = this.separator === 'first-letter' || this.selectedStrategyType === 'first-letter';
+
+    firstLetterRadio.onchange = () => {
+      if (firstLetterRadio.checked) {
+        this.separator = 'first-letter';
+        this.selectedStrategyType = 'first-letter';
+        // Reset dropdown to its first option as it's not "active" for grouping
+        if (dropdown.options.length > 0) {
+            dropdown.value = dropdown.options[0].value;
+        }
         this.clearContainer(this.dynamicContentPlaceholder);
         this.renderGroupOptions(this.dynamicContentPlaceholder);
       }
     };
 
-    separatorContainer.appendChild(separatorLabel);
-    separatorContainer.appendChild(separatorSelectElement);
+    const firstLetterLabelText = document.createElement("label");
+    firstLetterLabelText.textContent = "First Letter";
+    firstLetterLabelText.htmlFor = "first-letter-radio";
+    firstLetterLabelText.style.marginLeft = "5px"; // Spacing between radio and its label text
 
-    return { container: separatorContainer, selectElement: separatorSelectElement };
+    firstLetterWrapper.appendChild(firstLetterRadio);
+    firstLetterWrapper.appendChild(firstLetterLabelText);
+    controlGroup.appendChild(firstLetterWrapper);
+
+    container.appendChild(controlGroup);
+
+    // Ensure initial state of controls is consistent
+    if (this.selectedStrategyType === 'first-letter' || this.separator === 'first-letter') {
+        firstLetterRadio.checked = true;
+        if (dropdown.options.length > 0) dropdown.value = dropdown.options[0].value;
+    } else if (this.selectedStrategyType === 'manual_char' || (this.selectedStrategyType === null && defaultSeparators.includes(this.separator))) {
+        dropdown.value = this.separator; // this.separator should be a char here
+        firstLetterRadio.checked = false;
+    } else { // Default initial state if no specific strategy/separator is set that matches controls
+        if (dropdown.options.length > 0) dropdown.value = dropdown.options[0].value; // Default to first char separator
+        this.separator = dropdown.value; // Explicitly set this.separator
+        this.selectedStrategyType = 'manual_char'; // And the type
+        firstLetterRadio.checked = false;
+    }
+
+    return { container, dropdown, firstLetterRadio };
   }
 
   handleModeChange(newMode) {
     this.currentMode = newMode;
-    if (this.separatorSelect && this.separatorSelect.container) {
-      this.separatorSelect.container.style.display = this.currentMode === "groups" ? "flex" : "none";
+    if (this.suggestedSeparatorUI) {
+        this.suggestedSeparatorUI.style.display = this.currentMode === 'groups' ? 'block' : 'none';
     }
+    if (this.manualSeparatorControls && this.manualSeparatorControls.container) {
+        this.manualSeparatorControls.container.style.display = this.currentMode === 'groups' ? 'block' : 'none';
+    }
+    // Remove commented out/old logic for this.separatorSelect
+    // if (this.separatorSelect && this.separatorSelect.container) {
+    //     this.separatorSelect.container.style.display = this.currentMode === "groups" ? "flex": "none";
+    // }
+
     this.clearContainer(this.dynamicContentPlaceholder);
     if (this.currentMode === "taxa") {
       this.renderTaxaColorInputs(this.dynamicContentPlaceholder);
@@ -308,15 +427,39 @@ export default class TaxaColoring {
     return Array.from(groupSet);
   }
 
+  /**
+   * Determines the group for a given taxon name based on the currently selected
+   * separator and strategy type (`this.separator` and `this.selectedStrategyType`).
+   *
+   * @param {string} taxon - The taxon name to determine the group for.
+   * @returns {string} The determined group name, or "Ungrouped" if no group can be formed.
+   */
   getTaxonGroup(taxon) {
-    if (this.separator === "first-letter") {
-      return taxon.charAt(0);
+    const effectiveSeparator = this.separator;
+    const effectiveStrategyType = this.selectedStrategyType;
+
+    if (effectiveStrategyType === 'first-letter' || effectiveSeparator === 'first-letter') {
+      // Group by the first letter of the taxon name, case-insensitive (converted to uppercase).
+      return taxon && taxon.length > 0 ? taxon.charAt(0).toUpperCase() : "Ungrouped";
+    } else if (effectiveStrategyType === 'first' || effectiveStrategyType === 'last') {
+      // This case is for when a suggested strategy ('first' or 'last' occurrence of a separator) was clicked.
+      const group = this._getGroupForStrategy(taxon, effectiveSeparator, effectiveStrategyType);
+      return group !== null ? group : "Ungrouped"; // Fallback to "Ungrouped" if _getGroupForStrategy returns null.
     } else {
-      const parts = taxon.split(this.separator);
+      // This covers 'manual_char' (manual character separator selection),
+      // or the initial state (where selectedStrategyType is null and separator is a default character).
+      // It relies on this.separator being a single character (e.g., '-', '_').
+      if (!effectiveSeparator || typeof effectiveSeparator !== 'string' || effectiveSeparator.length === 0 || effectiveSeparator === 'first-letter') {
+          // Safety check: if separator is somehow invalid for splitting or is 'first-letter' here, treat as Ungrouped.
+          // The 'first-letter' case should have been caught by the first condition.
+          return "Ungrouped";
+      }
+      const parts = taxon.split(effectiveSeparator);
       if (parts.length > 1) {
+        // Default behavior for character separators: use the part before the first occurrence.
         return parts[0];
       }
-      return "Ungrouped";
+      return "Ungrouped"; // Taxon name doesn't contain the separator.
     }
   }
 
@@ -380,7 +523,8 @@ export default class TaxaColoring {
       mode: this.currentMode,
       taxaColorMap: this.taxaColorMap,
       groupColorMap: this.groupColorMap,
-      separator: this.separator,
+      separator: this.separator, // This should be the actual character or "first-letter"
+      strategyType: this.selectedStrategyType, // Pass the strategy type
     });
   }
 
@@ -409,5 +553,100 @@ export default class TaxaColoring {
     while (container && container.firstChild) {
       container.removeChild(container.firstChild);
     }
+  }
+
+  /**
+   * Helper function to extract a group name from a taxon name based on a separator and strategy.
+   * Used by `analyzeTaxaSeparators` and `getTaxonGroup` (when a suggested strategy is active).
+   *
+   * @param {string} taxonName - The full name of the taxon.
+   * @param {string} separator - The character used to split the taxon name.
+   * @param {string} strategyType - Either 'first' (part before the first separator) or
+   * 'last' (part before the last separator).
+   * @returns {string|null} The extracted group name, or null if the separator is not found
+   * or results in no meaningful group (e.g., taxon "A" with separator ".").
+   * @private
+   */
+  _getGroupForStrategy(taxonName, separator, strategyType) {
+    const parts = taxonName.split(separator);
+    if (parts.length <= 1) {
+      return null; // No group if separator not present or only one part (e.g. "A" or "A.noc")
+    }
+
+    if (strategyType === 'first') {
+      return parts[0]; // e.g., "A" from "A.B.C"
+    } else if (strategyType === 'last') {
+      return parts.slice(0, -1).join(separator); // e.g., "A.B" from "A.B.C"
+    }
+    return null; // Should not happen if strategyType is validated
+  }
+
+  /**
+   * Analyzes the provided list of taxa names to identify potential grouping strategies
+   * based on common separators like '.', '-', '_', and ' '.
+   * It checks for strategies like "group by prefix before first separator" and
+   * "group by prefix before last separator".
+   *
+   * @param {Array<string>} taxaNames - An array of taxa names.
+   * @returns {Array<Object>} An array of suggested strategy objects. Each object includes:
+   *   - `separator` (string): The separator character.
+   *   - `strategyType` (string): 'first' or 'last'.
+   *   - `description` (string): A human-readable description of the strategy.
+   *   - `groupsPreview` (Array<{groupName: string, count: number}>): A sample of up to 5 groups.
+   *   - `totalGroups` (number): Total number of unique groups found by this strategy.
+   * Returns an empty array if no meaningful strategies are found or if taxaNames is empty.
+   */
+  analyzeTaxaSeparators(taxaNames) {
+    if (!taxaNames || taxaNames.length === 0) {
+      return [];
+    }
+
+    const potentialSeparators = ['.', '-', '_', ' ']; // Common separators to check
+    const suggestedStrategies = [];
+    const totalTaxa = taxaNames.length;
+
+    potentialSeparators.forEach(separator => {
+      const strategyTypes = ['first', 'last']; // Types of strategies to check for each separator
+
+      strategyTypes.forEach(strategyType => {
+        const groupCounts = new Map(); // To count occurrences of each potential group
+        taxaNames.forEach(taxonName => {
+          const groupName = this._getGroupForStrategy(taxonName, separator, strategyType);
+          // A group is meaningful if it's not null (separator was found and split occurred)
+          // and the group name is not the same as the original taxon name (i.e., it actually grouped something)
+          if (groupName !== null && groupName !== taxonName) {
+            groupCounts.set(groupName, (groupCounts.get(groupName) || 0) + 1);
+          }
+        });
+
+        // A strategy is considered valid if it produces more than one group,
+        // but not so many groups that every taxon is its own group (or nearly so).
+        if (groupCounts.size > 1 && groupCounts.size < totalTaxa) {
+          const groupsPreview = [];
+          for (const [groupName, count] of groupCounts) {
+            groupsPreview.push({ groupName, count });
+          }
+          // Sort groups by count (descending) for a more informative preview
+          groupsPreview.sort((a, b) => b.count - a.count);
+
+          let description = ``; // Dynamically create description
+          if (strategyType === 'first') {
+            description = `Prefix before first '${separator}'`;
+          } else if (strategyType === 'last') {
+            description = `Prefix before last '${separator}'`;
+          }
+
+          suggestedStrategies.push({
+            separator: separator,
+            strategyType: strategyType,
+            description: description,
+            groupsPreview: groupsPreview.slice(0, 5), // Show a preview of up to 5 largest groups
+            totalGroups: groupCounts.size
+          });
+        }
+      });
+    });
+    // Sort suggested strategies, perhaps by totalGroups or another metric? For now, order is by separator, then type.
+    return suggestedStrategies;
   }
 }
