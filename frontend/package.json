@@ -19,21 +19,19 @@
     "@jbrowse/react-linear-genome-view": "^3.1.0",
     "@mui/material": "^7.1.0",
     "@vitejs/plugin-react": "^4.5.0",
+    "alignment-viewer-2": "^2.0.0-beta-23",
     "d3": "^7.9.0",
     "filepond": "^4.32.7",
-    "jbrowse-plugin-msaview": "^2.1.0",
     "localforage": "^1.10.0",
     "lodash": "^4.17.21",
     "mobx": "^6.13.7",
     "mobx-react": "^9.2.0",
     "mobx-state-tree": "^7.0.2",
-    "msa": "^1.0.3",
-    "msaview": "^0.1.1",
     "mui": "^0.0.1",
     "ohm-js": "^16.2.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "react-msaview": "file:./react-msaview/lib",
+    "three": "^0.152.2",
     "winbox": "^0.2.82"
   },
   "devDependencies": {
@@ -47,6 +45,7 @@
     "jsdom": "^26.1.0",
     "mocha": "^10.8.2",
     "node-fetch": "^3.3.2",
+    "sass": "^1.89.1",
     "sinon": "^17.0.1",
     "vite": "^4.0.0"
   }

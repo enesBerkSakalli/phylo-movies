@@ -1,4 +1,4 @@
-import * as THREE from "https://esm.sh/three@0.152.2";
+import * as THREE from "three";
 import { PointGeometryFactory } from "./PointGeometryFactory.js";
 import { InteractionManager } from "./InteractionManager.js";
 import { UIComponents } from "./UIComponents.js";
@@ -50,221 +50,285 @@ class ScatterPlotVisualizer {
     this.treeList = treeList; // Original treeList passed to the constructor
     this.options = options;
 
+    // Bind event handlers to the class instance to maintain proper 'this' context
+    this._handleMouseMove = this._handleMouseMove.bind(this);
+    this._handleClick = this._handleClick.bind(this);
+    this._onWindowResize = this._onWindowResize.bind(this);
+
     // Configuration settings with defaults that can be overridden
     this.settings = {
-    // Visual settings
-    backgroundColor: options.backgroundColor || 0xeeeeee,
-    pointColor: options.pointColor || 0x444444,
-    selectedColor: options.selectedColor || 0xe91e63,
-    connectionColor: options.connectionColor || 0x444444,
-    pointSize: options.pointSize || 0.15,
-    gridHelper: options.gridHelper !== false,
-    axesHelper: options.axesHelper !== false,
+      // Visual settings
+      backgroundColor: options.backgroundColor || 0xeeeeee,
+      pointColor: options.pointColor || 0x444444,
+      selectedColor: options.selectedColor || 0xe91e63,
+      connectionColor: options.connectionColor || 0x444444,
+      pointSize: options.pointSize || 0.15,
+      gridHelper: options.gridHelper !== false,
+      axesHelper: options.axesHelper !== false,
 
-    // Layout settings
-    useCustomPositions: options.useCustomPositions !== false,
-    layoutSpread: options.layoutSpread || 5,
+      // Layout settings
+      useCustomPositions: options.useCustomPositions !== false,
+      layoutSpread: options.layoutSpread || 5,
 
-    // Filter settings - only show full trees by default
-    showOnlyFullTrees: options.showOnlyFullTrees !== false,
+      // Filter settings - only show full trees by default
+      showOnlyFullTrees: options.showOnlyFullTrees !== false,
 
-    // Data source settings
-    distanceMatrix: options.distanceMatrix || null, // This would be for the filtered set if used directly
+      // Data source settings
+      distanceMatrix: options.distanceMatrix || null, // This would be for the filtered set if used directly
 
-    // Interaction settings
-    autoRotate: options.autoRotate !== undefined ? options.autoRotate : false,
-    showLabels: options.showLabels !== false,
-    maxConnections: this.options.maxConnections || 100,
-  };
+      // Interaction settings
+      autoRotate: options.autoRotate !== undefined ? options.autoRotate : false,
+      showLabels: options.showLabels !== false,
+      maxConnections: this.options.maxConnections || 100,
+    };
 
-  // Filter trees to only include full trees if requested
-  const { filteredTreeList, treeIndices: originalFilteredTreeIndices } = TreeSelectionService.filterTrees(
-    this.treeList, // Use the original treeList from constructor
-    this.settings.showOnlyFullTrees
-  );
-  this.treeIndices = originalFilteredTreeIndices; // Store for use in InteractionManager & highlightTree
-
-  // numPoints is the number of points we will actually render
-  this.numPoints = filteredTreeList.length;
-
-  // Initialize THREE.js scene, camera, renderer
-  const { renderer, scene, camera, controls } =
-    VisualizationRenderer.initialize(this.container, this.settings);
-  this.renderer = renderer;
-  this.scene = scene;
-  this.camera = camera;
-  this.controls = controls;
-
-  // Generate positions for the points by calling the refactored function
-  this.positions = PositioningAlgorithms.prepareScatterPlotPositions(
-    this.settings.useCustomPositions ? this.options.positions : null,
-    this.settings.distanceMatrix,
-    this.settings.layoutSpread,
-    this.numPoints, // numPointsToRender
-    this.settings.showOnlyFullTrees, // This flag guides how sourcePositions are filtered IF provided
-    this.treeList.length, // originalSourcePositionsLength
-    this.treeIndices // filteredSourceIndices
-  );
-
-  // The SVG debug logic
-  // called from here with the 'positions' or intermediate arrays, or be part of a debug mode
-  // in prepareScatterPlotPositions. For this refactor, it's assumed to be part of the moved logic
-  // or handled separately if still required for debugging.
-  // The original SVG debug logic used 'relevantPositionsSource' which is now internal to prepareScatterPlotPositions.
-  // If direct SVG debugging of the final THREE.js `positions` array is needed here:
-  if (options.debugSVG && !document.getElementById("embedding-debug-svg")) {
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.id = "embedding-debug-svg";
-    svg.style.position = "absolute";
-    svg.style.top = "0";
-    svg.style.right = "0";
-    svg.style.width = "200px";
-    svg.style.height = "200px";
-    svg.style.background = "rgba(255,255,255,0.7)";
-    svg.style.zIndex = "9999";
-    svg.style.pointerEvents = "none";
-    if (this.container && this.container.appendChild) {
-        this.container.appendChild(svg);
-    }
-
-    const tempPoints = [];
-    for (let i = 0; i < this.numPoints; i++) {
-        tempPoints.push({ x: this.positions[i*3], y: this.positions[i*3+1]});
-    }
-    let xs = tempPoints.map(p => p.x);
-    let ys = tempPoints.map(p => p.y);
-    if (xs.length > 0 && ys.length > 0) {
-        let minX = Math.min(...xs), maxX = Math.max(...xs);
-        let minY = Math.min(...ys), maxY = Math.max(...ys);
-        let rangeX = maxX - minX;
-        let rangeY = maxY - minY;
-
-        // Avoid division by zero if all points are collinear or identical
-        if (rangeX === 0 && rangeY === 0) { // All points are the same
-            // Plot all points at the center
-            tempPoints.forEach(() => {
-                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                circle.setAttribute("cx", "100"); // Center of 200px SVG
-                circle.setAttribute("cy", "100");
-                circle.setAttribute("r", 2);
-                circle.setAttribute("fill", "#4285f4");
-                svg.appendChild(circle);
-            });
-        } else if (rangeX === 0) { // Points are collinear vertically
-             let scaleY = 180 / rangeY || 1;
-             tempPoints.forEach(p => {
-                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                circle.setAttribute("cx", "100"); // Center X
-                circle.setAttribute("cy", ((p.y - minY) * scaleY + 10).toFixed(2));
-                circle.setAttribute("r", 2);
-                circle.setAttribute("fill", "#4285f4");
-                svg.appendChild(circle);
-            });
-        } else if (rangeY === 0) { // Points are collinear horizontally
-            let scaleX = 180 / rangeX || 1;
-            tempPoints.forEach(p => {
-                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                circle.setAttribute("cx", ((p.x - minX) * scaleX + 10).toFixed(2));
-                circle.setAttribute("cy", "100"); // Center Y
-                circle.setAttribute("r", 2);
-                circle.setAttribute("fill", "#4285f4");
-                svg.appendChild(circle);
-            });
-        } else { // Default case
-            let scaleX = 180 / rangeX;
-            let scaleY = 180 / rangeY;
-            tempPoints.forEach(p => {
-                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                circle.setAttribute("cx", ((p.x - minX) * scaleX + 10).toFixed(2));
-                circle.setAttribute("cy", ((p.y - minY) * scaleY + 10).toFixed(2));
-                circle.setAttribute("r", 2);
-                circle.setAttribute("fill", "#4285f4");
-                svg.appendChild(circle);
-            });
-        }
-    }
-  }
-
-  // Create point texture for better looking points
-  this.pointTexture = PointTextureCreator.createPointTexture();
-
-  // Prepare colors if group coloring is provided
-  let colorMapper;
-  if (this.options.groupColors && Array.isArray(this.options.groupColors)) {
-    colorMapper = this.options.groupColors.map((color) => new THREE.Color(color));
-  }
-
-  // Create geometry for points
-  // Note: PointGeometryFactory.createGeometry returns 'indices' which are the true mapping from
-  // the geometry's sorted/internal indices to the original treeIndices after filtering.
-  // We stored the treeIndices from TreeSelectionService.filterTrees as this.treeIndices earlier.
-  // For highlighting by original tree index, this.treeIndices should be used by InteractionManager.
-  const { geometry, colors, sizes, indices: geomPointToFilteredTreeIdxMap } =
-    PointGeometryFactory.createGeometry(
-      this.positions,
-      this.numPoints,
-      this.treeIndices, // Pass the originalFilteredTreeIndices here
-      this.settings.pointSize,
-      colorMapper
+    // Filter trees to only include full trees if requested
+    const { filteredTreeList, treeIndices: originalFilteredTreeIndices } = TreeSelectionService.filterTrees(
+      this.treeList, // Use the original treeList from constructor
+      this.settings.showOnlyFullTrees
     );
-  this.geometry = geometry;
-  this.colors = colors; // Storing for direct manipulation in clearHighlights, highlightTree
-  this.sizes = sizes;   // Storing for direct manipulation
+    this.treeIndices = originalFilteredTreeIndices; // Store for use in InteractionManager & highlightTree
 
-  // Create material and points
-  this.pointsMaterial = PointGeometryFactory.createPointsMaterial(
-    this.settings.pointSize,
-    this.pointTexture
-  );
+    // numPoints is the number of points we will actually render
+    this.numPoints = filteredTreeList.length;
 
-  this.points = new THREE.Points(this.geometry, this.pointsMaterial);
-  this.scene.add(this.points);
+    // Initialize THREE.js scene, camera, renderer
+    const { renderer, scene, camera, controls } =
+      VisualizationRenderer.initialize(this.container, this.settings);
+    this.renderer = renderer;
+    this.scene = scene;
+    this.camera = camera;
+    this.controls = controls;
 
-  // Create UI elements (info panel, tooltip)
-  this.infoPanel = UIComponents.createInfoPanel(
-    this.container,
-    this.numPoints,
-    (newSize) => { // onSizeChange callback
-      this.settings.pointSize = newSize;
-      for (let i = 0; i < this.numPoints; i++) {
-        this.sizes[i] = newSize; // Assumes this.sizes is the array from createGeometry
+    // Generate positions for the points by calling the refactored function
+    this.positions = PositioningAlgorithms.prepareScatterPlotPositions(
+      this.settings.useCustomPositions ? this.options.positions : null,
+      this.settings.distanceMatrix,
+      this.settings.layoutSpread,
+      this.numPoints, // numPointsToRender
+      this.settings.showOnlyFullTrees, // This flag guides how sourcePositions are filtered IF provided
+      this.treeList.length, // originalSourcePositionsLength
+      this.treeIndices // filteredSourceIndices
+    );
+
+    // The SVG debug logic
+    // called from here with the 'positions' or intermediate arrays, or be part of a debug mode
+    // in prepareScatterPlotPositions. For this refactor, it's assumed to be part of the moved logic
+    // or handled separately if still required for debugging.
+    // The original SVG debug logic used 'relevantPositionsSource' which is now internal to prepareScatterPlotPositions.
+    // If direct SVG debugging of the final THREE.js `positions` array is needed here:
+    if (options.debugSVG && !document.getElementById("embedding-debug-svg")) {
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.id = "embedding-debug-svg";
+      svg.style.position = "absolute";
+      svg.style.top = "0";
+      svg.style.right = "0";
+      svg.style.width = "200px";
+      svg.style.height = "200px";
+      svg.style.background = "rgba(255,255,255,0.7)";
+      svg.style.zIndex = "9999";
+      svg.style.pointerEvents = "none";
+      if (this.container && this.container.appendChild) {
+          this.container.appendChild(svg);
       }
-      this.geometry.attributes.size.needsUpdate = true;
-      this.pointsMaterial.size = newSize;
-      this.pointsMaterial.needsUpdate = true;
+
+      const tempPoints = [];
+      for (let i = 0; i < this.numPoints; i++) {
+          tempPoints.push({ x: this.positions[i*3], y: this.positions[i*3+1]});
+      }
+      let xs = tempPoints.map(p => p.x);
+      let ys = tempPoints.map(p => p.y);
+      if (xs.length > 0 && ys.length > 0) {
+          let minX = Math.min(...xs), maxX = Math.max(...xs);
+          let minY = Math.min(...ys), maxY = Math.max(...ys);
+          let rangeX = maxX - minX;
+          let rangeY = maxY - minY;
+
+          // Avoid division by zero if all points are collinear or identical
+          if (rangeX === 0 && rangeY === 0) { // All points are the same
+              // Plot all points at the center
+              tempPoints.forEach(() => {
+                  const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                  circle.setAttribute("cx", "100"); // Center of 200px SVG
+                  circle.setAttribute("cy", "100");
+                  circle.setAttribute("r", 2);
+                  circle.setAttribute("fill", "#4285f4");
+                  svg.appendChild(circle);
+              });
+          } else if (rangeX === 0) { // Points are collinear vertically
+               let scaleY = 180 / rangeY || 1;
+               tempPoints.forEach(p => {
+                  const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                  circle.setAttribute("cx", "100"); // Center X
+                  circle.setAttribute("cy", ((p.y - minY) * scaleY + 10).toFixed(2));
+                  circle.setAttribute("r", 2);
+                  circle.setAttribute("fill", "#4285f4");
+                  svg.appendChild(circle);
+              });
+          } else if (rangeY === 0) { // Points are collinear horizontally
+              let scaleX = 180 / rangeX || 1;
+              tempPoints.forEach(p => {
+                  const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                  circle.setAttribute("cx", ((p.x - minX) * scaleX + 10).toFixed(2));
+                  circle.setAttribute("cy", "100"); // Center Y
+                  circle.setAttribute("r", 2);
+                  circle.setAttribute("fill", "#4285f4");
+                  svg.appendChild(circle);
+              });
+          } else { // Default case
+              let scaleX = 180 / rangeX;
+              let scaleY = 180 / rangeY;
+              tempPoints.forEach(p => {
+                  const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                  circle.setAttribute("cx", ((p.x - minX) * scaleX + 10).toFixed(2));
+                  circle.setAttribute("cy", ((p.y - minY) * scaleY + 10).toFixed(2));
+                  circle.setAttribute("r", 2);
+                  circle.setAttribute("fill", "#4285f4");
+                  svg.appendChild(circle);
+              });
+          }
+      }
     }
-  );
 
-  this.tooltip = UIComponents.createTooltip(this.container);
-  this.compareButton = this.infoPanel.querySelector("#compare-connection-btn");
-  this.compareButton.style.display = "none";
+    // Create point texture for better looking points
+    this.pointTexture = PointTextureCreator.createPointTexture();
 
-  // Create selection marker
-  this.selectionMarker = UIComponents.createSelectionMarker(
-    this.settings.selectedColor
-  );
-  this.scene.add(this.selectionMarker);
-  this.selectionMarker.visible = false;
+    // Prepare colors if group coloring is provided
+    let colorMapper;
+    if (this.options.groupColors && Array.isArray(this.options.groupColors)) {
+      colorMapper = this.options.groupColors.map((color) => new THREE.Color(color));
+    }
 
-  this.comparisonModals = {}; // Managed locally
+    // Create geometry for points
+    // Note: PointGeometryFactory.createGeometry returns 'indices' which are the true mapping from
+    // the geometry's sorted/internal indices to the original treeIndices after filtering.
+    // We stored the treeIndices from TreeSelectionService.filterTrees as this.treeIndices earlier.
+    // For highlighting by original tree index, this.treeIndices should be used by InteractionManager.
+    const { geometry, colors, sizes, indices: geomPointToFilteredTreeIdxMap } =
+      PointGeometryFactory.createGeometry(
+        this.positions,
+        this.numPoints,
+        this.treeIndices, // Pass the originalFilteredTreeIndices here
+        this.settings.pointSize,
+        colorMapper
+      );
+    this.geometry = geometry;
+    this.colors = colors; // Storing for direct manipulation in clearHighlights, highlightTree
+    this.sizes = sizes;   // Storing for direct manipulation
 
-  // Instantiate InteractionManager
-  this.interactionManager = new InteractionManager(
-    this.scene,
-    this.camera,
-    this.points,
-    this.geometry,
-    this.settings,
-    this.selectionMarker,
-    this.compareButton,
-    geomPointToFilteredTreeIdxMap, // Pass the map from geometry index to filtered tree index
-                                   // This is what InteractionManager expects as 'treeIndices'
-    this.positions
-  );
+    // Create material and points
+    this.pointsMaterial = PointGeometryFactory.createPointsMaterial(
+      this.settings.pointSize,
+      this.pointTexture
+    );
+
+    this.points = new THREE.Points(this.geometry, this.pointsMaterial);
+    this.scene.add(this.points);
+
+    // Create UI elements (info panel, tooltip)
+    this.infoPanel = UIComponents.createInfoPanel(
+      this.container,
+      this.numPoints,
+      (newSize) => { // onSizeChange callback
+        this.settings.pointSize = newSize;
+        for (let i = 0; i < this.numPoints; i++) {
+          this.sizes[i] = newSize; // Assumes this.sizes is the array from createGeometry
+        }
+        this.geometry.attributes.size.needsUpdate = true;
+        this.pointsMaterial.size = newSize;
+        this.pointsMaterial.needsUpdate = true;
+      }
+    );
+
+    this.tooltip = UIComponents.createTooltip(this.container);
+    this.compareButton = this.infoPanel.querySelector("#compare-connection-btn");
+    this.compareButton.style.display = "none";
+
+    // Create selection marker
+    this.selectionMarker = UIComponents.createSelectionMarker(
+      this.settings.selectedColor
+    );
+    this.scene.add(this.selectionMarker);
+    this.selectionMarker.visible = false;
+
+    this.comparisonModals = {}; // Managed locally
+
+    // Instantiate InteractionManager
+    this.interactionManager = new InteractionManager(
+      this.scene,
+      this.camera,
+      this.points,
+      this.geometry,
+      this.settings,
+      this.selectionMarker,
+      this.compareButton,
+      geomPointToFilteredTreeIdxMap, // Pass the map from geometry index to filtered tree index
+      this.positions
+    );
+
+    // Add debug logging to track geometry and positions data
+    console.log("ScatterPlotVisualizer constructor - numPoints:", this.numPoints);
+    console.log("ScatterPlotVisualizer constructor - positions array length:", this.positions ? this.positions.length : 0);
+    console.log("ScatterPlotVisualizer constructor - geometry attributes:", this.geometry.attributes);
+
+    // Start animation loop and event listeners after all setup is complete
+    this._startAnimationLoop();
+    this._setupEventListeners();
+}
+
+  // The rest of the event handlers remain unchanged, but they'll now have the correct context:
+  _handleMouseMove(event) {
+    this.interactionManager.onMouseMove(event, this.container, this.tooltip);
+  }
+
+  _handleClick(event) {
+    if (event.shiftKey) {
+      this._toggleConnectionDebug(this.scene, this.interactionManager.connectionLines);
+      return;
+    }
+    this.interactionManager.handleConnectionClick(event, this.container);
+    if (!this.interactionManager.getSelectedConnectionInfo()) {
+      this.interactionManager.handlePointClick(event, this.container);
+    }
+  }
+
+  _onWindowResize() {
+    VisualizationRenderer.updateOnResize(this.renderer, this.camera, this.container);
+  }
+
+  _setupEventListeners() {
+    this.container.addEventListener("mousemove", this._handleMouseMove);
+    this.container.addEventListener("click", this._handleClick);
+    this.compareButton.addEventListener("click", () => {
+      const currentSelectedConnection = this.interactionManager.getSelectedConnectionInfo();
+      if (currentSelectedConnection) {
+        TreeSelectionService.compareTrees(
+          currentSelectedConnection.tree1,
+          currentSelectedConnection.tree2,
+          { treeList: this.treeList, comparisonModals: this.comparisonModals }
+        );
+      }
+    });
+    window.addEventListener("resize", this._onWindowResize);
+  }
+
+
+  _startAnimationLoop() {
+    VisualizationRenderer.startAnimation(() => {
+      this.controls.update();
+      if (this.selectionMarker.visible) {
+        this.selectionMarker.rotation.y += 0.02;
+        const time = Date.now() * 0.003;
+        const scale = 1 + 0.2 * Math.sin(time);
+        this.selectionMarker.scale.set(scale, scale, scale);
+      }
+      this.renderer.render(this.scene, this.camera);
+    });
+  }
 
   // Add a debug tool to visualize connections and hit areas
   // This becomes a private method
-  this._toggleConnectionDebug = (scene, connectionLines) => {
+  _toggleConnectionDebug(scene, connectionLines) {
     const existingDebug = scene.getObjectByName("connection-debug");
     if (existingDebug) {
       scene.remove(existingDebug);
@@ -300,58 +364,6 @@ class ScatterPlotVisualizer {
     });
 
     scene.add(debugHelper);
-  }
-
-    this.scene.add(debugHelper);
-  }
-
-  // Bind event handlers to the class instance or use arrow functions
-  _handleMouseMove = (event) => {
-    this.interactionManager.onMouseMove(event, this.container, this.tooltip);
-  }
-
-  _handleClick = (event) => {
-    if (event.shiftKey) {
-      this._toggleConnectionDebug(this.scene, this.interactionManager.connectionLines);
-      return;
-    }
-    this.interactionManager.handleConnectionClick(event, this.container);
-    if (!this.interactionManager.getSelectedConnectionInfo()) {
-      this.interactionManager.handlePointClick(event, this.container);
-    }
-  }
-
-  _onWindowResize = () => {
-    VisualizationRenderer.updateOnResize(this.renderer, this.camera, this.container);
-  }
-
-  _setupEventListeners() {
-    this.container.addEventListener("mousemove", this._handleMouseMove);
-    this.container.addEventListener("click", this._handleClick);
-    this.compareButton.addEventListener("click", () => {
-      const currentSelectedConnection = this.interactionManager.getSelectedConnectionInfo();
-      if (currentSelectedConnection) {
-        TreeSelectionService.compareTrees(
-          currentSelectedConnection.tree1,
-          currentSelectedConnection.tree2,
-          { treeList: this.treeList, comparisonModals: this.comparisonModals }
-        );
-      }
-    });
-    window.addEventListener("resize", this._onWindowResize);
-  }
-
-  _startAnimationLoop() {
-    VisualizationRenderer.startAnimation(() => {
-      this.controls.update();
-      if (this.selectionMarker.visible) {
-        this.selectionMarker.rotation.y += 0.02;
-        const time = Date.now() * 0.003;
-        const scale = 1 + 0.2 * Math.sin(time);
-        this.selectionMarker.scale.set(scale, scale, scale);
-      }
-      this.renderer.render(this.scene, this.camera);
-    });
   }
 
   // Public Interface Methods
@@ -657,15 +669,8 @@ class ScatterPlotVisualizer {
       }
     }, 5000);
   });
+  }
 }
 
-// WinBox modals do not block background interaction by default.
-// No overlay/backdrop is used.
-
-// Export the class as the primary export for this module if it replaces createScatterPlot
-export { ScatterPlotVisualizer };
-
-// Keep showScatterPlotModal as a separate export if it's called from elsewhere,
-// but now it uses the class. Or make it a static method of the class.
-// For this refactor, it's being made a static method.
-// export { showScatterPlotModal }; // This would be removed if it becomes static
+const showScatterPlotModal = ScatterPlotVisualizer.showInModal;
+export { ScatterPlotVisualizer, showScatterPlotModal };

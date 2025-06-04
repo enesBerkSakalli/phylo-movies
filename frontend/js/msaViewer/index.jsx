@@ -1,92 +1,69 @@
-import React, { useState, useEffect } from "react";
+
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { createRoot } from "react-dom/client";
-import MSAViewerContent from "./MSAViewerModal";
+import AlignmentViewer2Component from "./AlignmentViewer2Component";
 import localforage from "localforage";
 
-function App() {
-  console.log("React MSA modal loaded");
-  const [msaString, setMsaString] = useState("");
-  const [msaModalOpen, setMsaModalOpen] = useState(false);
-  const [winboxInstance, setWinboxInstance] = useState(null);
 
-  // Function to load MSA data from localForage (IndexedDB)
-  const loadMSAData = async () => {
+// Custom hook: Load and update MSA data from localForage
+function useMSAData() {
+  const [msaString, setMsaString] = useState("");
+
+  const loadMSAData = useCallback(async () => {
     try {
       const local = await localforage.getItem("phyloMovieMSAData");
-      console.log("[MSAViewer] Raw localForage data:", local);
-
       if (local) {
         if (local.rawData && typeof local.rawData === "string") {
-          console.log("[MSAViewer] Using rawData from parsed MSA object");
           setMsaString(local.rawData);
         } else if (local.sequences && Array.isArray(local.sequences)) {
-          console.log("[MSAViewer] Converting sequences array back to FASTA format");
           const fastaString = local.sequences
             .map((seq) => `>${seq.id}\n${seq.sequence}`)
             .join("\n");
           setMsaString(fastaString);
         } else if (typeof local === "string") {
-          console.log("[MSAViewer] Using string directly");
           setMsaString(local);
         } else {
-          console.warn("[MSAViewer] Unrecognized MSA data format:", local);
+          setMsaString("");
         }
       } else {
-        console.log("[MSAViewer] No MSA data found in localForage");
         setMsaString("");
       }
     } catch (e) {
-      console.error("[MSAViewer] Error loading MSA data from localForage:", e);
       setMsaString("");
     }
-  };
-
-  // Load MSA data from localForage on mount
-  useEffect(() => {
-    loadMSAData();
   }, []);
 
-  // Listen for custom msa-data-updated events and reload MSA data
-  useEffect(() => {
-    const handleCustomStorageChange = () => {
-      console.log("[MSAViewer] Custom MSA data update event received, reloading...");
-      loadMSAData();
-      // If MSA viewer is open, close it so it can be reopened with new data
-      if (winboxInstance) {
-        console.log("[MSAViewer] Closing existing MSA viewer to refresh with new data");
-        winboxInstance.close();
-      }
-    };
-    window.addEventListener("msa-data-updated", handleCustomStorageChange);
-    return () => {
-      window.removeEventListener("msa-data-updated", handleCustomStorageChange);
-    };
-  }, [winboxInstance]);
+  useEffect(() => { loadMSAData(); }, [loadMSAData]);
 
-  // Listen for open-msa-viewer events and create WinBox
+  // Listen for msa-data-updated events
+  useEffect(() => {
+    const handler = () => { loadMSAData(); };
+    window.addEventListener("msa-data-updated", handler);
+    return () => window.removeEventListener("msa-data-updated", handler);
+  }, [loadMSAData]);
+
+  return msaString;
+}
+
+// Custom hook: Manage WinBox window for MSA viewer
+function useMSAWinBox(msaString) {
+  const winboxInstance = useRef(null);
+
   useEffect(() => {
     function openMSAWindow(e) {
-      console.log("open-msa-viewer event received", e.detail);
-
       if (!msaString) {
         alert("No MSA data available. Please upload an MSA file.");
         return;
       }
-
-      // If a WinBox instance already exists, focus it instead of creating a new one
-      if (winboxInstance) {
-        winboxInstance.focus();
+      if (winboxInstance.current) {
+        winboxInstance.current.focus();
         return;
       }
-
-      // Create a container for the React component
       const container = document.createElement("div");
       container.id = "msa-winbox-content";
       container.style.width = "100%";
       container.style.height = "100%";
       container.style.overflow = "hidden";
-
-      // Create WinBox instance
       const wb = new WinBox("Multiple Sequence Alignment", {
         class: ["no-full"],
         background: "#373747",
@@ -97,52 +74,47 @@ function App() {
         y: "center",
         mount: container,
         onclose: () => {
-          // Cleanup React root on close
+          if (container.__reactRoot) {
+            try { container.__reactRoot.unmount(); } catch {}
+          }
+          winboxInstance.current = null;
+        },
+        onresize: (width, height) => {
           if (container.__reactRoot) {
             try {
-              container.__reactRoot.unmount();
-            } catch (err) {
-              console.error("Error unmounting React root:", err);
-            }
+              container.__reactRoot.render(
+                <AlignmentViewer2Component
+                  msaString={msaString}
+                  containerWidth={width}
+                  containerHeight={height}
+                />
+              );
+            } catch {}
           }
-          setWinboxInstance(null);
         },
       });
-
-      // Render React component into the container
       const root = createRoot(container);
       container.__reactRoot = root;
-
       root.render(
-        <MSAViewerContent
+        <AlignmentViewer2Component
           msaString={msaString}
           containerWidth={wb.width}
           containerHeight={wb.height}
         />
       );
-
-      setWinboxInstance(wb);
-      console.log("MSA WinBox created");
+      winboxInstance.current = wb;
     }
-
     window.addEventListener("open-msa-viewer", openMSAWindow);
     return () => {
       window.removeEventListener("open-msa-viewer", openMSAWindow);
-      // Cleanup any open WinBox on unmount
-      if (winboxInstance) {
-        winboxInstance.close();
-      }
+      if (winboxInstance.current) winboxInstance.current.close();
     };
-  }, [msaString, winboxInstance]);
+  }, [msaString]);
+}
 
-  console.log(
-    "Modal open state:",
-    msaModalOpen,
-    "MSA string length:",
-    msaString?.length || 0
-  );
-  console.log("MSA string preview:", msaString?.substring(0, 100));
-
+function App() {
+  const msaString = useMSAData();
+  useMSAWinBox(msaString);
   // This component doesn't render anything visible - it just manages the WinBox
   return null;
 }

@@ -41,6 +41,81 @@ export class TreeRenderer {
   }
 
   /**
+   * Create SVG container with side-by-side tree groups for comparison
+   */
+  createSideBySideContainer(id, parentElement) {
+    // Clear any existing content
+    parentElement.innerHTML = '';
+
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("id", id);
+    svg.setAttribute("width", "100%");
+    svg.setAttribute("height", "100%");
+    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+    svg.style.display = "block";
+    svg.style.border = "1px solid rgba(255,255,255,0.1)";
+    svg.style.borderRadius = "4px";
+    svg.style.background = "rgba(255,255,255,0.01)";
+
+    parentElement.appendChild(svg);
+
+    // Get container dimensions properly
+    const containerRect = parentElement.getBoundingClientRect();
+    const width = Math.max(containerRect.width || 800, 600);
+    const height = Math.max(containerRect.height || 600, 400);
+
+    svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+
+    // Create main container group
+    const mainGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    mainGroup.setAttribute("class", "comparison-main-container");
+    svg.appendChild(mainGroup);
+
+    // Calculate positions for side-by-side layout with better centering
+    const treeWidth = width / 2;
+    const tree1CenterX = treeWidth / 2;
+    const tree2CenterX = treeWidth + (treeWidth / 2);
+    const treeCenterY = height / 2;
+
+    // Create left tree group - no extra translation since TreeDrawer handles centering
+    const tree1Group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    tree1Group.setAttribute("class", "tree-container tree-left");
+    tree1Group.setAttribute("id", `${id}-tree1-group`);
+    // Let TreeDrawer handle the centering - just provide the base position
+    tree1Group.setAttribute("transform", `translate(${tree1CenterX}, ${treeCenterY})`);
+    mainGroup.appendChild(tree1Group);
+
+    // Create right tree group - no extra translation since TreeDrawer handles centering
+    const tree2Group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    tree2Group.setAttribute("class", "tree-container tree-right");
+    tree2Group.setAttribute("id", `${id}-tree2-group`);
+    // Let TreeDrawer handle the centering - just provide the base position
+    tree2Group.setAttribute("transform", `translate(${tree2CenterX}, ${treeCenterY})`);
+    mainGroup.appendChild(tree2Group);
+
+    // Add separator line
+    const separator = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    separator.setAttribute("x1", width / 2);
+    separator.setAttribute("y1", 20);
+    separator.setAttribute("x2", width / 2);
+    separator.setAttribute("y2", height - 20);
+    separator.setAttribute("stroke", "rgba(255,255,255,0.2)");
+    separator.setAttribute("stroke-width", "1");
+    separator.setAttribute("stroke-dasharray", "5,5");
+    mainGroup.appendChild(separator);
+
+    return {
+      svg,
+      width,
+      height,
+      tree1GroupId: `${id}-tree1-group`,
+      tree2GroupId: `${id}-tree2-group`,
+      availableTreeWidth: treeWidth - 60, // Account for padding
+      availableTreeHeight: height - 60
+    };
+  }
+
+  /**
    * Render tree with all proper parameters and improved error handling
    */
   async renderTree(treeData, svgId, options = {}) {
@@ -63,10 +138,12 @@ export class TreeRenderer {
             throw new Error(`SVG element ${svgId} not found`);
           }
 
-          // Construct tree layout
+          // Construct tree layout with font size for padding calculation
           const treeLayout = constructTree(treeData, ignoreBranchLengths, {
-            containerId: svgId
+            containerId: svgId,
+            fontSize: fontSize // Pass font size for dynamic padding calculation
           });
+
 
           // Use the SVG ID directly - TreeDrawer.getSVG() will handle container creation
           const success = drawTree(
@@ -93,64 +170,102 @@ export class TreeRenderer {
   }
 
   /**
-   * Center tree content within SVG viewport - enhanced with TreeDrawer integration
+   * Render trees side by side in their respective groups
    */
-  centerTree(svgId) {
-    const svg = document.getElementById(svgId);
-    if (!svg) {
-      console.warn(`[TreeRenderer] SVG element ${svgId} not found for centering`);
-      return;
+  async renderSideBySideTrees(treeData1, treeData2, svgId, options = {}) {
+    const {
+      leaveOrder = [],
+      ignoreBranchLengths = false,
+      fontSize = 1.7,
+      strokeWidth = 1,
+      toBeHighlighted1 = [],
+      toBeHighlighted2 = [],
+      drawDuration = 0
+    } = options;
+
+    const svgElement = document.getElementById(svgId);
+    if (!svgElement) {
+      throw new Error(`SVG element ${svgId} not found`);
     }
 
-    // Check if TreeDrawer has already created proper centering structure
-    const treeContainer = svg.querySelector('.tree-container');
-    if (treeContainer) {
-      // TreeDrawer handles centering for containers with .tree-container class
-      // Just ensure the container is properly positioned
-      const svgRect = svg.getBoundingClientRect();
-      const width = svgRect.width || +svg.getAttribute('width') || 400;
-      const height = svgRect.height || +svg.getAttribute('height') || 400;
+    const tree1GroupId = `${svgId}-tree1-group`;
+    const tree2GroupId = `${svgId}-tree2-group`;
 
-      // Update container centering if needed
-      treeContainer.setAttribute('transform', `translate(${width / 2}, ${height / 2})`);
-      return;
-    }
+    // Render both trees in parallel
+    const [tree1Layout, tree2Layout] = await Promise.all([
+      this.renderTreeInGroup(treeData1, tree1GroupId, {
+        ...options,
+        toBeHighlighted: toBeHighlighted1,
+        side: 'left'
+      }),
+      this.renderTreeInGroup(treeData2, tree2GroupId, {
+        ...options,
+        toBeHighlighted: toBeHighlighted2,
+        side: 'right'
+      })
+    ]);
 
-    // Fallback: manual centering for legacy tree structures
-    this._performManualCentering(svg);
+    return { tree1Layout, tree2Layout };
   }
 
   /**
-   * Performs manual centering for trees without proper container structure
-   * @param {Element} svg - The SVG element
-   * @private
+   * Render a single tree within a specific group
    */
-  _performManualCentering(svg) {
-    const allElements = svg.querySelectorAll('circle, path, text');
-    if (allElements.length === 0) return;
+  async renderTreeInGroup(treeData, groupId, options = {}) {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        try {
+          const treeGroup = document.getElementById(groupId);
+          if (!treeGroup) {
+            throw new Error(`Tree group ${groupId} not found`);
+          }
 
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+          // Clear existing content
+          treeGroup.innerHTML = '';
 
-    allElements.forEach(el => {
-      try {
-        const bbox = el.getBBox();
-        minX = Math.min(minX, bbox.x);
-        minY = Math.min(minY, bbox.y);
-        maxX = Math.max(maxX, bbox.x + bbox.width);
-        maxY = Math.max(maxY, bbox.y + bbox.height);
-      } catch (e) {
-        // Skip elements that can't provide bbox
-      }
+          // Get available space for this tree
+          const svgElement = treeGroup.closest('svg');
+          const svgRect = svgElement.getBoundingClientRect();
+
+          // Be more generous with space allocation for comparison trees
+          const availableWidth = (svgRect.width / 2) - 20; // Reduced padding
+          const availableHeight = svgRect.height - 20; // Reduced padding
+
+          // Calculate font size for padding
+          const adjustedFontSize = (options.fontSize || 1.7) * 0.9;
+
+          const treeLayout = constructTree(treeData, options.ignoreBranchLengths, {
+            containerId: groupId,
+            width: availableWidth - adjustedFontSize * 3,
+            height: availableHeight- adjustedFontSize * 3,
+            fontSize: adjustedFontSize, // Pass font size for padding calculation
+            isComparison: true
+          });
+
+          console.log(`TreeRenderer: Group ${groupId} - Available: ${availableWidth}x${availableHeight}`);
+          console.log(`TreeRenderer: Group ${groupId} - Label padding: ${treeLayout.labelPadding}`);
+
+          const success = drawTree(
+            treeLayout,
+            new Set(options.toBeHighlighted || []),
+            options.drawDuration || 0,
+            options.leaveOrder || [],
+            adjustedFontSize,
+            (options.strokeWidth || 1) * 0.9,
+            groupId,
+            options.ignoreBranchLengths
+          );
+
+          if (success) {
+            resolve(treeLayout);
+          } else {
+            reject(new Error('Tree rendering failed'));
+          }
+        } catch (error) {
+          console.error(`Error rendering tree in group ${groupId}:`, error);
+          reject(error);
+        }
+      }, 100);
     });
-
-    if (isFinite(minX) && isFinite(minY) && isFinite(maxX) && isFinite(maxY)) {
-      const padding = 50;
-      const width = maxX - minX + padding * 2;
-      const height = maxY - minY + padding * 2;
-      const viewBox = `${minX - padding} ${minY - padding} ${width} ${height}`;
-
-      svg.setAttribute('viewBox', viewBox);
-      svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-    }
   }
 }

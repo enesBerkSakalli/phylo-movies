@@ -1,0 +1,67 @@
+.msa-modal-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background-color: #2f2f2f;
+  color: white;
+}
+
+.msa-toolbar {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 8px;
+  background-color: #3a3a3a;
+  flex-shrink: 0;
+  gap: 15px;
+  border-bottom: 1px solid #444;
+}
+
+.msa-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.msa-toolbar select {
+  padding: 4px;
+  border-radius: 4px;
+  background-color: #555;
+  color: white;
+  border: 1px solid #777;
+}
+
+/* MSA Viewer Location Display Enhancements */
+.msa-viewer-container {
+  flex-grow: 1;
+  overflow: hidden; /* Important for the MSA viewer to scroll correctly */
+  height: 100%;
+}
+
+/* Ensure MSA viewer header (with location display) is visible */
+.msa-viewer-container .msa-viewer .jbrowse-header {
+  background-color: #f8f9fa !important;
+  border-bottom: 1px solid #dee2e6 !important;
+  padding: 4px 8px !important;
+}
+
+/* Style the location display text */
+.msa-viewer-container .MuiTypography-root {
+  font-size: 13px !important;
+  color: #495057 !important;
+  font-family: 'Courier New', monospace !important;
+}
+
+/* Ensure the MSA header is properly sized */
+.msa-viewer-container [style*="display: flex"] {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  min-height: 32px;
+}
+
+/* Let msa-react handle its own internal sizing */
+.msa-viewer-container .msa-viewer {
+  height: 100% !important;
+  width: 100% !important;
+}
