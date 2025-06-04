@@ -10,10 +10,10 @@ async function testImports() {
     const { TreeSelectionService } = await import('../js/space/TreeSelectionService.js');
     console.log('✓ TreeSelectionService.js import works');
 
-    const { ComparisonModal } = await import('../js/treeComparision/ComparisonModal.js');
+    const { ComparisonModal } = await import('../js/treeComparision/ComparisonWindow.js');
     console.log('✓ ComparisonModal.js import works');
 
-    const { InterpolationModal } = await import('../js/treeComparision/InterpolationModal.js');
+    const { InterpolationModal } = await import('../js/treeComparision/InterpolationWindow.js');
     console.log('✓ InterpolationModal.js import works');
 
     console.log('All imports successful!');

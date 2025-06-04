@@ -63,9 +63,11 @@ export class TreeDrawer {
 
     // Handle the main application case - return the group element directly
     if (svgContainerId === "application") {
-      // The main application SVG ("#application") is expected to be set up with a zoomable <g> element.
-      // This <g> element itself is returned, as TreeDrawer will append directly to it.
-      // Centering and viewbox are managed by the zoom behavior in the main application.
+      return container;
+    }
+
+    // For comparison containers (groups), return them directly
+    if (container.node().tagName.toLowerCase() === "g") {
       return container;
     }
 
@@ -138,14 +140,6 @@ export class TreeDrawer {
     }
 
     // For other containers, ensure proper centering
-    this._ensureProperCentering();
-  }
-
-  /**
-   * Ensures proper centering for non-main application containers.
-   * @private
-   */
-  _ensureProperCentering() {
     const containerNode = this.svg_container.node();
     if (!containerNode) return;
 
@@ -184,10 +178,7 @@ export class TreeDrawer {
 
   /**
    * Ensures the tree-container structure exists and is properly centered.
-   * @param {Node} svgElement - The SVG element.
-   * @param {number} width - The SVG width.
-   * @param {number} height - The SVG height.
-   * @private
+   * Simplified version without complex comparison logic.
    */
   _ensureTreeContainerStructure(svgElement, width, height) {
     const svgSelection = d3.select(svgElement);
@@ -207,23 +198,16 @@ export class TreeDrawer {
         treeContainer.node().appendChild(this);
       });
 
-      // Update the svg_container reference
       this.svg_container = treeContainer;
     } else {
       // Update existing container position
       treeContainer.attr("transform", `translate(${width / 2}, ${height / 2})`);
 
-      // Ensure svg_container points to the tree-container
       if (this.svg_container.attr("class") !== "tree-container") {
         this.svg_container = treeContainer;
       }
     }
   }
-
-  // Static properties 'markedLabelList' and 'parser' are now instance properties,
-  // initialized in the constructor. Their static declarations are removed.
-  // static markedLabelList = [];
-  // static parser = new ParseUtil();
 
   /**
    * Returns an interpolator function for animating branch paths (arcs) during transitions.
@@ -298,18 +282,9 @@ export class TreeDrawer {
 
   /**
    * Draws and updates the tree branch paths (links) using D3's general update pattern.
-   * Handles enter, update, and exit selections for branch paths.
-   * @memberof TreeDrawer
-   * @param {Array<Object>|null} [linksSubset=null] - Optional subset of D3 link objects to draw or update.
-   *                                                If null, all links from `this.root.links()` are used.
-   * @returns {void}
+   * Simplified - removed unnecessary centering call.
    */
   updateLinks(linksSubset = null) {
-    // Only center for non-main application containers
-    if (this.svg_container.attr("id") !== "application") {
-      this.centerTree();
-    }
-
     const linksData = linksSubset || this.root.links();
     let links = this.svg_container
       .selectAll(".links")
@@ -324,7 +299,7 @@ export class TreeDrawer {
       .append("path")
       .style("stroke", (d) => this.colorBranches(d))
       .attr("class", "links")
-      .attr("stroke-width", this.sizeMap.strokeWidth) // Use instance property 'this.sizeMap'
+      .attr("stroke-width", this.sizeMap.strokeWidth)
       .attr("fill", "none")
       .attr("id", (d) => this.getLinkId(d))
       .attr("d", (d) => buildSvgString(d))
@@ -333,10 +308,10 @@ export class TreeDrawer {
 
     // UPDATE old elements present in new data.
     links
-      .attr("stroke-width", this.sizeMap.strokeWidth) // Use instance property 'this.sizeMap'
+      .attr("stroke-width", this.sizeMap.strokeWidth)
       .style("stroke", (d) => this.colorBranches(d))
       .transition()
-      .ease(d3.easePolyInOut) // changed from d3.easeCubic
+      .ease(d3.easePolyInOut)
       .duration(this.drawDuration)
       .attrTween("d", this.getArcInterpolationFunction());
   }
@@ -373,16 +348,17 @@ export class TreeDrawer {
   }
 
   /**
-   * Draws and updates the branch extension paths (dashed lines from terminal branches to leaf labels).
-   * Uses D3's general update pattern (join, exit, enter, update).
-   * @memberof TreeDrawer
-   * @param {number} currentMaxRadius - The current maximum radius of the tree layout, used for positioning extensions.
-   * @returns {void}
+   * Draws and updates the branch extension paths with proper padding consideration.
    */
   updateLinkExtension(currentMaxRadius) {
+    // Calculate extension end point considering label space
+    const extensionEndRadius = currentMaxRadius - (this.calculatedPadding ? this.calculatedPadding * 0.1 : 20);
+
+    console.log("TreeDrawer: Extension positioning - maxRadius:", currentMaxRadius, "padding:", this.calculatedPadding, "extensionRadius:", extensionEndRadius);
+
     // JOIN new data with old elements.
     const linkExtension = this.svg_container
-      .selectAll(".link-extension") //updates the links
+      .selectAll(".link-extension")
       .data(this.root.leaves(), (leaf) => {
         return leaf.data.name.toString();
       });
@@ -390,10 +366,10 @@ export class TreeDrawer {
     // UPDATE old elements present in new data.
     linkExtension
       .transition()
-      .attr("stroke-width", this.sizeMap.strokeWidth) // Use instance property 'this.sizeMap'
-      .ease(d3.easePolyInOut) // changed from d3.easeExpInOut
+      .attr("stroke-width", this.sizeMap.strokeWidth)
+      .ease(d3.easePolyInOut)
       .duration(this.drawDuration)
-      .attrTween("d", this.getLinkExtensionInterpolator(currentMaxRadius - 40))
+      .attrTween("d", this.getLinkExtensionInterpolator(extensionEndRadius))
       .style("stroke", (d) => this.colorCircle(d));
 
     // ENTER new elements present in new data.
@@ -401,25 +377,27 @@ export class TreeDrawer {
       .enter()
       .append("path")
       .attr("class", "link-extension")
-
-      .attr("stroke-width", this.sizeMap.strokeWidth) // Use instance property 'this.sizeMap'
+      .attr("stroke-width", this.sizeMap.strokeWidth)
       .attr("stroke-dasharray", () => {
         return "5,5";
       })
       .attr("fill", "none")
       .attr("d", (d) => {
-        return buildSvgLinkExtension(d, currentMaxRadius - 40);
+        return buildSvgLinkExtension(d, extensionEndRadius);
       })
       .style("stroke", (d) => this.colorCircle(d));
   }
 
   /**
    * Draws and updates the leaf label text elements using D3's general update pattern.
-   * @memberof TreeDrawer
-   * @param {number} currentMaxRadius - The current maximum radius of the tree layout, used for positioning labels.
-   * @returns {void}
+   * Enhanced to use calculated padding for proper positioning.
    */
   updateLabels(currentMaxRadius) {
+    // Use calculated padding to ensure labels have enough space
+    const labelRadius = currentMaxRadius + (this.calculatedPadding ? this.calculatedPadding * 0.4 : 30);
+
+    console.log("TreeDrawer: Label positioning - maxRadius:", currentMaxRadius, "padding:", this.calculatedPadding, "labelRadius:", labelRadius);
+
     // JOIN new data with old svg elements
     const textLabels = this.svg_container
       .selectAll(".label")
@@ -430,11 +408,11 @@ export class TreeDrawer {
     // UPDATE old elements present in new data
     textLabels
       .transition()
-      .ease(d3.easeSinInOut) // changed from d3.easeExpInOut
+      .ease(d3.easeSinInOut)
       .duration(this.drawDuration)
-      .attrTween("transform", getOrientTextInterpolator(currentMaxRadius))
+      .attrTween("transform", getOrientTextInterpolator(labelRadius))
       .attr("text-anchor", (d) => anchorCalc(d))
-      .style("font-size", this.sizeMap.fontSize) // Use instance property 'this.sizeMap'
+      .style("font-size", this.sizeMap.fontSize)
       .style("fill", (d) => this.colorCircle(d));
 
     // ENTER new elements present in new data
@@ -447,11 +425,11 @@ export class TreeDrawer {
         return `label-${d.data.split_indices}`;
       })
       .attr("dy", ".31em")
-      .style("font-size", this.sizeMap.fontSize) // Use instance property 'this.sizeMap'
+      .style("font-size", this.sizeMap.fontSize)
       .text((d) => {
         return `${d.data.name}`;
       })
-      .attr("transform", (d) => orientText(d, currentMaxRadius))
+      .attr("transform", (d) => orientText(d, labelRadius))
       .attr("text-anchor", (d) => anchorCalc(d))
       .attr("font-weight", "bold")
       .attr("font-family", "Courier New")
@@ -459,13 +437,10 @@ export class TreeDrawer {
   }
 
   /**
-   * Draws and updates the leaf circle nodes using D3's general update pattern.
-   * Attaches a click event listener to these circles for node flipping (handled by `this.flipNode`).
-   * @memberof TreeDrawer
-   * @param {number} currentMaxRadius - The current maximum radius of the tree layout, used for positioning circles.
-   * @returns {void}
+   * Draws and updates the leaf circle nodes with proper spacing.
    */
   updateLeafCircles(currentMaxRadius) {
+
     // JOIN new data with old svg elements
     const leaf_circles = this.svg_container
       .selectAll(".leaf")
@@ -477,7 +452,7 @@ export class TreeDrawer {
     leaf_circles
       .style("fill", (d) => this.colorCircle(d))
       .transition()
-      .ease(d3.easeSinInOut) // changed from d3.easeExpInOut
+      .ease(d3.easeSinInOut)
       .duration(this.drawDuration)
       .attrTween("cx", attr2TweenCircleX(currentMaxRadius))
       .attrTween("cy", attr2TweenCircleY(currentMaxRadius))
@@ -493,10 +468,10 @@ export class TreeDrawer {
       })
       .attr("class", "leaf")
       .attr("cx", (d) => {
-        return (currentMaxRadius - 30) * Math.cos(d.angle);
+        return currentMaxRadius * Math.cos(d.angle);
       })
       .attr("cy", (d) => {
-        return (currentMaxRadius - 30) * Math.sin(d.angle);
+        return currentMaxRadius * Math.sin(d.angle);
       })
       .style("stroke", COLOR_MAP.colorMap.strokeColor)
       .attr("stroke-width", "0.1em")
@@ -606,7 +581,7 @@ export class TreeDrawer {
  */
 export default function drawTree(
   treeConstructor,
-  toBeHighlighted, // This is a Set of components (arrays/sets of split_indices)
+  toBeHighlighted,
   drawDurationFrontend,
   leaveOrder,
   fontSize,
@@ -615,34 +590,41 @@ export default function drawTree(
   options = {}
 ) {
   let currentRoot = treeConstructor["tree"];
-  let currentMaxRadius = treeConstructor["max_radius"] + 30;
+  let currentMaxRadius = treeConstructor["max_radius"];
+
+  // Use the calculated label padding from TreeConstructor
+  const calculatedPadding = treeConstructor["labelPadding"] || 40;
+
+  // For comparison views, reduce the padding buffer to fit better
+  const isComparison = svgContainerId.includes('comparison') || svgContainerId.includes('group');
+  const paddingMultiplier = isComparison ? 0.6 : 0.8;
+  const labelSpaceBuffer = calculatedPadding * paddingMultiplier;
 
   let treeDrawerInstance = new TreeDrawer(currentRoot, svgContainerId);
 
-  // Update instance properties for sizeMap
-  treeDrawerInstance.sizeMap.fontSize = `${fontSize}em`;
-  treeDrawerInstance.sizeMap.strokeWidth = strokeWidth;
+  // Adjust font and stroke sizes for comparison views
+  const fontSizeAdjustment = isComparison ? 0.85 : 1;
+  const strokeAdjustment = isComparison ? 0.9 : 1;
+
+  treeDrawerInstance.sizeMap.fontSize = `${fontSize * fontSizeAdjustment}em`;
+  treeDrawerInstance.sizeMap.strokeWidth = strokeWidth * strokeAdjustment;
 
   treeDrawerInstance.drawDuration = drawDurationFrontend;
   treeDrawerInstance.leaveOrder = leaveOrder;
-  treeDrawerInstance.marked = new Set(toBeHighlighted); // This is for component highlighting
+  treeDrawerInstance.marked = new Set(toBeHighlighted);
 
-  // Note: `treeDrawerInstance.markedLabelList` is initialized as [] in the constructor.
-  // If `calculateHighlightingTaxa` relies on specific labels being populated into this list
-  // via the `drawTree` function, that logic needs to be added here or where `toBeHighlighted`
-  // (if it were a list of labels) is processed.
-  // For now, `markedLabelList` is an instance property that can be managed by other methods if needed.
-  // The current `toBeHighlighted` (a Set of components) is used for branch/circle coloring via `treeDrawerInstance.marked`.
+  // Store padding info for use in positioning
+  treeDrawerInstance.calculatedPadding = calculatedPadding;
 
-  console.log("TreeDrawer: Marked taxa for highlighting (components):", treeDrawerInstance.marked);
-  console.log("toBeHighlighted (components for coloring):", toBeHighlighted);
+  console.log("TreeDrawer: Drawing tree for container:", svgContainerId);
+  console.log("TreeDrawer: Using calculated padding:", calculatedPadding);
+  console.log("TreeDrawer: Adjusted max radius:", currentMaxRadius);
+  console.log("TreeDrawer: Is comparison:", isComparison);
 
-
-  // Draw all tree elements
+  // Draw all tree elements with proper spacing
   treeDrawerInstance.updateLinks();
-  treeDrawerInstance.updateLinkExtension(currentMaxRadius);
-  treeDrawerInstance.updateLabels(currentMaxRadius);
-  treeDrawerInstance.updateLeafCircles(currentMaxRadius);
-
+  treeDrawerInstance.updateLinkExtension(currentMaxRadius + labelSpaceBuffer * 0.25);
+  treeDrawerInstance.updateLeafCircles(currentMaxRadius + labelSpaceBuffer * 1.25);
+  treeDrawerInstance.updateLabels(currentMaxRadius+ labelSpaceBuffer * 1.5);
   return true;
 }

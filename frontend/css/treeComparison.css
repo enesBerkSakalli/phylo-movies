@@ -1,7 +1,7 @@
 /* Tree Comparison Styles */
 
 /* Containers */
-.tree-comparison-modal { /* This class applies to the content *within* the WinBox body */
+.tree-comparison-window { /* This class applies to the content *within* the WinBox body */
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -12,7 +12,7 @@
   overflow-y: auto;
 }
 
-/* Header within the modal content */
+/* Header within the window content */
 .comparison-header {
   padding: var(--spacing-large) var(--spacing-xl); /* Increased horizontal padding for consistency */
   border-bottom: 1px solid var(--border-color-dark-theme);
@@ -38,11 +38,11 @@
   flex-direction: row;
   justify-content: center;
   align-items: stretch;
-  gap: var(--spacing-xl); /* Increased gap from 16px to 24px for better separation */
+  gap: var(--spacing-large); /* Reduced gap to give more space to trees */
   width: 100%;
   flex-grow: 1;
-  padding: var(--spacing-large) var(--spacing-xl); /* Added horizontal padding for better side margins */
-  min-height: 0;
+  padding: var(--spacing-medium) var(--spacing-large); /* Reduced vertical padding */
+  min-height: 600px; /* Increased minimum height for better tree display */
   position: relative; /* For positioning the visual separator */
 }
 
@@ -67,16 +67,18 @@
 
 .tree-container {
   flex: 1 1 0;
-  background-color: var(--card-background-dark-panel, var(--input-background-dark)); /* Use specific panel bg or fallback */
+  background-color: var(--card-background-dark-panel, var(--input-background-dark));
   border-radius: var(--standard-border-radius);
-  box-shadow: var(--shadow-sm); /* Changed from elevation-dp1 to shadow-sm for consistency */
+  box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
   align-items: stretch;
   justify-content: flex-start;
-  padding: var(--spacing-large); /* Increased padding from medium to large for better breathing room */
+  padding: var(--spacing-medium); /* Reduced padding to maximize tree space */
   overflow: hidden;
-  border: 1px solid var(--border-color-dark-theme); /* Added subtle border for better definition */
+  border: 1px solid var(--border-color-dark-theme);
+  min-height: 550px; /* Increased minimum height */
+  max-width: 48%; /* Slightly less to account for gap */
 }
 
 /* Tree label styling */
@@ -103,8 +105,8 @@
   transition: box-shadow 0.2s ease, border-color 0.2s ease; /* Smooth transitions */
 }
 
-/* Interpolation Modal */
-.tree-interpolation-modal {
+/* Interpolation Window */
+.tree-interpolation-window {
   display: flex;
   flex-direction: row;
   justify-content: center;
@@ -139,49 +141,55 @@
 }
 
 .svg-container {
-  flex: 1; /* Grow to fill tree-container */
-  display: flex; /* To center SVG if it's smaller */
+  flex: 1;
+  display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 200px; /* Increased minimum height for better tree visibility */
-  overflow: hidden; /* Ensure SVG doesn't break layout */
+  min-height: 450px; /* Increased for better tree visibility */
+  overflow: visible; /* Changed from hidden to visible for radial trees */
   width: 100%;
-  border-radius: var(--standard-border-radius); /* Add border radius for consistency */
-  background-color: rgba(255, 255, 255, 0.02); /* Very subtle background tint for SVG area */
+  border-radius: var(--standard-border-radius);
+  background-color: rgba(255, 255, 255, 0.02);
+  position: relative; /* For absolute positioning if needed */
+  /* Ensure the container can handle radial layouts */
+  aspect-ratio: 1 / 1; /* Square aspect ratio works best for radial trees */
 }
 
-/* No specific margins needed if .tree-container has padding */
-
-/* Tree Elements */
-.links {
-  fill: none;
-  stroke-opacity: 1;
-  /* stroke is set by JS or other CSS vars */
+/* Ensure SVG elements fill their containers properly and handle radial layout */
+.svg-container svg {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  overflow: visible; /* Allow tree labels to extend beyond if needed */
 }
 
-.leaf {
-  /* stroke is set by JS or other CSS vars */
-  stroke-width: 0.1em; /* This might be too small, consider relative units or larger fixed */
-  r: 0.4em; /* Consider rem or px */
+/* Specific styling for tree elements in comparison view */
+.svg-container .tree-container {
+  /* Ensure tree elements are properly positioned */
+  transform-origin: center center;
 }
 
-.label {
-  font-weight: var(--font-weight-normal);
-  font-family: var(--font-family-sans-serif);
-  fill: var(--text-color-dark-theme-emphasis);
-  font-size: var(--font-size-sm); /* Added a default size */
+.svg-container .tree-container .label {
+  /* Ensure labels are readable in comparison view */
+  font-size: 0.8em; /* Slightly smaller for comparison */
+  font-weight: var(--font-weight-medium);
 }
 
-.link-extension {
-  fill: none;
-  stroke-dasharray: 5,5;
-  /* stroke is set by JS or other CSS vars */
+.svg-container .tree-container .links {
+  /* Ensure branches are visible in comparison */
+  stroke-width: 1.5px;
+}
+
+.svg-container .tree-container .leaf {
+  /* Make leaf circles slightly smaller for comparison */
+  r: 3px;
 }
 
 /* Theme Colors - These are local fallbacks or component-specific overrides. */
 /* Global theme variables from style.css will take precedence if !important is not used. */
 /* It's generally better if JS directly uses global theme variables when applying styles. */
-.tree-comparison-modal { /* Scoping variables to the modal if needed, or remove this :root */
+.tree-comparison-window { /* Scoping variables to the window if needed, or remove this :root */
   --default-color: var(--text-color-dark-theme-faded, var(--text-color-dark-theme-muted)); /* For tree lines */
   --marked-color: var(--accent-color);
   --stroke-color: var(--text-color-dark-theme-faded, var(--text-color-dark-theme-muted)); /* For tree lines */
@@ -191,7 +199,7 @@
   --user-marked-color: var(--secondary-color);
 }
 
-/* Footer within the modal content */
+/* Footer within the window content */
 .comparison-footer {
   padding: var(--spacing-medium) var(--spacing-large);
   border-top: 1px solid var(--border-color-dark-theme);
@@ -200,81 +208,146 @@
   flex-shrink: 0;
 }
 
-/* Controls Styling */
+/* Controls Styling - Improved Layout */
 .comparison-controls {
-  display: flex;
-  flex-direction: column; /* Stack control groups vertically */
+  display: grid;
+  grid-template-columns: 1fr;
   gap: var(--spacing-medium, 12px);
-  padding: var(--spacing-large, 16px) var(--spacing-xl, 24px); /* Increased horizontal padding for consistency */
+  padding: var(--spacing-large, 16px) var(--spacing-xl, 24px);
   border-top: 1px solid var(--border-color-dark-theme, rgba(255,255,255,0.1));
-  /* margin-bottom: var(--spacing-medium, 12px); */ /* No bottom margin, footer is next */
-  background-color: var(--dialog-background-color); /* Match modal background */
-  border-radius: 0 0 var(--standard-border-radius) var(--standard-border-radius); /* Rounded bottom corners */
+  background-color: var(--dialog-background-color);
+  border-radius: 0 0 var(--standard-border-radius) var(--standard-border-radius);
 }
 
 .control-group {
-  display: flex;
+  display: grid;
+  grid-template-columns: 150px 1fr;
   align-items: center;
   gap: var(--spacing-sm, 8px);
+  min-height: 40px; /* Ensure consistent height */
+}
+
+.control-group.switch-row {
+  grid-template-columns: 150px auto;
 }
 
 .control-label {
   font-size: var(--font-size-sm, 12px);
   color: var(--text-color-dark-theme-muted, #aaa);
-  flex-shrink: 0; /* Prevent label from shrinking */
-  margin-right: var(--spacing-xs, 4px); /* Add some space if label is long */
+  margin: 0;
+  text-align: left;
+  font-weight: var(--font-weight-medium);
 }
 
-/* Styling for input[type="range"].mdc-slider is now expected to be handled by global styles in navigation.css */
-/* input[type="range"].themed-slider class and its styles are removed. */
+.control-input-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm, 8px);
+  justify-content: flex-start;
+}
+
+.control-input-group input[type="range"] {
+  flex: 1;
+  min-width: 120px;
+}
 
 .control-value-display {
   font-size: var(--font-size-sm, 12px);
   color: var(--text-color-dark-theme-main, #e0e0e0);
-  min-width: 2.5em; /* To prevent layout shifts when value changes */
-  text-align: right;
+  min-width: 3em;
+  text-align: center;
   background-color: var(--input-background-dark, rgba(255,255,255,0.05));
   padding: var(--spacing-xs, 4px) var(--spacing-sm, 8px);
   border-radius: var(--standard-border-radius, 4px);
   border: 1px solid var(--border-color-dark-theme, rgba(255,255,255,0.1));
+  font-family: monospace; /* For consistent number display */
 }
 
-/* Styling for #compare-ignore-branches checkbox is now handled by the global .switch styles in navigation.css */
-
-
-/* Styling for the secondary button in the footer */
-/* .md-button base styles are in navigation.css and use global vars */
-/* This provides the .secondary variant specific to this modal's context */
-.comparison-footer .md-button.secondary {
-  background: transparent;
-  border: 1px solid var(--primary-color-lighter, #79b6f2); /* Use a lighter shade of primary for border */
-  color: var(--primary-color-lighter, #79b6f2); /* Text color matches border */
-  box-shadow: none; /* No shadow for a less prominent look */
+/* Switch styling improvements */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
 }
 
-.comparison-footer .md-button.secondary:hover {
-  background: rgba(var(--primary-color-rgb, 67, 144, 225), 0.1); /* Subtle background on hover */
-  color: var(--primary-color-lighter, #79b6f2);
-  border-color: var(--primary-color-lighter, #79b6f2); /* Keep border color consistent on hover */
-  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,0.07)); /* Add subtle shadow on hover */
-  transform: translateY(-1px);
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
 }
 
-.comparison-footer .md-button.secondary:focus {
-  outline: none;
-  /* Focus ring specific for this secondary button, ensuring visibility on dark dialog */
-  box-shadow: 0 0 0 var(--focus-ring-offset, 2px) var(--dialog-background-color, #23242b), 0 0 0 calc(var(--focus-ring-offset, 2px) + var(--focus-ring-width, 3px)) var(--primary-color-lighter, #79b6f2);
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--input-background-dark, rgba(255,255,255,0.1));
+  transition: .4s;
+  border-radius: 24px;
+  border: 1px solid var(--border-color-dark-theme, rgba(255,255,255,0.2));
 }
 
-.comparison-footer .md-button.secondary:active {
-  background: rgba(var(--primary-color-rgb, 67, 144, 225), 0.15); /* Slightly darker background on active */
-  transform: translateY(0);
-  box-shadow: none;
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 2px;
+  bottom: 2px;
+  background-color: var(--text-color-dark-theme-main, #e0e0e0);
+  transition: .4s;
+  border-radius: 50%;
 }
 
+input:checked + .slider {
+  background-color: var(--primary-color, #4285f4);
+  border-color: var(--primary-color, #4285f4);
+}
 
-/* 3D Tree Comparison Modal */
-.tree3d-modal-content {
+input:checked + .slider:before {
+  transform: translateX(26px);
+  background-color: white;
+}
+
+/* Responsive design for comparison trees */
+@media (max-width: 1200px) {
+  .tree-comparison-row {
+    flex-direction: column;
+    gap: var(--spacing-medium);
+    min-height: auto;
+  }
+
+  .tree-container {
+    max-width: 100%;
+    min-height: 400px;
+  }
+
+  .svg-container {
+    min-height: 350px;
+    aspect-ratio: auto; /* Remove aspect ratio constraint on smaller screens */
+  }
+}
+
+@media (max-width: 768px) {
+  .tree-container {
+    padding: var(--spacing-sm);
+    min-height: 300px;
+  }
+
+  .svg-container {
+    min-height: 250px;
+  }
+
+  .svg-container .tree-container .label {
+    font-size: 0.7em; /* Even smaller labels on mobile */
+  }
+}
+
+/* 3D Tree Comparison Window */
+.tree3d-window-content {
   width: 100%;
   height: 100%;
   max-width: 100%;
@@ -283,29 +356,4 @@
   position: relative;
   box-sizing: border-box;
   background: var(--dialog-background-color);
-}
-
-.tree3d-row-container {
-  width: 100%;
-  height: 100%;
-  background: var(--dialog-background-color);
-  overflow: hidden;
-  position: relative;
-}
-
-.tree3d-error-message {
-  color: var(--error-color);
-  padding: var(--spacing-large); /* Was 20px */
-  text-align: center;
-  font-weight: var(--font-weight-bold); /* Was bold */
-}
-
-.tree3d-gui-container {
-  position: absolute;
-  left: var(--spacing-large);
-  bottom: var(--spacing-large);
-  z-index: 10;
-  background: var(--card-background-dark-panel);
-  border-radius: var(--standard-border-radius);
-  padding: var(--spacing-medium);
 }

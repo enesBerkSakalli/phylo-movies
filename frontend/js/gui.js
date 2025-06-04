@@ -165,7 +165,16 @@ export default class Gui {
 
   // ===== Modal Aliases =====
   openScatterplotModal(...args) {
-    return this.showScatterPlotModal(...args);
+    // Always call the real scatter plot modal with correct processed embedding
+    import("./space/scatterPlot.js").then((scatterPlotModule) => {
+      scatterPlotModule.showScatterPlotModal({
+        realTreeList: this.realTreeList,
+        treeList: this.treeList,
+        initialEmbedding: window.emb, // Use the processed embedding
+        modals: window.modals || {},
+        setModals: (modals) => { window.modals = modals; }
+      });
+    });
   }
 
   // ===== Animation Loop =====
@@ -814,13 +823,10 @@ export default class Gui {
 
   // ===== Modal Management: Scatter Plot =====
   showScatterPlotModal() {
-    // All imports at the top of the file for clarity and maintainability.
-    // This method is a thin wrapper that delegates to scatterPlot.js for all logic and UI.
-    // It is kept for backward compatibility and to maintain the modal management pattern.
-    // (import moved to top)
     scatterPlotModule.showScatterPlotModal({
       realTreeList: this.realTreeList,
       treeList: this.treeList,
+      initialEmbedding: window.emb, // Pass the processed embedding!
       modals: this.modals,
       setModals: (modals) => {
         this.modals = modals;
