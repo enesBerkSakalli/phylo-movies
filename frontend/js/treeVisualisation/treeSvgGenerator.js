@@ -1,4 +1,4 @@
-import { kar2pol, shortestAngle } from "./phyoMoviesMath.js";
+import { kar2pol, shortestAngle } from "../utils/MathUtils.js";
 
 /**
  * Generates the SVG path string for a branch (radial layout).
@@ -212,7 +212,7 @@ export function attr2TweenCircleX(currentMaxRadius) {
 
     return function (t) {
       const tweenAngle = diff * t + oldAngle;
-      return (currentMaxRadius - 30) * Math.cos(tweenAngle);
+      return (currentMaxRadius) * Math.cos(tweenAngle);
     };
   };
 }
@@ -235,7 +235,7 @@ export function attr2TweenCircleY(currentMaxRadius) {
 
     return function (t) {
       const tween_startAngle = diff * t + oldAngle;
-      return (currentMaxRadius - 30) * Math.sin(tween_startAngle);
+      return (currentMaxRadius) * Math.sin(tween_startAngle);
     };
   };
 }

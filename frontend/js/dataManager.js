@@ -1,5 +1,5 @@
 import localforage from 'localforage';
-import { parseMSA } from './msaViewer/parsers.js'; // Assuming parsers.js is in msaViewer
+// import { parseMSA } from './msaViewer/parsers.js'; // No longer needed
 
 const requiredFields = [
   "tree_list",
@@ -33,6 +33,7 @@ export async function fetchTreeData(formData) {
 
     const data = await response.json();
     console.log("[fetchTreeData] Received data:", data);
+    console.log("[fetchTreeData] tree_names in response:", data.tree_names || 'NOT_FOUND');
 
     if (data.error) {
       throw new Error(`Server error: ${data.error}`);
@@ -45,21 +46,26 @@ export async function fetchTreeData(formData) {
     }
     console.log("[fetchTreeData] Data saved to IndexedDB (localForage)");
 
-    // Save MSA data if provided
+    // Save MSA data if provided (store raw string only)
     const msaFile = formData.get("msaFile");
-    if (msaFile && msaFile.size > 0) { // Check if msaFile is not empty
+    if (msaFile && msaFile.size > 0) {
       try {
         const msaText = await msaFile.text();
-        const msaData = parseMSA(msaText);
-        if (msaData) {
-          await localforage.setItem("phyloMovieMSAData", msaData);
-          console.log("[fetchTreeData] MSA data saved to IndexedDB (localForage)");
-          // Dispatch custom event to notify MSA viewer of data update
-          window.dispatchEvent(new CustomEvent('msa-data-updated'));
-        }
+        await localforage.setItem("phyloMovieMSAData", { rawData: msaText });
+        window.dispatchEvent(new CustomEvent('msa-data-updated'));
+        console.log("[fetchTreeData] MSA raw data saved to IndexedDB (localForage)");
       } catch (msaErr) {
-        console.error("[fetchTreeData] Error parsing MSA file:", msaErr);
-        // Continue with tree data even if MSA parsing fails
+        console.error("[fetchTreeData] Error saving raw MSA file:", msaErr);
+        // Continue with tree data even if MSA saving fails
+      }
+    } else if (data.msa_content) {
+      // If backend processed MSA content, store it
+      try {
+        await localforage.setItem("phyloMovieMSAData", { rawData: data.msa_content });
+        window.dispatchEvent(new CustomEvent('msa-data-updated'));
+        console.log("[fetchTreeData] MSA data from backend saved to IndexedDB (localForage)");
+      } catch (msaErr) {
+        console.error("[fetchTreeData] Error saving backend MSA data:", msaErr);
       }
     }
 

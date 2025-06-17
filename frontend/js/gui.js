@@ -1,120 +1,86 @@
 import * as d3 from "d3";
-import { generateChartModal } from "./charts/chartGenerator.js";
 import { generateDistanceChart } from "./charts/distanceChart.js";
-import * as scatterPlotModule from "./space/scatterPlot.js";
 import TaxaColoring from "./taxaColoring.jsx";
 import { createSideBySideComparisonModal } from "./treeComparision/treeComparision.js";
-import calculateScales from "./treeVisualisation/calc.js";
-import constructTree from "./treeVisualisation/TreeConstructor.js";
-import drawTree, { TreeDrawer } from "./treeVisualisation/TreeDrawer.js";
+import calculateScales from "./utils/MathUtils.js";
+import constructTree from "./treeVisualisation/LayoutCalculator.js";
+import drawTree from "./treeVisualisation/TreeDrawer.js";
 import { exportSaveChart } from "./utils/svgExporter.js";
 import { handleZoomResize, initializeZoom } from "./zoom/zoomUtils.js";
-import { COLOR_MAP } from "./treeVisualisation/ColorMap.js";
-
-
+import { COLOR_MAP } from "./treeColoring/ColorMap.js";
+import TransitionIndexResolver from "./TransitionIndexResolver.js";
+import { calculateWindow } from "./utils/windowUtils.js";
+import { renderOrUpdateLineChart } from "./charts/lineChartManager.js";
+import { openModalChart } from "./charts/modalChartManager.js";
+import { STYLE_MAP } from "./treeVisualisation/TreeDrawer.js";
 // ===== GUI Class =====
 export default class Gui {
   // ===== MSA Sync Toggle =====
-  syncMSAEnabled = true;
-  // ===== Constructor & Initialization =====x
+  syncMSAEnabled = false;
+
+  // ===== Constructor & Initialization =====
   constructor(
     treeList,
     weightedRobinsonFouldsDistances,
     robinsonFouldsDistances,
     windowSize,
     windowStepSize,
-    toBeHighlighted,
+    toBeHighlightedFromBackend, // Highlight data corresponding to "full" trees
     leaveOrder,
-    colorInternalBranches,
     fileName,
-    factorValue = 1
+    factorValue = 1,
+    treeNames = []
   ) {
-    this.treeList = treeList;
-    // Store only the real (full) trees: every 5th tree
-    this.realTreeList = Array.isArray(treeList)
-      ? treeList.filter((_, i) => i % 5 === 0)
-      : [];
-    this.treeNameList = [
-      "Full. ",
-      "Intermediate ",
-      "Consensus 1 ",
-      "Consensus 2 ",
-      "Intermedidate ",
-    ];
+    this.treeList = treeList || [];
+    this.treeNames = Array.isArray(treeNames) && treeNames.length > 0
+      ? treeNames
+      : this.treeList.map((_, i) => `Tree ${i + 1}`);
+
+    // FIX: Unify highlight data into a single, consistent property
+    this.highlightData = toBeHighlightedFromBackend.jumping_taxa || [];
+    this.s_edges = toBeHighlightedFromBackend.s_edges || [];
+    this.covers = toBeHighlightedFromBackend.covers || [];
+
+
     this.robinsonFouldsDistances = robinsonFouldsDistances;
     this.fileName = fileName;
-    this.scaleList = calculateScales(treeList);
-    this.windowSize = windowSize;
-    this.windowStepSize = windowStepSize;
+    this.scaleList = calculateScales(this.treeList);
+    this.msaWindowSize = windowSize;
+    this.msaStepSize = windowStepSize;
+
+    document.getElementById("windowSize").innerText = this.msaWindowSize;
+    document.getElementById("windowStepSize").innerText = this.msaStepSize;
+
     this.windowStart = null;
     this.windowEnd = null;
-
-    // Flatten toBeHighlighted entries to handle potential deep nesting
-    this.toBeHighlighted = toBeHighlighted
-
-    console.log(
-      "[gui] toBeHighlighted:",
-      this.toBeHighlighted,
-      "leaveOrder:",
-      leaveOrder
-    );
-
-    console.log(
-      "[gui] Initializing GUI with treeList length:",
-      this.treeList.length,
-      "and toBeHighlighted length:",
-      this.toBeHighlighted.length
-    );
     this.leaveOrder = leaveOrder;
-    this.firstFull = 0;
     this.fontSize = 1.8;
     this.strokeWidth = 3;
     this.weightedRobinsonFouldsDistances = weightedRobinsonFouldsDistances;
-
-    document.getElementById("maxScaleText").innerText =
-      " " +
-      Math.max.apply(
-        Math,
-        this.scaleList.map(function (o) {
-          return o.value;
-        })
-      );
-
-    this.colorInternalBranches = colorInternalBranches;
-
     this.barOptionValue = "rfd";
-
     this.ignoreBranchLengths = false;
-
-    this.maxScale = Math.max.apply(
-      Math,
-      this.scaleList.map((o) => o.value)
-    );
-
-    this.index = 0;
-
-    // Use provided factor value or default to 1
+    this.currentDistanceChart = null;
+    this.lastChartType = null;
+    this.maxScale = this.scaleList?.length > 0 ? Math.max(...this.scaleList.map((o) => o.value)) : 0;
+    this.currentTreeIndex = 0;
     this.factor = factorValue;
-
     this.playing = false;
 
-    // Simplified color map initialization
     const taxaColorMap = {};
-    if (this.leaveOrder && Array.isArray(this.leaveOrder)) {
+    if (Array.isArray(this.leaveOrder)) {
       this.leaveOrder.forEach((taxon) => {
           taxaColorMap[taxon] = COLOR_MAP.colorMap.defaultColor;
       });
     }
 
-    // Defer zoom initialization
     requestAnimationFrame(() => {
       this.zoom = initializeZoom(this);
     });
 
-    // Update COLORMAP.colorMap with the initial default colors
-    if (Object.keys(taxaColorMap).length > 0) {
-      COLOR_MAP.colorMap = { ...COLOR_MAP.colorMap, ...taxaColorMap };
-    }
+    this._lastSyncTime = 0;
+    this._syncThrottleDelay = 250;
+
+    this.initializeTransitionResolver();
   }
 
   // ===== Movie Controls =====
@@ -125,52 +91,36 @@ export default class Gui {
 
   // ===== Timing & Animation =====
   getIntervalDuration() {
-    let treeTimeList = [200, 200, 200, 500, 200];
-    let type = this.index % 5;
-
-    // More robust factor handling
-    let factor = 1;
+    let defaultTime = 1000;
+    let factor = this.factor || 1;
     try {
       const factorInput = document.getElementById("factor");
-      if (factorInput && factorInput.value) {
+      if (factorInput?.value) {
         const parsedFactor = parseInt(factorInput.value, 10);
-        // Ensure factor is within reasonable bounds
-        factor =
-          !isNaN(parsedFactor) && parsedFactor > 0
-            ? parsedFactor
-            : this.factor || 1;
-      } else {
-        factor = this.factor || 1;
+        if (!isNaN(parsedFactor) && parsedFactor > 0) {
+            factor = parsedFactor;
+        }
       }
     } catch (e) {
       console.warn("[gui] Error getting factor:", e);
-      factor = this.factor || 1;
     }
-
-    return treeTimeList[type] * factor;
+    return defaultTime * factor;
   }
 
   play() {
-    // Ensure play is only called once
     if (this.playing) return;
-
     this.playing = true;
-
-    // Use window.requestAnimationFrame for smoother animation
     this.lastFrameTime = performance.now();
-    this.frameRequest = window.requestAnimationFrame(
-      this.animationLoop.bind(this)
-    );
+    this.frameRequest = window.requestAnimationFrame(this.animationLoop.bind(this));
   }
 
   // ===== Modal Aliases =====
-  openScatterplotModal(...args) {
-    // Always call the real scatter plot modal with correct processed embedding
+  openScatterplotModal() {
     import("./space/scatterPlot.js").then((scatterPlotModule) => {
       scatterPlotModule.showScatterPlotModal({
         realTreeList: this.realTreeList,
         treeList: this.treeList,
-        initialEmbedding: window.emb, // Use the processed embedding
+        initialEmbedding: window.emb,
         modals: window.modals || {},
         setModals: (modals) => { window.modals = modals; }
       });
@@ -180,531 +130,284 @@ export default class Gui {
   // ===== Animation Loop =====
   animationLoop(timestamp) {
     if (!this.playing) return;
-
     const elapsed = timestamp - this.lastFrameTime;
     const interval = this.getIntervalDuration();
-
     if (elapsed >= interval) {
-      // Time to advance frame
       this.forward();
       this.lastFrameTime = timestamp;
     }
-
-    // Schedule next frame
-    this.frameRequest = window.requestAnimationFrame(
-      this.animationLoop.bind(this)
-    );
+    this.frameRequest = window.requestAnimationFrame(this.animationLoop.bind(this));
   }
 
   stop() {
     if (!this.playing) return;
-
     this.playing = false;
-
-    // Cancel any pending animation frame
     if (this.frameRequest) {
       window.cancelAnimationFrame(this.frameRequest);
       this.frameRequest = null;
     }
   }
 
-  keepPlaying() {
-    if (this.playing) {
-      this.forward();
-      d3.timeout(() => {
-        this.keepPlaying();
-      }, this.getIntervalDuration());
+  // ===== MSA Viewer Sync =====
+  syncMSAIfOpenThrottled() {
+    const now = Date.now();
+    if (now - this._lastSyncTime < this._syncThrottleDelay) return;
+    this._lastSyncTime = now;
+    this.syncMSAIfOpen();
+  }
+
+  isMSAViewerOpen() {
+    return !!document.getElementById("msa-winbox-content");
+  }
+
+  syncMSAIfOpen() {
+    if (!this.syncMSAEnabled) return;
+    const msaPositionInfo = this.calculateMSAPosition();
+    const currentFullTreeDataIdx = this.transitionResolver.getDistanceIndex(this.currentTreeIndex);
+    const windowData = calculateWindow(currentFullTreeDataIdx, this.msaStepSize, this.msaWindowSize);
+
+    if (windowData) {
+      const windowInfo = {
+        windowStart: windowData.startPosition,
+        windowEnd: windowData.endPosition,
+        msaPosition: msaPositionInfo.position,
+        msaStepSize: msaPositionInfo.stepSize
+      };
+      // Dispatch event or call sync function here
     }
   }
 
   // ===== Main Update Cycle =====
-  update() {
-    this.resize();
-    this.updateLineChart();
-    this.updateControls();
-    this.updateScale();
-    this.updateMain();
+  update(skipAutoCenter = false) {
+    this.resize(skipAutoCenter);
+    const nextFullTreeIndex = this.transitionResolver.getHighlightingIndex(this.currentTreeIndex);
 
-    // Sync MSA viewer if it's open and sync is enabled (internal check in syncMSAIfOpen)
-    this.syncMSAIfOpen();
+    this.currentDistanceChartState = this.currentDistanceChartState || { instance: null, type: null };
+    this.currentDistanceChartState = renderOrUpdateLineChart({
+      data: {
+        robinsonFouldsDistances: this.robinsonFouldsDistances,
+        weightedRobinsonFouldsDistances: this.weightedRobinsonFouldsDistances,
+        scaleList: this.scaleList,
+      },
+      config: {
+        barOptionValue: this.barOptionValue,
+        currentTreeIndex: nextFullTreeIndex,
+        stickyChartPositionIfAvailable: this._lastClickedDistancePosition,
+      },
+      services: {
+        transitionResolver: this.transitionResolver,
+      },
+      chartState: this.currentDistanceChartState,
+      callbacks: {
+        onGoToPosition: (idx) => this.goToPosition(idx),
+        onHandleDrag: (idx) => this.handleDrag(idx),
+        onGoToFullTreeDataIndex: (idx) => this.goToFullTreeDataIndex(idx),
+      },
+      containerId: "lineChart",
+    });
+
+    this.currentDistanceChart = this.currentDistanceChartState.instance;
+    this.lastChartType = this.currentDistanceChartState.type;
+
+    this.updateControls();
+    this.updateMain();
+    this.updateScale();
+    this.syncMSAIfOpenThrottled();
   }
 
   // ===== UI Event Handlers =====
   handleDrag(position) {
-    // Update the index based on the dragged position
-    this.index = position * 5; // Adjust if necessary based on your data structure
-
-    // Update the application state
+    this._lastClickedDistancePosition = undefined;
+    this.currentTreeIndex = Math.max(0, Math.min(position, this.treeList.length - 1));
     this.update();
   }
 
-  // ===== MSA Viewer Sync =====
-  syncMSAIfOpen() {
-    if (!this.syncMSAEnabled) {
-      console.log("MSA sync skipped: Sync not enabled.");
-      return;
-    }
-
-    let highlightedTaxa = [];
-    if (this.marked && this.marked.size > 0) {
-      highlightedTaxa = Array.from(this.marked);
-    } else if (this.toBeHighlighted && this.toBeHighlighted[Math.floor(this.index / 5)]) {
-      // Ensure toBeHighlighted is treated as a flat list if it's not already
-      const currentHighlights = this.toBeHighlighted[Math.floor(this.index / 5)];
-      if (Array.isArray(currentHighlights)) {
-        currentHighlights.forEach(item => {
-          if (Array.isArray(item)) { // Handles nested arrays if structure is [ [...], [...] ]
-            item.forEach(taxon => highlightedTaxa.push(taxon));
-          } else { // Handles flat list or mixed list [ item, [...], item ]
-            highlightedTaxa.push(item);
-          }
-        });
-      }
-    }
-    // Remove duplicates that might arise from toBeHighlighted logic
-    highlightedTaxa = [...new Set(highlightedTaxa)];
-
-    const treeIndex = Math.floor(this.index / 5);
-    // Ensure windowStepSize is a positive number to avoid NaN or zero position if data is missing
-    const stepSize = this.windowStepSize > 0 ? this.windowStepSize : 1;
-    const currentPosition = (treeIndex + 1) * stepSize;
-
-    let windowInfo = null;
-    // Ensure windowStart and windowEnd are valid numbers before creating windowInfo
-    if (typeof this.windowStart === 'number' && typeof this.windowEnd === 'number' &&
-        !isNaN(this.windowStart) && !isNaN(this.windowEnd)) {
-      windowInfo = {
-        windowStart: this.windowStart,
-        windowEnd: this.windowEnd,
-      };
-    }
-
-    const eventDetail = { highlightedTaxa, position: currentPosition, windowInfo };
-
-    console.log("Dispatching msa-sync-request with detail:", eventDetail);
-    window.dispatchEvent(new CustomEvent('msa-sync-request', { detail: eventDetail }));
-  }
-
-  enableMSASync() {
-    this.syncMSAEnabled = true;
-    // Optionally trigger a sync immediately
-    this.syncMSAIfOpen();
-  }
-
-  disableMSASync() {
-    this.syncMSAEnabled = false;
-  }
-
-  // Add method to update highlighted taxa (call this when taxa are selected/highlighted)
-  setHighlightedTaxa(taxa) {
-    this.marked = new Set(taxa);
-    // Trigger MSA sync (internal check in syncMSAIfOpen)
-    this.syncMSAIfOpen();
-  }
-
-  // Add method to get current window information
   getCurrentWindow() {
-    const window = this.calculateWindow();
+    const currentFullTreeDataIdx = this.transitionResolver.getDistanceIndex(this.currentTreeIndex);
+    const window = calculateWindow(currentFullTreeDataIdx, this.msaStepSize, this.msaWindowSize);
     this.windowStart = window.startPosition;
     this.windowEnd = window.endPosition;
     return window;
   }
 
-  // Update the calculateWindow method to store results
-  calculateWindow() {
-    let midPosition = (Math.floor(this.index / 5) + 1) * this.windowStepSize;
-    let leftWindow = Math.trunc(this.windowSize / 2);
-    let rightWindow = Math.trunc((this.windowSize - 1) / 2);
-
-    let startPosition = midPosition - leftWindow;
-    let endPosition = midPosition + rightWindow;
-
-    startPosition = Math.max(1, startPosition);
-    endPosition = Math.min(
-      endPosition,
-      this.treeList.length * this.windowStepSize
-    );
-
-    // Store for MSA sync
-    this.windowStart = startPosition;
-    this.windowEnd = endPosition;
-
-    return {
-      startPosition: startPosition,
-      "mid-Position": midPosition,
-      endPosition: endPosition,
-    };
-  }
-
-  // ===== Chart Methods =====
-  updateLineChart() {
-    d3.select("#lineChart svg").remove();
-
-    if (this.robinsonFouldsDistances.length !== 1) {
-      const chartConfigurations = {
-        rfd: {
-          data: this.robinsonFouldsDistances,
-          xLabel: "Tree Index",
-          yLabel: "Relative RFD",
-          yMax: 1,
-        },
-        "w-rfd": {
-          data: this.weightedRobinsonFouldsDistances,
-          xLabel: "Tree Index",
-          yLabel: "Weighted RFD",
-          yMax: d3.max(this.weightedRobinsonFouldsDistances),
-        },
-        scale: {
-          data: this.scaleList.map((s) => s.value),
-          xLabel: "Tree Index",
-          yLabel: "Scale",
-          yMax: d3.max(this.scaleList, (s) => s.value),
-        },
-      };
-
-      const config = chartConfigurations[this.barOptionValue];
-      if (config) {
-        generateDistanceChart({ containerId: "lineChart" }, config.data, {
-          xLabel: config.xLabel,
-          yLabel: config.yLabel,
-          yMax: config.yMax,
-          currentPosition: Math.floor(this.index / 5),
-          onClick: (position) => this.goToPosition(position),
-          onDrag: (position) => this.handleDrag(position),
-        });
-      } else {
-        console.warn("Invalid barOptionValue:", this.barOptionValue);
-      }
-
-      this.setShipPosition(Math.floor(this.index / 5));
-    } else {
-      document.getElementById("lineChart").innerHTML = `
-        <p>Relative Robinson-Foulds Distance ${
-          this.robinsonFouldsDistances[0]
-        }</p>
-        <p>Scale ${this.scaleList[Math.floor(this.index / 5)].value}</p>
-      `;
-    }
-  }
-
-  updateScale() {
-    // Check if the old elements exist
-    const maxScaleElement = document.getElementById("maxScale");
-
-    if (maxScaleElement) {
-      // Old scale visualization code
-      let width = maxScaleElement.offsetWidth;
-      let currentScaleWidth =
-        (width * this.scaleList[Math.floor(this.index / 5)].value) /
-        this.maxScale;
-
-      d3.select("#currentScale")
-        .transition()
-        .duration(1000)
-        .style("width", currentScaleWidth + "px");
-    } else {
-      // For the modern scale visualization
-      try {
-        // Update the scale value texts
-        const currentScaleValue =
-          this.scaleList[Math.floor(this.index / 5)].value || 0;
-        const currentScaleText = document.getElementById("currentScaleText");
-        if (currentScaleText) {
-          currentScaleText.innerText = " " + currentScaleValue.toFixed(3);
-        }
-
-        // Update the progress bar if it exists
-        const scaleProgressBar = document.querySelector(".scale-progress-bar");
-        if (scaleProgressBar) {
-          const percentValue = (currentScaleValue / this.maxScale) * 100;
-          scaleProgressBar.style.width = `${percentValue}%`;
-        }
-      } catch (err) {
-        console.warn("Error updating scale visualization:", err);
-      }
-    }
-  }
-
   // ===== Tree Navigation & State =====
   updateMain() {
-    let drawDuration = this.getIntervalDuration();
+    const drawDuration = this.getIntervalDuration();
+    const tree = this.treeList[this.currentTreeIndex];
+    const d3tree = constructTree(tree, this.ignoreBranchLengths);
+    const highlightIndex = this.transitionResolver.getHighlightingIndex(this.currentTreeIndex);
+    const tree_s_edges = this.s_edges[highlightIndex] || [];
 
-    let tree = this.treeList[this.index];
+    const actualHighlightData = this.getActualHighlightData();
 
-    let d3tree = constructTree(tree, this.ignoreBranchLengths);
+    // Determine which cover set to use for the current tree
+    let atomCovers = [];
+    const coversObj = this.covers?.[highlightIndex];
+    if (coversObj && coversObj.t1 && coversObj.t2) {
+      const fullTreeIndices = this.transitionResolver.fullTreeIndices;
+      if (fullTreeIndices && fullTreeIndices.length > 1) {
+        if (this.currentTreeIndex === fullTreeIndices[highlightIndex]) {
+          atomCovers = coversObj.t1;
+        } else if (this.currentTreeIndex === fullTreeIndices[highlightIndex + 1]) {
+          atomCovers = coversObj.t2;
+        }
+      }
+    }
 
-    let colorIndex =
-      this.index % 5 === 0 && this.firstFull === 0
-        ? Math.floor(this.index / 5) - 1
-        : Math.floor(this.index / 5);
-
-    // Ensure animation starts after DOM is ready
     requestAnimationFrame(() => {
-      drawTree(
-        d3tree,
-        this.toBeHighlighted[colorIndex],
-        drawDuration,
-        this.leaveOrder,
-        this.fontSize,
-        this.strokeWidth
-      );
+      drawTree({
+        treeConstructor: d3tree,
+        toBeHighlighted: actualHighlightData,
+        drawDurationFrontend: drawDuration,
+        leaveOrder: this.leaveOrder,
+        fontSize: this.fontSize,
+        strokeWidth: this.strokeWidth,
+        s_edges: tree_s_edges,
+        atomCovers, // Only the correct cover set for this tree
+      });
     });
   }
 
-  resize() {
-    // Use the zoom utility for proper resize handling
-    handleZoomResize();
+  resize(skipAutoCenter = false) {
+    handleZoomResize(skipAutoCenter);
   }
 
   backward() {
-    if (this.index % 5 === 0 && this.firstFull === 0) {
-      this.firstFull = 1;
-    } else {
-      this.firstFull = 0;
-      this.index = Math.max(this.index - 1, 0);
+    this._lastClickedDistancePosition = undefined;
+    if (!this.transitionResolver) return;
+    const prevPosition = this.transitionResolver.getPreviousPosition(this.currentTreeIndex);
+    if (prevPosition !== this.currentTreeIndex) {
+      this.currentTreeIndex = prevPosition;
     }
-    this.update();
+    this.update(true);
+    if (this.syncMSAEnabled && this.isMSAViewerOpen()) this.syncMSAIfOpen();
   }
 
   forward() {
-    if (this.index % 5 === 0 && this.firstFull === 0) {
-      this.firstFull = 1;
-    } else {
-      this.firstFull = 0;
-      this.index = Math.min(this.index + 1, this.treeList.length - 1);
+    this._lastClickedDistancePosition = undefined;
+    if (!this.transitionResolver) return;
+    const nextPosition = this.transitionResolver.getNextPosition(this.currentTreeIndex);
+    if (nextPosition !== this.currentTreeIndex) {
+      this.currentTreeIndex = nextPosition;
     }
-    this.update();
+    this.update(true);
+    if (this.syncMSAEnabled && this.isMSAViewerOpen()) this.syncMSAIfOpen();
   }
 
   prevTree() {
-    this.firstFull = 1;
-    this.index = Math.max((Math.floor(this.index / 5) - 1) * 5, 0);
-    this.update();
+    this._lastClickedDistancePosition = undefined;
+    if (!this.transitionResolver) return;
+    const prevSequenceIndex = this.transitionResolver.getPreviousFullTreeSequenceIndex(this.currentTreeIndex);
+    if (prevSequenceIndex !== this.currentTreeIndex) {
+        this.currentTreeIndex = prevSequenceIndex;
+    }
+    this.update(true);
   }
 
   nextTree() {
-    this.firstFull = 1;
-    this.index = Math.min(
-      (Math.floor(this.index / 5) + 1) * 5,
-      this.treeList.length - 1
-    );
-    this.update();
+    this._lastClickedDistancePosition = undefined;
+    if (!this.transitionResolver) return;
+    const nextSequenceIndex = this.transitionResolver.getNextFullTreeSequenceIndex(this.currentTreeIndex);
+    if (nextSequenceIndex !== this.currentTreeIndex) {
+        this.currentTreeIndex = nextSequenceIndex;
+    }
+    this.update(true);
   }
 
-  // ===== Chart Positioning =====
-
-  setShipPosition(fullTreeIndex) {
-    const xAxis = document.getElementById("xAxis");
-    if (!xAxis) {
-      console.warn("setShipPosition: xAxis element not found.");
-      return;
-    }
-
-    const xAxisBBox = xAxis.getBBox();
-    if (!xAxisBBox || typeof xAxisBBox.width === 'undefined') {
-      console.warn("setShipPosition: xAxisBBox or its width is not available.");
-      return;
-    }
-
-    if (!this.robinsonFouldsDistances || typeof this.robinsonFouldsDistances.length === 'undefined') {
-      console.warn("setShipPosition: robinsonFouldsDistances is not available.");
-      return;
-    }
-
-    const numDistances = this.robinsonFouldsDistances.length;
-
-    // Ensure fullTreeIndex is within bounds (0 to numDistances - 1)
-    let safeIndex = Math.max(0, Math.min(fullTreeIndex, numDistances - 1));
-
-    let x;
-    if (numDistances <= 0) {
-      console.warn("setShipPosition: numDistances is zero or negative.");
-      x = 0;
-    } else if (numDistances === 1) {
-      // For a single point, position it at the start of the axis (e.g., first tick).
-      // Or, if it represents a single data point that should align with a scale,
-      // it might be xAxisBBox.width / 2 if centered, or 0 if aligned to the start.
-      // Using 0 to align with how scales typically start.
-      x = 0;
-    } else {
-      // currentVal is 1-based for this calculation logic
-      const currentVal = safeIndex + 1;
-      // This maps a 1-based index (currentVal, from 1 to numDistances)
-      // to a 0-based position on the axis [0, width].
-      // (currentVal - 1) makes it 0-based (0 to numDistances - 1)
-      // (numDistances - 1) is the number of intervals/segments in the data series
-      x = ((currentVal - 1) / (numDistances - 1)) * xAxisBBox.width;
-    }
-
-    // Ensure x is not NaN if any calculation went wrong (e.g. division by zero if numDistances was 1 before check)
-    if (isNaN(x)) {
-        console.warn("setShipPosition: Calculated x is NaN. Defaulting to 0.", {fullTreeIndex, safeIndex, numDistances, xAxisBBoxWidth: xAxisBBox.width});
-        x = 0;
-    }
-
-    d3.select("#ship").attr("transform", `translate(${x},${0})`);
+  manualNextTree() {
+    this.currentTreeIndex = Math.min(this.currentTreeIndex + 1, this.treeList.length - 1);
+    this.stop();
+    this.updateMain();
   }
 
-  generateModalChart() {
-    if (this.barOptionValue === "rfd") {
-      const config = {
-        title: "Relative Robinson-Foulds Distance",
-        xAccessor: (d, i) => i,
-        yAccessor: (d) => d,
-        xLabel: "Tree Index",
-        yLabel: "Relative RFD",
-        tooltipFormatter: (d, i) => `
-          <strong>Tree Index:</strong> ${i + 1}<br/>
-          <strong>Relative RFD:</strong> ${d.toFixed(3)}
-        `,
-      };
-      this.currentPosition = this.index;
-      generateChartModal(this.robinsonFouldsDistances, this, config);
-    } else if (this.barOptionValue === "w-rfd") {
-      const config = {
-        title: "Weighted Robinson-Foulds Distance",
-        xAccessor: (d, i) => i + 1,
-        yAccessor: (d) => d,
-        xLabel: "Tree Index",
-        yLabel: "Weighted RFD",
-        tooltipFormatter: (d, i) => `
-          <strong>Tree Index:</strong> ${i + 1}<br/>
-          <strong>Weighted RFD:</strong> ${d.toFixed(3)}
-        `,
-      };
-      this.currentPosition = this.index;
-      generateChartModal(this.weightedRobinsonFouldsDistances, this, config);
-    } else if (this.barOptionValue === "scale") {
-      const config = {
-        title: "Scale Changes Over Trees",
-        xAccessor: (d) => d.index + 1, // Use 'index' property
-        yAccessor: (d) => d.value, // Use 'value' property
-        xLabel: "Tree Index",
-        yLabel: "Scale",
-        tooltipFormatter: (d) => `
-          <strong>Tree Index:</strong> ${d.index + 1}<br/>
-          <strong>Scale:</strong> ${d.value.toFixed(3)}
-        `,
-      };
-      this.currentPosition = Math.floor(this.index / 5);
-      generateChartModal(this.scaleList, this, config);
+  manualPrevTree() {
+    this.currentTreeIndex = Math.max(this.currentTreeIndex - 1, 0);
+    this.stop();
+    this.updateMain();
+  }
+
+  // ===== Modal Chart (Bootstrap-based) =====
+  displayCurrentChartInModal() {
+    if (this.playing) this.stop();
+    if (!this.transitionResolver || !this.robinsonFouldsDistances || !this.weightedRobinsonFouldsDistances || !this.scaleList) {
+      console.warn("[GUI] Data not ready for modal chart.");
+      return;
     }
+    openModalChart({
+      barOptionValue: this.barOptionValue,
+      currentTreeIndex: this.currentTreeIndex,
+      robinsonFouldsDistances: this.robinsonFouldsDistances,
+      weightedRobinsonFouldsDistances: this.weightedRobinsonFouldsDistances,
+      scaleList: this.scaleList,
+      transitionResolver: this.transitionResolver,
+      onGoToFullTreeDataIndex: this.goToFullTreeDataIndex?.bind(this),
+      onGoToPosition: this.goToPosition?.bind(this)
+    });
   }
 
   // ===== UI Controls =====
-
   updateControls() {
-    document.getElementById("currentFullTree").innerHTML = (
-      Math.floor(this.index / 5) + 1
-    ).toString();
-
-    document.getElementById("numberOfFullTrees").innerHTML = (
-      Math.floor(this.treeList.length / 5) + 1
-    ).toString();
-
-    document.getElementById("currentTree").innerHTML = Math.max(
-      1,
-      this.index + 1
-    );
-
+    const distanceIndex = this.transitionResolver.getDistanceIndex(this.currentTreeIndex);
+    document.getElementById("currentFullTree").innerHTML = (distanceIndex + 1).toString();
+    const numberOfFullTrees = this.transitionResolver?.fullTreeIndices.length || 0;
+    document.getElementById("numberOfFullTrees").innerHTML = numberOfFullTrees.toString();
+    document.getElementById("currentTree").innerHTML = (this.currentTreeIndex + 1).toString();
     document.getElementById("numberOfTrees").innerHTML = this.treeList.length;
-
-    if (this.treeNameList && this.treeNameList.length > 0) {
-      document.getElementById("treeLabel").innerHTML =
-        this.treeNameList[this.index % this.treeNameList.length];
-    } else {
-      document.getElementById("treeLabel").innerHTML = "N/A";
-    }
-
-    this.updateScaleTexts();
-
-    let window = this.calculateWindow();
-    document.getElementById(
-      "windowArea"
-    ).innerHTML = `${window["startPosition"]} - ${window["endPosition"]}`;
-  }
-
-  updateScaleTexts() {
-    if (this.scaleList && this.scaleList.length > 0) {
-      const maxScaleValue = Math.max(...this.scaleList.map((o) => o.value));
-      document.getElementById("maxScaleText").innerText =
-        " " + maxScaleValue.toFixed(3);
-
-      const scaleIndex = Math.floor(this.index / 5);
-      if (this.scaleList[scaleIndex] !== undefined) {
-        const currentScaleValue = this.scaleList[scaleIndex].value;
-        document.getElementById("currentScaleText").innerText =
-          " " + currentScaleValue.toFixed(3);
-      } else {
-        document.getElementById("currentScaleText").innerText = " N/A";
-      }
-    } else {
-      document.getElementById("maxScaleText").innerText = " N/A";
-      document.getElementById("currentScaleText").innerText = " N/A";
-    }
+    document.getElementById("treeLabel").innerHTML = this.getCurrentTreeLabel();
+    const window = calculateWindow(distanceIndex, this.msaStepSize, this.msaWindowSize);
+    document.getElementById("windowArea").innerHTML = `${window.startPosition} - ${window.endPosition}`;
   }
 
   goToPosition(position) {
-    // Validate position
-    if (isNaN(position) || position < 0 || position >= this.treeList.length) {
-      console.warn("Invalid position:", position);
-      return;
-    }
-    this.index = position * 5;
+    this._lastClickedDistancePosition = undefined;
+    if (isNaN(position) || position < 0 || position >= this.treeList.length) return;
+    this.currentTreeIndex = position;
     this.update();
   }
 
-  // ===== Export & Save =====
-  saveChart() {
-    const button = document.getElementById("save-chart-button");
-    if (button) {
-      button.disabled = true;
-      button.innerText = "Saving...";
+  // ===== Helper Methods for Full Tree Logic =====
+  goToFullTreeDataIndex(transitionIndex) {
+    if (!this.transitionResolver) return;
+    const fullTreeIndices = this.transitionResolver.fullTreeIndices;
+    const numTransitions = Math.max(0, fullTreeIndices.length - 1);
+    if (transitionIndex < 0 || transitionIndex >= numTransitions) return;
+    this._lastClickedDistancePosition = transitionIndex;
+    if (transitionIndex < fullTreeIndices.length) {
+      this.currentTreeIndex = fullTreeIndices[transitionIndex];
     }
-
-    // Define the filename based on the current state
-    const barOption = this.barOptionValue || "chart";
-    const fileName = `${this.fileName || "chart"}-${barOption}.svg`;
-
-    // Call the exported saveChart function
-    exportSaveChart(this, "lineChart", fileName)
-      .then((message) => {
-        console.log(message);
-        if (button) {
-          button.disabled = false;
-          button.innerText = "Save";
-        }
-      })
-      .catch((error) => {
-        console.error("Failed to save chart SVG:", error);
-        if (button) {
-          button.disabled = false;
-          button.innerText = "Save";
-        }
-      });
+    this.update();
   }
 
+  getActualHighlightData() {
+    if (!this.transitionResolver) return [];
+    const highlightIndex = this.transitionResolver.getHighlightingIndex(this.currentTreeIndex);
+    if (highlightIndex === -1) return [];
+    // Highlight if:
+    // - The current element is NOT a full tree (interpolated),
+    // - OR it is the first tree (T0),
+    // - OR it is the second tree (T1, i.e., the first transition's end tree)
+    const isFullTree = this.transitionResolver.isFullTree(this.currentTreeIndex);
+    if (isFullTree) {
+        // Find all full tree indices
+        const fullTreeIndices = this.transitionResolver.fullTreeIndices;
+        // Highlight if this is the first or second full tree
+        if (this.currentTreeIndex !== fullTreeIndices[0] && this.currentTreeIndex !== fullTreeIndices[1]) {
+            return [];
+        }
+    }
+    return this.highlightData[highlightIndex] || [];
+  }
+
+  // ===== Export & Save =====
   saveSVG() {
     const button = document.getElementById("save-svg-button");
     if (button) {
       button.disabled = true;
       button.innerText = "Saving...";
     }
-
-    const fileName = `${this.fileName || "chart"}-${
-      Math.floor(this.index / 5) + 1
-    }-${this.getTreeName()}.svg`;
-
+    const fileName = `${this.fileName || "chart"}-${this.currentTreeIndex + 1}-${this.getTreeName()}.svg`;
     exportSaveChart(this, "application-container", fileName)
-      .then((message) => {
-        console.log(message);
-        if (button) {
-          button.disabled = false;
-          button.innerText = "Save SVG";
-        }
-      })
-      .catch((error) => {
-        console.error("Failed to save application SVG:", error);
+      .finally(() => {
         if (button) {
           button.disabled = false;
           button.innerText = "Save SVG";
@@ -713,137 +416,213 @@ export default class Gui {
   }
 
   getTreeName() {
-    const treeNameList = ["full", "inter", "cons", "cons", "inter"];
-    const index = typeof this.index === "number" ? this.index : 0;
-    return treeNameList[index % treeNameList.length] || "unknown";
+    return this.getCurrentTreeLabel();
+  }
+
+  getCurrentTreeLabel() {
+    const baseName = this.treeNames?.[this.currentTreeIndex] || `Tree ${this.currentTreeIndex + 1}`;
+    if (this.transitionResolver) {
+      const highlightIndex = this.transitionResolver.getHighlightingIndex(this.currentTreeIndex);
+      if (highlightIndex !== -1) {
+        return `${baseName} (Transition ${highlightIndex})`;
+      }
+    }
+    return `${baseName} (No transition data)`;
   }
 
   // ===== Modal Management =====
   async openComparisonModal() {
-    // Initialize comparison modals if not exists
-    if (!this.comparisonModals) {
-      this.comparisonModals = {};
-    }
+    this.comparisonModals = this.comparisonModals || {};
+    const currentIndex = this.currentTreeIndex;
+    const nextIndex = Math.min(currentIndex + 1, this.treeList.length - 1);
+    const highlightIndex = this.transitionResolver.getHighlightingIndex(currentIndex);
 
-    // Get the current real tree index (every 5th tree in the list)
-    const currentRealTreeIndex = Math.floor(this.index / 5) * 5;
-    const nextRealTreeIndex = currentRealTreeIndex + 5;
-    const windowIndex = Math.floor(this.index / 5);
-
-    // Check if we have enough trees for comparison
-    if (nextRealTreeIndex >= this.treeList.length) {
-      // If no next tree, compare with previous tree if available
-      const prevRealTreeIndex = currentRealTreeIndex - 5;
-      const prevWindowIndex = windowIndex - 1;
-      if (prevRealTreeIndex < 0) {
-        alert(
-          "Not enough trees to compare. Need at least 2 trees in the dataset."
-        );
-        return;
-      }
-      await createSideBySideComparisonModal({
-        tree1Index: prevRealTreeIndex,
-        tree2Index: currentRealTreeIndex,
+    let comparisonParams = {
         leaveOrder: this.leaveOrder,
         ignoreBranchLengths: this.ignoreBranchLengths,
         fontSize: this.fontSize,
         strokeWidth: this.strokeWidth,
-        toBeHighlighted: this.toBeHighlighted[prevWindowIndex] || [],
         treeList: this.treeList,
         comparisonModals: this.comparisonModals,
-      });
+        toBeHighlighted: this.highlightData[highlightIndex] || [],
+    };
+
+    if (currentIndex === nextIndex && currentIndex > 0) {
+        await createSideBySideComparisonModal({...comparisonParams, tree1Index: currentIndex - 1, tree2Index: currentIndex});
+    } else if (currentIndex !== nextIndex) {
+        await createSideBySideComparisonModal({...comparisonParams, tree1Index: currentIndex, tree2Index: nextIndex});
     } else {
-      await createSideBySideComparisonModal({
-        tree1Index: currentRealTreeIndex,
-        tree2Index: nextRealTreeIndex,
-        leaveOrder: this.leaveOrder,
-        ignoreBranchLengths: this.ignoreBranchLengths,
-        fontSize: this.fontSize,
-        strokeWidth: this.strokeWidth,
-        toBeHighlighted: this.toBeHighlighted[windowIndex] || [],
-        treeList: this.treeList,
-        comparisonModals: this.comparisonModals,
-      });
+        alert("Not enough trees to compare.");
     }
   }
 
   openTaxaColoringModal() {
-    if (!this.leaveOrder || this.leaveOrder.length === 0) {
+    if (!this.leaveOrder?.length) {
       alert("No taxa names available for coloring.");
       return;
     }
-
-    const onCompleteCallback = (colorData) => {
-      const newColorMap = {};
-      if (colorData.mode === "taxa") {
-        for (const [taxon, color] of colorData.taxaColorMap) {
-          newColorMap[taxon] = color;
-        }
-      } else if (colorData.mode === "groups") {
-        // Helper function to get group for a taxon
-        const getGroupForTaxon = (taxon, separator) => {
-          if (!taxon) return undefined;
-          if (separator === "first-letter") {
-            return taxon.charAt(0).toUpperCase();
-          }
-          const parts = taxon.split(separator);
-          return parts[0];
-        };
-
-        this.leaveOrder.forEach((taxon) => {
-          const group = getGroupForTaxon(taxon, colorData.separator);
-          const groupColor = colorData.groupColorMap.get(group);
-          if (groupColor) {
-            newColorMap[taxon] = groupColor;
-          } else {
-            // Retain existing color or default if group/color not found
-            newColorMap[taxon] =
-              COLORMAP.colorMap[taxon] ||
-              COLORMAP.colorMap.defaultColor ||
-              "#000000";
-          }
-        });
-      }
-
-      // Merge with existing COLORMAP.colorMap, prioritizing new colors
-      COLOR_MAP.colorMap = { ...COLOR_MAP.colorMap, ...newColorMap };
-      this.updateMain(); // Redraw the tree
-      console.log("Taxa colors updated:", COLOR_MAP.colorMap);
-    };
-
-    // Assuming groupNames are not explicitly managed in Gui, pass empty or derive if needed.
-    // Pass the current COLOR_MAP.colorMap as originalColorMap.
     new TaxaColoring(
       this.leaveOrder,
-      [], // groupNames - can be empty if TaxaColoring derives them or not strictly needed for its init
-      { ...COLOR_MAP.colorMap }, // originalColorMap - pass a copy
-      onCompleteCallback
+      { ...COLOR_MAP.colorMap },
+      (colorData) => this._handleTaxaColoringComplete(colorData)
     );
   }
 
-  // ===== Modal Management: Scatter Plot =====
-  showScatterPlotModal() {
-    scatterPlotModule.showScatterPlotModal({
-      realTreeList: this.realTreeList,
-      treeList: this.treeList,
-      initialEmbedding: window.emb, // Pass the processed embedding!
-      modals: this.modals,
-      setModals: (modals) => {
-        this.modals = modals;
-      },
-    });
+  _handleTaxaColoringComplete(colorData) {
+    const newColorMap = {};
+    if (colorData.mode === "taxa") {
+      for (const [taxon, color] of colorData.taxaColorMap) {
+        newColorMap[taxon] = color;
+      }
+    } else if (colorData.mode === "groups") {
+      this.leaveOrder.forEach((taxon) => {
+        const group = this._getGroupForTaxon(taxon, colorData.separator);
+        const groupColor = colorData.groupColorMap.get(group);
+        if (groupColor) {
+          newColorMap[taxon] = groupColor;
+        } else {
+          newColorMap[taxon] = COLOR_MAP.colorMap[taxon] || COLOR_MAP.colorMap.defaultColor || "#000000";
+        }
+      });
+    }
+    // --- Ensure the global color map is updated so label colors are correct ---
+    Object.assign(COLOR_MAP.colorMap, newColorMap);
+    this.updateMain();
   }
 
-  // ===== Modal Management =====
+  _getGroupForTaxon(taxon, separator) {
+    if (!taxon) return undefined;
+    if (separator === "first-letter") return taxon.charAt(0).toUpperCase();
+    return taxon.split(separator)[0];
+  }
+
   openMSAViewer() {
-    // Trigger MSA viewer to open with dark theme
     window.dispatchEvent(new CustomEvent("open-msa-viewer", {
       detail: {
         source: 'gui',
-        currentPosition: Math.floor(this.index / 5),
+        currentPosition: this.calculateMSAPosition().position,
         windowInfo: this.getCurrentWindow(),
-        theme: 'dark' // Ensure dark theme is applied
       }
     }));
+  }
+
+  // ===== MSA Position Tracking =====
+  calculateMSAPosition() {
+    const transitionStep = this.transitionResolver.getDistanceIndex(this.currentTreeIndex);
+    return {
+      position: this.currentTreeIndex + 1,
+      stepSize: this.msaStepSize,
+      steps: transitionStep * this.msaStepSize,
+      treeIndex: this.currentTreeIndex
+    };
+  }
+
+  // ===== TransitionIndexResolver Initialization =====
+  // FIX: Reordered to initialize the resolver before using it.
+initializeTransitionResolver() {
+    if (!this.treeNames || this.treeNames.length === 0) {
+        console.warn("[GUI] Cannot initialize TransitionIndexResolver: treeNames is empty or undefined.");
+        // Optionally, create a non-functional resolver or handle this state appropriately
+        this.transitionResolver = new TransitionIndexResolver([], [], [], false, 0); // Basic fallback
+        return;
+    }
+
+    const resolverSequenceData = this.treeNames.map(name => {
+        let type = 'UNKNOWN';
+        // Log for debugging
+        if (name.startsWith('IT')) {
+            type = 'IT';
+        } else if (name.startsWith('C_')) {
+            type = 'C';
+        } else if (name.startsWith('T') && /T\d+$/.test(name)) {
+            type = 'T';
+        }
+        return { name, type };
+    });
+
+    // Use the canonical highlightData property everywhere
+    const highlightDataForResolver = this.highlightData || [];
+    const numOriginalTransitions = highlightDataForResolver.length;
+
+    // Ensure this.robinsonFouldsDistances is the correct distance data array
+    const distanceDataForResolver = this.robinsonFouldsDistances || []; // Use an empty array if undefined
+
+    // Enable debug mode for the resolver (set to true or false as needed)
+    const debugResolver = true;
+
+    this.transitionResolver = new TransitionIndexResolver(
+        resolverSequenceData,
+        highlightDataForResolver,
+        distanceDataForResolver,
+        debugResolver,
+        numOriginalTransitions
+    );
+
+    if (debugResolver || !this.transitionResolver.validateData().isValid) {
+        console.log("[GUI] TransitionIndexResolver initialized.");
+        console.log("[GUI] Resolver Debug Info:", this.transitionResolver.getDebugInfo());
+        const validation = this.transitionResolver.validateData();
+        if (!validation.isValid) {
+            console.warn("[GUI] TransitionIndexResolver validation issues:", validation.issues);
+        }
+    }
+    // Any other logic that depends on the resolver being initialized
+    // For example, updating the UI based on the initial state.
+    // this.updateUIForSequencePosition(this.currentSequenceIndex);
+}
+
+  // FIX: Moved this method INSIDE the Gui class.
+  generateRealTreeList() {
+    if (!Array.isArray(this.treeList)) return [];
+    const realTreeData = [];
+    const fullTreeIndices = this.transitionResolver.fullTreeIndices;
+    fullTreeIndices.forEach((index) => {
+      if (this.treeList[index] !== undefined) {
+        realTreeData.push(this.treeList[index]);
+      }
+    });
+    return realTreeData;
+  }
+
+  // ===== Scale Bar Update =====
+  updateScale() {
+    const currentScaleValue = this.getCurrentScaleValue();
+    const maxScale = this.maxScale || 1;
+    const scaleProgressBar = document.querySelector(".scale-progress-bar");
+    if (scaleProgressBar) {
+      const percentValue = Math.max(0, Math.min(100, (currentScaleValue / maxScale) * 100));
+      scaleProgressBar.style.width = `${percentValue}%`;
+      return;
+    }
+    const maxScaleElement = document.getElementById("maxScale");
+    if (maxScaleElement) {
+      const width = maxScaleElement.offsetWidth;
+      const currentScaleWidth = (width * currentScaleValue) / maxScale;
+      d3.select("#currentScaleText").transition().duration(1000).style("width", `${currentScaleWidth}px`);
+    }
+  }
+
+  getCurrentScaleValue() {
+    if (this.scaleList?.[this.currentTreeIndex] !== undefined) {
+        const scaleItem = this.scaleList[this.currentTreeIndex];
+        return typeof scaleItem === 'object' ? scaleItem.value : scaleItem;
+    }
+    return 0;
+  }
+
+  setFontSize(fontSize) {
+    // Normalize font size to ensure it has a valid CSS unit
+    if (typeof fontSize === 'number') {
+      this.fontSize = fontSize + 'em';
+    } else if (typeof fontSize === 'string' && !fontSize.match(/(px|em|rem|pt|%)$/)) {
+      this.fontSize = fontSize + 'em';
+    } else {
+      this.fontSize = fontSize;
+    }
+
+
+    STYLE_MAP.fontSize = this.fontSize;
+
+    this.updateMain();
   }
 }

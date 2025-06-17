@@ -1,6 +1,6 @@
 
 import localforage from 'localforage';
-import { parseMSA } from './msaViewer/parsers.js';
+// import { parseMSA } from './msaViewer/parsers.js'; // No longer needed
 
 export async function fetchMSAFromBackend() {
   try {
@@ -17,12 +17,10 @@ export async function fetchMSAFromBackend() {
     const response = await fetch(url);
     if (!response.ok) throw new Error("No MSA file available on the server.");
     const msaRaw = await response.json();
-    const msaData = parseMSA(msaRaw.content);
-    if (msaData) {
-      await localforage.setItem("phyloMovieMSAData", msaData);
-      // Dispatch custom event to notify MSA viewer of data update
+    if (msaRaw && msaRaw.content) {
+      await localforage.setItem("phyloMovieMSAData", { rawData: msaRaw.content });
       window.dispatchEvent(new CustomEvent('msa-data-updated'));
-      return msaData;
+      return { rawData: msaRaw.content };
     }
     return null;
   } catch (err) {

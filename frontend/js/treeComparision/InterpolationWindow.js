@@ -1,4 +1,4 @@
-import constructTree from "../treeVisualisation/TreeConstructor.js";
+import constructTree from "../treeVisualisation/LayoutCalculator.js";
 import drawTree from "../treeVisualisation/TreeDrawer.js";
 
 /**
@@ -341,16 +341,15 @@ export class InterpolationWindow {
             margin: 40
           });
 
-          const success = drawTree(
-            treeLayout,
-            new Set(options.toBeHighlighted),
-            options.drawDuration,
-            options.leaveOrder,
-            options.fontSize,
-            options.strokeWidth,
-            treeGroupId,
-            options.ignoreBranchLengths
-          );
+          const success = drawTree({
+            treeConstructor: treeLayout,
+            toBeHighlighted: new Set(options.toBeHighlighted),
+            drawDurationFrontend: options.drawDuration,
+            leaveOrder: options.leaveOrder,
+            fontSize: options.fontSize,
+            strokeWidth: options.strokeWidth,
+            svgContainerId: treeGroupId
+          });
 
           if (success) {
             resolve(treeLayout);
