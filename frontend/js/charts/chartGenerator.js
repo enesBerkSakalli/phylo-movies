@@ -1,3 +1,6 @@
+// DEPRECATED: This file is obsolete and replaced by modalChartManager.js and chartModal.js (Bootstrap-based modals).
+// Safe to delete if not referenced elsewhere.
+
 /**
  * Debounce function to limit the rate at which a function can fire.
  */
@@ -239,12 +242,7 @@ function drawDataPoints(svg, data, scales, guiInstance, config) {
     })
     .on("click", function (event, d) {
       const index = parseInt(d3.select(this).attr("data-index"), 10);
-
-      pointsContainer.selectAll("circle").attr("fill", "#4390e1").attr("r", 4);
-      d3.select(this).attr("fill", "#FF4500").attr("r", 6).attr("stroke-width", 2);
-
-      guiInstance.currentPosition = index;
-      guiInstance.goToPosition(index);
+      // Always update ship and GUI state
       updateShipPosition(index, guiInstance, scales, config, data);
     });
 
@@ -258,109 +256,167 @@ function updateShipPosition(position, guiInstance, scales, config, data) {
   const { xScale, yScale } = scales;
   const svg = d3.select("#modal-graph-chart").select("svg").select("g");
 
-  d3.select("#ship-modal-group").remove();
+  // Handle empty data or missing scales
+  if (!data || data.length === 0 || !xScale || !yScale) {
+    svg.select("#ship-modal-group").remove(); // Remove ship if no data
+    return;
+  }
+  const height = yScale.range()[0];
 
-  const shipX = xScale(config.xAccessor(data[position], position));
-  const height = yScale.range()[0]; // Get height from yScale range
+  // Validate and clamp position to be within data bounds
+  const validPosition = Math.max(0, Math.min(data.length - 1, position));
 
-  const shipGroup = svg.append("g")
-    .attr("id", "ship-modal-group")
-    .style("cursor", "grab");
+  let shipGroup = svg.select("#ship-modal-group");
+  let isNew = false;
 
-  // Touch target
-  shipGroup.append("rect")
-    .attr("class", "ship-touch-target")
-    .attr("x", shipX - 15)
-    .attr("y", 0)
-    .attr("width", 30)
-    .attr("height", height)
-    .attr("fill", "transparent");
+  if (shipGroup.empty()) {
+    isNew = true;
+    shipGroup = svg.append("g")
+      .attr("id", "ship-modal-group")
+      .style("cursor", "grab");
 
-  // Ship line
-  shipGroup.append("line")
-    .attr("class", "ship-line")
-    .attr("x1", shipX)
-    .attr("y1", 0)
-    .attr("x2", shipX)
-    .attr("y2", height)
-    .attr("stroke", "#FF4500")
-    .attr("stroke-width", 2)
-    .attr("stroke-dasharray", "5,5");
+    // Touch target
+    shipGroup.append("rect")
+      .attr("class", "ship-touch-target")
+      .attr("y", 0)
+      .attr("width", 30) // Keep width constant
+      .attr("height", height)
+      .attr("fill", "transparent");
 
-  // Handle
-  shipGroup.append("circle")
-    .attr("class", "ship-handle")
-    .attr("cx", shipX)
-    .attr("cy", height / 2)
-    .attr("r", 8)
-    .attr("fill", "#FF4500")
-    .attr("stroke", "#23242b")
-    .attr("stroke-width", 1.5);
+    // Ship line
+    shipGroup.append("line")
+      .attr("class", "ship-line")
+      .attr("y1", 0)
+      .attr("y2", height)
+      .attr("stroke", "#FF4500")
+      .attr("stroke-width", 2)
+      .attr("stroke-dasharray", "5,5");
 
-  // Value text
-  shipGroup.append("text")
-    .attr("class", "handle-value")
+    // Handle
+    shipGroup.append("circle")
+      .attr("class", "ship-handle")
+      .attr("cy", height / 2)
+      .attr("r", 8)
+      .attr("fill", "#FF4500")
+      .attr("stroke", "#23242b")
+      .attr("stroke-width", 1.5);
+
+    // Value text
+    shipGroup.append("text")
+      .attr("class", "handle-value")
+      .attr("y", height / 2 - 15)
+      .attr("text-anchor", "middle")
+      .attr("fill", "white")
+      .attr("font-weight", "bold")
+      .attr("font-size", "12px")
+      .style("pointer-events", "none");
+
+    // Position label
+    shipGroup.append("text")
+      .attr("class", "current-position-label")
+      .attr("y", height + 17)
+      .attr("text-anchor", "middle")
+      .attr("fill", "#FF4500")
+      .attr("font-weight", "bold")
+      .attr("font-size", "13px")
+      .style("pointer-events", "none");
+  }
+
+  // Update positions and text using validated position
+  const shipX = xScale(config.xAccessor(data[validPosition], validPosition));
+
+  shipGroup.select(".ship-touch-target").attr("x", shipX - 15);
+  shipGroup.select(".ship-line").attr("x1", shipX).attr("x2", shipX);
+  shipGroup.select(".ship-handle").attr("cx", shipX);
+  shipGroup.select(".handle-value")
     .attr("x", shipX)
-    .attr("y", height / 2 - 15)
-    .attr("text-anchor", "middle")
-    .attr("fill", "white")
-    .attr("font-weight", "bold")
-    .attr("font-size", "12px")
-    .text(config.yAccessor(data[position]).toFixed(3))
-    .style("pointer-events", "none");
-
-  // Position label
-  shipGroup.append("text")
-    .attr("class", "current-position-label")
+    .text(config.yAccessor(data[validPosition]).toFixed(3));
+  shipGroup.select(".current-position-label")
     .attr("x", shipX)
-    .attr("y", height + 17)
-    .attr("text-anchor", "middle")
-    .attr("fill", "#FF4500")
-    .attr("font-weight", "bold")
-    .attr("font-size", "13px")
-    .text(`${position + 1}`)
-    .style("pointer-events", "none");
+    .text(`${validPosition + 1}`); // Display validated 1-based index
 
-  // Add drag behavior
-  shipGroup.call(d3.drag()
-    .on("start", function() {
-      d3.select(this).selectAll(".ship-line").attr("stroke-width", 3);
-      d3.select(this).selectAll(".ship-handle").attr("r", 10);
-      d3.select(this).style("cursor", "grabbing");
-    })
-    .on("drag", function(event) {
-      let xPos = Math.max(0, Math.min(xScale.range()[1], event.x));
+  // Always highlight the correct data point
+  svg.selectAll(".data-points circle").attr("fill", "#4390e1").attr("r", 4);
+  svg.selectAll(".data-points circle")
+    .filter((d, i) => i === validPosition)
+    .attr("fill", "#FF4500").attr("r", 6);
 
-      // Find closest data point
-      let closestIndex = 0;
-      let minDistance = Infinity;
+  // Synchronize GUI state and tree/data
+  if (guiInstance.currentPosition !== validPosition) {
+    guiInstance.currentPosition = validPosition;
+    if (typeof guiInstance.goToPosition === 'function') {
+      guiInstance.goToPosition(validPosition);
+    }
+  }
 
-      data.forEach((d, i) => {
-        const dataX = xScale(config.xAccessor(d, i));
-        const distance = Math.abs(dataX - xPos);
-        if (distance < minDistance) {
-          minDistance = distance;
-          closestIndex = i;
-        }
-      });
-
-      guiInstance.currentPosition = closestIndex;
-      guiInstance.goToPosition(closestIndex);
-      updateShipPosition(closestIndex, guiInstance, scales, config, data);
-
-      // Update data point highlight
-      svg.selectAll(".data-points circle").attr("fill", "#4390e1").attr("r", 4);
-      svg.selectAll(".data-points circle")
-        .filter((d, i) => i === closestIndex)
-        .attr("fill", "#FF4500").attr("r", 6);
-    })
-    .on("end", function() {
-      d3.select(this).selectAll(".ship-line").attr("stroke-width", 2);
-      d3.select(this).selectAll(".ship-handle").attr("r", 8);
-      d3.select(this).style("cursor", "grab");
-    })
-  );
+  // Add drag behavior only if it's newly created
+  if (isNew) {
+    shipGroup.call(d3.drag()
+      .on("start", function(event) {
+        d3.select(this).selectAll(".ship-line").attr("stroke-width", 3);
+        d3.select(this).selectAll(".ship-handle").attr("r", 10);
+        d3.select(this).style("cursor", "grabbing");
+        d3.select(this).classed("dragging", true);
+      })
+      .on("drag", function(event) {
+        const currentX = event.x;
+        let closestIndex = 0;
+        let minDistance = Infinity;
+        data.forEach((d, i) => {
+          const pointX = xScale(config.xAccessor(d, i));
+          const distance = Math.abs(currentX - pointX);
+          if (distance < minDistance) {
+            minDistance = distance;
+            closestIndex = i;
+          }
+        });
+        closestIndex = Math.max(0, Math.min(data.length - 1, closestIndex));
+        // Always update ship and GUI state
+        updateShipPosition(closestIndex, guiInstance, scales, config, data);
+      })
+      .on("end", function() {
+        d3.select(this).selectAll(".ship-line").attr("stroke-width", 2);
+        d3.select(this).selectAll(".ship-handle").attr("r", 8);
+        d3.select(this).style("cursor", "grab");
+        d3.select(this).classed("dragging", false);
+      })
+    );
+  }
 }
+
+// Expose updateShipPosition globally for external updates
+window.updateModalShipPosition = function(position, guiInstance) {
+  // Get the current chart data and config from the GUI instance
+  let data, config;
+
+  if (guiInstance.barOptionValue === "rfd") {
+    data = guiInstance.robinsonFouldsDistances;
+    config = {
+      xAccessor: (d, i) => i + 1,
+      yAccessor: (d) => d,
+    };
+  } else if (guiInstance.barOptionValue === "w-rfd") {
+    data = guiInstance.weightedRobinsonFouldsDistances;
+    config = {
+      xAccessor: (d, i) => i + 1,
+      yAccessor: (d) => d,
+    };
+  } else if (guiInstance.barOptionValue === "scale") {
+    data = guiInstance.scaleList;
+    config = {
+      xAccessor: (d, i) => i + 1,
+      yAccessor: (d) => d.value,
+    };
+  }
+
+  if (data && config && guiInstance.modalXScale && guiInstance.modalYScale) {
+    const scales = {
+      xScale: guiInstance.modalXScale,
+      yScale: guiInstance.modalYScale
+    };
+    updateShipPosition(position, guiInstance, scales, config, data);
+  }
+};
 
 /**
  * Main chart rendering function
@@ -392,27 +448,11 @@ function renderChart(guiInstance, data, config) {
       const mouseX = d3.pointer(event, this)[0];
       let rawIndex = scales.xScale.invert(mouseX);
       let closestIndex = Math.round(rawIndex);
-
-      // If the xScale domain starts at 1 (e.g., for 1-based indexing from xAccessor like i+1),
-      // adjust closestIndex to be 0-based for array indexing and goToPosition.
       if (scales.xScale.domain()[0] === 1) {
         closestIndex = closestIndex - 1;
       }
-
-      // Ensure closestIndex is bounded within [0, data.length - 1]
       closestIndex = Math.max(0, Math.min(data.length - 1, closestIndex));
-
-      if (guiInstance && typeof guiInstance.goToPosition === 'function') {
-        guiInstance.goToPosition(closestIndex);
-      }
-
-      // Update visual feedback in the modal chart
-      // Highlight the clicked point (similar to drawDataPoints click)
-      svg.selectAll(".data-points circle")
-         .attr("fill", "#4390e1").attr("r", 4) // Reset all points
-         .filter((d, i) => i === closestIndex)
-         .attr("fill", "#FF4500").attr("r", 6); // Highlight selected
-
+      // Always update ship and GUI state
       updateShipPosition(closestIndex, guiInstance, scales, config, data);
     });
 

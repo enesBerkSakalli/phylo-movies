@@ -1,4 +1,4 @@
-import constructTree from "../treeVisualisation/TreeConstructor.js";
+import constructTree from "../treeVisualisation/LayoutCalculator.js";
 import drawTree from "../treeVisualisation/TreeDrawer.js";
 
 /**
@@ -138,23 +138,23 @@ export class TreeRenderer {
             throw new Error(`SVG element ${svgId} not found`);
           }
 
-          // Construct tree layout with font size for padding calculation
+          // Construct tree layout
           const treeLayout = constructTree(treeData, ignoreBranchLengths, {
             containerId: svgId,
-            fontSize: fontSize // Pass font size for dynamic padding calculation
+            fontSize: fontSize
           });
 
 
           // Use the SVG ID directly - TreeDrawer.getSVG() will handle container creation
-          const success = drawTree(
-            treeLayout,
-            toBeHighlighted,
-            drawDuration,
-            leaveOrder,
-            fontSize,
-            strokeWidth,
-            svgId  // Use SVG ID directly
-          );
+          const success = drawTree({
+            treeConstructor: treeLayout,
+            toBeHighlighted: toBeHighlighted,
+            drawDurationFrontend: drawDuration,
+            leaveOrder: leaveOrder,
+            fontSize: fontSize,
+            strokeWidth: strokeWidth,
+            svgContainerId: svgId
+          });
 
           if (success) {
             resolve(treeLayout);
@@ -238,23 +238,21 @@ export class TreeRenderer {
             containerId: groupId,
             width: availableWidth - adjustedFontSize * 3,
             height: availableHeight- adjustedFontSize * 3,
-            fontSize: adjustedFontSize, // Pass font size for padding calculation
+            fontSize: adjustedFontSize,
             isComparison: true
           });
 
           console.log(`TreeRenderer: Group ${groupId} - Available: ${availableWidth}x${availableHeight}`);
-          console.log(`TreeRenderer: Group ${groupId} - Label padding: ${treeLayout.labelPadding}`);
 
-          const success = drawTree(
-            treeLayout,
-            new Set(options.toBeHighlighted || []),
-            options.drawDuration || 0,
-            options.leaveOrder || [],
-            adjustedFontSize,
-            (options.strokeWidth || 1) * 0.9,
-            groupId,
-            options.ignoreBranchLengths
-          );
+          const success = drawTree({
+            treeConstructor: treeLayout,
+            toBeHighlighted: new Set(options.toBeHighlighted || []),
+            drawDurationFrontend: options.drawDuration || 0,
+            leaveOrder: options.leaveOrder || [],
+            fontSize: adjustedFontSize,
+            strokeWidth: (options.strokeWidth || 1) * 0.9,
+            svgContainerId: groupId
+          });
 
           if (success) {
             resolve(treeLayout);

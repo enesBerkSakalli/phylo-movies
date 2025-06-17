@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-import json
-from pathlib import Path
-from typing import Any, Dict, List, Optional
 
+from typing import Any, Dict, List, Optional
 import numpy as np
 from flask import current_app
 from brancharchitect.tree import Node
 from flask import Request
+import umap
 
 # Type aliases – make the business‐logic signatures compact and explicit
 TreeList = List[Node]
@@ -80,12 +79,6 @@ def perform_umap(
         # A robust solution might involve trying and catching UMAP error, then returning zeros.
         # However, UMAP itself might adjust n_components internally or error.
         # Let's allow UMAP to try, but be aware. If issues, return np.zeros((n_samples, n_components))
-    try:
-        import umap
-    except ImportError:
-        current_app.logger.error(
-            "[perform_umap] umap-learn package not found. Please install it (e.g., pip install umap-learn)."
-        )
         # Fallback to zeros if UMAP is not installed
         return np.zeros((n_samples, n_components))
     try:
@@ -96,7 +89,7 @@ def perform_umap(
             metric="precomputed",
             random_state=random_state,
         )
-        raw_embedding = reducer.fit_transform(distance_matrix)
+        raw_embedding: np.ndarray = reducer.fit_transform(distance_matrix)
         embedding: np.ndarray = np.asarray(raw_embedding)
         return embedding
     except Exception as e:

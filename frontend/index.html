@@ -226,41 +226,29 @@
           // Save main data to IndexedDB/localForage
           await window.localforage.setItem("phyloMovieData", data);
 
-          // Handle MSA data saving and notification (like in fetch.js)
+          // Handle MSA data saving and notification
           const msaFiles = msaPond.getFiles();
           if (msaFiles.length > 0) {
             try {
               const msaFile = msaFiles[0].file;
               const msaText = await msaFile.text();
-              // Import parseMSA function dynamically
-              const { parseMSA } = await import('./js/msaViewer/parsers.js');
-              const msaData = parseMSA(msaText);
-              if (msaData) {
-                await window.localforage.setItem("phyloMovieMSAData", msaData);
-                console.log("[index.html] MSA data saved to localForage");
-                // Dispatch custom event to notify MSA viewer of data update
-                window.dispatchEvent(new CustomEvent('msa-data-updated'));
-              }
+              // Store raw MSA data in the same format as dataManager.js
+              await window.localforage.setItem("phyloMovieMSAData", { rawData: msaText });
+              console.log("[index.html] MSA raw data saved to localForage");
+              // Dispatch custom event to notify MSA viewer of data update
+              window.dispatchEvent(new CustomEvent('msa-data-updated'));
             } catch (msaErr) {
-              console.error("[index.html] Error parsing MSA file:", msaErr);
-              // Continue with tree data even if MSA parsing fails
+              console.error("[index.html] Error saving MSA file:", msaErr);
+              // Continue with tree data even if MSA saving fails
             }
-          } else if (data.msa_id) {
-            // If no file uploaded but backend has MSA data, fetch it
+          } else if (data.msa_content) {
+            // If no file uploaded but backend processed MSA data, store it
             try {
-              const msaResponse = await fetch(`/msa?msa_id=${data.msa_id}`);
-              if (msaResponse.ok) {
-                const msaRaw = await msaResponse.json();
-                const { parseMSA } = await import('./js/msaViewer/parsers.js');
-                const msaData = parseMSA(msaRaw.content);
-                if (msaData) {
-                  await window.localforage.setItem("phyloMovieMSAData", msaData);
-                  console.log("[index.html] MSA data fetched and saved to localForage");
-                  window.dispatchEvent(new CustomEvent('msa-data-updated'));
-                }
-              }
+              await window.localforage.setItem("phyloMovieMSAData", { rawData: data.msa_content });
+              console.log("[index.html] MSA data from backend saved to localForage");
+              window.dispatchEvent(new CustomEvent('msa-data-updated'));
             } catch (fetchErr) {
-              console.error("[index.html] Error fetching MSA data:", fetchErr);
+              console.error("[index.html] Error saving backend MSA data:", fetchErr);
             }
           }
 

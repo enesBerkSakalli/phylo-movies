@@ -24,6 +24,8 @@ function debounce(func, wait) {
  * @param {number} [options.currentPosition] - Current position index to display the indicator line.
  * @param {function} [options.onClick] - Callback function when a tick label is clicked.
  * @param {function} [options.onDrag] - Callback function when the indicator line is dragged.
+ * @param {function} [options.indexToSequence] - Function to map chart index to sequence index.
+ * @param {function} [options.sequenceToIndex] - Function to map sequence index to chart index.
  * @returns {Object} - Chart instance with update method for resizing.
  */
 export function generateDistanceChart(config, data, options = {}) {
@@ -33,15 +35,15 @@ export function generateDistanceChart(config, data, options = {}) {
     xLabel = "Index",
     yLabel = "Value",
     yMax = 1,
-    currentPosition,
+    currentPosition, // This should be a sequence index
     onClick,
     onDrag,
+    indexToSequence = (i) => i, // Default: identity mapping
+    sequenceToIndex = (seqIdx) => seqIdx // Default: identity mapping
   } = options;
 
   // Remove any existing SVG element inside the container
   d3.select(`#${containerId} svg`).remove();
-
-  const applicationContainer = document.getElementById(containerId);
 
   // Store initial dimensions and create chart state object
   const chartState = {
@@ -281,30 +283,28 @@ export function generateDistanceChart(config, data, options = {}) {
     // Add click event to the background
     chartState.chartGroup.select(".chart-background").on("click", function(event) {
       if (!onClick) return;
-
       const mouseX = d3.pointer(event)[0];
-      const position = Math.round(chartState.scales.x.invert(mouseX)) - 1;
-      const validPosition = Math.max(0, Math.min(data.length - 1, position));
-      onClick(validPosition);
+      const chartIndex = Math.round(chartState.scales.x.invert(mouseX)) - 1;
+      const validChartIndex = Math.max(0, Math.min(data.length - 1, chartIndex));
+      const sequenceIndex = indexToSequence(validChartIndex);
+      onClick(sequenceIndex);
     });
 
     // Add tooltip interactivity to dots
     chartState.clipGroup.selectAll(".dot")
       .on("mouseover", function(event, d) {
-        const i = data.indexOf(d);
+        const chartIndex = data.indexOf(d);
         d3.select(this)
           .transition()
           .duration(100)
           .attr("r", 5)
           .attr("fill", "#FF4500");
-
         tooltip
           .transition()
           .duration(200)
           .style("opacity", 0.9);
-
         tooltip
-          .html(`<div class="tooltip-title">Position ${i + 1}</div><div class="tooltip-value">Value: ${d.toFixed(4)}</div>`)
+          .html(`<div class="tooltip-title">Position ${chartIndex + 1}</div><div class="tooltip-value">Value: ${d.toFixed(4)}</div>`)
           .style("left", (event.pageX + 10) + "px")
           .style("top", (event.pageY - 28) + "px");
       })
@@ -314,7 +314,6 @@ export function generateDistanceChart(config, data, options = {}) {
           .duration(200)
           .attr("r", 3)
           .attr("fill", "#4682B4");
-
         tooltip
           .transition()
           .duration(500)
@@ -322,16 +321,22 @@ export function generateDistanceChart(config, data, options = {}) {
       })
       .on("click", function(event, d) {
         if (!onClick) return;
-        const i = data.indexOf(d);
-        onClick(i);
+        const chartIndex = data.indexOf(d);
+        const sequenceIndex = indexToSequence(chartIndex);
+        onClick(sequenceIndex);
         event.stopPropagation();
       });
   }
 
   // Function to render position indicator
   function renderPositionIndicator() {
-    if (typeof currentPosition === "number") {
-      createPositionIndicator(chartState.chartGroup, data, chartState.scales.x, chartState.scales.y, chartState.height, currentPosition, onDrag);
+    // Use sequenceToIndex to map sequence index to chart index
+    if (typeof currentPosition === "number" && onDrag) {
+      const chartIndex = sequenceToIndex(currentPosition);
+      createPositionIndicator(chartState.chartGroup, data, chartState.scales.x, chartState.scales.y, chartState.height, chartIndex, (newChartIndex) => {
+        const newSequenceIndex = indexToSequence(newChartIndex);
+        onDrag(newSequenceIndex);
+      });
     }
   }
 
@@ -371,7 +376,7 @@ export function generateDistanceChart(config, data, options = {}) {
     updatePosition: (newPosition) => {
       // Update position indicator without full redraw
       d3.select(`#${containerId} .drag-indicator`).remove();
-      if (typeof newPosition === "number") {
+      if (typeof newPosition === "number" && onDrag) {
         createPositionIndicator(chartState.chartGroup, data, chartState.scales.x, chartState.scales.y, chartState.height, newPosition, onDrag);
       }
     },
@@ -382,7 +387,15 @@ export function generateDistanceChart(config, data, options = {}) {
       d3.select(`#${containerId} svg`).remove();
       d3.select(`#${containerId} .chart-tooltip`).remove();
     },
-    getState: () => chartState
+    getState: () => chartState,
+    // Add method to get chart scales for external ship positioning
+    getScales: () => chartState.scales,
+    // Add method to get chart dimensions for external ship positioning
+    getDimensions: () => ({
+      width: chartState.width,
+      height: chartState.height,
+      margin: chartState.margin
+    })
   };
 }
 
@@ -395,8 +408,16 @@ function createPositionIndicator(chartGroup, data, x, y, height, currentPosition
     .attr("class", "drag-indicator")
     .attr("cursor", "grab");
 
-  // Calculate the initial position
-  const lineX = x(currentPosition + 1);
+  // Handle empty data case: do not draw indicator if no data
+  if (!data || data.length === 0) {
+    return;
+  }
+
+  // Validate and clamp currentPosition to be within data bounds
+  const validCurrentPos = Math.max(0, Math.min(data.length - 1, currentPosition));
+
+  // Calculate the initial position using the validated index
+  const lineX = x(validCurrentPos + 1);
 
   // Add a transparent touch target (wide rectangle) for better touch interaction
   const touchTarget = dragGroup.append("rect")
@@ -437,7 +458,7 @@ function createPositionIndicator(chartGroup, data, x, y, height, currentPosition
     .attr("text-anchor", "middle")
     .attr("fill", "#FF4500")
     .attr("font-weight", "bold")
-    .text(`${currentPosition + 1}`)
+    .text(`${validCurrentPos + 1}`) // Display validated 1-based index
     .style("pointer-events", "none");
 
   // Define drag behavior

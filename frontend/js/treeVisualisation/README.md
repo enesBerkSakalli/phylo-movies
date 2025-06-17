@@ -100,8 +100,6 @@ Staged or depth-based animation only animates tree growth or collapse by depth, 
 ## References
 
 - [D3 Data Joins](https://observablehq.com/@d3/selection-join)
-- [Animating Trees with D3](https://observablehq.com/@d3/animated-tree)
-- [Phylogenetic Tree Morphing (concept)](https://www.nature.com/articles/nmeth.3252)
 
 ---
 

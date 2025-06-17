@@ -3,6 +3,7 @@
 # --------------------------------------------------------------
 from __future__ import annotations
 
+from logging import Logger
 import os
 import json
 from pathlib import Path
@@ -56,7 +57,7 @@ def favicon():
 @bp.route("/treedata", methods=["POST"])
 def treedata() -> Union[Response, Tuple[dict[str, Any], int]]:
     try:
-        log = current_app.logger
+        log: Logger = current_app.logger
 
         log.info("[treedata] POST /treedata from %s", request.remote_addr)
         tree_file = request.files.get("treeFile")
@@ -95,7 +96,7 @@ def treedata() -> Union[Response, Tuple[dict[str, Any], int]]:
             log.info("[treedata] No MSA file provided")
 
         # Pass the rooting parameter and MSA content to handle_uploaded_file
-        payload = handle_uploaded_file(
+        payload: Dict[str, Any] = handle_uploaded_file(
             tree_file,
             msa_content=msa_content,
             enable_rooting=enable_rooting,
@@ -103,30 +104,6 @@ def treedata() -> Union[Response, Tuple[dict[str, Any], int]]:
             window_size=window_size,
             window_step=window_step,
         )
-
-        # Accept either 'weighted_robinson_foulds_distance_list' or 'weighted_rfd_list' for compatibility
-        required = [
-            "tree_list",
-            "rfd_list",
-            "to_be_highlighted",
-            "sorted_leaves",
-            "file_name",
-            "embedding",
-        ]
-
-        has_weighted = (
-            "weighted_robinson_foulds_distance_list" in payload
-            or "weighted_rfd_list" in payload
-        )
-
-        if not all(key in payload for key in required) or not has_weighted:
-            return _fail(500, "Internal error - backend returned incomplete data."), 500
-
-        # Always provide 'weighted_robinson_foulds_distance_list' for frontend compatibility
-        if "weighted_robinson_foulds_distance_list" not in payload:
-            payload["weighted_robinson_foulds_distance_list"] = payload.get(
-                "weighted_rfd_list", []
-            )
         # Success -------------------------------------------------------------
         response_data: Dict[str, Any] = {
             **payload,
@@ -136,11 +113,44 @@ def treedata() -> Union[Response, Tuple[dict[str, Any], int]]:
             "enable_embedding": enable_embedding,
         }
 
+        # Always ensure tree_names is present in the response
+        response_data["tree_names"] = payload.get("tree_names", [])
+
+        log.info(
+            f"[treedata] Sending tree_names in response: {response_data['tree_names']}"
+        )
+
         return Response(
             json.dumps(response_data, cls=UUIDEncoder), mimetype="application/json"
         )
     except Exception as e:
         current_app.logger.error("[treedata] Exception: %s", str(e))
+        return _fail(500, str(e)), 500
+
+
+# ----------------------------------------------------------------------
+# MSA data endpoint
+# ----------------------------------------------------------------------
+@bp.route("/msa")
+def get_msa() -> Union[Response, Tuple[dict[str, Any], int]]:
+    """Retrieve MSA data by ID."""
+    try:
+        msa_id = request.args.get("msa_id")
+        if not msa_id:
+            return _fail(400, "Missing required parameter 'msa_id'."), 400
+
+        # For now, return a simple response indicating MSA endpoint exists
+        # TODO: Implement actual MSA storage and retrieval logic
+        # This might involve storing MSA content in a database or file system
+        # and retrieving it by the provided msa_id
+
+        current_app.logger.info(f"[get_msa] MSA data requested for ID: {msa_id}")
+
+        # Placeholder response - you'll need to implement actual storage/retrieval
+        return _fail(404, f"MSA data not found for ID: {msa_id}"), 404
+
+    except Exception as e:
+        current_app.logger.error("[get_msa] Exception: %s", str(e))
         return _fail(500, str(e)), 500
 
 

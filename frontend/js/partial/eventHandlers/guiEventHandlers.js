@@ -17,8 +17,6 @@ export class GuiEventHandlers {
   constructor(gui) {
     this.gui = gui;
     this.registry = new EventHandlerRegistry(gui);
-    // iterator might be deprecated or its role changed, as attachAll directly uses registry.
-    this.iterator = new EventHandlerIterator(this.registry);
     this.attachmentStats = null; // Stores statistics from the last attachAll call.
   }
 
@@ -31,12 +29,12 @@ export class GuiEventHandlers {
    */
   async attachAll() {
     console.log('🎮 Initializing GUI event handler system...');
-    
+
     try {
       // Use the registry to attach all handlers
       this.attachmentStats = await this.registry.attachAll();
-      
-      
+
+
       return this.attachmentStats;
     } catch (error) {
       console.error('❌ Failed to attach GUI event handlers:', error);
@@ -47,18 +45,14 @@ export class GuiEventHandlers {
 
   /**
    * Retrieves detailed statistics about the attached event handlers.
-   * This includes stats from the registry, the last attachment operation, and the iterator.
+   * This includes stats from the registry and the last attachment operation.
    * @returns {Object} An object containing various statistics.
-   * Example: { registry: {...}, attachment: {...}, iterator: {...} }
+   * Example: { registry: {...}, attachment: {...} }
    */
   getDetailedStats() {
     return {
       registry: this.registry.getStats(),
-      attachment: this.attachmentStats,
-      iterator: { // Iterator stats might be less relevant if not directly used by attachAll
-        totalHandlers: this.iterator.getTotalCount(),
-        groupCount: this.iterator.groupNames.length
-      }
+      attachment: this.attachmentStats
     };
   }
 
@@ -74,7 +68,7 @@ export class GuiEventHandlers {
     const configs = this.registry.getEventHandlerConfigs();
     if (!configs[groupName]) {
       throw new Error(`Handler group '${groupName}' not found`);
-    }    
+    }
     return await this.registry.attachHandlerGroup(groupName, configs[groupName]);
   }
 
@@ -89,7 +83,7 @@ export class GuiEventHandlers {
     // Find handlers that should exist but weren't attached
     const configs = this.registry.getEventHandlerConfigs();
     const failedHandlers = [];
-    
+
     for (const [groupName, config] of Object.entries(configs)) {
       for (const handler of config.handlers) {
         if (handler.id && !this.registry.attachedHandlers.has(`${handler.id}-${handler.type || config.type || 'click'}`)) {
@@ -97,13 +91,13 @@ export class GuiEventHandlers {
         }
       }
     }
-        
+
     let retrySuccessCount = 0;
     for (const { config, handler } of failedHandlers) {
       const success = await this.registry.attachSingleHandler(handler, config);
       if (success) retrySuccessCount++;
     }
-    
+
     console.log(`✅ Retry results: ${retrySuccessCount}/${failedHandlers.length} successful`);
     return { attempted: failedHandlers.length, successful: retrySuccessCount };
   }

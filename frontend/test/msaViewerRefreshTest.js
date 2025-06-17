@@ -48,11 +48,16 @@ describe("MSA Viewer Refresh Tests", function () {
       .stub()
       .callsFake((key) => delete localStorageData[key]);
 
-    window.localStorage = {
-      getItem: localStorageGetItemStub,
-      setItem: localStorageSetItemStub,
-      removeItem: localStorageRemoveItemStub,
-    };
+    // Override localStorage using defineProperty to avoid read-only issues
+    Object.defineProperty(window, 'localStorage', {
+      value: {
+        getItem: localStorageGetItemStub,
+        setItem: localStorageSetItemStub,
+        removeItem: localStorageRemoveItemStub,
+      },
+      writable: true,
+      configurable: true
+    });
 
     // Mock event system
     addEventListenerStub = sinon.stub().callsFake((event, listener) => {
