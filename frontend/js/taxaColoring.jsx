@@ -1,5 +1,6 @@
-import { ColorSchemePresets, getColorScheme } from './treeColoring/ColorSchemePresets.js';
+import {  getColorScheme } from './treeColoring/ColorSchemePresets.js';
 import { UIComponentFactory } from './treeColoring/UIComponentFactory.js';
+import { COLOR_MAP } from "./treeColoring/ColorMap.js";
 
 /**
  * TaxaColoring: UI/controller for color assignment modal.
@@ -8,13 +9,11 @@ import { UIComponentFactory } from './treeColoring/UIComponentFactory.js';
 export default class TaxaColoring {
   /**
    * @param {Array<string>} taxaNames - List of taxa names
-   * @param {Array<string>} groupNames - List of group names
    * @param {Object} originalColorMap - Current color map
    * @param {Function} onComplete - Callback when coloring is complete
    */
-  constructor(taxaNames, groupNames, originalColorMap, onComplete) {
+  constructor(taxaNames, originalColorMap, onComplete) {
     this.taxaNames = taxaNames || [];
-    this.groupNames = groupNames || [];
     this.onComplete = onComplete || function () {};
     this.taxaColorMap = new Map();
     this.groupColorMap = new Map();
@@ -361,9 +360,9 @@ export default class TaxaColoring {
       const groupColor = this.groupColorMap.get(group) || this.getRandomColor();
       this.groupColorMap.set(group, groupColor); // Ensure new groups get a color
 
-      // For group label with count badge
+      // Create a rich label element with group name and count
       const groupLabelContent = document.createElement('div');
-      groupLabelContent.className = "color-input-label"; // Match styling if possible
+      groupLabelContent.className = "color-input-label"; // Match styling
 
       const labelText = document.createElement("span");
       labelText.textContent = group;
@@ -374,28 +373,17 @@ export default class TaxaColoring {
       countBadge.textContent = this.getGroupMemberCount(group);
       groupLabelContent.appendChild(countBadge);
 
-      // UIComponentFactory.createColorInput expects a string name, not an element.
-      // So, we pass group name and recreate the label structure if factory doesn't support rich labels.
-      // Or, modify createColorInput to accept an element or string for label.
-      // For now, we'll just pass the group name. The factory creates a simple label.
-      // The count badge will be lost with the current factory method.
-      // This is a limitation to note or address by modifying the factory.
-      // Workaround: Create the input with factory, then replace its label.
-      const colorInputEl = UIComponentFactory.createColorInput(group, groupColor, (newColor) => {
+      // Use the enhanced createColorInput with HTML element label
+      const colorInputEl = UIComponentFactory.createColorInput(groupLabelContent, groupColor, (newColor) => {
         this.groupColorMap.set(group, newColor);
-        if (colorInputEl.style) { // colorInputEl is the inputDiv from factory
+        if (colorInputEl.style) {
              colorInputEl.style.borderLeft = `4px solid ${newColor}`;
         }
       });
+
       // Set initial border color for the row
       if (colorInputEl.style) {
         colorInputEl.style.borderLeft = `4px solid ${groupColor}`;
-      }
-
-      // Replace the simple label from factory with our rich label (name + badge)
-      const factoryLabel = colorInputEl.querySelector('label');
-      if (factoryLabel && factoryLabel.parentNode) {
-        factoryLabel.parentNode.replaceChild(groupLabelContent, factoryLabel);
       }
 
       colorGrid.appendChild(colorInputEl);

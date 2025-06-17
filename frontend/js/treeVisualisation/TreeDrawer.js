@@ -1,19 +1,22 @@
 import * as d3 from "d3";
-import ParseUtil from "./ParseUtil.js";
-// Removed empty import for treeSvgGenerator.js as functions are imported by name
-import {COLOR_MAP} from "./ColorMap.js";
+import ParseUtil from "../utils/ParseUtil.js";
+import { LinkRenderer } from "./rendering/LinkRenderer.js";
+import { NodeRenderer } from "./rendering/NodeRenderer.js";
+import { LabelRenderer } from "./rendering/LabelRenderer.js";
+import { ExtensionRenderer } from "./rendering/ExtensionRenderer.js";
+import { ColorManager } from "./systems/ColorManager.js";
 
 import {
-  buildSvgString,
   buildSvgStringTime,
   buildLinkExtensionTime,
-  buildSvgLinkExtension,
-  orientText,
-  getOrientTextInterpolator,
-  anchorCalc,
-  attr2TweenCircleX,
-  attr2TweenCircleY,
 } from "./treeSvgGenerator.js";
+
+let STYLE_MAP = {
+  strokeWidth: "1", // Default stroke width
+  fontSize: "1.7em",  // Default font size
+};
+
+export { STYLE_MAP };
 
 /** Class For drawing Hierarchical Trees. */
 export class TreeDrawer {
@@ -30,12 +33,9 @@ export class TreeDrawer {
     this.marked = new Set(); // To store marked taxa/components for highlighting
     this.leaveOrder = []; // Stores the order of leaves, potentially for layout or comparison
     this._drawDuration = 1000; // Default animation duration
-
+    this.s_edges = []; // Stores edges for comparison or additional rendering logic
     // Initialize instance properties that were previously static
-    this.sizeMap = {
-      strokeWidth: "1", // Default stroke width
-      fontSize: "1.7em",  // Default font size
-    };
+
     this.markedLabelList = []; // List of labels to be marked/highlighted
     this.parser = new ParseUtil(); // Utility for parsing SVG path data etc.
 
@@ -46,6 +46,13 @@ export class TreeDrawer {
         `TreeDrawer: SVG container with id "${svgContainerId}" not found in the DOM.`
       );
     }
+
+    // Initialize rendering systems
+    this.colorManager = new ColorManager(this.marked);
+    this.linkRenderer = new LinkRenderer(this.svg_container, this.colorManager, STYLE_MAP);
+    this.nodeRenderer = new NodeRenderer(this.svg_container, this.colorManager, STYLE_MAP);
+    this.labelRenderer = new LabelRenderer(this.svg_container, this.colorManager, STYLE_MAP);
+    this.extensionRenderer = new ExtensionRenderer(this.svg_container, this.colorManager, STYLE_MAP);
   }
 
   /**
@@ -265,277 +272,123 @@ export class TreeDrawer {
   }
 
   /**
-   * Generates an SVG ID selector (e.g., "#link-0-1-2") for a leaf node's corresponding link.
-   * This is typically used to find the link element associated with a leaf.
-   * Assumes `getLinkId` structure for consistency.
-   * @memberof TreeDrawer
-   * @param {Object} node - The D3 node object for a leaf. Must have `data.split_indices` and `parent`.
-   * @returns {string|null} The SVG ID selector string, or null if the node has no parent (e.g., root node).
-   */
-  generateLinkIdForLeave(node) {
-    if (node.parent) {
-      return `#link-${node.data.split_indices.join("-")}`;
-    } else {
-      return null;
-    }
-  }
-
-  /**
-   * Draws and updates the tree branch paths (links) using D3's general update pattern.
-   * Simplified - removed unnecessary centering call.
+   * Draws and updates the tree branch paths (links) using LinkRenderer.
+   * Now delegates to the specialized LinkRenderer for better separation of concerns.
+   * Highlights edges whose split_indices match any in this.s_edges.
+   * @param {Array|null} linksSubset - Optional subset of links to render.
+   * @returns {d3.Selection} The updated links selection.
    */
   updateLinks(linksSubset = null) {
     const linksData = linksSubset || this.root.links();
-    let links = this.svg_container
-      .selectAll(".links")
-      .data(linksData, (d) => this.getLinkId(d));
 
-    // EXIT old elements not present in new data.
-    links.exit().remove();
+    // Update the color manager with current marked components
+    this.colorManager.updateMarkedComponents(this.marked);
 
-    // ENTER new elements present in new data.
-    links
-      .enter()
-      .append("path")
-      .style("stroke", (d) => this.colorBranches(d))
-      .attr("class", "links")
-      .attr("stroke-width", this.sizeMap.strokeWidth)
-      .attr("fill", "none")
-      .attr("id", (d) => this.getLinkId(d))
-      .attr("d", (d) => buildSvgString(d))
-      .style("stroke-opacity", 1)
-      .attr("neededHighlightingTaxa", 0);
+    // Update the link renderer's size configuration
+    this.linkRenderer.updateSizeConfig(STYLE_MAP);
 
-    // UPDATE old elements present in new data.
-    links
-      .attr("stroke-width", this.sizeMap.strokeWidth)
-      .style("stroke", (d) => this.colorBranches(d))
-      .transition()
-      .ease(d3.easePolyInOut)
-      .duration(this.drawDuration)
-      .attrTween("d", this.getArcInterpolationFunction());
+    // Delegate rendering to LinkRenderer, passing s_edges for highlighting
+    return this.linkRenderer.render(
+      linksData,
+      null,
+      this.getArcInterpolationFunction(),
+      this.drawDuration,
+      "easePolyInOut",
+      this.s_edges // <-- pass s_edges for highlighting
+    );
   }
 
   /**
-   * Determines the color for a branch based on whether any of its descendant leaves are marked.
-   * It checks if the branch's `target.data.split_indices` (representing all leaves under that branch)
-   * form a complete subset of any single marked component's indices.
-   * @memberof TreeDrawer
-   * @param {Object} d - The D3 link data object for the branch.
-   *                     `d.target.data.split_indices` contains indices of leaves under this branch.
-   * @returns {string} The color string (e.g., hex code) for the branch.
-   *                   Returns `COLOR_MAP.colorMap.markedColor` if highlighted, otherwise `COLOR_MAP.colorMap.defaultColor`.
-   */
-  colorBranches(d) {
-    if (this.marked.size === 0) {
-      return COLOR_MAP.colorMap.defaultColor; // No items are marked, so all branches are default color.
-    } else {
-      // Create a Set from the current branch's target node's leaf split indices.
-      // These indices represent all leaves descending from this branch.
-      const treeSplit = new Set(d.target.data.split_indices);
-      // Iterate over each marked component (a set of leaf indices).
-      for (const components of this.marked) {
-        const markedSet = new Set(components); // Ensure 'components' is a Set for efficient lookup.
-        // Check if all indices in treeSplit (leaves under this branch) are present in the current markedSet.
-        // This means this branch leads exclusively to a subset of currently marked leaves from ONE component.
-        const isSubset = [...treeSplit].every((x) => markedSet.has(x));
-        if (isSubset) {
-          return COLOR_MAP.colorMap.markedColor; // Highlight this branch.
-        }
-      }
-      return COLOR_MAP.colorMap.defaultColor; // This branch does not lead exclusively to a fully marked component.
-    }
-  }
-
-  /**
-   * Draws and updates the branch extension paths with proper padding consideration.
+   * Draws and updates the branch extension paths using ExtensionRenderer.
+   * Now delegates to the specialized ExtensionRenderer for better separation of concerns.
    */
   updateLinkExtension(currentMaxRadius) {
-    // Calculate extension end point considering label space
-    const extensionEndRadius = currentMaxRadius - (this.calculatedPadding ? this.calculatedPadding * 0.1 : 20);
+    // Calculate extension end point with standard buffer
+    const extensionEndRadius = currentMaxRadius + 20;
 
-    console.log("TreeDrawer: Extension positioning - maxRadius:", currentMaxRadius, "padding:", this.calculatedPadding, "extensionRadius:", extensionEndRadius);
+    // Update the color manager with current marked components
+    this.colorManager.updateMarkedComponents(this.marked);
 
-    // JOIN new data with old elements.
-    const linkExtension = this.svg_container
-      .selectAll(".link-extension")
-      .data(this.root.leaves(), (leaf) => {
-        return leaf.data.name.toString();
-      });
+    // Update the extension renderer's size configuration
+    this.extensionRenderer.updateSizeConfig(STYLE_MAP);
 
-    // UPDATE old elements present in new data.
-    linkExtension
-      .transition()
-      .attr("stroke-width", this.sizeMap.strokeWidth)
-      .ease(d3.easePolyInOut)
-      .duration(this.drawDuration)
-      .attrTween("d", this.getLinkExtensionInterpolator(extensionEndRadius))
-      .style("stroke", (d) => this.colorCircle(d));
-
-    // ENTER new elements present in new data.
-    linkExtension
-      .enter()
-      .append("path")
-      .attr("class", "link-extension")
-      .attr("stroke-width", this.sizeMap.strokeWidth)
-      .attr("stroke-dasharray", () => {
-        return "5,5";
-      })
-      .attr("fill", "none")
-      .attr("d", (d) => {
-        return buildSvgLinkExtension(d, extensionEndRadius);
-      })
-      .style("stroke", (d) => this.colorCircle(d));
+    // Delegate rendering to ExtensionRenderer
+    return this.extensionRenderer.renderExtensions(
+      this.root.leaves(),
+      extensionEndRadius,
+      this.getLinkExtensionInterpolator(extensionEndRadius),
+      this.drawDuration,
+      "easePolyInOut"
+    );
   }
 
   /**
-   * Draws and updates the leaf label text elements using D3's general update pattern.
-   * Enhanced to use calculated padding for proper positioning.
+   * Draws and updates the leaf label text elements using LabelRenderer.
+   * Delegates to the specialized LabelRenderer.
    */
   updateLabels(currentMaxRadius) {
-    // Use calculated padding to ensure labels have enough space
-    const labelRadius = currentMaxRadius + (this.calculatedPadding ? this.calculatedPadding * 0.4 : 30);
+    console.log('[TreeDrawer] updateLabels called', currentMaxRadius);
+    const labelRadius = currentMaxRadius + 30; // Standard label positioning
 
-    console.log("TreeDrawer: Label positioning - maxRadius:", currentMaxRadius, "padding:", this.calculatedPadding, "labelRadius:", labelRadius);
+    this.colorManager.updateMarkedComponents(this.marked);
+    this.labelRenderer.updateSizeConfig(STYLE_MAP); // Ensure LabelRenderer has latest size config
 
-    // JOIN new data with old svg elements
-    const textLabels = this.svg_container
-      .selectAll(".label")
-      .data(this.root.leaves(), (d) => {
-        return d.data.name;
-      });
+    // Prepare animation options for LabelRenderer
+    // LabelRenderer handles defaults if specific options are not provided.
+    // this.drawDuration is set by the main drawTree function.
+    const animationOptions = {
+      duration: this.drawDuration,
+      // Easing can be a string (e.g., "easeCubicInOut") or a D3 function.
+      // LabelRenderer's _getEasingFunction will handle string conversion.
+      // Let LabelRenderer use its configured default or this specific one if needed.
+      // easing: "easeSinInOut", // Or let LabelRenderer use its default
+      // Staggering is true by default in LabelRenderer unless options.stagger is false.
+      // stagger: true, // Or let LabelRenderer use its default
+      // onComplete: () => { console.log("TreeDrawer: Labels updated/animated."); } // Optional callback
+    };
 
-    // UPDATE old elements present in new data
-    textLabels
-      .transition()
-      .ease(d3.easeSinInOut)
-      .duration(this.drawDuration)
-      .attrTween("transform", getOrientTextInterpolator(labelRadius))
-      .attr("text-anchor", (d) => anchorCalc(d))
-      .style("font-size", this.sizeMap.fontSize)
-      .style("fill", (d) => this.colorCircle(d));
+    // If this.drawDuration is 0, LabelRenderer should treat it as non-animated.
+    // The 'animate' flag in LabelRenderer's options defaults to true.
+    // If duration is 0, the animation will be instant.
+    // To explicitly skip animation, you could add: animationOptions.animate = this.drawDuration > 0;
+    // However, LabelRenderer's logic with duration 0 should suffice.
 
-    // ENTER new elements present in new data
-    textLabels
-      .enter()
-      .append("text")
-      .style("fill", (d) => this.colorCircle(d))
-      .attr("class", "label")
-      .attr("id", (d) => {
-        return `label-${d.data.split_indices}`;
-      })
-      .attr("dy", ".31em")
-      .style("font-size", this.sizeMap.fontSize)
-      .text((d) => {
-        return `${d.data.name}`;
-      })
-      .attr("transform", (d) => orientText(d, labelRadius))
-      .attr("text-anchor", (d) => anchorCalc(d))
-      .attr("font-weight", "bold")
-      .attr("font-family", "Courier New")
-      .style("fill", (d) => this.colorCircle(d));
+    const labelsSelection = this.labelRenderer.renderLeafLabels(
+      this.root.leaves(),
+      labelRadius,
+      animationOptions
+    );
+
+    // Apply font size and color updates to all existing labels
+    // This ensures that changes to GUI settings are reflected on existing labels
+    if (STYLE_MAP && STYLE_MAP.fontSize) {
+      this.labelRenderer.updateFontSizes(STYLE_MAP.fontSize, STYLE_MAP.internalFontSize || STYLE_MAP.fontSize);
+    }
+
+    // Update colors for all existing labels based on current marked components
+    this.labelRenderer.updateLabelColors(this.marked);
+
+    return labelsSelection;
   }
 
   /**
-   * Draws and updates the leaf circle nodes with proper spacing.
+   * Draws and updates the leaf circle nodes using NodeRenderer.
+   * Now delegates to the specialized NodeRenderer for better separation of concerns.
    */
   updateLeafCircles(currentMaxRadius) {
+    // Update the color manager with current marked components
+    this.colorManager.updateMarkedComponents(this.marked);
 
-    // JOIN new data with old svg elements
-    const leaf_circles = this.svg_container
-      .selectAll(".leaf")
-      .data(this.root.leaves(), (d) => {
-        return d.data.split_indices;
-      });
+    // Update the node renderer's size configuration
+    this.nodeRenderer.updateSizeConfig(STYLE_MAP);
 
-    // UPDATE old elements present in new data
-    leaf_circles
-      .style("fill", (d) => this.colorCircle(d))
-      .transition()
-      .ease(d3.easeSinInOut)
-      .duration(this.drawDuration)
-      .attrTween("cx", attr2TweenCircleX(currentMaxRadius))
-      .attrTween("cy", attr2TweenCircleY(currentMaxRadius))
-      .style("fill", (d) => this.colorCircle(d));
-
-    // ENTER new elements present in new data
-    leaf_circles
-      .enter()
-      .append("circle")
-      .style("fill", (d) => this.colorCircle(d))
-      .attr("id", (d) => {
-        return `circle-${d.data.split_indices}`;
-      })
-      .attr("class", "leaf")
-      .attr("cx", (d) => {
-        return currentMaxRadius * Math.cos(d.angle);
-      })
-      .attr("cy", (d) => {
-        return currentMaxRadius * Math.sin(d.angle);
-      })
-      .style("stroke", COLOR_MAP.colorMap.strokeColor)
-      .attr("stroke-width", "0.1em")
-      .attr("r", "0.4em");
-
-    d3.selectAll(".leaf").on("click", (event, d) => {
-      this.flipNode(d);
-    });
-  }
-
-  /**
-   * Calculates and updates a 'neededHighlightingTaxa' attribute on a link element.
-   * This attribute seems to count how many highlighted taxa (by specific name, from `this.markedLabelList`)
-   * are descendants of this link.
-   * Note: This method's utility depends on how `this.markedLabelList` is populated.
-   *       It's initialized as an empty array in the constructor and not directly populated by `drawTree`'s `toBeHighlighted` parameter.
-   * @memberof TreeDrawer
-   * @param {Object} ancestor - The D3 node object (typically a leaf or an internal node considered as an ancestor).
-   * @param {string} nodeName - The name of a specific node (taxon) to check against `this.markedLabelList`.
-   * @returns {void}
-   */
-  calculateHighlightingTaxa(ancestor, nodeName) {
-    const linkId = this.generateLinkIdForLeave(ancestor); // Get the ID of the link leading to this ancestor.
-    if (!linkId) return; // No parent link.
-
-    const svgElement = d3.select(linkId);
-    if (svgElement.empty()) return; // Link element not found.
-
-    let neededHighlightingTaxa = svgElement.attr("neededHighlightingTaxa");
-    neededHighlightingTaxa =
-      neededHighlightingTaxa == null ? 0 : parseInt(neededHighlightingTaxa, 10);
-
-    // If the given nodeName is in the list of marked labels, increment the count.
-    if (this.markedLabelList.includes(nodeName)) {
-      neededHighlightingTaxa += 1;
-    }
-    svgElement.attr("neededHighlightingTaxa", neededHighlightingTaxa);
-  }
-
-  /**
-   * Determines the color for a leaf circle or label.
-   * If the leaf's `split_indices` are a subset of any marked component (from `this.marked`), it gets the marked color.
-   * Otherwise, it attempts to get a color from `COLOR_MAP.colorMap` based on the leaf's name.
-   * @memberof TreeDrawer
-   * @param {Object} d - The D3 node data object for a leaf.
-   *                     `d.data.split_indices` contains its own indices.
-   *                     `d.data.name` is the leaf's name.
-   * @returns {string} The color string. Defaults to `COLOR_MAP.colorMap.defaultColor` if no specific color found.
-   */
-  colorCircle(d) {
-    // Check if this leaf is part of any marked component.
-    const treeSplit = new Set(d.data.split_indices); // Indices of the current leaf.
-    for (const components of this.marked) { // `this.marked` is a Set of components (arrays/sets of split_indices)
-      const markedSet = new Set(components);
-      // Check if this leaf's indices are a subset of the current marked component.
-      // For a single leaf, this means its indices must be within the marked component.
-      const isSubset = [...treeSplit].every((x) => markedSet.has(x));
-      if (isSubset) {
-        return COLOR_MAP.colorMap.markedColor; // Highlight this leaf.
-      }
-    }
-    // If not part of a marked component, try to get a color by its name.
-    // Fallback to defaultColor if name not in COLOR_MAP or if COLOR_MAP.colorMap[d.data.name] is undefined.
-    return COLOR_MAP.colorMap[d.data.name] || COLOR_MAP.colorMap.defaultColor;
+    // Delegate rendering to NodeRenderer with click handler
+    return this.nodeRenderer.renderLeafCircles(
+      this.root.leaves(),
+      currentMaxRadius,
+      this.drawDuration,
+      "easeSinInOut",
+    );
   }
 
   /**
@@ -566,20 +419,19 @@ export class TreeDrawer {
  * It instantiates TreeDrawer, configures it with provided parameters, and calls its rendering methods.
  *
  * @export
- * @param {Object} treeConstructor - An object containing the tree structure and layout information.
- *                                 Expected to have `tree` (the D3 hierarchy root) and `max_radius`.
- * @param {Set<Array<number>>} toBeHighlighted - A Set where each element is an array (or Set) of `split_indices`
- *                                        representing a component of leaves to be highlighted.
- *                                        This is assigned to `treeDrawerInstance.marked`.
- * @param {number} drawDurationFrontend - Animation duration in milliseconds for D3 transitions.
- * @param {Array<string>} leaveOrder - An array specifying the desired order of leaves. (Currently assigned to `treeDrawerInstance.leaveOrder` but not directly used in drawing methods shown).
- * @param {string|number} fontSize - Font size for labels (e.g., "1.5em" or 1.5).
- * @param {string|number} strokeWidth - Stroke width for branches.
- * @param {string} [svgContainerId="application"] - The ID of the SVG container element where the tree will be drawn.
- * @param {Object} [options={}] - Additional options (currently not used in the function body, but could be for future extensions like `instant` drawing).
+ * @param {Object} params - Named parameters for tree drawing.
+ * @param {Object} params.treeConstructor - An object containing the tree structure and layout information.
+ * @param {Set<Array<number>>} params.toBeHighlighted - A Set where each element is an array (or Set) of `split_indices` representing a component of leaves to be highlighted.
+ * @param {number} params.drawDurationFrontend - Animation duration in milliseconds for D3 transitions.
+ * @param {Array<string>} params.leaveOrder - An array specifying the desired order of leaves.
+ * @param {string|number} params.fontSize - Font size for labels (e.g., "1.5em" or 1.5).
+ * @param {string|number} params.strokeWidth - Stroke width for branches.
+ * @param {string} [params.svgContainerId="application"] - The ID of the SVG container element where the tree will be drawn.
+ * @param {Array|Set} [params.s_edges=[]] - Edges to highlight.
+ * @param {Object} [params.options={}] - Additional options.
  * @returns {boolean} True if the drawing process was initiated successfully.
  */
-export default function drawTree(
+export default function drawTree({
   treeConstructor,
   toBeHighlighted,
   drawDurationFrontend,
@@ -587,44 +439,52 @@ export default function drawTree(
   fontSize,
   strokeWidth,
   svgContainerId = "application",
+  s_edges = [],
+  atomCovers = [], // Accept atomCovers as a parameter
   options = {}
-) {
+}) {
   let currentRoot = treeConstructor["tree"];
   let currentMaxRadius = treeConstructor["max_radius"];
 
-  // Use the calculated label padding from TreeConstructor
-  const calculatedPadding = treeConstructor["labelPadding"] || 40;
-
-  // For comparison views, reduce the padding buffer to fit better
+  // For comparison views, reduce sizes to fit better
   const isComparison = svgContainerId.includes('comparison') || svgContainerId.includes('group');
-  const paddingMultiplier = isComparison ? 0.6 : 0.8;
-  const labelSpaceBuffer = calculatedPadding * paddingMultiplier;
+  const fontSizeAdjustment = isComparison ? 0.85 : 1;
+  const strokeAdjustment = isComparison ? 0.9 : 1;
 
   let treeDrawerInstance = new TreeDrawer(currentRoot, svgContainerId);
 
   // Adjust font and stroke sizes for comparison views
-  const fontSizeAdjustment = isComparison ? 0.85 : 1;
-  const strokeAdjustment = isComparison ? 0.9 : 1;
+  let normalizedFontSize = fontSize;
+  if (typeof normalizedFontSize === 'string' && !normalizedFontSize.match(/(px|em|rem|pt|%)$/)) {
+    normalizedFontSize = normalizedFontSize + 'em';
+  } else if (typeof normalizedFontSize === 'number') {
+    normalizedFontSize = normalizedFontSize + 'em';
+  }
+  STYLE_MAP.fontSize = `${parseFloat(normalizedFontSize) * fontSizeAdjustment}em`;
 
-  treeDrawerInstance.sizeMap.fontSize = `${fontSize * fontSizeAdjustment}em`;
-  treeDrawerInstance.sizeMap.strokeWidth = strokeWidth * strokeAdjustment;
+  console.log(`TreeDrawer: Using font size ${STYLE_MAP.fontSize} for labels.`);
+
+  STYLE_MAP.strokeWidth = strokeWidth * strokeAdjustment;
 
   treeDrawerInstance.drawDuration = drawDurationFrontend;
   treeDrawerInstance.leaveOrder = leaveOrder;
-  treeDrawerInstance.marked = new Set(toBeHighlighted);
+  treeDrawerInstance.marked = toBeHighlighted;
+  treeDrawerInstance.s_edges = s_edges;
 
-  // Store padding info for use in positioning
-  treeDrawerInstance.calculatedPadding = calculatedPadding;
+  // --- Pass atomCovers to label rendering for background highlighting ---
+  const labelOptions = {
+    ...options,
+    coversSet: new Set(atomCovers), // Pass as Set for efficient lookup
+  };
 
-  console.log("TreeDrawer: Drawing tree for container:", svgContainerId);
-  console.log("TreeDrawer: Using calculated padding:", calculatedPadding);
-  console.log("TreeDrawer: Adjusted max radius:", currentMaxRadius);
-  console.log("TreeDrawer: Is comparison:", isComparison);
-
-  // Draw all tree elements with proper spacing
+  // Draw all tree elements with standard spacing
   treeDrawerInstance.updateLinks();
-  treeDrawerInstance.updateLinkExtension(currentMaxRadius + labelSpaceBuffer * 0.25);
-  treeDrawerInstance.updateLeafCircles(currentMaxRadius + labelSpaceBuffer * 1.25);
-  treeDrawerInstance.updateLabels(currentMaxRadius+ labelSpaceBuffer * 1.5);
+  treeDrawerInstance.updateLinkExtension(currentMaxRadius);
+  treeDrawerInstance.labelRenderer.renderLeafLabels(
+    treeDrawerInstance.root.leaves(),
+    currentMaxRadius + 30,
+    labelOptions
+  );
+  treeDrawerInstance.updateLeafCircles(currentMaxRadius);
   return true;
 }

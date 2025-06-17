@@ -1,0 +1,209 @@
+/**
+ * TransitionIndexResolver - Centralized logic for mapping tree indices to transition indices.
+ */
+export default class TransitionIndexResolver {
+    _cachedFullTreeIndices = null;
+
+    /**
+     * @param {object[]} sequenceData - Array of sequence items, e.g., [{name: 'T0', type: 'T'}, {name: 'IT1', type: 'IT'}].
+     * @param {any[]} highlightData - The highlight data array.
+     * @param {any[]} distanceData - The distance data array.
+     * @param {boolean} debug - Enable/disable debug logging.
+     * @param {number} numOriginalTransitions - The number of original transitions (typically highlightData.length).
+     */
+    constructor(sequenceData, highlightData, distanceData, debug = false, numOriginalTransitions = 0) {
+        this.debug = debug;
+        // Initialize numOriginalTransitions first as updateData might use it.
+        this.numOriginalTransitions = numOriginalTransitions;
+        this.updateData(sequenceData, highlightData, distanceData, numOriginalTransitions);
+    }
+
+    /**
+     * Updates the resolver with new data and clears the cache.
+     * @param {object[]} sequenceData
+     * @param {any[]} highlightData
+     * @param {any[]} distanceData
+     * @param {number} numOriginalTransitions
+     */
+    updateData(sequenceData, highlightData, distanceData, numOriginalTransitions) {
+        this.sequenceData = sequenceData ?? [];
+        this.highlightData = highlightData ?? []; // Stored for reference, or if other methods need it
+        this.distanceData = distanceData ?? [];
+        // If numOriginalTransitions is explicitly passed, use it, otherwise derive from highlightData.
+        // This ensures that if highlightData is empty but we know the number of transitions, it's respected.
+        this.numOriginalTransitions = numOriginalTransitions !== undefined ? numOriginalTransitions : (this.highlightData?.length || 0);
+        this._cachedFullTreeIndices = null; // Invalidate cache
+
+        if (this.debug) {
+            console.log("[TIR] Data updated. Sequence length:", this.sequenceData.length, "Num original transitions:", this.numOriginalTransitions);
+        }
+    }
+
+    /**
+     * A lazily-computed getter for the sequence indices of all full trees ('T').
+     * @returns {number[]}
+     */
+    get fullTreeIndices() {
+        if (!this._cachedFullTreeIndices) {
+            this._cachedFullTreeIndices = this.sequenceData.reduce((acc, item, i) => {
+                if (item?.type === 'T') {
+                    acc.push(i);
+                }
+                return acc;
+            }, []);
+            if (this.debug) {
+                console.log("[TIR] Cached fullTreeIndices:", this._cachedFullTreeIndices);
+            }
+        }
+        return this._cachedFullTreeIndices;
+    }
+
+    /**
+     * Gets the highlight data index for a given sequence position.
+     * The index `k` corresponds to the transition block starting with `T_k`.
+     * @param {number} position - Sequence position.
+     * @returns {number} Highlight data index, or -1 if no highlight applies.
+     */
+    getHighlightingIndex(position) {
+        if (position < 0 || position >= this.sequenceData.length) {
+            if (this.debug) console.log(`[TIR] getHighlightingIndex: Invalid sequence position: ${position}`);
+            return -1;
+        }
+
+        const fullTreeSeqIndices = this.fullTreeIndices;
+
+        if (fullTreeSeqIndices.length === 0) {
+            if (this.debug) console.log("[TIR] getHighlightingIndex: No full trees found in sequenceData.");
+            return -1;
+        }
+
+        let originalPairIndex = -1;
+
+        // Iterate through the full trees to find which segment the current position falls into.
+        // T_k (at fullTreeSeqIndices[k]) starts the k-th segment.
+        // This segment uses highlightData[k].
+        for (let k = 0; k < fullTreeSeqIndices.length; k++) {
+            const startOfPairSeqIdx = fullTreeSeqIndices[k]; // Sequence index of T_k
+            // The end of this segment is either the start of the next full tree or the end of the sequence.
+            const endOfPairSeqIdx = (k + 1 < fullTreeSeqIndices.length) ? fullTreeSeqIndices[k + 1] : this.sequenceData.length;
+
+            if (position >= startOfPairSeqIdx && position < endOfPairSeqIdx) {
+                originalPairIndex = k; // This 'k' is the index of OriginalT_k, so we use highlightData[k]
+                break;
+            }
+        }
+
+        if (originalPairIndex === -1) {
+            // This case should ideally not be hit if position is valid and fullTreeSeqIndices is populated,
+            // as the loop should cover all positions.
+            // However, as a fallback, if the position is the very last item and it's a full tree,
+            // it belongs to the last segment.
+            if (position === this.sequenceData.length - 1 && this.isFullTree(position)) {
+                 // The index of the last full tree in fullTreeSeqIndices corresponds to its segment index.
+                originalPairIndex = fullTreeSeqIndices.indexOf(position);
+            }
+
+            if (originalPairIndex === -1 && this.debug) {
+                 const itemName = this.sequenceData[position]?.name || 'Unknown';
+                console.log(`[TIR] getHighlightingIndex: Could not determine originalPairIndex for position ${position} (${itemName}). Fallback to -1.`);
+                return -1; // Explicitly return -1 if no segment found
+            }
+        }
+
+        // Ensure the determined originalPairIndex is valid for highlightData
+        if (originalPairIndex >= 0 && originalPairIndex < this.numOriginalTransitions) {
+            if (this.debug) {
+                const itemName = this.sequenceData[position]?.name || 'Unknown';
+                console.log(`[TIR] getHighlightingIndex: SeqPos ${position} (${itemName}) -> originalPairIndex ${originalPairIndex} -> highlightIndex ${originalPairIndex}`);
+            }
+            return originalPairIndex;
+        } else {
+            // This means originalPairIndex is for a transition that doesn't have highlight data
+            // (e.g., if T_L is the last tree, originalPairIndex might be L, but highlightData only goes up to L-1)
+            if (this.debug) {
+                const itemName = this.sequenceData[position]?.name || 'Unknown';
+                console.log(`[TIR] getHighlightingIndex: SeqPos ${position} (${itemName}) -> originalPairIndex ${originalPairIndex}, which is out of bounds for highlightData (numOriginalTransitions: ${this.numOriginalTransitions}). No highlight.`);
+            }
+            return -1; // No specific highlight
+        }
+    }
+
+    /**
+     * Gets the distance data index for a given sequence position.
+     * This logic remains different from highlighting:
+     * - Intermediate trees use the distance of the transition they are in.
+     * - Full trees use the distance of the transition that *led to* them.
+     * @param {number} position - Sequence position.
+     * @returns {number} Distance data index.
+     */
+    getDistanceIndex(position) {
+        if (position < 0 || position >= this.sequenceData.length) {
+            return 0; // Default to 0 for charts
+        }
+
+        // For a full tree T_k, the distance is from the previous transition (k-1).
+        if (this.isFullTree(position)) {
+            const fullTreePositionInList = this.fullTreeIndices.indexOf(position);
+            // Math.max ensures T0 (at position 0, fullTreePositionInList 0) returns distance index 0.
+            return Math.max(0, fullTreePositionInList - 1);
+        }
+
+        // For an intermediate tree, the distance is from the current transition block 'k'.
+        // findLastIndex returns the index in fullTreeIndices of the last T_k where treeIndex <= position.
+        // This 'k' corresponds to the transition block.
+        const distanceIndex = this.fullTreeIndices.findLastIndex(treeIndex => treeIndex <= position);
+        return Math.max(0, distanceIndex); // Clamp to 0 in case of -1 (e.g., before first T tree).
+    }
+
+    isFullTree = (position) => {
+        if (position < 0 || position >= this.sequenceData.length) return false;
+        return this.sequenceData[position]?.type === 'T' ?? false;
+    }
+
+    getNextPosition = (currentPosition) => {
+        if (this.sequenceData.length === 0) return 0;
+        return Math.min(currentPosition + 1, this.sequenceData.length - 1);
+    }
+
+    getPreviousPosition = (currentPosition) => {
+        if (this.sequenceData.length === 0) return 0;
+        return Math.max(currentPosition - 1, 0);
+    }
+
+    getNextFullTreeSequenceIndex = (currentIndex) => {
+        if (this.fullTreeIndices.length === 0) return currentIndex;
+        const nextIndex = this.fullTreeIndices.find(index => index > currentIndex);
+        return nextIndex ?? this.fullTreeIndices.at(-1) ?? currentIndex;
+    }
+
+    getPreviousFullTreeSequenceIndex = (currentIndex) => {
+        if (this.fullTreeIndices.length === 0) return currentIndex;
+        const prevIndex = this.fullTreeIndices.findLast(index => index < currentIndex);
+        return prevIndex ?? this.fullTreeIndices[0] ?? currentIndex;
+    }
+
+    validateData = () => {
+        // Basic validation example
+        const issues = [];
+        if (!this.sequenceData || this.sequenceData.length === 0) {
+            issues.push("Sequence data is empty.");
+        }
+        if (!this.highlightData) {
+            issues.push("Highlight data is undefined.");
+        }
+        if (this.numOriginalTransitions < 0) {
+            issues.push("Number of original transitions is negative.");
+        }
+        // Add more checks as needed
+        return { isValid: issues.length === 0, issues };
+    };
+
+    getDebugInfo = () => ({
+        sequenceLength: this.sequenceData.length,
+        fullTreeCount: this.fullTreeIndices.length,
+        highlightDataLength: this.highlightData.length,
+        numOriginalTransitions: this.numOriginalTransitions,
+        firstFullTreeIndex: this.fullTreeIndices.length > 0 ? this.fullTreeIndices[0] : -1,
+        lastFullTreeIndex: this.fullTreeIndices.length > 0 ? this.fullTreeIndices.at(-1) : -1,
+    });
+}

@@ -5,12 +5,10 @@ import {
   attachGuiEventHandlers,
   attachMSAButtonHandler,
   attachRecorderEventHandlers,
-  toggleSubmenu,
   initializeToggles,
 } from "./partial/eventHandlers.js";
 import { loadAllPartials } from "./partial/loadPartials.js";
 import { ScreenRecorder } from "./record/record.js";
-
 import localforage from 'localforage';
 import { getPhyloMovieData, fetchTreeData } from "./dataManager.js"; // Updated import
 
@@ -28,30 +26,33 @@ async function loadAllRequiredPartials() {
 
   try {
     await loadAllPartials([
+
       {
-        url: "/partials/line-chart.html",
-        containerId: "line-chart-container",
+        url: "/partials/tree_navigation.html",
+        containerId: "navigation-container",
       },
       {
         url: "/partials/buttons.html",
         containerId: "buttons-container",
       },
+
       {
-        url: "/partials/tree_navigation.html",
-        containerId: "navigation-container",
+        url: "/partials/line-chart.html",
+        containerId: "line-chart-container",
       },
       {
         url: "/partials/appearance.html",
         containerId: "appearance-container",
       },
       {
-        url: "/partials/scaleBar.html",
-        containerId: "scale-bar-container",
-      },
-      {
         url: "/partials/msa-button.html",
         containerId: "msa-button-container",
       },
+      {
+        url: "/partials/recording.html",
+        containerId: "recording-container",
+      },
+
     ]);
 
     // Verify important elements exist
@@ -106,37 +107,38 @@ async function loadAllRequiredPartials() {
  * @returns {Array<Object>} Processed embedding data (list-of-objects).
  */
 function processEmbeddingData(embeddingData) {
-  let processedEmbedding = [];
-  if (embeddingData && Array.isArray(embeddingData)) {
-    if (embeddingData.length > 0) {
-      if (Array.isArray(embeddingData[0])) {
-        console.log(
-          "[Embedding] Transforming list-of-lists to list-of-objects for embedding."
-        );
-        processedEmbedding = embeddingData.map((point) => ({
-          x: point[0],
-          y: point[1],
-          z: point.length > 2 ? point[2] : 0,
-        }));
-      } else if (
-        typeof embeddingData[0] === "object" &&
-        embeddingData[0] !== null &&
-        "x" in embeddingData[0] &&
-        "y" in embeddingData[0]
-      ) {
-        console.log(
-          "[Embedding] Embedding is already in list-of-objects format."
-        );
-        processedEmbedding = embeddingData;
-      } else {
-        console.warn(
-          "[Embedding] Unrecognized format for non-empty embedding data."
-        );
+    embeddingData = Array.isArray(embeddingData) ? embeddingData : [];
+    let processedEmbedding = [];
+    if (embeddingData && Array.isArray(embeddingData)) {
+      if (embeddingData.length > 0) {
+        if (Array.isArray(embeddingData[0])) {
+          console.log(
+            "[Embedding] Transforming list-of-lists to list-of-objects for embedding."
+          );
+          processedEmbedding = embeddingData.map((point) => ({
+            x: point[0],
+            y: point[1],
+            z: point.length > 2 ? point[2] : 0,
+          }));
+        } else if (
+          typeof embeddingData[0] === "object" &&
+          embeddingData[0] !== null &&
+          "x" in embeddingData[0] &&
+          "y" in embeddingData[0]
+        ) {
+          console.log(
+            "[Embedding] Embedding is already in list-of-objects format."
+          );
+          processedEmbedding = embeddingData;
+        } else {
+          console.warn(
+            "[Embedding] Unrecognized format for non-empty embedding data."
+          );
+        }
       }
     }
-  }
-  logEmbeddingEnhanced(processedEmbedding);
-  return processedEmbedding;
+    logEmbeddingEnhanced(processedEmbedding);
+    return processedEmbedding;
 }
 
 /**
@@ -161,7 +163,10 @@ async function initializeGuiAndEvents(parsedData, processedEmbedding) {
       to_be_highlighted = [],
       sorted_leaves = [],
       file_name = "",
+      tree_names = [] // Extract tree_names from stored data
     } = dbData || parsedData; // Fallback to initially parsedData if dbData is somehow null
+
+    console.log("[DEBUG] Extracted tree_names for GUI:", tree_names);
 
     let colorInternalBranches = true; // Default or configurable setting
 
@@ -177,9 +182,9 @@ async function initializeGuiAndEvents(parsedData, processedEmbedding) {
       window_step_size,
       to_be_highlighted,
       sorted_leaves,
-      colorInternalBranches,
       file_name,
-      factorValue
+      factorValue,
+      tree_names // Pass tree_names as the 11th argument
     );
 
     console.log("[DEBUG] Gui instance created successfully");
@@ -317,7 +322,6 @@ if (isVisualizationPage) {
       // Proceed with the main application initialization
       console.log("[phylo-movies] Initializing visualization via initializeAppFromParsedData");
       await initializeAppFromParsedData(parsedData);
-      console.log("[phylo-movies] Visualization initialization process completed.");
 
     } catch (e) {
       // Catch any critical errors during the startup process

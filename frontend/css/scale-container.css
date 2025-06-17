@@ -1,76 +1,206 @@
-/* Improved Scale Indicator styling */
+/* Enhanced Scale Indicator styling */
 .scale-indicator-container {
   margin: 15px 0;
-  padding: 15px;
-  background-color: rgba(0, 0, 0, 0.15);
-  border-radius: 8px;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  padding: 18px;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.25));
+  border-radius: 12px;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .scale-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.scale-title-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .scale-title {
-  font-size: 0.9em;
-  font-weight: 500;
+  font-size: 1em;
+  font-weight: 600;
   color: #eee;
+}
+
+.scale-explanation {
+  font-size: 0.75em;
+  color: #aaa;
+  font-style: italic;
 }
 
 .scale-value-wrapper {
   display: flex;
   align-items: center;
-  gap: 5px;
-  font-size: 0.9em;
+  gap: 6px;
+  font-size: 0.95em;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 6px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .scale-current {
-  font-weight: 600;
-  color: #4390e1;
+  font-weight: 700;
+  color: #4fc3f7;
+  text-shadow: 0 0 4px rgba(79, 195, 247, 0.3);
 }
 
 .scale-max {
-  color: #999;
+  color: #bbb;
+  font-weight: 500;
 }
 
 .scale-separator {
   color: #777;
+  font-weight: 300;
+}
+
+.scale-units {
+  font-size: 0.8em;
+  color: #999;
+  font-style: italic;
+}
+
+.scale-progress-container {
+  position: relative;
+  margin-bottom: 20px;
 }
 
 .scale-progress {
-  height: 8px;
-  background-color: rgba(0, 0, 0, 0.3);
-  border-radius: 4px;
+  height: 12px;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2));
+  border-radius: 6px;
   overflow: visible;
   position: relative;
-  margin-bottom: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .scale-progress-bar {
   height: 100%;
-  background: linear-gradient(to right, #4390e1, #2196F3);
-  border-radius: 4px;
+  background: linear-gradient(45deg, #4fc3f7, #29b6f6, #03a9f4);
+  border-radius: 6px;
   transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 6px rgba(79, 195, 247, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
   width: 0;
+  position: relative;
+}
+
+.scale-indicator-dot {
+  position: absolute;
+  right: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), 0 0 0 2px #4fc3f7;
+  transition: all 0.3s ease;
+}
+
+.scale-current-marker {
+  position: absolute;
+  top: -5px;
+  transform: translateX(-50%);
+  transition: left 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.scale-marker-line {
+  width: 2px;
+  height: 22px;
+  background: #ffeb3b;
+  margin: 0 auto;
+  box-shadow: 0 0 6px rgba(255, 235, 59, 0.6);
+}
+
+.scale-marker-value {
+  display: block;
+  text-align: center;
+  font-size: 0.7em;
+  color: #ffeb3b;
+  font-weight: 600;
+  margin-top: 2px;
+  text-shadow: 0 0 3px rgba(255, 235, 59, 0.8);
 }
 
 /* Scale markers */
 .scale-markers {
   position: relative;
-  height: 15px;
-  margin-top: 6px;
+  height: 25px;
+  margin-top: 8px;
+  margin-bottom: 16px;
 }
 
 .scale-marker {
   position: absolute;
   transform: translateX(-50%);
   font-size: 0.7em;
-  color: #999;
+  color: #ccc;
   top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.scale-marker .scale-marker-value {
+  color: #ccc;
+  font-weight: 500;
+  text-shadow: none;
+}
+
+.scale-marker-label {
+  font-size: 0.6em;
+  color: #999;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.scale-marker-start,
+.scale-marker-end {
+  font-weight: 600;
+}
+
+.scale-marker-start .scale-marker-value,
+.scale-marker-end .scale-marker-value {
+  color: #ddd;
+}
+
+.scale-info {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.scale-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.scale-info-label {
+  font-size: 0.7em;
+  color: #aaa;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.scale-info-value {
+  font-size: 0.85em;
+  color: #eee;
+  font-weight: 600;
 }
 
 /* Scale Bars */
@@ -82,4 +212,151 @@
 .current-scale-container,
 #maxScale {
   display: none;
+}
+
+/* Hover effects and interactive enhancements */
+.scale-indicator-container:hover {
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(79, 195, 247, 0.2);
+  border-color: rgba(79, 195, 247, 0.3);
+}
+
+.scale-progress:hover .scale-progress-bar {
+  box-shadow: 0 2px 8px rgba(79, 195, 247, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.scale-progress:hover .scale-indicator-dot {
+  transform: translateY(-50%) scale(1.2);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4), 0 0 0 3px #4fc3f7, 0 0 12px rgba(79, 195, 247, 0.6);
+}
+
+.scale-marker:hover .scale-marker-value {
+  color: #4fc3f7;
+  transform: scale(1.1);
+  transition: all 0.2s ease;
+}
+
+.scale-current-marker:hover .scale-marker-line {
+  box-shadow: 0 0 8px rgba(255, 235, 59, 0.8), 0 0 16px rgba(255, 235, 59, 0.4);
+}
+
+.scale-value-wrapper:hover {
+  background: rgba(0, 0, 0, 0.3);
+  border-color: rgba(79, 195, 247, 0.4);
+  transform: scale(1.02);
+  transition: all 0.2s ease;
+}
+
+/* Tooltip functionality */
+.scale-tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.9);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.75em;
+  white-space: nowrap;
+  z-index: 1000;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(-50%) translateY(-100%);
+  transition: opacity 0.2s ease;
+  border: 1px solid rgba(79, 195, 247, 0.5);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.scale-tooltip.visible {
+  opacity: 1;
+}
+
+/* Accessibility improvements */
+.scale-indicator-container[aria-expanded="true"] .scale-explanation {
+  color: #4fc3f7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scale-progress-bar,
+  .scale-current-marker,
+  .scale-indicator-dot,
+  .scale-value-wrapper {
+    transition: none;
+  }
+}
+
+/* Focus states for keyboard navigation */
+.scale-progress:focus-within {
+  outline: 2px solid #4fc3f7;
+  outline-offset: 2px;
+}
+
+.scale-marker:focus {
+  outline: 1px solid #4fc3f7;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Help section styling */
+.scale-help {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.scale-help-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 0.75em;
+}
+
+.scale-help-icon {
+  font-size: 1em;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.scale-help-text {
+  color: #aaa;
+  line-height: 1.3;
+  flex: 1;
+}
+
+.scale-help-item:hover .scale-help-text {
+  color: #ddd;
+  transition: color 0.2s ease;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .scale-indicator-container {
+    padding: 12px;
+  }
+
+  .scale-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .scale-value-wrapper {
+    align-self: flex-end;
+  }
+
+  .scale-help-item {
+    font-size: 0.7em;
+  }
+}
+
+/* Dark theme enhancements */
+@media (prefers-color-scheme: dark) {
+  .scale-indicator-container {
+    background: linear-gradient(135deg, rgba(10, 10, 10, 0.3), rgba(20, 20, 20, 0.5));
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .scale-value-wrapper {
+    background: rgba(0, 0, 0, 0.4);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
 }

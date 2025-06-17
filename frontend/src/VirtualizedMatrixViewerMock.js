@@ -1,7 +1,7 @@
 // Mock module to replace VirtualizedMatrixViewer.scss import
 // This provides the CSS module export that alignment-viewer-2 expects
 
-export default {
+module.exports = {
   hoverTrackerSize: 5,
   // Add any other CSS module exports if needed
   'av2-virtualized-matrix': 'av2-virtualized-matrix',

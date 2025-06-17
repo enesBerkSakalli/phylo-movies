@@ -48,12 +48,3 @@ export async function createInterpolationModal(options) {
   return await treeComparisonManager.createInterpolationWindow(options);
 }
 
-export function generateSvgId(prefix) {
-  return treeComparisonManager.generateSvgId(prefix);
-}
-
-// Legacy compatibility functions (deprecated)
-export async function createComparisonContent(gui) {
-  console.warn("createComparisonContent is deprecated, use createSideBySideComparisonWindow instead");
-  return document.createElement("div");
-}

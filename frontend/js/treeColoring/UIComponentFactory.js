@@ -186,37 +186,46 @@ export class UIComponentFactory {
 
   /**
    * Creates a color input for a taxon or group
-   * @param {string} name - Taxon or group name
+   * @param {string|HTMLElement} name - Taxon or group name (can be string or HTML element)
    * @param {string} color - Initial color value
    * @param {Function} onChange - Color change callback
    * @returns {HTMLElement} Color input element
    */
   static createColorInput(name, color, onChange) {
     const inputDiv = document.createElement('div');
-    // .color-input-row from coloring.css already defines:
-    // display: flex; align-items: center; padding: 7px 12px;
-    // border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 5px;
-    // border-radius: 4px; background-color: rgba(0,0,0,0.1);
-    // The factory used padding: 5px. We can add a new class or accept .color-input-row's padding.
-    inputDiv.className = 'color-input-row'; // Using existing class
-    // If specific padding '5px' is crucial and different from '7px 12px', add a modifier class.
-    // For now, assume .color-input-row is acceptable.
-    // inputDiv.classList.add('factory-color-input-custom-padding');
-
+    inputDiv.className = 'color-input-row';
 
     const label = document.createElement('label');
-    label.textContent = name;
-    // .color-input-label from coloring.css has:
-    // margin-right: 12px; font-size: 15px; flex-grow: 1; color: #e3eaf2; display: flex; align-items: center;
-    // The factory styles are mostly covered or compatible.
-    label.className = 'color-input-label'; // Using existing class
-    // Add specific factory overrides if needed:
-    label.classList.add('factory-color-input-label-overrides'); // For white-space, overflow, text-overflow, flex:1
+
+    // Handle both string labels and HTML elements
+    if (typeof name === "string") {
+      label.textContent = name;
+      label.setAttribute('for', `taxa-${name}`);
+    } else if (name instanceof HTMLElement) {
+      label.appendChild(name);
+      // Generate a unique ID for complex labels
+      const uniqueId = `taxa-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      label.setAttribute('for', uniqueId);
+    } else {
+      // Fallback for HTML strings
+      label.innerHTML = name;
+      const uniqueId = `taxa-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      label.setAttribute('for', uniqueId);
+    }
+
+    label.className = 'color-input-label';
+    label.classList.add('factory-color-input-label-overrides');
 
     const input = document.createElement('input');
     input.type = 'color';
     input.value = color || '#000000';
-    input.id = `taxa-${name}`;
+
+    // Set ID based on label type
+    if (typeof name === "string") {
+      input.id = `taxa-${name}`;
+    } else {
+      input.id = label.getAttribute('for');
+    }
 
     if (onChange) {
       input.addEventListener('change', (e) => onChange(e.target.value));

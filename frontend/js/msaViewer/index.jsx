@@ -1,4 +1,4 @@
-
+// --- Imports & Hooks ---
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { createRoot } from "react-dom/client";
 import AlignmentViewer2Component from "./AlignmentViewer2Component";
@@ -11,33 +11,27 @@ function useMSAData() {
 
   const loadMSAData = useCallback(async () => {
     try {
-      const local = await localforage.getItem("phyloMovieMSAData");
-      if (local) {
-        if (local.rawData && typeof local.rawData === "string") {
-          setMsaString(local.rawData);
-        } else if (local.sequences && Array.isArray(local.sequences)) {
-          const fastaString = local.sequences
-            .map((seq) => `>${seq.id}\n${seq.sequence}`)
-            .join("\n");
-          setMsaString(fastaString);
-        } else if (typeof local === "string") {
-          setMsaString(local);
-        } else {
-          setMsaString("");
-        }
+      const msaData = await localforage.getItem("phyloMovieMSAData");
+      if (msaData && msaData.rawData && typeof msaData.rawData === "string") {
+        setMsaString(msaData.rawData);
       } else {
         setMsaString("");
       }
-    } catch (e) {
+    } catch (error) {
+      console.error("[useMSAData] Error loading MSA data:", error);
       setMsaString("");
     }
   }, []);
 
-  useEffect(() => { loadMSAData(); }, [loadMSAData]);
+  useEffect(() => {
+    loadMSAData();
+  }, [loadMSAData]);
 
   // Listen for msa-data-updated events
   useEffect(() => {
-    const handler = () => { loadMSAData(); };
+    const handler = () => {
+      loadMSAData();
+    };
     window.addEventListener("msa-data-updated", handler);
     return () => window.removeEventListener("msa-data-updated", handler);
   }, [loadMSAData]);
@@ -48,70 +42,149 @@ function useMSAData() {
 // Custom hook: Manage WinBox window for MSA viewer
 function useMSAWinBox(msaString) {
   const winboxInstance = useRef(null);
+  const containerRef = useRef(null);
+  const rootRef = useRef(null);
+  const dimensionsRef = useRef({ width: 1000, height: 600 });
+  const msaStringRef = useRef(msaString);
 
+  // Keep msaString ref updated
+  useEffect(() => {
+    msaStringRef.current = msaString;
+  }, [msaString]);
+
+  // Update existing window when MSA data changes
+  useEffect(() => {
+    if (winboxInstance.current && rootRef.current && msaString) {
+      try {
+        console.log(`[useMSAWinBox] Updating MSA window with data length: ${msaString.length}`);
+        rootRef.current.render(
+          <AlignmentViewer2Component
+            msaString={msaString}
+            containerWidth={dimensionsRef.current.width}
+            containerHeight={dimensionsRef.current.height}
+          />
+        );
+        console.log(`[useMSAWinBox] Successfully updated MSA window with dimensions: ${dimensionsRef.current.width}x${dimensionsRef.current.height}`);
+      } catch (error) {
+        console.error("Failed to update MSA window with new data:", error);
+      }
+    }
+  }, [msaString]);
+
+  // Register event listener only once
   useEffect(() => {
     function openMSAWindow(e) {
-      if (!msaString) {
-        alert("No MSA data available. Please upload an MSA file.");
-        return;
+      const currentMsaString = msaStringRef.current;
+      console.log(`[openMSAWindow] Opening MSA window with data length: ${currentMsaString?.length || 0}`);
+
+      if (!currentMsaString) {
+        // Show more helpful message and offer to load test data
+        const useTestData = confirm("No MSA data available. Would you like to load test data for demonstration?");
+        if (useTestData) {
+          console.log("[openMSAWindow] Loading test MSA data...");
+          loadTestMSAData();
+          return;
+        } else {
+          alert("No MSA data available. Please upload an MSA file first.");
+          return;
+        }
       }
       if (winboxInstance.current) {
+        console.log("[openMSAWindow] MSA window already exists, focusing...");
         winboxInstance.current.focus();
         return;
       }
+
+      console.log("[openMSAWindow] Creating new MSA window...");
       const container = document.createElement("div");
       container.id = "msa-winbox-content";
       container.style.width = "100%";
       container.style.height = "100%";
       container.style.overflow = "hidden";
+
+      containerRef.current = container;
+
       const wb = new WinBox("Multiple Sequence Alignment", {
         class: ["no-full"],
-        background: "#373747",
         border: 2,
         width: 1000,
         height: 600,
         x: "center",
         y: "center",
         mount: container,
+        overflow: false, // Disable scrollbars
         onclose: () => {
-          if (container.__reactRoot) {
-            try { container.__reactRoot.unmount(); } catch {}
+          if (rootRef.current) {
+            try {
+              rootRef.current.unmount();
+            } catch {}
           }
           winboxInstance.current = null;
+          containerRef.current = null;
+          rootRef.current = null;
         },
-        onresize: (width, height) => {
-          if (container.__reactRoot) {
+        onresize: throttleResize((width, height) => {
+          // Store dimensions instead of immediate re-render
+          dimensionsRef.current = { width, height };
+
+          if (rootRef.current && containerRef.current) {
             try {
-              container.__reactRoot.render(
+              rootRef.current.render(
                 <AlignmentViewer2Component
-                  msaString={msaString}
+                  msaString={msaStringRef.current}
                   containerWidth={width}
                   containerHeight={height}
                 />
               );
             } catch {}
           }
-        },
+        }, 100), // Throttle resize events
       });
+
+      // Create React root only once
       const root = createRoot(container);
-      container.__reactRoot = root;
-      root.render(
-        <AlignmentViewer2Component
-          msaString={msaString}
-          containerWidth={wb.width}
-          containerHeight={wb.height}
-        />
-      );
+      rootRef.current = root;
+
+      // Initial render
+      dimensionsRef.current = { width: wb.width, height: wb.height };
+      console.log(`[openMSAWindow] Initial render with dimensions: ${wb.width}x${wb.height}`);
+
+      try {
+        root.render(
+          <AlignmentViewer2Component
+            msaString={currentMsaString}
+            containerWidth={wb.width}
+            containerHeight={wb.height}
+          />
+        );
+        console.log("[openMSAWindow] Successfully rendered AlignmentViewer2Component");
+      } catch (error) {
+        console.error("[openMSAWindow] Failed to render AlignmentViewer2Component:", error);
+      }
+
       winboxInstance.current = wb;
+      console.log("[openMSAWindow] MSA window created successfully");
     }
+
     window.addEventListener("open-msa-viewer", openMSAWindow);
     return () => {
       window.removeEventListener("open-msa-viewer", openMSAWindow);
       if (winboxInstance.current) winboxInstance.current.close();
     };
-  }, [msaString]);
+  }, []); // Empty dependency array - register only once
 }
 
+// Add throttle function for resize events
+function throttleResize(func, delay) {
+  let timeoutId = null;
+
+  return (...args) => {
+    if (timeoutId) clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func(...args), delay);
+  };
+}
+
+// --- Main App Component ---
 function App() {
   const msaString = useMSAData();
   useMSAWinBox(msaString);
@@ -119,12 +192,11 @@ function App() {
   return null;
 }
 
-// Create root container if it doesn't exist
+// --- Root Element Creation & Render ---
 let root = document.getElementById("msa-react-root");
 if (!root) {
   root = document.createElement("div");
   root.id = "msa-react-root";
   document.body.appendChild(root);
 }
-
-if (root) createRoot(root).render(<App />);
+createRoot(root).render(<App />);

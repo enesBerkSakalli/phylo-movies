@@ -13,7 +13,7 @@ from ..config import Config
 from ..utils import perform_umap
 from typing import Any, Dict
 from werkzeug.datastructures import FileStorage
-
+import numpy as np
 from numpy.typing import ArrayLike
 
 
@@ -60,12 +60,19 @@ def handle_uploaded_file(
     )
 
     # Process MSA data if available
-    msa_data = _process_msa_data(msa_content, len(trees), logger)
+    msa_data = _process_msa_data(
+        msa_content=msa_content,
+        num_trees=len(trees),
+        logger=logger,
+        window_size=window_size,
+        step_size=window_step,
+    )
 
     # Serialize trees for frontend
     interpolated_json: TreeList = serialize_tree_list_to_json(
         processed_data["interpolated_trees"]
     )
+    tree_names = processed_data.get("tree_names", [])
 
     # Extract leaf order
     sorted_leaves = getattr(trees[0], "_order", []) if trees else []
@@ -73,20 +80,21 @@ def handle_uploaded_file(
     return {
         "rfd_list": processed_data["rfd_list"],
         "embedding": embedding,
-        "weighted_rfd_list": processed_data["wrfd_list"],
-        "to_be_highlighted": processed_data["jumping_taxa"],
+        "weighted_robinson_foulds_distance_list": processed_data["wrfd_list"],
+        "to_be_highlighted": processed_data["solutions"],
         "sorted_leaves": sorted_leaves,
         "tree_list": interpolated_json,
+        "tree_names": tree_names,
         "file_name": filename,
         **msa_data,
     }
 
 
-def _parse_newick_file(file_storage, logger) -> TreeList:
+def _parse_newick_file(file_storage: FileStorage, logger: Logger) -> TreeList:
     """Parse Newick file and return list of trees."""
     try:
-        newick_text = file_storage.read().decode("utf-8").strip("\r")
-        trees: Union[Node, TreeList] = parse_newick(newick_text)
+        newick_text: str = file_storage.read().decode("utf-8").strip("\r")
+        trees: Union[Node, TreeList] = parse_newick(tokens=newick_text)
         trees = [trees] if isinstance(trees, Node) else trees
 
         if not trees:
@@ -111,7 +119,7 @@ def _process_trees(processor: TreeProcessor, logger: Logger) -> Dict[str, Any]:
             "jumping_taxa": [[]],
             "rfd_list": [0.0],
             "wrfd_list": [0.0],
-            "distance_matrix": processor._validate_distance_matrix([], 1),
+            "distance_matrix": processor.validate_distance_matrix([], 1),
         }
 
     if len(trees) == 1:
@@ -126,18 +134,25 @@ def _process_trees(processor: TreeProcessor, logger: Logger) -> Dict[str, Any]:
     # Optimize tree order
     trees: TreeList = processor.optimize_tree_order(trees)
 
-    # Generate interpolated trees
-    interpolated_trees: TreeList = processor.interpolate_trees(trees)
+    # Calculate jumping taxa
+    jumping_taxa, s_edges, covers = processor.calculate_jumping_taxa(trees)
+
+    # Generate interpolated trees and names
+    interpolated_trees, tree_names = processor.interpolate_trees(trees)
+
+    solutions = {
+        "s_edges": s_edges,
+        "covers": covers,
+        "jumping_taxa": jumping_taxa,
+    }
 
     # Calculate distances
     rfd_list, wrfd_list, distance_matrix = processor.calculate_distances(trees)
 
-    # Calculate jumping taxa
-    jumping_taxa = processor.calculate_jumping_taxa(trees)
-
     return {
         "interpolated_trees": interpolated_trees,
-        "jumping_taxa": jumping_taxa,
+        "tree_names": tree_names,
+        "solutions": solutions,
         "rfd_list": rfd_list,
         "wrfd_list": wrfd_list,
         "distance_matrix": distance_matrix,
@@ -145,9 +160,10 @@ def _process_trees(processor: TreeProcessor, logger: Logger) -> Dict[str, Any]:
 
 
 def _generate_embedding(
-    distance_matrix: "ArrayLike", logger, enable_embedding: bool = True
-) -> list:
+    distance_matrix: "ArrayLike", logger: Logger, enable_embedding: bool = True
+) -> list[list[float]]:
     """Generate UMAP or geometrical embedding from distance matrix."""
+    distance_matrix = np.asarray(distance_matrix)
     if distance_matrix.size == 0:
         logger.warning("Distance matrix is empty, skipping embedding")
         return []
@@ -157,7 +173,7 @@ def _generate_embedding(
         return _generate_geometrical_embedding(distance_matrix, logger)
 
     # Get UMAP parameters from config
-    umap_params = {
+    umap_params: dict[str, Any] = {
         "n_components": getattr(Config, "UMAP_N_COMPONENTS", 2),
         "random_state": getattr(Config, "UMAP_RANDOM_STATE", 42),
         "n_neighbors": getattr(Config, "UMAP_N_NEIGHBORS", 15),
@@ -174,11 +190,12 @@ def _generate_embedding(
         return _generate_geometrical_embedding(distance_matrix, logger)
 
 
-def _generate_geometrical_embedding(distance_matrix, logger) -> list:
+def _generate_geometrical_embedding(
+    distance_matrix: np.ndarray, logger: Logger
+) -> list[list[float]]:
     """Generate simple geometrical embedding patterns."""
-    import numpy as np
 
-    n_samples = distance_matrix.shape[0]
+    n_samples: int = distance_matrix.shape[0]
     if n_samples == 0:
         logger.warning(
             "Distance matrix is empty, returning empty geometrical embedding"
@@ -204,13 +221,13 @@ def _generate_geometrical_embedding(distance_matrix, logger) -> list:
     else:
         # Grid arrangement for larger datasets
         grid_size = int(np.ceil(np.sqrt(n_samples)))
-        embedding = []
+        embedding: list[list[float]] = []
         for i in range(n_samples):
             row = i // grid_size
             col = i % grid_size
             # Center the grid around origin
-            x = (col - grid_size / 2) * 2.0
-            y = (row - grid_size / 2) * 2.0
+            x: float = (col - grid_size / 2) * 2.0
+            y: float = (row - grid_size / 2) * 2.0
             embedding.append([x, y])
 
     logger.info(f"Generated {len(embedding)} geometrical embedding points")
@@ -218,8 +235,12 @@ def _generate_geometrical_embedding(distance_matrix, logger) -> list:
 
 
 def _process_msa_data(
-    msa_content: Optional[str], num_trees: int, window_size=1, step_size=1, logger=None
-) -> Dict[str, Optional[int]]:
+    msa_content: Optional[str],
+    num_trees: int,
+    window_size: int = 1,
+    step_size: int = 1,
+    logger: Optional[Logger] = None,
+) -> Dict[str, Optional[Union[int, str, bool]]]:
     """Process MSA content and infer window parameters."""
     if not msa_content:
         return {
@@ -257,6 +278,7 @@ def _process_msa_data(
             window_params.is_overlapping if window_params else None
         ),
         "alignment_length": alignment_length,
+        "msa_content": msa_content,  # Return raw MSA content for frontend storage
     }
 
 
@@ -265,7 +287,7 @@ def _create_empty_response(filename: str) -> PhyloMovieData:
     return {
         "rfd_list": [],
         "embedding": [],
-        "weighted_rfd_list": [],
+        "weighted_robinson_foulds_distance_list": [],
         "to_be_highlighted": [],
         "sorted_leaves": [],
         "tree_list": [],
@@ -274,4 +296,5 @@ def _create_empty_response(filename: str) -> PhyloMovieData:
         "inferred_step_size": None,
         "windows_are_overlapping": None,
         "alignment_length": None,
+        "msa_content": None,
     }

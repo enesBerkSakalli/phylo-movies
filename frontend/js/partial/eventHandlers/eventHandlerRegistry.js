@@ -114,7 +114,7 @@ export class EventHandlerRegistry {
             id: "font-size",
             type: "input",
             action: (event) => {
-              this.gui.fontSize = parseFloat(event.target.value);
+              this.gui.setFontSize(event.target.value);
               this.gui.updateMain();
             },
             description: "Font size adjustment",
@@ -180,7 +180,7 @@ export class EventHandlerRegistry {
    */
   handleChartModal() {
     this.gui.stop();
-    this.gui.generateModalChart();
+    this.gui.displayCurrentChartInModal();
   }
 
   /**

@@ -1,74 +1,26 @@
-<!-- Recording Controls -->
-<div class="submenu-container" data-collapsed="false">
-  <div class="submenu-header">
-    <div class="submenu-title">
-      <i class="fa fa-video-camera submenu-icon"></i>
-      <h2 class="mdc-section-title">Recording</h2>
-    </div>
-    <span class="toggle-icon" id="toggle-recording-submenu">▼</span>
-  </div>
-
-  <div class="submenu" id="recording-submenu">
-    <div class="control-panel">
-      <div class="button-row">
-        <div class="button-group">
-          <button
-            id="start-record"
-            type="button"
-            class="md-button record-start"
-            title="Start Recording"
-          >
-            <i class="fa fa-video-camera"></i> Record
-          </button>
-          <button
-            id="stop-record"
-            type="button"
-            class="md-button record-stop"
-            title="Stop Recording"
-            disabled
-          >
-            <i class="fa fa-stop-circle"></i> Stop
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- Playback Controls -->
-<div class="submenu-container" data-collapsed="false">
-  <div class="submenu-header">
-    <div class="submenu-title">
-      <i class="fa fa-play submenu-icon"></i>
-      <h2 class="mdc-section-title">Playback</h2>
-    </div>
-    <span class="toggle-icon" id="toggle-playback-submenu">▼</span>
-  </div>
+<div  class="tree-navigation-panel" role="region" aria-label="Tree Navigation">
 
   <div class="submenu" id="playback-submenu">
     <div class="control-panel">
-      <div class="button-row">
-        <div class="button-group">
+      <!-- Main controls in single row -->
+      <div class="button-row single-row">
+        <div class="button-group compact">
           <button
             id="start-button"
             type="button"
-            class="md-button primary"
+            class="md-button primary compact"
             title="Play"
           >
             <i class="fa fa-play"></i>
           </button>
-          <button id="stop-button" type="button" class="md-button" title="Stop">
+          <button id="stop-button" type="button" class="md-button compact" title="Stop">
             <i class="fa fa-stop"></i>
           </button>
-        </div>
-      </div>
-
-      <div class="button-row">
-        <div class="button-group">
           <button
             id="backward-button"
             type="button"
-            class="md-button"
+            class="md-button compact"
             title="Previous Frame"
           >
             <i class="fa fa-backward"></i>
@@ -76,20 +28,15 @@
           <button
             id="forward-button"
             type="button"
-            class="md-button"
+            class="md-button compact"
             title="Next Frame"
           >
             <i class="fa fa-forward"></i>
           </button>
-        </div>
-      </div>
-
-      <div class="button-row">
-        <div class="button-group">
           <button
             id="backwardStepButton"
             type="button"
-            class="md-button"
+            class="md-button compact"
             title="Previous Tree"
           >
             <i class="fa fa-step-backward"></i>
@@ -97,7 +44,7 @@
           <button
             id="forwardStepButton"
             type="button"
-            class="md-button"
+            class="md-button compact"
             title="Next Tree"
           >
             <i class="fa fa-step-forward"></i>
@@ -105,70 +52,57 @@
         </div>
       </div>
 
-      <!-- Animation Speed -->
-      <div class="factor-control">
-        <label for="factor">Animation Speed</label>
-        <div class="mdc-input-with-button">
-          <input
-            type="number"
-            id="factor"
-            class="mdc-input"
-            min="1"
-            max="10"
-            value="2"
-          />
-          <span class="info-value">× speed</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Tools -->
-<div class="submenu-container" data-collapsed="false">
-  <div class="submenu-header">
-    <div class="submenu-title">
-      <i class="fa fa-wrench submenu-icon"></i>
-      <h2 class="mdc-section-title">Tools</h2>
-    </div>
-    <span class="toggle-icon" id="toggle-tools-submenu">▼</span>
-  </div>
-
-  <div class="submenu" id="tools-submenu">
     <div class="control-panel">
-      <div class="button-row">
-        <div class="button-group">
+      <div class="button-row single-row">
+        <div class="button-group compact">
           <button
             id="save-button"
             type="button"
-            class="md-button"
+            class="md-button compact"
             title="Save SVG"
           >
             <i class="fa fa-save"></i> Save
           </button>
-          <button
-            id="chart-modal"
-            type="button"
-            class="md-button"
-            title="Open Chart"
-          >
-            <i class="fa fa-bar-chart"></i> Chart
-          </button>
-        </div>
-      </div>
 
-      <div class="button-row">
-        <div class="button-group">
           <button
             id="compare-sequence-button"
             type="button"
-            class="md-button"
+            class="md-button compact"
             title="Compare Trees"
           >
             <i class="fa fa-exchange"></i> Compare
           </button>
         </div>
       </div>
+    </div>
+      <!-- Animation Speed in compact form -->
+      <div class="factor-control compact">
+        <label for="factor">Speed</label>
+        <div class="mdc-input-with-button compact">
+          <input
+            type="number"
+            id="factor"
+            class="mdc-input compact"
+            min="1"
+            max="10"
+            value="2"
+          />
+          <span class="info-value">×</span>
+        </div>
+      </div>
+    </div>
+  </div>
+    <div class="submenu" id="msa-submenu">
+    <div class="button-row">
+      <button id="msa-viewer-btn" type="button" class="mdc-button primary">
+        <i class="fa fa-dna"></i>
+        <span>Open Alignment Viewer</span>
+      </button>
+    </div>
+
+    <div id="msa-status" class="info-item" style="margin-top: 12px;">
+      <div class="info-label">Status</div>
+      <div class="info-value">No alignment data loaded</div>
     </div>
   </div>
 </div>

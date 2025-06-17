@@ -33,7 +33,7 @@ describe('Tree Centering Verification', () => {
 
   before(() => {
     dom = setupDOM();
-    
+
     // Mock d3 for testing
     global.d3 = {
       select: (selector) => {
@@ -57,26 +57,34 @@ describe('Tree Centering Verification', () => {
           },
           append: (tagName) => {
             if (!element) return { empty: () => true };
-            const newElement = tagName === 'svg' 
+            const newElement = tagName === 'svg'
               ? document.createElementNS('http://www.w3.org/2000/svg', tagName)
               : document.createElementNS('http://www.w3.org/2000/svg', tagName);
             element.appendChild(newElement);
             // Return a new selection for the appended element
-            return {
-              ...selection,
+            const newSelection = {
+              empty: () => false,
               node: () => newElement,
               attr: (name, value) => {
                 if (value !== undefined) {
                   newElement.setAttribute(name, value);
-                  return selection;
+                  return newSelection;
                 }
                 return newElement.getAttribute(name);
               },
+              style: (name, value) => {
+                if (value !== undefined) {
+                  newElement.style[name] = value;
+                  return newSelection;
+                }
+                return newElement.style[name];
+              },
               select: (childSelector) => {
                 const child = newElement.querySelector ? newElement.querySelector(childSelector) : null;
-                return global.d3.select(child ? `[class="${childSelector.replace('.', '')}"]` : null);
+                return child ? global.d3.select(childSelector) : { empty: () => true };
               }
             };
+            return newSelection;
           },
           select: (childSelector) => {
             if (!element) return { empty: () => true };
@@ -84,7 +92,7 @@ describe('Tree Centering Verification', () => {
             return child ? global.d3.select(childSelector) : { empty: () => true };
           },
           selectAll: (selector) => ({
-            remove: () => ({ 
+            remove: () => ({
               each: (fn) => {
                 const elements = element ? element.querySelectorAll(selector) : [];
                 elements.forEach(fn);
@@ -108,7 +116,7 @@ describe('Tree Centering Verification', () => {
       const testContainer = document.getElementById('test-container');
       const appContainer = document.getElementById('application');
       const comparisonContainer = document.getElementById('comparison-container');
-      
+
       expect(testContainer).to.not.be.null;
       expect(appContainer).to.not.be.null;
       expect(comparisonContainer).to.not.be.null;
@@ -117,7 +125,7 @@ describe('Tree Centering Verification', () => {
     it('should verify main application container structure', () => {
       const appSvg = document.getElementById('application-container');
       const appGroup = document.getElementById('application');
-      
+
       expect(appSvg.tagName.toLowerCase()).to.equal('svg');
       expect(appGroup.tagName.toLowerCase()).to.equal('g');
       expect(appGroup.getAttribute('transform')).to.include('translate');
@@ -141,13 +149,13 @@ describe('Tree Centering Verification', () => {
     it('should simulate creating SVG in container', () => {
       const container = global.d3.select('#test-container');
       expect(container.empty()).to.be.false;
-      
+
       // Simulate what TreeDrawer._ensureSVGStructure would do
       const svg = container.append('svg')
         .attr('width', '800')
         .attr('height', '600')
         .attr('viewBox', '0 0 800 600');
-      
+
       expect(svg.attr('width')).to.equal('800');
       expect(svg.attr('height')).to.equal('600');
     });
