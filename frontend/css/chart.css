@@ -1,15 +1,17 @@
 /* chart.css - Modularized from style.css */
 
-/* Chart and Line Chart */
-#line-chart {
+/* Chart and Line Chart - Responsive sizing */
+#lineChart, #line-chart {
   width: 100%;
-  height: 220px;
-  min-height: 220px;
+  height: clamp(180px, 25vh, 280px); /* Responsive height between 180px-280px */
+  min-height: 180px;
+  max-height: 280px;
   background-color: #2c2c3a;
   border-radius: 4px;
   margin-bottom: 5px;
   position: relative;
   overflow: hidden;
+  resize: vertical; /* Allow manual vertical resizing */
 }
 
 .barContainer {
@@ -40,13 +42,16 @@
 
 .chart-canvas {
   width: 100%;
-  height: 220px;
-  min-height: 220px;
+  height: 100%; /* Use full parent height */
+  min-height: 180px;
+  max-height: 280px;
   background-color: #2c2c3a;
   border-radius: 4px;
   margin-bottom: 5px;
   position: relative;
   overflow: hidden;
+  display: block; /* Ensure proper display */
+  aspect-ratio: 16/9; /* Maintain aspect ratio for better scaling */
 }
 
 /* Removed 'transition: transform 0.1s ease;' for direct JS manipulation */
@@ -80,8 +85,6 @@
   fill: #ff6347;
   filter: drop-shadow(0 0 3px rgba(255, 99, 71, 0.7));
 }
-
-
 
 .line {
   stroke: #4682B4;
@@ -154,6 +157,22 @@
   border-bottom: 1px solid rgba(78, 140, 255, 0.08);
 }
 
+.chart-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.chart-subtitle {
+  font-size: 0.75em;
+  color: #888;
+  font-style: italic;
+  margin-top: 2px;
+  font-weight: normal;
+}
+
 
 /* Animate chart elements on hover */
 .chart-card .index-rect:hover {
@@ -217,13 +236,14 @@
 
 .chart-canvas {
   width: 100%;
-  height: 220px;
-  min-height: 220px;
-  background: #23273a;
+  height: 100%; /* Use full parent height */
+  min-height: 180px;
+  background-color: #2c2c3a;
   border-radius: 4px;
-  margin-bottom: 8px;
+  margin-bottom: 5px;
   position: relative;
   overflow: hidden;
+  display: block; /* Ensure proper display */
 }
 
 .chart-legend {
@@ -244,57 +264,73 @@
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
-#ship-modal-group:hover .ship-line {
+.ship-indicator-group:hover .ship-line {
   stroke-width: 3px;
+  stroke: #ff6347;
 }
 
-#ship-modal-group:hover .ship-handle {
-  r: 10;
-  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.4));
+.ship-indicator-group:hover .ship-handle {
+  r: 9;
+  fill: #ff6347;
+  filter: drop-shadow(0 0 3px rgba(255, 99, 71, 0.7));
 }
-/* Responsive adjustments */
+
+/* Chart interaction improvements */
+.chart-canvas[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.7em;
+  white-space: nowrap;
+  z-index: 1000;
+  pointer-events: none;
+  opacity: 0;
+  animation: fadeInTooltip 0.3s ease forwards;
+}
+
+@keyframes fadeInTooltip {
+  to { opacity: 1; }
+}
+
+/* Loading state for charts */
+.chart-canvas.loading {
+  background: #2c2c3a url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="20" fill="none" stroke="%234390e1" stroke-width="3"><animate attributeName="r" values="10;20;10" dur="2s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite"/></circle></svg>') center/40px no-repeat;
+}
+
+/* Responsive chart improvements */
 @media (max-width: 768px) {
-  .chart-modal-container {
-    padding: 10px;
+  #lineChart, #line-chart {
+    height: clamp(150px, 20vh, 200px);
   }
 
-  .chart-modal-content {
-    margin-bottom: 10px;
-  }
-
-  .chart-tooltip {
-    font-size: 12px;
-    padding: 8px 12px;
-    max-width: 240px;
+  .chart-subtitle {
+    display: none; /* Hide subtitle on small screens */
   }
 }
 
-.legend-item {
+@media (min-width: 1200px) {
+  #lineChart, #line-chart {
+    height: clamp(220px, 30vh, 320px);
+  }
+}
+
+/* Chart clarity improvements */
+.chart-canvas svg {
+  cursor: crosshair;
+}
+
+.chart-canvas:empty::before {
+  content: "Loading chart data...";
   display: flex;
   align-items: center;
-  gap: 6px;
-}
-
-.legend-color {
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
-}
-
-.legend-label {
-  font-size: 12px;
-  color: #ccc;
-}
-
-
-.tooltip-title {
-  font-weight: 600;
-  margin-bottom: 4px;
-  color: #4390e1;
-}
-
-.tooltip-value {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
+  justify-content: center;
+  height: 100%;
+  color: #888;
+  font-style: italic;
 }

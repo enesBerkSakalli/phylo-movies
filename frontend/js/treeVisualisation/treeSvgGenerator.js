@@ -57,11 +57,9 @@ export function buildSvgStringTime(d, t, pathArray) {
   let curveY = tween_startRadius * Math.sin(tween_endAngle);
   let lx = tween_endRadius * Math.cos(tween_endAngle);
   let ly = tween_endRadius * Math.sin(tween_endAngle);
-  let sweepFlag = 0;
-  if (shortestAngle(tween_startAngle, tween_endAngle) > 0) {
-    sweepFlag = 1;
-  }
-  const largeArcFlag = 0;
+  let angleDiff = shortestAngle(tween_startAngle, tween_endAngle);
+  let sweepFlag = angleDiff >= 0 ? 1 : 0;
+  const largeArcFlag = Math.abs(angleDiff) > Math.PI ? 1 : 0;
   const xAxisRotation = 0;
   return `M ${mx}, ${my} A${rx}, ${ry} ${xAxisRotation} ${largeArcFlag} ${sweepFlag} ${curveX}, ${curveY} L ${lx}, ${ly}`;
 }

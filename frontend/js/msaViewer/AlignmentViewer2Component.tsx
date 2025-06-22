@@ -21,6 +21,18 @@ import {
 import useAV2Settings from "alignment-viewer-2/dist/js/components/settings/Settings";
 import "alignment-viewer-2/dist/standalone/alignmentviewer.css";
 
+// Fix for undefined SVG path errors in AlignmentViewer 2.0
+// Set a fallback base URL for assets to prevent 404 errors
+if (typeof window !== 'undefined' && !window.location.origin.includes('/undefined/')) {
+  // Ensure AlignmentViewer can find its assets
+  const baseElement = document.querySelector('base');
+  if (!baseElement) {
+    const base = document.createElement('base');
+    base.href = window.location.origin + '/';
+    document.head.insertBefore(base, document.head.firstChild);
+  }
+}
+
 // UI Components
 import MSAViewerNoData from "./MSAViewerNoData";
 import MSAViewerLoading from "./MSAViewerLoading";
@@ -92,8 +104,11 @@ function createAlignmentFromMSA(msaString: string): Alignment {
 
   try {
     console.log(`[createAlignmentFromMSA] Parsing MSA string of ${msaString.length} characters`);
+    // Convert to uppercase for better parser compatibility
+    const upperCaseMSA = msaString.toUpperCase();
+    console.log(`[createAlignmentFromMSA] Converted sequences to uppercase for parser compatibility`);
     // AlignmentViewer 2.0 can handle FASTA directly
-    const alignment = FastaAlignment.fromFileContents("MSA_ALIGNMENT", msaString);
+    const alignment = FastaAlignment.fromFileContents("MSA_ALIGNMENT", upperCaseMSA);
     console.log(`[createAlignmentFromMSA] Successfully created alignment with ${alignment.getSequenceCount()} sequences of length ${alignment.getSequenceLength()}`);
     return alignment;
   } catch (error: any) {
@@ -327,7 +342,7 @@ export default function AlignmentViewer2Component({
     });
   }, [activeAlignment, settings?.barplots]);
 
-  // Add viewport-related props to AlignmentViewer
+  // Add viewport-related props to AlignmentViewer with proper sizing
   const alignmentViewerProps = useMemo(() => {
     const baseProps = {
       alignment: activeAlignment,
@@ -357,6 +372,7 @@ export default function AlignmentViewer2Component({
         logoType: settings?.logoType
       },
       barplots: barplotsProps
+      // Scrolling is handled by the parent div's CSS overflow property.
     };
 
     // Add highlighted sequences if available
@@ -404,16 +420,20 @@ export default function AlignmentViewer2Component({
       ref={containerRef}
       style={{
         ...containerStyles,
-        width: containerWidth ? containerWidth : "100%",
-        height: containerHeight ? containerHeight : "100%"
+        width: containerWidth ? `${containerWidth}px` : "100%",
+        height: containerHeight ? `${containerHeight}px` : "100%"
       }}
     >
       {/* Only render AlignmentViewer if activeAlignment is not null */}
       {activeAlignment && (
-        <AlignmentViewer
-          {...alignmentViewerProps as any}
-          ref={alignmentViewerRef}
-        />
+        <div style={{
+
+        }}>
+          <AlignmentViewer
+            {...alignmentViewerProps as any}
+            ref={alignmentViewerRef}
+          />
+        </div>
       )}
       <SettingsButton
         showSettings={showSettings}
@@ -516,19 +536,11 @@ const containerStyles: React.CSSProperties = {
   height: "100%",
   background: "#fff",
   borderRadius: "8px",
-  boxSizing: "border-box",
   overflow: "hidden",
-  margin: 0,
-  padding: 0,
+  margin: 0, // Remove margin
+  padding: 0, // Remove padding
   display: "flex",
-  flexDirection: "column"
-};
-
-const viewerContainerStyles: React.CSSProperties = {
-  flex: 1,
-  padding: "4px",
-  background: "#fff",
-  overflow: "hidden"
+  flexDirection: "column", // Ensure vertical stacking
 };
 
 const settingsButtonContainerStyles: React.CSSProperties = {
@@ -558,5 +570,4 @@ const settingsPanelStyles: React.CSSProperties = {
   borderRadius: "4px",
   boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
   maxHeight: "80vh",
-  overflow: "auto"
 };

@@ -155,6 +155,34 @@ export default class TransitionIndexResolver {
         return Math.max(0, distanceIndex); // Clamp to 0 in case of -1 (e.g., before first T tree).
     }
 
+    /**
+     * Maps from distance/transition index to the corresponding full tree sequence index.
+     * For distance index i, this returns the sequence index of the target full tree
+     * of the i-th transition (i.e., T_(i+1)).
+     * @param {number} distanceIndex - The distance/transition index.
+     * @returns {number} The sequence index of the corresponding full tree.
+     */
+    getTreeIndexForDistanceIndex(distanceIndex) {
+        const fullTreeIndices = this.fullTreeIndices;
+
+        if (fullTreeIndices.length === 0) {
+            return 0; // Fallback
+        }
+
+        // Distance index i corresponds to the transition from T_i to T_(i+1)
+        // We want to return the sequence index of T_(i+1)
+        if (distanceIndex < 0) {
+            return fullTreeIndices[0]; // First full tree
+        }
+
+        if (distanceIndex >= fullTreeIndices.length - 1) {
+            return fullTreeIndices[fullTreeIndices.length - 1]; // Last full tree
+        }
+
+        // Return the target full tree of the transition
+        return fullTreeIndices[distanceIndex + 1];
+    }
+
     isFullTree = (position) => {
         if (position < 0 || position >= this.sequenceData.length) return false;
         return this.sequenceData[position]?.type === 'T' ?? false;

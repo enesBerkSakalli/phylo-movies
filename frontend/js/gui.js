@@ -1,8 +1,12 @@
 import * as d3 from "d3";
-import { generateDistanceChart } from "./charts/distanceChart.js";
 import TaxaColoring from "./taxaColoring.jsx";
 import { createSideBySideComparisonModal } from "./treeComparision/treeComparision.js";
-import calculateScales from "./utils/MathUtils.js";
+import calculateScales, {
+  getCurrentScaleValue,
+  getMaxScaleValue,
+  calculateScalePercentage,
+  formatScaleValue
+} from "./utils/scaleUtils.js";
 import constructTree from "./treeVisualisation/LayoutCalculator.js";
 import drawTree from "./treeVisualisation/TreeDrawer.js";
 import { exportSaveChart } from "./utils/svgExporter.js";
@@ -11,7 +15,7 @@ import { COLOR_MAP } from "./treeColoring/ColorMap.js";
 import TransitionIndexResolver from "./TransitionIndexResolver.js";
 import { calculateWindow } from "./utils/windowUtils.js";
 import { renderOrUpdateLineChart } from "./charts/lineChartManager.js";
-import { openModalChart } from "./charts/modalChartManager.js";
+import { openModalChart } from "./charts/windowChartManager.js";
 import { STYLE_MAP } from "./treeVisualisation/TreeDrawer.js";
 // ===== GUI Class =====
 export default class Gui {
@@ -36,7 +40,7 @@ export default class Gui {
       ? treeNames
       : this.treeList.map((_, i) => `Tree ${i + 1}`);
 
-    // FIX: Unify highlight data into a single, consistent property
+    // Unify highlight data into a single, consistent property
     this.highlightData = toBeHighlightedFromBackend.jumping_taxa || [];
     this.s_edges = toBeHighlightedFromBackend.s_edges || [];
     this.covers = toBeHighlightedFromBackend.covers || [];
@@ -50,6 +54,11 @@ export default class Gui {
 
     document.getElementById("windowSize").innerText = this.msaWindowSize;
     document.getElementById("windowStepSize").innerText = this.msaStepSize;
+
+    console.log("[GUI] Initializing GUI with the following parameters:");
+    console.log("[GUI] Tree List:", this.treeList);
+    console.log("[GUI] Weighted RFD Distances:", weightedRobinsonFouldsDistances);
+    console.log("[GUI] ", toBeHighlightedFromBackend)
 
     this.windowStart = null;
     this.windowEnd = null;
@@ -180,8 +189,13 @@ export default class Gui {
   // ===== Main Update Cycle =====
   update(skipAutoCenter = false) {
     this.resize(skipAutoCenter);
-    const nextFullTreeIndex = this.transitionResolver.getHighlightingIndex(this.currentTreeIndex);
-
+    // Pass the correct index type for each chart type
+    let chartTreeIndex;
+    if (this.barOptionValue === "scale") {
+      chartTreeIndex = this.currentTreeIndex; // sequence index for scale charts
+    } else {
+      chartTreeIndex = this.transitionResolver.getDistanceIndex(this.currentTreeIndex); // transition index for RFD/W-RFD
+    }
     this.currentDistanceChartState = this.currentDistanceChartState || { instance: null, type: null };
     this.currentDistanceChartState = renderOrUpdateLineChart({
       data: {
@@ -191,7 +205,7 @@ export default class Gui {
       },
       config: {
         barOptionValue: this.barOptionValue,
-        currentTreeIndex: nextFullTreeIndex,
+        currentTreeIndex: chartTreeIndex,
         stickyChartPositionIfAvailable: this._lastClickedDistancePosition,
       },
       services: {
@@ -205,10 +219,8 @@ export default class Gui {
       },
       containerId: "lineChart",
     });
-
     this.currentDistanceChart = this.currentDistanceChartState.instance;
     this.lastChartType = this.currentDistanceChartState.type;
-
     this.updateControls();
     this.updateMain();
     this.updateScale();
@@ -317,13 +329,13 @@ export default class Gui {
   manualNextTree() {
     this.currentTreeIndex = Math.min(this.currentTreeIndex + 1, this.treeList.length - 1);
     this.stop();
-    this.updateMain();
+    this.update();
   }
 
   manualPrevTree() {
     this.currentTreeIndex = Math.max(this.currentTreeIndex - 1, 0);
     this.stop();
-    this.updateMain();
+    this.update();
   }
 
   // ===== Modal Chart (Bootstrap-based) =====
@@ -347,15 +359,31 @@ export default class Gui {
 
   // ===== UI Controls =====
   updateControls() {
-    const distanceIndex = this.transitionResolver.getDistanceIndex(this.currentTreeIndex);
-    document.getElementById("currentFullTree").innerHTML = (distanceIndex + 1).toString();
-    const numberOfFullTrees = this.transitionResolver?.fullTreeIndices.length || 0;
-    document.getElementById("numberOfFullTrees").innerHTML = numberOfFullTrees.toString();
-    document.getElementById("currentTree").innerHTML = (this.currentTreeIndex + 1).toString();
-    document.getElementById("numberOfTrees").innerHTML = this.treeList.length;
-    document.getElementById("treeLabel").innerHTML = this.getCurrentTreeLabel();
-    const window = calculateWindow(distanceIndex, this.msaStepSize, this.msaWindowSize);
-    document.getElementById("windowArea").innerHTML = `${window.startPosition} - ${window.endPosition}`;
+    const fullTreeIndices = this.fullTreeIndices;
+    const currentFullTreeIndex = fullTreeIndices.indexOf(this.currentTreeIndex);
+    document.getElementById("currentFullTree").innerText =
+      currentFullTreeIndex !== -1 ? (currentFullTreeIndex + 1) : "-";
+    document.getElementById("numberOfFullTrees").innerText = this.numberOfFullTrees;
+    document.getElementById("currentTree").innerText = this.currentTreeIndex + 1;
+    document.getElementById("numberOfTrees").innerText = this.treeList.length;
+    document.getElementById("treeLabel").innerText = this.getCurrentTreeLabel();
+    // Only call calculateWindow if currentFullTreeIndex is valid
+    if (currentFullTreeIndex !== -1) {
+        const window = calculateWindow(currentFullTreeIndex, this.msaStepSize, this.msaWindowSize);
+        document.getElementById("windowArea").innerText = `${window.startPosition} - ${window.endPosition}`;
+    } else {
+        document.getElementById("windowArea").innerText = "-";
+    }
+    // Update scale: always use the transitionResolver.getDistanceIndex for scale
+    const transitionDistanceIdx = this.transitionResolver.getDistanceIndex(this.currentTreeIndex);
+    const currentScale = getCurrentScaleValue(this.scaleList, transitionDistanceIdx);
+    const maxScale = this.maxScale;
+    document.getElementById("currentScaleText").innerText = formatScaleValue(currentScale);
+    document.getElementById("maxScaleText").innerText = formatScaleValue(maxScale);
+    // Update scale progress bar
+    const percent = calculateScalePercentage(currentScale, maxScale);
+    const progressBar = document.querySelector(".scale-progress-bar");
+    if (progressBar) progressBar.style.width = `${percent}%`;
   }
 
   goToPosition(position) {
@@ -405,7 +433,7 @@ export default class Gui {
       button.disabled = true;
       button.innerText = "Saving...";
     }
-    const fileName = `${this.fileName || "chart"}-${this.currentTreeIndex + 1}-${this.getTreeName()}.svg`;
+    const fileName = `${this.fileName || "chart"}-${this.currentTreeIndex + 1}-${this.getCurrentTreeLabel()}.svg`;
     exportSaveChart(this, "application-container", fileName)
       .finally(() => {
         if (button) {
@@ -413,10 +441,6 @@ export default class Gui {
           button.innerText = "Save SVG";
         }
       });
-  }
-
-  getTreeName() {
-    return this.getCurrentTreeLabel();
   }
 
   getCurrentTreeLabel() {
@@ -476,7 +500,7 @@ export default class Gui {
       }
     } else if (colorData.mode === "groups") {
       this.leaveOrder.forEach((taxon) => {
-        const group = this._getGroupForTaxon(taxon, colorData.separator);
+        const group = this._getGroupForTaxon(taxon, colorData.separator, colorData.strategyType);
         const groupColor = colorData.groupColorMap.get(group);
         if (groupColor) {
           newColorMap[taxon] = groupColor;
@@ -490,10 +514,99 @@ export default class Gui {
     this.updateMain();
   }
 
-  _getGroupForTaxon(taxon, separator) {
+  _getGroupForTaxon(taxon, separator, strategyType) {
     if (!taxon) return undefined;
-    if (separator === "first-letter") return taxon.charAt(0).toUpperCase();
-    return taxon.split(separator)[0];
+
+    // Handle first-letter grouping
+    if (separator === "first-letter" || strategyType === "first-letter") {
+      return taxon.charAt(0).toUpperCase();
+    }
+
+    // Use the same logic as taxaColoring.jsx
+    return this._getGroupForStrategy(taxon, separator, strategyType);
+  }
+
+  /**
+   * Extract group name using the same logic as taxaColoring.jsx
+   * This ensures consistency between the UI preview and the actual coloring
+   */
+  _getGroupForStrategy(taxonName, separator, strategyType, nthOccurrence = 1) {
+    // Handle new 'between' strategy type
+    if (strategyType && strategyType.startsWith('between-')) {
+      // Parse between strategy: 'between-_-1---1' means between 1st '_' and 1st '-'
+      const parts = strategyType.split('-');
+      if (parts.length >= 6) {
+        const startSep = parts[1];
+        const startOcc = parseInt(parts[2]) || 1;
+        const endSep = parts[4];
+        const endOcc = parseInt(parts[5]) || 1;
+        return this._getGroupBetweenSeparators(taxonName, startSep, startOcc, endSep, endOcc);
+      }
+      return null;
+    }
+
+    const parts = taxonName.split(separator);
+    if (parts.length <= 1) {
+      return null; // No group if separator not present or only one part
+    }
+
+    if (strategyType === 'first') {
+      return parts[0]; // e.g., "A" from "A.B.C"
+    } else if (strategyType === 'last') {
+      return parts.slice(0, -1).join(separator); // e.g., "A.B" from "A.B.C"
+    } else if (strategyType && strategyType.startsWith('nth-')) {
+      const occurrenceNum = parseInt(strategyType.split('-')[1]) || nthOccurrence;
+      if (occurrenceNum === 1) {
+        return parts[0]; // First occurrence: text before first separator
+      } else if (occurrenceNum >= 2 && occurrenceNum <= parts.length) {
+        return parts[occurrenceNum - 1]; // nth occurrence: text between (nth-1) and nth separator
+      }
+      return null; // Invalid occurrence number
+    }
+
+    return null; // Should not happen if strategyType is validated
+  }
+
+  /**
+   * Get text between two different separators at specific occurrences
+   */
+  _getGroupBetweenSeparators(taxonName, startSeparator, startOccurrence, endSeparator, endOccurrence) {
+    // Find the position of the start separator (nth occurrence)
+    let startPos = -1;
+    let currentOccurrence = 0;
+    for (let i = 0; i < taxonName.length; i++) {
+      if (taxonName[i] === startSeparator) {
+        currentOccurrence++;
+        if (currentOccurrence === startOccurrence) {
+          startPos = i;
+          break;
+        }
+      }
+    }
+
+    if (startPos === -1) {
+      return null; // Start separator not found at specified occurrence
+    }
+
+    // Find the position of the end separator (nth occurrence) after the start position
+    let endPos = -1;
+    currentOccurrence = 0;
+    for (let i = startPos + 1; i < taxonName.length; i++) {
+      if (taxonName[i] === endSeparator) {
+        currentOccurrence++;
+        if (currentOccurrence === endOccurrence) {
+          endPos = i;
+          break;
+        }
+      }
+    }
+
+    if (endPos === -1) {
+      // If end separator not found, take until the end of string
+      return taxonName.substring(startPos + 1);
+    }
+
+    return taxonName.substring(startPos + 1, endPos);
   }
 
   openMSAViewer() {
@@ -517,19 +630,16 @@ export default class Gui {
     };
   }
 
-  // ===== TransitionIndexResolver Initialization =====
-  // FIX: Reordered to initialize the resolver before using it.
+  // TransitionIndexResolver Initialization
+  // Reordered to initialize the resolver before using it.
 initializeTransitionResolver() {
     if (!this.treeNames || this.treeNames.length === 0) {
         console.warn("[GUI] Cannot initialize TransitionIndexResolver: treeNames is empty or undefined.");
-        // Optionally, create a non-functional resolver or handle this state appropriately
         this.transitionResolver = new TransitionIndexResolver([], [], [], false, 0); // Basic fallback
         return;
     }
-
     const resolverSequenceData = this.treeNames.map(name => {
         let type = 'UNKNOWN';
-        // Log for debugging
         if (name.startsWith('IT')) {
             type = 'IT';
         } else if (name.startsWith('C_')) {
@@ -539,17 +649,10 @@ initializeTransitionResolver() {
         }
         return { name, type };
     });
-
-    // Use the canonical highlightData property everywhere
     const highlightDataForResolver = this.highlightData || [];
     const numOriginalTransitions = highlightDataForResolver.length;
-
-    // Ensure this.robinsonFouldsDistances is the correct distance data array
-    const distanceDataForResolver = this.robinsonFouldsDistances || []; // Use an empty array if undefined
-
-    // Enable debug mode for the resolver (set to true or false as needed)
+    const distanceDataForResolver = this.robinsonFouldsDistances || [];
     const debugResolver = true;
-
     this.transitionResolver = new TransitionIndexResolver(
         resolverSequenceData,
         highlightDataForResolver,
@@ -557,6 +660,10 @@ initializeTransitionResolver() {
         debugResolver,
         numOriginalTransitions
     );
+    this.fullTreeIndices = this.transitionResolver.fullTreeIndices;
+    this.scaleList = calculateScales(this.treeList, this.fullTreeIndices);
+    this.maxScale = getMaxScaleValue(this.scaleList);
+    this.numberOfFullTrees = this.fullTreeIndices.length;
 
     if (debugResolver || !this.transitionResolver.validateData().isValid) {
         console.log("[GUI] TransitionIndexResolver initialized.");
@@ -571,7 +678,7 @@ initializeTransitionResolver() {
     // this.updateUIForSequencePosition(this.currentSequenceIndex);
 }
 
-  // FIX: Moved this method INSIDE the Gui class.
+  // Moved this method INSIDE the Gui class.
   generateRealTreeList() {
     if (!Array.isArray(this.treeList)) return [];
     const realTreeData = [];
@@ -586,11 +693,14 @@ initializeTransitionResolver() {
 
   // ===== Scale Bar Update =====
   updateScale() {
-    const currentScaleValue = this.getCurrentScaleValue();
+    const fullTreeIndices = this.fullTreeIndices;
+    // Use the unified transition distance index for scale display
+    const transitionDistanceIdx = this.transitionResolver.getDistanceIndex(this.currentTreeIndex);
+    const currentScaleValue = getCurrentScaleValue(this.scaleList, transitionDistanceIdx);
     const maxScale = this.maxScale || 1;
     const scaleProgressBar = document.querySelector(".scale-progress-bar");
     if (scaleProgressBar) {
-      const percentValue = Math.max(0, Math.min(100, (currentScaleValue / maxScale) * 100));
+      const percentValue = calculateScalePercentage(currentScaleValue, maxScale);
       scaleProgressBar.style.width = `${percentValue}%`;
       return;
     }
@@ -602,14 +712,6 @@ initializeTransitionResolver() {
     }
   }
 
-  getCurrentScaleValue() {
-    if (this.scaleList?.[this.currentTreeIndex] !== undefined) {
-        const scaleItem = this.scaleList[this.currentTreeIndex];
-        return typeof scaleItem === 'object' ? scaleItem.value : scaleItem;
-    }
-    return 0;
-  }
-
   setFontSize(fontSize) {
     // Normalize font size to ensure it has a valid CSS unit
     if (typeof fontSize === 'number') {
@@ -619,7 +721,6 @@ initializeTransitionResolver() {
     } else {
       this.fontSize = fontSize;
     }
-
 
     STYLE_MAP.fontSize = this.fontSize;
 
