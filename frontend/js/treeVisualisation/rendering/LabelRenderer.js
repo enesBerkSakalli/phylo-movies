@@ -2,6 +2,7 @@ import * as d3 from "d3";
 import { LabelAnimator } from "./LabelAnimator.js";
 import { anchorCalc } from "../treeSvgGenerator.js"; // Used for non-animated initial/final states
 import { STYLE_MAP } from "./../TreeDrawer.js";
+import { getNodeKey, getNodeSvgId } from "../utils/KeyGenerator.js";
 /**
  * Enhanced LabelRenderer with improved animation capabilities,
  * delegating animation specifics to LabelAnimator.
@@ -59,7 +60,7 @@ export class LabelRenderer {
 
     const textLabels = this.svgContainer
       .selectAll(`.${this.labelClass}`)
-      .data(leafData, (d) => d.data.split_indices)
+      .data(leafData, getNodeKey)
             .style("font-size", this.sizeConfig.fontSize || "1.2em");
 
     textLabels
@@ -73,7 +74,7 @@ export class LabelRenderer {
       .enter()
       .append("text")
       .attr("class", this.labelClass)
-      .attr("id", (d) => `label-${d.data.split_indices}`)
+      .attr("id", (d) => getNodeSvgId(d, "label"))
       .attr("dy", ".31em")
       .style("font-size", this.sizeConfig.fontSize || "1.2em")
       .attr("font-weight", this.sizeConfig.fontWeight || "bold")
@@ -129,7 +130,7 @@ export class LabelRenderer {
 
     const internalLabels = this.svgContainer
       .selectAll(`.${this.internalLabelClass}`)
-      .data(internalNodeData, (d) => d.data.split_indices);
+      .data(internalNodeData, getNodeKey);
 
     internalLabels
       .exit()
@@ -142,7 +143,7 @@ export class LabelRenderer {
       .enter()
       .append("text")
       .attr("class", this.internalLabelClass)
-      .attr("id", (d) => `internal-label-${d.data.split_indices}`)
+      .attr("id", (d) => getNodeSvgId(d, "internal-label"))
       .attr("dy", ".31em")
       .style("font-size", STYLE_MAP.fontSize || "0.8em")
       .attr("font-weight", this.sizeConfig.internalFontWeight || "normal")

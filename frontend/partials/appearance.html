@@ -7,37 +7,32 @@
     </div>
     <span class="toggle-icon" id="toggle-scale-submenu">▼</span>
   </div>
-  
   <div class="submenu" id="appearance-submenu">
     <!-- Visualization Controls -->
-    <div class="submenu-section">
-      <h3 class="submenu-section-title">Visualization Controls</h3>
-      
-      <div class="slider-group">
+    <div class="compact-status" style="margin-bottom:8px; padding:8px 10px; display:flex; flex-direction:column; gap:8px;">
+      <div class="slider-group" style="margin-bottom:0;">
         <div class="slider-row">
-          <label class="slider-label" for="font-size">
+          <label class="slider-label" for="font-size" title="Adjust the font size for tree labels.">
             <i class="fa fa-font"></i> Font Size
           </label>
           <span class="slider-value" id="font-size-value">1.8</span>
         </div>
-        <input type="range" class="mdc-slider" id="font-size" min="0.5" max="3" step="0.1" value="1.8" 
-          oninput="document.getElementById('font-size-value').textContent = this.value" />
+        <input type="range" class="mdc-slider" id="font-size" min="0.5" max="3" step="0.1" value="1.8"
+          oninput="document.getElementById('font-size-value').textContent = this.value" title="Font size" />
       </div>
-      
-      <div class="slider-group">
+      <div class="slider-group" style="margin-bottom:0;">
         <div class="slider-row">
-          <label class="slider-label" for="stroke-width">
+          <label class="slider-label" for="stroke-width" title="Adjust the width of tree branches.">
             <i class="fa fa-paint-brush"></i> Stroke Width
           </label>
           <span class="slider-value" id="stroke-width-value">3</span>
         </div>
-        <input type="range" class="mdc-slider" id="stroke-width" min="1" max="6" step="0.5" value="3" 
-          oninput="document.getElementById('stroke-width-value').textContent = this.value" />
+        <input type="range" class="mdc-slider" id="stroke-width" min="1" max="6" step="0.5" value="3"
+          oninput="document.getElementById('stroke-width-value').textContent = this.value" title="Stroke width" />
       </div>
-      
       <div class="switch-group">
         <div class="switch-row">
-          <label class="switch-label" for="branch-length">
+          <label class="switch-label" for="branch-length" title="Toggle to ignore branch lengths in the tree visualization.">
             <i class="fa fa-code-fork"></i> Ignore Branch Lengths
           </label>
           <label class="switch">
@@ -47,10 +42,9 @@
         </div>
       </div>
     </div>
-    
     <!-- Taxa Coloring Button -->
-    <div class="button-row">
-      <button id="taxa-coloring-button" class="md-button">
+    <div class="button-row" style="margin-bottom:0;">
+      <button id="taxa-coloring-button" class="md-button compact" title="Open taxa coloring options">
         <i class="fa fa-paint-brush"></i> Taxa Coloring
       </button>
     </div>

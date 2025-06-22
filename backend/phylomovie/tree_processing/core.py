@@ -15,6 +15,7 @@ from typing import Any, Dict
 from werkzeug.datastructures import FileStorage
 import numpy as np
 from numpy.typing import ArrayLike
+import re
 
 
 def handle_uploaded_file(
@@ -39,7 +40,10 @@ def handle_uploaded_file(
     Returns:
         Dictionary containing all data needed for front-end visualization
     """
-    filename: str = secure_filename(file_storage.filename)
+    filename_value = (
+        file_storage.filename if file_storage.filename is not None else "uploaded_file"
+    )
+    filename: str = secure_filename(filename_value)
     logger: Logger = current_app.logger
     logger.info(f"Processing uploaded file: {filename}")
 
@@ -49,6 +53,18 @@ def handle_uploaded_file(
         return _create_empty_response(filename)
 
     logger.info(f"Successfully parsed {len(trees)} trees")
+
+    # Generate individual nexus files if input was nexus format
+    individual_nexus_files = None
+    file_storage.seek(0)  # Reset file pointer
+    file_content = file_storage.read().decode("utf-8").strip("\r")
+    if _detect_file_format(file_content) == "nexus":
+        logger.info("Generating individual NEXUS files for download")
+        # Extract newick strings again for individual nexus file creation
+        newick_strings = _parse_nexus_to_newick_list(file_content, logger)
+        individual_nexus_files = _create_individual_nexus_files(
+            newick_strings, filename, logger
+        )
 
     # Process trees through the pipeline
     processor = TreeProcessor(trees, enable_rooting)
@@ -86,16 +102,158 @@ def handle_uploaded_file(
         "tree_list": interpolated_json,
         "tree_names": tree_names,
         "file_name": filename,
+        "individual_nexus_files": individual_nexus_files,
         **msa_data,
     }
 
 
-def _parse_newick_file(file_storage: FileStorage, logger: Logger) -> TreeList:
-    """Parse Newick file and return list of trees."""
+def _parse_nexus_to_newick_list(nexus_content: str, logger: Logger) -> list[str]:
+    """
+    Parse NEXUS format and extract individual tree strings in Newick format.
+
+    Args:
+        nexus_content: The NEXUS file content as string
+        logger: Logger instance
+
+    Returns:
+        List of Newick format tree strings
+    """
     try:
-        newick_text: str = file_storage.read().decode("utf-8").strip("\r")
-        trees: Union[Node, TreeList] = parse_newick(tokens=newick_text)
-        trees = [trees] if isinstance(trees, Node) else trees
+        # Remove comments (enclosed in square brackets)
+        content_no_comments = re.sub(r"\[.*?\]", "", nexus_content, flags=re.DOTALL)
+
+        # Find the TREES block
+        trees_block_match = re.search(
+            r"BEGIN\s+TREES\s*;(.*?)END\s*;",
+            content_no_comments,
+            re.IGNORECASE | re.DOTALL,
+        )
+
+        if not trees_block_match:
+            logger.warning("No TREES block found in NEXUS file")
+            return []
+
+        trees_block = trees_block_match.group(1)
+
+        # Extract individual tree definitions
+        # Pattern matches: TREE [treename] = [tree_string];
+        tree_pattern = r"TREE\s+[^=]*=\s*([^;]+);"
+        tree_matches = re.findall(tree_pattern, trees_block, re.IGNORECASE | re.DOTALL)
+
+        newick_trees: list[str] = []
+        for tree_match in tree_matches:
+            # Clean up the tree string
+            tree_string = tree_match.strip()
+
+            # Remove any remaining whitespace and newlines
+            tree_string = re.sub(r"\s+", " ", tree_string).strip()
+
+            # Ensure the tree string doesn't end with semicolon for consistency
+            if tree_string.endswith(";"):
+                tree_string = tree_string[:-1]
+
+            if tree_string:  # Only add non-empty trees
+                newick_trees.append(tree_string)
+
+        logger.info(f"Extracted {len(newick_trees)} trees from NEXUS format")
+        return newick_trees
+    except Exception as e:
+        logger.error(f"Error parsing NEXUS format: {e}", exc_info=True)
+        return []
+
+
+def _create_individual_nexus_files(
+    tree_strings: list[str], base_filename: str, logger: Logger
+) -> list[dict[str, str]]:
+    """
+    Create individual NEXUS file content for each tree.
+
+    Args:
+        tree_strings: List of Newick format tree strings
+        base_filename: Base filename to derive individual filenames
+        logger: Logger instance
+
+    Returns:
+        List of dictionaries with 'filename' and 'content' keys
+    """
+    nexus_files: list[dict[str, str]] = []
+
+    # Remove file extension from base filename
+    base_name = base_filename.rsplit(".", 1)[0]
+
+    for i, tree_string in enumerate(tree_strings, 1):
+        # Create individual NEXUS file content
+        nexus_content = f"""#NEXUS
+
+BEGIN TREES;
+    TREE tree_{i} = {tree_string};
+END;
+"""
+
+        # Create filename for individual nexus file
+        individual_filename = f"{base_name}_tree_{i:03d}.nexus"
+
+        nexus_files.append({"filename": individual_filename, "content": nexus_content})
+
+    logger.info(f"Created {len(nexus_files)} individual NEXUS file contents")
+    return nexus_files
+
+
+def _detect_file_format(content: str) -> str:
+    """
+    Detect if the file content is NEXUS or Newick format.
+
+    Args:
+        content: File content as string
+
+    Returns:
+        'nexus' or 'newick'
+    """
+    content_upper = content.upper().strip()
+
+    # Check for NEXUS format indicators
+    if content_upper.startswith("#NEXUS") or "BEGIN TREES" in content_upper:
+        return "nexus"
+
+    return "newick"
+
+
+def _parse_newick_file(file_storage: FileStorage, logger: Logger) -> TreeList:
+    """Parse Newick or NEXUS file and return list of trees."""
+    try:
+        file_content: str = file_storage.read().decode("utf-8").strip("\r")
+
+        # Detect file format
+        file_format = _detect_file_format(file_content)
+
+        if file_format == "nexus":
+            logger.info("Detected NEXUS format file")
+            # Parse NEXUS and extract Newick strings
+            newick_strings = _parse_nexus_to_newick_list(file_content, logger)
+
+            if not newick_strings:
+                logger.warning("No trees extracted from NEXUS file")
+                return []
+
+            # Parse each Newick string into a tree object
+            trees = []
+            for newick_string in newick_strings:
+                try:
+                    tree_obj = parse_newick(tokens=newick_string)
+                    if isinstance(tree_obj, Node):
+                        trees.append(tree_obj)
+                    elif isinstance(tree_obj, list) and tree_obj:
+                        trees.extend(tree_obj)
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to parse tree: {newick_string[:50]}... Error: {e}"
+                    )
+
+        else:
+            # Handle as Newick format
+            logger.info("Detected Newick format file")
+            trees: Union[Node, TreeList] = parse_newick(tokens=file_content)
+            trees = [trees] if isinstance(trees, Node) else trees
 
         if not trees:
             raise ValueError("No valid trees parsed from file")
@@ -103,7 +261,7 @@ def _parse_newick_file(file_storage: FileStorage, logger: Logger) -> TreeList:
         return trees
 
     except Exception as e:
-        logger.error(f"Newick parsing failed: {e}", exc_info=True)
+        logger.error(f"File parsing failed: {e}", exc_info=True)
         return []
 
 
@@ -292,6 +450,7 @@ def _create_empty_response(filename: str) -> PhyloMovieData:
         "sorted_leaves": [],
         "tree_list": [],
         "file_name": filename,
+        "individual_nexus_files": None,
         "inferred_window_size": None,
         "inferred_step_size": None,
         "windows_are_overlapping": None,

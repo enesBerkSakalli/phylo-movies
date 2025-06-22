@@ -1,9 +1,9 @@
-import { generateChartModal } from "./chartGenerator.js";
+import { generateChartModal, ChartCallbackManager } from "./chartGenerator.js";
 
 // Open a robust, feature-rich modal chart using WinBox and advanced chart logic
 export function openModalChart(options) {
-  // Remove any existing WinBox modal (if needed)
-  const existing = document.querySelector('.winbox');
+  // Remove any existing chart WinBox modal (not MSA viewer)
+  const existing = document.querySelector('.winbox[data-chart="true"]');
   if (existing) existing.remove();
 
   const {
@@ -78,8 +78,23 @@ export function openModalChart(options) {
     ? currentTreeIndex
     : transitionResolver.getDistanceIndex(currentTreeIndex);
 
+  // Create unified callback manager for consistent behavior
+  const callbackManager = new ChartCallbackManager({
+    onPositionChange: (chartIdx) => {
+      const seqIdx = chartSpecificIndexToSequence(chartIdx);
+      if (barOptionValue === "scale" && typeof onGoToPosition === 'function') {
+        onGoToPosition(seqIdx);
+      } else if (typeof onGoToFullTreeDataIndex === 'function') {
+        onGoToFullTreeDataIndex(seqIdx);
+      }
+    }
+  });
+
   // Attach currentPosition to guiInstance for chartGenerator.js logic
-  if (guiInstance) guiInstance.currentPosition = currentPosition;
+  if (guiInstance) {
+    guiInstance.currentPosition = currentPosition;
+    guiInstance.callbackManager = callbackManager;
+  }
 
   // Render the modal chart using the robust WinBox-based modal
   generateChartModal(

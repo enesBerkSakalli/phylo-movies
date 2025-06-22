@@ -1,106 +1,54 @@
 <!-- Playback Controls -->
-<div  class="tree-navigation-panel" role="region" aria-label="Tree Navigation">
-
+<div class="tree-navigation-panel" role="region" aria-label="Tree Navigation">
   <div class="submenu" id="playback-submenu">
-    <div class="control-panel">
-      <!-- Main controls in single row -->
-      <div class="button-row single-row">
-        <div class="button-group compact">
-          <button
-            id="start-button"
-            type="button"
-            class="md-button primary compact"
-            title="Play"
-          >
-            <i class="fa fa-play"></i>
-          </button>
-          <button id="stop-button" type="button" class="md-button compact" title="Stop">
-            <i class="fa fa-stop"></i>
-          </button>
-          <button
-            id="backward-button"
-            type="button"
-            class="md-button compact"
-            title="Previous Frame"
-          >
-            <i class="fa fa-backward"></i>
-          </button>
-          <button
-            id="forward-button"
-            type="button"
-            class="md-button compact"
-            title="Next Frame"
-          >
-            <i class="fa fa-forward"></i>
-          </button>
-          <button
-            id="backwardStepButton"
-            type="button"
-            class="md-button compact"
-            title="Previous Tree"
-          >
-            <i class="fa fa-step-backward"></i>
-          </button>
-          <button
-            id="forwardStepButton"
-            type="button"
-            class="md-button compact"
-            title="Next Tree"
-          >
-            <i class="fa fa-step-forward"></i>
-          </button>
-        </div>
-      </div>
-
-    <div class="control-panel">
-      <div class="button-row single-row">
-        <div class="button-group compact">
-          <button
-            id="save-button"
-            type="button"
-            class="md-button compact"
-            title="Save SVG"
-          >
-            <i class="fa fa-save"></i> Save
-          </button>
-
-          <button
-            id="compare-sequence-button"
-            type="button"
-            class="md-button compact"
-            title="Compare Trees"
-          >
-            <i class="fa fa-exchange"></i> Compare
-          </button>
-        </div>
-      </div>
+    <div class="button-row single-row" style="gap:6px; margin-bottom:6px;">
+      <button id="start-button" type="button" class="md-button primary compact" title="Play animation from current position">
+        <i class="fa fa-play"></i><span class="sr-only">Play</span>
+      </button>
+      <button id="stop-button" type="button" class="md-button compact" title="Pause/stop animation">
+        <i class="fa fa-stop"></i><span class="sr-only">Stop</span>
+      </button>
+      <button id="backward-button" type="button" class="md-button compact" title="Go to previous frame (previous window in current tree)">
+        <i class="fa fa-backward"></i><span class="sr-only">Previous Frame</span>
+      </button>
+      <button id="forward-button" type="button" class="md-button compact" title="Go to next frame (next window in current tree)">
+        <i class="fa fa-forward"></i><span class="sr-only">Next Frame</span>
+      </button>
+      <button id="backwardStepButton" type="button" class="md-button compact" title="Go to previous tree (previous full tree)">
+        <i class="fa fa-step-backward"></i><span class="sr-only">Previous Tree</span>
+      </button>
+      <button id="forwardStepButton" type="button" class="md-button compact" title="Go to next tree (next full tree)">
+        <i class="fa fa-step-forward"></i><span class="sr-only">Next Tree</span>
+      </button>
+      <button id="save-button" type="button" class="md-button compact" title="Save current tree visualization as SVG">
+        <i class="fa fa-save"></i><span class="sr-only">Save SVG</span>
+      </button>
+      <button id="compare-sequence-button" type="button" class="md-button compact" title="Compare the current tree with the next tree">
+        <i class="fa fa-exchange"></i><span class="sr-only">Compare Trees</span>
+      </button>
     </div>
-      <!-- Animation Speed in compact form -->
-      <div class="factor-control compact">
-        <label for="factor">Speed</label>
-        <div class="mdc-input-with-button compact">
-          <input
-            type="number"
-            id="factor"
-            class="mdc-input compact"
-            min="1"
-            max="10"
-            value="2"
-          />
-          <span class="info-value">×</span>
+    <div class="factor-control compact" style="margin-bottom:4px; align-items:center; gap:8px;">
+      <i class="fa fa-tachometer" aria-hidden="true" style="color:#4fc3f7; font-size:13px;" title="Animation speed (higher is slower)"></i>
+      <div class="speed-knob-container">
+        <div class="speed-knob" title="Adjust animation speed (drag to rotate)">
+          <input type="range" id="factor" min="1" max="10" value="2" step="1" class="speed-knob-input" />
+          <div class="speed-knob-face">
+            <div class="speed-knob-indicator"></div>
+            <div class="speed-knob-center"></div>
+          </div>
         </div>
       </div>
+      <span class="info-value speed-value" style="min-width:18px; text-align:center;">2×</span>
     </div>
   </div>
-    <div class="submenu" id="msa-submenu">
-    <div class="button-row">
-      <button id="msa-viewer-btn" type="button" class="mdc-button primary">
+  <div class="submenu" id="msa-submenu">
+    <div class="button-row" style="margin-bottom:4px;">
+      <button id="msa-viewer-btn" type="button" class="mdc-button primary compact" title="Open the Multiple Sequence Alignment (MSA) viewer for the current window">
         <i class="fa fa-dna"></i>
         <span>Open Alignment Viewer</span>
       </button>
     </div>
-
-    <div id="msa-status" class="info-item" style="margin-top: 12px;">
+    <div id="msa-status" class="info-item" style="margin-top: 8px;">
       <div class="info-label">Status</div>
       <div class="info-value">No alignment data loaded</div>
     </div>

@@ -386,8 +386,146 @@ h1 {
   font-weight: var(--font-weight-medium, 500);
   font-size: var(--font-size-lg, 18px); /* Was 16px */
   color: var(--text-color-dark-theme-emphasis, #e3eaf2); /* More emphasis for title */
+  color: #333;
 }
 
+
+/* --- MSA Viewer Scrolling Fix --- */
+
+/*
+  This rule is the most important. It forces the WinBox content area
+  to hide any overflow, preventing the "double scrollbar" problem.
+  The scrolling will be handled by an inner div inside the React component.
+*/
+.winbox .wb-body {
+  overflow: hidden !important;
+}
+
+/*
+  The AlignmentViewer2Component has an inner wrapper with `overflow: auto`.
+  We can style its scrollbars for a better look.
+*/
+.alignment-viewer-2 .viewport::-webkit-scrollbar,
+div[style*="overflow: auto"]::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+div[style*="overflow: auto"]::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+div[style*="overflow: auto"]::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 5px;
+}
+
+div[style*="overflow: auto"]::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Ensure AlignmentViewer components are properly constrained */
+.alignment-viewer-container,
+.alignment-viewer,
+div[class*="AlignmentViewer"] {
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
+/* Allow internal scrolling from AlignmentViewer 2.0 */
+.alignment-viewer-2 .viewport,
+.alignment-viewer-2 .main-viewport,
+.alignment-viewer-2 [class*="viewport"],
+.alignment-viewer-2 [class*="scroll"] {
+  overflow: auto !important; /* Allow internal scrolling within the viewer */
+}
+
+/* But prevent outer container from creating additional scrollbars */
+.alignment-viewer-2 {
+  overflow: visible !important; /* Let the internal components handle scrolling */
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Specific AlignmentViewer 2.0 scrolling support */
+.alignment-viewer-2 .main-container,
+.alignment-viewer-2 .sequence-container,
+.alignment-viewer-2 .alignment-container {
+  overflow: auto !important;
+}
+
+/* Ensure horizontal scrolling works in MSA */
+.alignment-viewer-2 .sequence-row,
+.alignment-viewer-2 .alignment-row {
+  white-space: nowrap !important;
+  overflow-x: auto !important;
+}
+
+/* Ensure the main alignment content can overflow horizontally */
+.alignment-viewer-2 .main-viewport,
+.alignment-viewer-2 .alignment-content,
+.alignment-viewer-2 .alignment-row,
+.alignment-viewer-2 .sequence-row {
+  white-space: nowrap !important;
+  min-width: max-content !important;
+  width: auto !important;
+  max-width: none !important;
+}
+
+/* Make sure minimap and other components don't interfere */
+.alignment-viewer-2 .minimap-container {
+  overflow: visible !important;
+}
+
+/* Ensure proper scrollbar styling in MSA viewer */
+.alignment-viewer-2 ::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+.alignment-viewer-2 ::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 6px;
+}
+
+.alignment-viewer-2 ::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 6px;
+}
+
+.alignment-viewer-2 ::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* AlignmentViewer 2.0 SVG Icon Fixes - Fix for undefined/close.svg error */
+.alignment-viewer-2 [style*="close.svg"],
+.alignment-viewer-2 .close-button,
+.alignment-viewer-2 [class*="close"],
+.alignment-viewer-2 [aria-label*="close" i],
+.alignment-viewer-2 [title*="close" i] {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23666'%3E%3Cpath d='M3.293 3.293a1 1 0 011.414 0L8 6.586l3.293-3.293a1 1 0 111.414 1.414L9.414 8l3.293 3.293a1 1 0 01-1.414 1.414L8 9.414l-3.293 3.293a1 1 0 01-1.414-1.414L6.586 8 3.293 4.707a1 1 0 010-1.414z'/%3E%3C/svg%3E") !important;
+  background-size: 16px 16px !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+}
+
+/* Fix for any other missing AlignmentViewer 2.0 SVG icons */
+.alignment-viewer-2 [style*="undefined/"],
+.alignment-viewer-2 [src*="undefined/"] {
+  display: none !important;
+}
+
+/* Alternative: Provide text fallback for close buttons */
+.alignment-viewer-2 [style*="close.svg"]:empty::before,
+.alignment-viewer-2 .close-button:empty::before {
+  content: "×" !important;
+  font-size: 16px !important;
+  font-weight: bold !important;
+  color: #666 !important;
+  display: inline-block !important;
+  text-align: center !important;
+  line-height: 1 !important;
+}
 
 /* Tree Status Panel styles moved to navigation.css */
 
