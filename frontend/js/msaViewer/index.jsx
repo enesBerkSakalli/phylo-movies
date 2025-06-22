@@ -2,18 +2,18 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { createRoot } from "react-dom/client";
 import AlignmentViewer2Component from "./AlignmentViewer2Component";
-import localforage from "localforage";
+import { msaData, EVENTS } from "../services/dataService.js";
 
 
-// Custom hook: Load and update MSA data from localForage
+// Custom hook: Load and update MSA data from data service
 function useMSAData() {
   const [msaString, setMsaString] = useState("");
 
   const loadMSAData = useCallback(async () => {
     try {
-      const msaData = await localforage.getItem("phyloMovieMSAData");
-      if (msaData && msaData.rawData && typeof msaData.rawData === "string") {
-        setMsaString(msaData.rawData);
+      const data = await msaData.get();
+      if (data && data.rawData && typeof data.rawData === "string") {
+        setMsaString(data.rawData);
       } else {
         setMsaString("");
       }
@@ -32,8 +32,8 @@ function useMSAData() {
     const handler = () => {
       loadMSAData();
     };
-    window.addEventListener("msa-data-updated", handler);
-    return () => window.removeEventListener("msa-data-updated", handler);
+    window.addEventListener(EVENTS.MSA_UPDATED, handler);
+    return () => window.removeEventListener(EVENTS.MSA_UPDATED, handler);
   }, [loadMSAData]);
 
   return msaString;
@@ -101,18 +101,21 @@ function useMSAWinBox(msaString) {
       container.style.width = "100%";
       container.style.height = "100%";
       container.style.overflow = "hidden";
+      container.style.position = "relative";
+      container.style.boxSizing = "border-box";
 
       containerRef.current = container;
 
       const wb = new WinBox("Multiple Sequence Alignment", {
-        class: ["no-full"],
+        class: ["no-full", "no-scrollbars"],
         border: 2,
         width: 1000,
         height: 600,
         x: "center",
         y: "center",
         mount: container,
-        overflow: false, // Disable scrollbars
+        html: container,
+        overflow: false, // Disable WinBox scrollbars completely
         onclose: () => {
           if (rootRef.current) {
             try {
@@ -124,16 +127,18 @@ function useMSAWinBox(msaString) {
           rootRef.current = null;
         },
         onresize: throttleResize((width, height) => {
-          // Store dimensions instead of immediate re-render
-          dimensionsRef.current = { width, height };
+          // Store dimensions and account for WinBox borders/padding
+          const adjustedWidth = Math.max(100, width - 4); // Account for border
+          const adjustedHeight = Math.max(100, height - 4); // Account for border
+          dimensionsRef.current = { width: adjustedWidth, height: adjustedHeight };
 
           if (rootRef.current && containerRef.current) {
             try {
               rootRef.current.render(
                 <AlignmentViewer2Component
                   msaString={msaStringRef.current}
-                  containerWidth={width}
-                  containerHeight={height}
+                  containerWidth={adjustedWidth}
+                  containerHeight={adjustedHeight}
                 />
               );
             } catch {}
@@ -146,15 +151,17 @@ function useMSAWinBox(msaString) {
       rootRef.current = root;
 
       // Initial render
-      dimensionsRef.current = { width: wb.width, height: wb.height };
-      console.log(`[openMSAWindow] Initial render with dimensions: ${wb.width}x${wb.height}`);
+      const initialWidth = Math.max(100, wb.width - 4);
+      const initialHeight = Math.max(100, wb.height - 4);
+      dimensionsRef.current = { width: initialWidth, height: initialHeight };
+      console.log(`[openMSAWindow] Initial render with adjusted dimensions: ${initialWidth}x${initialHeight}`);
 
       try {
         root.render(
           <AlignmentViewer2Component
             msaString={currentMsaString}
-            containerWidth={wb.width}
-            containerHeight={wb.height}
+            containerWidth={initialWidth}
+            containerHeight={initialHeight}
           />
         );
         console.log("[openMSAWindow] Successfully rendered AlignmentViewer2Component");

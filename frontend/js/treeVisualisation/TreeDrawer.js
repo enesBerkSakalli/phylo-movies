@@ -5,6 +5,7 @@ import { NodeRenderer } from "./rendering/NodeRenderer.js";
 import { LabelRenderer } from "./rendering/LabelRenderer.js";
 import { ExtensionRenderer } from "./rendering/ExtensionRenderer.js";
 import { ColorManager } from "./systems/ColorManager.js";
+import { getLinkKey, getLinkSvgId } from "./utils/KeyGenerator.js";
 
 import {
   buildSvgStringTime,
@@ -262,13 +263,13 @@ export class TreeDrawer {
   /**
    * Generates a unique ID string for a link element based on its target node's split indices.
    * This ID is used to bind data to DOM elements in D3.
-   * Example: link.target.data.split_indices = [0, 1, 2] -> "link-0-1-2"
+   * Now uses centralized key generation for consistency.
    * @memberof TreeDrawer
    * @param {Object} link - The D3 link object. The link's target node must have `data.split_indices`.
    * @returns {string} A unique ID string for the link (e.g., "link-0-1-2").
    */
   getLinkId(link) {
-    return `link-${link.target.data.split_indices.join("-")}`;
+    return getLinkSvgId(link);
   }
 
   /**

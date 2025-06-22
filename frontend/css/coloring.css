@@ -399,54 +399,81 @@ select.mdc-select option,
 
 /* --- Manual Separator Controls UI --- */
 .manual-separator-controls {
-  margin-top: 20px; /* Space above this section */
-  padding-top: 15px; /* Space below the border */
-  border-top: 1px solid #555555; /* Solid line to differentiate */
+  margin-top: 15px;
+  border-top: 1px solid #444444;
+  padding-top: 10px;
 }
 
-.manual-separator-title { /* This is a <label> in JS, but styled like a title */
-  font-size: 1em; /* Match suggested title size */
-  color: #00aeff;   /* Accent color */
-  margin-bottom: 12px; /* Space after title */
-  font-weight: 600;
-  display: block; /* Ensure it takes its own line */
+.manual-separator-title {
+  display: block;
+  margin-bottom: 8px;
+  color: #b0b0b0;
+  font-size: 0.9em;
 }
 
 .manual-separator-control-group {
   display: flex;
-  flex-wrap: wrap; /* Allow wrapping on small screens */
+  flex-wrap: wrap;
+  gap: 10px;
   align-items: center;
-  gap: 15px; /* Space between dropdown and radio group */
-  background-color: rgba(0,0,0,0.1); /* Subtle background for the group */
-  padding: 10px;
-  border-radius: 6px;
 }
 
 .manual-dropdown-wrapper,
+.manual-occurrence-wrapper,
 .manual-first-letter-wrapper {
   display: flex;
   align-items: center;
-  gap: 8px; /* Space between label and control */
+  gap: 5px;
 }
 
-/* Ensure existing select styling applies to #manual-separator-dropdown */
-/* (select.mdc-select, .mode-select, .separator-select) */
-
-/* Styling for radio button and its label */
-.manual-first-letter-wrapper input[type="radio"] {
-  /* Modern browsers are hard to style directly for the radio button itself.
-     Focus on making it accessible and the label clear. */
-  margin-right: 5px; /* Space between radio and its text label */
-  accent-color: #00aeff; /* Styles the checkmark/dot in modern browsers */
-}
-.manual-first-letter-wrapper label {
+.separator-select,
+.occurrence-select {
+  background-color: #3a3a3a;
+  color: #e0e0e0;
+  border: 1px solid #555555;
+  border-radius: 4px;
+  padding: 4px 8px;
   font-size: 0.9em;
-  color: #e0e0e0; /* Primary text */
+  min-width: 80px;
+}
+
+.separator-select:hover,
+.occurrence-select:hover {
+  background-color: #4a4a4a;
+  border-color: #666666;
+}
+
+.separator-select:focus,
+.occurrence-select:focus {
+  outline: none;
+  border-color: #00aeff;
+  box-shadow: 0 0 0 2px rgba(0, 174, 255, 0.2);
+}
+
+.manual-first-letter-wrapper input[type="radio"] {
+  accent-color: #00aeff;
+}
+
+.manual-first-letter-wrapper label {
+  color: #e0e0e0;
+  font-size: 0.9em;
   cursor: pointer;
 }
 
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .manual-separator-control-group {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 
-/* Responsive Design - Keep and test, adjust values if needed */
+  .manual-dropdown-wrapper,
+  .manual-occurrence-wrapper,
+  .manual-first-letter-wrapper {
+    width: 100%;
+  }
+}
+
 @media (max-width: 700px) {
   .factory-modal-content,
   .factory-csp-container,

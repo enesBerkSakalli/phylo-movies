@@ -94,12 +94,12 @@ files = [
 
 [[package]]
 name = "brancharchitect"
-version = "0.36.0"
+version = "0.37.0"
 description = ""
 optional = false
 python-versions = ">=3.11,<4.0"
 files = [
-    {file = "brancharchitect-0.36.0-py3-none-any.whl", hash = "sha256:655245570226f67672e7e048dd2b5bc5271ecbd9841e3e0f8e65985534c20b6b"},
+    {file = "brancharchitect-0.37.0-py3-none-any.whl", hash = "sha256:532a6457b8ea3305f99ff8aac6a904ce691e1901dbca2035f29e9b4fb74d615b"},
 ]
 
 [package.dependencies]
@@ -108,7 +108,7 @@ pydantic = ">=2.0,<3.0"
 
 [package.source]
 type = "file"
-url = "brancharchitect-0.36.0-py3-none-any.whl"
+url = "brancharchitect-0.37.0-py3-none-any.whl"
 
 [[package]]
 name = "cffi"
@@ -1046,13 +1046,13 @@ scipy = ">=1.0"
 
 [[package]]
 name = "pytest"
-version = "8.4.0"
+version = "8.4.1"
 description = "pytest: simple powerful testing with Python"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "pytest-8.4.0-py3-none-any.whl", hash = "sha256:f40f825768ad76c0977cbacdf1fd37c6f7a468e460ea6a0636078f8972d4517e"},
-    {file = "pytest-8.4.0.tar.gz", hash = "sha256:14d920b48472ea0dbf68e45b96cd1ffda4705f33307dcc86c676c1b5104838a6"},
+    {file = "pytest-8.4.1-py3-none-any.whl", hash = "sha256:539c70ba6fcead8e78eebbf1115e8b589e7565830d7d006a8723f19ac8a0afb7"},
+    {file = "pytest-8.4.1.tar.gz", hash = "sha256:7c67fd69174877359ed9371ec3af8a3d2b04741818c51e5e99cc1742251fa93c"},
 ]
 
 [package.dependencies]
@@ -1533,4 +1533,4 @@ watchdog = ["watchdog (>=2.3)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "df51aca2e79ada21524a516581cfbe7c706190ff7cd72a5b745b299aa378b341"
+content-hash = "b140a809ee7eb9b7b3b27fd78a7fc55e0489fbe22b02c655f7e9576638c90f56"

@@ -6,20 +6,22 @@
   </div>
 
   <div class="panel-section status">
-    <div class="status-group">
-      <span class="label">Tree:</span>
+    <div class="compact-status" style="margin:0 0 4px 0; padding:6px 8px; background:rgba(0,0,0,0.08); border-radius:5px; display:flex; align-items:center; gap:8px;">
+      <i class="fa fa-tree" aria-hidden="true" style="color:#4fc3f7; font-size:13px;" title="Phylogenetic tree navigation"></i>
+      <span class="label" title="Current full tree / total full trees. Each tree represents a window of the alignment.">Tree:</span>
       <span class="value"><span id="currentFullTree">0</span>/<span id="numberOfFullTrees"></span></span>
-      <span class="label">Step:</span>
+      <span class="label" title="Current window / total windows in this tree.">Step:</span>
       <span class="value"><span id="currentTree"></span>/<span id="numberOfTrees">5</span></span>
     </div>
-    <div class="status-group">
-      <span class="label">Type:</span>
+    <div class="compact-status" style="margin:0 0 4px 0; padding:6px 8px; background:rgba(0,0,0,0.08); border-radius:5px; display:flex; align-items:center; gap:8px;">
+      <span class="label" title="Type of tree interpolation method used.">Tree Type:</span>
       <span class="value" id="treeLabel"></span>
     </div>
-    <div class="status-group">
-      <span class="label">Size:</span>
+    <div class="compact-status" style="margin:8px 0 4px 0; padding:6px 8px; background:rgba(0,0,0,0.08); border-radius:5px; display:flex; align-items:center; gap:8px;">
+      <i class="fa fa-th" aria-hidden="true" style="color:#4fc3f7; font-size:13px;" title="Multiple Sequence Alignment window info"></i>
+      <span class="label" title="MSA window size: number of alignment columns in this window.">MSA Window Size:</span>
       <span class="value" id="windowSize">-</span>
-      <span class="label">Step:</span>
+      <span class="label" title="MSA step size: number of columns the window moves each step.">MSA Step Size:</span>
       <span class="value" id="windowStepSize">-</span>
       <span class="label">Area:</span>
       <span class="value" id="windowArea">-</span>
@@ -44,15 +46,21 @@
     </div>
   </div>
 
-  <div class="panel-section scale">
+  <div class="panel-section scale compact-scale">
     <div class="scale-header">
-      <span class="scale-title">Scale</span>
+      <span class="scale-title">
+        Scale
+        <i class="fa fa-info-circle" style="margin-left:4px; color:#8fa1c7; cursor:help;" title="Scale: Maximum root-to-leaf path length (sum of branch lengths) in the current tree."></i>
+      </span>
       <span class="scale-values">
         <span id="currentScaleText">0.000</span>/<span id="maxScaleText">0.000</span>
       </span>
     </div>
     <div class="scale-bar">
       <div class="scale-progress-bar" style="width: 0%"></div>
+    </div>
+    <div class="scale-explanation" style="font-size: 0.85em; color: #8fa1c7; margin-bottom: 2px;">
+      Scale = Maximum root-to-leaf path length (sum of branch lengths) in the current tree.
     </div>
     <div class="scale-markers">
       <span style="left: 0%">0</span>

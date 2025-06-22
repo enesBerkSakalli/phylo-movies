@@ -1,5 +1,6 @@
 import * as d3 from "d3";
 import { buildSvgString } from "../treeSvgGenerator.js";
+import { getLinkKey, getLinkSvgId } from "../utils/KeyGenerator.js";
 
 /**
  * LinkRenderer - Specialized renderer for tree branch paths (links)
@@ -38,8 +39,8 @@ export class LinkRenderer {
    * @returns {d3.Selection} The updated links selection
    */
   render(linksData, getLinkId, interpolationFunction, duration = 1000, easing = "easePolyInOut", highlightEdges = []) {
-    // Always use robust internal key function
-    const keyFn = this._getLinkIdConsistent;
+    // Always use centralized key function for consistency
+    const keyFn = getLinkKey;
     this._highlightEdges = highlightEdges;
     const links = this.svgContainer
       .selectAll(`.${this.linkClass}`)
@@ -101,7 +102,7 @@ export class LinkRenderer {
       .attr("class", this.linkClass)
       .attr("stroke-width", d => this._isHighlighted(d, highlightEdges) ? (parseFloat(this.sizeConfig.strokeWidth) * 2.5) : this.sizeConfig.strokeWidth)
       .attr("fill", "none")
-      .attr("id", (d) => this._getLinkIdConsistent(d))
+      .attr("id", (d) => getLinkSvgId(d))
       .attr("d", (d) => buildSvgString(d))
       .style("stroke", (d) => this._isHighlighted(d, highlightEdges) ? "#2196f3" : this.colorManager.getBranchColor(d))
       .style("stroke-opacity", 1)
@@ -168,33 +169,6 @@ export class LinkRenderer {
     };
 
     return easingMap[easingName] || d3.easePolyInOut;
-  }
-
-  /**
-   * Helper to extract link ID from data (fallback method)
-   * @param {Object} linkData - The link data object
-   * @returns {string} Generated link ID
-   * @private
-   */
-
-  /**
-   * Robust, canonical link ID logic (source+target, root, missing data)
-   * @param {Object} link - The D3 link object
-   * @returns {string} Unique, robust link ID
-   */
-  _getLinkIdConsistent(link) {
-    const getSplitIndices = (node) => {
-      if (node && node.data && Array.isArray(node.data.split_indices)) {
-        return node.data.split_indices.join("-");
-      }
-      return "unknown";
-    };
-    // Try to detect root link robustly
-    const isRoot = !link.source || !link.source.parent || (link.target && link.target.parent == null);
-    const targetId = getSplitIndices(link.target);
-    return isRoot
-      ? `link-root-${targetId}`
-      : `link-${targetId}`;
   }
 
   /**

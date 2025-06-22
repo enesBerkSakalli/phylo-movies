@@ -9,8 +9,8 @@ import {
 } from "./partial/eventHandlers.js";
 import { loadAllPartials } from "./partial/loadPartials.js";
 import { ScreenRecorder } from "./record/record.js";
-import localforage from 'localforage';
-import { getPhyloMovieData, fetchTreeData } from "./dataManager.js"; // Updated import
+import { phyloData } from './services/dataService.js';
+import { getPhyloMovieData, fetchTreeData } from "./dataManager.js";
 
 let eventHandlersAttached = false;
 
@@ -43,10 +43,6 @@ async function loadAllRequiredPartials() {
       {
         url: "/partials/appearance.html",
         containerId: "appearance-container",
-      },
-      {
-        url: "/partials/msa-button.html",
-        containerId: "msa-button-container",
       },
       {
         url: "/partials/recording.html",
@@ -149,11 +145,9 @@ function processEmbeddingData(embeddingData) {
  */
 async function initializeGuiAndEvents(parsedData, processedEmbedding) {
   try {
-    console.log("[DEBUG] Initializing GUI and attaching event handlers.");
-
-    // Always fetch latest data from IndexedDB/localForage for all major fields
+    // Always fetch latest data from data service for all major fields
     // This ensures consistency if data was updated elsewhere, though typically parsedData should be fresh.
-    const dbData = await localforage.getItem("phyloMovieData");
+    const dbData = await phyloData.get();
     const {
       tree_list = [],
       weighted_robinson_foulds_distance_list = [],
@@ -165,8 +159,6 @@ async function initializeGuiAndEvents(parsedData, processedEmbedding) {
       file_name = "",
       tree_names = [] // Extract tree_names from stored data
     } = dbData || parsedData; // Fallback to initially parsedData if dbData is somehow null
-
-    console.log("[DEBUG] Extracted tree_names for GUI:", tree_names);
 
     let colorInternalBranches = true; // Default or configurable setting
 
@@ -187,7 +179,6 @@ async function initializeGuiAndEvents(parsedData, processedEmbedding) {
       tree_names // Pass tree_names as the 11th argument
     );
 
-    console.log("[DEBUG] Gui instance created successfully");
     window.gui = gui;
     window.emb = processedEmbedding; // Make processed embedding globally available
 
@@ -226,12 +217,9 @@ async function initializeGuiAndEvents(parsedData, processedEmbedding) {
       eventHandlersAttached = true;
       gui.initializeMovie();
       gui.play();
-      console.log("[DEBUG] Event handlers attached and movie initialized.");
-    }
-  } catch (guiError) {
-    console.error("[DEBUG] Error during GUI initialization or event handling:", guiError);
+    }    } catch (guiError) {
+    console.error("[initializeGuiAndEvents] Error:", guiError);
     alert(`Error creating visualization or attaching events: ${guiError.message}`);
-    // Depending on the error, might want to throw it to be caught by initializeAppFromParsedData
     throw guiError;
   }
 }
@@ -244,8 +232,6 @@ async function initializeGuiAndEvents(parsedData, processedEmbedding) {
  */
 async function initializeAppFromParsedData(parsedData) {
   try {
-    console.log("[DEBUG] Starting initializeAppFromParsedData with:", parsedData);
-
     const processedEmbedding = processEmbeddingData(parsedData.embedding);
 
     const partialsLoaded = await loadAllRequiredPartials();
@@ -257,15 +243,10 @@ async function initializeAppFromParsedData(parsedData) {
       return; // Stop further execution if partials failed
     }
 
-    console.log("[DEBUG] All partials loaded, proceeding to initialize GUI and events.");
     await initializeGuiAndEvents(parsedData, processedEmbedding);
-    console.log("[phylo-movies] GUI and events initialization complete.");
 
   } catch (err) {
-    console.error(
-      "[DEBUG] Error in initializeAppFromParsedData execution flow:",
-      err
-    );
+    console.error("[initializeAppFromParsedData] Error:", err);
     // Ensure user is alerted about critical failures during app initialization.
     alert(`Critical application initialization error: ${err.message}. Please try refreshing the page.`);
     // Optionally, redirect or attempt recovery if applicable.
@@ -320,7 +301,6 @@ if (isVisualizationPage) {
       }
 
       // Proceed with the main application initialization
-      console.log("[phylo-movies] Initializing visualization via initializeAppFromParsedData");
       await initializeAppFromParsedData(parsedData);
 
     } catch (e) {
@@ -331,9 +311,9 @@ if (isVisualizationPage) {
       );
       // As a fallback, try to clear potentially corrupted data and redirect to index.html
       try {
-        await localforage.removeItem("phyloMovieData");
+        await phyloData.remove();
       } catch (removeError) {
-        console.error("[phylo-movies] Failed to remove phyloMovieData from localForage:", removeError);
+        console.error("[phylo-movies] Failed to remove phyloMovieData:", removeError);
       }
       window.location.href = "/index.html";
     }

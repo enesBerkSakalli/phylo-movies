@@ -1,11 +1,9 @@
 import { EventHandlerRegistry } from './eventHandlerRegistry.js';
-import { EventHandlerIterator } from './eventHandlerIterator.js';
 import { notifications } from './notificationSystem.js';
 
 /**
  * Manages the attachment and detachment of GUI event handlers.
- * It uses an `EventHandlerRegistry` to define and manage handler configurations
- * and an `EventHandlerIterator` (though its usage seems to have been replaced by direct registry calls).
+ * It uses an `EventHandlerRegistry` to define and manage handler configurations.
  * @export
  * @class GuiEventHandlers
  */

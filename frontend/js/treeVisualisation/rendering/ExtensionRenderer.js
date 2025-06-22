@@ -1,5 +1,6 @@
 import * as d3 from "d3";
 import { buildSvgLinkExtension } from "../treeSvgGenerator.js";
+import { getExtensionKey, getExtensionSvgId } from "../utils/KeyGenerator.js";
 
 /**
  * ExtensionRenderer - Specialized renderer for tree link extensions
@@ -39,7 +40,7 @@ export class ExtensionRenderer {
     // JOIN: Bind data to existing elements
     const linkExtensions = this.svgContainer
       .selectAll(`.${this.extensionClass}`)
-      .data(leafData, (leaf) => leaf.data.name.toString());
+      .data(leafData, getExtensionKey);
 
     // EXIT: Remove elements not in new data
     this._handleExit(linkExtensions);
@@ -73,6 +74,7 @@ export class ExtensionRenderer {
       .enter()
       .append("path")
       .attr("class", this.extensionClass)
+      .attr("id", (d) => getExtensionSvgId(d))
       .attr("stroke-width", this.sizeConfig.strokeWidth)
       .attr("stroke-dasharray", this.sizeConfig.dashArray || "5,5")
       .attr("fill", "none")

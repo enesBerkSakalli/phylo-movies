@@ -1,5 +1,18 @@
-// DEPRECATED: This file is obsolete and replaced by modalChartManager.js and chartModal.js (Bootstrap-based modals).
-// Safe to delete if not referenced elsewhere.
+// PARTIALLY DEPRECATED: This file contains mixed legacy and unified chart functions.
+// - generateLineChart, updateChartIndicator, ChartCallbackManager, ChartStateManager: UNIFIED (keep)
+// - generateChartModal, updateShipPosition, and modal-specific functions: LEGACY (consider refactoring)
+//
+// The unified functions provide consistent chart rendering across lineChartManager and windowChartManager.
+// Legacy modal functions are still used by windowChartManager but should be migrated to the unified approach.
+//
+// FIXES:
+// 1. Fixed ship group ID inconsistency: updateChartIndicator now looks for both "#ship-modal-group" and ".ship-indicator-group"
+// 2. Fixed missing scale references: scales are now stored on SVG elements using svg.property()
+// 3. Added ChartStateManager for unified chart state management
+// 4. Added ChartCallbackManager for consistent callback handling
+// 5. Enhanced error handling and position validation
+// 6. Updated lineChartManager.js to use unified approach
+// 7. Updated windowChartManager.js to use ChartCallbackManager
 
 /**
  * Debounce function to limit the rate at which a function can fire.
@@ -69,6 +82,7 @@ function createSVG(containerId, dimensions) {
     .attr("width", "100%")
     .attr("height", "100%")
     .attr("viewBox", `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
+    .attr("preserveAspectRatio", "xMidYMid meet") // Responsive scaling
     .style("font-family", "Heebo, sans-serif")
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
@@ -188,11 +202,11 @@ function drawChart(svg, data, scales, config) {
 /**
  * Draws interactive data points with tooltips
  */
-function drawDataPoints(svg, data, scales, guiInstance, config) {
+function drawDataPoints(svg, data, scales, guiInstance, config, containerId) {
   const { xScale, yScale } = scales;
 
   // Tooltip
-  const tooltip = d3.select("#modal-graph-chart")
+  const tooltip = d3.select(`#${containerId}`)
     .append("div")
     .attr("class", "chart-tooltip")
     .style("opacity", 0)
@@ -243,7 +257,7 @@ function drawDataPoints(svg, data, scales, guiInstance, config) {
     .on("click", function (event, d) {
       const index = parseInt(d3.select(this).attr("data-index"), 10);
       // Always update ship and GUI state
-      updateShipPosition(index, guiInstance, scales, config, data);
+      updateShipPosition(index, guiInstance, scales, config, data, containerId);
     });
 
   return circles;
@@ -252,9 +266,9 @@ function drawDataPoints(svg, data, scales, guiInstance, config) {
 /**
  * Creates or updates the ship position indicator
  */
-function updateShipPosition(position, guiInstance, scales, config, data) {
+function updateShipPosition(position, guiInstance, scales, config, data, containerId) {
   const { xScale, yScale } = scales;
-  const svg = d3.select("#modal-graph-chart").select("svg").select("g");
+  const svg = d3.select(`#${containerId}`).select("svg").select("g");
 
   // Handle empty data or missing scales
   if (!data || data.length === 0 || !xScale || !yScale) {
@@ -372,7 +386,7 @@ function updateShipPosition(position, guiInstance, scales, config, data) {
         });
         closestIndex = Math.max(0, Math.min(data.length - 1, closestIndex));
         // Always update ship and GUI state
-        updateShipPosition(closestIndex, guiInstance, scales, config, data);
+        updateShipPosition(closestIndex, guiInstance, scales, config, data, containerId);
       })
       .on("end", function() {
         d3.select(this).selectAll(".ship-line").attr("stroke-width", 2);
@@ -384,39 +398,61 @@ function updateShipPosition(position, guiInstance, scales, config, data) {
   }
 }
 
-// Expose updateShipPosition globally for external updates
-window.updateModalShipPosition = function(position, guiInstance) {
-  // Get the current chart data and config from the GUI instance
-  let data, config;
+/**
+ * Update the chart indicator (ship position) without re-adding drag behavior
+ * @param {string} containerId - The ID of the container
+ * @param {number} position - The position to update to
+ * @param {Object} config - The config object with xAccessor and yAccessor
+ * @param {Array} data - The data array
+ */
+export function updateChartIndicator(containerId, position, config, data) {
+  const svg = d3.select(`#${containerId}`).select("svg").select("g");
 
-  if (guiInstance.barOptionValue === "rfd") {
-    data = guiInstance.robinsonFouldsDistances;
-    config = {
-      xAccessor: (d, i) => i + 1,
-      yAccessor: (d) => d,
-    };
-  } else if (guiInstance.barOptionValue === "w-rfd") {
-    data = guiInstance.weightedRobinsonFouldsDistances;
-    config = {
-      xAccessor: (d, i) => i + 1,
-      yAccessor: (d) => d,
-    };
-  } else if (guiInstance.barOptionValue === "scale") {
-    data = guiInstance.scaleList;
-    config = {
-      xAccessor: (d, i) => i + 1,
-      yAccessor: (d) => d.value,
-    };
+  // Try to get scales from stored references or compute them
+  let xScale = svg.property('__xScale');
+  let yScale = svg.property('__yScale');
+
+  if (!xScale || !yScale) {
+    console.warn(`[updateChartIndicator] Scales not found for container ${containerId}, cannot update indicator`);
+    return;
   }
 
-  if (data && config && guiInstance.modalXScale && guiInstance.modalYScale) {
-    const scales = {
-      xScale: guiInstance.modalXScale,
-      yScale: guiInstance.modalYScale
-    };
-    updateShipPosition(position, guiInstance, scales, config, data);
+  // Use the same logic as updateShipPosition, but do not re-add drag
+  const validPosition = Math.max(0, Math.min(data.length - 1, position));
+
+  // Look for ship group with consistent ID
+  let shipGroup = svg.select("#ship-modal-group");
+  if (shipGroup.empty()) {
+    // Fallback to class-based selector for backward compatibility
+    shipGroup = svg.select(".ship-indicator-group");
   }
-};
+
+  if (shipGroup.empty()) {
+    console.warn(`[updateChartIndicator] Ship group not found in container ${containerId}`);
+    return;
+  }
+
+  const shipX = xScale(config.xAccessor(data[validPosition], validPosition));
+  const height = yScale.range()[0];
+
+  shipGroup.select(".ship-touch-target").attr("x", shipX - 15);
+  shipGroup.select(".ship-line").attr("x1", shipX).attr("x2", shipX);
+  shipGroup.select(".ship-handle").attr("cx", shipX);
+  shipGroup.select(".handle-value")
+    .attr("x", shipX)
+    .text(config.yAccessor(data[validPosition]).toFixed(3));
+  shipGroup.select(".current-position-label")
+    .attr("x", shipX)
+    .text(`${validPosition + 1}`);
+
+  // Update data points highlighting
+  svg.selectAll(".data-points circle").attr("fill", "#4390e1").attr("r", 4);
+  svg.selectAll(".data-points circle")
+    .filter((d, i) => i === validPosition)
+    .attr("fill", "#FF4500").attr("r", 6);
+}
+
+
 
 /**
  * Main chart rendering function
@@ -453,11 +489,16 @@ function renderChart(guiInstance, data, config) {
       }
       closestIndex = Math.max(0, Math.min(data.length - 1, closestIndex));
       // Always update ship and GUI state
-      updateShipPosition(closestIndex, guiInstance, scales, config, data);
+      updateShipPosition(closestIndex, guiInstance, scales, config, data, "modal-graph-chart");
     });
 
-  drawDataPoints(svg, data, scales, guiInstance, config); // Draw points on top of background
-  updateShipPosition(guiInstance.currentPosition, guiInstance, scales, config, data);
+  drawDataPoints(svg, data, scales, guiInstance, config, "modal-graph-chart"); // Draw points on top of background
+
+  // Store scales on the SVG for later access by updateChartIndicator
+  svg.property('__xScale', scales.xScale);
+  svg.property('__yScale', scales.yScale);
+
+  updateShipPosition(guiInstance.currentPosition, guiInstance, scales, config, data, "modal-graph-chart");
 }
 
 /**
@@ -510,6 +551,15 @@ function createModalWindow(title, onCloseCallback) {
   // Add custom styles for the modal
   const style = document.createElement('style');
   document.head.appendChild(style);
+
+  // Mark this as a chart window to avoid conflicts with MSA viewer
+  setTimeout(() => {
+    const winboxElement = winbox.dom;
+    if (winboxElement) {
+      winboxElement.setAttribute('data-chart', 'true');
+    }
+  }, 0);
+
   return winbox;
 }
 
@@ -642,4 +692,165 @@ export function saveChart(guiInstance, containerId, filename) {
       reject(error);
     }
   });
+}
+
+/**
+ * Renders a robust line chart to any container (not just modal)
+ * @param {string} containerId - The DOM id of the container to render into
+ * @param {Array} data - The chart data array
+ * @param {Object} config - Chart config (xLabel, yLabel, yMax, xAccessor, yAccessor, tooltipFormatter, etc)
+ * @param {Object} guiInstance - Optional, for state sync and callbacks
+ */
+export function generateLineChart(containerId, data, config, guiInstance) {
+  // Calculate dimensions based on the target container
+  function calculateChartDimensionsForContainer(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) {
+      console.warn(`Container ${containerId} not found, using defaults`);
+      return { containerWidth: 800, containerHeight: 400, width: 740, height: 340, margin: { top: 20, right: 30, bottom: 60, left: 60 } };
+    }
+
+    // Use getBoundingClientRect for more accurate sizing
+    const rect = container.getBoundingClientRect();
+    const containerWidth = rect.width || container.clientWidth || 800;
+    const containerHeight = rect.height || container.clientHeight || 400;
+
+    // Ensure minimum dimensions for readability
+    const adjustedWidth = Math.max(containerWidth, 300);
+    const adjustedHeight = Math.max(containerHeight, 180);
+
+    const margin = {
+      top: Math.max(20, adjustedHeight * 0.06),
+      right: Math.max(30, adjustedWidth * 0.06),
+      bottom: Math.max(60, adjustedHeight * 0.15),
+      left: Math.max(60, adjustedWidth * 0.1)
+    };
+    return {
+      containerWidth: adjustedWidth,
+      containerHeight: adjustedHeight,
+      width: adjustedWidth - margin.left - margin.right,
+      height: adjustedHeight - margin.top - margin.bottom,
+      margin
+    };
+  }
+
+  // Remove any existing SVG or tooltip in the container
+  d3.select(`#${containerId}`).select("svg").remove();
+  d3.select(`#${containerId}`).selectAll(".chart-tooltip").remove();
+
+  // Add loading indicator
+  const container = document.getElementById(containerId);
+  if (container) {
+    container.classList.add('loading');
+    setTimeout(() => container.classList.remove('loading'), 100); // Brief loading indication
+  }
+
+  const dimensions = calculateChartDimensionsForContainer(containerId);
+  const scales = createScales(data, dimensions.width, dimensions.height, config);
+  const svg = createSVG(containerId, dimensions);
+
+  // Create chart state manager
+  const chartStateManager = new ChartStateManager(containerId, 'line-chart');
+  chartStateManager.setData(data, config);
+  chartStateManager.setScales(scales.xScale, scales.yScale);
+
+  drawAxesAndGrid(svg, scales, dimensions, config);
+  drawChart(svg, data, scales, config);
+  drawDataPoints(svg, data, scales, guiInstance, config, containerId);
+
+  // Store scales on the SVG for later access by updateChartIndicator
+  svg.property('__xScale', scales.xScale);
+  svg.property('__yScale', scales.yScale);
+
+  if (guiInstance && typeof guiInstance.currentPosition === 'number') {
+    updateShipPosition(guiInstance.currentPosition, guiInstance, scales, config, data, containerId);
+  }
+
+  return chartStateManager;
+
+
+}
+
+/**
+ * Unified callback interface for chart interactions
+ */
+export class ChartCallbackManager {
+  constructor(callbacks = {}) {
+    this.onPositionChange = callbacks.onPositionChange || (() => {});
+    this.onDragStart = callbacks.onDragStart || (() => {});
+    this.onDragEnd = callbacks.onDragEnd || (() => {});
+    this.onPointClick = callbacks.onPointClick || (() => {});
+  }
+
+  // Map chart index to sequence index using provided mapping function
+  mapToSequenceIndex(chartIndex, mappingFunction) {
+    return mappingFunction ? mappingFunction(chartIndex) : chartIndex;
+  }
+
+  // Map sequence index to chart index using provided mapping function
+  mapToChartIndex(sequenceIndex, mappingFunction) {
+    return mappingFunction ? mappingFunction(sequenceIndex) : sequenceIndex;
+  }
+}
+
+/**
+ * Enhanced chart state manager for unified chart operations
+ */
+export class ChartStateManager {
+  constructor(containerId, chartType) {
+    this.containerId = containerId;
+    this.chartType = chartType;
+    this.scales = null;
+    this.data = null;
+    this.config = null;
+    this.callbackManager = null;
+    this.indexMappings = {
+      chartToSequence: (idx) => idx,
+      sequenceToChart: (idx) => idx
+    };
+  }
+
+  setData(data, config) {
+    this.data = data;
+    this.config = config;
+  }
+
+  setScales(xScale, yScale) {
+    this.scales = { xScale, yScale };
+    // Store on SVG as well for backward compatibility
+    const svg = d3.select(`#${this.containerId}`).select("svg").select("g");
+    svg.property('__xScale', xScale);
+    svg.property('__yScale', yScale);
+  }
+
+  setIndexMappings(chartToSequence, sequenceToChart) {
+    this.indexMappings.chartToSequence = chartToSequence;
+    this.indexMappings.sequenceToChart = sequenceToChart;
+  }
+
+  setCallbackManager(callbackManager) {
+    this.callbackManager = callbackManager;
+  }
+
+  updatePosition(sequencePosition) {
+    if (!this.data || !this.config || !this.scales) {
+      console.warn(`[ChartStateManager] Cannot update position: missing data, config, or scales`);
+      return;
+    }
+
+    const chartPosition = this.indexMappings.sequenceToChart(sequencePosition);
+
+    // Validate position bounds
+    const validChartPosition = Math.max(0, Math.min(this.data.length - 1, chartPosition));
+
+    updateChartIndicator(this.containerId, validChartPosition, this.config, this.data);
+  }
+
+  destroy() {
+    const container = document.getElementById(this.containerId);
+    if (container) {
+      d3.select(container).select("svg").remove();
+      d3.select(container).selectAll(".chart-tooltip").remove();
+    }
+  }
 }

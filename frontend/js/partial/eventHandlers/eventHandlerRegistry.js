@@ -78,9 +78,23 @@ export class EventHandlerRegistry {
           },
           {
             id: "factor",
-            type: "change",
+            type: "input",
             action: (event) => {
-              this.gui.factor = parseFloat(event.target.value);
+              const value = event.target.value;
+              this.gui.factor = parseFloat(value);
+
+              // Update the speed knob visual rotation
+              const indicator = document.querySelector('.speed-knob-indicator');
+              if (indicator) {
+                const angle = -126 + ((value - 1) / 9) * 252; // Map 1-10 to -126° to +126°
+                indicator.style.transform = `translateX(-50%) rotate(${angle}deg)`;
+              }
+
+              // Update the displayed value
+              const speedValue = document.querySelector('.speed-value');
+              if (speedValue) {
+                speedValue.textContent = `${value}×`;
+              }
             },
             description: "Speed factor change",
           },

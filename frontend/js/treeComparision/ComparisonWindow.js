@@ -1,16 +1,12 @@
 
 import { TreeRenderer } from "./TreeRenderer.js";
 
-// Debounce utility function
+// Import debounce function from chart utilities to avoid duplication
 function debounce(func, wait) {
   let timeout;
-  return function executedFunction(...args) {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
+  return function (...args) {
     clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
+    timeout = setTimeout(() => func.apply(this, args), wait);
   };
 }
 

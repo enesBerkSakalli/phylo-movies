@@ -1,6 +1,7 @@
 import * as d3 from "d3";
 import { COLOR_MAP } from "../../treeColoring/ColorMap.js";
 import { attr2TweenCircleX, attr2TweenCircleY } from "../treeSvgGenerator.js";
+import { getNodeKey, getNodeSvgId } from "../utils/KeyGenerator.js";
 
 /**
  * NodeRenderer - Specialized renderer for tree nodes (circles, internal nodes, etc.)
@@ -40,7 +41,7 @@ export class NodeRenderer {
     // JOIN: Bind data to existing elements
     const leafCircles = this.svgContainer
       .selectAll(`.${this.leafClass}`)
-      .data(leafData, (d) => d.data.split_indices);
+      .data(leafData, getNodeKey);
 
     // EXIT: Remove elements not in new data
     this._handleLeafExit(leafCircles);
@@ -70,7 +71,7 @@ export class NodeRenderer {
     // JOIN: Bind data to existing elements
     const internalNodes = this.svgContainer
       .selectAll(`.${this.internalNodeClass}`)
-      .data(internalNodeData, (d) => d.data.split_indices);
+      .data(internalNodeData, getNodeKey);
 
     // EXIT: Remove elements not in new data
     this._handleInternalNodeExit(internalNodes);
@@ -104,7 +105,7 @@ export class NodeRenderer {
       .enter()
       .append("circle")
       .attr("class", this.leafClass)
-      .attr("id", (d) => `circle-${d.data.split_indices}`)
+      .attr("id", (d) => getNodeSvgId(d, "circle"))
       .attr("cx", (d) => currentMaxRadius * Math.cos(d.angle))
       .attr("cy", (d) => currentMaxRadius * Math.sin(d.angle))
       .attr("r", this.sizeConfig.leafRadius || "0.4em")
@@ -174,7 +175,7 @@ export class NodeRenderer {
       .enter()
       .append("circle")
       .attr("class", this.internalNodeClass)
-      .attr("id", (d) => `internal-${d.data.split_indices}`)
+      .attr("id", (d) => getNodeSvgId(d, "internal"))
       .attr("r", this.sizeConfig.internalNodeRadius || "0.2em")
       .attr("cx", (d) => d.y * Math.cos(d.angle || 0))
       .attr("cy", (d) => d.y * Math.sin(d.angle || 0))

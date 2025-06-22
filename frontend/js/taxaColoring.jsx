@@ -87,11 +87,20 @@ export default class TaxaColoring {
             if (this.manualSeparatorControls) { // Check if manual controls are initialized
                 if (this.selectedStrategyType === 'first-letter' || this.separator === 'first-letter') {
                     if (this.manualSeparatorControls.firstLetterRadio) this.manualSeparatorControls.firstLetterRadio.checked = true;
-                     if(this.manualSeparatorControls.dropdown && this.manualSeparatorControls.dropdown.options.length > 0) {
+                    if(this.manualSeparatorControls.dropdown && this.manualSeparatorControls.dropdown.options.length > 0) {
                         this.manualSeparatorControls.dropdown.value = this.manualSeparatorControls.dropdown.options[0].value; // Reset dropdown
-                     }
+                    }
                 } else {
-                    if (this.manualSeparatorControls.dropdown) this.manualSeparatorControls.dropdown.value = selectedStrategy.separator;
+                    if (this.manualSeparatorControls.dropdown) {
+                        this.manualSeparatorControls.dropdown.value = selectedStrategy.separator;
+                        // Trigger the dropdown change to update occurrence options
+                        if (this.manualSeparatorControls.dropdown.onchange) {
+                            this.manualSeparatorControls.dropdown.onchange();
+                        }
+                    }
+                    if (this.manualSeparatorControls.occurrenceSelect) {
+                        this.manualSeparatorControls.occurrenceSelect.value = selectedStrategy.strategyType;
+                    }
                     if (this.manualSeparatorControls.firstLetterRadio) this.manualSeparatorControls.firstLetterRadio.checked = false;
                 }
             }
@@ -129,69 +138,122 @@ export default class TaxaColoring {
   }
 
   /**
-   * Creates manual controls for selecting a separator character or 'First Letter' grouping.
-   * This includes a dropdown for specific characters ('-', '_', '.', ' ') and a radio
-   * button for 'First Letter' grouping. Changes here update `this.separator` and
+   * Creates manual controls for selecting a separator character, occurrence number, and 'First Letter' grouping.
+   * This includes a dropdown for specific characters ('-', '_', '.', ' '), an occurrence selector,
+   * and a radio button for 'First Letter' grouping. Changes here update `this.separator` and
    * `this.selectedStrategyType`, then refresh the group options display.
    *
-   * @returns {Object} An object containing the main container element, the dropdown select element,
-   * and the first letter radio button element.
-   *   - `container` (HTMLElement): The main div holding these manual controls.
-   *   - `dropdown` (HTMLSelectElement): The dropdown for selecting a separator character.
-   *   - `firstLetterRadio` (HTMLInputElement): The radio button for 'First Letter' option.
+   * @returns {Object} An object containing the main container element and the control elements.
    */
   createManualSeparatorControls() {
     const container = document.createElement("div");
-    container.className = "manual-separator-controls"; // For CSS styling
-    // Basic styling for layout, ideally enhanced by CSS.
-    // container.style.marginTop = '15px'; // CSS: .manual-separator-controls
-    // container.style.borderTop = '1px solid #ccc'; // CSS: .manual-separator-controls
-    // container.style.paddingTop = '10px'; // CSS: .manual-separator-controls
+    container.className = "manual-separator-controls";
 
     const titleLabel = document.createElement("label");
     titleLabel.textContent = "Or, define grouping manually:";
-    titleLabel.className = "manual-separator-title"; // For CSS styling
-    // titleLabel.style.display = 'block'; // CSS: .manual-separator-title
-    // titleLabel.style.marginBottom = '8px'; // CSS: .manual-separator-title
+    titleLabel.className = "manual-separator-title";
     container.appendChild(titleLabel);
 
     const controlGroup = document.createElement('div');
-    controlGroup.className = "manual-separator-control-group"; // For CSS styling (e.g., flex)
+    controlGroup.className = "manual-separator-control-group";
 
     // Dropdown for specific separator characters
     const dropdownWrapper = document.createElement('div');
     dropdownWrapper.className = "manual-dropdown-wrapper";
     const dropdownLabel = document.createElement("label");
-    dropdownLabel.textContent = "Separator Character:";
+    dropdownLabel.textContent = "Separator:";
     dropdownLabel.htmlFor = "manual-separator-dropdown";
-    dropdownLabel.style.marginRight = "5px"; // Spacing between label and dropdown
+    dropdownLabel.style.marginRight = "5px";
     dropdownWrapper.appendChild(dropdownLabel);
 
-    const dropdown = document.createElement("select"); // The actual dropdown element
+    const dropdown = document.createElement("select");
     dropdown.id = "manual-separator-dropdown";
-    dropdown.className = "separator-select"; // Reuse existing class for styling
+    dropdown.className = "separator-select";
 
-    const defaultSeparators = ['-', '_', '.', ' ']; // 'first-letter' is handled by radio
+    const defaultSeparators = ['-', '_', '.', ' '];
     defaultSeparators.forEach(sepChar => {
       const option = document.createElement("option");
       option.value = sepChar;
       option.textContent = sepChar === ' ' ? 'Space' : sepChar;
       dropdown.appendChild(option);
     });
-    // Set initial value carefully based on current state, excluding 'first-letter'
-    dropdown.value = defaultSeparators.includes(this.separator) && this.separator !== 'first-letter'
-                     ? this.separator
-                     : defaultSeparators[0]; // Default to the first separator if current is 'first-letter' or not in list
 
-    dropdown.onchange = () => {
+    // Occurrence selector
+    const occurrenceWrapper = document.createElement('div');
+    occurrenceWrapper.className = "manual-occurrence-wrapper";
+    const occurrenceLabel = document.createElement("label");
+    occurrenceLabel.textContent = "Use:";
+    occurrenceLabel.htmlFor = "manual-occurrence-select";
+    occurrenceLabel.style.marginLeft = "10px";
+    occurrenceLabel.style.marginRight = "5px";
+    occurrenceWrapper.appendChild(occurrenceLabel);
+
+    const occurrenceSelect = document.createElement("select");
+    occurrenceSelect.id = "manual-occurrence-select";
+    occurrenceSelect.className = "occurrence-select";
+
+    // Populate occurrence options based on the current separator and taxa names
+    const updateOccurrenceOptions = (selectedSeparator) => {
+      // Clear existing options
+      occurrenceSelect.innerHTML = '';
+
+      if (!this.taxaNames || this.taxaNames.length === 0) {
+        const option = document.createElement("option");
+        option.value = "first";
+        option.textContent = "First occurrence";
+        occurrenceSelect.appendChild(option);
+        return;
+      }
+
+      // Find max occurrences of the selected separator across all taxa
+      const maxOccurrences = Math.max(...this.taxaNames.map(name =>
+        (name.split(selectedSeparator).length - 1)
+      ));
+
+      // Add "First" and "Last" options
+      const firstOption = document.createElement("option");
+      firstOption.value = "first";
+      firstOption.textContent = "Before first";
+      occurrenceSelect.appendChild(firstOption);
+
+      // Add numbered occurrence options if there are multiple occurrences
+      if (maxOccurrences > 1) {
+        for (let i = 2; i <= Math.min(maxOccurrences, 10); i++) {
+          const option = document.createElement("option");
+          option.value = `nth-${i}`;
+          option.textContent = `Between ${this._getOrdinal(i-1)} and ${this._getOrdinal(i)}`;
+          occurrenceSelect.appendChild(option);
+        }
+      }
+
+      const lastOption = document.createElement("option");
+      lastOption.value = "last";
+      lastOption.textContent = "Before last";
+      occurrenceSelect.appendChild(lastOption);
+    };
+
+    // Update the change handler to include occurrence
+    const updateGrouping = () => {
+      if (firstLetterRadio && firstLetterRadio.checked) return; // Don't update if first letter is selected
+
       this.separator = dropdown.value;
-      this.selectedStrategyType = 'manual_char'; // Indicate manual character selection
-      if (firstLetterRadio) firstLetterRadio.checked = false; // Uncheck radio if dropdown is used
+      this.selectedStrategyType = occurrenceSelect.value;
       this.clearContainer(this.dynamicContentPlaceholder);
       this.renderGroupOptions(this.dynamicContentPlaceholder);
     };
+
+    dropdown.onchange = () => {
+      updateOccurrenceOptions(dropdown.value);
+      updateGrouping();
+      if (firstLetterRadio) firstLetterRadio.checked = false;
+    };
+
+    occurrenceSelect.onchange = updateGrouping;
+
     dropdownWrapper.appendChild(dropdown);
+    occurrenceWrapper.appendChild(occurrenceSelect);
     controlGroup.appendChild(dropdownWrapper);
+    controlGroup.appendChild(occurrenceWrapper);
 
     // Radio button for "First Letter"
     const firstLetterWrapper = document.createElement('div');
@@ -199,19 +261,14 @@ export default class TaxaColoring {
     const firstLetterRadio = document.createElement("input");
     firstLetterRadio.type = "radio";
     firstLetterRadio.id = "first-letter-radio";
-    firstLetterRadio.name = "manualGroupStrategyRadio"; // Name for the radio group
+    firstLetterRadio.name = "manualGroupStrategyRadio";
     firstLetterRadio.value = "first-letter";
-    // Initial check based on this.separator or this.selectedStrategyType
     firstLetterRadio.checked = this.separator === 'first-letter' || this.selectedStrategyType === 'first-letter';
 
     firstLetterRadio.onchange = () => {
       if (firstLetterRadio.checked) {
         this.separator = 'first-letter';
         this.selectedStrategyType = 'first-letter';
-        // Reset dropdown to its first option as it's not "active" for grouping
-        if (dropdown.options.length > 0) {
-            dropdown.value = dropdown.options[0].value;
-        }
         this.clearContainer(this.dynamicContentPlaceholder);
         this.renderGroupOptions(this.dynamicContentPlaceholder);
       }
@@ -220,7 +277,7 @@ export default class TaxaColoring {
     const firstLetterLabelText = document.createElement("label");
     firstLetterLabelText.textContent = "First Letter";
     firstLetterLabelText.htmlFor = "first-letter-radio";
-    firstLetterLabelText.style.marginLeft = "5px"; // Spacing between radio and its label text
+    firstLetterLabelText.style.marginLeft = "5px";
 
     firstLetterWrapper.appendChild(firstLetterRadio);
     firstLetterWrapper.appendChild(firstLetterLabelText);
@@ -228,21 +285,24 @@ export default class TaxaColoring {
 
     container.appendChild(controlGroup);
 
-    // Ensure initial state of controls is consistent
+    // Initialize state
+    const currentSeparator = defaultSeparators.includes(this.separator) ? this.separator : defaultSeparators[0];
+    dropdown.value = currentSeparator;
+    updateOccurrenceOptions(currentSeparator);
+
     if (this.selectedStrategyType === 'first-letter' || this.separator === 'first-letter') {
         firstLetterRadio.checked = true;
-        if (dropdown.options.length > 0) dropdown.value = dropdown.options[0].value;
-    } else if (this.selectedStrategyType === 'manual_char' || (this.selectedStrategyType === null && defaultSeparators.includes(this.separator))) {
-        dropdown.value = this.separator; // this.separator should be a char here
+    } else {
         firstLetterRadio.checked = false;
-    } else { // Default initial state if no specific strategy/separator is set that matches controls
-        if (dropdown.options.length > 0) dropdown.value = dropdown.options[0].value; // Default to first char separator
-        this.separator = dropdown.value; // Explicitly set this.separator
-        this.selectedStrategyType = 'manual_char'; // And the type
-        firstLetterRadio.checked = false;
+        if (this.selectedStrategyType && this.selectedStrategyType !== 'manual_char') {
+          occurrenceSelect.value = this.selectedStrategyType;
+        } else {
+          occurrenceSelect.value = "first"; // Default
+          this.selectedStrategyType = "first";
+        }
     }
 
-    return { container, dropdown, firstLetterRadio };
+    return { container, dropdown, occurrenceSelect, firstLetterRadio };
   }
 
   handleModeChange(newMode) {
@@ -429,8 +489,12 @@ export default class TaxaColoring {
     if (effectiveStrategyType === 'first-letter' || effectiveSeparator === 'first-letter') {
       // Group by the first letter of the taxon name, case-insensitive (converted to uppercase).
       return taxon && taxon.length > 0 ? taxon.charAt(0).toUpperCase() : "Ungrouped";
-    } else if (effectiveStrategyType === 'first' || effectiveStrategyType === 'last') {
-      // This case is for when a suggested strategy ('first' or 'last' occurrence of a separator) was clicked.
+    } else if (effectiveStrategyType && effectiveStrategyType.startsWith('between-')) {
+      // Handle between-separators strategy
+      const group = this._getGroupForStrategy(taxon, effectiveSeparator, effectiveStrategyType);
+      return group !== null ? group : "Ungrouped";
+    } else if (effectiveStrategyType === 'first' || effectiveStrategyType === 'last' || (effectiveStrategyType && effectiveStrategyType.startsWith('nth-'))) {
+      // This case is for when a suggested strategy or nth occurrence was selected.
       const group = this._getGroupForStrategy(taxon, effectiveSeparator, effectiveStrategyType);
       return group !== null ? group : "Ungrouped"; // Fallback to "Ungrouped" if _getGroupForStrategy returns null.
     } else {
@@ -544,18 +608,83 @@ export default class TaxaColoring {
   }
 
   /**
+   * Enhanced function to extract text between different separators
+   * @param {string} taxonName - The taxon name to process
+   * @param {string} startSeparator - The starting separator
+   * @param {number} startOccurrence - Which occurrence of start separator (1-based)
+   * @param {string} endSeparator - The ending separator
+   * @param {number} endOccurrence - Which occurrence of end separator (1-based)
+   * @returns {string|null} The extracted text between separators, or null if not found
+   * @private
+   */
+  _getGroupBetweenSeparators(taxonName, startSeparator, startOccurrence, endSeparator, endOccurrence) {
+    // Find the position of the start separator (nth occurrence)
+    let startPos = -1;
+    let currentOccurrence = 0;
+    for (let i = 0; i < taxonName.length; i++) {
+      if (taxonName[i] === startSeparator) {
+        currentOccurrence++;
+        if (currentOccurrence === startOccurrence) {
+          startPos = i;
+          break;
+        }
+      }
+    }
+
+    if (startPos === -1) {
+      return null; // Start separator not found at specified occurrence
+    }
+
+    // Find the position of the end separator (nth occurrence) after the start position
+    let endPos = -1;
+    currentOccurrence = 0;
+    for (let i = startPos + 1; i < taxonName.length; i++) {
+      if (taxonName[i] === endSeparator) {
+        currentOccurrence++;
+        if (currentOccurrence === endOccurrence) {
+          endPos = i;
+          break;
+        }
+      }
+    }
+
+    if (endPos === -1) {
+      // If end separator not found, take until the end of string
+      return taxonName.substring(startPos + 1);
+    }
+
+    return taxonName.substring(startPos + 1, endPos);
+  }
+
+  /**
    * Helper function to extract a group name from a taxon name based on a separator and strategy.
    * Used by `analyzeTaxaSeparators` and `getTaxonGroup` (when a suggested strategy is active).
    *
    * @param {string} taxonName - The full name of the taxon.
    * @param {string} separator - The character used to split the taxon name.
-   * @param {string} strategyType - Either 'first' (part before the first separator) or
-   * 'last' (part before the last separator).
+   * @param {string} strategyType - Either 'first' (part before the first separator),
+   * 'last' (part before the last separator), 'nth-N' where N is the occurrence number,
+   * or 'between-X-Y' for between separators strategy.
+   * @param {number} [nthOccurrence] - For 'nth' strategy, which occurrence to use (1-based).
    * @returns {string|null} The extracted group name, or null if the separator is not found
    * or results in no meaningful group (e.g., taxon "A" with separator ".").
    * @private
    */
-  _getGroupForStrategy(taxonName, separator, strategyType) {
+  _getGroupForStrategy(taxonName, separator, strategyType, nthOccurrence = 1) {
+    // Handle new 'between' strategy type
+    if (strategyType && strategyType.startsWith('between-')) {
+      // Parse between strategy: 'between-_-1---1' means between 1st '_' and 1st '-'
+      const parts = strategyType.split('-');
+      if (parts.length >= 6) {
+        const startSep = parts[1];
+        const startOcc = parseInt(parts[2]) || 1;
+        const endSep = parts[4];
+        const endOcc = parseInt(parts[5]) || 1;
+        return this._getGroupBetweenSeparators(taxonName, startSep, startOcc, endSep, endOcc);
+      }
+      return null;
+    }
+
     const parts = taxonName.split(separator);
     if (parts.length <= 1) {
       return null; // No group if separator not present or only one part (e.g. "A" or "A.noc")
@@ -565,6 +694,14 @@ export default class TaxaColoring {
       return parts[0]; // e.g., "A" from "A.B.C"
     } else if (strategyType === 'last') {
       return parts.slice(0, -1).join(separator); // e.g., "A.B" from "A.B.C"
+    } else if (strategyType.startsWith('nth-')) {
+      const occurrenceNum = parseInt(strategyType.split('-')[1]) || nthOccurrence;
+      if (occurrenceNum === 1) {
+        return parts[0]; // First occurrence: text before first separator
+      } else if (occurrenceNum >= 2 && occurrenceNum <= parts.length) {
+        return parts[occurrenceNum - 1]; // nth occurrence: text between (nth-1) and nth separator
+      }
+      return null; // Invalid occurrence number
     }
     return null; // Should not happen if strategyType is validated
   }
@@ -594,7 +731,17 @@ export default class TaxaColoring {
     const totalTaxa = taxaNames.length;
 
     potentialSeparators.forEach(separator => {
-      const strategyTypes = ['first', 'last']; // Types of strategies to check for each separator
+      // Find the maximum number of occurrences of this separator across all taxa
+      const maxOccurrences = Math.max(...taxaNames.map(name => (name.split(separator).length - 1)));
+
+      const strategyTypes = ['first', 'last']; // Original strategy types
+
+      // Add nth occurrence strategies for separators that appear multiple times
+      if (maxOccurrences > 1) {
+        for (let i = 2; i <= Math.min(maxOccurrences, 5); i++) { // Limit to 5 occurrences to avoid UI clutter
+          strategyTypes.push(`nth-${i}`);
+        }
+      }
 
       strategyTypes.forEach(strategyType => {
         const groupCounts = new Map(); // To count occurrences of each potential group
@@ -619,9 +766,16 @@ export default class TaxaColoring {
 
           let description = ``; // Dynamically create description
           if (strategyType === 'first') {
-            description = `Prefix before first '${separator}'`;
+            description = `Text before first '${separator}'`;
           } else if (strategyType === 'last') {
-            description = `Prefix before last '${separator}'`;
+            description = `Text before last '${separator}'`;
+          } else if (strategyType.startsWith('nth-')) {
+            const occurrenceNum = parseInt(strategyType.split('-')[1]);
+            if (occurrenceNum === 2) {
+              description = `Text between 1st and 2nd '${separator}'`;
+            } else {
+              description = `Text between ${this._getOrdinal(occurrenceNum-1)} and ${this._getOrdinal(occurrenceNum)} '${separator}'`;
+            }
           }
 
           suggestedStrategies.push({
@@ -634,7 +788,72 @@ export default class TaxaColoring {
         }
       });
     });
+
+    // Add enhanced "between separators" strategies
+    const betweenSeparatorCombinations = [
+      { start: '_', startOcc: 1, end: '-', endOcc: 1, description: "Between 1st '_' and 1st '-'" },
+      { start: '.', startOcc: 1, end: '_', endOcc: 1, description: "Between 1st '.' and 1st '_'" },
+      { start: '.', startOcc: 1, end: '.', endOcc: 2, description: "Between 1st '.' and 2nd '.'" },
+      { start: '_', startOcc: 1, end: '-', endOcc: 2, description: "Between 1st '_' and 2nd '-'" },
+      { start: '-', startOcc: 1, end: '_', endOcc: 1, description: "Between 1st '-' and 1st '_'" },
+      { start: '.', startOcc: 2, end: '_', endOcc: 1, description: "Between 2nd '.' and 1st '_'" }
+    ];
+
+    betweenSeparatorCombinations.forEach(combo => {
+      // Check if both separators exist in the taxa names
+      const hasStartSep = taxaNames.some(name => name.includes(combo.start));
+      const hasEndSep = taxaNames.some(name => name.includes(combo.end));
+
+      if (!hasStartSep || !hasEndSep) return;
+
+      const strategyType = `between-${combo.start}-${combo.startOcc}--${combo.end}-${combo.endOcc}`;
+      const groupCounts = new Map();
+
+      taxaNames.forEach(taxonName => {
+        const groupName = this._getGroupBetweenSeparators(
+          taxonName,
+          combo.start,
+          combo.startOcc,
+          combo.end,
+          combo.endOcc
+        );
+
+        if (groupName !== null && groupName !== taxonName && groupName.trim() !== '') {
+          groupCounts.set(groupName, (groupCounts.get(groupName) || 0) + 1);
+        }
+      });
+
+      // Only add strategies that create meaningful groups
+      if (groupCounts.size > 1 && groupCounts.size < totalTaxa && groupCounts.size <= 20) {
+        const groupsPreview = [];
+        for (const [groupName, count] of groupCounts) {
+          groupsPreview.push({ groupName, count });
+        }
+        groupsPreview.sort((a, b) => b.count - a.count);
+
+        suggestedStrategies.push({
+          separator: `${combo.start}...${combo.end}`, // Indicate it's a between strategy
+          strategyType: strategyType,
+          description: combo.description,
+          groupsPreview: groupsPreview.slice(0, 5),
+          totalGroups: groupCounts.size
+        });
+      }
+    });
+
     // Sort suggested strategies, perhaps by totalGroups or another metric? For now, order is by separator, then type.
     return suggestedStrategies;
+  }
+
+  /**
+   * Helper method to convert numbers to ordinal form (1st, 2nd, 3rd, etc.)
+   * @param {string|number} num - The number to convert
+   * @returns {string} The ordinal form
+   */
+  _getOrdinal(num) {
+    const n = parseInt(num);
+    const suffix = ['th', 'st', 'nd', 'rd'];
+    const v = n % 100;
+    return n + (suffix[(v - 20) % 10] || suffix[v] || suffix[0]);
   }
 }

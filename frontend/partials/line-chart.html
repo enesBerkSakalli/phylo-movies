@@ -4,6 +4,7 @@
     <div class="chart-title">
       <i class="fa fa-line-chart chart-icon"></i>
       <span>Distance Chart</span>
+      <small class="chart-subtitle">Click to navigate • Drag to scrub</small>
     </div>
     <div class="chart-controls">
       <div class="select-wrapper">
@@ -13,14 +14,14 @@
           <option value="scale">Scale</option>
         </select>
         <i class="fa fa-chevron-down select-arrow"></i>
-            <button id="chart-modal" type="button" class="viz-btn compact" title="Open Chart">
+            <button id="chart-modal" type="button" class="viz-btn compact" title="Open detailed chart view">
             <i class="fa fa-bar-chart"></i></button>
       </div>
     </div>
   </div>
 
   <div class="chart-container">
-    <div id="lineChart" class="chart-canvas"></div>
+    <div id="lineChart" class="chart-canvas" style="height: 220px; min-height: 200px;" title="Interactive chart: Click points or drag indicator to navigate"></div>
 
     <div class="chart-legend">
       <div class="legend-item">
