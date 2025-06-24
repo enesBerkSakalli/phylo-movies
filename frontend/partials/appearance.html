@@ -2,61 +2,69 @@
 <div class="submenu-container" data-collapsed="false">
   <div class="submenu-header">
     <div class="submenu-title">
-      <i class="fa fa-arrows-h submenu-icon"></i>
+      <span class="material-icons submenu-icon" aria-hidden="true">tune</span>
       <h2 class="mdc-section-title">Appearance</h2>
     </div>
-    <span class="toggle-icon" id="toggle-appearance-submenu">▼</span>
+    <span class="toggle-icon" id="toggle-appearance-submenu" title="Toggle appearance settings visibility" aria-label="Toggle appearance settings">▼</span>
   </div>
   <div class="submenu" id="appearance-submenu">
     <!-- Visualization Controls -->
-    <div class="compact-status" style="margin-bottom:8px; padding:8px 10px; display:flex; flex-direction:column; gap:8px;">
-      <div class="slider-group" style="margin-bottom:0;">
+    <div class="compact-status">
+      <!-- Font Size Control - Own Row -->
+      <div class="slider-group">
         <div class="slider-row">
           <label class="slider-label" for="font-size" title="Adjust the font size for tree labels.">
-            <i class="fa fa-font"></i> Font Size
+            <span class="material-icons" aria-hidden="true">text_fields</span> Font Size
           </label>
           <span class="slider-value" id="font-size-value">1.8</span>
         </div>
         <input type="range" class="mdc-slider" id="font-size" min="0.5" max="3" step="0.1" value="1.8"
-          oninput="document.getElementById('font-size-value').textContent = this.value" title="Font size" />
+          oninput="document.getElementById('font-size-value').textContent = this.value" title="Font size" aria-label="Font size adjustment" />
       </div>
-      <div class="slider-group" style="margin-bottom:0;">
+
+      <!-- Stroke Width Control - Own Row -->
+      <div class="slider-group">
         <div class="slider-row">
           <label class="slider-label" for="stroke-width" title="Adjust the width of tree branches.">
-            <i class="fa fa-paint-brush"></i> Stroke Width
+            <span class="material-icons" aria-hidden="true">brush</span> Stroke Width
           </label>
           <span class="slider-value" id="stroke-width-value">3</span>
         </div>
         <input type="range" class="mdc-slider" id="stroke-width" min="1" max="6" step="0.5" value="3"
-          oninput="document.getElementById('stroke-width-value').textContent = this.value" title="Stroke width" />
+          oninput="document.getElementById('stroke-width-value').textContent = this.value" title="Stroke width" aria-label="Stroke width adjustment" />
       </div>
+
+      <!-- Branch Length Toggle - Own Row -->
       <div class="switch-group">
         <div class="switch-row">
           <label class="switch-label" for="branch-length" title="Toggle to ignore branch lengths in the tree visualization.">
-            <i class="fa fa-code-fork"></i> Ignore Branch Lengths
+            <span class="material-icons" aria-hidden="true">account_tree</span> Ignore Branch Lengths
           </label>
           <label class="switch">
-            <input type="checkbox" id="branch-length">
+            <input type="checkbox" id="branch-length" aria-label="Ignore branch lengths toggle">
             <span class="slider"></span>
           </label>
         </div>
       </div>
+
+      <!-- Monophyletic Coloring Toggle - Own Row -->
       <div class="switch-group">
         <div class="switch-row">
           <label class="switch-label" for="monophyletic-coloring" title="Enable monophyletic group coloring for tree branches.">
-            <i class="fa fa-sitemap"></i> Monophyletic Group Coloring
+            <span class="material-icons" aria-hidden="true">color_lens</span> Monophyletic Group Coloring
           </label>
           <label class="switch">
-            <input type="checkbox" id="monophyletic-coloring" checked>
+            <input type="checkbox" id="monophyletic-coloring" checked aria-label="Monophyletic group coloring toggle">
             <span class="slider"></span>
           </label>
         </div>
       </div>
     </div>
-    <!-- Taxa Coloring Button -->
-    <div class="button-row" style="margin-bottom:0;">
-      <button id="taxa-coloring-button" class="md-button compact" title="Open taxa coloring options">
-        <i class="fa fa-paint-brush"></i> Taxa Coloring
+
+    <!-- Taxa Coloring Button - Own Row -->
+    <div class="button-row">
+      <button id="taxa-coloring-button" class="md-button compact" title="Open taxa coloring modal to customize colors for different species groups" aria-label="Open taxa coloring modal">
+        <span class="material-icons">palette</span> Taxa Coloring
       </button>
     </div>
   </div>

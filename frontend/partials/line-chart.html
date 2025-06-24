@@ -1,35 +1,58 @@
-<!-- line-chart.html -->
-<div class="chart-card">
-  <div class="chart-header">
+<!-- line-chart.html - Material Design 3 -->
+<div class="chart-card" role="region" aria-label="Distance Chart">
+  <header class="chart-header">
     <div class="chart-title">
-      <i class="fa fa-line-chart chart-icon"></i>
-      <span>Distance Chart</span>
-      <small class="chart-subtitle">Click to navigate • Drag to scrub</small>
+      <span class="material-icons chart-icon" aria-hidden="true">timeline</span>
+      <div>
+        <span>Distance Chart</span>
+        <small class="chart-subtitle">Click to navigate • Drag to scrub</small>
+      </div>
     </div>
     <div class="chart-controls">
       <div class="select-wrapper">
-        <select name="barPlotOption" id="barPlotOption" class="compact-select">
+        <label for="barPlotOption" class="sr-only">Choose data series to display</label>
+        <select
+          name="barPlotOption"
+          id="barPlotOption"
+          class="compact-select"
+          aria-describedby="chart-select-help"
+          title="Choose data series to display: RFD shows tree topology differences, Weighted RFD includes branch lengths, Scale shows tree size changes"
+        >
           <option value="rfd">Rel. RFD</option>
           <option value="w-rfd">Weighted RFD</option>
           <option value="scale">Scale</option>
         </select>
-        <i class="fa fa-chevron-down select-arrow"></i>
-            <button id="chart-modal" type="button" class="viz-btn compact" title="Open detailed chart view">
-            <i class="fa fa-bar-chart"></i></button>
+        <div id="chart-select-help" class="sr-only">Choose data series: RFD shows tree topology differences, Weighted RFD includes branch lengths, Scale shows tree size changes</div>
       </div>
+      <button
+        id="chart-modal"
+        type="button"
+        class="md-button compact"
+        aria-label="Open full-size chart view"
+        title="Open full-size interactive chart view in modal window"
+      >
+        <span class="material-icons" aria-hidden="true">bar_chart</span>
+        <span class="button-text">Chart</span>
+      </button>
     </div>
-  </div>
+  </header>
 
   <div class="chart-container">
-    <div id="lineChart" class="chart-canvas" style="height: 220px; min-height: 200px;" title="Interactive chart: Click points or drag indicator to navigate"></div>
+    <div
+      id="lineChart"
+      class="chart-canvas"
+      role="img"
+      aria-label="Interactive distance chart"
+      title="Interactive chart: Click points or drag indicator to navigate"
+    ></div>
 
-    <div class="chart-legend">
+    <div class="chart-legend" role="group" aria-label="Chart legend">
       <div class="legend-item">
-        <div class="legend-color" style="background-color: #4682b4"></div>
+        <div class="legend-color distance-color" aria-hidden="true"></div>
         <span class="legend-label">Distance</span>
       </div>
       <div class="legend-item">
-        <div class="legend-color" style="background-color: #ff4500"></div>
+        <div class="legend-color current-position-color" aria-hidden="true"></div>
         <span class="legend-label">Current Position</span>
       </div>
     </div>

@@ -18,6 +18,7 @@ import { calculateWindow } from "./utils/windowUtils.js";
 import { renderOrUpdateLineChart } from "./charts/lineChartManager.js";
 import { openModalChart } from "./charts/windowChartManager.js";
 import { STYLE_MAP } from "./treeVisualisation/TreeDrawer.js";
+import { validateBackendData } from "./utils/contractValidator.js";
 
 // ============================================================================
 // GUI CLASS - Main interface for phylogenetic tree visualization
@@ -97,7 +98,11 @@ export default class Gui {
     this._lastSyncTime = 0;
     this._syncThrottleDelay = 250;
 
+    // Initialize synchronously to ensure transitionResolver exists
     this.initializeTransitionResolver();
+    
+    // Defer contract validation to avoid blocking constructor
+    setTimeout(() => this.performContractValidation(), 0);
   }
 
   // ========================================
@@ -197,11 +202,11 @@ export default class Gui {
       console.log("MSA viewer not open - skipping sync");
       return;
     }
-    
+
     const msaPositionInfo = this.calculateMSAPosition();
     const currentFullTreeDataIdx = this.transitionResolver.getDistanceIndex(this.currentTreeIndex);
     const windowData = calculateWindow(currentFullTreeDataIdx, this.msaStepSize, this.msaWindowSize, this.numberOfFullTrees);
-    
+
     console.log(`MSA sync data:`, {
       msaPositionInfo,
       currentFullTreeDataIdx,
@@ -216,10 +221,10 @@ export default class Gui {
         msaPosition: msaPositionInfo.position,
         msaStepSize: msaPositionInfo.stepSize
       };
-      
+
       // Get highlighted taxa for synchronization
       const highlightedTaxa = this.getActualHighlightData ? this.getActualHighlightData() : {};
-      
+
       // Dispatch sync event to MSA viewer
       window.dispatchEvent(new CustomEvent('msa-sync-request', {
         detail: {
@@ -230,7 +235,7 @@ export default class Gui {
           fullTreeIndex: currentFullTreeDataIdx
         }
       }));
-      
+
       console.log(`MSA sync: Tree ${this.currentTreeIndex} -> MSA region ${windowData.startPosition}-${windowData.endPosition}`);
     }
   }
@@ -429,31 +434,31 @@ export default class Gui {
     document.getElementById("treeLabel").innerText = this.getCurrentTreeLabel();
     // Get transition distance index for both MSA and scale calculations
     const transitionDistanceIdx = this.transitionResolver.getDistanceIndex(this.currentTreeIndex);
-    
+
     // Always show MSA window information - use distance index for all tree types
     if (transitionDistanceIdx >= 0 && this.numberOfFullTrees > 0) {
       const window = calculateWindow(transitionDistanceIdx, this.msaStepSize, this.msaWindowSize, this.numberOfFullTrees);
-      
+
       // Determine tree type for better user context
       const isFullTree = this.transitionResolver.isFullTree(this.currentTreeIndex);
       const isConsensusTree = this.transitionResolver.isConsensusTree(this.currentTreeIndex);
-      
+
       let windowDisplay = `${window.startPosition} - ${window.endPosition}`;
       let treeTypeIndicator = "";
-      
+
       if (isFullTree) {
         treeTypeIndicator = " (F)"; // Full tree indicator
       } else if (isConsensusTree) {
-        treeTypeIndicator = " (C)"; // Consensus tree indicator  
+        treeTypeIndicator = " (C)"; // Consensus tree indicator
       } else {
         treeTypeIndicator = " (I)"; // Interpolated tree indicator
       }
-      
+
       document.getElementById("windowArea").innerText = windowDisplay + treeTypeIndicator;
     } else {
       document.getElementById("windowArea").innerText = "No MSA data";
     }
-    
+
     // Update scale using the same transition distance index
     const currentScale = getCurrentScaleValue(this.scaleList, transitionDistanceIdx);
     const maxScale = this.maxScale;
@@ -618,8 +623,37 @@ export default class Gui {
   }
 
   // ========================================
-  // TRANSITION INDEX RESOLVER
+  // CONTRACT VALIDATION & INITIALIZATION
   // ========================================
+  
+  performContractValidation() {
+    // Perform contract validation after initialization
+    const contractValidation = validateBackendData({
+      treeList: this.treeList,
+      treeNames: this.treeNames,
+      robinsonFouldsDistances: this.robinsonFouldsDistances,
+      weightedRobinsonFouldsDistances: this.weightedRobinsonFouldsDistances,
+      highlightData: {
+        jumping_taxa: this.highlightData,
+        s_edges: this.s_edges,
+        covers: this.covers
+      },
+      scaleList: this.scaleList
+    }, { logLevel: 'info' });
+    
+    if (!contractValidation.isValid) {
+      console.error('[GUI] Backend contract validation failed:', contractValidation.issues);
+    } else {
+      console.log('[GUI] Backend contract validation passed:', contractValidation.summary);
+    }
+    
+    if (contractValidation.warnings.length > 0) {
+      console.warn('[GUI] Contract warnings:', contractValidation.warnings);
+    }
+    
+    this.contractValidation = contractValidation;
+  }
+  
   initializeTransitionResolver() {
     if (!this.treeNames || this.treeNames.length === 0) {
         console.warn("[GUI] Cannot initialize TransitionIndexResolver: treeNames is empty or undefined.");
@@ -661,10 +695,21 @@ export default class Gui {
             console.warn("[GUI] TransitionIndexResolver validation issues:", validation.issues);
         }
     }
-    // Any other logic that depends on the resolver being initialized
-    // For example, updating the UI based on the initial state.
-    // this.updateUIForSequencePosition(this.currentSequenceIndex);
-}
+    // Cross-validate with contract validation results
+    if (this.contractValidation) {
+      const resolverValidation = this.transitionResolver.validateData();
+      if (!resolverValidation.isValid) {
+        console.error('[GUI] TransitionIndexResolver validation failed after contract validation:', resolverValidation.issues);
+      }
+      
+      // Compare expected vs actual tree counts
+      const contractFullTrees = this.contractValidation.warnings.find(w => w.includes('full tree'));
+      const resolverFullTrees = this.transitionResolver.fullTreeIndices.length;
+      if (contractFullTrees && resolverFullTrees === 0) {
+        console.warn('[GUI] Tree count mismatch between contract validation and resolver');
+      }
+    }
+  }
 
   // Moved this method INSIDE the Gui class.
   generateRealTreeList() {

@@ -1,28 +1,29 @@
-/* chart-modal.css - Modal-specific styles split from chart.css */
+/* chart-modal.css - Unified modal styling */
 
 .chart-modal-container {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background-color: #23242b;
-  color: #e3eaf2;
-  padding: 20px;
-  font-family: 'Heebo', sans-serif;
+  background-color: var(--nav-bg-main);
+  color: var(--nav-text-primary);
+  padding: var(--nav-spacing-lg);
+  font-family: var(--font-family-sans-serif, 'Heebo', sans-serif);
 }
 
 .chart-modal-content {
   flex: 1;
   width: 100%;
   position: relative;
-  background-color: #2c2c3a;
-  border-radius: 8px;
+  background-color: var(--nav-bg-panel);
+  border-radius: var(--nav-border-radius);
   overflow: hidden;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  margin-bottom: 15px;
+  border: 1px solid var(--nav-border-color);
+  margin-bottom: var(--nav-spacing-md);
 }
 
 .chart-modal-controls {
-  padding-top: 5px;
+  padding-top: var(--nav-spacing-xs);
   display: flex;
   justify-content: flex-end;
+  gap: var(--nav-spacing-xs);
 }

@@ -37,7 +37,7 @@ function calculateChartDimensions() {
     top: Math.max(20, containerHeight * 0.06),
     right: Math.max(30, containerWidth * 0.06),
     bottom: Math.max(60, containerHeight * 0.15),
-    left: Math.max(60, containerWidth * 0.1)
+    left: Math.max(100, containerWidth * 0.2) // Increased from 80 and 0.15 to 100 and 0.2 for longer y-axis labels
   };
 
   return {
@@ -707,7 +707,7 @@ export function generateLineChart(containerId, data, config, guiInstance) {
     const container = document.getElementById(containerId);
     if (!container) {
       console.warn(`Container ${containerId} not found, using defaults`);
-      return { containerWidth: 800, containerHeight: 400, width: 740, height: 340, margin: { top: 20, right: 30, bottom: 60, left: 60 } };
+      return { containerWidth: 400, containerHeight: 180, width: 280, height: 120, margin: { top: 15, right: 20, bottom: 40, left: 65 } };
     }
 
     // Use getBoundingClientRect for more accurate sizing
@@ -715,15 +715,15 @@ export function generateLineChart(containerId, data, config, guiInstance) {
     const containerWidth = rect.width || container.clientWidth || 800;
     const containerHeight = rect.height || container.clientHeight || 400;
 
-    // Ensure minimum dimensions for readability
-    const adjustedWidth = Math.max(containerWidth, 300);
-    const adjustedHeight = Math.max(containerHeight, 180);
+    // Ensure minimum dimensions for compact design
+    const adjustedWidth = Math.max(containerWidth, 280);
+    const adjustedHeight = Math.max(containerHeight, 140);
 
     const margin = {
-      top: Math.max(20, adjustedHeight * 0.06),
-      right: Math.max(30, adjustedWidth * 0.06),
-      bottom: Math.max(60, adjustedHeight * 0.15),
-      left: Math.max(60, adjustedWidth * 0.1)
+      top: Math.max(15, adjustedHeight * 0.05),
+      right: Math.max(20, adjustedWidth * 0.05),
+      bottom: Math.max(40, adjustedHeight * 0.12),
+      left: Math.max(65, adjustedWidth * 0.12) // Increased from 45 and 0.08 to 65 and 0.12 for y-axis labels
     };
     return {
       containerWidth: adjustedWidth,

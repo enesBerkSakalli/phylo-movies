@@ -24,8 +24,8 @@
 /* Inputs and Select Elements */
 .mdc-input, .mdc-select {
   border-radius: 6px;
-  padding: 10px 12px;
-  font-size: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
   transition: all 0.2s ease;
   border: 1px solid rgba(125, 170, 255, 0.12);
   background-color: rgba(255, 255, 255, 0.04);
@@ -33,7 +33,7 @@
   width: 100%;
   box-sizing: border-box;
   backdrop-filter: blur(2px);
-  min-height: 20px;
+  min-height: 28px;
 }
 
 .mdc-input:hover, .mdc-select:hover {
@@ -57,88 +57,7 @@
   padding-right: 32px;
 }
 
-/* Buttons */
-.md-button, .mdc-button {
-  border-radius: 6px;
-  padding: 10px 14px;
-  font-size: 12px;
-  gap: 6px;
-  border: none;
-  font-weight: 500;
-  letter-spacing: 0.3px;
-  transition: all 0.2s ease;
-  box-shadow: none;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background-color: rgba(255, 255, 255, 0.06);
-  color: #e0e6f8;
-  backdrop-filter: blur(2px);
-  min-height: 20px;
-}
-
-.md-button:hover, .mdc-button:hover {
-  background-color: rgba(255, 255, 255, 0.12);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(125, 170, 255, 0.1);
-}
-
-.md-button:active, .mdc-button:active {
-  transform: translateY(0);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
-}
-
-/* Button Variants */
-.md-button.primary, .mdc-button.primary {
-  background-color: #7daaff;
-  background-image: linear-gradient(135deg, #7daaff 0%, #8db4ff 100%);
-  color: #1a1b2e;
-  font-weight: 600;
-}
-
-.md-button.primary:hover, .mdc-button.primary:hover {
-  background-image: linear-gradient(135deg, #8db4ff 0%, #9dc4ff 100%);
-  box-shadow: 0 6px 16px rgba(125, 170, 255, 0.25);
-  transform: translateY(-2px);
-}
-
-.md-button.secondary, .mdc-button.secondary {
-  background-color: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(125, 170, 255, 0.2);
-  backdrop-filter: blur(4px);
-}
-
-.md-button.secondary:hover, .mdc-button.secondary:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  border-color: rgba(125, 170, 255, 0.35);
-}
-
-.md-button.danger, .mdc-button.danger {
-  background-color: #ff6b6b;
-  background-image: linear-gradient(135deg, #ff6b6b 0%, #ff7979 100%);
-  color: #1a1b2e;
-  font-weight: 600;
-}
-
-.md-button.danger:hover, .mdc-button.danger:hover {
-  background-image: linear-gradient(135deg, #ff7979 0%, #ff8787 100%);
-  box-shadow: 0 6px 16px rgba(255, 107, 107, 0.25);
-  transform: translateY(-2px);
-}
-
-/* Button Sizes */
-.md-button.small, .mdc-button.small {
-  padding: 6px 10px;
-  font-size: 12px;
-  min-height: 16px;
-}
-
-.md-button.large, .mdc-button.large {
-  padding: 14px 20px;
-  font-size: 14px;
-  min-height: 24px;
-}
+/* Material Design buttons - deprecated, using unified navigation styles instead */
 
 /* Tree Space Visualization */
 .viz-tools {
@@ -152,37 +71,15 @@
   width: 100%;
 }
 
-.md-button.viz-button, .mdc-button.viz-button {
-  background-color: rgba(125, 170, 255, 0.08);
-  background-image: linear-gradient(135deg, rgba(125, 170, 255, 0.08) 0%, rgba(125, 170, 255, 0.12) 100%);
-  width: 100%;
-  padding: 10px 14px;
-  justify-content: flex-start;
-  text-align: left;
-  font-weight: 500;
-  border: 1px solid rgba(125, 170, 255, 0.1);
-  backdrop-filter: blur(4px);
-  min-height: 18px;
-}
-
-.md-button.viz-button:hover, .mdc-button.viz-button:hover {
-  background-image: linear-gradient(135deg, rgba(125, 170, 255, 0.15) 0%, rgba(125, 170, 255, 0.2) 100%);
-  border-color: rgba(125, 170, 255, 0.25);
-  box-shadow: 0 4px 12px rgba(125, 170, 255, 0.1);
-}
-
-.md-button.viz-button:active, .mdc-button.viz-button:active {
-  background-image: none;
-  background-color: rgba(125, 170, 255, 0.12);
-}
+/* Viz buttons - using unified navigation styles */
 
 /* Section Titles */
 .mdc-section-title {
   margin: 0 0 8px 0;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 1.2px;
+  letter-spacing: 0.5px;
   color: #7daaff;
   padding-left: 0;
   display: flex;
@@ -255,8 +152,8 @@
 .mdc-form-control {
   display: flex;
   align-items: center;
-  margin-bottom: 12px;
-  gap: 10px;
+  margin-bottom: 8px;
+  gap: 8px;
   min-height: 24px;
 }
 
@@ -284,10 +181,10 @@
 /* Card Styling - Glassmorphism */
 .mdc-card {
   background: rgba(35, 36, 58, 0.6);
-  border-radius: 8px;
-  padding: 14px 16px;
-  margin-bottom: 16px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(125, 170, 255, 0.08);
   backdrop-filter: blur(8px);
   transition: all 0.2s ease;
@@ -344,9 +241,7 @@
   justify-content: center;
 }
 
-.md-button .mdc-icon, .mdc-button .mdc-icon {
-  margin-right: 6px;
-}
+/* Button icons - using unified navigation styles */
 
 /* Tooltips */
 .mdc-tooltip {
