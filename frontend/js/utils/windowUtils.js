@@ -9,7 +9,7 @@
  * @param {number} msaWindowSize - Size of the MSA window
  * @returns {Object} Window object with startPosition, midPosition, and endPosition (all 1-based)
  */
-export function calculateWindow(currentFullTreeDataIdx, msaStepSize, msaWindowSize) {
+export function calculateWindow(currentFullTreeDataIdx, msaStepSize, msaWindowSize, treeListLength) {
     // Validate inputs
     if (currentFullTreeDataIdx < 0) {
         console.warn("[calculateWindow] Invalid currentFullTreeDataIdx:", currentFullTreeDataIdx);
@@ -28,18 +28,19 @@ export function calculateWindow(currentFullTreeDataIdx, msaStepSize, msaWindowSi
         msaWindowSize = 100; // Default to 100
     }
 
+
+    let midPosition =  (currentFullTreeDataIdx) * msaStepSize;
+    let leftWindow = Math.trunc(msaWindowSize / 2);
+    let rightWindow = Math.trunc((msaWindowSize -1) / 2);
+
     // Calculate positions: currentFullTreeDataIdx is the 0-based window frame.
     // msaStepSize is the increment for the start of each window frame.
-    let startPosition = currentFullTreeDataIdx * msaStepSize + 1;
-    let endPosition = startPosition + msaWindowSize - 1;
-
+    let startPosition = (midPosition - leftWindow);
+    let endPosition = (midPosition+rightWindow);
     // Ensure positions are at least 1
     startPosition = Math.max(1, startPosition);
     // Ensure endPosition is at least startPosition
-    endPosition = Math.max(startPosition, endPosition);
-
-    // Calculate a conceptual middle position of this window
-    const midPosition = startPosition + Math.floor((msaWindowSize - 1) / 2);
+    endPosition = Math.min(treeListLength*msaStepSize, endPosition);
 
     console.log(`[calculateWindow] FullTreeDataIndex: ${currentFullTreeDataIdx}, msaStepSize: ${msaStepSize}, msaWindowSize: ${msaWindowSize}, Calculated Window: ${startPosition}-${endPosition}`);
 

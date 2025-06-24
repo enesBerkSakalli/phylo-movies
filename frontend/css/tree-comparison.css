@@ -1,0 +1,351 @@
+/* Tree Comparison Modal Styles */
+.tree-comparison-modal {
+  padding: 20px;
+  height: 100%;
+  background: #373747;
+  color: #e0e0e0;
+  font-family: 'Heebo', sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+.comparison-header {
+  text-align: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding-bottom: 16px;
+}
+
+.comparison-header h3 {
+  margin: 0;
+  color: #4fc3f7;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.tree-comparison-row {
+  flex: 1;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.02);
+  margin-bottom: 20px;
+  min-height: 500px;
+}
+
+.comparison-controls {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 16px;
+  background: #23242b;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.control-label {
+  color: #b0b0b0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  min-width: 80px;
+}
+
+.control-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mdc-slider {
+  width: 120px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  appearance: none;
+  height: 6px;
+}
+
+.mdc-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #4fc3f7;
+  cursor: pointer;
+  border: 2px solid #373747;
+}
+
+.mdc-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #4fc3f7;
+  cursor: pointer;
+  border: 2px solid #373747;
+}
+
+.control-value-display {
+  color: #4fc3f7;
+  font-weight: 600;
+  font-size: 0.9rem;
+  min-width: 40px;
+  text-align: center;
+}
+
+.switch-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.2);
+  transition: 0.2s;
+  border-radius: 24px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.2s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #4fc3f7;
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+.comparison-footer {
+  text-align: center;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.md-button {
+  padding: 8px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  background: #23242b;
+  color: #e0e0e0;
+}
+
+.md-button:hover {
+  opacity: 0.8;
+  transform: translateY(-1px);
+}
+
+.md-button.secondary {
+  background: #23242b;
+  color: #e0e0e0;
+}
+
+/* Interpolation Styles */
+.interpolation-container {
+  padding: 20px;
+  height: 100%;
+  background: #373747;
+  color: #e0e0e0;
+  font-family: 'Heebo', sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+.interpolation-header {
+  text-align: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding-bottom: 16px;
+}
+
+.interpolation-header h3 {
+  margin: 0 0 8px 0;
+  color: #4fc3f7;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.interpolation-header p {
+  margin: 0;
+  color: #b0b0b0;
+  font-size: 0.9rem;
+}
+
+.current-step-info {
+  margin-top: 12px;
+  padding: 6px 12px;
+  background: rgba(79, 195, 247, 0.2);
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.current-step-label {
+  font-weight: 600;
+  color: #4fc3f7;
+}
+
+.interpolation-content {
+  flex: 1;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.02);
+  margin-bottom: 20px;
+  min-height: 400px;
+}
+
+.interpolation-svg-container {
+  width: 100%;
+  height: 100%;
+  min-height: 400px;
+}
+
+.interpolation-controls {
+  padding: 16px;
+  background: #23242b;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  text-align: center;
+}
+
+.interpolation-controls .btn {
+  padding: 8px 16px;
+  margin: 0 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  background: transparent;
+  color: #e0e0e0;
+}
+
+.interpolation-controls .btn:hover {
+  opacity: 0.8;
+  transform: translateY(-1px);
+}
+
+.interpolation-controls .btn-primary {
+  background: #4fc3f7;
+  color: #373747;
+  border-color: #4fc3f7;
+}
+
+.interpolation-progress {
+  margin: 16px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.progress-slider {
+  width: 250px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  appearance: none;
+  height: 6px;
+}
+
+.progress-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #4fc3f7;
+  cursor: pointer;
+  border: 2px solid #373747;
+}
+
+.interpolation-settings {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.interpolation-settings label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #b0b0b0;
+  font-size: 0.9rem;
+}
+
+.interpolation-settings select {
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  background: #23242b;
+  color: #e0e0e0;
+  font-family: inherit;
+}
+
+/* Error states */
+.error-message {
+  text-align: center;
+  padding: 40px;
+  color: #ff6b6b;
+}
+
+.error-message h4 {
+  margin: 0 0 16px 0;
+  color: #ff6b6b;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .comparison-controls {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .control-group {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+  
+  .interpolation-settings {
+    flex-direction: column;
+    align-items: center;
+  }
+}

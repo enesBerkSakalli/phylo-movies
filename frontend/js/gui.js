@@ -12,17 +12,25 @@ import drawTree from "./treeVisualisation/TreeDrawer.js";
 import { exportSaveChart } from "./utils/svgExporter.js";
 import { handleZoomResize, initializeZoom } from "./zoom/zoomUtils.js";
 import { COLOR_MAP } from "./treeColoring/ColorMap.js";
+import { applyColoringData } from "./treeColoring/TaxaGroupingUtils.js";
 import TransitionIndexResolver from "./TransitionIndexResolver.js";
 import { calculateWindow } from "./utils/windowUtils.js";
 import { renderOrUpdateLineChart } from "./charts/lineChartManager.js";
 import { openModalChart } from "./charts/windowChartManager.js";
 import { STYLE_MAP } from "./treeVisualisation/TreeDrawer.js";
-// ===== GUI Class =====
+
+// ============================================================================
+// GUI CLASS - Main interface for phylogenetic tree visualization
+// ============================================================================
 export default class Gui {
-  // ===== MSA Sync Toggle =====
+  // ========================================
+  // CLASS PROPERTIES
+  // ========================================
   syncMSAEnabled = false;
 
-  // ===== Constructor & Initialization =====
+  // ========================================
+  // CONSTRUCTOR & INITIALIZATION
+  // ========================================
   constructor(
     treeList,
     weightedRobinsonFouldsDistances,
@@ -92,28 +100,32 @@ export default class Gui {
     this.initializeTransitionResolver();
   }
 
-  // ===== Movie Controls =====
+  // ========================================
+  // MOVIE PLAYBACK CONTROLS
+  // ========================================
   initializeMovie() {
     this.resize();
     this.update();
   }
 
-  // ===== Timing & Animation =====
+  // ========================================
+  // TIMING & ANIMATION UTILITIES
+  // ========================================
   getIntervalDuration() {
     let defaultTime = 1000;
     let factor = this.factor || 1;
     try {
-      const factorInput = document.getElementById("factor");
+      const factorInput = document.getElementById("factor-range");
       if (factorInput?.value) {
-        const parsedFactor = parseInt(factorInput.value, 10);
-        if (!isNaN(parsedFactor) && parsedFactor > 0) {
+        const parsedFactor = parseFloat(factorInput.value);
+        if (!isNaN(parsedFactor) && parsedFactor >= 0.1 && parsedFactor <= 5) {
             factor = parsedFactor;
         }
       }
     } catch (e) {
       console.warn("[gui] Error getting factor:", e);
     }
-    return defaultTime * factor;
+    return defaultTime / factor;
   }
 
   play() {
@@ -123,7 +135,9 @@ export default class Gui {
     this.frameRequest = window.requestAnimationFrame(this.animationLoop.bind(this));
   }
 
-  // ===== Modal Aliases =====
+  // ========================================
+  // MODAL WINDOW MANAGEMENT
+  // ========================================
   openScatterplotModal() {
     import("./space/scatterPlot.js").then((scatterPlotModule) => {
       scatterPlotModule.showScatterPlotModal({
@@ -136,7 +150,9 @@ export default class Gui {
     });
   }
 
-  // ===== Animation Loop =====
+  // ========================================
+  // ANIMATION LOOP & PLAYBACK
+  // ========================================
   animationLoop(timestamp) {
     if (!this.playing) return;
     const elapsed = timestamp - this.lastFrameTime;
@@ -157,7 +173,9 @@ export default class Gui {
     }
   }
 
-  // ===== MSA Viewer Sync =====
+  // ========================================
+  // MSA VIEWER SYNCHRONIZATION
+  // ========================================
   syncMSAIfOpenThrottled() {
     const now = Date.now();
     if (now - this._lastSyncTime < this._syncThrottleDelay) return;
@@ -170,10 +188,26 @@ export default class Gui {
   }
 
   syncMSAIfOpen() {
-    if (!this.syncMSAEnabled) return;
+    console.log(`syncMSAIfOpen called - syncMSAEnabled: ${this.syncMSAEnabled}, isMSAViewerOpen: ${this.isMSAViewerOpen()}`);
+    if (!this.syncMSAEnabled) {
+      console.log("MSA sync disabled - skipping");
+      return;
+    }
+    if (!this.isMSAViewerOpen()) {
+      console.log("MSA viewer not open - skipping sync");
+      return;
+    }
+    
     const msaPositionInfo = this.calculateMSAPosition();
     const currentFullTreeDataIdx = this.transitionResolver.getDistanceIndex(this.currentTreeIndex);
-    const windowData = calculateWindow(currentFullTreeDataIdx, this.msaStepSize, this.msaWindowSize);
+    const windowData = calculateWindow(currentFullTreeDataIdx, this.msaStepSize, this.msaWindowSize, this.numberOfFullTrees);
+    
+    console.log(`MSA sync data:`, {
+      msaPositionInfo,
+      currentFullTreeDataIdx,
+      windowData,
+      currentTreeIndex: this.currentTreeIndex
+    });
 
     if (windowData) {
       const windowInfo = {
@@ -182,11 +216,28 @@ export default class Gui {
         msaPosition: msaPositionInfo.position,
         msaStepSize: msaPositionInfo.stepSize
       };
-      // Dispatch event or call sync function here
+      
+      // Get highlighted taxa for synchronization
+      const highlightedTaxa = this.getActualHighlightData ? this.getActualHighlightData() : {};
+      
+      // Dispatch sync event to MSA viewer
+      window.dispatchEvent(new CustomEvent('msa-sync-request', {
+        detail: {
+          position: msaPositionInfo.position,
+          windowInfo: windowInfo,
+          highlightedTaxa: highlightedTaxa,
+          treeIndex: this.currentTreeIndex,
+          fullTreeIndex: currentFullTreeDataIdx
+        }
+      }));
+      
+      console.log(`MSA sync: Tree ${this.currentTreeIndex} -> MSA region ${windowData.startPosition}-${windowData.endPosition}`);
     }
   }
 
-  // ===== Main Update Cycle =====
+  // ========================================
+  // MAIN UPDATE CYCLE
+  // ========================================
   update(skipAutoCenter = false) {
     this.resize(skipAutoCenter);
     // Pass the correct index type for each chart type
@@ -227,7 +278,9 @@ export default class Gui {
     this.syncMSAIfOpenThrottled();
   }
 
-  // ===== UI Event Handlers =====
+  // ========================================
+  // UI EVENT HANDLERS
+  // ========================================
   handleDrag(position) {
     this._lastClickedDistancePosition = undefined;
     this.currentTreeIndex = Math.max(0, Math.min(position, this.treeList.length - 1));
@@ -236,13 +289,15 @@ export default class Gui {
 
   getCurrentWindow() {
     const currentFullTreeDataIdx = this.transitionResolver.getDistanceIndex(this.currentTreeIndex);
-    const window = calculateWindow(currentFullTreeDataIdx, this.msaStepSize, this.msaWindowSize);
+    const window = calculateWindow(currentFullTreeDataIdx, this.msaStepSize, this.msaWindowSize, this.numberOfFullTrees);
     this.windowStart = window.startPosition;
     this.windowEnd = window.endPosition;
     return window;
   }
 
-  // ===== Tree Navigation & State =====
+  // ========================================
+  // TREE NAVIGATION & STATE MANAGEMENT
+  // ========================================
   updateMain() {
     const drawDuration = this.getIntervalDuration();
     const tree = this.treeList[this.currentTreeIndex];
@@ -276,6 +331,7 @@ export default class Gui {
         strokeWidth: this.strokeWidth,
         s_edges: tree_s_edges,
         atomCovers, // Only the correct cover set for this tree
+        monophyleticColoring: this.monophyleticColoringEnabled !== false, // Default to true
       });
     });
   }
@@ -338,7 +394,9 @@ export default class Gui {
     this.update();
   }
 
-  // ===== Modal Chart (Bootstrap-based) =====
+  // ========================================
+  // CHART MODAL DISPLAY
+  // ========================================
   displayCurrentChartInModal() {
     if (this.playing) this.stop();
     if (!this.transitionResolver || !this.robinsonFouldsDistances || !this.weightedRobinsonFouldsDistances || !this.scaleList) {
@@ -357,7 +415,9 @@ export default class Gui {
     });
   }
 
-  // ===== UI Controls =====
+  // ========================================
+  // UI CONTROL UPDATES
+  // ========================================
   updateControls() {
     const fullTreeIndices = this.fullTreeIndices;
     const currentFullTreeIndex = fullTreeIndices.indexOf(this.currentTreeIndex);
@@ -367,15 +427,34 @@ export default class Gui {
     document.getElementById("currentTree").innerText = this.currentTreeIndex + 1;
     document.getElementById("numberOfTrees").innerText = this.treeList.length;
     document.getElementById("treeLabel").innerText = this.getCurrentTreeLabel();
-    // Only call calculateWindow if currentFullTreeIndex is valid
-    if (currentFullTreeIndex !== -1) {
-        const window = calculateWindow(currentFullTreeIndex, this.msaStepSize, this.msaWindowSize);
-        document.getElementById("windowArea").innerText = `${window.startPosition} - ${window.endPosition}`;
-    } else {
-        document.getElementById("windowArea").innerText = "-";
-    }
-    // Update scale: always use the transitionResolver.getDistanceIndex for scale
+    // Get transition distance index for both MSA and scale calculations
     const transitionDistanceIdx = this.transitionResolver.getDistanceIndex(this.currentTreeIndex);
+    
+    // Always show MSA window information - use distance index for all tree types
+    if (transitionDistanceIdx >= 0 && this.numberOfFullTrees > 0) {
+      const window = calculateWindow(transitionDistanceIdx, this.msaStepSize, this.msaWindowSize, this.numberOfFullTrees);
+      
+      // Determine tree type for better user context
+      const isFullTree = this.transitionResolver.isFullTree(this.currentTreeIndex);
+      const isConsensusTree = this.transitionResolver.isConsensusTree(this.currentTreeIndex);
+      
+      let windowDisplay = `${window.startPosition} - ${window.endPosition}`;
+      let treeTypeIndicator = "";
+      
+      if (isFullTree) {
+        treeTypeIndicator = " (F)"; // Full tree indicator
+      } else if (isConsensusTree) {
+        treeTypeIndicator = " (C)"; // Consensus tree indicator  
+      } else {
+        treeTypeIndicator = " (I)"; // Interpolated tree indicator
+      }
+      
+      document.getElementById("windowArea").innerText = windowDisplay + treeTypeIndicator;
+    } else {
+      document.getElementById("windowArea").innerText = "No MSA data";
+    }
+    
+    // Update scale using the same transition distance index
     const currentScale = getCurrentScaleValue(this.scaleList, transitionDistanceIdx);
     const maxScale = this.maxScale;
     document.getElementById("currentScaleText").innerText = formatScaleValue(currentScale);
@@ -393,7 +472,9 @@ export default class Gui {
     this.update();
   }
 
-  // ===== Helper Methods for Full Tree Logic =====
+  // ========================================
+  // TREE POSITIONING & NAVIGATION HELPERS
+  // ========================================
   goToFullTreeDataIndex(transitionIndex) {
     if (!this.transitionResolver) return;
     const fullTreeIndices = this.transitionResolver.fullTreeIndices;
@@ -415,6 +496,7 @@ export default class Gui {
     // - OR it is the first tree (T0),
     // - OR it is the second tree (T1, i.e., the first transition's end tree)
     const isFullTree = this.transitionResolver.isFullTree(this.currentTreeIndex);
+    const isCon = this.transitionResolver.isConsensusTree(this.currentTreeIndex);
     if (isFullTree) {
         // Find all full tree indices
         const fullTreeIndices = this.transitionResolver.fullTreeIndices;
@@ -423,10 +505,20 @@ export default class Gui {
             return [];
         }
     }
-    return this.highlightData[highlightIndex] || [];
+    if(isCon) {
+      let cNumber = this.transitionResolver.getConsensusTreeNumber(this.currentTreeIndex);
+      console.log("[GUI] Consensus tree detected:", this.treeNames[this.currentTreeIndex]);
+      console.log("[GUI] Consensus tree number:", cNumber);
+      console.log("[GUI] Highlight data for consensus tree:", this.highlightData[highlightIndex][cNumber]);
+      this.transitionResolver.getConsensusTreeNumber(this.treeNames[this.currentTreeIndex])
+      return this.highlightData[highlightIndex] //[cNumber]] || [];
+    }
+    return [];
   }
 
-  // ===== Export & Save =====
+  // ========================================
+  // EXPORT & SAVE FUNCTIONALITY
+  // ========================================
   saveSVG() {
     const button = document.getElementById("save-svg-button");
     if (button) {
@@ -454,7 +546,9 @@ export default class Gui {
     return `${baseName} (No transition data)`;
   }
 
-  // ===== Modal Management =====
+  // ========================================
+  // COMPARISON & TAXA COLORING MODALS
+  // ========================================
   async openComparisonModal() {
     this.comparisonModals = this.comparisonModals || {};
     const currentIndex = this.currentTreeIndex;
@@ -493,121 +587,12 @@ export default class Gui {
   }
 
   _handleTaxaColoringComplete(colorData) {
-    const newColorMap = {};
-    if (colorData.mode === "taxa") {
-      for (const [taxon, color] of colorData.taxaColorMap) {
-        newColorMap[taxon] = color;
-      }
-    } else if (colorData.mode === "groups") {
-      this.leaveOrder.forEach((taxon) => {
-        const group = this._getGroupForTaxon(taxon, colorData.separator, colorData.strategyType);
-        const groupColor = colorData.groupColorMap.get(group);
-        if (groupColor) {
-          newColorMap[taxon] = groupColor;
-        } else {
-          newColorMap[taxon] = COLOR_MAP.colorMap[taxon] || COLOR_MAP.colorMap.defaultColor || "#000000";
-        }
-      });
-    }
-    // --- Ensure the global color map is updated so label colors are correct ---
+    const newColorMap = applyColoringData(colorData, this.leaveOrder, COLOR_MAP.colorMap);
+    // Ensure the global color map is updated so label colors are correct
     Object.assign(COLOR_MAP.colorMap, newColorMap);
     this.updateMain();
   }
 
-  _getGroupForTaxon(taxon, separator, strategyType) {
-    if (!taxon) return undefined;
-
-    // Handle first-letter grouping
-    if (separator === "first-letter" || strategyType === "first-letter") {
-      return taxon.charAt(0).toUpperCase();
-    }
-
-    // Use the same logic as taxaColoring.jsx
-    return this._getGroupForStrategy(taxon, separator, strategyType);
-  }
-
-  /**
-   * Extract group name using the same logic as taxaColoring.jsx
-   * This ensures consistency between the UI preview and the actual coloring
-   */
-  _getGroupForStrategy(taxonName, separator, strategyType, nthOccurrence = 1) {
-    // Handle new 'between' strategy type
-    if (strategyType && strategyType.startsWith('between-')) {
-      // Parse between strategy: 'between-_-1---1' means between 1st '_' and 1st '-'
-      const parts = strategyType.split('-');
-      if (parts.length >= 6) {
-        const startSep = parts[1];
-        const startOcc = parseInt(parts[2]) || 1;
-        const endSep = parts[4];
-        const endOcc = parseInt(parts[5]) || 1;
-        return this._getGroupBetweenSeparators(taxonName, startSep, startOcc, endSep, endOcc);
-      }
-      return null;
-    }
-
-    const parts = taxonName.split(separator);
-    if (parts.length <= 1) {
-      return null; // No group if separator not present or only one part
-    }
-
-    if (strategyType === 'first') {
-      return parts[0]; // e.g., "A" from "A.B.C"
-    } else if (strategyType === 'last') {
-      return parts.slice(0, -1).join(separator); // e.g., "A.B" from "A.B.C"
-    } else if (strategyType && strategyType.startsWith('nth-')) {
-      const occurrenceNum = parseInt(strategyType.split('-')[1]) || nthOccurrence;
-      if (occurrenceNum === 1) {
-        return parts[0]; // First occurrence: text before first separator
-      } else if (occurrenceNum >= 2 && occurrenceNum <= parts.length) {
-        return parts[occurrenceNum - 1]; // nth occurrence: text between (nth-1) and nth separator
-      }
-      return null; // Invalid occurrence number
-    }
-
-    return null; // Should not happen if strategyType is validated
-  }
-
-  /**
-   * Get text between two different separators at specific occurrences
-   */
-  _getGroupBetweenSeparators(taxonName, startSeparator, startOccurrence, endSeparator, endOccurrence) {
-    // Find the position of the start separator (nth occurrence)
-    let startPos = -1;
-    let currentOccurrence = 0;
-    for (let i = 0; i < taxonName.length; i++) {
-      if (taxonName[i] === startSeparator) {
-        currentOccurrence++;
-        if (currentOccurrence === startOccurrence) {
-          startPos = i;
-          break;
-        }
-      }
-    }
-
-    if (startPos === -1) {
-      return null; // Start separator not found at specified occurrence
-    }
-
-    // Find the position of the end separator (nth occurrence) after the start position
-    let endPos = -1;
-    currentOccurrence = 0;
-    for (let i = startPos + 1; i < taxonName.length; i++) {
-      if (taxonName[i] === endSeparator) {
-        currentOccurrence++;
-        if (currentOccurrence === endOccurrence) {
-          endPos = i;
-          break;
-        }
-      }
-    }
-
-    if (endPos === -1) {
-      // If end separator not found, take until the end of string
-      return taxonName.substring(startPos + 1);
-    }
-
-    return taxonName.substring(startPos + 1, endPos);
-  }
 
   openMSAViewer() {
     window.dispatchEvent(new CustomEvent("open-msa-viewer", {
@@ -619,7 +604,9 @@ export default class Gui {
     }));
   }
 
-  // ===== MSA Position Tracking =====
+  // ========================================
+  // MSA POSITION TRACKING
+  // ========================================
   calculateMSAPosition() {
     const transitionStep = this.transitionResolver.getDistanceIndex(this.currentTreeIndex);
     return {
@@ -630,9 +617,10 @@ export default class Gui {
     };
   }
 
-  // TransitionIndexResolver Initialization
-  // Reordered to initialize the resolver before using it.
-initializeTransitionResolver() {
+  // ========================================
+  // TRANSITION INDEX RESOLVER
+  // ========================================
+  initializeTransitionResolver() {
     if (!this.treeNames || this.treeNames.length === 0) {
         console.warn("[GUI] Cannot initialize TransitionIndexResolver: treeNames is empty or undefined.");
         this.transitionResolver = new TransitionIndexResolver([], [], [], false, 0); // Basic fallback
@@ -691,7 +679,9 @@ initializeTransitionResolver() {
     return realTreeData;
   }
 
-  // ===== Scale Bar Update =====
+  // ========================================
+  // SCALE BAR & STYLING UPDATES
+  // ========================================
   updateScale() {
     const fullTreeIndices = this.fullTreeIndices;
     // Use the unified transition distance index for scale display
@@ -724,6 +714,18 @@ initializeTransitionResolver() {
 
     STYLE_MAP.fontSize = this.fontSize;
 
+    this.updateMain();
+  }
+
+  /**
+   * Toggle monophyletic group coloring for tree branches
+   * @param {boolean} enabled - Whether to enable monophyletic coloring
+   */
+  setMonophyleticColoring(enabled) {
+    // Store the setting for future tree drawings
+    this.monophyleticColoringEnabled = enabled;
+
+    // Redraw the current tree with the new setting
     this.updateMain();
   }
 }

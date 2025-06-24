@@ -37,7 +37,7 @@ export class NodeRenderer {
    * @param {Function} clickHandler - Optional click handler function
    * @returns {d3.Selection} The updated leaf circles selection
    */
-  renderLeafCircles(leafData, currentMaxRadius, duration = 1000, easing = "easeSinInOut", clickHandler = null) {
+  renderLeafCircles(leafData, currentMaxRadius, duration = 1000, easing = "easePolyInOut", clickHandler = null) {
     // JOIN: Bind data to existing elements
     const leafCircles = this.svgContainer
       .selectAll(`.${this.leafClass}`)
@@ -67,7 +67,7 @@ export class NodeRenderer {
    * @param {string} easing - D3 easing function name
    * @returns {d3.Selection} The updated internal nodes selection
    */
-  renderInternalNodes(internalNodeData, duration = 1000, easing = "easeSinInOut") {
+  renderInternalNodes(internalNodeData, duration = 1000, easing = "easePolyInOut") {
     // JOIN: Bind data to existing elements
     const internalNodes = this.svgContainer
       .selectAll(`.${this.internalNodeClass}`)
@@ -228,7 +228,7 @@ export class NodeRenderer {
       'easeCubicInOut': d3.easeCubicInOut
     };
 
-    return easingMap[easingName] || d3.easeSinInOut;
+    return easingMap[easingName] || d3.easePolyInOut;
   }
 
   /**

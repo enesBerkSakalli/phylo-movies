@@ -3,6 +3,7 @@
  */
 export default class TransitionIndexResolver {
     _cachedFullTreeIndices = null;
+    _cachedConsensusTreeIndices = null;
 
     /**
      * @param {object[]} sequenceData - Array of sequence items, e.g., [{name: 'T0', type: 'T'}, {name: 'IT1', type: 'IT'}].
@@ -33,6 +34,7 @@ export default class TransitionIndexResolver {
         // This ensures that if highlightData is empty but we know the number of transitions, it's respected.
         this.numOriginalTransitions = numOriginalTransitions !== undefined ? numOriginalTransitions : (this.highlightData?.length || 0);
         this._cachedFullTreeIndices = null; // Invalidate cache
+        this._cachedConsensusTreeIndices = null; // Invalidate cache
 
         if (this.debug) {
             console.log("[TIR] Data updated. Sequence length:", this.sequenceData.length, "Num original transitions:", this.numOriginalTransitions);
@@ -56,6 +58,25 @@ export default class TransitionIndexResolver {
             }
         }
         return this._cachedFullTreeIndices;
+    }
+
+    /**
+     * A lazily-computed getter for the sequence indices of all consensus trees ('C').
+     * @returns {number[]}
+     */
+    get consensusTreeIndices() {
+        if (!this._cachedConsensusTreeIndices) {
+            this._cachedConsensusTreeIndices = this.sequenceData.reduce((acc, item, i) => {
+                if (item?.type === 'C') {
+                    acc.push(i);
+                }
+                return acc;
+            }, []);
+            if (this.debug) {
+                console.log("[TIR] Cached consensusTreeIndices:", this._cachedConsensusTreeIndices);
+            }
+        }
+        return this._cachedConsensusTreeIndices;
     }
 
     /**
@@ -188,6 +209,63 @@ export default class TransitionIndexResolver {
         return this.sequenceData[position]?.type === 'T' ?? false;
     }
 
+    /**
+     * Checks if the tree at a given position is a consensus tree.
+     * @param {number} position - Sequence position.
+     * @returns {boolean} True if the tree is a consensus tree.
+     */
+    isConsensusTree = (position) => {
+        if (position < 0 || position >= this.sequenceData.length) return false;
+        return this.sequenceData[position]?.type === 'C' ?? false;
+    }
+
+    /**
+     * Gets the consensus tree number from the tree name.
+     * Assumes consensus trees are named like 'C_1', 'C_2', etc.
+     * @param {number} position - Sequence position.
+     * @returns {number} The consensus tree number, or -1 if not a consensus tree or number cannot be extracted.
+     */
+
+    getConsensusTreeNumber = (position) => {
+        if (position < 0 || position >= this.sequenceData.length) return -1;
+
+        const item = this.sequenceData[position];
+        if (!item || item.type !== 'C') return -1;
+
+        // Extract number from consensus tree name (e.g., 'C_1' -> 1, 'C_15' -> 15)
+        const match = item.name.match(/^C_(\d+)$/);
+        if (match) {
+            return parseInt(match[1], 10);
+        }
+
+        // Alternative patterns: 'Consensus_1', 'consensus1', etc.
+        const altMatch = item.name.match(/^[Cc]onsensus[_-]?(\d+)$/);
+        if (altMatch) {
+            return parseInt(altMatch[1], 10);i
+        }
+
+        return -1;
+    }
+
+    /**
+     * Gets information about the tree at a given position.
+     * @param {number} position - Sequence position.
+     * @returns {object} Object containing tree information: { type, isConsensus, consensusNumber, name }.
+     */
+    getTreeInfo = (position) => {
+        if (position < 0 || position >= this.sequenceData.length) {
+            return { type: 'UNKNOWN', isConsensus: false, consensusNumber: -1, name: 'Unknown' };
+        }
+
+        const item = this.sequenceData[position];
+        const type = item?.type || 'UNKNOWN';
+        const name = item?.name || 'Unknown';
+        const isConsensus = type === 'C';
+        const consensusNumber = isConsensus ? this.getConsensusTreeNumber(position) : -1;
+
+        return { type, isConsensus, consensusNumber, name };
+    }
+
     getNextPosition = (currentPosition) => {
         if (this.sequenceData.length === 0) return 0;
         return Math.min(currentPosition + 1, this.sequenceData.length - 1);
@@ -210,6 +288,28 @@ export default class TransitionIndexResolver {
         return prevIndex ?? this.fullTreeIndices[0] ?? currentIndex;
     }
 
+    /**
+     * Get the next consensus tree sequence index from the current position.
+     * @param {number} currentIndex - Current sequence position.
+     * @returns {number} Next consensus tree sequence index.
+     */
+    getNextConsensusTreeSequenceIndex = (currentIndex) => {
+        if (this.consensusTreeIndices.length === 0) return currentIndex;
+        const nextIndex = this.consensusTreeIndices.find(index => index > currentIndex);
+        return nextIndex ?? this.consensusTreeIndices.at(-1) ?? currentIndex;
+    }
+
+    /**
+     * Get the previous consensus tree sequence index from the current position.
+     * @param {number} currentIndex - Current sequence position.
+     * @returns {number} Previous consensus tree sequence index.
+     */
+    getPreviousConsensusTreeSequenceIndex = (currentIndex) => {
+        if (this.consensusTreeIndices.length === 0) return currentIndex;
+        const prevIndex = this.consensusTreeIndices.findLast(index => index < currentIndex);
+        return prevIndex ?? this.consensusTreeIndices[0] ?? currentIndex;
+    }
+
     validateData = () => {
         // Basic validation example
         const issues = [];
@@ -229,9 +329,12 @@ export default class TransitionIndexResolver {
     getDebugInfo = () => ({
         sequenceLength: this.sequenceData.length,
         fullTreeCount: this.fullTreeIndices.length,
+        consensusTreeCount: this.consensusTreeIndices.length,
         highlightDataLength: this.highlightData.length,
         numOriginalTransitions: this.numOriginalTransitions,
         firstFullTreeIndex: this.fullTreeIndices.length > 0 ? this.fullTreeIndices[0] : -1,
         lastFullTreeIndex: this.fullTreeIndices.length > 0 ? this.fullTreeIndices.at(-1) : -1,
+        firstConsensusTreeIndex: this.consensusTreeIndices.length > 0 ? this.consensusTreeIndices[0] : -1,
+        lastConsensusTreeIndex: this.consensusTreeIndices.length > 0 ? this.consensusTreeIndices.at(-1) : -1,
     });
 }

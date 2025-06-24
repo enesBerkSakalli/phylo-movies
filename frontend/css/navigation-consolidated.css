@@ -1,0 +1,525 @@
+/* ============================================================================
+   CONSOLIDATED NAVIGATION STYLES - Clean & Consistent
+   ============================================================================ */
+
+/* CSS Custom Properties for Consistency - Increased Spacing */
+:root {
+  --nav-primary-color: #4390e1;
+  --nav-primary-darker: #357abd;
+  --nav-bg-main: linear-gradient(180deg, #2a2d3a 0%, #373747 100%);
+  --nav-bg-panel: #23273a;
+  --nav-bg-input: #181b28;
+  --nav-border-color: rgba(255, 255, 255, 0.08);
+  --nav-text-primary: #e0e6f0;
+  --nav-text-secondary: #9bb0d1;
+  --nav-text-muted: #8da9c4;
+  --nav-accent-blue: #4fc3f7;
+  --nav-spacing-xs: 6px;  /* Increased for better spacing */
+  --nav-spacing-sm: 10px; /* Increased for better spacing */
+  --nav-spacing-md: 14px; /* Increased for better spacing */
+  --nav-spacing-lg: 18px; /* Increased for better spacing */
+  --nav-border-radius: 6px;
+  --nav-button-height: 42px;      /* Increased for better touch targets */
+  --nav-button-height-compact: 32px;
+}
+
+/* ============================================================================
+   MAIN NAVIGATION SIDEBAR
+   ============================================================================ */
+
+.menu {
+  width: 320px;
+  min-width: 300px;
+  max-width: 380px;
+  flex-shrink: 0;
+  height: 100vh;
+  overflow-y: auto;
+  background: var(--nav-bg-main);
+  color: var(--nav-text-primary);
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  border-right: 1px solid var(--nav-border-color);
+}
+
+/* Custom scrollbar */
+.menu::-webkit-scrollbar {
+  width: 6px;
+}
+.menu::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+}
+.menu::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+.menu::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* ============================================================================
+   MENU HEADER & BRANDING
+   ============================================================================ */
+
+.menu-header {
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid var(--nav-border-color);
+}
+
+.compact-header {
+  display: flex;
+  align-items: center;
+}
+
+.app-info {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.app-info > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-status {
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+}
+
+.file-status .file-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+.file-status .embedding-type {
+  flex-shrink: 0;
+}
+
+
+/* ============================================================================
+   SUBMENU TOGGLE FUNCTIONALITY
+   ============================================================================ */
+
+.submenu-container {
+  margin-bottom: var(--nav-spacing-md);
+}
+
+.submenu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--nav-spacing-sm) var(--nav-spacing-md);
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--nav-border-radius) var(--nav-border-radius) 0 0;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  user-select: none;
+}
+
+.submenu-header:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.submenu-title {
+  display: flex;
+  align-items: center;
+  gap: var(--nav-spacing-sm);
+}
+
+.submenu-icon {
+  color: var(--nav-accent-blue);
+  font-size: 14px;
+}
+
+.mdc-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--nav-text-primary);
+  margin: 0;
+}
+
+.toggle-icon {
+  color: var(--nav-text-secondary);
+  font-size: 12px;
+  transition: transform 0.2s ease;
+  cursor: pointer;
+}
+
+.submenu-container[data-collapsed="true"] .toggle-icon {
+  transform: rotate(-90deg);
+}
+
+.submenu-container[data-collapsed="true"] .submenu {
+  display: none;
+}
+
+.submenu {
+  background: var(--nav-bg-panel);
+  border-radius: 0 0 var(--nav-border-radius) var(--nav-border-radius);
+  padding: var(--nav-spacing-md);
+  border: 1px solid var(--nav-border-color);
+  border-top: none;
+}
+
+/* ============================================================================
+   NAVIGATION PANELS & TOOLBAR OPTIMIZATION
+   ============================================================================ */
+
+.toolbar {
+  padding: 0;
+  margin: 0;
+}
+
+.tools {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nav-spacing-sm);
+  padding: 0;
+}
+
+.tree-navigation-panel {
+  background: var(--nav-bg-panel);
+  border-radius: var(--nav-border-radius);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: var(--nav-spacing-md) var(--nav-spacing-lg) var(--nav-spacing-md) var(--nav-spacing-lg);
+  color: var(--nav-text-primary);
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  margin-bottom: var(--nav-spacing-sm);
+  min-width: 260px;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  gap: var(--nav-spacing-sm);
+  margin-bottom: var(--nav-spacing-md);
+}
+
+.panel-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  gap: var(--nav-spacing-sm);
+}
+
+.panel-section {
+  margin-bottom: var(--nav-spacing-md);
+}
+
+.panel-section:last-child {
+  margin-bottom: 0;
+}
+
+/* ============================================================================
+   STATUS DISPLAYS - UNIFIED STYLING
+   ============================================================================ */
+
+.compact-status {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: var(--nav-border-radius);
+  padding: var(--nav-spacing-xs) var(--nav-spacing-sm);
+  margin-bottom: var(--nav-spacing-xs);
+  border: 1px solid var(--nav-border-color);
+}
+
+.info-group {
+  display: flex;
+  align-items: center;
+  gap: var(--nav-spacing-xs);
+}
+
+.label {
+  color: #b8c5d1; /* Improved contrast for better readability */
+  font-size: 10px;
+  font-weight: 500;
+  min-width: 35px;
+}
+
+.value {
+  color: #ffffff; /* Pure white for maximum contrast */
+  font-weight: 600;
+  font-size: 11px;
+}
+
+/* ============================================================================
+   FORM CONTROLS - UNIFIED SIZING & STYLING
+   ============================================================================ */
+
+.compact-input,
+.compact-select {
+  background: var(--nav-bg-input);
+  border: 1px solid #38405a;
+  color: var(--nav-text-primary);
+  border-radius: var(--nav-border-radius);
+  padding: var(--nav-spacing-sm);
+  font-size: 12px;
+  min-height: var(--nav-button-height-compact);
+  transition: border 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.compact-input:focus,
+.compact-select:focus {
+  border: 1.5px solid var(--nav-primary-color);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(67, 144, 225, 0.2);
+}
+
+/* Select dropdown styling */
+.compact-select {
+  padding-right: 28px;
+  appearance: none;
+  cursor: pointer;
+  background-image: url('data:image/svg+xml;utf8,<svg fill="%239bb0d1" height="16" viewBox="0 0 20 20" width="16" xmlns="http://www.w3.org/2000/svg"><path d="M7.293 8.293a1 1 0 011.414 0L10 9.586l1.293-1.293a1 1 0 111.414 1.414l-2 2a1 1 0 01-1.414 0l-2-2a1 1 0 010-1.414z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 16px 16px;
+}
+
+/* ============================================================================
+   BUTTONS - UNIFIED STYLING
+   ============================================================================ */
+
+.md-button,
+.primary-btn,
+.viz-btn {
+  background: linear-gradient(135deg, var(--nav-primary-color) 0%, var(--nav-primary-darker) 100%);
+  border: none;
+  color: white;
+  border-radius: var(--nav-border-radius);
+  padding: var(--nav-spacing-sm) var(--nav-spacing-md);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  min-height: var(--nav-button-height);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--nav-spacing-xs);
+  outline: none;
+  flex: 1;
+}
+
+.md-button:hover,
+.primary-btn:hover,
+.viz-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(67, 144, 225, 0.3);
+}
+
+.md-button:focus,
+.primary-btn:focus,
+.viz-btn:focus {
+  box-shadow: 0 0 0 2px rgba(67, 144, 225, 0.4);
+}
+
+.md-button:active,
+.primary-btn:active,
+.viz-btn:active {
+  transform: translateY(0);
+}
+
+.md-button:disabled,
+.primary-btn:disabled,
+.viz-btn:disabled {
+  background: #555;
+  color: var(--nav-text-muted);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Compact button variants */
+.md-button.compact,
+.primary-btn.compact,
+.viz-btn.compact {
+  padding: var(--nav-spacing-xs) var(--nav-spacing-sm);
+  font-size: 11px;
+  min-height: var(--nav-button-height-compact);
+}
+
+/* Button layouts */
+.button-row {
+  display: flex;
+  gap: var(--nav-spacing-xs);
+  margin-bottom: var(--nav-spacing-xs);
+}
+
+.button-group {
+  display: flex;
+  gap: var(--nav-spacing-xs);
+  flex: 1;
+}
+
+.control-row {
+  display: flex;
+  align-items: center;
+  gap: var(--nav-spacing-xs);
+  margin-bottom: var(--nav-spacing-xs);
+}
+
+/* ============================================================================
+   SCALE BAR - UNIFIED STYLING
+   ============================================================================ */
+
+.scale-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--nav-spacing-xs);
+}
+
+.scale-title {
+  font-size: 12px;
+  color: var(--nav-text-secondary);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: var(--nav-spacing-xs);
+}
+
+.scale-values {
+  font-size: 12px;
+  color: var(--nav-text-primary);
+  font-weight: 600;
+}
+
+.scale-bar {
+  background: var(--nav-bg-input);
+  border-radius: var(--nav-spacing-xs);
+  height: 8px;
+  width: 100%;
+  margin-bottom: var(--nav-spacing-xs);
+  position: relative;
+  overflow: hidden;
+}
+
+.scale-progress-bar {
+  background: linear-gradient(90deg, var(--nav-accent-blue), #29b6f6);
+  height: 100%;
+  border-radius: var(--nav-spacing-xs);
+  transition: width 0.3s ease;
+}
+
+.scale-explanation {
+  font-size: 10px;
+  color: var(--nav-text-muted);
+  margin-top: var(--nav-spacing-xs);
+  line-height: 1.2;
+}
+
+/* ============================================================================
+   ENHANCED MSA WINDOW STYLING
+   ============================================================================ */
+
+.msa-status {
+  margin: 0 0 var(--nav-spacing-sm) 0;
+  padding: var(--nav-spacing-sm) 10px;
+  background: linear-gradient(135deg, rgba(76, 195, 247, 0.1), rgba(76, 195, 247, 0.05));
+  border: 1px solid rgba(76, 195, 247, 0.3);
+  border-radius: var(--nav-border-radius);
+  position: relative;
+  overflow: hidden;
+}
+
+.msa-status::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--nav-accent-blue), #29b6f6, #03a9f4);
+  opacity: 0.6;
+}
+
+.msa-info-item {
+  text-align: center;
+  padding: var(--nav-spacing-xs);
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: var(--nav-spacing-xs);
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.msa-info-item:hover {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(76, 195, 247, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 1200px) {
+  .menu {
+    width: 260px;
+    min-width: 240px;
+  }
+}
+
+@media (max-width: 768px) {
+  .menu {
+    width: 240px;
+    min-width: 220px;
+  }
+  
+  .tree-navigation-panel {
+    padding: 10px 12px;
+    min-width: 0;
+  }
+  
+  .file-info-container {
+    padding: 6px 8px;
+  }
+}
+
+@media (max-width: 500px) {
+  .tree-navigation-panel {
+    padding: 8px 10px;
+  }
+  
+  .panel-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--nav-spacing-xs);
+  }
+  
+  .control-row {
+    flex-wrap: wrap;
+    gap: var(--nav-spacing-xs);
+  }
+}
+
+/* ============================================================================
+   UTILITY CLASSES
+   ============================================================================ */
+
+/* Remove spinner from number inputs */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+/* Focus visible improvements */
+.menu *:focus-visible {
+  outline: 2px solid var(--nav-primary-color);
+  outline-offset: 2px;
+}
+
+/* Text selection */
+::selection {
+  background: rgba(67, 144, 225, 0.3);
+}

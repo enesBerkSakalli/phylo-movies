@@ -2,14 +2,16 @@ import * as d3 from "d3";
 import ParseUtil from "../utils/ParseUtil.js";
 import { LinkRenderer } from "./rendering/LinkRenderer.js";
 import { NodeRenderer } from "./rendering/NodeRenderer.js";
-import { LabelRenderer } from "./rendering/LabelRenderer.js";
 import { ExtensionRenderer } from "./rendering/ExtensionRenderer.js";
 import { ColorManager } from "./systems/ColorManager.js";
-import { getLinkKey, getLinkSvgId } from "./utils/KeyGenerator.js";
+import { getLinkSvgId } from "./utils/KeyGenerator.js";
 
 import {
   buildSvgStringTime,
   buildLinkExtensionTime,
+  orientText,
+  getOrientTextInterpolator,
+  anchorCalc,
 } from "./treeSvgGenerator.js";
 
 let STYLE_MAP = {
@@ -52,7 +54,6 @@ export class TreeDrawer {
     this.colorManager = new ColorManager(this.marked);
     this.linkRenderer = new LinkRenderer(this.svg_container, this.colorManager, STYLE_MAP);
     this.nodeRenderer = new NodeRenderer(this.svg_container, this.colorManager, STYLE_MAP);
-    this.labelRenderer = new LabelRenderer(this.svg_container, this.colorManager, STYLE_MAP);
     this.extensionRenderer = new ExtensionRenderer(this.svg_container, this.colorManager, STYLE_MAP);
   }
 
@@ -147,11 +148,17 @@ export class TreeDrawer {
       return;
     }
 
-    // For other containers, ensure proper centering
     const containerNode = this.svg_container.node();
     if (!containerNode) return;
 
-    // Find the parent SVG element
+    // For comparison containers (groups), don't modify their structure
+    // They're already positioned correctly by TreeComparison
+    if (containerNode.tagName.toLowerCase() === "g" &&
+        containerNode.classList.contains("tree-container")) {
+      return;
+    }
+
+    // For other containers, ensure proper centering
     const svgElement = this._findParentSVG(containerNode);
     if (!svgElement) return;
 
@@ -282,12 +289,6 @@ export class TreeDrawer {
   updateLinks(linksSubset = null) {
     const linksData = linksSubset || this.root.links();
 
-    // Update the color manager with current marked components
-    this.colorManager.updateMarkedComponents(this.marked);
-
-    // Update the link renderer's size configuration
-    this.linkRenderer.updateSizeConfig(STYLE_MAP);
-
     // Delegate rendering to LinkRenderer, passing s_edges for highlighting
     return this.linkRenderer.render(
       linksData,
@@ -307,12 +308,6 @@ export class TreeDrawer {
     // Calculate extension end point with standard buffer
     const extensionEndRadius = currentMaxRadius + 20;
 
-    // Update the color manager with current marked components
-    this.colorManager.updateMarkedComponents(this.marked);
-
-    // Update the extension renderer's size configuration
-    this.extensionRenderer.updateSizeConfig(STYLE_MAP);
-
     // Delegate rendering to ExtensionRenderer
     return this.extensionRenderer.renderExtensions(
       this.root.leaves(),
@@ -324,52 +319,68 @@ export class TreeDrawer {
   }
 
   /**
-   * Draws and updates the leaf label text elements using LabelRenderer.
-   * Delegates to the specialized LabelRenderer.
+   * Draws and updates the leaf label text elements using the original coordinate-based approach.
+   * Uses D3's general update pattern with proper interpolation functions from treeSvgGenerator.
    */
   updateLabels(currentMaxRadius) {
-    console.log('[TreeDrawer] updateLabels called', currentMaxRadius);
+    console.log('[TreeDrawer] updateLabels called with original coordinate system', currentMaxRadius);
     const labelRadius = currentMaxRadius + 30; // Standard label positioning
 
-    this.colorManager.updateMarkedComponents(this.marked);
-    this.labelRenderer.updateSizeConfig(STYLE_MAP); // Ensure LabelRenderer has latest size config
+    // Use D3's general update pattern with original coordinate handling
+    const labels = this.svg_container
+      .selectAll(".label")
+      .data(this.root.leaves(), (d) => d.data.name);
 
-    // Prepare animation options for LabelRenderer
-    // LabelRenderer handles defaults if specific options are not provided.
-    // this.drawDuration is set by the main drawTree function.
-    const animationOptions = {
-      duration: this.drawDuration,
-      // Easing can be a string (e.g., "easeCubicInOut") or a D3 function.
-      // LabelRenderer's _getEasingFunction will handle string conversion.
-      // Let LabelRenderer use its configured default or this specific one if needed.
-      // easing: "easeSinInOut", // Or let LabelRenderer use its default
-      // Staggering is true by default in LabelRenderer unless options.stagger is false.
-      // stagger: true, // Or let LabelRenderer use its default
-      // onComplete: () => { console.log("TreeDrawer: Labels updated/animated."); } // Optional callback
-    };
+    // Remove exiting labels
+    labels.exit()
+      .transition("exitLabels")
+      .duration(this.drawDuration / 2)
+      .style("opacity", 0)
+      .remove();
 
-    // If this.drawDuration is 0, LabelRenderer should treat it as non-animated.
-    // The 'animate' flag in LabelRenderer's options defaults to true.
-    // If duration is 0, the animation will be instant.
-    // To explicitly skip animation, you could add: animationOptions.animate = this.drawDuration > 0;
-    // However, LabelRenderer's logic with duration 0 should suffice.
+    // Add entering labels with initial positioning
+    const enteringLabels = labels.enter()
+      .append("text")
+      .attr("class", "label")
+      .attr("dy", ".31em")
+      .style("font-size", STYLE_MAP.fontSize || "1.2em")
+      .attr("font-weight", "bold")
+      .attr("font-family", "Courier New")
+      .text((d) => d.data.name)
+      .style("opacity", 0)
+      .attr("transform", (d) => orientText(d, labelRadius))
+      .attr("text-anchor", (d) => anchorCalc(d))
+      .style("fill", (d) => this.colorManager.getNodeColor(d));
 
-    const labelsSelection = this.labelRenderer.renderLeafLabels(
-      this.root.leaves(),
-      labelRadius,
-      animationOptions
-    );
+    // Merge enter and update selections
+    const allLabels = labels.merge(enteringLabels);
 
-    // Apply font size and color updates to all existing labels
-    // This ensures that changes to GUI settings are reflected on existing labels
-    if (STYLE_MAP && STYLE_MAP.fontSize) {
-      this.labelRenderer.updateFontSizes(STYLE_MAP.fontSize, STYLE_MAP.internalFontSize || STYLE_MAP.fontSize);
+    // Apply transitions with original interpolation functions
+    if (this.drawDuration > 0) {
+      allLabels
+        .transition("updateLabels")
+        .duration(this.drawDuration)
+        .ease(d3.easePolyInOut)
+        .style("opacity", 1)
+        .attrTween("transform", getOrientTextInterpolator(labelRadius))
+        .attr("text-anchor", (d) => anchorCalc(d))
+        .style("fill", (d) => this.colorManager.getNodeColor(d));
+    } else {
+      // No animation - set final positions directly
+      allLabels
+        .attr("transform", (d) => orientText(d, labelRadius))
+        .attr("text-anchor", (d) => anchorCalc(d))
+        .style("opacity", 1)
+        .style("fill", (d) => this.colorManager.getNodeColor(d));
     }
 
-    // Update colors for all existing labels based on current marked components
-    this.labelRenderer.updateLabelColors(this.marked);
+    // Apply font size updates to all existing labels
+    if (STYLE_MAP && STYLE_MAP.fontSize) {
+      allLabels.style("font-size", STYLE_MAP.fontSize);
+    }
 
-    return labelsSelection;
+    console.log('[TreeDrawer] Label update completed with original coordinate system');
+    return allLabels;
   }
 
   /**
@@ -377,18 +388,13 @@ export class TreeDrawer {
    * Now delegates to the specialized NodeRenderer for better separation of concerns.
    */
   updateLeafCircles(currentMaxRadius) {
-    // Update the color manager with current marked components
-    this.colorManager.updateMarkedComponents(this.marked);
-
-    // Update the node renderer's size configuration
-    this.nodeRenderer.updateSizeConfig(STYLE_MAP);
 
     // Delegate rendering to NodeRenderer with click handler
     return this.nodeRenderer.renderLeafCircles(
       this.root.leaves(),
       currentMaxRadius,
       this.drawDuration,
-      "easeSinInOut",
+      "easePolyInOut",
     );
   }
 
@@ -413,6 +419,42 @@ export class TreeDrawer {
   get drawDuration() {
     return this._drawDuration;
   }
+
+  /**
+   * Synchronizes all renderer configurations and updates
+   * @param {Object} options - Options for rendering
+   */
+  synchronizeRenderers(options = {}) {
+    // Update color manager for all renderers
+    this.colorManager.updateMarkedComponents(this.marked);
+
+    // Update size configuration for all renderers
+    this.linkRenderer.updateSizeConfig(STYLE_MAP);
+    this.nodeRenderer.updateSizeConfig(STYLE_MAP);
+    this.extensionRenderer.updateSizeConfig(STYLE_MAP);
+
+    // Update color manager for all renderers
+    this.linkRenderer.updateColorManager(this.colorManager);
+    this.nodeRenderer.updateColorManager(this.colorManager);
+    this.extensionRenderer.updateColorManager(this.colorManager);
+  }
+
+  /**
+   * Renders all tree elements with synchronized timing and configuration
+   * @param {number} currentMaxRadius - The maximum radius of the tree
+   * @param {Object} options - Rendering options
+   */
+  renderAllElements(currentMaxRadius, options = {}) {
+    // Synchronize all renderers first
+    this.synchronizeRenderers(options);
+
+    // Render elements in sequence for better synchronization
+    this.updateLinks();
+    this.updateLinkExtension(currentMaxRadius);
+    this.updateLabels(currentMaxRadius);
+    this.updateLeafCircles(currentMaxRadius);
+  }
+
 }
 
 /**
@@ -442,15 +484,19 @@ export default function drawTree({
   svgContainerId = "application",
   s_edges = [],
   atomCovers = [], // Accept atomCovers as a parameter
+  monophyleticColoring = true, // Enable/disable monophyletic coloring
   options = {}
 }) {
   let currentRoot = treeConstructor["tree"];
   let currentMaxRadius = treeConstructor["max_radius"];
 
   // For comparison views, reduce sizes to fit better
-  const isComparison = svgContainerId.includes('comparison') || svgContainerId.includes('group');
-  const fontSizeAdjustment = isComparison ? 0.85 : 1;
-  const strokeAdjustment = isComparison ? 0.9 : 1;
+  const isComparison = svgContainerId.includes('comparison') ||
+                       svgContainerId.includes('tree1') ||
+                       svgContainerId.includes('tree2') ||
+                       svgContainerId.includes('group');
+  const fontSizeAdjustment = isComparison ? 0.75 : 1; // More aggressive font size reduction
+  const strokeAdjustment = isComparison ? 0.8 : 1;
 
   let treeDrawerInstance = new TreeDrawer(currentRoot, svgContainerId);
 
@@ -472,20 +518,13 @@ export default function drawTree({
   treeDrawerInstance.marked = toBeHighlighted;
   treeDrawerInstance.s_edges = s_edges;
 
-  // --- Pass atomCovers to label rendering for background highlighting ---
-  const labelOptions = {
-    ...options,
-    coversSet: new Set(atomCovers), // Pass as Set for efficient lookup
-  };
+  // Set monophyletic coloring option
+  treeDrawerInstance.colorManager.setMonophyleticColoring(monophyleticColoring);
 
-  // Draw all tree elements with standard spacing
-  treeDrawerInstance.updateLinks();
-  treeDrawerInstance.updateLinkExtension(currentMaxRadius);
-  treeDrawerInstance.labelRenderer.renderLeafLabels(
-    treeDrawerInstance.root.leaves(),
-    currentMaxRadius + 30,
-    labelOptions
-  );
-  treeDrawerInstance.updateLeafCircles(currentMaxRadius);
+  // --- Pass atomCovers to label rendering for background highlighting ---
+  // Note: These options are used in updateLabels() method internally
+
+  // Draw all tree elements with synchronized timing and configuration
+  treeDrawerInstance.renderAllElements(currentMaxRadius, { ...options, atomCovers });
   return true;
 }

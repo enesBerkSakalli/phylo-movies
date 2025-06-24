@@ -1,4 +1,5 @@
 import { notifications } from "./notificationSystem.js";
+import { SpeedKnobController } from "../../speedKnobController.js";
 
 /**
  * Centralized event handler registry with data-driven configuration
@@ -8,6 +9,7 @@ export class EventHandlerRegistry {
     this.gui = gui;
     // Store objects with {id, type, element, boundAction} to allow for proper removal
     this.attachedHandlers = [];
+    this.speedKnobController = null;
   }
 
   /**
@@ -77,26 +79,10 @@ export class EventHandlerRegistry {
             description: "Position input change",
           },
           {
-            id: "factor",
+            id: "factor-range",
             type: "input",
-            action: (event) => {
-              const value = event.target.value;
-              this.gui.factor = parseFloat(value);
-
-              // Update the speed knob visual rotation
-              const indicator = document.querySelector('.speed-knob-indicator');
-              if (indicator) {
-                const angle = -126 + ((value - 1) / 9) * 252; // Map 1-10 to -126° to +126°
-                indicator.style.transform = `translateX(-50%) rotate(${angle}deg)`;
-              }
-
-              // Update the displayed value
-              const speedValue = document.querySelector('.speed-value');
-              if (speedValue) {
-                speedValue.textContent = `${value}×`;
-              }
-            },
-            description: "Speed factor change",
+            action: (event) => this.handleFactorChange(event),
+            description: "Speed factor change (range input)",
           },
         ],
       },
@@ -145,6 +131,24 @@ export class EventHandlerRegistry {
         ],
       },
 
+      // Submenu toggle controls
+      submenuToggles: {
+        type: "click",
+        errorHandling: "log",
+        handlers: [
+          {
+            id: "toggle-appearance-submenu",
+            action: (event) => this.toggleSubmenu(event, "appearance-submenu"),
+            description: "Toggle appearance submenu",
+          },
+          {
+            id: "toggle-recording-submenu", 
+            action: (event) => this.toggleSubmenu(event, "recording-submenu"),
+            description: "Toggle recording submenu",
+          },
+        ],
+      },
+
       // Modal and advanced feature controls
       modalControls: {
         type: "click",
@@ -178,6 +182,31 @@ export class EventHandlerRegistry {
   }
 
   /**
+   * Toggle submenu visibility
+   */
+  toggleSubmenu(event, submenuId) {
+    const submenu = document.getElementById(submenuId);
+    const toggleIcon = event.target;
+    const container = submenu?.closest('.submenu-container');
+    
+    if (submenu && container) {
+      const isCollapsed = container.getAttribute('data-collapsed') === 'true';
+      
+      if (isCollapsed) {
+        // Show submenu
+        submenu.style.display = 'block';
+        container.setAttribute('data-collapsed', 'false');
+        toggleIcon.textContent = '▼';
+      } else {
+        // Hide submenu
+        submenu.style.display = 'none';
+        container.setAttribute('data-collapsed', 'true');
+        toggleIcon.textContent = '▶';
+      }
+    }
+  }
+
+  /**
    * Position navigation handler
    */
   handlePositionNavigation() {
@@ -186,6 +215,52 @@ export class EventHandlerRegistry {
       let position = Math.max(1, parseInt(positionInput.value, 10));
       positionInput.value = position;
       this.gui.goToPosition(position - 1);
+    }
+  }
+
+  /**
+   * Factor change handler for range input
+   */
+  handleFactorChange(event) {
+    // Skip if the speed knob controller is currently dragging to avoid conflicts
+    if (this.speedKnobController && this.speedKnobController.isDragging) {
+      return;
+    }
+    
+    const value = parseFloat(event.target.value);
+    // Validate factor is within bounds (now allowing values below 1 for slower animations)
+    if (!isNaN(value) && value >= 0.1 && value <= 5) {
+      this.gui.factor = value;
+
+      // Update the displayed value
+      const speedValue = document.querySelector('.speed-value');
+      if (speedValue) {
+        speedValue.textContent = `${value.toFixed(1)}×`;
+      }
+    }
+  }
+
+  /**
+   * Initialize the speed knob controller for interactive knob behavior
+   */
+  initializeSpeedKnob() {
+    const knobElement = document.querySelector('.speed-knob');
+    const inputElement = document.getElementById('factor-range');
+    
+    if (knobElement && inputElement && !this.speedKnobController) {
+      this.speedKnobController = new SpeedKnobController(knobElement, inputElement, {
+        onValueChange: (value) => {
+          this.gui.factor = value;
+          
+          // Update the displayed value
+          const speedValue = document.querySelector('.speed-value');
+          if (speedValue) {
+            speedValue.textContent = `${value.toFixed(1)}×`;
+          }
+        }
+      });
+      
+      console.log('Speed knob controller initialized');
     }
   }
 
@@ -376,6 +451,10 @@ export class EventHandlerRegistry {
     }
 
     this.logAttachmentSummary(summary);
+    
+    // Initialize special controllers after all handlers are attached
+    this.initializeSpeedKnob();
+    
     return summary;
   }
 

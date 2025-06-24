@@ -6,43 +6,89 @@
   </div>
 
   <div class="panel-section status">
-    <div class="compact-status" style="margin:0 0 4px 0; padding:6px 8px; background:rgba(0,0,0,0.08); border-radius:5px; display:flex; align-items:center; gap:8px;">
+    <!-- Tree Position Status -->
+    <div class="compact-status" style="margin:0 0 6px 0; padding:6px 8px; background:rgba(0,0,0,0.08); border-radius:5px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
       <i class="fa fa-tree" aria-hidden="true" style="color:#4fc3f7; font-size:13px;" title="Phylogenetic tree navigation"></i>
-      <span class="label" title="Current full tree / total full trees. Each tree represents a window of the alignment.">Tree:</span>
-      <span class="value"><span id="currentFullTree">0</span>/<span id="numberOfFullTrees"></span></span>
-      <span class="label" title="Current window / total windows in this tree.">Step:</span>
-      <span class="value"><span id="currentTree"></span>/<span id="numberOfTrees">5</span></span>
+      <span class="info-group">
+        <span class="label" title="Current full tree / total full trees">Tree:</span>
+        <span class="value"><span id="currentFullTree">0</span>/<span id="numberOfFullTrees">0</span></span>
+      </span>
+      <span class="info-group">
+        <span class="label" title="Current step / total steps in current tree">Step:</span>
+        <span class="value"><span id="currentTree">0</span>/<span id="numberOfTrees">0</span></span>
+      </span>
     </div>
-    <div class="compact-status" style="margin:0 0 4px 0; padding:6px 8px; background:rgba(0,0,0,0.08); border-radius:5px; display:flex; align-items:center; gap:8px;">
-      <span class="label" title="Type of tree interpolation method used.">Tree Type:</span>
-      <span class="value" id="treeLabel"></span>
+    
+    <!-- Tree Type Status -->
+    <div class="compact-status" style="margin:0 0 6px 0; padding:6px 8px; background:rgba(0,0,0,0.08); border-radius:5px; display:flex; align-items:center; gap:6px;">
+      <i class="fa fa-code-fork" aria-hidden="true" style="color:#4fc3f7; font-size:13px;" title="Tree type information"></i>
+      <span class="label" title="Type of tree interpolation method used">Type:</span>
+      <span class="value" id="treeLabel">-</span>
     </div>
-    <div class="compact-status" style="margin:8px 0 4px 0; padding:6px 8px; background:rgba(0,0,0,0.08); border-radius:5px; display:flex; align-items:center; gap:8px;">
-      <i class="fa fa-th" aria-hidden="true" style="color:#4fc3f7; font-size:13px;" title="Multiple Sequence Alignment window info"></i>
-      <span class="label" title="MSA window size: number of alignment columns in this window.">MSA Window Size:</span>
-      <span class="value" id="windowSize">-</span>
-      <span class="label" title="MSA step size: number of columns the window moves each step.">MSA Step Size:</span>
-      <span class="value" id="windowStepSize">-</span>
-      <span class="label">Area:</span>
-      <span class="value" id="windowArea">-</span>
+    
+    <!-- MSA Window Status - Enhanced with Flexible Height -->
+    <div class="msa-status" style="margin:0 0 8px 0; padding:8px 10px; background:linear-gradient(135deg, rgba(76, 195, 247, 0.1), rgba(76, 195, 247, 0.05)); border:1px solid rgba(76, 195, 247, 0.3); border-radius:6px; position:relative; min-height:88px; box-sizing:border-box;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; padding:4px 6px; background:rgba(255,255,255,0.1); border-radius:4px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <i class="fa fa-dna" aria-hidden="true" style="color:#4fc3f7; font-size:14px;" title="Multiple Sequence Alignment data"></i>
+          <span style="font-weight:600; color:#ffffff; font-size:12px;">Alignment Window</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="font-size:9px; color:#b8c5d1; text-transform:uppercase; letter-spacing:0.5px;">Current Region</span>
+          <i class="fa fa-info-circle" style="color:#4fc3f7; font-size:10px; opacity:0.7;" title="Shows which part of the alignment corresponds to the current tree"></i>
+        </div>
+      </div>
+      
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; font-size:12px; height:24px;">
+        <div class="msa-info-item" style="text-align:center; padding:2px 4px; background:rgba(255,255,255,0.8); border-radius:4px; display:flex; flex-direction:column; justify-content:center;">
+          <div style="color:#555; font-size:9px; line-height:1; margin-bottom:1px;">Size</div>
+          <div style="font-weight:700; color:#1a1a1a; font-size:11px; line-height:1;" id="windowSize">-</div>
+        </div>
+        <div class="msa-info-item" style="text-align:center; padding:2px 4px; background:rgba(255,255,255,0.8); border-radius:4px; display:flex; flex-direction:column; justify-content:center;">
+          <div style="color:#555; font-size:9px; line-height:1; margin-bottom:1px;">Step</div>
+          <div style="font-weight:700; color:#1a1a1a; font-size:11px; line-height:1;" id="windowStepSize">-</div>
+        </div>
+        <div class="msa-info-item" style="text-align:center; padding:2px 4px; background:rgba(255,255,255,0.8); border-radius:4px; display:flex; flex-direction:column; justify-content:center;">
+          <div style="color:#555; font-size:9px; line-height:1; margin-bottom:1px;">Area</div>
+          <div style="font-weight:700; color:#1a1a1a; font-size:10px; line-height:1;" id="windowArea">-</div>
+        </div>
+      </div>
+      
+      <!-- MSA Legend - Normal Flow -->
+      <div style="margin-top:8px; padding-top:6px; border-top:1px solid rgba(76, 195, 247, 0.2); font-size:8px; color:#888; text-align:center; display:flex; align-items:center; justify-content:center; gap:4px; flex-wrap:wrap;">
+        <span title="Full Tree" style="font-weight:600; color:#fff; white-space:nowrap;">(F) Full</span>
+        <span style="color:#aaa;">•</span>
+        <span title="Consensus Tree" style="font-weight:600; color:#fff; white-space:nowrap;">(C) Consensus</span>
+        <span style="color:#aaa;">•</span>
+        <span title="Interpolated Tree" style="font-weight:600; color:#fff; white-space:nowrap;">(I) Interpolated</span>
+      </div>
     </div>
   </div>
 
   <div class="panel-section controls">
-    <div class="control-row">
-      <input type="number" id="positionValue" class="compact-input" name="pos" value="1" min="1" placeholder="Pos" aria-label="Position" />
-      <button id="positionButton" class="primary-btn compact" aria-label="Go to Position">
-        <i class="fa fa-arrow-right"></i>
-      </button>
+    <!-- Position Control -->
+    <div class="control-row" style="margin-bottom:6px;">
+      <div class="position-control" style="display:flex; align-items:center; gap:6px;">
+        <i class="fa fa-crosshairs" aria-hidden="true" style="color:#4fc3f7; font-size:13px;" title="Navigate to specific position"></i>
+        <input type="number" id="positionValue" class="compact-input" name="pos" value="1" min="1" placeholder="Position" aria-label="Position" style="flex:1; min-width:60px;" />
+        <button id="positionButton" class="md-button primary compact" aria-label="Go to Position" title="Navigate to specified position">
+          <i class="fa fa-arrow-right"></i>
+        </button>
+      </div>
     </div>
+    
+    <!-- Visualization Control -->
     <div class="control-row">
-      <select id="scatter-plot-mode" class="compact-select" aria-label="Scatter Plot Mode">
-        <option value="umap">UMAP</option>
-        <option value="fallback">Fallback</option>
-      </select>
-      <button id="open-scatter-plot" class="viz-btn compact" aria-label="Open Scatter Plot">
-        <i class="fa fa-cube"></i>
-      </button>
+      <div class="viz-control" style="display:flex; align-items:center; gap:6px;">
+        <i class="fa fa-cube" aria-hidden="true" style="color:#4fc3f7; font-size:13px;" title="Tree space visualization"></i>
+        <select id="scatter-plot-mode" class="compact-select" aria-label="Scatter Plot Mode" style="flex:1;">
+          <option value="umap">UMAP</option>
+          <option value="fallback">Fallback</option>
+        </select>
+        <button id="open-scatter-plot" class="md-button compact" aria-label="Open Scatter Plot" title="Open tree space visualization">
+          <i class="fa fa-external-link"></i>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -59,15 +105,8 @@
     <div class="scale-bar">
       <div class="scale-progress-bar" style="width: 0%"></div>
     </div>
-    <div class="scale-explanation" style="font-size: 0.85em; color: #8fa1c7; margin-bottom: 2px;">
-      Scale = Maximum root-to-leaf path length (sum of branch lengths) in the current tree.
-    </div>
-    <div class="scale-markers">
-      <span style="left: 0%">0</span>
-      <span style="left: 25%">0.25</span>
-      <span style="left: 50%">0.50</span>
-      <span style="left: 75%">0.75</span>
-      <span style="left: 100%">1.00</span>
+    <div class="scale-explanation" style="font-size: 0.8em; color: #8fa1c7; margin: 4px 0 2px 0; line-height: 1.2;">
+      Maximum root-to-leaf path length (sum of branch lengths)
     </div>
   </div>
 </div>

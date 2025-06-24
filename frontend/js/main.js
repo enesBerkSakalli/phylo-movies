@@ -44,11 +44,6 @@ async function loadAllRequiredPartials() {
         url: "/partials/appearance.html",
         containerId: "appearance-container",
       },
-      {
-        url: "/partials/recording.html",
-        containerId: "recording-container",
-      },
-
     ]);
 
     // Verify important elements exist
@@ -63,7 +58,7 @@ async function loadAllRequiredPartials() {
       "compare-sequence-button",
       "chart-modal",
       "taxa-coloring-button",
-      "factor",
+      "factor-range",
       "branch-length",
       "font-size",
       "stroke-width",
@@ -162,8 +157,8 @@ async function initializeGuiAndEvents(parsedData, processedEmbedding) {
 
     let colorInternalBranches = true; // Default or configurable setting
 
-    const factorInput = document.getElementById("factor");
-    const factorValue = factorInput ? parseInt(factorInput.value, 10) : 0.5;
+    const factorInput = document.getElementById("factor-range");
+    const factorValue = factorInput ? parseFloat(factorInput.value) : 1;
 
     // Create GUI instance
     const gui = new Gui(
@@ -181,6 +176,10 @@ async function initializeGuiAndEvents(parsedData, processedEmbedding) {
 
     window.gui = gui;
     window.emb = processedEmbedding; // Make processed embedding globally available
+
+    // Enable MSA synchronization
+    gui.syncMSAEnabled = true;
+    console.log("MSA synchronization enabled");
 
     attachMSAButtonHandler(gui);
 
@@ -214,6 +213,15 @@ async function initializeGuiAndEvents(parsedData, processedEmbedding) {
     if (!eventHandlersAttached) {
       attachGuiEventHandlers(gui);
       initializeToggles();
+
+      // Add monophyletic coloring toggle handler
+      const monophyleticToggle = document.getElementById('monophyletic-coloring');
+      if (monophyleticToggle) {
+        monophyleticToggle.addEventListener('change', (event) => {
+          gui.setMonophyleticColoring(event.target.checked);
+        });
+      }
+
       eventHandlersAttached = true;
       gui.initializeMovie();
       gui.play();

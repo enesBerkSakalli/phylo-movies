@@ -79,6 +79,7 @@ export class LinkRenderer {
     });
   }
 
+
   /**
    * Handles the EXIT selection - removes old links
    * @param {d3.Selection} links - The links selection
