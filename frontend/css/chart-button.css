@@ -1,19 +1,29 @@
-/* chart-button.css - Button-specific styles split from chart.css */
+/* chart-button.css - Unified with navigation button styling */
 
+.chart-controls .md-button,
 .chart-controls .mdc-button {
-  background-color: #4390e1;
-  padding: 6px 12px;
-  border-radius: 4px;
-  font-size: 13px;
-  transition: background-color 0.2s;
+  background: linear-gradient(135deg, var(--nav-primary-color) 0%, var(--nav-primary-darker) 100%);
+  border: none;
+  color: white;
+  border-radius: var(--md-sys-shape-corner-full, 20px);
+  padding: var(--nav-spacing-xs) var(--nav-spacing-sm);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  min-height: var(--nav-button-height-compact);
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-weight: normal;
+  justify-content: center;
+  gap: var(--nav-spacing-xs);
+  outline: none;
+  position: relative;
 }
 
+.chart-controls .md-button:hover,
 .chart-controls .mdc-button:hover {
-  background-color: #5da0e4;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(67, 144, 225, 0.3);
 }
 
 .chart-controls .button-text {

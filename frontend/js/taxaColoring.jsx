@@ -1,10 +1,10 @@
 import { getColorScheme } from './treeColoring/ColorSchemePresets.js';
 import { UIComponentFactory } from './treeColoring/UIComponentFactory.js';
-import { 
-  getGroupForTaxon, 
-  detectUsefulSeparators, 
+import {
+  getGroupForTaxon,
+  detectUsefulSeparators,
   generateGroups as generateTaxaGroups,
-  mapStrategyName 
+  mapStrategyName
 } from './treeColoring/TaxaGroupingUtils.js';
 
 // Import the dedicated CSS file for taxa coloring modal
@@ -28,7 +28,7 @@ const SEPARATION_STRATEGIES = {
     example: 'Species_001_v1 → Species'
   },
   'suffix': {
-    label: 'Suffix (after last separator)', 
+    label: 'Suffix (after last separator)',
     description: 'Group by text after the last separator',
     example: 'Species_001_v1 → v1'
   },
@@ -79,10 +79,10 @@ class SeparationEngine {
       'middle': 'nth-2',
       'first-letter': 'first-letter'
     };
-    
+
     const mappedStrategy = strategyMap[strategy] || strategy;
     const group = getGroupForTaxon(taxon, separator, mappedStrategy);
-    
+
     // Return 'Ungrouped' if no group found
     return group || 'Ungrouped';
   }
@@ -155,15 +155,15 @@ export default class TaxaColoring {
     this.currentMode = "taxa";
     this.selectedSeparator = null;
     this.selectedStrategy = 'prefix';
-    
+
     // Initialize engines
     this.separationEngine = new SeparationEngine(this.taxaNames);
     this.colorManager = new ColorSchemeManager(originalColorMap);
-    
+
     // UI state
     this.isLoading = false;
     this.currentGroups = [];
-    
+
     this.initialize();
   }
 
@@ -268,7 +268,7 @@ export default class TaxaColoring {
   setMode(mode) {
     this.currentMode = mode;
     this.updateContent();
-    
+
     // Update mode buttons
     document.querySelectorAll('.taxa-mode-button').forEach(btn => {
       btn.classList.remove('active');
@@ -349,7 +349,7 @@ export default class TaxaColoring {
     separatorSection.innerHTML = '<h3 class="taxa-section-title">Choose Separator</h3>';
 
     const separators = this.separationEngine.detectSeparators();
-    
+
     if (separators.length === 0) {
       separatorSection.innerHTML += '<p>No useful separators detected in taxa names.</p>';
     } else {
@@ -402,7 +402,7 @@ export default class TaxaColoring {
 
   renderGroupsLayoutWithColorSchemes() {
     this.currentGroups = this.separationEngine.generateGroups(this.selectedSeparator, this.selectedStrategy);
-    
+
     if (this.currentGroups.length === 0) {
       this.renderEmptyState('No groups found with current settings');
       return;
@@ -469,10 +469,10 @@ export default class TaxaColoring {
     const schemeSelectorUI = UIComponentFactory.createColorSchemePresetSelector({
       onSchemeChange: (schemeName) => this.applyColorScheme(schemeName)
     });
-    
+
     // Apply consistent theming to match the rest of the modal
     schemeSelectorUI.style.marginBottom = '20px';
-    
+
     this.contentArea.appendChild(schemeSelectorUI);
   }
 

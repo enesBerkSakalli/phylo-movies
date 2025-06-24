@@ -1,66 +1,80 @@
 <!-- Playback Controls -->
-<div class="tree-navigation-panel" role="region" aria-label="Tree Navigation">
-  <div class="submenu" id="playback-submenu">
-    <!-- First Row: Main Playback Controls -->
-    <div class="button-row single-row" style="gap:6px; margin-bottom:6px;">
-      <button id="start-button" type="button" class="md-button primary compact" title="Play animation from current position">
-        <i class="fa fa-play"></i><span class="sr-only">Play</span>
-      </button>
-      <button id="stop-button" type="button" class="md-button compact" title="Pause/stop animation">
-        <i class="fa fa-stop"></i><span class="sr-only">Stop</span>
-      </button>
-      <button id="backward-button" type="button" class="md-button compact" title="Go to previous frame (previous window in current tree)">
-        <i class="fa fa-backward"></i><span class="sr-only">Previous Frame</span>
-      </button>
-      <button id="forward-button" type="button" class="md-button compact" title="Go to next frame (next window in current tree)">
-        <i class="fa fa-forward"></i><span class="sr-only">Next Frame</span>
-      </button>
-      <button id="backwardStepButton" type="button" class="md-button compact" title="Go to previous tree (previous full tree)">
-        <i class="fa fa-step-backward"></i><span class="sr-only">Previous Tree</span>
-      </button>
-      <button id="forwardStepButton" type="button" class="md-button compact" title="Go to next tree (next full tree)">
-        <i class="fa fa-step-forward"></i><span class="sr-only">Next Tree</span>
-      </button>
-    </div>
-    <!-- Second Row: Additional Controls -->
-    <div class="button-row single-row" style="gap:6px; margin-bottom:6px;">
-      <button id="save-button" type="button" class="md-button compact" title="Save current tree visualization as SVG">
-        <i class="fa fa-save"></i><span class="sr-only">Save SVG</span>
-      </button>
-      <button id="compare-sequence-button" type="button" class="md-button compact" title="Compare the current tree with the next tree">
-        <i class="fa fa-exchange"></i><span class="sr-only">Compare Trees</span>
-      </button>
-      <button id="start-record" type="button" class="md-button compact" title="Start Recording" style="background:linear-gradient(135deg,#e53e3e,#c53030);">
-        <i class="fa fa-video-camera"></i><span class="sr-only">Record</span>
-      </button>
-      <button id="stop-record" type="button" class="md-button compact" title="Stop Recording" disabled style="background:linear-gradient(135deg,#666,#555);">
-        <i class="fa fa-stop-circle"></i><span class="sr-only">Stop</span>
-      </button>
-    </div>
-    <div class="factor-control compact" style="margin-bottom:4px; align-items:center; gap:8px;">
-      <i class="fa fa-tachometer" aria-hidden="true" style="color:#4fc3f7; font-size:13px;" title="Animation speed (higher is faster)"></i>
-      <div class="speed-knob-container">
-        <div class="speed-knob" title="Adjust animation speed (drag to rotate)">
-          <input type="range" id="factor-range" min="0.1" max="5" value="1" step="0.1" class="speed-knob-input" />
-          <div class="speed-knob-face">
-            <div class="speed-knob-indicator"></div>
-            <div class="speed-knob-center"></div>
-          </div>
+<div class="control-section">
+  <div class="section-header">
+    <span class="material-icons submenu-icon" aria-hidden="true">play_arrow</span>
+    <h2 class="mdc-section-title">Playback Controls</h2>
+  </div>
+
+  <!-- First Row: Main Playback Controls -->
+  <div class="button-row">
+    <button id="start-button" type="button" class="md-button primary compact" title="Play animation from current position" aria-label="Play animation">
+      <span class="material-icons">play_arrow</span><span class="sr-only">Play</span>
+    </button>
+    <button id="stop-button" type="button" class="md-button compact" title="Pause/stop animation" aria-label="Stop animation">
+      <span class="material-icons">stop</span><span class="sr-only">Stop</span>
+    </button>
+    <button id="backward-button" type="button" class="md-button compact" title="Go to previous frame (previous window in current tree)" aria-label="Previous frame">
+      <span class="material-icons">skip_previous</span><span class="sr-only">Previous Frame</span>
+    </button>
+    <button id="forward-button" type="button" class="md-button compact" title="Go to next frame (next window in current tree)" aria-label="Next frame">
+      <span class="material-icons">skip_next</span><span class="sr-only">Next Frame</span>
+    </button>
+    <button id="backwardStepButton" type="button" class="md-button compact" title="Go to previous tree (previous full tree)" aria-label="Previous tree">
+      <span class="material-icons">first_page</span><span class="sr-only">Previous Tree</span>
+    </button>
+    <button id="forwardStepButton" type="button" class="md-button compact" title="Go to next tree (next full tree)" aria-label="Next tree">
+      <span class="material-icons">last_page</span><span class="sr-only">Next Tree</span>
+    </button>
+  </div>
+
+  <!-- Second Row: Additional Controls -->
+  <div class="button-row">
+    <button id="save-button" type="button" class="md-button compact" title="Save current tree visualization as SVG" aria-label="Save SVG">
+      <span class="material-icons">save</span><span class="sr-only">Save SVG</span>
+    </button>
+    <button id="compare-sequence-button" type="button" class="md-button compact" title="Compare the current tree with the next tree" aria-label="Compare trees">
+      <span class="material-icons">compare_arrows</span><span class="sr-only">Compare Trees</span>
+    </button>
+    <button id="start-record" type="button" class="md-button danger compact" title="Start screen recording of the phylogenetic tree animation" aria-label="Start recording">
+      <span class="material-icons">videocam</span><span class="sr-only">Record</span>
+    </button>
+    <button id="stop-record" type="button" class="md-button compact" title="Stop screen recording and save the video file" disabled aria-label="Stop recording">
+      <span class="material-icons">stop_circle</span><span class="sr-only">Stop</span>
+    </button>
+  </div>
+
+  <!-- Speed Control -->
+  <div class="factor-control compact">
+    <span class="material-icons" aria-hidden="true" title="Animation speed (higher is faster)">speed</span>
+    <div class="speed-knob-container">
+      <div class="speed-knob" title="Adjust animation speed (drag to rotate)">
+        <input type="range" id="factor-range" min="0.1" max="5" value="1" step="0.1" class="speed-knob-input" aria-label="Animation speed" />
+        <div class="speed-knob-face">
+          <div class="speed-knob-indicator"></div>
+          <div class="speed-knob-center"></div>
         </div>
       </div>
-      <span class="info-value speed-value" style="min-width:18px; text-align:center;">1×</span>
     </div>
+    <span class="info-value speed-value">1×</span>
   </div>
-  <div class="submenu" id="msa-submenu">
-    <div class="button-row" style="margin-bottom:4px;">
-      <button id="msa-viewer-btn" type="button" class="mdc-button primary compact" title="Open the Multiple Sequence Alignment (MSA) viewer for the current window">
-        <i class="fa fa-dna"></i>
-        <span>Open Alignment Viewer</span>
-      </button>
-    </div>
-    <div id="msa-status" class="info-item" style="margin-top: 8px;">
-      <div class="info-label">Status</div>
-      <div class="info-value">No alignment data loaded</div>
-    </div>
+</div>
+
+<!-- MSA Controls -->
+<div class="control-section">
+  <div class="section-header">
+    <span class="material-icons submenu-icon" aria-hidden="true">biotech</span>
+    <h2 class="mdc-section-title">MSA Viewer</h2>
+  </div>
+
+  <div class="button-row">
+    <button id="msa-viewer-btn" type="button" class="md-button primary compact" title="Open the Multiple Sequence Alignment (MSA) viewer for the current window" aria-label="Open alignment viewer">
+      <span class="material-icons">biotech</span>
+      <span>Open Alignment Viewer</span>
+    </button>
+  </div>
+
+  <div id="msa-status" class="info-item">
+    <div class="info-label">Status</div>
+    <div class="info-value">No alignment data loaded</div>
   </div>
 </div>

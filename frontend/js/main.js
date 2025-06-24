@@ -1,6 +1,6 @@
 import Gui from "./gui.js";
 import { logEmbeddingEnhanced } from "./log/log.js";
-import "./msaViewer/index.jsx";
+import "./msaViewer/init.ts";
 import {
   attachGuiEventHandlers,
   attachMSAButtonHandler,
