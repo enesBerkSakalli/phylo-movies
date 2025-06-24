@@ -1,6 +1,7 @@
 <!-- Playback Controls -->
 <div class="tree-navigation-panel" role="region" aria-label="Tree Navigation">
   <div class="submenu" id="playback-submenu">
+    <!-- First Row: Main Playback Controls -->
     <div class="button-row single-row" style="gap:6px; margin-bottom:6px;">
       <button id="start-button" type="button" class="md-button primary compact" title="Play animation from current position">
         <i class="fa fa-play"></i><span class="sr-only">Play</span>
@@ -20,25 +21,34 @@
       <button id="forwardStepButton" type="button" class="md-button compact" title="Go to next tree (next full tree)">
         <i class="fa fa-step-forward"></i><span class="sr-only">Next Tree</span>
       </button>
+    </div>
+    <!-- Second Row: Additional Controls -->
+    <div class="button-row single-row" style="gap:6px; margin-bottom:6px;">
       <button id="save-button" type="button" class="md-button compact" title="Save current tree visualization as SVG">
         <i class="fa fa-save"></i><span class="sr-only">Save SVG</span>
       </button>
       <button id="compare-sequence-button" type="button" class="md-button compact" title="Compare the current tree with the next tree">
         <i class="fa fa-exchange"></i><span class="sr-only">Compare Trees</span>
       </button>
+      <button id="start-record" type="button" class="md-button compact" title="Start Recording" style="background:linear-gradient(135deg,#e53e3e,#c53030);">
+        <i class="fa fa-video-camera"></i><span class="sr-only">Record</span>
+      </button>
+      <button id="stop-record" type="button" class="md-button compact" title="Stop Recording" disabled style="background:linear-gradient(135deg,#666,#555);">
+        <i class="fa fa-stop-circle"></i><span class="sr-only">Stop</span>
+      </button>
     </div>
     <div class="factor-control compact" style="margin-bottom:4px; align-items:center; gap:8px;">
-      <i class="fa fa-tachometer" aria-hidden="true" style="color:#4fc3f7; font-size:13px;" title="Animation speed (higher is slower)"></i>
+      <i class="fa fa-tachometer" aria-hidden="true" style="color:#4fc3f7; font-size:13px;" title="Animation speed (higher is faster)"></i>
       <div class="speed-knob-container">
         <div class="speed-knob" title="Adjust animation speed (drag to rotate)">
-          <input type="range" id="factor" min="1" max="10" value="2" step="1" class="speed-knob-input" />
+          <input type="range" id="factor-range" min="0.1" max="5" value="1" step="0.1" class="speed-knob-input" />
           <div class="speed-knob-face">
             <div class="speed-knob-indicator"></div>
             <div class="speed-knob-center"></div>
           </div>
         </div>
       </div>
-      <span class="info-value speed-value" style="min-width:18px; text-align:center;">2×</span>
+      <span class="info-value speed-value" style="min-width:18px; text-align:center;">1×</span>
     </div>
   </div>
   <div class="submenu" id="msa-submenu">

@@ -12,6 +12,12 @@ export class TreeConstructor {
     this.containerHeight = 0;
     this.margin = 0;
     this.scale = 0;
+
+    // Density-aware positioning configuration
+    this.densityThreshold = 0.5; // Density threshold for adjustment
+    this.angleExpansionFactor = 0.3; // How much to expand angles in dense regions
+    this.radiusExpansionFactor = 10; // How much to push dense nodes outward
+    this.angularResolution = 0.1; // ~5.7 degrees for neighbor detection
   }
 
   /**
@@ -199,6 +205,44 @@ export class TreeConstructor {
   }
 
   /**
+   * generating density-aware radial tree. Returns the tree with density-adjusted coordinates.
+   * @param {boolean} enableDensityAware - Whether to apply density-aware positioning
+   * @return {root}
+   */
+  constructDensityAwareRadialTree(enableDensityAware = true) {
+    // First, construct the standard radial tree
+    this.root.data.length = 0;
+
+    this.calcRadius(this.root, 0);
+    this.traverse(this.root);
+    this.calcAngle(this.root, Math.PI * 2, this.root.leaves().length);
+
+    // Apply density-aware adjustments before scaling and coordinate generation
+    if (enableDensityAware) {
+      this.adjustForDensity(this.root);
+    }
+
+    const minWindowSize = this.getMinDimension(
+      this.containerWidth,
+      this.containerHeight
+    );
+
+    const maxRadius = this.getMaxRadius(this.root);
+
+    // Use standard scaling
+    this.scale = this.calcScale(
+      minWindowSize,
+      maxRadius,
+      2.0
+    );
+
+    this.scaleRadius(this.root, this.scale);
+    this.generateCoordinates(this.root);
+
+    return this.root;
+  }
+
+  /**
    * calculates the scale of how the tree should be scaled
    */
   calcScale(minWindowSize, maxRadius, factor) {
@@ -207,6 +251,111 @@ export class TreeConstructor {
     const adjustedFactor = isComparison ? factor * 0.8 : factor; // More conservative for comparisons
 
     return minWindowSize / adjustedFactor / maxRadius;
+  }
+
+  /**
+   * Calculate density map for all leaves based on angular proximity
+   * @param {Array} leaves - Array of leaf nodes
+   * @return {Map} Map of leaf nodes to their density values
+   */
+  calculateDensityMap(leaves) {
+    const densityMap = new Map();
+    
+    leaves.forEach(leaf => {
+      const neighbors = this.getAngularNeighbors(leaf, leaves, this.angularResolution);
+      const density = neighbors.length / this.angularResolution;
+      densityMap.set(leaf, density);
+    });
+    
+    return densityMap;
+  }
+
+  /**
+   * Get neighboring leaves within angular range
+   * @param {Object} targetLeaf - The leaf to find neighbors for
+   * @param {Array} allLeaves - All leaf nodes
+   * @param {number} range - Angular range in radians
+   * @return {Array} Array of neighboring leaves
+   */
+  getAngularNeighbors(targetLeaf, allLeaves, range) {
+    return allLeaves.filter(leaf => {
+      if (leaf === targetLeaf) return false;
+      const angleDiff = Math.abs(leaf.angle - targetLeaf.angle);
+      const shortestAngleDiff = Math.min(angleDiff, 2 * Math.PI - angleDiff);
+      return shortestAngleDiff <= range;
+    });
+  }
+
+  /**
+   * Adjust angles for density-aware positioning
+   * @param {Object} leaf - The leaf node to adjust
+   * @param {number} density - Calculated density value
+   * @param {number} maxDensity - Maximum density in the tree
+   * @return {number} Adjusted angle
+   */
+  redistributeAngle(leaf, density, maxDensity) {
+    const baseAngle = leaf.angle;
+    const densityFactor = Math.min(density / maxDensity, 1.0);
+    
+    // Calculate expansion offset based on density
+    const expansion = densityFactor * this.angleExpansionFactor;
+    
+    // Simple offset calculation - can be enhanced with more sophisticated algorithms
+    const angleOffset = expansion * (Math.random() - 0.5) * 0.1; // Small random offset
+    
+    return baseAngle + angleOffset;
+  }
+
+  /**
+   * Adjust radius for density-aware positioning
+   * @param {Object} leaf - The leaf node to adjust
+   * @param {number} density - Calculated density value
+   * @param {number} maxDensity - Maximum density in the tree
+   * @return {number} Adjusted radius
+   */
+  adjustRadius(leaf, density, maxDensity) {
+    const baseRadius = leaf.radius;
+    const densityFactor = Math.min(density / maxDensity, 1.0);
+    
+    // Push dense nodes slightly outward
+    const radiusAdjustment = densityFactor * this.radiusExpansionFactor;
+    return baseRadius + radiusAdjustment;
+  }
+
+  /**
+   * Apply density-aware adjustments to tree layout
+   * @param {Object} root - Root node of the tree
+   * @return {void}
+   */
+  adjustForDensity(root) {
+    const leaves = root.leaves();
+    if (leaves.length < 2) return; // No need for density adjustment with few leaves
+    
+    const densityMap = this.calculateDensityMap(leaves);
+    const maxDensity = Math.max(...densityMap.values());
+    
+    if (maxDensity <= this.densityThreshold) return; // No dense regions found
+    
+    leaves.forEach(leaf => {
+      const density = densityMap.get(leaf);
+      if (density > this.densityThreshold) {
+        leaf.angle = this.redistributeAngle(leaf, density, maxDensity);
+        leaf.radius = this.adjustRadius(leaf, density, maxDensity);
+      }
+    });
+  }
+
+  /**
+   * Set density-aware positioning configuration
+   * @param {number} threshold - Density threshold for adjustment
+   * @param {number} angleExpansion - Angle expansion factor
+   * @param {number} radiusExpansion - Radius expansion factor
+   * @return {void}
+   */
+  setDensityConfiguration(threshold, angleExpansion, radiusExpansion) {
+    this.densityThreshold = threshold;
+    this.angleExpansionFactor = angleExpansion;
+    this.radiusExpansionFactor = radiusExpansion;
   }
 }
 
@@ -255,7 +404,23 @@ export default function constructTree(
 
   treeConstructor.setMargin(margin);
 
-  let root_ = treeConstructor.constructRadialTree();
+  // Configure density-aware positioning if specified
+  if (options.densityAware) {
+    if (options.densityThreshold !== undefined || 
+        options.angleExpansion !== undefined || 
+        options.radiusExpansion !== undefined) {
+      treeConstructor.setDensityConfiguration(
+        options.densityThreshold || 0.5,
+        options.angleExpansion || 0.3,
+        options.radiusExpansion || 10
+      );
+    }
+  }
+
+  // Use density-aware construction if requested
+  let root_ = options.densityAware ? 
+    treeConstructor.constructDensityAwareRadialTree(true) : 
+    treeConstructor.constructRadialTree();
 
   // For comparison views, ensure the tree is sized appropriately
   const isComparison = options.containerId && options.containerId.includes('comparison');
