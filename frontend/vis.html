@@ -12,7 +12,7 @@
 
     <link rel="stylesheet" type="text/css" href="/css/material-design.css" />
     <link rel="stylesheet" type="text/css" href="/css/style.css" />
-    <link rel="stylesheet" type="text/css" href="/css/navigation.css" />
+    <link rel="stylesheet" type="text/css" href="/css/navigation-consolidated.css" />
 
     <link rel="stylesheet" type="text/css" href="/css/chart.css" />
     <link rel="stylesheet" type="text/css" href="/css/chart-tooltip.css" />
@@ -20,7 +20,7 @@
     <link rel="stylesheet" type="text/css" href="/css/chart-button.css" />
 
     <link rel="stylesheet" type="text/css" href="/css/scale-container.css" />
-    <link rel="stylesheet" type="text/css" href="/css/tree_navigation.css" />
+    <link rel="stylesheet" type="text/css" href="/css/speed-control.css" />
 
     <link rel="stylesheet" type="text/css" href="/css/coloring.css" />
     <link rel="stylesheet" href="https://unpkg.com/winbox@0.2.82/dist/css/winbox.min.css" />
@@ -37,26 +37,19 @@
     <div class="container">
       <!-- Navigation Menu -->
       <div class="menu">
-        <!-- App Branding -->
+        <!-- Compact Header with App Info -->
         <div class="menu-header">
-          <div class="app-branding">
-            <i class="fa fa-film branding-icon"></i>
-            <div class="app-titles">
-              <h1>Phylo-Movies</h1>
-              <p class="subtitle">Phylogenetic Visualization</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- File Information -->
-        <div id="fileNameDisplay" class="file-info-container">
-          <i class="fa fa-file file-icon"></i>
-          <div class="file-details">
-            <span class="file-label">Current File</span>
-            <h3 class="file-name">Loading...</h3>
-            <div class="embedding-status">
-              <span id="embeddingStatusLabel" class="embedding-label">Embedding: </span>
-              <span id="embeddingStatusText" class="embedding-type">Loading...</span>
+          <div class="compact-header">
+            <div class="app-info">
+              <i class="fa fa-film" style="color:#4390e1; font-size:16px; margin-right:8px;"></i>
+              <div>
+                <h1 style="font-size:14px; margin:0; font-weight:600; color:#ffffff;">Phylo-Movies</h1>
+                <div class="file-status" style="display:flex; align-items:center; gap:4px; margin-top:2px;">
+                  <span style="font-size:9px; color:#9bb0d1;">File:</span>
+                  <span id="compactFileName" class="file-name" style="font-size:10px; color:#ffffff; font-weight:500;">Loading...</span>
+                  <span id="compactEmbedding" class="embedding-type" style="font-size:8px; padding:1px 4px; background:rgba(67,144,225,0.2); border-radius:3px; color:#ffffff;">...</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -66,14 +59,13 @@
           <div class="tools">
             <!-- Tree Navigation -->
             <div id="navigation-container"></div>
+            <div id="line-chart-container"></div>
             <!-- Playback Controls -->
             <div id="buttons-container"></div>
             <!-- Line Chart -->
-            <div id="line-chart-container"></div>
             <div id="msa-button-container"></div>
             <!-- Appearance Settings -->
             <div id="appearance-container"></div>
-            <div id="recording-container"></div>
           </div>
         </div>
       </div>
