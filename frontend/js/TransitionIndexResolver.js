@@ -241,7 +241,7 @@ export default class TransitionIndexResolver {
         // Alternative patterns: 'Consensus_1', 'consensus1', etc.
         const altMatch = item.name.match(/^[Cc]onsensus[_-]?(\d+)$/);
         if (altMatch) {
-            return parseInt(altMatch[1], 10);i
+            return parseInt(altMatch[1], 10);
         }
 
         return -1;
@@ -311,8 +311,9 @@ export default class TransitionIndexResolver {
     }
 
     validateData = () => {
-        // Basic validation example
         const issues = [];
+        
+        // Basic data structure validation
         if (!this.sequenceData || this.sequenceData.length === 0) {
             issues.push("Sequence data is empty.");
         }
@@ -322,7 +323,38 @@ export default class TransitionIndexResolver {
         if (this.numOriginalTransitions < 0) {
             issues.push("Number of original transitions is negative.");
         }
-        // Add more checks as needed
+        
+        // Backend-Frontend contract validation
+        if (this.sequenceData.length > 0) {
+            // Validate tree naming patterns
+            const hasValidFullTrees = this.fullTreeIndices.length > 0;
+            if (!hasValidFullTrees) {
+                issues.push("No valid full trees (T pattern) found in sequence data.");
+            }
+            
+            // Validate highlight data length matches original transitions
+            const expectedHighlightLength = this.fullTreeIndices.length > 0 ? this.fullTreeIndices.length - 1 : 0;
+            if (this.highlightData.length !== expectedHighlightLength && this.highlightData.length > 0) {
+                issues.push(`Highlight data length mismatch: expected ${expectedHighlightLength}, got ${this.highlightData.length}`);
+            }
+            
+            // Validate distance data exists
+            if (!this.distanceData || this.distanceData.length === 0) {
+                issues.push("Distance data is missing or empty.");
+            }
+            
+            // Validate tree type consistency  
+            let hasUnknownTypes = false;
+            this.sequenceData.forEach((item, i) => {
+                if (!item.type || item.type === 'UNKNOWN') {
+                    hasUnknownTypes = true;
+                }
+            });
+            if (hasUnknownTypes) {
+                issues.push("Some trees have unknown or missing type information.");
+            }
+        }
+        
         return { isValid: issues.length === 0, issues };
     };
 
@@ -331,10 +363,44 @@ export default class TransitionIndexResolver {
         fullTreeCount: this.fullTreeIndices.length,
         consensusTreeCount: this.consensusTreeIndices.length,
         highlightDataLength: this.highlightData.length,
+        distanceDataLength: this.distanceData?.length || 0,
         numOriginalTransitions: this.numOriginalTransitions,
         firstFullTreeIndex: this.fullTreeIndices.length > 0 ? this.fullTreeIndices[0] : -1,
         lastFullTreeIndex: this.fullTreeIndices.length > 0 ? this.fullTreeIndices.at(-1) : -1,
         firstConsensusTreeIndex: this.consensusTreeIndices.length > 0 ? this.consensusTreeIndices[0] : -1,
         lastConsensusTreeIndex: this.consensusTreeIndices.length > 0 ? this.consensusTreeIndices.at(-1) : -1,
+        expectedTransitions: this.fullTreeIndices.length > 0 ? this.fullTreeIndices.length - 1 : 0,
+        contractCompliance: this.validateBackendContract()
     });
+    
+    validateBackendContract = () => {
+        const issues = [];
+        const expectedTransitions = this.fullTreeIndices.length > 0 ? this.fullTreeIndices.length - 1 : 0;
+        
+        // Check highlight data contract
+        if (this.highlightData.length !== expectedTransitions && this.highlightData.length > 0) {
+            issues.push(`Highlight data: expected ${expectedTransitions}, got ${this.highlightData.length}`);
+        }
+        
+        // Check if full trees are properly spaced (basic interpolation validation)
+        if (this.fullTreeIndices.length > 1) {
+            const spacings = [];
+            for (let i = 1; i < this.fullTreeIndices.length; i++) {
+                spacings.push(this.fullTreeIndices[i] - this.fullTreeIndices[i-1]);
+            }
+            const minSpacing = Math.min(...spacings);
+            const maxSpacing = Math.max(...spacings);
+            if (minSpacing < 2) {
+                issues.push(`Full trees too close: minimum spacing ${minSpacing}`);
+            }
+            if (maxSpacing - minSpacing > 10) {
+                issues.push(`Inconsistent interpolation: spacing varies from ${minSpacing} to ${maxSpacing}`);
+            }
+        }
+        
+        return {
+            isCompliant: issues.length === 0,
+            issues
+        };
+    };
 }

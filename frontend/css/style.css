@@ -121,63 +121,7 @@ select {
 }
 
 
-/* Standardized Button Styling */
-/* Base button style - can be extended with classes like .btn-primary, .btn-secondary */
-button,
-.btn {
-  padding: 8px 16px;
-  border: 1px solid transparent; /* For border-based variants if needed */
-  border-radius: var(--standard-border-radius);
-  color: var(--text-on-primary);
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-darker) 100%);
-  font-weight: var(--font-weight-medium, 500);
-  font-size: var(--font-size-md, 13px);
-  line-height: 1.5;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  text-align: center;
-  vertical-align: middle;
-  user-select: none;
-  text-decoration: none; /* For <a> elements styled as buttons */
-}
-
-button:hover,
-.btn:hover {
-  background: linear-gradient(135deg, var(--primary-color-darker) 0%, var(--primary-color) 100%);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
-}
-
-button:focus,
-.btn:focus {
-  outline: none;
-  /* Create a focus ring using box-shadow. Offset by 2px from element, 3px wide. */
-  box-shadow: 0 0 0 var(--focus-ring-offset) var(--background-color-main), 0 0 0 calc(var(--focus-ring-offset) + var(--focus-ring-width)) var(--primary-color);
-}
-/* For dark backgrounds, the focus ring's first shadow should match that background */
-.menu button:focus, .menu .btn:focus,
-.dark-container button:focus, .dark-container .btn:focus {
-  box-shadow: 0 0 0 var(--focus-ring-offset) var(--background-color-menu), 0 0 0 calc(var(--focus-ring-offset) + var(--focus-ring-width)) var(--primary-color);
-}
-
-
-button:active,
-.btn:active {
-  transform: translateY(0);
-  box-shadow: var(--shadow-sm);
-}
-
-button:disabled,
-.btn:disabled {
-  background: #aeaeae; /* More standard disabled color */
-  color: #757575;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-  opacity: 0.65;
-}
+/* Legacy button styles - removed to prevent conflicts with unified navigation styles */
 
 
 /* Sliders and Switches */
@@ -315,27 +259,13 @@ h1 {
   justify-content: flex-end;
 }
 
-/* Material Design Button Controls */
+/* Control panels - simplified */
 .control-panel {
   display: flex;
   flex-direction: column;
-  gap: 8px; /* Was 10px */
-  margin-bottom: 16px; /* Was 20px */
-  padding: 8px 0; /* Vertical padding is fine */
-}
-
-.button-row {
-  display: flex;
-  justify-content: center;
-}
-
-.button-group { /* This is a specific component, likely in the menu */
-  display: flex;
-  gap: 4px;
-  background-color: var(--input-background-dark);
-  padding: var(--spacing-xs, 4px);
-  border-radius: var(--large-border-radius);
-  box-shadow: var(--shadow-sm);
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 8px 0;
 }
 
 .option-row {
@@ -390,114 +320,9 @@ h1 {
 }
 
 
-/* --- MSA Viewer Scrolling Fix --- */
+/* AlignmentViewer 2.0 SVG Icon Fixes */
 
-/*
-  This rule is the most important. It forces the WinBox content area
-  to hide any overflow, preventing the "double scrollbar" problem.
-  The scrolling will be handled by an inner div inside the React component.
-*/
-.winbox .wb-body {
-  overflow: hidden !important;
-}
-
-/*
-  The AlignmentViewer2Component has an inner wrapper with `overflow: auto`.
-  We can style its scrollbars for a better look.
-*/
-.alignment-viewer-2 .viewport::-webkit-scrollbar,
-div[style*="overflow: auto"]::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-
-div[style*="overflow: auto"]::-webkit-scrollbar-track {
-  background: #f1f1f1;
-}
-
-div[style*="overflow: auto"]::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 5px;
-}
-
-div[style*="overflow: auto"]::-webkit-scrollbar-thumb:hover {
-  background: #555;
-}
-
-/* Ensure AlignmentViewer components are properly constrained */
-.alignment-viewer-container,
-.alignment-viewer,
-div[class*="AlignmentViewer"] {
-  max-width: 100% !important;
-  max-height: 100% !important;
-}
-
-/* Allow internal scrolling from AlignmentViewer 2.0 */
-.alignment-viewer-2 .viewport,
-.alignment-viewer-2 .main-viewport,
-.alignment-viewer-2 [class*="viewport"],
-.alignment-viewer-2 [class*="scroll"] {
-  overflow: auto !important; /* Allow internal scrolling within the viewer */
-}
-
-/* But prevent outer container from creating additional scrollbars */
-.alignment-viewer-2 {
-  overflow: visible !important; /* Let the internal components handle scrolling */
-  width: 100% !important;
-  height: 100% !important;
-}
-
-/* Specific AlignmentViewer 2.0 scrolling support */
-.alignment-viewer-2 .main-container,
-.alignment-viewer-2 .sequence-container,
-.alignment-viewer-2 .alignment-container {
-  overflow: auto !important;
-}
-
-/* Ensure horizontal scrolling works in MSA */
-.alignment-viewer-2 .sequence-row,
-.alignment-viewer-2 .alignment-row {
-  white-space: nowrap !important;
-  overflow-x: auto !important;
-}
-
-/* Ensure the main alignment content can overflow horizontally */
-.alignment-viewer-2 .main-viewport,
-.alignment-viewer-2 .alignment-content,
-.alignment-viewer-2 .alignment-row,
-.alignment-viewer-2 .sequence-row {
-  white-space: nowrap !important;
-  min-width: max-content !important;
-  width: auto !important;
-  max-width: none !important;
-}
-
-/* Make sure minimap and other components don't interfere */
-.alignment-viewer-2 .minimap-container {
-  overflow: visible !important;
-}
-
-/* Ensure proper scrollbar styling in MSA viewer */
-.alignment-viewer-2 ::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
-}
-
-.alignment-viewer-2 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 6px;
-}
-
-.alignment-viewer-2 ::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 6px;
-}
-
-.alignment-viewer-2 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
-}
-
-/* AlignmentViewer 2.0 SVG Icon Fixes - Fix for undefined/close.svg error */
+/* Close button icons */
 .alignment-viewer-2 [style*="close.svg"],
 .alignment-viewer-2 .close-button,
 .alignment-viewer-2 [class*="close"],
@@ -509,18 +334,75 @@ div[class*="AlignmentViewer"] {
   background-position: center !important;
 }
 
-/* Fix for any other missing AlignmentViewer 2.0 SVG icons */
+/* Search button icons */
+.alignment-viewer-2 [style*="search.svg"],
+.alignment-viewer-2 .search-button,
+.alignment-viewer-2 [class*="search"],
+.alignment-viewer-2 [aria-label*="search" i],
+.alignment-viewer-2 [title*="search" i] {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23666'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'/%3E%3C/svg%3E") !important;
+  background-size: 16px 16px !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+}
+
+/* Settings/gear button icons */
+.alignment-viewer-2 [style*="settings.svg"],
+.alignment-viewer-2 .settings-button,
+.alignment-viewer-2 [class*="settings"],
+.alignment-viewer-2 [class*="gear"],
+.alignment-viewer-2 [aria-label*="settings" i],
+.alignment-viewer-2 [title*="settings" i] {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23666'%3E%3Cpath d='M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z'/%3E%3Cpath d='M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115l.094-.319z'/%3E%3C/svg%3E") !important;
+  background-size: 16px 16px !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+}
+
+/* Hide any elements with broken asset paths */
 .alignment-viewer-2 [style*="undefined/"],
-.alignment-viewer-2 [src*="undefined/"] {
+.alignment-viewer-2 [src*="undefined/"],
+.alignment-viewer-2 img[src*="undefined/"] {
   display: none !important;
 }
 
-/* Alternative: Provide text fallback for close buttons */
+/* Text fallbacks for missing icons */
 .alignment-viewer-2 [style*="close.svg"]:empty::before,
 .alignment-viewer-2 .close-button:empty::before {
   content: "×" !important;
   font-size: 16px !important;
   font-weight: bold !important;
+  color: #666 !important;
+  display: inline-block !important;
+  text-align: center !important;
+  line-height: 1 !important;
+}
+
+.alignment-viewer-2 [style*="search.svg"]:empty::before,
+.alignment-viewer-2 .search-button:empty::before {
+  content: "🔍" !important;
+  font-size: 14px !important;
+  color: #666 !important;
+  display: inline-block !important;
+  text-align: center !important;
+  line-height: 1 !important;
+}
+
+.alignment-viewer-2 [style*="settings.svg"]:empty::before,
+.alignment-viewer-2 .settings-button:empty::before {
+  content: "⚙" !important;
+  font-size: 14px !important;
+  color: #666 !important;
+  display: inline-block !important;
+  text-align: center !important;
+  line-height: 1 !important;
+}
+
+/* Generic fallback for any other missing SVG buttons */
+.alignment-viewer-2 button:empty[style*=".svg"]::before,
+.alignment-viewer-2 [class*="button"]:empty[style*=".svg"]::before {
+  content: "◯" !important;
+  font-size: 14px !important;
   color: #666 !important;
   display: inline-block !important;
   text-align: center !important;
