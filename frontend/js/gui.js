@@ -2,23 +2,33 @@ import * as d3 from "d3";
 import TaxaColoring from "./taxaColoring.jsx";
 import { createSideBySideComparisonModal } from "./treeComparision/treeComparision.js";
 import calculateScales, {
-  getCurrentScaleValue,
-  getMaxScaleValue,
-  calculateScalePercentage,
-  formatScaleValue
+  getMaxScaleValue
 } from "./utils/scaleUtils.js";
-import constructTree from "./treeVisualisation/LayoutCalculator.js";
-import drawTree from "./treeVisualisation/TreeDrawer.js";
+import { TreeAnimationController } from "./treeVisualisation/TreeAnimationController.js";
 import { exportSaveChart } from "./utils/svgExporter.js";
 import { handleZoomResize, initializeZoom } from "./zoom/zoomUtils.js";
 import { COLOR_MAP } from "./treeColoring/ColorMap.js";
 import { applyColoringData } from "./treeColoring/TaxaGroupingUtils.js";
 import TransitionIndexResolver from "./TransitionIndexResolver.js";
+import { NavigationController } from "./navigation/NavigationController.js";
+import {
+  ForwardCommand,
+  BackwardCommand,
+  NextTreeCommand,
+  PrevTreeCommand,
+  ManualNextTreeCommand,
+  ManualPrevTreeCommand,
+  GoToPositionCommand,
+  HandleDragCommand,
+  GoToFullTreeDataIndexCommand
+} from "./navigation/NavigationCommands.js";
+import { ChartController } from "./controllers/ChartController.js";
+import { UIController } from "./controllers/UIController.js";
 import { calculateWindow } from "./utils/windowUtils.js";
-import { renderOrUpdateLineChart } from "./charts/lineChartManager.js";
-import { openModalChart } from "./charts/windowChartManager.js";
-import { STYLE_MAP } from "./treeVisualisation/TreeDrawer.js";
+import { STYLE_MAP } from "./treeVisualisation/TreeAnimationController.js";
 import { validateBackendData } from "./utils/contractValidator.js";
+import { DebugPanel } from "./utils/DebugPanel.js";
+import { transformBranchLengths } from "./utils/branchTransformUtils.js";
 
 // ============================================================================
 // GUI CLASS - Main interface for phylogenetic tree visualization
@@ -32,77 +42,100 @@ export default class Gui {
   // ========================================
   // CONSTRUCTOR & INITIALIZATION
   // ========================================
-  constructor(
-    treeList,
-    weightedRobinsonFouldsDistances,
-    robinsonFouldsDistances,
-    windowSize,
-    windowStepSize,
-    toBeHighlightedFromBackend, // Highlight data corresponding to "full" trees
-    leaveOrder,
-    fileName,
-    factorValue = 1,
-    treeNames = []
-  ) {
-    this.treeList = treeList || [];
-    this.treeNames = Array.isArray(treeNames) && treeNames.length > 0
-      ? treeNames
-      : this.treeList.map((_, i) => `Tree ${i + 1}`);
+  constructor(movieData, factorValue = 1) {
+    // Store the complete movieData object for direct access
+    this.movieData = movieData;
 
-    // Unify highlight data into a single, consistent property
-    this.highlightData = toBeHighlightedFromBackend.jumping_taxa || [];
-    this.s_edges = toBeHighlightedFromBackend.s_edges || [];
-    this.covers = toBeHighlightedFromBackend.covers || [];
+    // Validate essential data exists
+    if (!movieData || !movieData.trees || !movieData.trees.interpolated_trees) {
+      throw new Error('Invalid movieData: missing interpolated_trees');
+    }
 
+    // Make this instance globally available for debugging
+    window.gui = this;
 
-    this.robinsonFouldsDistances = robinsonFouldsDistances;
-    this.fileName = fileName;
+    // Initialize debug panel
+    this.debugPanel = new DebugPanel();
+    window.debugPanel = this.debugPanel;
+
+    // Quick access properties for commonly used data
+    this.treeList = movieData.trees.interpolated_trees;
+    this.treeNames = movieData.trees.tree_names;
+    this.robinsonFouldsDistances = movieData.trees.distances.robinson_foulds;
+    this.weightedRobinsonFouldsDistances = movieData.trees.distances.weighted_robinson_foulds;
+    this.highlightData = movieData.visualization.highlighted_elements;
+    this.lattice_edge_tracking = movieData.visualization.highlighted_elements.lattice_edge_tracking;
+    this.covers = movieData.visualization.highlighted_elements.covers;
+    this.leaveOrder = movieData.visualization.sorted_leaves;
     this.scaleList = calculateScales(this.treeList);
-    this.msaWindowSize = windowSize;
-    this.msaStepSize = windowStepSize;
 
-    document.getElementById("windowSize").innerText = this.msaWindowSize;
-    document.getElementById("windowStepSize").innerText = this.msaStepSize;
 
-    console.log("[GUI] Initializing GUI with the following parameters:");
-    console.log("[GUI] Tree List:", this.treeList);
-    console.log("[GUI] Weighted RFD Distances:", weightedRobinsonFouldsDistances);
-    console.log("[GUI] ", toBeHighlightedFromBackend)
+    console.log(this.lattice_edge_tracking.length, "Lattice edge tracking length");
 
+    // Initialize MSA parameters with error handling and defaults
+    try {
+      this.msaWindowSize = movieData.msa?.window_params?.size ?? 1000;
+      this.msaStepSize = movieData.msa?.window_params?.step ?? 50;
+
+      if (!this.msaWindowSize || this.msaWindowSize <= 0) {
+        console.warn("[GUI] Invalid msaWindowSize from data, using default:", 1000);
+        this.msaWindowSize = 1000;
+      }
+
+      if (!this.msaStepSize || this.msaStepSize <= 0) {
+        console.warn("[GUI] Invalid msaStepSize from data, using default:", 50);
+        this.msaStepSize = 50;
+      }
+    } catch (error) {
+      console.warn("[GUI] Error initializing MSA parameters, using defaults:", error);
+      this.msaWindowSize = 30;
+      this.msaStepSize = 15;
+    }
+
+    document.getElementById("windowSize").value = this.msaWindowSize;
+    document.getElementById("windowStepSize").value = this.msaStepSize;
+
+
+    // Initialize GUI properties
     this.windowStart = null;
     this.windowEnd = null;
-    this.leaveOrder = leaveOrder;
     this.fontSize = 1.8;
     this.strokeWidth = 3;
-    this.weightedRobinsonFouldsDistances = weightedRobinsonFouldsDistances;
     this.barOptionValue = "rfd";
     this.ignoreBranchLengths = false;
-    this.currentDistanceChart = null;
-    this.lastChartType = null;
-    this.maxScale = this.scaleList?.length > 0 ? Math.max(...this.scaleList.map((o) => o.value)) : 0;
+    this.branchTransformation = 'none';
+    this.maxScale = this.scaleList.length > 0 ? Math.max(...this.scaleList.map((o) => o.value)) : 0;
     this.currentTreeIndex = 0;
+    this.previousTreeIndex = -1; // Track previous tree for transition detection
     this.factor = factorValue;
     this.playing = false;
 
-    const taxaColorMap = {};
-    if (Array.isArray(this.leaveOrder)) {
-      this.leaveOrder.forEach((taxon) => {
-          taxaColorMap[taxon] = COLOR_MAP.colorMap.defaultColor;
-      });
-    }
+    // Initialize TreeAnimationController instance for reuse
+    this.treeController = null; // Will be created on first use
+
+    // Initialize NavigationController
+    this.navigationController = new NavigationController(this);
+
+    // Initialize ChartController
+    this.chartController = new ChartController(this, this.navigationController);
+
+    // Initialize UIController
+    this.uiController = new UIController(this);
 
     requestAnimationFrame(() => {
       this.zoom = initializeZoom(this);
+      // Initialize button states
+      this._updatePlayButtonState();
     });
 
     this._lastSyncTime = 0;
     this._syncThrottleDelay = 250;
 
     // Initialize synchronously to ensure transitionResolver exists
-    this.initializeTransitionResolver();
-    
+    this._initializeTransitionResolver();
+
     // Defer contract validation to avoid blocking constructor
-    setTimeout(() => this.performContractValidation(), 0);
+    setTimeout(() => this._performContractValidation(), 0);
   }
 
   // ========================================
@@ -116,12 +149,12 @@ export default class Gui {
   // ========================================
   // TIMING & ANIMATION UTILITIES
   // ========================================
-  getIntervalDuration() {
+  _getIntervalDuration() {
     let defaultTime = 1000;
     let factor = this.factor || 1;
     try {
       const factorInput = document.getElementById("factor-range");
-      if (factorInput?.value) {
+      if (factorInput && factorInput.value) {
         const parsedFactor = parseFloat(factorInput.value);
         if (!isNaN(parsedFactor) && parsedFactor >= 0.1 && parsedFactor <= 5) {
             factor = parsedFactor;
@@ -133,11 +166,56 @@ export default class Gui {
     return defaultTime / factor;
   }
 
+  /**
+   * Get the duration for tree rendering animations (separate from playback interval)
+   * This should be shorter than interval to prevent overlapping animations
+   */
+  _getRenderDuration() {
+    const interval = this._getIntervalDuration();
+    // Use 80% of the interval duration for animations (increased from 70%)
+    // This leaves 20% buffer to prevent overlapping while giving more time for smooth transitions
+    return Math.max(400, interval * 0.8); // Minimum 400ms, max 80% of interval
+  }
+
+  // ========================================
+  // PLAYBACK BUTTON STATE MANAGEMENT
+  // ========================================
+  _updatePlayButtonState() {
+    const startButton = document.getElementById("start-button");
+    const stopButton = document.getElementById("stop-button");
+
+    if (!startButton || !stopButton) return;
+
+    const startIcon = startButton.querySelector(".material-icons");
+    const startSrOnly = startButton.querySelector(".sr-only");
+
+    if (this.playing) {
+      // Update start button to show pause state
+      if (startIcon) startIcon.textContent = "pause";
+      if (startSrOnly) startSrOnly.textContent = "Pause";
+      startButton.setAttribute("title", "Pause animation");
+      startButton.setAttribute("aria-label", "Pause animation");
+
+      // Update stop button to be more prominent
+      stopButton.classList.add("active");
+    } else {
+      // Update start button to show play state
+      if (startIcon) startIcon.textContent = "play_arrow";
+      if (startSrOnly) startSrOnly.textContent = "Play";
+      startButton.setAttribute("title", "Play animation from current position");
+      startButton.setAttribute("aria-label", "Play animation");
+
+      // Remove active state from stop button
+      stopButton.classList.remove("active");
+    }
+  }
+
   play() {
     if (this.playing) return;
     this.playing = true;
+    this._updatePlayButtonState();
     this.lastFrameTime = performance.now();
-    this.frameRequest = window.requestAnimationFrame(this.animationLoop.bind(this));
+    this.frameRequest = window.requestAnimationFrame(this._animationLoop.bind(this));
   }
 
   // ========================================
@@ -146,7 +224,7 @@ export default class Gui {
   openScatterplotModal() {
     import("./space/scatterPlot.js").then((scatterPlotModule) => {
       scatterPlotModule.showScatterPlotModal({
-        realTreeList: this.realTreeList,
+        realTreeList: this.generateRealTreeList(),
         treeList: this.treeList,
         initialEmbedding: window.emb,
         modals: window.modals || {},
@@ -158,20 +236,21 @@ export default class Gui {
   // ========================================
   // ANIMATION LOOP & PLAYBACK
   // ========================================
-  animationLoop(timestamp) {
+  async _animationLoop(timestamp) {
     if (!this.playing) return;
     const elapsed = timestamp - this.lastFrameTime;
-    const interval = this.getIntervalDuration();
+    const interval = this._getIntervalDuration();
     if (elapsed >= interval) {
-      this.forward();
+      await this.forward();
       this.lastFrameTime = timestamp;
     }
-    this.frameRequest = window.requestAnimationFrame(this.animationLoop.bind(this));
+    this.frameRequest = window.requestAnimationFrame(this._animationLoop.bind(this));
   }
 
   stop() {
     if (!this.playing) return;
     this.playing = false;
+    this._updatePlayButtonState();
     if (this.frameRequest) {
       window.cancelAnimationFrame(this.frameRequest);
       this.frameRequest = null;
@@ -181,7 +260,7 @@ export default class Gui {
   // ========================================
   // MSA VIEWER SYNCHRONIZATION
   // ========================================
-  syncMSAIfOpenThrottled() {
+  _syncMSAIfOpenThrottled() {
     const now = Date.now();
     if (now - this._lastSyncTime < this._syncThrottleDelay) return;
     this._lastSyncTime = now;
@@ -193,13 +272,10 @@ export default class Gui {
   }
 
   syncMSAIfOpen() {
-    console.log(`syncMSAIfOpen called - syncMSAEnabled: ${this.syncMSAEnabled}, isMSAViewerOpen: ${this.isMSAViewerOpen()}`);
     if (!this.syncMSAEnabled) {
-      console.log("MSA sync disabled - skipping");
       return;
     }
     if (!this.isMSAViewerOpen()) {
-      console.log("MSA viewer not open - skipping sync");
       return;
     }
 
@@ -207,12 +283,6 @@ export default class Gui {
     const currentFullTreeDataIdx = this.transitionResolver.getDistanceIndex(this.currentTreeIndex);
     const windowData = calculateWindow(currentFullTreeDataIdx, this.msaStepSize, this.msaWindowSize, this.numberOfFullTrees);
 
-    console.log(`MSA sync data:`, {
-      msaPositionInfo,
-      currentFullTreeDataIdx,
-      windowData,
-      currentTreeIndex: this.currentTreeIndex
-    });
 
     if (windowData) {
       const windowInfo = {
@@ -236,60 +306,29 @@ export default class Gui {
         }
       }));
 
-      console.log(`MSA sync: Tree ${this.currentTreeIndex} -> MSA region ${windowData.startPosition}-${windowData.endPosition}`);
     }
   }
 
   // ========================================
   // MAIN UPDATE CYCLE
   // ========================================
-  update(skipAutoCenter = false) {
+  async update(skipAutoCenter = false) {
     this.resize(skipAutoCenter);
-    // Pass the correct index type for each chart type
-    let chartTreeIndex;
-    if (this.barOptionValue === "scale") {
-      chartTreeIndex = this.currentTreeIndex; // sequence index for scale charts
-    } else {
-      chartTreeIndex = this.transitionResolver.getDistanceIndex(this.currentTreeIndex); // transition index for RFD/W-RFD
-    }
-    this.currentDistanceChartState = this.currentDistanceChartState || { instance: null, type: null };
-    this.currentDistanceChartState = renderOrUpdateLineChart({
-      data: {
-        robinsonFouldsDistances: this.robinsonFouldsDistances,
-        weightedRobinsonFouldsDistances: this.weightedRobinsonFouldsDistances,
-        scaleList: this.scaleList,
-      },
-      config: {
-        barOptionValue: this.barOptionValue,
-        currentTreeIndex: chartTreeIndex,
-        stickyChartPositionIfAvailable: this._lastClickedDistancePosition,
-      },
-      services: {
-        transitionResolver: this.transitionResolver,
-      },
-      chartState: this.currentDistanceChartState,
-      callbacks: {
-        onGoToPosition: (idx) => this.goToPosition(idx),
-        onHandleDrag: (idx) => this.handleDrag(idx),
-        onGoToFullTreeDataIndex: (idx) => this.goToFullTreeDataIndex(idx),
-      },
-      containerId: "lineChart",
-    });
-    this.currentDistanceChart = this.currentDistanceChartState.instance;
-    this.lastChartType = this.currentDistanceChartState.type;
-    this.updateControls();
-    this.updateMain();
-    this.updateScale();
-    this.syncMSAIfOpenThrottled();
+
+    // Delegate chart update to ChartController
+    await this.chartController.updateChart();
+
+    // Delegate UI update to UIController
+    this.uiController.update();
+    await this.updateMain();
+    this._syncMSAIfOpenThrottled();
   }
 
   // ========================================
   // UI EVENT HANDLERS
   // ========================================
-  handleDrag(position) {
-    this._lastClickedDistancePosition = undefined;
-    this.currentTreeIndex = Math.max(0, Math.min(position, this.treeList.length - 1));
-    this.update();
+  async handleDrag(position) {
+    await this.navigationController.execute(new HandleDragCommand(this, position));
   }
 
   getCurrentWindow() {
@@ -303,222 +342,207 @@ export default class Gui {
   // ========================================
   // TREE NAVIGATION & STATE MANAGEMENT
   // ========================================
-  updateMain() {
-    const drawDuration = this.getIntervalDuration();
+  async updateMain() {
+    const drawDuration = this._getRenderDuration();
     const tree = this.treeList[this.currentTreeIndex];
-    const d3tree = constructTree(tree, this.ignoreBranchLengths);
-    const highlightIndex = this.transitionResolver.getHighlightingIndex(this.currentTreeIndex);
-    const tree_s_edges = this.s_edges[highlightIndex] || [];
+
+    if (!tree) {
+      console.error(`[GUI] No tree at index ${this.currentTreeIndex}. TreeList length: ${this.treeList.length}`);
+      return;
+    }
 
     const actualHighlightData = this.getActualHighlightData();
 
-    // Determine which cover set to use for the current tree
-    let atomCovers = [];
-    const coversObj = this.covers?.[highlightIndex];
-    if (coversObj && coversObj.t1 && coversObj.t2) {
-      const fullTreeIndices = this.transitionResolver.fullTreeIndices;
-      if (fullTreeIndices && fullTreeIndices.length > 1) {
-        if (this.currentTreeIndex === fullTreeIndices[highlightIndex]) {
-          atomCovers = coversObj.t1;
-        } else if (this.currentTreeIndex === fullTreeIndices[highlightIndex + 1]) {
-          atomCovers = coversObj.t2;
-        }
-      }
+    // Get tree type information for transition detection
+    const currentTreeInfo = this.transitionResolver ? this.transitionResolver.getTreeInfo(this.currentTreeIndex) : null;
+    const previousTreeInfo = this.previousTreeIndex >= 0 && this.transitionResolver ? 
+      this.transitionResolver.getTreeInfo(this.previousTreeIndex) : null;
+
+
+
+    // Update debug panel with current tree info
+    if (this.debugPanel?.isShowing()) {
+      this.debugPanel.updateDebugInfo({
+        currentTreeIndex: this.currentTreeIndex,
+        treeNames: this.treeNames,
+        transitionResolver: this.transitionResolver,
+        lattice_edge_tracking: this.lattice_edge_tracking,
+        treeController: this.treeController,
+        actualHighlightData: actualHighlightData
+      });
     }
 
-    requestAnimationFrame(() => {
-      drawTree({
-        treeConstructor: d3tree,
-        toBeHighlighted: actualHighlightData,
-        drawDurationFrontend: drawDuration,
-        leaveOrder: this.leaveOrder,
-        fontSize: this.fontSize,
-        strokeWidth: this.strokeWidth,
-        s_edges: tree_s_edges,
-        atomCovers, // Only the correct cover set for this tree
-        monophyleticColoring: this.monophyleticColoringEnabled !== false, // Default to true
-      });
+    // Create TreeAnimationController instance on first use
+    if (!this.treeController) {
+      this.treeController = new TreeAnimationController(null, "application");
+    }
+
+    const lattice_edge = this.lattice_edge_tracking[this.currentTreeIndex]
+
+    // Apply branch length transformation if specified
+    const transformedTree = this.branchTransformation !== 'none' 
+      ? transformBranchLengths(tree, this.branchTransformation)
+      : tree;
+
+    // Update parameters efficiently - now includes layout calculation
+    this.treeController.updateParameters({
+      treeData: transformedTree,
+      ignoreBranchLengths: this.ignoreBranchLengths,
+      drawDuration: drawDuration,
+      marked: actualHighlightData,
+      leaveOrder: this.leaveOrder,
+      lattice_edges: [lattice_edge],
+      fontSize: this.fontSize,
+      strokeWidth: this.strokeWidth,
+      monophyleticColoring: this.monophyleticColoringEnabled !== false,
+      currentTreeType: currentTreeInfo?.type,
+      previousTreeType: previousTreeInfo?.type
     });
+
+    try {
+      await this.treeController.renderAllElements();
+    } catch (error) {
+      console.error("[GUI] Tree drawing failed:", error);
+    }
+
+    // Update previous tree index after successful render
+    this.previousTreeIndex = this.currentTreeIndex;
   }
+
 
   resize(skipAutoCenter = false) {
     handleZoomResize(skipAutoCenter);
   }
 
-  backward() {
-    this._lastClickedDistancePosition = undefined;
-    if (!this.transitionResolver) return;
-    const prevPosition = this.transitionResolver.getPreviousPosition(this.currentTreeIndex);
-    if (prevPosition !== this.currentTreeIndex) {
-      this.currentTreeIndex = prevPosition;
+  /**
+   * Toggle debug panel visibility (can be called from console: window.gui.toggleDebug())
+   */
+  toggleDebug() {
+    this.debugPanel.toggle();
+    // If we just showed it, update with current data
+    if (this.debugPanel.isShowing()) {
+      const actualHighlightData = this.getActualHighlightData();
+      this.debugPanel.updateDebugInfo({
+        currentTreeIndex: this.currentTreeIndex,
+        treeNames: this.treeNames,
+        transitionResolver: this.transitionResolver,
+        lattice_edge_tracking: this.lattice_edge_tracking,
+        treeController: this.treeController,
+        actualHighlightData: actualHighlightData
+      });
     }
-    this.update(true);
-    if (this.syncMSAEnabled && this.isMSAViewerOpen()) this.syncMSAIfOpen();
   }
 
-  forward() {
-    this._lastClickedDistancePosition = undefined;
-    if (!this.transitionResolver) return;
-    const nextPosition = this.transitionResolver.getNextPosition(this.currentTreeIndex);
-    if (nextPosition !== this.currentTreeIndex) {
-      this.currentTreeIndex = nextPosition;
-    }
-    this.update(true);
-    if (this.syncMSAEnabled && this.isMSAViewerOpen()) this.syncMSAIfOpen();
+  async backward() {
+    await this.navigationController.execute(new BackwardCommand(this));
   }
 
-  prevTree() {
-    this._lastClickedDistancePosition = undefined;
-    if (!this.transitionResolver) return;
-    const prevSequenceIndex = this.transitionResolver.getPreviousFullTreeSequenceIndex(this.currentTreeIndex);
-    if (prevSequenceIndex !== this.currentTreeIndex) {
-        this.currentTreeIndex = prevSequenceIndex;
-    }
-    this.update(true);
+  async forward() {
+    await this.navigationController.execute(new ForwardCommand(this));
   }
 
-  nextTree() {
-    this._lastClickedDistancePosition = undefined;
-    if (!this.transitionResolver) return;
-    const nextSequenceIndex = this.transitionResolver.getNextFullTreeSequenceIndex(this.currentTreeIndex);
-    if (nextSequenceIndex !== this.currentTreeIndex) {
-        this.currentTreeIndex = nextSequenceIndex;
-    }
-    this.update(true);
+  async prevTree() {
+    await this.navigationController.execute(new PrevTreeCommand(this));
   }
 
-  manualNextTree() {
-    this.currentTreeIndex = Math.min(this.currentTreeIndex + 1, this.treeList.length - 1);
-    this.stop();
-    this.update();
+  async nextTree() {
+    await this.navigationController.execute(new NextTreeCommand(this));
   }
 
-  manualPrevTree() {
-    this.currentTreeIndex = Math.max(this.currentTreeIndex - 1, 0);
-    this.stop();
-    this.update();
+  async manualNextTree() {
+    await this.navigationController.execute(new ManualNextTreeCommand(this));
+  }
+
+  async manualPrevTree() {
+    await this.navigationController.execute(new ManualPrevTreeCommand(this));
   }
 
   // ========================================
   // CHART MODAL DISPLAY
   // ========================================
   displayCurrentChartInModal() {
-    if (this.playing) this.stop();
-    if (!this.transitionResolver || !this.robinsonFouldsDistances || !this.weightedRobinsonFouldsDistances || !this.scaleList) {
-      console.warn("[GUI] Data not ready for modal chart.");
-      return;
-    }
-    openModalChart({
-      barOptionValue: this.barOptionValue,
-      currentTreeIndex: this.currentTreeIndex,
-      robinsonFouldsDistances: this.robinsonFouldsDistances,
-      weightedRobinsonFouldsDistances: this.weightedRobinsonFouldsDistances,
-      scaleList: this.scaleList,
-      transitionResolver: this.transitionResolver,
-      onGoToFullTreeDataIndex: this.goToFullTreeDataIndex?.bind(this),
-      onGoToPosition: this.goToPosition?.bind(this)
-    });
+    this.chartController.displayCurrentChartInModal();
   }
 
-  // ========================================
-  // UI CONTROL UPDATES
-  // ========================================
-  updateControls() {
-    const fullTreeIndices = this.fullTreeIndices;
-    const currentFullTreeIndex = fullTreeIndices.indexOf(this.currentTreeIndex);
-    document.getElementById("currentFullTree").innerText =
-      currentFullTreeIndex !== -1 ? (currentFullTreeIndex + 1) : "-";
-    document.getElementById("numberOfFullTrees").innerText = this.numberOfFullTrees;
-    document.getElementById("currentTree").innerText = this.currentTreeIndex + 1;
-    document.getElementById("numberOfTrees").innerText = this.treeList.length;
-    document.getElementById("treeLabel").innerText = this.getCurrentTreeLabel();
-    // Get transition distance index for both MSA and scale calculations
-    const transitionDistanceIdx = this.transitionResolver.getDistanceIndex(this.currentTreeIndex);
 
-    // Always show MSA window information - use distance index for all tree types
-    if (transitionDistanceIdx >= 0 && this.numberOfFullTrees > 0) {
-      const window = calculateWindow(transitionDistanceIdx, this.msaStepSize, this.msaWindowSize, this.numberOfFullTrees);
-
-      // Determine tree type for better user context
-      const isFullTree = this.transitionResolver.isFullTree(this.currentTreeIndex);
-      const isConsensusTree = this.transitionResolver.isConsensusTree(this.currentTreeIndex);
-
-      let windowDisplay = `${window.startPosition} - ${window.endPosition}`;
-      let treeTypeIndicator = "";
-
-      if (isFullTree) {
-        treeTypeIndicator = " (F)"; // Full tree indicator
-      } else if (isConsensusTree) {
-        treeTypeIndicator = " (C)"; // Consensus tree indicator
-      } else {
-        treeTypeIndicator = " (I)"; // Interpolated tree indicator
-      }
-
-      document.getElementById("windowArea").innerText = windowDisplay + treeTypeIndicator;
-    } else {
-      document.getElementById("windowArea").innerText = "No MSA data";
-    }
-
-    // Update scale using the same transition distance index
-    const currentScale = getCurrentScaleValue(this.scaleList, transitionDistanceIdx);
-    const maxScale = this.maxScale;
-    document.getElementById("currentScaleText").innerText = formatScaleValue(currentScale);
-    document.getElementById("maxScaleText").innerText = formatScaleValue(maxScale);
-    // Update scale progress bar
-    const percent = calculateScalePercentage(currentScale, maxScale);
-    const progressBar = document.querySelector(".scale-progress-bar");
-    if (progressBar) progressBar.style.width = `${percent}%`;
-  }
-
-  goToPosition(position) {
-    this._lastClickedDistancePosition = undefined;
-    if (isNaN(position) || position < 0 || position >= this.treeList.length) return;
-    this.currentTreeIndex = position;
-    this.update();
+  async goToPosition(position) {
+    await this.navigationController.execute(new GoToPositionCommand(this, position));
   }
 
   // ========================================
   // TREE POSITIONING & NAVIGATION HELPERS
   // ========================================
-  goToFullTreeDataIndex(transitionIndex) {
-    if (!this.transitionResolver) return;
-    const fullTreeIndices = this.transitionResolver.fullTreeIndices;
-    const numTransitions = Math.max(0, fullTreeIndices.length - 1);
-    if (transitionIndex < 0 || transitionIndex >= numTransitions) return;
-    this._lastClickedDistancePosition = transitionIndex;
-    if (transitionIndex < fullTreeIndices.length) {
-      this.currentTreeIndex = fullTreeIndices[transitionIndex];
+  async goToFullTreeDataIndex(transitionIndex) {
+    await this.navigationController.execute(new GoToFullTreeDataIndexCommand(this, transitionIndex));
+  }
+
+  /**
+   * Retrieves highlight data for a specific tree index.
+   * @param {number} index - The index of the tree to get highlight data for.
+   * @returns {Array} The highlight data array, or an empty array if none.
+   * @private
+   */
+  _getHighlightDataForIndex(index) {
+    if (index < 0) {
+      return [];
     }
-    this.update();
+
+    const isConsensus = this.transitionResolver.isConsensusTree(index);
+    const s_edge = this.lattice_edge_tracking?.[index];
+
+    if (!isConsensus || !s_edge) {
+      return [];
+    }
+
+    const highlightIndex = this.transitionResolver.getHighlightingIndex(index);
+    const latticeEdges = this.highlightData?.lattice_edge;
+
+    if (!latticeEdges || highlightIndex < 0 || highlightIndex >= latticeEdges.length) {
+      return [];
+    }
+
+    const treePairSolution = latticeEdges[highlightIndex];
+    if (!treePairSolution?.lattice_edge_solutions) {
+      return [];
+    }
+
+    const edgeKey = `[${s_edge.join(', ')}]`;
+    const latticeEdgeData = treePairSolution.lattice_edge_solutions[edgeKey];
+
+    return latticeEdgeData || [];
   }
 
   getActualHighlightData() {
-    if (!this.transitionResolver) return [];
-    const highlightIndex = this.transitionResolver.getHighlightingIndex(this.currentTreeIndex);
-    if (highlightIndex === -1) return [];
-    // Highlight if:
-    // - The current element is NOT a full tree (interpolated),
-    // - OR it is the first tree (T0),
-    // - OR it is the second tree (T1, i.e., the first transition's end tree)
-    const isFullTree = this.transitionResolver.isFullTree(this.currentTreeIndex);
-    const isCon = this.transitionResolver.isConsensusTree(this.currentTreeIndex);
-    if (isFullTree) {
-        // Find all full tree indices
-        const fullTreeIndices = this.transitionResolver.fullTreeIndices;
-        // Highlight if this is the first or second full tree
-        if (this.currentTreeIndex !== fullTreeIndices[0] && this.currentTreeIndex !== fullTreeIndices[1]) {
-            return [];
+    const currentIndex = this.currentTreeIndex;
+    const highlightIndex = this.transitionResolver.getHighlightingIndex(currentIndex);
+
+    // If the current tree is not in a highlightable transition segment, return empty.
+    if (highlightIndex === -1) {
+      return [];
+    }
+
+    const fullTreeIndices = this.transitionResolver.fullTreeIndices;
+    // The segment starts at the full tree that defines this transition.
+    const segmentStartIndex = fullTreeIndices[highlightIndex];
+
+    const uniqueSolutions = new Map();
+
+    // Iterate from the beginning of the segment up to the current tree.
+    for (let i = segmentStartIndex; i <= currentIndex; i++) {
+      // We only care about consensus trees within this range.
+      if (this.transitionResolver.isConsensusTree(i)) {
+        const dataForIndex = this._getHighlightDataForIndex(i);
+
+        if (Array.isArray(dataForIndex)) {
+          for (const solution of dataForIndex) {
+            // Use a stringified version of the solution as a key to ensure uniqueness.
+            uniqueSolutions.set(JSON.stringify(solution), solution);
+          }
         }
+      }
     }
-    if(isCon) {
-      let cNumber = this.transitionResolver.getConsensusTreeNumber(this.currentTreeIndex);
-      console.log("[GUI] Consensus tree detected:", this.treeNames[this.currentTreeIndex]);
-      console.log("[GUI] Consensus tree number:", cNumber);
-      console.log("[GUI] Highlight data for consensus tree:", this.highlightData[highlightIndex][cNumber]);
-      this.transitionResolver.getConsensusTreeNumber(this.treeNames[this.currentTreeIndex])
-      return this.highlightData[highlightIndex] //[cNumber]] || [];
-    }
-    return [];
+
+    return Array.from(uniqueSolutions.values());
   }
 
   // ========================================
@@ -591,11 +615,11 @@ export default class Gui {
     );
   }
 
-  _handleTaxaColoringComplete(colorData) {
+  async _handleTaxaColoringComplete(colorData) {
     const newColorMap = applyColoringData(colorData, this.leaveOrder, COLOR_MAP.colorMap);
     // Ensure the global color map is updated so label colors are correct
     Object.assign(COLOR_MAP.colorMap, newColorMap);
-    this.updateMain();
+    await this.updateMain();
   }
 
 
@@ -625,8 +649,8 @@ export default class Gui {
   // ========================================
   // CONTRACT VALIDATION & INITIALIZATION
   // ========================================
-  
-  performContractValidation() {
+
+  _performContractValidation() {
     // Perform contract validation after initialization
     const contractValidation = validateBackendData({
       treeList: this.treeList,
@@ -634,44 +658,53 @@ export default class Gui {
       robinsonFouldsDistances: this.robinsonFouldsDistances,
       weightedRobinsonFouldsDistances: this.weightedRobinsonFouldsDistances,
       highlightData: {
-        jumping_taxa: this.highlightData,
-        s_edges: this.s_edges,
+        lattice_edge: this.highlightData,
+        lattice_edge_tracking: this.s_edges,
         covers: this.covers
       },
       scaleList: this.scaleList
     }, { logLevel: 'info' });
-    
+
     if (!contractValidation.isValid) {
       console.error('[GUI] Backend contract validation failed:', contractValidation.issues);
     } else {
       console.log('[GUI] Backend contract validation passed:', contractValidation.summary);
     }
-    
+
     if (contractValidation.warnings.length > 0) {
       console.warn('[GUI] Contract warnings:', contractValidation.warnings);
     }
-    
+
     this.contractValidation = contractValidation;
   }
-  
-  initializeTransitionResolver() {
+
+  _initializeTransitionResolver() {
     if (!this.treeNames || this.treeNames.length === 0) {
         console.warn("[GUI] Cannot initialize TransitionIndexResolver: treeNames is empty or undefined.");
         this.transitionResolver = new TransitionIndexResolver([], [], [], false, 0); // Basic fallback
         return;
     }
     const resolverSequenceData = this.treeNames.map(name => {
-        let type = 'UNKNOWN';
-        if (name.startsWith('IT')) {
-            type = 'IT';
-        } else if (name.startsWith('C_')) {
-            type = 'C';
-        } else if (name.startsWith('T') && /T\d+$/.test(name)) {
+        let type = 'UNKNOWN'; // Default type
+
+        // Rule for Full Trees (T followed by digits only)
+        if (/^T\d+$/.test(name)) {
             type = 'T';
         }
+        // Rule for Intermediate Trees
+        else if (name.startsWith('IT')) {
+            type = 'IT';
+        }
+        // Rule for Consensus Trees
+        else if (name.startsWith('C')) { // Adjusted to be less strict if format is C0_1, etc.
+            type = 'C';
+        }
+
         return { name, type };
     });
-    const highlightDataForResolver = this.highlightData || [];
+
+
+    const highlightDataForResolver = this.highlightData?.lattice_edge || [];
     const numOriginalTransitions = highlightDataForResolver.length;
     const distanceDataForResolver = this.robinsonFouldsDistances || [];
     const debugResolver = true;
@@ -687,9 +720,8 @@ export default class Gui {
     this.maxScale = getMaxScaleValue(this.scaleList);
     this.numberOfFullTrees = this.fullTreeIndices.length;
 
+
     if (debugResolver || !this.transitionResolver.validateData().isValid) {
-        console.log("[GUI] TransitionIndexResolver initialized.");
-        console.log("[GUI] Resolver Debug Info:", this.transitionResolver.getDebugInfo());
         const validation = this.transitionResolver.validateData();
         if (!validation.isValid) {
             console.warn("[GUI] TransitionIndexResolver validation issues:", validation.issues);
@@ -701,7 +733,7 @@ export default class Gui {
       if (!resolverValidation.isValid) {
         console.error('[GUI] TransitionIndexResolver validation failed after contract validation:', resolverValidation.issues);
       }
-      
+
       // Compare expected vs actual tree counts
       const contractFullTrees = this.contractValidation.warnings.find(w => w.includes('full tree'));
       const resolverFullTrees = this.transitionResolver.fullTreeIndices.length;
@@ -715,7 +747,7 @@ export default class Gui {
   generateRealTreeList() {
     if (!Array.isArray(this.treeList)) return [];
     const realTreeData = [];
-    const fullTreeIndices = this.transitionResolver.fullTreeIndices;
+    const fullTreeIndices = this.transition. Resolver.fullTreeIndices;
     fullTreeIndices.forEach((index) => {
       if (this.treeList[index] !== undefined) {
         realTreeData.push(this.treeList[index]);
@@ -725,29 +757,10 @@ export default class Gui {
   }
 
   // ========================================
-  // SCALE BAR & STYLING UPDATES
+  // STYLING UPDATES
   // ========================================
-  updateScale() {
-    const fullTreeIndices = this.fullTreeIndices;
-    // Use the unified transition distance index for scale display
-    const transitionDistanceIdx = this.transitionResolver.getDistanceIndex(this.currentTreeIndex);
-    const currentScaleValue = getCurrentScaleValue(this.scaleList, transitionDistanceIdx);
-    const maxScale = this.maxScale || 1;
-    const scaleProgressBar = document.querySelector(".scale-progress-bar");
-    if (scaleProgressBar) {
-      const percentValue = calculateScalePercentage(currentScaleValue, maxScale);
-      scaleProgressBar.style.width = `${percentValue}%`;
-      return;
-    }
-    const maxScaleElement = document.getElementById("maxScale");
-    if (maxScaleElement) {
-      const width = maxScaleElement.offsetWidth;
-      const currentScaleWidth = (width * currentScaleValue) / maxScale;
-      d3.select("#currentScaleText").transition().duration(1000).style("width", `${currentScaleWidth}px`);
-    }
-  }
 
-  setFontSize(fontSize) {
+  async setFontSize(fontSize) {
     // Normalize font size to ensure it has a valid CSS unit
     if (typeof fontSize === 'number') {
       this.fontSize = fontSize + 'em';
@@ -759,18 +772,45 @@ export default class Gui {
 
     STYLE_MAP.fontSize = this.fontSize;
 
-    this.updateMain();
+    await this.updateMain();
   }
 
   /**
    * Toggle monophyletic group coloring for tree branches
    * @param {boolean} enabled - Whether to enable monophyletic coloring
    */
-  setMonophyleticColoring(enabled) {
+  async setMonophyleticColoring(enabled) {
     // Store the setting for future tree drawings
     this.monophyleticColoringEnabled = enabled;
 
     // Redraw the current tree with the new setting
-    this.updateMain();
+    await this.updateMain();
+  }
+
+  /**
+   * Clean up resources when GUI is destroyed
+   */
+  destroy() {
+    if (this.treeController) {
+      // Clear any ongoing animations
+      this.stop();
+      this.treeController = null;
+    }
+
+    // Clean up controllers
+    if (this.uiController) {
+      this.uiController.destroy();
+      this.uiController = null;
+    }
+
+    if (this.chartController) {
+      // ChartController cleanup if it has a destroy method
+      this.chartController = null;
+    }
+
+    if (this.navigationController) {
+      // NavigationController cleanup if it has a destroy method
+      this.navigationController = null;
+    }
   }
 }
