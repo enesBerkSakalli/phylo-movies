@@ -1,0 +1,100 @@
+<!-- Movie Player Bar - Timeline and Transport Controls -->
+<div class="movie-player-bar" role="region" aria-label="Movie Player Controls">
+  <div class="movie-player-container">
+
+    <!-- PRIMARY TRANSPORT & POSITION - LEFT SIDE -->
+    <div class="left-controls" role="group" aria-label="Transport controls and position">
+      <!-- Transport Controls -->
+      <div class="button-row transport-primary" role="group" aria-label="Tree navigation controls">
+        <!-- Speed Control -->
+        <div class="factor-control compact movie-player-speed" role="group" aria-labelledby="speed-control-label">
+          <label id="speed-control-label" class="control-label sr-only">
+            <span class="material-icons" aria-hidden="true" title="Animation playback speed">speed</span>
+            Playback Speed
+          </label>
+          <div class="speed-controls-row">
+            <div class="speed-knob-container">
+              <div class="speed-knob speed-mini" title="Adjust animation speed (drag to rotate)">
+                <input type="range" id="factor-range" min="0.1" max="5" value="1" step="0.1" class="speed-knob-input" aria-label="Animation speed" />
+                <div class="speed-knob-face">
+                  <div class="speed-knob-indicator" style="transform: translateX(-50%) rotate(-79.7143deg);"></div>
+                  <div class="speed-knob-center"></div>
+                </div>
+              </div>
+            </div>
+            <button type="button" class="speed-value-button speed-mini" title="Click to cycle through common speeds">
+              <span class="info-value speed-value">1×</span>
+            </button>
+          </div>
+        </div>
+        <button id="backwardStepButton" type="button" class="md-button compact" title="Go to previous tree (previous full tree)" aria-label="Previous tree">
+          <span class="material-icons">first_page</span><span class="sr-only">Previous Tree</span>
+        </button>
+        <button id="backward-button" type="button" class="md-button compact" title="Go to previous frame (previous window in current tree)" aria-label="Previous frame">
+          <span class="material-icons">chevron_left</span><span class="sr-only">Previous Frame</span>
+        </button>
+        <button id="start-button" type="button" class="md-button primary compact" title="Play/Pause animation" aria-label="Play/Pause animation">
+          <span class="material-icons">play_arrow</span><span class="sr-only">Play/Pause</span>
+        </button>
+        <button id="forward-button" type="button" class="md-button compact" title="Go to next frame (next window in current tree)" aria-label="Next frame">
+          <span class="material-icons">chevron_right</span><span class="sr-only">Next Frame</span>
+        </button>
+        <button id="forwardStepButton" type="button" class="md-button compact" title="Go to next tree (next full tree)" aria-label="Next tree">
+          <span class="material-icons">last_page</span><span class="sr-only">Next Tree</span>
+        </button>
+      </div>
+
+      <!-- Chart Controls - Under Transport Controls -->
+      <div class="chart-expand-controls">
+        <select
+          name="barPlotOption"
+          id="barPlotOption"
+          class="compact-select chart-select-mini"
+          aria-describedby="chart-select-help"
+          title="Choose data series to display"
+        >
+          <option value="rfd" title="Robinson-Foulds Distance (relative)">RFD</option>
+          <option value="w-rfd" title="Weighted Robinson-Foulds Distance">W-RFD</option>
+          <option value="scale" title="Tree scale">Scale</option>
+        </select>
+        <button
+          id="chart-modal"
+          type="button"
+          class="md-button compact secondary chart-expand-btn-small"
+          aria-label="Open full-size chart view"
+          title="Open full-size interactive chart view in modal window"
+        >
+          <span class="material-icons" aria-hidden="true">open_in_new</span>
+        </button>
+        <div id="chart-select-help" class="sr-only">Choose data series: RFD shows tree differences, W-RFD includes branch lengths, Scale shows tree size</div>
+      </div>
+    </div>
+
+    <!-- RIGHT SIDE CONTENT - STACKED VERTICALLY -->
+    <div class="right-content-stacked">
+
+      <!-- Timeline Container - will contain s-edge bars with individual scrubbers -->
+      <div class="timeline-container">
+        <div class="timeline-markers" aria-hidden="true"></div>
+        <!-- Horizontal scrollable track for S-Edge Bar segments -->
+        <div class="interpolation-timeline-track"></div>
+      </div>
+
+      <!-- Distance Chart - BOTTOM -->
+      <div class="movie-chart-container" role="region" aria-label="Distance Chart">
+        <div class="chart-content-inline">
+          <div
+            id="lineChart"
+            class="chart-canvas chart-inline"
+            role="img"
+            aria-label="Interactive distance chart"
+            title="Interactive chart: Click points or drag indicator to navigate"
+          ></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Movie player controls are managed by the main event handling system -->

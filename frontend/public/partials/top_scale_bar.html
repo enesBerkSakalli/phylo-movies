@@ -1,0 +1,17 @@
+<section class="top-scale-bar" aria-labelledby="scale-title" data-tooltip="Phylogenetic Scale Tracker">
+  <div class="scale-header">
+    <span class="material-icons scale-icon" aria-hidden="true">straighten</span>
+    <span id="scale-title" class="scale-title">Scale</span>
+  </div>
+  <div class="scale-values" aria-live="polite">
+    <span id="currentScaleText" class="scale-current" aria-label="Current scale">0.000</span>
+    <span class="scale-separator" aria-hidden="true">•</span>
+    <span id="maxScaleText" class="scale-max" aria-label="Maximum scale">0.000</span>
+  </div>
+  <div class="scale-bar-container">
+    <div class="scale-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Scale progress">
+      <div class="scale-progress-bar"></div>
+      <div class="scale-indicator" aria-hidden="true"></div>
+    </div>
+  </div>
+</section>
