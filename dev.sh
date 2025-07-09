@@ -1,6 +1,7 @@
 #!/bin/zsh
 lsof -ti :5002 | xargs kill -9 2>/dev/null
 lsof -ti :5173 | xargs kill -9 2>/dev/null
+lsof -ti :3001 | xargs kill -9 2>/dev/null
 
 # Check if port 5002 (backend) is available
 if lsof -i :5002 | grep LISTEN; then
@@ -14,19 +15,30 @@ if lsof -i :5173 | grep LISTEN; then
   exit 1
 fi
 
+# Check if port 3001 (browser logs MCP) is available
+if lsof -i :3001 | grep LISTEN; then
+  echo "[dev.sh] ERROR: Port 3001 is already in use. Please free it and try again."
+  exit 1
+fi
+
 # Start the Flask backend using poetry
-cd backend
 echo "[dev.sh] Installing backend dependencies with poetry..."
-poetry install
+(cd backend && poetry install)
+echo "[dev.sh] Checking brancharchitect version..."
+BRANCHARCHITECT_VERSION=$(cd backend && poetry run pip list | grep brancharchitect | awk '{print $2}')
+echo "[dev.sh] Using brancharchitect version: $BRANCHARCHITECT_VERSION"
+echo "[dev.sh] Starting Browser Logs MCP server..."
+(cd backend/browser-logs-mcp && node dist/index.js) &
+BROWSER_LOGS_PID=$!
+
 echo "[dev.sh] Starting Flask backend with poetry (using run.py)..."
-poetry run python -m phylomovie.run --host=127.0.0.1 --port=5002 &
+(cd backend && poetry run python run.py --host=127.0.0.1 --port=5002) &
 BACKEND_PID=$!
-cd ..
 
 # Wait for backend to be ready
 echo "[dev.sh] Waiting for backend to start..."
 for i in {1..30}; do
-  if curl -s http://127.0.0.1:5002/ >/dev/null 2>&1; then
+  if curl -s http://127.0.0.1:5002/about >/dev/null 2>&1; then
     echo "[dev.sh] Backend is ready!"
     break
   fi
@@ -38,7 +50,7 @@ for i in {1..30}; do
   sleep 1
 done
 
-if ! curl -s http://127.0.0.1:5002/ >/dev/null 2>&1; then
+if ! curl -s http://127.0.0.1:5002/about >/dev/null 2>&1; then
   echo "[dev.sh] ERROR: Backend failed to start within 30 seconds"
   kill $BACKEND_PID 2>/dev/null
   exit 1
@@ -86,15 +98,19 @@ cleanup() {
   echo "[dev.sh] Cleaning up..."
   if kill -0 $FRONTEND_PID 2>/dev/null; then kill $FRONTEND_PID 2>/dev/null; fi
   if kill -0 $BACKEND_PID 2>/dev/null; then kill $BACKEND_PID 2>/dev/null; fi
+  if kill -0 $BROWSER_LOGS_PID 2>/dev/null; then kill $BROWSER_LOGS_PID 2>/dev/null; fi
   wait $FRONTEND_PID 2>/dev/null
   wait $BACKEND_PID 2>/dev/null
+  wait $BROWSER_LOGS_PID 2>/dev/null
 }
 # Trap cleanup on SIGINT (Ctrl+C), SIGTERM, and EXIT
 trap cleanup SIGINT SIGTERM EXIT
 
-echo "[dev.sh] Frontend PID: $FRONTEND_PID, Backend PID: $BACKEND_PID"
-echo "[dev.sh] Both servers are running. Press Ctrl+C to stop."
+echo "[dev.sh] Frontend PID: $FRONTEND_PID, Backend PID: $BACKEND_PID, Browser Logs MCP PID: $BROWSER_LOGS_PID"
+echo "[dev.sh] All servers are running. Press Ctrl+C to stop."
 echo "[dev.sh] Flask backend: http://127.0.0.1:5002/"
 echo "[dev.sh] Vite frontend: http://127.0.0.1:5173/"
+echo "[dev.sh] Browser Logs MCP: http://127.0.0.1:3001/"
+echo "[dev.sh] Browser Logs Test Page: http://127.0.0.1:3001/test-page.html"
 
 wait || true

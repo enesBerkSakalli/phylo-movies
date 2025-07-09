@@ -1,0 +1,198 @@
+/* ============================================================================
+   TOP SCALE BAR - Compact Right-Side Tracker
+   ============================================================================ */
+
+/* Container - Fixed position on right side */
+#top-scale-bar-container {
+  position: fixed;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1000;
+  width: 48px;
+  background: var(--md-sys-color-surface-container, #23273a);
+  border: 1px solid var(--md-sys-color-outline, rgba(255, 255, 255, 0.08));
+  border-radius: 24px;
+  padding: 16px 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: width 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Hover state for expanded info */
+#top-scale-bar-container:hover {
+  width: 72px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Main section */
+.top-scale-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Compact header */
+.top-scale-bar .scale-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+/* Icon */
+.top-scale-bar .scale-icon {
+  font-size: 16px;
+  color: var(--md-sys-color-primary, #4390e1);
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+  transform: rotate(90deg); /* Vertical orientation */
+}
+
+#top-scale-bar-container:hover .scale-icon {
+  opacity: 1;
+}
+
+/* Title - hidden by default */
+.top-scale-bar .scale-title {
+  display: none;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant, #9bb0d1);
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+}
+
+#top-scale-bar-container:hover .scale-title {
+  display: block;
+}
+
+/* Values display */
+.top-scale-bar .scale-values {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 9px;
+  font-weight: 600;
+  width: 100%;
+}
+
+.top-scale-bar .scale-current {
+  color: var(--md-sys-color-primary, #4390e1);
+  font-family: var(--font-mono, 'SF Mono', monospace);
+  font-size: 10px;
+}
+
+.top-scale-bar .scale-max {
+  color: var(--md-sys-color-on-surface-variant, #9bb0d1);
+  font-family: var(--font-mono, 'SF Mono', monospace);
+  opacity: 0.7;
+}
+
+/* Hide separator */
+.top-scale-bar .scale-separator {
+  display: none;
+}
+
+/* Vertical progress bar container */
+.top-scale-bar .scale-bar-container {
+  position: relative;
+  width: 6px;
+  height: 100px;
+  margin: 8px 0;
+}
+
+/* Progress bar background */
+.top-scale-bar .scale-bar {
+  width: 100%;
+  height: 100%;
+  background: var(--md-sys-color-surface-container-low, #181b28);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Progress fill */
+.top-scale-bar .scale-progress-bar {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  background: linear-gradient(to top, var(--md-sys-color-primary, #4390e1), var(--md-sys-color-secondary, #4fc3f7));
+  border-radius: 3px;
+  transition: height 0.3s ease;
+  height: 0%; /* Will be set by JavaScript */
+}
+
+/* Indicator dot - positioned based on progress */
+.top-scale-bar .scale-indicator {
+  display: none; /* Hide for cleaner look */
+}
+
+/* Responsive - smaller on mobile */
+@media (max-width: 768px) {
+  #top-scale-bar-container {
+    right: 10px;
+    width: 40px;
+    padding: 12px 6px;
+  }
+  
+  #top-scale-bar-container:hover {
+    width: 56px;
+  }
+  
+  .top-scale-bar .scale-bar-container {
+    height: 80px;
+  }
+}
+
+/* Accessibility */
+.top-scale-bar .scale-bar[role="progressbar"] {
+  position: relative;
+}
+
+/* Focus styles */
+#top-scale-bar-container:focus-within {
+  outline: 2px solid var(--md-sys-color-primary, #4390e1);
+  outline-offset: 2px;
+}
+
+/* Entrance animation */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translate(20px, -50%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, -50%);
+  }
+}
+
+#top-scale-bar-container {
+  animation: slideInRight 0.3s ease-out;
+}
+
+/* Tooltip on hover */
+#top-scale-bar-container::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-right: 8px;
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+#top-scale-bar-container:hover::before {
+  opacity: 1;
+}

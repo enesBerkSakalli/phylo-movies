@@ -1,0 +1,54 @@
+<!-- Playback Controls -->
+<div class="panel-container tier-exploration">
+  <div class="panel-header">
+    <div class="panel-title">
+      <span class="material-icons panel-icon" aria-hidden="true">play_arrow</span>
+      <h2 class="panel-title-text">Playback Controls</h2>
+    </div>
+  </div>
+  <div class="panel-content">
+
+  <!-- Secondary Actions: File Operations & Recording -->
+  <div class="button-row transport-secondary" role="group" aria-label="File and recording controls">
+    <button id="save-button" type="button" class="md-button compact secondary" title="Save current tree visualization as SVG" aria-label="Save SVG">
+      <span class="material-icons">download</span><span class="sr-only">Save SVG</span>
+    </button>
+    <button id="compare-sequence-button" type="button" class="md-button compact secondary" title="Compare the current tree with the next tree" aria-label="Compare trees">
+      <span class="material-icons">compare_arrows</span><span class="sr-only">Compare Trees</span>
+    </button>
+    <button id="start-record" type="button" class="md-button danger compact" title="Start screen recording of the phylogenetic tree animation" aria-label="Start recording">
+      <span class="material-icons">fiber_manual_record</span><span class="sr-only">Record</span>
+    </button>
+    <button id="stop-record" type="button" class="md-button compact secondary" title="Stop screen recording and save the video file" disabled aria-label="Stop recording">
+      <span class="material-icons">stop_circle</span><span class="sr-only">Stop Recording</span>
+    </button>
+  </div>
+
+  <!-- Auxiliary Actions -->
+  <div class="button-row aux-actions ma-group-breathing" role="group" aria-label="Additional tools">
+  </div>
+
+  </div>
+</div>
+<div class="panel-container tier-exploration">
+  <div class="panel-header">
+    <div class="panel-title">
+      <span class="material-icons panel-icon" aria-hidden="true">biotech</span>
+      <h2 class="panel-title-text" title="Multiple Sequence Alignment - shows how DNA/protein sequences compare">MSA Viewer</h2>
+    </div>
+  </div>
+  <div class="panel-content">
+
+  <div class="button-row">
+    <button id="msa-viewer-btn" type="button" class="md-button primary compact" title="Open the Multiple Sequence Alignment (MSA) viewer for the current window" aria-label="Open alignment viewer">
+      <span class="material-icons">biotech</span>
+      <span>Open Alignment Viewer</span>
+    </button>
+  </div>
+
+  <div id="msa-status" class="info-item">
+    <div class="info-label">Status</div>
+    <div class="info-value">No alignment data loaded</div>
+  </div>
+  </div>
+</div>

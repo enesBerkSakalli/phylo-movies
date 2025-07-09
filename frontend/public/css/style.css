@@ -1,0 +1,461 @@
+/* Reset and Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+  font-family: var(--font-family-sans-serif, 'Heebo', sans-serif);
+  background: var(--background-color-main, #fff);
+  color: var(--text-color-main, #222);
+  font-size: var(--font-size-md, 13px); /* Base font size for the app */
+  line-height: 1.6; /* Improved readability */
+}
+
+/* General Styles */
+.container {
+  display: flex;
+  flex-direction: row;
+  width: 100vw;
+  height: 100vh;
+}
+
+.full-size-container {
+  flex: 1 1 0%;
+  min-width: 0;
+  min-height: 0;
+  background: #fff;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+#application-container {
+  width: 100%;
+  height: 100%;
+  align-self: stretch;
+  display: block;
+}
+
+/* Menu scrollbar styles moved to navigation-consolidated.css */
+
+/* Header and Menu */
+/* .menu-header styles moved to navigation-consolidated.css */
+
+.header {
+  display: flex;
+}
+
+.logo {
+  padding-top: 5px;
+  padding-inline: 20px;
+}
+
+.fa-film {
+  color: #ffff;
+}
+
+/* Tools and Controls */
+/* Removed .tools div rule - spacing now handled by navigation-consolidated.css using flexbox gap */
+
+.row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px; /* Standardized margin */
+}
+
+/* Obsolete .row .menuItem class removed */
+
+
+
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23555'%3E%3Cpath d='M8 11.207L2.396 5.604l.707-.707L8 9.793l4.896-4.896.707.707z'/%3E%3C/svg%3E"); /* Arrow for light theme */
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px;
+  padding-right: 36px; /* Ensure space for arrow */
+}
+
+.menu select, .dark-container select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23aaa'%3E%3Cpath d='M8 11.207L2.396 5.604l.707-.707L8 9.793l4.896-4.896.707.707z'/%3E%3C/svg%3E"); /* Arrow for dark theme */
+}
+
+
+/* Legacy button styles - removed to prevent conflicts with unified navigation styles */
+
+
+/* Sliders and Switches */
+.uk-range {
+  width: 100%;
+}
+
+/* Text and Headers */
+h1 {
+  font-size: 1.5em; /* Typically 24px if base is 16px */
+  margin-bottom: 16px; /* Added some default spacing */
+  color: var(--text-color-main); /* Ensure h1 uses theme text color */
+}
+
+
+/* Blinking Animation */
+.blink_me {
+  animation: blinker 1s linear infinite;
+}
+
+@keyframes blinker {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Tooltip Styles */
+.tooltip {
+  position: absolute;
+  opacity: 0;
+  background-color: var(--background-color-main);
+  border: 1px solid var(--input-border-light); /* Was #ccc */
+  border-radius: var(--standard-border-radius); /* Was 5px */
+  padding: 8px;
+  font-size: 12px;
+  font-family: Arial, sans-serif;
+  color: #333;
+  pointer-events: none;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+  white-space: nowrap;
+  z-index: 1000;
+  transition: opacity 0.3s;
+}
+
+/* Modal Chart */
+#modal-graph-chart {
+  flex: 1;
+  height: 100%;
+  width: 100%;
+  position: relative;
+}
+
+
+
+/* .toggle-icon styles moved to navigation-consolidated.css */
+
+/* .position-control and .factor-control are specific to menu. */
+/* Their current margins (16px top, 6px bottom for label) are reasonable. */
+/* If they need variable colors: */
+.position-control label, .factor-control label {
+  color: var(--text-color-dark-theme-muted); /* Already set this way */
+}
+
+
+/* Enhanced Branding Styles */
+/* .menu-header styles consolidated in navigation-consolidated.css */
+
+.app-branding {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.branding-icon {
+  font-size: 24px;
+  color: var(--primary-color);
+  margin-right: var(--spacing-medium, 12px);
+}
+
+.app-titles {
+  flex: 1;
+}
+
+
+.commitmessage {
+  font-size: 11px;
+  color: var(--text-color-dark-theme-muted); /* Was #aaa */
+  margin-top: 4px; /* Align to 4px grid */
+}
+
+.commit-hash {
+  font-family: var(--font-family-monospace, monospace);
+  background-color: var(--input-background-dark, rgba(255, 255, 255, 0.1));
+  padding: var(--spacing-xs, 4px) var(--spacing-sm, 8px); /* Was 1px 4px */
+  border-radius: var(--standard-border-radius, 4px); /* Was 3px */
+}
+
+
+.brand-separator {
+  height: 3px;
+  background: linear-gradient(to right, var(--primary-color) 0%, rgba(var(--primary-color-rgb), 0.1) 100%);
+  border-radius: 3px;
+  margin-bottom: var(--spacing-large, 16px);
+}
+
+/* .select-arrow is for a custom non-standardized select. Standardized 'select' has its own SVG arrow. */
+/* This can be removed if all selects are standardized, or kept for specific legacy cases. */
+/* For now, I'll adjust its color. */
+.select-arrow {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-color-dark-theme-muted); /* Was rgba(255, 255, 255, 0.6) */
+  pointer-events: none;
+}
+
+.playback-controls {
+  flex-grow: 2;
+  justify-content: center;
+}
+
+.tool-controls {
+  flex-grow: 1;
+  justify-content: flex-end;
+}
+
+/* Control panels - simplified */
+.control-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 8px 0;
+}
+
+.option-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-sm, 8px);
+  background-color: rgba(0,0,0,0.1);
+  border-radius: var(--standard-border-radius);
+  padding: var(--spacing-sm, 8px) var(--spacing-medium, 12px);
+}
+
+.option-row label {
+  font-size: 12px;
+  color: var(--text-color-dark-theme-main); /* Was #ddd */
+}
+
+.option-row select { /* This is a specific select, possibly to be replaced by standard select styling if applicable */
+  background-color: rgba(0,0,0,0.2); /* Darker than standard menu input */
+  color: var(--text-color-dark-theme-main);
+  border: 1px solid var(--border-color-dark-theme);
+  border-radius: var(--standard-border-radius);
+  padding: var(--spacing-sm, 8px) var(--spacing-medium, 12px); /* Adjusted to match standardized inputs, check select arrow */
+  font-size: var(--font-size-sm, 12px);
+}
+
+/* Obsolete group separator styles removed */
+
+/* Chart Modal Styling */
+.winbox.modern.modal {
+  border-radius: var(--large-border-radius, 8px);
+  box-shadow: var(--shadow-lg, 0 10px 30px rgba(0, 0, 0, 0.3));
+}
+
+.winbox.modern.modal .wb-body {
+  background: var(--dialog-background-color, #23242b);
+}
+
+.winbox.modern.modal .wb-title {
+  font-family: var(--font-family-sans-serif, 'Heebo', sans-serif);
+  font-weight: var(--font-weight-medium, 500);
+  font-size: var(--font-size-lg, 18px); /* Was 16px */
+  color: var(--text-color-dark-theme-emphasis, #e3eaf2); /* More emphasis for title */
+  color: #333;
+}
+
+
+/* AlignmentViewer 2.0 SVG Icon Fixes */
+
+/* Close button icons */
+.alignment-viewer-2 [style*="close.svg"],
+.alignment-viewer-2 .close-button,
+.alignment-viewer-2 [class*="close"],
+.alignment-viewer-2 [aria-label*="close" i],
+.alignment-viewer-2 [title*="close" i] {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23666'%3E%3Cpath d='M3.293 3.293a1 1 0 011.414 0L8 6.586l3.293-3.293a1 1 0 111.414 1.414L9.414 8l3.293 3.293a1 1 0 01-1.414 1.414L8 9.414l-3.293 3.293a1 1 0 01-1.414-1.414L6.586 8 3.293 4.707a1 1 0 010-1.414z'/%3E%3C/svg%3E") !important;
+  background-size: 16px 16px !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+}
+
+/* Search button icons */
+.alignment-viewer-2 [style*="search.svg"],
+.alignment-viewer-2 .search-button,
+.alignment-viewer-2 [class*="search"],
+.alignment-viewer-2 [aria-label*="search" i],
+.alignment-viewer-2 [title*="search" i] {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23666'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'/%3E%3C/svg%3E") !important;
+  background-size: 16px 16px !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+}
+
+/* Settings/gear button icons */
+.alignment-viewer-2 [style*="settings.svg"],
+.alignment-viewer-2 .settings-button,
+.alignment-viewer-2 [class*="settings"],
+.alignment-viewer-2 [class*="gear"],
+.alignment-viewer-2 [aria-label*="settings" i],
+.alignment-viewer-2 [title*="settings" i] {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23666'%3E%3Cpath d='M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z'/%3E%3Cpath d='M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115l.094-.319z'/%3E%3C/svg%3E") !important;
+  background-size: 16px 16px !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+}
+
+/* Hide any elements with broken asset paths */
+.alignment-viewer-2 [style*="undefined/"],
+.alignment-viewer-2 [src*="undefined/"],
+.alignment-viewer-2 img[src*="undefined/"] {
+  display: none !important;
+}
+
+/* Text fallbacks for missing icons */
+.alignment-viewer-2 [style*="close.svg"]:empty::before,
+.alignment-viewer-2 .close-button:empty::before {
+  content: "×" !important;
+  font-size: 16px !important;
+  font-weight: bold !important;
+  color: #666 !important;
+  display: inline-block !important;
+  text-align: center !important;
+  line-height: 1 !important;
+}
+
+.alignment-viewer-2 [style*="search.svg"]:empty::before,
+.alignment-viewer-2 .search-button:empty::before {
+  content: "🔍" !important;
+  font-size: 14px !important;
+  color: #666 !important;
+  display: inline-block !important;
+  text-align: center !important;
+  line-height: 1 !important;
+}
+
+.alignment-viewer-2 [style*="settings.svg"]:empty::before,
+.alignment-viewer-2 .settings-button:empty::before {
+  content: "⚙" !important;
+  font-size: 14px !important;
+  color: #666 !important;
+  display: inline-block !important;
+  text-align: center !important;
+  line-height: 1 !important;
+}
+
+/* Generic fallback for any other missing SVG buttons */
+.alignment-viewer-2 button:empty[style*=".svg"]::before,
+.alignment-viewer-2 [class*="button"]:empty[style*=".svg"]::before {
+  content: "◯" !important;
+  font-size: 14px !important;
+  color: #666 !important;
+  display: inline-block !important;
+  text-align: center !important;
+  line-height: 1 !important;
+}
+
+/* Tree Status Panel styles moved to navigation.css */
+
+.status-grid {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 16px;
+  align-items: flex-start;
+  justify-content: space-between;
+  width: 100%;
+  flex-wrap: nowrap; /* Prevent wrapping */
+}
+
+.status-item {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 0%;
+  min-width: 0; /* Allows flex items to shrink below their content size */
+  text-align: center;
+  max-width: 33.333%; /* Ensure equal width distribution */
+}
+
+.status-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-color-dark-theme-muted); /* Was #aaa */
+  margin-bottom: 4px;
+}
+
+.status-value {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-color-dark-theme-main); /* Was #fff */
+}
+
+/* Navigation Panel Components styles moved to navigation.css */
+
+/* .panel-header styles moved to navigation-consolidated.css */
+
+.panel-icon {
+  color: var(--primary-color);
+  font-size: var(--font-size-md, 14px); /* Adjusted to md */
+}
+
+/* .panel-title styles moved to navigation-consolidated.css */
+
+/* Parameter List */
+.param-list {
+  background-color: rgba(0,0,0,0.1);
+  border-radius: var(--standard-border-radius);
+  padding: var(--spacing-medium, 12px);
+}
+
+.param-item {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--spacing-sm, 8px) 0;
+  border-bottom: 1px solid var(--border-color-dark-theme);
+}
+
+.param-item:last-child {
+  border-bottom: none;
+}
+
+.param-name {
+  font-size: 12px;
+  color: #aaa;
+}
+
+.param-value {
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+}
+
+/* Position Control */
+.position-control { /* Specific layout class */
+  margin-top: 0; /* Overrides a previous margin, specific use */
+}
+
+/* Responsive adjustments for status grid */
+@media (max-width: 768px) {
+  .status-grid {
+    flex-direction: row !important; /* Keep horizontal even on mobile */
+    gap: 8px; /* Reduce gap on smaller screens */
+    flex-wrap: nowrap;
+  }
+
+  .status-item {
+    text-align: center; /* Keep centered on mobile */
+    max-width: 33.333%;
+  }
+
+  .status-label {
+    font-size: 10px; /* Smaller font on mobile */
+  }
+
+  .status-value {
+    font-size: 13px; /* Smaller font on mobile */
+  }
+}
+

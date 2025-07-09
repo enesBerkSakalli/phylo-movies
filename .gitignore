@@ -27,3 +27,11 @@ phylomovie/services/reports/auto
 phylo-io
 frontend.log
 backend/logs/debug_log.html
+backend/browser-logs-mcp
+backend/browser-tools-mcp
+backend/logs
+backend/memory-bank-mcp
+backend/msa_uploads
+backend/phylomovie/msa_uploads
+backend/phylomovie/services
+debug_logs
