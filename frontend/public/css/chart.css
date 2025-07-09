@@ -1,0 +1,297 @@
+/* chart.css - Unified chart styling with stringent design */
+
+/* Chart containers - compact and responsive */
+#lineChart, #line-chart {
+  width: 100%;
+  height: clamp(140px, 20vh, 200px);
+  min-height: 140px;
+  max-height: 200px;
+  background-color: var(--nav-bg-panel);
+  border-radius: var(--nav-border-radius);
+  margin-bottom: var(--nav-spacing-xs);
+  position: relative;
+  overflow: hidden;
+}
+
+.chart-canvas {
+  width: 100%;
+  height: 100%;
+  min-height: 140px;
+  max-height: 200px;
+  background-color: var(--nav-bg-panel);
+  border-radius: var(--nav-border-radius);
+  position: relative;
+  overflow: hidden;
+  display: block;
+}
+
+/* Chart interaction elements */
+.index-rect {
+  fill: rgba(67, 144, 225, 0.3);
+  stroke-width: 1px;
+  stroke: var(--nav-primary-color);
+  transition: fill 0.2s ease;
+}
+
+.index-rect:hover {
+  fill: var(--nav-primary-color);
+  cursor: pointer;
+}
+
+.drag-indicator .touch-target:hover,
+.drag-indicator:hover .current-position-line {
+  stroke: #ff4500;
+  stroke-width: 2px;
+}
+
+.drag-indicator:hover .drag-handle {
+  r: 6;
+  fill: #ff4500;
+}
+
+.ship-line,
+.ship-handle {
+  transition: all 0.2s ease;
+}
+
+#ship-modal-group:hover .ship-line,
+.ship-indicator-group:hover .ship-line {
+  stroke-width: 2px;
+  stroke: #ff4500;
+}
+
+#ship-modal-group:hover .ship-handle,
+.ship-indicator-group:hover .ship-handle {
+  r: 6;
+  fill: #ff4500;
+}
+
+/* Chart data visualization */
+.line {
+  stroke: var(--nav-primary-color);
+  stroke-width: 1.5px;
+  fill: none;
+  transition: stroke-width 0.2s ease;
+}
+
+.line:hover {
+  stroke-width: 2px;
+}
+
+.dot {
+  fill: var(--nav-primary-color);
+  stroke: white;
+  stroke-width: 1px;
+  r: 3;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.dot:hover {
+  r: 4;
+  fill: #ff4500;
+}
+
+.area {
+  opacity: 0.2;
+  transition: opacity 0.2s ease;
+}
+
+/* Chart card styling - Enhanced Material Design 3 */
+.chart-card {
+  background: var(--md-sys-color-surface-container, var(--nav-bg-panel));
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  border: 1px solid var(--md-sys-color-outline-variant, var(--nav-border-color));
+  margin-bottom: var(--nav-spacing-sm);
+  overflow: hidden;
+  box-shadow: var(--md-sys-elevation-level-1, 0 2px 8px rgba(0, 0, 0, 0.1));
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--nav-spacing-md) var(--nav-spacing-lg);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, var(--nav-border-color));
+  background: var(--md-sys-color-surface-container-highest, rgba(255, 255, 255, 0.04));
+}
+
+.chart-title {
+  display: flex;
+  align-items: center;
+  gap: var(--nav-spacing-sm);
+}
+
+.chart-title > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.chart-title > div > span {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface, var(--nav-text-primary));
+}
+
+.chart-icon {
+  color: var(--md-sys-color-primary, var(--nav-accent-blue));
+  font-size: 16px;
+}
+
+.chart-subtitle {
+  font-size: 11px;
+  color: var(--md-sys-color-on-surface-variant, var(--nav-text-muted));
+  font-style: italic;
+  margin-top: 2px;
+  font-weight: normal;
+  line-height: 1.2;
+}
+
+.chart-container {
+  padding: var(--nav-spacing-md);
+  background: var(--md-sys-color-surface-container-low, var(--nav-bg-input));
+}
+
+/* Enhanced chart canvas with better spacing for y-axis labels */
+#lineChart, #line-chart {
+  width: 100%;
+  height: clamp(140px, 20vh, 200px);
+  min-height: 140px;
+  max-height: 200px;
+  background-color: var(--md-sys-color-surface-container-low, var(--nav-bg-input));
+  border-radius: var(--md-sys-shape-corner-small, 8px);
+  margin-bottom: var(--nav-spacing-xs);
+  position: relative;
+  overflow: hidden;
+  /* Add more padding for y-axis labels */
+  padding-left: 20px;
+  padding-right: 10px;
+}
+
+.chart-canvas {
+  width: 100%;
+  height: 100%;
+  min-height: 140px;
+  max-height: 200px;
+  background-color: var(--md-sys-color-surface-container-low, var(--nav-bg-input));
+  border-radius: var(--md-sys-shape-corner-small, 8px);
+  position: relative;
+  overflow: visible; /* Allow y-axis labels to extend outside */
+  display: block;
+  /* Ensure enough space for y-axis labels */
+  padding: 10px 15px 10px 25px; /* top right bottom left */
+}
+
+/* Chart legend styling */
+.chart-legend {
+  display: flex;
+  justify-content: center;
+  gap: var(--nav-spacing-lg);
+  margin-top: var(--nav-spacing-sm);
+  padding: var(--nav-spacing-sm);
+  background: var(--md-sys-color-surface-container, var(--nav-bg-panel));
+  border-radius: var(--md-sys-shape-corner-small, 8px);
+  border-top: 1px solid var(--md-sys-color-outline-variant, var(--nav-border-color));
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--nav-spacing-xs);
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.distance-color {
+  background: var(--md-sys-color-primary, var(--nav-primary-color));
+}
+
+.current-position-color {
+  background: #ff4500;
+}
+
+.legend-label {
+  font-size: 11px;
+  color: var(--md-sys-color-on-surface-variant, var(--nav-text-muted));
+  font-weight: 500;
+}
+
+.chart-canvas:empty::before {
+  content: "Loading chart data...";
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--nav-text-muted);
+  font-style: italic;
+  font-size: 11px;
+}
+
+/* Chart cursor styling */
+.chart-canvas svg {
+  cursor: crosshair;
+}
+
+/* Material Icons in charts */
+.chart-header .material-icons {
+  font-size: 16px;
+  color: var(--md-sys-color-primary, var(--nav-primary-color));
+}
+
+.chart-controls .material-icons {
+  font-size: 14px;
+}
+
+/* Chart controls styling */
+.chart-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--nav-spacing-sm);
+}
+
+.select-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 100px;
+}
+
+.chart-controls .compact-select {
+  min-width: 100px;
+  max-width: 140px;
+  flex: 1;
+  background: var(--md-sys-color-surface-container-low, var(--nav-bg-input));
+  border: 1px solid var(--md-sys-color-outline, var(--nav-border-color));
+  color: var(--md-sys-color-on-surface, var(--nav-text-primary));
+}
+
+.chart-controls .md-button {
+  min-width: 36px;
+  height: 32px;
+  padding: 0 var(--nav-spacing-sm);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  #lineChart, #line-chart {
+    height: clamp(120px, 18vh, 160px);
+    min-height: 120px;
+    max-height: 160px;
+  }
+
+  .chart-subtitle {
+    display: none;
+  }
+}
+
+@media (min-width: 1200px) {
+  #lineChart, #line-chart {
+    height: clamp(160px, 22vh, 220px);
+    min-height: 160px;
+    max-height: 220px;
+  }
+}

@@ -1,0 +1,25 @@
+/* Horizontal scroll for interpolation timeline */
+.interpolation-timeline-track {
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  /* Keep flex for children, but allow scroll */
+  display: flex;
+  flex-wrap: nowrap;
+  /* Optional: smooth scrolling */
+  scroll-behavior: smooth;
+}
+
+.interpolation-timeline-track > * {
+  flex-shrink: 0;
+}
+
+/* Hide scrollbar but allow scroll (optional, for webkit browsers) */
+.interpolation-timeline-track::-webkit-scrollbar {
+  height: 8px;
+  background: transparent;
+}
+.interpolation-timeline-track::-webkit-scrollbar-thumb {
+  background: #bbb;
+  border-radius: 4px;
+}

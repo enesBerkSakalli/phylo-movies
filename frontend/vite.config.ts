@@ -94,6 +94,7 @@ const virtualizedMatrixViewerPlugin = () => {
 };
 
 export default defineConfig({
+  base: '/',
   plugins: [react(), virtualizedMatrixViewerPlugin()],
   resolve: {
     alias: [
@@ -137,14 +138,16 @@ export default defineConfig({
     watch: { usePolling: true },
     proxy: {
       "/treedata": "http://localhost:5002",
-      "/msa": "http://localhost:5002"
+      "/msa": "http://localhost:5002",
+      "/about": "http://localhost:5002"
     }
   },
   optimizeDeps: { include: ["d3", "alignment-viewer-2"], force: true },
+  root: "./public",
   build: {
-    outDir: "../dist",
+    outDir: "../../dist",
     rollupOptions: {
-      input: { main: "index.html", vis: "vis.html" }
+      input: { main: "index.html", visualization: "visualization.html" }
     }
   }
 });
