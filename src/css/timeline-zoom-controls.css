@@ -1,0 +1,133 @@
+/* Timeline Zoom and Scroll Controls */
+.timeline-zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-right: 12px;
+}
+
+.timeline-scroll-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.zoom-button, .scroll-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0;
+}
+
+.zoom-button:hover, .scroll-button:hover {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.24);
+}
+
+.zoom-button:active, .scroll-button:active {
+    background: rgba(0, 0, 0, 0.08);
+    transform: scale(0.95);
+}
+
+.zoom-button .material-icons, .scroll-button .material-icons {
+    font-size: 18px;
+    color: rgba(0, 0, 0, 0.6);
+}
+
+.zoom-button:hover .material-icons, .scroll-button:hover .material-icons {
+    color: rgba(0, 0, 0, 0.87);
+}
+
+/* Disabled state */
+.zoom-button:disabled, .scroll-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+    background: rgba(0, 0, 0, 0.02);
+}
+
+.zoom-button:disabled:hover, .scroll-button:disabled:hover {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.12);
+    transform: none;
+}
+
+/* Timeline container focus styles for keyboard navigation */
+#visTimelineContainer:focus {
+    outline: 2px solid rgba(33, 150, 243, 0.5);
+    outline-offset: 2px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .timeline-zoom-controls,
+    .timeline-scroll-controls {
+        gap: 2px;
+    }
+    
+    .zoom-button, .scroll-button {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .zoom-button .material-icons, .scroll-button .material-icons {
+        font-size: 16px;
+    }
+}
+
+/* Tooltip styling for better UX */
+.zoom-button[title], .scroll-button[title] {
+    position: relative;
+}
+
+/* Visual feedback for zoom level changes */
+.timeline-zoom-controls::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-radius: 6px;
+    background: rgba(33, 150, 243, 0.1);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+
+.timeline-zoom-controls.zooming::after {
+    opacity: 1;
+}
+
+/* Keyboard shortcut hints */
+.timeline-header-right {
+    position: relative;
+}
+
+.timeline-header-right::before {
+    content: 'Keyboard: +/- zoom, 0 fit, Home/End scroll';
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 4px;
+    padding: 2px 6px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    font-size: 10px;
+    border-radius: 3px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 1000;
+}
+
+.timeline-header-right:hover::before {
+    opacity: 1;
+}
