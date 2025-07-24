@@ -1,9 +1,9 @@
 import * as d3 from "d3";
-import { useAppStore } from '../../store.js';
+import { useAppStore } from '../../core/store.js';
 import { buildSvgLinkExtension, getLinkExtensionInterpolator } from "../radialTreeGeometry.js";
 import { getExtensionKey, getExtensionSvgId } from "../utils/KeyGenerator.js";
 import { shortestAngle } from "../../utils/MathUtils.js";
-import { getEasingFunction } from "../utils/animationUtils.js";
+import { getEasingFunction, EASING_FUNCTIONS } from "../utils/animationUtils.js";
 
 /**
  * ExtensionRenderer - Specialized renderer for tree link extensions
@@ -30,35 +30,32 @@ export class ExtensionRenderer {
     // CSS class for extension elements
     this.extensionClass = "link-extension";
 
-    // Cache for previous leaf positions to avoid DOM parsing
-    this.previousPositionsCache = new Map();
+
+    // Note: Position caching now handled by store - no local cache needed
   }
 
-  /**
-   * Updates the cache with current leaf positions
-   * @param {Array} leafData - Array of leaf node objects
-   */
-  updatePositionsCache(leafData) {
-    for (const leaf of leafData) {
-      const leafKey = getExtensionKey(leaf);
-      this.previousPositionsCache.set(leafKey, {
-        angle: leaf.angle,
-        radius: leaf.radius
-      });
-    }
-  }
 
   /**
-   * Sets previous positions on leaf data from cache
+   * Sets previous positions on leaf data from store cache
    * @param {Array} leafData - Array of leaf node objects
    */
   setPreviousPositions(leafData) {
+    // Get previous positions from store cache
+    const { previousTreeIndex, getTreePositions } = useAppStore.getState();
+    const previousPositions = getTreePositions(previousTreeIndex);
+
     for (const leaf of leafData) {
       const leafKey = getExtensionKey(leaf);
-      if (this.previousPositionsCache.has(leafKey)) {
-        const cached = this.previousPositionsCache.get(leafKey);
+
+      // Use store cache or default to current position
+      if (previousPositions && previousPositions.leaves.has(leafKey)) {
+        const cached = previousPositions.leaves.get(leafKey);
         leaf.prevAngle = cached.angle;
         leaf.prevRadius = cached.radius;
+      } else {
+        // Default to current position for entering leaves
+        leaf.prevAngle = leaf.angle;
+        leaf.prevRadius = leaf.radius;
       }
     }
   }
@@ -72,7 +69,7 @@ export class ExtensionRenderer {
    * @param {string} easing - D3 easing function name (default: "easePolyInOut")
    * @returns {d3.Selection} The updated extensions selection
    */
-  renderExtensions(leafData, extensionEndRadius, interpolationFunction, duration = 1000, easing = "easePolyInOut") {
+  renderExtensions(leafData, extensionEndRadius, interpolationFunction, duration = 1000, easing = EASING_FUNCTIONS.POLY_IN_OUT) {
     // JOIN: Bind data to existing elements
     const linkExtensions = this.svgContainer
       .selectAll(`.${this.extensionClass}`)
@@ -115,9 +112,9 @@ export class ExtensionRenderer {
       .attr("fill", "none") // Paths need fill none
       .attr("d", (d) => buildSvgLinkExtension(d, d.radius)); // Initial collapsed state
 
-    // MERGE and apply instant updates with transition
+    // MERGE and apply instant updates (no transition)
     enterSelection.merge(extensions)
-      .attrTween("d", getLinkExtensionInterpolator(extensionRadius)) // Use attrTween for path
+      .attr("d", (d) => buildSvgLinkExtension(d, extensionRadius)) // Use attr for instant positioning
       .style("opacity", (d) => (d._opacity !== undefined ? d._opacity : 1));
 
     return extensions;
@@ -173,31 +170,8 @@ export class ExtensionRenderer {
       .attrTween("d", interpolationFunction);
   }
 
-  /**
-   * Handles instant updates for extensions during scrubbing
-   * @param {d3.Selection} linkExtensions - The extensions selection
-   * @param {number} extensionEndRadius - End radius for extension positioning
-   * @private
-   */
-  _handleInstantUpdate(linkExtensions, extensionEndRadius) {
-    linkExtensions
-      .attr("stroke-width", this.sizeConfig.strokeWidth)
-      .style("stroke", (d) => this.colorManager.getNodeColor(d))
-      .attr("d", (d) => buildSvgLinkExtension(d, extensionEndRadius))
-      .style("opacity", (d) => {
-        const baseOpacity = this.sizeConfig.extensionOpacity || 0.7;
-        return d._opacity !== undefined ? d._opacity * baseOpacity : baseOpacity;
-      }); // Handle fade effects
-  }
 
 
-  /**
-   * Updates the styling configuration
-   * @param {Object} newConfig - New size configuration
-   */
-  updateSizeConfig(newConfig) {
-    // Removed updateSizeConfig: dynamic updates not needed
-  }
 
 
   /**
@@ -207,24 +181,37 @@ export class ExtensionRenderer {
    * @param {number} extensionEndRadius - End radius for extension positioning
    * @param {number} stageDuration - Stage 2 duration (should be totalDuration/3)
    * @param {string} easing - D3 easing function name (default: "easePolyInOut")
+   * @param {Object} filteredLeafData - Pre-filtered leaf data {entering, updating, exiting}
    * @returns {Promise} Promise that resolves when Stage 2 animation completes
    */
-  renderExtensionsWithPromise(leafData, extensionEndRadius, stageDuration = 333, easing = "easePolyInOut") {
+  renderExtensionsWithPromise(leafData, extensionEndRadius, stageDuration = 333, easing = EASING_FUNCTIONS.POLY_IN_OUT, filteredLeafData) {
     // Handle empty data case
     if (!leafData || leafData.length === 0) {
       return Promise.resolve();
     }
 
+    // Trust the pre-filtered data from TreeAnimationController
+    if (!filteredLeafData) {
+
+      throw new Error('ExtensionRenderer: filteredLeafData must be provided by TreeAnimationController');
+    }
+
     // Set previous positions from cache before animation
     this.setPreviousPositions(leafData);
+
+    // Use pre-filtered data directly - extensions correspond to leaves
+    const enteringExtensions = filteredLeafData.entering || [];
+    const updatingExtensions = filteredLeafData.updating || [];
+    const exitingExtensions = filteredLeafData.exiting || [];
+
 
     // JOIN: Bind data to existing elements (extensions should already exist)
     const linkExtensions = this.svgContainer
       .selectAll(`.${this.extensionClass}`)
       .data(leafData, getExtensionKey);
 
-    // ENTER: Create any missing extensions (should be rare since leaves are constant)
-    const enterExtensions = linkExtensions.enter()
+    // ENTER: Create any missing extensions
+    const enterExtensions = this._createExtensionEnterSelection(enteringExtensions)
       .append("path")
       .attr("class", this.extensionClass)
       .attr("stroke", "#999")
@@ -235,8 +222,9 @@ export class ExtensionRenderer {
       .style("opacity", 1)
       .attr("d", (d) => buildSvgLinkExtension(d, extensionEndRadius));
 
-    // EXIT: Remove any extra extensions (should be rare since leaves are constant)
-    linkExtensions.exit().remove();
+    // EXIT: Remove only extensions that our diffing identified as exiting
+    const exitingExtensionSelection = this._createExtensionExitSelection(exitingExtensions);
+    exitingExtensionSelection.remove();
 
     // UPDATE: Animate all extensions (merged enter + existing) to new positions
     const allExtensions = linkExtensions.merge(enterExtensions);
@@ -245,10 +233,20 @@ export class ExtensionRenderer {
       return Promise.resolve();
     }
 
+    // Filter to only extensions that our diffing identified as updating
+    const updatingExtensionSelection = this._createExtensionUpdateSelection([...enteringExtensions, ...updatingExtensions]);
+
+    // If no diffing updates but we have extensions, update all (for resize scenarios)
+    const extensionsToUpdate = updatingExtensionSelection.empty() ? allExtensions : updatingExtensionSelection;
+
+    if (extensionsToUpdate.empty()) {
+      return Promise.resolve();
+    }
+
     const easingFunction = getEasingFunction(easing);
 
     // Stage 2 Animation: Move extensions to new positions with synchronized timing
-    const transition = allExtensions
+    const transition = extensionsToUpdate
       .attr("stroke-width", this.sizeConfig.strokeWidth)
       .style("stroke", (d) => this.colorManager.getNodeColor(d))
       .transition("extension-stage2-update")
@@ -257,10 +255,20 @@ export class ExtensionRenderer {
       .attrTween("d", getLinkExtensionInterpolator(extensionEndRadius));
 
     // Convert D3 transition to Promise with proper error handling
-    return transition.end().then(() => {
-      // Update cache after animation completes
-      this.updatePositionsCache(leafData);
-    }).catch(() => {});
+    const result = transition.end().catch(() => {});
+
+    // Add debug info
+    result.filteredLeafData = filteredLeafData;
+    result.stats = {
+      total: leafData.length,
+      entering: enteringExtensions.length,
+      updating: updatingExtensions.length,
+      exiting: exitingExtensions.length,
+      // Show our diffing vs D3's detection
+      actuallyAnimated: extensionsToUpdate.size()
+    };
+
+    return result;
   }
 
   /**
@@ -313,17 +321,28 @@ export class ExtensionRenderer {
    * @returns {d3.Selection} The updated extensions selection
    */
   renderExtensionsInterpolated(fromLeafData, toLeafData, fromExtensionRadius, toExtensionRadius, timeFactor) {
-    // Debug logging
-    console.log('[ExtensionRenderer] renderExtensionsInterpolated TRACE:', {
-      fromLeafCount: fromLeafData.length,
-      toLeafCount: toLeafData.length,
-      fromExtensionRadius,
-      toExtensionRadius,
-      timeFactor
-    });
+
+    // Try to get positions from store cache first
+    const { previousTreeIndex, getTreePositions } = useAppStore.getState();
+    const previousPositions = getTreePositions(previousTreeIndex);
 
     // Create map for quick lookup of 'from' nodes by key
     const fromMap = new Map(fromLeafData.map(d => [getExtensionKey(d), d]));
+
+    // Enhance fromMap with store cache if available
+    if (previousPositions) {
+      toLeafData.forEach(leaf => {
+        const leafKey = getExtensionKey(leaf);
+        if (previousPositions.leaves.has(leafKey) && !fromMap.has(leafKey)) {
+          const cached = previousPositions.leaves.get(leafKey);
+          fromMap.set(leafKey, {
+            ...leaf,
+            angle: cached.angle,
+            radius: cached.radius
+          });
+        }
+      });
+    }
 
     // Use standard D3 data binding with toLeafData and getExtensionKey (like other renderers)
     const extensions = this.svgContainer
@@ -346,12 +365,6 @@ export class ExtensionRenderer {
     // MERGE and UPDATE: Handle all extensions
     const allExtensions = enterSelection.merge(extensions);
 
-    // Debug logging
-    console.log('[ExtensionRenderer] Extension counts:', {
-      enterCount: enterSelection.size(),
-      existingCount: extensions.size(),
-      totalCount: allExtensions.size()
-    });
 
     // Calculate interpolated extension radius
     const interpolatedRadius = fromExtensionRadius + (toExtensionRadius - fromExtensionRadius) * timeFactor;
@@ -414,4 +427,55 @@ export class ExtensionRenderer {
       }).size()
     };
   }
+
+  /**
+   * Creates extension enter selection directly from pre-filtered entering extension data
+   * @param {Array} enteringExtensions - Array of leaf objects that should enter
+   * @returns {d3.Selection} The enter selection
+   * @private
+   */
+  _createExtensionEnterSelection(enteringExtensions) {
+    if (enteringExtensions.length === 0) {
+      return d3.select(null).selectAll(null); // Empty selection
+    }
+
+    return this.svgContainer
+      .selectAll(null) // Start with empty selection
+      .data(enteringExtensions, getExtensionKey)
+      .enter();
+  }
+
+  /**
+   * Creates extension exit selection directly from pre-filtered exiting extension data
+   * @param {Array} exitingExtensions - Array of leaf objects that should exit
+   * @returns {d3.Selection} The exit selection
+   * @private
+   */
+  _createExtensionExitSelection(exitingExtensions) {
+    if (exitingExtensions.length === 0) {
+      return d3.select(null).selectAll(null); // Empty selection
+    }
+
+    return this.svgContainer
+      .selectAll(`.${this.extensionClass}`)
+      .data(exitingExtensions, getExtensionKey)
+      .exit();
+  }
+
+  /**
+   * Creates extension update selection directly from pre-filtered updating extension data
+   * @param {Array} updatingExtensions - Array of leaf objects that should update
+   * @returns {d3.Selection} The update selection
+   * @private
+   */
+  _createExtensionUpdateSelection(updatingExtensions) {
+    if (updatingExtensions.length === 0) {
+      return d3.select(null).selectAll(null); // Empty selection
+    }
+
+    return this.svgContainer
+      .selectAll(`.${this.extensionClass}`)
+      .data(updatingExtensions, getExtensionKey);
+  }
+
 }

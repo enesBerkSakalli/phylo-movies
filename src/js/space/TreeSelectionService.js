@@ -102,15 +102,7 @@ const TreeSelectionService = {
    * @private
    */
   _isWinBoxAvailable() {
-    if (typeof WinBox === "undefined") {
-      console.error(
-        "WinBox is not defined. Make sure to include the WinBox library before using compareTrees."
-      );
-      alert(
-        "Comparison tool is unavailable. The required library (WinBox) is not loaded."
-      );
-      return false;
-    }
+    // Since WinBox is now imported where needed, this check can be simplified
     return true;
   },
 

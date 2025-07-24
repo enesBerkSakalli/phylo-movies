@@ -28,7 +28,6 @@ export async function loadPartial({ url, containerId, callback, errorCallback })
   }
 
   try {
-    console.log(`Loading partial: ${url} -> ${containerId}`);
 
     const response = await fetch(url, {
       method: 'GET',

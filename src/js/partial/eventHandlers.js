@@ -24,7 +24,7 @@ let recorderHandlersInstance = null;
  *                    It should provide methods that handlers can call (e.g., `gui.play()`).
  * @returns {void}
  */
-export async function attachGuiEventHandlers(gui) {
+export function attachGuiEventHandlers(gui) {
   if (!gui) {
     console.error("GUI instance is required for event handlers");
     return;
@@ -35,7 +35,7 @@ export async function attachGuiEventHandlers(gui) {
       guiHandlersInstance.cleanup();
     }
     guiHandlersInstance = new GuiEventHandlers(gui);
-    await guiHandlersInstance.attachAll();
+    guiHandlersInstance.attachAll();
     console.log("GUI event handlers attached successfully");
   } catch (error) {
     console.error("Error attaching GUI event handlers:", error);

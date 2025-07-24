@@ -1,11 +1,11 @@
 import * as d3 from "d3";
-import { useAppStore } from '../../store.js';
-import { COLOR_MAP } from "../../treeColoring/ColorMap.js";
-import { attrTweenCircleX, attrTweenCircleY } from "../radialTreeGeometry.js";
+import { useAppStore } from '../../core/store.js';
+import { TREE_COLOR_CATEGORIES } from "../../core/store.js";
+import { attrTweenCircleX, attrTweenCircleY, attrTweenCircleXWithT, attrTweenCircleYWithT } from "../radialTreeGeometry.js";
 import { getNodeKey, getNodeSvgId } from "../utils/KeyGenerator.js";
-import { getEasingFunction } from "../utils/animationUtils.js";
+import { getEasingFunction, EASING_FUNCTIONS } from "../utils/animationUtils.js";
 
-/**th
+/**
  * NodeRenderer - Specialized renderer for tree nodes (circles, internal nodes, etc.)
  *
  * Handles rendering and updating of SVG elements that represent
@@ -30,36 +30,33 @@ export class NodeRenderer {
     this.leafClass = "leaf";
     this.internalNodeClass = "internal-node";
 
-    // Cache for previous node positions to avoid DOM parsing
-    this.previousPositionsCache = new Map();
+
+    // Note: Position caching now handled by store - no local cache needed
   }
 
 
-  /**
-   * Updates the cache with current node positions
-   * @param {Array} nodesData - Array of node objects
-   */
-  updatePositionsCache(nodesData) {
-    for (const node of nodesData) {
-      const nodeKey = getNodeKey(node);
-      this.previousPositionsCache.set(nodeKey, {
-        angle: node.angle,
-        radius: node.radius
-      });
-    }
-  }
 
   /**
-   * Sets previous positions on node data from cache
+   * Sets previous positions on node data from store cache
    * @param {Array} nodesData - Array of node objects
    */
   setPreviousPositions(nodesData) {
+    // Get previous positions from store cache
+    const { previousTreeIndex, getTreePositions } = useAppStore.getState();
+    const previousPositions = getTreePositions(previousTreeIndex);
+
     for (const node of nodesData) {
       const nodeKey = getNodeKey(node);
-      if (this.previousPositionsCache.has(nodeKey)) {
-        const cached = this.previousPositionsCache.get(nodeKey);
+
+      // Use store cache or appropriate fallback for entering nodes
+      if (previousPositions && previousPositions.nodes.has(nodeKey)) {
+        const cached = previousPositions.nodes.get(nodeKey);
         node.prevAngle = cached.angle;
         node.prevRadius = cached.radius;
+      } else {
+        // For entering nodes, start at their target position (no animation from origin)
+        node.prevAngle = node.angle;
+        node.prevRadius = node.radius; // Start at target position for entering nodes
       }
     }
   }
@@ -80,7 +77,6 @@ export class NodeRenderer {
   clear() {
     this.svgContainer.selectAll(`.${this.leafClass}`).remove();
     this.svgContainer.selectAll(`.${this.internalNodeClass}`).remove();
-    this.previousPositionsCache.clear();
   }
 
   /**
@@ -100,83 +96,190 @@ export class NodeRenderer {
   }
 
   /**
-   * Renders leaf circles with Stage 2 timing coordination (Update only - no enter/exit needed)
-   * Since leaf circles always exist for every leaf, we only need to animate position updates
-   * @param {Array} leafData - Array of D3 leaf nodes from tree.leaves()
-   * @param {number} maxLeafRadius - Maximum radius for positioning (unused but kept for API consistency)
+   * Renders all node circles (leaves + internal) with Stage 2 timing coordination
+   * @param {Array} allNodesData - Array of all D3 nodes from tree.descendants()
    * @param {number} stageDuration - Stage 2 duration (should be totalDuration/3)
    * @param {string} easing - D3 easing function name (default: "easePolyInOut")
-   * @param {Function} clickHandler - Optional click handler function
+   * @param {Function} clickHandler - Optional click handler function for leaf nodes
+   * @param {Object} filteredNodeData - Pre-filtered node data {entering, updating, exiting}
    * @returns {Promise} Promise that resolves when Stage 2 animation completes
    */
-  renderLeafCirclesWithPromise(leafData, maxLeafRadius, stageDuration = 333, easing = "easePolyInOut", clickHandler = null) {
+  renderAllNodesWithPromise(allNodesData, stageDuration = 333, easing = EASING_FUNCTIONS.POLY_IN_OUT, clickHandler = null, filteredNodeData) {
     // Handle empty data case
-    if (!leafData || leafData.length === 0) {
+    if (!allNodesData || allNodesData.length === 0) {
       return Promise.resolve();
+    }
+
+    // Trust the pre-filtered data from TreeAnimationController
+    if (!filteredNodeData) {
+      throw new Error('NodeRenderer: filteredNodeData must be provided by TreeAnimationController');
     }
 
     // Set previous positions from cache before animation
-    this.setPreviousPositions(leafData);
+    this.setPreviousPositions(allNodesData);
 
-    // JOIN: Bind data to existing elements (circles should already exist)
-    const leafCircles = this.svgContainer
-      .selectAll(`.${this.leafClass}`)
-      .data(leafData, getNodeKey);
+    // Separate leaf and internal nodes
+    const leafData = allNodesData.filter(d => !d.children);
+    const internalNodeData = allNodesData.filter(d => d.children);
 
-    // ENTER: Create any missing circles (should be rare since leaves are constant)
-    const enterCircles = leafCircles.enter()
-      .append("circle")
-      .attr("class", this.leafClass)
-      .attr("id", (d) => getNodeSvgId(d, "circle"))
-      .attr("cx", (d) => d.radius * Math.cos(d.angle))
-      .attr("cy", (d) => d.radius * Math.sin(d.angle))
-      .attr("r", this.sizeConfig.leafRadius || "0.4em")
-      .attr("stroke-width", this.sizeConfig.leafStrokeWidth || "0.1em")
-      .style("fill", (d) => this.colorManager.getNodeColor(d))
-      .style("stroke", COLOR_MAP.colorMap.strokeColor);
-
-    // EXIT: Remove any extra circles (should be rare since leaves are constant)
-    leafCircles.exit().remove();
-
-    // UPDATE: Animate all circles (merged enter + existing) to new positions
-    const allCircles = leafCircles.merge(enterCircles);
-
-    if (allCircles.empty()) {
-      return Promise.resolve();
-    }
+    // Use pre-filtered data directly - no key-based filtering needed
+    const enteringNodes = filteredNodeData.entering || [];
+    const updatingNodes = filteredNodeData.updating || [];
+    const exitingNodes = filteredNodeData.exiting || [];
 
     const easingFunction = getEasingFunction(easing);
+    const promises = [];
+    let updatingLeafCircles = d3.select(null).selectAll(null); // Initialize empty selection
+    let updatingInternalNodes = d3.select(null).selectAll(null); // Initialize empty selection
 
-    // Stage 2 Animation: Move circles to new positions with synchronized timing
-    const transition = allCircles
-      .style("fill", (d) => this.colorManager.getNodeColor(d))
-      .transition("leaf-circles-stage2-update")
-      .ease(easingFunction)
-      .duration(stageDuration) // Use stage duration for synchronization
-      .attrTween("cx", attrTweenCircleX())
-      .attrTween("cy", attrTweenCircleY())
-      .style("fill", (d) => this.colorManager.getNodeColor(d));
+    // Render leaf circles
+    if (leafData.length > 0) {
+      const leafCircles = this.svgContainer
+        .selectAll(`.${this.leafClass}`)
+        .data(leafData, getNodeKey);
 
-    // Bind click handlers if provided
-    if (clickHandler) {
-      this._bindLeafClickHandlers(clickHandler);
+      leafCircles.enter()
+        .append("circle")
+        .attr("class", this.leafClass)
+        .attr("id", (d) => getNodeSvgId(d, "circle"))
+        .attr("cx", (d) => {
+          // Start entering nodes at their previous position if available, otherwise current
+          const startAngle = d.prevAngle ?? d.angle;
+          const startRadius = d.prevRadius ?? d.radius;
+          return startRadius * Math.cos(startAngle);
+        })
+        .attr("cy", (d) => {
+          const startAngle = d.prevAngle ?? d.angle;
+          const startRadius = d.prevRadius ?? d.radius;
+          return startRadius * Math.sin(startAngle);
+        })
+        .attr("r", this.sizeConfig.leafRadius || "0.4em")
+        .attr("stroke-width", this.sizeConfig.leafStrokeWidth || "0.1em")
+        .style("fill", (d) => this.colorManager.getNodeColor(d))
+        .style("stroke", TREE_COLOR_CATEGORIES.strokeColor)
+        .style("opacity", 0); // Start transparent
+
+      // Animate exiting leaves
+      const exitingLeafCircles = this._createLeafExitSelection(exitingNodes.filter(d => !d.children));
+
+      if (!exitingLeafCircles.empty()) {
+        const exitTransition = exitingLeafCircles
+          .transition("leaf-circles-stage2-exit")
+          .ease(easingFunction)
+          .duration(stageDuration / 2) // Fade out faster
+          .style("opacity", 0)
+          .remove();
+        promises.push(exitTransition.end().catch(() => {}));
+      }
+
+
+      // Animate both entering and updating leaves to their final state
+      updatingLeafCircles = this._createLeafUpdateSelection(
+        [...enteringNodes, ...updatingNodes].filter(d => !d.children)
+      );
+
+      if (!updatingLeafCircles.empty()) {
+        const leafTransition = updatingLeafCircles
+          .transition("leaf-circles-stage2-update")
+          .ease(easingFunction)
+          .duration(stageDuration)
+          .attrTween("cx", attrTweenCircleX())
+          .attrTween("cy", attrTweenCircleY())
+          .style("fill", (d) => this.colorManager.getNodeColor(d))
+          .style("opacity", 1); // Fade in
+
+        promises.push(leafTransition.end().catch(() => {}));
+      }
+
+      // Bind click handlers for leaf nodes if provided
+      if (clickHandler) {
+        this._bindLeafClickHandlers(clickHandler);
+      }
     }
 
-    // Convert D3 transition to Promise with proper error handling
-    return transition.end().then(() => {
-      // Update cache after animation completes
-      this.updatePositionsCache(leafData);
-    }).catch(() => {});
+    // Render internal node circles
+    if (internalNodeData.length > 0) {
+      const internalNodes = this.svgContainer
+        .selectAll(`.${this.internalNodeClass}`)
+        .data(internalNodeData, getNodeKey);
+
+      const enterInternalNodes = internalNodes.enter()
+        .append("circle")
+        .attr("class", this.internalNodeClass)
+        .attr("id", (d) => getNodeSvgId(d, "internal-node"))
+        .attr("cx", (d) => {
+          const startAngle = d.prevAngle ?? d.angle;
+          const startRadius = d.prevRadius ?? d.radius;
+          return startRadius * Math.cos(startAngle);
+        })
+        .attr("cy", (d) => {
+          const startAngle = d.prevAngle ?? d.angle;
+          const startRadius = d.prevRadius ?? d.radius;
+          return startRadius * Math.sin(startAngle);
+        })
+        .attr("r", this.sizeConfig.internalNodeRadius || "0.2em")
+        .style("fill", (d) => this.colorManager.getNodeColor(d))
+        .style("stroke", TREE_COLOR_CATEGORIES.strokeColor)
+        .style("opacity", 0); // Start transparent
+
+      // Animate exiting internal nodes
+      const exitingInternalNodes = this._createInternalExitSelection(exitingNodes.filter(d => d.children));
+
+      if (!exitingInternalNodes.empty()) {
+        const internalExitTransition = exitingInternalNodes
+          .transition("internal-nodes-stage2-exit")
+          .ease(easingFunction)
+          .duration(stageDuration / 2)
+          .style("opacity", 0)
+          .remove();
+        promises.push(internalExitTransition.end().catch(() => {}));
+      }
+
+      internalNodes.merge(enterInternalNodes);
+
+      // Animate both entering and updating internal nodes
+      updatingInternalNodes = this._createInternalUpdateSelection(
+        [...enteringNodes, ...updatingNodes].filter(d => d.children)
+      );
+
+      if (!updatingInternalNodes.empty()) {
+        const internalTransition = updatingInternalNodes
+          .transition("internal-nodes-stage2-update")
+          .ease(easingFunction)
+          .duration(stageDuration)
+          .attrTween("cx", attrTweenCircleX())
+          .attrTween("cy", attrTweenCircleY())
+          .style("fill", (d) => this.colorManager.getNodeColor(d))
+          .style("opacity", 1); // Fade in
+
+        promises.push(internalTransition.end().catch(() => {}));
+      }
+    }
+
+    // Return promise that resolves when both leaf and internal node animations complete
+    const result = Promise.all(promises);
+
+    // Add debug info
+    result.filteredNodeData = filteredNodeData;
+    result.stats = {
+      total: allNodesData.length,
+      entering: enteringNodes.length,
+      updating: updatingNodes.length,
+      exiting: exitingNodes.length,
+      // Show our diffing vs D3's detection
+      actuallyAnimated: updatingInternalNodes.size() + updatingLeafCircles.size()
+    };
+
+    return result;
   }
 
   /**
    * Renders leaf circles instantly without animation (for scrubbing/interpolation)
    * @param {Array} leafData - Array of D3 leaf nodes from tree.leaves()
-   * @param {number} currentMaxRadius - Maximum radius for positioning
    * @param {Function} clickHandler - Optional click handler function
    * @returns {d3.Selection} The updated leaf circles selection
    */
-  renderLeafCirclesInstant(leafData, currentMaxRadius, clickHandler = null) {
+  renderLeafCirclesInstant(leafData, clickHandler = null) {
     const leafCircles = this.svgContainer
       .selectAll(`.${this.leafClass}`)
       .data(leafData, getNodeKey);
@@ -191,7 +294,7 @@ export class NodeRenderer {
       .attr("id", (d) => getNodeSvgId(d, "circle"))
       .attr("r", this.sizeConfig.leafRadius || "0.4em")
       .attr("stroke-width", this.sizeConfig.leafStrokeWidth || "0.1em")
-      .style("stroke", COLOR_MAP.colorMap.strokeColor)
+      .style("stroke", TREE_COLOR_CATEGORIES.strokeColor)
       .attr("cx", (d) => d.source ? d.source.x : d.x) // Initial position for new nodes
       .attr("cy", (d) => d.source ? d.source.y : d.y);
 
@@ -228,16 +331,15 @@ export class NodeRenderer {
       .attr("class", this.internalNodeClass)
       .attr("id", (d) => getNodeSvgId(d, "internal-node"))
       .attr("r", this.sizeConfig.internalNodeRadius || "0.2em")
-      .style("stroke", COLOR_MAP.colorMap.strokeColor)
+      .style("stroke", TREE_COLOR_CATEGORIES.strokeColor)
       .attr("cx", (d) => d.source ? d.source.x : d.x) // Initial position for new nodes
       .attr("cy", (d) => d.source ? d.source.y : d.y);
 
-    // MERGE and apply instant updates with transition
-    // MERGE and apply instant updates with transition
+    // MERGE and apply instant updates
     enterSelection.merge(internalNodes)
       .attr("cx", (d) => d.radius * Math.cos(d.angle))
       .attr("cy", (d) => d.radius * Math.sin(d.angle))
-      .style("fill", (d) => this.colorManager.getInternalNodeColor(d))
+      .style("fill", (d) => this.colorManager.getNodeColor(d))
       .style("opacity", (d) => (d._opacity !== undefined ? d._opacity : 1));
 
     return internalNodes;
@@ -247,97 +349,133 @@ export class NodeRenderer {
    * Renders all nodes (leaves and internal) instantly without animation.
    * This is the primary method for scrubbing/interpolation.
    * @param {Array} allNodesData - Array of all D3 nodes from tree.descendants()
-   * @param {number} maxRadius - Maximum radius for positioning leaf nodes
    * @param {Function} clickHandler - Optional click handler for leaf nodes
    */
-  renderAllNodesInstant(allNodesData, maxRadius, clickHandler = null) {
+  renderAllNodesInstant(allNodesData, clickHandler = null) {
     const leafData = allNodesData.filter(d => !d.children);
     const internalNodeData = allNodesData.filter(d => d.children);
 
-    this.renderLeafCirclesInstant(leafData, maxRadius, clickHandler);
+    this.renderLeafCirclesInstant(leafData, clickHandler);
     this.renderInternalNodesInstant(internalNodeData);
   }
 
   /**
-   * Renders nodes with interpolation support (for animated transitions)
-   * @param {Array} nodesFrom - Array of D3 nodes with interpolated positions
+   * Renders all nodes (leaves + internal) with interpolation support (for animated transitions)
+   * @param {Array} nodesFrom - Array of D3 nodes from source tree
+   * @param {Array} nodesTo - Array of D3 nodes from target tree
    * @param {number} timeFactor - Time factor for controlling animation speed
-   * @param {Function} clickHandler - Optional click handler function
+   * @param {Function} clickHandler - Optional click handler function for leaf nodes
    */
-  renderAllNodesInterpolated(nodesFrom, nodesTo, maxRadiusFrom, maxRadiusTo, timeFactor, clickHandler) {
-    // Only animate leaves (outer circles)
+  renderAllNodesInterpolated(nodesFrom, nodesTo, timeFactor, clickHandler) {
+    // Separate leaf and internal nodes
     const leafDataFrom = nodesFrom.filter(d => !d.children);
     const leafDataTo = nodesTo.filter(d => !d.children);
+    const internalDataFrom = nodesFrom.filter(d => d.children);
+    const internalDataTo = nodesTo.filter(d => d.children);
 
-    // Build a map from key to from-node for fast lookup
-    const fromMap = new Map();
-    for (const node of leafDataFrom) {
-      fromMap.set(getNodeKey(node), node);
-    }
+    // Build maps for fast lookup
+    const leafFromMap = new Map(leafDataFrom.map(node => [getNodeKey(node), node]));
+    const internalFromMap = new Map(internalDataFrom.map(node => [getNodeKey(node), node]));
 
-    // For each to-node, set prevAngle/prevRadius from the matching from-node
-    for (const node of leafDataTo) {
-      const fromNode = fromMap.get(getNodeKey(node));
-      if (fromNode) {
-        node.prevAngle = fromNode.angle;
-        node.prevRadius = fromNode.radius;
-      } else {
-        node.prevAngle = node.angle;
-        node.prevRadius = node.radius;
-      }
-    }
-
-    // D3 data join and update using robust keys for leaves only
-    const selection = this.svgContainer
-      .selectAll("circle.leaf")
+    // Render leaf circles
+    const leafSelection = this.svgContainer
+      .selectAll(`circle.${this.leafClass}`)
       .data(leafDataTo, getNodeKey);
 
-    selection.exit().remove();
+    leafSelection.exit().remove();
 
-    const enter = selection.enter()
+    const enterLeafCircles = leafSelection.enter()
       .append("circle")
-      .attr("class", "leaf")
+      .attr("class", this.leafClass)
       .attr("id", d => getNodeSvgId(d, "circle"))
-      .attr("r", d => d.radius)
-      .style("stroke", COLOR_MAP.colorMap.strokeColor);
+      .attr("r", this.sizeConfig.leafRadius || "0.4em")
+      .style("stroke", TREE_COLOR_CATEGORIES.strokeColor);
 
-    // For scrubbing: set attributes directly for the current timeFactor (no transition)
-    const merged = enter.merge(selection)
+    enterLeafCircles.merge(leafSelection)
       .attr("cx", d => {
-        // Calculate interpolated x position
-        const fromNode = fromMap.get(getNodeKey(d));
+        const fromNode = leafFromMap.get(getNodeKey(d));
         if (fromNode) {
-          const fromX = fromNode.radius * Math.cos(fromNode.angle);
-          const toX = d.radius * Math.cos(d.angle);
-          return fromX + (toX - fromX) * timeFactor;
+          // Set up previous positions for consistent interpolation
+          d.prevAngle = fromNode.angle;
+          d.prevRadius = fromNode.radius;
+
+          // Use the same interpolation system as LinkRenderer
+          const interpolatorFn = attrTweenCircleXWithT(timeFactor);
+          const interpolator = interpolatorFn(d);
+          return interpolator();
         }
         return d.radius * Math.cos(d.angle);
       })
       .attr("cy", d => {
-        // Calculate interpolated y position
-        const fromNode = fromMap.get(getNodeKey(d));
+        const fromNode = leafFromMap.get(getNodeKey(d));
         if (fromNode) {
-          const fromY = fromNode.radius * Math.sin(fromNode.angle);
-          const toY = d.radius * Math.sin(d.angle);
-          return fromY + (toY - fromY) * timeFactor;
+          // Set up previous positions for consistent interpolation
+          d.prevAngle = fromNode.angle;
+          d.prevRadius = fromNode.radius;
+
+          // Use the same interpolation system as LinkRenderer
+          const interpolatorFn = attrTweenCircleYWithT(timeFactor);
+          const interpolator = interpolatorFn(d);
+          return interpolator();
         }
         return d.radius * Math.sin(d.angle);
       })
       .style("fill", (d) => this.colorManager.getNodeColor(d))
-      .attr("r", d => {
-        // Use a fixed visual radius for the circle display (not the tree layout radius)
-        return this.sizeConfig.leafRadius; // Use leafRadius from styleConfig
-      })
       .style("opacity", d => {
-        const fromNode = fromMap.get(getNodeKey(d));
-        if (fromNode) {
-          return 1; // Always visible if exists in both
-        } else {
-          return timeFactor; // Fade in if only in target
-        }
+        const fromNode = leafFromMap.get(getNodeKey(d));
+        return fromNode ? 1 : timeFactor;
       });
 
-    // Optionally update color, opacity, etc.
+    // Render internal node circles
+    const internalSelection = this.svgContainer
+      .selectAll(`circle.${this.internalNodeClass}`)
+      .data(internalDataTo, getNodeKey);
+
+    internalSelection.exit().remove();
+
+    const enterInternalCircles = internalSelection.enter()
+      .append("circle")
+      .attr("class", this.internalNodeClass)
+      .attr("id", d => getNodeSvgId(d, "internal-node"))
+      .attr("r", this.sizeConfig.internalNodeRadius || "0.2em")
+      .style("stroke", TREE_COLOR_CATEGORIES.strokeColor);
+
+    enterInternalCircles.merge(internalSelection)
+      .attr("cx", d => {
+        const fromNode = internalFromMap.get(getNodeKey(d));
+        if (fromNode) {
+          // Set up previous positions for consistent interpolation
+          d.prevAngle = fromNode.angle;
+          d.prevRadius = fromNode.radius;
+
+          // Use the same interpolation system as LinkRenderer
+          const interpolatorFn = attrTweenCircleXWithT(timeFactor);
+          const interpolator = interpolatorFn(d);
+          return interpolator();
+        }
+        return d.radius * Math.cos(d.angle);
+      })
+      .attr("cy", d => {
+        const fromNode = internalFromMap.get(getNodeKey(d));
+        if (fromNode) {
+          // Set up previous positions for consistent interpolation
+          d.prevAngle = fromNode.angle;
+          d.prevRadius = fromNode.radius;
+
+          // Use the same interpolation system as LinkRenderer
+          const interpolatorFn = attrTweenCircleYWithT(timeFactor);
+          const interpolator = interpolatorFn(d);
+          return interpolator();
+        }
+        return d.radius * Math.sin(d.angle);
+      })
+      .style("fill", (d) => this.colorManager.getNodeColor(d))
+      .style("opacity", d => {
+        const fromNode = internalFromMap.get(getNodeKey(d));
+        return fromNode ? 1 : timeFactor;
+      });
+
+    // Bind click handlers for leaf nodes if provided
     if (clickHandler) {
       this._bindLeafClickHandlers(clickHandler);
     }
@@ -358,6 +496,73 @@ export class NodeRenderer {
       .style("fill", (d) => this.colorManager.getNodeColor(d));
 
     this.svgContainer.selectAll(`.${this.internalNodeClass}`)
-      .style("fill", (d) => this.colorManager.getInternalNodeColor(d));
+      .style("fill", (d) => this.colorManager.getNodeColor(d));
   }
+
+  /**
+   * Creates leaf exit selection directly from pre-filtered exiting leaf data
+   * @param {Array} exitingLeaves - Array of leaf objects that should exit
+   * @returns {d3.Selection} The exit selection
+   * @private
+   */
+  _createLeafExitSelection(exitingLeaves) {
+    if (exitingLeaves.length === 0) {
+      return d3.select(null).selectAll(null); // Empty selection
+    }
+
+    return this.svgContainer
+      .selectAll(`.${this.leafClass}`)
+      .data(exitingLeaves, getNodeKey)
+      .exit();
+  }
+
+  /**
+   * Creates leaf update selection directly from pre-filtered updating leaf data
+   * @param {Array} updatingLeaves - Array of leaf objects that should update
+   * @returns {d3.Selection} The update selection
+   * @private
+   */
+  _createLeafUpdateSelection(updatingLeaves) {
+    if (updatingLeaves.length === 0) {
+      return d3.select(null).selectAll(null); // Empty selection
+    }
+
+    return this.svgContainer
+      .selectAll(`.${this.leafClass}`)
+      .data(updatingLeaves, getNodeKey);
+  }
+
+  /**
+   * Creates internal node exit selection directly from pre-filtered exiting internal node data
+   * @param {Array} exitingInternalNodes - Array of internal node objects that should exit
+   * @returns {d3.Selection} The exit selection
+   * @private
+   */
+  _createInternalExitSelection(exitingInternalNodes) {
+    if (exitingInternalNodes.length === 0) {
+      return d3.select(null).selectAll(null); // Empty selection
+    }
+
+    return this.svgContainer
+      .selectAll(`.${this.internalNodeClass}`)
+      .data(exitingInternalNodes, getNodeKey)
+      .exit();
+  }
+
+  /**
+   * Creates internal node update selection directly from pre-filtered updating internal node data
+   * @param {Array} updatingInternalNodes - Array of internal node objects that should update
+   * @returns {d3.Selection} The update selection
+   * @private
+   */
+  _createInternalUpdateSelection(updatingInternalNodes) {
+    if (updatingInternalNodes.length === 0) {
+      return d3.select(null).selectAll(null); // Empty selection
+    }
+
+    return this.svgContainer
+      .selectAll(`.${this.internalNodeClass}`)
+      .data(updatingInternalNodes, getNodeKey);
+  }
+
 }

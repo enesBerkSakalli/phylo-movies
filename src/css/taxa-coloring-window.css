@@ -1,0 +1,233 @@
+/*
+ * Styles for the Taxa Coloring Component (prefixed with tc-)
+ * All rules are aligned with the project's Material Design 3 variables.
+ */
+
+/* Main container within the WinBox body */
+.tc-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: var(--md-sys-spacing-4, 16px);
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  font-family: 'Roboto', sans-serif;
+}
+
+/* Scoping class for the WinBox instance */
+.tc-winbox .wb-body {
+  padding: 0; /* Remove default padding to allow tc-container to control it */
+  overflow: hidden;
+}
+
+/* Header, Content, and Actions Layout */
+.tc-header, .tc-actions {
+  flex-shrink: 0;
+}
+
+.tc-content {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: var(--md-sys-spacing-2, 8px);
+  margin: 0 calc(-1 * var(--md-sys-spacing-2, 8px)); /* Hide scrollbar */
+}
+
+.tc-header {
+  padding-bottom: var(--md-sys-spacing-3, 12px);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+}
+
+.tc-title {
+  font: var(--md-sys-typescale-headline-small);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  margin: 0;
+}
+
+.tc-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--md-sys-spacing-2, 8px);
+  padding-top: var(--md-sys-spacing-3, 12px);
+  border-top: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+}
+
+/* Generic section used for grouping controls */
+.tc-section {
+  margin-bottom: var(--md-sys-spacing-5, 24px);
+}
+
+.tc-section-title {
+  font: var(--md-sys-typescale-title-medium);
+  color: var(--md-sys-color-primary, #6750a4);
+  margin: 0 0 var(--md-sys-spacing-3, 12px) 0;
+}
+
+/* Mode selector buttons (Individual Taxa / Group by Pattern) */
+.tc-mode-selector {
+  display: flex;
+  gap: var(--md-sys-spacing-2, 8px);
+  margin-bottom: var(--md-sys-spacing-4, 16px);
+}
+
+/* Scheme selector grid and buttons */
+.tc-scheme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--md-sys-spacing-2, 8px);
+}
+
+.tc-scheme-button {
+  font: var(--md-sys-typescale-label-large);
+  background: var(--md-sys-color-surface-container-high, #ece6f0);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: var(--md-sys-shape-corner-large, 16px);
+  padding: var(--md-sys-spacing-2, 8px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-sys-spacing-2, 8px);
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.tc-scheme-button:hover {
+  background: var(--md-sys-color-surface-container-highest, #e6e0e9);
+  border-color: var(--md-sys-color-primary, #6750a4);
+}
+
+.tc-scheme-gradient {
+  width: 100%;
+  height: 24px;
+  border-radius: var(--md-sys-shape-corner-small, 8px);
+}
+
+/* Individual color input grid and items */
+.tc-color-input-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: var(--md-sys-spacing-2, 8px);
+}
+
+.tc-color-input {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--md-sys-spacing-1, 4px) var(--md-sys-spacing-2, 8px);
+  background: var(--md-sys-color-surface-container, #f3edf7);
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+}
+
+.tc-color-input-label {
+  font: var(--md-sys-typescale-label-large);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: var(--md-sys-spacing-2, 8px);
+}
+
+/* Color Swatch and Popover */
+.tc-swatch-container {
+  position: relative;
+}
+
+.tc-swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--md-sys-color-outline, #79747e);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.tc-swatch:hover {
+  transform: scale(1.1);
+}
+
+.tc-popover {
+  position: absolute;
+  z-index: 100;
+  right: 0;
+  top: calc(100% + 4px);
+  width: 260px;
+  background: var(--md-sys-color-surface-container-high, #ece6f0);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  box-shadow: var(--md-sys-elevation-shadow-level-3);
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  padding: var(--md-sys-spacing-3, 12px);
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+}
+
+.tc-popover.visible {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.tc-popover-title {
+  font: var(--md-sys-typescale-title-small);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  margin: 0 0 var(--md-sys-spacing-2, 8px) 0;
+}
+
+.tc-popover-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(32px, 1fr));
+  gap: var(--md-sys-spacing-1, 4px);
+  margin-bottom: var(--md-sys-spacing-3, 12px);
+}
+
+.tc-popover-swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  transition: transform 0.15s ease;
+}
+
+.tc-popover-swatch:hover {
+  transform: scale(1.1);
+}
+
+.tc-popover-input {
+  width: 100%;
+  height: 32px;
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* Generic button row for separator/strategy controls */
+.tc-button-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--md-sys-spacing-2, 8px);
+}
+
+.tc-button-row .md-button {
+    flex-grow: 1;
+}
+
+/* Chip for displaying usage stats */
+.tc-chip {
+  display: inline-block;
+  padding: var(--md-sys-spacing-1, 4px) var(--md-sys-spacing-2, 8px);
+  background: var(--md-sys-color-secondary-container, #e8def8);
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
+  border-radius: var(--md-sys-shape-corner-small, 8px);
+  font: var(--md-sys-typescale-label-medium);
+  margin-left: var(--md-sys-spacing-2, 8px);
+}
+
+/* Empty state message */
+.tc-empty-state {
+  text-align: center;
+  padding: var(--md-sys-spacing-8, 32px);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  font: var(--md-sys-typescale-body-large);
+}

@@ -61,7 +61,7 @@ const VisualizationRenderer = {
     scene.add(ambientLight);
     
     // Camera setup
-    const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000);
+    const camera = new THREE.PerspectiveCamera(50, width / height, 0.01, 2000);
     camera.position.set(0, 3, 10);
     window.scatterPlotCamera = camera;
     
@@ -69,8 +69,8 @@ const VisualizationRenderer = {
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
-    controls.minDistance = 2;
-    controls.maxDistance = 50;
+    controls.minDistance = 0.1;
+    controls.maxDistance = 200;
     controls.autoRotate = settings.autoRotate;
     
     // Add grid helper for orientation (optional)

@@ -1,6 +1,6 @@
 import { calculateWindow } from "../utils/windowUtils.js";
 import { getCurrentScaleValue, calculateScalePercentage, formatScaleValue } from "../utils/scaleUtils.js";
-import { useAppStore } from '../store.js'; // Import useAppStore
+import { useAppStore } from '../core/store.js'; // Import useAppStore
 
 /**
  * Manages all updates to the informational UI elements (labels, counters, progress bars).

@@ -13,21 +13,15 @@ const UIComponents = {
    * @param {Function} onPointSizeChange - Callback for point size changes
    * @returns {HTMLElement} The created info panel
    */
-  createInfoPanel(container, numPoints, onPointSizeChange) {
-    const panel = document.createElement("div");
-    panel.setAttribute("role", "region");
-    panel.setAttribute("aria-label", "Scatter plot controls and legend");
-    panel.style.position = "absolute";
-    panel.style.bottom = "10px";
-    panel.style.left = "10px";
-    panel.style.background = "rgba(255,255,255,0.8)";
-    panel.style.padding = "10px";
-    panel.style.borderRadius = "4px";
-    panel.style.fontSize = "12px";
-    panel.style.fontFamily = "Arial, sans-serif";
-    panel.style.color = "#333";
-    panel.style.maxWidth = "250px";
-    panel.style.zIndex = "1001";
+  createInfoCard(container, numPoints, onPointSizeChange) {
+    const card = document.createElement("div");
+    card.setAttribute("role", "region");
+    card.setAttribute("aria-label", "Scatter plot controls and legend");
+    card.classList.add("card");
+    card.style.position = "absolute";
+    card.style.bottom = "10px";
+    card.style.left = "10px";
+    card.style.zIndex = "1001";
 
     // Create a toggle button to show/hide info
     const toggleButton = document.createElement("button");
@@ -40,7 +34,7 @@ const UIComponents = {
     toggleButton.style.border = "1px solid #bbb";
     toggleButton.style.borderRadius = "3px";
     toggleButton.style.cursor = "pointer";
-    panel.appendChild(toggleButton);
+    card.appendChild(toggleButton);
 
     // Create content div
     const content = document.createElement("div");
@@ -61,7 +55,7 @@ const UIComponents = {
         Compare Selected Connection
       </button>
     `;
-    panel.appendChild(content);
+    card.appendChild(content);
 
     // Add toggle functionality
     toggleButton.addEventListener("click", () => {
@@ -87,8 +81,8 @@ const UIComponents = {
       }
     });
 
-    container.appendChild(panel);
-    return panel;
+    container.appendChild(card);
+    return card;
   },
 
   /**

@@ -5,6 +5,7 @@
 import { useRef, useEffect, useCallback } from "react";
 import { createRoot, Root } from "react-dom/client";
 import React from "react";
+import WinBox from 'winbox';
 import AlignmentViewer2Component from "../AlignmentViewer2Component";
 import { MSA_WINDOW_CONFIG, MSA_WINBOX_CLASSES } from "../constants";
 import { throttle, getAdjustedDimensions, createMSAContainer, loadTestMSAData } from "../msaUtils";

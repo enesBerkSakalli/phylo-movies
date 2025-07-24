@@ -1,16 +1,16 @@
-<!-- Tree Navigation Panel - Material Design 3 -->
-<div class="panel-container tier-context" role="region" aria-label="Tree Navigation">
-  <div class="panel-header">
-    <div class="panel-title">
-      <span class="material-icons panel-icon" aria-hidden="true">navigation</span>
-      <h2 class="panel-title-text">Tree Navigation</h2>
+<!-- Tree Navigation Card - Material Design 3 -->
+<div class="card-container" role="region" aria-label="Tree Navigation">
+<div class="card-header">
+<div class="card-title">
+<span class="material-icons card-icon" aria-hidden="true">navigation</span>
+<h2 class="card-title-text">Tree Navigation</h2>
     </div>
   </div>
-  <div class="panel-content">
+  <div class="card-content">
 
-  <section class="panel-section status ma-section-breathing" aria-label="Tree status information">
+  <section class="panel-section status" aria-label="Tree status information">
     <!-- MSA Window Status - Shibui redesign with elegant simplicity -->
-    <div class="msa-status ma-cognitive-pause" role="group" aria-labelledby="msa-title">
+    <div class="msa-status" role="group" aria-labelledby="msa-title">
       <div class="msa-header-clean">
         <div class="msa-title-row">
           <span class="material-icons msa-icon" aria-hidden="true">view_column</span>
@@ -56,66 +56,5 @@
     </div>
   </section>
 
-  <section class="panel-section controls tier-exploration" aria-label="Navigation controls">
-    <!-- Position Control - Simplified with Ma spacing -->
-    <div class="control-row shibui-control" role="group" aria-labelledby="position-control-label">
-      <div class="control-icon-group">
-        <span class="material-icons" aria-hidden="true">my_location</span>
-        <label for="positionValue" id="position-control-label" class="control-label">Jump to Step</label>
-      </div>
-      <div class="control-input-group ma-input-breathing">
-        <input
-          type="number"
-          id="positionValue"
-          class="compact-input step-input"
-          name="pos"
-          value="1"
-          min="1"
-          placeholder="Step"
-          aria-describedby="position-help"
-          title="Enter step number to navigate to"
-        />
-        <button
-          id="positionButton"
-          class="md-button primary compact"
-          type="button"
-          aria-label="Navigate to specified step"
-          title="Go to entered step"
-        >
-          <span class="material-icons">arrow_forward</span>
-        </button>
-      </div>
-      <div id="position-help" class="sr-only">Enter step number to navigate within sequence</div>
-    </div>
-
-    <!-- ❌ HIDDEN VISUALIZATION CONTROL - MARKED FOR DELETION
-         This entire control is hidden (display: none) and may be legacy code
-         TODO: Confirm if this scatter plot control is still needed or can be removed -->
-    <div class="control-row" role="group" aria-labelledby="visualization-control-label" style="display: none;">
-      <span class="material-icons" aria-hidden="true">3d_rotation</span>
-      <label for="scatter-plot-mode" id="visualization-control-label" class="sr-only">Visualization Method</label>
-      <select
-        id="scatter-plot-mode"
-        class="compact-select"
-        aria-describedby="viz-help"
-        title="Choose visualization method: UMAP (Uniform Manifold Approximation and Projection) recommended for better clustering, or Fallback method for simpler visualization"
-      >
-        <option value="umap" title="Uniform Manifold Approximation and Projection - advanced clustering method">UMAP (Recommended)</option>
-        <option value="fallback" title="Simple fallback visualization method">Fallback Method</option>
-      </select>
-      <div id="viz-help" class="sr-only">Choose visualization method: UMAP (Uniform Manifold Approximation and Projection) for advanced clustering or Fallback for simple visualization</div>
-      <button
-        id="open-scatter-plot"
-        class="md-button"
-        type="button"
-        aria-label="Open 3D tree space visualization"
-        title="Open 3D tree space visualization using UMAP (Uniform Manifold Approximation and Projection) dimensionality reduction"
-      >
-        <span class="material-icons">open_in_new</span>
-      </button>
-    </div>
-  </section>
-
-  
   </div>
 </div>

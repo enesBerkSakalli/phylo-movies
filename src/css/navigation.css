@@ -1,0 +1,517 @@
+/* ============================================================================
+   NAVIGATION SYSTEM (Material Design 3 Enhanced)
+   ============================================================================ */
+
+/* Core adaptive width tokens */
+:root {
+  --nav-width-drawer: 280px;      /* Standard drawer width (MD spec) */
+  --nav-width-rail: 72px;         /* Navigation rail width */
+  --nav-transition-duration: 0.3s;
+  --nav-transition-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --nav-item-radius: var(--md-sys-shape-corner-full);
+  --nav-item-padding-inline: var(--md-sys-spacing-6);
+  --nav-item-gap: var(--md-sys-spacing-4);
+  --nav-indicator-width: 4px;
+  --nav-rail-label-gap: var(--md-sys-spacing-1);
+  --state-hover-opacity: 0.08;    /* MD3 interaction guidance */
+  --state-focus-opacity: 0.10;
+  --state-pressed-opacity: 0.10;
+  --state-drag-opacity: 0.16;
+}
+
+/* Scrollbar styling for navigation elements */
+.menu, .tools {
+  scrollbar-width: thin;
+  scrollbar-color: var(--md-sys-color-primary) var(--md-sys-color-surface-container-highest);
+}
+
+.menu::-webkit-scrollbar,
+.tools::-webkit-scrollbar {
+  width: var(--md-sys-spacing-2);
+  background: var(--md-sys-color-surface-container-highest);
+}
+
+.menu::-webkit-scrollbar-thumb,
+.tools::-webkit-scrollbar-thumb {
+  background: var(--md-sys-color-primary);
+  border-radius: var(--md-sys-spacing-2);
+  border: var(--md-sys-spacing-1) solid var(--md-sys-color-surface-container-highest);
+  box-shadow: var(--md-sys-elevation-shadow-level-1);
+}
+
+.menu::-webkit-scrollbar-thumb:hover,
+.tools::-webkit-scrollbar-thumb:hover {
+  background: var(--md-sys-color-primary);
+}
+
+.menu::-webkit-scrollbar-track,
+.tools::-webkit-scrollbar-track {
+  background: var(--md-sys-color-surface-container-highest);
+  border-radius: var(--md-sys-spacing-2);
+}
+
+/* ============================================================================
+   MAIN NAVIGATION SIDEBAR
+   ============================================================================ */
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: var(--nav-width-default);
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  box-shadow: var(--md-sys-elevation-shadow-level-1);
+  border-right: 1px solid var(--md-sys-color-outline);
+  transition: transform var(--nav-transition-duration) var(--nav-transition-ease),
+              width var(--nav-transition-duration) var(--nav-transition-ease);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1050;
+  overflow: hidden;
+}
+
+/* Tonal elevation overlay for menu */
+.menu::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--md-elev-overlay-1);
+  pointer-events: none;
+  mix-blend-mode: normal;
+}
+
+/* Hidden sidebar state */
+.menu.hidden {
+  transform: translateX(-100%);
+}
+
+/* Menu Header - Material Design 3 */
+.menu-header {
+  background: var(--md-sys-color-surface-container-low);
+  padding: var(--md-sys-spacing-16);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  box-shadow: var(--md-sys-elevation-shadow-level-1);
+  position: relative;
+  z-index: 1;
+}
+
+.compact-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-sys-spacing-8);
+}
+
+.app-info {
+  display: flex;
+  align-items: center;
+  gap: var(--md-sys-spacing-12);
+}
+
+.file-status {
+  display: flex;
+  align-items: center;
+  gap: var(--md-sys-spacing-8);
+  font-size: var(--md-typescale-body-small-size);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.file-name {
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface);
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Sidebar Toggle Button - Enhanced with logical properties */
+.sidebar-toggle {
+  position: fixed;
+  inset-block-start: var(--md-sys-spacing-8);
+  inset-inline-start: var(--md-sys-spacing-8);
+  padding: var(--md-sys-spacing-4) var(--md-sys-spacing-6);
+  font-size: var(--md-typescale-label-large-size);
+  background: var(--md-sys-color-surface-container);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-small);
+  cursor: pointer;
+  color: var(--md-sys-color-on-surface);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+  box-shadow: var(--md-sys-elevation-shadow-level-1);
+  z-index: 1100; /* Above movie player bar (1000) */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* State layer for sidebar toggle */
+.sidebar-toggle::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+}
+
+.sidebar-toggle:hover {
+  background: var(--md-sys-elevation-level-1);
+  box-shadow: var(--md-sys-elevation-shadow-level-1);
+  border-color: var(--md-sys-color-primary);
+}
+
+.sidebar-toggle:hover::after {
+  opacity: var(--state-hover-opacity);
+}
+
+.sidebar-toggle:active::after {
+  opacity: var(--state-pressed-opacity);
+}
+
+.sidebar-toggle:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+ outline-offset: 2px;
+}
+
+.sidebar-toggle.sidebar-hidden,
+.menu.hidden ~ * .sidebar-toggle {
+  inset-inline-start: var(--md-sys-spacing-8);
+}
+
+.sidebar-toggle.sidebar-visible {
+  inset-inline-start: calc(var(--nav-width-default) + var(--md-sys-spacing-8));
+}
+
+/* ============================================================================
+   NAVIGATION PANELS & TOOLBAR OPTIMIZATION
+   ============================================================================ */
+
+.toolbar {
+  padding: 0;
+  margin: 0;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Subtle inset shadow to indicate scrollable area */
+  box-shadow: inset 0 1px 0 var(--md-sys-color-outline-variant);
+  padding: var(--md-sys-spacing-2) 0;
+}
+
+/* ============================================================================
+   NAVIGATION LIST & ITEMS
+   ============================================================================ */
+
+.nav-list {
+  list-style: none;
+  margin: 0;
+  padding: var(--md-sys-spacing-2) 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nav-section {
+  padding: var(--md-sys-spacing-2) 0;
+}
+
+.nav-section-label {
+  font-size: var(--md-typescale-label-small-size);
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant);
+  padding: var(--md-sys-spacing-2) var(--nav-item-padding-inline);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.nav-item {
+  position: relative;
+}
+
+.nav-link {
+  --_pad-inline: var(--nav-item-padding-inline);
+  display: flex;
+  align-items: center;
+  gap: var(--nav-item-gap);
+  padding: var(--md-sys-spacing-3) var(--_pad-inline);
+  border-radius: var(--nav-item-radius);
+  text-decoration: none;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: var(--md-typescale-label-large-size);
+  font-weight: 500;
+  position: relative;
+  min-height: 48px;
+  outline: none;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+/* Icon inside nav item */
+.nav-link .icon {
+  font-size: 20px;
+  line-height: 1;
+  color: currentColor;
+  flex-shrink: 0;
+}
+
+/* State layer */
+.nav-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+  mix-blend-mode: normal;
+}
+
+.nav-link:hover::after {
+  opacity: var(--state-hover-opacity);
+}
+
+.nav-link:active::after {
+  opacity: var(--state-pressed-opacity);
+}
+
+.nav-link:focus-visible::after {
+  opacity: var(--state-focus-opacity);
+  outline: none;
+}
+
+/* Selected (current) destination */
+.nav-item[aria-current="page"] .nav-link {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  font-weight: 600;
+}
+
+.nav-item[aria-current="page"] .nav-link .icon {
+  color: var(--md-sys-color-on-primary-container);
+}
+
+/* Active indicator */
+.nav-item[aria-current="page"] .nav-link::before {
+  content: "";
+  position: absolute;
+  inset-block: var(--md-sys-spacing-2);
+  inset-inline-start: calc(var(--_pad-inline) - var(--nav-indicator-width) - var(--md-sys-spacing-2));
+  width: var(--nav-indicator-width);
+  border-radius: var(--nav-indicator-width);
+  background: var(--md-sys-color-primary);
+}
+
+/* Disabled nav item */
+.nav-item[aria-disabled="true"] .nav-link {
+  opacity: 0.38;
+  pointer-events: none;
+}
+
+/* ============================================================================
+   TOOLBAR CONTAINER ELEMENTS
+   ============================================================================ */
+
+/* Container for playback control buttons */
+#buttons-container {
+  padding: 0;
+  margin-bottom: var(--md-sys-spacing-2);
+}
+
+/* Container for MSA button */
+#msa-button-container {
+  padding: 0;
+  margin-bottom: var(--md-sys-spacing-2);
+}
+
+/* Container for appearance settings */
+#appearance-container {
+  padding: 0;
+  margin-bottom: 0; /* Last item doesn't need bottom margin */
+}
+
+/* Button and control rows */
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--md-sys-spacing-2);
+  width: 100%;
+  align-items: center;
+  margin-bottom: var(--md-sys-spacing-2);
+  justify-content: flex-start;
+}
+
+.button-row .md-button {
+  flex: 1 1 auto;
+  min-width: 80px;
+}
+
+.control-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--md-sys-spacing-2);
+  padding: var(--md-sys-spacing-2) 0;
+  width: 100%;
+  align-items: center;
+  margin-bottom: var(--md-sys-spacing-2);
+}
+
+/* ============================================================================
+   RESPONSIVE NAVIGATION MODES
+   ============================================================================ */
+
+/* Modal Drawer Mode (<600px) */
+@media (max-width: 599px) {
+  body[data-nav-mode="modal"] .menu {
+    position: fixed;
+    transform: translateX(-100%);
+    width: var(--nav-width-drawer);
+    box-shadow: var(--md-sys-elevation-shadow-level-3);
+  }
+
+  body[data-nav-mode="modal"][data-nav-open="true"] .menu {
+    transform: translateX(0);
+  }
+
+  /* Scrim */
+  body[data-nav-mode="modal"] .menu-scrim {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.32);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--nav-transition-duration) var(--nav-transition-ease);
+    z-index: 1040;
+  }
+
+  body[data-nav-mode="modal"][data-nav-open="true"] .menu-scrim {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+/* Rail Mode (600px–959px) */
+@media (min-width: 600px) and (max-width: 959px) {
+  body[data-nav-mode="rail"] .menu {
+    width: var(--nav-width-rail);
+  }
+
+  body[data-nav-mode="rail"] .nav-link {
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--nav-rail-label-gap);
+    padding-inline: 0;
+    padding-block: var(--md-sys-spacing-2);
+  }
+
+  body[data-nav-mode="rail"] .nav-link .label {
+    display: none; /* Optional: show only icons; can reveal on selection */
+  }
+
+  body[data-nav-mode="rail"] .nav-item[aria-current="page"] .nav-link .label {
+    display: block;
+  }
+
+  body[data-nav-mode="rail"] .nav-item[aria-current="page"] .nav-link::before {
+    /* replace vertical bar with a dot indicator in rail */
+    left: 50%;
+    top: auto;
+    bottom: var(--md-sys-spacing-2);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+
+  /* Optional: show labels only on hover in rail */
+  body[data-nav-mode="rail"] .nav-link:hover .label {
+    display: block;
+  }
+}
+
+/* Drawer Mode (>=960px) - already default */
+@media (min-width: 960px) {
+  body[data-nav-mode="drawer"] .menu {
+    width: var(--nav-width-drawer);
+  }
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 1200px) {
+  :root {
+    --nav-width-default: var(--nav-width-medium);
+  }
+  .menu {
+    width: var(--nav-width-medium);
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --nav-width-default: var(--nav-width-small);
+  }
+  .menu {
+    width: var(--nav-width-small);
+    min-width: 200px; /* Reduced from 220px */
+  }
+
+  /* Adjust button and control rows for small screens */
+  .button-row, .control-row {
+    gap: var(--md-sys-spacing-1);
+    padding: var(--md-sys-spacing-1) 0;
+    margin-bottom: var(--md-sys-spacing-1);
+  }
+
+  .button-row .md-button {
+    min-width: 60px; /* Smaller minimum width on mobile */
+    padding: 0 var(--md-sys-spacing-2); /* Reduce horizontal padding */
+  }
+}
+
+/* ============================================================================
+   RTL SUPPORT
+   ============================================================================ */
+
+:root[dir="rtl"] .nav-item[aria-current="page"] .nav-link::before {
+  inset-inline-start: auto;
+  inset-inline-end: calc(var(--_pad-inline) - var(--nav-indicator-width) - var(--md-sys-spacing-2));
+}
+
+:root[dir="rtl"] .menu {
+  border-right: none;
+  border-left: 1px solid var(--md-sys-color-outline);
+}
+
+/* ============================================================================
+   REDUCED MOTION
+   ============================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .menu,
+  .sidebar-toggle,
+  .nav-link::after,
+  body[data-nav-mode="modal"] .menu,
+  body[data-nav-mode="modal"] .menu-scrim {
+    transition: none !important;
+  }
+}
+
+/* ============================================================================
+   UTILITY CLASSES
+   ============================================================================ */
+
+.nav-spacer {
+  flex: 1 0 auto;
+}
+
+.nav-footer {
+  padding: var(--md-sys-spacing-4) var(--nav-item-padding-inline);
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: var(--md-typescale-body-small-size);
+  line-height: 1.5;
+}

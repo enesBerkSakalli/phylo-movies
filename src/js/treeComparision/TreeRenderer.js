@@ -140,6 +140,11 @@ export class TreeRenderer {
       drawDuration = 0
     } = options;
 
+    // Always transform tree if ignoreBranchLengths is true
+    let treeToRender = ignoreBranchLengths
+      ? require('../utils/branchTransformUtils').transformBranchLengths(treeData, 'ignore')
+      : treeData;
+
     return new Promise((resolve, reject) => {
       // Use a short timeout to ensure DOM is ready
       setTimeout(async () => {
@@ -151,7 +156,7 @@ export class TreeRenderer {
           }
 
           // Construct tree layout
-          const treeLayout = createRadialTreeLayout(treeData, ignoreBranchLengths, {
+          const treeLayout = createRadialTreeLayout(treeToRender, false, 'none', {
             containerId: svgId,
             fontSize: fontSize
           });
@@ -159,23 +164,22 @@ export class TreeRenderer {
           try {
             // Get TreeAnimationController instance for this container
             const treeController = this.getTreeController(svgId);
-            
+
             // Apply comparison-specific styling adjustments
             const isComparison = svgId !== "application";
             const fontSizeAdjustment = isComparison ? 0.75 : 1;
             const strokeAdjustment = isComparison ? 0.8 : 1;
-            
-            const finalFontSize = typeof fontSize === 'number' ? 
-              `${fontSize * fontSizeAdjustment}em` : 
+
+            const finalFontSize = typeof fontSize === 'number' ?
+              `${fontSize * fontSizeAdjustment}em` :
               `${parseFloat(fontSize) * fontSizeAdjustment}em`;
             const finalStrokeWidth = strokeWidth * strokeAdjustment;
 
             // Update parameters using the instance pattern
             treeController.updateParameters({
-              treeData: treeLayout.tree ? null : treeData, // If treeLayout.tree exists, pass root instead
+              treeData: treeLayout.tree ? null : treeToRender, // If treeLayout.tree exists, pass root instead
               root: treeLayout.tree || null,
               drawDuration: drawDuration,
-              marked: Array.isArray(toBeHighlighted) ? [new Set(toBeHighlighted)] : [toBeHighlighted],
               fontSize: finalFontSize,
               strokeWidth: finalStrokeWidth,
               monophyleticColoring: true
@@ -274,7 +278,7 @@ export class TreeRenderer {
           try {
             // Get TreeAnimationController instance for this container
             const treeController = this.getTreeController(groupId);
-            
+
             // Apply comparison-specific styling adjustments
             const finalFontSize = `${adjustedFontSize}em`;
             const finalStrokeWidth = (options.strokeWidth || 1) * 0.9;
@@ -283,7 +287,6 @@ export class TreeRenderer {
             treeController.updateParameters({
               root: treeLayout.tree,
               drawDuration: options.drawDuration || 0,
-              marked: [new Set(options.toBeHighlighted || [])],
               fontSize: finalFontSize,
               strokeWidth: finalStrokeWidth,
               monophyleticColoring: true

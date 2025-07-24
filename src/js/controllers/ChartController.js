@@ -1,4 +1,4 @@
-import { useAppStore } from '../store.js';
+import { useAppStore } from '../core/store.js';
 
 /**
  * ChartController - Manages chart-related functionality and state for the GUI
@@ -30,8 +30,18 @@ export class ChartController {
     this.navigationController = navigationController; // Keep navigationController reference for now
 
     useAppStore.subscribe(
-      (state) => ({ barOption: state.barOptionValue, index: state.currentTreeIndex }),
-      () => this.updateChart()
+      (state) => ({
+        barOption: state.barOptionValue,
+        index: state.currentTreeIndex,
+        subscriptionPaused: state.subscriptionPaused // Track subscription state for debugging
+      }),
+      (current, previous) => {
+        // Debug: Log subscription trigger
+
+        // ChartController should continue updating during scrubbing
+        // Charts need to stay synchronized regardless of GUI subscription state
+        this.updateChart();
+      }
     );
   }
 
@@ -46,7 +56,7 @@ export class ChartController {
     const appStoreState = useAppStore.getState();
 
     // Debug: Confirm updateChart is called and #lineChart exists
-    console.log('[ChartController] updateChart called');
+    console.log('[ChartController] updateChart called, subscriptionPaused:', appStoreState.subscriptionPaused);
     const lineChartElem = document.getElementById('lineChart');
     if (!lineChartElem) {
       console.warn('[ChartController] #lineChart element not found in DOM when updateChart called');
@@ -67,6 +77,15 @@ export class ChartController {
     const data = { robinsonFouldsDistances, weightedRobinsonFouldsDistances, scaleList };
     const config = { barOptionValue, currentTreeIndex };
     const services = { transitionResolver };
+
+    // Debug logging
+    console.log('[ChartController] Chart data:', {
+      robinsonFouldsDistances: robinsonFouldsDistances?.length,
+      weightedRobinsonFouldsDistances: weightedRobinsonFouldsDistances?.length,
+      scaleList: scaleList?.length,
+      barOptionValue,
+      currentTreeIndex
+    });
 
     this.currentDistanceChartState = renderOrUpdateLineChart({
       data,
@@ -163,9 +182,9 @@ export class ChartController {
   isChartDataReady() {
     const { transitionResolver, movieData } = useAppStore.getState();
     return !!(transitionResolver &&
-              movieData?.rfd_list &&
-              movieData?.wrfd_list &&
-              movieData?.scaleList);
+      movieData?.rfd_list &&
+      movieData?.wrfd_list &&
+      movieData?.scaleList);
   }
 
   /**

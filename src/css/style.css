@@ -1,3 +1,187 @@
+/* Material Design 3 - Light Theme System */
+:root {
+  /* MD3 Color Tokens - Light Theme */
+  --md-sys-color-primary: rgb(65 95 145);
+  --md-sys-color-primary-container: rgb(214 227 255);
+  --md-sys-color-on-primary: rgb(255 255 255);
+  --md-sys-color-on-primary-container: rgb(40 71 119);
+  --md-sys-color-secondary: rgb(86 95 113);
+  --md-sys-color-secondary-container: rgb(218 226 249);
+  --md-sys-color-on-secondary: rgb(255 255 255);
+  --md-sys-color-on-secondary-container: rgb(62 71 89);
+  --md-sys-color-tertiary: rgb(112 85 117);
+  --md-sys-color-tertiary-container: rgb(250 216 253);
+  --md-sys-color-on-tertiary: rgb(255 255 255);
+  --md-sys-color-on-tertiary-container: rgb(87 62 92);
+  --md-sys-color-error: rgb(186 26 26);
+  --md-sys-color-error-container: rgb(255 218 214);
+  --md-sys-color-on-error: rgb(255 255 255);
+  --md-sys-color-on-error-container: rgb(147 0 10);
+  /* Data Visualization Colors - Prefixed to prevent UI leakage */
+  --viz-chart-highlight: var(--md-sys-color-tertiary);
+  --viz-timeline-full-tree: #FF6B35;
+  --viz-timeline-full-tree-border: #FF4500;
+
+  /* Primary visualization colors */
+  --viz-primary: #6750a4; /* Current selection - same as primary */
+  --viz-secondary: #4a7c7e; /* Teal for secondary data */
+  --viz-neutral: #79747e; /* Gray for inactive/background data */
+  --viz-accent: #b3261e; /* Red for alerts/errors */
+
+  /* Chart/timeline specific colors */
+  --chart-active: var(--viz-primary);
+  --chart-inactive: var(--viz-neutral);
+  --chart-comparison: var(--viz-secondary);
+  --chart-background: rgba(121, 116, 126, 0.20); /* Fallback for browsers without color-mix */
+
+/* Surface Colors - MD3 Light Theme */
+  --md-sys-color-surface: rgb(249 249 255);
+  --md-sys-color-surface-container: rgb(237 237 244);
+  --md-sys-color-surface-container-low: rgb(243 243 250);
+  --md-sys-color-surface-container-high: rgb(231 232 238);
+  --md-sys-color-surface-container-highest: rgb(226 226 233);
+  --md-sys-color-surface-container-lowest: rgb(255 255 255);
+  --md-sys-color-surface-dim: rgb(217 217 224);
+  --md-sys-color-surface-bright: rgb(249 249 255);
+  --md-sys-color-surface-tint: rgb(65 95 145);
+
+  /* Text Colors - Light Theme - WCAG AA Compliant */
+  --md-sys-color-on-surface: rgb(25 28 32);
+  --md-sys-color-on-surface-variant: rgb(68 71 78);
+  --md-sys-color-on-surface-variant-strong: rgb(46 48 54); /* Darker variant for high emphasis text */
+
+  /* Additional accessible text colors */
+  --md-sys-color-on-surface-disabled: #7a7a7a; /* For disabled states */
+  --md-sys-color-on-surface-subtle: #2d2d2d; /* Between primary and variant */
+
+  /* Border/Outline - Light Theme */
+  --md-sys-color-outline: rgb(116 119 127);
+  --md-sys-color-outline-variant: rgb(196 198 208);
+
+  /* Missing MD3 Tokens */
+  --md-sys-color-surface-variant: rgb(224 226 236);
+
+  /* Inverse Colors - Light Theme */
+  --md-sys-color-inverse-surface: rgb(46 48 54);
+  --md-sys-color-inverse-on-surface: rgb(240 240 247);
+  --md-sys-color-inverse-primary: rgb(170 199 255);
+
+  /* Scrim and Shadow */
+  --md-sys-color-scrim: #000000;
+  --md-sys-color-shadow: #000000;
+
+  /* Spacing Scale (4dp grid - MD3 compliant) */
+  --md-sys-spacing-0: 0px;
+  --md-sys-spacing-1: 4px;
+  --md-sys-spacing-2: 8px;
+  --md-sys-spacing-3: 12px;
+  --md-sys-spacing-4: 16px;
+  --md-sys-spacing-5: 20px;
+  --md-sys-spacing-6: 24px;
+  --md-sys-spacing-7: 28px;
+  --md-sys-spacing-8: 32px;
+  --md-sys-spacing-9: 36px;
+  --md-sys-spacing-10: 40px;
+  --md-sys-spacing-11: 44px;
+  --md-sys-spacing-12: 48px;
+  --md-sys-spacing-13: 52px;
+  --md-sys-spacing-14: 56px;
+  --md-sys-spacing-15: 60px;
+  --md-sys-spacing-16: 64px;
+
+  /* Shape/Border Radius */
+  --md-sys-shape-corner-extra-small: 4px;
+  --md-sys-shape-corner-small: 6px;
+  --md-sys-shape-corner-medium: 8px;
+  --md-sys-shape-corner-large: 12px;
+  --md-sys-shape-corner-full: 20px;
+
+  /* Component Sizes */
+  --md-sys-size-button-height: 36px;
+  --md-sys-size-button-height-compact: 28px;
+
+  /* Elevation - MD3 Tonal Elevation System with Shadows */
+  --md-sys-elevation-level-0: var(--md-sys-color-surface);
+  --md-sys-elevation-level-1: var(--md-sys-color-surface-container-low);
+  --md-sys-elevation-level-2: var(--md-sys-color-surface-container);
+  --md-sys-elevation-level-3: var(--md-sys-color-surface-container-high);
+  --md-sys-elevation-level-4: var(--md-sys-color-surface-container-highest);
+  --md-sys-elevation-level-5: var(--md-sys-color-surface-container-highest);
+
+  /* Elevation Shadow System - MD3 Spec Compliant */
+  --md-sys-elevation-shadow-level-0: none;
+  --md-sys-elevation-shadow-level-1: none; /* MD3 Level 1 uses tonal overlay only */
+  --md-sys-elevation-shadow-level-2: 0px 1px 2px 0px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
+  --md-sys-elevation-shadow-level-3: 0px 1px 3px 0px rgba(0, 0, 0, 0.3), 0px 1px 2px 0px rgba(0, 0, 0, 0.15);
+  --md-sys-elevation-shadow-level-4: 0px 2px 3px 0px rgba(0, 0, 0, 0.3), 0px 6px 10px 4px rgba(0, 0, 0, 0.15);
+  --md-sys-elevation-shadow-level-5: 0px 4px 4px 0px rgba(0, 0, 0, 0.3), 0px 8px 12px 6px rgba(0, 0, 0, 0.15);
+
+  /* Elevation Overlay Tints - MD3 Primary Overlays */
+  --md-elev-overlay-1: rgba(103, 80, 164, 0.05); /* Fallback */
+  --md-elev-overlay-2: rgba(103, 80, 164, 0.08);
+  --md-elev-overlay-3: rgba(103, 80, 164, 0.11);
+  --md-elev-overlay-4: rgba(103, 80, 164, 0.12);
+  --md-elev-overlay-5: rgba(103, 80, 164, 0.24); /* MD3 spec: 24% overlay at level 5 */
+
+  /* Navigation Layout - MD3 Spec */
+  --nav-width-default: 280px; /* Reduced from 360px for better space utilization */
+  --nav-width-medium: 260px;
+  --nav-width-small: 240px;
+  --md-sys-font-family-monospace: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+  --md-sys-font-family-sans: 'Heebo', sans-serif;
+
+  /* Font Weight Tokens */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+
+  /* Additional Font Size Tokens */
+  --font-size-sm: 12px;
+  --font-size-base: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+
+  /* Missing Spacing Tokens */
+  /* State Layer Opacity Tokens */
+  --md-sys-state-hover: rgba(0, 0, 0, 0.08);
+  --md-sys-state-focus: rgba(0, 0, 0, 0.12);
+  --md-sys-state-pressed: rgba(0, 0, 0, 0.16);
+  --md-sys-state-dragged: rgba(0, 0, 0, 0.16);
+
+  /* MD3 Type Scale Tokens */
+  --md-typescale-title-medium-size: 16px;
+  --md-typescale-title-medium-lineheight: 24px;
+  --md-typescale-title-small-size: 14px;
+  --md-typescale-title-small-lineheight: 20px;
+  --md-typescale-body-large-size: 16px;
+  --md-typescale-body-large-lineheight: 24px;
+  --md-typescale-body-medium-size: 14px;
+  --md-typescale-body-medium-lineheight: 20px;
+  --md-typescale-body-small-size: 12px;
+  --md-typescale-body-small-lineheight: 16px;
+  --md-typescale-label-large-size: 14px;
+  --md-typescale-label-large-lineheight: 20px;
+  --md-typescale-label-medium-size: 12px;
+  --md-typescale-label-medium-lineheight: 16px;
+  --md-typescale-label-small-size: 11px;
+  --md-typescale-label-small-lineheight: 16px;
+}
+
+/* Modern browsers with color-mix support */
+@supports (background: color-mix(in srgb, red 50%, blue)) {
+  :root {
+    --chart-background: color-mix(in srgb, var(--viz-neutral) 20%, transparent);
+
+    /* Update elevation overlays with color-mix for dynamic primary color */
+    --md-elev-overlay-1: color-mix(in srgb, var(--md-sys-color-primary) 5%, transparent);
+    --md-elev-overlay-2: color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent);
+    --md-elev-overlay-3: color-mix(in srgb, var(--md-sys-color-primary) 11%, transparent);
+    --md-elev-overlay-4: color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
+    --md-elev-overlay-5: color-mix(in srgb, var(--md-sys-color-primary) 24%, transparent); /* MD3 spec: 24% overlay at level 5 */
+  }
+}
+
 /* Reset and Base Styles */
 * {
   margin: 0;
@@ -5,33 +189,39 @@
   box-sizing: border-box;
 }
 
-html,
-body {
+html {
+  font-size: 16px; /* MD3 minimum base font size */
   height: 100%;
+}
+
+body {
+  min-height: 100%;
   width: 100%;
   font-family: var(--font-family-sans-serif, 'Heebo', sans-serif);
-  background: var(--background-color-main, #fff);
-  color: var(--text-color-main, #222);
-  font-size: var(--font-size-md, 13px); /* Base font size for the app */
-  line-height: 1.6; /* Improved readability */
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  font-size: var(--md-typescale-body-medium-size);
+  line-height: 1.6;
 }
 
 /* General Styles */
 .container {
   display: flex;
   flex-direction: row;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: calc(100vh - var(--movie-bar-height, 100px)); /* Account for fixed movie player bar */
 }
 
 .full-size-container {
   flex: 1 1 0%;
   min-width: 0;
   min-height: 0;
-  background: #fff;
+  background: var(--md-sys-color-surface);
   display: flex;
   align-items: stretch;
   justify-content: stretch;
+  overflow: hidden; /* Prevent double scrollbar */
+  position: relative;
 }
 
 #application-container {
@@ -39,12 +229,34 @@ body {
   height: 100%;
   align-self: stretch;
   display: block;
+  /* Removed padding to give full space to visualization */
+  box-sizing: border-box;
 }
 
-/* Menu scrollbar styles moved to navigation-consolidated.css */
+/* SVG container should fill available space */
+#application-container svg {
+  width: 100%;
+  height: 100%;
+}
 
-/* Header and Menu */
-/* .menu-header styles moved to navigation-consolidated.css */
+/* WebGL container styling for consistent sizing */
+#webgl-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+#webgl-container canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Utility class to hide elements */
+.hidden {
+  display: none !important;
+}
 
 .header {
   display: flex;
@@ -56,406 +268,138 @@ body {
 }
 
 .fa-film {
-  color: #ffff;
+  color: var(--md-sys-color-on-surface);
 }
-
-/* Tools and Controls */
-/* Removed .tools div rule - spacing now handled by navigation-consolidated.css using flexbox gap */
 
 .row {
   display: flex;
   align-items: center;
-  margin-bottom: 8px; /* Standardized margin */
-}
-
-/* Obsolete .row .menuItem class removed */
-
-
-
-select {
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23555'%3E%3Cpath d='M8 11.207L2.396 5.604l.707-.707L8 9.793l4.896-4.896.707.707z'/%3E%3C/svg%3E"); /* Arrow for light theme */
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  background-size: 16px;
-  padding-right: 36px; /* Ensure space for arrow */
-}
-
-.menu select, .dark-container select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23aaa'%3E%3Cpath d='M8 11.207L2.396 5.604l.707-.707L8 9.793l4.896-4.896.707.707z'/%3E%3C/svg%3E"); /* Arrow for dark theme */
-}
-
-
-/* Legacy button styles - removed to prevent conflicts with unified navigation styles */
-
-
-/* Sliders and Switches */
-.uk-range {
-  width: 100%;
+  margin-block-end: var(--md-sys-spacing-2); /* 8px - MD3 compliant */
 }
 
 /* Text and Headers */
 h1 {
   font-size: 1.5em; /* Typically 24px if base is 16px */
   margin-bottom: 16px; /* Added some default spacing */
-  color: var(--text-color-main); /* Ensure h1 uses theme text color */
+  color: var(--md-sys-color-on-surface); /* Ensure h1 uses theme text color */
 }
 
-
-/* Blinking Animation */
-.blink_me {
-  animation: blinker 1s linear infinite;
-}
-
-@keyframes blinker {
-  50% {
-    opacity: 0;
-  }
-}
 
 /* Tooltip Styles */
 .tooltip {
   position: absolute;
   opacity: 0;
-  background-color: var(--background-color-main);
-  border: 1px solid var(--input-border-light); /* Was #ccc */
-  border-radius: var(--standard-border-radius); /* Was 5px */
-  padding: 8px;
-  font-size: 12px;
-  font-family: Arial, sans-serif;
-  color: #333;
+  background-color: var(--md-sys-color-inverse-surface);
+  border-radius: var(--md-sys-shape-corner-small);
+  padding: var(--md-sys-spacing-1) var(--md-sys-spacing-2);
+  font-size: var(--md-typescale-body-small-size);
+  line-height: var(--md-typescale-body-small-lineheight);
+  font-weight: var(--font-weight-regular);
+  font-family: var(--font-family-sans-serif, 'Heebo', sans-serif);
+  color: var(--md-sys-color-inverse-on-surface);
   pointer-events: none;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
   white-space: nowrap;
   z-index: 1000;
   transition: opacity 0.3s;
 }
 
-/* Modal Chart */
-#modal-graph-chart {
-  flex: 1;
-  height: 100%;
-  width: 100%;
-  position: relative;
-}
-
-
-
-/* .toggle-icon styles moved to navigation-consolidated.css */
-
-/* .position-control and .factor-control are specific to menu. */
-/* Their current margins (16px top, 6px bottom for label) are reasonable. */
-/* If they need variable colors: */
-.position-control label, .factor-control label {
-  color: var(--text-color-dark-theme-muted); /* Already set this way */
-}
-
-
-/* Enhanced Branding Styles */
-/* .menu-header styles consolidated in navigation-consolidated.css */
-
-.app-branding {
-  display: flex;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-.branding-icon {
-  font-size: 24px;
-  color: var(--primary-color);
-  margin-right: var(--spacing-medium, 12px);
-}
-
-.app-titles {
-  flex: 1;
-}
-
-
-.commitmessage {
-  font-size: 11px;
-  color: var(--text-color-dark-theme-muted); /* Was #aaa */
-  margin-top: 4px; /* Align to 4px grid */
-}
-
-.commit-hash {
-  font-family: var(--font-family-monospace, monospace);
-  background-color: var(--input-background-dark, rgba(255, 255, 255, 0.1));
-  padding: var(--spacing-xs, 4px) var(--spacing-sm, 8px); /* Was 1px 4px */
-  border-radius: var(--standard-border-radius, 4px); /* Was 3px */
-}
-
-
-.brand-separator {
-  height: 3px;
-  background: linear-gradient(to right, var(--primary-color) 0%, rgba(var(--primary-color-rgb), 0.1) 100%);
-  border-radius: 3px;
-  margin-bottom: var(--spacing-large, 16px);
-}
-
-/* .select-arrow is for a custom non-standardized select. Standardized 'select' has its own SVG arrow. */
-/* This can be removed if all selects are standardized, or kept for specific legacy cases. */
-/* For now, I'll adjust its color. */
-.select-arrow {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-color-dark-theme-muted); /* Was rgba(255, 255, 255, 0.6) */
-  pointer-events: none;
-}
-
-.playback-controls {
-  flex-grow: 2;
-  justify-content: center;
-}
-
-.tool-controls {
-  flex-grow: 1;
-  justify-content: flex-end;
-}
-
-/* Control panels - simplified */
-.control-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
-  padding: 8px 0;
-}
-
-.option-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--spacing-sm, 8px);
-  background-color: rgba(0,0,0,0.1);
-  border-radius: var(--standard-border-radius);
-  padding: var(--spacing-sm, 8px) var(--spacing-medium, 12px);
-}
-
-.option-row label {
-  font-size: 12px;
-  color: var(--text-color-dark-theme-main); /* Was #ddd */
-}
-
-.option-row select { /* This is a specific select, possibly to be replaced by standard select styling if applicable */
-  background-color: rgba(0,0,0,0.2); /* Darker than standard menu input */
-  color: var(--text-color-dark-theme-main);
-  border: 1px solid var(--border-color-dark-theme);
-  border-radius: var(--standard-border-radius);
-  padding: var(--spacing-sm, 8px) var(--spacing-medium, 12px); /* Adjusted to match standardized inputs, check select arrow */
-  font-size: var(--font-size-sm, 12px);
-}
-
-/* Obsolete group separator styles removed */
-
-/* Chart Modal Styling */
 .winbox.modern.modal {
-  border-radius: var(--large-border-radius, 8px);
-  box-shadow: var(--shadow-lg, 0 10px 30px rgba(0, 0, 0, 0.3));
+  border-radius: var(--md-sys-shape-corner-medium);
+  background: var(--md-sys-elevation-level-2);
+  border: 1px solid var(--md-sys-color-outline-variant);
 }
 
 .winbox.modern.modal .wb-body {
-  background: var(--dialog-background-color, #23242b);
+  background: var(--md-sys-elevation-level-2);
 }
 
 .winbox.modern.modal .wb-title {
   font-family: var(--font-family-sans-serif, 'Heebo', sans-serif);
   font-weight: var(--font-weight-medium, 500);
-  font-size: var(--font-size-lg, 18px); /* Was 16px */
-  color: var(--text-color-dark-theme-emphasis, #e3eaf2); /* More emphasis for title */
-  color: #333;
+  font-size: var(--font-size-lg, 18px);
+  color: var(--md-sys-color-on-surface);
 }
 
+/* ============================================================================
+   MD3 ELEVATION HELPER CLASSES
+   ============================================================================ */
 
-/* AlignmentViewer 2.0 SVG Icon Fixes */
-
-/* Close button icons */
-.alignment-viewer-2 [style*="close.svg"],
-.alignment-viewer-2 .close-button,
-.alignment-viewer-2 [class*="close"],
-.alignment-viewer-2 [aria-label*="close" i],
-.alignment-viewer-2 [title*="close" i] {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23666'%3E%3Cpath d='M3.293 3.293a1 1 0 011.414 0L8 6.586l3.293-3.293a1 1 0 111.414 1.414L9.414 8l3.293 3.293a1 1 0 01-1.414 1.414L8 9.414l-3.293 3.293a1 1 0 01-1.414-1.414L6.586 8 3.293 4.707a1 1 0 010-1.414z'/%3E%3C/svg%3E") !important;
-  background-size: 16px 16px !important;
-  background-repeat: no-repeat !important;
-  background-position: center !important;
+/* Elevation Level 1 - Tonal overlay only */
+.elev-1 {
+  background: var(--md-sys-elevation-level-1);
+  box-shadow: none;
+  position: relative;
 }
 
-/* Search button icons */
-.alignment-viewer-2 [style*="search.svg"],
-.alignment-viewer-2 .search-button,
-.alignment-viewer-2 [class*="search"],
-.alignment-viewer-2 [aria-label*="search" i],
-.alignment-viewer-2 [title*="search" i] {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23666'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'/%3E%3C/svg%3E") !important;
-  background-size: 16px 16px !important;
-  background-repeat: no-repeat !important;
-  background-position: center !important;
+.elev-1::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--md-elev-overlay-1);
+  border-radius: inherit;
+  pointer-events: none;
 }
 
-/* Settings/gear button icons */
-.alignment-viewer-2 [style*="settings.svg"],
-.alignment-viewer-2 .settings-button,
-.alignment-viewer-2 [class*="settings"],
-.alignment-viewer-2 [class*="gear"],
-.alignment-viewer-2 [aria-label*="settings" i],
-.alignment-viewer-2 [title*="settings" i] {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23666'%3E%3Cpath d='M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z'/%3E%3Cpath d='M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115l.094-.319z'/%3E%3C/svg%3E") !important;
-  background-size: 16px 16px !important;
-  background-repeat: no-repeat !important;
-  background-position: center !important;
+/* Elevation Level 2 - Tonal overlay + subtle shadow */
+.elev-2 {
+  background: var(--md-sys-elevation-level-2);
+  box-shadow: var(--md-sys-elevation-shadow-level-2);
+  position: relative;
 }
 
-/* Hide any elements with broken asset paths */
-.alignment-viewer-2 [style*="undefined/"],
-.alignment-viewer-2 [src*="undefined/"],
-.alignment-viewer-2 img[src*="undefined/"] {
-  display: none !important;
+.elev-2::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--md-elev-overlay-2);
+  border-radius: inherit;
+  pointer-events: none;
 }
 
-/* Text fallbacks for missing icons */
-.alignment-viewer-2 [style*="close.svg"]:empty::before,
-.alignment-viewer-2 .close-button:empty::before {
-  content: "×" !important;
-  font-size: 16px !important;
-  font-weight: bold !important;
-  color: #666 !important;
-  display: inline-block !important;
-  text-align: center !important;
-  line-height: 1 !important;
+/* Elevation Level 3 - Tonal overlay + medium shadow */
+.elev-3 {
+  background: var(--md-sys-elevation-level-3);
+  box-shadow: var(--md-sys-elevation-shadow-level-3);
+  position: relative;
 }
 
-.alignment-viewer-2 [style*="search.svg"]:empty::before,
-.alignment-viewer-2 .search-button:empty::before {
-  content: "🔍" !important;
-  font-size: 14px !important;
-  color: #666 !important;
-  display: inline-block !important;
-  text-align: center !important;
-  line-height: 1 !important;
+.elev-3::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--md-elev-overlay-3);
+  border-radius: inherit;
+  pointer-events: none;
 }
 
-.alignment-viewer-2 [style*="settings.svg"]:empty::before,
-.alignment-viewer-2 .settings-button:empty::before {
-  content: "⚙" !important;
-  font-size: 14px !important;
-  color: #666 !important;
-  display: inline-block !important;
-  text-align: center !important;
-  line-height: 1 !important;
+/* Elevation Level 4 - Tonal overlay + strong shadow */
+.elev-4 {
+  background: var(--md-sys-elevation-level-4);
+  box-shadow: var(--md-sys-elevation-shadow-level-4);
+  position: relative;
 }
 
-/* Generic fallback for any other missing SVG buttons */
-.alignment-viewer-2 button:empty[style*=".svg"]::before,
-.alignment-viewer-2 [class*="button"]:empty[style*=".svg"]::before {
-  content: "◯" !important;
-  font-size: 14px !important;
-  color: #666 !important;
-  display: inline-block !important;
-  text-align: center !important;
-  line-height: 1 !important;
+.elev-4::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--md-elev-overlay-4);
+  border-radius: inherit;
+  pointer-events: none;
 }
 
-/* Tree Status Panel styles moved to navigation.css */
-
-.status-grid {
-  display: flex !important;
-  flex-direction: row !important;
-  gap: 16px;
-  align-items: flex-start;
-  justify-content: space-between;
-  width: 100%;
-  flex-wrap: nowrap; /* Prevent wrapping */
+/* Elevation Level 5 - Tonal overlay + strongest shadow */
+.elev-5 {
+  background: var(--md-sys-elevation-level-5);
+  box-shadow: var(--md-sys-elevation-shadow-level-5);
+  position: relative;
 }
 
-.status-item {
-  display: flex !important;
-  flex-direction: column !important;
-  flex: 1 1 0%;
-  min-width: 0; /* Allows flex items to shrink below their content size */
-  text-align: center;
-  max-width: 33.333%; /* Ensure equal width distribution */
+.elev-5::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--md-elev-overlay-5);
+  border-radius: inherit;
+  pointer-events: none;
 }
-
-.status-label {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--text-color-dark-theme-muted); /* Was #aaa */
-  margin-bottom: 4px;
-}
-
-.status-value {
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--text-color-dark-theme-main); /* Was #fff */
-}
-
-/* Navigation Panel Components styles moved to navigation.css */
-
-/* .panel-header styles moved to navigation-consolidated.css */
-
-.panel-icon {
-  color: var(--primary-color);
-  font-size: var(--font-size-md, 14px); /* Adjusted to md */
-}
-
-/* .panel-title styles moved to navigation-consolidated.css */
-
-/* Parameter List */
-.param-list {
-  background-color: rgba(0,0,0,0.1);
-  border-radius: var(--standard-border-radius);
-  padding: var(--spacing-medium, 12px);
-}
-
-.param-item {
-  display: flex;
-  justify-content: space-between;
-  padding: var(--spacing-sm, 8px) 0;
-  border-bottom: 1px solid var(--border-color-dark-theme);
-}
-
-.param-item:last-child {
-  border-bottom: none;
-}
-
-.param-name {
-  font-size: 12px;
-  color: #aaa;
-}
-
-.param-value {
-  font-size: 13px;
-  font-weight: 500;
-  color: #fff;
-}
-
-/* Position Control */
-.position-control { /* Specific layout class */
-  margin-top: 0; /* Overrides a previous margin, specific use */
-}
-
-/* Responsive adjustments for status grid */
-@media (max-width: 768px) {
-  .status-grid {
-    flex-direction: row !important; /* Keep horizontal even on mobile */
-    gap: 8px; /* Reduce gap on smaller screens */
-    flex-wrap: nowrap;
-  }
-
-  .status-item {
-    text-align: center; /* Keep centered on mobile */
-    max-width: 33.333%;
-  }
-
-  .status-label {
-    font-size: 10px; /* Smaller font on mobile */
-  }
-
-  .status-value {
-    font-size: 13px; /* Smaller font on mobile */
-  }
-}
-

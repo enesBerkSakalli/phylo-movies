@@ -1,17 +1,9 @@
-/* Speed Control Styling */
-.speed-display {
-  display: inline-block;
-  margin-left: 10px;
-  font-weight: bold;
-  min-width: 40px;
-}
-
 .speed-value {
-  color: var(--nav-primary-color, #4390e1);
-  font-size: 0.9em;
+  color: var(--md-sys-color-primary);
+  font-size: var(--md-sys-typescale-label-medium-size, 0.9em);
   background: var(--md-sys-color-primary-container-light, rgba(67, 144, 225, 0.12));
-  padding: 2px 6px;
-  border-radius: var(--nav-border-radius-sm, 4px);
+  padding: var(--md-sys-spacing-1) var(--md-sys-spacing-3);
+  border-radius: var(--md-sys-shape-corner-small, 4px);
 }
 
 /* Speed Knob Styling */
@@ -40,7 +32,7 @@
 
 .speed-knob.dragging .speed-knob-face {
   transform: scale(1.05);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(255, 255, 255, 0.5);
+  box-shadow: var(--md-sys-elevation-level-3), inset 0 2px 4px rgba(255,255,255,0.5);
 }
 
 .speed-knob-input {
@@ -63,13 +55,13 @@
   height: 100%;
   border-radius: 50%;
   background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-  border: 3px solid var(--nav-primary-color, #4390e1);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.5);
+  border: 3px solid var(--md-sys-color-primary);
+  box-shadow: var(--md-sys-elevation-level-2), inset 0 2px 4px rgba(255,255,255,0.5);
   transition: all 0.2s ease;
 }
 
 .speed-knob:hover .speed-knob-face {
-  border-color: var(--nav-primary-darker, #357abd);
+  border-color: color-mix(in srgb, var(--md-sys-color-primary) 80%, var(--md-sys-color-on-primary));
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15), inset 0 2px 4px rgba(255, 255, 255, 0.5);
 }
 
@@ -79,7 +71,7 @@
   left: 50%;
   width: 3px;
   height: 15px;
-  background: var(--nav-primary-color, #4390e1);
+  background: var(--md-sys-color-primary);
   border-radius: 2px;
   transform-origin: 50% 22px;
   transform: translateX(-50%) rotate(-126deg);
@@ -92,7 +84,7 @@
   left: 50%;
   width: 8px;
   height: 8px;
-  background: var(--nav-primary-color, #4390e1);
+  background: var(--md-sys-color-primary);
   border-radius: 50%;
   transform: translate(-50%, -50%);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
@@ -100,46 +92,46 @@
 
 /* Speed indicator colors based on value */
 .speed-knob.speed-slow .speed-knob-face {
-  border-color: #ff6b6b;
+  border-color: var(--md-sys-color-error);
 }
 
 .speed-knob.speed-slow .speed-knob-indicator,
 .speed-knob.speed-slow .speed-knob-center {
-  background: #ff6b6b;
+  background: var(--md-sys-color-error);
 }
 
 .speed-knob.speed-normal .speed-knob-face {
-  border-color: #4ecdc4;
+  border-color: var(--md-sys-color-tertiary);
 }
 
 .speed-knob.speed-normal .speed-knob-indicator,
 .speed-knob.speed-normal .speed-knob-center {
-  background: #4ecdc4;
+  background: var(--md-sys-color-tertiary);
 }
 
 .speed-knob.speed-fast .speed-knob-face {
-  border-color: #45b7d1;
+  border-color: var(--md-sys-color-secondary);
 }
 
 .speed-knob.speed-fast .speed-knob-indicator,
 .speed-knob.speed-fast .speed-knob-center {
-  background: #45b7d1;
+  background: var(--md-sys-color-secondary);
 }
 
 /* Update speed value colors */
 .speed-slow .speed-value {
-  color: #ff6b6b;
-  background: rgba(255, 107, 107, 0.1);
+  color: var(--md-sys-color-error);
+  background: color-mix(in srgb, var(--md-sys-color-error) 10%, transparent);
 }
 
 .speed-normal .speed-value {
-  color: #4ecdc4;
-  background: rgba(78, 205, 196, 0.1);
+  color: var(--md-sys-color-tertiary);
+  background: color-mix(in srgb, var(--md-sys-color-tertiary) 10%, transparent);
 }
 
 .speed-fast .speed-value {
-  color: #45b7d1;
-  background: rgba(69, 183, 209, 0.1);
+  color: var(--md-sys-color-secondary);
+  background: color-mix(in srgb, var(--md-sys-color-secondary) 10%, transparent);
 }
 
 /* Movie Player Bar Speed Control - Mini Version */
@@ -147,7 +139,7 @@
   margin-right: 8px;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--md-sys-spacing-2);
 }
 
 .movie-player-speed .speed-controls-row {
@@ -184,26 +176,23 @@
   height: 4px;
 }
 
-.movie-player-speed .speed-value-button.speed-mini {
+.movie-player-speed .speed-display {
   padding: 2px 6px;
   font-size: 0.75em;
   min-width: 24px;
   height: 24px;
-  border: 1px solid var(--nav-border-color, #dee2e6);
-  border-radius: 4px;
-  background: var(--nav-surface-color, #ffffff);
-  color: var(--nav-text-color, #495057);
-  cursor: pointer;
-  transition: all 0.2s ease;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-small, 4px);
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.movie-player-speed .speed-value-button.speed-mini:hover {
-  background: var(--nav-surface-hover-color, #f8f9fa);
-  border-color: var(--nav-primary-color, #4390e1);
-}
-
-.movie-player-speed .speed-value-button.speed-mini .speed-value {
+.movie-player-speed .speed-display .speed-value {
   font-size: 0.85em;
   padding: 0;
   background: transparent;
+  font-weight: 600;
 }
