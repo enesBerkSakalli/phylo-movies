@@ -1,13 +1,14 @@
 <!-- Movie Player Bar - Timeline and Transport Controls -->
 <div class="movie-player-bar" role="region" aria-label="Movie Player Controls">
+
   <div class="movie-player-container">
 
     <!-- PRIMARY TRANSPORT & POSITION - LEFT SIDE -->
     <div class="left-controls" role="group" aria-label="Transport controls and position">
-      <!-- Transport Controls -->
-      <div class="button-row transport-primary" role="group" aria-label="Tree navigation controls">
+      <!-- Combined Transport and Chart Controls in a single row -->
+      <div class="combined-controls-row" role="group" aria-label="Tree navigation and chart controls">
         <!-- Speed Control -->
-        <div class="factor-control compact movie-player-speed" role="group" aria-labelledby="speed-control-label">
+        <div class="animation-speed-control ultra-compact movie-player-speed" role="group" aria-labelledby="speed-control-label">
           <label id="speed-control-label" class="control-label sr-only">
             <span class="material-icons" aria-hidden="true" title="Animation playback speed">speed</span>
             Playback Speed
@@ -15,52 +16,51 @@
           <div class="speed-controls-row">
             <div class="speed-knob-container">
               <div class="speed-knob speed-mini" title="Adjust animation speed (drag to rotate)">
-                <input type="range" id="factor-range" min="0.1" max="5" value="1" step="0.1" class="speed-knob-input" aria-label="Animation speed" />
+                <input type="range" id="animation-speed-range" min="0.1" max="5" value="1" step="0.1" class="speed-knob-input" aria-label="Animation speed" />
                 <div class="speed-knob-face">
-                  <div class="speed-knob-indicator" style="transform: translateX(-50%) rotate(-79.7143deg);"></div>
+                  <div class="speed-knob-indicator"></div>
                   <div class="speed-knob-center"></div>
                 </div>
               </div>
             </div>
-            <button type="button" class="speed-value-button speed-mini" title="Click to cycle through common speeds">
+            <div class="speed-display" title="Current playback speed">
               <span class="info-value speed-value">1×</span>
-            </button>
+            </div>
           </div>
         </div>
-        <button id="backwardStepButton" type="button" class="md-button compact" title="Go to previous tree (previous full tree)" aria-label="Previous tree">
+        <!-- Transport Controls -->
+        <button id="backwardStepButton" type="button" class="md-button sm secondary" title="Go to previous tree (previous full tree)" aria-label="Previous tree">
           <span class="material-icons">first_page</span><span class="sr-only">Previous Tree</span>
         </button>
-        <button id="backward-button" type="button" class="md-button compact" title="Go to previous frame (previous window in current tree)" aria-label="Previous frame">
+        <button id="backward-button" type="button" class="md-button sm secondary" title="Go to previous frame (previous window in current tree)" aria-label="Previous frame">
           <span class="material-icons">chevron_left</span><span class="sr-only">Previous Frame</span>
         </button>
-        <button id="start-button" type="button" class="md-button primary compact" title="Play/Pause animation" aria-label="Play/Pause animation">
+        <button id="start-button" type="button" class="md-button sm elevated" title="Play/Pause animation" aria-label="Play/Pause animation">
           <span class="material-icons">play_arrow</span><span class="sr-only">Play/Pause</span>
         </button>
-        <button id="forward-button" type="button" class="md-button compact" title="Go to next frame (next window in current tree)" aria-label="Next frame">
+        <button id="forward-button" type="button" class="md-button sm secondary" title="Go to next frame (next window in current tree)" aria-label="Next frame">
           <span class="material-icons">chevron_right</span><span class="sr-only">Next Frame</span>
         </button>
-        <button id="forwardStepButton" type="button" class="md-button compact" title="Go to next tree (next full tree)" aria-label="Next tree">
+        <button id="forwardStepButton" type="button" class="md-button sm secondary" title="Go to next tree (next full tree)" aria-label="Next tree">
           <span class="material-icons">last_page</span><span class="sr-only">Next Tree</span>
         </button>
-      </div>
-
-      <!-- Chart Controls - Under Transport Controls -->
-      <div class="chart-expand-controls">
+        <!-- Chart Controls -->
         <select
           name="barPlotOption"
           id="barPlotOption"
-          class="compact-select chart-select-mini"
+          class="select"
           aria-describedby="chart-select-help"
           title="Choose data series to display"
         >
           <option value="rfd" title="Robinson-Foulds Distance (relative)">RFD</option>
           <option value="w-rfd" title="Weighted Robinson-Foulds Distance">W-RFD</option>
           <option value="scale" title="Tree scale">Scale</option>
+          <option value="ignore-branch-lengths" title="Ignore Branch Lengths">Ignore Branch Lengths</option>
         </select>
         <button
           id="chart-modal"
           type="button"
-          class="md-button compact secondary chart-expand-btn-small"
+          class="md-button sm secondary"
           aria-label="Open full-size chart view"
           title="Open full-size interactive chart view in modal window"
         >
@@ -72,57 +72,44 @@
 
     <!-- RIGHT SIDE CONTENT - STACKED VERTICALLY -->
     <div class="right-content-stacked">
-
-      <!-- Timeline Container - will contain s-edge bars with individual scrubbers -->
+      <!-- Timeline Container -->
       <div class="timeline-container">
-        <div class="timeline-markers" aria-hidden="true"></div>
-        <!-- Horizontal scrollable track for S-Edge Bar segments -->
-        <div class="interpolation-timeline-track"></div>
-
-        <!-- Enhanced Timeline Container - Phylogenetic Movie Timeline -->
         <div class="interpolation-timeline-container">
           <div class="interpolation-timeline-header">
-            <div class="timeline-header-left">
-              <span class="timeline-label">
-                <span class="material-icons" aria-hidden="true">timeline</span>
-                Phylogenetic Movie Timeline
-              </span>
-            </div>
+            <!-- Removed timeline title to save space -->
             <div class="timeline-header-metrics">
-              <div class="timeline-metric">
-                <span class="metric-label">Total</span>
+              <!-- Primary Metrics -->
+              <div class="timeline-metric primary" title="Total number of trees in the phylogenetic movie sequence">
+                <span class="material-icons metric-icon" aria-hidden="true">account_tree</span>
                 <span class="metric-value" id="movieTimelineCount">0 trees</span>
               </div>
-              <div class="timeline-metric">
-                <span class="metric-label">Full Trees</span>
-                <span class="metric-value" id="fullTreeCount">0</span>
+              <div class="timeline-metric primary" title="Current position: Shows current tree index and nearest full tree position (e.g., 45/100 at T3→T4)">
+                <span class="material-icons metric-icon" aria-hidden="true">my_location</span>
+                <span class="metric-value" id="currentPositionInfo"></span>
               </div>
-              <div class="timeline-metric">
-                <span class="metric-label">Interpolated</span>
-                <span class="metric-value" id="interpolationDensity">0%</span>
-              </div>
-              <div class="timeline-metric">
-                <span class="metric-label">Tree Pairs</span>
-                <span class="metric-value" id="treePairCount">0</span>
+              <!-- Status Metric - Visual Only -->
+              <div class="timeline-metric status" title="Playback status: Current animation state and tree type being displayed">
+                <span class="status-indicator-enhanced" id="statusIndicator"></span>
+                <span class="metric-value status-text" id="interpolationStatus"></span>
               </div>
             </div>
             <div class="timeline-header-right">
               <div class="timeline-zoom-controls">
-                <button class="zoom-button" id="zoomOutBtn" title="Zoom out timeline (Ctrl + -)">
+                <button class="md-button sm secondary" id="zoomOutBtn" title="Zoom out timeline (Ctrl + -)">
                   <span class="material-icons">zoom_out</span>
                 </button>
-                <button class="zoom-button" id="fitToWindowBtn" title="Fit entire timeline to window (Ctrl + 0)">
+                <button class="md-button sm secondary" id="fitToWindowBtn" title="Fit entire timeline to window (Ctrl + 0)">
                   <span class="material-icons">fit_screen</span>
                 </button>
-                <button class="zoom-button" id="zoomInBtn" title="Zoom in timeline (Ctrl + +)">
+                <button class="md-button sm secondary" id="zoomInBtn" title="Zoom in timeline (Ctrl + +)">
                   <span class="material-icons">zoom_in</span>
                 </button>
               </div>
               <div class="timeline-scroll-controls">
-                <button class="scroll-button" id="scrollToStartBtn" title="Scroll to start (Home)">
+                <button class="md-button sm secondary" id="scrollToStartBtn" title="Scroll to start (Home)">
                   <span class="material-icons">first_page</span>
                 </button>
-                <button class="scroll-button" id="scrollToEndBtn" title="Scroll to end (End)">
+                <button class="md-button sm secondary" id="scrollToEndBtn" title="Scroll to end (End)">
                   <span class="material-icons">last_page</span>
                 </button>
               </div>
@@ -130,11 +117,9 @@
           </div>
           <!-- DOM-based timeline removed - using vis-timeline only -->
           <!-- vis-timeline container will be created dynamically by MovieTimelineManager -->
-      </div>
-
-      <!-- Distance Chart - BOTTOM -->
-      <div class="movie-chart-container" role="region" aria-label="Distance Chart">
-        <div class="chart-content-inline">
+        </div> <!-- .interpolation-timeline-container CLOSES HERE -->
+        <!-- Distance Chart - BOTTOM -->
+        <div class="movie-chart-container" role="region" aria-label="Distance Chart">
           <div
             id="lineChart"
             class="chart-canvas chart-inline"
@@ -143,10 +128,7 @@
             title="Interactive chart: Click points or drag indicator to navigate"
           ></div>
         </div>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<!-- Movie player controls are managed by the main event handling system -->
+      </div> <!-- .timeline-container CLOSES HERE -->
+    </div> <!-- .right-content-stacked CLOSES HERE -->
+  </div> <!-- .movie-player-container CLOSES HERE -->
+</div> <!-- .movie-player-bar CLOSES HERE -->

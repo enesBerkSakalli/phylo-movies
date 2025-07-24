@@ -1,5 +1,5 @@
 // Simple test to verify MovieTimelineManager cleanup worked correctly
-import { MovieTimelineManager } from './frontend/public/js/moviePlayer/MovieTimelineManager.js';
+import { MovieTimelineManager } from '../src/js/timeline/MovieTimelineManager.js';
 
 // Mock data structure
 const mockMovieData = {

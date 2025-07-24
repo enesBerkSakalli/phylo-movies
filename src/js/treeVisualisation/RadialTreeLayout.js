@@ -1,10 +1,12 @@
+import * as d3 from "d3";
+import { getNodeKey } from './utils/KeyGenerator.js';
+
 /** Class for calculating radial tree layout coordinates. */
 export class RadialTreeLayout {
-  constructor(root, ignoreBranchLengths = false) {
+  constructor(root) {
     //node element of d3
 
-    this.root = root;
-    this.ignoreBranchLengths = ignoreBranchLengths;
+    this.root = d3.hierarchy(root);
 
     //width of container
     this.containerWidth = 0;
@@ -48,17 +50,15 @@ export class RadialTreeLayout {
    * @return {void}
    */
   calcRadius(node, radius = 0) {
-    let length = node.data.length;
-
-    // Only override branch length if ignoring AND the length exists
-    // CRITICAL: Allow zero-length branches for s-edge collapse/expansion interpolation
-    if (this.ignoreBranchLengths && length !== undefined && length !== null) {
-      length = length === 0 ? 0 : 1; // Preserve zero-length for s-edge morphing
+    if (!node.parent) {
+      // If this is the root node, set its radius to 0
+      node.data.length = 0;
     }
 
+    let length = node.data.length;
 
     // Check if we should preserve radius for this node
-    const nodeKey = this.getNodeKey(node);
+    const nodeKey = getNodeKey(node);
     if (this.preserveRadius && this.previousNodeRadii.has(nodeKey)) {
       // Use preserved radius from previous calculation
       node.radius = this.previousNodeRadii.get(nodeKey);
@@ -76,19 +76,6 @@ export class RadialTreeLayout {
     }
   }
 
-  /**
-   * Generate a unique key for a node based on its data
-   * @param {Object} node - Tree node
-   * @returns {string} Unique key for the node
-   */
-  getNodeKey(node) {
-    // Use node name or data properties to create a unique identifier
-    if (node.data.name) {
-      return node.data.name;
-    }
-    // Fallback to data properties
-    return JSON.stringify(node.data);
-  }
 
   /**
    * Set radius preservation mode for IT → C transitions
@@ -216,8 +203,11 @@ export class RadialTreeLayout {
    * @return {root}
    */
   constructRadialTree() {
-    this.root.data.length = 0;
-    // This line permanently modified the tree data, preventing instance reuse
+    // CRITICAL FIX: Removed `this.root.data.length = 0` line that was mutating shared tree data
+    // This mutation was corrupting previous tree data and causing position diffing to fail,
+    // leading to duplicate element creation in WebGL renderer
+
+    // Removed debug log: Constructing tree layout - preserving original data integrity
 
     this.calcRadius(this.root, 0);
     this.indexLeafNodes(this.root);
@@ -259,11 +249,15 @@ export class RadialTreeLayout {
 
 export default function createRadialTreeLayout(
   tree,
-  ignoreBranchLengths,
+  branchTransformation = 'none',
   options = {}
 ) {
-  let d3tree = d3.hierarchy(tree);
-  let treeLayout = new RadialTreeLayout(d3tree, ignoreBranchLengths);
+  // Apply branch length transformation before layout
+  const { transformBranchLengths } = require('../utils/branchTransformUtils');
+  let transformedTree = transformBranchLengths(tree, branchTransformation);
+
+  let d3tree = d3.hierarchy(transformedTree);
+  let treeLayout = new RadialTreeLayout(d3tree);
 
   let container;
   let width, height, margin;
@@ -301,7 +295,6 @@ export default function createRadialTreeLayout(
   margin = options.margin || 40;
 
   treeLayout.setMargin(margin);
-
 
   // Use density-aware construction if requested
   let root_ = treeLayout.constructRadialTree();

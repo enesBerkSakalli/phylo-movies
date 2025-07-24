@@ -1,5 +1,6 @@
-import * as d3 from "d3";
-import { generateLineChart } from "./chartGenerator.js";
+import { generateLineChart, updateShipPosition } from "./chartGenerator.js";
+import { useAppStore } from '../core/store.js';
+import { GoToFullTreeDataIndexCommand } from '../core/NavigationCommands.js';
 
 /**
  * Unified chart rendering for phylo-movies line charts using chartGenerator.js.
@@ -21,7 +22,11 @@ export function renderOrUpdateLineChart({ data, config, services, chartState, ca
 
     // Fallback for empty data to prevent errors
     if (!robinsonFouldsDistances || !weightedRobinsonFouldsDistances || !scaleList) {
-        console.warn('[renderOrUpdateLineChart] Data arrays are not initialized.');
+        console.warn('[renderOrUpdateLineChart] Data arrays are not initialized.', {
+            robinsonFouldsDistances: robinsonFouldsDistances?.length,
+            weightedRobinsonFouldsDistances: weightedRobinsonFouldsDistances?.length,
+            scaleList: scaleList?.length
+        });
         return chartState;
     }
 
@@ -40,32 +45,19 @@ export function renderOrUpdateLineChart({ data, config, services, chartState, ca
     // Check if we can update existing chart instead of re-rendering
     if (chartState.instance && chartState.type === barOptionValue) {
         // Only update the position indicator, don't re-render the entire chart
-        // currentTreeIndex here is already the chart-specific index from getChartTreeIndex()
-        // For scale charts: currentTreeIndex = sequence index
-        // For RFD/W-RFD charts: currentTreeIndex = transition index
-        // We need to convert to sequence index for updatePosition
-        let sequenceIndex;
-        if (barOptionValue === "scale") {
-            // For scale charts, chart index = sequence index
-            sequenceIndex = currentTreeIndex;
-        } else {
-            // For RFD/W-RFD charts, handle different cases
-            if (currentTreeIndex >= 0) {
-                // If we have a valid transition index, convert it to sequence index
-                const chartDataLength = barOptionValue === "rfd" ? robinsonFouldsDistances.length : weightedRobinsonFouldsDistances.length;
-                if (currentTreeIndex < chartDataLength) {
-                    // Valid transition index - convert to sequence index
-                    sequenceIndex = transitionResolver.getTreeIndexForDistanceIndex(currentTreeIndex);
-                } else {
-                    // Transition index is out of bounds - don't update scrubber
-                    return chartState;
-                }
-            } else {
-                // Invalid transition index (e.g., -1) - don't update scrubber to prevent jumping
-                return chartState;
+        // currentTreeIndex is now always the distance index from store.js
+        // Convert to full tree sequence index for updatePosition
+        if (currentTreeIndex >= 0) {
+            const chartDataLength = barOptionValue === "rfd" ? robinsonFouldsDistances.length :
+                                   barOptionValue === "w-rfd" ? weightedRobinsonFouldsDistances.length :
+                                   scaleList.length;
+            if (currentTreeIndex < chartDataLength) {
+                // Valid distance index - convert to full tree sequence index
+                const fullTreeIndex = transitionResolver.getTreeIndexForDistanceIndex(currentTreeIndex);
+                chartState.instance.updatePosition(fullTreeIndex);
             }
+            // If index is out of bounds, don't update scrubber
         }
-        chartState.instance.updatePosition(sequenceIndex);
         return chartState;
     }
 
@@ -98,29 +90,14 @@ export function renderOrUpdateLineChart({ data, config, services, chartState, ca
         return chartState;
     }
 
-    // Determine indicator position and mapping logic
-    let determinedCurrentChartPosition;
-    let chartSpecificIndexToSequence, chartSpecificSequenceToIndex;
+    // All chart types use the same mapping functions since they all use distance index
+    const chartSpecificIndexToSequence = (chartIdx) => {
+        return transitionResolver.getTreeIndexForDistanceIndex(chartIdx);
+    };
 
-    if (barOptionValue === "scale") {
-        // For scale charts: direct 1:1 mapping between chart index and sequence index
-        determinedCurrentChartPosition = currentTreeIndex;
-        chartSpecificIndexToSequence = (chartIdx) => chartIdx;
-        chartSpecificSequenceToIndex = (seqIdx) => seqIdx;
-    } else {
-        // For RFD/W-RFD charts: chart index = transition index, need to map to full tree indices
-        determinedCurrentChartPosition = transitionResolver.getDistanceIndex(currentTreeIndex);
-
-        // Map from chart index (transition index) to sequence index (full tree index)
-        chartSpecificIndexToSequence = (chartIdx) => {
-            return transitionResolver.getTreeIndexForDistanceIndex(chartIdx);
-        };
-
-        // Map from sequence index to chart index (transition index)
-        chartSpecificSequenceToIndex = (seqIdx) => {
-            return transitionResolver.getDistanceIndex(seqIdx);
-        };
-    }
+    const chartSpecificSequenceToIndex = (seqIdx) => {
+        return transitionResolver.getDistanceIndex(seqIdx);
+    };
 
     // Prepare chart data and config for chartGenerator.js
     let chartData, xLabel, yLabel, yMax, xAccessor, yAccessor, tooltipFormatter;
@@ -129,7 +106,7 @@ export function renderOrUpdateLineChart({ data, config, services, chartState, ca
         xLabel = "Transition Index";
         yLabel = "Relative RFD";
         yMax = 1;
-        xAccessor = (d, i) => i + 1;
+        xAccessor = (_, i) => i + 1;
         yAccessor = (d) => d;
         tooltipFormatter = (d, i) => `Transition ${i + 1}<br>RFD: ${d.toFixed(3)}`;
     } else if (barOptionValue === "w-rfd") {
@@ -137,7 +114,7 @@ export function renderOrUpdateLineChart({ data, config, services, chartState, ca
         xLabel = "Transition Index";
         yLabel = "Weighted RFD";
         yMax = weightedRobinsonFouldsDistances.length > 0 ? Math.max(...weightedRobinsonFouldsDistances) : 0;
-        xAccessor = (d, i) => i + 1;
+        xAccessor = (_, i) => i + 1;
         yAccessor = (d) => d;
         tooltipFormatter = (d, i) => `Transition ${i + 1}<br>Weighted RFD: ${d.toFixed(3)}`;
     } else if (barOptionValue === "scale") {
@@ -145,7 +122,7 @@ export function renderOrUpdateLineChart({ data, config, services, chartState, ca
         xLabel = "Sequence Index";
         yLabel = "Scale";
         yMax = scaleList.length > 0 ? Math.max(...scaleList.map((s) => s.value)) : 0;
-        xAccessor = (d, i) => i + 1;
+        xAccessor = (_, i) => i + 1;
         yAccessor = (d) => d;
         tooltipFormatter = (d, i) => `Sequence ${i + 1}<br>Scale: ${d.toFixed(3)}`;
     } else {
@@ -158,33 +135,23 @@ export function renderOrUpdateLineChart({ data, config, services, chartState, ca
         chartState.instance = null;
         chartState.type = barOptionValue;
         return chartState;
-    }    // Prepare a guiInstance-like object for chartGenerator.js (for indicator/ship, drag/click, etc.)
-    const guiInstance = {
-        currentPosition: determinedCurrentChartPosition,
-        goToPosition: (chartIdx) => {
-            // Map chart index back to sequence index for GUI
-            let targetSequenceIndex;
+    }
 
-            if (barOptionValue === "scale") {
-                // For scale charts: direct 1:1 mapping
-                targetSequenceIndex = chartIdx;
-            } else {
-                // For RFD/W-RFD charts: map from chart index (transition index) to full tree sequence index
-                // Chart index represents a transition, so we want the target full tree of that transition
-                targetSequenceIndex = transitionResolver.getTreeIndexForDistanceIndex(chartIdx);
-            }
-
-            if (typeof callbacks.onGoToPosition === 'function') {
-                // Call async callback but don't await to avoid blocking chart updates
-                Promise.resolve(callbacks.onGoToPosition(targetSequenceIndex)).catch(error => {
-                    console.error('[lineChartManager] Error in onGoToPosition callback:', error);
-                });
-            }
+    // Create navigation callback that converts chart positions to full trees
+    const onPositionChange = (chartPosition) => {
+        // Use proper navigation command pattern
+        const command = new GoToFullTreeDataIndexCommand(chartPosition);
+        // Get navigation controller if available, otherwise execute directly
+        const { navigationController } = useAppStore.getState();
+        if (navigationController) {
+            navigationController.execute(command);
+        } else {
+            command.execute();
         }
     };
 
-    // Render the chart using chartGenerator.js
-    const chartStateManager = generateLineChart(
+    // Render the chart using chartGenerator.js with navigation callback
+    const chartResult = generateLineChart(
         containerId,
         chartData,
         {
@@ -195,8 +162,9 @@ export function renderOrUpdateLineChart({ data, config, services, chartState, ca
             yAccessor,
             tooltipFormatter
         },
-        guiInstance
+        onPositionChange
     );
+    const chartStateManager = chartResult.chartStateManager;
 
     // Add ResizeObserver for responsive chart handling in movie player bar
     const container = document.getElementById(containerId);
@@ -205,54 +173,46 @@ export function renderOrUpdateLineChart({ data, config, services, chartState, ca
         container._chartParams = {
             data: chartData,
             config: { xLabel, yLabel, yMax, xAccessor, yAccessor, tooltipFormatter },
-            guiInstance: guiInstance,
             indexMappings: { chartSpecificIndexToSequence, chartSpecificSequenceToIndex }
         };
 
         // Only add resize observer for charts in movie player bar
-        const resizeObserver = new ResizeObserver(entries => {
-            for (let entry of entries) {
-                // Check if container size actually changed
-                const rect = container.getBoundingClientRect();
-                const currentSize = `${Math.round(rect.width)}x${Math.round(rect.height)}`;
+        const resizeObserver = new ResizeObserver(() => {
+            // Check if container size actually changed
+            const rect = container.getBoundingClientRect();
+            const currentSize = `${Math.round(rect.width)}x${Math.round(rect.height)}`;
 
-                if (container._lastSize !== currentSize) {
-                    container._lastSize = currentSize;
+            if (container._lastSize !== currentSize) {
+                container._lastSize = currentSize;
 
-                    // Debounce resize to avoid excessive re-renders
-                    clearTimeout(container._resizeTimeout);
-                    container._resizeTimeout = setTimeout(() => {
-                        console.log(`[lineChartManager] Container ${containerId} resized to ${currentSize}, re-rendering chart`);
+                // Debounce resize to avoid excessive re-renders
+                clearTimeout(container._resizeTimeout);
+                container._resizeTimeout = setTimeout(() => {
 
-                        // Re-render the chart with updated dimensions
-                        const newChartStateManager = generateLineChart(
-                            containerId,
-                            container._chartParams.data,
-                            container._chartParams.config,
-                            container._chartParams.guiInstance
-                        );
+                    // Re-render the chart with updated dimensions
+                    const newChartResult = generateLineChart(
+                        containerId,
+                        container._chartParams.data,
+                        container._chartParams.config,
+                        onPositionChange
+                    );
+                    const newChartStateManager = newChartResult.chartStateManager;
 
-                        // Restore index mappings
-                        newChartStateManager.setIndexMappings(
-                            container._chartParams.indexMappings.chartSpecificIndexToSequence,
-                            container._chartParams.indexMappings.chartSpecificSequenceToIndex
-                        );
+                    // Restore index mappings
+                    newChartStateManager.setIndexMappings(
+                        container._chartParams.indexMappings.chartSpecificIndexToSequence,
+                        container._chartParams.indexMappings.chartSpecificSequenceToIndex
+                    );
 
-                        // Update current position if set
-                        if (container._chartParams.guiInstance &&
-                            typeof container._chartParams.guiInstance.currentPosition === 'number') {
-                            const sequencePosition = container._chartParams.indexMappings.chartSpecificIndexToSequence(
-                                container._chartParams.guiInstance.currentPosition
-                            );
-                            newChartStateManager.updatePosition(sequencePosition);
-                        }
-                    }, 200); // Increased debounce for better performance
-                }
+                    // Update current position using store - always move to full tree
+                    const { currentTreeIndex } = useAppStore.getState();
+                    const fullTreePosition = transitionResolver.getTreeIndexForDistanceIndex(currentTreeIndex);
+                    newChartResult.updatePosition(fullTreePosition);
+                }, 200); // Increased debounce for better performance
             }
         });
 
         resizeObserver.observe(container);
-
         // Store observer for cleanup
         container._resizeObserver = resizeObserver;
 
@@ -268,64 +228,36 @@ export function renderOrUpdateLineChart({ data, config, services, chartState, ca
         updatePosition: (newSequencePosition) => {
             // Map sequence position to chart position for the indicator
             const newChartPosition = chartSpecificSequenceToIndex(newSequencePosition);
-            guiInstance.currentPosition = newChartPosition;
 
-            // Store the current values for direct update
-            const currentConfig = {
-                xAccessor,
-                yAccessor
-            };
-
-            // Check if chart exists and has been rendered
+            // Get the chart container
             const container = document.getElementById(containerId);
-            const svg = container ? d3.select(container).select("svg").select("g") : null;
-
-            if (!svg || svg.empty()) {
-                console.warn(`[lineChartManager] Chart not found for container ${containerId}`);
+            if (!container) {
+                console.warn(`[lineChartManager] Container not found: ${containerId}`);
                 return;
             }
 
             // Get scales from chartStateManager if available
             const { xScale, yScale } = chartStateManager.scales;
-
             if (!xScale || !yScale) {
                 console.warn(`[lineChartManager] Scales not available for container ${containerId}`);
                 return;
             }
 
-            // Validate position bounds
-            const validPosition = Math.max(0, Math.min(chartData.length - 1, newChartPosition));
+            // Create config object for the indicator
+            const config = {
+                xAccessor,
+                yAccessor
+            };
 
-            // Look for ship group
-            let shipGroup = svg.select("#ship-modal-group");
-            if (shipGroup.empty()) {
-                shipGroup = svg.select(".ship-indicator-group");
-            }
-
-            if (shipGroup.empty()) {
-                console.warn(`[lineChartManager] Ship group not found in container ${containerId}`);
-                return;
-            }
-
-            // Update ship position directly
-            const shipX = xScale(currentConfig.xAccessor(chartData[validPosition], validPosition));
-            const height = yScale.range()[0];
-
-            shipGroup.select(".ship-touch-target").attr("x", shipX - 15);
-            shipGroup.select(".ship-line").attr("x1", shipX).attr("x2", shipX);
-            shipGroup.select(".ship-handle").attr("cx", shipX);
-            shipGroup.select(".handle-value")
-                .attr("x", shipX)
-                .text(currentConfig.yAccessor(chartData[validPosition]).toFixed(3));
-            shipGroup.select(".current-position-label")
-                .attr("x", shipX)
-                .text(`${validPosition + 1}`);
-
-            // Update data points highlighting
-            svg.selectAll(".data-points circle").attr("fill", "#4390e1").attr("r", 4);
-            svg.selectAll(".data-points circle")
-                .filter((d, i) => i === validPosition)
-                .attr("fill", "#FF4500").attr("r", 6);
+            // Use the centralized updateShipPosition function with navigation callback
+            updateShipPosition(
+                newChartPosition,
+                { xScale, yScale },
+                config,
+                chartData,
+                containerId,
+                onPositionChange
+            );
         },
         destroy: () => {
             // Clean up ResizeObserver and stored chart parameters

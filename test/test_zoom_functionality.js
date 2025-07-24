@@ -1,5 +1,5 @@
 // Test the zoom and scroll functionality of MovieTimelineManager
-import { MovieTimelineManager } from './frontend/public/js/moviePlayer/MovieTimelineManager.js';
+import { MovieTimelineManager } from '../src/js/timeline/MovieTimelineManager.js';
 
 // Mock data and dependencies
 const mockMovieData = {

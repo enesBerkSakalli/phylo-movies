@@ -1,3 +1,4 @@
+import WinBox from 'winbox';
 import createRadialTreeLayout from "../treeVisualisation/RadialTreeLayout.js";
 import { TreeAnimationController } from "../treeVisualisation/TreeAnimationController.js";
 
@@ -137,7 +138,7 @@ export class TreeComparison {
    * Create comparison modal with WinBox
    */
   createComparisonModal(title) {
-    return new window.WinBox({
+    return new WinBox({
       title,
       width: "90%",
       height: "90%",
@@ -190,7 +191,7 @@ export class TreeComparison {
     const tree1Label = Math.floor(tree1Index / 5) + 1;
     const tree2Label = Math.floor(tree2Index / 5) + 1;
 
-    return new window.WinBox({
+    return new WinBox({
       title,
       width: "80%",
       height: "85%",
@@ -488,7 +489,6 @@ export class TreeComparison {
       tree1Controller.updateParameters({
         root: tree1Layout.tree,
         drawDuration: renderOptions.drawDuration || 0,
-        marked: [new Set(highlightData1)],
         fontSize: finalFontSize,
         strokeWidth: finalStrokeWidth,
         monophyleticColoring: true
@@ -511,7 +511,6 @@ export class TreeComparison {
       tree2Controller.updateParameters({
         root: tree2Layout.tree,
         drawDuration: renderOptions.drawDuration || 0,
-        marked: [new Set(highlightData2)],
         fontSize: finalFontSize,
         strokeWidth: finalStrokeWidth,
         monophyleticColoring: true
@@ -601,7 +600,6 @@ export class TreeComparison {
       frameController.updateParameters({
         root: treeLayout.tree,
         drawDuration: 200,
-        marked: [new Set(toBeHighlighted)],
         fontSize: finalFontSize,
         strokeWidth: finalStrokeWidth,
         monophyleticColoring: true

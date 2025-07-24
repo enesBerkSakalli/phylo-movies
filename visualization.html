@@ -1,45 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
+    <meta charset="utf-8">
     <title>Phylo-Movies</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- Fonts and Icons -->
-    <link href="https://fonts.googleapis.com/css?family=Heebo" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css?family=Heebo" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
 
-    <link rel="stylesheet" type="text/css" href="/src/css/material-design.css" />
-    <link rel="stylesheet" type="text/css" href="/src/css/style.css" />
-    <link rel="stylesheet" type="text/css" href="/src/css/navigation-consolidated.css" />
-    <link rel="stylesheet" type="text/css" href="/src/css/tree-navigation.css" />
-    <link rel="stylesheet" type="text/css" href="/src/css/msa-viewer.css" />
+    <link rel="stylesheet" type="text/css" href="/src/css/style.css">
+    <link rel="stylesheet" type="text/css" href="/src/css/material-design.css">
+    <link rel="stylesheet" type="text/css" href="/src/css/material-design-card.css">
+    <link rel="stylesheet" type="text/css" href="/src/css/navigation.css">
+    <link rel="stylesheet" type="text/css" href="/src/css/tree-navigation.css">
+    <link rel="stylesheet" type="text/css" href="/src/css/msa-viewer.css">
 
-    <link rel="stylesheet" type="text/css" href="/src/css/chart.css" />
-    <link rel="stylesheet" type="text/css" href="/src/css/chart-tooltip.css" />
-    <link rel="stylesheet" type="text/css" href="/src/css/chart-modal.css" />
-    <link rel="stylesheet" type="text/css" href="/src/css/chart-button.css" />
+    <link rel="stylesheet" type="text/css" href="/src/css/chart.css">
 
-    <link rel="stylesheet" type="text/css" href="/src/css/top-scale-bar.css" />
-    <link rel="stylesheet" type="text/css" href="/src/css/speed-control.css" />
-    <link rel="stylesheet" type="text/css" href="/src/css/movie-player-bar.css" />
+    <link rel="stylesheet" type="text/css" href="/src/css/top-scale-bar.css">
+    <link rel="stylesheet" type="text/css" href="/src/css/speed-control.css">
+    <link rel="stylesheet" type="text/css" href="/src/css/movie-player-bar.css">
 
 
-    <link rel="stylesheet" href="https://unpkg.com/winbox@0.2.82/dist/css/winbox.min.css" />
-
-    <!-- Scripts -->
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.1.0/dist/chartjs-plugin-annotation.min.js"></script>
-    <script src="https://unpkg.com/winbox@0.2.82/dist/js/winbox.min.js"></script>
 
   </head>
 
   <body>
     <div id="top-scale-bar-container"></div>
+
     <button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle sidebar">
       <span class="material-icons">menu</span>
     </button>
@@ -56,7 +48,6 @@
                 <div class="file-status">
                   <span>File:</span>
                   <span id="compactFileName" class="file-name">Loading...</span>
-                  <span id="compactEmbedding" class="embedding-type">...</span>
                 </div>
               </div>
             </div>
@@ -82,6 +73,10 @@
 
       <!-- Main Content Area -->
       <div class="full-size-container">
+        <!-- WebGL Canvas (hidden by default) -->
+        <div id="webgl-container" style="display: none; width: 100%; height: 100%;"></div>
+
+        <!-- SVG Container (default) -->
         <svg id="application-container" width="100%" height="100%">
           <g id="application"></g>
         </svg>
@@ -109,6 +104,6 @@
       });
     </script>
 
-    <script type="module" src="/src/js/main.js"></script>
+    <script type="module" src="/src/js/core/main.js"></script>
   </body>
 </html>

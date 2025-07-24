@@ -1,186 +1,37 @@
-/* Tree Navigation Styles - Japanese Design Philosophy CSS */
-
-/* Screen Reader Only Styles */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-/* Shibui (Subtle Elegance) - Refined typography and spacing */
-.semantic-value {
-  display: flex;
-  align-items: center;
-  gap: 0.25em;
-}
-
-.separator {
-  color: var(--text-secondary, #666);
-  font-size: 0.9em;
-  font-weight: 400;
-}
-
-.semantic-tree-type {
-  display: flex;
-  align-items: center;
-  gap: 0.5em;
-}
-
-.tree-type-indicator {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  transition: all 0.2s ease;
-  border: 1px solid transparent;
-}
-
-/* Japanese-inspired color palette for tree types */
-.tree-type-indicator[data-tree-type="full"],
-.tree-type-full .tree-type-indicator {
-  background: var(--tree-full, #2E7D32);      /* Deep forest green - stability */
-  border-color: var(--tree-full-border, #1B5E20);
-}
-
-.tree-type-indicator[data-tree-type="intermediate"],
-.tree-type-intermediate .tree-type-indicator {
-  background: var(--tree-intermediate, #F57C00); /* Warm amber - transition */
-  border-color: var(--tree-intermediate-border, #E65100);
-}
-
-.tree-type-indicator[data-tree-type="consensus"],
-.tree-type-consensus .tree-type-indicator {
-  background: var(--tree-consensus, #1976D2);    /* Calm blue - harmony */
-  border-color: var(--tree-consensus-border, #0D47A1);
-}
-
-.tree-type-indicator[data-tree-type="unknown"],
-.tree-type-unknown .tree-type-indicator {
-  background: var(--tree-unknown, #616161);     /* Neutral gray - mystery */
-  border-color: var(--tree-unknown-border, #424242);
-}
-
-.tree-type-text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125em;
-}
-
-.tree-type-code {
-  font-weight: 600;
-  font-size: 0.95em;
-}
-
-.tree-type-description {
-  font-size: 0.8em;
-  color: var(--text-secondary, #666);
-  font-weight: 400;
-}
-
-/* Ma (Purposeful Space) - Enhanced spacing classes */
-.ma-subtle-spacing {
-  margin-left: 0.5em;
-}
-
-.ma-input-breathing {
-  display: flex;
-  align-items: center;
-  gap: 0.5em;
-}
-
-.ma-scale-breathing {
-  margin: 0.75em 0;
-}
-
-.ma-section-pause {
-  margin-top: 1.5em;
-}
-
-.ma-group-breathing {
-  margin-top: 1em;
-}
-
-.ma-cognitive-pause {
-  margin-top: 1.25em;
-}
-
-.ma-section-breathing {
-  margin-bottom: 1em;
-}
-
-/* Kanso (Simplicity) - Clean component structure */
-.shibui-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.shibui-control {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5em;
-}
-
-.shibui-subtle {
-  border-bottom: 1px solid var(--border-subtle, #e0e0e0);
-  padding-bottom: 0.5em;
-}
-
-.control-icon-group {
-  display: flex;
-  align-items: center;
-  gap: 0.5em;
-}
-
-.control-label {
-  font-size: 0.9em;
-  font-weight: 500;
-  color: var(--text-primary, #333);
-}
-
-.control-input-group {
-  align-self: flex-start;
-}
-
 /* Progressive disclosure for MSA details - Enhanced Shibui design */
+/* MD3 compact override for MSA status */
 .msa-status {
-  background: var(--surface-section, #f8fafc);
-  border: 1px solid var(--border-section, #e2e8f0);
-  border-radius: 10px;
-  padding: 1em;
-  margin: 0.75em 0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium);
+  padding: var(--md-sys-spacing-6);
+  margin: var(--md-sys-spacing-4) 0;
+  box-shadow: var(--md-sys-elevation-level-1);
 }
 
 .msa-header-clean {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.75em;
+  margin-bottom: var(--md-sys-spacing-2);
 }
 
 .msa-title-row {
   display: flex;
   align-items: center;
-  gap: 0.5em;
+  gap: var(--md-sys-spacing-1);
 }
 
 .msa-icon {
   font-size: 1.2em;
-  color: var(--text-secondary, #666);
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .msa-label {
   font-size: 0.95em;
   font-weight: 500;
   margin: 0;
-  color: var(--text-primary, #333);
+  color: var(--md-sys-color-on-surface);
 }
 
 .msa-status-indicator {
@@ -189,47 +40,39 @@
 }
 
 .msa-coverage-display {
-  background: var(--surface-elevated, #1a1a1a);
-  border: 2px solid var(--border-accent, #2563eb);
-  border-radius: 8px;
-  padding: 0.625em 1em;
-  min-width: 100px;
+  background: var(--md-sys-color-surface-container-high);
+  border: 2px solid var(--md-sys-color-primary);
+  border-radius: var(--md-sys-shape-corner-medium);
+  padding: var(--md-sys-spacing-4) var(--md-sys-spacing-6);
+  min-width: 80px;
   text-align: center;
   transition: all 0.15s ease;
-  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
+  box-shadow: 0 2px 6px var(--md-sys-color-primary-container);
   font-family: var(--font-mono, 'SF Mono', monospace);
 }
 
-.coverage-value {
-  font-size: 0.95em;
-  font-weight: 700;
-  color: var(--text-on-dark, #ffffff);
-  letter-spacing: 0.025em;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
 .msa-controls-grid {
-  border-top: 1px solid var(--border-muted, #cbd5e1);
-  padding-top: 0.875em;
-  margin-top: 0.5em;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  padding-top: var(--md-sys-spacing-1);
+  margin-top: var(--md-sys-spacing-1);
 }
 
 .msa-control-pair {
   display: flex;
-  gap: 1.25em;
+  gap: var(--md-sys-spacing-1);
 }
 
 .msa-control-item {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.5em;
+  gap: var(--md-sys-spacing-1);
 }
 
 .msa-control-label {
   font-size: 0.75em;
   font-weight: 600;
-  color: var(--text-muted, #9ca3af);
+  color: var(--md-sys-color-on-surface-variant);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -239,11 +82,11 @@
   text-align: center;
   font-size: 0.95em;
   font-weight: 600;
-  padding: 0.625em 0.875em;
-  border: 1px solid var(--border-input, #4b5563);
-  border-radius: 8px;
-  background: var(--surface-input, #ffffff);
-  color: var(--text-primary, #1f2937);
+  padding: 0.5em 0.75em;
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-small);
+  background: var(--md-sys-color-surface-container-lowest);
+  color: var(--md-sys-color-on-surface);
   transition: all 0.2s ease;
   font-family: var(--font-mono, 'SF Mono', monospace);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
@@ -251,21 +94,18 @@
 
 .msa-input-refined:focus {
   outline: none;
-  border-color: var(--accent-primary, #3b82f6);
-  box-shadow: 0 0 0 3px var(--accent-shadow, rgba(59, 130, 246, 0.15)),
-              0 1px 3px rgba(0, 0, 0, 0.1);
-  background: var(--surface-focus, #fefefe);
+  border-color: var(--md-sys-color-primary);
+  box-shadow: 0 0 0 3px var(--md-sys-color-primary-container),
+    0 1px 3px rgba(0, 0, 0, 0.1);
+  background: var(--md-sys-color-surface-container-lowest);
 }
 
 .msa-input-refined:hover:not(:focus) {
-  border-color: var(--border-hover, #6b7280);
-  background: var(--surface-hover, #fafafa);
+  border-color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-surface-container-low);
 }
 
-.info-icon {
-  font-size: 1.1em;
-  opacity: 0.7;
-}
+
 
 .msa-details[aria-hidden="true"] {
   display: none;
@@ -281,64 +121,34 @@
     opacity: 0;
     transform: translateY(-0.5em);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-/* Enhanced scale display */
-.scale-title-group {
-  display: flex;
-  align-items: center;
-  gap: 0.5em;
-}
 
-.scale-icon {
-  font-size: 1.1em;
-}
-
-.scale-title {
-  font-weight: 500;
-}
-
-.scale-separator {
-  margin: 0 0.25em;
-  color: var(--text-secondary, #666);
-}
-
-
-.semantic-coverage {
-  font-family: var(--font-mono, 'SF Mono', monospace);
-  font-size: 0.9em;
-}
-
-.kanso-text {
-  font-size: 0.85em;
-  color: var(--text-secondary, #666);
-  margin: 0.5em 0 0 0;
-  line-height: 1.3;
-}
 
 /* Enhanced inputs */
 .msa-input {
-  width: 70px;
+  width: 60px;
   text-align: center;
   font-size: 0.9em;
-  padding: 0.25em 0.5em;
-  border: 1px solid var(--border-input, #ddd);
-  border-radius: 4px;
-  background: var(--surface-input, #fff);
+  padding: 0.2em 0.4em;
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-small);
+  background: var(--md-sys-color-surface-container-lowest);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .msa-input:focus {
   outline: none;
-  border-color: var(--accent-color, #007bff);
-  box-shadow: 0 0 0 2px var(--accent-shadow, rgba(0, 123, 255, 0.25));
+  border-color: var(--md-sys-color-primary);
+  box-shadow: 0 0 0 2px var(--md-sys-color-primary-container);
 }
 
 .step-input {
-  width: 80px;
+  width: 60px;
   text-align: center;
 }

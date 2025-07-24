@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import WinBox from 'winbox';
 import { PointGeometryFactory } from "./PointGeometryFactory.js";
 import { InteractionManager } from "./InteractionManager.js";
 import { UIComponents } from "./UIComponents.js";
@@ -225,8 +226,8 @@ class ScatterPlotVisualizer {
     this.points = new THREE.Points(this.geometry, this.pointsMaterial);
     this.scene.add(this.points);
 
-    // Create UI elements (info panel, tooltip)
-    this.infoPanel = UIComponents.createInfoPanel(
+    // Create UI elements (info card, tooltip)
+    this.infoCard = UIComponents.createInfoCard(
       this.container,
       this.numPoints,
       (newSize) => { // onSizeChange callback
@@ -241,7 +242,7 @@ class ScatterPlotVisualizer {
     );
 
     this.tooltip = UIComponents.createTooltip(this.container);
-    this.compareButton = this.infoPanel.querySelector("#compare-connection-btn");
+    this.compareButton = this.infoCard.querySelector("#compare-connection-btn");
     this.compareButton.style.display = "none";
 
     // Create selection marker
@@ -477,7 +478,7 @@ class ScatterPlotVisualizer {
   /**
    * Cleans up resources used by the visualization. This includes removing event listeners,
    * disposing of THREE.js geometries, materials, and textures, clearing connections,
-   * and removing any DOM elements created by the visualizer (tooltip, infoPanel).
+   * and removing any DOM elements created by the visualizer (tooltip, infoCard).
    * It is important to call this method when the visualization is no longer needed to prevent memory leaks.
    */
   dispose() {
@@ -487,7 +488,7 @@ class ScatterPlotVisualizer {
     this.container.removeEventListener("click", this._handleClick);
 
     if (this.tooltip && this.tooltip.parentNode) this.tooltip.parentNode.removeChild(this.tooltip);
-    if (this.infoPanel && this.infoPanel.parentNode) this.infoPanel.parentNode.removeChild(this.infoPanel);
+    if (this.infoCard && this.infoCard.parentNode) this.infoCard.parentNode.removeChild(this.infoCard);
 
     this.interactionManager.clearConnections(); // Clear any lines/hitareas from scene via manager
     this.scene.remove(this.points);
