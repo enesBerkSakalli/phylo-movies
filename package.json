@@ -16,6 +16,10 @@
     "test:scss": "mocha --require @babel/register 'test/scssModuleLoading.test.js'",
     "test:alignment2msa": "mocha --require @babel/register 'test/alignment2MSAViewCreation.test.js'",
     "test:tree-animation": "mocha --require @babel/register 'test/tree_animation_demo.test.js'",
+    "test:backward-scrubbing": "mocha --require @babel/register 'test/backward-scrubbing-logic.test.js'",
+    "test:interpolation-fix": "mocha --require @babel/register 'test/interpolation-engine-bug-fix.test.js'",
+    "test:direction-detection": "mocha --require @babel/register 'test/scrubbing-direction-detection.test.js'",
+    "test:backward-scrubbing-all": "npm run test:direction-detection && npm run test:backward-scrubbing && npm run test:interpolation-fix",
     "postinstall": "patch-package"
   },
   "dependencies": {
@@ -63,6 +67,7 @@
     "puppeteer": "^24.12.1",
     "sass": "^1.89.1",
     "sinon": "^17.0.1",
+    "site-validator-cli": "^1.3.5",
     "typescript": "^5.8.3",
     "vite": "^4.0.0"
   }

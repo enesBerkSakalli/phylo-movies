@@ -1,6 +1,4 @@
-import * as d3 from "d3";
-import { useAppStore } from '../../store.js';
-import { COLOR_MAP } from "../../treeColoring/ColorMap.js";
+import { useAppStore, TREE_COLOR_CATEGORIES } from '../../core/store.js';
 
 /**
  * Enhanced ColorManager with mixed color highlighting support
@@ -17,7 +15,7 @@ export class ColorManager {
   constructor(markedComponents = new Set()) {
     this.marked = markedComponents;
 
-    // Configuration for highlighting and coloring
+    // Configuration for highlighting and coloringRer
     this.highlightConfig = {
       // Blend intensities for different highlight types
       markedComponents: 0.6,
@@ -28,10 +26,10 @@ export class ColorManager {
       strokeWidthMultiplier: useAppStore.getState().highlightStrokeMultiplier,
       opacityBoost: 0.2,
 
-      // Highlight colors
-      markedColor: "#ff5722",
-      s_edgesColor: "#2196f3",
-      atomCoversColor: "#9c27b0"
+      // Highlight colors - use centralized colors
+      markedColor: TREE_COLOR_CATEGORIES.markedColor,
+      s_edgesColor: TREE_COLOR_CATEGORIES.s_edgesColor,
+      atomCoversColor: TREE_COLOR_CATEGORIES.atomCoversColor
     };
 
     // Monophyletic coloring configuration
@@ -55,14 +53,15 @@ export class ColorManager {
   /**
    * Unified branch color method that handles both this.marked and lattice_edges highlighting
    * @param {Object} linkData - The D3 link data object
-   * @param {Array|Set} lattice_edges - Set of lattice edges to highlight (s_edges)
+   * @param {Array|Set} lattice_edges - Set of lattice edges to highlight (s_edges) - these are the ACTIVE ones
    * @param {Object} options - Highlighting options
    * @returns {Object} Object with color, isHighlighted, and effect type information
    */
   getBranchColorWithHighlights(linkData, lattice_edges = [], options = {}) {
     const isMarked = this._isComponentMarked(linkData);
     const isLatticeEdge = this._isS_EdgeHighlighted(linkData, lattice_edges);
-
+    // Only apply greying when there are actual ACTIVE lattice edges (highlightEdges from gui.js)
+    const hasActiveLatticeEdges = lattice_edges && lattice_edges.length > 0;
 
     const { highlightStrokeMultiplier } = useAppStore.getState();
 
@@ -70,7 +69,7 @@ export class ColorManager {
     if (isLatticeEdge && isMarked) {
       // Both highlighting types are active - use purple for combined effect
       return {
-        color: "#9c27b0", // Purple for both s-edge and marked
+        color: TREE_COLOR_CATEGORIES.combinedHighlightColor, // Purple for both s-edge and marked
         isHighlighted: true,
         effectType: "combined",
         needsGlow: false,
@@ -79,7 +78,7 @@ export class ColorManager {
     } else if (isLatticeEdge) {
       // Only lattice edge highlighting - use blue
       return {
-        color: "#2196f3", // Blue for s-edges (lattice edges)
+        color: TREE_COLOR_CATEGORIES.s_edgesColor, // Blue for s-edges (lattice edges)
         isHighlighted: true,
         effectType: "lattice",
         needsGlow: false,
@@ -88,14 +87,32 @@ export class ColorManager {
     } else if (isMarked) {
       // Only marked component highlighting - use red
       return {
-        color: "#ff5722", // Red for marked components
+        color: TREE_COLOR_CATEGORIES.markedColor, // Red for marked components
         isHighlighted: true,
         effectType: "marked",
         needsGlow: false,
         strokeMultiplier: highlightStrokeMultiplier
       };
+    } else if (hasActiveLatticeEdges && this._isDownstreamOfAnyS_Edge(linkData, lattice_edges)) {
+      // Branch is downstream of any ACTIVE s-edge - keep normal coloring to show the subtree
+      return {
+        color: this._getBaseBranchColor(linkData),
+        isHighlighted: false,
+        effectType: "downstream",
+        needsGlow: false,
+        strokeMultiplier: 1.0
+      };
+    } else if (hasActiveLatticeEdges) {
+      // ACTIVE s-edges exist but this branch is not highlighted or downstream - grey it out
+      return {
+        color: '#cccccc', // Grey color for dimmed branches
+        isHighlighted: false,
+        effectType: "dimmed",
+        needsGlow: false,
+        strokeMultiplier: 0.7
+      };
     } else {
-      // No highlighting - use base color
+      // No active highlighting - use base color
       return {
         color: this._getBaseBranchColor(linkData),
         isHighlighted: false,
@@ -114,7 +131,7 @@ export class ColorManager {
   _getBaseBranchColor(linkData) {
     // If monophyletic coloring is disabled, return default color
     if (!this.monophyleticColoringEnabled) {
-      return COLOR_MAP.colorMap.defaultColor;
+      return TREE_COLOR_CATEGORIES.defaultColor;
     }
 
     // For branches, determine color based on the subtree they lead to
@@ -122,13 +139,13 @@ export class ColorManager {
     // based on the predominant taxa group in their subtree
 
     if (!linkData.target || !linkData.target.data) {
-      return COLOR_MAP.colorMap.defaultColor;
+      return TREE_COLOR_CATEGORIES.defaultColor;
     }
 
     // If this branch leads to a leaf, use the leaf's taxa color
     if (!linkData.target.children || linkData.target.children.length === 0) {
       const leafName = linkData.target.data.name;
-      return COLOR_MAP.colorMap[leafName] || COLOR_MAP.colorMap.defaultColor;
+      return TREE_COLOR_CATEGORIES[leafName] || TREE_COLOR_CATEGORIES.defaultColor;
     }
 
     // For internal branches, determine color based on the subtree
@@ -136,22 +153,22 @@ export class ColorManager {
     const subtreeLeaves = this._getSubtreeLeaves(linkData.target);
 
     if (subtreeLeaves.length === 0) {
-      return COLOR_MAP.colorMap.defaultColor;
+      return TREE_COLOR_CATEGORIES.defaultColor;
     }
 
     // Check if all leaves in subtree have the same color (monophyletic group)
     const leafColors = subtreeLeaves.map(leafName =>
-      COLOR_MAP.colorMap[leafName] || COLOR_MAP.colorMap.defaultColor
+      TREE_COLOR_CATEGORIES[leafName] || TREE_COLOR_CATEGORIES.defaultColor
     );
 
     // If all leaves have the same color, use that color for the branch
     const uniqueColors = [...new Set(leafColors)];
-    if (uniqueColors.length === 1 && uniqueColors[0] !== COLOR_MAP.colorMap.defaultColor) {
+    if (uniqueColors.length === 1 && uniqueColors[0] !== TREE_COLOR_CATEGORIES.defaultColor) {
       return uniqueColors[0];
     }
 
     // Default to black for mixed subtrees (only color monophyletic groups)
-    return COLOR_MAP.colorMap.defaultColor;
+    return TREE_COLOR_CATEGORIES.defaultColor;
   }
 
   /**
@@ -211,6 +228,50 @@ export class ColorManager {
   }
 
   /**
+   * Check if a branch is downstream (part of the subtree) of any s-edge
+   * Uses d3.hierarchy node structure to check if current node is a descendant of any s-edge node
+   * @param {Object} linkData - The D3 link data object
+   * @param {Array|Set} s_edges - Set of s-edges (each s-edge is an array of indices)
+   * @returns {boolean} True if this branch is downstream of any s-edge
+   */
+  _isDownstreamOfAnyS_Edge(linkData, s_edges) {
+    if (!s_edges || s_edges.length === 0) {
+      return false;
+    }
+
+    if (!linkData.target || !linkData.target.data || !linkData.target.data.split_indices) {
+      return false;
+    }
+
+    const currentNode = linkData.target;
+
+    // Convert s_edges to array if it's a Set - each element is a single s-edge (array of indices)
+    const edgesArray = Array.isArray(s_edges) ? s_edges : Array.from(s_edges);
+
+    // Walk up the tree from current node to root, checking if any ancestor matches any s-edge
+    let ancestor = currentNode.parent;
+    while (ancestor) {
+      if (ancestor.data && ancestor.data.split_indices) {
+        const ancestorSplit = new Set(ancestor.data.split_indices);
+
+        // Check if this ancestor matches any s-edge
+        for (const edge of edgesArray) {
+          if (Array.isArray(edge)) {
+            const edgeSet = new Set(edge);
+            // Check if the sets are equal (same elements)
+            if (ancestorSplit.size === edgeSet.size && [...ancestorSplit].every(x => edgeSet.has(x))) {
+              return true; // Current node is downstream of this s-edge
+            }
+          }
+        }
+      }
+      ancestor = ancestor.parent;
+    }
+
+    return false;
+  }
+
+  /**
    * Check if a component is marked
    * @param {Object} linkData - The D3 link data object
    * @returns {boolean} True if marked
@@ -221,43 +282,49 @@ export class ColorManager {
     }
 
     const treeSplit = new Set(linkData.target.data.split_indices);
-    if (treeSplit.size === 0) {
-      return false;
-    }
 
     // `this.marked` is an iterable of components (e.g., a Set of Arrays).
     // We iterate through each component directly.
     for (const component of this.marked) {
       // `component` is the group of leaves to check against (e.g., ['t1', 't2']).
       const markedSet = new Set(component);
-
-      // A branch is marked if its leaves (`treeSplit`) are a proper subset
-      // of the marked component (`markedSet`).
-      const isProperSubset = treeSplit.size < markedSet.size &&
-                             [...treeSplit].every(leaf => markedSet.has(leaf));
-
+      let subset =  [...treeSplit].every(leaf => markedSet.has(leaf));
+      const isProperSubset = treeSplit.size <= markedSet.size && subset;
       if (isProperSubset) {
         return true;
       }
     }
-
     return false;
   }
 
   /**
-   * Enhanced node color with simple red highlighting
+   * Enhanced node color with highlighting and s-edge dimming support
    * @param {Object} nodeData - The D3 node data object
+   * @param {Array|Set} lattice_edges - Set of lattice edges to highlight (s_edges) - these are the ACTIVE ones
    * @param {Object} options - Highlighting options
    * @returns {string} The color string
    */
-  getNodeColor(nodeData, options = {}) {
+  getNodeColor(nodeData, lattice_edges = [], options = {}) {
+    const isMarked = this._isNodeMarked(nodeData);
+    const isS_EdgeNode = this._isNodeS_Edge(nodeData, lattice_edges);
+    // Only apply greying when there are actual ACTIVE lattice edges (highlightEdges from gui.js)
+    const hasActiveLatticeEdges = lattice_edges && lattice_edges.length > 0;
 
-    // Check if this leaf is part of any marked component - use simple red
-    if (this._isNodeMarked(nodeData)) {
-      return COLOR_MAP.colorMap.markedColor || "red";
+    // Priority system for node coloring
+    if (isMarked) {
+      return TREE_COLOR_CATEGORIES.markedColor; // Red for marked nodes
+    } else if (isS_EdgeNode) {
+      return TREE_COLOR_CATEGORIES.s_edgesColor; // Blue for s-edge nodes
+    } else if (hasActiveLatticeEdges && this._isNodeDownstreamOfAnyS_Edge(nodeData, lattice_edges)) {
+      // Node is downstream of any ACTIVE s-edge - keep normal coloring to show the subtree
+      return this._getBaseNodeColor(nodeData);
+    } else if (hasActiveLatticeEdges) {
+      // ACTIVE s-edges exist but this node is not highlighted or downstream - grey it out
+      return '#cccccc'; // Grey color for dimmed nodes
+    } else {
+      // No active highlighting - use base color
+      return this._getBaseNodeColor(nodeData);
     }
-
-    return this._getBaseNodeColor(nodeData);
   }
 
   /**
@@ -267,7 +334,7 @@ export class ColorManager {
    */
   _getBaseNodeColor(nodeData) {
     // Try to get color by name (taxa coloring), fallback to default
-    return COLOR_MAP.colorMap[nodeData.data.name] || COLOR_MAP.colorMap.defaultColor;
+    return TREE_COLOR_CATEGORIES[nodeData.data.name] || TREE_COLOR_CATEGORIES.defaultColor;
   }
 
   /**
@@ -290,6 +357,79 @@ export class ColorManager {
         }
       }
     }
+    return false;
+  }
+
+  /**
+   * Check if a node is an s-edge node
+   * @param {Object} nodeData - The D3 node data object
+   * @param {Array|Set} s_edges - Set of s-edges
+   * @returns {boolean} True if this node is an s-edge
+   */
+  _isNodeS_Edge(nodeData, s_edges) {
+    if (!s_edges || s_edges.length === 0) {
+      return false;
+    }
+
+    if (!nodeData.data || !nodeData.data.split_indices) {
+      return false;
+    }
+
+    const nodeSplit = new Set(nodeData.data.split_indices);
+    const edgesArray = Array.isArray(s_edges) ? s_edges : Array.from(s_edges);
+
+    // Check if this node's split matches any of the s_edges
+    for (const edge of edgesArray) {
+      if (Array.isArray(edge)) {
+        const edgeSet = new Set(edge);
+        // Check if the sets are equal (same elements)
+        if (nodeSplit.size === edgeSet.size && [...nodeSplit].every(x => edgeSet.has(x))) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Check if a node is downstream (part of the subtree) of any s-edge
+   * Uses d3.hierarchy node structure to check if current node is a descendant of any s-edge node
+   * @param {Object} nodeData - The D3 node data object
+   * @param {Array|Set} s_edges - Set of s-edges (each s-edge is an array of indices)
+   * @returns {boolean} True if this node is downstream of any s-edge
+   */
+  _isNodeDownstreamOfAnyS_Edge(nodeData, s_edges) {
+    if (!s_edges || s_edges.length === 0) {
+      return false;
+    }
+
+    if (!nodeData.data || !nodeData.data.split_indices) {
+      return false;
+    }
+
+    const edgesArray = Array.isArray(s_edges) ? s_edges : Array.from(s_edges);
+
+    // Walk up the tree from current node to root, checking if any ancestor matches any s-edge
+    let ancestor = nodeData.parent;
+    while (ancestor) {
+      if (ancestor.data && ancestor.data.split_indices) {
+        const ancestorSplit = new Set(ancestor.data.split_indices);
+
+        // Check if this ancestor matches any s-edge
+        for (const edge of edgesArray) {
+          if (Array.isArray(edge)) {
+            const edgeSet = new Set(edge);
+            // Check if the sets are equal (same elements)
+            if (ancestorSplit.size === edgeSet.size && [...ancestorSplit].every(x => edgeSet.has(x))) {
+              return true; // Current node is downstream of this s-edge
+            }
+          }
+        }
+      }
+      ancestor = ancestor.parent;
+    }
+
     return false;
   }
 

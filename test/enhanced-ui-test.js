@@ -23,7 +23,7 @@ class EnhancedPhyloMoviesTestSuite {
 
     async setup() {
         console.log('🚀 Setting up Enhanced UI Test...');
-        
+
         // Ensure screenshot directory exists
         if (!fs.existsSync(this.screenshotDir)) {
             fs.mkdirSync(this.screenshotDir, { recursive: true });
@@ -36,7 +36,7 @@ class EnhancedPhyloMoviesTestSuite {
         });
 
         this.page = await this.browser.newPage();
-        
+
         // Enable console logging
         this.page.on('console', msg => {
             if (msg.type() === 'error') {
@@ -44,9 +44,9 @@ class EnhancedPhyloMoviesTestSuite {
             }
         });
 
-        await this.page.goto(this.baseUrl, { 
+        await this.page.goto(this.baseUrl, {
             waitUntil: 'networkidle2',
-            timeout: 60000 
+            timeout: 60000
         });
         console.log('✅ Navigated to application');
     }
@@ -62,13 +62,13 @@ class EnhancedPhyloMoviesTestSuite {
         const filename = `${name}.png`;
         const filepath = path.join(this.screenshotDir, filename);
         await this.page.screenshot({ path: filepath, fullPage: true });
-        
+
         this.results.screenshots.push({
             name: filename,
             description: description,
             path: filepath
         });
-        
+
         console.log(`📸 Screenshot saved: ${filename} - ${description}`);
         return filepath;
     }
@@ -102,42 +102,42 @@ class EnhancedPhyloMoviesTestSuite {
 
     async uploadFileAndStartVisualization() {
         console.log('\n📂 Step 1: Uploading file and starting visualization...');
-        
+
         try {
             // Take initial screenshot
             await this.takeScreenshot('01-initial-page', 'Initial application page');
-            
+
             // Upload file
             const fileInput = await this.page.$('input[type="file"]');
             if (fileInput) {
                 await fileInput.uploadFile(this.testDataFile);
                 console.log('✅ File uploaded');
                 await this.takeScreenshot('02-file-uploaded', 'File uploaded to FilePond');
-                
+
                 // Wait for file processing
                 await new Promise(resolve => setTimeout(resolve, 2000));
-                
+
                 // Click the Play button to start visualization
                 const playButton = await this.page.$('.btn.btn-primary.btn-lg');
                 if (playButton) {
                     await playButton.click();
                     console.log('✅ Clicked Play button to start visualization');
-                    
+
                     // Wait for visualization to load
                     await new Promise(resolve => setTimeout(resolve, 5000));
-                    
+
                     await this.takeScreenshot('03-visualization-started', 'Visualization started');
-                    
+
                 } else {
                     throw new Error('Play button not found');
                 }
-                
+
             } else {
                 throw new Error('File input not found');
             }
-            
+
             await this.logTestResult('File Upload and Start Visualization', true);
-            
+
         } catch (error) {
             await this.logTestResult('File Upload and Start Visualization', false, error);
             throw error;
@@ -146,7 +146,7 @@ class EnhancedPhyloMoviesTestSuite {
 
     async exploreVisualizationUI() {
         console.log('\n🔍 Step 2: Exploring visualization UI...');
-        
+
         try {
             // Get all visible elements after visualization starts
             const allElements = await this.page.evaluate(() => {
@@ -161,7 +161,7 @@ class EnhancedPhyloMoviesTestSuite {
                         type: el.type || '',
                         hasClick: el.onclick !== null || el.addEventListener !== undefined
                     }))
-                    .filter(el => 
+                    .filter(el =>
                         // Filter for potentially interactive elements
                         el.tagName === 'button' ||
                         el.tagName === 'input' ||
@@ -177,20 +177,20 @@ class EnhancedPhyloMoviesTestSuite {
             });
 
             console.log(`🔍 Found ${allElements.length} potentially interactive elements`);
-            
+
             // Look for SVG elements (tree visualization)
             const svgElements = await this.page.$$('svg');
             console.log(`🌳 Found ${svgElements.length} SVG elements`);
-            
+
             // Test specific selectors that might exist
             const testSelectors = [
                 '#start-button', '#play-button', '.play-button',
                 '#forward-button', '#backward-button', '.nav-button',
                 '#forwardStepButton', '#backwardStepButton',
                 '#positionValue', '#positionButton',
-                '#factor-range', '.speed-control', '.range-slider',
+                '#animation-speed-range', '.speed-control', '.range-slider',
                 '#font-size', '.font-slider',
-                '#branch-length', '.branch-toggle',
+                '#branch-length-options', '.branch-toggle',
                 '#branch-transformation', '.transform-select',
                 '#monophyletic-coloring', '.coloring-toggle',
                 '#chart-modal', '#taxa-coloring-button', '#compare-sequence-button',
@@ -250,12 +250,12 @@ class EnhancedPhyloMoviesTestSuite {
                 const element = await this.page.$(selectorInfo.selector);
                 if (element) {
                     console.log(`\n🔧 Testing ${selectorInfo.selector}...`);
-                    
+
                     const tagName = selectorInfo.tagName;
-                    
+
                     // Take before screenshot
                     await this.takeScreenshot(
-                        `before-${selectorInfo.selector.replace(/[#.]/g, '')}`, 
+                        `before-${selectorInfo.selector.replace(/[#.]/g, '')}`,
                         `Before interacting with ${selectorInfo.selector}`
                     );
 
@@ -264,7 +264,7 @@ class EnhancedPhyloMoviesTestSuite {
                         await element.click();
                         await new Promise(resolve => setTimeout(resolve, 1000));
                         console.log(`  ✅ Clicked ${selectorInfo.selector}`);
-                        
+
                     } else if (tagName === 'input' && selectorInfo.textContent === 'range') {
                         // Test range sliders
                         await element.evaluate(el => {
@@ -273,13 +273,13 @@ class EnhancedPhyloMoviesTestSuite {
                         });
                         await new Promise(resolve => setTimeout(resolve, 500));
                         console.log(`  ✅ Moved slider ${selectorInfo.selector}`);
-                        
+
                     } else if (tagName === 'input' && selectorInfo.textContent === 'checkbox') {
                         // Toggle checkboxes
                         await element.click();
                         await new Promise(resolve => setTimeout(resolve, 500));
                         console.log(`  ✅ Toggled ${selectorInfo.selector}`);
-                        
+
                     } else if (tagName === 'select') {
                         // Change select options
                         const options = await element.$$('option');
@@ -288,7 +288,7 @@ class EnhancedPhyloMoviesTestSuite {
                             await new Promise(resolve => setTimeout(resolve, 500));
                             console.log(`  ✅ Changed select ${selectorInfo.selector}`);
                         }
-                        
+
                     } else if (tagName === 'input' && selectorInfo.textContent === 'text') {
                         // Test text inputs
                         await element.click({ clickCount: 3 }); // Select all
@@ -299,7 +299,7 @@ class EnhancedPhyloMoviesTestSuite {
 
                     // Take after screenshot
                     await this.takeScreenshot(
-                        `after-${selectorInfo.selector.replace(/[#.]/g, '')}`, 
+                        `after-${selectorInfo.selector.replace(/[#.]/g, '')}`,
                         `After interacting with ${selectorInfo.selector}`
                     );
 
@@ -321,15 +321,15 @@ class EnhancedPhyloMoviesTestSuite {
         try {
             // Look for SVG elements
             const svgElements = await this.page.$$('svg');
-            
+
             if (svgElements.length > 0) {
                 await this.takeScreenshot('tree-visualization', 'Tree visualization SVG elements');
-                
+
                 // Test clicking on tree elements
                 for (let i = 0; i < Math.min(svgElements.length, 3); i++) {
                     const svg = svgElements[i];
                     const boundingBox = await svg.boundingBox();
-                    
+
                     if (boundingBox) {
                         // Click in center of SVG
                         await this.page.mouse.click(
@@ -337,11 +337,11 @@ class EnhancedPhyloMoviesTestSuite {
                             boundingBox.y + boundingBox.height / 2
                         );
                         await new Promise(resolve => setTimeout(resolve, 500));
-                        
+
                         await this.takeScreenshot(`tree-click-${i}`, `Clicked on tree SVG ${i}`);
                     }
                 }
-                
+
                 await this.logTestResult('Tree Visualization Interaction', true);
             } else {
                 throw new Error('No SVG elements found for tree visualization');
@@ -354,7 +354,7 @@ class EnhancedPhyloMoviesTestSuite {
 
     async generateReport() {
         console.log('\n📊 Generating Enhanced Test Report...');
-        
+
         const report = {
             timestamp: new Date().toISOString(),
             summary: {
@@ -382,28 +382,28 @@ class EnhancedPhyloMoviesTestSuite {
     async runFullTestSuite() {
         try {
             await this.setup();
-            
+
             // Step 1: Upload file and start visualization
             await this.uploadFileAndStartVisualization();
-            
+
             // Step 2: Explore the UI that's now available
             const foundSelectors = await this.exploreVisualizationUI();
-            
+
             // Step 3: Test the found elements
             if (foundSelectors.length > 0) {
                 await this.testFoundElements(foundSelectors);
             } else {
                 console.log('⚠️ No interactive elements found to test');
             }
-            
+
             // Step 4: Test tree visualization
             await this.testTreeVisualization();
-            
+
             // Final screenshot
             await this.takeScreenshot('final-state', 'Final application state');
-            
+
             return await this.generateReport();
-            
+
         } catch (error) {
             console.error('🔴 Enhanced test suite failed:', error);
             await this.takeScreenshot('error-state', 'Error state screenshot');
@@ -420,7 +420,7 @@ module.exports = EnhancedPhyloMoviesTestSuite;
 // Run directly if called as script
 if (require.main === module) {
     const testSuite = new EnhancedPhyloMoviesTestSuite();
-    
+
     testSuite.runFullTestSuite()
         .then(report => {
             console.log('\n🎉 Enhanced Test Suite Completed!');

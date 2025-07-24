@@ -1,204 +1,78 @@
-/* chart.css - Unified chart styling with stringent design */
-
-/* Chart containers - compact and responsive */
-#lineChart, #line-chart {
-  width: 100%;
-  height: clamp(140px, 20vh, 200px);
-  min-height: 140px;
-  max-height: 200px;
-  background-color: var(--nav-bg-panel);
-  border-radius: var(--nav-border-radius);
-  margin-bottom: var(--nav-spacing-xs);
-  position: relative;
-  overflow: hidden;
-}
-
-.chart-canvas {
-  width: 100%;
-  height: 100%;
-  min-height: 140px;
-  max-height: 200px;
-  background-color: var(--nav-bg-panel);
-  border-radius: var(--nav-border-radius);
-  position: relative;
-  overflow: hidden;
-  display: block;
-}
-
-/* Chart interaction elements */
-.index-rect {
-  fill: rgba(67, 144, 225, 0.3);
-  stroke-width: 1px;
-  stroke: var(--nav-primary-color);
-  transition: fill 0.2s ease;
-}
-
-.index-rect:hover {
-  fill: var(--nav-primary-color);
-  cursor: pointer;
-}
-
-.drag-indicator .touch-target:hover,
-.drag-indicator:hover .current-position-line {
-  stroke: #ff4500;
-  stroke-width: 2px;
-}
-
-.drag-indicator:hover .drag-handle {
-  r: 6;
-  fill: #ff4500;
-}
-
-.ship-line,
-.ship-handle {
-  transition: all 0.2s ease;
-}
-
-#ship-modal-group:hover .ship-line,
-.ship-indicator-group:hover .ship-line {
-  stroke-width: 2px;
-  stroke: #ff4500;
-}
-
-#ship-modal-group:hover .ship-handle,
-.ship-indicator-group:hover .ship-handle {
-  r: 6;
-  fill: #ff4500;
-}
-
-/* Chart data visualization */
-.line {
-  stroke: var(--nav-primary-color);
-  stroke-width: 1.5px;
-  fill: none;
-  transition: stroke-width 0.2s ease;
-}
-
-.line:hover {
-  stroke-width: 2px;
-}
-
-.dot {
-  fill: var(--nav-primary-color);
-  stroke: white;
-  stroke-width: 1px;
-  r: 3;
-  transition: all 0.2s ease;
-  cursor: pointer;
-}
-
-.dot:hover {
-  r: 4;
-  fill: #ff4500;
-}
-
-.area {
-  opacity: 0.2;
-  transition: opacity 0.2s ease;
-}
-
-/* Chart card styling - Enhanced Material Design 3 */
-.chart-card {
-  background: var(--md-sys-color-surface-container, var(--nav-bg-panel));
-  border-radius: var(--md-sys-shape-corner-medium, 12px);
-  border: 1px solid var(--md-sys-color-outline-variant, var(--nav-border-color));
-  margin-bottom: var(--nav-spacing-sm);
-  overflow: hidden;
-  box-shadow: var(--md-sys-elevation-level-1, 0 2px 8px rgba(0, 0, 0, 0.1));
-}
-
-.chart-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--nav-spacing-md) var(--nav-spacing-lg);
-  border-bottom: 1px solid var(--md-sys-color-outline-variant, var(--nav-border-color));
-  background: var(--md-sys-color-surface-container-highest, rgba(255, 255, 255, 0.04));
-}
-
-.chart-title {
-  display: flex;
-  align-items: center;
-  gap: var(--nav-spacing-sm);
-}
-
-.chart-title > div {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-.chart-title > div > span {
+.chart-title>div>span {
   font-size: 14px;
   font-weight: 500;
-  color: var(--md-sys-color-on-surface, var(--nav-text-primary));
+  color: var(--md-sys-color-on-surface);
 }
 
 .chart-icon {
-  color: var(--md-sys-color-primary, var(--nav-accent-blue));
+  color: var(--md-sys-color-primary);
   font-size: 16px;
 }
 
-.chart-subtitle {
-  font-size: 11px;
-  color: var(--md-sys-color-on-surface-variant, var(--nav-text-muted));
-  font-style: italic;
-  margin-top: 2px;
-  font-weight: normal;
-  line-height: 1.2;
-}
+
 
 .chart-container {
-  padding: var(--nav-spacing-md);
-  background: var(--md-sys-color-surface-container-low, var(--nav-bg-input));
+  padding: var(--md-sys-spacing-5);
+  background: var(--md-sys-color-surface-container-low);
 }
 
-/* Enhanced chart canvas with better spacing for y-axis labels */
-#lineChart, #line-chart {
+/* Chart containers - unified styling */
+#lineChart,
+#line-chart {
   width: 100%;
-  height: clamp(140px, 20vh, 200px);
-  min-height: 140px;
-  max-height: 200px;
-  background-color: var(--md-sys-color-surface-container-low, var(--nav-bg-input));
-  border-radius: var(--md-sys-shape-corner-small, 8px);
-  margin-bottom: var(--nav-spacing-xs);
+  height: 100%;
+  background-color: var(--md-sys-color-surface-container-low);
+  border-radius: var(--md-sys-shape-corner-small);
   position: relative;
   overflow: hidden;
-  /* Add more padding for y-axis labels */
-  padding-left: 20px;
-  padding-right: 10px;
+  box-sizing: border-box;
+}
+
+/* Movie player bar specific overrides */
+.movie-player-bar #lineChart,
+.movie-player-bar #line-chart {
+  background: transparent;
+  border-radius: 0;
+  border: none;
+  padding: 0;
+  margin: 0;
 }
 
 .chart-canvas {
   width: 100%;
   height: 100%;
-  min-height: 140px;
-  max-height: 200px;
-  background-color: var(--md-sys-color-surface-container-low, var(--nav-bg-input));
-  border-radius: var(--md-sys-shape-corner-small, 8px);
+  background-color: var(--md-sys-color-surface-container-low);
+  border-radius: var(--md-sys-shape-corner-small);
   position: relative;
-  overflow: visible; /* Allow y-axis labels to extend outside */
+  overflow: hidden;
   display: block;
-  /* Ensure enough space for y-axis labels */
-  padding: 10px 15px 10px 25px; /* top right bottom left */
+  box-sizing: border-box;
+}
+
+/* Movie player bar chart canvas - transparent background */
+.movie-player-bar .chart-canvas {
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
 }
 
 /* Chart legend styling */
 .chart-legend {
   display: flex;
   justify-content: center;
-  gap: var(--nav-spacing-lg);
-  margin-top: var(--nav-spacing-sm);
-  padding: var(--nav-spacing-sm);
-  background: var(--md-sys-color-surface-container, var(--nav-bg-panel));
-  border-radius: var(--md-sys-shape-corner-small, 8px);
-  border-top: 1px solid var(--md-sys-color-outline-variant, var(--nav-border-color));
+  gap: var(--md-sys-spacing-3);
+  margin-top: var(--md-sys-spacing-2);
+  padding: var(--md-sys-spacing-2);
+  background: var(--md-sys-color-surface-container);
+  border-radius: var(--md-sys-shape-corner-small);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  gap: var(--nav-spacing-xs);
+  gap: var(--md-sys-spacing-1);
 }
 
 .legend-color {
@@ -208,16 +82,25 @@
 }
 
 .distance-color {
-  background: var(--md-sys-color-primary, var(--nav-primary-color));
+  background: var(--chart-inactive);
 }
 
 .current-position-color {
-  background: #ff4500;
+  background: var(--chart-active);
+}
+
+/* Secondary data visualization colors */
+.comparison-color {
+  background: var(--chart-comparison);
+}
+
+.neutral-color {
+  background: var(--chart-inactive);
 }
 
 .legend-label {
   font-size: 11px;
-  color: var(--md-sys-color-on-surface-variant, var(--nav-text-muted));
+  color: var(--md-sys-color-on-surface-variant);
   font-weight: 500;
 }
 
@@ -227,7 +110,7 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: var(--nav-text-muted);
+  color: var(--md-sys-color-on-surface-variant);
   font-style: italic;
   font-size: 11px;
 }
@@ -240,7 +123,7 @@
 /* Material Icons in charts */
 .chart-header .material-icons {
   font-size: 16px;
-  color: var(--md-sys-color-primary, var(--nav-primary-color));
+  color: var(--md-sys-color-primary);
 }
 
 .chart-controls .material-icons {
@@ -251,7 +134,7 @@
 .chart-controls {
   display: flex;
   align-items: center;
-  gap: var(--nav-spacing-sm);
+  gap: var(--md-sys-spacing-3);
 }
 
 .select-wrapper {
@@ -264,34 +147,94 @@
   min-width: 100px;
   max-width: 140px;
   flex: 1;
-  background: var(--md-sys-color-surface-container-low, var(--nav-bg-input));
-  border: 1px solid var(--md-sys-color-outline, var(--nav-border-color));
-  color: var(--md-sys-color-on-surface, var(--nav-text-primary));
+  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--md-sys-color-outline);
+  color: var(--md-sys-color-on-surface);
 }
 
 .chart-controls .md-button {
   min-width: 36px;
   height: 32px;
-  padding: 0 var(--nav-spacing-sm);
+  padding: var(--md-sys-spacing-2) var(--md-sys-spacing-3);
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  #lineChart, #line-chart {
-    height: clamp(120px, 18vh, 160px);
-    min-height: 120px;
-    max-height: 160px;
-  }
+/* Remove legacy responsive rules - handled by containers now */
 
-  .chart-subtitle {
-    display: none;
-  }
+
+.chart-controls-compact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--md-sys-spacing-8);
+  padding: var(--md-sys-spacing-6) var(--md-sys-spacing-12);
+  background: var(--md-sys-color-surface-container-high);
+  border-radius: var(--md-sys-shape-corner-small);
+  width: 100%;
+  /* Ensure full width */
+  box-sizing: border-box;
 }
 
-@media (min-width: 1200px) {
-  #lineChart, #line-chart {
-    height: clamp(160px, 22vh, 220px);
-    min-height: 160px;
-    max-height: 220px;
-  }
+.chart-select-inline {
+  min-width: var(--md-sys-spacing-30);
+  font-size: 12px;
+  padding: var(--md-sys-spacing-4) var(--md-sys-spacing-8);
+}
+
+.chart-expand-btn {
+  min-width: auto;
+  padding: var(--md-sys-spacing-4);
+}
+
+.chart-expand-btn .material-icons {
+  font-size: 16px;
+}
+
+/* Legacy chart content inline - no longer used */
+.chart-content-inline {
+  display: none;
+}
+
+/* Chart canvas for inline charts */
+.chart-inline {
+  width: 100%;
+  height: 100%;
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: var(--md-sys-shape-corner-small);
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Movie player bar specific chart inline styling */
+.movie-player-bar .chart-inline {
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
+}
+
+/* chart-tooltip.css - Unified tooltip styling */
+
+.chart-tooltip {
+  position: absolute;
+  background-color: rgba(35, 36, 43, 0.95);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium);
+  padding: var(--md-sys-spacing-1) var(--md-sys-spacing-2);
+  font-size: var(--md-sys-typescale-label-small-size, 11px);
+  font-family: var(--font-family-sans-serif, 'Heebo', sans-serif);
+  color: var(--md-sys-color-on-surface);
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  transition: opacity 0.2s ease;
+  max-width: 280px;
+  backdrop-filter: blur(4px);
+}
+
+.chart-tooltip strong {
+  color: var(--md-sys-color-primary);
+  font-weight: var(--md-sys-typescale-label-medium-weight, 600);
+  display: inline-block;
+  min-width: 80px;
 }

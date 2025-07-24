@@ -1,9 +1,13 @@
 import * as d3 from "d3";
-import { orientText, getOrientTextInterpolator, calculateTextAnchor } from "../radialTreeGeometry.js";
+import { orientText, getOrientTextInterpolator } from "../radialTreeGeometry.js";
 import { getNodeKey } from "../utils/KeyGenerator.js";
 import { shortestAngle } from "../../utils/MathUtils.js";
-import { getEasingFunction } from "../utils/animationUtils.js";
-import { useAppStore } from '../../store.js';
+import { getEasingFunction, EASING_FUNCTIONS } from "../utils/animationUtils.js";
+import { useAppStore } from '../../core/store.js';
+import { calculateTextAnchor as calculateTextAnchorFromModule, LABEL_OFFSETS } from "../utils/LabelPositioning.js";
+
+// Re-export for backward compatibility
+const calculateTextAnchor = (d) => calculateTextAnchorFromModule(d.angle);
 
 /**
  * LabelRenderer - Specialized renderer for tree leaf labels
@@ -21,6 +25,30 @@ export class LabelRenderer {
     this.svgContainer = svgContainer;
     this.colorManager = colorManager;
     this.labelClass = "label";
+
+  }
+
+  /**
+   * Sets previous positions on leaf data from store cache
+   * @param {Array} leafData - Array of leaf node objects
+   */
+  setPreviousPositions(leafData) {
+    // Get previous positions from store cache
+    const { previousTreeIndex, getTreePositions } = useAppStore.getState();
+    const previousPositions = getTreePositions(previousTreeIndex);
+
+    for (const leaf of leafData) {
+      const leafKey = getNodeKey(leaf);
+
+      // Use store cache or default for entering leaves
+      if (previousPositions && previousPositions.leaves.has(leafKey)) {
+        const cached = previousPositions.leaves.get(leafKey);
+        leaf.prevAngle = cached.angle;
+      } else {
+        // Default for entering leaves, animate from same angle.
+        leaf.prevAngle = leaf.angle;
+      }
+    }
   }
 
   /**
@@ -30,13 +58,35 @@ export class LabelRenderer {
    * @param {number} labelRadius - Radius for positioning
    * @param {number} stageDuration - Stage 2 duration (should be totalDuration/3)
    * @param {string} easing - D3 easing function name for synchronization
+   * @param {Object} filteredLeafData - Pre-filtered leaf data {entering, updating, exiting}
    * @returns {Promise} Promise that resolves when Stage 2 animation completes
    */
-  async renderUpdating(leafData, labelRadius, stageDuration = 333, easing = "easePolyInOut") {
+  async renderUpdating(leafData, labelRadius, stageDuration = 333, easing = EASING_FUNCTIONS.POLY_IN_OUT, filteredLeafData) {
     // Handle empty data case
     if (!leafData || leafData.length === 0) {
       return Promise.resolve();
     }
+
+    // Trust the pre-filtered data from TreeAnimationController
+    if (!filteredLeafData) {
+      throw new Error('LabelRenderer: filteredLeafData must be provided by TreeAnimationController');
+    }
+
+    // Set previous positions from cache before animation
+    this.setPreviousPositions(leafData);
+
+    // Get the old label radius for smooth transitions
+    const { previousTreeIndex, getLayoutCache } = useAppStore.getState();
+    const previousLayout = getLayoutCache(previousTreeIndex);
+    const oldLabelRadius = (previousLayout && typeof previousLayout.maxRadius === 'number')
+      ? previousLayout.maxRadius + LABEL_OFFSETS.DEFAULT
+      : labelRadius;
+
+    // Use pre-filtered data directly
+    const enteringLabels = filteredLeafData.entering || [];
+    const updatingLabels = filteredLeafData.updating || [];
+    const exitingLabels = filteredLeafData.exiting || [];
+
 
     // JOIN: Bind data to existing elements (labels should already exist) - use consistent key function
     const labels = this.svgContainer
@@ -49,12 +99,13 @@ export class LabelRenderer {
       .attr("class", this.labelClass)
       .attr("transform", (d) => orientText(d, labelRadius))
       .attr("text-anchor", (d) => calculateTextAnchor(d))
-      .style("font-size", useAppStore.getState().styleConfig.fontSize || "1.2em")
+      .style("font-size", useAppStore.getState().fontSize || "1.2em")
       .style("fill", (d) => this.colorManager.getNodeColor(d))
       .text((d) => d.data.name);
 
-    // EXIT: Remove any extra labels (should be rare since leaves are constant)
-    labels.exit().remove();
+    // EXIT: Remove only labels that our diffing identified as exiting
+    const exitingLabelSelection = this._createLabelExitSelection(exitingLabels);
+    exitingLabelSelection.remove();
 
     // UPDATE: Animate all labels (merged enter + existing) to new positions
     const allLabels = labels.merge(enterLabels);
@@ -63,17 +114,43 @@ export class LabelRenderer {
       return Promise.resolve();
     }
 
+    // Filter to only labels that our diffing identified as updating
+    const updatingLabelSelection = this._createLabelUpdateSelection([...enteringLabels, ...updatingLabels]);
+
+    // IMPORTANT: If no labels are updating structurally but fontSize might have changed,
+    // we still need to apply style updates to all labels
+    const labelsToUpdate = updatingLabelSelection.empty() ? allLabels : updatingLabelSelection;
+
+    if (labelsToUpdate.empty()) {
+      return Promise.resolve();
+    }
+
     // Get easing function for synchronization
     const easingFunction = getEasingFunction(easing);
 
     // Stage 2 Animation: Move labels to new positions with synchronized timing
-    return allLabels
+    const result = labelsToUpdate
       .transition("label-stage2-update")
       .ease(easingFunction)
       .duration(stageDuration) // Use stage duration for synchronization
-      .attrTween("transform", getOrientTextInterpolator(labelRadius))
+      .attrTween("transform", getOrientTextInterpolator(labelRadius, oldLabelRadius))
       .attr("text-anchor", (d) => calculateTextAnchor(d))
-      .style("font-size", useAppStore.getState().styleConfig.fontSize || "1.2em")
+      .style("fill", (d) => this.colorManager.getNodeColor(d))
+      .style("font-size", useAppStore.getState().fontSize || "1.2em")
+      .end().catch(() => {});
+
+    // Add debug info
+    result.filteredLeafData = filteredLeafData;
+    result.stats = {
+      total: leafData.length,
+      entering: enteringLabels.length,
+      updating: updatingLabels.length,
+      exiting: exitingLabels.length,
+      // Show our diffing vs D3's detection
+      actuallyAnimated: labelsToUpdate.size()
+    };
+
+    return result;
   }
 
 
@@ -98,13 +175,13 @@ export class LabelRenderer {
       .attr("id", (d) => `label-${getNodeKey(d)}`)
       .attr("dy", ".31em")
       .attr("font-family", "sans-serif")
-      .attr("font-size", useAppStore.getState().styleConfig.fontSize)
+      .attr("font-size", useAppStore.getState().fontSize)
       .text((d) => d.data.name.replace(/_/g, " "))
       .attr("transform", (d) => orientText(d, labelRadius)); // Initial position for new labels
 
-    // MERGE and apply instant updates with transition
+    // MERGE and apply instant updates (NO transition/tween)
     enterSelection.merge(labels)
-      .attrTween("transform", getOrientTextInterpolator(labelRadius))
+      .attr("transform", (d) => orientText(d, labelRadius))
       .attr("text-anchor", (d) => (d.angle > Math.PI ? "end" : "start"))
       .style("fill", (d) => this.colorManager.getNodeColor(d))
       .style("opacity", (d) => (d._opacity !== undefined ? d._opacity : 1));
@@ -123,8 +200,27 @@ export class LabelRenderer {
    * @returns {d3.Selection} The updated labels selection
    */
   renderLabelsInterpolated(fromLeafData, toLeafData, fromLabelRadius, toLabelRadius, timeFactor) {
+    // Try to get positions from store cache first
+    const { previousTreeIndex, getTreePositions } = useAppStore.getState();
+    const previousPositions = getTreePositions(previousTreeIndex);
+
     // Create map for quick lookup of 'from' nodes by key
     const fromMap = new Map(fromLeafData.map(d => [getNodeKey(d), d]));
+
+    // Enhance fromMap with store cache if available
+    if (previousPositions) {
+      toLeafData.forEach(node => {
+        const nodeKey = getNodeKey(node);
+        if (previousPositions.leaves.has(nodeKey) && !fromMap.has(nodeKey)) {
+          const cached = previousPositions.leaves.get(nodeKey);
+          fromMap.set(nodeKey, {
+            ...node,
+            angle: cached.angle,
+            radius: cached.radius
+          });
+        }
+      });
+    }
 
     // Use standard D3 data binding with toLeafData and getNodeKey (like other renderers)
     const labels = this.svgContainer
@@ -140,9 +236,9 @@ export class LabelRenderer {
       .attr("id", (d) => `label-${getNodeKey(d)}`)
       .attr("text-anchor", "middle")
       .attr("dominant-baseline", "middle")
-      .style("font-size", useAppStore.getState().styleConfig.fontSize)
+      .style("font-size", useAppStore.getState().fontSize)
       .style("font-family", "Arial, sans-serif")
-      .style("fill", "black")
+      .style("fill", (d) => this.colorManager.getNodeColor(d))
       .style("opacity", 0);
 
     // MERGE and UPDATE: Handle all labels
@@ -152,40 +248,36 @@ export class LabelRenderer {
     allLabels
       .text(d => d.data.name || "")
       .attr("transform", d => {
-        // Calculate interpolated transform using proper angle interpolation
+        // Use the same interpolation logic as other functions
         const fromNode = fromMap.get(getNodeKey(d));
         if (fromNode) {
-          // Interpolate angles using shortest path
-          const fromAngle = fromNode.angle;
-          const toAngle = d.angle;
-          const adjustedAngleDiff = shortestAngle(fromAngle, toAngle);
+          // Set up previous angle data for consistent interpolation
+          d.prevAngle = fromNode.angle;
 
-          const interpolatedAngle = fromAngle + adjustedAngleDiff * timeFactor;
+          // Create interpolator using the same function as other methods
+          const interpolator = getOrientTextInterpolator(toLabelRadius, fromLabelRadius);
+          const interpolatorFn = interpolator(d);
 
-          // Interpolate radius
-          const interpolatedRadius = fromLabelRadius + (toLabelRadius - fromLabelRadius) * timeFactor;
-
-          // Create interpolated node data for orientText
-          const interpolatedNode = {
-            angle: interpolatedAngle
-          };
-
-          return orientText(interpolatedNode, interpolatedRadius);
+          // Get the interpolated transform at the current timeFactor
+          return interpolatorFn(timeFactor);
         }
         return orientText(d, toLabelRadius);
       })
       .attr("text-anchor", d => {
-        // Calculate interpolated text anchor
+        // Use consistent text anchor calculation
         const fromNode = fromMap.get(getNodeKey(d));
         if (fromNode) {
+          // Interpolate the angle using the same method as transform
           const fromAngle = fromNode.angle;
           const toAngle = d.angle;
           const adjustedAngleDiff = shortestAngle(fromAngle, toAngle);
-
           const interpolatedAngle = fromAngle + adjustedAngleDiff * timeFactor;
-          return interpolatedAngle > Math.PI ? "end" : "start";
+
+          // Use the same logic as calculateTextAnchor but with interpolated angle
+          const interpolatedAngleDegrees = (interpolatedAngle * 180) / Math.PI;
+          return interpolatedAngleDegrees < 270 && interpolatedAngleDegrees > 90 ? "end" : "start";
         }
-        return d.angle > Math.PI ? "end" : "start";
+        return calculateTextAnchor(d);
       })
       .style("opacity", d => {
         const fromNode = fromMap.get(getNodeKey(d));
@@ -194,7 +286,8 @@ export class LabelRenderer {
         } else {
           return timeFactor; // Fade in if only in target
         }
-      });
+      })
+      .style("fill", (d) => this.colorManager.getNodeColor(d));
 
     return allLabels;
   }
@@ -205,7 +298,38 @@ export class LabelRenderer {
   clear() {
     this.svgContainer.selectAll(`.${this.labelClass}`).remove();
   }
+
+  /**
+   * Creates label exit selection directly from pre-filtered exiting label data
+   * @param {Array} exitingLabels - Array of leaf objects that should exit
+   * @returns {d3.Selection} The exit selection
+   * @private
+   */
+  _createLabelExitSelection(exitingLabels) {
+    if (exitingLabels.length === 0) {
+      return d3.select(null).selectAll(null); // Empty selection
+    }
+
+    return this.svgContainer
+      .selectAll(`.${this.labelClass}`)
+      .data(exitingLabels, getNodeKey)
+      .exit();
+  }
+
+  /**
+   * Creates label update selection directly from pre-filtered updating label data
+   * @param {Array} updatingLabels - Array of leaf objects that should update
+   * @returns {d3.Selection} The update selection
+   * @private
+   */
+  _createLabelUpdateSelection(updatingLabels) {
+    if (updatingLabels.length === 0) {
+      return d3.select(null).selectAll(null); // Empty selection
+    }
+
+    return this.svgContainer
+      .selectAll(`.${this.labelClass}`)
+      .data(updatingLabels, getNodeKey);
+  }
+
 }
-
-
-

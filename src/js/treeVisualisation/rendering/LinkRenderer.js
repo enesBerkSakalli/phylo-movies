@@ -1,8 +1,8 @@
 import * as d3 from "d3";
-import { buildSvgString, buildSvgStringTime } from "../radialTreeGeometry.js";
+import { buildInterpolatedBranchPath } from "../radialTreeGeometry.js";
 import { getLinkKey, getLinkSvgId } from "../utils/KeyGenerator.js";
-import { getEasingFunction } from "../utils/animationUtils.js";
-import { useAppStore } from '../../store.js';
+import { getEasingFunction, EASING_FUNCTIONS } from "../utils/animationUtils.js";
+import { useAppStore } from '../../core/store.js';
 
 
 /**
@@ -22,149 +22,94 @@ export class LinkRenderer {
   constructor(svgContainer, colorManager) {
     this.svgContainer = svgContainer;
     this.colorManager = colorManager;
-    const { styleConfig } = useAppStore.getState();
-    this.sizeConfig = { ...styleConfig, contourWidth: styleConfig.contourWidth || 4 };
 
     // CSS class for link elements
     this.linkClass = "links";
 
-    // Cache for previous link positions
-    this.previousPositionsCache = new Map();
-
-    // Store the last known set of links to calculate transitions
-    this.currentLinksData = [];
+    // Note: Position caching now handled by store - no local cache needed
   }
 
-  /**
-   * Creates an arc interpolation function for D3 transitions.
-   * Assumes the cache has been pre-populated for every link.
-   * @returns {Function} D3 attrTween interpolation function
-   */
-  getArcInterpolationFunction() {
-    return (d) => {
-      const linkKey = getLinkKey(d);
-      // The cache MUST have the key from the pre-population step
-      const cachedPos = this.previousPositionsCache.get(linkKey);
+  
 
-      // Default to the final position only as a safeguard, but it shouldn't be needed
-      const prevSourceAngle = cachedPos?.sourceAngle ?? d.source.angle;
-      const prevSourceRadius = cachedPos?.sourceRadius ?? d.source.radius;
-      const prevTargetAngle = cachedPos?.targetAngle ?? d.target.angle;
-      const prevTargetRadius = cachedPos?.targetRadius ?? d.target.radius;
-
-      // D3 attrTween inner function, called repeatedly during animation
-      return (t) => {
-        return buildSvgStringTime(d, t, prevSourceAngle, prevSourceRadius, prevTargetAngle, prevTargetRadius);
-      };
-    };
-  }
+  
 
   /**
    * Returns promises for each animation stage to allow external coordination.
-   * This version pre-populates the cache to avoid DOM reads.
    * @param {Array} newLinksData - The new array of D3 link objects to render.
    * @param {number} duration - Animation duration in milliseconds
    * @param {Array} highlightEdges - Array of split_indices to highlight
+   * @param {Object} filteredLinkData - Pre-filtered link data {entering, updating, exiting}
    * @returns {Object} Object with stage promises and selections
    */
-  getAnimationStages(newLinksData, duration = 1000, highlightEdges = []) {
-    const keyFn = getLinkKey;
+  getAnimationStages(newLinksData, duration = 1000, highlightEdges = [], filteredLinkData) {
     this._highlightEdges = highlightEdges;
 
-    // Create a map of previous links for quick lookup
-    const previousLinksMap = new Map(this.currentLinksData.map(d => [keyFn(d), d]));
+    // Trust the pre-filtered data from TreeAnimationController
+    if (!filteredLinkData) {
+      throw new Error('LinkRenderer: filteredLinkData must be provided by TreeAnimationController');
+    }
 
-    // Pre-populate the cache for every link in the new dataset
-    newLinksData.forEach(link => {
-      const linkKey = getLinkKey(link);
-      const previousLink = previousLinksMap.get(linkKey);
+    // Set previous positions on all link data
+    this._setPreviousPositions(newLinksData);
 
-      if (previousLink) {
-        // This is an UPDATING link. Cache its old position.
-        this.previousPositionsCache.set(linkKey, {
-          sourceAngle: previousLink.source.angle,
-          sourceRadius: previousLink.source.radius,
-          targetAngle: previousLink.target.angle,
-          targetRadius: previousLink.target.radius,
-        });
-      } else {
-        // This is an ENTERING link. It should "grow" from its parent's position.
-        const parentNode = link.source;
-        this.previousPositionsCache.set(linkKey, {
-          sourceAngle: parentNode.angle,
-          sourceRadius: parentNode.radius,
-          targetAngle: parentNode.angle,  // Start target at parent's position
-          targetRadius: parentNode.radius, // Start radius at parent's radius
-        });
-      }
-    });
-
-    // Bind the new data to the DOM elements
-    const links = this.svgContainer
+    // Use D3's standard data-joining pattern - consistent keys ensure proper enter/update/exit
+    const linkSelection = this.svgContainer
       .selectAll(`.${this.linkClass}`)
-      .data(newLinksData, keyFn);
+      .data(newLinksData, getLinkKey);
 
-    // For exiting links, remove them from the cache to prevent memory leaks
-    links.exit().each(d => {
-      this.previousPositionsCache.delete(keyFn(d));
-    });
+    const enterSelection = linkSelection.enter();
+    const updateSelection = linkSelection;
+    const exitSelection = linkSelection.exit();
 
-    // Get D3 selections for each state
-    const enterSelection = this._handleEnter(links.enter());
-    const updateSelection = links;
-    const exitSelection = links.exit();
-
-    const updateDuration = duration;
-    const exitDuration = duration;
-
-    // This function is now simple and reliable because the cache is ready
+    // Create interpolation function using data object properties
     const interpolationFunction = this.getArcInterpolationFunction();
 
-    // IMPORTANT: Update the state for the *next* animation cycle
-    this.currentLinksData = newLinksData;
-
-    return {
+    const result = {
       enterSelection,
       updateSelection,
       exitSelection,
-      stage1: () => {
-        if (enterSelection.empty()) return Promise.resolve();
-        // Animate new links from their starting position (the parent)
-        return this._animateEnter(enterSelection, interpolationFunction, duration, "easeSinOut", highlightEdges);
+      stageExit: () => {
+        // Stage 1: Exit old elements first
+        if (exitSelection.empty()) return Promise.resolve();
+        console.log('LinkRenderer stageExit: Removing', exitSelection.size(), 'links');
+        return this._animateExit(exitSelection, duration, EASING_FUNCTIONS.SIN_IN);
       },
-      stage2: () => {
+      stageEnter: () => {
+        // Stage 2: Create entering links in the DOM (they appear instantly at final position)
+        if (!enterSelection.empty()) {
+          this._handleEnter(enterSelection);
+          console.log('LinkRenderer stageEnter: Created', enterSelection.size(), 'entering links');
+        }
+        return Promise.resolve();
+      },
+      stageUpdate: () => {
+        // Stage 3: Update existing elements with animation
         if (updateSelection.empty()) return Promise.resolve();
-        return this._animateUpdate(updateSelection, interpolationFunction, updateDuration, "easeSinInOut", highlightEdges);
+        console.log('LinkRenderer stageUpdate: Animating', updateSelection.size(), 'links');
+        return this._animateUpdate(updateSelection, interpolationFunction, duration, EASING_FUNCTIONS.SIN_IN_OUT, highlightEdges);
       },
-      stage3: () => exitSelection.empty() ? Promise.resolve() : this._animateExit(exitSelection, exitDuration, "easeSinIn"),
       mergedSelection: enterSelection.merge(updateSelection)
     };
+
+    // Add debug info
+    result.filteredLinkData = filteredLinkData;
+    result.stats = {
+      total: newLinksData.length,
+      entering: filteredLinkData.entering?.length || 0,
+      updating: filteredLinkData.updating?.length || 0,
+      exiting: filteredLinkData.exiting?.length || 0,
+      actuallyAnimated: {
+        enter: enterSelection.size(),
+        update: updateSelection.size(),
+        exit: exitSelection.size()
+      }
+    };
+
+    return result;
   }
 
-  /**
-   * Handles the ENTER selection - creates new link elements structure.
-   * @param {d3.Selection} enter - The enter selection
-   * @returns {d3.Selection} The enter selection
-   * @private
-   */
-  _handleEnter(enter) {
-    const linkGroup = enter
-      .append("g")
-      .attr("class", this.linkClass)
-      .attr("id", (d) => getLinkSvgId(d));
 
-    // Append path elements without setting the 'd' attribute initially,
-    // as the animation will handle it.
-    linkGroup.append("path")
-      .attr("class", "contour-path")
-      .attr("fill", "none");
-
-    linkGroup.append("path")
-      .attr("class", "main-path")
-      .attr("fill", "none");
-
-    return linkGroup;
-  }
+  
 
   /**
    * Renders and interpolates links between two states for scrubbing.
@@ -181,37 +126,40 @@ export class LinkRenderer {
     const fromLinksMap = new Map(fromLinksData.map(d => [keyFn(d), d]));
     const toLinksMap = new Map(toLinksData.map(d => [keyFn(d), d]));
 
+    // Create union of all links (both from and to) for complete interpolation
     const allLinkKeys = new Set([...fromLinksMap.keys(), ...toLinksMap.keys()]);
     const unionLinksData = Array.from(allLinkKeys).map(key => {
+      // Prefer toLink if it exists, otherwise use fromLink
       return toLinksMap.get(key) || fromLinksMap.get(key);
-    });
+    }).filter(Boolean);
 
     const links = this.svgContainer
       .selectAll(`.${this.linkClass}`)
       .data(unionLinksData, keyFn);
 
-    links.exit()
-      .style("opacity", 0)
-      .remove();
+    // Handle exit elements during interpolation
+    const exitSelection = links.exit();
+    const enterSelection = links.enter();
 
-    const enterSelection = links.enter()
-      .append("g")
-      .attr("class", this.linkClass)
-      .attr("id", (d) => getLinkSvgId(d))
-      .style("opacity", 0);
+    const createdElements = this._handleEnter(enterSelection);
 
-    enterSelection.append("path")
-      .attr("class", "contour-path")
-      .attr("fill", "none");
+    const allLinks = createdElements.merge(links);
 
-    enterSelection.append("path")
-      .attr("class", "main-path")
-      .attr("fill", "none");
+    // Get style config once outside the loop for better performance
+    const { styleConfig, strokeWidth } = useAppStore.getState();
+    const mainStrokeWidth = Number(strokeWidth);
+    const contourStrokeWidth = mainStrokeWidth + styleConfig.contourWidthOffset;
 
-    const allLinks = enterSelection.merge(links);
-
+    // Handle all links in current data binding
     allLinks.each((d, i, nodes) => {
       const element = d3.select(nodes[i]);
+      
+      // Safety check: ensure DOM element exists
+      if (!element.node()) {
+        console.warn('[LinkRenderer] DOM element missing for link:', getLinkKey(d));
+        return;
+      }
+      
       const linkKey = keyFn(d);
       const fromLink = fromLinksMap.get(linkKey);
       const toLink = toLinksMap.get(linkKey);
@@ -219,143 +167,225 @@ export class LinkRenderer {
       let opacity;
 
       if (fromLink && toLink) {
-        pathData = buildSvgStringTime(
+        // UPDATE: Link exists in both. Interpolate from -> to.
+        pathData = buildInterpolatedBranchPath(
           toLink, timeFactor,
           fromLink.source.angle, fromLink.source.radius,
           fromLink.target.angle, fromLink.target.radius
         );
         opacity = 1;
+      } else if (!fromLink && toLink) {
+        // ENTER: Link is being added. Appear directly at final position.
+        pathData = buildInterpolatedBranchPath(
+          toLink, 1, // Always at final position (t=1)
+          toLink.source.angle, toLink.source.radius,
+          toLink.target.angle, toLink.target.radius
+        );
+        opacity = 1; // Always fully visible
       } else if (fromLink && !toLink) {
-        pathData = buildSvgString(fromLink);
-        opacity = 1 - timeFactor;
+        // EXIT: Link is being removed. Fade out gradually based on timeFactor.
+        pathData = buildInterpolatedBranchPath(
+          fromLink, 1, // Keep full path geometry
+          fromLink.source.angle, fromLink.source.radius,
+          fromLink.target.angle, fromLink.target.radius
+        );
+        opacity = 1 - timeFactor; // Fade out as timeFactor increases
       } else {
-        pathData = buildSvgString(toLink);
-        opacity = timeFactor;
+        // This shouldn't happen with our union approach, but handle gracefully
+        console.warn('[LinkRenderer] Unexpected case: link exists in neither from nor to data');
+        return;
       }
 
       element.style("opacity", opacity);
 
+      // Use the appropriate link data for color calculations
+      const linkForColoring = toLink || fromLink;
+
       element.select(".contour-path")
         .attr("d", pathData)
-        .attr("stroke", this.colorManager.getBranchColorWithHighlights(d, highlightEdges).color)
-        .attr("stroke-width", this.sizeConfig.strokeWidth + this.sizeConfig.contourWidth);
+        .attr("stroke", this.colorManager.getBranchColorWithHighlights(linkForColoring, highlightEdges).color)
+        .attr("stroke-width", contourStrokeWidth);
 
       element.select(".main-path")
         .attr("d", pathData)
-        .attr("stroke", this.colorManager.getBranchColor(d))
-        .attr("stroke-width", this.sizeConfig.strokeWidth);
+        .attr("stroke", this.colorManager.getBranchColor(linkForColoring))
+        .attr("stroke-width", mainStrokeWidth);
     });
+
+    // Clean up D3 exit selection (elements no longer in data)
+    exitSelection.remove();
 
     return allLinks;
   }
 
+
+
+  
+
+
+  /**
+   * Clears all link elements from the container.
+   */
+  clear() {
+    const linksToRemove = this.svgContainer.selectAll(`.${this.linkClass}`);
+    console.log('LinkRenderer clear() called - removing', linksToRemove.size(), 'links');
+    linksToRemove.remove();
+  }
+
+  /**
+   * Sets previous positions on link data from store cache
+   * @param {Array} linksData - Array of link objects
+   * @private
+   */
+  _setPreviousPositions(linksData) {
+    const { getTreePositions, previousTreeIndex } = useAppStore.getState();
+    const previousPositions = getTreePositions(previousTreeIndex);
+
+    linksData.forEach(link => {
+      const linkKey = getLinkKey(link);
+
+      // Try store cache first (uses existing KeyGenerator logic)
+      if (previousPositions && previousPositions.links.has(linkKey)) {
+        const cached = previousPositions.links.get(linkKey);
+        link.prevSourceAngle = cached.sourceAngle;
+        link.prevSourceRadius = cached.sourceRadius;
+        link.prevTargetAngle = cached.targetAngle;
+        link.prevTargetRadius = cached.targetRadius;
+      } else {
+        // This is an ENTERING link. It should appear directly at its final position.
+        link.prevSourceAngle = link.source.angle;
+        link.prevSourceRadius = link.source.radius;
+        link.prevTargetAngle = link.target.angle;
+        link.prevTargetRadius = link.target.radius;
+      }
+    });
+  }
+
+  /**
+   * Creates an arc interpolation function for D3 transitions using data object properties.
+   * @returns {Function} D3 attrTween interpolation function
+   */
+  getArcInterpolationFunction() {
+    return (d) => {
+      // Add defensive check for malformed link data
+      if (!d.source || !d.target) {
+        console.warn('Link data missing source or target:', d);
+        return () => '';
+      }
+
+      // Use previous positions stored directly on the data object
+      const prevSourceAngle = d.prevSourceAngle ?? d.source.angle;
+      const prevSourceRadius = d.prevSourceRadius ?? d.source.radius;
+      const prevTargetAngle = d.prevTargetAngle ?? d.target.angle; // Fixed: was d.source.angle
+      const prevTargetRadius = d.prevTargetRadius ?? d.target.radius; // Fixed: was d.source.radius
+
+      // D3 attrTween inner function, called repeatedly during animation
+      return (t) => {
+        return buildInterpolatedBranchPath(d, t, prevSourceAngle, prevSourceRadius, prevTargetAngle, prevTargetRadius);
+      };
+    };
+  }
+
+  /**
+   * Handles the ENTER selection - creates new link elements structure.
+   * @param {d3.Selection} enter - The enter selection
+   * @returns {d3.Selection} The enter selection
+   * @private
+   */
+  _handleEnter(enter) {
+    const linkGroup = enter
+      .append("g")
+      .attr("class", this.linkClass)
+      .attr("id", (d) => getLinkSvgId(d));
+
+    const { styleConfig, strokeWidth } = useAppStore.getState();
+
+    // Helper function to create path data
+    const getPathData = (d) => buildInterpolatedBranchPath(
+      d, 1, d.prevSourceAngle, d.prevSourceRadius, d.prevTargetAngle, d.prevTargetRadius
+    );
+
+    // Create contour path
+    linkGroup.append("path")
+      .attr("class", "contour-path")
+      .attr("fill", "none")
+      .attr("stroke", d => this.colorManager.getBranchColorWithHighlights(d, this._highlightEdges || []).color)
+      .attr("stroke-width", Number(strokeWidth) + styleConfig.contourWidthOffset)
+      .attr("d", getPathData);
+
+    // Create main path
+    linkGroup.append("path")
+      .attr("class", "main-path")
+      .attr("fill", "none")
+      .attr("stroke", d => this.colorManager.getBranchColor(d))
+      .attr("stroke-width", Number(strokeWidth))
+      .attr("d", getPathData);
+
+    return linkGroup;
+  }
+
 /**
- * Animates an exit selection and returns a promise.
- * (Signature unchanged.)
+ * Animates exit selection with fade-out effect.
+ * Links that should be deleted fade out slowly before being removed.
+ *
+ * @param {d3.Selection} exitSelection - D3 selection of elements to remove
+ * @param {number} duration - Animation duration in milliseconds
+ * @param {string} easing - Easing function name
+ * @returns {Promise} Promise that resolves when fade-out animation completes
  * @private
  */
 async _animateExit(exitSelection, duration, easing) {
-  // 1 — Nothing to animate ⇒ nothing to await
-  if (exitSelection.empty()) return Promise.resolve();
-
-  // 2 — Prefer a quicker “ease-out” curve for departures
-  const exitEasing   = easing === "easeCubicInOut" ? "easeQuadOut" : easing;
-  const easingFn     = getEasingFunction(exitEasing);
-
-  // 3 — Clone originals so the data-bound nodes can vanish immediately
-  const clones = exitSelection.nodes().flatMap(node => {
-    if (!node?.parentNode) return [];
-    const ghost = node.cloneNode(true);
-    ghost.classList.add("exiting-clone");
-    node.parentNode.insertBefore(ghost, node);
-    return ghost;
-  });
-
-  // Data-bound nodes gone – the next data-join is pristine
-  exitSelection.remove();
-
-  // 4 — Animate clones, guaranteeing cleanup even if interrupted
-  const cloneSel = d3.selectAll(clones);
-  try {
-    await cloneSel
-      .transition("link-exit-cleanup")
-      .ease(easingFn)
-      .duration(duration)
-      .style("stroke-opacity", 0)
-      .attr("stroke-width",   0)
-      .remove()
-      .end();                        // resolves or **rejects** on interrupt
-  } finally {
-    cloneSel.remove();               // belt-and-braces purge
+  if (exitSelection.empty()) {
+    return Promise.resolve();
   }
+
+  console.log('LinkRenderer _animateExit called - removing', exitSelection.size(), 'links');
+
+  const easingFn = getEasingFunction(easing);
+
+  // Animate fade-out with opacity transition
+  const transition = exitSelection
+    .transition("link-exit")
+    .duration(0)
+    .ease(easingFn)
+    .style("opacity", 0); // Fade to transparent
+
+  // Remove elements after transition completes
+  return transition.remove().end();
 }
 
   /**
    * Animates update selection and returns a promise
    * @private
    */
-  async _animateUpdate(updateSelection, interpolationFunction, duration, easing, highlightEdges) {
+  _animateUpdate(updateSelection, interpolationFunction, duration, easing, highlightEdges) {
     if (updateSelection.empty()) {
       return Promise.resolve();
     }
-    const easingFunction = getEasingFunction(easing);
 
-    const mainPathTransition = updateSelection.select(".main-path")
+    const easingFunction = getEasingFunction(easing);
+    const { styleConfig, strokeWidth } = useAppStore.getState();
+
+    // Animate both path types simultaneously
+    const mainPathPromise = updateSelection.select(".main-path")
       .transition("link-update-main")
       .ease(easingFunction)
       .duration(duration)
       .attr("stroke", d => this.colorManager.getBranchColor(d))
-      .attr("stroke-width", this.sizeConfig.strokeWidth)
-      .attrTween("d", interpolationFunction);
+      .attr("stroke-width", Number(strokeWidth))
+      .attrTween("d", interpolationFunction)
+      .end();
 
-    const contourPathTransition = updateSelection.select(".contour-path")
+    const contourPathPromise = updateSelection.select(".contour-path")
       .transition("link-update-contour")
       .ease(easingFunction)
       .duration(duration)
       .attr("stroke", d => this.colorManager.getBranchColorWithHighlights(d, highlightEdges).color)
-      .attr("stroke-width", this.sizeConfig.strokeWidth + this.sizeConfig.contourWidth)
-      .attrTween("d", interpolationFunction);
+      .attr("stroke-width", Number(strokeWidth) + styleConfig.contourWidthOffset)
+      .attrTween("d", interpolationFunction)
+      .end();
 
-    return Promise.all([mainPathTransition.end(), contourPathTransition.end()]);
-  }
-
-  /**
-   * Animates the enter selection from a pre-cached starting position.
-   * @private
-   */
-  async _animateEnter(enterSelection, interpolationFunction, duration, easing, highlightEdges) {
-    if (enterSelection.empty()) {
-      return Promise.resolve();
-    }
-    const easingFunction = getEasingFunction(easing);
-
-    // Set initial styles for contour and main paths
-    enterSelection.select(".contour-path")
-      .attr("stroke", d => this.colorManager.getBranchColorWithHighlights(d, highlightEdges).color)
-      .attr("stroke-width", this.sizeConfig.strokeWidth + this.sizeConfig.contourWidth);
-
-    enterSelection.select(".main-path")
-      .attr("stroke", d => this.colorManager.getBranchColor(d))
-      .attr("stroke-width", this.sizeConfig.strokeWidth);
-
-    // Animate both paths using the same interpolation
-    const transition = enterSelection
-      .transition("link-enter")
-      .duration(duration)
-      .ease(easingFunction);
-
-    transition.selectAll("path")
-      .attrTween("d", interpolationFunction);
-
-    return transition.end();
-  }
-
-  /**
-   * Clears all link elements and stored state from the container.
-   */
-  clear() {
-    this.svgContainer.selectAll(`.${this.linkClass}`).remove();
-    this.previousPositionsCache.clear();
-    this.currentLinksData = [];
+    return Promise.all([mainPathPromise, contourPathPromise]);
   }
 }
+

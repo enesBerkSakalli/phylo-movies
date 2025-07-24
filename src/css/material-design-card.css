@@ -1,0 +1,315 @@
+/* ============================================================================
+   CARD COMPONENTS
+   ============================================================================ */
+
+.card-container {
+  background-color: var(--md-sys-color-surface-container-lowest);
+  padding: var(--md-sys-spacing-2);
+  border-radius: var(--md-sys-shape-corner-large);
+  box-shadow: var(--md-sys-elevation-shadow-level-0);
+  position: relative;
+}
+
+/* Card Styling - Standard Filled Card */
+.card {
+  background: var(--md-sys-elevation-level-1);
+  box-shadow: var(--md-sys-elevation-shadow-level-1);
+  border-radius: var(--md-sys-shape-corner-medium);
+  padding: var(--md-sys-spacing-3);
+  margin-bottom: var(--md-sys-spacing-3);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  transition: background-color 0.15s, transform 0.15s, box-shadow 0.15s;
+  position: relative;
+}
+
+/* MD3 Elevation Tonal Overlay */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--md-elev-overlay-1);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.card:hover {
+  background: var(--md-sys-elevation-level-2);
+  box-shadow: var(--md-sys-elevation-shadow-level-2);
+}
+
+.card:hover::before {
+  background: var(--md-elev-overlay-2);
+}
+
+.card:last-child {
+  margin-bottom: 0;
+}
+
+/* Card Elevation Variants */
+.card.elev-1 {
+  background: var(--md-sys-elevation-level-1);
+  box-shadow: var(--md-sys-elevation-shadow-level-1);
+}
+
+.card.elev-1::before {
+  background: var(--md-elev-overlay-1);
+}
+
+.card.elev-2 {
+  background: var(--md-sys-elevation-level-2);
+  box-shadow: var(--md-sys-elevation-shadow-level-2);
+}
+
+.card.elev-2::before {
+  background: var(--md-elev-overlay-2);
+}
+
+.card.elev-3 {
+  background: var(--md-sys-elevation-level-3);
+  box-shadow: var(--md-sys-elevation-shadow-level-3);
+}
+
+.card.elev-3::before {
+  background: var(--md-elev-overlay-3);
+}
+
+/* Card Structure */
+.card-header {
+  margin-bottom: var(--md-sys-spacing-3);
+  display: flex;
+  align-items: center;
+  gap: var(--md-sys-spacing-2);
+  position: relative;
+  z-index: 1;
+}
+
+.card-title {
+  font-family: 'Roboto', sans-serif;
+  font-size: var(--md-typescale-title-medium-size);
+  font-weight: 500;
+  line-height: var(--md-typescale-title-medium-lineheight);
+  margin: 0;
+  color: var(--md-sys-color-on-surface);
+}
+
+.card-subtitle {
+  font-family: 'Roboto', sans-serif;
+  font-size: var(--md-typescale-body-medium-size);
+  font-weight: 400;
+  line-height: var(--md-typescale-body-medium-lineheight);
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+}
+
+.card-content {
+  margin-bottom: var(--md-sys-spacing-3);
+  position: relative;
+  z-index: 1;
+}
+
+.card-content:last-child {
+  margin-bottom: 0;
+}
+
+.card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--md-sys-spacing-2);
+  margin-top: var(--md-sys-spacing-3);
+  padding-top: var(--md-sys-spacing-2);
+  position: relative;
+  z-index: 1;
+}
+
+.card-icon {
+  color: var(--md-sys-color-primary);
+  font-size: 20px;
+}
+
+.card-title-text {
+  font-family: 'Roboto', sans-serif;
+  font-size: var(--md-typescale-title-large-size);
+  font-weight: 500;
+  line-height: var(--md-typescale-title-large-lineheight);
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+}
+
+/* Toggle icon for collapsible card sections */
+.toggle-icon {
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--md-sys-color-on-surface-variant);
+  transition: transform 0.3s ease;
+  margin-left: auto;
+  user-select: none;
+}
+
+.toggle-icon:hover {
+  color: var(--md-sys-color-on-surface);
+}
+
+/* Rotate toggle icon when collapsed */
+[data-collapsed="true"] .toggle-icon {
+  transform: rotate(-90deg);
+}
+
+/* Hide content when collapsed */
+[data-collapsed="true"] .card-content {
+  display: none;
+}
+
+/* Material Design 3 Card Components */
+.md-card {
+  border-radius: var(--md-sys-shape-corner-large);
+  overflow: hidden;
+  position: relative;
+}
+
+.md-card-filled {
+  background: var(--md-sys-elevation-level-1);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.md-card-filled::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--md-elev-overlay-1);
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.md-card-header {
+  padding: var(--md-sys-spacing-6) var(--md-sys-spacing-6) var(--md-sys-spacing-4) var(--md-sys-spacing-6);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--md-sys-spacing-4);
+  position: relative;
+  z-index: 1;
+}
+
+.md-card-header-text {
+  flex: 1;
+}
+
+.md-card-title {
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--md-sys-color-on-surface);
+  margin: 0 0 var(--md-sys-spacing-1) 0;
+}
+
+.md-card-subtitle {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+}
+
+.md-card-header-icon {
+  color: var(--md-sys-color-primary);
+  font-size: 24px;
+  margin-top: 2px;
+}
+
+.md-card-content {
+  padding: 0 var(--md-sys-spacing-6) var(--md-sys-spacing-6) var(--md-sys-spacing-6);
+  position: relative;
+  z-index: 1;
+}
+
+.md-card-actions {
+  padding: var(--md-sys-spacing-4) var(--md-sys-spacing-6) var(--md-sys-spacing-6) var(--md-sys-spacing-6);
+  display: flex;
+  gap: var(--md-sys-spacing-3);
+  justify-content: flex-end;
+  position: relative;
+  z-index: 1;
+}
+
+/* MD Card Elevation Variants */
+.md-card.elev-1,
+.md-card.elev-2,
+.md-card.elev-3 {
+  position: relative;
+}
+
+.md-card.elev-1::before,
+.md-card.elev-2::before,
+.md-card.elev-3::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.md-card.elev-1 {
+  background: var(--md-sys-elevation-level-1);
+  box-shadow: var(--md-sys-elevation-shadow-level-1);
+}
+
+.md-card.elev-1::before {
+  background: var(--md-elev-overlay-1);
+}
+
+.md-card.elev-2 {
+  background: var(--md-sys-elevation-level-2);
+  box-shadow: var(--md-sys-elevation-shadow-level-2);
+}
+
+.md-card.elev-2::before {
+  background: var(--md-elev-overlay-2);
+}
+
+.md-card.elev-3 {
+  background: var(--md-sys-elevation-level-3);
+  box-shadow: var(--md-sys-elevation-shadow-level-3);
+}
+
+.md-card.elev-3::before {
+  background: var(--md-elev-overlay-3);
+}
+
+/* Interactive Card - With hover state */
+.card-interactive {
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+
+.card-interactive:hover {
+  transform: translateY(-2px);
+}
+
+.card-interactive:active {
+  transform: translateY(0);
+}
+
+/* Card with state layer for ripple effect */
+.card-with-state-layer {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-with-state-layer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--md-sys-state-hover);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+  border-radius: inherit;
+}
+
+.card-with-state-layer:hover::after {
+  opacity: 1;
+}
+
+.card-with-state-layer:active::after {
+  background: var(--md-sys-state-pressed);
+  opacity: 1;
+}

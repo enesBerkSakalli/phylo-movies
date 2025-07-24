@@ -19,6 +19,14 @@ export class MovieDataSerializer {
     if (missingFields.length > 0) {
       throw new Error(`Missing required fields in movie data: ${missingFields.join(', ')}`);
     }
+
+    // Warn about missing optional but important fields for TransitionIndexResolver
+    const importantOptionalFields = ['tree_metadata', 'lattice_edge_tracking', 's_edge_metadata'];
+    const missingOptionalFields = importantOptionalFields.filter(field => !(field in this.data));
+    
+    if (missingOptionalFields.length > 0) {
+      console.warn(`[MovieDataSerializer] Missing optional but important fields: ${missingOptionalFields.join(', ')}. TransitionIndexResolver functionality may be limited.`);
+    }
   }
 
   /**
@@ -80,6 +88,32 @@ export class MovieDataSerializer {
   }
 
   /**
+   * Get tree metadata for TransitionIndexResolver
+   */
+  getTreeMetadata() {
+    return this.data.tree_metadata || [];
+  }
+
+  /**
+   * Get lattice edge tracking data
+   */
+  getLatticeEdgeTracking() {
+    return this.data.lattice_edge_tracking || [];
+  }
+
+  /**
+   * Get s-edge metadata for variable-length s-edge support
+   */
+  getSEdgeMetadata() {
+    return this.data.s_edge_metadata || {
+      s_edge_count: 0,
+      trees_per_s_edge: {},
+      total_interpolated_trees: 0,
+      phase_distribution: {}
+    };
+  }
+
+  /**
    * Get all data in a flat structure for backward compatibility
    * This can be used during transition period if needed
    */
@@ -89,6 +123,9 @@ export class MovieDataSerializer {
     const visualization = this.getVisualization();
     const msa = this.getMSA();
     const fileMetadata = this.getFileMetadata();
+    const treeMetadata = this.getTreeMetadata();
+    const latticeEdgeTracking = this.getLatticeEdgeTracking();
+    const sEdgeMetadata = this.getSEdgeMetadata();
 
     return {
       // Tree data
@@ -120,6 +157,12 @@ export class MovieDataSerializer {
       original_tree_count: trees.originalCount,
       interpolated_tree_count: trees.interpolatedCount,
       processing_time_ms: trees.processingTimeMs,
+
+      // TransitionIndexResolver required fields
+      tree_metadata: treeMetadata,
+      lattice_edge_tracking: latticeEdgeTracking,
+      s_edge_metadata: sEdgeMetadata,
+      highlighted_elements: visualization.highlightedElements, // Alias for compatibility
     };
   }
 
@@ -155,12 +198,24 @@ export class MovieDataSerializer {
   }
 
   /**
+   * Check if complete TransitionIndexResolver data is available
+   */
+  hasCompleteTransitionData() {
+    return this.data.tree_metadata && 
+           this.data.lattice_edge_tracking && 
+           this.data.s_edge_metadata &&
+           Array.isArray(this.data.tree_metadata) &&
+           Array.isArray(this.data.lattice_edge_tracking);
+  }
+
+  /**
    * Get summary information about the dataset
    */
   getSummary() {
     const trees = this.getTrees();
     const msa = this.getMSA();
     const fileMetadata = this.getFileMetadata();
+    const sEdgeMetadata = this.getSEdgeMetadata();
 
     return {
       fileName: fileMetadata.fileName,
@@ -169,9 +224,12 @@ export class MovieDataSerializer {
       hasInterpolation: trees.interpolatedCount > trees.originalCount,
       hasMSA: this.hasMSAData(),
       hasEmbedding: this.hasEmbeddingData(),
+      hasCompleteTransitionData: this.hasCompleteTransitionData(),
       processingTimeMs: trees.processingTimeMs,
       windowSize: msa.windowSize,
       windowStep: msa.windowStep,
+      sEdgeCount: sEdgeMetadata.s_edge_count,
+      totalInterpolatedTrees: sEdgeMetadata.total_interpolated_trees,
     };
   }
 }

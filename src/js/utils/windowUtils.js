@@ -42,7 +42,6 @@ export function calculateWindow(currentFullTreeDataIdx, msaStepSize, msaWindowSi
     // Ensure endPosition is at least startPosition
     endPosition = Math.min(treeListLength*msaStepSize, endPosition);
 
-    console.log(`[calculateWindow] FullTreeDataIndex: ${currentFullTreeDataIdx}, msaStepSize: ${msaStepSize}, msaWindowSize: ${msaWindowSize}, Calculated Window: ${startPosition}-${endPosition}`);
 
     return {
         startPosition: startPosition, // 1-based

@@ -1,4 +1,5 @@
 
+import WinBox from 'winbox';
 import { TreeRenderer } from "./TreeRenderer.js";
 
 // Import debounce function from chart utilities to avoid duplication
@@ -32,8 +33,8 @@ export class ComparisonWindow {
     this.windowContainer = container;
 
     let winboxInstance = null;
-    if (window.WinBox) {
-      winboxInstance = new window.WinBox({
+    if (WinBox) {
+      winboxInstance = new WinBox({
         title: `Tree Comparison: Tree ${this.tree1Index + 1} vs Tree ${this.tree2Index + 1}`,
         class: ["tree-comparison-winbox"],
         width: "90%",

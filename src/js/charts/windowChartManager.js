@@ -1,6 +1,8 @@
-import { generateLineChart, updateChartIndicator, generateChartModal } from "./chartGenerator.ts";
-import { ChartCallbackManager } from "./ChartCallbackManager.ts";
-import { ChartStateManager } from "./ChartStateManager.ts";
+import { generateLineChart, generateChartModal } from "./chartGenerator.js";
+import { updateChartIndicator } from "./ChartStateManager.js";
+import { ChartStateManager } from "./ChartStateManager.js";
+import { useAppStore } from '../core/store.js';
+import { GoToPositionCommand } from '../core/NavigationCommands.js';
 
 // Open a robust, feature-rich modal chart using WinBox and advanced chart logic
 export function openModalChart(options) {
@@ -16,8 +18,7 @@ export function openModalChart(options) {
     scaleList,
     transitionResolver,
     onGoToFullTreeDataIndex,
-    onGoToPosition,
-    guiInstance // Pass the GUI instance for event/state sync
+    onGoToPosition
   } = options;
 
   let data, xLabel, yLabel, yMax, onClickHandler, chartSpecificIndexToSequence, chartSpecificSequenceToIndex, chartTitle;
@@ -75,52 +76,36 @@ export function openModalChart(options) {
     tooltipFormatter: (d, i) => `<div class='tooltip-title'>Position ${i + 1}</div><div class='tooltip-value'>Value: ${typeof d === 'number' ? d.toFixed(4) : d}</div>`
   };
 
-  // Set the current position for the indicator (sequence index)
-  let currentPosition = (barOptionValue === "scale")
-    ? currentTreeIndex
-    : transitionResolver.getDistanceIndex(currentTreeIndex);
 
-  // Create unified callback manager for consistent behavior
-  const callbackManager = new ChartCallbackManager({
-    onPositionChange: (chartIdx) => {
-      const seqIdx = chartSpecificIndexToSequence(chartIdx);
-      if (barOptionValue === "scale" && typeof onGoToPosition === 'function') {
-        onGoToPosition(seqIdx);
-      } else if (typeof onGoToFullTreeDataIndex === 'function') {
-        onGoToFullTreeDataIndex(seqIdx);
+  // Create a context object for the chart that provides store access
+  const chartContext = {
+    getCurrentPosition: () => {
+      const { currentTreeIndex } = useAppStore.getState();
+      return (barOptionValue === "scale")
+        ? currentTreeIndex
+        : transitionResolver.getDistanceIndex(currentTreeIndex);
+    },
+    goToPosition: (idx) => {
+      const command = new GoToPositionCommand(barOptionValue === "scale" ? idx : transitionResolver.getTreeIndexForDistanceIndex(idx));
+      const { navigationController } = useAppStore.getState();
+      if (navigationController) {
+        navigationController.execute(command);
+      } else {
+        command.execute();
       }
-    }
-  });
-
-  // Attach currentPosition to guiInstance for chartGenerator.js logic
-  if (guiInstance) {
-    guiInstance.currentPosition = currentPosition;
-    guiInstance.callbackManager = callbackManager;
-  }
+    },
+    // Keep these for compatibility during migration
+    barOptionValue,
+    robinsonFouldsDistances,
+    weightedRobinsonFouldsDistances,
+    scaleList,
+    transitionResolver
+  };
 
   // Render the modal chart using the robust WinBox-based modal
   generateChartModal(
     data,
-    guiInstance || {
-      currentPosition,
-      goToPosition: (idx) => {
-        // Fallback: call the provided handler if guiInstance is not passed
-        if (barOptionValue === "scale" && typeof onGoToPosition === 'function') {
-          Promise.resolve(onGoToPosition(idx)).catch(error => {
-            console.error('[windowChartManager] Error in onGoToPosition callback:', error);
-          });
-        } else if (typeof onGoToFullTreeDataIndex === 'function') {
-          Promise.resolve(onGoToFullTreeDataIndex(idx)).catch(error => {
-            console.error('[windowChartManager] Error in onGoToFullTreeDataIndex callback:', error);
-          });
-        }
-      },
-      barOptionValue,
-      robinsonFouldsDistances,
-      weightedRobinsonFouldsDistances,
-      scaleList,
-      transitionResolver
-    },
+    chartContext,
     config
   );
 }

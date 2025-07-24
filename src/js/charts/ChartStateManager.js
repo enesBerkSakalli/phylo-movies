@@ -1,8 +1,7 @@
 import * as d3 from "d3";
-import { updateChartIndicator } from "./chartGenerator.js";
 
 /**
- * Enhanced chart state manager for unified chart operations
+ * Simplified chart state manager for chart operations
  */
 export class ChartStateManager {
   constructor(containerId, chartType) {
@@ -11,7 +10,6 @@ export class ChartStateManager {
     this.scales = null;
     this.data = null;
     this.config = null;
-    this.callbackManager = null;
     this.indexMappings = {
       chartToSequence: (idx) => idx,
       sequenceToChart: (idx) => idx
@@ -36,21 +34,12 @@ export class ChartStateManager {
     this.indexMappings.sequenceToChart = sequenceToChart;
   }
 
-  setCallbackManager(callbackManager) {
-    this.callbackManager = callbackManager;
-  }
-
   updatePosition(sequencePosition) {
     if (!this.data || !this.config || !this.scales) {
-      console.warn(`[ChartStateManager] Cannot update position: missing data, config, or scales`);
       return;
     }
-
     const chartPosition = this.indexMappings.sequenceToChart(sequencePosition);
-
-    // Validate position bounds
     const validChartPosition = Math.max(0, Math.min(this.data.length - 1, chartPosition));
-
     updateChartIndicator(this.containerId, validChartPosition, this.config, this.data);
   }
 
@@ -61,4 +50,60 @@ export class ChartStateManager {
       d3.select(container).selectAll(".chart-tooltip").remove();
     }
   }
+}
+
+
+
+/**
+ * Update the chart indicator (ship position) without re-adding drag behavior
+ * @param {string} containerId - The ID of the container
+ * @param {number} position - The position to update to
+ * @param {Object} config - The config object with xAccessor and yAccessor
+ * @param {Array} data - The data array
+ */
+export function updateChartIndicator(containerId, position, config, data) {
+  const svg = d3.select(`#${containerId}`).select("svg").select("g");
+
+  // Try to get scales from stored references or compute them
+  let xScale = svg.property('__xScale');
+  let yScale = svg.property('__yScale');
+
+  if (!xScale || !yScale) {
+    console.warn(`[updateChartIndicator] Scales not found for container ${containerId}, cannot update indicator`);
+    return;
+  }
+
+  // Use the same logic as updateShipPosition, but do not re-add drag
+  const validPosition = Math.max(0, Math.min(data.length - 1, position));
+
+  // Look for ship group with consistent ID
+  let shipGroup = svg.select("#ship-modal-group");
+  if (shipGroup.empty()) {
+    // Fallback to class-based selector for backward compatibility
+    shipGroup = svg.select(".ship-indicator-group");
+  }
+
+  if (shipGroup.empty()) {
+    console.warn(`[updateChartIndicator] Ship group not found in container ${containerId}`);
+    return;
+  }
+
+  const shipX = xScale(config.xAccessor(data[validPosition], validPosition));
+  const height = yScale.range()[0];
+
+  shipGroup.select(".ship-touch-target").attr("x", shipX - 15);
+  shipGroup.select(".ship-line").attr("x1", shipX).attr("x2", shipX);
+  shipGroup.select(".ship-handle").attr("cx", shipX);
+  shipGroup.select(".handle-value")
+    .attr("x", shipX)
+    .text(config.yAccessor(data[validPosition]).toFixed(3));
+  shipGroup.select(".current-position-label")
+    .attr("x", shipX)
+    .text(`${validPosition + 1}`);
+
+  // Update data points highlighting
+  svg.selectAll(".data-points circle").attr("fill", "#4390e1").attr("r", 4);
+  svg.selectAll(".data-points circle")
+    .filter((d, i) => i === validPosition)
+    .attr("fill", "#FF4500").attr("r", 6);
 }

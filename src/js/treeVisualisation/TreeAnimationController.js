@@ -1,13 +1,21 @@
 import * as d3 from "d3";
-import { useAppStore } from '../store.js';
+import { useAppStore } from '../core/store.js';
+import { transformBranchLengths } from "../utils/branchTransformUtils.js";
 import { LinkRenderer } from "./rendering/LinkRenderer.js";
 import { NodeRenderer } from "./rendering/NodeRenderer.js";
 import { ExtensionRenderer } from "./rendering/ExtensionRenderer.js";
 import { LabelRenderer } from "./rendering/LabelRenderer.js";
 import { ColorManager } from "./systems/ColorManager.js";
 import { RadialTreeLayout } from "./RadialTreeLayout.js";
+import { EASING_FUNCTIONS } from "./utils/animationUtils.js";
+import { createStoreIntegratedUpdatePattern } from "./utils/IndependentUpdatePattern.js";
 
-
+// Layout constants for consistent spacing
+const LAYOUT_CONSTANTS = {
+  EXTENSION_OFFSET: 20,  // Distance from leaf radius to extension end
+  LABEL_OFFSET: 30,      // Distance from leaf radius to label position
+  LABEL_OFFSET_WITH_EXTENSIONS: 40  // Distance when extensions are shown
+};
 
 /**
  * Controller class for orchestrating hierarchical tree animations and rendering.
@@ -26,31 +34,26 @@ export class TreeAnimationController {
     this._drawDuration = 1000;
     this.lattice_edges = [];
 
-
-
     // Transition tracking for phase-aware animations
     this.previousTreeIndex = -1;
     this.currentTreeIndex = -1;
     this.transitionResolver = null;
 
-    // Radius preservation for animation consistency
-    this.previousMaxLeafRadius = 0;
-    this.isInITtoCTransition = false;
-    this.preservedTransitionRadius = 0;
 
     // Layout calculator management - test reusing single instance
     this.layoutCalculator = null;
-    this.ignoreBranchLengths = false;
     this.margin = 40; // Default margin, can be overridden
 
     this.svg_container = this._initializeContainer(svgContainerId);
 
-    const { styleConfig } = useAppStore.getState();
+    // Centralized update pattern - single source of truth for all diffing
+    this.updatePattern = createStoreIntegratedUpdatePattern();
+
     this.colorManager = new ColorManager(this.marked);
-    this.linkRenderer = new LinkRenderer(this.svg_container, this.colorManager, styleConfig);
-    this.nodeRenderer = new NodeRenderer(this.svg_container, this.colorManager, styleConfig);
-    this.extensionRenderer = new ExtensionRenderer(this.svg_container, this.colorManager, styleConfig);
-    this.labelRenderer = new LabelRenderer(this.svg_container, this.colorManager, styleConfig);
+    this.linkRenderer = new LinkRenderer(this.svg_container, this.colorManager);
+    this.nodeRenderer = new NodeRenderer(this.svg_container, this.colorManager);
+    this.extensionRenderer = new ExtensionRenderer(this.svg_container, this.colorManager);
+    this.labelRenderer = new LabelRenderer(this.svg_container, this.colorManager);
   }
 
   /**
@@ -58,14 +61,14 @@ export class TreeAnimationController {
    * drawing group exists. This is the single source of truth for container setup.
    * @private
    */
-  _initializeContainer(containerId) {
-    const containerSelection = d3.select(`#${containerId}`);
+  _initializeContainer() {
+    const containerSelection = d3.select(`#${this.containerId}`);
     if (containerSelection.empty()) {
-      throw new Error(`TreeAnimationController: SVG container with id "${containerId}" not found.`);
+      throw new Error(`TreeAnimationController: SVG container with id "${this.containerId}" not found.`);
     }
 
     // If the target is the main application's zoom-able group, use it directly.
-    if (containerId === "application" && containerSelection.node().tagName.toLowerCase() === "g") {
+    if (this.containerId === "application" && containerSelection.node().tagName.toLowerCase() === "g") {
       return containerSelection;
     }
 
@@ -85,8 +88,6 @@ export class TreeAnimationController {
 
     let treeContainer = svg.select("g.tree-container");
     if (treeContainer.empty()) {
-      const width = +svg.attr("width") || (svg.node().getBoundingClientRect().width);
-      const height = +svg.attr("height") || (svg.node().getBoundingClientRect().height);
       treeContainer = svg.append("g")
         .attr("class", "tree-container");
     }
@@ -108,6 +109,18 @@ export class TreeAnimationController {
     this.colorManager.updateMarkedComponents(this.marked);
   }
 
+  /**
+   * Gets the previous tree from store cache for diffing
+   * @returns {Object|null} Previous tree or null if not available
+   * @private
+   */
+  _getPreviousTree() {
+    const { previousTreeIndex, getLayoutCache } = useAppStore.getState();
+    const previousLayout = getLayoutCache(previousTreeIndex);
+    return previousLayout?.tree || null;
+  }
+
+
   async renderAllElements() {
     this.synchronizeRenderers();
     await this.renderWithCoordinatedAnimations();
@@ -119,130 +132,198 @@ export class TreeAnimationController {
         return;
       }
 
+      // Centralized diffing for all elements - single source of truth
+      const previousTree = this._getPreviousTree();
+      const allUpdates = this.updatePattern.diffAllElements(this.root, previousTree);
+
+      // Log centralized diffing results for debugging
       const linksData = this.root.links();
+
+      // Extract actual data objects from diffing results - pass directly to renderers
+      const filteredData = {
+        links: {
+          enter: allUpdates.links.enter.map(op => op.current),
+          update: allUpdates.links.update.map(op => op.current),
+          exit: allUpdates.links.exit.map(op => op.previous)
+        },
+        nodes: {
+          enter: allUpdates.nodes.enter.map(op => op.current),
+          update: allUpdates.nodes.update.map(op => op.current),
+          exit: allUpdates.nodes.exit.map(op => op.previous)
+        },
+        leaves: {
+          enter: allUpdates.leaves.enter.map(op => op.current),
+          update: allUpdates.leaves.update.map(op => op.current),
+          exit: allUpdates.leaves.exit.map(op => op.previous)
+        }
+      };
+
       const leaves = this.root.leaves();
+      const allNodes = this.root.descendants();
 
       const currentMaxLeafRadius = leaves.length > 0 ? Math.max(...leaves.map(d => d.radius)) : 0;
 
-      // Determine animation strategy and transition type
-      const animationStrategy = this.getAnimationStrategy();
-      const transitionType = this.transitionResolver?.getTransitionType(this.previousTreeIndex, this.currentTreeIndex);
-      const isCurrentlyITtoC = animationStrategy === 'exit_first' && (transitionType?.isITDownToC || transitionType?.isITUpToC);
+      // Use current radius for layout calculations
+      const maxLeafRadius = currentMaxLeafRadius;
 
-      let maxLeafRadius;
+      const { showExtensions } = useAppStore.getState();
+      const labelOffset = showExtensions
+        ? maxLeafRadius + LAYOUT_CONSTANTS.LABEL_OFFSET_WITH_EXTENSIONS
+        : maxLeafRadius + LAYOUT_CONSTANTS.LABEL_OFFSET;
 
-      if (isCurrentlyITtoC) {
-        // Starting an IT → C transition: preserve the radius throughout the entire transition
-        if (!this.isInITtoCTransition) {
-          this.preservedTransitionRadius = currentMaxLeafRadius;
-          this.isInITtoCTransition = true;
-        }
-        maxLeafRadius = this.preservedTransitionRadius;
-      } else {
-        // Not in IT → C transition anymore
-        if (this.isInITtoCTransition) {
-          // Just finished an IT → C transition, reset
-          this.isInITtoCTransition = false;
-          this.preservedTransitionRadius = 0;
-        }
-        // Use current radius (normal behavior)
-        maxLeafRadius = currentMaxLeafRadius;
-      }
-
-      this.previousMaxLeafRadius = currentMaxLeafRadius;
-
+      // Pass pre-filtered data to renderer - no more filtering needed in renderer
       const linkStages = this.linkRenderer.getAnimationStages(
         linksData,
         this.drawDuration,
-        this.lattice_edges
+        this.lattice_edges,
+        filteredData.links
       );
 
-      if (animationStrategy === 'exit_first') {
-        // IT_DOWN → C: Simultaneous exit + update with complementary easing
-        // IT_UP → C: Standard exit first, then enter + update
-        const transitionType = this.transitionResolver?.getTransitionType(this.previousTreeIndex, this.currentTreeIndex);
-
-        if (transitionType?.isITDownToC) {
-          const simultaneousPromises = [
-            linkStages.stage3(), // Exit old elements
-            linkStages.stage2(), // Update existing elements
-            this.extensionRenderer.renderExtensionsWithPromise(leaves, maxLeafRadius + 20, this.drawDuration, "easeInQuad"),
-            this.labelRenderer.renderUpdating(leaves, maxLeafRadius + 30, this.drawDuration, "easeInQuad"),
-            this.nodeRenderer.renderLeafCirclesWithPromise(leaves, maxLeafRadius, this.drawDuration, "easeInQuad")
-          ];
-          await Promise.all(simultaneousPromises);
-
-          await linkStages.stage1();
-        } else {
-          const simultaneousPromises = [
-            linkStages.stage3(), // Exit old elements
-            linkStages.stage2(), // Update existing elements
-            this.extensionRenderer.renderExtensionsWithPromise(leaves, maxLeafRadius + 20, this.drawDuration, "easeInQuad"),
-            this.labelRenderer.renderUpdating(leaves, maxLeafRadius + 30, this.drawDuration, "easeInQuad"),
-            this.nodeRenderer.renderLeafCirclesWithPromise(leaves, maxLeafRadius, this.drawDuration, "easeInQuad")
-          ];
-          await Promise.all(simultaneousPromises);
-
-          await linkStages.stage1();
-        }
-
-      } else if (animationStrategy === 'animate_then_enter') {
-        const updatePromises = [
-          linkStages.stage2(), // Update existing links
-          linkStages.stage3(), // Exit old elements
-          this.extensionRenderer.renderExtensionsWithPromise(leaves, maxLeafRadius + 20, this.drawDuration, "easeSinInOut"),
-          this.labelRenderer.renderUpdating(leaves, maxLeafRadius + 30, this.drawDuration, "easeSinInOut"),
-          this.nodeRenderer.renderLeafCirclesWithPromise(leaves, maxLeafRadius, this.drawDuration, "easeSinInOut")
-        ];
-        await Promise.all(updatePromises);
-
-        await linkStages.stage1();
-
-      } else {
-        await linkStages.stage1(); // Enter new elements
-
-        const updatePromises = [
-          linkStages.stage2(), // Update links
-          this.extensionRenderer.renderExtensionsWithPromise(leaves, maxLeafRadius + 20, this.drawDuration, "easeSinInOut"),
-          this.labelRenderer.renderUpdating(leaves, maxLeafRadius + 30, this.drawDuration, "easeSinInOut"),
-          this.nodeRenderer.renderLeafCirclesWithPromise(leaves, maxLeafRadius, this.drawDuration, "easeSinInOut")
-        ];
-        await Promise.all(updatePromises);
-
-        await linkStages.stage3(); // Exit old elements
-      }
+      // Execute animation sequence directly based on data analysis
+      await this._executeAnimationSequence(filteredData, {
+        linkStages,
+        leaves,
+        allNodes,
+        maxLeafRadius,
+        labelOffset
+      });
 
     } catch (error) {
       throw error;
     }
   }
 
-  /**
-   * Determines the animation strategy based on transition type.
-   * @returns {string} Animation strategy: 'default', 'exit_first', or 'animate_then_enter'
-   */
-  getAnimationStrategy() {
-    if (!this.transitionResolver || this.previousTreeIndex === -1 || this.currentTreeIndex === -1) {
-      return 'default';
-    }
 
-    try {
-      const transitionType = this.transitionResolver.getTransitionType(this.previousTreeIndex, this.currentTreeIndex);
-      return transitionType.animationStrategy;
-    } catch (error) {
-      return 'default';
+  /**
+   * Checks if any renderer has exiting elements
+   * @param {Object} filteredData - Pre-filtered data
+   * @returns {boolean} True if any exiting elements exist
+   * @private
+   */
+  _hasExitingElements(filteredData) {
+    return filteredData.links.exit.length > 0 ||
+           filteredData.nodes.exit.length > 0 ||
+           filteredData.leaves.exit.length > 0;
+  }
+
+  /**
+   * Checks if any renderer has entering elements
+   * @param {Object} filteredData - Pre-filtered data
+   * @returns {boolean} True if any entering elements exist
+   * @private
+   */
+  _hasEnteringElements(filteredData) {
+    return filteredData.links.enter.length > 0 ||
+           filteredData.nodes.enter.length > 0 ||
+           filteredData.leaves.enter.length > 0;
+  }
+
+  /**
+   * Checks if any renderer has updating elements
+   * @param {Object} filteredData - Pre-filtered data
+   * @returns {boolean} True if any updating elements exist
+   * @private
+   */
+  _hasUpdatingElements(filteredData) {
+    return filteredData.links.update.length > 0 ||
+           filteredData.nodes.update.length > 0 ||
+           filteredData.leaves.update.length > 0;
+  }
+
+  /**
+   * Executes animation sequence directly based on data analysis
+   * Uses specific sequence logic based on which states are present
+   * @param {Object} filteredData - Pre-filtered data with enter/update/exit arrays
+   * @param {Object} context - Animation context with renderers and data
+   * @private
+   */
+  async _executeAnimationSequence(filteredData, context) {
+    const { linkStages, leaves, allNodes, maxLeafRadius, labelOffset } = context;
+    const hasExiting = this._hasExitingElements(filteredData);
+    const hasEntering = this._hasEnteringElements(filteredData);
+    const hasUpdating = this._hasUpdatingElements(filteredData);
+
+    // When all three states are present: Exit → Enter → Update
+    if (hasExiting && hasEntering && hasUpdating) {
+      await linkStages.stageExit();
+      await linkStages.stageEnter();
+      await this._executeUpdateStage(linkStages, leaves, allNodes, maxLeafRadius, labelOffset, filteredData, EASING_FUNCTIONS.SIN_IN_OUT);
+    }
+    // When hasEnter is activated: Enter → Update → Exit
+    else if (hasEntering && !hasExiting && hasUpdating) {
+      console.log('Executing: Enter → Update → Exit sequence (enter priority)');
+      await linkStages.stageEnter();
+      await this._executeUpdateStage(linkStages, leaves, allNodes, maxLeafRadius, labelOffset, filteredData, EASING_FUNCTIONS.SIN_IN_OUT);
+      if (hasExiting) await linkStages.stageExit();
+    }
+    // When hasExit is activated: Update → Enter → Exit
+    else if (hasExiting && !hasEntering && hasUpdating) {
+      console.log('Executing: Update → Enter → Exit sequence (exit priority)');
+      await this._executeUpdateStage(linkStages, leaves, allNodes, maxLeafRadius, labelOffset, filteredData, EASING_FUNCTIONS.SIN_IN_OUT);
+      if (hasEntering) await linkStages.stageEnter();
+      await linkStages.stageExit();
+    }
+    // Other combinations - follow standard logic
+    else {
+      await linkStages.stageExit();
+      await linkStages.stageEnter();
+      await this._executeUpdateStage(linkStages, leaves, allNodes, maxLeafRadius, labelOffset, filteredData, EASING_FUNCTIONS.SIN_IN_OUT);
     }
   }
 
+  /**
+   * Executes the update stage across all renderers simultaneously
+   * @param {Object} linkStages - Link animation stages
+   * @param {Array} leaves - Leaf data
+   * @param {Array} allNodes - All node data
+   * @param {number} maxLeafRadius - Maximum leaf radius
+   * @param {number} labelOffset - Label positioning offset
+   * @param {Object} filteredData - Pre-filtered data
+   * @param {string} easing - Easing function
+   * @private
+   */
+  async _executeUpdateStage(linkStages, leaves, allNodes, maxLeafRadius, labelOffset, filteredData, easing) {
+    const updatePromises = [
+      linkStages.stageUpdate(), // Update links
+      this.extensionRenderer.renderExtensionsWithPromise(
+        leaves,
+        maxLeafRadius + LAYOUT_CONSTANTS.EXTENSION_OFFSET,
+        this.drawDuration,
+        easing,
+        filteredData.leaves
+      ),
+      this.labelRenderer.renderUpdating(
+        leaves,
+        labelOffset,
+        this.drawDuration,
+        easing,
+        filteredData.leaves
+      ),
+      this.nodeRenderer.renderAllNodesWithPromise(
+        allNodes,
+        this.drawDuration,
+        easing,
+        null,
+        filteredData.nodes
+      )
+    ];
+
+    await Promise.all(updatePromises);
+  }
 
   /**
    * Calculates a tree layout without modifying the controller's state.
    * @param {Object} treeData - Raw tree data.
-   * @param {boolean} ignoreBranchLengths - Whether to ignore branch lengths.
    * @returns {Object} A layout object with tree, dimensions, etc.
    */
-  calculateLayout(treeData, ignoreBranchLengths) {
-    const d3hierarchy = d3.hierarchy(treeData);
+  calculateLayout(treeData) {
+    // Get the current transformation setting from the store
+    const { branchTransformation } = useAppStore.getState();
+
+    // Apply the selected transformation to a deep copy of the tree data
+    const transformedTreeData = transformBranchLengths(treeData, branchTransformation);
+
+    const d3hierarchy = d3.hierarchy(transformedTreeData);
 
     let width, height;
     const svgNode = this.svg_container.node().closest('svg');
@@ -270,7 +351,7 @@ export class TreeAnimationController {
       }
     }
 
-    const layoutCalculator = new RadialTreeLayout(d3hierarchy, ignoreBranchLengths);
+    const layoutCalculator = new RadialTreeLayout(d3hierarchy);
     layoutCalculator.setDimension(width, height);
     layoutCalculator.setMargin(this.margin || 40);
 
@@ -289,18 +370,20 @@ export class TreeAnimationController {
   /**
    * Update layout with new tree data, reusing layout calculator when possible.
    * @param {Object} treeData - Raw tree data
-   * @param {boolean} ignoreBranchLengths - Whether to ignore branch lengths
    * @returns {Object} Layout object with tree, dimensions, etc.
    */
-  updateLayout(treeData, ignoreBranchLengths = false) {
-    const layout = this.calculateLayout(treeData, ignoreBranchLengths);
+  updateLayout(treeData) {
+    const layout = this.calculateLayout(treeData);
 
     this.root = layout.tree;
-    this.ignoreBranchLengths = ignoreBranchLengths;
 
     if (!this.svg_container.attr("transform")) {
       this.svg_container.attr("transform", `translate(${layout.width / 2},${layout.height / 2})`);
     }
+
+    // Cache tree positions in store for renderer optimization
+    const { currentTreeIndex, cacheTreePositions } = useAppStore.getState();
+    cacheTreePositions(currentTreeIndex, layout);
 
     return layout;
   }
@@ -313,19 +396,16 @@ export class TreeAnimationController {
   updateParameters({
     root,
     treeData,
-    ignoreBranchLengths,
     drawDuration,
     marked,
     lattice_edges = [],
-    fontSize,
-    strokeWidth,
     monophyleticColoring,
     treeIndex,
     transitionResolver
   }) {
     // Handle layout updates - prefer treeData over root
     if (treeData) {
-      this.updateLayout(treeData, ignoreBranchLengths);
+      this.updateLayout(treeData);
     } else if (root) {
       this.root = root;
     }
@@ -358,15 +438,7 @@ export class TreeAnimationController {
     if (lattice_edges) this.lattice_edges = lattice_edges;
 
 
-    // Update style if provided
-    const { setStyleConfig } = useAppStore.getState();
-    if (fontSize !== undefined) {
-      const normalizedFontSize = typeof fontSize === 'number' ? `${fontSize}em` : fontSize;
-      setStyleConfig({ fontSize: normalizedFontSize });
-    }
-    if (strokeWidth !== undefined) {
-      setStyleConfig({ strokeWidth: strokeWidth });
-    }
+    // Style updates are handled directly by store actions - no need for styleConfig updates
 
     // Update monophyletic coloring
     if (monophyleticColoring !== undefined) {
@@ -384,47 +456,54 @@ export class TreeAnimationController {
   }
 
   /**
-   * Sets the transition resolver for phase-aware animations.
-   * @param {Object} transitionResolver - TransitionIndexResolver instance
+   * Update controller from store data - single source of truth approach
+   * Gets all required data directly from the store instead of requiring parameters
    */
-  setTransitionResolver(transitionResolver) {
-    this.transitionResolver = transitionResolver;
-  }
+  updateFromStore() {
+    const {
+      currentTreeIndex,
+      treeList,
+      branchTransformation,
+      monophyleticColoringEnabled,
+      animationSpeed,
+      getActualHighlightData,
+      lattice_edge_tracking,
+      transitionResolver
+    } = useAppStore.getState();
 
-  /**
-   * Updates the current tree index for transition tracking.
-   * @param {number} treeIndex - Current tree index
-   */
-  updateTreeIndex(treeIndex) {
-    this.previousTreeIndex = this.currentTreeIndex;
-    this.currentTreeIndex = treeIndex;
-
-    // --- PATCH: Use store actions for step parameters (strokeWidth, fontSize) ---
-    if (this.transitionResolver && this.transitionResolver.treeMetadata) {
-      const metadata = this.transitionResolver.treeMetadata[this.currentTreeIndex];
-      if (metadata) {
-        const { strokeWidth, fontSize } = metadata;
-        const store = useAppStore.getState();
-        let updated = false;
-        if (typeof strokeWidth !== 'undefined') {
-          store.setStrokeWidth(strokeWidth);
-          updated = true;
-        }
-        if (typeof fontSize !== 'undefined') {
-          store.setFontSize(fontSize);
-          updated = true;
-        }
-        if (updated) {
-          // Get latest values from store and update styleConfig
-          const styleUpdate = {
-            strokeWidth: store.strokeWidth,
-            fontSize: typeof store.fontSize === 'number' ? `${store.fontSize}em` : store.fontSize
-          };
-          store.setStyleConfig(styleUpdate);
-          this.synchronizeRenderers();
-        }
-      }
+    const currentTreeData = treeList[currentTreeIndex];
+    
+    // Update layout with current tree data from store
+    if (currentTreeData) {
+      // Apply branch transformation
+      const transformedTreeData = branchTransformation !== 'none' 
+        ? transformBranchLengths(currentTreeData, branchTransformation)
+        : currentTreeData;
+      this.updateLayout(transformedTreeData);
     }
+
+    // Update animation duration from store
+    const baseTime = 1000;
+    this.drawDuration = Math.max(200, baseTime / (animationSpeed || 1));
+
+    // Update marked components from store
+    const markedComponents = getActualHighlightData();
+    if (Array.isArray(markedComponents) && markedComponents.length > 0) {
+      const isArrayOfArrays = markedComponents.every(item => Array.isArray(item));
+      if (isArrayOfArrays) {
+        this.marked = markedComponents.map((innerArray) => new Set(innerArray));
+      } else {
+        this.marked = [new Set(markedComponents)];
+      }
+    } else {
+      this.marked = [];
+    }
+
+    // Update other properties from store
+    this.lattice_edges = lattice_edge_tracking || [];
+    this.colorManager.setMonophyleticColoring(monophyleticColoringEnabled);
+    this.colorManager.updateMarkedComponents(this.marked);
+    this.transitionResolver = transitionResolver;
   }
 
 
@@ -443,8 +522,7 @@ export class TreeAnimationController {
     const {
       highlightEdges = [],
       clickHandler = null,
-      showExtensions = true,
-      showLabels = true
+      showExtensions = true
     } = options;
 
     // Validate input tree data
@@ -455,15 +533,21 @@ export class TreeAnimationController {
     // Clamp timeFactor to [0, 1]
     let t = Math.max(0, Math.min(1, timeFactor));
 
-    // If trees are identical (by reference or shallow structure), just render one
-    if (fromTreeData === toTreeData || JSON.stringify(fromTreeData) === JSON.stringify(toTreeData)) {
+    // If trees are identical by reference, just render one
+    if (fromTreeData === toTreeData) {
       t = 0;
     }
 
     // --- INTERPOLATION: Pass both layouts and t to renderers ---
     // Compute layouts for both trees (do not mutate controller state)
-    const layoutFrom = this.calculateLayout(fromTreeData, this.ignoreBranchLengths);
-    const layoutTo = this.calculateLayout(toTreeData, this.ignoreBranchLengths);
+    const layoutFrom = this.calculateLayout(fromTreeData);
+    const layoutTo = this.calculateLayout(toTreeData);
+
+    // Cache interpolated layouts for renderer optimization
+    const { cacheTreePositions } = useAppStore.getState();
+    // Use negative indices to avoid conflicts with regular tree indices
+    cacheTreePositions(-1, layoutFrom); // From tree
+    cacheTreePositions(-2, layoutTo);   // To tree
 
     // Links
     this.linkRenderer.renderInterpolated(
@@ -477,8 +561,6 @@ export class TreeAnimationController {
     this.nodeRenderer.renderAllNodesInterpolated(
       layoutFrom.tree.descendants(),
       layoutTo.tree.descendants(),
-      layoutFrom.max_radius,
-      layoutTo.max_radius,
       t,
       clickHandler
     );
@@ -486,16 +568,16 @@ export class TreeAnimationController {
       this.extensionRenderer.renderExtensionsInterpolated(
         layoutFrom.tree.leaves(),
         layoutTo.tree.leaves(),
-        layoutFrom.max_radius + 20,
-        layoutTo.max_radius + 20,
+        layoutFrom.max_radius + LAYOUT_CONSTANTS.EXTENSION_OFFSET,
+        layoutTo.max_radius + LAYOUT_CONSTANTS.EXTENSION_OFFSET,
         t
       );
 
       this.labelRenderer.renderLabelsInterpolated(
         layoutFrom.tree.leaves(),
         layoutTo.tree.leaves(),
-        layoutFrom.max_radius + (showExtensions ? 40 : 20),
-        layoutTo.max_radius + (showExtensions ? 40 : 20),
+        layoutFrom.max_radius + (showExtensions ? LAYOUT_CONSTANTS.LABEL_OFFSET_WITH_EXTENSIONS : LAYOUT_CONSTANTS.LABEL_OFFSET),
+        layoutTo.max_radius + (showExtensions ? LAYOUT_CONSTANTS.LABEL_OFFSET_WITH_EXTENSIONS : LAYOUT_CONSTANTS.LABEL_OFFSET),
         t
       );
 

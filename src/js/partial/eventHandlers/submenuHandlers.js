@@ -20,7 +20,7 @@ export class SubmenuHandlers {
   static toggle(submenuId, toggleIconId) { // toggleIconId is passed but not used for icon state change here
     const submenu = document.getElementById(submenuId);
     if (!submenu) return;
-    const container = submenu.closest('.submenu-container');
+    const container = submenu.closest('.card-container');
     if (!container) return;
     // Toggle data-collapsed attribute only
     const isCollapsed = container.getAttribute('data-collapsed') === 'true';
@@ -40,11 +40,11 @@ export class SubmenuHandlers {
    * @returns {void}
    */
   static initializeAll() {
-    const submenuContainers = document.querySelectorAll('.submenu-container');
+    const submenuContainers = document.querySelectorAll('.card-container');
     submenuContainers.forEach(container => {
       if (container.getAttribute('data-initialized') === 'true') return;
-      const submenu = container.querySelector('.submenu');
-      const submenuHeader = container.querySelector('.submenu-header');
+      const submenu = container.querySelector('.card-content');
+      const submenuHeader = container.querySelector('.card-header');
       const toggleIcon = container.querySelector('.toggle-icon');
       if (submenu && submenuHeader && toggleIcon) {
         // Set unique IDs if not already set
@@ -93,7 +93,7 @@ export class SubmenuHandlers {
    * Clean up all initialized submenu event handlers
    */
   static cleanupAll() {
-    const initializedHeaders = document.querySelectorAll('.submenu-header[data-event-listeners-attached="true"]');
+    const initializedHeaders = document.querySelectorAll('.card-header[data-event-listeners-attached="true"]');
     initializedHeaders.forEach(submenuHeader => {
       // To remove specific listeners, we would need to store them as done above (e.g., submenuHeader._clickHandler)
       // For this implementation, we assume the handlers defined in initializeAll are the ones to remove.
@@ -164,19 +164,19 @@ export class SubmenuHandlers {
    */
   static createSubmenu(title, content, iconClass = 'fa-cog', collapsed = false) {
     const container = document.createElement('div');
-    container.className = 'submenu-container';
+    container.className = 'card-container';
     container.setAttribute('data-collapsed', collapsed.toString());
     const submenuId = `submenu-${Math.random().toString(36).substr(2, 9)}`;
     const toggleId = `toggle-${submenuId}`;
     container.innerHTML = `
-      <div class="submenu-header" tabindex="0">
-        <div class="submenu-title">
-          <i class="submenu-icon fa ${iconClass}"></i>
-          <span>${title}</span>
+      <div class="card-header" tabindex="0">
+        <div class="card-title">
+          <i class="card-icon material-icons">${iconClass}</i>
+          <h2 class="card-title-text">${title}</h2>
         </div>
-        <i class="toggle-icon fa fa-chevron-down" id="${toggleId}"></i>
+        <span class="toggle-icon" id="${toggleId}">▼</span>
       </div>
-      <div class="submenu" id="${submenuId}">
+      <div class="card-content" id="${submenuId}">
         ${content}
       </div>
     `;

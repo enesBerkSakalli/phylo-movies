@@ -237,12 +237,12 @@ export const server = {
       if (data.tree_metadata && data.tree_metadata.length > 0) {
         console.log("[DEBUG]   - Sample tree_metadata[0]:", data.tree_metadata[0]);
       }
-      
+
       // Log tree_pair_solutions structure
       console.log("[DEBUG]   - tree_pair_solutions type:", typeof data.tree_pair_solutions);
       console.log("[DEBUG]   - tree_pair_solutions is array:", Array.isArray(data.tree_pair_solutions));
       console.log("[DEBUG]   - tree_pair_solutions keys:", data.tree_pair_solutions ? Object.keys(data.tree_pair_solutions).slice(0, 5) : "N/A");
-      
+
       if (data.tree_pair_solutions) {
         const firstKey = Object.keys(data.tree_pair_solutions)[0];
         if (firstKey) {

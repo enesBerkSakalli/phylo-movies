@@ -23,6 +23,24 @@ export function getNodeKey(node) {
   return `node-${fallbackId}`;
 }
 
+/**
+ * Generates a robust, unique key for tree nodes (leaves and internal nodes)
+ * @param {Object} node - D3 hierarchy node with data.split_indices
+ * @returns {string} Unique node key (e.g., "node-0-1-2" or "node-unknown")
+ */
+export function getLabelKey(leave) {
+  if (leave && leave.data && Array.isArray(leave.data.split_indices)) {
+    return `label-${leave.data.split_indices.join("-")}`;
+  }
+
+  // Fallback: use name if available, otherwise "unknown"
+  const fallbackId = (leave && leave.data && leave.data.name)
+    ? leave.data.name.toString().replace(/[^a-zA-Z0-9-_]/g, "_")
+    : "unknown";
+
+  return `label-${fallbackId}`;
+}
+
 
   const getNodeId = (node) => {
     if (node && node.data && Array.isArray(node.data.split_indices)) {
@@ -38,17 +56,19 @@ export function getNodeKey(node) {
  * @returns {string} Unique link key (e.g., "link-0-1-2", "link-root-0-1-2")
  */
 export function getLinkKey(link) {
-  if (!link || !link.target) {
-    return "link-unknown";
+  if (!link || !link.source || !link.target) {
+    throw new Error('Invalid link object');
   }
 
-  // Detect root link robustly
-  const isRoot = !link.source || !link.source.parent || (link.target && link.target.parent == null);
+  const sourceId = getNodeId(link.source);
   const targetId = getNodeId(link.target);
 
-  return isRoot
-    ? `link-root-${targetId}`
-    : `link-${targetId}`;
+  // Handle the root case where source might not have a conventional ID
+  if (sourceId === "unknown" || link.source.parent === null) {
+    return `link-root-${targetId}`;
+  }
+
+  return `link-to-${targetId}`;
 }
 
 /**

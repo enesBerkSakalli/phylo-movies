@@ -1,6 +1,7 @@
 import { notifications } from "./notificationSystem.js";
-import { SpeedKnobController } from "../../speedKnobController.js";
-import { useAppStore } from '../../store.js';
+import { SpeedKnobController } from "../../controllers/speedKnobController.js";
+import { useAppStore } from '../../core/store.js';
+import { WebGLTreeAnimationController } from '../../treeVisualisation/WebGLTreeAnimationController.js';
 
 /**
  * Centralized event handler registry with data-driven configuration
@@ -96,40 +97,17 @@ export class EventHandlerRegistry {
         async: true,
         handlers: [
           {
-            id: "positionButton",
-            type: "click",
-            action: async () => {
-              const { goToPosition } = useAppStore.getState();
-              const positionInput = document.getElementById("positionValue");
-              if (positionInput) {
-                let position = Math.max(1, parseInt(positionInput.value, 10));
-                positionInput.value = position;
-                goToPosition(position - 1); // Dispatch action
-              }
-            },
-            description: "Navigate to position",
-          },
-          {
-            id: "positionValue",
-            type: "change",
-            action: () => {
-              const { stop } = useAppStore.getState();
-              stop(); // Dispatch stop action
-            },
-            description: "Position input change",
-          },
-          {
-            id: "factor-range",
+            id: "animation-speed-range",
             type: "input",
             action: (event) => {
-              const { setFactor } = useAppStore.getState();
+              const { setAnimationSpeed } = useAppStore.getState();
               // Skip if the speed knob controller is currently dragging to avoid conflicts
               if (this.speedKnobController && this.speedKnobController.isDragging) {
                 return;
               }
               const value = parseFloat(event.target.value);
               if (!isNaN(value) && value >= 0.1 && value <= 5) {
-                setFactor(value); // Dispatch action
+                setAnimationSpeed(value); // Dispatch action
                 // Update the displayed value
                 const speedValue = document.querySelector('.speed-value');
                 if (speedValue) {
@@ -137,7 +115,7 @@ export class EventHandlerRegistry {
                 }
               }
             },
-            description: "Speed factor change (range input)",
+            description: "Animation speed change (range input)",
           },
         ],
       },
@@ -153,33 +131,60 @@ export class EventHandlerRegistry {
             type: "change",
             action: async (event) => {
               const { setBarOption } = useAppStore.getState();
-              setBarOption(event.target.value); // Only call store action - let subscription handle update
+              setBarOption(event.target.value); // This is handled by chart-specific subscriptions
             },
             description: "Bar plot option change",
           },
           {
-            id: "branch-length",
+            id: "branch-length-options",
             type: "change",
             action: async (event) => {
-              console.log('[EventHandlerRegistry] branch-length changed:', event.target.checked);
-              const { setIgnoreBranchLengths } = useAppStore.getState();
-              setIgnoreBranchLengths(event.target.checked);
+              const { setBranchTransformation, treeController, treeList, currentTreeIndex } = useAppStore.getState();
+              const newTransform = event.target.value;
 
-              // Hide/show branch transformation when ignoring branch lengths
-              const transformRow = document.getElementById('branch-transformation-row');
-              if (transformRow) {
-                transformRow.style.display = event.target.checked ? 'none' : 'flex';
+              setBranchTransformation(newTransform);
+
+              if (treeController && treeList[currentTreeIndex]) {
+                // WebGL controllers manage animation duration internally via store
+                if (treeController instanceof WebGLTreeAnimationController) {
+                  // WebGL controller manages duration internally
+                  treeController.updateLayout(treeList[currentTreeIndex]);
+                  await treeController.renderAllElements();
+                } else {
+                  // SVG controller allows duration manipulation
+                  const originalDuration = treeController.drawDuration;
+                  treeController.drawDuration = 0; // Make animation instant
+
+                  treeController.updateLayout(treeList[currentTreeIndex]);
+                  await treeController.renderAllElements();
+
+                  treeController.drawDuration = originalDuration; // Restore duration
+                }
               }
             },
-            description: "Branch length setting",
+            description: "Branch length options selector",
           },
           {
             id: "font-size",
             type: "input",
             action: async (event) => {
-              console.log('[EventHandlerRegistry] font-size changed:', event.target.value);
-              const { setFontSize } = useAppStore.getState();
+              const { setFontSize, treeController } = useAppStore.getState();
               setFontSize(event.target.value);
+              document.getElementById('font-size-value').textContent = event.target.value + 'em';
+
+              if (treeController) {
+                // Only manipulate drawDuration for SVG controllers (WebGL controllers have getter-only drawDuration)
+                if (treeController instanceof WebGLTreeAnimationController) {
+                  // WebGL controller manages duration internally
+                  await treeController.renderAllElements();
+                } else {
+                  // SVG controller allows duration manipulation
+                  const originalDuration = treeController.drawDuration;
+                  treeController.drawDuration = 0;
+                  await treeController.renderAllElements();
+                  treeController.drawDuration = originalDuration;
+                }
+              }
             },
             description: "Font size adjustment",
           },
@@ -187,53 +192,68 @@ export class EventHandlerRegistry {
             id: "stroke-width",
             type: "input",
             action: async (event) => {
-              console.log('[EventHandlerRegistry] stroke-width changed:', event.target.value);
-              const { setStrokeWidth } = useAppStore.getState();
+              const { setStrokeWidth, treeController } = useAppStore.getState();
               setStrokeWidth(event.target.value);
+              document.getElementById('stroke-width-value').textContent = event.target.value;
+
+              if (treeController) {
+                // Only manipulate drawDuration for SVG controllers (WebGL controllers have getter-only drawDuration)
+                if (treeController instanceof WebGLTreeAnimationController) {
+                  // WebGL controller manages duration internally
+                  await treeController.renderAllElements();
+                } else {
+                  // SVG controller allows duration manipulation
+                  const originalDuration = treeController.drawDuration;
+                  treeController.drawDuration = 0;
+                  await treeController.renderAllElements();
+                  treeController.drawDuration = originalDuration;
+                }
+              }
             },
             description: "Stroke width adjustment",
-          },
-          {
-            id: "branch-transformation",
-            type: "change",
-            action: async (event) => {
-              const { setBranchTransformation } = useAppStore.getState();
-              setBranchTransformation(event.target.value); // Only call store action - let subscription handle update
-            },
-            description: "Branch length transformation",
-          },
-          {
-            id: "windowSize",
-            type: "change",
-            action: async (event) => {
-              const { setMsaWindowSize } = useAppStore.getState();
-              const newSize = parseInt(event.target.value, 10);
-              if (newSize && newSize > 0 && newSize <= 10000) {
-                setMsaWindowSize(newSize); // Only call store action - subscription will handle update
-              }
-            },
-            description: "MSA window size adjustment",
-          },
-          {
-            id: "windowStepSize",
-            type: "change",
-            action: async (event) => {
-              const { setMsaStepSize } = useAppStore.getState();
-              const newStepSize = parseInt(event.target.value, 10);
-              if (newStepSize && newStepSize > 0 && newStepSize <= 1000) {
-                setMsaStepSize(newStepSize); // Only call store action - subscription will handle update
-              }
-            },
-            description: "MSA step size adjustment",
           },
           {
             id: "monophyletic-coloring",
             type: "change",
             action: async (event) => {
-              const { setMonophyleticColoring } = useAppStore.getState();
-              setMonophyleticColoring(event.target.checked); // Only call store action - let subscription handle update
+              const { setMonophyleticColoring, treeController } = useAppStore.getState();
+              const enabled = event.target.checked;
+              setMonophyleticColoring(enabled);
+
+              if (treeController) {
+                // Update from store - single source of truth approach
+                // Store already updated by setMonophyleticColoring above
+                treeController.updateFromStore();
+                await treeController.renderAllElements();
+              }
             },
             description: "Monophyletic group coloring toggle",
+          },
+          {
+            id: "webgl-rendering",
+            type: "change",
+            action: async (event) => {
+              const { setWebglEnabled, setTreeController } = useAppStore.getState();
+              const enabled = event.target.checked;
+              setWebglEnabled(enabled);
+
+              // Show/hide appropriate containers
+              const webglContainer = document.getElementById('webgl-container');
+              const svgContainer = document.getElementById('application-container');
+
+              if (enabled) {
+                webglContainer.style.display = 'block';
+                svgContainer.style.display = 'none';
+              } else {
+                webglContainer.style.display = 'none';
+                svgContainer.style.display = 'block';
+              }
+
+              // Force creation of new controller with updated WebGL setting
+              setTreeController(null);
+              console.log(`[EventHandler] WebGL rendering ${enabled ? 'enabled' : 'disabled'}`);
+            },
+            description: "WebGL rendering toggle",
           },
         ],
       },
@@ -278,7 +298,7 @@ export class EventHandlerRegistry {
           },
           {
             id: "taxa-coloring-button",
-            action: () => this.gui.openTaxaColoringModal(),
+            action: () => this.gui.openTaxaColoringWindow(),
             description: "Open taxa coloring",
           },
           {
@@ -297,7 +317,7 @@ export class EventHandlerRegistry {
   toggleSubmenu(event, submenuId) {
     const submenu = document.getElementById(submenuId);
     const toggleIcon = event.target;
-    const container = submenu?.closest('.submenu-container');
+    const container = submenu?.closest('.card-container');
 
     if (submenu && container) {
       const isCollapsed = container.getAttribute('data-collapsed') === 'true';
@@ -316,85 +336,42 @@ export class EventHandlerRegistry {
     }
   }
 
-  /**
-   * Position navigation handler
-   */
-  async handlePositionNavigation() {
-    const { goToPosition } = useAppStore.getState();
-    const positionInput = document.getElementById("positionValue");
-    if (positionInput) {
-      let position = Math.max(1, parseInt(positionInput.value, 10));
-      positionInput.value = position;
-      goToPosition(position - 1); // Dispatch action
-    }
-  }
 
-  /**
-   * Factor change handler for range input
-   */
-  handleFactorChange(event) {
-    const { setFactor } = useAppStore.getState();
-    // Skip if the speed knob controller is currently dragging to avoid conflicts
-    if (this.speedKnobController && this.speedKnobController.isDragging) {
-      return;
-    }
-
-    const value = parseFloat(event.target.value);
-    // Validate factor is within bounds (now allowing values below 1 for slower animations)
-    if (!isNaN(value) && value >= 0.1 && value <= 5) {
-      setFactor(value); // Dispatch action
-
-      // Update the displayed value
-      const speedValue = document.querySelector('.speed-value');
-      if (speedValue) {
-        speedValue.textContent = `${value.toFixed(1)}×`;
-      }
-    }
-  }
+  // Note: Removed redundant handleFactorChange method as it duplicates the functionality
+  // in the navigationControls.handlers array for the factor-range input
 
   /**
    * Initialize the speed knob controller for interactive knob behavior
+   *
+   * Note: This method creates a SpeedKnobController that uses the same
+   * value update logic as the factor-range input handler, but for knob
+   * rotation events instead of direct input changes.
    */
   initializeSpeedKnob() {
     const knobElement = document.querySelector('.speed-knob');
-    const inputElement = document.getElementById('factor-range');
+    const inputElement = document.getElementById('animation-speed-range');
 
     if (knobElement && inputElement && !this.speedKnobController) {
-      this.speedKnobController = new SpeedKnobController(knobElement, inputElement, {
-        onValueChange: (value) => {
-          const { setFactor } = useAppStore.getState();
-          setFactor(value); // Dispatch action
+      // Create a value change handler that matches the animation-speed-range input handler
+      const handleValueChange = (value) => {
+        const { setAnimationSpeed } = useAppStore.getState();
+        setAnimationSpeed(value);
 
-          // Update the displayed value
-          const speedValue = document.querySelector('.speed-value');
-          if (speedValue) {
-            speedValue.textContent = `${value.toFixed(1)}×`;
-          }
+        // Update the displayed value
+        const speedValue = document.querySelector('.speed-value');
+        if (speedValue) {
+          speedValue.textContent = `${value.toFixed(1)}×`;
         }
+      };
+
+      this.speedKnobController = new SpeedKnobController(knobElement, inputElement, {
+        onValueChange: handleValueChange
       });
-
     }
   }
 
-  /**
-   * Chart modal handler with error handling
-   */
-  handleChartModal() {
-    const { stop } = useAppStore.getState();
-    stop(); // Dispatch stop action
-    this.gui.displayCurrentChartInModal();
-  }
-
-  /**
-   * Scatter plot handler
-   */
-  async handleScatterPlot() {
-    if (this.gui && typeof this.gui.openScatterplotModal === "function") {
-      await this.gui.openScatterplotModal();
-    } else {
-      throw new Error("Scatter plot function not available");
-    }
-  }
+  // Note: Removed redundant handleChartModal and handleScatterPlot methods
+  // as they duplicate functionality in the modalControls.handlers array
 
 
   /**
