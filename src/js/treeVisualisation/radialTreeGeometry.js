@@ -98,7 +98,7 @@ export function calculateBranchCoordinates(d, center = { x: 0, y: 0, z: 0 }) {
   // Check if this should be a straight line (same angle or negligible angle difference)
   const angleTolerance = 0.001; // ~0.06 degrees
   const angleDiff = Math.abs(signedShortestAngle(source.angle, target.angle));
-  
+
   if (angleDiff < angleTolerance) {
     // Straight line: no arc needed
     return {
@@ -200,7 +200,7 @@ export function calculateInterpolatedBranchCoordinates(
   // Check if this should be a straight line (same angle or negligible angle difference)
   const angleTolerance = 0.001; // ~0.06 degrees
   const angleDiff = Math.abs(signedShortestAngle(sAngle, tAngle));
-  
+
   if (angleDiff < angleTolerance) {
     // Straight line: no arc needed
     return {
@@ -390,6 +390,91 @@ export function attrTweenCircleYWithT(t) {
       return radius * Math.sin(angle);
     };
   };
+}
+
+/* ----------------------- Link Length and Classification ----------------------- */
+
+/**
+ * Calculates the total length of a path from coordinate data.
+ * @param {Object} coordinates - Coordinate data with movePoint, arcEndPoint, lineEndPoint, arcProperties
+ * @returns {number} Total path length
+ */
+export function calculatePathLengthFromCoordinates(coordinates) {
+  if (!coordinates || !coordinates.movePoint) return 0;
+
+  const { movePoint, arcEndPoint, lineEndPoint, arcProperties } = coordinates;
+  let length = 0;
+
+  if (arcProperties && arcProperties.radius && arcProperties.angleDiff) {
+    length += Math.abs(arcProperties.angleDiff) * arcProperties.radius;
+
+    if (lineEndPoint && arcEndPoint) {
+      const dx = lineEndPoint.x - arcEndPoint.x;
+      const dy = lineEndPoint.y - arcEndPoint.y;
+      const dz = (lineEndPoint.z || 0) - (arcEndPoint.z || 0);
+      length += Math.sqrt(dx * dx + dy * dy + dz * dz);
+    }
+  } else if (lineEndPoint) {
+    const dx = lineEndPoint.x - movePoint.x;
+    const dy = lineEndPoint.y - movePoint.y;
+    const dz = (lineEndPoint.z || 0) - (movePoint.z || 0);
+    length += Math.sqrt(dx * dx + dy * dy + dz * dz);
+  }
+
+  return length;
+}
+
+/**
+ * Calculates the length of a link, caching the result for performance.
+ * @param {Object} link - Link object with source and target
+ * @returns {number} Link length
+ */
+export function calculateLinkLength(link) {
+  if (!link.__coords) {
+    link.__coords = calculateBranchCoordinates(link);
+    link.__length = calculatePathLengthFromCoordinates(link.__coords);
+  }
+  return link.__length;
+}
+
+/**
+ * Classifies the type of change between two links for animation optimization.
+ * @param {Object} fromLink - Source link state
+ * @param {Object} toLink - Target link state
+ * @param {number} radiusTolerance - Tolerance for radius changes (default: 0.01)
+ * @param {number} lengthTolerance - Tolerance for length changes (default: 0.01)
+ * @param {number} angleTolerance - Tolerance for angle changes (default: 0.001)
+ * @returns {string} Change type: 'RETOPO', 'REORDER', or 'NONE'
+ */
+export function classifyEdgeChange(fromLink, toLink, radiusTolerance = 0.01, lengthTolerance = 0.01, angleTolerance = 0.001) {
+  const fromSourceRadius = fromLink.source.radius;
+  const fromTargetRadius = fromLink.target.radius;
+  const toSourceRadius   = toLink.source.radius;
+  const toTargetRadius   = toLink.target.radius;
+
+  const sourceRadiusChange = Math.abs(toSourceRadius - fromSourceRadius);
+  const targetRadiusChange = Math.abs(toTargetRadius - fromTargetRadius);
+  const maxFromRadius = Math.max(fromSourceRadius, fromTargetRadius);
+  const relativeRadiusChange = maxFromRadius > 0
+    ? Math.max(sourceRadiusChange, targetRadiusChange) / maxFromRadius
+    : 0;
+
+  const fromLength = calculateLinkLength(fromLink);
+  const toLength   = calculateLinkLength(toLink);
+  const lengthDiff = Math.abs(fromLength - toLength);
+  const relativeLengthChange = fromLength > 0 ? lengthDiff / fromLength : 0;
+
+  if (relativeRadiusChange > radiusTolerance || relativeLengthChange > lengthTolerance) {
+    return 'RETOPO';
+  }
+
+  const sourceAngleChange = Math.abs(toLink.source.angle - fromLink.source.angle);
+  const targetAngleChange = Math.abs(toLink.target.angle - fromLink.target.angle);
+  const maxAngleChange = Math.max(sourceAngleChange, targetAngleChange);
+
+  if (maxAngleChange > angleTolerance) return 'REORDER';
+
+  return 'NONE';
 }
 
 /* --------------------------------- Utils ----------------------------------- */

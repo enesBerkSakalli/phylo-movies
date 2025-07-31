@@ -24,30 +24,34 @@ export function getNodeKey(node) {
 }
 
 /**
- * Generates a robust, unique key for tree nodes (leaves and internal nodes)
- * @param {Object} node - D3 hierarchy node with data.split_indices
- * @returns {string} Unique node key (e.g., "node-0-1-2" or "node-unknown")
+ * Generates a robust, unique key for tree labels
+ * @param {Object} leaf - D3 hierarchy leaf node with data.split_indices
+ * @returns {string} Unique label key (e.g., "label-0-1-2" or "label-unknown")
  */
-export function getLabelKey(leave) {
-  if (leave && leave.data && Array.isArray(leave.data.split_indices)) {
-    return `label-${leave.data.split_indices.join("-")}`;
+export function getLabelKey(leaf) {
+  if (leaf && leaf.data && Array.isArray(leaf.data.split_indices)) {
+    return `label-${leaf.data.split_indices.join("-")}`;
   }
 
   // Fallback: use name if available, otherwise "unknown"
-  const fallbackId = (leave && leave.data && leave.data.name)
-    ? leave.data.name.toString().replace(/[^a-zA-Z0-9-_]/g, "_")
+  const fallbackId = (leaf && leaf.data && leaf.data.name)
+    ? leaf.data.name.toString().replace(/[^a-zA-Z0-9-_]/g, "_")
     : "unknown";
 
   return `label-${fallbackId}`;
 }
 
-
-  const getNodeId = (node) => {
-    if (node && node.data && Array.isArray(node.data.split_indices)) {
-      return node.data.split_indices.join("-");
-    }
-    return "unknown";
-  };
+/**
+ * Internal helper to generate node ID from split indices
+ * @param {Object} node - D3 hierarchy node
+ * @returns {string} Node ID without prefix
+ */
+const getNodeId = (node) => {
+  if (node && node.data && Array.isArray(node.data.split_indices)) {
+    return node.data.split_indices.join("-");
+  }
+  return "unknown";
+};
 
 
 /**
@@ -123,4 +127,59 @@ export function getLinkSvgId(link) {
  */
 export function getExtensionSvgId(leaf) {
   return getExtensionKey(leaf); // Same logic for consistency
+}
+
+/**
+ * Generates a stable, identity-based key for tree data structures
+ * Uses the first leaf node as the tree's identity representative
+ * 
+ * @param {Object} treeData - D3 hierarchy tree data
+ * @returns {string} Unique tree identity key
+ */
+export function getTreeKey(treeData) {
+  if (!treeData) return 'tree-empty';
+  
+  // Use tree ID if explicitly provided
+  if (treeData.id) {
+    return `tree-${treeData.id}`;
+  }
+  
+  // Use tree name if available
+  if (treeData.name) {
+    return `tree-${treeData.name.toString().replace(/[^a-zA-Z0-9-_]/g, "_")}`;
+  }
+  
+  // Use first leaf as identity representative
+  const leaves = treeData.leaves();
+  if (leaves.length > 0) {
+    const firstLeafKey = getNodeKey(leaves[0]);
+    // Strip 'node-' prefix to get pure identity
+    return firstLeafKey.replace('node-', 'tree-');
+  }
+  
+  // Fallback: use root node identity
+  const root = treeData.descendants()?.[0];
+  if (root) {
+    const rootKey = getNodeKey(root);
+    return rootKey.replace('node-', 'tree-');
+  }
+  
+  // Ultimate fallback: structural identity (rare)
+  return `tree-${treeData.descendants().length}-${treeData.links().length}`;
+}
+
+/**
+ * Creates a pair key for interpolation between two trees
+ * Ensures consistent ordering regardless of direction
+ * 
+ * @param {Object} fromTreeData - Source tree
+ * @param {Object} toTreeData - Target tree
+ * @returns {string} Stable interpolation pair key
+ */
+export function getInterpolationPairKey(fromTreeData, toTreeData) {
+  const fromKey = getTreeKey(fromTreeData);
+  const toKey = getTreeKey(toTreeData);
+  
+  // Ensure consistent ordering (lexicographical)
+  return [fromKey, toKey].sort().join(':');
 }

@@ -40,42 +40,62 @@ body.sidebar-hidden .movie-player-bar {
 
 .movie-player-container {
   display: flex;
-  align-items: stretch; /* Allow children to stretch vertically */
-  gap: min(var(--md-sys-spacing-6), 2vw); /* Reduced gap */
+  flex-direction: column; /* Stack rows vertically */
+  gap: var(--md-sys-spacing-2); /* Reduced gap */
   width: 100%;
   justify-content: flex-start;
   min-height: var(--md-sys-spacing-12); /* Reduced height */
 }
 
-/* Left controls container - stacked vertically: position above buttons */
+/* Controls row - spans full width with left/right alignment */
+.controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--md-sys-spacing-4);
+  width: 100%;
+  flex-shrink: 0;
+}
+
+/* Left controls container - horizontal layout for transport controls */
 .left-controls {
   display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
+  align-items: center;
   gap: var(--md-sys-spacing-1); /* Further reduced gap */
   flex-shrink: 0;
-  align-items: flex-start;
-  padding-top: var(--md-sys-spacing-1); /* Further reduced padding */
 }
 
-/* Chart expand controls - under transport buttons */
-.chart-expand-controls {
+/* Chart controls container - right side */
+.chart-controls {
   display: flex;
-  justify-content: flex-start;
   align-items: center;
-  gap: var(--md-sys-spacing-2); /* Reduced gap */
-  width: 100%;
+  gap: var(--md-sys-spacing-2);
+  flex-shrink: 0;
 }
 
-/* Right content container - stacked vertically: timeline above chart */
-.right-content-stacked {
-  flex: 1; /* Take all remaining horizontal space */
+/* Timeline container - spans full width */
+.timeline-container-full-width {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  gap: var(--md-sys-spacing-2); /* Reduced gap */
-  min-inline-size: clamp(200px, 40%, 280px); /* Reduced width */
-  min-height: 120px; /* Reduced height */
+  width: 100%;
+  min-height: 80px; /* Increased to give timeline more space */
+}
+
+/* Chart container - spans full width */
+.movie-chart-container-full-width {
+  flex: 0 0 auto; /* Don't grow, fixed height for slim profile */
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-sys-spacing-1); /* Reduced gap */
+  width: 100%; /* Take full width of parent */
+  height: 50px; /* Reduced height */
+  background: var(--md-sys-elevation-level-1);
+  border-radius: var(--md-sys-shape-corner-small);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  padding: var(--md-sys-spacing-1);
+  box-sizing: border-box;
+  position: relative;
 }
 
 /* Status Row Container */
@@ -99,36 +119,37 @@ body.sidebar-hidden .movie-player-bar {
 }
 
 .movie-player-bar .tree-position .label {
-  font-size: 12px;
+  font: var(--md-typescale-label-small);
   font-weight: 500;
   color: var(--md-sys-color-on-surface);
 }
 
 .movie-player-bar .tree-position .value {
-  font-size: 14px;
+  font: var(--md-typescale-label-medium);
   font-weight: 600;
   color: var(--md-sys-color-on-surface);
 }
 
 .movie-player-bar .tree-position .separator {
-  font-size: 12px;
+  font: var(--md-typescale-label-small);
   color: var(--md-sys-color-outline);
   margin: 0 var(--md-sys-spacing-0);
 }
 
-/* Integrated Distance Chart in Movie Player - Responsive */
-.movie-chart-container {
+/* Chart container - spans full width */
+.movie-chart-container-full-width {
   flex: 0 0 auto; /* Don't grow, fixed height for slim profile */
   display: flex;
   flex-direction: column;
   gap: var(--md-sys-spacing-1); /* Reduced gap */
   width: 100%; /* Take full width of parent */
-  height: 60px; /* Reduced height */
-  background: var(--md-sys-color-surface-container-low);
+  height: 50px; /* Reduced height */
+  background: var(--md-sys-elevation-level-1);
   border-radius: var(--md-sys-shape-corner-small);
   border: 1px solid var(--md-sys-color-outline-variant);
   padding: var(--md-sys-spacing-1);
   box-sizing: border-box;
+  position: relative;
 }
 
 .movie-player-bar #lineChart,
@@ -136,8 +157,25 @@ body.sidebar-hidden .movie-player-bar {
 .movie-player-bar .chart-inline {
   width: 100%;
   height: 100%;
-  min-height: 48px; /* Reduced height */
-  max-height: 56px; /* Reduced height */
+  min-height: 40px; /* Further reduced from 48px */
+  max-height: 48px; /* Further reduced from 56px */
+  display: block;
+  background: transparent;
+  border-radius: 0;
+  border: none;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+/* Full-width chart container styling */
+.movie-chart-container-full-width #lineChart,
+.movie-chart-container-full-width .chart-canvas,
+.movie-chart-container-full-width .chart-inline {
+  width: 100%;
+  height: 100%;
+  min-height: 40px;
+  max-height: 48px;
   display: block;
   background: transparent;
   border-radius: 0;
@@ -158,19 +196,20 @@ body.sidebar-hidden .movie-player-bar {
 }
 
 #start-button.playing:hover {
-  background: rgba(186, 26, 26, 0.92); /* Fallback for browsers without color-mix */
+  background: var(--md-sys-state-hover);
 }
 
-@supports (background: color-mix(in srgb, red 50%, blue)) {
-  #start-button.playing:hover {
-    background: color-mix(in srgb, var(--md-sys-color-error) 92%, var(--md-sys-color-on-error));
-  }
+#start-button:not(.playing):hover {
+  background: var(--md-sys-state-hover);
 }
 
-@supports (background: color-mix(in srgb, red 50%, blue)) {
-  #start-button:not(.playing):hover {
-    background: color-mix(in srgb, var(--md-sys-color-primary) 92%, var(--md-sys-color-on-primary));
-  }
+#start-button:active {
+  background: var(--md-sys-state-pressed);
+}
+
+#start-button:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
 }
 
 /* Responsive Design - Professional Layout Alignment */
@@ -191,18 +230,41 @@ body.sidebar-hidden .movie-player-bar {
   }
 
   .movie-player-container {
-    gap: min(var(--md-sys-spacing-4), 2vw); /* Reduced gap for mobile */
+    gap: var(--md-sys-spacing-1); /* Reduced gap for mobile */
+  }
+
+  /* Stack controls vertically on mobile */
+  .controls-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--md-sys-spacing-2);
+  }
+
+  .left-controls {
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .chart-controls {
+    width: 100%;
+    justify-content: center;
   }
 
   /* Responsive chart sizing for medium screens */
-  .movie-chart-container {
+  .movie-chart-container-full-width {
     height: 48px; /* Reduced height for tablet */
   }
 }
 
 @media (max-width: 480px) {
-  .movie-chart-container {
+  .movie-chart-container-full-width {
     height: 40px; /* Very compact for mobile */
+  }
+
+  /* Further reduce timeline container height on mobile */
+  .timeline-container-full-width {
+    min-height: 60px;
   }
 }
 /* Ultra-compact speed control styling */
@@ -220,7 +282,7 @@ body.sidebar-hidden .movie-player-bar {
 }
 
 /* Make select more compact */
-.chart-expand-controls .select {
+.chart-controls .select {
   font-size: 12px;
   padding: 4px 8px;
   height: 28px;
@@ -243,41 +305,15 @@ body.sidebar-hidden .movie-player-bar {
 .interpolation-timeline-container {
   min-height: 70px;
 }
-/* Combined controls row styling */
-.combined-controls-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--md-sys-spacing-1);
-  width: 100%;
-}
 
-/* Ensure select doesn't grow too large */
-.combined-controls-row select {
-  max-width: 80px;
-  margin-left: auto; /* Push to right side */
-}
-
-/* Responsive adjustments for combined row */
-@media (max-width: 768px) {
-  .combined-controls-row {
-    justify-content: center;
-  }
-
-  .combined-controls-row select,
-  .combined-controls-row #chart-modal {
-    margin-top: var(--md-sys-spacing-1);
-  }
+/* Full-width timeline container gets more space */
+.timeline-container-full-width .interpolation-timeline-container {
+  min-height: 80px;
 }
 
 /* Further reduce movie bar height */
 :root {
   --movie-bar-height: 60px; /* Further reduced from 70px */
-}
-
-/* Make movie chart container more compact */
-.movie-chart-container {
-  height: 50px; /* Further reduced from 60px */
 }
 
 .movie-player-bar #lineChart,

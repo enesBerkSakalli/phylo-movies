@@ -2,7 +2,6 @@ import { generateLineChart, generateChartModal } from "./chartGenerator.js";
 import { updateChartIndicator } from "./ChartStateManager.js";
 import { ChartStateManager } from "./ChartStateManager.js";
 import { useAppStore } from '../core/store.js';
-import { GoToPositionCommand } from '../core/NavigationCommands.js';
 
 // Open a robust, feature-rich modal chart using WinBox and advanced chart logic
 export function openModalChart(options) {
@@ -86,13 +85,10 @@ export function openModalChart(options) {
         : transitionResolver.getDistanceIndex(currentTreeIndex);
     },
     goToPosition: (idx) => {
-      const command = new GoToPositionCommand(barOptionValue === "scale" ? idx : transitionResolver.getTreeIndexForDistanceIndex(idx));
-      const { navigationController } = useAppStore.getState();
-      if (navigationController) {
-        navigationController.execute(command);
-      } else {
-        command.execute();
-      }
+      // Direct store navigation instead of command pattern
+      const { clearStickyChartPosition, goToPosition } = useAppStore.getState();
+      clearStickyChartPosition();
+      goToPosition(barOptionValue === "scale" ? idx : transitionResolver.getTreeIndexForDistanceIndex(idx));
     },
     // Keep these for compatibility during migration
     barOptionValue,

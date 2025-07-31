@@ -50,13 +50,13 @@
 
         <!-- Upload Form Card -->
         <section class="md-form-section">
-          <div class="md-card md-card-filled elev-2">
+          <div class="md-card elev-1">
 
             <!-- Card Header -->
             <div class="md-card-header">
               <div class="md-card-header-text">
-                <h2 class="md-card-title">Upload Data Files</h2>
-                <p class="md-card-subtitle">Select your phylogenetic tree files and configure visualization parameters</p>
+                <h2 class="md-card-title">Upload & Configure</h2>
+                <p class="md-card-subtitle">Prepare your phylogenetic data for visualization</p>
               </div>
               <span class="material-icons md-card-header-icon">upload_file</span>
             </div>
@@ -81,9 +81,8 @@
                   </h3>
 
                   <!-- Tree File Input -->
-                  <div class="md-text-field-container">
-                    <div class="md-text-field md-text-field-filled">
-                      <label for="trees" class="md-text-field-label">Tree File *</label>
+                  <div class="md-form-field-group">
+                    <div class="md-text-field md-text-field-outlined">
                       <input
                         id="trees"
                         type="file"
@@ -92,6 +91,15 @@
                         accept=".tree,.nwk,.newick,.tre,.ph"
                         placeholder=" "
                       >
+                      <label for="trees" class="md-text-field-label">Tree File *</label>
+                      <div class="md-text-field-outline">
+                        <div class="md-text-field-outline-start"></div>
+                        <div class="md-text-field-outline-notch">
+                          <div class="md-text-field-outline-panel-inactive"></div>
+                          <div class="md-text-field-outline-panel-active"></div>
+                        </div>
+                        <div class="md-text-field-outline-end"></div>
+                      </div>
                       <div class="md-text-field-supporting-text">
                         <span class="material-icons md-text-field-icon">info</span>
                         Newick format (.tree, .nwk, .newick)
@@ -100,9 +108,8 @@
                   </div>
 
                   <!-- Order File Input -->
-                  <div class="md-text-field-container">
-                    <div class="md-text-field md-text-field-filled">
-                      <label for="order" class="md-text-field-label">Order File</label>
+                  <div class="md-form-field-group">
+                    <div class="md-text-field md-text-field-outlined">
                       <input
                         type="file"
                         class="md-text-field-input"
@@ -110,6 +117,15 @@
                         accept=".txt,.order"
                         placeholder=" "
                       >
+                      <label for="order" class="md-text-field-label">Order File</label>
+                      <div class="md-text-field-outline">
+                        <div class="md-text-field-outline-start"></div>
+                        <div class="md-text-field-outline-notch">
+                          <div class="md-text-field-outline-panel-inactive"></div>
+                          <div class="md-text-field-outline-panel-active"></div>
+                        </div>
+                        <div class="md-text-field-outline-end"></div>
+                      </div>
                       <div class="md-text-field-supporting-text">
                         <span class="material-icons md-text-field-icon">info</span>
                         Optional: Tree ordering specification
@@ -126,9 +142,8 @@
                   </h3>
 
                   <!-- MSA File Input -->
-                  <div class="md-text-field-container">
-                    <div class="md-text-field md-text-field-filled">
-                      <label for="msa" class="md-text-field-label">Multiple Sequence Alignment</label>
+                  <div class="md-form-field-group">
+                    <div class="md-text-field md-text-field-outlined">
                       <input
                         type="file"
                         class="md-text-field-input"
@@ -136,6 +151,15 @@
                         accept=".fas,.fasta,.aln,.clustal,.msa,.phylip,.phy"
                         placeholder=" "
                       >
+                      <label for="msa" class="md-text-field-label">Multiple Sequence Alignment</label>
+                      <div class="md-text-field-outline">
+                        <div class="md-text-field-outline-start"></div>
+                        <div class="md-text-field-outline-notch">
+                          <div class="md-text-field-outline-panel-inactive"></div>
+                          <div class="md-text-field-outline-panel-active"></div>
+                        </div>
+                        <div class="md-text-field-outline-end"></div>
+                      </div>
                       <div class="md-text-field-supporting-text">
                         <span class="material-icons md-text-field-icon">info</span>
                         FASTA, CLUSTAL, or PHYLIP format
@@ -152,8 +176,8 @@
                   </h3>
 
                   <!-- Number Inputs Row -->
-                  <div class="md-form-row">
-                    <div class="md-text-field-container">
+                  <div class="md-form-grid md-form-grid-2-col">
+                    <div class="md-form-field-group">
                       <div class="md-text-field md-text-field-outlined">
                         <input
                           type="number"
@@ -177,7 +201,7 @@
                       </div>
                     </div>
 
-                    <div class="md-text-field-container">
+                    <div class="md-form-field-group">
                       <div class="md-text-field md-text-field-outlined">
                         <input
                           type="number"
@@ -250,11 +274,11 @@
                 <div class="md-card-actions">
                   <button type="submit" class="md-button elevated">
                     <span class="material-icons">play_arrow</span>
-                    Create Visualization
+                    <span>Create Visualization</span>
                   </button>
-                  <button type="reset" class="md-button secondary">
+                  <button type="reset" class="md-button text">
                     <span class="material-icons">refresh</span>
-                    Reset Form
+                    <span>Reset</span>
                   </button>
                 </div>
               </form>

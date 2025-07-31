@@ -99,7 +99,7 @@ export class LabelRenderer {
       .attr("class", this.labelClass)
       .attr("transform", (d) => orientText(d, labelRadius))
       .attr("text-anchor", (d) => calculateTextAnchor(d))
-      .style("font-size", useAppStore.getState().fontSize || "1.2em")
+      .style("font-size", useAppStore.getState().fontSize || "2.6em") // Use store default
       .style("fill", (d) => this.colorManager.getNodeColor(d))
       .text((d) => d.data.name);
 
@@ -136,7 +136,7 @@ export class LabelRenderer {
       .attrTween("transform", getOrientTextInterpolator(labelRadius, oldLabelRadius))
       .attr("text-anchor", (d) => calculateTextAnchor(d))
       .style("fill", (d) => this.colorManager.getNodeColor(d))
-      .style("font-size", useAppStore.getState().fontSize || "1.2em")
+      .style("font-size", useAppStore.getState().fontSize || "2.6em") // Use store default
       .end().catch(() => {});
 
     // Add debug info
@@ -290,6 +290,21 @@ export class LabelRenderer {
       .style("fill", (d) => this.colorManager.getNodeColor(d));
 
     return allLabels;
+  }
+
+  /**
+   * Update label font sizes reactively without full re-render
+   * Called when fontSize changes in the UI
+   */
+  updateLabelStyles() {
+    const { fontSize } = useAppStore.getState();
+
+    // Update all existing labels with new font size
+    this.svgContainer
+      .selectAll(`.${this.labelClass}`)
+      .style("font-size", fontSize);
+
+    return Promise.resolve();
   }
 
   /**
