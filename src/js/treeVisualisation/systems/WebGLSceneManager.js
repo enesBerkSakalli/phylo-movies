@@ -10,7 +10,7 @@ export class WebGLSceneManager {
   constructor(container, options = {}) {
     this.container = container;
     this.options = {
-      backgroundColor: 0xf8f9fa,
+      backgroundColor: 0xffffff, // Default to white background for proper label visibility
       antialias: true,
       alpha: true,
       preserveDrawingBuffer: false,
@@ -59,11 +59,8 @@ export class WebGLSceneManager {
 
   setupScene() {
     this.scene = new THREE.Scene();
-    if (this.options.backgroundColor != null) {
-      this.scene.background = new THREE.Color(this.options.backgroundColor);
-    } else {
-      this.scene.background = null;
-    }
+    // Set white background by default for proper label visibility
+    this.scene.background = new THREE.Color(this.options.backgroundColor);
   }
 
   setupRenderer() {
@@ -136,9 +133,8 @@ export class WebGLSceneManager {
 
     // When camera is recreated (switch mode etc.)
     this.cameraController.onCameraRecreated = (camera, mode) => {
-      if (this.options.backgroundColor != null) {
-        this.scene.background = new THREE.Color(this.options.backgroundColor);
-      }
+      // Ensure proper background color is set
+      this.scene.background = new THREE.Color(this.options.backgroundColor);
       this.setupLighting(); // ensure lights exist
       if (this.cameraChangeCallback) {
         this.cameraChangeCallback(camera, mode);
@@ -208,6 +204,36 @@ export class WebGLSceneManager {
 
   setPixelRatio(ratio) {
     this.renderer?.setPixelRatio(ratio);
+  }
+
+  /**
+   * Get the effective pixel ratio being used for rendering.
+   * This should be used by all renderers for consistency.
+   * @returns {number} Current pixel ratio
+   */
+  getEffectivePixelRatio() {
+    return this.renderer ? this.renderer.getPixelRatio() : 1;
+  }
+
+  /**
+   * Get the actual render dimensions (accounting for pixel ratio).
+   * @returns {Object} {width, height, pixelRatio, cssWidth, cssHeight}
+   */
+  getRenderDimensions() {
+    if (!this.renderer) return { width: 800, height: 600, pixelRatio: 1, cssWidth: 800, cssHeight: 600 };
+
+    const rect = this.container.getBoundingClientRect();
+    const cssWidth = rect.width || 800;
+    const cssHeight = rect.height || 600;
+    const pixelRatio = this.renderer.getPixelRatio();
+
+    return {
+      width: cssWidth * pixelRatio,
+      height: cssHeight * pixelRatio,
+      pixelRatio,
+      cssWidth,
+      cssHeight
+    };
   }
 
   /* ------------------------------------------------------------------ */
@@ -320,9 +346,9 @@ export class WebGLSceneManager {
     this.render();
   }
 
-  setBackgroundColor(color = null) {
+  setBackgroundColor(color = 0xffffff) {
     this.options.backgroundColor = color;
-    this.scene.background = color != null ? new THREE.Color(color) : null;
+    this.scene.background = new THREE.Color(color);
   }
 
   /* ------------------------------------------------------------------ */

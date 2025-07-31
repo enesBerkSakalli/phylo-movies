@@ -29,9 +29,9 @@ export class LinkRenderer {
     // Note: Position caching now handled by store - no local cache needed
   }
 
-  
 
-  
+
+
 
   /**
    * Returns promises for each animation stage to allow external coordination.
@@ -71,21 +71,18 @@ export class LinkRenderer {
       stageExit: () => {
         // Stage 1: Exit old elements first
         if (exitSelection.empty()) return Promise.resolve();
-        console.log('LinkRenderer stageExit: Removing', exitSelection.size(), 'links');
         return this._animateExit(exitSelection, duration, EASING_FUNCTIONS.SIN_IN);
       },
       stageEnter: () => {
         // Stage 2: Create entering links in the DOM (they appear instantly at final position)
         if (!enterSelection.empty()) {
           this._handleEnter(enterSelection);
-          console.log('LinkRenderer stageEnter: Created', enterSelection.size(), 'entering links');
         }
         return Promise.resolve();
       },
       stageUpdate: () => {
         // Stage 3: Update existing elements with animation
         if (updateSelection.empty()) return Promise.resolve();
-        console.log('LinkRenderer stageUpdate: Animating', updateSelection.size(), 'links');
         return this._animateUpdate(updateSelection, interpolationFunction, duration, EASING_FUNCTIONS.SIN_IN_OUT, highlightEdges);
       },
       mergedSelection: enterSelection.merge(updateSelection)
@@ -109,7 +106,7 @@ export class LinkRenderer {
   }
 
 
-  
+
 
   /**
    * Renders and interpolates links between two states for scrubbing.
@@ -153,13 +150,13 @@ export class LinkRenderer {
     // Handle all links in current data binding
     allLinks.each((d, i, nodes) => {
       const element = d3.select(nodes[i]);
-      
+
       // Safety check: ensure DOM element exists
       if (!element.node()) {
         console.warn('[LinkRenderer] DOM element missing for link:', getLinkKey(d));
         return;
       }
-      
+
       const linkKey = keyFn(d);
       const fromLink = fromLinksMap.get(linkKey);
       const toLink = toLinksMap.get(linkKey);
@@ -203,7 +200,7 @@ export class LinkRenderer {
 
       element.select(".contour-path")
         .attr("d", pathData)
-        .attr("stroke", this.colorManager.getBranchColorWithHighlights(linkForColoring, highlightEdges).color)
+        .attr("stroke", this.colorManager.getBranchColorWithHighlights(linkForColoring, highlightEdges))
         .attr("stroke-width", contourStrokeWidth);
 
       element.select(".main-path")
@@ -220,7 +217,7 @@ export class LinkRenderer {
 
 
 
-  
+
 
 
   /**
@@ -309,7 +306,7 @@ export class LinkRenderer {
     linkGroup.append("path")
       .attr("class", "contour-path")
       .attr("fill", "none")
-      .attr("stroke", d => this.colorManager.getBranchColorWithHighlights(d, this._highlightEdges || []).color)
+      .attr("stroke", d => this.colorManager.getBranchColorWithHighlights(d, this._highlightEdges || []))
       .attr("stroke-width", Number(strokeWidth) + styleConfig.contourWidthOffset)
       .attr("d", getPathData);
 
@@ -380,7 +377,7 @@ async _animateExit(exitSelection, duration, easing) {
       .transition("link-update-contour")
       .ease(easingFunction)
       .duration(duration)
-      .attr("stroke", d => this.colorManager.getBranchColorWithHighlights(d, highlightEdges).color)
+      .attr("stroke", d => this.colorManager.getBranchColorWithHighlights(d, highlightEdges))
       .attr("stroke-width", Number(strokeWidth) + styleConfig.contourWidthOffset)
       .attrTween("d", interpolationFunction)
       .end();

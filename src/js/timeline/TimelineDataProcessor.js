@@ -15,29 +15,101 @@ export class TimelineDataProcessor {
      */
     static createSegments(movieData, resolver) {
         const { tree_metadata, interpolated_trees, lattice_edge_tracking } = movieData;
-        
+
+        console.log('[TimelineDataProcessor] Creating segments from:', {
+            tree_metadata: tree_metadata?.length,
+            interpolated_trees: interpolated_trees?.length,
+            lattice_edge_tracking: lattice_edge_tracking?.length,
+            resolver: !!resolver
+        });
+
         if (!tree_metadata) {
             console.warn('[TimelineDataProcessor] No tree metadata available');
             return [];
         }
-        
-        return tree_metadata
-            .map((metadata, index) => ({
-                index,
+
+        const segments = [];
+        const groupedByTransition = new Map();
+
+        // Group metadata by s-edge tracker to create one segment per s-edge transition
+        tree_metadata.forEach((metadata, index) => {
+            const key = metadata.s_edge_tracker || `original_${metadata.source_tree_index || index}`;
+
+            if (!groupedByTransition.has(key)) {
+                groupedByTransition.set(key, []);
+            }
+            groupedByTransition.get(key).push({
                 metadata,
+                index,
                 tree: interpolated_trees[index],
-                latticeEdge: lattice_edge_tracking?.[index] || null,
-                phase: metadata.phase,
-                sEdgeTracker: metadata.s_edge_tracker,
-                treePairKey: metadata.tree_pair_key,
-                stepInPair: metadata.step_in_pair,
-                treeName: metadata.tree_name || `Tree ${index}`,
-                hasInterpolation: true,
-                // Add resolver-based information
-                isFullTree: resolver.isFullTree(index),
-                treeInfo: resolver.getTreeInfo(index)
-            }))
-            .filter(Boolean);
+                latticeEdge: lattice_edge_tracking?.[index] || null
+            });
+        });
+
+        // Create segments from grouped transitions - one per unique s-edge
+        groupedByTransition.forEach((group) => {
+            if (group.length === 1 || !group[0].metadata.s_edge_tracker || group[0].metadata.s_edge_tracker === "None") {
+                // Single segment (final tree or original tree without s-edge)
+                const { metadata, index, tree, latticeEdge } = group[0];
+                segments.push({
+                    index: segments.length,
+                    metadata,
+                    tree,
+                    latticeEdge,
+                    phase: metadata.phase,
+                    sEdgeTracker: metadata.s_edge_tracker,
+                    treePairKey: metadata.tree_pair_key,
+                    stepInPair: metadata.step_in_pair,
+                    treeName: metadata.tree_name || `Tree ${index}`,
+                    hasInterpolation: false,
+                    isFullTree: true,
+                    treeInfo: resolver.getTreeInfo(index),
+                    // For single segments, interpolation data is just the tree itself
+                    interpolationData: [{
+                        tree,
+                        progress: 0,
+                        metadata,
+                        stepInPair: 1,
+                        originalIndex: index
+                    }]
+                });
+            } else {
+                // Group of 5 interpolation steps for one s-edge - create single segment
+                const first = group[0];
+
+                // Ensure we have interpolation data for all 5 steps
+                const interpolationData = group
+                    .sort((a, b) => a.metadata.step_in_pair - b.metadata.step_in_pair)
+                    .map(item => ({
+                        tree: item.tree,
+                        progress: (item.metadata.step_in_pair - 1) / 4, // 0, 0.25, 0.5, 0.75, 1
+                        metadata: item.metadata,
+                        stepInPair: item.metadata.step_in_pair,
+                        originalIndex: item.index
+                    }));
+
+                segments.push({
+                    index: segments.length,
+                    metadata: first.metadata, // Use first metadata as representative
+                    tree: first.tree, // Use first tree as starting point
+                    latticeEdge: first.latticeEdge,
+                    phase: first.metadata.phase,
+                    sEdgeTracker: first.metadata.s_edge_tracker,
+                    treePairKey: first.metadata.tree_pair_key,
+                    stepInPair: first.metadata.step_in_pair,
+                    treeName: first.metadata.tree_name || `S-Edge ${first.metadata.s_edge_tracker}`,
+                    hasInterpolation: true,
+                    isFullTree: false,
+                    treeInfo: resolver.getTreeInfo(first.index),
+                    interpolationData // Store all 5 interpolation steps
+                });
+            }
+        });
+
+        console.log('[TimelineDataProcessor] Created', segments.length, 'segments');
+        console.log('[TimelineDataProcessor] Grouped by transition keys:', Array.from(groupedByTransition.keys()));
+
+        return segments;
     }
 
     /**
@@ -86,10 +158,23 @@ export class TimelineDataProcessor {
     static createTimelineData(segments) {
         const items = new DataSet();
         const groups = new DataSet([{ id: 1, content: '' }]);
-        const totalDuration = segments.length * TIMELINE_CONSTANTS.UNIT_DURATION_MS;
+
+        // Calculate duration: each segment gets duration based on its content
+        // - Full trees: 1 unit duration
+        // - Interpolation segments: 5 units duration (for 5 steps)
+        let totalDuration = 0;
+        const segmentDurations = segments.map(segment =>
+            segment.hasInterpolation && segment.interpolationData?.length > 1
+                ? segment.interpolationData.length * TIMELINE_CONSTANTS.UNIT_DURATION_MS
+                : TIMELINE_CONSTANTS.UNIT_DURATION_MS
+        );
+        totalDuration = segmentDurations.reduce((sum, duration) => sum + duration, 0);
+
         const pairColors = TimelineDataProcessor.getTreePairColors(segments);
+        let currentTime = 0;
 
         segments.forEach((segment, index) => {
+            const duration = segmentDurations[index];
             const baseClass = segment.isFullTree ? 'full-tree-segment' : 'interpolation-segment';
             const pairColorClass = pairColors[segment.treePairKey] || 'tree-pair-default';
             const segmentClass = `${baseClass} ${pairColorClass} ${segment.treeInfo.colorClass}`;
@@ -97,13 +182,19 @@ export class TimelineDataProcessor {
             items.add({
                 id: index + 1,
                 content: '',
-                start: index * TIMELINE_CONSTANTS.UNIT_DURATION_MS,
-                end: (index + 1) * TIMELINE_CONSTANTS.UNIT_DURATION_MS,
+                start: currentTime,
+                end: currentTime + duration,
                 type: 'range',
                 className: segmentClass,
                 group: 1,
-                title: TimelineDataProcessor.getSegmentTooltip(segment, index, segments.length)
+                title: TimelineDataProcessor.getSegmentTooltip(segment,
+                    segment.interpolationData?.[0]?.originalIndex || segment.index,
+                    segments.reduce((total, seg) =>
+                        total + (seg.hasInterpolation && seg.interpolationData?.length > 1
+                            ? seg.interpolationData.length : 1), 0))
             });
+
+            currentTime += duration;
         });
 
         return { items, groups, totalDuration };
@@ -127,13 +218,75 @@ export class TimelineDataProcessor {
      * @returns {Object} From and to segments with progress
      */
     static getSegmentsForInterpolation(segments, currentTime) {
-        const segmentIndex = Math.floor(currentTime / TIMELINE_CONSTANTS.UNIT_DURATION_MS);
-        const segmentProgress = (currentTime - segmentIndex * TIMELINE_CONSTANTS.UNIT_DURATION_MS) / TIMELINE_CONSTANTS.UNIT_DURATION_MS;
+        // Calculate actual segment durations
+        const segmentDurations = segments.map(segment =>
+            segment.hasInterpolation && segment.interpolationData?.length > 1
+                ? segment.interpolationData.length * TIMELINE_CONSTANTS.UNIT_DURATION_MS
+                : TIMELINE_CONSTANTS.UNIT_DURATION_MS
+        );
 
-        if (segmentIndex >= 0 && segmentIndex < segments.length) {
-            const fromSegment = segments[segmentIndex];
-            const toSegment = segments[Math.min(segmentIndex + 1, segments.length - 1)];
-            return { fromSegment, toSegment, segmentProgress };
+        let accumulatedTime = 0;
+        let segmentIndex = 0;
+        let segmentStartTime = 0;
+        let segmentDuration = 0;
+
+        // Find which segment contains the currentTime
+        for (let i = 0; i < segments.length; i++) {
+            const duration = segmentDurations[i];
+            if (currentTime >= accumulatedTime && currentTime < accumulatedTime + duration) {
+                segmentIndex = i;
+                segmentStartTime = accumulatedTime;
+                segmentDuration = duration;
+                break;
+            }
+            accumulatedTime += duration;
+        }
+
+        if (segmentIndex >= 0 && segmentIndex < segments.length && segmentDuration > 0) {
+            const segment = segments[segmentIndex];
+            const segmentProgress = (currentTime - segmentStartTime) / segmentDuration;
+
+            if (segment.hasInterpolation && segment.interpolationData.length > 1) {
+                // This segment has interpolation data - find the appropriate interpolation step
+                const interpolationProgress = segmentProgress;
+
+                // Find the two closest interpolation steps
+                const stepSize = 1 / (segment.interpolationData.length - 1);
+                const stepIndex = Math.min(
+                    Math.floor(interpolationProgress / stepSize),
+                    segment.interpolationData.length - 2
+                );
+
+                const fromStep = segment.interpolationData[stepIndex];
+                const toStep = segment.interpolationData[stepIndex + 1];
+
+                const stepStart = stepIndex * stepSize;
+                const stepProgress = (interpolationProgress - stepStart) / stepSize;
+
+                return {
+                    fromSegment: {
+                        ...segment,
+                        tree: fromStep.tree,
+                        metadata: fromStep.metadata,
+                        index: fromStep.originalIndex
+                    },
+                    toSegment: {
+                        ...segment,
+                        tree: toStep.tree,
+                        metadata: toStep.metadata,
+                        index: toStep.originalIndex
+                    },
+                    segmentProgress: stepProgress
+                };
+            } else {
+                // Single segment without interpolation - use the original tree index
+                const originalIndex = segment.interpolationData[0].originalIndex;
+                return {
+                    fromSegment: { ...segment, index: originalIndex },
+                    toSegment: { ...segment, index: originalIndex },
+                    segmentProgress: 0
+                };
+            }
         }
 
         return null;
@@ -141,22 +294,53 @@ export class TimelineDataProcessor {
 
     /**
      * Get target segment index during scrubbing
-     * @param {Array} segments - Timeline segments  
+     * @param {Array} segments - Timeline segments
      * @param {number} currentTime - Current time in ms
      * @returns {number} Target segment index
      */
     static getTargetSegmentIndex(segments, currentTime) {
         if (!segments?.length) return 0;
-        
-        const segmentIndex = Math.floor(currentTime / TIMELINE_CONSTANTS.UNIT_DURATION_MS);
-        const segmentProgress = (currentTime - segmentIndex * TIMELINE_CONSTANTS.UNIT_DURATION_MS) / TIMELINE_CONSTANTS.UNIT_DURATION_MS;
 
-        let targetSegmentIndex = segmentIndex;
-        if (segmentProgress > TIMELINE_CONSTANTS.SEGMENT_PROGRESS_THRESHOLD && segmentIndex + 1 < segments.length) {
-            targetSegmentIndex = segmentIndex + 1;
+        // Calculate actual segment durations
+        const segmentDurations = segments.map(segment =>
+            segment.hasInterpolation && segment.interpolationData?.length > 1
+                ? segment.interpolationData.length * TIMELINE_CONSTANTS.UNIT_DURATION_MS
+                : TIMELINE_CONSTANTS.UNIT_DURATION_MS
+        );
+
+        let accumulatedTime = 0;
+        let segmentIndex = 0;
+        let segmentStartTime = 0;
+        let segmentDuration = 0;
+
+        // Find which segment contains the currentTime
+        for (let i = 0; i < segments.length; i++) {
+            const duration = segmentDurations[i];
+            if (currentTime >= accumulatedTime && currentTime < accumulatedTime + duration) {
+                segmentIndex = i;
+                segmentStartTime = accumulatedTime;
+                segmentDuration = duration;
+                break;
+            }
+            accumulatedTime += duration;
         }
 
-        return Math.max(0, Math.min(targetSegmentIndex, segments.length - 1));
+        if (segmentIndex >= 0 && segmentIndex < segments.length && segmentDuration > 0) {
+            const segment = segments[segmentIndex];
+            const segmentProgress = (currentTime - segmentStartTime) / segmentDuration;
+
+            if (segment.hasInterpolation && segment.interpolationData.length > 1) {
+                // For interpolation segments, map to the actual tree index
+                const stepIndex = Math.floor(segmentProgress * segment.interpolationData.length);
+                const clampedStepIndex = Math.min(stepIndex, segment.interpolationData.length - 1);
+                return segment.interpolationData[clampedStepIndex].originalIndex;
+            } else {
+                // For single tree segments, return the original tree index
+                return segment.interpolationData[0].originalIndex;
+            }
+        }
+
+        return segments[Math.max(0, Math.min(segmentIndex, segments.length - 1))]?.interpolationData?.[0]?.originalIndex || 0;
     }
 
     /**
@@ -167,11 +351,11 @@ export class TimelineDataProcessor {
      */
     static _parseLeafIndices(sEdgeKey) {
         if (!sEdgeKey?.trim()) return [];
-        
+
         try {
             const cleanKey = sEdgeKey.replace(/[()]/g, '').trim();
             if (!cleanKey) return [];
-            
+
             return cleanKey
                 .split(',')
                 .map(idx => parseInt(idx.trim(), 10))

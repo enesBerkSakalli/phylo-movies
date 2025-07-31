@@ -1,70 +1,136 @@
 /* Material Design 3 - Light Theme System */
 :root {
-  /* MD3 Color Tokens - Light Theme */
-  --md-sys-color-primary: rgb(65 95 145);
-  --md-sys-color-primary-container: rgb(214 227 255);
-  --md-sys-color-on-primary: rgb(255 255 255);
-  --md-sys-color-on-primary-container: rgb(40 71 119);
-  --md-sys-color-secondary: rgb(86 95 113);
-  --md-sys-color-secondary-container: rgb(218 226 249);
-  --md-sys-color-on-secondary: rgb(255 255 255);
-  --md-sys-color-on-secondary-container: rgb(62 71 89);
-  --md-sys-color-tertiary: rgb(112 85 117);
-  --md-sys-color-tertiary-container: rgb(250 216 253);
-  --md-sys-color-on-tertiary: rgb(255 255 255);
-  --md-sys-color-on-tertiary-container: rgb(87 62 92);
-  --md-sys-color-error: rgb(186 26 26);
-  --md-sys-color-error-container: rgb(255 218 214);
-  --md-sys-color-on-error: rgb(255 255 255);
-  --md-sys-color-on-error-container: rgb(147 0 10);
-  /* Data Visualization Colors - Prefixed to prevent UI leakage */
-  --viz-chart-highlight: var(--md-sys-color-tertiary);
-  --viz-timeline-full-tree: #FF6B35;
-  --viz-timeline-full-tree-border: #FF4500;
+  /* MD3 Reference Tokens - For Material You Integration */
+  --md-ref-palette-primary0: #000000;
+  --md-ref-palette-primary10: #001d36;
+  --md-ref-palette-primary20: #003258;
+  --md-ref-palette-primary30: #004878;
+  --md-ref-palette-primary40: #415f91;
+  --md-ref-palette-primary50: #5c77ac;
+  --md-ref-palette-primary60: #7891c8;
+  --md-ref-palette-primary70: #94abe4;
+  --md-ref-palette-primary80: #b1c7ff;
+  --md-ref-palette-primary90: #d4e3ff;
+  --md-ref-palette-primary95: #ecf3ff;
+  --md-ref-palette-primary99: #fdfcff;
+  --md-ref-palette-primary100: #ffffff;
 
-  /* Primary visualization colors */
-  --viz-primary: #6750a4; /* Current selection - same as primary */
-  --viz-secondary: #4a7c7e; /* Teal for secondary data */
-  --viz-neutral: #79747e; /* Gray for inactive/background data */
-  --viz-accent: #b3261e; /* Red for alerts/errors */
+  --md-ref-palette-secondary0: #000000;
+  --md-ref-palette-secondary10: #0c1d31;
+  --md-ref-palette-secondary20: #223249;
+  --md-ref-palette-secondary30: #394861;
+  --md-ref-palette-secondary40: #506079;
+  --md-ref-palette-secondary50: #687993;
+  --md-ref-palette-secondary60: #8293ad;
+  --md-ref-palette-secondary70: #9cadca;
+  --md-ref-palette-secondary80: #b8c8e6;
+  --md-ref-palette-secondary90: #d4e3ff;
+  --md-ref-palette-secondary95: #ecf3ff;
+  --md-ref-palette-secondary99: #fdfcff;
+  --md-ref-palette-secondary100: #ffffff;
 
-  /* Chart/timeline specific colors */
-  --chart-active: var(--viz-primary);
-  --chart-inactive: var(--viz-neutral);
-  --chart-comparison: var(--viz-secondary);
-  --chart-background: rgba(121, 116, 126, 0.20); /* Fallback for browsers without color-mix */
+  --md-ref-palette-tertiary0: #000000;
+  --md-ref-palette-tertiary10: #2e1125;
+  --md-ref-palette-tertiary20: #45273b;
+  --md-ref-palette-tertiary30: #5d3d52;
+  --md-ref-palette-tertiary40: #765469;
+  --md-ref-palette-tertiary50: #906d82;
+  --md-ref-palette-tertiary60: #ab869c;
+  --md-ref-palette-tertiary70: #c7a0b6;
+  --md-ref-palette-tertiary80: #e3bbd1;
+  --md-ref-palette-tertiary90: #ffd8ec;
+  --md-ref-palette-tertiary95: #ffecf4;
+  --md-ref-palette-tertiary99: #fffbff;
+  --md-ref-palette-tertiary100: #ffffff;
 
-/* Surface Colors - MD3 Light Theme */
-  --md-sys-color-surface: rgb(249 249 255);
-  --md-sys-color-surface-container: rgb(237 237 244);
-  --md-sys-color-surface-container-low: rgb(243 243 250);
-  --md-sys-color-surface-container-high: rgb(231 232 238);
-  --md-sys-color-surface-container-highest: rgb(226 226 233);
-  --md-sys-color-surface-container-lowest: rgb(255 255 255);
-  --md-sys-color-surface-dim: rgb(217 217 224);
-  --md-sys-color-surface-bright: rgb(249 249 255);
-  --md-sys-color-surface-tint: rgb(65 95 145);
+  --md-ref-palette-error0: #000000;
+  --md-ref-palette-error10: #410002;
+  --md-ref-palette-error20: #690005;
+  --md-ref-palette-error30: #93000a;
+  --md-ref-palette-error40: #ba1a1a;
+  --md-ref-palette-error50: #de3730;
+  --md-ref-palette-error60: #ff5449;
+  --md-ref-palette-error70: #ff897d;
+  --md-ref-palette-error80: #ffb4ab;
+  --md-ref-palette-error90: #ffdad6;
+  --md-ref-palette-error95: #ffedea;
+  --md-ref-palette-error99: #fffbff;
+  --md-ref-palette-error100: #ffffff;
 
-  /* Text Colors - Light Theme - WCAG AA Compliant */
-  --md-sys-color-on-surface: rgb(25 28 32);
-  --md-sys-color-on-surface-variant: rgb(68 71 78);
-  --md-sys-color-on-surface-variant-strong: rgb(46 48 54); /* Darker variant for high emphasis text */
+  --md-ref-palette-neutral0: #000000;
+  --md-ref-palette-neutral10: #1c1b1f;
+  --md-ref-palette-neutral20: #313033;
+  --md-ref-palette-neutral30: #48464a;
+  --md-ref-palette-neutral40: #605d62;
+  --md-ref-palette-neutral50: #787579;
+  --md-ref-palette-neutral60: #939094;
+  --md-ref-palette-neutral70: #aeaaaf;
+  --md-ref-palette-neutral80: #c9c5ca;
+  --md-ref-palette-neutral90: #e6e1e6;
+  --md-ref-palette-neutral95: #f4eff4;
+  --md-ref-palette-neutral99: #fffbff;
+  --md-ref-palette-neutral100: #ffffff;
 
-  /* Additional accessible text colors */
-  --md-sys-color-on-surface-disabled: #7a7a7a; /* For disabled states */
-  --md-sys-color-on-surface-subtle: #2d2d2d; /* Between primary and variant */
+  --md-ref-palette-neutral-variant0: #000000;
+  --md-ref-palette-neutral-variant10: #191c1e;
+  --md-ref-palette-neutral-variant20: #2e3133;
+  --md-ref-palette-neutral-variant30: #444749;
+  --md-ref-palette-neutral-variant40: #5c5f61;
+  --md-ref-palette-neutral-variant50: #747779;
+  --md-ref-palette-neutral-variant60: #8e9193;
+  --md-ref-palette-neutral-variant70: #a9abae;
+  --md-ref-palette-neutral-variant80: #c4c7c9;
+  --md-ref-palette-neutral-variant90: #e0e3e5;
+  --md-ref-palette-neutral-variant95: #eef1f3;
+  --md-ref-palette-neutral-variant99: #fbfdfd;
+  --md-ref-palette-neutral-variant100: #ffffff;
 
-  /* Border/Outline - Light Theme */
-  --md-sys-color-outline: rgb(116 119 127);
-  --md-sys-color-outline-variant: rgb(196 198 208);
+  /* MD3 System Tokens - Light Theme */
+  --md-sys-color-primary: var(--md-ref-palette-primary40);
+  --md-sys-color-on-primary: var(--md-ref-palette-primary100);
+  --md-sys-color-primary-container: var(--md-ref-palette-primary90);
+  --md-sys-color-on-primary-container: var(--md-ref-palette-primary10);
+  
+  --md-sys-color-secondary: var(--md-ref-palette-secondary40);
+  --md-sys-color-on-secondary: var(--md-ref-palette-secondary100);
+  --md-sys-color-secondary-container: var(--md-ref-palette-secondary90);
+  --md-sys-color-on-secondary-container: var(--md-ref-palette-secondary10);
+  
+  --md-sys-color-tertiary: var(--md-ref-palette-tertiary40);
+  --md-sys-color-on-tertiary: var(--md-ref-palette-tertiary100);
+  --md-sys-color-tertiary-container: var(--md-ref-palette-tertiary90);
+  --md-sys-color-on-tertiary-container: var(--md-ref-palette-tertiary10);
+  
+  --md-sys-color-error: var(--md-ref-palette-error40);
+  --md-sys-color-on-error: var(--md-ref-palette-error100);
+  --md-sys-color-error-container: var(--md-ref-palette-error90);
+  --md-sys-color-on-error-container: var(--md-ref-palette-error10);
 
-  /* Missing MD3 Tokens */
-  --md-sys-color-surface-variant: rgb(224 226 236);
+  /* Surface Colors - MD3 Light Theme */
+  --md-sys-color-surface-dim: var(--md-ref-palette-neutral87);
+  --md-sys-color-surface: var(--md-ref-palette-neutral98);
+  --md-sys-color-surface-bright: var(--md-ref-palette-neutral98);
+  --md-sys-color-surface-container-lowest: var(--md-ref-palette-neutral100);
+  --md-sys-color-surface-container-low: var(--md-ref-palette-neutral96);
+  --md-sys-color-surface-container: var(--md-ref-palette-neutral94);
+  --md-sys-color-surface-container-high: var(--md-ref-palette-neutral92);
+  --md-sys-color-surface-container-highest: var(--md-ref-palette-neutral90);
+  --md-sys-color-surface-variant: var(--md-ref-palette-neutral-variant90);
+  --md-sys-color-on-surface: var(--md-ref-palette-neutral10);
+  --md-sys-color-on-surface-variant: var(--md-ref-palette-neutral-variant30);
 
+  /* Additional System Colors */
+  --md-sys-color-outline: var(--md-ref-palette-neutral-variant50);
+  --md-sys-color-outline-variant: var(--md-ref-palette-neutral-variant80);
+  
   /* Inverse Colors - Light Theme */
-  --md-sys-color-inverse-surface: rgb(46 48 54);
-  --md-sys-color-inverse-on-surface: rgb(240 240 247);
-  --md-sys-color-inverse-primary: rgb(170 199 255);
+  --md-sys-color-inverse-surface: var(--md-ref-palette-neutral20);
+  --md-sys-color-inverse-on-surface: var(--md-ref-palette-neutral95);
+  --md-sys-color-inverse-primary: var(--md-ref-palette-primary80);
+  
+  /* Shadow & Scrim */
+  --md-sys-color-shadow: var(--md-ref-palette-neutral0);
+  --md-sys-color-scrim: var(--md-ref-palette-neutral0);
 
   /* Scrim and Shadow */
   --md-sys-color-scrim: #000000;
@@ -112,16 +178,16 @@
   --md-sys-elevation-shadow-level-0: none;
   --md-sys-elevation-shadow-level-1: none; /* MD3 Level 1 uses tonal overlay only */
   --md-sys-elevation-shadow-level-2: 0px 1px 2px 0px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
-  --md-sys-elevation-shadow-level-3: 0px 1px 3px 0px rgba(0, 0, 0, 0.3), 0px 1px 2px 0px rgba(0, 0, 0, 0.15);
+  --md-sys-elevation-shadow-level-3: 0px 1px 3px 0px rgba(0, 0, 0, 0.3), 0px 4px 8px 3px rgba(0, 0, 0, 0.15);
   --md-sys-elevation-shadow-level-4: 0px 2px 3px 0px rgba(0, 0, 0, 0.3), 0px 6px 10px 4px rgba(0, 0, 0, 0.15);
   --md-sys-elevation-shadow-level-5: 0px 4px 4px 0px rgba(0, 0, 0, 0.3), 0px 8px 12px 6px rgba(0, 0, 0, 0.15);
 
   /* Elevation Overlay Tints - MD3 Primary Overlays */
-  --md-elev-overlay-1: rgba(103, 80, 164, 0.05); /* Fallback */
-  --md-elev-overlay-2: rgba(103, 80, 164, 0.08);
-  --md-elev-overlay-3: rgba(103, 80, 164, 0.11);
-  --md-elev-overlay-4: rgba(103, 80, 164, 0.12);
-  --md-elev-overlay-5: rgba(103, 80, 164, 0.24); /* MD3 spec: 24% overlay at level 5 */
+  --md-elev-overlay-1: color-mix(in srgb, var(--md-sys-color-primary) 5%, transparent);
+  --md-elev-overlay-2: color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent);
+  --md-elev-overlay-3: color-mix(in srgb, var(--md-sys-color-primary) 11%, transparent);
+  --md-elev-overlay-4: color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
+  --md-elev-overlay-5: color-mix(in srgb, var(--md-sys-color-primary) 24%); /* MD3 spec: 24% overlay at level 5 */
 
   /* Navigation Layout - MD3 Spec */
   --nav-width-default: 280px; /* Reduced from 360px for better space utilization */
@@ -172,13 +238,12 @@
 @supports (background: color-mix(in srgb, red 50%, blue)) {
   :root {
     --chart-background: color-mix(in srgb, var(--viz-neutral) 20%, transparent);
-
-    /* Update elevation overlays with color-mix for dynamic primary color */
-    --md-elev-overlay-1: color-mix(in srgb, var(--md-sys-color-primary) 5%, transparent);
-    --md-elev-overlay-2: color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent);
-    --md-elev-overlay-3: color-mix(in srgb, var(--md-sys-color-primary) 11%, transparent);
-    --md-elev-overlay-4: color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
-    --md-elev-overlay-5: color-mix(in srgb, var(--md-sys-color-primary) 24%, transparent); /* MD3 spec: 24% overlay at level 5 */
+    
+    /* State layer colors for interactive elements */
+    --md-sys-state-hover: color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent);
+    --md-sys-state-focus: color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
+    --md-sys-state-pressed: color-mix(in srgb, var(--md-sys-color-primary) 16%, transparent);
+    --md-sys-state-dragged: color-mix(in srgb, var(--md-sys-color-primary) 16%, transparent);
   }
 }
 

@@ -2,7 +2,6 @@
  * Utility functions for MSA Viewer
  */
 
-import React from 'react';
 import { MSA_WINDOW_CONFIG } from './constants';
 
 /**
@@ -35,7 +34,7 @@ export function getAdjustedDimensions(width: number, height: number): { width: n
 export function createMSAContainer(): HTMLDivElement {
   const container = document.createElement("div");
   container.id = "msa-winbox-content";
-  
+
   Object.assign(container.style, {
     width: "100%",
     height: "100%",
@@ -43,7 +42,7 @@ export function createMSAContainer(): HTMLDivElement {
     position: "relative",
     boxSizing: "border-box"
   });
-  
+
   return container;
 }
 

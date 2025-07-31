@@ -11,7 +11,9 @@ import { TIMELINE_CONSTANTS, createTimelineOptions } from './constants.js';
 import { TimelineDataProcessor } from './TimelineDataProcessor.js';
 import { TimelineInterpolator } from './TimelineInterpolator.js';
 import { TimelineUI } from './TimelineUI.js';
+import { createScrubberIntegration, isCustomScrubberSupported } from './ScrubberIntegration.js';
 import { useAppStore } from '../core/store.js';
+import { clamp } from '../utils/MathUtils.js';
 
 export class MovieTimelineManager {
     constructor(movieData, transitionIndexResolver) {
@@ -33,9 +35,17 @@ export class MovieTimelineManager {
             () => this.transitionResolver
         );
 
+        // Initialize custom scrubber integration
+        this.scrubberIntegration = null;
+
         // Process timeline data using existing resolver
         this.segments = TimelineDataProcessor.createSegments(movieData, transitionIndexResolver);
         this.timelineData = TimelineDataProcessor.createTimelineData(this.segments);
+
+        // Debug logging
+        console.log('[MovieTimelineManager] Created segments:', this.segments.length);
+        console.log('[MovieTimelineManager] Movie data:', !!movieData, movieData?.tree_metadata?.length);
+        console.log('[MovieTimelineManager] Transition resolver:', !!transitionIndexResolver);
 
         this._initialize();
     }
@@ -68,10 +78,38 @@ export class MovieTimelineManager {
         // Setup UI controls
         this._setupUIControls();
 
+        // Initialize custom scrubber integration
+        this._initializeScrubberIntegration();
+
         // Initialize current position
         requestAnimationFrame(() => {
             this.updateCurrentPosition();
         });
+    }
+
+    /**
+     * Initialize the custom scrubber integration system
+     * @private
+     */
+    _initializeScrubberIntegration() {
+        try {
+            if (isCustomScrubberSupported()) {
+                this.scrubberIntegration = createScrubberIntegration(this);
+
+                // Configure scrubber integration
+                this.scrubberIntegration.configure({
+                    useCustomScrubber: true,
+                    fallbackToOriginal: true,
+                    debugMode: true // Enable debug logging
+                });
+
+                console.log('[MovieTimelineManager] Custom scrubber integration initialized');
+            } else {
+                console.log('[MovieTimelineManager] Custom scrubber not supported, using fallback');
+            }
+        } catch (error) {
+            console.error('[MovieTimelineManager] Failed to initialize scrubber integration:', error);
+        }
     }
 
     /**
@@ -144,15 +182,47 @@ export class MovieTimelineManager {
     }
 
     /**
-     * Handle scrubbing interaction with performance throttling
+     * Handle scrubbing interaction with custom scrubber integration
      * @private
      * @param {number} time - Current time in milliseconds
      */
-    _handleScrubbing(time) {
+    async _handleScrubbing(time) {
         if (!this.isScrubbing) {
-            this._startScrubbing();
+            await this._startScrubbing(time);
+        } else {
+            await this._updateScrubbing(time);
+        }
+    }
+
+    /**
+     * Start scrubbing mode using integrated scrubber system
+     * @private
+     * @param {number} time - Initial time in milliseconds
+     */
+    async _startScrubbing(time) {
+        this.isScrubbing = true;
+
+        // Try to use custom scrubber integration first
+        if (this.scrubberIntegration) {
+            const success = await this.scrubberIntegration.handleScrubStart(time);
+            if (success) {
+                console.log('[MovieTimelineManager] Using custom scrubber for scrubbing');
+                return;
+            }
         }
 
+        // Fallback to original implementation
+        console.log('[MovieTimelineManager] Using original scrubber implementation');
+        this._startScrubbing_Original();
+        this._performScrubUpdate(time);
+    }
+
+    /**
+     * Update scrubbing position using integrated scrubber system
+     * @private
+     * @param {number} time - Current time in milliseconds
+     */
+    async _updateScrubbing(time) {
         // Throttle high-frequency scrubbing events for performance
         const now = performance.now();
         if (now - this.lastScrubTime < this.SCRUB_THROTTLE_MS) {
@@ -162,17 +232,109 @@ export class MovieTimelineManager {
             }
 
             // Schedule throttled update
-            this.scrubRequestId = requestAnimationFrame(() => {
-                this._performScrubUpdate(time);
+            this.scrubRequestId = requestAnimationFrame(async () => {
+                await this._updateScrubbing(time);
             });
             return;
         }
 
+        // Try to use custom scrubber integration
+        if (this.scrubberIntegration) {
+            const success = await this.scrubberIntegration.handleScrubUpdate(time);
+            if (success) {
+                this.lastScrubTime = now;
+                return;
+            }
+        }
+
+        // Fallback to original implementation
         this._performScrubUpdate(time);
     }
 
     /**
-     * Perform the actual scrub update with optimizations
+     * End scrubbing mode using integrated scrubber system
+     * @private
+     */
+    async _endScrubbing() {
+        if (!this.isScrubbing) return;
+
+        console.log('[MovieTimelineManager] Ending scrubbing mode');
+
+        // Clean up performance optimization timers
+        if (this.scrubRequestId) {
+            cancelAnimationFrame(this.scrubRequestId);
+            this.scrubRequestId = null;
+        }
+
+        // Try to use custom scrubber integration
+        if (this.scrubberIntegration) {
+            const success = await this.scrubberIntegration.handleScrubEnd(this._getCurrentTimelineTime());
+            if (success) {
+                this.isScrubbing = false;
+                return;
+            }
+        }
+
+        // Fallback to original implementation
+        this._endScrubbing_Original();
+    }
+
+    /**
+     * Get current timeline time for scrubber integration
+     * @private
+     * @returns {number} Current time in milliseconds
+     */
+    _getCurrentTimelineTime() {
+        return this.lastTimelineProgress * this.timelineData.totalDuration;
+    }
+
+    /**
+     * Original scrubbing start implementation (fallback)
+     * @private
+     */
+    _startScrubbing_Original() {
+        useAppStore.getState().setSubscriptionPaused(true);
+    }
+
+    /**
+     * Original scrubbing end implementation (fallback)
+     * @private
+     */
+    _endScrubbing_Original() {
+        this.isScrubbing = false;
+        useAppStore.getState().setSubscriptionPaused(false);
+
+        // Clear interpolation cache
+        this._lastInterpolationCache = null;
+
+        // Navigate to final position - find the tree index at the final timeline position
+        const finalTime = this.lastTimelineProgress * this.timelineData.totalDuration;
+        const finalTargetIndex = TimelineDataProcessor.getTargetSegmentIndex(this.segments, finalTime);
+
+        if (finalTargetIndex !== -1) {
+            const { goToPosition, clearPositionCache, clearLayoutCache } = useAppStore.getState();
+
+            // CRITICAL FIX: Clear caches if end state differs from expected
+            // This prevents stale cached data from causing visual inconsistencies
+            const currentTreeIndex = useAppStore.getState().currentTreeIndex;
+            if (currentTreeIndex !== finalTargetIndex) {
+                clearPositionCache();
+                clearLayoutCache();
+            }
+
+            // Update final timeline state before navigation
+            const interpolationData = this._getCachedInterpolationData(finalTime);
+            if (interpolationData) {
+                const { fromSegment, toSegment, segmentProgress } = interpolationData;
+                this._updateStoreTimelineState(finalTime, fromSegment, toSegment, segmentProgress);
+            }
+
+            goToPosition(finalTargetIndex);
+        }
+    }
+
+    /**
+     * Perform the actual scrub update with optimizations (original implementation)
      * @private
      * @param {number} time - Current time in milliseconds
      */
@@ -180,10 +342,10 @@ export class MovieTimelineManager {
         this.lastScrubTime = performance.now();
 
         const progress = time / this.timelineData.totalDuration;
-        const newProgress = Math.max(0, Math.min(progress, 1));
+        const newProgress = clamp(progress, 0, 1);
 
         // CRITICAL FIX: Add navigation direction detection for timeline scrubbing
-        // This unifies scrubbing behavior with button navigation direction detection
+        // Use store-based direction detection to prevent circular dependencies
         const previousProgress = this.lastTimelineProgress || 0;
         let scrubDirection = 'forward';
 
@@ -195,16 +357,9 @@ export class MovieTimelineManager {
             scrubDirection = 'none'; // No movement
         }
 
-        // Update navigation direction in GUI to maintain consistency with button navigation
-        const { gui } = useAppStore.getState();
-        if (gui && typeof gui.setNavigationDirection === 'function' && scrubDirection !== 'none') {
-            gui.setNavigationDirection(scrubDirection);
-
-            // Also update tree controller direction synchronously
-            const { treeController } = useAppStore.getState();
-            if (treeController && typeof treeController.setNavigationDirection === 'function') {
-                treeController.setNavigationDirection(scrubDirection);
-            }
+        // Update navigation direction in store (single source of truth)
+        if (scrubDirection !== 'none') {
+            useAppStore.getState().setNavigationDirection(scrubDirection);
         }
 
         this.lastTimelineProgress = newProgress;
@@ -214,6 +369,9 @@ export class MovieTimelineManager {
 
         if (interpolationData) {
             const { fromSegment, toSegment, segmentProgress } = interpolationData;
+
+            // Update store timeline state during scrubbing
+            this._updateStoreTimelineState(time, fromSegment, toSegment, segmentProgress);
 
             // Perform interpolation
             this.interpolator.interpolate(fromSegment, toSegment, segmentProgress);
@@ -271,65 +429,41 @@ export class MovieTimelineManager {
     _handleSegmentClick(segmentIndex) {
         if (segmentIndex >= 0 && segmentIndex < this.segments.length) {
             const segment = this.segments[segmentIndex];
-            const progress = segmentIndex / Math.max(1, this.segments.length - 1);
 
-            this.lastTimelineProgress = progress;
-
-            // Navigate to position
-            useAppStore.getState().goToPosition(segment.index);
-        }
-    }
-
-    /**
-     * Start scrubbing mode
-     * @private
-     */
-    _startScrubbing() {
-        this.isScrubbing = true;
-        useAppStore.getState().setSubscriptionPaused(true);
-    }
-
-    /**
-     * End scrubbing mode with cleanup
-     * @private
-     */
-    _endScrubbing() {
-        if (!this.isScrubbing) return;
-
-        this.isScrubbing = false;
-        useAppStore.getState().setSubscriptionPaused(false);
-
-        // Clean up performance optimization timers
-        if (this.scrubRequestId) {
-            cancelAnimationFrame(this.scrubRequestId);
-            this.scrubRequestId = null;
-        }
-
-        if (this._storeUpdateTimeout) {
-            clearTimeout(this._storeUpdateTimeout);
-            this._storeUpdateTimeout = null;
-        }
-
-        // Clear interpolation cache
-        this._lastInterpolationCache = null;
-
-        // Navigate to final position
-        const finalSegmentIndex = Math.round(this.lastTimelineProgress * (this.segments.length - 1));
-        const finalSegment = this.segments[finalSegmentIndex];
-
-        if (finalSegment) {
-            const { goToPosition, clearPositionCache, clearLayoutCache } = useAppStore.getState();
-
-            // CRITICAL FIX: Clear caches if end state differs from expected
-            // This prevents stale cached data from causing visual inconsistencies
-            const currentTreeIndex = useAppStore.getState().currentTreeIndex;
-            if (currentTreeIndex !== finalSegment.index) {
-                // ...existing code...
-                clearPositionCache();
-                clearLayoutCache();
+            // For grouped segments, navigate to the first tree in the group
+            // For single segments, navigate to that tree
+            let targetTreeIndex;
+            if (segment.hasInterpolation && segment.interpolationData?.length > 0) {
+                targetTreeIndex = segment.interpolationData[0].originalIndex;
+            } else {
+                targetTreeIndex = segment.interpolationData?.[0]?.originalIndex || segment.index;
             }
 
-            goToPosition(finalSegment.index);
+            // Calculate proper progress for this segment and update store timeline state
+            const { segmentIndex: foundSegmentIndex, timeInSegment } = this._findSegmentForTreeIndex(targetTreeIndex);
+            if (foundSegmentIndex !== -1) {
+                const segmentDurations = this.segments.map(seg =>
+                    seg.hasInterpolation && seg.interpolationData?.length > 1
+                        ? seg.interpolationData.length * TIMELINE_CONSTANTS.UNIT_DURATION_MS
+                        : TIMELINE_CONSTANTS.UNIT_DURATION_MS
+                );
+
+                let currentTime = 0;
+                for (let i = 0; i < foundSegmentIndex; i++) {
+                    currentTime += segmentDurations[i];
+                }
+                currentTime += timeInSegment;
+
+                this.lastTimelineProgress = currentTime / this.timelineData.totalDuration;
+
+                // Update store timeline state for the clicked segment
+                this._updateStoreTimelineState(currentTime, segment);
+            }
+
+            // Navigate to position with direction detection
+            const { currentTreeIndex } = useAppStore.getState();
+            const direction = targetTreeIndex > currentTreeIndex ? 'forward' : 'backward';
+            useAppStore.getState().goToPosition(targetTreeIndex, direction);
         }
     }
 
@@ -339,15 +473,85 @@ export class MovieTimelineManager {
      * @param {number} currentTime - Current time in ms
      */
     _updateStorePosition(currentTime) {
-        const targetSegmentIndex = TimelineDataProcessor.getTargetSegmentIndex(this.segments, currentTime);
-        const targetSegment = this.segments[targetSegmentIndex];
+        const targetTreeIndex = TimelineDataProcessor.getTargetSegmentIndex(this.segments, currentTime);
 
-        if (targetSegment) {
+        if (targetTreeIndex !== -1) {
             const { currentTreeIndex } = useAppStore.getState();
-            if (currentTreeIndex !== targetSegment.index) {
-                useAppStore.getState().goToPosition(targetSegment.index);
+            if (currentTreeIndex !== targetTreeIndex) {
+                useAppStore.getState().goToPosition(targetTreeIndex);
             }
         }
+    }
+
+    /**
+     * Updates store timeline state consistently across all operations
+     * @private
+     * @param {number} time - Current time in milliseconds
+     * @param {Object} fromSegment - Current segment (or source segment during interpolation)
+     * @param {Object} [toSegment] - Target segment (if interpolating)
+     * @param {number} [segmentProgress] - Progress within segment (0-1)
+     */
+    _updateStoreTimelineState(time, fromSegment, toSegment = null, segmentProgress = 0) {
+        const progress = time / this.timelineData.totalDuration;
+
+        // Find which segment we're primarily in
+        const primarySegment = toSegment || fromSegment;
+        const segmentIndex = this.segments.findIndex(seg => seg === primarySegment);
+
+        if (segmentIndex === -1) return;
+
+        // Calculate tree position within segment
+        let treeInSegmentValue = 1;
+        let treesInSegmentValue = 1;
+
+        if (primarySegment.hasInterpolation && primarySegment.interpolationData?.length > 1) {
+            treesInSegmentValue = primarySegment.interpolationData.length;
+            // Use segment progress to determine position within segment
+            treeInSegmentValue = Math.max(1, Math.ceil(segmentProgress * treesInSegmentValue));
+        }
+
+        // Update store with timeline state using existing variables
+        useAppStore.getState().updateTimelineState({
+            currentSegmentIndex: segmentIndex,
+            totalSegments: this.segments.length,
+            treeInSegment: treeInSegmentValue,
+            treesInSegment: treesInSegmentValue,
+            timelineProgress: progress
+        });
+
+        // Also update segment progress for interpolation
+        useAppStore.getState().setSegmentProgress(segmentProgress);
+    }
+
+    /**
+     * Find which segment contains a given tree index and position within segment
+     * @private
+     * @param {number} treeIndex - Tree index to find
+     * @returns {Object} {segmentIndex, timeInSegment}
+     */
+    _findSegmentForTreeIndex(treeIndex) {
+        for (let i = 0; i < this.segments.length; i++) {
+            const segment = this.segments[i];
+
+            if (segment.hasInterpolation && segment.interpolationData?.length > 1) {
+                // Check if tree index is within this interpolated segment
+                const interpolationData = segment.interpolationData;
+                for (let j = 0; j < interpolationData.length; j++) {
+                    if (interpolationData[j].originalIndex === treeIndex) {
+                        // Found the tree in this segment
+                        const timeInSegment = j * TIMELINE_CONSTANTS.UNIT_DURATION_MS;
+                        return { segmentIndex: i, timeInSegment };
+                    }
+                }
+            } else {
+                // Single tree segment
+                if (segment.interpolationData?.[0]?.originalIndex === treeIndex) {
+                    return { segmentIndex: i, timeInSegment: 0 };
+                }
+            }
+        }
+
+        return { segmentIndex: -1, timeInSegment: 0 };
     }
 
     /**
@@ -389,24 +593,74 @@ export class MovieTimelineManager {
 
         if (!metadata || !this.segments.length) return;
 
-        const currentSegmentIndex = this.segments.findIndex(segment => segment.index === currentTreeIndex);
-        if (currentSegmentIndex === -1) return;
+        // Find which segment contains the current tree index and calculate proper time
+        const { segmentIndex, timeInSegment } = this._findSegmentForTreeIndex(currentTreeIndex);
 
-        const progress = currentSegmentIndex / Math.max(1, this.segments.length - 1);
+        if (segmentIndex === -1) return;
+
+        // Calculate actual time based on segment durations
+        const segmentDurations = this.segments.map(segment =>
+            segment.hasInterpolation && segment.interpolationData?.length > 1
+                ? segment.interpolationData.length * TIMELINE_CONSTANTS.UNIT_DURATION_MS
+                : TIMELINE_CONSTANTS.UNIT_DURATION_MS
+        );
+
+        let currentTime = 0;
+        for (let i = 0; i < segmentIndex; i++) {
+            currentTime += segmentDurations[i];
+        }
+        currentTime += timeInSegment;
+
+        const progress = currentTime / this.timelineData.totalDuration;
 
         if (!this.isScrubbing) {
             this.lastTimelineProgress = progress;
 
             // Update timeline scrubber
-            const currentTime = progress * this.timelineData.totalDuration;
             this.timeline?.setCustomTime(currentTime, 'scrubber');
 
             // Highlight current segment
-            this.timeline?.setSelection([currentSegmentIndex + 1]);
+            this.timeline?.setSelection([segmentIndex + 1]);
         }
 
-        // Update UI
-        this.ui.updatePosition(currentTreeIndex, this.segments.length, progress);
+        // Update store with timeline-specific state using existing variables
+        const segment = this.segments[segmentIndex];
+        let treeInSegmentValue = 1;
+        if (segment.hasInterpolation && segment.interpolationData?.length > 1) {
+            // Find which tree in the interpolation data matches currentTreeIndex
+            const foundIndex = segment.interpolationData.findIndex(item =>
+                item.originalIndex === currentTreeIndex);
+            if (foundIndex !== -1) {
+                treeInSegmentValue = foundIndex + 1;
+            }
+        }
+
+        // Update store with current timeline state using helper method
+        this._updateStoreTimelineState(currentTime, segment, null, 0);
+
+        // Override treeInSegment with precise calculation
+        useAppStore.getState().updateTimelineState({
+            currentSegmentIndex: segmentIndex,
+            totalSegments: this.segments.length,
+            treeInSegment: treeInSegmentValue,
+            treesInSegment: segment.interpolationData?.length || 1,
+            timelineProgress: progress
+        });
+
+        // Get updated values from store for UI display
+        const storeState = useAppStore.getState();
+        const totalTrees = movieData.tree_metadata?.length || 0;
+
+        // Update UI with comprehensive position information from store
+        this.ui.updatePosition(
+            storeState.currentSegmentIndex + 1, // 1-based for UI
+            storeState.totalSegments,
+            storeState.timelineProgress,
+            currentTreeIndex + 1,
+            totalTrees,
+            storeState.treeInSegment,
+            storeState.treesInSegment
+        );
         this.ui.updateInterpolationStatus(metadata.phase);
     }
 
@@ -419,8 +673,6 @@ export class MovieTimelineManager {
 
         const newOptions = createTimelineOptions(this.timelineData, mode);
         this.timeline.setOptions(newOptions);
-
-        console.log(`[MovieTimelineManager] Switched to ${mode} mode`);
     }
 
     /**
@@ -428,11 +680,22 @@ export class MovieTimelineManager {
      * @returns {Object} Timeline configuration details
      */
     getConfigInfo() {
+        const totalTrees = this.movieData.tree_metadata?.length || 0;
+        const totalInterpolationSteps = this.segments?.reduce((total, seg) =>
+            total + (seg.hasInterpolation && seg.interpolationData?.length > 1
+                ? seg.interpolationData.length : 1), 0) || 0;
+
         return {
             totalDuration: this.timelineData?.totalDuration || 0,
             segmentCount: this.segments?.length || 0,
+            totalTrees: totalTrees,
+            totalInterpolationSteps: totalInterpolationSteps,
             constants: TIMELINE_CONSTANTS,
-            currentWindow: this.timeline?.getWindow()
+            currentWindow: this.timeline?.getWindow(),
+            structure: {
+                groupedSegments: this.segments?.filter(seg => seg.hasInterpolation)?.length || 0,
+                singleSegments: this.segments?.filter(seg => !seg.hasInterpolation)?.length || 0
+            }
         };
     }
 

@@ -1,251 +1,147 @@
+// materials/WebGLMaterialFactory.js
 import * as THREE from 'three';
-import { useAppStore } from '../../../core/store.js';
+import { LineMaterial }        from 'three/examples/jsm/lines/LineMaterial.js';
+import { LineDashedMaterial }  from 'three';          // native in r163
+import { useAppStore, TREE_COLOR_CATEGORIES } from '../../../core/store.js';
 
 export class WebGLMaterialFactory {
-  constructor(colorManager) {
-    this.colorManager = colorManager;
-    this.cache = new Map();
-  }
+  #cache = new Map();
 
-  getLinkMaterial(link, highlightEdges = [], lineWidth = 1, options = {}) {
-    if (!this.colorManager || !link) return this.getBasic('#ff0000');
+  /*───────────────────────────────────────────────────────────────────────*/
+  /* PUBLIC                                                               */
+  /*───────────────────────────────────────────────────────────────────────*/
+  /**
+   * Returns a fancy line material.
+   *
+   * @param link            – domain object
+   * @param highlightEdges  – array for colourManager
+   * @param strokePx        – base width in CSS px
+   * @param style           – 'solid' | 'gradient' | 'dashed' | 'glow'
+   * @param opts            – extra params for the underlying material
+   */
+  getLinkLineMaterial(
+    link,
+    highlightEdges = [],
+    strokePx       = 2,
+    style          = 'solid',
+    opts           = {}
+  ) {
+    /* 1️⃣  pick a colour (or fall back) */
+    const cm       = useAppStore.getState().getColorManager?.();
+    const colorHex = cm
+      ? cm.getBranchColorWithHighlights(link, highlightEdges) ?? TREE_COLOR_CATEGORIES.defaultColor
+      : TREE_COLOR_CATEGORIES.defaultColor;
 
-    const colorResult = this.colorManager.getBranchColorWithHighlights(link, highlightEdges);
-    const color = colorResult?.color;
+    /* 2️⃣  build cache-key */
+    const key = [
+      style, colorHex, strokePx,
+      this.#hashHighlights(highlightEdges)
+    ].join('_');
 
-    if (!color) return this.getBasic('#999999');
-
-    const cacheKey = `phong_${color}_${lineWidth}_${colorResult.effectType || 'none'}`;
-
-    if (!this.cache.has(cacheKey)) {
-      this.cache.set(cacheKey, this.createPhong(color, colorResult, options));
+    /* 3️⃣  reuse or create */
+    if (!this.#cache.has(key)) {
+      const mat = this.#make(style, colorHex, strokePx, opts);
+      this.#cache.set(key, mat);
     }
-
-    return this.cache.get(cacheKey);
+    return this.#cache.get(key);
   }
 
-  getNodeMaterial(node, options = {}) {
-    const color = this.colorManager.getNodeColor(node);
-    const cacheKey = `standard_${color}_node`;
-
-    if (!this.cache.has(cacheKey)) {
-      this.cache.set(cacheKey, this.createStandard(color, options));
+  /** Call on renderer resize */
+  updateLineResolutions(w, h) {
+    const dpr = this.#dpr();
+    for (const m of this.#cache.values()) {
+      m.resolution?.set(w * dpr, h * dpr);   // only LineMaterial has `.resolution`
     }
-
-    return this.cache.get(cacheKey);
-  }
-
-  getSpriteMaterial(leaf, rotation = 0, texture = null, options = {}) {
-    const color = this.colorManager.getNodeColor(leaf);
-    const cacheKey = `sprite_${color}_${rotation}_${texture ? texture.uuid : 'no_texture'}`;
-
-    if (!this.cache.has(cacheKey)) {
-      this.cache.set(cacheKey, this.createSprite(color, rotation, texture, options));
-    }
-
-    return this.cache.get(cacheKey);
-  }
-
-  createTextSprite(text, leaf, labelRadius, options = {}) {
-    if (!text || !leaf) return null;
-
-    const storeState = useAppStore.getState();
-    const storeFontSize = storeState?.fontSize;
-
-    const {
-      fontSize = this.convertEmToPx(storeFontSize || '1.8em'),
-      fontFamily = 'Arial',
-      padding = 40,
-      minWidth = 128,
-      zPosition = 1,
-      isIsometric = false
-    } = options;
-
-    let adjustedFontSize = isIsometric ? fontSize * 1.5 : fontSize;
-    const labelColor = this.colorManager.getNodeColor(leaf);
-
-    let x = labelRadius * Math.cos(leaf.angle);
-    let y = labelRadius * Math.sin(leaf.angle);
-
-    const needsFlip = leaf.angle > Math.PI / 2 && leaf.angle < 3 * Math.PI / 2;
-    const rotation = needsFlip ? leaf.angle + Math.PI : leaf.angle;
-
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
-
-    if (!context) return null;
-
-    context.font = `${adjustedFontSize}px ${fontFamily}`;
-    const textWidth = context.measureText(text).width;
-
-    canvas.width = Math.max(textWidth + padding, minWidth);
-    canvas.height = adjustedFontSize + 16;
-
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    context.fillStyle = labelColor;
-    context.font = `${adjustedFontSize}px ${fontFamily}`;
-    context.textBaseline = 'middle';
-
-    if (needsFlip) {
-      context.textAlign = 'right';
-      context.fillText(text, canvas.width - 10, canvas.height / 2);
-    } else {
-      context.textAlign = 'left';
-      context.fillText(text, 10, canvas.height / 2);
-    }
-
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.needsUpdate = true;
-    texture.flipY = true;
-    texture.generateMipmaps = false;
-
-    const spriteMaterial = this.getSpriteMaterial(leaf, rotation, texture);
-    const sprite = new THREE.Sprite(spriteMaterial);
-    sprite.position.set(x, y, zPosition);
-    sprite.renderOrder = isIsometric ? 2000 : 1000;
-
-    sprite.userData = {
-      position: { x, y },
-      rotation: rotation,
-      leaf: leaf,
-      color: labelColor,
-      canvas: canvas,
-      texture: texture
-    };
-
-    // Base sprite scale from canvas dimensions
-    let spriteScale = Math.max(canvas.width, canvas.height) * 0.5;
-
-    // Remove camera-dependent scaling - will be handled by onBeforeRender
-    sprite.scale.set(spriteScale, spriteScale * (canvas.height / canvas.width), 1);
-    return sprite;
-  }
-
-  getBasic(color, options = {}) {
-    const cacheKey = `basic_${color}`;
-
-    if (!this.cache.has(cacheKey)) {
-      this.cache.set(cacheKey, this.createBasic(color, options));
-    }
-
-    return this.cache.get(cacheKey);
-  }
-
-  createPhong(color, colorResult, options = {}) {
-    const materialOptions = {
-      emissiveIntensity: 0.2,
-      shininess: 30,
-      transparent: true,
-      opacity: 1,
-      side: THREE.DoubleSide,
-      color: color,
-      emissive: color,
-      ...options
-    };
-
-    if (colorResult.isHighlighted) {
-      const intensities = {
-        combined: 0.4,
-        lattice: 0.25,
-        marked: 0.35
-      };
-      materialOptions.emissiveIntensity = intensities[colorResult.effectType] || 0.3;
-    }
-
-    return new THREE.MeshPhongMaterial(materialOptions);
-  }
-
-  createStandard(color, options = {}) {
-    return new THREE.MeshStandardMaterial({
-      transparent: true,
-      opacity: 1,
-      roughness: 0.5,
-      metalness: 0.1,
-      color: color,
-      ...options
-    });
-  }
-
-  createSprite(color, rotation, texture, options = {}) {
-    const materialOptions = {
-      transparent: true,
-      alphaTest: 0.01,
-      sizeAttenuation: false,
-      depthTest: false,
-      depthWrite: false,
-      rotation: rotation,
-      ...options
-    };
-
-    if (options.isIsometric) {
-      materialOptions.depthTest = true;
-      materialOptions.depthWrite = false;
-      materialOptions.opacity = 1.0;
-      materialOptions.transparent = true;
-      materialOptions.renderOrder = 1000;
-    }
-
-    if (texture) {
-      materialOptions.map = texture;
-    }
-
-    return new THREE.SpriteMaterial(materialOptions);
-  }
-
-  createBasic(color, options = {}) {
-    return new THREE.MeshBasicMaterial({
-      transparent: true,
-      opacity: 1,
-      side: THREE.DoubleSide,
-      color: color,
-      ...options
-    });
-  }
-
-  updateColorsForMarkedComponents(markedComponents) {
-    if (this.colorManager.updateMarkedComponents) {
-      this.colorManager.updateMarkedComponents(markedComponents);
-    }
-    this.clearCache();
   }
 
   clearCache() {
-    this.cache.forEach(material => {
-      if (material.map) material.map.dispose();
-      if (material.normalMap) material.normalMap.dispose();
-      if (material.emissiveMap) material.emissiveMap.dispose();
-      material.dispose();
+    for (const m of this.#cache.values()) m.dispose?.();
+    this.#cache.clear();
+  }
+  destroy() { this.clearCache(); }
+
+  /*───────────────────────────────────────────────────────────────────────*/
+  /* INTERNAL                                                             */
+  /*───────────────────────────────────────────────────────────────────────*/
+  #make(style, colorHex, strokePx, opts) {
+    switch (style) {
+      case 'gradient': return this.#gradientMat(colorHex, strokePx, opts);
+      case 'dashed'  : return this.#dashedMat (colorHex, strokePx, opts);
+      case 'glow'    : return this.#glowMat   (colorHex, strokePx, opts);
+      default        : return this.#solidMat  (colorHex, strokePx, opts);
+    }
+  }
+
+  /* — SOLID — */
+  #solidMat(colorHex, strokePx, opts) {
+    return this.#lineMaterial({ colorHex, strokePx, vertexColors: false, ...opts });
+  }
+
+  /* — GRADIENT — */
+  #gradientMat(colorHex, strokePx, opts) {
+    // colour per-vertex ⇒ vertexColors: true
+    return this.#lineMaterial({ colorHex, strokePx, vertexColors: true, ...opts });
+  }
+
+  /* — DASHED — */
+  #dashedMat(colorHex, strokePx, {
+    dashSize = 3, gapSize = 1, scale = 1, ...rest } = {}) {
+
+    const mat = new LineDashedMaterial({
+      color      : new THREE.Color(colorHex),
+      linewidth  : strokePx,                // NB: ≤ 1 px on most GPUs
+      dashSize, gapSize, scale,
+      transparent: true,
+      ...rest
     });
-    this.cache.clear();
+
+    // Every frame: mat.dashOffset -= delta * speed;
+    return mat;
   }
 
-  getCacheStatistics() {
-    const materialTypes = {};
-    this.cache.forEach((material, key) => {
-      const type = key.split('_')[0];
-      materialTypes[type] = (materialTypes[type] || 0) + 1;
+  /* — GLOW (two-pass hack) — */
+  #glowMat(colorHex, strokePx, opts) {
+    // First build a LineMaterial but with additive blend & low alpha
+    return this.#lineMaterial({
+      colorHex,
+      strokePx : strokePx * 4,              // fatter halo
+      blending : THREE.AdditiveBlending,
+      opacity  : 0.35,
+      transparent: true,
+      depthWrite: false,
+      ...opts
+    });
+  }
+
+  /* — shared builder — */
+  #lineMaterial({ colorHex, strokePx, ...rest }) {
+    const mat = new LineMaterial({
+      color        : new THREE.Color(colorHex),
+      linewidth    : strokePx,
+      transparent  : true,
+      depthTest    : true,
+      depthWrite   : true,
+      ...rest
     });
 
-    return {
-      totalCached: this.cache.size,
-      byType: materialTypes
-    };
+    const { w, h } = this.#viewport();
+    mat.resolution.set(w, h);
+    return mat;
   }
 
-  convertEmToPx(emSize) {
-    if (!emSize || emSize === null || emSize === undefined) return 24;
-
-    const sizeStr = String(emSize);
-    if (!sizeStr || sizeStr === 'null' || sizeStr === 'undefined') return 24;
-
-    const emValue = parseFloat(sizeStr.replace('em', ''));
-    if (isNaN(emValue) || emValue <= 0) return 24;
-
-    return Math.round(emValue * 16 * 0.8);
+  /* — utils — */
+  #viewport() {
+    const w = typeof window !== 'undefined' ? window.innerWidth  : 1920;
+    const h = typeof window !== 'undefined' ? window.innerHeight : 1080;
+    const d = this.#dpr();
+    return { w: w * d, h: h * d };
   }
+  #dpr() { return typeof window !== 'undefined'
+      ? Math.min(2, window.devicePixelRatio || 1) : 1; }
 
-  destroy() {
-    this.clearCache();
-    this.colorManager = null;
+  #hashHighlights(a = []) {
+    return a.length
+      ? [...a].map(e => (Array.isArray(e) ? e.join(',') : e)).sort().join('|')
+      : 'none';
   }
 }

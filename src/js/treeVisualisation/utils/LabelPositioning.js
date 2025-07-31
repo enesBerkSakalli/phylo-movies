@@ -35,64 +35,171 @@ export function calculateLabelRotation(angleRadians) {
 }
 
 /**
- * Get label configuration for a node
- * Provides all necessary positioning data for both SVG and WebGL renderers
+ * Get label configuration for a node with text positioned exactly at extension tip
+ * Text end is positioned exactly at the extension tip, with minimal spacing
  * @param {Object} node - Tree node with angle and radius properties
- * @param {number} labelRadius - The final radius where the label should be positioned
- *                              (can be either node.radius + offset, or a fixed radius)
- * @returns {Object} Complete label configuration
+ * @param {number} extensionTipRadius - The exact radius where extension line ends
+ * @param {string} text - The actual label text for dynamic width calculation
+ * @param {number} fontSizePx - Font size in pixels for text width calculation
+ * @returns {Object} Complete label configuration with precise positioning
  */
-export function getLabelConfiguration(node, labelRadius) {
-  // If labelRadius is already the final position, use it directly
-  // This supports both: node.radius + offset (SVG) and fixed radius (WebGL)
-  const position = {
-    x: labelRadius * Math.cos(node.angle),
-    y: labelRadius * Math.sin(node.angle)
-  };
+export function getLabelConfiguration(node, extensionTipRadius, text = '', fontSizePx = 24) {
+  // Calculate text width based on character count and font size
+  const charWidth = fontSizePx * 0.4; // Tighter estimate for character width
+  const textWidth = text.length * charWidth;
+
+  // Calculate angular spacing factor based on angle clustering
+  const angleDegrees = (node.angle * 180) / Math.PI;
+
+  // Calculate angular density factor based on how close neighboring labels are
+  // This prevents overlap when labels are close together
+  const angularDensity = calculateAngularDensity(node.angle, text.length);
+
+  // Position labels with consistent padding from extension tip
   const needsFlip = shouldFlipLabel(node.angle);
-  
+
+  // Apply consistent small padding to prevent overlap with extension lines
+  const padding = 8; // Small consistent padding for all labels
+  const finalRadius = extensionTipRadius + padding;
+
+  const position = {
+    x: finalRadius * Math.cos(node.angle),
+    y: finalRadius * Math.sin(node.angle)
+  };
+
   return {
     position,
     rotation: calculateLabelRotation(node.angle),
     textAnchor: calculateTextAnchor(node.angle),
     needsFlip,
-    angleDegrees: (node.angle * 180) / Math.PI
+    angleDegrees: (node.angle * 180) / Math.PI,
+    extensionTipRadius,
+    textWidth,
+    textLength: text.length,
+    angularDensity
   };
+}
+
+/**
+ * Calculate angular density factor to prevent label overlap
+ * This function estimates how crowded labels are based on angle and text length
+ * @param {number} angle - Angle in radians
+ * @param {number} textLength - Length of the label text
+ * @returns {number} Density factor (1.0 = normal, >1.0 = more spacing needed)
+ */
+function calculateAngularDensity(angle, textLength) {
+  // Skip calculation for short labels
+  if (textLength <= 3) return 1.0;
+
+  // Convert to degrees for easier calculation
+  const angleDeg = (angle * 180) / Math.PI;
+
+  // Normalize angle to 0-360 range
+  const normalizedAngle = ((angleDeg % 360) + 360) % 360;
+
+  // Calculate density based on angle and text length
+  // Longer texts need more spacing in crowded areas
+  const baseDensity = 1.0;
+  const textMultiplier = Math.min(1.5, 1.0 + (textLength * 0.05));
+
+  // Add extra spacing in crowded quadrants
+  const quadrantAdjustment = (normalizedAngle > 80 && normalizedAngle < 100) ||
+                           (normalizedAngle > 260 && normalizedAngle < 280) ? 1.3 : 1.0;
+
+  return baseDensity * textMultiplier * quadrantAdjustment;
 }
 
 /**
  * Interpolate between two label configurations
  * @param {Object} fromNode - Source node
  * @param {Object} toNode - Target node
- * @param {number} fromLabelRadius - Source label radius (final position)
- * @param {number} toLabelRadius - Target label radius (final position)
+ * @param {number} fromExtensionTip - Source extension tip radius
+ * @param {number} toExtensionTip - Target extension tip radius
  * @param {number} t - Interpolation factor [0,1]
+ * @param {string} text - The actual label text
+ * @param {number} fontSizePx - Font size in pixels
  * @returns {Object} Interpolated label configuration
  */
-export function interpolateLabelConfiguration(fromNode, toNode, fromLabelRadius, toLabelRadius, t) {
+export function interpolateLabelConfiguration(fromNode, toNode, fromExtensionTip, toExtensionTip, t, text = '', fontSizePx = 24) {
   // Handle angle wrapping for shortest path
   const angleDiff = toNode.angle - fromNode.angle;
-  const adjustedAngleDiff = angleDiff > Math.PI ? angleDiff - 2 * Math.PI : 
+  const adjustedAngleDiff = angleDiff > Math.PI ? angleDiff - 2 * Math.PI :
                            angleDiff < -Math.PI ? angleDiff + 2 * Math.PI : angleDiff;
-  
+
   const interpolatedAngle = fromNode.angle + adjustedAngleDiff * t;
-  // For WebGL with fixed radius, fromLabelRadius === toLabelRadius
-  // For SVG, they might differ slightly based on tree size
-  const interpolatedLabelRadius = fromLabelRadius + (toLabelRadius - fromLabelRadius) * t;
-  
+  const interpolatedExtensionTip = fromExtensionTip + (toExtensionTip - fromExtensionTip) * t;
+
   const interpolatedNode = {
     angle: interpolatedAngle,
     radius: 0  // Not used since we pass the final radius directly
   };
-  
-  return getLabelConfiguration(interpolatedNode, interpolatedLabelRadius);
+
+  return getLabelConfiguration(interpolatedNode, interpolatedExtensionTip, text, fontSizePx);
+}
+
+/**
+ * Calculate dynamic label offset based on text length and font size
+ * This prevents label-extension overlap by accounting for actual text dimensions
+ * @param {string} text - The label text
+ * @param {number} fontSizePx - Font size in pixels
+ * @param {number} baseOffset - Base offset (current LABEL_OFFSETS.DEFAULT)
+ * @param {number} extensionLength - Length of extension line
+ * @returns {number} Dynamic offset that prevents overlap
+ */
+export function calculateDynamicLabelOffset(text, fontSizePx, baseOffset, extensionLength = 0) {
+  if (!text || typeof text !== 'string') return baseOffset;
+
+  // Calculate text width based on character count and font size (minimal multiplier)
+  // Average character width is roughly 0.25 * fontSize for minimal spacing
+  const avgCharWidth = fontSizePx * 0.2; // Minimal character width
+  const textWidth = text.length * avgCharWidth;
+
+  // Add minimal padding and account for extension
+  const minPadding = 2; // Minimal 2px padding
+  const extensionBuffer = extensionLength > 0 ? extensionLength + 3 : 0; // Minimal +3 buffer
+
+  // Calculate dynamic offset based on text length (minimal scaling)
+  const dynamicOffset = Math.max(
+    baseOffset + textWidth + minPadding,
+    baseOffset + extensionBuffer
+  );
+
+  // Cap the offset to prevent excessive spacing (minimal cap)
+  const maxOffset = baseOffset * 1.8; // Minimal cap
+  return Math.min(dynamicOffset, maxOffset);
+}
+
+/**
+ * Get label configuration with dynamic offset based on text length
+ * @param {Object} node - Tree node with angle and radius properties
+ * @param {string} text - The label text
+ * @param {number} baseLabelRadius - Base radius without text consideration
+ * @param {number} fontSizePx - Font size in pixels
+ * @param {number} extensionRadius - Radius where extension ends
+ * @returns {Object} Complete label configuration with dynamic positioning
+ */
+export function getDynamicLabelConfiguration(node, text, baseLabelRadius, fontSizePx, extensionRadius = 0) {
+  const extensionLength = Math.max(0, baseLabelRadius - extensionRadius);
+  const dynamicOffset = calculateDynamicLabelOffset(text, fontSizePx, 50, extensionLength);
+
+  // Calculate final position with dynamic offset
+  const finalLabelRadius = extensionRadius + dynamicOffset;
+
+  return {
+    ...getLabelConfiguration(node, finalLabelRadius),
+    extensionRadius,
+    dynamicOffset,
+    textLength: text.length,
+    finalLabelRadius
+  };
 }
 
 /**
  * Default label offset constants
+ * These are now base values - actual offsets are calculated dynamically
  */
 export const LABEL_OFFSETS = {
-  DEFAULT: 30,
-  WITH_EXTENSIONS: 60,  // Increased from 40 to 60 for better separation
-  EXTENSION: 20
+  DEFAULT: 50,        // Base offset, dynamically adjusted
+  WITH_EXTENSIONS: 120, // Base for extension scenarios, dynamically adjusted
+  EXTENSION: 8        // Minimal extension line length for direct placement
 };

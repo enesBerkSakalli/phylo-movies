@@ -2,8 +2,6 @@
  * TimelineInterpolator - Handles tree interpolation and rendering
  */
 
-import { ValidationError } from './constants.js';
-import { useAppStore } from '../core/store.js';
 
 export class TimelineInterpolator {
     constructor(getTreeController, getTransitionResolver) {
@@ -14,31 +12,24 @@ export class TimelineInterpolator {
     /**
      * Interpolate between two timeline segments
      * @param {Object} fromSegment - Source segment
-     * @param {Object} toSegment - Target segment  
+     * @param {Object} toSegment - Target segment
      * @param {number} progress - Interpolation progress (0-1)
      * @throws {ValidationError} If segments or progress are invalid
      */
     interpolate(fromSegment, toSegment, progress) {
         try {
-            // Validate inputs
-            this._validateInterpolationInputs(fromSegment, toSegment, progress);
-            
+
             // Get interpolation data
             const interpolationData = this._prepareInterpolationData(
-                fromSegment, 
-                toSegment, 
+                fromSegment,
+                toSegment,
                 progress
             );
-            
+
             // Get tree controller
             const treeController = this.getTreeController();
-            if (!treeController) {
-                throw new Error('TreeController not available for interpolation');
-            }
-            
-            // Update color manager if needed
-            this._updateColorManager(treeController, interpolationData.monophyleticData);
-            
+
+
             // Delegate rendering to tree controller
             treeController.renderInterpolatedFrame(
                 interpolationData.sourceTree,
@@ -46,7 +37,7 @@ export class TimelineInterpolator {
                 interpolationData.progress,
                 interpolationData.renderOptions
             );
-            
+
         } catch (error) {
             this._handleInterpolationError(error, fromSegment, toSegment);
         }
@@ -59,51 +50,18 @@ export class TimelineInterpolator {
     renderSegment(segment) {
         try {
             const treeController = this.getTreeController();
-            if (!treeController) {
-                throw new Error('TreeController not available for rendering');
-            }
-
-            // For instant rendering, we can use the tree controller's direct rendering methods
-            // This would depend on the specific API of the tree controller
-            const { getActualHighlightData, movieData } = useAppStore.getState();
             
-            const latticeEdge = movieData?.lattice_edge_tracking?.[segment.index];
-            const highlightEdges = latticeEdge ? [latticeEdge] : [];
-            const monophyleticData = getActualHighlightData();
-
-            this._updateColorManager(treeController, monophyleticData);
-
-            // Use renderAllElements or similar method for instant rendering
-            treeController.renderAllElements(segment.tree, {
-                highlightEdges,
-                showExtensions: true,
-                showLabels: true
-            });
-
+            // For grouped segments with interpolation data, render the first tree
+            if (segment.hasInterpolation && segment.interpolationData?.length > 0) {
+                treeController.renderAllElements(segment.interpolationData[0].tree);
+            } else {
+                treeController.renderAllElements(segment.tree);
+            }
         } catch (error) {
             console.error('[TimelineInterpolator] Error rendering segment:', error);
         }
     }
 
-    /**
-     * Validate interpolation inputs
-     * @private
-     * @param {Object} fromSegment - Source segment
-     * @param {Object} toSegment - Target segment
-     * @param {number} progress - Progress value
-     * @throws {ValidationError} If inputs are invalid
-     */
-    _validateInterpolationInputs(fromSegment, toSegment, progress) {
-        if (!fromSegment || !toSegment) {
-            throw new ValidationError('Invalid segments provided for interpolation');
-        }
-        if (typeof progress !== 'number' || progress < 0 || progress > 1) {
-            throw new ValidationError(`Invalid progress value: ${progress}. Must be between 0 and 1`);
-        }
-        if (!fromSegment.tree || !toSegment.tree) {
-            throw new ValidationError('Segments missing tree data');
-        }
-    }
 
     /**
      * Prepare interpolation data
@@ -114,61 +72,47 @@ export class TimelineInterpolator {
      * @returns {Object} Interpolation data
      */
     _prepareInterpolationData(fromSegment, toSegment, progress) {
-        const { getActualHighlightData, movieData } = useAppStore.getState();
-        
-        // Use natural tree order - let WebGL controller handle direction-aware diffing
-        const sourceTree = fromSegment.tree;
-        const targetTree = toSegment.tree;
+        // Check if we're interpolating within a grouped segment
+        if (fromSegment === toSegment && fromSegment.hasInterpolation && fromSegment.interpolationData?.length > 1) {
+            // Interpolating within a single segment using its interpolation data
+            const interpolationData = fromSegment.interpolationData;
             
-        const interpolatedIndex = Math.round(
-            fromSegment.index + (toSegment.index - fromSegment.index) * progress
-        );
-        
-        const latticeEdge = movieData?.lattice_edge_tracking?.[interpolatedIndex];
-        const highlightEdges = latticeEdge ? [latticeEdge] : [];
-        
-        return {
-            sourceTree,
-            targetTree,
-            progress,
-            interpolatedIndex,
-            monophyleticData: getActualHighlightData(),
-            renderOptions: {
-                highlightEdges,
-                showExtensions: true,
-                showLabels: true
-            }
-        };
-    }
+            // Find the correct interpolation step based on progress
+            const stepSize = 1 / (interpolationData.length - 1);
+            const stepIndex = Math.min(
+                Math.floor(progress / stepSize),
+                interpolationData.length - 2
+            );
+            
+            const fromStep = interpolationData[stepIndex];
+            const toStep = interpolationData[stepIndex + 1];
+            
+            const stepStart = stepIndex * stepSize;
+            const stepProgress = (progress - stepStart) / stepSize;
+            
+            return {
+                sourceTree: fromStep.tree,
+                targetTree: toStep.tree,
+                progress: stepProgress,
+                interpolatedIndex: Math.round(fromStep.originalIndex + (toStep.originalIndex - fromStep.originalIndex) * stepProgress),
+                renderOptions: {}
+            };
+        } else {
+            // Traditional interpolation between different segments
+            const sourceTree = fromSegment.tree;
+            const targetTree = toSegment.tree;
+            const interpolatedIndex = Math.round(
+                fromSegment.index + (toSegment.index - fromSegment.index) * progress
+            );
 
-    /**
-     * Update color manager with monophyletic data
-     * @private
-     * @param {Object} treeController - Tree controller instance
-     * @param {Array} monophyleticData - Monophyletic highlight data
-     */
-    _updateColorManager(treeController, monophyleticData) {
-        if (treeController.colorManager && monophyleticData) {
-            const transformedData = this._transformHighlightData(monophyleticData);
-            treeController.colorManager.updateMarkedComponents(transformedData);
+            return {
+                sourceTree,
+                targetTree,
+                progress,
+                interpolatedIndex,
+                renderOptions: {}
+            };
         }
-    }
-
-    /**
-     * Transform highlight data to the format expected by ColorManager
-     * @private
-     * @param {Array} highlightData - Raw highlight data
-     * @returns {Array} Transformed data as array of Sets
-     */
-    _transformHighlightData(highlightData) {
-        if (!Array.isArray(highlightData) || highlightData.length === 0) {
-            return [];
-        }
-        
-        const isArrayOfArrays = highlightData.every(item => Array.isArray(item));
-        return isArrayOfArrays 
-            ? highlightData.map(innerArray => new Set(innerArray))
-            : [new Set(highlightData)];
     }
 
     /**

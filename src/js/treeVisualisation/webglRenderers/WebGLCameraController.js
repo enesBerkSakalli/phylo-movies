@@ -83,13 +83,24 @@ export class WebGLCameraController {
     if (this.isOrtho()) {
       const { width, height } = this.getSize();
       const minDim = Math.min(width, height);
-      const optimalZoom = minDim / (maxRadius * 3);
+
+      // CRITICAL FIX: Prevent excessive zoom on initial load
+      // Ensure minimum radius to avoid division by very small numbers
+      const minRadius = 200; // Sensible minimum to prevent extreme zoom levels
+      const safeRadius = Math.max(maxRadius, minRadius);
+
+      // Reduced multiplier for better initial framing
+      const optimalZoom = minDim / (safeRadius * 2.5);
       const clampedZoom = THREE.MathUtils.clamp(optimalZoom, this.minZoom, this.maxZoom);
+
       this.camera.position.set(0, 0, 500);
       this.camera.zoom = clampedZoom;
       this.camera.updateProjectionMatrix();
     } else {
-      const optimalDistance = Math.max(maxRadius * 2.5, 1200);
+      // For perspective camera, also apply safer distance calculation
+      const minRadius = 300;
+      const safeRadius = Math.max(maxRadius, minRadius);
+      const optimalDistance = Math.max(safeRadius * 2.8, 1200);
       const tiltAngle = Math.PI / 4;
       this.camera.position.set(0, -optimalDistance * Math.sin(tiltAngle), optimalDistance * Math.cos(tiltAngle));
       this.camera.lookAt(0, 0, 0);

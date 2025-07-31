@@ -6,6 +6,46 @@
  */
 
 /**
+ * Deep clone a tree node structure while handling circular references
+ * @param {Object} node - Tree node to clone
+ * @param {WeakMap} cloneMap - Map to track already cloned nodes (prevents infinite recursion)
+ * @returns {Object} Cloned tree node
+ * @private
+ */
+function _cloneTreeNode(node, cloneMap = new WeakMap()) {
+  if (!node || typeof node !== 'object') return node;
+
+  // If we've already cloned this node, return the clone
+  if (cloneMap.has(node)) {
+    return cloneMap.get(node);
+  }
+
+  // Create new node object and add to map immediately to handle circular refs
+  const cloned = {};
+  cloneMap.set(node, cloned);
+
+  // Copy all properties except parent (to avoid circular references)
+  for (const key in node) {
+    if (node.hasOwnProperty(key) && key !== 'parent') {
+      const value = node[key];
+
+      if (Array.isArray(value)) {
+        // Recursively clone arrays (like children)
+        cloned[key] = value.map(item => _cloneTreeNode(item, cloneMap));
+      } else if (value && typeof value === 'object') {
+        // Recursively clone objects
+        cloned[key] = _cloneTreeNode(value, cloneMap);
+      } else {
+        // Copy primitive values directly
+        cloned[key] = value;
+      }
+    }
+  }
+
+  return cloned;
+}
+
+/**
  * Apply branch length transformation to a tree node and all its descendants
  * @param {Object} node - Tree node with children and branch_length properties
  * @param {string} transformType - Type of transformation to apply
@@ -14,20 +54,20 @@
 export function transformBranchLengths(node, transformType = 'none') {
   if (!node) return node;
 
-  // If transformType is 'none', do not transform
+  // If transformType is 'none', return a clean copy
   if (transformType === 'none') {
-    return JSON.parse(JSON.stringify(node));
+    return _cloneTreeNode(node);
   }
 
   // If transformType is 'ignore', set all branch lengths to 1
   if (transformType === 'ignore') {
-    const ignoredNode = JSON.parse(JSON.stringify(node));
+    const ignoredNode = _cloneTreeNode(node);
     _applyIgnoreBranchLengthsRecursive(ignoredNode);
     return ignoredNode;
   }
 
   // Create a deep copy to avoid modifying original
-  const transformedNode = JSON.parse(JSON.stringify(node));
+  const transformedNode = _cloneTreeNode(node);
 
   // Apply transformation recursively
   _applyTransformationRecursive(transformedNode, transformType);
@@ -42,7 +82,7 @@ export function transformBranchLengths(node, transformType = 'none') {
  */
 function _applyIgnoreBranchLengthsRecursive(node) {
   if (!node) return;
-  
+
   // Only set to 1 if the original length is not 0
   if (node.length !== undefined && node.length !== null && node.length !== 0) {
     node.length = 1;
@@ -50,7 +90,7 @@ function _applyIgnoreBranchLengthsRecursive(node) {
   if (node.branch_length !== undefined && node.branch_length !== null && node.branch_length !== 0) {
     node.branch_length = 1;
   }
-  
+
   if (node.children && Array.isArray(node.children)) {
     node.children.forEach(child => {
       _applyIgnoreBranchLengthsRecursive(child);

@@ -530,6 +530,30 @@ export class WebGLNodeRenderer {
   }
 
   /**
+   * Refreshes colors for all existing node meshes.
+   * Call this when ColorManager state changes to update material colors.
+   */
+  refreshColors() {
+    // Update leaf mesh colors
+    this.leafMeshes.forEach((mesh, nodeKey) => {
+      if (mesh.userData.node) {
+        const newColor = this.colorManager.getNodeColor(mesh.userData.node);
+        mesh.material.color.set(newColor);
+        mesh.material.needsUpdate = true;
+      }
+    });
+
+    // Update internal node mesh colors
+    this.internalMeshes.forEach((mesh, nodeKey) => {
+      if (mesh.userData.node) {
+        const newColor = this.colorManager.getNodeColor(mesh.userData.node);
+        mesh.material.color.set(newColor);
+        mesh.material.needsUpdate = true;
+      }
+    });
+  }
+
+  /**
    * Clean up resources
    */
   destroy() {

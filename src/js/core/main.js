@@ -8,7 +8,6 @@ import {
   attachGuiEventHandlers,
   attachMSAButtonHandler,
   attachRecorderEventHandlers,
-  initializeToggles,
 } from "../partial/eventHandlers.js";
 import { loadAllPartials } from "../partial/loadPartials.js";
 import { ScreenRecorder } from "../services/record.js";
@@ -126,26 +125,14 @@ async function initializeGuiAndEvents(parsedData) {
 
     attachMSAButtonHandler(gui);
 
+    // Create recorder without UI callbacks - EventHandlerRegistry handles UI updates
     const recorder = new ScreenRecorder({
-      onStart: () => {
-        document.getElementById("start-record").disabled = true;
-        document.getElementById("stop-record").disabled = false;
-      },
       onStop: () => {
+        // Keep the download link creation as it's not UI button management
         const downloadLink = recorder.createDownloadLink();
         document.body.appendChild(downloadLink);
-        document.getElementById("start-record").disabled = false;
-        document.getElementById("stop-record").disabled = true;
-      },
-      onError: (error) => {
-        console.error("Recording error:", error);
-        alert("Recording error: " + error.message);
-        document.getElementById("start-record").disabled = false;
-        document.getElementById("stop-record").disabled = true;
       },
     });
-
-    attachRecorderEventHandlers(recorder);
 
     // Debounced resize handler for better performance
     const debouncedResize = debounce(async () => {
@@ -157,7 +144,9 @@ async function initializeGuiAndEvents(parsedData) {
 
     if (!eventHandlersAttached) {
       await attachGuiEventHandlers(gui);
-      initializeToggles();
+
+      // IMPORTANT: Set recorder AFTER eventHandlerRegistry is initialized
+      attachRecorderEventHandlers(recorder);
 
       // Monophyletic coloring toggle handler is now managed by EventHandlerRegistry
       eventHandlersAttached = true;

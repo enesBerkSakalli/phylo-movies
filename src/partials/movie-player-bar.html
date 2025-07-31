@@ -3,10 +3,10 @@
 
   <div class="movie-player-container">
 
-    <!-- PRIMARY TRANSPORT & POSITION - LEFT SIDE -->
-    <div class="left-controls" role="group" aria-label="Transport controls and position">
-      <!-- Combined Transport and Chart Controls in a single row -->
-      <div class="combined-controls-row" role="group" aria-label="Tree navigation and chart controls">
+    <!-- CONTROLS ROW - SPANS FULL WIDTH -->
+    <div class="controls-row" role="group" aria-label="Transport controls and chart controls">
+      <!-- LEFT SIDE: Transport and Speed Controls -->
+      <div class="left-controls" role="group" aria-label="Transport controls and position">
         <!-- Speed Control -->
         <div class="animation-speed-control ultra-compact movie-player-speed" role="group" aria-labelledby="speed-control-label">
           <label id="speed-control-label" class="control-label sr-only">
@@ -42,9 +42,12 @@
           <span class="material-icons">chevron_right</span><span class="sr-only">Next Frame</span>
         </button>
         <button id="forwardStepButton" type="button" class="md-button sm secondary" title="Go to next tree (next full tree)" aria-label="Next tree">
-          <span class="material-icons">last_page</span><span class="sr-only">Next Tree</span>
+          <span class="material-icons">last_page</span>
         </button>
-        <!-- Chart Controls -->
+      </div>
+
+      <!-- RIGHT SIDE: Chart Controls -->
+      <div class="chart-controls" role="group" aria-label="Chart controls">
         <select
           name="barPlotOption"
           id="barPlotOption"
@@ -70,65 +73,63 @@
       </div>
     </div>
 
-    <!-- RIGHT SIDE CONTENT - STACKED VERTICALLY -->
-    <div class="right-content-stacked">
-      <!-- Timeline Container -->
-      <div class="timeline-container">
-        <div class="interpolation-timeline-container">
-          <div class="interpolation-timeline-header">
-            <!-- Removed timeline title to save space -->
-            <div class="timeline-header-metrics">
-              <!-- Primary Metrics -->
-              <div class="timeline-metric primary" title="Total number of trees in the phylogenetic movie sequence">
-                <span class="material-icons metric-icon" aria-hidden="true">account_tree</span>
-                <span class="metric-value" id="movieTimelineCount">0 trees</span>
-              </div>
-              <div class="timeline-metric primary" title="Current position: Shows current tree index and nearest full tree position (e.g., 45/100 at T3→T4)">
-                <span class="material-icons metric-icon" aria-hidden="true">my_location</span>
-                <span class="metric-value" id="currentPositionInfo"></span>
-              </div>
-              <!-- Status Metric - Visual Only -->
-              <div class="timeline-metric status" title="Playback status: Current animation state and tree type being displayed">
-                <span class="status-indicator-enhanced" id="statusIndicator"></span>
-                <span class="metric-value status-text" id="interpolationStatus"></span>
-              </div>
+    <!-- TIMELINE CONTAINER - SPANS FULL WIDTH -->
+    <div class="timeline-container-full-width">
+      <div class="interpolation-timeline-container">
+        <div class="interpolation-timeline-header">
+          <!-- Removed timeline title to save space -->
+          <div class="timeline-header-metrics">
+            <!-- Primary Metrics -->
+            <div class="timeline-metric primary" title="Total number of trees in the phylogenetic movie sequence">
+              <span class="material-icons metric-icon" aria-hidden="true">account_tree</span>
+              <span class="metric-value" id="movieTimelineCount">0 trees</span>
             </div>
-            <div class="timeline-header-right">
-              <div class="timeline-zoom-controls">
-                <button class="md-button sm secondary" id="zoomOutBtn" title="Zoom out timeline (Ctrl + -)">
-                  <span class="material-icons">zoom_out</span>
-                </button>
-                <button class="md-button sm secondary" id="fitToWindowBtn" title="Fit entire timeline to window (Ctrl + 0)">
-                  <span class="material-icons">fit_screen</span>
-                </button>
-                <button class="md-button sm secondary" id="zoomInBtn" title="Zoom in timeline (Ctrl + +)">
-                  <span class="material-icons">zoom_in</span>
-                </button>
-              </div>
-              <div class="timeline-scroll-controls">
-                <button class="md-button sm secondary" id="scrollToStartBtn" title="Scroll to start (Home)">
-                  <span class="material-icons">first_page</span>
-                </button>
-                <button class="md-button sm secondary" id="scrollToEndBtn" title="Scroll to end (End)">
-                  <span class="material-icons">last_page</span>
-                </button>
-              </div>
+            <div class="timeline-metric primary" title="Current position: Shows current tree index and nearest full tree position (e.g., 45/100 at T3→T4)">
+              <span class="material-icons metric-icon" aria-hidden="true">my_location</span>
+              <span class="metric-value" id="currentPositionInfo"></span>
+            </div>
+            <!-- Status Metric - Visual Only -->
+            <div class="timeline-metric status" title="Playback status: Current animation state and tree type being displayed">
+              <span class="status-indicator-enhanced" id="statusIndicator"></span>
+              <span class="metric-value status-text" id="interpolationStatus"></span>
             </div>
           </div>
-          <!-- DOM-based timeline removed - using vis-timeline only -->
-          <!-- vis-timeline container will be created dynamically by MovieTimelineManager -->
-        </div> <!-- .interpolation-timeline-container CLOSES HERE -->
-        <!-- Distance Chart - BOTTOM -->
-        <div class="movie-chart-container" role="region" aria-label="Distance Chart">
-          <div
-            id="lineChart"
-            class="chart-canvas chart-inline"
-            role="img"
-            aria-label="Interactive distance chart"
-            title="Interactive chart: Click points or drag indicator to navigate"
-          ></div>
+          <div class="timeline-header-right">
+            <div class="timeline-zoom-controls">
+              <button class="md-button sm secondary" id="zoomOutBtn" title="Zoom out timeline (Ctrl + -)">
+                <span class="material-icons">zoom_out</span>
+              </button>
+              <button class="md-button sm secondary" id="fitToWindowBtn" title="Fit entire timeline to window (Ctrl + 0)">
+                <span class="material-icons">fit_screen</span>
+              </button>
+              <button class="md-button sm secondary" id="zoomInBtn" title="Zoom in timeline (Ctrl + +)">
+                <span class="material-icons">zoom_in</span>
+              </button>
+            </div>
+            <div class="timeline-scroll-controls">
+              <button class="md-button sm secondary" id="scrollToStartBtn" title="Scroll to start (Home)">
+                <span class="material-icons">first_page</span>
+              </button>
+              <button class="md-button sm secondary" id="scrollToEndBtn" title="Scroll to end (End)">
+                <span class="material-icons">last_page</span>
+              </button>
+            </div>
+          </div>
         </div>
-      </div> <!-- .timeline-container CLOSES HERE -->
-    </div> <!-- .right-content-stacked CLOSES HERE -->
+        <!-- DOM-based timeline removed - using vis-timeline only -->
+        <!-- vis-timeline container will be created dynamically by MovieTimelineManager -->
+      </div> <!-- .interpolation-timeline-container CLOSES HERE -->
+    </div> <!-- .timeline-container-full-width CLOSES HERE -->
+
+    <!-- CHART CONTAINER - SPANS FULL WIDTH -->
+    <div class="movie-chart-container-full-width" role="region" aria-label="Distance Chart">
+      <div
+        id="lineChart"
+        class="chart-canvas chart-inline"
+        role="img"
+        aria-label="Interactive distance chart"
+        title="Interactive chart: Click points or drag indicator to navigate"
+      ></div>
+    </div>
   </div> <!-- .movie-player-container CLOSES HERE -->
 </div> <!-- .movie-player-bar CLOSES HERE -->

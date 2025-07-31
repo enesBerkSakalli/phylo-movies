@@ -1,6 +1,5 @@
 import { generateLineChart, updateShipPosition } from "./chartGenerator.js";
 import { useAppStore } from '../core/store.js';
-import { GoToFullTreeDataIndexCommand } from '../core/NavigationCommands.js';
 
 /**
  * Unified chart rendering for phylo-movies line charts using chartGenerator.js.
@@ -139,14 +138,19 @@ export function renderOrUpdateLineChart({ data, config, services, chartState, ca
 
     // Create navigation callback that converts chart positions to full trees
     const onPositionChange = (chartPosition) => {
-        // Use proper navigation command pattern
-        const command = new GoToFullTreeDataIndexCommand(chartPosition);
-        // Get navigation controller if available, otherwise execute directly
-        const { navigationController } = useAppStore.getState();
-        if (navigationController) {
-            navigationController.execute(command);
-        } else {
-            command.execute();
+        // Direct store navigation instead of command pattern
+        const { transitionResolver, goToPosition } = useAppStore.getState();
+        if (!transitionResolver) return;
+
+        const fullTreeIndices = transitionResolver.fullTreeIndices;
+        const numTransitions = Math.max(0, fullTreeIndices.length - 1);
+
+        if (chartPosition < 0 || chartPosition >= numTransitions) {
+            return;
+        }
+
+        if (chartPosition < fullTreeIndices.length) {
+            goToPosition(fullTreeIndices[chartPosition]);
         }
     };
 

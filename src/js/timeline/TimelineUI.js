@@ -36,17 +36,42 @@ export class TimelineUI {
     }
 
     /**
-     * Update current position display
-     * @param {number} currentIndex - Current tree index
+     * Update comprehensive position display with both segment and tree information
+     * @param {number} currentSegment - Current segment position (1-based)
+     * @param {number} totalSegments - Total number of segments
+     * @param {number} progress - Timeline progress (0-1)
+     * @param {number} currentTree - Current tree index (1-based)
      * @param {number} totalTrees - Total number of trees
-     * @param {number} progress - Animation progress (0-1)
+     * @param {number} treeInSegment - Position within current segment (1-based)
+     * @param {number} treesInSegment - Total trees in current segment
      */
-    updatePosition(currentIndex, totalTrees, progress) {
+    updatePosition(currentSegment, totalSegments, progress, currentTree = null, totalTrees = null, treeInSegment = null, treesInSegment = null) {
         if (!this.elements.currentPositionInfo) return;
 
         const progressPercent = Math.round(progress * 100);
-        this.elements.currentPositionInfo.textContent = 
-            `${currentIndex + 1} / ${totalTrees} (Animation: ${progressPercent}%)`;
+
+        // Base segment information
+        let displayText = `Segment ${currentSegment} / ${totalSegments} (Timeline: ${progressPercent}%)`;
+
+        // Add detailed tree information if provided
+        if (currentTree !== null && totalTrees !== null && treeInSegment !== null && treesInSegment !== null) {
+            displayText += ` | Tree ${currentTree}/${totalTrees} (${treeInSegment}/${treesInSegment} in segment)`;
+        }
+
+        this.elements.currentPositionInfo.textContent = displayText;
+    }
+
+    /**
+     * Update detailed position display with tree information
+     * @deprecated Use updatePosition with all parameters instead
+     * @param {number} currentTree - Current tree index (1-based)
+     * @param {number} totalTrees - Total number of trees
+     * @param {number} treeInSegment - Position within current segment (1-based)
+     * @param {number} treesInSegment - Total trees in current segment
+     */
+    updateDetailedPosition(currentTree, totalTrees, treeInSegment, treesInSegment) {
+        // This method is now deprecated - the comprehensive information should be set via updatePosition
+        console.warn('[TimelineUI] updateDetailedPosition is deprecated. Use updatePosition with all parameters instead.');
     }
 
     /**
@@ -73,7 +98,7 @@ export class TimelineUI {
         const toPhase = PHASE_NAMES[toSegment.phase] || 'Unknown';
         const progressPercent = Math.round(progress * 100);
 
-        this.elements.currentPositionInfo.textContent = 
+        this.elements.currentPositionInfo.textContent =
             `Over-interpolating ${fromPhase}→${toPhase} (${progressPercent}%)`;
     }
 
@@ -83,7 +108,7 @@ export class TimelineUI {
     clear() {
         const elementsToClear = [
             'movieTimelineCount',
-            'currentPositionInfo', 
+            'currentPositionInfo',
             'interpolationStatus'
         ];
 

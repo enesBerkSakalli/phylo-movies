@@ -200,9 +200,10 @@ export class RadialTreeLayout {
 
   /**
    * generating radial tree. Returns the tree with the coordinates to generate a tree with a radial Layout.
+   * @param {boolean} [useUniformScaling=false] - Whether to skip auto-scaling for uniform scaling
    * @return {root}
    */
-  constructRadialTree() {
+  constructRadialTree(useUniformScaling = false) {
     // CRITICAL FIX: Removed `this.root.data.length = 0` line that was mutating shared tree data
     // This mutation was corrupting previous tree data and causing position diffing to fail,
     // leading to duplicate element creation in WebGL renderer
@@ -213,21 +214,25 @@ export class RadialTreeLayout {
     this.indexLeafNodes(this.root);
     this.calcAngle(this.root, Math.PI * 2, this.root.leaves().length);
 
-    const minWindowSize = this.getMinContainerDimension(
-      this.containerWidth,
-      this.containerHeight
-    );
+    // Only apply auto-scaling if not using uniform scaling
+    if (!useUniformScaling) {
+      const minWindowSize = this.getMinContainerDimension(
+        this.containerWidth,
+        this.containerHeight
+      );
 
-    const maxRadius = this.getMaxRadius(this.root);
+      const maxRadius = this.getMaxRadius(this.root);
 
-    // Use standard scaling
-    this.scale = this.calculateContainerScale(
-      minWindowSize,
-      maxRadius,
-      2.0
-    );
+      // Use standard scaling
+      this.scale = this.calculateContainerScale(
+        minWindowSize,
+        maxRadius,
+        2.0
+      );
 
-    this.scaleRadius(this.root, this.scale);
+      this.scaleRadius(this.root, this.scale);
+    }
+
     this.generateCoordinates(this.root);
 
     return this.root;
@@ -296,12 +301,26 @@ export default function createRadialTreeLayout(
 
   treeLayout.setMargin(margin);
 
-  // Use density-aware construction if requested
-  let root_ = treeLayout.constructRadialTree();
+  // Check if uniform scaling is requested
+  const useUniformScaling = options.uniformScale !== undefined;
+  let root_;
+
+  if (useUniformScaling) {
+    // For uniform scaling, construct without auto-scaling, then apply uniform scale
+    root_ = treeLayout.constructRadialTree(true);
+
+    // Apply uniform scaling
+    treeLayout.scaleRadius(root_, options.uniformScale);
+    treeLayout.generateCoordinates(root_);
+    treeLayout.scale = options.uniformScale;
+  } else {
+    // Use density-aware construction with auto-scaling
+    root_ = treeLayout.constructRadialTree(false);
+  }
 
   // For comparison views, ensure the tree is sized appropriately
   const isComparison = options.containerId && options.containerId.includes('comparison');
-  if (isComparison && options.maxRadius) {
+  if (isComparison && options.maxRadius && !useUniformScaling) {
     const currentMaxRadius = treeLayout.getMaxRadius(root_);
     if (currentMaxRadius > options.maxRadius) {
       const adjustmentScale = options.maxRadius / currentMaxRadius * 0.9;

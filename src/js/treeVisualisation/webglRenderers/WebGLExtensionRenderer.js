@@ -6,6 +6,7 @@ import { createPolarInterpolator } from "../radialTreeGeometry.js";
 /**
  * WebGL Extension Renderer - Specialized renderer for tree link extensions using Three.js
  * Creates dashed lines from tree leaf nodes to their extended positions for labels
+ * Now supports uniform scaling and branch transformation awareness
  */
 export class WebGLExtensionRenderer {
 
@@ -13,19 +14,44 @@ export class WebGLExtensionRenderer {
    * Create a WebGL Extension Renderer instance
    * @param {THREE.Scene} scene - The Three.js scene
    * @param {Object} colorManager - Object with methods for determining extension colors
+   * @param {Object} controller - WebGL controller for accessing uniform scaling and transformation state
    */
-  constructor(scene, colorManager) {
+  constructor(scene, colorManager, controller = null) {
     this.scene = scene;
     this.colorManager = colorManager;
+    this.controller = controller; // Added controller reference for uniform scaling
 
     // Store extension lines by their keys
     this.extensionLines = new Map();
 
     // Material factory for centralized material management (like other renderers)
-    this.materialFactory = new WebGLMaterialFactory(this.colorManager);
+    this.materialFactory = new WebGLMaterialFactory();
   }
 
   /* --------------------------- Helper Methods --------------------------- */
+
+  /**
+   * Get transformation-aware extension radius that accounts for uniform scaling and branch transformations
+   * @param {number} baseExtensionRadius - Base extension radius
+   * @returns {number} Adjusted extension radius
+   * @private
+   */
+  _getTransformationAwareRadius(baseExtensionRadius) {
+    if (!this.controller) {
+      return baseExtensionRadius; // Fallback if no controller available
+    }
+
+    // Use the unified radius calculation system from the main controller
+    if (this.controller._getConsistentRadii) {
+      const { extensionRadius } = this.controller._getConsistentRadii();
+      return extensionRadius;
+    }
+    
+    // Fallback to legacy method
+    return this.controller._calculateUniformAwareRadius ?
+      this.controller._calculateUniformAwareRadius(baseExtensionRadius) :
+      baseExtensionRadius;
+  }
 
   /**
    * Get extension line from extension lines map
@@ -173,14 +199,16 @@ export class WebGLExtensionRenderer {
   }
 
   /**
-   * Renders extensions for leaf nodes in WebGL
+   * Renders extensions for leaf nodes in WebGL with transformation and uniform scaling awareness
    * @param {Array} leafData - Array of leaf data from tree
-   * @param {number} extensionRadius - Radius for extension end positions
+   * @param {number} extensionRadius - Base radius for extension end positions
    * @returns {Promise} Promise that resolves when extensions are created
    */
   async renderExtensions(leafData, extensionRadius = 500) {
-    // Use enter/update/exit pattern like WebGLLinkRenderer
+    // Use the unified radius calculation system from the main controller
+    const adjustedExtensionRadius = extensionRadius;
 
+    // Use enter/update/exit pattern like WebGLLinkRenderer
     // Build map of current extensions
     const newExtensionsMap = new Map(leafData.map(leaf => [getExtensionKey(leaf), leaf]));
 
@@ -193,13 +221,13 @@ export class WebGLExtensionRenderer {
       const existingLine = this._getExtensionLine(key);
 
       if (!existingLine) {
-        // Enter: Create new extension line
-        const extensionLine = this._createExtensionLine(leaf, extensionRadius);
+        // Enter: Create new extension line with adjusted radius
+        const extensionLine = this._createExtensionLine(leaf, adjustedExtensionRadius);
         this.extensionLines.set(key, extensionLine);
         this.scene.add(extensionLine);
       } else {
-        // Update: Update existing extension positions using helper
-        this._updateExtensionLinePositions(existingLine, leaf, extensionRadius);
+        // Update: Update existing extension positions with adjusted radius
+        this._updateExtensionLinePositions(existingLine, leaf, adjustedExtensionRadius);
       }
     }
 
@@ -210,13 +238,17 @@ export class WebGLExtensionRenderer {
 
   /**
    * Renders extensions with interpolation between two tree states
+   * Now supports transformation-aware radius calculation during animation
    * @param {Array} fromLeafData - Array of leaf nodes from source tree
    * @param {Array} toLeafData - Array of leaf nodes from target tree
-   * @param {number} fromExtensionRadius - Extension radius for source tree
-   * @param {number} toExtensionRadius - Extension radius for target tree
+   * @param {number} fromExtensionRadius - Base extension radius for source tree
+   * @param {number} toExtensionRadius - Base extension radius for target tree
    * @param {number} timeFactor - Interpolation factor [0,1]
    */
   renderExtensionsInterpolated(fromLeafData, toLeafData, fromExtensionRadius, toExtensionRadius, timeFactor) {
+    // Apply transformation-aware radius calculation to both radii
+    const adjustedFromRadius = this._getTransformationAwareRadius(fromExtensionRadius);
+    const adjustedToRadius = this._getTransformationAwareRadius(toExtensionRadius);
 
     // Use target-tree-only approach - consistent with other WebGL renderers
     const fromMap = new Map(fromLeafData.map(d => [getExtensionKey(d), d]));
@@ -225,8 +257,8 @@ export class WebGLExtensionRenderer {
     // Remove extensions that are not in target tree using helper
     this._removeObsoleteExtensions(new Set(toMap.keys()));
 
-    // Interpolate extension radius
-    const interpolatedExtensionRadius = fromExtensionRadius + (toExtensionRadius - fromExtensionRadius) * timeFactor;
+    // Interpolate extension radius using adjusted values
+    const interpolatedExtensionRadius = adjustedFromRadius + (adjustedToRadius - adjustedFromRadius) * timeFactor;
 
     // Process only extensions in target tree
     toMap.forEach((toLeaf, extensionKey) => {
@@ -238,9 +270,9 @@ export class WebGLExtensionRenderer {
         finalLeaf = this.interpolateLeaf(toLeaf, fromLeaf, timeFactor);
         radius = interpolatedExtensionRadius;
       } else {
-        // Extension only in target tree - fade in
+        // Extension only in target tree - fade in with adjusted radius
         finalLeaf = toLeaf;
-        radius = toExtensionRadius;
+        radius = adjustedToRadius;
       }
 
       if (finalLeaf) {

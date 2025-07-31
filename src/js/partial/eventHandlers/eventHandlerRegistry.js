@@ -12,6 +12,8 @@ export class EventHandlerRegistry {
     // Store objects with {id, type, element, boundAction} to allow for proper removal
     this.attachedHandlers = [];
     this.speedKnobController = null;
+    this.recorder = null;
+    this.isRecording = false;
   }
 
   /**
@@ -28,15 +30,16 @@ export class EventHandlerRegistry {
         handlers: [
           {
             id: "start-button",
-            action: () => {
-              const { playing, play, stop } = useAppStore.getState();
+            action: async () => {
+              console.log('[EventHandler] Start button clicked');
+              const { playing } = useAppStore.getState();
+              console.log('[EventHandler] Current playing state:', playing);
               if (playing) {
-                stop(); // Only call store action - let subscription handle update
+                console.log('[EventHandler] Stopping animation');
+                this.gui.stop(); // Call GUI's stop method which handles both store and controller
               } else {
-                // For play, we need to keep the GUI method since it manages the animation loop
-                if (this.gui) {
-                  this.gui.play();
-                }
+                console.log('[EventHandler] Starting animation');
+                await this.gui.play(); // Call GUI's play method which handles tree controller creation
               }
             },
             description: "Toggle play/pause",
@@ -168,25 +171,24 @@ export class EventHandlerRegistry {
             id: "font-size",
             type: "input",
             action: async (event) => {
+              console.log('[EventHandler] Font size change triggered:', event.target.value);
               const { setFontSize, treeController } = useAppStore.getState();
               setFontSize(event.target.value);
               document.getElementById('font-size-value').textContent = event.target.value + 'em';
 
-              if (treeController) {
-                // Only manipulate drawDuration for SVG controllers (WebGL controllers have getter-only drawDuration)
-                if (treeController instanceof WebGLTreeAnimationController) {
-                  // WebGL controller manages duration internally
-                  await treeController.renderAllElements();
-                } else {
-                  // SVG controller allows duration manipulation
-                  const originalDuration = treeController.drawDuration;
-                  treeController.drawDuration = 0;
-                  await treeController.renderAllElements();
-                  treeController.drawDuration = originalDuration;
-                }
+              console.log('[EventHandler] Tree controller:', treeController);
+              console.log('[EventHandler] updateLabelStyles method exists:', !!treeController?.updateLabelStyles);
+
+              if (treeController && treeController.updateLabelStyles) {
+                console.log('[EventHandler] Calling updateLabelStyles...');
+                // Use optimized font size update instead of full re-render
+                await treeController.updateLabelStyles();
+                console.log('[EventHandler] updateLabelStyles completed');
+              } else {
+                console.warn('[EventHandler] No treeController or updateLabelStyles method');
               }
             },
-            description: "Font size adjustment",
+            description: "Font size adjustment - optimized",
           },
           {
             id: "stroke-width",
@@ -221,9 +223,8 @@ export class EventHandlerRegistry {
               setMonophyleticColoring(enabled);
 
               if (treeController) {
-                // Update from store - single source of truth approach
                 // Store already updated by setMonophyleticColoring above
-                treeController.updateFromStore();
+                // renderAllElements will read the updated value directly from store
                 await treeController.renderAllElements();
               }
             },
@@ -276,6 +277,25 @@ export class EventHandlerRegistry {
         ],
       },
 
+      // Recording controls
+      recordingControls: {
+        type: "click",
+        errorHandling: "notify",
+        async: true,
+        handlers: [
+          {
+            id: "start-record",
+            action: async () => await this.handleStartRecording(),
+            description: "Start screen recording",
+          },
+          {
+            id: "stop-record",
+            action: () => this.handleStopRecording(),
+            description: "Stop screen recording",
+          },
+        ],
+      },
+
       // Modal and advanced feature controls
       modalControls: {
         type: "click",
@@ -312,7 +332,7 @@ export class EventHandlerRegistry {
   }
 
   /**
-   * Toggle submenu visibility
+   * Toggle submenu visibility with localStorage persistence
    */
   toggleSubmenu(event, submenuId) {
     const submenu = document.getElementById(submenuId);
@@ -327,18 +347,18 @@ export class EventHandlerRegistry {
         submenu.style.display = 'block';
         container.setAttribute('data-collapsed', 'false');
         toggleIcon.textContent = '▼';
+        // Save expanded state to localStorage
+        localStorage.setItem(`submenu-${submenuId}`, 'expanded');
       } else {
         // Hide submenu
         submenu.style.display = 'none';
         container.setAttribute('data-collapsed', 'true');
         toggleIcon.textContent = '▶';
+        // Save collapsed state to localStorage
+        localStorage.setItem(`submenu-${submenuId}`, 'collapsed');
       }
     }
   }
-
-
-  // Note: Removed redundant handleFactorChange method as it duplicates the functionality
-  // in the navigationControls.handlers array for the factor-range input
 
   /**
    * Initialize the speed knob controller for interactive knob behavior
@@ -369,10 +389,6 @@ export class EventHandlerRegistry {
       });
     }
   }
-
-  // Note: Removed redundant handleChartModal and handleScatterPlot methods
-  // as they duplicate functionality in the modalControls.handlers array
-
 
   /**
    * Toggle sidebar visibility
@@ -531,20 +547,10 @@ export class EventHandlerRegistry {
       }
     }
 
-    this.logAttachmentSummary(summary);
-
     // Initialize special controllers after all handlers are attached
     this.initializeSpeedKnob();
 
     return summary;
-  }
-
-  /**
-   * Log comprehensive attachment summary
-   */
-  logAttachmentSummary(summary) {
-    if (summary.successfulHandlers !== summary.totalHandlers) {
-    }
   }
 
   /**
@@ -562,13 +568,159 @@ export class EventHandlerRegistry {
   }
 
   /**
-   * Get attachment statistics
+   * Set the recorder instance for recording functionality
+   * @param {ScreenRecorder} recorder - The ScreenRecorder instance
    */
-  getStats() {
-    return {
-      attachedCount: this.attachedHandlers.length,
-      // Return descriptions or IDs for stats, not full elements/handlers
-      attachedHandlers: this.attachedHandlers.map(h => `${h.description} (${h.elementId}:${h.type})`),
-    };
+  setRecorder(recorder) {
+    console.log('[EventHandler] Setting recorder instance:', !!recorder);
+    this.recorder = recorder;
+    if (recorder) {
+      console.log('[EventHandler] Setting up recorder callbacks...');
+      // Set up recorder callbacks to update UI and state
+      recorder.onStart = () => this.onRecordingStart();
+      recorder.onStop = (blob) => this.onRecordingStop(blob);
+      recorder.onError = (error) => this.onRecordingError(error);
+      console.log('[EventHandler] Recorder callbacks set up successfully');
+    }
+  }
+
+  /**
+   * Handle start recording button click
+   */
+  async handleStartRecording() {
+    console.log('[EventHandler] Start recording button clicked');
+
+    if (!this.recorder) {
+      console.error("No recorder instance available");
+      notifications.show("Recording not available", "error");
+      return;
+    }
+
+    if (this.isRecording) {
+      console.warn("Already recording");
+      return;
+    }
+
+    console.log('[EventHandler] Attempting to start recording...');
+    try {
+      await this.recorder.start();
+      console.log('[EventHandler] Recording started successfully');
+    } catch (error) {
+      console.error("Failed to start recording:", error);
+      notifications.show("Failed to start recording. Please check your permissions.", "error");
+    }
+  }
+
+  /**
+   * Handle stop recording button click
+   */
+  handleStopRecording() {
+    console.log('[EventHandler] Stop recording button clicked');
+
+    if (!this.recorder) {
+      console.error("No recorder instance available");
+      return;
+    }
+
+    if (!this.isRecording) {
+      console.warn("Not currently recording");
+      return;
+    }
+
+    console.log('[EventHandler] Attempting to stop recording...');
+    this.recorder.stop();
+  }
+
+  /**
+   * Callback when recording starts - update UI
+   */
+  onRecordingStart() {
+    this.isRecording = true;
+    console.log("Recording started");
+
+    // Update UI
+    const startBtn = document.getElementById("start-record");
+    const stopBtn = document.getElementById("stop-record");
+
+    if (startBtn) {
+      startBtn.disabled = true;
+      startBtn.textContent = "Recording...";
+      startBtn.style.backgroundColor = "#e14390";
+    }
+
+    if (stopBtn) {
+      stopBtn.disabled = false;
+      stopBtn.style.backgroundColor = "#ff4444";
+    }
+  }
+
+  /**
+   * Callback when recording stops - update UI
+   */
+  onRecordingStop(blob) {
+    this.isRecording = false;
+    console.log("Recording stopped, blob size:", blob.size);
+
+    // Update UI
+    const startBtn = document.getElementById("start-record");
+    const stopBtn = document.getElementById("stop-record");
+
+    if (startBtn) {
+      startBtn.disabled = false;
+      startBtn.textContent = "Start Recording";
+      startBtn.style.backgroundColor = "";
+    }
+
+    if (stopBtn) {
+      stopBtn.disabled = true;
+      stopBtn.style.backgroundColor = "";
+    }
+
+    // If auto-save is not enabled, prompt user to save manually
+    if (this.recorder && !this.recorder.autoSave) {
+      this.promptManualSave();
+    }
+  }
+
+  /**
+   * Callback when recording encounters an error - update UI
+   */
+  onRecordingError(error) {
+    this.isRecording = false;
+    console.error("Recording error:", error);
+
+    // Reset UI
+    const startBtn = document.getElementById("start-record");
+    const stopBtn = document.getElementById("stop-record");
+
+    if (startBtn) {
+      startBtn.disabled = false;
+      startBtn.textContent = "Start Recording";
+      startBtn.style.backgroundColor = "";
+    }
+
+    if (stopBtn) {
+      stopBtn.disabled = true;
+      stopBtn.style.backgroundColor = "";
+    }
+
+    notifications.show(`Recording error: ${error.message || error}`, "error");
+  }
+
+  /**
+   * Prompt user to save recording manually
+   */
+  promptManualSave() {
+    const saveChoice = confirm("Recording complete! Would you like to save it now?");
+    if (saveChoice && this.recorder) {
+      try {
+        const filename = this.recorder.performAutoSave();
+        console.log(`Recording saved as: ${filename}.webm`);
+        notifications.show(`Recording saved as: ${filename}.webm`, "success");
+      } catch (error) {
+        console.error("Failed to save recording:", error);
+        notifications.show("Failed to save recording. Please try again.", "error");
+      }
+    }
   }
 }

@@ -5,7 +5,6 @@ import { LinkRenderer } from "./rendering/LinkRenderer.js";
 import { NodeRenderer } from "./rendering/NodeRenderer.js";
 import { ExtensionRenderer } from "./rendering/ExtensionRenderer.js";
 import { LabelRenderer } from "./rendering/LabelRenderer.js";
-import { ColorManager } from "./systems/ColorManager.js";
 import { RadialTreeLayout } from "./RadialTreeLayout.js";
 import { EASING_FUNCTIONS } from "./utils/animationUtils.js";
 import { createStoreIntegratedUpdatePattern } from "./utils/IndependentUpdatePattern.js";
@@ -49,7 +48,8 @@ export class TreeAnimationController {
     // Centralized update pattern - single source of truth for all diffing
     this.updatePattern = createStoreIntegratedUpdatePattern();
 
-    this.colorManager = new ColorManager(this.marked);
+    // Get ColorManager from store - single source of truth for colors (same as WebGL controller)
+    this.colorManager = useAppStore.getState().getColorManager();
     this.linkRenderer = new LinkRenderer(this.svg_container, this.colorManager);
     this.nodeRenderer = new NodeRenderer(this.svg_container, this.colorManager);
     this.extensionRenderer = new ExtensionRenderer(this.svg_container, this.colorManager);
@@ -106,7 +106,9 @@ export class TreeAnimationController {
   }
 
   synchronizeRenderers() {
-    this.colorManager.updateMarkedComponents(this.marked);
+    // Use store action to update ColorManager instead of direct call
+    const { updateColorManagerMarkedComponents } = useAppStore.getState();
+    updateColorManagerMarkedComponents(this.marked);
   }
 
   /**
@@ -124,6 +126,19 @@ export class TreeAnimationController {
   async renderAllElements() {
     this.synchronizeRenderers();
     await this.renderWithCoordinatedAnimations();
+  }
+
+  /**
+   * Update label font sizes reactively without full re-render
+   * Called when fontSize changes in the UI for optimized updates
+   */
+  async updateLabelStyles() {
+    if (!this.labelRenderer) {
+      return Promise.resolve();
+    }
+
+    // Call the label renderer's updateLabelStyles method
+    return await this.labelRenderer.updateLabelStyles();
   }
 
   async renderWithCoordinatedAnimations() {
@@ -432,17 +447,19 @@ export class TreeAnimationController {
         this.marked = []; // Empty or invalid data
       }
 
-      // Ensure ColorManager is immediately updated
-      this.colorManager.updateMarkedComponents(this.marked);
+      // Ensure ColorManager is immediately updated using store action
+      const { updateColorManagerMarkedComponents } = useAppStore.getState();
+      updateColorManagerMarkedComponents(this.marked);
     }
     if (lattice_edges) this.lattice_edges = lattice_edges;
 
 
     // Style updates are handled directly by store actions - no need for styleConfig updates
 
-    // Update monophyletic coloring
+    // Update monophyletic coloring using store action
     if (monophyleticColoring !== undefined) {
-      this.colorManager.setMonophyleticColoring(monophyleticColoring);
+      const { setColorManagerMonophyleticColoring } = useAppStore.getState();
+      setColorManagerMonophyleticColoring(monophyleticColoring);
     }
 
     // Update transition tracking for phase-aware animations
@@ -472,11 +489,11 @@ export class TreeAnimationController {
     } = useAppStore.getState();
 
     const currentTreeData = treeList[currentTreeIndex];
-    
+
     // Update layout with current tree data from store
     if (currentTreeData) {
       // Apply branch transformation
-      const transformedTreeData = branchTransformation !== 'none' 
+      const transformedTreeData = branchTransformation !== 'none'
         ? transformBranchLengths(currentTreeData, branchTransformation)
         : currentTreeData;
       this.updateLayout(transformedTreeData);
@@ -501,8 +518,12 @@ export class TreeAnimationController {
 
     // Update other properties from store
     this.lattice_edges = lattice_edge_tracking || [];
-    this.colorManager.setMonophyleticColoring(monophyleticColoringEnabled);
-    this.colorManager.updateMarkedComponents(this.marked);
+
+    // Use store actions for ColorManager updates
+    const { setColorManagerMonophyleticColoring, updateColorManagerMarkedComponents } = useAppStore.getState();
+    setColorManagerMonophyleticColoring(monophyleticColoringEnabled);
+    updateColorManagerMarkedComponents(this.marked);
+
     this.transitionResolver = transitionResolver;
   }
 
@@ -583,5 +604,23 @@ export class TreeAnimationController {
 
 
     return { success: true, timeFactor: t };
+  }
+
+  /**
+   * Starts animation playback - delegates to store for state management
+   */
+  startAnimation() {
+    const { play } = useAppStore.getState();
+    console.log('[SVG Controller] Starting animation - calling store.play()');
+    play();
+  }
+
+  /**
+   * Stops animation playback - delegates to store for state management
+   */
+  stopAnimation() {
+    const { stop } = useAppStore.getState();
+    console.log('[SVG Controller] Stopping animation - calling store.stop()');
+    stop();
   }
 }
