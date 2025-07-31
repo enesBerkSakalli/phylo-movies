@@ -5,7 +5,7 @@
 import { useRef, useEffect, useCallback } from "react";
 import { createRoot, Root } from "react-dom/client";
 import React from "react";
-import WinBox from 'winbox';
+import * as WinBoxModule from 'winbox';
 import AlignmentViewer2Component from "../AlignmentViewer2Component";
 import { MSA_WINDOW_CONFIG, MSA_WINBOX_CLASSES } from "../constants";
 import { throttle, getAdjustedDimensions, createMSAContainer, loadTestMSAData } from "../msaUtils";
@@ -75,7 +75,7 @@ export function useMSAWindow(msaString: string): MSAWindowState {
       const useTestData = window.confirm(
         "No MSA data available. Would you like to load test data for demonstration?"
       );
-      
+
       if (useTestData) {
         loadTestMSAData();
       } else {
@@ -95,6 +95,7 @@ export function useMSAWindow(msaString: string): MSAWindowState {
     containerRef.current = container;
 
     // Create WinBox
+    const WinBox = (WinBoxModule as any).default || WinBoxModule;
     const winbox = new WinBox("Multiple Sequence Alignment", {
       class: [...MSA_WINBOX_CLASSES],
       border: 2,
@@ -105,7 +106,7 @@ export function useMSAWindow(msaString: string): MSAWindowState {
       mount: container,
       html: container,
       overflow: false,
-      
+
       onclose: () => {
         if (reactRootRef.current) {
           try {
@@ -118,7 +119,7 @@ export function useMSAWindow(msaString: string): MSAWindowState {
         containerRef.current = null;
         reactRootRef.current = null;
       },
-      
+
       onresize: throttle((width: number, height: number) => {
         const adjusted = getAdjustedDimensions(width, height);
         dimensionsRef.current = adjusted;
@@ -132,7 +133,7 @@ export function useMSAWindow(msaString: string): MSAWindowState {
 
     const initialDimensions = getAdjustedDimensions(winbox.width, winbox.height);
     dimensionsRef.current = initialDimensions;
-    
+
     renderComponent(initialDimensions.width, initialDimensions.height);
     windowRef.current = winbox;
 
@@ -146,7 +147,7 @@ export function useMSAWindow(msaString: string): MSAWindowState {
     };
 
     window.addEventListener("open-msa-viewer", handleOpenEvent);
-    
+
     return () => {
       window.removeEventListener("open-msa-viewer", handleOpenEvent);
       if (windowRef.current) {
@@ -155,8 +156,8 @@ export function useMSAWindow(msaString: string): MSAWindowState {
     };
   }, [openMSAWindow]);
 
-  return { 
-    openWindow: openMSAWindow, 
-    isOpen: !!windowRef.current 
+  return {
+    openWindow: openMSAWindow,
+    isOpen: !!windowRef.current
   };
 }

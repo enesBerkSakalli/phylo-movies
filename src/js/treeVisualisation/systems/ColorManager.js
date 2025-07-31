@@ -34,6 +34,64 @@ export class ColorManager {
 
     // Monophyletic coloring configuration
     this.monophyleticColoringEnabled = true;
+
+    // Subscribe to store changes for automatic updates
+    this._setupStoreSubscription();
+  }
+
+  /**
+   * Set up store subscription to automatically update when highlighting data changes
+   * @private
+   */
+  _setupStoreSubscription() {
+    // Subscribe to store changes
+    this.unsubscribe = useAppStore.subscribe((state, prevState) => {
+      // Check if currentTreeIndex changed (which affects highlight data)
+      if (state.currentTreeIndex !== prevState.currentTreeIndex) {
+        this._updateFromStore();
+      }
+
+      // Check if monophyletic coloring setting changed
+      if (state.monophyleticColoringEnabled !== prevState.monophyleticColoringEnabled) {
+        this.monophyleticColoringEnabled = state.monophyleticColoringEnabled;
+      }
+
+      // Check if highlight stroke multiplier changed
+      if (state.highlightStrokeMultiplier !== prevState.highlightStrokeMultiplier) {
+        this.highlightConfig.strokeWidthMultiplier = state.highlightStrokeMultiplier;
+      }
+    });
+  }
+
+  /**
+   * Update marked components from store data
+   * @private
+   */
+  _updateFromStore() {
+    const { getActualHighlightData } = useAppStore.getState();
+    const highlightData = getActualHighlightData();
+
+    if (highlightData) {
+      const transformedData = this._transformHighlightData(highlightData);
+      this.marked = transformedData;
+    }
+  }
+
+  /**
+   * Transform highlight data to the format expected by ColorManager
+   * @private
+   * @param {Array} highlightData - Raw highlight data
+   * @returns {Array} Transformed data as array of Sets
+   */
+  _transformHighlightData(highlightData) {
+    if (!Array.isArray(highlightData) || highlightData.length === 0) {
+      return [];
+    }
+
+    const isArrayOfArrays = highlightData.every(item => Array.isArray(item));
+    return isArrayOfArrays
+      ? highlightData.map(innerArray => new Set(innerArray))
+      : [new Set(highlightData)];
   }
 
 
@@ -55,7 +113,7 @@ export class ColorManager {
    * @param {Object} linkData - The D3 link data object
    * @param {Array|Set} lattice_edges - Set of lattice edges to highlight (s_edges) - these are the ACTIVE ones
    * @param {Object} options - Highlighting options
-   * @returns {Object} Object with color, isHighlighted, and effect type information
+   * @returns {string} The color string (hex code)
    */
   getBranchColorWithHighlights(linkData, lattice_edges = [], options = {}) {
     const isMarked = this._isComponentMarked(linkData);
@@ -63,63 +121,19 @@ export class ColorManager {
     // Only apply greying when there are actual ACTIVE lattice edges (highlightEdges from gui.js)
     const hasActiveLatticeEdges = lattice_edges && lattice_edges.length > 0;
 
-    const { highlightStrokeMultiplier } = useAppStore.getState();
-
     // Priority system: both can be active, but we need to determine visual effect
     if (isLatticeEdge && isMarked) {
       // Both highlighting types are active - use purple for combined effect
-      return {
-        color: TREE_COLOR_CATEGORIES.combinedHighlightColor, // Purple for both s-edge and marked
-        isHighlighted: true,
-        effectType: "combined",
-        needsGlow: false,
-        strokeMultiplier: highlightStrokeMultiplier + 0.4
-      };
+      return TREE_COLOR_CATEGORIES.combinedHighlightColor; // Purple for both s-edge and marked
     } else if (isLatticeEdge) {
       // Only lattice edge highlighting - use blue
-      return {
-        color: TREE_COLOR_CATEGORIES.s_edgesColor, // Blue for s-edges (lattice edges)
-        isHighlighted: true,
-        effectType: "lattice",
-        needsGlow: false,
-        strokeMultiplier: highlightStrokeMultiplier + 0.1
-      };
+      return TREE_COLOR_CATEGORIES.s_edgesColor; // Blue for s-edges (lattice edges)
     } else if (isMarked) {
       // Only marked component highlighting - use red
-      return {
-        color: TREE_COLOR_CATEGORIES.markedColor, // Red for marked components
-        isHighlighted: true,
-        effectType: "marked",
-        needsGlow: false,
-        strokeMultiplier: highlightStrokeMultiplier
-      };
-    } else if (hasActiveLatticeEdges && this._isDownstreamOfAnyS_Edge(linkData, lattice_edges)) {
-      // Branch is downstream of any ACTIVE s-edge - keep normal coloring to show the subtree
-      return {
-        color: this._getBaseBranchColor(linkData),
-        isHighlighted: false,
-        effectType: "downstream",
-        needsGlow: false,
-        strokeMultiplier: 1.0
-      };
-    } else if (hasActiveLatticeEdges) {
-      // ACTIVE s-edges exist but this branch is not highlighted or downstream - grey it out
-      return {
-        color: '#cccccc', // Grey color for dimmed branches
-        isHighlighted: false,
-        effectType: "dimmed",
-        needsGlow: false,
-        strokeMultiplier: 0.7
-      };
+      return TREE_COLOR_CATEGORIES.markedColor; // Red for marked components
     } else {
       // No active highlighting - use base color
-      return {
-        color: this._getBaseBranchColor(linkData),
-        isHighlighted: false,
-        effectType: "none",
-        needsGlow: false,
-        strokeMultiplier: 1.0
-      };
+      return this._getBaseBranchColor(linkData);
     }
   }
 
@@ -467,6 +481,16 @@ export class ColorManager {
    */
   getMarkedComponents() {
     return this.marked;
+  }
+
+  /**
+   * Clean up store subscription
+   */
+  destroy() {
+    if (this.unsubscribe) {
+      this.unsubscribe();
+      this.unsubscribe = null;
+    }
   }
 
 }

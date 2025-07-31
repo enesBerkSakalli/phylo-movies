@@ -673,5 +673,4 @@ class ScatterPlotVisualizer {
   }
 }
 
-const showScatterPlotModal = ScatterPlotVisualizer.showInModal;
-export { ScatterPlotVisualizer, showScatterPlotModal };
+export { ScatterPlotVisualizer };

@@ -3,6 +3,7 @@ import TransitionIndexResolver from './TransitionIndexResolver.js';
 import calculateScales, { getMaxScaleValue } from '../utils/scaleUtils.js'; // ADDED
 import { getLinkKey, getNodeKey } from '../treeVisualisation/utils/KeyGenerator.js';
 import { ColorManager } from '../treeVisualisation/systems/ColorManager.js';
+import { clamp, easeInOutCubic } from '../utils/MathUtils.js';
 
 // Tree color categories for phylogenetic visualization
 export const TREE_COLOR_CATEGORIES = {
@@ -17,6 +18,8 @@ export const TREE_COLOR_CATEGORIES = {
   s_edgesColor: "#2196f3",
   atomCoversColor: "#9c27b0",
   combinedHighlightColor: "#9c27b0",
+  // Dimming colors for inactive elements
+  dimmedColor: "#cccccc",
 };
 
 
@@ -55,15 +58,28 @@ export const useAppStore = create((set, get) => ({
   // Dynamic application state
   currentTreeIndex: 0,
   previousTreeIndex: -1,
+  navigationDirection: 'forward', // 'forward', 'backward', or 'jump'
+  segmentProgress: 0, // 0-1 progress within the current segment (for interpolation)
+
+  // Timeline-specific state for grouped segments
+  currentSegmentIndex: 0, // Current segment index (0-based)
+  totalSegments: 0, // Total number of segments
+  treeInSegment: 1, // Position within current segment (1-based)
+  treesInSegment: 1, // Total trees in current segment
+  timelineProgress: 0, // 0-1 progress through entire timeline
+
   playing: false,
   renderInProgress: false,
-  updateInProgress: false, // Enhanced render lock to prevent all updates during render
   subscriptionPaused: false, // Allow temporary subscription pausing
   syncMSAEnabled: true, // New state variable
 
+  // Animation state management
+  animationProgress: 0, // 0-1 progress through entire movie
+  animationStartTime: null, // Performance timestamp when animation started
+
   // UI / Appearance state
   animationSpeed: 1,
-  fontSize: "1.8em",
+  fontSize: "2.6em",
   strokeWidth: 3,
   branchTransformation: 'none',
   monophyleticColoringEnabled: true,
@@ -126,43 +142,138 @@ export const useAppStore = create((set, get) => ({
 
   // --- Playback Actions ---
   /**
-   * Starts timeline playback
+   * Starts timeline playback and initializes animation state
    */
-  play: () => set({ playing: true }),
-  
+  play: () => {
+    set({
+      playing: true,
+      animationStartTime: performance.now(),
+      animationProgress: 0
+    });
+  },
+
   /**
-   * Stops timeline playback
+   * Stops timeline playback and resets animation state
    */
-  stop: () => set({ playing: false }),
-  
+  stop: () => {
+    set({
+      playing: false,
+      animationStartTime: null,
+      animationProgress: 0
+    });
+  },
+
   /**
    * Sets the animation playback speed multiplier
    * @param {number} animationSpeed - Speed multiplier (1.0 = normal speed)
    */
   setAnimationSpeed: (animationSpeed) => set({ animationSpeed }),
 
+  /**
+   * Updates animation progress based on elapsed time
+   * @param {number} timestamp - Current performance timestamp
+   * @returns {boolean} True if animation should stop (progress >= 1.0)
+   */
+  updateAnimationProgress: (timestamp) => {
+    const { animationStartTime, animationSpeed, treeList, playing } = get();
+
+    if (!playing || !animationStartTime || !treeList.length) {
+      return false;
+    }
+
+    const elapsed = (timestamp - animationStartTime) / 1000; // Convert to seconds
+    const totalTrees = treeList.length;
+    const progress = (elapsed * animationSpeed) / (totalTrees - 1);
+    const clampedProgress = Math.min(progress, 1.0);
+
+    set({ animationProgress: clampedProgress });
+
+    return progress >= 1.0;
+  },
+
+  /**
+   * Gets current animation interpolation data
+   * @returns {Object|null} Animation data with fromTreeIndex, toTreeIndex, exactTreeIndex, easedProgress
+   */
+  getAnimationInterpolationData: () => {
+    const { animationProgress, treeList, playing } = get();
+
+    if (!playing || !treeList.length) {
+      return null;
+    }
+
+    // Map animation progress to actual tree indices accounting for grouped segments
+    const totalTrees = treeList.length;
+    const exactTreeIndex = animationProgress * (totalTrees - 1);
+    const fromTreeIndex = Math.floor(exactTreeIndex);
+    const toTreeIndex = Math.min(fromTreeIndex + 1, totalTrees - 1);
+    const segmentProgress = exactTreeIndex - fromTreeIndex;
+    const easedProgress = easeInOutCubic(segmentProgress);
+
+    return {
+      exactTreeIndex,
+      fromTreeIndex,
+      toTreeIndex,
+      segmentProgress,
+      easedProgress,
+      progress: animationProgress
+    };
+  },
+
   // --- Navigation Actions ---
+  /**
+   * Sets navigation direction for interpolation handling
+   * @param {string} direction - Navigation direction ('forward', 'backward', 'jump')
+   */
+  setNavigationDirection: (direction) => set({ navigationDirection: direction }),
+
+  /**
+   * Sets segment progress for interpolation (0-1 within current segment)
+   * @param {number} progress - Segment progress (0-1)
+   */
+  setSegmentProgress: (progress) => set({ segmentProgress: clamp(progress, 0, 1) }),
+
+  /**
+   * Updates timeline-specific state for grouped segments
+   * @param {Object} timelineState - Timeline state object
+   * @param {number} timelineState.currentSegmentIndex - Current segment index (0-based)
+   * @param {number} timelineState.totalSegments - Total number of segments
+   * @param {number} timelineState.treeInSegment - Position within current segment (1-based)
+   * @param {number} timelineState.treesInSegment - Total trees in current segment
+   * @param {number} timelineState.timelineProgress - Timeline progress (0-1)
+   */
+  updateTimelineState: (timelineState) => set({
+    currentSegmentIndex: timelineState.currentSegmentIndex || 0,
+    totalSegments: timelineState.totalSegments || 0,
+    treeInSegment: timelineState.treeInSegment || 1,
+    treesInSegment: timelineState.treesInSegment || 1,
+    timelineProgress: clamp(timelineState.timelineProgress || 0, 0, 1)
+  }),
+
   /**
    * Navigates to a specific tree position in the timeline
    * @param {number} position - Target tree index (0-based)
+   * @param {string} [direction] - Optional navigation direction override
    */
-  goToPosition: (position) => {
-    const { treeList, currentTreeIndex, renderInProgress, gui } = get();
+  goToPosition: (position, direction) => {
+    const { treeList, currentTreeIndex, renderInProgress } = get();
 
     // Only skip if actively rendering, not during general updates
     if (renderInProgress) return;
 
-    const newIndex = Math.max(0, Math.min(treeList.length - 1, position));
+    const newIndex = clamp(position, 0, treeList.length - 1);
     if (newIndex !== currentTreeIndex) {
-      // CRITICAL FIX: Set navigation direction synchronously BEFORE state change
-      // This prevents the race condition where rendering starts before direction is set
-      if (gui && typeof gui._updateNavigationDirection === 'function') {
-        gui._updateNavigationDirection(newIndex, currentTreeIndex);
+      let navDirection = direction;
+      if (!navDirection) {
+        // Auto-detect direction based on position change
+        navDirection = newIndex > currentTreeIndex ? 'forward' : 'backward';
       }
 
       set({
         previousTreeIndex: currentTreeIndex,
         currentTreeIndex: newIndex,
+        navigationDirection: navDirection,
+        segmentProgress: 0 // Reset segment progress on discrete navigation
       });
     }
   },
@@ -210,7 +321,7 @@ export const useAppStore = create((set, get) => ({
     }
     set({ fontSize });
   },
-  
+
   /**
    * Sets the stroke width for tree branches
    * @param {string|number} width - Stroke width in pixels
@@ -219,31 +330,31 @@ export const useAppStore = create((set, get) => ({
     const numericWidth = Number(width);
     set({ strokeWidth: numericWidth });
   },
-  
+
   /**
    * Enables or disables monophyletic coloring mode
    * @param {boolean} enabled - Whether monophyletic coloring is enabled
    */
   setMonophyleticColoring: (enabled) => set({ monophyleticColoringEnabled: enabled }),
-  
+
   /**
    * Enables or disables WebGL rendering
    * @param {boolean} enabled - Whether WebGL rendering is enabled
    */
   setWebglEnabled: (enabled) => set({ webglEnabled: enabled }),
-  
+
   /**
    * Sets the branch transformation mode
    * @param {string} transform - Transformation type ('none', 'log', etc.)
    */
   setBranchTransformation: (transform) => set({ branchTransformation: transform }),
-  
+
   /**
    * Sets the MSA viewer window size
    * @param {number} size - Window size in base pairs
    */
   setMsaWindowSize: (size) => set({ msaWindowSize: size }),
-  
+
   /**
    * Sets the MSA viewer step size
    * @param {number} step - Step size for MSA navigation
@@ -270,13 +381,13 @@ export const useAppStore = create((set, get) => ({
    * @param {string} option - Chart type option
    */
   setBarOption: (option) => set({ barOptionValue: option }),
-  
+
   /**
    * Sets a sticky position for chart highlighting
    * @param {number} position - Position to highlight in chart
    */
   setStickyChartPosition: (position) => set({ stickyChartPosition: position }),
-  
+
   /**
    * Clears any sticky chart position highlighting
    */
@@ -289,7 +400,6 @@ export const useAppStore = create((set, get) => ({
    */
   setRenderInProgress: (inProgress) => set({
     renderInProgress: inProgress
-    // Don't automatically set updateInProgress - let actions decide when to block
   }),
 
   // --- Subscription Control ---
@@ -304,15 +414,14 @@ export const useAppStore = create((set, get) => ({
    */
   setTreeController: (controller) => {
     const { treeController: currentController } = get();
-    
+
     // Clean up previous controller if it exists and is being replaced
     if (currentController && currentController !== controller) {
-      console.log('[Store] Cleaning up previous tree controller');
       if (typeof currentController.destroy === 'function') {
         currentController.destroy();
       }
     }
-    
+
     set({ treeController: controller });
   },
   /**
@@ -321,15 +430,14 @@ export const useAppStore = create((set, get) => ({
    */
   setGui: (instance) => {
     const { gui: currentGui } = get();
-    
+
     // Clean up previous GUI instance if it exists and is being replaced
     if (currentGui && currentGui !== instance) {
-      console.log('[Store] Cleaning up previous GUI instance');
       if (typeof currentGui.destroy === 'function') {
         currentGui.destroy();
       }
     }
-    
+
     set({ gui: instance });
   },
 

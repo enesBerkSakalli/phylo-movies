@@ -1,109 +1,19 @@
 // renderers/WebGLLinkRenderer.js
 import * as THREE from 'three';
+import { Line2 } from 'three/examples/jsm/lines/Line2.js';
 import { useAppStore } from '../../core/store.js';
 import {
   calculateInterpolatedBranchCoordinates,
-  calculateBranchCoordinates
+  calculateBranchCoordinates,
+  classifyEdgeChange
 } from '../radialTreeGeometry.js';
 import { getLinkKey } from '../utils/KeyGenerator.js';
-import { TubeGeometryFactory } from './geometry/TubeGeometryFactory.js';
+
+import { PolylineGeometryFactory } from './geometry/PolylineGeometryFactory.js';
 import { WebGLMaterialFactory } from './materials/WebGLMaterialFactory.js';
 
-/* ---------- Tube length and change classification helpers ---------- */
+/* ---------- WebGLLinkRenderer (Line2) ---------- */
 
-/**
- * Calculate the total length of a tube based on its coordinates
- * Uses Pythagorean theorem for straight segments and arc length for curves
- */
-function calculateTubeLength(coordinates) {
-  if (!coordinates || !coordinates.movePoint) return 0;
-
-  let totalLength = 0;
-  const { movePoint, arcEndPoint, lineEndPoint, arcProperties } = coordinates;
-
-  // If there's an arc, calculate arc length
-  if (arcProperties !== null && arcProperties && arcProperties.radius && arcProperties.angleDiff) {
-    const arcLength = Math.abs(arcProperties.angleDiff) * arcProperties.radius;
-    totalLength += arcLength;
-
-    // Add line segment from arc end to final point if exists
-    if (lineEndPoint && arcEndPoint) {
-      const dx = lineEndPoint.x - arcEndPoint.x;
-      const dy = lineEndPoint.y - arcEndPoint.y;
-      const dz = (lineEndPoint.z || 0) - (arcEndPoint.z || 0);
-      totalLength += Math.sqrt(dx * dx + dy * dy + dz * dz);
-    }
-  }
-  // If no arc (straight line), calculate direct distance
-  else if (lineEndPoint) {
-    const dx = lineEndPoint.x - movePoint.x;
-    const dy = lineEndPoint.y - movePoint.y;
-    const dz = (lineEndPoint.z || 0) - (movePoint.z || 0);
-    totalLength = Math.sqrt(dx * dx + dy * dy + dz * dz);
-  }
-
-  return totalLength;
-}
-
-/**
- * Calculate tube length from link data by first generating coordinates
- */
-function calculateLinkLength(link) {
-  const coordinates = calculateBranchCoordinates(link);
-  return calculateTubeLength(coordinates);
-}
-
-/**
- * Classify edge change based on radius, length, and angle comparison
- * - RETOPO: length changes (branch weight changes - geometry rebuild needed)
- * - REORDER: radius and/or angle changes with same length (repositioning/rotation)
- * - NONE: no changes detected (skip animation)
- */
-function classifyEdgeChange(fromLink, toLink, radiusTolerance = 0.01, lengthTolerance = 0.01, angleTolerance = 0.001) {
-  // Check for radius changes first (tree growth/shrinkage vs repositioning)
-  const fromSourceRadius = fromLink.source.radius;
-  const fromTargetRadius = fromLink.target.radius;
-  const toSourceRadius = toLink.source.radius;
-  const toTargetRadius = toLink.target.radius;
-
-  const sourceRadiusChange = Math.abs(toSourceRadius - fromSourceRadius);
-  const targetRadiusChange = Math.abs(toTargetRadius - fromTargetRadius);
-  const maxFromRadius = Math.max(fromSourceRadius, fromTargetRadius);
-
-  const relativeRadiusChange = maxFromRadius > 0 ?
-    Math.max(sourceRadiusChange, targetRadiusChange) / maxFromRadius : 0;
-
-  // Check for length changes (branch weight changes)
-  const fromLength = calculateLinkLength(fromLink);
-  const toLength = calculateLinkLength(toLink);
-
-  const lengthDiff = Math.abs(fromLength - toLength);
-  const relativeLengthChange = fromLength > 0 ? lengthDiff / fromLength : 0;
-
-  // Significant radius or length changes = topology/weight changes
-  if (relativeRadiusChange > radiusTolerance || relativeLengthChange > lengthTolerance) {
-    return 'RETOPO'; // Major radius/length change = topology/weight change
-  }
-
-  // Check for angle changes
-  const sourceAngleChange = Math.abs(toLink.source.angle - fromLink.source.angle);
-  const targetAngleChange = Math.abs(toLink.target.angle - fromLink.target.angle);
-  const maxAngleChange = Math.max(sourceAngleChange, targetAngleChange);
-
-  // Minor radius/angle changes = reorder phase (repositioning/rotation)
-  if (maxAngleChange > angleTolerance) {
-    return 'REORDER'; // Rotation with minor repositioning
-  }
-
-  return 'NONE'; // No significant changes detected
-}
-
-/**
- * WebGLLinkRenderer
- * Renders phylogenetic links (branches) as 3D tubes in Three.js.
- * Handles instant rendering and scrub interpolation.
- * Incremental fix: freeze tube topology (segment counts) during updates.
- */
 export class WebGLLinkRenderer {
   constructor(scene, colorManager, opts = {}) {
     this.scene = scene;
@@ -113,19 +23,19 @@ export class WebGLLinkRenderer {
     this.styleConfig = styleConfig || {};
     this._strokeWidth = strokeWidth;
 
-    this.linkMeshes = new Map(); // key -> THREE.Mesh
-    this.linkGroup = new THREE.Group();
+    this.linkMeshes = new Map(); // key -> Line2
+    this.linkGroup  = new THREE.Group();
     this.scene.add(this.linkGroup);
 
-    this.geometryFactory = new TubeGeometryFactory({
-      useCylinderForPureLines: true, // Enable cylinder optimization for straight lines
-      ...opts.geometryOptions
+    this.geometryFactory = new PolylineGeometryFactory({
+      sampleStep: opts.sampleStep ?? 4,
+      fixedArcSegments: opts.fixedArcSegments ?? undefined,
+      cacheGeometries: opts.cacheGeometries ?? true,
     });
-    this.materialFactory = new WebGLMaterialFactory(this.colorManager);
+
+    this.materialFactory = new WebGLMaterialFactory();
 
     this._highlightEdges = [];
-    this.useMorphing = opts.useMorphing !== false;
-    this.cpuFallback = opts.cpuFallback === true;
   }
 
   /* --------------------------- Public API --------------------------- */
@@ -151,11 +61,14 @@ export class WebGLLinkRenderer {
   }
 
   clear() {
+    // Clear geometry cache
+    this.geometryFactory.clearCache();
+
     while (this.linkGroup.children.length) {
       const child = this.linkGroup.children[0];
       child.traverse(obj => {
         if (obj.geometry) obj.geometry.dispose();
-        if (obj.material) obj.material.dispose();
+        if (obj.material) obj.material.dispose?.();
       });
       this.linkGroup.remove(child);
     }
@@ -164,7 +77,7 @@ export class WebGLLinkRenderer {
 
   handleEnteringLinks(enteringLinks, timeFactor, highlightEdges = []) {
     this._highlightEdges = highlightEdges;
-    const radius = this._getRadius();
+    const strokePx = this._getStrokePx();
 
     enteringLinks.forEach(link => {
       const key = getLinkKey(link);
@@ -180,28 +93,20 @@ export class WebGLLinkRenderer {
       }
 
       const coordinates = calculateBranchCoordinates(link);
-      let opacity;
-      if (mesh.userData.isNewlyCreated) {
-        opacity = 0;
-        mesh.userData.isNewlyCreated = false;
-      } else {
-        opacity = timeFactor;
-      }
+      const opacity = mesh.userData.isNewlyCreated ? 0 : timeFactor;
+      mesh.userData.isNewlyCreated = false;
 
-      this._updateMeshGeometry(mesh, coordinates, radius); // no need to freeze on enter
-      this._updateMeshMaterial(mesh, link, radius, opacity);
-      mesh.userData.link = link;
-      mesh.updateMatrix();
+      this._updateMeshState(mesh, link, coordinates, strokePx, opacity);
     });
   }
 
   handleUpdatingLinks(updatingLinks, fromLinksMap, toLinksMap, timeFactor, highlightEdges = []) {
     this._highlightEdges = highlightEdges;
-    const radius = this._getRadius();
+    const strokePx = this._getStrokePx();
 
     updatingLinks.forEach(link => {
-      const key = getLinkKey(link);
-      let mesh = this._getLinkMesh(key);
+      const key  = getLinkKey(link);
+      let mesh   = this._getLinkMesh(key);
 
       if (!mesh) {
         console.warn(`[WebGLLinkRenderer] Missing mesh for updating link: ${key}, creating`);
@@ -216,18 +121,12 @@ export class WebGLLinkRenderer {
         return;
       }
 
-      // Classify the type of change based on radius, length, and angles
       const changeType = classifyEdgeChange(fromLink, toLink);
 
       if (changeType === 'REORDER') {
-        // Only angles changed - apply rotation-based transformation
         this._applyReorderTransformation(mesh, fromLink, toLink, timeFactor);
-
-        // ...existing code...
+        this._updateLineMaterial(mesh, toLink, strokePx, 1);
       } else if (changeType === 'RETOPO') {
-        // Significant radius or length change - rebuild geometry with interpolation
-
-        // Clear any previous transformation state to avoid conflicts
         this._clearTransformationState(mesh);
 
         const coordinates = calculateInterpolatedBranchCoordinates(
@@ -236,18 +135,12 @@ export class WebGLLinkRenderer {
           fromLink.target.angle, fromLink.target.radius
         );
 
-        // Use fixed segments for topology stability during interpolation
-        const segOpts = this._getFixedSegs(mesh, radius);
-        this._updateMeshGeometry(mesh, coordinates, radius, segOpts);
-
-        // ...existing code...
+        this._updateMeshState(mesh, toLink, coordinates, strokePx, 1);
       } else {
-        // NONE - no significant changes, skip animation
-        console.log(`[WebGLLinkRenderer] No changes detected for ${key}, skipping`);
-        // Don't update geometry or apply transformations
+        // NONE - just update material
+        this._updateLineMaterial(mesh, toLink, strokePx, 1);
       }
 
-      this._updateMeshMaterial(mesh, toLink, radius, 1);
       mesh.userData.link = toLink;
       mesh.updateMatrix();
     });
@@ -255,7 +148,7 @@ export class WebGLLinkRenderer {
 
   handleExitingLinks(exitingLinks, timeFactor, highlightEdges = []) {
     this._highlightEdges = highlightEdges;
-    const radius = this._getRadius();
+    const strokePx = this._getStrokePx();
 
     exitingLinks.forEach(link => {
       const key = getLinkKey(link);
@@ -266,16 +159,13 @@ export class WebGLLinkRenderer {
         return;
       }
 
-      const coordinates = calculateBranchCoordinates(link);
       const opacity = 1 - timeFactor;
 
       if (opacity <= 0) {
         this.removeLinkByKey(key);
       } else {
-        this._updateMeshGeometry(mesh, coordinates, radius); // topology stability not needed after exit
-        this._updateMeshMaterial(mesh, link, radius, opacity);
-        mesh.userData.link = link;
-        mesh.updateMatrix();
+        const coordinates = calculateBranchCoordinates(link);
+        this._updateMeshState(mesh, link, coordinates, strokePx, opacity);
       }
     });
   }
@@ -296,34 +186,55 @@ export class WebGLLinkRenderer {
 
   /* --------------------------- Internal utils --------------------------- */
 
+  _updateMeshState(mesh, link, coordinates, strokePx, opacity = 1) {
+    if (coordinates) {
+      this._updateLineGeometry(mesh, coordinates);
+    }
+    this._updateLineMaterial(mesh, link, strokePx, opacity);
+    mesh.userData.link = link;
+    mesh.updateMatrix();
+  }
+
   _getLinkMesh(linkKey) {
     return this.linkMeshes.get(linkKey) || null;
   }
 
-  /**
-   * Update mesh geometry; allow optional fixed segment overrides.
-   */
-  _updateMeshGeometry(mesh, coordinates, radius, extraOpts = undefined) {
-    const newGeom = this.geometryFactory.createTubeFromCoordinates(coordinates, radius, extraOpts);
-    if (!newGeom) {
-      console.error('[WebGLLinkRenderer] Failed to create geometry for coordinates:', coordinates);
-      return;
+  _updateLineGeometry(mesh, coordinates) {
+    const norm   = this.geometryFactory.normalizeCoordinates(coordinates);
+    const points = this.geometryFactory.generateContinuousPathPoints(norm, this.geometryFactory.defaults);
+
+    // If vertex count changed, rebuild geometry (LineGeometry reallocates anyway)
+    const oldAttr = mesh.geometry.attributes.position;
+    if (oldAttr && oldAttr.array && oldAttr.array.length !== points.length * 3) {
+      const newGeom = this.geometryFactory.createFromPoints(points, undefined, this.geometryFactory.defaults);
+      mesh.geometry.dispose();
+      mesh.geometry = newGeom;
+    } else {
+      this.geometryFactory.updateGeometryPositions(mesh.geometry, points);
+      // Flag attribute update if present
+      const posAttr = mesh.geometry.attributes.position;
+      if (posAttr) posAttr.needsUpdate = true;
     }
-    const oldGeom = mesh.geometry;
-    mesh.geometry = newGeom;
-    if (oldGeom && oldGeom !== newGeom) oldGeom.dispose();
-    newGeom.computeBoundingSphere();
+
+    mesh.computeLineDistances?.();
   }
 
-  _updateMeshMaterial(mesh, link, radius, opacity = 1) {
-    const mat = this._getMaterial(link, radius);
-    mat.opacity = opacity;
+  _updateLineMaterial(mesh, link, strokePx, opacity = 1) {
+    // ensure stroke > 0
+    const widthPx = Math.max(1, strokePx | 0);
+
+    let mat = this.materialFactory.getLinkLineMaterial(link, this._highlightEdges, widthPx);
+    if (!mat) {
+      console.warn('[WebGLLinkRenderer] Material factory returned null, falling back to basic line');
+      mat = this.materialFactory._getBasicLine('#ffffff', widthPx);
+    }
+
+    mat.opacity     = opacity;
     mat.transparent = opacity < 1;
+    mat.needsUpdate = true; // force uniforms refresh
 
     if (mesh.material !== mat) {
-      const oldMat = mesh.material;
       mesh.material = mat;
-      oldMat?.dispose?.();
     }
   }
 
@@ -338,49 +249,29 @@ export class WebGLLinkRenderer {
     return keysToRemove;
   }
 
-  _getRadius() {
+  _getStrokePx() {
     const { strokeWidth = this._strokeWidth } = useAppStore.getState();
     this._strokeWidth = strokeWidth;
-    return strokeWidth * 0.5;
-  }
-
-  _getMaterial(link, radius) {
-    return this.materialFactory.getLinkMaterial(link, this._highlightEdges, radius);
+    return strokeWidth;
   }
 
   _createLinkMesh(link) {
     const key = getLinkKey(link);
-    const existingMesh = this._getLinkMesh(key);
-    if (existingMesh) return existingMesh;
+    const existing = this._getLinkMesh(key);
+    if (existing) return existing;
 
-    const radius = this._getRadius();
-    const coordinates = calculateBranchCoordinates(link);
+    const coords   = calculateBranchCoordinates(link);
+    const geometry = this.geometryFactory.createFromCoordinates(coords, this.geometryFactory.defaults, key);
 
-    // Debug coordinates and geometry creation (reduced frequency)
-    if (Math.random() < 0.01) { // Reduced debug frequency to 1% for production
-      const isStraightLine = coordinates.arcProperties === null;
-      console.log('[WebGLLinkRenderer] Debug link coordinates:', {
-        key,
-        isStraightLine,
-        movePoint: coordinates.movePoint,
-        arcEndPoint: coordinates.arcEndPoint, 
-        lineEndPoint: coordinates.lineEndPoint,
-        arcProperties: coordinates.arcProperties
-      });
-    }
+    const strokePx = this._getStrokePx();
+    const material = this.materialFactory.getLinkLineMaterial(link, this._highlightEdges, Math.max(1, strokePx));
 
-    const geometry = this.geometryFactory.createTubeFromCoordinates(coordinates, radius);
-    if (!geometry) {
-      console.error('[WebGLLinkRenderer] Failed to create geometry for link:', key, coordinates);
-      return null;
-    }
+    const line = new Line2(geometry, material);
+    line.computeLineDistances();
+    line.userData = { linkKey: key, link };
 
-    const material = this._getMaterial(link, radius);
-
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.userData = { linkKey: key, link };
-    this.linkMeshes.set(key, mesh);
-    return mesh;
+    this.linkMeshes.set(key, line);
+    return line;
   }
 
   createAndAddLink(link) {
@@ -400,6 +291,10 @@ export class WebGLLinkRenderer {
   removeLinkByKey(key) {
     const mesh = this._getLinkMesh(key);
     if (!mesh) return;
+
+    // Also remove from geometry cache to prevent memory leaks
+    this.geometryFactory.removeFromCache(key);
+
     mesh.geometry?.dispose?.();
     mesh.material?.dispose?.();
     this.linkGroup.remove(mesh);
@@ -409,24 +304,19 @@ export class WebGLLinkRenderer {
   _updateMeshToLinkState(link, mesh) {
     if (!mesh) return;
 
-    // Clear any transformation state from previous animations
     this._clearTransformationState(mesh);
 
-    const radius = this._getRadius();
-    const coordinates = calculateBranchCoordinates(link);
+    const coords = calculateBranchCoordinates(link);
+    const strokePx = this._getStrokePx();
 
-    this._updateMeshGeometry(mesh, coordinates, radius);
-    this._updateMeshMaterial(mesh, link, radius, 1);
-
-    mesh.userData.link = link;
-    mesh.updateMatrix();
+    this._updateMeshState(mesh, link, coords, strokePx, 1);
   }
 
   _validateCurrentState(currentState, enter, update, exit) {
     const currentKeys = new Set(currentState.map(getLinkKey));
-    const enterKeys = new Set(enter.map(getLinkKey));
-    const updateKeys = new Set(update.map(getLinkKey));
-    const exitKeys = new Set(exit.map(getLinkKey));
+    const enterKeys   = new Set(enter.map(getLinkKey));
+    const updateKeys  = new Set(update.map(getLinkKey));
+    const exitKeys    = new Set(exit.map(getLinkKey));
 
     const expected = new Set([...currentKeys, ...enterKeys, ...updateKeys]);
     exitKeys.forEach(k => expected.delete(k));
@@ -442,21 +332,15 @@ export class WebGLLinkRenderer {
       if (!this._getLinkMesh(k) && !enterKeys.has(k)) missing.push(k);
     });
     if (missing.length) {
-      // This can happen during interpolation transitions - not necessarily an error
       console.warn('[WebGLLinkRenderer] Missing meshes for existing/updating links:', missing);
     }
   }
 
-  /**
-   * Clear transformation state to avoid conflicts between REORDER and RETOPO
-   */
   _clearTransformationState(mesh) {
-    // Reset transform to identity
     mesh.position.set(0, 0, 0);
     mesh.rotation.set(0, 0, 0);
     mesh.scale.set(1, 1, 1);
 
-    // Clear stored transformation data
     delete mesh.userData.originalRotation;
     delete mesh.userData.originalCoordinates;
     delete mesh.userData.originalMatrix;
@@ -464,54 +348,21 @@ export class WebGLLinkRenderer {
     mesh.updateMatrixWorld(true);
   }
 
-  /**
-   * Apply rotation-based transformation for REORDER changes
-   * This applies ONLY rotation around the origin - no position changes
-   * to preserve the tube geometry topology
-   */
   _applyReorderTransformation(mesh, fromLink, toLink, timeFactor) {
-    // Store original rotation if not already stored
     if (!mesh.userData.originalRotation) {
       mesh.userData.originalRotation = mesh.rotation.z || 0;
     }
 
-    // Calculate the average angular difference between from and to states
     const fromAvgAngle = (fromLink.source.angle + fromLink.target.angle) / 2;
-    const toAvgAngle = (toLink.source.angle + toLink.target.angle) / 2;
+    const toAvgAngle   = (toLink.source.angle   + toLink.target.angle)   / 2;
 
-    // Calculate rotation difference, handling wrap-around
     let angleDiff = toAvgAngle - fromAvgAngle;
-    if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+    if (angleDiff > Math.PI)  angleDiff -= 2 * Math.PI;
     if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
 
-    // Apply interpolated rotation around Z-axis only
-    const currentRotation = mesh.userData.originalRotation + (angleDiff * timeFactor);
-
-    // Reset position to origin and apply only rotation
+    const currentRotZ = mesh.userData.originalRotation + (angleDiff * timeFactor);
     mesh.position.set(0, 0, 0);
-    mesh.rotation.set(0, 0, currentRotation);
+    mesh.rotation.set(0, 0, currentRotZ);
     mesh.updateMatrixWorld(true);
-  }
-
-  /**
-   * Freezes segment counts for a mesh once per interpolation sequence.
-   * Stores fixed segment parameters in mesh.userData.fixedSegs for topology stability.
-   * @param {THREE.Mesh} mesh - The mesh to get fixed segments for
-   * @param {number} radius - Current radius for segment calculation
-   * @returns {Object} Fixed segment parameters for geometry consistency
-   * @private
-   */
-  _getFixedSegs(mesh, radius) {
-    if (mesh.userData.fixedSegs) return mesh.userData.fixedSegs;
-
-    // Derive from the current geometry (first frame) to stay visually consistent
-    const params = mesh.geometry?.parameters || {};
-    const fixed = {
-      fixedTubularSegments: params.tubularSegments ?? 64,
-      fixedRadialSegments: params.radialSegments ?? 16,
-      fixedArcSegments: 32 // reasonable default for our arcs; tweak if needed
-    };
-    mesh.userData.fixedSegs = fixed; // Cache fixed segments for consistent topology
-    return fixed;
   }
 }

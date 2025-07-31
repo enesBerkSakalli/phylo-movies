@@ -43,12 +43,8 @@ export const TIMELINE_OPTIONS = {
 
     // Performance optimizations
     PERFORMANCE: {
-        clickToUse: false,
-        animateZoom: true,
-        animation: {
-            duration: 300,
-            easingFunction: 'easeInOutQuad'
-        }
+        clickToUse: false
+        // Note: animateZoom and animation options removed - not supported in vis-timeline 7.7.4
     },
 
     // User interaction settings
@@ -56,12 +52,8 @@ export const TIMELINE_OPTIONS = {
         moveable: true,
         zoomable: true,
         zoomKey: 'ctrlKey',
-        selectable: false, // Using custom click handling
-        keyboard: {
-            enabled: true,
-            bindToWindow: false,
-            speed: 0.1
-        }
+        selectable: false // Using custom click handling
+        // Note: keyboard option removed - not supported in vis-timeline 7.7.4
     },
 
     // Touch/mobile support
@@ -167,7 +159,6 @@ export function createTimelineOptions(timelineData, mode = 'default') {
             return {
                 ...baseOptions,
                 zoomKey: 'ctrlKey',
-                keyboard: true,
                 clickToUse: false
             };
 
@@ -196,16 +187,9 @@ export function createTimelineOptions(timelineData, mode = 'default') {
                 ...baseOptions,
                 ...TIMELINE_OPTIONS.INTERACTION,
                 ...TIMELINE_OPTIONS.PERFORMANCE,
-                ...TIMELINE_OPTIONS.TOOLTIP,
-                ...TIMELINE_OPTIONS.ROLLING,
                 ...TIMELINE_OPTIONS.ZOOM_ADVANCED,
                 zoomMin: 10, // 10ms minimum zoom as in your example
-                zoomMax: timelineData.totalDuration * 2,
-                keyboard: {
-                    enabled: true,
-                    bindToWindow: false,
-                    speed: TIMELINE_CONSTANTS.KEYBOARD_SPEED
-                }
+                zoomMax: timelineData.totalDuration * 2
             };
 
         default: // 'default'
@@ -213,15 +197,8 @@ export function createTimelineOptions(timelineData, mode = 'default') {
                 ...baseOptions,
                 ...TIMELINE_OPTIONS.INTERACTION,
                 ...TIMELINE_OPTIONS.PERFORMANCE,
-                ...TIMELINE_OPTIONS.TOOLTIP,
-                ...TIMELINE_OPTIONS.ROLLING,
                 zoomMin: TIMELINE_CONSTANTS.MIN_ZOOM_MS,
-                zoomMax: timelineData.totalDuration * TIMELINE_CONSTANTS.MAX_ZOOM_FACTOR,
-                keyboard: {
-                    enabled: true,
-                    bindToWindow: false,
-                    speed: TIMELINE_CONSTANTS.KEYBOARD_SPEED
-                }
+                zoomMax: timelineData.totalDuration * TIMELINE_CONSTANTS.MAX_ZOOM_FACTOR
             };
     }
 }

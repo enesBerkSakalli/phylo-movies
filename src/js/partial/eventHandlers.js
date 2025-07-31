@@ -1,6 +1,4 @@
-import { GuiEventHandlers } from "./eventHandlers/guiEventHandlers.js";
-import { RecorderHandlers } from "./eventHandlers/recorderHandlers.js";
-import { SubmenuHandlers } from "./eventHandlers/submenuHandlers.js";
+import { EventHandlerRegistry } from "./eventHandlers/eventHandlerRegistry.js";
 import { notifications } from "./eventHandlers/notificationSystem.js";
 
 /**
@@ -12,9 +10,8 @@ import { notifications } from "./eventHandlers/notificationSystem.js";
  * Attach GUI event handlers (buttons, sliders, etc) to the main GUI instance.
  * @param {Gui} gui
  */
-// Store handler instances at module scope for cleanup
-let guiHandlersInstance = null;
-let recorderHandlersInstance = null;
+// Store handler instance at module scope for cleanup
+let eventRegistryInstance = null;
 
 /**
  * Attaches GUI event handlers (buttons, sliders, etc.) to the main GUI instance.
@@ -22,20 +19,20 @@ let recorderHandlersInstance = null;
  * before new ones are attached, preventing duplicate listeners.
  * @param {Gui} gui - The main GUI instance to which event handlers will be attached.
  *                    It should provide methods that handlers can call (e.g., `gui.play()`).
- * @returns {void}
+ * @returns {Promise<void>}
  */
-export function attachGuiEventHandlers(gui) {
+export async function attachGuiEventHandlers(gui) {
   if (!gui) {
     console.error("GUI instance is required for event handlers");
     return;
   }
   try {
     // Clean up previous handlers if any
-    if (guiHandlersInstance && typeof guiHandlersInstance.cleanup === "function") {
-      guiHandlersInstance.cleanup();
+    if (eventRegistryInstance && typeof eventRegistryInstance.detachAll === "function") {
+      eventRegistryInstance.detachAll();
     }
-    guiHandlersInstance = new GuiEventHandlers(gui);
-    guiHandlersInstance.attachAll();
+    eventRegistryInstance = new EventHandlerRegistry(gui);
+    await eventRegistryInstance.attachAll();
     console.log("GUI event handlers attached successfully");
   } catch (error) {
     console.error("Error attaching GUI event handlers:", error);
@@ -49,8 +46,8 @@ export function attachGuiEventHandlers(gui) {
 
 /**
  * Attaches event handlers for the screen recorder controls.
- * This function ensures that any previously attached recorder handlers are cleaned up
- * before new ones are attached.
+ * This function sets the recorder instance on the EventHandlerRegistry.
+ * The recording button handlers are already attached via EventHandlerRegistry.attachAll().
  * @param {ScreenRecorder} recorder - The ScreenRecorder instance.
  * @returns {void}
  */
@@ -60,55 +57,17 @@ export function attachRecorderEventHandlers(recorder) {
     return;
   }
   try {
-    // Clean up previous handlers if any
-    if (recorderHandlersInstance && typeof recorderHandlersInstance.cleanup === "function") {
-      recorderHandlersInstance.cleanup();
+    // Set the recorder instance on the existing EventHandlerRegistry
+    if (eventRegistryInstance) {
+      eventRegistryInstance.setRecorder(recorder);
+      console.log("Recorder instance set on EventHandlerRegistry successfully");
+    } else {
+      console.warn("EventHandlerRegistry not initialized yet. Recording buttons may not work.");
     }
-    recorderHandlersInstance = new RecorderHandlers(recorder);
-    recorderHandlersInstance.attachAll();
-    console.log("Recorder event handlers attached successfully");
   } catch (error) {
-    console.error("Error attaching recorder event handlers:", error);
+    console.error("Error setting up recorder:", error);
     notifications.show(
       "Error setting up recording controls: " + error.message,
-      "error"
-    );
-  }
-}
-
-/**
- * Toggles the display state of a submenu (collapses or expands it).
- * It delegates the action to `SubmenuHandlers.toggle`.
- * @param {string} submenuId - The ID of the submenu element to toggle.
- * @param {string} toggleIconId - The ID of the icon element that indicates the submenu's state.
- * @returns {void}
- */
-export function toggleSubmenu(submenuId, toggleIconId) {
-  SubmenuHandlers.toggle(submenuId, toggleIconId);
-}
-
-/**
- * Initializes all toggleable submenu elements on the page.
- * It schedules `SubmenuHandlers.initializeAll` to run after a short delay,
- * allowing the DOM to fully render, especially for dynamically loaded content.
- * @returns {void}
- */
-export function initializeToggles() {
-  try {
-    // Wait for DOM to be ready
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", () => {
-        setTimeout(() => SubmenuHandlers.initializeAll(), 100);
-      });
-    } else {
-      // DOM is already ready, but give a small delay for dynamic content
-      setTimeout(() => SubmenuHandlers.initializeAll(), 100);
-    }
-    console.log("Submenu toggles initialization scheduled");
-  } catch (error) {
-    console.error("Error initializing toggles:", error);
-    notifications.show(
-      "Error setting up menu toggles: " + error.message,
       "error"
     );
   }
