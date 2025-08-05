@@ -184,7 +184,7 @@ class EnhancedPhyloMoviesTestSuite {
 
             // Test specific selectors that might exist
             const testSelectors = [
-                '#start-button', '#play-button', '.play-button',
+                '#play-button', '#play-button', '.play-button',
                 '#forward-button', '#backward-button', '.nav-button',
                 '#forwardStepButton', '#backwardStepButton',
                 '#positionValue', '#positionButton',

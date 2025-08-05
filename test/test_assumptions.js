@@ -13,7 +13,7 @@ const simulatedData = {
             }
         },
         "pair_1_2": {
-            lattice_edge_solutions: {} // Empty = no s-edges  
+            lattice_edge_solutions: {} // Empty = no s-edges
         }
     },
     tree_metadata: [
@@ -30,25 +30,25 @@ console.log('1. Testing TransitionIndexResolver._updateInterpolationMap()...');
 
 function testTransitionIndexResolver(treePairKey, treePairSolutions) {
     const pairSolution = treePairSolutions[treePairKey];
-    
+
     // Original buggy logic
-    const buggyHasInterpolation = pairSolution && 
-                                 pairSolution.lattice_edge_solutions && 
+    const buggyHasInterpolation = pairSolution &&
+                                 pairSolution.lattice_edge_solutions &&
                                  pairSolution.lattice_edge_solutions.length > 0;
-    
+
     // Fixed logic
-    const fixedHasInterpolation = pairSolution && 
-                                 pairSolution.lattice_edge_solutions && 
+    const fixedHasInterpolation = pairSolution &&
+                                 pairSolution.lattice_edge_solutions &&
                                  typeof pairSolution.lattice_edge_solutions === 'object' &&
                                  Object.keys(pairSolution.lattice_edge_solutions).length > 0;
-    
+
     return { buggyHasInterpolation, fixedHasInterpolation };
 }
 
 for (const pairKey of Object.keys(simulatedData.tree_pair_solutions)) {
     const result = testTransitionIndexResolver(pairKey, simulatedData.tree_pair_solutions);
     const actualKeys = Object.keys(simulatedData.tree_pair_solutions[pairKey].lattice_edge_solutions);
-    
+
     console.log(`   ${pairKey}:`);
     console.log(`     - lattice_edge_solutions keys: ${actualKeys.length} (${actualKeys.join(', ')})`);
     console.log(`     - Buggy logic result: ${result.buggyHasInterpolation}`);
@@ -64,27 +64,27 @@ function testShouldIncludeTree(metadata, treePairSolutions) {
     if (!metadata.tree_pair_key) {
         return { included: true, reason: 'original tree' };
     }
-    
+
     // Check if this tree pair actually has interpolation
     const pairSolution = treePairSolutions[metadata.tree_pair_key];
     if (!pairSolution) {
         return { included: false, reason: 'no pair solution' };
     }
-    
+
     // Check if there are actual s-edges (lattice_edge_solutions)
     const hasLatticeEdges = pairSolution.lattice_edge_solutions &&
                            typeof pairSolution.lattice_edge_solutions === 'object' &&
                            Object.keys(pairSolution.lattice_edge_solutions).length > 0;
-    
+
     if (!hasLatticeEdges) {
         // No s-edges = identical trees, only include if this is the original tree
         const shouldInclude = metadata.step_in_pair === 1 || !metadata.step_in_pair;
-        return { 
-            included: shouldInclude, 
+        return {
+            included: shouldInclude,
             reason: shouldInclude ? 'first step of identical pair' : 'non-first step of identical pair'
         };
     }
-    
+
     // Has s-edges = include all interpolated trees
     return { included: true, reason: 'has s-edges' };
 }
@@ -94,12 +94,12 @@ let totalExcluded = 0;
 
 for (const metadata of simulatedData.tree_metadata) {
     const result = testShouldIncludeTree(metadata, simulatedData.tree_pair_solutions);
-    
+
     console.log(`   ${metadata.tree_name} (${metadata.tree_pair_key || 'original'}):`);
     console.log(`     - Phase: ${metadata.phase}`);
     console.log(`     - Step: ${metadata.step_in_pair || 'N/A'}`);
     console.log(`     - Included: ${result.included ? '✅' : '❌'} (${result.reason})`);
-    
+
     if (result.included) totalIncluded++;
     else totalExcluded++;
 }
@@ -118,4 +118,4 @@ console.log('   ✅ Interpolated trees from pairs without s-edges are excluded (
 console.log('   ✅ All interpolated trees from pairs with s-edges are included');
 
 console.log('\n=== ASSUMPTIONS VERIFIED ===');
-console.log('The fixes should resolve the s_edgeBar display issues.');
+console.log('The fixes should resolve the activeChangeEdgeBar display issues.');

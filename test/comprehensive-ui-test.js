@@ -152,7 +152,7 @@ class PhyloMoviesTestSuite {
 
         // Test Play/Pause Button
         try {
-            const playButton = await this.page.$('#start-button');
+            const playButton = await this.page.$('#play-button');
             if (playButton) {
                 await this.takeScreenshot('02-before-play', 'Before clicking play');
                 await playButton.click();
@@ -520,7 +520,7 @@ class PhyloMoviesTestSuite {
 
         try {
             // Start animation sequence
-            const playButton = await this.page.$('#start-button');
+            const playButton = await this.page.$('#play-button');
             if (playButton) {
                 await this.takeScreenshot('33-animation-start', 'Before starting animation');
 
