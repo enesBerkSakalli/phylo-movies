@@ -35,7 +35,10 @@ import { MovieTimelineManager } from "../timeline/MovieTimelineManager.js";
 // - Proper cleanup and resource management
 // ============================================================================
 export default class Gui {
-  constructor(movieData) {
+  constructor(movieData, options = {}) {
+    // Store options for later use
+    this.options = options;
+
     // Initialize the store first
     useAppStore.getState().initialize(movieData);
 
@@ -45,7 +48,7 @@ export default class Gui {
     this.uiController = new UIController(this);
     this.chartController = new ChartController(this, this.navigationController);
 
-    // Movie Timeline Manager for visual s_edge progress tracking
+    // Movie Timeline Manager for visual active change edge progress tracking
     this.movieTimelineManager = null;
 
     // Subscribe only to core tree navigation changes
@@ -108,7 +111,7 @@ export default class Gui {
   // ========================================
   _updatePlayButtonState() {
     const { playing } = useAppStore.getState(); // Get playing state from store
-    const startButton = document.getElementById("start-button");
+    const startButton = document.getElementById("play-button");
 
     if (!startButton) return;
 
@@ -212,15 +215,11 @@ export default class Gui {
         msaStepSize: msaPositionInfo.stepSize
       };
 
-      // Get highlighted taxa for synchronization
-      const highlightedTaxa = useAppStore.getState().getActualHighlightData(); // Use from store action
-
       // Dispatch sync event to MSA viewer
       window.dispatchEvent(new CustomEvent('msa-sync-request', {
         detail: {
           position: msaPositionInfo.position,
           windowInfo: windowInfo,
-          highlightedTaxa: highlightedTaxa,
           treeIndex: currentTreeIndex,
           fullTreeIndex: currentFullTreeDataIdx
         }
@@ -305,10 +304,17 @@ export default class Gui {
       return currentTreeController;
     }
 
-    // Create new controller based on WebGL mode
-    const newTreeController = webglEnabled
-      ? new WebGLTreeAnimationController()
-      : new TreeAnimationController(null, "application");
+    // Create new controller based on WebGL mode and options
+    let newTreeController;
+    if (this.options.TreeController) {
+      // Use provided controller class (e.g., DeckGLTreeAnimationController)
+      newTreeController = new this.options.TreeController();
+    } else {
+      // Use default logic
+      newTreeController = webglEnabled
+        ? new WebGLTreeAnimationController()
+        : new TreeAnimationController(null, "application");
+    }
 
     // Store handles all controller lifecycle management
     setTreeController(newTreeController);
@@ -433,10 +439,10 @@ export default class Gui {
     const step = metadata.step_in_pair;
 
     if (sEdgeInfo && step && phase !== 'ORIGINAL') {
-        // Extract s_edge index for cleaner display
+        // Extract active change edge index for cleaner display
         const match = sEdgeInfo.match(/pair_(\d+)_(\d+)/);
         const sEdgeIndex = match ? `S-edge ${parseInt(match[1])}` : sEdgeInfo;
-        const totalSteps = movieData.s_edge_metadata?.trees_per_s_edge?.[sEdgeInfo] || step; // Use movieData from store
+        const totalSteps = movieData.activeChangeEdge_metadata?.treesPerActiveChangeEdge?.[sEdgeInfo] || step; // Use movieData from store
         return `${baseName} (${sEdgeIndex}, Step ${step}/${totalSteps}, ${phase})`;
     }
 

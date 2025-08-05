@@ -158,14 +158,14 @@ export function calculateDynamicLabelOffset(text, fontSizePx, baseOffset, extens
   const minPadding = 2; // Minimal 2px padding
   const extensionBuffer = extensionLength > 0 ? extensionLength + 3 : 0; // Minimal +3 buffer
 
-  // Calculate dynamic offset based on text length (minimal scaling)
+  // Calculate dynamic offset based on text length (reduced scaling)
   const dynamicOffset = Math.max(
-    baseOffset + textWidth + minPadding,
-    baseOffset + extensionBuffer
+    baseOffset + (textWidth * 0.5) + minPadding, // Reduced text width multiplier
+    baseOffset + (extensionBuffer * 0.5) // Reduced extension buffer multiplier
   );
 
-  // Cap the offset to prevent excessive spacing (minimal cap)
-  const maxOffset = baseOffset * 1.8; // Minimal cap
+  // Cap the offset to prevent excessive spacing (reduced cap)
+  const maxOffset = baseOffset * 1.4; // Reduced cap
   return Math.min(dynamicOffset, maxOffset);
 }
 
@@ -180,7 +180,7 @@ export function calculateDynamicLabelOffset(text, fontSizePx, baseOffset, extens
  */
 export function getDynamicLabelConfiguration(node, text, baseLabelRadius, fontSizePx, extensionRadius = 0) {
   const extensionLength = Math.max(0, baseLabelRadius - extensionRadius);
-  const dynamicOffset = calculateDynamicLabelOffset(text, fontSizePx, 50, extensionLength);
+  const dynamicOffset = calculateDynamicLabelOffset(text, fontSizePx, 12, extensionLength);
 
   // Calculate final position with dynamic offset
   const finalLabelRadius = extensionRadius + dynamicOffset;
@@ -199,7 +199,7 @@ export function getDynamicLabelConfiguration(node, text, baseLabelRadius, fontSi
  * These are now base values - actual offsets are calculated dynamically
  */
 export const LABEL_OFFSETS = {
-  DEFAULT: 50,        // Base offset, dynamically adjusted
-  WITH_EXTENSIONS: 120, // Base for extension scenarios, dynamically adjusted
-  EXTENSION: 8        // Minimal extension line length for direct placement
+  DEFAULT: 20,        // Reduced base offset
+  WITH_EXTENSIONS: 40, // Reduced extension offset
+  EXTENSION: 5        // Minimal extension line length for direct placement
 };

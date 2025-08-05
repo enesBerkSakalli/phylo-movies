@@ -34,9 +34,7 @@ export class WebGLTreeAnimationController {
     // Track which transformation the current scaling was calculated for
     this._scaleCalculationTransformation = 'none';
 
-    // Initialize store-synchronized properties
-    this.marked = [];
-    this.lattice_edges = [];
+    this.activeChangeEdges = [];
     this.transitionResolver = null;
 
     // Initialize WebGL container
@@ -218,7 +216,6 @@ export class WebGLTreeAnimationController {
    * Renders all tree elements instantly (non-interpolated).
    * Optimized for performance and proper async coordination.
    * @param {Object} [options={}] - Rendering options and configuration
-   * @param {Array} [options.highlightEdges] - Edges to highlight
    * @param {boolean} [options.showExtensions=true] - Whether to show leaf extensions
    * @param {boolean} [options.showLabels=true] - Whether to show labels
    */
@@ -393,18 +390,9 @@ export class WebGLTreeAnimationController {
     const canvas = this.sceneManager.renderer.domElement;
     const rect = canvas.getBoundingClientRect();
 
-    // Use the actual rendering dimensions, not just CSS dimensions
-    // This ensures layout calculations match the actual pixel resolution
-    const pixelRatio = this.sceneManager.renderer.getPixelRatio();
     const width = rect.width;
     const height = rect.height;
-
-    // For layout calculations, we use CSS dimensions but need to be aware of the actual render resolution
-    const actualRenderWidth = width * pixelRatio;
-    const actualRenderHeight = height * pixelRatio;
-
     let layout;
-
     // Use uniform scaling if available for consistent consensus tree radii
     if (this.uniformScalingEnabled && this.globalScaleList && this.maxGlobalScale) {
       layout = this._createUniformRadialTreeLayout(
@@ -483,9 +471,7 @@ export class WebGLTreeAnimationController {
       treeList,
       branchTransformation,
       monophyleticColoringEnabled,
-      animationSpeed,
-      getActualHighlightData,
-      lattice_edge_tracking,
+      activeChangeEdgeTracking,
       transitionResolver
     } = useAppStore.getState();
 
@@ -505,26 +491,7 @@ export class WebGLTreeAnimationController {
       this.updateLayout(transformedTreeData, currentTreeIndex);
     }
 
-    // Update marked components from store
-    const markedComponents = getActualHighlightData();
-    this.marked = [];
-    if (Array.isArray(markedComponents) && markedComponents.length > 0) {
-      const isArrayOfArrays = markedComponents.every(item => Array.isArray(item));
-      if (isArrayOfArrays) {
-        this.marked = markedComponents.map((innerArray) => new Set(innerArray));
-      } else {
-        this.marked = [new Set(markedComponents)];
-      }
-    }
-
-    // Update other properties from store
-    this.lattice_edges = lattice_edge_tracking || [];
-
-    // Use store actions for ColorManager updates
-    const { setColorManagerMonophyleticColoring, updateColorManagerMarkedComponents } = useAppStore.getState();
     setColorManagerMonophyleticColoring(monophyleticColoringEnabled);
-    updateColorManagerMarkedComponents(this.marked);
-
     this.transitionResolver = transitionResolver;
   }
 
@@ -701,10 +668,6 @@ export class WebGLTreeAnimationController {
       goToPosition(discreteTreeIndex);
     }
 
-    // Get highlight edges for the interpolated position (reuse discreteTreeIndex)
-    const latticeEdge = movieData.lattice_edge_tracking?.[discreteTreeIndex];
-    const highlightEdges = latticeEdge ? [latticeEdge] : [];
-
     // ColorManager will automatically update itself via store subscription
 
     // Render interpolated frame with eased progress
@@ -714,7 +677,6 @@ export class WebGLTreeAnimationController {
         toTree,
         easedProgress,
         {
-          highlightEdges: highlightEdges,
           fromTreeIndex: fromTreeIndex,
           toTreeIndex: toTreeIndex
         }
@@ -734,12 +696,11 @@ export class WebGLTreeAnimationController {
    * @param {Object} toTreeData - Target tree data (t=1)
    * @param {number} timeFactor - Interpolation factor between 0 and 1
    * @param {Object} [options={}] - Rendering options
-   * @param {Array} [options.highlightEdges=[]] - Edges to highlight during interpolation
    * @param {number} [options.fromTreeIndex] - Index of source tree for cache lookup
    * @param {number} [options.toTreeIndex] - Index of target tree for cache lookup
    */
   async renderInterpolatedFrame(fromTreeData, toTreeData, timeFactor, options = {}) {
-    const { highlightEdges = [], fromTreeIndex, toTreeIndex } = options;
+    const { fromTreeIndex, toTreeIndex } = options;
     let t = Math.max(0, Math.min(1, timeFactor));
     if (fromTreeData === toTreeData) t = 0;
 
@@ -810,7 +771,6 @@ export class WebGLTreeAnimationController {
       fromTreeIndex: fromTreeIndex,
       toTreeIndex: toTreeIndex,
       timeFactor: t,
-      highlightEdges,
       filteredData: filteredData,
       isBackwardNavigation: isBackwardNavigation
     };
@@ -1050,46 +1010,6 @@ export class WebGLTreeAnimationController {
     };
   }
 
-  /**
-   * Calculates radius with uniform scaling awareness and branch transformation compensation.
-   * Ensures labels and extensions maintain proportional sizing across all trees and transformation types.
-   * @param {number} baseOffset - Base offset from LABEL_OFFSETS
-   * @returns {number} Calculated radius with uniform scaling and transformation awareness applied
-   * @private
-   */
-  _calculateUniformAwareRadius(baseOffset) {
-    const uniformScalingConfig = this.getUniformScalingConfig();
-    const { branchTransformation } = useAppStore.getState();
-
-    // Apply transformation-specific multipliers to account for different tree sizes
-    const transformationMultipliers = {
-      'none': 1.0,
-      'ignore': 1.2,      // Uniform branches need more separation
-      'log': 1.5,         // Compressed trees need larger offsets
-      'sqrt': 1.3,        // Moderately compressed trees
-      'power2': 0.8,      // Expanded trees need smaller offsets
-      'linear-scale': 0.6  // 2x larger trees need proportionally smaller offsets
-    };
-
-    const transformMultiplier = transformationMultipliers[branchTransformation] || 1.0;
-    const transformationAdjustedOffset = baseOffset * transformMultiplier;
-
-    if (uniformScalingConfig.enabled && uniformScalingConfig.maxGlobalScale) {
-      // Ensure labels maintain adequate separation regardless of tree size
-      // Use a minimum offset multiplier to prevent labels from getting too close to trees
-      const scaleFactor = Math.min(uniformScalingConfig.maxGlobalScale, 1.0);
-      const minOffsetMultiplier = 0.8; // Ensure at least 80% of base offset
-      const maxOffsetMultiplier = 1.5; // Allow up to 150% for smaller trees
-      const offsetMultiplier = Math.max(minOffsetMultiplier,
-        Math.min(maxOffsetMultiplier, 0.7 + scaleFactor * 0.8));
-
-      const adjustedOffset = transformationAdjustedOffset * offsetMultiplier;
-      return this.initialMaxLeafRadius + adjustedOffset;
-    }
-
-    // Fallback to transformation-adjusted calculation
-    return this.initialMaxLeafRadius + transformationAdjustedOffset;
-  }
 
 /**
    * SINGLE SOURCE OF TRUTH: Calculates label and extension radii with dynamic positioning.
@@ -1101,27 +1021,44 @@ export class WebGLTreeAnimationController {
    * @returns {Object} Object with extensionRadius and labelRadius
    * @private
    */
-  _getConsistentRadii(_layoutFrom = null, _layoutTo = null, branchTransformation = null, leafData = null) {
-    // Use provided transformation or get from store
-    const transformation = branchTransformation || useAppStore.getState().branchTransformation;
-    const { fontSize } = useAppStore.getState();
+// ...existing code...
+  /**
+   * Calculates consistent radii for extension lines and labels based on the current layout.
+   * This is the single source of truth for radius calculations for all renderers.
+   * @param {Object} layout - The current tree layout object.
+   * @returns {Object} Object with extensionRadius and labelRadius
+   * @private
+   */
+  _getConsistentRadii(layout, _layoutTo = null, branchTransformation = null, leafData = null) {
+    if (!layout || !layout.tree) {
+      console.warn("Cannot calculate radii without a valid layout. Using default values.");
+      return {
+        extensionRadius: 220,
+        labelRadius: 250,
+        transformation: branchTransformation || useAppStore.getState().branchTransformation
+      };
+    }
 
-    // Calculate base extension radius using uniform-aware calculation
-    const baseExtensionRadius = this._calculateUniformAwareRadius(LABEL_OFFSETS.EXTENSION);
+    // 1. Get the maximum radius from the canvas dimensions to ensure a perfect circle.
+    // This is more robust than using the tree's own max radius, which can be irregular.
+    const containerWidth = layout.width - layout.margin * 2;
+    const containerHeight = layout.height - layout.margin * 2;
+    const maxLeafRadius = Math.min(containerWidth, containerHeight) / 2;
 
-    // Extension radius is where the extension line ends (the tip)
-    let extensionRadius = baseExtensionRadius;
-
-    // Labels should have their text END positioned exactly at the extension tip
-    // The label renderer will handle text anchor positioning
-    let labelRadius = extensionRadius;
+    // 2. Apply consistent, predictable offsets to the maximum radius.
+    const extensionRadius = maxLeafRadius + LABEL_OFFSETS.EXTENSION;
+    const labelRadius = extensionRadius + LABEL_OFFSETS.LABEL;
 
     return {
       extensionRadius,
       labelRadius,
-      transformation
+      transformation: branchTransformation || useAppStore.getState().branchTransformation
     };
   }
+
+  /**
+   * Gets the current uniform scaling configuration.
+// ...existing code...
 
   /**
    * Gets the current uniform scaling configuration.
@@ -1243,7 +1180,5 @@ export class WebGLTreeAnimationController {
 
     // Clean up references
     this.updatePattern = null;
-    this.marked = null;
-    this.lattice_edges = null;
   }
 }

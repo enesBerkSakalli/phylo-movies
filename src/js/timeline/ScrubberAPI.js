@@ -23,18 +23,6 @@ export class ScrubberAPI {
     this.lastUpdateTime = 0;
     this.pendingUpdate = null;
 
-    // Performance configuration
-    this.THROTTLE_MS = 16; // 60fps max
-    this.ELEMENT_CREATION_TIMEOUT = 100; // ms to wait for element creation
-
-    // Element tracking for scrubbing
-    this.scrubbingElements = {
-      links: new Set(),
-      nodes: new Set(),
-      extensions: new Set(),
-      labels: new Set()
-    };
-
     // Cached interpolation state
     this.lastInterpolationState = null;
     this.interpolationCache = new Map();
@@ -70,11 +58,6 @@ export class ScrubberAPI {
    * @param {Object} options - Scrubbing options
    */
   async updatePosition(progress, options = {}) {
-    if (!this.isActive) {
-      console.warn('[ScrubberAPI] Not in scrubbing mode');
-      return;
-    }
-
     const clampedProgress = clamp(progress, 0, 1);
 
     // Throttle high-frequency updates
@@ -104,13 +87,14 @@ export class ScrubberAPI {
       this.pendingUpdate = null;
     }
 
-    // Finalize position if provided
-    if (finalProgress !== null) {
-      await this._performScrubUpdate(clamp(finalProgress, 0, 1), { isFinalization: true });
+    // Only update if finalProgress is provided and different from currentProgress
+    if (
+      finalProgress !== null &&
+      Math.abs(clamp(finalProgress, 0, 1) - this.currentProgress) > 1e-6
+    ) {
+      await this._performScrubUpdate(clamp(finalProgress, 0, 1));
     }
-
-    // Clean up scrubbing-specific elements
-    await this._cleanupScrubbingElements();
+    // Otherwise, keep the last interpolated state (do not snap)
 
     // Clear caches
     this.interpolationCache.clear();
@@ -120,7 +104,7 @@ export class ScrubberAPI {
     useAppStore.getState().setSubscriptionPaused(false);
 
     this.isActive = false;
-    console.log('[ScrubberAPI] Scrubbing mode ended');
+    console.log('[ScrubberAPI] Scrubbing mode ended (final state preserved)');
   }
 
   /**
@@ -131,13 +115,7 @@ export class ScrubberAPI {
     return {
       isActive: this.isActive,
       currentProgress: this.currentProgress,
-      lastUpdateTime: this.lastUpdateTime,
-      elementCounts: {
-        links: this.scrubbingElements.links.size,
-        nodes: this.scrubbingElements.nodes.size,
-        extensions: this.scrubbingElements.extensions.size,
-        labels: this.scrubbingElements.labels.size
-      }
+      lastUpdateTime: this.lastUpdateTime
     };
   }
 
@@ -150,8 +128,6 @@ export class ScrubberAPI {
   async _performScrubUpdate(progress, options = {}) {
     this.lastUpdateTime = performance.now();
     this.currentProgress = progress;
-
-    const { isFinalization = false } = options;
 
     try {
       // Get interpolation data for current progress
@@ -169,7 +145,7 @@ export class ScrubberAPI {
       useAppStore.getState().setNavigationDirection(direction);
 
       // Perform optimized scrubbing render
-      await this._renderScrubFrame(interpolationData, direction, isFinalization);
+      await this._renderScrubFrame(interpolationData, direction);
 
       // Cache successful interpolation state
       this.lastInterpolationState = {
@@ -188,18 +164,34 @@ export class ScrubberAPI {
    * Render a scrubbing frame with optimized element management
    * @private
    */
-  async _renderScrubFrame(interpolationData, direction, isFinalization) {
+  async _renderScrubFrame(interpolationData, direction) {
     const { fromTree, toTree, timeFactor, fromIndex, toIndex } = interpolationData;
+
+    // CRITICAL FIX: Update ColorManager state during scrubbing
+    // Since store subscriptions are paused, we need to manually update ColorManager
+    const storeState = useAppStore.getState();
+    const { updateColorManagerMarkedComponents, updateColorManagerActiveChangeEdge,
+            getActualHighlightData, getCurrentActiveChangeEdge } = storeState;
+
+    // Calculate which tree index we're primarily rendering (for color state)
+    const primaryTreeIndex = timeFactor < 0.5 ? fromIndex : toIndex;
+
+    // Temporarily update currentTreeIndex for ColorManager calculations
+    const originalTreeIndex = storeState.currentTreeIndex;
+    storeState.currentTreeIndex = primaryTreeIndex;
+
+    // Get highlight data for the primary tree index
+    const markedComponents = getActualHighlightData();
+    const activeChangeEdge = getCurrentActiveChangeEdge();
+
+        // Update ColorManager state for proper coloring during scrubbing
+    updateColorManagerMarkedComponents(markedComponents);
+    updateColorManagerActiveChangeEdge(activeChangeEdge);
 
     // Use specialized scrubbing render mode
     const renderOptions = {
-      highlightEdges: this._getHighlightEdges(fromIndex, toIndex),
       scrubMode: true,
       direction: direction,
-      isFinalization: isFinalization,
-      // Always render both extensions and labels during scrubbing for smooth position updates
-      skipExtensions: false,  // Always render extensions so positions update during scrubbing
-      skipLabels: false  // Always render labels so positions update during scrubbing
     };
 
     // Call optimized scrubbing render method with proper tree indices
@@ -208,7 +200,13 @@ export class ScrubberAPI {
       fromTreeIndex: fromIndex,
       toTreeIndex: toIndex
     };
-    await this.treeController.renderScrubFrame(fromTree, toTree, timeFactor, enhancedOptions);
+
+    try {
+      await this.treeController.renderScrubFrame(fromTree, toTree, timeFactor, enhancedOptions);
+    } finally {
+      // Restore original currentTreeIndex
+      storeState.currentTreeIndex = originalTreeIndex;
+    }
   }
 
   /**
@@ -292,24 +290,6 @@ export class ScrubberAPI {
   }
 
   /**
-   * Get highlight edges for current interpolation position
-   * @private
-   */
-  _getHighlightEdges(fromIndex, toIndex) {
-    const { movieData } = useAppStore.getState();
-
-    if (!movieData?.lattice_edge_tracking) {
-      return [];
-    }
-
-    // Use the target tree index for highlighting
-    const targetIndex = Math.round((fromIndex + toIndex) / 2);
-    const latticeEdge = movieData.lattice_edge_tracking[targetIndex];
-
-    return latticeEdge ? [latticeEdge] : [];
-  }
-
-  /**
    * Pre-cache nearby trees for smooth scrubbing performance
    * @private
    */
@@ -342,49 +322,7 @@ export class ScrubberAPI {
     }
   }
 
-  /**
-   * Clean up elements created during scrubbing
-   * @private
-   */
-  async _cleanupScrubbingElements() {
-    // Remove temporary elements that were created only for scrubbing
-    const cleanupPromises = [];
 
-    // Clean up any temporary links
-    if (this.scrubbingElements.links.size > 0) {
-      cleanupPromises.push(this._cleanupElementType('links'));
-    }
-
-    // Clean up any temporary nodes
-    if (this.scrubbingElements.nodes.size > 0) {
-      cleanupPromises.push(this._cleanupElementType('nodes'));
-    }
-
-    await Promise.all(cleanupPromises);
-
-    // Clear tracking sets
-    Object.values(this.scrubbingElements).forEach(set => set.clear());
-  }
-
-  /**
-   * Clean up specific element type
-   * @private
-   */
-  async _cleanupElementType(elementType) {
-    const elements = this.scrubbingElements[elementType];
-
-    elements.forEach(elementKey => {
-      switch (elementType) {
-        case 'links':
-          this.treeController.linkRenderer?.removeLinkByKey?.(elementKey);
-          break;
-        case 'nodes':
-          this.treeController.nodeRenderer?.removeNodeByKey?.(elementKey);
-          break;
-        // Add other element types as needed
-      }
-    });
-  }
 
   /**
    * Destroy the scrubber API and clean up resources

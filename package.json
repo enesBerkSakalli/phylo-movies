@@ -23,12 +23,15 @@
     "postinstall": "patch-package"
   },
   "dependencies": {
+    "@deck.gl/core": "^9.1.14",
+    "@deck.gl/layers": "^9.1.14",
     "@vitejs/plugin-react": "^4.5.0",
     "alignment-viewer-2": "^2.0.0-beta-23",
     "d3": "^7.9.0",
     "filepond": "^4.32.7",
     "localforage": "^1.10.0",
     "ohm-js": "^16.2.0",
+    "popmotion": "^11.0.5",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-redux": "^9.2.0",

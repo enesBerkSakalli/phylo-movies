@@ -10,7 +10,7 @@ export class TimelineUI {
     }
 
     /**
-     * Query and cache DOM elements
+     * Query and cache DOM elements with retry mechanism
      * @private
      * @returns {Object} Cached DOM elements
      */
@@ -19,19 +19,40 @@ export class TimelineUI {
         Object.entries(DOM_ELEMENTS).forEach(([key, id]) => {
             elements[key] = document.getElementById(id);
             if (!elements[key]) {
-                console.warn(`[TimelineUI] Element '${id}' not found`);
+                console.warn(`[TimelineUI] Element '${id}' not found - UI updates may not work properly`);
             }
         });
         return elements;
     }
 
     /**
-     * Update timeline metrics display
-     * @param {number} totalSegments - Total number of segments
+     * Refresh DOM element cache (useful if DOM is updated after initialization)
      */
-    updateMetrics(totalSegments) {
+    refreshElements() {
+        this.elements = this._queryElements();
+        return this.validateElements();
+    }
+
+    /**
+     * Update timeline metrics display
+     * @param {number} totalTrees - Total number of trees
+     * @param {number} totalSegments - Total number of segments (optional)
+     */
+    updateMetrics(totalTrees, totalSegments = null) {
+        if (!this.elements.movieTimelineCount) {
+            console.warn('[TimelineUI] movieTimelineCount element not available, attempting refresh...');
+            this.refreshElements();
+        }
+
         if (this.elements.movieTimelineCount) {
-            this.elements.movieTimelineCount.textContent = totalSegments.toString();
+            // Format the display to match HTML structure
+            const displayText = totalSegments !== null
+                ? `${totalTrees} trees (${totalSegments} segments)`
+                : `${totalTrees} trees`;
+            this.elements.movieTimelineCount.textContent = displayText;
+            console.log(`[TimelineUI] Updated metrics: ${displayText}`);
+        } else {
+            console.error('[TimelineUI] Failed to update metrics - element still not found');
         }
     }
 
@@ -46,7 +67,15 @@ export class TimelineUI {
      * @param {number} treesInSegment - Total trees in current segment
      */
     updatePosition(currentSegment, totalSegments, progress, currentTree = null, totalTrees = null, treeInSegment = null, treesInSegment = null) {
-        if (!this.elements.currentPositionInfo) return;
+        if (!this.elements.currentPositionInfo) {
+            console.warn('[TimelineUI] currentPositionInfo element not available, attempting refresh...');
+            this.refreshElements();
+        }
+
+        if (!this.elements.currentPositionInfo) {
+            console.error('[TimelineUI] Failed to update position - element not found');
+            return;
+        }
 
         const progressPercent = Math.round(progress * 100);
 
@@ -59,19 +88,7 @@ export class TimelineUI {
         }
 
         this.elements.currentPositionInfo.textContent = displayText;
-    }
-
-    /**
-     * Update detailed position display with tree information
-     * @deprecated Use updatePosition with all parameters instead
-     * @param {number} currentTree - Current tree index (1-based)
-     * @param {number} totalTrees - Total number of trees
-     * @param {number} treeInSegment - Position within current segment (1-based)
-     * @param {number} treesInSegment - Total trees in current segment
-     */
-    updateDetailedPosition(currentTree, totalTrees, treeInSegment, treesInSegment) {
-        // This method is now deprecated - the comprehensive information should be set via updatePosition
-        console.warn('[TimelineUI] updateDetailedPosition is deprecated. Use updatePosition with all parameters instead.');
+        console.log(`[TimelineUI] Updated position: ${displayText}`);
     }
 
     /**
@@ -79,27 +96,19 @@ export class TimelineUI {
      * @param {string} phase - Current phase
      */
     updateInterpolationStatus(phase) {
-        if (!this.elements.interpolationStatus) return;
+        if (!this.elements.interpolationStatus) {
+            console.warn('[TimelineUI] interpolationStatus element not available, attempting refresh...');
+            this.refreshElements();
+        }
+
+        if (!this.elements.interpolationStatus) {
+            console.error('[TimelineUI] Failed to update interpolation status - element not found');
+            return;
+        }
 
         const phaseDisplay = PHASE_NAMES[phase] || 'Unknown';
         this.elements.interpolationStatus.textContent = phaseDisplay;
-    }
-
-    /**
-     * Update position info for interpolated state
-     * @param {Object} fromSegment - Source segment
-     * @param {Object} toSegment - Target segment
-     * @param {number} progress - Interpolation progress (0-1)
-     */
-    updateInterpolationPosition(fromSegment, toSegment, progress) {
-        if (!this.elements.currentPositionInfo) return;
-
-        const fromPhase = PHASE_NAMES[fromSegment.phase] || 'Unknown';
-        const toPhase = PHASE_NAMES[toSegment.phase] || 'Unknown';
-        const progressPercent = Math.round(progress * 100);
-
-        this.elements.currentPositionInfo.textContent =
-            `Over-interpolating ${fromPhase}→${toPhase} (${progressPercent}%)`;
+        console.log(`[TimelineUI] Updated interpolation status: ${phaseDisplay}`);
     }
 
     /**

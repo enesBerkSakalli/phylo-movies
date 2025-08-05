@@ -1,309 +1,300 @@
 import { useAppStore, TREE_COLOR_CATEGORIES } from '../../core/store.js';
 
 /**
- * Enhanced ColorManager with mixed color highlighting support
+ * ColorManager - Centralized color management system for phylogenetic tree visualization
  *
- * Centralizes all color-related logic for branches, nodes, and labels.
- * Handles marked components, highlighting, and mixed color blending.
+ * Handles three types of coloring:
+ * 1. Base coloring (monophyletic groups, taxa colors)
+ * 2. Active change edge highlighting (blue) - edges from lattice tracking
+ * 3. Marked component highlighting (red) - components from highlight solutions
+ *
+ * Used by LayerStyles.js to provide colors for DeckGL layers
  */
 export class ColorManager {
-
-  /**
-   * Create a ColorManager instance
-   * @param {Set} markedComponents - Set of marked taxa/components for highlighting
-   */
-  constructor(markedComponents = new Set()) {
-    this.marked = markedComponents;
-
-    // Configuration for highlighting and coloringRer
-    this.highlightConfig = {
-      // Blend intensities for different highlight types
-      markedComponents: 0.6,
-      s_edges: 0.7,
-      atomCovers: 0.5,
-
-      // Visual enhancement factors
-      strokeWidthMultiplier: useAppStore.getState().highlightStrokeMultiplier,
-      opacityBoost: 0.2,
-
-      // Highlight colors - use centralized colors
-      markedColor: TREE_COLOR_CATEGORIES.markedColor,
-      s_edgesColor: TREE_COLOR_CATEGORIES.s_edgesColor,
-      atomCoversColor: TREE_COLOR_CATEGORIES.atomCoversColor
-    };
-
-    // Monophyletic coloring configuration
+  constructor() {
+    // Configuration
     this.monophyleticColoringEnabled = true;
 
-    // Subscribe to store changes for automatic updates
-    this._setupStoreSubscription();
+        // State
+    this.currentActiveChangeEdges = new Set(); // Current active change edges for highlighting
+    this.marked = []; // Array of Sets for red highlighting
   }
 
-  /**
-   * Set up store subscription to automatically update when highlighting data changes
-   * @private
-   */
-  _setupStoreSubscription() {
-    // Subscribe to store changes
-    this.unsubscribe = useAppStore.subscribe((state, prevState) => {
-      // Check if currentTreeIndex changed (which affects highlight data)
-      if (state.currentTreeIndex !== prevState.currentTreeIndex) {
-        this._updateFromStore();
-      }
-
-      // Check if monophyletic coloring setting changed
-      if (state.monophyleticColoringEnabled !== prevState.monophyleticColoringEnabled) {
-        this.monophyleticColoringEnabled = state.monophyleticColoringEnabled;
-      }
-
-      // Check if highlight stroke multiplier changed
-      if (state.highlightStrokeMultiplier !== prevState.highlightStrokeMultiplier) {
-        this.highlightConfig.strokeWidthMultiplier = state.highlightStrokeMultiplier;
-      }
-    });
-  }
+  // ===========================
+  // PUBLIC API - BRANCH COLORS
+  // ===========================
 
   /**
-   * Update marked components from store data
-   * @private
+   * Get branch color with highlighting logic
+   * This is the main method used by LayerStyles.getLinkColor()
+   *
+   * Priority: Active change edge (blue) > Marked (red) > Base color
+   *
+   * @param {Object} linkData - D3 link data with target.data.split_indices
+   * @param {Object} options - Additional options (unused but kept for API compatibility)
+   * @returns {string} Hex color code
    */
-  _updateFromStore() {
-    const { getActualHighlightData } = useAppStore.getState();
-    const highlightData = getActualHighlightData();
+  getBranchColorWithHighlights(linkData, options = {}) {
+    // Check highlighting states
+    const isMarked = this._isComponentMarked(linkData);
+    const isActiveChangeEdge = this._isActiveChangeEdgeHighlighted(linkData, this.currentActiveChangeEdges);
 
-    if (highlightData) {
-      const transformedData = this._transformHighlightData(highlightData);
-      this.marked = transformedData;
+    // Apply color priority
+    if (isActiveChangeEdge) {
+      return TREE_COLOR_CATEGORIES.activeChangeEdgeColor; // Blue for active change edges
+    } else if (isMarked) {
+      return TREE_COLOR_CATEGORIES.markedColor; // Red for marked components
+    } else {
+      return this._getBaseBranchColor(linkData); // Base color (black or taxa color)
     }
   }
 
   /**
-   * Transform highlight data to the format expected by ColorManager
-   * @private
-   * @param {Array} highlightData - Raw highlight data
-   * @returns {Array} Transformed data as array of Sets
+   * Get base branch color (without highlighting)
+   * Used by LayerStyles to detect highlighting differences
+   * @param {Object} linkData - D3 link data with target.data.split_indices
+   * @returns {string} Hex color code
    */
-  _transformHighlightData(highlightData) {
-    if (!Array.isArray(highlightData) || highlightData.length === 0) {
-      return [];
-    }
-
-    const isArrayOfArrays = highlightData.every(item => Array.isArray(item));
-    return isArrayOfArrays
-      ? highlightData.map(innerArray => new Set(innerArray))
-      : [new Set(highlightData)];
-  }
-
-
-  /**
-   * Base branch color without any highlighting - pure base/group colors only
-   * @param {Object} linkData - The D3 link data object
-   * @param {Object} options - Highlighting options
-   * @returns {string} The color string (hex code)
-   */
-  getBranchColor(linkData, options = {}) {
-    // No highlighting applied - only base colors (monophyletic groups or default)
+  getBranchColor(linkData) {
     return this._getBaseBranchColor(linkData);
   }
 
-
+  // ========================
+  // PUBLIC API - NODE COLORS
+  // ========================
 
   /**
-   * Unified branch color method that handles both this.marked and lattice_edges highlighting
-   * @param {Object} linkData - The D3 link data object
-   * @param {Array|Set} lattice_edges - Set of lattice edges to highlight (s_edges) - these are the ACTIVE ones
-   * @param {Object} options - Highlighting options
-   * @returns {string} The color string (hex code)
+   * Get node color with highlighting and dimming logic
+   * Used by LayerStyles for nodes, labels, and extensions
+   *
+   * @param {Object} nodeData - Node data with data.split_indices and data.name
+   * @param {Array} activeChangeEdges - Active change edges for dimming logic (unused - uses this.currentActiveChangeEdges)
+   * @param {Object} options - Additional options
+   * @returns {string} Hex color code
    */
-  getBranchColorWithHighlights(linkData, lattice_edges = [], options = {}) {
-    const isMarked = this._isComponentMarked(linkData);
-    const isLatticeEdge = this._isS_EdgeHighlighted(linkData, lattice_edges);
-    // Only apply greying when there are actual ACTIVE lattice edges (highlightEdges from gui.js)
-    const hasActiveLatticeEdges = lattice_edges && lattice_edges.length > 0;
+  getNodeColor(nodeData, activeChangeEdges = [], options = {}) {
+    // Check highlighting states
+    const isMarked = this._isNodeMarked(nodeData);
+    const isActiveChangeEdgeNode = this._isNodeActiveChangeEdge(nodeData, activeChangeEdges);
+    const hasActiveChangeEdges = activeChangeEdges && activeChangeEdges.length > 0;
 
-    // Priority system: both can be active, but we need to determine visual effect
-    if (isLatticeEdge && isMarked) {
-      // Both highlighting types are active - use purple for combined effect
-      return TREE_COLOR_CATEGORIES.combinedHighlightColor; // Purple for both s-edge and marked
-    } else if (isLatticeEdge) {
-      // Only lattice edge highlighting - use blue
-      return TREE_COLOR_CATEGORIES.s_edgesColor; // Blue for s-edges (lattice edges)
-    } else if (isMarked) {
-      // Only marked component highlighting - use red
-      return TREE_COLOR_CATEGORIES.markedColor; // Red for marked components
+    // Apply color priority with dimming logic
+    if (isMarked) {
+      return TREE_COLOR_CATEGORIES.markedColor; // Red for marked nodes
+    } else if (isActiveChangeEdgeNode) {
+      return TREE_COLOR_CATEGORIES.activeChangeEdgeColor; // Blue for active change edge nodes
+    } else if (hasActiveChangeEdges && this._isNodeDownstreamOfAnyActiveChangeEdge(nodeData, activeChangeEdges)) {
+      return this._getBaseNodeColor(nodeData); // Keep normal color for downstream nodes
+    } else if (hasActiveChangeEdges) {
+      return '#cccccc'; // Grey out non-highlighted nodes when highlighting is active
     } else {
-      // No active highlighting - use base color
-      return this._getBaseBranchColor(linkData);
+      return this._getBaseNodeColor(nodeData); // Normal coloring when no highlighting
+    }
+  }
+
+  // =======================
+  // PUBLIC API - STATE MANAGEMENT
+  // =======================
+
+  /**
+   * Update marked components (red highlighting)
+   * Called by store when highlight solutions change
+   */
+  updateMarkedComponents(newMarkedComponents) {
+    if (Array.isArray(newMarkedComponents)) {
+      this.marked = newMarkedComponents;
+    } else if (newMarkedComponents instanceof Set) {
+      this.marked = [newMarkedComponents];
+    } else {
+      this.marked = [];
     }
   }
 
   /**
-   * Get the base branch color with optional parsimonious subtree coloring
-   * @param {Object} linkData - The D3 link data object
-   * @returns {string} Base color
+   * Update current active change edge (blue highlighting)
+   * Called by store when current tree position changes
+   */
+  updateActiveChangeEdge(activeChangeEdge) {
+    this.currentActiveChangeEdges = new Set(activeChangeEdge);
+  }
+
+  /**
+   * Enable/disable monophyletic group coloring
+   */
+  setMonophyleticColoring(enabled) {
+    this.monophyleticColoringEnabled = enabled;
+  }
+
+  /**
+   * Get monophyletic coloring status
+   */
+  isMonophyleticColoringEnabled() {
+    return this.monophyleticColoringEnabled;
+  }
+
+  // ================================
+  // PRIVATE - BASE COLOR CALCULATION
+  // ================================
+
+  /**
+   * Get base branch color (no highlighting)
+   * Implements monophyletic group coloring
    */
   _getBaseBranchColor(linkData) {
-    // If monophyletic coloring is disabled, return default color
     if (!this.monophyleticColoringEnabled) {
       return TREE_COLOR_CATEGORIES.defaultColor;
     }
 
-    // For branches, determine color based on the subtree they lead to
-    // This implements parsimonious coloring where branches get colored
-    // based on the predominant taxa group in their subtree
-
-    if (!linkData.target || !linkData.target.data) {
-      return TREE_COLOR_CATEGORIES.defaultColor;
-    }
-
-    // If this branch leads to a leaf, use the leaf's taxa color
+    // Leaf branches get their taxa color
     if (!linkData.target.children || linkData.target.children.length === 0) {
       const leafName = linkData.target.data.name;
       return TREE_COLOR_CATEGORIES[leafName] || TREE_COLOR_CATEGORIES.defaultColor;
     }
 
-    // For internal branches, determine color based on the subtree
-    // Get all leaf names in this subtree
+    // Internal branches: check if monophyletic
     const subtreeLeaves = this._getSubtreeLeaves(linkData.target);
-
     if (subtreeLeaves.length === 0) {
       return TREE_COLOR_CATEGORIES.defaultColor;
     }
 
-    // Check if all leaves in subtree have the same color (monophyletic group)
+    // Get unique colors in subtree
     const leafColors = subtreeLeaves.map(leafName =>
       TREE_COLOR_CATEGORIES[leafName] || TREE_COLOR_CATEGORIES.defaultColor
     );
-
-    // If all leaves have the same color, use that color for the branch
     const uniqueColors = [...new Set(leafColors)];
+
+    // Color branch only if all leaves have same color (monophyletic)
     if (uniqueColors.length === 1 && uniqueColors[0] !== TREE_COLOR_CATEGORIES.defaultColor) {
       return uniqueColors[0];
     }
 
-    // Default to black for mixed subtrees (only color monophyletic groups)
     return TREE_COLOR_CATEGORIES.defaultColor;
   }
 
   /**
-   * Helper method to get all leaf names in a subtree
-   * @param {Object} node - The root node of the subtree
-   * @returns {Array<string>} Array of leaf names
+   * Get base node color (taxa color or default)
+   */
+  _getBaseNodeColor(nodeData) {
+    return TREE_COLOR_CATEGORIES[nodeData.data.name] || TREE_COLOR_CATEGORIES.defaultColor;
+  }
+
+  /**
+   * Recursively collect all leaf names in a subtree
    */
   _getSubtreeLeaves(node) {
     if (!node) return [];
 
-    // If this is a leaf, return its name
     if (!node.children || node.children.length === 0) {
       return [node.data.name];
     }
 
-    // Recursively collect leaves from all children
     const leaves = [];
     node.children.forEach(child => {
       leaves.push(...this._getSubtreeLeaves(child));
     });
-
     return leaves;
   }
 
-  /**
-   * Check if a link is highlighted as an s_edge
-   * @param {Object} linkData - The D3 link data object
-   * @param {Array|Set} s_edges - Set of edges to highlight
-   * @returns {boolean} True if this link is an s_edge
-   */
-  _isS_EdgeHighlighted(linkData, s_edges) {
-    if (!s_edges || s_edges.length === 0) {
-      return false;
-    }
+  // ====================================
+  // PRIVATE - S-EDGE HIGHLIGHTING CHECKS
+  // ====================================
 
-    if (!linkData.target || !linkData.target.data || !linkData.target.data.split_indices) {
+  /**
+   * Check if branch matches current active change edge
+   * Compares split_indices Sets for exact match
+   */
+  _isActiveChangeEdgeHighlighted(linkData, activeChangeEdge) {
+    if (!activeChangeEdge || !linkData.target?.data?.split_indices) {
       return false;
     }
 
     const treeSplit = new Set(linkData.target.data.split_indices);
 
-    // Convert s_edges to array if it's a Set
-    const edgesArray = Array.isArray(s_edges) ? s_edges : Array.from(s_edges);
+    // Check if Sets have identical contents
+    const areSetsEqual = treeSplit.size === activeChangeEdge.size &&
+                         [...treeSplit].every(element => activeChangeEdge.has(element));
 
-    // Check if this tree split matches any of the s_edges
+    return areSetsEqual;
+  }
+
+  /**
+   * Check if node matches any active change edge
+   */
+  _isNodeActiveChangeEdge(nodeData, activeChangeEdges) {
+    if (!activeChangeEdges || activeChangeEdges.length === 0 || !nodeData.data?.split_indices) {
+      return false;
+    }
+
+    const nodeSplit = new Set(nodeData.data.split_indices);
+    const edgesArray = Array.isArray(activeChangeEdges) ? activeChangeEdges : Array.from(activeChangeEdges);
+
+    // Check against each active change edge
     for (const edge of edgesArray) {
       if (Array.isArray(edge)) {
         const edgeSet = new Set(edge);
-        // Check if the sets are equal (same elements)
-        if (treeSplit.size === edgeSet.size && [...treeSplit].every(x => edgeSet.has(x))) {
+        // Check for exact Set match
+        if (nodeSplit.size === edgeSet.size && [...nodeSplit].every(x => edgeSet.has(x))) {
           return true;
         }
       }
     }
-
     return false;
   }
 
   /**
-   * Check if a branch is downstream (part of the subtree) of any s-edge
-   * Uses d3.hierarchy node structure to check if current node is a descendant of any s-edge node
-   * @param {Object} linkData - The D3 link data object
-   * @param {Array|Set} s_edges - Set of s-edges (each s-edge is an array of indices)
-   * @returns {boolean} True if this branch is downstream of any s-edge
+   * Check if node is in subtree of any active change edge
+   * Used for keeping downstream nodes colored during highlighting
    */
-  _isDownstreamOfAnyS_Edge(linkData, s_edges) {
-    if (!s_edges || s_edges.length === 0) {
+  _isNodeDownstreamOfAnyActiveChangeEdge(nodeData, activeChangeEdges) {
+    if (!activeChangeEdges || activeChangeEdges.length === 0 || !nodeData.data?.split_indices) {
       return false;
     }
 
-    if (!linkData.target || !linkData.target.data || !linkData.target.data.split_indices) {
-      return false;
-    }
+    const edgesArray = Array.isArray(activeChangeEdges) ? activeChangeEdges : Array.from(activeChangeEdges);
 
-    const currentNode = linkData.target;
-
-    // Convert s_edges to array if it's a Set - each element is a single s-edge (array of indices)
-    const edgesArray = Array.isArray(s_edges) ? s_edges : Array.from(s_edges);
-
-    // Walk up the tree from current node to root, checking if any ancestor matches any s-edge
-    let ancestor = currentNode.parent;
+    // Walk up tree checking ancestors
+    let ancestor = nodeData.parent;
     while (ancestor) {
-      if (ancestor.data && ancestor.data.split_indices) {
+      if (ancestor.data?.split_indices) {
         const ancestorSplit = new Set(ancestor.data.split_indices);
 
-        // Check if this ancestor matches any s-edge
+        // Check if ancestor matches any active change edge
         for (const edge of edgesArray) {
           if (Array.isArray(edge)) {
             const edgeSet = new Set(edge);
-            // Check if the sets are equal (same elements)
             if (ancestorSplit.size === edgeSet.size && [...ancestorSplit].every(x => edgeSet.has(x))) {
-              return true; // Current node is downstream of this s-edge
+              return true;
             }
           }
         }
       }
       ancestor = ancestor.parent;
     }
-
     return false;
   }
 
+  // =======================================
+  // PRIVATE - MARKED COMPONENT CHECKS
+  // =======================================
+
   /**
-   * Check if a component is marked
-   * @param {Object} linkData - The D3 link data object
-   * @returns {boolean} True if marked
+   * Check if branch is part of marked components
+   * Uses subset logic: branch is marked if its split is subset of any marked component
    */
   _isComponentMarked(linkData) {
-    if (!linkData.target || !linkData.target.data || !linkData.target.data.split_indices) {
+    if (!linkData.target?.data?.split_indices || !this.marked) {
       return false;
     }
 
     const treeSplit = new Set(linkData.target.data.split_indices);
 
-    // `this.marked` is an iterable of components (e.g., a Set of Arrays).
-    // We iterate through each component directly.
+    // Check each marked component
     for (const component of this.marked) {
-      // `component` is the group of leaves to check against (e.g., ['t1', 't2']).
       const markedSet = new Set(component);
-      let subset =  [...treeSplit].every(leaf => markedSet.has(leaf));
-      const isProperSubset = treeSplit.size <= markedSet.size && subset;
+      // Check if treeSplit is subset of markedSet
+      const isSubset = [...treeSplit].every(leaf => markedSet.has(leaf));
+      const isProperSubset = treeSplit.size <= markedSet.size && isSubset;
+
       if (isProperSubset) {
         return true;
       }
@@ -312,185 +303,33 @@ export class ColorManager {
   }
 
   /**
-   * Enhanced node color with highlighting and s-edge dimming support
-   * @param {Object} nodeData - The D3 node data object
-   * @param {Array|Set} lattice_edges - Set of lattice edges to highlight (s_edges) - these are the ACTIVE ones
-   * @param {Object} options - Highlighting options
-   * @returns {string} The color string
-   */
-  getNodeColor(nodeData, lattice_edges = [], options = {}) {
-    const isMarked = this._isNodeMarked(nodeData);
-    const isS_EdgeNode = this._isNodeS_Edge(nodeData, lattice_edges);
-    // Only apply greying when there are actual ACTIVE lattice edges (highlightEdges from gui.js)
-    const hasActiveLatticeEdges = lattice_edges && lattice_edges.length > 0;
-
-    // Priority system for node coloring
-    if (isMarked) {
-      return TREE_COLOR_CATEGORIES.markedColor; // Red for marked nodes
-    } else if (isS_EdgeNode) {
-      return TREE_COLOR_CATEGORIES.s_edgesColor; // Blue for s-edge nodes
-    } else if (hasActiveLatticeEdges && this._isNodeDownstreamOfAnyS_Edge(nodeData, lattice_edges)) {
-      // Node is downstream of any ACTIVE s-edge - keep normal coloring to show the subtree
-      return this._getBaseNodeColor(nodeData);
-    } else if (hasActiveLatticeEdges) {
-      // ACTIVE s-edges exist but this node is not highlighted or downstream - grey it out
-      return '#cccccc'; // Grey color for dimmed nodes
-    } else {
-      // No active highlighting - use base color
-      return this._getBaseNodeColor(nodeData);
-    }
-  }
-
-  /**
-   * Get the base node color before any highlighting (preserves taxa coloring)
-   * @param {Object} nodeData - The D3 node data object
-   * @returns {string} Base color
-   */
-  _getBaseNodeColor(nodeData) {
-    // Try to get color by name (taxa coloring), fallback to default
-    return TREE_COLOR_CATEGORIES[nodeData.data.name] || TREE_COLOR_CATEGORIES.defaultColor;
-  }
-
-  /**
-   * Check if a node is marked for highlighting
-   * @param {Object} nodeData - The D3 node data object
-   * @returns {boolean} True if marked
+   * Check if node intersects with any marked component
    */
   _isNodeMarked(nodeData) {
     const treeSplit = new Set(nodeData.data.split_indices);
-    if (treeSplit.size === 0) {
+    if (treeSplit.size === 0 || !this.marked) {
       return false;
     }
 
-    // `this.marked` is an array of Sets (e.g., [Set {9, 10, 11}])
-    for (const markedSet of this.marked) { // Iterate over the Sets directly
-      // Check if there's any intersection between treeSplit and markedSet
+    // Check for any intersection with marked components
+    for (const markedSet of this.marked) {
       for (const leaf of treeSplit) {
         if (markedSet.has(leaf)) {
-          return true; // Found a common element, so this node is marked
-        }
-      }
-    }
-    return false;
-  }
-
-  /**
-   * Check if a node is an s-edge node
-   * @param {Object} nodeData - The D3 node data object
-   * @param {Array|Set} s_edges - Set of s-edges
-   * @returns {boolean} True if this node is an s-edge
-   */
-  _isNodeS_Edge(nodeData, s_edges) {
-    if (!s_edges || s_edges.length === 0) {
-      return false;
-    }
-
-    if (!nodeData.data || !nodeData.data.split_indices) {
-      return false;
-    }
-
-    const nodeSplit = new Set(nodeData.data.split_indices);
-    const edgesArray = Array.isArray(s_edges) ? s_edges : Array.from(s_edges);
-
-    // Check if this node's split matches any of the s_edges
-    for (const edge of edgesArray) {
-      if (Array.isArray(edge)) {
-        const edgeSet = new Set(edge);
-        // Check if the sets are equal (same elements)
-        if (nodeSplit.size === edgeSet.size && [...nodeSplit].every(x => edgeSet.has(x))) {
           return true;
         }
       }
     }
-
     return false;
   }
 
-  /**
-   * Check if a node is downstream (part of the subtree) of any s-edge
-   * Uses d3.hierarchy node structure to check if current node is a descendant of any s-edge node
-   * @param {Object} nodeData - The D3 node data object
-   * @param {Array|Set} s_edges - Set of s-edges (each s-edge is an array of indices)
-   * @returns {boolean} True if this node is downstream of any s-edge
-   */
-  _isNodeDownstreamOfAnyS_Edge(nodeData, s_edges) {
-    if (!s_edges || s_edges.length === 0) {
-      return false;
-    }
-
-    if (!nodeData.data || !nodeData.data.split_indices) {
-      return false;
-    }
-
-    const edgesArray = Array.isArray(s_edges) ? s_edges : Array.from(s_edges);
-
-    // Walk up the tree from current node to root, checking if any ancestor matches any s-edge
-    let ancestor = nodeData.parent;
-    while (ancestor) {
-      if (ancestor.data && ancestor.data.split_indices) {
-        const ancestorSplit = new Set(ancestor.data.split_indices);
-
-        // Check if this ancestor matches any s-edge
-        for (const edge of edgesArray) {
-          if (Array.isArray(edge)) {
-            const edgeSet = new Set(edge);
-            // Check if the sets are equal (same elements)
-            if (ancestorSplit.size === edgeSet.size && [...ancestorSplit].every(x => edgeSet.has(x))) {
-              return true; // Current node is downstream of this s-edge
-            }
-          }
-        }
-      }
-      ancestor = ancestor.parent;
-    }
-
-    return false;
-  }
-
+  // ===========
+  // LIFECYCLE
+  // ===========
 
   /**
-   * Updates the marked components
-   * @param {Set} newMarkedComponents - New set of marked components
-   */
-  updateMarkedComponents(newMarkedComponents) {
-    this.marked = newMarkedComponents;
-  }
-
-
-
-  /**
-   * Enable or disable monophyletic group coloring
-   * @param {boolean} enabled - Whether to enable monophyletic coloring
-   */
-  setMonophyleticColoring(enabled) {
-    this.monophyleticColoringEnabled = enabled;
-  }
-
-  /**
-   * Get current monophyletic coloring status
-   * @returns {boolean} Whether monophyletic coloring is enabled
-   */
-  isMonophyleticColoringEnabled() {
-    return this.monophyleticColoringEnabled;
-  }
-
-
-  /**
-   * Gets the current marked components
-   * @returns {Set} The marked components set
-   */
-  getMarkedComponents() {
-    return this.marked;
-  }
-
-  /**
-   * Clean up store subscription
+   * Clean up resources
    */
   destroy() {
-    if (this.unsubscribe) {
-      this.unsubscribe();
-      this.unsubscribe = null;
-    }
+    // No store subscription to clean up - store handles updates centrally
   }
-
 }
