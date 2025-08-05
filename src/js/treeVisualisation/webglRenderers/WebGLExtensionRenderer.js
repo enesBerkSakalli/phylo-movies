@@ -46,7 +46,7 @@ export class WebGLExtensionRenderer {
       const { extensionRadius } = this.controller._getConsistentRadii();
       return extensionRadius;
     }
-    
+
     // Fallback to legacy method
     return this.controller._calculateUniformAwareRadius ?
       this.controller._calculateUniformAwareRadius(baseExtensionRadius) :

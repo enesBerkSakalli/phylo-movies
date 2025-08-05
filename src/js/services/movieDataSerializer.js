@@ -21,9 +21,9 @@ export class MovieDataSerializer {
     }
 
     // Warn about missing optional but important fields for TransitionIndexResolver
-    const importantOptionalFields = ['tree_metadata', 'lattice_edge_tracking', 's_edge_metadata'];
+    const importantOptionalFields = ['tree_metadata', 'activeChangeEdgeTracking', 'activeChangeEdge_metadata'];
     const missingOptionalFields = importantOptionalFields.filter(field => !(field in this.data));
-    
+
     if (missingOptionalFields.length > 0) {
       console.warn(`[MovieDataSerializer] Missing optional but important fields: ${missingOptionalFields.join(', ')}. TransitionIndexResolver functionality may be limited.`);
     }
@@ -91,25 +91,29 @@ export class MovieDataSerializer {
    * Get tree metadata for TransitionIndexResolver
    */
   getTreeMetadata() {
-    return this.data.tree_metadata || [];
+    const metadata = this.data.tree_metadata || [];
+
+    // Transform field names in each metadata object for consistency
+    return metadata.map(item => ({
+      ...item,
+      activeChangeEdgeTracker: item.activeChangeEdgeTracker || item.s_edge_tracker
+    }));
   }
 
   /**
    * Get lattice edge tracking data
    */
   getLatticeEdgeTracking() {
-    return this.data.lattice_edge_tracking || [];
+    return this.data.lattice_edge_tracking || this.data.activeChangeEdgeTracking || [];
   }
 
   /**
-   * Get s-edge metadata for variable-length s-edge support
+   * Get active change edge metadata for variable-length support
    */
-  getSEdgeMetadata() {
-    return this.data.s_edge_metadata || {
-      s_edge_count: 0,
-      trees_per_s_edge: {},
-      total_interpolated_trees: 0,
-      phase_distribution: {}
+  getActiveChangeEdgeMetadata() {
+    return this.data.s_edge_metadata || this.data.activeChangeEdge_metadata || {
+      activeChangeEdge_count: 0,
+      trees_per_activeChangeEdge: {}
     };
   }
 
@@ -125,7 +129,7 @@ export class MovieDataSerializer {
     const fileMetadata = this.getFileMetadata();
     const treeMetadata = this.getTreeMetadata();
     const latticeEdgeTracking = this.getLatticeEdgeTracking();
-    const sEdgeMetadata = this.getSEdgeMetadata();
+    const activeChangeEdgeMetadata = this.getActiveChangeEdgeMetadata();
 
     return {
       // Tree data
@@ -160,8 +164,8 @@ export class MovieDataSerializer {
 
       // TransitionIndexResolver required fields
       tree_metadata: treeMetadata,
-      lattice_edge_tracking: latticeEdgeTracking,
-      s_edge_metadata: sEdgeMetadata,
+      activeChangeEdgeTracking: latticeEdgeTracking,
+      activeChangeEdge_metadata: activeChangeEdgeMetadata,
       highlighted_elements: visualization.highlightedElements, // Alias for compatibility
     };
   }
@@ -201,11 +205,11 @@ export class MovieDataSerializer {
    * Check if complete TransitionIndexResolver data is available
    */
   hasCompleteTransitionData() {
-    return this.data.tree_metadata && 
-           this.data.lattice_edge_tracking && 
-           this.data.s_edge_metadata &&
+    return this.data.tree_metadata &&
+           (this.data.lattice_edge_tracking || this.data.activeChangeEdgeTracking) &&
+           (this.data.s_edge_metadata || this.data.activeChangeEdge_metadata) &&
            Array.isArray(this.data.tree_metadata) &&
-           Array.isArray(this.data.lattice_edge_tracking);
+           Array.isArray(this.data.lattice_edge_tracking || this.data.activeChangeEdgeTracking);
   }
 
   /**
@@ -215,7 +219,7 @@ export class MovieDataSerializer {
     const trees = this.getTrees();
     const msa = this.getMSA();
     const fileMetadata = this.getFileMetadata();
-    const sEdgeMetadata = this.getSEdgeMetadata();
+    const activeChangeEdgeMetadata = this.getActiveChangeEdgeMetadata();
 
     return {
       fileName: fileMetadata.fileName,
@@ -228,8 +232,8 @@ export class MovieDataSerializer {
       processingTimeMs: trees.processingTimeMs,
       windowSize: msa.windowSize,
       windowStep: msa.windowStep,
-      sEdgeCount: sEdgeMetadata.s_edge_count,
-      totalInterpolatedTrees: sEdgeMetadata.total_interpolated_trees,
+      activeChangeEdgeCount: activeChangeEdgeMetadata.activeChangeEdge_count,
+      totalInterpolatedTrees: activeChangeEdgeMetadata.total_interpolated_trees,
     };
   }
 }

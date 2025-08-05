@@ -90,17 +90,17 @@
   --md-sys-color-on-primary: var(--md-ref-palette-primary100);
   --md-sys-color-primary-container: var(--md-ref-palette-primary90);
   --md-sys-color-on-primary-container: var(--md-ref-palette-primary10);
-  
+
   --md-sys-color-secondary: var(--md-ref-palette-secondary40);
   --md-sys-color-on-secondary: var(--md-ref-palette-secondary100);
   --md-sys-color-secondary-container: var(--md-ref-palette-secondary90);
   --md-sys-color-on-secondary-container: var(--md-ref-palette-secondary10);
-  
+
   --md-sys-color-tertiary: var(--md-ref-palette-tertiary40);
   --md-sys-color-on-tertiary: var(--md-ref-palette-tertiary100);
   --md-sys-color-tertiary-container: var(--md-ref-palette-tertiary90);
   --md-sys-color-on-tertiary-container: var(--md-ref-palette-tertiary10);
-  
+
   --md-sys-color-error: var(--md-ref-palette-error40);
   --md-sys-color-on-error: var(--md-ref-palette-error100);
   --md-sys-color-error-container: var(--md-ref-palette-error90);
@@ -122,12 +122,12 @@
   /* Additional System Colors */
   --md-sys-color-outline: var(--md-ref-palette-neutral-variant50);
   --md-sys-color-outline-variant: var(--md-ref-palette-neutral-variant80);
-  
+
   /* Inverse Colors - Light Theme */
   --md-sys-color-inverse-surface: var(--md-ref-palette-neutral20);
   --md-sys-color-inverse-on-surface: var(--md-ref-palette-neutral95);
   --md-sys-color-inverse-primary: var(--md-ref-palette-primary80);
-  
+
   /* Shadow & Scrim */
   --md-sys-color-shadow: var(--md-ref-palette-neutral0);
   --md-sys-color-scrim: var(--md-ref-palette-neutral0);
@@ -190,7 +190,7 @@
   --md-elev-overlay-5: color-mix(in srgb, var(--md-sys-color-primary) 24%); /* MD3 spec: 24% overlay at level 5 */
 
   /* Navigation Layout - MD3 Spec */
-  --nav-width-default: 280px; /* Reduced from 360px for better space utilization */
+  --nav-width-default: 360px; /* Reduced from 360px for better space utilization */
   --nav-width-medium: 260px;
   --nav-width-small: 240px;
   --md-sys-font-family-monospace: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
@@ -238,7 +238,7 @@
 @supports (background: color-mix(in srgb, red 50%, blue)) {
   :root {
     --chart-background: color-mix(in srgb, var(--viz-neutral) 20%, transparent);
-    
+
     /* State layer colors for interactive elements */
     --md-sys-state-hover: color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent);
     --md-sys-state-focus: color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);

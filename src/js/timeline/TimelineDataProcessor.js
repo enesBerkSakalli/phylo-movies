@@ -9,17 +9,22 @@ import { TIMELINE_CONSTANTS, PHASE_NAMES, COLOR_CLASSES } from './constants.js';
 export class TimelineDataProcessor {
     /**
      * Create timeline segments from movie data using TransitionIndexResolver
-     * @param {Object} movieData - Raw movie data
+     * @param {Object} movieData - Raw movie data OR serializer instance
      * @param {TransitionIndexResolver} resolver - Existing transition resolver
      * @returns {Array} Timeline segments
      */
     static createSegments(movieData, resolver) {
-        const { tree_metadata, interpolated_trees, lattice_edge_tracking } = movieData;
+        // Check if movieData is a serializer instance
+        const isSerializer = movieData && typeof movieData.getTreeMetadata === 'function';
+
+        const tree_metadata = isSerializer ? movieData.getTreeMetadata() : movieData.tree_metadata;
+        const interpolated_trees = isSerializer ? movieData.getTrees().interpolatedTrees : movieData.interpolated_trees;
+        const activeChangeEdgeTracking = isSerializer ? movieData.getLatticeEdgeTracking() : movieData.activeChangeEdgeTracking || movieData.lattice_edge_tracking;
 
         console.log('[TimelineDataProcessor] Creating segments from:', {
             tree_metadata: tree_metadata?.length,
             interpolated_trees: interpolated_trees?.length,
-            lattice_edge_tracking: lattice_edge_tracking?.length,
+            activeChangeEdgeTracking: activeChangeEdgeTracking?.length,
             resolver: !!resolver
         });
 
@@ -33,7 +38,9 @@ export class TimelineDataProcessor {
 
         // Group metadata by s-edge tracker to create one segment per s-edge transition
         tree_metadata.forEach((metadata, index) => {
-            const key = metadata.s_edge_tracker || `original_${metadata.source_tree_index || index}`;
+            // Handle both old and new field names for backward compatibility
+            const activeChangeEdgeTracker = metadata.activeChangeEdgeTracker || metadata.s_edge_tracker;
+            const key = activeChangeEdgeTracker || `original_${metadata.source_tree_index || index}`;
 
             if (!groupedByTransition.has(key)) {
                 groupedByTransition.set(key, []);
@@ -42,22 +49,26 @@ export class TimelineDataProcessor {
                 metadata,
                 index,
                 tree: interpolated_trees[index],
-                latticeEdge: lattice_edge_tracking?.[index] || null
+                activeChangeEdge: activeChangeEdgeTracking?.[index] || null
             });
         });
 
         // Create segments from grouped transitions - one per unique s-edge
         groupedByTransition.forEach((group) => {
-            if (group.length === 1 || !group[0].metadata.s_edge_tracker || group[0].metadata.s_edge_tracker === "None") {
+            // Check the resolved tracker value for the first item in the group
+            const firstMetadata = group[0].metadata;
+            const resolvedTracker = firstMetadata.activeChangeEdgeTracker || firstMetadata.s_edge_tracker;
+
+            if (group.length === 1 || !resolvedTracker || resolvedTracker === "None") {
                 // Single segment (final tree or original tree without s-edge)
-                const { metadata, index, tree, latticeEdge } = group[0];
+                const { metadata, index, tree, activeChangeEdge } = group[0];
                 segments.push({
                     index: segments.length,
                     metadata,
                     tree,
-                    latticeEdge,
+                    activeChangeEdge,
                     phase: metadata.phase,
-                    sEdgeTracker: metadata.s_edge_tracker,
+                    activeChangeEdgeTracker: resolvedTracker,
                     treePairKey: metadata.tree_pair_key,
                     stepInPair: metadata.step_in_pair,
                     treeName: metadata.tree_name || `Tree ${index}`,
@@ -92,12 +103,12 @@ export class TimelineDataProcessor {
                     index: segments.length,
                     metadata: first.metadata, // Use first metadata as representative
                     tree: first.tree, // Use first tree as starting point
-                    latticeEdge: first.latticeEdge,
+                    activeChangeEdge: first.activeChangeEdge,
                     phase: first.metadata.phase,
-                    sEdgeTracker: first.metadata.s_edge_tracker,
+                    activeChangeEdgeTracker: resolvedTracker,
                     treePairKey: first.metadata.tree_pair_key,
                     stepInPair: first.metadata.step_in_pair,
-                    treeName: first.metadata.tree_name || `S-Edge ${first.metadata.s_edge_tracker}`,
+                    treeName: first.metadata.tree_name || `Active Change Edge ${resolvedTracker}`,
                     hasInterpolation: true,
                     isFullTree: false,
                     treeInfo: resolver.getTreeInfo(first.index),
@@ -141,8 +152,8 @@ export class TimelineDataProcessor {
 
         if (isFullTree) {
             return `FULL TREE: ${treeName} - ${treeInfo.semanticType} (stable state)`;
-        } else if (segment.sEdgeTracker && segment.sEdgeTracker !== "None") {
-            const leafIndices = TimelineDataProcessor._parseLeafIndices(segment.sEdgeTracker);
+        } else if (segment.activeChangeEdgeTracker && segment.activeChangeEdgeTracker !== "None") {
+            const leafIndices = TimelineDataProcessor._parseLeafIndices(segment.activeChangeEdgeTracker);
             const phaseDisplay = PHASE_NAMES[segment.phase] || 'Unknown';
             return `${position}: ${treeName} - ${phaseDisplay} phase (modifying leaves: ${leafIndices.join(', ')})`;
         } else {
@@ -344,16 +355,16 @@ export class TimelineDataProcessor {
     }
 
     /**
-     * Parse leaf indices from s_edge_tracker string
+     * Parse leaf indices from activeChangeEdgeTracker string
      * @private
-     * @param {string} sEdgeKey - S-edge tracker like "(9,10,11)"
+     * @param {string} activeChangeEdgeKey - Active change edge tracker like "(9,10,11)"
      * @returns {Array<number>} Array of leaf indices
      */
-    static _parseLeafIndices(sEdgeKey) {
-        if (!sEdgeKey?.trim()) return [];
+    static _parseLeafIndices(activeChangeEdgeKey) {
+        if (!activeChangeEdgeKey?.trim()) return [];
 
         try {
-            const cleanKey = sEdgeKey.replace(/[()]/g, '').trim();
+            const cleanKey = activeChangeEdgeKey.replace(/[()]/g, '').trim();
             if (!cleanKey) return [];
 
             return cleanKey
@@ -361,7 +372,7 @@ export class TimelineDataProcessor {
                 .map(idx => parseInt(idx.trim(), 10))
                 .filter(Number.isInteger);
         } catch (error) {
-            console.warn(`[TimelineDataProcessor] Failed to parse leaf indices from "${sEdgeKey}":`, error);
+            console.warn(`[TimelineDataProcessor] Failed to parse leaf indices from "${activeChangeEdgeKey}":`, error);
             return [];
         }
     }

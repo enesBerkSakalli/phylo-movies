@@ -47,6 +47,56 @@
       </div>
     </div>
 
+    <!-- Highlighting Colors Section -->
+    <div class="control-row">
+      <label class="slider-label" title="Customize colors for different types of highlighting.">
+        <span class="material-icons" aria-hidden="true">highlight</span> Highlighting Colors
+      </label>
+    </div>
+
+    <!-- Active Change Edges Color -->
+    <div class="control-row">
+      <div class="color-picker-row">
+        <label class="color-picker-label" for="active-change-edges-color" title="Color for active change edge highlighting (blue by default).">
+          <span class="material-icons" aria-hidden="true">timeline</span> Active Change Edges Color
+        </label>
+        <input type="color" class="color-picker" id="active-change-edges-color" value="#2196f3"
+          title="Active change edges highlighting color" aria-label="Active change edges color picker" />
+      </div>
+    </div>
+
+    <!-- Marked Components Color -->
+    <div class="control-row">
+      <div class="color-picker-row">
+        <label class="color-picker-label" for="marked-color" title="Color for marked component highlighting (red by default).">
+          <span class="material-icons" aria-hidden="true">flag</span> Marked Color
+        </label>
+        <input type="color" class="color-picker" id="marked-color" value="#ff5722"
+          title="Marked components highlighting color" aria-label="Marked components color picker" />
+      </div>
+    </div>
+
+    <!-- Dimmed Elements Color -->
+    <div class="control-row">
+      <div class="color-picker-row">
+        <label class="color-picker-label" for="dimmed-color" title="Color for dimmed/inactive elements when highlighting is active.">
+          <span class="material-icons" aria-hidden="true">opacity</span> Dimmed Color
+        </label>
+        <input type="color" class="color-picker" id="dimmed-color" value="#cccccc"
+          title="Dimmed elements color" aria-label="Dimmed elements color picker" />
+      </div>
+    </div>
+
+    <!-- Camera Mode Button -->
+    <div class="control-row">
+      <div class="button-row">
+        <button id="camera-mode-button" class="md-button" title="Switch between 2D orthographic and 3D orbit camera modes" aria-label="Toggle camera mode">
+          <span class="material-icons">3d_rotation</span>
+          <span id="camera-mode-text">2D View</span>
+        </button>
+      </div>
+    </div>
+
     <!-- Branch Length Toggle -->
     <div class="control-row">
       <label class="slider-label" for="branch-length-options" title="Choose how branch lengths are handled in the tree visualization.">
