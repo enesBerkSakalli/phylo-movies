@@ -4,9 +4,9 @@ import { MovieTimelineManager } from '../src/js/timeline/MovieTimelineManager.js
 // Mock data structure
 const mockMovieData = {
     tree_metadata: [
-        { phase: 'ORIGINAL', s_edge_tracker: 'None', tree_name: 'Tree 1' },
-        { phase: 'DOWN_PHASE', s_edge_tracker: '(1,2)', tree_name: 'Tree 2', tree_pair_key: 'pair1', step_in_pair: 1 },
-        { phase: 'COLLAPSE_PHASE', s_edge_tracker: '(1,2)', tree_name: 'Tree 3', tree_pair_key: 'pair1', step_in_pair: 2 }
+        { phase: 'ORIGINAL', activeChangeEdgeTracker: 'None', tree_name: 'Tree 1' },
+        { phase: 'DOWN_PHASE', activeChangeEdgeTracker: '(1,2)', tree_name: 'Tree 2', tree_pair_key: 'pair1', step_in_pair: 1 },
+        { phase: 'COLLAPSE_PHASE', activeChangeEdgeTracker: '(1,2)', tree_name: 'Tree 3', tree_pair_key: 'pair1', step_in_pair: 2 }
     ],
     interpolated_trees: [
         { nodes: [], edges: [] },
@@ -37,21 +37,21 @@ console.log('Testing MovieTimelineManager after cleanup...');
 
 try {
     const manager = new MovieTimelineManager(mockMovieData, mockGui, mockResolver);
-    
+
     // Test basic functionality
     console.log('✓ Constructor works');
     console.log('✓ Timeline segments created:', manager.timelineSegments?.length);
-    
+
     // Test position update
     manager.updateCurrentPosition();
     console.log('✓ Position update works');
-    
+
     // Test destroy
     manager.destroy();
     console.log('✓ Destroy works');
-    
+
     console.log('\n✅ All tests passed! Timeline cleanup was successful.');
-    
+
 } catch (error) {
     console.error('❌ Test failed:', error);
 }
