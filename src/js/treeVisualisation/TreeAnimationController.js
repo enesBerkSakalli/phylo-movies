@@ -31,7 +31,7 @@ export class TreeAnimationController {
     this.root = _currentRoot; // Can be null initially
     this.marked = new Set();
     this._drawDuration = 1000;
-    this.lattice_edges = [];
+    this.activeChangeEdges = [];
 
     // Transition tracking for phase-aware animations
     this.previousTreeIndex = -1;
@@ -190,7 +190,7 @@ export class TreeAnimationController {
       const linkStages = this.linkRenderer.getAnimationStages(
         linksData,
         this.drawDuration,
-        this.lattice_edges,
+        this.activeChangeEdges,
         filteredData.links
       );
 
@@ -413,7 +413,7 @@ export class TreeAnimationController {
     treeData,
     drawDuration,
     marked,
-    lattice_edges = [],
+    activeChangeEdges = [],
     monophyleticColoring,
     treeIndex,
     transitionResolver
@@ -451,7 +451,7 @@ export class TreeAnimationController {
       const { updateColorManagerMarkedComponents } = useAppStore.getState();
       updateColorManagerMarkedComponents(this.marked);
     }
-    if (lattice_edges) this.lattice_edges = lattice_edges;
+    if (activeChangeEdges) this.activeChangeEdges = activeChangeEdges;
 
 
     // Style updates are handled directly by store actions - no need for styleConfig updates
@@ -484,7 +484,7 @@ export class TreeAnimationController {
       monophyleticColoringEnabled,
       animationSpeed,
       getActualHighlightData,
-      lattice_edge_tracking,
+      activeChangeEdgeTracking,
       transitionResolver
     } = useAppStore.getState();
 
@@ -517,7 +517,7 @@ export class TreeAnimationController {
     }
 
     // Update other properties from store
-    this.lattice_edges = lattice_edge_tracking || [];
+    this.activeChangeEdges = activeChangeEdgeTracking || [];
 
     // Use store actions for ColorManager updates
     const { setColorManagerMonophyleticColoring, updateColorManagerMarkedComponents } = useAppStore.getState();

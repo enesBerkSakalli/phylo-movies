@@ -2,6 +2,7 @@ import Gui from "../controllers/gui.js";
 import { useAppStore } from './store.js';
 import { debounce } from '../utils/debounce.js';
 import 'winbox/dist/css/winbox.min.css';
+import { DeckGLTreeAnimationController } from '../treeVisualisation/DeckGLTreeAnimationController.js';
 
 import "../msaViewer/init.ts";
 import {
@@ -52,7 +53,7 @@ async function loadAllRequiredPartials() {
 
     // Verify important elements exist
     const requiredElements = [
-      "start-button",
+      "play-button",
       "forward-button",
       "backward-button",
       "save-button",
@@ -111,14 +112,18 @@ async function initializeGuiAndEvents(parsedData) {
     // No need to read from DOM or pass to GUI constructor
 
     // Show/hide appropriate containers based on store state
-    const { webglEnabled } = useAppStore.getState();
+    const { webglEnabled, useDeckGL = false } = useAppStore.getState();
+    console.log('[Main] WebGL enabled:', webglEnabled, 'UseDeckGL:', useDeckGL);
+
     if (webglEnabled) {
       document.getElementById('webgl-container').style.display = 'block';
       document.getElementById('application-container').style.display = 'none';
     }
 
-    // Create GUI instance with the whole MovieData object
-    const gui = new Gui(dataToUse);
+    // Create GUI with conditional controller
+    const TreeController = useDeckGL ? DeckGLTreeAnimationController : undefined;
+    console.log('[Main] TreeController selected:', TreeController ? 'DeckGLTreeAnimationController' : 'WebGLTreeAnimationController');
+    const gui = new Gui(dataToUse, { TreeController });
 
     // Set the gui instance into the store for global access
     useAppStore.getState().setGui(gui);

@@ -1,11 +1,13 @@
-// geometry/polarLinks.js
+// geometry/radialTreeGeometry.js - Handles radial tree branch calculation and interpolation
 import * as d3 from "d3";
 import { kar2pol, shortestAngle as signedShortestAngleExt } from "../utils/MathUtils.js";
 
-/* ---------------------------------- Helpers ---------------------------------- */
+/* ─────────────────────────── ANGLE & COORDINATE HELPERS ─────────────────────────── */
 
 /**
  * Normalize an angle to [0, 2π)
+ * @param {number} a - Angle in radians
+ * @returns {number} Normalized angle
  */
 export function normalizeAngle(a) {
   const TAU = Math.PI * 2;
@@ -14,7 +16,9 @@ export function normalizeAngle(a) {
 
 /**
  * Signed shortest angle from "from" to "to" in (-π, π]
- * (If you already have a correct version in MathUtils, keep that and delete this.)
+ * @param {number} from - Source angle in radians
+ * @param {number} to - Target angle in radians
+ * @returns {number} Signed shortest angle between angles
  */
 export function signedShortestAngle(from, to) {
   const TAU = Math.PI * 2;
@@ -26,6 +30,10 @@ export function signedShortestAngle(from, to) {
 
 /**
  * Polar → Cartesian (optionally offset by a center)
+ * @param {number} radius - Radius value
+ * @param {number} angle - Angle in radians
+ * @param {Object} center - Center point {x,y,z}
+ * @returns {Object} Cartesian coordinates {x,y,z}
  */
 export function polarToCartesian(radius, angle, center = { x: 0, y: 0, z: 0 }) {
   return {
@@ -35,8 +43,14 @@ export function polarToCartesian(radius, angle, center = { x: 0, y: 0, z: 0 }) {
   };
 }
 
+/* ─────────────────────────── INTERPOLATION ─────────────────────────── */
+
 /**
  * Interpolates node position in polar coords.
+ * @param {Object} fromNode - Source node with angle and radius
+ * @param {Object} toNode - Target node with angle and radius
+ * @param {number} t - Interpolation factor (0-1)
+ * @returns {Object} Interpolated position {x,y}
  */
 export function interpolatePolarPosition(fromNode, toNode, t) {
   const interpAngle = interpolateAngle(fromNode.angle, toNode.angle, t);
@@ -49,6 +63,10 @@ export function interpolatePolarPosition(fromNode, toNode, t) {
 
 /**
  * Interpolates between two angles with wrap-around handling.
+ * @param {number} from - Source angle in radians
+ * @param {number} to - Target angle in radians
+ * @param {number} t - Interpolation factor (0-1)
+ * @returns {number} Interpolated angle
  */
 export function interpolateAngle(from, to, t) {
   let delta = to - from;
@@ -59,6 +77,11 @@ export function interpolateAngle(from, to, t) {
 
 /**
  * Creates a polar interpolator for angle & radius.
+ * @param {number} oldAngle - Starting angle
+ * @param {number} oldRadius - Starting radius
+ * @param {number} newAngle - Target angle
+ * @param {number} newRadius - Target radius
+ * @returns {Function} Interpolator function that accepts t (0-1)
  */
 export function createPolarInterpolator(oldAngle, oldRadius, newAngle, newRadius) {
   const angleDiff = signedShortestAngleExt ? signedShortestAngleExt(oldAngle, newAngle)
@@ -73,14 +96,14 @@ export function createPolarInterpolator(oldAngle, oldRadius, newAngle, newRadius
   };
 }
 
-/* -------------------------- Core branch calc logic --------------------------- */
+/* ─────────────────────────── BRANCH CALCULATION ─────────────────────────── */
 
 /**
  * Calculates coordinate data for a (static) branch in a radial layout.
  * Produces: move (M), arc (A), line (L) - or just move (M), line (L) for straight branches.
  *
- * @param {Object} d                         Link data with .source/.target (each has angle, radius, x, y)
- * @param {{x:number,y:number,z:number}} center  Optional arc center (default origin)
+ * @param {Object} d - Link data with .source/.target (each has angle, radius, x, y)
+ * @param {{x:number,y:number,z:number}} center - Optional arc center (default origin)
  * @returns {Object} {movePoint, arcEndPoint, lineEndPoint, arcProperties}
  */
 export function calculateBranchCoordinates(d, center = { x: 0, y: 0, z: 0 }) {
@@ -136,33 +159,16 @@ export function calculateBranchCoordinates(d, center = { x: 0, y: 0, z: 0 }) {
 }
 
 /**
- * Builds SVG path string for static branch.
- */
-export function buildSvgString(d, center = { x: 0, y: 0, z: 0 }) {
-  const { movePoint, arcEndPoint, lineEndPoint, arcProperties } =
-    calculateBranchCoordinates(d, center);
-
-  // For straight lines (no arc), just use Move + Line
-  if (arcProperties === null) {
-    return `M ${movePoint.x}, ${movePoint.y} L ${lineEndPoint.x}, ${lineEndPoint.y}`;
-  }
-
-  const { radius, largeArcFlag, sweepFlag } = arcProperties;
-  const xAxisRotation = 0;
-
-  return `M ${movePoint.x}, ${movePoint.y} A ${radius}, ${radius} ${xAxisRotation} ${largeArcFlag} ${sweepFlag} ${arcEndPoint.x}, ${arcEndPoint.y} L ${lineEndPoint.x}, ${lineEndPoint.y}`;
-}
-
-/**
  * Calculates coordinate data for an interpolated branch (for animations).
  *
- * @param {Object} d
- * @param {number} t
- * @param {number} prevSourceAngle
- * @param {number} prevSourceRadius
- * @param {number} prevTargetAngle
- * @param {number} prevTargetRadius
- * @param {{x:number,y:number,z:number}} center
+ * @param {Object} d - Link data
+ * @param {number} t - Interpolation factor (0-1)
+ * @param {number} prevSourceAngle - Previous source angle
+ * @param {number} prevSourceRadius - Previous source radius
+ * @param {number} prevTargetAngle - Previous target angle
+ * @param {number} prevTargetRadius - Previous target radius
+ * @param {{x:number,y:number,z:number}} center - Center point for coordinates
+ * @returns {Object} Coordinate data for interpolated branch
  */
 export function calculateInterpolatedBranchCoordinates(
   d,
@@ -234,8 +240,39 @@ export function calculateInterpolatedBranchCoordinates(
   };
 }
 
+/* ─────────────────────────── SVG PATH GENERATION ─────────────────────────── */
+
+/**
+ * Builds SVG path string for static branch.
+ * @param {Object} d - Link data
+ * @param {Object} center - Center point {x,y,z}
+ * @returns {string} SVG path string
+ */
+export function buildSvgString(d, center = { x: 0, y: 0, z: 0 }) {
+  const { movePoint, arcEndPoint, lineEndPoint, arcProperties } =
+    calculateBranchCoordinates(d, center);
+
+  // For straight lines (no arc), just use Move + Line
+  if (arcProperties === null) {
+    return `M ${movePoint.x}, ${movePoint.y} L ${lineEndPoint.x}, ${lineEndPoint.y}`;
+  }
+
+  const { radius, largeArcFlag, sweepFlag } = arcProperties;
+  const xAxisRotation = 0;
+
+  return `M ${movePoint.x}, ${movePoint.y} A ${radius}, ${radius} ${xAxisRotation} ${largeArcFlag} ${sweepFlag} ${arcEndPoint.x}, ${arcEndPoint.y} L ${lineEndPoint.x}, ${lineEndPoint.y}`;
+}
+
 /**
  * SVG path for interpolated branch.
+ * @param {Object} d - Link data
+ * @param {number} t - Interpolation factor (0-1)
+ * @param {number} prevSourceAngle - Previous source angle
+ * @param {number} prevSourceRadius - Previous source radius
+ * @param {number} prevTargetAngle - Previous target angle
+ * @param {number} prevTargetRadius - Previous target radius
+ * @param {Object} center - Center point {x,y,z}
+ * @returns {string} SVG path string for interpolated branch
  */
 export function buildInterpolatedBranchPath(
   d,
@@ -268,8 +305,14 @@ export function buildInterpolatedBranchPath(
   return `M ${movePoint.x}, ${movePoint.y} A ${radius}, ${radius} ${xAxisRotation} ${largeArcFlag} ${sweepFlag} ${arcEndPoint.x}, ${arcEndPoint.y} L ${lineEndPoint.x}, ${lineEndPoint.y}`;
 }
 
-/* --------------------------- Extensions & labels ----------------------------- */
+/* ─────────────────────────── EXTENSIONS & LABELS ─────────────────────────── */
 
+/**
+ * Builds SVG path for link extension
+ * @param {Object} d - Link data
+ * @param {number} currentMaxRadius - Maximum radius
+ * @returns {string} SVG path string for link extension
+ */
 export function buildSvgLinkExtension(d, currentMaxRadius) {
   const mx = d.x;
   const my = d.y;
@@ -278,6 +321,12 @@ export function buildSvgLinkExtension(d, currentMaxRadius) {
   return `M ${mx}, ${my} L ${lxmax}, ${lymax}`;
 }
 
+/**
+ * Calculates rotation for text orientation
+ * @param {Object} d - Node data
+ * @param {number} currentMaxRadius - Maximum radius
+ * @returns {string} SVG transform string for text rotation
+ */
 export function orientText(d, currentMaxRadius) {
   const angleDeg = (d.angle * 180) / Math.PI;
   return `rotate(${angleDeg}) translate(${currentMaxRadius}, 0) rotate(${
@@ -285,6 +334,12 @@ export function orientText(d, currentMaxRadius) {
   })`;
 }
 
+/**
+ * Creates interpolator for text orientation
+ * @param {number} newMaxRadius - New maximum radius
+ * @param {number} oldMaxRadius - Old maximum radius
+ * @returns {Function} Interpolator function
+ */
 export function getOrientTextInterpolator(newMaxRadius, oldMaxRadius) {
   return function (d) {
     const oldAngle = d.prevAngle !== undefined ? d.prevAngle : d.angle;
@@ -305,6 +360,11 @@ export function getOrientTextInterpolator(newMaxRadius, oldMaxRadius) {
   };
 }
 
+/**
+ * Calculates text anchor position based on angle
+ * @param {Object} d - Node data
+ * @returns {string} Text anchor position ("start" or "end")
+ */
 export function calculateTextAnchor(d) {
   const angleDeg = (d.angle * 180) / Math.PI;
   return angleDeg < 270 && angleDeg > 90 ? "end" : "start";
@@ -312,8 +372,13 @@ export function calculateTextAnchor(d) {
 
 export const anchorCalc = calculateTextAnchor;
 
-/* ------------------------------ D3 attrTweens ------------------------------- */
+/* ─────────────────────────── D3 ANIMATION HELPERS ─────────────────────────── */
 
+/**
+ * Creates interpolator for link extensions
+ * @param {number} extensionEndRadius - End radius for extension
+ * @returns {Function} Interpolator function
+ */
 export function getLinkExtensionInterpolator(extensionEndRadius) {
   return function (d) {
     const oldAngle = d.prevAngle !== undefined ? d.prevAngle : d.angle;
@@ -340,6 +405,10 @@ export function getLinkExtensionInterpolator(extensionEndRadius) {
   };
 }
 
+/**
+ * D3 attribute tween for circle x position
+ * @returns {Function} Tween function
+ */
 export function attrTweenCircleX() {
   return function (d) {
     const oldAngle = d.prevAngle !== undefined ? d.prevAngle : d.angle;
@@ -353,6 +422,10 @@ export function attrTweenCircleX() {
   };
 }
 
+/**
+ * D3 attribute tween for circle y position
+ * @returns {Function} Tween function
+ */
 export function attrTweenCircleY() {
   return function (d) {
     const oldAngle = d.prevAngle !== undefined ? d.prevAngle : d.angle;
@@ -366,6 +439,11 @@ export function attrTweenCircleY() {
   };
 }
 
+/**
+ * D3 attribute tween for circle x position with fixed t
+ * @param {number} t - Interpolation factor (0-1)
+ * @returns {Function} Tween function
+ */
 export function attrTweenCircleXWithT(t) {
   return function (d) {
     const oldAngle = d.prevAngle !== undefined ? d.prevAngle : d.angle;
@@ -379,6 +457,11 @@ export function attrTweenCircleXWithT(t) {
   };
 }
 
+/**
+ * D3 attribute tween for circle y position with fixed t
+ * @param {number} t - Interpolation factor (0-1)
+ * @returns {Function} Tween function
+ */
 export function attrTweenCircleYWithT(t) {
   return function (d) {
     const oldAngle = d.prevAngle !== undefined ? d.prevAngle : d.angle;
@@ -392,7 +475,7 @@ export function attrTweenCircleYWithT(t) {
   };
 }
 
-/* ----------------------- Link Length and Classification ----------------------- */
+/* ─────────────────────────── LINK ANALYSIS ─────────────────────────── */
 
 /**
  * Calculates the total length of a path from coordinate data.
@@ -477,8 +560,15 @@ export function classifyEdgeChange(fromLink, toLink, radiusTolerance = 0.01, len
   return 'NONE';
 }
 
-/* --------------------------------- Utils ----------------------------------- */
+/* ─────────────────────────── PRIVATE UTILS ─────────────────────────── */
 
+/**
+ * Validates link data structure
+ * @param {Object} d - Link data
+ * @param {string} where - Context for error message
+ * @throws {Error} If link data is invalid
+ * @private
+ */
 function validateLink(d, where) {
   if (!d || !d.source || !d.target) {
     console.error(`${where} Invalid link data:`, d);

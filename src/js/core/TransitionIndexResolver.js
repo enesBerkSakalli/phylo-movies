@@ -10,9 +10,9 @@
  *
  * DATA STRUCTURE UNDERSTANDING:
  * - tree_metadata contains global sequence with variable tree_pair_key groupings
- * - s_edge_metadata.trees_per_s_edge provides actual counts per s-edge
+ * - activeChangeEdge_metadata.treesPerActiveChangeEdge provides actual counts per active change edge
  * - Phases: ORIGINAL, DOWN_PHASE, COLLAPSE_PHASE, REORDER_PHASE, PRE_SNAP_PHASE, SNAP_PHASE
- * - s_edge_tracker provides redundant tracking for grouping (intentional design)
+ * - activeChangeEdgeTracker provides redundant tracking for grouping (intentional design)
  */
 export default class TransitionIndexResolver {
     _cachedFullTreeIndices = null;
@@ -45,8 +45,8 @@ export default class TransitionIndexResolver {
         this.debug = debug;
         // Default to empty structure that supports variable-length s-edges
         this.sEdgeMetadata = sEdgeMetadata || {
-            s_edge_count: 0,
-            trees_per_s_edge: {}, // Variable counts per s-edge
+            activeChangeEdge_count: 0,
+            treesPerActiveChangeEdge: {}, // Variable counts per active change edge
             total_interpolated_trees: 0,
             phase_distribution: {}
         };
@@ -66,7 +66,7 @@ export default class TransitionIndexResolver {
         this.highlightData = highlightData ?? [];
         this.distanceData = distanceData ?? [];
 
-        // Process s_edge structure from metadata
+        // Process active change edge structure from metadata
         this._processSEdgeStructure();
 
         // Clear caches
@@ -74,7 +74,7 @@ export default class TransitionIndexResolver {
         this._cachedConsensusTreeIndices = null;
 
         if (this.debug) {
-            console.debug("TIR: Updated data -", this.treeMetadata.length, "trees,", this.sEdgeMetadata.s_edge_count, "s_edges");
+            console.debug("TIR: Updated data -", this.treeMetadata.length, "trees,", this.sEdgeMetadata.activeChangeEdge_count, "active change edges");
         }
     }
 
@@ -98,25 +98,25 @@ export default class TransitionIndexResolver {
     }
 
     /**
-     * Process s_edge structure from tree metadata with variable-length support
+     * Process active change edge structure from tree metadata with variable-length support
      * CRITICAL: Follows ProcessingResult logic - only processes actual interpolation
      * @private
      */
     _processSEdgeStructure() {
-        this.sEdgeCount = this.sEdgeMetadata.s_edge_count || 0;
+        this.sEdgeCount = this.sEdgeMetadata.activeChangeEdge_count || 0;
         // Support both legacy number format and new object format
-        this.treesPerSEdgeMap = typeof this.sEdgeMetadata.trees_per_s_edge === 'object'
-            ? this.sEdgeMetadata.trees_per_s_edge || {}
+        this.treesPerSEdgeMap = typeof this.sEdgeMetadata.treesPerActiveChangeEdge === 'object'
+            ? this.sEdgeMetadata.treesPerActiveChangeEdge || {}
             : {};
         this.totalInterpolatedTrees = this.sEdgeMetadata.total_interpolated_trees || 0;
 
-        // Group trees by s_edge/tree_pair_key
+        // Group trees by activeChangeEdgeTracker/tree_pair_key
         this.treesBySEdge = new Map();
         this.treesByPhase = new Map();
         this.actualInterpolationMap = new Map(); // Track which pairs actually have interpolation
 
         this.treeMetadata.forEach((metadata, index) => {
-            // Group by tree_pair_key (represents s_edge)
+            // Group by tree_pair_key (represents active change edge)
             if (metadata.tree_pair_key) {
                 if (!this.treesBySEdge.has(metadata.tree_pair_key)) {
                     this.treesBySEdge.set(metadata.tree_pair_key, []);
@@ -290,7 +290,7 @@ export default class TransitionIndexResolver {
 
             const treesInThisSEdge = this.treesPerSEdgeMap[metadata.tree_pair_key] || 1;
 
-            // Calculate fractional distance index based on actual s_edge progress
+            // Calculate fractional distance index based on actual active change edge progress
             return pairIndex + (stepInPair - 1) / treesInThisSEdge;
         }
 
@@ -655,7 +655,7 @@ export default class TransitionIndexResolver {
                 issues.push("No valid full trees (ORIGINAL phase) found.");
             }
 
-            // Validate s_edge structure with variable-length support
+            // Validate active change edge structure with variable-length support
             const actualInterpolatedTrees = this.treeMetadata.filter(m => m.phase !== 'ORIGINAL').length;
             const expectedFromMetadata = this.totalInterpolatedTrees;
 
@@ -688,9 +688,9 @@ export default class TransitionIndexResolver {
     };
 
     /**
-     * Get current s_edge information for a given tree position.
+     * Get current active change edge information for a given tree position.
      * @param {number} position - The global tree index.
-     * @returns {object} Object containing s_edge details.
+     * @returns {object} Object containing active change edge details.
      */
     getSEdgeInfo = (position) => {
         const metadata = this.treeMetadata?.[position];
@@ -712,7 +712,7 @@ export default class TransitionIndexResolver {
             }
         }
 
-        // Get actual step count for this s_edge from backend metadata
+        // Get actual step count for this active change edge from backend metadata
         let totalSteps = 0;
         if (metadata.tree_pair_key) {
             totalSteps = this.treesPerSEdgeMap?.[metadata.tree_pair_key] || 0;

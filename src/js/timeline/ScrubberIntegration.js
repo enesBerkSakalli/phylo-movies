@@ -133,24 +133,6 @@ export class ScrubberIntegration {
   }
 
   /**
-   * Get current scrubbing status and performance metrics
-   * @returns {Object} Status information
-   */
-  getStatus() {
-    const status = {
-      isUsingCustomScrubber: this.isUsingCustomScrubber,
-      customScrubberAvailable: !!this.scrubberAPI,
-      config: { ...this.integrationConfig }
-    };
-
-    if (this.scrubberAPI) {
-      status.scrubberState = this.scrubberAPI.getState();
-    }
-
-    return status;
-  }
-
-  /**
    * Configure integration behavior
    * @param {Object} config - Configuration options
    */
@@ -167,19 +149,6 @@ export class ScrubberIntegration {
     }
   }
 
-  /**
-   * Force refresh of the scrubber API (useful after tree controller changes)
-   */
-  refreshScrubberAPI() {
-    if (this.scrubberAPI) {
-      this.scrubberAPI.destroy();
-      this.scrubberAPI = null;
-    }
-
-    this._initializeScrubberAPI();
-  }
-
-  // Private methods
 
   /**
    * Convert timeline time to progress (0-1)
@@ -253,15 +222,3 @@ export function createScrubberIntegration(timelineManager) {
   return new ScrubberIntegration(timelineManager);
 }
 
-/**
- * Utility function to check if custom scrubber is supported
- * @returns {boolean} Whether custom scrubber can be used
- */
-export function isCustomScrubberSupported() {
-  try {
-    const { treeController } = useAppStore.getState();
-    return !!(treeController && typeof treeController.renderScrubFrame === 'function');
-  } catch (error) {
-    return false;
-  }
-}

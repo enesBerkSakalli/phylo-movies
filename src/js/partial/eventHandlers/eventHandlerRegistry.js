@@ -29,18 +29,16 @@ export class EventHandlerRegistry {
         async: true,
         handlers: [
           {
-            id: "start-button",
+            id: "play-button",
             action: async () => {
               console.log('[EventHandler] Start button clicked');
               const { playing } = useAppStore.getState();
-              console.log('[EventHandler] Current playing state:', playing);
               if (playing) {
-                console.log('[EventHandler] Stopping animation');
                 this.gui.stop(); // Call GUI's stop method which handles both store and controller
               } else {
-                console.log('[EventHandler] Starting animation');
                 await this.gui.play(); // Call GUI's play method which handles tree controller creation
               }
+              this.updatePlayButton(playing)
             },
             description: "Toggle play/pause",
           },
@@ -255,6 +253,61 @@ export class EventHandlerRegistry {
               console.log(`[EventHandler] WebGL rendering ${enabled ? 'enabled' : 'disabled'}`);
             },
             description: "WebGL rendering toggle",
+          },
+          {
+            id: "camera-mode-button",
+            type: "click",
+            action: async () => {
+              const { toggleCameraMode, treeController } = useAppStore.getState();
+              const newMode = toggleCameraMode();
+
+              // Update button text
+              const buttonText = document.getElementById('camera-mode-text');
+              if (buttonText) {
+                buttonText.textContent = newMode === 'orthographic' ? '2D View' : '3D View';
+              }
+
+              // Apply camera mode to tree controller if it supports it
+              if (treeController && typeof treeController.setCameraMode === 'function') {
+                treeController.setCameraMode(newMode);
+              }
+
+              console.log(`[EventHandler] Camera mode changed to: ${newMode}`);
+            },
+            description: "Toggle camera mode between orthographic and orbit",
+          },
+          {
+            id: "active-change-edges-color",
+            type: "input",
+            action: async (event) => {
+              const { setActiveChangeEdgeColor } = useAppStore.getState();
+              const newColor = event.target.value;
+              console.log('[EventHandler] Active change edges color changed to:', newColor);
+              setActiveChangeEdgeColor(newColor);
+            },
+            description: "Active change edges highlighting color picker",
+          },
+          {
+            id: "marked-color",
+            type: "input",
+            action: async (event) => {
+              const { setMarkedColor } = useAppStore.getState();
+              const newColor = event.target.value;
+              console.log('[EventHandler] Marked components color changed to:', newColor);
+              setMarkedColor(newColor);
+            },
+            description: "Marked components highlighting color picker",
+          },
+          {
+            id: "dimmed-color",
+            type: "input",
+            action: async (event) => {
+              const { setDimmedColor } = useAppStore.getState();
+              const newColor = event.target.value;
+              console.log('[EventHandler] Dimmed elements color changed to:', newColor);
+              setDimmedColor(newColor);
+            },
+            description: "Dimmed elements color picker",
           },
         ],
       },
@@ -557,6 +610,12 @@ export class EventHandlerRegistry {
    * Detach all attached handlers (cleanup)
    */
   detachAll() {
+    // Unsubscribe from the store to prevent memory leaks
+    if (this.unsubscribeFromStore) {
+        this.unsubscribeFromStore();
+        this.unsubscribeFromStore = null;
+    }
+
     this.attachedHandlers.forEach(handlerInfo => {
       try {
         handlerInfo.element.removeEventListener(handlerInfo.type, handlerInfo.handler);
@@ -722,5 +781,21 @@ export class EventHandlerRegistry {
         notifications.show("Failed to save recording. Please try again.", "error");
       }
     }
+  }
+
+  /**
+   * Update the play/pause button UI based on the current playing state.
+   * @param {boolean} isPlaying - The current playing state from the store.
+   */
+  updatePlayButton(isPlaying) {
+      const startButton = document.getElementById('play-button');
+      if (startButton) {
+          const icon = startButton.querySelector('.material-icons');
+          if (icon) {
+              icon.textContent = isPlaying ? 'pause' : 'play_arrow';
+          }
+          startButton.setAttribute('title', isPlaying ? 'Pause animation' : 'Play animation');
+          startButton.setAttribute('aria-label', isPlaying ? 'Pause animation' : 'Play/Pause animation');
+      }
   }
 }

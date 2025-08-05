@@ -229,11 +229,11 @@ export const server = {
         throw new Error(`Server error: ${data.error}`);
       }
 
-      // Debug logging for s_edge data flow verification
+      // Debug logging for active change edge data flow verification
       console.log("[DEBUG] Frontend received data from backend:");
       console.log("[DEBUG]   - tree_metadata:", data.tree_metadata ? data.tree_metadata.length : "undefined", "items");
-      console.log("[DEBUG]   - s_edge_metadata:", data.s_edge_metadata);
-      console.log("[DEBUG]   - lattice_edge_tracking:", data.lattice_edge_tracking ? data.lattice_edge_tracking.length : "undefined", "items");
+      console.log("[DEBUG]   - activeChangeEdge_metadata:", data.activeChangeEdge_metadata);
+      console.log("[DEBUG]   - activeChangeEdgeTracking:", data.activeChangeEdgeTracking ? data.activeChangeEdgeTracking.length : "undefined", "items");
       if (data.tree_metadata && data.tree_metadata.length > 0) {
         console.log("[DEBUG]   - Sample tree_metadata[0]:", data.tree_metadata[0]);
       }
