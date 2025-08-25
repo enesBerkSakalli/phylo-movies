@@ -1,6 +1,14 @@
 import 'filepond/dist/filepond.css';
 import * as FilePond from 'filepond';
 
+// Import Material Web button components
+import '@material/web/button/filled-button.js';
+import '@material/web/button/outlined-button.js';
+import '@material/web/button/text-button.js';
+import '@material/web/button/filled-tonal-button.js';
+import '@material/web/iconbutton/icon-button.js';
+import '@material/web/icon/icon.js';
+
 // FilePond setup
 const treesInput = document.getElementById("trees");
 const orderInput = document.getElementById("order");
@@ -41,6 +49,7 @@ document.getElementById("phylo-form").addEventListener("submit", async function 
     overlay.innerHTML = '<div class="loading-spinner"></div><div class="loading-message">Loading, please wait...</div>';
     document.body.appendChild(overlay);
   }
+
   overlay.style.display = "flex";
 
   const treeFiles = treesPond.getFiles();
@@ -68,7 +77,6 @@ document.getElementById("phylo-form").addEventListener("submit", async function 
   formData.append("windowSize", document.getElementById("windowSize").value);
   formData.append("windowStepSize", document.getElementById("window-step-size").value);
   formData.append("midpointRooting", document.getElementById("midpointRooting").checked ? "on" : "");
-  formData.append("deactivateEmbedding", document.getElementById("deactivateEmbedding").checked ? "on" : "");
 
   try {
     const response = await fetch("/treedata", {
@@ -94,6 +102,11 @@ document.getElementById("phylo-form").addEventListener("submit", async function 
       return;
     }
     const data = await response.json();
+
+    // Add the filename to the data object
+    const treeFileName = treeFiles[0].file.name;
+    data.file_name = treeFileName;
+
     // Save main data to IndexedDB/localForage
     await window.localforage.setItem("phyloMovieData", data);
 

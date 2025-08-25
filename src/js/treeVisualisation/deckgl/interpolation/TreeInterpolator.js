@@ -89,7 +89,9 @@ export class TreeInterpolator {
   }
 
   /**
-   * Interpolate labels with rotation and polar-aware positioning
+   * Interpolate labels with a clearer, delegated approach.
+   * This version simplifies the logic by always attempting polar interpolation
+   * and letting the `_interpolatePosition` function handle the fallback to linear.
    * @private
    */
   _interpolateLabels(fromLabels, toLabels, timeFactor) {
@@ -98,32 +100,24 @@ export class TreeInterpolator {
       toLabels,
       timeFactor,
       (from, to, t, fromLabel, toLabel) => {
-        // Try to interpolate position using polar coordinates if available
-        let interpolatedPosition = from.position;
-
-        // Check if labels have polar data (angle and radius information)
-        if (fromLabel && toLabel && fromLabel.leaf && toLabel.leaf) {
-          // Labels are positioned based on their leaf nodes
-          interpolatedPosition = this._interpolatePosition(
-            from.position,
-            to.position,
-            t,
-            fromLabel.leaf,
-            toLabel.leaf
-          );
-        } else {
-          // Fallback to linear interpolation
-          interpolatedPosition = this._interpolatePosition(from.position, to.position, t);
-        }
+        // Directly pass the leaf nodes to the position interpolator.
+        // It will intelligently decide whether to use polar or linear interpolation.
+        const interpolatedPosition = this._interpolatePosition(
+          from.position,
+          to.position,
+          t,
+          fromLabel?.leaf, // Safely access leaf property
+          toLabel?.leaf   // Safely access leaf property
+        );
 
         return {
           ...to,
           position: interpolatedPosition,
           rotation: this._interpolateRotation(from.rotation, to.rotation, t),
-          // Preserve text and anchor properties
+          // Preserve properties from the target element
           text: to.text,
           textAnchor: to.textAnchor,
-          leaf: to.leaf // Preserve leaf reference
+          leaf: to.leaf
         };
       },
       'labels'
@@ -131,7 +125,8 @@ export class TreeInterpolator {
   }
 
   /**
-   * Interpolate extensions with polar-aware path interpolation
+   * Interpolate extensions by delegating path logic to the PathInterpolator.
+   * This simplifies the function and centralizes the path interpolation strategy.
    * @private
    */
   _interpolateExtensions(fromExtensions, toExtensions, timeFactor) {
@@ -140,37 +135,15 @@ export class TreeInterpolator {
       toExtensions,
       timeFactor,
       (from, to, t, fromExt, toExt) => {
-        // Extensions should follow polar interpolation since they extend from leaves
-        let interpolatedPath = from.path;
-
-        // Check if we have leaf data with polar coordinates
-        if (fromExt && toExt && fromExt.leaf && toExt.leaf &&
-            this._canUsePolarInterpolation(fromExt.leaf, toExt.leaf)) {
-          // Interpolate start point (leaf position) using polar
-          const fromLeafPos = from.path[0];
-          const toLeafPos = to.path[0];
-          const interpolatedLeafPos = this._interpolatePositionPolar(fromExt.leaf, toExt.leaf, t);
-
-          // Interpolate end point (extension end) using polar as well
-          const fromEndAngle = Math.atan2(from.path[1][1], from.path[1][0]);
-          const toEndAngle = Math.atan2(to.path[1][1], to.path[1][0]);
-          const fromEndRadius = Math.sqrt(from.path[1][0]**2 + from.path[1][1]**2);
-          const toEndRadius = Math.sqrt(to.path[1][0]**2 + to.path[1][1]**2);
-
-          const interpolatedEndAngle = this._interpolateRotation(fromEndAngle, toEndAngle, t);
-          const interpolatedEndRadius = this._interpolateScalar(fromEndRadius, toEndRadius, t);
-
-          const endX = interpolatedEndRadius * Math.cos(interpolatedEndAngle);
-          const endY = interpolatedEndRadius * Math.sin(interpolatedEndAngle);
-
-          interpolatedPath = [
-            interpolatedLeafPos,
-            [endX, endY, 0]
-          ];
-        } else {
-          // Fallback to linear interpolation
-          interpolatedPath = this.pathInterpolator.linearInterpolatePath(from.path, to.path, t);
-        }
+        // Delegate the entire path interpolation to the specialized class.
+        // It will handle the polar vs. linear decision internally.
+        const interpolatedPath = this.pathInterpolator.interpolatePath(
+          from.path,
+          to.path,
+          t,
+          fromExt, // Pass the full extension object
+          toExt    // Pass the full extension object
+        );
 
         return {
           ...to,

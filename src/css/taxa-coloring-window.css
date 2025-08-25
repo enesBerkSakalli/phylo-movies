@@ -8,9 +8,11 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 400px; /* Ensure minimum height for content visibility */
   padding: var(--md-sys-spacing-4, 16px);
   background: var(--md-sys-color-surface-container-low, #f7f2fa);
   font-family: 'Roboto', sans-serif;
+  box-sizing: border-box;
 }
 
 /* Scoping class for the WinBox instance */
@@ -45,9 +47,23 @@
 .tc-actions {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
   gap: var(--md-sys-spacing-2, 8px);
   padding-top: var(--md-sys-spacing-3, 12px);
   border-top: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  min-height: 48px; /* Ensure sufficient height for Material buttons */
+}
+
+/* Ensure Material Design buttons have proper dimensions */
+.tc-actions md-filled-button,
+.tc-actions md-outlined-button,
+.tc-actions md-text-button,
+.tc-actions md-filled-tonal-button {
+  --md-filled-button-container-height: 40px;
+  --md-outlined-button-container-height: 40px;
+  --md-text-button-container-height: 40px;
+  --md-filled-tonal-button-container-height: 40px;
+  min-width: 64px;
 }
 
 /* Generic section used for grouping controls */
@@ -66,6 +82,15 @@
   display: flex;
   gap: var(--md-sys-spacing-2, 8px);
   margin-bottom: var(--md-sys-spacing-4, 16px);
+  align-items: center;
+}
+
+/* Ensure mode selector buttons have proper dimensions */
+.tc-mode-selector md-filled-button,
+.tc-mode-selector md-outlined-button {
+  --md-filled-button-container-height: 40px;
+  --md-outlined-button-container-height: 40px;
+  min-width: 120px;
 }
 
 /* Scheme selector grid and buttons */
@@ -202,32 +227,143 @@
   cursor: pointer;
 }
 
-/* Generic button row for separator/strategy controls */
-.tc-button-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--md-sys-spacing-2, 8px);
+
+/* Separation controls card */
+.tc-separation-card {
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
 }
 
-.tc-button-row .md-button {
-    flex-grow: 1;
+/* Section titles in separation controls */
+.tc-separation-title {
+  font-family: 'Roboto', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  margin: 0 0 16px 0;
 }
 
-/* Chip for displaying usage stats */
-.tc-chip {
-  display: inline-block;
-  padding: var(--md-sys-spacing-1, 4px) var(--md-sys-spacing-2, 8px);
-  background: var(--md-sys-color-secondary-container, #e8def8);
-  color: var(--md-sys-color-on-secondary-container, #1d192b);
-  border-radius: var(--md-sys-shape-corner-small, 8px);
-  font: var(--md-sys-typescale-label-medium);
-  margin-left: var(--md-sys-spacing-2, 8px);
+/* Strategy grid container */
+.tc-strategy-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+/* Strategy button content */
+.tc-strategy-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 4px;
+}
+
+.tc-strategy-label {
+  font-weight: 500;
+}
+
+.tc-strategy-example {
+  font-size: 12px;
+  opacity: 0.8;
+  font-weight: 400;
+}
+
+/* CSV Import Styles - Material Design Surface */
+.tc-csv-upload-surface {
+  background: var(--md-sys-color-surface-container, #f3edf7);
+  border: 2px dashed var(--md-sys-color-outline-variant, #c7c5d0);
+  border-radius: var(--md-sys-shape-corner-large, 16px);
+  padding: var(--md-sys-spacing-6, 24px);
+  text-align: center;
+  margin-bottom: var(--md-sys-spacing-4, 16px);
+  transition: all 0.3s ease;
+  --md-elevation-level: 1;
+}
+
+.tc-csv-upload-surface.drag-over {
+  background: var(--md-sys-color-primary-container, #eaddff);
+  border-color: var(--md-sys-color-primary, #6750a4);
+  --md-elevation-level: 3;
+}
+
+.tc-csv-upload-icon {
+  font-size: 48px;
+  color: var(--md-sys-color-primary, #6750a4);
+  margin-bottom: var(--md-sys-spacing-2, 8px);
+}
+
+.tc-csv-upload-text {
+  font: var(--md-sys-typescale-body-large);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  margin-bottom: var(--md-sys-spacing-3, 12px);
+}
+
+.tc-csv-file-input {
+  display: none;
+}
+
+.tc-csv-preview-section {
+  margin-top: var(--md-sys-spacing-4, 16px);
+}
+
+.tc-csv-preview-list {
+  background: var(--md-sys-color-surface, #fef7ff);
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  overflow: hidden;
+  margin-top: var(--md-sys-spacing-4, 16px);
+  --md-elevation-level: 1;
 }
 
 /* Empty state message */
 .tc-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
   text-align: center;
-  padding: var(--md-sys-spacing-8, 32px);
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border-radius: 12px;
+  border: 1px dashed var(--md-sys-color-outline-variant, #c7c5d0);
+  margin: 16px 0;
+}
+
+.tc-empty-state-icon {
+  font-size: 48px;
   color: var(--md-sys-color-on-surface-variant, #49454f);
-  font: var(--md-sys-typescale-body-large);
+  margin-bottom: 16px;
+}
+
+.tc-empty-state-message {
+  font-family: 'Roboto', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  margin: 0;
+}
+
+/* Ensure all Material Design buttons are visible and properly styled */
+.tc-container md-filled-button,
+.tc-container md-outlined-button,
+.tc-container md-text-button,
+.tc-container md-filled-tonal-button {
+  display: inline-flex;
+  visibility: visible;
+  opacity: 1;
+  z-index: 1;
+}
+
+/* Ensure proper font loading for Material icons */
+.tc-container md-icon {
+  font-family: 'Material Symbols Outlined', 'Material Icons';
+  font-size: 18px;
+  line-height: 1;
+  display: inline-block;
+  vertical-align: middle;
 }

@@ -7,7 +7,6 @@ import { ExtensionRenderer } from "./rendering/ExtensionRenderer.js";
 import { LabelRenderer } from "./rendering/LabelRenderer.js";
 import { RadialTreeLayout } from "./RadialTreeLayout.js";
 import { EASING_FUNCTIONS } from "./utils/animationUtils.js";
-import { createStoreIntegratedUpdatePattern } from "./utils/IndependentUpdatePattern.js";
 
 // Layout constants for consistent spacing
 const LAYOUT_CONSTANTS = {
@@ -41,6 +40,7 @@ export class TreeAnimationController {
 
     // Layout calculator management - test reusing single instance
     this.layoutCalculator = null;
+    this.layoutCache = new Map(); // Add a cache for layouts
     this.margin = 40; // Default margin, can be overridden
 
     this.svg_container = this._initializeContainer(svgContainerId);

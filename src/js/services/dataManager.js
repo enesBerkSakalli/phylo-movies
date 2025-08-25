@@ -8,7 +8,7 @@ export async function fetchTreeData(formData) {
   try {
     const data = await server.fetchTreeData(formData);
 
-    await workflows.saveTreeDataWorkflow(data, formData);
+    await workflows.saveTreeDataWorkflow(data);
 
     // Redirect after successful storage
     window.location.href = "/visualization.html";

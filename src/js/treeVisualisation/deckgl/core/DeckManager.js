@@ -40,6 +40,8 @@ export class DeckManager {
     this.canvas = null;
     this._onWebGLInitialized = null;
     this._onError = null;
+    this._onNodeClick = null;
+    this._onNodeHover = null;
 
     this.cameraMode = 'orthographic'; // 'orthographic' | 'orbit'
 
@@ -80,6 +82,11 @@ export class DeckManager {
     this.canvas.style.display = 'block';
     this.container.node().appendChild(this.canvas);
 
+    // Add debugging for raw click events on canvas
+    this.canvas.addEventListener('click', (event) => {
+      console.log('[DeckManager] Raw canvas click detected:', event);
+    });
+
     const activeId = this._activeViewId();
     const initialViewState = this.viewStates[activeId];
 
@@ -87,7 +94,15 @@ export class DeckManager {
     this.deck = new Deck({
       canvas: this.canvas,
       views: [this.views[this.cameraMode]],
-      controller: true,
+      controller: {
+        doubleClickZoom: false,
+        touchZoom: true,
+        touchRotate: true,
+        scrollZoom: true,
+        dragPan: true,
+        dragRotate: true,
+        keyboard: true
+      },
       initialViewState,                    // for first layout
       viewState: initialViewState,         // controlled from the beginning
       onViewStateChange: ({ viewState, viewId }) => {
@@ -96,6 +111,52 @@ export class DeckManager {
         this.viewStates[id] = { ...this.viewStates[id], ...viewState };
         // Keep Deck controlled by immediately setting the new state
         this.deck.setProps({ viewState: this.viewStates[id] });
+      },
+      onClick: (info, event) => {
+        console.log('[DeckManager] DECK.GL onClick triggered!', info);
+        console.log('[DeckManager] Layer info:', info.layer?.id);
+        console.log('[DeckManager] Object info:', info.object);
+        console.log('[DeckManager] Has _onNodeClick callback:', !!this._onNodeClick);
+
+        // Always handle node clicks
+        if (info.layer?.id === 'phylo-nodes' && this._onNodeClick) {
+          console.log('[DeckManager] Node click detected, calling handler');
+
+          // Prevent event bubbling to avoid immediately hiding the context menu
+          if (event && event.stopPropagation) {
+            event.stopPropagation();
+          }
+          if (event && event.preventDefault) {
+            event.preventDefault();
+          }
+
+          this._onNodeClick(info, event);
+          return true; // Consume the event
+        }
+
+        // Debug: Log why click wasn't handled
+        if (info.layer?.id !== 'phylo-nodes') {
+          console.log('[DeckManager] Click on layer:', info.layer?.id, 'but not phylo-nodes');
+        } else {
+          console.log('[DeckManager] Click with no layer info');
+        }
+
+        return false; // Let other handlers process
+      },
+      onHover: (info, event) => {
+        // Handle node hover specifically
+        if (info.layer?.id === 'phylo-nodes' && this._onNodeHover) {
+          this._onNodeHover(info, event);
+        }
+      },
+      getCursor: ({ isDragging, isHovering }) => {
+        if (isDragging) {
+          return 'grabbing';
+        }
+        if (isHovering) {
+          return 'pointer';
+        }
+        return 'default';
       },
       onWebGLInitialized: (gl) => {
         if (this._onWebGLInitialized) this._onWebGLInitialized(gl);
@@ -124,6 +185,22 @@ export class DeckManager {
    */
   onError(callback) {
     this._onError = callback;
+  }
+
+  /**
+   * Set a callback for node click events
+   * @param {Function} callback - Function to call when a node is clicked
+   */
+  onNodeClick(callback) {
+    this._onNodeClick = callback;
+  }
+
+  /**
+   * Set a callback for node hover events
+   * @param {Function} callback - Function to call when a node is hovered
+   */
+  onNodeHover(callback) {
+    this._onNodeHover = callback;
   }
 
   /**
@@ -161,6 +238,7 @@ export class DeckManager {
   getCameraMode() {
     return this.cameraMode;
   }
+
 
   /**
    * Switch the camera mode between 'orthographic' and 'orbit'.
@@ -306,6 +384,8 @@ export class DeckManager {
     }
     this._onWebGLInitialized = null;
     this._onError = null;
+    this._onNodeClick = null;
+    this._onNodeHover = null;
   }
 
   // ---- Internal helpers ----
@@ -330,4 +410,5 @@ export class DeckManager {
     this.viewStates[id] = next;
     this.setProps({ viewState: next });
   }
+
 }

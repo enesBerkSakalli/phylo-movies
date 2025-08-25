@@ -28,12 +28,9 @@ export class ElementMatcher {
         // Element exists in both - interpolate
         processedFromIds.add(id);
 
-        // Special handling for links to pass full objects for polar interpolation
-        if (elementType === 'links') {
-          result.push(interpolateFn(fromElement, toElement, timeFactor, fromElement, toElement));
-        } else {
-          result.push(interpolateFn(fromElement, toElement, timeFactor));
-        }
+        // Pass the full from/to elements to the interpolation function
+        // This allows the interpolator to access all necessary properties (e.g., for polar interpolation)
+        result.push(interpolateFn(fromElement, toElement, timeFactor, fromElement, toElement));
       } else {
         // Element is entering - fade in
         result.push(this._createEnteringElement(toElement, timeFactor));

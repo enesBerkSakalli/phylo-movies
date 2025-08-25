@@ -1,12 +1,11 @@
 .chart-title>div>span {
-  font-size: 14px;
-  font-weight: 500;
+  font: var(--md-sys-typescale-title-small);
   color: var(--md-sys-color-on-surface);
 }
 
 .chart-icon {
   color: var(--md-sys-color-primary);
-  font-size: 16px;
+  font-size: var(--md-sys-typescale-body-large-size);
 }
 
 
@@ -99,9 +98,8 @@
 }
 
 .legend-label {
-  font-size: 11px;
+  font: var(--md-sys-typescale-label-small);
   color: var(--md-sys-color-on-surface-variant);
-  font-weight: 500;
 }
 
 .chart-canvas:empty::before {
@@ -112,7 +110,7 @@
   height: 100%;
   color: var(--md-sys-color-on-surface-variant);
   font-style: italic;
-  font-size: 11px;
+  font-size: var(--md-sys-typescale-label-small-size);
 }
 
 /* Chart cursor styling */
@@ -122,12 +120,12 @@
 
 /* Material Icons in charts */
 .chart-header .material-icons {
-  font-size: 16px;
+  font-size: var(--md-sys-typescale-body-large-size);
   color: var(--md-sys-color-primary);
 }
 
 .chart-controls .material-icons {
-  font-size: 14px;
+  font-size: var(--md-sys-typescale-body-medium-size);
 }
 
 /* Chart controls styling */
@@ -152,10 +150,10 @@
   color: var(--md-sys-color-on-surface);
 }
 
-.chart-controls .md-button {
+.chart-controls md-filled-button,
+.chart-controls md-outlined-button {
   min-width: 36px;
   height: 32px;
-  padding: var(--md-sys-spacing-2) var(--md-sys-spacing-3);
 }
 
 /* Remove legacy responsive rules - handled by containers now */
@@ -176,7 +174,7 @@
 
 .chart-select-inline {
   min-width: var(--md-sys-spacing-30);
-  font-size: 12px;
+  font-size: var(--md-sys-typescale-body-small-size);
   padding: var(--md-sys-spacing-4) var(--md-sys-spacing-8);
 }
 
@@ -186,7 +184,7 @@
 }
 
 .chart-expand-btn .material-icons {
-  font-size: 16px;
+  font-size: var(--md-sys-typescale-body-large-size);
 }
 
 /* Legacy chart content inline - no longer used */
