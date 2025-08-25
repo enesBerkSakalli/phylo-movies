@@ -1,4 +1,5 @@
 import { useAppStore } from '../../../core/store.js';
+import { getLinkKey, getNodeKey } from '../../utils/KeyGenerator.js';
 
 /**
  * LayerStyles - Centralized style management for Deck.gl layers
@@ -44,17 +45,27 @@ export class LayerStyles {
 
   /**
    * Get link color using ColorManager for consistent highlighting
+   * Now handles dimming via opacity based on active change edges
    * @param {Object} link - Link data object
    * @returns {Array} RGBA color array for Deck.gl
    */
   getLinkColor(link) {
-    // Get ColorManager from store - same approach as WebGLMaterialFactory
+    // Get ColorManager from store
     const cm = useAppStore.getState().getColorManager();
-    // Check if link should be highlighted by testing if it gets a highlight color
-    const baseColor = cm.getBranchColor(link);
-    // Convert hex to RGBA array
-    const rgb = this._hexToRgb(baseColor);
-    const opacity = link.opacity !== undefined ? Math.round(link.opacity * 255) : 255;
+
+    // Get color with highlighting (no dimming in color)
+    const hexColor = cm.getBranchColor(link);
+    const rgb = this._hexToRgb(hexColor);
+
+    // Calculate opacity based on active change edges and downstream status
+    let opacity = link.opacity !== undefined ? Math.round(link.opacity * 255) : 255;
+
+    // Apply dimming only if dimming is enabled, there are active change edges, and this link is not downstream
+    const { dimmingEnabled } = useAppStore.getState();
+    if (dimmingEnabled && cm.hasActiveChangeEdges() && !cm.isDownstreamOfAnyActiveChangeEdge(link)) {
+        opacity = Math.round(opacity * 0.3); // 30% opacity for dimmed elements
+    }
+
     return [...rgb, opacity];
   }
 
@@ -78,7 +89,7 @@ export class LayerStyles {
     const highlightColor = cm.getBranchColorWithHighlights(link);
     const isHighlighted = baseColor !== highlightColor;
 
-    return isHighlighted ? baseWidth * 2 : Math.max(baseWidth, 3);
+    return isHighlighted ? baseWidth * 9 : Math.max(baseWidth, 3);
   }
 
   /**
@@ -104,10 +115,14 @@ export class LayerStyles {
       return [0, 0, 0, 0]; // Transparent for non-highlighted branches
     }
 
-    // Convert hex to RGBA array
+    // Convert the highlight color to RGB
     const rgb = this._hexToRgb(highlightedColor);
-    const opacity = link.opacity !== undefined ? Math.round(link.opacity * 255) : 255;
-    return [...rgb, opacity];
+
+    // Return the same color but with a lower opacity for a "glow" effect
+    const baseOpacity = link.opacity !== undefined ? link.opacity : 1;
+    const glowOpacity = Math.round(baseOpacity * 100); // ~40% opacity for the glow
+
+    return [rgb[0], rgb[1], rgb[2], glowOpacity];
   }
 
   /**
@@ -132,13 +147,15 @@ export class LayerStyles {
       return 0; // No outline for non-highlighted branches
     }
 
-    // Make outline wider than the main link
+    // Make outline significantly wider than the link to create a "halo"
     const baseWidth = this._cache.strokeWidth || useAppStore.getState().strokeWidth || 3;
-    return Math.max(baseWidth + 4, 6); // At least 4px wider, minimum 6px
+    const highlightedWidth = baseWidth * 2; // Based on the original non-experimental value in getLinkWidth
+    return highlightedWidth + 8; // Add 8px for a 4px glow on each side
   }
 
   /**
    * Get node color using ColorManager
+   * Now handles dimming via opacity based on active change edges
    * @param {Object} node - Node data object
    * @returns {Array} RGBA color array for Deck.gl
    */
@@ -149,11 +166,18 @@ export class LayerStyles {
     // Convert node data to format expected by ColorManager
     const nodeData = this._convertNodeToColorManagerFormat(node);
 
+    // Get color with highlighting (no dimming in color)
     const hexColor = cm.getNodeColor(nodeData);
-
-    // Convert hex to RGBA array
     const rgb = this._hexToRgb(hexColor);
-    const opacity = node.opacity !== undefined ? Math.round(node.opacity * 255) : 255;
+
+    // Calculate opacity based on active change edges and downstream status
+    let opacity = node.opacity !== undefined ? Math.round(node.opacity * 255) : 255;
+
+    // Apply dimming only if dimming is enabled, there are active change edges, and this node is not downstream
+    const { dimmingEnabled } = useAppStore.getState();
+    if (dimmingEnabled && cm.hasActiveChangeEdges() && !cm.isNodeDownstreamOfAnyActiveChangeEdge(nodeData)) {
+        opacity = Math.round(opacity * 0.3); // 30% opacity for dimmed elements
+    }
 
     return [...rgb, opacity];
   }
@@ -197,6 +221,7 @@ export class LayerStyles {
   }
 
   /**
+   *
    * Get extension width
    * @param {Object} extension - Extension data object
    * @returns {number} Extension width in pixels
@@ -222,12 +247,13 @@ export class LayerStyles {
    * @private
    */
   _convertNodeToColorManagerFormat(node) {
-    return {
-      data: {
-        split_indices: node.split_indices || [],
-        name: node.name
-      }
-    };
+    // If the node has an originalNode reference (from NodeConverter), use that
+    if (node.originalNode) {
+      return node.originalNode;
+    }
+
+    // Fallback for direct D3 hierarchy nodes
+    return node;
   }
 
 
@@ -257,12 +283,17 @@ export class LayerStyles {
   }
 
   /**
-   * Convert hex color to RGB array
+   * Convert color to RGB array (handles both hex and HSL formats)
    * @private
    */
-  _hexToRgb(hex) {
-    // Remove # if present
-    hex = hex.replace('#', '');
+  _hexToRgb(color) {
+    // Handle HSL format
+    if (color.startsWith('hsl(')) {
+      return this._hslToRgb(color);
+    }
+
+    // Handle hex format
+    let hex = color.replace('#', '');
 
     // Parse hex values
     const r = parseInt(hex.substring(0, 2), 16);
@@ -270,6 +301,46 @@ export class LayerStyles {
     const b = parseInt(hex.substring(4, 6), 16);
 
     return [r, g, b];
+  }
+
+  /**
+   * Convert HSL color string to RGB array
+   * @private
+   */
+  _hslToRgb(hslString) {
+    // Parse HSL string like "hsl(144, 70%, 60%)"
+    const match = hslString.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+    if (!match) {
+      console.warn('Invalid HSL format:', hslString);
+      return [0, 0, 0]; // Fallback to black
+    }
+
+    const h = parseInt(match[1]) / 360;
+    const s = parseInt(match[2]) / 100;
+    const l = parseInt(match[3]) / 100;
+
+    let r, g, b;
+
+    if (s === 0) {
+      r = g = b = l; // achromatic
+    } else {
+      const hue2rgb = (p, q, t) => {
+        if (t < 0) t += 1;
+        if (t > 1) t -= 1;
+        if (t < 1/6) return p + (q - p) * 6 * t;
+        if (t < 1/2) return q;
+        if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+        return p;
+      };
+
+      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+      const p = 2 * l - q;
+      r = hue2rgb(p, q, h + 1/3);
+      g = hue2rgb(p, q, h);
+      b = hue2rgb(p, q, h - 1/3);
+    }
+
+    return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
   }
 
   /**

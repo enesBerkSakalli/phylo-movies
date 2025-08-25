@@ -73,20 +73,20 @@ export async function loadAllPartials(partials) {
   }
 
   console.log(`Loading ${partials.length} partials...`);
-  
+
   const results = await Promise.allSettled(
     partials.map(partial => loadPartial(partial))
   );
-  
+
   const successful = results.filter(r => r.status === 'fulfilled' && r.value === true).length;
   const failed = results.length - successful;
-  
+
   console.log(`Partials loaded: ${successful}/${results.length} successful`);
-  
+
   if (failed > 0) {
     console.warn(`${failed} partials failed to load`);
   }
-  
+
   // Always return true - app should continue even if some partials fail
   return true;
 }

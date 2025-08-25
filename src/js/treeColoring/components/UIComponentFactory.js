@@ -1,7 +1,7 @@
 // UIComponentFactory.js - Simplified UI component factory
 
 // WinBox will be imported dynamically
-import { COLOR_SCHEMES } from '../constants/Colors.js';
+import { CATEGORICAL_PALETTES, getPaletteInfo } from '../../constants/ColorPalettes.js';
 import { ColorPicker } from './ColorPicker.js';
 
 /**
@@ -75,20 +75,37 @@ export class UIComponentFactory {
     const schemesContainer = document.createElement('div');
     schemesContainer.className = 'tc-scheme-grid';
 
-    Object.entries(COLOR_SCHEMES).forEach(([schemeId, schemeColors]) => {
+    Object.entries(CATEGORICAL_PALETTES).forEach(([schemeId, schemeColors]) => {
+      const paletteInfo = getPaletteInfo(schemeId);
       const schemeButton = document.createElement('button');
       schemeButton.className = 'tc-scheme-button';
+      schemeButton.title = paletteInfo.description;
 
       const colorBar = document.createElement('div');
       colorBar.className = 'tc-scheme-gradient';
       colorBar.style.background = `linear-gradient(to right, ${schemeColors.join(', ')})`;
 
+      const schemeNameContainer = document.createElement('div');
+      schemeNameContainer.style.display = 'flex';
+      schemeNameContainer.style.alignItems = 'center';
+      schemeNameContainer.style.gap = '4px';
+      
       const schemeName = document.createElement('span');
       schemeName.className = 'tc-scheme-name';
       schemeName.textContent = schemeId;
+      schemeNameContainer.appendChild(schemeName);
+      
+      // Add color-blind safe indicator
+      if (paletteInfo.colorBlindSafe) {
+        const indicator = document.createElement('span');
+        indicator.textContent = '👁';
+        indicator.title = 'Color-blind safe';
+        indicator.style.fontSize = '12px';
+        schemeNameContainer.appendChild(indicator);
+      }
 
       schemeButton.appendChild(colorBar);
-      schemeButton.appendChild(schemeName);
+      schemeButton.appendChild(schemeNameContainer);
       schemeButton.addEventListener('click', () => onSchemeChange(schemeId));
       schemesContainer.appendChild(schemeButton);
     });

@@ -18,9 +18,6 @@ export class TimelineUI {
         const elements = {};
         Object.entries(DOM_ELEMENTS).forEach(([key, id]) => {
             elements[key] = document.getElementById(id);
-            if (!elements[key]) {
-                console.warn(`[TimelineUI] Element '${id}' not found - UI updates may not work properly`);
-            }
         });
         return elements;
     }
@@ -40,7 +37,6 @@ export class TimelineUI {
      */
     updateMetrics(totalTrees, totalSegments = null) {
         if (!this.elements.movieTimelineCount) {
-            console.warn('[TimelineUI] movieTimelineCount element not available, attempting refresh...');
             this.refreshElements();
         }
 
@@ -50,7 +46,6 @@ export class TimelineUI {
                 ? `${totalTrees} trees (${totalSegments} segments)`
                 : `${totalTrees} trees`;
             this.elements.movieTimelineCount.textContent = displayText;
-            console.log(`[TimelineUI] Updated metrics: ${displayText}`);
         } else {
             console.error('[TimelineUI] Failed to update metrics - element still not found');
         }
@@ -68,12 +63,10 @@ export class TimelineUI {
      */
     updatePosition(currentSegment, totalSegments, progress, currentTree = null, totalTrees = null, treeInSegment = null, treesInSegment = null) {
         if (!this.elements.currentPositionInfo) {
-            console.warn('[TimelineUI] currentPositionInfo element not available, attempting refresh...');
             this.refreshElements();
         }
 
         if (!this.elements.currentPositionInfo) {
-            console.error('[TimelineUI] Failed to update position - element not found');
             return;
         }
 
@@ -88,7 +81,6 @@ export class TimelineUI {
         }
 
         this.elements.currentPositionInfo.textContent = displayText;
-        console.log(`[TimelineUI] Updated position: ${displayText}`);
     }
 
     /**
@@ -108,7 +100,6 @@ export class TimelineUI {
 
         const phaseDisplay = PHASE_NAMES[phase] || 'Unknown';
         this.elements.interpolationStatus.textContent = phaseDisplay;
-        console.log(`[TimelineUI] Updated interpolation status: ${phaseDisplay}`);
     }
 
     /**

@@ -4,10 +4,31 @@ import { debounce } from '../utils/debounce.js';
 import 'winbox/dist/css/winbox.min.css';
 import { DeckGLTreeAnimationController } from '../treeVisualisation/DeckGLTreeAnimationController.js';
 
-import "../msaViewer/init.ts";
+// Import Material Web components
+import '@material/web/button/filled-button.js';
+import '@material/web/button/outlined-button.js';
+import '@material/web/button/text-button.js';
+import '@material/web/button/filled-tonal-button.js';
+import '@material/web/button/elevated-button.js';
+import '@material/web/iconbutton/icon-button.js';
+import '@material/web/icon/icon.js';
+import '@material/web/switch/switch.js';
+import '@material/web/slider/slider.js';
+import '@material/web/select/outlined-select.js';
+import '@material/web/select/select-option.js';
+import '@material/web/chips/chip-set.js';
+import '@material/web/chips/assist-chip.js';
+import '@material/web/chips/suggestion-chip.js';
+import '@material/web/divider/divider.js';
+import '@material/web/list/list.js';
+import '@material/web/list/list-item.js';
+import '@material/web/progress/linear-progress.js';
+
+// Import Material Web typography styles
+import {styles as typescaleStyles} from '@material/web/typography/md-typescale-styles.js';
+
 import {
   attachGuiEventHandlers,
-  attachMSAButtonHandler,
   attachRecorderEventHandlers,
 } from "../partial/eventHandlers.js";
 import { loadAllPartials } from "../partial/loadPartials.js";
@@ -27,12 +48,10 @@ let eventHandlersAttached = false;
 async function loadAllRequiredPartials() {
 
   try {
+    // Add Material Web typography styles to document
+    document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
     await loadAllPartials([
-
-      {
-        url: "/src/partials/tree_navigation.html",
-        containerId: "navigation-container",
-      },
+      // tree_navigation.html removed - no navigation-container in visualization.html
       {
         url: "/src/partials/buttons.html",
         containerId: "buttons-container",
@@ -112,7 +131,9 @@ async function initializeGuiAndEvents(parsedData) {
     // No need to read from DOM or pass to GUI constructor
 
     // Show/hide appropriate containers based on store state
-    const { webglEnabled, useDeckGL = false } = useAppStore.getState();
+    const storeState = useAppStore.getState();
+    const { webglEnabled, useDeckGL } = storeState;
+    console.log('[Main] Store state:', { webglEnabled, useDeckGL });
     console.log('[Main] WebGL enabled:', webglEnabled, 'UseDeckGL:', useDeckGL);
 
     if (webglEnabled) {
@@ -123,12 +144,11 @@ async function initializeGuiAndEvents(parsedData) {
     // Create GUI with conditional controller
     const TreeController = useDeckGL ? DeckGLTreeAnimationController : undefined;
     console.log('[Main] TreeController selected:', TreeController ? 'DeckGLTreeAnimationController' : 'WebGLTreeAnimationController');
+    console.log('[Main] TreeController constructor:', TreeController);
     const gui = new Gui(dataToUse, { TreeController });
 
     // Set the gui instance into the store for global access
     useAppStore.getState().setGui(gui);
-
-    attachMSAButtonHandler(gui);
 
     // Create recorder without UI callbacks - EventHandlerRegistry handles UI updates
     const recorder = new ScreenRecorder({
@@ -215,9 +235,9 @@ if (isVisualizationPage) {
 
 
       // Update UI elements with loaded data (file name, embedding status, window size)
-      const fileNameElement = document.querySelector("#fileNameDisplay .file-name");
-      if (fileNameElement) {
-        fileNameElement.textContent = parsedData.file_name || "Unknown File";
+      const compactFileNameElement = document.getElementById("compactFileName");
+      if (compactFileNameElement) {
+        compactFileNameElement.textContent = parsedData.file_name || "Unknown File";
       }
 
 

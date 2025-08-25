@@ -199,6 +199,28 @@ export class RadialTreeLayout {
 
 
   /**
+   * Construct radial tree with uniform scaling applied.
+   * This ensures consistent scaling across multiple trees.
+   * @param {number} maxGlobalScale - Maximum scale value across all trees
+   * @returns {Object} Tree with uniform scaling applied
+   */
+  constructRadialTreeWithUniformScaling(maxGlobalScale) {
+    // Calculate radii and angles without auto-scaling
+    this.calcRadius(this.root, 0);
+    this.indexLeafNodes(this.root);
+    this.calcAngle(this.root, Math.PI * 2, this.root.leaves().length);
+
+    // Apply uniform scaling based on max global scale
+    const minWindowSize = this.getMinContainerDimension(this.containerWidth, this.containerHeight);
+    const uniformScale = minWindowSize / (2.0 * maxGlobalScale);
+    this.scaleRadius(this.root, uniformScale);
+    this.generateCoordinates(this.root);
+    this.scale = uniformScale;
+
+    return this.root;
+  }
+
+  /**
    * generating radial tree. Returns the tree with the coordinates to generate a tree with a radial Layout.
    * @param {boolean} [useUniformScaling=false] - Whether to skip auto-scaling for uniform scaling
    * @return {root}

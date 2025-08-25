@@ -170,60 +170,8 @@ export function renderOrUpdateLineChart({ data, config, services, chartState, ca
     );
     const chartStateManager = chartResult.chartStateManager;
 
-    // Add ResizeObserver for responsive chart handling in movie player bar
-    const container = document.getElementById(containerId);
-    if (container && container.closest('.movie-player-bar')) {
-        // Store the chart generation parameters for re-rendering
-        container._chartParams = {
-            data: chartData,
-            config: { xLabel, yLabel, yMax, xAccessor, yAccessor, tooltipFormatter },
-            indexMappings: { chartSpecificIndexToSequence, chartSpecificSequenceToIndex }
-        };
-
-        // Only add resize observer for charts in movie player bar
-        const resizeObserver = new ResizeObserver(() => {
-            // Check if container size actually changed
-            const rect = container.getBoundingClientRect();
-            const currentSize = `${Math.round(rect.width)}x${Math.round(rect.height)}`;
-
-            if (container._lastSize !== currentSize) {
-                container._lastSize = currentSize;
-
-                // Debounce resize to avoid excessive re-renders
-                clearTimeout(container._resizeTimeout);
-                container._resizeTimeout = setTimeout(() => {
-
-                    // Re-render the chart with updated dimensions
-                    const newChartResult = generateLineChart(
-                        containerId,
-                        container._chartParams.data,
-                        container._chartParams.config,
-                        onPositionChange
-                    );
-                    const newChartStateManager = newChartResult.chartStateManager;
-
-                    // Restore index mappings
-                    newChartStateManager.setIndexMappings(
-                        container._chartParams.indexMappings.chartSpecificIndexToSequence,
-                        container._chartParams.indexMappings.chartSpecificSequenceToIndex
-                    );
-
-                    // Update current position using store - always move to full tree
-                    const { currentTreeIndex } = useAppStore.getState();
-                    const fullTreePosition = transitionResolver.getTreeIndexForDistanceIndex(currentTreeIndex);
-                    newChartResult.updatePosition(fullTreePosition);
-                }, 200); // Increased debounce for better performance
-            }
-        });
-
-        resizeObserver.observe(container);
-        // Store observer for cleanup
-        container._resizeObserver = resizeObserver;
-
-        // Initialize size tracking
-        const rect = container.getBoundingClientRect();
-        container._lastSize = `${Math.round(rect.width)}x${Math.round(rect.height)}`;
-    }
+    // Note: Removed ResizeObserver for responsive chart handling
+    // Charts will use CSS-based responsive design instead
 
     // Set up index mappings on the chart state manager
     chartStateManager.setIndexMappings(chartSpecificIndexToSequence, chartSpecificSequenceToIndex);
@@ -264,18 +212,10 @@ export function renderOrUpdateLineChart({ data, config, services, chartState, ca
             );
         },
         destroy: () => {
-            // Clean up ResizeObserver and stored chart parameters
+            // Clean up chart container
             const container = document.getElementById(containerId);
             if (container) {
-                if (container._resizeObserver) {
-                    container._resizeObserver.disconnect();
-                    container._resizeObserver = null;
-                }
-                if (container._resizeTimeout) {
-                    clearTimeout(container._resizeTimeout);
-                    container._resizeTimeout = null;
-                }
-                // Clean up stored chart parameters
+                // Clean up any stored chart parameters
                 container._chartParams = null;
                 container._lastSize = null;
             }

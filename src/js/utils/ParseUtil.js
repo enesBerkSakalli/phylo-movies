@@ -3,7 +3,7 @@ import ohm from "ohm-js";
 /**
  * This class provides parsing services for SVG path strings of branch elements.
  * Uses ohm.js grammar parser to handle M (move), L (line), and A (arc) commands.
- * 
+ *
  * Supports flexible comma/space separation to be compatible with various SVG generators.
  * Format: M x,y A rx,ry rotation large-arc-flag sweep-flag x,y L x,y
  */
@@ -100,7 +100,7 @@ export default class ParseUtil {
       console.error('[ParseUtil] Parse error:', match.message);
       return null;
     }
-    
+
     try {
       return this.semantics(match).eval();
     } catch (error) {

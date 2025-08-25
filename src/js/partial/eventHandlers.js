@@ -33,7 +33,6 @@ export async function attachGuiEventHandlers(gui) {
     }
     eventRegistryInstance = new EventHandlerRegistry(gui);
     await eventRegistryInstance.attachAll();
-    console.log("GUI event handlers attached successfully");
   } catch (error) {
     console.error("Error attaching GUI event handlers:", error);
     notifications.show(
@@ -73,91 +72,7 @@ export function attachRecorderEventHandlers(recorder) {
   }
 }
 
-/**
- * Attaches an event handler to the MSA (Multiple Sequence Alignment) viewer button.
- * This handler, when clicked, attempts to retrieve MSA data using dataService
- * and then dispatches an event to open the MSA viewer with relevant context
- * (highlighted taxa, current position, window information from the GUI).
- * It also updates a status element to indicate if MSA data is available.
- * @param {Gui} gui - The main GUI instance, used to get context for the MSA viewer.
- * @returns {void}
- */
-export function attachMSAButtonHandler(gui) {
-  const msaBtn = document.getElementById("msa-viewer-btn");
-  const msaStatus = document.getElementById("msa-status");
-
-  if (!msaBtn) {
-    console.warn("MSA button not found in DOM");
-    return;
-  }
-
-  // Remove any existing event listeners to prevent duplicates
-  const newMsaBtn = msaBtn.cloneNode(true);
-  msaBtn.parentNode.replaceChild(newMsaBtn, msaBtn);
-
-  // Attach single event handler
-  newMsaBtn.addEventListener("click", async () => {
-    console.log("MSA button clicked");
-
-    // Get MSA data using dataService directly
-    const { msaData } = await import('../services/dataService.js');
-    const data = await msaData.get();
-
-    if (!data) {
-      console.warn("[attachMSAButtonHandler] No MSA data found.");
-      alert("No alignment data available. Please upload an MSA file.");
-      return;
-    }
-
-    // Get GUI context for sync information
-    const highlightedTaxa = gui ? Array.from(gui.marked || []) : [];
-    let currentPosition = 0;
-    let windowInfo = null;
-
-    if (gui) {
-      const treeIndex = Math.floor(gui.index / 5);
-      currentPosition = (treeIndex + 1) * gui.windowStepSize;
-
-      if (typeof gui.getCurrentWindow === "function") {
-        const window = gui.getCurrentWindow();
-        windowInfo = {
-          windowStart: window.startPosition,
-          windowEnd: window.endPosition,
-        };
-      } else if (gui.windowStart && gui.windowEnd) {
-        windowInfo = {
-          windowStart: gui.windowStart,
-          windowEnd: gui.windowEnd,
-        };
-      }
-    }
-
-    // Open MSA viewer
-    window.dispatchEvent(
-      new CustomEvent("open-msa-viewer", {
-        detail: { highlightedTaxa, position: currentPosition, windowInfo },
-      })
-    );
-  });
-
-  // Update the status text (async, but don't use await at top level)
-  if (msaStatus) {
-    import('../services/dataService.js').then(async ({ msaData }) => {
-      const data = await msaData.get();
-      const hasMSAData = !!data;
-      const statusElement = msaStatus.querySelector(".info-value");
-      if (statusElement) {
-        statusElement.textContent = hasMSAData
-          ? "Alignment data available"
-          : "No alignment data loaded";
-      }
-    }).catch(e => {
-      console.error("[attachMSAButtonHandler] Error updating MSA status text:", e);
-    });
-  }
-
-  console.log("MSA button handler attached successfully");
-}
+// Removed attachMSAButtonHandler - now handled by EventHandlerRegistry
 
 // Export notification system for use by other modules
 export { notifications };

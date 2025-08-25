@@ -19,8 +19,7 @@
 .comparison-header h3 {
   margin: 0;
   color: #4fc3f7;
-  font-size: 1.3rem;
-  font-weight: 600;
+  font: var(--md-sys-typescale-headline-small);
 }
 
 .tree-comparison-row {
@@ -46,13 +45,7 @@
 
 
 
-.mdc-slider {
-  width: 120px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  appearance: none;
-  height: 6px;
-}
+
 
 .mdc-slider::-webkit-slider-thumb {
   appearance: none;
@@ -75,8 +68,7 @@
 
 .control-value-display {
   color: #4fc3f7;
-  font-weight: 600;
-  font-size: 0.9rem;
+  font: var(--md-sys-typescale-body-medium);
   min-width: 40px;
   text-align: center;
 }
@@ -117,14 +109,13 @@ input:checked + .slider:before {
 .interpolation-header h3 {
   margin: 0 0 8px 0;
   color: #4fc3f7;
-  font-size: 1.3rem;
-  font-weight: 600;
+  font: var(--md-sys-typescale-headline-small);
 }
 
 .interpolation-header p {
   margin: 0;
   color: #b0b0b0;
-  font-size: 0.9rem;
+  font: var(--md-sys-typescale-body-medium);
 }
 
 .interpolation-content {
@@ -195,7 +186,7 @@ input:checked + .slider:before {
   align-items: center;
   gap: 8px;
   color: #b0b0b0;
-  font-size: 0.9rem;
+  font: var(--md-sys-typescale-body-medium);
 }
 
 .interpolation-settings select {

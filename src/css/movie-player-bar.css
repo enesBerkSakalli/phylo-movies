@@ -1,324 +1,109 @@
-/* CSS Variables for Dynamic Bar Height */
-:root {
-  --movie-bar-height: 80px; /* Reduced default height */
-  --nav-current-width: var(--nav-width-default);
-  --sidebar-offset: 0;
-}
-
-/* Movie Player Bar - Bottom Fixed Position - Full Width */
+/* Basic Movie Player Bar Styling */
 .movie-player-bar {
-  position: fixed;
-  bottom: 0;
-  left: var(--nav-width-default, 360px); /* Synchronized with navigation width */
-  right: 0; /* Always extend to right edge */
-  height: auto; /* Allow dynamic height for stacked content */
-  min-height: clamp(48px, 10vh, 80px); /* Reduced responsive minimum height */
-  background: var(--md-sys-elevation-level-2); /* Tonal elevation instead of shadows */
-  border-top: 1px solid var(--md-sys-color-outline-variant);
-  border-left: 1px solid var(--md-sys-color-outline-variant); /* Visual connection to navigation */
-  z-index: 1000;
-  display: flex;
-  align-items: flex-start;
-  padding: clamp(8px, 2vh, 16px) clamp(8px, 3vw, 24px); /* Reduced padding */
-  transition: left 0.3s ease, border-left-color 0.3s ease;
+    position: fixed;
+    bottom: 0;
+    left: var(--navigation-drawer-width);
+    right: 0;
+    z-index: 1000;
+    padding: 16px;
+    background: var(--md-sys-color-surface-container);
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+    box-shadow: var(--md-sys-elevation-level2);
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Feature query for safe-area-inset support */
-@supports (padding: env(safe-area-inset-bottom)) {
-  .movie-player-bar {
-    padding-block-end: calc(clamp(8px, 2vh, 16px) + env(safe-area-inset-bottom)); /* Reduced padding */
-  }
+/* Movie Player Bar when navigation is hidden */
+.movie-player-bar.nav-hidden {
+    left: 0;
 }
 
-/* When sidebar is hidden (menu has .hidden class), movie bar spans full width */
-.menu.hidden ~ * .movie-player-bar,
-body:has(.menu.hidden) .movie-player-bar,
-body.sidebar-hidden .movie-player-bar {
-  left: 0; /* Start from left edge when nav is closed */
-  border-left: none; /* Remove left border when nav is hidden */
-}
-
-.movie-player-container {
-  display: flex;
-  flex-direction: column; /* Stack rows vertically */
-  gap: var(--md-sys-spacing-2); /* Reduced gap */
-  width: 100%;
-  justify-content: flex-start;
-  min-height: var(--md-sys-spacing-12); /* Reduced height */
-}
-
-/* Controls row - spans full width with left/right alignment */
 .controls-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--md-sys-spacing-4);
-  width: 100%;
-  flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
 }
 
-/* Left controls container - horizontal layout for transport controls */
 .left-controls {
-  display: flex;
-  align-items: center;
-  gap: var(--md-sys-spacing-1); /* Further reduced gap */
-  flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-/* Chart controls container - right side */
+/* Navigation toggle button styling */
+#nav-toggle-button {
+    flex-shrink: 0;
+    margin-right: 8px;
+}
+
+.speed-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.chart-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
 .chart-controls {
-  display: flex;
-  align-items: center;
-  gap: var(--md-sys-spacing-2);
-  flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
 }
 
-/* Timeline container - spans full width */
-.timeline-container-full-width {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  min-height: 80px; /* Increased to give timeline more space */
-}
-
-/* Chart container - spans full width */
-.movie-chart-container-full-width {
-  flex: 0 0 auto; /* Don't grow, fixed height for slim profile */
-  display: flex;
-  flex-direction: column;
-  gap: var(--md-sys-spacing-1); /* Reduced gap */
-  width: 100%; /* Take full width of parent */
-  height: 50px; /* Reduced height */
-  background: var(--md-sys-elevation-level-1);
-  border-radius: var(--md-sys-shape-corner-small);
-  border: 1px solid var(--md-sys-color-outline-variant);
-  padding: var(--md-sys-spacing-1);
-  box-sizing: border-box;
-  position: relative;
-}
-
-/* Status Row Container */
-.movie-player-bar .status-row {
-  display: flex;
-  align-items: center;
-  gap: var(--md-sys-spacing-4); /* Reduced gap */
-  margin-bottom: var(--md-sys-spacing-4); /* Reduced margin */
-  width: 100%;
-}
-
-.movie-player-bar .tree-position .material-icons {
-  font-size: 16px;
-  color: var(--md-sys-color-on-surface);
-}
-
-.movie-player-bar .tree-position .info-group {
-  display: flex;
-  align-items: center;
-  gap: var(--md-sys-spacing-2); /* Reduced gap */
-}
-
-.movie-player-bar .tree-position .label {
-  font: var(--md-typescale-label-small);
-  font-weight: 500;
-  color: var(--md-sys-color-on-surface);
-}
-
-.movie-player-bar .tree-position .value {
-  font: var(--md-typescale-label-medium);
-  font-weight: 600;
-  color: var(--md-sys-color-on-surface);
-}
-
-.movie-player-bar .tree-position .separator {
-  font: var(--md-typescale-label-small);
-  color: var(--md-sys-color-outline);
-  margin: 0 var(--md-sys-spacing-0);
-}
-
-/* Chart container - spans full width */
-.movie-chart-container-full-width {
-  flex: 0 0 auto; /* Don't grow, fixed height for slim profile */
-  display: flex;
-  flex-direction: column;
-  gap: var(--md-sys-spacing-1); /* Reduced gap */
-  width: 100%; /* Take full width of parent */
-  height: 50px; /* Reduced height */
-  background: var(--md-sys-elevation-level-1);
-  border-radius: var(--md-sys-shape-corner-small);
-  border: 1px solid var(--md-sys-color-outline-variant);
-  padding: var(--md-sys-spacing-1);
-  box-sizing: border-box;
-  position: relative;
-}
-
-.movie-player-bar #lineChart,
-.movie-player-bar .chart-canvas,
-.movie-player-bar .chart-inline {
-  width: 100%;
-  height: 100%;
-  min-height: 40px; /* Further reduced from 48px */
-  max-height: 48px; /* Further reduced from 56px */
-  display: block;
-  background: transparent;
-  border-radius: 0;
-  border: none;
-  padding: 0;
-  margin: 0;
-  box-sizing: border-box;
-}
-
-/* Full-width chart container styling */
-.movie-chart-container-full-width #lineChart,
-.movie-chart-container-full-width .chart-canvas,
-.movie-chart-container-full-width .chart-inline {
-  width: 100%;
-  height: 100%;
-  min-height: 40px;
-  max-height: 48px;
-  display: block;
-  background: transparent;
-  border-radius: 0;
-  border: none;
-  padding: 0;
-  margin: 0;
-  box-sizing: border-box;
-}
-
-/* Play/Pause Button States */
-#start-button {
-  transition: background-color 0.2s ease, transform 0.2s ease;
-}
-
-#start-button.playing {
-  background: var(--md-sys-color-error); /* Red for pause/stop */
-  color: var(--md-sys-color-on-primary);
-}
-
-#start-button.playing:hover {
-  background: var(--md-sys-state-hover);
-}
-
-#start-button:not(.playing):hover {
-  background: var(--md-sys-state-hover);
-}
-
-#start-button:active {
-  background: var(--md-sys-state-pressed);
-}
-
-#start-button:focus-visible {
-  outline: 2px solid var(--md-sys-color-primary);
-  outline-offset: 2px;
-}
-
-/* Responsive Design - Professional Layout Alignment */
-@media (max-width: 1200px) {
-  .movie-player-bar {
-    left: var(--nav-width-medium); /* Sync with medium navigation width */
-  }
-}
-
-@media (max-width: 768px) {
-  .movie-player-bar {
-    left: var(--nav-width-small); /* Sync with small navigation width */
-    padding: var(--md-sys-spacing-2); /* Even more compact on mobile */
-  }
-
-  :root {
-    --movie-bar-height: 60px; /* Reduced responsive bar height */
-  }
-
-  .movie-player-container {
-    gap: var(--md-sys-spacing-1); /* Reduced gap for mobile */
-  }
-
-  /* Stack controls vertically on mobile */
-  .controls-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--md-sys-spacing-2);
-  }
-
-  .left-controls {
-    flex-wrap: wrap;
-    justify-content: center;
-    width: 100%;
-  }
-
-  .chart-controls {
-    width: 100%;
-    justify-content: center;
-  }
-
-  /* Responsive chart sizing for medium screens */
-  .movie-chart-container-full-width {
-    height: 48px; /* Reduced height for tablet */
-  }
-}
-
-@media (max-width: 480px) {
-  .movie-chart-container-full-width {
-    height: 40px; /* Very compact for mobile */
-  }
-
-  /* Further reduce timeline container height on mobile */
-  .timeline-container-full-width {
-    min-height: 60px;
-  }
-}
-/* Ultra-compact speed control styling */
-.animation-speed-control.ultra-compact {
-  max-width: 70px; /* Further limit width */
-}
-
-.animation-speed-control.ultra-compact .speed-knob-container {
-  transform: scale(0.85); /* Make knob smaller */
-}
-
-.animation-speed-control.ultra-compact .speed-display {
-  font-size: 10px; /* Smaller text */
-  padding: 2px;
-}
-
-/* Make select more compact */
-.chart-controls .select {
-  font-size: 12px;
-  padding: 4px 8px;
-  height: 28px;
-  min-width: 60px;
-}
-
-/* Further reduce spacing in timeline header */
 .interpolation-timeline-header {
-  padding: var(--md-sys-spacing-1);
-  margin-bottom: var(--md-sys-spacing-2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
 }
 
-/* Make timeline metrics more compact */
-.timeline-metric {
-  padding: var(--md-sys-spacing-1);
-  min-width: 40px;
+.timeline-header-metrics {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 16px;
 }
 
-/* Reduce height of timeline container */
-.interpolation-timeline-container {
-  min-height: 70px;
+.timeline-header-metrics md-suggestion-chip {
+    --md-suggestion-chip-container-height: 48px;
+    --md-suggestion-chip-label-text-size: var(--md-sys-typescale-body-large-size);
+    --md-suggestion-chip-icon-size: 20px;
+    --md-suggestion-chip-label-text-weight: var(--md-sys-typescale-body-large-weight);
 }
 
-/* Full-width timeline container gets more space */
-.timeline-container-full-width .interpolation-timeline-container {
-  min-height: 80px;
+.timeline-header-right {
+    display: flex;
+    gap: 8px;
 }
 
-/* Further reduce movie bar height */
-:root {
-  --movie-bar-height: 60px; /* Further reduced from 70px */
+.timeline-zoom-controls, .timeline-scroll-controls {
+    display: flex;
+    gap: 4px;
 }
 
-.movie-player-bar #lineChart,
-.movie-player-bar .chart-canvas,
-.movie-player-bar .chart-inline {
-  min-height: 40px; /* Further reduced from 48px */
-  max-height: 48px; /* Further reduced from 56px */
+#lineChart {
+    width: 100%;
+    height: 60px;
+}
+
+/* Increase the size of the main transport buttons */
+.transport-button {
+    --md-icon-button-icon-size: 32px;
+}
+
+.vertical-divider {
+  width: 1px;
+  height: 32px;
+  background-color: var(--md-sys-color-outline-variant);
+  margin: 0 8px;
+}
+
+.record-button-danger {
+  --md-icon-color: var(--md-sys-color-error);
 }

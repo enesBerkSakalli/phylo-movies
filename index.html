@@ -9,10 +9,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    <!-- Material Icons -->
+    <!-- Material Symbols for Material Web Components -->
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/icon?family=Material+Icons&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
     >
 
     <!-- Google Fonts - Roboto -->
@@ -21,274 +21,236 @@
       href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap"
     >
 
-    <!-- Material Design CSS -->
-    <link rel="stylesheet" type="text/css" href="/src/css/style.css">
+    <!-- Material Web Components -->
+    <script type="importmap">
+      {
+        "imports": {
+          "@material/web/": "https://esm.run/@material/web/"
+        }
+      }
+    </script>
+    <script type="module">
+      import '@material/web/button/filled-button.js';
+      import '@material/web/button/outlined-button.js';
+      import '@material/web/icon/icon.js';
+      import '@material/web/switch/switch.js';
+      import '@material/web/textfield/outlined-text-field.js';
+
+      // Debug: Check if components are loaded
+      window.addEventListener('load', () => {
+        console.log('Material Web components loaded:', {
+          'md-switch': customElements.get('md-switch') !== undefined,
+          'md-filled-button': customElements.get('md-filled-button') !== undefined,
+          'md-outlined-button': customElements.get('md-outlined-button') !== undefined,
+          'md-icon': customElements.get('md-icon') !== undefined
+        });
+      });
+    </script>
+
+    <!-- Material Design CSS - Optimized Loading Order -->
     <link rel="stylesheet" type="text/css" href="/src/css/material-design.css">
-    <link rel="stylesheet" type="text/css" href="/src/css/material-design-card.css">
+    <link rel="stylesheet" type="text/css" href="/src/css/style.css">
   </head>
 
   <body>
     <!-- Top App Bar -->
-    <header class="md-top-app-bar">
-      <div class="md-top-app-bar-container">
-        <span class="material-icons md-top-app-bar-icon">biotech</span>
-        <h1 class="md-top-app-bar-title">Phylo-Movies</h1>
+    <header style="background: var(--md-sys-color-surface-container); border-bottom: 1px solid var(--md-sys-color-outline-variant); padding: 16px 24px;">
+      <div style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; gap: 12px;">
+        <md-icon style="color: var(--md-sys-color-primary); font-size: 24px;">biotech</md-icon>
+        <h1 style="margin: 0; font-size: 22px; font-weight: 500; color: var(--md-sys-color-on-surface);">Phylo-Movies</h1>
       </div>
     </header>
 
-    <!-- Main Content with proper layout -->
-    <main class="md-layout-main">
-      <div class="md-layout-container">
+    <!-- Main Content -->
+    <main style="min-height: calc(100vh - 64px); background: var(--md-sys-color-surface);">
+      <div style="max-width: 800px; margin: 0 auto; padding: 24px 16px;">
 
         <!-- Hero Section -->
-        <section class="md-hero-section">
-          <div class="md-hero-content">
-            <h1 class="md-hero-title">Visualize Phylogenetic Evolution</h1>
-            <p class="md-hero-subtitle">Upload your tree files to create interactive phylogenetic movies with advanced interpolation and visualization.</p>
+        <section style="text-align: center; margin-bottom: 48px;">
+          <div style="margin-bottom: 24px;">
+            <md-icon style="color: var(--md-sys-color-primary); font-size: 48px;">account_tree</md-icon>
+          </div>
+          <h1 style="margin: 0 0 16px 0; font-size: 32px; font-weight: 500; color: var(--md-sys-color-on-surface);">Visualize Phylogenetic Evolution</h1>
+          <p style="margin: 0 0 32px 0; font-size: 16px; color: var(--md-sys-color-on-surface-variant); max-width: 600px; margin-left: auto; margin-right: auto;">Transform your phylogenetic data into stunning interactive movies. Upload tree files and watch evolution unfold through advanced visualization and smooth interpolation.</p>
+          <div style="display: flex; justify-content: center; gap: 32px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 8px; color: var(--md-sys-color-on-surface-variant);">
+              <md-icon style="color: var(--md-sys-color-primary);">timeline</md-icon>
+              <span>Interactive Timeline</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; color: var(--md-sys-color-on-surface-variant);">
+              <md-icon style="color: var(--md-sys-color-primary);">animation</md-icon>
+              <span>Smooth Transitions</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; color: var(--md-sys-color-on-surface-variant);">
+              <md-icon style="color: var(--md-sys-color-primary);">palette</md-icon>
+              <span>Rich Visualization</span>
+            </div>
           </div>
         </section>
 
         <!-- Upload Form Card -->
-        <section class="md-form-section">
-          <div class="md-card elev-1">
-
-            <!-- Card Header -->
-            <div class="md-card-header">
-              <div class="md-card-header-text">
-                <h2 class="md-card-title">Upload & Configure</h2>
-                <p class="md-card-subtitle">Prepare your phylogenetic data for visualization</p>
+        <section>
+          <div style="background: var(--md-sys-color-surface-container-low); border-radius: 16px; padding: 24px; margin-bottom: 24px; border: 1px solid var(--md-sys-color-outline-variant);">
+            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
+              <div style="flex: 1;">
+                <h2 style="margin: 0; font-size: 24px; font-weight: 500; color: var(--md-sys-color-on-surface);">Upload & Configure</h2>
+                <p style="margin: 4px 0 0 0; color: var(--md-sys-color-on-surface-variant);">Prepare your phylogenetic data for visualization</p>
               </div>
-              <span class="material-icons md-card-header-icon">upload_file</span>
+              <md-icon style="color: var(--md-sys-color-primary); font-size: 24px;">upload_file</md-icon>
             </div>
 
-            <!-- Form Content -->
-            <div class="md-card-content">
-              <div id="form-alert" class="md-alert md-alert-error hidden" role="alert">
-                <span class="material-icons md-alert-icon">error</span>
-                <div class="md-alert-content">
-                  <span class="md-alert-title">Upload Error</span>
-                  <span class="md-alert-message">Please check your files and try again.</span>
-                </div>
+            <div id="form-alert" style="display: none; flex-direction: row; align-items: flex-start; gap: 12px; padding: 16px; border-radius: 12px; margin-bottom: 16px; background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container);" role="alert">
+              <md-icon style="font-size: 20px; margin-top: 2px;">error</md-icon>
+              <div style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                <span style="font-weight: 500; font-size: 16px;">Upload Error</span>
+                <span style="font-size: 14px; opacity: 0.9;">Please check your files and try again.</span>
               </div>
+            </div>
 
-              <form id="phylo-form" enctype="multipart/form-data" class="md-form">
+            <form id="phylo-form" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 24px;">
+
+              <!-- File Upload Grid -->
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 24px;">
 
                 <!-- Required Files Section -->
-                <div class="md-form-section-group">
-                  <h3 class="md-form-section-title">
-                    <span class="material-icons">description</span>
+                <div style="background: var(--md-sys-color-surface-container-lowest); padding: 24px; border-radius: 16px; border: 1px solid var(--md-sys-color-outline-variant); transition: all 0.2s ease;">
+                  <h3 style="display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 500; color: var(--md-sys-color-primary); margin: 0 0 16px 0; padding-bottom: 8px; border-bottom: 1px solid var(--md-sys-color-outline-variant);">
+                    <md-icon style="font-size: 20px;">description</md-icon>
                     Required Files
                   </h3>
 
                   <!-- Tree File Input -->
-                  <div class="md-form-field-group">
-                    <div class="md-text-field md-text-field-outlined">
-                      <input
-                        id="trees"
-                        type="file"
-                        class="md-text-field-input"
-                        required
-                        accept=".tree,.nwk,.newick,.tre,.ph"
-                        placeholder=" "
-                      >
-                      <label for="trees" class="md-text-field-label">Tree File *</label>
-                      <div class="md-text-field-outline">
-                        <div class="md-text-field-outline-start"></div>
-                        <div class="md-text-field-outline-notch">
-                          <div class="md-text-field-outline-panel-inactive"></div>
-                          <div class="md-text-field-outline-panel-active"></div>
-                        </div>
-                        <div class="md-text-field-outline-end"></div>
-                      </div>
-                      <div class="md-text-field-supporting-text">
-                        <span class="material-icons md-text-field-icon">info</span>
-                        Newick format (.tree, .nwk, .newick)
-                      </div>
+                  <div style="display: flex; flex-direction: column; gap: 4px; width: 100%; margin-bottom: 16px;">
+                    <label for="trees" style="font-size: 14px; font-weight: 500; color: var(--md-sys-color-on-surface); margin-bottom: 8px;">Tree File *</label>
+                    <input
+                      id="trees"
+                      type="file"
+                      required
+                      accept=".tree,.nwk,.newick,.tre,.ph"
+                      style="padding: 12px; border: 1px solid var(--md-sys-color-outline); border-radius: 8px; background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); font-family: 'Roboto', sans-serif;"
+                    >
+                    <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--md-sys-color-on-surface-variant); padding: 4px 12px; line-height: 1.4;">
+                      <md-icon style="font-size: 16px; color: var(--md-sys-color-on-surface-variant);">cloud_upload</md-icon>
+                      Newick format (.tree, .nwk, .newick)
                     </div>
                   </div>
 
                   <!-- Order File Input -->
-                  <div class="md-form-field-group">
-                    <div class="md-text-field md-text-field-outlined">
-                      <input
-                        type="file"
-                        class="md-text-field-input"
-                        id="order"
-                        accept=".txt,.order"
-                        placeholder=" "
-                      >
-                      <label for="order" class="md-text-field-label">Order File</label>
-                      <div class="md-text-field-outline">
-                        <div class="md-text-field-outline-start"></div>
-                        <div class="md-text-field-outline-notch">
-                          <div class="md-text-field-outline-panel-inactive"></div>
-                          <div class="md-text-field-outline-panel-active"></div>
-                        </div>
-                        <div class="md-text-field-outline-end"></div>
-                      </div>
-                      <div class="md-text-field-supporting-text">
-                        <span class="material-icons md-text-field-icon">info</span>
-                        Optional: Tree ordering specification
-                      </div>
+                  <div style="display: flex; flex-direction: column; gap: 4px; width: 100%;">
+                    <label for="order" style="font-size: 14px; font-weight: 500; color: var(--md-sys-color-on-surface); margin-bottom: 8px;">Order File</label>
+                    <input
+                      type="file"
+                      id="order"
+                      accept=".txt,.order"
+                      style="padding: 12px; border: 1px solid var(--md-sys-color-outline); border-radius: 8px; background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); font-family: 'Roboto', sans-serif;"
+                    >
+                    <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--md-sys-color-on-surface-variant); padding: 4px 12px; line-height: 1.4;">
+                      <md-icon style="font-size: 16px; color: var(--md-sys-color-on-surface-variant);">description</md-icon>
+                      Optional: Tree ordering specification
                     </div>
                   </div>
                 </div>
 
                 <!-- Optional Files Section -->
-                <div class="md-form-section-group">
-                  <h3 class="md-form-section-title">
-                    <span class="material-icons">add_circle_outline</span>
+                <div style="background: var(--md-sys-color-surface-container-lowest); padding: 24px; border-radius: 16px; border: 1px solid var(--md-sys-color-outline-variant); transition: all 0.2s ease;">
+                  <h3 style="display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 500; color: var(--md-sys-color-primary); margin: 0 0 16px 0; padding-bottom: 8px; border-bottom: 1px solid var(--md-sys-color-outline-variant);">
+                    <md-icon style="font-size: 20px;">add_circle_outline</md-icon>
                     Optional Files
                   </h3>
 
                   <!-- MSA File Input -->
-                  <div class="md-form-field-group">
-                    <div class="md-text-field md-text-field-outlined">
-                      <input
-                        type="file"
-                        class="md-text-field-input"
-                        id="msa"
-                        accept=".fas,.fasta,.aln,.clustal,.msa,.phylip,.phy"
-                        placeholder=" "
-                      >
-                      <label for="msa" class="md-text-field-label">Multiple Sequence Alignment</label>
-                      <div class="md-text-field-outline">
-                        <div class="md-text-field-outline-start"></div>
-                        <div class="md-text-field-outline-notch">
-                          <div class="md-text-field-outline-panel-inactive"></div>
-                          <div class="md-text-field-outline-panel-active"></div>
-                        </div>
-                        <div class="md-text-field-outline-end"></div>
-                      </div>
-                      <div class="md-text-field-supporting-text">
-                        <span class="material-icons md-text-field-icon">info</span>
-                        FASTA, CLUSTAL, or PHYLIP format
-                      </div>
+                  <div style="display: flex; flex-direction: column; gap: 4px; width: 100%;">
+                    <label for="msa" style="font-size: 14px; font-weight: 500; color: var(--md-sys-color-on-surface); margin-bottom: 8px;">Multiple Sequence Alignment</label>
+                    <input
+                      type="file"
+                      id="msa"
+                      accept=".fas,.fasta,.aln,.clustal,.msa,.phylip,.phy"
+                      style="padding: 12px; border: 1px solid var(--md-sys-color-outline); border-radius: 8px; background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); font-family: 'Roboto', sans-serif;"
+                    >
+                    <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--md-sys-color-on-surface-variant); padding: 4px 12px; line-height: 1.4;">
+                      <md-icon style="font-size: 16px; color: var(--md-sys-color-on-surface-variant);">biotech</md-icon>
+                      FASTA, CLUSTAL, or PHYLIP format
                     </div>
                   </div>
                 </div>
 
-                <!-- Parameters Section -->
-                <div class="md-form-section-group">
-                  <h3 class="md-form-section-title">
-                    <span class="material-icons">tune</span>
-                    Visualization Parameters
-                  </h3>
+              </div>
 
-                  <!-- Number Inputs Row -->
-                  <div class="md-form-grid md-form-grid-2-col">
-                    <div class="md-form-field-group">
-                      <div class="md-text-field md-text-field-outlined">
-                        <input
-                          type="number"
-                          class="md-text-field-input"
-                          id="windowSize"
-                          name="windowSize"
-                          value="1"
-                          min="1"
-                          placeholder=" "
-                          required
-                        >
-                        <label for="windowSize" class="md-text-field-label">Window Size</label>
-                        <div class="md-text-field-outline">
-                          <div class="md-text-field-outline-start"></div>
-                          <div class="md-text-field-outline-notch">
-                            <div class="md-text-field-outline-panel-inactive"></div>
-                            <div class="md-text-field-outline-panel-active"></div>
-                          </div>
-                          <div class="md-text-field-outline-end"></div>
-                        </div>
-                      </div>
-                    </div>
+              <!-- Parameters Section -->
+              <div style="background: linear-gradient(135deg, var(--md-sys-color-surface-container-lowest) 0%, var(--md-sys-color-surface-container-low) 100%); padding: 24px; border-radius: 16px; border: 1px solid var(--md-sys-color-outline-variant);">
+                <h3 style="display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 500; color: var(--md-sys-color-primary); margin: 0 0 16px 0; padding-bottom: 8px; border-bottom: 1px solid var(--md-sys-color-outline-variant);">
+                  <md-icon style="font-size: 20px;">tune</md-icon>
+                  Visualization Parameters
+                </h3>
 
-                    <div class="md-form-field-group">
-                      <div class="md-text-field md-text-field-outlined">
-                        <input
-                          type="number"
-                          class="md-text-field-input"
-                          id="window-step-size"
-                          name="windowStepSize"
-                          value="1"
-                          min="1"
-                          placeholder=" "
-                          required
-                        >
-                        <label for="window-step-size" class="md-text-field-label">Step Size</label>
-                        <div class="md-text-field-outline">
-                          <div class="md-text-field-outline-start"></div>
-                          <div class="md-text-field-outline-notch">
-                            <div class="md-text-field-outline-panel-inactive"></div>
-                            <div class="md-text-field-outline-panel-active"></div>
-                          </div>
-                          <div class="md-text-field-outline-end"></div>
-                        </div>
-                      </div>
-                    </div>
+                <!-- Parameters Grid -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start;">
+
+                  <!-- Number Inputs -->
+                  <div style="display: flex; flex-direction: column; gap: 16px;">
+                    <md-outlined-text-field
+                      type="number"
+                      id="windowSize"
+                      name="windowSize"
+                      label="Window Size"
+                      value="1"
+                      min="1"
+                      required>
+                    </md-outlined-text-field>
+
+                    <md-outlined-text-field
+                      type="number"
+                      id="window-step-size"
+                      name="windowStepSize"
+                      label="Step Size"
+                      value="1"
+                      min="1"
+                      required>
+                    </md-outlined-text-field>
                   </div>
 
                   <!-- Options Section -->
-                  <div class="md-form-options">
-                    <div class="md-switch-container">
-                      <div class="md-switch">
-                        <input
-                          class="md-switch-input"
-                          type="checkbox"
-                          id="midpointRooting"
-                          name="midpointRooting"
-                        >
-                        <div class="md-switch-track">
-                          <div class="md-switch-handle">
-                            <div class="md-switch-ripple"></div>
-                          </div>
-                        </div>
+                  <div style="background: var(--md-sys-color-surface-container); padding: 16px; border-radius: 12px; border: 1px solid var(--md-sys-color-outline-variant);">
+                    <label style="display: flex; align-items: center; gap: 16px; cursor: pointer;">
+                      <md-switch
+                        id="midpointRooting"
+                        name="midpointRooting"
+                        value="on">
+                      </md-switch>
+                      <div style="flex: 1;">
+                        <div style="font-weight: 500; color: var(--md-sys-color-on-surface);">Enable Midpoint Rooting</div>
+                        <div style="font-size: 14px; color: var(--md-sys-color-on-surface-variant);">Automatically root trees at their midpoint</div>
                       </div>
-                      <label class="md-switch-label" for="midpointRooting">
-                        <span class="md-switch-label-text">Enable Midpoint Rooting</span>
-                        <span class="md-switch-supporting-text">Automatically root trees at their midpoint</span>
-                      </label>
-                    </div>
-
-                    <div class="md-switch-container">
-                      <div class="md-switch">
-                        <input
-                          class="md-switch-input"
-                          type="checkbox"
-                          id="deactivateEmbedding"
-                          name="deactivateEmbedding"
-                        >
-                        <div class="md-switch-track">
-                          <div class="md-switch-handle">
-                            <div class="md-switch-ripple"></div>
-                          </div>
-                        </div>
-                      </div>
-                      <label class="md-switch-label" for="deactivateEmbedding">
-                        <span class="md-switch-label-text">Use Geometric Patterns</span>
-                        <span class="md-switch-supporting-text">Disable embedding for geometric visualization</span>
-                      </label>
-                    </div>
+                    </label>
                   </div>
                 </div>
+              </div>
 
-                <!-- Action Buttons -->
-                <div class="md-card-actions">
-                  <button type="submit" class="md-button elevated">
-                    <span class="material-icons">play_arrow</span>
-                    <span>Create Visualization</span>
-                  </button>
-                  <button type="reset" class="md-button text">
-                    <span class="material-icons">refresh</span>
-                    <span>Reset</span>
-                  </button>
-                </div>
-              </form>
-            </div>
+              <!-- Action Buttons -->
+              <div style="display: flex; gap: 12px; justify-content: flex-end; padding-top: 16px; margin-top: 16px; border-top: 1px solid var(--md-sys-color-outline-variant);">
+                <md-outlined-button type="reset" has-icon>
+                  <md-icon slot="icon">refresh</md-icon>
+                  Reset
+                </md-outlined-button>
+                <md-filled-button type="submit" has-icon>
+                  <md-icon slot="icon">play_arrow</md-icon>
+                  Create Visualization
+                </md-filled-button>
+              </div>
+            </form>
           </div>
         </section>
       </div>
     </main>
-
     <script type="module" src="/src/js/index.js"></script>
-    <script src="/src/js/material-design-fixes.js"></script>
+
+    <style>
+      @media (max-width: 768px) {
+        div[style*="grid-template-columns: 1fr 1fr"] {
+          grid-template-columns: 1fr !important;
+          gap: 16px !important;
+        }
+      }
+    </style>
   </body>
 </html>

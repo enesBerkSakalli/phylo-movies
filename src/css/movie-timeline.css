@@ -1,672 +1,71 @@
-/* Import zoom controls styling */
-@import './navigation.css';
-
+/* Basic Timeline Styling */
 .interpolation-timeline-container {
-    margin-top: 0;
-    border-top: 1px solid var(--md-sys-color-outline-variant);
-    padding-top: var(--md-sys-spacing-1); /* Reduced padding */
-    padding-bottom: var(--md-sys-spacing-1); /* Reduced padding */
-    min-height: 80px; /* Reduced minimum height */
+    min-height: 60px;
+    padding: 8px;
 }
 
-.interpolation-timeline-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--md-sys-spacing-3);
-    padding: var(--md-sys-spacing-2);
-    background: var(--md-sys-color-surface-container-low);
-    border-radius: var(--md-sys-shape-corner-medium);
-    border: 1px solid var(--md-sys-color-outline-variant);
-}
-
-/* Timeline title styling */
-.timeline-title {
-    display: flex;
-    align-items: center;
-    gap: var(--md-sys-spacing-2);
-    margin: 0;
-    font-size: var(--md-typescale-title-medium-size);
-    font-weight: 500;
-    color: var(--md-sys-color-on-surface);
-    line-height: var(--md-typescale-title-medium-lineheight);
-}
-
-.timeline-title .material-icons {
-    font-size: 20px;
-    color: var(--md-sys-color-primary);
-}
-
-.timeline-header-right {
-    display: flex;
-    align-items: center;
-    gap: var(--md-sys-spacing-2); /* Reduced gap */
-}
-
-.timeline-zoom-controls {
-    display: flex;
-    align-items: center;
-    gap: var(--md-sys-spacing-1); /* Reduced gap */
-    padding: var(--md-sys-spacing-1); /* Reduced padding */
-    background: var(--md-sys-color-surface-container);
-    border-radius: var(--md-sys-shape-corner-small);
-    border: 1px solid var(--md-sys-color-outline-variant);
-}
-
-.zoom-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: var(--md-sys-spacing-7);
-    height: var(--md-sys-spacing-7);
-    background: transparent;
-    border: none;
-    border-radius: var(--md-sys-shape-corner-extra-small);
-    cursor: pointer;
-    color: var(--md-sys-color-on-surface-variant);
-    transition: all 0.2s ease;
-}
-
-.timeline-header-left {
-    display: flex;
-    align-items: center;
-    gap: var(--md-sys-spacing-2);
-}
-
-.timeline-label {
-    display: flex;
-    align-items: center;
-    gap: var(--md-sys-spacing-2);
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--md-sys-color-on-surface);
-}
-
-.timeline-label .material-icons {
-    font-size: 16px;
-    color: var(--md-sys-color-primary);
-}
-
-.timeline-header-metrics {
-    display: flex;
-    gap: var(--md-sys-spacing-2); /* Reduced gap */
-    align-items: center;
-    flex-wrap: wrap;
-}
-
-/* Enhanced timeline metrics with visual hierarchy */
-.timeline-metric {
-    display: flex;
-    align-items: center;
-    gap: var(--md-sys-spacing-2);
-    padding: var(--md-sys-spacing-1) var(--md-sys-spacing-2); /* Reduced padding */
-    background: var(--md-sys-color-surface-container);
-    border-radius: var(--md-sys-shape-corner-small);
-    border: 1px solid var(--md-sys-color-outline-variant);
-    transition: all 0.2s ease;
-    min-width: 50px; /* Reduced width */
-}
-
-/* Primary metrics - more prominent */
-.timeline-metric.primary {
-    background: var(--md-sys-color-primary-container);
-    border-color: var(--md-sys-color-primary);
-}
-
-.timeline-metric.primary .metric-label {
-    color: var(--md-sys-color-on-primary-container);
-    font-weight: 600;
-}
-
-.timeline-metric.primary .metric-value {
-    color: var(--md-sys-color-on-primary-container);
-    font-weight: 700;
-}
-
-/* Secondary metrics - subtle styling */
-.timeline-metric.secondary {
-    background: var(--md-sys-color-surface-container-high);
-    opacity: 0.8;
-}
-
-.timeline-metric.secondary:hover {
-    opacity: 1;
-}
-
-/* Status metric - visual-first styling */
-.timeline-metric.status {
-    background: var(--md-sys-color-surface-container-highest);
-    min-width: 80px;
-    justify-content: center;
-    padding: var(--md-sys-spacing-2) var(--md-sys-spacing-3); /* Reduced padding */
-}
-
-.timeline-metric.status .status-text {
-    text-align: center;
-    flex: 1;
-}
-
-/* Metric icons */
-.metric-icon {
-    font-size: 16px;
-    color: var(--md-sys-color-on-surface-variant);
-}
-
-.timeline-metric.primary .metric-icon {
-    color: var(--md-sys-color-primary);
-}
-
-/* Enhanced Status indicator with better visual feedback */
-.status-indicator-enhanced {
-    display: inline-block;
-    width: var(--md-sys-spacing-3);
-    height: var(--md-sys-spacing-3);
-    border-radius: 50%;
-    background: var(--md-sys-color-outline);
-    transition: all 0.3s ease;
-    position: relative;
-    box-shadow: 0 0 0 2px transparent;
-}
-
-.status-indicator-enhanced.playing {
-    background: var(--md-sys-color-primary);
-    animation: playingPulse 1.5s infinite;
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
-}
-
-.status-indicator-enhanced.paused {
-    background: var(--md-sys-color-error);
-    animation: none;
-}
-
-.status-indicator-enhanced.loading {
-    background: var(--md-sys-color-secondary);
-    animation: loadingRotate 1s linear infinite;
-}
-
-.status-indicator-enhanced.ready {
-    background: var(--md-sys-color-primary);
-    animation: readyGlow 2s ease-in-out;
-}
-
-@keyframes playingPulse {
-    0%, 100% {
-        opacity: 1;
-        transform: scale(1);
-    }
-    50% {
-        opacity: 0.7;
-        transform: scale(1.1);
-    }
-}
-
-@keyframes loadingRotate {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-@keyframes readyGlow {
-    0% { box-shadow: 0 0 0 0 var(--md-sys-color-primary); }
-    50% { box-shadow: 0 0 0 8px color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent); }
-    100% { box-shadow: 0 0 0 0 transparent; }
-}
-
-/* Legacy support for existing status-indicator class */
-.status-indicator {
-    display: inline-block;
-    width: var(--md-sys-spacing-2);
-    height: var(--md-sys-spacing-2);
-    border-radius: 50%;
-    background: var(--md-sys-color-outline);
-    transition: all 0.2s ease;
-}
-
-.status-indicator.playing {
-    background: var(--md-sys-color-primary);
-    animation: playingPulse 1.5s infinite;
-}
-
-.status-indicator.paused {
-    background: var(--md-sys-color-error);
-}
-
-.metric-label {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--md-sys-color-on-surface-variant);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.metric-value {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--md-sys-color-on-surface);
-    font-family: var(--md-sys-font-family-monospace, 'SF Mono', monospace);
-    transition: all 0.3s ease;
-}
-
-/* Animated metric value changes */
-.metric-value.updating {
-    animation: metricUpdate 0.5s ease-out;
-}
-
-.metric-value.counting {
-    animation: metricCountUp 0.8s ease-out;
-}
-
-/* Status text styling */
-.status-text {
-    font-family: var(--md-sys-font-family-body, system-ui);
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--md-sys-color-on-surface-variant);
-    margin-left: var(--md-sys-spacing-2);
-}
-
-@keyframes metricUpdate {
-    0% {
-        transform: scale(1);
-        color: var(--md-sys-color-on-surface);
-    }
-    50% {
-        transform: scale(1.1);
-        color: var(--md-sys-color-primary);
-    }
-    100% {
-        transform: scale(1);
-        color: var(--md-sys-color-on-surface);
-    }
-}
-
-@keyframes metricCountUp {
-    0% {
-        transform: translateY(10px);
-        opacity: 0;
-    }
-    50% {
-        transform: translateY(-2px);
-        opacity: 1;
-    }
-    100% {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-/* Enhanced metric value styling for specific metrics */
-.timeline-metric:nth-child(1) .metric-value {
-    color: var(--md-sys-color-primary);
-}
-
-.timeline-metric:nth-child(2) .metric-value {
-    color: var(--md-sys-color-secondary);
-    font-weight: 700;
-}
-
-.timeline-metric:nth-child(3) .metric-value {
-    color: var(--md-sys-color-tertiary);
-}
-
-.timeline-metric:nth-child(4) .metric-value {
-    color: var(--md-sys-color-outline);
-}
-
-/* VIS-TIMELINE VISUAL LAYER STYLES */
 .vis-timeline-visual-layer {
-    margin-top: var(--md-sys-spacing-2); /* Reduced margin */
-    padding: 2px 1px; /* Reduced padding */
-    border-radius: var(--md-sys-shape-corner-small);
-    border: 1px solid var(--md-sys-color-outline-variant);
-    background: var(--md-sys-color-surface-container);
-    overflow: hidden;
-    pointer-events: auto; /* Enable interactions for scrubbing */
-    min-height: 28px; /* Reduced height */
+    min-height: 24px;
 }
 
-/* Override vis-timeline default styles */
-.vis-timeline-visual-layer .vis-timeline {
-    background: transparent;
-    border: none;
-}
-
-.vis-timeline-visual-layer .vis-panel.vis-center {
-    background: transparent;
-}
-
-.vis-timeline-visual-layer .vis-time-axis {
-    display: none;
-}
-
-/* Full tree segments - prominent orange bars */
-.vis-timeline-visual-layer .vis-item.full-tree-segment {
-    background: var(--md-sys-color-tertiary);
-    border: 1px solid color-mix(in srgb, var(--md-sys-color-tertiary) 80%, var(--md-sys-color-on-tertiary));
-    border-radius: var(--md-sys-shape-corner-extra-small);
-    height: 20px; /* Reduced height */
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: none;
-    pointer-events: auto; /* Enable interactions */
-    margin: 0 !important; /* Remove any default margins */
-    padding: 0 !important; /* Remove any default padding */
-}
-
-.vis-timeline-visual-layer .vis-item.full-tree-segment:hover {
-    background: color-mix(in srgb, var(--md-sys-color-tertiary) 80%, var(--md-sys-color-on-tertiary));
-    box-shadow: 0 4px 12px color-mix(in srgb, var(--md-sys-color-tertiary) 60%, transparent);
-    transform: translateY(-1px); /* Subtle lift effect */
-    border-color: var(--md-sys-color-tertiary);
-    height: 24px; /* Reduced hover height */
-}
-
-/* Interpolation segments - use neutral color for inactive data */
-.vis-timeline-visual-layer .vis-item.interpolation-segment {
-    background: var(--chart-inactive);
-    border: 1px solid color-mix(in srgb, var(--chart-inactive) 80%, var(--md-sys-color-outline-variant));
-    border-radius: var(--md-sys-shape-corner-extra-small);
-    height: 12px; /* Reduced height */
-    cursor: pointer;
-    transition: all 0.2s ease;
-    opacity: 0.8;
-    pointer-events: auto; /* Enable interactions */
-    margin: 0 !important; /* Remove any default margins */
-    padding: 0 !important; /* Remove any default padding */
-}
-
-/* Active/current interpolation segment - Enhanced visibility */
-.vis-timeline-visual-layer .vis-item.interpolation-segment.active,
-.vis-timeline-visual-layer .vis-item.interpolation-segment.current {
-    background: var(--md-sys-color-primary);
-    border-color: var(--md-sys-color-primary);
-    opacity: 1;
-    height: 18px; /* Reduced height */
-    box-shadow: 0 0 0 2px var(--md-sys-color-primary), 0 0 8px color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent);
-    animation: currentSegmentPulse 2s ease-in-out infinite;
-    z-index: 10;
-}
-
-/* Current full tree segment highlighting */
-.vis-timeline-visual-layer .vis-item.full-tree-segment.current {
-    background: var(--md-sys-color-primary);
-    border-color: var(--md-sys-color-primary);
-    height: 22px; /* Reduced height */
-    box-shadow: 0 0 0 2px var(--md-sys-color-primary), 0 0 12px color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent);
-    animation: currentSegmentPulse 2s ease-in-out infinite;
-    z-index: 10;
-}
-
-@keyframes currentSegmentPulse {
-    0%, 100% {
-        box-shadow: 0 0 0 2px var(--md-sys-color-primary), 0 0 8px color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent);
-    }
-    50% {
-        box-shadow: 0 0 0 3px var(--md-sys-color-primary), 0 0 16px color-mix(in srgb, var(--md-sys-color-primary) 60%, transparent);
-    }
-}
-
-.vis-timeline-visual-layer .vis-item.interpolation-segment:hover {
-    height: 16px; /* Reduced hover height */
-    opacity: 1;
-    background: var(--chart-active);
-    border-color: var(--md-sys-color-primary);
-    box-shadow: 0 2px 4px color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
-    transform: translateY(-1px); /* Subtle lift effect */
-}
-
-/* Hide content text for clean appearance */
 .vis-timeline-visual-layer .vis-item .vis-item-content {
     display: none;
 }
 
-/* Ensure all items are in one horizontal line */
-.vis-timeline-visual-layer .vis-group {
-    border: none;
-    background: transparent;
-}
-
-.vis-timeline-visual-layer .vis-foreground .vis-group {
-    border-top: none;
-}
-
-/* Enhanced Current Position Indicator - Much More Visible */
+/* Current Position Scrubber - Enhanced Visibility */
 .vis-timeline-visual-layer .vis-custom-time {
-    background: var(--md-sys-color-error); /* Bright red for visibility */
-    width: 3px; /* Reduced width */
+    background: linear-gradient(to bottom, #ff0000, #cc0000);
+    width: 4px;
     cursor: ew-resize;
-    opacity: 1;
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 8px var(--md-sys-color-error);
-    transition: all 0.2s ease;
-    z-index: 1000; /* Ensure it's always on top */
-    position: relative;
+    z-index: 1000;
+    box-shadow: 0 0 8px rgba(255, 0, 0, 0.6), 
+                0 0 20px rgba(255, 0, 0, 0.3);
+    transition: box-shadow 0.2s ease, width 0.2s ease;
 }
 
-.vis-timeline-visual-layer .vis-custom-time:hover,
-.vis-timeline-visual-layer .vis-custom-time:focus {
-    width: 4px; /* Reduced hover width */
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.9), 0 0 12px var(--md-sys-color-error);
-    transform: scaleY(1.1); /* Slight vertical stretch */
+/* Make scrubber more prominent on hover */
+.vis-timeline-visual-layer .vis-custom-time:hover {
+    width: 5px;
+    box-shadow: 0 0 12px rgba(255, 0, 0, 0.8), 
+                0 0 30px rgba(255, 0, 0, 0.5),
+                -2px 0 4px rgba(255, 0, 0, 0.3),
+                2px 0 4px rgba(255, 0, 0, 0.3);
 }
 
-/* Add a top indicator arrow for current position */
+/* Add a handle/thumb at the top of the scrubber for better visibility */
 .vis-timeline-visual-layer .vis-custom-time::before {
     content: '';
     position: absolute;
-    top: -6px; /* Reduced size */
+    top: -8px;
     left: 50%;
     transform: translateX(-50%);
-    width: 0;
-    height: 0;
-    border-left: 4px solid transparent; /* Reduced size */
-    border-right: 4px solid transparent; /* Reduced size */
-    border-top: 6px solid var(--md-sys-color-error); /* Reduced size */
+    width: 12px;
+    height: 12px;
+    background: #ff0000;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     z-index: 1001;
 }
 
-/* Add a bottom indicator arrow for current position */
-.vis-timeline-visual-layer .vis-custom-time::after {
-    content: '';
-    position: absolute;
-    bottom: -6px; /* Reduced size */
-    left: 50%;
-    transform: translateX(-50%);
-    width: 0;
-    height: 0;
-    border-left: 4px solid transparent; /* Reduced size */
-    border-right: 4px solid transparent; /* Reduced size */
-    border-bottom: 6px solid var(--md-sys-color-error); /* Reduced size */
-    z-index: 1001;
-}
-
-/* Remove default selection box */
-.vis-timeline-visual-layer .vis-item.vis-box {
-    border: none;
-}
-
-/* Hide overflow items */
-.vis-timeline-visual-layer .vis-item.vis-cluster {
-    display: none;
-}
-
-/* Focus states for accessibility */
-.vis-timeline-visual-layer .vis-item.full-tree-segment:focus,
-.vis-timeline-visual-layer .vis-item.interpolation-segment:focus {
-    outline: 2px solid var(--md-sys-color-primary);
-    outline-offset: 2px;
-    z-index: 10;
-}
-
-/* Keyboard navigation support */
-.vis-timeline-visual-layer:focus {
-    outline: 2px solid var(--md-sys-color-primary);
-    outline-offset: 2px;
-}
-
-/* Tree pair alternating colors for better visual distinction */
-.vis-timeline-visual-layer .vis-item.tree-pair-color-1 {
-    background: var(--md-sys-color-primary-container);
-    border-color: var(--md-sys-color-primary);
-}
-
-.vis-timeline-visual-layer .vis-item.tree-pair-color-2 {
-    background: var(--md-sys-color-secondary-container);
-    border-color: var(--md-sys-color-secondary);
-}
-
-.vis-timeline-visual-layer .vis-item.tree-pair-color-3 {
-    background: var(--md-sys-color-tertiary-container);
-    border-color: var(--md-sys-color-tertiary);
-}
-
-.vis-timeline-visual-layer .vis-item.tree-pair-color-4 {
-    background: var(--md-sys-color-error-container);
-    border-color: var(--md-sys-color-error);
-}
-
-.vis-timeline-visual-layer .vis-item.tree-pair-color-5 {
-    background: color-mix(in srgb, var(--md-sys-color-primary) 30%, var(--md-sys-color-secondary));
-    border-color: color-mix(in srgb, var(--md-sys-color-primary) 60%, var(--md-sys-color-secondary));
-}
-
-.vis-timeline-visual-layer .vis-item.tree-pair-color-6 {
-    background: color-mix(in srgb, var(--md-sys-color-secondary) 30%, var(--md-sys-color-tertiary));
-    border-color: color-mix(in srgb, var(--md-sys-color-secondary) 60%, var(--md-sys-color-tertiary));
-}
-
-/* Default tree pair color (for original trees) */
-.vis-timeline-visual-layer .vis-item.tree-pair-default {
-    background: var(--md-sys-color-outline-variant);
-    border-color: var(--md-sys-color-outline);
-}
-
-/* Ensure tree pair colors work well with hover states */
-.vis-timeline-visual-layer .vis-item.tree-pair-color-1:hover {
-    background: color-mix(in srgb, var(--md-sys-color-primary-container) 80%, var(--md-sys-color-on-primary-container));
-    border-color: var(--md-sys-color-primary);
-}
-
-.vis-timeline-visual-layer .vis-item.tree-pair-color-2:hover {
-    background: color-mix(in srgb, var(--md-sys-color-secondary-container) 80%, var(--md-sys-color-on-secondary-container));
-    border-color: var(--md-sys-color-secondary);
-}
-
-.vis-timeline-visual-layer .vis-item.tree-pair-color-3:hover {
-    background: color-mix(in srgb, var(--md-sys-color-tertiary-container) 80%, var(--md-sys-color-on-tertiary-container));
-    border-color: var(--md-sys-color-tertiary);
-}
-
-.vis-timeline-visual-layer .vis-item.tree-pair-color-4:hover {
-    background: color-mix(in srgb, var(--md-sys-color-error-container) 80%, var(--md-sys-color-on-error-container));
-    border-color: var(--md-sys-color-error);
-}
-
-.vis-timeline-visual-layer .vis-item.tree-pair-color-5:hover {
-    background: color-mix(in srgb, var(--md-sys-color-primary) 50%, var(--md-sys-color-secondary));
-    border-color: color-mix(in srgb, var(--md-sys-color-primary) 80%, var(--md-sys-color-secondary));
-}
-
-.vis-timeline-visual-layer .vis-item.tree-pair-color-6:hover {
-    background: color-mix(in srgb, var(--md-sys-color-secondary) 50%, var(--md-sys-color-tertiary));
-    border-color: color-mix(in srgb, var(--md-sys-color-secondary) 80%, var(--md-sys-color-tertiary));
-}
-
-.vis-timeline-visual-layer .vis-item.tree-pair-default:hover {
-    background: color-mix(in srgb, var(--md-sys-color-outline-variant) 80%, var(--md-sys-color-on-surface));
-    border-color: var(--md-sys-color-outline);
-}
-
-/* High contrast mode support */
-@media (prefers-contrast: high) {
-    .vis-timeline-visual-layer .vis-item.full-tree-segment {
-        border-width: 2px;
+/* Pulsing animation for the scrubber when active */
+@keyframes scrubber-pulse {
+    0% {
+        box-shadow: 0 0 8px rgba(255, 0, 0, 0.6), 
+                    0 0 20px rgba(255, 0, 0, 0.3);
     }
-
-    .vis-timeline-visual-layer .vis-item.interpolation-segment {
-        border-width: 2px;
+    50% {
+        box-shadow: 0 0 15px rgba(255, 0, 0, 0.9), 
+                    0 0 35px rgba(255, 0, 0, 0.5);
     }
-
-    .vis-timeline-visual-layer .vis-custom-time {
-        width: 4px;
-        box-shadow: 0 0 0 2px var(--md-sys-color-on-secondary);
+    100% {
+        box-shadow: 0 0 8px rgba(255, 0, 0, 0.6), 
+                    0 0 20px rgba(255, 0, 0, 0.3);
     }
 }
 
-/* Responsive Design for Timeline Metrics */
-@media (max-width: 768px) {
-  .timeline-header-metrics {
-    flex-direction: column;
-    gap: var(--md-sys-spacing-1); /* Reduced gap */
-    align-items: stretch;
-  }
-
-  .timeline-metric {
-    justify-content: center;
-    min-width: auto;
-  }
-
-  .timeline-metric.secondary {
-    display: none; /* Hide secondary metrics on mobile */
-  }
-
-  .interpolation-timeline-header {
-    flex-direction: column;
-    gap: var(--md-sys-spacing-2); /* Reduced gap */
-    align-items: stretch;
-  }
-
-  .timeline-header-right {
-    justify-content: center;
-  }
-
-  /* Enhanced touch targets for mobile */
-  .vis-timeline-visual-layer .vis-item.full-tree-segment {
-    height: 20px; /* Reduced height */
-  }
-
-  .vis-timeline-visual-layer .vis-item.interpolation-segment {
-    height: 14px; /* Reduced height */
-  }
-
-  .vis-timeline-visual-layer .vis-item.interpolation-segment.active,
-  .vis-timeline-visual-layer .vis-item.interpolation-segment:hover {
-    height: 18px; /* Reduced height */
-  }
-
-  .vis-timeline-visual-layer .vis-item.full-tree-segment:hover {
-    height: 24px; /* Reduced height */
-  }
-
-  .vis-timeline-visual-layer {
-    min-height: 28px; /* Reduced height */
-    padding: 2px 1px; /* Reduced padding */
-  }
-
-  .interpolation-timeline-container {
-    min-height: 100px; /* Reduced height */
-  }
-}
-/* Hide metric labels on smaller screens */
-@media (max-width: 992px) {
-  .timeline-metric .metric-label {
-    display: none; /* Hide labels on smaller screens */
-  }
-
-  .timeline-metric {
-    padding: var(--md-sys-spacing-1);
-    min-width: 40px;
-  }
-
-  .timeline-metric.status {
-    min-width: 60px;
-  }
-}
-
-/* Make timeline container even more compact */
-.interpolation-timeline-container {
-  min-height: 70px; /* Further reduced from 80px */
-}
-
-/* Make vis-timeline visual layer more compact */
-.vis-timeline-visual-layer {
-  min-height: 24px; /* Further reduced from 28px */
+/* Apply pulsing animation during dragging */
+.vis-timeline-visual-layer .vis-custom-time.scrubbing {
+    animation: scrubber-pulse 1.5s ease-in-out infinite;
+    width: 5px;
 }

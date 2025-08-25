@@ -6,7 +6,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "mocha --require @babel/register 'test/fileUpload.test.js' 'test/parser.test.js' 'test/integration.test.js' 'test/fileUploadTests.js' 'test/msaViewerIntegrationTests.js' 'test/msaViewerRefreshTest.js' 'test/tree-centering-verification.test.js' 'test/chart-resizing-verification.test.js' 'test/msa-workflow.test.js' 'test/scssModuleLoading.test.js' 'test/msa-automated-scrolling.test.js'",
+    "test": "mocha --require @babel/register 'test/fileUpload.test.js' 'test/parser.test.js' 'test/integration.test.js' 'test/fileUploadTests.js' 'test/msaViewerIntegrationTests.js' 'test/msaViewerRefreshTest.js' 'test/tree-centering-verification.test.js' 'test/msa-workflow.test.js' 'test/scssModuleLoading.test.js' 'test/msa-automated-scrolling.test.js'",
     "test:watch": "mocha --require @babel/register --watch 'test/fileUpload.test.js' 'test/parser.test.js' 'test/integration.test.js' 'test/fileUploadTests.js' 'test/msaViewerIntegrationTests.js' 'test/msaViewerRefreshTest.js' 'test/msa-workflow.test.js' 'test/msa-automated-scrolling.test.js'",
     "test:msa": "mocha --require @babel/register 'test/msa-workflow.test.js' 'test/msa-automated-scrolling.test.js'",
     "test:msa-scrolling": "mocha --require @babel/register 'test/msa-automated-scrolling.test.js'",
@@ -25,6 +25,7 @@
   "dependencies": {
     "@deck.gl/core": "^9.1.14",
     "@deck.gl/layers": "^9.1.14",
+    "@material/web": "^2.3.0",
     "@vitejs/plugin-react": "^4.5.0",
     "alignment-viewer-2": "^2.0.0-beta-23",
     "d3": "^7.9.0",

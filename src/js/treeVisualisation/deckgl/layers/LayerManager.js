@@ -119,9 +119,12 @@ export class LayerManager {
       getPath: d => d.path,
       getColor: d => this.layerStyles.getLinkColor(d),
       getWidth: d => this.layerStyles.getLinkWidth(d),
+      getDashArray: d => this.layerStyles.getLinkDashArray(d),
+      dashJustified: true,
       updateTriggers: {
         getColor: [links, this.layerStyles._cache.highlightEdges],
         getWidth: [links, this.layerStyles._cache.strokeWidth],
+        getDashArray: [links, this.layerStyles._cache.strokeWidth],
         getPath: [links]
       }
     });
@@ -154,10 +157,11 @@ export class LayerManager {
    */
   createNodesLayer(nodes) {
     const config = this._layerConfigs.nodes;
-    return new config.LayerClass({
+    const layer = new config.LayerClass({
       ...config.defaultProps,
       id: config.id,
       data: nodes,
+      pickable: true, // Enable picking for node interactions
       getPosition: d => d.position,
       getRadius: d => Math.max(d.radius, this.MIN_NODE_RADIUS),
       getFillColor: d => this.layerStyles.getNodeColor(d),
@@ -169,6 +173,7 @@ export class LayerManager {
         getRadius: [nodes]
       }
     });
+    return layer;
   }
 
   /**
@@ -185,7 +190,8 @@ export class LayerManager {
       getText: d => d.text,
       getSize: () => this.layerStyles.getLabelSize(),
       getColor: d => this.layerStyles.getLabelColor(d.leaf),
-      getAngle: d => d.rotation,
+      // Convert rotation from radians (used in data) to degrees (expected by Deck.gl)
+      getAngle: d => d.rotation * (180 / Math.PI),
       getTextAnchor: d => d.textAnchor,
       updateTriggers: {
         getColor: [labels],

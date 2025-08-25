@@ -14,10 +14,26 @@ export class ColorManager {
   constructor() {
     // Configuration
     this.monophyleticColoringEnabled = true;
-
-        // State
+    // State
     this.currentActiveChangeEdges = new Set(); // Current active change edges for highlighting
     this.marked = []; // Array of Sets for red highlighting
+  }
+
+  /**
+   * Refresh the color categories reference
+   * Call this when TREE_COLOR_CATEGORIES is updated externally
+   */
+  refreshColorCategories() {
+    // The TREE_COLOR_CATEGORIES is imported statically, so it automatically reflects
+    // the latest changes when the object is mutated. However, we can trigger a
+    // re-render to ensure the visual changes are applied immediately.
+
+    // Get the store and trigger a re-render
+    const store = useAppStore.getState();
+    if (store.treeController && store.treeController.renderAllElements) {
+      // Force re-render to pick up new colors (works for both SVG and WebGL)
+      store.treeController.renderAllElements();
+    }
   }
 
   // ===========================
@@ -29,6 +45,7 @@ export class ColorManager {
    * This is the main method used by LayerStyles.getLinkColor()
    *
    * Priority: Active change edge (blue) > Marked (red) > Base color
+   * Note: Dimming is now handled by LayerStyles via opacity, not color change
    *
    * @param {Object} linkData - D3 link data with target.data.split_indices
    * @param {Object} options - Additional options (unused but kept for API compatibility)
@@ -39,11 +56,11 @@ export class ColorManager {
     const isMarked = this._isComponentMarked(linkData);
     const isActiveChangeEdge = this._isActiveChangeEdgeHighlighted(linkData, this.currentActiveChangeEdges);
 
-    // Apply color priority
+    // Apply color priority (removed dimming logic - handled by LayerStyles)
     if (isActiveChangeEdge) {
-      return TREE_COLOR_CATEGORIES.activeChangeEdgeColor; // Blue for active change edges
+      return TREE_COLOR_CATEGORIES.activeChangeEdgeColor; // Blue for active change edge
     } else if (isMarked) {
-      return TREE_COLOR_CATEGORIES.markedColor; // Red for marked components
+      return TREE_COLOR_CATEGORIES.markedColor; // Red for marked
     } else {
       return this._getBaseBranchColor(linkData); // Base color (black or taxa color)
     }
@@ -64,11 +81,12 @@ export class ColorManager {
   // ========================
 
   /**
-   * Get node color with highlighting and dimming logic
+   * Get node color with highlighting logic
    * Used by LayerStyles for nodes, labels, and extensions
+   * Note: Dimming is now handled by LayerStyles via opacity, not color change
    *
    * @param {Object} nodeData - Node data with data.split_indices and data.name
-   * @param {Array} activeChangeEdges - Active change edges for dimming logic (unused - uses this.currentActiveChangeEdges)
+   * @param {Array} activeChangeEdges - Active change edges for highlighting (optional)
    * @param {Object} options - Additional options
    * @returns {string} Hex color code
    */
@@ -76,19 +94,14 @@ export class ColorManager {
     // Check highlighting states
     const isMarked = this._isNodeMarked(nodeData);
     const isActiveChangeEdgeNode = this._isNodeActiveChangeEdge(nodeData, activeChangeEdges);
-    const hasActiveChangeEdges = activeChangeEdges && activeChangeEdges.length > 0;
 
-    // Apply color priority with dimming logic
+    // Apply color priority (removed dimming logic - handled by LayerStyles)
     if (isMarked) {
       return TREE_COLOR_CATEGORIES.markedColor; // Red for marked nodes
     } else if (isActiveChangeEdgeNode) {
       return TREE_COLOR_CATEGORIES.activeChangeEdgeColor; // Blue for active change edge nodes
-    } else if (hasActiveChangeEdges && this._isNodeDownstreamOfAnyActiveChangeEdge(nodeData, activeChangeEdges)) {
-      return this._getBaseNodeColor(nodeData); // Keep normal color for downstream nodes
-    } else if (hasActiveChangeEdges) {
-      return '#cccccc'; // Grey out non-highlighted nodes when highlighting is active
     } else {
-      return this._getBaseNodeColor(nodeData); // Normal coloring when no highlighting
+      return this._getBaseNodeColor(nodeData); // Normal base color
     }
   }
 
@@ -103,10 +116,13 @@ export class ColorManager {
   updateMarkedComponents(newMarkedComponents) {
     if (Array.isArray(newMarkedComponents)) {
       this.marked = newMarkedComponents;
+      console.log("[ColorManager] Updated marked components (array):", this.marked);
     } else if (newMarkedComponents instanceof Set) {
       this.marked = [newMarkedComponents];
+      console.log("[ColorManager] Updated marked components (set):", this.marked);
     } else {
       this.marked = [];
+      console.log("[ColorManager] Cleared marked components");
     }
   }
 
@@ -115,7 +131,10 @@ export class ColorManager {
    * Called by store when current tree position changes
    */
   updateActiveChangeEdge(activeChangeEdge) {
+    console.log('[ColorManager] updateActiveChangeEdge called with:', activeChangeEdge);
     this.currentActiveChangeEdges = new Set(activeChangeEdge);
+    console.log('[ColorManager] currentActiveChangeEdges Set:', this.currentActiveChangeEdges);
+    console.log('[ColorManager] Set size:', this.currentActiveChangeEdges.size);
   }
 
   /**
@@ -132,6 +151,53 @@ export class ColorManager {
     return this.monophyleticColoringEnabled;
   }
 
+  /**
+   * Check if a branch/link is downstream of any active change edge
+   * Used by LayerStyles for dimming logic
+   * @param {Object} linkData - D3 link data with target.data.split_indices
+   * @returns {boolean} True if this branch is downstream of any active change edge
+   */
+  isDownstreamOfAnyActiveChangeEdge(linkData) {
+    if (!this.currentActiveChangeEdges || this.currentActiveChangeEdges.size === 0) {
+      return false;
+    }
+    console.log('[ColorManager] Checking downstream for linkData:', linkData);
+    console.log('[ColorManager] Current activeChangeEdges:', this.currentActiveChangeEdges);
+    return this._isDownstreamOfAnyActiveChangeEdge(linkData, [this.currentActiveChangeEdges]);
+  }
+
+  /**
+   * Check if a node is downstream of any active change edge
+   * Used by LayerStyles for dimming logic
+   * @param {Object} nodeData - Node data with data.split_indices
+   * @returns {boolean} True if this node is downstream of any active change edge
+   */
+  isNodeDownstreamOfAnyActiveChangeEdge(nodeData) {
+    if (!this.currentActiveChangeEdges || this.currentActiveChangeEdges.size === 0) {
+      return false;
+    }
+    return this._isNodeDownstreamOfAnyActiveChangeEdge(nodeData, [this.currentActiveChangeEdges]);
+  }
+
+  /**
+   * Check if there are any active change edges
+   * Used by LayerStyles to determine if dimming should be applied
+   * @returns {boolean} True if there are active change edges
+   */
+  hasActiveChangeEdges() {
+    return this.currentActiveChangeEdges && this.currentActiveChangeEdges.size > 0;
+  }
+
+  /**
+   * Check if a branch is specifically an active change edge (not just highlighted)
+   * Used by LayerStyles to apply special stroke treatment to active change edges
+   * @param {Object} linkData - D3 link data with target.data.split_indices
+   * @returns {boolean} True if this branch is an active change edge
+   */
+  isActiveChangeEdge(linkData) {
+    return this._isActiveChangeEdgeHighlighted(linkData, this.currentActiveChangeEdges);
+  }
+
   // ================================
   // PRIVATE - BASE COLOR CALCULATION
   // ================================
@@ -141,17 +207,18 @@ export class ColorManager {
    * Implements monophyletic group coloring
    */
   _getBaseBranchColor(linkData) {
-    if (!this.monophyleticColoringEnabled) {
-      return TREE_COLOR_CATEGORIES.defaultColor;
-    }
-
-    // Leaf branches get their taxa color
+    // Leaf branches ALWAYS get their taxa color (regardless of monophyletic setting)
     if (!linkData.target.children || linkData.target.children.length === 0) {
       const leafName = linkData.target.data.name;
       return TREE_COLOR_CATEGORIES[leafName] || TREE_COLOR_CATEGORIES.defaultColor;
     }
 
-    // Internal branches: check if monophyletic
+    // Internal branches: only apply monophyletic coloring if enabled
+    if (!this.monophyleticColoringEnabled) {
+      return TREE_COLOR_CATEGORIES.defaultColor;
+    }
+
+    // Internal branches: check if monophyletic (all subtree leaves have same color)
     const subtreeLeaves = this._getSubtreeLeaves(linkData.target);
     if (subtreeLeaves.length === 0) {
       return TREE_COLOR_CATEGORIES.defaultColor;
@@ -161,9 +228,10 @@ export class ColorManager {
     const leafColors = subtreeLeaves.map(leafName =>
       TREE_COLOR_CATEGORIES[leafName] || TREE_COLOR_CATEGORIES.defaultColor
     );
+
     const uniqueColors = [...new Set(leafColors)];
 
-    // Color branch only if all leaves have same color (monophyletic)
+    // Color internal branch only if all leaves have same color (monophyletic)
     if (uniqueColors.length === 1 && uniqueColors[0] !== TREE_COLOR_CATEGORIES.defaultColor) {
       return uniqueColors[0];
     }
@@ -173,9 +241,38 @@ export class ColorManager {
 
   /**
    * Get base node color (taxa color or default)
+   * Implements monophyletic group coloring for internal nodes
    */
   _getBaseNodeColor(nodeData) {
-    return TREE_COLOR_CATEGORIES[nodeData.data.name] || TREE_COLOR_CATEGORIES.defaultColor;
+    // Leaf nodes ALWAYS get their taxa color (regardless of monophyletic setting)
+    if (!nodeData.children || nodeData.children.length === 0) {
+      return TREE_COLOR_CATEGORIES[nodeData.data.name] || TREE_COLOR_CATEGORIES.defaultColor;
+    }
+
+    // Internal nodes: only apply monophyletic coloring if enabled
+    if (!this.monophyleticColoringEnabled) {
+      return TREE_COLOR_CATEGORIES.defaultColor;
+    }
+
+    // Internal nodes: check if monophyletic (all subtree leaves have same color)
+    const subtreeLeaves = this._getSubtreeLeaves(nodeData);
+    if (subtreeLeaves.length === 0) {
+      return TREE_COLOR_CATEGORIES.defaultColor;
+    }
+
+    // Get unique colors in subtree
+    const leafColors = subtreeLeaves.map(leafName =>
+      TREE_COLOR_CATEGORIES[leafName] || TREE_COLOR_CATEGORIES.defaultColor
+    );
+
+    const uniqueColors = [...new Set(leafColors)];
+
+    // Color internal node only if all leaves have same color (monophyletic)
+    if (uniqueColors.length === 1 && uniqueColors[0] !== TREE_COLOR_CATEGORIES.defaultColor) {
+      return uniqueColors[0];
+    }
+
+    return TREE_COLOR_CATEGORIES.defaultColor;
   }
 
   /**
@@ -211,8 +308,7 @@ export class ColorManager {
     const treeSplit = new Set(linkData.target.data.split_indices);
 
     // Check if Sets have identical contents
-    const areSetsEqual = treeSplit.size === activeChangeEdge.size &&
-                         [...treeSplit].every(element => activeChangeEdge.has(element));
+    const areSetsEqual = treeSplit.size === activeChangeEdge.size && [...treeSplit].every(element => activeChangeEdge.has(element));
 
     return areSetsEqual;
   }
@@ -220,59 +316,44 @@ export class ColorManager {
   /**
    * Check if node matches any active change edge
    */
-  _isNodeActiveChangeEdge(nodeData, activeChangeEdges) {
-    if (!activeChangeEdges || activeChangeEdges.length === 0 || !nodeData.data?.split_indices) {
+  _isNodeActiveChangeEdge(nodeData, activeChangeEdge) {
+    if (!activeChangeEdge || !nodeData.data?.split_indices) {
       return false;
     }
 
-    const nodeSplit = new Set(nodeData.data.split_indices);
-    const edgesArray = Array.isArray(activeChangeEdges) ? activeChangeEdges : Array.from(activeChangeEdges);
+    const treeSplit = new Set(nodeData.data.split_indices);
 
-    // Check against each active change edge
-    for (const edge of edgesArray) {
-      if (Array.isArray(edge)) {
-        const edgeSet = new Set(edge);
-        // Check for exact Set match
-        if (nodeSplit.size === edgeSet.size && [...nodeSplit].every(x => edgeSet.has(x))) {
-          return true;
-        }
-      }
-    }
-    return false;
+    // Check if Sets have identical contents
+    const areSetsEqual = treeSplit.size === activeChangeEdge.size && [...treeSplit].every(element => activeChangeEdge.has(element));
+
+    return areSetsEqual;
   }
+
 
   /**
-   * Check if node is in subtree of any active change edge
-   * Used for keeping downstream nodes colored during highlighting
+   * Check if a branch is downstream (part of the subtree) of any activeChangeEdge
+   * Uses subset logic: branch is downstream if its split is a subset of any active change edge
+   * @param {Object} linkData - The D3 link data object
+   * @param {Array|Set} activeChangeEdges - Set of activeChangeEdges (each activeChangeEdge is an array of indices)
+   * @returns {boolean} True if this branch is downstream of any activeChangeEdge
    */
-  _isNodeDownstreamOfAnyActiveChangeEdge(nodeData, activeChangeEdges) {
-    if (!activeChangeEdges || activeChangeEdges.length === 0 || !nodeData.data?.split_indices) {
-      return false;
-    }
+  _isDownstreamOfAnyActiveChangeEdge(linkData, activeChangeEdges) {
 
-    const edgesArray = Array.isArray(activeChangeEdges) ? activeChangeEdges : Array.from(activeChangeEdges);
+    const treeSplit = new Set(linkData.target.data.split_indices);
 
-    // Walk up tree checking ancestors
-    let ancestor = nodeData.parent;
-    while (ancestor) {
-      if (ancestor.data?.split_indices) {
-        const ancestorSplit = new Set(ancestor.data.split_indices);
-
-        // Check if ancestor matches any active change edge
-        for (const edge of edgesArray) {
-          if (Array.isArray(edge)) {
-            const edgeSet = new Set(edge);
-            if (ancestorSplit.size === edgeSet.size && [...ancestorSplit].every(x => edgeSet.has(x))) {
-              return true;
-            }
-          }
+    // Check each active change edge
+    for (const edge of activeChangeEdges) {
+        const edgeSet = new Set(edge);
+        // Check if treeSplit is subset of edgeSet
+        const isSubset = [...treeSplit].every(leaf => edgeSet.has(leaf));
+        const isProperSubset = treeSplit.size <= edgeSet.size && isSubset;
+        if (isProperSubset) {
+          return true; // This branch is downstream of this active change edge
         }
-      }
-      ancestor = ancestor.parent;
     }
+
     return false;
   }
-
   // =======================================
   // PRIVATE - MARKED COMPONENT CHECKS
   // =======================================
@@ -290,7 +371,7 @@ export class ColorManager {
 
     // Check each marked component
     for (const component of this.marked) {
-      const markedSet = new Set(component);
+      const markedSet = component instanceof Set ? component : new Set(component);
       // Check if treeSplit is subset of markedSet
       const isSubset = [...treeSplit].every(leaf => markedSet.has(leaf));
       const isProperSubset = treeSplit.size <= markedSet.size && isSubset;
@@ -303,24 +384,55 @@ export class ColorManager {
   }
 
   /**
-   * Check if node intersects with any marked component
+   * Check if node is in subtree of any active change edge
+   * Used for keeping downstream nodes colored during highlighting
    */
-  _isNodeMarked(nodeData) {
-    const treeSplit = new Set(nodeData.data.split_indices);
-    if (treeSplit.size === 0 || !this.marked) {
+  _isNodeDownstreamOfAnyActiveChangeEdge(nodeData, activeChangeEdges) {
+    if (!activeChangeEdges || activeChangeEdges.length === 0 || !nodeData.data?.split_indices) {
       return false;
     }
 
-    // Check for any intersection with marked components
-    for (const markedSet of this.marked) {
-      for (const leaf of treeSplit) {
-        if (markedSet.has(leaf)) {
-          return true;
+    const nodeSplit = new Set(nodeData.data.split_indices);
+
+    // Check each active change edge
+    for (const edge of activeChangeEdges) {
+        const edgeSet = new Set(edge);
+        // Check if nodeSplit is subset of edgeSet
+        const isSubset = [...nodeSplit].every(leaf => edgeSet.has(leaf));
+        const isProperSubset = nodeSplit.size <= edgeSet.size && isSubset;
+
+        if (isProperSubset) {
+          return true; // This node is downstream of this active change edge
         }
+    }
+
+    return false;
+  }
+
+  /**
+   * Check if node intersects with any marked component
+   */
+  _isNodeMarked(nodeData) {
+    if (!nodeData.data?.split_indices || !this.marked) {
+      return false;
+    }
+
+    const treeSplit = new Set(nodeData.data.split_indices);
+
+    // Check each marked component
+    for (const component of this.marked) {
+      const markedSet = new Set(component);
+      // Check if treeSplit is subset of markedSet
+      const isSubset = [...treeSplit].every(leaf => markedSet.has(leaf));
+      const isProperSubset = treeSplit.size <= markedSet.size && isSubset;
+
+      if (isProperSubset) {
+        return true;
       }
     }
     return false;
   }
+
 
   // ===========
   // LIFECYCLE

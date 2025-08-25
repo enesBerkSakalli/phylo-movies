@@ -20,13 +20,14 @@ export class LabelConverter {
    * Create label data object from leaf node
    */
   createLabelData(leaf, labelRadius) {
-    const angleDeg = (leaf.angle * 180) / Math.PI;
+    // Use leaf.angle directly as it's already in radians
+    const angleRad = leaf.angle;
     const distance = Math.sqrt(leaf.x * leaf.x + leaf.y * leaf.y);
 
-    // Determine label orientation and positioning
-    const needsFlip = this._shouldFlipLabel(angleDeg);
+    // Determine label orientation and positioning using radians
+    const needsFlip = this._shouldFlipLabel(angleRad);
     const textAnchor = this._calculateTextAnchor(needsFlip);
-    const rotation = this._calculateLabelRotation(angleDeg);
+    const rotation = this._calculateLabelRotation(angleRad);
     const position = this._calculateLabelPosition(leaf, labelRadius);
 
     return {
@@ -34,21 +35,21 @@ export class LabelConverter {
       position: position,
       text: leaf.data.name || '',
       data: leaf.data,
-      angle: leaf.angle,
+      angle: angleRad,
       distance: distance,
       textAnchor: textAnchor,
-      rotation: rotation,
+      rotation: rotation, // Stored in RADIANS
       leaf: leaf // Store leaf reference for coloring
     };
   }
 
   /**
-   * Determine if label should be flipped based on angle
+   * Determine if label should be flipped based on angle in radians
    * @private
    */
-  _shouldFlipLabel(angleDeg) {
-    // Correctly determine orientation based on SVG/WebGL renderer logic (90° to 270°)
-    return angleDeg > 90 && angleDeg < 270;
+  _shouldFlipLabel(angleRad) {
+    // 90° to 270° in radians is PI/2 to 1.5*PI
+    return angleRad > Math.PI / 2 && angleRad < Math.PI * 1.5;
   }
 
   /**
@@ -57,33 +58,39 @@ export class LabelConverter {
    */
   _calculateTextAnchor(needsFlip) {
     // Set text anchor based on whether the label is flipped
-    return needsFlip ? 'start' : 'end';
+    // When flipped (left side), use 'end'; when not flipped (right side), use 'start'
+    return needsFlip ? 'end' : 'start';
   }
 
   /**
-   * Calculate label rotation in degrees
+   * Calculate label rotation in radians, preserving the original visual logic.
    * @private
    */
-  _calculateLabelRotation(angleDeg) {
-    let finalRotation = 0;
+  _calculateLabelRotation(angleRad) {
+    // The original logic was `0 - angleDeg`. This translates to `0 - angleRad`.
+    let finalRotation = 0 - angleRad;
 
-    if (0 < angleDeg) {
-      finalRotation = 0 - angleDeg; // Convert to 0-360 range
-      if (angleDeg > 90 && angleDeg < 270) {
-        finalRotation += 180; // Flip for left side labels
-      }
+    // The original flip condition was `angleDeg > 90 && angleDeg < 270`.
+    const needsFlip = angleRad > Math.PI / 2 && angleRad < Math.PI * 1.5;
+    if (needsFlip) {
+      // The original flip was `+= 180`. This translates to `+= Math.PI`.
+      finalRotation += Math.PI;
     }
 
     return finalRotation;
   }
 
   /**
-   * Calculate final label position coordinates
+   * Calculate final label position coordinates with margin
    * @private
    */
   _calculateLabelPosition(leaf, labelRadius) {
-    const finalX = labelRadius * Math.cos(leaf.angle);
-    const finalY = labelRadius * Math.sin(leaf.angle);
+    // Add a margin offset to push labels further away from tree elements
+    const LABEL_MARGIN = 25; // pixels of additional margin
+    const adjustedRadius = labelRadius + LABEL_MARGIN;
+    
+    const finalX = adjustedRadius * Math.cos(leaf.angle);
+    const finalY = adjustedRadius * Math.sin(leaf.angle);
     return [finalX, finalY, 0];
   }
 }

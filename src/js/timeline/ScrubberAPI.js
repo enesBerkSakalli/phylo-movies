@@ -23,9 +23,8 @@ export class ScrubberAPI {
     this.lastUpdateTime = 0;
     this.pendingUpdate = null;
 
-    // Cached interpolation state
+    // Interpolation state
     this.lastInterpolationState = null;
-    this.interpolationCache = new Map();
   }
 
   /**
@@ -34,7 +33,7 @@ export class ScrubberAPI {
    */
   async startScrubbing(initialProgress = 0) {
     if (this.isActive) {
-      console.warn('[ScrubberAPI] Already in scrubbing mode');
+      console.log('[ScrubberAPI] Already in scrubbing mode');
       return;
     }
 
@@ -45,9 +44,6 @@ export class ScrubberAPI {
     // Pause store subscriptions during scrubbing
     useAppStore.getState().setSubscriptionPaused(true);
 
-    // Pre-cache nearby trees for smooth scrubbing
-    await this._precacheNearbyTrees(initialProgress);
-
     // Initialize with current position
     await this.updatePosition(initialProgress);
   }
@@ -57,17 +53,18 @@ export class ScrubberAPI {
    * @param {number} progress - Timeline progress (0-1)
    * @param {Object} options - Scrubbing options
    */
-  async updatePosition(progress, options = {}) {
+  async updatePosition(progress) {
     const clampedProgress = clamp(progress, 0, 1);
 
     // Throttle high-frequency updates
     const now = performance.now();
-    if (now - this.lastUpdateTime < this.THROTTLE_MS) {
-      this._scheduleThrottledUpdate(clampedProgress, options);
+    const THROTTLE_MS = 16; // ~60fps
+    if (now - this.lastUpdateTime < THROTTLE_MS) {
+      this._scheduleThrottledUpdate(clampedProgress);
       return;
     }
 
-    await this._performScrubUpdate(clampedProgress, options);
+    await this._performScrubUpdate(clampedProgress);
   }
 
   /**
@@ -96,27 +93,13 @@ export class ScrubberAPI {
     }
     // Otherwise, keep the last interpolated state (do not snap)
 
-    // Clear caches
-    this.interpolationCache.clear();
+    // Clear state
     this.lastInterpolationState = null;
 
     // Resume store subscriptions
     useAppStore.getState().setSubscriptionPaused(false);
 
     this.isActive = false;
-    console.log('[ScrubberAPI] Scrubbing mode ended (final state preserved)');
-  }
-
-  /**
-   * Get current scrubbing state information
-   * @returns {Object} Scrubbing state
-   */
-  getState() {
-    return {
-      isActive: this.isActive,
-      currentProgress: this.currentProgress,
-      lastUpdateTime: this.lastUpdateTime
-    };
   }
 
   // Private methods
@@ -125,7 +108,7 @@ export class ScrubberAPI {
    * Perform the actual scrub update with element lifecycle management
    * @private
    */
-  async _performScrubUpdate(progress, options = {}) {
+  async _performScrubUpdate(progress) {
     this.lastUpdateTime = performance.now();
     this.currentProgress = progress;
 
@@ -213,28 +196,22 @@ export class ScrubberAPI {
    * Schedule throttled update to avoid overwhelming the renderer
    * @private
    */
-  _scheduleThrottledUpdate(progress, options) {
+  _scheduleThrottledUpdate(progress) {
     if (this.pendingUpdate) {
       cancelAnimationFrame(this.pendingUpdate);
     }
 
     this.pendingUpdate = requestAnimationFrame(async () => {
-      await this._performScrubUpdate(progress, options);
+      await this._performScrubUpdate(progress);
       this.pendingUpdate = null;
     });
   }
 
   /**
-   * Get interpolation data with caching optimization
+   * Get interpolation data for current progress
    * @private
    */
   async _getInterpolationData(progress) {
-    const cacheKey = Math.round(progress * 1000); // Cache at 0.1% precision
-
-    if (this.interpolationCache.has(cacheKey)) {
-      return this.interpolationCache.get(cacheKey);
-    }
-
     const storeState = useAppStore.getState();
     const { treeList, movieData } = storeState;
 
@@ -249,24 +226,13 @@ export class ScrubberAPI {
     const toIndex = Math.min(fromIndex + 1, totalTrees - 1);
     const timeFactor = exactIndex - fromIndex;
 
-    const interpolationData = {
+    return {
       fromTree: movieData.interpolated_trees[fromIndex],
       toTree: movieData.interpolated_trees[toIndex],
       timeFactor: timeFactor,
       fromIndex: fromIndex,
       toIndex: toIndex
     };
-
-    // Cache the result
-    this.interpolationCache.set(cacheKey, interpolationData);
-
-    // Limit cache size
-    if (this.interpolationCache.size > 100) {
-      const firstKey = this.interpolationCache.keys().next().value;
-      this.interpolationCache.delete(firstKey);
-    }
-
-    return interpolationData;
   }
 
   /**
@@ -290,41 +256,6 @@ export class ScrubberAPI {
   }
 
   /**
-   * Pre-cache nearby trees for smooth scrubbing performance
-   * @private
-   */
-  async _precacheNearbyTrees(progress) {
-    const { treeList, cacheTreePositions } = useAppStore.getState();
-
-    if (!treeList) return;
-
-    const totalTrees = treeList.length;
-    const centerIndex = Math.round(progress * (totalTrees - 1));
-    const cacheRadius = Math.min(5, Math.floor(totalTrees / 10)); // Cache 5 trees or 10% of total
-
-    for (let offset = -cacheRadius; offset <= cacheRadius; offset++) {
-      const treeIndex = centerIndex + offset;
-
-      if (treeIndex >= 0 && treeIndex < totalTrees) {
-        const treeData = treeList[treeIndex];
-
-        if (treeData && !useAppStore.getState().getLayoutCache(treeIndex)) {
-          // Calculate and cache layout for this tree using the correct method
-          const layout = this.treeController.calculateLayout(treeData, {
-            treeIndex: treeIndex,
-            updateController: false
-          });
-          if (layout && cacheTreePositions) {
-            cacheTreePositions(treeIndex, layout);
-          }
-        }
-      }
-    }
-  }
-
-
-
-  /**
    * Destroy the scrubber API and clean up resources
    */
   destroy() {
@@ -332,7 +263,6 @@ export class ScrubberAPI {
       this.endScrubbing();
     }
 
-    this.interpolationCache.clear();
     this.lastInterpolationState = null;
     this.treeController = null;
     this.transitionResolver = null;

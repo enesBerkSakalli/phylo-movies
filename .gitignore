@@ -38,3 +38,4 @@ debug_logs
 backend/brancharchitect-0.37.0.dist-info
 .env
 vite.log
+.vite/deps

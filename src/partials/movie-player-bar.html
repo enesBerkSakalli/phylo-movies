@@ -7,70 +7,43 @@
     <div class="controls-row" role="group" aria-label="Transport controls and chart controls">
       <!-- LEFT SIDE: Transport and Speed Controls -->
       <div class="left-controls" role="group" aria-label="Transport controls and position">
+        <!-- Navigation Toggle -->
+        <md-icon-button id="nav-toggle-button" title="Toggle navigation panel" aria-label="Toggle navigation panel">
+          <md-icon>menu</md-icon>
+        </md-icon-button>
         <!-- Speed Control -->
-        <div class="animation-speed-control ultra-compact movie-player-speed" role="group" aria-labelledby="speed-control-label">
-          <label id="speed-control-label" class="control-label sr-only">
-            <span class="material-icons" aria-hidden="true" title="Animation playback speed">speed</span>
-            Playback Speed
-          </label>
-          <div class="speed-controls-row">
-            <div class="speed-knob-container">
-              <div class="speed-knob speed-mini" title="Adjust animation speed (drag to rotate)">
-                <input type="range" id="animation-speed-range" min="0.1" max="5" value="1" step="0.1" class="speed-knob-input" aria-label="Animation speed" />
-                <div class="speed-knob-face">
-                  <div class="speed-knob-indicator"></div>
-                  <div class="speed-knob-center"></div>
-                </div>
-              </div>
-            </div>
-            <div class="speed-display" title="Current playback speed">
-              <span class="info-value speed-value">1×</span>
-            </div>
-          </div>
+        <div class="speed-control" role="group" aria-labelledby="speed-control-label">
+          <md-icon>speed</md-icon>
+          <md-slider id="animation-speed-range" min="0.1" max="5" value="1" step="0.1" labeled aria-label="Animation speed"></md-slider>
         </div>
         <!-- Transport Controls -->
-        <button id="backwardStepButton" type="button" class="md-button sm secondary" title="Go to previous tree (previous full tree)" aria-label="Previous tree">
-          <span class="material-icons">first_page</span><span class="sr-only">Previous Tree</span>
-        </button>
-        <button id="backward-button" type="button" class="md-button sm secondary" title="Go to previous frame (previous window in current tree)" aria-label="Previous frame">
-          <span class="material-icons">chevron_left</span><span class="sr-only">Previous Frame</span>
-        </button>
-        <button id="play-button" type="button" class="md-button sm elevated" title="Play/Pause animation" aria-label="Play/Pause animation">
-          <span class="material-icons">play_arrow</span><span class="sr-only">Play/Pause</span>
-        </button>
-        <button id="forward-button" type="button" class="md-button sm secondary" title="Go to next frame (next window in current tree)" aria-label="Next frame">
-          <span class="material-icons">chevron_right</span><span class="sr-only">Next Frame</span>
-        </button>
-        <button id="forwardStepButton" type="button" class="md-button sm secondary" title="Go to next tree (next full tree)" aria-label="Next tree">
-          <span class="material-icons">last_page</span>
-        </button>
+        <md-icon-button class="transport-button" id="backwardStepButton" title="Go to previous tree" aria-label="Previous tree">
+          <md-icon>first_page</md-icon>
+        </md-icon-button>
+        <md-icon-button class="transport-button" id="backward-button" title="Go to previous frame" aria-label="Previous frame">
+          <md-icon>chevron_left</md-icon>
+        </md-icon-button>
+        <md-icon-button toggle class="transport-button" id="play-button" title="Play/Pause animation" aria-label="Play/Pause animation">
+          <md-icon>play_arrow</md-icon>
+          <md-icon slot="selected">pause</md-icon>
+        </md-icon-button>
+        <md-icon-button class="transport-button" id="forward-button" title="Go to next frame" aria-label="Next frame">
+          <md-icon>chevron_right</md-icon>
+        </md-icon-button>
+        <md-icon-button class="transport-button" id="forwardStepButton" title="Go to next tree" aria-label="Next tree">
+          <md-icon>last_page</md-icon>
+        </md-icon-button>
+
+        <div class="vertical-divider"></div>
+
+        <md-icon-button id="start-record" class="record-button-danger" title="Start screen recording">
+          <md-icon>fiber_manual_record</md-icon>
+        </md-icon-button>
+        <md-icon-button id="stop-record" title="Stop screen recording" disabled>
+          <md-icon>stop_circle</md-icon>
+        </md-icon-button>
       </div>
 
-      <!-- RIGHT SIDE: Chart Controls -->
-      <div class="chart-controls" role="group" aria-label="Chart controls">
-        <select
-          name="barPlotOption"
-          id="barPlotOption"
-          class="select"
-          aria-describedby="chart-select-help"
-          title="Choose data series to display"
-        >
-          <option value="rfd" title="Robinson-Foulds Distance (relative)">RFD</option>
-          <option value="w-rfd" title="Weighted Robinson-Foulds Distance">W-RFD</option>
-          <option value="scale" title="Tree scale">Scale</option>
-          <option value="ignore-branch-lengths" title="Ignore Branch Lengths">Ignore Branch Lengths</option>
-        </select>
-        <button
-          id="chart-modal"
-          type="button"
-          class="md-button sm secondary"
-          aria-label="Open full-size chart view"
-          title="Open full-size interactive chart view in modal window"
-        >
-          <span class="material-icons" aria-hidden="true">open_in_new</span>
-        </button>
-        <div id="chart-select-help" class="sr-only">Choose data series: RFD shows tree differences, W-RFD includes branch lengths, Scale shows tree size</div>
-      </div>
     </div>
 
     <!-- TIMELINE CONTAINER - SPANS FULL WIDTH -->
@@ -78,40 +51,40 @@
       <div class="interpolation-timeline-container">
         <div class="interpolation-timeline-header">
           <!-- Removed timeline title to save space -->
-          <div class="timeline-header-metrics">
+          <md-chip-set class="timeline-header-metrics">
             <!-- Primary Metrics -->
-            <div class="timeline-metric primary" title="Total number of trees in the phylogenetic movie sequence">
-              <span class="material-icons metric-icon" aria-hidden="true">account_tree</span>
-              <span class="metric-value" id="movieTimelineCount">0 trees</span>
-            </div>
-            <div class="timeline-metric primary" title="Current position: Shows current tree index and nearest full tree position (e.g., 45/100 at T3→T4)">
-              <span class="material-icons metric-icon" aria-hidden="true">my_location</span>
-              <span class="metric-value" id="currentPositionInfo"></span>
-            </div>
+            <md-suggestion-chip elevated title="Total number of trees in the phylogenetic movie sequence">
+              <md-icon slot="icon">account_tree</md-icon>
+              <span id="movieTimelineCount">0 trees</span>
+            </md-suggestion-chip>
+            <md-suggestion-chip elevated title="Current position: Shows current tree index and nearest full tree position">
+              <md-icon slot="icon">my_location</md-icon>
+              <span id="currentPositionInfo"></span>
+            </md-suggestion-chip>
             <!-- Status Metric - Visual Only -->
-            <div class="timeline-metric status" title="Playback status: Current animation state and tree type being displayed">
-              <span class="metric-value status-text" id="interpolationStatus"></span>
-            </div>
-          </div>
+            <md-suggestion-chip elevated title="Playback status: Current animation state and tree type being displayed">
+              <span id="interpolationStatus"></span>
+            </md-suggestion-chip>
+          </md-chip-set>
           <div class="timeline-header-right">
             <div class="timeline-zoom-controls">
-              <button class="md-button sm secondary" id="zoomOutBtn" title="Zoom out timeline (Ctrl + -)">
-                <span class="material-icons">zoom_out</span>
-              </button>
-              <button class="md-button sm secondary" id="fitToWindowBtn" title="Fit entire timeline to window (Ctrl + 0)">
-                <span class="material-icons">fit_screen</span>
-              </button>
-              <button class="md-button sm secondary" id="zoomInBtn" title="Zoom in timeline (Ctrl + +)">
-                <span class="material-icons">zoom_in</span>
-              </button>
+              <md-icon-button id="zoomOutBtn" title="Zoom out timeline (Ctrl + -)">
+                <md-icon>zoom_out</md-icon>
+              </md-icon-button>
+              <md-icon-button id="fitToWindowBtn" title="Fit entire timeline to window (Ctrl + 0)">
+                <md-icon>fit_screen</md-icon>
+              </md-icon-button>
+              <md-icon-button id="zoomInBtn" title="Zoom in timeline (Ctrl + +)">
+                <md-icon>zoom_in</md-icon>
+              </md-icon-button>
             </div>
             <div class="timeline-scroll-controls">
-              <button class="md-button sm secondary" id="scrollToStartBtn" title="Scroll to start (Home)">
-                <span class="material-icons">first_page</span>
-              </button>
-              <button class="md-button sm secondary" id="scrollToEndBtn" title="Scroll to end (End)">
-                <span class="material-icons">last_page</span>
-              </button>
+              <md-icon-button id="scrollToStartBtn" title="Scroll to start (Home)">
+                <md-icon>first_page</md-icon>
+              </md-icon-button>
+              <md-icon-button id="scrollToEndBtn" title="Scroll to end (End)">
+                <md-icon>last_page</md-icon>
+              </md-icon-button>
             </div>
           </div>
         </div>
@@ -122,13 +95,45 @@
 
     <!-- CHART CONTAINER - SPANS FULL WIDTH -->
     <div class="movie-chart-container-full-width" role="region" aria-label="Distance Chart">
-      <div
-        id="lineChart"
-        class="chart-canvas chart-inline"
-        role="img"
-        aria-label="Interactive distance chart"
-        title="Interactive chart: Click points or drag indicator to navigate"
-      ></div>
+      <div class="chart-row">
+        <div
+          id="lineChart"
+          class="chart-canvas chart-inline"
+          role="img"
+          aria-label="Interactive distance chart"
+          title="Interactive chart: Click points or drag indicator to navigate"
+        ></div>
+        <div class="chart-controls" role="group" aria-label="Chart controls">
+          <md-outlined-select
+            name="barPlotOption"
+            id="barPlotOption"
+            aria-describedby="chart-select-help"
+            title="Choose data series to display"
+            value="rfd"
+          >
+            <md-select-option value="rfd" selected>
+              <div slot="headline">RFD</div>
+            </md-select-option>
+            <md-select-option value="w-rfd">
+              <div slot="headline">W-RFD</div>
+            </md-select-option>
+            <md-select-option value="scale">
+              <div slot="headline">Scale</div>
+            </md-select-option>
+            <md-select-option value="ignore-branch-lengths">
+              <div slot="headline">Ignore Branch Lengths</div>
+            </md-select-option>
+          </md-outlined-select>
+          <md-filled-tonal-button
+            id="chart-modal"
+            aria-label="Open full-size chart view"
+            title="Open full-size interactive chart view"
+          >
+            <md-icon slot="icon">open_in_new</md-icon>
+          </md-filled-tonal-button>
+          <div id="chart-select-help" class="sr-only">Choose data series: RFD shows tree differences, W-RFD includes branch lengths, Scale shows tree size</div>
+        </div>
+      </div>
     </div>
   </div> <!-- .movie-player-container CLOSES HERE -->
 </div> <!-- .movie-player-bar CLOSES HERE -->

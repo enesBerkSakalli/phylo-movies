@@ -39,7 +39,9 @@ export class NodeConverter {
       height: node.height,
       // Export polar coordinates for radial interpolation
       angle: node.angle,
-      polarRadius: node.radius
+      polarRadius: node.radius,
+      // Store reference to original node for ColorManager access
+      originalNode: node
     };
   }
 
@@ -63,7 +65,9 @@ export class NodeConverter {
       hasInvalidPosition: true,
       // Export polar coordinates for radial interpolation (fallback values)
       angle: node.angle || 0,
-      polarRadius: node.radius || 0
+      polarRadius: node.radius || 0,
+      // Store reference to original node for ColorManager access
+      originalNode: node
     };
   }
 

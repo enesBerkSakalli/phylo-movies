@@ -30,7 +30,13 @@ export default class TransitionIndexResolver {
      */
     isFullTree = (position) => {
         if (position < 0 || position >= this.treeMetadata.length) return false;
-        return this.treeMetadata[position]?.phase === 'ORIGINAL' ?? false;
+        const metadata = this.treeMetadata[position];
+        
+        // Check phase first (if available)
+        if (metadata?.phase === 'ORIGINAL') return true;
+        
+        // Fallback to tree name pattern (T0, T1, T2, etc.)
+        return metadata?.tree_name?.match(/^T\d+$/) ? true : false;
     }
 
     /**
@@ -85,7 +91,7 @@ export default class TransitionIndexResolver {
     get fullTreeIndices() {
         if (!this._cachedFullTreeIndices) {
             this._cachedFullTreeIndices = this.treeMetadata.reduce((acc, metadata, i) => {
-                if (metadata?.phase === 'ORIGINAL') {
+                if (this.isFullTree(i)) {
                     acc.push(i);
                 }
                 return acc;
@@ -180,7 +186,7 @@ export default class TransitionIndexResolver {
     get consensusTreeIndices() {
         if (!this._cachedConsensusTreeIndices) {
             this._cachedConsensusTreeIndices = this.treeMetadata.reduce((acc, metadata, i) => {
-                if (metadata?.phase === 'COLLAPSE_PHASE' || metadata?.phase === 'REORDER_PHASE') {
+                if (this.isConsensusTree(i)) {
                     acc.push(i);
                 }
                 return acc;
@@ -370,8 +376,14 @@ export default class TransitionIndexResolver {
      */
     isConsensusTree(position) {
         if (position < 0 || position >= this.treeMetadata.length) return false;
-        const phase = this.treeMetadata[position]?.phase;
-        return phase === 'COLLAPSE_PHASE' || phase === 'REORDER_PHASE';
+        const metadata = this.treeMetadata[position];
+        const phase = metadata?.phase;
+        
+        // Check phase first (if available)
+        if (phase === 'COLLAPSE_PHASE' || phase === 'REORDER_PHASE') return true;
+        
+        // Fallback to tree name pattern (C0_1_1, C0_1_2_reorder, etc.)
+        return metadata?.tree_name?.match(/^C\d+_\d+/) ? true : false;
     }
 
     /**

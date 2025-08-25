@@ -1,173 +1,210 @@
 <!-- appearance.html -->
-<div class="card">
-<div class="card-container" data-collapsed="false">
-<div class="card-header">
-<div class="card-title">
-<span class="material-icons card-icon" aria-hidden="true">tune</span>
-<h2 class="card-title-text">Appearance</h2>
+<div style="display: flex; flex-direction: column; gap: 16px;">
+
+  <!-- Tree Structure Controls -->
+  <div>
+    <h3 class="md-typescale-title-medium" style="margin: 0 0 16px 0; color: var(--md-sys-color-on-surface);">
+      <md-icon style="font-size: 18px; vertical-align: middle;">account_tree</md-icon>
+      Tree Structure
+    </h3>
+
+    <div style="display: flex; flex-direction: column; gap: 16px; padding-left: 24px;">
+      <!-- Branch Length Options -->
+      <div>
+        <label style="display: block; margin-bottom: 8px; color: var(--md-sys-color-on-surface); font-weight: 500;">
+          Branch Length Options
+        </label>
+        <md-outlined-select id="branch-length-options" style="width: 100%;" value="use">
+          <md-select-option value="use" selected>
+            <div slot="headline">Use Branch Lengths</div>
+          </md-select-option>
+          <md-select-option value="ignore">
+            <div slot="headline">Ignore Branch Lengths</div>
+          </md-select-option>
+          <md-select-option value="log">
+            <div slot="headline">Log Transform</div>
+          </md-select-option>
+          <md-select-option value="sqrt">
+            <div slot="headline">Square Root</div>
+          </md-select-option>
+          <md-select-option value="power2">
+            <div slot="headline">Power (x²)</div>
+          </md-select-option>
+          <md-select-option value="linear-scale">
+            <div slot="headline">Linear Scale (2x)</div>
+          </md-select-option>
+        </md-outlined-select>
+      </div>
     </div>
-    <span class="toggle-icon" id="toggle-appearance-submenu" title="Toggle appearance settings visibility" aria-label="Toggle appearance settings">▼</span>
   </div>
-  <div class="card-content" id="appearance-submenu">
-    <!-- Font Size Control -->
-    <div class="control-row">
-      <div class="slider-row">
-        <label class="slider-label" for="font-size" title="Adjust the font size for tree labels.">
-          <span class="material-icons" aria-hidden="true">text_fields</span> Font Size
+
+  <!-- Visual Style Controls -->
+  <div>
+    <h3 class="md-typescale-title-medium" style="margin: 0 0 16px 0; color: var(--md-sys-color-on-surface);">
+      <md-icon style="font-size: 18px; vertical-align: middle;">tune</md-icon>
+      Visual Style
+    </h3>
+
+    <div style="display: flex; flex-direction: column; gap: 16px; padding-left: 24px;">
+      <!-- Font Size Control -->
+      <div>
+        <label style="display: block; margin-bottom: 8px; color: var(--md-sys-color-on-surface); font-weight: 500;">
+          <md-icon style="font-size: 18px; vertical-align: middle;">text_fields</md-icon>
+          Font Size: <span id="font-size-value">1.8em</span>
         </label>
-        <span class="slider-value" id="font-size-value">1.8em</span>
+        <md-slider
+          id="font-size"
+          min="0.5"
+          max="10"
+          step="0.1"
+          value="1.8"
+          labeled>
+        </md-slider>
       </div>
-    </div>
-    <div class="control-row">
-      <input type="range" class="range-slider" id="font-size" min="0.5" max="10" step="0.1" value="1.8"
-        title="Font size" aria-label="Font size adjustment" />
-    </div>
 
-    <!-- Stroke Width Control -->
-    <div class="control-row">
-      <div class="slider-row">
-        <label class="slider-label" for="stroke-width" title="Adjust the width of tree branches.">
-          <span class="material-icons" aria-hidden="true">brush</span> Stroke Width
+      <!-- Stroke Width Control -->
+      <div>
+        <label style="display: block; margin-bottom: 8px; color: var(--md-sys-color-on-surface); font-weight: 500;">
+          <md-icon style="font-size: 18px; vertical-align: middle;">brush</md-icon>
+          Stroke Width: <span id="stroke-width-value">3</span>
         </label>
-        <span class="slider-value" id="stroke-width-value">3</span>
+        <md-slider
+          id="stroke-width"
+          min="1"
+          max="30"
+          step="0.2"
+          value="3"
+          labeled>
+        </md-slider>
       </div>
     </div>
-    <div class="control-row">
-      <input type="range" class="range-slider" id="stroke-width" min="1" max="30" step="0.2" value="3"
-        title="Stroke width" aria-label="Stroke width adjustment" />
+  </div>
 
-    </div>
+  <!-- Coloring Features -->
+  <div>
+    <h3 class="md-typescale-title-medium" style="margin: 0 0 16px 0; color: var(--md-sys-color-on-surface);">
+      <md-icon style="font-size: 18px; vertical-align: middle;">palette</md-icon>
+      Coloring & Styling
+    </h3>
 
-    <!-- Taxa Coloring Button -->
-    <div class="control-row">
-      <div class="button-row">
-        <button id="taxa-coloring-button" class="md-button" title="Open taxa coloring modal to customize colors for different species groups" aria-label="Open taxa coloring modal">
-          <span class="material-icons">palette</span> Taxa Coloring
-        </button>
-      </div>
-    </div>
+    <div style="display: flex; flex-direction: column; gap: 16px; padding-left: 24px;">
+      <!-- Taxa Coloring Button -->
+      <md-filled-button id="taxa-coloring-button" has-icon style="width: 100%;">
+        <md-icon slot="icon">palette</md-icon>
+        Taxa Coloring
+      </md-filled-button>
 
-    <!-- Highlighting Colors Section -->
-    <div class="control-row">
-      <label class="slider-label" title="Customize colors for different types of highlighting.">
-        <span class="material-icons" aria-hidden="true">highlight</span> Highlighting Colors
-      </label>
-    </div>
-
-    <!-- Active Change Edges Color -->
-    <div class="control-row">
-      <div class="color-picker-row">
-        <label class="color-picker-label" for="active-change-edges-color" title="Color for active change edge highlighting (blue by default).">
-          <span class="material-icons" aria-hidden="true">timeline</span> Active Change Edges Color
-        </label>
-        <input type="color" class="color-picker" id="active-change-edges-color" value="#2196f3"
-          title="Active change edges highlighting color" aria-label="Active change edges color picker" />
-      </div>
-    </div>
-
-    <!-- Marked Components Color -->
-    <div class="control-row">
-      <div class="color-picker-row">
-        <label class="color-picker-label" for="marked-color" title="Color for marked component highlighting (red by default).">
-          <span class="material-icons" aria-hidden="true">flag</span> Marked Color
-        </label>
-        <input type="color" class="color-picker" id="marked-color" value="#ff5722"
-          title="Marked components highlighting color" aria-label="Marked components color picker" />
-      </div>
-    </div>
-
-    <!-- Dimmed Elements Color -->
-    <div class="control-row">
-      <div class="color-picker-row">
-        <label class="color-picker-label" for="dimmed-color" title="Color for dimmed/inactive elements when highlighting is active.">
-          <span class="material-icons" aria-hidden="true">opacity</span> Dimmed Color
-        </label>
-        <input type="color" class="color-picker" id="dimmed-color" value="#cccccc"
-          title="Dimmed elements color" aria-label="Dimmed elements color picker" />
-      </div>
-    </div>
-
-    <!-- Camera Mode Button -->
-    <div class="control-row">
-      <div class="button-row">
-        <button id="camera-mode-button" class="md-button" title="Switch between 2D orthographic and 3D orbit camera modes" aria-label="Toggle camera mode">
-          <span class="material-icons">3d_rotation</span>
-          <span id="camera-mode-text">2D View</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Branch Length Toggle -->
-    <div class="control-row">
-      <label class="slider-label" for="branch-length-options" title="Choose how branch lengths are handled in the tree visualization.">
-        <span class="material-icons" aria-hidden="true">account_tree</span> Branch Length Options
-      </label>
-    </div>
-    <div class="control-row">
-      <select id="branch-length-options" class="select" aria-label="Branch length options">
-        <option value="use">Use Branch Lengths</option>
-        <option value="ignore">Ignore Branch Lengths</option>
-        <option value="log">Log Transform</option>
-        <option value="sqrt">Square Root</option>
-        <option value="power2">Power (x²)</option>
-        <option value="linear-scale">Linear Scale (2x)</option>
-      </select>
-    </div>
-
-    <!-- Monophyletic Coloring Toggle -->
-    <div class="control-row">
-      <div class="md-switch-container">
-        <div class="md-switch">
-          <input
-            class="md-switch-input"
-            type="checkbox"
-            id="monophyletic-coloring"
-            checked
-            aria-label="Monophyletic group coloring toggle"
-          >
-          <div class="md-switch-track">
-            <div class="md-switch-handle">
-              <div class="md-switch-ripple"></div>
-            </div>
-          </div>
-        </div>
-        <label class="md-switch-label" for="monophyletic-coloring">
-          <span class="md-switch-label-text">
-            <span class="material-icons" aria-hidden="true">color_lens</span>
+      <!-- Monophyletic Coloring Toggle -->
+      <label style="display: flex; align-items: center; gap: 16px; cursor: pointer;">
+        <md-switch id="monophyletic-coloring" selected></md-switch>
+        <div style="flex: 1;">
+          <div style="font-weight: 500; color: var(--md-sys-color-on-surface);">
+            <md-icon style="font-size: 18px; vertical-align: middle;">color_lens</md-icon>
             Monophyletic Group Coloring
-          </span>
-          <span class="md-switch-supporting-text">Enable coloring for monophyletic groups in the tree</span>
-        </label>
-      </div>
-    </div>
-
-    <!-- WebGL Rendering Toggle -->
-    <div class="control-row">
-      <div class="md-switch-container">
-        <div class="md-switch">
-          <input
-            class="md-switch-input"
-            type="checkbox"
-            id="webgl-rendering"
-            checked
-            aria-label="WebGL rendering toggle"
-          >
-          <div class="md-switch-track">
-            <div class="md-switch-handle">
-              <div class="md-switch-ripple"></div>
-            </div>
           </div>
+          <div class="md-typescale-body-medium" style="color: var(--md-sys-color-on-surface-variant);">Enable coloring for monophyletic groups in the tree</div>
         </div>
-        <label class="md-switch-label" for="webgl-rendering">
-          <span class="md-switch-label-text">
-            <span class="material-icons" aria-hidden="true">view_in_ar</span>
-            WebGL 3D Rendering
-          </span>
-          <span class="md-switch-supporting-text">Enable experimental 3D rendering mode</span>
+      </label>
+
+      <!-- Red Coloring Mode Selector -->
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; margin-bottom: 8px; color: var(--md-sys-color-on-surface); font-weight: 500;">
+          <md-icon style="font-size: 18px; vertical-align: middle;">swap_horiz</md-icon>
+          Red Coloring Mode
         </label>
+        <md-outlined-select id="red-coloring-mode" style="width: 100%;" value="highlight_solutions">
+          <md-select-option value="highlight_solutions" selected>
+            <div slot="headline">Highlight Solutions</div>
+          </md-select-option>
+          <md-select-option value="subtree_tracking">
+            <div slot="headline">Subtree Tracking</div>
+          </md-select-option>
+        </md-outlined-select>
+        <div class="md-typescale-body-small" style="margin-top: 4px; color: var(--md-sys-color-on-surface-variant);">
+          Highlight Solutions: Shows accumulated changes<br>
+          Subtree Tracking: Shows only moving elements
+        </div>
+      </div>
+
+      <!-- Highlighting Colors Subsection -->
+      <div>
+        <h4 class="md-typescale-title-small" style="margin: 16px 0 12px 0; color: var(--md-sys-color-on-surface-variant);">
+          <md-icon style="font-size: 16px; vertical-align: middle;">highlight</md-icon>
+          Highlighting Colors
+        </h4>
+
+        <div style="display: flex; flex-direction: column; gap: 12px; padding-left: 16px;">
+          <label style="display: flex; align-items: center; gap: 12px;">
+            <md-icon style="font-size: 18px;">timeline</md-icon>
+            <span style="flex: 1; color: var(--md-sys-color-on-surface);">Active Change Edges</span>
+            <input type="color" id="active-change-edges-color" value="#2196f3" style="width: 48px; height: 32px; border: none; border-radius: 4px; cursor: pointer;">
+          </label>
+
+          <label style="display: flex; align-items: center; gap: 12px;">
+            <md-icon style="font-size: 18px;">flag</md-icon>
+            <span style="flex: 1; color: var(--md-sys-color-on-surface);">Marked Components</span>
+            <input type="color" id="marked-color" value="#ff5722" style="width: 48px; height: 32px; border: none; border-radius: 4px; cursor: pointer;">
+          </label>
+
+          <label style="display: flex; align-items: center; gap: 12px;">
+            <md-icon style="font-size: 18px;">opacity</md-icon>
+            <span style="flex: 1; color: var(--md-sys-color-on-surface);">Dimmed Elements</span>
+            <input type="color" id="dimmed-color" value="#cccccc" style="width: 48px; height: 32px; border: none; border-radius: 4px; cursor: pointer;">
+          </label>
+        </div>
       </div>
     </div>
-
   </div>
-</div>
+
+  <!-- Focus & Highlighting Controls -->
+  <div>
+    <h3 class="md-typescale-title-medium" style="margin: 0 0 16px 0; color: var(--md-sys-color-on-surface);">
+      <md-icon style="font-size: 18px; vertical-align: middle;">center_focus_strong</md-icon>
+      Focus & Highlighting
+    </h3>
+
+    <div style="display: flex; flex-direction: column; gap: 16px; padding-left: 24px;">
+      <!-- Dim Non-Descendants Toggle -->
+      <label style="display: flex; align-items: center; gap: 16px; cursor: pointer;">
+        <md-switch id="dim-non-descendants-toggle"></md-switch>
+        <div style="flex: 1;">
+          <div style="font-weight: 500; color: var(--md-sys-color-on-surface);">
+            <md-icon style="font-size: 18px; vertical-align: middle;">visibility</md-icon>
+            Focus on Active Subtree
+          </div>
+          <div class="md-typescale-body-medium" style="color: var(--md-sys-color-on-surface-variant);">Dim all non-descendants of the active edge</div>
+        </div>
+      </label>
+    </div>
+  </div>
+
+
+  <!-- Advanced Features -->
+  <div>
+    <h3 class="md-typescale-title-medium" style="margin: 0 0 16px 0; color: var(--md-sys-color-on-surface);">
+      <md-icon style="font-size: 18px; vertical-align: middle;">science</md-icon>
+      Advanced Features
+    </h3>
+
+    <div style="display: flex; flex-direction: column; gap: 16px; padding-left: 24px;">
+      <!-- Camera Mode Button -->
+      <md-outlined-button id="camera-mode-button" has-icon style="width: 100%;">
+        <md-icon slot="icon">3d_rotation</md-icon>
+        <span id="camera-mode-text">2D View</span>
+      </md-outlined-button>
+
+      <!-- WebGL Rendering Toggle -->
+      <label style="display: flex; align-items: center; gap: 16px; cursor: pointer;">
+        <md-switch id="webgl-rendering" selected></md-switch>
+        <div style="flex: 1;">
+          <div style="font-weight: 500; color: var(--md-sys-color-on-surface);">
+            <md-icon style="font-size: 18px; vertical-align: middle;">view_in_ar</md-icon>
+            WebGL 3D Rendering
+          </div>
+          <div class="md-typescale-body-medium" style="color: var(--md-sys-color-on-surface-variant);">Enable experimental 3D rendering mode</div>
+        </div>
+      </label>
+    </div>
+  </div>
+
 </div>

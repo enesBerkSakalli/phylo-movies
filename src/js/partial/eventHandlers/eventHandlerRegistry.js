@@ -1,5 +1,4 @@
 import { notifications } from "./notificationSystem.js";
-import { SpeedKnobController } from "../../controllers/speedKnobController.js";
 import { useAppStore } from '../../core/store.js';
 import { WebGLTreeAnimationController } from '../../treeVisualisation/WebGLTreeAnimationController.js';
 
@@ -11,7 +10,6 @@ export class EventHandlerRegistry {
     this.gui = gui;
     // Store objects with {id, type, element, boundAction} to allow for proper removal
     this.attachedHandlers = [];
-    this.speedKnobController = null;
     this.recorder = null;
     this.isRecording = false;
   }
@@ -60,8 +58,8 @@ export class EventHandlerRegistry {
           },
           {
             id: "save-button",
-            action: () => this.gui.saveSVG(),
-            description: "Save SVG",
+            action: () => this.gui.saveImage(),
+            description: "Save Image",
           },
           {
             id: "forwardStepButton",
@@ -84,9 +82,9 @@ export class EventHandlerRegistry {
             description: "Previous tree",
           },
           {
-            id: "sidebar-toggle",
-            action: () => this.toggleSidebar(),
-            description: "Toggle sidebar visibility",
+            id: "nav-toggle-button",
+            action: () => this.toggleNavigation(),
+            description: "Toggle navigation panel visibility",
           },
         ],
       },
@@ -102,10 +100,6 @@ export class EventHandlerRegistry {
             type: "input",
             action: (event) => {
               const { setAnimationSpeed } = useAppStore.getState();
-              // Skip if the speed knob controller is currently dragging to avoid conflicts
-              if (this.speedKnobController && this.speedKnobController.isDragging) {
-                return;
-              }
               const value = parseFloat(event.target.value);
               if (!isNaN(value) && value >= 0.1 && value <= 5) {
                 setAnimationSpeed(value); // Dispatch action
@@ -169,21 +163,14 @@ export class EventHandlerRegistry {
             id: "font-size",
             type: "input",
             action: async (event) => {
-              console.log('[EventHandler] Font size change triggered:', event.target.value);
               const { setFontSize, treeController } = useAppStore.getState();
               setFontSize(event.target.value);
               document.getElementById('font-size-value').textContent = event.target.value + 'em';
-
-              console.log('[EventHandler] Tree controller:', treeController);
-              console.log('[EventHandler] updateLabelStyles method exists:', !!treeController?.updateLabelStyles);
 
               if (treeController && treeController.updateLabelStyles) {
                 console.log('[EventHandler] Calling updateLabelStyles...');
                 // Use optimized font size update instead of full re-render
                 await treeController.updateLabelStyles();
-                console.log('[EventHandler] updateLabelStyles completed');
-              } else {
-                console.warn('[EventHandler] No treeController or updateLabelStyles method');
               }
             },
             description: "Font size adjustment - optimized",
@@ -217,7 +204,8 @@ export class EventHandlerRegistry {
             type: "change",
             action: async (event) => {
               const { setMonophyleticColoring, treeController } = useAppStore.getState();
-              const enabled = event.target.checked;
+              const switchElement = document.getElementById('monophyletic-coloring');
+              const enabled = switchElement ? switchElement.selected : false;
               setMonophyleticColoring(enabled);
 
               if (treeController) {
@@ -229,11 +217,24 @@ export class EventHandlerRegistry {
             description: "Monophyletic group coloring toggle",
           },
           {
+            id: "red-coloring-mode",
+            type: "change",
+            action: async (event) => {
+              const { setRedColoringMode } = useAppStore.getState();
+              const selectElement = document.getElementById('red-coloring-mode');
+              const mode = selectElement ? selectElement.value : 'highlight_solutions';
+              console.log('[EventHandler] Red coloring mode changed to:', mode);
+              setRedColoringMode(mode);
+            },
+            description: "Red coloring mode selector (highlight_solutions vs subtree_tracking)",
+          },
+          {
             id: "webgl-rendering",
             type: "change",
             action: async (event) => {
               const { setWebglEnabled, setTreeController } = useAppStore.getState();
-              const enabled = event.target.checked;
+              const switchElement = document.getElementById('webgl-rendering');
+              const enabled = switchElement ? switchElement.selected : false;
               setWebglEnabled(enabled);
 
               // Show/hide appropriate containers
@@ -271,8 +272,6 @@ export class EventHandlerRegistry {
               if (treeController && typeof treeController.setCameraMode === 'function') {
                 treeController.setCameraMode(newMode);
               }
-
-              console.log(`[EventHandler] Camera mode changed to: ${newMode}`);
             },
             description: "Toggle camera mode between orthographic and orbit",
           },
@@ -282,7 +281,6 @@ export class EventHandlerRegistry {
             action: async (event) => {
               const { setActiveChangeEdgeColor } = useAppStore.getState();
               const newColor = event.target.value;
-              console.log('[EventHandler] Active change edges color changed to:', newColor);
               setActiveChangeEdgeColor(newColor);
             },
             description: "Active change edges highlighting color picker",
@@ -293,7 +291,6 @@ export class EventHandlerRegistry {
             action: async (event) => {
               const { setMarkedColor } = useAppStore.getState();
               const newColor = event.target.value;
-              console.log('[EventHandler] Marked components color changed to:', newColor);
               setMarkedColor(newColor);
             },
             description: "Marked components highlighting color picker",
@@ -309,26 +306,31 @@ export class EventHandlerRegistry {
             },
             description: "Dimmed elements color picker",
           },
+          {
+            id: "dim-non-descendants-toggle",
+            type: "change",
+            action: (event) => {
+              const { setDimmingEnabled, treeController } = useAppStore.getState();
+              const switchElement = document.getElementById('dim-non-descendants-toggle');
+              if (switchElement) {
+                // The .selected property is an alias for .checked. Let's try it.
+                const value = switchElement.selected;
+                console.log(`[EventHandler] 'Focus on Active Subtree' toggled. Value from .selected property:`, value);
+                setDimmingEnabled(value);
+              } else {
+                console.error("[EventHandler] Could not find #dim-non-descendants-toggle");
+              }
+              // Trigger re-render to apply dimming changes
+              if (treeController && treeController.renderAllElements) {
+                treeController.renderAllElements();
+              }
+            },
+            description: "Toggle dimming for non-descendant elements",
+          },
         ],
       },
 
       // Submenu toggle controls
-      submenuToggles: {
-        type: "click",
-        errorHandling: "log",
-        handlers: [
-          {
-            id: "toggle-appearance-submenu",
-            action: (event) => this.toggleSubmenu(event, "appearance-submenu"),
-            description: "Toggle appearance submenu",
-          },
-          {
-            id: "toggle-recording-submenu",
-            action: (event) => this.toggleSubmenu(event, "recording-submenu"),
-            description: "Toggle recording submenu",
-          },
-        ],
-      },
 
       // Recording controls
       recordingControls: {
@@ -379,89 +381,60 @@ export class EventHandlerRegistry {
             action: async () => await this.gui.openScatterplotModal(),
             description: "Open scatter plot visualization",
           },
+          {
+            id: "msa-viewer-btn",
+            action: async () => {
+              console.log("[EventHandler] MSA viewer button clicked");
+              
+              // Import MSA viewer module
+              const { showMSAViewer } = await import('../../msaViewer/index.js');
+              
+              // Get phylo data for MSA sequences
+              const { phyloData } = await import('../../services/dataService.js');
+              const data = await phyloData.get();
+              
+              if (!data || !data.msa || !data.msa.sequences) {
+                console.warn("[EventHandler] No MSA data available");
+                notifications.show("No alignment data available. Please upload an MSA file.", "warning");
+                return;
+              }
+              
+              // Show the MSA viewer window with data directly
+              showMSAViewer(data);
+              console.log("[EventHandler] MSA viewer window opened with data");
+            },
+            description: "Open MSA viewer window",
+          },
         ],
       },
     };
   }
 
   /**
-   * Toggle submenu visibility with localStorage persistence
-   */
-  toggleSubmenu(event, submenuId) {
-    const submenu = document.getElementById(submenuId);
-    const toggleIcon = event.target;
-    const container = submenu?.closest('.card-container');
-
-    if (submenu && container) {
-      const isCollapsed = container.getAttribute('data-collapsed') === 'true';
-
-      if (isCollapsed) {
-        // Show submenu
-        submenu.style.display = 'block';
-        container.setAttribute('data-collapsed', 'false');
-        toggleIcon.textContent = '▼';
-        // Save expanded state to localStorage
-        localStorage.setItem(`submenu-${submenuId}`, 'expanded');
-      } else {
-        // Hide submenu
-        submenu.style.display = 'none';
-        container.setAttribute('data-collapsed', 'true');
-        toggleIcon.textContent = '▶';
-        // Save collapsed state to localStorage
-        localStorage.setItem(`submenu-${submenuId}`, 'collapsed');
-      }
-    }
-  }
-
-  /**
-   * Initialize the speed knob controller for interactive knob behavior
-   *
-   * Note: This method creates a SpeedKnobController that uses the same
-   * value update logic as the factor-range input handler, but for knob
-   * rotation events instead of direct input changes.
-   */
-  initializeSpeedKnob() {
-    const knobElement = document.querySelector('.speed-knob');
-    const inputElement = document.getElementById('animation-speed-range');
-
-    if (knobElement && inputElement && !this.speedKnobController) {
-      // Create a value change handler that matches the animation-speed-range input handler
-      const handleValueChange = (value) => {
-        const { setAnimationSpeed } = useAppStore.getState();
-        setAnimationSpeed(value);
-
-        // Update the displayed value
-        const speedValue = document.querySelector('.speed-value');
-        if (speedValue) {
-          speedValue.textContent = `${value.toFixed(1)}×`;
-        }
-      };
-
-      this.speedKnobController = new SpeedKnobController(knobElement, inputElement, {
-        onValueChange: handleValueChange
-      });
-    }
-  }
-
-  /**
    * Toggle sidebar visibility
    */
-  toggleSidebar() {
-    const sidebar = document.querySelector('.menu');
-    const toggleButton = document.querySelector('.sidebar-toggle');
+  toggleNavigation() {
+    const navigationDrawer = document.getElementById('navigation-drawer');
+    const moviePlayerBar = document.querySelector('.movie-player-bar');
+    const mainContainer = document.querySelector('.container');
+    const toggleButton = document.getElementById('nav-toggle-button');
+    const toggleIcon = toggleButton?.querySelector('md-icon');
 
-    if (sidebar && toggleButton) {
-      sidebar.classList.toggle('hidden');
+    if (navigationDrawer && moviePlayerBar && mainContainer) {
+      const isHidden = navigationDrawer.style.transform === 'translateX(-100%)';
 
-      // Update toggle button position class
-      if (sidebar.classList.contains('hidden')) {
-        toggleButton.classList.remove('sidebar-visible');
-        toggleButton.classList.add('sidebar-hidden');
-        toggleButton.textContent = '☰';
+      if (isHidden) {
+        // Show navigation
+        navigationDrawer.style.transform = 'translateX(0)';
+        moviePlayerBar.classList.remove('nav-hidden');
+        mainContainer.style.marginLeft = 'var(--navigation-drawer-width)';
+        if (toggleIcon) toggleIcon.textContent = 'menu_open';
       } else {
-        toggleButton.classList.remove('sidebar-hidden');
-        toggleButton.classList.add('sidebar-visible');
-        toggleButton.textContent = '✕';
+        // Hide navigation
+        navigationDrawer.style.transform = 'translateX(-100%)';
+        moviePlayerBar.classList.add('nav-hidden');
+        mainContainer.style.marginLeft = '0';
+        if (toggleIcon) toggleIcon.textContent = 'menu';
       }
     }
   }
@@ -599,9 +572,6 @@ export class EventHandlerRegistry {
         summary.successfulGroups++;
       }
     }
-
-    // Initialize special controllers after all handlers are attached
-    this.initializeSpeedKnob();
 
     return summary;
   }
@@ -790,10 +760,9 @@ export class EventHandlerRegistry {
   updatePlayButton(isPlaying) {
       const startButton = document.getElementById('play-button');
       if (startButton) {
-          const icon = startButton.querySelector('.material-icons');
-          if (icon) {
-              icon.textContent = isPlaying ? 'pause' : 'play_arrow';
-          }
+          // For a toggle button, we just set its `selected` state.
+          // The component handles swapping the icons.
+          startButton.selected = isPlaying;
           startButton.setAttribute('title', isPlaying ? 'Pause animation' : 'Play animation');
           startButton.setAttribute('aria-label', isPlaying ? 'Pause animation' : 'Play/Pause animation');
       }

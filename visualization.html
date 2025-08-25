@@ -9,67 +9,62 @@
     <link href="https://fonts.googleapis.com/css?family=Heebo" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <!-- Material Symbols for Material Web Components -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+    <!-- Keep Material Icons for existing components -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-
 
     <link rel="stylesheet" type="text/css" href="/src/css/style.css">
     <link rel="stylesheet" type="text/css" href="/src/css/material-design.css">
-    <link rel="stylesheet" type="text/css" href="/src/css/material-design-card.css">
     <link rel="stylesheet" type="text/css" href="/src/css/navigation.css">
-    <link rel="stylesheet" type="text/css" href="/src/css/tree-navigation.css">
-    <link rel="stylesheet" type="text/css" href="/src/css/msa-viewer.css">
-
     <link rel="stylesheet" type="text/css" href="/src/css/chart.css">
-
-    <link rel="stylesheet" type="text/css" href="/src/css/top-scale-bar.css">
-    <link rel="stylesheet" type="text/css" href="/src/css/speed-control.css">
     <link rel="stylesheet" type="text/css" href="/src/css/movie-player-bar.css">
-
-
+    <link rel="stylesheet" type="text/css" href="/src/css/top-scale-bar.css">
 
   </head>
 
   <body>
     <div id="top-scale-bar-container"></div>
 
-    <button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle sidebar">
-      <span class="material-icons">menu</span>
-    </button>
-    <div class="container">
-      <!-- Navigation Menu -->
-      <div class="menu">
-        <!-- Compact Header with App Info -->
-        <div class="menu-header">
-          <div class="compact-header">
-            <div class="app-info">
-              <i class="fa fa-film"></i>
-              <div>
-                <h1>Phylo-Movies</h1>
-                <div class="file-status">
-                  <span>File:</span>
-                  <span id="compactFileName" class="file-name">Loading...</span>
-                </div>
-              </div>
-            </div>
+    <!-- Material Design 3 Navigation Drawer using Material Web Components -->
+    <nav style="position: fixed; top: 0; left: 0; width: var(--navigation-drawer-width); height: 100vh; background: var(--md-sys-color-surface-container-low); border-right: 1px solid var(--md-sys-color-outline-variant); z-index: 100; display: flex; flex-direction: column; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: var(--md-sys-elevation-level1);" id="navigation-drawer" role="navigation" aria-label="Main navigation">
+      <!-- Navigation Header with Material Design 3 styling -->
+      <header style="background: var(--md-sys-color-surface-container-low); border-bottom: 1px solid var(--md-sys-color-outline-variant); padding: 16px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <md-icon style="font-size: 24px; color: var(--md-sys-color-primary);">movie</md-icon>
+          <div style="flex: 1;">
+            <h1 style="margin: 0; font-size: 20px; font-weight: 500; line-height: 24px; color: var(--md-sys-color-on-surface);">Phylo-Movies</h1>
+            <p style="margin: 0; font-size: 12px; line-height: 16px; color: var(--md-sys-color-on-surface-variant);">
+              File: <span id="compactFileName">Loading...</span>
+            </p>
           </div>
         </div>
+      </header>
 
-        <!-- Main Controls -->
-        <div class="toolbar">
-          <div class="tools">
-            <!-- Tree Navigation -->
-            <div id="navigation-container"></div>
-            <!-- Playback Controls -->
+      <!-- Navigation Content using Material Web list -->
+      <div style="flex: 1; overflow-y: auto;">
+        <md-list>
+          <div style="padding: 0 16px 16px 16px; flex-shrink: 0;">
             <div id="buttons-container"></div>
-            <!-- Line Chart -->
-            <div id="line-chart-container"></div>
-            <!-- MSA Button -->
-            <div id="msa-button-container"></div>
-            <!-- Appearance Settings -->
+          </div>
+
+          <md-divider></md-divider>
+
+          <!-- Appearance Settings Section -->
+          <md-list-item>
+            <div slot="overline">SETTINGS</div>
+            <div slot="headline" class="md-typescale-headline-small" style="color: var(--md-sys-color-on-surface);">Appearance</div>
+            <md-icon slot="start" style="color: var(--md-sys-color-primary);">tune</md-icon>
+          </md-list-item>
+          <div style="padding: 0 16px 16px 16px; flex: 1; overflow-y: auto;">
             <div id="appearance-container"></div>
           </div>
-        </div>
+        </md-list>
       </div>
+    </nav>
+
+
+    <div class="container" style="margin-left: var(--navigation-drawer-width); transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
 
       <!-- Main Content Area -->
       <div class="full-size-container">
@@ -102,6 +97,32 @@
           height: window.innerHeight
         }
       });
+    </script>
+
+    <!-- Material Design Web Components -->
+    <script type="importmap">
+      {
+        "imports": {
+          "@material/web/": "https://esm.run/@material/web/"
+        }
+      }
+    </script>
+    
+    <script type="module">
+      // Import Material Design components used in MSA viewer
+      import '@material/web/button/filled-button.js';
+      import '@material/web/button/filled-tonal-button.js';
+      import '@material/web/button/outlined-button.js';
+      import '@material/web/button/text-button.js';
+      import '@material/web/icon/icon.js';
+      import '@material/web/switch/switch.js';
+      import '@material/web/slider/slider.js';
+      import '@material/web/chips/chip-set.js';
+      import '@material/web/chips/assist-chip.js';
+      import '@material/web/textfield/outlined-text-field.js';
+      import '@material/web/list/list.js';
+      import '@material/web/list/list-item.js';
+      import '@material/web/divider/divider.js';
     </script>
 
     <script type="module" src="/src/js/core/main.js"></script>
