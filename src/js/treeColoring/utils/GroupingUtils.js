@@ -154,10 +154,24 @@ export function applyColoringData(colorData, leaveOrder, defaultColorMap) {
       newColorMap[taxon] = color;
     }
   } else if (colorData.mode === "groups") {
-    // Group-based coloring
+    // Group-based coloring from pattern detection
     leaveOrder.forEach((taxon) => {
       const group = getGroupForTaxon(taxon, colorData.separator, colorData.strategyType);
       const groupColor = colorData.groupColorMap.get(group);
+
+      if (groupColor) {
+        newColorMap[taxon] = groupColor;
+      } else {
+        newColorMap[taxon] = defaultColorMap[taxon] || defaultColorMap.defaultColor || "#000000";
+      }
+    });
+  } else if (colorData.mode === "csv") {
+    // CSV-based group coloring
+    leaveOrder.forEach((taxon) => {
+      // Get group from CSV mapping
+      const group = colorData.csvTaxaMap?.get(taxon);
+      const groupColor = group ? colorData.groupColorMap.get(group) : null;
+
       if (groupColor) {
         newColorMap[taxon] = groupColor;
       } else {

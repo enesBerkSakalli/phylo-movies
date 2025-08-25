@@ -1,0 +1,96 @@
+/**
+ * Timeline Segment Color Scheme
+ * 
+ * Color strategy:
+ * - Full trees (dark blue): Stable anchor points between interpolations
+ * - Interpolation segments: Gradient from green to red based on complexity
+ *   - Green: Minimal changes (1-2 edges)
+ *   - Yellow: Light changes (3-4 edges)
+ *   - Orange: Moderate changes (5-6 edges)
+ *   - Red-orange: Heavy changes (7-8 edges)
+ *   - Dark red: Massive changes (9+ edges)
+ */
+
+/* Timeline Segment Base */
+.timeline-segment {
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 2px;
+    opacity: 0.9;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* Full Tree Segments - Stable anchor points */
+.timeline-full-tree {
+    background: linear-gradient(135deg, #2C3E50 0%, #34495E 100%);
+    border-color: #1a252f;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Interpolation Segments - Colored by complexity */
+.timeline-interp-minimal {
+    background: linear-gradient(135deg, #27AE60 0%, #2ECC71 100%);  /* Green - minimal change */
+    border-color: #229954;
+}
+
+.timeline-interp-light {
+    background: linear-gradient(135deg, #F39C12 0%, #F1C40F 100%);  /* Yellow - light change */
+    border-color: #D68910;
+}
+
+.timeline-interp-moderate {
+    background: linear-gradient(135deg, #E67E22 0%, #F39C12 100%);  /* Orange - moderate change */
+    border-color: #CA6F1E;
+}
+
+.timeline-interp-heavy {
+    background: linear-gradient(135deg, #E74C3C 0%, #EC7063 100%);  /* Red-orange - heavy change */
+    border-color: #CB4335;
+}
+
+.timeline-interp-massive {
+    background: linear-gradient(135deg, #C0392B 0%, #E74C3C 100%);  /* Dark red - massive change */
+    border-color: #A93226;
+}
+
+/* Fallback for segments without classification */
+.timeline-segment-default {
+    background: linear-gradient(135deg, #95A5A6 0%, #BDC3C7 100%);  /* Gray - unclassified */
+    border-color: #7F8C8D;
+}
+
+/* Hover effects */
+.timeline-segment:hover {
+    opacity: 1;
+    transform: scaleY(1.1);
+    cursor: pointer;
+}
+
+/* Selected segment */
+.vis-selected .timeline-segment {
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+    border-width: 2px;
+    opacity: 1;
+}
+
+/* Visual indicators for segment boundaries */
+.timeline-full-tree::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: #1a252f;
+    border-radius: 2px 0 0 2px;
+}
+
+.timeline-full-tree::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: #1a252f;
+    border-radius: 0 2px 2px 0;
+}

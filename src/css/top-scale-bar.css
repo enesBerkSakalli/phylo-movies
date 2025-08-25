@@ -1,223 +1,47 @@
 /* ============================================================================
-   TOP SCALE BAR - Compact Right-Side Tracker
+   TOP SCALE BAR - Material Design 3 Components
    ============================================================================ */
 
-/* Enhanced scale display */
-.scale-title-group {
-  display: flex;
-  align-items: center;
-  gap: var(--md-sys-spacing-1);
-}
-
-.scale-icon {
-  font-size: 1.1em;
-}
-
-.scale-title {
-  font-weight: 500;
-}
-
-.scale-separator {
-  margin: 0 var(--md-sys-spacing-1);
-  color: var(--md-sys-color-on-surface-variant);
-}
-
-
-/* Container - Anchored to top-right as an MD3 FAB-style control */
+/* Container positioning */
 #top-scale-bar-container {
   position: fixed;
-  right: var(--md-sys-spacing-6, 24px);
-  top: var(--md-sys-spacing-6, 24px); /* Top-right corner */
-  z-index: 1100; /* Higher than movie player bar (1000) */
-  width: var(--md-sys-spacing-14, 56px);
-  min-width: 56px; /* Ensure minimum visibility */
+  right: 24px;
+  top: 24px;
+  z-index: 1100;
   background: var(--md-sys-color-surface-container-high);
-  border: 1px solid var(--md-sys-color-outline-variant); /* Debug border */
-  border-radius: var(--md-sys-shape-corner-large);
-  padding: var(--md-sys-spacing-4);
-  /* MD3 elevation level 3 */
-  box-shadow: var(--md-sys-elevation-shadow-level-3);
-  transition: all 0.3s ease;
-  /* Debug visibility */
-  opacity: 1;
-  visibility: visible;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: var(--md-sys-elevation-level3);
 }
 
-/* Hover state for expanded info */
-#top-scale-bar-container:hover {
-  width: calc(var(--md-sys-spacing-12) + var(--md-sys-spacing-6));
-  box-shadow: var(--md-sys-elevation-shadow-level-4);
-}
-
-/* Main section */
+/* Main container */
 .top-scale-bar {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--md-sys-spacing-2);
+  gap: 12px;
 }
 
-/* Compact header */
+/* Header with icon and title */
 .top-scale-bar .scale-header {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: var(--md-sys-spacing-1);
-  width: 100%;
+  gap: 8px;
 }
 
-/* Icon */
-.top-scale-bar .scale-icon {
-  font-size: 14px;
-  color: var(--md-sys-color-primary);
-  opacity: 0.8;
-  transition: opacity 0.2s ease;
-  transform: rotate(90deg); /* Vertical orientation */
-}
-
-#top-scale-bar-container:hover .scale-icon {
-  opacity: 1;
-}
-
-/* Title - hidden by default */
 .top-scale-bar .scale-title {
-  display: none;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--md-sys-color-primary);
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
+  font: var(--md-sys-typescale-title-small);
+  color: var(--md-sys-color-on-surface);
 }
 
-#top-scale-bar-container:hover .scale-title {
-  display: block;
-}
-
-/* Values display */
+/* Values using Material Design chips */
 .top-scale-bar .scale-values {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: var(--md-sys-spacing-1);
-  font-size: 12px;
-  font-weight: 600;
-  width: 100%;
+  gap: 8px;
 }
 
-.top-scale-bar .scale-current {
-  color: var(--md-sys-color-primary);
-  font-family: var(--md-sys-font-family-monospace, 'SF Mono', monospace);
-  font-size: 12px;
-}
-
-.top-scale-bar .scale-max {
-  color: var(--md-sys-color-on-surface-variant);
-  font-family: var(--md-sys-font-family-monospace, 'SF Mono', monospace);
-  opacity: 0.7;
-}
-
-/* Hide separator */
-.top-scale-bar .scale-separator {
-  display: none;
-}
-
-/* Vertical progress bar container */
+/* Progress bar container */
 .top-scale-bar .scale-bar-container {
-  position: relative;
-  width: var(--md-sys-spacing-2);
-  height: var(--md-sys-spacing-16);
-  margin: var(--md-sys-spacing-1) 0;
-}
-
-/* Progress bar background */
-.top-scale-bar .scale-bar {
   width: 100%;
-  height: 100%;
-  background: var(--md-sys-color-surface-container-low);
-  border-radius: var(--md-sys-shape-corner-small);
-  overflow: hidden;
-  position: relative;
-}
-
-/* Progress fill */
-.top-scale-bar .scale-progress-bar {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  background: linear-gradient(to top, var(--md-sys-color-primary), var(--md-sys-color-secondary));
-  border-radius: var(--md-sys-shape-corner-small);
-  transition: height 0.3s ease;
-  height: 0%; /* Will be set by JavaScript */
-}
-
-/* Indicator dot - positioned based on progress */
-.top-scale-bar .scale-indicator {
-  display: none; /* Hide for cleaner look */
-}
-
-/* Responsive - smaller on mobile */
-@media (max-width: 768px) {
-  #top-scale-bar-container {
-    right: var(--md-sys-spacing-2);
-    width: var(--md-sys-spacing-10);
-    padding: var(--md-sys-spacing-3) var(--md-sys-spacing-1);
-  }
-
-  #top-scale-bar-container:hover {
-    width: calc(var(--md-sys-spacing-10) + var(--md-sys-spacing-4));
-  }
-
-  .top-scale-bar .scale-bar-container {
-    height: var(--md-sys-spacing-15);
-  }
-}
-
-/* Accessibility */
-.top-scale-bar .scale-bar[role="progressbar"] {
-  position: relative;
-}
-
-/* Focus styles */
-#top-scale-bar-container:focus-within {
-  outline: 2px solid var(--md-sys-color-primary);
-  outline-offset: 2px;
-}
-
-/* Entrance animation */
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translate(20px, -50%);
-  }
-  to {
-    opacity: 1;
-    transform: translate(0, -50%);
-  }
-}
-
-#top-scale-bar-container {
-  animation: slideInRight 0.3s ease-out;
-}
-
-/* Tooltip on hover */
-#top-scale-bar-container::before {
-  content: attr(data-tooltip);
-  position: absolute;
-  right: 100%;
-  top: 50%;
-  transform: translateY(-50%);
-  margin-right: var(--md-sys-spacing-2);
-  background: var(--md-sys-color-inverse-surface);
-  color: var(--md-sys-color-inverse-on-surface);
-  padding: var(--md-sys-spacing-1) var(--md-sys-spacing-2);
-  border-radius: var(--md-sys-shape-corner-small);
-  font-size: var(--md-typescale-body-small-size);
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-}
-
-#top-scale-bar-container:hover::before {
-  opacity: 1;
 }

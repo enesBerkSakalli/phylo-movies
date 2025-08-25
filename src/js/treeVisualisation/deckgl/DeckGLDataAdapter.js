@@ -19,6 +19,7 @@ export class DeckGLDataAdapter {
   convertTreeToLayerData(tree, options = {}) {
     const {
       extensionRadius = null,
+      labelRadius = null
     } = options;
 
     // Calculate adaptive node radii based on tree geometry
@@ -27,7 +28,7 @@ export class DeckGLDataAdapter {
     // Convert each type of data
     const nodes = this.nodeConverter.convertNodes(tree, adaptiveRadii);
     const links = this.linkConverter.convertLinks(tree);
-    const labels = this.labelConverter.convertLabels(tree, extensionRadius);
+    const labels = this.labelConverter.convertLabels(tree, labelRadius || extensionRadius);
     const extensions = this._convertExtensions(tree, extensionRadius);
 
     return { nodes, links, labels, extensions };

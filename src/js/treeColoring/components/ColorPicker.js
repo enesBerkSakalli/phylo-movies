@@ -1,6 +1,6 @@
 // ColorPicker.js - Simplified color picker component
 
-import { COLOR_SCHEMES } from '../constants/Colors.js';
+import { CATEGORICAL_PALETTES } from '../../constants/ColorPalettes.js';
 
 /**
  * Simplified color picker for taxa coloring
@@ -72,8 +72,10 @@ export class ColorPicker {
     const swatchGrid = document.createElement('div');
     swatchGrid.className = 'tc-popover-grid';
     
-    // Use first 4 color schemes for quick colors
-    const presetColors = new Set([].concat(...Object.values(COLOR_SCHEMES).slice(0, 4)));
+    // Use first 4 color schemes for quick colors (using accessible palettes)
+    const presetColors = new Set([].concat(
+      ...Object.values(CATEGORICAL_PALETTES).slice(0, 4).map(palette => palette.slice(0, 5))
+    ));
 
     presetColors.forEach(color => {
       const swatch = document.createElement('button');

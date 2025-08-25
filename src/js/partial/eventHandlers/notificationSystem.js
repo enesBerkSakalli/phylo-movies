@@ -82,23 +82,23 @@ export class NotificationSystem {
         animation: slideIn 0.3s ease-out;
         max-width: 300px;
       }
-      
+
       .notification.error { border-left: 4px solid #e53935; }
       .notification.warning { border-left: 4px solid #ff9800; }
       .notification.success { border-left: 4px solid #4caf50; }
       .notification.info { border-left: 4px solid #2196f3; }
-      
+
       .notification-content {
         display: flex;
         align-items: center;
         gap: 10px;
       }
-      
+
       .notification-content i {
         color: #666;
         flex-shrink: 0;
       }
-      
+
       .notification-close {
         background: none;
         border: none;
@@ -113,16 +113,16 @@ export class NotificationSystem {
         align-items: center;
         justify-content: center;
       }
-      
+
       .notification-close:hover {
         color: #333;
       }
-      
+
       @keyframes slideIn {
         from { transform: translateX(100%); opacity: 0; }
         to { transform: translateX(0); opacity: 1; }
       }
-      
+
       @keyframes slideOut {
         from { transform: translateX(0); opacity: 1; }
         to { transform: translateX(100%); opacity: 0; }

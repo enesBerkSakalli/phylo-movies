@@ -1,6 +1,5 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import path from 'path';
 
 
 
@@ -98,14 +97,6 @@ export default defineConfig({
   plugins: [react(), virtualizedMatrixViewerPlugin()],
   resolve: {
     alias: [
-      // Alias "../utils/globalThis" to our stub file.
-      { find: "../utils/globalThis", replacement: path.resolve(__dirname, "src/stubs/globalThis.js") },
-      // Alias for @juggle/resize-observer relative import of "./globalThis"
-      { find: "@juggle/resize-observer/lib/utils/globalThis", replacement: path.resolve(__dirname, "src/stubs/globalThis.js") },
-      // Alias for @juggle/resize-observer utils/global import (the actual issue)
-      { find: "@juggle/resize-observer/lib/utils/global", replacement: path.resolve(__dirname, "src/stubs/globalThis.js") },
-      // Alias for relative import "./globalThis" within modules (such as from scheduler.js)
-      { find: /^\.\/globalThis$/, replacement: path.resolve(__dirname, "src/stubs/globalThis.js") },
       // (Removed VirtualizedMatrixViewer.scss alias; plugin handles mocking)
     ]
   },

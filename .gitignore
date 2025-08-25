@@ -39,3 +39,4 @@ backend/brancharchitect-0.37.0.dist-info
 .env
 vite.log
 mcp
+.vite/deps

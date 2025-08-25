@@ -38,6 +38,7 @@ export default class Gui {
   constructor(movieData, options = {}) {
     // Store options for later use
     this.options = options;
+    this.movie_data = movieData;
 
     // Initialize the store first
     useAppStore.getState().initialize(movieData);
@@ -161,16 +162,11 @@ export default class Gui {
 
   stop() {
     const { treeController } = useAppStore.getState();
-
     // Stop animation first if controller has the method
     if (treeController && typeof treeController.stopAnimation === 'function') {
       treeController.stopAnimation();
     }
-
-    // Then update store state
     useAppStore.getState().stop();
-
-    // Button state will be updated automatically via store subscription
   }
 
 
@@ -189,11 +185,15 @@ export default class Gui {
   }
 
   isMSAViewerOpen() {
-    // Check if MSA viewer window (WinBox modal) is currently open
+    // Check if deck.gl MSA viewer window is currently open
     return !!document.getElementById("msa-winbox-content");
   }
 
   syncMSAIfOpen() {
+    // TODO: Re-implement for deck.gl MSA viewer
+    return; // Temporarily disabled during migration
+
+    /*
     const { currentTreeIndex, movieData, transitionResolver, msaWindowSize, msaStepSize, syncMSAEnabled } = useAppStore.getState(); // Get state from store
     if (!syncMSAEnabled) {
       return;
@@ -226,6 +226,7 @@ export default class Gui {
       }));
 
     }
+    */
   }
 
   // ========================================
@@ -253,11 +254,10 @@ export default class Gui {
   // ========================================
 
   getCurrentWindow() {
-    const { currentTreeIndex, transitionResolver, movieData, msaWindowSize, msaStepSize, setWindowStart, setWindowEnd } = useAppStore.getState(); // Get state from store
+    const { currentTreeIndex, transitionResolver, movieData, msaWindowSize, msaStepSize } = useAppStore.getState(); // Get state from store
     const currentFullTreeDataIdx = transitionResolver.getDistanceIndex(currentTreeIndex);
     const window = calculateWindow(currentFullTreeDataIdx, msaStepSize, msaWindowSize, movieData.interpolated_trees.length); // Use from store
-    setWindowStart(window.startPosition);
-    setWindowEnd(window.endPosition);
+    // Note: setWindowStart and setWindowEnd were removed as they don't exist in the store
     return window;
   }
 
@@ -307,15 +307,12 @@ export default class Gui {
     // Create new controller based on WebGL mode and options
     let newTreeController;
     if (this.options.TreeController) {
-      // Use provided controller class (e.g., DeckGLTreeAnimationController)
       newTreeController = new this.options.TreeController();
     } else {
-      // Use default logic
       newTreeController = webglEnabled
         ? new WebGLTreeAnimationController()
         : new TreeAnimationController(null, "application");
     }
-
     // Store handles all controller lifecycle management
     setTreeController(newTreeController);
     return newTreeController;
@@ -401,21 +398,53 @@ export default class Gui {
   // ========================================
   // EXPORT & SAVE FUNCTIONALITY
   // ========================================
-  saveSVG() {
-    const { currentTreeIndex } = useAppStore.getState(); // Get from store
-    const button = document.getElementById("save-svg-button");
+  async saveImage() {
+    let { webglEnabled, treeController } = useAppStore.getState();
+
+    // If no controller exists, create one by running the main update.
+    if (!treeController) {
+      await this.updateMain();
+      // Re-fetch the controller from the store now that it has been created.
+      treeController = useAppStore.getState().treeController;
+    }
+
+    const button = document.getElementById("save-button");
+
     if (button) {
       button.disabled = true;
-      button.innerText = "Saving...";
     }
-    const fileName = `${this.fileName || "chart"}-${currentTreeIndex + 1}-${this.getCurrentTreeLabel()}.svg`;
-    exportSaveChart(this, "application-container", fileName)
-      .finally(() => {
-        if (button) {
-          button.disabled = false;
-          button.innerText = "Save SVG";
+
+    try {
+      if (webglEnabled) {
+        // --- PNG Saving Logic ---
+        if (!treeController || !treeController.deckManager || !treeController.deckManager.canvas) {
+          console.error("Deck.gl canvas not available for saving PNG.");
+          return;
         }
-      });
+
+        const canvas = treeController.deckManager.canvas;
+        const dataURL = canvas.toDataURL('image/png');
+
+        const link = document.createElement('a');
+        const fileName = `phylo-movie-export-${useAppStore.getState().currentTreeIndex + 1}.png`;
+        link.href = dataURL;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+      } else {
+        // --- SVG Saving Logic (existing) ---
+        const fileName = `phylo-movie-export-${useAppStore.getState().currentTreeIndex + 1}.svg`;
+        await exportSaveChart(this, "application-container", fileName);
+      }
+    } catch (error) {
+      console.error("Error saving image:", error);
+    } finally {
+      if (button) {
+        button.disabled = false;
+      }
+    }
   }
 
   // ========================================
@@ -468,14 +497,12 @@ export default class Gui {
   }
 
   async _handleTaxaColoringComplete(colorData) {
-    const { movieData } = useAppStore.getState(); // Get from store
+    const { movieData, updateTaxaColors } = useAppStore.getState(); // Get from store
     const newColorMap = applyColoringData(colorData, movieData.sorted_leaves, TREE_COLOR_CATEGORIES); // Use movieData from store
-    // Ensure the global color map is updated so label colors are correct
-    Object.assign(TREE_COLOR_CATEGORIES, newColorMap);
-    // Color changes will trigger re-render through normal update cycle
+
+    // Use the store method to update colors and notify ColorManager
+    updateTaxaColors(newColorMap);
   }
-
-
 
   // ========================================
   // MSA POSITION TRACKING

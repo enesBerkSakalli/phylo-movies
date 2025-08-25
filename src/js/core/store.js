@@ -31,12 +31,11 @@ export const useAppStore = create((set, get) => ({
   movieData: null,
   treeList: [],
   treeMetadata: [],
-  highlightData: [],
-  activeChangeEdgeTracking: [], // Renamed from lattice_edge_tracking
+  highlightData: [], // From to_be_highlighted in JSON
+  activeChangeEdgeTracking: [], // From lattice_edge_tracking in JSON
 
   // Position cache for efficient diffing
   treePositionCache: new Map(), // Map<treeIndex, { links: Map, nodes: Map, leaves: Map }>
-  layoutCache: new Map(), // Map<treeIndex, layoutResult>
 
   // The TransitionIndexResolver will now live in the store
   transitionResolver: null,
@@ -72,12 +71,13 @@ export const useAppStore = create((set, get) => ({
   strokeWidth: 3,
   branchTransformation: 'none',
   monophyleticColoringEnabled: true,
+  dimmingEnabled: false, // For dimming non-descendants
+  activeDescendantKeys: new Set(), // For tracking descendant keys for dimming
   webglEnabled: true, // Default to WebGL enabled
   useDeckGL: true, // Feature flag for Deck.gl testing - SET TO TRUE for testing
   cameraMode: 'orthographic', // Camera mode for Deck.gl ('orthographic' or 'orbit')
   msaWindowSize: 1000, // Default value
   msaStepSize: 50,     // Default value
-  highlightStrokeMultiplier: 1.6, // New state variable for highlight stroke multiplier
   styleConfig: { ...DEFAULT_STYLE_CONFIG }, // New state variable for centralized style config
 
   // Chart-specific state
@@ -95,10 +95,10 @@ export const useAppStore = create((set, get) => ({
   initialize: (movieData) => {
     const resolver = new TransitionIndexResolver(
       movieData.tree_metadata,
-      movieData.highlighted_elements,
-      movieData.rfd_list,
-      movieData.s_edge_metadata || movieData.activeChangeEdge_metadata, // Support both old and new field names
-      movieData.tree_pair_solutions || {}, // Pass treePairSolutions for lattice_edge_solutions
+      movieData.to_be_highlighted,
+      movieData.distances?.robinson_foulds,
+      movieData.lattice_edge_tracking,
+      movieData.tree_pair_solutions || {},
       true // debug
     );
 
@@ -111,6 +111,10 @@ export const useAppStore = create((set, get) => ({
     // Initialize with empty array (ColorManager expects array of Sets)
     const colorManager = new ColorManager([]);
 
+    // Sync ColorManager with store's monophyletic setting
+    const initialMonophyleticColoring = get().monophyleticColoringEnabled !== undefined ? get().monophyleticColoringEnabled : true;
+    colorManager.setMonophyleticColoring(initialMonophyleticColoring);
+
     set({
       movieData: {
         ...movieData, // Keep existing movieData properties
@@ -121,8 +125,8 @@ export const useAppStore = create((set, get) => ({
       },
       treeList: movieData.interpolated_trees,
       treeMetadata: movieData.tree_metadata,
-      highlightData: movieData.highlighted_elements,
-      activeChangeEdgeTracking: movieData.lattice_edge_tracking || movieData.activeChangeEdgeTracking || [], // Support both old and new field names
+      highlightData: movieData.to_be_highlighted || [],
+      activeChangeEdgeTracking: movieData.lattice_edge_tracking || [],
       transitionResolver: resolver,
       colorManager: colorManager, // Single ColorManager instance
       currentTreeIndex: 0,
@@ -139,26 +143,33 @@ export const useAppStore = create((set, get) => ({
     updateColorManagerActiveChangeEdge(initialActiveChangeEdge);
   },
 
-  // --- Playback Actions ---
-  /**
-   * Starts timeline playback and initializes animation state
-   */
   play: () => {
+    const { animationProgress, treeList, animationSpeed } = get();
+    const totalTrees = treeList.length;
+
+    // If playback is at the end (progress >= 1), restart from the beginning.
+    // Otherwise, resume from the last known progress.
+    const initialProgress = animationProgress >= 1.0 ? 0 : animationProgress;
+
+    // Adjust start time to account for the initial progress.
+    // This pretends the animation started earlier, so the elapsed time calculation is correct.
+    const timeOffset = (initialProgress * (totalTrees - 1) / animationSpeed) * 1000;
+    const adjustedStartTime = performance.now() - timeOffset;
+
     set({
       playing: true,
-      animationStartTime: performance.now(),
-      animationProgress: 0
+      animationStartTime: adjustedStartTime,
+      animationProgress: initialProgress
     });
   },
 
   /**
-   * Stops timeline playback and resets animation state
+   * Stops timeline playback and preserves animation state
    */
   stop: () => {
     set({
       playing: false,
-      animationStartTime: null,
-      animationProgress: 0
+      animationStartTime: null
     });
   },
 
@@ -277,11 +288,16 @@ export const useAppStore = create((set, get) => ({
         navDirection = newIndex > currentTreeIndex ? 'forward' : 'backward';
       }
 
+      // **THE FIX**: Calculate and set animationProgress along with the tree index.
+      const totalTrees = treeList.length;
+      const newAnimationProgress = totalTrees > 1 ? newIndex / (totalTrees - 1) : 0;
+
       set({
         previousTreeIndex: currentTreeIndex,
         currentTreeIndex: newIndex,
         navigationDirection: navDirection,
-        segmentProgress: 0 // Reset segment progress on discrete navigation
+        segmentProgress: 0, // Reset segment progress on discrete navigation
+        animationProgress: newAnimationProgress // Sync animation progress
       });
 
       // Automatically update ColorManager with marked components for new position
@@ -362,6 +378,12 @@ export const useAppStore = create((set, get) => ({
   },
 
   /**
+   * Enables or disables dimming of non-descendant elements.
+   * @param {boolean} enabled - Whether dimming is enabled.
+   */
+  setDimmingEnabled: (enabled) => set({ dimmingEnabled: enabled }),
+
+  /**
    * Enables or disables WebGL rendering
    * @param {boolean} enabled - Whether WebGL rendering is enabled
    */
@@ -400,6 +422,7 @@ export const useAppStore = create((set, get) => ({
     return newMode;
   },
 
+
   /**
    * Sets the MSA viewer window size
    * @param {number} size - Window size in base pairs
@@ -411,12 +434,6 @@ export const useAppStore = create((set, get) => ({
    * @param {number} step - Step size for MSA navigation
    */
   setMsaStepSize: (step) => set({ msaStepSize: step }),
-
-  /**
-   * Sets the highlight stroke width multiplier
-   * @param {number} multiplier - Multiplier for highlighted element stroke width
-   */
-  setHighlightStrokeMultiplier: (multiplier) => set({ highlightStrokeMultiplier: multiplier }),
 
   /**
    * Updates the centralized style configuration
@@ -552,6 +569,12 @@ export const useAppStore = create((set, get) => ({
     // Update the color in TREE_COLOR_CATEGORIES
     TREE_COLOR_CATEGORIES[colorType] = newColor;
 
+    // Notify ColorManager of the update
+    const { colorManager } = get();
+    if (colorManager && colorManager.refreshColorCategories) {
+      colorManager.refreshColorCategories();
+    }
+
     // Trigger re-render for both SVG and WebGL renderers
     const { treeController, webglEnabled, webglTreeController } = get();
 
@@ -591,6 +614,33 @@ export const useAppStore = create((set, get) => ({
     updateHighlightingColor('dimmedColor', newColor);
   },
 
+  /**
+   * Updates taxa colors in TREE_COLOR_CATEGORIES
+   * Called after TaxaColoring component applies new colors
+   * @param {Object} newColorMap - Object mapping taxa names to hex colors
+   */
+  updateTaxaColors: (newColorMap) => {
+    // Update the colors in TREE_COLOR_CATEGORIES
+    Object.assign(TREE_COLOR_CATEGORIES, newColorMap);
+
+    // Notify ColorManager of the update
+    const { colorManager } = get();
+    if (colorManager && colorManager.refreshColorCategories) {
+      colorManager.refreshColorCategories();
+    }
+
+    // Trigger re-render for both SVG and WebGL renderers
+    const { treeController, webglEnabled, webglTreeController } = get();
+
+    if (webglEnabled && webglTreeController) {
+      // For WebGL: LayerStyles will pick up the new color via ColorManager
+      webglTreeController.renderAllElements();
+    } else if (treeController) {
+      // For SVG: Force a re-render to pick up new colors
+      treeController.renderAllElements();
+    }
+  },
+
   // --- Chart Data Getters ---
   /**
    * Gets properties needed for line chart rendering
@@ -605,8 +655,8 @@ export const useAppStore = create((set, get) => ({
     return {
       barOptionValue: state.barOptionValue,
       currentTreeIndex: distanceIndex, // Always use distance index for all chart types
-      robinsonFouldsDistances: state.movieData?.rfd_list,
-      weightedRobinsonFouldsDistances: state.movieData?.wrfd_list,
+      robinsonFouldsDistances: state.movieData?.distances?.robinson_foulds,
+      weightedRobinsonFouldsDistances: state.movieData?.distances?.weighted_robinson_foulds,
       scaleList: state.movieData?.scaleList,
       transitionResolver: state.transitionResolver,
     };
@@ -662,59 +712,6 @@ export const useAppStore = create((set, get) => ({
     return activeChangeEdge || []; // Return empty array if undefined
   },
 
-  // --- Position Cache Actions ---
-  /**
-   * Caches tree layout positions for efficient diffing during interpolation
-   * @param {number} treeIndex - Index of the tree being cached
-   * @param {Object} layoutResult - Layout result containing tree structure
-   */
-  cacheTreePositions: (treeIndex, layoutResult) => {
-    const { treePositionCache, layoutCache } = get();
-
-    if (!layoutResult || !layoutResult.tree) return;
-
-    const tree = layoutResult.tree;
-    const linksMap = new Map();
-    const nodesMap = new Map();
-    const leavesMap = new Map();
-
-    // Cache link positions using KeyGenerator
-    tree.links().forEach(link => {
-      const key = getLinkKey(link);
-      linksMap.set(key, {
-        sourceAngle: link.source.angle,
-        sourceRadius: link.source.radius,
-        targetAngle: link.target.angle,
-        targetRadius: link.target.radius
-      });
-    });
-
-    // Cache node positions using KeyGenerator
-    tree.descendants().forEach(node => {
-      const key = getNodeKey(node);
-      nodesMap.set(key, {
-        angle: node.angle,
-        radius: node.radius,
-        x: node.x,
-        y: node.y
-      });
-    });
-
-    // Cache leaf positions using KeyGenerator
-    tree.leaves().forEach(leaf => {
-      const key = getNodeKey(leaf); // Use same function as nodes
-      leavesMap.set(key, {
-        angle: leaf.angle,
-        radius: leaf.radius,
-        x: leaf.x,
-        y: leaf.y
-      });
-    });
-
-    // Store in cache
-    treePositionCache.set(treeIndex, { links: linksMap, nodes: nodesMap, leaves: leavesMap });
-    layoutCache.set(treeIndex, layoutResult);
-  },
 
   /**
    * Retrieves cached tree positions for a specific tree index
@@ -726,32 +723,6 @@ export const useAppStore = create((set, get) => ({
     return treePositionCache.get(treeIndex) || null;
   },
 
-  /**
-   * Retrieves cached layout result for a specific tree index
-   * @param {number} treeIndex - Index of the tree layout to retrieve
-   * @returns {Object|null} Cached layout result or null if not found
-   */
-  getLayoutCache: (treeIndex) => {
-    const { layoutCache } = get();
-    return layoutCache.get(treeIndex) || null;
-  },
-
-  // Cache clearing methods
-  /**
-   * Clears all cached tree positions
-   */
-  clearPositionCache: () => {
-    const { treePositionCache } = get();
-    treePositionCache.clear();
-  },
-
-  /**
-   * Clears all cached layout results
-   */
-  clearLayoutCache: () => {
-    const { layoutCache } = get();
-    layoutCache.clear();
-  },
 
   // --- ColorManager Subscription Setup ---
   /**
@@ -795,6 +766,7 @@ export const useAppStore = create((set, get) => ({
       // ColorManager will be updated automatically via subscription
     }
   },
+
 }));
 
 // Set up ColorManager subscription after store creation
