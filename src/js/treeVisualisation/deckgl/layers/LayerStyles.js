@@ -193,7 +193,7 @@ export class LayerStyles {
   }
 
   /**
-   * Get label color
+   * Get label color with dimming support
    * @param {Object} label - Label data object
    * @returns {Array} RGBA color array for Deck.gl
    */
@@ -202,21 +202,41 @@ export class LayerStyles {
     const cm = useAppStore.getState().getColorManager?.();
     const hexColor = cm.getNodeColor(label);
     const rgb = this._hexToRgb(hexColor);
-    const opacity = label.opacity !== undefined ? Math.round(label.opacity * 255) : 255;
+    
+    // Calculate base opacity
+    let opacity = label.opacity !== undefined ? Math.round(label.opacity * 255) : 255;
+    
+    // Apply dimming if enabled, there are active change edges, and this label's node is not downstream
+    const { dimmingEnabled } = useAppStore.getState();
+    const labelNode = this._convertNodeToColorManagerFormat(label);
+    if (dimmingEnabled && cm.hasActiveChangeEdges() && !cm.isNodeDownstreamOfAnyActiveChangeEdge(labelNode)) {
+        opacity = Math.round(opacity * 0.3); // 30% opacity for dimmed elements
+    }
+    
     return [rgb[0], rgb[1], rgb[2], opacity];
   }
 
   /**
-   * Get extension line color
+   * Get extension line color with dimming support
    * @param {Object} extension - Extension data object (which is a leaf node)
    * @returns {Array} RGBA color array for Deck.gl
    */
   getExtensionColor(extension) {
     // Get ColorManager from store
     const cm = useAppStore.getState().getColorManager?.();
-    const hexColor = cm.getNodeColor?.(extension, this._cache.highlightEdges);
+    const hexColor = cm.getNodeColor?.(extension);
     const rgb = this._hexToRgb(hexColor);
-    const opacity = extension.opacity !== undefined ? Math.round(extension.opacity * 255) : 255;
+    
+    // Calculate base opacity
+    let opacity = extension.opacity !== undefined ? Math.round(extension.opacity * 255) : 255;
+    
+    // Apply dimming if enabled, there are active change edges, and this extension's node is not downstream
+    const { dimmingEnabled } = useAppStore.getState();
+    const extensionNode = this._convertNodeToColorManagerFormat(extension);
+    if (dimmingEnabled && cm.hasActiveChangeEdges() && !cm.isNodeDownstreamOfAnyActiveChangeEdge(extensionNode)) {
+        opacity = Math.round(opacity * 0.3); // 30% opacity for dimmed elements
+    }
+    
     return [...rgb, opacity];
   }
 
@@ -311,8 +331,7 @@ export class LayerStyles {
     // Parse HSL string like "hsl(144, 70%, 60%)"
     const match = hslString.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
     if (!match) {
-      console.warn('Invalid HSL format:', hslString);
-      return [0, 0, 0]; // Fallback to black
+      return [0, 0, 0]; // Fallback to black without logging
     }
 
     const h = parseInt(match[1]) / 360;

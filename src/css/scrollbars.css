@@ -1,0 +1,38 @@
+/* Material-style scrollbars (global) */
+
+:root {
+  --pm-scrollbar-track: transparent;
+  --pm-scrollbar-thumb: var(--md-sys-color-outline-variant, #c6c6c6);
+  --pm-scrollbar-thumb-hover: color-mix(in oklab, var(--pm-scrollbar-thumb), var(--md-sys-color-primary, #006a6a) 35%);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--pm-scrollbar-thumb) var(--pm-scrollbar-track);
+}
+
+/* WebKit/Blink */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--pm-scrollbar-track);
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--pm-scrollbar-thumb);
+  border-radius: 8px;
+  border: 2px solid var(--pm-scrollbar-track);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--pm-scrollbar-thumb-hover);
+}
+
+/* Compact variant for small panes (legend under scale) */
+.top-scale-bar .taxa-legend-vertical::-webkit-scrollbar { width: 8px; }
+.top-scale-bar .taxa-legend-vertical { scrollbar-width: thin; }
+

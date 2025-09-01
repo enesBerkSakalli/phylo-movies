@@ -100,14 +100,14 @@ export class TreeInterpolator {
       toLabels,
       timeFactor,
       (from, to, t, fromLabel, toLabel) => {
-        // Directly pass the leaf nodes to the position interpolator.
-        // It will intelligently decide whether to use polar or linear interpolation.
+        // Prefer polar interpolation using label-level angle + polarRadius
+        // to move labels along arcs. Falls back to linear if unavailable.
         const interpolatedPosition = this._interpolatePosition(
           from.position,
           to.position,
           t,
-          fromLabel?.leaf, // Safely access leaf property
-          toLabel?.leaf   // Safely access leaf property
+          fromLabel,
+          toLabel
         );
 
         return {
@@ -178,11 +178,17 @@ export class TreeInterpolator {
    * @private
    */
   _canUsePolarInterpolation(fromNode, toNode) {
-    return fromNode && toNode &&
-           typeof fromNode.angle === 'number' && typeof fromNode.polarRadius === 'number' &&
-           typeof toNode.angle === 'number' && typeof toNode.polarRadius === 'number' &&
-           !isNaN(fromNode.angle) && !isNaN(fromNode.polarRadius) &&
-           !isNaN(toNode.angle) && !isNaN(toNode.polarRadius);
+    if (!fromNode || !toNode) return false;
+
+    const fromAngle = fromNode.angle;
+    const toAngle = toNode.angle;
+    const fromR = (typeof fromNode.polarRadius === 'number') ? fromNode.polarRadius : fromNode.radius;
+    const toR = (typeof toNode.polarRadius === 'number') ? toNode.polarRadius : toNode.radius;
+
+    return typeof fromAngle === 'number' && typeof toAngle === 'number' &&
+           typeof fromR === 'number' && typeof toR === 'number' &&
+           !isNaN(fromAngle) && !isNaN(toAngle) &&
+           !isNaN(fromR) && !isNaN(toR);
   }
 
   /**
@@ -191,7 +197,9 @@ export class TreeInterpolator {
    */
   _interpolatePositionPolar(fromNode, toNode, t) {
     // Interpolate in polar coordinates using shortest angle path
-    const interpolatedRadius = this._interpolateScalar(fromNode.polarRadius, toNode.polarRadius, t);
+    const fromR = (typeof fromNode.polarRadius === 'number') ? fromNode.polarRadius : fromNode.radius;
+    const toR = (typeof toNode.polarRadius === 'number') ? toNode.polarRadius : toNode.radius;
+    const interpolatedRadius = this._interpolateScalar(fromR, toR, t);
     const interpolatedAngle = this._interpolateRotation(fromNode.angle, toNode.angle, t);
 
     // Convert back to Cartesian coordinates

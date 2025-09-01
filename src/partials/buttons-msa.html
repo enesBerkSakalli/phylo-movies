@@ -1,0 +1,37 @@
+<!-- MSA Viewer Section (modular) -->
+<div class="msa-header">
+  <md-icon class="icon-primary">biotech</md-icon>
+  <h3 class="md-typescale-title-medium section-title" title="Multiple Sequence Alignment - shows how DNA/protein sequences compare">MSA Viewer</h3>
+</div>
+
+<div class="msa-group" role="group" aria-label="MSA operations" id="msa-controls">
+  <md-filled-button id="msa-viewer-btn" has-icon title="Open the Multiple Sequence Alignment (MSA) viewer for the current window" aria-label="Open alignment viewer" class="flex-1 minw-200" type="button">
+    <md-icon slot="icon">biotech</md-icon>
+    Open Alignment Viewer
+  </md-filled-button>
+  <label class="row-16 msa-switch-row flex-1 minw-200">
+    <md-switch id="enable-msa-sync-btn" selected aria-label="Toggle MSA sync"></md-switch>
+    <div class="flex-1">
+      <div style="font-weight: 500;">
+        <md-icon class="icon-small">sync</md-icon>
+        Sync MSA Window
+      </div>
+      <div class="md-typescale-body-medium muted-text">Keep the MSA region aligned with the current tree position</div>
+    </div>
+  </label>
+</div>
+
+<md-divider></md-divider>
+
+<md-chip-set id="msa-status-chips" aria-live="polite">
+  <md-assist-chip id="msa-status-empty" data-state="empty">
+    <md-icon slot="icon">info</md-icon>
+    <span>No alignment data loaded</span>
+  </md-assist-chip>
+  <md-assist-chip id="msa-status-loaded" data-state="loaded" hidden>
+    <md-icon slot="icon">done</md-icon>
+    <span>Alignment loaded</span>
+  </md-assist-chip>
+  <!-- Optionally add more chip states (loading/error) -->
+  <!-- <md-assist-chip id="msa-status-loading" data-state="loading" hidden><md-icon slot="icon">hourglass_top</md-icon><span>Loading…</span></md-assist-chip> -->
+</md-chip-set>

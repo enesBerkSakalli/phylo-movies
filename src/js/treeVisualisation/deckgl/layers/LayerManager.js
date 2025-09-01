@@ -1,5 +1,6 @@
 import { PathLayer, ScatterplotLayer, TextLayer } from '@deck.gl/layers';
 import { LayerStyles } from './LayerStyles.js';
+import { useAppStore } from '../../../core/store.js';
 
 /**
  * LayerManager - Creates and manages Deck.gl layers for tree visualization
@@ -8,7 +9,7 @@ import { LayerStyles } from './LayerStyles.js';
 export class LayerManager {
   constructor() {
     // Constants for consistent styling
-    this.MIN_NODE_RADIUS = 8; // Matches maxRadius in DeckGLDataAdapter config
+    this.MIN_NODE_RADIUS = 4; // Reduced for better overall scale
 
     this._layerConfigs = {
       linkOutlines: {
@@ -57,6 +58,17 @@ export class LayerManager {
         defaultProps: {
           getAlignmentBaseline: 'center'
         }
+      },
+      trails: {
+        id: 'phylo-motion-trails',
+        LayerClass: PathLayer,
+        defaultProps: {
+          widthUnits: 'pixels',
+          widthMinPixels: 1,
+          jointRounded: true,
+          capRounded: true,
+          pickable: false
+        }
       }
     };
 
@@ -70,7 +82,7 @@ export class LayerManager {
    * @returns {Array} Array of Deck.gl layers
    */
   createTreeLayers(data) {
-    const { nodes, links, labels, extensions = [] } = data;
+    const { nodes, links, labels, extensions = [], trails = [] } = data;
 
     return [
       // Render outlines first (background layer)
@@ -79,6 +91,7 @@ export class LayerManager {
       this.createLinksLayer(links),
       this.createExtensionsLayer(extensions),
       this.createNodesLayer(nodes),
+      this.createFlowTrailsLayer(trails),
       this.createLabelsLayer(labels)
     ].filter(Boolean); // Remove any null layers
   }
@@ -199,6 +212,39 @@ export class LayerManager {
         getAngle: [labels],
         getTextAnchor: [labels],
         getPosition: [labels]
+      }
+    });
+  }
+
+
+  /**
+   * Create Flow Trails layer (fading path segments showing recent motion)
+   */
+  createFlowTrailsLayer(trails) {
+    if (!trails || trails.length === 0) return null;
+    const config = this._layerConfigs.trails;
+    const { trailThickness } = useAppStore.getState();
+    return new config.LayerClass({
+      ...config.defaultProps,
+      id: config.id,
+      data: trails,
+      getPath: d => d.path,
+      getWidth: d => Math.max(1, (this.layerStyles._cache.strokeWidth || 3) * (trailThickness || 0.5)),
+      getColor: d => {
+        // Base color from node/label, then apply age-based alpha factor
+        let rgba;
+        if (d.kind === 'label') {
+          rgba = this.layerStyles.getLabelColor(d.leaf);
+        } else {
+          rgba = this.layerStyles.getNodeColor(d.node);
+        }
+        const alphaFactor = d.alphaFactor ?? 0.5;
+        const a = Math.max(0, Math.min(255, Math.round(((rgba[3] ?? 255)) * alphaFactor)));
+        return [rgba[0], rgba[1], rgba[2], a];
+      },
+      updateTriggers: {
+        getPath: [trails],
+        getColor: [trails, this.layerStyles._cache.strokeWidth]
       }
     });
   }

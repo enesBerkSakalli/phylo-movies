@@ -14,6 +14,7 @@ import '@material/web/iconbutton/icon-button.js';
 import '@material/web/icon/icon.js';
 import '@material/web/switch/switch.js';
 import '@material/web/slider/slider.js';
+import '@material/web/textfield/outlined-text-field.js';
 import '@material/web/select/outlined-select.js';
 import '@material/web/select/select-option.js';
 import '@material/web/chips/chip-set.js';
@@ -38,6 +39,72 @@ import { getPhyloMovieData, fetchTreeData } from "../services/dataManager.js";
 
 let eventHandlersAttached = false;
 
+// ======================
+// THEME TOGGLE (system/light/dark)
+// ======================
+const THEME_KEY = 'app-theme-preference'; // 'system' | 'light' | 'dark'
+
+function applyThemePreference(pref) {
+  const root = document.documentElement;
+  if (pref === 'light') {
+    root.setAttribute('data-theme', 'light');
+  } else if (pref === 'dark') {
+    root.setAttribute('data-theme', 'dark');
+  } else {
+    root.removeAttribute('data-theme'); // System
+  }
+  // Update store-managed tree colors to match theme
+  try {
+    useAppStore.getState().applyThemeColors(pref);
+  } catch {}
+  updateThemeToggleIcon(pref);
+}
+
+function getSavedThemePreference() {
+  const saved = localStorage.getItem(THEME_KEY);
+  return saved === 'light' || saved === 'dark' || saved === 'system' ? saved : 'system';
+}
+
+function saveThemePreference(pref) {
+  localStorage.setItem(THEME_KEY, pref);
+}
+
+function cycleThemePreference(current) {
+  // System → Dark → Light → System
+  if (current === 'system') return 'dark';
+  if (current === 'dark') return 'light';
+  return 'system';
+}
+
+function updateThemeToggleIcon(pref) {
+  const iconEl = document.getElementById('theme-toggle-icon');
+  if (!iconEl) return;
+  iconEl.textContent = pref === 'dark' ? 'dark_mode' : pref === 'light' ? 'light_mode' : 'computer';
+}
+
+function setupThemeToggle() {
+  // Apply saved preference on load
+  const pref = getSavedThemePreference();
+  applyThemePreference(pref);
+
+  // Hook up the button if present
+  const btn = document.getElementById('theme-toggle');
+  if (btn) {
+    btn.addEventListener('click', () => {
+      const current = getSavedThemePreference();
+      const next = cycleThemePreference(current);
+      saveThemePreference(next);
+      applyThemePreference(next);
+    });
+  }
+
+  // Keep icon in sync if DOM was late
+  requestAnimationFrame(() => updateThemeToggleIcon(getSavedThemePreference()));
+}
+
+// Apply saved theme preference as early as possible to minimize flash
+applyThemePreference(getSavedThemePreference());
+
 /**
  * Asynchronously loads all required HTML partials into their designated containers.
  * It also verifies that critical UI elements are present after loading.
@@ -53,8 +120,12 @@ async function loadAllRequiredPartials() {
     await loadAllPartials([
       // tree_navigation.html removed - no navigation-container in visualization.html
       {
-        url: "/src/partials/buttons.html",
-        containerId: "buttons-container",
+        url: "/src/partials/buttons-file-ops.html",
+        containerId: "buttons-file-container",
+      },
+      {
+        url: "/src/partials/buttons-msa.html",
+        containerId: "buttons-msa-container",
       },
       {
         url: "/src/partials/appearance.html",
@@ -112,6 +183,22 @@ async function loadAllRequiredPartials() {
   }
 }
 
+/**
+ * Measure the movie player bar height and expose it as a CSS variable so
+ * layout can reserve the correct space and avoid overlap.
+ */
+function updateMovieBarHeightVar() {
+  try {
+    const bar = document.querySelector('.movie-player-bar');
+    if (!bar) return;
+    const rect = bar.getBoundingClientRect();
+    const heightPx = Math.max(64, Math.round(rect.height));
+    document.documentElement.style.setProperty('--movie-player-bar-height', `${heightPx}px`);
+  } catch (e) {
+    console.warn('[layout] Failed to update --movie-player-bar-height:', e);
+  }
+}
+
 
 
 /**
@@ -122,24 +209,24 @@ async function loadAllRequiredPartials() {
  */
 async function initializeGuiAndEvents(parsedData) {
   try {
+    console.log('[Main] parsedData has window_size:', parsedData?.window_size, 'window_step_size:', parsedData?.window_step_size);
+
     // Always fetch latest data from data service for all major fields
     // This ensures consistency if data was updated elsewhere, though typically parsedData should be fresh.
     const movieData = await phyloData.get();
+    console.log('[Main] movieData from phyloData.get() has window_size:', movieData?.window_size, 'window_step_size:', movieData?.window_step_size);
+
     const dataToUse = movieData || parsedData; // Fallback to initially parsedData if movieData is somehow null
+    console.log('[Main] dataToUse has window_size:', dataToUse?.window_size, 'window_step_size:', dataToUse?.window_step_size);
 
     // Animation speed is now managed centrally by the store
     // No need to read from DOM or pass to GUI constructor
 
-    // Show/hide appropriate containers based on store state
+    // Always use WebGL container
     const storeState = useAppStore.getState();
-    const { webglEnabled, useDeckGL } = storeState;
-    console.log('[Main] Store state:', { webglEnabled, useDeckGL });
-    console.log('[Main] WebGL enabled:', webglEnabled, 'UseDeckGL:', useDeckGL);
-
-    if (webglEnabled) {
-      document.getElementById('webgl-container').style.display = 'block';
-      document.getElementById('application-container').style.display = 'none';
-    }
+    const { useDeckGL } = storeState;
+    const webglContainer = document.getElementById('webgl-container');
+    if (webglContainer) webglContainer.style.display = 'block';
 
     // Create GUI with conditional controller
     const TreeController = useDeckGL ? DeckGLTreeAnimationController : undefined;
@@ -150,13 +237,11 @@ async function initializeGuiAndEvents(parsedData) {
     // Set the gui instance into the store for global access
     useAppStore.getState().setGui(gui);
 
-    // Create recorder without UI callbacks - EventHandlerRegistry handles UI updates
+    // Create recorder with notifications support
+    const { notifications } = await import('../partial/eventHandlers/notificationSystem.js');
     const recorder = new ScreenRecorder({
-      onStop: () => {
-        // Keep the download link creation as it's not UI button management
-        const downloadLink = recorder.createDownloadLink();
-        document.body.appendChild(downloadLink);
-      },
+      notifications: notifications,
+      autoSave: false // Manual save prompting is handled by the recorder
     });
 
     // Debounced resize handler for better performance
@@ -203,7 +288,15 @@ async function initializeAppFromParsedData(parsedData) {
       return; // Stop further execution if partials failed
     }
 
+    // Setup theme toggle now that DOM is ready
+    setupThemeToggle();
+
     await initializeGuiAndEvents(parsedData);
+
+    // After partials and GUI initialized, compute initial bar height
+    updateMovieBarHeightVar();
+    // Recompute on resize (debounced resize already updates GUI)
+    window.addEventListener('resize', updateMovieBarHeightVar);
   } catch (err) {
     console.error("[initializeAppFromParsedData] Error:", err);
     // Ensure user is alerted about critical failures during app initialization.
@@ -215,7 +308,7 @@ async function initializeAppFromParsedData(parsedData) {
 // MAIN EXECUTION BLOCK
 // Determines if the current page is the visualization page or the index/upload page.
 const isVisualizationPage =
-  document.getElementById("application-container") !== null;
+  document.getElementById("webgl-container") !== null;
 
 if (isVisualizationPage) {
   // Initialization logic for the visualization page (visualization.html)
@@ -241,12 +334,7 @@ if (isVisualizationPage) {
       }
 
 
-      const windowSizeDisplay = document.getElementById("windowSizeDisplay");
-      if (windowSizeDisplay) {
-        windowSizeDisplay.textContent = `Window-Size: ${
-          parsedData.window_size || "N/A"
-        } / Step-Size: ${parsedData.window_step_size || "N/A"}`;
-      }
+
 
       // Proceed with the main application initialization
       await initializeAppFromParsedData(parsedData);

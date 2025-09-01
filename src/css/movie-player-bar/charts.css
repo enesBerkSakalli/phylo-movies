@@ -1,0 +1,25 @@
+/* Chart container in the movie player bar */
+
+.movie-chart-container-full-width {
+  inline-size: 100%;
+}
+
+.chart-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Ensure the chart takes remaining space and controls stay clickable */
+#lineChart {
+  flex: 1 1 auto;
+  min-width: 0; /* allow flexbox to shrink without overflow */
+  width: auto;  /* prevent over-expanding to 100% alongside controls */
+  height: 56px;
+}
+
+.chart-row .chart-controls {
+  flex: 0 0 auto;
+  position: relative; /* create stacking context for z-index */
+  z-index: 2;         /* ensure above any overlapping SVG/chart */
+}

@@ -12,6 +12,14 @@ const REQUIRED_PHYLO_FIELDS = [
   "distances"
 ];
 
+// Optional fields that should be preserved if present
+const OPTIONAL_PHYLO_FIELDS = [
+  "split_change_timeline",
+  "split_change_events",
+  "split_change_tracking",
+  "sorted_leaves"
+];
+
 // Storage keys
 const STORAGE_KEYS = {
   PHYLO_DATA: "phyloMovieData"
@@ -68,11 +76,15 @@ export const phyloData = {
       return null;
     }
 
+    console.log('[DataService] Retrieved data - window_size:', data?.window_size, 'window_step_size:', data?.window_step_size);
+    console.log('[DataService] Retrieved MSA data - window_size:', data?.msa?.window_size, 'step_size:', data?.msa?.step_size);
+
     // Return the full hierarchical MovieData object
     return this.validate(data);
   },
 
   async set(data) {
+    console.log('[DataService] Saving data - window_size:', data?.window_size, 'window_step_size:', data?.window_step_size);
     return await storage.set(STORAGE_KEYS.PHYLO_DATA, data);
   },
 
@@ -113,6 +125,7 @@ export const server = {
       if (data.error) {
         throw new Error(`Server error: ${data.error}`);
       }
+      return data; // Return the fetched data
     } catch (error) {
       throw error;
     }
@@ -134,9 +147,40 @@ export const workflows = {
       return true;
     } catch (error) {
       console.error("[DataService] Error in save workflow:", error);
-      throw error;    }
+      throw error;
+    }
+  },
+  
+  async handleMSADataSaving(formData, serverData) {
+    try {
+      // MSA data is already included in serverData.msa
+      // This function exists for compatibility with index.js
+      // No additional MSA handling needed since it's part of main data
+      console.log('[DataService] MSA data included in main data - window_size:', serverData.window_size, 'window_step_size:', serverData.window_step_size);
+      return true;
+    } catch (error) {
+      console.error("[DataService] Error handling MSA data:", error);
+      throw error;
+    }
   }
 };
+
+// Utility function to clear cache (for debugging)
+export const clearCache = async () => {
+  try {
+    await phyloData.remove();
+    console.log('[DataService] Cache cleared successfully');
+    return true;
+  } catch (error) {
+    console.error('[DataService] Error clearing cache:', error);
+    return false;
+  }
+};
+
+// Make it available globally for debugging
+if (typeof window !== 'undefined') {
+  window.clearPhyloCache = clearCache;
+}
 
 // Export constants for external use
 export { STORAGE_KEYS, EVENTS };

@@ -41,23 +41,19 @@ document.getElementById("phylo-form").addEventListener("submit", async function 
   const submitButton = this.querySelector("button[type='submit']");
   if (submitButton) submitButton.disabled = true;
 
-  // Show loading overlay
-  let overlay = document.getElementById("loading-overlay");
-  if (!overlay) {
-    overlay = document.createElement("div");
-    overlay.id = "loading-overlay";
-    overlay.innerHTML = '<div class="loading-spinner"></div><div class="loading-message">Loading, please wait...</div>';
-    document.body.appendChild(overlay);
+  const overlay = document.getElementById("loading-overlay");
+  if (overlay) {
+    overlay.style.display = "flex";
   }
-
-  overlay.style.display = "flex";
 
   const treeFiles = treesPond.getFiles();
   if (treeFiles.length === 0) {
     showFormAlert("Please select a tree file.", 'danger');
     isSubmitting = false;
     if (submitButton) submitButton.disabled = false;
-    overlay.style.display = "none";
+    if (overlay) {
+      overlay.style.display = "none";
+    }
     return;
   }
   const formData = new FormData();
@@ -98,16 +94,20 @@ document.getElementById("phylo-form").addEventListener("submit", async function 
       showFormAlert(errorMsg, 'danger');
       isSubmitting = false;
       if (submitButton) submitButton.disabled = false;
-      overlay.style.display = "none";
+      if (overlay) {
+        overlay.style.display = "none";
+      }
       return;
     }
     const data = await response.json();
+    console.log('[Index] Data from server - window_size:', data.window_size, 'window_step_size:', data.window_step_size);
 
     // Add the filename to the data object
     const treeFileName = treeFiles[0].file.name;
     data.file_name = treeFileName;
 
     // Save main data to IndexedDB/localForage
+    console.log('[Index] Saving to localForage - window_size:', data.window_size, 'window_step_size:', data.window_step_size);
     await window.localforage.setItem("phyloMovieData", data);
 
     // Handle MSA data saving using dataService.js workflow
@@ -119,12 +119,14 @@ document.getElementById("phylo-form").addEventListener("submit", async function 
       // Continue with tree data even if MSA saving fails
     }
 
-    window.location.href = "/visualization.html";
+    window.location.href = "/pages/visualization/";
   } catch (err) {
     showFormAlert("Network error: " + err, 'danger');
     isSubmitting = false;
     if (submitButton) submitButton.disabled = false;
-    overlay.style.display = "none";
+    if (overlay) {
+      overlay.style.display = "none";
+    }
   }
 });
 // Ensure localForage is available on window

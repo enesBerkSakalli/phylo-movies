@@ -10,12 +10,15 @@
  */
 
 import { useAppStore } from '../core/store.js';
-import { clamp } from '../utils/MathUtils.js';
+import { TIMELINE_CONSTANTS } from './constants.js';
+import { TimelineMathUtils } from './TimelineMathUtils.js';
 
 export class ScrubberAPI {
-  constructor(treeController, transitionResolver) {
+  constructor(treeController, transitionResolver, timelineManager = null) {
     this.treeController = treeController;
     this.transitionResolver = transitionResolver;
+    // Optional: access to timeline segments + total duration for accurate mapping
+    this.timelineManager = timelineManager;
 
     // Scrubbing state
     this.isActive = false;
@@ -32,14 +35,11 @@ export class ScrubberAPI {
    * @param {number} initialProgress - Starting progress (0-1)
    */
   async startScrubbing(initialProgress = 0) {
-    if (this.isActive) {
-      console.log('[ScrubberAPI] Already in scrubbing mode');
-      return;
-    }
+    if (this.isActive) return;
 
-    console.log('[ScrubberAPI] Starting scrubbing mode');
+    
     this.isActive = true;
-    this.currentProgress = clamp(initialProgress, 0, 1);
+    this.currentProgress = TimelineMathUtils.clampProgress(initialProgress);
 
     // Pause store subscriptions during scrubbing
     useAppStore.getState().setSubscriptionPaused(true);
@@ -54,11 +54,11 @@ export class ScrubberAPI {
    * @param {Object} options - Scrubbing options
    */
   async updatePosition(progress) {
-    const clampedProgress = clamp(progress, 0, 1);
+    const clampedProgress = TimelineMathUtils.clampProgress(progress);
 
     // Throttle high-frequency updates
     const now = performance.now();
-    const THROTTLE_MS = 16; // ~60fps
+    const THROTTLE_MS = TIMELINE_CONSTANTS.SCRUB_THROTTLE_MS; // ~60fps
     if (now - this.lastUpdateTime < THROTTLE_MS) {
       this._scheduleThrottledUpdate(clampedProgress);
       return;
@@ -76,7 +76,7 @@ export class ScrubberAPI {
       return;
     }
 
-    console.log('[ScrubberAPI] Ending scrubbing mode');
+    
 
     // Cancel any pending updates
     if (this.pendingUpdate) {
@@ -87,9 +87,9 @@ export class ScrubberAPI {
     // Only update if finalProgress is provided and different from currentProgress
     if (
       finalProgress !== null &&
-      Math.abs(clamp(finalProgress, 0, 1) - this.currentProgress) > 1e-6
+      Math.abs(TimelineMathUtils.clampProgress(finalProgress) - this.currentProgress) > 1e-6
     ) {
-      await this._performScrubUpdate(clamp(finalProgress, 0, 1));
+      await this._performScrubUpdate(TimelineMathUtils.clampProgress(finalProgress));
     }
     // Otherwise, keep the last interpolated state (do not snap)
 
@@ -116,10 +116,7 @@ export class ScrubberAPI {
       // Get interpolation data for current progress
       const interpolationData = await this._getInterpolationData(progress);
 
-      if (!interpolationData) {
-        console.warn('[ScrubberAPI] No interpolation data for progress:', progress);
-        return;
-      }
+      if (!interpolationData) return;
 
       // Detect navigation direction for proper element handling
       const direction = this._detectNavigationDirection(progress);
@@ -138,9 +135,7 @@ export class ScrubberAPI {
         timestamp: this.lastUpdateTime
       };
 
-    } catch (error) {
-      console.error('[ScrubberAPI] Error during scrub update:', error);
-    }
+    } catch (error) {}
   }
 
   /**
@@ -154,7 +149,8 @@ export class ScrubberAPI {
     // Since store subscriptions are paused, we need to manually update ColorManager
     const storeState = useAppStore.getState();
     const { updateColorManagerMarkedComponents, updateColorManagerActiveChangeEdge,
-            getActualHighlightData, getCurrentActiveChangeEdge } = storeState;
+            getActualHighlightData, getCurrentActiveChangeEdge,
+            markedComponentsEnabled, activeChangeEdgesEnabled } = storeState;
 
     // Calculate which tree index we're primarily rendering (for color state)
     const primaryTreeIndex = timeFactor < 0.5 ? fromIndex : toIndex;
@@ -163,13 +159,22 @@ export class ScrubberAPI {
     const originalTreeIndex = storeState.currentTreeIndex;
     storeState.currentTreeIndex = primaryTreeIndex;
 
-    // Get highlight data for the primary tree index
-    const markedComponents = getActualHighlightData();
-    const activeChangeEdge = getCurrentActiveChangeEdge();
+    // Only update ColorManager if the respective toggles are enabled
+    if (markedComponentsEnabled) {
+      const markedComponents = getActualHighlightData();
+      updateColorManagerMarkedComponents(markedComponents);
+    } else {
+      // Clear marked components if toggle is off
+      updateColorManagerMarkedComponents([]);
+    }
 
-        // Update ColorManager state for proper coloring during scrubbing
-    updateColorManagerMarkedComponents(markedComponents);
-    updateColorManagerActiveChangeEdge(activeChangeEdge);
+    if (activeChangeEdgesEnabled) {
+      const activeChangeEdge = getCurrentActiveChangeEdge();
+      updateColorManagerActiveChangeEdge(activeChangeEdge);
+    } else {
+      // Clear active change edges if toggle is off
+      updateColorManagerActiveChangeEdge([]);
+    }
 
     // Use specialized scrubbing render mode
     const renderOptions = {
@@ -215,24 +220,74 @@ export class ScrubberAPI {
     const storeState = useAppStore.getState();
     const { treeList, movieData } = storeState;
 
-    if (!treeList || !movieData) {
-      return null;
+    // If we have timeline context, use segment-aware time mapping to avoid offsets
+    const segments = this.timelineManager?.segments;
+    const totalDuration = this.timelineManager?.timelineData?.totalDuration;
+    if (segments && Number.isFinite(totalDuration) && totalDuration > 0) {
+      const currentTime = TimelineMathUtils.progressToTime(progress, totalDuration);
+
+      // Find segment containing currentTime using cached durations
+      const segmentDurations = this.timelineManager?.timelineData?.segmentDurations || TimelineMathUtils.calculateSegmentDurations(segments);
+      let accumulatedTime = 0;
+      let segIndex = 0;
+      for (let i = 0; i < segmentDurations.length; i++) {
+        const dur = segmentDurations[i];
+        if (currentTime >= accumulatedTime && currentTime < accumulatedTime + dur) {
+          segIndex = i;
+          break;
+        }
+        accumulatedTime += dur;
+      }
+
+      const segment = segments[segIndex];
+      const segStart = accumulatedTime;
+      const segDur = segmentDurations[segIndex] || 1;
+
+      // Full tree (anchor) -> no interpolation
+      if (segment?.isFullTree || !segment?.hasInterpolation || !Array.isArray(segment?.interpolationData)) {
+        const idx = segment?.interpolationData?.[0]?.originalIndex ?? 0;
+        return {
+          fromTree: movieData.interpolated_trees[idx],
+          toTree: movieData.interpolated_trees[idx],
+          timeFactor: 0,
+          fromIndex: idx,
+          toIndex: idx
+        };
+      }
+
+      const steps = segment.interpolationData.length;
+      if (steps <= 1) {
+        const idx = segment.interpolationData[0].originalIndex;
+        return {
+          fromTree: movieData.interpolated_trees[idx],
+          toTree: movieData.interpolated_trees[idx],
+          timeFactor: 0,
+          fromIndex: idx,
+          toIndex: idx
+        };
+      }
+
+      // Position within segment -> map to adjacent trees
+      const local = Math.max(0, Math.min(1, (currentTime - segStart) / segDur));
+      const exact = local * (steps - 1);
+      const fromStep = Math.floor(exact);
+      const toStep = Math.min(fromStep + 1, steps - 1);
+      const timeFactor = exact - fromStep;
+
+      const fromIndex = segment.interpolationData[fromStep].originalIndex;
+      const toIndex = segment.interpolationData[toStep].originalIndex;
+
+      return {
+        fromTree: movieData.interpolated_trees[fromIndex],
+        toTree: movieData.interpolated_trees[toIndex],
+        timeFactor,
+        fromIndex,
+        toIndex
+      };
     }
 
-    // Calculate tree indices
-    const totalTrees = treeList.length;
-    const exactIndex = progress * (totalTrees - 1);
-    const fromIndex = Math.floor(exactIndex);
-    const toIndex = Math.min(fromIndex + 1, totalTrees - 1);
-    const timeFactor = exactIndex - fromIndex;
-
-    return {
-      fromTree: movieData.interpolated_trees[fromIndex],
-      toTree: movieData.interpolated_trees[toIndex],
-      timeFactor: timeFactor,
-      fromIndex: fromIndex,
-      toIndex: toIndex
-    };
+    // Fallback: uniform mapping across all trees (legacy)
+    return TimelineMathUtils.getInterpolationDataForProgress(progress, treeList, movieData);
   }
 
   /**

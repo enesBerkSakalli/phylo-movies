@@ -25,6 +25,20 @@ export const TolBright = [
   "#BBBBBB", // Grey
 ];
 
+/**
+ * Tol Bright (white-bg optimized)
+ * Adjusted to increase contrast on white (darker grey)
+ */
+export const TolBrightWhiteBG = [
+  "#EE7733",
+  "#0077BB",
+  "#33BBEE",
+  "#009988",
+  "#CC3311",
+  "#EE3377",
+  "#6E6E6E", // darker grey for white backgrounds
+];
+
 export const TolMuted = [
   "#CC6677", // Rose
   "#332288", // Indigo
@@ -37,6 +51,22 @@ export const TolMuted = [
   "#AA4499", // Purple
 ];
 
+/**
+ * Tol Muted (white-bg optimized)
+ * Slightly darkened sand to read better on white
+ */
+export const TolMutedWhiteBG = [
+  "#CC6677",
+  "#332288",
+  "#BBAA33", // darker sand
+  "#117733",
+  "#88CCEE",
+  "#882255",
+  "#44AA99",
+  "#8A8A33", // slightly darker olive
+  "#AA4499",
+];
+
 export const TolVibrant = [
   "#EE7733", // Orange
   "#0077BB", // Blue
@@ -46,6 +76,21 @@ export const TolVibrant = [
   "#EE3377", // Magenta
   "#BBBBBB", // Grey
   "#000000", // Black
+];
+
+/**
+ * Tol Vibrant (white-bg optimized)
+ * Darker grey, rest unchanged
+ */
+export const TolVibrantWhiteBG = [
+  "#EE7733",
+  "#0077BB",
+  "#33BBEE",
+  "#009988",
+  "#CC3311",
+  "#EE3377",
+  "#6E6E6E", // darker grey
+  "#000000",
 ];
 
 /**
@@ -64,6 +109,21 @@ export const WongPalette = [
 ];
 
 /**
+ * Wong (white-bg optimized)
+ * Darkened yellow and grey for better stroke visibility on white
+ */
+export const WongWhiteBG = [
+  "#E69F00",
+  "#56B4E9",
+  "#009E73",
+  "#B59F00", // darker yellow
+  "#0072B2",
+  "#D55E00",
+  "#CC79A7",
+  "#666666", // darker grey
+];
+
+/**
  * Okabe-Ito palette - Universal design for color-blindness
  * Source: Okabe & Ito 2008
  */
@@ -76,6 +136,21 @@ export const OkabeIto = [
   "#D55E00", // Vermillion
   "#CC79A7", // Pink
   "#000000", // Black
+];
+
+/**
+ * Okabe-Ito (white-bg optimized)
+ * Darkened yellow for white background
+ */
+export const OkabeItoWhiteBG = [
+  "#E69F00",
+  "#56B4E9",
+  "#009E73",
+  "#B3A800", // darker yellow
+  "#0072B2",
+  "#D55E00",
+  "#CC79A7",
+  "#000000",
 ];
 
 /**
@@ -108,6 +183,21 @@ export const IBMColorBlind = [
   "#C4C4C4", // Grey
 ];
 
+/**
+ * IBM (white-bg optimized)
+ * Darker neutral; keep strong category colors
+ */
+export const IBMColorBlindWhiteBG = [
+  "#648FFF",
+  "#785EF0",
+  "#DC267F",
+  "#FE6100",
+  "#D99000", // slightly darker gold
+  "#3DBA1E", // slightly darker green to reduce brightness on white
+  "#007E61", // slightly darker teal
+  "#6F6F6F", // darker grey
+];
+
 // ============================================
 // SEQUENTIAL PALETTES (for gradients)
 // ============================================
@@ -122,6 +212,15 @@ export const Viridis = [
 ];
 
 /**
+ * Viridis (white-bg optimized)
+ * Clip the two lightest bins to avoid near-white yellows on white
+ */
+export const ViridisWhiteBG = [
+  "#440154", "#482777", "#3e4989", "#31688e", "#26828e",
+  "#1f9e89", "#35b779", "#6ece58"
+];
+
+/**
  * Cividis - Color-blind optimized version of Viridis
  */
 export const Cividis = [
@@ -130,11 +229,29 @@ export const Cividis = [
 ];
 
 /**
+ * Cividis (white-bg optimized)
+ * Clip the brightest yellows to improve contrast on white
+ */
+export const CividisWhiteBG = [
+  "#00204D", "#002D6C", "#16406C", "#3B496C", "#555068",
+  "#6C5B5D", "#7F6850", "#958B43"
+];
+
+/**
  * Turbo - Rainbow-like but perceptually uniform
  */
 export const Turbo = [
   "#30123B", "#4662D7", "#36AAF9", "#1AE4B6", "#72FE5E",
   "#C7EF34", "#FBCA36", "#F66B19", "#CA2B1F", "#7A0403"
+];
+
+/**
+ * Turbo (white-bg optimized)
+ * Remove the brightest yellow/orange bins
+ */
+export const TurboWhiteBG = [
+  "#30123B", "#4662D7", "#36AAF9", "#1AE4B6", "#72FE5E",
+  "#F66B19", "#CA2B1F", "#7A0403"
 ];
 
 // ============================================
@@ -151,11 +268,29 @@ export const CoolWarm = [
 ];
 
 /**
+ * CoolWarm (white-bg optimized)
+ * Darken the center neutral and adjacent lights for visibility on white
+ */
+export const CoolWarmWhiteBG = [
+  "#3B4CC0", "#5F80E6", "#8FB3F7", "#B5CFFF", "#D9D9D9",
+  "#FFC27A", "#FF8A40", "#D55224", "#B40426"
+];
+
+/**
  * Purple-Green diverging (color-blind safe)
  */
 export const PurpleGreen = [
   "#762A83", "#9970AB", "#C2A5CF", "#E7D4E8", "#F7F7F7",
   "#D9F0D3", "#ACD39E", "#5AAE61", "#1B7837"
+];
+
+/**
+ * Purple-Green (white-bg optimized)
+ * Darken the neutral midpoint and adjacent tints
+ */
+export const PurpleGreenWhiteBG = [
+  "#762A83", "#8E66A2", "#B896C6", "#D7BEDC", "#D9D9D9",
+  "#BEE5B8", "#93C98E", "#4C9D58", "#1B7837"
 ];
 
 // ============================================
@@ -182,6 +317,25 @@ export const PhyloOptimized = [
 ];
 
 /**
+ * Phylo-Optimized (white-bg optimized)
+ * Reduce very light tints for better small-stroke visibility
+ */
+export const PhyloOptimizedWhiteBG = [
+  "#E95A5A", // darker coral red
+  "#3FB8B0", // darker teal
+  "#349CC0", // darker sky blue
+  "#E26D5A", // darker salmon
+  "#63B7A8", // darker mint
+  "#5A4DD1", // darker purple
+  "#D99A00", // darker yellow
+  "#2979FF", // deeper blue
+  "#E06398", // darker pink
+  "#6F6AF2", // darker lavender
+  "#00A07F", // darker green
+  "#E95F5E", // darker red
+];
+
+/**
  * High contrast palette for maximum visibility
  */
 export const HighContrast = [
@@ -203,6 +357,16 @@ export const HighContrast = [
  * Categorical palettes for discrete groups
  */
 export const CATEGORICAL_PALETTES = {
+  // White-background optimized first
+  OkabeItoWhiteBG,
+  WongWhiteBG,
+  TolBrightWhiteBG,
+  TolMutedWhiteBG,
+  TolVibrantWhiteBG,
+  IBMColorBlindWhiteBG,
+  PhyloOptimizedWhiteBG,
+  
+  // Originals
   TolBright,
   TolMuted,
   TolVibrant,
@@ -218,6 +382,9 @@ export const CATEGORICAL_PALETTES = {
  * Sequential palettes for continuous data
  */
 export const SEQUENTIAL_PALETTES = {
+  ViridisWhiteBG,
+  CividisWhiteBG,
+  TurboWhiteBG,
   Viridis,
   Cividis,
   Turbo,
@@ -227,6 +394,8 @@ export const SEQUENTIAL_PALETTES = {
  * Diverging palettes for comparative data
  */
 export const DIVERGING_PALETTES = {
+  CoolWarmWhiteBG,
+  PurpleGreenWhiteBG,
   CoolWarm,
   PurpleGreen,
 };
@@ -246,7 +415,8 @@ export const ALL_PALETTES = {
  * @returns {string[]} Array of hex color codes
  */
 export function getPalette(name) {
-  return ALL_PALETTES[name] || TolBright;
+  // Default to a white-background friendly categorical palette
+  return ALL_PALETTES[name] || OkabeItoWhiteBG;
 }
 
 /**
@@ -257,6 +427,13 @@ export function getPalette(name) {
 export function getPaletteInfo(name) {
   const paletteMeta = {
     // Categorical
+    OkabeItoWhiteBG: { type: 'categorical', colorBlindSafe: true, maxColors: 8, description: 'Okabe-Ito tuned for white background' },
+    WongWhiteBG: { type: 'categorical', colorBlindSafe: true, maxColors: 8, description: 'Wong palette tuned for white background' },
+    TolBrightWhiteBG: { type: 'categorical', colorBlindSafe: true, maxColors: 7, description: 'Tol Bright tuned for white background' },
+    TolMutedWhiteBG: { type: 'categorical', colorBlindSafe: true, maxColors: 9, description: 'Tol Muted tuned for white background' },
+    TolVibrantWhiteBG: { type: 'categorical', colorBlindSafe: true, maxColors: 8, description: 'Tol Vibrant tuned for white background' },
+    IBMColorBlindWhiteBG: { type: 'categorical', colorBlindSafe: true, maxColors: 8, description: 'IBM accessible palette tuned for white background' },
+    PhyloOptimizedWhiteBG: { type: 'categorical', colorBlindSafe: false, maxColors: 12, description: 'Tree-optimized palette tuned for white background' },
     TolBright: { type: 'categorical', colorBlindSafe: true, maxColors: 7, description: 'Bright, color-blind friendly' },
     TolMuted: { type: 'categorical', colorBlindSafe: true, maxColors: 9, description: 'Muted, color-blind friendly' },
     TolVibrant: { type: 'categorical', colorBlindSafe: true, maxColors: 8, description: 'Vibrant, color-blind friendly' },
@@ -268,11 +445,16 @@ export function getPaletteInfo(name) {
     HighContrast: { type: 'categorical', colorBlindSafe: false, maxColors: 8, description: 'Maximum contrast' },
     
     // Sequential
+    ViridisWhiteBG: { type: 'sequential', colorBlindSafe: true, maxColors: 8, description: 'Viridis clipped for white background' },
+    CividisWhiteBG: { type: 'sequential', colorBlindSafe: true, maxColors: 8, description: 'Cividis clipped for white background' },
+    TurboWhiteBG: { type: 'sequential', colorBlindSafe: false, maxColors: 8, description: 'Turbo clipped for white background' },
     Viridis: { type: 'sequential', colorBlindSafe: true, maxColors: 10, description: 'Scientific standard, perceptually uniform' },
     Cividis: { type: 'sequential', colorBlindSafe: true, maxColors: 10, description: 'Color-blind optimized Viridis' },
     Turbo: { type: 'sequential', colorBlindSafe: false, maxColors: 10, description: 'Rainbow-like, perceptually uniform' },
     
     // Diverging
+    CoolWarmWhiteBG: { type: 'diverging', colorBlindSafe: false, maxColors: 9, description: 'Cool-Warm tuned for white background' },
+    PurpleGreenWhiteBG: { type: 'diverging', colorBlindSafe: true, maxColors: 9, description: 'Purple-Green tuned for white background' },
     CoolWarm: { type: 'diverging', colorBlindSafe: false, maxColors: 9, description: 'Blue to red diverging' },
     PurpleGreen: { type: 'diverging', colorBlindSafe: true, maxColors: 9, description: 'Color-blind safe diverging' },
   };

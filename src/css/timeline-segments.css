@@ -13,47 +13,75 @@
 
 /* Timeline Segment Base */
 .timeline-segment {
+    /* CSS variable defaults used by deck.gl renderer (fill and border) */
+    --seg-fill: #95A5A6;   /* default gray */
+    --seg-border: #7F8C8D; /* default darker gray */
     border: 1px solid rgba(0, 0, 0, 0.2);
     border-radius: 2px;
     opacity: 0.9;
     transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-/* Full Tree Segments - Stable anchor points */
+/* Full Tree Segments - Stable anchor points (PILLARS) */
 .timeline-full-tree {
-    background: linear-gradient(135deg, #2C3E50 0%, #34495E 100%);
-    border-color: #1a252f;
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+    --seg-fill: #212121;   /* dark body color */
+    --seg-border: #000000; /* strong border */
+    background: linear-gradient(135deg, #212121 0%, #424242 100%);  /* Dark gray/black gradient */
+    border: 2px solid #000000;
+    box-shadow: 
+        0 2px 8px rgba(0, 0, 0, 0.6),          /* Dark shadow */
+        0 0 0 1px rgba(255, 255, 255, 0.1) inset;  /* Subtle inner highlight */
+    position: relative;
+    z-index: 2;  /* Slightly elevated */
+    min-height: 45px;  /* Taller for prominence */
+    border-radius: 3px;  /* Subtle rounding */
 }
 
-/* Interpolation Segments - Colored by complexity */
+/* Interpolation Segments - Colored by complexity (subdued for contrast) */
 .timeline-interp-minimal {
-    background: linear-gradient(135deg, #27AE60 0%, #2ECC71 100%);  /* Green - minimal change */
-    border-color: #229954;
+    --seg-fill: #81C784;   /* light green */
+    --seg-border: #66BB6A; /* green border */
+    background: linear-gradient(135deg, #81C784 0%, #A5D6A7 100%);  /* Lighter green - minimal change */
+    border-color: #66BB6A;
+    opacity: 0.85;  /* Slightly transparent to emphasize full trees */
 }
 
 .timeline-interp-light {
-    background: linear-gradient(135deg, #F39C12 0%, #F1C40F 100%);  /* Yellow - light change */
-    border-color: #D68910;
+    --seg-fill: #FFD54F;   /* light yellow */
+    --seg-border: #FFCA28; /* yellow border */
+    background: linear-gradient(135deg, #FFD54F 0%, #FFE082 100%);  /* Lighter yellow - light change */
+    border-color: #FFCA28;
+    opacity: 0.85;
 }
 
 .timeline-interp-moderate {
-    background: linear-gradient(135deg, #E67E22 0%, #F39C12 100%);  /* Orange - moderate change */
-    border-color: #CA6F1E;
+    --seg-fill: #FFB74D;   /* light orange */
+    --seg-border: #FFA726; /* orange border */
+    background: linear-gradient(135deg, #FFB74D 0%, #FFCC80 100%);  /* Lighter orange - moderate change */
+    border-color: #FFA726;
+    opacity: 0.85;
 }
 
 .timeline-interp-heavy {
-    background: linear-gradient(135deg, #E74C3C 0%, #EC7063 100%);  /* Red-orange - heavy change */
-    border-color: #CB4335;
+    --seg-fill: #FF8A65;   /* light red-orange */
+    --seg-border: #FF7043; /* red-orange border */
+    background: linear-gradient(135deg, #FF8A65 0%, #FFAB91 100%);  /* Lighter red-orange - heavy change */
+    border-color: #FF7043;
+    opacity: 0.85;
 }
 
 .timeline-interp-massive {
-    background: linear-gradient(135deg, #C0392B 0%, #E74C3C 100%);  /* Dark red - massive change */
-    border-color: #A93226;
+    --seg-fill: #EF5350;   /* light red */
+    --seg-border: #F44336; /* red border */
+    background: linear-gradient(135deg, #EF5350 0%, #E57373 100%);  /* Lighter red - massive change */
+    border-color: #F44336;
+    opacity: 0.85;
 }
 
 /* Fallback for segments without classification */
 .timeline-segment-default {
+    --seg-fill: #95A5A6;   /* gray */
+    --seg-border: #7F8C8D; /* darker gray */
     background: linear-gradient(135deg, #95A5A6 0%, #BDC3C7 100%);  /* Gray - unclassified */
     border-color: #7F8C8D;
 }
@@ -65,6 +93,16 @@
     cursor: pointer;
 }
 
+/* Special hover for full trees */
+.timeline-full-tree:hover {
+    transform: scaleY(1.1);  /* Subtle expansion */
+    background: linear-gradient(135deg, #000000 0%, #333333 100%);
+    box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.8),
+        0 0 0 2px rgba(255, 255, 255, 0.2) inset;
+    cursor: pointer;
+}
+
 /* Selected segment */
 .vis-selected .timeline-segment {
     box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
@@ -72,16 +110,21 @@
     opacity: 1;
 }
 
-/* Visual indicators for segment boundaries */
+/* Visual indicators for segment boundaries - PILLAR markers */
 .timeline-full-tree::before {
     content: '';
     position: absolute;
     left: 0;
     top: 0;
     bottom: 0;
-    width: 3px;
-    background: #1a252f;
-    border-radius: 2px 0 0 2px;
+    width: 8px;
+    background: linear-gradient(90deg, 
+        rgba(0, 0, 0, 0.8) 0%, 
+        rgba(0, 0, 0, 0.4) 40%,
+        rgba(0, 0, 0, 0) 100%);  /* Strong black edge indicator */
+    border-radius: 3px 0 0 3px;
+    pointer-events: none;  /* Ensure it doesn't interfere with interaction */
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);  /* Shadow effect */
 }
 
 .timeline-full-tree::after {
@@ -90,7 +133,12 @@
     right: 0;
     top: 0;
     bottom: 0;
-    width: 3px;
-    background: #1a252f;
-    border-radius: 0 2px 2px 0;
+    width: 8px;
+    background: linear-gradient(270deg, 
+        rgba(0, 0, 0, 0.8) 0%, 
+        rgba(0, 0, 0, 0.4) 40%,
+        rgba(0, 0, 0, 0) 100%);  /* Strong black edge indicator */
+    border-radius: 0 3px 3px 0;
+    pointer-events: none;  /* Ensure it doesn't interfere with interaction */
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);  /* Shadow effect */
 }
