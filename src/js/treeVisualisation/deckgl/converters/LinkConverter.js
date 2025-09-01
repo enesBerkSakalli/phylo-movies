@@ -1,5 +1,5 @@
 import { getLinkKey } from '../../utils/KeyGenerator.js';
-import { calculateBranchCoordinates } from '../../radialTreeGeometry.js';
+import { calculateBranchCoordinates } from '../../layout/RadialTreeGeometry.js';
 
 /**
  * Handles conversion of D3 hierarchy links to Deck.gl layer format

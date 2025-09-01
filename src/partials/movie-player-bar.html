@@ -36,6 +36,28 @@
 
         <div class="vertical-divider"></div>
 
+        <!-- Jump to Step Control -->
+        <div class="jump-to-step-control" role="group" aria-labelledby="position-control-label">
+          <label id="position-control-label" class="sr-only">Jump to Step</label>
+          <md-outlined-text-field
+            type="number"
+            id="positionValue"
+            name="pos"
+            value="1"
+            min="1"
+            label="Step"
+            placeholder="Step"
+            aria-label="Step number to jump to"
+            title="Enter step number to navigate to"
+            class="jump-to-step-field"
+          ></md-outlined-text-field>
+          <md-icon-button id="positionButton" title="Go to entered step" aria-label="Navigate to specified step">
+            <md-icon>arrow_forward</md-icon>
+          </md-icon-button>
+        </div>
+
+        <div class="vertical-divider"></div>
+
         <md-icon-button id="start-record" class="record-button-danger" title="Start screen recording">
           <md-icon>fiber_manual_record</md-icon>
         </md-icon-button>
@@ -53,17 +75,30 @@
           <!-- Removed timeline title to save space -->
           <md-chip-set class="timeline-header-metrics">
             <!-- Primary Metrics -->
-            <md-suggestion-chip elevated title="Total number of trees in the phylogenetic movie sequence">
+            <md-suggestion-chip elevated title="Total number of trees in the animation">
               <md-icon slot="icon">account_tree</md-icon>
               <span id="movieTimelineCount">0 trees</span>
             </md-suggestion-chip>
-            <md-suggestion-chip elevated title="Current position: Shows current tree index and nearest full tree position">
+            <md-suggestion-chip elevated title="Your current position in the animation">
               <md-icon slot="icon">my_location</md-icon>
               <span id="currentPositionInfo"></span>
             </md-suggestion-chip>
             <!-- Status Metric - Visual Only -->
-            <md-suggestion-chip elevated title="Playback status: Current animation state and tree type being displayed">
+            <md-suggestion-chip elevated title="Shows the current tree or transition. During transitions, displays which leaves are being moved">
+              <md-icon slot="icon">timeline</md-icon>
               <span id="interpolationStatus"></span>
+            </md-suggestion-chip>
+            <!-- MSA Window Chip -->
+            <md-suggestion-chip elevated title="Displays the current window of the Multiple Sequence Alignment">
+              <md-icon slot="icon">view_column</md-icon>
+              <span class="metrics-window">
+                MSA Window:
+                <span id="windowStart" class="metrics-window-value">1</span>
+                <span>-</span>
+                <span id="windowMid" class="metrics-window-value metrics-window-value--primary">50</span>
+                <span>-</span>
+                <span id="windowEnd" class="metrics-window-value">100</span>
+              </span>
             </md-suggestion-chip>
           </md-chip-set>
           <div class="timeline-header-right">
@@ -88,9 +123,9 @@
             </div>
           </div>
         </div>
-        <!-- DOM-based timeline removed - using vis-timeline only -->
-        <!-- vis-timeline container will be created dynamically by MovieTimelineManager -->
-      </div> <!-- .interpolation-timeline-container CLOSES HERE -->
+        <!-- Timeline container will be created dynamically by MovieTimelineManager -->
+        <!-- timeline container will be created dynamically by MovieTimelineManager -->
+    </div> <!-- .interpolation-timeline-container CLOSES HERE -->
     </div> <!-- .timeline-container-full-width CLOSES HERE -->
 
     <!-- CHART CONTAINER - SPANS FULL WIDTH -->
@@ -107,21 +142,19 @@
           <md-outlined-select
             name="barPlotOption"
             id="barPlotOption"
+            class="compact-select"
             aria-describedby="chart-select-help"
-            title="Choose data series to display"
+            title="Choose which tree distance metric to display in the chart"
             value="rfd"
           >
-            <md-select-option value="rfd" selected>
+            <md-select-option value="rfd" selected title="Robinson-Foulds Distance: Measures topological differences between trees">
               <div slot="headline">RFD</div>
             </md-select-option>
-            <md-select-option value="w-rfd">
-              <div slot="headline">W-RFD</div>
+            <md-select-option value="w-rfd" title="Weighted Robinson-Foulds: Includes branch length differences">
+              <div slot="headline">W‑RFD</div>
             </md-select-option>
-            <md-select-option value="scale">
+            <md-select-option value="scale" title="Tree scale: Shows relative size changes">
               <div slot="headline">Scale</div>
-            </md-select-option>
-            <md-select-option value="ignore-branch-lengths">
-              <div slot="headline">Ignore Branch Lengths</div>
             </md-select-option>
           </md-outlined-select>
           <md-filled-tonal-button

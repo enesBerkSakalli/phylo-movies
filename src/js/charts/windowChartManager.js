@@ -1,7 +1,6 @@
 import { generateLineChart, generateChartModal } from "./chartGenerator.js";
-import { updateChartIndicator } from "./ChartStateManager.js";
-import { ChartStateManager } from "./ChartStateManager.js";
 import { useAppStore } from '../core/store.js';
+import { getIndexMappings } from '../core/IndexMapping.js';
 
 // Open a robust, feature-rich modal chart using WinBox and advanced chart logic
 export function openModalChart(options) {
@@ -34,7 +33,7 @@ export function openModalChart(options) {
     data = weightedRobinsonFouldsDistances;
     xLabel = "Transition Index";
     yLabel = "Weighted RFD";
-    yMax = weightedRobinsonFouldsDistances.length > 0 ? Math.max(...weightedRobinsonFouldsDistances) : 0;
+    yMax = weightedRobinsonFouldsDistances && weightedRobinsonFouldsDistances.length > 0 ? Math.max(...weightedRobinsonFouldsDistances) : 0;
     onClickHandler = onGoToFullTreeDataIndex;
     chartSpecificIndexToSequence = (idx) => transitionResolver.getTreeIndexForDistanceIndex(idx);
     chartSpecificSequenceToIndex = (idx) => transitionResolver.getDistanceIndex(idx);
@@ -79,16 +78,21 @@ export function openModalChart(options) {
   // Create a context object for the chart that provides store access
   const chartContext = {
     getCurrentPosition: () => {
-      const { currentTreeIndex } = useAppStore.getState();
-      return (barOptionValue === "scale")
-        ? currentTreeIndex
-        : transitionResolver.getDistanceIndex(currentTreeIndex);
+      const store = useAppStore.getState();
+      if (barOptionValue === 'scale') return store.getNearestAnchorChartIndex();
+      return getIndexMappings(store).distanceIndex;
     },
     goToPosition: (idx) => {
       // Direct store navigation instead of command pattern
       const { clearStickyChartPosition, goToPosition } = useAppStore.getState();
       clearStickyChartPosition();
-      goToPosition(barOptionValue === "scale" ? idx : transitionResolver.getTreeIndexForDistanceIndex(idx));
+      if (barOptionValue === 'scale') {
+        const fti = transitionResolver.fullTreeIndices || [];
+        const seqIndex = fti[Math.max(0, Math.min(fti.length - 1, idx))] ?? 0;
+        goToPosition(seqIndex);
+      } else {
+        goToPosition(transitionResolver.getTreeIndexForDistanceIndex(idx));
+      }
     },
     // Keep these for compatibility during migration
     barOptionValue,

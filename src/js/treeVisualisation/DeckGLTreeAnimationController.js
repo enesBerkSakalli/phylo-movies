@@ -26,6 +26,15 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     this.deckManager.initialize();
 
     this.layerManager.layerStyles.setStyleChangeCallback(() => this._handleStyleChange());
+
+    // Flow trails history: Map of element id -> array of past positions
+    this._trailHistory = new Map();
+    
+    // Track last interpolation source to detect when we start a new interpolation
+    this._lastInterpolationFromIndex = null;
+
+    // Track last tree index we auto-fit to
+    this._lastFocusedTreeIndex = null;
   }
 
   _handleStyleChange() {
@@ -55,10 +64,20 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     const layerData = this.dataConverter.convertTreeToLayerData(
       currentLayout.tree,
       { extensionRadius, labelRadius }
-    );
+     );
 
+    // Append trails if enabled
+    layerData.trails = this._buildFlowTrails(layerData.nodes, layerData.labels);
     this._updateLayersEfficiently(layerData);
-    this.focusOnTree(layerData.nodes, layerData.labels);
+    // Auto-fit policy: only focus when not playing and policy enabled,
+    // and only when the tree index actually changes.
+    const { playing, autoFitOnTreeChange } = useAppStore.getState();
+    if (!playing && autoFitOnTreeChange) {
+      if (this._lastFocusedTreeIndex !== currentTreeIndex) {
+        this.focusOnTree(layerData.nodes, layerData.labels);
+        this._lastFocusedTreeIndex = currentTreeIndex;
+      }
+    }
   }
 
   focusOnTree(nodes, labels) {
@@ -75,10 +94,13 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       minY: Infinity, maxY: -Infinity,
     });
 
-    this.deckManager.fitToBounds(bounds, { padding: 1.2, duration: 500 });
+    this.deckManager.fitToBounds(bounds, {
+      padding: 1.25,
+      duration: 550,
+      labels,
+      getLabelSize: this.layerManager.layerStyles.getLabelSize?.bind(this.layerManager.layerStyles)
+    });
   }
-
-  renderScene() {}
 
   applyInterpolationEasing(t, easingType = 'linear') {
     return easingType === 'easeInOut' ? easeInOut(t) : t;
@@ -95,6 +117,12 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     const { fromTreeIndex, toTreeIndex } = options;
     let t = Math.max(0, Math.min(1, timeFactor));
     if (fromTreeData === toTreeData) t = 0;
+
+    // Clear trails when starting a new interpolation (from a different source tree)
+    if (this._lastInterpolationFromIndex !== fromTreeIndex) {
+      this._trailHistory.clear();
+      this._lastInterpolationFromIndex = fromTreeIndex;
+    }
 
     t = this.applyInterpolationEasing(t, 'easeInOut');
     const layoutFrom = this._calculateLayout(fromTreeData, fromTreeIndex);
@@ -115,6 +143,8 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     );
 
     const interpolatedData = this.treeInterpolator.interpolateTreeData(dataFrom, dataTo, t);
+    // Append trails if enabled
+    interpolatedData.trails = this._buildFlowTrails(interpolatedData.nodes, interpolatedData.labels);
     this._updateLayersEfficiently(interpolatedData);
   }
 
@@ -183,6 +213,56 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
   refreshAllColors(triggerRender = true) {
     this.layerManager?.layerStyles?.invalidateCache();
     if (triggerRender) this.renderAllElements();
+  }
+
+
+  _buildFlowTrails(nodes, labels) {
+    const { trailsEnabled, trailLength, trailOpacity } = useAppStore.getState();
+    if (!trailsEnabled) return [];
+
+    const minDistSq = 0.25; // avoid noise for tiny moves
+
+    const addPoint = (el) => {
+      const id = el.id;
+      const [x,y] = el.position;
+      let arr = this._trailHistory.get(id);
+      if (!arr) arr = [];
+      const last = arr[arr.length - 1];
+      if (!last || ((x - last.x)*(x - last.x) + (y - last.y)*(y - last.y)) > minDistSq) {
+        arr.push({ x, y });
+        if (arr.length > trailLength) arr.shift();
+        this._trailHistory.set(id, arr);
+      }
+    };
+
+    (nodes || []).forEach(addPoint);
+    (labels || []).forEach(addPoint);
+
+    const segments = [];
+    const pushSegs = (el, kind) => {
+      const id = el.id;
+      const hist = this._trailHistory.get(id) || [];
+      for (let i = 0; i < hist.length - 1; i++) {
+        const p0 = hist[i];
+        const p1 = hist[i+1];
+        const ageFactor = (i+1) / Math.max(1, hist.length);
+        const alphaFactor = trailOpacity * (1 - ageFactor);
+        const seg = {
+          id: `${id}-seg-${i}`,
+          path: [[p0.x, p0.y, 0], [p1.x, p1.y, 0]],
+          alphaFactor,
+          kind
+        };
+        if (kind === 'label') seg.leaf = el.leaf;
+        if (kind === 'node') seg.node = el;
+        segments.push(seg);
+      }
+    };
+
+    (nodes || []).forEach(n => pushSegs(n, 'node'));
+    (labels || []).forEach(l => pushSegs(l, 'label'));
+
+    return segments;
   }
 
 }

@@ -1,0 +1,24 @@
+/* Movie Player Bar container and layout */
+
+.movie-player-bar {
+  position: fixed;
+  bottom: 0;
+  left: var(--navigation-drawer-width);
+  right: 0;
+  z-index: 1000;
+  padding: 8px;
+  background: var(--md-sys-color-surface-container);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  box-shadow: var(--md-sys-elevation-level2);
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.movie-player-bar.nav-hidden {
+  left: 0;
+}
+
+.movie-player-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}

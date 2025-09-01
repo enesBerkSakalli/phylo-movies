@@ -38,6 +38,25 @@ export default class TransitionIndexResolver {
         // Fallback to tree name pattern (T0, T1, T2, etc.)
         return metadata?.tree_name?.match(/^T\d+$/) ? true : false;
     }
+    
+    /**
+     * Gets the full tree index (0, 1, 2, ...) for a given tree position.
+     * Returns -1 if the position is not a full tree.
+     * @param {number} position - The tree index position
+     * @returns {number} The full tree index (0-based sequential), or -1 if not a full tree
+     */
+    getFullTreeIndex = (position) => {
+        if (!this.isFullTree(position)) return -1;
+        
+        // Count how many full trees come before this position
+        let fullTreeCount = 0;
+        for (let i = 0; i < position && i < this.treeMetadata.length; i++) {
+            if (this.isFullTree(i)) {
+                fullTreeCount++;
+            }
+        }
+        return fullTreeCount;
+    }
 
     /**
      * @param {object[]} treeMetadata - Tree metadata from InterpolationSequence

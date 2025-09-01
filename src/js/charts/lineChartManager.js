@@ -18,69 +18,79 @@ export function renderOrUpdateLineChart({ data, config, services, chartState, ca
     const { robinsonFouldsDistances, weightedRobinsonFouldsDistances, scaleList } = data;
     const { barOptionValue, currentTreeIndex } = config;
     const { transitionResolver } = services;
+    
+    console.log('[lineChartManager] Rendering chart with type:', barOptionValue, 'at index:', currentTreeIndex);
 
-    // Fallback for empty data to prevent errors
-    if (!robinsonFouldsDistances || !weightedRobinsonFouldsDistances || !scaleList) {
-        console.warn('[renderOrUpdateLineChart] Data arrays are not initialized.', {
+    // Validate only the dataset required for the selected chart type
+    const hasRFD = Array.isArray(robinsonFouldsDistances) && robinsonFouldsDistances.length > 0;
+    const hasWRFD = Array.isArray(weightedRobinsonFouldsDistances) && weightedRobinsonFouldsDistances.length > 0;
+    const hasScale = Array.isArray(scaleList) && scaleList.length > 0;
+
+    const datasetOk =
+        (barOptionValue === 'rfd' && hasRFD) ||
+        (barOptionValue === 'w-rfd' && hasWRFD) ||
+        (barOptionValue === 'scale' && hasScale);
+
+    if (!datasetOk) {
+        const lengths = {
             robinsonFouldsDistances: robinsonFouldsDistances?.length,
             weightedRobinsonFouldsDistances: weightedRobinsonFouldsDistances?.length,
             scaleList: scaleList?.length
-        });
-        return chartState;
-    }
-
-    if (robinsonFouldsDistances.length === 0 && scaleList.length === 0) {
-        // No data to plot, clear chart area or show message
+        };
+        console.warn('[renderOrUpdateLineChart] Required dataset missing for chart type', barOptionValue, lengths);
+        // Clear chart area politely
         const chartContainer = document.getElementById(containerId);
-        if (chartContainer) chartContainer.innerHTML = '<p>No chart data available.</p>';
-        if (chartState.instance && chartState.instance.destroy) {
-            chartState.instance.destroy();
-        }
-        chartState.instance = null;
-        chartState.type = null;
-        return chartState;
-    }
-
-    // Check if we can update existing chart instead of re-rendering
-    if (chartState.instance && chartState.type === barOptionValue) {
-        // Only update the position indicator, don't re-render the entire chart
-        // currentTreeIndex is now always the distance index from store.js
-        // Convert to full tree sequence index for updatePosition
-        if (currentTreeIndex >= 0) {
-            const chartDataLength = barOptionValue === "rfd" ? robinsonFouldsDistances.length :
-                                   barOptionValue === "w-rfd" ? weightedRobinsonFouldsDistances.length :
-                                   scaleList.length;
-            if (currentTreeIndex < chartDataLength) {
-                // Valid distance index - convert to full tree sequence index
-                const fullTreeIndex = transitionResolver.getTreeIndexForDistanceIndex(currentTreeIndex);
-                chartState.instance.updatePosition(fullTreeIndex);
-            }
-            // If index is out of bounds, don't update scrubber
-        }
-        return chartState;
-    }
-
-    // Handle case where only one RFD value exists (no line chart to plot)
-    if (barOptionValue !== "scale" && robinsonFouldsDistances.length === 1) {
-        const chartContainer = document.getElementById(containerId);
-        if (chartContainer) {
-            let scaleValueText = "N/A";
-            if (scaleList && scaleList[currentTreeIndex] && typeof scaleList[currentTreeIndex].value !== 'undefined') {
-                scaleValueText = scaleList[currentTreeIndex].value.toFixed(3);
-            } else if (scaleList && scaleList.length > 0 && typeof scaleList[0].value !== 'undefined' && currentTreeIndex === 0) {
-                scaleValueText = scaleList[0].value.toFixed(3);
-            }
-            chartContainer.innerHTML = `
-                <p>Relative Robinson-Foulds Distance: ${robinsonFouldsDistances[0]}</p>
-                <p>Scale: ${scaleValueText}</p>
-            `;
-        }
-        if (chartState.instance && chartState.instance.destroy) {
-            chartState.instance.destroy();
-        }
+        if (chartContainer) chartContainer.innerHTML = `<p>No data for ${barOptionValue} chart.</p>`;
+        if (chartState.instance && chartState.instance.destroy) chartState.instance.destroy();
         chartState.instance = null;
         chartState.type = barOptionValue;
         return chartState;
+    }
+
+    // datasetOk above already guards by selected chart type; no mixed checks here
+
+    // Assume weighted distances are present (per example.json schema)
+
+    // Check if we can update existing chart instead of re-rendering
+    if (chartState.instance && chartState.type === barOptionValue) {
+        console.log('[lineChartManager] Chart type unchanged, only updating position');
+        // Use store/helper mappings for indicator position
+        const store = useAppStore.getState();
+        const chartDataLength = barOptionValue === 'rfd' ? robinsonFouldsDistances.length
+                              : barOptionValue === 'w-rfd' ? (weightedRobinsonFouldsDistances?.length ?? 0)
+                              : scaleList.length;
+
+        const idxForBounds = barOptionValue === 'scale'
+          ? store.getNearestAnchorChartIndex()
+          : transitionResolver.getDistanceIndex(store.currentTreeIndex);
+        if (idxForBounds >= 0 && idxForBounds < chartDataLength) {
+            const seqIndex = barOptionValue === 'scale'
+              ? store.getNearestAnchorSeqIndex()
+              : transitionResolver.getTreeIndexForDistanceIndex(idxForBounds);
+            chartState.instance.updatePosition(seqIndex);
+        }
+        return chartState;
+    }
+
+    // Handle case where only one distance value exists (no line chart to plot)
+    if (barOptionValue !== "scale") {
+        const seriesLength = barOptionValue === 'rfd' ? robinsonFouldsDistances.length : weightedRobinsonFouldsDistances.length;
+        if (seriesLength === 1) {
+            const chartContainer = document.getElementById(containerId);
+            if (chartContainer) {
+                const value = barOptionValue === 'rfd' ? robinsonFouldsDistances[0] : weightedRobinsonFouldsDistances[0];
+                const label = barOptionValue === 'rfd' ? 'Relative RFD' : 'Weighted RFD';
+                chartContainer.innerHTML = `
+                    <p>${label}: ${value}</p>
+                `;
+            }
+            if (chartState.instance && chartState.instance.destroy) {
+                chartState.instance.destroy();
+            }
+            chartState.instance = null;
+            chartState.type = barOptionValue;
+            return chartState;
+        }
     }
 
     // --- Unified transition index mapping for all chart types ---
@@ -89,12 +99,33 @@ export function renderOrUpdateLineChart({ data, config, services, chartState, ca
         return chartState;
     }
 
-    // All chart types use the same mapping functions since they all use distance index
+    // Mapping depends on chart type:
+    // - Distances: distance index <-> sequence index via resolver
+    // - Scale: chart index (0..fullTrees-1) <-> sequence index via fullTreeIndices list
     const chartSpecificIndexToSequence = (chartIdx) => {
+        if (barOptionValue === 'scale') {
+            const fti = transitionResolver.fullTreeIndices;
+            const clamped = Math.max(0, Math.min(fti.length - 1, chartIdx));
+            return fti[clamped] ?? 0;
+        }
         return transitionResolver.getTreeIndexForDistanceIndex(chartIdx);
     };
 
     const chartSpecificSequenceToIndex = (seqIdx) => {
+        if (barOptionValue === 'scale') {
+            const fti = transitionResolver.fullTreeIndices || [];
+            if (fti.length === 0) return 0;
+            let k = 0;
+            for (let i = fti.length - 1; i >= 0; i--) {
+                if (fti[i] <= seqIdx) { k = i; break; }
+            }
+            if (k + 1 < fti.length) {
+                const left = Math.abs(seqIdx - fti[k]);
+                const right = Math.abs(fti[k + 1] - seqIdx);
+                if (right < left) k = k + 1;
+            }
+            return k;
+        }
         return transitionResolver.getDistanceIndex(seqIdx);
     };
 
@@ -112,7 +143,7 @@ export function renderOrUpdateLineChart({ data, config, services, chartState, ca
         chartData = weightedRobinsonFouldsDistances;
         xLabel = "Transition Index";
         yLabel = "Weighted RFD";
-        yMax = weightedRobinsonFouldsDistances.length > 0 ? Math.max(...weightedRobinsonFouldsDistances) : 0;
+        yMax = weightedRobinsonFouldsDistances && weightedRobinsonFouldsDistances.length > 0 ? Math.max(...weightedRobinsonFouldsDistances) : 0;
         xAccessor = (_, i) => i + 1;
         yAccessor = (d) => d;
         tooltipFormatter = (d, i) => `Transition ${i + 1}<br>Weighted RFD: ${d.toFixed(3)}`;
@@ -136,22 +167,31 @@ export function renderOrUpdateLineChart({ data, config, services, chartState, ca
         return chartState;
     }
 
-    // Create navigation callback that converts chart positions to full trees
+    // Create navigation callback that converts chart positions to sequence indices
     const onPositionChange = (chartPosition) => {
-        // Direct store navigation instead of command pattern
         const { transitionResolver, goToPosition } = useAppStore.getState();
         if (!transitionResolver) return;
 
-        const fullTreeIndices = transitionResolver.fullTreeIndices;
-        const numTransitions = Math.max(0, fullTreeIndices.length - 1);
+        // Bounds: based on currently selected dataset length
+        const seriesLength = barOptionValue === 'rfd'
+          ? robinsonFouldsDistances.length
+          : barOptionValue === 'w-rfd'
+            ? (weightedRobinsonFouldsDistances?.length ?? 0)
+            : scaleList.length; // scale
 
-        if (chartPosition < 0 || chartPosition >= numTransitions) {
-            return;
+        if (chartPosition < 0 || chartPosition >= seriesLength) return;
+
+        let targetSeqIndex;
+        if (barOptionValue === 'scale') {
+          // Scale is per-full-tree; chart index maps to that full tree's sequence index
+          const fti = transitionResolver.fullTreeIndices;
+          targetSeqIndex = fti[Math.max(0, Math.min(fti.length - 1, chartPosition))];
+        } else {
+          // Distances are between full trees; use resolver to map distance index to target full tree
+          targetSeqIndex = transitionResolver.getTreeIndexForDistanceIndex(chartPosition);
         }
 
-        if (chartPosition < fullTreeIndices.length) {
-            goToPosition(fullTreeIndices[chartPosition]);
-        }
+        goToPosition(targetSeqIndex);
     };
 
     // Render the chart using chartGenerator.js with navigation callback
@@ -168,59 +208,22 @@ export function renderOrUpdateLineChart({ data, config, services, chartState, ca
         },
         onPositionChange
     );
-    const chartStateManager = chartResult.chartStateManager;
-
     // Note: Removed ResizeObserver for responsive chart handling
     // Charts will use CSS-based responsive design instead
-
-    // Set up index mappings on the chart state manager
-    chartStateManager.setIndexMappings(chartSpecificIndexToSequence, chartSpecificSequenceToIndex);
 
     chartState.instance = {
         updatePosition: (newSequencePosition) => {
             // Map sequence position to chart position for the indicator
-            const newChartPosition = chartSpecificSequenceToIndex(newSequencePosition);
+            let newChartPosition = chartSpecificSequenceToIndex(newSequencePosition);
+            // Round and clamp to valid data index
+            if (!Number.isFinite(newChartPosition)) newChartPosition = 0;
+            newChartPosition = Math.max(0, Math.min((chartData?.length ?? 1) - 1, Math.round(newChartPosition)));
 
-            // Get the chart container
-            const container = document.getElementById(containerId);
-            if (!container) {
-                console.warn(`[lineChartManager] Container not found: ${containerId}`);
-                return;
-            }
-
-            // Get scales from chartStateManager if available
-            const { xScale, yScale } = chartStateManager.scales;
-            if (!xScale || !yScale) {
-                console.warn(`[lineChartManager] Scales not available for container ${containerId}`);
-                return;
-            }
-
-            // Create config object for the indicator
-            const config = {
-                xAccessor,
-                yAccessor
-            };
-
-            // Use the centralized updateShipPosition function with navigation callback
-            updateShipPosition(
-                newChartPosition,
-                { xScale, yScale },
-                config,
-                chartData,
-                containerId,
-                onPositionChange
-            );
+            // Use the generator's internal updater (captures scales/config)
+            chartResult.updatePositionChartIndex(newChartPosition);
         },
         destroy: () => {
-            // Clean up chart container
-            const container = document.getElementById(containerId);
-            if (container) {
-                // Clean up any stored chart parameters
-                container._chartParams = null;
-                container._lastSize = null;
-            }
-
-            chartStateManager.destroy();
+            chartResult.destroy();
         }
     };
     chartState.type = barOptionValue;
