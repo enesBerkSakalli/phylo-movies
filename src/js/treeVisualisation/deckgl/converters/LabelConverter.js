@@ -30,6 +30,11 @@ export class LabelConverter {
     const rotation = this._calculateLabelRotation(angleRad);
     const position = this._calculateLabelPosition(leaf, labelRadius);
 
+    // Keep radius used for positioning exactly the same as before.
+    // We expose it as polarRadius so interpolation can follow the arc.
+    const LABEL_MARGIN = 25; // Must match _calculateLabelPosition
+    const adjustedRadius = labelRadius + LABEL_MARGIN;
+
     return {
       id: getLabelKey(leaf),
       position: position,
@@ -37,6 +42,7 @@ export class LabelConverter {
       data: leaf.data,
       angle: angleRad,
       distance: distance,
+      polarRadius: adjustedRadius,
       textAnchor: textAnchor,
       rotation: rotation, // Stored in RADIANS
       leaf: leaf // Store leaf reference for coloring

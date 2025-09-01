@@ -7,6 +7,7 @@
  * @param {number} currentFullTreeDataIdx - 0-based index of current full tree data
  * @param {number} msaStepSize - Step size for MSA window advancement
  * @param {number} msaWindowSize - Size of the MSA window
+ * @param {number} treeListLength - Length of the tree list (or MSA length)
  * @returns {Object} Window object with startPosition, midPosition, and endPosition (all 1-based)
  */
 export function calculateWindow(currentFullTreeDataIdx, msaStepSize, msaWindowSize, treeListLength) {
@@ -28,20 +29,26 @@ export function calculateWindow(currentFullTreeDataIdx, msaStepSize, msaWindowSi
         msaWindowSize = 100; // Default to 100
     }
 
+    // Calculate the center position for this window frame
+    // For frame 0, midPosition should start at 1 (1-based indexing)
+    // Each subsequent frame shifts by msaStepSize
+    let midPosition = 1 + (currentFullTreeDataIdx * msaStepSize);
 
-    let midPosition =  (currentFullTreeDataIdx) * msaStepSize;
-    let leftWindow = Math.trunc(msaWindowSize / 2);
-    let rightWindow = Math.trunc((msaWindowSize -1) / 2);
+    // Calculate half-window sizes
+    let leftWindow = Math.floor(msaWindowSize / 2);
+    let rightWindow = Math.floor((msaWindowSize - 1) / 2);
 
-    // Calculate positions: currentFullTreeDataIdx is the 0-based window frame.
-    // msaStepSize is the increment for the start of each window frame.
-    let startPosition = (midPosition - leftWindow);
-    let endPosition = (midPosition+rightWindow);
-    // Ensure positions are at least 1
+    // Calculate start and end positions based on the center
+    let startPosition = midPosition - leftWindow;
+    let endPosition = midPosition + rightWindow;
+
+    // Ensure positions stay within valid bounds (1 to treeListLength)
     startPosition = Math.max(1, startPosition);
-    // Ensure endPosition is at least startPosition
-    endPosition = Math.min(treeListLength*msaStepSize, endPosition);
+    endPosition = Math.min(treeListLength, endPosition);
 
+    // Adjust midPosition if it's outside the valid range
+    // This can happen at the edges of the alignment
+    midPosition = Math.max(1, Math.min(treeListLength, midPosition));
 
     return {
         startPosition: startPosition, // 1-based

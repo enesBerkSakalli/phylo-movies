@@ -1,4 +1,4 @@
-import { calculateInterpolatedBranchCoordinates } from '../../radialTreeGeometry.js';
+import { calculateInterpolatedBranchCoordinates } from '../../layout/RadialTreeGeometry.js';
 
 /**
  * PathInterpolator - Handles path interpolation for tree branches
@@ -186,39 +186,7 @@ export class PathInterpolator {
     ];
   }
 
-  /**
-   * Interpolate between two points with optional polar coordinate handling
-   * @param {Array} fromPoint - Source point [x, y, z]
-   * @param {Array} toPoint - Target point [x, y, z]
-   * @param {number} t - Interpolation factor (0-1)
-   * @param {boolean} isPolar - Whether to treat coordinates as polar (r, θ, z)
-   * @returns {Array} Interpolated point
-   * @private
-   */
-  _interpolatePointAdvanced(fromPoint, toPoint, t, isPolar = false) {
-    if (!isPolar) {
-      return this._interpolatePoint(fromPoint, toPoint, t);
-    }
-
-    // Polar interpolation: [radius, angle, z]
-    const fromRadius = fromPoint[0];
-    const fromAngle = fromPoint[1];
-    const fromZ = fromPoint[2] || 0;
-
-    const toRadius = toPoint[0];
-    const toAngle = toPoint[1];
-    const toZ = toPoint[2] || 0;
-
-    // Interpolate radius and z linearly
-    const radius = fromRadius + (toRadius - fromRadius) * t;
-    const z = fromZ + (toZ - fromZ) * t;
-
-    // Interpolate angle using shortest path
-    const angleDiff = this._shortestAngleDifference(fromAngle, toAngle);
-    const angle = fromAngle + angleDiff * t;
-
-    return [radius, angle, z];
-  }
+  
 
   /**
    * Set segment count for arc generation

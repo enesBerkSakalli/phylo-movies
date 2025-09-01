@@ -3,14 +3,19 @@
  * Extracted from msa_viewer.html for integration with WinBox
  */
 
-import { Deck, OrthographicView, OrthographicController } from '@deck.gl/core';
-import { PolygonLayer, TextLayer } from '@deck.gl/layers';
+import { Deck, OrthographicView } from '@deck.gl/core';
+import { processPhyloData } from './utils/dataUtils.js';
+import { createCellsLayer, buildCellData } from './layers/cellsLayer.js';
+import { createSelectionBorderLayer, buildSelectionBorder } from './layers/selectionBorderLayer.js';
+import { createLettersLayer, buildTextData } from './layers/lettersLayer.js';
+import { createRowLabelsLayer, buildRowLabels } from './layers/rowLabelsLayer.js';
+import { createColumnAxisLayer, buildColumnAxis } from './layers/columnAxisLayer.js';
 
 export class MSADeckGLViewer {
   constructor(container, options = {}) {
     this.container = container;
     this.options = {
-      MAX_CELLS: 150000,
+      MAX_CELLS: 150_000,  // Use numeric separator for readability
       cellSize: 16,
       showLetters: true,
       ...options
@@ -23,7 +28,7 @@ export class MSADeckGLViewer {
       rows: 0,
       cols: 0,
       selection: null,
-      viewState: { target: [0, 0, 0], zoom: 0 }
+      viewState: { target: [0, 0, 0], zoom: -1 }  // Start with reasonable zoom
     };
 
     this.frame = null;
@@ -35,93 +40,82 @@ export class MSADeckGLViewer {
   // UTILITIES
   // =======================================================================
 
-  parseFastaAligned(fasta) {
-    const lines = (fasta || '').trim().split(/\r?\n/);
-    const recs = [];
-    let id = null, seq = [];
+  /**
+   * Get the zoom scale factor (2^zoom)
+   * @returns {number} The zoom scale factor
+   */
+  getZoomScale() {
+    return Math.pow(2, this.state.viewState.zoom || 0);
+  }
 
-    for (const line of lines) {
-      if (!line) continue;
-      if (line[0] === '>') {
-        if (id) recs.push({id, seq: seq.join('').toUpperCase()});
-        id = line.slice(1).trim();
-        seq = [];
-      } else {
-        seq.push(line.trim());
-      }
+  /**
+   * Check if sequences are loaded
+   * @returns {boolean} True if sequences are loaded and not empty
+   */
+  hasSequences() {
+    return this.state.seqs && this.state.seqs.length > 0;
+  }
+
+  // =======================================================================
+  // DECK.GL EVENT HANDLERS
+  // =======================================================================
+
+  /**
+   * Handle view state changes from deck.gl
+   * @param {Object} viewState - The new view state
+   */
+  handleViewStateChange(viewState) {
+    // Clamp zoom to prevent performance issues
+    const MIN_ZOOM = -5;
+    const MAX_ZOOM = 10;
+    viewState.zoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, viewState.zoom));
+
+    this.state.viewState = viewState;
+
+    // Only render if we have data
+    if (this.hasSequences()) {
+      this.renderThrottled();
     }
 
-    if (id) recs.push({id, seq: seq.join('').toUpperCase()});
-    if (!recs.length) throw new Error('No sequences parsed.');
-
-    const L = recs[0].seq.length;
-    for (const r of recs) {
-      if (r.seq.length !== L) {
-        throw new Error(`Sequences must be equal length (got ${L} and ${r.seq.length}).`);
-      }
-    }
-    return recs;
-  }
-
-  rgba(r, g, b, a = 255) {
-    return [r, g, b, a];
-  }
-
-  gray(v, a = 255) {
-    return [v, v, v, a];
-  }
-
-  dnaColor(ch) {
-    switch(ch) {
-      case 'A': return this.rgba(0, 200, 0);      // Bright green
-      case 'C': return this.rgba(0, 100, 255);    // Bright blue
-      case 'G': return this.rgba(255, 165, 0);    // Orange
-      case 'T': case 'U': return this.rgba(255, 0, 0);  // Red
-      case '-': return this.gray(220);
-      default: return this.gray(180);
+    // Dispatch custom event for view updates
+    if (this.onViewStateChange) {
+      this.onViewStateChange(viewState);
     }
   }
 
-  proteinColor(ch) {
-    const hydrophobic = new Set(['A','V','I','L','M','F','W','Y','P']);
-    const polar = new Set(['S','T','N','Q','C','G']);
-    const positive = new Set(['K','R','H']);
-    const negative = new Set(['D','E']);
-
-    if (ch === '-') return this.gray(220);
-    if (hydrophobic.has(ch)) return this.rgba(255, 200, 0);   // Yellow/gold - hydrophobic
-    if (polar.has(ch)) return this.rgba(0, 150, 255);        // Light blue - polar
-    if (positive.has(ch)) return this.rgba(0, 0, 255);       // Dark blue - positive
-    if (negative.has(ch)) return this.rgba(255, 0, 0);       // Red - negative
-    return this.gray(180);
-  }
-
-  guessTypeFromSeqs(recs) {
-    const letters = new Set('ACGTU-');
-    for (const r of recs) {
-      for (const ch of r.seq) {
-        if (!letters.has(ch)) return 'protein';
-      }
+  /**
+   * Generate tooltip content for objects
+   * @param {Object} object - The object being hovered
+   * @returns {Object|null} Tooltip content or null
+   */
+  getTooltipContent(object) {
+    if (!object || object.row === undefined || !this.state.seqs[object.row]) {
+      return null;
     }
-    return 'dna';
+    const { row } = object;
+    if (object.kind === 'cell') {
+      const { col, ch } = object;
+      return { text: `${this.state.seqs[row].id}\nrow ${row + 1}, col ${col + 1}: ${ch}` };
+    }
+    if (object.kind === 'label') {
+      return { text: this.state.seqs[row].id };
+    }
+    return null;
   }
 
   // =======================================================================
   // DECK.GL INITIALIZATION
   // =======================================================================
 
-  initializeDeck() {
-    // Ensure container has dimensions before initializing
-    if (!this.container.offsetWidth || !this.container.offsetHeight) {
-      console.warn('[MSA] Container has no dimensions, deferring deck initialization');
-      setTimeout(() => this.initializeDeck(), 100);
-      return;
-    }
-
+  /**
+   * Setup container styling and create canvas element for deck.gl
+   * @returns {HTMLCanvasElement} The created canvas element
+   */
+  setupContainerAndCanvas() {
     // Ensure container can receive mouse events
     this.container.style.position = 'relative';
     this.container.style.overflow = 'hidden';
-    
+
     // Create canvas element for deck.gl
     const canvas = document.createElement('canvas');
     canvas.style.position = 'absolute';
@@ -131,50 +125,37 @@ export class MSADeckGLViewer {
     canvas.style.height = '100%';
     this.container.appendChild(canvas);
 
+    return canvas;
+  }
+
+  initializeDeck() {
+    // Setup container and create canvas
+    const canvas = this.setupContainerAndCanvas();
+
     this.state.deckgl = new Deck({
       canvas,
-      width: this.container.offsetWidth,
-      height: this.container.offsetHeight,
-      views: [new OrthographicView({ 
+      width: '100%',    // Let deck.gl handle automatic resize
+      height: '100%',   // No more manual resize() method needed
+      views: [new OrthographicView({
         id: 'ortho',
-        flipY: true  // Top-left origin for UI consistency
+        flipY: true,  // Top-left origin for UI consistency
+        clear: { color: [255, 255, 255, 1] }  // White background
       })],
       controller: true,  // Enable controller at Deck level
-      initialViewState: { 
-        target: [0, 0, 0], 
-        zoom: 0,
-        minZoom: -5,  // Allow more zooming out
-        maxZoom: 10   // Allow much more zooming in (2^10 = 1024x magnification)
+      initialViewState: {
+        target: [0, 0, 0],  // Will be updated when data loads
+        zoom: -1,            // Start slightly zoomed out for MSA viewing
+        minZoom: -5,
+        maxZoom: 10
       },
       getCursor: ({isDragging}) => isDragging ? 'grabbing' : 'grab',
       // Don't override container styles
       style: {},
       onViewStateChange: ({ viewState }) => {
-        // Clamp zoom to prevent issues
-        viewState.zoom = Math.max(-5, Math.min(10, viewState.zoom));
-        this.state.viewState = viewState;
-        // Only render if we have data
-        if (this.state.seqs && this.state.seqs.length > 0) {
-          this.renderThrottled();
-        }
-        // Dispatch custom event for view updates
-        if (this.onViewStateChange) {
-          this.onViewStateChange(viewState);
-        }
+        this.handleViewStateChange(viewState);
       },
       getTooltip: ({ object }) => {
-        if (!object || object.row === undefined || !this.state.seqs[object.row]) {
-          return null;
-        }
-        const { row } = object;
-        if (object.kind === 'cell') {
-          const { col, ch } = object;
-          return { text: `${this.state.seqs[row].id}\nrow ${row + 1}, col ${col + 1}: ${ch}` };
-        }
-        if (object.kind === 'label') {
-          return { text: this.state.seqs[row].id };
-        }
-        return null;
+        return this.getTooltipContent(object);
       }
     });
   }
@@ -183,62 +164,75 @@ export class MSADeckGLViewer {
   // DATA LOADING
   // =======================================================================
 
-  loadFasta(fasta, type = null) {
-    try {
-      const seqs = this.parseFastaAligned(fasta);
-      const dataType = type || this.guessTypeFromSeqs(seqs);
-
-      this.state.seqs = seqs;
-      this.state.type = dataType;
-      this.state.rows = seqs.length;
-      this.state.cols = seqs.length > 0 ? seqs[0].seq.length : 0;
-      this.state.selection = null;
-
-      // Render the data
-      this.render();
-      return true;
-    } catch (error) {
-      console.error('Error loading FASTA:', error);
-      return false;
-    }
-  }
-
   loadFromPhyloData(data) {
-    if (!data?.msa?.sequences) {
-      console.warn('[MSADeckGLViewer] No MSA sequences found in data');
+    const processedData = processPhyloData(data);
+
+    if (!processedData) {
       return false;
     }
 
-    // Convert dictionary to array format expected by deck.gl viewer
-    const seqs = Object.entries(data.msa.sequences).map(([name, seq]) => ({
-      id: name,
-      seq: seq.toUpperCase()
-    }));
-
-    const dataType = this.guessTypeFromSeqs(seqs);
-
-    this.state.seqs = seqs;
-    this.state.type = dataType;
-    this.state.rows = seqs.length;
-    this.state.cols = seqs.length > 0 ? seqs[0].seq.length : 0;
+    this.state.seqs = processedData.sequences;
+    this.state.type = processedData.type;
+    this.state.rows = processedData.rows;
+    this.state.cols = processedData.cols;
     this.state.selection = null;
 
     console.log(`[MSADeckGLViewer] Loaded ${this.state.rows} sequences, type: ${this.state.type}`);
 
-    // Check if deck.gl is ready before rendering
-    if (this.state.deckgl) {
-      // Render the data
-      this.render();
-    } else {
-      console.log('[MSADeckGLViewer] Deck.gl not ready, deferring render');
-      // Retry after deck.gl initializes
-      setTimeout(() => {
-        if (this.state.deckgl) {
-          this.render();
-        }
-      }, 200);
-    }
+    // Position camera to fit the MSA data
+    this.fitToMSA();
+
+    // Force immediate render after fitting
+    this.render();
+    
+    // Also trigger a second render after a brief delay to ensure visibility
+    setTimeout(() => this.render(), 100);
+    
     return true;
+  }
+
+  /**
+   * Fit the camera to show the entire MSA alignment
+   */
+  fitToMSA() {
+    if (!this.hasSequences() || !this.state.deckgl) {
+      return;
+    }
+
+    const cellSize = this.options.cellSize;
+    const totalWidth = this.state.cols * cellSize;
+    const totalHeight = this.state.rows * cellSize;
+
+    // Calculate center of the alignment
+    const centerX = totalWidth / 2;
+    const centerY = -totalHeight / 2; // Negative because of flipY
+
+    // Calculate zoom to fit the entire alignment
+    const containerWidth = this.container.clientWidth;
+    const containerHeight = this.container.clientHeight;
+
+    if (containerWidth > 0 && containerHeight > 0) {
+      const zoomX = Math.log2(containerWidth / totalWidth);
+      const zoomY = Math.log2(containerHeight / totalHeight);
+      const fitZoom = Math.min(zoomX, zoomY) - 0.1; // Small margin
+
+      // Clamp zoom to reasonable bounds
+      const clampedZoom = Math.max(-2, Math.min(5, fitZoom));
+
+      // Update view state
+      const newViewState = {
+        target: [centerX, centerY, 0],
+        zoom: clampedZoom
+      };
+
+      this.state.viewState = newViewState;
+
+      // Update deck.gl view state - use viewState instead of initialViewState for immediate update
+      this.state.deckgl.setProps({ 
+        viewState: newViewState,
+        initialViewState: newViewState 
+      });
+    }
   }
 
   // =======================================================================
@@ -274,7 +268,7 @@ export class MSADeckGLViewer {
     }
 
     // Don't render if no data is loaded
-    if (!this.state.seqs || this.state.seqs.length === 0) {
+    if (!this.hasSequences()) {
       this.state.deckgl.setProps({ layers: [] });
       return;
     }
@@ -282,78 +276,11 @@ export class MSADeckGLViewer {
     const cs = this.options.cellSize;
 
     const layers = [
-      new PolygonLayer({
-        id: 'cells',
-        data: this.buildCellData(cs),
-        pickable: true,
-        autoHighlight: true,
-        extruded: false,
-        stroked: false,
-        filled: true,
-        getPolygon: d => d.polygon,
-        getFillColor: d => {
-          const baseColor = (this.state.type === 'dna' ? this.dnaColor : this.proteinColor).call(this, d.ch);
-          // Dim colors outside the selection
-          if (this.state.selection) {
-            const { startCol, endCol } = this.state.selection;
-            if (d.col < startCol - 1 || d.col > endCol - 1) {
-              // Dim by reducing saturation and brightness
-              return [
-                baseColor[0] * 0.3 + 180,  // Blend with gray
-                baseColor[1] * 0.3 + 180,
-                baseColor[2] * 0.3 + 180,
-                baseColor[3]
-              ];
-            }
-          }
-          return baseColor;
-        },
-      }),
-      new PolygonLayer({
-        id: 'selection-border',
-        data: this.buildSelectionBorder(cs),
-        pickable: false,
-        stroked: true,
-        filled: false,
-        lineWidthMinPixels: 3,
-        getPolygon: d => d.polygon,
-        getLineColor: [255, 140, 0, 255],  // Bright orange border
-      }),
-      new TextLayer({
-        id: 'letters',
-        data: this.buildTextData(cs),
-        pickable: false,
-        getText: d => d.text,
-        getPosition: d => d.position,
-        getSize: 14,
-        getTextAnchor: 'middle',
-        getAlignmentBaseline: 'center',
-        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
-      }),
-      new TextLayer({
-        id: 'rowLabels',
-        data: this.buildRowLabels(cs),
-        pickable: true,
-        getText: d => d.text,
-        getPosition: d => d.position,
-        getSize: 12,
-        getTextAnchor: 'end',
-        getAlignmentBaseline: 'center',
-        background: true,
-        getBackgroundColor: [15, 21, 48, 160],
-        fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial'
-      }),
-      new TextLayer({
-        id: 'columnAxis',
-        data: this.buildColumnAxis(cs),
-        pickable: false,
-        getText: d => d.text,
-        getPosition: d => d.position,
-        getSize: 12,
-        getTextAnchor: 'middle',
-        getAlignmentBaseline: 'bottom',
-        fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial'
-      })
+      this.buildCellsLayer(cs),
+      this.buildSelectionBorderLayer(cs),
+      this.buildLettersLayer(cs),
+      this.buildRowLabelsLayer(cs),
+      this.buildColumnAxisLayer(cs)
     ];
 
     this.state.deckgl.setProps({ layers });
@@ -371,7 +298,7 @@ export class MSADeckGLViewer {
   getVisibleRange(cellSize) {
     const w = this.container.clientWidth;
     const h = this.container.clientHeight;
-    const worldPerPixel = 1 / Math.pow(2, (this.state.viewState.zoom || 0));
+    const worldPerPixel = 1 / this.getZoomScale();
     const halfW = (w * worldPerPixel) / 2;
     const halfH = (h * worldPerPixel) / 2;
     const [cx, cy] = this.state.viewState.target;
@@ -389,133 +316,60 @@ export class MSADeckGLViewer {
     return { r0, r1, c0, c1 };
   }
 
-  buildCellData(cellSize) {
-    if (!this.state.seqs || this.state.seqs.length === 0) {
-      return [];
-    }
+  // =======================================================================
+  // LAYER BUILDING
+  // =======================================================================
 
-    const { r0, r1, c0, c1 } = this.getVisibleRange(cellSize);
-    const nR = r1 - r0 + 1;
-    const nC = c1 - c0 + 1;
-    const step = Math.max(1, Math.ceil(Math.sqrt(nR * nC / this.options.MAX_CELLS)));
-    const data = [];
-
-    for (let r = r0; r <= r1; r += step) {
-      for (let c = c0; c <= c1; c += step) {
-        if (r >= this.state.seqs.length) continue;
-        const seq = this.state.seqs[r];
-        if (!seq || !seq.seq) continue;
-        
-        const x = c * cellSize;
-        const y = -r * cellSize;
-        const w = cellSize * Math.min(step, (c1 - c + 1));
-        const h = cellSize * Math.min(step, (r1 - r + 1));
-
-        data.push({
-          kind: 'cell',
-          row: r,
-          col: c,
-          ch: seq.seq[c] || '-',
-          polygon: [[x, y], [x + w, y], [x + w, y - h], [x, y - h]]
-        });
-      }
-    }
-
-    return data;
+  /**
+   * Build the cells polygon layer
+   * @param {number} cellSize - Size of each cell
+   * @returns {PolygonLayer} The cells layer
+   */
+  buildCellsLayer(cellSize) {
+    const visibleRange = this.getVisibleRange(cellSize);
+    const cellData = buildCellData(cellSize, this.state.seqs, visibleRange, this.options.MAX_CELLS);
+    return createCellsLayer(cellData, this.state.type, this.state.selection);
   }
 
-  buildTextData(cellSize) {
-    if (!this.options.showLetters ||
-        (this.options.cellSize * Math.pow(2, this.state.viewState.zoom || 0) < 12) ||
-        !this.state.seqs || this.state.seqs.length === 0) {
-      return [];
-    }
-
-    const { r0, r1, c0, c1 } = this.getVisibleRange(cellSize);
-    const data = [];
-
-    for (let r = r0; r <= r1; r++) {
-      if (r >= this.state.seqs.length) continue;
-      const seq = this.state.seqs[r];
-      if (!seq || !seq.seq) continue;
-      
-      for (let c = c0; c <= c1; c++) {
-        const ch = seq.seq[c] || '-';
-        if (ch !== '-') {
-          data.push({
-            kind: 'text',
-            position: [c * cellSize + cellSize / 2, -r * cellSize - cellSize / 2, 0],
-            text: ch
-          });
-        }
-      }
-    }
-
-    return data;
+  /**
+   * Build the selection border polygon layer
+   * @param {number} cellSize - Size of each cell
+   * @returns {PolygonLayer} The selection border layer
+   */
+  buildSelectionBorderLayer(cellSize) {
+    const borderData = buildSelectionBorder(cellSize, this.state.selection, this.state.rows);
+    return createSelectionBorderLayer(borderData);
   }
 
-  buildRowLabels(cellSize) {
-    if (this.state.viewState.zoom <= -2 || !this.state.seqs || this.state.seqs.length === 0) {
-      return [];
-    }
-
-    const { r0, r1 } = this.getVisibleRange(cellSize);
-    const data = [];
-    const pad = Math.max(8, cellSize * 0.25);
-
-    for (let r = r0; r <= r1; r++) {
-      if (r >= this.state.seqs.length) continue;
-      const seq = this.state.seqs[r];
-      if (!seq) continue;
-      
-      data.push({
-        kind: 'label',
-        row: r,
-        text: seq.id || `Seq ${r + 1}`,
-        position: [-pad, -r * cellSize - cellSize / 2, 0]
-      });
-    }
-
-    return data;
+  /**
+   * Build the letters text layer
+   * @param {number} cellSize - Size of each cell
+   * @returns {TextLayer} The letters layer
+   */
+  buildLettersLayer(cellSize) {
+    const visibleRange = this.getVisibleRange(cellSize);
+    const textData = buildTextData(cellSize, this.state.seqs, visibleRange, this.options.showLetters, this.options.cellSize, this.getZoomScale());
+    return createLettersLayer(textData);
+  }  /**
+   * Build the row labels text layer
+   * @param {number} cellSize - Size of each cell
+   * @returns {TextLayer} The row labels layer
+   */
+  buildRowLabelsLayer(cellSize) {
+    const visibleRange = this.getVisibleRange(cellSize);
+    const labelsData = buildRowLabels(cellSize, this.state.seqs, visibleRange, this.state.viewState, this.getZoomScale());
+    return createRowLabelsLayer(labelsData);
   }
 
-  buildColumnAxis(cellSize) {
-    if (this.state.viewState.zoom <= -2) return [];
-
-    const { c0, c1 } = this.getVisibleRange(cellSize);
-    const data = [];
-    const pad = 8;
-
-    const pixelsPerCell = this.options.cellSize * Math.pow(2, this.state.viewState.zoom || 0);
-    let step = 1;
-    if (pixelsPerCell < 5) step = 10;
-    if (pixelsPerCell < 2) step = 50;
-    if (pixelsPerCell < 0.5) step = 200;
-    if (pixelsPerCell < 0.1) step = 1000;
-
-    for (let c = c0; c <= c1; c++) {
-      if ((c + 1) % step === 0) {
-        data.push({
-          text: `${c + 1}`,
-          position: [c * cellSize + cellSize / 2, pad, 0]
-        });
-      }
-    }
-
-    return data;
-  }
-
-  buildSelectionBorder(cellSize) {
-    if (!this.state.selection) return [];
-
-    const { startCol, endCol } = this.state.selection;
-    const x = (startCol - 1) * cellSize;
-    const w = (endCol - startCol + 1) * cellSize;
-    const h = this.state.rows * cellSize;
-
-    return [{
-      polygon: [[x, 0], [x + w, 0], [x + w, -h], [x, -h]]
-    }];
+  /**
+   * Build the column axis text layer
+   * @param {number} cellSize - Size of each cell
+   * @returns {TextLayer} The column axis layer
+   */
+  buildColumnAxisLayer(cellSize) {
+    const visibleRange = this.getVisibleRange(cellSize);
+    const axisData = buildColumnAxis(cellSize, this.state.viewState, visibleRange, this.state.rows, this.getZoomScale(), this.options.cellSize);
+    return createColumnAxisLayer(axisData, this.getZoomScale());
   }
 
   // =======================================================================
@@ -532,7 +386,7 @@ export class MSADeckGLViewer {
     this.render();
   }
 
-  // Public API for region selection
+  // Public API for region selection (alias for setSelection/clearSelection)
   setRegion(startCol, endCol) {
     this.setSelection(startCol, endCol);
   }
@@ -541,21 +395,30 @@ export class MSADeckGLViewer {
     this.clearSelection();
   }
 
-  getSelection() {
-    return this.state.selection;
+  /**
+   * Fit camera to show entire MSA alignment
+   */
+  fitCameraToMSA() {
+    this.fitToMSA();
   }
 
-  resize() {
-    if (this.state.deckgl) {
-      // Update deck.gl dimensions
-      this.state.deckgl.setProps({
-        width: this.container.offsetWidth,
-        height: this.container.offsetHeight
-      });
-      // Update view if data is loaded
-      if (this.state.rows > 0 && this.state.cols > 0) {
-        requestAnimationFrame(() => {
-          this.render();
+  /**
+   * Reset camera to initial MSA overview
+   */
+  resetCamera() {
+    if (this.hasSequences()) {
+      this.fitToMSA();
+    } else {
+      // Reset to default view if no data loaded
+      const defaultViewState = {
+        target: [0, 0, 0],
+        zoom: -1
+      };
+      this.state.viewState = defaultViewState;
+      if (this.state.deckgl) {
+        this.state.deckgl.setProps({ 
+          viewState: defaultViewState,
+          initialViewState: defaultViewState 
         });
       }
     }

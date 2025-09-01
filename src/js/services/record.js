@@ -1,12 +1,11 @@
 export class ScreenRecorder {
-  constructor({ onStart, onStop, onError, autoSave = false, filename = null } = {}) {
+  constructor({ autoSave = false, filename = null, notifications = null } = {}) {
     this.mediaRecorder = null;
     this.recordedChunks = [];
-    this.onStart = onStart;
-    this.onStop = onStop;
-    this.onError = onError;
     this.autoSave = autoSave;
     this.filename = filename;
+    this.isRecording = false;
+    this.notifications = notifications; // Optional notifications system
   }
 
   async start() {
@@ -23,23 +22,19 @@ export class ScreenRecorder {
         }
       };
       this.mediaRecorder.onstop = () => {
-        if (typeof this.onStop === "function") {
-          this.onStop(this.getBlob());
-        }
+        this.isRecording = false;
+        this.onRecordingStop();
       };
       this.mediaRecorder.onerror = (e) => {
-        if (typeof this.onError === "function") {
-          this.onError(e.error || e);
-        }
+        this.isRecording = false;
+        this.onRecordingError(e.error || e);
       };
       this.mediaRecorder.start(200);
-      if (typeof this.onStart === "function") {
-        this.onStart();
-      }
+      this.isRecording = true;
+      this.onRecordingStart();
     } catch (error) {
-      if (typeof this.onError === "function") {
-        this.onError(error);
-      }
+      this.isRecording = false;
+      this.onRecordingError(error);
     }
   }
 
@@ -108,40 +103,73 @@ export class ScreenRecorder {
     return this.performAutoSave(filename);
   }
 
-  // Add method to save with custom location (if using File System Access API)
-  async saveToCustomLocation() {
-    try {
-      // Check if File System Access API is supported
-      if ("showSaveFilePicker" in window) {
-        const fileHandle = await window.showSaveFilePicker({
-          suggestedName: `phylo-movie-recording-${new Date()
-            .toISOString()
-            .slice(0, 19)
-            .replace(/:/g, "-")}.webm`,
-          types: [
-            {
-              description: "Video files",
-              accept: {
-                "video/webm": [".webm"],
-                "video/mp4": [".mp4"],
-              },
-            },
-          ],
-        });
-
-        const writable = await fileHandle.createWritable();
-        await writable.write(this.getBlob());
-        await writable.close();
-
-        return fileHandle.name;
-      } else {
-        // Fallback to regular download
-        return this.autoSave();
-      }
-    } catch (error) {
-      console.error("Failed to save file:", error);
-      // Fallback to regular download
-      return this.autoSave();
+  // UI State and Control Methods
+  updateStartButton(disabled, text, backgroundColor) {
+    const startBtn = document.getElementById("start-record");
+    if (startBtn) {
+      startBtn.disabled = disabled;
+      if (text) startBtn.textContent = text;
+      if (backgroundColor) startBtn.style.backgroundColor = backgroundColor;
+      else startBtn.style.backgroundColor = "";
     }
   }
+
+  updateStopButton(disabled, backgroundColor) {
+    const stopBtn = document.getElementById("stop-record");
+    if (stopBtn) {
+      stopBtn.disabled = disabled;
+      if (backgroundColor) stopBtn.style.backgroundColor = backgroundColor;
+      else stopBtn.style.backgroundColor = "";
+    }
+  }
+
+  onRecordingStart() {
+    this.updateStartButton(true, "Recording...", "#e14390");
+    this.updateStopButton(false, "#ff4444");
+    console.log("Recording started");
+  }
+
+  onRecordingStop() {
+    this.updateStartButton(false, "Start Recording", "");
+    this.updateStopButton(true, "");
+    console.log("Recording stopped");
+    
+    // If auto-save is not enabled, prompt user to save manually
+    if (!this.autoSave) {
+      this.promptManualSave();
+    }
+  }
+
+  onRecordingError(error) {
+    this.updateStartButton(false, "Start Recording", "");
+    this.updateStopButton(true, "");
+    console.error("Recording error:", error);
+    
+    // Show notification if available
+    if (this.notifications) {
+      this.notifications.show(`Recording error: ${error.message || error}`, "error");
+    }
+  }
+
+  promptManualSave() {
+    const saveChoice = confirm("Recording complete! Would you like to save it now?");
+    if (saveChoice) {
+      try {
+        const filename = this.performAutoSave(this.filename);
+        console.log(`Recording saved as: ${filename}.webm`);
+        if (this.notifications) {
+          this.notifications.show(`Recording saved as: ${filename}.webm`, "success");
+        }
+      } catch (error) {
+        console.error("Failed to save recording:", error);
+        if (this.notifications) {
+          this.notifications.show("Failed to save recording. Please try again.", "error");
+        }
+      }
+    }
+  }
+
+  // Add method to save with custom location (if using File System Access API)
+  // Removed saveToCustomLocation - not used anywhere
+  // The File System Access API method can be re-added if needed in the future
 }

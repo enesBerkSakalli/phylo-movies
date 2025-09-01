@@ -1,0 +1,27 @@
+/* MSA section */
+
+.msa-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.msa-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.msa-switch-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+}
+
+/* Utility: prevent controls from shrinking too small */
+.minw-200 {
+  min-width: 200px;
+}

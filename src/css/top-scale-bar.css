@@ -45,3 +45,26 @@
 .top-scale-bar .scale-bar-container {
   width: 100%;
 }
+
+/* Legend under the scale */
+.top-scale-bar .legend-section {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.top-scale-bar .legend-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.top-scale-bar .legend-title {
+  font: var(--md-sys-typescale-title-small);
+  color: var(--md-sys-color-on-surface);
+}
+
+.top-scale-bar .taxa-legend-vertical {
+  max-height: 240px;
+  overflow-y: auto;
+}

@@ -1,9 +1,9 @@
 import * as d3 from "d3";
 import { useAppStore } from '../core/store.js';
 import { transformBranchLengths } from "../utils/branchTransformUtils.js";
-import { RadialTreeLayout } from "./RadialTreeLayout.js";
+import { RadialTreeLayout } from "./layout/RadialTreeLayout.js";
 import calculateScales, { getMaxScaleValue } from "../utils/scaleUtils.js";
-import { LABEL_OFFSETS } from "./utils/LabelPositioning.js";
+// LABEL_OFFSETS moved to centralized store styleConfig
 
 export class WebGLTreeAnimationController {
   /**
@@ -64,25 +64,12 @@ export class WebGLTreeAnimationController {
 
 
   /**
-   * Renders the WebGL scene using the scene manager.
-   * Triggers all onBeforeRender callbacks for dynamic updates.
-   * @private
-   */
-  renderScene() {
-    // No-op in base class - overridden by DeckGLTreeAnimationController
-  }
-
-  /**
    * Starts the continuous WebGL rendering loop.
    * Required for dynamic camera-agnostic scaling and smooth updates.
    * @private
    */
   startRenderLoop() {
-    const renderLoop = () => {
-      this.renderScene();
-      this.renderLoopId = requestAnimationFrame(renderLoop);
-    };
-    renderLoop();
+    // Removed - not needed as renderScene is a no-op
   }
 
 
@@ -170,33 +157,6 @@ export class WebGLTreeAnimationController {
     });
   }
 
-  /**
-   * Update controller from store data - single source of truth approach
-   * Gets all required data directly from the store instead of requiring parameters
-   */
-  updateFromStore() {
-    const {
-      currentTreeIndex,
-      treeList,
-      branchTransformation,
-      monophyleticColoringEnabled
-    } = useAppStore.getState();
-
-    // Reinitialize uniform scaling if tree list has changed
-    if (!this.globalScaleList || this.globalScaleList.length !== treeList.length) {
-      this.initializeUniformScaling(branchTransformation);
-    }
-
-    const currentTreeData = treeList[currentTreeIndex];
-
-    // Apply branch transformation
-    const transformedTreeData = branchTransformation !== 'none'
-      ? transformBranchLengths(currentTreeData, branchTransformation)
-      : currentTreeData;
-    this.updateLayout(transformedTreeData, currentTreeIndex);
-
-    setColorManagerMonophyleticColoring(monophyleticColoringEnabled);
-  }
 
 
   /**
@@ -245,8 +205,10 @@ export class WebGLTreeAnimationController {
     const containerHeight = layout.height - layout.margin * 2;
     const maxLeafRadius = Math.min(containerWidth, containerHeight) / 2;
 
-    const extensionRadius = maxLeafRadius + LABEL_OFFSETS.EXTENSION;
-    const labelRadius = extensionRadius + LABEL_OFFSETS.LABEL;
+    const { styleConfig } = useAppStore.getState();
+    const offsets = styleConfig?.labelOffsets || { DEFAULT: 20, EXTENSION: 5 };
+    const extensionRadius = maxLeafRadius + (offsets.EXTENSION ?? 5);
+    const labelRadius = extensionRadius + (offsets.DEFAULT ?? 20);
 
     return {
       extensionRadius,
@@ -260,7 +222,6 @@ export class WebGLTreeAnimationController {
    * Must be called when controller is no longer needed to prevent memory leaks.
    */
   destroy() {
-    cancelAnimationFrame(this.renderLoopId);
-    this.storeUnsubscribe?.();
+    // Clean up if needed by subclasses
   }
 }

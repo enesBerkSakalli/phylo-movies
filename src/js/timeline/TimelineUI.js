@@ -47,7 +47,7 @@ export class TimelineUI {
                 : `${totalTrees} trees`;
             this.elements.movieTimelineCount.textContent = displayText;
         } else {
-            console.error('[TimelineUI] Failed to update metrics - element still not found');
+            // element not yet available
         }
     }
 
@@ -72,34 +72,80 @@ export class TimelineUI {
 
         const progressPercent = Math.round(progress * 100);
 
-        // Base segment information
-        let displayText = `Segment ${currentSegment} / ${totalSegments} (Timeline: ${progressPercent}%)`;
+        // Clean display without tree names
+        let displayText = '';
 
-        // Add detailed tree information if provided
-        if (currentTree !== null && totalTrees !== null && treeInSegment !== null && treesInSegment !== null) {
-            displayText += ` | Tree ${currentTree}/${totalTrees} (${treeInSegment}/${treesInSegment} in segment)`;
+        // Show position and progress
+        if (currentTree !== null && totalTrees !== null) {
+            // Primary display: position / total with progress
+            displayText = `${currentTree} / ${totalTrees}`;
+
+            // Add step info only if in multi-step transition
+            if (treesInSegment > 1) {
+                displayText += ` (step ${treeInSegment}/${treesInSegment})`;
+            }
+
+            // Add overall progress
+            displayText += ` • ${progressPercent}%`;
+        } else {
+            // Fallback display
+            displayText = `Position: ${progressPercent}%`;
         }
 
         this.elements.currentPositionInfo.textContent = displayText;
     }
 
+    // Legend UI is handled independently (TaxaColoring component)
+
     /**
-     * Update interpolation status display
+     * Update interpolation status display with transition context
      * @param {string} phase - Current phase
+     * @param {Object} transitionInfo - Optional transition information
+     * @param {Array} changingLeaves - Optional array of leaf names that are changing
+     * @param {number} transitionProgress - Progress within transition (0-1)
      */
-    updateInterpolationStatus(phase) {
+    updateInterpolationStatus(phase, transitionInfo = null, changingLeaves = null, transitionProgress = null) {
         if (!this.elements.interpolationStatus) {
-            console.warn('[TimelineUI] interpolationStatus element not available, attempting refresh...');
+            // interpolationStatus element not yet available; try refresh
             this.refreshElements();
         }
 
         if (!this.elements.interpolationStatus) {
-            console.error('[TimelineUI] Failed to update interpolation status - element not found');
+            // failed to update interpolation status; element missing
             return;
         }
 
-        const phaseDisplay = PHASE_NAMES[phase] || 'Unknown';
-        this.elements.interpolationStatus.textContent = phaseDisplay;
+        let statusText = '';
+
+        // Check if this is a transition or a stable/complete tree
+        if (transitionInfo && transitionInfo.isTransition) {
+            // Show transition with percentage
+            const percentage = transitionProgress !== null ?
+                Math.round(transitionProgress * 100) : 0;
+
+            if (changingLeaves && changingLeaves.length > 0) {
+                // Show percentage with moving leaves
+                const displayLeaves = changingLeaves.slice(0, 3);
+                const leafText = displayLeaves.join(', ');
+                const moreText = changingLeaves.length > 3 ? ` +${changingLeaves.length - 3}` : '';
+                statusText = `${percentage}% • Moving: ${leafText}${moreText}`;
+            } else {
+                // Just show transition percentage
+                statusText = `Transition: ${percentage}%`;
+            }
+        } else if (transitionInfo && transitionInfo.isFullTree) {
+            // Show stable/complete tree state - emphasize as anchor/pillar
+            statusText = '[ ANCHOR POINT ]';
+        } else if (phase) {
+            // Fallback to phase display
+            const phaseDisplay = PHASE_NAMES[phase] || phase;
+            statusText = phaseDisplay;
+        } else {
+            // Default message
+            statusText = 'Loading...';
+        }
+
+        this.elements.interpolationStatus.textContent = statusText;
     }
 
     /**

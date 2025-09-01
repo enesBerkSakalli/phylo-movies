@@ -1,21 +1,21 @@
 <!-- appearance.html -->
-<div style="display: flex; flex-direction: column; gap: 16px;">
+<div class="appearance-root">
 
   <!-- Tree Structure Controls -->
   <div>
-    <h3 class="md-typescale-title-medium" style="margin: 0 0 16px 0; color: var(--md-sys-color-on-surface);">
-      <md-icon style="font-size: 18px; vertical-align: middle;">account_tree</md-icon>
+    <h3 class="md-typescale-title-medium section-title">
+      <md-icon class="icon-small">account_tree</md-icon>
       Tree Structure
     </h3>
 
-    <div style="display: flex; flex-direction: column; gap: 16px; padding-left: 24px;">
+    <div class="section-body">
       <!-- Branch Length Options -->
       <div>
-        <label style="display: block; margin-bottom: 8px; color: var(--md-sys-color-on-surface); font-weight: 500;">
-          Branch Length Options
+        <label class="control-label">
+          <span id="branch-length-options-label">Branch Length Options</span>
         </label>
-        <md-outlined-select id="branch-length-options" style="width: 100%;" value="use">
-          <md-select-option value="use" selected>
+        <md-outlined-select id="branch-length-options" class="full-width" value="use" aria-labelledby="branch-length-options-label">
+          <md-select-option value="use">
             <div slot="headline">Use Branch Lengths</div>
           </md-select-option>
           <md-select-option value="ignore">
@@ -40,17 +40,17 @@
 
   <!-- Visual Style Controls -->
   <div>
-    <h3 class="md-typescale-title-medium" style="margin: 0 0 16px 0; color: var(--md-sys-color-on-surface);">
-      <md-icon style="font-size: 18px; vertical-align: middle;">tune</md-icon>
+    <h3 class="md-typescale-title-medium section-title">
+      <md-icon class="icon-small">tune</md-icon>
       Visual Style
     </h3>
 
-    <div style="display: flex; flex-direction: column; gap: 16px; padding-left: 24px;">
+    <div class="section-body">
       <!-- Font Size Control -->
       <div>
-        <label style="display: block; margin-bottom: 8px; color: var(--md-sys-color-on-surface); font-weight: 500;">
-          <md-icon style="font-size: 18px; vertical-align: middle;">text_fields</md-icon>
-          Font Size: <span id="font-size-value">1.8em</span>
+        <label class="control-label" title="Adjust label text size" aria-label="Label size control">
+          <md-icon class="icon-small">text_fields</md-icon>
+          <span id="font-size-label">Label Size</span>: <span id="font-size-value">1.8em</span>
         </label>
         <md-slider
           id="font-size"
@@ -58,15 +58,16 @@
           max="10"
           step="0.1"
           value="1.8"
+          aria-labelledby="font-size-label"
           labeled>
         </md-slider>
       </div>
 
       <!-- Stroke Width Control -->
       <div>
-        <label style="display: block; margin-bottom: 8px; color: var(--md-sys-color-on-surface); font-weight: 500;">
-          <md-icon style="font-size: 18px; vertical-align: middle;">brush</md-icon>
-          Stroke Width: <span id="stroke-width-value">3</span>
+        <label class="control-label" title="Adjust branch line width" aria-label="Branch width control">
+          <md-icon class="icon-small">brush</md-icon>
+          <span id="stroke-width-label">Branch Width</span>: <span id="stroke-width-value">3</span>
         </label>
         <md-slider
           id="stroke-width"
@@ -74,6 +75,7 @@
           max="30"
           step="0.2"
           value="3"
+          aria-labelledby="stroke-width-label"
           labeled>
         </md-slider>
       </div>
@@ -82,45 +84,45 @@
 
   <!-- Coloring Features -->
   <div>
-    <h3 class="md-typescale-title-medium" style="margin: 0 0 16px 0; color: var(--md-sys-color-on-surface);">
-      <md-icon style="font-size: 18px; vertical-align: middle;">palette</md-icon>
+    <h3 class="md-typescale-title-medium section-title">
+      <md-icon class="icon-small">palette</md-icon>
       Coloring & Styling
     </h3>
 
-    <div style="display: flex; flex-direction: column; gap: 16px; padding-left: 24px;">
+    <div class="section-body">
       <!-- Taxa Coloring Button -->
-      <md-filled-button id="taxa-coloring-button" has-icon style="width: 100%;">
+      <md-filled-button id="taxa-coloring-button" has-icon class="full-width">
         <md-icon slot="icon">palette</md-icon>
         Taxa Coloring
       </md-filled-button>
 
       <!-- Monophyletic Coloring Toggle -->
-      <label style="display: flex; align-items: center; gap: 16px; cursor: pointer;">
-        <md-switch id="monophyletic-coloring" selected></md-switch>
+      <label class="row-16" style="cursor: pointer;">
+        <md-switch id="monophyletic-coloring" selected aria-labelledby="monophyletic-coloring-label" aria-describedby="monophyletic-coloring-desc"></md-switch>
         <div style="flex: 1;">
-          <div style="font-weight: 500; color: var(--md-sys-color-on-surface);">
-            <md-icon style="font-size: 18px; vertical-align: middle;">color_lens</md-icon>
+          <div id="monophyletic-coloring-label" style="font-weight: 500; color: var(--md-sys-color-on-surface);">
+            <md-icon class="icon-small">color_lens</md-icon>
             Monophyletic Group Coloring
           </div>
-          <div class="md-typescale-body-medium" style="color: var(--md-sys-color-on-surface-variant);">Enable coloring for monophyletic groups in the tree</div>
+          <div id="monophyletic-coloring-desc" class="md-typescale-body-medium muted-text">Enable coloring for monophyletic groups in the tree</div>
         </div>
       </label>
 
       <!-- Red Coloring Mode Selector -->
-      <div style="margin-bottom: 16px;">
-        <label style="display: block; margin-bottom: 8px; color: var(--md-sys-color-on-surface); font-weight: 500;">
-          <md-icon style="font-size: 18px; vertical-align: middle;">swap_horiz</md-icon>
-          Red Coloring Mode
+      <div>
+        <label class="control-label">
+          <md-icon class="icon-small">swap_horiz</md-icon>
+          <span id="change-coloring-mode-label">Change Coloring Mode</span>
         </label>
-        <md-outlined-select id="red-coloring-mode" style="width: 100%;" value="highlight_solutions">
-          <md-select-option value="highlight_solutions" selected>
+        <md-outlined-select id="red-coloring-mode" class="full-width" value="highlight_solutions" aria-labelledby="change-coloring-mode-label" aria-describedby="change-coloring-mode-help">
+          <md-select-option value="highlight_solutions">
             <div slot="headline">Highlight Solutions</div>
           </md-select-option>
           <md-select-option value="subtree_tracking">
             <div slot="headline">Subtree Tracking</div>
           </md-select-option>
         </md-outlined-select>
-        <div class="md-typescale-body-small" style="margin-top: 4px; color: var(--md-sys-color-on-surface-variant);">
+        <div id="change-coloring-mode-help" class="md-typescale-body-small muted-text" style="margin-top: 4px;">
           Highlight Solutions: Shows accumulated changes<br>
           Subtree Tracking: Shows only moving elements
         </div>
@@ -128,28 +130,33 @@
 
       <!-- Highlighting Colors Subsection -->
       <div>
-        <h4 class="md-typescale-title-small" style="margin: 16px 0 12px 0; color: var(--md-sys-color-on-surface-variant);">
-          <md-icon style="font-size: 16px; vertical-align: middle;">highlight</md-icon>
+        <h4 class="md-typescale-title-small subtitle">
+          <md-icon class="icon-small" style="font-size: 16px;">highlight</md-icon>
           Highlighting Colors
         </h4>
 
-        <div style="display: flex; flex-direction: column; gap: 12px; padding-left: 16px;">
-          <label style="display: flex; align-items: center; gap: 12px;">
-            <md-icon style="font-size: 18px;">timeline</md-icon>
-            <span style="flex: 1; color: var(--md-sys-color-on-surface);">Active Change Edges</span>
-            <input type="color" id="active-change-edges-color" value="#2196f3" style="width: 48px; height: 32px; border: none; border-radius: 4px; cursor: pointer;">
-          </label>
+        <div class="section-body section-body--compact">
+          <!-- Active Change Edges with toggle -->
+          <div class="row-12">
+            <md-switch id="active-change-edges-toggle" selected aria-labelledby="active-change-edges-label"></md-switch>
+            <md-icon class="icon-small">timeline</md-icon>
+            <span id="active-change-edges-label" style="flex: 1;">Active Change Edges</span>
+            <input type="color" id="active-change-edges-color" value="#2196f3" class="color-swatch" aria-labelledby="active-change-edges-label">
+          </div>
 
-          <label style="display: flex; align-items: center; gap: 12px;">
-            <md-icon style="font-size: 18px;">flag</md-icon>
-            <span style="flex: 1; color: var(--md-sys-color-on-surface);">Marked Components</span>
-            <input type="color" id="marked-color" value="#ff5722" style="width: 48px; height: 32px; border: none; border-radius: 4px; cursor: pointer;">
-          </label>
+          <!-- Marked Components with toggle -->
+          <div class="row-12">
+            <md-switch id="marked-components-toggle" selected aria-labelledby="marked-components-label"></md-switch>
+            <md-icon class="icon-small">flag</md-icon>
+            <span id="marked-components-label" style="flex: 1;">Marked Components</span>
+            <input type="color" id="marked-color" value="#ff5722" class="color-swatch" aria-labelledby="marked-components-label">
+          </div>
 
-          <label style="display: flex; align-items: center; gap: 12px;">
-            <md-icon style="font-size: 18px;">opacity</md-icon>
-            <span style="flex: 1; color: var(--md-sys-color-on-surface);">Dimmed Elements</span>
-            <input type="color" id="dimmed-color" value="#cccccc" style="width: 48px; height: 32px; border: none; border-radius: 4px; cursor: pointer;">
+          <!-- Dimmed Elements (no toggle needed - controlled by dim-non-descendants-toggle) -->
+          <label class="row-12">
+            <md-icon class="icon-small">opacity</md-icon>
+            <span id="dimmed-elements-label" style="flex: 1;">Dimmed Elements</span>
+            <input type="color" id="dimmed-color" value="#cccccc" class="color-swatch" aria-labelledby="dimmed-elements-label">
           </label>
         </div>
       </div>
@@ -158,21 +165,21 @@
 
   <!-- Focus & Highlighting Controls -->
   <div>
-    <h3 class="md-typescale-title-medium" style="margin: 0 0 16px 0; color: var(--md-sys-color-on-surface);">
-      <md-icon style="font-size: 18px; vertical-align: middle;">center_focus_strong</md-icon>
+    <h3 class="md-typescale-title-medium section-title">
+      <md-icon class="icon-small">center_focus_strong</md-icon>
       Focus & Highlighting
     </h3>
 
-    <div style="display: flex; flex-direction: column; gap: 16px; padding-left: 24px;">
+    <div class="section-body">
       <!-- Dim Non-Descendants Toggle -->
-      <label style="display: flex; align-items: center; gap: 16px; cursor: pointer;">
-        <md-switch id="dim-non-descendants-toggle"></md-switch>
+      <label class="row-16" style="cursor: pointer;">
+        <md-switch id="dim-non-descendants-toggle" aria-labelledby="dim-non-descendants-label" aria-describedby="dim-non-descendants-desc"></md-switch>
         <div style="flex: 1;">
-          <div style="font-weight: 500; color: var(--md-sys-color-on-surface);">
-            <md-icon style="font-size: 18px; vertical-align: middle;">visibility</md-icon>
+          <div id="dim-non-descendants-label" style="font-weight: 500; color: var(--md-sys-color-on-surface);">
+            <md-icon class="icon-small">visibility</md-icon>
             Focus on Active Subtree
           </div>
-          <div class="md-typescale-body-medium" style="color: var(--md-sys-color-on-surface-variant);">Dim all non-descendants of the active edge</div>
+          <div id="dim-non-descendants-desc" class="md-typescale-body-medium muted-text">Dim all non-descendants of the active edge</div>
         </div>
       </label>
     </div>
@@ -181,29 +188,59 @@
 
   <!-- Advanced Features -->
   <div>
-    <h3 class="md-typescale-title-medium" style="margin: 0 0 16px 0; color: var(--md-sys-color-on-surface);">
-      <md-icon style="font-size: 18px; vertical-align: middle;">science</md-icon>
+    <h3 class="md-typescale-title-medium section-title">
+      <md-icon class="icon-small">science</md-icon>
       Advanced Features
     </h3>
 
-    <div style="display: flex; flex-direction: column; gap: 16px; padding-left: 24px;">
+    <div class="section-body">
       <!-- Camera Mode Button -->
-      <md-outlined-button id="camera-mode-button" has-icon style="width: 100%;">
+      <md-outlined-button id="camera-mode-button" has-icon class="full-width">
         <md-icon slot="icon">3d_rotation</md-icon>
         <span id="camera-mode-text">2D View</span>
       </md-outlined-button>
+      
 
-      <!-- WebGL Rendering Toggle -->
-      <label style="display: flex; align-items: center; gap: 16px; cursor: pointer;">
-        <md-switch id="webgl-rendering" selected></md-switch>
+      <!-- Motion Trails (Flow Trails) -->
+      <label class="row-16" style="cursor: pointer; margin-top: 12px;">
+        <md-switch id="trails-toggle" aria-labelledby="trails-label" aria-describedby="trails-desc"></md-switch>
         <div style="flex: 1;">
-          <div style="font-weight: 500; color: var(--md-sys-color-on-surface);">
-            <md-icon style="font-size: 18px; vertical-align: middle;">view_in_ar</md-icon>
-            WebGL 3D Rendering
+          <div id="trails-label" style="font-weight: 500; color: var(--md-sys-color-on-surface);">
+            <md-icon class="icon-small">timeline</md-icon>
+            Motion Trails
           </div>
-          <div class="md-typescale-body-medium" style="color: var(--md-sys-color-on-surface-variant);">Enable experimental 3D rendering mode</div>
+          <div id="trails-desc" class="md-typescale-body-medium muted-text">Show faint streaming trails for moving elements</div>
         </div>
       </label>
+
+      <div class="section-body section-body--compact" style="gap: 8px;">
+        <div>
+          <label class="control-label" title="Number of historical positions per element">
+            <md-icon class="icon-small">route</md-icon>
+            <span id="trail-length-label">Trail Length</span>: <span id="trail-length-value">12</span>
+          </label>
+          <md-slider id="trail-length" min="2" max="40" step="1" value="12" aria-labelledby="trail-length-label" labeled disabled></md-slider>
+        </div>
+
+        <div>
+          <label class="control-label" title="Trail opacity (0–1)">
+            <md-icon class="icon-small">opacity</md-icon>
+            <span id="trail-opacity-label">Trail Opacity</span>: <span id="trail-opacity-value">0.5</span>
+          </label>
+          <md-slider id="trail-opacity" min="0" max="1" step="0.05" value="0.5" aria-labelledby="trail-opacity-label" labeled disabled></md-slider>
+        </div>
+
+        <div>
+          <label class="control-label" title="Trail thickness relative to branch width">
+            <md-icon class="icon-small">line_weight</md-icon>
+            <span id="trail-thickness-label">Trail Thickness</span>: <span id="trail-thickness-value">0.5</span>
+          </label>
+          <md-slider id="trail-thickness" min="0.1" max="5" step="0.1" value="0.5" aria-labelledby="trail-thickness-label" labeled disabled></md-slider>
+        </div>
+      </div>
+
+      
+      
     </div>
   </div>
 

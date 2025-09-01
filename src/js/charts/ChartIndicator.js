@@ -31,7 +31,7 @@ export class ChartIndicator {
    * @returns {d3.Selection} The ship group selection
    */
   updateShipPosition(position, scales, data, onPositionChange) {
-    const { xScale, yScale } = scales;
+    const { xScale, yScale } = scales || {};
 
     // Handle empty data or missing scales
     if (!data || data.length === 0 || !xScale || !yScale) {
@@ -39,7 +39,9 @@ export class ChartIndicator {
       return null;
     }
 
-    const height = yScale.range()[0];
+    // Derive chart height robustly from scale range (accounts for inverted ranges)
+    const [r0, r1] = yScale.range();
+    const height = Math.abs(r1 - r0);
     const validPosition = this.validatePosition(position, data.length);
 
     let shipGroup = this.svg.select("#ship-modal-group");
@@ -89,7 +91,8 @@ export class ChartIndicator {
       .attr("class", "ship-line")
       .attr("y1", 0)
       .attr("y2", height)
-      .attr("stroke", "#FF4500")
+      // Use Material tokens (fallbacks provided)
+      .attr("stroke", "var(--pm-indicator, var(--md-sys-color-secondary, #FF4500))")
       .attr("stroke-width", 2)
       .attr("stroke-dasharray", "5,5");
 
@@ -98,8 +101,8 @@ export class ChartIndicator {
       .attr("class", "ship-handle")
       .attr("cy", height / 2)
       .attr("r", 8)
-      .attr("fill", "#FF4500")
-      .attr("stroke", "#23242b")
+      .attr("fill", "var(--pm-indicator, var(--md-sys-color-secondary, #FF4500))")
+      .attr("stroke", "var(--pm-indicator-stroke, var(--md-sys-color-outline, #23242b))")
       .attr("stroke-width", 1.5);
 
     // Value text
@@ -107,7 +110,7 @@ export class ChartIndicator {
       .attr("class", "handle-value")
       .attr("y", height / 2 - 15)
       .attr("text-anchor", "middle")
-      .attr("fill", "white")
+      .attr("fill", "var(--pm-indicator-contrast, var(--md-sys-color-on-secondary, #ffffff))")
       .attr("font-weight", "bold")
       .attr("font-size", "12px")
       .style("pointer-events", "none");
@@ -117,7 +120,7 @@ export class ChartIndicator {
       .attr("class", "current-position-label")
       .attr("y", height + 17)
       .attr("text-anchor", "middle")
-      .attr("fill", "#FF4500")
+      .attr("fill", "var(--pm-indicator, var(--md-sys-color-secondary, #FF4500))")
       .attr("font-weight", "bold")
       .attr("font-size", "13px")
       .style("pointer-events", "none");
@@ -136,14 +139,17 @@ export class ChartIndicator {
    */
   _updateShipElements(shipGroup, validPosition, data, scales, height) {
     const { xScale } = scales;
-    const shipX = xScale(this.config.xAccessor(data[validPosition], validPosition));
+    // Accessors with safe fallbacks
+    const xAcc = this.config?.xAccessor || ((d, i) => i);
+    const yAcc = this.config?.yAccessor || ((d) => d);
+    const shipX = xScale(xAcc(data[validPosition], validPosition));
 
     shipGroup.select(".ship-touch-target").attr("x", shipX - 15);
     shipGroup.select(".ship-line").attr("x1", shipX).attr("x2", shipX);
     shipGroup.select(".ship-handle").attr("cx", shipX);
     shipGroup.select(".handle-value")
       .attr("x", shipX)
-      .text(this.config.yAccessor(data[validPosition]).toFixed(3));
+      .text(Number.parseFloat(yAcc(data[validPosition])).toFixed(3));
     shipGroup.select(".current-position-label")
       .attr("x", shipX)
       .text(`${validPosition + 1}`);
@@ -175,7 +181,7 @@ export class ChartIndicator {
    * @private
    */
   _addDragBehavior(shipGroup, data, scales, onPositionChange) {
-    const { xScale, yScale } = scales;
+    const { xScale } = scales;
 
     const dragBehavior = d3.drag()
       .on("start", function(event) {
@@ -190,7 +196,8 @@ export class ChartIndicator {
         let minDistance = Infinity;
 
         data.forEach((d, i) => {
-          const pointX = xScale(this.config.xAccessor(d, i));
+          const xAcc = this.config?.xAccessor || ((_, idx) => idx);
+          const pointX = xScale(xAcc(d, i));
           const distance = Math.abs(currentX - pointX);
           if (distance < minDistance) {
             minDistance = distance;

@@ -6,6 +6,51 @@
   --nav-width: 280px;
   --nav-width-tablet: 240px;
   --nav-width-mobile: 200px;
+  /* Bridge variable used inline by visualization layout */
+  --navigation-drawer-width: var(--nav-width);
+}
+
+/* Fixed navigation drawer styling (replaces inline styles) */
+.nav-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--navigation-drawer-width);
+  height: 100vh;
+  background: var(--md-sys-color-surface-container-low);
+  border-right: 1px solid var(--md-sys-color-outline-variant);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--md-sys-elevation-level1);
+}
+
+.nav-header {
+  background: var(--md-sys-color-surface-container-low);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  padding: 16px;
+}
+
+.nav-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 24px;
+  color: var(--md-sys-color-on-surface);
+}
+
+.nav-subtitle {
+  margin: 0;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 /* Navigation drawer */
@@ -23,7 +68,8 @@
   display: flex;
   flex-direction: row;
   width: 100%;
-  height: calc(100vh - 100px); /* Account for fixed movie player bar */
+  /* Reserve space for the fixed movie player bar via a shared CSS var */
+  height: calc(100vh - var(--movie-player-bar-height, 100px));
   margin-left: var(--nav-width);
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }

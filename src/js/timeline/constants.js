@@ -4,53 +4,43 @@
 
 export const TIMELINE_CONSTANTS = {
     UNIT_DURATION_MS: 1000, // 1 second per tree
+    ANCHOR_DURATION_MULTIPLIER: 0.5, // Anchor points are 0.5x width - visual markers, not scrubbable
     MIN_ZOOM_MS: 100,       // 0.1 second
     ZOOM_PERCENTAGE_UI: 0.3,
-    TIMELINE_HEIGHT: '32px',
-    MAX_ZOOM_FACTOR: 2
+    TIMELINE_HEIGHT: '35px',
+    MAX_ZOOM_FACTOR: 2,
+    
+    // Scrubbing configuration
+    SCRUB_THROTTLE_MS: 16,        // ~60fps throttling for scrubbing
+    SCRUB_END_TIMEOUT_MS: 500,    // Fallback timeout for ending scrubbing
+    
+    // UI defaults
+    DEFAULT_TREE_INDEX: 0,
+    DEFAULT_SEGMENT_INDEX: -1,
+    DEFAULT_PROGRESS: 0,
+    MIN_PROGRESS: 0,
+    MAX_PROGRESS: 1,
+    
+    // Position calculations
+    DEFAULT_TREE_IN_SEGMENT: 1,
+    DEFAULT_TREES_IN_SEGMENT: 1,
+    
+    // Index conversions
+    INDEX_OFFSET_UI: 1,           // Convert 0-based to 1-based for UI display
+    
+    // Tooltip configuration
+    MAX_TOOLTIP_LEAVES: 5,        // Maximum leaves to show in tooltips
+    
+    // Complexity scoring weights
+    DURATION_COMPLEXITY_WEIGHT: 0.6,  // Weight for duration in complexity score
+    EDGE_COMPLEXITY_WEIGHT: 0.4,      // Weight for edge count in complexity score
+    DEFAULT_COMPLEXITY: 0.5,           // Default complexity value
+    
+    // Edge count defaults
+    DEFAULT_MAX_EDGES: 15,            // Default max edges if not specified
+    FALLBACK_MAX_EDGES: 10,           // Fallback for max edge count
 };
 
-/**
- * Simplified vis-timeline configuration - leveraging native capabilities
- */
-export const TIMELINE_OPTIONS = {
-    // Core display settings
-    height: '32px',
-    orientation: 'top',
-    showCurrentTime: false,
-    showMajorLabels: false,
-    showMinorLabels: false,
-    editable: false,
-    stack: false,
-    autoResize: true,
-
-    // Interaction settings
-    moveable: true,
-    zoomable: true,
-    zoomKey: 'ctrlKey',
-    selectable: false,
-    clickToUse: false,
-
-    // Disable clustering entirely
-    cluster: false,
-
-    // Native tooltip configuration
-    tooltip: {
-        followMouse: true,
-        overflowMethod: 'cap'
-    },
-
-    // Layout optimization
-    margin: {
-        item: { horizontal: 0, vertical: 2 },
-        axis: 0
-    },
-
-    // Time axis configuration
-    timeAxis: {
-        scale: 'millisecond'
-    }
-};
 
 export const PHASE_NAMES = {
     DOWN_PHASE: 'Down',
@@ -74,6 +64,15 @@ export const COLOR_CLASSES = {
         if (complexityScore <= 0.6) return 'timeline-interp-moderate';     // Orange - moderate complexity
         if (complexityScore <= 0.8) return 'timeline-interp-heavy';        // Red-orange - heavy complexity
         return 'timeline-interp-massive';                                   // Dark red - most complex
+    },
+
+    // Map number of subtrees to a color class (simpler and more interpretable)
+    getInterpolationClassBySubtrees: function(count) {
+        if (count <= 1) return 'timeline-interp-minimal';
+        if (count === 2) return 'timeline-interp-light';
+        if (count === 3) return 'timeline-interp-moderate';
+        if (count === 4) return 'timeline-interp-heavy';
+        return 'timeline-interp-massive';
     }
 };
 
@@ -88,25 +87,10 @@ export const DOM_ELEMENTS = {
     scrollToEndBtn: 'scrollToEndBtn'
 };
 
-/**
- * Helper function to create timeline options with dynamic clustering
- * @param {Object} timelineData - Timeline data with totalDuration
- * @returns {Object} Complete vis-timeline options object
- */
-export function createTimelineOptions(timelineData) {
-    const baseOptions = { ...TIMELINE_OPTIONS };
+// Renderer mode: 'vis' (default) or 'deck'
+export const TIMELINE_RENDERER_MODE = 'deck';
 
-    // Show the entire timeline initially
-    return {
-        ...baseOptions,
-        min: 0,
-        max: timelineData.totalDuration,
-        start: 0,
-        end: timelineData.totalDuration,
-        zoomMin: TIMELINE_CONSTANTS.MIN_ZOOM_MS,
-        zoomMax: timelineData.totalDuration * TIMELINE_CONSTANTS.MAX_ZOOM_FACTOR
-    };
-}
+// Deck renderer uses internal options; no external timeline config needed
 
 export class ValidationError extends Error {
     constructor(message) {

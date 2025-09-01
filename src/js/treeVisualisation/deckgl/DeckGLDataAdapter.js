@@ -57,7 +57,19 @@ export class DeckGLDataAdapter {
       sourcePosition: [leaf.x, leaf.y, 0],
       targetPosition: [extensionX, extensionY, 0],
       path: [[leaf.x, leaf.y, 0], [extensionX, extensionY, 0]],
-      leaf: leaf // Store leaf reference for coloring
+      leaf: leaf, // Store leaf reference for coloring
+      // Provide polar metadata so PathInterpolator can perform
+      // polar-aware interpolation for extension paths
+      polarData: {
+        source: {
+          angle: leaf.angle,
+          radius: leaf.radius
+        },
+        target: {
+          angle: leaf.angle,
+          radius: extensionRadius
+        }
+      }
     };
   }
 

@@ -17,23 +17,13 @@ export class TreeNodeInteractionHandler {
    * @param {HTMLCanvasElement} canvas - Canvas element for coordinate calculation
    */
   handleNodeClick(info, event, canvas) {
-    console.log('[TreeNodeInteractionHandler] handleNodeClick called');
-    console.log('[TreeNodeInteractionHandler] info:', info);
-    console.log('[TreeNodeInteractionHandler] info.object:', info.object);
-    console.log('[TreeNodeInteractionHandler] event:', event);
-    console.log('[TreeNodeInteractionHandler] canvas:', canvas);
-
     const { currentTreeIndex, treeList } = useAppStore.getState();
     const currentTreeData = treeList[currentTreeIndex];
     const treeNode = this._findTreeNodeFromLayerData(info.object, currentTreeData);
 
-
     const rect = canvas.getBoundingClientRect();
     const x = event.center ? event.center.x : (rect.left + (info.x || 0));
     const y = event.center ? event.center.y : (rect.top + (info.y || 0));
-
-    console.log('[TreeNodeInteractionHandler] Menu position:', { x, y });
-    console.log('[TreeNodeInteractionHandler] Calling contextMenu.show');
 
     this.contextMenu.show(treeNode, currentTreeData, x, y);
   }

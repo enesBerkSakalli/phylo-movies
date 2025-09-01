@@ -1,0 +1,50 @@
+/* Independent legend styles for taxa grouping */
+
+.taxa-legend-container {
+  margin-top: 6px;
+  padding: 4px 8px;
+}
+
+.taxa-legend { display: none; }
+
+.taxa-legend-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.taxa-legend-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.04);
+  border: 1px solid rgba(0,0,0,0.08);
+  white-space: nowrap;
+}
+
+.taxa-legend-vertical .taxa-legend-chip {
+  border-radius: 6px;
+}
+
+.taxa-legend-chip .swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(0,0,0,0.2);
+  display: inline-block;
+}
+
+.taxa-legend-chip .label {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.taxa-legend-more {
+  color: rgba(0,0,0,0.6);
+}

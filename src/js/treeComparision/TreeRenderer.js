@@ -1,5 +1,4 @@
-import createRadialTreeLayout from "../treeVisualisation/RadialTreeLayout.js";
-import { TreeAnimationController } from "../treeVisualisation/TreeAnimationController.js";
+import createRadialTreeLayout from "../treeVisualisation/layout/RadialTreeLayout.js";
 
 /**
  * Handles tree rendering operations with proper parameter management
@@ -7,7 +6,7 @@ import { TreeAnimationController } from "../treeVisualisation/TreeAnimationContr
 export class TreeRenderer {
   constructor() {
     this.svgCounter = 0;
-    // Cache TreeAnimationController instances by container ID
+    // No-op controller cache (kept for API compatibility)
     this.treeControllers = new Map();
   }
 
@@ -23,7 +22,12 @@ export class TreeRenderer {
    */
   getTreeController(containerId) {
     if (!this.treeControllers.has(containerId)) {
-      this.treeControllers.set(containerId, new TreeAnimationController(null, containerId));
+      // Create a no-op controller stub
+      const noop = {
+        updateParameters: () => {},
+        renderAllElements: async () => {},
+      };
+      this.treeControllers.set(containerId, noop);
     }
     return this.treeControllers.get(containerId);
   }

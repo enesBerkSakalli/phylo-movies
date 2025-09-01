@@ -1,0 +1,20 @@
+/* Metrics chips content and inline values */
+
+.metrics-window {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.metrics-window-value {
+  font-weight: var(--md-typescale-body-medium-weight);
+}
+
+.metrics-window-value--primary {
+  color: var(--md-sys-color-primary);
+}
+
+.jump-to-step-field {
+  inline-size: 90px;
+}
+

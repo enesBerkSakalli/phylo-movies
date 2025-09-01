@@ -1,15 +1,13 @@
 import { useAppStore } from '../core/store.js';
 import { TaxaColoring } from "../treeColoring/index.js";
-import { TreeAnimationController } from "../treeVisualisation/TreeAnimationController.js";
 import { WebGLTreeAnimationController } from "../treeVisualisation/WebGLTreeAnimationController.js";
-import { exportSaveChart } from "../utils/svgExporter.js";
-import { handleZoomResize, initializeZoom } from "../zoom/zoomUtils.js";
 import { TREE_COLOR_CATEGORIES } from "../core/store.js";
 import { applyColoringData } from "../treeColoring/index.js";
 import { NavigationController } from "./NavigationController.js";
 import { ChartController } from "./ChartController.js";
 import { UIController } from "./UIController.js";
 import { calculateWindow } from "../utils/windowUtils.js";
+import { getMSAFrameIndex } from "../core/IndexMapping.js";
 import { MovieTimelineManager } from "../timeline/MovieTimelineManager.js";
 
 // ============================================================================
@@ -73,11 +71,6 @@ export default class Gui {
           return; // Don't process other updates when animation state changes
         }
 
-        // Skip updates during animation to prevent stuttering
-        if (current.playing) {
-          return;
-        }
-
         // Skip if subscriptions are paused
         if (current.subscriptionPaused) {
           return;
@@ -85,8 +78,12 @@ export default class Gui {
 
         // Only update on tree navigation changes
         if (current.currentTreeIndex !== previous?.currentTreeIndex) {
-          this.updateMain();
+          // Always sync MSA region, even during playback
           this.syncMSAIfOpen();
+          // Avoid re-rendering main tree while playing to prevent stutter
+          if (!current.playing) {
+            this.updateMain();
+          }
         }
       }
     );
@@ -98,7 +95,7 @@ export default class Gui {
   // ========================================
   initializeMovie() {
     const { gui } = useAppStore.getState();
-    initializeZoom(gui);
+    // No SVG zoom to initialize in WebGL mode
     gui.resize();
     gui.update();
 
@@ -185,48 +182,22 @@ export default class Gui {
   }
 
   isMSAViewerOpen() {
-    // Check if deck.gl MSA viewer window is currently open
-    return !!document.getElementById("msa-winbox-content");
+    // Legacy check no longer required; viewer API is safe to call if missing
+    return true;
   }
 
   syncMSAIfOpen() {
-    // TODO: Re-implement for deck.gl MSA viewer
-    return; // Temporarily disabled during migration
-
-    /*
-    const { currentTreeIndex, movieData, transitionResolver, msaWindowSize, msaStepSize, syncMSAEnabled } = useAppStore.getState(); // Get state from store
-    if (!syncMSAEnabled) {
-      return;
-    }
-    if (!this.isMSAViewerOpen()) {
-      return;
-    }
-
-    const msaPositionInfo = this.calculateMSAPosition();
-    const currentFullTreeDataIdx = transitionResolver.getDistanceIndex(currentTreeIndex); // Use from store
-    const windowData = calculateWindow(currentFullTreeDataIdx, msaStepSize, msaWindowSize, movieData.interpolated_trees.length); // Use from store
-
-
-    if (windowData) {
-      const windowInfo = {
-        windowStart: windowData.startPosition,
-        windowEnd: windowData.endPosition,
-        msaPosition: msaPositionInfo.position,
-        msaStepSize: msaPositionInfo.stepSize
-      };
-
-      // Dispatch sync event to MSA viewer
-      window.dispatchEvent(new CustomEvent('msa-sync-request', {
-        detail: {
-          position: msaPositionInfo.position,
-          windowInfo: windowInfo,
-          treeIndex: currentTreeIndex,
-          fullTreeIndex: currentFullTreeDataIdx
-        }
-      }));
-
-    }
-    */
+    const { transitionResolver, msaWindowSize, msaStepSize, syncMSAEnabled, msaColumnCount } = useAppStore.getState();
+    if (!syncMSAEnabled || !transitionResolver || !msaColumnCount) return;
+    // Centralized frame index for MSA anchoring
+    const frameIndex = getMSAFrameIndex();
+    if (frameIndex < 0) return;
+    const windowData = calculateWindow(frameIndex, msaStepSize, msaWindowSize, msaColumnCount);
+    import('../msaViewer/index.js')
+      .then(({ setMSARegion }) => {
+        setMSARegion(windowData.startPosition, windowData.endPosition);
+      })
+      .catch(() => {});
   }
 
   // ========================================
@@ -254,9 +225,9 @@ export default class Gui {
   // ========================================
 
   getCurrentWindow() {
-    const { currentTreeIndex, transitionResolver, movieData, msaWindowSize, msaStepSize } = useAppStore.getState(); // Get state from store
-    const currentFullTreeDataIdx = transitionResolver.getDistanceIndex(currentTreeIndex);
-    const window = calculateWindow(currentFullTreeDataIdx, msaStepSize, msaWindowSize, movieData.interpolated_trees.length); // Use from store
+    const { msaWindowSize, msaStepSize, msaColumnCount } = useAppStore.getState(); // Get state from store
+    const frameIndex = getMSAFrameIndex();
+    const window = calculateWindow(frameIndex, msaStepSize, msaWindowSize, msaColumnCount || 0);
     // Note: setWindowStart and setWindowEnd were removed as they don't exist in the store
     return window;
   }
@@ -296,22 +267,19 @@ export default class Gui {
   _ensureTreeController() {
     const {
       setTreeController,
-      treeController: currentTreeController,
-      webglEnabled
+      treeController: currentTreeController
     } = useAppStore.getState();
 
     if (currentTreeController) {
       return currentTreeController;
     }
 
-    // Create new controller based on WebGL mode and options
+    // Always create a WebGL-based controller unless an override is provided
     let newTreeController;
     if (this.options.TreeController) {
       newTreeController = new this.options.TreeController();
     } else {
-      newTreeController = webglEnabled
-        ? new WebGLTreeAnimationController()
-        : new TreeAnimationController(null, "application");
+      newTreeController = new WebGLTreeAnimationController();
     }
     // Store handles all controller lifecycle management
     setTreeController(newTreeController);
@@ -373,9 +341,7 @@ export default class Gui {
   }
 
 
-  resize(skipAutoCenter = false) {
-    handleZoomResize(skipAutoCenter);
-  }
+  resize(_skipAutoCenter = false) {}
 
 
   async backward() {
@@ -399,7 +365,7 @@ export default class Gui {
   // EXPORT & SAVE FUNCTIONALITY
   // ========================================
   async saveImage() {
-    let { webglEnabled, treeController } = useAppStore.getState();
+    let { treeController } = useAppStore.getState();
 
     // If no controller exists, create one by running the main update.
     if (!treeController) {
@@ -415,29 +381,22 @@ export default class Gui {
     }
 
     try {
-      if (webglEnabled) {
-        // --- PNG Saving Logic ---
-        if (!treeController || !treeController.deckManager || !treeController.deckManager.canvas) {
-          console.error("Deck.gl canvas not available for saving PNG.");
-          return;
-        }
-
-        const canvas = treeController.deckManager.canvas;
-        const dataURL = canvas.toDataURL('image/png');
-
-        const link = document.createElement('a');
-        const fileName = `phylo-movie-export-${useAppStore.getState().currentTreeIndex + 1}.png`;
-        link.href = dataURL;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-      } else {
-        // --- SVG Saving Logic (existing) ---
-        const fileName = `phylo-movie-export-${useAppStore.getState().currentTreeIndex + 1}.svg`;
-        await exportSaveChart(this, "application-container", fileName);
+      // --- PNG Saving Logic ---
+      if (!treeController || !treeController.deckManager || !treeController.deckManager.canvas) {
+        console.error("Deck.gl canvas not available for saving PNG.");
+        return;
       }
+
+      const canvas = treeController.deckManager.canvas;
+      const dataURL = canvas.toDataURL('image/png');
+
+      const link = document.createElement('a');
+      const fileName = `phylo-movie-export-${useAppStore.getState().currentTreeIndex + 1}.png`;
+      link.href = dataURL;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } catch (error) {
       console.error("Error saving image:", error);
     } finally {
@@ -456,22 +415,23 @@ export default class Gui {
   }
 
   getCurrentTreeLabel() {
-    const { currentTreeIndex, movieData } = useAppStore.getState(); // Get from store
-    const metadata = movieData.tree_metadata?.[currentTreeIndex]; // Use movieData from store
+    const store = useAppStore.getState();
+    const { currentTreeIndex, movieData, getCurrentAnchorPair } = store;
+    const metadata = movieData.tree_metadata?.[currentTreeIndex];
     if (!metadata) {
         return `Tree ${currentTreeIndex + 1}`;
     }
 
     const baseName = metadata.tree_name;
     const phase = metadata.phase;
-    const sEdgeInfo = metadata.tree_pair_key;
     const step = metadata.step_in_pair;
+    const { pairKey } = typeof getCurrentAnchorPair === 'function' ? getCurrentAnchorPair() : { pairKey: metadata.tree_pair_key };
 
-    if (sEdgeInfo && step && phase !== 'ORIGINAL') {
+    if (pairKey && step && phase !== 'ORIGINAL') {
         // Extract active change edge index for cleaner display
-        const match = sEdgeInfo.match(/pair_(\d+)_(\d+)/);
-        const sEdgeIndex = match ? `S-edge ${parseInt(match[1])}` : sEdgeInfo;
-        const totalSteps = movieData.activeChangeEdge_metadata?.treesPerActiveChangeEdge?.[sEdgeInfo] || step; // Use movieData from store
+        const match = pairKey.match(/pair_(\d+)_(\d+)/);
+        const sEdgeIndex = match ? `S-edge ${parseInt(match[1])}` : pairKey;
+        const totalSteps = movieData.activeChangeEdge_metadata?.treesPerActiveChangeEdge?.[pairKey] || step;
         return `${baseName} (${sEdgeIndex}, Step ${step}/${totalSteps}, ${phase})`;
     }
 
@@ -497,19 +457,32 @@ export default class Gui {
   }
 
   async _handleTaxaColoringComplete(colorData) {
-    const { movieData, updateTaxaColors } = useAppStore.getState(); // Get from store
+    const { movieData, updateTaxaColors, setTaxaGrouping } = useAppStore.getState(); // Get from store
     const newColorMap = applyColoringData(colorData, movieData.sorted_leaves, TREE_COLOR_CATEGORIES); // Use movieData from store
 
     // Use the store method to update colors and notify ColorManager
     updateTaxaColors(newColorMap);
+
+    // Persist grouping info for UI (tooltips)
+    try {
+      const grouping = {
+        mode: colorData?.mode || 'taxa',
+        separator: colorData?.separator || null,
+        strategyType: colorData?.strategyType || null,
+        csvTaxaMap: colorData?.csvTaxaMap ? Object.fromEntries(colorData.csvTaxaMap) : null,
+        // Persist group color map so legend and tooltips can show consistent colors
+        groupColorMap: colorData?.groupColorMap ? Object.fromEntries(colorData.groupColorMap) : null,
+      };
+      setTaxaGrouping(grouping);
+    } catch (_) { /* ignore */ }
   }
 
   // ========================================
   // MSA POSITION TRACKING
   // ========================================
   calculateMSAPosition() {
-    const { currentTreeIndex, transitionResolver, msaStepSize } = useAppStore.getState(); // Get from store
-    const transitionStep = transitionResolver.getDistanceIndex(currentTreeIndex); // Use from store
+    const { currentTreeIndex, msaStepSize } = useAppStore.getState(); // Get from store
+    const transitionStep = getMSAFrameIndex();
     return {
       position: currentTreeIndex + 1,
       stepSize: msaStepSize, // Get from store

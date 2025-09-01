@@ -5,6 +5,8 @@ import {
   LinearInterpolator,
   FlyToInterpolator
 } from '@deck.gl/core';
+import { easeInOutCubic } from '../../../utils/MathUtils.js';
+// import { useAppStore } from '../../../core/store.js';
 
 const VIEW_IDS = {
   ORTHO: 'ortho',
@@ -57,15 +59,24 @@ export class DeckManager {
       [VIEW_IDS.ORBIT]: { ...DEFAULT_ORBIT_STATE, ...(options.initialOrbitState || {}) }
     };
 
-    // Interpolators to animate changes
+    // Interpolators to animate changes. Use LinearInterpolator for non-geospatial views
+    // because FlyToInterpolator expects longitude/latitude props.
     this.interpolatorOrtho = new LinearInterpolator({ transitionProps: ['target', 'zoom'] });
     this.interpolatorOrbit = new LinearInterpolator({
       transitionProps: ['target', 'zoom', 'rotationOrbit', 'rotationX']
     });
 
-    // If you prefer the "fly" feel everywhere, uncomment these two lines:
-    // this.interpolatorOrtho = new FlyToInterpolator({ speed: 1.5 });
-    // this.interpolatorOrbit = new FlyToInterpolator({ speed: 1.5 });
+    // Default transition tuning
+    this._defaultEasing = easeInOutCubic;
+    this._durations = {
+      fit: 700,
+      pan: 550,
+      zoom: 500,
+      orbit: 600,
+      fly: 700
+    };
+
+    // No post-process effects
   }
 
   /**
@@ -285,13 +296,13 @@ export class DeckManager {
   /**
    * Programmatic motion helpers
    */
-  panTo(target = [0, 0, 0], { duration = 600, easing, interpolator } = {}) {
+  panTo(target = [0, 0, 0], { duration = this._durations.pan, easing = this._defaultEasing, interpolator } = {}) {
     const id = this._activeViewId();
     const transitionInterpolator = interpolator || this._interpolatorFor(id);
     this._applyViewState(id, { target }, { transitionDuration: duration, transitionEasing: easing, transitionInterpolator });
   }
 
-  zoomTo(zoom, { duration = 500, easing, interpolator } = {}) {
+  zoomTo(zoom, { duration = this._durations.zoom, easing = this._defaultEasing, interpolator } = {}) {
     const id = this._activeViewId();
     const clamped = this._clampZoom(id, zoom);
     const transitionInterpolator = interpolator || this._interpolatorFor(id);
@@ -304,7 +315,7 @@ export class DeckManager {
     this.zoomTo(current + delta, opts);
   }
 
-  orbitRotateTo({ rotationOrbit, rotationX }, { duration = 500, easing, interpolator } = {}) {
+  orbitRotateTo({ rotationOrbit, rotationX }, { duration = this._durations.orbit, easing = this._defaultEasing, interpolator } = {}) {
     const id = this._activeViewId();
     if (id !== VIEW_IDS.ORBIT) return;
     const patch = {};
@@ -314,10 +325,29 @@ export class DeckManager {
     this._applyViewState(id, patch, { transitionDuration: duration, transitionEasing: easing, transitionInterpolator });
   }
 
-  fitToBounds(bounds, { padding = 1.2, duration = 600, easing, interpolator } = {}) {
+  fitToBounds(bounds, { padding = 1.2, duration = this._durations.fit, easing = this._defaultEasing, interpolator, labels = null, labelSizePx = null, getLabelSize = null } = {}) {
     // bounds: {minX, minY, maxX, maxY}
     const id = this._activeViewId();
     const { width: canvasWidth, height: canvasHeight } = this.getCanvasDimensions();
+
+    // Expand bounds to account for label glyph size to avoid clipping
+    if (labels && labels.length) {
+      try {
+        const sizePx = labelSizePx || (typeof getLabelSize === 'function' ? getLabelSize() : 16);
+        const maxChars = labels.reduce((m, l) => Math.max(m, (l.text || '').length), 0);
+        const estCharWidth = 0.6 * sizePx; // average glyph width estimate
+        const estLabelWidth = Math.min(2000, maxChars * estCharWidth);
+        const estLabelHeight = 1.2 * sizePx;
+        bounds = {
+          minX: bounds.minX - estLabelWidth,
+          maxX: bounds.maxX + estLabelWidth,
+          minY: bounds.minY - estLabelHeight,
+          maxY: bounds.maxY + estLabelHeight
+        };
+      } catch (e) {
+        // Ignore if anything goes wrong
+      }
+    }
 
     const centerX = (bounds.minX + bounds.maxX) / 2;
     const centerY = (bounds.minY + bounds.maxY) / 2;
@@ -335,7 +365,7 @@ export class DeckManager {
     );
   }
 
-  flyTo(patch, { duration = 800, easing, interpolator } = {}) {
+  flyTo(patch, { duration = this._durations.fly, easing = this._defaultEasing, interpolator } = {}) {
     const id = this._activeViewId();
     const transitionInterpolator = interpolator || this._interpolatorFor(id);
     this._applyViewState(id, patch, { transitionDuration: duration, transitionEasing: easing, transitionInterpolator });
@@ -410,5 +440,6 @@ export class DeckManager {
     this.viewStates[id] = next;
     this.setProps({ viewState: next });
   }
+
 
 }

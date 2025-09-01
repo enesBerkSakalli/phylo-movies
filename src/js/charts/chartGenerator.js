@@ -1,8 +1,6 @@
 import * as d3 from "d3";
-import { ChartStateManager } from "./ChartStateManager.js";
 import { ChartInteractions } from "./ChartInteractions.js";
 import { ChartIndicator } from "./ChartIndicator.js";
-import { ChartZoom } from "./ChartZoom.js";
 /**
  * Calculates consistent dimensions and margins for the chart for any container
  * @param {string} containerId - The ID of the container element
@@ -26,10 +24,11 @@ function calculateChartDimensionsForContainer(containerId) {
   const isInMoviePlayerBar = container.closest('.movie-player-bar') !== null;
 
   const margin = isInMoviePlayerBar ? {
-    top: Math.max(8, containerHeight * 0.08),
-    right: Math.max(16, containerWidth * 0.04),
-    bottom: Math.max(24, containerHeight * 0.2),
-    left: Math.max(40, containerWidth * 0.12)
+    // Compact, fixed margins for tight layout alongside timeline
+    top: 8,
+    right: 16,
+    bottom: 28, // extra room so x-axis labels don't overlap
+    left: 40 // ensure Y-axis labels have room and do not collide with plot
   } : {
     top: Math.max(20, containerHeight * 0.06),
     right: Math.max(30, containerWidth * 0.06),
@@ -59,8 +58,11 @@ function createScales(data, width, height, config) {
   const xScale = d3.scaleLinear().domain(xExtent).range([0, width]).nice();
   const yScale = d3.scaleLinear().domain([0, yMax * 1.1]).range([height, 0]).nice();
 
-  const maxXTicks = Math.floor(width / 80); // Responsive tick count
-  const tickStep = Math.ceil((xExtent[1] - xExtent[0]) / maxXTicks) || 1;
+  // Light clamp: aim for ~80px per tick, but cap to 12 to avoid crowding on giant widths
+  const desiredTicks = Math.floor(width / 80);
+  const maxXTicks = Math.min(Math.max(desiredTicks, 3), 12);
+  const domainSpan = Math.max(1, (xExtent[1] - xExtent[0]));
+  const tickStep = Math.ceil(domainSpan / maxXTicks);
   const actualTicks = d3.range(xExtent[0], xExtent[1] + 1, tickStep);
 
   return { xScale, yScale, actualTicks };
@@ -116,7 +118,9 @@ function drawAxesAndGrid(svg, scales, dimensions, config) {
     .style("fill", "var(--md-sys-color-on-surface-variant, rgba(255,255,255,0.8))")
     .style("font-family", "var(--md-sys-typescale-label-medium-font, Heebo, sans-serif)")
     .attr("transform", "rotate(-45)")
-    .style("text-anchor", "end");
+    .style("text-anchor", "end")
+    .attr("dx", "-0.4em")
+    .attr("dy", "0.7em");
 
   // Y Axis
   svg.append("g")
@@ -178,25 +182,7 @@ function drawAxesAndGrid(svg, scales, dimensions, config) {
 /**
  * Update line and area paths with new scales
  */
-function updateChartPaths(svg, data, xScale, yScale, config) {
-  const area = d3.area()
-    .x((d, i) => xScale(config.xAccessor(d, i)))
-    .y0(yScale(0))
-    .y1((d) => yScale(config.yAccessor(d)))
-    .curve(d3.curveMonotoneX);
-
-  const line = d3.line()
-    .x((d, i) => xScale(config.xAccessor(d, i)))
-    .y((d) => yScale(config.yAccessor(d)))
-    .curve(d3.curveMonotoneX);
-
-  svg.select(".area")
-    .datum(data)
-    .attr("d", area);
-  svg.select(".line")
-    .datum(data)
-    .attr("d", line);
-}
+// updateChartPaths removed (no zoom)
 
 /**
  * Draws the line and area chart
@@ -287,51 +273,27 @@ function renderChart(data, config, containerId, onPositionChange = null) {
   // Create initial scales
   let { xScale, yScale, actualTicks } = createScales(data, dimensions.width, dimensions.height, config);
 
-  // Store original scales for reset
-  const initialXScale = xScale.copy();
-  const initialYScale = yScale.copy();
-
-  // Create chart state manager
-  const chartStateManager = new ChartStateManager(containerId, 'line-chart');
-  chartStateManager.setData(data, config);
-  chartStateManager.setScales(xScale, yScale);
+  // No zoom: initial scale copies are unnecessary
 
   // Draw initial chart elements
-  let xAxisGroup = drawAxesAndGrid(svg, { xScale, yScale, actualTicks }, dimensions, config);
+  // Draw chart first, then axes on top to avoid the plot overlapping the axes
   drawChart(svg, data, { xScale, yScale }, config, containerId);
-  let dataPoints = drawDataPoints(svg, data, { xScale, yScale }, config, containerId, onPositionChange);
+  let xAxisGroup = drawAxesAndGrid(svg, { xScale, yScale, actualTicks }, dimensions, config);
+  drawDataPoints(svg, data, { xScale, yScale }, config, containerId, onPositionChange);
 
-  // Initialize zoom behavior
-  const chartZoom = new ChartZoom(svg, dimensions, config);
+  // Zoom removed for performance and simplicity
 
-  const onZoom = (zoomData) => {
-    // Update scales with zoom transform
-    xScale = zoomData.xScale;
-    yScale = zoomData.yScale;
-
-    // Update axes
-    xAxisGroup.call(d3.axisBottom(xScale).tickValues(actualTicks));
-    svg.select(".y.axis").call(d3.axisLeft(yScale).ticks(5));
-
-    // Update line and area paths using helper function
-    updateChartPaths(svg, data, xScale, yScale, config);
-
-    // Update data points
-    dataPoints.attr("cx", (d, i) => xScale(config.xAccessor(d, i)))
-      .attr("cy", (d) => yScale(config.yAccessor(d)));
-
-    // Update scales in chartStateManager
-    chartStateManager.setScales(xScale, yScale);
+  return {
+    updatePositionChartIndex: (chartIndex) =>
+      updateShipPosition(chartIndex, { xScale, yScale }, config, data, containerId, onPositionChange),
+    destroy: () => {
+      const container = document.getElementById(containerId);
+      if (container) {
+        d3.select(container).select("svg").remove();
+        d3.select(container).selectAll(".chart-tooltip").remove();
+      }
+    }
   };
-
-  chartZoom.initialize({ xScale: initialXScale, yScale: initialYScale }, onZoom);
-
-  // Store scales and zoom instance on the SVG for later access
-  svg.property('__xScale', xScale);
-  svg.property('__yScale', yScale);
-  svg.property('__chartZoom', chartZoom);
-
-  return { chartStateManager, updatePosition: (position) => updateShipPosition(position, { xScale, yScale }, config, data, containerId, onPositionChange) };
 }
 
 

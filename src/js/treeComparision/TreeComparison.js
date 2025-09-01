@@ -1,6 +1,5 @@
 import WinBox from 'winbox';
-import createRadialTreeLayout from "../treeVisualisation/RadialTreeLayout.js";
-import { TreeAnimationController } from "../treeVisualisation/TreeAnimationController.js";
+import createRadialTreeLayout from "../treeVisualisation/layout/RadialTreeLayout.js";
 
 // Load CSS
 const cssLink = document.createElement('link');
@@ -15,7 +14,7 @@ document.head.appendChild(cssLink);
 export class TreeComparison {
   constructor() {
     this.idCounter = 0;
-    // Cache TreeAnimationController instances by container ID
+    // No-op controller cache (kept for API compatibility)
     this.treeControllers = new Map();
   }
 
@@ -24,7 +23,12 @@ export class TreeComparison {
    */
   getTreeController(containerId) {
     if (!this.treeControllers.has(containerId)) {
-      this.treeControllers.set(containerId, new TreeAnimationController(null, containerId));
+      // Create a no-op controller stub
+      const noop = {
+        updateParameters: () => {},
+        renderAllElements: async () => {},
+      };
+      this.treeControllers.set(containerId, noop);
     }
     return this.treeControllers.get(containerId);
   }
