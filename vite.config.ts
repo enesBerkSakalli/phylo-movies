@@ -19,9 +19,9 @@ export default defineConfig({
     strictPort: true,
     watch: { usePolling: true },
     proxy: {
-      "/treedata": "http://localhost:5003",
-      "/msa": "http://localhost:5003",
-      "/about": "http://localhost:5003"
+      "/treedata": "http://localhost:5002",
+      "/msa": "http://localhost:5002",
+      "/about": "http://localhost:5002"
     }
   },
   optimizeDeps: {
