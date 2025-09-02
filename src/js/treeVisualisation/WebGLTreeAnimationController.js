@@ -26,7 +26,7 @@ export class WebGLTreeAnimationController {
 
   /**
    * Initializes the uniform scaling system using global maximum scale from scaleUtils.
-   * This ensures all trees, especially consensus trees, use consistent radius scaling.
+   * Ensures consistent radii across Anchor and Transition trees.
    * @param {string} [branchTransformation='none'] - Branch transformation to apply during scale calculation
    * @private
    */
@@ -116,7 +116,7 @@ export class WebGLTreeAnimationController {
     let layout;
     let layoutResult;
 
-    // Use uniform scaling if available for consistent consensus tree radii
+    // Use uniform scaling if available for consistent tree radii
     if (this.uniformScalingEnabled && this.globalScaleList && this.maxGlobalScale) {
       layoutResult = layoutCalculator.constructRadialTreeWithUniformScaling(this.maxGlobalScale);
     } else {

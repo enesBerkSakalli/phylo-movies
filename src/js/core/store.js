@@ -37,7 +37,8 @@ export const useAppStore = create((set, get) => ({
   movieData: null,
   treeList: [],
   treeMetadata: [],
-  highlightData: [], // From to_be_highlighted in JSON
+  // highlightData removed: using tree_pair_solutions for marked groups
+  pairSolutions: {}, // From tree_pair_solutions in JSON (used for red/marked)
   activeChangeEdgeTracking: [], // From split_change_tracking in JSON
 
 
@@ -113,9 +114,8 @@ export const useAppStore = create((set, get) => ({
 
     const resolver = new TransitionIndexResolver(
       movieData.tree_metadata,
-      movieData.to_be_highlighted,
       movieData.distances?.robinson_foulds,
-      movieData.lattice_edge_tracking,
+      movieData.split_change_tracking,
       movieData.tree_pair_solutions || {},
       true // debug
     );
@@ -154,7 +154,7 @@ export const useAppStore = create((set, get) => ({
     // Get window parameters from movieData
     const windowSize = movieData.window_size || movieData.msa?.window_size || 1000;
     const stepSize = movieData.window_step_size || movieData.msa?.step_size || 50;
-    
+
     console.log('[Store] Setting MSA params - windowSize:', windowSize, 'stepSize:', stepSize, 'columnCount:', msaColumnCount);
 
     set({
@@ -167,7 +167,8 @@ export const useAppStore = create((set, get) => ({
       },
       treeList: movieData.interpolated_trees,
       treeMetadata: movieData.tree_metadata,
-      highlightData: movieData.to_be_highlighted || [],
+      // highlightData omitted
+      pairSolutions: movieData.tree_pair_solutions || {},
       // Use split_change_tracking as the single source of truth for active change edges
       activeChangeEdgeTracking: movieData.split_change_tracking || [],
       transitionResolver: resolver,
@@ -534,7 +535,7 @@ export const useAppStore = create((set, get) => ({
    */
   setBranchTransformation: (transform) => set({ branchTransformation: transform }),
 
-  
+
 
   /**
    * Sets the camera mode for Deck.gl rendering
@@ -874,37 +875,46 @@ export const useAppStore = create((set, get) => ({
    * @returns {Array} Array of highlight solutions for current tree state
    */
   getActualHighlightData: () => {
-    const { currentTreeIndex, transitionResolver, highlightData, activeChangeEdgeTracking } = get();
+    const { currentTreeIndex, transitionResolver, pairSolutions, activeChangeEdgeTracking, movieData } = get();
 
     const highlightIndex = transitionResolver.getHighlightingIndex(currentTreeIndex);
 
-    const fullTreeIndices = transitionResolver.fullTreeIndices;
-    // The segment starts at the full tree that defines this transition.
-    const segmentStartIndex = fullTreeIndices[highlightIndex];
+    const fullTreeIndices = transitionResolver.fullTreeIndices || [];
+    // The segment starts at the full tree that defines this transition. If unknown, start at 0.
+    const segmentStartIndex = (fullTreeIndices && fullTreeIndices.length > 0 && highlightIndex >= 0)
+      ? (fullTreeIndices[highlightIndex] ?? 0)
+      : 0;
 
     const uniqueSolutions = new Map();
 
     // Iterate from the beginning of the segment up to the current tree.
     for (let i = segmentStartIndex; i <= currentTreeIndex; i++) {
-      // We only care about consensus trees within this range.
-      if (transitionResolver.isConsensusTree(i)) {
         const activeChangeEdge = activeChangeEdgeTracking?.[i];
+        // Determine pair key for this index
+        const pairKey = movieData?.tree_metadata?.[i]?.tree_pair_key;
+        const pairEntry = pairKey ? pairSolutions?.[pairKey] : null;
+        const latticeSolutions = pairEntry?.lattice_edge_solutions || {};
+        if (!pairEntry) continue;
 
-        // Skip if no active change edge data for this tree
-        if (!activeChangeEdge || !Array.isArray(activeChangeEdge)) {
-          continue;
+        if (Array.isArray(activeChangeEdge) && activeChangeEdge.length > 0) {
+          const edgeKey = `[${activeChangeEdge.join(', ')}]`;
+          const latticeEdgeData = latticeSolutions[edgeKey];
+          if (latticeEdgeData) {
+            for (const solution of latticeEdgeData.flat()) {
+              uniqueSolutions.set(JSON.stringify(solution), solution);
+            }
+          }
+        } else {
+          // No explicit active edge; include all available solutions for this transition
+          for (const value of Object.values(latticeSolutions)) {
+            if (!value) continue;
+            const flat = Array.isArray(value) ? value.flat() : [];
+            for (const solution of flat) {
+              uniqueSolutions.set(JSON.stringify(solution), solution);
+            }
+          }
         }
 
-        const treePairSolution = highlightData[highlightIndex];
-
-        const edgeKey = `[${activeChangeEdge.join(', ')}]`;
-        const latticeEdgeData = treePairSolution.lattice_edge_solutions[edgeKey];
-
-        for (const solution of latticeEdgeData.flat()) {
-            uniqueSolutions.set(JSON.stringify(solution), solution);
-        }
-
-      }
     }
     return Array.from(uniqueSolutions.values());
   },
@@ -918,6 +928,7 @@ export const useAppStore = create((set, get) => ({
     const activeChangeEdge = activeChangeEdgeTracking?.[currentTreeIndex];
     return activeChangeEdge || []; // Return empty array if undefined
   },
+
 
 
 
@@ -947,7 +958,7 @@ export const useAppStore = create((set, get) => ({
 
         // Only update active change edges if they are enabled
         if (activeChangeEdgesEnabled) {
-          const activeChangeEdge = getCurrentActiveChangeEdge();
+          const activeChangeEdge = state.getCurrentActiveChangeEdge();
           updateColorManagerActiveChangeEdge(activeChangeEdge);
         }
 

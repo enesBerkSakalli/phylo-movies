@@ -76,9 +76,6 @@ export const phyloData = {
       return null;
     }
 
-    console.log('[DataService] Retrieved data - window_size:', data?.window_size, 'window_step_size:', data?.window_step_size);
-    console.log('[DataService] Retrieved MSA data - window_size:', data?.msa?.window_size, 'step_size:', data?.msa?.step_size);
-
     // Return the full hierarchical MovieData object
     return this.validate(data);
   },
@@ -150,7 +147,7 @@ export const workflows = {
       throw error;
     }
   },
-  
+
   async handleMSADataSaving(formData, serverData) {
     try {
       // MSA data is already included in serverData.msa
