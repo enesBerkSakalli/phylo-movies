@@ -13,7 +13,7 @@ An interactive phylogenetic tree viewer focused on visualizing tree trajectories
 ### 🎭 Interactive Tree Visualization
 
 - **Smooth Tree Morphing**: Watch phylogenetic trees transform with fluid animations
-- **Multiple Tree Types**: View full trees, intermediate states, and consensus trees
+- **Tree Types**: View Anchor trees and Transition states
 - **Customizable Rendering**: Adjust branch thickness, font size, and coloring schemes
 - **Zoom & Pan**: Navigate large trees with intuitive zoom controls
 

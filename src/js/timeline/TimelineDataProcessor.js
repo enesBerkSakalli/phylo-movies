@@ -37,7 +37,7 @@ export class TimelineDataProcessor {
                 const globalIndex = entry.global_index;
                 const arrayIdx = globalIndex; // global_index is already 0-indexed in the data
                 const treeIndex = entry.tree_index; // This is the original tree number (0, 1, 2)
-                
+
                 if (arrayIdx >= 0 && arrayIdx < interpolated_trees.length) {
                     const metadata = tree_metadata[arrayIdx];
                     segments.push({
@@ -49,7 +49,7 @@ export class TimelineDataProcessor {
                         activeChangeEdgeTracker: null,
                         treePairKey: null,
                         stepInPair: null,
-                        treeName: entry.name || metadata?.tree_name || `Tree ${treeIndex}`,
+                        treeName: entry.name || `Anchor Tree ${treeIndex + 1}`,
                         hasInterpolation: false,
                         isFullTree: true,
                         treeInfo: null,

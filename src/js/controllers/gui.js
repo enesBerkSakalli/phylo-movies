@@ -416,26 +416,27 @@ export default class Gui {
 
   getCurrentTreeLabel() {
     const store = useAppStore.getState();
-    const { currentTreeIndex, movieData, getCurrentAnchorPair } = store;
-    const metadata = movieData.tree_metadata?.[currentTreeIndex];
-    if (!metadata) {
-        return `Tree ${currentTreeIndex + 1}`;
+    const { currentTreeIndex, movieData, transitionResolver } = store;
+    const md = movieData.tree_metadata?.[currentTreeIndex];
+    if (!md) return `Tree ${currentTreeIndex + 1}`;
+
+    const phase = md.phase || 'UNKNOWN';
+    const pairKey = md.tree_pair_key || null;
+    const step = md.step_in_pair || null;
+
+    // Anchor/full tree label
+    if (!pairKey || phase === 'ORIGINAL') {
+      const fullIdx = typeof transitionResolver?.getFullTreeIndex === 'function'
+        ? transitionResolver.getFullTreeIndex(currentTreeIndex)
+        : -1;
+      return fullIdx >= 0 ? `Anchor Tree ${fullIdx + 1}` : `Anchor Tree`;
     }
 
-    const baseName = metadata.tree_name;
-    const phase = metadata.phase;
-    const step = metadata.step_in_pair;
-    const { pairKey } = typeof getCurrentAnchorPair === 'function' ? getCurrentAnchorPair() : { pairKey: metadata.tree_pair_key };
-
-    if (pairKey && step && phase !== 'ORIGINAL') {
-        // Extract active change edge index for cleaner display
-        const match = pairKey.match(/pair_(\d+)_(\d+)/);
-        const sEdgeIndex = match ? `S-edge ${parseInt(match[1])}` : pairKey;
-        const totalSteps = movieData.activeChangeEdge_metadata?.treesPerActiveChangeEdge?.[pairKey] || step;
-        return `${baseName} (${sEdgeIndex}, Step ${step}/${totalSteps}, ${phase})`;
-    }
-
-    return `${baseName} (${phase || 'Unknown phase'})`;
+    // Transition label using pair_key and step
+    const m = typeof pairKey === 'string' ? pairKey.match(/pair_(\d+)_/) : null;
+    const sEdgeLabel = m ? `S-edge ${parseInt(m[1], 10)}` : pairKey;
+    const stepStr = step ? `, Step ${step}` : '';
+    return `${sEdgeLabel}${stepStr} — Transition ${pairKey}`;
   }
 
 
