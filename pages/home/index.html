@@ -29,25 +29,6 @@
         }
       }
     </script>
-    <script type="module">
-      import '@material/web/button/filled-button.js';
-      import '@material/web/button/outlined-button.js';
-      import '@material/web/icon/icon.js';
-      import '@material/web/switch/switch.js';
-      import '@material/web/textfield/outlined-text-field.js';
-      import '@material/web/progress/circular-progress.js';
-
-      // Debug: Check if components are loaded
-      window.addEventListener('load', () => {
-        console.log('Material Web components loaded:', {
-          'md-switch': customElements.get('md-switch') !== undefined,
-          'md-filled-button': customElements.get('md-filled-button') !== undefined,
-          'md-outlined-button': customElements.get('md-outlined-button') !== undefined,
-          'md-icon': customElements.get('md-icon') !== undefined,
-          'md-circular-progress': customElements.get('md-circular-progress') !== undefined
-        });
-      });
-    </script>
 
     <!-- Material Design CSS - Optimized Loading Order -->
     <link rel="stylesheet" type="text/css" href="/src/css/material-design.css">

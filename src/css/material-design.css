@@ -263,7 +263,5 @@ body {
     --md-sys-elevation-level1: var(--md-sys-elevation-shadow-level-1);
   }
 }
-  /* Timeline variables moved to movie-timeline/theme.css */
-@import url('./movie-timeline/theme.css');
-
+/* Timeline theme styles are imported via JS (DeckTimelineRenderer.js) to avoid @import ordering issues in CSS bundlers. */
 

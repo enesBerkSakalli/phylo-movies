@@ -9,6 +9,8 @@ import '@material/web/button/filled-tonal-button.js';
 import '@material/web/iconbutton/icon-button.js';
 import '@material/web/icon/icon.js';
 import '@material/web/switch/switch.js';
+import '@material/web/textfield/outlined-text-field.js';
+import '@material/web/progress/circular-progress.js';
 import { phyloData } from './services/dataService.js';
 
 // FilePond setup
