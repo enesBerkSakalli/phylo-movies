@@ -57,6 +57,8 @@
   /* Navigation Layout Variables */
   --navigation-drawer-width: 280px;
 
+  /* Timeline variables moved to movie-timeline/theme.css */
+
   /* Elevation tokens (light) */
   /* Background tokens for elevated surfaces (used as backgrounds) */
   --md-sys-elevation-level-0: var(--md-sys-color-surface);
@@ -76,6 +78,29 @@
 
   /* Back-compat alias used by some components */
   --md-sys-elevation-level1: var(--md-sys-elevation-shadow-level-1);
+
+  /* Timeline theme variables (Material Design neutral colors) */
+  --timeline-height: 35px;
+  --timeline-scrubber-core-color: var(--md-sys-color-primary);
+  --timeline-scrubber-glow-color: var(--md-sys-color-primary);
+  --timeline-padding-x: 8;
+  --timeline-padding-y: 0;
+  --timeline-connection-width: 4;
+  --timeline-connection-hover-width: 6;
+  --timeline-connection-selection-width: 8;
+  --timeline-connection-selection-color: var(--md-sys-color-primary);
+  --timeline-connection-hover-color: var(--md-sys-color-primary);
+  --timeline-connection-color-neutral: var(--md-sys-color-outline-variant);
+
+  --timeline-anchor-fill-color: var(--md-sys-color-surface-container-highest);
+  --timeline-anchor-stroke-color: var(--md-sys-color-outline);
+  --timeline-anchor-radius: 7;
+  --timeline-anchor-stroke-width: 3;
+
+  --timeline-separator-color: rgb(190 195 210);
+  --timeline-separator-width: 2;
+
+  --timeline-gap-default: 6;
 }
 
 
@@ -238,3 +263,7 @@ body {
     --md-sys-elevation-level1: var(--md-sys-elevation-shadow-level-1);
   }
 }
+  /* Timeline variables moved to movie-timeline/theme.css */
+@import url('./movie-timeline/theme.css');
+
+

@@ -1,8 +1,4 @@
-/**
- * TimelineUI - Handles UI updates for timeline components
- */
-
-import { DOM_ELEMENTS, PHASE_NAMES } from './constants.js';
+import { DOM_ELEMENTS } from './constants.js';
 
 export class TimelineUI {
     constructor() {
@@ -10,10 +6,113 @@ export class TimelineUI {
     }
 
     /**
-     * Query and cache DOM elements with retry mechanism
-     * @private
-     * @returns {Object} Cached DOM elements
+     * Parse tree pair key and format transition display text
+     * @param {string} treePairKey - Key like "pair_1_2"
+     * @param {number} transitionProgress - Progress 0-1
+     * @returns {Object} { fromTo: string, percent: number, formattedText: string }
      */
+    _formatTransitionText(treePairKey, transitionProgress = 0) {
+        const percent = transitionProgress != null ? Math.round(transitionProgress * 100) : 0;
+        let fromTo = '';
+        console.log('[TimelineUI] _formatTransitionText called with treePairKey:', treePairKey, 'transitionProgress:', transitionProgress, 'percent:', percent);
+        if (typeof treePairKey === 'string') {
+            const match = treePairKey.match(/pair_(\d+)_(\d+)/);
+            if (match) {
+                const fromTree = parseInt(match[1], 10) + 1;
+                const toTree = parseInt(match[2], 10) + 1;
+                fromTo = `Tree ${fromTree} → ${toTree}`;
+            }
+        }
+
+        const formattedText = fromTo ? `${fromTo} (${percent}%)` : `Interpolation: ${percent}%`;
+
+        return { fromTo, percent, formattedText };
+    }
+
+    /**
+     * Create visual indicator for position within segment
+     * @param {number} current - Current position (1-based)
+     * @param {number} total - Total positions
+     * @param {string} filledChar - Character for filled positions
+     * @param {string} emptyChar - Character for empty positions
+     * @returns {string} Visual indicator like "●●●○○"
+     */
+    _createVisualIndicator(current, total, filledChar = '●', emptyChar = '○') {
+        if (total <= 1) return ''; // No indicator needed for single position
+
+        // Clamp current to valid range
+        const clampedCurrent = Math.max(1, Math.min(current, total));
+
+        let indicator = '';
+        for (let i = 1; i <= total; i++) {
+            indicator += i <= clampedCurrent ? filledChar : emptyChar;
+        }
+
+        return indicator;
+    }
+
+    /**
+     * Create Material Web progress bar element for segment position
+     * @param {number} current - Current position (1-based)
+     * @param {number} total - Total positions
+     * @returns {HTMLElement|null} Material Web progress element or null if not needed
+     */
+    _createMaterialProgressBar(current, total) {
+        if (total <= 1) return null; // No progress bar needed for single position
+
+        // Clamp current to valid range
+        const clampedCurrent = Math.max(1, Math.min(current, total));
+
+        // Calculate progress value (0-1 range)
+        const progress = (clampedCurrent - 1) / (total - 1);
+
+        // Create md-linear-progress element
+        const progressBar = document.createElement('md-linear-progress');
+        progressBar.value = progress;
+        progressBar.setAttribute('aria-label', `Step ${clampedCurrent} of ${total}`);
+
+        // Set custom styling for prominent display
+        progressBar.style.cssText = `
+            width: 80px;
+            height: 6px;
+            --md-linear-progress-track-height: 6px;
+            --md-linear-progress-active-indicator-height: 6px;
+            --md-linear-progress-track-shape: 6px;
+            vertical-align: middle;
+            margin-inline: 6px;
+        `;
+
+        return progressBar;
+    }
+
+    /**
+     * Create Material Web progress bar element for overall timeline progress
+     * @param {number} timelineProgress - Timeline progress (0-1 range)
+     * @returns {HTMLElement|null} Material Web progress element
+     */
+    _createTimelineProgressBar(timelineProgress) {
+        // Clamp progress to valid range
+        const clampedProgress = Math.max(0, Math.min(1, timelineProgress));
+
+        // Create md-linear-progress element
+        const progressBar = document.createElement('md-linear-progress');
+        progressBar.value = clampedProgress;
+        progressBar.setAttribute('aria-label', `Timeline progress ${Math.round(clampedProgress * 100)}%`);
+
+        // Set custom styling for prominent display
+        progressBar.style.cssText = `
+            width: 80px;
+            height: 6px;
+            --md-linear-progress-track-height: 6px;
+            --md-linear-progress-active-indicator-height: 6px;
+            --md-linear-progress-track-shape: 6px;
+            vertical-align: middle;
+            margin-inline: 6px;
+        `;
+
+        return progressBar;
+    }
+
     _queryElements() {
         const elements = {};
         Object.entries(DOM_ELEMENTS).forEach(([key, id]) => {
@@ -22,140 +121,120 @@ export class TimelineUI {
         return elements;
     }
 
-    /**
-     * Refresh DOM element cache (useful if DOM is updated after initialization)
-     */
     refreshElements() {
         this.elements = this._queryElements();
         return this.validateElements();
     }
 
-    /**
-     * Update timeline metrics display
-     * @param {number} totalTrees - Total number of trees
-     * @param {number} totalSegments - Total number of segments (optional)
-     */
     updateMetrics(totalTrees, totalSegments = null) {
         if (!this.elements.movieTimelineCount) {
             this.refreshElements();
         }
 
         if (this.elements.movieTimelineCount) {
-            // Format the display to match HTML structure
             const displayText = totalSegments !== null
                 ? `${totalTrees} trees (${totalSegments} segments)`
                 : `${totalTrees} trees`;
             this.elements.movieTimelineCount.textContent = displayText;
-        } else {
-            // element not yet available
         }
     }
 
-    /**
-     * Update comprehensive position display with both segment and tree information
-     * @param {number} currentSegment - Current segment position (1-based)
-     * @param {number} totalSegments - Total number of segments
-     * @param {number} progress - Timeline progress (0-1)
-     * @param {number} currentTree - Current tree index (1-based)
-     * @param {number} totalTrees - Total number of trees
-     * @param {number} treeInSegment - Position within current segment (1-based)
-     * @param {number} treesInSegment - Total trees in current segment
-     */
-    updatePosition(currentSegment, totalSegments, progress, currentTree = null, totalTrees = null, treeInSegment = null, treesInSegment = null) {
-        if (!this.elements.currentPositionInfo) {
-            this.refreshElements();
-        }
-
-        if (!this.elements.currentPositionInfo) {
-            return;
-        }
-
+    updatePositionDisplay({ progress, currentTree, totalTrees, treeInSegment, treesInSegment }) {
         const progressPercent = Math.round(progress * 100);
+        let displayText = `${progressPercent}%`;
 
-        // Clean display without tree names
-        let displayText = '';
+        // Helper function to update a position element
+        const updatePositionElement = (element) => {
+            if (!element) return;
 
-        // Show position and progress
-        if (currentTree !== null && totalTrees !== null) {
-            // Primary display: position / total with progress
-            displayText = `${currentTree} / ${totalTrees}`;
+            element.innerHTML = '';
 
-            // Add step info only if in multi-step transition
-            if (treesInSegment > 1) {
-                displayText += ` (step ${treeInSegment}/${treesInSegment})`;
+            if (currentTree !== null && totalTrees !== null && totalTrees > 1) {
+                // Create progress bar using OVERALL timeline progress, not segment progress
+                const progressBar = this._createTimelineProgressBar(progress);
+
+                if (progressBar) {
+                    const container = document.createElement('span');
+                    container.style.cssText = 'display: inline-flex; align-items: center; gap: 8px;';
+
+                    container.appendChild(progressBar);
+
+                    const percentSpan = document.createElement('span');
+                    percentSpan.textContent = displayText;
+                    container.appendChild(percentSpan);
+
+                    element.appendChild(container);
+                } else {
+                    element.textContent = displayText;
+                }
+            } else {
+                element.textContent = displayText;
             }
+        };
 
-            // Add overall progress
-            displayText += ` • ${progressPercent}%`;
-        } else {
-            // Fallback display
-            displayText = `Position: ${progressPercent}%`;
-        }
-
-        this.elements.currentPositionInfo.textContent = displayText;
-    }
-
-    // Legend UI is handled independently (TaxaColoring component)
-
-    /**
-     * Update interpolation status display with transition context
-     * @param {string} phase - Current phase
-     * @param {Object} transitionInfo - Optional transition information
-     * @param {Array} changingLeaves - Optional array of leaf names that are changing
-     * @param {number} transitionProgress - Progress within transition (0-1)
-     */
-    updateInterpolationStatus(phase, transitionInfo = null, changingLeaves = null, transitionProgress = null) {
-        if (!this.elements.interpolationStatus) {
-            // interpolationStatus element not yet available; try refresh
+        // Update timeline position display
+        if (!this.elements.currentPositionInfo) {
             this.refreshElements();
         }
+        updatePositionElement(this.elements.currentPositionInfo);
 
-        if (!this.elements.interpolationStatus) {
-            // failed to update interpolation status; element missing
-            return;
-        }
-
-        let statusText = '';
-
-        // Check if this is a transition or a stable/complete tree
-        if (transitionInfo && transitionInfo.isTransition) {
-            // Show transition with percentage
-            const percentage = transitionProgress !== null ?
-                Math.round(transitionProgress * 100) : 0;
-
-            if (changingLeaves && changingLeaves.length > 0) {
-                // Show percentage with moving leaves
-                const displayLeaves = changingLeaves.slice(0, 3);
-                const leafText = displayLeaves.join(', ');
-                const moreText = changingLeaves.length > 3 ? ` +${changingLeaves.length - 3}` : '';
-                statusText = `${percentage}% • Moving: ${leafText}${moreText}`;
-            } else {
-                // Just show transition percentage
-                statusText = `Transition: ${percentage}%`;
-            }
-        } else if (transitionInfo && transitionInfo.isFullTree) {
-            // Show stable/complete tree state - emphasize as anchor/pillar
-            statusText = '[ ANCHOR POINT ]';
-        } else if (phase) {
-            // Fallback to phase display
-            const phaseDisplay = PHASE_NAMES[phase] || phase;
-            statusText = phaseDisplay;
-        } else {
-            // Default message
-            statusText = 'Loading...';
-        }
-
-        this.elements.interpolationStatus.textContent = statusText;
+        // Update HUD position display
+        updatePositionElement(this.elements.hudPositionInfo);
     }
 
-    /**
-     * Clear all UI elements
-     */
+    updateSegmentInfo(segment, transitionProgress, storeState) {
+        let text = '';
+
+        if (segment?.isFullTree) {
+            const getNearestAnchorChartIndex = storeState.getNearestAnchorChartIndex?.bind(storeState) || null;
+            const nearest = typeof getNearestAnchorChartIndex === 'function' ? (getNearestAnchorChartIndex() + 1) : null;
+            text = nearest ? `Original tree ${nearest}` : 'Original tree';
+        } else if (segment?.hasInterpolation) {
+            const { formattedText } = this._formatTransitionText(segment.treePairKey, transitionProgress);
+            text = formattedText;
+        } else {
+            text = 'Interpolation: 0%';
+        }
+
+        // Update timeline segment info
+        const segInfoEl = document.getElementById('segmentInfo');
+        if (segInfoEl) {
+            segInfoEl.textContent = text;
+        }
+
+        // Update HUD segment info
+        if (this.elements.hudSegmentInfo) {
+            this.elements.hudSegmentInfo.textContent = text;
+        }
+    }
+
+    updateTransitionIndicator(segment, changingLeaves, transitionProgress) {
+        if (!this.elements.transitionIndicator) {
+            this.refreshElements();
+            if (!this.elements.transitionIndicator) return;
+        }
+
+        const line1 = this.elements.tiLine1;
+        const line2 = this.elements.tiLine2;
+
+        if (segment?.hasInterpolation && line1 && line2) {
+            const { fromTo, percent } = this._formatTransitionText(segment.treePairKey, transitionProgress);
+            line1.textContent = fromTo ? `${fromTo} • ${percent}%` : `Interpolation • ${percent}%`;
+
+            const movingCount = Array.isArray(changingLeaves) ? changingLeaves.length : 0;
+            line2.textContent = movingCount > 0 ? `Changing: ${movingCount} leaves` : 'Changing: none';
+
+            this.elements.transitionIndicator.style.display = 'block';
+        } else if (this.elements.transitionIndicator) {
+            this.elements.transitionIndicator.style.display = 'none';
+        }
+    }
+
+
     clear() {
         const elementsToClear = [
             'movieTimelineCount',
-            'currentPositionInfo',
-            'interpolationStatus'
+            'currentPositionInfo'
         ];
 
         elementsToClear.forEach(key => {
@@ -165,11 +244,6 @@ export class TimelineUI {
             }
         });
     }
-
-    /**
-     * Setup button event handlers
-     * @param {Object} handlers - Object mapping button names to handler functions
-     */
     setupButtonHandlers(handlers) {
         const buttonMapping = {
             zoomInBtn: handlers.zoomIn,
@@ -187,15 +261,10 @@ export class TimelineUI {
         });
     }
 
-    /**
-     * Validate that required elements exist
-     * @returns {Array} Array of missing element IDs
-     */
     validateElements() {
         const requiredElements = [
             'movieTimelineCount',
-            'currentPositionInfo',
-            'interpolationStatus'
+            'currentPositionInfo'
         ];
 
         return requiredElements.filter(key => !this.elements[key]);

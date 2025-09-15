@@ -6,7 +6,7 @@ import { useAppStore, TREE_COLOR_CATEGORIES } from '../../core/store.js';
  * Handles three types of coloring:
  * 1. Base coloring (monophyletic groups, taxa colors)
  * 2. Active change edge highlighting (blue) - edges from lattice tracking
- * 3. Marked component highlighting (red) - components from highlight solutions
+ * 3. Marked subtree highlighting (red) - from computed subtrees (naming only)
  *
  * Used by LayerStyles.js to provide colors for DeckGL layers
  */
@@ -91,9 +91,12 @@ export class ColorManager {
    * @returns {string} Hex color code
    */
   getNodeColor(nodeData, activeChangeEdges = [], options = {}) {
+    // Resolve active edge input to a Set (or use current if not provided)
+    const edgeSet = this._resolveActiveEdgeSet(activeChangeEdges);
+
     // Check highlighting states
     const isMarked = this._isNodeMarked(nodeData);
-    const isActiveChangeEdgeNode = this._isNodeActiveChangeEdge(nodeData, activeChangeEdges);
+    const isActiveChangeEdgeNode = this._nodeOrParentMatchesActiveEdge(nodeData, edgeSet);
 
     // Apply color priority (removed dimming logic - handled by LayerStyles)
     if (isMarked) {
@@ -110,19 +113,16 @@ export class ColorManager {
   // =======================
 
   /**
-   * Update marked components (red highlighting)
+   * Update marked subtrees (red highlighting)
    * Called by store when highlight solutions change
    */
-  updateMarkedComponents(newMarkedComponents) {
+  updateMarkedSubtrees(newMarkedComponents) {
     if (Array.isArray(newMarkedComponents)) {
       this.marked = newMarkedComponents;
-      console.log("[ColorManager] Updated marked components (array):", this.marked);
     } else if (newMarkedComponents instanceof Set) {
       this.marked = [newMarkedComponents];
-      console.log("[ColorManager] Updated marked components (set):", this.marked);
     } else {
       this.marked = [];
-      console.log("[ColorManager] Cleared marked components");
     }
   }
 
@@ -131,10 +131,7 @@ export class ColorManager {
    * Called by store when current tree position changes
    */
   updateActiveChangeEdge(activeChangeEdge) {
-    console.log('[ColorManager] updateActiveChangeEdge called with:', activeChangeEdge);
     this.currentActiveChangeEdges = new Set(activeChangeEdge);
-    console.log('[ColorManager] currentActiveChangeEdges Set:', this.currentActiveChangeEdges);
-    console.log('[ColorManager] Set size:', this.currentActiveChangeEdges.size);
   }
 
   /**
@@ -161,8 +158,6 @@ export class ColorManager {
     if (!this.currentActiveChangeEdges || this.currentActiveChangeEdges.size === 0) {
       return false;
     }
-    console.log('[ColorManager] Checking downstream for linkData:', linkData);
-    console.log('[ColorManager] Current activeChangeEdges:', this.currentActiveChangeEdges);
     return this._isDownstreamOfAnyActiveChangeEdge(linkData, [this.currentActiveChangeEdges]);
   }
 
@@ -301,32 +296,60 @@ export class ColorManager {
    * Compares split_indices Sets for exact match
    */
   _isActiveChangeEdgeHighlighted(linkData, activeChangeEdge) {
-    if (!activeChangeEdge || !linkData.target?.data?.split_indices) {
-      return false;
-    }
-
-    const treeSplit = new Set(linkData.target.data.split_indices);
-
-    // Check if Sets have identical contents
-    const areSetsEqual = treeSplit.size === activeChangeEdge.size && [...treeSplit].every(element => activeChangeEdge.has(element));
-
-    return areSetsEqual;
+    if (!activeChangeEdge || !linkData.target?.data?.split_indices) return false;
+    return this._splitsEqual(linkData.target.data.split_indices, activeChangeEdge);
   }
 
   /**
    * Check if node matches any active change edge
    */
   _isNodeActiveChangeEdge(nodeData, activeChangeEdge) {
-    if (!activeChangeEdge || !nodeData.data?.split_indices) {
-      return false;
+    if (!activeChangeEdge || !nodeData?.data?.split_indices) return false;
+    return this._splitsEqual(nodeData.data.split_indices, activeChangeEdge);
+  }
+
+  /**
+   * Check if a node is either the active edge, or the parent of a child that is the active edge.
+   */
+  _nodeOrParentMatchesActiveEdge(nodeData, activeChangeEdge) {
+    if (!activeChangeEdge) return false;
+    // Exact match on the node itself
+    if (this._isNodeActiveChangeEdge(nodeData, activeChangeEdge)) return true;
+    // Immediate child match (parent highlight)
+    if (Array.isArray(nodeData?.children) && nodeData.children.length > 0) {
+      for (const child of nodeData.children) {
+        if (child?.data?.split_indices && this._splitsEqual(child.data.split_indices, activeChangeEdge)) {
+          return true;
+        }
+      }
     }
+    return false;
+  }
 
-    const treeSplit = new Set(nodeData.data.split_indices);
+  /**
+   * Normalize active edge input to a Set.
+   * - Accepts a Set directly
+   * - Accepts an array of indices
+   * - Falls back to current active edge Set stored in ColorManager
+   */
+  _resolveActiveEdgeSet(activeChangeEdges) {
+    if (activeChangeEdges instanceof Set) return activeChangeEdges;
+    if (Array.isArray(activeChangeEdges) && activeChangeEdges.length > 0 && typeof activeChangeEdges[0] === 'number') {
+      return new Set(activeChangeEdges);
+    }
+    return this.currentActiveChangeEdges || null;
+  }
 
-    // Check if Sets have identical contents
-    const areSetsEqual = treeSplit.size === activeChangeEdge.size && [...treeSplit].every(element => activeChangeEdge.has(element));
-
-    return areSetsEqual;
+  /**
+   * Compare split array with an active edge Set for equality.
+   */
+  _splitsEqual(splitArray, activeEdgeSet) {
+    if (!Array.isArray(splitArray) || !(activeEdgeSet instanceof Set)) return false;
+    if (splitArray.length !== activeEdgeSet.size) return false;
+    for (const el of splitArray) {
+      if (!activeEdgeSet.has(el)) return false;
+    }
+    return true;
   }
 
 
@@ -359,8 +382,8 @@ export class ColorManager {
   // =======================================
 
   /**
-   * Check if branch is part of marked components
-   * Uses subset logic: branch is marked if its split is subset of any marked component
+   * Check if branch is part of marked subtree (naming only)
+   * Uses subset logic: branch is marked if its split is subset of any marked set
    */
   _isComponentMarked(linkData) {
     if (!linkData.target?.data?.split_indices || !this.marked) {
@@ -410,7 +433,7 @@ export class ColorManager {
   }
 
   /**
-   * Check if node intersects with any marked component
+   * Check if node intersects with any marked subtree (naming only)
    */
   _isNodeMarked(nodeData) {
     if (!nodeData.data?.split_indices || !this.marked) {

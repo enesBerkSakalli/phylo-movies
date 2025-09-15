@@ -40,3 +40,4 @@ backend/brancharchitect-0.37.0.dist-info
 vite.log
 mcp
 .vite/deps
+.playwright-mcp

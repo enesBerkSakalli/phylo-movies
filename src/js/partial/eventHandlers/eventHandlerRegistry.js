@@ -132,7 +132,12 @@ export class EventHandlerRegistry {
           {
             id: "font-size",
             type: "input",
-            action: async (event) => await handleFontSizeChange(event),
+            action: async (event) => {
+              // Get the treeController from the store here
+              const { treeController } = useAppStore.getState();
+              // Pass it to the handler function
+              await handleFontSizeChange(event, treeController);
+            },
             description: "Font size adjustment - optimized",
           },
           {
@@ -174,7 +179,7 @@ export class EventHandlerRegistry {
             id: "marked-components-toggle",
             type: "change",
             action: async () => await handleMarkedComponentsToggle(),
-            description: "Toggle marked components highlighting",
+            description: "Toggle subtrees highlighting",
           },
           {
             id: "marked-color",
@@ -184,7 +189,7 @@ export class EventHandlerRegistry {
               const newColor = event.target.value;
               setMarkedColor(newColor);
             },
-            description: "Marked components highlighting color picker",
+            description: "Subtrees highlighting color picker",
           },
           {
             id: "dimmed-color",

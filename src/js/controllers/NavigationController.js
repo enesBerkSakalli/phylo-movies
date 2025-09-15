@@ -90,7 +90,7 @@ export class NavigationController {
     } else {
       // transition index for RFD/W-RFD charts
       return transitionResolver ?
-        transitionResolver.getDistanceIndex(currentTreeIndex) :
+        transitionResolver.getSourceTreeIndex(currentTreeIndex) :
         currentTreeIndex;
     }
   }
@@ -102,8 +102,11 @@ export class NavigationController {
   getChartNavigationCallbacks() {
     return {
       onGoToPosition: async (idx) => {
+        console.log('[NavigationController] onGoToPosition called with idx:', idx);
         const { goToPosition } = useAppStore.getState(); // Get action from store
+        console.log('[NavigationController] Calling store.goToPosition with:', idx);
         goToPosition(idx); // Dispatch action
+        console.log('[NavigationController] goToPosition completed');
       },
       onHandleDrag: async (idx) => {
         const { goToPosition } = useAppStore.getState(); // Get action from store
