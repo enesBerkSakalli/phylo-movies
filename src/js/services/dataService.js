@@ -12,13 +12,6 @@ const REQUIRED_PHYLO_FIELDS = [
   "distances"
 ];
 
-// Optional fields that should be preserved if present
-const OPTIONAL_PHYLO_FIELDS = [
-  "split_change_timeline",
-  "split_change_events",
-  "split_change_tracking",
-  "sorted_leaves"
-];
 
 // Storage keys
 const STORAGE_KEYS = {

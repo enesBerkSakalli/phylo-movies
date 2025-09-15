@@ -1,5 +1,4 @@
 import * as d3 from "d3";
-import { ChartInteractions } from "./ChartInteractions.js";
 import { ChartIndicator } from "./ChartIndicator.js";
 /**
  * Calculates consistent dimensions and margins for the chart for any container
@@ -17,18 +16,26 @@ function calculateChartDimensionsForContainer(containerId) {
       margin: { top: 20, right: 30, bottom: 60, left: 100 }
     };
   }
-  const containerWidth = container.clientWidth || 600;
+  let containerWidth = container.clientWidth || 600;
   const containerHeight = container.clientHeight || 300;
 
   // Check if in movie player bar for more compact margins
   const isInMoviePlayerBar = container.closest('.movie-player-bar') !== null;
+  
+  // Fix for movie player bar: account for removed padding
+  if (isInMoviePlayerBar) {
+    // The CSS removes 8px padding on each side, so container width includes this
+    // No need to subtract navigation width since CSS no longer extends into nav area
+    containerWidth = Math.max(200, containerWidth);
+  }
+
 
   const margin = isInMoviePlayerBar ? {
-    // Compact, fixed margins for tight layout alongside timeline
-    top: 8,
-    right: 16,
-    bottom: 28, // extra room so x-axis labels don't overlap
-    left: 40 // ensure Y-axis labels have room and do not collide with plot
+    // Minimal margins for tight layout alongside timeline - fill available space
+    top: 4,
+    right: 4,
+    bottom: 20, // minimal room for x-axis labels
+    left: 30 // minimal room for Y-axis labels
   } : {
     top: Math.max(20, containerHeight * 0.06),
     right: Math.max(30, containerWidth * 0.06),
@@ -36,13 +43,19 @@ function calculateChartDimensionsForContainer(containerId) {
     left: Math.max(100, containerWidth * 0.2)
   };
 
-  return {
+  console.log('[chartGenerator] Using margins:', margin);
+
+  const finalDimensions = {
     containerWidth,
     containerHeight,
     width: Math.max(100, containerWidth - margin.left - margin.right),
     height: Math.max(40, containerHeight - margin.top - margin.bottom),
     margin
   };
+
+  console.log('[chartGenerator] Final dimensions:', finalDimensions);
+
+  return finalDimensions;
 }
 
 /**
@@ -223,29 +236,29 @@ function drawChart(svg, data, scales, config, containerId) {
   return { chartArea, chartLine };
 }
 
-/**
- * Creates interactive data points using ChartInteractions
- */
-function drawDataPoints(svg, data, scales, config, containerId, onPositionChange) {
-  const interactions = new ChartInteractions(svg, config, containerId);
-  return interactions.createInteractiveDataPoints(data, scales, onPositionChange);
-}
 
 /**
- * Creates or updates the ship position indicator using ChartIndicator
+ * Creates or updates the position indicator using ChartIndicator
  * This is a centralized helper for consistent indicator updates
  */
-export function updateShipPosition(position, scales, config, data, containerId, onPositionChange = null) {
+export function updateIndicatorPosition(position, scales, config, data, containerId, onPositionChange = null) {
+  console.log('chartGenerator: updateIndicatorPosition called with position:', position);
   const svg = d3.select(`#${containerId}`).select("svg").select("g");
 
   // Get or create indicator instance (store on SVG to avoid recreation)
   let indicator = svg.property('__indicator');
   if (!indicator) {
+    console.log('chartGenerator: Creating new ChartIndicator instance');
     indicator = new ChartIndicator(svg, config, containerId);
     svg.property('__indicator', indicator);
+  } else {
+    console.log('chartGenerator: Using existing ChartIndicator instance');
   }
 
-  return indicator.updateShipPosition(position, scales, data, onPositionChange);
+  console.log('chartGenerator: Calling indicator.updateIndicatorPosition');
+  const result = indicator.updateIndicatorPosition(position, scales, data, onPositionChange);
+  console.log('chartGenerator: indicator.updateIndicatorPosition completed');
+  return result;
 }
 
 
@@ -278,14 +291,17 @@ function renderChart(data, config, containerId, onPositionChange = null) {
   // Draw initial chart elements
   // Draw chart first, then axes on top to avoid the plot overlapping the axes
   drawChart(svg, data, { xScale, yScale }, config, containerId);
-  let xAxisGroup = drawAxesAndGrid(svg, { xScale, yScale, actualTicks }, dimensions, config);
-  drawDataPoints(svg, data, { xScale, yScale }, config, containerId, onPositionChange);
+  drawAxesAndGrid(svg, { xScale, yScale, actualTicks }, dimensions, config);
 
   // Zoom removed for performance and simplicity
 
   return {
-    updatePositionChartIndex: (chartIndex) =>
-      updateShipPosition(chartIndex, { xScale, yScale }, config, data, containerId, onPositionChange),
+    updatePositionChartIndex: (chartIndex) => {
+      console.log('chartGenerator: updatePositionChartIndex called with:', chartIndex);
+      const result = updateIndicatorPosition(chartIndex, { xScale, yScale }, config, data, containerId, onPositionChange);
+      console.log('chartGenerator: updateIndicatorPosition completed');
+      return result;
+    },
     destroy: () => {
       const container = document.getElementById(containerId);
       if (container) {

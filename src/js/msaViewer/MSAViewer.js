@@ -66,11 +66,18 @@ export default class MSAViewer {
       this.container = document.createElement('div');
       this.container.classList.add(CLASS.container);
 
-      // Create controls container
+      // Create renderer container first
+      const rendererContainer = document.createElement('div');
+      rendererContainer.classList.add(CLASS.rendererContainer);
+      this.container.appendChild(rendererContainer);
+
+      // Initialize the deck.gl renderer BEFORE creating controls
+      this.renderer = new MSADeckGLViewer(rendererContainer, { ...DEFAULTS.renderer });
+
       const controlsContainer = document.createElement('div');
       controlsContainer.classList.add(CLASS.controls);
 
-      // Create region selection controls
+      // Create region selection controls with properly initialized renderer
       const regionControlsData = createRegionControls(this.renderer);
       controlsContainer.appendChild(regionControlsData.container);
 
@@ -79,14 +86,6 @@ export default class MSAViewer {
       this.clearBtn = regionControlsData.clearBtn;
 
       this.container.appendChild(controlsContainer);
-
-      // Create renderer container
-      const rendererContainer = document.createElement('div');
-      rendererContainer.classList.add(CLASS.rendererContainer);
-      this.container.appendChild(rendererContainer);
-
-      // Initialize the deck.gl renderer
-      this.renderer = new MSADeckGLViewer(rendererContainer, { ...DEFAULTS.renderer });
 
       // Create WinBox window
       this.winBoxInstance = new WinBox(UI.windowTitle, {

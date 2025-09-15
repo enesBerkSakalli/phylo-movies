@@ -27,7 +27,7 @@ export function openModalChart(options) {
     yMax = 1;
     onClickHandler = onGoToFullTreeDataIndex;
     chartSpecificIndexToSequence = (idx) => transitionResolver.getTreeIndexForDistanceIndex(idx);
-    chartSpecificSequenceToIndex = (idx) => transitionResolver.getDistanceIndex(idx);
+    chartSpecificSequenceToIndex = (idx) => transitionResolver.getSourceTreeIndex(idx);
     chartTitle = "Relative Robinson-Foulds Distance";
   } else if (barOptionValue === "w-rfd") {
     data = weightedRobinsonFouldsDistances;
@@ -36,7 +36,7 @@ export function openModalChart(options) {
     yMax = weightedRobinsonFouldsDistances && weightedRobinsonFouldsDistances.length > 0 ? Math.max(...weightedRobinsonFouldsDistances) : 0;
     onClickHandler = onGoToFullTreeDataIndex;
     chartSpecificIndexToSequence = (idx) => transitionResolver.getTreeIndexForDistanceIndex(idx);
-    chartSpecificSequenceToIndex = (idx) => transitionResolver.getDistanceIndex(idx);
+    chartSpecificSequenceToIndex = (idx) => transitionResolver.getSourceTreeIndex(idx);
     chartTitle = "Weighted Robinson-Foulds Distance";
   } else if (barOptionValue === "scale") {
     data = scaleList.map((s) => s.value);

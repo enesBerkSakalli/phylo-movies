@@ -36,74 +36,13 @@ import { loadAllPartials } from "../partial/loadPartials.js";
 import { ScreenRecorder } from "../services/record.js";
 import { phyloData } from '../services/dataService.js';
 import { getPhyloMovieData, fetchTreeData } from "../services/dataManager.js";
+import { notifications } from '../partial/eventHandlers/notificationSystem.js';
+import { initializeTheme } from './theme.js';
 
 let eventHandlersAttached = false;
 
-// ======================
-// THEME TOGGLE (system/light/dark)
-// ======================
-const THEME_KEY = 'app-theme-preference'; // 'system' | 'light' | 'dark'
-
-function applyThemePreference(pref) {
-  const root = document.documentElement;
-  if (pref === 'light') {
-    root.setAttribute('data-theme', 'light');
-  } else if (pref === 'dark') {
-    root.setAttribute('data-theme', 'dark');
-  } else {
-    root.removeAttribute('data-theme'); // System
-  }
-  // Update store-managed tree colors to match theme
-  try {
-    useAppStore.getState().applyThemeColors(pref);
-  } catch {}
-  updateThemeToggleIcon(pref);
-}
-
-function getSavedThemePreference() {
-  const saved = localStorage.getItem(THEME_KEY);
-  return saved === 'light' || saved === 'dark' || saved === 'system' ? saved : 'system';
-}
-
-function saveThemePreference(pref) {
-  localStorage.setItem(THEME_KEY, pref);
-}
-
-function cycleThemePreference(current) {
-  // System → Dark → Light → System
-  if (current === 'system') return 'dark';
-  if (current === 'dark') return 'light';
-  return 'system';
-}
-
-function updateThemeToggleIcon(pref) {
-  const iconEl = document.getElementById('theme-toggle-icon');
-  if (!iconEl) return;
-  iconEl.textContent = pref === 'dark' ? 'dark_mode' : pref === 'light' ? 'light_mode' : 'computer';
-}
-
-function setupThemeToggle() {
-  // Apply saved preference on load
-  const pref = getSavedThemePreference();
-  applyThemePreference(pref);
-
-  // Hook up the button if present
-  const btn = document.getElementById('theme-toggle');
-  if (btn) {
-    btn.addEventListener('click', () => {
-      const current = getSavedThemePreference();
-      const next = cycleThemePreference(current);
-      saveThemePreference(next);
-      applyThemePreference(next);
-    });
-  }
-
-  // Keep icon in sync if DOM was late
-  requestAnimationFrame(() => updateThemeToggleIcon(getSavedThemePreference()));
-}
-
-// Apply saved theme preference as early as possible to minimize flash
-applyThemePreference(getSavedThemePreference());
+// Initialize theme as early as possible
+initializeTheme();
 
 /**
  * Asynchronously loads all required HTML partials into their designated containers.
@@ -112,34 +51,24 @@ applyThemePreference(getSavedThemePreference());
  * @function loadAllRequiredPartials
  * @returns {Promise<boolean>} True if all partials are loaded and elements verified, false otherwise.
  */
-async function loadAllRequiredPartials() {
+async function loadAllRequiredPartials(hasMsa = true) {
 
   try {
     // Add Material Web typography styles to document
     document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
-    await loadAllPartials([
+    const partials = [
       // tree_navigation.html removed - no navigation-container in visualization.html
-      {
-        url: "/src/partials/buttons-file-ops.html",
-        containerId: "buttons-file-container",
-      },
-      {
-        url: "/src/partials/buttons-msa.html",
-        containerId: "buttons-msa-container",
-      },
-      {
-        url: "/src/partials/appearance.html",
-        containerId: "appearance-container",
-      },
-      {
-        url: "/src/partials/top_scale_bar.html",
-        containerId: "top-scale-bar-container",
-      },
-    {
-        url: "/src/partials/movie-player-bar.html",
-        containerId: "movie-player-container",
-      },
-    ]);
+      { url: "/src/partials/buttons-file-ops.html", containerId: "buttons-file-container" },
+      { url: "/src/partials/appearance.html", containerId: "appearance-container" },
+      { url: "/src/partials/top_scale_bar.html", containerId: "top-scale-bar-container" },
+      { url: "/src/partials/movie-player-bar.html", containerId: "movie-player-container" },
+    ];
+
+    if (hasMsa) {
+      partials.splice(1, 0, { url: "/src/partials/buttons-msa.html", containerId: "buttons-msa-container" });
+    }
+
+    await loadAllPartials(partials);
 
     // Verify important elements exist
     const requiredElements = [
@@ -223,22 +152,18 @@ async function initializeGuiAndEvents(parsedData) {
     // No need to read from DOM or pass to GUI constructor
 
     // Always use WebGL container
-    const storeState = useAppStore.getState();
-    const { useDeckGL } = storeState;
     const webglContainer = document.getElementById('webgl-container');
     if (webglContainer) webglContainer.style.display = 'block';
 
-    // Create GUI with conditional controller
-    const TreeController = useDeckGL ? DeckGLTreeAnimationController : undefined;
-    console.log('[Main] TreeController selected:', TreeController ? 'DeckGLTreeAnimationController' : 'WebGLTreeAnimationController');
-    console.log('[Main] TreeController constructor:', TreeController);
+    // Create GUI with the DeckGL controller
+    const TreeController = DeckGLTreeAnimationController;
+    console.log('[Main] Using TreeController:', 'DeckGLTreeAnimationController');
     const gui = new Gui(dataToUse, { TreeController });
 
     // Set the gui instance into the store for global access
     useAppStore.getState().setGui(gui);
 
-    // Create recorder with notifications support
-    const { notifications } = await import('../partial/eventHandlers/notificationSystem.js');
+
     const recorder = new ScreenRecorder({
       notifications: notifications,
       autoSave: false // Manual save prompting is handled by the recorder
@@ -280,7 +205,11 @@ async function initializeGuiAndEvents(parsedData) {
 async function initializeAppFromParsedData(parsedData) {
   try {
 
-    const partialsLoaded = await loadAllRequiredPartials();
+    const hasMsa = !!(parsedData?.msa && parsedData.msa.sequences && Object.keys(parsedData.msa.sequences).length > 0);
+    try {
+      document.documentElement.setAttribute('data-has-msa', hasMsa ? 'true' : 'false');
+    } catch {}
+    const partialsLoaded = await loadAllRequiredPartials(hasMsa);
     if (!partialsLoaded) {
       alert(
         "Error: Failed to load essential interface components. Please refresh the page or check the console."
@@ -288,8 +217,25 @@ async function initializeAppFromParsedData(parsedData) {
       return; // Stop further execution if partials failed
     }
 
-    // Setup theme toggle now that DOM is ready
-    setupThemeToggle();
+    // Hide MSA-related UI if no MSA data is present
+    try {
+      if (!hasMsa) {
+        // Hide MSA controls group and header
+        const msaGroup = document.getElementById('msa-controls');
+        if (msaGroup) {
+          // Hide the entire group and the header above it
+          msaGroup.hidden = true;
+          const header = msaGroup.previousElementSibling;
+          if (header && header.classList?.contains('msa-header')) header.hidden = true;
+        }
+        // Hide the status chips (No alignment / Alignment loaded)
+        const msaChips = document.getElementById('msa-status-chips');
+        if (msaChips) msaChips.hidden = true;
+        // Hide the timeline MSA window chip if present
+        const msaWindowChip = document.getElementById('msa-window-chip');
+        if (msaWindowChip) msaWindowChip.hidden = true;
+      }
+    } catch {}
 
     await initializeGuiAndEvents(parsedData);
 
@@ -305,71 +251,91 @@ async function initializeAppFromParsedData(parsedData) {
   }
 }
 
-// MAIN EXECUTION BLOCK
-// Determines if the current page is the visualization page or the index/upload page.
-const isVisualizationPage =
-  document.getElementById("webgl-container") !== null;
-
-if (isVisualizationPage) {
-  // Initialization logic for the visualization page (visualization.html)
-  // This IIFE (Immediately Invoked Function Expression) is async to use await for data loading.
-  (async () => {
-    try {
-      // Attempt to get validated phyloMovieData using the dataManager
-      const parsedData = await getPhyloMovieData();
-      if (!parsedData) {
-        // If no data or data is invalid, alert the user and redirect to the upload page.
-        alert(
-          "Error: No visualization data found or data is invalid.\n\nRedirecting to the upload form."
-        );
-        window.location.href = "/index.html";
-        return; // Stop further execution on this page
-      }
-
-
-      // Update UI elements with loaded data (file name, embedding status, window size)
-      const compactFileNameElement = document.getElementById("compactFileName");
-      if (compactFileNameElement) {
-        compactFileNameElement.textContent = parsedData.file_name || "Unknown File";
-      }
-
-
-
-
-      // Proceed with the main application initialization
-      await initializeAppFromParsedData(parsedData);
-
-    } catch (e) {
-      // Catch any critical errors during the startup process
-      console.error("[phylo-movies] Critical error during page load and data initialization:", e);
-      alert(
-        `Error during application startup: ${e.message}\n\nAttempting to redirect to the upload form.`
-      );
-      // As a fallback, try to clear potentially corrupted data and redirect to index.html
+// MAIN EXECUTION BLOCK for the visualization page
+(async () => {
+  try {
+    // Attempt to get validated phyloMovieData using the dataManager
+    const parsedData = await getPhyloMovieData();
+    if (!parsedData) {
+      // No stored data found. Try to load bundled example data as a fallback.
       try {
-        await phyloData.remove();
-      } catch (removeError) {
-        console.error("[phylo-movies] Failed to remove phyloMovieData:", removeError);
-      }
-      window.location.href = "/index.html";
-    }
-  })();
-} else {
-  // Setup for the index.html page (upload form)
+        let exampleData = null;
 
-  // Attach event listener to the phylo-form once the DOM is fully loaded.
-  document.addEventListener("DOMContentLoaded", () => {
-    const form = document.getElementById("phylo-form");
-    if (form) {
-      form.addEventListener("submit", async (event) => {
-        event.preventDefault(); // Prevent default form submission
-        const formData = new FormData(form);
-        // Call fetchTreeData from dataManager to process the form and redirect.
-        // Errors are handled within fetchTreeData.
-        await fetchTreeData(formData);
-      });
-    } else {
-      console.warn("[phylo-movies] #phylo-form not found on this page.");
+        const base = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL) ? import.meta.env.BASE_URL : '/';
+        const candidates = [
+          `${base}example.json`, // correct for GH Pages when base=/repo/
+          '/example.json',       // dev server root
+          'example.json'         // relative
+        ];
+
+        for (const url of candidates) {
+          try {
+            const resp = await fetch(url);
+            if (resp.ok) {
+              exampleData = await resp.json();
+              break;
+            }
+          } catch {}
+        }
+
+        if (!exampleData) throw new Error('Example data not available');
+
+        // Set a default file name if missing
+        if (!exampleData.file_name) {
+          exampleData.file_name = 'example.json';
+        }
+
+        // Persist and continue initialization with example data
+        await phyloData.set(exampleData);
+
+        const compactFileNameElement = document.getElementById("compactFileName");
+        if (compactFileNameElement) {
+          compactFileNameElement.textContent = exampleData.file_name;
+        }
+
+        await initializeAppFromParsedData(exampleData);
+        return; // Done initializing with example data
+      } catch (fallbackErr) {
+        console.error('[phylo-movies] Failed to load example data fallback:', fallbackErr);
+        alert(
+          "Error: No visualization data found and example could not be loaded.\n\nRedirecting to the upload form."
+        );
+        {
+          const base = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL) ? import.meta.env.BASE_URL : '/';
+          window.location.href = `${base}index.html`;
+        }
+        return;
+      }
     }
-  });
-}
+
+
+    // Update UI elements with loaded data (file name, embedding status, window size)
+    const compactFileNameElement = document.getElementById("compactFileName");
+    if (compactFileNameElement) {
+      compactFileNameElement.textContent = parsedData.file_name || "Unknown File";
+    }
+
+
+
+
+    // Proceed with the main application initialization
+    await initializeAppFromParsedData(parsedData);
+
+  } catch (e) {
+    // Catch any critical errors during the startup process
+    console.error("[phylo-movies] Critical error during page load and data initialization:", e);
+    alert(
+      `Error during application startup: ${e.message}\n\nAttempting to redirect to the upload form.`
+    );
+    // As a fallback, try to clear potentially corrupted data and redirect to index.html
+    try {
+      await phyloData.remove();
+    } catch (removeError) {
+      console.error("[phylo-movies] Failed to remove phyloMovieData:", removeError);
+    }
+    {
+      const base = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL) ? import.meta.env.BASE_URL : '/';
+      window.location.href = `${base}index.html`;
+    }
+  }
+})();

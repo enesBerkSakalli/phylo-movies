@@ -198,6 +198,31 @@ You can add your own data files here for local testing, or use these samples to 
 
 ## 🤝 Contributing
 
+## 🌐 GitHub Pages (Static Demo)
+
+You can host a fully static demo of the frontend on GitHub Pages without any backend. The visualization will automatically load an example dataset if no data is present.
+
+Build and deploy:
+
+- Build for GitHub Pages and include the example dataset:
+
+  ```bash
+  npm run build:gh
+  ```
+
+- Publish the `dist/` folder as your Pages site.
+
+Direct links (replace <user>/<repo>):
+
+- Home: `https://<user>.github.io/<repo>/pages/home/`
+- Visualization (auto-loads example if empty): `https://<user>.github.io/<repo>/pages/visualization/`
+
+Notes:
+
+- The build script sets the base to `/<repo>/` and copies `example.json` into `dist/` so it is available at `/<repo>/example.json`.
+- If your repository name is different from `phylo-movies`, update `--base` in `package.json` → `build:gh`.
+- On GitHub Pages there is no backend; use the "Load Example" button or open the visualization link directly.
+
 Contributions are welcome! Please feel free to:
 
 - Report bugs and issues

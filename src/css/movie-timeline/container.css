@@ -1,17 +1,15 @@
-/* Timeline container and base visual layer sizing */
-
 .interpolation-timeline-container {
   min-height: 52px;
   padding: 4px;
 }
 
 .timeline-visual-layer {
-  min-height: 28px;
-  height: 28px;
+  min-height: var(--timeline-height, 35px);
+  height: var(--timeline-height, 35px);
+  padding: 0 8px;
 }
 
-/* Ensure deck.gl overlay canvas is transparent and layered above timeline items */
 .interpolation-timeline-container .deck-canvas {
   background: transparent !important;
-  pointer-events: auto; /* enable direct interactions in pure deck mode */
+  pointer-events: auto;
 }

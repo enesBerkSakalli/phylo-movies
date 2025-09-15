@@ -9,7 +9,7 @@ import { useAppStore } from '../../../core/store.js';
 export class LayerManager {
   constructor() {
     // Constants for consistent styling
-    this.MIN_NODE_RADIUS = 4; // Reduced for better overall scale
+    this.MIN_NODE_RADIUS = 3; // Smaller minimum to allow tiny internal nodes
 
     this._layerConfigs = {
       linkOutlines: {
@@ -17,7 +17,7 @@ export class LayerManager {
         LayerClass: PathLayer,
         defaultProps: {
           widthUnits: 'pixels',
-          widthMinPixels: 3,
+          widthMinPixels: 4,
           jointRounded: true,
           capRounded: true
         }
@@ -27,7 +27,7 @@ export class LayerManager {
         LayerClass: PathLayer,
         defaultProps: {
           widthUnits: 'pixels',
-          widthMinPixels: 2,
+          widthMinPixels: 3,
           jointRounded: true,
           capRounded: true
         }
@@ -37,7 +37,7 @@ export class LayerManager {
         LayerClass: PathLayer,
         defaultProps: {
           widthUnits: 'pixels',
-          widthMinPixels: 1,
+          widthMinPixels: 2,
           jointRounded: true,
           capRounded: true
         }
@@ -48,8 +48,8 @@ export class LayerManager {
         defaultProps: {
           lineWidthUnits: 'pixels',
           radiusUnits: 'pixels',
-          radiusMinPixels: 1,
-          getLineWidth: 2
+          radiusMinPixels: 3,
+          getLineWidth: 3
         }
       },
       labels: {

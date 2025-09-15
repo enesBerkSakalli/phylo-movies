@@ -8,8 +8,6 @@ export class TimelineTooltip {
 
   _ensureCreated() {
     if (this.el) return;
-
-    // Ensure styles are injected
     TimelineTooltipStyles.injectStyles();
 
     const el = document.createElement('div');
@@ -31,7 +29,6 @@ export class TimelineTooltip {
     if (!this.el) return;
     this.el.style.display = 'none';
     this.visible = false;
-    // Remove element to keep DOM clean; recreated on next show
     if (this.el.parentNode) this.el.parentNode.removeChild(this.el);
     this.el = null;
   }

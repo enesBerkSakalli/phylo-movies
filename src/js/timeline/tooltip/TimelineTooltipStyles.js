@@ -1,15 +1,5 @@
-/**
- * Timeline Tooltip Styles Module
- * Manages CSS styles for timeline tooltips
- */
-
 export class TimelineTooltipStyles {
   static STYLE_ID = 'timeline-tooltip-styles';
-
-  /**
-   * Get the CSS styles for timeline tooltips
-   * @returns {string} CSS styles as string
-   */
   static getStyles() {
     return `
       .timeline-tooltip .tt-header {
@@ -56,13 +46,9 @@ export class TimelineTooltipStyles {
       }
     `;
   }
-
-  /**
-   * Inject styles into the document head if not already present
-   */
   static injectStyles() {
     if (document.getElementById(this.STYLE_ID)) {
-      return; // Already injected
+      return;
     }
 
     const style = document.createElement('style');
@@ -70,11 +56,6 @@ export class TimelineTooltipStyles {
     style.textContent = this.getStyles();
     document.head.appendChild(style);
   }
-
-  /**
-   * Get the default inline styles for the tooltip element
-   * @returns {string} CSS styles for the tooltip element
-   */
   static getElementStyles() {
     return `
       position: fixed;
@@ -95,10 +76,6 @@ export class TimelineTooltipStyles {
       line-height: var(--md-sys-typescale-body-large-line-height, 1.5);
     `;
   }
-
-  /**
-   * Remove styles from document head
-   */
   static removeStyles() {
     const styleElement = document.getElementById(this.STYLE_ID);
     if (styleElement) {

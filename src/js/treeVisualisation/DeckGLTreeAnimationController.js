@@ -29,7 +29,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
     // Flow trails history: Map of element id -> array of past positions
     this._trailHistory = new Map();
-    
+
     // Track last interpolation source to detect when we start a new interpolation
     this._lastInterpolationFromIndex = null;
 
@@ -37,9 +37,25 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     this._lastFocusedTreeIndex = null;
   }
 
+  startAnimation() {
+    const { play } = useAppStore.getState();
+    play(); // Set store to playing state
+    this._animationLoop(); // Start the controller's animation loop
+  }
+
+  stopAnimation() {
+    if (this.animationFrameId) {
+      this.animationFrameId.stop();
+      this.animationFrameId = null;
+    }
+    // The store's stop() action will be called by the Gui controller
+  }
+
   _handleStyleChange() {
     this.renderAllElements();
   }
+
+  
 
   setCameraMode(mode) {
     this.deckManager.setCameraMode(mode, { preserveTarget: true });
@@ -63,7 +79,12 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
     const layerData = this.dataConverter.convertTreeToLayerData(
       currentLayout.tree,
-      { extensionRadius, labelRadius }
+      {
+        extensionRadius,
+        labelRadius,
+        canvasWidth: currentLayout.width,
+        canvasHeight: currentLayout.height
+      }
      );
 
     // Append trails if enabled
@@ -134,12 +155,22 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     );
     const dataFrom = this.dataConverter.convertTreeToLayerData(
       layoutFrom.tree,
-      { extensionRadius, labelRadius }
+      {
+        extensionRadius,
+        labelRadius,
+        canvasWidth: layoutFrom.width,
+        canvasHeight: layoutFrom.height
+      }
     );
 
     const dataTo = this.dataConverter.convertTreeToLayerData(
       layoutTo.tree,
-      { extensionRadius, labelRadius }
+      {
+        extensionRadius,
+        labelRadius,
+        canvasWidth: layoutTo.width,
+        canvasHeight: layoutTo.height
+      }
     );
 
     const interpolatedData = this.treeInterpolator.interpolateTreeData(dataFrom, dataTo, t);

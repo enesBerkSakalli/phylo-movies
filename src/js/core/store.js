@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import TransitionIndexResolver from './TransitionIndexResolver.js';
 import calculateScales, { getMaxScaleValue } from '../utils/scaleUtils.js'; // ADDED
-import { getIndexMappings } from './IndexMapping.js';
 import { ColorManager } from '../treeVisualisation/systems/ColorManager.js';
 import { clamp, easeInOutCubic } from '../utils/MathUtils.js';
 
@@ -10,10 +9,8 @@ export const TREE_COLOR_CATEGORIES = {
   defaultColor: "#000000",
   markedColor: "#ff5722",
   strokeColor: "#000000",
-  changingColor: "#ffa500",
-    // Highlighting colors for different types
+  // Highlighting colors for different types
   activeChangeEdgeColor: "#2196f3", // Color for edges where active changes are happening
-  atomCoversColor: "#9c27b0",
   // Dimming colors for inactive elements
   dimmedColor: "#cccccc",
 };
@@ -77,9 +74,8 @@ export const useAppStore = create((set, get) => ({
   branchTransformation: 'none',
   monophyleticColoringEnabled: true,
   activeChangeEdgesEnabled: true, // Toggle for active change edges highlighting
-  markedComponentsEnabled: true, // Toggle for marked components highlighting
+  markedComponentsEnabled: true, // Toggle for marked subtrees highlighting (naming only)
   dimmingEnabled: false, // For dimming non-descendants
-  useDeckGL: true, // Feature flag for Deck.gl testing - SET TO TRUE for testing
   cameraMode: 'orthographic', // Camera mode for Deck.gl ('orthographic' or 'orbit')
   msaWindowSize: 1000, // Default value
   msaStepSize: 50,     // Default value
@@ -112,11 +108,13 @@ export const useAppStore = create((set, get) => ({
     console.log('[Store] Initializing with movieData - window_size:', movieData?.window_size, 'window_step_size:', movieData?.window_step_size);
     console.log('[Store] MSA data - window_size:', movieData?.msa?.window_size, 'step_size:', movieData?.msa?.step_size);
 
+    console.log("Store: movieData.pair_interpolation_ranges:", movieData.pair_interpolation_ranges?.length, "items");
+
     const resolver = new TransitionIndexResolver(
       movieData.tree_metadata,
       movieData.distances?.robinson_foulds,
-      movieData.split_change_tracking,
       movieData.tree_pair_solutions || {},
+      movieData.pair_interpolation_ranges || [],
       true // debug
     );
 
@@ -132,8 +130,6 @@ export const useAppStore = create((set, get) => ({
     // Sync ColorManager with store's monophyletic setting
     const initialMonophyleticColoring = get().monophyleticColoringEnabled !== undefined ? get().monophyleticColoringEnabled : true;
     colorManager.setMonophyleticColoring(initialMonophyleticColoring);
-
-    console.log(movieData)
 
     // Derive MSA column count if available (dictionary: taxa -> sequence)
     let msaColumnCount = 0;
@@ -182,24 +178,20 @@ export const useAppStore = create((set, get) => ({
     });
 
     // Initialize ColorManager with marked components for the initial tree position (index 0)
-    const { getActualHighlightData, updateColorManagerMarkedComponents,  updateColorManagerActiveChangeEdge, getCurrentActiveChangeEdge } = get();
+    const { getActualHighlightData, updateColorManagerMarkedSubtrees,  updateColorManagerActiveChangeEdge, getCurrentActiveChangeEdge } = get();
     const initialMarkedComponents = getActualHighlightData();
     const initialActiveChangeEdge = getCurrentActiveChangeEdge();
 
-    updateColorManagerMarkedComponents(initialMarkedComponents);
+    updateColorManagerMarkedSubtrees(initialMarkedComponents);
     updateColorManagerActiveChangeEdge(initialActiveChangeEdge);
   },
 
   play: () => {
-    const { animationProgress, treeList, animationSpeed } = get();
+    const { playing, animationProgress, treeList, animationSpeed } = get();
+    if (playing) return;
+
     const totalTrees = treeList.length;
-
-    // If playback is at the end (progress >= 1), restart from the beginning.
-    // Otherwise, resume from the last known progress.
     const initialProgress = animationProgress >= 1.0 ? 0 : animationProgress;
-
-    // Adjust start time to account for the initial progress.
-    // This pretends the animation started earlier, so the elapsed time calculation is correct.
     const timeOffset = (initialProgress * (totalTrees - 1) / animationSpeed) * 1000;
     const adjustedStartTime = performance.now() - timeOffset;
 
@@ -208,6 +200,7 @@ export const useAppStore = create((set, get) => ({
       animationStartTime: adjustedStartTime,
       animationProgress: initialProgress
     });
+    // NO animation loop here. The TreeAnimationController is responsible for driving the updates.
   },
 
   /**
@@ -322,18 +315,32 @@ export const useAppStore = create((set, get) => ({
    * @param {string} [direction] - Optional navigation direction override
    */
   goToPosition: (position, direction) => {
+    console.log('[Store] goToPosition called with position:', position, 'direction:', direction);
     const { treeList, currentTreeIndex, renderInProgress } = get();
+    console.log('[Store] goToPosition - treeList:', treeList?.length, 'currentTreeIndex:', currentTreeIndex, 'renderInProgress:', renderInProgress);
 
     // Only skip if actively rendering, not during general updates
-    if (renderInProgress) return;
+    if (renderInProgress) {
+      console.log('[Store] goToPosition skipped - renderInProgress:', renderInProgress);
+      return;
+    }
+
+    if (!treeList || treeList.length === 0) {
+      console.log('[Store] goToPosition skipped - no treeList');
+      return;
+    }
 
     const newIndex = clamp(position, 0, treeList.length - 1);
+    console.log('[Store] goToPosition - currentTreeIndex:', currentTreeIndex, 'newIndex:', newIndex, 'treeList.length:', treeList.length);
+
     if (newIndex !== currentTreeIndex) {
       let navDirection = direction;
       if (!navDirection) {
         // Auto-detect direction based on position change
         navDirection = newIndex > currentTreeIndex ? 'forward' : 'backward';
       }
+
+      console.log('[Store] goToPosition - updating from', currentTreeIndex, 'to', newIndex, 'direction:', navDirection);
 
       // **THE FIX**: Calculate and set animationProgress along with the tree index.
       const totalTrees = treeList.length;
@@ -347,13 +354,8 @@ export const useAppStore = create((set, get) => ({
         animationProgress: newAnimationProgress // Sync animation progress
       });
 
-      // Automatically update ColorManager with marked components for new position
-    // Initialize ColorManager with marked components for the initial tree position (index 0)
-      const { getActualHighlightData, updateColorManagerMarkedComponents,  updateColorManagerActiveChangeEdge, getCurrentActiveChangeEdge } = get();
-      const markedComponents = getActualHighlightData();
-      updateColorManagerMarkedComponents(markedComponents);
-      const activeChangeEdge = getCurrentActiveChangeEdge();
-      updateColorManagerActiveChangeEdge(activeChangeEdge);
+      // The subscription will automatically handle the color manager update.
+      // No need for manual calls here.
     }
   },
 
@@ -444,21 +446,21 @@ export const useAppStore = create((set, get) => ({
   },
 
   /**
-   * Set whether marked components highlighting is enabled.
-   * @param {boolean} enabled - Whether marked components highlighting is enabled.
+   * Set whether marked subtrees highlighting is enabled (naming only).
+   * @param {boolean} enabled - Whether marked subtrees highlighting is enabled.
    */
   setMarkedComponentsEnabled: (enabled) => {
     set({ markedComponentsEnabled: enabled });
 
-    // Update ColorManager - clear or restore based on enabled state
-    const { updateColorManagerMarkedComponents, getActualHighlightData } = get();
+    // Update ColorManager - clear or restore based on enabled state (naming only)
+    const { updateColorManagerMarkedSubtrees, getActualHighlightData } = get();
     if (!enabled) {
-      // Clear marked components when disabled
-      updateColorManagerMarkedComponents([]);
+      // Clear marked subtrees when disabled
+      updateColorManagerMarkedSubtrees([]);
     } else {
-      // Restore marked components when enabled
+      // Restore marked subtrees when enabled
       const markedComponents = getActualHighlightData();
-      updateColorManagerMarkedComponents(markedComponents);
+      updateColorManagerMarkedSubtrees(markedComponents);
     }
   },
 
@@ -468,14 +470,6 @@ export const useAppStore = create((set, get) => ({
    */
   setDimmingEnabled: (enabled) => set({ dimmingEnabled: enabled }),
 
-
-
-  /**
-   * Toggle function for Deck.gl testing
-   */
-  toggleDeckGL: () => set(state => ({
-    useDeckGL: !state.useDeckGL
-  })),
 
   /**
    * Motion trails toggles and parameters
@@ -602,73 +596,8 @@ export const useAppStore = create((set, get) => ({
    */
   clearStickyChartPosition: () => set({ stickyChartPosition: undefined }),
 
-  // --- Anchor Helpers ---
-  /**
-   * Returns anchor context for the current position.
-   * { pairKey, startAnchorSeqIndex, endAnchorSeqIndex, fullTreeIndex }
-   * - If on an anchor: fullTreeIndex is >= 0, startAnchorSeqIndex is that anchor, endAnchorSeqIndex is the next anchor if available.
-   * - If within a transition: fullTreeIndex is -1, pairKey defines the [k,k+1] anchors.
-   */
-  getCurrentAnchorPair: () => {
-    const state = get();
-    const seqIndex = state.currentTreeIndex ?? 0;
-    const resolver = state.transitionResolver;
-    const fti = resolver?.fullTreeIndices || [];
-    const md = state.movieData?.tree_metadata?.[seqIndex];
-    const onAnchor = resolver?.getFullTreeIndex ? resolver.getFullTreeIndex(seqIndex) : -1;
 
-    if (onAnchor >= 0) {
-      const startAnchorSeqIndex = fti[onAnchor] ?? -1;
-      const endAnchorSeqIndex = fti[onAnchor + 1] ?? -1;
-      return {
-        pairKey: null,
-        startAnchorSeqIndex,
-        endAnchorSeqIndex,
-        fullTreeIndex: onAnchor
-      };
-    }
 
-    const pairKey = md?.tree_pair_key || null;
-    if (typeof pairKey === 'string') {
-      const m = pairKey.match(/pair_(\d+)_(\d+)/);
-      if (m) {
-        const k = parseInt(m[1], 10);
-        return {
-          pairKey,
-          startAnchorSeqIndex: fti[k] ?? -1,
-          endAnchorSeqIndex: fti[k + 1] ?? -1,
-          fullTreeIndex: -1
-        };
-      }
-    }
-    // Fallback to nearest anchor if pairKey missing
-    const { nearestFullTreeSeqIndex } = getIndexMappings(state);
-    const nearestIdx = fti.findIndex(v => v === nearestFullTreeSeqIndex);
-    return {
-      pairKey: null,
-      startAnchorSeqIndex: nearestFullTreeSeqIndex ?? -1,
-      endAnchorSeqIndex: fti[nearestIdx + 1] ?? -1,
-      fullTreeIndex: nearestIdx
-    };
-  },
-
-  /**
-   * Returns the nearest full-tree (anchor) sequence index for the current position.
-   */
-  getNearestAnchorSeqIndex: () => {
-    const state = get();
-    const { nearestFullTreeSeqIndex } = getIndexMappings(state);
-    return nearestFullTreeSeqIndex ?? 0;
-  },
-
-  /**
-   * Returns the nearest full-tree (anchor) chart index (0..N-1).
-   */
-  getNearestAnchorChartIndex: () => {
-    const state = get();
-    const { nearestFullTreeChartIndex } = getIndexMappings(state);
-    return nearestFullTreeChartIndex ?? 0;
-  },
 
   // --- Rendering Lock ---
   /**
@@ -700,6 +629,35 @@ export const useAppStore = create((set, get) => ({
     }
 
     set({ treeController: controller });
+
+    // When a tree controller is first registered, apply the current ColorManager state
+    // to ensure the initial tree is properly colored
+    if (controller) {
+      const { getActualHighlightData, updateColorManagerMarkedSubtrees, 
+              getCurrentActiveChangeEdge, updateColorManagerActiveChangeEdge,
+              markedComponentsEnabled, activeChangeEdgesEnabled } = get();
+      
+      console.log('[Store] Applying initial ColorManager state to new tree controller');
+      
+      try {
+        if (markedComponentsEnabled) {
+          const markedComponents = getActualHighlightData();
+          updateColorManagerMarkedSubtrees(markedComponents);
+        }
+        
+        if (activeChangeEdgesEnabled) {
+          const activeChangeEdge = getCurrentActiveChangeEdge();
+          updateColorManagerActiveChangeEdge(activeChangeEdge);
+        }
+
+        // Trigger a render to apply the colors
+        if (controller.renderAllElements) {
+          setTimeout(() => controller.renderAllElements(), 100);
+        }
+      } catch (error) {
+        console.error('[Store] Error applying initial ColorManager state:', error);
+      }
+    }
   },
   /**
    * Sets the GUI instance reference with cleanup of previous instance
@@ -729,24 +687,24 @@ export const useAppStore = create((set, get) => ({
   },
 
   /**
-   * Updates the ColorManager with new marked components
-   * @param {Array<Array>} markedComponents - Array of arrays containing marked component IDs
+   * Updates the ColorManager with new marked subtrees
+   * @param {Array<Array>} markedComponents - Array of arrays containing marked subtree IDs
    */
-  updateColorManagerMarkedComponents: (markedComponents) => {
+  updateColorManagerMarkedSubtrees: (markedComponents) => {
     const { colorManager } = get();
       // Convert highlight data to the format ColorManager expects (array of Sets)
       let convertedMarked = [];
 
-      console.log("Updating ColorManager with marked components:", markedComponents);
+      console.log("Updating ColorManager with marked subtrees:", markedComponents);
 
       // Array of arrays - convert each inner array to a Set
       convertedMarked = markedComponents.map((innerArray) => {
         return new Set(innerArray);
       });
 
-      console.log("Converted marked components for ColorManager:", convertedMarked);
+      console.log("Converted marked subtrees for ColorManager:", convertedMarked);
 
-      colorManager.updateMarkedComponents(convertedMarked);
+      colorManager.updateMarkedSubtrees(convertedMarked);
   },
 
   /**
@@ -759,15 +717,8 @@ export const useAppStore = create((set, get) => ({
   },
 
   /**
-   * Sets monophyletic coloring mode in the ColorManager
-   * @param {boolean} enabled - Whether monophyletic coloring is enabled
+   * DELETED: This function is redundant. `setMonophyleticColoring` already handles this.
    */
-  setColorManagerMonophyleticColoring: (enabled) => {
-    const { colorManager } = get();
-    if (colorManager) {
-      colorManager.setMonophyleticColoring(enabled);
-    }
-  },
 
   /**
    * Updates highlighting colors in TREE_COLOR_CATEGORIES
@@ -801,8 +752,8 @@ export const useAppStore = create((set, get) => ({
   },
 
   /**
-   * Updates marked components highlighting color
-   * @param {string} newColor - New hex color value for marked component highlighting
+   * Updates marked subtrees highlighting color (naming only)
+   * @param {string} newColor - New hex color value for marked subtree highlighting
    */
   setMarkedColor: (newColor) => {
     const { updateHighlightingColor } = get();
@@ -853,7 +804,6 @@ export const useAppStore = create((set, get) => ({
    */
   getLineChartProps: () => {
     const state = get();
-    const { distanceIndex } = getIndexMappings(state);
 
     // Use canonical schema from example.json
     const robinsonFouldsDistances = state.movieData?.distances?.robinson_foulds;
@@ -862,7 +812,7 @@ export const useAppStore = create((set, get) => ({
 
     return {
       barOptionValue: state.barOptionValue,
-      currentTreeIndex: distanceIndex, // Always use distance index for all chart types
+      currentTreeIndex: state.currentTreeIndex,
       robinsonFouldsDistances,
       weightedRobinsonFouldsDistances,
       scaleList,
@@ -871,52 +821,64 @@ export const useAppStore = create((set, get) => ({
   },
 
   /**
-   * Gets highlighting data for the current tree position
-   * @returns {Array} Array of highlight solutions for current tree state
+   * Gets highlighting data (subtrees) for the current tree position
+   * @returns {Array} Array of highlight subtrees for current tree state
    */
   getActualHighlightData: () => {
     const { currentTreeIndex, transitionResolver, pairSolutions, activeChangeEdgeTracking, movieData } = get();
 
-    const highlightIndex = transitionResolver.getHighlightingIndex(currentTreeIndex);
-
-    const fullTreeIndices = transitionResolver.fullTreeIndices || [];
-    // The segment starts at the full tree that defines this transition. If unknown, start at 0.
-    const segmentStartIndex = (fullTreeIndices && fullTreeIndices.length > 0 && highlightIndex >= 0)
-      ? (fullTreeIndices[highlightIndex] ?? 0)
-      : 0;
-
-    const uniqueSolutions = new Map();
-
-    // Iterate from the beginning of the segment up to the current tree.
-    for (let i = segmentStartIndex; i <= currentTreeIndex; i++) {
-        const activeChangeEdge = activeChangeEdgeTracking?.[i];
-        // Determine pair key for this index
-        const pairKey = movieData?.tree_metadata?.[i]?.tree_pair_key;
-        const pairEntry = pairKey ? pairSolutions?.[pairKey] : null;
-        const latticeSolutions = pairEntry?.lattice_edge_solutions || {};
-        if (!pairEntry) continue;
-
-        if (Array.isArray(activeChangeEdge) && activeChangeEdge.length > 0) {
-          const edgeKey = `[${activeChangeEdge.join(', ')}]`;
-          const latticeEdgeData = latticeSolutions[edgeKey];
-          if (latticeEdgeData) {
-            for (const solution of latticeEdgeData.flat()) {
-              uniqueSolutions.set(JSON.stringify(solution), solution);
-            }
-          }
-        } else {
-          // No explicit active edge; include all available solutions for this transition
-          for (const value of Object.values(latticeSolutions)) {
-            if (!value) continue;
-            const flat = Array.isArray(value) ? value.flat() : [];
-            for (const solution of flat) {
-              uniqueSolutions.set(JSON.stringify(solution), solution);
-            }
-          }
-        }
-
+    // When at an ORIGINAL (full) tree, clear all red highlights
+    // Use a robust check against known full-tree sequence indices
+    const fullTreeSeq = (transitionResolver?.fullTreeIndices || movieData?.fullTreeIndices || []);
+    const onAnchor = Array.isArray(fullTreeSeq) && fullTreeSeq.includes(currentTreeIndex);
+    if (onAnchor || transitionResolver?.isFullTree?.(currentTreeIndex)) {
+      return [];
     }
-    return Array.from(uniqueSolutions.values());
+
+    // Only evaluate the current step (no accumulation)
+    const i = currentTreeIndex;
+    const activeChangeEdge = activeChangeEdgeTracking?.[i];
+    if (!Array.isArray(activeChangeEdge) || activeChangeEdge.length === 0) {
+      return [];
+    }
+
+    const pairKey = movieData?.tree_metadata?.[i]?.tree_pair_key;
+    const pairEntry = pairKey ? pairSolutions?.[pairKey] : null;
+    const latticeSolutions = pairEntry?.jumping_subtree_solutions || {};
+    if (!pairEntry) return [];
+
+    const edgeKey = `[${activeChangeEdge.join(', ')}]`;
+    const latticeEdgeData = latticeSolutions[edgeKey];
+    return Array.from(latticeEdgeData.flat());
+  },
+
+  /**
+   * Updates the ColorManager based on the current tree index and enabled features.
+   * This is the canonical way to sync color highlighting.
+   */
+  updateColorManagerForCurrentIndex: () => {
+    const {
+      markedComponentsEnabled,
+      activeChangeEdgesEnabled,
+      getActualHighlightData,
+      getCurrentActiveChangeEdge,
+      updateColorManagerMarkedSubtrees,
+      updateColorManagerActiveChangeEdge
+    } = get();
+
+    if (markedComponentsEnabled) {
+      const markedComponents = getActualHighlightData();
+      updateColorManagerMarkedSubtrees(markedComponents);
+    } else {
+      updateColorManagerMarkedSubtrees([]);
+    }
+
+    if (activeChangeEdgesEnabled) {
+      const activeChangeEdge = getCurrentActiveChangeEdge();
+      updateColorManagerActiveChangeEdge(activeChangeEdge);
+    } else {
+      updateColorManagerActiveChangeEdge([]);
+    }
   },
 
   /**
@@ -928,6 +890,8 @@ export const useAppStore = create((set, get) => ({
     const activeChangeEdge = activeChangeEdgeTracking?.[currentTreeIndex];
     return activeChangeEdge || []; // Return empty array if undefined
   },
+
+  // Removed accumulated edges getter (reverted)
 
 
 
@@ -948,20 +912,8 @@ export const useAppStore = create((set, get) => ({
 
       // Only update if index actually changed
       if (currentTreeIndex !== previousTreeIndex) {
-        const { getActualHighlightData, updateColorManagerMarkedComponents, updateColorManagerActiveChangeEdge, getCurrentActiveChangeEdge, markedComponentsEnabled, activeChangeEdgesEnabled } = state;
-
-        // Only update marked components if they are enabled
-        if (markedComponentsEnabled) {
-          const markedComponents = getActualHighlightData();
-          updateColorManagerMarkedComponents(markedComponents);
-        }
-
-        // Only update active change edges if they are enabled
-        if (activeChangeEdgesEnabled) {
-          const activeChangeEdge = state.getCurrentActiveChangeEdge();
-          updateColorManagerActiveChangeEdge(activeChangeEdge);
-        }
-
+        // Use the centralized update action
+        state.updateColorManagerForCurrentIndex();
         previousTreeIndex = currentTreeIndex;
       }
     });

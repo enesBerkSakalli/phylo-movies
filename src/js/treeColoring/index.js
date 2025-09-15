@@ -17,9 +17,9 @@ export {
   getGroupForStrategy,
   getGroupBetweenSeparators,
   generateGroups,
-  applyColoringData
+  applyColoringData,
+  detectBestSeparator
 } from './utils/GroupingUtils.js';
-export { analyzeSeparatorUsage, detectUsefulSeparators } from './utils/SeparatorUtils.js';
 
 // Components
 export { ColorPicker } from './components/ColorPicker.js';

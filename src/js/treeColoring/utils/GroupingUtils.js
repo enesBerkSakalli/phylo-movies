@@ -15,6 +15,16 @@ export function getGroupForTaxon(taxon, separator, strategyType) {
     return taxon.charAt(0).toUpperCase();
   }
 
+  // Integrated separator analysis - automatically detect best separator if not specified
+  if (!separator && strategyType !== "first-letter") {
+    const bestSeparator = detectBestSeparator([taxon]);
+    if (bestSeparator) {
+      separator = bestSeparator;
+    } else {
+      return null;
+    }
+  }
+
   return getGroupForStrategy(taxon, separator, strategyType);
 }
 
@@ -112,17 +122,49 @@ export function getGroupBetweenSeparators(taxonName, startSeparator, startOccurr
 }
 
 /**
- * Generate groups from taxa names using a separator and strategy
+ * Detect best separator for a set of taxa names
  * @param {Array} taxaNames - Array of taxa names
- * @param {string} separator - The separator character
+ * @returns {string|null} Best separator character or null if none found
+ */
+export function detectBestSeparator(taxaNames) {
+  const separatorChars = ['-', '_', '.', ' ', '|', ':'];
+  let bestSeparator = null;
+  let bestUsage = 0;
+
+  separatorChars.forEach(char => {
+    const withSeparator = taxaNames.filter(name => name.includes(char));
+    const usage = (withSeparator.length / taxaNames.length) * 100;
+    
+    if (usage >= 20 && withSeparator.length >= 2 && usage > bestUsage) {
+      bestSeparator = char;
+      bestUsage = usage;
+    }
+  });
+
+  return bestSeparator;
+}
+
+/**
+ * Generate groups from taxa names using integrated separator detection and strategy
+ * @param {Array} taxaNames - Array of taxa names
+ * @param {string} separator - The separator character (optional - will auto-detect if not provided)
  * @param {string} strategy - The grouping strategy
- * @returns {Array} Array of group objects with name, count, and members
+ * @returns {Array} Array of group objects with name, count, and members, plus separator info
  */
 export function generateGroups(taxaNames, separator, strategy) {
   const groups = new Map();
+  let usedSeparator = separator;
+
+  // Auto-detect separator if not provided and not first-letter strategy
+  if (!separator && strategy !== "first-letter") {
+    usedSeparator = detectBestSeparator(taxaNames);
+    if (!usedSeparator) {
+      return { groups: [], separator: null, analyzed: true };
+    }
+  }
 
   taxaNames.forEach(taxon => {
-    const groupName = getGroupForTaxon(taxon, separator, strategy);
+    const groupName = getGroupForTaxon(taxon, usedSeparator, strategy);
     if (groupName) {
       if (!groups.has(groupName)) {
         groups.set(groupName, []);
@@ -131,11 +173,17 @@ export function generateGroups(taxaNames, separator, strategy) {
     }
   });
 
-  return Array.from(groups.entries()).map(([name, members]) => ({
+  const groupArray = Array.from(groups.entries()).map(([name, members]) => ({
     name,
     count: members.length,
     members
   }));
+
+  return {
+    groups: groupArray,
+    separator: usedSeparator,
+    analyzed: !separator // indicates if separator was auto-detected
+  };
 }
 
 /**
