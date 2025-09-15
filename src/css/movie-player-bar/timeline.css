@@ -37,3 +37,17 @@
   display: flex;
   gap: 4px;
 }
+
+/* Responsive: avoid overlap with controls on narrow widths */
+@media (max-width: 900px) {
+  .timeline-header-metrics {
+    position: static;
+    left: auto;
+    transform: none;
+    justify-content: center;
+    flex: 1 1 auto;
+  }
+  .timeline-header-right {
+    margin-left: auto;
+  }
+}

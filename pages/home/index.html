@@ -115,10 +115,19 @@
               </div>
             </div>
 
+            <!-- Static Demo Mode Banner -->
+            <div id="static-demo-banner" style="display: none; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; margin-bottom: 16px; background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container);">
+              <md-icon style="font-size: 20px;">info</md-icon>
+              <div style="flex: 1;">
+                <div style="font-weight: 500;">Static demo mode enabled</div>
+                <div style="font-size: 14px; opacity: 0.9;">Uploads are disabled. Use "Load Example" to view the demo dataset.</div>
+              </div>
+            </div>
+
             <form id="phylo-form" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 24px;">
 
               <!-- File Upload Grid -->
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 24px;">
+              <div id="upload-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 24px;">
 
                 <!-- Required Files Section -->
                 <div style="background: var(--md-sys-color-surface-container-lowest); padding: 24px; border-radius: 16px; border: 1px solid var(--md-sys-color-outline-variant); transition: all 0.2s ease;">
@@ -235,12 +244,20 @@
               </div>
 
               <!-- Action Buttons -->
-              <div style="display: flex; gap: 12px; justify-content: flex-end; padding-top: 16px; margin-top: 16px; border-top: 1px solid var(--md-sys-color-outline-variant);">
+              <div style="display: flex; gap: 12px; justify-content: flex-end; padding-top: 16px; margin-top: 16px; border-top: 1px solid var(--md-sys-color-outline-variant); align-items: center;">
+                <label style="display: inline-flex; align-items: center; gap: 10px; margin-right: auto; cursor: pointer;">
+                  <md-switch id="static-demo-toggle" aria-label="Toggle static demo mode"></md-switch>
+                  <span style="color: var(--md-sys-color-on-surface-variant);">Static Demo Mode</span>
+                </label>
                 <md-outlined-button type="reset" has-icon>
                   <md-icon slot="icon">refresh</md-icon>
                   Reset
                 </md-outlined-button>
-                <md-filled-button type="submit" has-icon>
+                <md-filled-tonal-button id="load-example-button" has-icon title="Load a bundled example dataset">
+                  <md-icon slot="icon">movie</md-icon>
+                  Load Example
+                </md-filled-tonal-button>
+                <md-filled-button id="submit-button" type="submit" has-icon>
                   <md-icon slot="icon">play_arrow</md-icon>
                   Create Visualization
                 </md-filled-button>

@@ -10,8 +10,9 @@ export async function fetchTreeData(formData) {
 
     await workflows.saveTreeDataWorkflow(data);
 
-    // Redirect after successful storage (updated path)
-    window.location.href = "/pages/visualization/";
+    // Redirect after successful storage (updated path, respect base in static builds)
+    const base = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL) ? import.meta.env.BASE_URL : '/';
+    window.location.href = `${base}pages/visualization/`;
   } catch (err) {
     console.error("[fetchTreeData] Error:", err);
     alert(`Error processing tree data: ${err.message}`);

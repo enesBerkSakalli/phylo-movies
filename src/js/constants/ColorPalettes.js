@@ -199,6 +199,59 @@ export const IBMColorBlindWhiteBG = [
 ];
 
 // ============================================
+// BLUE-FOCUSED PALETTES
+// ============================================
+
+/**
+ * Blue Shades (categorical) – distinct tints/tones of blue
+ * Useful where a single-hue family is preferred (e.g., blue-themed projects)
+ */
+export const BlueShades = [
+  "#E3F2FD", // very light
+  "#BBDEFB",
+  "#90CAF9",
+  "#64B5F6",
+  "#42A5F5",
+  "#2196F3",
+  "#1E88E5",
+  "#1976D2",
+  "#1565C0",
+  "#0D47A1"  // very dark
+];
+
+/**
+ * Blue Shades (white-bg optimized) – avoid very light tints on white
+ */
+export const BlueShadesWhiteBG = [
+  "#BBD9FF",
+  "#90BDF9",
+  "#6CA9F4",
+  "#4D9AF2",
+  "#2E8AEF",
+  "#1976D2",
+  "#1565C0",
+  "#1152A6",
+  "#0E468F",
+  "#0A3A79"
+];
+
+/**
+ * Blue Sequential – perceptual light→dark blue ramp
+ */
+export const BlueSequential = [
+  "#E7F0FA", "#CFE2F3", "#B7D3ED", "#9EC5E6", "#86B7DF",
+  "#6EA9D9", "#559BD2", "#3D8DCB", "#257FC5", "#0D71BE"
+];
+
+/**
+ * Blue Sequential (white-bg optimized) – clip near-white bins
+ */
+export const BlueSequentialWhiteBG = [
+  "#B7D3ED", "#9EC5E6", "#86B7DF", "#6EA9D9",
+  "#559BD2", "#3D8DCB", "#257FC5", "#0D71BE"
+];
+
+// ============================================
 // SEQUENTIAL PALETTES (for gradients)
 // ============================================
 
@@ -358,6 +411,7 @@ export const HighContrast = [
  */
 export const CATEGORICAL_PALETTES = {
   // White-background optimized first
+  BlueShadesWhiteBG,
   OkabeItoWhiteBG,
   WongWhiteBG,
   TolBrightWhiteBG,
@@ -367,6 +421,7 @@ export const CATEGORICAL_PALETTES = {
   PhyloOptimizedWhiteBG,
   
   // Originals
+  BlueShades,
   TolBright,
   TolMuted,
   TolVibrant,
@@ -382,9 +437,11 @@ export const CATEGORICAL_PALETTES = {
  * Sequential palettes for continuous data
  */
 export const SEQUENTIAL_PALETTES = {
+  BlueSequentialWhiteBG,
   ViridisWhiteBG,
   CividisWhiteBG,
   TurboWhiteBG,
+  BlueSequential,
   Viridis,
   Cividis,
   Turbo,
@@ -427,6 +484,7 @@ export function getPalette(name) {
 export function getPaletteInfo(name) {
   const paletteMeta = {
     // Categorical
+    BlueShadesWhiteBG: { type: 'categorical', colorBlindSafe: true, maxColors: 10, description: 'Blue tints/tones tuned for white background' },
     OkabeItoWhiteBG: { type: 'categorical', colorBlindSafe: true, maxColors: 8, description: 'Okabe-Ito tuned for white background' },
     WongWhiteBG: { type: 'categorical', colorBlindSafe: true, maxColors: 8, description: 'Wong palette tuned for white background' },
     TolBrightWhiteBG: { type: 'categorical', colorBlindSafe: true, maxColors: 7, description: 'Tol Bright tuned for white background' },
@@ -434,6 +492,7 @@ export function getPaletteInfo(name) {
     TolVibrantWhiteBG: { type: 'categorical', colorBlindSafe: true, maxColors: 8, description: 'Tol Vibrant tuned for white background' },
     IBMColorBlindWhiteBG: { type: 'categorical', colorBlindSafe: true, maxColors: 8, description: 'IBM accessible palette tuned for white background' },
     PhyloOptimizedWhiteBG: { type: 'categorical', colorBlindSafe: false, maxColors: 12, description: 'Tree-optimized palette tuned for white background' },
+    BlueShades: { type: 'categorical', colorBlindSafe: true, maxColors: 10, description: 'Blue tints/tones (single-hue categorical)' },
     TolBright: { type: 'categorical', colorBlindSafe: true, maxColors: 7, description: 'Bright, color-blind friendly' },
     TolMuted: { type: 'categorical', colorBlindSafe: true, maxColors: 9, description: 'Muted, color-blind friendly' },
     TolVibrant: { type: 'categorical', colorBlindSafe: true, maxColors: 8, description: 'Vibrant, color-blind friendly' },
@@ -445,9 +504,11 @@ export function getPaletteInfo(name) {
     HighContrast: { type: 'categorical', colorBlindSafe: false, maxColors: 8, description: 'Maximum contrast' },
     
     // Sequential
+    BlueSequentialWhiteBG: { type: 'sequential', colorBlindSafe: true, maxColors: 8, description: 'Blue ramp clipped for white background' },
     ViridisWhiteBG: { type: 'sequential', colorBlindSafe: true, maxColors: 8, description: 'Viridis clipped for white background' },
     CividisWhiteBG: { type: 'sequential', colorBlindSafe: true, maxColors: 8, description: 'Cividis clipped for white background' },
     TurboWhiteBG: { type: 'sequential', colorBlindSafe: false, maxColors: 8, description: 'Turbo clipped for white background' },
+    BlueSequential: { type: 'sequential', colorBlindSafe: true, maxColors: 10, description: 'Perceptual light→dark blue ramp' },
     Viridis: { type: 'sequential', colorBlindSafe: true, maxColors: 10, description: 'Scientific standard, perceptually uniform' },
     Cividis: { type: 'sequential', colorBlindSafe: true, maxColors: 10, description: 'Color-blind optimized Viridis' },
     Turbo: { type: 'sequential', colorBlindSafe: false, maxColors: 10, description: 'Rainbow-like, perceptually uniform' },

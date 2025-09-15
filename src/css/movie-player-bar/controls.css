@@ -31,6 +31,47 @@
   margin-left: 6px;
 }
 
+.jump-to-step-field {
+  width: 60px;
+  height: 24px;
+  padding: 2px 6px;
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 4px;
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  font-size: 13px;
+  font-family: var(--md-sys-typescale-body-medium-font);
+  text-align: center;
+}
+
+.jump-to-step-field:focus {
+  outline: none;
+  border-color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-surface-container-low);
+}
+
+.jump-button {
+  height: 24px;
+  padding: 2px 8px;
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 4px;
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface);
+  font-size: 12px;
+  font-family: var(--md-sys-typescale-body-medium-font);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.jump-button:hover {
+  background: var(--md-sys-color-surface-container-high);
+}
+
+.jump-button:active {
+  background: var(--md-sys-color-surface-container-highest);
+}
+
 .transport-button {
   /* Increase the size of the main transport buttons */
   --md-icon-button-icon-size: 24px;

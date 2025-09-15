@@ -24,45 +24,40 @@ export class ChartController {
    * @param {NavigationController} navigationController - The navigation controller instance
    */
   constructor(gui, navigationController) {
+    console.log('ChartController: constructor called');
     // Chart state - moved from GUI
     this.currentDistanceChartState = null;
     this.currentDistanceChart = null;
     this.lastChartType = null;
     this.gui = gui; // Keep gui reference for now
     this.navigationController = navigationController; // Keep navigationController reference for now
-    this.barOptionHandler = null; // Store handler reference for proper cleanup
 
-    // Subscribe only to relevant changes (chart type or index)
+    // Subscribe to chart type changes (full re-render needed)
     useAppStore.subscribe(
-      (state) => ({
-        barOption: state.barOptionValue,
-        index: state.currentTreeIndex
-      }),
-      (currentState) => {
-        console.log('[ChartController] Store subscription triggered - barOption:', currentState.barOption, 'index:', currentState.index);
+      (state) => state.barOptionValue,
+      (barOption) => {
         this.updateChart();
-      },
-      {
-        equalityFn: (a, b) => {
-          const isEqual = a.barOption === b.barOption && a.index === b.index;
-          if (!isEqual) {
-            console.log('[ChartController] State changed - old:', a, 'new:', b);
+      }
+    );
+
+    // Subscribe to position changes (just update indicator)
+    // This setup correctly listens for changes to a specific part of the state.
+    useAppStore.subscribe(
+      (state) => state.currentTreeIndex,
+      (currentTreeIndex, previousTreeIndex) => {
+        if (currentTreeIndex !== previousTreeIndex) {
+          console.log('*** TIMELINE MOVED: currentTreeIndex =', currentTreeIndex);
+          try {
+            this.updateIndicatorPosition(currentTreeIndex);
+          } catch (error) {
+            console.error('ChartController: Error in updateIndicatorPosition:', error);
           }
-          return isEqual;
         }
       }
     );
 
-    // Ensure UI reflects available datasets (disable options lacking data)
-    this.ensureBarOptionsAvailability();
-
-    // Bind direct listeners to the select as a fallback for shadow-DOM quirks
-    // Delay to ensure Material Design component is fully initialized
-    setTimeout(() => {
-      this.bindBarOptionSelectListeners();
-    }, 100);
-
     // Render initial chart once after construction
+    console.log('ChartController: Scheduling initial chart update');
     setTimeout(() => this.updateChart(), 0);
   }
 
@@ -72,39 +67,31 @@ export class ChartController {
    * @returns {Promise<void>}
    */
   async updateChart() {
-    console.log('[ChartController] updateChart called');
-    
+
     const appStoreState = useAppStore.getState();
-    const lineChartElem = document.getElementById('lineChart');
-    if (!lineChartElem) {
-      console.warn('[ChartController] lineChart element not found');
-      return;
-    }
 
     const chartProps = appStoreState.getLineChartProps();
-    if (!chartProps) {
-      console.warn('[ChartController] No chart props available');
-      return;
-    }
-    
-    console.log('[ChartController] Updating chart with barOptionValue:', chartProps.barOptionValue);
 
-    // Initialize chart state if not exists
-    if (!this.currentDistanceChartState) {
-      this.currentDistanceChartState = { instance: null, type: null };
-    }
+    this.currentDistanceChartState = this.currentDistanceChartState || { instance: null, type: null };
+
 
     // Split chartProps into data, config, services
     const { barOptionValue, currentTreeIndex, robinsonFouldsDistances, weightedRobinsonFouldsDistances, scaleList, transitionResolver } = chartProps;
     const data = { robinsonFouldsDistances, weightedRobinsonFouldsDistances, scaleList };
-    // Distances expect distance index; scale expects sequence index of the nearest full tree
-    const distanceIdx = Math.round(Number(currentTreeIndex));
-    const nearestFullTreeSeq = useAppStore.getState().getNearestAnchorSeqIndex();
+
+    // THE FIX: Do NOT convert the index here. The lineChartManager is responsible
+    // for handling the index conversion based on the specific chart type.
+    // We must pass the raw, unconverted currentTreeIndex.
     const config = {
       barOptionValue,
-      currentTreeIndex: barOptionValue === 'scale' ? nearestFullTreeSeq : distanceIdx,
+      currentTreeIndex: currentTreeIndex, // Pass the raw index
     };
     const services = { transitionResolver };
+
+    // Destroy the old chart instance if it exists to prevent memory leaks
+    if (this.currentDistanceChartState.instance && this.currentDistanceChartState.instance.destroy) {
+        this.currentDistanceChartState.instance.destroy();
+    }
 
     this.currentDistanceChartState = renderOrUpdateLineChart({
       data,
@@ -119,18 +106,42 @@ export class ChartController {
     this.currentDistanceChart = this.currentDistanceChartState.instance;
     this.lastChartType = this.currentDistanceChartState.type;
 
-    // Keep UI select options in sync with available datasets
-    this.ensureBarOptionsAvailability();
+    console.log('ChartController: Chart updated, currentDistanceChart is:', this.currentDistanceChart);
+    console.log('ChartController: Chart has updatePosition method:', !!this.currentDistanceChart?.updatePosition);
 
-    // Ensure indicator initializes at the current position immediately after render
-    try {
-      const seqIndexForIndicator = barOptionValue === 'scale'
-        ? config.currentTreeIndex // nearest full tree sequence index
-        : transitionResolver.getTreeIndexForDistanceIndex(distanceIdx); // map distance → sequence
-      if (this.currentDistanceChart?.updatePosition) {
-        this.currentDistanceChart.updatePosition(seqIndexForIndicator);
-      }
-    } catch (_) { /* no-op */ }
+    // Initialize indicator at current position after chart creation
+    const currentIndex = useAppStore.getState().currentTreeIndex;
+    this.updateIndicatorPosition(currentIndex);
+  }
+
+  /**
+   * Update only the chart indicator position (no full re-render)
+   * @param {number} currentTreeIndex - The new tree index
+   */
+  updateIndicatorPosition(currentTreeIndex) {
+    // THE FIX: Always get the chart instance from the state object,
+    // which is guaranteed to be the most current one.
+    const chart = this.currentDistanceChartState?.instance;
+
+    console.log('ChartController: updateIndicatorPosition called', {
+      currentTreeIndex,
+      hasChart: !!chart,
+      hasUpdateMethod: !!chart?.updatePosition,
+    });
+
+    if (!chart) {
+      console.warn('ChartController: No current distance chart state instance');
+      return;
+    }
+
+    if (!chart.updatePosition) {
+      console.warn('ChartController: Chart has no updatePosition method');
+      return;
+    }
+
+    console.log('ChartController: Calling chart.updatePosition with currentTreeIndex:', currentTreeIndex);
+    chart.updatePosition(currentTreeIndex);
+    console.log('ChartController: chart.updatePosition completed');
   }
 
   /**
@@ -139,24 +150,16 @@ export class ChartController {
    */
   async displayCurrentChartInModal() {
     const { stop, barOptionValue, currentTreeIndex, movieData, transitionResolver } = useAppStore.getState();
-    // Stop playback if running
-    if (useAppStore.getState().playing) {
-      stop();
-    }
+    stop();
 
-    // Validate data availability
-    if (!this.isChartDataReady()) {
-      console.warn("[ChartController] Data not ready for modal chart.");
-      return;
-    }
-
-    // Open modal chart with current configuration
+    // THE FIX: Also remove the incorrect conversion here for consistency.
+    // The modal chart rendering logic should also handle its own index resolution.
     openModalChart({
       barOptionValue,
-      currentTreeIndex,
-      robinsonFouldsDistances: movieData?.distances?.robinson_foulds,
-      weightedRobinsonFouldsDistances: movieData?.distances?.weighted_robinson_foulds,
-      scaleList: movieData?.scaleList,
+      currentTreeIndex: currentTreeIndex, // Pass the raw index
+      robinsonFouldsDistances: movieData.distances.robinson_foulds,
+      weightedRobinsonFouldsDistances: movieData.distances.weighted_robinson_foulds,
+      scaleList: movieData.scaleList,
       transitionResolver,
       onGoToFullTreeDataIndex: this.navigationController.getChartNavigationCallbacks().onGoToFullTreeDataIndex,
       onGoToPosition: this.navigationController.getChartNavigationCallbacks().onGoToPosition
@@ -204,119 +207,11 @@ export class ChartController {
     this.lastChartType = null;
   }
 
-  /**
-   * Check if chart is ready for display
-   * @returns {boolean} True if all required data is available
-   */
   isChartDataReady() {
-    const { transitionResolver, movieData, barOptionValue } = useAppStore.getState();
-    if (!transitionResolver || !movieData) return false;
-    if (barOptionValue === 'rfd') {
-      return Array.isArray(movieData?.distances?.robinson_foulds) && movieData.distances.robinson_foulds.length > 0;
-    }
-    if (barOptionValue === 'w-rfd') {
-      return Array.isArray(movieData?.distances?.weighted_robinson_foulds) && movieData.distances.weighted_robinson_foulds.length > 0;
-    }
-    if (barOptionValue === 'scale') {
-      return Array.isArray(movieData?.scaleList) && movieData.scaleList.length > 0;
-    }
-    return false;
+    return useAppStore.getState().movieData !== null;
   }
 
-  /**
-   * Handle chart resize events
-   */
   handleResize() {
-    // If there's a current chart, it will be updated in the next update cycle
-    // The existing chart system handles responsive sizing
   }
 
-  /**
-   * Disable unavailable chart options (e.g., W‑RFD when weighted data is missing).
-   * If current selection becomes invalid, switch to a valid option.
-   */
-  ensureBarOptionsAvailability() {
-    const { movieData, barOptionValue } = useAppStore.getState();
-    const hasWRFD = Array.isArray(movieData?.distances?.weighted_robinson_foulds) && movieData.distances.weighted_robinson_foulds.length > 0;
-
-    const selectEl = document.getElementById('barPlotOption');
-    if (selectEl) {
-      const wOpt = selectEl.querySelector('md-select-option[value="w-rfd"]');
-      if (wOpt) {
-        if (!hasWRFD) {
-          wOpt.setAttribute('disabled', 'true');
-          // If currently selected, fallback to RFD if available, else scale
-          if (barOptionValue === 'w-rfd') {
-            const hasRFD = Array.isArray(movieData?.distances?.robinson_foulds) && movieData.distances.robinson_foulds.length > 0;
-            const fallback = hasRFD ? 'rfd' : 'scale';
-            selectEl.value = fallback;
-            useAppStore.getState().setBarOption(fallback);
-          }
-        } else {
-          wOpt.removeAttribute('disabled');
-        }
-      }
-    }
-  }
-
-  /**
-   * Attach direct listeners to the bar option select to ensure store updates
-   * even if component-specific events differ across versions.
-   */
-  bindBarOptionSelectListeners() {
-    const selectEl = document.getElementById('barPlotOption');
-    if (!selectEl) {
-      console.warn('[ChartController] barPlotOption select element not found, retrying in 500ms');
-      setTimeout(() => this.bindBarOptionSelectListeners(), 500);
-      return;
-    }
-    
-    // Create handler if it doesn't exist
-    if (!this.barOptionHandler) {
-      this.barOptionHandler = (event) => {
-        // For Material Design components, check multiple value sources
-        const value = event?.target?.value || event?.currentTarget?.value || selectEl.value;
-        const currentValue = useAppStore.getState().barOptionValue;
-        console.log('[ChartController] Bar option changed to:', value, 'current:', currentValue);
-        
-        if (value && value !== currentValue) {
-          console.log('[ChartController] Setting bar option in store to:', value);
-          useAppStore.getState().setBarOption(value);
-          // Force chart update immediately after store update
-          setTimeout(() => {
-            console.log('[ChartController] Store barOptionValue after update:', useAppStore.getState().barOptionValue);
-            this.updateChart();
-          }, 0);
-        }
-      };
-    }
-    
-    // Remove any existing listeners first to avoid duplicates
-    selectEl.removeEventListener('change', this.barOptionHandler);
-    selectEl.removeEventListener('input', this.barOptionHandler);
-    
-    // Attach multiple event types for better Material Design compatibility
-    selectEl.addEventListener('change', this.barOptionHandler);
-    selectEl.addEventListener('input', this.barOptionHandler);
-    
-    // For Material Design selects, also listen to click events on options
-    const options = selectEl.querySelectorAll('md-select-option');
-    options.forEach(option => {
-      option.addEventListener('click', () => {
-        // Get the value directly from the clicked option
-        const clickedValue = option.getAttribute('value') || option.value;
-        const currentValue = useAppStore.getState().barOptionValue;
-        console.log('[ChartController] Option clicked, value from option:', clickedValue, 'current:', currentValue);
-        
-        if (clickedValue && clickedValue !== currentValue) {
-          console.log('[ChartController] Setting bar option from option click to:', clickedValue);
-          useAppStore.getState().setBarOption(clickedValue);
-          // Force chart update
-          setTimeout(() => this.updateChart(), 0);
-        }
-      });
-    });
-    
-    console.log('[ChartController] Bar option select listeners bound successfully');
-  }
 }

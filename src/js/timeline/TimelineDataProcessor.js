@@ -3,7 +3,7 @@
  * Leverages existing TransitionIndexResolver for most data operations
  */
 
-import { TIMELINE_CONSTANTS, PHASE_NAMES, COLOR_CLASSES } from './constants.js';
+import { TIMELINE_CONSTANTS, PHASE_NAMES } from './constants.js';
 import { TimelineMathUtils } from './TimelineMathUtils.js';
 
 export class TimelineDataProcessor {
@@ -21,7 +21,13 @@ export class TimelineDataProcessor {
 
         let splitChangeTimeline;
         splitChangeTimeline = movieData.split_change_timeline;
-        const segments = this._createSegmentsFromSplitChangeTimeline(splitChangeTimeline, tree_metadata, interpolated_trees);
+        const segments = this._createSegmentsFromSplitChangeTimeline(
+            splitChangeTimeline,
+            tree_metadata,
+            interpolated_trees,
+            movieData.split_change_tracking,
+            movieData.tree_pair_solutions
+        );
         return segments;
     }
 
@@ -29,8 +35,17 @@ export class TimelineDataProcessor {
      * Create segments from split_change_timeline data structure
      * @private
      */
-    static _createSegmentsFromSplitChangeTimeline(timeline, tree_metadata, interpolated_trees) {
+    static _createSegmentsFromSplitChangeTimeline(timeline, tree_metadata, interpolated_trees, split_change_tracking, tree_pair_solutions) {
         const segments = [];
+
+        // Add debugging and validation
+        console.log('[TimelineDataProcessor] timeline:', timeline, 'type:', typeof timeline, 'isArray:', Array.isArray(timeline));
+
+        if (!timeline || !Array.isArray(timeline)) {
+            console.warn('[TimelineDataProcessor] split_change_timeline is not available or not an array, falling back to empty segments');
+            return segments;
+        }
+
         for (const entry of timeline) {
             if (entry.type === 'original') {
                 // Full tree anchor point - use global_index for array access
@@ -81,7 +96,30 @@ export class TimelineDataProcessor {
 
                 if (interpolationData.length > 0) {
                     const first = interpolationData[0];
-                    const subtreeMoveCount = entry.subtrees ? entry.subtrees.length : 0;
+
+                    // Calculate subtree changes from jumping subtree solutions
+                    let subtreeMoveCount = 0;
+                    if (first.metadata && split_change_tracking && tree_pair_solutions) {
+                        const treeIndex = first.originalIndex;
+                        const activeChangingSplits = split_change_tracking[treeIndex];
+                        const pairKey = first.metadata.tree_pair_key;
+
+                        if (activeChangingSplits && pairKey && tree_pair_solutions[pairKey]) {
+                            const jumpingSolutions = tree_pair_solutions[pairKey].jumping_subtree_solutions;
+                            const edgeKey = `[${activeChangingSplits.join(', ')}]`;
+                            const solutions = jumpingSolutions?.[edgeKey];
+
+                            if (solutions) {
+                                // Flatten and count the jumping subtree solutions
+                                subtreeMoveCount = Array.from(solutions.flat()).length;
+                            }
+                        }
+                    }
+
+                    // Fallback to split length if jumping solutions not available
+                    if (subtreeMoveCount === 0) {
+                        subtreeMoveCount = entry.split ? entry.split.length : 0;
+                    }
 
                     segments.push({
                         index: segments.length,
@@ -106,78 +144,6 @@ export class TimelineDataProcessor {
         return segments;
     }
 
-    /**
-     * Determine subtree movement count for a given step using split_change_events if available.
-     * Falls back to split_change length, otherwise 0.
-     */
-    static _getSubtreeMoveCount(movieData, metadata) {
-        try {
-            const key = metadata?.tree_pair_key;
-            const step = metadata?.step_in_pair;
-            const events = movieData?.split_change_events?.[key];
-            if (Array.isArray(events) && typeof step === 'number') {
-                for (const ev of events) {
-                    const r = ev?.step_range;
-                    if (Array.isArray(r) && r.length === 2 && step >= r[0] && step <= r[1]) {
-                        const subs = ev?.subtrees;
-                        if (Array.isArray(subs)) {
-                            return subs.length;
-                        }
-                    }
-                }
-            }
-            // Fallback: if split_change is present on metadata, treat any movement as one group
-            if (Array.isArray(metadata?.split_change)) {
-                return metadata.split_change.length > 0 ? 1 : 0;
-            }
-        } catch {}
-        return 0;
-    }
-
-    /**
-     * Get both subtree move count and an event identity for grouping transitions by event ranges
-     */
-    static _getEventInfo(movieData, metadata) {
-        try {
-            const key = metadata?.tree_pair_key;
-            const step = metadata?.step_in_pair;
-            const events = movieData?.split_change_events?.[key];
-            if (Array.isArray(events) && typeof step === 'number') {
-                for (let i = 0; i < events.length; i++) {
-                    const ev = events[i];
-                    const r = ev?.step_range;
-                    if (Array.isArray(r) && r.length === 2 && step >= r[0] && step <= r[1]) {
-                        const subs = Array.isArray(ev?.subtrees) ? ev.subtrees.length : 0;
-                        return { count: subs, eventId: `${key}_${i}` };
-                    }
-                }
-            }
-            const fallback = TimelineDataProcessor._getSubtreeMoveCount(movieData, metadata);
-            return { count: fallback, eventId: null };
-        } catch {
-            return { count: 0, eventId: null };
-        }
-    }
-
-    /**
-     * Get color class for a segment based on its type, edge count, and duration
-     * @param {Object} segment - Timeline segment
-     * @param {number} totalLeaves - Total possible edges
-     * @param {number} segmentDuration - Duration of this segment in ms
-     * @param {number} maxDuration - Maximum duration across all segments
-     * @returns {string} CSS class name for coloring
-     */
-    static getSegmentColorClass(segment) {
-        if (segment.isFullTree) return COLOR_CLASSES.FULL_TREE;
-        if (typeof segment.subtreeMoveCount === 'number') {
-            // Keep class for CSS variables to be available, final color is computed in renderer
-            // Use a moderate class as a neutral base
-            return 'timeline-interp-moderate';
-        }
-        return 'timeline-segment-default';
-    }
-
-    // Removed legacy getSegmentTooltip (replaced by buildTimelineTooltipContent)
 
     /**
      * Create timeline data structures
@@ -186,9 +152,6 @@ export class TimelineDataProcessor {
      * @returns {Object} Timeline data with durations and metadata
      */
     static createTimelineData(segments) {
-        const items = [];
-        const groups = [{ id: 1, content: '' }];
-
         // Calculate duration: each segment gets duration based on its content (cached)
         const segmentDurations = TimelineMathUtils.calculateSegmentDurations(segments);
         const cumulativeDurations = (() => {
@@ -215,53 +178,6 @@ export class TimelineDataProcessor {
         }
 
 
-        let currentTime = 0;
-
-        segments.forEach((segment, index) => {
-            const duration = segmentDurations[index];
-            const colorClass = TimelineDataProcessor.getSegmentColorClass(segment);
-            const segmentClass = `timeline-segment ${colorClass}`;
-
-
-            items.push({
-                id: index + 1,
-                content: '',
-                start: currentTime,
-                end: currentTime + duration,
-                type: 'range',
-                className: segmentClass,
-                group: 1,
-                // No native title tooltip; use custom dynamic overlay for clarity
-                editable: false,
-                selectable: true
-            });
-
-            currentTime += duration;
-        });
-
-        return { items, groups, totalDuration, segmentDurations, cumulativeDurations, minSubtreeMoves, maxSubtreeMoves };
+        return { totalDuration, segmentDurations, cumulativeDurations, minSubtreeMoves, maxSubtreeMoves };
     }
-
-
-    /**
-     * Calculate segment durations for timeline segments
-     * @param {Array} segments - Timeline segments
-     * @returns {Array} Array of segment durations in milliseconds
-     */
-    static calculateSegmentDurations(segments) {
-        return TimelineMathUtils.calculateSegmentDurations(segments);
-    }
-
-    /**
-     * Get target segment index during scrubbing
-     * @param {Array} segments - Timeline segments
-     * @param {number} currentTime - Current time in ms
-     * @returns {number} Target segment index
-     */
-    static getTargetSegmentIndex(segments, currentTime, segmentDurations = null) {
-        const durations = segmentDurations || TimelineMathUtils.calculateSegmentDurations(segments);
-        const { treeIndex } = TimelineMathUtils.getTargetTreeForTime(segments, currentTime, durations);
-        return treeIndex;
-    }
-
 }

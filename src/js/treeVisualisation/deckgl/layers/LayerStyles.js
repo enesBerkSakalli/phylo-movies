@@ -84,12 +84,12 @@ export class LayerStyles {
       return Math.max(baseWidth, 3); // Fallback without highlighting
     }
 
-    // Check if link should be highlighted by testing if it gets a highlight color
-    const baseColor = cm.getBranchColorWithHighlights(link);
+    // Check if link should be highlighted by comparing base vs highlighted colors
+    const baseColor = cm.getBranchColor?.(link);
     const highlightColor = cm.getBranchColorWithHighlights(link);
     const isHighlighted = baseColor !== highlightColor;
 
-    return isHighlighted ? baseWidth * 9 : Math.max(baseWidth, 3);
+    return isHighlighted ? baseWidth * 2 : Math.max(baseWidth, 3);
   }
 
   /**
@@ -200,19 +200,20 @@ export class LayerStyles {
   getLabelColor(label) {
     // Get ColorManager from store
     const cm = useAppStore.getState().getColorManager?.();
-    const hexColor = cm.getNodeColor(label);
+    // Normalize to node format for consistent highlighting
+    const node = this._convertNodeToColorManagerFormat(label);
+    const hexColor = cm.getNodeColor(node);
     const rgb = this._hexToRgb(hexColor);
-    
+
     // Calculate base opacity
     let opacity = label.opacity !== undefined ? Math.round(label.opacity * 255) : 255;
-    
+
     // Apply dimming if enabled, there are active change edges, and this label's node is not downstream
     const { dimmingEnabled } = useAppStore.getState();
-    const labelNode = this._convertNodeToColorManagerFormat(label);
-    if (dimmingEnabled && cm.hasActiveChangeEdges() && !cm.isNodeDownstreamOfAnyActiveChangeEdge(labelNode)) {
+    if (dimmingEnabled && cm.hasActiveChangeEdges() && !cm.isNodeDownstreamOfAnyActiveChangeEdge(node)) {
         opacity = Math.round(opacity * 0.3); // 30% opacity for dimmed elements
     }
-    
+
     return [rgb[0], rgb[1], rgb[2], opacity];
   }
 
@@ -224,19 +225,20 @@ export class LayerStyles {
   getExtensionColor(extension) {
     // Get ColorManager from store
     const cm = useAppStore.getState().getColorManager?.();
-    const hexColor = cm.getNodeColor?.(extension);
+    // Normalize to node format for consistent highlighting
+    const extensionNode = this._convertNodeToColorManagerFormat(extension);
+    const hexColor = cm.getNodeColor?.(extensionNode);
     const rgb = this._hexToRgb(hexColor);
-    
+
     // Calculate base opacity
     let opacity = extension.opacity !== undefined ? Math.round(extension.opacity * 255) : 255;
-    
+
     // Apply dimming if enabled, there are active change edges, and this extension's node is not downstream
     const { dimmingEnabled } = useAppStore.getState();
-    const extensionNode = this._convertNodeToColorManagerFormat(extension);
     if (dimmingEnabled && cm.hasActiveChangeEdges() && !cm.isNodeDownstreamOfAnyActiveChangeEdge(extensionNode)) {
         opacity = Math.round(opacity * 0.3); // 30% opacity for dimmed elements
     }
-    
+
     return [...rgb, opacity];
   }
 

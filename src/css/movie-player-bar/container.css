@@ -13,6 +13,19 @@
   transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Remove padding for chart container but DON'T extend into navigation area */
+.movie-player-bar .movie-chart-container-full-width {
+  margin-left: -8px; /* only remove left padding, don't extend into nav */
+  margin-right: -8px;
+  width: calc(100% + 16px); /* only compensate for removed padding */
+}
+
+/* When navigation is hidden, only remove padding (don't extend into nav area) */
+.movie-player-bar.nav-hidden .movie-chart-container-full-width {
+  margin-left: -8px;
+  width: calc(100% + 16px);
+}
+
 .movie-player-bar.nav-hidden {
   left: 0;
 }
@@ -22,3 +35,7 @@
   flex-direction: column;
   gap: 6px;
 }
+
+/* MSA chip visibility control: hidden by default unless data-has-msa=true */
+.movie-player-bar .requires-msa { display: none; }
+[data-has-msa="true"] .movie-player-bar .requires-msa { display: inline-flex; }

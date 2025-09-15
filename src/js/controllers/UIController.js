@@ -41,8 +41,9 @@ export class UIController {
     // Remove tree counter updates since elements are deleted
     // Tree position and type information now handled by MovieTimelineManager
 
-    // Use centralized mapping for scale index (nearest full-tree chart index)
-    const transitionDistanceIdx = useAppStore.getState().getNearestAnchorChartIndex();
+    // Get distance index directly using TransitionIndexResolver
+    const { currentTreeIndex, transitionResolver } = useAppStore.getState();
+    const transitionDistanceIdx = transitionResolver.getSourceTreeIndex(currentTreeIndex);
 
     // MSA window chip is updated centrally by MovieTimelineManager only.
 

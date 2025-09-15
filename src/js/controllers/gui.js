@@ -59,32 +59,24 @@ export default class Gui {
         subscriptionPaused: state.subscriptionPaused
       }),
       (current, previous) => {
-        // Handle playing state changes (start/stop animation)
+        // THE FIX: This entire block was causing a logical conflict with the animation controller.
+        // The animation controller is responsible for rendering during playback.
+        // The ChartController is responsible for updating its own view.
+        // This subscription was preventing the necessary updates.
+        // By simplifying this, we allow the controllers to react to state changes as designed.
+
+        // Handle playing state changes to update the UI button
         if (current.playing !== previous?.playing) {
-          // Update button state reactively when playing state changes
           this._updatePlayButtonState();
-
-          if (!current.playing && previous?.playing) {
-            // Animation was stopped - ensure controller is also stopped
-            this.stop();
-          }
-          return; // Don't process other updates when animation state changes
         }
 
-        // Skip if subscriptions are paused
-        if (current.subscriptionPaused) {
-          return;
+        // Only update the main tree view when NOT playing and the index has changed.
+        if (!current.playing && current.currentTreeIndex !== previous?.currentTreeIndex) {
+          this.updateMain();
         }
 
-        // Only update on tree navigation changes
-        if (current.currentTreeIndex !== previous?.currentTreeIndex) {
-          // Always sync MSA region, even during playback
-          this.syncMSAIfOpen();
-          // Avoid re-rendering main tree while playing to prevent stutter
-          if (!current.playing) {
-            this.updateMain();
-          }
-        }
+        // Always sync MSA, throttled within the function itself.
+        this.syncMSAIfOpen();
       }
     );
   }
@@ -144,26 +136,25 @@ export default class Gui {
       treeController = useAppStore.getState().treeController;
     }
 
-    // Start animation on controller - controller will update store state
+    // THE FIX: The controller's startAnimation method is the single source of truth for starting playback.
+    // It will handle setting the store state and beginning the animation loop.
     if (treeController && typeof treeController.startAnimation === 'function') {
       treeController.startAnimation();
     } else {
       console.warn('[GUI] Cannot start animation - no valid tree controller');
-      return;
     }
-
-    // Button state will be updated automatically via store subscription
   }
 
 
 
   stop() {
-    const { treeController } = useAppStore.getState();
+    const { treeController, stop: stopStore } = useAppStore.getState();
     // Stop animation first if controller has the method
     if (treeController && typeof treeController.stopAnimation === 'function') {
       treeController.stopAnimation();
     }
-    useAppStore.getState().stop();
+    // Also ensure the store state is set to not playing.
+    stopStore();
   }
 
 
@@ -426,9 +417,9 @@ export default class Gui {
 
     // Anchor/full tree label
     if (!pairKey || phase === 'ORIGINAL') {
-      const fullIdx = typeof transitionResolver?.getFullTreeIndex === 'function'
-        ? transitionResolver.getFullTreeIndex(currentTreeIndex)
-        : -1;
+      // Check if current position is exactly on a full tree
+      const fullTreeIndices = transitionResolver?.fullTreeIndices || [];
+      const fullIdx = fullTreeIndices.indexOf(currentTreeIndex);
       return fullIdx >= 0 ? `Anchor Tree ${fullIdx + 1}` : `Anchor Tree`;
     }
 
@@ -450,9 +441,23 @@ export default class Gui {
       alert("No taxa names available for coloring.");
       return;
     }
+
+    // Create a complete color map that includes both system colors and current taxa colors
+    const completeColorMap = { ...TREE_COLOR_CATEGORIES };
+
+    // Add current taxa colors to the map - this ensures persistence
+    movieData.sorted_leaves.forEach(taxon => {
+      if (TREE_COLOR_CATEGORIES[taxon]) {
+        completeColorMap[taxon] = TREE_COLOR_CATEGORIES[taxon];
+      } else {
+        // If no color is set, use the default black color
+        completeColorMap[taxon] = TREE_COLOR_CATEGORIES.defaultColor || "#000000";
+      }
+    });
+
     new TaxaColoring(
       movieData.sorted_leaves, // Use movieData from store
-      { ...TREE_COLOR_CATEGORIES },
+      completeColorMap, // Pass complete color map including current taxa assignments
       (colorData) => this._handleTaxaColoringComplete(colorData)
     );
   }
@@ -505,6 +510,7 @@ export default class Gui {
       const { movieData, transitionResolver } = useAppStore.getState();
       this.movieTimelineManager = new MovieTimelineManager(movieData, transitionResolver);
     } catch (error) {
+      console.error('[GUI] Failed to initialize MovieTimelineManager:', error);
       this.movieTimelineManager = null;
     }
   }

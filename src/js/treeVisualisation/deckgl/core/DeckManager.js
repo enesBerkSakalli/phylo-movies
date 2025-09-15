@@ -114,7 +114,6 @@ export class DeckManager {
         dragRotate: true,
         keyboard: true
       },
-      initialViewState,                    // for first layout
       viewState: initialViewState,         // controlled from the beginning
       onViewStateChange: ({ viewState, viewId }) => {
         // Persist current camera state so switching views doesn't lose it
@@ -124,11 +123,6 @@ export class DeckManager {
         this.deck.setProps({ viewState: this.viewStates[id] });
       },
       onClick: (info, event) => {
-        console.log('[DeckManager] DECK.GL onClick triggered!', info);
-        console.log('[DeckManager] Layer info:', info.layer?.id);
-        console.log('[DeckManager] Object info:', info.object);
-        console.log('[DeckManager] Has _onNodeClick callback:', !!this._onNodeClick);
-
         // Always handle node clicks
         if (info.layer?.id === 'phylo-nodes' && this._onNodeClick) {
           console.log('[DeckManager] Node click detected, calling handler');
