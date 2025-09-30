@@ -99,35 +99,21 @@ export function getExtensionKey(leaf) {
  * @param {string} prefix - Prefix for the ID (e.g., "circle", "internal")
  * @returns {string} SVG-safe ID string
  */
-export function getNodeSvgId(node, prefix = "node") {
-  if (node && node.data && Array.isArray(node.data.split_indices)) {
-    return `${prefix}-${node.data.split_indices.join("-")}`;
-  }
-
-  const fallbackId = (node && node.data && node.data.name)
-    ? node.data.name.toString().replace(/[^a-zA-Z0-9-_]/g, "_")
-    : "unknown";
-
-  return `${prefix}-${fallbackId}`;
-}
+// Removed unused SVG ID helpers (getNodeSvgId, getLinkSvgId, getExtensionSvgId, getTreeKey)
 
 /**
  * Generates SVG id attribute for links
  * @param {Object} link - D3 link object
  * @returns {string} SVG-safe ID string
  */
-export function getLinkSvgId(link) {
-  return getLinkKey(link); // Same logic for consistency
-}
+//
 
 /**
  * Generates SVG id attribute for extensions
  * @param {Object} leaf - D3 leaf node
  * @returns {string} SVG-safe ID string
  */
-export function getExtensionSvgId(leaf) {
-  return getExtensionKey(leaf); // Same logic for consistency
-}
+//
 
 /**
  * Generates a stable, identity-based key for tree data structures
@@ -136,34 +122,4 @@ export function getExtensionSvgId(leaf) {
  * @param {Object} treeData - D3 hierarchy tree data
  * @returns {string} Unique tree identity key
  */
-export function getTreeKey(treeData) {
-  if (!treeData) return 'tree-empty';
-
-  // Use tree ID if explicitly provided
-  if (treeData.id) {
-    return `tree-${treeData.id}`;
-  }
-
-  // Use tree name if available
-  if (treeData.name) {
-    return `tree-${treeData.name.toString().replace(/[^a-zA-Z0-9-_]/g, "_")}`;
-  }
-
-  // Use first leaf as identity representative
-  const leaves = treeData.leaves();
-  if (leaves.length > 0) {
-    const firstLeafKey = getNodeKey(leaves[0]);
-    // Strip 'node-' prefix to get pure identity
-    return firstLeafKey.replace('node-', 'tree-');
-  }
-
-  // Fallback: use root node identity
-  const root = treeData.descendants()?.[0];
-  if (root) {
-    const rootKey = getNodeKey(root);
-    return rootKey.replace('node-', 'tree-');
-  }
-
-  // Ultimate fallback: structural identity (rare)
-  return `tree-${treeData.descendants().length}-${treeData.links().length}`;
-}
+//

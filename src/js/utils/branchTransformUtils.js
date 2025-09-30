@@ -188,38 +188,4 @@ function _transformSingleValue(value, transformType) {
  * @param {Object} node - Tree root node
  * @returns {Object} Statistics about branch lengths
  */
-export function getBranchLengthStats(node) {
-  const lengths = [];
-
-  function collectLengths(n) {
-    if (!n) return;
-
-    // Check both 'length' and 'branch_length' properties
-    let branchLength = n.length !== undefined ? n.length : n.branch_length;
-    if (branchLength !== undefined && branchLength !== null && branchLength > 0) {
-      lengths.push(branchLength);
-    }
-
-    if (n.children && Array.isArray(n.children)) {
-      n.children.forEach(collectLengths);
-    }
-  }
-
-  collectLengths(node);
-
-  if (lengths.length === 0) {
-    return { min: 0, max: 0, mean: 0, median: 0, count: 0 };
-  }
-
-  lengths.sort((a, b) => a - b);
-
-  return {
-    min: lengths[0],
-    max: lengths[lengths.length - 1],
-    mean: lengths.reduce((sum, val) => sum + val, 0) / lengths.length,
-    median: lengths[Math.floor(lengths.length / 2)],
-    count: lengths.length,
-    range: lengths[lengths.length - 1] - lengths[0]
-  };
-}
-
+// Removed unused helper: getBranchLengthStats

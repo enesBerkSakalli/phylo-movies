@@ -4,7 +4,7 @@ import { debounce } from '../utils/debounce.js';
 import 'winbox/dist/css/winbox.min.css';
 import { DeckGLTreeAnimationController } from '../treeVisualisation/DeckGLTreeAnimationController.js';
 
-// Import Material Web components
+// Import Material Web components (these are also declared in HTML importmap)
 import '@material/web/button/filled-button.js';
 import '@material/web/button/outlined-button.js';
 import '@material/web/button/text-button.js';
@@ -24,20 +24,14 @@ import '@material/web/divider/divider.js';
 import '@material/web/list/list.js';
 import '@material/web/list/list-item.js';
 import '@material/web/progress/linear-progress.js';
-// React pilot mount for TopScaleBar
-import { mountReactTopScaleBar, mountReactButtonsFileOps, mountReactButtonsMSA, mountReactAppearance, mountReactMoviePlayerBar } from '../../react/mountPartialsReact.jsx';
 
 // Import Material Web typography styles
 import {styles as typescaleStyles} from '@material/web/typography/md-typescale-styles.js';
 
-import {
-  attachGuiEventHandlers,
-  attachRecorderEventHandlers,
-} from "../partial/eventHandlers.js";
-import { ScreenRecorder } from "../services/record.js";
+// Legacy event handler system removed; React components own their events
+import { notifications } from "../partial/eventHandlers/notificationSystem.js";
 import { phyloData } from '../services/dataService.js';
 import { getPhyloMovieData } from "../services/dataManager.js";
-import { notifications } from '../partial/eventHandlers/notificationSystem.js';
 import { initializeTheme } from './theme.js';
 
 let eventHandlersAttached = false;
@@ -45,66 +39,11 @@ let eventHandlersAttached = false;
 // Initialize theme as early as possible
 initializeTheme();
 
-/**
- * Asynchronously loads all required HTML partials into their designated containers.
- * It also verifies that critical UI elements are present after loading.
- * @async
- * @function loadAllRequiredPartials
- * @returns {Promise<boolean>} True if all partials are loaded and elements verified, false otherwise.
- */
-async function loadAllRequiredPartials(hasMsa = true) {
+// Adopt Material Web typography styles once (safe to ignore if unsupported)
+try {
+  document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
+} catch {}
 
-  try {
-    // Add Material Web typography styles to document
-    document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
-    // No partials are used anymore; mount React components directly
-    // Mount React components (TopScaleBar, File Ops, MSA, Appearance, MoviePlayerBar)
-    try { mountReactTopScaleBar(); } catch {}
-    try { mountReactButtonsFileOps(); } catch {}
-    try { mountReactButtonsMSA(); } catch {}
-    try { mountReactAppearance(); } catch {}
-    try { mountReactMoviePlayerBar(); } catch {}
-
-    // Verify important elements exist
-    const requiredElements = [
-      "play-button",
-      "forward-button",
-      "backward-button",
-      "save-button",
-      "forwardStepButton",
-      "backwardStepButton",
-      "compare-sequence-button",
-      "taxa-coloring-button",
-      "animation-speed-range",
-      "branch-length-options",
-      "font-size",
-      "stroke-width",
-      "barPlotOption",
-      "lineChart",
-    ];
-
-    const missingElements = requiredElements.filter(
-      (id) => !document.getElementById(id)
-    );
-
-    if (missingElements.length > 0) {
-      // If any required element is missing, log a warning and return false.
-      // This indicates a potential issue with the HTML partials or the expected page structure.
-      console.warn(
-        `[phylo-movies] Critical UI elements are missing after attempting to load partials.
-        The application may not function correctly. Missing elements: ${missingElements.join(", ")}.
-        Please check the HTML partial files and their container IDs.`,
-        missingElements
-      );
-      return false;
-    }
-
-    return true;
-  } catch (err) {
-    console.error("[phylo-movies] Failed to load partials:", err);
-    return false;
-  }
-}
 
 /**
  * Measure the movie player bar height and expose it as a CSS variable so
@@ -158,11 +97,6 @@ async function initializeGuiAndEvents(parsedData) {
     useAppStore.getState().setGui(gui);
 
 
-    const recorder = new ScreenRecorder({
-      notifications: notifications,
-      autoSave: false // Manual save prompting is handled by the recorder
-    });
-
     // Debounced resize handler for better performance
     const debouncedResize = debounce(async () => {
       gui.resize();
@@ -172,12 +106,6 @@ async function initializeGuiAndEvents(parsedData) {
     window.addEventListener("resize", debouncedResize);
 
     if (!eventHandlersAttached) {
-      await attachGuiEventHandlers(gui);
-
-      // IMPORTANT: Set recorder AFTER eventHandlerRegistry is initialized
-      attachRecorderEventHandlers(recorder);
-
-      // Monophyletic coloring toggle handler is now managed by EventHandlerRegistry
       eventHandlersAttached = true;
       gui.initializeMovie();
     }
@@ -193,7 +121,7 @@ async function initializeGuiAndEvents(parsedData) {
 
 /**
  * Main function to initialize the application after data is parsed.
- * It processes data, loads partials, and then initializes the GUI and event handlers.
+ * It processes data, ensures UI, and then initializes the GUI and event handlers.
  * @param {Object} parsedData - The validated phyloMovieData from dataManager.
  */
 async function initializeAppFromParsedData(parsedData) {
@@ -203,19 +131,12 @@ async function initializeAppFromParsedData(parsedData) {
     try {
       document.documentElement.setAttribute('data-has-msa', hasMsa ? 'true' : 'false');
     } catch {}
-    const partialsLoaded = await loadAllRequiredPartials(hasMsa);
-    if (!partialsLoaded) {
-      alert(
-        "Error: Failed to load essential interface components. Please refresh the page or check the console."
-      );
-      return; // Stop further execution if partials failed
-    }
 
     // MSA UI state is handled by the React component (ButtonsMSA)
 
     await initializeGuiAndEvents(parsedData);
 
-    // After partials and GUI initialized, compute initial bar height
+    // After components and GUI initialized, compute initial bar height
     updateMovieBarHeightVar();
     // Recompute on resize (debounced resize already updates GUI)
     window.addEventListener('resize', updateMovieBarHeightVar);
