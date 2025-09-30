@@ -140,6 +140,7 @@ export class TimelineUI {
     }
 
     updatePositionDisplay({ progress, currentTree, totalTrees, treeInSegment, treesInSegment }) {
+        const reactHudMounted = !!document.querySelector('.phylo-hud[data-react-component="hud"]');
         const progressPercent = Math.round(progress * 100);
         let displayText = `${progressPercent}%`;
 
@@ -178,12 +179,15 @@ export class TimelineUI {
         }
         updatePositionElement(this.elements.currentPositionInfo);
 
-        // Update HUD position display
-        updatePositionElement(this.elements.hudPositionInfo);
+        // Update HUD position display unless React HUD is mounted
+        if (!reactHudMounted) {
+            updatePositionElement(this.elements.hudPositionInfo);
+        }
     }
 
     updateSegmentInfo(segment, transitionProgress, storeState) {
         let text = '';
+        const reactHudMounted = !!document.querySelector('.phylo-hud[data-react-component="hud"]');
 
         if (segment?.isFullTree) {
             const getNearestAnchorChartIndex = storeState.getNearestAnchorChartIndex?.bind(storeState) || null;
@@ -202,8 +206,8 @@ export class TimelineUI {
             segInfoEl.textContent = text;
         }
 
-        // Update HUD segment info
-        if (this.elements.hudSegmentInfo) {
+        // Update HUD segment info unless React HUD is mounted
+        if (!reactHudMounted && this.elements.hudSegmentInfo) {
             this.elements.hudSegmentInfo.textContent = text;
         }
     }

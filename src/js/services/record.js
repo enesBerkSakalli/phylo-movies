@@ -133,7 +133,7 @@ export class ScreenRecorder {
     this.updateStartButton(false, "Start Recording", "");
     this.updateStopButton(true, "");
     console.log("Recording stopped");
-    
+
     // If auto-save is not enabled, prompt user to save manually
     if (!this.autoSave) {
       this.promptManualSave();
@@ -144,7 +144,7 @@ export class ScreenRecorder {
     this.updateStartButton(false, "Start Recording", "");
     this.updateStopButton(true, "");
     console.error("Recording error:", error);
-    
+
     // Show notification if available
     if (this.notifications) {
       this.notifications.show(`Recording error: ${error.message || error}`, "error");

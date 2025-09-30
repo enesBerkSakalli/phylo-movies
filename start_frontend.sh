@@ -63,7 +63,7 @@ fi
 # Cleanup function
 cleanup() {
   echo "[frontend] Cleaning up..."
-  if [ -n "$FRONTEND_PID" ] && kill -0 $FRONTEND_PID 2>/dev/null; then 
+  if [ -n "$FRONTEND_PID" ] && kill -0 $FRONTEND_PID 2>/dev/null; then
     kill $FRONTEND_PID 2>/dev/null
   fi
   wait $FRONTEND_PID 2>/dev/null

@@ -19,26 +19,39 @@ export class UIComponentFactory {
     const windowContent = document.createElement('div');
     windowContent.className = 'tc-container'; // Use a specific prefix 'tc-' for Taxa Coloring
 
-    // Try to get WinBox from global scope first, then dynamic import
+    // Resolve WinBox: prefer ESM import (works with Vite dev/build),
+    // then fall back to a global if present.
     let WinBox = window.WinBox;
-
     if (!WinBox) {
+      let WinBoxCtor = null;
+      // Try explicit ESM path first (works best with Vite)
       try {
-        // Try loading the bundled version
-        const script = document.createElement('script');
-        script.src = '/node_modules/winbox/dist/winbox.bundle.min.js';
-        document.head.appendChild(script);
-
-        // Wait for script to load
-        await new Promise((resolve, reject) => {
-          script.onload = resolve;
-          script.onerror = reject;
-        });
-
-        WinBox = window.WinBox;
-      } catch (error) {
-        throw new Error(`Failed to load WinBox bundle: ${error.message}`);
+        const mod = await import('winbox/src/js/winbox.js');
+        WinBoxCtor = mod?.default || mod?.WinBox || mod;
+      } catch {}
+      // Fallback to package entry
+      if (!WinBoxCtor) {
+        try {
+          const mod = await import('winbox');
+          WinBoxCtor = mod?.default || mod?.WinBox || null;
+        } catch {}
       }
+      // Fallback to CDN if still unavailable
+      if (!WinBoxCtor) {
+        try {
+          const script = document.createElement('script');
+          script.src = 'https://cdn.jsdelivr.net/npm/winbox@0.2.82/dist/winbox.bundle.min.js';
+          document.head.appendChild(script);
+          await new Promise((resolve, reject) => {
+            script.onload = resolve;
+            script.onerror = reject;
+          });
+          WinBoxCtor = window.WinBox;
+        } catch (e) {
+          throw new Error(`Failed to load WinBox (module and CDN): ${e?.message}`);
+        }
+      }
+      WinBox = WinBoxCtor;
     }
 
     if (typeof WinBox !== 'function') {

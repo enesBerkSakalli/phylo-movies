@@ -15,8 +15,7 @@
 }
 
 /* Movie player bar specific overrides for chart elements */
-.movie-player-bar #lineChart,
-.movie-player-bar #line-chart {
+.movie-player-bar #lineChart {
   flex: 1 1 auto;
   min-width: 0; /* allow flexbox to shrink without overflow */
   width: 100%;  /* use full width of extended container */

@@ -1,9 +1,20 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
+// Strip importmap blocks from built HTML (not during dev)
+function stripImportMapsOnBuild() {
+  return {
+    name: 'strip-importmaps-on-build',
+    apply: 'build' as const,
+    transformIndexHtml(html: string) {
+      return html.replace(/<script\s+type=["']importmap["'][\s\S]*?<\/script>\s*/gi, '');
+    }
+  };
+}
+
 export default defineConfig({
   base: '/',
-  plugins: [react()],
+  plugins: [react(), stripImportMapsOnBuild()],
   define: {
     global: 'globalThis',
     'process.env': {}
@@ -25,7 +36,7 @@ export default defineConfig({
     }
   },
   optimizeDeps: {
-    include: ["d3", "winbox"]
+    include: ["d3", "winbox", "winbox/src/js/winbox.js"]
   },
 
   build: {

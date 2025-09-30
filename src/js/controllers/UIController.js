@@ -1,4 +1,4 @@
-import { getCurrentScaleValue, calculateScalePercentage, formatScaleValue } from "../utils/scaleUtils.js";
+import { getCurrentScaleValue, formatScaleValue } from "../utils/scaleUtils.js";
 import { useAppStore } from '../core/store.js'; // Import useAppStore
 
 /**
@@ -17,7 +17,8 @@ export class UIController {
       // Removed: window chip handling; managed by MovieTimelineManager only
       currentScaleText: document.getElementById("currentScaleText"),
       maxScaleText: document.getElementById("maxScaleText"),
-      scaleProgressBar: document.querySelector(".scale-progress-bar"),
+      // Use the Material Web linear progress element defined in the partial
+      scaleProgress: document.getElementById("scale-progress"),
     };
 
     // Log any missing elements for debugging
@@ -57,10 +58,12 @@ export class UIController {
       this.elements.maxScaleText.innerText = formatScaleValue(maxScale);
     }
 
-    // Update scale progress bar (vertical orientation)
-    if (this.elements.scaleProgressBar) {
-      const percent = calculateScalePercentage(currentScale, maxScale);
-      this.elements.scaleProgressBar.style.height = `${percent}%`;
+    // Update the Material linear progress (expects a value in [0, 1])
+    if (this.elements.scaleProgress) {
+      const progress = maxScale > 0 ? Math.max(0, Math.min(1, currentScale / maxScale)) : 0;
+      try {
+        this.elements.scaleProgress.value = progress;
+      } catch {}
     }
 
     // Legacy scale display code removed - using scaleProgressBar only

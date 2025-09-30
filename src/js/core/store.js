@@ -94,7 +94,6 @@ export const useAppStore = create((set, get) => ({
 
   // Chart-specific state
   barOptionValue: 'rfd',
-  stickyChartPosition: undefined,
 
   // ===================================
   // ACTIONS
@@ -585,16 +584,7 @@ export const useAppStore = create((set, get) => ({
    */
   setBarOption: (option) => set({ barOptionValue: option }),
 
-  /**
-   * Sets a sticky position for chart highlighting
-   * @param {number} position - Position to highlight in chart
-   */
-  setStickyChartPosition: (position) => set({ stickyChartPosition: position }),
-
-  /**
-   * Clears any sticky chart position highlighting
-   */
-  clearStickyChartPosition: () => set({ stickyChartPosition: undefined }),
+  // Sticky chart position removed
 
 
 
@@ -798,27 +788,7 @@ export const useAppStore = create((set, get) => ({
   setTaxaGrouping: (grouping) => set({ taxaGrouping: grouping }),
 
   // --- Chart Data Getters ---
-  /**
-   * Gets properties needed for line chart rendering
-   * @returns {Object} Chart properties including distances, scales, and current position
-   */
-  getLineChartProps: () => {
-    const state = get();
-
-    // Use canonical schema from example.json
-    const robinsonFouldsDistances = state.movieData?.distances?.robinson_foulds;
-    const weightedRobinsonFouldsDistances = state.movieData?.distances?.weighted_robinson_foulds;
-    const scaleList = state.movieData?.scaleList;
-
-    return {
-      barOptionValue: state.barOptionValue,
-      currentTreeIndex: state.currentTreeIndex,
-      robinsonFouldsDistances,
-      weightedRobinsonFouldsDistances,
-      scaleList,
-      transitionResolver: state.transitionResolver,
-    };
-  },
+  // Legacy getLineChartProps removed; React chart reads state directly
 
   /**
    * Gets highlighting data (subtrees) for the current tree position

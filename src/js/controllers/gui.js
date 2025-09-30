@@ -4,7 +4,6 @@ import { WebGLTreeAnimationController } from "../treeVisualisation/WebGLTreeAnim
 import { TREE_COLOR_CATEGORIES } from "../core/store.js";
 import { applyColoringData } from "../treeColoring/index.js";
 import { NavigationController } from "./NavigationController.js";
-import { ChartController } from "./ChartController.js";
 import { UIController } from "./UIController.js";
 import { calculateWindow } from "../utils/windowUtils.js";
 import { getMSAFrameIndex } from "../core/IndexMapping.js";
@@ -45,7 +44,7 @@ export default class Gui {
     // Initialize controllers, passing 'this' (the Gui instance) where needed
     this.navigationController = new NavigationController(this);
     this.uiController = new UIController(this);
-    this.chartController = new ChartController(this, this.navigationController);
+    // React (Nivo) chart renders via components; no chart controller
 
     // Movie Timeline Manager for visual active change edge progress tracking
     this.movieTimelineManager = null;
@@ -59,11 +58,7 @@ export default class Gui {
         subscriptionPaused: state.subscriptionPaused
       }),
       (current, previous) => {
-        // THE FIX: This entire block was causing a logical conflict with the animation controller.
-        // The animation controller is responsible for rendering during playback.
-        // The ChartController is responsible for updating its own view.
-        // This subscription was preventing the necessary updates.
-        // By simplifying this, we allow the controllers to react to state changes as designed.
+        // Keep subscription focused: animation drives renders; avoid redundant work.
 
         // Handle playing state changes to update the UI button
         if (current.playing !== previous?.playing) {
@@ -201,8 +196,7 @@ export default class Gui {
     // 2. Render tree content
     await this.updateMain();
 
-    // 3. Update chart indicators to match tree position
-    await this.chartController.updateChart();
+    // 3. Chart updates are handled by React (Nivo) via store state
 
     // 4. Update UI elements with current state
     this.uiController.update();
@@ -397,13 +391,7 @@ export default class Gui {
     }
   }
 
-  // ========================================
-  // CHART MODAL FUNCTIONALITY
-  // ========================================
-  displayCurrentChartInModal() {
-    // Delegate to ChartController
-    return this.chartController.displayCurrentChartInModal();
-  }
+  // Chart modal removed
 
   getCurrentTreeLabel() {
     const store = useAppStore.getState();
@@ -541,10 +529,7 @@ export default class Gui {
       this.uiController = null;
     }
 
-    if (this.chartController) {
-      // ChartController cleanup if it has a destroy method
-      this.chartController = null;
-    }
+    // React (Nivo) chart is component-driven; nothing to clean up here
 
     if (this.navigationController) {
       // NavigationController cleanup if it has a destroy method
