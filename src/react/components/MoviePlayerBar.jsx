@@ -1,6 +1,8 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { HUD } from './HUD.jsx';
 import { useAppStore } from '../../js/core/store.js';
+import { ScreenRecorder } from '../../js/services/record.js';
+import { notifications } from '../../js/partial/eventHandlers/notificationSystem.js';
 import { TimelineChart } from './TimelineChart.jsx';
 
 export function MoviePlayerBar() {
@@ -14,6 +16,15 @@ export function MoviePlayerBar() {
   const setAnimationSpeed = useAppStore((s) => s.setAnimationSpeed);
   const barOptionValue = useAppStore((s) => s.barOptionValue);
   const setBarOption = useAppStore((s) => s.setBarOption);
+  const recorderRef = useRef(null);
+  const [isRecording, setIsRecording] = useState(false);
+
+  const ensureRecorder = useCallback(() => {
+    if (!recorderRef.current) {
+      recorderRef.current = new ScreenRecorder({ autoSave: false, notifications });
+    }
+    return recorderRef.current;
+  }, []);
 
   const onPlayClick = useCallback(async () => {
     try {
@@ -132,10 +143,37 @@ export function MoviePlayerBar() {
 
               <div className="vertical-divider"></div>
 
-              <md-icon-button id="start-record" className="record-button-danger" title="Start screen recording">
+              <md-icon-button
+                id="start-record"
+                className="record-button-danger"
+                title="Start screen recording"
+                disabled={isRecording}
+                onClick={async () => {
+                  try {
+                    await ensureRecorder().start();
+                    setIsRecording(true);
+                  } catch (error) {
+                    console.error('[MoviePlayerBar] Failed to start recording:', error);
+                    notifications.show('Failed to start recording. Please check permissions.', 'error');
+                  }
+                }}
+              >
                 <md-icon>fiber_manual_record</md-icon>
               </md-icon-button>
-              <md-icon-button id="stop-record" title="Stop screen recording" disabled>
+              <md-icon-button
+                id="stop-record"
+                title="Stop screen recording"
+                disabled={!isRecording}
+                onClick={() => {
+                  try {
+                    ensureRecorder().stop();
+                    setIsRecording(false);
+                  } catch (error) {
+                    console.error('[MoviePlayerBar] Failed to stop recording:', error);
+                    notifications.show('Failed to stop recording.', 'error');
+                  }
+                }}
+              >
                 <md-icon>stop_circle</md-icon>
               </md-icon-button>
             </div>

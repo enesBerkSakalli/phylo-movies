@@ -49,14 +49,7 @@ export const clamp = (value, min = 0, max = 1) => Math.max(min, Math.min(max, va
  * @param {number} progress - Progress value between 0-1
  * @returns {Object} Interpolation indices and segment progress
  */
-export const calculateInterpolationIndices = (total, progress) => {
-  const exact = progress * (total - 1);
-  return {
-    from: Math.floor(exact),
-    to: Math.min(Math.floor(exact) + 1, total - 1),
-    segment: exact - Math.floor(exact)
-  };
-};
+// Removed unused helper: calculateInterpolationIndices
 
 /**
  * Linear interpolation between two values
@@ -65,18 +58,14 @@ export const calculateInterpolationIndices = (total, progress) => {
  * @param {number} progress - Progress between 0-1
  * @returns {number} Interpolated value
  */
-export const lerp = (start, end, progress) => {
-  return start + (end - start) * progress;
-};
+// Removed unused helper: lerp
 
 /**
  * Smooth step interpolation for natural transitions
  * @param {number} x - Input value between 0-1
  * @returns {number} Smoothed value
  */
-export const smoothStep = (x) => {
-  return x * x * (3 - 2 * x);
-};
+// Removed unused helper: smoothStep
 
 /**
  * Cubic ease-in-out interpolation for biological transitions
@@ -86,5 +75,4 @@ export const smoothStep = (x) => {
 export const easeInOutCubic = (x) => {
   return x ** 2 * 3 - x ** 3 * 2;
 };
-
 

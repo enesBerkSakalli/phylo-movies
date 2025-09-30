@@ -9,10 +9,7 @@ import { kar2pol, shortestAngle as signedShortestAngleExt } from "../../utils/Ma
  * @param {number} a - Angle in radians
  * @returns {number} Normalized angle
  */
-export function normalizeAngle(a) {
-  const TAU = Math.PI * 2;
-  return ((a % TAU) + TAU) % TAU;
-}
+// Removed unused helper: normalizeAngle
 
 /**
  * Signed shortest angle from "from" to "to" in (-π, π]
@@ -52,14 +49,7 @@ export function polarToCartesian(radius, angle, center = { x: 0, y: 0, z: 0 }) {
  * @param {number} t - Interpolation factor (0-1)
  * @returns {Object} Interpolated position {x,y}
  */
-export function interpolatePolarPosition(fromNode, toNode, t) {
-  const interpAngle = interpolateAngle(fromNode.angle, toNode.angle, t);
-  const interpRadius = fromNode.radius + (toNode.radius - fromNode.radius) * t;
-  return {
-    x: interpRadius * Math.cos(interpAngle),
-    y: interpRadius * Math.sin(interpAngle)
-  };
-}
+// Removed unused helper: interpolatePolarPosition
 
 /**
  * Interpolates between two angles with wrap-around handling.
@@ -299,13 +289,7 @@ export function calculatePathLengthFromCoordinates(coordinates) {
  * @param {Object} link - Link object with source and target
  * @returns {number} Link length
  */
-export function calculateLinkLength(link) {
-  if (!link.__coords) {
-    link.__coords = calculateBranchCoordinates(link);
-    link.__length = calculatePathLengthFromCoordinates(link.__coords);
-  }
-  return link.__length;
-}
+// Removed unused helper: calculateLinkLength
 
 
 

@@ -4,7 +4,6 @@ import { WebGLTreeAnimationController } from "../treeVisualisation/WebGLTreeAnim
 import { TREE_COLOR_CATEGORIES } from "../core/store.js";
 import { applyColoringData } from "../treeColoring/index.js";
 import { NavigationController } from "./NavigationController.js";
-import { UIController } from "./UIController.js";
 import { calculateWindow } from "../utils/windowUtils.js";
 import { getMSAFrameIndex } from "../core/IndexMapping.js";
 import { MovieTimelineManager } from "../timeline/MovieTimelineManager.js";
@@ -16,7 +15,7 @@ import { MovieTimelineManager } from "../timeline/MovieTimelineManager.js";
 // - Orchestrates WebGL/SVG tree rendering via TreeAnimationController
 // - Manages animation playback with smooth interpolation
 // - Handles navigation direction tracking for backward scrubbing support
-// - Coordinates UI controllers (Navigation, Chart, UI)
+// - Coordinates UI controllers (Navigation, UI)
 // - Synchronizes with MSA viewer when enabled
 // - Provides centralized state management through store integration
 //
@@ -43,7 +42,7 @@ export default class Gui {
 
     // Initialize controllers, passing 'this' (the Gui instance) where needed
     this.navigationController = new NavigationController(this);
-    this.uiController = new UIController(this);
+    // Scale bar is managed by React; no UI controller needed
     // React (Nivo) chart renders via components; no chart controller
 
     // Movie Timeline Manager for visual active change edge progress tracking
@@ -198,8 +197,7 @@ export default class Gui {
 
     // 3. Chart updates are handled by React (Nivo) via store state
 
-    // 4. Update UI elements with current state
-    this.uiController.update();
+    // 4. UI elements update via React components
 
     // 5. Sync external viewers if needed
     this._syncMSAIfOpenThrottled();
@@ -524,10 +522,7 @@ export default class Gui {
     }
 
     // Clean up controllers
-    if (this.uiController) {
-      this.uiController.destroy();
-      this.uiController = null;
-    }
+    // No UI controller to clean up
 
     // React (Nivo) chart is component-driven; nothing to clean up here
 

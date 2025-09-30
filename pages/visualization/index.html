@@ -38,79 +38,12 @@
   </head>
 
   <body>
-    <div id="top-scale-bar-container"></div>
-
-    <!-- Material Design 3 Navigation Drawer using Material Web Components -->
-    <nav class="nav-drawer" id="navigation-drawer" role="navigation" aria-label="Main navigation">
-      <!-- Navigation Header with Material Design 3 styling -->
-      <header class="nav-header">
-        <div class="nav-title-row">
-          <md-icon style="font-size: 24px; color: var(--md-sys-color-primary);">movie</md-icon>
-          <div style="flex: 1;">
-            <h1 class="nav-title">Phylo-Movies</h1>
-            <p class="nav-subtitle">
-              File: <span id="compactFileName">Loading...</span>
-            </p>
-          </div>
-          <!-- Theme toggle: cycles System → Dark → Light -->
-          <md-icon-button id="theme-toggle" aria-label="Toggle theme" title="Toggle theme">
-            <md-icon id="theme-toggle-icon">computer</md-icon>
-          </md-icon-button>
-        </div>
-      </header>
-
-      <!-- Navigation Content using Material Web list -->
-      <div style="flex: 1; overflow-y: auto;">
-        <md-list>
-          <div style="padding: 0 16px 16px 16px; flex-shrink: 0; display: flex; flex-direction: column; gap: 16px;">
-            <div id="buttons-file-container"></div>
-            <div id="buttons-msa-container"></div>
-          </div>
-
-          <md-divider></md-divider>
-
-          <!-- Appearance Settings Section -->
-          <md-list-item>
-            <div slot="overline">SETTINGS</div>
-            <div slot="headline" class="md-typescale-headline-small" style="color: var(--md-sys-color-on-surface);">Appearance</div>
-            <md-icon slot="start" style="color: var(--md-sys-color-primary);">tune</md-icon>
-          </md-list-item>
-          <div style="padding: 0 16px 16px 16px; flex: 1; overflow-y: auto;">
-            <div id="appearance-container"></div>
-          </div>
-          <md-divider></md-divider>
-
-        </md-list>
-      </div>
-    </nav>
-
-
-    <div class="container">
-
-      <!-- Main Content Area -->
-      <div class="full-size-container">
-        <!-- WebGL Canvas -->
-        <div id="webgl-container" style="width: 100%; height: 100%;"></div>
-      </div>
-    </div>
-
-    <!-- Movie Player Bar - positioned at bottom like movie player -->
-    <div id="movie-player-container"></div>
+    <div id="root"></div>
 
 
 
 
 
-    <!-- Material Design Web Components -->
-    <script type="importmap">
-      {
-        "imports": {
-          "@material/web/": "https://esm.run/@material/web/"
-        }
-      }
-    </script>
-
-
-    <script type="module" src="/src/js/core/main.js"></script>
+    <script type="module" src="/src/react/main.jsx"></script>
   </body>
 </html>

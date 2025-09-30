@@ -43,10 +43,7 @@ export function getMaxScaleValue(scaleList) {
  * @param {number} maxScale - Maximum scale value
  * @returns {number} Percentage (0-100)
  */
-export function calculateScalePercentage(currentScale, maxScale) {
-  if (maxScale === 0) return 0;
-  return Math.max(0, Math.min(100, (currentScale / maxScale) * 100));
-}
+// Removed unused helper: calculateScalePercentage
 
 /**
  * Format scale value for display
