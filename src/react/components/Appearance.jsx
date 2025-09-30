@@ -6,35 +6,9 @@ import { AdvancedFeatures } from './AdvancedFeatures.jsx';
 import { TreeStructure } from './TreeStructure.jsx';
 
 export function Appearance() {
-  const fontSize = useAppStore((s) => s.fontSize);
-  const strokeWidth = useAppStore((s) => s.strokeWidth);
-  const monophyletic = useAppStore((s) => s.monophyleticColoringEnabled);
-  const activeChange = useAppStore((s) => s.activeChangeEdgesEnabled);
-  const marked = useAppStore((s) => s.markedComponentsEnabled);
   const dimming = useAppStore((s) => s.dimmingEnabled);
-  const trailsEnabled = useAppStore((s) => s.trailsEnabled);
-  const trailLength = useAppStore((s) => s.trailLength);
-  const trailOpacity = useAppStore((s) => s.trailOpacity);
-  const trailThickness = useAppStore((s) => s.trailThickness);
-  const cameraMode = useAppStore((s) => s.cameraMode);
-  const branchTransformation = useAppStore((s) => s.branchTransformation);
   const treeController = useAppStore((s) => s.treeController);
-  const setFontSize = useAppStore((s) => s.setFontSize);
-  const setStrokeWidth = useAppStore((s) => s.setStrokeWidth);
-  const setMonophyleticColoring = useAppStore((s) => s.setMonophyleticColoring);
-  const setActiveChangeEdgesEnabled = useAppStore((s) => s.setActiveChangeEdgesEnabled);
-  const setMarkedComponentsEnabled = useAppStore((s) => s.setMarkedComponentsEnabled);
   const setDimmingEnabled = useAppStore((s) => s.setDimmingEnabled);
-  const setTrailLength = useAppStore((s) => s.setTrailLength);
-  const setTrailOpacity = useAppStore((s) => s.setTrailOpacity);
-  const setTrailThickness = useAppStore((s) => s.setTrailThickness);
-  const toggleCameraMode = useAppStore((s) => s.toggleCameraMode);
-  const setBranchTransformation = useAppStore((s) => s.setBranchTransformation);
-  const setActiveChangeEdgeColor = useAppStore((s) => s.setActiveChangeEdgeColor);
-  const setMarkedColor = useAppStore((s) => s.setMarkedColor);
-  const setDimmedColor = useAppStore((s) => s.setDimmedColor);
-
-  const fontSizeNumber = typeof fontSize === 'string' ? parseFloat(fontSize) : Number(fontSize || 1.8);
 
   // Bridge Web Component events/properties for the Focus toggle (md-switch)
   const focusSwitchRef = useRef(null);
