@@ -2,6 +2,11 @@ import { getDevicePixelRatio, createSnapFunction } from './utils/renderingUtils.
 import { msToX } from './utils/coordinateUtils.js';
 import { createAnchor, createConnection } from './utils/geometryUtils.js';
 
+// Visualization constants
+const SEPARATOR_MIN_HEIGHT_PX = 6;            // Minimum tick height in pixels
+const SEPARATOR_HEIGHT_FRACTION = 0.6;        // Fraction of available height used for tick
+const ID_OFFSET = 1;                          // Convert 0-based index to 1-based id
+
 export function processSegments(
   { startIdx, endIdx, width, height, visStart, visEnd, zoomScale, theme, timelineData, segments, selectedId, lastHoverId, rangeStart, rangeEnd },
   { radiusStrategy, gapStrategy }
@@ -21,30 +26,62 @@ export function processSegments(
   const separators = [];
 
   for (let i = startIdx; i <= endIdx; i++) {
-    const segStart = i === 0 ? 0 : cumulativeDurations[i - 1];
-    const segEnd = cumulativeDurations[i];
-    if (segEnd < visStart || segStart > visEnd) continue;
+    // Segment boundaries in milliseconds
+    const segStartMs = i === 0 ? 0 : cumulativeDurations[i - 1];
+    const segEndMs = cumulativeDurations[i];
+    if (segEndMs < visStart || segStartMs > visEnd) continue;
 
-    const x0 = msToX(segStart, rangeStart, rangeEnd, width);
-    const x1 = msToX(segEnd, rangeStart, rangeEnd, width);
-    const id = i + 1;
-    const isAnchor = !!segments[i]?.isFullTree;
+    // Convert ms to pixel space [0, width]
+    const xStartPx = msToX(segStartMs, rangeStart, rangeEnd, width);
+    const xEndPx = msToX(segEndMs, rangeStart, rangeEnd, width);
+    const id = i + ID_OFFSET;
+    const isFullTree = !!segments[i]?.isFullTree;
 
-    const tickX = snap(x0 - width / 2);
-    const tickH = Math.max(6, Math.floor(height * 0.6));
-    separators.push({ path: [[tickX, -tickH / 2], [tickX, tickH / 2]] });
+    // Vertical separator tick at segment start (convert to centered coordinates)
+    const separatorX = snap(xStartPx - width / 2);
+    const separatorHeight = Math.max(
+      SEPARATOR_MIN_HEIGHT_PX,
+      Math.floor(height * SEPARATOR_HEIGHT_FRACTION)
+    );
+    separators.push({ path: [[separatorX, -separatorHeight / 2], [separatorX, separatorHeight / 2]] });
 
-    if (isAnchor) {
-      const anchor = createAnchor(id, x0, x1, width, height, anchorFillRGB, anchorStrokeRGB, anchorRadiusVar, zoomScale, snap, { radiusStrategy });
+    if (isFullTree) {
+      const anchor = createAnchor(
+        id,
+        xStartPx,
+        xEndPx,
+        width,
+        height,
+        anchorFillRGB,
+        anchorStrokeRGB,
+        anchorRadiusVar,
+        zoomScale,
+        snap,
+        { radiusStrategy }
+      );
       anchorPoints.push(anchor);
       if (selectedId === id) selectionAnchors.push(anchor);
       else if (lastHoverId === id) hoverAnchors.push(anchor);
     } else {
-      const item = createConnection(i, id, x0, x1, width, height, anchorRadiusVar, zoomScale, gapDefault, connectionNeutralRGB, snap, segments, { radiusStrategy, gapStrategy });
-      if (!item) continue;
-      connections.push(item);
-      if (selectedId === id) selectionConnections.push(item);
-      else if (lastHoverId === id) hoverConnections.push(item);
+      const connection = createConnection(
+        i,
+        id,
+        xStartPx,
+        xEndPx,
+        width,
+        height,
+        anchorRadiusVar,
+        zoomScale,
+        gapDefault,
+        connectionNeutralRGB,
+        snap,
+        segments,
+        { radiusStrategy, gapStrategy }
+      );
+      if (!connection) continue;
+      connections.push(connection);
+      if (selectedId === id) selectionConnections.push(connection);
+      else if (lastHoverId === id) hoverConnections.push(connection);
     }
   }
 

@@ -11,7 +11,7 @@ import { useAppStore } from '../core/store.js'; // <-- IMPORT THE STORE
  * - Orchestrate execution of navigation commands
  * - Provide error handling and logging for navigation operations
  * - Maintain separation of concerns between GUI rendering and navigation logic
- * - Manage chart-navigation integration and sticky position state
+ * - Manage navigation integration
  */
 export class NavigationController {
   constructor() {
@@ -55,68 +55,9 @@ export class NavigationController {
     this.isNavigating = false;
   }
 
-  /**
-   * Clear the sticky chart position (called during most navigation operations)
-   */
-  clearStickyPosition() {
-    useAppStore.getState().clearStickyChartPosition();
-  }
+  // Sticky chart position features removed
 
-  /**
-   * Set the sticky chart position (called when clicking on chart data points)
-   * @param {number} position - The position index to remember
-   */
-  setStickyPosition(position) {
-    useAppStore.getState().setStickyChartPosition(position);
-  }
+  // Chart tree index helpers removed; React chart derives index directly
 
-  /**
-   * Get the sticky chart position if available
-   * @returns {number|undefined} The last clicked distance position
-   */
-  getStickyPosition() {
-    return useAppStore.getState().stickyChartPosition;
-  }
-
-  /**
-   * Get the appropriate tree index for chart display based on chart type
-   * @param {string} chartType - The type of chart ('scale', 'rfd', 'w-rfd')
-   * @returns {number} The appropriate index for the chart
-   */
-  getChartTreeIndex(chartType) {
-    const { currentTreeIndex, transitionResolver } = useAppStore.getState();
-    if (chartType === "scale") {
-      return currentTreeIndex; // sequence index for scale charts
-    } else {
-      // transition index for RFD/W-RFD charts
-      return transitionResolver ?
-        transitionResolver.getSourceTreeIndex(currentTreeIndex) :
-        currentTreeIndex;
-    }
-  }
-
-  /**
-   * Generate navigation callbacks for chart interaction
-   * @returns {Object} Object containing callback functions for chart events
-   */
-  getChartNavigationCallbacks() {
-    return {
-      onGoToPosition: async (idx) => {
-        console.log('[NavigationController] onGoToPosition called with idx:', idx);
-        const { goToPosition } = useAppStore.getState(); // Get action from store
-        console.log('[NavigationController] Calling store.goToPosition with:', idx);
-        goToPosition(idx); // Dispatch action
-        console.log('[NavigationController] goToPosition completed');
-      },
-      onHandleDrag: async (idx) => {
-        const { goToPosition } = useAppStore.getState(); // Get action from store
-        goToPosition(idx); // Dispatch action
-      },
-      onGoToFullTreeDataIndex: async (idx) => {
-        const { setStickyChartPosition, goToPosition } = useAppStore.getState(); // Get actions from store
-        setStickyChartPosition(idx); // Dispatch action
-        goToPosition(idx); // Dispatch action
-      }
-    };
-  }
+  // Chart-specific callbacks removed (React chart calls store directly)
 }

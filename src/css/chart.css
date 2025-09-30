@@ -1,8 +1,7 @@
 /* Removed unused chart title/icon/container styles */
 
 /* Chart containers - unified styling */
-#lineChart,
-#line-chart {
+#lineChart {
   width: 100%;
   height: 100%;
   background-color: var(--md-sys-color-surface-container-low);
@@ -71,27 +70,7 @@
   background: var(--md-sys-color-surface-container-low);
 }
 
-.chart-modal-button {
-  height: 32px;
-  padding: 4px 12px;
-  border: 1px solid var(--md-sys-color-outline);
-  border-radius: 4px;
-  background: var(--md-sys-color-surface-container);
-  color: var(--md-sys-color-on-surface);
-  font-size: 13px;
-  font-family: var(--md-sys-typescale-body-medium-font);
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.chart-modal-button:hover {
-  background: var(--md-sys-color-surface-container-high);
-}
-
-.chart-modal-button:active {
-  background: var(--md-sys-color-surface-container-highest);
-}
+/* Modal chart button removed */
 
 
 /* Chart canvas for inline charts */
