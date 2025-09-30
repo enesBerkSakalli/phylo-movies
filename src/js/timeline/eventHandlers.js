@@ -7,56 +7,23 @@
  * @param {DeckTimelineRenderer} renderer - The timeline renderer instance
  * @param {MouseEvent} event - The click event
  */
-export function handleTimelineClick(renderer, event) {
-  const rect = renderer.container.getBoundingClientRect();
-  const x = event.clientX - rect.left;
-  let ms = renderer._xToMs(x);
-  let segIndex = renderer._timeToSegmentIndex(ms);
-
-  if (segIndex >= 0 && segIndex < renderer.segments.length) {
-    segIndex = renderer._getTargetSegmentIndex(segIndex, ms);
-
-    const id = segIndex + 1;
-    renderer._emit('click', { item: id, event });
-    renderer._selectedId = id;
-    renderer._scheduleUpdate();
-  }
-}
+// Removed unused: handleTimelineClick
 
 /**
  * Zooms in on the timeline
  * @param {DeckTimelineRenderer} renderer - The timeline renderer instance
  * @param {number} pct - The zoom percentage (0.05 to 0.95)
  */
-export function handleTimelineZoomIn(renderer, pct) {
-  const factor = Math.max(0.05, Math.min(0.95, pct || 0.3));
-  const span = renderer._rangeEnd - renderer._rangeStart;
-  const newSpan = Math.max(1, span * (1 - factor));
-  const center = (renderer._rangeStart + renderer._rangeEnd) / 2;
-  renderer._rangeStart = Math.max(0, center - newSpan / 2);
-  renderer._rangeEnd = Math.min(renderer._totalDuration, center + newSpan / 2);
-  renderer._scheduleUpdate();
-}
+// Removed unused: handleTimelineZoomIn
 
 /**
  * Zooms out on the timeline
  * @param {DeckTimelineRenderer} renderer - The timeline renderer instance
  * @param {number} pct - The zoom percentage (0.05 to 0.95)
  */
-export function handleTimelineZoomOut(renderer, pct) {
-  const span = renderer._rangeEnd - renderer._rangeStart;
-  const newSpan = Math.min(renderer._totalDuration, span * (1 + pct));
-  const center = (renderer._rangeStart + renderer._rangeEnd) / 2;
-  renderer._rangeStart = Math.max(0, center - newSpan / 2);
-  renderer._rangeEnd = Math.min(renderer._totalDuration, center + newSpan / 2);
-  renderer._scheduleUpdate();
-}
+// Removed unused: handleTimelineZoomOut
 
-export function handleTimelineFit(renderer) {
-  renderer._rangeStart = 0;
-  renderer._rangeEnd = renderer._totalDuration;
-  renderer._scheduleUpdate();
-}
+// Removed unused: handleTimelineFit
 
 export function handleTimelineMouseMove(renderer, event) {
   if (renderer._isScrubbing) return;

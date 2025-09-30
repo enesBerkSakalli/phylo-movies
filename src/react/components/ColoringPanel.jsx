@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useAppStore, TREE_COLOR_CATEGORIES } from '../../js/core/store.js';
 
 export function ColoringPanel() {
+  const gui = useAppStore((s) => s.gui);
   const monophyletic = useAppStore((s) => s.monophyleticColoringEnabled);
   const activeChange = useAppStore((s) => s.activeChangeEdgesEnabled);
   const marked = useAppStore((s) => s.markedComponentsEnabled);
@@ -50,7 +51,7 @@ export function ColoringPanel() {
         Coloring & Styling
       </h3>
       <div className="section-body">
-          <md-filled-button id="taxa-coloring-button" has-icon className="full-width">
+          <md-filled-button id="taxa-coloring-button" has-icon className="full-width" onClick={() => gui?.openTaxaColoringWindow?.()}>
             <md-icon slot="icon">palette</md-icon>
             Taxa Coloring
           </md-filled-button>

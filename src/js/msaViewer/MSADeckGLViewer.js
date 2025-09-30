@@ -184,10 +184,10 @@ export class MSADeckGLViewer {
 
     // Force immediate render after fitting
     this.render();
-    
+
     // Also trigger a second render after a brief delay to ensure visibility
     setTimeout(() => this.render(), 100);
-    
+
     return true;
   }
 
@@ -228,9 +228,9 @@ export class MSADeckGLViewer {
       this.state.viewState = newViewState;
 
       // Update deck.gl view state - use viewState instead of initialViewState for immediate update
-      this.state.deckgl.setProps({ 
+      this.state.deckgl.setProps({
         viewState: newViewState,
-        initialViewState: newViewState 
+        initialViewState: newViewState
       });
     }
   }
@@ -416,9 +416,9 @@ export class MSADeckGLViewer {
       };
       this.state.viewState = defaultViewState;
       if (this.state.deckgl) {
-        this.state.deckgl.setProps({ 
+        this.state.deckgl.setProps({
           viewState: defaultViewState,
-          initialViewState: defaultViewState 
+          initialViewState: defaultViewState
         });
       }
     }
