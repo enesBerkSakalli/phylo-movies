@@ -24,6 +24,8 @@ import '@material/web/divider/divider.js';
 import '@material/web/list/list.js';
 import '@material/web/list/list-item.js';
 import '@material/web/progress/linear-progress.js';
+// React pilot mount for TopScaleBar
+import { mountReactTopScaleBar, mountReactButtonsFileOps, mountReactButtonsMSA, mountReactAppearance, mountReactMoviePlayerBar } from '../../react/mountPartialsReact.jsx';
 
 // Import Material Web typography styles
 import {styles as typescaleStyles} from '@material/web/typography/md-typescale-styles.js';
@@ -32,10 +34,9 @@ import {
   attachGuiEventHandlers,
   attachRecorderEventHandlers,
 } from "../partial/eventHandlers.js";
-import { loadAllPartials } from "../partial/loadPartials.js";
 import { ScreenRecorder } from "../services/record.js";
 import { phyloData } from '../services/dataService.js';
-import { getPhyloMovieData, fetchTreeData } from "../services/dataManager.js";
+import { getPhyloMovieData } from "../services/dataManager.js";
 import { notifications } from '../partial/eventHandlers/notificationSystem.js';
 import { initializeTheme } from './theme.js';
 
@@ -56,19 +57,13 @@ async function loadAllRequiredPartials(hasMsa = true) {
   try {
     // Add Material Web typography styles to document
     document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
-    const partials = [
-      // tree_navigation.html removed - no navigation-container in visualization.html
-      { url: "/src/partials/buttons-file-ops.html", containerId: "buttons-file-container" },
-      { url: "/src/partials/appearance.html", containerId: "appearance-container" },
-      { url: "/src/partials/top_scale_bar.html", containerId: "top-scale-bar-container" },
-      { url: "/src/partials/movie-player-bar.html", containerId: "movie-player-container" },
-    ];
-
-    if (hasMsa) {
-      partials.splice(1, 0, { url: "/src/partials/buttons-msa.html", containerId: "buttons-msa-container" });
-    }
-
-    await loadAllPartials(partials);
+    // No partials are used anymore; mount React components directly
+    // Mount React components (TopScaleBar, File Ops, MSA, Appearance, MoviePlayerBar)
+    try { mountReactTopScaleBar(); } catch {}
+    try { mountReactButtonsFileOps(); } catch {}
+    try { mountReactButtonsMSA(); } catch {}
+    try { mountReactAppearance(); } catch {}
+    try { mountReactMoviePlayerBar(); } catch {}
 
     // Verify important elements exist
     const requiredElements = [
@@ -79,7 +74,6 @@ async function loadAllRequiredPartials(hasMsa = true) {
       "forwardStepButton",
       "backwardStepButton",
       "compare-sequence-button",
-      "chart-modal",
       "taxa-coloring-button",
       "animation-speed-range",
       "branch-length-options",
@@ -217,25 +211,7 @@ async function initializeAppFromParsedData(parsedData) {
       return; // Stop further execution if partials failed
     }
 
-    // Hide MSA-related UI if no MSA data is present
-    try {
-      if (!hasMsa) {
-        // Hide MSA controls group and header
-        const msaGroup = document.getElementById('msa-controls');
-        if (msaGroup) {
-          // Hide the entire group and the header above it
-          msaGroup.hidden = true;
-          const header = msaGroup.previousElementSibling;
-          if (header && header.classList?.contains('msa-header')) header.hidden = true;
-        }
-        // Hide the status chips (No alignment / Alignment loaded)
-        const msaChips = document.getElementById('msa-status-chips');
-        if (msaChips) msaChips.hidden = true;
-        // Hide the timeline MSA window chip if present
-        const msaWindowChip = document.getElementById('msa-window-chip');
-        if (msaWindowChip) msaWindowChip.hidden = true;
-      }
-    } catch {}
+    // MSA UI state is handled by the React component (ButtonsMSA)
 
     await initializeGuiAndEvents(parsedData);
 

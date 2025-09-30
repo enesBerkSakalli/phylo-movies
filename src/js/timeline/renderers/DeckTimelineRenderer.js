@@ -2,13 +2,13 @@ import '../../../css/movie-timeline/container.css';
 import '../../../css/movie-timeline/theme.css';
 import { Deck, OrthographicView } from '@deck.gl/core';
 import { TIMELINE_CONSTANTS } from '../constants.js';
-import { handleTimelineMouseMove, handleTimelineScrubMove, handleTimelineMouseMoveOrScrub, handleTimelineMouseDown, handleTimelineMouseUp, handleTimelineWheel, handleTimelineMouseLeave } from '../eventHandlers.js';
+import { handleTimelineMouseMoveOrScrub, handleTimelineMouseDown, handleTimelineMouseUp, handleTimelineWheel, handleTimelineMouseLeave } from '../eventHandlers.js';
 import { createPathLayer, createAnchorLayer, createConnectionLayer, createAnchorHoverLayer, createConnectionHoverLayer, createAnchorSelectionLayer, createConnectionSelectionLayer, createSeparatorLayer } from '../utils/layerUtils.js';
 import { getTimelineTheme } from '../utils/cssUtils.js';
 import { msToX, xToMs, calculateZoomScale } from '../utils/coordinateUtils.js';
 import { timeToSegmentIndex } from '../utils/searchUtils.js';
 import { getTargetSegmentIndex } from '../utils/segmentUtils.js';
-import { createScrubberLayer, getDevicePixelRatio, createSnapFunction } from '../utils/renderingUtils.js';
+import { createScrubberLayer, getDevicePixelRatio } from '../utils/renderingUtils.js';
 import { DefaultRadiusStrategy } from '../strategies/radiusStrategy.js';
 import { DefaultGapStrategy } from '../strategies/gapStrategy.js';
 import { processSegments } from '../segmentProcessor.js';
@@ -24,7 +24,6 @@ export class DeckTimelineRenderer {
     this._selectedId = null;
     this._lastHoverId = null;
     this._isScrubbing = false;
-    this._scrubThresholdPx = 10;
     this._onResize = () => this._scheduleUpdate();
 
     this._totalDuration = timelineData.totalDuration || 1;
@@ -35,9 +34,9 @@ export class DeckTimelineRenderer {
     this._viewState = { target: [0, 0, 0], zoom: 0 };
     this._updateScheduled = false;
 
-    // --- Pre-bind event handlers for stable references ---
-    this._handleScrubMove = this._handleScrubMove.bind(this);
-    this._handleMouseUp = this._handleMouseUp.bind(this);
+    // Scrub threshold used by event handlers to detect grabbing the scrubber
+    this._scrubThresholdPx = 10;
+    // --- Pre-bind retained handlers for stable references (only those used) ---
 
     // --- Layer instances, initialized once ---
     this.separatorLayer = null;
@@ -188,9 +187,9 @@ export class DeckTimelineRenderer {
    */
   getVisibleTimeRange() {
     // Use internal range state instead of trying to reverse-engineer from viewState
-    return { 
-      min: this._rangeStart, 
-      max: this._rangeEnd 
+    return {
+      min: this._rangeStart,
+      max: this._rangeEnd
     };
   }
 
@@ -290,10 +289,6 @@ export class DeckTimelineRenderer {
     this._updateScheduled = false;
   }
 
-  _handleMouseMove(event) {
-    handleTimelineMouseMove(this, event);
-  }
-
   _handleClick(event) {
     const rect = this.container.getBoundingClientRect();
     const x = event.clientX - rect.left;
@@ -313,11 +308,6 @@ export class DeckTimelineRenderer {
     this._emit('select', { id: targetId, ms: clickMs, segment: this.segments[targetIndex] });
   }
 
-  // --- Add handler methods to call the external logic ---
-  _handleScrubMove(event) {
-    handleTimelineScrubMove(this, event);
-  }
-
   _handleMouseUp() {
     handleTimelineMouseUp(this);
   }
@@ -333,6 +323,7 @@ export class DeckTimelineRenderer {
   _msToX(ms) {
     return msToX(ms, this._rangeStart, this._rangeEnd, this._width);
   }
+
 
   _emit(event, payload) {
     const set = this._handlers.get(event);

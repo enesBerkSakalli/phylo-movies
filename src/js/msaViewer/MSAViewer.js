@@ -39,22 +39,32 @@ export default class MSAViewer {
 
   async createWindow() {
     try {
-      // Load WinBox if not already available
+      // Load WinBox if not already available. Prefer ESM import.
       let WinBox = window.WinBox;
-
       if (!WinBox) {
-        // Try loading from node_modules
-        const script = document.createElement('script');
-        script.src = '/node_modules/winbox/dist/winbox.bundle.min.js';
-        document.head.appendChild(script);
-
-        await new Promise((resolve, reject) => {
-          script.onload = resolve;
-          script.onerror = reject;
-          setTimeout(reject, 5000); // 5 second timeout
-        });
-
-        WinBox = window.WinBox;
+        let WinBoxCtor = null;
+        try {
+          const mod = await import('winbox/src/js/winbox.js');
+          WinBoxCtor = mod?.default || mod?.WinBox || mod;
+        } catch {}
+        if (!WinBoxCtor) {
+          try {
+            const mod = await import('winbox');
+            WinBoxCtor = mod?.default || mod?.WinBox || null;
+          } catch {}
+        }
+        if (!WinBoxCtor) {
+          const script = document.createElement('script');
+          script.src = 'https://cdn.jsdelivr.net/npm/winbox@0.2.82/dist/winbox.bundle.min.js';
+          document.head.appendChild(script);
+          await new Promise((resolve, reject) => {
+            script.onload = resolve;
+            script.onerror = reject;
+            setTimeout(reject, 5000);
+          });
+          WinBoxCtor = window.WinBox;
+        }
+        WinBox = WinBoxCtor;
       }
 
       if (typeof WinBox !== 'function') {
