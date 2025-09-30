@@ -53,7 +53,7 @@ export class EventHandlerRegistry {
 
   /**
    * Set the recorder instance for recording functionality
-   * @param {ScreenRecorder} recorder - The ScreenRecorder instance
+  * @param {Object} recorder - Recorder instance used by the UI controls
    */
   setRecorder(recorder) {
     // reduced logging

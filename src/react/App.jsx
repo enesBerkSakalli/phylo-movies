@@ -3,7 +3,7 @@ import { TopScaleBar } from './components/TopScaleBar.jsx';
 import { ButtonsFileOps } from './components/ButtonsFileOps.jsx';
 import { ButtonsMSA } from './components/ButtonsMSA.jsx';
 import { Appearance } from './components/Appearance.jsx';
-import { MoviePlayerBar } from './components/MoviePlayerBar.jsx';
+import { MoviePlayerBar } from './components/movie-player/MoviePlayerBar.jsx';
 
 export function App() {
   return (
