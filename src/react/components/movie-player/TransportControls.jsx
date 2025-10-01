@@ -1,4 +1,6 @@
 import React from 'react';
+import { Button } from '@/components/ui/button';
+import { ChevronsLeft, ChevronLeft, Play, Pause, ChevronRight, ChevronsRight } from 'lucide-react';
 
 export function TransportControls({
   playing,
@@ -12,60 +14,68 @@ export function TransportControls({
 }) {
   return (
     <>
-      <md-icon-button
+      <Button
         className="transport-button"
         id="backwardStepButton"
+        variant="ghost"
+        size="icon"
         title="Go to previous tree"
         aria-label="Previous tree"
         disabled={!canStepBackward}
         onClick={onBackwardStep}
       >
-        <md-icon>first_page</md-icon>
-      </md-icon-button>
+        <ChevronsLeft className="size-5" />
+      </Button>
 
-      <md-icon-button
+      <Button
         className="transport-button"
         id="backward-button"
+        variant="ghost"
+        size="icon"
         title="Go to previous frame"
         aria-label="Previous frame"
         onClick={onBackward}
       >
-        <md-icon>chevron_left</md-icon>
-      </md-icon-button>
+        <ChevronLeft className="size-5" />
+      </Button>
 
-      <md-icon-button
-        toggle=""
+      <Button
         className="transport-button"
         id="play-button"
+        variant="ghost"
+        size="icon"
         title="Play/Pause animation"
         aria-label="Play/Pause animation"
         onClick={onPlayClick}
-        {...(playing ? { selected: '' } : {})}
+        data-state={playing ? 'playing' : 'paused'}
       >
-        <md-icon>play_arrow</md-icon>
-        <md-icon slot="selected">pause</md-icon>
-      </md-icon-button>
+        {playing ? <Pause className="size-5" /> : <Play className="size-5" />}
+      </Button>
 
-      <md-icon-button
+      <Button
         className="transport-button"
         id="forward-button"
+        variant="ghost"
+        size="icon"
         title="Go to next frame"
         aria-label="Next frame"
         onClick={onForward}
       >
-        <md-icon>chevron_right</md-icon>
-      </md-icon-button>
+        <ChevronRight className="size-5" />
+      </Button>
 
-      <md-icon-button
+      <Button
         className="transport-button"
         id="forwardStepButton"
+        variant="ghost"
+        size="icon"
         title="Go to next tree"
         aria-label="Next tree"
         disabled={!canStepForward}
         onClick={onForwardStep}
       >
-        <md-icon>last_page</md-icon>
-      </md-icon-button>
+        <ChevronsRight className="size-5" />
+      </Button>
     </>
   );
 }

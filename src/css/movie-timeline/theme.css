@@ -1,7 +1,7 @@
 :root {
   --timeline-height: 42px;
-  --timeline-scrubber-core-color: var(--md-sys-color-primary);
-  --timeline-scrubber-glow-color: var(--md-sys-color-primary);
+  --timeline-scrubber-core-color: var(--primary);
+  --timeline-scrubber-glow-color: var(--primary);
   --timeline-padding-x: 8;
   --timeline-padding-y: 0;
   --timeline-connection-width: 4;
@@ -11,8 +11,8 @@
   --timeline-connection-hover-color: rgb(128 128 128);
   --timeline-connection-color-neutral: rgb(100 100 100);
 
-  --timeline-anchor-fill-color: var(--md-sys-color-surface-container-highest);
-  --timeline-anchor-stroke-color: var(--md-sys-color-outline);
+  --timeline-anchor-fill-color: var(--card);
+  --timeline-anchor-stroke-color: var(--border);
   --timeline-anchor-radius: 7;
   --timeline-anchor-stroke-width: 3;
 
@@ -23,8 +23,8 @@
 }
 
 :root[data-theme='dark'] {
-  --timeline-scrubber-core-color: var(--md-sys-color-primary);
-  --timeline-scrubber-glow-color: var(--md-sys-color-primary);
+  --timeline-scrubber-core-color: var(--primary);
+  --timeline-scrubber-glow-color: var(--primary);
   --timeline-padding-x: 8;
   --timeline-padding-y: 0;
 
@@ -35,8 +35,8 @@
   --timeline-connection-hover-color: rgb(128 128 128);
   --timeline-connection-color-neutral: rgb(100 100 100);
 
-  --timeline-anchor-fill-color: var(--md-sys-color-surface-container-highest);
-  --timeline-anchor-stroke-color: var(--md-sys-color-outline);
+  --timeline-anchor-fill-color: var(--card);
+  --timeline-anchor-stroke-color: var(--border);
   --timeline-anchor-radius: 7;
   --timeline-anchor-stroke-width: 3;
 
@@ -54,7 +54,7 @@
     --timeline-connection-width: 3;
     --timeline-gap-default: 4;
   }
-  
+
   :root[data-theme='dark'] {
     --timeline-height: 40px;
     --timeline-anchor-radius: 4;
@@ -70,7 +70,7 @@
     --timeline-connection-width: 3;
     --timeline-gap-default: 5;
   }
-  
+
   :root[data-theme='dark'] {
     --timeline-height: 45px;
     --timeline-anchor-radius: 5;
@@ -84,7 +84,7 @@
     --timeline-height: 48px;
     --timeline-anchor-radius: 6;
   }
-  
+
   :root[data-theme='dark'] {
     --timeline-height: 48px;
     --timeline-anchor-radius: 6;
@@ -96,7 +96,7 @@
     --timeline-height: 42px;
     --timeline-anchor-radius: 7;
   }
-  
+
   :root[data-theme='dark'] {
     --timeline-height: 42px;
     --timeline-anchor-radius: 7;

@@ -7,6 +7,7 @@ import { NavigationController } from "./NavigationController.js";
 import { calculateWindow } from "../utils/windowUtils.js";
 import { getMSAFrameIndex } from "../core/IndexMapping.js";
 import { MovieTimelineManager } from "../timeline/MovieTimelineManager.js";
+import { TIMELINE_CONSTANTS } from "../timeline/constants.js";
 
 // ============================================================================
 // GUI CLASS - Main controller for phylogenetic tree visualization application
@@ -91,32 +92,39 @@ export default class Gui {
   }
 
   // ========================================
+  // TIMELINE CONTROLS (invoked by React buttons)
+  // ========================================
+  zoomInTimeline() {
+    try { this.movieTimelineManager?.timeline?.zoomIn?.(TIMELINE_CONSTANTS.ZOOM_PERCENTAGE_UI); } catch {}
+  }
+  zoomOutTimeline() {
+    try { this.movieTimelineManager?.timeline?.zoomOut?.(TIMELINE_CONSTANTS.ZOOM_PERCENTAGE_UI); } catch {}
+  }
+  fitTimeline() {
+    try { this.movieTimelineManager?.timeline?.fit?.(); } catch {}
+  }
+  scrollToStartTimeline() {
+    try { this.movieTimelineManager?.timeline?.moveTo?.(TIMELINE_CONSTANTS.DEFAULT_PROGRESS); } catch {}
+  }
+  scrollToEndTimeline() {
+    try {
+      const t = this.movieTimelineManager?.timeline;
+      if (!t) return;
+      const total = t.getTotalDuration?.();
+      const range = t.getVisibleTimeRange?.();
+      if (typeof total === 'number' && range && typeof range.min === 'number' && typeof range.max === 'number') {
+        const visible = Math.max(0, range.max - range.min);
+        t.moveTo(Math.max(0, total - visible));
+      }
+    } catch {}
+  }
+
+  // ========================================
   // PLAYBACK BUTTON STATE MANAGEMENT
   // ========================================
   _updatePlayButtonState() {
-    const { playing } = useAppStore.getState(); // Get playing state from store
-    const startButton = document.getElementById("play-button");
-
-    if (!startButton) return;
-
-    const startIcon = startButton.querySelector(".material-icons");
-    const startSrOnly = startButton.querySelector(".sr-only");
-
-    if (playing) { // Use playing from store
-      // Update start button to show pause state
-      if (startIcon) startIcon.textContent = "pause";
-      if (startSrOnly) startSrOnly.textContent = "Pause";
-      startButton.setAttribute("title", "Pause animation");
-      startButton.setAttribute("aria-label", "Pause animation");
-      startButton.classList.add("playing");
-    } else {
-      // Update start button to show play state
-      if (startIcon) startIcon.textContent = "play_arrow";
-      if (startSrOnly) startSrOnly.textContent = "Play";
-      startButton.setAttribute("title", "Play animation from current position");
-      startButton.setAttribute("aria-label", "Play animation");
-      startButton.classList.remove("playing");
-    }
+    // React TransportControls handles play/pause icon and labels.
+    // No DOM updates needed here.
   }
 
   async play() {

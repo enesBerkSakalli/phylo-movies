@@ -45,7 +45,6 @@ export class MovieTimelineManager {
         this.uiManager = new TimelineUIManager(this.movieData, this.timeline);
         this.uiManager.updateMetrics(totalSequenceLength, this.segments.length);
         this._setupEvents();
-        this.uiManager.setupControls();
         this._initializeScrubberAPI();
         this.tooltip = new TimelineTooltip();
 

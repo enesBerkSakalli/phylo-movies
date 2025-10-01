@@ -98,7 +98,7 @@ export function TimelineChart() {
             x2={cx}
             y1={0}
             y2={innerHeight}
-            stroke="var(--md-sys-color-primary)"
+            stroke="var(--primary)"
             strokeWidth={1}
           />
         </g>
@@ -198,16 +198,16 @@ export function TimelineChart() {
             cursorLayer,
           ]}
           theme={{
-            textColor: 'var(--md-sys-color-on-surface)',
+            textColor: 'var(--foreground)',
             grid: {
               line: {
                 stroke:
-                  'color-mix(in oklab, var(--md-sys-color-on-surface) 10%, transparent)',
+                  'color-mix(in oklab, var(--foreground) 10%, transparent)',
               },
             },
             crosshair: {
               line: {
-                stroke: 'var(--md-sys-color-outline-variant)',
+                stroke: 'var(--border)',
                 strokeWidth: 1,
               },
             },
@@ -224,7 +224,7 @@ export function TimelineChart() {
             placeItems: 'center',
             width: '100%',
             height: '100%',
-            color: 'var(--md-sys-color-outline)',
+            color: 'var(--border)',
             fontSize: '0.85rem',
             letterSpacing: '0.02em',
           }}

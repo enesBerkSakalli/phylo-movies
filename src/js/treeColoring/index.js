@@ -23,5 +23,4 @@ export {
 
 // Components
 export { ColorPicker } from './components/ColorPicker.js';
-export { UIComponentFactory } from './components/UIComponentFactory.js';
 export { default as TaxaColoring } from './components/TaxaColoring.jsx';

@@ -6,7 +6,7 @@
 .phylo-hud {
   position: fixed;
   top: 20px;
-  left: 20px;
+  left: calc(var(--sidebar-width) + 20px);
   z-index: 1000;
   pointer-events: none;
   
@@ -14,22 +14,7 @@
   transition: left 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
-/* Navigation drawer visibility adjustments */
-.phylo-hud.nav-visible {
-  left: calc(var(--navigation-drawer-width) + 20px);
-}
-
-@media (max-width: 768px) {
-  .phylo-hud.nav-visible {
-    left: calc(var(--nav-width-tablet) + 20px);
-  }
-}
-
-@media (max-width: 480px) {
-  .phylo-hud.nav-visible {
-    left: calc(var(--nav-width-mobile) + 20px);
-  }
-}
+/* Navigation drawer visibility adjustments handled by CSS variable */
 
 /* HUD metrics container */
 .phylo-hud .hud-metrics {
@@ -72,10 +57,7 @@
   white-space: nowrap;
 }
 
-.phylo-hud .hud-item md-icon {
-  --md-icon-size: 18px;
-  color: rgb(25, 95, 175);
-}
+/* Material icon overrides removed; HUD uses lucide icons */
 
 .phylo-hud .hud-label {
   font-weight: 500;
@@ -97,9 +79,7 @@
     color: rgb(228, 227, 233);
   }
   
-  .phylo-hud .hud-item md-icon {
-    color: rgb(137, 173, 229);
-  }
+  /* Material icon overrides removed */
   
   .phylo-hud .hud-label {
     color: rgb(228, 227, 233);
