@@ -33,15 +33,7 @@ export const PHASE_NAMES = {
 };
 
 export const DOM_ELEMENTS = {
-    movieTimelineCount: 'movieTimelineCount',
-    currentPositionInfo: 'currentPositionInfo',
-    interpolationStatus: 'interpolationStatus',
-    zoomInBtn: 'zoomInBtn',
-    zoomOutBtn: 'zoomOutBtn',
-    fitToWindowBtn: 'fitToWindowBtn',
-    scrollToStartBtn: 'scrollToStartBtn',
-    scrollToEndBtn: 'scrollToEndBtn',
-    // HUD Elements
+    // HUD Elements only; other controls handled by React
     hudPositionInfo: 'hudPositionInfo',
     hudSegmentInfo: 'hudSegmentInfo',
     hudWindowStart: 'hudWindowStart',

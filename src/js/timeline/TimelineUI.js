@@ -126,18 +126,7 @@ export class TimelineUI {
         return this.validateElements();
     }
 
-    updateMetrics(totalTrees, totalSegments = null) {
-        if (!this.elements.movieTimelineCount) {
-            this.refreshElements();
-        }
-
-        if (this.elements.movieTimelineCount) {
-            const displayText = totalSegments !== null
-                ? `${totalTrees} trees (${totalSegments} segments)`
-                : `${totalTrees} trees`;
-            this.elements.movieTimelineCount.textContent = displayText;
-        }
-    }
+    updateMetrics(_totalTrees, _totalSegments = null) { /* no-op; React handles metrics */ }
 
     updatePositionDisplay({ progress, currentTree, totalTrees, treeInSegment, treesInSegment }) {
         const reactHudMounted = !!document.querySelector('.phylo-hud[data-react-component="hud"]');
@@ -173,12 +162,6 @@ export class TimelineUI {
             }
         };
 
-        // Update timeline position display
-        if (!this.elements.currentPositionInfo) {
-            this.refreshElements();
-        }
-        updatePositionElement(this.elements.currentPositionInfo);
-
         // Update HUD position display unless React HUD is mounted
         if (!reactHudMounted) {
             updatePositionElement(this.elements.hudPositionInfo);
@@ -198,12 +181,6 @@ export class TimelineUI {
             text = formattedText;
         } else {
             text = 'Interpolation: 0%';
-        }
-
-        // Update timeline segment info
-        const segInfoEl = document.getElementById('segmentInfo');
-        if (segInfoEl) {
-            segInfoEl.textContent = text;
         }
 
         // Update HUD segment info unless React HUD is mounted
@@ -248,22 +225,7 @@ export class TimelineUI {
             }
         });
     }
-    setupButtonHandlers(handlers) {
-        const buttonMapping = {
-            zoomInBtn: handlers.zoomIn,
-            zoomOutBtn: handlers.zoomOut,
-            fitToWindowBtn: handlers.fitToWindow,
-            scrollToStartBtn: handlers.scrollToStart,
-            scrollToEndBtn: handlers.scrollToEnd
-        };
-
-        Object.entries(buttonMapping).forEach(([elementKey, handler]) => {
-            const element = this.elements[elementKey];
-            if (element && handler) {
-                element.addEventListener('click', handler);
-            }
-        });
-    }
+    // Timeline controls are managed by React; no button handlers here
 
     validateElements() {
         const requiredElements = [

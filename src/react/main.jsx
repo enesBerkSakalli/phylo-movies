@@ -1,4 +1,5 @@
 import React from 'react';
+import '@/index.css';
 import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
 
@@ -8,4 +9,3 @@ root.render(<App />);
 
 // Initialize the non-React app core (data load, controllers, etc.)
 import('../js/core/main.js');
-

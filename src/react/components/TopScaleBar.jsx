@@ -1,6 +1,9 @@
-import React, { useMemo, useRef, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { useAppStore } from '../../js/core/store.js';
 import { formatScaleValue } from '../../js/utils/scaleUtils.js';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Ruler, Crosshair, ArrowDownUp, Palette } from 'lucide-react';
 
 // React version of src/partials/top_scale_bar.html
 // Keeps identical IDs and structure so existing code continues to work.
@@ -58,36 +61,31 @@ export function TopScaleBar() {
     };
   }, [currentTreeIndex, scaleList, maxScale, fullTreeIndices, transitionResolver]);
 
-  const progressRef = useRef(null);
-  useEffect(() => {
-    if (progressRef.current) {
-      try { progressRef.current.value = progress; } catch {}
-    }
-  }, [progress]);
+  const progressPercent = Math.round((progress || 0) * 100);
 
   return (
     <div className="top-scale-bar" role="region" aria-label="Phylogenetic Scale Tracker">
       <div className="scale-header">
-        <md-icon>straighten</md-icon>
+        <Ruler className="size-4" />
         <span className="scale-title">Scale</span>
       </div>
       <div className="scale-values" aria-live="polite">
-        <md-assist-chip>
-          <md-icon slot="icon">my_location</md-icon>
+        <Badge variant="secondary">
+          <Crosshair className="size-3" />
           <span id="currentScaleText">{formattedCurrent}</span>
-        </md-assist-chip>
-        <md-assist-chip>
-          <md-icon slot="icon">height</md-icon>
+        </Badge>
+        <Badge>
+          <ArrowDownUp className="size-3" />
           <span id="maxScaleText">{formattedMax}</span>
-        </md-assist-chip>
+        </Badge>
       </div>
       <div className="scale-bar-container">
-        <md-linear-progress id="scale-progress" aria-label="Scale progress" ref={progressRef}></md-linear-progress>
+        <Progress id="scale-progress" aria-label="Scale progress" value={progressPercent} />
       </div>
 
       <div className="legend-section" role="region" aria-label="Taxa Groups Legend">
         <div className="legend-header">
-          <md-icon>palette</md-icon>
+          <Palette className="size-4" />
           <span className="legend-title">Groups</span>
         </div>
         <div id="taxaLegend" className="taxa-legend taxa-legend-vertical" role="list" aria-label="Taxa groups legend"></div>

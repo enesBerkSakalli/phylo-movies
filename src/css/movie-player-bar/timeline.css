@@ -20,12 +20,7 @@
   gap: 8px;
 }
 
-.timeline-header-metrics md-suggestion-chip {
-  --md-suggestion-chip-container-height: 36px;
-  --md-suggestion-chip-label-text-size: var(--md-sys-typescale-body-medium-size);
-  --md-suggestion-chip-icon-size: 18px;
-  --md-suggestion-chip-label-text-weight: var(--md-sys-typescale-body-medium-weight);
-}
+/* Removed Material suggestion chip overrides */
 
 .timeline-header-right {
   display: flex;

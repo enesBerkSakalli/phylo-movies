@@ -6,15 +6,10 @@
   gap: 4px;
 }
 
-.metrics-window-value {
-  font-weight: var(--md-typescale-body-medium-weight);
-}
+.metrics-window-value { font-weight: 600; }
 
-.metrics-window-value--primary {
-  color: var(--md-sys-color-primary);
-}
+.metrics-window-value--primary { color: var(--primary); }
 
 .jump-to-step-field {
   inline-size: 90px;
 }
-

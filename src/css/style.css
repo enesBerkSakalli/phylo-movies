@@ -1,22 +1,18 @@
-/* Application Layout - Pure Material Web Components */
-
-/* Chart-specific variables (mapped to Material Design tokens) */
+/* App theme variables for charts */
 :root {
   --chart-background: rgba(0, 0, 0, 0.05);
-  --chart-inactive: var(--md-sys-color-outline-variant);
-  --chart-active: var(--md-sys-color-primary);
-  --chart-comparison: var(--md-sys-color-secondary);
+  --chart-inactive: var(--border);
+  --chart-active: var(--primary);
+  --chart-comparison: var(--secondary);
 }
 
-
 /* Application layout containers */
-/* .container moved to navigation.css for consolidation */
 
 .full-size-container {
   flex: 1 1 0%;
   min-width: 0;
   min-height: 0;
-  background: var(--md-sys-color-surface);
+  background: var(--background);
   display: flex;
   align-items: stretch;
   justify-content: stretch;
@@ -41,19 +37,8 @@
 }
 
 /* Third-party library overrides (winbox modal) */
-.winbox.modern.modal {
-  border-radius: var(--md-sys-shape-corner-medium);
-  background: var(--md-sys-elevation-level-2);
-  border: 1px solid var(--md-sys-color-outline-variant);
-}
+.winbox.modern.modal { border-radius: 12px; background: var(--card); border: 1px solid var(--border); }
 
-.winbox.modern.modal .wb-body {
-  background: var(--md-sys-elevation-level-2);
-}
+.winbox.modern.modal .wb-body { background: var(--card); }
 
-.winbox.modern.modal .wb-title {
-  font-family: var(--md-typescale-title-medium-font);
-  font-weight: var(--md-typescale-title-medium-weight);
-  font-size: var(--md-typescale-title-medium-size);
-  color: var(--md-sys-color-on-surface);
-}
+.winbox.modern.modal .wb-title { font-weight: 600; font-size: 18px; color: var(--foreground); }

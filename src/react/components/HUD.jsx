@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { useAppStore } from '../../js/core/store.js';
 import { getIndexMappings, getMSAFrameIndex } from '../../js/core/IndexMapping.js';
 import { calculateWindow } from '../../js/utils/windowUtils.js';
+import { Film, BarChart2, Columns3 } from 'lucide-react';
 
 export function HUD() {
   const hasMsa = useAppStore((s) => (s.msaColumnCount || 0) > 0 || !!s.movieData?.msa?.sequences);
@@ -52,10 +53,10 @@ export function HUD() {
   }, [storeState, hasMsa]);
 
   return (
-    <div className="phylo-hud nav-visible" data-react-component="hud" role="complementary" aria-label="Timeline Status Display">
+    <div className="phylo-hud" data-react-component="hud" role="complementary" aria-label="Timeline Status Display">
       <div className="hud-metrics">
         <div className="hud-item">
-          <md-icon>movie</md-icon>
+          <Film className="size-4" />
           <span className="hud-label">Movie progress:</span>
           <span id="hudPositionInfo" aria-live="polite">{progressText}</span>
         </div>
@@ -63,7 +64,7 @@ export function HUD() {
         <div className="hud-separator">•</div>
 
         <div className="hud-item">
-          <md-icon>analytics</md-icon>
+          <BarChart2 className="size-4" />
           <span className="hud-label">Interpolation:</span>
           <span id="hudSegmentInfo" aria-live="polite">{segmentText}</span>
         </div>
@@ -71,7 +72,7 @@ export function HUD() {
         <div className="hud-separator requires-msa" style={{ display: hasMsa ? 'inline-flex' : 'none' }}>•</div>
 
         <div className="hud-item requires-msa" id="hud-msa-window-item" style={{ display: hasMsa ? 'inline-flex' : 'none' }}>
-          <md-icon>view_column</md-icon>
+          <Columns3 className="size-4" />
           <span className="hud-label">MSA:</span>
           <span className="metrics-window">
             <span id="hudWindowStart" className="metrics-window-value">{msaWindow?.startPosition ?? 1}</span>
