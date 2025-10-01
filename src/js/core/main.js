@@ -4,32 +4,10 @@ import { debounce } from '../utils/debounce.js';
 import 'winbox/dist/css/winbox.min.css';
 import { DeckGLTreeAnimationController } from '../treeVisualisation/DeckGLTreeAnimationController.js';
 
-// Import Material Web components (these are also declared in HTML importmap)
-import '@material/web/button/filled-button.js';
-import '@material/web/button/outlined-button.js';
-import '@material/web/button/text-button.js';
-import '@material/web/button/filled-tonal-button.js';
-import '@material/web/button/elevated-button.js';
-import '@material/web/iconbutton/icon-button.js';
-import '@material/web/icon/icon.js';
-import '@material/web/switch/switch.js';
-import '@material/web/slider/slider.js';
-import '@material/web/textfield/outlined-text-field.js';
-import '@material/web/select/outlined-select.js';
-import '@material/web/select/select-option.js';
-import '@material/web/chips/chip-set.js';
-import '@material/web/chips/assist-chip.js';
-import '@material/web/chips/suggestion-chip.js';
-import '@material/web/divider/divider.js';
-import '@material/web/list/list.js';
-import '@material/web/list/list-item.js';
-import '@material/web/progress/linear-progress.js';
-
-// Import Material Web typography styles
-import {styles as typescaleStyles} from '@material/web/typography/md-typescale-styles.js';
+//
 
 // Legacy event handler system removed; React components own their events
-import { notifications } from "../partial/eventHandlers/notificationSystem.js";
+import { notifications } from "../services/notifications.js";
 import { phyloData } from '../services/dataService.js';
 import { getPhyloMovieData } from "../services/dataManager.js";
 import { initializeTheme } from './theme.js';
@@ -39,10 +17,7 @@ let eventHandlersAttached = false;
 // Initialize theme as early as possible
 initializeTheme();
 
-// Adopt Material Web typography styles once (safe to ignore if unsupported)
-try {
-  document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
-} catch {}
+//
 
 
 /**

@@ -26,25 +26,7 @@ export class TimelineUIManager {
         return leafNames;
     }
 
-    setupControls() {
-        this.ui.setupButtonHandlers({
-            zoomIn: () => this.timeline?.zoomIn(TIMELINE_CONSTANTS.ZOOM_PERCENTAGE_UI),
-            zoomOut: () => this.timeline?.zoomOut(TIMELINE_CONSTANTS.ZOOM_PERCENTAGE_UI),
-            fitToWindow: () => this.timeline?.fit(),
-            scrollToStart: () => this.timeline?.moveTo(TIMELINE_CONSTANTS.DEFAULT_PROGRESS),
-            scrollToEnd: () => {
-                // THE FIX: Get the total duration and visible range to correctly
-                // calculate the position that will place the end of the timeline
-                // at the edge of the viewport.
-                const totalDuration = this.timeline?.getTotalDuration();
-                const visibleRange = this.timeline?.getVisibleTimeRange();
-                if (totalDuration !== undefined && visibleRange) {
-                    const visibleDuration = visibleRange.max - visibleRange.min;
-                    this.timeline.moveTo(totalDuration - visibleDuration);
-                }
-            }
-        });
-    }
+    // React owns timeline controls; no DOM handler setup here
 
     updateDisplay(segment, transitionProgress) {
         const storeState = useAppStore.getState();

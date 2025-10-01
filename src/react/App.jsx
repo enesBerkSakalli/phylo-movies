@@ -1,65 +1,115 @@
 import React from 'react';
-import { TopScaleBar } from './components/TopScaleBar.jsx';
-import { ButtonsFileOps } from './components/ButtonsFileOps.jsx';
-import { ButtonsMSA } from './components/ButtonsMSA.jsx';
-import { Appearance } from './components/Appearance.jsx';
+import { ButtonsFileOps } from './components/nav/ButtonsFileOps.jsx';
+import { ButtonsMSA } from './components/nav/ButtonsMSA.jsx';
+import { Appearance } from './components/nav/appearance/Appearance.jsx';
+import { VisualElements } from './components/nav/appearance/VisualElements.jsx';
+import { TreeStructureGroup } from './components/nav/appearance/TreeStructureGroup.jsx';
 import { MoviePlayerBar } from './components/movie-player/MoviePlayerBar.jsx';
+import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator } from '@/components/ui/sidebar';
+import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
+import { Film, SlidersHorizontal, Monitor, Sun, Moon, FolderOpen, Dna, GitBranch } from 'lucide-react';
 
 export function App() {
   return (
-    <>
-      <div id="top-scale-bar-container">
-        <TopScaleBar />
-      </div>
-
-      <nav className="nav-drawer" id="navigation-drawer" role="navigation" aria-label="Main navigation">
-        <header className="nav-header">
-          <div className="nav-title-row">
-            <md-icon style={{ fontSize: '24px', color: 'var(--md-sys-color-primary)' }}>movie</md-icon>
-            <div style={{ flex: 1 }}>
-              <h1 className="nav-title">Phylo-Movies</h1>
-              <p className="nav-subtitle">
+    <SidebarProvider>
+      <Sidebar>
+        <SidebarHeader>
+          <div className="flex items-center gap-3">
+            <Film className="size-6 text-primary" />
+            <div className="flex-1 min-w-0">
+              <h1 className="m-0 text-base font-medium text-foreground truncate">Phylo-Movies</h1>
+              <p className="m-0 text-xs text-muted-foreground truncate">
                 File: <span id="compactFileName">Loading...</span>
               </p>
             </div>
-            <md-icon-button id="theme-toggle" aria-label="Toggle theme" title="Toggle theme">
-              <md-icon id="theme-toggle-icon">computer</md-icon>
-            </md-icon-button>
+            <Button id="theme-toggle" variant="ghost" size="icon" aria-label="Toggle theme" title="Toggle theme">
+              <Sun className="size-5 icon-sun" />
+              <Moon className="size-5 icon-moon" />
+              <Monitor className="size-5 icon-monitor" />
+            </Button>
           </div>
-        </header>
+        </SidebarHeader>
 
-        <div style={{ flex: 1, overflowY: 'auto' }}>
-          <md-list>
-            <div style={{ padding: '0 16px 16px 16px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <ButtonsFileOps />
-              <ButtonsMSA />
-            </div>
+        <SidebarContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarGroup>
+                <SidebarGroupLabel>
+                  <FolderOpen className="size-4 text-primary" />
+                  File Operations
+                </SidebarGroupLabel>
+                <ButtonsFileOps />
+              </SidebarGroup>
+            </SidebarMenuItem>
 
-            <md-divider></md-divider>
+            <SidebarMenuItem>
+              <SidebarSeparator />
+            </SidebarMenuItem>
 
-            <md-list-item>
-              <div slot="overline">SETTINGS</div>
-              <div slot="headline" className="md-typescale-headline-small" style={{ color: 'var(--md-sys-color-on-surface)' }}>Appearance</div>
-              <md-icon slot="start" style={{ color: 'var(--md-sys-color-primary)' }}>tune</md-icon>
-            </md-list-item>
-            <div style={{ padding: '0 16px 16px 16px', flex: 1, overflowY: 'auto' }}>
-              <Appearance />
-            </div>
-            <md-divider></md-divider>
-          </md-list>
-        </div>
-      </nav>
+            <SidebarMenuItem>
+              <SidebarGroup>
+                <SidebarGroupLabel>
+                  <Dna className="size-4 text-primary" />
+                  MSA Viewer
+                </SidebarGroupLabel>
+                <ButtonsMSA />
+              </SidebarGroup>
+            </SidebarMenuItem>
 
-      <div className="container">
-        <div className="full-size-container">
+            <SidebarMenuItem>
+              <SidebarSeparator />
+            </SidebarMenuItem>
+
+            <SidebarMenuItem>
+              <SidebarGroup>
+                <SidebarGroupLabel>
+                  <GitBranch className="size-4 text-primary" />
+                  Tree Structure
+                </SidebarGroupLabel>
+                <TreeStructureGroup />
+              </SidebarGroup>
+            </SidebarMenuItem>
+
+            <SidebarMenuItem>
+              <SidebarSeparator />
+            </SidebarMenuItem>
+
+            <SidebarMenuItem>
+              <SidebarGroup>
+                <SidebarGroupLabel>
+                  <Monitor className="size-4 text-primary" />
+                  Visual Elements
+                </SidebarGroupLabel>
+                <VisualElements />
+              </SidebarGroup>
+            </SidebarMenuItem>
+
+            <SidebarMenuItem>
+              <SidebarSeparator />
+            </SidebarMenuItem>
+
+            <SidebarMenuItem>
+              <SidebarGroup>
+                <SidebarGroupLabel>
+                  <SlidersHorizontal className="size-4 text-primary" />
+                  Settings
+                </SidebarGroupLabel>
+                <Appearance />
+              </SidebarGroup>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarContent>
+      </Sidebar>
+
+      <SidebarInset>
+        <div className="full-size-container" style={{ flex: 1, minHeight: 0 }}>
           <div id="webgl-container" style={{ width: '100%', height: '100%' }}></div>
         </div>
-      </div>
-
-      <MoviePlayerBar />
-    </>
+        <MoviePlayerBar />
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
 
 export default App;
-

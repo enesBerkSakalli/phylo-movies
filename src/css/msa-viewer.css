@@ -6,8 +6,8 @@
 
 .msa-controls {
   padding: 12px;
-  background: var(--md-sys-color-surface-container, #f5f5f5);
-  border-bottom: 1px solid var(--md-sys-color-outline-variant, #ddd);
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
   display: flex;
   gap: 12px;
   align-items: center;
@@ -28,19 +28,19 @@
 
 .msa-label {
   font-size: 14px;
-  color: var(--md-sys-color-on-surface, #000);
+  color: var(--foreground);
   font-weight: 500;
 }
 
 .msa-to-label {
   font-size: 14px;
-  color: var(--md-sys-color-on-surface-variant, #666);
+  color: var(--muted-foreground);
 }
 
 .msa-input {
   width: 80px;
   padding: 6px 8px;
-  border: 1px solid var(--md-sys-color-outline, #ccc);
+  border: 1px solid var(--border);
   border-radius: 4px;
   font-size: 14px;
 }
@@ -55,10 +55,9 @@
 }
 
 .msa-button--set {
-  background: var(--md-sys-color-primary, #006a6a);
+  background: var(--primary);
 }
 
 .msa-button--clear {
-  background: var(--md-sys-color-error, #ba1a1a);
+  background: var(--destructive);
 }
-

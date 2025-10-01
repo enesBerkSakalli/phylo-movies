@@ -35,9 +35,18 @@ function cycleThemePreference(current) {
 }
 
 function updateThemeToggleIcon(pref) {
+  // Back-compat: update old material icon if present
   const iconEl = document.getElementById('theme-toggle-icon');
-  if (!iconEl) return;
-  iconEl.textContent = pref === 'dark' ? 'dark_mode' : pref === 'light' ? 'light_mode' : 'computer';
+  if (iconEl) {
+    iconEl.textContent = pref === 'dark' ? 'dark_mode' : pref === 'light' ? 'light_mode' : 'computer';
+  }
+  // New: set a data attribute on the toggle button for React/lucide UIs
+  const btn = document.getElementById('theme-toggle');
+  if (btn) {
+    btn.setAttribute('data-theme-icon', pref);
+    btn.setAttribute('aria-label', `Toggle theme (current: ${pref})`);
+    btn.setAttribute('title', `Toggle theme (current: ${pref})`);
+  }
 }
 
 function setupThemeToggle() {

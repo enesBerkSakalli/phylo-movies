@@ -1,67 +1,7 @@
-/* Appearance panel styles – use Material tokens where possible */
+/* Appearance panel styles – minimal helpers */
 
-.appearance-root {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  inline-size: 100%;
-}
-
-/* Ensure width calculations respect padding */
-.appearance-root, .appearance-root * {
-  box-sizing: border-box;
-}
-
-.section-title {
-  margin: 0 0 16px 0;
-  color: var(--md-sys-color-on-surface);
-}
-
-.icon-small {
-  font-size: 18px;
-  vertical-align: middle;
-}
-
-.section-body {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-/* Compact variant for tighter vertical spacing when needed */
-.section-body--compact {
-  gap: 12px;
-}
-
-.control-label {
-  display: block;
-  margin-bottom: 8px;
-  color: var(--md-sys-color-on-surface);
-  font-weight: 500;
-}
-
-.full-width { inline-size: 100%; }
-
-.row-12 {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.row-16 {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.muted-text {
-  color: var(--md-sys-color-on-surface-variant);
-}
-
-.subtitle {
-  color: var(--md-sys-color-on-surface-variant);
-  margin: 16px 0 12px 0;
-}
+.appearance-root { display: flex; flex-direction: column; gap: 16px; inline-size: 100%; }
+.appearance-root, .appearance-root * { box-sizing: border-box; }
 
 .color-swatch {
   width: 48px;

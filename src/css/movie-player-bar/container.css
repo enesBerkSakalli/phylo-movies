@@ -1,16 +1,15 @@
 /* Movie Player Bar container and layout */
 
 .movie-player-bar {
-  position: fixed;
+  position: sticky;
   bottom: 0;
-  left: var(--navigation-drawer-width);
-  right: 0;
+  left: auto;
+  right: auto;
   z-index: 1000;
   padding: 8px;
-  background: var(--md-sys-color-surface-container);
-  border-top: 1px solid var(--md-sys-color-outline-variant);
-  box-shadow: var(--md-sys-elevation-level2);
-  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--card);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
 }
 
 /* Remove padding for chart container but DON'T extend into navigation area */
@@ -20,15 +19,7 @@
   width: calc(100% + 16px); /* only compensate for removed padding */
 }
 
-/* When navigation is hidden, only remove padding (don't extend into nav area) */
-.movie-player-bar.nav-hidden .movie-chart-container-full-width {
-  margin-left: -8px;
-  width: calc(100% + 16px);
-}
-
-.movie-player-bar.nav-hidden {
-  left: 0;
-}
+/* Legacy nav-hidden rules removed: Sidebar width variable controls offset */
 
 .movie-player-container {
   display: flex;

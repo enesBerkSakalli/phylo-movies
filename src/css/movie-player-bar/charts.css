@@ -34,13 +34,6 @@
   margin: 0;
 }
 
-.movie-player-bar .chart-inline {
-  background: transparent;
-  border-radius: 0;
-  padding: 0;
-  margin: 0;
-}
-
 .chart-row .chart-controls {
   flex: 0 0 auto;
   position: relative; /* create stacking context for z-index */

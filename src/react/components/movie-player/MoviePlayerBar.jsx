@@ -5,7 +5,11 @@ import { TransportControls } from './TransportControls.jsx';
 import { RecordingControls } from './RecordingControls.jsx';
 import { useAppStore } from '../../../js/core/store.js';
 import { CanvasRecorder } from '../../../js/services/canvasRecorder.js';
-import { notifications } from '../../../js/partial/eventHandlers/notificationSystem.js';
+import { notifications } from '../../../js/services/notifications.js';
+import { useSidebar } from '@/components/ui/sidebar';
+import { Button } from '@/components/ui/button';
+import { Slider } from '@/components/ui/slider';
+import { Menu, ZoomOut, ZoomIn, Scan, ChevronsLeft, ChevronsRight, Gauge } from 'lucide-react';
 
 export function MoviePlayerBar() {
   const playing = useAppStore((s) => s.playing);
@@ -16,6 +20,7 @@ export function MoviePlayerBar() {
   const currentTreeIndex = useAppStore((s) => s.currentTreeIndex);
   const treeListLen = useAppStore((s) => s.treeList?.length || 0);
   const setAnimationSpeed = useAppStore((s) => s.setAnimationSpeed);
+  const animationSpeed = useAppStore((s) => s.animationSpeed);
   const barOptionValue = useAppStore((s) => s.barOptionValue);
   const setBarOption = useAppStore((s) => s.setBarOption);
   const recorderRef = useRef(null);
@@ -86,25 +91,12 @@ export function MoviePlayerBar() {
     }
   }, [ensureRecorder]);
 
+  const { open, toggleSidebar } = useSidebar();
   const handleNavigationToggle = useCallback(() => {
     try {
-      const navigationDrawer = document.getElementById('navigation-drawer');
-      const moviePlayerBar = document.querySelector('.movie-player-bar');
-      const mainContainer = document.querySelector('.container');
-      const toggleButton = document.getElementById('nav-toggle-button');
-      const toggleIcon = toggleButton?.querySelector('md-icon');
-      const phyloHud = document.querySelector('.phylo-hud');
-
-      if (!navigationDrawer || !moviePlayerBar || !mainContainer) return;
-      const willHide = !navigationDrawer.classList.contains('hidden');
-
-      navigationDrawer.classList.toggle('hidden', willHide);
-      mainContainer.classList.toggle('navigation-hidden', willHide);
-      moviePlayerBar.classList.toggle('nav-hidden', willHide);
-      if (toggleIcon) toggleIcon.textContent = willHide ? 'menu' : 'menu_open';
-      if (phyloHud) phyloHud.classList.toggle('nav-visible', !willHide);
+      toggleSidebar();
     } catch {}
-  }, []);
+  }, [toggleSidebar]);
 
   return (
     <>
@@ -112,43 +104,59 @@ export function MoviePlayerBar() {
         <div className="movie-player-container">
           <div className="controls-row" role="group" aria-label="Transport controls and chart controls">
             <div className="left-controls" role="group" aria-label="Transport controls and position">
-              <md-icon-button
+              <Button
                 id="nav-toggle-button"
-                title="Toggle navigation panel"
-                aria-label="Toggle navigation panel"
+                variant="ghost"
+                size="icon"
+                title="Toggle sidebar"
+                aria-label="Toggle sidebar"
+                aria-controls="app-sidebar"
+                aria-expanded={open ? 'true' : 'false'}
                 onClick={handleNavigationToggle}
               >
-                <md-icon>menu</md-icon>
-              </md-icon-button>
+                <Menu className="size-5" />
+              </Button>
 
               <div className="vertical-divider"></div>
 
               <div className="timeline-zoom-controls" role="group" aria-label="Timeline zoom controls">
-                <md-icon-button id="zoomOutBtn" title="Zoom out timeline (Ctrl + -)">
-                  <md-icon>zoom_out</md-icon>
-                </md-icon-button>
-                <md-icon-button id="fitToWindowBtn" title="Fit entire timeline to window (Ctrl + 0)">
-                  <md-icon>fit_screen</md-icon>
-                </md-icon-button>
-                <md-icon-button id="zoomInBtn" title="Zoom in timeline (Ctrl + +)">
-                  <md-icon>zoom_in</md-icon>
-                </md-icon-button>
+                <Button id="zoomOutBtn" variant="ghost" size="icon" title="Zoom out timeline (Ctrl + -)" onClick={() => gui?.zoomOutTimeline?.()}>
+                  <ZoomOut className="size-5" />
+                </Button>
+                <Button id="fitToWindowBtn" variant="ghost" size="icon" title="Fit entire timeline to window (Ctrl + 0)" onClick={() => gui?.fitTimeline?.()}>
+                  <Scan className="size-5" />
+                </Button>
+                <Button id="zoomInBtn" variant="ghost" size="icon" title="Zoom in timeline (Ctrl + +)" onClick={() => gui?.zoomInTimeline?.()}>
+                  <ZoomIn className="size-5" />
+                </Button>
               </div>
 
               <div className="timeline-scroll-controls" role="group" aria-label="Timeline scroll controls">
-                <md-icon-button id="scrollToStartBtn" title="Scroll to start (Home)">
-                  <md-icon>first_page</md-icon>
-                </md-icon-button>
-                <md-icon-button id="scrollToEndBtn" title="Scroll to end (End)">
-                  <md-icon>last_page</md-icon>
-                </md-icon-button>
+                <Button id="scrollToStartBtn" variant="ghost" size="icon" title="Scroll to start (Home)" onClick={() => gui?.scrollToStartTimeline?.()}>
+                  <ChevronsLeft className="size-5" />
+                </Button>
+                <Button id="scrollToEndBtn" variant="ghost" size="icon" title="Scroll to end (End)" onClick={() => gui?.scrollToEndTimeline?.()}>
+                  <ChevronsRight className="size-5" />
+                </Button>
               </div>
 
               <div className="vertical-divider"></div>
 
               <div className="speed-control" role="group" aria-labelledby="speed-control-label">
-                <md-icon>speed</md-icon>
-                <md-slider id="animation-speed-range" min="0.1" max="5" value="1" step="0.1" labeled aria-label="Animation speed" onInput={(e) => { const v = parseFloat(e.target.value); if (Number.isFinite(v)) setAnimationSpeed(v); }}></md-slider>
+                <Gauge className="size-5" />
+                <Slider
+                  id="animation-speed-range"
+                  min={0.1}
+                  max={5}
+                  step={0.1}
+                  value={[animationSpeed]}
+                  onValueChange={(vals) => {
+                    const v = Array.isArray(vals) ? vals[0] : 1
+                    if (typeof v === 'number' && Number.isFinite(v)) setAnimationSpeed(v)
+                  }}
+                  aria-label="Animation speed"
+                  className="w-40"
+                />
               </div>
 
               <TransportControls
