@@ -1,0 +1,249 @@
+{
+  "tested_fields": [
+    {
+      "name": "interpolated_trees",
+      "type": "array",
+      "description": "Flattened playback sequence: all original inputs, then every interpolated frame. Main data source for renderers/playback UIs.",
+      "ordering": "Sequential playback order: original trees at specific indices, interpolated frames between them",
+      "error_handling": "If missing or wrong type, fail validation immediately; consumers must not proceed with invalid tree data",
+      "notes": [
+        "Consumed by: WebGLTreeAnimationController, DeckGLTreeAnimationController, Timeline UI, Navigation"
+      ],
+      "test_status": "passed",
+      "json_shape": "TreeNode"
+    },
+    {
+      "name": "tree_metadata",
+      "type": "array",
+      "description": "Metadata aligned 1:1 with interpolated_trees. Each record provides frame categorization, pair mapping, and global index information.",
+      "ordering": "Must have exactly same length as interpolated_trees; index correspondence is critical",
+      "error_handling": "Length mismatch with interpolated_trees is fatal; missing fields should use null per schema",
+      "notes": [
+        "Consumed by: Timeline, Frame categorization logic, Pair-level analytics, Navigation"
+      ],
+      "test_status": "passed",
+      "json_shape": "TreeMetadata"
+    },
+    {
+      "name": "tree_pair_solutions",
+      "type": "object",
+      "description": "Maps pair_i_j (string) → TreePairSolution. Enables drill-down/reconciliation views and analytics for each tree transition.",
+      "ordering": "Keys follow format \"pair_X_Y\" where X < Y; values contain index ranges matching interpolated_trees",
+      "error_handling": "Missing pair keys should log warning; malformed solution objects fail validation",
+      "notes": [
+        "Consumed by: Analytics views, Split change tracking, Debugging tools, Reconciliation UI"
+      ],
+      "test_status": "passed",
+      "json_shape": "TreePairSolution"
+    },
+    {
+      "name": "pair_interpolation_ranges",
+      "type": "array",
+      "description": "For each original tree pair, the [start_global_index, end_global_index] (inclusive) covering frames in interpolated_trees.",
+      "ordering": "Array index corresponds to pair number (0-indexed); ranges must be non-overlapping and sequential",
+      "error_handling": "Overlapping or non-sequential ranges indicate data corruption; fail validation",
+      "notes": [
+        "Consumed by: Timeline slicing, Pair navigation, Range queries"
+      ],
+      "test_status": "passed",
+      "json_shape": "[number, number]"
+    },
+    {
+      "name": "distances",
+      "type": "object",
+      "description": "Robinson-Foulds and weighted RF distances between consecutive original trees.",
+      "ordering": "Arrays must have length = original_tree_count - 1",
+      "error_handling": "Length mismatch logs error; missing keys use empty array",
+      "notes": [
+        "Consumed by: Metrics dashboard, Tree similarity analysis, Export reports"
+      ],
+      "test_status": "passed",
+      "json_shape": "scalar"
+    },
+    {
+      "name": "original_tree_count",
+      "type": "number",
+      "description": "Count of input trees (post-rooting/normalization). Used for validation and UI configuration.",
+      "ordering": "Must equal number of original trees before interpolation",
+      "error_handling": "Mismatch with actual tree count fails validation",
+      "notes": [
+        "Consumed by: Validation, UI initialization, Summary stats"
+      ],
+      "test_status": "passed",
+      "json_shape": "scalar"
+    },
+    {
+      "name": "interpolated_tree_count",
+      "type": "number",
+      "description": "Total count of all trees (originals + interpolated). Must equal interpolated_trees.length.",
+      "ordering": "Must be >= original_tree_count",
+      "error_handling": "Mismatch with array length fails validation",
+      "notes": [
+        "Consumed by: Buffer allocation, Progress bars, Performance metrics"
+      ],
+      "test_status": "passed",
+      "json_shape": "scalar"
+    },
+    {
+      "name": "msa",
+      "type": "object",
+      "description": "Multiple sequence alignment data with window parameters. Can be null if no MSA provided.",
+      "ordering": "N/A",
+      "error_handling": "Missing object uses default with null sequences; invalid structure logs warning",
+      "notes": [
+        "Consumed by: MSA Viewer, Sequence highlighting, Window calculations"
+      ],
+      "test_status": "passed",
+      "json_shape": "scalar"
+    },
+    {
+      "name": "file_name",
+      "type": "string",
+      "description": "Original input filename for user reference.",
+      "ordering": "N/A",
+      "error_handling": "Missing value uses default \"unknown.newick\"",
+      "notes": [
+        "Consumed by: UI display, Export naming, Session management"
+      ],
+      "test_status": "passed",
+      "json_shape": "scalar"
+    },
+    {
+      "name": "processing_options",
+      "type": "object",
+      "description": "Processing configuration used (e.g., rooting_enabled). Documents backend decisions.",
+      "ordering": "N/A",
+      "error_handling": "Missing object uses empty {}; logs warning",
+      "notes": [
+        "Consumed by: Debugging, Session replay, Export metadata"
+      ],
+      "test_status": "passed",
+      "json_shape": "scalar"
+    },
+    {
+      "name": "tree_count",
+      "type": "object",
+      "description": "Object with original and interpolated counts. Convenience wrapper for counts.",
+      "ordering": "N/A",
+      "error_handling": "Missing keys use parent-level counts",
+      "notes": [
+        "Consumed by: UI display, Validation cross-check"
+      ],
+      "test_status": "passed",
+      "json_shape": "scalar"
+    },
+    {
+      "name": "window_size",
+      "type": "number",
+      "description": "MSA window size parameter. Used for sequence window calculations.",
+      "ordering": "N/A",
+      "error_handling": "Missing value defaults to 1",
+      "notes": [
+        "Consumed by: MSA calculations, Window utilities"
+      ],
+      "test_status": "passed",
+      "json_shape": "scalar"
+    },
+    {
+      "name": "window_step_size",
+      "type": "number",
+      "description": "MSA window step size parameter. Controls window overlap/spacing.",
+      "ordering": "N/A",
+      "error_handling": "Missing value defaults to 1",
+      "notes": [
+        "Consumed by: MSA calculations, Window utilities"
+      ],
+      "test_status": "passed",
+      "json_shape": "scalar"
+    },
+    {
+      "name": "covers",
+      "type": "array",
+      "description": "Coverage data for split tracking (legacy/experimental).",
+      "ordering": "N/A",
+      "error_handling": "Missing array defaults to []",
+      "notes": [
+        "Consumed by: Split tracking analytics"
+      ],
+      "test_status": "passed",
+      "json_shape": "scalar"
+    },
+    {
+      "name": "sorted_leaves",
+      "type": "array",
+      "description": "Ordered list of leaf names. Defines canonical leaf ordering.",
+      "ordering": "Leaf names in display order",
+      "error_handling": "Missing array uses extraction from first tree",
+      "notes": [
+        "Consumed by: Leaf ordering, Label display, MSA alignment"
+      ],
+      "test_status": "passed",
+      "json_shape": "string"
+    },
+    {
+      "name": "split_change_events",
+      "type": "object",
+      "description": "Map of pair_key → array of split change events for that pair.",
+      "ordering": "Keys follow pair_X_Y format; values are event arrays",
+      "error_handling": "Missing object defaults to {}",
+      "notes": [
+        "Consumed by: Split change visualization, Event timeline"
+      ],
+      "test_status": "passed",
+      "json_shape": "object"
+    },
+    {
+      "name": "split_change_timeline",
+      "type": "array",
+      "description": "Timeline data structure for split changes (array of events).",
+      "ordering": "Chronological order",
+      "error_handling": "Missing array defaults to []",
+      "notes": [
+        "Consumed by: Timeline visualization"
+      ],
+      "test_status": "passed",
+      "json_shape": "scalar"
+    },
+    {
+      "name": "split_change_tracking",
+      "type": "array",
+      "description": "Tracking metadata for split changes (array of tracking records).",
+      "ordering": "Sequential tracking order",
+      "error_handling": "Missing array defaults to []",
+      "notes": [
+        "Consumed by: Change tracking analytics"
+      ],
+      "test_status": "passed",
+      "json_shape": "scalar"
+    }
+  ],
+  "undocumented_fields": [],
+  "highlight_debug": {
+    "context": "Frame highlighting in playback sequence",
+    "input_data": {
+      "global_tree_index": 5,
+      "metadata": {
+        "global_tree_index": 5,
+        "tree_pair_key": "pair_0_1",
+        "step_in_pair": 5,
+        "reference_pair_tree_index": 0,
+        "target_pair_tree_index": 1,
+        "source_tree_global_index": 0,
+        "target_tree_global_index": 21
+      },
+      "is_original": false,
+      "is_interpolated": true
+    },
+    "expected": {
+      "highlighting": "Interpolated frames should be visually distinct from original frames",
+      "ui_indicator": "Frame type should be shown in timeline and HUD"
+    },
+    "actual": {
+      "highlighting": "Currently determined by tree_pair_key === null check",
+      "ui_indicator": "Timeline uses interpolationData from segments"
+    },
+    "explanation": "Highlighting relies on tree_metadata.tree_pair_key to distinguish frame types\nOriginal trees have tree_pair_key = null\nInterpolated frames have tree_pair_key = \"pair_X_Y\"\nTimeline segments track interpolationData array with originalIndex references\nPotential issue: Mismatch between metadata.global_tree_index and segment.interpolationData indices\nRoot cause: Timeline construction may not align perfectly with metadata array indices",
+    "recommendation": "Verify timeline segment construction aligns with tree_metadata array indexing"
+  },
+  "failures": []
+}
