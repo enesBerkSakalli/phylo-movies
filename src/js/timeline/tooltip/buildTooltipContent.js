@@ -7,18 +7,10 @@ export function buildTimelineTooltipContent(segment, segIndex, totalSegments, st
 
   let groupedHtml = '';
 
-  let activeChangingSplits = null;
-  if (!isFull) {
-    // Get active changing splits from split_change_tracking for any tree in this segment
-    if (Array.isArray(segment.interpolationData)) {
-      for (const it of segment.interpolationData) {
-        const treeIndex = it?.originalIndex;
-        if (typeof treeIndex === 'number' && state.activeChangeEdgeTracking?.[treeIndex]) {
-          activeChangingSplits = state.activeChangeEdgeTracking[treeIndex];
-          break;
-        }
-      }
-    }
+  let movingSubtreesDisplay = '—';
+  if (!isFull && segment.jumpingSubtrees && Array.isArray(segment.jumpingSubtrees)) {
+    // Format jumping subtrees: these are leaf indices that are moving
+    movingSubtreesDisplay = formatJumpingSubtrees(segment.jumpingSubtrees, getLeafNamesByIndices);
   }
 
   const hint = isFull
@@ -32,11 +24,55 @@ export function buildTimelineTooltipContent(segment, segIndex, totalSegments, st
     </div>
     <div class="tt-divider"></div>
     <div class="tt-row"><span class="tt-label">Segment:</span><span class="tt-value">${segIndex + 1} / ${totalSegments}</span></div>
-    ${isFull ? '' : `<div class="tt-row"><span class="tt-label">Active splits:</span><span class="tt-value">${activeChangingSplits ? `[${activeChangingSplits.join(', ')}]` : '—'}</span></div>`}
+    ${isFull ? '' : `<div class="tt-row"><span class="tt-label">Moving subtrees:</span><span class="tt-value">${movingSubtreesDisplay}</span></div>`}
     ${isFull ? '' : `<div class="tt-row"><span class="tt-label">Steps:</span><span class="tt-value">${steps} step${steps!==1?'s':''}</span></div>`}
-    ${isFull ? '' : `<div class="tt-row"><span class="tt-label">Subtree changes:</span><span class="tt-value">${leaves}</span></div>`}
+    ${isFull ? '' : `<div class="tt-row"><span class="tt-label">Taxa moving:</span><span class="tt-value">${leaves}</span></div>`}
     ${groupedHtml}
     <div class="tt-divider"></div>
     <div class="tt-hint">${hint}</div>
   `;
+}
+
+/**
+ * Formats jumping subtree solutions by converting leaf indices to taxon names.
+ * Jumping subtrees are the actual clades being moved during SPR operations.
+ *
+ * @param {Array} jumpingSubtrees - Array of solutions, each containing groups of leaf indices
+ * @param {Function} getLeafNamesByIndices - Function to convert leaf indices to names
+ * @returns {string} Formatted string like "[A, B, C], [D, E]" or "—"
+ */
+function formatJumpingSubtrees(jumpingSubtrees, getLeafNamesByIndices) {
+  if (!jumpingSubtrees || !jumpingSubtrees.length || !getLeafNamesByIndices) {
+    return '—';
+  }
+
+  const subtreeDescriptions = [];
+
+  // jumpingSubtrees structure: [ [ [leaf_indices_group_1], [leaf_indices_group_2] ], ... ]
+  for (const solution of jumpingSubtrees) {
+    if (!Array.isArray(solution)) continue;
+
+    for (const leafIndicesGroup of solution) {
+      if (!Array.isArray(leafIndicesGroup) || leafIndicesGroup.length === 0) continue;
+
+      // Convert leaf indices to taxon names
+      const leafNames = getLeafNamesByIndices(leafIndicesGroup);
+
+      if (leafNames && leafNames.length > 0) {
+        // Format: show first few names, add ellipsis if too many
+        if (leafNames.length === 1) {
+          subtreeDescriptions.push(`[${leafNames[0]}]`);
+        } else if (leafNames.length <= 3) {
+          subtreeDescriptions.push(`[${leafNames.join(', ')}]`);
+        } else if (leafNames.length <= 5) {
+          subtreeDescriptions.push(`[${leafNames.slice(0, 4).join(', ')}, …]`);
+        } else {
+          // For larger subtrees, show first 3 + count
+          subtreeDescriptions.push(`[${leafNames.slice(0, 3).join(', ')} + ${leafNames.length - 3} more]`);
+        }
+      }
+    }
+  }
+
+  return subtreeDescriptions.length > 0 ? subtreeDescriptions.join(', ') : '—';
 }

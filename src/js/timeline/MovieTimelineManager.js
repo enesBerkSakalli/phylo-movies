@@ -68,14 +68,15 @@ export class MovieTimelineManager {
 
     _initializeScrubberAPI() {
         try {
-            const { treeController } = useAppStore.getState();
-            if (!treeController) {
-                console.warn('[Timeline] TreeController not available for ScrubberAPI');
+            const { treeControllers } = useAppStore.getState();
+            if (!treeControllers || treeControllers.length === 0) {
+                console.warn('[Timeline] TreeControllers not available for ScrubberAPI');
                 return;
             }
 
+            // Use the first tree controller (primary visualization)
             this.scrubberAPI = new ScrubberAPI(
-                treeController,
+                treeControllers[0],
                 this.transitionResolver,
                 this
             );
@@ -328,6 +329,10 @@ export class MovieTimelineManager {
 
     _getTimeFromProperties(properties) {
         const { time } = properties;
+        // Handle both raw milliseconds (timeline-relative) and Date objects (legacy)
+        if (typeof time === 'number') {
+            return time;
+        }
         return time instanceof Date ? time.getTime() : time;
     }
 
@@ -352,4 +357,5 @@ export class MovieTimelineManager {
         this.tooltip = null;
         this.scrubRequestId = null;
     }
+
 }

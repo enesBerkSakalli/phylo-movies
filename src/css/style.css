@@ -1,11 +1,3 @@
-/* App theme variables for charts */
-:root {
-  --chart-background: rgba(0, 0, 0, 0.05);
-  --chart-inactive: var(--border);
-  --chart-active: var(--primary);
-  --chart-comparison: var(--secondary);
-}
-
 /* Application layout containers */
 
 .full-size-container {

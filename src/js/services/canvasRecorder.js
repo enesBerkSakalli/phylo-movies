@@ -1,4 +1,5 @@
 import CCapture from 'ccapture.js/src/CCapture.js';
+import { animate } from 'popmotion';
 import { useAppStore } from '../core/store.js';
 
 export class CanvasRecorder {
@@ -26,15 +27,20 @@ export class CanvasRecorder {
     this.isRecording = false;
     this.recordedBlob = null;
     this._rafId = null;
+  this._animationController = null;
   }
 
   _resolveCanvas() {
-    const { treeController } = useAppStore.getState();
-    const canvas = treeController?.deckManager?.canvas || document.querySelector('#webgl-container canvas');
+    const { treeControllers } = useAppStore.getState();
+    const primaryController = Array.isArray(treeControllers) && treeControllers.length > 0
+      ? treeControllers[0]
+      : null;
+
+    const canvas = primaryController?.deckManager?.canvas || document.querySelector('#webgl-container canvas');
     if (!canvas) {
       throw new Error('Visualization canvas not found. Make sure the movie has finished rendering.');
     }
-    this.deck = treeController?.deckManager?.getDeck?.() || treeController?.deckManager?.deck || null;
+    this.deck = primaryController?.deckManager?.getDeck?.() || primaryController?.deckManager?.deck || null;
     return canvas;
   }
 
@@ -68,12 +74,19 @@ export class CanvasRecorder {
         },
       });
     } else {
-      const step = () => {
-        if (!this.isRecording) return;
-        this.capturer.capture(this.canvas);
-        this._rafId = requestAnimationFrame(step);
-      };
-      this._rafId = requestAnimationFrame(step);
+      this._animationController?.stop?.();
+      this._animationController = animate({
+        repeat: Infinity,
+        duration: 16.67,
+        onUpdate: () => {
+          if (!this.isRecording) {
+            this._animationController?.stop?.();
+            this._animationController = null;
+            return;
+          }
+          this.capturer.capture(this.canvas);
+        }
+      });
     }
   }
 
@@ -85,6 +98,8 @@ export class CanvasRecorder {
       cancelAnimationFrame(this._rafId);
       this._rafId = null;
     }
+    this._animationController?.stop?.();
+    this._animationController = null;
     this.prevAfterRender = null;
     this.deck = null;
   }

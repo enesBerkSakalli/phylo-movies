@@ -1,7 +1,7 @@
 import { useAppStore } from '../core/store.js';
 import { TaxaColoring } from "../treeColoring/index.js";
 import { WebGLTreeAnimationController } from "../treeVisualisation/WebGLTreeAnimationController.js";
-import { TREE_COLOR_CATEGORIES } from "../core/store.js";
+import { TREE_COLOR_CATEGORIES } from "../constants/TreeColors.js";
 import { applyColoringData } from "../treeColoring/index.js";
 import { NavigationController } from "./NavigationController.js";
 import { calculateWindow } from "../utils/windowUtils.js";
@@ -128,33 +128,27 @@ export default class Gui {
   }
 
   async play() {
-    let { playing, treeController } = useAppStore.getState();
+    const { playing, treeControllers } = useAppStore.getState();
     if (playing) return;
 
-    // Ensure we have a tree controller before starting animation
-    if (!treeController) {
+    if (!treeControllers.length) {
       await this.updateMain();
-      // Re-fetch the controller that was just created
-      treeController = useAppStore.getState().treeController;
     }
 
-    // THE FIX: The controller's startAnimation method is the single source of truth for starting playback.
-    // It will handle setting the store state and beginning the animation loop.
-    if (treeController && typeof treeController.startAnimation === 'function') {
-      treeController.startAnimation();
-    } else {
-      console.warn('[GUI] Cannot start animation - no valid tree controller');
-    }
+    const controllers = useAppStore.getState().treeControllers;
+    controllers.forEach(c => c.startAnimation());
   }
 
 
 
   stop() {
-    const { treeController, stop: stopStore } = useAppStore.getState();
+    const { treeControllers, stop: stopStore } = useAppStore.getState();
     // Stop animation first if controller has the method
-    if (treeController && typeof treeController.stopAnimation === 'function') {
-      treeController.stopAnimation();
-    }
+    treeControllers.forEach(c => {
+      if (c && typeof c.stopAnimation === 'function') {
+        c.stopAnimation();
+      }
+    });
     // Also ensure the store state is set to not playing.
     stopStore();
   }
@@ -256,38 +250,39 @@ export default class Gui {
    * @returns {Object} Tree controller ready for rendering
    */
   _ensureTreeController() {
-    const {
-      setTreeController,
-      treeController: currentTreeController
-    } = useAppStore.getState();
+    const { setTreeControllers, treeControllers: currentTreeControllers, comparisonMode } = useAppStore.getState();
 
-    if (currentTreeController) {
-      return currentTreeController;
-    }
-
-    // Always create a WebGL-based controller unless an override is provided
-    let newTreeController;
-    if (this.options.TreeController) {
-      newTreeController = new this.options.TreeController();
+    if (comparisonMode) {
+      if (currentTreeControllers.length === 2) {
+        return currentTreeControllers;
+      }
+      const newControllers = [
+        new this.options.TreeController('#webgl-container-left', { animations: false }),
+        new this.options.TreeController('#webgl-container-right', { animations: true }),
+      ];
+      setTreeControllers(newControllers);
+      return newControllers;
     } else {
-      newTreeController = new WebGLTreeAnimationController();
+      if (currentTreeControllers.length === 1) {
+        return currentTreeControllers;
+      }
+      const newController = new this.options.TreeController('#webgl-container', { animations: true });
+      setTreeControllers([newController]);
+      return [newController];
     }
-    // Store handles all controller lifecycle management
-    setTreeController(newTreeController);
-    return newTreeController;
   }
 
   /**
    * Performs the actual tree rendering with proper error handling
    * @param {Object} treeController - The controller to use for rendering
    */
-  async _performTreeRender(treeController) {
+  async _performTreeRender(treeController, treeIndex) {
     const { setRenderInProgress } = useAppStore.getState();
 
     setRenderInProgress(true);
     try {
       // Always do a fresh render - renderAllElements now clears automatically
-      await treeController.renderAllElements();
+      await treeController.renderAllElements({ treeIndex });
     } catch (error) {
       console.error('Error during tree rendering:', error);
       throw error; // Re-throw so caller can handle if needed
@@ -316,12 +311,40 @@ export default class Gui {
       return; // Early exit - either already rendering or no valid tree
     }
 
+    const { comparisonMode, currentTreeIndex } = useAppStore.getState();
+
     // 2. Ensure we have the right controller for current mode
-    const treeController = this._ensureTreeController();
+    const treeControllers = this._ensureTreeController();
 
     // 3. Perform the actual rendering
     try {
-      await this._performTreeRender(treeController);
+      if (comparisonMode) {
+        const { transitionResolver } = useAppStore.getState();
+        const full = transitionResolver?.fullTreeIndices || [];
+        let leftIndex = Math.max(0, currentTreeIndex - 1);
+        let rightIndex = currentTreeIndex;
+
+        // Prefer comparing full trees (anchor snapshots) when available
+        if (Array.isArray(full) && full.length >= 2) {
+          // Find the first anchor >= current index
+          let idx = full.findIndex((i) => i >= currentTreeIndex);
+          if (idx === -1) idx = full.length - 1; // past the last anchor
+
+          // Show a distinct pair of anchors around current position
+          rightIndex = full[idx];
+          leftIndex = full[Math.max(0, idx - 1)];
+
+          // If both anchors collapse to the same index (e.g., at start), try next anchor for right
+          if (leftIndex === rightIndex && idx + 1 < full.length) {
+            rightIndex = full[idx + 1];
+          }
+        }
+
+        await this._performTreeRender(treeControllers[0], leftIndex);
+        await this._performTreeRender(treeControllers[1], rightIndex);
+      } else {
+        await this._performTreeRender(treeControllers[0]);
+      }
     } catch (error) {
       // Error already logged in _performTreeRender, just return
       return;
@@ -356,14 +379,16 @@ export default class Gui {
   // EXPORT & SAVE FUNCTIONALITY
   // ========================================
   async saveImage() {
-    let { treeController } = useAppStore.getState();
+    let { treeControllers } = useAppStore.getState();
 
     // If no controller exists, create one by running the main update.
-    if (!treeController) {
+    if (!treeControllers.length) {
       await this.updateMain();
       // Re-fetch the controller from the store now that it has been created.
-      treeController = useAppStore.getState().treeController;
+      treeControllers = useAppStore.getState().treeControllers;
     }
+
+    const treeController = treeControllers[treeControllers.length - 1]; // Save the right-most view
 
     const button = document.getElementById("save-button");
 
@@ -515,13 +540,9 @@ export default class Gui {
    * Clean up resources when GUI is destroyed
    */
   destroy() {
-    const { treeController, setTreeController } = useAppStore.getState();
-    if (treeController) {
-      // Clear any ongoing animations
-      this.stop();
-      // Let store handle controller cleanup
-      setTreeController(null);
-    }
+    const { treeControllers, setTreeControllers } = useAppStore.getState();
+    treeControllers.forEach(c => c.destroy());
+    setTreeControllers([]);
 
     // Clean up store subscription
     if (this.unsubscribeStore) {

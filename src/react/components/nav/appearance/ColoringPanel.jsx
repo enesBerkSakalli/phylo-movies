@@ -1,5 +1,5 @@
-import React from 'react';
-import { useAppStore, TREE_COLOR_CATEGORIES } from '../../../../js/core/store.js';
+import React, { useCallback } from 'react';
+import { useAppStore } from '../../../../js/core/store.js';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -10,18 +10,38 @@ export function ColoringPanel() {
   const monophyletic = useAppStore((s) => s.monophyleticColoringEnabled);
   const activeChange = useAppStore((s) => s.activeChangeEdgesEnabled);
   const marked = useAppStore((s) => s.markedComponentsEnabled);
-  const treeController = useAppStore((s) => s.treeController);
+  const treeControllers = useAppStore((s) => s.treeControllers);
+  const activeChangeEdgeColor = useAppStore((s) => s.activeChangeEdgeColor);
+  const markedColor = useAppStore((s) => s.markedColor);
 
   const setMonophyleticColoring = useAppStore((s) => s.setMonophyleticColoring);
   const setActiveChangeEdgesEnabled = useAppStore((s) => s.setActiveChangeEdgesEnabled);
   const setMarkedComponentsEnabled = useAppStore((s) => s.setMarkedComponentsEnabled);
   const setActiveChangeEdgeColor = useAppStore((s) => s.setActiveChangeEdgeColor);
   const setMarkedColor = useAppStore((s) => s.setMarkedColor);
-  const setDimmedColor = useAppStore((s) => s.setDimmedColor);
 
-  const onToggleMonophyletic = async (v) => { setMonophyleticColoring(!!v); try { await treeController?.renderAllElements?.(); } catch {} };
-  const onToggleActiveChange = async (v) => { setActiveChangeEdgesEnabled(!!v); try { await treeController?.renderAllElements?.(); } catch {} };
-  const onToggleMarked = async (v) => { setMarkedComponentsEnabled(!!v); try { await treeController?.renderAllElements?.(); } catch {} };
+  const rerenderControllers = useCallback(async () => {
+    try {
+      for (const controller of treeControllers ?? []) {
+        await controller?.renderAllElements?.();
+      }
+    } catch {}
+  }, [treeControllers]);
+
+  const onToggleMonophyletic = useCallback(async (v) => {
+    setMonophyleticColoring(!!v);
+    await rerenderControllers();
+  }, [setMonophyleticColoring, rerenderControllers]);
+
+  const onToggleActiveChange = useCallback(async (v) => {
+    setActiveChangeEdgesEnabled(!!v);
+    await rerenderControllers();
+  }, [setActiveChangeEdgesEnabled, rerenderControllers]);
+
+  const onToggleMarked = useCallback(async (v) => {
+    setMarkedComponentsEnabled(!!v);
+    await rerenderControllers();
+  }, [setMarkedComponentsEnabled, rerenderControllers]);
 
   return (
     <div>
@@ -55,25 +75,6 @@ export function ColoringPanel() {
         </label>
 
         <div>
-          <Label className="font-medium" htmlFor="red-coloring-mode">
-            <span id="change-coloring-mode-label">Change Coloring Mode</span>
-          </Label>
-          <Select defaultValue="highlight_solutions">
-            <SelectTrigger id="red-coloring-mode" className="full-width" aria-labelledby="change-coloring-mode-label" aria-describedby="change-coloring-mode-help">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="highlight_solutions">Highlight Subtrees</SelectItem>
-              <SelectItem value="subtree_tracking">Subtree Tracking</SelectItem>
-            </SelectContent>
-          </Select>
-          <div id="change-coloring-mode-help" className="text-xs text-muted-foreground" style={{ marginTop: 4 }}>
-            Highlight Subtrees: Shows accumulated changes<br />
-            Subtree Tracking: Shows only moving elements
-          </div>
-        </div>
-
-        <div>
           <h4 className="text-sm font-medium">Highlighting Colors</h4>
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-3">
@@ -87,12 +88,12 @@ export function ColoringPanel() {
               <input
                 type="color"
                 id="active-change-edges-color"
-                defaultValue={TREE_COLOR_CATEGORIES.activeChangeEdgeColor || '#2196f3'}
+                value={activeChangeEdgeColor || '#2196f3'}
                 className="color-swatch"
                 aria-labelledby="active-change-edges-label"
-                onInput={async (e) => {
+                onChange={async (e) => {
                   setActiveChangeEdgeColor(e.target.value);
-                  try { await treeController?.renderAllElements?.(); } catch {}
+                  await rerenderControllers();
                 }}
               />
             </div>
@@ -107,29 +108,15 @@ export function ColoringPanel() {
               <input
                 type="color"
                 id="marked-color"
-                defaultValue={TREE_COLOR_CATEGORIES.markedColor || '#ff5722'}
+                value={markedColor || '#ff5722'}
                 className="color-swatch"
                 aria-labelledby="marked-components-label"
-                onInput={async (e) => {
+                onChange={async (e) => {
                   setMarkedColor(e.target.value);
-                  try { await treeController?.renderAllElements?.(); } catch {}
+                  await rerenderControllers();
                 }}
               />
             </div>
-            <label className="flex items-center gap-3">
-              <span id="dimmed-elements-label" style={{ flex: 1 }}>Dimmed Elements</span>
-              <input
-                type="color"
-                id="dimmed-color"
-                defaultValue={TREE_COLOR_CATEGORIES.dimmedColor || '#cccccc'}
-                className="color-swatch"
-                aria-labelledby="dimmed-elements-label"
-                onInput={async (e) => {
-                  setDimmedColor(e.target.value);
-                  try { await treeController?.renderAllElements?.(); } catch {}
-                }}
-              />
-            </label>
           </div>
         </div>
       </div>

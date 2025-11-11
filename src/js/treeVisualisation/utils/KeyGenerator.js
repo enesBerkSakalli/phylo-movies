@@ -24,6 +24,21 @@ export function getNodeKey(node) {
 }
 
 /**
+ * Returns a stable, cross-tree node id for the same biological leaf.
+ * Priority:
+ * 1) Explicit stable field if present (guid/id)
+ * 2) Taxon name
+ * 3) Fallback to split_indices-based key
+ */
+export function getStableNodeId(node) {
+  const guid = node?.data?.guid || node?.data?.id;
+  if (guid) return `stable-${String(guid)}`;
+  const name = node?.data?.name ? String(node.data.name).replace(/[^a-zA-Z0-9-_]/g, "_") : null;
+  if (name) return `stable-${name}`;
+  return getNodeKey(node);
+}
+
+/**
  * Generates a robust, unique key for tree labels
  * @param {Object} leaf - D3 hierarchy leaf node with data.split_indices
  * @returns {string} Unique label key (e.g., "label-0-1-2" or "label-unknown")
@@ -92,34 +107,3 @@ export function getExtensionKey(leaf) {
 
   return `ext-${fallbackId}`;
 }
-
-/**
- * Generates SVG id attribute for nodes
- * @param {Object} node - D3 hierarchy node
- * @param {string} prefix - Prefix for the ID (e.g., "circle", "internal")
- * @returns {string} SVG-safe ID string
- */
-// Removed unused SVG ID helpers (getNodeSvgId, getLinkSvgId, getExtensionSvgId, getTreeKey)
-
-/**
- * Generates SVG id attribute for links
- * @param {Object} link - D3 link object
- * @returns {string} SVG-safe ID string
- */
-//
-
-/**
- * Generates SVG id attribute for extensions
- * @param {Object} leaf - D3 leaf node
- * @returns {string} SVG-safe ID string
- */
-//
-
-/**
- * Generates a stable, identity-based key for tree data structures
- * Uses the first leaf node as the tree's identity representative
- *
- * @param {Object} treeData - D3 hierarchy tree data
- * @returns {string} Unique tree identity key
- */
-//

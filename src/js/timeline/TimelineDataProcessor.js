@@ -38,9 +38,6 @@ export class TimelineDataProcessor {
     static _createSegmentsFromSplitChangeTimeline(timeline, tree_metadata, interpolated_trees, split_change_tracking, tree_pair_solutions) {
         const segments = [];
 
-        // Add debugging and validation
-        console.log('[TimelineDataProcessor] timeline:', timeline, 'type:', typeof timeline, 'isArray:', Array.isArray(timeline));
-
         if (!timeline || !Array.isArray(timeline)) {
             console.warn('[TimelineDataProcessor] split_change_timeline is not available or not an array, falling back to empty segments');
             return segments;
@@ -81,15 +78,15 @@ export class TimelineDataProcessor {
                 const globalRange = entry.step_range_global;
                 const interpolationData = [];
 
-                // Collect all trees in this range using global indices
-                // globalRange is 1-indexed, convert to 0-indexed for array access
+                // Collect all trees in this range using provided global indices directly
+                // The backend provides step_range_global as array indices (inclusive)
                 for (let globalIdx = globalRange[0]; globalIdx <= globalRange[1]; globalIdx++) {
-                    const arrayIdx = globalIdx - 1; // Convert 1-indexed to 0-indexed
+                    const arrayIdx = globalIdx;
                     if (arrayIdx >= 0 && arrayIdx < interpolated_trees.length) {
                         interpolationData.push({
                             metadata: tree_metadata[arrayIdx],
                             tree: interpolated_trees[arrayIdx],
-                            originalIndex: arrayIdx  // Store the 0-indexed position
+                            originalIndex: arrayIdx
                         });
                     }
                 }
@@ -99,20 +96,22 @@ export class TimelineDataProcessor {
 
                     // Calculate subtree changes from jumping subtree solutions
                     let subtreeMoveCount = 0;
-                    if (first.metadata && split_change_tracking && tree_pair_solutions) {
-                        const treeIndex = first.originalIndex;
-                        const activeChangingSplits = split_change_tracking[treeIndex];
-                        const pairKey = first.metadata.tree_pair_key;
+                    let jumpingSubtrees = null;
 
-                        if (activeChangingSplits && pairKey && tree_pair_solutions[pairKey]) {
-                            const jumpingSolutions = tree_pair_solutions[pairKey].jumping_subtree_solutions;
-                            const edgeKey = `[${activeChangingSplits.join(', ')}]`;
-                            const solutions = jumpingSolutions?.[edgeKey];
+                    // Use entry.split (from split_change_timeline) as the key, not split_change_tracking
+                    const activeChangingSplits = entry.split;
+                    const pairKey = entry.pair_key;
 
-                            if (solutions) {
-                                // Flatten and count the jumping subtree solutions
-                                subtreeMoveCount = Array.from(solutions.flat()).length;
-                            }
+                    if (activeChangingSplits && pairKey && tree_pair_solutions && tree_pair_solutions[pairKey]) {
+                        const jumpingSolutions = tree_pair_solutions[pairKey].jumping_subtree_solutions;
+                        const edgeKey = `[${activeChangingSplits.join(', ')}]`;
+                        const solutions = jumpingSolutions?.[edgeKey];
+
+                        if (solutions) {
+                            // Store the jumping subtree solutions (leaf indices)
+                            jumpingSubtrees = solutions;
+                            // Flatten and count the jumping subtree solutions
+                            subtreeMoveCount = Array.from(solutions.flat(2)).length;
                         }
                     }
 
@@ -126,6 +125,7 @@ export class TimelineDataProcessor {
                         metadata: first.metadata,
                         tree: first.tree,
                         activeChangeEdge: entry.split || [],
+                        jumpingSubtrees: jumpingSubtrees,
                         phase: first.metadata?.phase || PHASE_NAMES.ORIGINAL,
                         activeChangeEdgeTracker: entry.split || [],
                         treePairKey: entry.pair_key,

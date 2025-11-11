@@ -15,8 +15,25 @@ import { processSegments } from '../segmentProcessor.js';
 
 export class DeckTimelineRenderer {
   constructor(timelineData, segments) {
+    // Validate required data structures
+    if (!timelineData || typeof timelineData !== 'object') {
+      throw new Error('[DeckTimelineRenderer] Invalid timelineData: must be an object');
+    }
+    if (typeof timelineData.totalDuration !== 'number' || timelineData.totalDuration <= 0) {
+      throw new Error('[DeckTimelineRenderer] Invalid timelineData.totalDuration: must be a positive number');
+    }
+    if (!Array.isArray(timelineData.segmentDurations)) {
+      throw new Error('[DeckTimelineRenderer] Invalid timelineData.segmentDurations: must be an array');
+    }
+    if (!Array.isArray(timelineData.cumulativeDurations)) {
+      throw new Error('[DeckTimelineRenderer] Invalid timelineData.cumulativeDurations: must be an array');
+    }
+    if (!Array.isArray(segments)) {
+      throw new Error('[DeckTimelineRenderer] Invalid segments: must be an array');
+    }
+
     this.timelineData = timelineData;
-    this.segments = segments || [];
+    this.segments = segments;
     this.deck = null;
     this.container = null;
     this.canvas = null;
@@ -26,7 +43,7 @@ export class DeckTimelineRenderer {
     this._isScrubbing = false;
     this._onResize = () => this._scheduleUpdate();
 
-    this._totalDuration = timelineData.totalDuration || 1;
+    this._totalDuration = timelineData.totalDuration;
     this._rangeStart = 0;
     this._rangeEnd = this._totalDuration;
     this._scrubberMs = 0;
@@ -211,6 +228,11 @@ export class DeckTimelineRenderer {
       this.deck.finalize();
     }
     if (this.canvas?.parentNode) this.canvas.parentNode.removeChild(this.canvas);
+    // Unbind mouse events if previously bound to avoid leaks
+    if (this._unbindMouseEvents) {
+      try { this._unbindMouseEvents(); } catch {}
+      this._unbindMouseEvents = null;
+    }
     window.removeEventListener('resize', this._onResize);
     if (this._resizeObserver) {
       try { this._resizeObserver.disconnect(); } catch {}
@@ -239,7 +261,8 @@ export class DeckTimelineRenderer {
 
     const startIdx = Math.max(0, timeToSegmentIndex(Math.max(0, visStart), this.timelineData.cumulativeDurations) - 1);
 
-    const endIdx = Math.min(this.segments.length - 1, timeToSegmentIndex(Math.min(this._totalDuration - 1, visEnd), this.timelineData.cumulativeDurations) + 1);
+    const rawEndIdx = timeToSegmentIndex(Math.min(this._totalDuration - 1, visEnd), this.timelineData.cumulativeDurations);
+    const endIdx = Math.min(this.segments.length - 1, rawEndIdx + 1);
 
     const zoomScale = calculateZoomScale(rangeStart, rangeEnd, this._totalDuration);
 
@@ -338,6 +361,11 @@ export class DeckTimelineRenderer {
   }
 
   _bindMouseEvents() {
+    // Prevent duplicate listeners if bindings already exist
+    if (this._unbindMouseEvents) {
+      try { this._unbindMouseEvents(); } catch {}
+      this._unbindMouseEvents = null;
+    }
     const eventConfigs = [
       { event: 'mousemove', handler: (e) => handleTimelineMouseMoveOrScrub(this, e), target: this.canvas },
       { event: 'mousedown', handler: (e) => handleTimelineMouseDown(this, e), target: this.canvas },

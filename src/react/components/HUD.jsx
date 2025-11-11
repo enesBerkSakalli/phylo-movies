@@ -6,19 +6,29 @@ import { Film, BarChart2, Columns3 } from 'lucide-react';
 
 export function HUD() {
   const hasMsa = useAppStore((s) => (s.msaColumnCount || 0) > 0 || !!s.movieData?.msa?.sequences);
-  const storeState = useAppStore((s) => s);
+  const currentTreeIndex = useAppStore((s) => s.currentTreeIndex);
+  const timelineProgress = useAppStore((s) => s.timelineProgress);
+  const transitionResolver = useAppStore((s) => s.transitionResolver);
+  const treeListLength = useAppStore((s) => s.treeList?.length || 0);
+  const msaWindowSize = useAppStore((s) => s.msaWindowSize);
+  const msaStepSize = useAppStore((s) => s.msaStepSize);
+  const msaColumnCount = useAppStore((s) => s.msaColumnCount);
+
+  const proxyState = useMemo(
+    () => ({ currentTreeIndex, transitionResolver, treeList: { length: treeListLength } }),
+    [currentTreeIndex, transitionResolver, treeListLength]
+  );
 
   const { progressText, segmentText, msaWindow } = useMemo(() => {
     try {
-      const state = storeState;
-      const { sequenceIndex, totalSequenceLength } = getIndexMappings(state);
-      const tlProgress = typeof state.timelineProgress === 'number' ? state.timelineProgress : null;
+      const { sequenceIndex, totalSequenceLength } = getIndexMappings(proxyState);
+      const tlProgress = typeof timelineProgress === 'number' ? timelineProgress : null;
       const progress = tlProgress != null ? tlProgress : (totalSequenceLength > 1 ? sequenceIndex / (totalSequenceLength - 1) : 0);
       const progressText = `${Math.round(progress * 100)}%`;
 
       // Interpolation/segment text
       let segmentText = '';
-      const resolver = state.transitionResolver;
+      const resolver = transitionResolver;
       const fti = resolver?.fullTreeIndices || [];
       // find full tree anchor index if exactly on anchor
       const fullTreeAnchorIdx = fti.indexOf(sequenceIndex);
@@ -30,19 +40,25 @@ export function HUD() {
         for (let i = fti.length - 1; i >= 0; i--) {
           if (fti[i] <= sequenceIndex) { prevIdx = i; break; }
         }
-        const nextIdx = Math.min(fti.length - 1, prevIdx + 1);
-        const prevSeq = fti[prevIdx];
-        const nextSeq = fti[nextIdx];
-        const denom = Math.max(1, nextSeq - prevSeq);
-        const pct = Math.round(((sequenceIndex - prevSeq) / denom) * 100);
-        segmentText = `Tree ${prevIdx + 1} → ${nextIdx + 1} (${pct}%)`;
+        const nextIdx = prevIdx + 1;
+
+        // Only show interpolation if there is a next tree
+        if (nextIdx < fti.length) {
+          const prevSeq = fti[prevIdx];
+          const nextSeq = fti[nextIdx];
+          const denom = Math.max(1, nextSeq - prevSeq);
+          const pct = Math.round(((sequenceIndex - prevSeq) / denom) * 100);
+          segmentText = `Tree ${prevIdx + 1} → ${nextIdx + 1} (${pct}%)`;
+        } else {
+          // At or past the last anchor
+          segmentText = `Original tree ${prevIdx + 1}`;
+        }
       }
 
       // MSA window
       let msaWindow = null;
       if (hasMsa) {
-        const frame = getMSAFrameIndex(state);
-        const { msaStepSize, msaWindowSize, msaColumnCount } = state;
+        const frame = getMSAFrameIndex(proxyState);
         msaWindow = calculateWindow(frame, msaStepSize, msaWindowSize, msaColumnCount || 0);
       }
 
@@ -50,7 +66,7 @@ export function HUD() {
     } catch (e) {
       return { progressText: '', segmentText: '', msaWindow: null };
     }
-  }, [storeState, hasMsa]);
+  }, [hasMsa, proxyState, transitionResolver, timelineProgress, msaStepSize, msaWindowSize, msaColumnCount]);
 
   return (
     <div className="phylo-hud" data-react-component="hud" role="complementary" aria-label="Timeline Status Display">
@@ -79,7 +95,7 @@ export function HUD() {
             <span>-</span>
             <span id="hudWindowMid" className="metrics-window-value metrics-window-value--primary">{msaWindow?.midPosition ?? 1}</span>
             <span>-</span>
-            <span id="hudWindowEnd" className="metrics-window-value">{msaWindow?.endPosition ?? storeState.msaWindowSize ?? 100}</span>
+            <span id="hudWindowEnd" className="metrics-window-value">{msaWindow?.endPosition ?? msaWindowSize ?? 100}</span>
           </span>
         </div>
       </div>

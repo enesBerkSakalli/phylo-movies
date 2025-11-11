@@ -1,4 +1,5 @@
-import { useAppStore, TREE_COLOR_CATEGORIES } from '../../core/store.js';
+import { useAppStore } from '../../core/store.js';
+import { TREE_COLOR_CATEGORIES } from '../../constants/TreeColors.js';
 
 /**
  * ColorManager - Centralized color management system for phylogenetic tree visualization
@@ -28,11 +29,13 @@ export class ColorManager {
     // the latest changes when the object is mutated. However, we can trigger a
     // re-render to ensure the visual changes are applied immediately.
 
-    // Get the store and trigger a re-render
+    // Get the store and trigger a re-render for all controllers
     const store = useAppStore.getState();
-    if (store.treeController && store.treeController.renderAllElements) {
-      // Force re-render to pick up new colors (works for both SVG and WebGL)
-      store.treeController.renderAllElements();
+    const controllers = store.treeControllers || [];
+    for (const controller of controllers) {
+      if (controller?.renderAllElements) {
+        controller.renderAllElements();
+      }
     }
   }
 

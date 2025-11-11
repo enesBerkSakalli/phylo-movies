@@ -9,7 +9,7 @@ export class WebGLTreeAnimationController {
   /**
    * Creates a new WebGL tree animation controller.
    */
-  constructor() {
+  constructor(container = "#webgl-container") {
     // Consolidated state tracking
     this._scalingState = {
       branchTransformation: undefined,
@@ -17,7 +17,7 @@ export class WebGLTreeAnimationController {
     };
 
     // Initialize WebGL container
-    this.webglContainer = d3.select("#webgl-container");
+    this.webglContainer = d3.select(container);
 
     // Start render loop
     this.startRenderLoop();
@@ -184,13 +184,6 @@ export class WebGLTreeAnimationController {
   async _animationLoop() {
     // Override in subclasses like DeckGLTreeAnimationController
   }
-
-
-
-
-
-
-
 
   /**
    * Calculates label and extension radii with dynamic positioning.

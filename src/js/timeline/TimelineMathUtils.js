@@ -224,15 +224,23 @@ export class TimelineMathUtils {
     static calculateSegmentDurations(segments) {
         if (!segments?.length) return [];
 
-        return segments.map(segment => {
+        const durations = segments.map((segment, idx) => {
+            let duration;
             if (segment.isFullTree) {
-                return 0;
+                // Give anchor segments a small duration for better hover detection
+                // This makes them easier to hover over in the UI
+                duration = TIMELINE_CONSTANTS.UNIT_DURATION_MS * 0.5;
             }
             else if (segment.hasInterpolation && segment.interpolationData?.length > 1) {
-                return segment.interpolationData.length * TIMELINE_CONSTANTS.UNIT_DURATION_MS;
+                duration = segment.interpolationData.length * TIMELINE_CONSTANTS.UNIT_DURATION_MS;
+            } else {
+                duration = TIMELINE_CONSTANTS.UNIT_DURATION_MS;
             }
-            return TIMELINE_CONSTANTS.UNIT_DURATION_MS;
+
+            return duration;
         });
+
+        return durations;
     }
     static getInterpolationDataForProgress(progress, treeList, movieData) {
         if (!treeList || !movieData || !movieData.interpolated_trees) {

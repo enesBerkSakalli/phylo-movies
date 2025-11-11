@@ -11,8 +11,8 @@
   --timeline-connection-hover-color: rgb(128 128 128);
   --timeline-connection-color-neutral: rgb(100 100 100);
 
-  --timeline-anchor-fill-color: var(--card);
-  --timeline-anchor-stroke-color: var(--border);
+  --timeline-anchor-fill-color: rgb(240 240 245);
+  --timeline-anchor-stroke-color: rgb(60 60 80);
   --timeline-anchor-radius: 7;
   --timeline-anchor-stroke-width: 3;
 
@@ -35,8 +35,8 @@
   --timeline-connection-hover-color: rgb(128 128 128);
   --timeline-connection-color-neutral: rgb(100 100 100);
 
-  --timeline-anchor-fill-color: var(--card);
-  --timeline-anchor-stroke-color: var(--border);
+  --timeline-anchor-fill-color: rgb(45 45 55);
+  --timeline-anchor-stroke-color: rgb(200 200 210);
   --timeline-anchor-radius: 7;
   --timeline-anchor-stroke-width: 3;
 

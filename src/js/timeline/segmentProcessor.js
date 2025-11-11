@@ -1,6 +1,6 @@
 import { getDevicePixelRatio, createSnapFunction } from './utils/renderingUtils.js';
 import { msToX } from './utils/coordinateUtils.js';
-import { createAnchor, createConnection } from './utils/geometryUtils.js';
+import { createAnchor, createConnection, calculateRadius } from './utils/geometryUtils.js';
 
 // Visualization constants
 const SEPARATOR_MIN_HEIGHT_PX = 6;            // Minimum tick height in pixels
@@ -24,12 +24,17 @@ export function processSegments(
   const selectionConnections = [];
   const hoverConnections = [];
   const separators = [];
+  // Track consecutive anchors at the same timestamp to avoid overlap
+  let lastAnchorMs = null;
+  let duplicateAnchorCount = 0;
 
   for (let i = startIdx; i <= endIdx; i++) {
     // Segment boundaries in milliseconds
     const segStartMs = i === 0 ? 0 : cumulativeDurations[i - 1];
     const segEndMs = cumulativeDurations[i];
-    if (segEndMs < visStart || segStartMs > visEnd) continue;
+    if (segEndMs < visStart || segStartMs > visEnd) {
+      continue;
+    }
 
     // Convert ms to pixel space [0, width]
     const xStartPx = msToX(segStartMs, rangeStart, rangeEnd, width);
@@ -59,6 +64,25 @@ export function processSegments(
         snap,
         { radiusStrategy }
       );
+
+      // If multiple anchors share the same timestamp, offset slightly to keep them visible
+      if (lastAnchorMs !== null && segStartMs === lastAnchorMs) {
+        duplicateAnchorCount += 1;
+        const radius = calculateRadius(anchorRadiusVar, height, zoomScale, radiusStrategy);
+        const spacing = Math.max(4, Math.floor(radius * 3)); // Increased from 2 and 1.2 to 4 and 3
+        const minX = -width / 2 + radius;
+        const maxX = width / 2 - radius;
+        // Prefer shifting inward if we're at an edge; else alternate sides
+        const atRightEdge = Math.abs(anchor.position[0] - maxX) < 0.5;
+        const atLeftEdge = Math.abs(anchor.position[0] - minX) < 0.5;
+        const dir = atRightEdge ? -1 : atLeftEdge ? 1 : ((duplicateAnchorCount % 2 === 1) ? 1 : -1);
+        const offset = dir * spacing * Math.ceil((duplicateAnchorCount + 1) / 2);
+        const shiftedX = Math.max(minX, Math.min(maxX, anchor.position[0] + offset));
+        anchor.position = [snap(shiftedX), 0];
+      } else {
+        lastAnchorMs = segStartMs;
+        duplicateAnchorCount = 0;
+      }
       anchorPoints.push(anchor);
       if (selectedId === id) selectionAnchors.push(anchor);
       else if (lastHoverId === id) hoverAnchors.push(anchor);

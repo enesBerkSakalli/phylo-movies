@@ -2,18 +2,34 @@ import { create } from 'zustand';
 import TransitionIndexResolver from './TransitionIndexResolver.js';
 import calculateScales, { getMaxScaleValue } from '../utils/scaleUtils.js'; // ADDED
 import { ColorManager } from '../treeVisualisation/systems/ColorManager.js';
-import { clamp, easeInOutCubic } from '../utils/MathUtils.js';
+import { clamp } from '../utils/MathUtils.js';
+import { TREE_COLOR_CATEGORIES } from '../constants/TreeColors.js';
+export { TREE_COLOR_CATEGORIES };
 
-// Tree color categories for phylogenetic visualization
-export const TREE_COLOR_CATEGORIES = {
-  defaultColor: "#000000",
-  markedColor: "#ff5722",
-  strokeColor: "#000000",
-  // Highlighting colors for different types
-  activeChangeEdgeColor: "#2196f3", // Color for edges where active changes are happening
-  // Dimming colors for inactive elements
-  dimmedColor: "#cccccc",
-};
+// --- Optional persistence of user color choices in localStorage ---
+const COLOR_STORAGE_KEY = 'phylo.colorCategories';
+
+function _loadPersistedColorCategories() {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return null;
+    const raw = window.localStorage.getItem(COLOR_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return (parsed && typeof parsed === 'object') ? parsed : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function _persistColorCategories() {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    // Persist a simple snapshot (strings only) to avoid functions/refs
+    window.localStorage.setItem(COLOR_STORAGE_KEY, JSON.stringify(TREE_COLOR_CATEGORIES));
+  } catch (_) {
+    // ignore
+  }
+}
 
 
 const DEFAULT_STYLE_CONFIG = {
@@ -33,7 +49,7 @@ export const useAppStore = create((set, get) => ({
   // Raw data, initialized once
   movieData: null,
   treeList: [],
-  treeMetadata: [],
+  // treeMetadata removed (TransitionIndexResolver manages its own copy)
   // highlightData removed: using tree_pair_solutions for marked groups
   pairSolutions: {}, // From tree_pair_solutions in JSON (used for red/marked)
   activeChangeEdgeTracking: [], // From split_change_tracking in JSON
@@ -43,11 +59,11 @@ export const useAppStore = create((set, get) => ({
   transitionResolver: null,
   colorManager: null, // Single ColorManager instance - source of truth for colors
   gui: null, // ADD THIS LINE: Reference to the Gui instance
-  treeController: null, // This was already added in the previous thought process, keep it.
+  treeControllers: [], // This was already added in the previous thought process, keep it.
 
   // Dynamic application state
   currentTreeIndex: 0,
-  previousTreeIndex: -1,
+  // previousTreeIndex removed (tracked locally in subscription only)
   navigationDirection: 'forward', // 'forward', 'backward', or 'jump'
   segmentProgress: 0, // 0-1 progress within the current segment (for interpolation)
 
@@ -59,6 +75,7 @@ export const useAppStore = create((set, get) => ({
   timelineProgress: 0, // 0-1 progress through entire timeline
 
   playing: false,
+  comparisonMode: false,
   renderInProgress: false,
   subscriptionPaused: false, // Allow temporary subscription pausing
   syncMSAEnabled: true, // New state variable
@@ -70,12 +87,16 @@ export const useAppStore = create((set, get) => ({
   // UI / Appearance state
   animationSpeed: 1,
   fontSize: "2.6em",
-  strokeWidth: 3,
+  strokeWidth: 2,
+  nodeSize: 1, // Multiplier for node sizes (default 1.0)
   branchTransformation: 'none',
   monophyleticColoringEnabled: true,
   activeChangeEdgesEnabled: true, // Toggle for active change edges highlighting
   markedComponentsEnabled: true, // Toggle for marked subtrees highlighting (naming only)
+  activeChangeEdgeColor: TREE_COLOR_CATEGORIES.activeChangeEdgeColor,
+  markedColor: TREE_COLOR_CATEGORIES.markedColor,
   dimmingEnabled: false, // For dimming non-descendants
+  dimmingOpacity: 0.3, // Opacity level for dimmed elements (0-1)
   cameraMode: 'orthographic', // Camera mode for Deck.gl ('orthographic' or 'orbit')
   msaWindowSize: 1000, // Default value
   msaStepSize: 50,     // Default value
@@ -88,9 +109,13 @@ export const useAppStore = create((set, get) => ({
   trailLength: 12,
   trailOpacity: 0.5,
   trailThickness: 0.5,
+  // Debug toggles removed
 
   // Taxa grouping (from TaxaColoring modal) for UI/tooltip use
   taxaGrouping: null, // { mode: 'taxa'|'groups'|'csv', separator?, strategyType?, csvTaxaMap? }
+
+  // Color update tracking for deck.gl updateTriggers
+  taxaColorVersion: 0, // Increment when TREE_COLOR_CATEGORIES changes
 
   // Chart-specific state
   barOptionValue: 'rfd',
@@ -98,6 +123,7 @@ export const useAppStore = create((set, get) => ({
   // ===================================
   // ACTIONS
   // ===================================
+  toggleComparisonMode: () => set((state) => ({ comparisonMode: !state.comparisonMode })),
 
   /**
    * Initializes the entire application state from the raw movieData object.
@@ -108,6 +134,12 @@ export const useAppStore = create((set, get) => ({
     console.log('[Store] MSA data - window_size:', movieData?.msa?.window_size, 'step_size:', movieData?.msa?.step_size);
 
     console.log("Store: movieData.pair_interpolation_ranges:", movieData.pair_interpolation_ranges?.length, "items");
+
+    // Merge any persisted user color choices before ColorManager is created
+    try {
+      const persisted = _loadPersistedColorCategories();
+      if (persisted) Object.assign(TREE_COLOR_CATEGORIES, persisted);
+    } catch (_) {}
 
     const resolver = new TransitionIndexResolver(
       movieData.tree_metadata,
@@ -161,7 +193,7 @@ export const useAppStore = create((set, get) => ({
         numberOfFullTrees // Add numberOfFullTrees
       },
       treeList: movieData.interpolated_trees,
-      treeMetadata: movieData.tree_metadata,
+      // treeMetadata omitted
       // highlightData omitted
       pairSolutions: movieData.tree_pair_solutions || {},
       // Use split_change_tracking as the single source of truth for active change edges
@@ -169,11 +201,12 @@ export const useAppStore = create((set, get) => ({
       transitionResolver: resolver,
       colorManager: colorManager, // Single ColorManager instance
       currentTreeIndex: 0,
-      previousTreeIndex: -1,
       playing: false,
       msaColumnCount,
       msaWindowSize: windowSize,
       msaStepSize: stepSize,
+      activeChangeEdgeColor: TREE_COLOR_CATEGORIES.activeChangeEdgeColor,
+      markedColor: TREE_COLOR_CATEGORIES.markedColor,
     });
 
     // Initialize ColorManager with marked components for the initial tree position (index 0)
@@ -266,7 +299,9 @@ export const useAppStore = create((set, get) => ({
     const fromTreeIndex = Math.floor(exactTreeIndex);
     const toTreeIndex = Math.min(fromTreeIndex + 1, totalTrees - 1);
     const segmentProgress = exactTreeIndex - fromTreeIndex;
-    const easedProgress = easeInOutCubic(segmentProgress);
+
+  // Use linear progress - easing is applied within the rendering controller when needed
+    const easedProgress = segmentProgress;
 
     return {
       exactTreeIndex,
@@ -346,7 +381,6 @@ export const useAppStore = create((set, get) => ({
       const newAnimationProgress = totalTrees > 1 ? newIndex / (totalTrees - 1) : 0;
 
       set({
-        previousTreeIndex: currentTreeIndex,
         currentTreeIndex: newIndex,
         navigationDirection: navDirection,
         segmentProgress: 0, // Reset segment progress on discrete navigation
@@ -412,6 +446,15 @@ export const useAppStore = create((set, get) => ({
   },
 
   /**
+   * Sets the node size multiplier
+   * @param {number} size - Node size multiplier (1.0 = default)
+   */
+  setNodeSize: (size) => {
+    const numericSize = Number(size);
+    set({ nodeSize: Math.max(0.1, Math.min(10, numericSize)) });
+  },
+
+  /**
    * Enables or disables monophyletic coloring mode
    * @param {boolean} enabled - Whether monophyletic coloring is enabled
    */
@@ -469,6 +512,12 @@ export const useAppStore = create((set, get) => ({
    */
   setDimmingEnabled: (enabled) => set({ dimmingEnabled: enabled }),
 
+  /**
+   * Sets the opacity level for dimmed elements.
+   * @param {number} opacity - Opacity level (0-1) for dimmed elements.
+   */
+  setDimmingOpacity: (opacity) => set({ dimmingOpacity: Math.max(0, Math.min(1, opacity)) }),
+
 
   /**
    * Motion trails toggles and parameters
@@ -478,24 +527,13 @@ export const useAppStore = create((set, get) => ({
   setTrailOpacity: (opacity) => set({ trailOpacity: Math.max(0, Math.min(1, Number(opacity) || 0.5)) }),
   setTrailThickness: (thickness) => set({ trailThickness: Math.max(0.1, Math.min(5, Number(thickness) || 0.5)) }),
 
-  /**
-   * Toggle auto-fit on tree change policy
-   */
-  toggleAutoFitOnTreeChange: () => set(state => ({
-    autoFitOnTreeChange: !state.autoFitOnTreeChange
-  })),
-
-  /**
-   * Explicitly set auto-fit on tree change policy
-   * @param {boolean} enabled
-   */
-  setAutoFitOnTreeChange: (enabled) => set({ autoFitOnTreeChange: !!enabled }),
+  // Auto-fit toggles removed (unused): toggleAutoFitOnTreeChange, setAutoFitOnTreeChange
 
   /**
    * Apply theme-aware default colors for branches and strokes.
    * @param {'system'|'light'|'dark'} themePref
    */
-  applyThemeColors: (themePref = 'system') => {
+  applyThemeColors: (themePref = 'light') => {
     try {
       const prefersDark = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
       const isDark = themePref === 'dark' || (themePref === 'system' && prefersDark);
@@ -504,18 +542,17 @@ export const useAppStore = create((set, get) => ({
         // Slightly darker neutral grey for dark theme
         defaultColor: isDark ? '#9AA4AE' : '#000000',
         strokeColor: isDark ? '#9AA4AE' : '#000000',
-        dimmedColor: isDark ? '#555555' : '#cccccc',
       };
 
       Object.assign(TREE_COLOR_CATEGORIES, next);
 
       // Notify ColorManager and trigger re-render
-      const { colorManager, treeController } = get();
+      const { colorManager, treeControllers } = get();
       if (colorManager && colorManager.refreshColorCategories) {
         colorManager.refreshColorCategories();
       }
-      if (treeController && treeController.renderAllElements) {
-        treeController.renderAllElements();
+      if (treeControllers) {
+        treeControllers.forEach(c => c.renderAllElements());
       }
     } catch (e) {
       console.warn('[store] applyThemeColors failed:', e);
@@ -530,15 +567,7 @@ export const useAppStore = create((set, get) => ({
 
 
 
-  /**
-   * Sets the camera mode for Deck.gl rendering
-   * @param {string} mode - Camera mode ('orthographic' or 'orbit')
-   */
-  setCameraMode: (mode) => {
-    if (mode === 'orthographic' || mode === 'orbit') {
-      set({ cameraMode: mode });
-    }
-  },
+  // setCameraMode removed (unused; UI uses toggleCameraMode)
 
   /**
    * Toggles between orthographic and orbit camera modes
@@ -551,31 +580,11 @@ export const useAppStore = create((set, get) => ({
   },
 
 
-  /**
-   * Sets the MSA viewer window size
-   * @param {number} size - Window size in base pairs
-   */
-  setMsaWindowSize: (size) => set({ msaWindowSize: size }),
+  // setMsaWindowSize/setMsaStepSize removed (unused)
 
-  /**
-   * Sets the MSA viewer step size
-   * @param {number} step - Step size for MSA navigation
-   */
-  setMsaStepSize: (step) => set({ msaStepSize: step }),
+  // setSyncMSAEnabled kept (used by ButtonsMSA)
 
-  /**
-   * Enables or disables MSA synchronization with tree position
-   * @param {boolean} enabled - Whether MSA sync is enabled
-   */
-  setSyncMSAEnabled: (enabled) => set({ syncMSAEnabled: enabled }),
-
-  /**
-   * Updates the centralized style configuration
-   * @param {Object} newConfig - Partial style config to merge with existing
-   */
-  setStyleConfig: (newConfig) => set((state) => ({
-    styleConfig: { ...state.styleConfig, ...newConfig }
-  })),
+  // setStyleConfig removed (unused)
 
   // --- Chart Actions ---
   /**
@@ -598,57 +607,21 @@ export const useAppStore = create((set, get) => ({
     renderInProgress: inProgress
   }),
 
-  // --- Subscription Control ---
-  /**
-   * Pauses or resumes store subscriptions
-   * @param {boolean} paused - Whether subscriptions should be paused
-   */
-  setSubscriptionPaused: (paused) => set({ subscriptionPaused: paused }),
+  // setSubscriptionPaused removed (unused)
   /**
    * Sets the tree controller instance with cleanup of previous instance
    * @param {Object} controller - Tree controller instance
    */
-  setTreeController: (controller) => {
-    const { treeController: currentController } = get();
+  setTreeControllers: (controllers) => {
+    const { treeControllers: currentControllers } = get();
 
     // Clean up previous controller if it exists and is being replaced
-    if (currentController && currentController !== controller) {
-      if (typeof currentController.destroy === 'function') {
-        currentController.destroy();
-      }
-    }
+    currentControllers.forEach(c => c.destroy());
 
-    set({ treeController: controller });
-
-    // When a tree controller is first registered, apply the current ColorManager state
-    // to ensure the initial tree is properly colored
-    if (controller) {
-      const { getActualHighlightData, updateColorManagerMarkedSubtrees, 
-              getCurrentActiveChangeEdge, updateColorManagerActiveChangeEdge,
-              markedComponentsEnabled, activeChangeEdgesEnabled } = get();
-      
-      console.log('[Store] Applying initial ColorManager state to new tree controller');
-      
-      try {
-        if (markedComponentsEnabled) {
-          const markedComponents = getActualHighlightData();
-          updateColorManagerMarkedSubtrees(markedComponents);
-        }
-        
-        if (activeChangeEdgesEnabled) {
-          const activeChangeEdge = getCurrentActiveChangeEdge();
-          updateColorManagerActiveChangeEdge(activeChangeEdge);
-        }
-
-        // Trigger a render to apply the colors
-        if (controller.renderAllElements) {
-          setTimeout(() => controller.renderAllElements(), 100);
-        }
-      } catch (error) {
-        console.error('[Store] Error applying initial ColorManager state:', error);
-      }
-    }
+    set({ treeControllers: controllers });
   },
+  // addTreeController removed (unused)
+
   /**
    * Sets the GUI instance reference with cleanup of previous instance
    * @param {Object} instance - GUI instance
@@ -712,12 +685,21 @@ export const useAppStore = create((set, get) => ({
 
   /**
    * Updates highlighting colors in TREE_COLOR_CATEGORIES
-   * @param {string} colorType - Type of color to update (activeChangeEdgeColor, markedColor, dimmedColor)
+   * @param {string} colorType - Type of color to update (activeChangeEdgeColor, markedColor)
    * @param {string} newColor - New hex color value
    */
   updateHighlightingColor: (colorType, newColor) => {
-    // Update the color in TREE_COLOR_CATEGORIES
-    TREE_COLOR_CATEGORIES[colorType] = newColor;
+    // Create new object to avoid direct mutation and ensure reactivity
+    const updatedCategories = { ...TREE_COLOR_CATEGORIES, [colorType]: newColor };
+
+    // Update the module-level TREE_COLOR_CATEGORIES for external consumers
+    Object.assign(TREE_COLOR_CATEGORIES, updatedCategories);
+
+    if (colorType === 'activeChangeEdgeColor') {
+      set({ activeChangeEdgeColor: newColor });
+    } else if (colorType === 'markedColor') {
+      set({ markedColor: newColor });
+    }
 
     // Notify ColorManager of the update
     const { colorManager } = get();
@@ -726,10 +708,13 @@ export const useAppStore = create((set, get) => ({
     }
 
     // Trigger re-render
-    const { treeController } = get();
-    if (treeController) {
-      treeController.renderAllElements();
+    const { treeControllers } = get();
+    if (treeControllers) {
+      treeControllers.forEach(c => c.renderAllElements());
     }
+
+    // Persist user color choice
+    _persistColorCategories();
   },
 
   /**
@@ -751,22 +736,19 @@ export const useAppStore = create((set, get) => ({
   },
 
   /**
-   * Updates dimmed elements color
-   * @param {string} newColor - New hex color value for dimmed elements
-   */
-  setDimmedColor: (newColor) => {
-    const { updateHighlightingColor } = get();
-    updateHighlightingColor('dimmedColor', newColor);
-  },
-
-  /**
    * Updates taxa colors in TREE_COLOR_CATEGORIES
    * Called after TaxaColoring component applies new colors
    * @param {Object} newColorMap - Object mapping taxa names to hex colors
    */
   updateTaxaColors: (newColorMap) => {
-    // Update the colors in TREE_COLOR_CATEGORIES
-    Object.assign(TREE_COLOR_CATEGORIES, newColorMap);
+    // Create new object to avoid direct mutation and ensure reactivity
+    const updatedCategories = { ...TREE_COLOR_CATEGORIES, ...newColorMap };
+
+    // Update the module-level TREE_COLOR_CATEGORIES for external consumers
+    Object.assign(TREE_COLOR_CATEGORIES, updatedCategories);
+
+    // Increment version to trigger deck.gl updateTriggers
+    set((state) => ({ taxaColorVersion: state.taxaColorVersion + 1 }));
 
     // Notify ColorManager of the update
     const { colorManager } = get();
@@ -775,13 +757,14 @@ export const useAppStore = create((set, get) => ({
     }
 
     // Trigger re-render
-    const { treeController } = get();
-    if (treeController) {
-      treeController.renderAllElements();
+    const { treeControllers } = get();
+    if (treeControllers) {
+      treeControllers.forEach(c => c.renderAllElements());
     }
-  },
 
-  /**
+    // Persist user color choices (taxa map)
+    _persistColorCategories();
+  },  /**
    * Persist current taxa grouping settings for UI (tooltips, lists)
    * @param {Object|null} grouping - { mode, separator?, strategyType?, csvTaxaMap? }
    */
@@ -794,19 +777,20 @@ export const useAppStore = create((set, get) => ({
    * Gets highlighting data (subtrees) for the current tree position
    * @returns {Array} Array of highlight subtrees for current tree state
    */
-  getActualHighlightData: () => {
+  getActualHighlightData: (treeIndexOverride = null) => {
     const { currentTreeIndex, transitionResolver, pairSolutions, activeChangeEdgeTracking, movieData } = get();
+    const index = typeof treeIndexOverride === 'number' ? treeIndexOverride : currentTreeIndex;
 
     // When at an ORIGINAL (full) tree, clear all red highlights
     // Use a robust check against known full-tree sequence indices
     const fullTreeSeq = (transitionResolver?.fullTreeIndices || movieData?.fullTreeIndices || []);
-    const onAnchor = Array.isArray(fullTreeSeq) && fullTreeSeq.includes(currentTreeIndex);
-    if (onAnchor || transitionResolver?.isFullTree?.(currentTreeIndex)) {
+    const onAnchor = Array.isArray(fullTreeSeq) && fullTreeSeq.includes(index);
+    if (onAnchor || transitionResolver?.isFullTree?.(index)) {
       return [];
     }
 
     // Only evaluate the current step (no accumulation)
-    const i = currentTreeIndex;
+    const i = index;
     const activeChangeEdge = activeChangeEdgeTracking?.[i];
     if (!Array.isArray(activeChangeEdge) || activeChangeEdge.length === 0) {
       return [];
@@ -855,16 +839,12 @@ export const useAppStore = create((set, get) => ({
    * Gets current active change edge data for automatic highlighting
    * @returns {Array} Current active change edge data for the current tree position, or empty array
    */
-  getCurrentActiveChangeEdge: () => {
+  getCurrentActiveChangeEdge: (treeIndexOverride = null) => {
     const { currentTreeIndex, activeChangeEdgeTracking } = get();
-    const activeChangeEdge = activeChangeEdgeTracking?.[currentTreeIndex];
+    const index = typeof treeIndexOverride === 'number' ? treeIndexOverride : currentTreeIndex;
+    const activeChangeEdge = activeChangeEdgeTracking?.[index];
     return activeChangeEdge || []; // Return empty array if undefined
   },
-
-  // Removed accumulated edges getter (reverted)
-
-
-
 
 
   // --- ColorManager Subscription Setup ---

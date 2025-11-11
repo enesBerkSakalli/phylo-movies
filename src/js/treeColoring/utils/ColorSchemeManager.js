@@ -1,4 +1,5 @@
 import { getPalette } from '../../constants/ColorPalettes.js';
+import { colorToRgb } from '../../utils/colorUtils.js';
 
 export class ColorSchemeManager {
   constructor(originalColorMap = {}) {
@@ -77,22 +78,9 @@ export class ColorSchemeManager {
   }
 
   _hexToLab(hex) {
-    const { r, g, b } = this._hexToRgb(hex);
+    const [r, g, b] = colorToRgb(hex);
     const { x, y, z } = this._rgbToXyz(r, g, b);
     return this._xyzToLab(x, y, z);
-  }
-
-  _hexToRgb(hex) {
-    let h = hex.replace('#', '');
-    if (h.length === 3) {
-      h = h.split('').map(c => c + c).join('');
-    }
-    const num = parseInt(h, 16);
-    return {
-      r: (num >> 16) & 0xff,
-      g: (num >> 8) & 0xff,
-      b: num & 0xff,
-    };
   }
 
   _rgbToXyz(r, g, b) {

@@ -12,7 +12,7 @@ export function AdvancedFeatures() {
   const trailOpacity = useAppStore((s) => s.trailOpacity);
   const trailThickness = useAppStore((s) => s.trailThickness);
 
-  const treeController = useAppStore((s) => s.treeController);
+  const treeControllers = useAppStore((s) => s.treeControllers);
   const toggleCameraMode = useAppStore((s) => s.toggleCameraMode);
   const setTrailLength = useAppStore((s) => s.setTrailLength);
   const setTrailOpacity = useAppStore((s) => s.setTrailOpacity);
@@ -22,7 +22,9 @@ export function AdvancedFeatures() {
   const onToggleTrails = async (v) => {
     try {
       setTrailsEnabled(!!v);
-      await treeController?.renderAllElements?.();
+      for (const controller of treeControllers) {
+        await controller?.renderAllElements?.();
+      }
     } catch {}
   };
 
@@ -36,7 +38,7 @@ export function AdvancedFeatures() {
           onClick={() => {
             try {
               const newMode = toggleCameraMode();
-              treeController?.setCameraMode?.(newMode);
+              treeControllers.forEach(c => c?.setCameraMode?.(newMode));
             } catch {}
           }}
         >
@@ -82,7 +84,11 @@ export function AdvancedFeatures() {
               onValueChange={async (vals) => {
                 const v = Array.isArray(vals) ? vals[0] : Number(trailLength);
                 setTrailLength(v);
-                try { await treeController?.renderAllElements?.(); } catch {}
+                try {
+                  for (const controller of treeControllers) {
+                    await controller?.renderAllElements?.();
+                  }
+                } catch {}
               }}
               className="w-48"
             />
@@ -102,7 +108,11 @@ export function AdvancedFeatures() {
               onValueChange={async (vals) => {
                 const v = Array.isArray(vals) ? vals[0] : Number(trailOpacity);
                 setTrailOpacity(v);
-                try { await treeController?.renderAllElements?.(); } catch {}
+                try {
+                  for (const controller of treeControllers) {
+                    await controller?.renderAllElements?.();
+                  }
+                } catch {}
               }}
               className="w-48"
             />
@@ -122,7 +132,11 @@ export function AdvancedFeatures() {
               onValueChange={async (vals) => {
                 const v = Array.isArray(vals) ? vals[0] : Number(trailThickness);
                 setTrailThickness(v);
-                try { await treeController?.renderAllElements?.(); } catch {}
+                try {
+                  for (const controller of treeControllers) {
+                    await controller?.renderAllElements?.();
+                  }
+                } catch {}
               }}
               className="w-48"
             />
