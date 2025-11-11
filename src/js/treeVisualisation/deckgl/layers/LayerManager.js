@@ -124,6 +124,7 @@ export class LayerManager {
    */
   createLinksLayer(links) {
     const config = this._layerConfigs.links;
+    const taxaColorVersion = useAppStore.getState().taxaColorVersion;
     return new config.LayerClass({
       ...config.defaultProps,
       id: config.id,
@@ -135,9 +136,9 @@ export class LayerManager {
       getDashArray: d => this.layerStyles.getLinkDashArray(d),
       dashJustified: true,
       updateTriggers: {
-        getColor: [links, this.layerStyles._cache.highlightEdges],
+        getColor: [links, this.layerStyles._cache.highlightEdges, taxaColorVersion],
         getWidth: [links, this.layerStyles._cache.strokeWidth],
-        getDashArray: [links, this.layerStyles._cache.strokeWidth],
+        getDashArray: [links, this.layerStyles._cache.strokeWidth, this.layerStyles._cache.highlightEdges],
         getPath: [links]
       }
     });
@@ -149,6 +150,7 @@ export class LayerManager {
    */
   createExtensionsLayer(extensions) {
     const config = this._layerConfigs.extensions;
+    const taxaColorVersion = useAppStore.getState().taxaColorVersion;
     return new config.LayerClass({
       ...config.defaultProps,
       id: config.id,
@@ -157,7 +159,7 @@ export class LayerManager {
       getColor: d => this.layerStyles.getExtensionColor(d.leaf),
       getWidth: d => this.layerStyles.getExtensionWidth(d),
       updateTriggers: {
-        getColor: [extensions],
+        getColor: [extensions, taxaColorVersion],
         getPath: [extensions],
         getWidth: [extensions, this.layerStyles._cache.strokeWidth],
       }
@@ -170,20 +172,21 @@ export class LayerManager {
    */
   createNodesLayer(nodes) {
     const config = this._layerConfigs.nodes;
+    const taxaColorVersion = useAppStore.getState().taxaColorVersion;
     const layer = new config.LayerClass({
       ...config.defaultProps,
       id: config.id,
       data: nodes,
       pickable: true, // Enable picking for node interactions
       getPosition: d => d.position,
-      getRadius: d => Math.max(d.radius, this.MIN_NODE_RADIUS),
+      getRadius: d => this.layerStyles.getNodeRadius(d, this.MIN_NODE_RADIUS),
       getFillColor: d => this.layerStyles.getNodeColor(d),
       getLineColor: d => this.layerStyles.getNodeBorderColor(d),
       updateTriggers: {
-        getFillColor: [nodes, this.layerStyles._cache.highlightEdges],
+        getFillColor: [nodes, this.layerStyles._cache.highlightEdges, taxaColorVersion],
         getLineColor: [nodes],
         getPosition: [nodes],
-        getRadius: [nodes]
+        getRadius: [nodes, this.layerStyles._cache.nodeSize]
       }
     });
     return layer;
@@ -195,6 +198,7 @@ export class LayerManager {
    */
   createLabelsLayer(labels) {
     const config = this._layerConfigs.labels;
+    const taxaColorVersion = useAppStore.getState().taxaColorVersion;
     return new config.LayerClass({
       ...config.defaultProps,
       id: config.id,
@@ -207,7 +211,7 @@ export class LayerManager {
       getAngle: d => d.rotation * (180 / Math.PI),
       getTextAnchor: d => d.textAnchor,
       updateTriggers: {
-        getColor: [labels],
+        getColor: [labels, taxaColorVersion],
         getSize: [this.layerStyles._cache.fontSize],
         getAngle: [labels],
         getTextAnchor: [labels],

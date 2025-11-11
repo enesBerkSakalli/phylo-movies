@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ChevronsLeft, ChevronLeft, Play, Pause, ChevronRight, ChevronsRight } from 'lucide-react';
+import { ChevronsLeft, ChevronLeft, Play, Pause, ChevronRight, ChevronsRight, GitCompare } from 'lucide-react';
+import { useAppStore } from '../../../js/core/store.js';
 
 export function TransportControls({
   playing,
@@ -12,6 +13,9 @@ export function TransportControls({
   canStepBackward,
   canStepForward,
 }) {
+  const comparisonMode = useAppStore((state) => state.comparisonMode);
+  const toggleComparisonMode = useAppStore((state) => state.toggleComparisonMode);
+
   return (
     <>
       <Button
@@ -75,6 +79,19 @@ export function TransportControls({
         onClick={onForwardStep}
       >
         <ChevronsRight className="size-5" />
+      </Button>
+
+      <Button
+        className="transport-button"
+        id="compare-button"
+        variant="ghost"
+        size="icon"
+        title="Toggle comparison mode"
+        aria-label="Toggle comparison mode"
+        onClick={toggleComparisonMode}
+        data-state={comparisonMode ? 'active' : 'inactive'}
+      >
+        <GitCompare className="size-5" />
       </Button>
     </>
   );

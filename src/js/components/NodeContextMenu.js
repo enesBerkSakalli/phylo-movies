@@ -435,11 +435,13 @@ export class NodeContextMenu {
    * @private
    */
   _focusOnNode() {
-    const { treeController } = useAppStore.getState();
-    if (treeController && typeof treeController.focusOnNode === 'function') {
-      treeController.focusOnNode(this.currentNode);
+    const { treeControllers } = useAppStore.getState();
+    if (treeControllers && treeControllers.length > 0) {
+      const controller = treeControllers[0]; // Use first controller
+      if (controller && typeof controller.focusOnNode === 'function') {
+        controller.focusOnNode(this.currentNode);
+      }
     }
-
   }
 
   /**

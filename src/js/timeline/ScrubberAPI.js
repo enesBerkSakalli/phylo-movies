@@ -56,16 +56,14 @@ export class ScrubberAPI {
             getActualHighlightData, getCurrentActiveChangeEdge,
             markedComponentsEnabled, activeChangeEdgesEnabled } = storeState;
     const primaryTreeIndex = timeFactor < 0.5 ? fromIndex : toIndex;
-    const originalTreeIndex = storeState.currentTreeIndex;
-    storeState.currentTreeIndex = primaryTreeIndex;
     if (markedComponentsEnabled) {
-      const markedComponents = getActualHighlightData();
+      const markedComponents = getActualHighlightData(primaryTreeIndex);
       updateColorManagerMarkedSubtrees(markedComponents);
     } else {
       updateColorManagerMarkedSubtrees([]);
     }
     if (activeChangeEdgesEnabled) {
-      const activeChangeEdge = getCurrentActiveChangeEdge();
+      const activeChangeEdge = getCurrentActiveChangeEdge(primaryTreeIndex);
       updateColorManagerActiveChangeEdge(activeChangeEdge);
     } else {
       updateColorManagerActiveChangeEdge([]);
@@ -84,11 +82,7 @@ export class ScrubberAPI {
       toTreeIndex: toIndex
     };
 
-    try {
-      await this.treeController.renderScrubFrame(fromTree, toTree, timeFactor, enhancedOptions);
-    } finally {
-      storeState.currentTreeIndex = originalTreeIndex;
-    }
+    await this.treeController.renderScrubFrame(fromTree, toTree, timeFactor, enhancedOptions);
   }
 
   async _getInterpolationData(progress) {
@@ -102,28 +96,41 @@ export class ScrubberAPI {
 
       let accumulatedTime = 0;
       let segIndex = segments.length - 1; // Default to last segment
+      let segStart = 0;
 
       for (let i = 0; i < segments.length; i++) {
           const duration = segmentDurations[i];
-          const endTime = accumulatedTime + duration;
+          const segmentStart = accumulatedTime;
+          const segmentEnd = accumulatedTime + duration;
 
-          if (i === segments.length - 1 && currentTime >= endTime) {
-              segIndex = i;
-              break;
+          // Check if currentTime falls within this segment
+          // For 0-duration segments, we need exact match or range check
+          if (duration === 0) {
+              // Anchor segment: check if time matches exactly
+              if (currentTime === segmentStart) {
+                  segIndex = i;
+                  segStart = segmentStart;
+                  // Don't break yet - check if there are more anchors at same time
+              }
+          } else {
+              // Interpolation segment: check if time is within range
+              if (currentTime >= segmentStart && currentTime < segmentEnd) {
+                  segIndex = i;
+                  segStart = segmentStart;
+                  break;
+              }
           }
-          if (currentTime < endTime) {
-              segIndex = i;
-              break;
-          }
-          if (currentTime === endTime && duration === 0) {
-              segIndex = i;
-              break;
-          }
-          accumulatedTime = endTime;
+
+          accumulatedTime = segmentEnd;
+      }
+
+      // Handle edge case: if we're at the very end
+      if (segIndex === -1 || currentTime >= totalDuration) {
+          segIndex = segments.length - 1;
+          segStart = accumulatedTime - (segmentDurations[segIndex] || 0);
       }
 
       const segment = segments[segIndex];
-      const segStart = accumulatedTime;
       const segDur = segmentDurations[segIndex] || 1;
       if (segment?.isFullTree || !segment?.hasInterpolation || !Array.isArray(segment?.interpolationData)) {
         const idx = segment?.interpolationData?.[0]?.originalIndex ?? 0;

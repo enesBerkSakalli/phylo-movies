@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
+import {
   Palette,
   Eye,
   Upload,
@@ -286,6 +286,21 @@ export function TaxaColoringWindow({ taxaNames = [], originalColorMap = {}, onAp
     if (res?.groups) {
       setGroups(res.groups);
       if (res.analyzed && res.separator) setSelectedSeparator(res.separator);
+
+      // Clear stale group colors - remove colors for groups that no longer exist
+      const mgr = colorManagerRef.current;
+      const currentGroupNames = new Set(res.groups.map(g => g.name));
+      const staleGroups = Array.from(mgr.groupColorMap.keys()).filter(g => !currentGroupNames.has(g));
+      staleGroups.forEach(g => mgr.groupColorMap.delete(g));
+
+      // Auto-assign colors to new groups that don't have colors yet
+      res.groups.forEach(g => {
+        if (!mgr.groupColorMap.has(g.name)) {
+          mgr.groupColorMap.set(g.name, mgr.getRandomColor());
+        }
+      });
+
+      force(); // Force re-render to show new colors
     } else {
       setGroups(res || []);
     }
@@ -336,7 +351,7 @@ export function TaxaColoringWindow({ taxaNames = [], originalColorMap = {}, onAp
       mode,
       taxaColorMap: colorManagerRef.current.taxaColorMap,
       groupColorMap: colorManagerRef.current.groupColorMap,
-      separator: selectedSeparator,
+      separator: selectedSeparator === null || selectedSeparator === 'null' || selectedSeparator === undefined ? null : selectedSeparator,
       strategyType: mapStrategyName(selectedStrategy),
       csvTaxaMap, csvGroups, csvColumn
     };

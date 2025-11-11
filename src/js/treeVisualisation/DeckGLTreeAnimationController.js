@@ -2,15 +2,18 @@ import { DeckGLDataAdapter } from './deckgl/DeckGLDataAdapter.js';
 import { DeckManager } from './deckgl/core/DeckManager.js';
 import { LayerManager } from './deckgl/layers/LayerManager.js';
 import { TreeInterpolator } from './deckgl/interpolation/TreeInterpolator.js';
+import { TrailBuilder } from './deckgl/trails/TrailBuilder.js';
 import { WebGLTreeAnimationController } from './WebGLTreeAnimationController.js';
 import { useAppStore } from '../core/store.js';
 import { easeInOut, animate } from 'popmotion';
 import { NodeContextMenu } from '../components/NodeContextMenu.js';
 import { TreeNodeInteractionHandler } from './interaction/TreeNodeInteractionHandler.js';
+import { applyInterpolationEasing } from '../utils/easingUtils.js';
 
 export class DeckGLTreeAnimationController extends WebGLTreeAnimationController {
-  constructor() {
-    super();
+  constructor(container, { animations = true } = {}) {
+    super(container);
+    this.animationsEnabled = animations;
     this.dataConverter = new DeckGLDataAdapter();
     this.layerManager = new LayerManager();
     this.treeInterpolator = new TreeInterpolator();
@@ -19,25 +22,43 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     this.interactionHandler = new TreeNodeInteractionHandler(this, this.contextMenu);
 
     this.deckManager = new DeckManager(this.webglContainer);
+
     this.deckManager.onWebGLInitialized((gl) => { this.gl = gl; });
+
     this.deckManager.onError((error) => console.error('[DeckGL Controller] Deck.gl error:', error));
+
     this.deckManager.onNodeClick((info, event) => this.interactionHandler.handleNodeClick(info, event, this.deckManager.canvas));
+
     this.deckManager.onNodeHover((info, event) => this.interactionHandler.handleNodeHover(info, event));
+
     this.deckManager.initialize();
 
     this.layerManager.layerStyles.setStyleChangeCallback(() => this._handleStyleChange());
 
-    // Flow trails history: Map of element id -> array of past positions
-    this._trailHistory = new Map();
+    // Motion trail builder for tracking element movement
+    this.trailBuilder = new TrailBuilder({ minDistanceSq: 0.25 });
+    // Maintain last-frame node angles for tracking purposes
+    this._lastNodeAngles = new Map();
+    this._lastTickTs = null;
 
     // Track last interpolation source to detect when we start a new interpolation
     this._lastInterpolationFromIndex = null;
 
     // Track last tree index we auto-fit to
     this._lastFocusedTreeIndex = null;
+
+    // Track change metrics between frames to adapt easing strategies
+    this._lastChangeMetrics = null;
+
+    // Simple layout cache to avoid recomputing the same from/to layouts every frame
+    this._lastLayoutFromIndex = null;
+    this._lastLayoutToIndex = null;
+    this._lastLayoutFrom = null;
+    this._lastLayoutTo = null;
   }
 
   startAnimation() {
+    if (!this.animationsEnabled) return;
     const { play } = useAppStore.getState();
     play(); // Set store to playing state
     this._animationLoop(); // Start the controller's animation loop
@@ -55,7 +76,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     this.renderAllElements();
   }
 
-  
+
 
   setCameraMode(mode) {
     this.deckManager.setCameraMode(mode, { preserveTarget: true });
@@ -75,6 +96,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     });
 
     const treeLeaves = currentLayout.tree.leaves();
+
     const { extensionRadius, labelRadius } = this._getConsistentRadii(currentLayout, null, null, treeLeaves);
 
     const layerData = this.dataConverter.convertTreeToLayerData(
@@ -89,7 +111,9 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
     // Append trails if enabled
     layerData.trails = this._buildFlowTrails(layerData.nodes, layerData.labels);
+
     this._updateLayersEfficiently(layerData);
+
     // Auto-fit policy: only focus when not playing and policy enabled,
     // and only when the tree index actually changes.
     const { playing, autoFitOnTreeChange } = useAppStore.getState();
@@ -99,6 +123,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
         this._lastFocusedTreeIndex = currentTreeIndex;
       }
     }
+
   }
 
   focusOnTree(nodes, labels) {
@@ -141,7 +166,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
     // Clear trails when starting a new interpolation (from a different source tree)
     if (this._lastInterpolationFromIndex !== fromTreeIndex) {
-      this._trailHistory.clear();
+      this.trailBuilder.clearHistory();
       this._lastInterpolationFromIndex = fromTreeIndex;
     }
 
@@ -196,6 +221,18 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     const fromTree = movieData.interpolated_trees[fromTreeIndex];
     const toTree = movieData.interpolated_trees[toTreeIndex];
 
+    // Safety check: ensure tree data exists before rendering
+    if (!fromTree || !toTree) {
+      console.warn('[DeckGLTreeAnimationController] Missing tree data:', {
+        fromTreeIndex,
+        toTreeIndex,
+        hasFromTree: !!fromTree,
+        hasToTree: !!toTree,
+        totalTrees: movieData.interpolated_trees?.length
+      });
+      return;
+    }
+
     await this.renderInterpolatedFrame(
       fromTree,
       toTree,
@@ -210,7 +247,10 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
 
   destroy() {
-    this.animationFrameId?.stop();
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
+    }
     this.contextMenu?.destroy();
     this.deckManager?.destroy();
     this.layerManager?.destroy();
@@ -247,53 +287,35 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
   }
 
 
+  /**
+   * Build flow trails for nodes and labels using modular TrailBuilder.
+   * Trails help track element movement during animations.
+   * @param {Array} nodes - Node elements
+   * @param {Array} labels - Label elements
+   * @returns {Array} Trail segments
+   */
   _buildFlowTrails(nodes, labels) {
     const { trailsEnabled, trailLength, trailOpacity } = useAppStore.getState();
-    if (!trailsEnabled) return [];
 
-    const minDistSq = 0.25; // avoid noise for tiny moves
+    return this.trailBuilder.buildTrails(nodes, labels, {
+      enabled: trailsEnabled,
+      length: trailLength,
+      opacity: trailOpacity
+    });
+  }
 
-    const addPoint = (el) => {
-      const id = el.id;
-      const [x,y] = el.position;
-      let arr = this._trailHistory.get(id);
-      if (!arr) arr = [];
-      const last = arr[arr.length - 1];
-      if (!last || ((x - last.x)*(x - last.x) + (y - last.y)*(y - last.y)) > minDistSq) {
-        arr.push({ x, y });
-        if (arr.length > trailLength) arr.shift();
-        this._trailHistory.set(id, arr);
-      }
-    };
+  _selectInterpolationEasing(changeMetrics) {
+    const avgChange = changeMetrics?.averageChange ?? 0;
 
-    (nodes || []).forEach(addPoint);
-    (labels || []).forEach(addPoint);
+    if (!Number.isFinite(avgChange) || avgChange <= 0.05) {
+      return 'gentle';
+    }
 
-    const segments = [];
-    const pushSegs = (el, kind) => {
-      const id = el.id;
-      const hist = this._trailHistory.get(id) || [];
-      for (let i = 0; i < hist.length - 1; i++) {
-        const p0 = hist[i];
-        const p1 = hist[i+1];
-        const ageFactor = (i+1) / Math.max(1, hist.length);
-        const alphaFactor = trailOpacity * (1 - ageFactor);
-        const seg = {
-          id: `${id}-seg-${i}`,
-          path: [[p0.x, p0.y, 0], [p1.x, p1.y, 0]],
-          alphaFactor,
-          kind
-        };
-        if (kind === 'label') seg.leaf = el.leaf;
-        if (kind === 'node') seg.node = el;
-        segments.push(seg);
-      }
-    };
+    if (avgChange >= 0.2) {
+      return 'linear';
+    }
 
-    (nodes || []).forEach(n => pushSegs(n, 'node'));
-    (labels || []).forEach(l => pushSegs(l, 'label'));
-
-    return segments;
+    return avgChange > 0.1 ? 'linear' : 'gentle';
   }
 
 }

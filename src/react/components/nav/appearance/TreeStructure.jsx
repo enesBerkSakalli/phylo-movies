@@ -6,34 +6,31 @@ import { Label } from '@/components/ui/label';
 export function TreeStructure() {
   const branchTransformation = useAppStore((s) => s.branchTransformation);
   const setBranchTransformation = useAppStore((s) => s.setBranchTransformation);
-  const treeController = useAppStore((s) => s.treeController);
+  const treeControllers = useAppStore((s) => s.treeControllers);
 
   const handleBranchOptionChange = useCallback(
-    (rawValue) => {
+    async (rawValue) => {
       const normalized = rawValue === 'use' || !rawValue ? 'none' : rawValue;
 
       setBranchTransformation(normalized);
 
-      requestAnimationFrame(() => {
+      requestAnimationFrame(async () => {
         try {
           const state = useAppStore.getState();
-          treeController?.initializeUniformScaling?.(normalized);
-          treeController?.updateLayout?.(
-            state.treeList[state.currentTreeIndex],
-            state.currentTreeIndex
-          );
+          for (const controller of treeControllers) {
+            await controller?.initializeUniformScaling?.(normalized);
+            await controller?.updateLayout?.(
+              state.treeList[state.currentTreeIndex],
+              state.currentTreeIndex
+            );
+            await controller?.renderAllElements?.();
+          }
         } catch (error) {
           console.warn('[TreeStructure] Failed to update layout for branch transformation:', error);
         }
-
-        try {
-          treeController?.renderAllElements?.();
-        } catch (error) {
-          console.warn('[TreeStructure] Failed to render elements after branch transformation change:', error);
-        }
       });
     },
-    [setBranchTransformation, treeController]
+    [setBranchTransformation, treeControllers]
   );
 
   return (

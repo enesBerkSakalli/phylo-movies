@@ -19,6 +19,8 @@ export function getCssVarNumber(element, varName, defVal) {
 
 export function parseCssColor(str) {
   if (!str) return null;
+
+  // Handle rgb/rgba formats
   const rgbaMatch = str.match(/rgba?\(([^)]+)\)/i);
   if (rgbaMatch) {
     // Handle both space-separated (rgb(209 209 216)) and comma-separated (rgb(209, 209, 216)) formats
@@ -31,6 +33,8 @@ export function parseCssColor(str) {
     const b = parseInt(parts[2], 10) || 0;
     return [r, g, b];
   }
+
+  // Handle hex format
   const hexMatch = str.match(/^#([0-9a-f]{6})$/i);
   if (hexMatch) {
     const hex = hexMatch[1];
@@ -39,6 +43,24 @@ export function parseCssColor(str) {
     const b = parseInt(hex.slice(4, 6), 16);
     return [r, g, b];
   }
+
+  // Handle oklch, lab, lch, and other modern CSS color formats
+  // by using canvas to convert to RGB
+  if (str.match(/^(oklch|oklab|lab|lch|hwb|color)\(/i)) {
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1;
+      canvas.height = 1;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = str;
+      ctx.fillRect(0, 0, 1, 1);
+      const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+      return [r, g, b];
+    } catch {
+      return null;
+    }
+  }
+
   return null;
 }
 

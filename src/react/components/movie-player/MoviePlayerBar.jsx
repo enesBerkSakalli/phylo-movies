@@ -9,7 +9,7 @@ import { notifications } from '../../../js/services/notifications.js';
 import { useSidebar } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Menu, ZoomOut, ZoomIn, Scan, ChevronsLeft, ChevronsRight, Gauge } from 'lucide-react';
+import { Menu, ZoomOut, ZoomIn, Scan, ChevronsLeft, ChevronsRight, Gauge, ChevronUp, ChevronDown } from 'lucide-react';
 
 export function MoviePlayerBar() {
   const playing = useAppStore((s) => s.playing);
@@ -25,6 +25,7 @@ export function MoviePlayerBar() {
   const setBarOption = useAppStore((s) => s.setBarOption);
   const recorderRef = useRef(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [toolbarExpanded, setToolbarExpanded] = useState(true);
 
   const canStepBackward = currentTreeIndex > 0;
   const canStepForward = currentTreeIndex < treeListLen - 1;
@@ -119,45 +120,51 @@ export function MoviePlayerBar() {
 
               <div className="vertical-divider"></div>
 
-              <div className="timeline-zoom-controls" role="group" aria-label="Timeline zoom controls">
-                <Button id="zoomOutBtn" variant="ghost" size="icon" title="Zoom out timeline (Ctrl + -)" onClick={() => gui?.zoomOutTimeline?.()}>
-                  <ZoomOut className="size-5" />
-                </Button>
-                <Button id="fitToWindowBtn" variant="ghost" size="icon" title="Fit entire timeline to window (Ctrl + 0)" onClick={() => gui?.fitTimeline?.()}>
-                  <Scan className="size-5" />
-                </Button>
-                <Button id="zoomInBtn" variant="ghost" size="icon" title="Zoom in timeline (Ctrl + +)" onClick={() => gui?.zoomInTimeline?.()}>
-                  <ZoomIn className="size-5" />
-                </Button>
-              </div>
+              {toolbarExpanded && (
+                <>
+                  <div className="timeline-zoom-controls" role="group" aria-label="Timeline zoom controls">
+                    <Button id="zoomOutBtn" variant="ghost" size="icon" title="Zoom out timeline (Ctrl + -)" onClick={() => gui?.zoomOutTimeline?.()}>
+                      <ZoomOut className="size-5" />
+                    </Button>
+                    <Button id="fitToWindowBtn" variant="ghost" size="icon" title="Fit entire timeline to window (Ctrl + 0)" onClick={() => gui?.fitTimeline?.()}>
+                      <Scan className="size-5" />
+                    </Button>
+                    <Button id="zoomInBtn" variant="ghost" size="icon" title="Zoom in timeline (Ctrl + +)" onClick={() => gui?.zoomInTimeline?.()}>
+                      <ZoomIn className="size-5" />
+                    </Button>
+                  </div>
 
-              <div className="timeline-scroll-controls" role="group" aria-label="Timeline scroll controls">
-                <Button id="scrollToStartBtn" variant="ghost" size="icon" title="Scroll to start (Home)" onClick={() => gui?.scrollToStartTimeline?.()}>
-                  <ChevronsLeft className="size-5" />
-                </Button>
-                <Button id="scrollToEndBtn" variant="ghost" size="icon" title="Scroll to end (End)" onClick={() => gui?.scrollToEndTimeline?.()}>
-                  <ChevronsRight className="size-5" />
-                </Button>
-              </div>
+                  <div className="timeline-scroll-controls" role="group" aria-label="Timeline scroll controls">
+                    <Button id="scrollToStartBtn" variant="ghost" size="icon" title="Scroll to start (Home)" onClick={() => gui?.scrollToStartTimeline?.()}>
+                      <ChevronsLeft className="size-5" />
+                    </Button>
+                    <Button id="scrollToEndBtn" variant="ghost" size="icon" title="Scroll to end (End)" onClick={() => gui?.scrollToEndTimeline?.()}>
+                      <ChevronsRight className="size-5" />
+                    </Button>
+                  </div>
 
-              <div className="vertical-divider"></div>
+                  <div className="vertical-divider"></div>
 
-              <div className="speed-control" role="group" aria-labelledby="speed-control-label">
-                <Gauge className="size-5" />
-                <Slider
-                  id="animation-speed-range"
-                  min={0.1}
-                  max={5}
-                  step={0.1}
-                  value={[animationSpeed]}
-                  onValueChange={(vals) => {
-                    const v = Array.isArray(vals) ? vals[0] : 1
-                    if (typeof v === 'number' && Number.isFinite(v)) setAnimationSpeed(v)
-                  }}
-                  aria-label="Animation speed"
-                  className="w-40"
-                />
-              </div>
+                  <div className="speed-control" role="group" aria-labelledby="speed-control-label">
+                    <Gauge className="size-5" />
+                    <Slider
+                      id="animation-speed-range"
+                      min={0.1}
+                      max={5}
+                      step={0.1}
+                      value={[animationSpeed]}
+                      onValueChange={(vals) => {
+                        const v = Array.isArray(vals) ? vals[0] : 1
+                        if (typeof v === 'number' && Number.isFinite(v)) setAnimationSpeed(v)
+                      }}
+                      aria-label="Animation speed"
+                      className="w-40"
+                    />
+                  </div>
+
+                  <div className="vertical-divider"></div>
+                </>
+              )}
 
               <TransportControls
                 playing={playing}
@@ -170,30 +177,48 @@ export function MoviePlayerBar() {
                 canStepForward={canStepForward}
               />
 
+              {toolbarExpanded && (
+                <>
+                  <div className="vertical-divider"></div>
+
+                  <div className="jump-to-step-control" role="group" aria-labelledby="position-control-label">
+                    <input
+                      type="number"
+                      id="positionValue"
+                      name="pos"
+                      defaultValue={1}
+                      min="1"
+                      placeholder="Step"
+                      aria-label="Step number to jump to"
+                      title="Enter step number to navigate to"
+                      className="jump-to-step-field"
+                    />
+                    <button id="positionButton" title="Go to entered step" aria-label="Navigate to specified step" className="jump-button" onClick={onJumpClick}>
+                      Go
+                    </button>
+                  </div>
+
+                  <RecordingControls
+                    isRecording={isRecording}
+                    onStart={handleStartRecording}
+                    onStop={handleStopRecording}
+                  />
+                </>
+              )}
+
               <div className="vertical-divider"></div>
 
-              <div className="jump-to-step-control" role="group" aria-labelledby="position-control-label">
-                <input
-                  type="number"
-                  id="positionValue"
-                  name="pos"
-                  defaultValue={1}
-                  min="1"
-                  placeholder="Step"
-                  aria-label="Step number to jump to"
-                  title="Enter step number to navigate to"
-                  className="jump-to-step-field"
-                />
-                <button id="positionButton" title="Go to entered step" aria-label="Navigate to specified step" className="jump-button" onClick={onJumpClick}>
-                  Go
-                </button>
-              </div>
-
-              <RecordingControls
-                isRecording={isRecording}
-                onStart={handleStartRecording}
-                onStop={handleStopRecording}
-              />
+              <Button
+                variant="ghost"
+                size="icon"
+                title={toolbarExpanded ? "Collapse toolbar" : "Expand toolbar"}
+                aria-label={toolbarExpanded ? "Collapse toolbar" : "Expand toolbar"}
+                aria-expanded={toolbarExpanded}
+                onClick={() => setToolbarExpanded(!toolbarExpanded)}
+                className="toolbar-toggle-btn"
+              >
+                {toolbarExpanded ? <ChevronUp className="size-5" /> : <ChevronDown className="size-5" />}
+              </Button>
             </div>
           </div>
 

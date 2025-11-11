@@ -1,4 +1,5 @@
 import { getLinkKey } from '../../utils/KeyGenerator.js';
+import { getNodeKey } from '../../utils/KeyGenerator.js';
 import { calculateBranchCoordinates } from '../../layout/RadialTreeGeometry.js';
 
 /**
@@ -36,6 +37,13 @@ export class LinkConverter {
       path: linkPath,
       source: link.source,
       target: link.target,
+      // Stable IDs for endpoints to enable subtree-aware interpolation
+      sourceId: getNodeKey(link.source),
+      targetId: getNodeKey(link.target),
+      sourceGlobalId: (link.source?.data?.guid || link.source?.data?.id || link.source?.data?.name) ?
+        `stable-${String(link.source.data.guid || link.source.data.id || link.source.data.name).replace(/[^a-zA-Z0-9-_]/g, '_')}` : getNodeKey(link.source),
+      targetGlobalId: (link.target?.data?.guid || link.target?.data?.id || link.target?.data?.name) ?
+        `stable-${String(link.target.data.guid || link.target.data.id || link.target.data.name).replace(/[^a-zA-Z0-9-_]/g, '_')}` : getNodeKey(link.target),
       polarData: this._extractPolarData(link)
     };
   }
