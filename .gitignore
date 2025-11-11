@@ -40,3 +40,5 @@ backend/brancharchitect-0.37.0.dist-info
 vite.log
 .vite/deps
 docs
+dist-publish
+playwright.config.ts
