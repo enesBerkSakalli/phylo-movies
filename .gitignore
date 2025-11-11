@@ -42,3 +42,5 @@ mcp
 .vite/deps
 .playwright-mcp
 docs
+dist-publish
+playwright.config.ts
