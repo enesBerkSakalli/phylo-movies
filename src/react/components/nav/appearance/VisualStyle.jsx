@@ -6,9 +6,11 @@ import { Label } from '@/components/ui/label';
 export function VisualStyle() {
   const fontSize = useAppStore((s) => s.fontSize);
   const strokeWidth = useAppStore((s) => s.strokeWidth);
+  const nodeSize = useAppStore((s) => s.nodeSize);
   const setFontSize = useAppStore((s) => s.setFontSize);
   const setStrokeWidth = useAppStore((s) => s.setStrokeWidth);
-  const treeController = useAppStore((s) => s.treeController);
+  const setNodeSize = useAppStore((s) => s.setNodeSize);
+  const treeControllers = useAppStore((s) => s.treeControllers);
 
   const fontSizeNumber = typeof fontSize === 'string' ? parseFloat(fontSize) : Number(fontSize || 1.8);
 
@@ -46,9 +48,37 @@ export function VisualStyle() {
             value={[Number(strokeWidth || 3)]}
             aria-labelledby="stroke-width-label"
             onValueChange={async (vals) => {
-              const v = Array.isArray(vals) ? vals[0] : Number(strokeWidth || 3);
+              const v = Array.isArray(vals) ? vals[0] : Number(strokeWidth || 2);
               setStrokeWidth(v);
-              try { await treeController?.renderAllElements?.(); } catch {}
+              try {
+                for (const controller of treeControllers) {
+                  await controller?.renderAllElements?.();
+                }
+              } catch {}
+            }}
+            className="w-40"
+          />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label title="Adjust node size" aria-label="Node size control">
+            <span id="node-size-label">Node Size</span>: <span id="node-size-value">{nodeSize || 1}</span>
+          </Label>
+          <Slider
+            id="node-size"
+            min={0.01}
+            max={5}
+            step={0.1}
+            value={[Number(nodeSize || 1)]}
+            aria-labelledby="node-size-label"
+            onValueChange={async (vals) => {
+              const v = Array.isArray(vals) ? vals[0] : Number(nodeSize || 1);
+              setNodeSize(v);
+              try {
+                for (const controller of treeControllers) {
+                  await controller?.renderAllElements?.();
+                }
+              } catch {}
             }}
             className="w-40"
           />

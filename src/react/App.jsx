@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ButtonsFileOps } from './components/nav/ButtonsFileOps.jsx';
 import { ButtonsMSA } from './components/nav/ButtonsMSA.jsx';
 import { Appearance } from './components/nav/appearance/Appearance.jsx';
@@ -9,8 +9,18 @@ import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarGroup, 
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Film, SlidersHorizontal, Monitor, Sun, Moon, FolderOpen, Dna, GitBranch } from 'lucide-react';
+import { useAppStore } from '../js/core/store.js';
 
 export function App() {
+  const comparisonMode = useAppStore((s) => s.comparisonMode);
+  const gui = useAppStore((s) => s.gui);
+
+  useEffect(() => {
+    if (gui) {
+      gui.updateMain();
+    }
+  }, [comparisonMode, gui]);
+
   return (
     <SidebarProvider>
       <Sidebar>
@@ -104,7 +114,14 @@ export function App() {
 
       <SidebarInset>
         <div className="full-size-container" style={{ flex: 1, minHeight: 0 }}>
-          <div id="webgl-container" style={{ width: '100%', height: '100%' }}></div>
+          {comparisonMode ? (
+            <div style={{ display: 'flex', width: '100%', height: '100%' }}>
+              <div id="webgl-container-left" style={{ width: '50%', height: '100%' }}></div>
+              <div id="webgl-container-right" style={{ width: '50%', height: '100%' }}></div>
+            </div>
+          ) : (
+            <div id="webgl-container" style={{ width: '100%', height: '100%' }}></div>
+          )}
         </div>
         <MoviePlayerBar />
       </SidebarInset>

@@ -20,7 +20,8 @@ function applyThemePreference(pref) {
 
 function getSavedThemePreference() {
   const saved = localStorage.getItem(THEME_KEY);
-  return saved === 'light' || saved === 'dark' || saved === 'system' ? saved : 'system';
+  // Default to 'light' when no preference is stored
+  return saved === 'light' || saved === 'dark' || saved === 'system' ? saved : 'light';
 }
 
 function saveThemePreference(pref) {

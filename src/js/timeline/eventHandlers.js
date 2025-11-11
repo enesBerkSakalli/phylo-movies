@@ -57,7 +57,7 @@ export function handleTimelineScrubMove(renderer, event) {
   const ms = Math.max(0, Math.min(renderer._xToMs(x), renderer._totalDuration));
 
   renderer._scrubberMs = ms;
-  renderer._emit('timechange', { id: 'scrubber', time: new Date(renderer._scrubberMs) });
+  renderer._emit('timechange', { id: 'scrubber', time: ms });
   renderer._scheduleUpdate();
 }
 
@@ -91,7 +91,7 @@ export function handleTimelineMouseDown(renderer, event) {
 export function handleTimelineMouseUp(renderer) {
   if (renderer._isScrubbing) {
     renderer.setScrubbing(false);
-    renderer._emit('timechanged', { id: 'scrubber', time: new Date(renderer._scrubberMs) });
+    renderer._emit('timechanged', { id: 'scrubber', time: renderer._scrubberMs });
   }
 }
 

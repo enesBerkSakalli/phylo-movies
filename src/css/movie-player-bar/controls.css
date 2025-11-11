@@ -5,17 +5,38 @@
   align-items: center;
   gap: 8px;
   margin-bottom: 6px;
+  transition: all 0.3s ease;
 }
 
 .left-controls {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: wrap;
+  transition: all 0.3s ease;
 }
 
 #nav-toggle-button {
   flex-shrink: 0;
   margin-right: 6px;
+}
+
+/* Toolbar toggle button styling */
+.toolbar-toggle-btn {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.toolbar-toggle-btn:hover {
+  transform: scale(1.05);
+}
+
+/* Collapsible sections with smooth animation */
+.timeline-zoom-controls,
+.timeline-scroll-controls,
+.speed-control,
+.jump-to-step-control {
+  transition: opacity 0.3s ease, max-height 0.3s ease;
 }
 
 .speed-control {
@@ -40,12 +61,14 @@
   background: var(--background);
   color: var(--foreground);
   text-align: center;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
 .jump-to-step-field:focus {
   outline: none;
   border-color: var(--primary);
   background: var(--secondary);
+  box-shadow: 0 0 0 2px var(--ring);
 }
 
 .jump-button {
@@ -57,15 +80,20 @@
   color: var(--foreground);
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .jump-button:hover {
   background: var(--secondary);
+  border-color: var(--primary);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .jump-button:active {
   background: var(--secondary);
+  transform: translateY(0);
+  box-shadow: none;
 }
 
 /* .transport-button is styled via shadcn Button/icon sizes */
@@ -75,6 +103,30 @@
   block-size: 24px;
   background-color: var(--border);
   margin: 0 6px;
+  transition: opacity 0.3s ease;
+}
+
+/* Improve visual hierarchy with subtle shadows and borders */
+.controls-row {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
 }
 
 /* .record-button-danger no longer used; start button icon color can be set inline if needed */
+
+/* Responsive design improvements */
+@media (max-width: 1200px) {
+  .left-controls {
+    gap: 4px;
+  }
+
+  .vertical-divider {
+    margin: 0 4px;
+  }
+}
+
+@media (max-width: 900px) {
+  .speed-control .w-40 {
+    width: 30px !important;
+  }
+}

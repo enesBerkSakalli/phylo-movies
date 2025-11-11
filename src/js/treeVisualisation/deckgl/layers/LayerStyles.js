@@ -1,5 +1,5 @@
 import { useAppStore } from '../../../core/store.js';
-import { getLinkKey, getNodeKey } from '../../utils/KeyGenerator.js';
+import { colorToRgb } from '../../../utils/colorUtils.js';
 
 /**
  * LayerStyles - Centralized style management for Deck.gl layers
@@ -10,7 +10,8 @@ export class LayerStyles {
     // Cache for performance
     this._cache = {
       strokeWidth: null,
-      fontSize: null
+      fontSize: null,
+      nodeSize: null
     };
 
     // Subscribe to store changes
@@ -35,6 +36,10 @@ export class LayerStyles {
         this._cache.fontSize = state.fontSize;
         styleChanged = true;
       }
+      if (state.nodeSize !== prevState.nodeSize) {
+        this._cache.nodeSize = state.nodeSize;
+        styleChanged = true;
+      }
 
       // Notify listeners when styles change
       if (styleChanged && this.onStyleChange) {
@@ -54,17 +59,11 @@ export class LayerStyles {
     const cm = useAppStore.getState().getColorManager();
 
     // Get color with highlighting (no dimming in color)
-    const hexColor = cm.getBranchColor(link);
-    const rgb = this._hexToRgb(hexColor);
+    const rgb = colorToRgb(cm.getBranchColor(link));
 
     // Calculate opacity based on active change edges and downstream status
-    let opacity = link.opacity !== undefined ? Math.round(link.opacity * 255) : 255;
-
-    // Apply dimming only if dimming is enabled, there are active change edges, and this link is not downstream
-    const { dimmingEnabled } = useAppStore.getState();
-    if (dimmingEnabled && cm.hasActiveChangeEdges() && !cm.isDownstreamOfAnyActiveChangeEdge(link)) {
-        opacity = Math.round(opacity * 0.3); // 30% opacity for dimmed elements
-    }
+    let opacity = this._getBaseOpacity(link.opacity);
+    opacity = this._applyDimming(opacity, cm.hasActiveChangeEdges(), cm.isDownstreamOfAnyActiveChangeEdge(link));
 
     return [...rgb, opacity];
   }
@@ -75,21 +74,32 @@ export class LayerStyles {
    * @returns {number} Link width in pixels
    */
   getLinkWidth(link) {
-    const baseWidth = this._cache.strokeWidth || useAppStore.getState().strokeWidth || 3;
+    const baseWidth = this._cache.strokeWidth || useAppStore.getState().strokeWidth || 2;
 
     // Get ColorManager from store
     const cm = useAppStore.getState().getColorManager?.();
 
     if (!cm) {
-      return Math.max(baseWidth, 3); // Fallback without highlighting
+      return Math.max(baseWidth, 2); // Fallback without highlighting
     }
 
-    // Check if link should be highlighted by comparing base vs highlighted colors
-    const baseColor = cm.getBranchColor?.(link);
-    const highlightColor = cm.getBranchColorWithHighlights(link);
-    const isHighlighted = baseColor !== highlightColor;
+    // Check if link should be highlighted
+    const isHighlighted = this._isLinkHighlighted(link, cm);
 
-    return isHighlighted ? baseWidth * 2 : Math.max(baseWidth, 3);
+    return isHighlighted ? baseWidth * 1.5 : Math.max(baseWidth, 2);
+  }
+
+  /**
+   * Get link dash array for dashed/dotted lines
+   * Can be used to distinguish certain types of branches
+   * @param {Object} link - Link data object
+   * @returns {Array|null} Dash array [on, off] or null for solid line
+   */
+  getLinkDashArray(link) {
+    // Currently returning null for solid lines
+    // This can be extended to return dash patterns based on link properties
+    // For example: return link.dashed ? [4, 2] : null;
+    return null;
   }
 
   /**
@@ -106,17 +116,13 @@ export class LayerStyles {
       return [0, 0, 0, 0]; // Transparent if no ColorManager
     }
 
-    // Check if this branch should be highlighted by comparing colors
-    const normalColor = cm.getBranchColor?.(link);
-    const highlightedColor = cm.getBranchColorWithHighlights(link);
-
-    // Only show outline if there's a highlighting difference
-    if (normalColor === highlightedColor) {
+    // Only show outline if highlighted
+    if (!this._isLinkHighlighted(link, cm)) {
       return [0, 0, 0, 0]; // Transparent for non-highlighted branches
     }
 
     // Convert the highlight color to RGB
-    const rgb = this._hexToRgb(highlightedColor);
+    const rgb = colorToRgb(cm.getBranchColorWithHighlights(link));
 
     // Return the same color but with a lower opacity for a "glow" effect
     const baseOpacity = link.opacity !== undefined ? link.opacity : 1;
@@ -138,19 +144,15 @@ export class LayerStyles {
       return 0; // No outline if no ColorManager
     }
 
-    // Check if this branch should be highlighted
-    const normalColor = cm.getBranchColor?.(link);
-    const highlightedColor = cm.getBranchColorWithHighlights(link);
-
     // Only show outline for highlighted branches
-    if (normalColor === highlightedColor) {
+    if (!this._isLinkHighlighted(link, cm)) {
       return 0; // No outline for non-highlighted branches
     }
 
     // Make outline significantly wider than the link to create a "halo"
-    const baseWidth = this._cache.strokeWidth || useAppStore.getState().strokeWidth || 3;
-    const highlightedWidth = baseWidth * 2; // Based on the original non-experimental value in getLinkWidth
-    return highlightedWidth + 8; // Add 8px for a 4px glow on each side
+    const baseWidth = this._getBaseStrokeWidth();
+    const highlightedWidth = baseWidth * 1.5; // Based on the highlighted value in getLinkWidth
+    return highlightedWidth + 6; // Add 6px for a 3px glow on each side
   }
 
   /**
@@ -168,15 +170,15 @@ export class LayerStyles {
 
     // Get color with highlighting (no dimming in color)
     const hexColor = cm.getNodeColor(nodeData);
-    const rgb = this._hexToRgb(hexColor);
+    const rgb = colorToRgb(hexColor);
 
     // Calculate opacity based on active change edges and downstream status
     let opacity = node.opacity !== undefined ? Math.round(node.opacity * 255) : 255;
 
     // Apply dimming only if dimming is enabled, there are active change edges, and this node is not downstream
-    const { dimmingEnabled } = useAppStore.getState();
+    const { dimmingEnabled, dimmingOpacity } = useAppStore.getState();
     if (dimmingEnabled && cm.hasActiveChangeEdges() && !cm.isNodeDownstreamOfAnyActiveChangeEdge(nodeData)) {
-        opacity = Math.round(opacity * 0.3); // 30% opacity for dimmed elements
+        opacity = Math.round(opacity * dimmingOpacity);
     }
 
     return [...rgb, opacity];
@@ -193,28 +195,24 @@ export class LayerStyles {
   }
 
   /**
+   * Get node radius with size multiplier applied
+   * @param {Object} node - Node data object
+   * @param {number} minRadius - Minimum radius (default 3)
+   * @returns {number} Node radius in pixels
+   */
+  getNodeRadius(node, minRadius = 3) {
+    const nodeSize = this._cache.nodeSize || useAppStore.getState().nodeSize || 1;
+    const baseRadius = node.radius || minRadius;
+    return Math.max(baseRadius * nodeSize, minRadius);
+  }
+
+  /**
    * Get label color with dimming support
    * @param {Object} label - Label data object
    * @returns {Array} RGBA color array for Deck.gl
    */
   getLabelColor(label) {
-    // Get ColorManager from store
-    const cm = useAppStore.getState().getColorManager?.();
-    // Normalize to node format for consistent highlighting
-    const node = this._convertNodeToColorManagerFormat(label);
-    const hexColor = cm.getNodeColor(node);
-    const rgb = this._hexToRgb(hexColor);
-
-    // Calculate base opacity
-    let opacity = label.opacity !== undefined ? Math.round(label.opacity * 255) : 255;
-
-    // Apply dimming if enabled, there are active change edges, and this label's node is not downstream
-    const { dimmingEnabled } = useAppStore.getState();
-    if (dimmingEnabled && cm.hasActiveChangeEdges() && !cm.isNodeDownstreamOfAnyActiveChangeEdge(node)) {
-        opacity = Math.round(opacity * 0.3); // 30% opacity for dimmed elements
-    }
-
-    return [rgb[0], rgb[1], rgb[2], opacity];
+    return this._getNodeBasedRgba(label, label.opacity);
   }
 
   /**
@@ -223,23 +221,7 @@ export class LayerStyles {
    * @returns {Array} RGBA color array for Deck.gl
    */
   getExtensionColor(extension) {
-    // Get ColorManager from store
-    const cm = useAppStore.getState().getColorManager?.();
-    // Normalize to node format for consistent highlighting
-    const extensionNode = this._convertNodeToColorManagerFormat(extension);
-    const hexColor = cm.getNodeColor?.(extensionNode);
-    const rgb = this._hexToRgb(hexColor);
-
-    // Calculate base opacity
-    let opacity = extension.opacity !== undefined ? Math.round(extension.opacity * 255) : 255;
-
-    // Apply dimming if enabled, there are active change edges, and this extension's node is not downstream
-    const { dimmingEnabled } = useAppStore.getState();
-    if (dimmingEnabled && cm.hasActiveChangeEdges() && !cm.isNodeDownstreamOfAnyActiveChangeEdge(extensionNode)) {
-        opacity = Math.round(opacity * 0.3); // 30% opacity for dimmed elements
-    }
-
-    return [...rgb, opacity];
+    return this._getNodeBasedRgba(extension, extension.opacity);
   }
 
   /**
@@ -249,7 +231,7 @@ export class LayerStyles {
    * @returns {number} Extension width in pixels
    */
   getExtensionWidth(extension) {
-    const baseWidth = this._cache.strokeWidth || useAppStore.getState().strokeWidth || 3;
+    const baseWidth = this._getBaseStrokeWidth();
     // Extensions are typically thinner than main branches
     return Math.max(baseWidth * 0.5, 1);
   }
@@ -281,6 +263,59 @@ export class LayerStyles {
 
 
   /**
+   * Get node/label/extension RGBA with dimming rules applied
+   * @private
+   */
+  _getNodeBasedRgba(entity, baseOpacity) {
+    const cm = useAppStore.getState().getColorManager?.();
+    const node = this._convertNodeToColorManagerFormat(entity);
+    const rgb = colorToRgb(cm?.getNodeColor?.(node));
+    let opacity = this._getBaseOpacity(baseOpacity);
+    const hasActive = cm?.hasActiveChangeEdges?.() || false;
+    const isDownstream = cm?.isNodeDownstreamOfAnyActiveChangeEdge?.(node) || false;
+    opacity = this._applyDimming(opacity, hasActive, isDownstream);
+    return [...rgb, opacity];
+  }
+
+  /**
+   * Is a link highlighted (color diff between base and highlighted)?
+   * @private
+   */
+  _isLinkHighlighted(link, cm) {
+    const normalColor = cm?.getBranchColor?.(link);
+    const highlightedColor = cm?.getBranchColorWithHighlights?.(link);
+    return normalColor !== highlightedColor;
+  }
+
+  /**
+   * Base stroke width from cache/store
+   * @private
+   */
+  _getBaseStrokeWidth() {
+    return this._cache.strokeWidth || useAppStore.getState().strokeWidth || 2;
+  }
+
+  /**
+   * Normalize base opacity input (0-1 -> 0-255)
+   * @private
+   */
+  _getBaseOpacity(opacityValue) {
+    return opacityValue !== undefined ? Math.round(opacityValue * 255) : 255;
+  }
+
+  /**
+   * Apply dimming per store settings and active-change/downstream flags
+   * @private
+   */
+  _applyDimming(opacity, hasActiveChangeEdges, isDownstream) {
+    const { dimmingEnabled, dimmingOpacity } = useAppStore.getState();
+    if (dimmingEnabled && hasActiveChangeEdges && !isDownstream) {
+      return Math.round(opacity * dimmingOpacity);
+    }
+    return opacity;
+  }
+
+  /**
    * Invalidate cache and trigger style updates
    * Called when external factors change that affect styling
    */
@@ -304,65 +339,9 @@ export class LayerStyles {
     this.onStyleChange = callback;
   }
 
-  /**
-   * Convert color to RGB array (handles both hex and HSL formats)
-   * @private
-   */
-  _hexToRgb(color) {
-    // Handle HSL format
-    if (color.startsWith('hsl(')) {
-      return this._hslToRgb(color);
-    }
 
-    // Handle hex format
-    let hex = color.replace('#', '');
 
-    // Parse hex values
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
 
-    return [r, g, b];
-  }
-
-  /**
-   * Convert HSL color string to RGB array
-   * @private
-   */
-  _hslToRgb(hslString) {
-    // Parse HSL string like "hsl(144, 70%, 60%)"
-    const match = hslString.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
-    if (!match) {
-      return [0, 0, 0]; // Fallback to black without logging
-    }
-
-    const h = parseInt(match[1]) / 360;
-    const s = parseInt(match[2]) / 100;
-    const l = parseInt(match[3]) / 100;
-
-    let r, g, b;
-
-    if (s === 0) {
-      r = g = b = l; // achromatic
-    } else {
-      const hue2rgb = (p, q, t) => {
-        if (t < 0) t += 1;
-        if (t > 1) t -= 1;
-        if (t < 1/6) return p + (q - p) * 6 * t;
-        if (t < 1/2) return q;
-        if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
-        return p;
-      };
-
-      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-      const p = 2 * l - q;
-      r = hue2rgb(p, q, h + 1/3);
-      g = hue2rgb(p, q, h);
-      b = hue2rgb(p, q, h - 1/3);
-    }
-
-    return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
-  }
 
   /**
    * Clean up resources

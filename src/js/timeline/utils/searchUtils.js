@@ -9,5 +9,16 @@ export function timeToSegmentIndex(ms, cumulativeDurations) {
       lo = mid + 1;
     }
   }
+
+  // If we found a valid index, scan forward to include any consecutive
+  // segments with the same cumulative duration (0-duration anchors)
+  if (ans !== -1) {
+    const targetTime = cumulativeDurations[ans];
+    while (ans + 1 < cumulativeDurations.length &&
+           cumulativeDurations[ans + 1] === targetTime) {
+      ans++;
+    }
+  }
+
   return ans;
 }

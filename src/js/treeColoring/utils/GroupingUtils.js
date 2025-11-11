@@ -134,7 +134,7 @@ export function detectBestSeparator(taxaNames) {
   separatorChars.forEach(char => {
     const withSeparator = taxaNames.filter(name => name.includes(char));
     const usage = (withSeparator.length / taxaNames.length) * 100;
-    
+
     if (usage >= 20 && withSeparator.length >= 2 && usage > bestUsage) {
       bestSeparator = char;
       bestUsage = usage;
