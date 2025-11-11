@@ -5,6 +5,7 @@ const path = require('path');
 // Pull in ES modules via Babel register (mocha command already uses @babel/register)
 const { TimelineDataProcessor } = require('../src/js/timeline/TimelineDataProcessor.js');
 const { TimelineMathUtils } = require('../src/js/timeline/TimelineMathUtils.js');
+const { useAppStore } = require('../src/js/core/store.js');
 
 function loadMovieData() {
   const candidates = [
@@ -110,5 +111,82 @@ describe('Timeline construction from backend result', () => {
     // Report which dataset was used for clarity when reading logs
     // eslint-disable-next-line no-console
     console.log(`[timeline-construction.test] Used: ${source}`);
+  });
+});
+
+describe('Active change edge mapping (small_example)', () => {
+  let movieData;
+
+  before(() => {
+    const { data } = loadMovieData();
+    movieData = data;
+  });
+
+  beforeEach(() => {
+    useAppStore.getState().initialize(movieData);
+  });
+
+  it('leaves anchor tree indices unmarked', () => {
+    const highlight = useAppStore.getState().getActualHighlightData();
+    expect(highlight).to.deep.equal([]);
+  });
+
+  it('provides marked subtrees for first interpolated tree', () => {
+    const store = useAppStore.getState();
+    store.goToPosition(1); // First interpolation step between tree 0 and 1
+    const highlight = useAppStore.getState().getActualHighlightData();
+    expect(highlight).to.deep.equal([[13]]);
+  });
+
+  it('tracks later interpolation jump solutions', () => {
+    const store = useAppStore.getState();
+    store.goToPosition(6); // Jump where split [2,3,4,5,6] is active
+    const highlight = useAppStore.getState().getActualHighlightData();
+    expect(highlight).to.deep.equal([[4], [6]]);
+  });
+
+  it('respects per-step lattice sequences when multiple snapshots exist', () => {
+    const storeAPI = useAppStore;
+    const pairKey = 'pair_0_1';
+    const baseState = storeAPI.getState();
+    const basePairSolutions = baseState.pairSolutions;
+    const pairEntry = basePairSolutions[pairKey];
+    const pivotSplit = pairEntry.split_change_events[0].split;
+    const pivotKey = `[${pivotSplit.join(', ')}]`;
+
+    const modifiedPairEntry = {
+      ...pairEntry,
+      jumping_subtree_solutions: {
+        ...pairEntry.jumping_subtree_solutions,
+        [pivotKey]: [
+          [[13]],
+          [[99]]
+        ]
+      }
+    };
+
+    const modifiedPairSolutions = {
+      ...basePairSolutions,
+      [pairKey]: modifiedPairEntry
+    };
+
+    const movieDataWithOverride = {
+      ...baseState.movieData,
+      tree_pair_solutions: modifiedPairSolutions
+    };
+
+    storeAPI.setState({
+      pairSolutions: modifiedPairSolutions,
+      movieData: movieDataWithOverride
+    });
+
+    const store = storeAPI.getState();
+    store.goToPosition(1); // step_in_pair = 1 (zero-based 0)
+    let highlight = storeAPI.getState().getActualHighlightData();
+    expect(highlight).to.deep.equal([[13]]);
+
+    store.goToPosition(2); // step_in_pair = 2 (zero-based 1)
+    highlight = storeAPI.getState().getActualHighlightData();
+    expect(highlight).to.deep.equal([[99]]);
   });
 });
