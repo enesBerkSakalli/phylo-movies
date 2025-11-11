@@ -41,3 +41,4 @@ vite.log
 mcp
 .vite/deps
 .playwright-mcp
+docs
