@@ -6,7 +6,6 @@ import { VisualElements } from './components/nav/appearance/VisualElements.jsx';
 import { TreeStructureGroup } from './components/nav/appearance/TreeStructureGroup.jsx';
 import { MoviePlayerBar } from './components/movie-player/MoviePlayerBar.jsx';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator } from '@/components/ui/sidebar';
-import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Film, SlidersHorizontal, Monitor, Sun, Moon, FolderOpen, Dna, GitBranch } from 'lucide-react';
 import { useAppStore } from '../js/core/store.js';
@@ -42,17 +41,30 @@ export function App() {
 
         // Instantiate GUI (initializes store internally)
         const TreeController = DeckGLTreeAnimationController;
+
         const guiInstance = new Gui(parsedData, { TreeController });
 
         // Store GUI reference
         useAppStore.getState().setGui(guiInstance);
 
-        // Debounced resize handler
+        // Debounced resize handler with guards
         const debouncedResize = debounce(async () => {
-          guiInstance.resize();
-          await guiInstance.update();
+          if (cancelled || !guiInstance) return;
+          try {
+            guiInstance.resize();
+            await guiInstance.update();
+          } catch (e) {
+            console.warn('[App bootstrap] resize/update failed:', e);
+          }
         }, 200);
-        resizeRef.current = debouncedResize;
+
+        // Initial sync
+        debouncedResize();
+
+        resizeRef.current = () => {
+          cancelled = true;
+          window.removeEventListener('resize', debouncedResize);
+        };
         window.addEventListener('resize', debouncedResize);
 
         guiInstance.initializeMovie();
@@ -64,7 +76,7 @@ export function App() {
     return () => {
       cancelled = true;
       if (resizeRef.current) {
-        window.removeEventListener('resize', resizeRef.current);
+        resizeRef.current();
       }
     };
   }, []);

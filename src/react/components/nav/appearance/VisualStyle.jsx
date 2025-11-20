@@ -10,6 +10,10 @@ export function VisualStyle() {
   const setFontSize = useAppStore((s) => s.setFontSize);
   const setStrokeWidth = useAppStore((s) => s.setStrokeWidth);
   const setNodeSize = useAppStore((s) => s.setNodeSize);
+  const layoutAngleDegrees = useAppStore((s) => s.layoutAngleDegrees);
+  const setLayoutAngleDegrees = useAppStore((s) => s.setLayoutAngleDegrees);
+  const layoutRotationDegrees = useAppStore((s) => s.layoutRotationDegrees);
+  const setLayoutRotationDegrees = useAppStore((s) => s.setLayoutRotationDegrees);
   const treeControllers = useAppStore((s) => s.treeControllers);
 
   const fontSizeNumber = typeof fontSize === 'string' ? parseFloat(fontSize) : Number(fontSize || 1.8);
@@ -31,6 +35,54 @@ export function VisualStyle() {
             onValueChange={(vals) => {
               const v = Array.isArray(vals) ? vals[0] : fontSizeNumber || 1.8;
               setFontSize(v);
+            }}
+            className="w-40"
+          />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label title="Angular span for radial layout" aria-label="Layout angle control">
+            <span id="layout-angle-label">Layout Angle</span>: <span id="layout-angle-value">{layoutAngleDegrees || 360}°</span>
+          </Label>
+          <Slider
+            id="layout-angle"
+            min={90}
+            max={360}
+            step={10}
+            value={[Number(layoutAngleDegrees || 360)]}
+            aria-labelledby="layout-angle-label"
+            onValueChange={async (vals) => {
+              const v = Array.isArray(vals) ? vals[0] : Number(layoutAngleDegrees || 360);
+              setLayoutAngleDegrees(v);
+              try {
+                for (const controller of treeControllers) {
+                  await controller?.renderAllElements?.();
+                }
+              } catch {}
+            }}
+            className="w-40"
+          />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label title="Rotate the radial layout" aria-label="Layout rotation control">
+            <span id="layout-rotation-label">Rotation</span>: <span id="layout-rotation-value">{layoutRotationDegrees || 0}°</span>
+          </Label>
+          <Slider
+            id="layout-rotation"
+            min={0}
+            max={360}
+            step={5}
+            value={[Number(layoutRotationDegrees || 0)]}
+            aria-labelledby="layout-rotation-label"
+            onValueChange={async (vals) => {
+              const v = Array.isArray(vals) ? vals[0] : Number(layoutRotationDegrees || 0);
+              setLayoutRotationDegrees(v);
+              try {
+                for (const controller of treeControllers) {
+                  await controller?.renderAllElements?.();
+                }
+              } catch {}
             }}
             className="w-40"
           />

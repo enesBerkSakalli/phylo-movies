@@ -20,15 +20,14 @@ export class LabelConverter {
    * Create label data object from leaf node
    */
   createLabelData(leaf, labelRadius) {
-    // Use leaf.angle directly as it's already in radians
-    const angleRad = leaf.angle;
+    const angleRad = leaf.rotatedAngle != null ? leaf.rotatedAngle : (leaf.angle || 0);
     const distance = Math.sqrt(leaf.x * leaf.x + leaf.y * leaf.y);
 
     // Determine label orientation and positioning using radians
     const needsFlip = this._shouldFlipLabel(angleRad);
     const textAnchor = this._calculateTextAnchor(needsFlip);
     const rotation = this._calculateLabelRotation(angleRad);
-    const position = this._calculateLabelPosition(leaf, labelRadius);
+    const position = this._calculateLabelPosition(angleRad, labelRadius);
 
     // Keep radius used for positioning exactly the same as before.
     // We expose it as polarRadius so interpolation can follow the arc.
@@ -90,13 +89,13 @@ export class LabelConverter {
    * Calculate final label position coordinates with margin
    * @private
    */
-  _calculateLabelPosition(leaf, labelRadius) {
+  _calculateLabelPosition(angleRad, labelRadius) {
     // Add a margin offset to push labels further away from tree elements
     const LABEL_MARGIN = 25; // pixels of additional margin
     const adjustedRadius = labelRadius + LABEL_MARGIN;
     
-    const finalX = adjustedRadius * Math.cos(leaf.angle);
-    const finalY = adjustedRadius * Math.sin(leaf.angle);
+    const finalX = adjustedRadius * Math.cos(angleRad);
+    const finalY = adjustedRadius * Math.sin(angleRad);
     return [finalX, finalY, 0];
   }
 }

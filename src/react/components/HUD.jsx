@@ -1,8 +1,67 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useAppStore } from '../../js/core/store.js';
 import { getIndexMappings, getMSAFrameIndex } from '../../js/core/IndexMapping.js';
 import { calculateWindow } from '../../js/utils/windowUtils.js';
 import { Film, BarChart2, Columns3 } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Slider } from '@/components/ui/slider';
+import { Badge } from '@/components/ui/badge';
+
+const clamp01 = (value) => Math.max(0, Math.min(1, value || 0));
+
+// Derive timeline-wide progress text from either an explicit timelineProgress
+// or the current position within the sequence list.
+function buildProgressText(sequenceIndex, totalSequenceLength, timelineProgress) {
+  const explicitProgress = typeof timelineProgress === 'number' ? timelineProgress : null;
+  const derivedProgress = totalSequenceLength > 1 ? (sequenceIndex / (totalSequenceLength - 1)) : 0;
+  const progressValue = clamp01(explicitProgress ?? derivedProgress);
+  return `${Math.round(progressValue * 100)}%`;
+}
+
+// Human-readable interpolation label based on anchor (full tree) indices.
+function buildSegmentText(sequenceIndex, transitionResolver) {
+  const anchorIndices = transitionResolver?.fullTreeIndices || [];
+  if (!anchorIndices.length) return 'Between anchors';
+
+  const anchorAtPosition = anchorIndices.indexOf(sequenceIndex);
+  if (anchorAtPosition === 0) {
+    return 'Start (Anchor 1)';
+  }
+  if (anchorAtPosition === anchorIndices.length - 1) {
+    return `End (Anchor ${anchorAtPosition + 1})`;
+  }
+  if (anchorAtPosition > 0) {
+    return `Original tree ${anchorAtPosition + 1}`;
+  }
+
+  // Find the most recent anchor and the next one (if available)
+  let previousAnchorIdx = 0;
+  for (let i = anchorIndices.length - 1; i >= 0; i--) {
+    if (anchorIndices[i] <= sequenceIndex) {
+      previousAnchorIdx = i;
+      break;
+    }
+  }
+  const nextAnchorIdx = previousAnchorIdx + 1;
+
+  if (nextAnchorIdx < anchorIndices.length) {
+    const from = anchorIndices[previousAnchorIdx];
+    const to = anchorIndices[nextAnchorIdx];
+    const span = Math.max(1, to - from);
+    const pct = Math.round(((sequenceIndex - from) / span) * 100);
+    return `Tree ${previousAnchorIdx + 1} → ${nextAnchorIdx + 1} (${pct}%)`;
+  }
+
+  // Past the final anchor
+  return `End (Anchor ${previousAnchorIdx + 1})`;
+}
+
+function buildMsaWindow(hasMsa, indexState, msaStepSize, msaWindowSize, msaColumnCount) {
+  if (!hasMsa) return null;
+  const frame = getMSAFrameIndex(indexState);
+  return calculateWindow(frame, msaStepSize, msaWindowSize, msaColumnCount || 0);
+}
 
 export function HUD() {
   const hasMsa = useAppStore((s) => (s.msaColumnCount || 0) > 0 || !!s.movieData?.msa?.sequences);
@@ -13,92 +72,96 @@ export function HUD() {
   const msaWindowSize = useAppStore((s) => s.msaWindowSize);
   const msaStepSize = useAppStore((s) => s.msaStepSize);
   const msaColumnCount = useAppStore((s) => s.msaColumnCount);
+  const goToPosition = useAppStore((s) => s.goToPosition);
 
   const proxyState = useMemo(
     () => ({ currentTreeIndex, transitionResolver, treeList: { length: treeListLength } }),
     [currentTreeIndex, transitionResolver, treeListLength]
   );
 
-  const { progressText, segmentText, msaWindow } = useMemo(() => {
-    try {
-      const { sequenceIndex, totalSequenceLength } = getIndexMappings(proxyState);
-      const tlProgress = typeof timelineProgress === 'number' ? timelineProgress : null;
-      const progress = tlProgress != null ? tlProgress : (totalSequenceLength > 1 ? sequenceIndex / (totalSequenceLength - 1) : 0);
-      const progressText = `${Math.round(progress * 100)}%`;
+  const { progressText, segmentText, msaWindow, sequenceIndex } = useMemo(() => {
+    const { sequenceIndex, totalSequenceLength } = getIndexMappings(proxyState);
 
-      // Interpolation/segment text
-      let segmentText = '';
-      const resolver = transitionResolver;
-      const fti = resolver?.fullTreeIndices || [];
-      // find full tree anchor index if exactly on anchor
-      const fullTreeAnchorIdx = fti.indexOf(sequenceIndex);
-      if (fullTreeAnchorIdx >= 0) {
-        segmentText = `Original tree ${fullTreeAnchorIdx + 1}`;
-      } else if (fti.length > 0) {
-        // Find previous and next anchor sequence indices
-        let prevIdx = 0;
-        for (let i = fti.length - 1; i >= 0; i--) {
-          if (fti[i] <= sequenceIndex) { prevIdx = i; break; }
-        }
-        const nextIdx = prevIdx + 1;
+    return {
+      progressText: buildProgressText(sequenceIndex, totalSequenceLength, timelineProgress),
+      segmentText: buildSegmentText(sequenceIndex, transitionResolver),
+      msaWindow: buildMsaWindow(hasMsa, proxyState, msaStepSize, msaWindowSize, msaColumnCount),
+      sequenceIndex,
+    };
 
-        // Only show interpolation if there is a next tree
-        if (nextIdx < fti.length) {
-          const prevSeq = fti[prevIdx];
-          const nextSeq = fti[nextIdx];
-          const denom = Math.max(1, nextSeq - prevSeq);
-          const pct = Math.round(((sequenceIndex - prevSeq) / denom) * 100);
-          segmentText = `Tree ${prevIdx + 1} → ${nextIdx + 1} (${pct}%)`;
-        } else {
-          // At or past the last anchor
-          segmentText = `Original tree ${prevIdx + 1}`;
-        }
-      }
-
-      // MSA window
-      let msaWindow = null;
-      if (hasMsa) {
-        const frame = getMSAFrameIndex(proxyState);
-        msaWindow = calculateWindow(frame, msaStepSize, msaWindowSize, msaColumnCount || 0);
-      }
-
-      return { progressText, segmentText, msaWindow };
-    } catch (e) {
-      return { progressText: '', segmentText: '', msaWindow: null };
-    }
   }, [hasMsa, proxyState, transitionResolver, timelineProgress, msaStepSize, msaWindowSize, msaColumnCount]);
 
+  const sliderMax = Math.max(0, treeListLength - 1);
+  const sliderValue = Math.min(sliderMax, Math.max(0, sequenceIndex || 0));
+  const canScrub = sliderMax > 0 && typeof goToPosition === 'function';
+
+  const handleSliderCommit = useCallback(
+    (vals) => {
+      if (!canScrub) return;
+      const v = Array.isArray(vals) ? vals[0] : sliderValue;
+      if (typeof v !== 'number' || Number.isNaN(v)) return;
+      goToPosition(Math.max(0, Math.min(sliderMax, Math.round(v))));
+    },
+    [canScrub, goToPosition, sliderMax, sliderValue]
+  );
+
   return (
-    <div className="phylo-hud" data-react-component="hud" role="complementary" aria-label="Timeline Status Display">
-      <div className="hud-metrics">
-        <div className="hud-item">
-          <Film className="size-4" />
-          <span className="hud-label">Movie progress:</span>
-          <span id="hudPositionInfo" aria-live="polite">{progressText}</span>
+    <div className="phylo-hud pointer-events-none" data-react-component="hud" role="complementary" aria-label="Timeline Status Display">
+      <Card className="pointer-events-auto flex items-center gap-4 px-4 py-2 shadow-lg backdrop-blur-sm">
+
+        <div className="flex items-center gap-2">
+
+          <Film className="size-4 text-primary" aria-hidden />
+
+          <span className="text-sm font-medium text-foreground/80">Movie progress</span>
+
+          <span id="hudPositionInfo" aria-live="polite" className="font-semibold text-foreground">{progressText}</span>
+
+          <Slider
+            aria-label="Timeline position"
+            min={0}
+            max={sliderMax}
+            step={1}
+            value={[sliderValue]}
+            disabled={!canScrub}
+            onValueCommit={handleSliderCommit}
+            className="w-32"
+          />
         </div>
 
-        <div className="hud-separator">•</div>
+        <Separator orientation="vertical" className="h-6" />
 
-        <div className="hud-item">
-          <BarChart2 className="size-4" />
-          <span className="hud-label">Interpolation:</span>
-          <span id="hudSegmentInfo" aria-live="polite">{segmentText}</span>
+        <div className="flex items-center gap-2">
+          <BarChart2 className="size-4 text-primary" aria-hidden />
+          <span className="text-sm font-medium text-foreground/80">Interpolation</span>
+          <Badge
+            id="hudSegmentInfo"
+            aria-live="polite"
+            variant="secondary"
+            className="text-xs font-semibold"
+            title={segmentText}
+          >
+            {segmentText}
+          </Badge>
         </div>
 
-        <div className="hud-separator requires-msa" style={{ display: hasMsa ? 'inline-flex' : 'none' }}>•</div>
-
-        <div className="hud-item requires-msa" id="hud-msa-window-item" style={{ display: hasMsa ? 'inline-flex' : 'none' }}>
-          <Columns3 className="size-4" />
-          <span className="hud-label">MSA:</span>
-          <span className="metrics-window">
-            <span id="hudWindowStart" className="metrics-window-value">{msaWindow?.startPosition ?? 1}</span>
-            <span>-</span>
-            <span id="hudWindowMid" className="metrics-window-value metrics-window-value--primary">{msaWindow?.midPosition ?? 1}</span>
-            <span>-</span>
-            <span id="hudWindowEnd" className="metrics-window-value">{msaWindow?.endPosition ?? msaWindowSize ?? 100}</span>
-          </span>
-        </div>
-      </div>
+        {hasMsa && (
+          <>
+            <Separator orientation="vertical" className="h-6" />
+            <div className="flex items-center gap-2" id="hud-msa-window-item">
+              <Columns3 className="size-4 text-primary" aria-hidden />
+              <span className="text-sm font-medium text-foreground/80">MSA</span>
+              <div className="inline-flex items-center gap-1 font-semibold text-foreground">
+                <span id="hudWindowStart">{msaWindow?.startPosition ?? 1}</span>
+                <span className="text-muted-foreground">-</span>
+                <span id="hudWindowMid" className="text-primary">{msaWindow?.midPosition ?? 1}</span>
+                <span className="text-muted-foreground">-</span>
+                <span id="hudWindowEnd">{msaWindow?.endPosition ?? msaWindowSize ?? 100}</span>
+              </div>
+            </div>
+          </>
+        )}
+      </Card>
     </div>
   );
 }

@@ -8,7 +8,7 @@ import { useAppStore, selectCurrentTree } from '../core/store.js';
 import { easeInOut, animate } from 'popmotion';
 import { NodeContextMenu } from '../components/NodeContextMenu.js';
 import { TreeNodeInteractionHandler } from './interaction/TreeNodeInteractionHandler.js';
-import { applyInterpolationEasing } from '../utils/easingUtils.js';
+
 
 export class DeckGLTreeAnimationController extends WebGLTreeAnimationController {
   constructor(container, { animations = true } = {}) {

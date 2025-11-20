@@ -1,6 +1,45 @@
 import { SubtreeExtractor } from '../utils/SubtreeExtractor.js';
 import { useAppStore } from '../core/store.js';
 
+const lucideSvg = (nodes) => {
+  const children = nodes.map(([tag, attrs]) => {
+    const attrString = Object.entries(attrs)
+      .filter(([key]) => key !== 'key')
+      .map(([k, v]) => `${k}="${v}"`)
+      .join(' ');
+    return `<${tag} ${attrString}></${tag}>`;
+  }).join('');
+
+  return `<svg aria-hidden="true" focusable="false" class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${children}</svg>`;
+};
+
+const ICON_COPY = lucideSvg([
+  ["rect", { width: "8", height: "4", x: "8", y: "2", rx: "1", ry: "1" }],
+  ["path", { d: "M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" }],
+  ["path", { d: "M16 4h2a2 2 0 0 1 2 2v4" }],
+  ["path", { d: "M21 14H11" }],
+  ["path", { d: "m15 10-4 4 4 4" }]
+]);
+
+const ICON_HIGHLIGHT = lucideSvg([
+  ["path", { d: "m9 11-6 6v3h9l3-3" }],
+  ["path", { d: "m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4" }]
+]);
+
+const ICON_CROSSHAIR = lucideSvg([
+  ["circle", { cx: "12", cy: "12", r: "10" }],
+  ["line", { x1: "22", x2: "18", y1: "12", y2: "12" }],
+  ["line", { x1: "6", x2: "2", y1: "12", y2: "12" }],
+  ["line", { x1: "12", x2: "12", y1: "6", y2: "2" }],
+  ["line", { x1: "12", x2: "12", y1: "22", y2: "18" }]
+]);
+
+const ICON_INFO = lucideSvg([
+  ["circle", { cx: "12", cy: "12", r: "10" }],
+  ["path", { d: "M12 16v-4" }],
+  ["path", { d: "M12 8h.01" }]
+]);
+
 /**
  * NodeContextMenu - Context menu component for tree node interactions
  * Provides options for subtree extraction, highlighting, and navigation
@@ -23,154 +62,56 @@ export class NodeContextMenu {
   _createMenuElement() {
     this.menu = document.createElement('div');
     this.menu.id = 'node-context-menu';
-    this.menu.className = 'node-context-menu md-elevation-2';
-    this.menu.style.cssText = `
-      position: fixed;
-      background: var(--md-sys-color-surface-container, #fff);
-      border-radius: var(--md-sys-shape-corner-medium, 12px);
-      padding: 8px 0;
-      z-index: 99999;
-      display: none;
-      min-width: 240px;
-      font-family: var(--md-sys-typescale-body-medium-font, Roboto, sans-serif);
-      font-size: var(--md-sys-typescale-body-medium-size, 14px);
-      max-width: 320px;
-      overflow: hidden;
-      box-shadow: var(--md-sys-elevation-level2, 0 2px 6px rgba(0, 0, 0, 0.15));
-    `;
+    this.menu.className = [
+      'node-context-menu',
+      'fixed',
+      'z-[99999]',
+      'min-w-[240px]',
+      'max-w-[320px]',
+      'overflow-hidden',
+      'rounded-md',
+      'border',
+      'border-border',
+      'bg-popover',
+      'text-popover-foreground',
+      'shadow-lg',
+      'text-sm',
+      'font-medium',
+      'backdrop-blur',
+    ].join(' ');
+    Object.assign(this.menu.style, {
+      position: 'fixed',
+      left: '0px',
+      top: '0px',
+      zIndex: '99999',
+      display: 'none',
+    });
 
-    // Add menu items with Material Icons
+    // Add menu items with shadcn-style classes
     this.menu.innerHTML = `
-      <div class="context-menu-header">
+      <div class="context-menu-header flex flex-col gap-1 border-b border-border bg-muted/50 px-4 py-3 text-xs font-semibold text-muted-foreground">
         <span class="node-name"></span>
         <span class="node-stats"></span>
       </div>
-      <div class="context-menu-separator"></div>
-      <div class="context-menu-item" data-action="extract-subtree">
-        <span class="menu-icon material-icons">content_copy</span>
-        <span class="menu-text">Copy Subtree (Newick)</span>
-      </div>
-      <div class="context-menu-item" data-action="highlight-descendants">
-        <span class="menu-icon material-icons">highlight</span>
-        <span class="menu-text">Highlight Descendants</span>
-      </div>
-      <div class="context-menu-item" data-action="focus-node">
-        <span class="menu-icon material-icons">center_focus_strong</span>
-        <span class="menu-text">Focus on Node</span>
-      </div>
-      <div class="context-menu-item" data-action="copy-info">
-        <span class="menu-icon material-icons">info</span>
-        <span class="menu-text">Copy Node Info</span>
-      </div>
+      <div role="separator" class="context-menu-separator h-px bg-border"></div>
+      <button class="context-menu-item flex w-full items-center gap-3 px-4 py-3 text-left text-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50" data-action="extract-subtree">
+        <span class="menu-icon text-foreground/70" aria-hidden="true">${ICON_COPY}</span>
+        <span class="menu-text flex-1 text-foreground">Copy Subtree (Newick)</span>
+      </button>
+      <button class="context-menu-item flex w-full items-center gap-3 px-4 py-3 text-left text-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50" data-action="highlight-descendants">
+        <span class="menu-icon text-foreground/70" aria-hidden="true">${ICON_HIGHLIGHT}</span>
+        <span class="menu-text flex-1 text-foreground">Highlight Descendants</span>
+      </button>
+      <button class="context-menu-item flex w-full items-center gap-3 px-4 py-3 text-left text-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50" data-action="focus-node">
+        <span class="menu-icon text-foreground/70" aria-hidden="true">${ICON_CROSSHAIR}</span>
+        <span class="menu-text flex-1 text-foreground">Focus on Node</span>
+      </button>
+      <button class="context-menu-item flex w-full items-center gap-3 px-4 py-3 text-left text-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50" data-action="copy-info">
+        <span class="menu-icon text-foreground/70" aria-hidden="true">${ICON_INFO}</span>
+        <span class="menu-text flex-1 text-foreground">Copy Node Info</span>
+      </button>
     `;
-
-    // Add styles for menu items
-    const style = document.createElement('style');
-    style.textContent = `
-      .node-context-menu .context-menu-header {
-        padding: 12px 16px;
-        font-weight: var(--md-sys-typescale-title-small-weight, 500);
-        color: var(--md-sys-color-on-surface-variant);
-        font-size: var(--md-sys-typescale-label-large-size, 0.875rem);
-        border-bottom: 1px solid var(--md-sys-color-outline-variant, #CAC4D0);
-        margin-bottom: 4px;
-        background: var(--md-sys-color-surface-container-low, #F7F2FA);
-      }
-
-      .node-context-menu .node-name {
-        display: block;
-        font-weight: var(--md-sys-typescale-title-small-weight, 600);
-        color: var(--md-sys-color-on-surface);
-        margin-bottom: 4px;
-        font-size: var(--md-sys-typescale-title-small-size, 1rem);
-      }
-
-      .node-context-menu .node-stats {
-        font-size: var(--md-sys-typescale-label-small-size, 0.75rem);
-        color: var(--md-sys-color-on-surface-variant);
-        opacity: 0.8;
-      }
-
-      .node-context-menu .context-menu-separator {
-        height: 1px;
-        background: var(--md-sys-color-outline-variant, #CAC4D0);
-        margin: 0;
-      }
-
-      .node-context-menu .context-menu-item {
-        display: flex;
-        align-items: center;
-        padding: 12px 16px;
-        cursor: pointer;
-        transition: all 0.2s var(--md-sys-motion-easing-standard, cubic-bezier(0.4, 0, 0.2, 1));
-        color: var(--md-sys-color-on-surface);
-        position: relative;
-        min-height: 48px;
-      }
-
-      .node-context-menu .context-menu-item::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: var(--md-sys-color-on-surface);
-        opacity: 0;
-        transition: opacity 0.2s var(--md-sys-motion-easing-standard, cubic-bezier(0.4, 0, 0.2, 1));
-        pointer-events: none;
-      }
-
-      .node-context-menu .context-menu-item:hover::before {
-        opacity: var(--md-sys-state-hover-state-layer-opacity, 0.08);
-      }
-
-      .node-context-menu .context-menu-item:active::before {
-        opacity: var(--md-sys-state-pressed-state-layer-opacity, 0.12);
-      }
-
-      .node-context-menu .context-menu-item.disabled {
-        opacity: 0.38;
-        cursor: not-allowed;
-      }
-
-      .node-context-menu .context-menu-item.disabled::before {
-        display: none;
-      }
-
-      .node-context-menu .menu-icon {
-        margin-right: 16px;
-        font-size: 20px;
-        color: var(--md-sys-color-on-surface-variant);
-        position: relative;
-        z-index: 1;
-        width: 24px;
-        height: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .node-context-menu .menu-text {
-        flex: 1;
-        color: var(--md-sys-color-on-surface);
-        font-size: var(--md-sys-typescale-body-large-size, 1rem);
-        line-height: var(--md-sys-typescale-body-large-line-height, 1.5);
-        letter-spacing: var(--md-sys-typescale-body-large-tracking, 0.5px);
-        position: relative;
-        z-index: 1;
-      }
-
-      /* Make sure the menu is always visible */
-      .node-context-menu {
-        visibility: visible !important;
-        opacity: 1 !important;
-      }
-    `;
-
-    document.head.appendChild(style);
     document.body.appendChild(this.menu);
-
   }
 
   /**
@@ -191,7 +132,7 @@ export class NodeContextMenu {
         return;
       }
 
-      if (item.classList.contains('disabled')) {
+      if (item.classList.contains('disabled') || item.disabled) {
         console.log('[NodeContextMenu] Menu item is disabled');
         return;
       }
@@ -299,11 +240,8 @@ export class NodeContextMenu {
       const canExtract = SubtreeExtractor.isValidSubtreeRoot(this.currentNode);
 
       if (extractItem) {
-        if (canExtract) {
-          extractItem.classList.remove('disabled');
-        } else {
-          extractItem.classList.add('disabled');
-        }
+        extractItem.classList.toggle('disabled', !canExtract);
+        extractItem.disabled = !canExtract;
       }
     } catch (error) {
       console.error('[NodeContextMenu] Error checking subtree validity:', error);

@@ -38,7 +38,7 @@ export class NodeConverter {
       depth: node.depth,
       height: node.height,
       // Export polar coordinates for radial interpolation
-      angle: node.angle,
+      angle: node.rotatedAngle != null ? node.rotatedAngle : (node.angle || 0),
       polarRadius: node.radius,
       // Store reference to original node for ColorManager access
       originalNode: node

@@ -87,7 +87,7 @@ export class WebGLTreeAnimationController {
     const { treeIndex, cacheFunction, updateController = false } = options;
 
     // Get branch transformation from store (single store access)
-    const { branchTransformation } = useAppStore.getState();
+    const { branchTransformation, layoutAngleDegrees, layoutRotationDegrees } = useAppStore.getState();
 
     // Check if transformation has changed
     const transformationChanged = this._scalingState.branchTransformation !== undefined &&
@@ -112,6 +112,8 @@ export class WebGLTreeAnimationController {
     const layoutCalculator = new RadialTreeLayout(transformedTreeData);
     layoutCalculator.setDimension(width, height);
     layoutCalculator.setMargin(40);
+    layoutCalculator.setAngleExtentDegrees(layoutAngleDegrees || 360);
+    layoutCalculator.setAngleOffsetDegrees(layoutRotationDegrees || 0);
 
     let layout;
     let layoutResult;
