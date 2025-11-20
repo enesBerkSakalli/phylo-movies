@@ -21,6 +21,8 @@ export const createUiSlice = (set, get) => ({
   trailOpacity: 0.5,
   trailThickness: 0.5,
   barOptionValue: 'rfd',
+  layoutAngleDegrees: 360,
+  layoutRotationDegrees: 0,
 
   toggleComparisonMode: () => set((state) => ({ comparisonMode: !state.comparisonMode })),
 
@@ -84,6 +86,22 @@ export const createUiSlice = (set, get) => ({
   setTrailLength: (length) => set({ trailLength: Math.max(2, Math.min(50, Math.round(Number(length) || 12))) }),
   setTrailOpacity: (opacity) => set({ trailOpacity: Math.max(0, Math.min(1, Number(opacity) || 0.5)) }),
   setTrailThickness: (thickness) => set({ trailThickness: Math.max(0.1, Math.min(5, Number(thickness) || 0.5)) }),
+
+  /**
+   * Sets the angular extent (in degrees) of the radial tree layout (default 360).
+   */
+  setLayoutAngleDegrees: (degrees) => {
+    const value = Number.isFinite(degrees) ? degrees : 360;
+    set({ layoutAngleDegrees: value });
+  },
+
+  /**
+   * Sets the rotation (in degrees) of the radial tree layout (default 0).
+   */
+  setLayoutRotationDegrees: (degrees) => {
+    const value = Number.isFinite(degrees) ? degrees : 0;
+    set({ layoutRotationDegrees: value });
+  },
 
   /**
    * Sets the branch transformation mode

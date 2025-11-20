@@ -314,7 +314,6 @@ npm run demo:msa-scrolling # Run MSA scrolling demonstration
 - Memory-efficient rendering pipeline with viewport culling
 - Responsive design adapts to various screen sizes and devices
 
-
 ## Project Structure
 
 ```

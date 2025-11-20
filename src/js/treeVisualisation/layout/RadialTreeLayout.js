@@ -14,6 +14,8 @@ export class RadialTreeLayout {
     this.containerHeight = 0;
     this.margin = 0;
     this.scale = 0;
+    this.angleExtent = Math.PI * 2; // total angular span in radians (default 360°)
+    this.angleOffset = 0; // rotation offset in radians
 
     // Radius preservation for IT → C transitions
     this.preserveRadius = false;
@@ -41,6 +43,42 @@ export class RadialTreeLayout {
     }
 
     return i;
+  }
+
+  /**
+   * Set the total angular extent (in degrees) for the radial layout.
+   * @param {number} degrees
+   */
+  setAngleExtentDegrees(degrees = 360) {
+    const clamped = typeof degrees === 'number' && isFinite(degrees) ? degrees : 360;
+    this.angleExtent = (clamped * Math.PI) / 180;
+  }
+
+  /**
+   * Set the total angular extent (in radians) for the radial layout.
+   * @param {number} radians
+   */
+  setAngleExtentRadians(radians = Math.PI * 2) {
+    const span = typeof radians === 'number' && isFinite(radians) ? radians : Math.PI * 2;
+    this.angleExtent = span;
+  }
+
+  /**
+   * Set rotation offset (in degrees) for the radial layout.
+   * @param {number} degrees
+   */
+  setAngleOffsetDegrees(degrees = 0) {
+    const value = typeof degrees === 'number' && isFinite(degrees) ? degrees : 0;
+    this.angleOffset = (value * Math.PI) / 180;
+  }
+
+  /**
+   * Set rotation offset (in radians) for the radial layout.
+   * @param {number} radians
+   */
+  setAngleOffsetRadians(radians = 0) {
+    const value = typeof radians === 'number' && isFinite(radians) ? radians : 0;
+    this.angleOffset = value;
   }
 
   /**
@@ -151,9 +189,14 @@ export class RadialTreeLayout {
    * @return {void}
    */
   generateCoordinates(root) {
-    root.each(function (d) {
-      d.x = d.radius * Math.cos(d.angle);
-      d.y = d.radius * Math.sin(d.angle);
+    const offset = this.angleOffset || 0;
+    root.each((d) => {
+      const baseAngle = d.angle || 0;
+      const theta = baseAngle + offset;
+      d.rotatedAngle = theta;
+      d.offset = offset;
+      d.x = d.radius * Math.cos(theta);
+      d.y = d.radius * Math.sin(theta);
     });
   }
 
@@ -208,7 +251,7 @@ export class RadialTreeLayout {
     // Calculate radii and angles without auto-scaling
     this.calcRadius(this.root, 0);
     this.indexLeafNodes(this.root);
-    this.calcAngle(this.root, Math.PI * 2, this.root.leaves().length);
+    this.calcAngle(this.root, this.angleExtent, this.root.leaves().length);
 
     // Apply uniform scaling based on max global scale
     const minWindowSize = this.getMinContainerDimension(this.containerWidth, this.containerHeight);
@@ -234,7 +277,7 @@ export class RadialTreeLayout {
 
     this.calcRadius(this.root, 0);
     this.indexLeafNodes(this.root);
-    this.calcAngle(this.root, Math.PI * 2, this.root.leaves().length);
+    this.calcAngle(this.root, this.angleExtent, this.root.leaves().length);
 
     // Only apply auto-scaling if not using uniform scaling
     if (!useUniformScaling) {

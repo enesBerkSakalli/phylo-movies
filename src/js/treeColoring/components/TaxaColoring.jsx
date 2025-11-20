@@ -3,6 +3,7 @@ import { useAppStore } from '../../core/store.js';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { TaxaColoringWindow } from '@/react/components/taxa-coloring/TaxaColoringWindow.jsx';
+import 'winbox/dist/css/winbox.min.css';
 
 // Import the component's stylesheet for any remaining layout specifics (safe to keep)
 // Removed legacy taxa-coloring-window.css (React/shadcn handles styling)

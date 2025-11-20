@@ -41,6 +41,7 @@ export const createHighlightSlice = (set, get) => ({
   markedComponentsEnabled: true, // Toggle for marked subtrees highlighting (naming only)
   activeChangeEdgeColor: TREE_COLOR_CATEGORIES.activeChangeEdgeColor,
   markedColor: TREE_COLOR_CATEGORIES.markedColor,
+  manualHighlightedNodes: [], // User-invoked highlights (e.g., from context menu)
   // Taxa grouping (from TaxaColoring modal) for UI/tooltip use
   taxaGrouping: null, // { mode: 'taxa'|'groups'|'csv', separator?, strategyType?, csvTaxaMap? }
   // Color update tracking for deck.gl updateTriggers
@@ -260,14 +261,19 @@ export const createHighlightSlice = (set, get) => ({
       getActualHighlightData,
       getCurrentActiveChangeEdge,
       updateColorManagerMarkedSubtrees,
-      updateColorManagerActiveChangeEdge
+      updateColorManagerActiveChangeEdge,
+      manualHighlightedNodes
     } = get();
+
+    const manual = Array.isArray(manualHighlightedNodes) && manualHighlightedNodes.length
+      ? [new Set(manualHighlightedNodes)]
+      : [];
 
     if (markedComponentsEnabled) {
       const markedComponents = getActualHighlightData();
-      updateColorManagerMarkedSubtrees(markedComponents);
+      updateColorManagerMarkedSubtrees([...manual, ...markedComponents]);
     } else {
-      updateColorManagerMarkedSubtrees([]);
+      updateColorManagerMarkedSubtrees(manual);
     }
 
     if (activeChangeEdgesEnabled) {
@@ -319,14 +325,47 @@ export const createHighlightSlice = (set, get) => ({
     set({ markedComponentsEnabled: enabled });
 
     // Update ColorManager - clear or restore based on enabled state (naming only)
-    const { updateColorManagerMarkedSubtrees, getActualHighlightData } = get();
+    const { updateColorManagerMarkedSubtrees, getActualHighlightData, manualHighlightedNodes } = get();
     if (!enabled) {
       // Clear marked subtrees when disabled
-      updateColorManagerMarkedSubtrees([]);
+      updateColorManagerMarkedSubtrees(
+        Array.isArray(manualHighlightedNodes) && manualHighlightedNodes.length
+          ? [new Set(manualHighlightedNodes)]
+          : []
+      );
     } else {
       // Restore marked subtrees when enabled
       const markedComponents = getActualHighlightData();
-      updateColorManagerMarkedSubtrees(markedComponents);
+      const manual = Array.isArray(manualHighlightedNodes) && manualHighlightedNodes.length
+        ? [new Set(manualHighlightedNodes)]
+        : [];
+      updateColorManagerMarkedSubtrees([...manual, ...markedComponents]);
     }
+  },
+
+  /**
+   * Set descendants highlighted manually (e.g., from context menu) and refresh rendering.
+   * @param {Array<string>} nodeIds
+   */
+  setHighlightedNodes: (nodeIds = []) => {
+    const nodes = Array.isArray(nodeIds) ? nodeIds.filter(Boolean) : [];
+    set({ manualHighlightedNodes: nodes });
+
+    const {
+      markedComponentsEnabled,
+      getActualHighlightData,
+      updateColorManagerMarkedSubtrees,
+      treeControllers
+    } = get();
+
+    const manual = nodes.length ? [new Set(nodes)] : [];
+    if (markedComponentsEnabled) {
+      const autoMarked = getActualHighlightData();
+      updateColorManagerMarkedSubtrees([...manual, ...autoMarked]);
+    } else {
+      updateColorManagerMarkedSubtrees(manual);
+    }
+
+    renderTreeControllers(treeControllers);
   },
 });
