@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { ButtonsFileOps } from './components/nav/ButtonsFileOps.jsx';
 import { ButtonsMSA } from './components/nav/ButtonsMSA.jsx';
 import { Appearance } from './components/nav/appearance/Appearance.jsx';
@@ -10,16 +10,70 @@ import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Film, SlidersHorizontal, Monitor, Sun, Moon, FolderOpen, Dna, GitBranch } from 'lucide-react';
 import { useAppStore } from '../js/core/store.js';
+import { getPhyloMovieData } from '../js/services/dataManager.js';
+import Gui from '../js/controllers/gui.js';
+import { DeckGLTreeAnimationController } from '../js/treeVisualisation/DeckGLTreeAnimationController.js';
+import { debounce } from '../js/utils/debounce.js';
+import { initializeTheme } from '../js/core/theme.js';
 
 export function App() {
   const comparisonMode = useAppStore((s) => s.comparisonMode);
   const gui = useAppStore((s) => s.gui);
+  const fileName = useAppStore((s) => s.fileName || 'Loading...');
+  const hasMsa = useAppStore((s) => s.hasMsa);
+  const resizeRef = useRef(null);
 
   useEffect(() => {
     if (gui) {
       gui.updateMain();
     }
   }, [comparisonMode, gui]);
+
+  useEffect(() => {
+    initializeTheme();
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const parsedData = await getPhyloMovieData();
+        if (cancelled) return;
+
+        // Instantiate GUI (initializes store internally)
+        const TreeController = DeckGLTreeAnimationController;
+        const guiInstance = new Gui(parsedData, { TreeController });
+
+        // Store GUI reference
+        useAppStore.getState().setGui(guiInstance);
+
+        // Debounced resize handler
+        const debouncedResize = debounce(async () => {
+          guiInstance.resize();
+          await guiInstance.update();
+        }, 200);
+        resizeRef.current = debouncedResize;
+        window.addEventListener('resize', debouncedResize);
+
+        guiInstance.initializeMovie();
+      } catch (err) {
+        console.error('[App bootstrap] Failed to initialize GUI:', err);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      if (resizeRef.current) {
+        window.removeEventListener('resize', resizeRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    try {
+      document.documentElement.setAttribute('data-has-msa', hasMsa ? 'true' : 'false');
+    } catch {}
+  }, [hasMsa]);
 
   return (
     <SidebarProvider>
@@ -30,7 +84,7 @@ export function App() {
             <div className="flex-1 min-w-0">
               <h1 className="m-0 text-base font-medium text-foreground truncate">Phylo-Movies</h1>
               <p className="m-0 text-xs text-muted-foreground truncate">
-                File: <span id="compactFileName">Loading...</span>
+                File: <span id="compactFileName">{fileName}</span>
               </p>
             </div>
             <Button id="theme-toggle" variant="ghost" size="icon" aria-label="Toggle theme" title="Toggle theme">
