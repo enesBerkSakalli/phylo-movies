@@ -53,8 +53,9 @@ export class DeckGLDataAdapter {
    * @private
    */
   _createExtensionData(leaf, extensionRadius) {
-    const extensionX = Math.cos(leaf.angle) * extensionRadius;
-    const extensionY = Math.sin(leaf.angle) * extensionRadius;
+    const angle = leaf.rotatedAngle != null ? leaf.rotatedAngle : leaf.angle;
+    const extensionX = Math.cos(angle) * extensionRadius;
+    const extensionY = Math.sin(angle) * extensionRadius;
 
     return {
       id: getExtensionKey(leaf),
@@ -66,11 +67,11 @@ export class DeckGLDataAdapter {
       // polar-aware interpolation for extension paths
       polarData: {
         source: {
-          angle: leaf.angle,
+          angle,
           radius: leaf.radius
         },
         target: {
-          angle: leaf.angle,
+          angle,
           radius: extensionRadius
         }
       }

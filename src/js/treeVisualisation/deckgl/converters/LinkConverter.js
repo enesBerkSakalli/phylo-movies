@@ -57,13 +57,13 @@ export class LinkConverter {
       source: {
         x: link.source.x,
         y: link.source.y,
-        angle: link.source.angle,
+        angle: link.source.rotatedAngle != null ? link.source.rotatedAngle : link.source.angle,
         radius: link.source.radius
       },
       target: {
         x: link.target.x,
         y: link.target.y,
-        angle: link.target.angle,
+        angle: link.target.rotatedAngle != null ? link.target.rotatedAngle : link.target.angle,
         radius: link.target.radius
       }
     };
@@ -76,11 +76,11 @@ export class LinkConverter {
   _extractPolarData(link) {
     return {
       source: {
-        angle: link.source.angle,
+        angle: link.source.rotatedAngle != null ? link.source.rotatedAngle : link.source.angle,
         radius: link.source.radius
       },
       target: {
-        angle: link.target.angle,
+        angle: link.target.rotatedAngle != null ? link.target.rotatedAngle : link.target.angle,
         radius: link.target.radius
       }
     };

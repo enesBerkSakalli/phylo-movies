@@ -2,104 +2,13 @@
    HUD (Heads-Up Display) STYLES
    ============================================================================ */
 
-/* Main HUD container - floating position */
 .phylo-hud {
   position: fixed;
   top: 20px;
-  left: calc(var(--sidebar-width) + 20px);
+  left: calc(var(--nav-width, 280px) + 20px);
   z-index: 1000;
   pointer-events: none;
-  
-  /* Navigation integration - shift right when navigation is visible */
   transition: left 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
-}
-
-/* Navigation drawer visibility adjustments handled by CSS variable */
-
-/* HUD metrics container */
-.phylo-hud .hud-metrics {
-  pointer-events: all;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 14px;
-  min-height: 38px;
-  
-  /* Enhanced elevation and styling for HUD */
-  background: rgba(255, 255, 255, 0.95);
-  color: rgb(25, 28, 32);
-  border-radius: 20px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  
-  /* Box shadow for prominence */
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.15),
-    0 4px 16px rgba(0, 0, 0, 0.1);
-  
-  /* Subtle animation on hover */
-  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
-}
-
-.phylo-hud .hud-metrics:hover {
-  transform: translateY(-2px);
-  box-shadow: 
-    0 12px 48px rgba(0, 0, 0, 0.2),
-    0 6px 24px rgba(0, 0, 0, 0.15);
-}
-
-/* Individual HUD items */
-.phylo-hud .hud-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  white-space: nowrap;
-}
-
-/* Material icon overrides removed; HUD uses lucide icons */
-
-.phylo-hud .hud-label {
-  font-weight: 500;
-  font-size: 1.0rem;
-  color: rgb(25, 28, 32);
-}
-
-.phylo-hud .hud-separator {
-  color: rgb(0, 0, 0);
-  font-weight: bold;
-  font-size: 1.2rem;
-  opacity: 0.8;
-}
-
-/* Dark theme adjustments for HUD */
-@media (prefers-color-scheme: dark) {
-  .phylo-hud .hud-metrics {
-    background: rgba(32, 34, 40, 0.95);
-    color: rgb(228, 227, 233);
-  }
-  
-  /* Material icon overrides removed */
-  
-  .phylo-hud .hud-label {
-    color: rgb(228, 227, 233);
-  }
-  
-  .phylo-hud .hud-separator {
-    color: rgb(0, 0, 0);
-    opacity: 0.9;
-  }
-}
-
-/* MSA item specific styling for HUD */
-.phylo-hud #hud-msa-window-item {
-  /* Initially hidden, shown when MSA is active */
-  display: none;
-}
-
-/* Progress bar styling within HUD */
-.hud-progress-container {
-  /* Add any specific progress bar styling here */
 }
 
 /* Responsive positioning for smaller screens */
@@ -109,19 +18,5 @@
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-  }
-  
-  .phylo-hud .hud-metrics {
-    gap: 12px;
-    padding: 10px 16px;
-    min-height: 48px;
-  }
-  
-  .phylo-hud .hud-item {
-    gap: 6px;
-  }
-  
-  .phylo-hud .hud-label {
-    font-size: 1.0rem;
   }
 }
