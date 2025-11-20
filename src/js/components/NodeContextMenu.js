@@ -179,7 +179,7 @@ export class NodeContextMenu {
    */
   _attachEventListeners() {
     // Handle menu item clicks
-    this.menu.addEventListener('click', (event) => {
+    this._onMenuClick = (event) => {
       console.log('[NodeContextMenu] Menu click event:', event);
       console.log('[NodeContextMenu] Event target:', event.target);
 
@@ -200,21 +200,24 @@ export class NodeContextMenu {
       console.log('[NodeContextMenu] Action:', action);
       this._handleAction(action);
       this.hide();
-    });
+    };
+    this.menu.addEventListener('click', this._onMenuClick);
 
     // Hide menu when clicking outside
-    document.addEventListener('click', (event) => {
+    this._onDocumentClick = (event) => {
       if (this.isVisible && !this.menu.contains(event.target)) {
         this.hide();
       }
-    });
+    };
+    document.addEventListener('click', this._onDocumentClick);
 
     // Hide menu on escape key
-    document.addEventListener('keydown', (event) => {
+    this._onDocumentKeydown = (event) => {
       if (event.key === 'Escape' && this.isVisible) {
         this.hide();
       }
-    });
+    };
+    document.addEventListener('keydown', this._onDocumentKeydown);
   }
 
   /**
@@ -513,9 +516,21 @@ Max Depth: ${stats.maxDepth}`;
    * Destroy the context menu and clean up resources
    */
   destroy() {
+    if (this.menu && this._onMenuClick) {
+      this.menu.removeEventListener('click', this._onMenuClick);
+    }
+    if (this._onDocumentClick) {
+      document.removeEventListener('click', this._onDocumentClick);
+    }
+    if (this._onDocumentKeydown) {
+      document.removeEventListener('keydown', this._onDocumentKeydown);
+    }
     if (this.menu && this.menu.parentNode) {
       this.menu.parentNode.removeChild(this.menu);
     }
+    this._onMenuClick = null;
+    this._onDocumentClick = null;
+    this._onDocumentKeydown = null;
     this.menu = null;
     this.currentNode = null;
     this.currentTreeData = null;

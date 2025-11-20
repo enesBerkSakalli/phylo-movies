@@ -4,7 +4,7 @@ import { LayerManager } from './deckgl/layers/LayerManager.js';
 import { TreeInterpolator } from './deckgl/interpolation/TreeInterpolator.js';
 import { TrailBuilder } from './deckgl/trails/TrailBuilder.js';
 import { WebGLTreeAnimationController } from './WebGLTreeAnimationController.js';
-import { useAppStore } from '../core/store.js';
+import { useAppStore, selectCurrentTree } from '../core/store.js';
 import { easeInOut, animate } from 'popmotion';
 import { NodeContextMenu } from '../components/NodeContextMenu.js';
 import { TreeNodeInteractionHandler } from './interaction/TreeNodeInteractionHandler.js';
@@ -85,13 +85,22 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
 
   async renderAllElements(options = {}) {
-    const { currentTreeIndex, treeList } = useAppStore.getState();
-    const currentTreeData = treeList[currentTreeIndex];
+    const { treeIndex } = options;
+    const state = useAppStore.getState();
+    const { currentTreeIndex, treeList } = state;
+    const targetIndex = Number.isInteger(treeIndex)
+      ? Math.min(Math.max(treeIndex, 0), treeList.length - 1)
+      : currentTreeIndex;
 
-    this.currentTreeData = currentTreeData;
+    const targetTreeData =
+      targetIndex === currentTreeIndex
+        ? selectCurrentTree(state)
+        : treeList[targetIndex];
 
-    const currentLayout = this.calculateLayout(currentTreeData, {
-      treeIndex: currentTreeIndex,
+    this.currentTreeData = targetTreeData;
+
+    const currentLayout = this.calculateLayout(targetTreeData, {
+      treeIndex: targetIndex,
       updateController: true
     });
 
@@ -118,9 +127,9 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     // and only when the tree index actually changes.
     const { playing, autoFitOnTreeChange } = useAppStore.getState();
     if (!playing && autoFitOnTreeChange) {
-      if (this._lastFocusedTreeIndex !== currentTreeIndex) {
+      if (this._lastFocusedTreeIndex !== targetIndex) {
         this.focusOnTree(layerData.nodes, layerData.labels);
-        this._lastFocusedTreeIndex = currentTreeIndex;
+        this._lastFocusedTreeIndex = targetIndex;
       }
     }
 

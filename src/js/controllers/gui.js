@@ -54,8 +54,7 @@ export default class Gui {
     this.unsubscribeStore = useAppStore.subscribe(
       (state) => ({
         currentTreeIndex: state.currentTreeIndex,
-        playing: state.playing,
-        subscriptionPaused: state.subscriptionPaused
+        playing: state.playing
       }),
       (current, previous) => {
         // Keep subscription focused: animation drives renders; avoid redundant work.
@@ -540,8 +539,7 @@ export default class Gui {
    * Clean up resources when GUI is destroyed
    */
   destroy() {
-    const { treeControllers, setTreeControllers } = useAppStore.getState();
-    treeControllers.forEach(c => c.destroy());
+    const { setTreeControllers } = useAppStore.getState();
     setTreeControllers([]);
 
     // Clean up store subscription

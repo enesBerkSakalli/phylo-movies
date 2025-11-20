@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useId } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -6,8 +6,9 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Palette,
   Eye,
@@ -23,7 +24,7 @@ import { CATEGORICAL_PALETTES, getPaletteInfo } from "@/js/constants/ColorPalett
 import { ColorSchemeManager } from "@/js/treeColoring/utils/ColorSchemeManager.js";
 import { parseGroupCSV, validateCSVTaxa } from "@/js/treeColoring/utils/CSVParser.js";
 import { generateGroups } from "@/js/treeColoring/utils/GroupingUtils.js";
-import { mapStrategyName, SEPARATION_STRATEGIES } from "@/js/treeColoring/constants/Strategies.js";
+import { mapStrategyName } from "@/js/treeColoring/constants/Strategies.js";
 
 function useForceUpdate() {
   const [, setV] = useState(0);
@@ -31,8 +32,8 @@ function useForceUpdate() {
 }
 
 function ColorSwatchInput({ label, color, onChange }) {
-  const inputRef = useRef(null);
   const [open, setOpen] = useState(false);
+  const controlId = useId();
 
   // Quick colors: first 4 palettes, first 5 colors each
   const quickColors = useMemo(() => {
@@ -43,87 +44,100 @@ function ColorSwatchInput({ label, color, onChange }) {
 
   return (
     <div className="flex flex-col gap-1.5">
-      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <Label className="text-xs text-muted-foreground" htmlFor={controlId}>{label}</Label>
       <div className="flex items-center gap-2">
-        <button
-          type="button"
-          className="h-6 w-6 rounded border"
-          style={{ backgroundColor: color || "#000000" }}
-          onClick={() => setOpen(o => !o)}
-          aria-label="Open color picker"
-        />
-        {open && (
-          <div className="z-50 rounded-md border bg-popover p-2 shadow-md">
-            <div className="mb-2 grid grid-cols-10 gap-1">
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              id={controlId}
+              type="button"
+              variant="outline"
+              size="icon"
+              className="h-7 w-7 border border-input"
+              style={{ backgroundColor: color || "#000000" }}
+              aria-label={`Select color for ${label}`}
+            />
+          </PopoverTrigger>
+          <PopoverContent className="w-64 space-y-3" align="start">
+            <div className="grid grid-cols-10 gap-1">
               {quickColors.map((c) => (
-                <button
+                <Button
                   key={c}
                   type="button"
-                  title={c}
-                  className="h-5 w-5 rounded border"
+                  size="icon"
+                  variant="ghost"
+                  className="h-6 w-6 border border-input p-0 hover:opacity-80"
                   style={{ backgroundColor: c }}
+                  aria-label={`Use color ${c}`}
                   onClick={() => { onChange(c); setOpen(false); }}
                 />
               ))}
             </div>
             <div className="flex items-center gap-2">
               <Input
-                ref={inputRef}
                 type="color"
                 value={color || "#000000"}
+                aria-label="Pick custom color"
                 onChange={(e) => onChange(e.target.value)}
-                className="h-8 w-[4.5rem] p-1"
+                className="h-8 w-[4.5rem] cursor-pointer p-1"
               />
               <Button size="sm" variant="outline" onClick={() => setOpen(false)}>Close</Button>
             </div>
-          </div>
-        )}
+          </PopoverContent>
+        </Popover>
+        <span className="text-xs text-muted-foreground">{color || "#000000"}</span>
       </div>
     </div>
   );
 }
 
-function ColorSchemeSelector({ onApply, title = "Apply a Color Scheme" }) {
+function ColorSchemeSelector({ onApply, title = "Apply a Color Scheme", description = "Browse curated palettes to jump-start coloring." }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium">{title}</h3>
-        <Collapsible open={open} onOpenChange={setOpen}>
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <div>
+            <CardTitle className="text-sm font-medium">{title}</CardTitle>
+            {description && <CardDescription className="text-xs text-muted-foreground">{description}</CardDescription>}
+          </div>
           <CollapsibleTrigger asChild>
-            <Button size="sm" variant="secondary">
+            <Button size="sm" variant="secondary" className="shrink-0">
               <Palette className="mr-2 size-4" />
-              {open ? (<>Hide <ChevronUp className="ml-1 size-4" /></>) : (<>Show Color Schemes <ChevronDown className="ml-1 size-4" /></>)}
+              {open ? (<>Hide <ChevronUp className="ml-1 size-4" /></>) : (<>Browse Palettes <ChevronDown className="ml-1 size-4" /></>)}
             </Button>
           </CollapsibleTrigger>
-          <CollapsibleContent className="mt-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {Object.entries(CATEGORICAL_PALETTES).map(([id, colors]) => {
-                const info = getPaletteInfo(id);
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => onApply(id)}
-                    className="rounded-md border p-2 text-left hover:bg-accent/40"
-                    title={info.description}
-                  >
-                    <div className="h-4 rounded" style={{ background: `linear-gradient(to right, ${colors.join(", ")})` }} />
-                    <div className="mt-2 flex items-center gap-1 text-xs">
-                      <span className="font-medium">{id}</span>
-                      {info.colorBlindSafe && (
-                        <span className="inline-flex items-center gap-1 text-muted-foreground"><Eye className="size-3" />CB-safe</span>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
-      </div>
-      <Separator />
-    </div>
+        </CardHeader>
+        <CollapsibleContent>
+          <CardContent className="grid grid-cols-1 gap-3 pt-0 md:grid-cols-2">
+            {Object.entries(CATEGORICAL_PALETTES).map(([id, colors]) => {
+              const info = getPaletteInfo(id);
+              return (
+                <Button
+                  key={id}
+                  type="button"
+                  variant="outline"
+                  className="h-auto flex flex-col items-start gap-2 text-left"
+                  onClick={() => onApply(id)}
+                  title={info.description}
+                >
+                  <div className="h-4 w-full rounded" style={{ background: `linear-gradient(to right, ${colors.join(", ")})` }} />
+                  <div className="flex items-center gap-1 text-xs">
+                    <span className="font-medium">{id}</span>
+                    {info.colorBlindSafe && (
+                      <span className="inline-flex items-center gap-1 text-muted-foreground">
+                        <Eye className="size-3" />
+                        CB-safe
+                      </span>
+                    )}
+                  </div>
+                </Button>
+              );
+            })}
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
   );
 }
 
@@ -138,46 +152,54 @@ function StrategySelector({ selectedStrategy, selectedSeparator, onChange, cache
   const allSeparators = Array.from(new Set([ ...commonSeparators, ...(cachedSeparators || []) ]));
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h4 className="text-sm font-medium mb-2">Grouping Strategy</h4>
-        <div className="flex flex-wrap gap-2">
-          {strategies.map(s => (
-            <Button
-              key={s.value}
-              size="sm"
-              variant={selectedStrategy === s.value ? "default" : "outline"}
-              onClick={() => onChange(s.value, selectedSeparator)}
-            >
-              {s.label}
-            </Button>
-          ))}
+    <Card>
+      <CardHeader className="space-y-1">
+        <CardTitle className="text-sm font-medium">Grouping Strategy</CardTitle>
+        <CardDescription className="text-xs text-muted-foreground">
+          Choose how taxa names are parsed and how separators are detected.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div>
+          <p className="mb-2 text-sm font-medium">Pattern</p>
+          <div className="flex flex-wrap gap-2">
+            {strategies.map(s => (
+              <Button
+                key={s.value}
+                size="sm"
+                variant={selectedStrategy === s.value ? "default" : "outline"}
+                onClick={() => onChange(s.value, selectedSeparator)}
+              >
+                {s.label}
+              </Button>
+            ))}
+          </div>
         </div>
-      </div>
-      <div>
-        <h4 className="text-sm font-medium mb-2">Separator Character</h4>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            size="sm"
-            variant={selectedSeparator == null ? "default" : "outline"}
-            onClick={() => onChange(selectedStrategy, null)}
-          >
-            Auto-detect
-          </Button>
-          {allSeparators.map(sep => (
+        <Separator />
+        <div>
+          <p className="mb-2 text-sm font-medium">Separator Character</p>
+          <div className="flex flex-wrap items-center gap-2">
             <Button
-              key={sep === " " ? "space" : sep}
               size="sm"
-              variant={selectedSeparator === sep ? "default" : "outline"}
-              onClick={() => onChange(selectedStrategy, sep)}
+              variant={selectedSeparator == null ? "default" : "outline"}
+              onClick={() => onChange(selectedStrategy, null)}
             >
-              {sep === " " ? "Space" : sep}
+              Auto-detect
             </Button>
-          ))}
+            {allSeparators.map(sep => (
+              <Button
+                key={sep === " " ? "space" : sep}
+                size="sm"
+                variant={selectedSeparator === sep ? "default" : "outline"}
+                onClick={() => onChange(selectedStrategy, sep)}
+              >
+                {sep === " " ? "Space" : sep}
+              </Button>
+            ))}
+          </div>
         </div>
-      </div>
-      <Separator />
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -186,21 +208,28 @@ function CSVUpload({ onFile }) {
   const [dragOver, setDragOver] = useState(false);
 
   return (
-    <div
-      onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-      onDragLeave={() => setDragOver(false)}
-      onDrop={(e) => {
-        e.preventDefault(); setDragOver(false);
-        const file = e.dataTransfer.files?.[0];
-        if (file) onFile(file);
-      }}
-      className={"relative rounded-md border p-6 text-center " + (dragOver ? "ring-2 ring-primary" : "")}
-    >
-      <Upload className="mx-auto mb-2 size-6 text-primary" />
-      <div className="text-sm text-muted-foreground mb-3">Drag and drop a CSV file here, or click to browse</div>
-      <input ref={inputRef} type="file" accept=".csv" className="hidden" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
-      <Button variant="secondary" size="sm" onClick={() => inputRef.current?.click()}>Browse Files</Button>
-    </div>
+    <Card>
+      <CardContent className="p-0">
+        <div
+          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={(e) => {
+            e.preventDefault(); setDragOver(false);
+            const file = e.dataTransfer.files?.[0];
+            if (file) onFile(file);
+          }}
+          className={
+            "relative flex min-h-[200px] flex-col items-center justify-center gap-3 rounded-md border-2 border-dashed p-6 text-center transition " +
+            (dragOver ? "border-primary ring-2 ring-primary/40" : "border-muted")
+          }
+        >
+          <Upload className="mx-auto size-6 text-primary" />
+          <div className="text-sm text-muted-foreground">Drag and drop a CSV file here, or click to browse</div>
+          <input ref={inputRef} type="file" accept=".csv" className="hidden" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
+          <Button variant="secondary" size="sm" onClick={() => inputRef.current?.click()}>Browse Files</Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -346,6 +375,18 @@ export function TaxaColoringWindow({ taxaNames = [], originalColorMap = {}, onAp
     force();
   }
 
+  function resetColorsToBlack() {
+    const mgr = colorManagerRef.current;
+    if (mode === "taxa") {
+      taxaNames.forEach((name) => mgr.taxaColorMap.set(name, "#000000"));
+    } else if (mode === "groups") {
+      groups.forEach((group) => mgr.groupColorMap.set(group.name, "#000000"));
+    } else if (mode === "csv") {
+      csvGroups.forEach((group) => mgr.groupColorMap.set(group.name, "#000000"));
+    }
+    force();
+  }
+
   function applyAndClose() {
     const result = {
       mode,
@@ -363,33 +404,34 @@ export function TaxaColoringWindow({ taxaNames = [], originalColorMap = {}, onAp
 
   return (
     <div className="flex h-full flex-col gap-4 p-4">
-      <header className="flex items-center justify-between">
-        <h1 className="text-base font-semibold">Taxa Color Assignment</h1>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={resetAll}>Reset</Button>
+      <header className="flex flex-col gap-3 border-b pb-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-base font-semibold">Taxa Color Assignment</h1>
+          <p className="text-sm text-muted-foreground">Fine-tune palette presets, grouping strategies, or CSV imports.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={resetColorsToBlack}>Reset Colors to Black</Button>
+          <Button variant="outline" size="sm" onClick={resetAll}>Reset All</Button>
           <Button size="sm" onClick={applyAndClose}>Apply</Button>
         </div>
       </header>
       <main className="flex-1 space-y-4 overflow-auto">
-        <div className="flex flex-wrap gap-2">
-          {[
-            { key: "taxa", label: "Taxa" },
-            { key: "groups", label: "Group by Pattern" },
-            { key: "csv", label: "Import CSV" },
-          ].map(({ key, label }) => (
-            <Button key={key} size="sm" variant={mode === key ? "default" : "outline"} onClick={() => setMode(key)}>
-              {label}
-            </Button>
-          ))}
-        </div>
+        <Tabs value={mode} onValueChange={setMode} className="space-y-4">
+          <TabsList className="grid w-full grid-cols-3 md:w-auto">
+            <TabsTrigger value="taxa">Taxa</TabsTrigger>
+            <TabsTrigger value="groups">Group by Pattern</TabsTrigger>
+            <TabsTrigger value="csv">Import CSV</TabsTrigger>
+          </TabsList>
 
-        {mode === "taxa" && (
-          <div className="space-y-4">
-            <ColorSchemeSelector onApply={(id) => applyScheme(id, "taxa")} />
+          <TabsContent value="taxa" className="space-y-4">
+            <ColorSchemeSelector
+              onApply={(id) => applyScheme(id, "taxa")}
+              description="Apply a curated palette directly to each taxa."
+            />
             {taxaNames.length === 0 ? (
               <Alert>
                 <div className="flex items-start gap-2">
-                  <Info className="size-4 mt-0.5" />
+                  <Info className="mt-0.5 size-4" />
                   <div>
                     <AlertTitle>No taxa available for coloring.</AlertTitle>
                     <AlertDescription>Load a dataset to configure taxa colors.</AlertDescription>
@@ -397,93 +439,118 @@ export function TaxaColoringWindow({ taxaNames = [], originalColorMap = {}, onAp
                 </div>
               </Alert>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {taxaNames.map((name) => (
-                  <ColorSwatchInput
-                    key={name}
-                    label={name}
-                    color={mgr.taxaColorMap.get(name) || "#000000"}
-                    onChange={(c) => { mgr.taxaColorMap.set(name, c); force(); }}
-                  />
-                ))}
-              </div>
+              <Card>
+                <CardHeader className="space-y-1 pb-2">
+                  <CardTitle className="text-sm font-medium">Taxa Colors ({taxaNames.length})</CardTitle>
+                  <CardDescription>Adjust colors for each taxa entry.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                    {taxaNames.map((name) => (
+                      <ColorSwatchInput
+                        key={name}
+                        label={name}
+                        color={mgr.taxaColorMap.get(name) || "#000000"}
+                        onChange={(c) => { mgr.taxaColorMap.set(name, c); force(); }}
+                      />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             )}
-          </div>
-        )}
+          </TabsContent>
 
-        {mode === "groups" && (
-          <div className="space-y-4">
+          <TabsContent value="groups" className="space-y-4">
             <StrategySelector
               selectedStrategy={selectedStrategy}
               selectedSeparator={selectedSeparator}
               onChange={(s, sep) => { setSelectedStrategy(s); setSelectedSeparator(sep); }}
               cachedSeparators={cachedSeparators}
             />
-            <ColorSchemeSelector onApply={(id) => applyScheme(id, "groups")} />
+            <ColorSchemeSelector
+              onApply={(id) => applyScheme(id, "groups")}
+              description="Assign palettes to generated groups."
+            />
             {groups.length === 0 ? (
               <Alert>
                 <div className="flex items-start gap-2">
-                  <Info className="size-4 mt-0.5" />
+                  <Info className="mt-0.5 size-4" />
                   <div>
                     <AlertTitle>No groups found with current settings.</AlertTitle>
                   </div>
                 </div>
               </Alert>
             ) : (
-              <div className="space-y-3">
-                <h3 className="text-sm font-medium">Group Colors ({groups.length})</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {groups.map((g) => (
-                    <ColorSwatchInput
-                      key={g.name}
-                      label={`${g.name} (${g.count})`}
-                      color={mgr.groupColorMap.get(g.name) || mgr.getRandomColor()}
-                      onChange={(c) => { mgr.groupColorMap.set(g.name, c); force(); }}
-                    />
-                  ))}
-                </div>
-              </div>
+              <Card>
+                <CardHeader className="space-y-1 pb-2">
+                  <CardTitle className="text-sm font-medium">Group Colors ({groups.length})</CardTitle>
+                  <CardDescription>Fine-tune colors for each detected grouping.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                    {groups.map((g) => (
+                      <ColorSwatchInput
+                        key={g.name}
+                        label={`${g.name} (${g.count})`}
+                        color={mgr.groupColorMap.get(g.name) || mgr.getRandomColor()}
+                        onChange={(c) => { mgr.groupColorMap.set(g.name, c); force(); }}
+                      />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             )}
-          </div>
-        )}
+          </TabsContent>
 
-        {mode === "csv" && (
-          <div className="space-y-4">
+          <TabsContent value="csv" className="space-y-4">
             <CSVUpload onFile={onFile} />
 
             {csvData && (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {csvData.groupingColumns.length > 1 && (
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <div className="text-sm font-medium">Column:</div>
-                    {csvData.groupingColumns.map((c) => (
-                      <Button key={c.name} size="sm" variant={csvColumn === c.name ? "default" : "outline"} onClick={() => onColumnChange(c.name)}>
-                        {c.displayName}
-                      </Button>
-                    ))}
-                  </div>
+                  <Card>
+                    <CardHeader className="space-y-1 pb-2">
+                      <CardTitle className="text-sm font-medium">Select CSV Column</CardTitle>
+                      <CardDescription>Choose which grouping column to visualize.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex flex-wrap gap-2">
+                      {csvData.groupingColumns.map((c) => (
+                        <Button key={c.name} size="sm" variant={csvColumn === c.name ? "default" : "outline"} onClick={() => onColumnChange(c.name)}>
+                          {c.displayName}
+                        </Button>
+                      ))}
+                    </CardContent>
+                  </Card>
                 )}
                 <CSVPreview csvValidation={csvValidation} csvGroups={csvGroups} />
-                <ColorSchemeSelector onApply={(id) => applyScheme(id, "csv")} />
+                <ColorSchemeSelector
+                  onApply={(id) => applyScheme(id, "csv")}
+                  description="Apply palettes to CSV-defined groups."
+                />
                 {csvGroups.length > 0 && (
-                  <div className="space-y-3">
-                    <h3 className="text-sm font-medium">Group Colors ({csvGroups.length})</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {csvGroups.map((g) => (
-                        <ColorSwatchInput
-                          key={g.name}
-                          label={`${g.name} (${g.count})`}
-                          color={mgr.groupColorMap.get(g.name) || mgr.getRandomColor()}
-                          onChange={(c) => { mgr.groupColorMap.set(g.name, c); force(); }}
-                        />
-                      ))}
-                    </div>
-                  </div>
+                  <Card>
+                    <CardHeader className="space-y-1 pb-2">
+                      <CardTitle className="text-sm font-medium">Group Colors ({csvGroups.length})</CardTitle>
+                      <CardDescription>Adjust colors imported from CSV groupings.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                        {csvGroups.map((g) => (
+                          <ColorSwatchInput
+                            key={g.name}
+                            label={`${g.name} (${g.count})`}
+                            color={mgr.groupColorMap.get(g.name) || mgr.getRandomColor()}
+                            onChange={(c) => { mgr.groupColorMap.set(g.name, c); force(); }}
+                          />
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
                 )}
               </div>
             )}
-          </div>
-        )}
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );

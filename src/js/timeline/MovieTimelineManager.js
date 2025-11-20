@@ -31,6 +31,26 @@ export class MovieTimelineManager {
         this._initialize();
     }
 
+    /**
+     * Select the most appropriate tree controller for scrubbing.
+     * Prefer one with animations enabled (right pane in comparison mode),
+     * otherwise fall back to the last available controller.
+     */
+    _selectScrubberController() {
+        const { treeControllers } = useAppStore.getState();
+        if (!Array.isArray(treeControllers) || !treeControllers.length) {
+            return null;
+        }
+
+        // In comparison mode, always target the right-hand controller (index 1) if it exists.
+        if (treeControllers.length > 1) {
+            return treeControllers[1];
+        }
+
+        const animated = treeControllers.find((ctrl) => ctrl?.animationsEnabled !== false);
+        return animated || treeControllers[treeControllers.length - 1] || null;
+    }
+
     _initialize() {
         const { totalSequenceLength } = getIndexMappings();
         const { playing } = useAppStore.getState();
@@ -59,6 +79,14 @@ export class MovieTimelineManager {
                 if (state.playing !== prevState.playing) {
                     this.isTimelinePlaying = state.playing;
                 }
+
+                // When controllers change (e.g., toggling comparison mode), refresh scrubber target
+                if (state.treeControllers !== prevState.treeControllers) {
+                    const controller = this._selectScrubberController();
+                    if (controller && controller !== this.scrubberAPI?.treeController) {
+                        this._initializeScrubberAPI(controller);
+                    }
+                }
             }
         );
 
@@ -66,17 +94,17 @@ export class MovieTimelineManager {
         requestAnimationFrame(() => this.updateCurrentPosition());
     }
 
-    _initializeScrubberAPI() {
+    _initializeScrubberAPI(controllerOverride = null) {
         try {
-            const { treeControllers } = useAppStore.getState();
-            if (!treeControllers || treeControllers.length === 0) {
+            const controller = controllerOverride || this._selectScrubberController();
+            if (!controller) {
                 console.warn('[Timeline] TreeControllers not available for ScrubberAPI');
                 return;
             }
 
             // Use the first tree controller (primary visualization)
             this.scrubberAPI = new ScrubberAPI(
-                treeControllers[0],
+                controller,
                 this.transitionResolver,
                 this
             );
@@ -86,10 +114,19 @@ export class MovieTimelineManager {
     }
 
     _createTimeline() {
-        let container = document.getElementById('timelineContainer');
         const timelineParent = document.querySelector('.interpolation-timeline-container');
+        if (!timelineParent) {
+            console.warn('[Timeline] Parent container not found. Skipping timeline initialisation.');
+            return;
+        }
 
-        container = document.createElement('div');
+        // Remove any stale container to avoid duplicate IDs when re-initialising.
+        const existing = timelineParent.querySelector('#timelineContainer');
+        if (existing && existing.parentNode) {
+            existing.parentNode.removeChild(existing);
+        }
+
+        const container = document.createElement('div');
         container.id = 'timelineContainer';
         container.className = 'timeline-visual-layer';
         // Use insertAdjacentElement to place it correctly after the header

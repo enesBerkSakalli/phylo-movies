@@ -1,4 +1,4 @@
-import { useAppStore } from '../../core/store.js';
+import { useAppStore, selectCurrentTree } from '../../core/store.js';
 
 /**
  * Handles tree node interactions for deck.gl visualization
@@ -17,8 +17,9 @@ export class TreeNodeInteractionHandler {
    * @param {HTMLCanvasElement} canvas - Canvas element for coordinate calculation
    */
   handleNodeClick(info, event, canvas) {
-    const { currentTreeIndex, treeList } = useAppStore.getState();
-    const currentTreeData = treeList[currentTreeIndex];
+    const state = useAppStore.getState();
+    const currentTreeData = selectCurrentTree(state);
+
     const treeNode = this._findTreeNodeFromLayerData(info.object, currentTreeData);
 
     const rect = canvas.getBoundingClientRect();
