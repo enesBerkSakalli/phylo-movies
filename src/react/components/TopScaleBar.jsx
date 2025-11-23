@@ -22,8 +22,29 @@ const buildHistogram = (lengths) => {
   if (!Array.isArray(lengths) || !lengths.length) return { bins: [], maxCount: 0, mean: 0, min: 0, max: 0 };
   const minLen = Math.min(...lengths);
   const maxLen = Math.max(...lengths);
+  const total = lengths.reduce((sum, v) => sum + v, 0);
+  const mean = lengths.length ? total / lengths.length : 0;
+
+  // Single-value case: one discrete bin
+  if (minLen === maxLen) {
+    const singleBin = [{ from: minLen, to: minLen, count: lengths.length }];
+    return { bins: singleBin, maxCount: lengths.length, mean, min: minLen, max: maxLen };
+  }
+
+  // If only a few unique discrete values, bucket exactly by value to avoid empty bins
+  const valueCounts = new Map();
+  lengths.forEach((v) => {
+    valueCounts.set(v, (valueCounts.get(v) || 0) + 1);
+  });
+  const uniques = Array.from(valueCounts.keys()).sort((a, b) => a - b);
+  if (uniques.length <= 6) {
+    const bins = uniques.map((v) => ({ from: v, to: v, count: valueCounts.get(v) || 0 }));
+    const maxCount = Math.max(...bins.map((b) => b.count));
+    return { bins, maxCount, mean, min: minLen, max: maxLen };
+  }
+
   const domainMin = minLen;
-  const domainMax = minLen === maxLen ? minLen + 1 : Math.max(domainMin + 1e-6, maxLen);
+  const domainMax = Math.max(domainMin + 1e-6, maxLen);
   const thresholdCount = clamp(Math.ceil(Math.sqrt(lengths.length)), 6, 14);
   const binner = d3Bin().domain([domainMin, domainMax]).thresholds(thresholdCount);
   const binned = binner(lengths);
@@ -33,8 +54,6 @@ const buildHistogram = (lengths) => {
     count: bucket.length,
   }));
   const maxCount = binned.reduce((acc, bucket) => Math.max(acc, bucket.length), 0);
-  const total = lengths.reduce((sum, v) => sum + v, 0);
-  const mean = lengths.length ? total / lengths.length : 0;
   return { bins, maxCount, mean, min: minLen, max: maxLen };
 };
 
