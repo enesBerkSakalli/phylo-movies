@@ -1,11 +1,11 @@
 import React from 'react';
-import { TimelineChart } from '../TimelineChart.jsx';
+import { DistanceChart } from '../DistanceChart.jsx';
 
 export function MovieChartSection({ barOptionValue, onBarOptionChange }) {
   return (
     <div className="movie-chart-container-full-width" role="region" aria-label="Distance Chart">
       <div className="chart-row">
-        <TimelineChart />
+        <DistanceChart />
         <div className="chart-controls" role="group" aria-label="Chart controls">
           <select
             name="barPlotOption"

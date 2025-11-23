@@ -23,6 +23,9 @@ export const createDataSlice = (set, get) => ({
   movieData: null,
   treeList: [],
   fileName: null,
+  distanceRfd: [],
+  distanceWeightedRfd: [],
+  scaleValues: [],
   pairSolutions: {}, // From tree_pair_solutions in JSON (used for red/marked)
   activeChangeEdgeTracking: [], // From split_change_tracking in JSON
   transitionResolver: null,
@@ -89,10 +92,18 @@ export const createDataSlice = (set, get) => ({
     const fileName = movieData.file_name || 'Unknown File';
 
     const hasMsa = !!(movieData?.msa && movieData.msa.sequences && Object.keys(movieData.msa.sequences).length > 0);
+    const distanceRfd = Array.isArray(movieData?.distances?.robinson_foulds)
+      ? [...movieData.distances.robinson_foulds]
+      : [];
+    const distanceWeightedRfd = Array.isArray(movieData?.distances?.weighted_robinson_foulds)
+      ? [...movieData.distances.weighted_robinson_foulds]
+      : [];
+    const scaleValues = scaleList.map((s) => (Number.isFinite(s?.value) ? s.value : 0));
 
     set({
       movieData: {
         ...movieData, // Keep existing movieData properties
+        distances: undefined, // distances stored at top-level fields
         scaleList,
         maxScale,
         fullTreeIndices,
@@ -101,6 +112,9 @@ export const createDataSlice = (set, get) => ({
       treeList: interpolatedTrees,
       fileName,
       hasMsa,
+      distanceRfd,
+      distanceWeightedRfd,
+      scaleValues,
       pairSolutions: movieData.tree_pair_solutions || {},
       activeChangeEdgeTracking: movieData.split_change_tracking || [],
       transitionResolver: resolver,
@@ -127,4 +141,8 @@ export const createDataSlice = (set, get) => ({
     updateColorManagerMarkedSubtrees(initialMarkedComponents);
     updateColorManagerActiveChangeEdge(initialActiveChangeEdge);
   },
+
+  setDistanceRfd: (arr) => set({ distanceRfd: Array.isArray(arr) ? [...arr] : [] }),
+  setDistanceWeightedRfd: (arr) => set({ distanceWeightedRfd: Array.isArray(arr) ? [...arr] : [] }),
+  setScaleValues: (arr) => set({ scaleValues: Array.isArray(arr) ? [...arr] : [] }),
 });

@@ -18,17 +18,8 @@ export function ButtonsFileOps() {
             onClick: () => gui?.saveImage?.(),
             icon: <Download className="size-4" />,
           },
-          {
-            id: 'compare-sequence-button',
-            label: 'Compare Trees',
-            title: 'Compare the current tree with the next tree',
-            ariaLabel: 'Compare trees',
-            disabled: true,
-            icon: <ArrowLeftRight className="size-4" />,
-          },
         ]}
       />
-
       <Separator />
     </>
   );
