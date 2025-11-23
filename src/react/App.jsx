@@ -5,6 +5,7 @@ import { Appearance } from './components/nav/appearance/Appearance.jsx';
 import { VisualElements } from './components/nav/appearance/VisualElements.jsx';
 import { TreeStructureGroup } from './components/nav/appearance/TreeStructureGroup.jsx';
 import { MoviePlayerBar } from './components/movie-player/MoviePlayerBar.jsx';
+import { TopScaleBar } from './components/TopScaleBar.jsx';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Film, SlidersHorizontal, Monitor, Sun, Moon, FolderOpen, Dna, GitBranch } from 'lucide-react';
@@ -190,6 +191,9 @@ export function App() {
           )}
         </div>
         <MoviePlayerBar />
+        <div id="top-scale-bar-container">
+          <TopScaleBar />
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );
