@@ -8,18 +8,21 @@ import { useAppStore, selectCurrentTree } from '../core/store.js';
 import { easeInOut, animate } from 'popmotion';
 import { NodeContextMenu } from '../components/NodeContextMenu.js';
 import { TreeNodeInteractionHandler } from './interaction/TreeNodeInteractionHandler.js';
+import { ComparisonModeRenderer } from './comparison/ComparisonModeRenderer.js';
+import { ViewportManager } from './viewport/ViewportManager.js';
 
 
 export class DeckGLTreeAnimationController extends WebGLTreeAnimationController {
-  constructor(container, { animations = true } = {}) {
+  constructor(container, { animations = true, viewSide = 'single', offset = null } = {}) {
     super(container);
     this.animationsEnabled = animations;
+    this.viewSide = viewSide;
     this.dataConverter = new DeckGLDataAdapter();
     this.layerManager = new LayerManager();
     this.treeInterpolator = new TreeInterpolator();
     this.contextMenu = new NodeContextMenu();
     this.currentTreeData = null;
-    this.interactionHandler = new TreeNodeInteractionHandler(this, this.contextMenu);
+    this.interactionHandler = new TreeNodeInteractionHandler(this, this.contextMenu, this.viewSide);
 
     this.deckManager = new DeckManager(this.webglContainer);
 
@@ -35,11 +38,14 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
     this.layerManager.layerStyles.setStyleChangeCallback(() => this._handleStyleChange());
 
+    // Comparison mode renderer
+    this.comparisonRenderer = new ComparisonModeRenderer(this);
+
+    // Viewport manager for camera and screen projections
+    this.viewportManager = new ViewportManager(this);
+
     // Motion trail builder for tracking element movement
     this.trailBuilder = new TrailBuilder({ minDistanceSq: 0.25 });
-    // Maintain last-frame node angles for tracking purposes
-    this._lastNodeAngles = new Map();
-    this._lastTickTs = null;
 
     // Track last interpolation source to detect when we start a new interpolation
     this._lastInterpolationFromIndex = null;
@@ -47,14 +53,8 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     // Track last tree index we auto-fit to
     this._lastFocusedTreeIndex = null;
 
-    // Track change metrics between frames to adapt easing strategies
-    this._lastChangeMetrics = null;
-
-    // Simple layout cache to avoid recomputing the same from/to layouts every frame
-    this._lastLayoutFromIndex = null;
-    this._lastLayoutToIndex = null;
-    this._lastLayoutFrom = null;
-    this._lastLayoutTo = null;
+    // Optional initial view offset
+    this.viewportManager.initializeOffsets(offset);
   }
 
   startAnimation() {
@@ -76,7 +76,13 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     this.renderAllElements();
   }
 
+  _getViewOffset() {
+    return this.viewportManager.getViewOffset();
+  }
 
+  _areBoundsInView(bounds, paddingFactor = 1.05) {
+    return this.viewportManager.areBoundsInView(bounds, paddingFactor);
+  }
 
   setCameraMode(mode) {
     this.deckManager.setCameraMode(mode, { preserveTarget: true });
@@ -84,10 +90,27 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
   }
 
 
+  async _renderComparisonMode(leftIndex, rightIndex) {
+    return this.comparisonRenderer.renderStatic(leftIndex, rightIndex);
+  }
+
   async renderAllElements(options = {}) {
-    const { treeIndex } = options;
+    const { treeIndex, leftIndex, rightIndex, comparisonMode } = options;
     const state = useAppStore.getState();
-    const { currentTreeIndex, treeList } = state;
+    const { currentTreeIndex, treeList, transitionResolver, comparisonMode: comparisonModeFromStore } = state;
+
+    // Handle comparison mode (explicit or inferred from store)
+    const useComparison = comparisonMode ?? comparisonModeFromStore;
+    if (useComparison) {
+      const full = Array.isArray(transitionResolver?.fullTreeIndices) ? transitionResolver.fullTreeIndices : [];
+      // Always pick the next anchor after the current position; fallback to last anchor
+      const computedRight = full.find((i) => i > currentTreeIndex) ?? full[full.length - 1] ?? currentTreeIndex;
+      const leftIdx = Number.isInteger(leftIndex) ? leftIndex : currentTreeIndex;
+      const rightIdx = Number.isInteger(rightIndex) ? rightIndex : computedRight;
+      return this._renderComparisonMode(leftIdx, rightIdx);
+    }
+
+    // Single tree mode
     const targetIndex = Number.isInteger(treeIndex)
       ? Math.min(Math.max(treeIndex, 0), treeList.length - 1)
       : currentTreeIndex;
@@ -122,39 +145,18 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     layerData.trails = this._buildFlowTrails(layerData.nodes, layerData.labels);
 
     this._updateLayersEfficiently(layerData);
+    this.viewportManager.updateScreenPositions(layerData.nodes);
 
     // Auto-fit policy: only focus when not playing and policy enabled,
     // and only when the tree index actually changes.
     const { playing, autoFitOnTreeChange } = useAppStore.getState();
     if (!playing && autoFitOnTreeChange) {
       if (this._lastFocusedTreeIndex !== targetIndex) {
-        this.focusOnTree(layerData.nodes, layerData.labels);
+        this.viewportManager.focusOnTree(layerData.nodes, layerData.labels);
         this._lastFocusedTreeIndex = targetIndex;
       }
     }
 
-  }
-
-  focusOnTree(nodes, labels) {
-    const allElements = [...nodes, ...(labels || [])];
-    const bounds = allElements.reduce((acc, el) => {
-      const [x, y] = el.position;
-      acc.minX = Math.min(acc.minX, x);
-      acc.maxX = Math.max(acc.maxX, x);
-      acc.minY = Math.min(acc.minY, y);
-      acc.maxY = Math.max(acc.maxY, y);
-      return acc;
-    }, {
-      minX: Infinity, maxX: -Infinity,
-      minY: Infinity, maxY: -Infinity,
-    });
-
-    this.deckManager.fitToBounds(bounds, {
-      padding: 1.25,
-      duration: 550,
-      labels,
-      getLabelSize: this.layerManager.layerStyles.getLabelSize?.bind(this.layerManager.layerStyles)
-    });
   }
 
   applyInterpolationEasing(t, easingType = 'linear') {
@@ -166,6 +168,43 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       treeIndex: treeIndex,
       updateController: false
     });
+  }
+
+  /**
+   * Build interpolated DeckGL layer data between two trees without rendering.
+   */
+  _buildInterpolatedData(fromTreeData, toTreeData, t, options = {}) {
+    const { fromTreeIndex, toTreeIndex } = options;
+    const layoutFrom = this._calculateLayout(fromTreeData, fromTreeIndex);
+    const layoutTo = this._calculateLayout(toTreeData, toTreeIndex);
+
+    const currentLeaves = layoutTo.tree.leaves();
+    const { extensionRadius, labelRadius } = this._getConsistentRadii(
+      layoutFrom, layoutTo, null, currentLeaves
+    );
+    const dataFrom = this.dataConverter.convertTreeToLayerData(
+      layoutFrom.tree,
+      {
+        extensionRadius,
+        labelRadius,
+        canvasWidth: layoutFrom.width,
+        canvasHeight: layoutFrom.height
+      }
+    );
+
+    const dataTo = this.dataConverter.convertTreeToLayerData(
+      layoutTo.tree,
+      {
+        extensionRadius,
+        labelRadius,
+        canvasWidth: layoutTo.width,
+        canvasHeight: layoutTo.height
+      }
+    );
+
+    const interpolatedData = this.treeInterpolator.interpolateTreeData(dataFrom, dataTo, t);
+    interpolatedData.trails = this._buildFlowTrails(interpolatedData.nodes, interpolatedData.labels);
+    return interpolatedData;
   }
 
   async renderInterpolatedFrame(fromTreeData, toTreeData, timeFactor, options = {}) {
@@ -211,6 +250,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     // Append trails if enabled
     interpolatedData.trails = this._buildFlowTrails(interpolatedData.nodes, interpolatedData.labels);
     this._updateLayersEfficiently(interpolatedData);
+    this.viewportManager.updateScreenPositions(interpolatedData.nodes);
   }
 
   async _updateLayersEfficiently(newData) {
@@ -220,7 +260,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
 
   async _updateSmoothAnimation(timestamp) {
-    const { movieData, updateAnimationProgress, getAnimationInterpolationData, stop } = useAppStore.getState();
+    const { movieData, updateAnimationProgress, getAnimationInterpolationData, stop, comparisonMode, transitionResolver } = useAppStore.getState();
     if (!movieData || updateAnimationProgress(timestamp)) {
       stop();
       return;
@@ -240,6 +280,22 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
         totalTrees: movieData.interpolated_trees?.length
       });
       return;
+    }
+
+    if (comparisonMode) {
+      const interpolatedData = this._buildInterpolatedData(fromTree, toTree, easedProgress, {
+        toTreeIndex,
+        fromTreeIndex
+      });
+
+      const full = Array.isArray(transitionResolver?.fullTreeIndices) ? transitionResolver.fullTreeIndices : [];
+      const rightIdx = full.find((i) => i > toTreeIndex) ?? full[full.length - 1] ?? toTreeIndex;
+      const rightTree = movieData.interpolated_trees[rightIdx];
+
+      if (rightTree) {
+        await this.comparisonRenderer.renderAnimated(interpolatedData, rightTree, rightIdx);
+        return;
+      }
     }
 
     await this.renderInterpolatedFrame(
@@ -313,18 +369,19 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     });
   }
 
-  _selectInterpolationEasing(changeMetrics) {
-    const avgChange = changeMetrics?.averageChange ?? 0;
+  /**
+   * Get store state - helper for ComparisonModeRenderer
+   */
+  _getState() {
+    return useAppStore.getState();
+  }
 
-    if (!Number.isFinite(avgChange) || avgChange <= 0.05) {
-      return 'gentle';
-    }
-
-    if (avgChange >= 0.2) {
-      return 'linear';
-    }
-
-    return avgChange > 0.1 ? 'linear' : 'gentle';
+  /**
+   * Clamp tree index to valid range - helper for ComparisonModeRenderer
+   */
+  _clampIndex(index) {
+    const { treeList } = useAppStore.getState();
+    return Math.min(Math.max(index, 0), treeList.length - 1);
   }
 
 }

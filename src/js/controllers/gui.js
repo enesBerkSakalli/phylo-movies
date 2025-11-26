@@ -245,43 +245,67 @@ export default class Gui {
   }
 
   /**
+   * Calculate tree indices for comparison mode
+   * @param {number} currentTreeIndex - Current position in sequence
+   * @param {Object} transitionResolver - Transition index resolver
+   * @returns {Object} Object with leftIndex and rightIndex
+   */
+  _getComparisonIndices(currentTreeIndex, transitionResolver) {
+    const full = transitionResolver?.fullTreeIndices || [];
+
+    // Left shows current tree (animated)
+    const leftIndex = currentTreeIndex;
+
+    // Right shows next anchor after the source anchor (static)
+    const sourceAnchorIndex = transitionResolver.getSourceTreeIndex(currentTreeIndex);
+    const rightIndex = full.find((i) => i > sourceAnchorIndex) ?? full[full.length - 1];
+
+    return { leftIndex, rightIndex };
+  }
+
+  /**
    * Ensures we have the appropriate tree controller (WebGL or SVG)
    * @returns {Object} Tree controller ready for rendering
    */
   _ensureTreeController() {
     const { setTreeControllers, treeControllers: currentTreeControllers, comparisonMode } = useAppStore.getState();
 
-    if (comparisonMode) {
-      if (currentTreeControllers.length === 2) {
-        return currentTreeControllers;
+    // Always use single controller - it will handle comparison mode internally
+    if (currentTreeControllers.length === 1) {
+      const controller = currentTreeControllers[0];
+      // Update comparison mode state
+      if (controller.setComparisonMode) {
+        controller.setComparisonMode(comparisonMode);
       }
-      const newControllers = [
-        new this.options.TreeController('#webgl-container-left', { animations: false }),
-        new this.options.TreeController('#webgl-container-right', { animations: true }),
-      ];
-      setTreeControllers(newControllers);
-      return newControllers;
-    } else {
-      if (currentTreeControllers.length === 1) {
-        return currentTreeControllers;
-      }
-      const newController = new this.options.TreeController('#webgl-container', { animations: true });
-      setTreeControllers([newController]);
-      return [newController];
+      return currentTreeControllers;
     }
+
+    const newController = new this.options.TreeController('#webgl-container', {
+      animations: true,
+      comparisonMode
+    });
+    setTreeControllers([newController]);
+    return [newController];
   }
 
   /**
    * Performs the actual tree rendering with proper error handling
    * @param {Object} treeController - The controller to use for rendering
+   * @param {number|Object} treeIndexOrOptions - Tree index or options object with leftIndex, rightIndex, comparisonMode
    */
-  async _performTreeRender(treeController, treeIndex) {
+  async _performTreeRender(treeController, treeIndexOrOptions) {
     const { setRenderInProgress } = useAppStore.getState();
 
     setRenderInProgress(true);
     try {
       // Always do a fresh render - renderAllElements now clears automatically
-      await treeController.renderAllElements({ treeIndex });
+      if (typeof treeIndexOrOptions === 'object' && treeIndexOrOptions !== null) {
+        // Comparison mode with both trees
+        await treeController.renderAllElements(treeIndexOrOptions);
+      } else {
+        // Single tree mode
+        await treeController.renderAllElements({ treeIndex: treeIndexOrOptions });
+      }
     } catch (error) {
       console.error('Error during tree rendering:', error);
       throw error; // Re-throw so caller can handle if needed
@@ -310,7 +334,7 @@ export default class Gui {
       return; // Early exit - either already rendering or no valid tree
     }
 
-    const { comparisonMode, currentTreeIndex } = useAppStore.getState();
+    const { comparisonMode, currentTreeIndex, treeList, transitionResolver } = useAppStore.getState();
 
     // 2. Ensure we have the right controller for current mode
     const treeControllers = this._ensureTreeController();
@@ -318,29 +342,9 @@ export default class Gui {
     // 3. Perform the actual rendering
     try {
       if (comparisonMode) {
-        const { transitionResolver } = useAppStore.getState();
-        const full = transitionResolver?.fullTreeIndices || [];
-        let leftIndex = Math.max(0, currentTreeIndex - 1);
-        let rightIndex = currentTreeIndex;
-
-        // Prefer comparing full trees (anchor snapshots) when available
-        if (Array.isArray(full) && full.length >= 2) {
-          // Find the first anchor >= current index
-          let idx = full.findIndex((i) => i >= currentTreeIndex);
-          if (idx === -1) idx = full.length - 1; // past the last anchor
-
-          // Show a distinct pair of anchors around current position
-          rightIndex = full[idx];
-          leftIndex = full[Math.max(0, idx - 1)];
-
-          // If both anchors collapse to the same index (e.g., at start), try next anchor for right
-          if (leftIndex === rightIndex && idx + 1 < full.length) {
-            rightIndex = full[idx + 1];
-          }
-        }
-
-        await this._performTreeRender(treeControllers[0], leftIndex);
-        await this._performTreeRender(treeControllers[1], rightIndex);
+        const { leftIndex, rightIndex } = this._getComparisonIndices(currentTreeIndex, transitionResolver);
+        // Pass both tree indices to the controller for split-view rendering
+        await this._performTreeRender(treeControllers[0], { leftIndex, rightIndex, comparisonMode: true });
       } else {
         await this._performTreeRender(treeControllers[0]);
       }

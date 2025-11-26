@@ -54,7 +54,8 @@ export class ScrubberAPI {
     const storeState = useAppStore.getState();
     const { updateColorManagerMarkedSubtrees, updateColorManagerActiveChangeEdge,
             getActualHighlightData, getCurrentActiveChangeEdge,
-            markedComponentsEnabled, activeChangeEdgesEnabled } = storeState;
+            markedComponentsEnabled, activeChangeEdgesEnabled,
+            comparisonMode, treeControllers, transitionResolver, movieData } = storeState;
     const primaryTreeIndex = timeFactor < 0.5 ? fromIndex : toIndex;
     if (markedComponentsEnabled) {
       const markedComponents = getActualHighlightData(primaryTreeIndex);
@@ -81,6 +82,16 @@ export class ScrubberAPI {
       fromTreeIndex: fromIndex,
       toTreeIndex: toIndex
     };
+
+    // In comparison mode, pass right tree index for static display
+    if (comparisonMode) {
+      const full = Array.isArray(transitionResolver?.fullTreeIndices) ? transitionResolver.fullTreeIndices : [];
+      // Show the next anchor after the current interpolated index
+      const rightIndex = full.find((i) => i > primaryTreeIndex) ?? full[full.length - 1] ?? primaryTreeIndex;
+
+      enhancedOptions.comparisonMode = true;
+      enhancedOptions.rightTreeIndex = rightIndex;
+    }
 
     await this.treeController.renderScrubFrame(fromTree, toTree, timeFactor, enhancedOptions);
   }

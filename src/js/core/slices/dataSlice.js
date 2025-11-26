@@ -34,6 +34,16 @@ export const createDataSlice = (set, get) => ({
   msaStepSize: 50,
   msaColumnCount: 0, // Derived from data.msa.sequences[first]
   hasMsa: false,
+  viewLinkMapping: {
+    fromIndex: null,
+    toIndex: null,
+    anchors: [],
+    movers: [],
+    sourceToDest: {},
+    destToSource: {},
+    sourceSplits: {},
+    destSplits: {}
+  },
 
   /**
    * Initializes the entire application state from the raw movieData object.

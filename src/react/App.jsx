@@ -15,6 +15,7 @@ import Gui from '../js/controllers/gui.js';
 import { DeckGLTreeAnimationController } from '../js/treeVisualisation/DeckGLTreeAnimationController.js';
 import { debounce } from '../js/utils/debounce.js';
 import { initializeTheme } from '../js/core/theme.js';
+import { MoverCurvesOverlay } from './components/overlays/MoverCurvesOverlay.jsx';
 
 export function App() {
   const comparisonMode = useAppStore((s) => s.comparisonMode);
@@ -180,15 +181,9 @@ export function App() {
       </Sidebar>
 
       <SidebarInset>
-        <div className="full-size-container" style={{ flex: 1, minHeight: 0 }}>
-          {comparisonMode ? (
-            <div style={{ display: 'flex', width: '100%', height: '100%' }}>
-              <div id="webgl-container-left" style={{ width: '50%', height: '100%' }}></div>
-              <div id="webgl-container-right" style={{ width: '50%', height: '100%' }}></div>
-            </div>
-          ) : (
-            <div id="webgl-container" style={{ width: '100%', height: '100%' }}></div>
-          )}
+        <div className="full-size-container" style={{ flex: 1, minHeight: 0, position: 'relative' }}>
+          <div id="webgl-container" style={{ width: '100%', height: '100%' }}></div>
+          {comparisonMode && <MoverCurvesOverlay />}
         </div>
         <MoviePlayerBar />
         <div id="top-scale-bar-container">

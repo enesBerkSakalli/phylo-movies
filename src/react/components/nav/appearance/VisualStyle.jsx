@@ -14,9 +14,15 @@ export function VisualStyle() {
   const setLayoutAngleDegrees = useAppStore((s) => s.setLayoutAngleDegrees);
   const layoutRotationDegrees = useAppStore((s) => s.layoutRotationDegrees);
   const setLayoutRotationDegrees = useAppStore((s) => s.setLayoutRotationDegrees);
+  const viewOffsetX = useAppStore((s) => s.viewOffsetX);
+  const viewOffsetY = useAppStore((s) => s.viewOffsetY);
+  const setViewOffsetX = useAppStore((s) => s.setViewOffsetX);
+  const setViewOffsetY = useAppStore((s) => s.setViewOffsetY);
   const treeControllers = useAppStore((s) => s.treeControllers);
 
   const fontSizeNumber = typeof fontSize === 'string' ? parseFloat(fontSize) : Number(fontSize || 1.8);
+  const viewOffsetXValue = Number(viewOffsetX) || 0;
+  const viewOffsetYValue = Number(viewOffsetY) || 0;
 
   return (
     <div>
@@ -78,6 +84,54 @@ export function VisualStyle() {
             onValueChange={async (vals) => {
               const v = Array.isArray(vals) ? vals[0] : Number(layoutRotationDegrees || 0);
               setLayoutRotationDegrees(v);
+              try {
+                for (const controller of treeControllers) {
+                  await controller?.renderAllElements?.();
+                }
+              } catch {}
+            }}
+            className="w-40"
+          />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label title="Adjust spacing between trees horizontally in comparison view" aria-label="Horizontal offset control">
+            <span id="view-offset-x-label">Tree Spacing X</span>: <span id="view-offset-x-value">{viewOffsetXValue}</span>
+          </Label>
+          <Slider
+            id="view-offset-x"
+            min={-500}
+            max={500}
+            step={5}
+            value={[viewOffsetXValue]}
+            aria-labelledby="view-offset-x-label"
+            onValueChange={async (vals) => {
+              const v = Array.isArray(vals) ? vals[0] : viewOffsetXValue;
+              setViewOffsetX(v);
+              try {
+                for (const controller of treeControllers) {
+                  await controller?.renderAllElements?.();
+                }
+              } catch {}
+            }}
+            className="w-40"
+          />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label title="Adjust vertical separation between trees in comparison view" aria-label="Vertical offset control">
+            <span id="view-offset-y-label">Tree Spacing Y</span>: <span id="view-offset-y-value">{viewOffsetYValue}</span>
+          </Label>
+          <Slider
+            id="view-offset-y"
+            min={-500}
+            max={500}
+            step={5}
+            value={[viewOffsetYValue]}
+            aria-labelledby="view-offset-y-label"
+            onValueChange={async (vals) => {
+              const v = Array.isArray(vals) ? vals[0] : viewOffsetYValue;
+              setViewOffsetY(v);
               try {
                 for (const controller of treeControllers) {
                   await controller?.renderAllElements?.();

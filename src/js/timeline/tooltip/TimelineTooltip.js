@@ -48,4 +48,10 @@ export class TimelineTooltip {
     this.el.style.left = `${left}px`;
     this.el.style.top = `${top}px`;
   }
+
+  destroy() {
+    this.hide();
+    this.el = null;
+    this.visible = false;
+  }
 }
