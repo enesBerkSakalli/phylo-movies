@@ -1,7 +1,7 @@
 import * as d3 from "d3";
 import { useAppStore } from '../core/store.js';
 import { transformBranchLengths } from "../utils/branchTransformUtils.js";
-import { RadialTreeLayout } from "./layout/RadialTreeLayout.js";
+import { TidyTreeLayout } from "./layout/TidyTreeLayout.js";
 import calculateScales, { getMaxScaleValue } from "../utils/scaleUtils.js";
 // LABEL_OFFSETS moved to centralized store styleConfig
 
@@ -15,6 +15,7 @@ export class WebGLTreeAnimationController {
       branchTransformation: undefined,
       calculationTransformation: 'none'
     };
+    this._transformedCache = new Map();
 
     // Initialize WebGL container
     this.webglContainer = d3.select(container);
@@ -32,13 +33,29 @@ export class WebGLTreeAnimationController {
    */
   initializeUniformScaling(branchTransformation = 'none') {
     const { treeList, transitionResolver } = useAppStore.getState();
+    const datasetToken = `${branchTransformation}::${treeList?.length || 0}`;
+
+    // Skip recompute if dataset and transformation are unchanged
+    if (
+      this.uniformScalingEnabled &&
+      this.maxGlobalScale &&
+      this._scalingState.calculationTransformation === branchTransformation &&
+      this._scalingState.datasetToken === datasetToken &&
+      this._scalingState.datasetRef === treeList
+    ) {
+      return;
+    }
 
     const fullTreeIndices = transitionResolver?.fullTreeIndices || Array.from({ length: treeList.length }, (_, i) => i);
 
-    // Apply transformation to all trees before calculating scales
-    const transformedTreeList = branchTransformation !== 'none'
-      ? treeList.map(treeData => transformBranchLengths(treeData, branchTransformation))
-      : treeList;
+    // Apply transformation to all trees before calculating scales (cached per transformation)
+    let transformedTreeList = this._transformedCache.get(branchTransformation);
+    if (!transformedTreeList) {
+      transformedTreeList = branchTransformation !== 'none'
+        ? treeList.map(treeData => transformBranchLengths(treeData, branchTransformation))
+        : treeList;
+      this._transformedCache.set(branchTransformation, transformedTreeList);
+    }
 
     // Calculate global scales using transformed tree data
     this.globalScaleList = calculateScales(transformedTreeList, fullTreeIndices);
@@ -47,6 +64,8 @@ export class WebGLTreeAnimationController {
 
     // Store the transformation state this scaling was calculated for
     this._scalingState.calculationTransformation = branchTransformation;
+    this._scalingState.datasetToken = datasetToken;
+    this._scalingState.datasetRef = treeList;
   }
 
   /**
@@ -108,8 +127,15 @@ export class WebGLTreeAnimationController {
     const height = rect.height;
 
     // Apply transformation and create layout
-    const transformedTreeData = transformBranchLengths(treeData, branchTransformation);
-    const layoutCalculator = new RadialTreeLayout(transformedTreeData);
+    // Reuse cached transformed tree to keep scaling consistent with uniform scale list
+    let transformedTreeData;
+    const cachedList = this._transformedCache.get(branchTransformation);
+    if (cachedList && typeof options.treeIndex === 'number') {
+      transformedTreeData = cachedList[options.treeIndex];
+    } else {
+      transformedTreeData = transformBranchLengths(treeData, branchTransformation);
+    }
+    const layoutCalculator = new TidyTreeLayout(transformedTreeData);
     layoutCalculator.setDimension(width, height);
     layoutCalculator.setMargin(40);
     layoutCalculator.setAngleExtentDegrees(layoutAngleDegrees || 360);

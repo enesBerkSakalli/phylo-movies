@@ -23,6 +23,8 @@ export const createUiSlice = (set, get) => ({
   barOptionValue: 'rfd',
   layoutAngleDegrees: 360,
   layoutRotationDegrees: 0,
+  viewOffsetX: 0,
+  viewOffsetY: 0,
 
   toggleComparisonMode: () => set((state) => ({ comparisonMode: !state.comparisonMode })),
 
@@ -101,6 +103,22 @@ export const createUiSlice = (set, get) => ({
   setLayoutRotationDegrees: (degrees) => {
     const value = Number.isFinite(degrees) ? degrees : 0;
     set({ layoutRotationDegrees: value });
+  },
+
+  /**
+   * Horizontal spacing offset between trees (comparison view).
+   */
+  setViewOffsetX: (offset) => {
+    const value = clamp(Number(offset) || 0, -5000, 5000);
+    set({ viewOffsetX: value });
+  },
+
+  /**
+   * Vertical offset between trees (comparison view).
+   */
+  setViewOffsetY: (offset) => {
+    const value = clamp(Number(offset) || 0, -5000, 5000);
+    set({ viewOffsetY: value });
   },
 
   /**

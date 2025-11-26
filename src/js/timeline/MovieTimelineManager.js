@@ -32,9 +32,8 @@ export class MovieTimelineManager {
     }
 
     /**
-     * Select the most appropriate tree controller for scrubbing.
-     * Prefer one with animations enabled (right pane in comparison mode),
-     * otherwise fall back to the last available controller.
+     * Select the tree controller for scrubbing.
+     * Returns the first available controller (now always a single controller).
      */
     _selectScrubberController() {
         const { treeControllers } = useAppStore.getState();
@@ -42,13 +41,7 @@ export class MovieTimelineManager {
             return null;
         }
 
-        // In comparison mode, always target the right-hand controller (index 1) if it exists.
-        if (treeControllers.length > 1) {
-            return treeControllers[1];
-        }
-
-        const animated = treeControllers.find((ctrl) => ctrl?.animationsEnabled !== false);
-        return animated || treeControllers[treeControllers.length - 1] || null;
+        return treeControllers[0] || null;
     }
 
     _initialize() {

@@ -5,9 +5,10 @@ import { useAppStore, selectCurrentTree } from '../../core/store.js';
  * Coordinates between layer data and tree data for click/hover events
  */
 export class TreeNodeInteractionHandler {
-  constructor(layoutCalculator, contextMenu) {
+  constructor(layoutCalculator, contextMenu, viewSide = 'single') {
     this.layoutCalculator = layoutCalculator;
     this.contextMenu = contextMenu;
+    this.viewSide = viewSide; // 'left' | 'right' | 'single'
   }
 
   /**
@@ -35,7 +36,7 @@ export class TreeNodeInteractionHandler {
    * @param {Event} event - DOM event
    */
   handleNodeHover(info, event) {
-    // Future: Could add hover effects, tooltips, etc.
+    // No-op: linked highlighting is applied automatically when view link mapping is recomputed.
   }
 
   /**
