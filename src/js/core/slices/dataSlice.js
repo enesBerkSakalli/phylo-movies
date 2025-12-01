@@ -34,6 +34,8 @@ export const createDataSlice = (set, get) => ({
   msaStepSize: 50,
   msaColumnCount: 0, // Derived from data.msa.sequences[first]
   hasMsa: false,
+  screenPositionsLeft: {},
+  screenPositionsRight: {},
   viewLinkMapping: {
     fromIndex: null,
     toIndex: null,
@@ -155,4 +157,32 @@ export const createDataSlice = (set, get) => ({
   setDistanceRfd: (arr) => set({ distanceRfd: Array.isArray(arr) ? [...arr] : [] }),
   setDistanceWeightedRfd: (arr) => set({ distanceWeightedRfd: Array.isArray(arr) ? [...arr] : [] }),
   setScaleValues: (arr) => set({ scaleValues: Array.isArray(arr) ? [...arr] : [] }),
+
+  /**
+   * Store screen-space positions for overlay rendering.
+   * @param {'left'|'right'|string} side - Side identifier (non-'right' treated as 'left')
+   * @param {Object} positions - Map of splitIndex key -> {x,y,width,height,isLeaf}
+   */
+  setScreenPositions: (side, positions) => {
+    const isRight = side === 'right';
+    set(isRight ? { screenPositionsRight: positions || {} } : { screenPositionsLeft: positions || {} });
+  },
+
+  /**
+   * Store the view link mapping used by comparison overlays.
+   * @param {Object} mapping - Mapping from buildViewLinkMapping; defaults to empty mapping when falsy.
+   */
+  setViewLinkMapping: (mapping) => {
+    const empty = {
+      fromIndex: null,
+      toIndex: null,
+      anchors: [],
+      movers: [],
+      sourceToDest: {},
+      destToSource: {},
+      sourceSplits: {},
+      destSplits: {}
+    };
+    set({ viewLinkMapping: mapping || empty });
+  },
 });

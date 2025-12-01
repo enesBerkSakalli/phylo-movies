@@ -64,8 +64,8 @@ export default class Gui {
           this._updatePlayButtonState();
         }
 
-        // Only update the main tree view when NOT playing and the index has changed.
-        if (!current.playing && current.currentTreeIndex !== previous?.currentTreeIndex) {
+        // Update the main tree view when the index has changed (even during playback)
+        if (current.currentTreeIndex !== previous?.currentTreeIndex) {
           this.updateMain();
         }
 

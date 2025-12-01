@@ -73,16 +73,169 @@ export class ComparisonModeRenderer {
    * Combine layer data from left and right trees.
    * @param {Object} leftData - Left tree layer data
    * @param {Object} rightData - Right tree layer data
+   * @param {Array} connectors - Optional connector paths between trees
    * @returns {Object} Combined layer data
    */
-  _combineLayerData(leftData, rightData) {
+  _combineLayerData(leftData, rightData, connectors = []) {
     return {
       nodes: [...leftData.nodes, ...rightData.nodes],
       links: [...(leftData.links || []), ...(rightData.links || [])],
       extensions: [...(leftData.extensions || []), ...(rightData.extensions || [])],
       labels: [...(leftData.labels || []), ...(rightData.labels || [])],
-      trails: leftData.trails || []
+      trails: leftData.trails || [],
+      connectors
     };
+  }
+
+  /**
+   * Build a quick lookup of split-index keys to positions (prefers label/tip position when available).
+   */
+  _buildPositionMap(nodes, labels = []) {
+    const positionMap = new Map();
+    const labelPositionByLeaf = new Map();
+
+    labels.forEach(label => {
+      if (label.leaf) {
+        labelPositionByLeaf.set(label.leaf, label.position);
+      }
+    });
+
+    nodes.forEach(node => {
+      const splitIndices = node.data?.split_indices;
+      if (Array.isArray(splitIndices) && splitIndices.length > 0) {
+        const key = splitIndices.join('-');
+        let position = node.position;
+
+        // For leaf nodes, use label position (tip)
+        if (node.isLeaf && node.originalNode) {
+          const labelPos = labelPositionByLeaf.get(node.originalNode);
+          if (labelPos) {
+            position = labelPos;
+          }
+        }
+
+        positionMap.set(key, {
+          position,
+          isLeaf: node.isLeaf,
+          node,
+          name: node.data?.name ? String(node.data.name) : null
+        });
+      }
+    });
+
+    return positionMap;
+  }
+
+  /**
+   * Build simple straight connectors using backend mapping.
+   */
+  _buildConnectors(viewLinkMapping, leftPositions, rightPositions) {
+    const connectors = [];
+    const mapping = viewLinkMapping?.sourceToDest || viewLinkMapping;
+    if (!mapping || Object.keys(mapping).length === 0) {
+      console.warn('[ComparisonModeRenderer] No viewLinkMapping provided; skipping connectors');
+      return connectors;
+    }
+
+    console.log('[ComparisonModeRenderer] Building connectors', {
+      mappingKeys: Object.keys(mapping).length,
+      leftPositions: leftPositions.size,
+      rightPositions: rightPositions.size
+    });
+
+    const moversSet = new Set(viewLinkMapping?.movers || []);
+    const moverLeaves = new Set(viewLinkMapping?.moverLeafIds || []);
+    const colorManager = this.controller._getState()?.colorManager;
+
+    const hexToRgba = (hex = '#000000', alpha = 160) => {
+      if (!hex || typeof hex !== 'string') return [220, 40, 40, alpha];
+      const clean = hex.replace('#', '');
+      const full = clean.length === 3
+        ? clean.split('').map((c) => c + c).join('')
+        : clean.padEnd(6, '0');
+      const r = parseInt(full.slice(0, 2), 16);
+      const g = parseInt(full.slice(2, 4), 16);
+      const b = parseInt(full.slice(4, 6), 16);
+      return [r, g, b, alpha];
+    };
+
+    const buildBezierPath = (from, to, samples = 24) => {
+      if (!from || !to) return [];
+      const p0 = from;
+      const p3 = to;
+      const midX = (p0[0] + p3[0]) / 2;
+      const offset = Math.max(Math.abs(p3[0] - p0[0]) * 0.15, 30);
+      const p1 = [midX - offset, p0[1], 0];
+      const p2 = [midX + offset, p3[1], 0];
+
+      const path = [];
+      for (let i = 0; i <= samples; i++) {
+        const t = i / samples;
+        const mt = 1 - t;
+        const x = mt * mt * mt * p0[0] + 3 * mt * mt * t * p1[0] + 3 * mt * t * t * p2[0] + t * t * t * p3[0];
+        const y = mt * mt * mt * p0[1] + 3 * mt * mt * t * p1[1] + 3 * mt * t * t * p2[1] + t * t * t * p3[1];
+        path.push([x, y, 0]);
+      }
+      return path;
+    };
+
+    const rightLeavesByName = new Map();
+    for (const [key, info] of rightPositions) {
+      if (info?.isLeaf && info.name) {
+        rightLeavesByName.set(info.name, { key, info });
+      }
+    }
+
+    let connectorIdx = 0;
+
+    Object.entries(mapping || {}).forEach(([rawSrcKey, rawDstKeys]) => {
+      const srcKey = Array.isArray(rawSrcKey) ? rawSrcKey.join('-') : String(rawSrcKey || '');
+      if (!srcKey || !rawDstKeys) return;
+      if (moversSet.size && !moversSet.has(srcKey)) return;
+
+      const srcIdsAll = srcKey.split('-').filter(Boolean);
+      const srcIds = moverLeaves.size ? srcIdsAll.filter((id) => moverLeaves.has(Number(id))) : srcIdsAll;
+      const destinations = Array.isArray(rawDstKeys) ? rawDstKeys : [rawDstKeys];
+
+      const allowedNames = new Set();
+      destinations.forEach((dstKeyRaw) => {
+        const dstKey = Array.isArray(dstKeyRaw) ? dstKeyRaw.join('-') : String(dstKeyRaw || '');
+        const dstIdsAll = dstKey.split('-').filter(Boolean);
+        const dstIds = moverLeaves.size ? dstIdsAll.filter((id) => moverLeaves.has(Number(id))) : dstIdsAll;
+        dstIds.forEach((id) => {
+          const info = rightPositions.get(id);
+          if (info?.isLeaf && info.name) allowedNames.add(info.name);
+        });
+      });
+
+      srcIds.forEach(splitIdx => {
+        const info = leftPositions.get(splitIdx);
+        if (info && info.isLeaf && info.name) {
+          if (!allowedNames.has(info.name)) return;
+          const rightMatch = rightLeavesByName.get(info.name);
+          if (rightMatch) {
+            const srcPos = [info.position[0], info.position[1], 0];
+            const dstPos = [rightMatch.info.position[0], rightMatch.info.position[1], 0];
+            const path = buildBezierPath(srcPos, dstPos);
+            if (!path.length) return;
+            const srcColorHex = colorManager?.getNodeColor ? colorManager.getNodeColor(info.node || info) : null;
+            connectors.push({
+              id: `connector-${splitIdx}-${rightMatch.key}-${connectorIdx++}`,
+              source: srcPos,
+              target: dstPos,
+              path,
+              color: hexToRgba(srcColorHex, 160),
+              width: 1.5,
+              jointRounded: true,
+              capRounded: true
+            });
+          }
+        }
+      });
+    });
+
+    console.log('[ComparisonModeRenderer] Built connector count', connectors.length);
+    return connectors;
   }
 
   /**
@@ -147,7 +300,17 @@ export class ComparisonModeRenderer {
     leftLayerData.trails = this.controller._buildFlowTrails(leftLayerData.nodes, leftLayerData.labels);
     rightLayerData.trails = [];
 
-    const combinedData = this._combineLayerData(leftLayerData, rightLayerData);
+    // Build connectors (straight lines) from backend mapping if views are linked
+    const { viewsConnected, viewLinkMapping } = this.controller._getState();
+    const connectors = (viewsConnected && viewLinkMapping && Object.keys(viewLinkMapping).length > 0)
+      ? this._buildConnectors(
+          viewLinkMapping,
+          this._buildPositionMap(leftLayerData.nodes, leftLayerData.labels),
+          this._buildPositionMap(rightLayerData.nodes, rightLayerData.labels)
+        )
+      : [];
+
+    const combinedData = this._combineLayerData(leftLayerData, rightLayerData, connectors);
 
     const elements = [...combinedData.nodes, ...(combinedData.labels || [])];
     const bounds = this._calculateBounds(elements);
@@ -206,12 +369,22 @@ export class ComparisonModeRenderer {
 
     this._applyOffset(rightLayerData, rightOffset, viewOffset.y);
 
+    const { viewsConnected, viewLinkMapping } = this.controller._getState();
+    const connectors = (viewsConnected && viewLinkMapping && Object.keys(viewLinkMapping).length > 0)
+      ? this._buildConnectors(
+          viewLinkMapping,
+          this._buildPositionMap(interpolatedData.nodes, interpolatedData.labels),
+          this._buildPositionMap(rightLayerData.nodes, rightLayerData.labels)
+        )
+      : [];
+
     const combinedData = {
       nodes: [...(interpolatedData.nodes || []), ...(rightLayerData.nodes || [])],
       links: [...(interpolatedData.links || []), ...(rightLayerData.links || [])],
       extensions: [...(interpolatedData.extensions || []), ...(rightLayerData.extensions || [])],
       labels: [...(interpolatedData.labels || []), ...(rightLayerData.labels || [])],
-      trails: interpolatedData.trails || []
+      trails: interpolatedData.trails || [],
+      connectors
     };
 
     this.controller._updateLayersEfficiently(combinedData);

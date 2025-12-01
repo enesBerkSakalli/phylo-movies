@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Deck, OrthographicView, COORDINATE_SYSTEM } from '@deck.gl/core';
-import { PathLayer } from '@deck.gl/layers';
+import { TripsLayer } from '@deck.gl/geo-layers';
 import { useAppStore } from '../../../js/core/store.js';
 
 function buildCurves(sourceToDest, sourcePos, destPos) {
@@ -38,10 +38,18 @@ function buildBezierPath(from, to, samples = 24) {
   return path;
 }
 
+function toTimedPath(from, to, samples = 24, duration = 2000) {
+  const base = buildBezierPath(from, to, samples);
+  if (base.length === 0) return [];
+  return base.map((p, i) => [...p, (i / Math.max(base.length - 1, 1)) * duration]);
+}
+
 export function MoverCurvesOverlay() {
   const containerRef = useRef(null);
   const deckRef = useRef(null);
+  const [timeMs, setTimeMs] = useState(0);
   const viewsConnected = useAppStore((s) => s.viewsConnected);
+  const playing = useAppStore((s) => s.playing);
   const sourceToDest = useAppStore((s) => s.viewLinkMapping.sourceToDest);
   const sourcePos = useAppStore((s) => s.screenPositionsLeft);
   const destPos = useAppStore((s) => s.screenPositionsRight);
@@ -99,33 +107,57 @@ export function MoverCurvesOverlay() {
   }, []);
 
   useEffect(() => {
+    if (!viewsConnected || !playing) {
+      setTimeMs(0);
+      return undefined;
+    }
+    let frame = null;
+    const loop = (t) => {
+      setTimeMs(t % 2000); // repeat every 2 seconds
+      frame = requestAnimationFrame(loop);
+    };
+    frame = requestAnimationFrame(loop);
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, [viewsConnected, playing]);
+
+  useEffect(() => {
     const deck = deckRef.current;
     if (!deck) return;
     const rect = containerRef.current?.getBoundingClientRect();
-    const layer = new PathLayer({
-      id: 'mover-curves',
-      data: curves.map((c, idx) => ({ id: idx, path: buildBezierPath(c.from, c.to) })),
-      getPath: d => d.path,
-      getColor: [59, 130, 246, 200],
+    const tripsData = curves.map((c, idx) => ({
+      id: idx,
+      path: toTimedPath(c.from, c.to),
+      color: [59, 130, 246]
+    }));
+
+    const layer = new TripsLayer({
+      id: 'mover-trips',
+      data: tripsData,
+      getPath: (d) => d.path,
+      getColor: (d) => d.color,
       getWidth: 2,
       widthUnits: 'pixels',
+      currentTime: timeMs,
+      trailLength: 400, // ms visible behind the head
+      opacity: 0.9,
       pickable: false,
-      coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
-      opacity: 0.9
+      coordinateSystem: COORDINATE_SYSTEM.CARTESIAN
     });
     deck.setProps({
-      layers: (viewsConnected && curves.length) ? [layer] : [],
+      layers: (viewsConnected && tripsData.length) ? [layer] : [],
       viewState: rect ? {
         id: 'mover-view',
         target: [rect.width / 2, -rect.height / 2, 0],
         zoom: 0
       } : undefined
     });
-  }, [curves, viewsConnected]);
+  }, [curves, viewsConnected, timeMs]);
 
   const debugText = viewsConnected
-    ? `movers: ${curves.length} | src keys: ${Object.keys(sourcePos || {}).length} | dst keys: ${Object.keys(destPos || {}).length}`
-    : 'views disconnected';
+    ? `Views connected • movers: ${curves.length}`
+    : 'Views disconnected';
 
   return (
     <div ref={containerRef} style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>

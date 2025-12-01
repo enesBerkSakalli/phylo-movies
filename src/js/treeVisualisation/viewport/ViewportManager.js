@@ -98,7 +98,7 @@ export class ViewportManager {
    * Project node positions into screen space for overlay rendering.
    * @param {Array} nodes - Node elements to project
    */
-  updateScreenPositions(nodes) {
+  updateScreenPositions(nodes, sideOverride = null) {
     const overlayEl = document.getElementById('comparison-overlay');
     if (!overlayEl || !this.controller.deckManager?.deck || !nodes) return;
 
@@ -118,12 +118,17 @@ export class ViewportManager {
         const [px, py] = viewport.project(node.position);
         positions[key] = {
           x: px + containerRect.left - overlayRect.left,
-          y: py + containerRect.top - overlayRect.top
+          y: py + containerRect.top - overlayRect.top,
+          width: 0,
+          height: 0,
+          isLeaf: !node.children || node.children.length === 0
         };
       });
 
       if (typeof setScreenPositions === 'function') {
-        setScreenPositions(this.controller.viewSide, positions);
+        const side = sideOverride || this.controller.viewSide || 'single';
+        console.log('[viewport] setScreenPositions', side, 'keys', Object.keys(positions));
+        setScreenPositions(side, positions);
       }
     } catch (e) {
       console.warn('[ViewportManager] Failed to project screen positions:', e);
