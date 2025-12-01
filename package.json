@@ -25,8 +25,11 @@
     "test:backward-scrubbing-all": "npm run test:direction-detection && npm run test:backward-scrubbing && npm run test:interpolation-fix"
   },
   "dependencies": {
-    "@deck.gl/core": "^9.1.14",
-    "@deck.gl/layers": "^9.1.14",
+    "@deck.gl/core": "9.1.14",
+    "@deck.gl/extensions": "9.1.14",
+    "@deck.gl/layers": "9.1.14",
+    "@deck.gl/geo-layers": "9.1.14",
+    "@deck.gl/mesh-layers": "9.1.14",
     "@hookform/resolvers": "^5.2.2",
     "@material/web": "^2.4.0",
     "@nivo/core": "^0.85.0",

@@ -10,6 +10,7 @@ import { NodeContextMenu } from '../components/NodeContextMenu.js';
 import { TreeNodeInteractionHandler } from './interaction/TreeNodeInteractionHandler.js';
 import { ComparisonModeRenderer } from './comparison/ComparisonModeRenderer.js';
 import { ViewportManager } from './viewport/ViewportManager.js';
+import { buildViewLinkMapping } from '../utils/viewLinkMapping.js';
 
 
 export class DeckGLTreeAnimationController extends WebGLTreeAnimationController {
@@ -80,6 +81,49 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     return this.viewportManager.getViewOffset();
   }
 
+  /**
+   * Resolve pair key from current tree metadata (prefer exact indices).
+   */
+  _derivePairKey(leftIndex, rightIndex, treeMetadata = []) {
+    if (!Array.isArray(treeMetadata)) return null;
+    const directLeft = treeMetadata[leftIndex]?.tree_pair_key;
+    if (directLeft) return directLeft;
+    const directRight = treeMetadata[rightIndex]?.tree_pair_key;
+    if (directRight) return directRight;
+    // Fallback: scan between indices
+    const start = Math.min(leftIndex ?? 0, rightIndex ?? 0);
+    const end = Math.max(leftIndex ?? 0, rightIndex ?? 0);
+    for (let i = start; i <= end; i++) {
+      const key = treeMetadata?.[i]?.tree_pair_key;
+      if (key) return key;
+    }
+    return null;
+  }
+
+  /**
+   * Build and store view link mapping for comparison rendering.
+   */
+  _updateViewLinkMapping(leftIndex, rightIndex) {
+    const { treeList, pairSolutions, setViewLinkMapping, movieData } = useAppStore.getState();
+    if (!setViewLinkMapping || !Array.isArray(treeList)) return;
+
+    const pairKey = this._derivePairKey(leftIndex, rightIndex, movieData?.tree_metadata);
+    const pairSolution = pairKey ? pairSolutions?.[pairKey] : null;
+
+    if (pairSolution) {
+      const mapping = buildViewLinkMapping(
+        treeList[leftIndex] || null,
+        treeList[rightIndex] || null,
+        leftIndex,
+        rightIndex,
+        pairSolution
+      );
+      setViewLinkMapping(mapping);
+    } else {
+      setViewLinkMapping(null);
+    }
+  }
+
   _areBoundsInView(bounds, paddingFactor = 1.05) {
     return this.viewportManager.areBoundsInView(bounds, paddingFactor);
   }
@@ -107,6 +151,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       const computedRight = full.find((i) => i > currentTreeIndex) ?? full[full.length - 1] ?? currentTreeIndex;
       const leftIdx = Number.isInteger(leftIndex) ? leftIndex : currentTreeIndex;
       const rightIdx = Number.isInteger(rightIndex) ? rightIndex : computedRight;
+      this._updateViewLinkMapping(leftIdx, rightIdx);
       return this._renderComparisonMode(leftIdx, rightIdx);
     }
 
@@ -145,7 +190,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     layerData.trails = this._buildFlowTrails(layerData.nodes, layerData.labels);
 
     this._updateLayersEfficiently(layerData);
-    this.viewportManager.updateScreenPositions(layerData.nodes);
+    this.viewportManager.updateScreenPositions(layerData.nodes, this.viewSide);
 
     // Auto-fit policy: only focus when not playing and policy enabled,
     // and only when the tree index actually changes.
@@ -250,10 +295,14 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     // Append trails if enabled
     interpolatedData.trails = this._buildFlowTrails(interpolatedData.nodes, interpolatedData.labels);
     this._updateLayersEfficiently(interpolatedData);
-    this.viewportManager.updateScreenPositions(interpolatedData.nodes);
+    this.viewportManager.updateScreenPositions(interpolatedData.nodes, this.viewSide);
   }
 
   async _updateLayersEfficiently(newData) {
+    if (!this.deckManager?.deck) {
+      console.warn('[DeckGLTreeAnimationController] Deck not ready, skipping layer update');
+      return;
+    }
     const layers = this.layerManager.updateLayersWithData(newData);
     this.deckManager.setLayers(layers);
   }

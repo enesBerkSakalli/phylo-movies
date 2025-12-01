@@ -45,25 +45,31 @@ export function MoviePlayerBar() {
   }, [playing, gui]);
 
   const onJumpClick = useCallback(() => {
+    try { gui?.stop?.(); } catch {}
     const input = document.getElementById('positionValue');
     if (!input) return;
     const raw = parseInt(input.value, 10);
     if (!Number.isFinite(raw)) return;
     const target = Math.max(1, Math.min(treeListLen, raw)) - 1; // 1-based to 0-based
     goToPosition(target);
+    try { gui?.updateMain?.(); } catch {}
   }, [goToPosition, treeListLen]);
 
   const onBackwardStep = useCallback(() => {
     if (currentTreeIndex > 0) {
+      try { gui?.stop?.(); } catch {}
       goToPosition(currentTreeIndex - 1);
+      try { gui?.updateMain?.(); } catch {}
     }
-  }, [currentTreeIndex, goToPosition]);
+  }, [currentTreeIndex, goToPosition, gui]);
 
   const onForwardStep = useCallback(() => {
     if (currentTreeIndex < treeListLen - 1) {
+      try { gui?.stop?.(); } catch {}
       goToPosition(currentTreeIndex + 1);
+      try { gui?.updateMain?.(); } catch {}
     }
-  }, [currentTreeIndex, treeListLen, goToPosition]);
+  }, [currentTreeIndex, treeListLen, goToPosition, gui]);
 
   const handleStartRecording = useCallback(async () => {
     const recorder = ensureRecorder();

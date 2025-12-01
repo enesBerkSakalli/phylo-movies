@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ChevronsLeft, ChevronLeft, Play, Pause, ChevronRight, ChevronsRight, GitCompare } from 'lucide-react';
+import { ChevronsLeft, ChevronLeft, Play, Pause, ChevronRight, ChevronsRight, GitCompare, Link2, Link2Off } from 'lucide-react';
 import { useAppStore } from '../../../js/core/store.js';
 
 export function TransportControls({
@@ -15,6 +15,8 @@ export function TransportControls({
 }) {
   const comparisonMode = useAppStore((state) => state.comparisonMode);
   const toggleComparisonMode = useAppStore((state) => state.toggleComparisonMode);
+  const viewsConnected = useAppStore((s) => s.viewsConnected);
+  const setViewsConnected = useAppStore((s) => s.setViewsConnected);
 
   return (
     <>
@@ -92,6 +94,19 @@ export function TransportControls({
         data-state={comparisonMode ? 'active' : 'inactive'}
       >
         <GitCompare className="size-5" />
+      </Button>
+
+      <Button
+        className="transport-button"
+        id="link-views-button"
+        variant="ghost"
+        size="icon"
+        title="Toggle view linking (draw connectors between trees)"
+        aria-label="Toggle view linking"
+        onClick={() => setViewsConnected(!viewsConnected)}
+        data-state={viewsConnected ? 'active' : 'inactive'}
+      >
+        {viewsConnected ? <Link2 className="size-5" /> : <Link2Off className="size-5" />}
       </Button>
     </>
   );

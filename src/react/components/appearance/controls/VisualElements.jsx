@@ -1,7 +1,6 @@
 import React from 'react';
-import { ColoringPanel } from './ColoringPanel.jsx';
+import { ColoringPanel } from '../color/ColoringPanel.jsx';
 import { VisualStyle } from './VisualStyle.jsx';
-import { ViewLinking } from './ViewLinking.jsx';
 import { SidebarGroup, SidebarGroupLabel } from '@/components/ui/sidebar';
 
 export function VisualElements() {
@@ -14,10 +13,6 @@ export function VisualElements() {
       <SidebarGroup>
         <SidebarGroupLabel>Coloring & Styling</SidebarGroupLabel>
         <ColoringPanel />
-      </SidebarGroup>
-      <SidebarGroup>
-        <SidebarGroupLabel>View Linking</SidebarGroupLabel>
-        <ViewLinking />
       </SidebarGroup>
     </div>
   );
