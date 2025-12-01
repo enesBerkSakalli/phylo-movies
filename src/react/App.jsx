@@ -1,9 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import { ButtonsFileOps } from './components/nav/ButtonsFileOps.jsx';
 import { ButtonsMSA } from './components/nav/ButtonsMSA.jsx';
-import { Appearance } from './components/nav/appearance/Appearance.jsx';
-import { VisualElements } from './components/nav/appearance/VisualElements.jsx';
-import { TreeStructureGroup } from './components/nav/appearance/TreeStructureGroup.jsx';
+import { Appearance } from './components/appearance/Appearance.jsx';
+import { VisualElements } from './components/appearance/controls/VisualElements.jsx';
+import { TreeStructureGroup } from './components/appearance/layout/TreeStructureGroup.jsx';
 import { MoviePlayerBar } from './components/movie-player/MoviePlayerBar.jsx';
 import { TopScaleBar } from './components/TopScaleBar.jsx';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator } from '@/components/ui/sidebar';
@@ -183,7 +183,6 @@ export function App() {
       <SidebarInset>
         <div className="full-size-container" style={{ flex: 1, minHeight: 0, position: 'relative' }}>
           <div id="webgl-container" style={{ width: '100%', height: '100%' }}></div>
-          {comparisonMode && <MoverCurvesOverlay />}
         </div>
         <MoviePlayerBar />
         <div id="top-scale-bar-container">

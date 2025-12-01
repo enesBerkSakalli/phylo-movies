@@ -1,8 +1,22 @@
+const DEBUG_VIEW_LINK = false;
+
+const normalizeKey = (key) => {
+  if (Array.isArray(key)) return key.join('-');
+  if (typeof key === 'string') {
+    return key
+      .replace(/[\[\]\s]/g, '')
+      .split(',')
+      .filter(Boolean)
+      .join('-');
+  }
+  return String(key || '');
+};
+
 function buildFromSolution(pairSolution, fromIndex = null, toIndex = null) {
   const sourceMap = pairSolution?.solution_to_source_map || {};
   const destMap = pairSolution?.solution_to_destination_map || {};
-  const anchors = [];
   const movers = [];
+  const moverLeafIds = new Set();
   const sourceToDest = {};
   const destToSource = {};
   const sourceSplits = {};
@@ -26,9 +40,9 @@ function buildFromSolution(pairSolution, fromIndex = null, toIndex = null) {
       dstGroups.forEach((dst) => {
         const dKey = toKey(dst);
         destSplits[dKey] = { split: dst };
-        sourceToDest[sKey].push(dKey);
+        if (!sourceToDest[sKey].includes(dKey)) sourceToDest[sKey].push(dKey);
         if (!destToSource[dKey]) destToSource[dKey] = [];
-        destToSource[dKey].push(sKey);
+        if (!destToSource[dKey].includes(sKey)) destToSource[dKey].push(sKey);
       });
     });
     dstGroups.forEach((dst) => {
@@ -37,15 +51,46 @@ function buildFromSolution(pairSolution, fromIndex = null, toIndex = null) {
       if (!destToSource[dKey]) destToSource[dKey] = [];
       // If there was no source group for this solution, still add empty mapping entry
     });
-    // Heuristic: mark any mapped groups as movers (they participated in a solution)
-    movers.push(...srcGroups.map(toKey), ...dstGroups.map(toKey));
+    // Movers: restrict to jumps defined by jumping_subtree_solutions when available
   });
+
+  const jumpSolutions = pairSolution?.jumping_subtree_solutions || {};
+  const jumpKeys = Object.keys(jumpSolutions);
+  if (jumpKeys.length) {
+    movers.push(
+      ...jumpKeys.map((k) => normalizeKey(k)).filter(Boolean)
+    );
+    // Collect individual leaf ids participating in jumps (innermost arrays)
+    Object.values(jumpSolutions).forEach((entries) => {
+      // entries is often nested arrays; flatten numeric leaves
+      const collectLeaves = (val) => {
+        if (Array.isArray(val)) {
+          val.forEach(collectLeaves);
+        } else if (typeof val === 'number') {
+          moverLeafIds.add(val);
+        }
+      };
+      collectLeaves(entries);
+    });
+  } else {
+    // Fallback: treat any mapped group as mover
+    solutionIds.forEach((sid) => {
+      const srcEntries = Object.values(sourceMap[sid] || {});
+      const dstEntries = Object.values(destMap[sid] || {});
+      movers.push(
+        ...srcEntries.map(parseSplit).filter((g) => g.length).map(toKey),
+        ...dstEntries.map(parseSplit).filter((g) => g.length).map(toKey)
+      );
+      srcEntries.forEach((g) => parseSplit(g).forEach((n) => moverLeafIds.add(n)));
+      dstEntries.forEach((g) => parseSplit(g).forEach((n) => moverLeafIds.add(n)));
+    });
+  }
 
   return {
     fromIndex,
     toIndex,
-    anchors,
     movers,
+    moverLeafIds,
     sourceToDest,
     destToSource,
     sourceSplits,
@@ -54,29 +99,35 @@ function buildFromSolution(pairSolution, fromIndex = null, toIndex = null) {
 }
 
 export function buildViewLinkMapping(fromTree, toTree, fromIndex = null, toIndex = null, pairSolution = null) {
-  console.log('[viewLinkMapping] Building mapping:', {
-    fromIndex,
-    toIndex,
-    hasPairSolution: !!pairSolution,
-    hasSourceMap: !!(pairSolution?.solution_to_source_map),
-    hasDestMap: !!(pairSolution?.solution_to_destination_map),
-    sourceMapKeys: pairSolution?.solution_to_source_map ? Object.keys(pairSolution.solution_to_source_map) : [],
-    destMapKeys: pairSolution?.solution_to_destination_map ? Object.keys(pairSolution.solution_to_destination_map) : []
-  });
+  if (DEBUG_VIEW_LINK) {
+    console.log('[viewLinkMapping] Building mapping:', {
+      fromIndex,
+      toIndex,
+      hasPairSolution: !!pairSolution,
+      hasSourceMap: !!(pairSolution?.solution_to_source_map),
+      hasDestMap: !!(pairSolution?.solution_to_destination_map),
+      sourceMapKeys: pairSolution?.solution_to_source_map ? Object.keys(pairSolution.solution_to_source_map) : [],
+      destMapKeys: pairSolution?.solution_to_destination_map ? Object.keys(pairSolution.solution_to_destination_map) : []
+    });
+  }
 
   if (pairSolution && pairSolution.solution_to_source_map && pairSolution.solution_to_destination_map) {
     const result = buildFromSolution(pairSolution, fromIndex, toIndex);
-    console.log('[viewLinkMapping] Result:', {
-      sourceSplitsCount: Object.keys(result.sourceSplits).length,
-      destSplitsCount: Object.keys(result.destSplits).length,
-      sourceToDest: Object.keys(result.sourceToDest).length,
-      destToSource: Object.keys(result.destToSource).length,
-      moversCount: result.movers.length
-    });
+    if (DEBUG_VIEW_LINK) {
+      console.log('[viewLinkMapping] Result:', {
+        sourceSplitsCount: Object.keys(result.sourceSplits).length,
+        destSplitsCount: Object.keys(result.destSplits).length,
+        sourceToDest: Object.keys(result.sourceToDest).length,
+        destToSource: Object.keys(result.destToSource).length,
+        moversCount: result.movers.length
+      });
+    }
     return result;
   }
   // No solution maps available—return empty mapping (no fallback).
-  console.warn('[viewLinkMapping] No solution maps available - returning empty mapping');
+  if (DEBUG_VIEW_LINK) {
+    console.warn('[viewLinkMapping] No solution maps available - returning empty mapping');
+  }
   return {
     fromIndex,
     toIndex,

@@ -69,6 +69,17 @@ export class LayerManager {
           capRounded: true,
           pickable: false
         }
+      },
+      connectors: {
+        id: 'phylo-connectors',
+        LayerClass: PathLayer,
+        defaultProps: {
+          widthUnits: 'pixels',
+          widthMinPixels: 1,
+          jointRounded: true,
+          capRounded: true,
+          pickable: true
+        }
       }
     };
 
@@ -82,7 +93,7 @@ export class LayerManager {
    * @returns {Array} Array of Deck.gl layers
    */
   createTreeLayers(data) {
-    const { nodes, links, labels, extensions = [], trails = [] } = data;
+    const { nodes, links, labels, extensions = [], trails = [], connectors = [] } = data;
 
     return [
       // Render outlines first (background layer)
@@ -90,6 +101,7 @@ export class LayerManager {
       // Main links render on top of outlines
       this.createLinksLayer(links),
       this.createExtensionsLayer(extensions),
+      this.createConnectorsLayer(connectors),
       this.createNodesLayer(nodes),
       this.createFlowTrailsLayer(trails),
       this.createLabelsLayer(labels)
@@ -162,6 +174,28 @@ export class LayerManager {
         getColor: [extensions, taxaColorVersion],
         getPath: [extensions],
         getWidth: [extensions, this.layerStyles._cache.strokeWidth],
+      }
+    });
+  }
+
+  /**
+   * Create connectors layer (lines between trees)
+   */
+  createConnectorsLayer(connectors) {
+    if (!connectors || connectors.length === 0) return null;
+    const config = this._layerConfigs.connectors;
+    console.log('[LayerManager] Rendering connectors layer', connectors.length);
+    return new config.LayerClass({
+      ...config.defaultProps,
+      id: config.id,
+      data: connectors,
+      getPath: d => d.path,
+      getWidth: d => d.width || (d.isLeafToLeaf ? 2 : 1),
+      getColor: d => d.color || (d.isLeafToLeaf ? [70, 130, 220, 200] : [150, 150, 150, 100]),
+      updateTriggers: {
+        getPath: [connectors],
+        getWidth: [connectors],
+        getColor: [connectors]
       }
     });
   }

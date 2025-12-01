@@ -25,6 +25,7 @@ export const createUiSlice = (set, get) => ({
   layoutRotationDegrees: 0,
   viewOffsetX: 0,
   viewOffsetY: 0,
+  viewsConnected: false,
 
   toggleComparisonMode: () => set((state) => ({ comparisonMode: !state.comparisonMode })),
 
@@ -126,6 +127,11 @@ export const createUiSlice = (set, get) => ({
    * @param {string} transform - Transformation type ('none', 'log', etc.)
    */
   setBranchTransformation: (transform) => set({ branchTransformation: transform }),
+
+  /**
+   * Toggle or set whether the two views are linked for connector rendering.
+   */
+  setViewsConnected: (enabled) => set({ viewsConnected: !!enabled }),
 
   /**
    * Toggles between orthographic and orbit camera modes
