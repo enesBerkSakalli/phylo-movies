@@ -48,7 +48,6 @@ export function App() {
         const debouncedResize = debounce(async () => {
           if (cancelled || !guiInstance) return;
           try {
-            guiInstance.resize();
             await guiInstance.update();
           } catch (e) {
             console.warn('[App bootstrap] resize/update failed:', e);
@@ -64,7 +63,7 @@ export function App() {
         };
         window.addEventListener('resize', debouncedResize);
 
-        guiInstance.initializeMovie();
+        // MovieTimelineManager is now initialized automatically by the store
       } catch (err) {
         console.error('[App bootstrap] Failed to initialize GUI:', err);
       }

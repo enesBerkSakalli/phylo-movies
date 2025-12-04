@@ -1,4 +1,5 @@
 import { clamp } from '../../utils/MathUtils.js';
+import { MovieTimelineManager } from '../../timeline/MovieTimelineManager.js';
 
 /**
  * UI/appearance slice: UI flags, controls, GUI references, and look/feel settings.
@@ -6,6 +7,7 @@ import { clamp } from '../../utils/MathUtils.js';
 export const createUiSlice = (set, get) => ({
   gui: null,
   treeControllers: [],
+  movieTimelineManager: null,
   comparisonMode: false,
   syncMSAEnabled: true,
   isMsaViewerOpen: false,
@@ -180,7 +182,7 @@ export const createUiSlice = (set, get) => ({
    * @param {Object} instance - GUI instance
    */
   setGui: (instance) => {
-    const { gui: currentGui } = get();
+    const { gui: currentGui, movieTimelineManager: currentManager } = get();
 
     // Clean up previous GUI instance if it exists and is being replaced
     if (currentGui && currentGui !== instance) {
@@ -189,7 +191,28 @@ export const createUiSlice = (set, get) => ({
       }
     }
 
+    // Clean up previous MovieTimelineManager if exists
+    if (currentManager && typeof currentManager.destroy === 'function') {
+      currentManager.destroy();
+    }
+
     set({ gui: instance });
+
+    // Initialize MovieTimelineManager when GUI is set
+    if (instance) {
+      const state = get();
+      if (state.movieData && state.transitionResolver) {
+        try {
+          const manager = new MovieTimelineManager(state.movieData, state.transitionResolver);
+          set({ movieTimelineManager: manager });
+        } catch (error) {
+          console.error('[Store] Failed to initialize MovieTimelineManager:', error);
+          set({ movieTimelineManager: null });
+        }
+      }
+    } else {
+      set({ movieTimelineManager: null });
+    }
   },
 
   // ========================================
@@ -236,9 +259,9 @@ export const createUiSlice = (set, get) => ({
    * Zoom in on timeline
    */
   zoomInTimeline: () => {
-    const { gui } = get();
+    const { movieTimelineManager } = get();
     try {
-      const timeline = gui?.movieTimelineManager?.timeline;
+      const timeline = movieTimelineManager?.timeline;
       if (!timeline?.zoomIn) return;
       // Import constant value inline to avoid circular dependencies
       timeline.zoomIn(0.2); // TIMELINE_CONSTANTS.ZOOM_PERCENTAGE_UI
@@ -251,9 +274,9 @@ export const createUiSlice = (set, get) => ({
    * Zoom out on timeline
    */
   zoomOutTimeline: () => {
-    const { gui } = get();
+    const { movieTimelineManager } = get();
     try {
-      const timeline = gui?.movieTimelineManager?.timeline;
+      const timeline = movieTimelineManager?.timeline;
       if (!timeline?.zoomOut) return;
       timeline.zoomOut(0.2); // TIMELINE_CONSTANTS.ZOOM_PERCENTAGE_UI
     } catch (e) {
@@ -265,9 +288,9 @@ export const createUiSlice = (set, get) => ({
    * Fit timeline to window
    */
   fitTimeline: () => {
-    const { gui } = get();
+    const { movieTimelineManager } = get();
     try {
-      const timeline = gui?.movieTimelineManager?.timeline;
+      const timeline = movieTimelineManager?.timeline;
       if (!timeline?.fit) return;
       timeline.fit();
     } catch (e) {
@@ -279,9 +302,9 @@ export const createUiSlice = (set, get) => ({
    * Scroll timeline to start
    */
   scrollToStartTimeline: () => {
-    const { gui } = get();
+    const { movieTimelineManager } = get();
     try {
-      const timeline = gui?.movieTimelineManager?.timeline;
+      const timeline = movieTimelineManager?.timeline;
       if (!timeline?.moveTo) return;
       timeline.moveTo(0); // TIMELINE_CONSTANTS.DEFAULT_PROGRESS
     } catch (e) {
@@ -293,9 +316,9 @@ export const createUiSlice = (set, get) => ({
    * Scroll timeline to end
    */
   scrollToEndTimeline: () => {
-    const { gui } = get();
+    const { movieTimelineManager } = get();
     try {
-      const timeline = gui?.movieTimelineManager?.timeline;
+      const timeline = movieTimelineManager?.timeline;
       if (!timeline) return;
 
       const total = timeline.getTotalDuration?.();

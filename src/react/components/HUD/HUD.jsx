@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { useAppStore } from '../../../js/core/store.js';
 import { getIndexMappings, getMSAFrameIndex } from '../../../js/domain/indexing/IndexMapping.js';
-import { calculateWindow } from '../../../js/utils/windowUtils.js';
+import { calculateWindow } from '../../../js/services/domain/msaWindowCalculator.js';
 import { Film, BarChart2, Columns3 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
