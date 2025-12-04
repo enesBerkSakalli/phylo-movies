@@ -1,5 +1,5 @@
 import { useAppStore } from '../../../core/store.js';
-import { colorToRgb } from '../../../utils/colorUtils.js';
+import { colorToRgb } from '../../../services/ui/colorUtils.js';
 
 /**
  * LayerStyles - Centralized style management for Deck.gl layers

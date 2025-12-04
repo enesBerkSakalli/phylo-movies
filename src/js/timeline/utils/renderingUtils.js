@@ -1,5 +1,4 @@
 import { msToX } from './coordinateUtils.js';
-import { createPathLayer } from './layerUtils.js';
 
 export function getDevicePixelRatio() {
   return (typeof window !== 'undefined' && window.devicePixelRatio) ? window.devicePixelRatio : 1;

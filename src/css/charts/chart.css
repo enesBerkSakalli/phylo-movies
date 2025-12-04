@@ -1,0 +1,90 @@
+/* ============================================================================
+   Chart styles (shared + movie player overrides)
+   ============================================================================ */
+
+/* Shared chart container */
+#lineChart {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.chart-canvas {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  display: block;
+  box-sizing: border-box;
+}
+
+/* Shared chart controls */
+.chart-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.chart-controls .compact-select {
+  min-width: 80px;
+  max-width: 100px;
+  height: 32px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 14px;
+  font-family: inherit;
+  flex: 0 0 auto;
+}
+
+.chart-controls .compact-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: var(--secondary);
+}
+
+/* Movie player bar overrides */
+.movie-chart-container-full-width {
+  inline-size: 100%;
+  width: 100%;
+}
+
+.chart-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.movie-player-bar #lineChart {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  height: 100px;
+  background: transparent;
+  border-radius: 0;
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.movie-player-bar .chart-canvas {
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.chart-row .chart-controls {
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 2;
+  margin-right: 0;
+  margin-left: 8px;
+}

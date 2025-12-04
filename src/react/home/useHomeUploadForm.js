@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const WINDOW_MIN = 1;
 const WINDOW_MAX = 100000;
@@ -6,6 +7,7 @@ const STEP_MIN = 1;
 const STEP_MAX = 100000;
 
 export function useHomeUploadForm() {
+  const navigate = useNavigate();
   const [treesFile, setTreesFile] = useState(null);
   const [orderFile, setOrderFile] = useState(null);
   const [msaFile, setMsaFile] = useState(null);
@@ -146,7 +148,7 @@ export function useHomeUploadForm() {
         console.error('[HomePage] MSA workflow error:', err);
       }
 
-      window.location.href = `${base}pages/visualization/`;
+      navigate('/visualization');
     } catch (err) {
       showAlert(err.message || String(err));
     } finally {
@@ -178,7 +180,7 @@ export function useHomeUploadForm() {
 
       const { phyloData } = await import('@/js/services/data/dataService.js');
       await phyloData.set(exampleData);
-      window.location.href = `${base}pages/visualization/`;
+      navigate('/visualization');
     } catch (err) {
       console.error('[HomePage] Failed to load example:', err);
       showAlert(`Failed to load example: ${err.message || err}`);

@@ -1,6 +1,6 @@
 // geometry/radialTreeGeometry.js - Handles radial tree branch calculation and interpolation
 import * as d3 from "d3";
-import { kar2pol, shortestAngle as signedShortestAngleExt } from "../../utils/MathUtils.js";
+import { kar2pol, shortestAngle as signedShortestAngleExt } from "../../domain/math/mathUtils.js";
 
 /* ─────────────────────────── ANGLE & COORDINATE HELPERS ─────────────────────────── */
 

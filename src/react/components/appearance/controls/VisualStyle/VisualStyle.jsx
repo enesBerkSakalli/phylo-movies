@@ -1,7 +1,5 @@
 import React from 'react';
 import { useAppStore } from '../../../../../js/core/store.js';
-import { Slider } from '@/components/ui/slider';
-import { Label } from '@/components/ui/label';
 import { SidebarGroup, SidebarGroupLabel, SidebarGroupContent } from '@/components/ui/sidebar';
 import { ComparisonSpacingControls } from '../../../comparison/ComparisonSpacingControls/ComparisonSpacingControls.jsx';
 import { LayoutTransform } from '../../layout/LayoutTransform/LayoutTransform.jsx';

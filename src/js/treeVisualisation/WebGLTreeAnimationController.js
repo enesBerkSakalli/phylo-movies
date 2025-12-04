@@ -1,8 +1,8 @@
 import * as d3 from "d3";
 import { useAppStore } from '../core/store.js';
-import { transformBranchLengths } from "../utils/branchTransformUtils.js";
+import { transformBranchLengths } from "../domain/tree/branchTransform.js";
 import { TidyTreeLayout } from "./layout/TidyTreeLayout.js";
-import calculateScales, { getMaxScaleValue } from "../utils/scaleUtils.js";
+import calculateScales, { getMaxScaleValue } from "../domain/tree/scaleUtils.js";
 // LABEL_OFFSETS moved to centralized store styleConfig
 
 export class WebGLTreeAnimationController {
