@@ -39,15 +39,9 @@ export default class Gui {
     // Subscribe only to core tree navigation changes
     // Controllers handle their own specific subscriptions
     this.unsubscribeStore = useAppStore.subscribe(
-      (state) => ({
-        currentTreeIndex: state.currentTreeIndex,
-        playing: state.playing
-      }),
-      (current, previous) => {
-        // Keep subscription focused: animation drives renders; avoid redundant work.
-
+      (state, prevState) => {
         // Update the main tree view when the index has changed (even during playback)
-        if (current.currentTreeIndex !== previous?.currentTreeIndex) {
+        if (state.currentTreeIndex !== prevState.currentTreeIndex) {
           this.updateMain();
         }
 

@@ -132,7 +132,6 @@ export class ViewportManager {
 
       if (typeof setScreenPositions === 'function') {
         const side = sideOverride || this.controller.viewSide || 'single';
-        console.log('[viewport] setScreenPositions', side, 'keys', Object.keys(positions));
         setScreenPositions(side, positions);
       }
     } catch (e) {

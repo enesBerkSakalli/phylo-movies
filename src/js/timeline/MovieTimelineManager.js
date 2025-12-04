@@ -1,10 +1,13 @@
-import { TIMELINE_CONSTANTS } from '../constants.js';
-import { TimelineDataProcessor } from '../data/TimelineDataProcessor.js';
+import { TIMELINE_CONSTANTS } from './constants.js';
+import { TimelineDataProcessor } from './TimelineDataProcessor.js';
+import { TimelineUIManager } from './TimelineUIManager.js';
 import { ScrubberAPI } from './ScrubberAPI.js';
-import { TimelineMathUtils } from '../math/TimelineMathUtils.js';
-import { useAppStore } from '../../core/store.js';
-import { getIndexMappings } from '../../domain/indexing/IndexMapping.js';
-import { DeckTimelineRenderer } from '../renderers/DeckTimelineRenderer.js';
+import { TimelineMathUtils } from './TimelineMathUtils.js';
+import { useAppStore } from '../core/store.js';
+import { getIndexMappings } from '../domain/indexing/IndexMapping.js';
+import { TimelineTooltip } from './tooltip/TimelineTooltip.js';
+import { buildTimelineTooltipContent } from './tooltip/buildTooltipContent.js';
+import { DeckTimelineRenderer } from './renderers/DeckTimelineRenderer.js';
 
 export class MovieTimelineManager {
     constructor(movieData, transitionIndexResolver) {
@@ -13,7 +16,9 @@ export class MovieTimelineManager {
         this.isTimelinePlaying = false;
         this.isScrubbing = false;
 
+        this.uiManager = null;
         this.scrubberAPI = null;
+        this.tooltip = null;
         this.timeline = null;
 
         this.segments = TimelineDataProcessor.createSegments(movieData);
@@ -50,8 +55,11 @@ export class MovieTimelineManager {
             return;
         }
 
+        this.uiManager = new TimelineUIManager(this.movieData, this.timeline);
+        this.uiManager.updateMetrics(totalSequenceLength, this.segments.length);
         this._setupEvents();
         this._initializeScrubberAPI();
+        this.tooltip = new TimelineTooltip();
 
         // Single, clean subscription to store changes
         this.unsubscribeFromStore = useAppStore.subscribe(
@@ -117,15 +125,27 @@ export class MovieTimelineManager {
         // Use insertAdjacentElement to place it correctly after the header
         timelineParent.insertAdjacentElement('beforeend', container);
 
-        this.timeline = new DeckTimelineRenderer(this.timelineData, this.segments).init(container);
+        console.log('[Timeline] Creating DeckTimelineRenderer...');
+        this.timeline = new DeckTimelineRenderer(this.timelineData, this.segments);
+        console.log('[Timeline] Calling init on renderer...', this.timeline);
+        this.timeline.init(container);
+        console.log('[Timeline] After init, timeline is:', this.timeline);
     }
 
     _setupEvents() {
-        if (!this.timeline) return;
+        if (!this.timeline) {
+            console.error('[Timeline] Cannot setup events - timeline is null');
+            return;
+        }
 
+        console.log('[Timeline] Setting up event listeners on:', this.timeline);
         this.timeline.on('timechange', this._onTimeChange.bind(this));
         this.timeline.on('timechanged', this._onTimeChanged.bind(this));
         this.timeline.on('select', this._onTimelineClick.bind(this));
+        this.timeline.on('itemover', this._onItemOver.bind(this));
+        this.timeline.on('itemout', this._onItemOut.bind(this));
+        this.timeline.on('mouseMove', this._onMouseMove.bind(this));
+        console.log('[Timeline] Event listeners registered');
     }
 
     _onTimeChange(properties) {
@@ -143,6 +163,7 @@ export class MovieTimelineManager {
     }
 
     _onTimelineClick(properties) {
+        console.log('[Timeline] Click event received:', properties);
         if (properties.id) {
             this._handleSegmentClick(properties.id - TIMELINE_CONSTANTS.INDEX_OFFSET_UI);
         }
@@ -247,11 +268,16 @@ export class MovieTimelineManager {
     }
 
     _handleSegmentClick(segmentIndex) {
+        console.log('[Timeline] Segment click:', { segmentIndex });
         const segment = this._validateSegment(segmentIndex);
-        if (!segment) return;
+        if (!segment) {
+            console.warn('[Timeline] Invalid segment:', segmentIndex);
+            return;
+        }
 
         // Get the first tree in the segment
         const targetTreeIndex = segment.interpolationData?.[0]?.originalIndex ?? segment.index;
+        console.log('[Timeline] Navigating to tree:', { targetTreeIndex, segment });
 
         this._navigateToTree(targetTreeIndex);
     }
@@ -278,6 +304,7 @@ export class MovieTimelineManager {
         // Update store and UI
         this._updateStoreTimelineState(currentTime, segment, currentTreeIndex);
         useAppStore.getState().setSegmentProgress(segmentProgress); // Move this call here
+        this.uiManager?.updateDisplay(segment, segmentProgress, currentTreeIndex);
     }
 
     _calculateTimeForSegment(segmentIndex, timeInSegment = 0) {
@@ -363,12 +390,16 @@ export class MovieTimelineManager {
         }
 
         this.timeline?.destroy();
+        this.uiManager?.destroy();
         this.scrubberAPI?.destroy();
+        this.tooltip?.destroy();
 
         this.timeline = null;
         this.segments = null;
         this.timelineData = null;
+        this.uiManager = null;
         this.scrubberAPI = null;
+        this.tooltip = null;
         this.scrubRequestId = null;
     }
 

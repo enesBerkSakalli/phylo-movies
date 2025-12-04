@@ -33,6 +33,16 @@ export function MoviePlayerBar() {
   // Get segments from timeline manager
   const segments = movieTimelineManager?.segments || [];
 
+  // Reinitialize timeline when component mounts and container is available
+  useEffect(() => {
+    if (movieTimelineManager && !movieTimelineManager.timeline) {
+      movieTimelineManager._createTimeline();
+      if (movieTimelineManager.timeline) {
+        movieTimelineManager._setupEvents();
+      }
+    }
+  }, [movieTimelineManager]);
+
   // Track mouse position for tooltip
   useEffect(() => {
     const handleMouseMove = (e) => {
