@@ -1,4 +1,4 @@
-import { SubtreeExtractor } from '../utils/SubtreeExtractor.js';
+import { SubtreeExtractor } from '../domain/tree/subtreeExtractor.js';
 import { useAppStore } from '../core/store.js';
 
 const lucideSvg = (nodes) => {

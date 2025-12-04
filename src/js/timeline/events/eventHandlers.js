@@ -1,29 +1,4 @@
-/**
- * Event handling utilities for timeline components
- */
-
-/**
- * Handles click events on the timeline
- * @param {DeckTimelineRenderer} renderer - The timeline renderer instance
- * @param {MouseEvent} event - The click event
- */
-// Removed unused: handleTimelineClick
-
-/**
- * Zooms in on the timeline
- * @param {DeckTimelineRenderer} renderer - The timeline renderer instance
- * @param {number} pct - The zoom percentage (0.05 to 0.95)
- */
-// Removed unused: handleTimelineZoomIn
-
-/**
- * Zooms out on the timeline
- * @param {DeckTimelineRenderer} renderer - The timeline renderer instance
- * @param {number} pct - The zoom percentage (0.05 to 0.95)
- */
-// Removed unused: handleTimelineZoomOut
-
-// Removed unused: handleTimelineFit
+import { useAppStore } from '../../core/store.js';
 
 export function handleTimelineMouseMove(renderer, event) {
   if (renderer._isScrubbing) return;
@@ -36,9 +11,14 @@ export function handleTimelineMouseMove(renderer, event) {
   if (id !== renderer._lastHoverId) {
     if (renderer._lastHoverId != null) {
       renderer._emit('itemout', {});
+      // Update store for React tooltip
+      useAppStore.getState().setHoveredSegment(null, null);
     }
     if (id != null) {
       renderer._emit('itemover', { item: id, event });
+      // Update store for React tooltip
+      const segment = renderer.segments[segIndex];
+      useAppStore.getState().setHoveredSegment(segIndex, segment);
     }
     renderer._lastHoverId = id;
     renderer._scheduleUpdate();
@@ -117,6 +97,8 @@ export function handleTimelineWheel(renderer, event) {
 export function handleTimelineMouseLeave(renderer) {
   if (renderer._lastHoverId != null) {
     renderer._emit('itemout', {});
+    // Update store for React tooltip
+    useAppStore.getState().setHoveredSegment(null, null);
     renderer._lastHoverId = null;
     renderer._scheduleUpdate();
   }

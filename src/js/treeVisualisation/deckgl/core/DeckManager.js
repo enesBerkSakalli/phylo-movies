@@ -5,7 +5,7 @@ import {
   LinearInterpolator,
   FlyToInterpolator
 } from '@deck.gl/core';
-import { easeInOutCubic } from '../../../utils/MathUtils.js';
+import { easeInOutCubic } from '../../../domain/math/mathUtils.js';
 // import { useAppStore } from '../../../core/store.js';
 
 const VIEW_IDS = {

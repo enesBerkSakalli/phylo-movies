@@ -14,14 +14,12 @@ import { useAppStore } from '../js/core/store.js';
 import { getPhyloMovieData } from '../js/services/data/dataManager.js';
 import Gui from '../js/controllers/gui.js';
 import { DeckGLTreeAnimationController } from '../js/treeVisualisation/DeckGLTreeAnimationController.js';
-import { debounce } from '../js/utils/debounce.js';
 
 export function App() {
   const comparisonMode = useAppStore((s) => s.comparisonMode);
   const gui = useAppStore((s) => s.gui);
   const fileName = useAppStore((s) => s.fileName || 'Loading...');
   const hasMsa = useAppStore((s) => s.hasMsa);
-  const resizeRef = useRef(null);
 
   useEffect(() => {
     if (gui) {
@@ -44,25 +42,6 @@ export function App() {
         // Store GUI reference
         useAppStore.getState().setGui(guiInstance);
 
-        // Debounced resize handler with guards
-        const debouncedResize = debounce(async () => {
-          if (cancelled || !guiInstance) return;
-          try {
-            await guiInstance.update();
-          } catch (e) {
-            console.warn('[App bootstrap] resize/update failed:', e);
-          }
-        }, 200);
-
-        // Initial sync
-        debouncedResize();
-
-        resizeRef.current = () => {
-          cancelled = true;
-          window.removeEventListener('resize', debouncedResize);
-        };
-        window.addEventListener('resize', debouncedResize);
-
         // MovieTimelineManager is now initialized automatically by the store
       } catch (err) {
         console.error('[App bootstrap] Failed to initialize GUI:', err);
@@ -71,9 +50,6 @@ export function App() {
 
     return () => {
       cancelled = true;
-      if (resizeRef.current) {
-        resizeRef.current();
-      }
     };
   }, []);
 

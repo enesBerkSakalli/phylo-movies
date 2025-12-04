@@ -1,13 +1,10 @@
-import { TIMELINE_CONSTANTS } from './constants.js';
-import { TimelineDataProcessor } from './TimelineDataProcessor.js';
-import { TimelineUIManager } from './TimelineUIManager.js';
+import { TIMELINE_CONSTANTS } from '../constants.js';
+import { TimelineDataProcessor } from '../data/TimelineDataProcessor.js';
 import { ScrubberAPI } from './ScrubberAPI.js';
-import { TimelineMathUtils } from './TimelineMathUtils.js';
-import { useAppStore } from '../core/store.js';
-import { getIndexMappings } from '../domain/indexing/IndexMapping.js';
-import { TimelineTooltip } from './tooltip/TimelineTooltip.js';
-import { buildTimelineTooltipContent } from './tooltip/buildTooltipContent.js';
-import { createTimelineRenderer } from './renderers/TimelineRendererFactory.js';
+import { TimelineMathUtils } from '../math/TimelineMathUtils.js';
+import { useAppStore } from '../../core/store.js';
+import { getIndexMappings } from '../../domain/indexing/IndexMapping.js';
+import { DeckTimelineRenderer } from '../renderers/DeckTimelineRenderer.js';
 
 export class MovieTimelineManager {
     constructor(movieData, transitionIndexResolver) {
@@ -16,9 +13,7 @@ export class MovieTimelineManager {
         this.isTimelinePlaying = false;
         this.isScrubbing = false;
 
-        this.uiManager = null;
         this.scrubberAPI = null;
-        this.tooltip = null;
         this.timeline = null;
 
         this.segments = TimelineDataProcessor.createSegments(movieData);
@@ -55,11 +50,8 @@ export class MovieTimelineManager {
             return;
         }
 
-        this.uiManager = new TimelineUIManager(this.movieData, this.timeline);
-        this.uiManager.updateMetrics(totalSequenceLength, this.segments.length);
         this._setupEvents();
         this._initializeScrubberAPI();
-        this.tooltip = new TimelineTooltip();
 
         // Single, clean subscription to store changes
         this.unsubscribeFromStore = useAppStore.subscribe(
@@ -125,7 +117,7 @@ export class MovieTimelineManager {
         // Use insertAdjacentElement to place it correctly after the header
         timelineParent.insertAdjacentElement('beforeend', container);
 
-        this.timeline = createTimelineRenderer(this.timelineData, this.segments).init(container);
+        this.timeline = new DeckTimelineRenderer(this.timelineData, this.segments).init(container);
     }
 
     _setupEvents() {
@@ -134,9 +126,6 @@ export class MovieTimelineManager {
         this.timeline.on('timechange', this._onTimeChange.bind(this));
         this.timeline.on('timechanged', this._onTimeChanged.bind(this));
         this.timeline.on('click', this._onTimelineClick.bind(this));
-        this.timeline.on('itemover', this._onItemOver.bind(this));
-        this.timeline.on('itemout', this._onItemOut.bind(this));
-        this.timeline.on('mouseMove', this._onMouseMove.bind(this));
     }
 
     _onTimeChange(properties) {
@@ -289,7 +278,6 @@ export class MovieTimelineManager {
         // Update store and UI
         this._updateStoreTimelineState(currentTime, segment, currentTreeIndex);
         useAppStore.getState().setSegmentProgress(segmentProgress); // Move this call here
-        this.uiManager?.updateDisplay(segment, segmentProgress, currentTreeIndex);
     }
 
     _calculateTimeForSegment(segmentIndex, timeInSegment = 0) {
@@ -375,16 +363,12 @@ export class MovieTimelineManager {
         }
 
         this.timeline?.destroy();
-        this.uiManager?.destroy();
         this.scrubberAPI?.destroy();
-        this.tooltip?.destroy();
 
         this.timeline = null;
         this.segments = null;
         this.timelineData = null;
-        this.uiManager = null;
         this.scrubberAPI = null;
-        this.tooltip = null;
         this.scrubRequestId = null;
     }
 

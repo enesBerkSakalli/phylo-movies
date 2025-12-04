@@ -1,17 +1,20 @@
-import { TIMELINE_CONSTANTS } from './constants.js';
+import { TIMELINE_CONSTANTS } from '../constants.js';
 
 export class TimelineMathUtils {
     static EPSILON_MS = 1;
+
     static progressToTime(progress, totalDuration) {
         const clampedProgress = this.clampProgress(progress);
         return clampedProgress * totalDuration;
     }
+
     static timeToProgress(time, totalDuration) {
         if (!totalDuration || totalDuration === 0) {
             return TIMELINE_CONSTANTS.DEFAULT_PROGRESS;
         }
         return this.clampProgress(time / totalDuration);
     }
+
     static clampProgress(progress) {
         return Math.max(TIMELINE_CONSTANTS.MIN_PROGRESS,
                        Math.min(TIMELINE_CONSTANTS.MAX_PROGRESS, progress));
@@ -145,44 +148,8 @@ export class TimelineMathUtils {
             segmentProgress: TIMELINE_CONSTANTS.DEFAULT_PROGRESS
         };
     }
-    static clampTimeForFinalization(segments, currentTime, segmentDurations, bias = 'nearest') {
-        try {
-            if (!segments?.length || !segmentDurations?.length) return currentTime;
-            const cumulativeDurations = (() => {
-                const arr = new Array(segmentDurations.length);
-                let acc = 0;
-                for (let i = 0; i < segmentDurations.length; i++) {
-                    acc += segmentDurations[i];
-                    arr[i] = acc;
-                }
-                return arr;
-            })();
-            let lo = 0, hi = cumulativeDurations.length - 1, idx = -1;
-            while (lo <= hi) {
-                const mid = (lo + hi) >> 1;
-                if (currentTime < cumulativeDurations[mid]) { idx = mid; hi = mid - 1; }
-                else { lo = mid + 1; }
-            }
-            if (idx < 0) idx = 0;
 
-            const segStart = idx === 0 ? 0 : cumulativeDurations[idx - 1];
-            const segEnd = cumulativeDurations[idx];
-            const seg = segments[idx];
-            if (seg?.isFullTree) {
-                if (bias === 'forward' && idx < segments.length - 1) {
-                    const nextEnd = cumulativeDurations[idx + 1];
-                    return Math.min(nextEnd - this.EPSILON_MS, segEnd + this.EPSILON_MS);
-                }
-                if (bias === 'backward') {
-                    return Math.max(0, segStart - this.EPSILON_MS);
-                }
-                return segStart + Math.max(1, Math.floor((segEnd - segStart) / 2));
-            }
-            return Math.max(segStart + this.EPSILON_MS, Math.min(currentTime, segEnd - this.EPSILON_MS));
-        } catch {
-            return currentTime;
-        }
-    }
+
     static calculateTreePositionInSegment(segment, currentTreeIndex) {
         if (!segment || !segment.hasInterpolation || !segment.interpolationData?.length) {
             return {
@@ -206,6 +173,7 @@ export class TimelineMathUtils {
             treesInSegment: TIMELINE_CONSTANTS.DEFAULT_TREES_IN_SEGMENT
         };
     }
+
     static calculateTimeForSegment(segments, segmentIndex, timeInSegment = TIMELINE_CONSTANTS.DEFAULT_PROGRESS, segmentDurations = null) {
         const durations = segmentDurations || this.calculateSegmentDurations(segments);
         let currentTime = 0;
@@ -221,6 +189,7 @@ export class TimelineMathUtils {
         currentTime += within;
         return currentTime;
     }
+
     static calculateSegmentDurations(segments) {
         if (!segments?.length) return [];
 

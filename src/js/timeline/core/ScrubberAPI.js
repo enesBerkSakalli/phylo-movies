@@ -1,5 +1,5 @@
-import { useAppStore } from '../core/store.js';
-import { TimelineMathUtils } from './TimelineMathUtils.js';
+import { useAppStore } from '../../core/store.js';
+import { TimelineMathUtils } from '../math/TimelineMathUtils.js';
 
 export class ScrubberAPI {
   constructor(treeController, transitionResolver, timelineManager = null) {
@@ -22,10 +22,12 @@ export class ScrubberAPI {
     }
     this.lastInterpolationState = null;
   }
+
   async startScrubbing(progress) {
     this.currentProgress = TimelineMathUtils.clampProgress(progress ?? 0);
     this.lastInterpolationState = null;
   }
+
   async _performScrubUpdate(progress) {
         this.currentProgress = progress;
 
@@ -183,6 +185,7 @@ export class ScrubberAPI {
     }
     return TimelineMathUtils.getInterpolationDataForProgress(progress, treeList, movieData);
   }
+
   _detectNavigationDirection(currentProgress) {
         // This method is no longer used but can be kept for reference or removed.
         if (!this.lastInterpolationState) {

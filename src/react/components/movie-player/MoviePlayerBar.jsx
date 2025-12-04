@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { HUD } from '../HUD/HUD.jsx';
 import { MovieChartSection } from './MovieChartSection/MovieChartSection.jsx';
 import { TransportControls } from './TransportControls.jsx';
@@ -6,6 +6,7 @@ import { RecordingControls } from '../media/RecordingControls.jsx';
 import { SaveImageButton } from '../media/SaveImageButton.jsx';
 import { TimelineScrollControls } from './TimelineScrollControls/TimelineScrollControls.jsx';
 import { PlaybackSpeedControl } from './PlaybackSpeedControl/PlaybackSpeedControl.jsx';
+import { TimelineSegmentTooltip } from '../timeline/TimelineSegmentTooltip.jsx';
 import { useAppStore } from '../../../js/core/store.js';
 import { useSidebar } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,41 @@ export function MoviePlayerBar() {
   const barOptionValue = useAppStore((s) => s.barOptionValue);
   const setBarOption = useAppStore((s) => s.setBarOption);
   const [toolbarExpanded, setToolbarExpanded] = useState(true);
+
+  // Timeline tooltip state
+  const hoveredSegmentIndex = useAppStore((s) => s.hoveredSegmentIndex);
+  const hoveredSegmentData = useAppStore((s) => s.hoveredSegmentData);
+  const movieData = useAppStore((s) => s.movieData);
+  const movieTimelineManager = useAppStore((s) => s.movieTimelineManager);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const tooltipRef = useRef(null);
+
+  // Get segments from timeline manager
+  const segments = movieTimelineManager?.segments || [];
+
+  // Track mouse position for tooltip
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+    };
+
+    if (hoveredSegmentIndex !== null) {
+      window.addEventListener('mousemove', handleMouseMove);
+      return () => window.removeEventListener('mousemove', handleMouseMove);
+    }
+  }, [hoveredSegmentIndex]);  // Get leaf names function for tooltip
+  const getLeafNames = useCallback((indices) => {
+    const sortedLeaves = movieData?.sorted_leaves;
+    if (!sortedLeaves || !Array.isArray(sortedLeaves)) return [];
+
+    const leafNames = [];
+    for (const idx of indices) {
+      if (Number.isInteger(idx) && idx >= 0 && idx < sortedLeaves.length) {
+        leafNames.push(sortedLeaves[idx]);
+      }
+    }
+    return leafNames;
+  }, [movieData?.sorted_leaves]);
 
   const { open, toggleSidebar } = useSidebar();
   const handleNavigationToggle = useCallback(() => {
@@ -108,6 +144,33 @@ export function MoviePlayerBar() {
       </div>
 
       <HUD />
+
+      {/* Timeline segment tooltip - positioned above cursor */}
+      {hoveredSegmentIndex !== null && hoveredSegmentData && (
+        <div
+          ref={tooltipRef}
+          style={{
+            position: 'fixed',
+            left: `${mousePosition.x}px`,
+            top: `${mousePosition.y - 12}px`,
+            transform: 'translate(-50%, -100%)',
+            zIndex: 10000,
+            pointerEvents: 'none',
+            minWidth: '400px',
+            maxWidth: '500px'
+          }}
+          className="animate-in fade-in-0 zoom-in-95 duration-200"
+        >
+          <div className="rounded-lg border bg-card p-3 shadow-lg">
+            <TimelineSegmentTooltip
+              segment={hoveredSegmentData}
+              segmentIndex={hoveredSegmentIndex}
+              totalSegments={segments.length}
+              getLeafNames={getLeafNames}
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 }

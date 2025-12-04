@@ -1,5 +1,6 @@
 import * as d3 from "d3";
 import { getNodeKey } from '../utils/KeyGenerator.js';
+import { transformBranchLengths } from '../../domain/tree/branchTransform.js';
 
 /** Class for calculating radial tree layout coordinates. */
 export class RadialTreeLayout {
@@ -323,7 +324,6 @@ export default function createRadialTreeLayout(
   options = {}
 ) {
   // Apply branch length transformation before layout
-  const { transformBranchLengths } = require('../utils/branchTransformUtils');
   let transformedTree = transformBranchLengths(tree, branchTransformation);
 
   let d3tree = d3.hierarchy(transformedTree);

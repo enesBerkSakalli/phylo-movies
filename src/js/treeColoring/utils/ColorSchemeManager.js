@@ -1,5 +1,5 @@
 import { getPalette } from '../../constants/ColorPalettes.js';
-import { colorToRgb } from '../../utils/colorUtils.js';
+import { colorToRgb } from '../../services/ui/colorUtils.js';
 
 export class ColorSchemeManager {
   constructor(originalColorMap = {}) {

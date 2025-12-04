@@ -1,5 +1,5 @@
 import TransitionIndexResolver from '../../domain/indexing/TransitionIndexResolver.js';
-import calculateScales, { getMaxScaleValue } from '../../utils/scaleUtils.js';
+import calculateScales, { getMaxScaleValue } from '../../domain/tree/scaleUtils.js';
 import { TreeColorManager } from '../../treeVisualisation/systems/TreeColorManager.js';
 import { TREE_COLOR_CATEGORIES } from '../../constants/TreeColors.js';
 

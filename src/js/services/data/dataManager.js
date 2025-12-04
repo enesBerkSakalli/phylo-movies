@@ -2,20 +2,18 @@ import { server, workflows, phyloData } from './dataService.js';
 
 /**
  * Fetches tree data from the server and stores it in localForage.
+ * Returns the processed data for navigation handling by the caller.
  * @param {FormData} formData The form data containing the tree file and other options.
+ * @returns {Promise<Object>} The processed tree data
  */
 export async function fetchTreeData(formData) {
   try {
     const data = await server.fetchTreeData(formData);
-
     await workflows.saveTreeDataWorkflow(data);
-
-    // Redirect after successful storage (updated path, respect base in static builds)
-    const base = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL) ? import.meta.env.BASE_URL : '/';
-    window.location.href = `${base}pages/visualization/`;
+    return data; // Return data instead of redirecting
   } catch (err) {
     console.error("[fetchTreeData] Error:", err);
-    alert(`Error processing tree data: ${err.message}`);
+    throw new Error(`Error processing tree data: ${err.message}`);
   }
 }
 

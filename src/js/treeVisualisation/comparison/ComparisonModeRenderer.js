@@ -1,4 +1,4 @@
-import { colorToRgb } from '../../utils/colorUtils.js';
+import { colorToRgb } from '../../services/ui/colorUtils.js';
 import { Bezier } from 'bezier-js';
 
 /**

@@ -1,17 +1,13 @@
 import '../../../css/movie-timeline/container.css';
-import '../../../css/movie-timeline/theme.css';
 import { Deck, OrthographicView } from '@deck.gl/core';
-import { TIMELINE_CONSTANTS } from '../constants.js';
-import { handleTimelineMouseMoveOrScrub, handleTimelineMouseDown, handleTimelineMouseUp, handleTimelineWheel, handleTimelineMouseLeave } from '../eventHandlers.js';
+import { TIMELINE_CONSTANTS, TIMELINE_THEME } from '../constants.js';
+import { handleTimelineMouseMoveOrScrub, handleTimelineMouseDown, handleTimelineMouseUp, handleTimelineWheel, handleTimelineMouseLeave } from '../events/eventHandlers.js';
 import { createPathLayer, createAnchorLayer, createConnectionLayer, createAnchorHoverLayer, createConnectionHoverLayer, createAnchorSelectionLayer, createConnectionSelectionLayer, createSeparatorLayer } from '../utils/layerUtils.js';
-import { getTimelineTheme } from '../utils/cssUtils.js';
 import { msToX, xToMs, calculateZoomScale } from '../utils/coordinateUtils.js';
 import { timeToSegmentIndex } from '../utils/searchUtils.js';
 import { getTargetSegmentIndex } from '../utils/segmentUtils.js';
 import { createScrubberLayer, getDevicePixelRatio } from '../utils/renderingUtils.js';
-import { DefaultRadiusStrategy } from '../strategies/radiusStrategy.js';
-import { DefaultGapStrategy } from '../strategies/gapStrategy.js';
-import { processSegments } from '../segmentProcessor.js';
+import { processSegments } from '../data/segmentProcessor.js';
 
 export class DeckTimelineRenderer {
   constructor(timelineData, segments) {
@@ -64,10 +60,6 @@ export class DeckTimelineRenderer {
     this.connectionSelectionLayer = null;
     this.anchorSelectionLayer = null;
     this.scrubberLayer = null;
-
-    // Strategies (can be swapped for custom behaviors)
-    this.radiusStrategy = DefaultRadiusStrategy;
-    this.gapStrategy = DefaultGapStrategy;
   }
 
   init(container) {
@@ -86,14 +78,13 @@ export class DeckTimelineRenderer {
     container.appendChild(this.canvas);
 
     // --- Create layer instances one time with empty data ---
-    const initialTheme = getTimelineTheme(this.container);
-    this.separatorLayer = createSeparatorLayer([], initialTheme);
-    this.connectionLayer = createConnectionLayer([], initialTheme.connectionWidth);
-    this.anchorLayer = createAnchorLayer([], initialTheme.anchorStrokeWidth);
-    this.connectionHoverLayer = createConnectionHoverLayer([], initialTheme.connectionHoverRGB, initialTheme.connectionHoverWidth);
-    this.anchorHoverLayer = createAnchorHoverLayer([], initialTheme.connectionHoverRGB);
-    this.connectionSelectionLayer = createConnectionSelectionLayer([], initialTheme);
-    this.anchorSelectionLayer = createAnchorSelectionLayer([], initialTheme);
+    this.separatorLayer = createSeparatorLayer([], TIMELINE_THEME);
+    this.connectionLayer = createConnectionLayer([], TIMELINE_THEME.connectionWidth);
+    this.anchorLayer = createAnchorLayer([], TIMELINE_THEME.anchorStrokeWidth);
+    this.connectionHoverLayer = createConnectionHoverLayer([], TIMELINE_THEME.connectionHoverRGB, TIMELINE_THEME.connectionHoverWidth);
+    this.anchorHoverLayer = createAnchorHoverLayer([], TIMELINE_THEME.connectionHoverRGB);
+    this.connectionSelectionLayer = createConnectionSelectionLayer([], TIMELINE_THEME);
+    this.anchorSelectionLayer = createAnchorSelectionLayer([], TIMELINE_THEME);
     // Initialize scrubberLayer as a proper PathLayer instance
     this.scrubberLayer = createPathLayer('scrubber-layer', [], [0, 0, 0, 0], 1);
 
@@ -251,8 +242,6 @@ export class DeckTimelineRenderer {
 
     this._width = width;
 
-    const theme = getTimelineTheme(this.container);
-
     const rangeStart = this._rangeStart;
     const rangeEnd = this._rangeEnd;
     const buffer = (rangeEnd - rangeStart) * 0.1;
@@ -274,33 +263,27 @@ export class DeckTimelineRenderer {
       connections,
       selectionConnections,
       hoverConnections
-    } = processSegments(
-      {
-        startIdx, endIdx, width, height, visStart, visEnd, zoomScale, theme,
-        timelineData: this.timelineData,
-        segments: this.segments,
-        selectedId: this._selectedId,
-        lastHoverId: this._lastHoverId,
-        rangeStart: this._rangeStart,
-        rangeEnd: this._rangeEnd
-      },
-      {
-        radiusStrategy: this.radiusStrategy,
-        gapStrategy: this.gapStrategy
-      }
-    );
+    } = processSegments({
+      startIdx, endIdx, width, height, visStart, visEnd, zoomScale, theme: TIMELINE_THEME,
+      timelineData: this.timelineData,
+      segments: this.segments,
+      selectedId: this._selectedId,
+      lastHoverId: this._lastHoverId,
+      rangeStart: this._rangeStart,
+      rangeEnd: this._rangeEnd
+    });
 
     // --- Clone layers with new data and props ---
     const layers = [
-      this.separatorLayer.clone({ data: separators, getColor: [theme.separatorRGB[0], theme.separatorRGB[1], theme.separatorRGB[2], 120], widthMinPixels: theme.separatorWidth }),
-      this.connectionLayer.clone({ data: connections, widthMinPixels: theme.connectionWidth }),
-      this.connectionHoverLayer.clone({ data: hoverConnections, getColor: [theme.connectionHoverRGB[0], theme.connectionHoverRGB[1], theme.connectionHoverRGB[2], 160], widthMinPixels: theme.connectionHoverWidth }),
-      this.connectionSelectionLayer.clone({ data: selectionConnections, getColor: [theme.connectionSelectionRGB[0], theme.connectionSelectionRGB[1], theme.connectionSelectionRGB[2], 230], widthMinPixels: theme.connectionSelectionWidth }),
-      this.scrubberLayer.clone(createScrubberLayer(this._scrubberMs, this._rangeStart, this._rangeEnd, width, height, theme, this._isScrubbing)),
+      this.separatorLayer.clone({ data: separators, getColor: [TIMELINE_THEME.separatorRGB[0], TIMELINE_THEME.separatorRGB[1], TIMELINE_THEME.separatorRGB[2], 120], widthMinPixels: TIMELINE_THEME.separatorWidth }),
+      this.connectionLayer.clone({ data: connections, widthMinPixels: TIMELINE_THEME.connectionWidth }),
+      this.connectionHoverLayer.clone({ data: hoverConnections, getColor: [TIMELINE_THEME.connectionHoverRGB[0], TIMELINE_THEME.connectionHoverRGB[1], TIMELINE_THEME.connectionHoverRGB[2], 160], widthMinPixels: TIMELINE_THEME.connectionHoverWidth }),
+      this.connectionSelectionLayer.clone({ data: selectionConnections, getColor: [TIMELINE_THEME.connectionSelectionRGB[0], TIMELINE_THEME.connectionSelectionRGB[1], TIMELINE_THEME.connectionSelectionRGB[2], 230], widthMinPixels: TIMELINE_THEME.connectionSelectionWidth }),
+      this.scrubberLayer.clone(createScrubberLayer(this._scrubberMs, this._rangeStart, this._rangeEnd, width, height, TIMELINE_THEME, this._isScrubbing)),
       // Anchor layers on top to ensure circles are always visible
-      this.anchorLayer.clone({ data: anchorPoints, lineWidthMinPixels: theme.anchorStrokeWidth }),
-      this.anchorHoverLayer.clone({ data: hoverAnchors, getLineColor: [theme.connectionHoverRGB[0], theme.connectionHoverRGB[1], theme.connectionHoverRGB[2], 160] }),
-      this.anchorSelectionLayer.clone({ data: selectionAnchors, getLineColor: [theme.connectionSelectionRGB[0], theme.connectionSelectionRGB[1], theme.connectionSelectionRGB[2], 230] })
+      this.anchorLayer.clone({ data: anchorPoints, lineWidthMinPixels: TIMELINE_THEME.anchorStrokeWidth }),
+      this.anchorHoverLayer.clone({ data: hoverAnchors, getLineColor: [TIMELINE_THEME.connectionHoverRGB[0], TIMELINE_THEME.connectionHoverRGB[1], TIMELINE_THEME.connectionHoverRGB[2], 160] }),
+      this.anchorSelectionLayer.clone({ data: selectionAnchors, getLineColor: [TIMELINE_THEME.connectionSelectionRGB[0], TIMELINE_THEME.connectionSelectionRGB[1], TIMELINE_THEME.connectionSelectionRGB[2], 230] })
     ];
 
     this.deck.setProps({

@@ -1,5 +1,5 @@
 import { useAppStore } from '../core/store.js';
-import { calculateWindow } from "../services/domain/msaWindowCalculator.js";
+import { calculateWindow } from "../domain/msa/msaWindowCalculator.js";
 import { getMSAFrameIndex } from "../domain/indexing/IndexMapping.js";
 
 // ============================================================================
@@ -28,7 +28,6 @@ export default class Gui {
   constructor(movieData, options = {}) {
     // Store options for later use
     this.options = options;
-    this.movie_data = movieData;
 
     // Initialize the store first
     useAppStore.getState().initialize(movieData);
@@ -79,21 +78,6 @@ export default class Gui {
     const windowData = calculateWindow(frameIndex, msaStepSize, msaWindowSize, msaColumnCount);
     // Store-driven region; viewer will subscribe to this state
     setMsaRegion(windowData.startPosition, windowData.endPosition);
-  }
-
-  // ========================================
-  // MAIN UPDATE CYCLE
-  // ========================================
-  async update() {
-    // 1. Render tree content
-    await this.updateMain();
-
-    // 2. Chart updates are handled by React (Nivo) via store state
-
-    // 3. UI elements update via React components
-
-    // 4. Sync external viewers if needed
-    this._syncMSAIfOpenThrottled();
   }
 
   // ========================================
