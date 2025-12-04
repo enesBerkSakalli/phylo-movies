@@ -4,7 +4,7 @@ import { TimelineUIManager } from './TimelineUIManager.js';
 import { ScrubberAPI } from './ScrubberAPI.js';
 import { TimelineMathUtils } from './TimelineMathUtils.js';
 import { useAppStore } from '../core/store.js';
-import { getIndexMappings } from '../core/IndexMapping.js';
+import { getIndexMappings } from '../domain/indexing/IndexMapping.js';
 import { TimelineTooltip } from './tooltip/TimelineTooltip.js';
 import { buildTimelineTooltipContent } from './tooltip/buildTooltipContent.js';
 import { createTimelineRenderer } from './renderers/TimelineRendererFactory.js';

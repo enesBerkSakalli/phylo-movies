@@ -1,12 +1,5 @@
 /* Transport, speed, and utility controls */
 
-.controls-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-  transition: all 0.3s ease;
-}
 
 .left-controls {
   display: flex;
@@ -34,8 +27,7 @@
 /* Collapsible sections with smooth animation */
 .timeline-zoom-controls,
 .timeline-scroll-controls,
-.speed-control,
-.jump-to-step-control {
+.speed-control{
   transition: opacity 0.3s ease, max-height 0.3s ease;
 }
 
@@ -45,58 +37,6 @@
   gap: 6px;
 }
 
-.jump-to-step-control {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-left: 6px;
-}
-
-.jump-to-step-field {
-  width: 60px;
-  height: 24px;
-  padding: 2px 6px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  background: var(--background);
-  color: var(--foreground);
-  text-align: center;
-  transition: border-color 0.2s ease, background-color 0.2s ease;
-}
-
-.jump-to-step-field:focus {
-  outline: none;
-  border-color: var(--primary);
-  background: var(--secondary);
-  box-shadow: 0 0 0 2px var(--ring);
-}
-
-.jump-button {
-  height: 24px;
-  padding: 2px 8px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  background: var(--card);
-  color: var(--foreground);
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.jump-button:hover {
-  background: var(--secondary);
-  border-color: var(--primary);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.jump-button:active {
-  background: var(--secondary);
-  transform: translateY(0);
-  box-shadow: none;
-}
-
-/* .transport-button is styled via shadcn Button/icon sizes */
 
 .vertical-divider {
   inline-size: 1px;
@@ -105,14 +45,6 @@
   margin: 0 6px;
   transition: opacity 0.3s ease;
 }
-
-/* Improve visual hierarchy with subtle shadows and borders */
-.controls-row {
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 8px;
-}
-
-/* .record-button-danger no longer used; start button icon color can be set inline if needed */
 
 /* Responsive design improvements */
 @media (max-width: 1200px) {

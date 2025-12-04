@@ -80,12 +80,19 @@ export class ViewportManager {
    * @param {Array} nodes - Node elements
    * @param {Array} labels - Label elements
    * @param {Object} options - Fit options {padding, duration}
-   */
+  */
   focusOnTree(nodes, labels, options = {}) {
     const bounds = this.calculateBounds(nodes, labels);
 
+    // Increase padding for dense trees to reduce overlap of thick strokes/labels
+    const leafCount = Array.isArray(nodes) ? nodes.length : 0;
+    const densityPadding = leafCount > 400 ? 1.4
+      : leafCount > 200 ? 1.3
+      : leafCount > 100 ? 1.2
+      : 0;
+
     this.controller.deckManager.fitToBounds(bounds, {
-      padding: options.padding ?? 1.25,
+      padding: options.padding ?? (1.25 + densityPadding),
       duration: options.duration ?? 550,
       labels,
       getLabelSize: this.controller.layerManager.layerStyles.getLabelSize?.bind(
@@ -99,14 +106,12 @@ export class ViewportManager {
    * @param {Array} nodes - Node elements to project
    */
   updateScreenPositions(nodes, sideOverride = null) {
-    const overlayEl = document.getElementById('comparison-overlay');
-    if (!overlayEl || !this.controller.deckManager?.deck || !nodes) return;
+    if (!this.controller.deckManager?.deck || !nodes) return;
 
     try {
       const viewport = this.controller.deckManager.deck.getViewports()[0];
       if (!viewport) return;
       const containerRect = this.controller.webglContainer.node().getBoundingClientRect();
-      const overlayRect = overlayEl.getBoundingClientRect();
       const { setScreenPositions } = this.controller._getState();
 
       const positions = {};
@@ -117,8 +122,8 @@ export class ViewportManager {
         if (!key) return;
         const [px, py] = viewport.project(node.position);
         positions[key] = {
-          x: px + containerRect.left - overlayRect.left,
-          y: py + containerRect.top - overlayRect.top,
+          x: px + containerRect.left,
+          y: py + containerRect.top,
           width: 0,
           height: 0,
           isLeaf: !node.children || node.children.length === 0

@@ -9,25 +9,24 @@ export function ButtonsMSA() {
   const hasMsa = useAppStore((s) => (s.msaColumnCount || 0) > 0 || !!s.movieData?.msa?.sequences);
   const syncMSAEnabled = useAppStore((s) => s.syncMSAEnabled);
   const setSyncMSAEnabled = useAppStore((s) => s.setSyncMSAEnabled);
+  const openMsaViewer = useAppStore((s) => s.openMsaViewer);
 
   const handleOpenViewer = async () => {
     if (!hasMsa) return;
 
     try {
-      const [{ showMSAViewer }, { phyloData }, { notifications }] = await Promise.all([
-        import('../../../js/msaViewer/index.js'),
-        import('../../../js/services/dataService.js'),
-        import('../../../js/services/notifications.js')
+      const [{ notifications }] = await Promise.all([
+        import('../../../js/services/ui/notifications.js')
       ]);
 
-      const data = await phyloData.get();
+      const data = useAppStore.getState().movieData;
 
       if (!data?.msa?.sequences) {
         notifications.show('No alignment data available. Please upload an MSA file.', 'warning');
         return;
       }
 
-      await showMSAViewer(data);
+      openMsaViewer();
     } catch (error) {
       console.error('[ButtonsMSA] Failed to open MSA viewer:', error);
     }

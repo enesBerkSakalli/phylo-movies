@@ -27,10 +27,3 @@
   width: 100% !important;
   height: 100% !important;
 }
-
-/* Third-party library overrides (winbox modal) */
-.winbox.modern.modal { border-radius: 12px; background: var(--card); border: 1px solid var(--border); }
-
-.winbox.modern.modal .wb-body { background: var(--card); }
-
-.winbox.modern.modal .wb-title { font-weight: 600; font-size: 18px; color: var(--foreground); }

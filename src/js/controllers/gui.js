@@ -1,35 +1,29 @@
 import { useAppStore } from '../core/store.js';
-import { TaxaColoring } from "../treeColoring/index.js";
-import { WebGLTreeAnimationController } from "../treeVisualisation/WebGLTreeAnimationController.js";
-import { TREE_COLOR_CATEGORIES } from "../constants/TreeColors.js";
-import { applyColoringData } from "../treeColoring/index.js";
-import { NavigationController } from "./NavigationController.js";
 import { calculateWindow } from "../utils/windowUtils.js";
-import { getMSAFrameIndex } from "../core/IndexMapping.js";
+import { getMSAFrameIndex } from "../domain/indexing/IndexMapping.js";
 import { MovieTimelineManager } from "../timeline/MovieTimelineManager.js";
-import { TIMELINE_CONSTANTS } from "../timeline/constants.js";
 
 // ============================================================================
 // GUI CLASS - Main controller for phylogenetic tree visualization application
 //
 // CORE RESPONSIBILITIES:
-// - Orchestrates WebGL/SVG tree rendering via TreeAnimationController
-// - Manages animation playback with smooth interpolation
-// - Handles navigation direction tracking for backward scrubbing support
-// - Coordinates UI controllers (Navigation, UI)
+// - Orchestrates WebGL tree rendering via TreeAnimationController
+// - Manages tree rendering lifecycle and state
 // - Synchronizes with MSA viewer when enabled
 // - Provides centralized state management through store integration
 //
-// ANIMATION SYSTEM:
-// - Uses TWEEN.js for smooth easing during playback
-// - Supports forward/backward/jump navigation detection
-// - Handles interpolated frame rendering for timeline scrubbing
-// - Manages render-in-progress state to prevent overlapping renders
+// RENDER ORCHESTRATION:
+// - Coordinates comparison mode vs single tree rendering
+// - Handles render-in-progress state to prevent overlapping renders
+// - Manages post-render component updates
 //
 // STORE INTEGRATION:
 // - Single source of truth pattern with useAppStore
 // - Reactive updates via store subscriptions
 // - Proper cleanup and resource management
+//
+// NOTE: Animation and timeline controls now live directly in the store (uiSlice)
+// React components call store methods directly instead of going through Gui
 // ============================================================================
 export default class Gui {
   constructor(movieData, options = {}) {
@@ -41,8 +35,6 @@ export default class Gui {
     useAppStore.getState().initialize(movieData);
 
 
-    // Initialize controllers, passing 'this' (the Gui instance) where needed
-    this.navigationController = new NavigationController(this);
     // Scale bar is managed by React; no UI controller needed
     // React (Nivo) chart renders via components; no chart controller
 
@@ -58,11 +50,6 @@ export default class Gui {
       }),
       (current, previous) => {
         // Keep subscription focused: animation drives renders; avoid redundant work.
-
-        // Handle playing state changes to update the UI button
-        if (current.playing !== previous?.playing) {
-          this._updatePlayButtonState();
-        }
 
         // Update the main tree view when the index has changed (even during playback)
         if (current.currentTreeIndex !== previous?.currentTreeIndex) {
@@ -91,71 +78,6 @@ export default class Gui {
   }
 
   // ========================================
-  // TIMELINE CONTROLS (invoked by React buttons)
-  // ========================================
-  zoomInTimeline() {
-    try { this.movieTimelineManager?.timeline?.zoomIn?.(TIMELINE_CONSTANTS.ZOOM_PERCENTAGE_UI); } catch {}
-  }
-  zoomOutTimeline() {
-    try { this.movieTimelineManager?.timeline?.zoomOut?.(TIMELINE_CONSTANTS.ZOOM_PERCENTAGE_UI); } catch {}
-  }
-  fitTimeline() {
-    try { this.movieTimelineManager?.timeline?.fit?.(); } catch {}
-  }
-  scrollToStartTimeline() {
-    try { this.movieTimelineManager?.timeline?.moveTo?.(TIMELINE_CONSTANTS.DEFAULT_PROGRESS); } catch {}
-  }
-  scrollToEndTimeline() {
-    try {
-      const t = this.movieTimelineManager?.timeline;
-      if (!t) return;
-      const total = t.getTotalDuration?.();
-      const range = t.getVisibleTimeRange?.();
-      if (typeof total === 'number' && range && typeof range.min === 'number' && typeof range.max === 'number') {
-        const visible = Math.max(0, range.max - range.min);
-        t.moveTo(Math.max(0, total - visible));
-      }
-    } catch {}
-  }
-
-  // ========================================
-  // PLAYBACK BUTTON STATE MANAGEMENT
-  // ========================================
-  _updatePlayButtonState() {
-    // React TransportControls handles play/pause icon and labels.
-    // No DOM updates needed here.
-  }
-
-  async play() {
-    const { playing, treeControllers } = useAppStore.getState();
-    if (playing) return;
-
-    if (!treeControllers.length) {
-      await this.updateMain();
-    }
-
-    const controllers = useAppStore.getState().treeControllers;
-    controllers.forEach(c => c.startAnimation());
-  }
-
-
-
-  stop() {
-    const { treeControllers, stop: stopStore } = useAppStore.getState();
-    // Stop animation first if controller has the method
-    treeControllers.forEach(c => {
-      if (c && typeof c.stopAnimation === 'function') {
-        c.stopAnimation();
-      }
-    });
-    // Also ensure the store state is set to not playing.
-    stopStore();
-  }
-
-
-
-
-  // ========================================
   // MSA VIEWER SYNCHRONIZATION
   // ========================================
   _syncMSAIfOpenThrottled() {
@@ -167,23 +89,15 @@ export default class Gui {
     this.syncMSAIfOpen();
   }
 
-  isMSAViewerOpen() {
-    // Legacy check no longer required; viewer API is safe to call if missing
-    return true;
-  }
-
   syncMSAIfOpen() {
-    const { transitionResolver, msaWindowSize, msaStepSize, syncMSAEnabled, msaColumnCount } = useAppStore.getState();
+    const { transitionResolver, msaWindowSize, msaStepSize, syncMSAEnabled, msaColumnCount, setMsaRegion } = useAppStore.getState();
     if (!syncMSAEnabled || !transitionResolver || !msaColumnCount) return;
     // Centralized frame index for MSA anchoring
     const frameIndex = getMSAFrameIndex();
     if (frameIndex < 0) return;
     const windowData = calculateWindow(frameIndex, msaStepSize, msaWindowSize, msaColumnCount);
-    import('../msaViewer/index.js')
-      .then(({ setMSARegion }) => {
-        setMSARegion(windowData.startPosition, windowData.endPosition);
-      })
-      .catch(() => {});
+    // Store-driven region; viewer will subscribe to this state
+    setMsaRegion(windowData.startPosition, windowData.endPosition);
   }
 
   // ========================================
@@ -225,16 +139,7 @@ export default class Gui {
    * @returns {Object|null} Validation result with tree data, or null if invalid
    */
   _validateRenderState() {
-    const {
-      currentTreeIndex,
-      movieData,
-      renderInProgress
-    } = useAppStore.getState();
-
-    // Skip if render is already in progress to prevent overlapping renders
-    if (renderInProgress) {
-      return null;
-    }
+    const { currentTreeIndex, movieData } = useAppStore.getState();
 
     const tree = movieData.interpolated_trees[currentTreeIndex];
     if (!tree) {
@@ -360,151 +265,6 @@ export default class Gui {
 
   resize(_skipAutoCenter = false) {}
 
-
-  async backward() {
-    const { backward: storeBackward } = useAppStore.getState();
-    storeBackward();
-  }
-
-  async forward() {
-    const { forward: storeForward } = useAppStore.getState();
-    storeForward();
-  }
-
-  async goToPosition(position) {
-    const { goToPosition: storeGoToPosition } = useAppStore.getState();
-
-    // Just navigate - renderAllElements will clear and refresh automatically
-    storeGoToPosition(position);
-  }
-
-  // ========================================
-  // EXPORT & SAVE FUNCTIONALITY
-  // ========================================
-  async saveImage() {
-    let { treeControllers } = useAppStore.getState();
-
-    // If no controller exists, create one by running the main update.
-    if (!treeControllers.length) {
-      await this.updateMain();
-      // Re-fetch the controller from the store now that it has been created.
-      treeControllers = useAppStore.getState().treeControllers;
-    }
-
-    const treeController = treeControllers[treeControllers.length - 1]; // Save the right-most view
-
-    const button = document.getElementById("save-button");
-
-    if (button) {
-      button.disabled = true;
-    }
-
-    try {
-      // --- PNG Saving Logic ---
-      if (!treeController || !treeController.deckManager || !treeController.deckManager.canvas) {
-        console.error("Deck.gl canvas not available for saving PNG.");
-        return;
-      }
-
-      const canvas = treeController.deckManager.canvas;
-      const dataURL = canvas.toDataURL('image/png');
-
-      const link = document.createElement('a');
-      const fileName = `phylo-movie-export-${useAppStore.getState().currentTreeIndex + 1}.png`;
-      link.href = dataURL;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      console.error("Error saving image:", error);
-    } finally {
-      if (button) {
-        button.disabled = false;
-      }
-    }
-  }
-
-  // Chart modal removed
-
-  getCurrentTreeLabel() {
-    const store = useAppStore.getState();
-    const { currentTreeIndex, movieData, transitionResolver } = store;
-    const md = movieData.tree_metadata?.[currentTreeIndex];
-    if (!md) return `Tree ${currentTreeIndex + 1}`;
-
-    const phase = md.phase || 'UNKNOWN';
-    const pairKey = md.tree_pair_key || null;
-    const step = md.step_in_pair || null;
-
-    // Anchor/full tree label
-    if (!pairKey || phase === 'ORIGINAL') {
-      // Check if current position is exactly on a full tree
-      const fullTreeIndices = transitionResolver?.fullTreeIndices || [];
-      const fullIdx = fullTreeIndices.indexOf(currentTreeIndex);
-      return fullIdx >= 0 ? `Anchor Tree ${fullIdx + 1}` : `Anchor Tree`;
-    }
-
-    // Transition label using pair_key and step
-    const m = typeof pairKey === 'string' ? pairKey.match(/pair_(\d+)_/) : null;
-    const sEdgeLabel = m ? `S-edge ${parseInt(m[1], 10)}` : pairKey;
-    const stepStr = step ? `, Step ${step}` : '';
-    return `${sEdgeLabel}${stepStr} — Transition ${pairKey}`;
-  }
-
-
-  // ========================================
-  // TAXA COLORING WINDOW
-  // ========================================
-
-  openTaxaColoringWindow() {
-    const { movieData } = useAppStore.getState(); // Get from store
-    if (!movieData.sorted_leaves?.length) { // Use movieData from store
-      alert("No taxa names available for coloring.");
-      return;
-    }
-
-    // Create a complete color map that includes both system colors and current taxa colors
-    const completeColorMap = { ...TREE_COLOR_CATEGORIES };
-
-    // Add current taxa colors to the map - this ensures persistence
-    movieData.sorted_leaves.forEach(taxon => {
-      if (TREE_COLOR_CATEGORIES[taxon]) {
-        completeColorMap[taxon] = TREE_COLOR_CATEGORIES[taxon];
-      } else {
-        // If no color is set, use the default black color
-        completeColorMap[taxon] = TREE_COLOR_CATEGORIES.defaultColor || "#000000";
-      }
-    });
-
-    new TaxaColoring(
-      movieData.sorted_leaves, // Use movieData from store
-      completeColorMap, // Pass complete color map including current taxa assignments
-      (colorData) => this._handleTaxaColoringComplete(colorData)
-    );
-  }
-
-  async _handleTaxaColoringComplete(colorData) {
-    const { movieData, updateTaxaColors, setTaxaGrouping } = useAppStore.getState(); // Get from store
-    const newColorMap = applyColoringData(colorData, movieData.sorted_leaves, TREE_COLOR_CATEGORIES); // Use movieData from store
-
-    // Use the store method to update colors and notify ColorManager
-    updateTaxaColors(newColorMap);
-
-    // Persist grouping info for UI (tooltips)
-    try {
-      const grouping = {
-        mode: colorData?.mode || 'taxa',
-        separator: colorData?.separator || null,
-        strategyType: colorData?.strategyType || null,
-        csvTaxaMap: colorData?.csvTaxaMap ? Object.fromEntries(colorData.csvTaxaMap) : null,
-        // Persist group color map so legend and tooltips can show consistent colors
-        groupColorMap: colorData?.groupColorMap ? Object.fromEntries(colorData.groupColorMap) : null,
-      };
-      setTaxaGrouping(grouping);
-    } catch (_) { /* ignore */ }
-  }
-
   // ========================================
   // MSA POSITION TRACKING
   // ========================================
@@ -552,15 +312,7 @@ export default class Gui {
       this.unsubscribeStore = null;
     }
 
-    // Clean up controllers
-    // No UI controller to clean up
-
     // React (Nivo) chart is component-driven; nothing to clean up here
-
-    if (this.navigationController) {
-      // NavigationController cleanup if it has a destroy method
-      this.navigationController = null;
-    }
 
 
     // Clean up Movie Timeline Manager

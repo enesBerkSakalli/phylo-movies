@@ -2,20 +2,19 @@ import React, { useEffect, useRef } from 'react';
 import { ButtonsFileOps } from './components/nav/ButtonsFileOps.jsx';
 import { ButtonsMSA } from './components/nav/ButtonsMSA.jsx';
 import { Appearance } from './components/appearance/Appearance.jsx';
-import { VisualElements } from './components/appearance/controls/VisualElements.jsx';
+import { VisualElements } from './components/appearance/controls/VisualElements/VisualElements.jsx';
 import { TreeStructureGroup } from './components/appearance/layout/TreeStructureGroup.jsx';
 import { MoviePlayerBar } from './components/movie-player/MoviePlayerBar.jsx';
-import { TopScaleBar } from './components/TopScaleBar.jsx';
-import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator } from '@/components/ui/sidebar';
-import { Button } from '@/components/ui/button';
-import { Film, SlidersHorizontal, Monitor, Sun, Moon, FolderOpen, Dna, GitBranch } from 'lucide-react';
+import { TopScaleBar } from './components/TopScaleBar/TopScaleBar.jsx';
+import { MsaRndWindow } from './components/msa/MsaRndWindow.jsx';
+import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarInset, SidebarMenu, SidebarMenuItem,  SidebarSeparator } from '@/components/ui/sidebar';
+
+import { Film, SlidersHorizontal, FolderOpen, Dna, GitBranch } from 'lucide-react';
 import { useAppStore } from '../js/core/store.js';
-import { getPhyloMovieData } from '../js/services/dataManager.js';
+import { getPhyloMovieData } from '../js/services/data/dataManager.js';
 import Gui from '../js/controllers/gui.js';
 import { DeckGLTreeAnimationController } from '../js/treeVisualisation/DeckGLTreeAnimationController.js';
 import { debounce } from '../js/utils/debounce.js';
-import { initializeTheme } from '../js/core/theme.js';
-import { MoverCurvesOverlay } from './components/overlays/MoverCurvesOverlay.jsx';
 
 export function App() {
   const comparisonMode = useAppStore((s) => s.comparisonMode);
@@ -29,10 +28,6 @@ export function App() {
       gui.updateMain();
     }
   }, [comparisonMode, gui]);
-
-  useEffect(() => {
-    initializeTheme();
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -101,11 +96,6 @@ export function App() {
                 File: <span id="compactFileName">{fileName}</span>
               </p>
             </div>
-            <Button id="theme-toggle" variant="ghost" size="icon" aria-label="Toggle theme" title="Toggle theme">
-              <Sun className="size-5 icon-sun" />
-              <Moon className="size-5 icon-moon" />
-              <Monitor className="size-5 icon-monitor" />
-            </Button>
           </div>
         </SidebarHeader>
 
@@ -156,7 +146,7 @@ export function App() {
             <SidebarMenuItem>
               <SidebarGroup>
                 <SidebarGroupLabel>
-                  <Monitor className="size-4 text-primary" />
+                  <SlidersHorizontal className="size-4 text-primary" />
                   Visual Elements
                 </SidebarGroupLabel>
                 <VisualElements />
@@ -179,6 +169,8 @@ export function App() {
           </SidebarMenu>
         </SidebarContent>
       </Sidebar>
+
+      <MsaRndWindow />
 
       <SidebarInset>
         <div className="full-size-container" style={{ flex: 1, minHeight: 0, position: 'relative' }}>

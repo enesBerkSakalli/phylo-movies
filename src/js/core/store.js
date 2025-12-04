@@ -1,16 +1,14 @@
 import { create } from 'zustand';
-import { createDataSlice } from './slices/dataSlice.js';
+import { createPhylogeneticDataSlice } from './slices/phylogeneticDataSlice.js';
 import { createPlaybackSlice } from './slices/playbackSlice.js';
 import { createUiSlice } from './slices/uiSlice.js';
 import { createHighlightSlice } from './slices/highlightSlice.js';
+
 export const useAppStore = create((set, get) => ({
-  ...createDataSlice(set, get),
+  ...createPhylogeneticDataSlice(set, get),
   ...createPlaybackSlice(set, get),
   ...createUiSlice(set, get),
   ...createHighlightSlice(set, get),
-  // ===================================
-  // STATE
-  // ===================================
 }));
 
 // Set up ColorManager subscription after store creation
