@@ -4,24 +4,6 @@
   inline-size: 100%;
 }
 
-.interpolation-timeline-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 4px;
-  position: relative;
-}
-
-.timeline-header-metrics {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 8px;
-}
-
-/* Removed Material suggestion chip overrides */
-
 .timeline-header-right {
   display: flex;
   gap: 8px;
@@ -35,13 +17,7 @@
 
 /* Responsive: avoid overlap with controls on narrow widths */
 @media (max-width: 900px) {
-  .timeline-header-metrics {
-    position: static;
-    left: auto;
-    transform: none;
-    justify-content: center;
-    flex: 1 1 auto;
-  }
+
   .timeline-header-right {
     margin-left: auto;
   }

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Palette } from 'lucide-react';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
+import { openTaxaColoringFromStore } from '../../../../js/treeColoring/components/TaxaColoring.jsx';
 
 export function ColoringPanel() {
   const monophyletic = useAppStore((s) => s.monophyleticColoringEnabled);
@@ -46,7 +47,7 @@ export function ColoringPanel() {
   return (
     <div>
       <div className="flex flex-col gap-4">
-          <Button id="taxa-coloring-button" className="w-full" onClick={() => useAppStore.getState().gui?.openTaxaColoringWindow?.()}>
+          <Button id="taxa-coloring-button" className="w-full" onClick={openTaxaColoringFromStore}>
             <Palette className="size-4" />
             <span>Taxa Coloring</span>
           </Button>

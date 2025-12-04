@@ -1,3 +1,6 @@
+import { colorToRgb } from '../../utils/colorUtils.js';
+import { Bezier } from 'bezier-js';
+
 /**
  * ComparisonModeRenderer
  *
@@ -127,6 +130,30 @@ export class ComparisonModeRenderer {
   }
 
   /**
+   * Build Bezier path between two points.
+   * @private
+   */
+  _buildBezierPath(from, to, samples = 24) {
+    if (!from || !to) return [];
+
+    const p0 = from;
+    const p3 = to;
+    const midX = (p0[0] + p3[0]) / 2;
+    const offset = Math.max(Math.abs(p3[0] - p0[0]) * 0.15, 30);
+    const p1 = [midX - offset, p0[1]];
+    const p2 = [midX + offset, p3[1]];
+
+    // Create cubic Bezier curve using bezier-js
+    const curve = new Bezier(p0[0], p0[1], p1[0], p1[1], p2[0], p2[1], p3[0], p3[1]);
+
+    // Get lookup table of points along the curve
+    const lut = curve.getLUT(samples);
+
+    // Convert {x, y} objects to [x, y, 0] arrays for deck.gl
+    return lut.map(p => [p.x, p.y, 0]);
+  }
+
+  /**
    * Build simple straight connectors using backend mapping.
    */
   _buildConnectors(viewLinkMapping, leftPositions, rightPositions) {
@@ -146,38 +173,6 @@ export class ComparisonModeRenderer {
     const moversSet = new Set(viewLinkMapping?.movers || []);
     const moverLeaves = new Set(viewLinkMapping?.moverLeafIds || []);
     const colorManager = this.controller._getState()?.colorManager;
-
-    const hexToRgba = (hex = '#000000', alpha = 160) => {
-      if (!hex || typeof hex !== 'string') return [220, 40, 40, alpha];
-      const clean = hex.replace('#', '');
-      const full = clean.length === 3
-        ? clean.split('').map((c) => c + c).join('')
-        : clean.padEnd(6, '0');
-      const r = parseInt(full.slice(0, 2), 16);
-      const g = parseInt(full.slice(2, 4), 16);
-      const b = parseInt(full.slice(4, 6), 16);
-      return [r, g, b, alpha];
-    };
-
-    const buildBezierPath = (from, to, samples = 24) => {
-      if (!from || !to) return [];
-      const p0 = from;
-      const p3 = to;
-      const midX = (p0[0] + p3[0]) / 2;
-      const offset = Math.max(Math.abs(p3[0] - p0[0]) * 0.15, 30);
-      const p1 = [midX - offset, p0[1], 0];
-      const p2 = [midX + offset, p3[1], 0];
-
-      const path = [];
-      for (let i = 0; i <= samples; i++) {
-        const t = i / samples;
-        const mt = 1 - t;
-        const x = mt * mt * mt * p0[0] + 3 * mt * mt * t * p1[0] + 3 * mt * t * t * p2[0] + t * t * t * p3[0];
-        const y = mt * mt * mt * p0[1] + 3 * mt * mt * t * p1[1] + 3 * mt * t * t * p2[1] + t * t * t * p3[1];
-        path.push([x, y, 0]);
-      }
-      return path;
-    };
 
     const rightLeavesByName = new Map();
     for (const [key, info] of rightPositions) {
@@ -216,15 +211,16 @@ export class ComparisonModeRenderer {
           if (rightMatch) {
             const srcPos = [info.position[0], info.position[1], 0];
             const dstPos = [rightMatch.info.position[0], rightMatch.info.position[1], 0];
-            const path = buildBezierPath(srcPos, dstPos);
+            const path = this._buildBezierPath(srcPos, dstPos);
             if (!path.length) return;
             const srcColorHex = colorManager?.getNodeColor ? colorManager.getNodeColor(info.node || info) : null;
+            const [r, g, b] = srcColorHex ? colorToRgb(srcColorHex) : [220, 40, 40];
             connectors.push({
               id: `connector-${splitIdx}-${rightMatch.key}-${connectorIdx++}`,
               source: srcPos,
               target: dstPos,
               path,
-              color: hexToRgba(srcColorHex, 160),
+              color: [r, g, b, 160],
               width: 1.5,
               jointRounded: true,
               capRounded: true
