@@ -1,7 +1,6 @@
 import { useAppStore } from '../core/store.js';
-import { calculateWindow } from "../utils/windowUtils.js";
+import { calculateWindow } from "../services/domain/msaWindowCalculator.js";
 import { getMSAFrameIndex } from "../domain/indexing/IndexMapping.js";
-import { MovieTimelineManager } from "../timeline/MovieTimelineManager.js";
 
 // ============================================================================
 // GUI CLASS - Main controller for phylogenetic tree visualization application
@@ -38,9 +37,6 @@ export default class Gui {
     // Scale bar is managed by React; no UI controller needed
     // React (Nivo) chart renders via components; no chart controller
 
-    // Movie Timeline Manager for visual active change edge progress tracking
-    this.movieTimelineManager = null;
-
     // Subscribe only to core tree navigation changes
     // Controllers handle their own specific subscriptions
     this.unsubscribeStore = useAppStore.subscribe(
@@ -60,21 +56,6 @@ export default class Gui {
         this.syncMSAIfOpen();
       }
     );
-  }
-
-
-  // ========================================
-  // MOVIE PLAYBACK CONTROLS
-  // ========================================
-  initializeMovie() {
-    const { gui } = useAppStore.getState();
-    // No SVG zoom to initialize in WebGL mode
-    gui.resize();
-    gui.update();
-
-
-    // Initialize Movie Timeline Manager after movie is initialized
-    this._initializeMovieTimelineManager();
   }
 
   // ========================================
@@ -103,31 +84,16 @@ export default class Gui {
   // ========================================
   // MAIN UPDATE CYCLE
   // ========================================
-  async update(skipAutoCenter = false) {
-    // 1. Handle layout/sizing first
-    this.resize(skipAutoCenter);
-
-    // 2. Render tree content
+  async update() {
+    // 1. Render tree content
     await this.updateMain();
 
-    // 3. Chart updates are handled by React (Nivo) via store state
+    // 2. Chart updates are handled by React (Nivo) via store state
 
-    // 4. UI elements update via React components
+    // 3. UI elements update via React components
 
-    // 5. Sync external viewers if needed
+    // 4. Sync external viewers if needed
     this._syncMSAIfOpenThrottled();
-  }
-
-  // ========================================
-  // UI EVENT HANDLERS
-  // ========================================
-
-  getCurrentWindow() {
-    const { msaWindowSize, msaStepSize, msaColumnCount } = useAppStore.getState(); // Get state from store
-    const frameIndex = getMSAFrameIndex();
-    const window = calculateWindow(frameIndex, msaStepSize, msaWindowSize, msaColumnCount || 0);
-    // Note: setWindowStart and setWindowEnd were removed as they don't exist in the store
-    return window;
   }
 
   // ========================================
@@ -224,8 +190,9 @@ export default class Gui {
    */
   _updatePostRenderComponents() {
     // Update S-Edge bars if available
-    if (this.movieTimelineManager) {
-      this.movieTimelineManager.updateCurrentPosition();
+    const { movieTimelineManager } = useAppStore.getState();
+    if (movieTimelineManager) {
+      movieTimelineManager.updateCurrentPosition();
     }
   }
 
@@ -262,48 +229,11 @@ export default class Gui {
     this._updatePostRenderComponents();
   }
 
-
-  resize(_skipAutoCenter = false) {}
-
-  // ========================================
-  // MSA POSITION TRACKING
-  // ========================================
-  calculateMSAPosition() {
-    const { currentTreeIndex, msaStepSize } = useAppStore.getState(); // Get from store
-    const transitionStep = getMSAFrameIndex();
-    return {
-      position: currentTreeIndex + 1,
-      stepSize: msaStepSize, // Get from store
-      steps: transitionStep * msaStepSize, // Get from store
-      treeIndex: currentTreeIndex
-    };
-  }
-
-  // ========================================
-  // MOVIE TIMELINE MANAGER INITIALIZATION
-  // ========================================
-
-  /**
-   * Initialize Movie Timeline Manager for visual progress tracking
-   * @private
-   */
-  _initializeMovieTimelineManager() {
-    try {
-      const { movieData, transitionResolver } = useAppStore.getState();
-      this.movieTimelineManager = new MovieTimelineManager(movieData, transitionResolver);
-    } catch (error) {
-      console.error('[GUI] Failed to initialize MovieTimelineManager:', error);
-      this.movieTimelineManager = null;
-    }
-  }
-
-
-
   /**
    * Clean up resources when GUI is destroyed
    */
   destroy() {
-    const { setTreeControllers } = useAppStore.getState();
+    const { setTreeControllers, movieTimelineManager } = useAppStore.getState();
     setTreeControllers([]);
 
     // Clean up store subscription
@@ -314,12 +244,6 @@ export default class Gui {
 
     // React (Nivo) chart is component-driven; nothing to clean up here
 
-
-    // Clean up Movie Timeline Manager
-    if (this.movieTimelineManager) {
-      this.movieTimelineManager.destroy();
-      this.movieTimelineManager = null;
-    }
-
+    // MovieTimelineManager cleanup is handled by the store
   }
 }
