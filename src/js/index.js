@@ -11,7 +11,7 @@ import '@material/web/icon/icon.js';
 import '@material/web/switch/switch.js';
 import '@material/web/textfield/outlined-text-field.js';
 import '@material/web/progress/circular-progress.js';
-import { phyloData } from './services/dataService.js';
+import { phyloData } from './services/data/dataService.js';
 
 // FilePond setup
 const treesInput = document.getElementById("trees");
@@ -156,7 +156,7 @@ document.getElementById("phylo-form").addEventListener("submit", async function 
 
     // Handle MSA data saving using dataService.js workflow
     try {
-      const { workflows } = await import('../js/services/dataService.js');
+      const { workflows } = await import('../js/services/data/dataService.js');
       await workflows.handleMSADataSaving(formData, data);
     } catch (msaErr) {
       console.error("[index.html] Error in MSA workflow:", msaErr);

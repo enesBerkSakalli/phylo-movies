@@ -1,22 +1,49 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronsLeft, ChevronLeft, Play, Pause, ChevronRight, ChevronsRight, GitCompare, Link2, Link2Off } from 'lucide-react';
 import { useAppStore } from '../../../js/core/store.js';
 
 export function TransportControls({
-  playing,
-  onPlayClick,
   onBackward,
-  onBackwardStep,
   onForward,
-  onForwardStep,
-  canStepBackward,
-  canStepForward,
 }) {
+  const playing = useAppStore((s) => s.playing);
+  const gui = useAppStore((s) => s.gui);
+  const currentTreeIndex = useAppStore((s) => s.currentTreeIndex);
+  const treeListLen = useAppStore((s) => s.treeList?.length || 0);
+  const goToPosition = useAppStore((s) => s.goToPosition);
   const comparisonMode = useAppStore((state) => state.comparisonMode);
   const toggleComparisonMode = useAppStore((state) => state.toggleComparisonMode);
   const viewsConnected = useAppStore((s) => s.viewsConnected);
   const setViewsConnected = useAppStore((s) => s.setViewsConnected);
+  const startAnimationPlayback = useAppStore((s) => s.startAnimationPlayback);
+  const stopAnimationPlayback = useAppStore((s) => s.stopAnimationPlayback);
+
+  const canStepBackward = currentTreeIndex > 0;
+  const canStepForward = currentTreeIndex < treeListLen - 1;
+
+  const onPlayClick = useCallback(async () => {
+    try {
+      if (playing) stopAnimationPlayback();
+      else await startAnimationPlayback();
+    } catch {}
+  }, [playing, startAnimationPlayback, stopAnimationPlayback]);
+
+  const onBackwardStep = useCallback(() => {
+    if (currentTreeIndex > 0) {
+      stopAnimationPlayback();
+      goToPosition(currentTreeIndex - 1);
+      gui?.updateMain?.();
+    }
+  }, [currentTreeIndex, goToPosition, gui, stopAnimationPlayback]);
+
+  const onForwardStep = useCallback(() => {
+    if (currentTreeIndex < treeListLen - 1) {
+      stopAnimationPlayback();
+      goToPosition(currentTreeIndex + 1);
+      gui?.updateMain?.();
+    }
+  }, [currentTreeIndex, treeListLen, goToPosition, gui, stopAnimationPlayback]);
 
   return (
     <>
@@ -90,12 +117,13 @@ export function TransportControls({
         size="icon"
         title="Toggle comparison mode"
         aria-label="Toggle comparison mode"
-        onClick={toggleComparisonMode}
-        data-state={comparisonMode ? 'active' : 'inactive'}
-      >
-        <GitCompare className="size-5" />
-      </Button>
+      onClick={toggleComparisonMode}
+      data-state={comparisonMode ? 'active' : 'inactive'}
+    >
+      <GitCompare className="size-5" />
+    </Button>
 
+    {comparisonMode && (
       <Button
         className="transport-button"
         id="link-views-button"
@@ -108,6 +136,7 @@ export function TransportControls({
       >
         {viewsConnected ? <Link2 className="size-5" /> : <Link2Off className="size-5" />}
       </Button>
-    </>
+    )}
+  </>
   );
 }

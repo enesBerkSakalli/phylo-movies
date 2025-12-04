@@ -1,5 +1,5 @@
 import { useAppStore } from '../../../js/core/store.js';
-import { AdvancedFeatures } from './controls/AdvancedFeatures.jsx';
+import { AdvancedFeatures } from './controls/AdvancedFeatures/AdvancedFeatures.jsx';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { SidebarGroup, SidebarGroupLabel } from '@/components/ui/sidebar';

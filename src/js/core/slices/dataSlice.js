@@ -1,6 +1,6 @@
-import TransitionIndexResolver from '../TransitionIndexResolver.js';
+import TransitionIndexResolver from '../../domain/indexing/TransitionIndexResolver.js';
 import calculateScales, { getMaxScaleValue } from '../../utils/scaleUtils.js';
-import { ColorManager } from '../../treeVisualisation/systems/ColorManager.js';
+import { TreeColorManager } from '../../treeVisualisation/systems/TreeColorManager.js';
 import { TREE_COLOR_CATEGORIES } from '../../constants/TreeColors.js';
 
 // Optional persistence of user color choices in localStorage
@@ -33,6 +33,7 @@ export const createDataSlice = (set, get) => ({
   msaWindowSize: 1000,
   msaStepSize: 50,
   msaColumnCount: 0, // Derived from data.msa.sequences[first]
+  msaRegion: null,
   hasMsa: false,
   screenPositionsLeft: {},
   screenPositionsRight: {},
@@ -80,8 +81,7 @@ export const createDataSlice = (set, get) => ({
     const numberOfFullTrees = fullTreeIndices.length;
 
     // Create single ColorManager instance - single source of truth
-    // Initialize with empty array (ColorManager expects array of Sets)
-    const colorManager = new ColorManager([]);
+    const colorManager = new TreeColorManager();
 
     // Sync ColorManager with store's monophyletic setting
     const initialMonophyleticColoring = get().monophyleticColoringEnabled !== undefined ? get().monophyleticColoringEnabled : true;
@@ -185,4 +185,26 @@ export const createDataSlice = (set, get) => ({
     };
     set({ viewLinkMapping: mapping || empty });
   },
+
+  /**
+   * Set the current MSA region (1-based, inclusive). Clamps to the known column count.
+   */
+  setMsaRegion: (start, end) => {
+    const { msaColumnCount } = get();
+    if (!Number.isFinite(start) || !Number.isFinite(end)) {
+      set({ msaRegion: null });
+      return;
+    }
+    const min = Math.min(start, end);
+    const max = Math.max(start, end);
+    const limit = msaColumnCount || Number.MAX_SAFE_INTEGER;
+    const clampedStart = Math.max(1, Math.min(limit, min));
+    const clampedEnd = Math.max(1, Math.min(limit, max));
+    set({ msaRegion: { start: clampedStart, end: clampedEnd } });
+  },
+
+  /**
+   * Clear any stored MSA region.
+   */
+  clearMsaRegion: () => set({ msaRegion: null }),
 });

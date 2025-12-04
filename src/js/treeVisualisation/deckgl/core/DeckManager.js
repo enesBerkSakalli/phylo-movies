@@ -115,6 +115,8 @@ export class DeckManager {
         keyboard: true
       },
       viewState: initialViewState,         // controlled from the beginning
+      // Set white background for canvas recording (prevents black background in videos)
+      _backgroundColor: [255, 255, 255, 255],
       onViewStateChange: ({ viewState, viewId }) => {
         // Persist current camera state so switching views doesn't lose it
         const id = viewId || activeId;

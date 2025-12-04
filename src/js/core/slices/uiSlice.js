@@ -8,9 +8,11 @@ export const createUiSlice = (set, get) => ({
   treeControllers: [],
   comparisonMode: false,
   syncMSAEnabled: true,
+  isMsaViewerOpen: false,
+  msaWindow: { x: 40, y: 40, width: 960, height: 620 },
   fontSize: '2.6em',
-  strokeWidth: 2,
-  nodeSize: 1,
+  strokeWidth: 1,
+  nodeSize: 0.7,
   branchTransformation: 'none',
   dimmingEnabled: false,
   dimmingOpacity: 0.3,
@@ -28,6 +30,12 @@ export const createUiSlice = (set, get) => ({
   viewsConnected: false,
 
   toggleComparisonMode: () => set((state) => ({ comparisonMode: !state.comparisonMode })),
+
+  openMsaViewer: () => set({ isMsaViewerOpen: true }),
+  closeMsaViewer: () => set({ isMsaViewerOpen: false }),
+  setMsaWindow: (partial) => set((state) => ({
+    msaWindow: { ...state.msaWindow, ...(partial || {}) }
+  })),
 
   /**
    * Toggle syncing of MSA window/step with timeline progression.
@@ -182,5 +190,123 @@ export const createUiSlice = (set, get) => ({
     }
 
     set({ gui: instance });
+  },
+
+  // ========================================
+  // ANIMATION CONTROLS (Direct Access)
+  // ========================================
+  /**
+   * Start animation playback
+   */
+  startAnimationPlayback: async () => {
+    const { playing, treeControllers, gui } = get();
+    if (playing) return;
+
+    // Ensure we have a tree controller ready
+    if (!treeControllers.length && gui?.updateMain) {
+      await gui.updateMain();
+    }
+
+    // Start animation on all controllers
+    const controllers = get().treeControllers;
+    controllers.forEach(c => {
+      if (c?.startAnimation) c.startAnimation();
+    });
+  },
+
+  /**
+   * Stop animation playback
+   */
+  stopAnimationPlayback: () => {
+    const { treeControllers, stop } = get();
+
+    // Stop animation on all controllers
+    treeControllers.forEach(c => {
+      if (c?.stopAnimation) c.stopAnimation();
+    });
+
+    // Update store state
+    stop();
+  },
+
+  // ========================================
+  // TIMELINE CONTROLS (Direct Access)
+  // ========================================
+  /**
+   * Zoom in on timeline
+   */
+  zoomInTimeline: () => {
+    const { gui } = get();
+    try {
+      const timeline = gui?.movieTimelineManager?.timeline;
+      if (!timeline?.zoomIn) return;
+      // Import constant value inline to avoid circular dependencies
+      timeline.zoomIn(0.2); // TIMELINE_CONSTANTS.ZOOM_PERCENTAGE_UI
+    } catch (e) {
+      console.warn('[Store] zoomInTimeline failed:', e);
+    }
+  },
+
+  /**
+   * Zoom out on timeline
+   */
+  zoomOutTimeline: () => {
+    const { gui } = get();
+    try {
+      const timeline = gui?.movieTimelineManager?.timeline;
+      if (!timeline?.zoomOut) return;
+      timeline.zoomOut(0.2); // TIMELINE_CONSTANTS.ZOOM_PERCENTAGE_UI
+    } catch (e) {
+      console.warn('[Store] zoomOutTimeline failed:', e);
+    }
+  },
+
+  /**
+   * Fit timeline to window
+   */
+  fitTimeline: () => {
+    const { gui } = get();
+    try {
+      const timeline = gui?.movieTimelineManager?.timeline;
+      if (!timeline?.fit) return;
+      timeline.fit();
+    } catch (e) {
+      console.warn('[Store] fitTimeline failed:', e);
+    }
+  },
+
+  /**
+   * Scroll timeline to start
+   */
+  scrollToStartTimeline: () => {
+    const { gui } = get();
+    try {
+      const timeline = gui?.movieTimelineManager?.timeline;
+      if (!timeline?.moveTo) return;
+      timeline.moveTo(0); // TIMELINE_CONSTANTS.DEFAULT_PROGRESS
+    } catch (e) {
+      console.warn('[Store] scrollToStartTimeline failed:', e);
+    }
+  },
+
+  /**
+   * Scroll timeline to end
+   */
+  scrollToEndTimeline: () => {
+    const { gui } = get();
+    try {
+      const timeline = gui?.movieTimelineManager?.timeline;
+      if (!timeline) return;
+
+      const total = timeline.getTotalDuration?.();
+      const range = timeline.getVisibleTimeRange?.();
+
+      if (typeof total === 'number' && range && typeof range.min === 'number' && typeof range.max === 'number') {
+        const visible = Math.max(0, range.max - range.min);
+        timeline.moveTo(Math.max(0, total - visible));
+      }
+    } catch (e) {
+      console.warn('[Store] scrollToEndTimeline failed:', e);
+    }
   },
 });

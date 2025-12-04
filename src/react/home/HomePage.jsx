@@ -15,12 +15,14 @@ export function HomePage() {
   const {
     treesFile, setTreesFile,
     msaFile, setMsaFile,
-    windowSize, setWindowSize,
-    stepSize, setStepSize,
+    windowSize: windowSizeInput, setWindowSize: setWindowSizeInput,
+    stepSize: stepSizeInput, setStepSize: setStepSizeInput,
+    windowSizeError, stepSizeError,
+    commitWindowInput, commitStepInput,
     midpointRooting, setMidpointRooting,
     submitting, loadingExample,
     alert, clearAlert,
-    handleSubmit, handleLoadExample,
+    handleSubmit, handleLoadExample, reset,
   } = useHomeUploadForm();
 
   const disabled = submitting || loadingExample;
@@ -39,7 +41,7 @@ export function HomePage() {
           <Sprout className="size-10 text-primary mb-3 mx-auto" />
           <h2 className="text-2xl font-semibold mb-2">Visualize Phylogenetic Evolution</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto mb-4">
-            Transform your phylogenetic data into stunning interactive movies. Upload tree files and watch evolution unfold.
+            Turn Newick/JSON trees and MSAs into an interactive movie that animates topology changes, highlights taxa, and syncs alignment windows so you can explore evolutionary transitions with both trees and sequences side by side.
           </p>
           <div className="flex justify-center gap-6 text-sm text-muted-foreground">
             <span>• Interactive Timeline</span>
@@ -70,7 +72,7 @@ export function HomePage() {
                 <FileUploadZone
                   id="trees-input"
                   label="Trees (.nwk, .newick, .json)"
-                  description="Newick or JSON tree file"
+                  description="Newick or JSON tree file (optional if MSA provided)"
                   disabled={disabled}
                   value={treesFile}
                   onFileSelect={setTreesFile}
@@ -79,7 +81,7 @@ export function HomePage() {
                 <FileUploadZone
                   id="msa-input"
                   label="Multiple Sequence Alignment"
-                  description="FASTA, CLUSTAL, or PHYLIP format"
+                  description="FASTA, CLUSTAL, or PHYLIP format (optional if trees provided)"
                   accept={{
                     'text/plain': ['.fas', '.fasta', '.aln', '.clustal', '.msa', '.phylip', '.phy']
                   }}
@@ -104,11 +106,26 @@ export function HomePage() {
                       id="window-size"
                       type="number"
                       min={1}
-                      value={windowSize}
+                      max={100000}
+                      step={1}
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={windowSizeInput}
                       disabled={disabled}
-                      onChange={(e) => setWindowSize(Math.max(1, Number(e.target.value || 1)))}
+                      onChange={(e) => setWindowSizeInput(e.target.value)}
+                      onBlur={commitWindowInput}
                       className="mt-2"
+                      aria-invalid={!!windowSizeError}
+                      aria-describedby="window-size-help window-size-error"
                     />
+                    <p id="window-size-help" className="text-sm text-muted-foreground mt-1">
+                      Whole number of alignment columns per frame. Typical range: 100–10,000 (allowed 1–100,000).
+                    </p>
+                    {windowSizeError && (
+                      <p id="window-size-error" className="text-sm text-destructive mt-1">
+                        {windowSizeError}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <Label htmlFor="step-size">Step Size</Label>
@@ -116,11 +133,26 @@ export function HomePage() {
                       id="step-size"
                       type="number"
                       min={1}
-                      value={stepSize}
+                      max={100000}
+                      step={1}
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={stepSizeInput}
                       disabled={disabled}
-                      onChange={(e) => setStepSize(Math.max(1, Number(e.target.value || 1)))}
+                      onChange={(e) => setStepSizeInput(e.target.value)}
+                      onBlur={commitStepInput}
                       className="mt-2"
+                      aria-invalid={!!stepSizeError}
+                      aria-describedby="step-size-help step-size-error"
                     />
+                    <p id="step-size-help" className="text-sm text-muted-foreground mt-1">
+                      Frames to advance per step. Use whole numbers. Typical range: 10–2,000 (allowed 1–100,000).
+                    </p>
+                    {stepSizeError && (
+                      <p id="step-size-error" className="text-sm text-destructive mt-1">
+                        {stepSizeError}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="rounded-lg border p-4 flex items-center gap-4">
@@ -140,13 +172,8 @@ export function HomePage() {
           <CardFooter className="flex justify-end gap-2">
             <Button
               variant="outline"
-                  onClick={() => {
-                setTreesFile(null);
-                setMsaFile(null);
-                setWindowSize(1);
-                setStepSize(1);
-                setMidpointRooting(false);
-                clearAlert();
+              onClick={() => {
+                reset();
               }}
               disabled={disabled}
             >
@@ -159,7 +186,7 @@ export function HomePage() {
             >
               Load Example
             </Button>
-            <Button onClick={handleSubmit} disabled={disabled}>
+            <Button onClick={handleSubmit} disabled={disabled || (!treesFile && !msaFile)}>
               Create Visualization
             </Button>
           </CardFooter>

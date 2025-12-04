@@ -1,14 +1,9 @@
 import { TREE_COLOR_CATEGORIES } from '../../constants/TreeColors.js';
-import { COLOR_STORAGE_KEY } from './dataSlice.js';
+import { persistColorCategories } from '../../services/storage/colorPersistence.js';
 
-// Local helpers
-const persistColorCategories = () => {
-  try {
-    if (typeof window === 'undefined' || !window.localStorage) return;
-    window.localStorage.setItem(COLOR_STORAGE_KEY, JSON.stringify(TREE_COLOR_CATEGORIES));
-  } catch (_) {
-    // ignore
-  }
+// Local helper to persist with current categories
+const persistCurrentColorCategories = () => {
+  persistColorCategories(TREE_COLOR_CATEGORIES);
 };
 
 const renderTreeControllers = (controllers) => {
@@ -77,7 +72,7 @@ export const createHighlightSlice = (set, get) => ({
 
   /**
    * Gets the current ColorManager instance
-   * @returns {ColorManager} The color manager instance
+   * @returns {TreeColorManager} The color manager instance
    */
   getColorManager: () => {
     const { colorManager } = get();
@@ -154,7 +149,7 @@ export const createHighlightSlice = (set, get) => ({
     }
 
     renderTreeControllers(treeControllers);
-    persistColorCategories();
+    persistCurrentColorCategories();
   },
 
   /**
@@ -197,7 +192,7 @@ export const createHighlightSlice = (set, get) => ({
     }
 
     renderTreeControllers(treeControllers);
-    persistColorCategories();
+    persistCurrentColorCategories();
   },
 
   /**

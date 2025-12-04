@@ -391,8 +391,28 @@ export class MSADeckGLViewer {
     this.setSelection(startCol, endCol);
   }
 
+  /**
+   * Returns the current region selection, or null if none.
+   * @returns {{startCol:number,endCol:number}|null}
+   */
+  getRegion() {
+    if (!this.state?.selection) return null;
+    return { ...this.state.selection };
+  }
+
   clearRegion() {
     this.clearSelection();
+  }
+
+  /**
+   * Resize DeckGL to match current container size.
+   */
+  resize() {
+    if (!this.state.deckgl || !this.container) return;
+    const width = this.container.clientWidth;
+    const height = this.container.clientHeight;
+    this.state.deckgl.setProps({ width, height });
+    this.render();
   }
 
   /**
