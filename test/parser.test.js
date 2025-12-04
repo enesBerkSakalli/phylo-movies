@@ -5,9 +5,9 @@ const {
   shortestAngle,
   clamp,
   easeInOutCubic,
-} = require('../src/js/utils/MathUtils.js');
+} = require('../src/js/domain/math/mathUtils.js');
 
-const { applyInterpolationEasing } = require('../src/js/utils/easingUtils.js');
+const { applyInterpolationEasing } = require('../src/js/domain/math/easingUtils.js');
 
 describe('Utils/MathUtils', () => {
   it('kar2pol should convert cartesian to polar consistently', () => {

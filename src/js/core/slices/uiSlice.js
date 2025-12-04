@@ -1,5 +1,5 @@
-import { clamp } from '../../utils/MathUtils.js';
-import { MovieTimelineManager } from '../../timeline/MovieTimelineManager.js';
+import { clamp } from '../../domain/math/mathUtils.js';
+import { MovieTimelineManager } from '../../timeline/core/MovieTimelineManager.js';
 
 /**
  * UI/appearance slice: UI flags, controls, GUI references, and look/feel settings.
@@ -30,6 +30,15 @@ export const createUiSlice = (set, get) => ({
   viewOffsetX: 0,
   viewOffsetY: 0,
   viewsConnected: false,
+
+  // Timeline tooltip state
+  hoveredSegmentIndex: null,
+  hoveredSegmentData: null,
+
+  setHoveredSegment: (segmentIndex, segmentData = null) => set({
+    hoveredSegmentIndex: segmentIndex,
+    hoveredSegmentData: segmentData
+  }),
 
   toggleComparisonMode: () => set((state) => ({ comparisonMode: !state.comparisonMode })),
 

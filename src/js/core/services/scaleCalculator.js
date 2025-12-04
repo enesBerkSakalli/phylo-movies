@@ -2,7 +2,7 @@
  * Service for calculating scale values from tree data
  */
 
-import calculateScales, { getMaxScaleValue } from '../../utils/scaleUtils.js';
+import calculateScales, { getMaxScaleValue } from '../../domain/tree/scaleUtils.js';
 
 /**
  * Calculates scale values and metadata for tree list

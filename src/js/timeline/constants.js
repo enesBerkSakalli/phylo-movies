@@ -22,21 +22,21 @@ export const TIMELINE_CONSTANTS = {
     FALLBACK_MAX_EDGES: 10,
 };
 
-
-export const PHASE_NAMES = {
-    DOWN_PHASE: 'Down',
-    COLLAPSE_PHASE: 'Collapse',
-    REORDER_PHASE: 'Reorder',
-    PRE_SNAP_PHASE: 'Pre-Snap',
-    SNAP_PHASE: 'Snap',
-    ORIGINAL: 'Original'
-};
-
-export const DOM_ELEMENTS = {
-    // HUD Elements only; other controls handled by React
-    hudPositionInfo: 'hudPositionInfo',
-    hudSegmentInfo: 'hudSegmentInfo',
-    hudWindowStart: 'hudWindowStart',
-    hudWindowMid: 'hudWindowMid',
-    hudWindowEnd: 'hudWindowEnd'
+export const TIMELINE_THEME = {
+    connectionWidth: 4,
+    connectionHoverWidth: 6,
+    connectionSelectionWidth: 8,
+    connectionSelectionRGB: [64, 128, 255],
+    connectionHoverRGB: [128, 128, 128],
+    connectionNeutralRGB: [100, 100, 100],
+    anchorStrokeWidth: 3,
+    anchorFillRGB: [240, 240, 245],
+    anchorStrokeRGB: [60, 60, 80],
+    anchorRadiusVar: 7,
+    separatorRGB: [0, 0, 0],
+    separatorWidth: 5,
+    scrubberCoreRGB: [64, 128, 255],
+    gapDefault: 6,
+    paddingX: 8,
+    paddingY: 0
 };

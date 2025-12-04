@@ -2,8 +2,8 @@ import TransitionIndexResolver from '../../domain/indexing/TransitionIndexResolv
 import { TreeColorManager } from '../../treeVisualisation/systems/TreeColorManager.js';
 import { TREE_COLOR_CATEGORIES } from '../../constants/TreeColors.js';
 import { loadPersistedColorCategories } from '../../services/storage/colorPersistence.js';
-import { extractMsaColumnCount, extractMsaWindowParameters, hasMsaData } from '../../services/domain/msaDataExtractor.js';
-import { calculateTreeScales } from '../../services/domain/scaleCalculator.js';
+import { extractMsaColumnCount, extractMsaWindowParameters, hasMsaData } from '../../domain/msa/msaDataExtractor.js';
+import { calculateTreeScales } from '../../domain/tree/scaleCalculator.js';
 
 /**
  * Phylogenetic data slice: manages immutable phylogenetic tree data and initialization

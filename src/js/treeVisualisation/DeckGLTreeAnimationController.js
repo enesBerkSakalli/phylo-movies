@@ -10,7 +10,7 @@ import { NodeContextMenu } from '../components/NodeContextMenu.js';
 import { TreeNodeInteractionHandler } from './interaction/TreeNodeInteractionHandler.js';
 import { ComparisonModeRenderer } from './comparison/ComparisonModeRenderer.js';
 import { ViewportManager } from './viewport/ViewportManager.js';
-import { buildViewLinkMapping } from '../utils/viewLinkMapping.js';
+import { buildViewLinkMapping } from '../domain/view/viewLinkMapper.js';
 
 
 export class DeckGLTreeAnimationController extends WebGLTreeAnimationController {

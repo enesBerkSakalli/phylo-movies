@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useAppStore } from '../../../js/core/store.js';
-import { formatScaleValue } from '../../../js/utils/scaleUtils.js';
+import { formatScaleValue } from '../../../js/domain/tree/scaleUtils.js';
 import { bin as d3Bin } from 'd3-array';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';

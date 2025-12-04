@@ -1,6 +1,6 @@
-import { getDevicePixelRatio, createSnapFunction } from './utils/renderingUtils.js';
-import { msToX } from './utils/coordinateUtils.js';
-import { createAnchor, createConnection, calculateRadius } from './utils/geometryUtils.js';
+import { getDevicePixelRatio, createSnapFunction } from '../utils/renderingUtils.js';
+import { msToX } from '../utils/coordinateUtils.js';
+import { createAnchor, createConnection, calculateRadius } from '../utils/geometryUtils.js';
 
 // Visualization constants
 const SEPARATOR_MIN_HEIGHT_PX = 6;            // Minimum tick height in pixels
@@ -8,8 +8,7 @@ const SEPARATOR_HEIGHT_FRACTION = 0.6;        // Fraction of available height us
 const ID_OFFSET = 1;                          // Convert 0-based index to 1-based id
 
 export function processSegments(
-  { startIdx, endIdx, width, height, visStart, visEnd, zoomScale, theme, timelineData, segments, selectedId, lastHoverId, rangeStart, rangeEnd },
-  { radiusStrategy, gapStrategy }
+  { startIdx, endIdx, width, height, visStart, visEnd, zoomScale, theme, timelineData, segments, selectedId, lastHoverId, rangeStart, rangeEnd }
 ) {
   const dpr = getDevicePixelRatio();
   const snap = createSnapFunction(dpr);
@@ -61,14 +60,13 @@ export function processSegments(
         anchorStrokeRGB,
         anchorRadiusVar,
         zoomScale,
-        snap,
-        { radiusStrategy }
+        snap
       );
 
       // If multiple anchors share the same timestamp, offset slightly to keep them visible
       if (lastAnchorMs !== null && segStartMs === lastAnchorMs) {
         duplicateAnchorCount += 1;
-        const radius = calculateRadius(anchorRadiusVar, height, zoomScale, radiusStrategy);
+        const radius = calculateRadius(anchorRadiusVar, height, zoomScale);
         const spacing = Math.max(4, Math.floor(radius * 3)); // Increased from 2 and 1.2 to 4 and 3
         const minX = -width / 2 + radius;
         const maxX = width / 2 - radius;
@@ -99,8 +97,7 @@ export function processSegments(
         gapDefault,
         connectionNeutralRGB,
         snap,
-        segments,
-        { radiusStrategy, gapStrategy }
+        segments
       );
       if (!connection) continue;
       connections.push(connection);

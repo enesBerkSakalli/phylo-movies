@@ -1,4 +1,4 @@
-import { clamp } from '../../utils/MathUtils.js';
+import { clamp } from '../../domain/math/mathUtils.js';
 
 // Playback/navigation slice: timeline navigation, animation progress, and guards
 export const createPlaybackSlice = (set, get) => ({

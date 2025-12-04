@@ -49,13 +49,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
       include: ["d3", "winbox", "winbox/src/js/winbox.js"]
     },
     build: {
-      outDir: "dist",
-      rollupOptions: {
-        input: {
-          main: "pages/home/index.html",
-          visualization: "pages/visualization/index.html"
-        }
-      }
+      outDir: "dist"
     }
   };
 });

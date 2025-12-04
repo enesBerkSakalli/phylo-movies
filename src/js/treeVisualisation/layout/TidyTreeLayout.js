@@ -1,5 +1,6 @@
 import * as d3 from "d3";
 import { getNodeKey } from '../utils/KeyGenerator.js';
+import { transformBranchLengths } from '../../domain/tree/branchTransform.js';
 
 /**
  * Tidy tree layout with radial projection and branch-length radii.
@@ -171,7 +172,6 @@ export default function createTidyTreeLayout(
   branchTransformation = 'none',
   options = {}
 ) {
-  const { transformBranchLengths } = require('../utils/branchTransformUtils');
   const transformedTree = transformBranchLengths(tree, branchTransformation);
   const d3tree = d3.hierarchy(transformedTree);
   const treeLayout = new TidyTreeLayout(d3tree);
