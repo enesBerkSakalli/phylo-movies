@@ -2,7 +2,7 @@ import { TIMELINE_CONSTANTS } from './constants.js';
 import { TimelineUI } from './TimelineUI.js';
 import { useAppStore } from '../core/store.js';
 import { getIndexMappings, getMSAFrameIndex, getPhaseMetadata } from '../domain/indexing/IndexMapping.js';
-import { calculateWindow } from '../utils/windowUtils.js';
+import { calculateWindow } from '../services/domain/msaWindowCalculator.js';
 
 export class TimelineUIManager {
     constructor(movieData, timeline) {
