@@ -5,7 +5,7 @@ import { Appearance } from './components/appearance/Appearance.jsx';
 import { VisualElements } from './components/appearance/controls/VisualElements/VisualElements.jsx';
 import { TreeStructureGroup } from './components/appearance/layout/TreeStructureGroup.jsx';
 import { MoviePlayerBar } from './components/movie-player/MoviePlayerBar.jsx';
-import { TopScaleBar } from './components/TopScaleBar/TopScaleBar.jsx';
+import { TopScaleBar } from './components/TopScaleBar';
 import { MsaRndWindow } from './components/msa/MsaRndWindow.jsx';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarInset, SidebarMenu, SidebarMenuItem,  SidebarSeparator } from '@/components/ui/sidebar';
 
