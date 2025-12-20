@@ -55,7 +55,8 @@ export function getGroupForTaxon(taxon, separators, strategyType, options = {}) 
   // Auto-detect separator if not provided
   let usedSeparators = separators;
   if (!separators && strategyType !== "first-letter") {
-    const bestSeparator = detectBestSeparator([taxon]);
+    const detectedList = detectBestSeparators([taxon]);
+    const bestSeparator = detectedList.length > 0 ? detectedList[0].separator : null;
     usedSeparators = bestSeparator ? [bestSeparator] : null;
     if (!usedSeparators) {
       return null;
@@ -80,19 +81,14 @@ export function getGroupForStrategy(taxonName, separators, strategyType, options
     return null; // No group if separator not present or only one part
   }
 
-  // Map old strategy names to new ones
-  const strategy = strategyType === 'first' ? 'prefix' :
-                  strategyType === 'last' ? 'suffix' :
-                  strategyType;
-
-  if (strategy === 'prefix') {
+  if (strategyType === 'prefix') {
     return parts[0]; // e.g., "A" from "A_B_C"
-  } else if (strategy === 'suffix') {
+  } else if (strategyType === 'suffix') {
     return parts[parts.length - 1]; // e.g., "C" from "A_B_C"
-  } else if (strategy === 'middle') {
+  } else if (strategyType === 'middle') {
     if (parts.length < 3) return null;
     return parts[Math.floor(parts.length / 2)]; // Middle segment
-  } else if (strategy === 'segment') {
+  } else if (strategyType === 'segment') {
     const segmentIndex = options.segmentIndex ?? 0;
     if (segmentIndex < 0) {
       // Negative index: count from end
@@ -103,54 +99,6 @@ export function getGroupForStrategy(taxonName, separators, strategyType, options
   }
 
   return null;
-}
-
-/**
- * Get text between two different separators at specific occurrences
- * @param {string} taxonName - The taxon name
- * @param {string} startSeparator - The starting separator character
- * @param {number} startOccurrence - Which occurrence of start separator to use
- * @param {string} endSeparator - The ending separator character
- * @param {number} endOccurrence - Which occurrence of end separator to use
- * @returns {string|null} The text between separators or null if not found
- */
-export function getGroupBetweenSeparators(taxonName, startSeparator, startOccurrence, endSeparator, endOccurrence) {
-  // Find the position of the start separator (nth occurrence)
-  let startPos = -1;
-  let currentOccurrence = 0;
-  for (let i = 0; i < taxonName.length; i++) {
-    if (taxonName[i] === startSeparator) {
-      currentOccurrence++;
-      if (currentOccurrence === startOccurrence) {
-        startPos = i;
-        break;
-      }
-    }
-  }
-
-  if (startPos === -1) {
-    return null; // Start separator not found at specified occurrence
-  }
-
-  // Find the position of the end separator (nth occurrence) after the start position
-  let endPos = -1;
-  currentOccurrence = 0;
-  for (let i = startPos + 1; i < taxonName.length; i++) {
-    if (taxonName[i] === endSeparator) {
-      currentOccurrence++;
-      if (currentOccurrence === endOccurrence) {
-        endPos = i;
-        break;
-      }
-    }
-  }
-
-  if (endPos === -1) {
-    // If end separator not found, take until the end of string
-    return taxonName.substring(startPos + 1);
-  }
-
-  return taxonName.substring(startPos + 1, endPos);
 }
 
 /**
@@ -177,16 +125,6 @@ export function detectBestSeparators(taxaNames) {
   });
 
   return results.sort((a, b) => b.score - a.score);
-}
-
-/**
- * Detect best separator for a set of taxa names (backward compatible)
- * @param {Array} taxaNames - Array of taxa names
- * @returns {string|null} Best separator character or null if none found
- */
-export function detectBestSeparator(taxaNames) {
-  const ranked = detectBestSeparators(taxaNames);
-  return ranked.length > 0 ? ranked[0].separator : null;
 }
 
 /**
@@ -269,7 +207,7 @@ export function applyColoringData(colorData, leaveOrder, defaultColorMap) {
 
   if (colorData.mode === "taxa") {
     // Direct taxa coloring
-    for (const [taxon, color] of colorData.taxaColorMap) {
+    for (const [taxon, color] of Object.entries(colorData.taxaColorMap)) {
       newColorMap[taxon] = color;
     }
   } else if (colorData.mode === "groups") {
@@ -283,7 +221,7 @@ export function applyColoringData(colorData, leaveOrder, defaultColorMap) {
 
     leaveOrder.forEach((taxon) => {
       const group = getGroupForTaxon(taxon, separators, colorData.strategyType, options);
-      const groupColor = colorData.groupColorMap.get(group);
+      const groupColor = colorData.groupColorMap[group];
 
       if (groupColor) {
         newColorMap[taxon] = groupColor;
@@ -296,7 +234,7 @@ export function applyColoringData(colorData, leaveOrder, defaultColorMap) {
     leaveOrder.forEach((taxon) => {
       // Get group from CSV mapping
       const group = colorData.csvTaxaMap?.get(taxon);
-      const groupColor = group ? colorData.groupColorMap.get(group) : null;
+      const groupColor = group ? colorData.groupColorMap[group] : null;
 
       if (groupColor) {
         newColorMap[taxon] = groupColor;

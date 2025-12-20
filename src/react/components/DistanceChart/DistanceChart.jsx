@@ -8,21 +8,30 @@ const BASE_LAYERS = ['grid', 'axes', 'areas', 'lines', 'mesh'];
 const buildSeriesPoints = (barOptionValue, robinsonFouldsDistances, weightedRobinsonFouldsDistances, scaleList) => {
   if (barOptionValue === 'rfd') {
     return {
-      points: robinsonFouldsDistances.map((value, index) => ({ x: index + 1, y: Number(value) })),
+      points: (robinsonFouldsDistances || []).map((value, index) => {
+        const y = Number(value);
+        return { x: index + 1, y: Number.isFinite(y) ? y : 0 };
+      }),
       yMax: 1,
     };
   }
 
   if (barOptionValue === 'w-rfd') {
     return {
-      points: weightedRobinsonFouldsDistances.map((value, index) => ({ x: index + 1, y: Number(value) })),
+      points: (weightedRobinsonFouldsDistances || []).map((value, index) => {
+        const y = Number(value);
+        return { x: index + 1, y: Number.isFinite(y) ? y : 0 };
+      }),
       yMax: 'auto',
     };
   }
 
   if (barOptionValue === 'scale') {
     return {
-      points: scaleList.map((entry, index) => ({ x: index + 1, y: entry?.value || 0 })),
+      points: (scaleList || []).map((entry, index) => {
+        const y = Number(entry?.value);
+        return { x: index + 1, y: Number.isFinite(y) ? y : 0 };
+      }),
       yMax: 'auto',
     };
   }
@@ -161,6 +170,9 @@ export function DistanceChart() {
   const cursorLayer = useCursorLayer(currentX);
   const chartLayers = useMemo(() => [...BASE_LAYERS, cursorLayer], [cursorLayer]);
   const { containerRef, size } = useContainerSize();
+  const minWidth = CHART_MARGINS.left + CHART_MARGINS.right;
+  const minHeight = CHART_MARGINS.top + CHART_MARGINS.bottom;
+  const shouldRenderChart = hasData && size.w > minWidth && size.h > minHeight;
 
   // Map a click on the mesh back to the correct tree index.
   const handleClick = useCallback(
@@ -193,7 +205,7 @@ export function DistanceChart() {
       data-react-chart="nivo"
       ref={containerRef}
     >
-      {hasData && (
+      {shouldRenderChart && (
         <Line
           width={size.w}
           height={size.h}

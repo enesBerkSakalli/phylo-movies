@@ -4,7 +4,7 @@
  */
 
 import { PolygonLayer } from '@deck.gl/layers';
-import { dnaColor, proteinColor } from '../utils/colorUtils.js';
+import { getColorScheme } from '../utils/colorUtils.js';
 
 /**
  * Build cell data for the MSA visualization
@@ -54,9 +54,13 @@ export function buildCellData(cellSize, sequences, visibleRange, maxCells) {
  * @param {Array} cellData - The cell data from buildCellData
  * @param {string} sequenceType - Either 'dna' or 'protein'
  * @param {Object} selection - Current selection state
+ * @param {string} colorScheme - Color scheme name
+ * @param {string} consensus - The consensus sequence (optional)
  * @returns {PolygonLayer} The cells layer
  */
-export function createCellsLayer(cellData, sequenceType, selection) {
+export function createCellsLayer(cellData, sequenceType, selection, colorScheme = 'default', consensus = null) {
+  const colorFn = getColorScheme(colorScheme, sequenceType);
+
   return new PolygonLayer({
     id: 'cells',
     data: cellData,
@@ -67,7 +71,30 @@ export function createCellsLayer(cellData, sequenceType, selection) {
     filled: true,
     getPolygon: d => d.polygon,
     getFillColor: d => {
-      const baseColor = (sequenceType === 'dna' ? dnaColor : proteinColor)(d.ch);
+      let baseColor;
+
+      if (colorScheme === 'identity' && consensus) {
+        const consensusChar = consensus[d.col];
+        // Dark blue for match, white for mismatch
+        if (d.ch === consensusChar && d.ch !== '-' && d.ch !== ' ') {
+           baseColor = [0, 0, 180, 255];
+        } else {
+           baseColor = [255, 255, 255, 255];
+        }
+      } else if (colorScheme === 'similarity' && consensus) {
+         // Simple similarity: Match = Dark Blue, Mismatch = White
+         // Ideally this would use BLOSUM scores, but for now we'll use Identity as a base
+         // and maybe expand later.
+         const consensusChar = consensus[d.col];
+         if (d.ch === consensusChar && d.ch !== '-' && d.ch !== ' ') {
+            baseColor = [0, 0, 180, 255];
+         } else {
+            baseColor = [255, 255, 255, 255];
+         }
+      } else {
+        baseColor = colorFn(d.ch);
+      }
+
       // Dim colors outside the selection
       if (selection) {
         const { startCol, endCol } = selection;
@@ -83,5 +110,8 @@ export function createCellsLayer(cellData, sequenceType, selection) {
       }
       return baseColor;
     },
+    updateTriggers: {
+      getFillColor: [colorScheme, selection, consensus]
+    }
   });
 }

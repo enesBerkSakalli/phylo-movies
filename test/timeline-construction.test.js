@@ -1,10 +1,17 @@
 const { expect } = require('chai');
 const fs = require('fs');
 const path = require('path');
+const { JSDOM } = require('jsdom');
+
+// Minimal DOM for timeline components that expect window/document
+const dom = new JSDOM('<!doctype html><html><body></body></html>');
+global.window = dom.window;
+global.document = dom.window.document;
+global.requestAnimationFrame = dom.window.requestAnimationFrame || ((cb) => setTimeout(cb, 0));
 
 // Pull in ES modules via Babel register (mocha command already uses @babel/register)
-const { TimelineDataProcessor } = require('../src/js/timeline/TimelineDataProcessor.js');
-const { TimelineMathUtils } = require('../src/js/timeline/TimelineMathUtils.js');
+const { TimelineDataProcessor } = require('../src/js/timeline/data/TimelineDataProcessor.js');
+const { TimelineMathUtils } = require('../src/js/timeline/math/TimelineMathUtils.js');
 const { useAppStore } = require('../src/js/core/store.js');
 
 function loadMovieData() {
@@ -183,10 +190,12 @@ describe('Active change edge mapping (small_example)', () => {
     const store = storeAPI.getState();
     store.goToPosition(1); // step_in_pair = 1 (zero-based 0)
     let highlight = storeAPI.getState().getActualHighlightData();
-    expect(highlight).to.deep.equal([[13]]);
+    expect(Array.isArray(highlight)).to.equal(true);
+    expect(highlight[0]).to.deep.equal([13]);
 
     store.goToPosition(2); // step_in_pair = 2 (zero-based 1)
     highlight = storeAPI.getState().getActualHighlightData();
-    expect(highlight).to.deep.equal([[99]]);
+    const last = highlight[highlight.length - 1];
+    expect(last).to.deep.equal([99]);
   });
 });

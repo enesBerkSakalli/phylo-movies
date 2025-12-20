@@ -4,7 +4,6 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "lint:store-usage": "node scripts/check-store-usage.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "test": "mocha --require @babel/register 'test/fileUpload.test.js' 'test/parser.test.js' 'test/integration.test.js' 'test/fileUploadTests.js' 'test/msaViewerIntegrationTests.js' 'test/msaViewerRefreshTest.js' 'test/tree-centering-verification.test.js' 'test/msa-workflow.test.js' 'test/scssModuleLoading.test.js' 'test/msa-automated-scrolling.test.js' 'test/timeline-construction.test.js'",

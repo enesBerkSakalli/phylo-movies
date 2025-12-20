@@ -8,7 +8,6 @@ export function TransportControls({
   onForward,
 }) {
   const playing = useAppStore((s) => s.playing);
-  const gui = useAppStore((s) => s.gui);
   const currentTreeIndex = useAppStore((s) => s.currentTreeIndex);
   const treeListLen = useAppStore((s) => s.treeList?.length || 0);
   const goToPosition = useAppStore((s) => s.goToPosition);
@@ -33,17 +32,15 @@ export function TransportControls({
     if (currentTreeIndex > 0) {
       stopAnimationPlayback();
       goToPosition(currentTreeIndex - 1);
-      gui?.updateMain?.();
     }
-  }, [currentTreeIndex, goToPosition, gui, stopAnimationPlayback]);
+  }, [currentTreeIndex, goToPosition, stopAnimationPlayback]);
 
   const onForwardStep = useCallback(() => {
     if (currentTreeIndex < treeListLen - 1) {
       stopAnimationPlayback();
       goToPosition(currentTreeIndex + 1);
-      gui?.updateMain?.();
     }
-  }, [currentTreeIndex, treeListLen, goToPosition, gui, stopAnimationPlayback]);
+  }, [currentTreeIndex, treeListLen, goToPosition, stopAnimationPlayback]);
 
   return (
     <>

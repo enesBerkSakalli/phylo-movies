@@ -1,7 +1,13 @@
 const { expect } = require('chai');
+const { JSDOM } = require('jsdom');
 const Module = require('module');
 // Ignore CSS imports from the renderer in test environment
 require.extensions['.css'] = () => {};
+
+// Minimal DOM for renderer sizing
+const dom = new JSDOM('<!doctype html><html><body></body></html>');
+global.window = dom.window;
+global.document = dom.window.document;
 
 // ---- Minimal deck.gl mocks to avoid ESM + WebGL in tests ----
 const mockDeckGLCore = {
@@ -67,6 +73,7 @@ describe('DeckTimelineRenderer', () => {
     ];
     const timelineData = {
       // 3 segments of 1000ms
+      segmentDurations: [1000, 1000, 1000],
       totalDuration: 3000,
       cumulativeDurations: [1000, 2000, 3000]
     };
@@ -89,12 +96,13 @@ describe('DeckTimelineRenderer', () => {
     const renderer = new DeckTimelineRenderer(timelineData, segments).init(container);
 
     renderer.setCustomTime(1500);
+    renderer._updateLayers();
     // Find scrubber layer by id
     const scrubber = renderer.deck.props.layers.find(l => l.id === 'scrubber-layer');
     expect(scrubber).to.exist;
     const path = scrubber.props.data?.[0]?.path;
     expect(Array.isArray(path)).to.equal(true);
-    // With width=800 and ms=1500 in [0,3000], scrub x should be 0 (centered coords)
+    // With width=800 and ms=1500 in [0,3000], scrub x should be centered
     expect(path[0][0]).to.be.closeTo(0, 1e-6);
     expect(path[1][0]).to.be.closeTo(0, 1e-6);
   });

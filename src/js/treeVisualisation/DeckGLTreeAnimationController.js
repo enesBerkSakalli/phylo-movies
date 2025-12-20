@@ -5,7 +5,7 @@ import { TreeInterpolator } from './deckgl/interpolation/TreeInterpolator.js';
 import { TrailBuilder } from './deckgl/trails/TrailBuilder.js';
 import { WebGLTreeAnimationController } from './WebGLTreeAnimationController.js';
 import { useAppStore, selectCurrentTree } from '../core/store.js';
-import { easeInOut, animate } from 'popmotion';
+import { easeInOut } from 'popmotion';
 import { NodeContextMenu } from '../components/NodeContextMenu.js';
 import { TreeNodeInteractionHandler } from './interaction/TreeNodeInteractionHandler.js';
 import { ComparisonModeRenderer } from './comparison/ComparisonModeRenderer.js';
@@ -18,16 +18,30 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     super(container);
     this.animationsEnabled = animations;
     this.viewSide = viewSide;
+    this.ready = false;
+    this._resolveReady = null;
+    this.readyPromise = new Promise((resolve) => {
+      this._resolveReady = resolve;
+    });
     this.dataConverter = new DeckGLDataAdapter();
     this.layerManager = new LayerManager();
     this.treeInterpolator = new TreeInterpolator();
     this.contextMenu = new NodeContextMenu();
     this.currentTreeData = null;
     this.interactionHandler = new TreeNodeInteractionHandler(this, this.contextMenu, this.viewSide);
+    this._lastMappedLeftIndex = null;
+    this._lastMappedRightIndex = null;
 
     this.deckManager = new DeckManager(this.webglContainer);
 
-    this.deckManager.onWebGLInitialized((gl) => { this.gl = gl; });
+    this.deckManager.onWebGLInitialized((gl) => {
+      this.gl = gl;
+      this.ready = true;
+      if (typeof this._resolveReady === 'function') {
+        this._resolveReady();
+        this._resolveReady = null;
+      }
+    });
 
     this.deckManager.onError((error) => console.error('[DeckGL Controller] Deck.gl error:', error));
 
@@ -67,13 +81,15 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
   stopAnimation() {
     if (this.animationFrameId) {
-      this.animationFrameId.stop();
+      cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
     }
-    // The store's stop() action will be called by the Gui controller
+    this._frameInFlight = false;
+    // The store's stop() action will be called by the playback controller
   }
 
   _handleStyleChange() {
+    this._cachedInterpolationData = null;
     this.renderAllElements();
   }
 
@@ -104,28 +120,25 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
    * Build and store view link mapping for comparison rendering.
    */
   _updateViewLinkMapping(leftIndex, rightIndex) {
+    if (this._lastMappedLeftIndex === leftIndex && this._lastMappedRightIndex === rightIndex) {
+      return;
+    }
+
     const { treeList, pairSolutions, setViewLinkMapping, movieData } = useAppStore.getState();
     if (!setViewLinkMapping || !Array.isArray(treeList)) return;
+
+    this._lastMappedLeftIndex = leftIndex;
+    this._lastMappedRightIndex = rightIndex;
 
     const pairKey = this._derivePairKey(leftIndex, rightIndex, movieData?.tree_metadata);
     const pairSolution = pairKey ? pairSolutions?.[pairKey] : null;
 
     if (pairSolution) {
-      const mapping = buildViewLinkMapping(
-        treeList[leftIndex] || null,
-        treeList[rightIndex] || null,
-        leftIndex,
-        rightIndex,
-        pairSolution
-      );
+      const mapping = buildViewLinkMapping(leftIndex, rightIndex, pairSolution);
       setViewLinkMapping(mapping);
     } else {
       setViewLinkMapping(null);
     }
-  }
-
-  _areBoundsInView(bounds, paddingFactor = 1.05) {
-    return this.viewportManager.areBoundsInView(bounds, paddingFactor);
   }
 
   setCameraMode(mode) {
@@ -139,6 +152,17 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
   }
 
   async renderAllElements(options = {}) {
+    if (!this.ready) {
+      try {
+        await this.readyPromise;
+      } catch (_) {
+        // If readiness never resolves, skip rendering to avoid hard errors
+        return;
+      }
+    }
+
+    if (!this.deckManager?.deck) return;
+
     const { treeIndex, leftIndex, rightIndex, comparisonMode } = options;
     const state = useAppStore.getState();
     const { currentTreeIndex, treeList, transitionResolver, comparisonMode: comparisonModeFromStore } = state;
@@ -174,7 +198,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
     const treeLeaves = currentLayout.tree.leaves();
 
-    const { extensionRadius, labelRadius } = this._getConsistentRadii(currentLayout, null, null, treeLeaves);
+    const { extensionRadius, labelRadius } = this._getConsistentRadii(currentLayout, null, treeLeaves);
 
     const layerData = this.dataConverter.convertTreeToLayerData(
       currentLayout.tree,
@@ -204,10 +228,6 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
   }
 
-  applyInterpolationEasing(t, easingType = 'linear') {
-    return easingType === 'easeInOut' ? easeInOut(t) : t;
-  }
-
   _calculateLayout(treeData, treeIndex) {
     return this.calculateLayout(treeData, {
       treeIndex: treeIndex,
@@ -225,7 +245,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
     const currentLeaves = layoutTo.tree.leaves();
     const { extensionRadius, labelRadius } = this._getConsistentRadii(
-      layoutFrom, layoutTo, null, currentLeaves
+      layoutFrom, null, currentLeaves
     );
     const dataFrom = this.dataConverter.convertTreeToLayerData(
       layoutFrom.tree,
@@ -263,33 +283,57 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       this._lastInterpolationFromIndex = fromTreeIndex;
     }
 
-    t = this.applyInterpolationEasing(t, 'easeInOut');
-    const layoutFrom = this._calculateLayout(fromTreeData, fromTreeIndex);
-    const layoutTo = this._calculateLayout(toTreeData, toTreeIndex);
+    t = easeInOut(t);
 
-    const currentLeaves = layoutTo.tree.leaves();
-    const { extensionRadius, labelRadius } = this._getConsistentRadii(
-      layoutFrom, layoutTo, null, currentLeaves
-    );
-    const dataFrom = this.dataConverter.convertTreeToLayerData(
-      layoutFrom.tree,
-      {
-        extensionRadius,
-        labelRadius,
-        canvasWidth: layoutFrom.width,
-        canvasHeight: layoutFrom.height
-      }
-    );
+    // Check cache to avoid redundant layout calculations
+    let dataFrom, dataTo;
+    if (
+      this._cachedInterpolationData &&
+      this._cachedInterpolationData.fromIndex === fromTreeIndex &&
+      this._cachedInterpolationData.toIndex === toTreeIndex &&
+      this._cachedInterpolationData.width === this.width &&
+      this._cachedInterpolationData.height === this.height
+    ) {
+      dataFrom = this._cachedInterpolationData.dataFrom;
+      dataTo = this._cachedInterpolationData.dataTo;
+    } else {
+      const layoutFrom = this._calculateLayout(fromTreeData, fromTreeIndex);
+      const layoutTo = this._calculateLayout(toTreeData, toTreeIndex);
 
-    const dataTo = this.dataConverter.convertTreeToLayerData(
-      layoutTo.tree,
-      {
-        extensionRadius,
-        labelRadius,
-        canvasWidth: layoutTo.width,
-        canvasHeight: layoutTo.height
-      }
-    );
+      const currentLeaves = layoutTo.tree.leaves();
+      const { extensionRadius, labelRadius } = this._getConsistentRadii(
+        layoutFrom, null, currentLeaves
+      );
+      dataFrom = this.dataConverter.convertTreeToLayerData(
+        layoutFrom.tree,
+        {
+          extensionRadius,
+          labelRadius,
+          canvasWidth: layoutFrom.width,
+          canvasHeight: layoutFrom.height
+        }
+      );
+
+      dataTo = this.dataConverter.convertTreeToLayerData(
+        layoutTo.tree,
+        {
+          extensionRadius,
+          labelRadius,
+          canvasWidth: layoutTo.width,
+          canvasHeight: layoutTo.height
+        }
+      );
+
+      // Update cache
+      this._cachedInterpolationData = {
+        fromIndex: fromTreeIndex,
+        toIndex: toTreeIndex,
+        width: this.width,
+        height: this.height,
+        dataFrom,
+        dataTo
+      };
+    }
 
     const interpolatedData = this.treeInterpolator.interpolateTreeData(dataFrom, dataTo, t);
     // Append trails if enabled
@@ -338,10 +382,15 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       });
 
       const full = Array.isArray(transitionResolver?.fullTreeIndices) ? transitionResolver.fullTreeIndices : [];
-      const rightIdx = full.find((i) => i > toTreeIndex) ?? full[full.length - 1] ?? toTreeIndex;
+      // Always find the next anchor tree that is strictly greater than the current 'from' index
+      // This ensures that even when we are exactly AT an anchor (toTreeIndex == fromTreeIndex),
+      // we look ahead to the next one.
+      const rightIdx = full.find((i) => i > fromTreeIndex) ?? full[full.length - 1] ?? toTreeIndex;
       const rightTree = movieData.interpolated_trees[rightIdx];
 
       if (rightTree) {
+        // Ensure view link mapping is updated for the current pair
+        this._updateViewLinkMapping(fromTreeIndex, rightIdx);
         await this.comparisonRenderer.renderAnimated(interpolatedData, rightTree, rightIdx);
         return;
       }
@@ -361,6 +410,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
 
   destroy() {
+    super.destroy?.();
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
@@ -373,31 +423,55 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
   async _animationLoop() {
     if (!useAppStore.getState().playing) return;
 
-    this.animationFrameId = animate({
-      from: 0,
-      to: 1,
-      duration: 16.67,
-      repeat: Infinity,
-      onUpdate: async () => {
-        const { playing } = useAppStore.getState();
-        if (playing) {
-          await this._updateSmoothAnimation(performance.now());
-        } else {
-          this.animationFrameId?.stop();
-          this.animationFrameId = null;
-        }
+    const step = async () => {
+      const { playing } = useAppStore.getState();
+      if (!playing) {
+        this.animationFrameId = null;
+        this._frameInFlight = false;
+        return;
       }
-    });
+
+      // Prevent overlapping frames if the previous render is still running
+      if (this._frameInFlight) {
+        this.animationFrameId = requestAnimationFrame(step);
+        return;
+      }
+
+      this._frameInFlight = true;
+      try {
+        await this._updateSmoothAnimation(performance.now());
+        // Ask deck.gl to flush the frame immediately
+        this.deckManager?.deck?.redraw?.(true);
+      } finally {
+        this._frameInFlight = false;
+      }
+
+      this.animationFrameId = requestAnimationFrame(step);
+    };
+
+    this.animationFrameId = requestAnimationFrame(step);
   }
 
   async renderScrubFrame(fromTreeData, toTreeData, timeFactor, options = {}) {
+    const { comparisonMode, rightTreeIndex, fromTreeIndex } = options;
+
+    if (comparisonMode && typeof rightTreeIndex === 'number') {
+      // Ensure mapping is up to date for the current pair
+      if (typeof fromTreeIndex === 'number') {
+        this._updateViewLinkMapping(fromTreeIndex, rightTreeIndex);
+      }
+
+      const { movieData } = useAppStore.getState();
+      const rightTree = movieData?.interpolated_trees?.[rightTreeIndex];
+
+      if (rightTree) {
+        const interpolatedData = this._buildInterpolatedData(fromTreeData, toTreeData, timeFactor, options);
+        await this.comparisonRenderer.renderAnimated(interpolatedData, rightTree, rightTreeIndex);
+        return;
+      }
+    }
+
     await this.renderInterpolatedFrame(fromTreeData, toTreeData, timeFactor, options);
-  }
-
-
-  refreshAllColors(triggerRender = true) {
-    this.layerManager?.layerStyles?.invalidateCache();
-    if (triggerRender) this.renderAllElements();
   }
 
 

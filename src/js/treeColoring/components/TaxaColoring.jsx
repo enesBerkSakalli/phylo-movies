@@ -8,12 +8,9 @@ import { TREE_COLOR_CATEGORIES } from '../../constants/TreeColors.js';
 import { applyColoringData } from '../utils/GroupingUtils.js';
 import { TaxaColoringWindow } from '@/react/components/taxa-coloring/TaxaColoringWindow.jsx';
 
-// Import the component's stylesheet for any remaining layout specifics (safe to keep)
-// Removed legacy taxa-coloring-window.css (React/shadcn handles styling)
-
 export function openTaxaColoringFromStore() {
   const store = useAppStore.getState?.();
-  const { movieData, updateTaxaColors, setTaxaGrouping } = store || {};
+  const { movieData, updateTaxaColors, setTaxaGrouping, taxaGrouping } = store || {};
 
   const taxaNames = movieData?.sorted_leaves || [];
   if (!taxaNames.length) {
@@ -35,16 +32,18 @@ export function openTaxaColoringFromStore() {
       updateTaxaColors?.(newColorMap);
 
       // Persist grouping info for UI (tooltips)
-      try {
-        setTaxaGrouping?.({
-          mode: colorData?.mode || 'taxa',
-          separator: colorData?.separator || null,
+      setTaxaGrouping?.({
+        mode: colorData?.mode || 'taxa',
+          separators: colorData?.separators || null,
           strategyType: colorData?.strategyType || null,
+          segmentIndex: colorData?.segmentIndex,
+          useRegex: colorData?.useRegex,
+          regexPattern: colorData?.regexPattern,
           csvTaxaMap: colorData?.csvTaxaMap ? Object.fromEntries(colorData.csvTaxaMap) : null,
-          groupColorMap: colorData?.groupColorMap ? Object.fromEntries(colorData.groupColorMap) : null,
-        });
-      } catch (_) { /* ignore */ }
-    }
+          groupColorMap: colorData?.groupColorMap || null,
+      });
+    },
+    taxaGrouping || {}
   );
 }
 
@@ -52,7 +51,7 @@ export default class TaxaColoring {
   static currentInstance = null;
   static lastWindowState = null;
 
-  constructor(taxaNames, originalColorMap, onComplete) {
+  constructor(taxaNames, originalColorMap, onComplete, initialSettings = {}) {
     if (TaxaColoring.currentInstance) {
       TaxaColoring.currentInstance.close();
       TaxaColoring.currentInstance = null;
@@ -62,6 +61,7 @@ export default class TaxaColoring {
     this.taxaNames = taxaNames || [];
     this.originalColorMap = originalColorMap || {};
     this.onComplete = onComplete || (() => {});
+    this.initialSettings = initialSettings;
 
     this.reactRoot = null;
     this.container = null;
@@ -81,7 +81,7 @@ export default class TaxaColoring {
     };
   }
 
-  async createWindow() {
+  createWindow() {
     try {
       this.container = document.createElement('div');
       this.container.id = 'taxa-coloring-rnd-root';
@@ -106,6 +106,7 @@ export default class TaxaColoring {
           onClose={handleClose}
           initialState={this.windowState}
           onWindowChange={persistWindowState}
+          initialSettings={this.initialSettings}
         />
       );
     } catch (error) {
@@ -139,7 +140,7 @@ export default class TaxaColoring {
   }
 }
 
-function TaxaColoringRndWindow({ taxaNames, originalColorMap, onApply, onClose, initialState, onWindowChange }) {
+function TaxaColoringRndWindow({ taxaNames, originalColorMap, onApply, onClose, initialState, onWindowChange, initialSettings }) {
   const initialPosition = useMemo(() => ({
     x: initialState?.x ?? 60,
     y: initialState?.y ?? 60,
@@ -201,60 +202,10 @@ function TaxaColoringRndWindow({ taxaNames, originalColorMap, onApply, onClose, 
             originalColorMap={originalColorMap}
             onApply={onApply}
             onClose={onClose}
+            initialState={initialSettings}
           />
         </div>
       </div>
     </Rnd>
   );
 }
-
-// Independent legend control (vertical list in visualization page)
-export function renderTaxaLegend(grouping) {
-  const el = document.getElementById('taxaLegend');
-  if (!el) return;
-
-  // Clear
-  el.innerHTML = '';
-
-  if (!grouping || grouping.mode === 'taxa') {
-    el.style.display = 'none';
-    return;
-  }
-
-  const colorMap = grouping.groupColorMap || {};
-  const names = Object.keys(colorMap);
-  if (!names.length) {
-    el.style.display = 'none';
-    return;
-  }
-
-  el.style.display = 'flex';
-
-  const frag = document.createDocumentFragment();
-  names.forEach((name) => {
-    const color = colorMap[name] || '#666';
-    const item = document.createElement('div');
-    item.className = 'taxa-legend-chip';
-    item.innerHTML = `<span class="swatch" style="background:${color}"></span><span class="label" title="${name}">${name}</span>`;
-    frag.appendChild(item);
-  });
-
-  el.appendChild(frag);
-}
-
-// Keep legend in sync with store.taxaGrouping
-try {
-  const store = useAppStore;
-  let prev = store.getState().taxaGrouping;
-
-  // Initial render (when page loads or refreshes)
-  renderTaxaLegend(prev);
-
-  // Subscribe to grouping changes
-  store.subscribe((state) => {
-    if (state.taxaGrouping !== prev) {
-      prev = state.taxaGrouping;
-      renderTaxaLegend(state.taxaGrouping);
-    }
-  });
-} catch (_) { /* store may not be initialized yet */ }

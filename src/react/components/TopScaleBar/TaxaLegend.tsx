@@ -1,19 +1,26 @@
-// TaxaLegend.tsx - Placeholder container for taxa color legend (populated by external code)
-
 import React from 'react';
 import { Palette } from 'lucide-react';
+import { useAppStore } from '../../../js/core/store.js';
 
 /**
- * Taxa groups legend container
- *
- * NOTE: This component only provides the container structure.
- * The actual legend content (#taxaLegend) is populated by external DOM manipulation code
- * elsewhere in the application. This is a legacy pattern from the pre-React codebase.
- *
- * TODO: Consider refactoring to React-controlled content when the legend population logic
- * is migrated to React components.
+ * Taxa groups legend - displays color-coded groups when taxa coloring is applied
+ * Subscribes to store.taxaGrouping and renders group chips with colors
  */
 export const TaxaLegend: React.FC = () => {
+  const taxaGrouping = useAppStore((s) => s.taxaGrouping);
+
+  // Hide legend in taxa mode (individual coloring) or when no groups exist
+  if (!taxaGrouping || taxaGrouping.mode === 'taxa') {
+    return null;
+  }
+
+  const colorMap = taxaGrouping.groupColorMap || {};
+  const groupNames = Object.keys(colorMap);
+
+  if (groupNames.length === 0) {
+    return null;
+  }
+
   return (
     <div className="legend-section" role="region" aria-label="Taxa Groups Legend">
       <div className="legend-header">
@@ -21,11 +28,20 @@ export const TaxaLegend: React.FC = () => {
         <span className="legend-title">Groups</span>
       </div>
       <div
-        id="taxaLegend"
         className="taxa-legend taxa-legend-vertical"
         role="list"
         aria-label="Taxa groups legend"
-      />
+      >
+        {groupNames.map((name) => {
+          const color = colorMap[name] || '#666';
+          return (
+            <div key={name} className="taxa-legend-chip" role="listitem">
+              <span className="swatch" style={{ background: color }} />
+              <span className="label" title={name}>{name}</span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };

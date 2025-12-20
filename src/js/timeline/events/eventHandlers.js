@@ -1,5 +1,7 @@
 import { useAppStore } from '../../core/store.js';
 
+let hoverTimeout = null;
+
 export function handleTimelineMouseMove(renderer, event) {
   if (renderer._isScrubbing) return;
   const rect = renderer.container.getBoundingClientRect();
@@ -11,14 +13,31 @@ export function handleTimelineMouseMove(renderer, event) {
   if (id !== renderer._lastHoverId) {
     if (renderer._lastHoverId != null) {
       renderer._emit('itemout', {});
-      // Update store for React tooltip
-      useAppStore.getState().setHoveredSegment(null, null);
+      // Delay clearing to allow moving to tooltip
+      if (hoverTimeout) clearTimeout(hoverTimeout);
+      hoverTimeout = setTimeout(() => {
+        useAppStore.getState().setHoveredSegment(null, null);
+      }, 150);
     }
     if (id != null) {
+      if (hoverTimeout) clearTimeout(hoverTimeout);
       renderer._emit('itemover', { item: id, event });
-      // Update store for React tooltip
+
+      // Calculate segment center position for stable tooltip
       const segment = renderer.segments[segIndex];
-      useAppStore.getState().setHoveredSegment(segIndex, segment);
+      const segmentStartMs = renderer.timelineData.cumulativeDurations[segIndex] - renderer.timelineData.segmentDurations[segIndex];
+      const segmentEndMs = renderer.timelineData.cumulativeDurations[segIndex];
+      const startX = renderer._msToX(segmentStartMs);
+      const endX = renderer._msToX(segmentEndMs);
+      const centerX = (startX + endX) / 2;
+
+      // Pass absolute screen coordinates
+      const position = {
+        x: rect.left + centerX,
+        y: rect.top
+      };
+
+      useAppStore.getState().setHoveredSegment(segIndex, segment, position);
     }
     renderer._lastHoverId = id;
     renderer._scheduleUpdate();
@@ -97,8 +116,11 @@ export function handleTimelineWheel(renderer, event) {
 export function handleTimelineMouseLeave(renderer) {
   if (renderer._lastHoverId != null) {
     renderer._emit('itemout', {});
-    // Update store for React tooltip
-    useAppStore.getState().setHoveredSegment(null, null);
+    // Update store for React tooltip with delay
+    if (hoverTimeout) clearTimeout(hoverTimeout);
+    hoverTimeout = setTimeout(() => {
+      useAppStore.getState().setHoveredSegment(null, null);
+    }, 150);
     renderer._lastHoverId = null;
     renderer._scheduleUpdate();
   }
