@@ -4,6 +4,7 @@ import { TREE_COLOR_CATEGORIES } from '../../constants/TreeColors.js';
 import { loadPersistedColorCategories } from '../../services/storage/colorPersistence.js';
 import { extractMsaColumnCount, extractMsaWindowParameters, hasMsaData } from '../../domain/msa/msaDataExtractor.js';
 import { calculateTreeScales } from '../../domain/tree/scaleCalculator.js';
+import { MovieTimelineManager } from '../../timeline/core/MovieTimelineManager.js';
 
 /**
  * Phylogenetic data slice: manages immutable phylogenetic tree data and initialization
@@ -24,9 +25,41 @@ export const createPhylogeneticDataSlice = (set, get) => ({
   msaColumnCount: 0,
   msaRegion: null,
   hasMsa: false,
-  screenPositionsLeft: {},
-  screenPositionsRight: {},
   viewLinkMapping: createEmptyViewLinkMapping(),
+
+  /**
+   * Resets the application state to its initial values.
+   * This is useful when unmounting the visualization or loading a new file.
+   */
+  reset: () => {
+    set({
+      movieData: null,
+      treeList: [],
+      fileName: null,
+      distanceRfd: [],
+      distanceWeightedRfd: [],
+      scaleValues: [],
+      pairSolutions: {},
+      activeChangeEdgeTracking: [],
+      transitionResolver: null,
+      colorManager: null,
+      msaColumnCount: 0,
+      msaRegion: null,
+      hasMsa: false,
+      viewLinkMapping: createEmptyViewLinkMapping(),
+
+      // Reset playback state
+      currentTreeIndex: 0,
+      playing: false,
+      animationProgress: 0,
+      timelineProgress: 0,
+      currentSegmentIndex: 0,
+      treeInSegment: 1,
+      animationStartTime: null,
+      movieTimelineManager: null,
+      treeControllers: [],
+    });
+  },
 
   /**
    * Initializes the entire application state from the raw movieData object.
@@ -63,6 +96,9 @@ export const createPhylogeneticDataSlice = (set, get) => ({
     const distanceRfd = extractDistanceArray(movieData?.distances?.robinson_foulds);
     const distanceWeightedRfd = extractDistanceArray(movieData?.distances?.weighted_robinson_foulds);
 
+    // Initialize Timeline Manager
+    const movieTimelineManager = new MovieTimelineManager(movieData, resolver);
+
     set({
       movieData: {
         ...movieData,
@@ -72,6 +108,7 @@ export const createPhylogeneticDataSlice = (set, get) => ({
         fullTreeIndices,
         numberOfFullTrees
       },
+      movieTimelineManager,
       treeList: interpolatedTrees,
       fileName,
       hasMsa: hasMsaContent,
@@ -94,23 +131,6 @@ export const createPhylogeneticDataSlice = (set, get) => ({
     initializeColorManagerForInitialState(get);
   },
 
-  setDistanceRfd: (arr) => set({ distanceRfd: extractDistanceArray(arr) }),
-  setDistanceWeightedRfd: (arr) => set({ distanceWeightedRfd: extractDistanceArray(arr) }),
-  setScaleValues: (arr) => set({ scaleValues: extractDistanceArray(arr) }),
-
-  /**
-   * Store screen-space positions for overlay rendering.
-   * @param {'left'|'right'|string} side - Side identifier (non-'right' treated as 'left')
-   * @param {Object} positions - Map of splitIndex key -> {x,y,width,height,isLeaf}
-   */
-  setScreenPositions: (side, positions) => {
-    const isRight = side === 'right';
-    set(isRight
-      ? { screenPositionsRight: positions || {} }
-      : { screenPositionsLeft: positions || {} }
-    );
-  },
-
   /**
    * Store the view link mapping used by comparison overlays.
    * @param {Object} mapping - Mapping from buildViewLinkMapping; defaults to empty mapping when falsy.
@@ -123,9 +143,11 @@ export const createPhylogeneticDataSlice = (set, get) => ({
    * Set the current MSA region (1-based, inclusive). Clamps to the known column count.
    */
   setMsaRegion: (start, end) => {
-    const { msaColumnCount } = get();
+    const { msaColumnCount, msaRegion } = get();
     if (!Number.isFinite(start) || !Number.isFinite(end)) {
-      set({ msaRegion: null });
+      if (msaRegion !== null) {
+        set({ msaRegion: null });
+      }
       return;
     }
     const min = Math.min(start, end);
@@ -133,7 +155,11 @@ export const createPhylogeneticDataSlice = (set, get) => ({
     const limit = msaColumnCount || Number.MAX_SAFE_INTEGER;
     const clampedStart = Math.max(1, Math.min(limit, min));
     const clampedEnd = Math.max(1, Math.min(limit, max));
-    set({ msaRegion: { start: clampedStart, end: clampedEnd } });
+
+    // Only update if the region actually changed
+    if (!msaRegion || msaRegion.start !== clampedStart || msaRegion.end !== clampedEnd) {
+      set({ msaRegion: { start: clampedStart, end: clampedEnd } });
+    }
   },
 
   /**
@@ -144,16 +170,15 @@ export const createPhylogeneticDataSlice = (set, get) => ({
 
 // ========== Private Helper Functions ==========
 
+/**
+ * Create an empty view link mapping with consistent structure.
+ * Used as default when no comparison mapping is available.
+ */
 function createEmptyViewLinkMapping() {
   return {
     fromIndex: null,
     toIndex: null,
-    anchors: [],
-    movers: [],
     sourceToDest: {},
-    destToSource: {},
-    sourceSplits: {},
-    destSplits: {}
   };
 }
 

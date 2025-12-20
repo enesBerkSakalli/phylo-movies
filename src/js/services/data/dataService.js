@@ -90,9 +90,6 @@ export const phyloData = {
   }
 };
 
-// MSA data is now stored within phyloData.msa.sequences
-// No separate msaData or msaId operations needed
-
 /**
  * Server communication operations
  */
@@ -123,12 +120,7 @@ export const server = {
 export const workflows = {
   async saveTreeDataWorkflow(serverData) {
     try {
-      // Save main phylo data
       await phyloData.set(serverData);
-
-      // MSA data is included in serverData.msa.sequences
-      // No separate MSA handling needed
-
       return true;
     } catch (error) {
       console.error("[DataService] Error in save workflow:", error);
@@ -138,9 +130,6 @@ export const workflows = {
 
   async handleMSADataSaving(formData, serverData) {
     try {
-      // MSA data is already included in serverData.msa
-      // This function exists for compatibility with index.js
-      // No additional MSA handling needed since it's part of main data
       console.log('[DataService] MSA data included in main data - window_size:', serverData.window_size, 'window_step_size:', serverData.window_step_size);
       return true;
     } catch (error) {

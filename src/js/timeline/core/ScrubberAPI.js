@@ -20,7 +20,9 @@ export class ScrubberAPI {
     ) {
       await this._performScrubUpdate(TimelineMathUtils.clampProgress(finalProgress));
     }
+    const snapshot = this.lastInterpolationState;
     this.lastInterpolationState = null;
+    return snapshot;
   }
 
   async startScrubbing(progress) {
@@ -88,8 +90,8 @@ export class ScrubberAPI {
     // In comparison mode, pass right tree index for static display
     if (comparisonMode) {
       const full = Array.isArray(transitionResolver?.fullTreeIndices) ? transitionResolver.fullTreeIndices : [];
-      // Show the next anchor after the current interpolated index
-      const rightIndex = full.find((i) => i > primaryTreeIndex) ?? full[full.length - 1] ?? primaryTreeIndex;
+      // Show the next anchor after the current interpolated index (using fromIndex to be consistent with animation loop)
+      const rightIndex = full.find((i) => i > fromIndex) ?? full[full.length - 1] ?? fromIndex;
 
       enhancedOptions.comparisonMode = true;
       enhancedOptions.rightTreeIndex = rightIndex;

@@ -20,8 +20,35 @@ export class WebGLTreeAnimationController {
     // Initialize WebGL container
     this.webglContainer = d3.select(container);
 
+    // Initialize dimensions and setup ResizeObserver to avoid layout thrashing
+    const node = this.webglContainer.node();
+    const rect = node ? node.getBoundingClientRect() : { width: 800, height: 600 };
+    this.width = rect.width;
+    this.height = rect.height;
+
+    if (node) {
+      this.resizeObserver = new ResizeObserver(entries => {
+        for (let entry of entries) {
+          const { width, height } = entry.contentRect;
+          this.width = width;
+          this.height = height;
+        }
+      });
+      this.resizeObserver.observe(node);
+    }
+
     // Start render loop
     this.startRenderLoop();
+  }
+
+  /**
+   * Cleanup resources
+   */
+  destroy() {
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = null;
+    }
   }
 
 
@@ -76,7 +103,6 @@ export class WebGLTreeAnimationController {
    */
   _recalculateUniformScalingForTransformation(newTransformation) {
     if (this._scalingState.calculationTransformation !== newTransformation) {
-      console.log(`[WebGL Controller] Recalculating uniform scaling for transformation change: ${this._scalingState.calculationTransformation} → ${newTransformation}`);
       this.initializeUniformScaling(newTransformation);
     }
   }
@@ -121,10 +147,9 @@ export class WebGLTreeAnimationController {
     this._scalingState.branchTransformation = branchTransformation;
 
     // Get container dimensions
-    const containerElement = this.webglContainer.node();
-    const rect = containerElement.getBoundingClientRect();
-    const width = rect.width;
-    const height = rect.height;
+    // Use cached dimensions to avoid layout thrashing
+    const width = this.width;
+    const height = this.height;
 
     // Apply transformation and create layout
     // Reuse cached transformed tree to keep scaling consistent with uniform scale list
@@ -216,12 +241,11 @@ export class WebGLTreeAnimationController {
   /**
    * Calculates label and extension radii with dynamic positioning.
    * @param {Object} layout - Layout object with tree dimensions
-   * @param {Object} [_layoutTo=null] - Unused parameter kept for API compatibility
    * @param {string} [branchTransformation=null] - Override branch transformation
    * @returns {Object} Object with extensionRadius and labelRadius
    * @private
    */
-  _getConsistentRadii(layout, _layoutTo = null, branchTransformation = null) {
+  _getConsistentRadii(layout, branchTransformation = null) {
     const containerWidth = layout.width - layout.margin * 2;
     const containerHeight = layout.height - layout.margin * 2;
     const maxLeafRadius = Math.min(containerWidth, containerHeight) / 2;

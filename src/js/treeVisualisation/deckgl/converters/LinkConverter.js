@@ -1,6 +1,6 @@
-import { getLinkKey } from '../../utils/KeyGenerator.js';
-import { getNodeKey } from '../../utils/KeyGenerator.js';
+import { getLinkKey, getNodeKey } from '../../utils/KeyGenerator.js';
 import { calculateBranchCoordinates } from '../../layout/RadialTreeGeometry.js';
+import { ARC_SEGMENT_COUNT } from '../interpolation/PathInterpolator.js';
 
 /**
  * Handles conversion of D3 hierarchy links to Deck.gl layer format
@@ -115,7 +115,7 @@ export class LinkConverter {
    * Create link path using radialTreeGeometry.js for proper curved branches.
    * This version generates a smooth arc by sampling points.
    */
-  createLinkPath(link, segmentCount = 16) {
+  createLinkPath(link, segmentCount = ARC_SEGMENT_COUNT) {
     const branchCoords = calculateBranchCoordinates(link);
 
     if (branchCoords.arcProperties === null) {

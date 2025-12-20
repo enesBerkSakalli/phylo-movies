@@ -1,11 +1,9 @@
 import { clamp } from '../../domain/math/mathUtils.js';
-import { MovieTimelineManager } from '../../timeline/core/MovieTimelineManager.js';
 
 /**
- * UI/appearance slice: UI flags, controls, GUI references, and look/feel settings.
+ * UI/appearance slice: UI flags, controls, and look/feel settings.
  */
 export const createUiSlice = (set, get) => ({
-  gui: null,
   treeControllers: [],
   movieTimelineManager: null,
   comparisonMode: false,
@@ -30,15 +28,31 @@ export const createUiSlice = (set, get) => ({
   viewOffsetX: 0,
   viewOffsetY: 0,
   viewsConnected: false,
+  linkConnectionOpacity: 0.6,
 
   // Timeline tooltip state
   hoveredSegmentIndex: null,
   hoveredSegmentData: null,
+  hoveredSegmentPosition: null,
+  isTooltipHovered: false,
 
-  setHoveredSegment: (segmentIndex, segmentData = null) => set({
-    hoveredSegmentIndex: segmentIndex,
-    hoveredSegmentData: segmentData
-  }),
+  setHoveredSegment: (segmentIndex, segmentData = null, position = null) => {
+    const { isTooltipHovered } = get();
+    // If trying to clear but tooltip is hovered, ignore
+    if (segmentIndex === null && isTooltipHovered) return;
+
+    set({
+      hoveredSegmentIndex: segmentIndex,
+      hoveredSegmentData: segmentData,
+      hoveredSegmentPosition: position
+    });
+  },
+
+  setTooltipHovered: (isHovered) => {
+    set({ isTooltipHovered: isHovered });
+    // If we stop hovering the tooltip, and we aren't hovering a segment (implied by logic elsewhere), we might want to clear.
+    // But usually the mouse leave event on tooltip will handle the clearing explicitly.
+  },
 
   toggleComparisonMode: () => set((state) => ({ comparisonMode: !state.comparisonMode })),
 
@@ -92,13 +106,21 @@ export const createUiSlice = (set, get) => ({
    * Enables or disables dimming of non-descendant elements.
    * @param {boolean} enabled - Whether dimming is enabled.
    */
-  setDimmingEnabled: (enabled) => set({ dimmingEnabled: enabled }),
+  setDimmingEnabled: (enabled) => set((state) => ({
+    dimmingEnabled: enabled,
+    // Increment highlightVersion to trigger deck.gl updateTriggers
+    highlightVersion: (state.highlightVersion ?? 0) + 1
+  })),
 
   /**
    * Sets the opacity level for dimmed elements.
    * @param {number} opacity - Opacity level (0-1) for dimmed elements.
    */
-  setDimmingOpacity: (opacity) => set({ dimmingOpacity: Math.max(0, Math.min(1, opacity)) }),
+  setDimmingOpacity: (opacity) => set((state) => ({
+    dimmingOpacity: Math.max(0, Math.min(1, opacity)),
+    // Increment highlightVersion to trigger deck.gl updateTriggers
+    highlightVersion: (state.highlightVersion ?? 0) + 1
+  })),
 
 
   /**
@@ -153,6 +175,11 @@ export const createUiSlice = (set, get) => ({
   setViewsConnected: (enabled) => set({ viewsConnected: !!enabled }),
 
   /**
+   * Set the opacity for link connections between views.
+   */
+  setLinkConnectionOpacity: (opacity) => set({ linkConnectionOpacity: clamp(opacity, 0, 1) }),
+
+  /**
    * Toggles between orthographic and orbit camera modes
    */
   toggleCameraMode: () => {
@@ -186,43 +213,7 @@ export const createUiSlice = (set, get) => ({
     set({ treeControllers: nextControllers });
   },
 
-  /**
-   * Sets the GUI instance reference with cleanup of previous instance
-   * @param {Object} instance - GUI instance
-   */
-  setGui: (instance) => {
-    const { gui: currentGui, movieTimelineManager: currentManager } = get();
 
-    // Clean up previous GUI instance if it exists and is being replaced
-    if (currentGui && currentGui !== instance) {
-      if (typeof currentGui.destroy === 'function') {
-        currentGui.destroy();
-      }
-    }
-
-    // Clean up previous MovieTimelineManager if exists
-    if (currentManager && typeof currentManager.destroy === 'function') {
-      currentManager.destroy();
-    }
-
-    set({ gui: instance });
-
-    // Initialize MovieTimelineManager when GUI is set
-    if (instance) {
-      const state = get();
-      if (state.movieData && state.transitionResolver) {
-        try {
-          const manager = new MovieTimelineManager(state.movieData, state.transitionResolver);
-          set({ movieTimelineManager: manager });
-        } catch (error) {
-          console.error('[Store] Failed to initialize MovieTimelineManager:', error);
-          set({ movieTimelineManager: null });
-        }
-      }
-    } else {
-      set({ movieTimelineManager: null });
-    }
-  },
 
   // ========================================
   // ANIMATION CONTROLS (Direct Access)
@@ -231,13 +222,8 @@ export const createUiSlice = (set, get) => ({
    * Start animation playback
    */
   startAnimationPlayback: async () => {
-    const { playing, treeControllers, gui } = get();
+    const { playing, treeControllers } = get();
     if (playing) return;
-
-    // Ensure we have a tree controller ready
-    if (!treeControllers.length && gui?.updateMain) {
-      await gui.updateMain();
-    }
 
     // Start animation on all controllers
     const controllers = get().treeControllers;

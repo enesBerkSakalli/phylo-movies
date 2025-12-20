@@ -10,6 +10,8 @@ export function Appearance() {
   const treeControllers = useAppStore((s) => s.treeControllers);
   const setDimmingEnabled = useAppStore((s) => s.setDimmingEnabled);
   const setDimmingOpacity = useAppStore((s) => s.setDimmingOpacity);
+  const linkConnectionOpacity = useAppStore((s) => s.linkConnectionOpacity);
+  const setLinkConnectionOpacity = useAppStore((s) => s.setLinkConnectionOpacity);
 
   const toggleDimming = async (value) => {
     try {
@@ -24,6 +26,16 @@ export function Appearance() {
     try {
       const opacity = value[0]; // Slider returns array
       setDimmingOpacity(opacity);
+      for (const controller of treeControllers) {
+        await controller?.renderAllElements?.();
+      }
+    } catch {}
+  };
+
+  const handleLinkOpacityChange = async (value) => {
+    try {
+      const opacity = value[0];
+      setLinkConnectionOpacity(opacity);
       for (const controller of treeControllers) {
         await controller?.renderAllElements?.();
       }
@@ -82,6 +94,30 @@ export function Appearance() {
               </div>
             </div>
           )}
+        </div>
+      </SidebarGroup>
+      <SidebarGroup>
+        <SidebarGroupLabel>Connections</SidebarGroupLabel>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <label htmlFor="connection-opacity-slider" className="text-sm font-medium">
+                Connection Opacity
+              </label>
+              <span className="text-sm text-muted-foreground">
+                {Math.round((linkConnectionOpacity ?? 0.6) * 100)}%
+              </span>
+            </div>
+            <Slider
+              id="connection-opacity-slider"
+              min={0}
+              max={1}
+              step={0.05}
+              value={[linkConnectionOpacity ?? 0.6]}
+              onValueChange={handleLinkOpacityChange}
+              className="w-full"
+            />
+          </div>
         </div>
       </SidebarGroup>
       <SidebarGroup>

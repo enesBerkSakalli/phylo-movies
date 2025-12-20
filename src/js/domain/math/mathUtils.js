@@ -45,28 +45,6 @@ export const clamp = (value, min = 0, max = 1) => Math.max(min, Math.min(max, va
 
 /**
  * Calculates interpolation indices for tree transitions
- * @param {number} total - Total number of trees
- * @param {number} progress - Progress value between 0-1
- * @returns {Object} Interpolation indices and segment progress
- */
-// Removed unused helper: calculateInterpolationIndices
-
-/**
- * Linear interpolation between two values
- * @param {number} start - Start value
- * @param {number} end - End value
- * @param {number} progress - Progress between 0-1
- * @returns {number} Interpolated value
- */
-// Removed unused helper: lerp
-
-/**
- * Smooth step interpolation for natural transitions
- * @param {number} x - Input value between 0-1
- * @returns {number} Smoothed value
- */
-// Removed unused helper: smoothStep
-
 /**
  * Cubic ease-in-out interpolation for biological transitions
  * @param {number} x - Progress value (0-1)

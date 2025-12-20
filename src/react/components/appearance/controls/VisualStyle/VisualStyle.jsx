@@ -1,11 +1,17 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useAppStore } from '../../../../../js/core/store.js';
 import { SidebarGroup, SidebarGroupLabel, SidebarGroupContent } from '@/components/ui/sidebar';
 import { ComparisonSpacingControls } from '../../../comparison/ComparisonSpacingControls/ComparisonSpacingControls.jsx';
 import { LayoutTransform } from '../../layout/LayoutTransform/LayoutTransform.jsx';
 import { TreeElements } from '../TreeElements/TreeElements.jsx';
 
+const toNumericFontSize = (size) => {
+  const parsed = typeof size === 'string' ? parseFloat(size) : Number(size);
+  return Number.isFinite(parsed) ? parsed : 1.8;
+};
+
 export function VisualStyle() {
+  // Use individual selectors to avoid object reference instability
   const fontSize = useAppStore((s) => s.fontSize);
   const strokeWidth = useAppStore((s) => s.strokeWidth);
   const nodeSize = useAppStore((s) => s.nodeSize);
@@ -18,15 +24,7 @@ export function VisualStyle() {
   const setLayoutRotationDegrees = useAppStore((s) => s.setLayoutRotationDegrees);
   const treeControllers = useAppStore((s) => s.treeControllers);
 
-  const fontSizeNumber = typeof fontSize === 'string' ? parseFloat(fontSize) : Number(fontSize || 1.8);
-
-  const renderControllers = async () => {
-    try {
-      for (const controller of treeControllers) {
-        await controller?.renderAllElements?.();
-      }
-    } catch {}
-  };
+  const fontSizeNumber = useMemo(() => toNumericFontSize(fontSize), [fontSize]);
 
   return (
     <div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { ButtonsFileOps } from './components/nav/ButtonsFileOps.jsx';
 import { ButtonsMSA } from './components/nav/ButtonsMSA.jsx';
 import { Appearance } from './components/appearance/Appearance.jsx';
@@ -12,20 +12,17 @@ import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarGroup, 
 import { Film, SlidersHorizontal, FolderOpen, Dna, GitBranch } from 'lucide-react';
 import { useAppStore } from '../js/core/store.js';
 import { getPhyloMovieData } from '../js/services/data/dataManager.js';
-import Gui from '../js/controllers/gui.js';
-import { DeckGLTreeAnimationController } from '../js/treeVisualisation/DeckGLTreeAnimationController.js';
+import { useTreeController } from '../hooks/useTreeController.js';
 
 export function App() {
   const comparisonMode = useAppStore((s) => s.comparisonMode);
-  const gui = useAppStore((s) => s.gui);
   const fileName = useAppStore((s) => s.fileName || 'Loading...');
   const hasMsa = useAppStore((s) => s.hasMsa);
+  const initializeStore = useAppStore((s) => s.initialize);
+  const resetStore = useAppStore((s) => s.reset);
 
-  useEffect(() => {
-    if (gui) {
-      gui.updateMain();
-    }
-  }, [comparisonMode, gui]);
+  // Initialize Tree Controller and Rendering Logic
+  useTreeController();
 
   useEffect(() => {
     let cancelled = false;
@@ -34,24 +31,19 @@ export function App() {
         const parsedData = await getPhyloMovieData();
         if (cancelled) return;
 
-        // Instantiate GUI (initializes store internally)
-        const TreeController = DeckGLTreeAnimationController;
+        // Initialize store directly
+        initializeStore(parsedData);
 
-        const guiInstance = new Gui(parsedData, { TreeController });
-
-        // Store GUI reference
-        useAppStore.getState().setGui(guiInstance);
-
-        // MovieTimelineManager is now initialized automatically by the store
       } catch (err) {
-        console.error('[App bootstrap] Failed to initialize GUI:', err);
+        console.error('[App bootstrap] Failed to initialize data:', err);
       }
     })();
 
     return () => {
       cancelled = true;
+      resetStore();
     };
-  }, []);
+  }, [initializeStore, resetStore]);
 
   useEffect(() => {
     try {

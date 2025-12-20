@@ -82,7 +82,7 @@ Use when modifying code or running tests with hot reload.
    ```bash
    npm run dev
    ```
-2. Open `http://localhost:5173/pages/home/` or `http://localhost:5173/pages/visualization/`.
+2. Open `http://localhost:5173/home` or `http://localhost:5173/visualization`.
 3. Development mode provides HMR, source maps, and error overlays out of the box.
 
 #### Method 2: Production build (custom hosting)
@@ -111,7 +111,7 @@ Use for a public, dataset-backed demo hosted on GitHub Pages.
    ```
    The script sets `--base`, copies `example.json`, and writes a redirecting `dist/index.html`.
 2. Publish `dist/` via the `gh-pages` branch or the Pages configuration in repository settings.
-3. Access the deployment at `https://<username>.github.io/<repo>/pages/home/` (replace placeholders). Update the `build:gh` script if the repository name differs from `phylo-movies`.
+3. Access the deployment at `https://<username>.github.io/<repo>/home` (replace placeholders). Update the `build:gh` script if the repository name differs from `phylo-movies`.
 
 ---
 
@@ -169,7 +169,7 @@ VITE v5.4.20  ready in XXX ms
 Local: http://localhost:5173/
 ```
 
-Open `http://localhost:5173/pages/home/` in your browser. You should see the PhyloMovies home page.
+Open `http://localhost:5173/home` in your browser. You should see the PhyloMovies home page.
 
 **4. Test production build:**
 
@@ -180,8 +180,7 @@ npm run build
 Expected output should end with:
 ```
 Built in XXXs
-dist/pages/home/index.html                   0.57 kB
-dist/pages/visualization/index.html          1.11 kB
+dist/index.html                              0.57 kB
 dist/assets/[various files listed]
 ```
 
@@ -196,12 +195,12 @@ ls -l dist/
 npm run preview
 ```
 
-Access at `http://localhost:4173/pages/home/`
+Access at `http://localhost:4173/home`
 
 **6. Test with example data:**
 
 - Start dev server: `npm run dev`
-- Navigate to `http://localhost:5173/pages/home/`
+- Navigate to `http://localhost:5173/home`
 - Click "Load Example" button
 - Should load example phylogenetic tree visualization
 
@@ -333,9 +332,6 @@ phylo-movies/
 |   |-- components/          # shadcn/ui components
 |   |-- lib/                 # Library utilities
 |   `-- index.css            # Global styles
-|-- pages/                   # Static pages
-|   |-- home/                # Home page entry point
-|   `-- visualization/       # Visualization page entry point
 |-- data/                    # Example datasets
 |-- test/                    # Test suites
 |-- dist/                    # Production build output (generated)

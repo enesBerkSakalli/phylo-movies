@@ -4,8 +4,8 @@ import { colorToRgb } from '../../services/ui/colorUtils.js';
 export class ColorSchemeManager {
   constructor(originalColorMap = {}) {
     this.originalColorMap = originalColorMap;
-    this.taxaColorMap = new Map(Object.entries(originalColorMap));
-    this.groupColorMap = new Map();
+    this.taxaColorMap = { ...originalColorMap };
+    this.groupColorMap = {};
   }
 
   applyColorScheme(schemeName, targets, isGroup) {
@@ -20,7 +20,7 @@ export class ColorSchemeManager {
       const color = scheme[index % scheme.length];
       const name = isGroup ? target.name : target;
       const map = isGroup ? this.groupColorMap : this.taxaColorMap;
-      map.set(name, color);
+      map[name] = color;
     });
   }
 
@@ -124,7 +124,7 @@ export class ColorSchemeManager {
   }
 
   reset() {
-    this.taxaColorMap = new Map(Object.entries(this.originalColorMap));
-    this.groupColorMap.clear();
+    this.taxaColorMap = { ...this.originalColorMap };
+    this.groupColorMap = {};
   }
 }

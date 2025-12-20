@@ -13,8 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Menu, ChevronUp, ChevronDown } from 'lucide-react';
 
 export function MoviePlayerBar() {
-  const gui = useAppStore((s) => s.gui);
-  const forward = useAppStore((s) => s.forward);
+                                           const forward = useAppStore((s) => s.forward);
   const backward = useAppStore((s) => s.backward);
   const setAnimationSpeed = useAppStore((s) => s.setAnimationSpeed);
   const animationSpeed = useAppStore((s) => s.animationSpeed);
@@ -25,9 +24,11 @@ export function MoviePlayerBar() {
   // Timeline tooltip state
   const hoveredSegmentIndex = useAppStore((s) => s.hoveredSegmentIndex);
   const hoveredSegmentData = useAppStore((s) => s.hoveredSegmentData);
+  const hoveredSegmentPosition = useAppStore((s) => s.hoveredSegmentPosition);
+  const setTooltipHovered = useAppStore((s) => s.setTooltipHovered);
+  const setHoveredSegment = useAppStore((s) => s.setHoveredSegment);
   const movieData = useAppStore((s) => s.movieData);
   const movieTimelineManager = useAppStore((s) => s.movieTimelineManager);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const tooltipRef = useRef(null);
 
   // Get segments from timeline manager
@@ -35,25 +36,22 @@ export function MoviePlayerBar() {
 
   // Reinitialize timeline when component mounts and container is available
   useEffect(() => {
-    if (movieTimelineManager && !movieTimelineManager.timeline) {
-      movieTimelineManager._createTimeline();
-      if (movieTimelineManager.timeline) {
-        movieTimelineManager._setupEvents();
+    if (movieTimelineManager) {
+      // Check if timeline exists and is attached to the DOM
+      const isTimelineAttached = movieTimelineManager.timeline &&
+                                 movieTimelineManager.timeline.container &&
+                                 document.body.contains(movieTimelineManager.timeline.container);
+
+      if (!isTimelineAttached) {
+        movieTimelineManager._createTimeline();
+        if (movieTimelineManager.timeline) {
+          movieTimelineManager._setupEvents();
+        }
       }
     }
   }, [movieTimelineManager]);
 
-  // Track mouse position for tooltip
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      setMousePosition({ x: e.clientX, y: e.clientY });
-    };
-
-    if (hoveredSegmentIndex !== null) {
-      window.addEventListener('mousemove', handleMouseMove);
-      return () => window.removeEventListener('mousemove', handleMouseMove);
-    }
-  }, [hoveredSegmentIndex]);  // Get leaf names function for tooltip
+  // Get leaf names function for tooltip
   const getLeafNames = useCallback((indices) => {
     const sortedLeaves = movieData?.sorted_leaves;
     if (!sortedLeaves || !Array.isArray(sortedLeaves)) return [];
@@ -155,23 +153,28 @@ export function MoviePlayerBar() {
 
       <HUD />
 
-      {/* Timeline segment tooltip - positioned above cursor */}
-      {hoveredSegmentIndex !== null && hoveredSegmentData && (
+      {/* Timeline segment tooltip - positioned above segment center */}
+      {hoveredSegmentIndex !== null && hoveredSegmentData && hoveredSegmentPosition && (
         <div
           ref={tooltipRef}
           style={{
             position: 'fixed',
-            left: `${mousePosition.x}px`,
-            top: `${mousePosition.y - 12}px`,
+            left: `${hoveredSegmentPosition.x}px`,
+            top: `${hoveredSegmentPosition.y - 12}px`,
             transform: 'translate(-50%, -100%)',
             zIndex: 10000,
-            pointerEvents: 'none',
-            minWidth: '400px',
-            maxWidth: '500px'
+            pointerEvents: 'auto',
+            minWidth: '200px',
+            maxWidth: '300px'
           }}
           className="animate-in fade-in-0 zoom-in-95 duration-200"
+          onMouseEnter={() => setTooltipHovered(true)}
+          onMouseLeave={() => {
+            setTooltipHovered(false);
+            setHoveredSegment(null, null);
+          }}
         >
-          <div className="rounded-lg border bg-card p-3 shadow-lg">
+          <div className="rounded-lg border bg-card p-2 shadow-lg">
             <TimelineSegmentTooltip
               segment={hoveredSegmentData}
               segmentIndex={hoveredSegmentIndex}

@@ -41,34 +41,7 @@ export const createHighlightSlice = (set, get) => ({
   taxaGrouping: null, // { mode: 'taxa'|'groups'|'csv', separator?, strategyType?, csvTaxaMap? }
   // Color update tracking for deck.gl updateTriggers
   taxaColorVersion: 0, // Increment when TREE_COLOR_CATEGORIES changes
-
-  /**
-   * Apply theme-aware default colors for branches and strokes.
-   * @param {'system'|'light'|'dark'} themePref
-   */
-  applyThemeColors: (themePref = 'light') => {
-    try {
-      const prefersDark = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const isDark = themePref === 'dark' || (themePref === 'system' && prefersDark);
-
-      const next = {
-        // Slightly darker neutral grey for dark theme
-        defaultColor: isDark ? '#9AA4AE' : '#000000',
-        strokeColor: isDark ? '#9AA4AE' : '#000000',
-      };
-
-      Object.assign(TREE_COLOR_CATEGORIES, next);
-
-      // Notify ColorManager and trigger re-render
-      const { colorManager, treeControllers } = get();
-      if (colorManager && colorManager.refreshColorCategories) {
-        colorManager.refreshColorCategories();
-      }
-      renderTreeControllers(treeControllers);
-    } catch (e) {
-      console.warn('[store] applyThemeColors failed:', e);
-    }
-  },
+  highlightVersion: 0, // Increment when highlight state changes (activeChangeEdge, marked, dimming)
 
   /**
    * Gets the current ColorManager instance
@@ -104,6 +77,8 @@ export const createHighlightSlice = (set, get) => ({
     });
 
     colorManager.updateMarkedSubtrees(convertedMarked);
+    // Increment version to trigger deck.gl updateTriggers
+    set((state) => ({ highlightVersion: state.highlightVersion + 1 }));
   },
 
   /**
@@ -122,6 +97,8 @@ export const createHighlightSlice = (set, get) => ({
         : [];
 
     colorManager.updateActiveChangeEdge(normalizedEdge); // Update current active change edges
+    // Increment version to trigger deck.gl updateTriggers
+    set((state) => ({ highlightVersion: state.highlightVersion + 1 }));
   },
 
   /**

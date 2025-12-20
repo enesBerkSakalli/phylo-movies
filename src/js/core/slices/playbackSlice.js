@@ -26,18 +26,21 @@ export const createPlaybackSlice = (set, get) => ({
   autoFitOnTreeChange: true,
 
   play: () => {
-    const { playing, animationProgress, treeList, animationSpeed } = get();
+    const { playing, animationProgress, timelineProgress, treeList, animationSpeed } = get();
     if (playing) return;
 
     const totalTrees = treeList.length;
-    const initialProgress = animationProgress >= 1.0 ? 0 : animationProgress;
+    // Use timelineProgress if available (from scrubbing), otherwise animationProgress
+    const currentProgress = timelineProgress ?? animationProgress;
+    const initialProgress = currentProgress >= 1.0 ? 0 : currentProgress;
     const timeOffset = (initialProgress * (totalTrees - 1) / animationSpeed) * 1000;
     const adjustedStartTime = performance.now() - timeOffset;
 
     set({
       playing: true,
       animationStartTime: adjustedStartTime,
-      animationProgress: initialProgress
+      animationProgress: initialProgress,
+      timelineProgress: null // Clear scrubbed position so animation progress takes over
     });
     // NO animation loop here. The TreeAnimationController is responsible for driving the updates.
   },
@@ -54,9 +57,27 @@ export const createPlaybackSlice = (set, get) => ({
 
   /**
    * Sets the animation playback speed multiplier
-   * @param {number} animationSpeed - Speed multiplier (1.0 = normal speed)
+   * @param {number} newSpeed - Speed multiplier (1.0 = normal speed)
    */
-  setAnimationSpeed: (animationSpeed) => set({ animationSpeed }),
+  setAnimationSpeed: (newSpeed) => {
+    const { playing, animationStartTime, animationSpeed: oldSpeed } = get();
+
+    if (playing && animationStartTime) {
+      const now = performance.now();
+      // Calculate how much "virtual time" has passed at the old speed
+      const elapsed = now - animationStartTime;
+      // Adjust start time so that (now - newStartTime) * newSpeed === elapsed * oldSpeed
+      // This preserves the current animation progress
+      const newStartTime = now - (elapsed * oldSpeed / newSpeed);
+
+      set({
+        animationSpeed: newSpeed,
+        animationStartTime: newStartTime
+      });
+    } else {
+      set({ animationSpeed: newSpeed });
+    }
+  },
 
   /**
    * Updates animation progress and automatically updates currentTreeIndex
@@ -158,6 +179,53 @@ export const createPlaybackSlice = (set, get) => ({
   }),
 
   /**
+   * Sets the scrubber position to an exact interpolated point
+   * @param {number} progress - Animation progress (0-1)
+   */
+  setScrubPosition: (progress) => {
+    const { treeList } = get();
+    if (!treeList || treeList.length === 0) return;
+
+    const clampedProgress = clamp(progress, 0, 1);
+    const totalTrees = treeList.length;
+
+    // Calculate exact tree position
+    const exactTreeIndex = clampedProgress * (totalTrees - 1);
+    const currentTreeIndex = Math.floor(exactTreeIndex);
+    const segmentProgress = exactTreeIndex - currentTreeIndex;
+
+    set({
+      animationProgress: clampedProgress,
+      currentTreeIndex: clamp(currentTreeIndex, 0, totalTrees - 1),
+      segmentProgress: segmentProgress,
+      // Maintain current direction or set to none/jump if needed
+    });
+  },
+
+  /**
+   * Sets timeline progress based on an exact timeline-relative progress (0-1),
+   * keeping the current tree index in sync with that point on the timeline.
+   * This avoids snapping to anchor trees when the scrubber is released mid-segment.
+   * @param {number} progress - Timeline progress (0-1)
+   * @param {number} treeIndex - Tree index corresponding to the timeline position
+   * @param {number} [segmentProgress=0] - Progress within the current segment (0-1)
+   */
+  setTimelineProgress: (progress, treeIndex, segmentProgress = 0) => {
+    const { treeList } = get();
+    const clampedProgress = clamp(progress, 0, 1);
+    const maxIndex = Math.max(0, (treeList?.length || 1) - 1);
+    const clampedTreeIndex = clamp(treeIndex ?? 0, 0, maxIndex);
+
+    set({
+      // Don't update animationProgress - preserve scrubbed position independently
+      timelineProgress: clampedProgress,
+      currentTreeIndex: clampedTreeIndex,
+      segmentProgress: clamp(segmentProgress, 0, 1),
+      navigationDirection: 'jump'
+    });
+  },
+
+  /**
    * Navigates to a specific tree position in the timeline
    * @param {number} position - Target tree index (0-based)
    * @param {string} [direction] - Optional navigation direction override
@@ -190,7 +258,8 @@ export const createPlaybackSlice = (set, get) => ({
         currentTreeIndex: newIndex,
         navigationDirection: navDirection,
         segmentProgress: 0, // Reset segment progress on discrete navigation
-        animationProgress: newAnimationProgress // Sync animation progress
+        animationProgress: newAnimationProgress, // Sync animation progress
+        timelineProgress: newAnimationProgress // Sync timeline progress to ensure scrubber updates
       });
 
       // The subscription will automatically handle the color manager update.

@@ -1,5 +1,8 @@
 import { getLabelKey } from '../../utils/KeyGenerator.js';
 
+/** Margin offset (px) to push labels further away from tree elements */
+const LABEL_MARGIN = 25;
+
 /**
  * Handles conversion of D3 hierarchy labels to Deck.gl layer format
  * Manages label positioning, rotation, and text anchor calculations for radial trees
@@ -29,9 +32,7 @@ export class LabelConverter {
     const rotation = this._calculateLabelRotation(angleRad);
     const position = this._calculateLabelPosition(angleRad, labelRadius);
 
-    // Keep radius used for positioning exactly the same as before.
-    // We expose it as polarRadius so interpolation can follow the arc.
-    const LABEL_MARGIN = 25; // Must match _calculateLabelPosition
+    // We expose polarRadius so interpolation can follow the arc.
     const adjustedRadius = labelRadius + LABEL_MARGIN;
 
     return {
@@ -75,9 +76,7 @@ export class LabelConverter {
     // The original logic was `0 - angleDeg`. This translates to `0 - angleRad`.
     let finalRotation = 0 - angleRad;
 
-    // The original flip condition was `angleDeg > 90 && angleDeg < 270`.
-    const needsFlip = angleRad > Math.PI / 2 && angleRad < Math.PI * 1.5;
-    if (needsFlip) {
+    if (this._shouldFlipLabel(angleRad)) {
       // The original flip was `+= 180`. This translates to `+= Math.PI`.
       finalRotation += Math.PI;
     }
@@ -90,10 +89,8 @@ export class LabelConverter {
    * @private
    */
   _calculateLabelPosition(angleRad, labelRadius) {
-    // Add a margin offset to push labels further away from tree elements
-    const LABEL_MARGIN = 25; // pixels of additional margin
     const adjustedRadius = labelRadius + LABEL_MARGIN;
-    
+
     const finalX = adjustedRadius * Math.cos(angleRad);
     const finalY = adjustedRadius * Math.sin(angleRad);
     return [finalX, finalY, 0];

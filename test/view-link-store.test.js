@@ -2,7 +2,7 @@ const { expect } = require('chai');
 
 // SUTs
 const { useAppStore } = require('../src/js/core/store.js');
-const { buildViewLinkMapping } = require('../src/js/utils/viewLinkMapping.js');
+const { buildViewLinkMapping } = require('../src/js/domain/view/viewLinkMapper.js');
 
 describe('View link store wiring', () => {
   beforeEach(() => {
@@ -53,13 +53,12 @@ describe('buildViewLinkMapping', () => {
       },
     };
 
-    const result = buildViewLinkMapping(null, null, null, null, pairSolution);
+    const result = buildViewLinkMapping(null, null, pairSolution);
     expect(result.sourceToDest).to.deep.equal({ '1-2': ['10'] });
-    expect(result.destToSource).to.deep.equal({ '10': ['1-2'] });
   });
 
   it('returns empty mapping when solution maps are missing', () => {
-    const result = buildViewLinkMapping(null, null, null, null, null);
-    expect(result).to.deep.equal({});
+    const result = buildViewLinkMapping(null, null, null);
+    expect(result.sourceToDest).to.deep.equal({});
   });
 });

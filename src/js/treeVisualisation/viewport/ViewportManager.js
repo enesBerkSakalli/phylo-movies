@@ -108,11 +108,13 @@ export class ViewportManager {
   updateScreenPositions(nodes, sideOverride = null) {
     if (!this.controller.deckManager?.deck || !nodes) return;
 
+    const setScreenPositions = this.controller._getState?.().setScreenPositions;
+    if (typeof setScreenPositions !== 'function') return;
+
     try {
       const viewport = this.controller.deckManager.deck.getViewports()[0];
       if (!viewport) return;
       const containerRect = this.controller.webglContainer.node().getBoundingClientRect();
-      const { setScreenPositions } = this.controller._getState();
 
       const positions = {};
       nodes.forEach((node) => {
@@ -120,6 +122,9 @@ export class ViewportManager {
           ? node.data.split_indices.join('-')
           : null;
         if (!key) return;
+        if (!node.position || !Array.isArray(node.position)) return;
+        if (!Number.isFinite(node.position[0]) || !Number.isFinite(node.position[1])) return;
+
         const [px, py] = viewport.project(node.position);
         positions[key] = {
           x: px + containerRect.left,
