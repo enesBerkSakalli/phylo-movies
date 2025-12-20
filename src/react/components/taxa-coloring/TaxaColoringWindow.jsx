@@ -7,7 +7,7 @@ import { GroupsTabContent } from "./groups-tab/GroupsTabContent.jsx";
 import { CSVTabContent } from "./csv-tab/CSVTabContent.jsx";
 import { useTaxaColoringState } from "./hooks/useTaxaColoringState.js";
 
-export function TaxaColoringWindow({ taxaNames = [], originalColorMap = {}, onApply, onClose }) {
+export function TaxaColoringWindow({ taxaNames = [], originalColorMap = {}, onApply, onClose, initialState = {} }) {
   const {
     mode,
     setMode,
@@ -31,7 +31,7 @@ export function TaxaColoringWindow({ taxaNames = [], originalColorMap = {}, onAp
     resetColorsToBlack,
     buildResult,
     handleColorChange
-  } = useTaxaColoringState(taxaNames, originalColorMap);
+  } = useTaxaColoringState(taxaNames, originalColorMap, initialState);
 
   const applyAndClose = () => {
     onApply?.(buildResult());

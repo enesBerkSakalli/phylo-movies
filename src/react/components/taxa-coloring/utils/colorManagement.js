@@ -3,14 +3,14 @@ export function syncGroupColors(colorManager, groups) {
   const currentGroupNames = new Set(groups.map(g => g.name));
 
   // Remove stale colors
-  Array.from(colorManager.groupColorMap.keys())
+  Object.keys(colorManager.groupColorMap)
     .filter(name => !currentGroupNames.has(name))
-    .forEach(name => colorManager.groupColorMap.delete(name));
+    .forEach(name => delete colorManager.groupColorMap[name]);
 
   // Assign colors to new groups
   groups.forEach(g => {
-    if (!colorManager.groupColorMap.has(g.name)) {
-      colorManager.groupColorMap.set(g.name, colorManager.getRandomColor());
+    if (!colorManager.groupColorMap[g.name]) {
+      colorManager.groupColorMap[g.name] = colorManager.getRandomColor();
     }
   });
 }

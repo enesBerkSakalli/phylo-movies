@@ -4,7 +4,7 @@
  */
 
 import { Deck, OrthographicView } from '@deck.gl/core';
-import { processPhyloData } from './utils/dataUtils.js';
+import { processPhyloData, calculateConsensus } from './utils/dataUtils.js';
 import { createCellsLayer, buildCellData } from './layers/cellsLayer.js';
 import { createSelectionBorderLayer, buildSelectionBorder } from './layers/selectionBorderLayer.js';
 import { createLettersLayer, buildTextData } from './layers/lettersLayer.js';
@@ -18,6 +18,7 @@ export class MSADeckGLViewer {
       MAX_CELLS: 150_000,  // Use numeric separator for readability
       cellSize: 16,
       showLetters: true,
+      colorScheme: 'default',
       ...options
     };
 
@@ -72,6 +73,11 @@ export class MSADeckGLViewer {
 
     this.state.viewState = viewState;
 
+    // Update deck.gl view state to maintain controlled mode
+    if (this.state.deckgl) {
+      this.state.deckgl.setProps({ viewState });
+    }
+
     // Only render if we have data
     if (this.hasSequences()) {
       this.renderThrottled();
@@ -79,8 +85,42 @@ export class MSADeckGLViewer {
 
     // Dispatch custom event for view updates
     if (this.onViewStateChange) {
-      this.onViewStateChange(viewState);
+      // Calculate visible range to pass along
+      const range = this.getVisibleRange(this.options.cellSize);
+      this.onViewStateChange({ viewState, range });
     }
+  }
+
+  /**
+   * Zoom in by a fixed step
+   */
+  zoomIn() {
+    const { zoom, target } = this.state.viewState;
+    this.handleViewStateChange({
+      target,
+      zoom: zoom + 0.5
+    });
+  }
+
+  /**
+   * Zoom out by a fixed step
+   */
+  zoomOut() {
+    const { zoom, target } = this.state.viewState;
+    this.handleViewStateChange({
+      target,
+      zoom: zoom - 0.5
+    });
+  }
+
+  /**
+   * Reset view to default
+   */
+  resetView() {
+    this.handleViewStateChange({
+      target: [0, 0, 0],
+      zoom: -1
+    });
   }
 
   /**
@@ -176,6 +216,7 @@ export class MSADeckGLViewer {
     this.state.rows = processedData.rows;
     this.state.cols = processedData.cols;
     this.state.selection = null;
+    this.state.consensus = calculateConsensus(this.state.seqs);
 
     console.log(`[MSADeckGLViewer] Loaded ${this.state.rows} sequences, type: ${this.state.type}`);
 
@@ -263,7 +304,6 @@ export class MSADeckGLViewer {
 
   render() {
     if (!this.state.deckgl) {
-      console.warn('[MSA] Cannot render - deck.gl not initialized');
       return;
     }
 
@@ -328,7 +368,7 @@ export class MSADeckGLViewer {
   buildCellsLayer(cellSize) {
     const visibleRange = this.getVisibleRange(cellSize);
     const cellData = buildCellData(cellSize, this.state.seqs, visibleRange, this.options.MAX_CELLS);
-    return createCellsLayer(cellData, this.state.type, this.state.selection);
+    return createCellsLayer(cellData, this.state.type, this.state.selection, this.options.colorScheme, this.state.consensus);
   }
 
   /**
@@ -386,40 +426,22 @@ export class MSADeckGLViewer {
     this.render();
   }
 
-  // Public API for region selection (alias for setSelection/clearSelection)
+  /**
+   * Set the color scheme
+   * @param {string} scheme - The color scheme name
+   */
+  setColorScheme(scheme) {
+    this.options.colorScheme = scheme;
+    this.render();
+  }
+
+  // Public API for region selection
   setRegion(startCol, endCol) {
     this.setSelection(startCol, endCol);
   }
 
-  /**
-   * Returns the current region selection, or null if none.
-   * @returns {{startCol:number,endCol:number}|null}
-   */
-  getRegion() {
-    if (!this.state?.selection) return null;
-    return { ...this.state.selection };
-  }
-
   clearRegion() {
     this.clearSelection();
-  }
-
-  /**
-   * Resize DeckGL to match current container size.
-   */
-  resize() {
-    if (!this.state.deckgl || !this.container) return;
-    const width = this.container.clientWidth;
-    const height = this.container.clientHeight;
-    this.state.deckgl.setProps({ width, height });
-    this.render();
-  }
-
-  /**
-   * Fit camera to show entire MSA alignment
-   */
-  fitCameraToMSA() {
-    this.fitToMSA();
   }
 
   /**

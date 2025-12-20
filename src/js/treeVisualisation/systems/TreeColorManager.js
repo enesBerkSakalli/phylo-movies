@@ -51,10 +51,9 @@ export class TreeColorManager {
    * Note: Dimming is now handled by LayerStyles via opacity, not color change
    *
    * @param {Object} linkData - D3 link data with target.data.split_indices
-   * @param {Object} options - Additional options (unused but kept for API compatibility)
    * @returns {string} Hex color code
    */
-  getBranchColorWithHighlights(linkData, options = {}) {
+  getBranchColorWithHighlights(linkData) {
     // Check highlighting states
     const isMarked = this._isComponentMarked(linkData);
     const isActiveChangeEdge = this._isActiveChangeEdgeHighlighted(linkData, this.currentActiveChangeEdges);

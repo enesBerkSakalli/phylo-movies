@@ -4,7 +4,6 @@ import { Download } from 'lucide-react';
 import { useAppStore } from '../../../js/core/store.js';
 
 export function SaveImageButton() {
-  const gui = useAppStore((s) => s.gui);
   const treeControllers = useAppStore((s) => s.treeControllers);
   const currentTreeIndex = useAppStore((s) => s.currentTreeIndex);
   const [isSaving, setIsSaving] = useState(false);
@@ -12,15 +11,13 @@ export function SaveImageButton() {
   const handleSaveImage = async () => {
     setIsSaving(true);
     try {
-      let controllers = treeControllers;
-
-      // If no controller exists, create one by running the main update
-      if (!controllers.length) {
-        await gui?.updateMain?.();
-        controllers = useAppStore.getState().treeControllers;
+      // If no controller exists, we can't save
+      if (!treeControllers.length) {
+        console.error("No tree controller available for saving PNG.");
+        return;
       }
 
-      const treeController = controllers[controllers.length - 1]; // Save the right-most view
+      const treeController = treeControllers[treeControllers.length - 1]; // Save the right-most view
 
       if (!treeController?.deckManager?.canvas) {
         console.error("Deck.gl canvas not available for saving PNG.");

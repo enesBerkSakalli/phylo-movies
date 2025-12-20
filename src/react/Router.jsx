@@ -10,9 +10,6 @@ export function Router() {
         <Route path="/" element={<Navigate to="/home" replace />} />
         <Route path="/home" element={<HomePage />} />
         <Route path="/visualization" element={<App />} />
-        {/* Legacy route support */}
-        <Route path="/pages/home/*" element={<Navigate to="/home" replace />} />
-        <Route path="/pages/visualization/*" element={<Navigate to="/visualization" replace />} />
       </Routes>
     </BrowserRouter>
   );

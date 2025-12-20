@@ -1,21 +1,21 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { ColorSchemeManager } from "@/js/treeColoring/utils/ColorSchemeManager.js";
 import { generateGroups } from "@/js/treeColoring/utils/GroupingUtils.js";
-import { mapStrategyName } from "@/js/treeColoring/constants/Strategies.js";
 import { syncGroupColors, normalizeSeparator } from "../utils/colorManagement.js";
-import { useForceUpdate } from "./useForceUpdate.js";
 import { useCSVState } from "./useCSVState.js";
 
-export function useTaxaColoringState(taxaNames, originalColorMap) {
+export function useTaxaColoringState(taxaNames, originalColorMap, initialStateParam = {}) {
+  const initialState = initialStateParam || {};
   const colorManagerRef = useRef(new ColorSchemeManager(originalColorMap));
-  const force = useForceUpdate();
+  const [version, setVersion] = useState(0);
+  const forceUpdate = useCallback(() => setVersion(v => v + 1), []);
 
-  const [mode, setMode] = useState("taxa");
-  const [selectedStrategy, setSelectedStrategy] = useState("prefix");
-  const [separators, setSeparators] = useState([]);
-  const [segmentIndex, setSegmentIndex] = useState(0);
-  const [useRegex, setUseRegex] = useState(false);
-  const [regexPattern, setRegexPattern] = useState("");
+  const [mode, setMode] = useState(initialState.mode || "taxa");
+  const [selectedStrategy, setSelectedStrategy] = useState(initialState.strategyType || 'prefix');
+  const [separators, setSeparators] = useState(initialState.separators || []);
+  const [segmentIndex, setSegmentIndex] = useState(initialState.segmentIndex || 0);
+  const [useRegex, setUseRegex] = useState(initialState.useRegex || false);
+  const [regexPattern, setRegexPattern] = useState(initialState.regexPattern || "");
   const [groups, setGroups] = useState([]);
   const [groupingResult, setGroupingResult] = useState(null);
 
@@ -32,6 +32,20 @@ export function useTaxaColoringState(taxaNames, originalColorMap) {
 
   const mgr = colorManagerRef.current;
 
+  // Initialize group colors from saved state if available
+  useEffect(() => {
+    if (initialState.groupColorMap) {
+      const map = initialState.groupColorMap instanceof Map
+        ? Object.fromEntries(initialState.groupColorMap)
+        : initialState.groupColorMap;
+
+      Object.entries(map).forEach(([name, color]) => {
+        mgr.groupColorMap[name] = color;
+      });
+      forceUpdate();
+    }
+  }, []); // Run once on mount
+
   const applyScheme = useCallback((id, targetMode) => {
     const itemsMap = {
       taxa: { items: taxaNames, isGrouped: false },
@@ -40,18 +54,17 @@ export function useTaxaColoringState(taxaNames, originalColorMap) {
     };
     const { items, isGrouped } = itemsMap[targetMode];
     mgr.applyColorScheme(id, items, isGrouped);
-    force();
-  }, [taxaNames, groups, csvGroups, mgr, force]);
+    forceUpdate();
+  }, [taxaNames, groups, csvGroups, mgr, forceUpdate]);
 
   const updateGroups = useCallback(() => {
-    const mapped = mapStrategyName(selectedStrategy);
     const options = {
       segmentIndex,
       useRegex,
       regexPattern
     };
 
-    const res = generateGroups(taxaNames, separators.length > 0 ? separators : null, mapped, options);
+    const res = generateGroups(taxaNames, separators.length > 0 ? separators : null, selectedStrategy, options);
 
     setGroupingResult(res);
 
@@ -62,11 +75,11 @@ export function useTaxaColoringState(taxaNames, originalColorMap) {
         setSeparators(res.separators);
       }
       syncGroupColors(mgr, res.groups);
-      force();
+      forceUpdate();
     } else {
       setGroups([]);
     }
-  }, [taxaNames, selectedStrategy, separators, segmentIndex, useRegex, regexPattern, mgr, force]);
+  }, [taxaNames, selectedStrategy, separators, segmentIndex, useRegex, regexPattern, mgr, forceUpdate]);
 
   useEffect(() => {
     if (mode === "groups") updateGroups();
@@ -91,8 +104,8 @@ export function useTaxaColoringState(taxaNames, originalColorMap) {
     setGroups([]);
     setGroupingResult(null);
     resetCSV();
-    force();
-  }, [mgr, resetCSV, force]);
+    forceUpdate();
+  }, [mgr, resetCSV, forceUpdate]);
 
   const resetColorsToBlack = useCallback(() => {
     const itemsMap = {
@@ -101,16 +114,16 @@ export function useTaxaColoringState(taxaNames, originalColorMap) {
       csv: csvGroups.map(g => ({ name: g.name, map: mgr.groupColorMap }))
     };
 
-    itemsMap[mode]?.forEach(({ name, map }) => map.set(name, "#000000"));
-    force();
-  }, [mode, taxaNames, groups, csvGroups, mgr, force]);
+    itemsMap[mode]?.forEach(({ name, map }) => map[name] = "#000000");
+    forceUpdate();
+  }, [mode, taxaNames, groups, csvGroups, mgr, forceUpdate]);
 
   const buildResult = useCallback(() => ({
     mode,
     taxaColorMap: mgr.taxaColorMap,
     groupColorMap: mgr.groupColorMap,
     separators: separators.length > 0 ? separators : null,
-    strategyType: mapStrategyName(selectedStrategy),
+    strategyType: selectedStrategy,
     segmentIndex,
     useRegex,
     regexPattern,
@@ -121,9 +134,9 @@ export function useTaxaColoringState(taxaNames, originalColorMap) {
 
   const handleColorChange = useCallback((name, color, isGroup = false) => {
     const colorMap = isGroup ? mgr.groupColorMap : mgr.taxaColorMap;
-    colorMap.set(name, color);
-    force();
-  }, [mgr, force]);
+    colorMap[name] = color;
+    forceUpdate();
+  }, [mgr, forceUpdate]);
 
   return {
     mode,

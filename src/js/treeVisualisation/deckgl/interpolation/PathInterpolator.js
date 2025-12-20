@@ -1,12 +1,15 @@
 import { calculateInterpolatedBranchCoordinates } from '../../layout/RadialTreeGeometry.js';
 
+/** Default number of segments for arc generation */
+export const ARC_SEGMENT_COUNT = 16;
+
 /**
  * PathInterpolator - Handles path interpolation for tree branches
  * Supports both polar (radial) and linear interpolation strategies
  */
 export class PathInterpolator {
   constructor() {
-    this.segmentCount = 16; // Default segments for arc generation
+    this.segmentCount = ARC_SEGMENT_COUNT;
   }
 
   /**
@@ -186,7 +189,7 @@ export class PathInterpolator {
     ];
   }
 
-  
+
 
   /**
    * Set segment count for arc generation

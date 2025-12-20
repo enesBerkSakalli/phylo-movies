@@ -9,16 +9,14 @@ export {
   getPaletteInfo,
   getRecommendedPalettes
 } from '../constants/ColorPalettes.js';
-export { SEPARATION_STRATEGIES, mapStrategyName } from './constants/Strategies.js';
 
 // Utils
 export {
   getGroupForTaxon,
   getGroupForStrategy,
-  getGroupBetweenSeparators,
   generateGroups,
   applyColoringData,
-  detectBestSeparator
+  detectBestSeparators
 } from './utils/GroupingUtils.js';
 
 // Components

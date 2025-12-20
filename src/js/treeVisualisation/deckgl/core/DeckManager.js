@@ -93,11 +93,6 @@ export class DeckManager {
     this.canvas.style.display = 'block';
     this.container.node().appendChild(this.canvas);
 
-    // Add debugging for raw click events on canvas
-    this.canvas.addEventListener('click', (event) => {
-      console.log('[DeckManager] Raw canvas click detected:', event);
-    });
-
     const activeId = this._activeViewId();
     const initialViewState = this.viewStates[activeId];
 
@@ -127,8 +122,6 @@ export class DeckManager {
       onClick: (info, event) => {
         // Always handle node clicks
         if (info.layer?.id === 'phylo-nodes' && this._onNodeClick) {
-          console.log('[DeckManager] Node click detected, calling handler');
-
           // Prevent event bubbling to avoid immediately hiding the context menu
           if (event && event.stopPropagation) {
             event.stopPropagation();
@@ -139,13 +132,6 @@ export class DeckManager {
 
           this._onNodeClick(info, event);
           return true; // Consume the event
-        }
-
-        // Debug: Log why click wasn't handled
-        if (info.layer?.id !== 'phylo-nodes') {
-          console.log('[DeckManager] Click on layer:', info.layer?.id, 'but not phylo-nodes');
-        } else {
-          console.log('[DeckManager] Click with no layer info');
         }
 
         return false; // Let other handlers process
@@ -167,7 +153,6 @@ export class DeckManager {
       },
       onWebGLInitialized: (gl) => {
         if (this._onWebGLInitialized) this._onWebGLInitialized(gl);
-        console.log('[DeckManager] WebGL context initialized');
       },
       onError: (error) => {
         if (this._onError) this._onError(error);
@@ -272,8 +257,6 @@ export class DeckManager {
       views: [this.views[this.cameraMode]],
       viewState: this.viewStates[toId]
     });
-
-    console.log(`[DeckManager] Switching camera mode to: ${this.cameraMode}`);
   }
 
   /**

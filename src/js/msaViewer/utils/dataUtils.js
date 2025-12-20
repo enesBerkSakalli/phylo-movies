@@ -91,3 +91,35 @@ export function processPhyloData(data) {
     cols: seqs.length > 0 ? seqs[0].seq.length : 0
   };
 }
+
+/**
+ * Calculates the consensus sequence from an array of sequences
+ * @param {Array<{id: string, seq: string}>} sequences - Array of sequence objects
+ * @returns {string} The consensus sequence string
+ */
+export function calculateConsensus(sequences) {
+  if (!sequences || sequences.length === 0) return '';
+
+  const len = sequences[0].seq.length;
+  const consensus = [];
+
+  for (let i = 0; i < len; i++) {
+    const counts = {};
+    let maxCount = 0;
+    let maxChar = '-';
+
+    for (const s of sequences) {
+      const ch = s.seq[i];
+      if (ch === '-' || ch === undefined) continue;
+
+      counts[ch] = (counts[ch] || 0) + 1;
+      if (counts[ch] > maxCount) {
+        maxCount = counts[ch];
+        maxChar = ch;
+      }
+    }
+    consensus.push(maxChar);
+  }
+
+  return consensus.join('');
+}

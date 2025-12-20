@@ -142,7 +142,9 @@ export class TidyTreeLayout {
     this.applyTidyLayout();
 
     const minWindowSize = this.getMinContainerDimension(this.containerWidth, this.containerHeight);
-    const uniformScale = minWindowSize / (2.0 * maxGlobalScale);
+    // Guard against zero maxGlobalScale to prevent Infinity/NaN
+    const safeMaxScale = (maxGlobalScale && maxGlobalScale > 0) ? maxGlobalScale : 1;
+    const uniformScale = minWindowSize / (2.0 * safeMaxScale);
     this.scaleRadius(this.root, uniformScale);
     this.generateCoordinates(this.root);
     this.scale = uniformScale;

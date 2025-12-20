@@ -1,6 +1,6 @@
 /**
  * ColorPalettes.js - Centralized color palette definitions for the application
- * 
+ *
  * These palettes are designed for:
  * - Accessibility (WCAG AA contrast ratios)
  * - Color-blind friendliness
@@ -419,7 +419,7 @@ export const CATEGORICAL_PALETTES = {
   TolVibrantWhiteBG,
   IBMColorBlindWhiteBG,
   PhyloOptimizedWhiteBG,
-  
+
   // Originals
   BlueShades,
   TolBright,
@@ -502,7 +502,7 @@ export function getPaletteInfo(name) {
     IBMColorBlind: { type: 'categorical', colorBlindSafe: true, maxColors: 8, description: 'IBM accessible design' },
     PhyloOptimized: { type: 'categorical', colorBlindSafe: false, maxColors: 12, description: 'Optimized for tree visualization' },
     HighContrast: { type: 'categorical', colorBlindSafe: false, maxColors: 8, description: 'Maximum contrast' },
-    
+
     // Sequential
     BlueSequentialWhiteBG: { type: 'sequential', colorBlindSafe: true, maxColors: 8, description: 'Blue ramp clipped for white background' },
     ViridisWhiteBG: { type: 'sequential', colorBlindSafe: true, maxColors: 8, description: 'Viridis clipped for white background' },
@@ -512,14 +512,14 @@ export function getPaletteInfo(name) {
     Viridis: { type: 'sequential', colorBlindSafe: true, maxColors: 10, description: 'Scientific standard, perceptually uniform' },
     Cividis: { type: 'sequential', colorBlindSafe: true, maxColors: 10, description: 'Color-blind optimized Viridis' },
     Turbo: { type: 'sequential', colorBlindSafe: false, maxColors: 10, description: 'Rainbow-like, perceptually uniform' },
-    
+
     // Diverging
     CoolWarmWhiteBG: { type: 'diverging', colorBlindSafe: false, maxColors: 9, description: 'Cool-Warm tuned for white background' },
     PurpleGreenWhiteBG: { type: 'diverging', colorBlindSafe: true, maxColors: 9, description: 'Purple-Green tuned for white background' },
     CoolWarm: { type: 'diverging', colorBlindSafe: false, maxColors: 9, description: 'Blue to red diverging' },
     PurpleGreen: { type: 'diverging', colorBlindSafe: true, maxColors: 9, description: 'Color-blind safe diverging' },
   };
-  
+
   return paletteMeta[name] || { type: 'unknown', colorBlindSafe: false, maxColors: 0, description: 'Unknown palette' };
 }
 
@@ -530,7 +530,7 @@ export function getPaletteInfo(name) {
  */
 export function getRecommendedPalettes(options = {}) {
   const { numColors = 5, colorBlindSafe = true, type = 'categorical' } = options;
-  
+
   return Object.keys(ALL_PALETTES).filter(name => {
     const info = getPaletteInfo(name);
     return (
@@ -541,5 +541,4 @@ export function getRecommendedPalettes(options = {}) {
   });
 }
 
-// Export default for backward compatibility
-export default ALL_PALETTES;
+// Default export removed for clarity — use named exports (`getPalette`, `CATEGORICAL_PALETTES`, etc.)
