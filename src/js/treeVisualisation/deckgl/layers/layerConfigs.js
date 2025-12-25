@@ -3,6 +3,7 @@
  * Centralizes IDs and default props for all tree visualization layers
  */
 import { PathLayer, ScatterplotLayer, TextLayer } from '@deck.gl/layers';
+import { PathStyleExtension } from '@deck.gl/extensions';
 
 // Hover highlight color: semi-transparent cyan for good contrast with blue/red data highlights
 export const HOVER_HIGHLIGHT_COLOR = [0, 200, 220, 150];
@@ -21,18 +22,34 @@ const pathLayerDefaults = {
 };
 
 /**
+ * PathStyleExtension instance for dashed line support
+ * highPrecisionDash improves dash rendering quality for wider strokes
+ */
+const pathStyleExtension = new PathStyleExtension({ dash: true, highPrecisionDash: true });
+
+/**
  * Layer configurations keyed by layer name
  */
 export const LAYER_CONFIGS = {
   linkOutlines: {
     id: 'phylo-link-outlines',
     LayerClass: PathLayer,
-    defaultProps: { ...pathLayerDefaults }
+    defaultProps: {
+      ...pathLayerDefaults,
+      // Disable rounded caps for dashed lines - rounded caps can fill gaps
+      capRounded: false,
+      extensions: [pathStyleExtension] // Enable dashing support for outline
+    }
   },
   links: {
     id: 'phylo-links',
     LayerClass: PathLayer,
-    defaultProps: { ...pathLayerDefaults }
+    defaultProps: {
+      ...pathLayerDefaults,
+      // Disable rounded caps for dashed lines - rounded caps can fill gaps
+      capRounded: false,
+      extensions: [pathStyleExtension] // Enable dashing support
+    }
   },
   extensions: {
     id: 'phylo-extensions',
@@ -54,15 +71,6 @@ export const LAYER_CONFIGS = {
     LayerClass: TextLayer,
     defaultProps: {
       getAlignmentBaseline: 'center'
-    }
-  },
-  trails: {
-    id: 'phylo-motion-trails',
-    LayerClass: PathLayer,
-    defaultProps: {
-      ...pathLayerDefaults,
-      widthMinPixels: 1,
-      pickable: false
     }
   },
   connectors: {

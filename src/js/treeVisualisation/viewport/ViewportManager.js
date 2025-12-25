@@ -22,32 +22,26 @@ export class ViewportManager {
 
   /**
    * Check if bounds are within current viewport.
+   * Uses deck.gl's viewport.getBounds() for accurate view bounds.
    * @param {Object} bounds - {minX, maxX, minY, maxY}
-   * @param {number} paddingFactor - Padding multiplier
-   * @returns {boolean} True if bounds are in view
+   * @param {number} paddingFactor - Padding multiplier (1.0 = exact fit, >1.0 = looser)
+   * @returns {boolean} True if bounds are fully within view
    */
   areBoundsInView(bounds, paddingFactor = 1.05) {
     try {
-      const viewState = this.controller.deckManager?.getViewState?.();
-      if (!viewState) return false;
-      const { width, height } = this.controller.deckManager.getCanvasDimensions();
-      const zoom = Number.isFinite(viewState.zoom) ? viewState.zoom : 0;
-      const scale = 2 ** zoom;
-      const halfW = (width / scale) / 2;
-      const halfH = (height / scale) / 2;
-      const cx = Array.isArray(viewState.target) ? viewState.target[0] ?? 0 : 0;
-      const cy = Array.isArray(viewState.target) ? viewState.target[1] ?? 0 : 0;
+      const viewport = this.controller.deckManager?.deck?.getViewports?.()?.[0];
+      if (!viewport?.getBounds) return false;
 
-      const viewMinX = cx - halfW * paddingFactor;
-      const viewMaxX = cx + halfW * paddingFactor;
-      const viewMinY = cy - halfH * paddingFactor;
-      const viewMaxY = cy + halfH * paddingFactor;
+      const [viewMinX, viewMinY, viewMaxX, viewMaxY] = viewport.getBounds();
+      // Apply padding: expand view bounds by padding factor
+      const padX = (viewMaxX - viewMinX) * (paddingFactor - 1) / 2;
+      const padY = (viewMaxY - viewMinY) * (paddingFactor - 1) / 2;
 
       return (
-        bounds.minX >= viewMinX &&
-        bounds.maxX <= viewMaxX &&
-        bounds.minY >= viewMinY &&
-        bounds.maxY <= viewMaxY
+        bounds.minX >= viewMinX - padX &&
+        bounds.maxX <= viewMaxX + padX &&
+        bounds.minY >= viewMinY - padY &&
+        bounds.maxY <= viewMaxY + padY
       );
     } catch (_) {
       return false;
@@ -88,8 +82,8 @@ export class ViewportManager {
     const leafCount = Array.isArray(nodes) ? nodes.length : 0;
     const densityPadding = leafCount > 400 ? 1.4
       : leafCount > 200 ? 1.3
-      : leafCount > 100 ? 1.2
-      : 0;
+        : leafCount > 100 ? 1.2
+          : 0;
 
     this.controller.deckManager.fitToBounds(bounds, {
       padding: options.padding ?? (1.25 + densityPadding),
@@ -135,10 +129,8 @@ export class ViewportManager {
         };
       });
 
-      if (typeof setScreenPositions === 'function') {
-        const side = sideOverride || this.controller.viewSide || 'single';
-        setScreenPositions(side, positions);
-      }
+      const side = sideOverride || this.controller.viewSide || 'single';
+      setScreenPositions(side, positions);
     } catch (e) {
       console.warn('[ViewportManager] Failed to project screen positions:', e);
     }

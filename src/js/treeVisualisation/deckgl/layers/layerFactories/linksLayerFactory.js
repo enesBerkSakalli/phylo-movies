@@ -7,6 +7,7 @@ import { LAYER_CONFIGS, HOVER_HIGHLIGHT_COLOR } from '../layerConfigs.js';
 /**
  * Create link outlines layer (for silhouette/highlighting effect)
  * Only renders when there are active highlights for better performance.
+ * Includes pulse animation support for breathing effect.
  *
  * @param {Array} links - Link data array
  * @param {Object} state - Store state snapshot
@@ -14,12 +15,12 @@ import { LAYER_CONFIGS, HOVER_HIGHLIGHT_COLOR } from '../layerConfigs.js';
  * @returns {Layer} deck.gl PathLayer
  */
 export function createLinkOutlinesLayer(links, state, layerStyles) {
-  const { highlightVersion, strokeWidth } = state;
+  const { highlightVersion, strokeWidth, highlightPulsePhase, activeEdgeDashingEnabled, highlightPulseEnabled } = state;
   const colorManager = state.getColorManager?.();
 
   // Only show outlines when there are active highlights
   const hasHighlights = colorManager?.hasActiveChangeEdges?.() ||
-                        (colorManager?.marked?.length > 0);
+    (colorManager?.marked?.length > 0);
 
   // Get cached state once for all accessors
   const cached = layerStyles.getCachedState();
@@ -31,9 +32,12 @@ export function createLinkOutlinesLayer(links, state, layerStyles) {
     getPath: d => d.path,
     getColor: d => layerStyles.getLinkOutlineColor(d, cached),
     getWidth: d => layerStyles.getLinkOutlineWidth(d, cached),
+    getDashArray: d => layerStyles.getLinkOutlineDashArray(d, cached),
+    dashJustified: false, // Don't justify dashes
     updateTriggers: {
-      getColor: highlightVersion,
-      getWidth: [highlightVersion, strokeWidth],
+      getColor: [highlightVersion, highlightPulsePhase, highlightPulseEnabled], // Include pulse phase and enabled state
+      getWidth: [highlightVersion, strokeWidth, highlightPulsePhase, highlightPulseEnabled], // Width also pulses
+      getDashArray: [highlightVersion, activeEdgeDashingEnabled], // Update when highlights or dashing toggle changes
       getPath: links.length
     }
   });
@@ -48,7 +52,7 @@ export function createLinkOutlinesLayer(links, state, layerStyles) {
  * @returns {Layer} deck.gl PathLayer
  */
 export function createLinksLayer(links, state, layerStyles) {
-  const { taxaColorVersion, highlightVersion, strokeWidth } = state;
+  const { taxaColorVersion, highlightVersion, strokeWidth, activeEdgeDashingEnabled } = state;
 
   // Get cached state once for all accessors
   const cached = layerStyles.getCachedState();
@@ -61,12 +65,12 @@ export function createLinksLayer(links, state, layerStyles) {
     getPath: d => d.path,
     getColor: d => layerStyles.getLinkColor(d, cached),
     getWidth: d => layerStyles.getLinkWidth(d, cached),
-    getDashArray: d => layerStyles.getLinkDashArray(d),
+    getDashArray: d => layerStyles.getLinkDashArray(d, cached),
     dashJustified: true,
     updateTriggers: {
       getColor: [highlightVersion, taxaColorVersion],
       getWidth: [highlightVersion, strokeWidth],
-      getDashArray: [highlightVersion, strokeWidth],
+      getDashArray: [highlightVersion, activeEdgeDashingEnabled], // Update when highlights or dashing toggle changes
       getPath: links.length
     }
   });

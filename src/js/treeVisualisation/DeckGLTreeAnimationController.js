@@ -2,7 +2,6 @@ import { DeckGLDataAdapter } from './deckgl/DeckGLDataAdapter.js';
 import { DeckManager } from './deckgl/core/DeckManager.js';
 import { LayerManager } from './deckgl/layers/LayerManager.js';
 import { TreeInterpolator } from './deckgl/interpolation/TreeInterpolator.js';
-import { TrailBuilder } from './deckgl/trails/TrailBuilder.js';
 import { WebGLTreeAnimationController } from './WebGLTreeAnimationController.js';
 import { useAppStore, selectCurrentTree } from '../core/store.js';
 import { easeInOut } from 'popmotion';
@@ -58,12 +57,6 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
     // Viewport manager for camera and screen projections
     this.viewportManager = new ViewportManager(this);
-
-    // Motion trail builder for tracking element movement
-    this.trailBuilder = new TrailBuilder({ minDistanceSq: 0.25 });
-
-    // Track last interpolation source to detect when we start a new interpolation
-    this._lastInterpolationFromIndex = null;
 
     // Track last tree index we auto-fit to
     this._lastFocusedTreeIndex = null;
@@ -196,6 +189,12 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       updateController: true
     });
 
+    // Guard against null layout (can happen if tree data isn't ready)
+    if (!currentLayout || !currentLayout.tree) {
+      console.warn('[DeckGLTreeAnimationController] Layout not available, skipping render');
+      return;
+    }
+
     const treeLeaves = currentLayout.tree.leaves();
 
     const { extensionRadius, labelRadius } = this._getConsistentRadii(currentLayout, null, treeLeaves);
@@ -208,10 +207,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
         canvasWidth: currentLayout.width,
         canvasHeight: currentLayout.height
       }
-     );
-
-    // Append trails if enabled
-    layerData.trails = this._buildFlowTrails(layerData.nodes, layerData.labels);
+    );
 
     this._updateLayersEfficiently(layerData);
     this.viewportManager.updateScreenPositions(layerData.nodes, this.viewSide);
@@ -268,7 +264,6 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     );
 
     const interpolatedData = this.treeInterpolator.interpolateTreeData(dataFrom, dataTo, t);
-    interpolatedData.trails = this._buildFlowTrails(interpolatedData.nodes, interpolatedData.labels);
     return interpolatedData;
   }
 
@@ -276,12 +271,6 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     const { fromTreeIndex, toTreeIndex } = options;
     let t = Math.max(0, Math.min(1, timeFactor));
     if (fromTreeData === toTreeData) t = 0;
-
-    // Clear trails when starting a new interpolation (from a different source tree)
-    if (this._lastInterpolationFromIndex !== fromTreeIndex) {
-      this.trailBuilder.clearHistory();
-      this._lastInterpolationFromIndex = fromTreeIndex;
-    }
 
     t = easeInOut(t);
 
@@ -336,8 +325,6 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     }
 
     const interpolatedData = this.treeInterpolator.interpolateTreeData(dataFrom, dataTo, t);
-    // Append trails if enabled
-    interpolatedData.trails = this._buildFlowTrails(interpolatedData.nodes, interpolatedData.labels);
     this._updateLayersEfficiently(interpolatedData);
     this.viewportManager.updateScreenPositions(interpolatedData.nodes, this.viewSide);
   }
@@ -472,24 +459,6 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     }
 
     await this.renderInterpolatedFrame(fromTreeData, toTreeData, timeFactor, options);
-  }
-
-
-  /**
-   * Build flow trails for nodes and labels using modular TrailBuilder.
-   * Trails help track element movement during animations.
-   * @param {Array} nodes - Node elements
-   * @param {Array} labels - Label elements
-   * @returns {Array} Trail segments
-   */
-  _buildFlowTrails(nodes, labels) {
-    const { trailsEnabled, trailLength, trailOpacity } = useAppStore.getState();
-
-    return this.trailBuilder.buildTrails(nodes, labels, {
-      enabled: trailsEnabled,
-      length: trailLength,
-      opacity: trailOpacity
-    });
   }
 
   /**

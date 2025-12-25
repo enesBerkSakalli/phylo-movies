@@ -296,6 +296,46 @@ export const createPlaybackSlice = (set, get) => ({
     goToPosition(currentTreeIndex - 1);
   },
 
+  /**
+   * Navigates to the next anchor (full) tree in the timeline
+   */
+  goToNextAnchor: () => {
+    const { currentTreeIndex, transitionResolver, goToPosition, renderInProgress } = get();
+
+    if (renderInProgress) return;
+
+    const anchors = transitionResolver?.fullTreeIndices || [];
+    const nextAnchor = anchors.find(idx => idx > currentTreeIndex);
+
+    if (nextAnchor !== undefined) {
+      goToPosition(nextAnchor, 'forward');
+    }
+  },
+
+  /**
+   * Navigates to the previous anchor (full) tree in the timeline
+   */
+  goToPreviousAnchor: () => {
+    const { currentTreeIndex, transitionResolver, goToPosition, renderInProgress } = get();
+
+    if (renderInProgress) return;
+
+    const anchors = transitionResolver?.fullTreeIndices || [];
+
+    // Find the last anchor strictly before current position
+    let prevAnchor = null;
+    for (let i = anchors.length - 1; i >= 0; i--) {
+      if (anchors[i] < currentTreeIndex) {
+        prevAnchor = anchors[i];
+        break;
+      }
+    }
+
+    if (prevAnchor !== null) {
+      goToPosition(prevAnchor, 'backward');
+    }
+  },
+
   // --- Rendering Lock ---
   /**
    * Sets the rendering progress state to prevent concurrent operations
