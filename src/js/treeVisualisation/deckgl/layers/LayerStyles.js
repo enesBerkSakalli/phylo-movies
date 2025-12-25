@@ -33,11 +33,14 @@ export class LayerStyles {
   getCachedState() {
     if (!this._renderCache) {
       const state = useAppStore.getState();
+      const pulseEnabled = state.highlightPulseEnabled ?? true;
       this._renderCache = {
         state,
         colorManager: state.getColorManager?.(),
         dimmingEnabled: state.dimmingEnabled,
-        dimmingOpacity: state.dimmingOpacity
+        dimmingOpacity: state.dimmingOpacity,
+        pulseOpacity: pulseEnabled ? (state.getPulseOpacity?.() ?? 1.0) : 1.0,
+        dashingEnabled: state.activeEdgeDashingEnabled ?? true
       };
     }
     return this._renderCache;
@@ -83,7 +86,8 @@ export class LayerStyles {
 
   /**
    * Get link color using ColorManager for consistent highlighting
-   * Now handles dimming via opacity based on active change edges
+   * Active change edges get highlight color, marked branches keep base color
+   * Handles dimming via opacity based on active change edges
    * @param {Object} link - Link data object
    * @param {Object} [cached] - Optional cached state from getCachedState()
    * @returns {Array} RGBA color array for Deck.gl
@@ -92,8 +96,8 @@ export class LayerStyles {
     // Use cached state if provided, otherwise get fresh (less efficient)
     const { colorManager: cm, dimmingEnabled, dimmingOpacity } = cached || this.getCachedState();
 
-    // Get color with highlighting (no dimming in color)
-    const rgb = colorToRgb(cm.getBranchColor(link));
+    // Get color for inner line: active edges get blue, marked keep base color
+    const rgb = colorToRgb(cm.getBranchColorForInnerLine(link));
 
     // Calculate opacity based on active change edges and downstream status
     let opacity = this._getBaseOpacity(link.opacity);
@@ -124,26 +128,88 @@ export class LayerStyles {
 
   /**
    * Get link dash array for dashed/dotted lines
-   * Can be used to distinguish certain types of branches
+   * Active change edges are rendered with a dashed pattern proportional to path length
    * @param {Object} link - Link data object
+   * @param {Object} [cached] - Optional cached state from getCachedState()
    * @returns {Array|null} Dash array [on, off] or null for solid line
    */
-  getLinkDashArray(link) {
-    // Currently returning null for solid lines
-    // This can be extended to return dash patterns based on link properties
-    // For example: return link.dashed ? [4, 2] : null;
-    return null;
+  getLinkDashArray(link, cached) {
+    const { colorManager: cm, dashingEnabled } = cached || this.getCachedState();
+
+    // Only active change edges get dashed pattern when dashing is enabled
+    if (dashingEnabled && cm?.isActiveChangeEdge?.(link)) {
+      return this._calculateDashArray(link.path);
+    }
+
+    return null; // Solid line for everything else
+  }
+
+  /**
+   * Get link outline dash array for dashed/dotted lines
+   * Uses a different pattern than inner line to be visually distinct
+   * @param {Object} link - Link data object
+   * @param {Object} [cached] - Optional cached state from getCachedState()
+   * @returns {Array|null} Dash array [on, off] or null for solid line
+   */
+  getLinkOutlineDashArray(link, cached) {
+    const { colorManager: cm, dashingEnabled } = cached || this.getCachedState();
+
+    // Only active change edges get dashed pattern when dashing is enabled
+    if (dashingEnabled && cm?.isActiveChangeEdge?.(link)) {
+      // Use a proportional dash pattern based on path length
+      return this._calculateDashArray(link.path);
+    }
+
+    return null; // Solid line for everything else
+  }
+
+  /**
+   * Calculate dash array based on path length
+   * @private
+   * @param {Array} path - Array of [x, y, z] coordinates
+   * @returns {Array} Dash array [on, off]
+   */
+  _calculateDashArray(path) {
+    // Calculate path length for proportional dashing
+    const pathLength = this._calculatePathLength(path);
+
+    // Scale dash pattern based on path length
+    // Aim for ~5-8 dashes per edge, with min/max bounds
+    const targetDashes = 6;
+    const dashUnit = Math.max(4, Math.min(20, pathLength / (targetDashes * 1.5)));
+    const gapUnit = dashUnit * 0.5;
+
+    return [dashUnit, gapUnit];
+  }
+
+  /**
+   * Calculate the total length of a path
+   * @private
+   * @param {Array} path - Array of [x, y] coordinates
+   * @returns {number} Total path length in pixels
+   */
+  _calculatePathLength(path) {
+    if (!path || path.length < 2) return 0;
+
+    let length = 0;
+    for (let i = 1; i < path.length; i++) {
+      const dx = path[i][0] - path[i - 1][0];
+      const dy = path[i][1] - path[i - 1][1];
+      length += Math.sqrt(dx * dx + dy * dy);
+    }
+    return length;
   }
 
   /**
    * Get link outline color for silhouette/highlighting effect
    * Only visible when there are changes to highlight
+   * Includes pulse animation for breathing effect
    * @param {Object} link - Link data object
    * @param {Object} [cached] - Optional cached state from getCachedState()
    * @returns {Array} RGBA color array for Deck.gl
    */
   getLinkOutlineColor(link, cached) {
-    const { colorManager: cm } = cached || this.getCachedState();
+    const { colorManager: cm, pulseOpacity } = cached || this.getCachedState();
 
     if (!cm) {
       return [0, 0, 0, 0]; // Transparent if no ColorManager
@@ -157,21 +223,23 @@ export class LayerStyles {
     // Convert the highlight color to RGB
     const rgb = colorToRgb(cm.getBranchColorWithHighlights(link));
 
-    // Glow effect: 50% opacity for visible but non-competing outline
+    // Apply pulse animation to opacity
+    // Base opacity is 50% of link opacity, then modulated by pulse
     const baseOpacity = link.opacity !== undefined ? link.opacity : 1;
-    const glowOpacity = Math.round(baseOpacity * 128); // 50% of base opacity
+    const glowOpacity = Math.round(baseOpacity * 128 * pulseOpacity); // 50% base * pulse
 
     return [rgb[0], rgb[1], rgb[2], glowOpacity];
   }
 
   /**
    * Get link outline width for silhouette effect
+   * Includes pulse animation for breathing effect on width
    * @param {Object} link - Link data object
    * @param {Object} [cached] - Optional cached state from getCachedState()
    * @returns {number} Outline width in pixels
    */
   getLinkOutlineWidth(link, cached) {
-    const { colorManager: cm } = cached || this.getCachedState();
+    const { colorManager: cm, pulseOpacity } = cached || this.getCachedState();
 
     if (!cm) {
       return 0; // No outline if no ColorManager
@@ -185,7 +253,15 @@ export class LayerStyles {
     // Make outline significantly wider than the link to create a "halo"
     const baseWidth = this._getBaseStrokeWidth();
     const highlightedWidth = baseWidth * 1.5; // Based on the highlighted value in getLinkWidth
-    return highlightedWidth + 6; // Add 6px for a 3px glow on each side
+
+    // Apply pulse to width: oscillate between +4px and +8px glow
+    // pulseOpacity ranges from 0.4 to 1.0, map to 4-8px extra width
+    const minGlow = 4;
+    const maxGlow = 8;
+    const glowRange = maxGlow - minGlow;
+    const pulseGlow = minGlow + (glowRange * pulseOpacity);
+
+    return highlightedWidth + pulseGlow;
   }
 
   /**

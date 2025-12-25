@@ -18,10 +18,6 @@ export const createUiSlice = (set, get) => ({
   dimmingOpacity: 0.3,
   cameraMode: 'orthographic',
   styleConfig: { contourWidthOffset: 2, labelOffsets: { DEFAULT: 20, WITH_EXTENSIONS: 40, EXTENSION: 5 } },
-  trailsEnabled: false,
-  trailLength: 12,
-  trailOpacity: 0.5,
-  trailThickness: 0.5,
   barOptionValue: 'rfd',
   layoutAngleDegrees: 360,
   layoutRotationDegrees: 0,
@@ -122,14 +118,6 @@ export const createUiSlice = (set, get) => ({
     highlightVersion: (state.highlightVersion ?? 0) + 1
   })),
 
-
-  /**
-   * Motion trails toggles and parameters
-   */
-  setTrailsEnabled: (enabled) => set({ trailsEnabled: !!enabled }),
-  setTrailLength: (length) => set({ trailLength: Math.max(2, Math.min(50, Math.round(Number(length) || 12))) }),
-  setTrailOpacity: (opacity) => set({ trailOpacity: Math.max(0, Math.min(1, Number(opacity) || 0.5)) }),
-  setTrailThickness: (thickness) => set({ trailThickness: Math.max(0.1, Math.min(5, Number(thickness) || 0.5)) }),
 
   /**
    * Sets the angular extent (in degrees) of the radial tree layout (default 360).

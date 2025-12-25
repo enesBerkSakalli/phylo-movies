@@ -136,7 +136,7 @@ export class WebGLTreeAnimationController {
 
     // Check if transformation has changed
     const transformationChanged = this._scalingState.branchTransformation !== undefined &&
-                                 this._scalingState.branchTransformation !== branchTransformation;
+      this._scalingState.branchTransformation !== branchTransformation;
 
     // Recalculate uniform scaling if transformation changed
     if (transformationChanged && this.uniformScalingEnabled) {
@@ -157,9 +157,16 @@ export class WebGLTreeAnimationController {
     const cachedList = this._transformedCache.get(branchTransformation);
     if (cachedList && typeof options.treeIndex === 'number') {
       transformedTreeData = cachedList[options.treeIndex];
-    } else {
+    } else if (treeData) {
       transformedTreeData = transformBranchLengths(treeData, branchTransformation);
     }
+
+    // Guard against undefined tree data
+    if (!transformedTreeData) {
+      console.warn('calculateLayout: No tree data available');
+      return null;
+    }
+
     const layoutCalculator = new TidyTreeLayout(transformedTreeData);
     layoutCalculator.setDimension(width, height);
     layoutCalculator.setMargin(40);

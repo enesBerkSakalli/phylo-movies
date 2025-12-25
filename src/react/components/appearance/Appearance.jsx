@@ -13,13 +13,21 @@ export function Appearance() {
   const linkConnectionOpacity = useAppStore((s) => s.linkConnectionOpacity);
   const setLinkConnectionOpacity = useAppStore((s) => s.setLinkConnectionOpacity);
 
+  // Pulse animation state
+  const pulseEnabled = useAppStore((s) => s.highlightPulseEnabled);
+  const setPulseEnabled = useAppStore((s) => s.setHighlightPulseEnabled);
+
+  // Dashing state
+  const dashingEnabled = useAppStore((s) => s.activeEdgeDashingEnabled);
+  const setDashingEnabled = useAppStore((s) => s.setActiveEdgeDashingEnabled);
+
   const toggleDimming = async (value) => {
     try {
       setDimmingEnabled(!!value);
       for (const controller of treeControllers) {
         await controller?.renderAllElements?.();
       }
-    } catch {}
+    } catch { }
   };
 
   const handleDimmingOpacityChange = async (value) => {
@@ -29,7 +37,7 @@ export function Appearance() {
       for (const controller of treeControllers) {
         await controller?.renderAllElements?.();
       }
-    } catch {}
+    } catch { }
   };
 
   const handleLinkOpacityChange = async (value) => {
@@ -39,7 +47,15 @@ export function Appearance() {
       for (const controller of treeControllers) {
         await controller?.renderAllElements?.();
       }
-    } catch {}
+    } catch { }
+  };
+
+  const togglePulse = (value) => {
+    setPulseEnabled(!!value);
+  };
+
+  const toggleDashing = (value) => {
+    setDashingEnabled(!!value);
   };
 
   return (
@@ -96,6 +112,58 @@ export function Appearance() {
           )}
         </div>
       </SidebarGroup>
+
+      <SidebarGroup>
+        <SidebarGroupLabel>Active Edge Effects</SidebarGroupLabel>
+        <div className="flex flex-col gap-4">
+          <label
+            className="flex items-center gap-4"
+            style={{ cursor: 'pointer' }}
+            onClick={(e) => {
+              if (e.target?.closest?.('[data-slot="switch"]')) return;
+              togglePulse(!pulseEnabled);
+            }}
+          >
+            <Switch
+              id="pulse-animation-toggle"
+              aria-labelledby="pulse-animation-label"
+              aria-describedby="pulse-animation-desc"
+              checked={!!pulseEnabled}
+              onCheckedChange={togglePulse}
+            />
+            <div style={{ flex: 1 }}>
+              <div id="pulse-animation-label" style={{ fontWeight: 500, color: 'var(--foreground)' }}>
+                Pulse Animation
+              </div>
+              <div id="pulse-animation-desc" className="text-sm text-muted-foreground">Breathing effect on highlighted edges</div>
+            </div>
+          </label>
+
+          <label
+            className="flex items-center gap-4"
+            style={{ cursor: 'pointer' }}
+            onClick={(e) => {
+              if (e.target?.closest?.('[data-slot="switch"]')) return;
+              toggleDashing(!dashingEnabled);
+            }}
+          >
+            <Switch
+              id="dashing-toggle"
+              aria-labelledby="dashing-label"
+              aria-describedby="dashing-desc"
+              checked={dashingEnabled !== false}
+              onCheckedChange={toggleDashing}
+            />
+            <div style={{ flex: 1 }}>
+              <div id="dashing-label" style={{ fontWeight: 500, color: 'var(--foreground)' }}>
+                Dashed Lines
+              </div>
+              <div id="dashing-desc" className="text-sm text-muted-foreground">Show active edges with dashed pattern</div>
+            </div>
+          </label>
+        </div>
+      </SidebarGroup>
+
       <SidebarGroup>
         <SidebarGroupLabel>Connections</SidebarGroupLabel>
         <div className="flex flex-col gap-4">

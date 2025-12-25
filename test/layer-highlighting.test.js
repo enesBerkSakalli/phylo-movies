@@ -12,7 +12,7 @@ const Module = require('module');
 
 // ---- Minimal deck.gl mocks ----
 const mockDeckGLCore = {
-  Deck: class { constructor(props) { this.props = props || {}; } setProps(p) { this.props = { ...this.props, ...p }; } finalize() {} },
+  Deck: class { constructor(props) { this.props = props || {}; } setProps(p) { this.props = { ...this.props, ...p }; } finalize() { } },
   OrthographicView: class { constructor(opts) { this.opts = opts; } },
   OrbitView: class { constructor(opts) { this.opts = opts; } },
   LinearInterpolator: class { constructor(opts) { this.opts = opts; } },
@@ -31,9 +31,16 @@ class MockLayer {
 }
 
 const mockDeckGLLayers = {
-  PathLayer: class PathLayer extends MockLayer {},
-  ScatterplotLayer: class ScatterplotLayer extends MockLayer {},
-  TextLayer: class TextLayer extends MockLayer {}
+  PathLayer: class PathLayer extends MockLayer { },
+  ScatterplotLayer: class ScatterplotLayer extends MockLayer { },
+  TextLayer: class TextLayer extends MockLayer { }
+};
+
+// Mock deck.gl extensions
+const mockDeckGLExtensions = {
+  PathStyleExtension: class PathStyleExtension {
+    constructor(opts) { this.opts = opts; }
+  }
 };
 
 // Mock zustand store
@@ -46,7 +53,9 @@ let mockStoreState = {
   dimmingEnabled: false,
   dimmingOpacity: 0.3,
   linkConnectionOpacity: 0.6,
-  trailThickness: 0.5,
+  highlightPulseEnabled: false,
+  activeEdgeDashingEnabled: false,
+  getPulseOpacity: () => 1.0,
   getColorManager: () => ({
     hasActiveChangeEdges: () => false,
     marked: [],
@@ -60,7 +69,7 @@ let mockStoreState = {
 
 const mockUseAppStore = {
   getState: () => mockStoreState,
-  subscribe: () => () => {}
+  subscribe: () => () => { }
 };
 
 // Patch module loader
@@ -68,6 +77,7 @@ const originalLoad = Module._load;
 Module._load = function (request, parent, isMain) {
   if (request === '@deck.gl/core') return mockDeckGLCore;
   if (request === '@deck.gl/layers') return mockDeckGLLayers;
+  if (request === '@deck.gl/extensions') return mockDeckGLExtensions;
   if (request.includes('store.js') || request.includes('store')) return { useAppStore: mockUseAppStore };
   if (request.includes('colorUtils')) return { colorToRgb: (hex) => [0, 0, 0] };
   if (request.includes('mathUtils')) return { easeInOutCubic: (t) => t };
@@ -97,7 +107,9 @@ describe('Layer Highlighting Configuration', () => {
       dimmingEnabled: false,
       dimmingOpacity: 0.3,
       linkConnectionOpacity: 0.6,
-      trailThickness: 0.5,
+      highlightPulseEnabled: false,
+      activeEdgeDashingEnabled: false,
+      getPulseOpacity: () => 1.0,
       getColorManager: () => ({
         hasActiveChangeEdges: () => false,
         marked: [],

@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronsLeft, ChevronLeft, Play, Pause, ChevronRight, ChevronsRight, GitCompare, Link2, Link2Off } from 'lucide-react';
 import { useAppStore } from '../../../js/core/store.js';
@@ -10,49 +10,58 @@ export function TransportControls({
   const playing = useAppStore((s) => s.playing);
   const currentTreeIndex = useAppStore((s) => s.currentTreeIndex);
   const treeListLen = useAppStore((s) => s.treeList?.length || 0);
-  const goToPosition = useAppStore((s) => s.goToPosition);
   const comparisonMode = useAppStore((state) => state.comparisonMode);
   const toggleComparisonMode = useAppStore((state) => state.toggleComparisonMode);
   const viewsConnected = useAppStore((s) => s.viewsConnected);
   const setViewsConnected = useAppStore((s) => s.setViewsConnected);
   const startAnimationPlayback = useAppStore((s) => s.startAnimationPlayback);
   const stopAnimationPlayback = useAppStore((s) => s.stopAnimationPlayback);
+  const goToNextAnchor = useAppStore((s) => s.goToNextAnchor);
+  const goToPreviousAnchor = useAppStore((s) => s.goToPreviousAnchor);
+  const transitionResolver = useAppStore((s) => s.transitionResolver);
 
-  const canStepBackward = currentTreeIndex > 0;
-  const canStepForward = currentTreeIndex < treeListLen - 1;
+  // Get anchor indices for disabled state calculation
+  const anchorIndices = useMemo(() => {
+    return transitionResolver?.fullTreeIndices || [];
+  }, [transitionResolver]);
+
+  // Check if we can navigate to previous/next anchor
+  const canGoToPreviousAnchor = useMemo(() => {
+    return anchorIndices.some(idx => idx < currentTreeIndex);
+  }, [anchorIndices, currentTreeIndex]);
+
+  const canGoToNextAnchor = useMemo(() => {
+    return anchorIndices.some(idx => idx > currentTreeIndex);
+  }, [anchorIndices, currentTreeIndex]);
 
   const onPlayClick = useCallback(async () => {
     try {
       if (playing) stopAnimationPlayback();
       else await startAnimationPlayback();
-    } catch {}
+    } catch { }
   }, [playing, startAnimationPlayback, stopAnimationPlayback]);
 
-  const onBackwardStep = useCallback(() => {
-    if (currentTreeIndex > 0) {
-      stopAnimationPlayback();
-      goToPosition(currentTreeIndex - 1);
-    }
-  }, [currentTreeIndex, goToPosition, stopAnimationPlayback]);
+  const onPreviousAnchor = useCallback(() => {
+    stopAnimationPlayback();
+    goToPreviousAnchor();
+  }, [goToPreviousAnchor, stopAnimationPlayback]);
 
-  const onForwardStep = useCallback(() => {
-    if (currentTreeIndex < treeListLen - 1) {
-      stopAnimationPlayback();
-      goToPosition(currentTreeIndex + 1);
-    }
-  }, [currentTreeIndex, treeListLen, goToPosition, stopAnimationPlayback]);
+  const onNextAnchor = useCallback(() => {
+    stopAnimationPlayback();
+    goToNextAnchor();
+  }, [goToNextAnchor, stopAnimationPlayback]);
 
   return (
     <>
       <Button
         className="transport-button"
-        id="backwardStepButton"
+        id="backwardAnchorButton"
         variant="ghost"
         size="icon"
-        title="Go to previous tree"
-        aria-label="Previous tree"
-        disabled={!canStepBackward}
-        onClick={onBackwardStep}
+        title="Go to previous anchor tree"
+        aria-label="Previous anchor tree"
+        disabled={!canGoToPreviousAnchor}
+        onClick={onPreviousAnchor}
       >
         <ChevronsLeft className="size-5" />
       </Button>
@@ -96,13 +105,13 @@ export function TransportControls({
 
       <Button
         className="transport-button"
-        id="forwardStepButton"
+        id="forwardAnchorButton"
         variant="ghost"
         size="icon"
-        title="Go to next tree"
-        aria-label="Next tree"
-        disabled={!canStepForward}
-        onClick={onForwardStep}
+        title="Go to next anchor tree"
+        aria-label="Next anchor tree"
+        disabled={!canGoToNextAnchor}
+        onClick={onNextAnchor}
       >
         <ChevronsRight className="size-5" />
       </Button>
@@ -114,26 +123,26 @@ export function TransportControls({
         size="icon"
         title="Toggle comparison mode"
         aria-label="Toggle comparison mode"
-      onClick={toggleComparisonMode}
-      data-state={comparisonMode ? 'active' : 'inactive'}
-    >
-      <GitCompare className="size-5" />
-    </Button>
-
-    {comparisonMode && (
-      <Button
-        className="transport-button"
-        id="link-views-button"
-        variant="ghost"
-        size="icon"
-        title="Toggle view linking (draw connectors between trees)"
-        aria-label="Toggle view linking"
-        onClick={() => setViewsConnected(!viewsConnected)}
-        data-state={viewsConnected ? 'active' : 'inactive'}
+        onClick={toggleComparisonMode}
+        data-state={comparisonMode ? 'active' : 'inactive'}
       >
-        {viewsConnected ? <Link2 className="size-5" /> : <Link2Off className="size-5" />}
+        <GitCompare className="size-5" />
       </Button>
-    )}
-  </>
+
+      {comparisonMode && (
+        <Button
+          className="transport-button"
+          id="link-views-button"
+          variant="ghost"
+          size="icon"
+          title="Toggle view linking (draw connectors between trees)"
+          aria-label="Toggle view linking"
+          onClick={() => setViewsConnected(!viewsConnected)}
+          data-state={viewsConnected ? 'active' : 'inactive'}
+        >
+          {viewsConnected ? <Link2 className="size-5" /> : <Link2Off className="size-5" />}
+        </Button>
+      )}
+    </>
   );
 }
