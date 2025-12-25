@@ -1,5 +1,6 @@
 import { colorToRgb } from '../../services/ui/colorUtils.js';
 import { Bezier } from 'bezier-js';
+import { getBaseNodeColor } from '../systems/color/index.js';
 
 const BUNDLING_STRENGTH = 0.6;
 
@@ -238,9 +239,11 @@ export class ComparisonModeRenderer {
    *
    * Uses the same subset logic as TreeColorManager._isComponentMarked:
    * A leaf is part of a moving subtree if its split_indices is a subset of
-   * any entry in colorManager.marked (the red-highlighted subtrees).
+   * any entry in the actual highlight data (the jumping/moving subtrees).
    *
-   * Note: We use `marked` (red) not `currentActiveChangeEdges` (blue) because:
+   * Note: We use the actual highlight data (not colorManager.marked) because:
+   * - Connectors should remain visible even when red coloring is disabled
+   * - The underlying data determines which leaves to connect, not the visual state
    * - marked = specific jumping/moving subtrees
    * - currentActiveChangeEdges = entire subtree being animated (includes non-movers)
    *
@@ -249,11 +252,22 @@ export class ComparisonModeRenderer {
    */
   _buildConnectors(viewLinkMapping, leftPositions, rightPositions, leftCenter = [0, 0], rightCenter = [0, 0]) {
     const connectors = [];
-    const colorManager = this.controller._getState()?.colorManager;
+    const state = this.controller._getState();
+    const colorManager = state?.colorManager;
 
-    // Get marked components from ColorManager (the red-highlighted moving subtrees)
-    const markedComponents = colorManager?.marked;
-    if (!markedComponents || markedComponents.length === 0) {
+    // Get actual highlight data from the store (independent of markedComponentsEnabled toggle)
+    // This ensures connectors remain visible even when red coloring is disabled
+    const getActualHighlightData = state?.getActualHighlightData;
+    const actualHighlightData = typeof getActualHighlightData === 'function' ? getActualHighlightData() : [];
+
+    // Convert to Sets for subset checking (same format as colorManager.marked)
+    const markedComponents = actualHighlightData.map(component => {
+      if (component instanceof Set) return component;
+      if (Array.isArray(component)) return new Set(component);
+      return new Set([component]);
+    }).filter(set => set.size > 0);
+
+    if (markedComponents.length === 0) {
       return connectors;
     }
 
@@ -297,10 +311,21 @@ export class ComparisonModeRenderer {
       const srcPos = [leftInfo.position[0], leftInfo.position[1], 0];
       const dstPos = [rightMatch.info.position[0], rightMatch.info.position[1], 0];
 
-      // Get color from ColorManager
-      const nodeForColor = leftInfo.node?.originalNode || leftInfo.node || leftInfo;
-      const srcColorHex = colorManager?.getNodeColor?.(nodeForColor);
-      const [r, g, b] = srcColorHex ? colorToRgb(srcColorHex) : [220, 40, 40];
+      // Get connector color based on markedComponentsEnabled state:
+      // - When enabled: use red (marked color) to match the highlighted subtrees
+      // - When disabled: use taxa/grouping color
+      const markedComponentsEnabled = state?.markedComponentsEnabled ?? true;
+      let srcColorHex;
+      if (markedComponentsEnabled) {
+        // Use marked color (red) when highlighting is enabled
+        srcColorHex = colorManager?.getNodeColor?.(leftInfo.node?.originalNode || leftInfo.node || leftInfo);
+      } else {
+        // Use taxa/grouping color when highlighting is disabled
+        const nodeForColor = leftInfo.node?.originalNode || leftInfo.node || leftInfo;
+        const monophyleticEnabled = colorManager?.isMonophyleticColoringEnabled?.() ?? true;
+        srcColorHex = getBaseNodeColor(nodeForColor, monophyleticEnabled);
+      }
+      const [r, g, b] = srcColorHex ? colorToRgb(srcColorHex) : [200, 80, 80];
 
       connections.push({
         id: `connector-${key}-${rightMatch.key}`,
