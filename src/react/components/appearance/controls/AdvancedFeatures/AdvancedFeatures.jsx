@@ -1,6 +1,7 @@
 import { useAppStore } from '../../../../../js/core/store.js';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export function AdvancedFeatures() {
   const cameraMode = useAppStore((s) => s.cameraMode);
@@ -14,6 +15,10 @@ export function AdvancedFeatures() {
   // Dashing state
   const activeEdgeDashingEnabled = useAppStore((s) => s.activeEdgeDashingEnabled);
   const setActiveEdgeDashingEnabled = useAppStore((s) => s.setActiveEdgeDashingEnabled);
+
+  // Marked subtree mode
+  const markedSubtreeMode = useAppStore((s) => s.markedSubtreeMode);
+  const setMarkedSubtreeMode = useAppStore((s) => s.setMarkedSubtreeMode);
 
   return (
     <div>
@@ -59,6 +64,25 @@ export function AdvancedFeatures() {
               <div className="text-xs text-muted-foreground">Show active edges as dashed</div>
             </div>
           </label>
+        </div>
+
+        {/* Marked Subtree Mode */}
+        <div className="flex flex-col gap-2">
+          <div className="text-sm font-medium text-muted-foreground">Marked Subtrees</div>
+          <Select value={markedSubtreeMode || 'all'} onValueChange={setMarkedSubtreeMode}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select mode" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All subtrees for edge</SelectItem>
+              <SelectItem value="current">Current subtree only</SelectItem>
+            </SelectContent>
+          </Select>
+          <div className="text-xs text-muted-foreground">
+            {markedSubtreeMode === 'current'
+              ? 'Highlight only the currently animating subtree'
+              : 'Highlight all jumping subtrees for the active edge'}
+          </div>
         </div>
 
         {/* Camera Mode */}
