@@ -12,7 +12,6 @@ import {
   createExtensionsLayer,
   createNodesLayer,
   createLabelsLayer,
-  createFlowTrailsLayer,
   createConnectorsLayer
 } from './layerFactories/index.js';
 
@@ -28,7 +27,7 @@ export class LayerManager {
    * @returns {Array} Array of deck.gl layers
    */
   createTreeLayers(data) {
-    const { nodes, links, labels, extensions = [], trails = [], connectors = [] } = data;
+    const { nodes, links, labels, extensions = [], connectors = [] } = data;
     const state = useAppStore.getState();
 
     // Clear render cache before creating layers (ensures fresh state snapshot)
@@ -42,7 +41,6 @@ export class LayerManager {
       createExtensionsLayer(extensions, state, this.layerStyles),
       createConnectorsLayer(connectors, state),
       createNodesLayer(nodes, state, this.layerStyles),
-      createFlowTrailsLayer(trails, state, this.layerStyles),
       createLabelsLayer(labels, state, this.layerStyles)
     ].filter(Boolean); // Remove any null layers
 

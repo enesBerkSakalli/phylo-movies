@@ -30,6 +30,11 @@ const flattenHighlightEntries = (entries) => {
   return flattened;
 };
 
+// Pulse animation constants
+const PULSE_DURATION_MS = 1500; // Full pulse cycle duration
+const PULSE_MIN_OPACITY = 0.4; // Minimum opacity during pulse (0-1)
+const PULSE_MAX_OPACITY = 1.0; // Maximum opacity during pulse (0-1)
+
 export const createHighlightSlice = (set, get) => ({
   monophyleticColoringEnabled: true,
   activeChangeEdgesEnabled: true, // Toggle for active change edges highlighting
@@ -42,6 +47,14 @@ export const createHighlightSlice = (set, get) => ({
   // Color update tracking for deck.gl updateTriggers
   taxaColorVersion: 0, // Increment when TREE_COLOR_CATEGORIES changes
   highlightVersion: 0, // Increment when highlight state changes (activeChangeEdge, marked, dimming)
+
+  // Pulse animation state
+  highlightPulseEnabled: true, // User preference to enable/disable pulse animation
+  highlightPulsePhase: 0, // Current pulse phase (0-1), used for opacity calculation
+  _pulseAnimationId: null, // Internal: animation frame ID
+
+  // Dashing state for active change edges
+  activeEdgeDashingEnabled: true, // User preference to enable/disable dashed lines on active edges
 
   /**
    * Gets the current ColorManager instance
@@ -99,6 +112,17 @@ export const createHighlightSlice = (set, get) => ({
     colorManager.updateActiveChangeEdge(normalizedEdge); // Update current active change edges
     // Increment version to trigger deck.gl updateTriggers
     set((state) => ({ highlightVersion: state.highlightVersion + 1 }));
+
+    // Start or stop pulse animation based on whether there are highlights
+    const { highlightPulseEnabled, startPulseAnimation, stopPulseAnimation } = get();
+    if (highlightPulseEnabled) {
+      const hasHighlights = normalizedEdge.length > 0 || (colorManager?.marked?.length > 0);
+      if (hasHighlights) {
+        startPulseAnimation();
+      } else {
+        stopPulseAnimation();
+      }
+    }
   },
 
   /**
@@ -261,13 +285,20 @@ export const createHighlightSlice = (set, get) => ({
    * @param {boolean} enabled - Whether monophyletic coloring is enabled
    */
   setMonophyleticColoring: (enabled) => {
-    set({ monophyleticColoringEnabled: enabled });
+    // Update state and increment taxaColorVersion to trigger deck.gl updateTriggers
+    set((state) => ({
+      monophyleticColoringEnabled: enabled,
+      taxaColorVersion: state.taxaColorVersion + 1
+    }));
 
     // Automatically update the ColorManager to keep it in sync
-    const { colorManager } = get();
+    const { colorManager, treeControllers } = get();
     if (colorManager) {
       colorManager.setMonophyleticColoring(enabled);
     }
+
+    // Force re-render of tree controllers to apply the color change
+    renderTreeControllers(treeControllers);
   },
 
   /**
@@ -339,5 +370,116 @@ export const createHighlightSlice = (set, get) => ({
     }
 
     renderTreeControllers(treeControllers);
+  },
+
+  // ===========================
+  // PULSE ANIMATION
+  // ===========================
+
+  /**
+   * Enable or disable pulse animation for highlighted edges
+   * @param {boolean} enabled - Whether pulse animation is enabled
+   */
+  setHighlightPulseEnabled: (enabled) => {
+    set((state) => ({
+      highlightPulseEnabled: enabled,
+      highlightVersion: state.highlightVersion + 1 // Trigger re-render
+    }));
+    if (enabled) {
+      get().startPulseAnimation();
+    } else {
+      get().stopPulseAnimation();
+      // Force re-render when disabling to reset pulse opacity
+      const { treeControllers } = get();
+      renderTreeControllers(treeControllers);
+    }
+  },
+
+  /**
+   * Enable or disable dashed lines for active change edges
+   * @param {boolean} enabled - Whether dashing is enabled
+   */
+  setActiveEdgeDashingEnabled: (enabled) => {
+    set((state) => ({
+      activeEdgeDashingEnabled: enabled,
+      highlightVersion: state.highlightVersion + 1 // Trigger re-render
+    }));
+    const { treeControllers } = get();
+    renderTreeControllers(treeControllers);
+  },
+
+  /**
+   * Get the current pulse opacity multiplier (0-1)
+   * Uses a smooth sine wave for breathing effect
+   * @returns {number} Opacity multiplier between PULSE_MIN_OPACITY and PULSE_MAX_OPACITY
+   */
+  getPulseOpacity: () => {
+    const { highlightPulseEnabled, highlightPulsePhase } = get();
+    if (!highlightPulseEnabled) return 1.0;
+
+    // Sine wave oscillation between min and max opacity
+    const range = PULSE_MAX_OPACITY - PULSE_MIN_OPACITY;
+    const sineValue = Math.sin(highlightPulsePhase * Math.PI * 2);
+    return PULSE_MIN_OPACITY + (range * (0.5 + 0.5 * sineValue));
+  },
+
+  /**
+   * Start the pulse animation loop
+   * Only runs when there are active highlights
+   */
+  startPulseAnimation: () => {
+    const { _pulseAnimationId, highlightPulseEnabled, colorManager } = get();
+
+    // Don't start if already running or disabled
+    if (_pulseAnimationId || !highlightPulseEnabled) return;
+
+    // Don't start if no active highlights
+    const hasHighlights = colorManager?.hasActiveChangeEdges?.() ||
+      (colorManager?.marked?.length > 0);
+    if (!hasHighlights) return;
+
+    let startTime = performance.now();
+
+    const animate = (timestamp) => {
+      const { highlightPulseEnabled: stillEnabled, colorManager: cm, treeControllers } = get();
+
+      // Check if we should continue animating
+      const stillHasHighlights = cm?.hasActiveChangeEdges?.() ||
+        (cm?.marked?.length > 0);
+
+      if (!stillEnabled || !stillHasHighlights) {
+        set({ _pulseAnimationId: null, highlightPulsePhase: 0 });
+        return;
+      }
+
+      // Calculate phase (0-1) based on elapsed time
+      const elapsed = timestamp - startTime;
+      const phase = (elapsed % PULSE_DURATION_MS) / PULSE_DURATION_MS;
+
+      set({ highlightPulsePhase: phase });
+
+      // Trigger layer update by incrementing highlight version
+      // This is throttled to ~30fps to avoid excessive re-renders
+      if (elapsed % 33 < 16) { // Roughly every 33ms (30fps)
+        renderTreeControllers(treeControllers);
+      }
+
+      const frameId = requestAnimationFrame(animate);
+      set({ _pulseAnimationId: frameId });
+    };
+
+    const frameId = requestAnimationFrame(animate);
+    set({ _pulseAnimationId: frameId });
+  },
+
+  /**
+   * Stop the pulse animation loop
+   */
+  stopPulseAnimation: () => {
+    const { _pulseAnimationId } = get();
+    if (_pulseAnimationId) {
+      cancelAnimationFrame(_pulseAnimationId);
+      set({ _pulseAnimationId: null, highlightPulsePhase: 0 });
+    }
   },
 });

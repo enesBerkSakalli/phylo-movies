@@ -88,7 +88,6 @@ export class ComparisonModeRenderer {
       links: [...(leftData.links || []), ...(rightData.links || [])],
       extensions: [...(leftData.extensions || []), ...(rightData.extensions || [])],
       labels: [...(leftData.labels || []), ...(rightData.labels || [])],
-      trails: leftData.trails || [],
       connectors
     };
   }
@@ -395,19 +394,16 @@ export class ComparisonModeRenderer {
 
     this._applyOffset(rightLayerData, rightOffset, viewOffset.y);
 
-    leftLayerData.trails = this.controller._buildFlowTrails(leftLayerData.nodes, leftLayerData.labels);
-    rightLayerData.trails = [];
-
     // Build connectors between trees if views are linked
     const { viewsConnected } = this.controller._getState();
     const connectors = viewsConnected
       ? this._buildConnectors(
-          null, // viewLinkMapping no longer used - kept for future movement direction visualization
-          this._buildPositionMap(leftLayerData.nodes, leftLayerData.labels),
-          this._buildPositionMap(rightLayerData.nodes, rightLayerData.labels),
-          [0, 0], // Left tree center
-          [rightOffset, viewOffset.y] // Right tree center
-        )
+        null, // viewLinkMapping no longer used - kept for future movement direction visualization
+        this._buildPositionMap(leftLayerData.nodes, leftLayerData.labels),
+        this._buildPositionMap(rightLayerData.nodes, rightLayerData.labels),
+        [0, 0], // Left tree center
+        [rightOffset, viewOffset.y] // Right tree center
+      )
       : [];
 
     const combinedData = this._combineLayerData(leftLayerData, rightLayerData, connectors);
@@ -473,12 +469,12 @@ export class ComparisonModeRenderer {
     const { viewsConnected } = this.controller._getState();
     const connectors = viewsConnected
       ? this._buildConnectors(
-          null, // viewLinkMapping no longer used - kept for future movement direction visualization
-          this._buildPositionMap(interpolatedData.nodes, interpolatedData.labels),
-          this._buildPositionMap(rightLayerData.nodes, rightLayerData.labels),
-          [0, 0], // Left tree center
-          [rightOffset, viewOffset.y] // Right tree center
-        )
+        null, // viewLinkMapping no longer used - kept for future movement direction visualization
+        this._buildPositionMap(interpolatedData.nodes, interpolatedData.labels),
+        this._buildPositionMap(rightLayerData.nodes, rightLayerData.labels),
+        [0, 0], // Left tree center
+        [rightOffset, viewOffset.y] // Right tree center
+      )
       : [];
 
     const combinedData = {
@@ -486,7 +482,6 @@ export class ComparisonModeRenderer {
       links: [...(interpolatedData.links || []), ...(rightLayerData.links || [])],
       extensions: [...(interpolatedData.extensions || []), ...(rightLayerData.extensions || [])],
       labels: [...(interpolatedData.labels || []), ...(rightLayerData.labels || [])],
-      trails: interpolatedData.trails || [],
       connectors
     };
 
