@@ -2,8 +2,6 @@ import { colorToRgb } from '../../services/ui/colorUtils.js';
 import { Bezier } from 'bezier-js';
 import { getBaseNodeColor } from '../systems/color/index.js';
 
-const BUNDLING_STRENGTH = 0.6;
-
 /**
  * ComparisonModeRenderer
  *
@@ -133,30 +131,6 @@ export class ComparisonModeRenderer {
   }
 
   /**
-   * Build Bezier path between two points.
-   * @private
-   */
-  _buildBezierPath(from, to, samples = 24) {
-    if (!from || !to) return [];
-
-    const p0 = from;
-    const p3 = to;
-    const midX = (p0[0] + p3[0]) / 2;
-    const offset = Math.max(Math.abs(p3[0] - p0[0]) * 0.15, 30);
-    const p1 = [midX - offset, p0[1]];
-    const p2 = [midX + offset, p3[1]];
-
-    // Create cubic Bezier curve using bezier-js
-    const curve = new Bezier(p0[0], p0[1], p1[0], p1[1], p2[0], p2[1], p3[0], p3[1]);
-
-    // Get lookup table of points along the curve
-    const lut = curve.getLUT(samples);
-
-    // Convert {x, y} objects to [x, y, 0] arrays for deck.gl
-    return lut.map(p => [p.x, p.y, 0]);
-  }
-
-  /**
    * Calculate a "radial bundle point" that pulls the bundle OUTWARD from the tree center.
    * This prevents lines from crossing through the tree structure.
    */
@@ -235,41 +209,69 @@ export class ComparisonModeRenderer {
 
   /**
    * Build connectors with hierarchical edge bundling.
-   * Connects leaves whose split_indices is a subset of any marked component.
    *
-   * Uses the same subset logic as TreeColorManager._isComponentMarked:
-   * A leaf is part of a moving subtree if its split_indices is a subset of
-   * any entry in the actual highlight data (the jumping/moving subtrees).
+   * Connects leaves that are part of any jumping subtree assigned to the current active change edge.
+   * Colors connectors based on whether the leaf is part of the currently moving subtree:
+   * - Currently moving subtree: red (marked color)
+   * - Other jumping subtrees for this edge: taxa/grouping color
    *
-   * Note: We use the actual highlight data (not colorManager.marked) because:
-   * - Connectors should remain visible even when red coloring is disabled
-   * - The underlying data determines which leaves to connect, not the visual state
-   * - marked = specific jumping/moving subtrees
-   * - currentActiveChangeEdges = entire subtree being animated (includes non-movers)
-   *
-   * TODO: viewLinkMapping.sourceToDest could be used to visualize movement direction
-   *       (e.g., arrows showing where leaves move from source to destination position).
+   * This ensures:
+   * - All jumping subtrees for the active edge get connectors
+   * - The currently animating subtree is visually distinguished by color
    */
-  _buildConnectors(viewLinkMapping, leftPositions, rightPositions, leftCenter = [0, 0], rightCenter = [0, 0]) {
+  _buildConnectors(leftPositions, rightPositions, leftCenter = [0, 0], rightCenter = [0, 0]) {
     const connectors = [];
     const state = this.controller._getState();
     const colorManager = state?.colorManager;
+    const currentTreeIndex = state?.currentTreeIndex ?? 0;
 
-    // Get actual highlight data from the store (independent of markedComponentsEnabled toggle)
-    // This ensures connectors remain visible even when red coloring is disabled
-    const getActualHighlightData = state?.getActualHighlightData;
-    const actualHighlightData = typeof getActualHighlightData === 'function' ? getActualHighlightData() : [];
+    // Get all jumping subtrees for the current active change edge
+    const movieData = state?.movieData;
+    const pairSolutions = state?.pairSolutions || {};
+    const activeChangeEdgeTracking = state?.activeChangeEdgeTracking || [];
+    const activeChangeEdge = activeChangeEdgeTracking[currentTreeIndex];
 
-    // Convert to Sets for subset checking (same format as colorManager.marked)
-    const markedComponents = actualHighlightData.map(component => {
-      if (component instanceof Set) return component;
-      if (Array.isArray(component)) return new Set(component);
-      return new Set([component]);
-    }).filter(set => set.size > 0);
-
-    if (markedComponents.length === 0) {
+    if (!Array.isArray(activeChangeEdge) || activeChangeEdge.length === 0) {
       return connectors;
     }
+
+    // Get all jumping subtrees for this active change edge
+    const pairKey = movieData?.tree_metadata?.[currentTreeIndex]?.tree_pair_key;
+    const pairEntry = pairKey ? pairSolutions[pairKey] : null;
+    const latticeSolutions = pairEntry?.jumping_subtree_solutions || {};
+    const edgeKey = `[${activeChangeEdge.join(', ')}]`;
+    const allJumpingSubtrees = latticeSolutions[edgeKey] || [];
+
+    // Flatten the jumping subtrees (they come as nested arrays)
+    const flattenedSubtrees = [];
+    const flattenEntries = (entries) => {
+      if (!Array.isArray(entries)) return;
+      entries.forEach(entry => {
+        if (Array.isArray(entry)) {
+          // Check if this is a leaf array (contains numbers) or nested array
+          if (entry.length > 0 && typeof entry[0] === 'number') {
+            flattenedSubtrees.push(entry);
+          } else {
+            flattenEntries(entry);
+          }
+        }
+      });
+    };
+    flattenEntries(allJumpingSubtrees);
+
+    if (flattenedSubtrees.length === 0) {
+      return connectors;
+    }
+
+    // Convert to Sets for fast lookup
+    const jumpingSubtreeSets = flattenedSubtrees.map(st => new Set(st));
+
+    // Get the currently moving subtree (from subtree_tracking)
+    const subtreeTracking = state?.subtreeTracking || [];
+    const currentSubtree = subtreeTracking[currentTreeIndex];
+    const currentSubtreeSet = Array.isArray(currentSubtree) && currentSubtree.length > 0
+      ? new Set(currentSubtree)
+      : null;
 
     // Index right leaves by name for fast lookup
     const rightLeavesByName = new Map();
@@ -281,10 +283,10 @@ export class ComparisonModeRenderer {
 
     // Collect connections for bundling
     const connections = [];
-    const opacity = this.controller._getState()?.linkConnectionOpacity ?? 0.6;
+    const opacity = state?.linkConnectionOpacity ?? 0.6;
+    const markedComponentsEnabled = state?.markedComponentsEnabled ?? true;
 
-    // Iterate over all left leaves and check if their split is a subset of any marked component
-    // This matches TreeColorManager._isComponentMarked subset logic
+    // Iterate over all left leaves and check if they're part of any jumping subtree
     for (const [key, leftInfo] of leftPositions) {
       if (!leftInfo?.isLeaf || !leftInfo.name) continue;
 
@@ -292,36 +294,43 @@ export class ComparisonModeRenderer {
       const splitIndices = key.split('-').map(Number).filter(n => !isNaN(n));
       if (splitIndices.length === 0) continue;
 
-      // Check if this leaf's split is a subset of ANY marked component
-      let isMarked = false;
-      for (const component of markedComponents) {
-        const markedSet = component instanceof Set ? component : new Set(component);
-        const isSubset = splitIndices.every(leaf => markedSet.has(leaf));
-        const isProperSubset = splitIndices.length <= markedSet.size && isSubset;
+      // Check if this leaf is part of any jumping subtree for this edge
+      let isInJumpingSubtree = false;
+      for (const subtreeSet of jumpingSubtreeSets) {
+        const isSubset = splitIndices.every(leaf => subtreeSet.has(leaf));
+        const isProperSubset = splitIndices.length <= subtreeSet.size && isSubset;
         if (isProperSubset) {
-          isMarked = true;
+          isInJumpingSubtree = true;
           break;
         }
       }
-      if (!isMarked) continue;
+      if (!isInJumpingSubtree) continue;
 
       const rightMatch = rightLeavesByName.get(leftInfo.name);
       if (!rightMatch) continue;
 
+      // Check if this leaf is part of the currently moving subtree
+      let isCurrentlyMoving = false;
+      if (currentSubtreeSet) {
+        const isSubset = splitIndices.every(leaf => currentSubtreeSet.has(leaf));
+        const isProperSubset = splitIndices.length <= currentSubtreeSet.size && isSubset;
+        isCurrentlyMoving = isProperSubset;
+      }
+
       const srcPos = [leftInfo.position[0], leftInfo.position[1], 0];
       const dstPos = [rightMatch.info.position[0], rightMatch.info.position[1], 0];
 
-      // Get connector color based on markedComponentsEnabled state:
-      // - When enabled: use red (marked color) to match the highlighted subtrees
-      // - When disabled: use taxa/grouping color
-      const markedComponentsEnabled = state?.markedComponentsEnabled ?? true;
+      // Determine connector color:
+      // - If leaf is in the currently moving subtree AND marking is enabled: use marked color (red)
+      // - Otherwise: use taxa/grouping color
       let srcColorHex;
-      if (markedComponentsEnabled) {
-        // Use marked color (red) when highlighting is enabled
-        srcColorHex = colorManager?.getNodeColor?.(leftInfo.node?.originalNode || leftInfo.node || leftInfo);
+      const nodeForColor = leftInfo.node?.originalNode || leftInfo.node || leftInfo;
+
+      if (isCurrentlyMoving && markedComponentsEnabled) {
+        // Use marked color (red) for currently moving subtree leaves
+        srcColorHex = colorManager?.getNodeColor?.(nodeForColor);
       } else {
-        // Use taxa/grouping color when highlighting is disabled
-        const nodeForColor = leftInfo.node?.originalNode || leftInfo.node || leftInfo;
+        // Use taxa/grouping color for other jumping subtree leaves
         const monophyleticEnabled = colorManager?.isMonophyleticColoringEnabled?.() ?? true;
         srcColorHex = getBaseNodeColor(nodeForColor, monophyleticEnabled);
       }
@@ -331,7 +340,8 @@ export class ComparisonModeRenderer {
         id: `connector-${key}-${rightMatch.key}`,
         source: srcPos,
         target: dstPos,
-        color: [r, g, b, Math.round(opacity * 255)]
+        color: [r, g, b, Math.round(opacity * 255)],
+        isCurrentlyMoving
       });
     }
 
@@ -375,6 +385,17 @@ export class ComparisonModeRenderer {
     const leftTreeData = treeList[clampedLeftIndex];
     const rightTreeData = treeList[clampedRightIndex];
 
+    // Guard against null/undefined tree data
+    if (!leftTreeData || !rightTreeData) {
+      console.warn('ComparisonModeRenderer.renderStatic: Missing tree data', {
+        leftIndex: clampedLeftIndex,
+        rightIndex: clampedRightIndex,
+        hasLeftTree: !!leftTreeData,
+        hasRightTree: !!rightTreeData
+      });
+      return;
+    }
+
     const leftLayout = this.controller.calculateLayout(leftTreeData, {
       treeIndex: clampedLeftIndex,
       updateController: true
@@ -386,7 +407,6 @@ export class ComparisonModeRenderer {
     });
 
     const leftLeaves = leftLayout.tree.leaves();
-    const rightLeaves = rightLayout.tree.leaves();
     const { extensionRadius, labelRadius } = this.controller._getConsistentRadii(
       leftLayout,
       null,
@@ -423,11 +443,10 @@ export class ComparisonModeRenderer {
     const { viewsConnected } = this.controller._getState();
     const connectors = viewsConnected
       ? this._buildConnectors(
-        null, // viewLinkMapping no longer used - kept for future movement direction visualization
         this._buildPositionMap(leftLayerData.nodes, leftLayerData.labels),
         this._buildPositionMap(rightLayerData.nodes, rightLayerData.labels),
-        [0, 0], // Left tree center
-        [rightOffset, viewOffset.y] // Right tree center
+        [0, 0],
+        [rightOffset, viewOffset.y]
       )
       : [];
 
@@ -463,6 +482,16 @@ export class ComparisonModeRenderer {
    * @param {number} rightIndex - Right tree index
    */
   async renderAnimated(interpolatedData, rightTreeData, rightIndex) {
+    // Guard against null/undefined data
+    if (!interpolatedData || !rightTreeData) {
+      console.warn('ComparisonModeRenderer.renderAnimated: Missing data', {
+        hasInterpolatedData: !!interpolatedData,
+        hasRightTreeData: !!rightTreeData,
+        rightIndex
+      });
+      return;
+    }
+
     const rightLayout = this.controller.calculateLayout(rightTreeData, {
       treeIndex: rightIndex,
       updateController: false
@@ -494,11 +523,10 @@ export class ComparisonModeRenderer {
     const { viewsConnected } = this.controller._getState();
     const connectors = viewsConnected
       ? this._buildConnectors(
-        null, // viewLinkMapping no longer used - kept for future movement direction visualization
         this._buildPositionMap(interpolatedData.nodes, interpolatedData.labels),
         this._buildPositionMap(rightLayerData.nodes, rightLayerData.labels),
-        [0, 0], // Left tree center
-        [rightOffset, viewOffset.y] // Right tree center
+        [0, 0],
+        [rightOffset, viewOffset.y]
       )
       : [];
 

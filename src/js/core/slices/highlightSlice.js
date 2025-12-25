@@ -56,6 +56,9 @@ export const createHighlightSlice = (set, get) => ({
   // Dashing state for active change edges
   activeEdgeDashingEnabled: true, // User preference to enable/disable dashed lines on active edges
 
+  // Marked subtree mode: 'all' = all jumping subtrees for current edge, 'current' = only the currently animating subtree
+  markedSubtreeMode: 'all',
+
   /**
    * Gets the current ColorManager instance
    * @returns {TreeColorManager} The color manager instance
@@ -207,7 +210,7 @@ export const createHighlightSlice = (set, get) => ({
    * @returns {Array} Array of highlight subtrees for current tree state
    */
   getActualHighlightData: (treeIndexOverride = null) => {
-    const { currentTreeIndex, transitionResolver, pairSolutions, activeChangeEdgeTracking, movieData } = get();
+    const { currentTreeIndex, transitionResolver, pairSolutions, activeChangeEdgeTracking, subtreeTracking, movieData, markedSubtreeMode } = get();
     const index = typeof treeIndexOverride === 'number' ? treeIndexOverride : currentTreeIndex;
 
     // When at an ORIGINAL (full) tree, clear all red highlights
@@ -218,7 +221,16 @@ export const createHighlightSlice = (set, get) => ({
       return [];
     }
 
-    // Only evaluate the current step (no accumulation)
+    // If mode is 'current', use subtreeTracking directly (single current subtree)
+    if (markedSubtreeMode === 'current') {
+      const currentSubtree = subtreeTracking?.[index];
+      if (Array.isArray(currentSubtree) && currentSubtree.length > 0) {
+        return [currentSubtree];
+      }
+      return [];
+    }
+
+    // Mode is 'all' - return all jumping subtrees for the current active change edge
     const i = index;
     const activeChangeEdge = activeChangeEdgeTracking?.[i];
     if (!Array.isArray(activeChangeEdge) || activeChangeEdge.length === 0) {
@@ -405,6 +417,29 @@ export const createHighlightSlice = (set, get) => ({
       highlightVersion: state.highlightVersion + 1 // Trigger re-render
     }));
     const { treeControllers } = get();
+    renderTreeControllers(treeControllers);
+  },
+
+  /**
+   * Set the marked subtree mode
+   * @param {'all' | 'current'} mode - 'all' for all jumping subtrees, 'current' for only the animating subtree
+   */
+  setMarkedSubtreeMode: (mode) => {
+    if (mode !== 'all' && mode !== 'current') return;
+    set({ markedSubtreeMode: mode });
+
+    // Update ColorManager with new highlight data based on mode
+    const { markedComponentsEnabled, getActualHighlightData, updateColorManagerMarkedSubtrees, manualHighlightedNodes, treeControllers } = get();
+
+    const manual = Array.isArray(manualHighlightedNodes) && manualHighlightedNodes.length
+      ? [new Set(manualHighlightedNodes)]
+      : [];
+
+    if (markedComponentsEnabled) {
+      const markedComponents = getActualHighlightData();
+      updateColorManagerMarkedSubtrees([...manual, ...markedComponents]);
+    }
+
     renderTreeControllers(treeControllers);
   },
 
