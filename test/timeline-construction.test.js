@@ -8,6 +8,7 @@ const dom = new JSDOM('<!doctype html><html><body></body></html>');
 global.window = dom.window;
 global.document = dom.window.document;
 global.requestAnimationFrame = dom.window.requestAnimationFrame || ((cb) => setTimeout(cb, 0));
+global.cancelAnimationFrame = dom.window.cancelAnimationFrame || ((id) => clearTimeout(id));
 
 // Pull in ES modules via Babel register (mocha command already uses @babel/register)
 const { TimelineDataProcessor } = require('../src/js/timeline/data/TimelineDataProcessor.js');
@@ -24,7 +25,7 @@ function loadMovieData() {
       const raw = fs.readFileSync(p, 'utf8');
       const data = JSON.parse(raw);
       return { data, source: p };
-    } catch {}
+    } catch { }
   }
   throw new Error('No input JSON found for timeline construction test.');
 }
@@ -133,23 +134,27 @@ describe('Active change edge mapping (small_example)', () => {
     useAppStore.getState().initialize(movieData);
   });
 
+  afterEach(() => {
+    useAppStore.getState().reset();
+  });
+
   it('leaves anchor tree indices unmarked', () => {
-    const highlight = useAppStore.getState().getActualHighlightData();
-    expect(highlight).to.deep.equal([]);
+    const markedSubtrees = useAppStore.getState().getMarkedSubtreeData();
+    expect(markedSubtrees).to.deep.equal([]);
   });
 
   it('provides marked subtrees for first interpolated tree', () => {
     const store = useAppStore.getState();
     store.goToPosition(1); // First interpolation step between tree 0 and 1
-    const highlight = useAppStore.getState().getActualHighlightData();
-    expect(highlight).to.deep.equal([[13]]);
+    const markedSubtrees = useAppStore.getState().getMarkedSubtreeData();
+    expect(markedSubtrees).to.deep.equal([[13]]);
   });
 
   it('tracks later interpolation jump solutions', () => {
     const store = useAppStore.getState();
     store.goToPosition(6); // Jump where split [2,3,4,5,6] is active
-    const highlight = useAppStore.getState().getActualHighlightData();
-    expect(highlight).to.deep.equal([[4], [6]]);
+    const markedSubtrees = useAppStore.getState().getMarkedSubtreeData();
+    expect(markedSubtrees).to.deep.equal([[4], [6]]);
   });
 
   it('respects per-step lattice sequences when multiple snapshots exist', () => {
@@ -189,13 +194,13 @@ describe('Active change edge mapping (small_example)', () => {
 
     const store = storeAPI.getState();
     store.goToPosition(1); // step_in_pair = 1 (zero-based 0)
-    let highlight = storeAPI.getState().getActualHighlightData();
-    expect(Array.isArray(highlight)).to.equal(true);
-    expect(highlight[0]).to.deep.equal([13]);
+    let markedSubtrees = storeAPI.getState().getMarkedSubtreeData();
+    expect(Array.isArray(markedSubtrees)).to.equal(true);
+    expect(markedSubtrees[0]).to.deep.equal([13]);
 
     store.goToPosition(2); // step_in_pair = 2 (zero-based 1)
-    highlight = storeAPI.getState().getActualHighlightData();
-    const last = highlight[highlight.length - 1];
+    markedSubtrees = storeAPI.getState().getMarkedSubtreeData();
+    const last = markedSubtrees[markedSubtrees.length - 1];
     expect(last).to.deep.equal([99]);
   });
 });

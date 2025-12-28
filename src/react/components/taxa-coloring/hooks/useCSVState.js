@@ -2,12 +2,17 @@ import { useCallback, useState } from "react";
 import { parseGroupCSV } from "@/js/treeColoring/utils/CSVParser.js";
 import { loadCSVColumn } from "../utils/csvHelpers.js";
 
-export function useCSVState(taxaNames) {
-  const [csvData, setCsvData] = useState(null);
-  const [csvGroups, setCsvGroups] = useState([]);
-  const [csvTaxaMap, setCsvTaxaMap] = useState(null);
-  const [csvColumn, setCsvColumn] = useState(null);
+export function useCSVState(taxaNames, initialState = {}) {
+  const [csvData, setCsvData] = useState(initialState.csvData || null);
+  const [csvGroups, setCsvGroups] = useState(initialState.csvGroups || []);
+  const [csvTaxaMap, setCsvTaxaMap] = useState(initialState.csvTaxaMap || null);
+  const [csvColumn, setCsvColumn] = useState(initialState.csvColumn || null);
   const [csvValidation, setCsvValidation] = useState(null);
+
+  // If csvTaxaMap is an object (from persistence), it's fine as we fixed applyColoringData
+  // but for local UI state we might want consistency.
+  // However, the current code works with both due to the fix in GroupingUtils.
+
 
   const onFile = useCallback(async (file) => {
     try {

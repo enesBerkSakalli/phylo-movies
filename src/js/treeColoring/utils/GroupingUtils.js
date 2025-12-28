@@ -228,12 +228,23 @@ export function applyColoringData(colorData, leaveOrder, defaultColorMap) {
       } else {
         newColorMap[taxon] = defaultColorMap[taxon] || defaultColorMap.defaultColor || "#000000";
       }
-    });
+      });
   } else if (colorData.mode === "csv") {
     // CSV-based group coloring
+    // Handle csvTaxaMap as either Map or Object (from serialized state)
+    const csvMap = colorData.csvTaxaMap;
+    const getGroup = (taxon) => {
+      if (csvMap instanceof Map) {
+        return csvMap.get(taxon);
+      } else if (csvMap && typeof csvMap === 'object') {
+        return csvMap[taxon];
+      }
+      return null;
+    };
+
     leaveOrder.forEach((taxon) => {
       // Get group from CSV mapping
-      const group = colorData.csvTaxaMap?.get(taxon);
+      const group = getGroup(taxon);
       const groupColor = group ? colorData.groupColorMap[group] : null;
 
       if (groupColor) {

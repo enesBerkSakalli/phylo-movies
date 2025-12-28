@@ -11,26 +11,26 @@ export class TimelineDataProcessor {
      * @returns {Array} Timeline segments
      */
     static createSegments(movieData) {
-            // Check if movieData is a serializer instance
-            const isSerializer = movieData && typeof movieData.getTreeMetadata === 'function';
+        // Check if movieData is a serializer instance
+        const isSerializer = movieData && typeof movieData.getTreeMetadata === 'function';
 
-            const tree_metadata = isSerializer ? movieData.getTreeMetadata() : movieData.tree_metadata;
-            const interpolated_trees = isSerializer ? movieData.getTrees().interpolatedTrees : movieData.interpolated_trees;
+        const tree_metadata = isSerializer ? movieData.getTreeMetadata() : movieData.tree_metadata;
+        const interpolated_trees = isSerializer ? movieData.getTrees().interpolatedTrees : movieData.interpolated_trees;
 
-            const splitChangeTimeline = movieData.split_change_timeline;
-            const segments = this._createSegmentsFromSplitChangeTimeline(
-                splitChangeTimeline,
-                tree_metadata,
-                interpolated_trees,
-                movieData.tree_pair_solutions
-            );
-            return segments;
-        }
+        const splitChangeTimeline = movieData.split_change_timeline;
+        const segments = this._createSegmentsFromSplitChangeTimeline(
+            splitChangeTimeline,
+            tree_metadata,
+            interpolated_trees,
+            movieData.tree_pair_solutions
+        );
+        return segments;
+    }
 
-        /**
-         * Create segments from split_change_timeline data structure
-         * @private
-         */
+    /**
+     * Create segments from split_change_timeline data structure
+     * @private
+     */
     static _createSegmentsFromSplitChangeTimeline(timeline, tree_metadata, interpolated_trees, tree_pair_solutions) {
         const segments = [];
 
@@ -47,13 +47,11 @@ export class TimelineDataProcessor {
 
 
     /**
-     * Create timeline data structures
-     * @param {Array} segments - Timeline segments
-     * @param {Array} sortedLeaves - Optional sorted leaves array for tooltips
-     * @returns {Object} Timeline data with durations and metadata
+     * Creates timeline data structures from segments.
+     * @param {Array} segments - Timeline segments from createSegments()
+     * @returns {{totalDuration: number, segmentDurations: number[], cumulativeDurations: number[]}} Timeline metadata
      */
     static createTimelineData(segments) {
-        // Calculate duration: each segment gets duration based on its content (cached)
         const segmentDurations = TimelineMathUtils.calculateSegmentDurations(segments);
         const cumulativeDurations = (() => {
             const arr = new Array(segmentDurations.length);
@@ -67,19 +65,7 @@ export class TimelineDataProcessor {
 
         const totalDuration = segmentDurations.reduce((sum, duration) => sum + duration, 0);
 
-        // Determine global min/max of subtree movements across segments
-        let minSubtreeMoves = Infinity;
-        let maxSubtreeMoves = -Infinity;
-        for (const seg of segments) {
-            const c = typeof seg.subtreeMoveCount === 'number' ? seg.subtreeMoveCount : 0;
-            if (!seg.isFullTree) { // consider only transition segments for scale
-                minSubtreeMoves = Math.min(minSubtreeMoves, c);
-                maxSubtreeMoves = Math.max(maxSubtreeMoves, c);
-            }
-        }
-
-
-        return { totalDuration, segmentDurations, cumulativeDurations, minSubtreeMoves, maxSubtreeMoves };
+        return { totalDuration, segmentDurations, cumulativeDurations };
     }
 
     static _appendOriginalTreeSegment(entry, tree_metadata, interpolated_trees, segments) {

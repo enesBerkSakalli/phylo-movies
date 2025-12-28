@@ -4,14 +4,14 @@
 .left-controls {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   flex-wrap: wrap;
   transition: all 0.3s ease;
 }
 
 #nav-toggle-button {
   flex-shrink: 0;
-  margin-right: 6px;
+  margin-right: 4px;
 }
 
 /* Toolbar toggle button styling */
@@ -34,15 +34,15 @@
 .speed-control {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 
 .vertical-divider {
   inline-size: 1px;
-  block-size: 24px;
+  block-size: 20px;
   background-color: var(--border);
-  margin: 0 6px;
+  margin: 0 4px;
   transition: opacity 0.3s ease;
 }
 

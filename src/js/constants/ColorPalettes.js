@@ -32,11 +32,11 @@ export const TolBright = [
 export const TolBrightWhiteBG = [
   "#EE7733",
   "#0077BB",
-  "#33BBEE",
+  "#0099CC", // darkened from #33BBEE
   "#009988",
   "#CC3311",
   "#EE3377",
-  "#6E6E6E", // darker grey for white backgrounds
+  "#666666", // darkened from #6E6E6E
 ];
 
 export const TolMuted = [
@@ -376,16 +376,33 @@ export const PhyloOptimized = [
 export const PhyloOptimizedWhiteBG = [
   "#E95A5A", // darker coral red
   "#3FB8B0", // darker teal
-  "#349CC0", // darker sky blue
+  "#0087B0", // darker sky blue (was #349CC0)
   "#E26D5A", // darker salmon
-  "#63B7A8", // darker mint
-  "#5A4DD1", // darker purple
+  "#008E77", // darker mint (was #63B7A8)
+  "#5E58D6", // darker purple (was #5A4DD1)
   "#D99A00", // darker yellow
   "#2979FF", // deeper blue
   "#E06398", // darker pink
-  "#6F6AF2", // darker lavender
+  "#5A4DCC", // darker lavender (adjusted)
   "#00A07F", // darker green
-  "#E95F5E", // darker red
+  "#D94040", // darker red (adjusted)
+];
+
+/**
+ * Cluster High Contrast - Designed for maximum distinctness on white
+ * Derived from Kelly's colors, optimized for readability
+ */
+export const ClusterHighContrast = [
+  "#C20000", // Vivid Red
+  "#006400", // Dark Green
+  "#0000B3", // Strong Blue
+  "#800080", // Purple
+  "#FF6B00", // Vivid Orange
+  "#009999", // Teal
+  "#A0522D", // Sienna
+  "#D900D9", // Magenta
+  "#666666", // Dark Grey
+  "#999900", // Dark Yellow/Gold
 ];
 
 /**
@@ -419,6 +436,7 @@ export const CATEGORICAL_PALETTES = {
   TolVibrantWhiteBG,
   IBMColorBlindWhiteBG,
   PhyloOptimizedWhiteBG,
+  ClusterHighContrast,
 
   // Originals
   BlueShades,
@@ -492,6 +510,7 @@ export function getPaletteInfo(name) {
     TolVibrantWhiteBG: { type: 'categorical', colorBlindSafe: true, maxColors: 8, description: 'Tol Vibrant tuned for white background' },
     IBMColorBlindWhiteBG: { type: 'categorical', colorBlindSafe: true, maxColors: 8, description: 'IBM accessible palette tuned for white background' },
     PhyloOptimizedWhiteBG: { type: 'categorical', colorBlindSafe: false, maxColors: 12, description: 'Tree-optimized palette tuned for white background' },
+    ClusterHighContrast: { type: 'categorical', colorBlindSafe: false, maxColors: 10, description: 'Maximum distinctness for clusters on white' },
     BlueShades: { type: 'categorical', colorBlindSafe: true, maxColors: 10, description: 'Blue tints/tones (single-hue categorical)' },
     TolBright: { type: 'categorical', colorBlindSafe: true, maxColors: 7, description: 'Bright, color-blind friendly' },
     TolMuted: { type: 'categorical', colorBlindSafe: true, maxColors: 9, description: 'Muted, color-blind friendly' },

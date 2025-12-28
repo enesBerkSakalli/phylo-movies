@@ -14,19 +14,25 @@ import {
   getBaseBranchColor,
   getBaseNodeColor,
   resolveActiveEdgeSet,
-  isActiveChangeEdgeHighlighted,
+  isLinkActiveChangeEdge,
   nodeOrParentMatchesActiveEdge,
-  isDownstreamOfActiveChangeEdge,
-  isNodeDownstreamOfActiveChangeEdge,
-  isComponentMarked,
-  isNodeMarked
+  nodeOrParentMatchesAnyEdge,
+  isLinkDownstreamOfChangeEdge,
+  isNodeDownstreamOfChangeEdge
 } from './color/index.js';
+import {
+  isLinkInSubtree,
+  isNodeInSubtree,
+  isNodeSubtreeRoot
+} from '../deckgl/layers/styles/subtreeMatching.js';
 
 export class TreeColorManager {
   constructor() {
     this.monophyleticColoringEnabled = true;
     this.currentActiveChangeEdges = new Set();
-    this.marked = [];
+    this.upcomingChangeEdges = []; // Array of Sets for upcoming edges
+    this.completedChangeEdges = []; // Array of Sets for completed edges
+    this.sharedMarkedJumpingSubtrees = []; // Shared jumping subtrees across views
   }
 
   /**
@@ -53,8 +59,8 @@ export class TreeColorManager {
    * @returns {string} Hex color code
    */
   getBranchColorWithHighlights(linkData) {
-    const isMarked = isComponentMarked(linkData, this.marked);
-    const isActiveEdge = isActiveChangeEdgeHighlighted(linkData, this.currentActiveChangeEdges);
+    const isMarked = isLinkInSubtree(linkData, this.sharedMarkedJumpingSubtrees);
+    const isActiveEdge = isLinkActiveChangeEdge(linkData, this.currentActiveChangeEdges);
 
     if (isActiveEdge) {
       return TREE_COLOR_CATEGORIES.activeChangeEdgeColor;
@@ -72,7 +78,7 @@ export class TreeColorManager {
    * @returns {string} Hex color code
    */
   getBranchColorForInnerLine(linkData) {
-    const isActiveEdge = isActiveChangeEdgeHighlighted(linkData, this.currentActiveChangeEdges);
+    const isActiveEdge = isLinkActiveChangeEdge(linkData, this.currentActiveChangeEdges);
 
     if (isActiveEdge) {
       return TREE_COLOR_CATEGORIES.activeChangeEdgeColor;
@@ -103,7 +109,7 @@ export class TreeColorManager {
    */
   getNodeColor(nodeData, activeChangeEdges = []) {
     const edgeSet = resolveActiveEdgeSet(activeChangeEdges, this.currentActiveChangeEdges);
-    const marked = isNodeMarked(nodeData, this.marked);
+    const marked = isNodeInSubtree(nodeData, this.sharedMarkedJumpingSubtrees);
     const isActiveEdgeNode = nodeOrParentMatchesActiveEdge(nodeData, edgeSet);
 
     if (marked) {
@@ -120,16 +126,28 @@ export class TreeColorManager {
   // =======================
 
   /**
-   * Update marked subtrees (red highlighting)
+   * Update shared marked jumping subtrees (red highlighting)
+   * Pre-converts to Sets for performance in rendering loops.
    */
-  updateMarkedSubtrees(newMarkedComponents) {
-    if (Array.isArray(newMarkedComponents)) {
-      this.marked = newMarkedComponents;
-    } else if (newMarkedComponents instanceof Set) {
-      this.marked = [newMarkedComponents];
-    } else {
-      this.marked = [];
+  updateMarkedSubtrees(markedSubtrees) {
+    let subtrees = [];
+    if (Array.isArray(markedSubtrees)) {
+      subtrees = markedSubtrees;
+    } else if (markedSubtrees instanceof Set) {
+      subtrees = [markedSubtrees];
     }
+
+    // Cache as Sets immediately to avoid recreation in render checks
+    this.sharedMarkedJumpingSubtrees = subtrees.map(s =>
+      s instanceof Set ? s : new Set(s)
+    );
+  }
+
+  /**
+   * Check if a node is the root of any shared marked jumping subtree.
+   */
+  isNodeMarkedSubtreeRoot(nodeData) {
+    return isNodeSubtreeRoot(nodeData, this.sharedMarkedJumpingSubtrees);
   }
 
   /**
@@ -137,6 +155,30 @@ export class TreeColorManager {
    */
   updateActiveChangeEdge(activeChangeEdge) {
     this.currentActiveChangeEdges = new Set(activeChangeEdge);
+  }
+
+  /**
+   * Update upcoming change edges (lighter/dashed preview)
+   * @param {Array} upcomingEdges - Array of edge arrays that will be active before next anchor
+   */
+  updateUpcomingChangeEdges(upcomingEdges) {
+    if (Array.isArray(upcomingEdges)) {
+      this.upcomingChangeEdges = upcomingEdges.map(edge => new Set(edge));
+    } else {
+      this.upcomingChangeEdges = [];
+    }
+  }
+
+  /**
+   * Update completed change edges (grayed out/muted)
+   * @param {Array} completedEdges - Array of edge arrays that have been processed since last anchor
+   */
+  updateCompletedChangeEdges(completedEdges) {
+    if (Array.isArray(completedEdges)) {
+      this.completedChangeEdges = completedEdges.map(edge => new Set(edge));
+    } else {
+      this.completedChangeEdges = [];
+    }
   }
 
   /**
@@ -164,7 +206,7 @@ export class TreeColorManager {
     if (!this.currentActiveChangeEdges || this.currentActiveChangeEdges.size === 0) {
       return false;
     }
-    return isDownstreamOfActiveChangeEdge(linkData, [this.currentActiveChangeEdges]);
+    return isLinkDownstreamOfChangeEdge(linkData, [this.currentActiveChangeEdges]);
   }
 
   /**
@@ -174,7 +216,7 @@ export class TreeColorManager {
     if (!this.currentActiveChangeEdges || this.currentActiveChangeEdges.size === 0) {
       return false;
     }
-    return isNodeDownstreamOfActiveChangeEdge(nodeData, [this.currentActiveChangeEdges]);
+    return isNodeDownstreamOfChangeEdge(nodeData, [this.currentActiveChangeEdges]);
   }
 
   /**
@@ -188,7 +230,75 @@ export class TreeColorManager {
    * Check if a branch is specifically an active change edge
    */
   isActiveChangeEdge(linkData) {
-    return isActiveChangeEdgeHighlighted(linkData, this.currentActiveChangeEdges);
+    return isLinkActiveChangeEdge(linkData, this.currentActiveChangeEdges);
+  }
+
+  /**
+   * Check if a node is part of an upcoming change edge (node or its parent).
+   */
+  isNodeUpcomingChangeEdge(nodeData) {
+    if (!this.upcomingChangeEdges || this.upcomingChangeEdges.length === 0) {
+      return false;
+    }
+    return nodeOrParentMatchesAnyEdge(nodeData, this.upcomingChangeEdges);
+  }
+
+  /**
+   * Check if a node is part of a completed change edge (node or its parent).
+   */
+  isNodeCompletedChangeEdge(nodeData) {
+    if (!this.completedChangeEdges || this.completedChangeEdges.length === 0) {
+      return false;
+    }
+    return nodeOrParentMatchesAnyEdge(nodeData, this.completedChangeEdges);
+  }
+
+  /**
+   * Check if a branch is an upcoming change edge (will be active before next anchor)
+   */
+  isUpcomingChangeEdge(linkData) {
+    if (!this.upcomingChangeEdges || this.upcomingChangeEdges.length === 0) {
+      return false;
+    }
+
+    // Check if this link matches any upcoming edge
+    for (const edgeSet of this.upcomingChangeEdges) {
+      if (isLinkActiveChangeEdge(linkData, edgeSet)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Check if a branch is a completed change edge (was active since last anchor)
+   */
+  isCompletedChangeEdge(linkData) {
+    if (!this.completedChangeEdges || this.completedChangeEdges.length === 0) {
+      return false;
+    }
+
+    // Check if this link matches any completed edge
+    for (const edgeSet of this.completedChangeEdges) {
+      if (isLinkActiveChangeEdge(linkData, edgeSet)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Check if there are any upcoming change edges
+   */
+  hasUpcomingChangeEdges() {
+    return this.upcomingChangeEdges && this.upcomingChangeEdges.length > 0;
+  }
+
+  /**
+   * Check if there are any completed change edges
+   */
+  hasCompletedChangeEdges() {
+    return this.completedChangeEdges && this.completedChangeEdges.length > 0;
   }
 
   /**

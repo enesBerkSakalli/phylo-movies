@@ -1,170 +1,123 @@
 import { TIMELINE_CONSTANTS } from '../constants.js';
 
+/**
+ * Timeline math utilities for progress/time conversion, segment lookup, and duration calculations.
+ */
 export class TimelineMathUtils {
+
+    // ==========================================================================
+    // CONSTANTS
+    // ==========================================================================
+
     static EPSILON_MS = 1;
 
+    // ==========================================================================
+    // PROGRESS / TIME CONVERSION
+    // ==========================================================================
+
     static progressToTime(progress, totalDuration) {
-        const clampedProgress = this.clampProgress(progress);
-        return clampedProgress * totalDuration;
+        return this.clampProgress(progress) * totalDuration;
     }
 
     static timeToProgress(time, totalDuration) {
-        if (!totalDuration || totalDuration === 0) {
-            return TIMELINE_CONSTANTS.DEFAULT_PROGRESS;
-        }
         return this.clampProgress(time / totalDuration);
     }
 
     static clampProgress(progress) {
-        return Math.max(TIMELINE_CONSTANTS.MIN_PROGRESS,
-                       Math.min(TIMELINE_CONSTANTS.MAX_PROGRESS, progress));
+        return Math.max(TIMELINE_CONSTANTS.MIN_PROGRESS, Math.min(TIMELINE_CONSTANTS.MAX_PROGRESS, progress));
     }
 
-    static findSegmentForTreeIndex(segments, treeIndex) {
-        if (!segments || segments.length === 0) {
-            return {
-                segmentIndex: TIMELINE_CONSTANTS.DEFAULT_SEGMENT_INDEX,
-                timeInSegment: TIMELINE_CONSTANTS.DEFAULT_PROGRESS,
-                segment: null
-            };
-        }
+    // ==========================================================================
+    // SEGMENT LOOKUP
+    // ==========================================================================
 
+    static findSegmentForTreeIndex(segments, treeIndex) {
         for (let i = 0; i < segments.length; i++) {
             const segment = segments[i];
+
             if (segment.isFullTree) {
                 if (segment.interpolationData?.[0]?.originalIndex === treeIndex) {
-                    return {
-                        segmentIndex: i,
-                        timeInSegment: 0,
-                        segment
-                    };
+                    return { segmentIndex: i, timeInSegment: 0, segment };
                 }
-            }
-            else if (segment.hasInterpolation && segment.interpolationData?.length > 1) {
-                const interpolationData = segment.interpolationData;
-                for (let j = 0; j < interpolationData.length; j++) {
-                    if (interpolationData[j].originalIndex === treeIndex) {
-                        const timeInSegment = j * TIMELINE_CONSTANTS.UNIT_DURATION_MS;
-                        return { segmentIndex: i, timeInSegment, segment };
+            } else if (segment.hasInterpolation && segment.interpolationData?.length > 1) {
+                for (let j = 0; j < segment.interpolationData.length; j++) {
+                    if (segment.interpolationData[j].originalIndex === treeIndex) {
+                        return { segmentIndex: i, timeInSegment: j * TIMELINE_CONSTANTS.UNIT_DURATION_MS, segment };
                     }
                 }
-            } else {
-                if (segment.interpolationData?.[0]?.originalIndex === treeIndex) {
-                    return {
-                        segmentIndex: i,
-                        timeInSegment: TIMELINE_CONSTANTS.DEFAULT_PROGRESS,
-                        segment
-                    };
-                }
+            } else if (segment.interpolationData?.[0]?.originalIndex === treeIndex) {
+                return { segmentIndex: i, timeInSegment: TIMELINE_CONSTANTS.DEFAULT_PROGRESS, segment };
             }
         }
+
         return {
             segmentIndex: TIMELINE_CONSTANTS.DEFAULT_SEGMENT_INDEX,
             timeInSegment: TIMELINE_CONSTANTS.DEFAULT_PROGRESS,
             segment: null
         };
     }
-    static getTargetTreeForTime(segments, currentTime, segmentDurations, bias = 'nearest') {
-        let accumulatedTime = 0;
-        let segmentIndex = segments.length - 1; // Default to last segment
-        let segmentStartTime = 0;
-        let segmentDuration = 0;
 
-        for (let i = 0; i < segments.length; i++) {
-            const duration = segmentDurations[i];
-            const endTime = accumulatedTime + duration;
+    // ==========================================================================
+    // TREE INDEX RESOLUTION
+    // ==========================================================================
 
-            // Handle being exactly at the end of the timeline
-            if (i === segments.length - 1 && currentTime >= endTime) {
-                segmentIndex = i;
-                break;
-            }
+    static getTargetTreeForTime(segments, currentTime, segmentDurations, bias = 'nearest', cumulativeDurations = null) {
+        const cumulative = cumulativeDurations || this._buildCumulative(segmentDurations);
+        const segmentIndex = this._binarySearchSegment(cumulative, currentTime);
+        const segmentStartTime = segmentIndex === 0 ? 0 : cumulative[segmentIndex - 1];
+        const segmentDuration = segmentDurations[segmentIndex];
+        const segment = segments[segmentIndex];
 
-            // If the current time is less than the end of this segment, we've found it.
-            if (currentTime < endTime) {
-                segmentIndex = i;
-                break;
-            }
-            // If time is exactly on a boundary, and the segment is a zero-duration one, it's that one.
-            if (currentTime === endTime && duration === 0) {
-                segmentIndex = i;
-                break;
-            }
-            accumulatedTime = endTime;
+        if (segment.isFullTree) {
+            return {
+                treeIndex: segment.interpolationData[0].originalIndex,
+                segmentIndex,
+                segmentProgress: 0.5
+            };
         }
 
-        // Recalculate start time for the found segment
-        accumulatedTime = 0;
-        for (let i = 0; i < segmentIndex; i++) {
-            accumulatedTime += segmentDurations[i];
-        }
-        segmentStartTime = accumulatedTime;
-        segmentDuration = segmentDurations[segmentIndex];
+        const clampedTime = Math.max(
+            segmentStartTime + this.EPSILON_MS,
+            Math.min(currentTime, segmentStartTime + segmentDuration - this.EPSILON_MS)
+        );
+        const segmentProgress = (clampedTime - segmentStartTime) / segmentDuration;
 
-        if (segmentIndex >= 0 && segmentIndex < segments.length && segmentDuration >= 0) {
-            const segment = segments[segmentIndex];
-            if (segment.isFullTree) {
-                return {
-                    treeIndex: segment.interpolationData[0].originalIndex,
-                    segmentIndex,
-                    segmentProgress: 0.5
-                };
-            }
-            const clampedTime = Math.max(
-                segmentStartTime + this.EPSILON_MS,
-                Math.min(currentTime, segmentStartTime + segmentDuration - this.EPSILON_MS)
-            );
-            const segmentProgress = (clampedTime - segmentStartTime) / segmentDuration;
+        if (segment.hasInterpolation && segment.interpolationData.length > 1) {
+            const exactPosition = segmentProgress * (segment.interpolationData.length - 1);
+            let stepIndex;
 
-            if (segment.hasInterpolation && segment.interpolationData.length > 1) {
-                const exactPosition = segmentProgress * (segment.interpolationData.length - 1);
-                let stepIndex;
-                if (bias === 'forward') {
-                    stepIndex = Math.ceil(exactPosition - 1e-8);
-                } else if (bias === 'backward') {
-                    stepIndex = Math.floor(exactPosition + 1e-8);
-                } else {
-                    stepIndex = Math.round(exactPosition);
-                }
-                const clampedStepIndex = Math.max(0, Math.min(stepIndex, segment.interpolationData.length - 1));
-
-                return {
-                    treeIndex: segment.interpolationData[clampedStepIndex].originalIndex,
-                    segmentIndex,
-                    segmentProgress: this.clampProgress(segmentProgress)
-                };
+            if (bias === 'forward') {
+                stepIndex = Math.ceil(exactPosition - 1e-8);
+            } else if (bias === 'backward') {
+                stepIndex = Math.floor(exactPosition + 1e-8);
             } else {
-                return {
-                    treeIndex: segment.interpolationData[0].originalIndex,
-                    segmentIndex,
-                    segmentProgress: TIMELINE_CONSTANTS.DEFAULT_PROGRESS
-                };
+                stepIndex = Math.round(exactPosition);
             }
+
+            const clampedStepIndex = Math.max(0, Math.min(stepIndex, segment.interpolationData.length - 1));
+
+            return {
+                treeIndex: segment.interpolationData[clampedStepIndex].originalIndex,
+                segmentIndex,
+                segmentProgress: this.clampProgress(segmentProgress)
+            };
         }
-        const fallbackSegment = segments[Math.max(0, Math.min(segmentIndex, segments.length - 1))];
+
         return {
-            treeIndex: fallbackSegment?.interpolationData?.[0]?.originalIndex || TIMELINE_CONSTANTS.DEFAULT_TREE_INDEX,
-            segmentIndex: Math.max(0, Math.min(segmentIndex, segments.length - 1)),
+            treeIndex: segment.interpolationData[0].originalIndex,
+            segmentIndex,
             segmentProgress: TIMELINE_CONSTANTS.DEFAULT_PROGRESS
         };
     }
 
-
     static calculateTreePositionInSegment(segment, currentTreeIndex) {
-        if (!segment || !segment.hasInterpolation || !segment.interpolationData?.length) {
-            return {
-                treeInSegment: TIMELINE_CONSTANTS.DEFAULT_TREE_IN_SEGMENT,
-                treesInSegment: TIMELINE_CONSTANTS.DEFAULT_TREES_IN_SEGMENT
-            };
-        }
-
         const treesInSegment = segment.interpolationData.length;
+
         if (treesInSegment > 1) {
-            const foundIndex = segment.interpolationData.findIndex(item =>
-                item.originalIndex === currentTreeIndex);
-            const treeInSegment = foundIndex !== -1 ?
-                foundIndex + TIMELINE_CONSTANTS.INDEX_OFFSET_UI :
-                TIMELINE_CONSTANTS.DEFAULT_TREE_IN_SEGMENT;
+            const foundIndex = segment.interpolationData.findIndex(item => item.originalIndex === currentTreeIndex);
+            const treeInSegment = foundIndex !== -1
+                ? foundIndex + TIMELINE_CONSTANTS.INDEX_OFFSET_UI
+                : TIMELINE_CONSTANTS.DEFAULT_TREE_IN_SEGMENT;
             return { treeInSegment, treesInSegment };
         }
 
@@ -174,61 +127,68 @@ export class TimelineMathUtils {
         };
     }
 
-    static calculateTimeForSegment(segments, segmentIndex, timeInSegment = TIMELINE_CONSTANTS.DEFAULT_PROGRESS, segmentDurations = null) {
-        const durations = segmentDurations || this.calculateSegmentDurations(segments);
-        let currentTime = 0;
-        for (let i = 0; i < segmentIndex && i < durations.length; i++) {
-            currentTime += durations[i];
-        }
-        const seg = segments?.[segmentIndex];
-        const segDur = durations?.[segmentIndex] ?? 0;
-        let within = timeInSegment;
-        if (seg && !seg.isFullTree) {
-            within = Math.max(this.EPSILON_MS, Math.min(timeInSegment, segDur - this.EPSILON_MS));
-        }
-        currentTime += within;
-        return currentTime;
-    }
+    // ==========================================================================
+    // DURATION CALCULATIONS
+    // ==========================================================================
 
     static calculateSegmentDurations(segments) {
-        if (!segments?.length) return [];
-
-        const durations = segments.map((segment, idx) => {
-            let duration;
+        return segments.map((segment) => {
             if (segment.isFullTree) {
-                // Give anchor segments a small duration for better hover detection
-                // This makes them easier to hover over in the UI
-                duration = TIMELINE_CONSTANTS.UNIT_DURATION_MS * 0.5;
+                return TIMELINE_CONSTANTS.UNIT_DURATION_MS * 0.5;
             }
-            else if (segment.hasInterpolation && segment.interpolationData?.length > 1) {
-                duration = segment.interpolationData.length * TIMELINE_CONSTANTS.UNIT_DURATION_MS;
-            } else {
-                duration = TIMELINE_CONSTANTS.UNIT_DURATION_MS;
+            if (segment.hasInterpolation && segment.interpolationData?.length > 1) {
+                return segment.interpolationData.length * TIMELINE_CONSTANTS.UNIT_DURATION_MS;
             }
-
-            return duration;
+            return TIMELINE_CONSTANTS.UNIT_DURATION_MS;
         });
-
-        return durations;
     }
-    static getInterpolationDataForProgress(progress, treeList, movieData) {
-        if (!treeList || !movieData || !movieData.interpolated_trees) {
-            return null;
-        }
 
+    // ==========================================================================
+    // INTERPOLATION DATA
+    // ==========================================================================
+
+    static getInterpolationDataForProgress(progress, treeList, movieData) {
         const clampedProgress = this.clampProgress(progress);
         const totalTrees = treeList.length;
         const exactIndex = clampedProgress * (totalTrees - 1);
         const fromIndex = Math.floor(exactIndex);
         const toIndex = Math.min(fromIndex + 1, totalTrees - 1);
-        const timeFactor = exactIndex - fromIndex;
 
         return {
             fromTree: movieData.interpolated_trees[fromIndex],
             toTree: movieData.interpolated_trees[toIndex],
-            timeFactor: timeFactor,
-            fromIndex: fromIndex,
-            toIndex: toIndex
+            timeFactor: exactIndex - fromIndex,
+            fromIndex,
+            toIndex
         };
+    }
+
+    // ==========================================================================
+    // BINARY SEARCH HELPERS
+    // ==========================================================================
+
+    static _binarySearchSegment(cumulativeDurations, time) {
+        let lo = 0;
+        let hi = cumulativeDurations.length - 1;
+
+        while (lo < hi) {
+            const mid = (lo + hi) >>> 1;
+            if (cumulativeDurations[mid] <= time) {
+                lo = mid + 1;
+            } else {
+                hi = mid;
+            }
+        }
+        return lo;
+    }
+
+    static _buildCumulative(segmentDurations) {
+        const arr = new Array(segmentDurations.length);
+        let acc = 0;
+        for (let i = 0; i < segmentDurations.length; i++) {
+            acc += segmentDurations[i];
+            arr[i] = acc;
+        }
+        return arr;
     }
 }

@@ -5,9 +5,11 @@ import { Appearance } from './components/appearance/Appearance.jsx';
 import { VisualElements } from './components/appearance/controls/VisualElements/VisualElements.jsx';
 import { TreeStructureGroup } from './components/appearance/layout/TreeStructureGroup.jsx';
 import { MoviePlayerBar } from './components/movie-player/MoviePlayerBar.jsx';
-import { TopScaleBar } from './components/TopScaleBar';
+import { TreeStatsPanel } from './components/TreeStatsPanel/TreeStatsPanel.tsx';
+import { DeckGLCanvas } from './components/deckgl/DeckGLCanvas.jsx';
 import { MsaRndWindow } from './components/msa/MsaRndWindow.jsx';
-import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarInset, SidebarMenu, SidebarMenuItem,  SidebarSeparator } from '@/components/ui/sidebar';
+import { ClipboardDismissButton } from './components/clipboard/ClipboardDismissButton.jsx';
+import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarSeparator } from '@/components/ui/sidebar';
 
 import { Film, SlidersHorizontal, FolderOpen, Dna, GitBranch } from 'lucide-react';
 import { useAppStore } from '../js/core/store.js';
@@ -48,7 +50,7 @@ export function App() {
   useEffect(() => {
     try {
       document.documentElement.setAttribute('data-has-msa', hasMsa ? 'true' : 'false');
-    } catch {}
+    } catch { }
   }, [hasMsa]);
 
   return (
@@ -141,11 +143,12 @@ export function App() {
 
       <SidebarInset>
         <div className="full-size-container" style={{ flex: 1, minHeight: 0, position: 'relative' }}>
-          <div id="webgl-container" style={{ width: '100%', height: '100%' }}></div>
+          <DeckGLCanvas />
+          <ClipboardDismissButton />
         </div>
         <MoviePlayerBar />
         <div id="top-scale-bar-container">
-          <TopScaleBar />
+          <TreeStatsPanel />
         </div>
       </SidebarInset>
     </SidebarProvider>
