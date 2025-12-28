@@ -362,10 +362,10 @@ export class NodeContextMenu {
     const descendants = SubtreeExtractor.getDescendants(this.currentNode);
     const nodeIds = descendants.map(node => node.data.name || `node_${node.depth}_${node.x}_${node.y}`);
 
-    // Update store to highlight these nodes
-    const { setHighlightedNodes } = useAppStore.getState();
-    if (setHighlightedNodes) {
-      setHighlightedNodes(nodeIds);
+    // Update store to mark these nodes
+    const { setManuallyMarkedNodes } = useAppStore.getState();
+    if (setManuallyMarkedNodes) {
+      setManuallyMarkedNodes(nodeIds);
     }
 
     this._showNotification(`Highlighted ${descendants.length} nodes`, 'success');

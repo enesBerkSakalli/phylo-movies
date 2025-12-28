@@ -70,6 +70,7 @@ export const LAYER_CONFIGS = {
     id: 'phylo-labels',
     LayerClass: TextLayer,
     defaultProps: {
+      sizeUnits: 'pixels',  // Labels stay constant size regardless of zoom
       getAlignmentBaseline: 'center'
     }
   },
@@ -81,5 +82,35 @@ export const LAYER_CONFIGS = {
       widthMinPixels: 1,
       pickable: true
     }
+  }
+};
+
+/**
+ * Clipboard layer configurations - same as LAYER_CONFIGS but with 'clipboard-' prefix
+ */
+export const CLIPBOARD_LAYER_CONFIGS = {
+  linkOutlines: {
+    ...LAYER_CONFIGS.linkOutlines,
+    id: 'clipboard-link-outlines'
+  },
+  links: {
+    ...LAYER_CONFIGS.links,
+    id: 'clipboard-links'
+  },
+  extensions: {
+    ...LAYER_CONFIGS.extensions,
+    id: 'clipboard-extensions'
+  },
+  nodes: {
+    ...LAYER_CONFIGS.nodes,
+    id: 'clipboard-nodes'
+  },
+  labels: {
+    ...LAYER_CONFIGS.labels,
+    id: 'clipboard-labels'
+  },
+  connectors: {
+    ...LAYER_CONFIGS.connectors,
+    id: 'clipboard-connectors'
   }
 };

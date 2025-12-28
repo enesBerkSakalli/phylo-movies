@@ -4,58 +4,94 @@ import { DeckGLTreeAnimationController } from '../js/treeVisualisation/DeckGLTre
 import { calculateWindow } from "../js/domain/msa/msaWindowCalculator.js";
 import { getMSAFrameIndex } from "../js/domain/indexing/IndexMapping.js";
 
+// ==========================================================================
+// STORE SELECTORS
+// ==========================================================================
+
+// Core state
+const selectMovieData = (s) => s.movieData;
+const selectCurrentTreeIndex = (s) => s.currentTreeIndex;
+const selectComparisonMode = (s) => s.comparisonMode;
+const selectTransitionResolver = (s) => s.transitionResolver;
+const selectTreeControllers = (s) => s.treeControllers;
+const selectPlaying = (s) => s.playing;
+const selectClipboardTreeIndex = (s) => s.clipboardTreeIndex;
+
+// Actions
+const selectSetTreeControllers = (s) => s.setTreeControllers;
+const selectSetRenderInProgress = (s) => s.setRenderInProgress;
+
+// MSA sync state
+const selectSyncMSAEnabled = (s) => s.syncMSAEnabled;
+const selectMsaWindowSize = (s) => s.msaWindowSize;
+const selectMsaStepSize = (s) => s.msaStepSize;
+const selectMsaColumnCount = (s) => s.msaColumnCount;
+const selectSetMsaRegion = (s) => s.setMsaRegion;
+
+// ==========================================================================
+// HOOK
+// ==========================================================================
+
 /**
  * Hook to manage the Tree Controller and rendering lifecycle.
- * Replaces the legacy Gui.js controller.
+ *
+ * Responsibilities:
+ * 1. Controller initialization - creates DeckGLTreeAnimationController
+ * 2. Tree rendering - renders trees when currentTreeIndex changes
+ * 3. MSA sync - synchronizes MSA viewer region with current tree
  */
 export function useTreeController() {
-  const movieData = useAppStore((s) => s.movieData);
-  const currentTreeIndex = useAppStore((s) => s.currentTreeIndex);
-  const comparisonMode = useAppStore((s) => s.comparisonMode);
-  const treeList = useAppStore((s) => s.treeList);
-  const transitionResolver = useAppStore((s) => s.transitionResolver);
-  const setTreeControllers = useAppStore((s) => s.setTreeControllers);
-  const setRenderInProgress = useAppStore((s) => s.setRenderInProgress);
-  const treeControllers = useAppStore((s) => s.treeControllers);
-  const playing = useAppStore((s) => s.playing);
+  // ---------------------------------------------------------------------------
+  // Store subscriptions
+  // ---------------------------------------------------------------------------
+  const movieData = useAppStore(selectMovieData);
+  const currentTreeIndex = useAppStore(selectCurrentTreeIndex);
+  const comparisonMode = useAppStore(selectComparisonMode);
+  const transitionResolver = useAppStore(selectTransitionResolver);
+  const treeControllers = useAppStore(selectTreeControllers);
+  const playing = useAppStore(selectPlaying);
+  const clipboardTreeIndex = useAppStore(selectClipboardTreeIndex);
 
-  // MSA Sync dependencies
-  const syncMSAEnabled = useAppStore((s) => s.syncMSAEnabled);
-  const msaWindowSize = useAppStore((s) => s.msaWindowSize);
-  const msaStepSize = useAppStore((s) => s.msaStepSize);
-  const msaColumnCount = useAppStore((s) => s.msaColumnCount);
-  const setMsaRegion = useAppStore((s) => s.setMsaRegion);
-  const movieTimelineManager = useAppStore((s) => s.movieTimelineManager);
+  const setTreeControllers = useAppStore(selectSetTreeControllers);
+  const setRenderInProgress = useAppStore(selectSetRenderInProgress);
 
-  // Refs to track previous state for diffing
+  // MSA sync
+  const syncMSAEnabled = useAppStore(selectSyncMSAEnabled);
+  const msaWindowSize = useAppStore(selectMsaWindowSize);
+  const msaStepSize = useAppStore(selectMsaStepSize);
+  const msaColumnCount = useAppStore(selectMsaColumnCount);
+  const setMsaRegion = useAppStore(selectSetMsaRegion);
+
+  // ---------------------------------------------------------------------------
+  // Refs for diffing/throttling
+  // ---------------------------------------------------------------------------
   const prevTreeIndexRef = useRef(currentTreeIndex);
   const lastSyncTimeRef = useRef(0);
 
-  // Initialize Controller
+  // ---------------------------------------------------------------------------
+  // Controller initialization
+  // ---------------------------------------------------------------------------
   useEffect(() => {
     if (!movieData) return;
+    if (treeControllers.length > 0) return;
 
-    // Create controller if it doesn't exist
-    if (treeControllers.length === 0) {
-      const controller = new DeckGLTreeAnimationController('#webgl-container', {
-        animations: true,
-        comparisonMode
-      });
-      setTreeControllers([controller]);
-    }
-
-    return () => {
-      // Cleanup handled by store or App unmount
-    };
+    const controller = new DeckGLTreeAnimationController('#webgl-container', {
+      animations: true,
+      comparisonMode,
+      useReactDeckGL: true
+    });
+    setTreeControllers([controller]);
   }, [movieData, treeControllers.length, comparisonMode, setTreeControllers]);
 
-  // Handle Rendering
+  // ---------------------------------------------------------------------------
+  // Tree rendering
+  // ---------------------------------------------------------------------------
   useEffect(() => {
     const controller = treeControllers[0];
     if (!controller || !movieData) return;
 
     const render = async () => {
-      // Wait for DeckGL to finish initializing before rendering
+      // Wait for DeckGL to finish initializing
       if (!controller.ready) {
         try {
           await controller.readyPromise;
@@ -64,21 +100,13 @@ export function useTreeController() {
         }
       }
 
-      // Skip static rendering if animation is playing to avoid conflict with animation loop
+      // Skip static rendering during animation playback
       if (playing) return;
 
       setRenderInProgress(true);
       try {
         if (comparisonMode) {
-          const full = transitionResolver?.fullTreeIndices || [];
-          const sourceAnchorIndex = transitionResolver?.getSourceTreeIndex(currentTreeIndex) ?? 0;
-          const rightIndex = full.find((i) => i > sourceAnchorIndex) ?? full[full.length - 1];
-
-          await controller.renderAllElements({
-            leftIndex: currentTreeIndex,
-            rightIndex,
-            comparisonMode: true
-          });
+          await renderComparisonMode(controller, transitionResolver, currentTreeIndex);
         } else {
           await controller.renderAllElements({ treeIndex: currentTreeIndex });
         }
@@ -86,27 +114,22 @@ export function useTreeController() {
         console.error('Error during tree rendering:', error);
       } finally {
         setRenderInProgress(false);
-
-        // Update auxiliary components
-        if (movieTimelineManager) {
-          movieTimelineManager.updateCurrentPosition();
-        }
       }
     };
 
     render();
+  }, [currentTreeIndex, comparisonMode, treeControllers, movieData, transitionResolver, setRenderInProgress, playing, clipboardTreeIndex]);
 
-  }, [currentTreeIndex, comparisonMode, treeControllers, movieData, transitionResolver, setRenderInProgress, movieTimelineManager, playing]);
-
-  // Handle MSA Sync
+  // ---------------------------------------------------------------------------
+  // MSA synchronization
+  // ---------------------------------------------------------------------------
   useEffect(() => {
     if (!syncMSAEnabled || !transitionResolver || !msaColumnCount) return;
-
-    // Only sync if tree index changed
     if (currentTreeIndex === prevTreeIndexRef.current) return;
+
     prevTreeIndexRef.current = currentTreeIndex;
 
-    // Throttle sync
+    // Throttle sync to 100ms
     const now = Date.now();
     if (now - lastSyncTimeRef.current < 100) return;
     lastSyncTimeRef.current = now;
@@ -116,6 +139,21 @@ export function useTreeController() {
 
     const windowData = calculateWindow(frameIndex, msaStepSize, msaWindowSize, msaColumnCount);
     setMsaRegion(windowData.startPosition, windowData.endPosition);
-
   }, [currentTreeIndex, syncMSAEnabled, transitionResolver, msaColumnCount, msaStepSize, msaWindowSize, setMsaRegion]);
+}
+
+// ==========================================================================
+// HELPERS
+// ==========================================================================
+
+async function renderComparisonMode(controller, transitionResolver, currentTreeIndex) {
+  const full = transitionResolver?.fullTreeIndices || [];
+  const sourceAnchorIndex = transitionResolver?.getSourceTreeIndex(currentTreeIndex) ?? 0;
+  const rightIndex = full.find((i) => i > sourceAnchorIndex) ?? full[full.length - 1];
+
+  await controller.renderAllElements({
+    leftIndex: currentTreeIndex,
+    rightIndex,
+    comparisonMode: true
+  });
 }

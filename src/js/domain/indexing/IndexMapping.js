@@ -1,5 +1,56 @@
 import { useAppStore } from '../../core/store.js';
 
+// ===========================
+// ANCHOR NAVIGATION UTILITIES
+// ===========================
+
+/**
+ * Find the index (into anchorIndices array) of the last anchor at or before the given position
+ * @param {Array<number>} anchorIndices - Sorted array of anchor sequence indices
+ * @param {number} position - Current sequence position
+ * @returns {number} Index into anchorIndices array (0 if none found before position)
+ */
+export function findPreviousAnchorIndex(anchorIndices, position) {
+  if (!anchorIndices?.length) return 0;
+  for (let i = anchorIndices.length - 1; i >= 0; i--) {
+    if (anchorIndices[i] <= position) {
+      return i;
+    }
+  }
+  return 0;
+}
+
+/**
+ * Find the sequence index of the previous anchor (last anchor at or before position)
+ * @param {Array<number>} anchorIndices - Sorted array of anchor sequence indices
+ * @param {number} position - Current sequence position
+ * @returns {number} Sequence index of previous anchor
+ */
+export function findPreviousAnchorSequenceIndex(anchorIndices, position) {
+  if (!anchorIndices?.length) return 0;
+  const idx = findPreviousAnchorIndex(anchorIndices, position);
+  return anchorIndices[idx] ?? 0;
+}
+
+/**
+ * Find the sequence index of the next anchor after the given position
+ * @param {Array<number>} anchorIndices - Sorted array of anchor sequence indices
+ * @param {number} position - Current sequence position
+ * @returns {number|null} Sequence index of next anchor, or null if none exists
+ */
+export function findNextAnchorSequenceIndex(anchorIndices, position) {
+  if (!anchorIndices?.length) return null;
+  for (const anchorIdx of anchorIndices) {
+    if (anchorIdx > position) {
+      return anchorIdx;
+    }
+  }
+  return null;
+}
+
+// ===========================
+// INDEX MAPPING FUNCTIONS
+// ===========================
 
 export function getIndexMappings(state = useAppStore.getState()) {
   const seqIndex = state.currentTreeIndex || 0;
@@ -44,14 +95,5 @@ export function getMSAFrameIndex(state = useAppStore.getState()) {
   const resolver = state.transitionResolver;
   const fullTreeIndices = resolver?.fullTreeIndices || [];
 
-  // Find the last full tree before or at current position
-  let sourceTreeIndex = 0;
-  for (let i = fullTreeIndices.length - 1; i >= 0; i--) {
-    if (fullTreeIndices[i] <= seqIndex) {
-      sourceTreeIndex = i;
-      break;
-    }
-  }
-
-  return sourceTreeIndex;
+  return findPreviousAnchorIndex(fullTreeIndices, seqIndex);
 }

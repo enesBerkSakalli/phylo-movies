@@ -1,7 +1,5 @@
 import { getLabelKey } from '../../utils/KeyGenerator.js';
-
-/** Margin offset (px) to push labels further away from tree elements */
-const LABEL_MARGIN = 25;
+import { LABEL_MARGIN } from './converterConstants.js';
 
 /**
  * Handles conversion of D3 hierarchy labels to Deck.gl layer format

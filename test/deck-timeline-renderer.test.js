@@ -2,7 +2,7 @@ const { expect } = require('chai');
 const { JSDOM } = require('jsdom');
 const Module = require('module');
 // Ignore CSS imports from the renderer in test environment
-require.extensions['.css'] = () => {};
+require.extensions['.css'] = () => { };
 
 // Minimal DOM for renderer sizing
 const dom = new JSDOM('<!doctype html><html><body></body></html>');
@@ -18,7 +18,7 @@ const mockDeckGLCore = {
     setProps(p) {
       this.props = { ...this.props, ...p };
     }
-    finalize() {}
+    finalize() { }
   },
   OrthographicView: class { constructor(opts) { this.opts = opts; } },
   COORDINATE_SYSTEM: { CARTESIAN: 1 }
@@ -35,8 +35,8 @@ class MockLayer {
 }
 
 const mockDeckGLLayers = {
-  PathLayer: class PathLayer extends MockLayer {},
-  ScatterplotLayer: class ScatterplotLayer extends MockLayer {}
+  PathLayer: class PathLayer extends MockLayer { },
+  ScatterplotLayer: class ScatterplotLayer extends MockLayer { }
 };
 
 // Patch module loader to substitute deck.gl packages before requiring SUT

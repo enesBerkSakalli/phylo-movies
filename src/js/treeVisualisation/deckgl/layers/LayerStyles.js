@@ -1,5 +1,23 @@
 import { useAppStore } from '../../../core/store.js';
-import { colorToRgb } from '../../../services/ui/colorUtils.js';
+import {
+  getLinkColor as resolveLinkColor,
+  getLinkWidth as resolveLinkWidth,
+  getLinkDashArray as resolveLinkDashArray,
+  getLinkOutlineDashArray as resolveLinkOutlineDashArray,
+  getLinkOutlineColor as resolveLinkOutlineColor,
+  getLinkOutlineWidth as resolveLinkOutlineWidth
+} from './styles/linkStyles.js';
+import {
+  getNodeColor as resolveNodeColor,
+  getNodeBorderColor as resolveNodeBorderColor,
+  getNodeRadius as resolveNodeRadius,
+  getLabelColor as resolveLabelColor,
+  getLabelSize as resolveLabelSize
+} from './styles/nodeStyles.js';
+import {
+  getExtensionColor as resolveExtensionColor,
+  getExtensionWidth as resolveExtensionWidth
+} from './styles/extensionStyles.js';
 
 /**
  * LayerStyles - Centralized style management for Deck.gl layers
@@ -21,6 +39,11 @@ export class LayerStyles {
     // Per-render-cycle cache to avoid repeated store access
     this._renderCache = null;
 
+    const getBaseOpacity = this._getBaseOpacity.bind(this);
+    const getBaseStrokeWidth = this._getBaseStrokeWidth.bind(this);
+    this._styleHelpers = { getBaseOpacity, getBaseStrokeWidth };
+    this._nodeHelpers = { getBaseOpacity, getBaseStrokeWidth, nodeSize: 1 };
+
     // Subscribe to store changes
     this._setupStoreSubscription();
   }
@@ -33,14 +56,23 @@ export class LayerStyles {
   getCachedState() {
     if (!this._renderCache) {
       const state = useAppStore.getState();
-      const pulseEnabled = state.highlightPulseEnabled ?? true;
+      const pulseEnabled = state.changePulseEnabled ?? true;
+      // Get marked subtree data for subtree dimming (works even when red coloring is disabled)
+      const markedSubtreeData = state.getMarkedSubtreeData?.() || [];
       this._renderCache = {
         state,
         colorManager: state.getColorManager?.(),
         dimmingEnabled: state.dimmingEnabled,
         dimmingOpacity: state.dimmingOpacity,
+        subtreeDimmingEnabled: state.subtreeDimmingEnabled,
+        subtreeDimmingOpacity: state.subtreeDimmingOpacity,
+        markedSubtreeData,
+        markedSubtreesEnabled: state.markedSubtreesEnabled ?? true,
         pulseOpacity: pulseEnabled ? (state.getPulseOpacity?.() ?? 1.0) : 1.0,
-        dashingEnabled: state.activeEdgeDashingEnabled ?? true
+        dashingEnabled: state.activeEdgeDashingEnabled ?? true,
+        upcomingChangesEnabled: state.upcomingChangesEnabled ?? false,
+        highContrastHighlightingEnabled: state.highContrastHighlightingEnabled ?? true,
+        linkConnectionOpacity: state.linkConnectionOpacity ?? 0.6
       };
     }
     return this._renderCache;
@@ -86,182 +118,76 @@ export class LayerStyles {
 
   /**
    * Get link color using ColorManager for consistent highlighting
-   * Active change edges get highlight color, marked branches keep base color
-   * Handles dimming via opacity based on active change edges
+   * History mode uses same color but different opacity for accessibility
+   * Done: full opacity, Current: full, Next: semi-transparent
    * @param {Object} link - Link data object
    * @param {Object} [cached] - Optional cached state from getCachedState()
    * @returns {Array} RGBA color array for Deck.gl
    */
   getLinkColor(link, cached) {
-    // Use cached state if provided, otherwise get fresh (less efficient)
-    const { colorManager: cm, dimmingEnabled, dimmingOpacity } = cached || this.getCachedState();
-
-    // Get color for inner line: active edges get blue, marked keep base color
-    const rgb = colorToRgb(cm.getBranchColorForInnerLine(link));
-
-    // Calculate opacity based on active change edges and downstream status
-    let opacity = this._getBaseOpacity(link.opacity);
-    opacity = this._applyDimmingWithCache(opacity, cm, link, false, dimmingEnabled, dimmingOpacity);
-
-    return [...rgb, opacity];
+    const resolved = cached || this.getCachedState();
+    return resolveLinkColor(link, resolved, this._styleHelpers);
   }
 
   /**
    * Get link width with highlighting support
+   * History mode: Done=thick, Current=thick, Next=medium
    * @param {Object} link - Link data object
    * @param {Object} [cached] - Optional cached state from getCachedState()
    * @returns {number} Link width in pixels
    */
   getLinkWidth(link, cached) {
-    const baseWidth = this._getBaseStrokeWidth();
-    const { colorManager: cm } = cached || this.getCachedState();
-
-    if (!cm) {
-      return Math.max(baseWidth, 2); // Fallback without highlighting
-    }
-
-    // Check if link should be highlighted
-    const isHighlighted = this._isLinkHighlighted(link, cm);
-
-    return isHighlighted ? baseWidth * 1.5 : baseWidth;
+    const resolved = cached || this.getCachedState();
+    return resolveLinkWidth(link, resolved, this._styleHelpers);
   }
 
   /**
    * Get link dash array for dashed/dotted lines
-   * Active change edges are rendered with a dashed pattern proportional to path length
+   * History mode: Done=solid, Current=dashed, Next=dotted
    * @param {Object} link - Link data object
    * @param {Object} [cached] - Optional cached state from getCachedState()
    * @returns {Array|null} Dash array [on, off] or null for solid line
    */
   getLinkDashArray(link, cached) {
-    const { colorManager: cm, dashingEnabled } = cached || this.getCachedState();
-
-    // Only active change edges get dashed pattern when dashing is enabled
-    if (dashingEnabled && cm?.isActiveChangeEdge?.(link)) {
-      return this._calculateDashArray(link.path);
-    }
-
-    return null; // Solid line for everything else
+    const resolved = cached || this.getCachedState();
+    return resolveLinkDashArray(link, resolved);
   }
 
   /**
    * Get link outline dash array for dashed/dotted lines
-   * Uses a different pattern than inner line to be visually distinct
+   * Matches the inner line style for consistency
    * @param {Object} link - Link data object
    * @param {Object} [cached] - Optional cached state from getCachedState()
    * @returns {Array|null} Dash array [on, off] or null for solid line
    */
   getLinkOutlineDashArray(link, cached) {
-    const { colorManager: cm, dashingEnabled } = cached || this.getCachedState();
-
-    // Only active change edges get dashed pattern when dashing is enabled
-    if (dashingEnabled && cm?.isActiveChangeEdge?.(link)) {
-      // Use a proportional dash pattern based on path length
-      return this._calculateDashArray(link.path);
-    }
-
-    return null; // Solid line for everything else
-  }
-
-  /**
-   * Calculate dash array based on path length
-   * @private
-   * @param {Array} path - Array of [x, y, z] coordinates
-   * @returns {Array} Dash array [on, off]
-   */
-  _calculateDashArray(path) {
-    // Calculate path length for proportional dashing
-    const pathLength = this._calculatePathLength(path);
-
-    // Scale dash pattern based on path length
-    // Aim for ~5-8 dashes per edge, with min/max bounds
-    const targetDashes = 6;
-    const dashUnit = Math.max(4, Math.min(20, pathLength / (targetDashes * 1.5)));
-    const gapUnit = dashUnit * 0.5;
-
-    return [dashUnit, gapUnit];
-  }
-
-  /**
-   * Calculate the total length of a path
-   * @private
-   * @param {Array} path - Array of [x, y] coordinates
-   * @returns {number} Total path length in pixels
-   */
-  _calculatePathLength(path) {
-    if (!path || path.length < 2) return 0;
-
-    let length = 0;
-    for (let i = 1; i < path.length; i++) {
-      const dx = path[i][0] - path[i - 1][0];
-      const dy = path[i][1] - path[i - 1][1];
-      length += Math.sqrt(dx * dx + dy * dy);
-    }
-    return length;
+    const resolved = cached || this.getCachedState();
+    return resolveLinkOutlineDashArray(link, resolved);
   }
 
   /**
    * Get link outline color for silhouette/highlighting effect
-   * Only visible when there are changes to highlight
-   * Includes pulse animation for breathing effect
+   * History mode: same color, different glow intensity
+   * Done: strong static glow, Current: strong pulsing, Next: medium static
    * @param {Object} link - Link data object
    * @param {Object} [cached] - Optional cached state from getCachedState()
    * @returns {Array} RGBA color array for Deck.gl
    */
   getLinkOutlineColor(link, cached) {
-    const { colorManager: cm, pulseOpacity } = cached || this.getCachedState();
-
-    if (!cm) {
-      return [0, 0, 0, 0]; // Transparent if no ColorManager
-    }
-
-    // Only show outline if highlighted
-    if (!this._isLinkHighlighted(link, cm)) {
-      return [0, 0, 0, 0]; // Transparent for non-highlighted branches
-    }
-
-    // Convert the highlight color to RGB
-    const rgb = colorToRgb(cm.getBranchColorWithHighlights(link));
-
-    // Apply pulse animation to opacity
-    // Base opacity is 50% of link opacity, then modulated by pulse
-    const baseOpacity = link.opacity !== undefined ? link.opacity : 1;
-    const glowOpacity = Math.round(baseOpacity * 128 * pulseOpacity); // 50% base * pulse
-
-    return [rgb[0], rgb[1], rgb[2], glowOpacity];
+    const resolved = cached || this.getCachedState();
+    return resolveLinkOutlineColor(link, resolved);
   }
 
   /**
    * Get link outline width for silhouette effect
-   * Includes pulse animation for breathing effect on width
+   * History mode: Done=large (same as current), Current=large pulsing, Next=medium
    * @param {Object} link - Link data object
    * @param {Object} [cached] - Optional cached state from getCachedState()
    * @returns {number} Outline width in pixels
    */
   getLinkOutlineWidth(link, cached) {
-    const { colorManager: cm, pulseOpacity } = cached || this.getCachedState();
-
-    if (!cm) {
-      return 0; // No outline if no ColorManager
-    }
-
-    // Only show outline for highlighted branches
-    if (!this._isLinkHighlighted(link, cm)) {
-      return 0; // No outline for non-highlighted branches
-    }
-
-    // Make outline significantly wider than the link to create a "halo"
-    const baseWidth = this._getBaseStrokeWidth();
-    const highlightedWidth = baseWidth * 1.5; // Based on the highlighted value in getLinkWidth
-
-    // Apply pulse to width: oscillate between +4px and +8px glow
-    // pulseOpacity ranges from 0.4 to 1.0, map to 4-8px extra width
-    const minGlow = 4;
-    const maxGlow = 8;
-    const glowRange = maxGlow - minGlow;
-    const pulseGlow = minGlow + (glowRange * pulseOpacity);
-
-    return highlightedWidth + pulseGlow;
+    const resolved = cached || this.getCachedState();
+    return resolveLinkOutlineWidth(link, resolved, this._styleHelpers);
   }
 
   /**
@@ -272,20 +198,8 @@ export class LayerStyles {
    * @returns {Array} RGBA color array for Deck.gl
    */
   getNodeColor(node, cached) {
-    const { colorManager: cm, dimmingEnabled, dimmingOpacity } = cached || this.getCachedState();
-
-    // Convert node data to format expected by ColorManager
-    const nodeData = this._convertNodeToColorManagerFormat(node);
-
-    // Get color with highlighting (no dimming in color)
-    const hexColor = cm?.getNodeColor?.(nodeData) || '#000000';
-    const rgb = colorToRgb(hexColor);
-
-    // Calculate opacity with unified dimming logic
-    let opacity = this._getBaseOpacity(node.opacity);
-    opacity = this._applyDimmingWithCache(opacity, cm, nodeData, true, dimmingEnabled, dimmingOpacity);
-
-    return [...rgb, opacity];
+    const resolved = cached || this.getCachedState();
+    return resolveNodeColor(node, resolved, this._styleHelpers);
   }
 
   /**
@@ -295,24 +209,8 @@ export class LayerStyles {
    * @returns {Array} RGBA color array for Deck.gl
    */
   getNodeBorderColor(node, cached) {
-    const { colorManager: cm, dimmingEnabled, dimmingOpacity } = cached || this.getCachedState();
-    const nodeData = this._convertNodeToColorManagerFormat(node);
-
-    // Check if node is highlighted
-    const isHighlighted = this._isNodeHighlighted(nodeData, cm);
-
-    let opacity = this._getBaseOpacity(node.opacity);
-    opacity = this._applyDimmingWithCache(opacity, cm, nodeData, true, dimmingEnabled, dimmingOpacity);
-
-    if (isHighlighted) {
-      // Use a darker version of the highlight color for the border
-      const hexColor = cm?.getNodeColor?.(nodeData) || '#000000';
-      const rgb = colorToRgb(hexColor);
-      // Darken by reducing each channel by 30%
-      return [Math.round(rgb[0] * 0.7), Math.round(rgb[1] * 0.7), Math.round(rgb[2] * 0.7), opacity];
-    }
-
-    return [20, 20, 20, opacity];
+    const resolved = cached || this.getCachedState();
+    return resolveNodeBorderColor(node, resolved, this._styleHelpers);
   }
 
   /**
@@ -324,16 +222,9 @@ export class LayerStyles {
    * @returns {number} Node radius in pixels
    */
   getNodeRadius(node, minRadius = 3, cached) {
-    const { colorManager: cm } = cached || this.getCachedState();
-    const nodeSize = this._cache.nodeSize || useAppStore.getState().nodeSize || 1;
-    const baseRadius = node.radius || minRadius;
-    const scaledRadius = baseRadius * nodeSize;
-
-    // Boost radius for highlighted nodes (similar to link width boost)
-    const nodeData = this._convertNodeToColorManagerFormat(node);
-    const isHighlighted = this._isNodeHighlighted(nodeData, cm);
-
-    return isHighlighted ? scaledRadius * 1.3 : scaledRadius;
+    const resolved = cached || this.getCachedState();
+    this._nodeHelpers.nodeSize = this._cache.nodeSize || useAppStore.getState().nodeSize || 1;
+    return resolveNodeRadius(node, minRadius, resolved, this._nodeHelpers);
   }
 
   /**
@@ -343,7 +234,8 @@ export class LayerStyles {
    * @returns {Array} RGBA color array for Deck.gl
    */
   getLabelColor(label, cached) {
-    return this._getNodeBasedRgba(label, label.opacity, cached);
+    const resolved = cached || this.getCachedState();
+    return resolveLabelColor(label, resolved, this._styleHelpers);
   }
 
   /**
@@ -353,88 +245,34 @@ export class LayerStyles {
    * @returns {Array} RGBA color array for Deck.gl
    */
   getExtensionColor(extension, cached) {
-    return this._getNodeBasedRgba(extension, extension.opacity, cached);
+    const resolved = cached || this.getCachedState();
+    return resolveExtensionColor(extension, resolved, this._styleHelpers);
   }
 
   /**
    *
    * Get extension width
    * @param {Object} extension - Extension data object
+   * @param {Object} [cached] - Optional cached state
    * @returns {number} Extension width in pixels
    */
-  getExtensionWidth(extension) {
-    const baseWidth = this._getBaseStrokeWidth();
-    // Extensions are typically thinner than main branches
-    return baseWidth * 0.5;
+  getExtensionWidth(extension, cached) {
+    const resolved = cached || this.getCachedState();
+    return resolveExtensionWidth(extension, this._getBaseStrokeWidth(), resolved);
   }
 
   /**
-   * Get label size from store
+   * Get label size from store (optionally per-label for marked highlighting)
+   * @param {Object} label - Optional label data for dynamic sizing
+   * @param {Object} cached - Optional cached state
    * @returns {number} Label size in pixels
    */
-  getLabelSize() {
+  getLabelSize(label, cached) {
     const fontSize = this._cache.fontSize || useAppStore.getState().fontSize || '2.6em';
-    return parseFloat(fontSize) * 10 || 16;
+    const resolvedCached = cached || this.getCachedState();
+    return resolveLabelSize(label, fontSize, resolvedCached);
   }
 
-
-  /**
-   * Convert Deck.gl node format to ColorManager format
-   * @private
-   */
-  _convertNodeToColorManagerFormat(node) {
-    // If the node has an originalNode reference (from NodeConverter), use that
-    if (node.originalNode) {
-      return node.originalNode;
-    }
-
-    // Fallback for direct D3 hierarchy nodes
-    return node;
-  }
-
-
-
-  /**
-   * Get node/label/extension RGBA with dimming rules applied
-   * @private
-   */
-  _getNodeBasedRgba(entity, baseOpacity, cached) {
-    const { colorManager: cm, dimmingEnabled, dimmingOpacity } = cached || this.getCachedState();
-    const node = this._convertNodeToColorManagerFormat(entity);
-    const rgb = colorToRgb(cm?.getNodeColor?.(node) || '#000000');
-    let opacity = this._getBaseOpacity(baseOpacity);
-    opacity = this._applyDimmingWithCache(opacity, cm, node, true, dimmingEnabled, dimmingOpacity);
-    return [...rgb, opacity];
-  }
-
-  /**
-   * Is a link highlighted (color diff between base and highlighted)?
-   * @private
-   */
-  _isLinkHighlighted(link, cm) {
-    const normalColor = cm?.getBranchColor?.(link);
-    const highlightedColor = cm?.getBranchColorWithHighlights?.(link);
-    return normalColor !== highlightedColor;
-  }
-
-  /**
-   * Is a node highlighted (marked or active change edge)?
-   * @private
-   */
-  _isNodeHighlighted(nodeData, cm) {
-    if (!cm) return false;
-    // Check if node color differs from base (meaning it's highlighted)
-    const baseColor = cm.getNodeColor?.(nodeData, [], { skipHighlights: true });
-    const highlightedColor = cm.getNodeColor?.(nodeData);
-    // Fallback: check marked or active edge directly
-    const isMarked = cm.marked?.some(set => {
-      const splitIndices = nodeData?.data?.split_indices || nodeData?.split_indices;
-      return splitIndices?.some(idx => set.has(idx));
-    });
-    const isActiveEdge = cm.currentActiveChangeEdges?.size > 0 &&
-      cm.isNodeDownstreamOfAnyActiveChangeEdge?.(nodeData);
-    return isMarked || isActiveEdge || (baseColor !== highlightedColor);
-  }
 
   /**
    * Base stroke width from cache/store
@@ -453,72 +291,12 @@ export class LayerStyles {
   }
 
   /**
-   * Apply dimming per store settings and active-change/downstream flags
-   * Legacy method - prefer _applyDimmingWithCache for better performance
-   * @private
-   */
-  _applyDimming(opacity, hasActiveChangeEdges, isDownstream) {
-    const { dimmingEnabled, dimmingOpacity } = useAppStore.getState();
-    if (dimmingEnabled && hasActiveChangeEdges && !isDownstream) {
-      return Math.round(opacity * dimmingOpacity);
-    }
-    return opacity;
-  }
-
-  /**
-   * Apply dimming with cached state for better performance
-   * @private
-   * @param {number} opacity - Base opacity (0-255)
-   * @param {Object} cm - ColorManager instance
-   * @param {Object} entity - Link or node data
-   * @param {boolean} isNode - True if entity is a node, false if link
-   * @param {boolean} dimmingEnabled - From cached state
-   * @param {number} dimmingOpacity - From cached state
-   * @returns {number} Adjusted opacity
-   */
-  _applyDimmingWithCache(opacity, cm, entity, isNode, dimmingEnabled, dimmingOpacity) {
-    if (!dimmingEnabled || !cm?.hasActiveChangeEdges?.()) {
-      return opacity;
-    }
-
-    const isDownstream = isNode
-      ? cm.isNodeDownstreamOfAnyActiveChangeEdge?.(entity)
-      : cm.isDownstreamOfAnyActiveChangeEdge?.(entity);
-
-    if (!isDownstream) {
-      return Math.round(opacity * dimmingOpacity);
-    }
-    return opacity;
-  }
-
-  /**
-   * Invalidate cache and trigger style updates
-   * Called when external factors change that affect styling
-   */
-  invalidateCache() {
-    // Force cache refresh on next access
-    this._cache.strokeWidth = null;
-    this._cache.fontSize = null;
-    this._cache.nodeSize = null;
-    this._renderCache = null;
-
-    // Notify listeners
-    if (this.onStyleChange) {
-      this.onStyleChange();
-    }
-  }
-
-  /**
    * Set style change callback
    * @param {Function} callback - Function to call when styles change
    */
   setStyleChangeCallback(callback) {
     this.onStyleChange = callback;
   }
-
-
-
-
 
   /**
    * Clean up resources
