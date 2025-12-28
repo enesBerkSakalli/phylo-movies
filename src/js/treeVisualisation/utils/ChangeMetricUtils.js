@@ -1,29 +1,23 @@
-// Utilities to compute change metrics between two tree layouts
-// Provides: computeExtensionChangeMetrics(layoutFrom, layoutTo, options)
-//           classifyExtensionChanges(layoutFrom, layoutTo)
+/**
+ * Utilities to compute change metrics between two tree layouts
+ * Used for analyzing relationships and differences between phylogenetic trees.
+ */
 
-function signedShortestAngle(from, to) {
-  const TAU = Math.PI * 2;
-  let delta = (to - from) % TAU;
-  if (delta > Math.PI) delta -= TAU;
-  if (delta <= -Math.PI) delta += TAU;
-  return delta;
-}
+// ============================================================================
+// PUBLIC API
+// ============================================================================
 
-function safeLeaves(layout) {
-  if (!layout || !layout.tree || typeof layout.tree.leaves !== 'function') return [];
-  try { return layout.tree.leaves() || []; } catch (e) { return []; }
-}
-
-function leafKey(leaf) {
-  if (!leaf || !leaf.data) return null;
-  const d = leaf.data;
-  if (Array.isArray(d.split_indices) && d.split_indices.length > 0) return String(d.split_indices[0]);
-  if (d.name !== undefined && d.name !== null) return String(d.name);
-  if (d.id !== undefined && d.id !== null) return String(d.id);
-  return null;
-}
-
+/**
+ * Computes weighted change metrics between two tree layouts based on leaf positions.
+ * Considers both radial (radius) and angular (angle) changes.
+ *
+ * @param {Object} layoutFrom - The source tree layout object
+ * @param {Object} layoutTo - The target tree layout object
+ * @param {Object} [options={}] - Configuration options
+ * @param {number} [options.radiusWeight=0.6] - Weight for radial distance changes (0-1)
+ * @param {number} [options.angleWeight=0.4] - Weight for angular distance changes (0-1)
+ * @returns {Object} { averageChange, compared, totalWeightedChange }
+ */
 export function computeExtensionChangeMetrics(layoutFrom, layoutTo, options = {}) {
   // Validate inputs
   if (!layoutFrom || !layoutTo) {
@@ -74,6 +68,14 @@ export function computeExtensionChangeMetrics(layoutFrom, layoutTo, options = {}
   };
 }
 
+/**
+ * Classifies leaf nodes into 'enter', 'update', and 'exit' categories based on their presence
+ * in the source and target layouts.
+ *
+ * @param {Object} layoutFrom - The source tree layout
+ * @param {Object} layoutTo - The target tree layout
+ * @returns {Object} { enter: Array, update: Array, exit: Array }
+ */
 export function classifyExtensionChanges(layoutFrom, layoutTo) {
   const fromLeaves = safeLeaves(layoutFrom);
   const toLeaves = safeLeaves(layoutTo);
@@ -112,6 +114,54 @@ export function classifyExtensionChanges(layoutFrom, layoutTo) {
 
   return { enter, update, exit };
 }
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+/**
+ * Calculates the shortest signed angle between two angles (in radians).
+ * Result is in range [-PI, PI].
+ * @param {number} from - Start angle
+ * @param {number} to - End angle
+ * @returns {number} Shortest delta angle
+ */
+function signedShortestAngle(from, to) {
+  const TAU = Math.PI * 2;
+  let delta = (to - from) % TAU;
+  if (delta > Math.PI) delta -= TAU;
+  if (delta <= -Math.PI) delta += TAU;
+  return delta;
+}
+
+/**
+ * Safely extracts leaves from a layout object.
+ * @param {Object} layout - Layout object containing a tree
+ * @returns {Array} Array of leaf nodes
+ */
+function safeLeaves(layout) {
+  if (!layout || !layout.tree || typeof layout.tree.leaves !== 'function') return [];
+  try { return layout.tree.leaves() || []; } catch (e) { return []; }
+}
+
+/**
+ * Generates a unique key for a leaf node.
+ * Tries split_indices, then name, then id.
+ * @param {Object} leaf - The leaf node
+ * @returns {string|null} Unique string key or null
+ */
+function leafKey(leaf) {
+  if (!leaf || !leaf.data) return null;
+  const d = leaf.data;
+  if (Array.isArray(d.split_indices) && d.split_indices.length > 0) return String(d.split_indices[0]);
+  if (d.name !== undefined && d.name !== null) return String(d.name);
+  if (d.id !== undefined && d.id !== null) return String(d.id);
+  return null;
+}
+
+// ============================================================================
+// EXPORTS
+// ============================================================================
 
 // CommonJS export for tests that use require()
 module.exports = Object.assign(module.exports || {}, {

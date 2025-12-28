@@ -1,6 +1,16 @@
 import { useAppStore } from '../../core/store.js';
 import { TimelineMathUtils } from '../math/TimelineMathUtils.js';
 
+// ============================================================================
+// HELPERS
+// ============================================================================
+
+const toSet = (v) => v instanceof Set ? v : new Set(v);
+
+// ============================================================================
+// SCRUBBER API
+// ============================================================================
+
 export class ScrubberAPI {
   constructor(treeController, transitionResolver, timelineManager = null) {
     this.treeController = treeController;
@@ -9,209 +19,144 @@ export class ScrubberAPI {
     this.currentProgress = 0;
     this.lastInterpolationState = null;
   }
-  async updatePosition(progress) {
-    const clampedProgress = TimelineMathUtils.clampProgress(progress);
-    await this._performScrubUpdate(clampedProgress);
-  }
-  async endScrubbing(finalProgress = null) {
-    if (
-      finalProgress !== null &&
-      Math.abs(TimelineMathUtils.clampProgress(finalProgress) - this.currentProgress) > 1e-6
-    ) {
-      await this._performScrubUpdate(TimelineMathUtils.clampProgress(finalProgress));
-    }
-    const snapshot = this.lastInterpolationState;
-    this.lastInterpolationState = null;
-    return snapshot;
-  }
+
+  // ==========================================================================
+  // PUBLIC API
+  // ==========================================================================
 
   async startScrubbing(progress) {
     this.currentProgress = TimelineMathUtils.clampProgress(progress ?? 0);
     this.lastInterpolationState = null;
   }
 
-  async _performScrubUpdate(progress) {
-        this.currentProgress = progress;
-
-        try {
-            const interpolationData = await this._getInterpolationData(progress);
-
-            if (!interpolationData) return;
-
-            const direction = useAppStore.getState().navigationDirection;
-
-            useAppStore.getState().setNavigationDirection(direction);
-
-            await this._renderScrubFrame(interpolationData, direction);
-
-            this.lastInterpolationState = {
-                progress,
-                interpolationData,
-                direction,
-                timestamp: this.lastUpdateTime
-            };
-
-        } catch (error) {}
+  async updatePosition(progress) {
+    await this._performScrubUpdate(TimelineMathUtils.clampProgress(progress));
   }
+
+  async endScrubbing(finalProgress = null) {
+    if (finalProgress !== null) {
+      const clamped = TimelineMathUtils.clampProgress(finalProgress);
+      if (Math.abs(clamped - this.currentProgress) > 1e-6) {
+        await this._performScrubUpdate(clamped);
+      }
+    }
+    const snapshot = this.lastInterpolationState;
+    this.lastInterpolationState = null;
+    return snapshot;
+  }
+
+  destroy() {
+    this.lastInterpolationState = null;
+    this.treeController = null;
+    this.transitionResolver = null;
+  }
+
+  // ==========================================================================
+  // SCRUB UPDATE
+  // ==========================================================================
+
+  async _performScrubUpdate(progress) {
+    this.currentProgress = progress;
+    try {
+      const interpolationData = await this._getInterpolationData(progress);
+      if (!interpolationData) return;
+
+      const direction = useAppStore.getState().navigationDirection;
+      await this._renderScrubFrame(interpolationData, direction);
+
+      this.lastInterpolationState = { progress, interpolationData, direction };
+    } catch (error) { }
+  }
+
+  // ==========================================================================
+  // RENDERING
+  // ==========================================================================
+
   async _renderScrubFrame(interpolationData, direction) {
     const { fromTree, toTree, timeFactor, fromIndex, toIndex } = interpolationData;
-    const storeState = useAppStore.getState();
-    const { updateColorManagerMarkedSubtrees, updateColorManagerActiveChangeEdge,
-            getActualHighlightData, getCurrentActiveChangeEdge,
-            markedComponentsEnabled, activeChangeEdgesEnabled,
-            comparisonMode, treeControllers, transitionResolver, movieData } = storeState;
+    const state = useAppStore.getState();
     const primaryTreeIndex = timeFactor < 0.5 ? fromIndex : toIndex;
-    if (markedComponentsEnabled) {
-      const markedComponents = getActualHighlightData(primaryTreeIndex);
-      updateColorManagerMarkedSubtrees(markedComponents);
-    } else {
-      updateColorManagerMarkedSubtrees([]);
-    }
-    if (activeChangeEdgesEnabled) {
-      const activeChangeEdge = getCurrentActiveChangeEdge(primaryTreeIndex);
-      updateColorManagerActiveChangeEdge(activeChangeEdge);
-    } else {
-      updateColorManagerActiveChangeEdge([]);
-    }
 
-    // Use specialized scrubbing render mode
-    const renderOptions = {
+    this._updateColorManagerForScrub(state, primaryTreeIndex);
+
+    const options = {
       scrubMode: true,
-      direction: direction,
-    };
-
-    // Call optimized scrubbing render method with proper tree indices
-    const enhancedOptions = {
-      ...renderOptions,
+      direction,
       fromTreeIndex: fromIndex,
-      toTreeIndex: toIndex
+      toTreeIndex: toIndex,
     };
 
-    // In comparison mode, pass right tree index for static display
-    if (comparisonMode) {
-      const full = Array.isArray(transitionResolver?.fullTreeIndices) ? transitionResolver.fullTreeIndices : [];
-      // Show the next anchor after the current interpolated index (using fromIndex to be consistent with animation loop)
-      const rightIndex = full.find((i) => i > fromIndex) ?? full[full.length - 1] ?? fromIndex;
-
-      enhancedOptions.comparisonMode = true;
-      enhancedOptions.rightTreeIndex = rightIndex;
+    if (state.comparisonMode) {
+      const anchors = state.transitionResolver.fullTreeIndices;
+      options.comparisonMode = true;
+      options.rightTreeIndex = anchors.find((i) => i > fromIndex) ?? anchors[anchors.length - 1];
     }
 
-    await this.treeController.renderScrubFrame(fromTree, toTree, timeFactor, enhancedOptions);
+    await this.treeController.renderScrubFrame(fromTree, toTree, timeFactor, options);
   }
 
+  _updateColorManagerForScrub(state, treeIndex) {
+    const { colorManager, markedSubtreesEnabled, activeChangeEdgesEnabled,
+      getMarkedSubtreeData, getCurrentActiveChangeEdge } = state;
+    if (!colorManager) return;
+
+    colorManager.updateMarkedSubtrees(
+      markedSubtreesEnabled ? getMarkedSubtreeData(treeIndex).map(toSet) : []
+    );
+    colorManager.updateActiveChangeEdge(
+      activeChangeEdgesEnabled ? getCurrentActiveChangeEdge(treeIndex) : []
+    );
+  }
+
+  // ==========================================================================
+  // INTERPOLATION DATA
+  // ==========================================================================
+
   async _getInterpolationData(progress) {
-    const storeState = useAppStore.getState();
-    const { treeList, movieData } = storeState;
+    const { treeList, movieData } = useAppStore.getState();
     const segments = this.timelineManager?.segments;
-    const totalDuration = this.timelineManager?.timelineData?.totalDuration;
-    if (segments && Number.isFinite(totalDuration) && totalDuration > 0) {
-      const currentTime = TimelineMathUtils.progressToTime(progress, totalDuration);
-      const segmentDurations = this.timelineManager?.timelineData?.segmentDurations || TimelineMathUtils.calculateSegmentDurations(segments);
+    const timelineData = this.timelineManager?.timelineData;
 
-      let accumulatedTime = 0;
-      let segIndex = segments.length - 1; // Default to last segment
-      let segStart = 0;
-
-      for (let i = 0; i < segments.length; i++) {
-          const duration = segmentDurations[i];
-          const segmentStart = accumulatedTime;
-          const segmentEnd = accumulatedTime + duration;
-
-          // Check if currentTime falls within this segment
-          // For 0-duration segments, we need exact match or range check
-          if (duration === 0) {
-              // Anchor segment: check if time matches exactly
-              if (currentTime === segmentStart) {
-                  segIndex = i;
-                  segStart = segmentStart;
-                  // Don't break yet - check if there are more anchors at same time
-              }
-          } else {
-              // Interpolation segment: check if time is within range
-              if (currentTime >= segmentStart && currentTime < segmentEnd) {
-                  segIndex = i;
-                  segStart = segmentStart;
-                  break;
-              }
-          }
-
-          accumulatedTime = segmentEnd;
-      }
-
-      // Handle edge case: if we're at the very end
-      if (segIndex === -1 || currentTime >= totalDuration) {
-          segIndex = segments.length - 1;
-          segStart = accumulatedTime - (segmentDurations[segIndex] || 0);
-      }
-
-      const segment = segments[segIndex];
-      const segDur = segmentDurations[segIndex] || 1;
-      if (segment?.isFullTree || !segment?.hasInterpolation || !Array.isArray(segment?.interpolationData)) {
-        const idx = segment?.interpolationData?.[0]?.originalIndex ?? 0;
-        return {
-          fromTree: movieData.interpolated_trees[idx],
-          toTree: movieData.interpolated_trees[idx],
-          timeFactor: 0,
-          fromIndex: idx,
-          toIndex: idx
-        };
-      }
-      const steps = segment.interpolationData.length;
-      if (steps <= 1) {
-        const idx = segment.interpolationData[0].originalIndex;
-        return {
-          fromTree: movieData.interpolated_trees[idx],
-          toTree: movieData.interpolated_trees[idx],
-          timeFactor: 0,
-          fromIndex: idx,
-          toIndex: idx
-        };
-      }
-      const local = Math.max(0, Math.min(1, (currentTime - segStart) / segDur));
-      const exact = local * (steps - 1);
-      const fromStep = Math.floor(exact);
-      const toStep = Math.min(fromStep + 1, steps - 1);
-      const timeFactor = exact - fromStep;
-
-      const fromIndex = segment.interpolationData[fromStep].originalIndex;
-      const toIndex = segment.interpolationData[toStep].originalIndex;
-
-      return {
-        fromTree: movieData.interpolated_trees[fromIndex],
-        toTree: movieData.interpolated_trees[toIndex],
-        timeFactor,
-        fromIndex,
-        toIndex
-      };
+    if (segments?.length && timelineData?.totalDuration > 0) {
+      return this._getSegmentAwareInterpolation(progress, segments, timelineData, movieData);
     }
     return TimelineMathUtils.getInterpolationDataForProgress(progress, treeList, movieData);
   }
 
-  _detectNavigationDirection(currentProgress) {
-        // This method is no longer used but can be kept for reference or removed.
-        if (!this.lastInterpolationState) {
-            return 'forward';
-        }
+  _getSegmentAwareInterpolation(progress, segments, timelineData, movieData) {
+    const { totalDuration, segmentDurations, cumulativeDurations } = timelineData;
+    const currentTime = TimelineMathUtils.progressToTime(progress, totalDuration);
+    const segIndex = TimelineMathUtils._binarySearchSegment(cumulativeDurations, currentTime);
+    const segment = segments[segIndex];
 
-        const prevProgress = this.lastInterpolationState.progress;
+    if (!segment) return this._createStaticResult(0, movieData);
 
-        if (currentProgress > prevProgress) {
-            return 'forward';
-        } else if (currentProgress < prevProgress) {
-            return 'backward';
-        } else {
-            return 'none';
-        }
+    if (segment.isFullTree || !segment.hasInterpolation) {
+      return this._createStaticResult(segment.interpolationData[0].originalIndex, movieData);
     }
 
-    destroy() {
-    if (this.isActive) {
-      this.endScrubbing();
+    const steps = segment.interpolationData.length;
+    if (steps <= 1) {
+      return this._createStaticResult(segment.interpolationData[0].originalIndex, movieData);
     }
 
-    this.lastInterpolationState = null;
-    this.treeController = null;
-    this.transitionResolver = null;
+    const segStart = segIndex > 0 ? cumulativeDurations[segIndex - 1] : 0;
+    const localProgress = (currentTime - segStart) / segmentDurations[segIndex];
+    const exactStep = localProgress * (steps - 1);
+    const fromStep = Math.floor(exactStep);
+    const toStep = Math.min(fromStep + 1, steps - 1);
+
+    return {
+      fromTree: movieData.interpolated_trees[segment.interpolationData[fromStep].originalIndex],
+      toTree: movieData.interpolated_trees[segment.interpolationData[toStep].originalIndex],
+      timeFactor: exactStep - fromStep,
+      fromIndex: segment.interpolationData[fromStep].originalIndex,
+      toIndex: segment.interpolationData[toStep].originalIndex
+    };
+  }
+
+  _createStaticResult(idx, movieData) {
+    const tree = movieData.interpolated_trees[idx];
+    return { fromTree: tree, toTree: tree, timeFactor: 0, fromIndex: idx, toIndex: idx };
   }
 }

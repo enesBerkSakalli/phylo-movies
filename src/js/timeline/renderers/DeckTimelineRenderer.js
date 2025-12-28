@@ -1,17 +1,79 @@
-import '../../../css/movie-timeline/container.css';
+// Load timeline styles only in browser environments to keep Node-based tests happy
+if (typeof document !== 'undefined') {
+  import('../../../css/movie-timeline/container.css');
+}
 import { Deck, OrthographicView } from '@deck.gl/core';
 import { TIMELINE_CONSTANTS, TIMELINE_THEME } from '../constants.js';
 import { handleTimelineMouseMoveOrScrub, handleTimelineMouseDown, handleTimelineMouseUp, handleTimelineWheel, handleTimelineMouseLeave } from '../events/eventHandlers.js';
-import { createPathLayer, createAnchorLayer, createConnectionLayer, createAnchorHoverLayer, createConnectionHoverLayer, createAnchorSelectionLayer, createConnectionSelectionLayer, createSeparatorLayer } from '../utils/layerUtils.js';
-import { msToX, xToMs, calculateZoomScale } from '../utils/coordinateUtils.js';
+import { createPathLayer, createAnchorLayer, createConnectionLayer, createAnchorHoverLayer, createConnectionHoverLayer, createAnchorSelectionLayer, createConnectionSelectionLayer, createSeparatorLayer, createScrubberLayer, getDevicePixelRatio } from '../utils/layerFactories.js';
+import { msToX, xToMs, calculateZoomScale } from '../math/coordinateUtils.js';
 import { timeToSegmentIndex } from '../utils/searchUtils.js';
 import { getTargetSegmentIndex } from '../utils/segmentUtils.js';
-import { createScrubberLayer, getDevicePixelRatio } from '../utils/renderingUtils.js';
 import { processSegments } from '../data/segmentProcessor.js';
 
+/**
+ * WebGL-based timeline renderer using deck.gl.
+ * Renders segments as anchors (circles) and connections (lines), with scrubber, hover, and selection states.
+ * Supports zoom, pan, and scrubbing interactions.
+ */
 export class DeckTimelineRenderer {
+
+  // ==========================================================================
+  // CONSTRUCTOR
+  // ==========================================================================
+
+  /**
+   * Creates a new timeline renderer instance.
+   * @param {Object} timelineData - Timeline metadata containing durations
+   * @param {number} timelineData.totalDuration - Total duration in milliseconds
+   * @param {number[]} timelineData.segmentDurations - Duration of each segment
+   * @param {number[]} timelineData.cumulativeDurations - Cumulative end times for each segment
+   * @param {Object[]} segments - Array of segment objects to render
+   */
   constructor(timelineData, segments) {
-    // Validate required data structures
+    this._validateConstructorArgs(timelineData, segments);
+
+    this.timelineData = timelineData;
+    this.segments = segments;
+
+    // DOM & deck.gl
+    this.deck = null;
+    this.container = null;
+    this.canvas = null;
+
+    // Event handling
+    this._handlers = new Map();
+    this._onResize = () => this._scheduleUpdate();
+
+    // Interaction state
+    this._selectedId = null;
+    this._lastHoverId = null;
+    this._isScrubbing = false;
+    this._scrubThresholdPx = 10;
+    this._wasScrubbingOnMouseDown = false;
+
+    // Timeline range
+    this._totalDuration = timelineData.totalDuration;
+    this._rangeStart = 0;
+    this._rangeEnd = this._totalDuration;
+    this._scrubberMs = 0;
+
+    // Rendering
+    this._updateScheduled = false;
+    this._width = 0;
+
+    // Layer instances (initialized in init())
+    this.separatorLayer = null;
+    this.connectionLayer = null;
+    this.anchorLayer = null;
+    this.connectionHoverLayer = null;
+    this.anchorHoverLayer = null;
+    this.connectionSelectionLayer = null;
+    this.anchorSelectionLayer = null;
+    this.scrubberLayer = null;
+  }
+
+  _validateConstructorArgs(timelineData, segments) {
     if (!timelineData || typeof timelineData !== 'object') {
       throw new Error('[DeckTimelineRenderer] Invalid timelineData: must be an object');
     }
@@ -27,134 +89,119 @@ export class DeckTimelineRenderer {
     if (!Array.isArray(segments)) {
       throw new Error('[DeckTimelineRenderer] Invalid segments: must be an array');
     }
-
-    this.timelineData = timelineData;
-    this.segments = segments;
-    this.deck = null;
-    this.container = null;
-    this.canvas = null;
-    this._handlers = new Map();
-    this._selectedId = null;
-    this._lastHoverId = null;
-    this._isScrubbing = false;
-    this._onResize = () => this._scheduleUpdate();
-
-    this._totalDuration = timelineData.totalDuration;
-    this._rangeStart = 0;
-    this._rangeEnd = this._totalDuration;
-    this._scrubberMs = 0;
-
-    this._viewState = { target: [0, 0, 0], zoom: 0 };
-    this._updateScheduled = false;
-
-    // Scrub threshold used by event handlers to detect grabbing the scrubber
-    this._scrubThresholdPx = 10;
-    // --- Pre-bind retained handlers for stable references (only those used) ---
-
-    // --- Layer instances, initialized once ---
-    this.separatorLayer = null;
-    this.connectionLayer = null;
-    this.anchorLayer = null;
-    this.connectionHoverLayer = null;
-    this.anchorHoverLayer = null;
-    this.connectionSelectionLayer = null;
-    this.anchorSelectionLayer = null;
-    this.scrubberLayer = null;
   }
 
+  // ==========================================================================
+  // INITIALIZATION
+  // ==========================================================================
+
+  /**
+   * Initializes the renderer by creating the canvas, deck.gl instance, and binding events.
+   * @param {HTMLElement} container - DOM element to render into
+   * @returns {DeckTimelineRenderer} This instance for chaining
+   */
   init(container) {
-    if (!window.getComputedStyle(container).position || window.getComputedStyle(container).position === 'static') {
-      container.style.position = 'relative';
-    }
-    this.container = container;
-    this.canvas = document.createElement('div');
-    this.canvas.style.position = 'absolute';
-    this.canvas.style.left = '0';
-    this.canvas.style.right = '0';
-    this.canvas.style.top = '0';
-    this.canvas.style.bottom = '0';
-    this.canvas.style.zIndex = '2';
-    this.canvas.style.pointerEvents = 'auto';
-    container.appendChild(this.canvas);
+    this._setupContainer(container);
+    this._createLayers();
+    this._createDeck();
 
-    // --- Create layer instances one time with empty data ---
-    this.separatorLayer = createSeparatorLayer([], TIMELINE_THEME);
-    this.connectionLayer = createConnectionLayer([], TIMELINE_THEME.connectionWidth);
-    this.anchorLayer = createAnchorLayer([], TIMELINE_THEME.anchorStrokeWidth);
-    this.connectionHoverLayer = createConnectionHoverLayer([], TIMELINE_THEME.connectionHoverRGB, TIMELINE_THEME.connectionHoverWidth);
-    this.anchorHoverLayer = createAnchorHoverLayer([], TIMELINE_THEME.connectionHoverRGB);
-    this.connectionSelectionLayer = createConnectionSelectionLayer([], TIMELINE_THEME);
-    this.anchorSelectionLayer = createAnchorSelectionLayer([], TIMELINE_THEME);
-    // Initialize scrubberLayer as a proper PathLayer instance
-    this.scrubberLayer = createPathLayer('scrubber-layer', [], [0, 0, 0, 0], 1);
-
-    const rect = container.getBoundingClientRect();
-    const width = Math.max(1, rect.width);
-    const height = Math.max(1, rect.height);
-
-    this.deck = new Deck({
-      parent: this.canvas,
-      views: [new OrthographicView({
-        id: 'ortho',
-        flipY: false,
-        near: 0.1,
-        far: 1000
-      })],
-      controller: false,
-      viewState: this._viewState,
-      width,
-      height,
-      useDevicePixels: getDevicePixelRatio(),
-      layers: [],
-      onViewStateChange: () => {},
-      glOptions: {
-        alpha: true,
-        preserveDrawingBuffer: true
-      }
-    });
-
-    this.addCustomTime(TIMELINE_CONSTANTS.DEFAULT_PROGRESS, 'scrubber');
-
+    this.setCustomTime(TIMELINE_CONSTANTS.DEFAULT_PROGRESS);
     this._updateLayers();
-    window.addEventListener('resize', this._onResize);
-    if (window.ResizeObserver) {
-      this._resizeObserver = new ResizeObserver(() => this._scheduleUpdate());
-      this._resizeObserver.observe(this.container);
-    }
+
+    this._bindResizeObservers();
     this._bindMouseEvents();
 
     return this;
   }
 
-  setScrubbing(enabled) {
-    this._isScrubbing = !!enabled;
-    this._scheduleUpdate();
+  _setupContainer(container) {
+    if (!window.getComputedStyle(container).position || window.getComputedStyle(container).position === 'static') {
+      container.style.position = 'relative';
+    }
+    this.container = container;
+
+    this.canvas = document.createElement('div');
+    this.canvas.style.cssText = 'position:absolute;left:0;right:0;top:0;bottom:0;z-index:2;pointer-events:auto;';
+    container.appendChild(this.canvas);
   }
 
-  on(event, handler) {
-    if (!this._handlers.has(event)) this._handlers.set(event, new Set());
-    this._handlers.get(event).add(handler);
+  _createLayers() {
+    this.separatorLayer = createSeparatorLayer([], TIMELINE_THEME);
+    this.connectionLayer = createConnectionLayer([], TIMELINE_THEME.connectionWidth);
+    this.anchorLayer = createAnchorLayer([], TIMELINE_THEME.anchorStrokeWidth);
+    this.connectionHoverLayer = createConnectionHoverLayer([], TIMELINE_THEME.connectionHoverRGB, TIMELINE_THEME.connectionHoverWidth, (info) => this._handleHoverLayerClick(info));
+    this.anchorHoverLayer = createAnchorHoverLayer([], TIMELINE_THEME.connectionHoverRGB, (info) => this._handleHoverLayerClick(info));
+    this.connectionSelectionLayer = createConnectionSelectionLayer([], TIMELINE_THEME);
+    this.anchorSelectionLayer = createAnchorSelectionLayer([], TIMELINE_THEME);
+    this.scrubberLayer = createPathLayer('scrubber-layer', [], [0, 0, 0, 0], 1);
   }
 
-  off(event, handler) {
-    const set = this._handlers.get(event);
-    if (set) set.delete(handler);
+  _createDeck() {
+    const rect = this.container.getBoundingClientRect();
+    const width = Math.max(1, rect.width);
+    const height = Math.max(1, rect.height);
+
+    this.deck = new Deck({
+      parent: this.canvas,
+      views: [new OrthographicView({ id: 'ortho', flipY: false, near: 0.1, far: 1000 })],
+      controller: false,
+      viewState: { target: [0, 0, 0], zoom: 0 },
+      width,
+      height,
+      useDevicePixels: getDevicePixelRatio(),
+      layers: [],
+      onViewStateChange: () => { },
+      glOptions: { alpha: true, preserveDrawingBuffer: true }
+    });
   }
 
-  addCustomTime(ms, id) {
-    const value = typeof ms === 'number' ? ms : TIMELINE_CONSTANTS.DEFAULT_PROGRESS;
-    this._scrubberMs = Math.max(0, Math.min(value, this._totalDuration));
-    this._scheduleUpdate();
+  _bindResizeObservers() {
+    window.addEventListener('resize', this._onResize);
+    if (typeof ResizeObserver !== 'undefined') {
+      this._resizeObserver = new ResizeObserver(() => this._scheduleUpdate());
+      this._resizeObserver.observe(this.container);
+    }
   }
 
-  setCustomTime(ms, id) {
+  // ==========================================================================
+  // PUBLIC API: Scrubber & Selection
+  // ==========================================================================
+
+  /**
+   * Sets the scrubber position to a specific time.
+   * @param {number} ms - Time in milliseconds (clamped to valid range)
+   */
+  setCustomTime(ms) {
     this._scrubberMs = Math.max(0, Math.min(ms, this._totalDuration));
     this._scheduleUpdate();
   }
+
+  /**
+   * Sets the scrubbing state. When true, the scrubber is visually highlighted.
+   * @param {boolean} enabled - Whether scrubbing is active
+   */
+  setScrubbing(enabled) {
+    this._isScrubbing = enabled;
+    this._scheduleUpdate();
+  }
+
+  /**
+   * Sets the selected segment(s). Only the first ID is used.
+   * @param {number[]|null} ids - Array of segment IDs (1-indexed) or null to clear
+   */
   setSelection(ids) {
     this._selectedId = Array.isArray(ids) && ids.length ? ids[0] : null;
     this._updateLayers();
   }
+
+  // ==========================================================================
+  // PUBLIC API: Zoom & Pan
+  // ==========================================================================
+
+  /**
+   * Zooms in by reducing the visible time range, centered on current view.
+   * @param {number} pct - Zoom factor (0.2 = 20% reduction in visible span)
+   */
   zoomIn(pct) {
     const span = this._rangeEnd - this._rangeStart;
     const newSpan = Math.max(1, span * (1 - pct));
@@ -163,6 +210,11 @@ export class DeckTimelineRenderer {
     this._rangeEnd = Math.min(this._totalDuration, center + newSpan / 2);
     this._scheduleUpdate();
   }
+
+  /**
+   * Zooms out by expanding the visible time range, centered on current view.
+   * @param {number} pct - Zoom factor (0.2 = 20% increase in visible span)
+   */
   zoomOut(pct) {
     const span = this._rangeEnd - this._rangeStart;
     const newSpan = Math.min(this._totalDuration, span * (1 + pct));
@@ -171,135 +223,99 @@ export class DeckTimelineRenderer {
     this._rangeEnd = Math.min(this._totalDuration, center + newSpan / 2);
     this._scheduleUpdate();
   }
+
+  /**
+   * Resets zoom to show the entire timeline.
+   */
   fit() {
-    // This now works by updating the internal range state
-    // and letting _updateLayers calculate the correct viewState.
     this._rangeStart = 0;
     this._rangeEnd = this._totalDuration;
     this._scheduleUpdate();
   }
 
-  // --- THE FIX: Add the missing public methods ---
+  /**
+   * Pans the view so the given time is at the left edge, preserving zoom level.
+   * @param {number} ms - Target time in milliseconds for left edge
+   */
+  moveTo(ms) {
+    const span = this._rangeEnd - this._rangeStart;
+    const newStart = Math.max(0, Math.min(ms, this._totalDuration - span));
+    this._rangeStart = newStart;
+    this._rangeEnd = newStart + span;
+    this._scheduleUpdate();
+  }
+
+  // ==========================================================================
+  // PUBLIC API: Getters
+  // ==========================================================================
 
   /**
-   * Returns the total duration of the timeline.
-   * @returns {number} The total duration in milliseconds.
+   * Returns the total duration of the timeline in milliseconds.
+   * @returns {number} Total duration
    */
   getTotalDuration() {
     return this._totalDuration;
   }
 
   /**
-   * Calculates and returns the currently visible time range.
-   * @returns {{min: number, max: number}|null} An object with min and max time, or null if not available.
+   * Returns the currently visible time range.
+   * @returns {{min: number, max: number}} Visible range in milliseconds
    */
   getVisibleTimeRange() {
-    // Use internal range state instead of trying to reverse-engineer from viewState
-    return {
-      min: this._rangeStart,
-      max: this._rangeEnd
+    return { min: this._rangeStart, max: this._rangeEnd };
+  }
+
+  // ==========================================================================
+  // PUBLIC API: Events
+  // ==========================================================================
+
+  /**
+   * Registers an event handler for timeline events.
+   * @param {string} event - Event name ('timechange', 'timechanged', 'select', 'itemover', 'itemout', 'mouseMove')
+   * @param {Function} handler - Callback function receiving event payload
+   */
+  on(event, handler) {
+    if (!this._handlers.has(event)) this._handlers.set(event, new Set());
+    this._handlers.get(event).add(handler);
+  }
+
+  // ==========================================================================
+  // EVENT HANDLING
+  // ==========================================================================
+
+  _bindMouseEvents() {
+    const eventConfigs = [
+      { event: 'mousemove', handler: (e) => handleTimelineMouseMoveOrScrub(this, e), target: this.canvas },
+      { event: 'mousedown', handler: (e) => handleTimelineMouseDown(this, e), target: this.canvas },
+      { event: 'mouseup', handler: () => this._handleMouseUp(), target: window },
+      { event: 'click', handler: (e) => this._handleClick(e), target: this.canvas },
+      { event: 'wheel', handler: (e) => handleTimelineWheel(this, e), target: this.canvas, options: { passive: false } },
+      { event: 'mouseleave', handler: () => handleTimelineMouseLeave(this), target: this.canvas }
+    ];
+
+    eventConfigs.forEach(({ event, handler, target, options }) => {
+      target.addEventListener(event, handler, options);
+    });
+
+    this._unbindMouseEvents = () => {
+      eventConfigs.forEach(({ event, handler, target, options }) => {
+        target.removeEventListener(event, handler, options);
+      });
     };
   }
 
-  // --- END FIX ---
-
-  moveTo(ms) {
-    // Pan the view to show 'ms' at the start, preserving current zoom level (span)
-    const span = this._rangeEnd - this._rangeStart;
-    const newStart = Math.max(0, Math.min(ms, this._totalDuration - span));
-    const newEnd = newStart + span;
-
-    this._rangeStart = newStart;
-    this._rangeEnd = newEnd;
-    this._scheduleUpdate();
-  }
-
-  destroy() {
-    if (this.deck) {
-      this.deck.finalize();
-    }
-    if (this.canvas?.parentNode) this.canvas.parentNode.removeChild(this.canvas);
-    // Unbind mouse events if previously bound to avoid leaks
-    if (this._unbindMouseEvents) {
-      try { this._unbindMouseEvents(); } catch {}
-      this._unbindMouseEvents = null;
-    }
-    window.removeEventListener('resize', this._onResize);
-    if (this._resizeObserver) {
-      try { this._resizeObserver.disconnect(); } catch {}
-      this._resizeObserver = null;
-    }
-    this.deck = null;
-    this.container = null;
-    this._handlers.clear();
-  }
-
-  _updateLayers() {
-    if (!this.deck) return;
-    const rect = this.container.getBoundingClientRect();
-    const width = Math.max(1, Math.round(rect.width));
-    const height = Math.max(1, Math.round(rect.height));
-
-    this._width = width;
-
-    const rangeStart = this._rangeStart;
-    const rangeEnd = this._rangeEnd;
-    const buffer = (rangeEnd - rangeStart) * 0.1;
-    const visStart = rangeStart - buffer;
-    const visEnd = rangeEnd + buffer;
-
-    const startIdx = Math.max(0, timeToSegmentIndex(Math.max(0, visStart), this.timelineData.cumulativeDurations) - 1);
-
-    const rawEndIdx = timeToSegmentIndex(Math.min(this._totalDuration - 1, visEnd), this.timelineData.cumulativeDurations);
-    const endIdx = Math.min(this.segments.length - 1, rawEndIdx + 1);
-
-    const zoomScale = calculateZoomScale(rangeStart, rangeEnd, this._totalDuration);
-
-    const {
-      separators,
-      anchorPoints,
-      selectionAnchors,
-      hoverAnchors,
-      connections,
-      selectionConnections,
-      hoverConnections
-    } = processSegments({
-      startIdx, endIdx, width, height, visStart, visEnd, zoomScale, theme: TIMELINE_THEME,
-      timelineData: this.timelineData,
-      segments: this.segments,
-      selectedId: this._selectedId,
-      lastHoverId: this._lastHoverId,
-      rangeStart: this._rangeStart,
-      rangeEnd: this._rangeEnd
-    });
-
-    // --- Clone layers with new data and props ---
-    const layers = [
-      this.separatorLayer.clone({ data: separators, getColor: [TIMELINE_THEME.separatorRGB[0], TIMELINE_THEME.separatorRGB[1], TIMELINE_THEME.separatorRGB[2], 120], widthMinPixels: TIMELINE_THEME.separatorWidth }),
-      this.connectionLayer.clone({ data: connections, widthMinPixels: TIMELINE_THEME.connectionWidth }),
-      this.connectionHoverLayer.clone({ data: hoverConnections, getColor: [TIMELINE_THEME.connectionHoverRGB[0], TIMELINE_THEME.connectionHoverRGB[1], TIMELINE_THEME.connectionHoverRGB[2], 160], widthMinPixels: TIMELINE_THEME.connectionHoverWidth }),
-      this.connectionSelectionLayer.clone({ data: selectionConnections, getColor: [TIMELINE_THEME.connectionSelectionRGB[0], TIMELINE_THEME.connectionSelectionRGB[1], TIMELINE_THEME.connectionSelectionRGB[2], 230], widthMinPixels: TIMELINE_THEME.connectionSelectionWidth }),
-      this.scrubberLayer.clone(createScrubberLayer(this._scrubberMs, this._rangeStart, this._rangeEnd, width, height, TIMELINE_THEME, this._isScrubbing)),
-      // Anchor layers on top to ensure circles are always visible
-      this.anchorLayer.clone({ data: anchorPoints, lineWidthMinPixels: TIMELINE_THEME.anchorStrokeWidth }),
-      this.anchorHoverLayer.clone({ data: hoverAnchors, getLineColor: [TIMELINE_THEME.connectionHoverRGB[0], TIMELINE_THEME.connectionHoverRGB[1], TIMELINE_THEME.connectionHoverRGB[2], 160] }),
-      this.anchorSelectionLayer.clone({ data: selectionAnchors, getLineColor: [TIMELINE_THEME.connectionSelectionRGB[0], TIMELINE_THEME.connectionSelectionRGB[1], TIMELINE_THEME.connectionSelectionRGB[2], 230] })
-    ];
-
-    this.deck.setProps({
-      width,
-      height,
-      layers,
-      viewState: this._viewState
-    });
-    this._updateScheduled = false;
-  }
-
   _handleClick(event) {
+    if (this._wasScrubbingOnMouseDown) {
+      this._wasScrubbingOnMouseDown = false;
+      return;
+    }
+
     const rect = this.container.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const clickMs = this._xToMs(x);
     const initialSegIndex = this._timeToSegmentIndex(clickMs);
+
+    console.log('[DeckTimelineRenderer] Click detected:', { x, clickMs, initialSegIndex });
 
     if (initialSegIndex === -1) {
       this.setSelection(null);
@@ -309,6 +325,9 @@ export class DeckTimelineRenderer {
 
     const targetIndex = getTargetSegmentIndex(initialSegIndex, clickMs, this.segments, this.timelineData.cumulativeDurations);
     const targetId = targetIndex + 1;
+    const segment = this.segments[targetIndex];
+
+    console.log('[DeckTimelineRenderer] Segment click:', { targetIndex, targetId, isFullTree: segment?.isFullTree });
 
     this.setSelection([targetId]);
     this._emit('select', { id: targetId, ms: clickMs, segment: this.segments[targetIndex] });
@@ -318,18 +337,18 @@ export class DeckTimelineRenderer {
     handleTimelineMouseUp(this);
   }
 
-  _timeToSegmentIndex(ms) {
-    return timeToSegmentIndex(ms, this.timelineData.cumulativeDurations);
-  }
+  _handleHoverLayerClick(info) {
+    if (!info?.object?.id) return;
 
-  _xToMs(x) {
-    return xToMs(x, this._rangeStart, this._rangeEnd, this._width);
-  }
+    const targetIndex = info.object.id - 1;
+    const targetId = info.object.id;
+    const segment = this.segments[targetIndex];
 
-  _msToX(ms) {
-    return msToX(ms, this._rangeStart, this._rangeEnd, this._width);
+    if (targetIndex >= 0 && targetIndex < this.segments.length) {
+      this.setSelection([targetId]);
+      this._emit('select', { id: targetId, segment });
+    }
   }
-
 
   _emit(event, payload) {
     const set = this._handlers.get(event);
@@ -343,37 +362,144 @@ export class DeckTimelineRenderer {
     }
   }
 
-  _bindMouseEvents() {
-    // Prevent duplicate listeners if bindings already exist
-    if (this._unbindMouseEvents) {
-      try { this._unbindMouseEvents(); } catch {}
-      this._unbindMouseEvents = null;
-    }
-    const eventConfigs = [
-      { event: 'mousemove', handler: (e) => handleTimelineMouseMoveOrScrub(this, e), target: this.canvas },
-      { event: 'mousedown', handler: (e) => handleTimelineMouseDown(this, e), target: this.canvas },
-      { event: 'mouseup', handler: () => this._handleMouseUp(), target: window },
-      { event: 'click', handler: (e) => this._handleClick(e), target: this.canvas },
-      { event: 'wheel', handler: (e) => handleTimelineWheel(this, e), target: this.canvas, options: { passive: false } },
-      { event: 'mouseleave', handler: () => handleTimelineMouseLeave(this), target: this.canvas }
-    ];
+  // ==========================================================================
+  // COORDINATE CONVERSION
+  // ==========================================================================
 
-    // Add event listeners
-    eventConfigs.forEach(({ event, handler, target, options }) => {
-      target.addEventListener(event, handler, options);
-    });
-
-    // Create unbind function
-    this._unbindMouseEvents = () => {
-      eventConfigs.forEach(({ event, handler, target, options }) => {
-        target.removeEventListener(event, handler, options);
-      });
-    };
+  _timeToSegmentIndex(ms) {
+    return timeToSegmentIndex(ms, this.timelineData.cumulativeDurations);
   }
+
+  _xToMs(x) {
+    return xToMs(x, this._rangeStart, this._rangeEnd, this._width);
+  }
+
+  _msToX(ms) {
+    return msToX(ms, this._rangeStart, this._rangeEnd, this._width);
+  }
+
+  // ==========================================================================
+  // RENDERING
+  // ==========================================================================
 
   _scheduleUpdate() {
     if (this._updateScheduled) return;
     this._updateScheduled = true;
     requestAnimationFrame(() => this._updateLayers());
+  }
+
+  _updateLayers() {
+    if (!this.deck) return;
+
+    const rect = this.container.getBoundingClientRect();
+    const width = Math.max(1, Math.round(rect.width));
+    const height = Math.max(1, Math.round(rect.height));
+    this._width = width;
+
+    const { rangeStart, rangeEnd, visStart, visEnd, startIdx, endIdx, zoomScale } = this._computeVisibleRange();
+
+    const {
+      separators, anchorPoints, selectionAnchors, hoverAnchors,
+      connections, selectionConnections, hoverConnections
+    } = processSegments({
+      startIdx, endIdx, width, height, visStart, visEnd, zoomScale,
+      theme: TIMELINE_THEME,
+      timelineData: this.timelineData,
+      segments: this.segments,
+      selectedId: this._selectedId,
+      lastHoverId: this._lastHoverId,
+      rangeStart, rangeEnd
+    });
+
+    const layers = this._buildLayers({
+      separators, anchorPoints, selectionAnchors, hoverAnchors,
+      connections, selectionConnections, hoverConnections,
+      width, height
+    });
+
+    this.deck.setProps({ width, height, layers });
+    this._updateScheduled = false;
+  }
+
+  _computeVisibleRange() {
+    const rangeStart = this._rangeStart;
+    const rangeEnd = this._rangeEnd;
+    const buffer = (rangeEnd - rangeStart) * 0.1;
+    const visStart = rangeStart - buffer;
+    const visEnd = rangeEnd + buffer;
+
+    const startIdx = Math.max(0, timeToSegmentIndex(Math.max(0, visStart), this.timelineData.cumulativeDurations) - 1);
+    const rawEndIdx = timeToSegmentIndex(Math.min(this._totalDuration - 1, visEnd), this.timelineData.cumulativeDurations);
+    const endIdx = Math.min(this.segments.length - 1, rawEndIdx + 1);
+
+    const zoomScale = calculateZoomScale(rangeStart, rangeEnd, this._totalDuration);
+
+    return { rangeStart, rangeEnd, visStart, visEnd, startIdx, endIdx, zoomScale };
+  }
+
+  _buildLayers({ separators, anchorPoints, selectionAnchors, hoverAnchors, connections, selectionConnections, hoverConnections, width, height }) {
+    const theme = TIMELINE_THEME;
+
+    return [
+      this.separatorLayer.clone({
+        data: separators,
+        getColor: [theme.separatorRGB[0], theme.separatorRGB[1], theme.separatorRGB[2], 120],
+        widthMinPixels: theme.separatorWidth
+      }),
+      this.connectionLayer.clone({ data: connections, widthMinPixels: theme.connectionWidth }),
+      this.connectionHoverLayer.clone({
+        data: hoverConnections,
+        getColor: [theme.connectionHoverRGB[0], theme.connectionHoverRGB[1], theme.connectionHoverRGB[2], 160],
+        widthMinPixels: theme.connectionHoverWidth
+      }),
+      this.connectionSelectionLayer.clone({
+        data: selectionConnections,
+        getColor: [theme.connectionSelectionRGB[0], theme.connectionSelectionRGB[1], theme.connectionSelectionRGB[2], 230],
+        widthMinPixels: theme.connectionSelectionWidth
+      }),
+      this.scrubberLayer.clone(createScrubberLayer(this._scrubberMs, this._rangeStart, this._rangeEnd, width, height, theme, this._isScrubbing)),
+      this.anchorLayer.clone({ data: anchorPoints, lineWidthMinPixels: theme.anchorStrokeWidth }),
+      this.anchorHoverLayer.clone({
+        data: hoverAnchors,
+        getLineColor: [theme.connectionHoverRGB[0], theme.connectionHoverRGB[1], theme.connectionHoverRGB[2], 160]
+      }),
+      this.anchorSelectionLayer.clone({
+        data: selectionAnchors,
+        getLineColor: [theme.connectionSelectionRGB[0], theme.connectionSelectionRGB[1], theme.connectionSelectionRGB[2], 230]
+      })
+    ];
+  }
+
+  // ==========================================================================
+  // CLEANUP
+  // ==========================================================================
+
+  /**
+   * Cleans up all resources: deck.gl instance, DOM elements, event listeners, observers.
+   */
+  destroy() {
+    if (this.deck) {
+      this.deck.finalize();
+      this.deck = null;
+    }
+
+    if (this.canvas?.parentNode) {
+      this.canvas.parentNode.removeChild(this.canvas);
+    }
+
+    if (this._unbindMouseEvents) {
+      this._unbindMouseEvents();
+      this._unbindMouseEvents = null;
+    }
+
+    window.removeEventListener('resize', this._onResize);
+
+    if (this._resizeObserver) {
+      this._resizeObserver.disconnect();
+      this._resizeObserver = null;
+    }
+
+    this.container = null;
+    this._handlers.clear();
   }
 }

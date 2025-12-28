@@ -46,20 +46,21 @@ const mockDeckGLExtensions = {
 // Mock zustand store
 let mockStoreState = {
   taxaColorVersion: 0,
-  highlightVersion: 0,
+  colorVersion: 0,
   strokeWidth: 2,
   fontSize: '2.6em',
   nodeSize: 1,
   dimmingEnabled: false,
   dimmingOpacity: 0.3,
   linkConnectionOpacity: 0.6,
-  highlightPulseEnabled: false,
+  changePulseEnabled: false,
   activeEdgeDashingEnabled: false,
   getPulseOpacity: () => 1.0,
   getColorManager: () => ({
     hasActiveChangeEdges: () => false,
-    marked: [],
+    sharedMarkedJumpingSubtrees: [],
     getBranchColor: () => '#000000',
+    getBranchColorForInnerLine: () => '#000000',
     getBranchColorWithHighlights: () => '#000000',
     getNodeColor: () => '#000000',
     isDownstreamOfAnyActiveChangeEdge: () => false,
@@ -79,7 +80,15 @@ Module._load = function (request, parent, isMain) {
   if (request === '@deck.gl/layers') return mockDeckGLLayers;
   if (request === '@deck.gl/extensions') return mockDeckGLExtensions;
   if (request.includes('store.js') || request.includes('store')) return { useAppStore: mockUseAppStore };
-  if (request.includes('colorUtils')) return { colorToRgb: (hex) => [0, 0, 0] };
+  if (request.includes('colorUtils')) return {
+    colorToRgb: (hex) => {
+      // Basic hex -> RGB for testing
+      const trimmed = (hex || '').replace('#', '');
+      const num = parseInt(trimmed || '000000', 16);
+      return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+    },
+    getContrastingHighlightColor: () => [255, 255, 255]
+  };
   if (request.includes('mathUtils')) return { easeInOutCubic: (t) => t };
   return originalLoad.apply(this, arguments);
 };
@@ -89,7 +98,8 @@ const { LayerManager } = require('../src/js/treeVisualisation/deckgl/layers/Laye
 const {
   createLinksLayer,
   createNodesLayer,
-  createLinkOutlinesLayer
+  createLinkOutlinesLayer,
+  createExtensionsLayer
 } = require('../src/js/treeVisualisation/deckgl/layers/layerFactories/index.js');
 const { LayerStyles } = require('../src/js/treeVisualisation/deckgl/layers/LayerStyles.js');
 
@@ -100,20 +110,21 @@ describe('Layer Highlighting Configuration', () => {
     // Reset mock state
     mockStoreState = {
       taxaColorVersion: 0,
-      highlightVersion: 0,
+      colorVersion: 0,
       strokeWidth: 2,
       fontSize: '2.6em',
       nodeSize: 1,
       dimmingEnabled: false,
       dimmingOpacity: 0.3,
       linkConnectionOpacity: 0.6,
-      highlightPulseEnabled: false,
+      changePulseEnabled: false,
       activeEdgeDashingEnabled: false,
       getPulseOpacity: () => 1.0,
       getColorManager: () => ({
         hasActiveChangeEdges: () => false,
-        marked: [],
+        sharedMarkedJumpingSubtrees: [],
         getBranchColor: () => '#000000',
+        getBranchColorForInnerLine: () => '#000000',
         getBranchColorWithHighlights: () => '#000000',
         getNodeColor: () => '#000000',
         isDownstreamOfAnyActiveChangeEdge: () => false,
@@ -153,7 +164,7 @@ describe('Layer Highlighting Configuration', () => {
   });
 
   describe('updateTriggers stability', () => {
-    it('should use scalar highlightVersion in links updateTriggers', () => {
+    it('should use scalar colorVersion in links updateTriggers', () => {
       const links = [{ path: [[0, 0, 0], [1, 1, 0]], target: { data: { split_indices: [1] } } }];
       const layer = createLinksLayer(links, mockStoreState, layerStyles);
 
@@ -165,7 +176,7 @@ describe('Layer Highlighting Configuration', () => {
       expect(colorTrigger.some(v => typeof v === 'number')).to.be.true;
     });
 
-    it('should use scalar highlightVersion in nodes updateTriggers', () => {
+    it('should use scalar colorVersion in nodes updateTriggers', () => {
       const nodes = [{ position: [0, 0, 0], data: { split_indices: [1] } }];
       const layer = createNodesLayer(nodes, mockStoreState, layerStyles);
 
@@ -174,11 +185,11 @@ describe('Layer Highlighting Configuration', () => {
       expect(colorTrigger).to.not.deep.include(nodes);
     });
 
-    it('should increment highlightVersion when highlight state changes', () => {
-      const initialVersion = mockStoreState.highlightVersion;
+    it('should increment colorVersion when color state changes', () => {
+      const initialVersion = mockStoreState.colorVersion;
 
-      // Simulate highlight version increment
-      mockStoreState.highlightVersion = initialVersion + 1;
+      // Simulate color version increment
+      mockStoreState.colorVersion = initialVersion + 1;
 
       const links = [{ path: [[0, 0, 0], [1, 1, 0]], target: { data: { split_indices: [1] } } }];
       const layer = createLinksLayer(links, mockStoreState, layerStyles);
@@ -193,6 +204,9 @@ describe('Layer Highlighting Configuration', () => {
       const links = [{ path: [[0, 0, 0], [1, 1, 0]], target: { data: { split_indices: [1] } } }];
       const layer = createLinkOutlinesLayer(links, mockStoreState, layerStyles);
 
+      // Debug: inspect props
+      console.log('linkOutlines props:', layer.props);
+
       expect(layer.props.visible).to.equal(false);
     });
 
@@ -201,7 +215,7 @@ describe('Layer Highlighting Configuration', () => {
         ...mockStoreState,
         getColorManager: () => ({
           hasActiveChangeEdges: () => true,
-          marked: [],
+          sharedMarkedJumpingSubtrees: [],
           getBranchColor: () => '#000000',
           getBranchColorWithHighlights: () => '#2196f3',
           getNodeColor: () => '#000000',
@@ -221,7 +235,7 @@ describe('Layer Highlighting Configuration', () => {
         ...mockStoreState,
         getColorManager: () => ({
           hasActiveChangeEdges: () => false,
-          marked: [new Set([1, 2, 3])],
+          sharedMarkedJumpingSubtrees: [new Set([1, 2, 3])],
           getBranchColor: () => '#000000',
           getBranchColorWithHighlights: () => '#ff5722',
           getNodeColor: () => '#000000',
@@ -251,11 +265,128 @@ describe('Layer Highlighting Configuration', () => {
       expect(a).to.be.greaterThan(100); // Semi-transparent
     });
   });
+
+  describe('subtree dimming', () => {
+    it('should dim nodes not in marked subtree when subtreeDimmingEnabled', () => {
+      // Mutate the mock store so LayerStyles.getCachedState() observes subtree settings
+      mockStoreState.subtreeDimmingEnabled = true;
+      mockStoreState.subtreeDimmingOpacity = 0.5;
+      mockStoreState.getColorManager = () => ({
+        hasActiveChangeEdges: () => false,
+        sharedMarkedJumpingSubtrees: [new Set([1, 2, 3])],
+        getBranchColor: () => '#000000',
+        getBranchColorWithHighlights: () => '#2196f3',
+        getNodeColor: () => '#000000',
+        isDownstreamOfAnyActiveChangeEdge: () => false,
+        isNodeDownstreamOfAnyActiveChangeEdge: () => false
+      });
+
+      const nodes = [
+        { position: [0, 0, 0], data: { split_indices: [4] }, opacity: 1 }, // outside
+        { position: [0, 0, 0], data: { split_indices: [1] }, opacity: 1 }  // inside
+      ];
+
+      const layer = createNodesLayer(nodes, mockStoreState, layerStyles);
+
+      const outsideColor = layer.props.getFillColor(nodes[0]);
+      const insideColor = layer.props.getFillColor(nodes[1]);
+
+      expect(outsideColor[3]).to.be.lessThan(insideColor[3]);
+    });
+
+    it('should dim extensions not in marked subtree when subtreeDimmingEnabled', () => {
+      // Mutate the mock store so LayerStyles.getCachedState() observes subtree settings
+      mockStoreState.subtreeDimmingEnabled = true;
+      mockStoreState.subtreeDimmingOpacity = 0.5;
+      mockStoreState.getColorManager = () => ({
+        hasActiveChangeEdges: () => false,
+        sharedMarkedJumpingSubtrees: [new Set([1, 2, 3])],
+        getBranchColor: () => '#000000',
+        getBranchColorWithHighlights: () => '#2196f3',
+        getNodeColor: () => '#000000',
+        isDownstreamOfAnyActiveChangeEdge: () => false,
+        isNodeDownstreamOfAnyActiveChangeEdge: () => false
+      });
+
+      const extensions = [
+        { path: [[0, 0, 0], [1, 1, 0]], leaf: { data: { split_indices: [4] }, opacity: 1 } }, // outside
+        { path: [[0, 0, 0], [1, 1, 0]], leaf: { data: { split_indices: [1] }, opacity: 1 } }  // inside
+      ];
+
+      const layer = createExtensionsLayer(extensions, mockStoreState, layerStyles);
+
+      const outsideColor = layer.props.getColor(extensions[0]);
+      const insideColor = layer.props.getColor(extensions[1]);
+
+      expect(outsideColor[3]).to.be.lessThan(insideColor[3]);
+    });
+  });
+
+  describe('coloring toggle independence', () => {
+    it('keeps subtree dimming active when marked coloring is disabled', () => {
+      mockStoreState.subtreeDimmingEnabled = true;
+      mockStoreState.subtreeDimmingOpacity = 0.5;
+      mockStoreState.markedSubtreesEnabled = false;
+      mockStoreState.getMarkedSubtreeData = () => [new Set([1])];
+      mockStoreState.getColorManager = () => ({
+        hasActiveChangeEdges: () => false,
+        sharedMarkedJumpingSubtrees: [],
+        getBranchColor: () => '#000000',
+        getBranchColorForInnerLine: () => '#000000',
+        getBranchColorWithHighlights: () => '#2196f3',
+        getNodeColor: () => '#000000',
+        isDownstreamOfAnyActiveChangeEdge: () => false,
+        isNodeDownstreamOfAnyActiveChangeEdge: () => false
+      });
+
+      const nodes = [
+        { position: [0, 0, 0], data: { split_indices: [2] }, opacity: 1 },
+        { position: [0, 0, 0], data: { split_indices: [1] }, opacity: 1 }
+      ];
+
+      const cached = layerStyles.getCachedState();
+      const outsideColor = layerStyles.getNodeColor(nodes[0], cached);
+      const insideColor = layerStyles.getNodeColor(nodes[1], cached);
+
+      expect(outsideColor[3]).to.be.lessThan(insideColor[3]);
+    });
+
+    it('removes marked highlight scaling when coloring is disabled', () => {
+      mockStoreState.markedSubtreesEnabled = true;
+      mockStoreState.getMarkedSubtreeData = () => [new Set([1])];
+      mockStoreState.dimmingEnabled = false;
+      mockStoreState.subtreeDimmingEnabled = false;
+      mockStoreState.getColorManager = () => ({
+        hasActiveChangeEdges: () => false,
+        sharedMarkedJumpingSubtrees: [],
+        getBranchColor: () => '#123456',
+        getBranchColorForInnerLine: () => '#123456',
+        getBranchColorWithHighlights: () => '#123456',
+        getNodeColor: () => '#123456',
+        isDownstreamOfAnyActiveChangeEdge: () => false,
+        isNodeDownstreamOfAnyActiveChangeEdge: () => false
+      });
+
+      const markedNode = { position: [0, 0, 0], data: { split_indices: [1] }, radius: 4, opacity: 1 };
+
+      const cachedWithColor = layerStyles.getCachedState();
+      const radiusWithColoring = layerStyles.getNodeRadius(markedNode, 3, cachedWithColor);
+
+      layerStyles.clearRenderCache();
+      mockStoreState.markedSubtreesEnabled = false;
+
+      const cachedWithoutColor = layerStyles.getCachedState();
+      const radiusWithoutColoring = layerStyles.getNodeRadius(markedNode, 3, cachedWithoutColor);
+
+      expect(radiusWithColoring).to.be.greaterThan(radiusWithoutColoring);
+      expect(radiusWithoutColoring).to.equal(4);
+    });
+  });
 });
 
-describe('Highlight Version Counter Integration', () => {
+describe('Color Version Counter Integration', () => {
   it('should be included in store state', () => {
-    expect(mockStoreState).to.have.property('highlightVersion');
-    expect(typeof mockStoreState.highlightVersion).to.equal('number');
+    expect(mockStoreState).to.have.property('colorVersion');
+    expect(typeof mockStoreState.colorVersion).to.equal('number');
   });
 });

@@ -5,32 +5,39 @@ export function getTargetSegmentIndex(initialSegIndex, clickMs, segments, cumula
     return initialSegIndex;
   }
 
-  // If it is an anchor, we need to decide if the user meant to click
-  // one of the adjacent connections instead.
+  // For anchor segments, calculate if the click is closer to the anchor center
+  // or to an adjacent connection center
+  const segStart = initialSegIndex > 0 ? cumulativeDurations[initialSegIndex - 1] : 0;
   const segEnd = cumulativeDurations[initialSegIndex];
+  const anchorCenter = (segStart + segEnd) / 2;
+  const anchorDist = Math.abs(clickMs - anchorCenter);
 
   let targetIndex = initialSegIndex;
+  let minDist = anchorDist;
 
   // Check the previous segment (left connection)
   if (initialSegIndex > 0 && !segments[initialSegIndex - 1]?.isFullTree) {
-    const prevEnd = initialSegIndex > 1 ? cumulativeDurations[initialSegIndex - 2] : 0;
-    // Calculate distance from click to the center of the previous connection
-    const prevDist = Math.abs(clickMs - (cumulativeDurations[initialSegIndex - 1] + prevEnd) / 2);
-    targetIndex = initialSegIndex - 1; // Tentatively select the previous connection
+    const prevStart = initialSegIndex > 1 ? cumulativeDurations[initialSegIndex - 2] : 0;
+    const prevEnd = cumulativeDurations[initialSegIndex - 1];
+    const prevCenter = (prevStart + prevEnd) / 2;
+    const prevDist = Math.abs(clickMs - prevCenter);
 
-    // Check the next segment (right connection)
-    if (initialSegIndex < segments.length - 1 && !segments[initialSegIndex + 1]?.isFullTree) {
-      const nextEnd = cumulativeDurations[initialSegIndex + 1];
-      // Calculate distance from click to the center of the next connection
-      const nextDist = Math.abs(clickMs - (segEnd + nextEnd) / 2);
-      // If the next connection is closer, select it instead
-      if (nextDist < prevDist) {
-        targetIndex = initialSegIndex + 1;
-      }
+    if (prevDist < minDist) {
+      minDist = prevDist;
+      targetIndex = initialSegIndex - 1;
     }
-  } else if (initialSegIndex < segments.length - 1 && !segments[initialSegIndex + 1]?.isFullTree) {
-    // If only the next segment is a connection, it's the only other possibility
-    targetIndex = initialSegIndex + 1;
+  }
+
+  // Check the next segment (right connection)
+  if (initialSegIndex < segments.length - 1 && !segments[initialSegIndex + 1]?.isFullTree) {
+    const nextStart = segEnd;
+    const nextEnd = cumulativeDurations[initialSegIndex + 1];
+    const nextCenter = (nextStart + nextEnd) / 2;
+    const nextDist = Math.abs(clickMs - nextCenter);
+
+    if (nextDist < minDist) {
+      targetIndex = initialSegIndex + 1;
+    }
   }
 
   return targetIndex;

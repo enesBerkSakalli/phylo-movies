@@ -6,7 +6,7 @@
   left: auto;
   right: auto;
   z-index: 1000;
-  padding: 8px;
+  padding: 6px;
   background: var(--card);
   border-top: 1px solid var(--border);
   box-shadow: 0 2px 4px rgba(0,0,0,0.08);
@@ -14,9 +14,9 @@
 
 /* Remove padding for chart container but DON'T extend into navigation area */
 .movie-player-bar .movie-chart-container-full-width {
-  margin-left: -8px; /* only remove left padding, don't extend into nav */
-  margin-right: -8px;
-  width: calc(100% + 16px); /* only compensate for removed padding */
+  margin-left: -6px;
+  margin-right: -6px;
+  width: calc(100% + 12px);
 }
 
 /* Legacy nav-hidden rules removed: Sidebar width variable controls offset */
@@ -24,7 +24,7 @@
 .movie-player-container {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 /* MSA chip visibility control: hidden by default unless data-has-msa=true */

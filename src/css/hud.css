@@ -4,19 +4,17 @@
 
 .phylo-hud {
   position: fixed;
-  top: 20px;
-  left: calc(var(--nav-width, 280px) + 20px);
-  z-index: 1000;
-  pointer-events: none;
+  bottom: 140px;
+  left: calc(var(--nav-width, 280px) + 16px);
+  z-index: 1001;
   transition: left 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
 /* Responsive positioning for smaller screens */
 @media (max-width: 768px) {
   .phylo-hud {
-    top: auto;
-    bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
   }
 }
+

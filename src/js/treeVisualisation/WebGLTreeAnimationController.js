@@ -3,212 +3,47 @@ import { useAppStore } from '../core/store.js';
 import { transformBranchLengths } from "../domain/tree/branchTransform.js";
 import { TidyTreeLayout } from "./layout/TidyTreeLayout.js";
 import calculateScales, { getMaxScaleValue } from "../domain/tree/scaleUtils.js";
-// LABEL_OFFSETS moved to centralized store styleConfig
 
 export class WebGLTreeAnimationController {
-  /**
-   * Creates a new WebGL tree animation controller.
-   */
+
+  // ==========================================================================
+  // CONSTRUCTOR
+  // ==========================================================================
+
   constructor(container = "#webgl-container") {
-    // Consolidated state tracking
     this._scalingState = {
       branchTransformation: undefined,
       calculationTransformation: 'none'
     };
     this._transformedCache = new Map();
 
-    // Initialize WebGL container
     this.webglContainer = d3.select(container);
 
-    // Initialize dimensions and setup ResizeObserver to avoid layout thrashing
     const node = this.webglContainer.node();
     const rect = node ? node.getBoundingClientRect() : { width: 800, height: 600 };
     this.width = rect.width;
     this.height = rect.height;
 
-    if (node) {
-      this.resizeObserver = new ResizeObserver(entries => {
-        for (let entry of entries) {
-          const { width, height } = entry.contentRect;
-          this.width = width;
-          this.height = height;
-        }
-      });
-      this.resizeObserver.observe(node);
-    }
-
-    // Start render loop
-    this.startRenderLoop();
+    this._initializeResizeObserver(node);
   }
 
-  /**
-   * Cleanup resources
-   */
-  destroy() {
-    if (this.resizeObserver) {
-      this.resizeObserver.disconnect();
-      this.resizeObserver = null;
-    }
+  _initializeResizeObserver(node) {
+    if (!node || typeof ResizeObserver === 'undefined') return;
+
+    this.resizeObserver = new ResizeObserver(entries => {
+      for (let entry of entries) {
+        const { width, height } = entry.contentRect;
+        this.width = width;
+        this.height = height;
+      }
+    });
+    this.resizeObserver.observe(node);
   }
 
+  // ==========================================================================
+  // PUBLIC API
+  // ==========================================================================
 
-  /**
-   * Initializes the uniform scaling system using global maximum scale from scaleUtils.
-   * Ensures consistent radii across Anchor and Transition trees.
-   * @param {string} [branchTransformation='none'] - Branch transformation to apply during scale calculation
-   * @private
-   */
-  initializeUniformScaling(branchTransformation = 'none') {
-    const { treeList, transitionResolver } = useAppStore.getState();
-    const datasetToken = `${branchTransformation}::${treeList?.length || 0}`;
-
-    // Skip recompute if dataset and transformation are unchanged
-    if (
-      this.uniformScalingEnabled &&
-      this.maxGlobalScale &&
-      this._scalingState.calculationTransformation === branchTransformation &&
-      this._scalingState.datasetToken === datasetToken &&
-      this._scalingState.datasetRef === treeList
-    ) {
-      return;
-    }
-
-    const fullTreeIndices = transitionResolver?.fullTreeIndices || Array.from({ length: treeList.length }, (_, i) => i);
-
-    // Apply transformation to all trees before calculating scales (cached per transformation)
-    let transformedTreeList = this._transformedCache.get(branchTransformation);
-    if (!transformedTreeList) {
-      transformedTreeList = branchTransformation !== 'none'
-        ? treeList.map(treeData => transformBranchLengths(treeData, branchTransformation))
-        : treeList;
-      this._transformedCache.set(branchTransformation, transformedTreeList);
-    }
-
-    // Calculate global scales using transformed tree data
-    this.globalScaleList = calculateScales(transformedTreeList, fullTreeIndices);
-    this.maxGlobalScale = getMaxScaleValue(this.globalScaleList);
-    this.uniformScalingEnabled = true;
-
-    // Store the transformation state this scaling was calculated for
-    this._scalingState.calculationTransformation = branchTransformation;
-    this._scalingState.datasetToken = datasetToken;
-    this._scalingState.datasetRef = treeList;
-  }
-
-  /**
-   * Recalculates uniform scaling when branch transformation changes.
-   * This ensures that the maxGlobalScale reflects the actual tree sizes after transformation.
-   * @param {string} newTransformation - New branch transformation type
-   * @private
-   */
-  _recalculateUniformScalingForTransformation(newTransformation) {
-    if (this._scalingState.calculationTransformation !== newTransformation) {
-      this.initializeUniformScaling(newTransformation);
-    }
-  }
-
-
-  /**
-   * Starts the continuous WebGL rendering loop.
-   * Required for dynamic camera-agnostic scaling and smooth updates.
-   * @private
-   */
-  startRenderLoop() {
-    // Removed - not needed as renderScene is a no-op
-  }
-
-
-  /**
-   * Calculates tree layout with branch transformations and caching.
-   * Single authoritative method for all layout calculations.
-   * @param {Object} treeData - Raw tree data structure
-   * @param {Object} [options={}] - Layout calculation options
-   * @param {number} [options.treeIndex] - Tree index for caching purposes
-   * @param {Function} [options.cacheFunction] - Optional function to cache the layout
-   * @param {boolean} [options.updateController=false] - Whether to update controller state
-   * @returns {Object} Layout object containing tree, max_radius, width, height, margin, scale
-   */
-  calculateLayout(treeData, options = {}) {
-    const { treeIndex, cacheFunction, updateController = false } = options;
-
-    // Get branch transformation from store (single store access)
-    const { branchTransformation, layoutAngleDegrees, layoutRotationDegrees } = useAppStore.getState();
-
-    // Check if transformation has changed
-    const transformationChanged = this._scalingState.branchTransformation !== undefined &&
-      this._scalingState.branchTransformation !== branchTransformation;
-
-    // Recalculate uniform scaling if transformation changed
-    if (transformationChanged && this.uniformScalingEnabled) {
-      this._recalculateUniformScalingForTransformation(branchTransformation);
-    }
-
-    // Track transformation state for change detection
-    this._scalingState.branchTransformation = branchTransformation;
-
-    // Get container dimensions
-    // Use cached dimensions to avoid layout thrashing
-    const width = this.width;
-    const height = this.height;
-
-    // Apply transformation and create layout
-    // Reuse cached transformed tree to keep scaling consistent with uniform scale list
-    let transformedTreeData;
-    const cachedList = this._transformedCache.get(branchTransformation);
-    if (cachedList && typeof options.treeIndex === 'number') {
-      transformedTreeData = cachedList[options.treeIndex];
-    } else if (treeData) {
-      transformedTreeData = transformBranchLengths(treeData, branchTransformation);
-    }
-
-    // Guard against undefined tree data
-    if (!transformedTreeData) {
-      console.warn('calculateLayout: No tree data available');
-      return null;
-    }
-
-    const layoutCalculator = new TidyTreeLayout(transformedTreeData);
-    layoutCalculator.setDimension(width, height);
-    layoutCalculator.setMargin(40);
-    layoutCalculator.setAngleExtentDegrees(layoutAngleDegrees || 360);
-    layoutCalculator.setAngleOffsetDegrees(layoutRotationDegrees || 0);
-
-    let layout;
-    let layoutResult;
-
-    // Use uniform scaling if available for consistent tree radii
-    if (this.uniformScalingEnabled && this.globalScaleList && this.maxGlobalScale) {
-      layoutResult = layoutCalculator.constructRadialTreeWithUniformScaling(this.maxGlobalScale);
-    } else {
-      // Fallback to individual scaling
-      layoutResult = layoutCalculator.constructRadialTree();
-    }
-
-    layout = {
-      tree: layoutResult,
-      max_radius: layoutCalculator.getMaxRadius(layoutResult),
-      width: width,
-      height: height,
-      margin: layoutCalculator.margin,
-      scale: layoutCalculator.scale
-    };
-
-    // Update controller state if requested
-    if (updateController && cacheFunction && treeIndex !== undefined) {
-      cacheFunction(treeIndex, layout);
-    }
-
-    return layout;
-  }
-
-  /**
-   * Updates controller layout with new tree data and caches result.
-   * Wrapper method that calls calculateLayout with updateController=true.
-   * @param {Object} treeData - Raw tree data structure
-   * @param {number} [treeIndex=0] - Tree index for caching purposes
-   * @param {Function} [cacheFunction=null] - Optional function to cache the layout
-   * @returns {Object} Layout object with calculated tree structure and dimensions
-   */
   updateLayout(treeData, treeIndex = 0, cacheFunction = null) {
     return this.calculateLayout(treeData, {
       treeIndex,
@@ -217,40 +52,134 @@ export class WebGLTreeAnimationController {
     });
   }
 
-
-
-  /**
-   * Starts animation playback - delegates to store
-   */
-  startAnimation() {
-    const { play } = useAppStore.getState();
-    play();
-    // Start the animation loop
-    this._animationLoop();
+  destroy() {
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = null;
+    }
   }
 
-  /**
-   * Stops animation playback - delegates to store
-   */
-  stopAnimation() {
-    const { stop } = useAppStore.getState();
-    stop();
-  }
+  // ==========================================================================
+  // UNIFORM SCALING
+  // ==========================================================================
 
   /**
-   * Animation loop for smooth playback - overridden by subclasses
-   * @private
+   * Initializes the uniform scaling system using global maximum scale.
+   * Ensures consistent radii across Anchor and Transition trees.
    */
-  async _animationLoop() {
-    // Override in subclasses like DeckGLTreeAnimationController
+  initializeUniformScaling(branchTransformation = 'none') {
+    const { treeList, transitionResolver } = useAppStore.getState();
+    const datasetToken = `${branchTransformation}::${treeList?.length || 0}`;
+
+    if (this._isScalingCacheValid(branchTransformation, datasetToken, treeList)) {
+      return;
+    }
+
+    const fullTreeIndices = transitionResolver?.fullTreeIndices || Array.from({ length: treeList.length }, (_, i) => i);
+    const transformedTreeList = this._getOrCacheTransformedTrees(treeList, branchTransformation);
+
+    this.globalScaleList = calculateScales(transformedTreeList, fullTreeIndices);
+    this.maxGlobalScale = getMaxScaleValue(this.globalScaleList);
+    this.uniformScalingEnabled = true;
+
+    this._scalingState.calculationTransformation = branchTransformation;
+    this._scalingState.datasetToken = datasetToken;
+    this._scalingState.datasetRef = treeList;
   }
+
+  _isScalingCacheValid(branchTransformation, datasetToken, treeList) {
+    return (
+      this.uniformScalingEnabled &&
+      this.maxGlobalScale &&
+      this._scalingState.calculationTransformation === branchTransformation &&
+      this._scalingState.datasetToken === datasetToken &&
+      this._scalingState.datasetRef === treeList
+    );
+  }
+
+  _recalculateUniformScalingForTransformation(newTransformation) {
+    if (this._scalingState.calculationTransformation !== newTransformation) {
+      this.initializeUniformScaling(newTransformation);
+    }
+  }
+
+  // ==========================================================================
+  // LAYOUT CALCULATION
+  // ==========================================================================
+
+  /**
+   * Calculates tree layout with branch transformations and caching.
+   */
+  calculateLayout(treeData, options = {}) {
+    const { treeIndex, cacheFunction, updateController = false } = options;
+    const { branchTransformation, layoutAngleDegrees, layoutRotationDegrees } = useAppStore.getState();
+
+    this._handleTransformationChange(branchTransformation);
+
+    const transformedTreeData = this._getTransformedTreeData(treeData, branchTransformation, treeIndex);
+    if (!transformedTreeData) {
+      console.warn('calculateLayout: No tree data available');
+      return null;
+    }
+
+    const layout = this._computeLayout(transformedTreeData, layoutAngleDegrees, layoutRotationDegrees);
+
+    if (updateController && cacheFunction && treeIndex !== undefined) {
+      cacheFunction(treeIndex, layout);
+    }
+
+    return layout;
+  }
+
+  _handleTransformationChange(branchTransformation) {
+    const transformationChanged = this._scalingState.branchTransformation !== undefined &&
+      this._scalingState.branchTransformation !== branchTransformation;
+
+    if (transformationChanged && this.uniformScalingEnabled) {
+      this._recalculateUniformScalingForTransformation(branchTransformation);
+    }
+
+    this._scalingState.branchTransformation = branchTransformation;
+  }
+
+  _getTransformedTreeData(treeData, branchTransformation, treeIndex) {
+    const cachedList = this._transformedCache.get(branchTransformation);
+    if (cachedList && typeof treeIndex === 'number') {
+      return cachedList[treeIndex];
+    }
+    if (treeData) {
+      return transformBranchLengths(treeData, branchTransformation);
+    }
+    return null;
+  }
+
+  _computeLayout(transformedTreeData, layoutAngleDegrees, layoutRotationDegrees) {
+    const layoutCalculator = new TidyTreeLayout(transformedTreeData);
+    layoutCalculator.setDimension(this.width, this.height);
+    layoutCalculator.setMargin(40);
+    layoutCalculator.setAngleExtentDegrees(layoutAngleDegrees || 360);
+    layoutCalculator.setAngleOffsetDegrees(layoutRotationDegrees || 0);
+
+    const layoutResult = this.uniformScalingEnabled && this.globalScaleList && this.maxGlobalScale
+      ? layoutCalculator.constructRadialTreeWithUniformScaling(this.maxGlobalScale)
+      : layoutCalculator.constructRadialTree();
+
+    return {
+      tree: layoutResult,
+      max_radius: layoutCalculator.getMaxRadius(layoutResult),
+      width: this.width,
+      height: this.height,
+      margin: layoutCalculator.margin,
+      scale: layoutCalculator.scale
+    };
+  }
+
+  // ==========================================================================
+  // RADII CALCULATION
+  // ==========================================================================
 
   /**
    * Calculates label and extension radii with dynamic positioning.
-   * @param {Object} layout - Layout object with tree dimensions
-   * @param {string} [branchTransformation=null] - Override branch transformation
-   * @returns {Object} Object with extensionRadius and labelRadius
-   * @private
    */
   _getConsistentRadii(layout, branchTransformation = null) {
     const containerWidth = layout.width - layout.margin * 2;
@@ -259,6 +188,7 @@ export class WebGLTreeAnimationController {
 
     const { styleConfig } = useAppStore.getState();
     const offsets = styleConfig?.labelOffsets || { DEFAULT: 20, EXTENSION: 5 };
+
     const extensionRadius = maxLeafRadius + (offsets.EXTENSION ?? 5);
     const labelRadius = extensionRadius + (offsets.DEFAULT ?? 20);
 
@@ -269,11 +199,18 @@ export class WebGLTreeAnimationController {
     };
   }
 
-  /**
-   * Cleans up all WebGL resources and stops rendering loops.
-   * Must be called when controller is no longer needed to prevent memory leaks.
-   */
-  destroy() {
-    // Clean up if needed by subclasses
+  // ==========================================================================
+  // TREE TRANSFORMATION CACHE
+  // ==========================================================================
+
+  _getOrCacheTransformedTrees(treeList, branchTransformation) {
+    let transformedTreeList = this._transformedCache.get(branchTransformation);
+    if (!transformedTreeList) {
+      transformedTreeList = branchTransformation !== 'none'
+        ? treeList.map(treeData => transformBranchLengths(treeData, branchTransformation))
+        : treeList;
+      this._transformedCache.set(branchTransformation, transformedTreeList);
+    }
+    return transformedTreeList;
   }
 }

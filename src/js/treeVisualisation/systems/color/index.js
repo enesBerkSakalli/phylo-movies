@@ -11,11 +11,10 @@ export {
 export {
   splitsEqual,
   resolveActiveEdgeSet,
-  isActiveChangeEdgeHighlighted,
+  isLinkActiveChangeEdge,
   isNodeActiveChangeEdge,
   nodeOrParentMatchesActiveEdge,
-  isDownstreamOfActiveChangeEdge,
-  isNodeDownstreamOfActiveChangeEdge,
-  isComponentMarked,
-  isNodeMarked
-} from './highlightDetection.js';
+  nodeOrParentMatchesAnyEdge,
+  isLinkDownstreamOfChangeEdge,
+  isNodeDownstreamOfChangeEdge
+} from './changeEdgeDetection.js';

@@ -1,14 +1,26 @@
 import { create } from 'zustand';
 import { createPhylogeneticDataSlice } from './slices/phylogeneticDataSlice.js';
 import { createPlaybackSlice } from './slices/playbackSlice.js';
-import { createUiSlice } from './slices/uiSlice.js';
-import { createHighlightSlice } from './slices/highlightSlice.js';
+import { createControllersSlice } from './slices/controllersSlice.js';
+import { createTimelineSlice } from './slices/timelineSlice.js';
+import { createTreeAppearanceSlice } from './slices/treeAppearanceSlice.js';
+import { createMsaViewerSlice } from './slices/msaViewerSlice.js';
+import { createComparisonViewSlice } from './slices/comparisonViewSlice.js';
+import { createVisualisationChangeStateSlice } from './slices/visualisationChangeStateSlice.js';
+import { createVisualEffectsSlice } from './slices/visualEffectsSlice.js';
+import { createClipboardSlice } from './slices/clipboardSlice.js';
 
 export const useAppStore = create((set, get) => ({
   ...createPhylogeneticDataSlice(set, get),
   ...createPlaybackSlice(set, get),
-  ...createUiSlice(set, get),
-  ...createHighlightSlice(set, get),
+  ...createControllersSlice(set, get),
+  ...createTimelineSlice(set, get),
+  ...createTreeAppearanceSlice(set, get),
+  ...createMsaViewerSlice(set, get),
+  ...createComparisonViewSlice(set, get),
+  ...createVisualisationChangeStateSlice(set, get),
+  ...createVisualEffectsSlice(set, get),
+  ...createClipboardSlice(set, get),
 }));
 
 // Set up ColorManager subscription after store creation

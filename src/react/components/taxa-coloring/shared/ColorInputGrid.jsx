@@ -8,7 +8,7 @@ export function ColorInputGrid({ items, isGroup, colorManager, onColorChange }) 
         const name = isGroup ? item.name : item;
         const label = isGroup ? `${name} (${item.count})` : name;
         const colorMap = isGroup ? colorManager.groupColorMap : colorManager.taxaColorMap;
-        const color = colorMap[name] || (isGroup ? colorManager.getRandomColor() : "#000000");
+        const color = colorMap[name] || "#000000";
 
         return (
           <ColorSwatchInput

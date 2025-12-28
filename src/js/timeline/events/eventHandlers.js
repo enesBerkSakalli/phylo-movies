@@ -2,8 +2,12 @@ import { useAppStore } from '../../core/store.js';
 
 let hoverTimeout = null;
 
-export function handleTimelineMouseMove(renderer, event) {
-  if (renderer._isScrubbing) return;
+/**
+ * Handles mouse movement over the timeline when not scrubbing.
+ * Detects which segment is being hovered and updates the store accordingly.
+ * Emits 'itemover'/'itemout' events and 'mouseMove' on every move.
+ */
+function handleTimelineMouseMove(renderer, event) {
   const rect = renderer.container.getBoundingClientRect();
   const x = event.clientX - rect.left;
   const ms = renderer._xToMs(x);
@@ -13,17 +17,15 @@ export function handleTimelineMouseMove(renderer, event) {
   if (id !== renderer._lastHoverId) {
     if (renderer._lastHoverId != null) {
       renderer._emit('itemout', {});
-      // Delay clearing to allow moving to tooltip
-      if (hoverTimeout) clearTimeout(hoverTimeout);
+      clearTimeout(hoverTimeout);
       hoverTimeout = setTimeout(() => {
         useAppStore.getState().setHoveredSegment(null, null);
       }, 150);
     }
     if (id != null) {
-      if (hoverTimeout) clearTimeout(hoverTimeout);
+      clearTimeout(hoverTimeout);
       renderer._emit('itemover', { item: id, event });
 
-      // Calculate segment center position for stable tooltip
       const segment = renderer.segments[segIndex];
       const segmentStartMs = renderer.timelineData.cumulativeDurations[segIndex] - renderer.timelineData.segmentDurations[segIndex];
       const segmentEndMs = renderer.timelineData.cumulativeDurations[segIndex];
@@ -31,7 +33,6 @@ export function handleTimelineMouseMove(renderer, event) {
       const endX = renderer._msToX(segmentEndMs);
       const centerX = (startX + endX) / 2;
 
-      // Pass absolute screen coordinates
       const position = {
         x: rect.left + centerX,
         y: rect.top
@@ -46,11 +47,10 @@ export function handleTimelineMouseMove(renderer, event) {
 }
 
 /**
- * Handles scrub move events during dragging
- * @param {DeckTimelineRenderer} renderer - The timeline renderer instance
- * @param {MouseEvent} event - The mouse move event during scrubbing
+ * Handles mouse movement during an active scrub operation.
+ * Updates scrubber position and emits 'timechange' event.
  */
-export function handleTimelineScrubMove(renderer, event) {
+function handleTimelineScrubMove(renderer, event) {
   const rect = renderer.container.getBoundingClientRect();
   const x = event.clientX - rect.left;
   const ms = Math.max(0, Math.min(renderer._xToMs(x), renderer._totalDuration));
@@ -61,7 +61,7 @@ export function handleTimelineScrubMove(renderer, event) {
 }
 
 /**
- * Handles mouse move events (scrubbing or regular movement)
+ * Routes mouse move events to either scrub or hover handler based on scrubbing state.
  */
 export function handleTimelineMouseMoveOrScrub(renderer, event) {
   if (renderer._isScrubbing) {
@@ -71,21 +71,25 @@ export function handleTimelineMouseMoveOrScrub(renderer, event) {
   }
 }
 
+/**
+ * Handles mousedown to detect scrubber grab. Initiates scrubbing if click is near scrubber.
+ */
 export function handleTimelineMouseDown(renderer, event) {
   const rect = renderer.container.getBoundingClientRect();
   const x = event.clientX - rect.left;
-  const clickMs = renderer._xToMs(x);
   const scrubX = renderer._msToX(renderer._scrubberMs);
   const dist = Math.abs(x - scrubX);
 
   if (dist < renderer._scrubThresholdPx) {
+    renderer._wasScrubbingOnMouseDown = true;
     renderer.setScrubbing(true);
-    // No longer need to add/remove listeners here; the main listeners will handle it.
+  } else {
+    renderer._wasScrubbingOnMouseDown = false;
   }
 }
 
 /**
- * Handles mouse up events for stopping scrubbing
+ * Handles mouseup to end scrubbing. Emits 'timechanged' event with final position.
  */
 export function handleTimelineMouseUp(renderer) {
   if (renderer._isScrubbing) {
@@ -95,7 +99,7 @@ export function handleTimelineMouseUp(renderer) {
 }
 
 /**
- * Handles mouse wheel events for zooming
+ * Handles mouse wheel for timeline zoom. Zooms centered on cursor position.
  */
 export function handleTimelineWheel(renderer, event) {
   const rect = renderer.container.getBoundingClientRect();
@@ -111,13 +115,12 @@ export function handleTimelineWheel(renderer, event) {
 }
 
 /**
- * Handles mouse leave events for clearing hover state
+ * Handles mouse leave to clear hover state with debounce.
  */
 export function handleTimelineMouseLeave(renderer) {
   if (renderer._lastHoverId != null) {
     renderer._emit('itemout', {});
-    // Update store for React tooltip with delay
-    if (hoverTimeout) clearTimeout(hoverTimeout);
+    clearTimeout(hoverTimeout);
     hoverTimeout = setTimeout(() => {
       useAppStore.getState().setHoveredSegment(null, null);
     }, 150);

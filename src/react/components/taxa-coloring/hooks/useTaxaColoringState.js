@@ -28,12 +28,14 @@ export function useTaxaColoringState(taxaNames, originalColorMap, initialStatePa
     onFile,
     onColumnChange,
     resetCSV
-  } = useCSVState(taxaNames);
+  } = useCSVState(taxaNames, initialState);
 
   const mgr = colorManagerRef.current;
 
   // Initialize group colors from saved state if available
+  // Also trigger groups regeneration if we're in groups mode with saved separators
   useEffect(() => {
+    // Restore group color map
     if (initialState.groupColorMap) {
       const map = initialState.groupColorMap instanceof Map
         ? Object.fromEntries(initialState.groupColorMap)
@@ -42,8 +44,33 @@ export function useTaxaColoringState(taxaNames, originalColorMap, initialStatePa
       Object.entries(map).forEach(([name, color]) => {
         mgr.groupColorMap[name] = color;
       });
-      forceUpdate();
     }
+
+    // If we're reopening in groups mode with saved configuration, regenerate groups
+    if (initialState.mode === "groups" && taxaNames.length > 0) {
+      const savedSeparators = initialState.separators;
+      const options = {
+        segmentIndex: initialState.segmentIndex || 0,
+        useRegex: initialState.useRegex || false,
+        regexPattern: initialState.regexPattern || ""
+      };
+
+      const res = generateGroups(
+        taxaNames,
+        savedSeparators && savedSeparators.length > 0 ? savedSeparators : null,
+        initialState.strategyType || 'prefix',
+        options
+      );
+
+      if (res?.groups) {
+        setGroups(res.groups);
+        setGroupingResult(res);
+        // Sync colors: restore saved colors or generate new ones
+        syncGroupColors(mgr, res.groups);
+      }
+    }
+
+    forceUpdate();
   }, []); // Run once on mount
 
   const applyScheme = useCallback((id, targetMode) => {
@@ -81,7 +108,13 @@ export function useTaxaColoringState(taxaNames, originalColorMap, initialStatePa
     }
   }, [taxaNames, selectedStrategy, separators, segmentIndex, useRegex, regexPattern, mgr, forceUpdate]);
 
+  // Update groups when mode changes to "groups" (but not on initial mount - handled above)
+  const isInitialMount = useRef(true);
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
     if (mode === "groups") updateGroups();
   }, [mode, updateGroups]);
 

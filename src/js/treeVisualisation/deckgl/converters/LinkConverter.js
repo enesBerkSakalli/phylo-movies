@@ -8,7 +8,7 @@ import { ARC_SEGMENT_COUNT } from '../interpolation/PathInterpolator.js';
  */
 export class LinkConverter {
   constructor() {
-    this.arcCache = new Map();
+    // Cache removed - was not being used effectively
   }
 
   /**

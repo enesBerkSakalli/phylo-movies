@@ -3,9 +3,10 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
+// Switch removed as it is now encapsulated in ToggleWithLabel
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info } from "lucide-react";
+import { ToggleWithLabel } from "@/components/ui/toggle-with-label";
 
 export function AdvancedPatternOptions({
   strategy,
@@ -71,21 +72,14 @@ export function AdvancedPatternOptions({
           )}
 
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="use-regex" className="text-sm">
-                  Use Custom Regex Pattern
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  Enable regex mode for advanced pattern matching
-                </p>
-              </div>
-              <Switch
-                id="use-regex"
-                checked={useRegex}
-                onCheckedChange={onUseRegexChange}
-              />
-            </div>
+            <ToggleWithLabel
+              id="use-regex"
+              label="Use Custom Regex Pattern"
+              description="Enable regex mode for advanced pattern matching"
+              checked={useRegex}
+              onCheckedChange={onUseRegexChange}
+              switchPosition="right"
+            />
 
             {useRegex && (
               <div className="space-y-2">

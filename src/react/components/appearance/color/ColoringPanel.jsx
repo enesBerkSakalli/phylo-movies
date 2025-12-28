@@ -10,14 +10,14 @@ import { openTaxaColoringFromStore } from '../../../../js/treeColoring/component
 export function ColoringPanel() {
   const monophyletic = useAppStore((s) => s.monophyleticColoringEnabled);
   const activeChange = useAppStore((s) => s.activeChangeEdgesEnabled);
-  const marked = useAppStore((s) => s.markedComponentsEnabled);
+  const marked = useAppStore((s) => s.markedSubtreesEnabled);
   const treeControllers = useAppStore((s) => s.treeControllers);
   const activeChangeEdgeColor = useAppStore((s) => s.activeChangeEdgeColor);
   const markedColor = useAppStore((s) => s.markedColor);
 
   const setMonophyleticColoring = useAppStore((s) => s.setMonophyleticColoring);
   const setActiveChangeEdgesEnabled = useAppStore((s) => s.setActiveChangeEdgesEnabled);
-  const setMarkedComponentsEnabled = useAppStore((s) => s.setMarkedComponentsEnabled);
+  const setMarkedSubtreesEnabled = useAppStore((s) => s.setMarkedSubtreesEnabled);
   const setActiveChangeEdgeColor = useAppStore((s) => s.setActiveChangeEdgeColor);
   const setMarkedColor = useAppStore((s) => s.setMarkedColor);
 
@@ -26,7 +26,7 @@ export function ColoringPanel() {
       for (const controller of treeControllers ?? []) {
         await controller?.renderAllElements?.();
       }
-    } catch {}
+    } catch { }
   }, [treeControllers]);
 
   const onToggleMonophyletic = useCallback(async (v) => {
@@ -40,26 +40,26 @@ export function ColoringPanel() {
   }, [setActiveChangeEdgesEnabled, rerenderControllers]);
 
   const onToggleMarked = useCallback(async (v) => {
-    setMarkedComponentsEnabled(!!v);
+    setMarkedSubtreesEnabled(!!v);
     await rerenderControllers();
-  }, [setMarkedComponentsEnabled, rerenderControllers]);
+  }, [setMarkedSubtreesEnabled, rerenderControllers]);
 
   return (
     <div>
       <div className="flex flex-col gap-4">
-          <Button id="taxa-coloring-button" className="w-full" onClick={openTaxaColoringFromStore}>
-            <Palette className="size-4" />
-            <span>Taxa Coloring</span>
-          </Button>
+        <Button id="taxa-coloring-button" className="w-full" onClick={openTaxaColoringFromStore}>
+          <Palette className="size-4" />
+          <span>Taxa Coloring</span>
+        </Button>
 
-          <label
-            className="row-16"
-            style={{ cursor: 'pointer' }}
-            onClick={(e) => {
-              if (e.target?.closest?.('[data-slot="switch"]')) return;
-              onToggleMonophyletic(!monophyletic);
-            }}
-          >
+        <label
+          className="row-16"
+          style={{ cursor: 'pointer' }}
+          onClick={(e) => {
+            if (e.target?.closest?.('[data-slot="switch"]')) return;
+            onToggleMonophyletic(!monophyletic);
+          }}
+        >
           <Switch
             id="monophyletic-coloring"
             aria-labelledby="monophyletic-coloring-label"
@@ -77,8 +77,8 @@ export function ColoringPanel() {
 
         <div>
           <h4 className="text-sm font-medium">Highlighting Colors</h4>
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-3">
               <Switch
                 id="active-change-edges-toggle"
                 aria-labelledby="active-change-edges-label"
@@ -98,7 +98,7 @@ export function ColoringPanel() {
                 }}
               />
             </div>
-              <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3">
               <Switch
                 id="marked-components-toggle"
                 aria-labelledby="marked-components-label"

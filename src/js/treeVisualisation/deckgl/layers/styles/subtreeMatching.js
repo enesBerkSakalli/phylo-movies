@@ -1,0 +1,151 @@
+/**
+ * Subtree matching utilities
+ * Checks if tree elements (links/nodes) belong to marked subtrees
+ * using split index subset relationships
+ */
+
+/**
+ * Check if a link's split indices are a subset of any marked subtree
+ * @param {Object} linkData - Link data with target.data.split_indices or target.split_indices
+ * @param {Array<Set|Array>} subtreeSets - Array of subtree sets to check against
+ * @returns {boolean} True if link is within any subtree
+ */
+export function isLinkInSubtree(linkData, subtreeSets) {
+  const splitIndices = linkData?.target?.data?.split_indices || linkData?.target?.split_indices;
+  if (!splitIndices || !subtreeSets?.length) {
+    return false;
+  }
+
+  const linkSplits = new Set(splitIndices);
+
+  for (const subtree of subtreeSets) {
+    const subtreeSet = subtree instanceof Set ? subtree : new Set(subtree);
+    const isSubset = [...linkSplits].every(leaf => subtreeSet.has(leaf));
+    const isProperSubset = linkSplits.size <= subtreeSet.size && isSubset;
+    if (isProperSubset) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Check if a node's split indices are a subset of any marked subtree
+ * @param {Object} nodeData - Node data with data.split_indices or split_indices
+ * @param {Array<Set|Array>} subtreeSets - Array of subtree sets to check against
+ * @returns {boolean} True if node is within any subtree
+ */
+export function isNodeInSubtree(nodeData, subtreeSets) {
+  const splitIndices = nodeData?.data?.split_indices || nodeData?.split_indices;
+  if (!splitIndices || !subtreeSets?.length) {
+    return false;
+  }
+
+  const nodeSplits = new Set(splitIndices);
+
+  for (const subtree of subtreeSets) {
+    const subtreeSet = subtree instanceof Set ? subtree : new Set(subtree);
+    const isSubset = [...nodeSplits].every(leaf => subtreeSet.has(leaf));
+    const isProperSubset = nodeSplits.size <= subtreeSet.size && isSubset;
+    if (isProperSubset) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Check if a link has different color when highlighted vs base
+ * (i.e., is visually distinguished)
+ * @param {Object} link - Link data
+ * @param {Object} colorManager - ColorManager instance
+ * @returns {boolean} True if link appears highlighted
+ */
+export function isLinkVisuallyHighlighted(link, colorManager) {
+  const normalColor = colorManager?.getBranchColor?.(link);
+  const highlightedColor = colorManager?.getBranchColorWithHighlights?.(link);
+  return normalColor !== highlightedColor;
+}
+
+/**
+ * Check if a node is visually highlighted (marked or active edge)
+ * @param {Object} nodeData - Node data
+ * @param {Object} colorManager - ColorManager instance
+ * @returns {boolean} True if node appears highlighted
+ */
+export function isNodeVisuallyHighlighted(nodeData, colorManager) {
+  if (!colorManager) return false;
+
+  const baseColor = colorManager.getNodeColor?.(nodeData, [], { skipHighlights: true });
+  const highlightedColor = colorManager.getNodeColor?.(nodeData);
+
+  const isMarked = colorManager.sharedMarkedJumpingSubtrees?.some(set => {
+    const splitIndices = nodeData?.data?.split_indices || nodeData?.split_indices;
+    return splitIndices?.some(idx => set.has(idx));
+  });
+  const isActiveEdge = colorManager.currentActiveChangeEdges?.size > 0 &&
+    colorManager.isNodeDownstreamOfAnyActiveChangeEdge?.(nodeData);
+
+  return isMarked || isActiveEdge || (baseColor !== highlightedColor);
+}
+
+/**
+ * Check if a node is the exact root of any subtree (split indices equal the subtree set)
+ * @param {Object} nodeData - Node data with data.split_indices or split_indices
+ * @param {Array<Set|Array>} subtreeSets - Array of subtree sets to check against
+ * @returns {boolean} True if node matches any subtree root exactly
+ */
+export function isNodeSubtreeRoot(nodeData, subtreeSets) {
+  const splitIndices = nodeData?.data?.split_indices || nodeData?.split_indices;
+  if (!Array.isArray(splitIndices) || !subtreeSets?.length) {
+    return false;
+  }
+
+  for (const subtree of subtreeSets) {
+    const subtreeSet = subtree instanceof Set ? subtree : new Set(subtree);
+    if (splitIndices.length !== subtreeSet.size) continue;
+    const allMatch = splitIndices.every(idx => subtreeSet.has(idx));
+    if (allMatch) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Flatten nested subtree entries into a single array, filtering out nulls.
+ * Handles arbitrarily nested arrays but preserves "leaf arrays" (arrays of numbers)
+ * which represent actual subtree node sets.
+ *
+ * @param {Array} entries - Potentially nested array of subtree entries
+ * @returns {Array} Flattened array with null/undefined entries removed
+ */
+export function flattenSubtreeEntries(entries) {
+  if (!Array.isArray(entries)) return [];
+
+  const flattened = [];
+  const recurse = (items) => {
+    if (!Array.isArray(items)) return;
+
+    items.forEach(item => {
+      // If it's a leaf array (non-empty array of numbers) or a Set, keeps it
+      if (item instanceof Set) {
+        flattened.push(item);
+      } else if (Array.isArray(item)) {
+        if (item.length > 0 && typeof item[0] === 'number') {
+          // It's a leaf array (list of node IDs), keep it
+          flattened.push(item);
+        } else {
+          // It's a structural nesting array, recurse
+          recurse(item);
+        }
+      } else if (item != null) {
+        // Just in case there are single items that aren't arrays/sets (though likely unexpected)
+        // flattened.push(item);
+      }
+    });
+  };
+
+  recurse(entries);
+  return flattened;
+}

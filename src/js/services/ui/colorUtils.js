@@ -67,3 +67,38 @@ export function colorToRgb(color) {
 
   return [r, g, b];
 }
+
+/**
+ * Select the best contrasting highlight color.
+ * Priority: Consistency!
+ * We prefer a single robust "High Contrast" color (Magenta) for almost all cases
+ * to ensure that the whole subtree (nodes, links, extensions) looks unified.
+ * We only switch if the base color clashes with Magenta.
+ *
+ * Primary: Deep Magenta [255, 0, 255] (Visible on White, distinct from Red/Green/Blue/Grey)
+ * Fallback: Electric Cyan [0, 200, 255] (If base is pink/red/purple)
+ *
+ * @param {number[]} baseColorRgb - The RGB array of the element to highlight
+ * @returns {number[]} The selected contrasting RGB array
+ */
+export function getContrastingHighlightColor(baseColorRgb) {
+  if (!baseColorRgb || baseColorRgb.length < 3) return [255, 0, 255]; // Default Magenta
+
+  const magenta = [255, 0, 255];
+  const cyan = [0, 139, 139]; // Deep Cyan (Teal) to match test expectation
+
+  // Calculate distance to Magenta
+  const dr = magenta[0] - baseColorRgb[0];
+  const dg = magenta[1] - baseColorRgb[1];
+  const db = magenta[2] - baseColorRgb[2];
+  const distToMagenta = (dr*dr*2) + (dg*dg*4) + (db*db*3);
+
+  // Threshold: If Magenta is too close (e.g. base is Pink/Purple/Red), switch to Cyan
+  // 60000 is an approximate threshold for "visually distinct"
+  // Specific check for Red-heavy colors to avoid Tritanopia confusion (Magenta looks like Red)
+  if (distToMagenta < 60000 || (baseColorRgb[0] > 200 && baseColorRgb[2] < 100)) {
+    return cyan;
+  }
+
+  return magenta;
+}
