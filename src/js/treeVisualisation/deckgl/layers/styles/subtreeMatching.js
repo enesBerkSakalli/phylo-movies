@@ -59,34 +59,42 @@ export function isNodeInSubtree(nodeData, subtreeSets) {
  * (i.e., is visually distinguished)
  * @param {Object} link - Link data
  * @param {Object} colorManager - ColorManager instance
+ * @param {boolean} markedSubtreesEnabled - Whether marked subtree coloring is enabled
  * @returns {boolean} True if link appears highlighted
  */
-export function isLinkVisuallyHighlighted(link, colorManager) {
-  const normalColor = colorManager?.getBranchColor?.(link);
-  const highlightedColor = colorManager?.getBranchColorWithHighlights?.(link);
-  return normalColor !== highlightedColor;
+export function isLinkVisuallyHighlighted(link, colorManager, markedSubtreesEnabled = true) {
+  if (!colorManager) return false;
+
+  // Check if link is in a marked subtree (only if coloring is enabled)
+  const isMarked = markedSubtreesEnabled !== false && isLinkInSubtree(link, colorManager.sharedMarkedJumpingSubtrees);
+
+  // Check if link IS the active change edge (not downstream of it)
+  // Only the specific edge being changed should be highlighted, not all descendants
+  const isActiveEdge = colorManager.isActiveChangeEdge?.(link);
+
+  return isMarked || isActiveEdge;
 }
 
 /**
  * Check if a node is visually highlighted (marked or active edge)
  * @param {Object} nodeData - Node data
  * @param {Object} colorManager - ColorManager instance
+ * @param {boolean} markedSubtreesEnabled - Whether marked subtree coloring is enabled
  * @returns {boolean} True if node appears highlighted
  */
-export function isNodeVisuallyHighlighted(nodeData, colorManager) {
+export function isNodeVisuallyHighlighted(nodeData, colorManager, markedSubtreesEnabled = true) {
   if (!colorManager) return false;
 
-  const baseColor = colorManager.getNodeColor?.(nodeData, [], { skipHighlights: true });
+  // Only check marked subtrees if coloring is enabled
+  const isMarked = markedSubtreesEnabled !== false && isNodeInSubtree(nodeData, colorManager.sharedMarkedJumpingSubtrees);
+
+  // Check if node IS the active change edge by comparing colors
+  // This is the simplest and most reliable way - if the color differs, it's highlighted
+  const baseColor = colorManager.getNodeBaseColor?.(nodeData);
   const highlightedColor = colorManager.getNodeColor?.(nodeData);
+  const isActiveEdgeNode = baseColor !== highlightedColor;
 
-  const isMarked = colorManager.sharedMarkedJumpingSubtrees?.some(set => {
-    const splitIndices = nodeData?.data?.split_indices || nodeData?.split_indices;
-    return splitIndices?.some(idx => set.has(idx));
-  });
-  const isActiveEdge = colorManager.currentActiveChangeEdges?.size > 0 &&
-    colorManager.isNodeDownstreamOfAnyActiveChangeEdge?.(nodeData);
-
-  return isMarked || isActiveEdge || (baseColor !== highlightedColor);
+  return isMarked || isActiveEdgeNode;
 }
 
 /**
