@@ -96,12 +96,14 @@ export class ScrubberAPI {
   }
 
   _updateColorManagerForScrub(state, treeIndex) {
-    const { colorManager, markedSubtreesEnabled, activeChangeEdgesEnabled,
+    const { colorManager, activeChangeEdgesEnabled,
       getMarkedSubtreeData, getCurrentActiveChangeEdge } = state;
     if (!colorManager) return;
 
+    // Always update subtree data for dimming purposes
+    // The markedSubtreesEnabled flag controls coloring, not the data availability
     colorManager.updateMarkedSubtrees(
-      markedSubtreesEnabled ? getMarkedSubtreeData(treeIndex).map(toSet) : []
+      getMarkedSubtreeData(treeIndex).map(toSet)
     );
     colorManager.updateActiveChangeEdge(
       activeChangeEdgesEnabled ? getCurrentActiveChangeEdge(treeIndex) : []

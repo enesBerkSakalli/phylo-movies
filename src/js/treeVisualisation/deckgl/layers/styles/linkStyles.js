@@ -96,7 +96,7 @@ export function getLinkWidth(link, cached, helpers) {
   }
 
   // Check if link should be highlighted (current active)
-  const isHighlighted = isLinkVisuallyHighlighted(link, cm);
+  const isHighlighted = isLinkVisuallyHighlighted(link, cm, cached.markedSubtreesEnabled);
 
   return isHighlighted ? baseWidth * 2 : baseWidth; // Thick for current
 }
@@ -191,7 +191,7 @@ export function getLinkOutlineColor(link, cached) {
     glowOpacity = Math.round(baseOpacity * 255); // Full opacity for persistent visibility
   }
   // Current Active Edge: strong pulsing glow
-  else if (isLinkVisuallyHighlighted(link, cm)) {
+  else if (isLinkVisuallyHighlighted(link, cm, cached.markedSubtreesEnabled)) {
     rgb = colorToRgb(cm.getBranchColorWithHighlights(link));
     glowOpacity = Math.round(baseOpacity * 128 * pulseOpacity);
   }
@@ -248,7 +248,7 @@ export function getLinkOutlineWidth(link, cached, helpers) {
   }
 
   // Only show outline for highlighted branches
-  if (!isLinkVisuallyHighlighted(link, cm)) {
+  if (!isLinkVisuallyHighlighted(link, cm, cached.markedSubtreesEnabled)) {
     return 0;
   }
 

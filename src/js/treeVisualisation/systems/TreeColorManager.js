@@ -29,6 +29,7 @@ import {
 export class TreeColorManager {
   constructor() {
     this.monophyleticColoringEnabled = true;
+    this.markedSubtreesColoringEnabled = true; // Controls whether marked subtrees get red color
     this.currentActiveChangeEdges = new Set();
     this.upcomingChangeEdges = []; // Array of Sets for upcoming edges
     this.completedChangeEdges = []; // Array of Sets for completed edges
@@ -54,12 +55,12 @@ export class TreeColorManager {
 
   /**
    * Get branch color with highlighting logic
-   * Priority: Active change edge (blue) > Marked (red) > Base color
+   * Priority: Active change edge (blue) > Marked (red, if enabled) > Base color
    * @param {Object} linkData - D3 link data
    * @returns {string} Hex color code
    */
   getBranchColorWithHighlights(linkData) {
-    const isMarked = isLinkInSubtree(linkData, this.sharedMarkedJumpingSubtrees);
+    const isMarked = this.markedSubtreesColoringEnabled && isLinkInSubtree(linkData, this.sharedMarkedJumpingSubtrees);
     const isActiveEdge = isLinkActiveChangeEdge(linkData, this.currentActiveChangeEdges);
 
     if (isActiveEdge) {
@@ -109,7 +110,7 @@ export class TreeColorManager {
    */
   getNodeColor(nodeData, activeChangeEdges = []) {
     const edgeSet = resolveActiveEdgeSet(activeChangeEdges, this.currentActiveChangeEdges);
-    const marked = isNodeInSubtree(nodeData, this.sharedMarkedJumpingSubtrees);
+    const marked = this.markedSubtreesColoringEnabled && isNodeInSubtree(nodeData, this.sharedMarkedJumpingSubtrees);
     const isActiveEdgeNode = nodeOrParentMatchesActiveEdge(nodeData, edgeSet);
 
     if (marked) {
@@ -119,6 +120,16 @@ export class TreeColorManager {
     } else {
       return getBaseNodeColor(nodeData, this.monophyleticColoringEnabled);
     }
+  }
+
+  /**
+   * Get base node color (without highlighting)
+   * Used for contrast calculation to ensure consistency with links
+   * @param {Object} nodeData - Node data
+   * @returns {string} Hex color code
+   */
+  getNodeBaseColor(nodeData) {
+    return getBaseNodeColor(nodeData, this.monophyleticColoringEnabled);
   }
 
   // =======================
@@ -193,6 +204,21 @@ export class TreeColorManager {
    */
   isMonophyleticColoringEnabled() {
     return this.monophyleticColoringEnabled;
+  }
+
+  /**
+   * Enable/disable marked subtrees coloring (red highlight)
+   * When disabled, subtrees still exist for dimming but don't get red color
+   */
+  setMarkedSubtreesColoring(enabled) {
+    this.markedSubtreesColoringEnabled = enabled;
+  }
+
+  /**
+   * Get marked subtrees coloring status
+   */
+  isMarkedSubtreesColoringEnabled() {
+    return this.markedSubtreesColoringEnabled;
   }
 
   // =======================

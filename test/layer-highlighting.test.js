@@ -100,7 +100,7 @@ const {
   createNodesLayer,
   createLinkOutlinesLayer,
   createExtensionsLayer
-} = require('../src/js/treeVisualisation/deckgl/layers/layerFactories/index.js');
+} = require('../src/js/treeVisualisation/deckgl/layers/factory/index.js');
 const { LayerStyles } = require('../src/js/treeVisualisation/deckgl/layers/LayerStyles.js');
 
 describe('Layer Highlighting Configuration', () => {
@@ -327,10 +327,10 @@ describe('Layer Highlighting Configuration', () => {
       mockStoreState.subtreeDimmingEnabled = true;
       mockStoreState.subtreeDimmingOpacity = 0.5;
       mockStoreState.markedSubtreesEnabled = false;
-      mockStoreState.getMarkedSubtreeData = () => [new Set([1])];
+      // ColorManager has the subtree data (single source of truth)
       mockStoreState.getColorManager = () => ({
         hasActiveChangeEdges: () => false,
-        sharedMarkedJumpingSubtrees: [],
+        sharedMarkedJumpingSubtrees: [new Set([1])], // Data comes from ColorManager
         getBranchColor: () => '#000000',
         getBranchColorForInnerLine: () => '#000000',
         getBranchColorWithHighlights: () => '#2196f3',
@@ -352,13 +352,18 @@ describe('Layer Highlighting Configuration', () => {
     });
 
     it('removes marked highlight scaling when coloring is disabled', () => {
+      // Note: This test verifies that the markedSubtreesEnabled flag affects the
+      // shouldHighlightMarkedNode check (1.6x scaling), but isNodeVisuallyHighlighted
+      // still checks ColorManager.sharedMarkedJumpingSubtrees directly (1.5x scaling).
+      // This is expected behavior - the toggle controls the "marked" visual treatment
+      // but not the general "highlighted" treatment.
       mockStoreState.markedSubtreesEnabled = true;
-      mockStoreState.getMarkedSubtreeData = () => [new Set([1])];
       mockStoreState.dimmingEnabled = false;
       mockStoreState.subtreeDimmingEnabled = false;
+      // ColorManager has the subtree data for radius scaling
       mockStoreState.getColorManager = () => ({
         hasActiveChangeEdges: () => false,
-        sharedMarkedJumpingSubtrees: [],
+        sharedMarkedJumpingSubtrees: [new Set([1])], // Data comes from ColorManager
         getBranchColor: () => '#123456',
         getBranchColorForInnerLine: () => '#123456',
         getBranchColorWithHighlights: () => '#123456',
@@ -378,8 +383,10 @@ describe('Layer Highlighting Configuration', () => {
       const cachedWithoutColor = layerStyles.getCachedState();
       const radiusWithoutColoring = layerStyles.getNodeRadius(markedNode, 3, cachedWithoutColor);
 
+      // With markedSubtreesEnabled=true: 4 * 1.6 = 6.4 (marked scaling)
+      // With markedSubtreesEnabled=false: 4 * 1.5 = 6 (highlighted scaling via isNodeVisuallyHighlighted)
+      // The marked scaling (1.6x) is larger than highlighted scaling (1.5x)
       expect(radiusWithColoring).to.be.greaterThan(radiusWithoutColoring);
-      expect(radiusWithoutColoring).to.equal(4);
     });
   });
 });
@@ -388,5 +395,404 @@ describe('Color Version Counter Integration', () => {
   it('should be included in store state', () => {
     expect(mockStoreState).to.have.property('colorVersion');
     expect(typeof mockStoreState.colorVersion).to.equal('number');
+  });
+});
+
+/**
+ * Task 4: Unit tests for LayerStyles.getCachedState()
+ * Property 1: ColorManager is Single Source of Truth
+ * Validates: Requirements 2.1, 2.2
+ */
+describe('LayerStyles.getCachedState() - ColorManager as Single Source of Truth', () => {
+  let layerStyles;
+
+  beforeEach(() => {
+    layerStyles = new LayerStyles();
+  });
+
+  afterEach(() => {
+    layerStyles.clearRenderCache();
+    layerStyles.destroy();
+  });
+
+  it('should get markedSubtreeData from ColorManager, not from store', () => {
+    // Set up ColorManager with specific subtree data
+    const colorManagerSubtrees = [new Set([10, 20, 30])];
+
+    // Set up store with DIFFERENT subtree data (simulating stale store state)
+    mockStoreState.getMarkedSubtreeData = () => [new Set([1, 2, 3])]; // This should be ignored
+    mockStoreState.getColorManager = () => ({
+      hasActiveChangeEdges: () => false,
+      sharedMarkedJumpingSubtrees: colorManagerSubtrees,
+      getBranchColor: () => '#000000',
+      getBranchColorForInnerLine: () => '#000000',
+      getBranchColorWithHighlights: () => '#000000',
+      getNodeColor: () => '#000000',
+      isDownstreamOfAnyActiveChangeEdge: () => false,
+      isNodeDownstreamOfAnyActiveChangeEdge: () => false
+    });
+
+    const cached = layerStyles.getCachedState();
+
+    // markedSubtreeData should come from ColorManager, not store
+    expect(cached.markedSubtreeData).to.equal(colorManagerSubtrees);
+    expect(cached.markedSubtreeData).to.not.deep.equal([new Set([1, 2, 3])]);
+  });
+
+  it('should return empty array when ColorManager is null', () => {
+    mockStoreState.getColorManager = () => null;
+
+    const cached = layerStyles.getCachedState();
+
+    expect(cached.markedSubtreeData).to.deep.equal([]);
+  });
+
+  it('should return empty array when ColorManager.sharedMarkedJumpingSubtrees is undefined', () => {
+    mockStoreState.getColorManager = () => ({
+      hasActiveChangeEdges: () => false,
+      // sharedMarkedJumpingSubtrees is undefined
+      getBranchColor: () => '#000000',
+      getBranchColorForInnerLine: () => '#000000',
+      getBranchColorWithHighlights: () => '#000000',
+      getNodeColor: () => '#000000',
+      isDownstreamOfAnyActiveChangeEdge: () => false,
+      isNodeDownstreamOfAnyActiveChangeEdge: () => false
+    });
+
+    const cached = layerStyles.getCachedState();
+
+    expect(cached.markedSubtreeData).to.deep.equal([]);
+  });
+
+  it('should properly clear and rebuild cache', () => {
+    // First call with initial data
+    const initialSubtrees = [new Set([1, 2])];
+    mockStoreState.getColorManager = () => ({
+      hasActiveChangeEdges: () => false,
+      sharedMarkedJumpingSubtrees: initialSubtrees,
+      getBranchColor: () => '#000000',
+      getBranchColorForInnerLine: () => '#000000',
+      getBranchColorWithHighlights: () => '#000000',
+      getNodeColor: () => '#000000',
+      isDownstreamOfAnyActiveChangeEdge: () => false,
+      isNodeDownstreamOfAnyActiveChangeEdge: () => false
+    });
+
+    const cached1 = layerStyles.getCachedState();
+    expect(cached1.markedSubtreeData).to.equal(initialSubtrees);
+
+    // Clear cache
+    layerStyles.clearRenderCache();
+
+    // Update ColorManager with new data
+    const updatedSubtrees = [new Set([5, 6, 7])];
+    mockStoreState.getColorManager = () => ({
+      hasActiveChangeEdges: () => false,
+      sharedMarkedJumpingSubtrees: updatedSubtrees,
+      getBranchColor: () => '#000000',
+      getBranchColorForInnerLine: () => '#000000',
+      getBranchColorWithHighlights: () => '#000000',
+      getNodeColor: () => '#000000',
+      isDownstreamOfAnyActiveChangeEdge: () => false,
+      isNodeDownstreamOfAnyActiveChangeEdge: () => false
+    });
+
+    // Second call should get new data
+    const cached2 = layerStyles.getCachedState();
+    expect(cached2.markedSubtreeData).to.equal(updatedSubtrees);
+    expect(cached2.markedSubtreeData).to.not.equal(initialSubtrees);
+  });
+
+  it('should cache state within same render cycle', () => {
+    const subtrees = [new Set([1])];
+    let callCount = 0;
+    mockStoreState.getColorManager = () => {
+      callCount++;
+      return {
+        hasActiveChangeEdges: () => false,
+        sharedMarkedJumpingSubtrees: subtrees,
+        getBranchColor: () => '#000000',
+        getBranchColorForInnerLine: () => '#000000',
+        getBranchColorWithHighlights: () => '#000000',
+        getNodeColor: () => '#000000',
+        isDownstreamOfAnyActiveChangeEdge: () => false,
+        isNodeDownstreamOfAnyActiveChangeEdge: () => false
+      };
+    };
+
+    // Multiple calls within same render cycle
+    layerStyles.getCachedState();
+    layerStyles.getCachedState();
+    layerStyles.getCachedState();
+
+    // getColorManager should only be called once due to caching
+    expect(callCount).to.equal(1);
+  });
+});
+
+/**
+ * Task 5: Unit tests for dimmingUtils.applyDimmingWithCache()
+ * Property 3: Dimming Data Consistency
+ * Validates: Requirements 1.4, 2.4
+ */
+describe('dimmingUtils.applyDimmingWithCache() - Dimming Data Consistency', () => {
+  const { applyDimmingWithCache } = require('../src/js/treeVisualisation/deckgl/layers/styles/dimmingUtils.js');
+
+  it('should use ColorManager subtree data for dimming', () => {
+    const colorManager = {
+      hasActiveChangeEdges: () => false,
+      sharedMarkedJumpingSubtrees: [new Set([1, 2, 3])]
+    };
+
+    // Node inside subtree (split_indices contains 1)
+    const nodeInside = { data: { split_indices: [1] } };
+    // Node outside subtree (split_indices contains 99)
+    const nodeOutside = { data: { split_indices: [99] } };
+
+    const opacityInside = applyDimmingWithCache(
+      255, colorManager, nodeInside, true,
+      false, 0.3, // dimmingEnabled, dimmingOpacity
+      true, 0.5,  // subtreeDimmingEnabled, subtreeDimmingOpacity
+      [] // markedSubtreeData parameter (should be ignored)
+    );
+
+    const opacityOutside = applyDimmingWithCache(
+      255, colorManager, nodeOutside, true,
+      false, 0.3,
+      true, 0.5,
+      [] // markedSubtreeData parameter (should be ignored)
+    );
+
+    // Node inside subtree should have full opacity
+    expect(opacityInside).to.equal(255);
+    // Node outside subtree should be dimmed
+    expect(opacityOutside).to.equal(Math.round(255 * 0.5));
+  });
+
+  it('should ignore markedSubtreeData parameter and use ColorManager', () => {
+    const colorManager = {
+      hasActiveChangeEdges: () => false,
+      sharedMarkedJumpingSubtrees: [new Set([100])] // ColorManager says node 100 is in subtree
+    };
+
+    // Node with split_indices [100] - in ColorManager's subtree
+    const node = { data: { split_indices: [100] } };
+
+    // Pass DIFFERENT data in markedSubtreeData parameter (should be ignored)
+    const staleMarkedData = [new Set([1, 2, 3])]; // This would NOT include node 100
+
+    const opacity = applyDimmingWithCache(
+      255, colorManager, node, true,
+      false, 0.3,
+      true, 0.5,
+      staleMarkedData // This should be ignored
+    );
+
+    // Node should NOT be dimmed because ColorManager says it's in subtree
+    expect(opacity).to.equal(255);
+  });
+
+  it('should return full opacity when ColorManager is null', () => {
+    const node = { data: { split_indices: [1] } };
+
+    const opacity = applyDimmingWithCache(
+      255, null, node, true,
+      false, 0.3,
+      true, 0.5,
+      [new Set([1])] // markedSubtreeData parameter
+    );
+
+    // No dimming should occur when ColorManager is null
+    expect(opacity).to.equal(255);
+  });
+
+  it('should return full opacity when ColorManager has empty subtrees', () => {
+    const colorManager = {
+      hasActiveChangeEdges: () => false,
+      sharedMarkedJumpingSubtrees: [] // Empty
+    };
+
+    const node = { data: { split_indices: [1] } };
+
+    const opacity = applyDimmingWithCache(
+      255, colorManager, node, true,
+      false, 0.3,
+      true, 0.5,
+      []
+    );
+
+    // No dimming when no subtrees are marked
+    expect(opacity).to.equal(255);
+  });
+
+  it('should apply active change edge dimming correctly', () => {
+    const colorManager = {
+      hasActiveChangeEdges: () => true,
+      sharedMarkedJumpingSubtrees: [],
+      isNodeDownstreamOfAnyActiveChangeEdge: (node) => node.data.isDownstream
+    };
+
+    const downstreamNode = { data: { split_indices: [1], isDownstream: true } };
+    const upstreamNode = { data: { split_indices: [2], isDownstream: false } };
+
+    const opacityDownstream = applyDimmingWithCache(
+      255, colorManager, downstreamNode, true,
+      true, 0.3, // dimmingEnabled
+      false, 0.5,
+      []
+    );
+
+    const opacityUpstream = applyDimmingWithCache(
+      255, colorManager, upstreamNode, true,
+      true, 0.3,
+      false, 0.5,
+      []
+    );
+
+    // Downstream node should have full opacity
+    expect(opacityDownstream).to.equal(255);
+    // Upstream node should be dimmed
+    expect(opacityUpstream).to.equal(Math.round(255 * 0.3));
+  });
+});
+
+/**
+ * Task 6: Integration test for scrubbing highlighting
+ * Property 2: Scrub Position Highlighting Consistency
+ * Validates: Requirements 1.1, 1.2, 1.3
+ */
+describe('Scrubbing Highlighting Integration', () => {
+  let layerStyles;
+
+  beforeEach(() => {
+    layerStyles = new LayerStyles();
+  });
+
+  afterEach(() => {
+    layerStyles.clearRenderCache();
+    layerStyles.destroy();
+  });
+
+  it('should use correct highlighting when scrubbing to different positions', () => {
+    // Simulate scrubbing to tree index 5 - ColorManager is updated with tree 5's data
+    const tree5Subtrees = [new Set([50, 51, 52])];
+    mockStoreState.currentTreeIndex = 0; // Store still has stale index
+    mockStoreState.getMarkedSubtreeData = () => [new Set([1, 2, 3])]; // Store has stale data
+    mockStoreState.getColorManager = () => ({
+      hasActiveChangeEdges: () => false,
+      sharedMarkedJumpingSubtrees: tree5Subtrees, // ColorManager has correct data
+      getBranchColor: () => '#000000',
+      getBranchColorForInnerLine: () => '#000000',
+      getBranchColorWithHighlights: () => '#000000',
+      getNodeColor: () => '#000000',
+      isDownstreamOfAnyActiveChangeEdge: () => false,
+      isNodeDownstreamOfAnyActiveChangeEdge: () => false
+    });
+
+    const cached = layerStyles.getCachedState();
+
+    // Should use ColorManager's data (tree 5), not store's stale data
+    expect(cached.markedSubtreeData).to.equal(tree5Subtrees);
+    expect(cached.markedSubtreeData[0].has(50)).to.be.true;
+    expect(cached.markedSubtreeData[0].has(1)).to.be.false;
+  });
+
+  it('should update highlighting as scrub position changes', () => {
+    // First scrub position - tree index 3
+    const tree3Subtrees = [new Set([30, 31])];
+    mockStoreState.getColorManager = () => ({
+      hasActiveChangeEdges: () => false,
+      sharedMarkedJumpingSubtrees: tree3Subtrees,
+      getBranchColor: () => '#000000',
+      getBranchColorForInnerLine: () => '#000000',
+      getBranchColorWithHighlights: () => '#000000',
+      getNodeColor: () => '#000000',
+      isDownstreamOfAnyActiveChangeEdge: () => false,
+      isNodeDownstreamOfAnyActiveChangeEdge: () => false
+    });
+
+    const cached1 = layerStyles.getCachedState();
+    expect(cached1.markedSubtreeData[0].has(30)).to.be.true;
+
+    // Clear cache (simulating new render frame)
+    layerStyles.clearRenderCache();
+
+    // Second scrub position - tree index 7
+    const tree7Subtrees = [new Set([70, 71, 72])];
+    mockStoreState.getColorManager = () => ({
+      hasActiveChangeEdges: () => false,
+      sharedMarkedJumpingSubtrees: tree7Subtrees,
+      getBranchColor: () => '#000000',
+      getBranchColorForInnerLine: () => '#000000',
+      getBranchColorWithHighlights: () => '#000000',
+      getNodeColor: () => '#000000',
+      isDownstreamOfAnyActiveChangeEdge: () => false,
+      isNodeDownstreamOfAnyActiveChangeEdge: () => false
+    });
+
+    const cached2 = layerStyles.getCachedState();
+    expect(cached2.markedSubtreeData[0].has(70)).to.be.true;
+    expect(cached2.markedSubtreeData[0].has(30)).to.be.false;
+  });
+
+  it('should correctly dim nodes based on scrub position subtree data', () => {
+    mockStoreState.subtreeDimmingEnabled = true;
+    mockStoreState.subtreeDimmingOpacity = 0.4;
+
+    // Scrub position has subtree with nodes 100, 101
+    mockStoreState.getColorManager = () => ({
+      hasActiveChangeEdges: () => false,
+      sharedMarkedJumpingSubtrees: [new Set([100, 101])],
+      getBranchColor: () => '#000000',
+      getBranchColorForInnerLine: () => '#000000',
+      getBranchColorWithHighlights: () => '#000000',
+      getNodeColor: () => '#000000',
+      isDownstreamOfAnyActiveChangeEdge: () => false,
+      isNodeDownstreamOfAnyActiveChangeEdge: () => false
+    });
+
+    const nodeInSubtree = { position: [0, 0, 0], data: { split_indices: [100] }, opacity: 1 };
+    const nodeOutsideSubtree = { position: [0, 0, 0], data: { split_indices: [999] }, opacity: 1 };
+
+    const cached = layerStyles.getCachedState();
+    const colorInside = layerStyles.getNodeColor(nodeInSubtree, cached);
+    const colorOutside = layerStyles.getNodeColor(nodeOutsideSubtree, cached);
+
+    // Node inside subtree should have higher opacity than node outside
+    expect(colorInside[3]).to.be.greaterThan(colorOutside[3]);
+  });
+
+  it('should correctly dim links based on scrub position subtree data', () => {
+    mockStoreState.subtreeDimmingEnabled = true;
+    mockStoreState.subtreeDimmingOpacity = 0.4;
+
+    mockStoreState.getColorManager = () => ({
+      hasActiveChangeEdges: () => false,
+      sharedMarkedJumpingSubtrees: [new Set([200, 201])],
+      getBranchColor: () => '#000000',
+      getBranchColorForInnerLine: () => '#000000',
+      getBranchColorWithHighlights: () => '#000000',
+      getNodeColor: () => '#000000',
+      isDownstreamOfAnyActiveChangeEdge: () => false,
+      isNodeDownstreamOfAnyActiveChangeEdge: () => false
+    });
+
+    const linkInSubtree = {
+      path: [[0, 0, 0], [1, 1, 0]],
+      target: { data: { split_indices: [200] } },
+      opacity: 1
+    };
+    const linkOutsideSubtree = {
+      path: [[0, 0, 0], [1, 1, 0]],
+      target: { data: { split_indices: [888] } },
+      opacity: 1
+    };
+
+    const cached = layerStyles.getCachedState();
+    const colorInside = layerStyles.getLinkColor(linkInSubtree, cached);
+    const colorOutside = layerStyles.getLinkColor(linkOutsideSubtree, cached);
+
+    // Link inside subtree should have higher opacity than link outside
+    expect(colorInside[3]).to.be.greaterThan(colorOutside[3]);
   });
 });

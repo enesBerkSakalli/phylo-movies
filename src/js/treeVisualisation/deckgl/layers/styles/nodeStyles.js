@@ -40,8 +40,8 @@ export function getNodeColor(node, cached, helpers) {
     let highlightRgb = colorToRgb(TREE_COLOR_CATEGORIES.markedColor);
 
     if (highContrastHighlightingEnabled) {
-      // Get base color to calculate contrast
-      const baseHex = cm?.getBranchColor?.(nodeData) || '#000000';
+      // Get base node color to calculate contrast (matches link behavior)
+      const baseHex = cm?.getNodeBaseColor?.(nodeData) || '#000000';
       const baseRgb = colorToRgb(baseHex);
       highlightRgb = getContrastingHighlightColor(baseRgb);
     }
@@ -99,13 +99,13 @@ export function getNodeBorderColor(node, cached, helpers) {
     let highlightRgb = colorToRgb(TREE_COLOR_CATEGORIES.markedColor);
 
     if (highContrastHighlightingEnabled) {
-       // Get base branch color to calculate contrast - use same source as getNodeColor
-      const baseHex = cm?.getBranchColor?.(nodeData) || '#000000';
+      // Get base node color to calculate contrast (matches link behavior)
+      const baseHex = cm?.getNodeBaseColor?.(nodeData) || '#000000';
       const baseRgb = colorToRgb(baseHex);
       highlightRgb = getContrastingHighlightColor(baseRgb);
     }
     rgb = highlightRgb;
-  } else if (!isNodeVisuallyHighlighted(nodeData, cm)) {
+  } else if (!isNodeVisuallyHighlighted(nodeData, cm, cached.markedSubtreesEnabled)) {
     // Normal node border
     rgb = colorToRgb(TREE_COLOR_CATEGORIES.strokeColor || '#000000');
   } else {
@@ -117,10 +117,10 @@ export function getNodeBorderColor(node, cached, helpers) {
   // Calculate final opacity
   let opacity = 255;
   if (!shouldHighlightMarkedNode(nodeData, cached)) {
-    if (!isNodeVisuallyHighlighted(nodeData, cm)) {
-        opacity = Math.round(baseOpacity * 255);
+    if (!isNodeVisuallyHighlighted(nodeData, cm, cached.markedSubtreesEnabled)) {
+      opacity = Math.round(baseOpacity * 255);
     } else {
-        opacity = Math.round(baseOpacity * 255 * pulseOpacity);
+      opacity = Math.round(baseOpacity * 255 * pulseOpacity);
     }
   }
 
@@ -166,7 +166,7 @@ export function getNodeRadius(node, minRadius = 3, cached, helpers) {
   }
 
   // Check if node is highlighted (active edge)
-  const isHighlighted = isNodeVisuallyHighlighted(nodeData, cm);
+  const isHighlighted = isNodeVisuallyHighlighted(nodeData, cm, cached.markedSubtreesEnabled);
 
   return isHighlighted ? baseRadius * 1.5 : baseRadius;
 }
@@ -197,15 +197,15 @@ export function getNodeBasedRgba(entity, baseOpacity, cached, helpers) {
 
   // Check if part of marked subtree - if so, use contrasting highlight
   if (shouldHighlightMarkedNode(node, cached)) {
-     let highlightRgb = colorToRgb(TREE_COLOR_CATEGORIES.markedColor); // Default red
+    let highlightRgb = colorToRgb(TREE_COLOR_CATEGORIES.markedColor); // Default red
 
-     if (highContrastHighlightingEnabled) {
-       // Use branch color for contrast calculation to match nodes and links
-       const baseHex = cm?.getBranchColor?.(node) || '#000000';
-       const baseRgb = colorToRgb(baseHex);
-       highlightRgb = getContrastingHighlightColor(baseRgb);
-     }
-     rgb = highlightRgb;
+    if (highContrastHighlightingEnabled) {
+      // Use node base color for contrast calculation (matches link behavior)
+      const baseHex = cm?.getNodeBaseColor?.(node) || '#000000';
+      const baseRgb = colorToRgb(baseHex);
+      highlightRgb = getContrastingHighlightColor(baseRgb);
+    }
+    rgb = highlightRgb;
   }
 
   let opacity = helpers.getBaseOpacity(baseOpacity);

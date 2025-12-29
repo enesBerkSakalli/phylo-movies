@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { ResponsiveBar } from '@nivo/bar';
 import { useAppStore } from '../../../../js/core/store';
 import { calculateSubtreeFrequencies, getTopSubtrees, formatSubtreeLabel } from '../../../../js/domain/tree/subtreeFrequencyUtils';
+import { TREE_COLOR_CATEGORIES } from '../../../../js/constants/TreeColors';
 
 /**
  * SubtreeFrequencyBarChart
@@ -41,7 +42,7 @@ export const SubtreeFrequencyBarChart = () => {
                 layout="vertical"
                 valueScale={{ type: 'linear' }}
                 indexScale={{ type: 'band', round: true }}
-                colors={{ scheme: 'blues' }}
+                colors={[TREE_COLOR_CATEGORIES.markedColor]}
                 borderRadius={4}
                 borderColor={{ from: 'color', modifiers: [['darker', 0.6]] }}
                 axisTop={null}
