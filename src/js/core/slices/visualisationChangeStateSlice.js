@@ -276,9 +276,16 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
 
   setMarkedSubtreesEnabled: (enabled) => {
     set({ markedSubtreesEnabled: enabled });
+    // Update ColorManager's coloring flag
+    const { colorManager } = get();
+    if (colorManager?.setMarkedSubtreesColoring) {
+      colorManager.setMarkedSubtreesColoring(enabled);
+    }
+    // Always keep subtree data in ColorManager for dimming purposes
+    // The markedSubtreesEnabled flag controls coloring, not the data availability
     const { updateColorManagerMarkedSubtrees, getMarkedSubtreeData, manuallyMarkedNodes } = get();
     const manual = toManualMarkedSets(manuallyMarkedNodes);
-    updateColorManagerMarkedSubtrees(enabled ? [...manual, ...getMarkedSubtreeData()] : manual);
+    updateColorManagerMarkedSubtrees([...manual, ...getMarkedSubtreeData()]);
   },
 
   setMarkedSubtreeMode: (mode) => {
@@ -294,9 +301,11 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
   setManuallyMarkedNodes: (nodeIds = []) => {
     const nodes = Array.isArray(nodeIds) ? nodeIds.filter(Boolean) : [];
     set({ manuallyMarkedNodes: nodes });
-    const { markedSubtreesEnabled, getMarkedSubtreeData, updateColorManagerMarkedSubtrees, treeControllers } = get();
+    // Always keep subtree data in ColorManager for dimming purposes
+    // The markedSubtreesEnabled flag controls coloring, not the data availability
+    const { getMarkedSubtreeData, updateColorManagerMarkedSubtrees, treeControllers } = get();
     const manual = toManualMarkedSets(nodes);
-    updateColorManagerMarkedSubtrees(markedSubtreesEnabled ? [...manual, ...getMarkedSubtreeData()] : manual);
+    updateColorManagerMarkedSubtrees([...manual, ...getMarkedSubtreeData()]);
     renderTreeControllers(treeControllers);
   },
 
@@ -305,14 +314,16 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
   // ==========================================================================
   updateColorManagerForCurrentIndex: () => {
     const {
-      markedSubtreesEnabled, activeChangeEdgesEnabled,
+      activeChangeEdgesEnabled,
       getMarkedSubtreeData, getCurrentActiveChangeEdge,
       updateColorManagerMarkedSubtrees, updateColorManagerActiveChangeEdge,
       updateUpcomingChanges, manuallyMarkedNodes
     } = get();
 
+    // Always keep subtree data in ColorManager for dimming purposes
+    // The markedSubtreesEnabled flag controls coloring, not the data availability
     const manual = toManualMarkedSets(manuallyMarkedNodes);
-    updateColorManagerMarkedSubtrees(markedSubtreesEnabled ? [...manual, ...getMarkedSubtreeData()] : manual);
+    updateColorManagerMarkedSubtrees([...manual, ...getMarkedSubtreeData()]);
     updateColorManagerActiveChangeEdge(activeChangeEdgesEnabled ? getCurrentActiveChangeEdge() : []);
     updateUpcomingChanges();
   },

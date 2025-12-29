@@ -56,12 +56,15 @@ export class LayerStyles {
   getCachedState() {
     if (!this._renderCache) {
       const state = useAppStore.getState();
+      const colorManager = state.getColorManager?.();
       const pulseEnabled = state.changePulseEnabled ?? true;
-      // Get marked subtree data for subtree dimming (works even when red coloring is disabled)
-      const markedSubtreeData = state.getMarkedSubtreeData?.() || [];
+      // Use ColorManager as single source of truth for marked subtree data
+      // This ensures correct highlighting during scrubbing when ColorManager is updated
+      // with the scrub position's tree index but store's currentTreeIndex is stale
+      const markedSubtreeData = colorManager?.sharedMarkedJumpingSubtrees || [];
       this._renderCache = {
         state,
-        colorManager: state.getColorManager?.(),
+        colorManager,
         dimmingEnabled: state.dimmingEnabled,
         dimmingOpacity: state.dimmingOpacity,
         subtreeDimmingEnabled: state.subtreeDimmingEnabled,

@@ -23,11 +23,10 @@ export function applyDimmingWithCache(
   }
 
   // Subtree dimming - dim elements NOT in the marked subtree
-  // Prefer explicit markedSubtreeData from store only when it contains data,
-  // otherwise fall back to ColorManager.sharedMarkedJumpingSubtrees.
-  const subtreeData = (Array.isArray(markedSubtreeData) && markedSubtreeData.length > 0)
-    ? markedSubtreeData
-    : (colorManager?.sharedMarkedJumpingSubtrees || []);
+  // Always use ColorManager as the authoritative source for subtree data
+  // This ensures consistency during scrubbing when ColorManager is updated
+  // with the correct tree index but the store's currentTreeIndex is stale
+  const subtreeData = colorManager?.sharedMarkedJumpingSubtrees || [];
 
   if (subtreeDimmingEnabled && subtreeData.length > 0) {
     const isInSubtree = isNode
