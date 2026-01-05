@@ -30,49 +30,19 @@ export const SubtreeFrequencyList = () => {
 
   const handleSubtreeClick = (splitIndices) => {
     // Toggle: if clicking same subtree, clear it. If new, set it.
-    // Note: This logic assumes single selection for simplicity first
-    // setManuallyMarkedNodes expects array of node IDs or split arrays?
-    // Checking store: setManuallyMarkedNodes(nodes) -> updates state.manuallyMarkedNodes
+    // We compare signatures to see if it's the same subtree
+    const signature = [...splitIndices].sort((a, b) => a - b).join(',');
+    const currentSignature = Array.isArray(markedNodes) && markedNodes.length > 0
+      ? [...markedNodes].sort((a, b) => a - b).join(',')
+      : '';
 
-    // We send the split indices as a Set to be consistent with how marking works
-    // Actually, looking at TreeColorManager, it usually marks specific node IDs or
-    // uses jumping_subtree_solutions logic.
-    // Let's pass the splitIndices directly. The visualizer often needs specific Node objects or IDs,
-    // but let's try passing the criteria.
-    // WAIT: setManuallyMarkedNodes usually takes an array of node IDs (strings/ints).
-    // But for jumping subtrees, we want to highlight the *concept* of the subtree.
-
-    // REVISION: The store likely expects node IDs. However, we only have split indices (leaf IDs).
-    // We need to find the node index in the current tree that corresponds to this split.
-    // Since that's complex to do here without tree traversal, we might need a different approach.
-    // OR we pass the splitIndices and let a downstream system handle it?
-    // Let's look at `TreeColorManager.js` again. `updateMarkedSubtrees` takes sets of split indices.
-    // But `setManuallyMarkedNodes` might be for user selection of specific nodes.
-
-    // ACTION: Let's use a new store action if needed, or pass the split indices if the visualizer supports it.
-    // For now, let's assume we can pass the splitIndices array to a specialized action
-    // or we might need to update the store to handle "highlight subtree by split".
-
-    // Checking `visualisationChangeStateSlice.js` or `interactionSlice.js` would differ,
-    // but based on `TreeColorManager.updateMarkedSubtrees(markedSubtrees)`,
-    // we should update the `markedSubtreeMode` or add a specific "manual" subtree list.
-
-    // Let's try to set it as a "Shared Marked Jumping Subtree" via a store action if possible,
-    // or strictly use `setManuallyMarkedNodes` if it accepts split sets.
-
-    // Since I can't see the store implementation right now, I will use `setManuallyMarkedNodes`
-    // with an object wrapper or just the indices, and relies on the fact that existing logic
-    // (from previous task context) mentioned `sharedMarkedJumpingSubtrees` handling sets.
-
-    // Let's assume we can trigger the same action used by the playback when a jump occurs,
-    // but manually. For now, I'll dispatch `setManuallyMarkedNodes` with the SPLIT INDICES
-    // and rely on the visualizer to interpret "Array of numbers" as a split definition if it detects it,
-    // OR I will assume I need to map it.
-
-    // Safer bet: Pass the splitIndices as a wrapper object or just the array,
-    // assuming the system can handle "Mark this group of leaves".
-
-    setManuallyMarkedNodes([splitIndices]);
+    if (signature === currentSignature) {
+      setManuallyMarkedNodes([]);
+    } else {
+      // Pass the split indices directly. The store's toManualMarkedSets will
+      // convert this array of leaf IDs into a Set for the ColorManager.
+      setManuallyMarkedNodes(splitIndices);
+    }
   };
 
   return (

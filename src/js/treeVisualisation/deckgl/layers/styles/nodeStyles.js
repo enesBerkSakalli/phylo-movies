@@ -12,6 +12,12 @@ const shouldHighlightMarkedNode = (nodeData, cached) => {
 export function getNodeColor(node, cached, helpers) {
   const { colorManager: cm, dimmingEnabled, dimmingOpacity, upcomingChangesEnabled, markedSubtreeData, highContrastHighlightingEnabled } = cached;
 
+  // Ghost mode - low opacity, fixed color
+  if (node.isGhost) {
+    const ghostColor = colorToRgb(TREE_COLOR_CATEGORIES.markedColor);
+    return [...ghostColor, 40]; // Very low opacity
+  }
+
   // Convert node data to format expected by ColorManager
   const nodeData = toColorManagerNode(node);
 
@@ -146,6 +152,10 @@ export function getNodeRadius(node, minRadius = 3, cached, helpers) {
   // NodeSize multiplier from store
   const nodeSize = helpers.nodeSize || 1;
   const baseRadius = (node.radius || minRadius) * nodeSize;
+
+  if (node.isGhost) {
+    return baseRadius * 1.2;
+  }
 
   if (!cm) {
     return baseRadius;
