@@ -8,6 +8,7 @@ import { LayerStyles } from './LayerStyles.js';
 import { useAppStore } from '../../../core/store.js';
 import * as layerFactories from './factory/index.js';
 import { CLIPBOARD_LAYER_CONFIGS } from './layerConfigs.js';
+import { isNodeInSubtree, isLinkInSubtree } from './styles/subtreeMatching.js';
 
 // ==========================================================================
 // CONSTANTS
@@ -28,9 +29,10 @@ export class LayerManager {
   /**
    * Create all tree visualization layers
    * @param {Object} data - Tree data containing nodes, links, labels, extensions
+   * @param {Object} ghostData - Optional data for ghost subtree visualization
    * @returns {Array} Array of deck.gl layers
    */
-  createTreeLayers(data) {
+  createTreeLayers(data, ghostData = null) {
     const { nodes, links, labels, extensions = [], connectors = [] } = data;
     const state = useAppStore.getState();
 
@@ -45,21 +47,32 @@ export class LayerManager {
       layerFactories.createConnectorsLayer(connectors || [], state),
       layerFactories.createNodesLayer(nodes, state, this.layerStyles),
       layerFactories.createLabelsLayer(labels, state, this.layerStyles)
-    ].filter(Boolean);
+    ];
+
+    // Add ghost layers if data is provided
+    if (ghostData) {
+      layers.push(
+        layerFactories.createGhostLinksLayer(ghostData.links || [], state, this.layerStyles),
+        layerFactories.createGhostNodesLayer(ghostData.nodes || [], state, this.layerStyles)
+      );
+    }
+
+    const filteredLayers = layers.filter(Boolean);
 
     // Clear render cache after creating layers (free memory)
     this.layerStyles.clearRenderCache();
 
-    return layers;
+    return filteredLayers;
   }
 
   /**
    * Update layers with new data - deck.gl handles the diffing and optimization
    * @param {Object} interpolatedData - New data to apply to layers
+   * @param {Object} ghostData - Optional data for ghost subtree visualization
    * @returns {Array} New layers (deck.gl will handle updates internally)
    */
-  updateLayersWithData(interpolatedData) {
-    return this.createTreeLayers(interpolatedData);
+  updateLayersWithData(interpolatedData, ghostData = null) {
+    return this.createTreeLayers(interpolatedData, ghostData);
   }
 
   // ==========================================================================

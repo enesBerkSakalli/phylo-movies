@@ -16,12 +16,10 @@ export function isLinkInSubtree(linkData, subtreeSets) {
     return false;
   }
 
-  const linkSplits = new Set(splitIndices);
-
   for (const subtree of subtreeSets) {
     const subtreeSet = subtree instanceof Set ? subtree : new Set(subtree);
-    const isSubset = [...linkSplits].every(leaf => subtreeSet.has(leaf));
-    const isProperSubset = linkSplits.size <= subtreeSet.size && isSubset;
+    const isSubset = splitIndices.every(leaf => subtreeSet.has(leaf));
+    const isProperSubset = splitIndices.length <= subtreeSet.size && isSubset;
     if (isProperSubset) {
       return true;
     }
@@ -41,12 +39,10 @@ export function isNodeInSubtree(nodeData, subtreeSets) {
     return false;
   }
 
-  const nodeSplits = new Set(splitIndices);
-
   for (const subtree of subtreeSets) {
     const subtreeSet = subtree instanceof Set ? subtree : new Set(subtree);
-    const isSubset = [...nodeSplits].every(leaf => subtreeSet.has(leaf));
-    const isProperSubset = nodeSplits.size <= subtreeSet.size && isSubset;
+    const isSubset = splitIndices.every(leaf => subtreeSet.has(leaf));
+    const isProperSubset = splitIndices.length <= subtreeSet.size && isSubset;
     if (isProperSubset) {
       return true;
     }

@@ -5,13 +5,13 @@ import { TreeInterpolator } from './deckgl/interpolation/TreeInterpolator.js';
 import { WebGLTreeAnimationController } from './WebGLTreeAnimationController.js';
 import { useAppStore, selectCurrentTree } from '../core/store.js';
 import { easeInOut } from 'popmotion';
-import { NodeContextMenu } from '../components/NodeContextMenu.js';
 import { TreeNodeInteractionHandler } from './interaction/TreeNodeInteractionHandler.js';
 import { ComparisonModeRenderer } from './comparison/ComparisonModeRenderer.js';
 import { ViewportManager } from './viewport/ViewportManager.js';
 import { buildViewLinkMapping } from '../domain/view/viewLinkMapper.js';
 import * as layerFactories from './deckgl/layers/factory/index.js';
 import { calculateVisualBounds } from './utils/TreeBoundsUtils.js';
+import { isNodeInSubtree, isLinkInSubtree } from './deckgl/layers/styles/subtreeMatching.js';
 
 export class DeckGLTreeAnimationController extends WebGLTreeAnimationController {
 
@@ -35,9 +35,8 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     this.dataConverter = new DeckGLDataAdapter();
     this.layerManager = new LayerManager();
     this.treeInterpolator = new TreeInterpolator();
-    this.contextMenu = new NodeContextMenu();
     this.currentTreeData = null;
-    this.interactionHandler = new TreeNodeInteractionHandler(this, this.contextMenu, this.viewSide);
+    this.interactionHandler = new TreeNodeInteractionHandler(this, null, this.viewSide);
 
     // View link mapping cache
     this._lastMappedLeftIndex = null;
@@ -240,11 +239,21 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       ...(layerData.extensions || [])
     ].forEach(d => d.treeSide = 'left');
 
-    this._updateLayersEfficiently(layerData);
+    // Calculate ghost data (destination of marked subtrees in the NEXT tree)
+    let ghostData = null;
+    const { playing, autoFitOnTreeChange, markedSubtreesEnabled } = state;
+
+    if (markedSubtreesEnabled && !playing && targetIndex < treeList.length - 1) {
+      const nextTreeData = treeList[targetIndex + 1];
+      const nextLayout = this._calculateLayout(nextTreeData, targetIndex + 1);
+      const nextLayerData = this._convertLayoutToLayerData(nextLayout, extensionRadius, labelRadius);
+      ghostData = this._getGhostData(nextLayerData);
+    }
+
+    this._updateLayersEfficiently(layerData, ghostData);
     this.viewportManager.updateScreenPositions(layerData.nodes, this.viewSide);
 
     // Auto-fit policy
-    const { playing, autoFitOnTreeChange } = useAppStore.getState();
     if (!playing && autoFitOnTreeChange && this._lastFocusedTreeIndex !== targetIndex) {
       this.viewportManager.focusOnTree(layerData.nodes, layerData.labels);
       this._lastFocusedTreeIndex = targetIndex;
@@ -264,8 +273,32 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     const { dataFrom, dataTo } = this._getOrCacheInterpolationData(fromTreeData, toTreeData, fromTreeIndex, toTreeIndex);
     const interpolatedData = this.treeInterpolator.interpolateTreeData(dataFrom, dataTo, t);
 
-    this._updateLayersEfficiently(interpolatedData);
+    // Calculate ghost data (destination of marked subtrees)
+    const ghostData = this._getGhostData(dataTo);
+
+    this._updateLayersEfficiently(interpolatedData, ghostData);
     this.viewportManager.updateScreenPositions(interpolatedData.nodes, this.viewSide);
+  }
+
+  /**
+   * Extract ghost data (marked subtrees at their destination)
+   * @private
+   */
+  _getGhostData(targetData) {
+    const state = useAppStore.getState();
+    const colorManager = state.getColorManager?.();
+    const markedSubtrees = colorManager?.sharedMarkedJumpingSubtrees || [];
+
+    if (markedSubtrees.length === 0) return null;
+
+    return {
+      nodes: targetData.nodes
+        .filter(n => isNodeInSubtree(n, markedSubtrees))
+        .map(n => ({ ...n, isGhost: true })),
+      links: targetData.links
+        .filter(l => isLinkInSubtree(l, markedSubtrees))
+        .map(l => ({ ...l, isGhost: true }))
+    };
   }
 
   async renderScrubFrame(fromTreeData, toTreeData, timeFactor, options = {}) {
@@ -471,8 +504,8 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
   // LAYER MANAGEMENT
   // ==========================================================================
 
-  async _updateLayersEfficiently(newData) {
-    const layers = this.layerManager.updateLayersWithData(newData);
+  async _updateLayersEfficiently(newData, ghostData = null) {
+    const layers = this.layerManager.updateLayersWithData(newData, ghostData);
 
     // Add clipboard layers if clipboard is active
     const clipboardLayers = this._getClipboardLayers();

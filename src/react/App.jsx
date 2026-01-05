@@ -9,6 +9,8 @@ import { TreeStatsPanel } from './components/TreeStatsPanel/TreeStatsPanel.tsx';
 import { DeckGLCanvas } from './components/deckgl/DeckGLCanvas.jsx';
 import { MsaRndWindow } from './components/msa/MsaRndWindow.jsx';
 import { ClipboardDismissButton } from './components/clipboard/ClipboardDismissButton.jsx';
+import { NodeContextMenu } from './components/NodeContextMenu.jsx';
+import { Toaster } from '@/components/ui/sonner';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarSeparator } from '@/components/ui/sidebar';
 
 import { Film, SlidersHorizontal, FolderOpen, Dna, GitBranch } from 'lucide-react';
@@ -151,6 +153,8 @@ export function App() {
           <TreeStatsPanel />
         </div>
       </SidebarInset>
+      <NodeContextMenu />
+      <Toaster />
     </SidebarProvider>
   );
 }

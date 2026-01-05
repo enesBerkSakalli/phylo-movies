@@ -46,6 +46,8 @@ const selectCameraMode = (s) => s.cameraMode;
 const selectToggleCameraMode = (s) => s.toggleCameraMode;
 
 // Marked subtree state additions
+const selectMarkedSubtreesEnabled = (s) => s.markedSubtreesEnabled;
+const selectSetMarkedSubtreesEnabled = (s) => s.setMarkedSubtreesEnabled;
 const selectMarkedSubtreeMode = (s) => s.markedSubtreeMode;
 const selectSetMarkedSubtreeMode = (s) => s.setMarkedSubtreeMode;
 
@@ -67,6 +69,9 @@ export function Appearance() {
   const highContrastHighlightingEnabled = useAppStore(selectHighContrastHighlightingEnabled);
   const upcomingChangesEnabled = useAppStore(selectUpcomingChangesEnabled);
   const treeControllers = useAppStore(selectTreeControllers);
+
+  const markedSubtreesEnabled = useAppStore(selectMarkedSubtreesEnabled);
+  const setMarkedSubtreesEnabled = useAppStore(selectSetMarkedSubtreesEnabled);
 
   const setDimmingEnabled = useAppStore(selectSetDimmingEnabled);
   const setDimmingOpacity = useAppStore(selectSetDimmingOpacity);
@@ -128,9 +133,23 @@ export function Appearance() {
     } catch { }
   };
 
+  const toggleMarkedSubtrees = async (value) => {
+    try {
+      setMarkedSubtreesEnabled(!!value);
+      await rerenderAll();
+    } catch { }
+  };
+
   const togglePulse = (value) => setPulseEnabled(!!value);
   const toggleDashing = (value) => setDashingEnabled(!!value);
-  const toggleHighContrast = (value) => setHighContrastEnabled(!!value);
+
+  const toggleHighContrast = async (value) => {
+    try {
+      setHighContrastEnabled(!!value);
+      await rerenderAll();
+    } catch { }
+  };
+
   const toggleUpcomingChanges = (value) => setUpcomingChangesEnabled(!!value);
 
   // ---------------------------------------------------------------------------
@@ -147,18 +166,23 @@ export function Appearance() {
         onDimmingOpacityChange={handleDimmingOpacityChange}
         onToggleSubtreeDimming={toggleSubtreeDimming}
         onSubtreeDimmingOpacityChange={handleSubtreeDimmingOpacityChange}
-        markedSubtreeMode={markedSubtreeMode}
-        onMarkedSubtreeModeChange={setMarkedSubtreeMode}
+      />
+
+      <SubtreeHighlightingSection
+        enabled={markedSubtreesEnabled}
+        onToggle={toggleMarkedSubtrees}
+        mode={markedSubtreeMode}
+        onModeChange={setMarkedSubtreeMode}
+        highContrast={highContrastHighlightingEnabled}
+        onToggleHighContrast={toggleHighContrast}
       />
 
       <ActiveEdgeEffectsSection
         pulseEnabled={pulseEnabled}
         dashingEnabled={dashingEnabled}
-        highContrastHighlightingEnabled={highContrastHighlightingEnabled}
         upcomingChangesEnabled={upcomingChangesEnabled}
         onTogglePulse={togglePulse}
         onToggleDashing={toggleDashing}
-        onToggleHighContrast={toggleHighContrast}
         onToggleUpcomingChanges={toggleUpcomingChanges}
       />
 
@@ -204,13 +228,11 @@ function FocusHighlightingSection({
   onToggleDimming,
   onDimmingOpacityChange,
   onToggleSubtreeDimming,
-  onSubtreeDimmingOpacityChange,
-  markedSubtreeMode,
-  onMarkedSubtreeModeChange
+  onSubtreeDimmingOpacityChange
 }) {
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Focus & Highlighting</SidebarGroupLabel>
+      <SidebarGroupLabel>Focus & Dimming</SidebarGroupLabel>
       <div className="flex flex-col gap-4">
         <ToggleWithSlider
           id="dim-non-descendants"
@@ -235,21 +257,59 @@ function FocusHighlightingSection({
             sliderLabel="Dimming Intensity"
           />
         </div>
+      </div>
+    </SidebarGroup>
+  );
+}
 
-        <div className="flex flex-col gap-1.5 mt-2">
-           <label className="text-xs font-medium text-muted-foreground pl-1">
-             Subtree Highlight Scope
-           </label>
-           <Select value={markedSubtreeMode || 'current'} onValueChange={onMarkedSubtreeModeChange}>
-            <SelectTrigger className="w-full h-8 text-xs">
-              <SelectValue placeholder="Select mode" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Entire Edge Structure</SelectItem>
-              <SelectItem value="current">Active Subtree Only</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+function SubtreeHighlightingSection({
+  enabled,
+  onToggle,
+  mode,
+  onModeChange,
+  highContrast,
+  onToggleHighContrast
+}) {
+  return (
+    <SidebarGroup>
+      <SidebarGroupLabel>Subtree Highlighting (Red)</SidebarGroupLabel>
+      <div className="flex flex-col gap-4">
+        <ToggleWithLabel
+          id="enable-marked-subtrees"
+          label="Enable Highlighting"
+          description="Show marked subtrees in red"
+          checked={!!enabled}
+          onCheckedChange={onToggle}
+          switchPosition="left"
+        />
+
+        {enabled && (
+          <>
+            <div className="flex flex-col gap-1.5 pl-1">
+              <label className="text-xs font-medium text-muted-foreground">
+                Highlight Scope
+              </label>
+              <Select value={mode || 'current'} onValueChange={onModeChange}>
+                <SelectTrigger className="w-full h-8 text-xs">
+                  <SelectValue placeholder="Select mode" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Entire Edge Structure</SelectItem>
+                  <SelectItem value="current">Active Subtree Only</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <ToggleWithLabel
+              id="high-contrast"
+              label="High Contrast Mode"
+              description="Use dynamic colors for better visibility"
+              checked={highContrast !== false}
+              onCheckedChange={onToggleHighContrast}
+              switchPosition="left"
+            />
+          </>
+        )}
       </div>
     </SidebarGroup>
   );
@@ -258,16 +318,14 @@ function FocusHighlightingSection({
 function ActiveEdgeEffectsSection({
   pulseEnabled,
   dashingEnabled,
-  highContrastHighlightingEnabled,
   upcomingChangesEnabled,
   onTogglePulse,
   onToggleDashing,
-  onToggleHighContrast,
   onToggleUpcomingChanges
 }) {
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Active Edge Effects</SidebarGroupLabel>
+      <SidebarGroupLabel>Active Edge Effects (Blue)</SidebarGroupLabel>
       <div className="flex flex-col gap-4">
         <ToggleWithLabel
           id="pulse-animation"
@@ -284,15 +342,6 @@ function ActiveEdgeEffectsSection({
           description="Show active edges with dashed pattern"
           checked={dashingEnabled !== false}
           onCheckedChange={onToggleDashing}
-          switchPosition="left"
-        />
-
-        <ToggleWithLabel
-          id="high-contrast"
-          label="High Contrast Highlighting"
-          description="Use dynamic colors for marked subtrees"
-          checked={highContrastHighlightingEnabled !== false}
-          onCheckedChange={onToggleHighContrast}
           switchPosition="left"
         />
 

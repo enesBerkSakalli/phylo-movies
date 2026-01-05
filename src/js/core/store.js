@@ -9,6 +9,7 @@ import { createComparisonViewSlice } from './slices/comparisonViewSlice.js';
 import { createVisualisationChangeStateSlice } from './slices/visualisationChangeStateSlice.js';
 import { createVisualEffectsSlice } from './slices/visualEffectsSlice.js';
 import { createClipboardSlice } from './slices/clipboardSlice.js';
+import { createContextMenuSlice } from './slices/contextMenuSlice.js';
 
 export const useAppStore = create((set, get) => ({
   ...createPhylogeneticDataSlice(set, get),
@@ -21,6 +22,7 @@ export const useAppStore = create((set, get) => ({
   ...createVisualisationChangeStateSlice(set, get),
   ...createVisualEffectsSlice(set, get),
   ...createClipboardSlice(set, get),
+  ...createContextMenuSlice(set, get),
 }));
 
 // Set up ColorManager subscription after store creation

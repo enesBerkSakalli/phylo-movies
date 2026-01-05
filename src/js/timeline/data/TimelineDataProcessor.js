@@ -90,6 +90,7 @@ export class TimelineDataProcessor {
                 isFullTree: true,
                 treeInfo: null,
                 subtreeMoveCount: 0,
+                originalTreeIndex: treeIndex,  // Original anchor tree index (0-based)
                 interpolationData: [{
                     metadata,
                     tree: interpolated_trees[arrayIdx],
