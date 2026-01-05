@@ -12,6 +12,12 @@ const shouldHighlightMarkedSubtree = (link, cached) => {
 export function getLinkColor(link, cached, helpers) {
   const { colorManager: cm, dimmingEnabled, dimmingOpacity, upcomingChangesEnabled, markedSubtreeData } = cached;
 
+  // Ghost mode - low opacity, fixed color
+  if (link.isGhost) {
+    const ghostColor = colorToRgb(TREE_COLOR_CATEGORIES.markedColor);
+    return [...ghostColor, 40]; // Very low opacity (approx 15%)
+  }
+
   // History mode - use same blue color but different opacity
   const historyColor = colorToRgb(TREE_COLOR_CATEGORIES.activeChangeEdgeColor);
 
@@ -73,6 +79,10 @@ export function getLinkWidth(link, cached, helpers) {
   const baseWidth = helpers.getBaseStrokeWidth();
   const { colorManager: cm, upcomingChangesEnabled, markedSubtreeData } = cached;
 
+  if (link.isGhost) {
+    return baseWidth * 1.5; // Slightly thicker but faint
+  }
+
   if (!cm) {
     return Math.max(baseWidth, 2); // Fallback without highlighting
   }
@@ -102,6 +112,10 @@ export function getLinkWidth(link, cached, helpers) {
 }
 
 export function getLinkDashArray(link, cached) {
+  if (link.isGhost) {
+    return [4, 4]; // Always dashed for ghost
+  }
+
   const { colorManager: cm, dashingEnabled, upcomingChangesEnabled } = cached;
 
   // History mode line styles

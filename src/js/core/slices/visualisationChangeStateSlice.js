@@ -155,8 +155,12 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
   // ==========================================================================
   // ACTIONS: Dimming
   // ==========================================================================
+  // Dimming modes are mutually exclusive: only one can be active at a time,
+  // but both can be deactivated. When activating one, deactivate the other.
   setDimmingEnabled: (enabled) => set((s) => ({
     dimmingEnabled: enabled,
+    // If activating this mode, deactivate the other
+    subtreeDimmingEnabled: enabled ? false : s.subtreeDimmingEnabled,
     colorVersion: s.colorVersion + 1
   })),
 
@@ -167,6 +171,8 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
 
   setSubtreeDimmingEnabled: (enabled) => set((s) => ({
     subtreeDimmingEnabled: enabled,
+    // If activating this mode, deactivate the other
+    dimmingEnabled: enabled ? false : s.dimmingEnabled,
     colorVersion: s.colorVersion + 1
   })),
 

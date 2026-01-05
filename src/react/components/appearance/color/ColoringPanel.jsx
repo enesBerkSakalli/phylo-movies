@@ -10,14 +10,12 @@ import { openTaxaColoringFromStore } from '../../../../js/treeColoring/component
 export function ColoringPanel() {
   const monophyletic = useAppStore((s) => s.monophyleticColoringEnabled);
   const activeChange = useAppStore((s) => s.activeChangeEdgesEnabled);
-  const marked = useAppStore((s) => s.markedSubtreesEnabled);
   const treeControllers = useAppStore((s) => s.treeControllers);
   const activeChangeEdgeColor = useAppStore((s) => s.activeChangeEdgeColor);
   const markedColor = useAppStore((s) => s.markedColor);
 
   const setMonophyleticColoring = useAppStore((s) => s.setMonophyleticColoring);
   const setActiveChangeEdgesEnabled = useAppStore((s) => s.setActiveChangeEdgesEnabled);
-  const setMarkedSubtreesEnabled = useAppStore((s) => s.setMarkedSubtreesEnabled);
   const setActiveChangeEdgeColor = useAppStore((s) => s.setActiveChangeEdgeColor);
   const setMarkedColor = useAppStore((s) => s.setMarkedColor);
 
@@ -38,11 +36,6 @@ export function ColoringPanel() {
     setActiveChangeEdgesEnabled(!!v);
     await rerenderControllers();
   }, [setActiveChangeEdgesEnabled, rerenderControllers]);
-
-  const onToggleMarked = useCallback(async (v) => {
-    setMarkedSubtreesEnabled(!!v);
-    await rerenderControllers();
-  }, [setMarkedSubtreesEnabled, rerenderControllers]);
 
   return (
     <div>
@@ -99,13 +92,7 @@ export function ColoringPanel() {
               />
             </div>
             <div className="flex items-center gap-3">
-              <Switch
-                id="marked-components-toggle"
-                aria-labelledby="marked-components-label"
-                checked={!!marked}
-                onCheckedChange={onToggleMarked}
-              />
-              <span id="marked-components-label" style={{ flex: 1 }}>Subtrees</span>
+              <span id="marked-components-label" style={{ flex: 1 }}>Subtree Highlight Color</span>
               <input
                 type="color"
                 id="marked-color"

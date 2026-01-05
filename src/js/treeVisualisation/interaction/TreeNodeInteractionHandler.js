@@ -5,9 +5,8 @@ import { useAppStore, selectCurrentTree } from '../../core/store.js';
  * Coordinates between layer data and tree data for click/hover events
  */
 export class TreeNodeInteractionHandler {
-  constructor(layoutCalculator, contextMenu, viewSide = 'single') {
+  constructor(layoutCalculator, viewSide = 'single') {
     this.layoutCalculator = layoutCalculator;
-    this.contextMenu = contextMenu;
     this.viewSide = viewSide; // 'left' | 'right' | 'single'
   }
 
@@ -23,11 +22,25 @@ export class TreeNodeInteractionHandler {
 
     const treeNode = this._findTreeNodeFromLayerData(info.object, currentTreeData);
 
-    const rect = canvas.getBoundingClientRect();
-    const x = event.center ? event.center.x : (rect.left + (info.x || 0));
-    const y = event.center ? event.center.y : (rect.top + (info.y || 0));
+    let x, y;
+    if (event.center) {
+      x = event.center.x;
+      y = event.center.y;
+    } else if (canvas) {
+      const rect = canvas.getBoundingClientRect();
+      x = rect.left + (info.x || 0);
+      y = rect.top + (info.y || 0);
+    } else {
+      x = info.x || 0;
+      y = info.y || 0;
+      console.warn('TreeNodeInteractionHandler: Canvas is null and event.center is missing. Context menu position might be incorrect.');
+    }
 
-    this.contextMenu.show(treeNode, currentTreeData, x, y);
+    if (state.showNodeContextMenu) {
+      state.showNodeContextMenu(treeNode, currentTreeData, x, y);
+    } else {
+      console.warn('showNodeContextMenu action not found in store');
+    }
   }
 
   /**
