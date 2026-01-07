@@ -97,7 +97,8 @@ export class ScrubberAPI {
 
   _updateColorManagerForScrub(state, treeIndex) {
     const { colorManager, activeChangeEdgesEnabled,
-      getMarkedSubtreeData, getCurrentActiveChangeEdge } = state;
+      getMarkedSubtreeData, getCurrentActiveChangeEdge,
+      getSubtreeHistoryData, updateColorManagerHistorySubtrees, markedSubtreesEnabled } = state;
     if (!colorManager) return;
 
     // Always update subtree data for dimming purposes
@@ -108,6 +109,10 @@ export class ScrubberAPI {
     colorManager.updateActiveChangeEdge(
       activeChangeEdgesEnabled ? getCurrentActiveChangeEdge(treeIndex) : []
     );
+    if (updateColorManagerHistorySubtrees && getSubtreeHistoryData) {
+      const history = markedSubtreesEnabled === false ? [] : getSubtreeHistoryData(treeIndex);
+      updateColorManagerHistorySubtrees(history);
+    }
   }
 
   // ==========================================================================

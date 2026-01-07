@@ -2,7 +2,15 @@
  * Factory for nodes layer
  */
 import { createLayer } from '../base/createLayer.js';
-import { LAYER_CONFIGS, HOVER_HIGHLIGHT_COLOR, MIN_NODE_RADIUS } from '../../layerConfigs.js';
+import { LAYER_CONFIGS, HOVER_HIGHLIGHT_COLOR, MIN_NODE_RADIUS, HISTORY_Z_OFFSET } from '../../layerConfigs.js';
+
+const getHistoryOffset = (cached, node) =>
+  cached?.colorManager?.isNodeHistorySubtree?.(node) ? HISTORY_Z_OFFSET : 0;
+
+const addZOffset = (position, offset) => {
+  if (!offset) return position;
+  return [position[0], position[1], (position[2] || 0) + offset];
+};
 
 /**
  * Create nodes layer (scatter plot for tree nodes)
@@ -35,14 +43,14 @@ export function getNodesLayerProps(nodes, state, layerStyles) {
     pickable: true,
     autoHighlight: true,
     highlightColor: HOVER_HIGHLIGHT_COLOR,
-    getPosition: d => d.position,
+    getPosition: d => addZOffset(d.position, getHistoryOffset(cached, d)),
     getRadius: d => layerStyles.getNodeRadius(d, MIN_NODE_RADIUS, cached),
     getFillColor: d => layerStyles.getNodeColor(d, cached),
     getLineColor: d => layerStyles.getNodeBorderColor(d, cached),
     updateTriggers: {
       getFillColor: [colorVersion, taxaColorVersion, upcomingChangesEnabled],
       getLineColor: [colorVersion, upcomingChangesEnabled],
-      getPosition: nodes.length,
+      getPosition: [nodes.length, colorVersion],
       getRadius: [nodes.length, nodeSize, colorVersion]
     }
   };
