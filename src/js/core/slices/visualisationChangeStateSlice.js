@@ -31,6 +31,20 @@ const collectUniqueEdges = (tracking, start, end, excludeKey) => {
   return Array.from(map.values());
 };
 
+const toSubtreeKey = (subtree) => subtree.slice().sort((a, b) => a - b).join(',');
+
+const collectUniqueSubtrees = (tracking, start, end, excludeKey) => {
+  const map = new Map();
+  for (let i = start; i < end; i++) {
+    const subtree = tracking[i];
+    if (Array.isArray(subtree) && subtree.length > 0) {
+      const key = toSubtreeKey(subtree);
+      if (key !== excludeKey && !map.has(key)) map.set(key, subtree);
+    }
+  }
+  return Array.from(map.values());
+};
+
 const getSubtreeAtIndex = (state, index) => {
   const subtree = state.subtreeTracking?.[index];
   return Array.isArray(subtree) && subtree.length > 0 ? [subtree] : [];
@@ -45,6 +59,24 @@ const getAllSubtreesForActiveEdge = (state, index) => {
   if (!solutions) return [];
 
   return flattenSubtreeEntries(solutions[`[${edge.join(', ')}]`]);
+};
+
+const getSubtreeHistoryAtIndex = (state, index) => {
+  if (state.transitionResolver?.isFullTree?.(index)) return [];
+  const tracking = state.subtreeTracking;
+  if (!Array.isArray(tracking) || tracking.length === 0) return [];
+
+  const anchors = state.movieData?.fullTreeIndices || state.transitionResolver?.fullTreeIndices || [];
+  if (!anchors.length) return [];
+
+  const prevAnchor = findPreviousAnchorSequenceIndex(anchors, index);
+  const start = Math.max(prevAnchor + 1, 0);
+  const end = Math.min(index, tracking.length);
+  if (end <= start) return [];
+
+  const current = tracking[index];
+  const excludeKey = Array.isArray(current) && current.length > 0 ? toSubtreeKey(current) : null;
+  return collectUniqueSubtrees(tracking, start, end, excludeKey);
 };
 
 const toSubtreeSets = (input) => {
@@ -279,10 +311,23 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
       : getAllSubtreesForActiveEdge(get(), index);
   },
 
+  getSubtreeHistoryData: (indexOverride = null) => {
+    const { currentTreeIndex } = get();
+    const index = indexOverride ?? currentTreeIndex;
+    return getSubtreeHistoryAtIndex(get(), index);
+  },
+
   updateColorManagerMarkedSubtrees: (subtrees) => {
     const { colorManager } = get();
     if (!colorManager?.updateMarkedSubtrees) return;
     colorManager.updateMarkedSubtrees(toSubtreeSets(subtrees));
+    set((s) => ({ colorVersion: s.colorVersion + 1 }));
+  },
+
+  updateColorManagerHistorySubtrees: (subtrees) => {
+    const { colorManager } = get();
+    if (!colorManager?.updateHistorySubtrees) return;
+    colorManager.updateHistorySubtrees(toSubtreeSets(subtrees));
     set((s) => ({ colorVersion: s.colorVersion + 1 }));
   },
 
@@ -295,9 +340,10 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
     }
     // Always keep subtree data in ColorManager for dimming purposes
     // The markedSubtreesEnabled flag controls coloring, not the data availability
-    const { updateColorManagerMarkedSubtrees, getMarkedSubtreeData, manuallyMarkedNodes } = get();
+    const { updateColorManagerMarkedSubtrees, getMarkedSubtreeData, manuallyMarkedNodes, updateColorManagerHistorySubtrees, getSubtreeHistoryData } = get();
     const manual = toManualMarkedSets(manuallyMarkedNodes);
     updateColorManagerMarkedSubtrees([...manual, ...getMarkedSubtreeData()]);
+    updateColorManagerHistorySubtrees(enabled ? getSubtreeHistoryData() : []);
   },
 
   setMarkedSubtreeMode: (mode) => {
@@ -329,6 +375,7 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
       activeChangeEdgesEnabled,
       getMarkedSubtreeData, getCurrentActiveChangeEdge,
       updateColorManagerMarkedSubtrees, updateColorManagerActiveChangeEdge,
+      updateColorManagerHistorySubtrees, getSubtreeHistoryData,
       updateUpcomingChanges, manuallyMarkedNodes
     } = get();
 
@@ -337,6 +384,7 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
     const manual = toManualMarkedSets(manuallyMarkedNodes);
     updateColorManagerMarkedSubtrees([...manual, ...getMarkedSubtreeData()]);
     updateColorManagerActiveChangeEdge(activeChangeEdgesEnabled ? getCurrentActiveChangeEdge() : []);
+    updateColorManagerHistorySubtrees(getSubtreeHistoryData());
     updateUpcomingChanges();
   },
 

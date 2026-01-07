@@ -9,6 +9,11 @@ const shouldHighlightMarkedSubtree = (link, cached) => {
   return markedSubtreesEnabled !== false && markedSubtreeData && isLinkInSubtree(link, markedSubtreeData);
 };
 
+const shouldHighlightHistorySubtree = (link, cached) => {
+  const { colorManager: cm, markedSubtreesEnabled } = cached;
+  return markedSubtreesEnabled !== false && cm?.isLinkHistorySubtree?.(link);
+};
+
 export function getLinkColor(link, cached, helpers) {
   const { colorManager: cm, dimmingEnabled, dimmingOpacity, upcomingChangesEnabled, markedSubtreeData } = cached;
 
@@ -99,6 +104,11 @@ export function getLinkWidth(link, cached, helpers) {
   // Static, very thick stroke to ensure visibility without pulsing
   if (shouldHighlightMarkedSubtree(link, cached)) {
     return getScaledWidth(3.0); // Very thick for marked subtrees
+  }
+
+  // History subtrees: bold stroke
+  if (shouldHighlightHistorySubtree(link, cached) && !cm?.isActiveChangeEdge?.(link)) {
+    return getScaledWidth(2.2);
   }
 
   // Check if link should be highlighted (current active)
@@ -196,6 +206,11 @@ export function getLinkOutlineColor(link, cached) {
     rgb = highlightRgb;
     glowOpacity = Math.round(baseOpacity * 255); // Full opacity for persistent visibility
   }
+  // History subtrees: base color silhouette without pulsing
+  else if (shouldHighlightHistorySubtree(link, cached) && !cm?.isActiveChangeEdge?.(link)) {
+    rgb = colorToRgb(cm.getBranchColor(link));
+    glowOpacity = Math.round(baseOpacity * 160);
+  }
   // Current Active Edge: strong pulsing glow
   else if (isLinkVisuallyHighlighted(link, cm, cached.markedSubtreesEnabled)) {
     rgb = colorToRgb(cm.getBranchColorWithHighlights(link));
@@ -251,6 +266,11 @@ export function getLinkOutlineWidth(link, cached, helpers) {
   // Large static glow width
   if (shouldHighlightMarkedSubtree(link, cached)) {
     return baseWidth * 2 + 8; // Extra generous glow for visibility
+  }
+
+  // History subtrees: bold silhouette without pulse
+  if (shouldHighlightHistorySubtree(link, cached) && !cm?.isActiveChangeEdge?.(link)) {
+    return baseWidth * 2 + 4;
   }
 
   // Only show outline for highlighted branches

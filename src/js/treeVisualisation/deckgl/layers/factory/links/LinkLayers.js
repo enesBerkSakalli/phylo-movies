@@ -2,7 +2,23 @@
  * Factory for links-related layers (links, linkOutlines, extensions)
  */
 import { createLayer } from '../base/createLayer.js';
-import { LAYER_CONFIGS, HOVER_HIGHLIGHT_COLOR } from '../../layerConfigs.js';
+import { LAYER_CONFIGS, HOVER_HIGHLIGHT_COLOR, HISTORY_Z_OFFSET } from '../../layerConfigs.js';
+
+const getHistoryLinkOffset = (cached, link) =>
+  cached?.colorManager?.isLinkHistorySubtree?.(link) ? HISTORY_Z_OFFSET : 0;
+
+const getHistoryNodeOffset = (cached, node) =>
+  cached?.colorManager?.isNodeHistorySubtree?.(node) ? HISTORY_Z_OFFSET : 0;
+
+const addZOffset = (position, offset) => {
+  if (!offset) return position;
+  return [position[0], position[1], (position[2] || 0) + offset];
+};
+
+const addZOffsetToPath = (path, offset) => {
+  if (!offset) return path;
+  return path.map((point) => addZOffset(point, offset));
+};
 
 /**
  * Create link outlines layer (for silhouette/highlighting effect)
@@ -70,7 +86,7 @@ export function getLinksLayerProps(links, state, layerStyles) {
     pickable: true,
     autoHighlight: true,
     highlightColor: HOVER_HIGHLIGHT_COLOR,
-    getPath: d => d.path,
+    getPath: d => addZOffsetToPath(d.path, getHistoryLinkOffset(cached, d)),
     getColor: d => layerStyles.getLinkColor(d, cached),
     getWidth: d => layerStyles.getLinkWidth(d, cached),
     getDashArray: d => layerStyles.getLinkDashArray(d, cached),
@@ -79,7 +95,7 @@ export function getLinksLayerProps(links, state, layerStyles) {
       getColor: [colorVersion, taxaColorVersion, upcomingChangesEnabled],
       getWidth: [colorVersion, strokeWidth],
       getDashArray: [colorVersion, activeEdgeDashingEnabled, upcomingChangesEnabled],
-      getPath: links.length
+      getPath: [links.length, colorVersion]
     }
   };
 }
@@ -107,13 +123,13 @@ export function getExtensionsLayerProps(extensions, state, layerStyles) {
     pickable: true,
     autoHighlight: true,
     highlightColor: HOVER_HIGHLIGHT_COLOR,
-    getPath: d => d.path,
+    getPath: d => addZOffsetToPath(d.path, getHistoryNodeOffset(cached, d.leaf || d)),
     getColor: d => layerStyles.getExtensionColor(d.leaf, cached),
     getWidth: d => layerStyles.getExtensionWidth(d.leaf, cached),
     updateTriggers: {
       getColor: [colorVersion, taxaColorVersion],
-      getPath: extensions.length,
-      getWidth: [extensions.length, strokeWidth]
+      getPath: [extensions.length, colorVersion],
+      getWidth: [extensions.length, strokeWidth, colorVersion]
     }
   };
 }

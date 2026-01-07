@@ -9,6 +9,11 @@ const shouldHighlightMarkedNode = (nodeData, cached) => {
   return markedSubtreesEnabled !== false && markedSubtreeData && isNodeInSubtree(nodeData, markedSubtreeData);
 };
 
+const isHistorySubtreeNode = (nodeData, cached) => {
+  const { colorManager: cm, markedSubtreesEnabled } = cached;
+  return markedSubtreesEnabled !== false && cm?.isNodeHistorySubtree?.(nodeData);
+};
+
 export function getNodeColor(node, cached, helpers) {
   const { colorManager: cm, dimmingEnabled, dimmingOpacity, upcomingChangesEnabled, markedSubtreeData, highContrastHighlightingEnabled } = cached;
 
@@ -105,6 +110,9 @@ export function getNodeBorderColor(node, cached, helpers) {
       highlightRgb = getContrastingHighlightColor(baseRgb);
     }
     rgb = highlightRgb;
+  } else if (isHistorySubtreeNode(nodeData, cached)) {
+    // History subtrees: silhouette-only border
+    rgb = colorToRgb(TREE_COLOR_CATEGORIES.strokeColor || '#000000');
   } else if (!isNodeVisuallyHighlighted(nodeData, cm, cached.markedSubtreesEnabled)) {
     // Normal node border
     rgb = colorToRgb(TREE_COLOR_CATEGORIES.strokeColor || '#000000');
@@ -117,7 +125,9 @@ export function getNodeBorderColor(node, cached, helpers) {
   // Calculate final opacity
   let opacity = 255;
   if (!shouldHighlightMarkedNode(nodeData, cached)) {
-    if (!isNodeVisuallyHighlighted(nodeData, cm, cached.markedSubtreesEnabled)) {
+    if (isHistorySubtreeNode(nodeData, cached)) {
+      opacity = Math.round(baseOpacity * 200);
+    } else if (!isNodeVisuallyHighlighted(nodeData, cm, cached.markedSubtreesEnabled)) {
       opacity = Math.round(baseOpacity * 255);
     } else {
       opacity = Math.round(baseOpacity * 255 * pulseOpacity);
@@ -176,6 +186,10 @@ export function getNodeRadius(node, minRadius = 3, cached, helpers) {
     return getScaledRadius(1.6);
   }
 
+  if (isHistorySubtreeNode(nodeData, cached)) {
+    return getScaledRadius(1.3);
+  }
+
   // Check if node is highlighted (active edge)
   const isHighlighted = isNodeVisuallyHighlighted(nodeData, cm, cached.markedSubtreesEnabled);
 
@@ -183,7 +197,11 @@ export function getNodeRadius(node, minRadius = 3, cached, helpers) {
 }
 
 export function getLabelColor(label, cached, helpers) {
-  return getNodeBasedRgba(label, label.opacity, cached, helpers);
+  const color = getNodeBasedRgba(label, label.opacity, cached, helpers);
+  if (isHistorySubtreeNode(label, cached)) {
+    color[3] = Math.min(255, Math.round(color[3] * 1.2));
+  }
+  return color;
 }
 
 export function getLabelSize(label, fontSize, cached) {
@@ -195,6 +213,10 @@ export function getLabelSize(label, fontSize, cached) {
     if (shouldHighlightMarkedNode(nodeData, cached)) {
       return baseSize * 1.4; // 40% larger for marked labels
     }
+  }
+
+  if (label && isHistorySubtreeNode(label, cached)) {
+    return baseSize * 1.2;
   }
 
   return baseSize;

@@ -10,6 +10,7 @@ export const HOVER_HIGHLIGHT_COLOR = [0, 200, 220, 150];
 
 // Minimum node radius for internal nodes
 export const MIN_NODE_RADIUS = 3;
+export const HISTORY_Z_OFFSET = 0.1;
 
 /**
  * Shared default props for PathLayer-based layers
