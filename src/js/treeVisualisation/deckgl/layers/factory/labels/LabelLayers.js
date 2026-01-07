@@ -2,7 +2,15 @@
  * Factory for labels layer
  */
 import { createLayer } from '../base/createLayer.js';
-import { LAYER_CONFIGS } from '../../layerConfigs.js';
+import { LAYER_CONFIGS, HISTORY_Z_OFFSET } from '../../layerConfigs.js';
+
+const getHistoryOffset = (cached, label) =>
+  cached?.colorManager?.isNodeHistorySubtree?.(label) ? HISTORY_Z_OFFSET : 0;
+
+const addZOffset = (position, offset) => {
+  if (!offset) return position;
+  return [position[0], position[1], (position[2] || 0) + offset];
+};
 
 /**
  * Create labels layer (text labels for leaf nodes)
@@ -33,7 +41,7 @@ export function getLabelsLayerProps(labels, state, layerStyles) {
   return {
     data: labels,
     pickable: true,
-    getPosition: d => d.position,
+    getPosition: d => addZOffset(d.position, getHistoryOffset(cached, d)),
     getText: d => d.text,
     getSize: d => layerStyles.getLabelSize(d.leaf, cached),
     getColor: d => layerStyles.getLabelColor(d.leaf, cached),
@@ -45,7 +53,7 @@ export function getLabelsLayerProps(labels, state, layerStyles) {
       getSize: [fontSize, colorVersion, taxaColorVersion],
       getAngle: labels.length,
       getTextAnchor: labels.length,
-      getPosition: labels.length
+      getPosition: [labels.length, colorVersion]
     }
   };
 }

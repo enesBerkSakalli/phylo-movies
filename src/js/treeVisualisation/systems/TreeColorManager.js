@@ -35,6 +35,7 @@ export class TreeColorManager {
     this.completedChangeEdges = []; // Array of Sets for completed edges
     this.prominentHistoryHashes = new Set(); // Set of hashes for prominent history (added + moved structures)
     this.sharedMarkedJumpingSubtrees = []; // Shared jumping subtrees across views
+    this.historySubtrees = []; // Subtrees that already moved in the current transition
   }
 
   /**
@@ -156,6 +157,22 @@ export class TreeColorManager {
   }
 
   /**
+   * Update history subtrees (already moved during this transition)
+   */
+  updateHistorySubtrees(subtrees) {
+    let history = [];
+    if (Array.isArray(subtrees)) {
+      history = subtrees;
+    } else if (subtrees instanceof Set) {
+      history = [subtrees];
+    }
+
+    this.historySubtrees = history.map(s =>
+      s instanceof Set ? s : new Set(s)
+    );
+  }
+
+  /**
    * Check if a node is the root of any shared marked jumping subtree.
    */
   isNodeMarkedSubtreeRoot(nodeData) {
@@ -220,6 +237,20 @@ export class TreeColorManager {
     // Create hash: sorted indices joined by comma
     const hash = linkData.split_indices.slice().sort((a, b) => a - b).join(',');
     return this.prominentHistoryHashes.has(hash);
+  }
+
+  /**
+   * Check if a link belongs to a history subtree
+   */
+  isLinkHistorySubtree(linkData) {
+    return isLinkInSubtree(linkData, this.historySubtrees);
+  }
+
+  /**
+   * Check if a node belongs to a history subtree
+   */
+  isNodeHistorySubtree(nodeData) {
+    return isNodeInSubtree(nodeData, this.historySubtrees);
   }
   /**
    * Enable/disable monophyletic group coloring

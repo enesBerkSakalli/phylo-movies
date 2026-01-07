@@ -80,34 +80,5 @@ export class ElementMatcher {
     };
   }
 
-  /**
-   * Classify elements into enter, update, and exit categories
-   * Useful for staged animation systems
-   */
-  classifyElements(fromElements, toElements) {
-    const fromMap = this._createElementMap(fromElements);
-    const toMap = this._createElementMap(toElements);
 
-    const enter = [];
-    const update = [];
-    const exit = [];
-
-    // Find entering and updating elements
-    for (const [id, toElement] of toMap) {
-      if (fromMap.has(id)) {
-        update.push({ from: fromMap.get(id), to: toElement });
-      } else {
-        enter.push(toElement);
-      }
-    }
-
-    // Find exiting elements
-    for (const [id, fromElement] of fromMap) {
-      if (!toMap.has(id)) {
-        exit.push(fromElement);
-      }
-    }
-
-    return { enter, update, exit };
-  }
 }
