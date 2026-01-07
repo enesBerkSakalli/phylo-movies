@@ -58,7 +58,8 @@ export function createLettersLayer(textData) {
     getText: d => d.text,
     getPosition: d => d.position,
     getSize: 14,
-    getColor: [0, 0, 0, 255],  // Black text for good contrast
+    sizeUnits: 'pixels',  // Use pixel units for consistent sizing
+    getColor: [0, 0, 0, 255],
     getTextAnchor: 'middle',
     getAlignmentBaseline: 'center',
     fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',

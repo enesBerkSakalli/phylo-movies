@@ -33,6 +33,7 @@ export class TreeColorManager {
     this.currentActiveChangeEdges = new Set();
     this.upcomingChangeEdges = []; // Array of Sets for upcoming edges
     this.completedChangeEdges = []; // Array of Sets for completed edges
+    this.prominentHistoryHashes = new Set(); // Set of hashes for prominent history (added + moved structures)
     this.sharedMarkedJumpingSubtrees = []; // Shared jumping subtrees across views
   }
 
@@ -192,6 +193,34 @@ export class TreeColorManager {
     }
   }
 
+
+  /**
+   * Update prominent history hashes (added + moved structures)
+   * @param {Set|Array} hashes
+   */
+  updateProminentHistory(hashes) {
+    if (hashes instanceof Set) {
+      this.prominentHistoryHashes = hashes;
+    } else if (Array.isArray(hashes)) {
+      this.prominentHistoryHashes = new Set(hashes);
+    } else {
+      this.prominentHistoryHashes = new Set();
+    }
+  }
+
+  /**
+   * Check if a branch represents a prominent history structure (added or moved-into)
+   */
+  isProminentHistoryStructure(linkData) {
+    if (!this.prominentHistoryHashes || this.prominentHistoryHashes.size === 0) {
+      return false;
+    }
+    if (!linkData.split_indices) return false;
+
+    // Create hash: sorted indices joined by comma
+    const hash = linkData.split_indices.slice().sort((a, b) => a - b).join(',');
+    return this.prominentHistoryHashes.has(hash);
+  }
   /**
    * Enable/disable monophyletic group coloring
    */

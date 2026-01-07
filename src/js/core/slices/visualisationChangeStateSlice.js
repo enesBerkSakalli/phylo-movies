@@ -52,6 +52,8 @@ const toSubtreeSets = (input) => {
   return input.map((s) => (s instanceof Set ? s : Array.isArray(s) ? new Set(s) : new Set()));
 };
 
+
+
 // ============================================================================
 // SLICE
 // ============================================================================
@@ -147,9 +149,13 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
       colorManager: null,
       colorVersion: 0,
       taxaColorVersion: 0,
+      taxaGrouping: null,
       upcomingChangeEdges: [],
       completedChangeEdges: [],
     });
+    // Clear persisted data to prevent reload issues with different datasets
+    persistTaxaGrouping(null);
+    persistColorCategories({});  // Clear persisted color mappings
   },
 
   // ==========================================================================
@@ -368,6 +374,8 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
     const completed = collectUniqueEdges(activeChangeEdgeTracking, prevAnchor + 1, currentTreeIndex, currentKey);
     set({ completedChangeEdges: completed });
     colorManager?.updateCompletedChangeEdges?.(completed);
+
+
 
     if (nextAnchor === null) {
       set({ upcomingChangeEdges: [] });
