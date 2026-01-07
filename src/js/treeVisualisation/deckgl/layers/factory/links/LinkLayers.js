@@ -89,27 +89,6 @@ export function createLinksLayer(links, state, layerStyles) {
 }
 
 /**
- * Create ghost links layer (for move destination visualization)
- *
- * @param {Array} links - Link data array
- * @param {Object} state - Store state snapshot
- * @param {Object} layerStyles - LayerStyles instance
- * @returns {Layer} deck.gl PathLayer
- */
-export function createGhostLinksLayer(links, state, layerStyles) {
-  const props = getLinksLayerProps(links, state, layerStyles);
-  return createLayer({ ...LAYER_CONFIGS.links, id: 'ghost-links' }, {
-    ...props,
-    pickable: false,
-    autoHighlight: false,
-    updateTriggers: {
-      ...props.updateTriggers,
-      getPath: [links.length, links[0]?.id] // Ensure update when data changes
-    }
-  });
-}
-
-/**
  * Create extensions layer (dashed lines extending from leaves)
  *
  * @param {Array} extensions - Extension data array

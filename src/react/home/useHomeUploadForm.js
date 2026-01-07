@@ -1,10 +1,30 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const WINDOW_MIN = 1;
 const WINDOW_MAX = 100000;
 const STEP_MIN = 1;
 const STEP_MAX = 100000;
+
+// Electron loading helpers
+function getElectronAPI() {
+  return typeof window !== 'undefined' ? window.electronAPI : null;
+}
+
+function showElectronLoading(message) {
+  const api = getElectronAPI();
+  if (api?.showLoading) api.showLoading(message);
+}
+
+function hideElectronLoading() {
+  const api = getElectronAPI();
+  if (api?.hideLoading) api.hideLoading();
+}
+
+function updateElectronProgress(progress, message) {
+  const api = getElectronAPI();
+  if (api?.updateProgress) api.updateProgress(progress, message);
+}
 
 export function useHomeUploadForm() {
   const navigate = useNavigate();
@@ -21,6 +41,7 @@ export function useHomeUploadForm() {
   const [submitting, setSubmitting] = useState(false);
   const [loadingExample, setLoadingExample] = useState(false);
   const [alert, setAlert] = useState(null);
+  const [progress, setProgress] = useState({ percent: 0, message: '' });
 
   const base = useMemo(() => {
     try {
@@ -112,7 +133,14 @@ export function useHomeUploadForm() {
     }
 
     setSubmitting(true);
+    setProgress({ percent: 0, message: 'Preparing upload...' });
+    showElectronLoading('Preparing upload...');
+
+    let eventSource = null;
+
     try {
+      updateElectronProgress(5, 'Uploading files...');
+
       const formData = new FormData();
       if (treesFile) formData.append('treeFile', treesFile);
       if (orderFile) formData.append('orderFile', orderFile);
@@ -121,7 +149,8 @@ export function useHomeUploadForm() {
       formData.append('windowStepSize', String(stepSizeValue ?? 1));
       formData.append('midpointRooting', midpointRooting ? 'on' : '');
 
-      const resp = await fetch('/treedata', { method: 'POST', body: formData });
+      // Use streaming endpoint
+      const resp = await fetch('/treedata/stream', { method: 'POST', body: formData });
       if (!resp.ok) {
         let errorMsg = 'Upload failed!';
         try {
@@ -133,11 +162,89 @@ export function useHomeUploadForm() {
         throw new Error(errorMsg);
       }
 
-      const data = await resp.json();
+      const { channel_id } = await resp.json();
+      if (!channel_id) {
+        throw new Error('No channel_id returned from server');
+      }
+
+      updateElectronProgress(10, 'Processing tree data...');
+
+      // Connect to SSE stream for progress updates
+      const data = await new Promise((resolve, reject) => {
+        eventSource = new EventSource(`/stream/progress/${channel_id}`);
+
+        eventSource.addEventListener('progress', (event) => {
+          try {
+            const progressData = JSON.parse(event.data);
+            const percent = progressData.percent ?? progressData.current ?? 0;
+            const message = progressData.message || 'Processing...';
+            const scaledPercent = Math.min(90, 10 + percent * 0.8);
+            setProgress({ percent: scaledPercent, message });
+            updateElectronProgress(scaledPercent, message);
+          } catch (err) {
+            console.warn('[SSE] Failed to parse progress:', err);
+          }
+        });
+
+        eventSource.addEventListener('log', (event) => {
+          try {
+            const log = JSON.parse(event.data);
+            console.log(`[Backend] ${log.level}: ${log.message}`);
+          } catch {}
+        });
+
+        eventSource.addEventListener('complete', (event) => {
+          eventSource.close();
+          eventSource = null;
+          try {
+            const result = JSON.parse(event.data);
+            if (result.error) {
+              reject(new Error(result.error));
+            } else if (result.data) {
+              resolve(result.data);
+            } else if (result.result) {
+              // Handle alternative response shape
+              resolve(result.result);
+            } else {
+              reject(new Error('No data in complete event'));
+            }
+          } catch (err) {
+            reject(new Error('Failed to parse completion data: ' + err.message));
+          }
+        });
+
+        eventSource.addEventListener('error', (event) => {
+          try {
+            const error = JSON.parse(event.data);
+            eventSource.close();
+            eventSource = null;
+            reject(new Error(error.error || 'Processing failed'));
+          } catch {
+            // SSE connection error (not a server error event)
+            if (eventSource.readyState === EventSource.CLOSED) {
+              reject(new Error('Connection to server lost'));
+            }
+          }
+        });
+
+        eventSource.onerror = () => {
+          if (eventSource && eventSource.readyState === EventSource.CLOSED) {
+            eventSource = null;
+            reject(new Error('SSE connection closed unexpectedly'));
+          }
+        };
+      });
+
       if (treesFile && treesFile.name) data.file_name = treesFile.name;
+
+      setProgress({ percent: 92, message: 'Saving data locally...' });
+      updateElectronProgress(92, 'Saving data locally...');
 
       const localforage = (await import('localforage')).default || (await import('localforage'));
       await localforage.setItem('phyloMovieData', data);
+
+      setProgress({ percent: 95, message: 'Processing MSA data...' });
+      updateElectronProgress(95, 'Processing MSA data...');
 
       try {
         const { workflows } = await import('@/js/services/data/dataService.js');
@@ -148,10 +255,22 @@ export function useHomeUploadForm() {
         console.error('[HomePage] MSA workflow error:', err);
       }
 
+      setProgress({ percent: 100, message: 'Complete!' });
+      updateElectronProgress(100, 'Complete!');
+
+      // Brief delay to show completion
+      await new Promise(resolve => setTimeout(resolve, 300));
+
       navigate('/visualization');
     } catch (err) {
       showAlert(err.message || String(err));
     } finally {
+      // Clean up SSE connection if still open
+      if (eventSource) {
+        eventSource.close();
+        eventSource = null;
+      }
+      hideElectronLoading();
       setSubmitting(false);
     }
   }
@@ -159,7 +278,13 @@ export function useHomeUploadForm() {
   async function handleLoadExample() {
     clearAlert();
     setLoadingExample(true);
+    setProgress({ percent: 0, message: 'Loading example data...' });
+    showElectronLoading('Loading example data...');
+
     try {
+      setProgress({ percent: 20, message: 'Fetching example...' });
+      updateElectronProgress(20, 'Fetching example...');
+
       let exampleData = null;
       const candidates = [
         `${base}example.json`,
@@ -178,13 +303,22 @@ export function useHomeUploadForm() {
       if (!exampleData) throw new Error('Example data not available');
       if (!exampleData.file_name) exampleData.file_name = 'example.json';
 
+      setProgress({ percent: 70, message: 'Saving data...' });
+      updateElectronProgress(70, 'Saving data...');
+
       const { phyloData } = await import('@/js/services/data/dataService.js');
       await phyloData.set(exampleData);
+
+      setProgress({ percent: 100, message: 'Complete!' });
+      updateElectronProgress(100, 'Complete!');
+      await new Promise(resolve => setTimeout(resolve, 200));
+
       navigate('/visualization');
     } catch (err) {
       console.error('[HomePage] Failed to load example:', err);
       showAlert(`Failed to load example: ${err.message || err}`);
     } finally {
+      hideElectronLoading();
       setLoadingExample(false);
     }
   }
@@ -213,7 +347,7 @@ export function useHomeUploadForm() {
     windowSizeError, stepSizeError,
     commitWindowInput, commitStepInput,
     midpointRooting, setMidpointRooting,
-    submitting, loadingExample,
+    submitting, loadingExample, progress,
     alert, showAlert, clearAlert,
     // actions
     handleSubmit, handleLoadExample, reset,

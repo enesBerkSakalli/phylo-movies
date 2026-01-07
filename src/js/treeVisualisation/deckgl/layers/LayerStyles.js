@@ -75,7 +75,9 @@ export class LayerStyles {
         dashingEnabled: state.activeEdgeDashingEnabled ?? true,
         upcomingChangesEnabled: state.upcomingChangesEnabled ?? false,
         highContrastHighlightingEnabled: state.highContrastHighlightingEnabled ?? true,
-        linkConnectionOpacity: state.linkConnectionOpacity ?? 0.6
+        linkConnectionOpacity: state.linkConnectionOpacity ?? 0.6,
+        // Density-based scaling: reduce highlight thickness for dense trees
+        densityScale: this._calculateDensityScale(state)
       };
     }
     return this._renderCache;
@@ -276,6 +278,17 @@ export class LayerStyles {
     return resolveLabelSize(label, fontSize, resolvedCached);
   }
 
+
+  /**
+   * Calculate density scaling factor for highlights
+   * Returns value between 0.3 (dense) and 1.0 (sparse)
+   * @private
+   */
+  _calculateDensityScale(state) {
+    const taxaCount = state.movieData?.sorted_leaves?.length || 10;
+    // Scale inversely to taxa count: 10 taxa -> 1.0, 100 taxa -> 0.1 (clamped to 0.3)
+    return Math.max(0.3, Math.min(1.0, 10 / taxaCount));
+  }
 
   /**
    * Base stroke width from cache/store

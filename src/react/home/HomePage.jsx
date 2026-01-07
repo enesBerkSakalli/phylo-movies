@@ -20,7 +20,7 @@ export function HomePage() {
     windowSizeError, stepSizeError,
     commitWindowInput, commitStepInput,
     midpointRooting, setMidpointRooting,
-    submitting, loadingExample,
+    submitting, loadingExample, progress,
     alert, clearAlert,
     handleSubmit, handleLoadExample, reset,
   } = useHomeUploadForm();
@@ -194,9 +194,21 @@ export function HomePage() {
 
         {(submitting || loadingExample) && (
           <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center">
-            <Card className="w-auto">
-              <CardContent className="pt-6">
-                <p className="text-sm">Loading, please wait...</p>
+            <Card className="w-80">
+              <CardContent className="pt-6 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  <p className="text-sm font-medium">{progress.message || 'Processing...'}</p>
+                </div>
+                <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-primary transition-all duration-300 ease-out"
+                    style={{ width: `${progress.percent}%` }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground text-center">
+                  {Math.round(progress.percent)}% complete
+                </p>
               </CardContent>
             </Card>
           </div>

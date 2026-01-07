@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 // STORE SELECTORS
 // ==========================================================================
 
-const selectHasMsa = (s) => (s.msaColumnCount || 0) > 0 || !!s.movieData?.msa?.sequences;
+const selectHasMsa = (s) => s.hasMsa;
 const selectCurrentTreeIndex = (s) => s.currentTreeIndex;
 const selectTimelineProgress = (s) => s.timelineProgress;
 const selectAnimationProgress = (s) => s.animationProgress;

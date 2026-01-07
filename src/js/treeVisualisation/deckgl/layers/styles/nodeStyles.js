@@ -12,12 +12,6 @@ const shouldHighlightMarkedNode = (nodeData, cached) => {
 export function getNodeColor(node, cached, helpers) {
   const { colorManager: cm, dimmingEnabled, dimmingOpacity, upcomingChangesEnabled, markedSubtreeData, highContrastHighlightingEnabled } = cached;
 
-  // Ghost mode - low opacity, fixed color
-  if (node.isGhost) {
-    const ghostColor = colorToRgb(TREE_COLOR_CATEGORIES.markedColor);
-    return [...ghostColor, 40]; // Very low opacity
-  }
-
   // Convert node data to format expected by ColorManager
   const nodeData = toColorManagerNode(node);
 
@@ -148,13 +142,14 @@ export function getNodeBorderColor(node, cached, helpers) {
 }
 
 export function getNodeRadius(node, minRadius = 3, cached, helpers) {
-  const { colorManager: cm, upcomingChangesEnabled } = cached;
+  const { colorManager: cm, upcomingChangesEnabled, densityScale } = cached;
   // NodeSize multiplier from store
   const nodeSize = helpers.nodeSize || 1;
   const baseRadius = (node.radius || minRadius) * nodeSize;
 
-  if (node.isGhost) {
-    return baseRadius * 1.2;
+  // Diff-style: entering/exiting nodes are smaller
+  if (node.isEntering || node.isExiting) {
+    return baseRadius * 0.7;
   }
 
   if (!cm) {
@@ -164,21 +159,27 @@ export function getNodeRadius(node, minRadius = 3, cached, helpers) {
   // Convert node data
   const nodeData = toColorManagerNode(node);
 
+  // Helper to scale added radius based on density
+  // scale = 1.0 (sparse) to 0.3 (dense)
+  const scale = densityScale !== undefined ? densityScale : 1.0;
+  const getScaledRadius = (multiplier) => baseRadius * (1 + (multiplier - 1) * scale);
+
+
   // History mode sizing
   if (upcomingChangesEnabled && cm.isNodeCompletedChangeEdge?.(nodeData)) {
-    return baseRadius * 1.5;
+    return getScaledRadius(1.5);
   }
 
   // Check if node is part of a MARKED subtree (persistent highlight)
   // Larger static size
   if (shouldHighlightMarkedNode(nodeData, cached)) {
-    return baseRadius * 1.6;
+    return getScaledRadius(1.6);
   }
 
   // Check if node is highlighted (active edge)
   const isHighlighted = isNodeVisuallyHighlighted(nodeData, cm, cached.markedSubtreesEnabled);
 
-  return isHighlighted ? baseRadius * 1.5 : baseRadius;
+  return isHighlighted ? getScaledRadius(1.5) : baseRadius;
 }
 
 export function getLabelColor(label, cached, helpers) {

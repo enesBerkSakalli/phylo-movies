@@ -10,14 +10,17 @@ import { PolygonLayer } from '@deck.gl/layers';
  * @param {number} cellSize - Size of each cell
  * @param {Object} selection - Current selection state {startCol, endCol}
  * @param {number} rows - Number of rows in the alignment
+ * @param {number} cols - Number of columns in the alignment
  * @returns {Array} Border polygon data
  */
-export function buildSelectionBorder(cellSize, selection, rows) {
-  if (!selection || !rows) {
+export function buildSelectionBorder(cellSize, selection, rows, cols) {
+  if (!selection || !rows || !cols) {
     return [];
   }
 
-  const { startCol, endCol } = selection;
+  // Clamp selection to valid column range
+  const startCol = Math.max(1, Math.min(cols, selection.startCol));
+  const endCol = Math.max(1, Math.min(cols, selection.endCol));
 
   // Convert to 0-based indices and adjust for inclusive end
   const startX = (startCol - 1) * cellSize;
