@@ -29,10 +29,9 @@ export class LayerManager {
   /**
    * Create all tree visualization layers
    * @param {Object} data - Tree data containing nodes, links, labels, extensions
-   * @param {Object} ghostData - Optional data for ghost subtree visualization
    * @returns {Array} Array of deck.gl layers
    */
-  createTreeLayers(data, ghostData = null) {
+  createTreeLayers(data) {
     const { nodes, links, labels, extensions = [], connectors = [] } = data;
     const state = useAppStore.getState();
 
@@ -49,14 +48,6 @@ export class LayerManager {
       layerFactories.createLabelsLayer(labels, state, this.layerStyles)
     ];
 
-    // Add ghost layers if data is provided
-    if (ghostData) {
-      layers.push(
-        layerFactories.createGhostLinksLayer(ghostData.links || [], state, this.layerStyles),
-        layerFactories.createGhostNodesLayer(ghostData.nodes || [], state, this.layerStyles)
-      );
-    }
-
     const filteredLayers = layers.filter(Boolean);
 
     // Clear render cache after creating layers (free memory)
@@ -68,11 +59,10 @@ export class LayerManager {
   /**
    * Update layers with new data - deck.gl handles the diffing and optimization
    * @param {Object} interpolatedData - New data to apply to layers
-   * @param {Object} ghostData - Optional data for ghost subtree visualization
    * @returns {Array} New layers (deck.gl will handle updates internally)
    */
-  updateLayersWithData(interpolatedData, ghostData = null) {
-    return this.createTreeLayers(interpolatedData, ghostData);
+  updateLayersWithData(interpolatedData) {
+    return this.createTreeLayers(interpolatedData);
   }
 
   // ==========================================================================

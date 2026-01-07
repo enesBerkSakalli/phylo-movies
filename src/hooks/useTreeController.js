@@ -63,10 +63,9 @@ export function useTreeController() {
   const setMsaRegion = useAppStore(selectSetMsaRegion);
 
   // ---------------------------------------------------------------------------
-  // Refs for diffing/throttling
+  // Refs for tracking state changes
   // ---------------------------------------------------------------------------
-  const prevTreeIndexRef = useRef(currentTreeIndex);
-  const lastSyncTimeRef = useRef(0);
+  const prevMsaFrameRef = useRef(-1);
 
   // ---------------------------------------------------------------------------
   // Controller initialization
@@ -121,21 +120,17 @@ export function useTreeController() {
   }, [currentTreeIndex, comparisonMode, treeControllers, movieData, transitionResolver, setRenderInProgress, playing, clipboardTreeIndex]);
 
   // ---------------------------------------------------------------------------
-  // MSA synchronization
+  // MSA synchronization - only update when reaching a new anchor tree
   // ---------------------------------------------------------------------------
   useEffect(() => {
     if (!syncMSAEnabled || !transitionResolver || !msaColumnCount) return;
-    if (currentTreeIndex === prevTreeIndexRef.current) return;
-
-    prevTreeIndexRef.current = currentTreeIndex;
-
-    // Throttle sync to 100ms
-    const now = Date.now();
-    if (now - lastSyncTimeRef.current < 100) return;
-    lastSyncTimeRef.current = now;
 
     const frameIndex = getMSAFrameIndex();
     if (frameIndex < 0) return;
+
+    // Only update region when the MSA frame (anchor tree) actually changes
+    if (frameIndex === prevMsaFrameRef.current) return;
+    prevMsaFrameRef.current = frameIndex;
 
     const windowData = calculateWindow(frameIndex, msaStepSize, msaWindowSize, msaColumnCount);
     setMsaRegion(windowData.startPosition, windowData.endPosition);

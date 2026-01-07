@@ -17,27 +17,6 @@ export function createNodesLayer(nodes, state, layerStyles) {
 }
 
 /**
- * Create ghost nodes layer (for move destination visualization)
- *
- * @param {Array} nodes - Node data array
- * @param {Object} state - Store state snapshot
- * @param {Object} layerStyles - LayerStyles instance
- * @returns {Layer} deck.gl ScatterplotLayer
- */
-export function createGhostNodesLayer(nodes, state, layerStyles) {
-  const props = getNodesLayerProps(nodes, state, layerStyles);
-  return createLayer({ ...LAYER_CONFIGS.nodes, id: 'ghost-nodes' }, {
-    ...props,
-    pickable: false,
-    autoHighlight: false,
-    updateTriggers: {
-      ...props.updateTriggers,
-      getPosition: [nodes.length, nodes[0]?.id]
-    }
-  });
-}
-
-/**
  * Build props for the nodes layer so callers can reuse base instances via clone
  *
  * @param {Array} nodes - Node data array

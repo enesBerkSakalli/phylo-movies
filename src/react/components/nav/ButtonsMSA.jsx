@@ -6,7 +6,7 @@ import { Dna, RefreshCw, Info, Check } from 'lucide-react';
 import { SidebarMenuButtons } from '@/components/ui/sidebar-menu-buttons';
 
 export function ButtonsMSA() {
-  const hasMsa = useAppStore((s) => (s.msaColumnCount || 0) > 0 || !!s.movieData?.msa?.sequences);
+  const hasMsa = useAppStore((s) => s.hasMsa);
   const syncMSAEnabled = useAppStore((s) => s.syncMSAEnabled);
   const setSyncMSAEnabled = useAppStore((s) => s.setSyncMSAEnabled);
   const openMsaViewer = useAppStore((s) => s.openMsaViewer);

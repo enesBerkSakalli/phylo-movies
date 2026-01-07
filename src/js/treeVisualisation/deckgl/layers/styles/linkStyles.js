@@ -12,12 +12,6 @@ const shouldHighlightMarkedSubtree = (link, cached) => {
 export function getLinkColor(link, cached, helpers) {
   const { colorManager: cm, dimmingEnabled, dimmingOpacity, upcomingChangesEnabled, markedSubtreeData } = cached;
 
-  // Ghost mode - low opacity, fixed color
-  if (link.isGhost) {
-    const ghostColor = colorToRgb(TREE_COLOR_CATEGORIES.markedColor);
-    return [...ghostColor, 40]; // Very low opacity (approx 15%)
-  }
-
   // History mode - use same blue color but different opacity
   const historyColor = colorToRgb(TREE_COLOR_CATEGORIES.activeChangeEdgeColor);
 
@@ -77,45 +71,43 @@ export function getLinkColor(link, cached, helpers) {
 
 export function getLinkWidth(link, cached, helpers) {
   const baseWidth = helpers.getBaseStrokeWidth();
-  const { colorManager: cm, upcomingChangesEnabled, markedSubtreeData } = cached;
-
-  if (link.isGhost) {
-    return baseWidth * 1.5; // Slightly thicker but faint
-  }
+  const { colorManager: cm, upcomingChangesEnabled, densityScale } = cached;
 
   if (!cm) {
     return Math.max(baseWidth, 2); // Fallback without highlighting
   }
+
+  // Helper to scale added thickness based on density
+  // scale = 1.0 (sparse) to 0.3 (dense)
+  const scale = densityScale !== undefined ? densityScale : 1.0;
+  const getScaledWidth = (multiplier) => baseWidth * (1 + (multiplier - 1) * scale);
+
 
   // History mode - different thickness for each state
   // Done: thick (1.8x) - prominent, clearly visible
   // Current: thick (2x) - most prominent
   // Next: medium (1.2x) - less prominent
   if (upcomingChangesEnabled && cm.isCompletedChangeEdge?.(link)) {
-    return baseWidth * 1.8; // Thick for completed - clearly visible
+    return getScaledWidth(1.8); // Thick for completed - clearly visible
   }
 
   if (upcomingChangesEnabled && cm.isUpcomingChangeEdge?.(link)) {
-    return baseWidth * 1.2; // Medium for upcoming
+    return getScaledWidth(1.2); // Medium for upcoming
   }
 
   // Check if link is part of a MARKED subtree (persistent highlight)
   // Static, very thick stroke to ensure visibility without pulsing
   if (shouldHighlightMarkedSubtree(link, cached)) {
-    return baseWidth * 3; // Very thick for marked subtrees
+    return getScaledWidth(3.0); // Very thick for marked subtrees
   }
 
   // Check if link should be highlighted (current active)
   const isHighlighted = isLinkVisuallyHighlighted(link, cm, cached.markedSubtreesEnabled);
 
-  return isHighlighted ? baseWidth * 2 : baseWidth; // Thick for current
+  return isHighlighted ? getScaledWidth(2.0) : baseWidth; // Thick for current
 }
 
 export function getLinkDashArray(link, cached) {
-  if (link.isGhost) {
-    return [4, 4]; // Always dashed for ghost
-  }
-
   const { colorManager: cm, dashingEnabled, upcomingChangesEnabled } = cached;
 
   // History mode line styles

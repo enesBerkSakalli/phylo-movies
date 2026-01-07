@@ -16,25 +16,25 @@ import { TextLayer } from '@deck.gl/layers';
  * @returns {Array} Column axis data
  */
 export function buildColumnAxis(cellSize, viewState, visibleRange, rows, zoomScale, optionsCellSize) {
-  if (viewState.zoom <= -2) return [];
+  // if (viewState.zoom <= -2) return []; // Removed to ensure no info lost
 
   const { c0, c1 } = visibleRange;
   const data = [];
 
-  // Scale padding with zoom level - smaller when zoomed out, larger when zoomed in
-  const basePad = 16;
-  const zoomFactor = zoomScale;
-  const pad = Math.max(basePad, basePad * zoomFactor * 0.5);
-
-  // Position axis below the data (negative Y since flipY is true)
-  const axisY = -(rows * cellSize) - pad;
+  // Position axis centered in the top view
+  const axisY = 0;
 
   const pixelsPerCell = optionsCellSize * zoomScale;
-  let step = 1;
-  if (pixelsPerCell < 5) step = 10;
-  else if (pixelsPerCell < 2) step = 50;
-  else if (pixelsPerCell < 0.5) step = 200;
-  else if (pixelsPerCell < 0.1) step = 1000;
+
+  // Calculate step to prevent overlapping labels
+  // Approximate label width is ~40px for 4-digit numbers
+  // Need: step * pixelsPerCell >= labelWidth
+  const labelWidth = 40;
+  let step = Math.ceil(labelWidth / Math.max(0.01, pixelsPerCell));
+
+  // Round up to nice intervals (1, 5, 10, 20, 50, 100, 200, 500, 1000, ...)
+  const niceSteps = [1, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000];
+  step = niceSteps.find(n => n >= step) || niceSteps[niceSteps.length - 1];
 
   for (let c = c0; c <= c1; c++) {
     if ((c + 1) % step === 0) {
@@ -61,11 +61,12 @@ export function createColumnAxisLayer(axisData, zoomScale) {
     pickable: false,
     getText: d => d.text,
     getPosition: d => d.position,
-    getSize: Math.max(10, Math.min(14, 12 * zoomScale * 0.1)),
+    getSize: 12,
+    sizeUnits: 'pixels',  // Use pixel units for consistent sizing
     getTextAnchor: 'middle',
-    getAlignmentBaseline: 'top',
+    getAlignmentBaseline: 'center',
     background: true,
-    getBackgroundColor: [255, 255, 255, 180],  // Semi-transparent white background
+    getBackgroundColor: [255, 255, 255, 180],
     fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial'
   });
 }

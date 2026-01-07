@@ -37,9 +37,10 @@ export class NodeConverter {
       data: node.data,
       depth: node.depth,
       height: node.height,
-      // Export polar coordinates for radial interpolation
       angle: node.rotatedAngle != null ? node.rotatedAngle : (node.angle || 0),
       polarRadius: node.radius,
+      // Pass split_indices for movement analysis matching
+      split_indices: node.data.split_indices,
       // Store reference to original node for ColorManager access
       originalNode: node
     };
