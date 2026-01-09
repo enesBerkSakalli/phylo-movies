@@ -8,7 +8,8 @@ import { transformBranchLengths } from '../../domain/tree/branchTransform.js';
  */
 export class TidyTreeLayout {
   constructor(root) {
-    this.root = d3.hierarchy(root);
+    const isHierarchyNode = root && typeof root.each === 'function' && root.data !== undefined;
+    this.root = isHierarchyNode ? root : d3.hierarchy(root);
     this.containerWidth = 0;
     this.containerHeight = 0;
     this.margin = 0;
@@ -40,7 +41,8 @@ export class TidyTreeLayout {
   }
 
   calcRadius(node, radius = 0) {
-    const length = node.parent ? (Number(node.data.length) || 0) : 0;
+    const rawLength = node.data?.length ?? node.data?.branch_length ?? node.data?.branchLength;
+    const length = node.parent ? (Number(rawLength) || 0) : 0;
     const nodeKey = getNodeKey(node);
     if (this.preserveRadius && this.previousNodeRadii.has(nodeKey)) {
       node.radius = this.previousNodeRadii.get(nodeKey);
@@ -69,8 +71,10 @@ export class TidyTreeLayout {
 
   setMargin(margin) {
     this.margin = margin;
-    this.containerWidth = (this.originalWidth || this.containerWidth) - this.margin;
-    this.containerHeight = (this.originalHeight || this.containerHeight) - this.margin;
+    const baseWidth = this.originalWidth || this.containerWidth;
+    const baseHeight = this.originalHeight || this.containerHeight;
+    this.containerWidth = Math.max(1, baseWidth - this.margin * 2);
+    this.containerHeight = Math.max(1, baseHeight - this.margin * 2);
   }
 
   generateCoordinates(root) {
@@ -86,7 +90,7 @@ export class TidyTreeLayout {
 
   getMaxRadius(root) {
     let maxRadius = 0;
-    root.leaves().forEach((d) => {
+    root.each((d) => {
       if (d.radius > maxRadius) maxRadius = d.radius;
     });
     return maxRadius;
@@ -175,8 +179,7 @@ export default function createTidyTreeLayout(
   options = {}
 ) {
   const transformedTree = transformBranchLengths(tree, branchTransformation);
-  const d3tree = d3.hierarchy(transformedTree);
-  const treeLayout = new TidyTreeLayout(d3tree);
+  const treeLayout = new TidyTreeLayout(transformedTree);
 
   let container;
   let width, height, margin;
@@ -205,7 +208,9 @@ export default function createTidyTreeLayout(
   let root_;
 
   if (useUniformScaling) {
-    root_ = treeLayout.constructRadialTree(true);
+    treeLayout.calcRadius(treeLayout.root, 0);
+    treeLayout.applyTidyLayout();
+    root_ = treeLayout.root;
     treeLayout.scaleRadius(root_, options.uniformScale);
     treeLayout.generateCoordinates(root_);
     treeLayout.scale = options.uniformScale;
@@ -219,6 +224,7 @@ export default function createTidyTreeLayout(
     if (currentMaxRadius > options.maxRadius) {
       const adjustmentScale = (options.maxRadius / currentMaxRadius) * 0.9;
       treeLayout.scaleRadius(root_, adjustmentScale);
+      treeLayout.scale *= adjustmentScale;
       treeLayout.generateCoordinates(root_);
     }
   }

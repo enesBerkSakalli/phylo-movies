@@ -63,7 +63,7 @@ export function TransportControls({
         disabled={!canGoToPreviousAnchor}
         onClick={onPreviousAnchor}
       >
-        <ChevronsLeft className="size-5" />
+        <ChevronsLeft className="size-4" />
       </Button>
 
       <Button
@@ -75,7 +75,7 @@ export function TransportControls({
         aria-label="Previous frame"
         onClick={onBackward}
       >
-        <ChevronLeft className="size-5" />
+        <ChevronLeft className="size-4" />
       </Button>
 
       <Button
@@ -88,7 +88,7 @@ export function TransportControls({
         onClick={onPlayClick}
         data-state={playing ? 'playing' : 'paused'}
       >
-        {playing ? <Pause className="size-5" /> : <Play className="size-5" />}
+        {playing ? <Pause className="size-4" /> : <Play className="size-4" />}
       </Button>
 
       <Button
@@ -100,7 +100,7 @@ export function TransportControls({
         aria-label="Next frame"
         onClick={onForward}
       >
-        <ChevronRight className="size-5" />
+        <ChevronRight className="size-4" />
       </Button>
 
       <Button
@@ -113,7 +113,7 @@ export function TransportControls({
         disabled={!canGoToNextAnchor}
         onClick={onNextAnchor}
       >
-        <ChevronsRight className="size-5" />
+        <ChevronsRight className="size-4" />
       </Button>
 
       <Button
@@ -126,7 +126,7 @@ export function TransportControls({
         onClick={toggleComparisonMode}
         data-state={comparisonMode ? 'active' : 'inactive'}
       >
-        <GitCompare className="size-5" />
+        <GitCompare className="size-4" />
       </Button>
 
       {comparisonMode && (
@@ -140,7 +140,7 @@ export function TransportControls({
           onClick={() => setViewsConnected(!viewsConnected)}
           data-state={viewsConnected ? 'active' : 'inactive'}
         >
-          {viewsConnected ? <Link2 className="size-5" /> : <Link2Off className="size-5" />}
+          {viewsConnected ? <Link2 className="size-4" /> : <Link2Off className="size-4" />}
         </Button>
       )}
     </>

@@ -4,6 +4,5 @@ export const TREE_COLOR_CATEGORIES = {
   markedColor: "#ff5722",
   strokeColor: "#000000",
   // Highlighting colors for different types
-  activeChangeEdgeColor: "#2196f3", // Color for edges where active changes are happening
+  activeChangeEdgeColor: "#2196f3" // Color for edges where active changes are happening
 };
-

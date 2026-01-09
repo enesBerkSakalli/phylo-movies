@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useEffect, useRef } from 'react';
-import { HUD } from '../HUD/HUD.jsx';
+
 import { MovieChartSection } from './MovieChartSection/MovieChartSection.jsx';
 import { TransportControls } from './TransportControls.jsx';
 import { RecordingControls } from '../media/RecordingControls.jsx';
@@ -88,7 +88,7 @@ export function MoviePlayerBar() {
                 aria-expanded={open ? 'true' : 'false'}
                 onClick={handleNavigationToggle}
               >
-                <Menu className="size-5" />
+                <Menu className="size-4" />
               </Button>
 
               <div className="vertical-divider"></div>
@@ -136,7 +136,7 @@ export function MoviePlayerBar() {
                 onClick={() => setToolbarExpanded(!toolbarExpanded)}
                 className="toolbar-toggle-btn"
               >
-                {toolbarExpanded ? <ChevronUp className="size-5" /> : <ChevronDown className="size-5" />}
+                {toolbarExpanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
               </Button>
             </div>
           </div>
@@ -151,7 +151,7 @@ export function MoviePlayerBar() {
         </div>
       </div>
 
-      <HUD />
+
 
       {/* Timeline segment tooltip - positioned above segment center */}
       {hoveredSegmentIndex !== null && hoveredSegmentData && hoveredSegmentPosition && (

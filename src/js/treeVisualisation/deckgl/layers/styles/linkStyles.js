@@ -1,11 +1,24 @@
 import { colorToRgb, getContrastingHighlightColor } from '../../../../services/ui/colorUtils.js';
 import { TREE_COLOR_CATEGORIES } from '../../../../constants/TreeColors.js';
-import { calculateDashArray } from './dashUtils.js';
+import { calculateDashArray, calculateFlightDashArray } from './dashUtils.js';
 import { applyDimmingWithCache } from './dimmingUtils.js';
 import { isLinkVisuallyHighlighted, isLinkInSubtree } from './subtreeMatching.js';
 
 const shouldHighlightMarkedSubtree = (link, cached) => {
-  const { markedSubtreesEnabled, markedSubtreeData } = cached;
+  const { markedSubtreesEnabled, highlightSourceEnabled, highlightDestinationEnabled, markedSubtreeData, colorManager } = cached;
+
+  // Specific toggles override specific subset checks
+  if (highlightSourceEnabled && colorManager?.isLinkSourceEdge?.(link)) return true;
+  if (highlightDestinationEnabled && colorManager?.isLinkDestinationEdge?.(link)) return true;
+
+  // Global toggle checks "active" marked data (which might exclude source/dest if those are what we are targeting)
+  // However, markedSubtreeData USUALLY includes source+dest when "current" is selected.
+  // We desire "independent" control.
+
+  // If either specific toggle is ON, we might want to disable the generic check for those parts?
+  // Or simply: if generic is ON, it highlights everything.
+  // The user likely wants to turn OFF generic (markedSubtreeEnabled) and turn ON specific.
+
   return markedSubtreesEnabled !== false && markedSubtreeData && isLinkInSubtree(link, markedSubtreeData);
 };
 
@@ -134,7 +147,7 @@ export function getLinkDashArray(link, cached) {
 
   // Current: DASHED (when dashing enabled) - active, in progress
   if (dashingEnabled && cm?.isActiveChangeEdge?.(link)) {
-    return calculateDashArray(link.path);
+    return calculateFlightDashArray(link.path);
   }
 
   return null; // Solid line for everything else
@@ -155,7 +168,7 @@ export function getLinkOutlineDashArray(link, cached) {
 
   // Current: dashed (when enabled)
   if (dashingEnabled && cm?.isActiveChangeEdge?.(link)) {
-    return calculateDashArray(link.path);
+    return calculateFlightDashArray(link.path);
   }
 
   return null;

@@ -19,8 +19,8 @@ export class TreeNodeInteractionHandler {
   handleNodeClick(info, event, canvas) {
     const state = useAppStore.getState();
     const currentTreeData = selectCurrentTree(state);
-
-    const treeNode = this._findTreeNodeFromLayerData(info.object, currentTreeData);
+    const treeNode = info?.object?.originalNode ||
+      this._findTreeNodeFromLayerData(info?.object, currentTreeData);
 
     let x, y;
     if (event.center) {
@@ -59,6 +59,7 @@ export class TreeNodeInteractionHandler {
    * @returns {Object|null} Corresponding D3 tree node
    */
   _findTreeNodeFromLayerData(layerData, currentTreeData) {
+    if (!layerData || !layerData.position || !currentTreeData) return null;
     const { currentTreeIndex } = useAppStore.getState();
     const currentLayout = this.layoutCalculator.calculateLayout(currentTreeData, {
       treeIndex: currentTreeIndex,

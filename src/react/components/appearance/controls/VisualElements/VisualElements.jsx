@@ -1,20 +1,29 @@
 import React from 'react';
 import { ColoringPanel } from '../../color/ColoringPanel.jsx';
 import { VisualStyle } from '../VisualStyle/VisualStyle.jsx';
-import { SidebarGroup, SidebarGroupLabel } from '@/components/ui/sidebar';
+import { SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
+import { ChevronDown, Palette } from 'lucide-react';
 
 export function VisualElements() {
   return (
-    <div className="visual-elements-root" data-react-component="visual-elements">
-      <SidebarGroup>
-        <SidebarGroupLabel>Visual Style</SidebarGroupLabel>
-        <VisualStyle />
-      </SidebarGroup>
-      <SidebarGroup>
-        <SidebarGroupLabel>Coloring & Styling</SidebarGroupLabel>
-        <ColoringPanel />
-      </SidebarGroup>
-    </div>
+    <>
+      <VisualStyle />
+      <Collapsible defaultOpen asChild className="group/collapsible">
+        <SidebarMenuItem>
+          <CollapsibleTrigger asChild>
+            <SidebarMenuButton tooltip="Coloring & Styling">
+              <Palette className="text-primary" />
+              <span>Coloring & Styling</span>
+              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            </SidebarMenuButton>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <ColoringPanel />
+          </CollapsibleContent>
+        </SidebarMenuItem>
+      </Collapsible>
+    </>
   );
 }
 

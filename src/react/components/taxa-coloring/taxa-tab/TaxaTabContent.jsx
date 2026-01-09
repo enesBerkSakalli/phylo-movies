@@ -14,12 +14,12 @@ export function TaxaTabContent({ taxaNames, colorManager, applyScheme, handleCol
       {taxaNames.length === 0 ? (
         <EmptyStateAlert mode="taxa" />
       ) : (
-        <Card>
-          <CardHeader className="space-y-1 pb-2">
-            <CardTitle className="text-sm font-medium">Taxa Colors ({taxaNames.length})</CardTitle>
-            <CardDescription>Adjust colors for each taxa entry.</CardDescription>
+        <Card className="gap-0 py-0 border-border/30 shadow-none bg-accent/5">
+          <CardHeader className="space-y-0.5 pb-2 pt-3 px-4">
+            <CardTitle className="text-[13px] font-bold">Manual Overrides ({taxaNames.length})</CardTitle>
+            <CardDescription className="text-[10px]">Individual color assignments.</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-3 pb-3">
             <ColorInputGrid
               items={taxaNames}
               isGroup={false}

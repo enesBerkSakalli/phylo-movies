@@ -35,6 +35,11 @@ export const createControllersSlice = (set, get) => ({
     controllers.forEach(c => c?.startAnimation?.());
   },
 
+  resetInterpolationCaches: () => {
+    const { treeControllers } = get();
+    treeControllers.forEach(c => c?.resetInterpolationCaches?.());
+  },
+
   stopAnimationPlayback: () => {
     const { treeControllers, stop } = get();
     treeControllers.forEach(c => c?.stopAnimation?.());

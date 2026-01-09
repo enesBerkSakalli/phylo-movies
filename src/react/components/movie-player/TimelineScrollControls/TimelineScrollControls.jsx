@@ -40,7 +40,7 @@ export function TimelineScrollControls() {
           title="Zoom out timeline (Ctrl + -)"
           onClick={handleZoomOut}
         >
-          <ZoomOut className="size-5" />
+          <ZoomOut className="size-4" />
         </Button>
         <Button
           id="fitToWindowBtn"
@@ -49,7 +49,7 @@ export function TimelineScrollControls() {
           title="Fit entire timeline to window (Ctrl + 0)"
           onClick={handleFitTimeline}
         >
-          <Scan className="size-5" />
+          <Scan className="size-4" />
         </Button>
         <Button
           id="zoomInBtn"
@@ -58,7 +58,7 @@ export function TimelineScrollControls() {
           title="Zoom in timeline (Ctrl + +)"
           onClick={handleZoomIn}
         >
-          <ZoomIn className="size-5" />
+          <ZoomIn className="size-4" />
         </Button>
       </div>
 
@@ -70,7 +70,7 @@ export function TimelineScrollControls() {
         title="Scroll to start (Home)"
         onClick={handleScrollToStart}
       >
-        <ChevronsLeft className="size-5" />
+        <ChevronsLeft className="size-4" />
       </Button>
       <Button
         id="scrollToEndBtn"
@@ -79,7 +79,7 @@ export function TimelineScrollControls() {
         title="Scroll to end (End)"
         onClick={handleScrollToEnd}
       >
-        <ChevronsRight className="size-5" />
+        <ChevronsRight className="size-4" />
       </Button>
     </div>
     </>

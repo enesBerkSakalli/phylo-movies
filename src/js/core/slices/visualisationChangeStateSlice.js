@@ -45,9 +45,37 @@ const collectUniqueSubtrees = (tracking, start, end, excludeKey) => {
   return Array.from(map.values());
 };
 
+const normalizeSolutionKey = (key) => {
+  if (Array.isArray(key)) return key.join(',');
+  if (typeof key === 'string') {
+    return key.replace(/[\[\]\s]/g, '').split(',').filter(Boolean).join(',');
+  }
+  return String(key || '');
+};
+
+const buildSolutionKey = (arr) => `[${arr.join(', ')}]`;
+
+const findSolutionEntry = (map, keyArr) => {
+  if (!map || !Array.isArray(keyArr) || keyArr.length === 0) return null;
+  const direct = buildSolutionKey(keyArr);
+  if (map[direct]) return map[direct];
+  const compact = `[${keyArr.join(',')}]`;
+  if (map[compact]) return map[compact];
+  const normalized = normalizeSolutionKey(keyArr);
+  for (const key of Object.keys(map)) {
+    if (normalizeSolutionKey(key) === normalized) return map[key];
+  }
+  return null;
+};
+
 const getSubtreeAtIndex = (state, index) => {
   const subtree = state.subtreeTracking?.[index];
   return Array.isArray(subtree) && subtree.length > 0 ? [subtree] : [];
+};
+
+const getMovingSubtreeAtIndex = (state, index) => {
+  const subtree = state.subtreeTracking?.[index];
+  return Array.isArray(subtree) && subtree.length > 0 ? subtree : [];
 };
 
 const getAllSubtreesForActiveEdge = (state, index) => {
@@ -77,6 +105,40 @@ const getSubtreeHistoryAtIndex = (state, index) => {
   const current = tracking[index];
   const excludeKey = Array.isArray(current) && current.length > 0 ? toSubtreeKey(current) : null;
   return collectUniqueSubtrees(tracking, start, end, excludeKey);
+};
+
+const getSourceDestinationEdgesAtIndex = (state, index) => {
+  if (state.transitionResolver?.isFullTree?.(index)) return { source: [], dest: [] };
+
+  const activeEdge = state.activeChangeEdgeTracking?.[index];
+  const subtree = state.subtreeTracking?.[index];
+  if (!Array.isArray(activeEdge) || activeEdge.length === 0) return { source: [], dest: [] };
+  if (!Array.isArray(subtree) || subtree.length === 0) return { source: [], dest: [] };
+
+  const pairKey = state.movieData?.tree_metadata?.[index]?.tree_pair_key;
+  const pairSolution = pairKey ? state.pairSolutions?.[pairKey] : null;
+  if (!pairSolution) return { source: [], dest: [] };
+
+  const sourceMap = pairSolution.solution_to_source_map || {};
+  const destMap = pairSolution.solution_to_destination_map || {};
+
+  const sourceEdgeMap = findSolutionEntry(sourceMap, activeEdge);
+  const destEdgeMap = findSolutionEntry(destMap, activeEdge);
+  if (!sourceEdgeMap || !destEdgeMap) return { source: [], dest: [] };
+
+  const sourceEdge = findSolutionEntry(sourceEdgeMap, subtree);
+  const destEdge = findSolutionEntry(destEdgeMap, subtree);
+
+  const movingSet = new Set(subtree);
+  const trimMoving = (edge) => (Array.isArray(edge) ? edge.filter((leaf) => !movingSet.has(leaf)) : []);
+
+  const trimmedSource = trimMoving(sourceEdge);
+  const trimmedDest = trimMoving(destEdge);
+
+  return {
+    source: trimmedSource.length ? [trimmedSource] : [],
+    dest: trimmedDest.length ? [trimmedDest] : []
+  };
 };
 
 const toSubtreeSets = (input) => {
@@ -137,6 +199,12 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
   upcomingChangesEnabled: false,
   upcomingChangeEdges: [],
   completedChangeEdges: [],
+
+  // ==========================================================================
+  // STATE: Specific Source/Dest Highlighting
+  // ==========================================================================
+  highlightSourceEnabled: false,
+  highlightDestinationEnabled: false,
 
   // ==========================================================================
   // ACTIONS: ColorManager Access
@@ -317,6 +385,18 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
     return getSubtreeHistoryAtIndex(get(), index);
   },
 
+  getCurrentMovingSubtreeData: (indexOverride = null) => {
+    const { currentTreeIndex } = get();
+    const index = indexOverride ?? currentTreeIndex;
+    return getMovingSubtreeAtIndex(get(), index);
+  },
+
+  getSourceDestinationEdgeData: (indexOverride = null) => {
+    const { currentTreeIndex } = get();
+    const index = indexOverride ?? currentTreeIndex;
+    return getSourceDestinationEdgesAtIndex(get(), index);
+  },
+
   updateColorManagerMarkedSubtrees: (subtrees) => {
     const { colorManager } = get();
     if (!colorManager?.updateMarkedSubtrees) return;
@@ -328,6 +408,21 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
     const { colorManager } = get();
     if (!colorManager?.updateHistorySubtrees) return;
     colorManager.updateHistorySubtrees(toSubtreeSets(subtrees));
+    set((s) => ({ colorVersion: s.colorVersion + 1 }));
+  },
+
+  updateColorManagerSourceDestinationEdges: (sourceEdges, destEdges) => {
+    const { colorManager } = get();
+    if (!colorManager?.updateSourceEdgeLeaves || !colorManager?.updateDestinationEdgeLeaves) return;
+    colorManager.updateSourceEdgeLeaves(toSubtreeSets(sourceEdges));
+    colorManager.updateDestinationEdgeLeaves(toSubtreeSets(destEdges));
+    set((s) => ({ colorVersion: s.colorVersion + 1 }));
+  },
+
+  updateColorManagerMovingSubtree: (subtree) => {
+    const { colorManager } = get();
+    if (!colorManager?.updateCurrentMovingSubtree) return;
+    colorManager.updateCurrentMovingSubtree(subtree);
     set((s) => ({ colorVersion: s.colorVersion + 1 }));
   },
 
@@ -376,6 +471,8 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
       getMarkedSubtreeData, getCurrentActiveChangeEdge,
       updateColorManagerMarkedSubtrees, updateColorManagerActiveChangeEdge,
       updateColorManagerHistorySubtrees, getSubtreeHistoryData,
+      updateColorManagerSourceDestinationEdges, getSourceDestinationEdgeData,
+      updateColorManagerMovingSubtree, getCurrentMovingSubtreeData,
       updateUpcomingChanges, manuallyMarkedNodes
     } = get();
 
@@ -385,6 +482,9 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
     updateColorManagerMarkedSubtrees([...manual, ...getMarkedSubtreeData()]);
     updateColorManagerActiveChangeEdge(activeChangeEdgesEnabled ? getCurrentActiveChangeEdge() : []);
     updateColorManagerHistorySubtrees(getSubtreeHistoryData());
+    const { source, dest } = getSourceDestinationEdgeData();
+    updateColorManagerSourceDestinationEdges(source, dest);
+    updateColorManagerMovingSubtree(getCurrentMovingSubtreeData());
     updateUpcomingChanges();
   },
 
@@ -434,6 +534,18 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
     const upcoming = collectUniqueEdges(activeChangeEdgeTracking, currentTreeIndex + 1, nextAnchor, currentKey);
     set({ upcomingChangeEdges: upcoming });
     colorManager?.updateUpcomingChangeEdges?.(upcoming);
+  },
+
+  setHighlightSourceEnabled: (enabled) => {
+    set((s) => ({ highlightSourceEnabled: enabled, colorVersion: s.colorVersion + 1 }));
+    const { treeControllers } = get();
+    renderTreeControllers(treeControllers);
+  },
+
+  setHighlightDestinationEnabled: (enabled) => {
+    set((s) => ({ highlightDestinationEnabled: enabled, colorVersion: s.colorVersion + 1 }));
+    const { treeControllers } = get();
+    renderTreeControllers(treeControllers);
   },
 });
 

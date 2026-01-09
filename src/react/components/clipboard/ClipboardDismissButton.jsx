@@ -3,6 +3,7 @@
  */
 import { useAppStore } from '../../../js/core/store.js';
 import { X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export function ClipboardDismissButton() {
   const clipboardTreeIndex = useAppStore((s) => s.clipboardTreeIndex);
@@ -11,30 +12,19 @@ export function ClipboardDismissButton() {
   if (clipboardTreeIndex === null) return null;
 
   return (
-    <button
+    <Button
       onClick={clearClipboard}
-      className="clipboard-dismiss-button"
+      className="clipboard-dismiss-button gap-2 bg-black/70 hover:bg-black/80 text-white border-white/30 h-auto py-1.5 px-3 text-xs font-medium"
       title="Dismiss clipboard tree"
       style={{
         position: 'absolute',
         top: '10px',
         right: '10px',
         zIndex: 1000,
-        display: 'flex',
-        alignItems: 'center',
-        gap: '6px',
-        padding: '6px 12px',
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-        color: 'white',
-        border: '1px solid rgba(255, 255, 255, 0.3)',
-        borderRadius: '4px',
-        cursor: 'pointer',
-        fontSize: '12px',
-        fontWeight: 500
       }}
     >
       <span>Tree #{clipboardTreeIndex + 1}</span>
       <X size={14} />
-    </button>
+    </Button>
   );
 }

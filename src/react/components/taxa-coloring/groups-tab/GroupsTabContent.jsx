@@ -36,12 +36,12 @@ export function GroupsTabContent({
       {groups.length === 0 ? (
         <EmptyStateAlert mode="groups" />
       ) : (
-        <Card>
-          <CardHeader className="space-y-1 pb-2">
-            <CardTitle className="text-sm font-medium">Group Colors ({groups.length})</CardTitle>
-            <CardDescription>Fine-tune colors for each detected grouping.</CardDescription>
+        <Card className="gap-0 py-0 border-border/30 shadow-none bg-accent/5">
+          <CardHeader className="space-y-0.5 pb-2 pt-3 px-4">
+            <CardTitle className="text-[13px] font-bold">Group Customization ({groups.length})</CardTitle>
+            <CardDescription className="text-[10px]">Colors assigned to detected clades.</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-3 pb-3">
             <ColorInputGrid
               items={groups}
               isGroup={true}

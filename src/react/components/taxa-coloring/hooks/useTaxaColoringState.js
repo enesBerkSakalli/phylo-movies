@@ -21,6 +21,7 @@ export function useTaxaColoringState(taxaNames, originalColorMap, initialStatePa
 
   const {
     csvData,
+    csvFileName,
     csvGroups,
     csvTaxaMap,
     csvColumn,
@@ -141,15 +142,13 @@ export function useTaxaColoringState(taxaNames, originalColorMap, initialStatePa
   }, [mgr, resetCSV, forceUpdate]);
 
   const resetColorsToBlack = useCallback(() => {
-    const itemsMap = {
-      taxa: taxaNames.map(name => ({ name, map: mgr.taxaColorMap })),
-      groups: groups.map(g => ({ name: g.name, map: mgr.groupColorMap })),
-      csv: csvGroups.map(g => ({ name: g.name, map: mgr.groupColorMap }))
-    };
+    // Clear everything across all modes
+    taxaNames.forEach(name => { mgr.taxaColorMap[name] = "#000000"; });
+    groups.forEach(g => { mgr.groupColorMap[g.name] = "#000000"; });
+    csvGroups.forEach(g => { mgr.groupColorMap[g.name] = "#000000"; });
 
-    itemsMap[mode]?.forEach(({ name, map }) => map[name] = "#000000");
     forceUpdate();
-  }, [mode, taxaNames, groups, csvGroups, mgr, forceUpdate]);
+  }, [taxaNames, groups, csvGroups, mgr, forceUpdate]);
 
   const buildResult = useCallback(() => ({
     mode,
@@ -163,7 +162,7 @@ export function useTaxaColoringState(taxaNames, originalColorMap, initialStatePa
     csvTaxaMap,
     csvGroups,
     csvColumn
-  }), [mode, mgr, separators, selectedStrategy, segmentIndex, useRegex, regexPattern, csvTaxaMap, csvGroups, csvColumn]);
+  }), [mode, mgr, separators, selectedStrategy, segmentIndex, useRegex, regexPattern, csvTaxaMap, csvGroups, csvColumn, version]);
 
   const handleColorChange = useCallback((name, color, isGroup = false) => {
     const colorMap = isGroup ? mgr.groupColorMap : mgr.taxaColorMap;
@@ -183,6 +182,7 @@ export function useTaxaColoringState(taxaNames, originalColorMap, initialStatePa
     handleStrategyChange,
     groups,
     csvData,
+    csvFileName,
     csvGroups,
     csvColumn,
     csvValidation,
@@ -190,6 +190,7 @@ export function useTaxaColoringState(taxaNames, originalColorMap, initialStatePa
     applyScheme,
     onFile,
     onColumnChange,
+    resetCSV,
     resetAll,
     resetColorsToBlack,
     buildResult,

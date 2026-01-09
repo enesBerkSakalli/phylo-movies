@@ -1,4 +1,5 @@
 import { TextLayer } from '@deck.gl/layers';
+import { CLIPBOARD_LAYER_ID_PREFIX } from '../deckgl/layers/layerConfigs.js';
 
 /**
  * Create clipboard label TextLayer
@@ -24,7 +25,7 @@ export function createClipboardLabelLayer(treeIndex, bounds, fullTreeIndices = [
   }
 
   return new TextLayer({
-    id: 'clipboard-tree-label',
+    id: `${CLIPBOARD_LAYER_ID_PREFIX}-tree-label`,
     data: [{
       text: labelText,
       // Place well above the visual top (minY).

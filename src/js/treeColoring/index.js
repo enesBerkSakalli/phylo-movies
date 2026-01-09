@@ -20,4 +20,5 @@ export {
 } from './utils/GroupingUtils.js';
 
 // Components
-export { default as TaxaColoring, openTaxaColoringFromStore } from './components/TaxaColoring.jsx';
+// Components
+// export { default as TaxaColoring, openTaxaColoringFromStore } from './components/TaxaColoring.jsx';

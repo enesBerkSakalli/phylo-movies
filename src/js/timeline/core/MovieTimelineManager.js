@@ -14,6 +14,7 @@ export class MovieTimelineManager {
         this.movieData = movieData;
         this.transitionResolver = transitionIndexResolver;
         this.isScrubbing = false;
+        this.isDestroyed = false;
         this.scrubberAPI = null;
         this.timeline = null;
         this.segments = TimelineDataProcessor.createSegments(movieData);
@@ -74,6 +75,8 @@ export class MovieTimelineManager {
     // ==========================================================================
 
     _createTimeline() {
+        if (this.isDestroyed) return;
+
         const timelineParent = document.querySelector('.interpolation-timeline-container');
         if (!timelineParent) return;
 
@@ -86,6 +89,17 @@ export class MovieTimelineManager {
         container.id = 'timelineContainer';
         container.className = 'timeline-visual-layer';
         timelineParent.insertAdjacentElement('beforeend', container);
+
+        // Safety check for renderer constructor
+        if (!this.timelineData || typeof this.timelineData !== 'object') {
+            console.error('[MovieTimelineManager] Cannot create timeline: invalid timelineData', this.timelineData);
+            return;
+        }
+
+        if (this.timelineData.totalDuration <= 0) {
+            console.warn('[MovieTimelineManager] Cannot create timeline: totalDuration is 0');
+            return;
+        }
 
         this.timeline = new DeckTimelineRenderer(this.timelineData, this.segments).init(container);
     }
@@ -312,6 +326,7 @@ export class MovieTimelineManager {
     // ==========================================================================
 
     destroy() {
+        this.isDestroyed = true;
         if (this.scrubRequestId) cancelAnimationFrame(this.scrubRequestId);
         this.unsubscribeFromStore?.();
 

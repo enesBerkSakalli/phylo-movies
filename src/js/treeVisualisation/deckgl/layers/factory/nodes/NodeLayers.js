@@ -32,7 +32,7 @@ export function createNodesLayer(nodes, state, layerStyles) {
  * @param {Object} layerStyles - LayerStyles instance
  * @returns {Object} props for ScatterplotLayer
  */
-export function getNodesLayerProps(nodes, state, layerStyles) {
+export function getNodesLayerProps(nodes = [], state, layerStyles) {
   const { taxaColorVersion, colorVersion, nodeSize, upcomingChangesEnabled } = state || {};
 
   // Get cached state once for all accessors
@@ -43,15 +43,21 @@ export function getNodesLayerProps(nodes, state, layerStyles) {
     pickable: true,
     autoHighlight: true,
     highlightColor: HOVER_HIGHLIGHT_COLOR,
-    getPosition: d => addZOffset(d.position, getHistoryOffset(cached, d)),
+    getPosition: d => {
+      const p = d?.position;
+      const x = p?.[0] ?? 0;
+      const y = p?.[1] ?? 0;
+      const z = p?.[2] ?? 0;
+      return addZOffset([x, y, z], getHistoryOffset(cached, d));
+    },
     getRadius: d => layerStyles.getNodeRadius(d, MIN_NODE_RADIUS, cached),
     getFillColor: d => layerStyles.getNodeColor(d, cached),
     getLineColor: d => layerStyles.getNodeBorderColor(d, cached),
     updateTriggers: {
       getFillColor: [colorVersion, taxaColorVersion, upcomingChangesEnabled],
-      getLineColor: [colorVersion, upcomingChangesEnabled],
-      getPosition: [nodes.length, colorVersion],
-      getRadius: [nodes.length, nodeSize, colorVersion]
+      getLineColor: [colorVersion, taxaColorVersion, upcomingChangesEnabled],
+      getPosition: [colorVersion],
+      getRadius: [nodeSize, colorVersion]
     }
   };
 }
