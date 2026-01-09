@@ -8,6 +8,10 @@ import { PathStyleExtension } from '@deck.gl/extensions';
 // Hover highlight color: semi-transparent cyan for good contrast with blue/red data highlights
 export const HOVER_HIGHLIGHT_COLOR = [0, 200, 220, 150];
 
+export const LAYER_ID_PREFIX = 'phylo';
+export const HISTORY_LAYER_ID_PREFIX = `${LAYER_ID_PREFIX}-history`;
+export const CLIPBOARD_LAYER_ID_PREFIX = `${LAYER_ID_PREFIX}-clipboard`;
+
 // Minimum node radius for internal nodes
 export const MIN_NODE_RADIUS = 3;
 export const HISTORY_Z_OFFSET = 0.1;
@@ -17,7 +21,7 @@ export const HISTORY_Z_OFFSET = 0.1;
  */
 const pathLayerDefaults = {
   widthUnits: 'pixels',
-  widthMinPixels: 0,
+  widthMinPixels: 1,
   jointRounded: true,
   capRounded: true
 };
@@ -33,7 +37,7 @@ const pathStyleExtension = new PathStyleExtension({ dash: true, highPrecisionDas
  */
 export const LAYER_CONFIGS = {
   linkOutlines: {
-    id: 'phylo-link-outlines',
+    id: `${LAYER_ID_PREFIX}-link-outlines`,
     LayerClass: PathLayer,
     defaultProps: {
       ...pathLayerDefaults,
@@ -43,7 +47,7 @@ export const LAYER_CONFIGS = {
     }
   },
   links: {
-    id: 'phylo-links',
+    id: `${LAYER_ID_PREFIX}-links`,
     LayerClass: PathLayer,
     defaultProps: {
       ...pathLayerDefaults,
@@ -53,12 +57,12 @@ export const LAYER_CONFIGS = {
     }
   },
   extensions: {
-    id: 'phylo-extensions',
+    id: `${LAYER_ID_PREFIX}-extensions`,
     LayerClass: PathLayer,
     defaultProps: { ...pathLayerDefaults }
   },
   nodes: {
-    id: 'phylo-nodes',
+    id: `${LAYER_ID_PREFIX}-nodes`,
     LayerClass: ScatterplotLayer,
     defaultProps: {
       lineWidthUnits: 'pixels',
@@ -68,15 +72,15 @@ export const LAYER_CONFIGS = {
     }
   },
   labels: {
-    id: 'phylo-labels',
+    id: `${LAYER_ID_PREFIX}-labels`,
     LayerClass: TextLayer,
     defaultProps: {
-      sizeUnits: 'pixels',  // Labels stay constant size regardless of zoom
+      sizeUnits: 'common',  // Labels scale with zoom in tree space
       getAlignmentBaseline: 'center'
     }
   },
   connectors: {
-    id: 'phylo-connectors',
+    id: `${LAYER_ID_PREFIX}-connectors`,
     LayerClass: PathLayer,
     defaultProps: {
       ...pathLayerDefaults,
@@ -87,31 +91,31 @@ export const LAYER_CONFIGS = {
 };
 
 /**
- * Clipboard layer configurations - same as LAYER_CONFIGS but with 'clipboard-' prefix
+ * Clipboard layer configurations - same as LAYER_CONFIGS but with 'phylo-clipboard-' prefix
  */
 export const CLIPBOARD_LAYER_CONFIGS = {
   linkOutlines: {
     ...LAYER_CONFIGS.linkOutlines,
-    id: 'clipboard-link-outlines'
+    id: `${CLIPBOARD_LAYER_ID_PREFIX}-link-outlines`
   },
   links: {
     ...LAYER_CONFIGS.links,
-    id: 'clipboard-links'
+    id: `${CLIPBOARD_LAYER_ID_PREFIX}-links`
   },
   extensions: {
     ...LAYER_CONFIGS.extensions,
-    id: 'clipboard-extensions'
+    id: `${CLIPBOARD_LAYER_ID_PREFIX}-extensions`
   },
   nodes: {
     ...LAYER_CONFIGS.nodes,
-    id: 'clipboard-nodes'
+    id: `${CLIPBOARD_LAYER_ID_PREFIX}-nodes`
   },
   labels: {
     ...LAYER_CONFIGS.labels,
-    id: 'clipboard-labels'
+    id: `${CLIPBOARD_LAYER_ID_PREFIX}-labels`
   },
   connectors: {
     ...LAYER_CONFIGS.connectors,
-    id: 'clipboard-connectors'
+    id: `${CLIPBOARD_LAYER_ID_PREFIX}-connectors`
   }
 };

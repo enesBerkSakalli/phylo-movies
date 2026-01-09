@@ -36,6 +36,9 @@ export class TreeColorManager {
     this.prominentHistoryHashes = new Set(); // Set of hashes for prominent history (added + moved structures)
     this.sharedMarkedJumpingSubtrees = []; // Shared jumping subtrees across views
     this.historySubtrees = []; // Subtrees that already moved in the current transition
+    this.sourceEdgeLeaves = [];
+    this.destinationEdgeLeaves = [];
+    this.currentMovingSubtree = new Set();
   }
 
   /**
@@ -172,6 +175,36 @@ export class TreeColorManager {
     );
   }
 
+  updateSourceEdgeLeaves(sourceEdges) {
+    let edges = [];
+    if (Array.isArray(sourceEdges)) {
+      edges = sourceEdges;
+    } else if (sourceEdges instanceof Set) {
+      edges = [sourceEdges];
+    }
+    this.sourceEdgeLeaves = edges.map(s => (s instanceof Set ? s : new Set(s)));
+  }
+
+  updateDestinationEdgeLeaves(destEdges) {
+    let edges = [];
+    if (Array.isArray(destEdges)) {
+      edges = destEdges;
+    } else if (destEdges instanceof Set) {
+      edges = [destEdges];
+    }
+    this.destinationEdgeLeaves = edges.map(s => (s instanceof Set ? s : new Set(s)));
+  }
+
+  updateCurrentMovingSubtree(subtree) {
+    if (subtree instanceof Set) {
+      this.currentMovingSubtree = subtree;
+    } else if (Array.isArray(subtree)) {
+      this.currentMovingSubtree = new Set(subtree);
+    } else {
+      this.currentMovingSubtree = new Set();
+    }
+  }
+
   /**
    * Check if a node is the root of any shared marked jumping subtree.
    */
@@ -251,6 +284,27 @@ export class TreeColorManager {
    */
   isNodeHistorySubtree(nodeData) {
     return isNodeInSubtree(nodeData, this.historySubtrees);
+  }
+
+  isNodeSourceEdge(nodeData) {
+    return isNodeInSubtree(nodeData, this.sourceEdgeLeaves);
+  }
+
+  isLinkSourceEdge(linkData) {
+    return isLinkInSubtree(linkData, this.sourceEdgeLeaves);
+  }
+
+  isNodeDestinationEdge(nodeData) {
+    return isNodeInSubtree(nodeData, this.destinationEdgeLeaves);
+  }
+
+  isLinkDestinationEdge(linkData) {
+    return isLinkInSubtree(linkData, this.destinationEdgeLeaves);
+  }
+
+  isNodeMovingSubtree(nodeData) {
+    if (!this.currentMovingSubtree || this.currentMovingSubtree.size === 0) return false;
+    return isNodeInSubtree(nodeData, [this.currentMovingSubtree]);
   }
   /**
    * Enable/disable monophyletic group coloring

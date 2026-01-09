@@ -1,15 +1,6 @@
-// geometry/radialTreeGeometry.js - Handles radial tree branch calculation and interpolation
-import * as d3 from "d3";
-import { kar2pol, shortestAngle as signedShortestAngleExt } from "../../domain/math/mathUtils.js";
+import { shortestAngle as signedShortestAngleExt } from "../../domain/math/mathUtils.js";
 
 /* ─────────────────────────── ANGLE & COORDINATE HELPERS ─────────────────────────── */
-
-/**
- * Normalize an angle to [0, 2π)
- * @param {number} a - Angle in radians
- * @returns {number} Normalized angle
- */
-// Removed unused helper: normalizeAngle
 
 /**
  * Signed shortest angle from "from" to "to" in (-π, π]
@@ -36,7 +27,7 @@ export function polarToCartesian(radius, angle, center = { x: 0, y: 0, z: 0 }) {
   return {
     x: center.x + radius * Math.cos(angle),
     y: center.y + radius * Math.sin(angle),
-    z: center.z || 0
+    z: center.z ?? 0
   };
 }
 
@@ -71,11 +62,16 @@ export function interpolateAngle(from, to, t) {
  * @param {number} oldRadius - Starting radius
  * @param {number} newAngle - Target angle
  * @param {number} newRadius - Target radius
+ * @param {Object} [options] - Interpolator options
+ * @param {boolean} [options.useShortestAngle=true] - Use shortest angular delta
  * @returns {Function} Interpolator function that accepts t (0-1)
  */
-export function createPolarInterpolator(oldAngle, oldRadius, newAngle, newRadius) {
-  const angleDiff = signedShortestAngleExt ? signedShortestAngleExt(oldAngle, newAngle)
-                                           : signedShortestAngle(oldAngle, newAngle);
+export function createPolarInterpolator(oldAngle, oldRadius, newAngle, newRadius, options = {}) {
+  const useShortestAngle = options?.useShortestAngle !== false;
+  const angleDiff = useShortestAngle
+    ? (signedShortestAngleExt ? signedShortestAngleExt(oldAngle, newAngle)
+                              : signedShortestAngle(oldAngle, newAngle))
+    : (newAngle - oldAngle);
   const radiusDiff = newRadius - oldRadius;
 
   return function (t) {
@@ -102,11 +98,11 @@ export function calculateBranchCoordinates(d, center = { x: 0, y: 0, z: 0 }) {
   const source = d.source;
   const target = d.target;
 
-  // 1) Move point = source cartesian
-  const movePoint = { x: source.x, y: source.y, z: 0 };
+  // 1) Move point = source polar converted with center offset
+  const movePoint = polarToCartesian(source.radius, source.angle, center);
 
-  // 3) Line end point = target cartesian
-  const lineEndPoint = { x: target.x, y: target.y, z: 0 };
+  // 3) Line end point = target polar converted with center offset
+  const lineEndPoint = polarToCartesian(target.radius, target.angle, center);
 
   // Check if this should be a straight line (same angle or negligible angle difference)
   const angleTolerance = 0.001; // ~0.06 degrees
@@ -125,12 +121,8 @@ export function calculateBranchCoordinates(d, center = { x: 0, y: 0, z: 0 }) {
   // 2) Arc end point: same radius as source, but at target angle
   const arcEndPoint = polarToCartesian(source.radius, target.angle, center);
 
-  // Signed angle diff (direction matters for sweep)
+  // Signed shortest angle diff (direction matters for sweep)
   const diff = signedShortestAngle(source.angle, target.angle);
-
-  // SVG flags per spec
-  const largeArcFlag = Math.abs(diff) > Math.PI ? 1 : 0;
-  const sweepFlag = diff >= 0 ? 1 : 0;
 
   return {
     movePoint,
@@ -140,9 +132,7 @@ export function calculateBranchCoordinates(d, center = { x: 0, y: 0, z: 0 }) {
       radius: source.radius,
       startAngle: source.angle,
       endAngle: target.angle,
-      angleDiff: diff, // signed
-      largeArcFlag,
-      sweepFlag,
+      angleDiff: diff, // signed shortest diff
       center
     }
   };
@@ -158,6 +148,7 @@ export function calculateBranchCoordinates(d, center = { x: 0, y: 0, z: 0 }) {
  * @param {number} prevTargetAngle - Previous target angle
  * @param {number} prevTargetRadius - Previous target radius
  * @param {{x:number,y:number,z:number}} center - Center point for coordinates
+ * @param {Object} [options] - Interpolation options
  * @returns {Object} Coordinate data for interpolated branch
  */
 export function calculateInterpolatedBranchCoordinates(
@@ -167,7 +158,8 @@ export function calculateInterpolatedBranchCoordinates(
   prevSourceRadius,
   prevTargetAngle,
   prevTargetRadius,
-  center = { x: 0, y: 0, z: 0 }
+  center = { x: 0, y: 0, z: 0 },
+  options = {}
 ) {
   validateLink(d, "[calculateInterpolatedBranchCoordinates]");
 
@@ -183,8 +175,8 @@ export function calculateInterpolatedBranchCoordinates(
   const nTA = d.target.angle;
   const nTR = d.target.radius;
 
-  const sourceInterpolator = createPolarInterpolator(pSA, pSR, nSA, nSR);
-  const targetInterpolator = createPolarInterpolator(pTA, pTR, nTA, nTR);
+  const sourceInterpolator = createPolarInterpolator(pSA, pSR, nSA, nSR, options);
+  const targetInterpolator = createPolarInterpolator(pTA, pTR, nTA, nTR, options);
 
   const { angle: sAngle, radius: sRadius } = sourceInterpolator(t);
   const { angle: tAngle, radius: tRadius } = targetInterpolator(t);
@@ -209,10 +201,8 @@ export function calculateInterpolatedBranchCoordinates(
 
   const arcEndPoint = polarToCartesian(sRadius, tAngle, center);
 
-  // Signed diff
+  // Signed shortest diff
   const diff = signedShortestAngle(sAngle, tAngle);
-  const largeArcFlag = Math.abs(diff) > Math.PI ? 1 : 0;
-  const sweepFlag = diff >= 0 ? 1 : 0;
 
   return {
     movePoint,
@@ -223,34 +213,11 @@ export function calculateInterpolatedBranchCoordinates(
       startAngle: sAngle,
       endAngle: tAngle,
       angleDiff: diff,
-      largeArcFlag,
-      sweepFlag,
       center
     }
   };
 }
 
-/* ─────────────────────────── SVG PATH GENERATION ─────────────────────────── */
-
-/**
- * Builds SVG path string for static branch.
- * @param {Object} d - Link data
- * @param {Object} center - Center point {x,y,z}
- * @returns {string} SVG path string
- */
-// removed: buildSvgString
-
-/**
- * SVG path for interpolated branch.
- * @param {Object} d - Link data
- * @param {number} t - Interpolation factor (0-1)
- * @param {number} prevSourceAngle - Previous source angle
- * @param {number} prevSourceRadius - Previous source radius
- * @param {number} prevTargetAngle - Previous target angle
- * @param {number} prevTargetRadius - Previous target radius
- * @param {Object} center - Center point {x,y,z}
- * @returns {string} SVG path string for interpolated branch
- */
 
 /* ─────────────────────────── LINK ANALYSIS ─────────────────────────── */
 
@@ -284,14 +251,6 @@ export function calculatePathLengthFromCoordinates(coordinates) {
   return length;
 }
 
-/**
- * Calculates the length of a link, caching the result for performance.
- * @param {Object} link - Link object with source and target
- * @returns {number} Link length
- */
-// Removed unused helper: calculateLinkLength
-
-
 
 /* ─────────────────────────── PRIVATE UTILS ─────────────────────────── */
 
@@ -311,7 +270,7 @@ function validateLink(d, where) {
     console.error(`${where} Self-referencing link:`, d);
     throw new Error("Invalid link data: source equals target");
   }
-  const requiredProps = ["x", "y", "angle", "radius"];
+  const requiredProps = ["angle", "radius"];
   for (const prop of requiredProps) {
     if (typeof d.source[prop] === "undefined" || typeof d.target[prop] === "undefined") {
       console.error(`${where} Missing property ${prop}:`, d);

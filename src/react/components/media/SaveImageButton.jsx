@@ -62,7 +62,7 @@ export function SaveImageButton() {
       onClick={handleSaveImage}
       aria-label="Save PNG"
     >
-      <Download className="size-5" />
+      <Download className="size-4" />
     </Button>
   );
 }

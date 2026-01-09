@@ -7,6 +7,11 @@ import { useAppStore } from '../../core/store.js';
 import { TREE_COLOR_CATEGORIES } from '../../constants/TreeColors.js';
 import { applyColoringData } from '../utils/GroupingUtils.js';
 import { TaxaColoringWindow } from '@/react/components/taxa-coloring/TaxaColoringWindow.jsx';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function openTaxaColoringFromStore() {
   const store = useAppStore.getState?.();
@@ -180,23 +185,35 @@ function TaxaColoringRndWindow({ taxaNames, originalColorMap, onApply, onClose, 
       onDragStop={handleDragStop}
       onResizeStop={handleResizeStop}
       dragHandleClassName="taxa-coloring-drag-handle"
-      className="fixed z-50 pointer-events-auto shadow-2xl border border-border rounded-xl bg-card overflow-hidden"
-      style={{ backdropFilter: 'blur(10px)' }}
+      className="fixed z-50 pointer-events-auto shadow-2xl border border-border/60 rounded-xl bg-card/95 overflow-hidden"
+      style={{ backdropFilter: 'blur(12px)' }}
     >
-      <div className="flex h-full flex-col bg-card">
-        <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-border bg-card/90 taxa-coloring-drag-handle cursor-move select-none">
-          <div className="flex items-center gap-2 text-sm font-semibold">
-            <Palette className="size-5 text-primary" aria-hidden />
-            <div className="flex flex-col leading-tight">
-              <span>Taxa Coloring</span>
-              <span className="text-xs font-normal text-muted-foreground">Assign palettes, groups, or CSV imports.</span>
+      <div className="flex h-full flex-col">
+        <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-border/40 bg-card/50 taxa-coloring-drag-handle cursor-move select-none transition-colors hover:bg-card/70 group/header">
+          <div className="flex items-center gap-3 text-sm font-semibold">
+            <div className="flex aspect-square size-9 items-center justify-center rounded-lg bg-primary/10 text-primary shadow-inner group-hover/header:rotate-12 transition-transform duration-300">
+               <Palette className="size-5" />
+            </div>
+            <div className="flex flex-col gap-0.5 leading-none">
+              <span className="text-foreground">Taxa Coloring</span>
+              <span className="text-[10px] font-normal text-muted-foreground/80 tracking-wide uppercase">Assignment Manager</span>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close taxa coloring window">
-            <X className="size-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onClose}
+                className="size-8 rounded-full hover:bg-destructive/10 hover:text-destructive transition-colors"
+              >
+                <X className="size-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent variant="destructive">Close Coloring Window</TooltipContent>
+          </Tooltip>
         </div>
-        <div className="flex-1 min-h-0 overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-hidden bg-background/50">
           <TaxaColoringWindow
             taxaNames={taxaNames}
             originalColorMap={originalColorMap}

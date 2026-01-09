@@ -70,7 +70,7 @@ export function RecordingControls() {
         onClick={handleStartRecording}
         aria-label="Start recording"
       >
-        <CircleDot className="size-5" />
+        <CircleDot className="size-4" />
       </Button>
       <Button
         id="stop-record"
@@ -81,7 +81,7 @@ export function RecordingControls() {
         onClick={handleStopRecording}
         aria-label="Stop recording"
       >
-        <StopCircle className="size-5" />
+        <StopCircle className="size-4" />
       </Button>
     </>
   );

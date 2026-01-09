@@ -4,6 +4,7 @@ import { loadCSVColumn } from "../utils/csvHelpers.js";
 
 export function useCSVState(taxaNames, initialState = {}) {
   const [csvData, setCsvData] = useState(initialState.csvData || null);
+  const [csvFileName, setCsvFileName] = useState(initialState.csvFileName || null);
   const [csvGroups, setCsvGroups] = useState(initialState.csvGroups || []);
   const [csvTaxaMap, setCsvTaxaMap] = useState(initialState.csvTaxaMap || null);
   const [csvColumn, setCsvColumn] = useState(initialState.csvColumn || null);
@@ -32,6 +33,7 @@ export function useCSVState(taxaNames, initialState = {}) {
       }
 
       setCsvData(parsed.data);
+      setCsvFileName(file.name);
       setCsvColumn(firstCol);
       setCsvTaxaMap(map);
       setCsvGroups(groups);
@@ -52,6 +54,7 @@ export function useCSVState(taxaNames, initialState = {}) {
 
   const resetCSV = useCallback(() => {
     setCsvData(null);
+    setCsvFileName(null);
     setCsvGroups([]);
     setCsvTaxaMap(null);
     setCsvColumn(null);
@@ -60,6 +63,7 @@ export function useCSVState(taxaNames, initialState = {}) {
 
   return {
     csvData,
+    csvFileName,
     csvGroups,
     csvTaxaMap,
     csvColumn,

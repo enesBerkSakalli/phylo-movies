@@ -89,12 +89,8 @@ export class RadialTreeLayout {
    * @return {void}
    */
   calcRadius(node, radius = 0) {
-    if (!node.parent) {
-      // If this is the root node, set its radius to 0
-      node.data.length = 0;
-    }
-
-    let length = node.data.length;
+    const rawLength = node.parent ? node?.data?.length : 0;
+    const length = Number(rawLength) || 0;
 
     // Check if we should preserve radius for this node
     const nodeKey = getNodeKey(node);
@@ -180,8 +176,10 @@ export class RadialTreeLayout {
   setMargin(margin) {
     this.margin = margin;
     // Calculate from original dimensions to avoid accumulation
-    this.containerWidth = (this.originalWidth || this.containerWidth) - this.margin;
-    this.containerHeight = (this.originalHeight || this.containerHeight) - this.margin;
+    const baseWidth = this.originalWidth || this.containerWidth;
+    const baseHeight = this.originalHeight || this.containerHeight;
+    this.containerWidth = Math.max(1, baseWidth - this.margin * 2);
+    this.containerHeight = Math.max(1, baseHeight - this.margin * 2);
   }
 
   /**
@@ -269,7 +267,7 @@ export class RadialTreeLayout {
    * @param {boolean} [useUniformScaling=false] - Whether to skip auto-scaling for uniform scaling
    * @return {root}
    */
-  constructRadialTree(useUniformScaling = false) {
+  constructRadialTree(useUniformScaling = false, options = {}) {
     // CRITICAL FIX: Removed `this.root.data.length = 0` line that was mutating shared tree data
     // This mutation was corrupting previous tree data and causing position diffing to fail,
     // leading to duplicate element creation in WebGL renderer
@@ -299,7 +297,10 @@ export class RadialTreeLayout {
       this.scaleRadius(this.root, this.scale);
     }
 
-    this.generateCoordinates(this.root);
+    const generateCoords = options.generateCoords !== false;
+    if (generateCoords) {
+      this.generateCoordinates(this.root);
+    }
 
     return this.root;
   }
@@ -313,7 +314,8 @@ export class RadialTreeLayout {
     const isComparison = this.containerWidth < 600 || this.containerHeight < 600;
     const adjustedFactor = isComparison ? factor * 0.8 : factor; // More conservative for comparisons
 
-    return minWindowSize / adjustedFactor / maxRadius;
+    const safeMaxRadius = Math.max(Number(maxRadius) || 0, 1e-6);
+    return minWindowSize / adjustedFactor / safeMaxRadius;
   }
 
 }
@@ -326,8 +328,7 @@ export default function createRadialTreeLayout(
   // Apply branch length transformation before layout
   let transformedTree = transformBranchLengths(tree, branchTransformation);
 
-  let d3tree = d3.hierarchy(transformedTree);
-  let treeLayout = new RadialTreeLayout(d3tree);
+  let treeLayout = new RadialTreeLayout(transformedTree);
 
   let container;
   let width, height, margin;
@@ -371,13 +372,13 @@ export default function createRadialTreeLayout(
   let root_;
 
   if (useUniformScaling) {
-    // For uniform scaling, construct without auto-scaling, then apply uniform scale
-    root_ = treeLayout.constructRadialTree(true);
+    const s = Number(options.uniformScale);
+    const uniformScale = Number.isFinite(s) && s > 0 ? s : 1;
 
-    // Apply uniform scaling
-    treeLayout.scaleRadius(root_, options.uniformScale);
+    root_ = treeLayout.constructRadialTree(true, { generateCoords: false });
+    treeLayout.scaleRadius(root_, uniformScale);
     treeLayout.generateCoordinates(root_);
-    treeLayout.scale = options.uniformScale;
+    treeLayout.scale = uniformScale;
   } else {
     // Use density-aware construction with auto-scaling
     root_ = treeLayout.constructRadialTree(false);
@@ -390,6 +391,7 @@ export default function createRadialTreeLayout(
     if (currentMaxRadius > options.maxRadius) {
       const adjustmentScale = options.maxRadius / currentMaxRadius * 0.9;
       treeLayout.scaleRadius(root_, adjustmentScale);
+      treeLayout.scale *= adjustmentScale;
       treeLayout.generateCoordinates(root_);
     }
   }

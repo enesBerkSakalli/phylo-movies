@@ -57,7 +57,7 @@ export function TimelineSegmentTooltip({ segment, segmentIndex, totalSegments, g
  */
 function TooltipHeader({ isAnchor, segmentIndex, totalSegments }) {
   const Icon = isAnchor ? Anchor : ArrowRightLeft;
-  const title = isAnchor ? 'Anchor' : 'Transition';
+  const title = isAnchor ? 'Anchor' : 'Interpolation';
 
   return (
     <div className="flex items-center gap-1.5 pb-1.5 border-b border-border">
@@ -92,7 +92,7 @@ function AnchorContent({ segment }) {
  * Displays moving subtrees, step count, and taxa count.
  */
 function TransitionContent({ segment, getLeafNames, isExpanded, onToggleExpanded }) {
-  const steps = segment.hasInterpolation && Array.isArray(segment.interpolationData)
+  const frames = segment.hasInterpolation && Array.isArray(segment.interpolationData)
     ? segment.interpolationData.length
     : 1;
 
@@ -110,8 +110,12 @@ function TransitionContent({ segment, getLeafNames, isExpanded, onToggleExpanded
         onToggleExpanded={onToggleExpanded}
       />
 
+      <div className="text-[10px] text-muted-foreground">
+        Algorithmic interpolation frames (not time)
+      </div>
+
       <div className="flex items-center justify-between pt-1 text-muted-foreground border-t border-border/50 mt-1">
-        <span>{steps} steps</span>
+        <span>{frames} frames</span>
         <span>{taxaCount} taxa</span>
       </div>
     </>
@@ -201,15 +205,32 @@ function extractMovingSubtreeGroups(jumpingSubtrees, getLeafNamesByIndices) {
 
   const subtreeGroups = [];
 
-  for (const solution of jumpingSubtrees) {
-    if (!Array.isArray(solution)) continue;
+  for (const item of jumpingSubtrees) {
+    if (!Array.isArray(item)) continue;
 
-    for (const leafIndicesGroup of solution) {
-      if (!Array.isArray(leafIndicesGroup) || leafIndicesGroup.length === 0) continue;
+    // Check depth: is this a group of indices [1, 2] or a solution containing groups [[1, 2]]?
+    const firstElement = item[0];
 
-      const leafNames = getLeafNamesByIndices(leafIndicesGroup);
-      if (leafNames?.length > 0) {
-        subtreeGroups.push(leafNames);
+    if (Array.isArray(firstElement)) {
+      // 3D Structure: Item is a solution containing groups
+      // e.g. [[1, 2], [3]]
+      for (const group of item) {
+        if (Array.isArray(group) && group.length > 0) {
+          const leafNames = getLeafNamesByIndices(group);
+          if (leafNames?.length > 0) {
+            subtreeGroups.push(leafNames);
+          }
+        }
+      }
+    } else {
+      // 2D Structure: Item is a single group of indices
+      // e.g. [1, 2]
+      // or empty array
+      if (item.length > 0) {
+        const leafNames = getLeafNamesByIndices(item);
+        if (leafNames?.length > 0) {
+          subtreeGroups.push(leafNames);
+        }
       }
     }
   }

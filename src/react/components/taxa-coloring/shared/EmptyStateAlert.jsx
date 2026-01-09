@@ -4,12 +4,20 @@ import { Info } from "lucide-react";
 
 export function EmptyStateAlert({ mode }) {
   return (
-    <Alert>
-      <div className="flex items-start gap-2">
-        <Info className="mt-0.5 size-4" />
+    <Alert className="bg-muted/30 border-dashed border-muted-foreground/30 py-6">
+      <div className="flex flex-col items-center text-center gap-2">
+        <div className="p-3 rounded-full bg-muted/50 mb-1">
+          <Info className="size-6 text-muted-foreground" />
+        </div>
         <div>
-          <AlertTitle>No {mode === "taxa" ? "taxa available for coloring" : "groups found with current settings"}.</AlertTitle>
-          {mode === "taxa" && <AlertDescription>Load a dataset to configure taxa colors.</AlertDescription>}
+          <AlertTitle className="text-base font-semibold">
+            {mode === "taxa" ? "No taxa available for coloring" : "No groups found with current settings"}
+          </AlertTitle>
+          <AlertDescription className="text-sm text-muted-foreground max-w-[300px]">
+            {mode === "taxa"
+              ? "Load a phylogenetic dataset to start configuring taxa colors."
+              : "Try adjusting your grouping strategy or separators to detect taxa groups."}
+          </AlertDescription>
         </div>
       </div>
     </Alert>

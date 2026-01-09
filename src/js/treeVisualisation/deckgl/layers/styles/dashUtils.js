@@ -22,3 +22,17 @@ export function calculateDashArray(path) {
 
   return [dashUnit, gapUnit];
 }
+
+export function calculateFlightDashArray(path) {
+  const pathLength = calculatePathLength(path);
+
+  // Flight pattern: small dots with wide gaps
+  // Aim for ~8-12 dots per edge to show trajectory
+  const targetDots = 10;
+  // Dots should be small but visible (e.g., 2-4px)
+  const dotSize = Math.max(2, Math.min(6, pathLength / (targetDots * 4)));
+  // Gaps should be significantly larger (e.g., 3-4x dot size)
+  const gapSize = dotSize * 3.5;
+
+  return [dotSize, gapSize];
+}

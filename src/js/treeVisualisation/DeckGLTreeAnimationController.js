@@ -9,8 +9,8 @@ import { TreeNodeInteractionHandler } from './interaction/TreeNodeInteractionHan
 import { ComparisonModeRenderer } from './comparison/ComparisonModeRenderer.js';
 import { ViewportManager } from './viewport/ViewportManager.js';
 import { buildViewLinkMapping } from '../domain/view/viewLinkMapper.js';
-import * as layerFactories from './deckgl/layers/factory/index.js';
 import { calculateVisualBounds } from './utils/TreeBoundsUtils.js';
+import { createClipboardLabelLayer } from './utils/ClipboardUtils.js';
 
 export class DeckGLTreeAnimationController extends WebGLTreeAnimationController {
 
@@ -43,6 +43,8 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
     // Track last tree index we auto-fit to
     this._lastFocusedTreeIndex = null;
+    this._resizeRenderScheduled = false;
+    this.setOnResize(() => this._handleContainerResize());
 
     // Drag state
     this._dragState = null;
@@ -143,6 +145,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     if (!this.animationsEnabled) return;
     const { play } = useAppStore.getState();
     play();
+    if (this.animationFrameId != null) return;
     this._animationLoop();
   }
 
@@ -159,6 +162,11 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     this.contextMenu?.destroy();
     this.deckManager?.destroy();
     this.layerManager?.destroy();
+  }
+
+  resetInterpolationCaches() {
+    this._cachedInterpolationData = null;
+    this.treeInterpolator?.resetCaches?.();
   }
 
   // ==========================================================================
@@ -196,6 +204,8 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
   }
 
   _renderSingleTree(treeIndex, currentTreeIndex, treeList, state) {
+    if (!treeList?.length) return;
+
     const targetIndex = Number.isInteger(treeIndex)
       ? Math.min(Math.max(treeIndex, 0), treeList.length - 1)
       : currentTreeIndex;
@@ -238,16 +248,14 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       ...(layerData.extensions || [])
     ].forEach(d => d.treeSide = 'left');
 
-    const { playing, autoFitOnTreeChange } = state;
-
     this._updateLayersEfficiently(layerData);
-    this.viewportManager.updateScreenPositions(layerData.nodes, this.viewSide);
 
-    // Auto-fit policy
-    if (!playing && autoFitOnTreeChange && this._lastFocusedTreeIndex !== targetIndex) {
+    if (this._lastFocusedTreeIndex === null) {
       this.viewportManager.focusOnTree(layerData.nodes, layerData.labels);
       this._lastFocusedTreeIndex = targetIndex;
     }
+
+    this.viewportManager.updateScreenPositions(layerData.nodes, this.viewSide);
   }
 
   // ==========================================================================
@@ -255,6 +263,10 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
   // ==========================================================================
 
   async renderInterpolatedFrame(fromTreeData, toTreeData, timeFactor, options = {}) {
+    if (!this.ready) {
+      await this.readyPromise;
+    }
+
     const { fromTreeIndex, toTreeIndex } = options;
     let t = Math.max(0, Math.min(1, timeFactor));
     if (fromTreeData === toTreeData) t = 0;
@@ -270,6 +282,10 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
   }
 
   async renderScrubFrame(fromTreeData, toTreeData, timeFactor, options = {}) {
+    if (!this.ready) {
+      await this.readyPromise;
+    }
+
     const { comparisonMode, rightTreeIndex, fromTreeIndex } = options;
 
     if (comparisonMode && typeof rightTreeIndex === 'number') {
@@ -472,7 +488,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
   // LAYER MANAGEMENT
   // ==========================================================================
 
-  async _updateLayersEfficiently(newData) {
+  _updateLayersEfficiently(newData) {
     const layers = this.layerManager.updateLayersWithData(newData);
 
     // Add clipboard layers if clipboard is active
@@ -516,12 +532,12 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
   /**
    * Create clipboard tree layers with visual positioning.
-   * Delegated to ClipboardLayers factory.
    */
   _createClipboardLayers(treeIndex, treeData) {
     const layout = this.calculateLayout(treeData, {
       treeIndex,
-      updateController: false
+      updateController: false,
+      rotationAlignmentKey: 'clipboard'
     });
 
     if (!layout?.tree) {
@@ -557,16 +573,16 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     const gap = 50;
     const yOffset = (mainTreeBounds.minY - clipboardBounds.maxY - gap) + clipboardOffsetY;
 
-    // Delegate to modular factory
-    return layerFactories.createClipboardLayers({
-      layerData,
+    const treeLayers = this.layerManager.createClipboardLayers(layerData, 0, xOffset, yOffset);
+    const labelLayer = createClipboardLabelLayer(
+      treeIndex,
       clipboardBounds,
       fullTreeIndices,
-      treeIndex,
       xOffset,
-      yOffset,
-      layerManager: this.layerManager
-    });
+      yOffset
+    );
+
+    return [...treeLayers, labelLayer].filter(Boolean);
   }
 
 
@@ -619,15 +635,18 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       return false;
     }
 
+    const controllerConfig = this.deckManager.getControllerConfig?.() || null;
+
     this._dragState = {
       side: treeSide,
       startOffset,
-      startPos: { x: info.x, y: info.y }
+      startPos: { x: info.x, y: info.y },
+      controllerConfig: controllerConfig ? { ...controllerConfig } : null
     };
 
     // Prevent map panning while dragging a tree - use callback mechanism for React compatibility
     this.deckManager.setControllerConfig({
-      ...this.deckManager.getControllerConfig(),
+      ...(controllerConfig || this.deckManager.getControllerConfig()),
       dragPan: false
     });
     return true;
@@ -638,7 +657,10 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
     const { side, startOffset, startPos } = this._dragState;
     const viewState = this.deckManager.getViewState();
-    const zoom = viewState.zoom || 0;
+    const zoom = viewState.zoom ?? 0;
+    const [zoomX, zoomY] = Array.isArray(zoom) ? zoom : [zoom, zoom];
+    const safeZoomX = Number.isFinite(zoomX) ? zoomX : 0;
+    const safeZoomY = Number.isFinite(zoomY) ? zoomY : 0;
 
     // Convert total screen pixel displacement to world units
     // Formula for Orthographic: world = pixel * 2^-zoom
@@ -649,8 +671,8 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       return false;
     }
 
-    const worldDeltaX = totalPixelDeltaX * Math.pow(2, -zoom);
-    const worldDeltaY = totalPixelDeltaY * Math.pow(2, -zoom);
+    const worldDeltaX = totalPixelDeltaX * Math.pow(2, -safeZoomX);
+    const worldDeltaY = totalPixelDeltaY * Math.pow(2, -safeZoomY);
 
     const state = this._getState();
     if (side === 'left') {
@@ -673,10 +695,37 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
   _handleDragEnd() {
     if (!this._dragState) return;
 
+    const controllerConfig = this._dragState.controllerConfig;
     this._dragState = null;
 
     // Re-enable map panning - use callback mechanism for React compatibility
-    this.deckManager.setControllerConfig(this.deckManager.getControllerConfig());
+    if (controllerConfig) {
+      this.deckManager.setControllerConfig(controllerConfig);
+    } else {
+      this.deckManager.setControllerConfig(this.deckManager.getControllerConfig());
+    }
+  }
+
+  _handleContainerResize() {
+    if (this._resizeRenderScheduled) return;
+    this._resizeRenderScheduled = true;
+
+    const schedule = typeof requestAnimationFrame === 'function'
+      ? requestAnimationFrame
+      : (cb) => setTimeout(cb, 16);
+
+    schedule(async () => {
+      this._resizeRenderScheduled = false;
+      const { playing } = this._getState();
+      if (playing) return;
+      this._lastFocusedTreeIndex = null;
+      this.comparisonRenderer?.resetAutoFit?.();
+      try {
+        await this.renderAllElements();
+      } catch (err) {
+        console.warn('[DeckGLTreeAnimationController] Resize render failed:', err);
+      }
+    });
   }
 
   // ==========================================================================
@@ -684,9 +733,14 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
   // ==========================================================================
 
   _calculateLayout(treeData, treeIndex) {
+    const state = this._getState();
+    const movingTaxa = Array.isArray(state?.subtreeTracking?.[treeIndex]) && state.subtreeTracking[treeIndex]?.length
+      ? state.subtreeTracking[treeIndex]
+      : null;
     return this.calculateLayout(treeData, {
-      treeIndex: treeIndex,
-      updateController: false
+      treeIndex,
+      updateController: false,
+      rotationAlignmentExcludeTaxa: movingTaxa
     });
   }
 

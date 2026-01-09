@@ -54,3 +54,8 @@ export const easeInOutCubic = (x) => {
   return x ** 2 * 3 - x ** 3 * 2;
 };
 
+export const unwrapAngle = (angle, reference) => {
+  if (!Number.isFinite(angle) || !Number.isFinite(reference)) return angle;
+  const TAU = Math.PI * 2;
+  return angle + Math.round((reference - angle) / TAU) * TAU;
+};

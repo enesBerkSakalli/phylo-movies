@@ -44,6 +44,12 @@ export class LayerStyles {
     this._styleHelpers = { getBaseOpacity, getBaseStrokeWidth };
     this._nodeHelpers = { getBaseOpacity, getBaseStrokeWidth, nodeSize: 1 };
 
+    const initialState = useAppStore.getState();
+    this._cache.strokeWidth = initialState.strokeWidth;
+    this._cache.fontSize = initialState.fontSize;
+    this._cache.nodeSize = initialState.nodeSize;
+    this._nodeHelpers.nodeSize = initialState.nodeSize ?? 1;
+
     // Subscribe to store changes
     this._setupStoreSubscription();
   }
@@ -62,6 +68,7 @@ export class LayerStyles {
       // This ensures correct highlighting during scrubbing when ColorManager is updated
       // with the scrub position's tree index but store's currentTreeIndex is stale
       const markedSubtreeData = colorManager?.sharedMarkedJumpingSubtrees || [];
+      this._nodeHelpers.nodeSize = state.nodeSize ?? this._cache.nodeSize ?? 1;
       this._renderCache = {
         state,
         colorManager,
@@ -71,6 +78,8 @@ export class LayerStyles {
         subtreeDimmingOpacity: state.subtreeDimmingOpacity,
         markedSubtreeData,
         markedSubtreesEnabled: state.markedSubtreesEnabled ?? true,
+        highlightSourceEnabled: state.highlightSourceEnabled ?? false,
+        highlightDestinationEnabled: state.highlightDestinationEnabled ?? false,
         pulseOpacity: pulseEnabled ? (state.getPulseOpacity?.() ?? 1.0) : 1.0,
         dashingEnabled: state.activeEdgeDashingEnabled ?? true,
         upcomingChangesEnabled: state.upcomingChangesEnabled ?? false,
@@ -114,7 +123,31 @@ export class LayerStyles {
         styleChanged = true;
       }
 
+      if (
+        state.dimmingEnabled !== prevState.dimmingEnabled ||
+        state.dimmingOpacity !== prevState.dimmingOpacity ||
+        state.subtreeDimmingEnabled !== prevState.subtreeDimmingEnabled ||
+        state.subtreeDimmingOpacity !== prevState.subtreeDimmingOpacity ||
+        state.markedSubtreesEnabled !== prevState.markedSubtreesEnabled ||
+        state.highlightSourceEnabled !== prevState.highlightSourceEnabled ||
+        state.highlightDestinationEnabled !== prevState.highlightDestinationEnabled ||
+        state.activeEdgeDashingEnabled !== prevState.activeEdgeDashingEnabled ||
+        state.upcomingChangesEnabled !== prevState.upcomingChangesEnabled ||
+        state.highContrastHighlightingEnabled !== prevState.highContrastHighlightingEnabled ||
+        state.linkConnectionOpacity !== prevState.linkConnectionOpacity ||
+        state.changePulseEnabled !== prevState.changePulseEnabled ||
+        state.changePulsePhase !== prevState.changePulsePhase ||
+        state.colorVersion !== prevState.colorVersion ||
+        state.taxaColorVersion !== prevState.taxaColorVersion ||
+        (state.movieData?.sorted_leaves?.length || 0) !== (prevState.movieData?.sorted_leaves?.length || 0)
+      ) {
+        styleChanged = true;
+      }
+
       // Notify listeners when styles change
+      if (styleChanged) {
+        this._renderCache = null;
+      }
       if (styleChanged && this.onStyleChange) {
         this.onStyleChange();
       }
@@ -228,7 +261,6 @@ export class LayerStyles {
    */
   getNodeRadius(node, minRadius = 3, cached) {
     const resolved = cached || this.getCachedState();
-    this._nodeHelpers.nodeSize = this._cache.nodeSize || useAppStore.getState().nodeSize || 1;
     return resolveNodeRadius(node, minRadius, resolved, this._nodeHelpers);
   }
 
@@ -273,9 +305,9 @@ export class LayerStyles {
    * @returns {number} Label size in pixels
    */
   getLabelSize(label, cached) {
-    const fontSize = this._cache.fontSize || useAppStore.getState().fontSize || '2.6em';
-    const resolvedCached = cached || this.getCachedState();
-    return resolveLabelSize(label, fontSize, resolvedCached);
+    const resolved = cached || this.getCachedState();
+    const fontSize = resolved.state?.fontSize ?? this._cache.fontSize ?? '2.6em';
+    return resolveLabelSize(label, fontSize, resolved);
   }
 
 
@@ -295,7 +327,7 @@ export class LayerStyles {
    * @private
    */
   _getBaseStrokeWidth() {
-    return this._cache.strokeWidth || useAppStore.getState().strokeWidth || 2;
+    return this._renderCache?.state?.strokeWidth ?? this._cache.strokeWidth ?? 2;
   }
 
   /**

@@ -10,7 +10,7 @@ interface FileUploadZoneProps {
   accept?: Record<string, string[]>
   disabled?: boolean
   value?: File | null
-  label?: string
+  label?: React.ReactNode
   description?: string
   id?: string
   maxSize?: number

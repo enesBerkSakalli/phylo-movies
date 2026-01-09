@@ -1,7 +1,7 @@
-import React from 'react';
-import { Slider } from '@/components/ui/slider';
-import { Label } from '@/components/ui/label';
-import { SidebarGroup, SidebarGroupLabel, SidebarGroupContent } from '@/components/ui/sidebar';
+import React, { useCallback, useRef } from 'react';
+import { LabeledSlider } from '../../controls/common/LabeledSlider.jsx';
+import { SidebarMenuSub, SidebarMenuSubItem } from '@/components/ui/sidebar';
+import { RotateCcw, Compass } from 'lucide-react';
 
 export function LayoutTransform({
   layoutAngleDegrees,
@@ -10,60 +10,72 @@ export function LayoutTransform({
   setLayoutRotationDegrees,
   treeControllers,
 }) {
-  const renderControllers = async () => {
+  const isRenderingRef = useRef(false);
+
+  const renderControllers = useCallback(async () => {
+    if (isRenderingRef.current) return;
+    isRenderingRef.current = true;
     try {
-      for (const controller of treeControllers) {
+      for (const controller of treeControllers ?? []) {
         await controller?.renderAllElements?.();
       }
-    } catch {}
-  };
+    } catch { }
+    finally {
+      isRenderingRef.current = false;
+    }
+  }, [treeControllers]);
+
+  const handleAngleChange = useCallback((vals) => {
+    const v = Array.isArray(vals) ? vals[0] : 360;
+    setLayoutAngleDegrees(v);
+    renderControllers();
+  }, [setLayoutAngleDegrees, renderControllers]);
+
+  const handleRotationChange = useCallback((vals) => {
+    const v = Array.isArray(vals) ? vals[0] : 0;
+    setLayoutRotationDegrees(v);
+    renderControllers();
+  }, [setLayoutRotationDegrees, renderControllers]);
 
   return (
-    <SidebarGroup>
-      <SidebarGroupLabel>Layout Transform</SidebarGroupLabel>
-      <SidebarGroupContent>
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <Label title="Angular span for radial layout" aria-label="Layout angle control">
-              <span id="layout-angle-label">Layout Angle</span>: <span id="layout-angle-value">{layoutAngleDegrees || 360}°</span>
-            </Label>
-            <Slider
-              id="layout-angle"
-              min={90}
-              max={360}
-              step={10}
-              value={[Number(layoutAngleDegrees || 360)]}
-              aria-labelledby="layout-angle-label"
-              onValueChange={async (vals) => {
-                const v = Array.isArray(vals) ? vals[0] : Number(layoutAngleDegrees || 360);
-                setLayoutAngleDegrees(v);
-                await renderControllers();
-              }}
-              className="w-40"
-            />
-          </div>
+    <SidebarMenuSub>
+      <SidebarMenuSubItem>
+        <div className="flex flex-col gap-6 px-1 py-3">
+          <LabeledSlider
+            id="layout-angle"
+            label="Layout Angle"
+            title="Angular span for radial layout"
+            ariaLabel="Layout angle control"
+            valueDisplay={`${layoutAngleDegrees || 360}°`}
+            value={Number(layoutAngleDegrees || 360)}
+            min={90}
+            max={360}
+            step={10}
+            onChange={handleAngleChange}
+          />
 
-          <div className="flex flex-col gap-2">
-            <Label title="Rotate the radial layout" aria-label="Layout rotation control">
-              <span id="layout-rotation-label">Rotation</span>: <span id="layout-rotation-value">{layoutRotationDegrees || 0}°</span>
-            </Label>
-            <Slider
-              id="layout-rotation"
-              min={0}
-              max={360}
-              step={5}
-              value={[Number(layoutRotationDegrees || 0)]}
-              aria-labelledby="layout-rotation-label"
-              onValueChange={async (vals) => {
-                const v = Array.isArray(vals) ? vals[0] : Number(layoutRotationDegrees || 0);
-                setLayoutRotationDegrees(v);
-                await renderControllers();
-              }}
-              className="w-40"
-            />
+          <LabeledSlider
+            id="layout-rotation"
+            label="Rotation"
+            title="Rotate the radial layout"
+            ariaLabel="Layout rotation control"
+            valueDisplay={`${layoutRotationDegrees || 0}°`}
+            value={Number(layoutRotationDegrees || 0)}
+            min={0}
+            max={360}
+            step={5}
+            onChange={handleRotationChange}
+          />
+
+          <div className="flex items-start gap-2 text-[10px] text-muted-foreground/80 italic">
+            <Compass className="size-3 shrink-0 mt-0.5" />
+            <span>Angle affects the spread of branches, while rotation pivots the entire tree.</span>
           </div>
         </div>
-      </SidebarGroupContent>
-    </SidebarGroup>
+      </SidebarMenuSubItem>
+    </SidebarMenuSub>
   );
 }
+
+export default LayoutTransform;
+

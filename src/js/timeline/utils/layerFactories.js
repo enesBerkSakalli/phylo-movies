@@ -26,7 +26,10 @@ export function createPathLayer(id, data, color, width, options = {}) {
     getPath: d => d.path,
     widthMinPixels: width,
     coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
-    parameters: { depthTest: false },
+    parameters: {
+      depthCompare: 'always',
+      depthWriteEnabled: false
+    },
     ...options
   };
   props.getColor = Array.isArray(color) ? color : (d => d.color);
@@ -38,7 +41,10 @@ export function createScatterplotLayer(id, data, options = {}) {
     id,
     data,
     coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
-    parameters: { depthTest: false },
+    parameters: {
+      depthCompare: 'always',
+      depthWriteEnabled: false
+    },
     ...options
   });
 }

@@ -39,7 +39,7 @@ export function ComparisonSpacingControls() {
     <SidebarGroup>
       <SidebarGroupLabel>Comparison Spacing</SidebarGroupLabel>
       <SidebarGroupContent>
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2">
           <OffsetJoystick
             valueX={viewOffsetXValue}
             valueY={viewOffsetYValue}
@@ -50,6 +50,7 @@ export function ComparisonSpacingControls() {
             <Button
               variant="outline"
               size="sm"
+              className="h-7 text-xs px-2"
               onClick={async () => {
                 await handleOffsetChange(0, 0, true);
               }}
@@ -59,6 +60,7 @@ export function ComparisonSpacingControls() {
             <Button
               variant="outline"
               size="sm"
+              className="h-7 text-xs px-2"
               onClick={async () => {
                 await renderControllers();
               }}

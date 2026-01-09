@@ -11,8 +11,15 @@ export function applyDimmingWithCache(
   subtreeDimmingOpacity,
   markedSubtreeData
 ) {
+  let isSourceOrDest = false;
+  if (isNode) {
+    const isSource = colorManager?.isNodeSourceEdge?.(entity);
+    const isDestination = colorManager?.isNodeDestinationEdge?.(entity);
+    isSourceOrDest = isSource || isDestination;
+  }
+
   // Active change edge dimming
-  if (dimmingEnabled && colorManager?.hasActiveChangeEdges?.()) {
+  if (!isSourceOrDest && dimmingEnabled && colorManager?.hasActiveChangeEdges?.()) {
     const isDownstream = isNode
       ? colorManager.isNodeDownstreamOfAnyActiveChangeEdge?.(entity)
       : colorManager.isDownstreamOfAnyActiveChangeEdge?.(entity);

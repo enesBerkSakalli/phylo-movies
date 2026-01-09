@@ -1,7 +1,8 @@
 import React, { useCallback } from 'react';
 import { useAppStore } from '../../../../js/core/store.js';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
+import { SidebarMenuSub, SidebarMenuSubItem } from '@/components/ui/sidebar';
+import { GitGraph } from 'lucide-react';
 
 export function TreeStructure() {
   const branchTransformation = useAppStore((s) => s.branchTransformation);
@@ -34,17 +35,18 @@ export function TreeStructure() {
   );
 
   return (
-    <div>
-      <div className="flex flex-col gap-4">
-        <div>
-          <Label htmlFor="branch-length-options" className="font-medium">
-            <span id="branch-length-options-label">Branch Length Options</span>
-          </Label>
+    <SidebarMenuSub>
+      <SidebarMenuSubItem>
+        <div className="flex flex-col gap-2 px-2 py-1.5">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <GitGraph className="size-3.5" />
+            <span className="text-[11px] font-medium uppercase tracking-wider">Branch Lengths</span>
+          </div>
           <Select
             value={branchTransformation && branchTransformation !== 'none' ? branchTransformation : 'use'}
             onValueChange={handleBranchOptionChange}
           >
-            <SelectTrigger aria-labelledby="branch-length-options-label">
+            <SelectTrigger className="h-8 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -57,9 +59,10 @@ export function TreeStructure() {
             </SelectContent>
           </Select>
         </div>
-      </div>
-    </div>
+      </SidebarMenuSubItem>
+    </SidebarMenuSub>
   );
 }
 
 export default TreeStructure;
+

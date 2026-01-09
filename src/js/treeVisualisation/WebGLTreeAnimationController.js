@@ -16,6 +16,8 @@ export class WebGLTreeAnimationController {
       calculationTransformation: 'none'
     };
     this._transformedCache = new Map();
+    this._onResize = null;
+    this._resizeRaf = null;
 
     this.webglContainer = d3.select(container);
 
@@ -33,8 +35,28 @@ export class WebGLTreeAnimationController {
     this.resizeObserver = new ResizeObserver(entries => {
       for (let entry of entries) {
         const { width, height } = entry.contentRect;
-        this.width = width;
-        this.height = height;
+        const nextWidth = Number.isFinite(width) ? width : this.width;
+        const nextHeight = Number.isFinite(height) ? height : this.height;
+        const changed = nextWidth !== this.width || nextHeight !== this.height;
+        this.width = nextWidth;
+        this.height = nextHeight;
+
+        if (changed && this._onResize) {
+          if (this._resizeRaf != null) {
+            if (typeof cancelAnimationFrame === 'function') {
+              cancelAnimationFrame(this._resizeRaf);
+            } else {
+              clearTimeout(this._resizeRaf);
+            }
+          }
+          const schedule = typeof requestAnimationFrame === 'function'
+            ? requestAnimationFrame
+            : (cb) => setTimeout(cb, 16);
+          this._resizeRaf = schedule(() => {
+            this._resizeRaf = null;
+            this._onResize?.({ width: this.width, height: this.height });
+          });
+        }
       }
     });
     this.resizeObserver.observe(node);
@@ -52,11 +74,24 @@ export class WebGLTreeAnimationController {
     });
   }
 
+  setOnResize(callback) {
+    this._onResize = typeof callback === 'function' ? callback : null;
+  }
+
   destroy() {
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
       this.resizeObserver = null;
     }
+    if (this._resizeRaf != null) {
+      if (typeof cancelAnimationFrame === 'function') {
+        cancelAnimationFrame(this._resizeRaf);
+      } else {
+        clearTimeout(this._resizeRaf);
+      }
+      this._resizeRaf = null;
+    }
+    this._onResize = null;
   }
 
   // ==========================================================================
@@ -156,7 +191,7 @@ export class WebGLTreeAnimationController {
   _computeLayout(transformedTreeData, layoutAngleDegrees, layoutRotationDegrees) {
     const layoutCalculator = new TidyTreeLayout(transformedTreeData);
     layoutCalculator.setDimension(this.width, this.height);
-    layoutCalculator.setMargin(40);
+    layoutCalculator.setMargin(60);
     layoutCalculator.setAngleExtentDegrees(layoutAngleDegrees || 360);
     layoutCalculator.setAngleOffsetDegrees(layoutRotationDegrees || 0);
 

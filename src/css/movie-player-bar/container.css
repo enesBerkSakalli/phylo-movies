@@ -6,7 +6,7 @@
   left: auto;
   right: auto;
   z-index: 1000;
-  padding: 6px;
+  padding: 4px;
   background: var(--card);
   border-top: 1px solid var(--border);
   box-shadow: 0 2px 4px rgba(0,0,0,0.08);

@@ -9,23 +9,71 @@ const perfCounters = {
   creationTimes: []
 };
 
-/**
- * Create a deck.gl layer from configuration
- * @param {Object} config - Layer config with id, LayerClass, defaultProps
- * @param {Object} props - Instance-specific props
- * @returns {Layer} deck.gl layer instance
- */
-export function createLayer(config, props) {
-  const perfEnabled = !!(typeof process !== 'undefined' && process?.env?.PERF_DEBUG);
+function isPerfEnabled() {
+  // Supports both bundler env and runtime toggles
+  const envFlag =
+    typeof process !== 'undefined' && process?.env?.PERF_DEBUG;
+  const runtimeFlag =
+    typeof globalThis !== 'undefined' && globalThis?.PERF_DEBUG;
+  return !!(envFlag || runtimeFlag);
+}
+
+export function createLayer(config, props = {}) {
+  if (!config || !config.LayerClass) {
+    throw new Error('[createLayer] Invalid config: missing LayerClass');
+  }
+  if (!config.id || typeof config.id !== 'string') {
+    throw new Error('[createLayer] Invalid config: missing string id');
+  }
+
+  const perfEnabled = isPerfEnabled();
   const start = perfEnabled
     ? (typeof performance !== 'undefined' && performance?.now ? performance.now() : Date.now())
     : null;
 
-  const layer = new config.LayerClass({
-    ...config.defaultProps,
-    id: config.id,
-    ...props
+  const defaultProps = config.defaultProps || {};
+
+  // ID policy: allow props.id, otherwise config.id
+  const id = (props.id ?? config.id);
+  if (typeof id !== 'string' || id.length === 0) {
+    throw new Error('[createLayer] Invalid layer id');
+  }
+
+  // Merge nested props that should not be clobbered
+  const mergedParameters = {
+    ...(defaultProps.parameters || {}),
+    ...(props.parameters || {})
+  };
+
+  // Merge extensions: concat, de-dup by constructor name
+  const defaultExt = Array.isArray(defaultProps.extensions) ? defaultProps.extensions : [];
+  const propExt = Array.isArray(props.extensions) ? props.extensions : [];
+  const mergedExtensions = [...defaultExt, ...propExt].filter(Boolean);
+
+  // Optional: de-dup extensions by class name to avoid duplicates
+  const seen = new Set();
+  const dedupedExtensions = mergedExtensions.filter((e) => {
+    const key = e?.constructor?.name || String(e);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
   });
+
+  const mergedUpdateTriggers = {
+    ...(defaultProps.updateTriggers || {}),
+    ...(props.updateTriggers || {})
+  };
+
+  const layerProps = {
+    ...defaultProps,
+    ...props,
+    id,
+    parameters: mergedParameters,
+    extensions: dedupedExtensions,
+    updateTriggers: mergedUpdateTriggers
+  };
+
+  const layer = new config.LayerClass(layerProps);
 
   perfCounters.layerCreations += 1;
   if (perfEnabled && start !== null) {
@@ -36,18 +84,11 @@ export function createLayer(config, props) {
   return layer;
 }
 
-/**
- * Reset perf counters
- */
 export function resetPerf() {
   perfCounters.layerCreations = 0;
   perfCounters.creationTimes = [];
 }
 
-/**
- * Get current perf snapshot (copy)
- * @returns {{layerCreations:number, creationTimes:number[]}}
- */
 export function getPerfSnapshot() {
   return {
     layerCreations: perfCounters.layerCreations,

@@ -2,7 +2,12 @@
  * Factory for links-related layers (links, linkOutlines, extensions)
  */
 import { createLayer } from '../base/createLayer.js';
-import { LAYER_CONFIGS, HOVER_HIGHLIGHT_COLOR, HISTORY_Z_OFFSET } from '../../layerConfigs.js';
+import {
+  LAYER_CONFIGS,
+  HOVER_HIGHLIGHT_COLOR,
+  HISTORY_Z_OFFSET,
+  HISTORY_LAYER_ID_PREFIX
+} from '../../layerConfigs.js';
 
 const getHistoryLinkOffset = (cached, link) =>
   cached?.colorManager?.isLinkHistorySubtree?.(link) ? HISTORY_Z_OFFSET : 0;
@@ -15,10 +20,99 @@ const addZOffset = (position, offset) => {
   return [position[0], position[1], (position[2] || 0) + offset];
 };
 
+const isTypedArray = (value) =>
+  ArrayBuffer.isView(value) && typeof value?.BYTES_PER_ELEMENT === 'number';
+
+const addZOffsetToFlatPath = (path, offset) => {
+  const length = path?.length ?? 0;
+  if (!length) return path;
+  const useTypedArray = isTypedArray(path);
+  const createArray = (size) => (useTypedArray ? new path.constructor(size) : new Array(size));
+  const isXYZ = length % 3 === 0;
+
+  if (isXYZ) {
+    const next = createArray(length);
+    for (let i = 0; i < length; i += 3) {
+      next[i] = path[i];
+      next[i + 1] = path[i + 1];
+      next[i + 2] = (path[i + 2] || 0) + offset;
+    }
+    return next;
+  }
+
+  if (length % 2 === 0) {
+    const next = createArray((length / 2) * 3);
+    for (let i = 0, j = 0; i < length; i += 2, j += 3) {
+      next[j] = path[i];
+      next[j + 1] = path[i + 1];
+      next[j + 2] = offset;
+    }
+    return next;
+  }
+
+  return path;
+};
+
 const addZOffsetToPath = (path, offset) => {
   if (!offset) return path;
-  return path.map((point) => addZOffset(point, offset));
+  if (!path) return path;
+  if (Array.isArray(path)) {
+    if (!path.length) return path;
+    if (Array.isArray(path[0])) {
+      return path.map((point) => addZOffset(point, offset));
+    }
+    if (typeof path[0] === 'number') {
+      return addZOffsetToFlatPath(path, offset);
+    }
+    return path;
+  }
+  if (isTypedArray(path)) {
+    return addZOffsetToFlatPath(path, offset);
+  }
+  return path;
 };
+
+const isHistoryLink = (cached, link) => {
+  if (!cached?.colorManager?.isLinkHistorySubtree?.(link)) return false;
+  return link?.treeSide !== 'right';
+};
+
+const getHistoryLinks = (links, cached) => links.filter((link) => isHistoryLink(cached, link));
+
+const HISTORY_DEPTH_PARAMETERS = {
+  depthCompare: 'always',
+  depthWriteEnabled: false
+};
+
+const HISTORY_LINKS_CONFIG = {
+  ...LAYER_CONFIGS.links,
+  id: `${HISTORY_LAYER_ID_PREFIX}-links`,
+  defaultProps: {
+    ...LAYER_CONFIGS.links.defaultProps,
+    parameters: HISTORY_DEPTH_PARAMETERS
+  }
+};
+
+const HISTORY_LINKS_HALO_CONFIG = {
+  ...LAYER_CONFIGS.links,
+  id: `${HISTORY_LAYER_ID_PREFIX}-links-halo`,
+  defaultProps: {
+    ...LAYER_CONFIGS.links.defaultProps,
+    parameters: HISTORY_DEPTH_PARAMETERS
+  }
+};
+
+const getHistoryLinkColor = (link, layerStyles, cached, alphaScale = 1) => {
+  const color = layerStyles.getLinkColor(link, cached);
+  if (alphaScale === 1) return color;
+  if (!Array.isArray(color)) return color;
+  const next = [...color];
+  next[3] = Math.round(next[3] * alphaScale);
+  return next;
+};
+
+const getHistoryLinkWidth = (link, layerStyles, cached, scale = 1) =>
+  layerStyles.getLinkWidth(link, cached) * scale;
 
 /**
  * Create link outlines layer (for silhouette/highlighting effect)
@@ -58,7 +152,7 @@ export function getLinkOutlinesLayerProps(links, state, layerStyles) {
       getColor: [colorVersion, changePulsePhase, changePulseEnabled, upcomingChangesEnabled],
       getWidth: [colorVersion, strokeWidth, changePulsePhase, changePulseEnabled, upcomingChangesEnabled],
       getDashArray: [colorVersion, activeEdgeDashingEnabled, upcomingChangesEnabled],
-      getPath: links.length
+      getPath: [links]
     }
   };
 }
@@ -95,13 +189,58 @@ export function getLinksLayerProps(links, state, layerStyles) {
       getColor: [colorVersion, taxaColorVersion, upcomingChangesEnabled],
       getWidth: [colorVersion, strokeWidth],
       getDashArray: [colorVersion, activeEdgeDashingEnabled, upcomingChangesEnabled],
-      getPath: [links.length, colorVersion]
+      getPath: [links, colorVersion]
     }
   };
 }
 
 export function createLinksLayer(links, state, layerStyles) {
   return createLayer(LAYER_CONFIGS.links, getLinksLayerProps(links, state, layerStyles));
+}
+
+export function getHistoryLinksLayerProps(historyLinks, state, layerStyles, cached, options = {}) {
+  const { taxaColorVersion, colorVersion, strokeWidth, activeEdgeDashingEnabled, upcomingChangesEnabled } = state || {};
+  const { alphaScale = 1, widthScale = 1 } = options;
+
+  return {
+    data: historyLinks,
+    pickable: false,
+    getPath: d => d.path,
+    getColor: d => getHistoryLinkColor(d, layerStyles, cached, alphaScale),
+    getWidth: d => getHistoryLinkWidth(d, layerStyles, cached, widthScale),
+    getDashArray: d => layerStyles.getLinkDashArray(d, cached),
+    dashJustified: true,
+    updateTriggers: {
+      getColor: [colorVersion, taxaColorVersion, upcomingChangesEnabled],
+      getWidth: [colorVersion, strokeWidth],
+      getDashArray: [colorVersion, activeEdgeDashingEnabled, upcomingChangesEnabled],
+      getPath: [historyLinks]
+    }
+  };
+}
+
+export function createHistoryLinksLayer(links, state, layerStyles) {
+  const cached = layerStyles.getCachedState();
+  const historyLinks = getHistoryLinks(links, cached);
+  if (!historyLinks.length) return null;
+
+  const props = getHistoryLinksLayerProps(historyLinks, state, layerStyles, cached, {
+    alphaScale: 1,
+    widthScale: 1.0
+  });
+  return createLayer(HISTORY_LINKS_CONFIG, props);
+}
+
+export function createHistoryLinksHaloLayer(links, state, layerStyles) {
+  const cached = layerStyles.getCachedState();
+  const historyLinks = getHistoryLinks(links, cached);
+  if (!historyLinks.length) return null;
+
+  const props = getHistoryLinksLayerProps(historyLinks, state, layerStyles, cached, {
+    alphaScale: 0.35,
+    widthScale: 1.4
+  });
+  return createLayer(HISTORY_LINKS_HALO_CONFIG, props);
 }
 
 /**
@@ -128,7 +267,7 @@ export function getExtensionsLayerProps(extensions, state, layerStyles) {
     getWidth: d => layerStyles.getExtensionWidth(d.leaf, cached),
     updateTriggers: {
       getColor: [colorVersion, taxaColorVersion],
-      getPath: [extensions.length, colorVersion],
+      getPath: [extensions, colorVersion],
       getWidth: [extensions.length, strokeWidth, colorVersion]
     }
   };

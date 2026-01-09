@@ -22,7 +22,6 @@ export function NodeContextMenu() {
   const isOpen = useAppStore((s) => s.contextMenuOpen);
   const position = useAppStore((s) => s.contextMenuPosition);
   const node = useAppStore((s) => s.contextMenuNode);
-  const treeData = useAppStore((s) => s.contextMenuTreeData);
   const hideMenu = useAppStore((s) => s.hideNodeContextMenu);
   const setManuallyMarkedNodes = useAppStore((s) => s.setManuallyMarkedNodes);
   const treeControllers = useAppStore((s) => s.treeControllers);
@@ -246,24 +245,19 @@ Max Depth: ${stats.maxDepth}`;
 /**
  * Individual menu item with icon and label.
  */
+import { Button } from '@/components/ui/button';
+
 function MenuItem({ icon: Icon, label, onClick, disabled = false }) {
   return (
-    <button
-      className={`
-        flex w-full items-center gap-3 rounded-sm px-2 py-2 text-left text-sm
-        transition-colors
-        ${disabled
-          ? 'cursor-not-allowed opacity-50'
-          : 'hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground'
-        }
-        focus:outline-none focus-visible:ring-2 focus-visible:ring-ring
-      `}
+    <Button
+      variant="ghost"
+      className="w-full justify-start gap-3 px-2 h-9 font-normal"
       onClick={disabled ? undefined : onClick}
       disabled={disabled}
     >
       <Icon className="size-4 text-muted-foreground" />
-      <span className="flex-1">{label}</span>
-    </button>
+      <span className="flex-1 text-left">{label}</span>
+    </Button>
   );
 }
 

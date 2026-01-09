@@ -5,7 +5,11 @@ import { isNodeVisuallyHighlighted, isNodeInSubtree } from './subtreeMatching.js
 import { toColorManagerNode } from './nodeUtils.js';
 
 const shouldHighlightMarkedNode = (nodeData, cached) => {
-  const { markedSubtreesEnabled, markedSubtreeData } = cached;
+  const { markedSubtreesEnabled, highlightSourceEnabled, highlightDestinationEnabled, markedSubtreeData, colorManager } = cached;
+
+  if (highlightSourceEnabled && colorManager?.isNodeSourceEdge?.(nodeData)) return true;
+  if (highlightDestinationEnabled && colorManager?.isNodeDestinationEdge?.(nodeData)) return true;
+
   return markedSubtreesEnabled !== false && markedSubtreeData && isNodeInSubtree(nodeData, markedSubtreeData);
 };
 
@@ -198,6 +202,7 @@ export function getNodeRadius(node, minRadius = 3, cached, helpers) {
 
 export function getLabelColor(label, cached, helpers) {
   const color = getNodeBasedRgba(label, label.opacity, cached, helpers);
+
   if (isHistorySubtreeNode(label, cached)) {
     color[3] = Math.min(255, Math.round(color[3] * 1.2));
   }

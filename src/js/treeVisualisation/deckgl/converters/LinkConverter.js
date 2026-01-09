@@ -32,6 +32,7 @@ export class LinkConverter {
 
     return {
       id: getLinkKey(link),
+      depth: link.target.depth, // Depth for elongation-based cascade timing
       sourcePosition: [link.source.x, link.source.y, 0],
       targetPosition: [link.target.x, link.target.y, 0],
       path: linkPath,
@@ -142,13 +143,13 @@ export class LinkConverter {
    */
   _createCurvedPath(branchCoords, segmentCount) {
     const points = [];
-    const { radius, startAngle, endAngle, center } = branchCoords.arcProperties;
+    const { radius, startAngle, endAngle, angleDiff, center } = branchCoords.arcProperties;
 
     // Start with move point (source position)
     points.push([branchCoords.movePoint.x, branchCoords.movePoint.y, 0]);
 
     // Generate arc segment points
-    points.push(...this._generateArcPoints(radius, startAngle, endAngle, center, segmentCount));
+    points.push(...this._generateArcPoints(radius, startAngle, endAngle, angleDiff, center, segmentCount));
 
     // Add the final line endpoint
     points.push([branchCoords.lineEndPoint.x, branchCoords.lineEndPoint.y, 0]);
@@ -160,12 +161,13 @@ export class LinkConverter {
    * Generate points along an arc
    * @private
    */
-  _generateArcPoints(radius, startAngle, endAngle, center, segmentCount) {
+  _generateArcPoints(radius, startAngle, endAngle, angleDiff, center, segmentCount) {
     const points = [];
+    const delta = Number.isFinite(angleDiff) ? angleDiff : (endAngle - startAngle);
 
     for (let i = 0; i <= segmentCount; i++) {
       const t = i / segmentCount;
-      const angle = startAngle + (endAngle - startAngle) * t;
+      const angle = startAngle + delta * t;
       const x = center.x + radius * Math.cos(angle);
       const y = center.y + radius * Math.sin(angle);
       points.push([x, y, 0]);

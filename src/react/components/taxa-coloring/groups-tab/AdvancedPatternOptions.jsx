@@ -15,9 +15,10 @@ export function AdvancedPatternOptions({
   regexPattern,
   onSegmentIndexChange,
   onUseRegexChange,
-  onRegexPatternChange
+  onRegexPatternChange,
+  hideSegmentPicker = false
 }) {
-  const showSegmentPicker = strategy === "segment";
+  const showSegmentPicker = strategy === "segment" && !hideSegmentPicker;
   const [regexError, setRegexError] = React.useState(null);
 
   const validateRegex = (pattern) => {

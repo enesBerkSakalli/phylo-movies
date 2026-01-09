@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
@@ -50,9 +51,9 @@ export function GroupingPreview({ groupingResult, isOpen, onToggle }) {
               </CardDescription>
             </div>
             <CollapsibleTrigger asChild>
-              <button className="p-2 hover:bg-accent rounded-md transition-colors">
+              <Button variant="ghost" size="icon" className="h-8 w-8">
                 {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-              </button>
+              </Button>
             </CollapsibleTrigger>
           </div>
         </CardHeader>

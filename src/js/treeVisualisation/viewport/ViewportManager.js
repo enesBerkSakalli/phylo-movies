@@ -4,6 +4,7 @@
  * Handles viewport calculations, camera positioning, bounds checking,
  * and screen space projections for tree visualization.
  */
+import { calculateVisualBounds } from '../utils/TreeBoundsUtils.js';
 export class ViewportManager {
 
   // ==========================================================================
@@ -40,20 +41,7 @@ export class ViewportManager {
   // BOUNDS CALCULATION
   // ==========================================================================
 
-  calculateBounds(nodes, labels) {
-    const allElements = [...nodes, ...(labels || [])];
-    return allElements.reduce((acc, el) => {
-      const [x, y] = el.position;
-      acc.minX = Math.min(acc.minX, x);
-      acc.maxX = Math.max(acc.maxX, x);
-      acc.minY = Math.min(acc.minY, y);
-      acc.maxY = Math.max(acc.maxY, y);
-      return acc;
-    }, {
-      minX: Infinity, maxX: -Infinity,
-      minY: Infinity, maxY: -Infinity,
-    });
-  }
+
 
   areBoundsInView(bounds, paddingFactor = 1.05) {
     try {
@@ -80,22 +68,85 @@ export class ViewportManager {
   // ==========================================================================
 
   focusOnTree(nodes, labels, options = {}) {
-    const bounds = this.calculateBounds(nodes, labels);
+    const { playing } = this.controller._getState();
+    if (playing && !options.allowDuringPlayback) return;
+    const bounds = calculateVisualBounds(nodes, labels);
     const densityPadding = this._calculateDensityPadding(nodes);
+    const safeArea = this.getSafeAreaPadding();
+    const padding = options.padding ?? (1.25 + densityPadding);
+
+
 
     this.controller.deckManager.fitToBounds(bounds, {
-      padding: options.padding ?? (1.05 + densityPadding),
+      padding,
       duration: options.duration ?? 550,
-      labels,
+      // labels: do not pass labels, as input bounds already account for them via calculateVisualBounds
       getLabelSize: this.controller.layerManager.layerStyles.getLabelSize?.bind(
         this.controller.layerManager.layerStyles
-      )
+      ),
+      safeArea
     });
   }
 
+  getSafeAreaPadding() {
+    if (typeof document === 'undefined') return null;
+    const container = this.controller.webglContainer?.node?.();
+    if (!container?.getBoundingClientRect) return null;
+    const canvasRect = container.getBoundingClientRect();
+    if (!canvasRect?.width || !canvasRect?.height) return null;
+
+    const selectors = ['.movie-player-bar', '#top-scale-bar-container'];
+    const padding = { top: 0, right: 0, bottom: 0, left: 0 };
+    const edgeThreshold = 24;
+
+    selectors.forEach((selector) => {
+      const el = document.querySelector(selector);
+      if (!el?.getBoundingClientRect) return;
+      const rect = el.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return;
+
+      const overlapX = Math.max(0, Math.min(rect.right, canvasRect.right) - Math.max(rect.left, canvasRect.left));
+      const overlapY = Math.max(0, Math.min(rect.bottom, canvasRect.bottom) - Math.max(rect.top, canvasRect.top));
+      if (overlapX <= 0 || overlapY <= 0) return;
+
+      // Heuristic: Only consider an element as a "bar" (top/bottom/side) if it covers > 50% of the edge.
+      // Small corner overlays (like scale bars or legends) shouldn't shift the entire viewport.
+      const isHorizontalBar = rect.width > canvasRect.width * 0.5;
+      const isVerticalBar = rect.height > canvasRect.height * 0.5;
+
+      if (isHorizontalBar) {
+        if (rect.top <= canvasRect.top + edgeThreshold) {
+          padding.top = Math.max(padding.top, Math.min(rect.bottom - canvasRect.top, canvasRect.height));
+        }
+        if (rect.bottom >= canvasRect.bottom - edgeThreshold) {
+          padding.bottom = Math.max(padding.bottom, Math.min(canvasRect.bottom - rect.top, canvasRect.height));
+        }
+      }
+
+      if (isVerticalBar) {
+        if (rect.left <= canvasRect.left + edgeThreshold) {
+          padding.left = Math.max(padding.left, Math.min(rect.right - canvasRect.left, canvasRect.width));
+        }
+        if (rect.right >= canvasRect.right - edgeThreshold) {
+          padding.right = Math.max(padding.right, Math.min(canvasRect.right - rect.left, canvasRect.width));
+        }
+      }
+    });
+
+    if (!padding.top && !padding.right && !padding.bottom && !padding.left) return null;
+
+    const extraPadding = 20;
+    return {
+      top: padding.top ? padding.top + extraPadding : 0,
+      right: padding.right ? padding.right + extraPadding : 0,
+      bottom: padding.bottom ? padding.bottom + extraPadding : 0,
+      left: padding.left ? padding.left + extraPadding : 0
+    };
+  }
+
   _calculateDensityPadding(nodes) {
-    // Reduced padding logic: DeckManager already expands bounds for labels.
-    // We only need slight extra breathing room for very dense trees.
+    // Density-based padding to ensure readability for dense trees.
+    // Base padding is applied in focusOnTree.
     const leafCount = Array.isArray(nodes) ? nodes.length : 0;
     if (leafCount > 400) return 0.15;
     if (leafCount > 200) return 0.1;

@@ -10,6 +10,8 @@ export const createTreeAppearanceSlice = (set, get) => ({
   layoutAngleDegrees: 360,
   layoutRotationDegrees: 0,
   styleConfig: { contourWidthOffset: 2, labelOffsets: { DEFAULT: 16, WITH_EXTENSIONS: 32, EXTENSION: 4 } },
+  taxaColoringOpen: false,
+  taxaColoringWindow: { x: 40, y: 40, width: 980, height: 720 },
 
   // ==========================================================================
   // ACTIONS
@@ -49,4 +51,9 @@ export const createTreeAppearanceSlice = (set, get) => ({
     set({ cameraMode: newMode });
     return newMode;
   },
+
+  setTaxaColoringOpen: (isOpen) => set({ taxaColoringOpen: !!isOpen }),
+  setTaxaColoringWindow: (partial) => set((state) => ({
+    taxaColoringWindow: { ...state.taxaColoringWindow, ...partial }
+  })),
 });
