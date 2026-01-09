@@ -10,7 +10,7 @@ export function PlaybackSpeedControl({ value, setValue }) {
 
   return (
     <div className="speed-control" role="group" aria-labelledby="speed-control-label">
-      <Gauge className="size-5" />
+      <Gauge className="size-4" />
       <Slider
         id="animation-speed-range"
         min={0.1}
@@ -19,7 +19,7 @@ export function PlaybackSpeedControl({ value, setValue }) {
         value={[value]}
         onValueChange={handleChange}
         aria-label="Animation speed"
-        className="w-40"
+        className="w-32"
       />
     </div>
   );

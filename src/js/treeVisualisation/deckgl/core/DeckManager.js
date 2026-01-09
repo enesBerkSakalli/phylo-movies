@@ -346,7 +346,7 @@ export class DeckManager {
   // PUBLIC API - Animated Transitions
   // ==========================================================================
 
-  fitToBounds(bounds, { padding = 1.2, duration = this._durations.fit, easing = this._defaultEasing, interpolator, labels = null, labelSizePx = null, getLabelSize = null } = {}) {
+  fitToBounds(bounds, { padding = 1.2, duration = this._durations.fit, easing = this._defaultEasing, interpolator, labels = null, labelSizePx = null, getLabelSize = null, safeArea = null } = {}) {
     const id = this._activeViewId();
     const { width: canvasWidth, height: canvasHeight } = this.getCanvasDimensions();
 
@@ -358,13 +358,27 @@ export class DeckManager {
     const w = Math.max(1e-6, expandedBounds.maxX - expandedBounds.minX);
     const h = Math.max(1e-6, expandedBounds.maxY - expandedBounds.minY);
 
-    let zoom = Math.log2(Math.min(canvasWidth / (w * padding), canvasHeight / (h * padding)));
+    const safe = this._normalizeSafeArea(safeArea, canvasWidth, canvasHeight);
+    const safeWidth = Math.max(1, canvasWidth - safe.left - safe.right);
+    const safeHeight = Math.max(1, canvasHeight - safe.top - safe.bottom);
+
+    let zoom = Math.log2(Math.min(safeWidth / (w * padding), safeHeight / (h * padding)));
     zoom = this._clampZoom(id, zoom);
 
     const transitionInterpolator = interpolator || this._interpolatorFor(id);
+    const target = this._applySafeAreaToTarget(
+      id,
+      [centerX, centerY, 0],
+      zoom,
+      safe,
+      canvasWidth,
+      canvasHeight,
+      safeWidth,
+      safeHeight
+    );
     this._applyViewState(
       id,
-      { target: [centerX, centerY, 0], zoom },
+      { target, zoom },
       { transitionDuration: duration, transitionEasing: easing, transitionInterpolator }
     );
   }
@@ -475,6 +489,60 @@ export class DeckManager {
       };
     } catch {
       return bounds;
+    }
+  }
+
+  _normalizeSafeArea(safeArea, canvasWidth, canvasHeight) {
+    const clamp = (value, max) => Math.max(0, Math.min(Number.isFinite(value) ? value : 0, max));
+    if (!safeArea) return { top: 0, right: 0, bottom: 0, left: 0 };
+    let top = clamp(safeArea.top, canvasHeight);
+    let right = clamp(safeArea.right, canvasWidth);
+    let bottom = clamp(safeArea.bottom, canvasHeight);
+    let left = clamp(safeArea.left, canvasWidth);
+
+    const minVisibleFraction = 0.4;
+    const maxTotalX = canvasWidth * (1 - minVisibleFraction);
+    const maxTotalY = canvasHeight * (1 - minVisibleFraction);
+
+    if (left + right > maxTotalX) {
+      const scale = maxTotalX / Math.max(1, left + right);
+      left *= scale;
+      right *= scale;
+    }
+
+    if (top + bottom > maxTotalY) {
+      const scale = maxTotalY / Math.max(1, top + bottom);
+      top *= scale;
+      bottom *= scale;
+    }
+
+    return { top, right, bottom, left };
+  }
+
+  _applySafeAreaToTarget(id, baseTarget, zoom, safe, canvasWidth, canvasHeight, safeWidth, safeHeight) {
+    if (!safe || (!safe.top && !safe.right && !safe.bottom && !safe.left)) {
+      return baseTarget;
+    }
+    try {
+      const view = this.views[this.cameraMode];
+      if (!view?.makeViewport) return baseTarget;
+
+      const viewState = { ...this.viewStates[id], target: baseTarget, zoom };
+      const viewport = view.makeViewport({ width: canvasWidth, height: canvasHeight, viewState });
+      if (!viewport?.unproject) return baseTarget;
+
+      const safeCenterX = safe.left + safeWidth / 2;
+      const safeCenterY = safe.top + safeHeight / 2;
+      const safeWorld = viewport.unproject([safeCenterX, safeCenterY]);
+      if (!safeWorld) return baseTarget;
+
+      return [
+        baseTarget[0] + (baseTarget[0] - safeWorld[0]),
+        baseTarget[1] + (baseTarget[1] - safeWorld[1]),
+        baseTarget[2] ?? 0
+      ];
+    } catch {
+      return baseTarget;
     }
   }
 }

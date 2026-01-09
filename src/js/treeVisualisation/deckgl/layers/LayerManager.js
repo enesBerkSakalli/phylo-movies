@@ -45,7 +45,11 @@ export class LayerManager {
       layerFactories.createExtensionsLayer(extensions, state, this.layerStyles),
       layerFactories.createConnectorsLayer(connectors || [], state),
       layerFactories.createNodesLayer(nodes, state, this.layerStyles),
-      layerFactories.createLabelsLayer(labels, state, this.layerStyles)
+      layerFactories.createLabelsLayer(labels, state, this.layerStyles),
+      layerFactories.createSourceLabelsLayer(labels, state, this.layerStyles),
+      layerFactories.createDestinationLabelsLayer(labels, state, this.layerStyles),
+      layerFactories.createHistoryLinksHaloLayer(links, state, this.layerStyles),
+      layerFactories.createHistoryLinksLayer(links, state, this.layerStyles)
     ];
 
     const filteredLayers = layers.filter(Boolean);
@@ -62,7 +66,18 @@ export class LayerManager {
    * @returns {Array} New layers (deck.gl will handle updates internally)
    */
   updateLayersWithData(interpolatedData) {
-    return this.createTreeLayers(interpolatedData);
+    return this.createTreeLayers(this._cloneLayerData(interpolatedData));
+  }
+
+  _cloneLayerData(data) {
+    if (!data) return data;
+    const next = { ...data };
+    if (Array.isArray(data.nodes)) next.nodes = [...data.nodes];
+    if (Array.isArray(data.links)) next.links = [...data.links];
+    if (Array.isArray(data.labels)) next.labels = [...data.labels];
+    if (Array.isArray(data.extensions)) next.extensions = [...data.extensions];
+    if (Array.isArray(data.connectors)) next.connectors = [...data.connectors];
+    return next;
   }
 
   // ==========================================================================
@@ -159,6 +174,8 @@ export class LayerManager {
       props
     );
   }
+
+
 
   // ==========================================================================
   // HELPERS: Z-Offset

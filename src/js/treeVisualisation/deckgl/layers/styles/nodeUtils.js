@@ -1,4 +1,8 @@
 export function toColorManagerNode(node) {
+  if (node?.leaf) {
+    return node.leaf;
+  }
+
   // If the node has an originalNode reference (from NodeConverter), use that
   if (node?.originalNode) {
     return node.originalNode;

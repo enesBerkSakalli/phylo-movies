@@ -19,6 +19,10 @@ export class ComparisonModeRenderer {
     this._lastFittedIndices = null;
   }
 
+  resetAutoFit() {
+    this._lastFittedIndices = null;
+  }
+
   // ==========================================================================
   // PUBLIC API
   // ==========================================================================
@@ -55,7 +59,8 @@ export class ComparisonModeRenderer {
 
     const rightLayout = this.controller.calculateLayout(rightTreeData, {
       treeIndex: clampedRightIndex,
-      updateController: false
+      updateController: false,
+      rotationAlignmentKey: 'comparison-right'
     });
 
     const leftLeaves = leftLayout.tree.leaves();
@@ -118,23 +123,13 @@ export class ComparisonModeRenderer {
     const elements = [...combinedData.nodes, ...(combinedData.labels || [])];
     const bounds = calculateBounds(elements);
 
-    // Auto-fit only when the tree pair changes, and respect global auto-fit setting
-    const { playing, autoFitOnTreeChange } = this.controller._getState();
-    const indicesKey = `${clampedLeftIndex}-${clampedRightIndex}`;
+    this.controller._updateLayersEfficiently(combinedData);
 
-    if (!playing && autoFitOnTreeChange && Number.isFinite(bounds.minX) && this._lastFittedIndices !== indicesKey) {
-      this.controller.deckManager.fitToBounds(bounds, {
-        padding: 1.15,
-        duration: 350,
-        labels: combinedData.labels,
-        getLabelSize: this.controller.layerManager.layerStyles.getLabelSize?.bind(
-          this.controller.layerManager.layerStyles
-        )
-      });
-      this._lastFittedIndices = indicesKey;
+    if (this._lastFittedIndices === null) {
+      this.controller.viewportManager.focusOnTree(combinedData.nodes, combinedData.labels);
+      this._lastFittedIndices = { left: leftIndex, right: rightIndex };
     }
 
-    this.controller._updateLayersEfficiently(combinedData);
     this.controller.viewportManager.updateScreenPositions(leftLayerData.nodes);
   }
 
@@ -157,7 +152,8 @@ export class ComparisonModeRenderer {
 
     const rightLayout = this.controller.calculateLayout(rightTreeData, {
       treeIndex: rightIndex,
-      updateController: false
+      updateController: false,
+      rotationAlignmentKey: 'comparison-right'
     });
 
     const rightLeaves = rightLayout.tree.leaves();
@@ -213,6 +209,12 @@ export class ComparisonModeRenderer {
     };
 
     this.controller._updateLayersEfficiently(combinedData);
+
+    if (this._lastFittedIndices === null) {
+      this.controller.viewportManager.focusOnTree(combinedData.nodes, combinedData.labels);
+      this._lastFittedIndices = { left: -1, right: rightIndex };
+    }
+
     this.controller.viewportManager.updateScreenPositions(interpolatedData.nodes);
   }
 

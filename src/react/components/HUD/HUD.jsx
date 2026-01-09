@@ -1,14 +1,15 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import Draggable from 'react-draggable';
 import { useAppStore } from '../../../js/core/store.js';
 import { getIndexMappings, getMSAFrameIndex } from '../../../js/domain/indexing/IndexMapping.js';
 import { calculateWindow } from '../../../js/domain/msa/msaWindowCalculator.js';
-import { Film, BarChart2, Columns3, Clipboard, ChevronLeft, ChevronRight, X, GripVertical } from 'lucide-react';
+import { Film, BarChart2, Dna, Clipboard, ChevronLeft, ChevronRight, X, GripVertical } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 // ==========================================================================
 // STORE SELECTORS
@@ -38,8 +39,6 @@ const selectClearClipboard = (s) => s.clearClipboard;
 const clamp01 = (value) => Math.max(0, Math.min(1, value || 0));
 
 function buildProgressText(sequenceIndex, totalSequenceLength, timelineProgress, animationProgress, playing) {
-  // During playback, use animationProgress directly for smooth updates
-  // Otherwise, prefer timelineProgress (from scrubbing) or derive from sequenceIndex
   if (playing && typeof animationProgress === 'number') {
     return `${Math.round(clamp01(animationProgress) * 100)}%`;
   }
@@ -52,14 +51,13 @@ function buildProgressText(sequenceIndex, totalSequenceLength, timelineProgress,
 
 function buildSegmentText(sequenceIndex, transitionResolver) {
   const anchorIndices = transitionResolver?.fullTreeIndices || [];
-  if (!anchorIndices.length) return 'Between anchors';
+  if (!anchorIndices.length) return 'Between anchors (interp)';
 
   const anchorAtPosition = anchorIndices.indexOf(sequenceIndex);
   if (anchorAtPosition === 0) return 'Start (Anchor 1)';
   if (anchorAtPosition === anchorIndices.length - 1) return `End (Anchor ${anchorAtPosition + 1})`;
-  if (anchorAtPosition > 0) return `Original tree ${anchorAtPosition + 1}`;
+  if (anchorAtPosition > 0) return `Anchor ${anchorAtPosition + 1}`;
 
-  // Find the most recent anchor and the next one
   let previousAnchorIdx = 0;
   for (let i = anchorIndices.length - 1; i >= 0; i--) {
     if (anchorIndices[i] <= sequenceIndex) {
@@ -74,7 +72,7 @@ function buildSegmentText(sequenceIndex, transitionResolver) {
     const to = anchorIndices[nextAnchorIdx];
     const span = Math.max(1, to - from);
     const pct = Math.round(((sequenceIndex - from) / span) * 100);
-    return `Tree ${previousAnchorIdx + 1} → ${nextAnchorIdx + 1} (${pct}%)`;
+    return `Anchor ${previousAnchorIdx + 1} → ${nextAnchorIdx + 1} (${pct}%)`;
   }
 
   return `End (Anchor ${previousAnchorIdx + 1})`;
@@ -91,9 +89,6 @@ function buildMsaWindow(hasMsa, indexState, msaStepSize, msaWindowSize, msaColum
 // ==========================================================================
 
 export function HUD() {
-  // ---------------------------------------------------------------------------
-  // Store subscriptions
-  // ---------------------------------------------------------------------------
   const hasMsa = useAppStore(selectHasMsa);
   const currentTreeIndex = useAppStore(selectCurrentTreeIndex);
   const timelineProgress = useAppStore(selectTimelineProgress);
@@ -106,23 +101,15 @@ export function HUD() {
   const msaColumnCount = useAppStore(selectMsaColumnCount);
   const goToPosition = useAppStore(selectGoToPosition);
 
-  // Clipboard state
   const clipboardTreeIndex = useAppStore(selectClipboardTreeIndex);
   const setClipboardTreeIndex = useAppStore(selectSetClipboardTreeIndex);
   const clearClipboard = useAppStore(selectClearClipboard);
 
-  // HUD visibility state
-  const [isVisible, setIsVisible] = React.useState(true);
-
-  // Get anchor tree indices
   const anchorIndices = useMemo(
     () => transitionResolver?.fullTreeIndices || [],
     [transitionResolver]
   );
 
-  // ---------------------------------------------------------------------------
-  // Derived state
-  // ---------------------------------------------------------------------------
   const proxyState = useMemo(
     () => ({ currentTreeIndex, transitionResolver, treeList: { length: treeListLength } }),
     [currentTreeIndex, transitionResolver, treeListLength]
@@ -142,9 +129,6 @@ export function HUD() {
   const sliderValue = Math.min(sliderMax, Math.max(0, sequenceIndex || 0));
   const canScrub = sliderMax > 0 && typeof goToPosition === 'function';
 
-  // ---------------------------------------------------------------------------
-  // Event handlers
-  // ---------------------------------------------------------------------------
   const handleSliderCommit = useCallback(
     (vals) => {
       if (!canScrub) return;
@@ -155,22 +139,25 @@ export function HUD() {
     [canScrub, goToPosition, sliderMax, sliderValue]
   );
 
-  if (!isVisible) return null;
-
-  // ---------------------------------------------------------------------------
-  // Render
-  // ---------------------------------------------------------------------------
   return (
     <Draggable handle=".hud-drag-handle" bounds="parent">
-      <div className="phylo-hud" data-react-component="hud" role="complementary" aria-label="Timeline Status Display" style={{ pointerEvents: 'auto' }}>
-        <div style={{ position: 'relative' }}>
-          <Card className="flex items-center gap-4 px-4 py-2 shadow-lg backdrop-blur-sm">
-            {/* Drag Handle */}
-            <div className="hud-drag-handle cursor-grab active:cursor-grabbing p-1 -ml-2 hover:bg-accent rounded" title="Drag to move">
-              <GripVertical className="size-4 text-muted-foreground" />
-            </div>
+      <div
+        className="phylo-hud fixed bottom-48 left-4 z-50 pointer-events-auto"
+        role="complementary"
+        aria-label="Timeline Status Display"
+      >
+        <Card className="flex items-center gap-4 px-3 py-1.5 shadow-lg backdrop-blur-md border-sidebar-border bg-sidebar/90 cursor-default ring-1 ring-border/50">
+          {/* Drag Handle */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="hud-drag-handle cursor-grab active:cursor-grabbing p-1 -ml-2 hover:bg-accent rounded transition-colors duration-200">
+                <GripVertical className="size-3.5 text-muted-foreground" />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="top">Drag to move HUD</TooltipContent>
+          </Tooltip>
 
-            <MovieProgressSection
+          <MovieProgressSection
             progressText={progressText}
             sliderMax={sliderMax}
             sliderValue={sliderValue}
@@ -198,35 +185,6 @@ export function HUD() {
             onClear={clearClipboard}
           />
         </Card>
-
-          {/* Close button overlaying the HUD */}
-          <button
-            onClick={() => setIsVisible(false)}
-            style={{
-              position: 'absolute',
-              top: '-8px',
-              right: '-8px',
-              width: '24px',
-              height: '24px',
-              borderRadius: '50%',
-              backgroundColor: 'hsl(var(--destructive))',
-              color: 'hsl(var(--destructive-foreground))',
-              border: '2px solid hsl(var(--background))',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 'bold',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-              zIndex: 1001
-            }}
-            title="Close HUD"
-            aria-label="Close HUD"
-          >
-            ×
-          </button>
-        </div>
       </div>
     </Draggable>
   );
@@ -239,20 +197,22 @@ export function HUD() {
 function MovieProgressSection({ progressText, sliderMax, sliderValue, canScrub, onSliderCommit }) {
   return (
     <div className="flex items-center gap-2">
-      <Film className="size-4 text-primary" aria-hidden />
-      <span className="text-sm font-medium text-foreground/80">Movie progress</span>
-      <span id="hudPositionInfo" aria-live="polite" className="font-semibold text-foreground">
-        {progressText}
-      </span>
+      <Film className="size-3.5 text-primary" aria-hidden />
+      <div className="flex flex-col -gap-0.5">
+        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Progress</span>
+        <span id="hudPositionInfo" aria-live="polite" className="text-xs font-bold text-foreground">
+          {progressText}
+        </span>
+      </div>
       <Slider
-        aria-label="Timeline position"
+        aria-label="Interpolation position"
         min={0}
         max={sliderMax}
         step={1}
         value={[sliderValue]}
         disabled={!canScrub}
         onValueCommit={onSliderCommit}
-        className="w-32"
+        className="w-20 ml-1"
       />
     </div>
   );
@@ -261,17 +221,25 @@ function MovieProgressSection({ progressText, sliderMax, sliderValue, canScrub, 
 function InterpolationSection({ segmentText }) {
   return (
     <div className="flex items-center gap-2">
-      <BarChart2 className="size-4 text-primary" aria-hidden />
-      <span className="text-sm font-medium text-foreground/80">Interpolation</span>
-      <Badge
-        id="hudSegmentInfo"
-        aria-live="polite"
-        variant="secondary"
-        className="text-xs font-semibold"
-        title={segmentText}
-      >
-        {segmentText}
-      </Badge>
+      <BarChart2 className="size-3.5 text-primary" aria-hidden />
+      <div className="flex flex-col -gap-0.5">
+        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Segment</span>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge
+              id="hudSegmentInfo"
+              aria-live="polite"
+              variant="secondary"
+              className="h-5 px-1.5 text-[10px] font-bold cursor-help"
+            >
+              {segmentText}
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-xs">
+            Algorithmic interpolation between anchors: {segmentText}
+          </TooltipContent>
+        </Tooltip>
+      </div>
     </div>
   );
 }
@@ -279,14 +247,16 @@ function InterpolationSection({ segmentText }) {
 function MSAWindowSection({ msaWindow, msaWindowSize }) {
   return (
     <div className="flex items-center gap-2" id="hud-msa-window-item">
-      <Columns3 className="size-4 text-primary" aria-hidden />
-      <span className="text-sm font-medium text-foreground/80">MSA</span>
-      <div className="inline-flex items-center gap-1 font-semibold text-foreground">
-        <span id="hudWindowStart">{msaWindow?.startPosition ?? 1}</span>
-        <span className="text-muted-foreground">-</span>
-        <span id="hudWindowMid" className="text-primary">{msaWindow?.midPosition ?? 1}</span>
-        <span className="text-muted-foreground">-</span>
-        <span id="hudWindowEnd">{msaWindow?.endPosition ?? msaWindowSize ?? 100}</span>
+      <Dna className="size-3.5 text-primary" aria-hidden />
+      <div className="flex flex-col -gap-0.5">
+        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">MSA Window</span>
+        <div className="inline-flex items-center gap-1 text-xs font-bold text-foreground">
+          <span id="hudWindowStart">{msaWindow?.startPosition ?? 1}</span>
+          <span className="text-muted-foreground/50 text-[10px]">-</span>
+          <span id="hudWindowMid" className="text-primary">{msaWindow?.midPosition ?? 1}</span>
+          <span className="text-muted-foreground/50 text-[10px]">-</span>
+          <span id="hudWindowEnd">{msaWindow?.endPosition ?? msaWindowSize ?? 100}</span>
+        </div>
       </div>
     </div>
   );
@@ -296,7 +266,6 @@ function ClipboardSection({ clipboardTreeIndex, anchorIndices, onShowAnchor, onC
   const hasAnchors = anchorIndices.length > 0;
   const isShowing = clipboardTreeIndex !== null;
 
-  // Find current anchor position (0-based index into anchorIndices)
   const currentAnchorPosition = isShowing
     ? anchorIndices.indexOf(clipboardTreeIndex)
     : -1;
@@ -304,7 +273,6 @@ function ClipboardSection({ clipboardTreeIndex, anchorIndices, onShowAnchor, onC
   const handlePrevAnchor = () => {
     if (!hasAnchors) return;
     if (currentAnchorPosition <= 0) {
-      // Show first anchor
       onShowAnchor(anchorIndices[0]);
     } else {
       onShowAnchor(anchorIndices[currentAnchorPosition - 1]);
@@ -314,7 +282,6 @@ function ClipboardSection({ clipboardTreeIndex, anchorIndices, onShowAnchor, onC
   const handleNextAnchor = () => {
     if (!hasAnchors) return;
     if (currentAnchorPosition < 0 || currentAnchorPosition >= anchorIndices.length - 1) {
-      // Show last anchor
       onShowAnchor(anchorIndices[anchorIndices.length - 1]);
     } else {
       onShowAnchor(anchorIndices[currentAnchorPosition + 1]);
@@ -329,55 +296,70 @@ function ClipboardSection({ clipboardTreeIndex, anchorIndices, onShowAnchor, onC
   };
 
   return (
-    <div className="flex items-center gap-2" id="hud-clipboard-section">
-      <Clipboard className="size-4 text-primary" aria-hidden />
-      <span className="text-sm font-medium text-foreground/80">Clipboard</span>
+    <div className="flex items-center gap-3" id="hud-clipboard-section">
+      <Clipboard className="size-3.5 text-primary" aria-hidden />
+      <div className="flex flex-col -gap-0.5">
+        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Clipboard</span>
+        <div className="flex items-center gap-1 mt-0.5">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-5 w-5 hover:bg-accent rounded-sm"
+                onClick={handlePrevAnchor}
+                disabled={!hasAnchors}
+                aria-label="Previous anchor tree"
+              >
+                <ChevronLeft className="size-3" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Previous anchor tree</TooltipContent>
+          </Tooltip>
 
-      <div className="flex items-center gap-1">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6"
-          onClick={handlePrevAnchor}
-          disabled={!hasAnchors}
-          title="Previous anchor tree"
-          aria-label="Previous anchor tree"
-        >
-          <ChevronLeft className="size-4" />
-        </Button>
-
-        <Badge
-          variant={isShowing ? "default" : "secondary"}
-          className="text-xs font-semibold min-w-[60px] justify-center"
-        >
-          {getClipboardLabel()}
-        </Badge>
-
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6"
-          onClick={handleNextAnchor}
-          disabled={!hasAnchors}
-          title="Next anchor tree"
-          aria-label="Next anchor tree"
-        >
-          <ChevronRight className="size-4" />
-        </Button>
-
-        {isShowing && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 text-destructive hover:text-destructive"
-            onClick={onClear}
-            title="Hide clipboard"
-            aria-label="Hide clipboard"
+          <Badge
+            variant={isShowing ? "default" : "secondary"}
+            className="h-5 px-1.5 text-[10px] font-bold min-w-[55px] justify-center tabular-nums"
           >
-            <X className="size-4" />
-          </Button>
-        )}
+            {getClipboardLabel()}
+          </Badge>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-5 w-5 hover:bg-accent rounded-sm"
+                onClick={handleNextAnchor}
+                disabled={!hasAnchors}
+                aria-label="Next anchor tree"
+              >
+                <ChevronRight className="size-3" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Next anchor tree</TooltipContent>
+          </Tooltip>
+
+          {isShowing && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-sm ml-0.5"
+                  onClick={onClear}
+                  aria-label="Hide clipboard"
+                >
+                  <X className="size-3" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Hide clipboard</TooltipContent>
+            </Tooltip>
+          )}
+        </div>
       </div>
     </div>
   );
 }
+
+export default HUD;

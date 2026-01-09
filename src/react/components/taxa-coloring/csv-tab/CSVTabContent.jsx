@@ -7,18 +7,20 @@ import { CSVGroupColors } from "./CSVGroupColors.jsx";
 
 export function CSVTabContent({
   csvData,
+  csvFileName,
   csvColumn,
   csvValidation,
   csvGroups,
   colorManager,
   onFile,
   onColumnChange,
+  resetCSV,
   applyScheme,
   handleColorChange
 }) {
   return (
-    <div className="space-y-4">
-      <CSVUpload onFile={onFile} />
+    <div className="space-y-5">
+      <CSVUpload onFile={onFile} csvFileName={csvFileName} onReset={resetCSV} />
       {csvData && (
         <div className="space-y-4">
           <CSVColumnSelector

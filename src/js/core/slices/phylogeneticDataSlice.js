@@ -2,7 +2,6 @@ import TransitionIndexResolver from '../../domain/indexing/TransitionIndexResolv
 import { extractMsaColumnCount, extractMsaWindowParameters, hasMsaData } from '../../domain/msa/msaDataExtractor.js';
 import { calculateTreeScales } from '../../domain/tree/scaleCalculator.js';
 import { MovieTimelineManager } from '../../timeline/core/MovieTimelineManager.js';
-import { reconstructSortedLeavesFromTree } from '../../domain/tree/treeReconstructionUtils.js';
 
 /**
  * Phylogenetic data slice: manages immutable phylogenetic tree data and initialization.
@@ -67,6 +66,9 @@ export const createPhylogeneticDataSlice = (set, get) => ({
       return;
     }
 
+    const { resetInterpolationCaches } = get();
+    resetInterpolationCaches?.();
+
     const interpolatedTrees = Array.isArray(movieData.interpolated_trees)
       ? movieData.interpolated_trees
       : [];
@@ -79,19 +81,7 @@ export const createPhylogeneticDataSlice = (set, get) => ({
     const { scaleList, maxScale, scaleValues } = calculateTreeScales(interpolatedTrees, fullTreeIndices);
     const numberOfFullTrees = fullTreeIndices.length;
 
-    // === FIX: Reconstruct sorted_leaves from tree topology ===
-    // The backend sometimes sorts sorted_leaves alphabetically, but indices
-    // in jumping_subtree_solutions refer to the unsorted/original indices.
-    // We traverse the first tree to build the correct index -> name map.
-    let correctedSortedLeaves = movieData.sorted_leaves || [];
-    if (interpolatedTrees.length > 0) {
-      const reconstructed = reconstructSortedLeavesFromTree(interpolatedTrees[0]);
-      if (reconstructed.length > 0) {
-        // Only use reconstructed if valid
-        console.log('[Store] Reconstructed sorted_leaves from tree topology to fix index mapping.');
-        correctedSortedLeaves = reconstructed;
-      }
-    }
+    const sortedLeaves = movieData.sorted_leaves || [];
 
     // Extract MSA data and set via MSA slice
     const msaColumnCount = extractMsaColumnCount(movieData);
@@ -119,7 +109,7 @@ export const createPhylogeneticDataSlice = (set, get) => ({
     set({
       movieData: {
         ...movieData,
-        sorted_leaves: correctedSortedLeaves,
+        sorted_leaves: sortedLeaves,
         distances: undefined,
         scaleList,
         maxScale,
