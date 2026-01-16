@@ -2,6 +2,24 @@ export function calculatePathLength(path) {
   if (!path || path.length < 2) return 0;
 
   let length = 0;
+
+  // Handle flattened paths (e.g. [x0, y0, z0, x1, y1, z1, ...])
+  // We detect this if the first element is a number (vs nested array)
+  if (typeof path[0] === 'number') {
+    // Determine coordinate stride (2 for XY, 3 for XYZ)
+    // Most paths in our system are 2D or 3D flattened arrays
+    const isXYZ = path.length % 3 === 0;
+    const stride = isXYZ ? 3 : 2;
+
+    for (let i = stride; i < path.length; i += stride) {
+      const dx = path[i] - path[i - stride];
+      const dy = path[i + 1] - path[i - stride + 1];
+      length += Math.sqrt(dx * dx + dy * dy);
+    }
+    return length;
+  }
+
+  // Handle nested paths (e.g. [[x0, y0], [x1, y1], ...])
   for (let i = 1; i < path.length; i++) {
     const dx = path[i][0] - path[i - 1][0];
     const dy = path[i][1] - path[i - 1][1];

@@ -27,9 +27,10 @@ export function MSAControls() {
   }, [msaRegion]);
 
   const handleSetRegion = () => {
-    const start = clampPositive(startValue);
-    const end = clampPositive(endValue);
-    if (Number.isFinite(start) && Number.isFinite(end) && start < end) {
+    let start = clampPositive(startValue);
+    let end = clampPositive(endValue);
+    if (Number.isFinite(start) && Number.isFinite(end)) {
+      if (start > end) [start, end] = [end, start];
       setMsaRegion(start, end);
     }
   };
@@ -41,43 +42,43 @@ export function MSAControls() {
   };
 
   return (
-    <div className="px-4 py-3 border-b border-border flex flex-wrap items-center gap-3 bg-card">
-      <div className="flex items-center gap-2">
-        <label htmlFor="msa-start" className="text-sm font-medium">Region</label>
+    <div className="px-1.5 py-1 border-b border-border flex flex-wrap items-center gap-1.5 bg-card">
+      <div className="flex items-center gap-1">
+        <label htmlFor="msa-start" className="text-xs font-medium">Region</label>
         <Input
           id="msa-start"
           type="number"
           min={1}
           value={startValue}
           onChange={(e) => setStartValue(e.target.value)}
-          className="w-28"
+          className="w-20 h-7 text-xs"
           aria-label="Start column"
         />
-        <span className="text-muted-foreground">to</span>
+        <span className="text-[10px] text-muted-foreground">to</span>
         <Input
           id="msa-end"
           type="number"
           min={1}
           value={endValue}
           onChange={(e) => setEndValue(e.target.value)}
-          className="w-28"
+          className="w-20 h-7 text-xs"
           aria-label="End column"
         />
-        <Button size="sm" onClick={handleSetRegion} disabled={!startValue || !endValue}>Set</Button>
-        <Button size="sm" variant="outline" onClick={handleClear}>Clear</Button>
+        <Button size="xs" onClick={handleSetRegion} disabled={!startValue || !endValue}>Set</Button>
+        <Button size="xs" variant="outline" onClick={handleClear}>Clear</Button>
       </div>
 
       <div className="h-6 w-px bg-border mx-2" />
 
-      <div className="flex items-center gap-1">
-        <Button variant="ghost" size="icon" onClick={() => triggerViewAction('ZOOM_IN')} title="Zoom In">
-          <ZoomIn className="size-4" />
+      <div className="flex items-center gap-0.5">
+        <Button variant="ghost" size="icon-xs" onClick={() => triggerViewAction('ZOOM_IN')} title="Zoom In">
+          <ZoomIn className="size-3.5" />
         </Button>
-        <Button variant="ghost" size="icon" onClick={() => triggerViewAction('ZOOM_OUT')} title="Zoom Out">
-          <ZoomOut className="size-4" />
+        <Button variant="ghost" size="icon-xs" onClick={() => triggerViewAction('ZOOM_OUT')} title="Zoom Out">
+          <ZoomOut className="size-3.5" />
         </Button>
-        <Button variant="ghost" size="icon" onClick={() => triggerViewAction('RESET')} title="Reset View">
-          <RotateCcw className="size-4" />
+        <Button variant="ghost" size="icon-xs" onClick={() => triggerViewAction('RESET')} title="Reset View">
+          <RotateCcw className="size-3.5" />
         </Button>
       </div>
 
@@ -115,8 +116,8 @@ export function MSAControls() {
 
         <div className="h-4 w-px bg-border mx-1" />
 
-        <Switch id="msa-toggle-letters" checked={showLetters} onCheckedChange={setShowLetters} aria-label="Toggle residue letters" />
-        <label htmlFor="msa-toggle-letters" className="text-sm">Letters</label>
+        <Switch id="msa-toggle-letters" checked={showLetters} onCheckedChange={setShowLetters} aria-label="Toggle residue letters" className="scale-75" />
+        <label htmlFor="msa-toggle-letters" className="text-xs">Letters</label>
         {processedData ? (
           <Badge variant="secondary" className="text-xs">{processedData.type.toUpperCase()}</Badge>
         ) : (

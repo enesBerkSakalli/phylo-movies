@@ -1,5 +1,5 @@
 import React, { useCallback, useRef } from 'react';
-import { LabeledSlider } from '../common/LabeledSlider.jsx';
+import { LabeledSlider } from '@/components/ui/labeled-slider';
 import { SidebarMenuSub, SidebarMenuSubItem } from '@/components/ui/sidebar';
 
 const clampValue = (value, fallback) => {

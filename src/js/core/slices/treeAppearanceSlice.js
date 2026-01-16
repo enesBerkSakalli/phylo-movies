@@ -11,7 +11,8 @@ export const createTreeAppearanceSlice = (set, get) => ({
   layoutRotationDegrees: 0,
   styleConfig: { contourWidthOffset: 2, labelOffsets: { DEFAULT: 16, WITH_EXTENSIONS: 32, EXTENSION: 4 } },
   taxaColoringOpen: false,
-  taxaColoringWindow: { x: 40, y: 40, width: 980, height: 720 },
+  taxaColoringWindow: { x: 40, y: 40, width: 640, height: 700 },
+  markedSubtreeOpacity: 0.8, // Default opacity for the marked subtree highlight
 
   // ==========================================================================
   // ACTIONS
@@ -56,4 +57,9 @@ export const createTreeAppearanceSlice = (set, get) => ({
   setTaxaColoringWindow: (partial) => set((state) => ({
     taxaColoringWindow: { ...state.taxaColoringWindow, ...partial }
   })),
+
+  setMarkedSubtreeOpacity: (opacity) => {
+    const value = Math.max(0, Math.min(1, Number(opacity)));
+    set({ markedSubtreeOpacity: value });
+  },
 });

@@ -79,10 +79,10 @@ export default class TaxaColoring {
     const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1440;
     const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 900;
     return {
-      x: Math.max(24, Math.round((viewportWidth - 980) / 2)),
-      y: Math.max(24, Math.round((viewportHeight - 720) / 2)),
-      width: Math.min(viewportWidth - 48, 1100),
-      height: Math.min(viewportHeight - 48, 760),
+      x: Math.max(24, Math.round((viewportWidth - 640) / 2)),
+      y: Math.max(24, Math.round((viewportHeight - 680) / 2)),
+      width: Math.min(viewportWidth - 48, 640),
+      height: Math.min(viewportHeight - 48, 700),
     };
   }
 
@@ -151,8 +151,8 @@ function TaxaColoringRndWindow({ taxaNames, originalColorMap, onApply, onClose, 
     y: initialState?.y ?? 60,
   }), [initialState?.x, initialState?.y]);
   const initialSize = useMemo(() => ({
-    width: initialState?.width ?? 980,
-    height: initialState?.height ?? 720,
+    width: initialState?.width ?? 640,
+    height: initialState?.height ?? 700,
   }), [initialState?.width, initialState?.height]);
 
   const [position, setPosition] = useState(initialPosition);
@@ -178,7 +178,7 @@ function TaxaColoringRndWindow({ taxaNames, originalColorMap, onApply, onClose, 
   return (
     <Rnd
       bounds="window"
-      minWidth={760}
+      minWidth={500}
       minHeight={520}
       size={size}
       position={position}

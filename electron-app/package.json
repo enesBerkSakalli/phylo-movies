@@ -1,0 +1,80 @@
+{
+  "name": "phylo-movies-desktop",
+  "version": "0.1.0",
+  "description": "Phylo-Movies Desktop Application - Electron wrapper",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dev": "NODE_ENV=development electron .",
+    "setup:backend": "cd backend && git clone https://github.com/EnesSakalliUniWien/BranchArchitect.git && cd BranchArchitect && poetry install",
+    "build:frontend": "cd .. && npm run build && cp -r dist electron-app/frontend-dist",
+    "build:backend": "cd backend && pip install -r requirements.txt && pyinstaller brancharchitect.spec --clean",
+    "build:mac": "npm run build:frontend && electron-builder --mac",
+    "build:win": "npm run build:frontend && electron-builder --win",
+    "build:linux": "npm run build:frontend && electron-builder --linux",
+    "dist": "npm run build:backend && npm run build:mac"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "com.phylomovies.app",
+    "productName": "Phylo-Movies",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "frontend-dist/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "backend/dist/",
+        "to": "backend/",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.education",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "build/icon.icns"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "category": "Science"
+    }
+  }
+}

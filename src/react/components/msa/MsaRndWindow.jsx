@@ -17,17 +17,17 @@ function MSAWindowContent() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="msa-rnd-header flex items-center justify-between gap-3 px-4 py-3 border-b border-border bg-card cursor-move select-none">
-        <div className="flex items-center gap-3">
-          <Columns className="size-5 text-primary" aria-hidden />
+      <div className="msa-rnd-header flex items-center justify-between gap-2 px-1.5 py-1 border-b border-border bg-card cursor-move select-none">
+        <div className="flex items-center gap-1.5">
+          <Columns className="size-4 text-primary" aria-hidden />
           <div>
-            <div className="font-semibold">MSA Viewer</div>
-            <div className="text-xs text-muted-foreground" aria-live="polite">{summary}</div>
+            <div className="text-sm font-semibold leading-tight">MSA Viewer</div>
+            <div className="text-[10px] text-muted-foreground leading-tight" aria-live="polite">{summary}</div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={closeMsaViewer} aria-label="Close MSA viewer">
-            <X className="size-5" />
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon-xs" onClick={closeMsaViewer} aria-label="Close MSA viewer">
+            <X className="size-4" />
           </Button>
         </div>
       </div>
@@ -76,7 +76,7 @@ export function MsaRndWindow() {
           y: pos.y,
         });
       }}
-      className="fixed z-40 pointer-events-auto shadow-2xl border border-border rounded-lg bg-card overflow-hidden"
+      className="fixed z-40 pointer-events-auto shadow-2xl bg-card overflow-hidden"
     >
       <MSAProvider>
         <MSAWindowContent />

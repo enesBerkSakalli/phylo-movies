@@ -3,6 +3,8 @@ import { ColorSchemeManager } from "@/js/treeColoring/utils/ColorSchemeManager.j
 import { generateGroups } from "@/js/treeColoring/utils/GroupingUtils.js";
 import { syncGroupColors, normalizeSeparator } from "../utils/colorManagement.js";
 import { useCSVState } from "./useCSVState.js";
+import { rgbToHex, toHexMap } from "@/js/services/ui/colorUtils.js";
+
 
 export function useTaxaColoringState(taxaNames, originalColorMap, initialStateParam = {}) {
   const initialState = initialStateParam || {};
@@ -152,8 +154,8 @@ export function useTaxaColoringState(taxaNames, originalColorMap, initialStatePa
 
   const buildResult = useCallback(() => ({
     mode,
-    taxaColorMap: mgr.taxaColorMap,
-    groupColorMap: mgr.groupColorMap,
+    taxaColorMap: toHexMap(mgr.taxaColorMap),
+    groupColorMap: toHexMap(mgr.groupColorMap),
     separators: separators.length > 0 ? separators : null,
     strategyType: selectedStrategy,
     segmentIndex,

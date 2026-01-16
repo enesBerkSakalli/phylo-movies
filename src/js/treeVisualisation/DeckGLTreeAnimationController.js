@@ -6,11 +6,11 @@ import { WebGLTreeAnimationController } from './WebGLTreeAnimationController.js'
 import { useAppStore, selectCurrentTree } from '../core/store.js';
 import { easeInOut } from 'popmotion';
 import { TreeNodeInteractionHandler } from './interaction/TreeNodeInteractionHandler.js';
+import { handleDragStart, handleDrag, handleDragEnd, handleContainerResize } from './interaction/InteractionHandlers.js';
 import { ComparisonModeRenderer } from './comparison/ComparisonModeRenderer.js';
 import { ViewportManager } from './viewport/ViewportManager.js';
 import { buildViewLinkMapping } from '../domain/view/viewLinkMapper.js';
-import { calculateVisualBounds } from './utils/TreeBoundsUtils.js';
-import { createClipboardLabelLayer } from './utils/ClipboardUtils.js';
+import { getClipboardLayers } from './utils/ClipboardUtils.js';
 
 export class DeckGLTreeAnimationController extends WebGLTreeAnimationController {
 
@@ -35,7 +35,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     this.layerManager = new LayerManager();
     this.treeInterpolator = new TreeInterpolator();
     this.currentTreeData = null;
-    this.interactionHandler = new TreeNodeInteractionHandler(this, null, this.viewSide);
+    this.interactionHandler = new TreeNodeInteractionHandler(this, this.viewSide);
 
     // View link mapping cache
     this._lastMappedLeftIndex = null;
@@ -44,7 +44,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     // Track last tree index we auto-fit to
     this._lastFocusedTreeIndex = null;
     this._resizeRenderScheduled = false;
-    this.setOnResize(() => this._handleContainerResize());
+    this.setOnResize(() => handleContainerResize(this));
 
     // Drag state
     this._dragState = null;
@@ -66,8 +66,6 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     } else {
       this._initializeDeckManager();
     }
-
-    this._reactLayerUpdater = null;
   }
 
   _initializeDeckManager() {
@@ -84,7 +82,6 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
   _configureDeckManagerCallbacks() {
     this.deckManager.onWebGLInitialized((gl) => {
-      this.gl = gl;
       this._markReady();
     });
 
@@ -103,9 +100,9 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       }
     });
 
-    this.deckManager.onDragStart((info, event) => this._handleDragStart(info, event));
-    this.deckManager.onDrag((info, event) => this._handleDrag(info, event));
-    this.deckManager.onDragEnd((info, event) => this._handleDragEnd(info, event));
+    this.deckManager.onDragStart((info, event) => handleDragStart(this, info));
+    this.deckManager.onDrag((info, event) => handleDrag(this, info));
+    this.deckManager.onDragEnd((info, event) => handleDragEnd(this));
   }
 
   _markReady() {
@@ -123,14 +120,21 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       this._configureDeckManagerCallbacks();
     }
     this.deckManager.attachExternalDeck(deckInstance);
+    // Ensure canvas is set
+    if (!this.deckManager.canvas && deckInstance.canvas) {
+      this.deckManager.canvas = deckInstance.canvas;
+    }
+    if (!this.deckManager.canvas) {
+       // Fallback for React DeckGL: look in the container
+       this.deckManager.canvas = this.webglContainer.node()?.querySelector('canvas');
+    }
+
     if (!this.ready) {
       this._markReady();
     }
   }
 
-  setReactLayerUpdater(updater) {
-    this._reactLayerUpdater = updater;
-  }
+
 
   // ==========================================================================
   // PUBLIC API
@@ -159,7 +163,6 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     super.destroy();
     cancelAnimationFrame(this.animationFrameId);
     this.animationFrameId = null;
-    this.contextMenu?.destroy();
     this.deckManager?.destroy();
     this.layerManager?.destroy();
   }
@@ -227,8 +230,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       return;
     }
 
-    const treeLeaves = currentLayout.tree.leaves();
-    const { extensionRadius, labelRadius } = this._getConsistentRadii(currentLayout, null, treeLeaves);
+    const { extensionRadius, labelRadius } = this._getConsistentRadii(currentLayout);
 
     const layerData = this.dataConverter.convertTreeToLayerData(
       currentLayout.tree,
@@ -262,7 +264,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
   // RENDERING - INTERPOLATED (Animation/Scrubbing)
   // ==========================================================================
 
-  async renderInterpolatedFrame(fromTreeData, toTreeData, timeFactor, options = {}) {
+  async renderSingleInterpolatedFrame(fromTreeData, toTreeData, timeFactor, options = {}) {
     if (!this.ready) {
       await this.readyPromise;
     }
@@ -270,9 +272,12 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     const { fromTreeIndex, toTreeIndex } = options;
     let t = Math.max(0, Math.min(1, timeFactor));
     if (fromTreeData === toTreeData) t = 0;
-    t = easeInOut(t);
+    // Easing is now applied by the caller (renderProgress or _updateSmoothAnimation)
+    // t = easeInOut(t);
 
     const { dataFrom, dataTo } = this._getOrCacheInterpolationData(fromTreeData, toTreeData, fromTreeIndex, toTreeIndex);
+
+    if (!dataFrom || !dataTo) return;
 
     const interpolatedData = this.treeInterpolator.interpolateTreeData(dataFrom, dataTo, t);
     interpolatedData.targetData = dataTo;  // Add target data for movement arrow endpoints
@@ -281,7 +286,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     this.viewportManager.updateScreenPositions(interpolatedData.nodes, this.viewSide);
   }
 
-  async renderScrubFrame(fromTreeData, toTreeData, timeFactor, options = {}) {
+  async renderComparisonAwareScrubFrame(fromTreeData, toTreeData, timeFactor, options = {}) {
     if (!this.ready) {
       await this.readyPromise;
     }
@@ -303,7 +308,47 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       }
     }
 
-    await this.renderInterpolatedFrame(fromTreeData, toTreeData, timeFactor, options);
+    await this.renderSingleInterpolatedFrame(fromTreeData, toTreeData, timeFactor, options);
+  }
+
+  async renderProgress(progress) {
+    if (!this.ready) {
+      await this.readyPromise;
+    }
+
+    const state = useAppStore.getState();
+    const treeList = state.movieData?.interpolated_trees || state.treeList;
+
+    if (!treeList || treeList.length === 0) return;
+
+    const totalTrees = treeList.length;
+    // Safety check for single tree
+    if (totalTrees === 1) {
+      return this.renderAllElements({ treeIndex: 0 });
+    }
+
+    const exactTreeIndex = progress * (totalTrees - 1);
+    const fromIndex = Math.floor(exactTreeIndex);
+    const toIndex = Math.min(fromIndex + 1, totalTrees - 1);
+    let t = exactTreeIndex - fromIndex;
+
+    // Apply easing for scrubbing/rendering from progress
+    t = easeInOut(t);
+
+    // Optimization: Snap to nearest integer if very close, avoiding interpolation overhead
+    if (t <= 0.001 || fromIndex === toIndex) {
+      const snapIndex = Math.round(exactTreeIndex);
+      return this.renderAllElements({ treeIndex: snapIndex });
+    }
+
+    // Render interpolated frame
+    const fromTree = treeList[fromIndex];
+    const toTree = treeList[toIndex];
+
+    return this.renderSingleInterpolatedFrame(fromTree, toTree, t, {
+      fromTreeIndex: fromIndex,
+      toTreeIndex: toIndex
+    });
   }
 
   // ==========================================================================
@@ -349,7 +394,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       return;
     }
 
-    const { fromTreeIndex, toTreeIndex, easedProgress } = getAnimationInterpolationData();
+    const { fromTreeIndex, toTreeIndex, localT } = getAnimationInterpolationData();
     const fromTree = movieData.interpolated_trees[fromTreeIndex];
     const toTree = movieData.interpolated_trees[toTreeIndex];
 
@@ -364,16 +409,19 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       return;
     }
 
+    // Apply easing centrally here
+    const easedT = easeInOut(localT);
+
     if (comparisonMode) {
-      await this._updateComparisonAnimation(fromTree, toTree, easedProgress, fromTreeIndex, toTreeIndex, transitionResolver, movieData);
+      await this._updateComparisonAnimation(fromTree, toTree, easedT, fromTreeIndex, toTreeIndex, transitionResolver, movieData);
       return;
     }
 
-    await this.renderInterpolatedFrame(fromTree, toTree, easedProgress, { toTreeIndex, fromTreeIndex });
+    await this.renderSingleInterpolatedFrame(fromTree, toTree, easedT, { toTreeIndex, fromTreeIndex });
   }
 
-  async _updateComparisonAnimation(fromTree, toTree, easedProgress, fromTreeIndex, toTreeIndex, transitionResolver, movieData) {
-    const interpolatedData = this._buildInterpolatedData(fromTree, toTree, easedProgress, {
+  async _updateComparisonAnimation(fromTree, toTree, easedT, fromTreeIndex, toTreeIndex, transitionResolver, movieData) {
+    const interpolatedData = this._buildInterpolatedData(fromTree, toTree, easedT, {
       toTreeIndex,
       fromTreeIndex
     });
@@ -397,8 +445,12 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     const layoutFrom = this._calculateLayout(fromTreeData, fromTreeIndex);
     const layoutTo = this._calculateLayout(toTreeData, toTreeIndex);
 
-    const currentLeaves = layoutTo.tree.leaves();
-    const { extensionRadius, labelRadius } = this._getConsistentRadii(layoutFrom, null, currentLeaves);
+    if (!layoutFrom || !layoutTo) {
+      console.warn('[DeckGLTreeAnimationController] Layout calculation failed in _buildInterpolatedData, returning empty substitute');
+      return { nodes: [], links: [], labels: [], extensions: [] };
+    }
+
+    const { extensionRadius, labelRadius } = this._getConsistentRadii(layoutFrom);
 
     const dataFrom = this._convertLayoutToLayerData(layoutFrom, extensionRadius, labelRadius);
     const dataTo = this._convertLayoutToLayerData(layoutTo, extensionRadius, labelRadius);
@@ -411,6 +463,8 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       this._cachedInterpolationData &&
       this._cachedInterpolationData.fromIndex === fromTreeIndex &&
       this._cachedInterpolationData.toIndex === toTreeIndex &&
+      this._cachedInterpolationData.fromTreeData === fromTreeData &&
+      this._cachedInterpolationData.toTreeData === toTreeData &&
       this._cachedInterpolationData.width === this.width &&
       this._cachedInterpolationData.height === this.height
     ) {
@@ -423,8 +477,12 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     const layoutFrom = this._calculateLayout(fromTreeData, fromTreeIndex);
     const layoutTo = this._calculateLayout(toTreeData, toTreeIndex);
 
-    const currentLeaves = layoutTo.tree.leaves();
-    const { extensionRadius, labelRadius } = this._getConsistentRadii(layoutFrom, null, currentLeaves);
+    if (!layoutFrom || !layoutTo) {
+      console.warn('[DeckGLTreeAnimationController] Layout calculation failed, skipping frame');
+      return { dataFrom: null, dataTo: null };
+    }
+
+    const { extensionRadius, labelRadius } = this._getConsistentRadii(layoutFrom);
 
     const dataFrom = this._convertLayoutToLayerData(layoutFrom, extensionRadius, labelRadius);
     const dataTo = this._convertLayoutToLayerData(layoutTo, extensionRadius, labelRadius);
@@ -432,6 +490,8 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     this._cachedInterpolationData = {
       fromIndex: fromTreeIndex,
       toIndex: toTreeIndex,
+      fromTreeData,
+      toTreeData,
       width: this.width,
       height: this.height,
       dataFrom,
@@ -488,24 +548,19 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
   // LAYER MANAGEMENT
   // ==========================================================================
 
-  _updateLayersEfficiently(newData) {
-    const layers = this.layerManager.updateLayersWithData(newData);
+  _updateLayersEfficiently(interpolatedFrameData) {
+    const layers = this.layerManager.updateLayersWithData(interpolatedFrameData);
 
     // Add clipboard layers if clipboard is active
-    const clipboardLayers = this._getClipboardLayers();
-    const allLayers = clipboardLayers.length > 0 ? [...layers, ...clipboardLayers] : layers;
-
-    if (this.useReactDeckGL && typeof this._reactLayerUpdater === 'function') {
-      this._reactLayerUpdater(allLayers);
-      return;
-    }
+    const clipboardLayers = getClipboardLayers(this);
+    const combinedLayers = clipboardLayers.length > 0 ? [...layers, ...clipboardLayers] : layers;
 
     if (!this.deckManager?.deck) {
       console.warn('[DeckGLTreeAnimationController] Deck not ready, skipping layer update');
       return;
     }
 
-    this.deckManager.setLayers(allLayers);
+    this.deckManager.setLayers(combinedLayers);
   }
 
   _handleStyleChange() {
@@ -513,227 +568,15 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     this.renderAllElements();
   }
 
-  // ==========================================================================
-  // CLIPBOARD RENDERING
-  // ==========================================================================
-
-  /**
-   * Get clipboard layers if clipboard is active
-   * @returns {Array} Clipboard layers or empty array
-   */
-  _getClipboardLayers() {
-    const { clipboardTreeIndex, treeList } = useAppStore.getState();
-    if (clipboardTreeIndex === null || !treeList?.[clipboardTreeIndex]) {
-      return [];
-    }
-
-    return this._createClipboardLayers(clipboardTreeIndex, treeList[clipboardTreeIndex]);
-  }
-
-  /**
-   * Create clipboard tree layers with visual positioning.
-   */
-  _createClipboardLayers(treeIndex, treeData) {
-    const layout = this.calculateLayout(treeData, {
-      treeIndex,
-      updateController: false,
-      rotationAlignmentKey: 'clipboard'
-    });
-
-    if (!layout?.tree) {
-      console.warn('[DeckGLTreeAnimationController] Clipboard layout not available');
-      return [];
-    }
-
-    const treeLeaves = layout.tree.leaves();
-    const { extensionRadius, labelRadius } = this._getConsistentRadii(layout, null, treeLeaves);
-
-    const layerData = this.dataConverter.convertTreeToLayerData(
-      layout.tree,
-      {
-        extensionRadius,
-        labelRadius,
-        canvasWidth: layout.width,
-        canvasHeight: layout.height
-      }
-    );
-
-    const { transitionResolver, clipboardOffsetX = 0, clipboardOffsetY = 0 } = useAppStore.getState();
-    const fullTreeIndices = transitionResolver?.fullTreeIndices || [];
-
-    // Calculate clipboard tree VISUAL bounds (including labels)
-    const clipboardBounds = calculateVisualBounds(layerData.nodes, layerData.labels);
-
-    // Get current main tree VISUAL bounds
-    const mainTreeBounds = this._getMainTreeBounds();
-
-    // Position clipboard to the TOP LEFT ABOVE the main tree
-    // Combined with dynamic user dragging offsets
-    const xOffset = (mainTreeBounds.minX - clipboardBounds.minX) + clipboardOffsetX;
-    const gap = 50;
-    const yOffset = (mainTreeBounds.minY - clipboardBounds.maxY - gap) + clipboardOffsetY;
-
-    const treeLayers = this.layerManager.createClipboardLayers(layerData, 0, xOffset, yOffset);
-    const labelLayer = createClipboardLabelLayer(
-      treeIndex,
-      clipboardBounds,
-      fullTreeIndices,
-      xOffset,
-      yOffset
-    );
-
-    return [...treeLayers, labelLayer].filter(Boolean);
-  }
 
 
-
-  /**
-   * Get bounds of the currently rendered main tree
-   */
-  _getMainTreeBounds() {
-    // Use the current tree data to calculate bounds
-    if (this.currentTreeData) {
-      const layout = this.calculateLayout(this.currentTreeData, {
-        treeIndex: useAppStore.getState().currentTreeIndex,
-        updateController: false
-      });
-      if (layout?.tree) {
-        const treeLeaves = layout.tree.leaves();
-        const { extensionRadius, labelRadius } = this._getConsistentRadii(layout, null, treeLeaves);
-        const layerData = this.dataConverter.convertTreeToLayerData(
-          layout.tree,
-          { extensionRadius, labelRadius, canvasWidth: layout.width, canvasHeight: layout.height }
-        );
-        return calculateVisualBounds(layerData.nodes, layerData.labels);
-      }
-    }
-    // Fallback to reasonable defaults
-    return { minX: -500, maxX: 500, minY: -500, maxY: 500 };
-  }
-
-
-  // ==========================================================================
-  // INTERACTIVE DRAGGING (Trees)
-  // ==========================================================================
-
-  _handleDragStart(info) {
-    // Only allow dragging if we picked a tree element (node, link, extension, label)
-    const treeSide = info.object?.treeSide;
-    if (!treeSide) return false;
-
-    const state = this._getState();
-
-    // Store starting offsets
-    let startOffset;
-    if (treeSide === 'left') {
-      startOffset = { x: state.leftTreeOffsetX, y: state.leftTreeOffsetY };
-    } else if (treeSide === 'right') {
-      startOffset = { x: state.viewOffsetX, y: state.viewOffsetY };
-    } else if (treeSide === 'clipboard') {
-      startOffset = { x: state.clipboardOffsetX, y: state.clipboardOffsetY };
-    } else {
-      return false;
-    }
-
-    const controllerConfig = this.deckManager.getControllerConfig?.() || null;
-
-    this._dragState = {
-      side: treeSide,
-      startOffset,
-      startPos: { x: info.x, y: info.y },
-      controllerConfig: controllerConfig ? { ...controllerConfig } : null
-    };
-
-    // Prevent map panning while dragging a tree - use callback mechanism for React compatibility
-    this.deckManager.setControllerConfig({
-      ...(controllerConfig || this.deckManager.getControllerConfig()),
-      dragPan: false
-    });
-    return true;
-  }
-
-  _handleDrag(info) {
-    if (!this._dragState) return false;
-
-    const { side, startOffset, startPos } = this._dragState;
-    const viewState = this.deckManager.getViewState();
-    const zoom = viewState.zoom ?? 0;
-    const [zoomX, zoomY] = Array.isArray(zoom) ? zoom : [zoom, zoom];
-    const safeZoomX = Number.isFinite(zoomX) ? zoomX : 0;
-    const safeZoomY = Number.isFinite(zoomY) ? zoomY : 0;
-
-    // Convert total screen pixel displacement to world units
-    // Formula for Orthographic: world = pixel * 2^-zoom
-    const totalPixelDeltaX = info.x - startPos.x;
-    const totalPixelDeltaY = info.y - startPos.y;
-
-    if (!Number.isFinite(totalPixelDeltaX) || !Number.isFinite(totalPixelDeltaY)) {
-      return false;
-    }
-
-    const worldDeltaX = totalPixelDeltaX * Math.pow(2, -safeZoomX);
-    const worldDeltaY = totalPixelDeltaY * Math.pow(2, -safeZoomY);
-
-    const state = this._getState();
-    if (side === 'left') {
-      state.setLeftTreeOffsetX(startOffset.x + worldDeltaX);
-      state.setLeftTreeOffsetY(startOffset.y + worldDeltaY);
-    } else if (side === 'right') {
-      state.setViewOffsetX(startOffset.x + worldDeltaX);
-      state.setViewOffsetY(startOffset.y + worldDeltaY);
-    } else if (side === 'clipboard') {
-      state.setClipboardOffsetX(startOffset.x + worldDeltaX);
-      state.setClipboardOffsetY(startOffset.y + worldDeltaY);
-    }
-
-    // Trigger a render update
-    this.renderAllElements();
-
-    return true;
-  }
-
-  _handleDragEnd() {
-    if (!this._dragState) return;
-
-    const controllerConfig = this._dragState.controllerConfig;
-    this._dragState = null;
-
-    // Re-enable map panning - use callback mechanism for React compatibility
-    if (controllerConfig) {
-      this.deckManager.setControllerConfig(controllerConfig);
-    } else {
-      this.deckManager.setControllerConfig(this.deckManager.getControllerConfig());
-    }
-  }
-
-  _handleContainerResize() {
-    if (this._resizeRenderScheduled) return;
-    this._resizeRenderScheduled = true;
-
-    const schedule = typeof requestAnimationFrame === 'function'
-      ? requestAnimationFrame
-      : (cb) => setTimeout(cb, 16);
-
-    schedule(async () => {
-      this._resizeRenderScheduled = false;
-      const { playing } = this._getState();
-      if (playing) return;
-      this._lastFocusedTreeIndex = null;
-      this.comparisonRenderer?.resetAutoFit?.();
-      try {
-        await this.renderAllElements();
-      } catch (err) {
-        console.warn('[DeckGLTreeAnimationController] Resize render failed:', err);
-      }
-    });
-  }
 
   // ==========================================================================
   // HELPERS
   // ==========================================================================
 
   _calculateLayout(treeData, treeIndex) {
-    const state = this._getState();
+    const state = useAppStore.getState();
     const movingTaxa = Array.isArray(state?.subtreeTracking?.[treeIndex]) && state.subtreeTracking[treeIndex]?.length
       ? state.subtreeTracking[treeIndex]
       : null;
@@ -756,16 +599,5 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     );
   }
 
-  _getViewOffset() {
-    return this.viewportManager.getViewOffset();
-  }
 
-  _getState() {
-    return useAppStore.getState();
-  }
-
-  _clampIndex(index) {
-    const { treeList } = useAppStore.getState();
-    return Math.min(Math.max(index, 0), treeList.length - 1);
-  }
 }
