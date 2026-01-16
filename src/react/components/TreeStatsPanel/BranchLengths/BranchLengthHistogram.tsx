@@ -9,6 +9,7 @@ interface BranchLengthHistogramProps {
   bins: HistogramBin[];
   maxCount: number;
   stats: HistogramStats;
+  showHeader?: boolean;
 }
 
 /**
@@ -18,7 +19,8 @@ interface BranchLengthHistogramProps {
 export const BranchLengthHistogram: React.FC<BranchLengthHistogramProps> = ({
   bins,
   maxCount,
-  stats
+  stats,
+  showHeader = true
 }) => {
   const columnCount = Math.max(bins.length, 1);
   const hasData = bins.length > 0;
@@ -28,11 +30,12 @@ export const BranchLengthHistogram: React.FC<BranchLengthHistogramProps> = ({
       className="flex flex-col gap-2 w-full"
       aria-label="Current Tree Branch Length Distribution"
     >
-      {/* Header */}
-      <div className="inline-flex items-center gap-2 text-xs text-muted-foreground">
-        <Palette className="size-3" aria-hidden />
-        <span id="branch-lengths-label">Current Tree Branch Lengths</span>
-      </div>
+      {showHeader ? (
+        <div className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+          <Palette className="size-3" aria-hidden />
+          <span id="branch-lengths-label">Current Tree Branch Lengths</span>
+        </div>
+      ) : null}
 
       {/* Histogram bars */}
       <div

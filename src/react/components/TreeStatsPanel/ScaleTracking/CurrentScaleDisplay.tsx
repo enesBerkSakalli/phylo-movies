@@ -9,6 +9,7 @@ interface CurrentScaleDisplayProps {
   formattedCurrent: string;
   formattedMax: string;
   progressPercent: number;
+  showHeader?: boolean;
 }
 
 /**
@@ -19,14 +20,17 @@ export const CurrentScaleDisplay: React.FC<CurrentScaleDisplayProps> = ({
   formattedCurrent,
   formattedMax,
   progressPercent,
+  showHeader = true,
 }) => {
   return (
     <>
       {/* Current scale value */}
-      <div className="scale-header">
-        <Ruler className="size-4" />
-        <span className="scale-title">Current Tree Scale</span>
-      </div>
+      {showHeader ? (
+        <div className="scale-header">
+          <Ruler className="size-4" />
+          <span className="scale-title">Current Tree Scale</span>
+        </div>
+      ) : null}
 
       <div className="scale-values" aria-live="polite">
         <Badge

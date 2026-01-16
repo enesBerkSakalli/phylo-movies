@@ -49,11 +49,11 @@ export function TaxaColoringWindow({ taxaNames = [], originalColorMap = {}, onAp
   };
 
   return (
-    <div className="flex h-full flex-col gap-2 p-5 sm:p-6">
-      <header className="flex flex-col gap-4 border-b border-border/40 pb-4 md:flex-row md:items-center md:justify-between shrink-0">
-        <div className="space-y-1">
-          <h1 className="text-base font-bold tracking-tight">Taxa Color Assignment</h1>
-          <p className="text-[11px] text-muted-foreground/80">Fine-tune palette presets, grouping strategies, or CSV imports.</p>
+    <div className="flex h-full flex-col gap-2 p-3 sm:p-4">
+      <header className="flex flex-col gap-3 border-b border-border/40 pb-3 md:flex-row md:items-center md:justify-between shrink-0">
+        <div className="space-y-0.5">
+          <h1 className="text-sm font-bold tracking-tight">Taxa Color Assignment</h1>
+          <p className="text-[10px] text-muted-foreground/80">Fine-tune palette presets, grouping strategies, or CSV imports.</p>
         </div>
         <div className="flex items-center gap-3 self-end md:self-auto">
           <div className="flex items-center gap-1.5 bg-accent/30 p-1.5 rounded-lg border border-border/40 shadow-sm">
@@ -88,10 +88,10 @@ export function TaxaColoringWindow({ taxaNames = [], originalColorMap = {}, onAp
       </header>
       <main className="flex-1 space-y-3 overflow-auto pr-1">
         <Tabs value={mode} onValueChange={setMode} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3 md:w-auto">
-            <TabsTrigger value="taxa">Taxa</TabsTrigger>
-            <TabsTrigger value="groups">Group by Pattern</TabsTrigger>
-            <TabsTrigger value="csv">Import CSV</TabsTrigger>
+          <TabsList className="h-8 p-0.5 bg-muted/70 w-fit mx-auto md:mx-0">
+            <TabsTrigger value="taxa" className="h-7 text-xs font-medium px-4">Taxa</TabsTrigger>
+            <TabsTrigger value="groups" className="h-7 text-xs font-medium px-4">Group by Pattern</TabsTrigger>
+            <TabsTrigger value="csv" className="h-7 text-xs font-medium px-4">Import CSV</TabsTrigger>
           </TabsList>
 
           <TabsContent value="taxa">

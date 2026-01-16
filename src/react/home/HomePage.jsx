@@ -38,6 +38,12 @@ const formSchema = z.object({
 });
 
 export function HomePage() {
+  React.useEffect(() => {
+    console.log("[HomePage] Mounted");
+  }, []);
+
+  console.log("[HomePage] Rendering...");
+
   const {
     treesFile, setTreesFile,
     msaFile, setMsaFile,

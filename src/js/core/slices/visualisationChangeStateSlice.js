@@ -536,17 +536,7 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
     colorManager?.updateUpcomingChangeEdges?.(upcoming);
   },
 
-  setHighlightSourceEnabled: (enabled) => {
-    set((s) => ({ highlightSourceEnabled: enabled, colorVersion: s.colorVersion + 1 }));
-    const { treeControllers } = get();
-    renderTreeControllers(treeControllers);
-  },
 
-  setHighlightDestinationEnabled: (enabled) => {
-    set((s) => ({ highlightDestinationEnabled: enabled, colorVersion: s.colorVersion + 1 }));
-    const { treeControllers } = get();
-    renderTreeControllers(treeControllers);
-  },
 });
 
 // ==========================================================================

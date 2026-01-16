@@ -24,6 +24,8 @@ export class DeckManager {
     this._resizeObserver = null;
     this.useExternalDeck = options.useExternalDeck ?? false;
     this._viewStateListeners = new Set();
+    this._layerListeners = new Set(); // Listeners for layer updates (for React ref sync)
+    this._controllerConfigListeners = new Set();
 
     // Event callbacks
     this._onWebGLInitialized = null;
@@ -243,12 +245,14 @@ export class DeckManager {
   // ==========================================================================
 
   setProps(props) {
-    if (this.useExternalDeck) {
-      // In React mode, we don't directly set props on the deck
-      // Layers are managed via React state, other props via callbacks
-      console.warn('[DeckManager] setProps called in external deck mode - use React state instead');
+    // In React mode, we typically use state. However, for high-frequency animation updates
+    // driven by the controller (bypassing React render cycle for perf), we allow direct updates
+    // if the deck instance is attached.
+    if (this.useExternalDeck && !this.deck) {
+      console.warn('[DeckManager] setProps called in external deck mode but no deck attached');
       return;
     }
+
     if (!this.deck) {
       console.warn('[DeckManager] Deck not initialized, cannot set props');
       return;
@@ -257,12 +261,22 @@ export class DeckManager {
   }
 
   setLayers(layers) {
-    // In React mode, layers should be set via _reactLayerUpdater, not here
-    if (this.useExternalDeck) {
-      console.warn('[DeckManager] setLayers called in external deck mode - use React layer updater instead');
-      return;
+    if (this.useExternalDeck && !this.deck) {
+       console.warn('[DeckManager] setLayers called in external deck mode but no deck attached');
+       return;
     }
+    // Notify listeners (e.g. to update React ref cache)
+    this._layerListeners.forEach(listener => listener(layers));
+
     this.setProps({ layers });
+  }
+
+  addLayerListener(listener) {
+    this._layerListeners.add(listener);
+  }
+
+  removeLayerListener(listener) {
+    this._layerListeners.delete(listener);
   }
 
   getControllerConfig() {
@@ -425,11 +439,11 @@ export class DeckManager {
     return id === VIEW_IDS.ORTHO ? this.interpolatorOrtho : this.interpolatorOrbit;
   }
 
-  _clampZoom(id, z) {
-    const vs = this.viewStates[id];
-    const minZ = vs.minZoom ?? -Infinity;
-    const maxZ = vs.maxZoom ?? Infinity;
-    return Math.max(minZ, Math.min(maxZ, z));
+  _clampZoom(viewId, zoom) {
+    const viewState = this.viewStates[viewId];
+    const minZoom = viewState.minZoom ?? -Infinity;
+    const maxZoom = viewState.maxZoom ?? Infinity;
+    return Math.max(minZoom, Math.min(maxZoom, zoom));
   }
 
   _applyViewState(id, patch, transitionProps) {

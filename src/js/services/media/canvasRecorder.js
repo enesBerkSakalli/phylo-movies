@@ -11,17 +11,20 @@ export class CanvasRecorder {
     videoBitsPerSecond = 2500000, // 2.5 Mbps for good quality
     autoSave = false,
     filename = null,
-    notifications = null,
+    backgroundColor = '#FFFFFF', // Force white background for video
   } = {}) {
     this.framerate = framerate;
     this.mimeType = mimeType;
     this.videoBitsPerSecond = videoBitsPerSecond;
     this.autoSave = autoSave;
     this.filename = filename;
-    this.notifications = notifications;
+    this.backgroundColor = backgroundColor;
 
     this.mediaRecorder = null;
     this.canvas = null;
+    this.proxyCanvas = null;
+    this.proxyCtx = null;
+    this.renderLoopId = null;
     this.stream = null;
     this.recordedChunks = [];
     this.isRecording = false;
@@ -47,24 +50,36 @@ export class CanvasRecorder {
       throw new Error('Canvas stream not initialized');
     }
 
-    // Check for MediaRecorder support and best codec
-    const options = { mimeType: this.mimeType, videoBitsPerSecond: this.videoBitsPerSecond };
+    // Prioritize MP4 (H.264), then WebM
+    const preferredTypes = [
+      'video/mp4;codecs=h264',
+      'video/mp4;codecs=avc1.42E01E',
+      'video/mp4',
+      'video/webm;codecs=vp9',
+      'video/webm;codecs=vp8',
+      'video/webm'
+    ];
 
-    // Fallback to alternative codecs if vp9 not supported
-    if (!MediaRecorder.isTypeSupported(this.mimeType)) {
-      const fallbacks = [
-        'video/webm;codecs=vp8',
-        'video/webm',
-        'video/mp4'
-      ];
+    let options = { videoBitsPerSecond: this.videoBitsPerSecond };
+    let selectedType = null;
 
-      for (const type of fallbacks) {
+    // 1. Try user-provided mimeType first if valid
+    if (this.mimeType && MediaRecorder.isTypeSupported(this.mimeType)) {
+      selectedType = this.mimeType;
+    } else {
+      // 2. Fallback to preferred list
+      for (const type of preferredTypes) {
         if (MediaRecorder.isTypeSupported(type)) {
-          options.mimeType = type;
-          this._notifyInfo(`Using fallback codec: ${type}`);
+          selectedType = type;
           break;
         }
       }
+    }
+
+    if (selectedType) {
+        options.mimeType = selectedType;
+    } else {
+        console.warn('[CanvasRecorder] No preferred mimeType supported, letting browser choose default.');
     }
 
     this.mediaRecorder = new MediaRecorder(this.stream, options);
@@ -78,12 +93,26 @@ export class CanvasRecorder {
 
     this.mediaRecorder.onerror = (event) => {
       console.error('[CanvasRecorder] MediaRecorder error:', event.error);
-      this._notifyError(event.error);
     };
   }
 
-  // Native canvas.captureStream() handles frame capture automatically
-  // No manual frame capture hooks needed
+  _startRenderLoop() {
+    const render = () => {
+      if (!this.isRecording) return;
+
+      // 1. Clear with solid background
+      this.proxyCtx.fillStyle = this.backgroundColor;
+      this.proxyCtx.fillRect(0, 0, this.proxyCanvas.width, this.proxyCanvas.height);
+
+      // 2. Draw source canvas onto proxy
+      // WebGL canvas must have preserveDrawingBuffer: true for this to work
+      this.proxyCtx.drawImage(this.canvas, 0, 0);
+
+      this.renderLoopId = requestAnimationFrame(render);
+    };
+
+    this.renderLoopId = requestAnimationFrame(render);
+  }
 
   async start() {
     if (this.isRecording) return;
@@ -91,8 +120,18 @@ export class CanvasRecorder {
     try {
       this.canvas = this._resolveCanvas();
 
-      // Use native canvas.captureStream() API
-      this.stream = this.canvas.captureStream(this.framerate);
+      // Create a proxy canvas to handle background color
+      // This is necessary because MediaRecorder interprets transparency as black
+      this.proxyCanvas = document.createElement('canvas');
+      this.proxyCanvas.width = this.canvas.width;
+      this.proxyCanvas.height = this.canvas.height;
+      this.proxyCtx = this.proxyCanvas.getContext('2d');
+
+      // Start render loop to composite frames
+      this._startRenderLoop();
+
+      // Use proxy canvas for stream capture
+      this.stream = this.proxyCanvas.captureStream(this.framerate);
 
       if (!this.stream || this.stream.getTracks().length === 0) {
         throw new Error('Failed to capture canvas stream');
@@ -100,15 +139,13 @@ export class CanvasRecorder {
 
       this._initializeMediaRecorder();
 
-      // Start recording with timeslice for periodic data availability
-      this.mediaRecorder.start(1000); // Request data every second
+      // Start recording
+      this.mediaRecorder.start(1000);
       this.isRecording = true;
       this.recordedBlob = null;
-
-      this._notifyInfo('Recording started. Capturing the visualization canvas.');
     } catch (error) {
       this._cleanup();
-      this._notifyError(error);
+      console.error('[CanvasRecorder] Start error:', error);
       throw error;
     }
   }
@@ -118,6 +155,11 @@ export class CanvasRecorder {
 
     this.isRecording = false;
 
+    if (this.renderLoopId) {
+      cancelAnimationFrame(this.renderLoopId);
+      this.renderLoopId = null;
+    }
+
     return new Promise((resolve, reject) => {
       this.mediaRecorder.onstop = async () => {
         try {
@@ -126,7 +168,6 @@ export class CanvasRecorder {
           });
 
           this.recordedBlob = blob;
-          this._notifyInfo('Recording finished. Preparing download.');
 
           if (this.autoSave) {
             this.performAutoSave(this.filename, blob);
@@ -136,24 +177,27 @@ export class CanvasRecorder {
           resolve(blob);
         } catch (error) {
           this._cleanup();
-          this._notifyError(error);
+          console.error('[CanvasRecorder] Stop error:', error);
           reject(error);
         }
       };
 
-      // Stop the MediaRecorder
       try {
         this.mediaRecorder.stop();
       } catch (error) {
         this._cleanup();
-        this._notifyError(error);
+        console.error('[CanvasRecorder] Stop error:', error);
         reject(error);
       }
     });
   }
 
   _cleanup() {
-    // Stop and clean up media stream tracks
+    if (this.renderLoopId) {
+      cancelAnimationFrame(this.renderLoopId);
+      this.renderLoopId = null;
+    }
+
     if (this.stream) {
       this.stream.getTracks().forEach(track => track.stop());
       this.stream = null;
@@ -161,6 +205,8 @@ export class CanvasRecorder {
 
     this.mediaRecorder = null;
     this.canvas = null;
+    this.proxyCanvas = null;
+    this.proxyCtx = null;
     this.recordedChunks = [];
   }
 
@@ -168,14 +214,22 @@ export class CanvasRecorder {
     return this.recordedBlob;
   }
 
+  _getExtension(mimeType) {
+    if (!mimeType) return 'webm';
+    if (mimeType.includes('mp4')) return 'mp4';
+    if (mimeType.includes('webm')) return 'webm';
+    return 'webm'; // default fallback
+  }
+
   createDownloadLink(blob = this.recordedBlob, filename = null) {
     if (!blob) return null;
+    const ext = this._getExtension(blob.type);
     const finalName = this._buildFilename(filename);
     const url = URL.createObjectURL(blob);
     const downloadLink = document.createElement('a');
     downloadLink.href = url;
-    downloadLink.download = `${finalName}.webm`;
-    downloadLink.textContent = `Download ${finalName}.webm`;
+    downloadLink.download = `${finalName}.${ext}`;
+    downloadLink.textContent = `Download ${finalName}.${ext}`;
     downloadLink.style.display = 'block';
     // Store URL for cleanup
     downloadLink.dataset.blobUrl = url;
@@ -194,10 +248,7 @@ export class CanvasRecorder {
     if (url) {
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
-    if (this.notifications) {
-      this.notifications.show(`Recording saved as: ${link.download}`, 'success');
-    }
-    return link.download.replace(/\.webm$/, '');
+    return link.download;
   }
 
   // Removed - UI prompts should be handled by React components, not service layer
@@ -209,15 +260,6 @@ export class CanvasRecorder {
 
   _notifyError(error) {
     console.error('[CanvasRecorder] Recording error:', error);
-    if (this.notifications) {
-      this.notifications.show(`Recording error: ${error.message || error}`, 'error');
-    }
-  }
-
-  _notifyInfo(message) {
-    if (this.notifications) {
-      this.notifications.show(message, 'info');
-    }
   }
 
 }

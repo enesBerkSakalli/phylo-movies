@@ -1,0 +1,17 @@
+# Phylo-Movies Desktop - Backend Requirements
+#
+# Option 1: Install BranchArchitect from local clone (recommended for development)
+# First clone: git clone https://github.com/EnesSakalliUniWien/BranchArchitect.git
+# Then: pip install -e ./BranchArchitect
+
+# Option 2: Install directly from GitHub (simpler but slower)
+# Uncomment the line below if you don't want to clone manually:
+# git+https://github.com/EnesSakalliUniWien/BranchArchitect.git@main
+
+# PyInstaller for bundling
+pyinstaller>=6.0.0
+
+# Flask dependencies (should be pulled by BranchArchitect, but listed as backup)
+flask>=2.3.0
+flask-cors>=4.0.0
+werkzeug>=2.3.0

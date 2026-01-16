@@ -8,6 +8,8 @@ import { BranchLengthHistogram } from './BranchLengths/BranchLengthHistogram';
 import { SubtreeFrequencyList } from './SubtreeAnalytics/SubtreeFrequencyList';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
 import { TaxaLegend } from './Shared/TaxaLegend';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ChevronDown } from 'lucide-react';
 
 /**
  * TopScaleBar component displays phylogenetic scale metrics for the current tree:
@@ -27,6 +29,7 @@ export const TreeStatsPanel: React.FC = () => {
   const maxScale = useAppStore((s) => s.movieData?.maxScale || 0);
   const fullTreeIndices = useAppStore((s) => s.movieData?.fullTreeIndices);
   const transitionResolver = useAppStore((s) => s.transitionResolver);
+  const branchTransformation = useAppStore((s) => s.branchTransformation);
 
   // Compute scale metrics and histogram (memoized)
   const {
@@ -46,6 +49,7 @@ export const TreeStatsPanel: React.FC = () => {
   });
 
   const progressPercent = Math.round(progress * 100);
+  const showBranchLengths = branchTransformation !== 'ignore' && histogramBins.length > 0;
 
   return (
     <div
@@ -54,30 +58,46 @@ export const TreeStatsPanel: React.FC = () => {
       aria-label="Phylogenetic Scale Tracker"
       style={{ maxWidth: 200, minWidth: 160, width: '100%', overflow: 'hidden' }}
     >
-      {/* Current scale value and progress */}
-      <CurrentScaleDisplay
-        formattedCurrent={formattedCurrent}
-        formattedMax={formattedMax}
-        progressPercent={progressPercent}
-      />
+      <Collapsible defaultOpen={false} className="w-full group/top-scale-collapsible">
+        <CollapsibleTrigger asChild>
+          <button
+            type="button"
+            className="inline-flex w-full items-center justify-between text-xs text-muted-foreground"
+            aria-label="Toggle analytics panel"
+          >
+            <span className="uppercase tracking-wider font-medium">Analytics</span>
+            <ChevronDown className="size-3 transition-transform group-data-[state=open]/top-scale-collapsible:rotate-180" />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="pt-2 space-y-2">
+          {/* Current scale value and progress */}
+          <CurrentScaleDisplay
+            formattedCurrent={formattedCurrent}
+            formattedMax={formattedMax}
+            progressPercent={progressPercent}
+          />
 
-      {/* Branch length histogram */}
-      <BranchLengthHistogram
-        bins={histogramBins}
-        maxCount={histogramMax}
-        stats={histogramStats}
-      />
+          {/* Branch length histogram */}
+          {showBranchLengths ? (
+            <BranchLengthHistogram
+              bins={histogramBins}
+              maxCount={histogramMax}
+              stats={histogramStats}
+            />
+          ) : null}
 
-      {/* Subtree Frequency Analytics */}
-      <SubtreeFrequencyList />
+          {/* Subtree Frequency Analytics */}
+          <SubtreeFrequencyList />
 
-      {/* Advanced Analytics Dashboard Trigger */}
-      <div className="mt-2 text-center">
-         <AnalyticsDashboard />
-      </div>
+          {/* Advanced Analytics Dashboard Trigger */}
+          <div className="mt-2 text-center">
+            <AnalyticsDashboard />
+          </div>
 
-      {/* Taxa groups legend (content populated externally) */}
-      <TaxaLegend />
+          {/* Taxa groups legend (content populated externally) */}
+          <TaxaLegend />
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 };

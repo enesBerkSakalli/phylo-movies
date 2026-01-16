@@ -1,4 +1,5 @@
 import { prepareJumpingSubtreeConnectors } from '../deckgl/data/transforms/ComparisonPrep.js';
+import { useAppStore } from '../../core/store.js';
 import {
   calculateRightOffset,
   applyOffset,
@@ -33,13 +34,18 @@ export class ComparisonModeRenderer {
    * @param {number} rightIndex - Right tree index
    */
   async renderStatic(leftIndex, rightIndex) {
-    const { treeList } = this.controller._getState();
+    const { treeList, leftTreeOffsetX = 0, leftTreeOffsetY = 0, viewsConnected } = useAppStore.getState();
 
-    const clampedLeftIndex = this.controller._clampIndex(leftIndex);
-    const clampedRightIndex = this.controller._clampIndex(rightIndex);
+    const clampIndex = (idx) => {
+      if (!Array.isArray(treeList)) return 0;
+      return Math.min(Math.max(idx, 0), treeList.length - 1);
+    };
 
-    const leftTreeData = treeList[clampedLeftIndex];
-    const rightTreeData = treeList[clampedRightIndex];
+    const clampedLeftIndex = clampIndex(leftIndex);
+    const clampedRightIndex = clampIndex(rightIndex);
+
+    const leftTreeData = treeList?.[clampedLeftIndex];
+    const rightTreeData = treeList?.[clampedRightIndex];
 
     // Guard against null/undefined tree data
     if (!leftTreeData || !rightTreeData) {
@@ -63,11 +69,14 @@ export class ComparisonModeRenderer {
       rotationAlignmentKey: 'comparison-right'
     });
 
-    const leftLeaves = leftLayout.tree.leaves();
+    // Safety check for layout
+    if (!leftLayout || !rightLayout) {
+        console.warn('[ComparisonModeRenderer] Layout calculation failed, skipping renderStatic');
+        return;
+    }
+
     const { extensionRadius, labelRadius } = this.controller._getConsistentRadii(
-      leftLayout,
-      null,
-      leftLeaves
+      leftLayout
     );
 
     const leftLayerData = this.controller.dataConverter.convertTreeToLayerData(
@@ -91,9 +100,8 @@ export class ComparisonModeRenderer {
     );
 
     const canvasWidth = this.controller.deckManager.getCanvasDimensions().width;
-    const state = this.controller._getState();
-    const { leftTreeOffsetX = 0, leftTreeOffsetY = 0 } = state;
-    const viewOffset = this.controller._getViewOffset();
+
+    const viewOffset = this.controller.viewportManager.getViewOffset();
     const rightOffset = calculateRightOffset(canvasWidth, viewOffset);
 
     // Apply independent offsets to both trees
@@ -101,7 +109,6 @@ export class ComparisonModeRenderer {
     applyOffset(rightLayerData, rightOffset, viewOffset.y);
 
     // Build connectors between trees if views are linked
-    const { viewsConnected } = state;
     const connectors = viewsConnected
       ? this._buildConnectors(
         buildPositionMap(leftLayerData.nodes, leftLayerData.labels),
@@ -156,11 +163,13 @@ export class ComparisonModeRenderer {
       rotationAlignmentKey: 'comparison-right'
     });
 
-    const rightLeaves = rightLayout.tree.leaves();
+    if (!rightLayout) {
+         console.warn('[ComparisonModeRenderer] Right layout calculation failed, skipping renderAnimated');
+         return;
+    }
+
     const { extensionRadius, labelRadius } = this.controller._getConsistentRadii(
-      rightLayout,
-      null,
-      rightLeaves
+      rightLayout
     );
 
     const rightLayerData = this.controller.dataConverter.convertTreeToLayerData(
@@ -174,16 +183,14 @@ export class ComparisonModeRenderer {
     );
 
     const canvasWidth = this.controller.deckManager.getCanvasDimensions().width;
-    const state = this.controller._getState();
-    const { leftTreeOffsetX = 0, leftTreeOffsetY = 0 } = state;
-    const viewOffset = this.controller._getViewOffset();
+    const { leftTreeOffsetX = 0, leftTreeOffsetY = 0, viewsConnected } = useAppStore.getState();
+    const viewOffset = this.controller.viewportManager.getViewOffset();
     const rightOffset = calculateRightOffset(canvasWidth, viewOffset);
 
     // Apply independent offsets to both trees
     applyOffset(interpolatedData, leftTreeOffsetX, leftTreeOffsetY);
     applyOffset(rightLayerData, rightOffset, viewOffset.y);
 
-    const { viewsConnected } = this.controller._getState();
     const connectors = viewsConnected
       ? this._buildConnectors(
         buildPositionMap(interpolatedData.nodes, interpolatedData.labels),
@@ -227,7 +234,7 @@ export class ComparisonModeRenderer {
    * Delegated to prepareJumpingSubtreeConnectors transform.
    */
   _buildConnectors(leftPositions, rightPositions, leftCenter = [0, 0], rightCenter = [0, 0]) {
-    const state = this.controller._getState();
+    const state = useAppStore.getState();
     const currentTreeIndex = state?.currentTreeIndex ?? 0;
     const activeChangeEdgeTracking = state?.activeChangeEdgeTracking || [];
     const activeChangeEdge = activeChangeEdgeTracking[currentTreeIndex];

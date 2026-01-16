@@ -2,6 +2,7 @@ import { colorToRgb } from '../../../../services/ui/colorUtils.js';
 import { getBaseNodeColor } from '../../../systems/color/index.js';
 import { calculateRadialBundlePoint, buildBundledBezierPath } from '../../../utils/BundleUtils.js';
 import { flattenSubtreeEntries } from '../../layers/styles/subtreeMatching.js';
+import { TREE_COLOR_CATEGORIES } from '../../../../constants/TreeColors.js';
 
 /**
  * Prepares connector data for jumping subtrees between two trees.
@@ -102,7 +103,11 @@ export function prepareJumpingSubtreeConnectors({
       colorHex = getBaseNodeColor(nodeForColor, monophyleticEnabled);
     }
 
-    const [r, g, b] = colorHex ? colorToRgb(colorHex) : [200, 80, 80];
+    // Use activeChangeEdgeColor as fallback for consistency if no color is found
+    // instead of hardcoded [200, 80, 80]
+    const fallbackHex = TREE_COLOR_CATEGORIES.activeChangeEdgeColor || '#2196f3';
+    const finalColorHex = colorHex || fallbackHex;
+    const [r, g, b] = colorToRgb(finalColorHex);
 
     rawConnections.push({
       id: `connector-${key}-${rightMatch.key}`,

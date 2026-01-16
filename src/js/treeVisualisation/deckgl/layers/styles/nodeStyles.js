@@ -19,7 +19,7 @@ const isHistorySubtreeNode = (nodeData, cached) => {
 };
 
 export function getNodeColor(node, cached, helpers) {
-  const { colorManager: cm, dimmingEnabled, dimmingOpacity, upcomingChangesEnabled, markedSubtreeData, highContrastHighlightingEnabled } = cached;
+  const { colorManager: cm, dimmingEnabled, dimmingOpacity, upcomingChangesEnabled, markedSubtreeData, highlightColorMode } = cached;
 
   // Convert node data to format expected by ColorManager
   const nodeData = toColorManagerNode(node);
@@ -46,15 +46,20 @@ export function getNodeColor(node, cached, helpers) {
   // Check if node is MARKED (persistent highlight)
   // Use high-contrast color for fill if enabled
   if (shouldHighlightMarkedNode(nodeData, cached)) {
-    let highlightRgb = colorToRgb(TREE_COLOR_CATEGORIES.markedColor);
+    const mode = highlightColorMode || 'solid';
 
-    if (highContrastHighlightingEnabled) {
+    if (mode === 'contrast') {
       // Get base node color to calculate contrast (matches link behavior)
       const baseHex = cm?.getNodeBaseColor?.(nodeData) || '#000000';
       const baseRgb = colorToRgb(baseHex);
-      highlightRgb = getContrastingHighlightColor(baseRgb);
+      rgb = getContrastingHighlightColor(baseRgb);
+    } else if (mode === 'solid') {
+      rgb = colorToRgb(cached.markedColor || TREE_COLOR_CATEGORIES.markedColor);
+    } else {
+      // 'taxa' mode: use base color without fallback
+      const baseHex = cm?.getNodeBaseColor?.(nodeData) || '#000000';
+      rgb = colorToRgb(baseHex);
     }
-    rgb = highlightRgb;
   }
 
   // Calculate opacity with unified dimming logic
@@ -76,7 +81,7 @@ export function getNodeColor(node, cached, helpers) {
 }
 
 export function getNodeBorderColor(node, cached, helpers) {
-  const { colorManager: cm, dimmingEnabled, dimmingOpacity, upcomingChangesEnabled, markedSubtreeData, pulseOpacity, highContrastHighlightingEnabled } = cached;
+  const { colorManager: cm, dimmingEnabled, dimmingOpacity, upcomingChangesEnabled, markedSubtreeData, pulseOpacity, highlightColorMode } = cached;
   const nodeData = toColorManagerNode(node);
 
   if (!cm) {
@@ -105,15 +110,21 @@ export function getNodeBorderColor(node, cached, helpers) {
   // Check if node is MARKED (persistent highlight)
   // Use static opaque border matching the high-contrast glow
   if (shouldHighlightMarkedNode(nodeData, cached)) {
-    let highlightRgb = colorToRgb(TREE_COLOR_CATEGORIES.markedColor);
+    const mode = highlightColorMode || 'solid';
 
-    if (highContrastHighlightingEnabled) {
+    if (mode === 'contrast') {
       // Get base node color to calculate contrast (matches link behavior)
       const baseHex = cm?.getNodeBaseColor?.(nodeData) || '#000000';
       const baseRgb = colorToRgb(baseHex);
-      highlightRgb = getContrastingHighlightColor(baseRgb);
+      rgb = getContrastingHighlightColor(baseRgb);
+    } else if (mode === 'taxa') {
+      // Taxa mode: use base color without fallback
+      const baseHex = cm?.getNodeBaseColor?.(nodeData) || '#000000';
+      rgb = colorToRgb(baseHex);
+    } else {
+      // 'solid' mode
+      rgb = colorToRgb(cached.markedColor || TREE_COLOR_CATEGORIES.markedColor);
     }
-    rgb = highlightRgb;
   } else if (isHistorySubtreeNode(nodeData, cached)) {
     // History subtrees: silhouette-only border
     rgb = colorToRgb(TREE_COLOR_CATEGORIES.strokeColor || '#000000');
@@ -121,9 +132,20 @@ export function getNodeBorderColor(node, cached, helpers) {
     // Normal node border
     rgb = colorToRgb(TREE_COLOR_CATEGORIES.strokeColor || '#000000');
   } else {
-    // Active Edge: pulsing border base color
-    const hexColor = cm.getNodeColor(nodeData);
-    rgb = colorToRgb(hexColor);
+    // Active Edge: pulsing border
+    const mode = highlightColorMode || 'solid';
+
+    if (mode === 'contrast') {
+      const baseHex = cm.getNodeBaseColor?.(nodeData) || '#000000';
+      const baseRgb = colorToRgb(baseHex);
+      rgb = getContrastingHighlightColor(baseRgb);
+    } else if (mode === 'solid') {
+      rgb = colorToRgb(cached.markedColor || TREE_COLOR_CATEGORIES.markedColor);
+    } else {
+      // 'taxa' mode or 'color' mode active
+      const hexColor = cm?.getNodeBaseColor?.(nodeData) || '#000000';
+      rgb = colorToRgb(hexColor);
+    }
   }
 
   // Calculate final opacity
@@ -228,22 +250,29 @@ export function getLabelSize(label, fontSize, cached) {
 }
 
 export function getNodeBasedRgba(entity, baseOpacity, cached, helpers) {
-  const { colorManager: cm, dimmingEnabled, dimmingOpacity, subtreeDimmingEnabled, subtreeDimmingOpacity, markedSubtreeData, highContrastHighlightingEnabled } = cached;
+  const { colorManager: cm, dimmingEnabled, dimmingOpacity, subtreeDimmingEnabled, subtreeDimmingOpacity, markedSubtreeData, highlightColorMode } = cached;
   const node = toColorManagerNode(entity);
 
   let rgb = colorToRgb(cm?.getNodeColor?.(node) || '#000000');
 
-  // Check if part of marked subtree - if so, use contrasting highlight
-  if (shouldHighlightMarkedNode(node, cached)) {
-    let highlightRgb = colorToRgb(TREE_COLOR_CATEGORIES.markedColor); // Default red
+  // Check if part of marked subtree OR active/highlighted - if so, use contrasting highlight
+  if (shouldHighlightMarkedNode(node, cached) || isNodeVisuallyHighlighted(node, cm, cached.markedSubtreesEnabled)) {
+    const mode = highlightColorMode || 'solid';
+    // console.log("[Debug] Node Highlight:", { id: node.id, mode, highlightColorMode, cachedMode: cached.highlightColorMode });
 
-    if (highContrastHighlightingEnabled) {
+    if (mode === 'contrast') {
       // Use node base color for contrast calculation (matches link behavior)
       const baseHex = cm?.getNodeBaseColor?.(node) || '#000000';
       const baseRgb = colorToRgb(baseHex);
-      highlightRgb = getContrastingHighlightColor(baseRgb);
+      rgb = getContrastingHighlightColor(baseRgb);
+    } else if (mode === 'solid') {
+      rgb = colorToRgb(cached.markedColor || TREE_COLOR_CATEGORIES.markedColor);
+    } else {
+      // 'taxa' mode: use base color without fallback
+      // If no base color (black), it stays black, honoring the 'taxa' request
+      const baseHex = cm?.getNodeBaseColor?.(node) || '#000000';
+      rgb = colorToRgb(baseHex);
     }
-    rgb = highlightRgb;
   }
 
   let opacity = helpers.getBaseOpacity(baseOpacity);
@@ -262,3 +291,4 @@ export function getNodeBasedRgba(entity, baseOpacity, cached, helpers) {
 
   return [...rgb, opacity];
 }
+

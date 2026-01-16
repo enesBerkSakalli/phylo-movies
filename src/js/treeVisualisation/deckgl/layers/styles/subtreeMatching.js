@@ -28,6 +28,28 @@ export function isLinkInSubtree(linkData, subtreeSets) {
 }
 
 /**
+ * Check if a node is precisely the root of any marked subtree
+ * @param {Object} nodeData - Node data
+ * @param {Array<Set|Array>} subtreeSets - Array of subtree sets
+ * @returns {boolean} True if node is the root of a subtree
+ */
+export function isNodeSubtreeRoot(nodeData, subtreeSets) {
+  const splitIndices = nodeData?.data?.split_indices || nodeData?.split_indices;
+  if (!splitIndices || !subtreeSets?.length) {
+    return false;
+  }
+
+  for (const subtree of subtreeSets) {
+    const subtreeSet = subtree instanceof Set ? subtree : new Set(subtree);
+    if (splitIndices.length === subtreeSet.size) {
+      const isMatch = splitIndices.every(leaf => subtreeSet.has(leaf));
+      if (isMatch) return true;
+    }
+  }
+  return false;
+}
+
+/**
  * Check if a node's split indices are a subset of any marked subtree
  * @param {Object} nodeData - Node data with data.split_indices or split_indices
  * @param {Array<Set|Array>} subtreeSets - Array of subtree sets to check against
@@ -91,29 +113,6 @@ export function isNodeVisuallyHighlighted(nodeData, colorManager, markedSubtrees
   const isActiveEdgeNode = baseColor !== highlightedColor;
 
   return isMarked || isActiveEdgeNode;
-}
-
-/**
- * Check if a node is the exact root of any subtree (split indices equal the subtree set)
- * @param {Object} nodeData - Node data with data.split_indices or split_indices
- * @param {Array<Set|Array>} subtreeSets - Array of subtree sets to check against
- * @returns {boolean} True if node matches any subtree root exactly
- */
-export function isNodeSubtreeRoot(nodeData, subtreeSets) {
-  const splitIndices = nodeData?.data?.split_indices || nodeData?.split_indices;
-  if (!Array.isArray(splitIndices) || !subtreeSets?.length) {
-    return false;
-  }
-
-  for (const subtree of subtreeSets) {
-    const subtreeSet = subtree instanceof Set ? subtree : new Set(subtree);
-    if (splitIndices.length !== subtreeSet.size) continue;
-    const allMatch = splitIndices.every(idx => subtreeSet.has(idx));
-    if (allMatch) {
-      return true;
-    }
-  }
-  return false;
 }
 
 /**

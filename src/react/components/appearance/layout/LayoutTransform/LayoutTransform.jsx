@@ -1,5 +1,5 @@
 import React, { useCallback, useRef } from 'react';
-import { LabeledSlider } from '../../controls/common/LabeledSlider.jsx';
+import { LabeledSlider } from '@/components/ui/labeled-slider';
 import { SidebarMenuSub, SidebarMenuSubItem } from '@/components/ui/sidebar';
 import { RotateCcw, Compass } from 'lucide-react';
 

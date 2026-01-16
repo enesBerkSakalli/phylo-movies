@@ -26,16 +26,16 @@ export function buildSelectionBorder(cellSize, selection, rows, cols) {
   const startX = (startCol - 1) * cellSize;
   const endX = endCol * cellSize;
   const startY = 0;  // Top of the alignment
-  const endY = -rows * cellSize;  // Bottom of the alignment
+  const endY = rows * cellSize;  // Bottom of the alignment
 
   // Create a border rectangle around the selected region
   const borderWidth = 2;  // Border thickness in pixels
   const borderData = [{
     polygon: [
-      [startX - borderWidth, startY + borderWidth],
-      [endX + borderWidth, startY + borderWidth],
-      [endX + borderWidth, endY - borderWidth],
-      [startX - borderWidth, endY - borderWidth]
+      [startX - borderWidth, startY - borderWidth],
+      [endX + borderWidth, startY - borderWidth],
+      [endX + borderWidth, endY + borderWidth],
+      [startX - borderWidth, endY + borderWidth]
     ]
   }];
 

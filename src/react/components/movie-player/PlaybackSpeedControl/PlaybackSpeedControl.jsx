@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import { Slider } from '@/components/ui/slider';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Gauge } from 'lucide-react';
 
 export function PlaybackSpeedControl({ value, setValue }) {
@@ -10,7 +11,14 @@ export function PlaybackSpeedControl({ value, setValue }) {
 
   return (
     <div className="speed-control" role="group" aria-labelledby="speed-control-label">
-      <Gauge className="size-4" />
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Gauge className="size-4" />
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Playback Speed: {value}x</p>
+        </TooltipContent>
+      </Tooltip>
       <Slider
         id="animation-speed-range"
         min={0.1}

@@ -4,10 +4,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export function MovieChartSection({ barOptionValue, onBarOptionChange }) {
   return (
-    <div className="movie-chart-container-full-width" role="region" aria-label="Distance Chart">
-      <div className="chart-row">
-        <DistanceChart />
-        <div className="chart-controls" role="group" aria-label="Chart controls">
+    <div className="w-full" role="region" aria-label="Distance Chart">
+      <div className="flex items-center w-full gap-0">
+        <div className="flex-1 min-w-0 h-[60px] relative">
+            <DistanceChart />
+        </div>
+        <div className="flex-none relative z-[2] ml-2" role="group" aria-label="Chart controls">
           <Select value={barOptionValue} onValueChange={onBarOptionChange}>
             <SelectTrigger className="w-[100px] h-8">
               <SelectValue placeholder="Metric" />

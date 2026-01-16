@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useMemo } from 'react';
 import { useAppStore } from '../../../js/core/store.js';
 import { processPhyloData } from '../../../js/msaViewer/utils/dataUtils.js';
+import { TREE_COLOR_CATEGORIES } from '../../../js/constants/TreeColors.js';
+import { getGroupForTaxon } from '../../../js/treeColoring/utils/GroupingUtils.js';
 
 const MSAContext = createContext(null);
 
@@ -10,6 +12,8 @@ export function MSAProvider({ children }) {
   const msaRegion = useAppStore((s) => s.msaRegion);
   const setMsaRegion = useAppStore((s) => s.setMsaRegion);
   const clearMsaRegion = useAppStore((s) => s.clearMsaRegion);
+  const taxaGrouping = useAppStore((s) => s.taxaGrouping);
+  const taxaColorVersion = useAppStore((s) => s.taxaColorVersion);
 
   const [showLetters, setShowLetters] = useState(true);
   const [colorScheme, setColorScheme] = useState('default');
@@ -31,6 +35,54 @@ export function MSAProvider({ children }) {
     }
   }, [hasMsa, movieData]);
 
+  // Map each taxon id to its assigned color (group > per-taxon palette)
+  const rowColorMap = useMemo(() => {
+    if (!processedData?.sequences) return {};
+    const map = {};
+
+    const csvMap = taxaGrouping?.csvTaxaMap;
+    const getCsvGroup = (taxon) => {
+      if (!csvMap) return null;
+      if (csvMap instanceof Map) return csvMap.get(taxon);
+      if (typeof csvMap === 'object') return csvMap[taxon];
+      return null;
+    };
+
+    processedData.sequences.forEach((seq) => {
+      const id = seq.id;
+      let color = null;
+
+      if (taxaGrouping && taxaGrouping.mode !== 'taxa') {
+        let group = null;
+        if (taxaGrouping.mode === 'groups') {
+          group = getGroupForTaxon(
+            id,
+            taxaGrouping.separators || taxaGrouping.separator,
+            taxaGrouping.strategyType,
+            {
+              segmentIndex: taxaGrouping.segmentIndex,
+              useRegex: taxaGrouping.useRegex,
+              regexPattern: taxaGrouping.regexPattern,
+            }
+          );
+        } else if (taxaGrouping.mode === 'csv') {
+          group = getCsvGroup(id);
+        }
+        if (group && taxaGrouping.groupColorMap?.[group]) {
+          color = taxaGrouping.groupColorMap[group];
+        }
+      }
+
+      // Per-taxon explicit color (do not fall back to defaultColor; default -> no color)
+      if (!color && TREE_COLOR_CATEGORIES[id]) {
+        color = TREE_COLOR_CATEGORIES[id];
+      }
+
+      if (color) map[id] = color;
+    });
+    return map;
+  }, [processedData, taxaGrouping, taxaColorVersion]);
+
   const value = useMemo(() => ({
     movieData,
     processedData,
@@ -45,6 +97,7 @@ export function MSAProvider({ children }) {
     triggerViewAction,
     visibleRange,
     setVisibleRange,
+    rowColorMap,
   }), [
     movieData,
     processedData,
@@ -58,7 +111,8 @@ export function MSAProvider({ children }) {
     viewAction,
     triggerViewAction,
     visibleRange,
-    setVisibleRange
+    setVisibleRange,
+    rowColorMap
   ]);
 
   return (

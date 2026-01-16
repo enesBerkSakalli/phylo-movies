@@ -47,7 +47,9 @@ export function hslToRgb(hslString) {
  * @returns {number[]} RGB array [r, g, b]
  */
 export function colorToRgb(color) {
-  if (!color || typeof color !== 'string') return [0, 0, 0];
+  if (!color) return [0, 0, 0];
+  if (Array.isArray(color)) return color;
+  if (typeof color !== 'string') return [0, 0, 0];
 
   // Handle HSL format
   if (color.startsWith('hsl(')) {
@@ -66,6 +68,17 @@ export function colorToRgb(color) {
   const b = parseInt(hex.substring(4, 6), 16) || 0;
 
   return [r, g, b];
+}
+
+/**
+ * Convert color string to RGBA array (0-255 per channel)
+ * @param {string|Array<number>} color - hex/hsl string or RGB array
+ * @param {number} alpha - alpha 0-255 (defaults to 255)
+ * @returns {number[]} RGBA array [r, g, b, a]
+ */
+export function colorToRgba(color, alpha = 255) {
+  const [r, g, b] = colorToRgb(color);
+  return [r, g, b, alpha];
 }
 
 /**
@@ -101,4 +114,80 @@ export function getContrastingHighlightColor(baseColorRgb) {
   }
 
   return magenta;
+}
+
+/**
+ * Detect the current theme background color from the DOM.
+ * Returns a normalized [r, g, b, a] array (0-1) suitable for WebGL clearColor.
+ * @returns {number[]} [r, g, b, a] where each component is 0-1
+ */
+export function getThemeBackgroundColor() {
+  if (typeof window === 'undefined') return [1, 1, 1, 1];
+
+  // Try multiple elements in case body is transparent
+  const elementsToTry = [
+    document.body,
+    document.documentElement,
+    document.querySelector('.sidebar-inset'),
+    document.querySelector('#root')
+  ];
+
+  for (const el of elementsToTry) {
+    if (!el) continue;
+    const bg = window.getComputedStyle(el).backgroundColor;
+    // parse rgb(r, g, b) or rgba(r, g, b, a) - now handles optional alpha correctly
+    const match = bg.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d?(?:\.\d+)?))?\)/);
+    if (match) {
+      const [, r, g, b, a] = match;
+      const alpha = (a !== undefined && a !== '') ? parseFloat(a) : 1;
+
+      // If alpha is 0, this element is transparent, skip it
+      if (alpha === 0) continue;
+
+      return [
+        parseInt(r, 10) / 255,
+        parseInt(g, 10) / 255,
+        parseInt(b, 10) / 255,
+        1 // Force opaque for WebGL clear
+      ];
+    }
+  }
+
+  // Final fallback based on theme class
+  if (document.documentElement.classList.contains('dark')) {
+    return [0.145, 0.145, 0.145, 1];
+  }
+
+  return [1, 1, 1, 1]; // Default white
+}
+
+/**
+ * Convert RGB array to Hex string
+ * @param {number[]} rgb - [r, g, b]
+ * @returns {string} Hex string "#rrggbb"
+ */
+export function rgbToHex(rgb) {
+  if (!rgb || !Array.isArray(rgb) || rgb.length < 3) return "#000000";
+  const toHex = (c) => {
+    const hex = Math.round(c).toString(16);
+    return hex.length === 1 ? "0" + hex : hex;
+  };
+  return "#" + toHex(rgb[0]) + toHex(rgb[1]) + toHex(rgb[2]);
+}
+
+/**
+ * Convert a map of colors (arrays or strings) to a map of Hex strings
+ * @param {Object} map - Input color map
+ * @returns {Object} New map with Hex values
+ */
+export function toHexMap(map) {
+  const hexMap = {};
+  Object.keys(map).forEach(key => {
+    let val = map[key];
+    if (Array.isArray(val)) {
+      val = rgbToHex(val);
+    }
+    hexMap[key] = val;
+  });
+  return hexMap;
 }

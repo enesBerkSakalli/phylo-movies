@@ -136,7 +136,7 @@ export function createDestinationLabelsLayer(labels, state, layerStyles) {
 }
 
 export function getHighlightLabelsLayerProps(labels, state, layerStyles, cached, options) {
-  const { taxaColorVersion, colorVersion, fontSize } = state || {};
+  const { taxaColorVersion, colorVersion, fontSize, highlightColorMode } = state || {};
   const {
     sizeScale = 1,
     fontWeight,
@@ -158,7 +158,7 @@ export function getHighlightLabelsLayerProps(labels, state, layerStyles, cached,
     getAngle: d => ((d.rotation ?? 0) * 180) / Math.PI,
     getTextAnchor: d => normalizeTextAnchor(d.textAnchor),
     updateTriggers: {
-      getColor: [colorVersion, taxaColorVersion],
+      getColor: [colorVersion, taxaColorVersion, highlightColorMode],
       getSize: [fontSize, colorVersion, taxaColorVersion],
       getPosition: [colorVersion]
     }
@@ -174,7 +174,7 @@ export function getHighlightLabelsLayerProps(labels, state, layerStyles, cached,
  * @returns {Object} props for TextLayer
  */
 export function getLabelsLayerProps(labels, state, layerStyles) {
-  const { taxaColorVersion, colorVersion, fontSize } = state || {};
+  const { taxaColorVersion, colorVersion, fontSize, highlightColorMode } = state || {};
 
   // Get cached state once for all accessors
   const cached = layerStyles.getCachedState();
@@ -191,7 +191,7 @@ export function getLabelsLayerProps(labels, state, layerStyles) {
     getAngle: d => ((d.rotation ?? 0) * 180) / Math.PI,
     getTextAnchor: d => normalizeTextAnchor(d.textAnchor),
     updateTriggers: {
-      getColor: [colorVersion, taxaColorVersion],
+      getColor: [colorVersion, taxaColorVersion, highlightColorMode],
       getSize: [fontSize, colorVersion, taxaColorVersion],
       getPosition: [colorVersion]
     }

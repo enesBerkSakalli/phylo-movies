@@ -30,16 +30,36 @@ export function applyOffset(layerData, offsetX, offsetY) {
   (layerData.links || []).forEach(link => {
     link.sourcePosition = [link.sourcePosition[0] + offsetX, link.sourcePosition[1] + offsetY, link.sourcePosition[2]];
     link.targetPosition = [link.targetPosition[0] + offsetX, link.targetPosition[1] + offsetY, link.targetPosition[2]];
-    if (Array.isArray(link.path)) {
-      link.path = link.path.map(point => [point[0] + offsetX, point[1] + offsetY, point[2]]);
+
+    if (link.path) {
+      if (link.path instanceof Float32Array || link.path instanceof Float64Array) {
+        // Handle typed arrays (flat format [x, y, z, ...]) used in animation
+        for (let i = 0; i < link.path.length; i += 3) {
+          link.path[i] += offsetX;
+          link.path[i + 1] += offsetY;
+        }
+      } else if (Array.isArray(link.path)) {
+        // Handle standard arrays (nested format [[x,y,z], ...]) used in static view
+        link.path = link.path.map(point => [point[0] + offsetX, point[1] + offsetY, point[2]]);
+      }
     }
   });
 
   (layerData.extensions || []).forEach(ext => {
     ext.sourcePosition = [ext.sourcePosition[0] + offsetX, ext.sourcePosition[1] + offsetY, ext.sourcePosition[2]];
     ext.targetPosition = [ext.targetPosition[0] + offsetX, ext.targetPosition[1] + offsetY, ext.targetPosition[2]];
-    if (Array.isArray(ext.path)) {
-      ext.path = ext.path.map(point => [point[0] + offsetX, point[1] + offsetY, point[2]]);
+
+    if (ext.path) {
+      if (ext.path instanceof Float32Array || ext.path instanceof Float64Array) {
+        // Handle typed arrays (flat format [x, y, z, ...]) used in animation
+        for (let i = 0; i < ext.path.length; i += 3) {
+          ext.path[i] += offsetX;
+          ext.path[i + 1] += offsetY;
+        }
+      } else if (Array.isArray(ext.path)) {
+        // Handle standard arrays (nested format [[x,y,z], ...]) used in static view
+        ext.path = ext.path.map(point => [point[0] + offsetX, point[1] + offsetY, point[2]]);
+      }
     }
   });
 

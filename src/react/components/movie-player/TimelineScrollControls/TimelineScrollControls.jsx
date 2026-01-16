@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ChevronsLeft, ChevronsRight, ZoomOut, ZoomIn, Scan } from 'lucide-react';
 import { useAppStore } from '../../../../js/core/store.js';
 
@@ -32,56 +33,79 @@ export function TimelineScrollControls() {
 
   return (
     <>
-      <div className="timeline-zoom-controls" role="group" aria-label="Timeline zoom controls">
-        <Button
-          id="zoomOutBtn"
-          variant="ghost"
-          size="icon"
-          title="Zoom out timeline (Ctrl + -)"
-          onClick={handleZoomOut}
-        >
-          <ZoomOut className="size-4" />
-        </Button>
-        <Button
-          id="fitToWindowBtn"
-          variant="ghost"
-          size="icon"
-          title="Fit entire timeline to window (Ctrl + 0)"
-          onClick={handleFitTimeline}
-        >
-          <Scan className="size-4" />
-        </Button>
-        <Button
-          id="zoomInBtn"
-          variant="ghost"
-          size="icon"
-          title="Zoom in timeline (Ctrl + +)"
-          onClick={handleZoomIn}
-        >
-          <ZoomIn className="size-4" />
-        </Button>
+      <div className="timeline-zoom-controls flex items-center" role="group" aria-label="Timeline zoom controls">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              id="zoomOutBtn"
+              variant="ghost"
+              size="icon"
+              onClick={handleZoomOut}
+            >
+              <ZoomOut className="size-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Zoom out timeline (Ctrl + -)</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              id="fitToWindowBtn"
+              variant="ghost"
+              size="icon"
+              onClick={handleFitTimeline}
+            >
+              <Scan className="size-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Fit entire timeline to window (Ctrl + 0)</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              id="zoomInBtn"
+              variant="ghost"
+              size="icon"
+              onClick={handleZoomIn}
+            >
+              <ZoomIn className="size-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Zoom in timeline (Ctrl + +)</TooltipContent>
+        </Tooltip>
       </div>
 
-      <div className="timeline-scroll-controls" role="group" aria-label="Timeline scroll controls">
-      <Button
-        id="scrollToStartBtn"
-        variant="ghost"
-        size="icon"
-        title="Scroll to start (Home)"
-        onClick={handleScrollToStart}
-      >
-        <ChevronsLeft className="size-4" />
-      </Button>
-      <Button
-        id="scrollToEndBtn"
-        variant="ghost"
-        size="icon"
-        title="Scroll to end (End)"
-        onClick={handleScrollToEnd}
-      >
-        <ChevronsRight className="size-4" />
-      </Button>
-    </div>
+      <div className="timeline-scroll-controls flex items-center" role="group" aria-label="Timeline scroll controls">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              id="scrollToStartBtn"
+              variant="ghost"
+              size="icon"
+              onClick={handleScrollToStart}
+            >
+              <ChevronsLeft className="size-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Scroll to start (Home)</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              id="scrollToEndBtn"
+              variant="ghost"
+              size="icon"
+              onClick={handleScrollToEnd}
+            >
+              <ChevronsRight className="size-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Scroll to end (End)</TooltipContent>
+        </Tooltip>
+      </div>
     </>
   );
 }

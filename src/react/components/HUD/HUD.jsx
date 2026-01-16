@@ -142,7 +142,7 @@ export function HUD() {
   return (
     <Draggable handle=".hud-drag-handle" bounds="parent">
       <div
-        className="phylo-hud fixed bottom-48 left-4 z-50 pointer-events-auto"
+        className="phylo-hud absolute bottom-48 left-4 z-50 pointer-events-auto"
         role="complementary"
         aria-label="Timeline Status Display"
       >

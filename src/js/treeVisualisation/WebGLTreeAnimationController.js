@@ -178,9 +178,9 @@ export class WebGLTreeAnimationController {
   }
 
   _getTransformedTreeData(treeData, branchTransformation, treeIndex) {
-    const cachedList = this._transformedCache.get(branchTransformation);
-    if (cachedList && typeof treeIndex === 'number') {
-      return cachedList[treeIndex];
+    const cached = this._transformedCache.get(branchTransformation);
+    if (cached && cached.transformedList && typeof treeIndex === 'number') {
+      return cached.transformedList[treeIndex];
     }
     if (treeData) {
       return transformBranchLengths(treeData, branchTransformation);
@@ -216,7 +216,7 @@ export class WebGLTreeAnimationController {
   /**
    * Calculates label and extension radii with dynamic positioning.
    */
-  _getConsistentRadii(layout, branchTransformation = null) {
+  _getConsistentRadii(layout) {
     const containerWidth = layout.width - layout.margin * 2;
     const containerHeight = layout.height - layout.margin * 2;
     const maxLeafRadius = Math.min(containerWidth, containerHeight) / 2;
@@ -230,7 +230,6 @@ export class WebGLTreeAnimationController {
     return {
       extensionRadius,
       labelRadius,
-      transformation: branchTransformation || useAppStore.getState().branchTransformation
     };
   }
 
@@ -239,13 +238,20 @@ export class WebGLTreeAnimationController {
   // ==========================================================================
 
   _getOrCacheTransformedTrees(treeList, branchTransformation) {
-    let transformedTreeList = this._transformedCache.get(branchTransformation);
-    if (!transformedTreeList) {
-      transformedTreeList = branchTransformation !== 'none'
-        ? treeList.map(treeData => transformBranchLengths(treeData, branchTransformation))
-        : treeList;
-      this._transformedCache.set(branchTransformation, transformedTreeList);
+    const cached = this._transformedCache.get(branchTransformation);
+    if (cached && cached.sourceList === treeList) {
+      return cached.transformedList;
     }
-    return transformedTreeList;
+
+    const transformedList = branchTransformation !== 'none'
+      ? treeList.map(treeData => transformBranchLengths(treeData, branchTransformation))
+      : treeList;
+
+    this._transformedCache.set(branchTransformation, {
+      sourceList: treeList,
+      transformedList
+    });
+
+    return transformedList;
   }
 }

@@ -33,7 +33,7 @@ export function createNodesLayer(nodes, state, layerStyles) {
  * @returns {Object} props for ScatterplotLayer
  */
 export function getNodesLayerProps(nodes = [], state, layerStyles) {
-  const { taxaColorVersion, colorVersion, nodeSize, upcomingChangesEnabled } = state || {};
+  const { taxaColorVersion, colorVersion, nodeSize, upcomingChangesEnabled, highlightColorMode } = state || {};
 
   // Get cached state once for all accessors
   const cached = layerStyles.getCachedState();
@@ -54,8 +54,8 @@ export function getNodesLayerProps(nodes = [], state, layerStyles) {
     getFillColor: d => layerStyles.getNodeColor(d, cached),
     getLineColor: d => layerStyles.getNodeBorderColor(d, cached),
     updateTriggers: {
-      getFillColor: [colorVersion, taxaColorVersion, upcomingChangesEnabled],
-      getLineColor: [colorVersion, taxaColorVersion, upcomingChangesEnabled],
+      getFillColor: [colorVersion, taxaColorVersion, upcomingChangesEnabled, highlightColorMode],
+      getLineColor: [colorVersion, taxaColorVersion, upcomingChangesEnabled, highlightColorMode],
       getPosition: [colorVersion],
       getRadius: [nodeSize, colorVersion]
     }

@@ -11,14 +11,14 @@ export const createVisualEffectsSlice = (set, get) => ({
   changePulseEnabled: true,
   changePulsePhase: 0,
   activeEdgeDashingEnabled: true,
-  highContrastHighlightingEnabled: true,
+  highlightColorMode: 'solid', // 'contrast' | 'taxa' | 'solid'
   linkConnectionOpacity: 0.6,
 
   // ==========================================================================
   // ACTIONS
   // ==========================================================================
-  setHighContrastHighlightingEnabled: (enabled) => {
-    set((s) => ({ highContrastHighlightingEnabled: enabled, colorVersion: s.colorVersion + 1 }));
+  setHighlightColorMode: (mode) => {
+    set((s) => ({ highlightColorMode: mode, colorVersion: s.colorVersion + 1 }));
     renderTreeControllers(get().treeControllers);
   },
 

@@ -3,7 +3,7 @@ import { MSADeckGLViewer } from '../../../js/msaViewer/MSADeckGLViewer.js';
 import { useMSA } from './MSAContext';
 
 export function MSAViewer() {
-  const { processedData, msaRegion, showLetters, movieData, viewAction, colorScheme, setVisibleRange } = useMSA();
+  const { processedData, msaRegion, showLetters, movieData, viewAction, colorScheme, setVisibleRange, rowColorMap, visibleRange } = useMSA();
   const containerRef = useRef(null);
   const viewerRef = useRef(null);
 
@@ -41,7 +41,7 @@ export function MSAViewer() {
   useEffect(() => {
     if (!containerRef.current) return undefined;
 
-    const viewer = new MSADeckGLViewer(containerRef.current, { showLetters, colorScheme });
+    const viewer = new MSADeckGLViewer(containerRef.current, { showLetters, colorScheme, rowColorMap });
     viewerRef.current = viewer;
 
     // Handle view state changes
@@ -49,10 +49,7 @@ export function MSAViewer() {
     viewer.onViewStateChange = ({ range }) => {
       const now = Date.now();
       if (range && now - lastUpdate > 100) {
-        setVisibleRange({
-          start: range.c0 + 1,
-          end: range.c1 + 1
-        });
+        setVisibleRange(range);
         lastUpdate = now;
       }
     };
@@ -68,21 +65,7 @@ export function MSAViewer() {
       viewer.destroy();
       viewerRef.current = null;
     };
-  }, [processedData]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Reload data when movieData changes while open
-  useEffect(() => {
-    const viewer = viewerRef.current;
-    if (viewer && processedData) {
-      viewer.loadFromPhyloData(movieData);
-      // Re-apply region if exists, but don't trigger this effect on msaRegion change
-      if (msaRegion) {
-        viewer.setRegion(msaRegion.start, msaRegion.end);
-      } else {
-        viewer.clearRegion();
-      }
-    }
-  }, [processedData, movieData]); // Removed msaRegion from dependencies
+  }, [processedData, movieData]); // Added movieData to ensure updates if data changes while open
 
   // Toggle letters without recreating viewer
   useEffect(() => {
@@ -101,5 +84,25 @@ export function MSAViewer() {
     }
   }, [colorScheme]);
 
-  return <div className="msa-rnd-body flex-1 min-h-0 relative bg-white" ref={containerRef} />;
+  // Update row label colors (group/taxon colors)
+  useEffect(() => {
+    const viewer = viewerRef.current;
+    if (viewer) {
+      viewer.setRowColorMap(rowColorMap);
+    }
+  }, [rowColorMap]);
+
+  return (
+    <div className="msa-rnd-body flex-1 min-h-0 relative bg-white" ref={containerRef}>
+      {visibleRange && Number.isFinite(visibleRange.r0) && Number.isFinite(visibleRange.c0) && (
+        <div className="absolute right-3 top-3 z-10 rounded-md bg-black/60 text-white text-[11px] px-3 py-1.5 shadow-md backdrop-blur-sm">
+          <div className="flex gap-2">
+            <span>Rows {visibleRange.r0 + 1}–{visibleRange.r1 + 1}</span>
+            <span className="opacity-70">|</span>
+            <span>Cols {visibleRange.c0 + 1}–{visibleRange.c1 + 1}</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }

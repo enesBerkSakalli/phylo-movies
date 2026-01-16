@@ -1,6 +1,7 @@
 import { useAppStore } from '../../../js/core/store.js';
-import { Switch } from '@/components/ui/switch';
+import { ToggleWithLabel } from '@/components/ui/toggle-with-label';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Dna, RefreshCw, Info, Check, ChevronDown, AlignJustify } from 'lucide-react';
 import {
   SidebarMenu,
@@ -10,9 +11,9 @@ import {
   SidebarMenuSub,
   SidebarMenuSubItem,
   SidebarMenuSubButton,
-  SidebarMenuBadge,
 } from '@/components/ui/sidebar';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
+import { toast } from 'sonner';
 
 export function ButtonsMSA() {
   const hasMsa = useAppStore((s) => s.hasMsa);
@@ -24,14 +25,10 @@ export function ButtonsMSA() {
     if (!hasMsa) return;
 
     try {
-      const [{ notifications }] = await Promise.all([
-        import('../../../js/services/ui/notifications.js')
-      ]);
-
       const data = useAppStore.getState().movieData;
 
       if (!data?.msa?.sequences) {
-        notifications.show('No alignment data available. Please upload an MSA file.', 'warning');
+        toast.warning('No alignment data available. Please upload an MSA file.');
         return;
       }
 
@@ -46,43 +43,42 @@ export function ButtonsMSA() {
         <CollapsibleTrigger asChild>
           <SidebarMenuButton tooltip="Multiple Sequence Alignment">
             <Dna className="text-primary" />
-            <span>Multiple Sequence Alignment</span>
-            <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            <span className="truncate">Multiple Sequence Alignment</span>
+            <div className="ml-auto flex items-center gap-1">
+              {hasMsa && (
+                <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-none hover:bg-emerald-500/20 h-5 px-1.5 text-[10px] font-medium transition-colors">
+                  Active
+                </Badge>
+              )}
+              <ChevronDown className="transition-transform group-data-[state=open]/collapsible:rotate-180" />
+            </div>
           </SidebarMenuButton>
         </CollapsibleTrigger>
-
-        {hasMsa && (
-          <SidebarMenuBadge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-none group-data-[collapsible=icon]:hidden">
-            Active
-          </SidebarMenuBadge>
-        )}
 
         <CollapsibleContent>
           <SidebarMenuSub>
             <SidebarMenuSubItem>
-              <SidebarMenuSubButton
+              <Button
                 onClick={handleOpenViewer}
                 disabled={!hasMsa}
-                size="md"
+                variant="outline"
+                className="w-full justify-start h-8 text-xs font-normal"
               >
-                <Dna className="size-4" />
-                <span>Open Alignment Viewer</span>
-              </SidebarMenuSubButton>
+                <Dna className="size-3.5 mr-2" />
+                <span>Open Viewer</span>
+              </Button>
             </SidebarMenuSubItem>
 
             <SidebarMenuSubItem>
-              <div className="flex items-center justify-between px-2 py-1.5 w-full">
-                <div className="flex items-center gap-2 overflow-hidden">
-                  <RefreshCw className="size-3.5 text-muted-foreground shrink-0" />
-                  <span className="text-xs text-foreground/70 truncate">Sync Window</span>
-                </div>
-                <Switch
+              <div className="px-2 py-1.5">
+                <ToggleWithLabel
                   id="enable-msa-sync-btn"
-                  aria-label="Toggle MSA sync"
+                  label="Sync Window"
                   checked={!!syncMSAEnabled && !!hasMsa}
                   onCheckedChange={(checked) => setSyncMSAEnabled(!!checked)}
                   disabled={!hasMsa}
-                  className="scale-75 origin-right"
+                  className="w-full gap-2 justify-between"
+                  switchPosition="right"
                 />
               </div>
             </SidebarMenuSubItem>

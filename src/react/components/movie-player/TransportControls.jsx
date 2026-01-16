@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ChevronsLeft, ChevronLeft, Play, Pause, ChevronRight, ChevronsRight, GitCompare, Link2, Link2Off } from 'lucide-react';
 import { useAppStore } from '../../../js/core/store.js';
 
@@ -53,95 +54,123 @@ export function TransportControls({
 
   return (
     <>
-      <Button
-        className="transport-button"
-        id="backwardAnchorButton"
-        variant="ghost"
-        size="icon"
-        title="Go to previous anchor tree"
-        aria-label="Previous anchor tree"
-        disabled={!canGoToPreviousAnchor}
-        onClick={onPreviousAnchor}
-      >
-        <ChevronsLeft className="size-4" />
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            className="transport-button"
+            id="backwardAnchorButton"
+            variant="ghost"
+            size="icon"
+            aria-label="Previous anchor tree"
+            disabled={!canGoToPreviousAnchor}
+            onClick={onPreviousAnchor}
+          >
+            <ChevronsLeft className="size-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Go to previous anchor tree</TooltipContent>
+      </Tooltip>
 
-      <Button
-        className="transport-button"
-        id="backward-button"
-        variant="ghost"
-        size="icon"
-        title="Go to previous frame"
-        aria-label="Previous frame"
-        onClick={onBackward}
-      >
-        <ChevronLeft className="size-4" />
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            className="transport-button"
+            id="backward-button"
+            variant="ghost"
+            size="icon"
+            aria-label="Previous frame"
+            onClick={onBackward}
+          >
+            <ChevronLeft className="size-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Go to previous frame</TooltipContent>
+      </Tooltip>
 
-      <Button
-        className="transport-button"
-        id="play-button"
-        variant="ghost"
-        size="icon"
-        title="Play/Pause animation"
-        aria-label="Play/Pause animation"
-        onClick={onPlayClick}
-        data-state={playing ? 'playing' : 'paused'}
-      >
-        {playing ? <Pause className="size-4" /> : <Play className="size-4" />}
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            className="transport-button"
+            id="play-button"
+            variant="ghost"
+            size="icon"
+            aria-label="Play/Pause animation"
+            onClick={onPlayClick}
+            data-state={playing ? 'playing' : 'paused'}
+          >
+            {playing ? <Pause className="size-4" /> : <Play className="size-4" />}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Play/Pause animation</TooltipContent>
+      </Tooltip>
 
-      <Button
-        className="transport-button"
-        id="forward-button"
-        variant="ghost"
-        size="icon"
-        title="Go to next frame"
-        aria-label="Next frame"
-        onClick={onForward}
-      >
-        <ChevronRight className="size-4" />
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            className="transport-button"
+            id="forward-button"
+            variant="ghost"
+            size="icon"
+            aria-label="Next frame"
+            onClick={onForward}
+          >
+            <ChevronRight className="size-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Go to next frame</TooltipContent>
+      </Tooltip>
 
-      <Button
-        className="transport-button"
-        id="forwardAnchorButton"
-        variant="ghost"
-        size="icon"
-        title="Go to next anchor tree"
-        aria-label="Next anchor tree"
-        disabled={!canGoToNextAnchor}
-        onClick={onNextAnchor}
-      >
-        <ChevronsRight className="size-4" />
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            className="transport-button"
+            id="forwardAnchorButton"
+            variant="ghost"
+            size="icon"
+            aria-label="Next anchor tree"
+            disabled={!canGoToNextAnchor}
+            onClick={onNextAnchor}
+          >
+            <ChevronsRight className="size-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Go to next anchor tree</TooltipContent>
+      </Tooltip>
 
-      <Button
-        className="transport-button"
-        id="compare-button"
-        variant="ghost"
-        size="icon"
-        title="Toggle comparison mode"
-        aria-label="Toggle comparison mode"
-        onClick={toggleComparisonMode}
-        data-state={comparisonMode ? 'active' : 'inactive'}
-      >
-        <GitCompare className="size-4" />
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            className="transport-button"
+            id="compare-button"
+            variant="ghost"
+            size="icon"
+            aria-label="Toggle comparison mode"
+            onClick={toggleComparisonMode}
+            data-state={comparisonMode ? 'active' : 'inactive'}
+          >
+            <GitCompare className="size-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Toggle comparison mode</TooltipContent>
+      </Tooltip>
 
       {comparisonMode && (
-        <Button
-          className="transport-button"
-          id="link-views-button"
-          variant="ghost"
-          size="icon"
-          title="Toggle view linking (draw connectors between trees)"
-          aria-label="Toggle view linking"
-          onClick={() => setViewsConnected(!viewsConnected)}
-          data-state={viewsConnected ? 'active' : 'inactive'}
-        >
-          {viewsConnected ? <Link2 className="size-4" /> : <Link2Off className="size-4" />}
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              className="transport-button"
+              id="link-views-button"
+              variant="ghost"
+              size="icon"
+              aria-label="Toggle view linking"
+              onClick={() => setViewsConnected(!viewsConnected)}
+              data-state={viewsConnected ? 'active' : 'inactive'}
+            >
+              {viewsConnected ? <Link2 className="size-4" /> : <Link2Off className="size-4" />}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Toggle view linking (draw connectors between trees)</TooltipContent>
+        </Tooltip>
       )}
     </>
   );

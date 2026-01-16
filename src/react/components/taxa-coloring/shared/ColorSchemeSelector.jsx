@@ -11,9 +11,9 @@ export function ColorSchemeSelector({ onApply, title = "Apply a Color Scheme", d
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <Card className="gap-0 py-0 border-border/40 shadow-none">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 py-3 px-4">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 py-2 px-3">
           <div>
-            <CardTitle className="text-[13px] font-bold">{title}</CardTitle>
+            <CardTitle className="text-xs font-bold uppercase tracking-wide">{title}</CardTitle>
             {description && <CardDescription className="text-[10px] text-muted-foreground">{description}</CardDescription>}
           </div>
           <CollapsibleTrigger asChild>
@@ -24,7 +24,7 @@ export function ColorSchemeSelector({ onApply, title = "Apply a Color Scheme", d
           </CollapsibleTrigger>
         </CardHeader>
         <CollapsibleContent>
-          <CardContent className="grid grid-cols-1 gap-2 p-3 pt-0 md:grid-cols-2">
+          <CardContent className="grid grid-cols-2 gap-2 p-2 pt-0 md:grid-cols-3">
             {Object.entries(CATEGORICAL_PALETTES).map(([id, colors]) => {
               const info = getPaletteInfo(id);
               return (
@@ -33,19 +33,14 @@ export function ColorSchemeSelector({ onApply, title = "Apply a Color Scheme", d
                     <Button
                       type="button"
                       variant="outline"
-                      className="h-auto w-full flex flex-col items-start gap-2 text-left hover:bg-accent/50 transition-colors py-3"
+                      className="h-8 w-full flex items-center justify-start gap-2 px-2 hover:bg-accent/50 transition-colors"
                       onClick={() => onApply(id)}
                     >
-                      <div className="h-4 w-full rounded" style={{ background: `linear-gradient(to right, ${colors.join(", ")})` }} />
-                      <div className="flex items-center gap-1 text-xs">
-                        <span className="font-medium text-foreground">{id}</span>
-                        {info.colorBlindSafe && (
-                          <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
-                            <Eye className="size-3" />
-                            CB-safe
-                          </span>
-                        )}
+                      <div className="h-4 w-12 shrink-0 rounded-sm shadow-sm" style={{ background: `linear-gradient(to right, ${colors.join(", ")})` }} />
+                      <div className="flex-1 truncate text-left text-[10px] font-medium leading-none">
+                        {id}
                       </div>
+                      {info.colorBlindSafe && <Eye className="size-2.5 text-emerald-500 shrink-0" />}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" className="max-w-[300px]">

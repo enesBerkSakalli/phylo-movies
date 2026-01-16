@@ -12,8 +12,12 @@ import { useSidebar } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Menu, ChevronUp, ChevronDown } from 'lucide-react';
 
+import { Separator } from '@/components/ui/separator';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+
 export function MoviePlayerBar() {
-                                           const forward = useAppStore((s) => s.forward);
+  // ... existing hooks ...
+  const forward = useAppStore((s) => s.forward);
   const backward = useAppStore((s) => s.backward);
   const setAnimationSpeed = useAppStore((s) => s.setAnimationSpeed);
   const animationSpeed = useAppStore((s) => s.animationSpeed);
@@ -21,6 +25,7 @@ export function MoviePlayerBar() {
   const setBarOption = useAppStore((s) => s.setBarOption);
   const [toolbarExpanded, setToolbarExpanded] = useState(true);
 
+  // ... rest of state and effects ...
   // Timeline tooltip state
   const hoveredSegmentIndex = useAppStore((s) => s.hoveredSegmentIndex);
   const hoveredSegmentData = useAppStore((s) => s.hoveredSegmentData);
@@ -74,37 +79,41 @@ export function MoviePlayerBar() {
 
   return (
     <>
-      <div className="movie-player-bar" role="region" aria-label="Movie Player Controls">
-        <div className="movie-player-container">
-          <div className="controls-row" role="group" aria-label="Transport controls and chart controls">
-            <div className="left-controls" role="group" aria-label="Transport controls and position">
-              <Button
-                id="nav-toggle-button"
-                variant="ghost"
-                size="icon"
-                title="Toggle sidebar"
-                aria-label="Toggle sidebar"
-                aria-controls="app-sidebar"
-                aria-expanded={open ? 'true' : 'false'}
-                onClick={handleNavigationToggle}
-              >
-                <Menu className="size-4" />
-              </Button>
+      <div className="sticky bottom-0 z-[1000] bg-card border-t shadow-[0_2px_4px_rgba(0,0,0,0.08)] p-1" role="region" aria-label="Movie Player Controls">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center justify-between" role="group" aria-label="Transport controls and chart controls">
+            <div className="flex items-center gap-1 flex-wrap transition-all duration-300" role="group" aria-label="Transport controls and position">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    id="nav-toggle-button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Toggle sidebar"
+                    aria-controls="app-sidebar"
+                    aria-expanded={open ? 'true' : 'false'}
+                    onClick={handleNavigationToggle}
+                  >
+                    <Menu className="size-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Toggle sidebar</TooltipContent>
+              </Tooltip>
 
-              <div className="vertical-divider"></div>
+              <Separator orientation="vertical" className="h-5 mx-1" />
 
               {toolbarExpanded && (
                 <>
                   <TimelineScrollControls />
 
-                  <div className="vertical-divider"></div>
+                  <Separator orientation="vertical" className="h-5 mx-1" />
 
                   <PlaybackSpeedControl
                     value={animationSpeed}
                     setValue={setAnimationSpeed}
                   />
 
-                  <div className="vertical-divider"></div>
+                  <Separator orientation="vertical" className="h-5 mx-1" />
                 </>
               )}
 
@@ -115,34 +124,38 @@ export function MoviePlayerBar() {
 
               {toolbarExpanded && (
                 <>
-                  <div className="vertical-divider"></div>
+                  <Separator orientation="vertical" className="h-5 mx-1" />
 
                   <RecordingControls />
 
-                  <div className="vertical-divider"></div>
+                  <Separator orientation="vertical" className="h-5 mx-1" />
 
                   <SaveImageButton />
                 </>
               )}
 
-              <div className="vertical-divider"></div>
+              <Separator orientation="vertical" className="h-5 mx-1" />
 
-              <Button
-                variant="ghost"
-                size="icon"
-                title={toolbarExpanded ? "Collapse toolbar" : "Expand toolbar"}
-                aria-label={toolbarExpanded ? "Collapse toolbar" : "Expand toolbar"}
-                aria-expanded={toolbarExpanded}
-                onClick={() => setToolbarExpanded(!toolbarExpanded)}
-                className="toolbar-toggle-btn"
-              >
-                {toolbarExpanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label={toolbarExpanded ? "Collapse toolbar" : "Expand toolbar"}
+                    aria-expanded={toolbarExpanded}
+                    onClick={() => setToolbarExpanded(!toolbarExpanded)}
+                    className="hover:bg-accent"
+                  >
+                    {toolbarExpanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{toolbarExpanded ? "Collapse toolbar" : "Expand toolbar"}</TooltipContent>
+              </Tooltip>
             </div>
           </div>
 
-          <div className="timeline-container-full-width">
-            <div className="interpolation-timeline-container">
+          <div className="w-full">
+            <div className="interpolation-timeline-container min-h-[12px]">
               {/* Timeline container will be created dynamically by MovieTimelineManager */}
             </div>
           </div>

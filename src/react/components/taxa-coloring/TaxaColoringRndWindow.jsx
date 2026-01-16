@@ -80,7 +80,7 @@ export function TaxaColoringRndWindow() {
   return (
     <Rnd
       bounds="window"
-      minWidth={760}
+      minWidth={500}
       minHeight={520}
       size={{ width: windowState.width, height: windowState.height }}
       position={{ x: windowState.x, y: windowState.y }}

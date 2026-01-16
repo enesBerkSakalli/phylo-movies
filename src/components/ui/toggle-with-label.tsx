@@ -1,5 +1,6 @@
 import * as React from "react"
 import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 
 export interface ToggleWithLabelProps extends React.HTMLAttributes<HTMLLabelElement> {
@@ -26,7 +27,7 @@ export const ToggleWithLabel = React.forwardRef<HTMLLabelElement, ToggleWithLabe
     }
 
     return (
-      <label
+      <Label
         ref={ref}
         htmlFor={id}
         className={cn(
@@ -63,7 +64,7 @@ export const ToggleWithLabel = React.forwardRef<HTMLLabelElement, ToggleWithLabe
             disabled={disabled}
           />
         )}
-      </label>
+      </Label>
     )
   }
 )
