@@ -4,7 +4,9 @@
  * Handles viewport calculations, camera positioning, bounds checking,
  * and screen space projections for tree visualization.
  */
+import { useAppStore } from '../../core/store.js';
 import { calculateVisualBounds } from '../utils/TreeBoundsUtils.js';
+
 export class ViewportManager {
 
   // ==========================================================================
@@ -20,7 +22,7 @@ export class ViewportManager {
   // ==========================================================================
 
   getViewOffset() {
-    const { viewOffsetX = 0, viewOffsetY = 0 } = this.controller._getState();
+    const { viewOffsetX = 0, viewOffsetY = 0 } = useAppStore.getState();
     const x = Number.isFinite(Number(viewOffsetX)) ? Number(viewOffsetX) : 0;
     const y = Number.isFinite(Number(viewOffsetY)) ? Number(viewOffsetY) : 0;
     return { x, y };
@@ -28,7 +30,7 @@ export class ViewportManager {
 
   initializeOffsets(offset) {
     if (!offset) return;
-    const { setViewOffsetX, setViewOffsetY } = this.controller._getState();
+    const { setViewOffsetX, setViewOffsetY } = useAppStore.getState();
     if (typeof setViewOffsetX === 'function' && offset.x !== undefined) {
       setViewOffsetX(offset.x);
     }
@@ -68,7 +70,7 @@ export class ViewportManager {
   // ==========================================================================
 
   focusOnTree(nodes, labels, options = {}) {
-    const { playing } = this.controller._getState();
+    const { playing } = useAppStore.getState();
     if (playing && !options.allowDuringPlayback) return;
     const bounds = calculateVisualBounds(nodes, labels);
     const densityPadding = this._calculateDensityPadding(nodes);
@@ -161,7 +163,7 @@ export class ViewportManager {
   updateScreenPositions(nodes, sideOverride = null) {
     if (!this.controller.deckManager?.deck || !nodes) return;
 
-    const setScreenPositions = this.controller._getState?.().setScreenPositions;
+    const setScreenPositions = useAppStore.getState().setScreenPositions;
     if (typeof setScreenPositions !== 'function') return;
 
     try {

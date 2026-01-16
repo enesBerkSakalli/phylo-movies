@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { ButtonsMSA } from './components/nav/ButtonsMSA.jsx';
 import { Appearance } from './components/appearance/Appearance.jsx';
@@ -12,6 +13,7 @@ import { TaxaColoringRndWindow } from './components/taxa-coloring/TaxaColoringRn
 import { ClipboardDismissButton } from './components/clipboard/ClipboardDismissButton.jsx';
 import { NodeContextMenu } from './components/NodeContextMenu.jsx';
 import { Toaster } from '@/components/ui/sonner';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { HUD } from './components/HUD/HUD.jsx';
 import {
   SidebarProvider,
@@ -45,6 +47,9 @@ export function App() {
   // Initialize Tree Controller and Rendering Logic
   useTreeController();
 
+  const navigate = useNavigate();
+  const [error, setError] = React.useState(null);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -52,11 +57,18 @@ export function App() {
         const parsedData = await getPhyloMovieData();
         if (cancelled) return;
 
+        if (!parsedData) {
+          console.warn('[App bootstrap] No data found, redirecting to home...');
+          navigate('/home');
+          return;
+        }
+
         // Initialize store directly
         initializeStore(parsedData);
 
       } catch (err) {
         console.error('[App bootstrap] Failed to initialize data:', err);
+        setError(err.message || 'Failed to load data');
       }
     })();
 
@@ -64,7 +76,7 @@ export function App() {
       cancelled = true;
       resetStore();
     };
-  }, [initializeStore, resetStore]);
+  }, [initializeStore, resetStore, navigate]);
 
   useEffect(() => {
     try {
@@ -73,72 +85,74 @@ export function App() {
   }, [hasMsa]);
 
   return (
-    <SidebarProvider>
+    <TooltipProvider>
+      <SidebarProvider>
 
-      <Sidebar collapsible="icon">
-        <SidebarHeader>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton size="lg" asChild className="md:h-12">
-                <div className="flex items-center gap-3 w-full">
-                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shrink-0">
-                    <Film className="size-5" />
-                  </div>
-                  <div className="flex flex-col gap-0.5 leading-none group-data-[collapsible=icon]:hidden overflow-hidden">
-                    <span className="font-semibold truncate">Phylo-Movies</span>
-                    <span className="text-[10px] text-muted-foreground truncate">
-                      {fileName}
-                    </span>
-                  </div>
-                </div>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarHeader>
-
-        <SidebarContent>
-          {/* Main Navigation Group */}
-          <SidebarGroup>
-            <SidebarGroupLabel>Platform</SidebarGroupLabel>
+        <Sidebar collapsible="icon">
+          <SidebarHeader>
             <SidebarMenu>
-              <ButtonsMSA />
-              <TreeStructureGroup />
+              <SidebarMenuItem>
+                <SidebarMenuButton size="lg" asChild className="md:h-12">
+                  <div className="flex items-center gap-3 w-full">
+                    <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shrink-0">
+                      <Film className="size-5" />
+                    </div>
+                    <div className="flex flex-col gap-0.5 leading-none group-data-[collapsible=icon]:hidden overflow-hidden">
+                      <span className="font-semibold truncate">Phylo-Movies</span>
+                      <span className="text-[10px] text-muted-foreground truncate">
+                        {error ? `Error: ${error}` : fileName}
+                      </span>
+                    </div>
+                  </div>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
-          </SidebarGroup>
+          </SidebarHeader>
 
-          <SidebarSeparator />
+          <SidebarContent>
+            {/* Main Navigation Group */}
+            <SidebarGroup>
+              <SidebarGroupLabel>Platform</SidebarGroupLabel>
+              <SidebarMenu>
+                <ButtonsMSA />
+                <TreeStructureGroup />
+              </SidebarMenu>
+            </SidebarGroup>
 
-          {/* Visualization Controls Group */}
-          <SidebarGroup>
-            <SidebarGroupLabel>Visualization</SidebarGroupLabel>
-            <SidebarMenu>
-              <VisualElements />
-              <Appearance />
-            </SidebarMenu>
-          </SidebarGroup>
-        </SidebarContent>
-        <SidebarRail />
-      </Sidebar>
+            <SidebarSeparator />
 
-      <MsaRndWindow />
-      <TaxaColoringRndWindow />
+            {/* Visualization Controls Group */}
+            <SidebarGroup>
+              <SidebarGroupLabel>Visualization</SidebarGroupLabel>
+              <SidebarMenu>
+                <VisualElements />
+                <Appearance />
+              </SidebarMenu>
+            </SidebarGroup>
+          </SidebarContent>
+          <SidebarRail />
+        </Sidebar>
+
+        <MsaRndWindow />
+        <TaxaColoringRndWindow />
 
 
-      <SidebarInset>
-        <SidebarTrigger className="absolute top-2 left-2 z-50" />
-        <div className="full-size-container" style={{ flex: 1, minHeight: 0, position: 'relative' }}>
-          <DeckGLCanvas />
-          <ClipboardDismissButton />
-          <HUD />
-        </div>
-        <MoviePlayerBar />
-        <div id="top-scale-bar-container">
-          <TreeStatsPanel />
-        </div>
-      </SidebarInset>
-      <NodeContextMenu />
-      <Toaster />
-    </SidebarProvider>
+        <SidebarInset className="overflow-hidden">
+          <SidebarTrigger className="absolute top-2 left-2 z-[1200]" />
+          <div className="full-size-container" style={{ flex: 1, minHeight: 0, position: 'relative', overflow: 'hidden' }}>
+            <DeckGLCanvas />
+            <ClipboardDismissButton />
+            <HUD />
+          </div>
+          <MoviePlayerBar />
+          <div id="top-scale-bar-container" className="fixed top-4 right-4 z-[1100] bg-card/80 backdrop-blur-sm rounded-xl p-2.5 shadow-lg border">
+            <TreeStatsPanel />
+          </div>
+        </SidebarInset>
+        <NodeContextMenu />
+        <Toaster />
+      </SidebarProvider>
+    </TooltipProvider>
   );
 }
 

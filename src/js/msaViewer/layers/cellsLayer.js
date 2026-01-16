@@ -32,7 +32,7 @@ export function buildCellData(cellSize, sequences, visibleRange, maxCells) {
       if (!seq || !seq.seq) continue;
 
       const x = c * cellSize;
-      const y = -r * cellSize;
+      const y = r * cellSize;
       const w = cellSize * Math.min(step, (c1 - c + 1));
       const h = cellSize * Math.min(step, (r1 - r + 1));
 
@@ -41,7 +41,7 @@ export function buildCellData(cellSize, sequences, visibleRange, maxCells) {
         row: r,
         col: c,
         ch: seq.seq[c] || '-',
-        polygon: [[x, y], [x + w, y], [x + w, y - h], [x, y - h]]
+        polygon: [[x, y], [x + w, y], [x + w, y + h], [x, y + h]]
       });
     }
   }

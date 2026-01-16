@@ -1,7 +1,8 @@
 import React from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+// Card imports removed
 import { StrategySelector } from "./StrategySelector.jsx";
 import { ColorSchemeSelector } from "../shared/ColorSchemeSelector.jsx";
+import { GroupingStatusSummary } from "./GroupingStatusSummary.jsx";
 import { EmptyStateAlert } from "../shared/EmptyStateAlert.jsx";
 import { ColorInputGrid } from "../shared/ColorInputGrid.jsx";
 
@@ -36,20 +37,18 @@ export function GroupsTabContent({
       {groups.length === 0 ? (
         <EmptyStateAlert mode="groups" />
       ) : (
-        <Card className="gap-0 py-0 border-border/30 shadow-none bg-accent/5">
-          <CardHeader className="space-y-0.5 pb-2 pt-3 px-4">
-            <CardTitle className="text-[13px] font-bold">Group Customization ({groups.length})</CardTitle>
-            <CardDescription className="text-[10px]">Colors assigned to detected clades.</CardDescription>
-          </CardHeader>
-          <CardContent className="px-3 pb-3">
-            <ColorInputGrid
-              items={groups}
-              isGroup={true}
-              colorManager={colorManager}
-              onColorChange={handleColorChange}
-            />
-          </CardContent>
-        </Card>
+        <div className="rounded-md border border-border/30 bg-accent/5 px-3 py-3">
+          <div className="mb-3 space-y-0.5 px-1">
+            <h3 className="text-[13px] font-bold leading-none">Group Customization ({groups.length})</h3>
+            <p className="text-[10px] text-muted-foreground">Colors assigned to detected clades.</p>
+          </div>
+          <ColorInputGrid
+            items={groups}
+            isGroup={true}
+            colorManager={colorManager}
+            onColorChange={handleColorChange}
+          />
+        </div>
       )}
     </div>
   );

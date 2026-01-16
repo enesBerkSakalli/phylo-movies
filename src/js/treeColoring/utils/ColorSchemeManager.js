@@ -3,18 +3,44 @@ import { colorToRgb } from '../../services/ui/colorUtils.js';
 
 export class ColorSchemeManager {
   constructor(originalColorMap = {}) {
-    this.originalColorMap = originalColorMap;
-    this.taxaColorMap = { ...originalColorMap };
+    this.originalColorMap = this._normalizeMap(originalColorMap);
+    this.taxaColorMap = { ...this.originalColorMap };
     this.groupColorMap = {};
   }
 
+  /**
+   * Normalize an input map to ensure all values are [r, g, b] arrays
+   */
+  _normalizeMap(map) {
+    const normalized = {};
+    for (const [key, value] of Object.entries(map)) {
+      normalized[key] = this._ensureRgb(value);
+    }
+    return normalized;
+  }
+
+  /**
+   * Ensure a color is a valid [r, g, b] array (check vs array/string)
+   */
+  _ensureRgb(color) {
+    if (Array.isArray(color) && color.length >= 3) {
+      return color.slice(0, 3); // Strip alpha if present, or keep it? DeckGL usually handles [r,g,b] faster
+    }
+    return colorToRgb(color);
+  }
+
   applyColorScheme(schemeName, targets, isGroup) {
+    // Get palette as Hex strings or whatever stored
     const baseScheme = getPalette(schemeName);
 
     // For groups, maximize perceptual distance between successive colors
+    // Note: _orderPaletteForMaxDistance now needs to handle the conversion internally
+    // or we convert first. Let's convert first.
+    const rgbScheme = baseScheme.map(c => this._ensureRgb(c));
+
     const scheme = isGroup
-      ? this._orderPaletteForMaxDistance(baseScheme, targets.length)
-      : baseScheme;
+      ? this._orderPaletteForMaxDistance(rgbScheme, targets.length)
+      : rgbScheme;
 
     targets.forEach((target, index) => {
       const color = scheme[index % scheme.length];
@@ -28,51 +54,44 @@ export class ColorSchemeManager {
   // Palette ordering utils
   // =====================
   _orderPaletteForMaxDistance(palette, k, backgroundHex = '#ffffff') {
-    const uniquePalette = Array.from(new Set(palette));
-    const labs = uniquePalette.map(c => this._hexToLab(c));
-    const whiteLab = this._hexToLab(backgroundHex);
+    // Palette is now Array of [r,g,b]
+    // Filter duplicates based on string representation
+    const uniquePalette = [];
+    const seen = new Set();
+    for(const c of palette) {
+        const s = c.join(',');
+        if(!seen.has(s)) {
+            seen.add(s);
+            uniquePalette.push(c);
+        }
+    }
+
+    const labs = uniquePalette.map(c => this._rgbToLab(c[0], c[1], c[2]));
+    const whiteLab = this._rgbToLab(255, 255, 255); // Assume white bg
 
     const n = uniquePalette.length;
     if (n === 0) return [];
 
     // Filter out colors with very poor contrast against background (L distance < 20)
-    // Only if we have enough colors remaining.
     let validIndices = [];
     const minLDiff = 20;
 
     for(let i=0; i<n; i++) {
-        // Simple lightness check: L ranges 0-100. White is ~100.
-        // We want colors that are not too close to 100.
-        // Or just use the full Lab distance.
         const dist = this._labDistance(labs[i], whiteLab);
-        // Also check raw Lightness to avoid pale yellows even if a/b make them "distant"
         const lDiff = Math.abs(labs[i].L - whiteLab.L);
 
         // Penalize very light colors on white background
-        // Keep index if it has decent contrast
         if (lDiff > minLDiff && dist > 25) {
             validIndices.push(i);
         }
     }
 
-    // Fallback: if filtering removed too many, revert to all
+    // Fallback
     if (validIndices.length < Math.min(k, n)) {
         validIndices = Array.from({ length: n }, (_, i) => i);
     }
 
-    // Helper to get effective distance including background penalty
-    const getBgPenalty = (idx) => {
-        // Higher distance from BG is better
-        // We can just use the raw distance as a factor
-        const d = this._labDistance(labs[idx], whiteLab);
-        // Normalize to some range or just use it.
-        // Prefer darker colors on white (higher distance)
-        return d;
-    };
-
-    // Seed: color with max hybrid score (distance from BG + some bias)
-    // Actually, let's stick to the Maximim approach but consider BG as a "chosen" color with a weight
-    // Or just pick the one farthest from white as seed.
+    // Seed: color with max distance from BG
     let seedIndex = validIndices[0];
     let bestBgDist = -Infinity;
 
@@ -92,14 +111,9 @@ export class ColorSchemeManager {
       for (const idx of remaining) {
         // Distance to already chosen colors
         const minPeerDist = Math.min(...chosen.map(ci => this._labDistance(labs[idx], labs[ci])));
-
-        // Distance to background (treat background as a permanent existing peer, but maybe with less weight?)
-        // If we strictly treat BG as a peer, we might avoid colors 'near' white.
-        // Let's enforce a minimum "visibility" score.
+        // Distance to background
         const bgDist = this._labDistance(labs[idx], whiteLab);
-
-        // Score = min(peer distances, bgDistance)
-        // This ensures the new color is distinct from peers AND distinguishable from background
+        // Score
         const score = Math.min(minPeerDist, bgDist);
 
         if (score > bestScore) { bestScore = score; bestIdx = idx; }
@@ -113,57 +127,36 @@ export class ColorSchemeManager {
       }
     }
 
-    // If we need more colors than validIndices provided (and k > validIndices.length),
-    // we might need to dip into the excluded ones if k < n but k > validIndices.length?
-    // The fallback above ensures validIndices has enough if possible.
-    // If k > n, we just handle the loop below.
-
-    // If more groups than palette, return full ordered palette and let caller cycle
-    // Note: 'chosen' contains indices from 'uniquePalette'
-
-    // ... logic for cycling handled by caller or filling rest
+    // Fill remaining if k > chosen
     if (k > chosen.length && remaining.size > 0) {
-         // Should calculate for remaining valid indices
-          while (chosen.length < k && remaining.size > 0) {
-             let bestIdx = null;
-             let bestScore = -Infinity;
-             for (const idx of remaining) {
-               const bgDist = this._labDistance(labs[idx], whiteLab);
+       while (chosen.length < k && remaining.size > 0) {
+          let bestIdx = null; // Just pick logical next
+          let bestScore = -Infinity;
+          for (const idx of remaining) {
+               // Just maximize distance to existing chosen
                const minPeerDist = Math.min(...chosen.map(ci => this._labDistance(labs[idx], labs[ci])));
-               const score = Math.min(minPeerDist, bgDist);
-               if (score > bestScore) { bestScore = score; bestIdx = idx; }
-             }
-             chosen.push(bestIdx);
-             remaining.delete(bestIdx);
+               if(minPeerDist > bestScore) { bestScore = minPeerDist; bestIdx = idx; }
           }
+          chosen.push(bestIdx);
+          remaining.delete(bestIdx);
+       }
     }
 
-    // If we still need more and we excluded some, we should probably add them back at the end?
-    // But the requirements usually imply we just recycle the palette if k > n
-    // So we just return what we have (up to n)
-
-    // If we filtered out some indices but k > validIndices.length, we might want to append the "bad" colors
-    // rather than cycling the "good" ones immediately?
-    // For now, let's keep it simple: return the chosen "good" ones. Caller cycles.
-    // BUT! if n > chosen.length (meaning we have unused "bad" colors), we should probably append them
-    // strictly for coverage, just in case the user REALLY needs 20 colors and we responsible for 7 good ones.
-
-    if (chosen.length < n) {
-        const usedSet = new Set(chosen);
-        const unused = Array.from({length: n}, (_, i) => i).filter(i => !usedSet.has(i));
-        // simple sort by contrast for the rest
-        unused.sort((a,b) => this._labDistance(labs[b], whiteLab) - this._labDistance(labs[a], whiteLab));
-        chosen.push(...unused);
-    }
-
+    // If still need more (palettes exhausted), we recycle in outer loop, so just return distinct
     return chosen.map(i => uniquePalette[i]);
   }
 
-  _hexToLab(hex) {
-    const [r, g, b] = colorToRgb(hex);
-    const { x, y, z } = this._rgbToXyz(r, g, b);
-    return this._xyzToLab(x, y, z);
+
+  // =====================
+  // Color Systems
+  // =====================
+  // _hexToLab removed - we work in RGB now
+
+  _rgbToLab(r, g, b) {
+    const xyz = this._rgbToXyz(r, g, b);
+    return this._xyzToLab(xyz.x, xyz.y, xyz.z);
   }
+
 
   _rgbToXyz(r, g, b) {
     // Normalize to [0,1]
@@ -201,8 +194,24 @@ export class ColorSchemeManager {
     return Math.sqrt(dL * dL + da * da + db * db); // CIE76
   }
 
+  /**
+   * Generates a "Professional" random color.
+   * Avoids neon/super-bright colors by constraining Saturation and Lightness.
+   * Returns [r, g, b]
+   */
   getRandomColor() {
-    return `hsl(${Math.floor(Math.random() * 360)}, 70%, 60%)`;
+    // Hue: 0-360 (Random)
+    const h = Math.floor(Math.random() * 360);
+
+    // Saturation: 45-65% (avoid <40% grey, avoid >80% neon)
+    const s = 45 + Math.floor(Math.random() * 20);
+
+    // Lightness: 40-55% (Darker/Rich for White Background visibility)
+    // Avoid >60% (Pastel) and <30% (Black)
+    const l = 40 + Math.floor(Math.random() * 15);
+
+    const hslString = `hsl(${h}, ${s}%, ${l}%)`;
+    return colorToRgb(hslString);
   }
 
   reset() {

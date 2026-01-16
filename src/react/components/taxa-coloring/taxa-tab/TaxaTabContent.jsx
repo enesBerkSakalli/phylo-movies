@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+// Card imports removed
 import { ColorSchemeSelector } from "../shared/ColorSchemeSelector.jsx";
 import { EmptyStateAlert } from "../shared/EmptyStateAlert.jsx";
 import { ColorInputGrid } from "../shared/ColorInputGrid.jsx";
@@ -14,20 +14,18 @@ export function TaxaTabContent({ taxaNames, colorManager, applyScheme, handleCol
       {taxaNames.length === 0 ? (
         <EmptyStateAlert mode="taxa" />
       ) : (
-        <Card className="gap-0 py-0 border-border/30 shadow-none bg-accent/5">
-          <CardHeader className="space-y-0.5 pb-2 pt-3 px-4">
-            <CardTitle className="text-[13px] font-bold">Manual Overrides ({taxaNames.length})</CardTitle>
-            <CardDescription className="text-[10px]">Individual color assignments.</CardDescription>
-          </CardHeader>
-          <CardContent className="px-3 pb-3">
-            <ColorInputGrid
-              items={taxaNames}
-              isGroup={false}
-              colorManager={colorManager}
-              onColorChange={handleColorChange}
-            />
-          </CardContent>
-        </Card>
+        <div className="rounded-md border border-border/30 bg-accent/5 px-3 py-3">
+          <div className="mb-3 space-y-0.5 px-1">
+            <h3 className="text-[13px] font-bold leading-none">Manual Overrides ({taxaNames.length})</h3>
+            <p className="text-[10px] text-muted-foreground">Individual color assignments.</p>
+          </div>
+          <ColorInputGrid
+            items={taxaNames}
+            isGroup={false}
+            colorManager={colorManager}
+            onColorChange={handleColorChange}
+          />
+        </div>
       )}
     </div>
   );

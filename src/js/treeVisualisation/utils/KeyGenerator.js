@@ -72,22 +72,16 @@ const getNodeId = (node) => {
 /**
  * Generates a robust, unique key for tree links (branches)
  * @param {Object} link - D3 link object with source and target nodes
- * @returns {string} Unique link key (e.g., "link-0-1-2", "link-root-0-1-2")
+ * @returns {string} Unique link key (e.g., "link-0-1-2")
  */
 export function getLinkKey(link) {
   if (!link || !link.source || !link.target) {
     throw new Error('Invalid link object');
   }
 
-  const sourceId = getNodeId(link.source);
   const targetId = getNodeId(link.target);
 
-  // Handle the root case where source might not have a conventional ID
-  if (sourceId === "unknown" || link.source.parent === null) {
-    return `link-root-${targetId}`;
-  }
-
-  return `link-to-${targetId}`;
+  return `link-${targetId}`;
 }
 
 /**

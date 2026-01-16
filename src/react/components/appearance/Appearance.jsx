@@ -4,6 +4,7 @@ import { ToggleWithLabel } from '@/components/ui/toggle-with-label';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import {
   SidebarGroup,
   SidebarMenu,
@@ -13,7 +14,7 @@ import {
   SidebarMenuSubItem
 } from '@/components/ui/sidebar';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
-import { ChevronDown, Eye, Highlighter, Activity, Link, Box, Info } from 'lucide-react';
+import { ChevronDown, Eye, Activity, Link, Box, Info } from 'lucide-react';
 
 // ==========================================================================
 // STORE SELECTORS
@@ -33,17 +34,14 @@ const selectPulseEnabled = (s) => s.changePulseEnabled;
 const selectSetPulseEnabled = (s) => s.setChangePulseEnabled;
 const selectDashingEnabled = (s) => s.activeEdgeDashingEnabled;
 const selectSetDashingEnabled = (s) => s.setActiveEdgeDashingEnabled;
-const selectHighContrastHighlightingEnabled = (s) => s.highContrastHighlightingEnabled;
-const selectSetHighContrastEnabled = (s) => s.setHighContrastHighlightingEnabled;
+const selectHighlightColorMode = (s) => s.highlightColorMode;
+const selectSetHighlightColorMode = (s) => s.setHighlightColorMode;
 const selectUpcomingChangesEnabled = (s) => s.upcomingChangesEnabled;
 const selectSetUpcomingChangesEnabled = (s) => s.setUpcomingChangesEnabled;
 const selectTreeControllers = (s) => s.treeControllers;
 const selectCameraMode = (s) => s.cameraMode;
 const selectToggleCameraMode = (s) => s.toggleCameraMode;
-const selectMarkedSubtreesEnabled = (s) => s.markedSubtreesEnabled;
-const selectSetMarkedSubtreesEnabled = (s) => s.setMarkedSubtreesEnabled;
-const selectMarkedSubtreeMode = (s) => s.markedSubtreeMode;
-const selectSetMarkedSubtreeMode = (s) => s.setMarkedSubtreeMode;
+
 
 // ==========================================================================
 // COMPONENT
@@ -57,11 +55,13 @@ export function Appearance() {
   const linkConnectionOpacity = useAppStore(selectLinkConnectionOpacity);
   const pulseEnabled = useAppStore(selectPulseEnabled);
   const dashingEnabled = useAppStore(selectDashingEnabled);
-  const highContrastHighlightingEnabled = useAppStore(selectHighContrastHighlightingEnabled);
+  const highlightColorMode = useAppStore(selectHighlightColorMode);
   const upcomingChangesEnabled = useAppStore(selectUpcomingChangesEnabled);
   const treeControllers = useAppStore(selectTreeControllers);
-  const markedSubtreesEnabled = useAppStore(selectMarkedSubtreesEnabled);
-  const setMarkedSubtreesEnabled = useAppStore(selectSetMarkedSubtreesEnabled);
+  const cameraMode = useAppStore(selectCameraMode);
+  const toggleCameraMode = useAppStore(selectToggleCameraMode);
+
+  // Setter functions - retrieve from store
   const setDimmingEnabled = useAppStore(selectSetDimmingEnabled);
   const setDimmingOpacity = useAppStore(selectSetDimmingOpacity);
   const setSubtreeDimmingEnabled = useAppStore(selectSetSubtreeDimmingEnabled);
@@ -69,12 +69,7 @@ export function Appearance() {
   const setLinkConnectionOpacity = useAppStore(selectSetLinkConnectionOpacity);
   const setPulseEnabled = useAppStore(selectSetPulseEnabled);
   const setDashingEnabled = useAppStore(selectSetDashingEnabled);
-  const setHighContrastEnabled = useAppStore(selectSetHighContrastEnabled);
   const setUpcomingChangesEnabled = useAppStore(selectSetUpcomingChangesEnabled);
-  const cameraMode = useAppStore(selectCameraMode);
-  const markedSubtreeMode = useAppStore(selectMarkedSubtreeMode);
-  const setMarkedSubtreeMode = useAppStore(selectSetMarkedSubtreeMode);
-  const toggleCameraMode = useAppStore(selectToggleCameraMode);
 
   const rerenderAll = async () => {
     for (const controller of treeControllers) {
@@ -97,9 +92,7 @@ export function Appearance() {
   const handleLinkOpacityChange = async (value) => {
     try { setLinkConnectionOpacity(value[0]); await rerenderAll(); } catch { }
   };
-  const toggleMarkedSubtrees = async (value) => {
-    try { setMarkedSubtreesEnabled(!!value); await rerenderAll(); } catch { }
-  };
+
   const togglePulse = (value) => setPulseEnabled(!!value);
   const toggleDashing = (value) => setDashingEnabled(!!value);
   const toggleHighContrast = async (value) => {
@@ -119,14 +112,7 @@ export function Appearance() {
         onToggleSubtreeDimming={toggleSubtreeDimming}
         onSubtreeDimmingOpacityChange={handleSubtreeDimmingOpacityChange}
       />
-      <SubtreeHighlightingSection
-        enabled={markedSubtreesEnabled}
-        onToggle={toggleMarkedSubtrees}
-        mode={markedSubtreeMode}
-        onModeChange={setMarkedSubtreeMode}
-        highContrast={highContrastHighlightingEnabled}
-        onToggleHighContrast={toggleHighContrast}
-      />
+
       <ActiveEdgeEffectsSection
         pulseEnabled={pulseEnabled}
         dashingEnabled={dashingEnabled}
@@ -232,61 +218,7 @@ function FocusHighlightingSection({
   );
 }
 
-function SubtreeHighlightingSection({ enabled, onToggle, mode, onModeChange, highContrast, onToggleHighContrast }) {
-  return (
-    <Collapsible defaultOpen asChild className="group/collapsible">
-      <SidebarMenuItem>
-        <CollapsibleTrigger asChild>
-          <SidebarMenuButton tooltip="Subtree Highlighting (Red)">
-            <Highlighter className="text-primary" />
-            <span>Subtree Highlighting (Red)</span>
-            <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-          </SidebarMenuButton>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <SidebarMenuSub>
-            <SidebarMenuSubItem>
-              <div className="flex flex-col gap-4 px-1 py-3">
-                <ToggleWithLabel
-                  id="enable-marked-subtrees"
-                  label="Enable Highlighting"
-                  description="Show marked subtrees in red"
-                  checked={!!enabled}
-                  onCheckedChange={onToggle}
-                  switchPosition="left"
-                />
-                {enabled && (
-                  <div className="flex flex-col gap-4 pl-7 pr-1">
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">Highlight Scope</label>
-                      <Select value={mode || 'current'} onValueChange={onModeChange}>
-                        <SelectTrigger className="w-full h-8 text-xs">
-                          <SelectValue placeholder="Select mode" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Entire Edge Structure</SelectItem>
-                          <SelectItem value="current">Active Subtree Only</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <ToggleWithLabel
-                      id="high-contrast"
-                      label="High Contrast Mode"
-                      description="Dynamic colors for visibility"
-                      checked={highContrast !== false}
-                      onCheckedChange={onToggleHighContrast}
-                      switchPosition="left"
-                    />
-                  </div>
-                )}
-              </div>
-            </SidebarMenuSubItem>
-          </SidebarMenuSub>
-        </CollapsibleContent>
-      </SidebarMenuItem>
-    </Collapsible>
-  );
-}
+
 
 function ActiveEdgeEffectsSection({ pulseEnabled, dashingEnabled, upcomingChangesEnabled, onTogglePulse, onToggleDashing, onToggleUpcomingChanges }) {
   return (
@@ -332,7 +264,7 @@ function ConnectionsSection({ linkConnectionOpacity, onLinkOpacityChange }) {
               <div className="px-1 py-3">
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center justify-between px-1">
-                    <label htmlFor="connection-opacity-slider" className="text-xs font-medium text-foreground/80">Connection Opacity</label>
+                    <Label htmlFor="connection-opacity-slider" className="text-xs font-medium text-foreground/80">Connection Opacity</Label>
                     <span className="text-xs font-medium tabular-nums text-muted-foreground">{Math.round((linkConnectionOpacity ?? 0.6) * 100)}%</span>
                   </div>
                   <Slider
@@ -361,7 +293,7 @@ function ToggleWithSlider({ id, label, description, checked, onToggle, sliderVal
       {checked && (
         <div className="flex flex-col gap-3 pl-8 pr-1">
           <div className="flex items-center justify-between">
-            <label htmlFor={`${id}-opacity-slider`} className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">{sliderLabel}</label>
+            <Label htmlFor={`${id}-opacity-slider`} className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">{sliderLabel}</Label>
             <span className="text-xs font-medium tabular-nums text-muted-foreground">{Math.round((1 - sliderValue) * 100)}%</span>
           </div>
           <Slider

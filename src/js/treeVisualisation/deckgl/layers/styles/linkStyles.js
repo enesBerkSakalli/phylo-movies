@@ -51,17 +51,18 @@ export function getLinkColor(link, cached, helpers) {
   let rgb = colorToRgb(cm.getBranchColorForInnerLine(link));
 
   // Check if link is part of a MARKED subtree (persistent highlight)
-  if (shouldHighlightMarkedSubtree(link, cached)) {
-    // Default to markedColor
-    let highlightRgb = colorToRgb(TREE_COLOR_CATEGORIES.markedColor);
-
-    // If High Contrast Highlighting is ENABLED, calculate dynamic contrast
-    if (cached.highContrastHighlightingEnabled) {
+  // But ensure ACTIVE CHANGE EDGE takes precedence (stays blue)
+  if (shouldHighlightMarkedSubtree(link, cached) && !cm?.isActiveChangeEdge?.(link)) {
+    // Only override inner color if High Contrast Mode is active
+    if (cached.highlightColorMode === 'contrast') {
       // Use standard branch color for contrast calculation (ignore inner line overrides)
       const baseRgb = colorToRgb(cm.getBranchColor(link));
-      highlightRgb = getContrastingHighlightColor(baseRgb);
+      rgb = getContrastingHighlightColor(baseRgb);
     }
-    rgb = highlightRgb;
+    // Otherwise ('taxa' or 'solid'), keep the inner line as its original color
+    else {
+      rgb = colorToRgb(cm.getBranchColor(link));
+    }
   }
 
   // Calculate opacity with unified dimming logic
@@ -115,8 +116,14 @@ export function getLinkWidth(link, cached, helpers) {
 
   // Check if link is part of a MARKED subtree (persistent highlight)
   // Static, very thick stroke to ensure visibility without pulsing
-  if (shouldHighlightMarkedSubtree(link, cached)) {
-    return getScaledWidth(3.0); // Very thick for marked subtrees
+  // Active edge takes precedence
+  if (shouldHighlightMarkedSubtree(link, cached) && !cm?.isActiveChangeEdge?.(link)) {
+    // Only thicken the inner line in High Contrast Mode
+    if (cached.highlightColorMode === 'contrast') {
+      return getScaledWidth(3.0);
+    }
+    // In other modes ('taxa', 'solid'), keep standard width
+    return baseWidth;
   }
 
   // History subtrees: bold stroke
@@ -180,8 +187,9 @@ export function getLinkOutlineColor(link, cached) {
     pulseOpacity,
     upcomingChangesEnabled,
     markedSubtreeData,
-    highContrastHighlightingEnabled,
+    highlightColorMode,
     linkConnectionOpacity,
+    markedSubtreeOpacity,
   } = cached;
 
   if (!cm) {
@@ -206,18 +214,25 @@ export function getLinkOutlineColor(link, cached) {
     glowOpacity = Math.round(baseOpacity * 120); // Medium glow
   }
   // Check if link is part of a MARKED subtree (persistent highlight)
-  else if (shouldHighlightMarkedSubtree(link, cached)) {
-    // Default to markedColor
-    let highlightRgb = colorToRgb(TREE_COLOR_CATEGORIES.markedColor);
+  // Active edge takes precedence (skip this block if active)
+  else if (shouldHighlightMarkedSubtree(link, cached) && !cm?.isActiveChangeEdge?.(link)) {
+    const mode = cached.highlightColorMode || 'solid';
+    let highlightRgb;
 
-    // If High Contrast Highlighting is ENABLED, calculate dynamic contrast
-    if (highContrastHighlightingEnabled) {
-      // Use standard branch color for contrast calculation (ignore inner line overrides)
+    if (mode === 'contrast') {
       const baseRgb = colorToRgb(cm.getBranchColor(link));
       highlightRgb = getContrastingHighlightColor(baseRgb);
+    } else if (mode === 'taxa') {
+      highlightRgb = colorToRgb(cm.getBranchColor(link));
+    } else {
+      // 'solid' mode - default Red
+      highlightRgb = colorToRgb(cached.markedColor || TREE_COLOR_CATEGORIES.markedColor);
     }
     rgb = highlightRgb;
-    glowOpacity = Math.round(baseOpacity * 255); // Full opacity for persistent visibility
+
+    // Apply adjustable opacity from slider
+    const sensitivity = markedSubtreeOpacity ?? 0.8;
+    glowOpacity = Math.round(baseOpacity * 255 * sensitivity);
   }
   // History subtrees: base color silhouette without pulsing
   else if (shouldHighlightHistorySubtree(link, cached) && !cm?.isActiveChangeEdge?.(link)) {

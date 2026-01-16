@@ -78,12 +78,14 @@ export class LayerStyles {
         subtreeDimmingOpacity: state.subtreeDimmingOpacity,
         markedSubtreeData,
         markedSubtreesEnabled: state.markedSubtreesEnabled ?? true,
+        markedSubtreeOpacity: state.markedSubtreeOpacity ?? 0.8,
         highlightSourceEnabled: state.highlightSourceEnabled ?? false,
         highlightDestinationEnabled: state.highlightDestinationEnabled ?? false,
         pulseOpacity: pulseEnabled ? (state.getPulseOpacity?.() ?? 1.0) : 1.0,
         dashingEnabled: state.activeEdgeDashingEnabled ?? true,
         upcomingChangesEnabled: state.upcomingChangesEnabled ?? false,
-        highContrastHighlightingEnabled: state.highContrastHighlightingEnabled ?? true,
+        highlightColorMode: state.highlightColorMode ?? 'contrast',
+        markedColor: state.markedColor ?? '#ff5722',
         linkConnectionOpacity: state.linkConnectionOpacity ?? 0.6,
         // Density-based scaling: reduce highlight thickness for dense trees
         densityScale: this._calculateDensityScale(state)
@@ -128,12 +130,15 @@ export class LayerStyles {
         state.dimmingOpacity !== prevState.dimmingOpacity ||
         state.subtreeDimmingEnabled !== prevState.subtreeDimmingEnabled ||
         state.subtreeDimmingOpacity !== prevState.subtreeDimmingOpacity ||
+        state.subtreeDimmingOpacity !== prevState.subtreeDimmingOpacity ||
         state.markedSubtreesEnabled !== prevState.markedSubtreesEnabled ||
+        state.markedSubtreeOpacity !== prevState.markedSubtreeOpacity ||
         state.highlightSourceEnabled !== prevState.highlightSourceEnabled ||
         state.highlightDestinationEnabled !== prevState.highlightDestinationEnabled ||
         state.activeEdgeDashingEnabled !== prevState.activeEdgeDashingEnabled ||
         state.upcomingChangesEnabled !== prevState.upcomingChangesEnabled ||
-        state.highContrastHighlightingEnabled !== prevState.highContrastHighlightingEnabled ||
+        state.highlightColorMode !== prevState.highlightColorMode ||
+        state.markedColor !== prevState.markedColor ||
         state.linkConnectionOpacity !== prevState.linkConnectionOpacity ||
         state.changePulseEnabled !== prevState.changePulseEnabled ||
         state.changePulsePhase !== prevState.changePulsePhase ||

@@ -15,6 +15,7 @@ const selectComparisonMode = (s) => s.comparisonMode;
 const selectTransitionResolver = (s) => s.transitionResolver;
 const selectTreeControllers = (s) => s.treeControllers;
 const selectPlaying = (s) => s.playing;
+const selectAnimationProgress = (s) => s.animationProgress;
 const selectClipboardTreeIndex = (s) => s.clipboardTreeIndex;
 
 // Actions
@@ -32,14 +33,6 @@ const selectSetMsaRegion = (s) => s.setMsaRegion;
 // HOOK
 // ==========================================================================
 
-/**
- * Hook to manage the Tree Controller and rendering lifecycle.
- *
- * Responsibilities:
- * 1. Controller initialization - creates DeckGLTreeAnimationController
- * 2. Tree rendering - renders trees when currentTreeIndex changes
- * 3. MSA sync - synchronizes MSA viewer region with current tree
- */
 export function useTreeController() {
   // ---------------------------------------------------------------------------
   // Store subscriptions
@@ -50,6 +43,7 @@ export function useTreeController() {
   const transitionResolver = useAppStore(selectTransitionResolver);
   const treeControllers = useAppStore(selectTreeControllers);
   const playing = useAppStore(selectPlaying);
+  const animationProgress = useAppStore(selectAnimationProgress);
   const clipboardTreeIndex = useAppStore(selectClipboardTreeIndex);
 
   const setTreeControllers = useAppStore(selectSetTreeControllers);
@@ -57,6 +51,7 @@ export function useTreeController() {
 
   // MSA sync
   const syncMSAEnabled = useAppStore(selectSyncMSAEnabled);
+
   const msaWindowSize = useAppStore(selectMsaWindowSize);
   const msaStepSize = useAppStore(selectMsaStepSize);
   const msaColumnCount = useAppStore(selectMsaColumnCount);
@@ -83,6 +78,18 @@ export function useTreeController() {
   }, [movieData, treeControllers.length, comparisonMode, setTreeControllers]);
 
   // ---------------------------------------------------------------------------
+  // Sync Color Manager (Active Edge Highlight)
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    // Whenever tree index changes (e.g. manual scrubbing), ensure highlight is correct
+    // Note: During animation, DeckGLTreeAnimationController handles this per-frame.
+    const { playing, updateColorManagerForCurrentIndex } = useAppStore.getState();
+    if (!playing && updateColorManagerForCurrentIndex) {
+        updateColorManagerForCurrentIndex();
+    }
+  }, [currentTreeIndex]);
+
+  // ---------------------------------------------------------------------------
   // Tree rendering
   // ---------------------------------------------------------------------------
   useEffect(() => {
@@ -107,7 +114,8 @@ export function useTreeController() {
         if (comparisonMode) {
           await renderComparisonMode(controller, transitionResolver, currentTreeIndex);
         } else {
-          await controller.renderAllElements({ treeIndex: currentTreeIndex });
+          // Render based on current animation progress (handles static interpolation)
+          await controller.renderProgress(animationProgress);
         }
       } catch (error) {
         console.error('Error during tree rendering:', error);
@@ -117,7 +125,8 @@ export function useTreeController() {
     };
 
     render();
-  }, [currentTreeIndex, comparisonMode, treeControllers, movieData, transitionResolver, setRenderInProgress, playing, clipboardTreeIndex]);
+  }, [currentTreeIndex, comparisonMode, treeControllers, movieData, transitionResolver, setRenderInProgress, playing, clipboardTreeIndex, animationProgress]);
+
 
   // ---------------------------------------------------------------------------
   // MSA synchronization - only update when reaching a new anchor tree

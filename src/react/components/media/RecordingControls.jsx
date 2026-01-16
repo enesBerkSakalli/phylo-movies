@@ -1,8 +1,9 @@
 import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { CircleDot, StopCircle } from 'lucide-react';
 import { CanvasRecorder } from '../../../js/services/media/canvasRecorder.js';
-import { notifications } from '../../../js/services/ui/notifications.js';
+import { toast } from 'sonner';
 
 export function RecordingControls() {
   const recorderRef = useRef(null);
@@ -12,7 +13,6 @@ export function RecordingControls() {
     if (!recorderRef.current) {
       recorderRef.current = new CanvasRecorder({
         autoSave: true,
-        notifications,
         framerate: 60,
         videoBitsPerSecond: 2500000 // 2.5 Mbps for good quality
       });
@@ -33,24 +33,25 @@ export function RecordingControls() {
     const recorder = ensureRecorder();
     try {
       setIsRecording(true);
-      notifications.show('Preparing to start recording…', 'info', 2000);
+      toast.info('Preparing to start recording…', { duration: 2000 });
       await recorder.start();
-      notifications.show('Recording started. Capturing frames…', 'success', 3000);
+      toast.success('Recording started. Capturing frames…', { duration: 3000 });
     } catch (error) {
       setIsRecording(false);
       console.error('[MoviePlayerBar] Failed to start recording:', error);
-      notifications.show('Failed to start recording. Please check permissions.', 'error');
+      toast.error('Failed to start recording. Please check permissions.');
     }
   }, [ensureRecorder]);
 
   const handleStopRecording = useCallback(async () => {
     const recorder = ensureRecorder();
     try {
-      notifications.show('Finishing recording…', 'info', 2000);
+      toast.info('Finishing recording…', { duration: 2000 });
       await recorder.stop();
+      toast.success('Recording saved successfully.');
     } catch (error) {
       console.error('[MoviePlayerBar] Failed to stop recording:', error);
-      notifications.show('Failed to stop recording.', 'error');
+      toast.error('Failed to stop recording.');
     } finally {
       setIsRecording(false);
     }
@@ -60,29 +61,38 @@ export function RecordingControls() {
     <>
       <div className="vertical-divider"></div>
 
-      <Button
-        id="start-record"
-        className="record-button-danger"
-        variant="ghost"
-        size="icon"
-        title="Start screen recording"
-        disabled={isRecording}
-        onClick={handleStartRecording}
-        aria-label="Start recording"
-      >
-        <CircleDot className="size-4" />
-      </Button>
-      <Button
-        id="stop-record"
-        variant="ghost"
-        size="icon"
-        title="Stop screen recording"
-        disabled={!isRecording}
-        onClick={handleStopRecording}
-        aria-label="Stop recording"
-      >
-        <StopCircle className="size-4" />
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            id="start-record"
+            className="record-button-danger"
+            variant="ghost"
+            size="icon"
+            disabled={isRecording}
+            onClick={handleStartRecording}
+            aria-label="Start recording"
+          >
+            <CircleDot className="size-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Start screen recording</TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            id="stop-record"
+            variant="ghost"
+            size="icon"
+            disabled={!isRecording}
+            onClick={handleStopRecording}
+            aria-label="Stop recording"
+          >
+            <StopCircle className="size-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Stop screen recording</TooltipContent>
+      </Tooltip>
     </>
   );
 }

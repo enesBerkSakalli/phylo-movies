@@ -12,6 +12,7 @@ export class PathInterpolator {
   constructor() {
     this.segmentCount = ARC_SEGMENT_COUNT;
     this._angleCache = new Map();
+    this._normalizationCache = new Map();
   }
 
   /**
@@ -21,7 +22,7 @@ export class PathInterpolator {
    * @param {number} timeFactor - Interpolation factor (0-1)
    * @param {Object} fromLink - Source link data (optional, for polar interpolation)
    * @param {Object} toLink - Target link data (optional, for polar interpolation)
-   * @returns {Array} Interpolated path points
+   * @returns {Float32Array} Interpolated path points in flat format [x0, y0, z0, x1, y1, z1, ...]
    */
   interpolatePath(fromPath, toPath, timeFactor, fromLink = null, toLink = null) {
     const t = Math.max(0, Math.min(1, timeFactor));
@@ -35,7 +36,7 @@ export class PathInterpolator {
     }
 
     // Fallback to linear interpolation
-    return this.linearInterpolatePath(fromPath, toPath, t);
+    return this.linearInterpolatePath(fromPath, toPath, t, fromLink, toLink);
   }
 
   /**
@@ -133,27 +134,24 @@ export class PathInterpolator {
 
     if (!arcProperties) {
       // Straight line
-      return [
-        [movePoint.x, movePoint.y, 0],
-        [lineEndPoint.x, lineEndPoint.y, 0]
-      ];
+      const result = new Float32Array(6);
+      result[0] = movePoint.x;
+      result[1] = movePoint.y;
+      result[2] = 0;
+      result[3] = lineEndPoint.x;
+      result[4] = lineEndPoint.y;
+      result[5] = 0;
+      return result;
     }
 
     // Generate arc points
-    const points = [];
     const { radius, startAngle, endAngle, center, angleDiff: arcAngleDiff } = arcProperties;
 
-    // Start with move point
-    points.push([movePoint.x, movePoint.y, 0]);
-
-    // Arc segment - generate smooth curve points
+    // Calculate dynamic segment count based on arc length
     const angleDiff = Number.isFinite(arcAngleDiff)
       ? arcAngleDiff
       : shortestAngle(startAngle, endAngle);
 
-    // Calculate dynamic segment count based on arc length
-    // Target ~10 pixels per segment, with reasonable min/max bounds
-    // arcLength = radius * |angleDiff|
     const arcLength = Math.abs(angleDiff * radius);
     const targetPixelsPerSegment = 15;
     const dynamicSegmentCount = Math.min(
@@ -164,24 +162,44 @@ export class PathInterpolator {
       )
     );
 
+    // Initial move point + dynamic segments + final line endpoint
+    // Total points = 1 (move) + dynamicSegmentCount + 1 (final)
+    const totalPoints = dynamicSegmentCount + 2;
+    const result = new Float32Array(totalPoints * 3);
+
+    // 1. Move point
+    result[0] = movePoint.x;
+    result[1] = movePoint.y;
+    result[2] = 0;
+
+    // 2. Arc segments
     for (let i = 1; i <= dynamicSegmentCount; i++) {
       const t = i / dynamicSegmentCount;
-
       const angle = startAngle + angleDiff * t;
-
       const x = center.x + radius * Math.cos(angle);
       const y = center.y + radius * Math.sin(angle);
-      points.push([x, y, 0]);
+
+      const idx = i * 3;
+      result[idx] = x;
+      result[idx + 1] = y;
+      result[idx + 2] = 0;
     }
 
+    // Adjust last arc point to match arcEndPoint exactly if provided
     if (arcEndPoint) {
-      points[points.length - 1] = [arcEndPoint.x, arcEndPoint.y, 0];
+      const idx = dynamicSegmentCount * 3;
+      result[idx] = arcEndPoint.x;
+      result[idx + 1] = arcEndPoint.y;
+      result[idx + 2] = 0;
     }
 
-    // Final line segment
-    points.push([lineEndPoint.x, lineEndPoint.y, 0]);
+    // 3. Final line segment
+    const lastIdx = (totalPoints - 1) * 3;
+    result[lastIdx] = lineEndPoint.x;
+    result[lastIdx + 1] = lineEndPoint.y;
+    result[lastIdx + 2] = 0;
 
-    return points;
+    return result;
   }
 
   /**
@@ -189,22 +207,64 @@ export class PathInterpolator {
    * @param {Array} fromPath - Source path points
    * @param {Array} toPath - Target path points
    * @param {number} timeFactor - Interpolation factor (0-1)
-   * @returns {Array} Interpolated path points
+   * @param {Object} fromLink - Source link context
+   * @param {Object} toLink - Target link context
+   * @returns {Float32Array} Interpolated path points
    */
-  linearInterpolatePath(fromPath, toPath, timeFactor) {
-    if (!fromPath || !toPath) return toPath || fromPath || [];
+  linearInterpolatePath(fromPath, toPath, timeFactor, fromLink = null, toLink = null) {
+    if (!fromPath || !toPath) {
+      const path = toPath || fromPath || [];
+      return path instanceof Float32Array ? path : this._toFlatTypedArray(path);
+    }
+
     const t = Math.max(0, Math.min(1, timeFactor));
 
-    // Ensure paths have same number of points for smooth interpolation
-    const maxLength = Math.max(fromPath.length, toPath.length);
-    const normalizedFrom = this._normalizePath(fromPath, maxLength);
-    const normalizedTo = this._normalizePath(toPath, maxLength);
+    let fFlat, tFlat;
 
-    // Interpolate each point
-    return normalizedFrom.map((fromPoint, i) => {
-      const toPoint = normalizedTo[i];
-      return this._interpolatePoint(fromPoint, toPoint, t);
-    });
+    // Use cache if context objects are provided
+    const cacheKey = fromLink || toLink;
+    if (cacheKey && this._normalizationCache.has(cacheKey)) {
+      const cached = this._normalizationCache.get(cacheKey);
+      fFlat = cached.fFlat;
+      tFlat = cached.tFlat;
+    } else {
+      // Ensure paths have same number of points for smooth interpolation
+      const maxLength = Math.max(fromPath.length, toPath.length);
+      const nFrom = this._normalizePath(fromPath, maxLength);
+      const nTo = this._normalizePath(toPath, maxLength);
+
+      fFlat = this._toFlatTypedArray(nFrom);
+      tFlat = this._toFlatTypedArray(nTo);
+
+      if (cacheKey) {
+        this._normalizationCache.set(cacheKey, { fFlat, tFlat });
+      }
+    }
+
+    // Interpolate each coordinate directly into a new Float32Array
+    const count = fFlat.length;
+    const result = new Float32Array(count);
+    for (let i = 0; i < count; i++) {
+      result[i] = fFlat[i] + (tFlat[i] - fFlat[i]) * t;
+    }
+
+    return result;
+  }
+
+  /**
+   * Convert point arrays to flat Float32Array
+   * @private
+   */
+  _toFlatTypedArray(path) {
+    if (!path || path.length === 0) return new Float32Array(0);
+    const result = new Float32Array(path.length * 3);
+    for (let i = 0; i < path.length; i++) {
+      const p = path[i];
+      result[i * 3] = p[0];
+      result[i * 3 + 1] = p[1];
+      result[i * 3 + 2] = p[2] || 0;
+    }
+    return result;
   }
 
   /**
@@ -254,8 +314,6 @@ export class PathInterpolator {
     ];
   }
 
-
-
   /**
    * Set segment count for arc generation
    * @param {number} count - Number of segments
@@ -267,16 +325,11 @@ export class PathInterpolator {
 
   resetCaches() {
     this._angleCache.clear();
+    this._normalizationCache.clear();
   }
 
-  /**
-   * Calculate shortest angle difference between two angles in radians
-   * @param {number} fromAngle - Source angle in radians
-   * @param {number} toAngle - Target angle in radians
-   * @returns {number} Shortest angle difference in radians
-   * @private
-   */
-
-
+  clearNormalizationCache() {
+    this._normalizationCache.clear();
+  }
 
 }

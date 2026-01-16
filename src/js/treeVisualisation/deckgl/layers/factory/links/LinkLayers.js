@@ -125,7 +125,24 @@ const getHistoryLinkWidth = (link, layerStyles, cached, scale = 1) =>
  * @returns {Layer} deck.gl PathLayer
  */
 export function getLinkOutlinesLayerProps(links, state, layerStyles) {
-  const { colorVersion, strokeWidth, changePulsePhase, activeEdgeDashingEnabled, changePulseEnabled, upcomingChangesEnabled } = state || {};
+  const {
+    colorVersion,
+    strokeWidth,
+    changePulsePhase,
+    activeEdgeDashingEnabled,
+    changePulseEnabled,
+    upcomingChangesEnabled,
+    markedSubtreesEnabled,
+    highlightColorMode,
+    highlightSourceEnabled,
+    highlightDestinationEnabled,
+    dimmingEnabled,
+    dimmingOpacity,
+    subtreeDimmingEnabled,
+    subtreeDimmingOpacity,
+    linkConnectionOpacity,
+    markedSubtreeOpacity
+  } = state || {};
   const colorManager = state?.getColorManager?.();
 
   // Only show outlines when there are active highlights, upcoming changes, or completed changes
@@ -143,16 +160,41 @@ export function getLinkOutlinesLayerProps(links, state, layerStyles) {
     data: links,
     visible: hasHighlights, // Conditionally visible for performance
     pickable: false, // Outlines are not pickable
-    getPath: d => d.path,
+    getPath: d => addZOffsetToPath(d.path, getHistoryLinkOffset(cached, d)),
     getColor: d => layerStyles.getLinkOutlineColor(d, cached),
     getWidth: d => layerStyles.getLinkOutlineWidth(d, cached),
     getDashArray: d => layerStyles.getLinkOutlineDashArray(d, cached),
     dashJustified: false, // Don't justify dashes
     updateTriggers: {
-      getColor: [colorVersion, changePulsePhase, changePulseEnabled, upcomingChangesEnabled],
-      getWidth: [colorVersion, strokeWidth, changePulsePhase, changePulseEnabled, upcomingChangesEnabled],
+      getColor: [
+        colorVersion,
+        changePulsePhase,
+        changePulseEnabled,
+        upcomingChangesEnabled,
+        markedSubtreesEnabled,
+        highlightColorMode,
+        highlightSourceEnabled,
+        highlightDestinationEnabled,
+        dimmingEnabled,
+        dimmingOpacity,
+        subtreeDimmingEnabled,
+        subtreeDimmingOpacity,
+        linkConnectionOpacity,
+        markedSubtreeOpacity
+      ],
+      getWidth: [
+        colorVersion,
+        strokeWidth,
+        changePulsePhase,
+        changePulseEnabled,
+        upcomingChangesEnabled,
+        markedSubtreesEnabled,
+        highlightColorMode,
+        highlightSourceEnabled,
+        highlightDestinationEnabled
+      ],
       getDashArray: [colorVersion, activeEdgeDashingEnabled, upcomingChangesEnabled],
-      getPath: [links]
+      getPath: [links, colorVersion]
     }
   };
 }
@@ -170,7 +212,22 @@ export function createLinkOutlinesLayer(links, state, layerStyles) {
  * @returns {Layer} deck.gl PathLayer
  */
 export function getLinksLayerProps(links, state, layerStyles) {
-  const { taxaColorVersion, colorVersion, strokeWidth, activeEdgeDashingEnabled, upcomingChangesEnabled } = state || {};
+  const {
+    taxaColorVersion,
+    colorVersion,
+    strokeWidth,
+    activeEdgeDashingEnabled,
+    upcomingChangesEnabled,
+    markedSubtreesEnabled,
+    highlightColorMode,
+    highlightSourceEnabled,
+    highlightDestinationEnabled,
+    dimmingEnabled,
+    dimmingOpacity,
+    subtreeDimmingEnabled,
+    subtreeDimmingOpacity,
+    linkConnectionOpacity
+  } = state || {};
 
   // Get cached state once for all accessors
   const cached = layerStyles.getCachedState();
@@ -186,8 +243,29 @@ export function getLinksLayerProps(links, state, layerStyles) {
     getDashArray: d => layerStyles.getLinkDashArray(d, cached),
     dashJustified: true,
     updateTriggers: {
-      getColor: [colorVersion, taxaColorVersion, upcomingChangesEnabled],
-      getWidth: [colorVersion, strokeWidth],
+      getColor: [
+        colorVersion,
+        taxaColorVersion,
+        upcomingChangesEnabled,
+        markedSubtreesEnabled,
+        highlightColorMode,
+        highlightSourceEnabled,
+        highlightDestinationEnabled,
+        dimmingEnabled,
+        dimmingOpacity,
+        subtreeDimmingEnabled,
+        subtreeDimmingOpacity,
+        linkConnectionOpacity
+      ],
+      getWidth: [
+        colorVersion,
+        strokeWidth,
+        upcomingChangesEnabled,
+        markedSubtreesEnabled,
+        highlightColorMode,
+        highlightSourceEnabled,
+        highlightDestinationEnabled
+      ],
       getDashArray: [colorVersion, activeEdgeDashingEnabled, upcomingChangesEnabled],
       getPath: [links, colorVersion]
     }
@@ -205,7 +283,7 @@ export function getHistoryLinksLayerProps(historyLinks, state, layerStyles, cach
   return {
     data: historyLinks,
     pickable: false,
-    getPath: d => d.path,
+    getPath: d => addZOffsetToPath(d.path, getHistoryLinkOffset(cached, d)),
     getColor: d => getHistoryLinkColor(d, layerStyles, cached, alphaScale),
     getWidth: d => getHistoryLinkWidth(d, layerStyles, cached, widthScale),
     getDashArray: d => layerStyles.getLinkDashArray(d, cached),
@@ -252,7 +330,7 @@ export function createHistoryLinksHaloLayer(links, state, layerStyles) {
  * @returns {Layer} deck.gl PathLayer
  */
 export function getExtensionsLayerProps(extensions, state, layerStyles) {
-  const { taxaColorVersion, colorVersion, strokeWidth } = state || {};
+  const { taxaColorVersion, colorVersion, strokeWidth, highlightColorMode } = state || {};
 
   // Get cached state once for all accessors
   const cached = layerStyles.getCachedState();
@@ -265,8 +343,10 @@ export function getExtensionsLayerProps(extensions, state, layerStyles) {
     getPath: d => addZOffsetToPath(d.path, getHistoryNodeOffset(cached, d.leaf || d)),
     getColor: d => layerStyles.getExtensionColor(d.leaf, cached),
     getWidth: d => layerStyles.getExtensionWidth(d.leaf, cached),
+    getDashArray: [2, 3], // Dotted line: 2px dash, 3px gap
+    dashJustified: true,
     updateTriggers: {
-      getColor: [colorVersion, taxaColorVersion],
+      getColor: [colorVersion, taxaColorVersion, highlightColorMode],
       getPath: [extensions, colorVersion],
       getWidth: [extensions.length, strokeWidth, colorVersion]
     }

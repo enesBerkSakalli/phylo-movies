@@ -44,3 +44,4 @@ mcp
 docs
 dist-publish
 playwright.config.ts
+.kiro

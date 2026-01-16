@@ -16,21 +16,18 @@ export const CLIPBOARD_LAYER_ID_PREFIX = `${LAYER_ID_PREFIX}-clipboard`;
 export const MIN_NODE_RADIUS = 3;
 export const HISTORY_Z_OFFSET = 0.1;
 
-/**
- * Shared default props for PathLayer-based layers
- */
 const pathLayerDefaults = {
   widthUnits: 'pixels',
   widthMinPixels: 1,
-  jointRounded: true,
-  capRounded: true
+  jointRounded: false, // Optimization: save attribute slots
+  capRounded: false     // Optimization: save attribute slots
 };
 
 /**
  * PathStyleExtension instance for dashed line support
  * highPrecisionDash improves dash rendering quality for wider strokes
  */
-const pathStyleExtension = new PathStyleExtension({ dash: true, highPrecisionDash: true });
+const pathStyleExtension = new PathStyleExtension({ dash: true, highPrecisionDash: false });
 
 /**
  * Layer configurations keyed by layer name
@@ -59,7 +56,11 @@ export const LAYER_CONFIGS = {
   extensions: {
     id: `${LAYER_ID_PREFIX}-extensions`,
     LayerClass: PathLayer,
-    defaultProps: { ...pathLayerDefaults }
+    defaultProps: {
+      ...pathLayerDefaults,
+      capRounded: false,
+      extensions: [pathStyleExtension]
+    }
   },
   nodes: {
     id: `${LAYER_ID_PREFIX}-nodes`,

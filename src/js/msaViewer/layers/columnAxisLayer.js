@@ -21,19 +21,18 @@ export function buildColumnAxis(cellSize, viewState, visibleRange, rows, zoomSca
   const { c0, c1 } = visibleRange;
   const data = [];
 
-  // Position axis centered in the top view
-  const axisY = 0;
+  // Position axis centered in the top view (AXIS_HEIGHT is 20)
+  const axisY = 10;
 
   const pixelsPerCell = optionsCellSize * zoomScale;
 
   // Calculate step to prevent overlapping labels
-  // Approximate label width is ~40px for 4-digit numbers
-  // Need: step * pixelsPerCell >= labelWidth
-  const labelWidth = 40;
+  // Approximate label width is ~50px for large numbers
+  const labelWidth = 50;
   let step = Math.ceil(labelWidth / Math.max(0.01, pixelsPerCell));
 
-  // Round up to nice intervals (1, 5, 10, 20, 50, 100, 200, 500, 1000, ...)
-  const niceSteps = [1, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000];
+  // Round up to nice intervals
+  const niceSteps = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000];
   step = niceSteps.find(n => n >= step) || niceSteps[niceSteps.length - 1];
 
   for (let c = c0; c <= c1; c++) {
@@ -61,7 +60,7 @@ export function createColumnAxisLayer(axisData, zoomScale) {
     pickable: false,
     getText: d => d.text,
     getPosition: d => d.position,
-    getSize: 12,
+    getSize: 10,
     sizeUnits: 'pixels',  // Use pixel units for consistent sizing
     getTextAnchor: 'middle',
     getAlignmentBaseline: 'center',
