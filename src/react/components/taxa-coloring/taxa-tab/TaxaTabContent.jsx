@@ -4,7 +4,7 @@ import { ColorSchemeSelector } from "../shared/ColorSchemeSelector.jsx";
 import { EmptyStateAlert } from "../shared/EmptyStateAlert.jsx";
 import { ColorInputGrid } from "../shared/ColorInputGrid.jsx";
 
-export function TaxaTabContent({ taxaNames, colorManager, applyScheme, handleColorChange }) {
+export function TaxaTabContent({ taxaNames, colorManager, colorVersion, applyScheme, handleColorChange }) {
   return (
     <div className="space-y-4">
       <ColorSchemeSelector
@@ -20,6 +20,7 @@ export function TaxaTabContent({ taxaNames, colorManager, applyScheme, handleCol
             <p className="text-[10px] text-muted-foreground">Individual color assignments.</p>
           </div>
           <ColorInputGrid
+            key={colorVersion}
             items={taxaNames}
             isGroup={false}
             colorManager={colorManager}

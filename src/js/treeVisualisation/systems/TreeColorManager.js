@@ -19,12 +19,12 @@ import {
   nodeOrParentMatchesAnyEdge,
   isLinkDownstreamOfChangeEdge,
   isNodeDownstreamOfChangeEdge
-} from './color/index.js';
+} from './tree_color/index.js';
 import {
   isLinkInSubtree,
   isNodeInSubtree,
   isNodeSubtreeRoot
-} from '../deckgl/layers/styles/subtreeMatching.js';
+} from '../utils/splitMatching.js';
 
 export class TreeColorManager {
   constructor() {
@@ -60,7 +60,7 @@ export class TreeColorManager {
 
   /**
    * Get branch color with highlighting logic
-   * Priority: Active change edge (blue) > Marked (red, if enabled) > Base color
+   * Priority: Marked (red, if enabled) > Active change edge (blue) > Base color
    * @param {Object} linkData - D3 link data
    * @returns {string} Hex color code
    */
@@ -68,10 +68,10 @@ export class TreeColorManager {
     const isMarked = this.markedSubtreesColoringEnabled && isLinkInSubtree(linkData, this.sharedMarkedJumpingSubtrees);
     const isActiveEdge = isLinkActiveChangeEdge(linkData, this.currentActiveChangeEdges);
 
-    if (isActiveEdge) {
-      return TREE_COLOR_CATEGORIES.activeChangeEdgeColor;
-    } else if (isMarked) {
+    if (isMarked) {
       return TREE_COLOR_CATEGORIES.markedColor;
+    } else if (isActiveEdge) {
+      return TREE_COLOR_CATEGORIES.activeChangeEdgeColor;
     } else {
       return getBaseBranchColor(linkData, this.monophyleticColoringEnabled);
     }
@@ -306,6 +306,11 @@ export class TreeColorManager {
     if (!this.currentMovingSubtree || this.currentMovingSubtree.size === 0) return false;
     return isNodeInSubtree(nodeData, [this.currentMovingSubtree]);
   }
+
+  isLinkMovingSubtree(linkData) {
+    if (!this.currentMovingSubtree || this.currentMovingSubtree.size === 0) return false;
+    return isLinkInSubtree(linkData, [this.currentMovingSubtree]);
+  }
   /**
    * Enable/disable monophyletic group coloring
    */
@@ -372,6 +377,18 @@ export class TreeColorManager {
   isActiveChangeEdge(linkData) {
     return isLinkActiveChangeEdge(linkData, this.currentActiveChangeEdges);
   }
+
+  /**
+   * Check if a node is part of the current active change edge (node itself or parent of the edge).
+   * This mirrors isActiveChangeEdge(link) but for nodes.
+   */
+  isNodeActiveChangeEdge(nodeData) {
+    if (!this.currentActiveChangeEdges || this.currentActiveChangeEdges.size === 0) {
+      return false;
+    }
+    return nodeOrParentMatchesActiveEdge(nodeData, this.currentActiveChangeEdges);
+  }
+
 
   /**
    * Check if a node is part of an upcoming change edge (node or its parent).

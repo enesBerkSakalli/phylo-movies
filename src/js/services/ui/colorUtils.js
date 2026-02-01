@@ -51,6 +51,14 @@ export function colorToRgb(color) {
   if (Array.isArray(color)) return color;
   if (typeof color !== 'string') return [0, 0, 0];
 
+  // Handle rgb/rgba format
+  if (color.startsWith('rgb')) {
+    const m = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/i);
+    if (m) {
+      return [parseInt(m[1], 10), parseInt(m[2], 10), parseInt(m[3], 10)];
+    }
+  }
+
   // Handle HSL format
   if (color.startsWith('hsl(')) {
     return hslToRgb(color);
@@ -104,7 +112,7 @@ export function getContrastingHighlightColor(baseColorRgb) {
   const dr = magenta[0] - baseColorRgb[0];
   const dg = magenta[1] - baseColorRgb[1];
   const db = magenta[2] - baseColorRgb[2];
-  const distToMagenta = (dr*dr*2) + (dg*dg*4) + (db*db*3);
+  const distToMagenta = (dr * dr * 2) + (dg * dg * 4) + (db * db * 3);
 
   // Threshold: If Magenta is too close (e.g. base is Pink/Purple/Red), switch to Cyan
   // 60000 is an approximate threshold for "visually distinct"
@@ -163,13 +171,16 @@ export function getThemeBackgroundColor() {
 
 /**
  * Convert RGB array to Hex string
+ * Handles NaN, out-of-range values, and clamps to valid 0-255 range
  * @param {number[]} rgb - [r, g, b]
  * @returns {string} Hex string "#rrggbb"
  */
 export function rgbToHex(rgb) {
   if (!rgb || !Array.isArray(rgb) || rgb.length < 3) return "#000000";
   const toHex = (c) => {
-    const hex = Math.round(c).toString(16);
+    // Handle NaN, undefined, and clamp to 0-255 range
+    const safeValue = Number.isFinite(c) ? Math.max(0, Math.min(255, Math.round(c))) : 0;
+    const hex = safeValue.toString(16);
     return hex.length === 1 ? "0" + hex : hex;
   };
   return "#" + toHex(rgb[0]) + toHex(rgb[1]) + toHex(rgb[2]);
@@ -190,4 +201,66 @@ export function toHexMap(map) {
     hexMap[key] = val;
   });
   return hexMap;
+}
+
+// ============================================================================
+// NEW: APCA & DeltaE Utilities (using colorjs.io)
+// ============================================================================
+import Color from 'colorjs.io';
+
+/**
+ * Calculate sRGB luminance
+ * @param {number[]} rgb - [r, g, b]
+ * @returns {number} Luminance (0-1)
+ */
+export function calculateLuminance(rgb) {
+  const [r, g, b] = rgb.map(v => {
+    v /= 255;
+    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+/**
+ * Convert RGB to Lab (via colorjs.io)
+ * @param {number} r - Red (0-255)
+ * @param {number} g - Green (0-255)
+ * @param {number} b - Blue (0-255)
+ * @returns {Object} { l, a, b }
+ */
+export function rgbToLab(r, g, b) {
+  const c = new Color("srgb", [r / 255, g / 255, b / 255]).to("lab");
+  return { L: c.coords[0], a: c.coords[1], b: c.coords[2] };
+}
+
+/**
+ * Calculate DeltaE 2000 Distance
+ * @param {Object} lab1 - {L, a, b} or Color object
+ * @param {Object} lab2 - {L, a, b} or Color object
+ * @returns {number} Distance
+ */
+export function getDeltaE00(lab1, lab2) {
+  // If inputs are already Color objects, use them directly
+  if (lab1 instanceof Color && lab2 instanceof Color) {
+    return lab1.deltaE(lab2, "2000");
+  }
+
+  // Otherwise assume manual objects {L, a, b} and wrap them
+  // Note: This is slightly inefficient if calling in loop.
+  // Prefer passing Color objects if performance is critical.
+  const c1 = new Color("lab", [lab1.L, lab1.a, lab1.b]);
+  const c2 = new Color("lab", [lab2.L, lab2.a, lab2.b]);
+  return c1.deltaE(c2, "2000");
+}
+
+/**
+ * Calculate APCA Contrast
+ * @param {number[]} rgb1 - [r, g, b]
+ * @param {number[]} rgb2 - [r, g, b]
+ * @returns {number} Absolute contrast value (Lc)
+ */
+export function getAPCAContrast(rgb1, rgb2) {
+  const c1 = new Color("srgb", [rgb1[0] / 255, rgb1[1] / 255, rgb1[2] / 255]);
+  const c2 = new Color("srgb", [rgb2[0] / 255, rgb2[1] / 255, rgb2[2] / 255]);
+  return Math.abs(c1.contrast(c2, "APCA"));
 }

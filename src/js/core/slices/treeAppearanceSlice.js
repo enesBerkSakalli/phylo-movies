@@ -4,15 +4,17 @@ export const createTreeAppearanceSlice = (set, get) => ({
   // ==========================================================================
   fontSize: '1.8em',
   strokeWidth: 1,
+  connectorStrokeWidth: 1,
   nodeSize: 0.5,
   branchTransformation: 'none',
   cameraMode: 'orthographic',
   layoutAngleDegrees: 360,
   layoutRotationDegrees: 0,
-  styleConfig: { contourWidthOffset: 2, labelOffsets: { DEFAULT: 16, WITH_EXTENSIONS: 32, EXTENSION: 4 } },
+  styleConfig: { contourWidthOffset: 2, labelOffsets: { DEFAULT: 1, WITH_EXTENSIONS: 3, EXTENSION: 1 } },
   taxaColoringOpen: false,
   taxaColoringWindow: { x: 40, y: 40, width: 640, height: 700 },
-  markedSubtreeOpacity: 0.8, // Default opacity for the marked subtree highlight
+  markedSubtreeOpacity: 0.5, // Default opacity for the marked subtree highlight (reduced from 0.8)
+  labelsVisible: true, // Whether node/taxa labels are displayed
 
   // ==========================================================================
   // ACTIONS
@@ -28,6 +30,8 @@ export const createTreeAppearanceSlice = (set, get) => ({
   },
 
   setStrokeWidth: (width) => set({ strokeWidth: Number(width) }),
+
+  setConnectorStrokeWidth: (width) => set({ connectorStrokeWidth: Number(width) }),
 
   setNodeSize: (size) => {
     const numericSize = Number(size);
@@ -62,4 +66,6 @@ export const createTreeAppearanceSlice = (set, get) => ({
     const value = Math.max(0, Math.min(1, Number(opacity)));
     set({ markedSubtreeOpacity: value });
   },
+
+  setLabelsVisible: (visible) => set({ labelsVisible: !!visible }),
 });

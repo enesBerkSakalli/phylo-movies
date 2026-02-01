@@ -5,18 +5,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export function MovieChartSection({ barOptionValue, onBarOptionChange }) {
   return (
     <div className="w-full" role="region" aria-label="Distance Chart">
-      <div className="flex items-center w-full gap-0">
-        <div className="flex-1 min-w-0 h-[60px] relative">
+      <div className="flex items-center w-full">
+        <div className="flex-1 h-[70px] relative">
             <DistanceChart />
         </div>
-        <div className="flex-none relative z-[2] ml-2" role="group" aria-label="Chart controls">
+        <div className="flex-none relative ml-2" role="group" aria-label="Chart controls">
           <Select value={barOptionValue} onValueChange={onBarOptionChange}>
             <SelectTrigger className="w-[100px] h-8">
               <SelectValue placeholder="Metric" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[2000]">
               <SelectItem value="rfd" title="Robinson-Foulds Distance: Measures topological differences between trees">RFD</SelectItem>
-              <SelectItem value="w-rfd" title="Weighted Robinson-Foulds: Includes branch length differences">W‑RFD</SelectItem>
+              <SelectItem value="w-rfd" title="Weighted Robinson-Foulds: Includes branch length differences">W-RFD</SelectItem>
               <SelectItem value="scale" title="Tree scale: Shows relative size changes">Scale</SelectItem>
             </SelectContent>
           </Select>

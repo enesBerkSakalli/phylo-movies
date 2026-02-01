@@ -81,24 +81,33 @@ export function getGroupForStrategy(taxonName, separators, strategyType, options
     return null; // No group if separator not present or only one part
   }
 
+  let groupName = null;
+
   if (strategyType === 'prefix') {
-    return parts[0]; // e.g., "A" from "A_B_C"
+    groupName = parts[0]; // e.g., "A" from "A_B_C"
   } else if (strategyType === 'suffix') {
-    return parts[parts.length - 1]; // e.g., "C" from "A_B_C"
+    groupName = parts[parts.length - 1]; // e.g., "C" from "A_B_C"
   } else if (strategyType === 'middle') {
     if (parts.length < 3) return null;
-    return parts[Math.floor(parts.length / 2)]; // Middle segment
+    groupName = parts[Math.floor(parts.length / 2)]; // Middle segment
   } else if (strategyType === 'segment') {
     const segmentIndex = options.segmentIndex ?? 0;
     if (segmentIndex < 0) {
       // Negative index: count from end
       const idx = parts.length + segmentIndex;
-      return idx >= 0 ? parts[idx] : null;
+      groupName = idx >= 0 ? parts[idx] : null;
+    } else {
+      groupName = segmentIndex < parts.length ? parts[segmentIndex] : null;
     }
-    return segmentIndex < parts.length ? parts[segmentIndex] : null;
   }
 
-  return null;
+  // Trim whitespace and return null for empty strings
+  if (groupName != null) {
+    groupName = String(groupName).trim();
+    if (groupName === '') return null;
+  }
+
+  return groupName;
 }
 
 /**
@@ -204,15 +213,18 @@ export function generateGroups(taxaNames, separators, strategy, options = {}) {
  */
 export function applyColoringData(colorData, leaveOrder, defaultColorMap) {
   const newColorMap = {};
+  const safeDefaultColorMap = defaultColorMap || {};
+  const fallbackColor = safeDefaultColorMap.defaultColor || "#000000";
 
   if (colorData.mode === "taxa") {
     // Direct taxa coloring
-    for (const [taxon, color] of Object.entries(colorData.taxaColorMap)) {
+    for (const [taxon, color] of Object.entries(colorData.taxaColorMap || {})) {
       newColorMap[taxon] = color;
     }
   } else if (colorData.mode === "groups") {
     // Group-based coloring from pattern detection
     const separators = colorData.separators || colorData.separator;
+    const groupColorMap = colorData.groupColorMap || {};
     const options = {
       segmentIndex: colorData.segmentIndex,
       useRegex: colorData.useRegex,
@@ -221,18 +233,21 @@ export function applyColoringData(colorData, leaveOrder, defaultColorMap) {
 
     leaveOrder.forEach((taxon) => {
       const group = getGroupForTaxon(taxon, separators, colorData.strategyType, options);
-      const groupColor = colorData.groupColorMap[group];
+      // Ensure string lookup for group color (handles numeric-like group names)
+      const groupKey = group != null ? String(group) : null;
+      const groupColor = groupKey != null ? groupColorMap[groupKey] : null;
 
       if (groupColor) {
         newColorMap[taxon] = groupColor;
       } else {
-        newColorMap[taxon] = defaultColorMap[taxon] || defaultColorMap.defaultColor || "#000000";
+        newColorMap[taxon] = safeDefaultColorMap[taxon] || fallbackColor;
       }
-      });
+    });
   } else if (colorData.mode === "csv") {
     // CSV-based group coloring
     // Handle csvTaxaMap as either Map or Object (from serialized state)
     const csvMap = colorData.csvTaxaMap;
+    const groupColorMap = colorData.groupColorMap || {};
     const getGroup = (taxon) => {
       if (csvMap instanceof Map) {
         return csvMap.get(taxon);
@@ -245,12 +260,14 @@ export function applyColoringData(colorData, leaveOrder, defaultColorMap) {
     leaveOrder.forEach((taxon) => {
       // Get group from CSV mapping
       const group = getGroup(taxon);
-      const groupColor = group ? colorData.groupColorMap[group] : null;
+      // Ensure string lookup for group color
+      const groupKey = group != null ? String(group) : null;
+      const groupColor = groupKey != null ? groupColorMap[groupKey] : null;
 
       if (groupColor) {
         newColorMap[taxon] = groupColor;
       } else {
-        newColorMap[taxon] = defaultColorMap[taxon] || defaultColorMap.defaultColor || "#000000";
+        newColorMap[taxon] = safeDefaultColorMap[taxon] || fallbackColor;
       }
     });
   }

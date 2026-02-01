@@ -1,154 +1,198 @@
 import { useEffect, useRef } from 'react';
 import { useAppStore } from '../js/core/store.js';
 import { DeckGLTreeAnimationController } from '../js/treeVisualisation/DeckGLTreeAnimationController.js';
-import { calculateWindow } from "../js/domain/msa/msaWindowCalculator.js";
-import { getMSAFrameIndex } from "../js/domain/indexing/IndexMapping.js";
+import { calculateWindow } from '../js/domain/msa/msaWindowCalculator.js';
+import { getMSAFrameIndex } from '../js/domain/indexing/IndexMapping.js';
 
-// ==========================================================================
-// STORE SELECTORS
-// ==========================================================================
-
-// Core state
-const selectMovieData = (s) => s.movieData;
-const selectCurrentTreeIndex = (s) => s.currentTreeIndex;
-const selectComparisonMode = (s) => s.comparisonMode;
-const selectTransitionResolver = (s) => s.transitionResolver;
-const selectTreeControllers = (s) => s.treeControllers;
-const selectPlaying = (s) => s.playing;
-const selectAnimationProgress = (s) => s.animationProgress;
-const selectClipboardTreeIndex = (s) => s.clipboardTreeIndex;
-
-// Actions
-const selectSetTreeControllers = (s) => s.setTreeControllers;
-const selectSetRenderInProgress = (s) => s.setRenderInProgress;
-
-// MSA sync state
-const selectSyncMSAEnabled = (s) => s.syncMSAEnabled;
-const selectMsaWindowSize = (s) => s.msaWindowSize;
-const selectMsaStepSize = (s) => s.msaStepSize;
-const selectMsaColumnCount = (s) => s.msaColumnCount;
-const selectSetMsaRegion = (s) => s.setMsaRegion;
-
-// ==========================================================================
+// =============================================================================
 // HOOK
-// ==========================================================================
+// =============================================================================
 
 export function useTreeController() {
-  // ---------------------------------------------------------------------------
-  // Store subscriptions
-  // ---------------------------------------------------------------------------
-  const movieData = useAppStore(selectMovieData);
-  const currentTreeIndex = useAppStore(selectCurrentTreeIndex);
-  const comparisonMode = useAppStore(selectComparisonMode);
-  const transitionResolver = useAppStore(selectTransitionResolver);
-  const treeControllers = useAppStore(selectTreeControllers);
-  const playing = useAppStore(selectPlaying);
-  const animationProgress = useAppStore(selectAnimationProgress);
-  const clipboardTreeIndex = useAppStore(selectClipboardTreeIndex);
-
-  const setTreeControllers = useAppStore(selectSetTreeControllers);
-  const setRenderInProgress = useAppStore(selectSetRenderInProgress);
-
-  // MSA sync
-  const syncMSAEnabled = useAppStore(selectSyncMSAEnabled);
-
-  const msaWindowSize = useAppStore(selectMsaWindowSize);
-  const msaStepSize = useAppStore(selectMsaStepSize);
-  const msaColumnCount = useAppStore(selectMsaColumnCount);
-  const setMsaRegion = useAppStore(selectSetMsaRegion);
-
-  // ---------------------------------------------------------------------------
-  // Refs for tracking state changes
-  // ---------------------------------------------------------------------------
+  const controllerRef = useRef(null);
+  const renderRafRef = useRef(null);
   const prevMsaFrameRef = useRef(-1);
 
-  // ---------------------------------------------------------------------------
-  // Controller initialization
-  // ---------------------------------------------------------------------------
   useEffect(() => {
-    if (!movieData) return;
-    if (treeControllers.length > 0) return;
+    let disposed = false;
 
-    const controller = new DeckGLTreeAnimationController('#webgl-container', {
-      animations: true,
-      comparisonMode,
-      useReactDeckGL: true
-    });
-    setTreeControllers([controller]);
-  }, [movieData, treeControllers.length, comparisonMode, setTreeControllers]);
+    const schedule = typeof requestAnimationFrame === 'function'
+      ? requestAnimationFrame
+      : (cb) => setTimeout(cb, 16);
 
-  // ---------------------------------------------------------------------------
-  // Sync Color Manager (Active Edge Highlight)
-  // ---------------------------------------------------------------------------
-  useEffect(() => {
-    // Whenever tree index changes (e.g. manual scrubbing), ensure highlight is correct
-    // Note: During animation, DeckGLTreeAnimationController handles this per-frame.
-    const { playing, updateColorManagerForCurrentIndex } = useAppStore.getState();
-    if (!playing && updateColorManagerForCurrentIndex) {
-        updateColorManagerForCurrentIndex();
-    }
-  }, [currentTreeIndex]);
-
-  // ---------------------------------------------------------------------------
-  // Tree rendering
-  // ---------------------------------------------------------------------------
-  useEffect(() => {
-    const controller = treeControllers[0];
-    if (!controller || !movieData) return;
-
-    const render = async () => {
-      // Wait for DeckGL to finish initializing
-      if (!controller.ready) {
-        try {
-          await controller.readyPromise;
-        } catch {
-          return;
-        }
-      }
-
-      // Skip static rendering during animation playback
-      if (playing) return;
-
-      setRenderInProgress(true);
-      try {
-        if (comparisonMode) {
-          await renderComparisonMode(controller, transitionResolver, currentTreeIndex);
-        } else {
-          // Render based on current animation progress (handles static interpolation)
-          await controller.renderProgress(animationProgress);
-        }
-      } catch (error) {
-        console.error('Error during tree rendering:', error);
-      } finally {
-        setRenderInProgress(false);
+    const cancelSchedule = (id) => {
+      if (typeof cancelAnimationFrame === 'function') {
+        cancelAnimationFrame(id);
+      } else {
+        clearTimeout(id);
       }
     };
 
-    render();
-  }, [currentTreeIndex, comparisonMode, treeControllers, movieData, transitionResolver, setRenderInProgress, playing, clipboardTreeIndex, animationProgress]);
+    const ensureController = () => {
+      const state = useAppStore.getState();
+      if (!state.movieData) return;
 
+      if (Array.isArray(state.treeControllers) && state.treeControllers.length > 0) {
+        controllerRef.current = state.treeControllers[0];
+        return;
+      }
 
-  // ---------------------------------------------------------------------------
-  // MSA synchronization - only update when reaching a new anchor tree
-  // ---------------------------------------------------------------------------
-  useEffect(() => {
-    if (!syncMSAEnabled || !transitionResolver || !msaColumnCount) return;
+      const controller = new DeckGLTreeAnimationController('#webgl-container', {
+        animations: true,
+        comparisonMode: state.comparisonMode,
+        useReactDeckGL: true
+      });
 
-    const frameIndex = getMSAFrameIndex();
-    if (frameIndex < 0) return;
+      state.setTreeControllers([controller]);
+      controllerRef.current = controller;
+    };
 
-    // Only update region when the MSA frame (anchor tree) actually changes
-    if (frameIndex === prevMsaFrameRef.current) return;
-    prevMsaFrameRef.current = frameIndex;
+    const scheduleRender = () => {
+      if (renderRafRef.current != null) return;
 
-    const windowData = calculateWindow(frameIndex, msaStepSize, msaWindowSize, msaColumnCount);
-    setMsaRegion(windowData.startPosition, windowData.endPosition);
-  }, [currentTreeIndex, syncMSAEnabled, transitionResolver, msaColumnCount, msaStepSize, msaWindowSize, setMsaRegion]);
+      renderRafRef.current = schedule(async () => {
+        renderRafRef.current = null;
+        if (disposed) return;
+
+        const state = useAppStore.getState();
+        if (state.playing) return;
+
+        const controller = controllerRef.current || state.treeControllers?.[0];
+        if (!controller || !state.movieData) return;
+
+        if (!controller.ready) {
+          try {
+            await controller.readyPromise;
+          } catch {
+            return;
+          }
+        }
+
+        state.setRenderInProgress(true);
+        try {
+          if (state.comparisonMode) {
+            await renderComparisonMode(controller, state.transitionResolver, state.currentTreeIndex);
+          } else {
+            await controller.renderProgress(state.animationProgress);
+          }
+        } catch (error) {
+          console.error('Error during tree rendering:', error);
+        } finally {
+          state.setRenderInProgress(false);
+        }
+      });
+    };
+
+    const syncColorManager = () => {
+      const state = useAppStore.getState();
+      if (!state.playing && state.updateColorManagerForCurrentIndex) {
+        state.updateColorManagerForCurrentIndex();
+      }
+    };
+
+    const syncMsaRegion = () => {
+      const state = useAppStore.getState();
+      if (!state.syncMSAEnabled || !state.transitionResolver || !state.msaColumnCount) return;
+
+      const frameIndex = getMSAFrameIndex();
+      if (frameIndex < 0) return;
+      if (frameIndex === prevMsaFrameRef.current) return;
+
+      prevMsaFrameRef.current = frameIndex;
+
+      const windowData = calculateWindow(
+        frameIndex,
+        state.msaStepSize,
+        state.msaWindowSize,
+        state.msaColumnCount
+      );
+      state.setMsaRegion(windowData.startPosition, windowData.endPosition);
+    };
+
+    ensureController();
+    scheduleRender();
+
+    const unsubscribe = useAppStore.subscribe((state, prevState) => {
+      if (state.movieData !== prevState.movieData || state.comparisonMode !== prevState.comparisonMode) {
+        ensureController();
+        scheduleRender();
+      }
+
+      if (state.treeControllers !== prevState.treeControllers) {
+        controllerRef.current = Array.isArray(state.treeControllers) ? state.treeControllers[0] : null;
+      }
+
+      if (state.currentTreeIndex !== prevState.currentTreeIndex) {
+        syncColorManager();
+        syncMsaRegion();
+        scheduleRender();
+      }
+
+      if (state.animationProgress !== prevState.animationProgress) {
+        scheduleRender();
+      }
+
+      if (state.clipboardTreeIndex !== prevState.clipboardTreeIndex) {
+        scheduleRender();
+      }
+
+      // Ensure every controller reacts to branch length transforms, even if the change
+      // originated outside the TreeStructure dropdown.
+      if (state.branchTransformation !== prevState.branchTransformation) {
+        const controller = controllerRef.current || state.treeControllers?.[0];
+        controller?.resetInterpolationCaches?.();
+        controller?.initializeUniformScaling?.(state.branchTransformation);
+        scheduleRender();
+      }
+
+      if (
+        state.transitionResolver !== prevState.transitionResolver ||
+        state.syncMSAEnabled !== prevState.syncMSAEnabled ||
+        state.msaWindowSize !== prevState.msaWindowSize ||
+        state.msaStepSize !== prevState.msaStepSize ||
+        state.msaColumnCount !== prevState.msaColumnCount
+      ) {
+        syncMsaRegion();
+        scheduleRender();
+      }
+
+      if (state.playing !== prevState.playing && !state.playing) {
+        scheduleRender();
+      }
+    });
+
+    return () => {
+      disposed = true;
+      if (renderRafRef.current != null) {
+        cancelSchedule(renderRafRef.current);
+        renderRafRef.current = null;
+      }
+      unsubscribe?.();
+
+      // Properly destroy the controller to clean up deck.gl instances and DOM elements
+      // This prevents React DOM reconciliation errors when the component unmounts
+      const controller = controllerRef.current;
+      if (controller) {
+        try {
+          controller.destroy();
+        } catch (err) {
+          console.warn('[useTreeController] Failed to destroy controller:', err);
+        }
+        controllerRef.current = null;
+      }
+
+      // Clear tree controllers from store to prevent stale references
+      const state = useAppStore.getState();
+      if (state.treeControllers?.length) {
+        state.setTreeControllers([]);
+      }
+    };
+  }, []);
 }
 
-// ==========================================================================
+// =============================================================================
 // HELPERS
-// ==========================================================================
+// =============================================================================
 
 async function renderComparisonMode(controller, transitionResolver, currentTreeIndex) {
   const full = transitionResolver?.fullTreeIndices || [];

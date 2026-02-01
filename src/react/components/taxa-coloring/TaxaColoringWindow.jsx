@@ -26,6 +26,7 @@ export function TaxaColoringWindow({ taxaNames = [], originalColorMap = {}, onAp
     csvColumn,
     csvValidation,
     colorManager,
+    colorVersion, // For triggering re-renders when colors change
     applyScheme,
     onFile,
     onColumnChange,
@@ -43,10 +44,10 @@ export function TaxaColoringWindow({ taxaNames = [], originalColorMap = {}, onAp
     onApply?.(result);
   }, [result, onApply]);
 
-  const applyAndClose = () => {
+  const applyAndClose = React.useCallback(() => {
     // onApply is already called via effect, so we just close
     onClose?.();
-  };
+  }, [onClose]);
 
   return (
     <div className="flex h-full flex-col gap-2 p-3 sm:p-4">
@@ -98,6 +99,7 @@ export function TaxaColoringWindow({ taxaNames = [], originalColorMap = {}, onAp
             <TaxaTabContent
               taxaNames={taxaNames}
               colorManager={colorManager}
+              colorVersion={colorVersion}
               applyScheme={applyScheme}
               handleColorChange={handleColorChange}
             />
@@ -113,6 +115,7 @@ export function TaxaColoringWindow({ taxaNames = [], originalColorMap = {}, onAp
               groupingResult={groupingResult}
               groups={groups}
               colorManager={colorManager}
+              colorVersion={colorVersion}
               applyScheme={applyScheme}
               handleColorChange={handleColorChange}
               onStrategyChange={handleStrategyChange}
@@ -126,6 +129,7 @@ export function TaxaColoringWindow({ taxaNames = [], originalColorMap = {}, onAp
               csvValidation={csvValidation}
               csvGroups={csvGroups}
               colorManager={colorManager}
+              colorVersion={colorVersion}
               onFile={onFile}
               onColumnChange={onColumnChange}
               applyScheme={applyScheme}

@@ -1,3 +1,5 @@
+import { getSplitHash } from './splitMatching.js';
+
 /**
  * KeyGenerator - Centralized, robust key generation for D3 data binding
  *
@@ -11,32 +13,13 @@
  * @returns {string} Unique node key (e.g., "node-0-1-2" or "node-unknown")
  */
 export function getNodeKey(node) {
-  if (node && node.data && Array.isArray(node.data.split_indices)) {
-    return `node-${node.data.split_indices.join("-")}`;
-  }
+  const splitKey = normalizeSplitIndices(node?.data?.split_indices);
+  if (splitKey) return `node-${splitKey}`;
 
-  // Fallback: use name if available, otherwise "unknown"
-  const fallbackId = (node && node.data && node.data.name)
-    ? node.data.name.toString().replace(/[^a-zA-Z0-9-_]/g, "_")
-    : "unknown";
-
+  const fallbackId = getFallbackId(node?.data);
   return `node-${fallbackId}`;
 }
 
-/**
- * Returns a stable, cross-tree node id for the same biological leaf.
- * Priority:
- * 1) Explicit stable field if present (guid/id)
- * 2) Taxon name
- * 3) Fallback to split_indices-based key
- */
-export function getStableNodeId(node) {
-  const guid = node?.data?.guid || node?.data?.id;
-  if (guid) return `stable-${String(guid)}`;
-  const name = node?.data?.name ? String(node.data.name).replace(/[^a-zA-Z0-9-_]/g, "_") : null;
-  if (name) return `stable-${name}`;
-  return getNodeKey(node);
-}
 
 /**
  * Generates a robust, unique key for tree labels
@@ -44,14 +27,11 @@ export function getStableNodeId(node) {
  * @returns {string} Unique label key (e.g., "label-0-1-2" or "label-unknown")
  */
 export function getLabelKey(leaf) {
-  if (leaf && leaf.data && Array.isArray(leaf.data.split_indices)) {
-    return `label-${leaf.data.split_indices.join("-")}`;
-  }
+  const splitKey = normalizeSplitIndices(leaf?.data?.split_indices);
+  if (splitKey) return `label-${splitKey}`;
 
   // Fallback: use name if available, otherwise "unknown"
-  const fallbackId = (leaf && leaf.data && leaf.data.name)
-    ? leaf.data.name.toString().replace(/[^a-zA-Z0-9-_]/g, "_")
-    : "unknown";
+  const fallbackId = getFallbackId(leaf?.data);
 
   return `label-${fallbackId}`;
 }
@@ -62,10 +42,9 @@ export function getLabelKey(leaf) {
  * @returns {string} Node ID without prefix
  */
 const getNodeId = (node) => {
-  if (node && node.data && Array.isArray(node.data.split_indices)) {
-    return node.data.split_indices.join("-");
-  }
-  return "unknown";
+  const splitKey = normalizeSplitIndices(node?.data?.split_indices);
+  if (splitKey) return splitKey;
+  return getFallbackId(node?.data);
 };
 
 
@@ -90,14 +69,32 @@ export function getLinkKey(link) {
  * @returns {string} Unique extension key (e.g., "ext-0-1-2")
  */
 export function getExtensionKey(leaf) {
-  if (leaf && leaf.data && Array.isArray(leaf.data.split_indices)) {
-    return `ext-${leaf.data.split_indices.join("-")}`;
-  }
+  const splitKey = normalizeSplitIndices(leaf?.data?.split_indices);
+  if (splitKey) return `ext-${splitKey}`;
 
   // Fallback: use name if available
-  const fallbackId = (leaf && leaf.data && leaf.data.name)
-    ? leaf.data.name.toString().replace(/[^a-zA-Z0-9-_]/g, "_")
-    : "unknown";
+  const fallbackId = getFallbackId(leaf?.data);
 
   return `ext-${fallbackId}`;
 }
+
+/**
+ * Convert split_indices array to a stable key string.
+ * Uses an order-independent hash for performance (O(N)) and short key length.
+ * @param {Array<number>} splitIndices
+ * @returns {string|null}
+ */
+const normalizeSplitIndices = (splitIndices) => {
+  if (!Array.isArray(splitIndices) || splitIndices.length === 0) return null;
+  return getSplitHash(splitIndices);
+};
+
+/**
+ * Build a sanitized fallback id from node data.
+ * @param {Object} data
+ * @returns {string}
+ */
+const getFallbackId = (data) => {
+  const raw = data?.guid ?? data?.id ?? data?.name ?? "unknown";
+  return raw.toString().replace(/[^a-zA-Z0-9-_]/g, "_");
+};

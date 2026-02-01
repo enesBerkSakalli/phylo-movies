@@ -60,7 +60,7 @@ export function TaxaColoringRndWindow() {
     const newColorMap = applyColoringData(colorData, taxaNames, colorData.taxaColorMap);
     updateTaxaColors(newColorMap);
 
-    // Persist grouping info for UI (tooltips)
+    // Persist grouping info for UI (tooltips) and window state restoration
     setTaxaGrouping({
       mode: colorData?.mode || 'taxa',
       separators: colorData?.separators || null,
@@ -68,12 +68,31 @@ export function TaxaColoringRndWindow() {
       segmentIndex: colorData?.segmentIndex,
       useRegex: colorData?.useRegex,
       regexPattern: colorData?.regexPattern,
-      csvTaxaMap: colorData?.csvTaxaMap ? Object.fromEntries(colorData.csvTaxaMap) : null,
+      csvTaxaMap: (colorData?.csvTaxaMap instanceof Map) ? Object.fromEntries(colorData.csvTaxaMap) : (colorData?.csvTaxaMap || null),
       groupColorMap: colorData?.groupColorMap || null,
+      taxaColorMap: colorData?.taxaColorMap || null, // Persist taxa colors for restoration
+      // CSV-specific fields for full state restoration
+      csvGroups: colorData?.csvGroups || null,
+      csvColumn: colorData?.csvColumn || null,
+      csvData: colorData?.csvData || null,
+      csvFileName: colorData?.csvFileName || null,
     });
   }, [taxaNames, updateTaxaColors, setTaxaGrouping]);
 
-  const handleClose = () => setOpen(false);
+  const handleClose = useCallback(() => setOpen(false), [setOpen]);
+
+  const onDragStop = useCallback((_e, d) => {
+      setWindowState({ x: d.x, y: d.y });
+  }, [setWindowState]);
+
+  const onResizeStop = useCallback((_e, _dir, ref, _delta, pos) => {
+        setWindowState({
+          width: parseInt(ref.style.width, 10),
+          height: parseInt(ref.style.height, 10),
+          x: pos.x,
+          y: pos.y,
+        });
+  }, [setWindowState]);
 
   if (!isOpen || !taxaNames.length) return null;
 
@@ -84,15 +103,8 @@ export function TaxaColoringRndWindow() {
       minHeight={520}
       size={{ width: windowState.width, height: windowState.height }}
       position={{ x: windowState.x, y: windowState.y }}
-      onDragStop={(_e, d) => setWindowState({ x: d.x, y: d.y })}
-      onResizeStop={(_e, _dir, ref, _delta, pos) => {
-        setWindowState({
-          width: parseInt(ref.style.width, 10),
-          height: parseInt(ref.style.height, 10),
-          x: pos.x,
-          y: pos.y,
-        });
-      }}
+      onDragStop={onDragStop}
+      onResizeStop={onResizeStop}
       dragHandleClassName="taxa-coloring-drag-handle"
       className="fixed z-50 pointer-events-auto shadow-2xl border border-border/60 rounded-xl bg-card/95 overflow-hidden"
       style={{ backdropFilter: 'blur(12px)' }}

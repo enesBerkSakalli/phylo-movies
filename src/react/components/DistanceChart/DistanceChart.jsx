@@ -10,7 +10,7 @@ import {
 import { useAppStore } from '../../../js/core/store.js';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '../../../components/ui/chart.tsx';
 
-const CHART_MARGINS = { top: 8, right: 8, bottom: 4, left: 8 };
+const CHART_MARGINS = { top: 2, right: 8, bottom: 4, left: 8 };
 
 const buildSeriesPoints = (barOptionValue, robinsonFouldsDistances, weightedRobinsonFouldsDistances, scaleList) => {
   if (barOptionValue === 'rfd') {
@@ -134,7 +134,7 @@ export function DistanceChart() {
   const chartConfig = useMemo(() => ({
     dist: {
       label: barOptionValue === 'rfd' ? 'RFD' : barOptionValue === 'w-rfd' ? 'W-RFD' : 'Scale',
-      color: 'var(--primary)',
+      color: '#2563eb',
     },
   }), [barOptionValue]);
 
@@ -181,34 +181,24 @@ export function DistanceChart() {
           margin={CHART_MARGINS}
           onClick={handleClick}
         >
-          <defs>
-            <linearGradient id="fillDist" x1="0" y1="0" x2="0" y2="1">
-              <stop
-                offset="5%"
-                stopColor="var(--primary)"
-                stopOpacity={0.3}
-              />
-              <stop
-                offset="95%"
-                stopColor="var(--primary)"
-                stopOpacity={0.05}
-              />
-            </linearGradient>
-          </defs>
           <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-muted/20" />
           <XAxis
             dataKey="x"
-            hide
             type="number"
             domain={['dataMin', 'dataMax']}
+            tickLine={false}
+            axisLine
+            tickMargin={4}
+            tickCount={8}
+            fontSize={9}
           />
           <YAxis
             type="number"
             domain={[0, yMax === 'auto' ? 'auto' : yMax]}
             tickLine={false}
-            axisLine={false}
+            axisLine
             tickMargin={4}
-            tickCount={3} // Reduce tick count to fix overlap in small height
+            tickCount={6}
             fontSize={9}
             tickFormatter={(value) => value.toLocaleString(undefined, { maximumFractionDigits: 1 })}
           />
@@ -218,16 +208,16 @@ export function DistanceChart() {
           />
           <Area
             dataKey="y"
-            type="monotone"
-            fill="url(#fillDist)"
-            fillOpacity={1}
-            stroke="var(--primary)"
+            type="stepAfter"
+            fill="#2563eb"
+            fillOpacity={0.2}
+            stroke="#2563eb"
             strokeWidth={1.5}
             isAnimationActive={false}
           />
           <ReferenceLine
             x={currentX}
-            stroke="var(--primary)"
+            stroke="#2563eb"
             strokeWidth={2}
             isFront
           />

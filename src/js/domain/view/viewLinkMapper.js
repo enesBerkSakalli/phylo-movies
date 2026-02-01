@@ -18,6 +18,32 @@
  */
 
 /**
+ * Derive the Pair Key used to lookup Comparison Mode solutions.
+ * Attempts to find a direct key on the left or right tree, or scans the range between them.
+ *
+ * @param {number} leftIndex - The index of the left tree
+ * @param {number} rightIndex - The index of the right tree
+ * @param {Array} treeMetadata - Array of tree metadata objects containing tree_pair_key
+ * @returns {string|null} The resolved pair key or null if not found
+ */
+export function derivePairKey(leftIndex, rightIndex, treeMetadata = []) {
+  const directLeft = treeMetadata[leftIndex]?.tree_pair_key;
+  if (directLeft) return directLeft;
+
+  const directRight = treeMetadata[rightIndex]?.tree_pair_key;
+  if (directRight) return directRight;
+
+  // Fallback: scan between indices
+  const start = Math.min(leftIndex ?? 0, rightIndex ?? 0);
+  const end = Math.max(leftIndex ?? 0, rightIndex ?? 0);
+  for (let i = start; i <= end; i++) {
+    const key = treeMetadata[i]?.tree_pair_key;
+    if (key) return key;
+  }
+  return null;
+}
+
+/**
  * Convert split indices array to a normalized string key.
  * @param {Array|string} key - Split indices
  * @returns {string} Normalized "x-y-z" format key
