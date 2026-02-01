@@ -4,7 +4,7 @@ require.extensions['.scss'] = () => {};
 require.extensions['.sass'] = () => {};
 
 const { expect } = require('chai');
-const { resetPerf, getPerfSnapshot } = require('../src/js/treeVisualisation/deckgl/layers/layerFactories/index.js');
+const { resetPerf, getPerfSnapshot } = require('../src/js/treeVisualisation/deckgl/layers/factory/index.js');
 const { LayerManager } = require('../src/js/treeVisualisation/deckgl/layers/LayerManager.js');
 
 describe('LayerManager perf (direct creation)', function () {

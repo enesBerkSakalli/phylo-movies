@@ -2,10 +2,8 @@
  * Factory for nodes layer
  */
 import { createLayer } from '../base/createLayer.js';
-import { LAYER_CONFIGS, HOVER_HIGHLIGHT_COLOR, MIN_NODE_RADIUS, HISTORY_Z_OFFSET } from '../../layerConfigs.js';
-
-const getHistoryOffset = (cached, node) =>
-  cached?.colorManager?.isNodeHistorySubtree?.(node) ? HISTORY_Z_OFFSET : 0;
+import { LAYER_CONFIGS, HOVER_HIGHLIGHT_COLOR, MIN_NODE_RADIUS, Z_NODE } from '../../config/layerConfigs.js';
+import { getNodeHistoryZOffset } from '../../../utils/GeometryUtils.js';
 
 const addZOffset = (position, offset) => {
   if (!offset) return position;
@@ -48,11 +46,13 @@ export function getNodesLayerProps(nodes = [], state, layerStyles) {
       const x = p?.[0] ?? 0;
       const y = p?.[1] ?? 0;
       const z = p?.[2] ?? 0;
-      return addZOffset([x, y, z], getHistoryOffset(cached, d));
+
+      return addZOffset([x, y, z + Z_NODE], getNodeHistoryZOffset(cached, d));
     },
     getRadius: d => layerStyles.getNodeRadius(d, MIN_NODE_RADIUS, cached),
     getFillColor: d => layerStyles.getNodeColor(d, cached),
     getLineColor: d => layerStyles.getNodeBorderColor(d, cached),
+    getLineWidth: d => layerStyles.getNodeLineWidth(d, cached),
     updateTriggers: {
       getFillColor: [colorVersion, taxaColorVersion, upcomingChangesEnabled, highlightColorMode],
       getLineColor: [colorVersion, taxaColorVersion, upcomingChangesEnabled, highlightColorMode],

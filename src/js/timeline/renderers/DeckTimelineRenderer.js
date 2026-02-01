@@ -5,7 +5,7 @@ if (typeof document !== 'undefined') {
 import { Deck, OrthographicView } from '@deck.gl/core';
 import { TIMELINE_CONSTANTS, TIMELINE_THEME } from '../constants.js';
 import { handleTimelineMouseMoveOrScrub, handleTimelineMouseDown, handleTimelineMouseUp, handleTimelineWheel, handleTimelineMouseLeave } from '../events/eventHandlers.js';
-import { createPathLayer, createAnchorLayer, createConnectionLayer, createAnchorHoverLayer, createConnectionHoverLayer, createAnchorSelectionLayer, createConnectionSelectionLayer, createSeparatorLayer, createScrubberLayer, getDevicePixelRatio } from '../utils/layerFactories.js';
+import { createPathLayer, createAnchorLayer, createConnectionLayer, createAnchorHoverLayer, createConnectionHoverLayer, createAnchorSelectionLayer, createConnectionSelectionLayer, createSeparatorLayer, createScrubberLayer, getDevicePixelRatio, calculateSeparatorWidth } from '../utils/layerFactories.js';
 import { msToX, xToMs, calculateZoomScale } from '../math/coordinateUtils.js';
 import { timeToSegmentIndex } from '../utils/searchUtils.js';
 import { getTargetSegmentIndex } from '../utils/segmentUtils.js';
@@ -439,12 +439,13 @@ export class DeckTimelineRenderer {
 
   _buildLayers({ separators, anchorPoints, selectionAnchors, hoverAnchors, connections, selectionConnections, hoverConnections, width, height }) {
     const theme = TIMELINE_THEME;
+    const separatorWidth = calculateSeparatorWidth(this.segments?.length || 0, theme);
 
     return [
       this.separatorLayer.clone({
         data: separators,
-        getColor: [theme.separatorRGB[0], theme.separatorRGB[1], theme.separatorRGB[2], 120],
-        widthMinPixels: theme.separatorWidth
+        getColor: [theme.separatorRGB[0], theme.separatorRGB[1], theme.separatorRGB[2], 80],
+        widthMinPixels: separatorWidth
       }),
       this.connectionLayer.clone({ data: connections, widthMinPixels: theme.connectionWidth }),
       this.connectionHoverLayer.clone({

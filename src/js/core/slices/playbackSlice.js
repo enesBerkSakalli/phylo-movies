@@ -11,13 +11,16 @@ export const createPlaybackSlice = (set, get) => ({
   animationProgress: 0,
   animationStartTime: null,
   animationSpeed: 1,
+  transitionDuration: 1.0, // seconds
+  pauseDuration: 0.0, // seconds
+
 
   // ==========================================================================
   // STATE: Navigation
   // ==========================================================================
   currentTreeIndex: 0,
   navigationDirection: 'forward', // 'forward', 'backward', or 'jump'
-  segmentProgress: 0,
+
 
   // ==========================================================================
   // STATE: Timeline Segments
@@ -77,6 +80,12 @@ export const createPlaybackSlice = (set, get) => ({
     }
   },
 
+  adjustAnimationStartTime: (deltaMs) => {
+    set((state) => ({
+      animationStartTime: (state.animationStartTime || 0) + deltaMs
+    }));
+  },
+
   updateAnimationProgress: (timestamp) => {
     const { animationStartTime, animationSpeed, treeList, playing } = get();
     if (!playing || !animationStartTime || !treeList.length) return false;
@@ -117,7 +126,7 @@ export const createPlaybackSlice = (set, get) => ({
       fromTreeIndex,
       toTreeIndex,
       segmentProgress,
-      easedProgress: segmentProgress,
+      localT: segmentProgress, // Linear progress (0-1) within the current transition
       progress: animationProgress
     };
   },
@@ -126,8 +135,6 @@ export const createPlaybackSlice = (set, get) => ({
   // ACTIONS: Navigation
   // ==========================================================================
   setNavigationDirection: (direction) => set({ navigationDirection: direction }),
-
-  setSegmentProgress: (progress) => set({ segmentProgress: clamp(progress, 0, 1) }),
 
   goToPosition: (position, direction) => {
     const { treeList, currentTreeIndex, renderInProgress } = get();
@@ -143,7 +150,6 @@ export const createPlaybackSlice = (set, get) => ({
     set({
       currentTreeIndex: newIndex,
       navigationDirection: navDirection,
-      segmentProgress: 0,
       animationProgress: newAnimationProgress,
       timelineProgress: newAnimationProgress
     });
@@ -221,19 +227,19 @@ export const createPlaybackSlice = (set, get) => ({
 
     set({
       animationProgress: clampedProgress,
-      currentTreeIndex: clamp(currentTreeIndex, 0, totalTrees - 1),
-      segmentProgress
+      currentTreeIndex: clamp(currentTreeIndex, 0, totalTrees - 1)
     });
   },
 
-  setTimelineProgress: (progress, treeIndex, segmentProgress = 0) => {
+  setTimelineProgress: (progress, treeIndex) => {
     const { treeList } = get();
     const maxIndex = Math.max(0, treeList.length - 1);
+    const clampedProgress = clamp(progress, 0, 1);
 
     set({
-      timelineProgress: clamp(progress, 0, 1),
+      timelineProgress: clampedProgress,
+      animationProgress: clampedProgress,
       currentTreeIndex: clamp(treeIndex, 0, maxIndex),
-      segmentProgress: clamp(segmentProgress, 0, 1),
       navigationDirection: 'jump'
     });
   },
@@ -252,7 +258,6 @@ export const createPlaybackSlice = (set, get) => ({
     animationStartTime: null,
     currentTreeIndex: 0,
     navigationDirection: 'forward',
-    segmentProgress: 0,
     currentSegmentIndex: 0,
     totalSegments: 0,
     treeInSegment: 1,

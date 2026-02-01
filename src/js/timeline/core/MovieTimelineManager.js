@@ -249,7 +249,7 @@ export class MovieTimelineManager {
         const preservingScrubPosition = (withinGracePeriod || !playing) && timelineProgress != null;
         if (!preservingScrubPosition) {
             this._updateStoreTimelineState(currentTime, segment, treeIndex);
-            useAppStore.getState().setSegmentProgress(segmentProgress);
+            // setSegmentProgress is removed as it is redundant
         }
     }
 

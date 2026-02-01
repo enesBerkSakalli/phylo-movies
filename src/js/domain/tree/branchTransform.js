@@ -65,7 +65,6 @@ export function transformBranchLengths(node, transformType = 'none') {
     _applyIgnoreBranchLengthsRecursive(ignoredNode);
     return ignoredNode;
   }
-
   // Create a deep copy to avoid modifying original
   const transformedNode = _cloneTreeNode(node);
 
@@ -132,14 +131,16 @@ function _applyTransformationRecursive(node, transformType) {
  * @private
  */
 function _transformSingleValue(value, transformType) {
-  if (value <= 0) {
-    // Handle zero or negative values safely
-    switch (transformType) {
-      case 'log':
-        return 0.001; // Small positive value for log
-      default:
-        return Math.max(0.001, value);
+  if (value < 0) {
+    return 0.001; // Force tiny positive for negative values
+  }
+
+  if (value === 0) {
+    // Zero is valid for most transforms, except log
+    if (transformType === 'log') {
+      return 0.001;
     }
+    return 0;
   }
 
   let result;
@@ -174,8 +175,8 @@ function _transformSingleValue(value, transformType) {
       result = value;
   }
 
-  // Final safety check: ensure result is a positive finite number
-  if (!isFinite(result) || isNaN(result) || result <= 0) {
+  // Final safety check: ensure result is a non-negative finite number
+  if (!isFinite(result) || isNaN(result) || result < 0) {
     console.warn(`[branchTransformUtils] Transformation produced invalid result: ${result}, using fallback`);
     return Math.max(0.001, value);
   }

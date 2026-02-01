@@ -93,7 +93,6 @@ export function createPolarInterpolator(oldAngle, oldRadius, newAngle, newRadius
  * @returns {Object} {movePoint, arcEndPoint, lineEndPoint, arcProperties}
  */
 export function calculateBranchCoordinates(d, center = { x: 0, y: 0, z: 0 }) {
-  validateLink(d, "[calculateBranchCoordinates]");
 
   const source = d.source;
   const target = d.target;
@@ -161,7 +160,6 @@ export function calculateInterpolatedBranchCoordinates(
   center = { x: 0, y: 0, z: 0 },
   options = {}
 ) {
-  validateLink(d, "[calculateInterpolatedBranchCoordinates]");
 
   // Prev values fallback to current
   const pSA = prevSourceAngle !== undefined ? prevSourceAngle : d.source.angle;
@@ -252,29 +250,3 @@ export function calculatePathLengthFromCoordinates(coordinates) {
 }
 
 
-/* ─────────────────────────── PRIVATE UTILS ─────────────────────────── */
-
-/**
- * Validates link data structure
- * @param {Object} d - Link data
- * @param {string} where - Context for error message
- * @throws {Error} If link data is invalid
- * @private
- */
-function validateLink(d, where) {
-  if (!d || !d.source || !d.target) {
-    console.error(`${where} Invalid link data:`, d);
-    throw new Error("Invalid link data: missing source or target");
-  }
-  if (d.source === d.target) {
-    console.error(`${where} Self-referencing link:`, d);
-    throw new Error("Invalid link data: source equals target");
-  }
-  const requiredProps = ["angle", "radius"];
-  for (const prop of requiredProps) {
-    if (typeof d.source[prop] === "undefined" || typeof d.target[prop] === "undefined") {
-      console.error(`${where} Missing property ${prop}:`, d);
-      throw new Error(`Invalid link data: missing ${prop} property`);
-    }
-  }
-}

@@ -41,13 +41,23 @@ export class TidyTreeLayout {
   }
 
   calcRadius(node, radius = 0) {
-    const rawLength = node.data?.length ?? node.data?.branch_length ?? node.data?.branchLength;
-    const length = node.parent ? (Number(rawLength) || 0) : 0;
+    // Check various common property names for branch length
+    // Handle both direct properties and nested 'data' objects (d3 vs raw vs phylo formats)
+    const d = node.data || {};
+    // Backend standardizes on 'length'.
+    const rawLength = d.length ?? 0;
+
+    const length = Number(rawLength) || 0;
+
+    // Root must always have 0 effective length to ensure it sits at the calculated center
+    // regardless of what the data property says (some formats assign stem length to root)
+    const effectiveLength = node.parent ? length : 0;
+
     const nodeKey = getNodeKey(node);
     if (this.preserveRadius && this.previousNodeRadii.has(nodeKey)) {
       node.radius = this.previousNodeRadii.get(nodeKey);
     } else {
-      node.radius = length + radius;
+      node.radius = effectiveLength + radius;
       this.previousNodeRadii.set(nodeKey, node.radius);
     }
 

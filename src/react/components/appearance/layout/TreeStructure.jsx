@@ -19,6 +19,7 @@ export function TreeStructure() {
         try {
           const state = useAppStore.getState();
           for (const controller of treeControllers) {
+            controller?.resetInterpolationCaches?.();
             await controller?.initializeUniformScaling?.(normalized);
             await controller?.updateLayout?.(
               state.treeList[state.currentTreeIndex],
@@ -65,4 +66,3 @@ export function TreeStructure() {
 }
 
 export default TreeStructure;
-

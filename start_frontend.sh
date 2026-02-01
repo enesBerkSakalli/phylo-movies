@@ -32,13 +32,13 @@ fi
 echo "[frontend] Current working directory before npm run dev: $(pwd)"
 
 # Start the frontend server
-npm run dev -- --port 5173 --host 127.0.0.1 --no-open --clearScreen false >vite.log 2>&1 </dev/null &
+npm run dev -- --port 5173 --no-open --clearScreen false >vite.log 2>&1 </dev/null &
 FRONTEND_PID=$!
 
 # Wait for frontend to be ready
 echo "[frontend] Waiting for frontend to start..."
 for i in {1..20}; do
-  if curl -s http://127.0.0.1:5173/ >/dev/null 2>&1; then
+  if lsof -i :5173 | grep -q LISTEN; then
     echo "[frontend] Frontend is ready!"
     break
   fi
@@ -52,7 +52,7 @@ for i in {1..20}; do
   sleep 1
 done
 
-if ! curl -s http://127.0.0.1:5173/ >/dev/null 2>&1; then
+if ! lsof -i :5173 | grep -q LISTEN; then
   echo "[frontend] ERROR: Frontend failed to start within 20 seconds"
   kill $FRONTEND_PID 2>/dev/null
   echo "[frontend] --- Frontend logs ---"

@@ -1,9 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 import { MSADeckGLViewer } from '../../../js/msaViewer/MSADeckGLViewer.js';
 import { useMSA } from './MSAContext';
+import { MSAScrollbars } from './MSAScrollbars';
 
 export function MSAViewer() {
-  const { processedData, msaRegion, showLetters, movieData, viewAction, colorScheme, setVisibleRange, rowColorMap, visibleRange } = useMSA();
+  const { processedData, msaRegion, showLetters, movieData, viewAction, colorScheme, setVisibleRange, rowColorMap, visibleRange, scrollAction } = useMSA();
   const containerRef = useRef(null);
   const viewerRef = useRef(null);
 
@@ -26,6 +27,14 @@ export function MSAViewer() {
     }
   }, [viewAction]);
 
+  // Handle scroll actions from scrollbar overlays
+  useEffect(() => {
+    if (!scrollAction || !viewerRef.current) return;
+
+    const { row, col } = scrollAction;
+    viewerRef.current.scrollTo({ row, col });
+  }, [scrollAction]);
+
   // Keep viewer in sync with external region updates
   useEffect(() => {
     if (msaRegion) {
@@ -37,9 +46,9 @@ export function MSAViewer() {
     }
   }, [msaRegion]);
 
-  // Initialize DeckGL viewer
+  // Initialize DeckGL viewer once
   useEffect(() => {
-    if (!containerRef.current) return undefined;
+    if (!containerRef.current || viewerRef.current) return undefined;
 
     const viewer = new MSADeckGLViewer(containerRef.current, { showLetters, colorScheme, rowColorMap });
     viewerRef.current = viewer;
@@ -48,12 +57,13 @@ export function MSAViewer() {
     let lastUpdate = 0;
     viewer.onViewStateChange = ({ range }) => {
       const now = Date.now();
-      if (range && now - lastUpdate > 100) {
+      if (range && now - lastUpdate > 33) {
         setVisibleRange(range);
         lastUpdate = now;
       }
     };
 
+    // If data already present when viewer mounts, load immediately
     if (processedData) {
       viewer.loadFromPhyloData(movieData);
       if (msaRegion) {
@@ -65,7 +75,21 @@ export function MSAViewer() {
       viewer.destroy();
       viewerRef.current = null;
     };
-  }, [processedData, movieData]); // Added movieData to ensure updates if data changes while open
+  }, []);
+
+  // Load/refresh data into existing viewer
+  useEffect(() => {
+    const viewer = viewerRef.current;
+    if (!viewer || !processedData) return;
+    // Use preprocessed data to avoid re-parsing and keep order intact
+    viewer.loadFromProcessedData(processedData);
+    if (msaRegion) {
+      viewer.setRegion(msaRegion.start, msaRegion.end);
+    } else {
+      viewer.clearRegion();
+    }
+    viewer.render?.();
+  }, [processedData, msaRegion]);
 
   // Toggle letters without recreating viewer
   useEffect(() => {
@@ -95,7 +119,7 @@ export function MSAViewer() {
   return (
     <div className="msa-rnd-body flex-1 min-h-0 relative bg-white" ref={containerRef}>
       {visibleRange && Number.isFinite(visibleRange.r0) && Number.isFinite(visibleRange.c0) && (
-        <div className="absolute right-3 top-3 z-10 rounded-md bg-black/60 text-white text-[11px] px-3 py-1.5 shadow-md backdrop-blur-sm">
+        <div className="absolute right-6 top-3 z-10 rounded-md bg-black/60 text-white text-[11px] px-3 py-1.5 shadow-md backdrop-blur-sm">
           <div className="flex gap-2">
             <span>Rows {visibleRange.r0 + 1}–{visibleRange.r1 + 1}</span>
             <span className="opacity-70">|</span>
@@ -103,6 +127,7 @@ export function MSAViewer() {
           </div>
         </div>
       )}
+      <MSAScrollbars containerRef={containerRef} />
     </div>
   );
 }

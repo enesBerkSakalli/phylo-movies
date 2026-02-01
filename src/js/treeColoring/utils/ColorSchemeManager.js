@@ -1,5 +1,6 @@
-import { getPalette } from '../../constants/ColorPalettes.js';
+import { getPalette, generatePalette } from '../../constants/ColorPalettes.js';
 import { colorToRgb } from '../../services/ui/colorUtils.js';
+import Color from 'colorjs.io';
 
 export class ColorSchemeManager {
   constructor(originalColorMap = {}) {
@@ -30,20 +31,44 @@ export class ColorSchemeManager {
   }
 
   applyColorScheme(schemeName, targets, isGroup) {
-    // Get palette as Hex strings or whatever stored
-    const baseScheme = getPalette(schemeName);
+    const numTargets = targets.length;
+    if (numTargets === 0) return;
 
-    // For groups, maximize perceptual distance between successive colors
-    // Note: _orderPaletteForMaxDistance now needs to handle the conversion internally
-    // or we convert first. Let's convert first.
+    // Get base palette
+    let baseScheme = getPalette(schemeName);
+
+    // If we have more targets than colors in the palette, dynamically generate exactly enough
+    if (numTargets > baseScheme.length) {
+      console.log(`[ColorSchemeManager] Palette "${schemeName}" has ${baseScheme.length} colors but need ${numTargets}. Generating dynamic palette.`);
+      baseScheme = generatePalette(numTargets, 'sinebow');
+    }
+
+    // Convert to RGB arrays
     const rgbScheme = baseScheme.map(c => this._ensureRgb(c));
 
-    const scheme = isGroup
-      ? this._orderPaletteForMaxDistance(rgbScheme, targets.length)
+    // For groups, maximize perceptual distance between successive colors
+    // For taxa, use the palette order directly
+    let scheme = isGroup
+      ? this._orderPaletteForMaxDistance(rgbScheme, numTargets)
       : rgbScheme;
 
+    // Ensure we always have a valid scheme with enough colors
+    if (!scheme || scheme.length === 0) {
+      console.warn(`[ColorSchemeManager] Scheme "${schemeName}" returned empty, using fallback`);
+      scheme = rgbScheme;
+    }
+
+    // If scheme still has fewer colors than targets after ordering (due to duplicates),
+    // supplement with dynamically generated colors to ensure every target gets a unique color
+    if (scheme.length < numTargets) {
+      console.log(`[ColorSchemeManager] Ordered scheme has ${scheme.length} colors but need ${numTargets}. Supplementing.`);
+      const supplemental = generatePalette(numTargets - scheme.length, 'sinebow');
+      const supplementalRgb = supplemental.map(c => this._ensureRgb(c));
+      scheme = [...scheme, ...supplementalRgb];
+    }
+
     targets.forEach((target, index) => {
-      const color = scheme[index % scheme.length];
+      const color = scheme[index] ?? scheme[index % scheme.length];
       const name = isGroup ? target.name : target;
       const map = isGroup ? this.groupColorMap : this.taxaColorMap;
       map[name] = color;
@@ -54,164 +79,190 @@ export class ColorSchemeManager {
   // Palette ordering utils
   // =====================
   _orderPaletteForMaxDistance(palette, k, backgroundHex = '#ffffff') {
-    // Palette is now Array of [r,g,b]
     // Filter duplicates based on string representation
     const uniquePalette = [];
     const seen = new Set();
-    for(const c of palette) {
-        const s = c.join(',');
-        if(!seen.has(s)) {
-            seen.add(s);
-            uniquePalette.push(c);
-        }
+    for (const c of palette) {
+      const s = c.join(',');
+      if (!seen.has(s)) {
+        seen.add(s);
+        uniquePalette.push(c);
+      }
     }
-
-    const labs = uniquePalette.map(c => this._rgbToLab(c[0], c[1], c[2]));
-    const whiteLab = this._rgbToLab(255, 255, 255); // Assume white bg
 
     const n = uniquePalette.length;
     if (n === 0) return [];
 
-    // Filter out colors with very poor contrast against background (L distance < 20)
-    let validIndices = [];
-    const minLDiff = 20;
+    // Pre-convert to Color objects for Perf (avoid re-parsing in loops)
+    const colorObjs = uniquePalette.map(c => new Color("srgb", [c[0] / 255, c[1] / 255, c[2] / 255]));
+    const white = new Color("white");
 
-    for(let i=0; i<n; i++) {
-        const dist = this._labDistance(labs[i], whiteLab);
-        const lDiff = Math.abs(labs[i].L - whiteLab.L);
+    // APCA 45 is sufficient for visual elements (nodes, branches) with outlined labels
+    // 60 was too aggressive and caused colors to be over-darkened (washed out/muddy)
+    const validIndices = new Set();
+    const minLc = 45;
 
-        // Penalize very light colors on white background
-        if (lDiff > minLDiff && dist > 25) {
-            validIndices.push(i);
+    for (let i = 0; i < n; i++) {
+      let color = colorObjs[i];
+      const contrast = Math.abs(white.contrast(color, "APCA"));
+
+      if (contrast < minLc) {
+        // Fix it by darkening
+        // Convert to Oklch for perceptual darkening
+        let fixed = color.to("oklch");
+        let safety = 0;
+        // Loop until it passes or safety break
+        while (Math.abs(white.contrast(fixed, "APCA")) < minLc && safety < 50) {
+          fixed.l -= 0.01;
+          safety++;
         }
+        // Update the color object used for distance calc
+        colorObjs[i] = fixed;
+      }
+      validIndices.add(i);
     }
 
-    // Fallback
-    if (validIndices.length < Math.min(k, n)) {
-        validIndices = Array.from({ length: n }, (_, i) => i);
-    }
+    // Fallback if too few valid checks
+    // Fallback block removed - we fix colors instead of dropping them
 
-    // Seed: color with max distance from BG
-    let seedIndex = validIndices[0];
+    // Convert Set to Array for indexing
+    const validIdxArray = Array.from(validIndices);
+
+    // Seed: color with max distance from BG (usually darkest)
+    let seedIndex = validIdxArray[0];
     let bestBgDist = -Infinity;
 
-    for (const i of validIndices) {
-      const d = this._labDistance(labs[i], whiteLab);
+    for (const i of validIdxArray) {
+      const d = colorObjs[i].deltaE(white, "2000");
       if (d > bestBgDist) { bestBgDist = d; seedIndex = i; }
     }
 
-    const chosen = [seedIndex];
-    const remaining = new Set(validIndices.filter(i => i !== seedIndex));
-    const targetCount = Math.min(k, validIndices.length);
+    const chosenIndices = [seedIndex];
+    // Remove seed from remaining set.
+    // Optimization: We use a Set for remaining logic to avoid .filter() array allocs
+    const remainingIndices = new Set(validIdxArray);
+    remainingIndices.delete(seedIndex);
 
-    while (chosen.length < targetCount && remaining.size > 0) {
+    const targetCount = Math.min(k, validIdxArray.length);
+
+    while (chosenIndices.length < targetCount && remainingIndices.size > 0) {
       let bestIdx = null;
       let bestScore = -Infinity;
 
-      for (const idx of remaining) {
-        // Distance to already chosen colors
-        const minPeerDist = Math.min(...chosen.map(ci => this._labDistance(labs[idx], labs[ci])));
-        // Distance to background
-        const bgDist = this._labDistance(labs[idx], whiteLab);
-        // Score
+      // "Soup" Fix: Use simple loop instead of map/min
+      for (const idx of remainingIndices) {
+        const candidateColor = colorObjs[idx];
+
+        // Find min distance to ANY already chosen color
+        let minPeerDist = Infinity;
+        for (const chosenIdx of chosenIndices) {
+          const d = candidateColor.deltaE(colorObjs[chosenIdx], "2000");
+          if (d < minPeerDist) minPeerDist = d;
+        }
+
+        // Distance to background (ensure it stays distinct from BG too)
+        const bgDist = candidateColor.deltaE(white, "2000");
+
+        // Score: We want to maximize the MIN distance (Maximin)
         const score = Math.min(minPeerDist, bgDist);
 
         if (score > bestScore) { bestScore = score; bestIdx = idx; }
       }
 
       if (bestIdx !== null) {
-          chosen.push(bestIdx);
-          remaining.delete(bestIdx);
+        chosenIndices.push(bestIdx);
+        remainingIndices.delete(bestIdx);
       } else {
-          break;
+        break;
       }
     }
 
-    // Fill remaining if k > chosen
-    if (k > chosen.length && remaining.size > 0) {
-       while (chosen.length < k && remaining.size > 0) {
-          let bestIdx = null; // Just pick logical next
-          let bestScore = -Infinity;
-          for (const idx of remaining) {
-               // Just maximize distance to existing chosen
-               const minPeerDist = Math.min(...chosen.map(ci => this._labDistance(labs[idx], labs[ci])));
-               if(minPeerDist > bestScore) { bestScore = minPeerDist; bestIdx = idx; }
-          }
-          chosen.push(bestIdx);
-          remaining.delete(bestIdx);
-       }
-    }
+    // If we need more colors than available in valid set (should refer to original palette rotation/handling in caller)
+    // The caller rotates: scheme[index % scheme.length]
+    // So we just return the ordered subset.
 
-    // If still need more (palettes exhausted), we recycle in outer loop, so just return distinct
-    return chosen.map(i => uniquePalette[i]);
+    // Return the chosen colors (converted back to [r,g,b] from potentially modified Color objects)
+    // Use toGamut to clamp out-of-gamut colors to valid sRGB range
+    return chosenIndices.map(i => {
+      const srgb = colorObjs[i].to("srgb").toGamut({ space: "srgb" });
+      return [
+        Math.max(0, Math.min(255, Math.round(srgb.coords[0] * 255))),
+        Math.max(0, Math.min(255, Math.round(srgb.coords[1] * 255))),
+        Math.max(0, Math.min(255, Math.round(srgb.coords[2] * 255)))
+      ];
+    });
   }
 
 
   // =====================
   // Color Systems
   // =====================
-  // _hexToLab removed - we work in RGB now
-
-  _rgbToLab(r, g, b) {
-    const xyz = this._rgbToXyz(r, g, b);
-    return this._xyzToLab(xyz.x, xyz.y, xyz.z);
-  }
-
-
-  _rgbToXyz(r, g, b) {
-    // Normalize to [0,1]
-    let [rs, gs, bs] = [r, g, b].map(v => v / 255);
-    // Inverse companding (sRGB to linear)
-    [rs, gs, bs] = [rs, gs, bs].map(v => (v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)));
-    // sRGB D65 matrix
-    const x = rs * 0.4124564 + gs * 0.3575761 + bs * 0.1804375;
-    const y = rs * 0.2126729 + gs * 0.7151522 + bs * 0.0721750;
-    const z = rs * 0.0193339 + gs * 0.1191920 + bs * 0.9503041;
-    return { x, y, z };
-  }
-
-  _xyzToLab(x, y, z) {
-    // D65 reference white
-    const Xn = 0.95047, Yn = 1.00000, Zn = 1.08883;
-    let fx = this._fxyz(x / Xn);
-    let fy = this._fxyz(y / Yn);
-    let fz = this._fxyz(z / Zn);
-    const L = 116 * fy - 16;
-    const a = 500 * (fx - fy);
-    const b = 200 * (fy - fz);
-    return { L, a, b };
-  }
-
-  _fxyz(t) {
-    const delta = 6 / 29;
-    return t > Math.pow(delta, 3) ? Math.cbrt(t) : t / (3 * delta * delta) + 4 / 29;
-  }
-
-  _labDistance(l1, l2) {
-    const dL = l1.L - l2.L;
-    const da = l1.a - l2.a;
-    const db = l1.b - l2.b;
-    return Math.sqrt(dL * dL + da * da + db * db); // CIE76
-  }
+  // Legacy conversion helpers removed in favor of colorUtils / colorjs.io
 
   /**
-   * Generates a "Professional" random color.
-   * Avoids neon/super-bright colors by constraining Saturation and Lightness.
+   * Generates a vibrant random color using OKLCH space.
+   * Ensures APCA contrast > 45 against white (sufficient for visual elements).
    * Returns [r, g, b]
    */
   getRandomColor() {
-    // Hue: 0-360 (Random)
-    const h = Math.floor(Math.random() * 360);
+    // We try to generate a valid color.
+    // If we fail after N attempts, we force adjustment.
+    const white = new Color("white");
+    const targetLc = 45;
 
-    // Saturation: 45-65% (avoid <40% grey, avoid >80% neon)
-    const s = 45 + Math.floor(Math.random() * 20);
+    // Random Oklch parameters - optimized for vibrant, readable colors
+    // L: 0.35 - 0.65 (Lightness) - Wider range for more variety
+    // C: 0.15 - 0.35 (Chroma) - Higher range for more vibrant/saturated colors
+    // H: 0 - 360 (Hue)
 
-    // Lightness: 40-55% (Darker/Rich for White Background visibility)
-    // Avoid >60% (Pastel) and <30% (Black)
-    const l = 40 + Math.floor(Math.random() * 15);
+    // Oklch is perceptually uniform.
+    // With APCA 45 threshold, we can allow brighter colors while maintaining readability.
 
-    const hslString = `hsl(${h}, ${s}%, ${l}%)`;
-    return colorToRgb(hslString);
+    let color;
+    let attempts = 0;
+    while (attempts < 10) {
+      const h = Math.random() * 360;
+      const c = 0.15 + Math.random() * 0.20; // 0.15 - 0.35 (More vibrant colors)
+      let l = 0.35 + Math.random() * 0.30; // 0.35 - 0.65 (Wider lightness range)
+
+      color = new Color("oklch", [l, c, h]);
+      const contrast = Math.abs(white.contrast(color, "APCA"));
+
+      if (contrast >= targetLc) {
+        // Clamp to sRGB gamut to avoid out-of-range values
+        const srgb = color.to("srgb").toGamut({ space: "srgb" });
+        return [
+          Math.max(0, Math.min(255, Math.round(srgb.coords[0] * 255))),
+          Math.max(0, Math.min(255, Math.round(srgb.coords[1] * 255))),
+          Math.max(0, Math.min(255, Math.round(srgb.coords[2] * 255)))
+        ];
+      }
+
+      // Decrease L to increase contrast against white
+      l -= 0.05;
+      if (l < 0.2) l = 0.2; // Don't go too black
+      attempts++;
+    }
+
+    // If loop fails, force darkened version of last color
+    // Reduce L until it passes
+    if (color) {
+      let safety = 0;
+      while (Math.abs(white.contrast(color, "APCA")) < targetLc && safety < 20) {
+        color.oklch.l -= 0.02;
+        safety++;
+      }
+    } else {
+      color = new Color("black");
+    }
+
+    // Clamp to sRGB gamut to avoid out-of-range values
+    const srgb = color.to("srgb").toGamut({ space: "srgb" });
+    return [
+      Math.max(0, Math.min(255, Math.round(srgb.coords[0] * 255))),
+      Math.max(0, Math.min(255, Math.round(srgb.coords[1] * 255))),
+      Math.max(0, Math.min(255, Math.round(srgb.coords[2] * 255)))
+    ];
   }
 
   reset() {

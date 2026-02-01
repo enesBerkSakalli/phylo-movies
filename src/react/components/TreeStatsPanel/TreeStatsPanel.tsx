@@ -7,7 +7,7 @@ import { CurrentScaleDisplay } from './ScaleTracking/CurrentScaleDisplay';
 import { BranchLengthHistogram } from './BranchLengths/BranchLengthHistogram';
 import { SubtreeFrequencyList } from './SubtreeAnalytics/SubtreeFrequencyList';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
-import { TaxaLegend } from './Shared/TaxaLegend';
+import { TaxaGroupsLegend } from './Shared/TaxaLegend';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown } from 'lucide-react';
 
@@ -95,7 +95,7 @@ export const TreeStatsPanel: React.FC = () => {
           </div>
 
           {/* Taxa groups legend (content populated externally) */}
-          <TaxaLegend />
+          <TaxaGroupsLegend />
         </CollapsibleContent>
       </Collapsible>
     </div>

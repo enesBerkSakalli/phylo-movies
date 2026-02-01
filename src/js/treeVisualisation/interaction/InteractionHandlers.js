@@ -23,8 +23,8 @@ export function handleDragStart(controller, info) {
     return false;
   }
 
-  const deckManager = controller.deckManager;
-  const controllerConfig = deckManager.getControllerConfig?.() || null;
+  const deckContext = controller.deckContext;
+  const controllerConfig = deckContext.getControllerConfig?.() || null;
 
   controller._dragState = {
     side: treeSide,
@@ -34,8 +34,8 @@ export function handleDragStart(controller, info) {
   };
 
   // Prevent map panning while dragging a tree - use callback mechanism for React compatibility
-  deckManager.setControllerConfig({
-    ...(controllerConfig || deckManager.getControllerConfig()),
+  deckContext.setControllerConfig({
+    ...(controllerConfig || deckContext.getControllerConfig()),
     dragPan: false
   });
   return true;
@@ -45,7 +45,7 @@ export function handleDrag(controller, info) {
   if (!controller._dragState) return false;
 
   const { side, startOffset, startPos } = controller._dragState;
-  const viewState = controller.deckManager.getViewState();
+  const viewState = controller.deckContext.getViewState();
   const zoom = viewState.zoom ?? 0;
   const [zoomX, zoomY] = Array.isArray(zoom) ? zoom : [zoom, zoom];
   const safeZoomX = Number.isFinite(zoomX) ? zoomX : 0;
@@ -89,9 +89,9 @@ export function handleDragEnd(controller) {
 
   // Re-enable map panning - use callback mechanism for React compatibility
   if (controllerConfig) {
-    controller.deckManager.setControllerConfig(controllerConfig);
+    controller.deckContext.setControllerConfig(controllerConfig);
   } else {
-    controller.deckManager.setControllerConfig(controller.deckManager.getControllerConfig());
+    controller.deckContext.setControllerConfig(controller.deckContext.getControllerConfig());
   }
 }
 
@@ -111,7 +111,7 @@ export function handleContainerResize(controller) {
     controller._resizeRenderScheduled = false;
     const { playing } = useAppStore.getState();
     if (playing) return;
-    controller._lastFocusedTreeIndex = null;
+    // controller._lastFocusedTreeIndex = null; // Removed to prevent auto-focus reset on resize
     controller.comparisonRenderer?.resetAutoFit?.();
     try {
       await controller.renderAllElements();

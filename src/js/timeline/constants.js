@@ -2,7 +2,7 @@ export const TIMELINE_CONSTANTS = {
     UNIT_DURATION_MS: 1000,
     MIN_ZOOM_MS: 100,
     ZOOM_PERCENTAGE_UI: 0.3,
-    TIMELINE_HEIGHT: '35px',
+    TIMELINE_HEIGHT: '38px',
     MAX_ZOOM_FACTOR: 2,
     SCRUB_THROTTLE_MS: 16,
     SCRUB_END_TIMEOUT_MS: 500,
@@ -34,9 +34,11 @@ export const TIMELINE_THEME = {
     anchorStrokeRGB: [60, 60, 80],
     anchorRadiusVar: 7,
     separatorRGB: [0, 0, 0],
-    separatorWidth: 5,
+    separatorWidthMax: 2,
+    separatorWidthMin: 1,
     scrubberCoreRGB: [64, 128, 255],
     gapDefault: 6,
+    transitionGap: 3,
     paddingX: 8,
     paddingY: 0
 };

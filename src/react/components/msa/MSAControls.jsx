@@ -6,11 +6,28 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
+import { useAppStore } from '../../../js/core/store.js';
 
 const clampPositive = (value) => Math.max(1, Math.round(Number(value) || 1));
 
 export function MSAControls() {
   const { processedData, msaRegion, setMsaRegion, clearMsaRegion, showLetters, setShowLetters, colorScheme, setColorScheme, triggerViewAction, visibleRange } = useMSA();
+  const treeControllers = useAppStore((s) => s.treeControllers);
+  const currentTreeIndex = useAppStore((s) => s.currentTreeIndex);
+  const setMsaRowOrder = useAppStore((s) => s.setMsaRowOrder);
+  const clearMsaRowOrder = useAppStore((s) => s.clearMsaRowOrder);
+
+  // Pull selector directly to avoid extra subscription in useAppStore
+  const getCurrentTree = () => {
+    try {
+      const state = useAppStore.getState();
+      const { treeList, currentTreeIndex: idx } = state;
+      if (!Array.isArray(treeList) || typeof idx !== 'number') return null;
+      return treeList[idx] ?? null;
+    } catch {
+      return null;
+    }
+  };
 
   const [startValue, setStartValue] = useState('');
   const [endValue, setEndValue] = useState('');
@@ -39,6 +56,38 @@ export function MSAControls() {
     clearMsaRegion();
     setStartValue('');
     setEndValue('');
+  };
+
+  const handleMatchTreeOrder = () => {
+    const controller = Array.isArray(treeControllers) ? treeControllers[0] : null;
+    if (!controller?.calculateLayout) return;
+
+    const tree = getCurrentTree();
+    if (!tree) return;
+
+    const layout = controller.calculateLayout(tree, { treeIndex: currentTreeIndex });
+    if (!layout?.tree?.leaves) return;
+
+    const leaves = layout.tree.leaves();
+    leaves.sort((a, b) => (a.rotatedAngle ?? a.angle ?? 0) - (b.rotatedAngle ?? b.angle ?? 0));
+
+    const seen = new Set();
+    const order = [];
+    for (const l of leaves) {
+      const id = l?.data?.name;
+      if (typeof id === 'string' && id.length > 0 && !seen.has(id)) {
+        seen.add(id);
+        order.push(id);
+      }
+    }
+
+    if (order.length) {
+      setMsaRowOrder(order);
+    }
+  };
+
+  const handleResetOrder = () => {
+    clearMsaRowOrder();
   };
 
   return (
@@ -82,9 +131,14 @@ export function MSAControls() {
         </Button>
       </div>
 
+      <div className="flex items-center gap-1 border-l border-border pl-2 ml-1">
+        <Button size="xs" variant="secondary" onClick={handleMatchTreeOrder}>Match Tree Order</Button>
+        <Button size="xs" variant="outline" onClick={handleResetOrder}>Reset Order</Button>
+      </div>
+
       {visibleRange && (
         <div className="text-xs text-muted-foreground border-l border-border pl-3 ml-1">
-          Visible: {visibleRange.start} - {visibleRange.end}
+          Visible: Cols {visibleRange.c0 + 1} - {visibleRange.c1 + 1}
         </div>
       )}
 

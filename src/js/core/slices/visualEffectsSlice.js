@@ -58,7 +58,7 @@ export const createVisualEffectsSlice = (set, get) => ({
     if (!pulseController) {
       pulseController = new PulseAnimationController({
         onPhaseUpdate: (phase) => set({ changePulsePhase: phase }),
-        onRender: () => renderTreeControllers(get().treeControllers),
+        // onRender removed - deck.gl updateTriggers handles pulse updates via changePulsePhase
         shouldContinue: () => {
           const s = get();
           const cm = s.colorManager;

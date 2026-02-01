@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+
 import { ButtonsMSA } from './components/nav/ButtonsMSA.jsx';
 import { Appearance } from './components/appearance/Appearance.jsx';
 import { VisualElements } from './components/appearance/controls/VisualElements/VisualElements.jsx';
@@ -22,7 +23,6 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupLabel,
-  SidebarGroupContent,
   SidebarInset,
   SidebarSeparator,
   SidebarTrigger,
@@ -32,10 +32,12 @@ import {
   SidebarMenuButton,
 } from '@/components/ui/sidebar';
 
-import { Film, Dna, GitBranch } from 'lucide-react';
+import { Film } from 'lucide-react';
 import { useAppStore } from '../js/core/store.js';
 import { getPhyloMovieData } from '../js/services/data/dataManager.js';
 import { useTreeController } from '../hooks/useTreeController.js';
+
+
 
 export function App() {
 
@@ -87,8 +89,7 @@ export function App() {
   return (
     <TooltipProvider>
       <SidebarProvider>
-
-        <Sidebar collapsible="icon">
+                <Sidebar collapsible="icon">
           <SidebarHeader>
             <SidebarMenu>
               <SidebarMenuItem>

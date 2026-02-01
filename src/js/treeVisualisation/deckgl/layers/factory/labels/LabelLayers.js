@@ -2,85 +2,31 @@
  * Factory for labels layer
  */
 import { createLayer } from '../base/createLayer.js';
-import { LAYER_CONFIGS, HISTORY_Z_OFFSET, LAYER_ID_PREFIX } from '../../layerConfigs.js';
+import { LAYER_CONFIGS, LAYER_ID_PREFIX } from '../../config/layerConfigs.js';
+import {
+  SOURCE_LABEL_SCALE,
+  DESTINATION_LABEL_SCALE,
+  SOURCE_FONT_WEIGHT,
+  DESTINATION_FONT_WEIGHT,
+  SOURCE_ALPHA_SCALE,
+  DESTINATION_ALPHA_SCALE,
+  LABEL_HIGHLIGHT_Z_OFFSET,
+  SOURCE_TEXT_PREFIX,
+  DESTINATION_TEXT_SUFFIX
+} from '../../config/LabelConfig.js';
 
-const getHistoryOffset = (cached, label) => {
-  const node = label?.leaf || label;
-  return cached?.colorManager?.isNodeHistorySubtree?.(node) ? HISTORY_Z_OFFSET : 0;
-};
 
-const addZOffset = (position, offset) => {
-  if (!offset) return position;
-  return [position[0], position[1], (position[2] || 0) + offset];
-};
+import {
+  getHistoryOffset,
+  addZOffset,
+  boostAlpha,
+  isLabelSource,
+  isLabelDestination,
+  isSourceOrDestinationLabel,
+  withSideSuffix,
+  normalizeTextAnchor
+} from '../../styles/labels/labelUtils.js';
 
-const boostAlpha = (color, scale) => {
-  if (!scale || scale === 1) return color;
-  const next = [...color];
-  next[3] = Math.min(255, Math.round(next[3] * scale));
-  return next;
-};
-
-const isLabelSource = (cached, label) => {
-  const node = label?.leaf || label;
-  const cm = cached?.colorManager;
-  if (!cm || label?.treeSide === 'right' || label?.treeSide === 'clipboard') return false;
-  if (cm.isNodeMovingSubtree?.(node)) return false;
-  return !!cm.isNodeSourceEdge?.(node);
-};
-
-const isLabelDestination = (cached, label) => {
-  const node = label?.leaf || label;
-  const cm = cached?.colorManager;
-  if (!cm || label?.treeSide === 'right' || label?.treeSide === 'clipboard') return false;
-  if (cm.isNodeMovingSubtree?.(node)) return false;
-  return !!cm.isNodeDestinationEdge?.(node);
-};
-
-const isSourceOrDestinationLabel = (cached, label) =>
-  isLabelSource(cached, label) || isLabelDestination(cached, label);
-
-const getSingleTreeSide = (labels) => {
-  if (!Array.isArray(labels) || labels.length === 0) return null;
-  const side = labels[0]?.treeSide;
-  if (typeof side !== 'string' || !side) return null;
-  for (const label of labels) {
-    if (label?.treeSide !== side) return null;
-  }
-  return side;
-};
-
-const withSideSuffix = (id, labels) => {
-  const side = getSingleTreeSide(labels);
-  return side ? `${id}-${side}` : id;
-};
-
-const normalizeTextAnchor = (anchor) => {
-  switch (anchor) {
-    case 'left':
-      return 'start';
-    case 'center':
-      return 'middle';
-    case 'right':
-      return 'end';
-    case 'start':
-    case 'middle':
-    case 'end':
-      return anchor;
-    default:
-      return 'start';
-  }
-};
-
-const SOURCE_LABEL_SCALE = 1.15;
-const DESTINATION_LABEL_SCALE = 1.3;
-const SOURCE_FONT_WEIGHT = '600';
-const DESTINATION_FONT_WEIGHT = '800';
-const SOURCE_ALPHA_SCALE = 1.2;
-const DESTINATION_ALPHA_SCALE = 1.35;
-const LABEL_HIGHLIGHT_Z_OFFSET = 0.2;
-const SOURCE_TEXT_PREFIX = '';
-const DESTINATION_TEXT_SUFFIX = '';
 
 /**
  * Create labels layer (text labels for leaf nodes)
@@ -135,6 +81,14 @@ export function createDestinationLabelsLayer(labels, state, layerStyles) {
   );
 }
 
+/**
+ * Build props for the labels layer to enable base+clone reuse
+ *
+ * @param {Array} labels - Label data array
+ * @param {Object} state - Store state snapshot
+ * @param {Object} layerStyles - LayerStyles instance
+ * @returns {Object} props for TextLayer
+ */
 export function getHighlightLabelsLayerProps(labels, state, layerStyles, cached, options) {
   const { taxaColorVersion, colorVersion, fontSize, highlightColorMode } = state || {};
   const {
@@ -148,7 +102,7 @@ export function getHighlightLabelsLayerProps(labels, state, layerStyles, cached,
   return {
     data: labels,
     pickable: true,
-    fontWeight,
+    fontWeight: fontWeight || 'bold',  // Bold to match node visual intensity
     getPosition: d =>
       addZOffset(d.position, getHistoryOffset(cached, d) + LABEL_HIGHLIGHT_Z_OFFSET),
     getText: d => `${textPrefix}${d.text || ''}${textSuffix}`,
@@ -157,6 +111,13 @@ export function getHighlightLabelsLayerProps(labels, state, layerStyles, cached,
     // Convert rotation from radians to degrees (deck.gl expects degrees)
     getAngle: d => ((d.rotation ?? 0) * 180) / Math.PI,
     getTextAnchor: d => normalizeTextAnchor(d.textAnchor),
+
+    // SDF disabled - bitmap fonts render cleaner at small sizes when zoomed out
+    characterSet: 'auto',
+    fontSettings: {
+      sdf: false
+    },
+
     updateTriggers: {
       getColor: [colorVersion, taxaColorVersion, highlightColorMode],
       getSize: [fontSize, colorVersion, taxaColorVersion],
@@ -165,31 +126,34 @@ export function getHighlightLabelsLayerProps(labels, state, layerStyles, cached,
   };
 }
 
-/**
- * Build props for the labels layer to enable base+clone reuse
- *
- * @param {Array} labels - Label data array
- * @param {Object} state - Store state snapshot
- * @param {Object} layerStyles - LayerStyles instance
- * @returns {Object} props for TextLayer
- */
 export function getLabelsLayerProps(labels, state, layerStyles) {
   const { taxaColorVersion, colorVersion, fontSize, highlightColorMode } = state || {};
 
   // Get cached state once for all accessors
   const cached = layerStyles.getCachedState();
-  const baseLabels = labels.filter((label) => !isSourceOrDestinationLabel(cached, label));
+  // Render all labels in single layer (source/destination styling handled conditionally)
 
   return {
-    data: baseLabels,
+    data: labels,
     pickable: true,
+    fontWeight: 'bold',  // Bold to match node visual intensity
     getPosition: d => addZOffset(d.position, getHistoryOffset(cached, d)),
     getText: d => d.text,
     getSize: d => layerStyles.getLabelSize(d, cached),
-    getColor: d => layerStyles.getLabelColor(d, cached),
+    getColor: d => {
+      const color = layerStyles.getLabelColor(d, cached);
+      return color;
+    },
     // Convert rotation from radians to degrees (deck.gl expects degrees)
     getAngle: d => ((d.rotation ?? 0) * 180) / Math.PI,
     getTextAnchor: d => normalizeTextAnchor(d.textAnchor),
+
+    // SDF disabled - bitmap fonts render cleaner at small sizes when zoomed out
+    characterSet: 'auto',
+    fontSettings: {
+      sdf: false
+    },
+
     updateTriggers: {
       getColor: [colorVersion, taxaColorVersion, highlightColorMode],
       getSize: [fontSize, colorVersion, taxaColorVersion],

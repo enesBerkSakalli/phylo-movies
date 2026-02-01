@@ -89,7 +89,9 @@ export class RadialTreeLayout {
    * @return {void}
    */
   calcRadius(node, radius = 0) {
-    const rawLength = node.parent ? node?.data?.length : 0;
+    const d = node.data || {};
+    // Backend standardizes on 'length'.
+    const rawLength = d.length ?? 0;
     const length = Number(rawLength) || 0;
 
     // Check if we should preserve radius for this node

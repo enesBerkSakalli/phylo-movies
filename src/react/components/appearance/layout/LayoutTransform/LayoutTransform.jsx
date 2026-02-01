@@ -1,7 +1,7 @@
 import React, { useCallback, useRef } from 'react';
 import { LabeledSlider } from '@/components/ui/labeled-slider';
 import { SidebarMenuSub, SidebarMenuSubItem } from '@/components/ui/sidebar';
-import { RotateCcw, Compass } from 'lucide-react';
+import {  Compass } from 'lucide-react';
 
 export function LayoutTransform({
   layoutAngleDegrees,

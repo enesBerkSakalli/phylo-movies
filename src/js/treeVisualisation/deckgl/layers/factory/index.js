@@ -10,14 +10,17 @@ export { createLayer, resetPerf, getPerfSnapshot } from './base/createLayer.js';
 export {
   createLinkOutlinesLayer,
   createLinksLayer,
-  createHistoryLinksLayer,
-  createHistoryLinksHaloLayer,
-  createExtensionsLayer,
+
   getLinkOutlinesLayerProps,
   getLinksLayerProps,
-  getHistoryLinksLayerProps,
-  getExtensionsLayerProps
 } from './links/LinkLayers.js';
+
+export {
+  createExtensionsLayer,
+  getExtensionsLayerProps
+} from './extensions/ExtensionLayers.js';
+
+export { createHistoryLayers } from './links/HistoryLinkLayers.js';
 
 export { createNodesLayer, getNodesLayerProps } from './nodes/NodeLayers.js';
 export {
@@ -27,4 +30,5 @@ export {
   getLabelsLayerProps,
   getHighlightLabelsLayerProps
 } from './labels/LabelLayers.js';
+export { createLabelDotsLayer, getLabelDotsLayerProps } from './labels/LabelDotsLayer.js';
 export { createConnectorsLayer, getConnectorsLayerProps } from './connectors/ConnectorLayers.js';

@@ -79,7 +79,7 @@ export function MoviePlayerBar() {
 
   return (
     <>
-      <div className="sticky bottom-0 z-[1000] bg-card border-t shadow-[0_2px_4px_rgba(0,0,0,0.08)] p-1" role="region" aria-label="Movie Player Controls">
+      <div className="sticky bottom-0 z-[1000] bg-card border-t shadow-[0_2px_4px_rgba(0,0,0,0.08)]" role="region" aria-label="Movie Player Controls">
         <div className="flex flex-col gap-1">
           <div className="flex items-center justify-between" role="group" aria-label="Transport controls and chart controls">
             <div className="flex items-center gap-1 flex-wrap transition-all duration-300" role="group" aria-label="Transport controls and position">
@@ -88,7 +88,7 @@ export function MoviePlayerBar() {
                   <Button
                     id="nav-toggle-button"
                     variant="ghost"
-                    size="icon"
+                    size="icon-sm"
                     aria-label="Toggle sidebar"
                     aria-controls="app-sidebar"
                     aria-expanded={open ? 'true' : 'false'}
@@ -100,20 +100,20 @@ export function MoviePlayerBar() {
                 <TooltipContent>Toggle sidebar</TooltipContent>
               </Tooltip>
 
-              <Separator orientation="vertical" className="h-5 mx-1" />
+              <Separator orientation="vertical" className="h-4 mx-0.5" />
 
               {toolbarExpanded && (
                 <>
                   <TimelineScrollControls />
 
-                  <Separator orientation="vertical" className="h-5 mx-1" />
+                  <Separator orientation="vertical" className="h-4 mx-0.5" />
 
                   <PlaybackSpeedControl
                     value={animationSpeed}
                     setValue={setAnimationSpeed}
                   />
 
-                  <Separator orientation="vertical" className="h-5 mx-1" />
+                  <Separator orientation="vertical" className="h-4 mx-0.5" />
                 </>
               )}
 
@@ -124,23 +124,23 @@ export function MoviePlayerBar() {
 
               {toolbarExpanded && (
                 <>
-                  <Separator orientation="vertical" className="h-5 mx-1" />
+                  <Separator orientation="vertical" className="h-4 mx-0.5" />
 
                   <RecordingControls />
 
-                  <Separator orientation="vertical" className="h-5 mx-1" />
+                  <Separator orientation="vertical" className="h-4 mx-0.5" />
 
                   <SaveImageButton />
                 </>
               )}
 
-              <Separator orientation="vertical" className="h-5 mx-1" />
+              <Separator orientation="vertical" className="h-4 mx-0.5" />
 
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
-                    size="icon"
+                    size="icon-sm"
                     aria-label={toolbarExpanded ? "Collapse toolbar" : "Expand toolbar"}
                     aria-expanded={toolbarExpanded}
                     onClick={() => setToolbarExpanded(!toolbarExpanded)}

@@ -1,4 +1,4 @@
-import { isLinkInSubtree, isNodeInSubtree } from './subtreeMatching.js';
+import { isLinkInSubtree, isNodeInSubtree } from '../../../utils/splitMatching.js';
 
 export function applyDimmingWithCache(
   opacity,

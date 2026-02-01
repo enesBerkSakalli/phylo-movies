@@ -37,11 +37,11 @@ export class CanvasRecorder {
       ? treeControllers[0]
       : null;
 
-    const canvas = primaryController?.deckManager?.canvas || document.querySelector('#webgl-container canvas');
+    const canvas = primaryController?.deckContext?.canvas || document.querySelector('#webgl-container canvas');
     if (!canvas) {
       throw new Error('Visualization canvas not found. Make sure the movie has finished rendering.');
     }
-    this.deck = primaryController?.deckManager?.getDeck?.() || primaryController?.deckManager?.deck || null;
+    this.deck = primaryController?.deckContext?.getDeck?.() || primaryController?.deckContext?.deck || null;
     return canvas;
   }
 

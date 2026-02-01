@@ -12,6 +12,7 @@ export const createMsaViewerSlice = (set, get) => ({
   msaStepSize: 50,
   msaColumnCount: 0,
   msaRegion: null,
+  msaRowOrder: null,
 
   // ==========================================================================
   // STATE: MSA Viewer UI
@@ -38,7 +39,8 @@ export const createMsaViewerSlice = (set, get) => ({
       msaWindowSize: 1000,
       msaStepSize: 50,
       msaColumnCount: 0,
-      msaRegion: null
+      msaRegion: null,
+      msaRowOrder: null
     });
   },
 
@@ -65,6 +67,19 @@ export const createMsaViewerSlice = (set, get) => ({
   },
 
   clearMsaRegion: () => set({ msaRegion: null }),
+
+  // ==========================================================================
+  // ACTIONS: Row Ordering
+  // ==========================================================================
+  setMsaRowOrder: (order) => {
+    if (!Array.isArray(order) || order.length === 0) {
+      set({ msaRowOrder: null });
+      return;
+    }
+    set({ msaRowOrder: order.slice() });
+  },
+
+  clearMsaRowOrder: () => set({ msaRowOrder: null }),
 
   // ==========================================================================
   // ACTIONS: MSA Viewer UI

@@ -4,7 +4,7 @@
  */
 
 import { TextLayer } from '@deck.gl/layers';
-import { colorToRgba } from '../../services/ui/colorUtils.js';
+import { colorToRgb, colorToRgba } from '../../services/ui/colorUtils.js';
 
 /**
  * Pick contrasting text color based on background luminance
@@ -40,7 +40,9 @@ export function buildRowLabels(cellSize, sequences, visibleRange, viewState, zoo
   // Calculate position: Right aligned in the view (labels view has target [0, y, 0])
   // The center of the view is at X=0 in world space.
   // The right edge of the view in world space is (viewWidth / 2) / zoomScale.
-  const screenPad = 4;
+  // Scale padding so it shrinks when zooming out (avoids huge relative gaps)
+  const basePadPx = 4;
+  const screenPad = basePadPx * Math.min(1, zoomScale || 1);
   const worldX = (viewWidth - screenPad) / zoomScale;
 
   for (let r = r0; r <= r1; r++) {
@@ -50,7 +52,10 @@ export function buildRowLabels(cellSize, sequences, visibleRange, viewState, zoo
     if (!seq) continue;
 
     const baseColor = rowColorMap[seq.id];
-    const bg = baseColor ? colorToRgba(baseColor, 200) : [255, 255, 255, 255]; // default white
+    const rgb = baseColor ? colorToRgb(baseColor) : [255, 255, 255];
+    // Slight brightness boost to match node render intensity (UI contrast)
+    const boosted = baseColor ? rgb.map(v => Math.min(255, Math.round(v * 1.08))) : rgb;
+    const bg = baseColor ? [...boosted, 255] : [255, 255, 255, 255]; // full opacity
     const fg = baseColor ? textColorFor(bg) : [0, 0, 0, 255]; // default black
 
     data.push({
@@ -60,7 +65,8 @@ export function buildRowLabels(cellSize, sequences, visibleRange, viewState, zoo
       position: [worldX, r * cellSize + cellSize / 2, 0],
       cellSize, // Pass cellSize for getSize in 'common' units
       backgroundColor: bg,
-      textColor: fg
+      textColor: fg,
+      paddingPx: screenPad / 2
     });
   }
 
@@ -84,6 +90,12 @@ export function createRowLabelsLayer(labelsData) {
     getTextAnchor: 'end',
     getAlignmentBaseline: 'center',
     background: true,
+    padding: 0,
+    // Use per-datum padding that scales with zoom (set in buildRowLabels)
+    getBackgroundPadding: d => {
+      const p = d.paddingPx ?? 2;
+      return [0, p, 0, p];
+    },
     getBackgroundColor: d => d.backgroundColor || [255, 255, 255, 255],
     getColor: d => d.textColor || [0, 0, 0, 255],
     fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial'

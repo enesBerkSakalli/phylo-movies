@@ -92,7 +92,7 @@ export class ScrubberAPI {
       options.rightTreeIndex = anchors.find((i) => i > fromIndex) ?? anchors[anchors.length - 1];
     }
 
-    await this.treeController.renderScrubFrame(fromTree, toTree, timeFactor, options);
+    await this.treeController.renderComparisonAwareScrubFrame(fromTree, toTree, timeFactor, options);
   }
 
   _updateColorManagerForScrub(state, treeIndex) {

@@ -36,8 +36,13 @@ export const storage = {
       await localforage.setItem(key, value);
       return true;
     } catch (error) {
+      // Handle IndexedDB quota/memory errors
+      if (error.name === 'DataCloneError' || error.message?.includes('out of memory')) {
+        console.error(`[DataService] Data too large to store in IndexedDB. Trees: ${value?.interpolated_trees?.length || 'unknown'}`);
+        throw new Error(`Dataset too large for browser storage. Try reducing the number of trees or window size.`);
+      }
       console.error(`[DataService] Error storing ${key}:`, error);
-      return false;
+      throw error;
     }
   },
 

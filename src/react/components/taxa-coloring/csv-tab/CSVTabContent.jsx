@@ -12,6 +12,7 @@ export function CSVTabContent({
   csvValidation,
   csvGroups,
   colorManager,
+  colorVersion,
   onFile,
   onColumnChange,
   resetCSV,
@@ -34,6 +35,7 @@ export function CSVTabContent({
             description="Apply palettes to CSV-defined groups."
           />
           <CSVGroupColors
+            key={colorVersion}
             csvGroups={csvGroups}
             colorManager={colorManager}
             onColorChange={handleColorChange}

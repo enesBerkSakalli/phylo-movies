@@ -8,8 +8,8 @@ require.extensions['.scss'] = () => {};
 require.extensions['.sass'] = () => {};
 
 const { expect } = require('chai');
-const { getPerfSnapshot, resetPerf } = require('../src/js/treeVisualisation/deckgl/layers/layerFactories/index.js');
-const { createLinksLayer, createLinkOutlinesLayer, createExtensionsLayer, createNodesLayer, createLabelsLayer, createConnectorsLayer } = require('../src/js/treeVisualisation/deckgl/layers/layerFactories/index.js');
+const { getPerfSnapshot, resetPerf } = require('../src/js/treeVisualisation/deckgl/layers/factory/index.js');
+const { createLinksLayer, createLinkOutlinesLayer, createExtensionsLayer, createNodesLayer, createLabelsLayer, createConnectorsLayer } = require('../src/js/treeVisualisation/deckgl/layers/factory/index.js');
 const { LayerStyles } = require('../src/js/treeVisualisation/deckgl/layers/LayerStyles.js');
 const { useAppStore } = require('../src/js/core/store.js');
 
