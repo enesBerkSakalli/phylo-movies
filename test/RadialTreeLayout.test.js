@@ -1,5 +1,5 @@
-const { expect } = require('chai');
-const { RadialTreeLayout } = require('../src/js/treeVisualisation/layout/RadialTreeLayout.js');
+import { expect, describe, it, beforeEach } from 'vitest';
+import { RadialTreeLayout } from '../src/js/treeVisualisation/layout/RadialTreeLayout.js';
 
 describe('RadialTreeLayout - indexLeafNodes', () => {
   let layout;
@@ -279,6 +279,127 @@ describe('RadialTreeLayout - indexLeafNodes', () => {
       expect(tree.children[0].index).to.equal(0);             // A (no children property)
       expect(tree.children[1].children[0].index).to.equal(1); // B
       expect(count).to.equal(2);
+    });
+  });
+});
+
+describe('RadialTreeLayout - Geometry & Calculations', () => {
+  let layout;
+  let mockRoot;
+
+  beforeEach(() => {
+    mockRoot = {
+      id: 'root',
+      length: 0,
+      children: [
+        {
+          id: 'A',
+          length: 10,
+          children: []
+        },
+        {
+          id: 'B',
+          length: 20,
+          children: []
+        }
+      ]
+    };
+    layout = new RadialTreeLayout(mockRoot);
+    // Set standard dimensions for predictable testing
+    layout.setDimension(1000, 1000);
+    layout.setMargin(0);
+  });
+
+  describe('calcRadius', () => {
+    it('should correctly accumulate branch lengths', () => {
+      layout.calcRadius(layout.root, 0);
+
+      // Root should be 0 (effective length)
+      expect(layout.root.radius).to.equal(0);
+
+      // Child A: 0 + 10 = 10
+      expect(layout.root.children[0].radius).to.equal(10);
+
+      // Child B: 0 + 20 = 20
+      expect(layout.root.children[1].radius).to.equal(20);
+    });
+
+    it('should handle nested accumulation', () => {
+      const deepTree = {
+        length: 0,
+        children: [{
+          length: 5,
+          children: [{
+            length: 3
+          }]
+        }]
+      };
+      const l = new RadialTreeLayout(deepTree);
+      l.calcRadius(l.root, 0);
+
+      // Root -> 0
+      expect(l.root.radius).to.equal(0);
+      // Child 1 (5) -> 5
+      expect(l.root.children[0].radius).to.equal(5);
+      // Grandchild (3) -> 5 + 3 = 8
+      expect(l.root.children[0].children[0].radius).to.equal(8);
+    });
+  });
+
+  describe('generateCoordinates (Polar to Cartesian)', () => {
+    it('should convert radius and angle to x, y correctly', () => {
+      // Manually set properties to test pure math conversion
+      const node = { radius: 100, angle: 0 }; // 0 radians = Right
+      // We need to attach node so generateCoordinates can iterate if it expects a hierarchy,
+      // but generateCoordinates takes a root and uses .each().
+      // Let's use d3.hierarchy logic or the internal root.
+
+      const root = {
+        each: (cb) => cb(node)
+      };
+
+      layout.generateCoordinates(root);
+
+      // At angle 0, x=r, y=0
+      expect(node.x).to.be.closeTo(100, 0.0001);
+      expect(node.y).to.be.closeTo(0, 0.0001);
+    });
+
+    it('should handle 90 degrees (Pi/2)', () => {
+      const node = { radius: 100, angle: Math.PI / 2 };
+      const root = { each: (cb) => cb(node) };
+      layout.generateCoordinates(root);
+
+      // At 90 deg, x=0, y=100
+      expect(node.x).to.be.closeTo(0, 0.0001);
+      expect(node.y).to.be.closeTo(100, 0.0001);
+    });
+
+    it('should apply scale before generating coordinates (if scaled manually)', () => {
+      // Note: RadialTreeLayout.scaleRadius is usually called before generateCoordinates
+      const node = { radius: 10 };
+      const root = { each: (cb) => cb(node) };
+
+      layout.scaleRadius(root, 2.0); // radius becomes 20
+      node.angle = 0;
+      layout.generateCoordinates(root);
+
+      expect(node.x).to.be.closeTo(20, 0.0001);
+    });
+  });
+
+  describe('constructRadialTreeWithUniformScaling', () => {
+    it('should calculate scale based on minWindow / (2 * maxGlobalScale)', () => {
+      // Window 1000x1000, maxGlobalScale=50
+      // Scale = 1000 / 100 = 10
+      const maxGlobalScale = 50;
+      layout.constructRadialTreeWithUniformScaling(maxGlobalScale);
+
+      expect(layout.scale).to.equal(10);
+
+      // Check if radius was scaled
+      // Child A (len 10) * 10 = 100
+      expect(layout.root.children[0].radius).to.equal(100);
     });
   });
 });

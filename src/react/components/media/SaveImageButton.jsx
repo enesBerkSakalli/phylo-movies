@@ -20,11 +20,11 @@ export function SaveImageButton() {
 
       const treeController = treeControllers[treeControllers.length - 1]; // Save the right-most view
 
-      let canvas = treeController.deckManager?.canvas;
+      let canvas = treeController.deckContext?.canvas;
 
         // Fallback: try to find canvas in DOM if not in manager
       if (!canvas) {
-        console.warn("DeckManager canvas reference missing, attempting DOM lookup via ID...");
+        console.warn("DeckGLContext canvas reference missing, attempting DOM lookup via ID...");
         const container = document.getElementById('webgl-container');
         if (container) {
           canvas = container.querySelector('canvas');
@@ -40,14 +40,29 @@ export function SaveImageButton() {
       }
 
       if (!canvas) {
-        console.error("Deck.gl canvas not found for saving PNG. Checked DeckManager and DOM.");
+        console.error("Deck.gl canvas not found for saving PNG. Checked DeckGLContext and DOM.");
         return;
       }
 
       const fileName = `phylo-movie-export-${currentTreeIndex + 1}.png`;
 
-      // Use toBlob for better performance (more efficient than toDataURL)
-      canvas.toBlob((blob) => {
+      // Create a proxy 2D canvas to fix WebGL color drift issues
+      // Direct toBlob() on WebGL canvas causes color shifts due to premultiplied alpha
+      // and color space handling differences between WebGL and PNG encoding
+      const proxyCanvas = document.createElement('canvas');
+      proxyCanvas.width = canvas.width;
+      proxyCanvas.height = canvas.height;
+      const ctx = proxyCanvas.getContext('2d');
+
+      // Draw solid white background (handles alpha compositing correctly)
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, proxyCanvas.width, proxyCanvas.height);
+
+      // Composite WebGL canvas onto 2D canvas (this normalizes color space)
+      ctx.drawImage(canvas, 0, 0);
+
+      // Export from the proxy canvas for accurate colors
+      proxyCanvas.toBlob((blob) => {
         if (!blob) {
           console.error("Failed to create image blob");
           return;

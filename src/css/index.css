@@ -1,4 +1,6 @@
-@import "tailwindcss";
+@import "tailwindcss" source(none);
+@source "../../index.html";
+@source "../**";
 @plugin "tailwindcss-animate";
 
 @custom-variant dark (&:is(.dark *));
@@ -112,11 +114,15 @@
   }
   html {
     font-size: 14px;
+    overflow: hidden;
+    height: 100%;
   }
   body {
     @apply bg-background text-foreground;
     font-size: 0.875rem; /* 14px */
     line-height: 1.5;
+    overflow: hidden;
+    height: 100%;
   }
 }
 

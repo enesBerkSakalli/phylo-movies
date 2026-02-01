@@ -6,6 +6,9 @@
  */
 import { useAppStore } from '../../core/store.js';
 import { calculateVisualBounds } from '../utils/TreeBoundsUtils.js';
+import { projectNodesToScreen, applySafeAreaToTarget } from '../spatial/projections.js';
+import { areBoundsInView, expandBoundsForLabels } from '../spatial/bounds.js';
+import { calculateSafeAreaPadding, normalizeSafeArea } from '../spatial/layout.js';
 
 export class ViewportManager {
 
@@ -43,26 +46,9 @@ export class ViewportManager {
   // BOUNDS CALCULATION
   // ==========================================================================
 
-
-
   areBoundsInView(bounds, paddingFactor = 1.05) {
-    try {
-      const viewport = this.controller.deckManager?.deck?.getViewports?.()?.[0];
-      if (!viewport?.getBounds) return false;
-
-      const [viewMinX, viewMinY, viewMaxX, viewMaxY] = viewport.getBounds();
-      const padX = (viewMaxX - viewMinX) * (paddingFactor - 1) / 2;
-      const padY = (viewMaxY - viewMinY) * (paddingFactor - 1) / 2;
-
-      return (
-        bounds.minX >= viewMinX - padX &&
-        bounds.maxX <= viewMaxX + padX &&
-        bounds.minY >= viewMinY - padY &&
-        bounds.maxY <= viewMaxY + padY
-      );
-    } catch {
-      return false;
-    }
+    const viewport = this.controller.deckContext?.deck?.getViewports?.()?.[0];
+    return areBoundsInView(bounds, viewport, paddingFactor);
   }
 
   // ==========================================================================
@@ -73,77 +59,66 @@ export class ViewportManager {
     const { playing } = useAppStore.getState();
     if (playing && !options.allowDuringPlayback) return;
     const bounds = calculateVisualBounds(nodes, labels);
+    const { width: canvasWidth, height: canvasHeight } = this.controller.deckContext.getCanvasDimensions();
     const densityPadding = this._calculateDensityPadding(nodes);
     const safeArea = this.getSafeAreaPadding();
     const padding = options.padding ?? (1.25 + densityPadding);
+    const labelSizePx = options.labelSizePx;
+    const getLabelSize = options.getLabelSize ?? this.controller.layerManager.layerStyles.getLabelSize?.bind(
+      this.controller.layerManager.layerStyles
+    );
 
+    // 1. Expand bounds for labels
+    const expandedBounds = expandBoundsForLabels(bounds, labels, labelSizePx, getLabelSize);
 
+    // 2. Calculate Center & Dimensions
+    const centerX = (expandedBounds.minX + expandedBounds.maxX) / 2;
+    const centerY = (expandedBounds.minY + expandedBounds.maxY) / 2;
+    const w = Math.max(1e-6, expandedBounds.maxX - expandedBounds.minX);
+    const h = Math.max(1e-6, expandedBounds.maxY - expandedBounds.minY);
 
-    this.controller.deckManager.fitToBounds(bounds, {
-      padding,
+    // 3. Normalize Safe Area
+    const safe = normalizeSafeArea(safeArea, canvasWidth, canvasHeight);
+    const safeWidth = Math.max(1, canvasWidth - safe.left - safe.right);
+    const safeHeight = Math.max(1, canvasHeight - safe.top - safe.bottom);
+
+    // 4. Calculate Zoom (log2 scale)
+    // Note: Clamping happens in DeckGLContext.transitionTo
+    const zoom = Math.log2(Math.min(safeWidth / (w * padding), safeHeight / (h * padding)));
+
+    // 5. Apply Safe Area offset to Target
+    // We need the active view to properly unproject the safe center
+    const activeView = this.controller.deckContext.getActiveView();
+    const currentViewState = this.controller.deckContext.getViewState();
+
+    const target = applySafeAreaToTarget(
+      activeView,
+      [centerX, centerY, 0],
+      zoom,
+      safe,
+      canvasWidth,
+      canvasHeight,
+      safeWidth,
+      safeHeight,
+      currentViewState
+    );
+
+    // 6. Execute Transition
+    this.controller.deckContext.transitionTo({
+      target,
+      zoom,
       duration: options.duration ?? 550,
-      // labels: do not pass labels, as input bounds already account for them via calculateVisualBounds
-      getLabelSize: this.controller.layerManager.layerStyles.getLabelSize?.bind(
-        this.controller.layerManager.layerStyles
-      ),
-      safeArea
+      easing: options.easing, // DeckGLContext will use default if undefined
+      interpolator: options.interpolator
     });
   }
 
+  // ==========================================================================
+  // HELPER METHODS
+  // ==========================================================================
+
   getSafeAreaPadding() {
-    if (typeof document === 'undefined') return null;
-    const container = this.controller.webglContainer?.node?.();
-    if (!container?.getBoundingClientRect) return null;
-    const canvasRect = container.getBoundingClientRect();
-    if (!canvasRect?.width || !canvasRect?.height) return null;
-
-    const selectors = ['.movie-player-bar', '#top-scale-bar-container'];
-    const padding = { top: 0, right: 0, bottom: 0, left: 0 };
-    const edgeThreshold = 24;
-
-    selectors.forEach((selector) => {
-      const el = document.querySelector(selector);
-      if (!el?.getBoundingClientRect) return;
-      const rect = el.getBoundingClientRect();
-      if (rect.width <= 0 || rect.height <= 0) return;
-
-      const overlapX = Math.max(0, Math.min(rect.right, canvasRect.right) - Math.max(rect.left, canvasRect.left));
-      const overlapY = Math.max(0, Math.min(rect.bottom, canvasRect.bottom) - Math.max(rect.top, canvasRect.top));
-      if (overlapX <= 0 || overlapY <= 0) return;
-
-      // Heuristic: Only consider an element as a "bar" (top/bottom/side) if it covers > 50% of the edge.
-      // Small corner overlays (like scale bars or legends) shouldn't shift the entire viewport.
-      const isHorizontalBar = rect.width > canvasRect.width * 0.5;
-      const isVerticalBar = rect.height > canvasRect.height * 0.5;
-
-      if (isHorizontalBar) {
-        if (rect.top <= canvasRect.top + edgeThreshold) {
-          padding.top = Math.max(padding.top, Math.min(rect.bottom - canvasRect.top, canvasRect.height));
-        }
-        if (rect.bottom >= canvasRect.bottom - edgeThreshold) {
-          padding.bottom = Math.max(padding.bottom, Math.min(canvasRect.bottom - rect.top, canvasRect.height));
-        }
-      }
-
-      if (isVerticalBar) {
-        if (rect.left <= canvasRect.left + edgeThreshold) {
-          padding.left = Math.max(padding.left, Math.min(rect.right - canvasRect.left, canvasRect.width));
-        }
-        if (rect.right >= canvasRect.right - edgeThreshold) {
-          padding.right = Math.max(padding.right, Math.min(canvasRect.right - rect.left, canvasRect.width));
-        }
-      }
-    });
-
-    if (!padding.top && !padding.right && !padding.bottom && !padding.left) return null;
-
-    const extraPadding = 20;
-    return {
-      top: padding.top ? padding.top + extraPadding : 0,
-      right: padding.right ? padding.right + extraPadding : 0,
-      bottom: padding.bottom ? padding.bottom + extraPadding : 0,
-      left: padding.left ? padding.left + extraPadding : 0
-    };
+    return calculateSafeAreaPadding(this.controller.webglContainer?.node?.());
   }
 
   _calculateDensityPadding(nodes) {
@@ -161,46 +136,22 @@ export class ViewportManager {
   // ==========================================================================
 
   updateScreenPositions(nodes, sideOverride = null) {
-    if (!this.controller.deckManager?.deck || !nodes) return;
+    if (!this.controller.deckContext?.deck || !nodes) return;
 
     const setScreenPositions = useAppStore.getState().setScreenPositions;
     if (typeof setScreenPositions !== 'function') return;
 
     try {
-      const viewport = this.controller.deckManager.deck.getViewports()[0];
+      const viewport = this.controller.deckContext.deck.getViewports()[0];
       if (!viewport) return;
 
       const containerRect = this.controller.webglContainer.node().getBoundingClientRect();
-      const positions = this._projectNodesToScreen(nodes, viewport, containerRect);
+      const positions = projectNodesToScreen(nodes, viewport, containerRect);
 
       const side = sideOverride || this.controller.viewSide || 'single';
       setScreenPositions(side, positions);
     } catch (e) {
-      console.warn('[ViewportManager] Failed to project screen positions:', e);
+      console.warn('[ViewportManager] Failed to projection screen positions:', e);
     }
-  }
-
-  _projectNodesToScreen(nodes, viewport, containerRect) {
-    const positions = {};
-
-    nodes.forEach((node) => {
-      const key = Array.isArray(node.data?.split_indices)
-        ? node.data.split_indices.join('-')
-        : null;
-      if (!key) return;
-      if (!node.position || !Array.isArray(node.position)) return;
-      if (!Number.isFinite(node.position[0]) || !Number.isFinite(node.position[1])) return;
-
-      const [px, py] = viewport.project(node.position);
-      positions[key] = {
-        x: px + containerRect.left,
-        y: py + containerRect.top,
-        width: 0,
-        height: 0,
-        isLeaf: !node.children || node.children.length === 0
-      };
-    });
-
-    return positions;
   }
 }

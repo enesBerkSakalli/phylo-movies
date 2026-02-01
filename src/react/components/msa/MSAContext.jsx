@@ -12,6 +12,7 @@ export function MSAProvider({ children }) {
   const msaRegion = useAppStore((s) => s.msaRegion);
   const setMsaRegion = useAppStore((s) => s.setMsaRegion);
   const clearMsaRegion = useAppStore((s) => s.clearMsaRegion);
+  const msaRowOrder = useAppStore((s) => s.msaRowOrder);
   const taxaGrouping = useAppStore((s) => s.taxaGrouping);
   const taxaColorVersion = useAppStore((s) => s.taxaColorVersion);
 
@@ -19,21 +20,54 @@ export function MSAProvider({ children }) {
   const [colorScheme, setColorScheme] = useState('default');
   const [viewAction, setViewAction] = useState(null);
   const [visibleRange, setVisibleRange] = useState(null);
+  const [scrollAction, setScrollAction] = useState(null);
 
   const triggerViewAction = (action) => {
     setViewAction({ action, id: Date.now() });
+  };
+
+  // Trigger a scroll to a specific row/col position from scrollbars
+  const scrollToPosition = (position) => {
+    setScrollAction({ ...position, id: Date.now() });
   };
 
   // Process data
   const processedData = useMemo(() => {
     if (!hasMsa || !movieData) return null;
     try {
-      return processPhyloData(movieData);
+      const parsed = processPhyloData(movieData);
+      if (!parsed) return null;
+
+      // Apply optional row ordering based on msaRowOrder (taxon IDs)
+      if (Array.isArray(msaRowOrder) && msaRowOrder.length) {
+        const seqMap = new Map(parsed.sequences.map((s) => [s.id, s]));
+        const reordered = [];
+
+        // First: add in requested order when present
+        msaRowOrder.forEach((id) => {
+          const seq = seqMap.get(id);
+          if (seq) {
+            reordered.push(seq);
+            seqMap.delete(id);
+          }
+        });
+
+        // Then: append any remaining sequences not in the order list
+        seqMap.forEach((seq) => reordered.push(seq));
+
+        return {
+          ...parsed,
+          sequences: reordered,
+          rows: reordered.length
+        };
+      }
+
+      return parsed;
     } catch (err) {
       console.warn('[MSA Context] Failed to process MSA data:', err);
       return null;
     }
-  }, [hasMsa, movieData]);
+  }, [hasMsa, movieData, msaRowOrder]);
 
   // Map each taxon id to its assigned color (group > per-taxon palette)
   const rowColorMap = useMemo(() => {
@@ -98,6 +132,8 @@ export function MSAProvider({ children }) {
     visibleRange,
     setVisibleRange,
     rowColorMap,
+    scrollAction,
+    scrollToPosition,
   }), [
     movieData,
     processedData,
@@ -112,7 +148,9 @@ export function MSAProvider({ children }) {
     triggerViewAction,
     visibleRange,
     setVisibleRange,
-    rowColorMap
+    rowColorMap,
+    scrollAction,
+    scrollToPosition
   ]);
 
   return (

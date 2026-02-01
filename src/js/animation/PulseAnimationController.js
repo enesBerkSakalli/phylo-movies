@@ -24,7 +24,7 @@ export class PulseAnimationController {
     this._animationId = null;
     this._startTime = null;
     this._onPhaseUpdate = onPhaseUpdate;
-    this._onRender = onRender;
+    this._onRender = onRender; // Optional - omit for deck.gl updateTrigger-based updates
     this._shouldContinue = shouldContinue;
   }
 
@@ -56,7 +56,7 @@ export class PulseAnimationController {
     const phase = (elapsed % PULSE_DURATION_MS) / PULSE_DURATION_MS;
 
     this._onPhaseUpdate(phase);
-    this._onRender();
+    this._onRender?.(); // Only call if provided
 
     this._animationId = requestAnimationFrame(this._animate);
   };

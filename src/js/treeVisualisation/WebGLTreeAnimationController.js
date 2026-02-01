@@ -17,49 +17,29 @@ export class WebGLTreeAnimationController {
     };
     this._transformedCache = new Map();
     this._onResize = null;
-    this._resizeRaf = null;
 
     this.webglContainer = d3.select(container);
 
     const node = this.webglContainer.node();
     const rect = node ? node.getBoundingClientRect() : { width: 800, height: 600 };
-    this.width = rect.width;
-    this.height = rect.height;
+    this.width = Math.max(1, rect.width);
+    this.height = Math.max(1, rect.height);
 
-    this._initializeResizeObserver(node);
+    // Resize handling is delegated to DeckGLContext or external driver
   }
 
-  _initializeResizeObserver(node) {
-    if (!node || typeof ResizeObserver === 'undefined') return;
+  /*
+   * Updates controller dimensions. Called by external driver (DeckGLContext).
+   */
+  resize({ width, height }) {
+    const nextWidth = Number.isFinite(width) ? width : this.width;
+    const nextHeight = Number.isFinite(height) ? height : this.height;
 
-    this.resizeObserver = new ResizeObserver(entries => {
-      for (let entry of entries) {
-        const { width, height } = entry.contentRect;
-        const nextWidth = Number.isFinite(width) ? width : this.width;
-        const nextHeight = Number.isFinite(height) ? height : this.height;
-        const changed = nextWidth !== this.width || nextHeight !== this.height;
-        this.width = nextWidth;
-        this.height = nextHeight;
-
-        if (changed && this._onResize) {
-          if (this._resizeRaf != null) {
-            if (typeof cancelAnimationFrame === 'function') {
-              cancelAnimationFrame(this._resizeRaf);
-            } else {
-              clearTimeout(this._resizeRaf);
-            }
-          }
-          const schedule = typeof requestAnimationFrame === 'function'
-            ? requestAnimationFrame
-            : (cb) => setTimeout(cb, 16);
-          this._resizeRaf = schedule(() => {
-            this._resizeRaf = null;
-            this._onResize?.({ width: this.width, height: this.height });
-          });
-        }
-      }
-    });
-    this.resizeObserver.observe(node);
+    if (nextWidth !== this.width || nextHeight !== this.height) {
+      this.width = nextWidth;
+      this.height = nextHeight;
+      this._onResize?.({ width: this.width, height: this.height });
+    }
   }
 
   // ==========================================================================
@@ -79,18 +59,6 @@ export class WebGLTreeAnimationController {
   }
 
   destroy() {
-    if (this.resizeObserver) {
-      this.resizeObserver.disconnect();
-      this.resizeObserver = null;
-    }
-    if (this._resizeRaf != null) {
-      if (typeof cancelAnimationFrame === 'function') {
-        cancelAnimationFrame(this._resizeRaf);
-      } else {
-        clearTimeout(this._resizeRaf);
-      }
-      this._resizeRaf = null;
-    }
     this._onResize = null;
   }
 
@@ -149,7 +117,13 @@ export class WebGLTreeAnimationController {
     const { treeIndex, cacheFunction, updateController = false } = options;
     const { branchTransformation, layoutAngleDegrees, layoutRotationDegrees } = useAppStore.getState();
 
-    this._handleTransformationChange(branchTransformation);
+    // Lazy initialization of uniform scaling to ensure consistent sizing across frames
+    if (!this.uniformScalingEnabled) {
+      this.initializeUniformScaling(branchTransformation);
+    } else {
+      // Handle transformation changes if already initialized
+      this._handleTransformationChange(branchTransformation);
+    }
 
     const transformedTreeData = this._getTransformedTreeData(treeData, branchTransformation, treeIndex);
     if (!transformedTreeData) {

@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { parseGroupCSV } from "@/js/treeColoring/utils/CSVParser.js";
 import { loadCSVColumn } from "../utils/csvHelpers.js";
 
@@ -6,13 +6,23 @@ export function useCSVState(taxaNames, initialState = {}) {
   const [csvData, setCsvData] = useState(initialState.csvData || null);
   const [csvFileName, setCsvFileName] = useState(initialState.csvFileName || null);
   const [csvGroups, setCsvGroups] = useState(initialState.csvGroups || []);
-  const [csvTaxaMap, setCsvTaxaMap] = useState(initialState.csvTaxaMap || null);
+  const [csvTaxaMap, setCsvTaxaMap] = useState(() => {
+    // Convert object back to Map if restored from persistence
+    const saved = initialState.csvTaxaMap;
+    if (saved instanceof Map) return saved;
+    if (saved && typeof saved === 'object') return new Map(Object.entries(saved));
+    return null;
+  });
   const [csvColumn, setCsvColumn] = useState(initialState.csvColumn || null);
   const [csvValidation, setCsvValidation] = useState(null);
 
-  // If csvTaxaMap is an object (from persistence), it's fine as we fixed applyColoringData
-  // but for local UI state we might want consistency.
-  // However, the current code works with both due to the fix in GroupingUtils.
+  // Recalculate validation when restoring from initial state
+  useEffect(() => {
+    if (initialState.csvData && initialState.csvColumn && taxaNames.length > 0) {
+      const { validation } = loadCSVColumn(initialState.csvData, initialState.csvColumn, taxaNames);
+      setCsvValidation(validation);
+    }
+  }, []); // Run once on mount
 
 
   const onFile = useCallback(async (file) => {

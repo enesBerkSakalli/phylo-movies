@@ -19,12 +19,6 @@ function isPerfEnabled() {
 }
 
 export function createLayer(config, props = {}) {
-  if (!config || !config.LayerClass) {
-    throw new Error('[createLayer] Invalid config: missing LayerClass');
-  }
-  if (!config.id || typeof config.id !== 'string') {
-    throw new Error('[createLayer] Invalid config: missing string id');
-  }
 
   const perfEnabled = isPerfEnabled();
   const start = perfEnabled

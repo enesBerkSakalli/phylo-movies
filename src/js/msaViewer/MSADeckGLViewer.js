@@ -10,18 +10,19 @@ import { createSelectionBorderLayer, buildSelectionBorder } from './layers/selec
 import { createLettersLayer, buildTextData } from './layers/lettersLayer.js';
 import { createRowLabelsLayer, buildRowLabels } from './layers/rowLabelsLayer.js';
 import { createColumnAxisLayer, buildColumnAxis } from './layers/columnAxisLayer.js';
+import { DEFAULT_MSA_VIEWER_OPTIONS, MSA_VIEWER_CONSTANTS } from './config.js';
+import { clampViewState, getVisibleRange, getZoomScale } from './viewportUtils.js';
 
 export class MSADeckGLViewer {
 
   constructor(container, options = {}) {
     this.container = container;
+    const { rowColorMap = DEFAULT_MSA_VIEWER_OPTIONS.rowColorMap, ...restOptions } = options;
     this.options = {
-      MAX_CELLS: 150_000,
-      cellSize: 12, // High-density default (67% feel)
-      showLetters: true,
-      colorScheme: 'default',
-      rowColorMap: {},
-      ...options
+      ...DEFAULT_MSA_VIEWER_OPTIONS,
+      ...restOptions,
+      // Ensure we never mutate the shared default map
+      rowColorMap: { ...DEFAULT_MSA_VIEWER_OPTIONS.rowColorMap, ...rowColorMap }
     };
 
     this.state = {
@@ -32,38 +33,32 @@ export class MSADeckGLViewer {
       cols: 0,
       selection: null,
       // Main view state
-      viewState: { target: [0, 0, 0], zoom: 0 },
-      minimapViewState: { target: [0, 0, 0], zoom: -1.5 }
+      viewState: { target: [0, 0, 0], zoom: 0 }
     };
 
 
 
-    // Constants
-    this.DEFAULT_LABELS_WIDTH = 20;
+    // Constants (centralised in config)
+    this.DEFAULT_LABELS_WIDTH = MSA_VIEWER_CONSTANTS.DEFAULT_LABELS_WIDTH;
     this.LABELS_WIDTH = this.DEFAULT_LABELS_WIDTH;
-    this.AXIS_HEIGHT = 20;   // Proportionate height for 10px cells
-    this.MIN_ZOOM = -8;
-    this.MAX_ZOOM = 10;
+    this.AXIS_HEIGHT = MSA_VIEWER_CONSTANTS.AXIS_HEIGHT;
+    this.MIN_ZOOM = MSA_VIEWER_CONSTANTS.MIN_ZOOM;
+    this.MAX_ZOOM = MSA_VIEWER_CONSTANTS.MAX_ZOOM;
 
     this.frame = null;
     this._pendingFitToMSA = false;  // Track if we need to fit after deck init
     this.resizeObserver = null;     // ResizeObserver for container resize handling
+    this._labelMeasuredWidth = this.DEFAULT_LABELS_WIDTH; // raw text-based width before zoom scaling
+    this._scrollZoomSpeed = 0.08;   // Custom wheel zoom speed multiplier
+    this._handleWheel = this.handleWheel.bind(this);
 
     // Delay initialization to ensure container has dimensions
-    setTimeout(() => this.initializeDeck(), 50);
+    setTimeout(() => this.initializeDeck(), MSA_VIEWER_CONSTANTS.INIT_DELAY_MS);
   }
 
   // =======================================================================
   // UTILITIES
   // =======================================================================
-
-  /**
-   * Get the zoom scale factor (2^zoom)
-   * @returns {number} The zoom scale factor
-   */
-  getZoomScale() {
-    return Math.pow(2, this.state.viewState.zoom || 0);
-  }
 
   /**
    * Measure text width using a 2D canvas context
@@ -103,48 +98,33 @@ export class MSADeckGLViewer {
     const activeViewState = viewState.main || viewState;
     const oldViewState = this.state.viewState;
 
-    // 1. Zoom Clamping (Guard against blank voids)
-    activeViewState.zoom = Math.max(this.MIN_ZOOM, Math.min(this.MAX_ZOOM, activeViewState.zoom));
+    const containerWidth = this.container?.clientWidth || 0;
+    const containerHeight = this.container?.clientHeight || 0;
 
-    // 2. Clamp pan to content bounds when data is present
-    if (this.hasSequences()) {
-      const contentWidth = this.state.cols * this.options.cellSize;
-      const contentHeight = this.state.rows * this.options.cellSize;
-      const zoomScale = this.getZoomScale();
-
-      const viewportWidth = Math.max(1, (this.container.clientWidth - this.LABELS_WIDTH));
-      const viewportHeight = Math.max(1, (this.container.clientHeight - this.AXIS_HEIGHT));
-      const halfW = (viewportWidth / zoomScale) / 2;
-      const halfH = (viewportHeight / zoomScale) / 2;
-
-      const minX = Math.min(halfW, contentWidth / 2);
-      const maxX = Math.max(contentWidth - halfW, contentWidth / 2);
-      const minY = Math.min(halfH, contentHeight / 2);
-      const maxY = Math.max(contentHeight - halfH, contentHeight / 2);
-
-      activeViewState.target = [
-        Math.max(minX, Math.min(maxX, activeViewState.target[0])),
-        Math.max(minY, Math.min(maxY, activeViewState.target[1])),
-        0
-      ];
-    }
+    const activeClamped = clampViewState(activeViewState, {
+      minZoom: this.MIN_ZOOM,
+      maxZoom: this.MAX_ZOOM,
+      containerWidth,
+      containerHeight,
+      labelsWidth: this.LABELS_WIDTH,
+      axisHeight: this.AXIS_HEIGHT,
+      cellSize: this.options.cellSize,
+      rows: this.state.rows,
+      cols: this.state.cols
+    });
 
     // 3. Infinite Loop Prevention (Equality Check)
-    if (oldViewState.zoom === activeViewState.zoom &&
-        oldViewState.target[0] === activeViewState.target[0] &&
-        oldViewState.target[1] === activeViewState.target[1]) {
+    if (oldViewState.zoom === activeClamped.zoom &&
+        oldViewState.target[0] === activeClamped.target[0] &&
+        oldViewState.target[1] === activeClamped.target[1]) {
       return;
     }
 
-    this.state.viewState = activeViewState;
+    this.state.viewState = activeClamped;
 
-    // Derive minimap view state (lighter zoom, centered on content)
+    // Keep label column width proportional to zoom
     if (this.hasSequences()) {
-      const minimapZoom = Math.max(this.MIN_ZOOM, Math.min(this.MAX_ZOOM, activeViewState.zoom - 1.5));
-      this.state.minimapViewState = {
-        target: [this.state.cols * this.options.cellSize / 2, this.state.rows * this.options.cellSize / 2, 0],
-        zoom: minimapZoom
-      };
+      this.updateLabelWidthForZoom(getZoomScale(activeClamped.zoom));
     }
 
     // 4. Derived View States (Axis Lock Strategy)
@@ -152,20 +132,17 @@ export class MSADeckGLViewer {
     // - axis: ignores Y changes (target[1] = viewportHeight / 2)
     // - corner: frozen position, shared zoom
 
-    // We need the view dimensions to center the top-left correctly
-    const mainWidth = (this.container.clientWidth - this.LABELS_WIDTH);
-    const mainHeight = (this.container.clientHeight - this.AXIS_HEIGHT);
-
-    const labelsViewState = { ...activeViewState, target: [this.LABELS_WIDTH / 2 / this.getZoomScale(), activeViewState.target[1], 0] };
-    const axisViewState = { ...activeViewState, target: [activeViewState.target[0], this.AXIS_HEIGHT / 2 / this.getZoomScale(), 0] };
-    const cornerViewState = { ...activeViewState, target: [this.LABELS_WIDTH / 2 / this.getZoomScale(), this.AXIS_HEIGHT / 2 / this.getZoomScale(), 0] };
+    const zoomScale = getZoomScale(activeClamped.zoom);
+    const labelsViewState = { ...activeClamped, target: [this.LABELS_WIDTH / 2 / zoomScale, activeClamped.target[1], 0] };
+    const axisViewState = { ...activeClamped, target: [activeClamped.target[0], this.AXIS_HEIGHT / 2 / zoomScale, 0] };
+    const cornerViewState = { ...activeClamped, target: [this.LABELS_WIDTH / 2 / zoomScale, this.AXIS_HEIGHT / 2 / zoomScale, 0] };
 
     // Update deck.gl view state
-    if (this.state.deckgl) {
-      this.state.deckgl.setProps({
-        viewState: {
-          main: activeViewState,
-          minimap: this.state.minimapViewState,
+      if (this.state.deckgl) {
+        this.state.deckgl.setProps({
+          viewState: {
+            main: activeClamped,
+            minimap: this.state.minimapViewState,
           labels: labelsViewState,
           axis: axisViewState,
           corner: cornerViewState
@@ -181,8 +158,14 @@ export class MSADeckGLViewer {
     // Dispatch custom event for view updates
     if (this.onViewStateChange) {
       // Calculate visible range to pass along
-      const range = this.getVisibleRange(this.options.cellSize);
-      this.onViewStateChange({ viewState: activeViewState, range });
+      const range = getVisibleRange(
+        activeClamped,
+        { containerWidth: this.container.clientWidth, containerHeight: this.container.clientHeight, labelsWidth: this.LABELS_WIDTH, axisHeight: this.AXIS_HEIGHT },
+        this.options.cellSize,
+        this.state.rows,
+        this.state.cols
+      );
+      this.onViewStateChange({ viewState: activeClamped, range });
     }
   }
 
@@ -253,7 +236,7 @@ export class MSADeckGLViewer {
   setupContainerAndCanvas() {
     // Ensure container can receive mouse events
     this.container.style.position = 'relative';
-    this.container.style.overflow = 'hidden';
+    this.container.style.overflow = 'hidden';  // Disable native scrollbars - use deck.gl panning
 
     // Create canvas element for deck.gl
     const canvas = document.createElement('canvas');
@@ -263,6 +246,7 @@ export class MSADeckGLViewer {
     canvas.style.width = '100%';
     canvas.style.height = '100%';
     this.container.appendChild(canvas);
+    this.canvas = canvas;
 
     return canvas;
   }
@@ -275,18 +259,12 @@ export class MSADeckGLViewer {
       canvas,
       width: '100%',
       height: '100%',
+      useDevicePixels: true,
+      glOptions: {
+        antialias: true,
+        preserveDrawingBuffer: true
+      },
       views: [
-        // Minimap view (bottom-right overlay)
-        new OrthographicView({
-          id: 'minimap',
-          x: 10,
-          y: 10,
-          width: 180,
-          height: 140,
-          clear: { color: [245, 245, 245, 1] },
-          flipY: true,
-          controller: false
-        }),
         // Top-Left Corner: Filler for background
         new OrthographicView({
           id: 'corner',
@@ -339,7 +317,6 @@ export class MSADeckGLViewer {
       // We must initialize with the composite view state
       viewState: {
         main: { target: [0, 0, 0], zoom: 0 },
-        minimap: { target: [0, 0, 0], zoom: -1.5 },
         labels: { target: [0, 0, 0], zoom: 0 },
         axis: { target: [0, 0, 0], zoom: 0 },
         corner: { target: [0, 0, 0], zoom: 0 }
@@ -350,7 +327,7 @@ export class MSADeckGLViewer {
         type: OrthographicController,
         dragPan: true,
         inertia: true,
-        scrollZoom: { speed: 0.02, smooth: true },
+        scrollZoom: false, // Custom wheel handler handles pan/zoom
         doubleClickZoom: false,
         keyboard: { zoomSpeed: 0.08 }
       },
@@ -361,6 +338,9 @@ export class MSADeckGLViewer {
         return this.getTooltipContent(object);
       }
     });
+
+    // Attach wheel handler for custom pan/zoom behavior
+    this.container.addEventListener('wheel', this._handleWheel, { passive: false });
 
     // If data was loaded before deck was ready, set initial camera now
     if (this._pendingFitToMSA && this.hasSequences()) {
@@ -386,7 +366,14 @@ export class MSADeckGLViewer {
 
   loadFromPhyloData(data) {
     const processedData = processPhyloData(data);
+    return this._applyProcessedData(processedData);
+  }
 
+  loadFromProcessedData(processedData) {
+    return this._applyProcessedData(processedData);
+  }
+
+  _applyProcessedData(processedData) {
     if (!processedData) {
       return false;
     }
@@ -406,7 +393,6 @@ export class MSADeckGLViewer {
 
     // Restore selection if still valid for new data, otherwise clear it
     if (prevSelection && prevCols === this.state.cols) {
-      // Selection is still valid - keep it
       this.state.selection = prevSelection;
     } else {
       this.state.selection = null;
@@ -414,19 +400,14 @@ export class MSADeckGLViewer {
 
     console.log(`[MSADeckGLViewer] Loaded ${this.state.rows} sequences, type: ${this.state.type}`);
 
-    // Position camera to start at Top-Left if this is the first load
     const isFirstLoad = !this._hasLoadedOnce;
     if (isFirstLoad) {
       this.initCameraPosition();
       this._hasLoadedOnce = true;
     }
 
-    // Force immediate render
     this.render();
-
-    // Also trigger a second render after a brief delay to ensure visibility
     setTimeout(() => this.render(), 100);
-
     return true;
   }
 
@@ -483,12 +464,10 @@ export class MSADeckGLViewer {
     const axisViewState = { ...newViewState, target: [newViewState.target[0], this.AXIS_HEIGHT / 2 / scale, 0] };
 
     this.handleViewStateChange({
-      viewState: {
-        main: { ...newViewState, transitionDuration: 400 },
-        labels: { ...labelsViewState, transitionDuration: 400 },
-        axis: { ...axisViewState, transitionDuration: 400 },
-        corner: { ...newViewState, target: [this.LABELS_WIDTH / 2 / scale, this.AXIS_HEIGHT / 2 / scale, 0], transitionDuration: 400 }
-      }
+      main: { ...newViewState, transitionDuration: 400 },
+      labels: { ...labelsViewState, transitionDuration: 400 },
+      axis: { ...axisViewState, transitionDuration: 400 },
+      corner: { ...newViewState, target: [this.LABELS_WIDTH / 2 / scale, this.AXIS_HEIGHT / 2 / scale, 0], transitionDuration: 400 }
     });
   }
 
@@ -545,10 +524,7 @@ export class MSADeckGLViewer {
       selectionLayer.clone({ id: 'selectionBorder', viewId: 'main' }),
       lettersLayer.clone({ id: 'letters', viewId: 'main' }),
       rowLabelsLayer.clone({ id: 'rowLabels', viewId: 'labels' }),
-      columnAxisLayer.clone({ id: 'columnAxis', viewId: 'axis' }),
-      // Minimap layers (lightweight: cells + selection outline only)
-      cellsLayer.clone({ id: 'minimap-cells', viewId: 'minimap' }),
-      selectionLayer.clone({ id: 'minimap-selectionBorder', viewId: 'minimap' })
+      columnAxisLayer.clone({ id: 'columnAxis', viewId: 'axis' })
     ];
 
     this.state.deckgl.setProps({ layers });
@@ -562,41 +538,73 @@ export class MSADeckGLViewer {
     });
   }
 
+  // =======================================================================
+  // WHEEL PAN/ZOOM
+  // =======================================================================
 
-  getVisibleRange(cellSize) {
-    const w = this.container.clientWidth;
-    const h = this.container.clientHeight;
-    const worldPerPixel = 1 / this.getZoomScale();
-    const halfW = (w * worldPerPixel) / 2;
-    const halfH = (h * worldPerPixel) / 2;
-    const [cx, cy] = this.state.viewState.target;
+  /**
+   * Handle wheel events: pan by default; zoom when ctrl/meta is held (pinch gesture).
+   */
+  handleWheel(event) {
+    // Prevent browser/page scroll
+    event.preventDefault();
 
-    let c0 = Math.floor((cx - halfW) / cellSize) - 1;
-    let c1 = Math.ceil((cx + halfW) / cellSize) + 1;
-    let r0 = Math.floor((cy - halfH) / cellSize) - 1;
-    let r1 = Math.ceil((cy + halfH) / cellSize) + 1;
+    const ctrlZoom = event.ctrlKey || event.metaKey;
+    const { target, zoom } = this.state.viewState;
+    const zoomScale = getZoomScale(zoom);
 
-    c0 = Math.max(0, Math.min(this.state.cols - 1, c0));
-    c1 = Math.max(0, Math.min(this.state.cols - 1, c1));
-    r0 = Math.max(0, Math.min(this.state.rows - 1, r0));
-    r1 = Math.max(0, Math.min(this.state.rows - 1, r1));
+    if (ctrlZoom) {
+      // Pinch/ctrl+wheel zoom; scale delta to keep feel snappy
+      const delta = -event.deltaY * 0.001 * this._scrollZoomSpeed;
+      this.handleViewStateChange({
+        main: {
+          ...this.state.viewState,
+          zoom: zoom + delta
+        }
+      });
+      return;
+    }
 
-    return { r0, r1, c0, c1 };
+    // Default: pan using wheel deltas
+    const dx = -event.deltaX / zoomScale;
+    const dy = -event.deltaY / zoomScale;
+    this.handleViewStateChange({
+      main: {
+        ...this.state.viewState,
+        target: [target[0] + dx, target[1] + dy, 0]
+      }
+    });
   }
+
 
   // =======================================================================
   // LAYER BUILDING
   // =======================================================================
 
   /**
-   * Build the cells polygon layer
+   * Build the cells polygon layer for the MAIN view (culled)
    * @param {number} cellSize - Size of each cell
    * @returns {PolygonLayer} The cells layer
    */
   buildCellsLayer(cellSize) {
-    const visibleRange = this.getVisibleRange(cellSize);
+    const visibleRange = getVisibleRange(
+      this.state.viewState,
+      { containerWidth: this.container.clientWidth, containerHeight: this.container.clientHeight, labelsWidth: this.LABELS_WIDTH, axisHeight: this.AXIS_HEIGHT },
+      cellSize,
+      this.state.rows,
+      this.state.cols
+    );
     const cellData = buildCellData(cellSize, this.state.seqs, visibleRange, this.options.MAX_CELLS);
     return createCellsLayer(cellData, this.state.type, this.state.selection, this.options.colorScheme, this.state.consensus);
+  }
+
+  /**
+   * Build the cells polygon layer for the MINIMAP (Global overview, downsampled)
+   * @param {number} cellSize - Size of each cell
+   * @returns {PolygonLayer} The cells layer for minimap
+   */
+  buildMinimapCellsLayer(_cellSize) {
+    return null; // Minimap disabled
   }
 
   /**
@@ -615,8 +623,15 @@ export class MSADeckGLViewer {
    * @returns {TextLayer} The letters layer
    */
   buildLettersLayer(cellSize) {
-    const visibleRange = this.getVisibleRange(cellSize);
-    const textData = buildTextData(cellSize, this.state.seqs, visibleRange, this.options.showLetters, this.options.cellSize, this.getZoomScale());
+    const visibleRange = getVisibleRange(
+      this.state.viewState,
+      { containerWidth: this.container.clientWidth, containerHeight: this.container.clientHeight, labelsWidth: this.LABELS_WIDTH, axisHeight: this.AXIS_HEIGHT },
+      cellSize,
+      this.state.rows,
+      this.state.cols
+    );
+    const zoomScale = getZoomScale(this.state.viewState.zoom);
+    const textData = buildTextData(cellSize, this.state.seqs, visibleRange, this.options.showLetters, this.options.cellSize, zoomScale);
     return createLettersLayer(textData);
   }  /**
    * Build the row labels text layer
@@ -624,14 +639,20 @@ export class MSADeckGLViewer {
    * @returns {TextLayer} The row labels layer
    */
   buildRowLabelsLayer(cellSize) {
-    const visibleRange = this.getVisibleRange(cellSize);
+    const visibleRange = getVisibleRange(
+      this.state.viewState,
+      { containerWidth: this.container.clientWidth, containerHeight: this.container.clientHeight, labelsWidth: this.LABELS_WIDTH, axisHeight: this.AXIS_HEIGHT },
+      cellSize,
+      this.state.rows,
+      this.state.cols
+    );
     // Pass LABELS_WIDTH to calculate alignment
     const labelsData = buildRowLabels(
       cellSize,
       this.state.seqs,
       visibleRange,
       this.state.viewState,
-      this.getZoomScale(),
+      getZoomScale(this.state.viewState.zoom),
       this.LABELS_WIDTH,
       this.options.rowColorMap
     );
@@ -644,9 +665,16 @@ export class MSADeckGLViewer {
    * @returns {TextLayer} The column axis layer
    */
   buildColumnAxisLayer(cellSize) {
-    const visibleRange = this.getVisibleRange(cellSize);
-    const axisData = buildColumnAxis(cellSize, this.state.viewState, visibleRange, this.state.rows, this.getZoomScale(), this.options.cellSize);
-    return createColumnAxisLayer(axisData, this.getZoomScale());
+    const visibleRange = getVisibleRange(
+      this.state.viewState,
+      { containerWidth: this.container.clientWidth, containerHeight: this.container.clientHeight, labelsWidth: this.LABELS_WIDTH, axisHeight: this.AXIS_HEIGHT },
+      cellSize,
+      this.state.rows,
+      this.state.cols
+    );
+    const zoomScale = getZoomScale(this.state.viewState.zoom);
+    const axisData = buildColumnAxis(cellSize, this.state.viewState, visibleRange, this.state.rows, zoomScale, this.options.cellSize);
+    return createColumnAxisLayer(axisData, zoomScale);
   }
 
   // =======================================================================
@@ -687,6 +715,37 @@ export class MSADeckGLViewer {
   }
 
   /**
+   * Scroll to a specific row and/or column position
+   * Used by external scrollbar controls
+   * @param {Object} options - { row, col } - row and/or column indices to scroll to
+   */
+  scrollTo({ row, col }) {
+    if (!this.hasSequences()) return;
+
+    const cellSize = this.options.cellSize;
+    const currentTarget = [...this.state.viewState.target];
+    const zoom = this.state.viewState.zoom;
+
+    // Calculate new target position
+    // DeckGL target is the center of the viewport in world coordinates
+    if (col !== undefined && col !== null) {
+      // Convert column index to world X coordinate (center on that column)
+      currentTarget[0] = col * cellSize + cellSize / 2;
+    }
+
+    if (row !== undefined && row !== null) {
+      // Convert row index to world Y coordinate (center on that row)
+      currentTarget[1] = row * cellSize + cellSize / 2;
+    }
+
+    // Apply the new view state (clamping will handle bounds)
+    this.handleViewStateChange({
+      target: currentTarget,
+      zoom
+    });
+  }
+
+  /**
    * Reset camera to initial MSA overview
    */
   resetCamera() {
@@ -723,84 +782,100 @@ export class MSADeckGLViewer {
       if (w > maxWidth) maxWidth = w;
     });
 
-    // Add padding (4px each side)
-    const calculatedWidth = Math.max(this.DEFAULT_LABELS_WIDTH, maxWidth + 8);
+    // Add minimal padding (1px each side) and store the unscaled width
+    const calculatedWidth = Math.max(this.DEFAULT_LABELS_WIDTH, maxWidth + 2);
+    this._labelMeasuredWidth = calculatedWidth;
+    this.updateLabelWidthForZoom(getZoomScale(this.state.viewState.zoom));
+  }
+
+  /**
+   * Update deck.gl views after LABELS_WIDTH changes.
+   */
+  updateViewsWithLabelWidth(labelsViewState, axisViewState, cornerViewState) {
+    if (!this.container || !this.state.deckgl) return;
+    const containerW = this.container.clientWidth;
+    const containerH = this.container.clientHeight;
+
+    this.state.deckgl.setProps({
+      views: [
+        // Top-Left Corner
+        new OrthographicView({
+          id: 'corner',
+          x: 0,
+          y: 0,
+          width: this.LABELS_WIDTH,
+          height: this.AXIS_HEIGHT,
+          flipY: true,
+          controller: false,
+          clear: { color: [248, 248, 248, 1] }
+        }),
+        // Left panel (Labels)
+        new OrthographicView({
+          id: 'labels',
+          x: 0,
+          y: this.AXIS_HEIGHT,
+          width: this.LABELS_WIDTH,
+          height: containerH - this.AXIS_HEIGHT, // Height in pixels
+          flipY: true,
+          controller: false,
+          clear: { color: [248, 248, 248, 1] }
+        }),
+        // Top panel (Axis)
+        new OrthographicView({
+          id: 'axis',
+          x: this.LABELS_WIDTH,
+          y: 0,
+          width: containerW - this.LABELS_WIDTH, // Width in pixels
+          height: this.AXIS_HEIGHT,
+          flipY: true,
+          controller: false,
+          clear: { color: [248, 248, 248, 1] }
+        }),
+        // Main View
+        new OrthographicView({
+          id: 'main',
+          x: this.LABELS_WIDTH,
+          y: this.AXIS_HEIGHT,
+          width: containerW - this.LABELS_WIDTH, // Width in pixels
+          height: containerH - this.AXIS_HEIGHT, // Height in pixels
+          flipY: true,
+          controller: true,
+          clear: { color: [255, 255, 255, 1] }
+        })
+      ],
+      viewState: {
+        main: this.state.viewState,
+        labels: labelsViewState,
+        axis: axisViewState,
+        corner: cornerViewState
+      }
+    });
+  }
+
+  /**
+   * Update LABELS_WIDTH and view layout based on current zoom, keeping label column proportional.
+   */
+  updateLabelWidthForZoom(zoomScale) {
+    if (!this.container) return;
+
+    const baseWidth = this._labelMeasuredWidth || this.DEFAULT_LABELS_WIDTH;
+    // Shrink when zoomed out, up to 60% reduction; don't grow beyond base when zooming in
+    const widthScale = Math.max(0.4, Math.min(1, zoomScale || 1));
+    const targetWidth = baseWidth * widthScale;
+
     // Cap at 30% of container width to avoid taking over the screen
     const screenMaxWidth = this.container.clientWidth * 0.3 || 300;
-    this.LABELS_WIDTH = Math.min(calculatedWidth, screenMaxWidth);
+    this.LABELS_WIDTH = Math.min(targetWidth, screenMaxWidth);
 
     // Construct synchronized view states for labels/axis
     const vs = this.state.viewState;
-    const scale = this.getZoomScale();
+    const scale = getZoomScale(vs.zoom);
 
     const labelsViewState = { ...vs, target: [this.LABELS_WIDTH / 2 / scale, vs.target[1], 0] };
     const axisViewState = { ...vs, target: [vs.target[0], this.AXIS_HEIGHT / 2 / scale, 0] };
     const cornerViewState = { ...vs, target: [this.LABELS_WIDTH / 2 / scale, this.AXIS_HEIGHT / 2 / scale, 0] };
 
-    // Update views if deckgl is initialized
-    if (this.state.deckgl) {
-      this.state.deckgl.setProps({
-        views: [
-          new OrthographicView({
-            id: 'minimap',
-            x: 10,
-            y: 10,
-            width: 180,
-            height: 140,
-            clear: { color: [245, 245, 245, 1] },
-            flipY: true,
-            controller: false
-          }),
-          new OrthographicView({
-            id: 'corner',
-            x: 0,
-            y: 0,
-            width: this.LABELS_WIDTH,
-            height: this.AXIS_HEIGHT,
-            flipY: true,
-            controller: false,
-            clear: { color: [248, 248, 248, 1] }
-          }),
-          new OrthographicView({
-            id: 'labels',
-            x: 0,
-            y: this.AXIS_HEIGHT,
-            width: this.LABELS_WIDTH,
-            height: `calc(100% - ${this.AXIS_HEIGHT}px)`,
-            flipY: true,
-            controller: false,
-            clear: { color: [248, 248, 248, 1] }
-          }),
-          new OrthographicView({
-            id: 'axis',
-            x: this.LABELS_WIDTH,
-            y: 0,
-            width: `calc(100% - ${this.LABELS_WIDTH}px)`,
-            height: this.AXIS_HEIGHT,
-            flipY: true,
-            controller: false,
-            clear: { color: [248, 248, 248, 1] }
-          }),
-          new OrthographicView({
-            id: 'main',
-            x: this.LABELS_WIDTH,
-            y: this.AXIS_HEIGHT,
-            width: `calc(100% - ${this.LABELS_WIDTH}px)`,
-            height: `calc(100% - ${this.AXIS_HEIGHT}px)`,
-            flipY: true,
-            controller: true,
-            clear: { color: [255, 255, 255, 1] }
-          })
-        ],
-        viewState: {
-          main: vs,
-          minimap: this.state.minimapViewState,
-          labels: labelsViewState,
-          axis: axisViewState,
-          corner: cornerViewState
-        }
-      });
-    }
+    this.updateViewsWithLabelWidth(labelsViewState, axisViewState, cornerViewState);
   }
 
   destroy() {
@@ -810,9 +885,21 @@ export class MSADeckGLViewer {
       this.resizeObserver = null;
     }
 
+    // Remove wheel handler
+    if (this.container && this._handleWheel) {
+      this.container.removeEventListener('wheel', this._handleWheel);
+    }
+
     if (this.state.deckgl) {
       this.state.deckgl.finalize();
       this.state.deckgl = null;
+    }
+
+    // Remove artifacts we added (leave React-managed children alone)
+    if (this.container) {
+      if (this.canvas && this.canvas.parentNode === this.container) {
+        this.container.removeChild(this.canvas);
+      }
     }
   }
 }

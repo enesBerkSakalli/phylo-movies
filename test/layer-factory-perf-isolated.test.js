@@ -1,5 +1,5 @@
 const { expect } = require('chai');
-const { resetPerf, getPerfSnapshot } = require('../src/js/treeVisualisation/deckgl/layers/layerFactories/index.js');
+const { resetPerf, getPerfSnapshot } = require('../src/js/treeVisualisation/deckgl/layers/factory/index.js');
 const {
   createLinksLayer,
   createLinkOutlinesLayer,
@@ -13,7 +13,7 @@ const {
   getNodesLayerProps,
   getLabelsLayerProps,
   getConnectorsLayerProps
-} = require('../src/js/treeVisualisation/deckgl/layers/layerFactories/index.js');
+} = require('../src/js/treeVisualisation/deckgl/layers/factory/index.js');
 
 describe('Layer factory perf (isolated, fake LayerStyles)', function () {
   it('verifies cloning strategy prevents repeated instantiation', function () {

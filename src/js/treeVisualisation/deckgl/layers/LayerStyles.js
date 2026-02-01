@@ -1,19 +1,24 @@
 import { useAppStore } from '../../../core/store.js';
 import {
   getLinkColor as resolveLinkColor,
-  getLinkWidth as resolveLinkWidth,
-  getLinkDashArray as resolveLinkDashArray,
+  getLinkDashArray as resolveLinkDashArray
+} from './styles/links/inner/linkInnerStyles.js';
+import { getLinkWidth as resolveLinkWidth } from './styles/links/linkWidthStyles.js';
+import {
   getLinkOutlineDashArray as resolveLinkOutlineDashArray,
   getLinkOutlineColor as resolveLinkOutlineColor,
   getLinkOutlineWidth as resolveLinkOutlineWidth
-} from './styles/linkStyles.js';
+} from './styles/links/outline/linkOutlineStyles.js';
 import {
   getNodeColor as resolveNodeColor,
   getNodeBorderColor as resolveNodeBorderColor,
   getNodeRadius as resolveNodeRadius,
+  getNodeLineWidth as resolveNodeLineWidth
+} from './styles/nodes/nodeStyles.js';
+import {
   getLabelColor as resolveLabelColor,
   getLabelSize as resolveLabelSize
-} from './styles/nodeStyles.js';
+} from './styles/labels/labelStyles.js';
 import {
   getExtensionColor as resolveExtensionColor,
   getExtensionWidth as resolveExtensionWidth
@@ -129,7 +134,6 @@ export class LayerStyles {
         state.dimmingEnabled !== prevState.dimmingEnabled ||
         state.dimmingOpacity !== prevState.dimmingOpacity ||
         state.subtreeDimmingEnabled !== prevState.subtreeDimmingEnabled ||
-        state.subtreeDimmingOpacity !== prevState.subtreeDimmingOpacity ||
         state.subtreeDimmingOpacity !== prevState.subtreeDimmingOpacity ||
         state.markedSubtreesEnabled !== prevState.markedSubtreesEnabled ||
         state.markedSubtreeOpacity !== prevState.markedSubtreeOpacity ||
@@ -267,6 +271,17 @@ export class LayerStyles {
   getNodeRadius(node, minRadius = 3, cached) {
     const resolved = cached || this.getCachedState();
     return resolveNodeRadius(node, minRadius, resolved, this._nodeHelpers);
+  }
+
+  /**
+   * Get node line width (stroke/border thickness)
+   * @param {Object} node - Node data object
+   * @param {Object} [cached] - Optional cached state from getCachedState()
+   * @returns {number} Node line width in pixels
+   */
+  getNodeLineWidth(node, cached) {
+    const resolved = cached || this.getCachedState();
+    return resolveNodeLineWidth(node, resolved);
   }
 
   /**

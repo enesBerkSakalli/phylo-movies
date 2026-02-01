@@ -1,152 +1,20 @@
 import { TREE_COLOR_CATEGORIES } from '../../constants/TreeColors.js';
-import { persistColorCategories, loadPersistedColorCategories, loadPersistedTaxaGrouping, persistTaxaGrouping } from '../../services/storage/colorPersistence.js';
-import { flattenSubtreeEntries } from '../../treeVisualisation/deckgl/layers/styles/subtreeMatching.js';
-import { findPreviousAnchorSequenceIndex, findNextAnchorSequenceIndex } from '../../domain/indexing/IndexMapping.js';
-import { renderTreeControllers } from './sliceHelpers.js';
+import { loadPersistedColorCategories, loadPersistedTaxaGrouping, persistTaxaGrouping } from '../../services/storage/colorPersistence.js';
 import { TreeColorManager } from '../../treeVisualisation/systems/TreeColorManager.js';
-
-// ============================================================================
-// HELPERS
-// ============================================================================
-
-const persistCurrentColorCategories = () => persistColorCategories(TREE_COLOR_CATEGORIES);
-
-const toManualMarkedSets = (nodes) =>
-  Array.isArray(nodes) && nodes.length ? [new Set(nodes)] : [];
-
-const clearEdgePreviews = (colorManager) => {
-  colorManager?.updateUpcomingChangeEdges?.([]);
-  colorManager?.updateCompletedChangeEdges?.([]);
-};
-
-const collectUniqueEdges = (tracking, start, end, excludeKey) => {
-  const map = new Map();
-  for (let i = start; i < end; i++) {
-    const edge = tracking[i];
-    if (Array.isArray(edge) && edge.length > 0) {
-      const key = JSON.stringify(edge);
-      if (key !== excludeKey && !map.has(key)) map.set(key, edge);
-    }
-  }
-  return Array.from(map.values());
-};
-
-const toSubtreeKey = (subtree) => subtree.slice().sort((a, b) => a - b).join(',');
-
-const collectUniqueSubtrees = (tracking, start, end, excludeKey) => {
-  const map = new Map();
-  for (let i = start; i < end; i++) {
-    const subtree = tracking[i];
-    if (Array.isArray(subtree) && subtree.length > 0) {
-      const key = toSubtreeKey(subtree);
-      if (key !== excludeKey && !map.has(key)) map.set(key, subtree);
-    }
-  }
-  return Array.from(map.values());
-};
-
-const normalizeSolutionKey = (key) => {
-  if (Array.isArray(key)) return key.join(',');
-  if (typeof key === 'string') {
-    return key.replace(/[\[\]\s]/g, '').split(',').filter(Boolean).join(',');
-  }
-  return String(key || '');
-};
-
-const buildSolutionKey = (arr) => `[${arr.join(', ')}]`;
-
-const findSolutionEntry = (map, keyArr) => {
-  if (!map || !Array.isArray(keyArr) || keyArr.length === 0) return null;
-  const direct = buildSolutionKey(keyArr);
-  if (map[direct]) return map[direct];
-  const compact = `[${keyArr.join(',')}]`;
-  if (map[compact]) return map[compact];
-  const normalized = normalizeSolutionKey(keyArr);
-  for (const key of Object.keys(map)) {
-    if (normalizeSolutionKey(key) === normalized) return map[key];
-  }
-  return null;
-};
-
-const getSubtreeAtIndex = (state, index) => {
-  const subtree = state.subtreeTracking?.[index];
-  return Array.isArray(subtree) && subtree.length > 0 ? [subtree] : [];
-};
-
-const getMovingSubtreeAtIndex = (state, index) => {
-  const subtree = state.subtreeTracking?.[index];
-  return Array.isArray(subtree) && subtree.length > 0 ? subtree : [];
-};
-
-const getAllSubtreesForActiveEdge = (state, index) => {
-  const edge = state.activeChangeEdgeTracking?.[index];
-  if (!Array.isArray(edge) || edge.length === 0) return [];
-
-  const pairKey = state.movieData?.tree_metadata?.[index]?.tree_pair_key;
-  const solutions = state.pairSolutions?.[pairKey]?.jumping_subtree_solutions;
-  if (!solutions) return [];
-
-  return flattenSubtreeEntries(solutions[`[${edge.join(', ')}]`]);
-};
-
-const getSubtreeHistoryAtIndex = (state, index) => {
-  if (state.transitionResolver?.isFullTree?.(index)) return [];
-  const tracking = state.subtreeTracking;
-  if (!Array.isArray(tracking) || tracking.length === 0) return [];
-
-  const anchors = state.movieData?.fullTreeIndices || state.transitionResolver?.fullTreeIndices || [];
-  if (!anchors.length) return [];
-
-  const prevAnchor = findPreviousAnchorSequenceIndex(anchors, index);
-  const start = Math.max(prevAnchor + 1, 0);
-  const end = Math.min(index, tracking.length);
-  if (end <= start) return [];
-
-  const current = tracking[index];
-  const excludeKey = Array.isArray(current) && current.length > 0 ? toSubtreeKey(current) : null;
-  return collectUniqueSubtrees(tracking, start, end, excludeKey);
-};
-
-const getSourceDestinationEdgesAtIndex = (state, index) => {
-  if (state.transitionResolver?.isFullTree?.(index)) return { source: [], dest: [] };
-
-  const activeEdge = state.activeChangeEdgeTracking?.[index];
-  const subtree = state.subtreeTracking?.[index];
-  if (!Array.isArray(activeEdge) || activeEdge.length === 0) return { source: [], dest: [] };
-  if (!Array.isArray(subtree) || subtree.length === 0) return { source: [], dest: [] };
-
-  const pairKey = state.movieData?.tree_metadata?.[index]?.tree_pair_key;
-  const pairSolution = pairKey ? state.pairSolutions?.[pairKey] : null;
-  if (!pairSolution) return { source: [], dest: [] };
-
-  const sourceMap = pairSolution.solution_to_source_map || {};
-  const destMap = pairSolution.solution_to_destination_map || {};
-
-  const sourceEdgeMap = findSolutionEntry(sourceMap, activeEdge);
-  const destEdgeMap = findSolutionEntry(destMap, activeEdge);
-  if (!sourceEdgeMap || !destEdgeMap) return { source: [], dest: [] };
-
-  const sourceEdge = findSolutionEntry(sourceEdgeMap, subtree);
-  const destEdge = findSolutionEntry(destEdgeMap, subtree);
-
-  const movingSet = new Set(subtree);
-  const trimMoving = (edge) => (Array.isArray(edge) ? edge.filter((leaf) => !movingSet.has(leaf)) : []);
-
-  const trimmedSource = trimMoving(sourceEdge);
-  const trimmedDest = trimMoving(destEdge);
-
-  return {
-    source: trimmedSource.length ? [trimmedSource] : [],
-    dest: trimmedDest.length ? [trimmedDest] : []
-  };
-};
-
-const toSubtreeSets = (input) => {
-  if (!Array.isArray(input)) return [];
-  return input.map((s) => (s instanceof Set ? s : Array.isArray(s) ? new Set(s) : new Set()));
-};
-
-
+import {
+  renderTreeControllers,
+  persistCurrentColorCategories,
+  toManualMarkedSets,
+  clearEdgePreviews,
+  getSubtreeAtIndex,
+  getMovingSubtreeAtIndex,
+  getAllSubtreesForActiveEdge,
+  getSubtreeHistoryAtIndex,
+  getSourceDestinationEdgesAtIndex,
+  toSubtreeSets,
+  resolveMarkedSubtrees,
+  calculateChangePreviews
+} from './sliceHelpers.js';
 
 // ============================================================================
 // SLICE
@@ -207,6 +75,16 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
   highlightDestinationEnabled: false,
 
   // ==========================================================================
+  // STATE: Animation Phase Tracking
+  // ==========================================================================
+  currentAnimationStage: null, // 'COLLAPSE' | 'EXPAND' | 'REORDER' | null
+
+  // ==========================================================================
+  // ACTIONS: Animation Stage
+  // ==========================================================================
+  setAnimationStage: (stage) => set({ currentAnimationStage: stage }),
+
+  // ==========================================================================
   // ACTIONS: ColorManager Access
   // ==========================================================================
   getColorManager: () => get().colorManager,
@@ -253,9 +131,7 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
       upcomingChangeEdges: [],
       completedChangeEdges: [],
     });
-    // Clear persisted data to prevent reload issues with different datasets
-    persistTaxaGrouping(null);
-    persistColorCategories({});  // Clear persisted color mappings
+    // Persisted data is now preserved across resets to handle reloads/sessions correctly
   },
 
   // ==========================================================================
@@ -370,13 +246,7 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
   // ACTIONS: Marked Subtrees
   // ==========================================================================
   getMarkedSubtreeData: (indexOverride = null) => {
-    const { currentTreeIndex, transitionResolver, markedSubtreeMode } = get();
-    const index = indexOverride ?? currentTreeIndex;
-
-    if (transitionResolver?.isFullTree?.(index)) return [];
-    return markedSubtreeMode === 'current'
-      ? getSubtreeAtIndex(get(), index)
-      : getAllSubtreesForActiveEdge(get(), index);
+    return resolveMarkedSubtrees(get(), indexOverride);
   },
 
   getSubtreeHistoryData: (indexOverride = null) => {
@@ -398,9 +268,16 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
   },
 
   updateColorManagerMarkedSubtrees: (subtrees) => {
-    const { colorManager } = get();
+    const { colorManager, colorVersion } = get();
     if (!colorManager?.updateMarkedSubtrees) return;
-    colorManager.updateMarkedSubtrees(toSubtreeSets(subtrees));
+    const asSets = toSubtreeSets(subtrees);
+
+    colorManager.updateMarkedSubtrees(asSets);
+
+    // Force immediate render if available
+    const { treeControllers } = get();
+    renderTreeControllers(treeControllers);
+
     set((s) => ({ colorVersion: s.colorVersion + 1 }));
   },
 
@@ -430,7 +307,7 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
     set({ markedSubtreesEnabled: enabled });
     // Update ColorManager's coloring flag
     const { colorManager } = get();
-    if (colorManager?.setMarkedSubtreesColoring) {
+    if (colorManager.setMarkedSubtreesColoring) {
       colorManager.setMarkedSubtreesColoring(enabled);
     }
     // Always keep subtree data in ColorManager for dimming purposes
@@ -467,7 +344,7 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
   // ==========================================================================
   updateColorManagerForCurrentIndex: () => {
     const {
-      activeChangeEdgesEnabled,
+      activeChangeEdgesEnabled, currentTreeIndex,
       getMarkedSubtreeData, getCurrentActiveChangeEdge,
       updateColorManagerMarkedSubtrees, updateColorManagerActiveChangeEdge,
       updateColorManagerHistorySubtrees, getSubtreeHistoryData,
@@ -479,7 +356,9 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
     // Always keep subtree data in ColorManager for dimming purposes
     // The markedSubtreesEnabled flag controls coloring, not the data availability
     const manual = toManualMarkedSets(manuallyMarkedNodes);
-    updateColorManagerMarkedSubtrees([...manual, ...getMarkedSubtreeData()]);
+    const markedSubtreeData = getMarkedSubtreeData();
+
+    updateColorManagerMarkedSubtrees([...manual, ...markedSubtreeData]);
     updateColorManagerActiveChangeEdge(activeChangeEdgesEnabled ? getCurrentActiveChangeEdge() : []);
     updateColorManagerHistorySubtrees(getSubtreeHistoryData());
     const { source, dest } = getSourceDestinationEdgeData();
@@ -499,7 +378,9 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
   },
 
   updateUpcomingChanges: () => {
-    const { upcomingChangesEnabled, currentTreeIndex, activeChangeEdgeTracking, movieData, colorManager } = get();
+    const { upcomingChangesEnabled, colorManager } = get();
+    // Using the helper to calculate data from current state
+    const { upcoming, completed } = calculateChangePreviews(get());
 
     if (!upcomingChangesEnabled) {
       set({ upcomingChangeEdges: [], completedChangeEdges: [] });
@@ -507,32 +388,8 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
       return;
     }
 
-    const anchors = movieData?.fullTreeIndices || [];
-    if (!anchors.length || !activeChangeEdgeTracking?.length) {
-      set({ upcomingChangeEdges: [], completedChangeEdges: [] });
-      clearEdgePreviews(colorManager);
-      return;
-    }
-
-    const prevAnchor = findPreviousAnchorSequenceIndex(anchors, currentTreeIndex);
-    const nextAnchor = findNextAnchorSequenceIndex(anchors, currentTreeIndex);
-    const currentEdge = activeChangeEdgeTracking[currentTreeIndex];
-    const currentKey = currentEdge?.length > 0 ? JSON.stringify(currentEdge) : null;
-
-    const completed = collectUniqueEdges(activeChangeEdgeTracking, prevAnchor + 1, currentTreeIndex, currentKey);
-    set({ completedChangeEdges: completed });
+    set({ upcomingChangeEdges: upcoming, completedChangeEdges: completed });
     colorManager?.updateCompletedChangeEdges?.(completed);
-
-
-
-    if (nextAnchor === null) {
-      set({ upcomingChangeEdges: [] });
-      colorManager?.updateUpcomingChangeEdges?.([]);
-      return;
-    }
-
-    const upcoming = collectUniqueEdges(activeChangeEdgeTracking, currentTreeIndex + 1, nextAnchor, currentKey);
-    set({ upcomingChangeEdges: upcoming });
     colorManager?.updateUpcomingChangeEdges?.(upcoming);
   },
 

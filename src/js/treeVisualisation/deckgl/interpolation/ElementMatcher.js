@@ -12,7 +12,7 @@ export class ElementMatcher {
    * @param {string} elementType - Type of elements for special handling
    * @returns {Array} Interpolated elements
    */
-  interpolateElements(fromElements, toElements, timeFactor, interpolateFn, elementType = null) {
+  interpolateElements(fromElements, toElements, timeFactor, interpolateFn) {
     // Create lookup maps for efficient matching
     const fromMap = this._createElementMap(fromElements);
     const toMap = this._createElementMap(toElements);
@@ -41,7 +41,7 @@ export class ElementMatcher {
     for (const [id, fromElement] of fromMap) {
       if (!processedFromIds.has(id)) {
         // Element is exiting - fade out
-        result.push(this._createExitingElement(fromElement, timeFactor));
+        result.push(this._createExitingElement(fromElement));
       }
     }
 
@@ -57,13 +57,13 @@ export class ElementMatcher {
   }
 
   /**
-   * Create entering element with fade-in effect
+   * Create entering element - appears instantly
    * @private
    */
   _createEnteringElement(element, timeFactor) {
     return {
       ...element,
-      opacity: timeFactor,
+      opacity: 1,  // Instant appearance, no fade-in
       isEntering: true
     };
   }
@@ -72,10 +72,10 @@ export class ElementMatcher {
    * Create exiting element with fade-out effect
    * @private
    */
-  _createExitingElement(element, timeFactor) {
+  _createExitingElement(element) {
     return {
       ...element,
-      opacity: 1 - timeFactor,
+      opacity: 1,
       isExiting: true
     };
   }

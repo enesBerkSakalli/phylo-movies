@@ -110,8 +110,21 @@ export function createAnchorSelectionLayer(selectionAnchors, theme) {
   });
 }
 
-export function createSeparatorLayer(separators, theme) {
-  return createPathLayer('separator-layer', separators, [theme.separatorRGB[0], theme.separatorRGB[1], theme.separatorRGB[2], 120], theme.separatorWidth);
+export function createSeparatorLayer(separators, theme, widthOverride = 1) {
+  return createPathLayer('separator-layer', separators, [theme.separatorRGB[0], theme.separatorRGB[1], theme.separatorRGB[2], 80], widthOverride);
+}
+
+/**
+ * Calculate separator width based on segment count.
+ * Fewer segments = thicker separators, many segments = thinner.
+ */
+export function calculateSeparatorWidth(segmentCount, theme) {
+  const { separatorWidthMin = 1, separatorWidthMax = 2 } = theme;
+  if (segmentCount <= 5) return separatorWidthMax;
+  if (segmentCount >= 30) return separatorWidthMin;
+  // Linear interpolation between 5 and 30 segments
+  const t = (segmentCount - 5) / 25;
+  return Math.round(separatorWidthMax - t * (separatorWidthMax - separatorWidthMin));
 }
 
 export function createConnectionSelectionLayer(selectionConnections, theme) {
