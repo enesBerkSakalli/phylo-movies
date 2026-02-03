@@ -3,18 +3,18 @@
  *
  * Creates a sourceToDest mapping that connects leaf groups between two trees.
  * The actual active/moving subtree filtering is handled dynamically by
- * TreeColorManager.currentActiveChangeEdges at render time.
+ * TreeColorManager.currentPivotEdges at render time.
  *
  * Data model:
  * - Each leaf has a consistent integer ID across all trees (split_indices)
  * - solution_to_source_map: Maps solution key → source tree leaf groups
  * - solution_to_destination_map: Maps solution key → destination tree leaf groups
- * - The "mover" is identified by the active_changing_edge which contains the moving subtree's leaf IDs
+ * - The "mover" is identified by the pivot_edge which contains the moving subtree's leaf IDs
  *
  * TODO: The sourceToDest mapping could be used to visualize movement direction:
  *       - Show arrows or animated paths indicating where leaves move from/to
  *       - Highlight source position vs destination position differently
- *       - Currently we only use currentActiveChangeEdges to filter which leaves to connect
+ *       - Currently we only use currentPivotEdges to filter which leaves to connect
  */
 
 /**

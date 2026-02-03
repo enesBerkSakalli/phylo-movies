@@ -6,7 +6,7 @@
 import { Deck, OrthographicView, OrthographicController } from '@deck.gl/core';
 import { processPhyloData, calculateConsensus } from './utils/dataUtils.js';
 import { createCellsLayer, buildCellData } from './layers/cellsLayer.js';
-import { createSelectionBorderLayer, buildSelectionBorder } from './layers/selectionBorderLayer.js';
+import { createSelectionBorderLayer, createPreviousSelectionBorderLayer, buildSelectionBorder } from './layers/selectionBorderLayer.js';
 import { createLettersLayer, buildTextData } from './layers/lettersLayer.js';
 import { createRowLabelsLayer, buildRowLabels } from './layers/rowLabelsLayer.js';
 import { createColumnAxisLayer, buildColumnAxis } from './layers/columnAxisLayer.js';
@@ -32,6 +32,7 @@ export class MSADeckGLViewer {
       rows: 0,
       cols: 0,
       selection: null,
+      previousSelection: null,
       // Main view state
       viewState: { target: [0, 0, 0], zoom: 0 }
     };
@@ -514,6 +515,7 @@ export class MSADeckGLViewer {
     const cs = this.options.cellSize;
 
     const cellsLayer = this.buildCellsLayer(cs);
+    const previousSelectionLayer = this.buildPreviousSelectionBorderLayer(cs);
     const selectionLayer = this.buildSelectionBorderLayer(cs);
     const lettersLayer = this.buildLettersLayer(cs);
     const rowLabelsLayer = this.buildRowLabelsLayer(cs);
@@ -521,6 +523,7 @@ export class MSADeckGLViewer {
 
     const layers = [
       cellsLayer.clone({ id: 'cells', viewId: 'main' }),
+      previousSelectionLayer.clone({ id: 'previousSelectionBorder', viewId: 'main' }),
       selectionLayer.clone({ id: 'selectionBorder', viewId: 'main' }),
       lettersLayer.clone({ id: 'letters', viewId: 'main' }),
       rowLabelsLayer.clone({ id: 'rowLabels', viewId: 'labels' }),
@@ -595,7 +598,7 @@ export class MSADeckGLViewer {
       this.state.cols
     );
     const cellData = buildCellData(cellSize, this.state.seqs, visibleRange, this.options.MAX_CELLS);
-    return createCellsLayer(cellData, this.state.type, this.state.selection, this.options.colorScheme, this.state.consensus);
+    return createCellsLayer(cellData, this.state.type, this.state.selection, this.options.colorScheme, this.state.consensus, this.state.previousSelection);
   }
 
   /**
@@ -615,6 +618,16 @@ export class MSADeckGLViewer {
   buildSelectionBorderLayer(cellSize) {
     const borderData = buildSelectionBorder(cellSize, this.state.selection, this.state.rows, this.state.cols);
     return createSelectionBorderLayer(borderData);
+  }
+
+  /**
+   * Build the previous selection border polygon layer (behind current)
+   * @param {number} cellSize - Size of each cell
+   * @returns {PolygonLayer} The previous selection border layer
+   */
+  buildPreviousSelectionBorderLayer(cellSize) {
+    const borderData = buildSelectionBorder(cellSize, this.state.previousSelection, this.state.rows, this.state.cols);
+    return createPreviousSelectionBorderLayer(borderData);
   }
 
   /**
@@ -712,6 +725,27 @@ export class MSADeckGLViewer {
 
   clearRegion() {
     this.clearSelection();
+  }
+
+  // Public API for previous region selection
+  setPreviousRegion(startCol, endCol) {
+    if (startCol > endCol) {
+      [startCol, endCol] = [endCol, startCol];
+    }
+
+    // Clamp to valid column range if data loaded
+    if (this.state.cols > 0) {
+      startCol = Math.max(1, Math.min(this.state.cols, startCol));
+      endCol = Math.max(1, Math.min(this.state.cols, endCol));
+    }
+
+    this.state.previousSelection = { startCol, endCol };
+    this.render();
+  }
+
+  clearPreviousRegion() {
+    this.state.previousSelection = null;
+    this.render();
   }
 
   /**
@@ -897,8 +931,12 @@ export class MSADeckGLViewer {
 
     // Remove artifacts we added (leave React-managed children alone)
     if (this.container) {
-      if (this.canvas && this.canvas.parentNode === this.container) {
-        this.container.removeChild(this.canvas);
+      try {
+        if (this.canvas && this.canvas.parentNode === this.container) {
+          this.container.removeChild(this.canvas);
+        }
+      } catch (err) {
+        console.warn('[MSA Viewer] Cleanup error during removeChild:', err);
       }
     }
   }

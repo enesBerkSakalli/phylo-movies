@@ -1,15 +1,16 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-
 import { ButtonsMSA } from './components/nav/ButtonsMSA.jsx';
 import { Appearance } from './components/appearance/Appearance.jsx';
 import { VisualElements } from './components/appearance/controls/VisualElements/VisualElements.jsx';
 import { TreeStructureGroup } from './components/appearance/layout/TreeStructureGroup.jsx';
 import { MoviePlayerBar } from './components/movie-player/MoviePlayerBar.jsx';
 import { TreeStatsPanel } from './components/TreeStatsPanel/TreeStatsPanel.tsx';
+import { TaxaGroupsLegend } from './components/TreeStatsPanel/Shared/TaxaLegend';
+import AnalyticsDashboard from './components/TreeStatsPanel/AnalyticsDashboard.tsx';
 import { DeckGLCanvas } from './components/deckgl/DeckGLCanvas.jsx';
 import { MsaRndWindow } from './components/msa/MsaRndWindow.jsx';
+import { MSAProvider } from './components/msa/MSAContext';
 import { TaxaColoringRndWindow } from './components/taxa-coloring/TaxaColoringRndWindow.jsx';
 import { ClipboardDismissButton } from './components/clipboard/ClipboardDismissButton.jsx';
 import { NodeContextMenu } from './components/NodeContextMenu.jsx';
@@ -32,25 +33,34 @@ import {
   SidebarMenuButton,
 } from '@/components/ui/sidebar';
 
-import { Film } from 'lucide-react';
+import { Film, ArrowLeftFromLine } from 'lucide-react';
 import { useAppStore } from '../js/core/store.js';
 import { getPhyloMovieData } from '../js/services/data/dataManager.js';
 import { useTreeController } from '../hooks/useTreeController.js';
 
-
+// ==========================================================================
+// STORE SELECTORS
+// ==========================================================================
+const selectFileName = (s) => s.fileName || 'Loading...';
+const selectHasMsa = (s) => s.hasMsa;
+const selectInitialize = (s) => s.initialize;
+const selectReset = (s) => s.reset;
 
 export function App() {
 
-  const fileName = useAppStore((s) => s.fileName || 'Loading...');
-  const hasMsa = useAppStore((s) => s.hasMsa);
-  const initializeStore = useAppStore((s) => s.initialize);
-  const resetStore = useAppStore((s) => s.reset);
+  const fileName = useAppStore(selectFileName);
+  const hasMsa = useAppStore(selectHasMsa);
+  const initializeStore = useAppStore(selectInitialize);
+  const resetStore = useAppStore(selectReset);
 
   // Initialize Tree Controller and Rendering Logic
   useTreeController();
 
   const navigate = useNavigate();
   const [error, setError] = React.useState(null);
+  const handleReturnHome = React.useCallback(() => {
+    navigate('/home');
+  }, [navigate]);
 
   useEffect(() => {
     let cancelled = false;
@@ -100,7 +110,7 @@ export function App() {
                     </div>
                     <div className="flex flex-col gap-0.5 leading-none group-data-[collapsible=icon]:hidden overflow-hidden">
                       <span className="font-semibold truncate">Phylo-Movies</span>
-                      <span className="text-[10px] text-muted-foreground truncate">
+                      <span className="text-2xs text-muted-foreground truncate">
                         {error ? `Error: ${error}` : fileName}
                       </span>
                     </div>
@@ -115,8 +125,29 @@ export function App() {
             <SidebarGroup>
               <SidebarGroupLabel>Platform</SidebarGroupLabel>
               <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    tooltip="Back to upload page"
+                    onClick={handleReturnHome}
+                  >
+                    <ArrowLeftFromLine className="size-4" />
+                    <span>Return to Home</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
                 <ButtonsMSA />
                 <TreeStructureGroup />
+              </SidebarMenu>
+            </SidebarGroup>
+
+            <SidebarSeparator />
+
+            {/* Analytics & Insights Group */}
+            <SidebarGroup>
+              <SidebarGroupLabel>Analysis & Metrics</SidebarGroupLabel>
+              <SidebarMenu>
+                <AnalyticsDashboard />
+                <TaxaGroupsLegend />
+                <TreeStatsPanel />
               </SidebarMenu>
             </SidebarGroup>
 
@@ -134,7 +165,9 @@ export function App() {
           <SidebarRail />
         </Sidebar>
 
-        <MsaRndWindow />
+        <MSAProvider>
+          <MsaRndWindow />
+        </MSAProvider>
         <TaxaColoringRndWindow />
 
 
@@ -146,9 +179,6 @@ export function App() {
             <HUD />
           </div>
           <MoviePlayerBar />
-          <div id="top-scale-bar-container" className="fixed top-4 right-4 z-[1100] bg-card/80 backdrop-blur-sm rounded-xl p-2.5 shadow-lg border">
-            <TreeStatsPanel />
-          </div>
         </SidebarInset>
         <NodeContextMenu />
         <Toaster />

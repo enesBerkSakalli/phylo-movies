@@ -2,12 +2,21 @@
  * PolarLabelInterpolator - Interpolates label positions and rotations
  * Handles smooth interpolation of tree labels in radial layouts
  */
-import { unwrapAngle } from '../../../../domain/math/mathUtils.js';
+import { unwrapAngle, shortestAngle, crossesAngle, longArcDelta } from '../../../../domain/math/mathUtils.js';
 
 export class PolarLabelInterpolator {
   constructor() {
     this._angleCache = new Map();
     this._rotationCache = new Map();
+    this._rootAngle = 0;
+  }
+
+  /**
+   * Set the root angle for crossing detection
+   * @param {number} angle - Root angle in radians (default 0)
+   */
+  setRootAngle(angle) {
+    this._rootAngle = angle ?? 0;
   }
 
   /**
@@ -50,18 +59,21 @@ export class PolarLabelInterpolator {
     const toR = toLabel.polarPosition ?? toLabel.radius ?? 0;
     const interpolatedRadius = fromR + (toR - fromR) * t;
 
-    // Unwrap angles for continuous interpolation (prevents spinning)
-    const cacheId = toLabel?.id ?? fromLabel?.id;
-    const cachedAngle = cacheId != null ? this._angleCache.get(cacheId) : null;
+    // Get angles
+    const fromAngle = fromLabel.angle || 0;
+    const toAngleRaw = toLabel.angle || 0;
 
-    const fromAngle = unwrapAngle(fromLabel.angle || 0, cachedAngle);
-    const toAngle = unwrapAngle(toLabel.angle || 0, fromAngle);
-    const interpolatedAngle = fromAngle + (toAngle - fromAngle) * t;
+    // Calculate shortest angular delta
+    const shortDelta = shortestAngle(fromAngle, toAngleRaw);
 
-    // Cache final angle for next frame
-    if (cacheId != null && t === 1 && Number.isFinite(toAngle)) {
-      this._angleCache.set(cacheId, toAngle);
-    }
+    // Check if the short path would cross through the root (0°)
+    // If so, take the long arc instead to avoid visual crossing
+    const shortEndAngle = fromAngle + shortDelta;
+    const crossesRoot = crossesAngle(fromAngle, shortEndAngle, this._rootAngle);
+
+    // Use long arc if crossing root, otherwise use short arc
+    const delta = crossesRoot ? longArcDelta(shortDelta) : shortDelta;
+    const interpolatedAngle = fromAngle + delta * t;
 
     // Convert back to Cartesian coordinates
     const x = interpolatedRadius * Math.cos(interpolatedAngle);

@@ -32,12 +32,10 @@ export class RadialTreeLayout {
   indexLeafNodes(node, i = 0) {
     const self = this; // Get a reference to your object.
 
-    if (!("children" in node)) {
+    if (!node.children) {
       node.index = i;
       i++;
-    }
-
-    if (node.children) {
+    } else {
       node.children.forEach(function (child) {
         i = self.indexLeafNodes(child, i);
       });

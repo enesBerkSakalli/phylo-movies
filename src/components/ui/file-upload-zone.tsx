@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 
-interface FileUploadZoneProps {
+interface FileUploadZoneProps extends React.HTMLAttributes<HTMLDivElement> {
   onFileSelect: (file: File | null) => void
   accept?: Record<string, string[]>
   disabled?: boolean
@@ -17,7 +17,7 @@ interface FileUploadZoneProps {
   className?: string
 }
 
-export function FileUploadZone({
+export const FileUploadZone = React.forwardRef<HTMLDivElement, FileUploadZoneProps>(function FileUploadZone({
   onFileSelect,
   accept,
   disabled = false,
@@ -27,7 +27,8 @@ export function FileUploadZone({
   id,
   maxSize = 100 * 1024 * 1024,
   className,
-}: FileUploadZoneProps) {
+  ...divProps
+}, ref) {
   const onDrop = React.useCallback(
     (acceptedFiles: File[]) => {
       if (acceptedFiles.length > 0) {
@@ -52,7 +53,7 @@ export function FileUploadZone({
   }
 
   return (
-    <div className={className}>
+    <div ref={ref} className={className} {...divProps}>
       {label && <Label htmlFor={id}>{label}</Label>}
       <div
         {...getRootProps()}
@@ -108,4 +109,5 @@ export function FileUploadZone({
       </div>
     </div>
   )
-}
+})
+FileUploadZone.displayName = "FileUploadZone"

@@ -12,68 +12,94 @@ const toNumericFontSize = (size) => {
   return Number.isFinite(parsed) ? parsed : 1.8;
 };
 
-export function VisualStyle() {
-  const fontSize = useAppStore((s) => s.fontSize);
-  const strokeWidth = useAppStore((s) => s.strokeWidth);
-  const nodeSize = useAppStore((s) => s.nodeSize);
-  const setFontSize = useAppStore((s) => s.setFontSize);
-  const setStrokeWidth = useAppStore((s) => s.setStrokeWidth);
-  const setNodeSize = useAppStore((s) => s.setNodeSize);
-  const layoutAngleDegrees = useAppStore((s) => s.layoutAngleDegrees);
-  const setLayoutAngleDegrees = useAppStore((s) => s.setLayoutAngleDegrees);
-  const layoutRotationDegrees = useAppStore((s) => s.layoutRotationDegrees);
-  const setLayoutRotationDegrees = useAppStore((s) => s.setLayoutRotationDegrees);
-  const treeControllers = useAppStore((s) => s.treeControllers);
+// ==========================================================================
+// STORE SELECTORS
+// ==========================================================================
+const selectFontSize = (s) => s.fontSize;
+const selectStrokeWidth = (s) => s.strokeWidth;
+const selectNodeSize = (s) => s.nodeSize;
+const selectSetFontSize = (s) => s.setFontSize;
+const selectSetStrokeWidth = (s) => s.setStrokeWidth;
+const selectSetNodeSize = (s) => s.setNodeSize;
+const selectLayoutAngleDegrees = (s) => s.layoutAngleDegrees;
+const selectSetLayoutAngleDegrees = (s) => s.setLayoutAngleDegrees;
+const selectLayoutRotationDegrees = (s) => s.layoutRotationDegrees;
+const selectSetLayoutRotationDegrees = (s) => s.setLayoutRotationDegrees;
+const selectTreeControllers = (s) => s.treeControllers;
+
+export function GeometryDimensionsSection() {
+  const nodeSize = useAppStore(selectNodeSize);
+  const strokeWidth = useAppStore(selectStrokeWidth);
+  const fontSize = useAppStore(selectFontSize);
+  const setNodeSize = useAppStore(selectSetNodeSize);
+  const setStrokeWidth = useAppStore(selectSetStrokeWidth);
+  const setFontSize = useAppStore(selectSetFontSize);
+  const treeControllers = useAppStore(selectTreeControllers);
 
   const fontSizeNumber = useMemo(() => toNumericFontSize(fontSize), [fontSize]);
 
   return (
-    <>
-      {/* Section 1: Geometry Dimensions */}
-      <Collapsible defaultOpen asChild className="group/collapsible">
-        <SidebarMenuItem>
-          <CollapsibleTrigger asChild>
-            <SidebarMenuButton tooltip="Geometry Dimensions">
-              <Circle className="text-primary" />
-              <span>Geometry Dimensions</span>
-              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-            </SidebarMenuButton>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <GeometryDimensions
-              nodeSize={nodeSize}
-              setNodeSize={setNodeSize}
-              strokeWidth={strokeWidth}
-              setStrokeWidth={setStrokeWidth}
-              fontSizeNumber={fontSizeNumber}
-              setFontSize={setFontSize}
-              treeControllers={treeControllers}
-            />
-          </CollapsibleContent>
-        </SidebarMenuItem>
-      </Collapsible>
+    <Collapsible defaultOpen asChild className="group/collapsible">
+      <SidebarMenuItem>
+        <CollapsibleTrigger asChild>
+          <SidebarMenuButton tooltip="Element Sizes">
+            <Circle className="text-primary" />
+            <span>Element Sizes</span>
+            <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+          </SidebarMenuButton>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <GeometryDimensions
+            nodeSize={nodeSize}
+            setNodeSize={setNodeSize}
+            strokeWidth={strokeWidth}
+            setStrokeWidth={setStrokeWidth}
+            fontSizeNumber={fontSizeNumber}
+            setFontSize={setFontSize}
+            treeControllers={treeControllers}
+          />
+        </CollapsibleContent>
+      </SidebarMenuItem>
+    </Collapsible>
+  );
+}
 
-      {/* Section 2: Layout Transform */}
-      <Collapsible defaultOpen asChild className="group/collapsible">
-        <SidebarMenuItem>
-          <CollapsibleTrigger asChild>
-            <SidebarMenuButton tooltip="Layout Transform">
-              <RotateCw className="text-primary" />
-              <span>Layout Transform</span>
-              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-            </SidebarMenuButton>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <LayoutTransform
-              layoutAngleDegrees={layoutAngleDegrees}
-              setLayoutAngleDegrees={setLayoutAngleDegrees}
-              layoutRotationDegrees={layoutRotationDegrees}
-              setLayoutRotationDegrees={setLayoutRotationDegrees}
-              treeControllers={treeControllers}
-            />
-          </CollapsibleContent>
-        </SidebarMenuItem>
-      </Collapsible>
+export function LayoutTransformSection() {
+  const layoutAngleDegrees = useAppStore(selectLayoutAngleDegrees);
+  const setLayoutAngleDegrees = useAppStore(selectSetLayoutAngleDegrees);
+  const layoutRotationDegrees = useAppStore(selectLayoutRotationDegrees);
+  const setLayoutRotationDegrees = useAppStore(selectSetLayoutRotationDegrees);
+  const treeControllers = useAppStore(selectTreeControllers);
+
+  return (
+    <Collapsible defaultOpen asChild className="group/collapsible">
+      <SidebarMenuItem>
+        <CollapsibleTrigger asChild>
+          <SidebarMenuButton tooltip="Tree Layout">
+            <RotateCw className="text-primary" />
+            <span>Tree Layout</span>
+            <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+          </SidebarMenuButton>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <LayoutTransform
+            layoutAngleDegrees={layoutAngleDegrees}
+            setLayoutAngleDegrees={setLayoutAngleDegrees}
+            layoutRotationDegrees={layoutRotationDegrees}
+            setLayoutRotationDegrees={setLayoutRotationDegrees}
+            treeControllers={treeControllers}
+          />
+        </CollapsibleContent>
+      </SidebarMenuItem>
+    </Collapsible>
+  );
+}
+
+export function VisualStyle() {
+  return (
+    <>
+      <GeometryDimensionsSection />
+      <LayoutTransformSection />
     </>
   );
 }

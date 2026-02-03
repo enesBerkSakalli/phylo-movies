@@ -29,6 +29,34 @@ import {
 
 
 /**
+ * Single-pass partitioning of labels into source and destination categories.
+ * Avoids the O(2n) cost of calling filter() twice on the same array.
+ *
+ * @param {Array} labels - Label data array
+ * @param {Object} cached - Cached state from layerStyles
+ * @returns {{ source: Array, destination: Array }} Partitioned labels
+ */
+export function partitionLabels(labels, cached) {
+  const source = [];
+  const destination = [];
+
+  for (let i = 0, len = labels.length; i < len; i++) {
+    const label = labels[i];
+    const isDest = isLabelDestination(cached, label);
+    const isSrc = isLabelSource(cached, label);
+
+    if (isDest) {
+      destination.push(label);
+    } else if (isSrc) {
+      source.push(label);
+    }
+    // Labels that are neither source nor destination are not included in either array
+  }
+
+  return { source, destination };
+}
+
+/**
  * Create labels layer (text labels for leaf nodes)
  *
  * @param {Array} labels - Label data array
@@ -43,11 +71,56 @@ export function createLabelsLayer(labels, state, layerStyles) {
   );
 }
 
+/**
+ * Create both source and destination label layers in a single pass.
+ * More efficient than calling createSourceLabelsLayer + createDestinationLabelsLayer separately.
+ *
+ * @param {Array} labels - Label data array
+ * @param {Object} state - Store state snapshot
+ * @param {Object} layerStyles - LayerStyles instance
+ * @returns {{ sourceLayer: Layer|null, destinationLayer: Layer|null }}
+ */
+export function createHighlightLabelLayers(labels, state, layerStyles) {
+  const cached = layerStyles.getCachedState();
+  const { source, destination } = partitionLabels(labels, cached);
+
+  const sourceLayer = source.length > 0
+    ? createLayer(
+        {
+          ...LAYER_CONFIGS.labels,
+          id: withSideSuffix(`${LAYER_ID_PREFIX}-labels-source`, source)
+        },
+        getHighlightLabelsLayerProps(source, state, layerStyles, cached, {
+          sizeScale: SOURCE_LABEL_SCALE,
+          fontWeight: SOURCE_FONT_WEIGHT,
+          alphaScale: SOURCE_ALPHA_SCALE,
+          textPrefix: SOURCE_TEXT_PREFIX
+        })
+      )
+    : null;
+
+  const destinationLayer = destination.length > 0
+    ? createLayer(
+        {
+          ...LAYER_CONFIGS.labels,
+          id: withSideSuffix(`${LAYER_ID_PREFIX}-labels-destination`, destination)
+        },
+        getHighlightLabelsLayerProps(destination, state, layerStyles, cached, {
+          sizeScale: DESTINATION_LABEL_SCALE,
+          fontWeight: DESTINATION_FONT_WEIGHT,
+          alphaScale: DESTINATION_ALPHA_SCALE,
+          textSuffix: DESTINATION_TEXT_SUFFIX
+        })
+      )
+    : null;
+
+  return { sourceLayer, destinationLayer };
+}
+
 export function createSourceLabelsLayer(labels, state, layerStyles) {
   const cached = layerStyles.getCachedState();
-  const sourceLabels = labels.filter(
-    (label) => isLabelSource(cached, label) && !isLabelDestination(cached, label)
-  );
+  // Use single-pass partition for efficiency
+  const { source: sourceLabels } = partitionLabels(labels, cached);
   if (!sourceLabels.length) return null;
   return createLayer(
     {
@@ -65,7 +138,8 @@ export function createSourceLabelsLayer(labels, state, layerStyles) {
 
 export function createDestinationLabelsLayer(labels, state, layerStyles) {
   const cached = layerStyles.getCachedState();
-  const destinationLabels = labels.filter((label) => isLabelDestination(cached, label));
+  // Use single-pass partition for efficiency
+  const { destination: destinationLabels } = partitionLabels(labels, cached);
   if (!destinationLabels.length) return null;
   return createLayer(
     {

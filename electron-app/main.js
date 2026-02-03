@@ -35,12 +35,18 @@ function createSplashWindow() {
     alwaysOnTop: true,
     skipTaskbar: true,
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: true,
+      preload: path.join(__dirname, 'splash-preload.js'),
     },
   });
 
-  splashWindow.loadFile(path.join(__dirname, 'splash.html'));
+  if (isDev) {
+    splashWindow.loadURL(`${FRONTEND_DEV_URL}/splash.html`);
+  } else {
+    splashWindow.loadFile(path.join(__dirname, 'frontend-dist', 'splash.html'));
+  }
 
   splashWindow.on('closed', () => {
     splashWindow = null;
@@ -138,8 +144,8 @@ function getBackendPath() {
   const execName = platform === 'win32' ? 'brancharchitect-server.exe' : 'brancharchitect-server';
 
   const possiblePaths = [
-    path.join(process.resourcesPath, 'backend', execName),
-    path.join(__dirname, 'backend', 'dist', execName),
+    path.join(process.resourcesPath, 'BranchArchitect', 'brancharchitect-server', execName),
+    path.join(__dirname, 'BranchArchitect', 'dist', 'brancharchitect-server', execName),
   ];
 
   for (const p of possiblePaths) {
@@ -153,6 +159,27 @@ function getBackendPath() {
 }
 
 /**
+ * Get the path to the FastTree binary
+ */
+function getFastTreePath() {
+  const platform = process.platform;
+  const execName = platform === 'win32' ? 'fasttree.exe' : 'fasttree';
+
+  const possiblePaths = [
+    path.join(__dirname, 'BranchArchitect', 'bin', platform, execName),
+    path.join(process.resourcesPath, 'BranchArchitect', 'brancharchitect-server', 'bin', platform, execName),
+  ];
+
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p)) {
+      return p;
+    }
+  }
+
+  return null; // Fallback to PATH
+}
+
+/**
  * Start the Python backend server
  */
 async function startBackend() {
@@ -160,46 +187,81 @@ async function startBackend() {
   console.log(`Starting backend on port ${backendPort}...`);
 
   const backendPath = getBackendPath();
+  const fasttreePath = getFastTreePath();
 
   if (isDev || !backendPath) {
     // Development: run Python through Poetry (BranchArchitect's venv)
-    const serverScript = path.join(__dirname, 'backend', 'server.py');
-    const branchArchitectDir = path.join(__dirname, 'backend', 'BranchArchitect');
+    const serverScript = path.join(__dirname, 'BranchArchitect', 'webapp', 'run.py');
+    const branchArchitectDir = path.join(__dirname, 'BranchArchitect');
+
+    const env = {
+      ...process.env,
+      FLASK_ENV: 'development',
+      PORT: backendPort.toString(),
+    };
+
+    if (fasttreePath) {
+      env.FASTTREE_PATH = fasttreePath;
+      console.log(`Using bundled FastTree at: ${fasttreePath}`);
+    }
 
     pythonProcess = spawn('poetry', ['run', 'python', serverScript, '--port', backendPort.toString()], {
       cwd: branchArchitectDir,
-      env: {
-        ...process.env,
-        FLASK_ENV: 'development',
-        PORT: backendPort.toString(),
-      },
+      env: env,
       stdio: ['pipe', 'pipe', 'pipe'],
       shell: true,
     });
   } else {
     // Production: run bundled executable
+    const env = {
+      ...process.env,
+      PORT: backendPort.toString(),
+      FLASK_DEBUG: '0',  // Disable debug mode in production to avoid reloader issues
+      FLASK_ENV: 'production',
+    };
+
+    if (fasttreePath) {
+      env.FASTTREE_PATH = fasttreePath;
+    }
+
     pythonProcess = spawn(backendPath, ['--port', backendPort.toString()], {
       cwd: path.dirname(backendPath),
-      env: { ...process.env, PORT: backendPort.toString() },
+      env: env,
       stdio: ['pipe', 'pipe', 'pipe'],
     });
   }
 
+  // Store stderr output for error reporting
+  let stderrBuffer = '';
+
   pythonProcess.stdout.on('data', (data) => {
-    console.log(`[Backend] ${data.toString().trim()}`);
+    try {
+      console.log(`[Backend] ${data.toString().trim()}`);
+    } catch (e) {
+      // Ignore logging errors
+    }
   });
 
   pythonProcess.stderr.on('data', (data) => {
-    console.error(`[Backend Error] ${data.toString().trim()}`);
+    try {
+      const output = data.toString().trim();
+      stderrBuffer += output + '\n';
+      console.error(`[Backend Error] ${output}`);
+    } catch (e) {
+      // Ignore logging errors
+    }
   });
 
   pythonProcess.on('error', (err) => {
     console.error('Failed to start backend:', err);
-    dialog.showErrorBox('Backend Error', `Failed to start backend: ${err.message}`);
+    dialog.showErrorBox('Backend Error', `Failed to start backend: ${err.message}\n\n${stderrBuffer}`);
   });
 
   pythonProcess.on('exit', (code) => {
     console.log(`Backend exited with code ${code}`);
+    if (code !== 0 && code !== null) {
+      dialog.showErrorBox('Backend Crashed', `Backend exited with code ${code}\n\nError output:\n${stderrBuffer.slice(-2000)}`);
+    }
     pythonProcess = null;
   });
 
@@ -261,136 +323,6 @@ function createWindow() {
 }
 
 /**
- * Loading overlay window for data processing
- */
-let loadingWindow = null;
-
-function createLoadingWindow(message = 'Processing...') {
-  if (loadingWindow && !loadingWindow.isDestroyed()) {
-    return;
-  }
-
-  loadingWindow = new BrowserWindow({
-    width: 350,
-    height: 150,
-    frame: false,
-    transparent: true,
-    resizable: false,
-    parent: mainWindow,
-    modal: true,
-    show: false,
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-    },
-  });
-
-  const loadingHtml = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          background: rgba(26, 26, 46, 0.95);
-          border-radius: 12px;
-          height: 100vh;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          color: #fff;
-          padding: 20px;
-          -webkit-app-region: drag;
-        }
-        .spinner {
-          width: 36px;
-          height: 36px;
-          border: 3px solid rgba(79, 172, 254, 0.2);
-          border-top-color: #4facfe;
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-          margin-bottom: 16px;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .message {
-          font-size: 14px;
-          color: rgba(255, 255, 255, 0.9);
-          text-align: center;
-          margin-bottom: 12px;
-        }
-        .progress-bar {
-          width: 200px;
-          height: 4px;
-          background: rgba(255, 255, 255, 0.1);
-          border-radius: 2px;
-          overflow: hidden;
-        }
-        .progress-fill {
-          height: 100%;
-          background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
-          width: 0%;
-          transition: width 0.3s ease;
-        }
-        .progress-fill.indeterminate {
-          width: 30%;
-          animation: indeterminate 1.5s infinite ease-in-out;
-        }
-        @keyframes indeterminate {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(400%); }
-        }
-      </style>
-    </head>
-    <body>
-      <div class="spinner"></div>
-      <div class="message" id="message">${message}</div>
-      <div class="progress-bar">
-        <div class="progress-fill indeterminate" id="progress"></div>
-      </div>
-      <script>
-        const { ipcRenderer } = require('electron');
-        ipcRenderer.on('update-loading', (event, { message, progress }) => {
-          if (message) document.getElementById('message').textContent = message;
-          const progressEl = document.getElementById('progress');
-          if (progress !== undefined && progress >= 0) {
-            progressEl.classList.remove('indeterminate');
-            progressEl.style.width = progress + '%';
-          } else {
-            progressEl.classList.add('indeterminate');
-          }
-        });
-      </script>
-    </body>
-    </html>
-  `;
-
-  loadingWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(loadingHtml));
-
-  loadingWindow.once('ready-to-show', () => {
-    loadingWindow.show();
-  });
-
-  loadingWindow.on('closed', () => {
-    loadingWindow = null;
-  });
-}
-
-function updateLoadingWindow(message, progress) {
-  if (loadingWindow && !loadingWindow.isDestroyed()) {
-    loadingWindow.webContents.send('update-loading', { message, progress });
-  }
-}
-
-function closeLoadingWindow() {
-  if (loadingWindow && !loadingWindow.isDestroyed()) {
-    loadingWindow.close();
-    loadingWindow = null;
-  }
-}
-
-/**
  * Set up IPC handlers for loading progress
  */
 function setupIpcHandlers() {
@@ -400,20 +332,21 @@ function setupIpcHandlers() {
   ipcMain.handle('get-app-version', () => app.getVersion());
   ipcMain.handle('get-backend-url', () => `http://127.0.0.1:${backendPort}`);
 
-  // Loading window handlers
+  // Loading UI handlers - Consolidated to only handle native taskbar progress
+  // while the frontend React components handle the visual overlay
   ipcMain.on('loading-show', (event, message) => {
-    createLoadingWindow(message || 'Processing...');
+    if (mainWindow) {
+      mainWindow.setProgressBar(0.01); // Show indeterminate/start in dock
+    }
   });
 
   ipcMain.on('loading-hide', () => {
-    closeLoadingWindow();
     if (mainWindow) {
       mainWindow.setProgressBar(-1); // Clear dock progress
     }
   });
 
   ipcMain.on('loading-progress', (event, { progress, message }) => {
-    updateLoadingWindow(message, progress);
     if (mainWindow && progress >= 0) {
       mainWindow.setProgressBar(progress / 100); // Dock progress (0-1)
     }

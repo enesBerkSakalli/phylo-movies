@@ -19,7 +19,7 @@ export function getLinkOutlineDashArray(link, cached) {
   }
 
   // Current: dashed (when enabled)
-  if (dashingEnabled && cm.isActiveChangeEdge(link)) {
+  if (dashingEnabled && cm.isPivotEdge(link)) {
     return calculateFlightDashArray(link.path);
   }
 
@@ -40,7 +40,7 @@ export function getLinkOutlineColor(link, cached) {
     return [0, 0, 0, 0]; // Transparent if no ColorManager
   }
 
-  const historyColor = colorToRgb(TREE_COLOR_CATEGORIES.activeChangeEdgeColor);
+  const historyColor = colorToRgb(TREE_COLOR_CATEGORIES.pivotEdgeColor);
   const baseOpacity = link.opacity !== undefined ? link.opacity : 1;
 
   // 1. Determine base RGB
@@ -55,9 +55,9 @@ export function getLinkOutlineColor(link, cached) {
   }
 
   // Check if link is part of a MARKED subtree (persistent highlight)
-  // Priority: Marked (Red) > Active (Blue)
-  // We allow Marked highlight even if it's active, so the specific jumping subtree stands out
-  // from the broader active pivot edge.
+  // Priority: Marked (Red) > Pivot (Blue)
+  // We allow Marked highlight even if it's part of the pivot edge, so the specific jumping subtree stands out
+  // from the broader pivot edge.
   else if (shouldHighlightMarkedSubtree(link, cached)) {
     const mode = cached.highlightColorMode || 'solid';
     rgb = getMarkedHighlightColor(link, cm, mode, cached.markedColor);
@@ -68,12 +68,12 @@ export function getLinkOutlineColor(link, cached) {
   }
 
   // History subtrees: base color silhouette without pulsing
-  // We remove the isActiveChangeEdge constraint because history items may have left the active zone
+  // We remove the isPivotEdge constraint because history items may have left the active zone
   else if (shouldHighlightHistorySubtree(link, cached)) {
     rgb = colorToRgb(cm.getBranchColor(link));
     glowOpacity = Math.round(baseOpacity * 100); // Reduced from 160 for subtler effect
   }
-  // Current Active Edge: strong pulsing glow
+  // Current Pivot Edge: strong pulsing glow
   else if (isLinkVisuallyHighlighted(link, cm, cached.markedSubtreesEnabled)) {
     rgb = colorToRgb(cm.getBranchColorWithHighlights(link));
     glowOpacity = Math.round(baseOpacity * 128 * pulseOpacity);
@@ -129,7 +129,7 @@ export function getLinkOutlineWidth(link, cached, helpers) {
   }
 
   // History subtrees: subtle silhouette without pulse (reduced from baseWidth * 2 + 4)
-  if (shouldHighlightHistorySubtree(link, cached) && !cm?.isActiveChangeEdge?.(link)) {
+  if (shouldHighlightHistorySubtree(link, cached) && !cm?.isPivotEdge?.(link)) {
     return baseWidth * 1.5 + 2;
   }
 

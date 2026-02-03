@@ -110,7 +110,7 @@ function TransitionContent({ segment, getLeafNames, isExpanded, onToggleExpanded
         onToggleExpanded={onToggleExpanded}
       />
 
-      <div className="text-[10px] text-muted-foreground">
+      <div className="text-2xs text-muted-foreground">
         Algorithmic interpolation frames (not time)
       </div>
 
@@ -134,7 +134,7 @@ function MovingSubtreesSection({ subtreeGroups, isExpanded, onToggleExpanded }) 
     <div className="flex flex-col gap-1">
       {/* Section header with expand/collapse button */}
       <div className="flex items-center justify-between">
-        <span className="text-muted-foreground font-medium text-[10px] uppercase tracking-wider">
+        <span className="text-muted-foreground font-medium text-2xs uppercase tracking-wider">
           Moving subtrees
         </span>
         {hasManyGroups && (
@@ -159,7 +159,7 @@ function MovingSubtreesSection({ subtreeGroups, isExpanded, onToggleExpanded }) 
             <SubtreeBadge key={idx} names={names} />
           ))}
           {!isExpanded && hasManyGroups && (
-            <span className="text-[10px] text-muted-foreground self-center pl-1">
+            <span className="text-2xs text-muted-foreground self-center pl-1">
               +{subtreeGroups.length - MAX_VISIBLE} more
             </span>
           )}
@@ -180,7 +180,7 @@ function SubtreeBadge({ names }) {
   return (
     <Badge
       variant="secondary"
-      className="text-[10px] px-1.5 py-0 h-5 font-medium whitespace-nowrap"
+      className="text-2xs px-1.5 py-0 h-5 font-medium whitespace-nowrap"
     >
       {displayText}
     </Badge>

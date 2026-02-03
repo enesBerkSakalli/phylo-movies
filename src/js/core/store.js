@@ -11,6 +11,13 @@ import { createVisualEffectsSlice } from './slices/visualEffectsSlice.js';
 import { createClipboardSlice } from './slices/clipboardSlice.js';
 import { createContextMenuSlice } from './slices/contextMenuSlice.js';
 
+/**
+ * @typedef {import('../../types/store.ts').AppStoreState} AppStoreState
+ */
+
+/**
+ * @type {import('zustand').UseBoundStore<import('zustand').StoreApi<AppStoreState>>}
+ */
 export const useAppStore = create((set, get) => ({
   ...createPhylogeneticDataSlice(set, get),
   ...createPlaybackSlice(set, get),

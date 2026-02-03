@@ -1,92 +1,92 @@
 import React, { useMemo } from 'react';
-import { ResponsiveBar } from '@nivo/bar';
 import { useAppStore } from '../../../../js/core/store';
 import { calculateSubtreeFrequencies, getTopSubtrees, formatSubtreeLabel } from '../../../../js/domain/tree/subtreeFrequencyUtils';
 import { TREE_COLOR_CATEGORIES } from '../../../../js/constants/TreeColors';
+import type { AppStoreState } from '../../../../types/store';
+import { Badge } from '@/components/ui/badge';
+
+// ==========================================================================
+// STORE SELECTORS
+// ==========================================================================
+const EMPTY_ARRAY: any[] = [];
+const selectPairSolutions = (s: AppStoreState) => s.pairSolutions;
+const selectSortedLeaves = (s: AppStoreState) => s.movieData?.sorted_leaves || EMPTY_ARRAY;
 
 /**
  * SubtreeFrequencyBarChart
  *
- * Bar chart showing top N most frequent jumping subtrees.
- * Matches the data displayed in SubtreeFrequencyList.
+ * Vertical list showing top N most frequent jumping subtrees with inline bars.
+ * Uses tree_pair_solutions.jumping_subtree_solutions as the data source.
  */
 export const SubtreeFrequencyBarChart = () => {
-    const pairSolutions = useAppStore(s => s.pairSolutions);
-    const sortedLeaves = useAppStore(s => s.movieData?.sorted_leaves || []);
+    const pairSolutions = useAppStore(selectPairSolutions);
+    const sortedLeaves = useAppStore(selectSortedLeaves);
 
     const data = useMemo(() => {
-        if (!pairSolutions) return [];
+        if (!pairSolutions || Object.keys(pairSolutions).length === 0) return [];
 
         const allFreqs = calculateSubtreeFrequencies(pairSolutions);
-        const topSubtrees = getTopSubtrees(allFreqs, 10); // Top 10 for chart
+        const topSubtrees = getTopSubtrees(allFreqs, 10); // Top 10
 
-        return topSubtrees.map(item => ({
+        return topSubtrees.map((item: any, idx: number) => ({
+            rank: idx + 1,
             subtree: formatSubtreeLabel(item.splitIndices, sortedLeaves),
+            taxaCount: item.splitIndices.length,
             count: item.count,
             percentage: item.percentage
         }));
     }, [pairSolutions, sortedLeaves]);
 
-    const labelLayout = useMemo(() => {
-        const maxLabelLength = data.reduce((max, item) => Math.max(max, item.subtree.length), 0);
-        const leftMargin = Math.min(280, Math.max(140, Math.round(maxLabelLength * 6.5)));
-        return { leftMargin, maxLabelLength };
+    const maxCount = useMemo(() => {
+        return data.length > 0 ? Math.max(...data.map(d => d.count)) : 1;
     }, [data]);
 
-    const truncateLabel = (value) => {
-        const maxChars = 28;
-        return value.length > maxChars ? `${value.slice(0, maxChars - 1)}…` : value;
-    };
-
     if (!data || data.length === 0) {
-        return <div className="text-center text-muted-foreground p-4">No frequency data available.</div>;
+        return <div className="text-center text-muted-foreground p-4">No mobility metrics available.</div>;
     }
 
     return (
-        <div className="w-full h-full min-h-[350px]">
-            <ResponsiveBar
-                data={data}
-                keys={['count']}
-                indexBy="subtree"
-                margin={{ top: 20, right: 30, bottom: 50, left: labelLayout.leftMargin }}
-                padding={0.3}
-                layout="horizontal"
-                valueScale={{ type: 'linear' }}
-                indexScale={{ type: 'band', round: true }}
-                colors={[TREE_COLOR_CATEGORIES.markedColor]}
-                borderRadius={4}
-                borderColor={{ from: 'color', modifiers: [['darker', 0.6]] }}
-                axisTop={null}
-                axisRight={null}
-                axisBottom={{
-                    tickSize: 5,
-                    tickPadding: 5,
-                    tickRotation: 0,
-                    legend: 'Jump Count',
-                    legendPosition: 'middle',
-                    legendOffset: 36
-                }}
-                axisLeft={{
-                    tickSize: 5,
-                    tickPadding: 8,
-                    tickRotation: 0,
-                    legend: '',
-                    legendPosition: 'middle',
-                    legendOffset: -50,
-                    format: truncateLabel
-                }}
-                labelSkipWidth={12}
-                labelSkipHeight={12}
-                labelTextColor={{ from: 'color', modifiers: [['darker', 1.6]] }}
-                animate={true}
-                motionConfig="gentle"
-                tooltip={({ indexValue, value }) => (
-                    <div className="rounded-md bg-popover px-2 py-1 text-xs text-popover-foreground shadow">
-                        <div className="font-medium">{indexValue}</div>
-                        <div>Jump count: {value}</div>
+        <div className="w-full h-full overflow-auto p-2 space-y-2">
+            {data.map((item) => (
+                <div
+                    key={item.rank}
+                    className="group relative rounded-lg border border-border/40 bg-muted/5 hover:bg-muted/20 transition-colors p-3"
+                >
+                    {/* Header row with rank, count badge, and percentage */}
+                    <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-muted-foreground/60 w-5">
+                                #{item.rank}
+                            </span>
+                            <Badge variant="secondary" className="font-mono text-xs tabular-nums">
+                                {item.count} events
+                            </Badge>
+                            <span className="text-2xs text-muted-foreground">
+                                ({item.taxaCount} taxa)
+                            </span>
+                        </div>
+                        <span className="text-xs font-mono text-muted-foreground tabular-nums">
+                            {item.percentage.toFixed(1)}%
+                        </span>
                     </div>
-                )}
-            />
+
+                    {/* Progress bar */}
+                    <div className="w-full h-2 bg-secondary/50 rounded-full overflow-hidden mb-2">
+                        <div
+                            className="h-full rounded-full transition-all"
+                            style={{
+                                width: `${(item.count / maxCount) * 100}%`,
+                                backgroundColor: TREE_COLOR_CATEGORIES.markedColor
+                            }}
+                        />
+                    </div>
+
+                    {/* Full taxa names - wrapping allowed */}
+                    <div className="text-xs text-foreground/90 leading-relaxed break-words">
+                        {item.subtree}
+                    </div>
+                </div>
+            ))}
         </div>
     );
 };

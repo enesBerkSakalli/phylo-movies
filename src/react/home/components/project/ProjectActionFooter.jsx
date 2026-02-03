@@ -4,14 +4,14 @@ import { Button } from "@/components/ui/button";
 
 export function ProjectActionFooter({ disabled, reset, canSubmit }) {
   return (
-    <CardFooter className="flex justify-end gap-3 px-0 pb-0 pt-6 bg-transparent border-t">
+    <CardFooter className="flex justify-end gap-3 px-0 pb-0 pt-4 bg-transparent border-t">
       <Button
         type="button"
         variant="outline"
         size="sm"
         onClick={reset}
         disabled={disabled}
-        className="px-6"
+        className="px-4"
       >
         Reset form
       </Button>
@@ -19,7 +19,7 @@ export function ProjectActionFooter({ disabled, reset, canSubmit }) {
         type="submit"
         size="sm"
         disabled={disabled || !canSubmit}
-        className="px-8 shadow-md hover:shadow-lg transition-all"
+        className="px-6 shadow-md hover:shadow-lg transition-all"
       >
         Create Visualization
       </Button>

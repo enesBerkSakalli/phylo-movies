@@ -2,10 +2,10 @@
  * pure domain logic for calculating animation state based on time and playlist length.
  */
 
-export function calculatePlaybackState({ 
-  timestamp, 
-  startTime, 
-  speed, 
+export function calculatePlaybackState({
+  timestamp,
+  startTime,
+  speed,
   totalItems,
   transitionDuration = 1.0, // Default 1s per transition
   pauseDuration = 0.0       // Default 0s pause
@@ -23,14 +23,14 @@ export function calculatePlaybackState({
   }
 
   const segmentCount = totalItems - 1;
-  
+
   // Calculate total duration: T * N + P * (N-1)
-  const totalDuration = (segmentCount * transitionDuration) + 
+  const totalDuration = (segmentCount * transitionDuration) +
                         (Math.max(0, segmentCount - 1) * pauseDuration);
 
   const elapsedSeconds = (timestamp - startTime) / 1000;
   const effectiveTime = elapsedSeconds * speed;
-  
+
   const rawProgress = totalDuration > 0 ? effectiveTime / totalDuration : 1;
   const isFinished = rawProgress >= 1.0;
   const progress = Math.max(0, Math.min(1, rawProgress));
@@ -39,7 +39,7 @@ export function calculatePlaybackState({
   const segmentWithPause = transitionDuration + pauseDuration;
   const timeBeforeLast = (segmentCount - 1) * segmentWithPause;
   const clampedTime = Math.min(effectiveTime, totalDuration);
-  
+
   let segmentIndex;
   let timeInSegment;
 
@@ -52,7 +52,7 @@ export function calculatePlaybackState({
     segmentIndex = Math.floor(clampedTime / segmentWithPause);
     timeInSegment = clampedTime - (segmentIndex * segmentWithPause);
   }
-  
+
   segmentIndex = Math.max(0, Math.min(segmentIndex, segmentCount - 1));
 
   let localT;

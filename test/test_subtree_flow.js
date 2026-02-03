@@ -207,15 +207,15 @@ console.log("\n=== END SLICE TESTS ===");
 console.log("\n=== VISIBILITY CHECK ===");
 console.log("12. Test if link outline layer would be visible:");
 const colorManagerForVisibility = {
-  hasActiveChangeEdges: () => false,  // Assuming no active change edges for subtree test
+  hasPivotEdges: () => false,  // Assuming no pivot edges for subtree test
   sharedMarkedJumpingSubtrees: cm.sharedMarkedJumpingSubtrees  // from test 10
 };
 
 const hasHighlights = !!(
-  colorManagerForVisibility.hasActiveChangeEdges?.() ||
+  colorManagerForVisibility.hasPivotEdges?.() ||
   (colorManagerForVisibility.sharedMarkedJumpingSubtrees?.length > 0)
 );
-console.log(`   hasActiveChangeEdges: ${colorManagerForVisibility.hasActiveChangeEdges()}`);
+console.log(`   hasPivotEdges: ${colorManagerForVisibility.hasPivotEdges()}`);
 console.log(`   sharedMarkedJumpingSubtrees.length: ${colorManagerForVisibility.sharedMarkedJumpingSubtrees?.length}`);
 console.log(`   hasHighlights (outline visible): ${hasHighlights}`);
 

@@ -46,6 +46,17 @@ export class InterpolationRenderer {
     // Update Visuals
     this.controller._updateLayersEfficiently(interpolatedData);
     this.controller.viewportManager.updateScreenPositions(interpolatedData.nodes, this.controller.viewSide);
+
+    // NOTE: Auto-fit during playback is intentionally disabled here.
+    // Fitting every interpolation frame causes camera "jumping" that disrupts the viewing experience.
+    // Auto-fit should only happen on discrete tree changes (next/prev buttons) or when playback starts,
+    // NOT on every animation frame. The bounding box changes subtly during interpolation
+    // and constant refitting makes the camera fight against user interaction.
+    // 
+    // If auto-fit on tree change is needed, it should be triggered:
+    // - At the START of playback (once)
+    // - When user manually navigates to a new tree (not during animation)
+    // - In StaticRenderer for discrete jumps
   }
 
   /*

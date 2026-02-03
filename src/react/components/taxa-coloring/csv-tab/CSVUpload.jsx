@@ -2,11 +2,6 @@ import React, { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Upload, FileText, CheckCircle2, XCircle, Info, FileSpreadsheet, Trash2 } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 export function CSVUpload({ onFile, csvFileName, onReset }) {
   const inputRef = useRef(null);
@@ -22,7 +17,7 @@ export function CSVUpload({ onFile, csvFileName, onReset }) {
             </div>
             <div>
               <p className="text-sm font-bold text-foreground line-clamp-1">{csvFileName}</p>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Active Dataset</p>
+              <p className="text-2xs text-muted-foreground uppercase tracking-wider font-semibold">Active Dataset</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -51,7 +46,7 @@ export function CSVUpload({ onFile, csvFileName, onReset }) {
           </div>
           <div className="space-y-1">
             <p className="text-[11px] font-bold leading-none">Format Requirements</p>
-            <p className="text-[10px] text-muted-foreground leading-tight">
+            <p className="text-2xs text-muted-foreground leading-tight">
               One column must contain exactly the same taxa names as in your tree. Other columns define colors/groups.
             </p>
           </div>
@@ -62,8 +57,8 @@ export function CSVUpload({ onFile, csvFileName, onReset }) {
           </div>
           <div className="space-y-1">
             <p className="text-[11px] font-bold leading-none">Pro-Tip: Mapping</p>
-            <p className="text-[10px] text-muted-foreground leading-tight">
-              Values like "High", "Low" or "Group A" will be automatically detected as distinct coloring clades.
+            <p className="text-2xs text-muted-foreground leading-tight">
+              Values like "High", "Low" or "Group A" will be automatically detected as distinct coloring subtrees.
             </p>
           </div>
         </div>
@@ -86,15 +81,15 @@ export function CSVUpload({ onFile, csvFileName, onReset }) {
           if (file && file.name.endsWith('.csv')) onFile(file);
         }}
       >
-        <CardContent className="flex flex-col items-center justify-center py-10 px-6 text-center">
-          <div className="mb-4 rounded-2xl bg-primary/10 p-4 transition-transform group-hover/drop:scale-110 group-hover/drop:rotate-3">
-             <Upload className="size-8 text-primary" />
+        <CardContent className="flex flex-col items-center justify-center py-6 px-6 text-center">
+          <div className="mb-3 rounded-xl bg-primary/10 p-3 transition-transform group-hover/drop:scale-110 group-hover/drop:rotate-3">
+             <Upload className="size-6 text-primary" />
           </div>
 
-          <div className="space-y-2 mb-6">
+          <div className="space-y-1.5 mb-5">
             <h3 className="text-sm font-bold tracking-tight">Import Taxa Mapping</h3>
-            <p className="text-xs text-muted-foreground max-w-[240px] mx-auto leading-relaxed">
-              Drag and drop your <code className="bg-muted px-1 rounded text-primary font-mono font-bold">.csv</code> file here to instantly synchronize coloring metadata.
+            <p className="text-[11px] text-muted-foreground max-w-[240px] mx-auto leading-tight">
+              Drag and drop your <code className="bg-muted px-1 rounded text-primary font-mono font-bold">.csv</code> file here.
             </p>
           </div>
 
@@ -107,24 +102,6 @@ export function CSVUpload({ onFile, csvFileName, onReset }) {
             >
               Select File
             </Button>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 text-xs font-medium border-border/50 hover:bg-background"
-                >
-                  Example CSV
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="w-[200px] text-[10px] leading-tight">
-                taxa_name,group,color_hex<br/>
-                human,Mammalia,#ff0000<br/>
-                mouse,Mammalia,#ff0000<br/>
-                shark,Chondrichthyes,#0000ff
-              </TooltipContent>
-            </Tooltip>
           </div>
 
           <input
@@ -137,7 +114,7 @@ export function CSVUpload({ onFile, csvFileName, onReset }) {
         </CardContent>
       </Card>
 
-      <p className="text-center text-[10px] text-muted-foreground/60 italic">
+      <p className="text-center text-2xs text-muted-foreground/60 italic">
         Max file size: 5MB • Privacy: All processing happens locally in your browser.
       </p>
     </div>

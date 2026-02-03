@@ -3,7 +3,7 @@
  *
  * Handles threetypes of coloring:
  * 1. Base coloring (monophyletic groups, taxa colors)
- * 2. Active change edge highlighting (blue) - edges from lattice tracking
+ * 2. Pivot edge highlighting (blue) - edges from lattice tracking
  * 3. Marked subtree highlighting (red) - from computed subtrees
  *
  * Used by LayerStyles.js to provide colors for DeckGL layers
@@ -13,9 +13,9 @@ import { TREE_COLOR_CATEGORIES } from '../../constants/TreeColors.js';
 import {
   getBaseBranchColor,
   getBaseNodeColor,
-  resolveActiveEdgeSet,
-  isLinkActiveChangeEdge,
-  nodeOrParentMatchesActiveEdge,
+  resolvePivotEdgeSet,
+  isLinkPivotEdge,
+  nodeOrParentMatchesPivotEdge,
   nodeOrParentMatchesAnyEdge,
   isLinkDownstreamOfChangeEdge,
   isNodeDownstreamOfChangeEdge
@@ -30,11 +30,12 @@ export class TreeColorManager {
   constructor() {
     this.monophyleticColoringEnabled = true;
     this.markedSubtreesColoringEnabled = true; // Controls whether marked subtrees get red color
-    this.currentActiveChangeEdges = new Set();
+    this.currentPivotEdges = new Set();
     this.upcomingChangeEdges = []; // Array of Sets for upcoming edges
     this.completedChangeEdges = []; // Array of Sets for completed edges
     this.prominentHistoryHashes = new Set(); // Set of hashes for prominent history (added + moved structures)
     this.sharedMarkedJumpingSubtrees = []; // Shared jumping subtrees across views
+    this._markedLeavesUnion = new Set(); // Pre-built union of all marked leaf indices for O(1) rejection
     this.historySubtrees = []; // Subtrees that already moved in the current transition
     this.sourceEdgeLeaves = [];
     this.destinationEdgeLeaves = [];
@@ -60,18 +61,18 @@ export class TreeColorManager {
 
   /**
    * Get branch color with highlighting logic
-   * Priority: Marked (red, if enabled) > Active change edge (blue) > Base color
+   * Priority: Marked (red, if enabled) > Pivot edge (blue) > Base color
    * @param {Object} linkData - D3 link data
    * @returns {string} Hex color code
    */
   getBranchColorWithHighlights(linkData) {
-    const isMarked = this.markedSubtreesColoringEnabled && isLinkInSubtree(linkData, this.sharedMarkedJumpingSubtrees);
-    const isActiveEdge = isLinkActiveChangeEdge(linkData, this.currentActiveChangeEdges);
+    const isMarked = this.isLinkInMarkedSubtreeFast(linkData);
+    const isPivotEdge = isLinkPivotEdge(linkData, this.currentPivotEdges);
 
     if (isMarked) {
       return TREE_COLOR_CATEGORIES.markedColor;
-    } else if (isActiveEdge) {
-      return TREE_COLOR_CATEGORIES.activeChangeEdgeColor;
+    } else if (isPivotEdge) {
+      return TREE_COLOR_CATEGORIES.pivotEdgeColor;
     } else {
       return getBaseBranchColor(linkData, this.monophyleticColoringEnabled);
     }
@@ -79,15 +80,15 @@ export class TreeColorManager {
 
   /**
    * Get branch color for the inner/main line
-   * Active change edges get highlight color, marked branches keep base color
+   * Pivot edges get highlight color, marked branches keep base color
    * @param {Object} linkData - D3 link data
    * @returns {string} Hex color code
    */
   getBranchColorForInnerLine(linkData) {
-    const isActiveEdge = isLinkActiveChangeEdge(linkData, this.currentActiveChangeEdges);
+    const isPivotEdge = isLinkPivotEdge(linkData, this.currentPivotEdges);
 
-    if (isActiveEdge) {
-      return TREE_COLOR_CATEGORIES.activeChangeEdgeColor;
+    if (isPivotEdge) {
+      return TREE_COLOR_CATEGORIES.pivotEdgeColor;
     } else {
       // Marked branches keep their base color (taxa/monophyletic)
       return getBaseBranchColor(linkData, this.monophyleticColoringEnabled);
@@ -110,18 +111,18 @@ export class TreeColorManager {
   /**
    * Get node color with highlighting logic
    * @param {Object} nodeData - Node data
-   * @param {Array} activeChangeEdges - Active change edges (optional)
+   * @param {Array} pivotEdges - Pivot edges (optional)
    * @returns {string} Hex color code
    */
-  getNodeColor(nodeData, activeChangeEdges = []) {
-    const edgeSet = resolveActiveEdgeSet(activeChangeEdges, this.currentActiveChangeEdges);
-    const marked = this.markedSubtreesColoringEnabled && isNodeInSubtree(nodeData, this.sharedMarkedJumpingSubtrees);
-    const isActiveEdgeNode = nodeOrParentMatchesActiveEdge(nodeData, edgeSet);
+  getNodeColor(nodeData, pivotEdges = []) {
+    const edgeSet = resolvePivotEdgeSet(pivotEdges, this.currentPivotEdges);
+    const marked = this.isNodeInMarkedSubtreeFast(nodeData);
+    const isPivotEdgeNode = nodeOrParentMatchesPivotEdge(nodeData, edgeSet);
 
     if (marked) {
       return TREE_COLOR_CATEGORIES.markedColor;
-    } else if (isActiveEdgeNode) {
-      return TREE_COLOR_CATEGORIES.activeChangeEdgeColor;
+    } else if (isPivotEdgeNode) {
+      return TREE_COLOR_CATEGORIES.pivotEdgeColor;
     } else {
       return getBaseNodeColor(nodeData, this.monophyleticColoringEnabled);
     }
@@ -143,7 +144,7 @@ export class TreeColorManager {
 
   /**
    * Update shared marked jumping subtrees (red highlighting)
-   * Pre-converts to Sets for performance in rendering loops.
+   * Pre-converts to Sets and builds a union index for O(1) rejection in hot paths.
    */
   updateMarkedSubtrees(markedSubtrees) {
     let subtrees = [];
@@ -157,6 +158,62 @@ export class TreeColorManager {
     this.sharedMarkedJumpingSubtrees = subtrees.map(s =>
       s instanceof Set ? s : new Set(s)
     );
+
+    // Build union of all marked leaf indices for fast O(1) rejection
+    // A node can only be in a subtree if ALL its leaves are in this union
+    this._markedLeavesUnion = new Set();
+    for (const subtree of this.sharedMarkedJumpingSubtrees) {
+      for (const leafIdx of subtree) {
+        this._markedLeavesUnion.add(leafIdx);
+      }
+    }
+  }
+
+  /**
+   * Fast check if a node could possibly be in any marked subtree.
+   * Uses pre-built union for O(1) rejection - if any leaf is NOT in union, node can't be in subtree.
+   * @param {Object} nodeData - Node with data.split_indices
+   * @returns {boolean} True if node is definitely in a subtree, false if definitely not or needs full check
+   */
+  isNodeInMarkedSubtreeFast(nodeData) {
+    if (!this.markedSubtreesColoringEnabled || this._markedLeavesUnion.size === 0) {
+      return false;
+    }
+    const splits = nodeData?.data?.split_indices || nodeData?.split_indices;
+    if (!splits?.length) return false;
+
+    // Fast rejection: if any leaf is NOT in union, node can't be in any subtree
+    for (let i = 0; i < splits.length; i++) {
+      if (!this._markedLeavesUnion.has(splits[i])) {
+        return false;
+      }
+    }
+
+    // All leaves are in union - do full subset check against individual subtrees
+    return isNodeInSubtree(nodeData, this.sharedMarkedJumpingSubtrees);
+  }
+
+  /**
+   * Fast check if a link's target is in any marked subtree.
+   * @param {Object} linkData - Link with target.data.split_indices
+   * @returns {boolean} True if link target is in a subtree
+   */
+  isLinkInMarkedSubtreeFast(linkData) {
+    if (!this.markedSubtreesColoringEnabled || this._markedLeavesUnion.size === 0) {
+      return false;
+    }
+    const splits = linkData?.target?.data?.split_indices || linkData?.target?.split_indices;
+    if (!splits?.length) return false;
+
+    // Fast rejection: if any leaf is NOT in union, link can't be in any subtree
+    for (let i = 0; i < splits.length; i++) {
+      if (!this._markedLeavesUnion.has(splits[i])) {
+        return false;
+      }
+    }
+
+    // All leaves are in union - do full subset check
+    return isLinkInSubtree(linkData, this.sharedMarkedJumpingSubtrees);
   }
 
   /**
@@ -213,10 +270,10 @@ export class TreeColorManager {
   }
 
   /**
-   * Update current active change edge (blue highlighting)
+   * Update current pivot edge (blue highlighting)
    */
-  updateActiveChangeEdge(activeChangeEdge) {
-    this.currentActiveChangeEdges = new Set(activeChangeEdge);
+  updatePivotEdge(pivotEdge) {
+    this.currentPivotEdges = new Set(pivotEdge);
   }
 
   /**
@@ -345,48 +402,48 @@ export class TreeColorManager {
   // =======================
 
   /**
-   * Check if a branch is downstream of any active change edge
+   * Check if a branch is downstream of current pivot edge
    */
-  isDownstreamOfAnyActiveChangeEdge(linkData) {
-    if (!this.currentActiveChangeEdges || this.currentActiveChangeEdges.size === 0) {
+  isDownstreamOfAnyPivotEdge(linkData) {
+    if (!this.currentPivotEdges || this.currentPivotEdges.size === 0) {
       return false;
     }
-    return isLinkDownstreamOfChangeEdge(linkData, [this.currentActiveChangeEdges]);
+    return isLinkDownstreamOfChangeEdge(linkData, [this.currentPivotEdges]);
   }
 
   /**
-   * Check if a node is downstream of any active change edge
+   * Check if a node is downstream of current pivot edge
    */
-  isNodeDownstreamOfAnyActiveChangeEdge(nodeData) {
-    if (!this.currentActiveChangeEdges || this.currentActiveChangeEdges.size === 0) {
+  isNodeDownstreamOfAnyPivotEdge(nodeData) {
+    if (!this.currentPivotEdges || this.currentPivotEdges.size === 0) {
       return false;
     }
-    return isNodeDownstreamOfChangeEdge(nodeData, [this.currentActiveChangeEdges]);
+    return isNodeDownstreamOfChangeEdge(nodeData, [this.currentPivotEdges]);
   }
 
   /**
-   * Check if there are any active change edges
+   * Check if there are any pivot edges
    */
-  hasActiveChangeEdges() {
-    return this.currentActiveChangeEdges && this.currentActiveChangeEdges.size > 0;
+  hasPivotEdges() {
+    return this.currentPivotEdges && this.currentPivotEdges.size > 0;
   }
 
   /**
-   * Check if a branch is specifically an active change edge
+   * Check if a branch is specifically a pivot edge
    */
-  isActiveChangeEdge(linkData) {
-    return isLinkActiveChangeEdge(linkData, this.currentActiveChangeEdges);
+  isPivotEdge(linkData) {
+    return isLinkPivotEdge(linkData, this.currentPivotEdges);
   }
 
   /**
-   * Check if a node is part of the current active change edge (node itself or parent of the edge).
-   * This mirrors isActiveChangeEdge(link) but for nodes.
+   * Check if a node is part of the pivot edge.
+   * This mirrors isPivotEdge(link) but for nodes.
    */
-  isNodeActiveChangeEdge(nodeData) {
-    if (!this.currentActiveChangeEdges || this.currentActiveChangeEdges.size === 0) {
+  isNodePivotEdge(nodeData) {
+    if (!this.currentPivotEdges || this.currentPivotEdges.size === 0) {
       return false;
     }
-    return nodeOrParentMatchesActiveEdge(nodeData, this.currentActiveChangeEdges);
+    return nodeOrParentMatchesPivotEdge(nodeData, this.currentPivotEdges);
   }
 
 
@@ -420,7 +477,7 @@ export class TreeColorManager {
 
     // Check if this link matches any upcoming edge
     for (const edgeSet of this.upcomingChangeEdges) {
-      if (isLinkActiveChangeEdge(linkData, edgeSet)) {
+      if (isLinkPivotEdge(linkData, edgeSet)) {
         return true;
       }
     }
@@ -437,7 +494,7 @@ export class TreeColorManager {
 
     // Check if this link matches any completed edge
     for (const edgeSet of this.completedChangeEdges) {
-      if (isLinkActiveChangeEdge(linkData, edgeSet)) {
+      if (isLinkPivotEdge(linkData, edgeSet)) {
         return true;
       }
     }

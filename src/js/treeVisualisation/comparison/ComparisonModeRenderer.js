@@ -1,5 +1,6 @@
 import { buildSubtreeConnectors } from '../deckgl/data/transforms/SubtreeConnectorBuilder.js';
 import { useAppStore } from '../../core/store.js';
+import { tagTreeSide } from '../utils/layerDataUtils.js';
 import {
   calculateRightOffset,
   applyOffset,
@@ -162,11 +163,8 @@ export class ComparisonModeRenderer {
       : [];
 
     // Tag data with side for interactive picking/dragging
-    const tagSide = (data, side) => {
-      [...(data.nodes || []), ...(data.links || []), ...(data.extensions || []), ...(data.labels || [])].forEach(d => d.treeSide = side);
-    };
-    tagSide(leftLayerData, 'left');
-    tagSide(rightLayerData, 'right');
+    tagTreeSide(leftLayerData, 'left');
+    tagTreeSide(rightLayerData, 'right');
 
     const combinedData = combineLayerData(leftLayerData, rightLayerData, connectors);
 
@@ -256,11 +254,8 @@ export class ComparisonModeRenderer {
       : [];
 
     // Tag data with side for interactive picking/dragging
-    const tagSide = (data, side) => {
-      [...(data.nodes || []), ...(data.links || []), ...(data.extensions || []), ...(data.labels || [])].forEach(d => d.treeSide = side);
-    };
-    tagSide(interpolatedData, 'left');
-    tagSide(rightLayerData, 'right');
+    tagTreeSide(interpolatedData, 'left');
+    tagTreeSide(rightLayerData, 'right');
 
     const combinedData = {
       nodes: [...(interpolatedData.nodes || []), ...(rightLayerData.nodes || [])],
@@ -272,8 +267,14 @@ export class ComparisonModeRenderer {
 
     this.controller._updateLayersEfficiently(combinedData);
 
+    // Only auto-fit on FIRST render of comparison mode, not every animation frame.
+    // Fitting every frame causes camera "jumping" that disrupts the viewing experience.
     if (this._lastFittedIndices === null) {
-      this.controller.viewportManager.focusOnTree(combinedData.nodes, combinedData.labels);
+      this.controller.viewportManager.focusOnTree(
+        combinedData.nodes,
+        combinedData.labels,
+        { allowDuringPlayback: true, duration: 0 }
+      );
       this._lastFittedIndices = { left: -1, right: rightIndex };
     }
 
@@ -291,10 +292,10 @@ export class ComparisonModeRenderer {
   _buildConnectors(leftPositions, rightPositions, leftCenter = [0, 0], rightCenter = [0, 0], leftRadius, rightRadius) {
     const state = useAppStore.getState();
     const currentTreeIndex = state?.currentTreeIndex ?? 0;
-    const activeChangeEdgeTracking = state?.activeChangeEdgeTracking || [];
-    const activeChangeEdge = activeChangeEdgeTracking[currentTreeIndex];
+    const pivotEdgeTracking = state?.pivotEdgeTracking || [];
+    const pivotEdge = pivotEdgeTracking[currentTreeIndex];
 
-    if (!Array.isArray(activeChangeEdge) || activeChangeEdge.length === 0) {
+    if (!Array.isArray(pivotEdge) || pivotEdge.length === 0) {
       return [];
     }
 
@@ -302,7 +303,7 @@ export class ComparisonModeRenderer {
       leftPositions,
       rightPositions,
       latticeSolutions: state?.pairSolutions?.[state?.movieData?.tree_metadata?.[currentTreeIndex]?.tree_pair_key]?.jumping_subtree_solutions || {},
-      activeChangeEdge,
+      pivotEdge,
       colorManager: state?.colorManager,
       subtreeTracking: state?.subtreeTracking || [],
       currentTreeIndex,

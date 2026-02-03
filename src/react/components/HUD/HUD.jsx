@@ -1,8 +1,8 @@
 import React, { useCallback, useMemo } from 'react';
 import Draggable from 'react-draggable';
-import { useAppStore } from '../../../js/core/store.js';
-import { getIndexMappings, getMSAFrameIndex } from '../../../js/domain/indexing/IndexMapping.js';
-import { calculateWindow } from '../../../js/domain/msa/msaWindowCalculator.js';
+import { useAppStore } from '@/js/core/store';
+import { getIndexMappings, getMSAFrameIndex } from '@/js/domain/indexing/IndexMapping';
+import { calculateWindow } from '@/js/domain/msa/msaWindowCalculator';
 import { Film, BarChart2, Dna, Clipboard, ChevronLeft, ChevronRight, X, GripVertical } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -38,15 +38,15 @@ const selectClearClipboard = (s) => s.clearClipboard;
 
 const clamp01 = (value) => Math.max(0, Math.min(1, value || 0));
 
-function buildProgressText(sequenceIndex, totalSequenceLength, timelineProgress, animationProgress, playing) {
+function buildInterpolationText(sequenceIndex, totalSequenceLength, timelineProgress, animationProgress, playing) {
   if (playing && typeof animationProgress === 'number') {
-    return `${Math.round(clamp01(animationProgress) * 100)}%`;
+    return `${clamp01(animationProgress).toFixed(2)}`;
   }
 
-  const explicitProgress = typeof timelineProgress === 'number' ? timelineProgress : null;
-  const derivedProgress = totalSequenceLength > 1 ? (sequenceIndex / (totalSequenceLength - 1)) : 0;
-  const progressValue = clamp01(explicitProgress ?? derivedProgress);
-  return `${Math.round(progressValue * 100)}%`;
+  const explicitValue = typeof timelineProgress === 'number' ? timelineProgress : null;
+  const derivedValue = totalSequenceLength > 1 ? (sequenceIndex / (totalSequenceLength - 1)) : 0;
+  const interpolationValue = clamp01(explicitValue ?? derivedValue);
+  return `${interpolationValue.toFixed(2)}`;
 }
 
 function buildSegmentText(sequenceIndex, transitionResolver) {
@@ -115,10 +115,10 @@ export function HUD() {
     [currentTreeIndex, transitionResolver, treeListLength]
   );
 
-  const { progressText, segmentText, msaWindow, sequenceIndex } = useMemo(() => {
+  const { interpolationText, segmentText, msaWindow, sequenceIndex } = useMemo(() => {
     const { sequenceIndex, totalSequenceLength } = getIndexMappings(proxyState);
     return {
-      progressText: buildProgressText(sequenceIndex, totalSequenceLength, timelineProgress, animationProgress, playing),
+      interpolationText: buildInterpolationText(sequenceIndex, totalSequenceLength, timelineProgress, animationProgress, playing),
       segmentText: buildSegmentText(sequenceIndex, transitionResolver),
       msaWindow: buildMsaWindow(hasMsa, proxyState, msaStepSize, msaWindowSize, msaColumnCount),
       sequenceIndex,
@@ -146,7 +146,7 @@ export function HUD() {
         role="complementary"
         aria-label="Timeline Status Display"
       >
-        <Card className="flex items-center gap-4 px-3 py-1.5 shadow-lg backdrop-blur-md border-sidebar-border bg-sidebar/90 cursor-default ring-1 ring-border/50">
+        <Card className="flex items-center gap-4 px-4 py-2 shadow-lg backdrop-blur-md border-sidebar-border bg-sidebar/90 cursor-default ring-1 ring-border/50">
           {/* Drag Handle */}
           <Tooltip>
             <TooltipTrigger asChild>
@@ -157,8 +157,8 @@ export function HUD() {
             <TooltipContent side="top">Drag to move HUD</TooltipContent>
           </Tooltip>
 
-          <MovieProgressSection
-            progressText={progressText}
+          <InterpolationCoordinateSection
+            interpolationText={interpolationText}
             sliderMax={sliderMax}
             sliderValue={sliderValue}
             canScrub={canScrub}
@@ -194,14 +194,14 @@ export function HUD() {
 // SUB-COMPONENTS
 // ==========================================================================
 
-function MovieProgressSection({ progressText, sliderMax, sliderValue, canScrub, onSliderCommit }) {
+function InterpolationCoordinateSection({ interpolationText, sliderMax, sliderValue, canScrub, onSliderCommit }) {
   return (
     <div className="flex items-center gap-2">
       <Film className="size-3.5 text-primary" aria-hidden />
-      <div className="flex flex-col -gap-0.5">
-        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Progress</span>
-        <span id="hudPositionInfo" aria-live="polite" className="text-xs font-bold text-foreground">
-          {progressText}
+      <div className="flex flex-col gap-0">
+        <span className="text-2xs font-medium text-muted-foreground uppercase tracking-wider">Coordinate</span>
+        <span id="hudPositionInfo" aria-live="polite" className="text-xs font-bold text-foreground tabular-nums">
+          {interpolationText}
         </span>
       </div>
       <Slider
@@ -222,15 +222,15 @@ function InterpolationSection({ segmentText }) {
   return (
     <div className="flex items-center gap-2">
       <BarChart2 className="size-3.5 text-primary" aria-hidden />
-      <div className="flex flex-col -gap-0.5">
-        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Segment</span>
+      <div className="flex flex-col gap-0">
+        <span className="text-2xs font-medium text-muted-foreground uppercase tracking-wider">Segment</span>
         <Tooltip>
           <TooltipTrigger asChild>
             <Badge
               id="hudSegmentInfo"
               aria-live="polite"
               variant="secondary"
-              className="h-5 px-1.5 text-[10px] font-bold cursor-help"
+              className="h-5 px-1.5 text-2xs font-bold cursor-help"
             >
               {segmentText}
             </Badge>
@@ -248,13 +248,13 @@ function MSAWindowSection({ msaWindow, msaWindowSize }) {
   return (
     <div className="flex items-center gap-2" id="hud-msa-window-item">
       <Dna className="size-3.5 text-primary" aria-hidden />
-      <div className="flex flex-col -gap-0.5">
-        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">MSA Window</span>
-        <div className="inline-flex items-center gap-1 text-xs font-bold text-foreground">
+      <div className="flex flex-col gap-0">
+        <span className="text-2xs font-medium text-muted-foreground uppercase tracking-wider">MSA Window</span>
+        <div className="inline-flex items-center gap-1 text-xs font-bold text-foreground tabular-nums">
           <span id="hudWindowStart">{msaWindow?.startPosition ?? 1}</span>
-          <span className="text-muted-foreground/50 text-[10px]">-</span>
+          <span className="text-muted-foreground/50 text-2xs">-</span>
           <span id="hudWindowMid" className="text-primary">{msaWindow?.midPosition ?? 1}</span>
-          <span className="text-muted-foreground/50 text-[10px]">-</span>
+          <span className="text-muted-foreground/50 text-2xs">-</span>
           <span id="hudWindowEnd">{msaWindow?.endPosition ?? msaWindowSize ?? 100}</span>
         </div>
       </div>
@@ -298,9 +298,9 @@ function ClipboardSection({ clipboardTreeIndex, anchorIndices, onShowAnchor, onC
   return (
     <div className="flex items-center gap-3" id="hud-clipboard-section">
       <Clipboard className="size-3.5 text-primary" aria-hidden />
-      <div className="flex flex-col -gap-0.5">
-        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Clipboard</span>
-        <div className="flex items-center gap-1 mt-0.5">
+      <div className="flex flex-col gap-0">
+        <span className="text-2xs font-medium text-muted-foreground uppercase tracking-wider">Clipboard</span>
+        <div className="flex items-center gap-1 mt-1">
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -319,7 +319,7 @@ function ClipboardSection({ clipboardTreeIndex, anchorIndices, onShowAnchor, onC
 
           <Badge
             variant={isShowing ? "default" : "secondary"}
-            className="h-5 px-1.5 text-[10px] font-bold min-w-[55px] justify-center tabular-nums"
+            className="h-5 px-1.5 text-2xs font-bold min-w-[55px] justify-center tabular-nums"
           >
             {getClipboardLabel()}
           </Badge>

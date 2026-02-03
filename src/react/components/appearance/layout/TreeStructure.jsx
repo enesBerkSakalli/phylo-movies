@@ -4,10 +4,17 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@
 import { SidebarMenuSub, SidebarMenuSubItem } from '@/components/ui/sidebar';
 import { GitGraph } from 'lucide-react';
 
+// ==========================================================================
+// STORE SELECTORS
+// ==========================================================================
+const selectBranchTransformation = (s) => s.branchTransformation;
+const selectSetBranchTransformation = (s) => s.setBranchTransformation;
+const selectTreeControllers = (s) => s.treeControllers;
+
 export function TreeStructure() {
-  const branchTransformation = useAppStore((s) => s.branchTransformation);
-  const setBranchTransformation = useAppStore((s) => s.setBranchTransformation);
-  const treeControllers = useAppStore((s) => s.treeControllers);
+  const branchTransformation = useAppStore(selectBranchTransformation);
+  const setBranchTransformation = useAppStore(selectSetBranchTransformation);
+  const treeControllers = useAppStore(selectTreeControllers);
 
   const handleBranchOptionChange = useCallback(
     async (rawValue) => {

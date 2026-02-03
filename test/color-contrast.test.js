@@ -24,11 +24,11 @@ describe('High Contrast Color Logic', () => {
         expect(highlight).to.deep.equal(DEEP_CYAN);
     });
 
-    it('should return Deep Cyan for Orange marked color (Red Dominant)', () => {
-        // #ff5722 is [255, 87, 34]
-        const orange = [255, 87, 34];
-        const highlight = getContrastingHighlightColor(orange);
-        expect(highlight).to.deep.equal(DEEP_CYAN);
+    it('should return Magenta for Emerald marked color (Green Dominant)', () => {
+        // #10b981 is [16, 185, 129]
+        const emerald = [16, 185, 129];
+        const highlight = getContrastingHighlightColor(emerald);
+        expect(highlight).to.deep.equal(MAGENTA);
     });
 
     it('should return Magenta for Purple base color (Not Red Dominant)', () => {

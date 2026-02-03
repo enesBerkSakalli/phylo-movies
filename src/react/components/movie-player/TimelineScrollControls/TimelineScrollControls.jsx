@@ -2,14 +2,23 @@ import React, { useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ChevronsLeft, ChevronsRight, ZoomOut, ZoomIn, Scan } from 'lucide-react';
-import { useAppStore } from '../../../../js/core/store.js';
+import { useAppStore } from '@/js/core/store';
+
+// ==========================================================================
+// STORE SELECTORS
+// ==========================================================================
+const selectScrollToStartTimeline = (s) => s.scrollToStartTimeline;
+const selectScrollToEndTimeline = (s) => s.scrollToEndTimeline;
+const selectZoomOutTimeline = (s) => s.zoomOutTimeline;
+const selectZoomInTimeline = (s) => s.zoomInTimeline;
+const selectFitTimeline = (s) => s.fitTimeline;
 
 export function TimelineScrollControls() {
-  const scrollToStartTimeline = useAppStore((s) => s.scrollToStartTimeline);
-  const scrollToEndTimeline = useAppStore((s) => s.scrollToEndTimeline);
-  const zoomOutTimeline = useAppStore((s) => s.zoomOutTimeline);
-  const zoomInTimeline = useAppStore((s) => s.zoomInTimeline);
-  const fitTimeline = useAppStore((s) => s.fitTimeline);
+  const scrollToStartTimeline = useAppStore(selectScrollToStartTimeline);
+  const scrollToEndTimeline = useAppStore(selectScrollToEndTimeline);
+  const zoomOutTimeline = useAppStore(selectZoomOutTimeline);
+  const zoomInTimeline = useAppStore(selectZoomInTimeline);
+  const fitTimeline = useAppStore(selectFitTimeline);
 
   const handleScrollToStart = useCallback(() => {
     scrollToStartTimeline();

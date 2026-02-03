@@ -1,48 +1,34 @@
 
 /**
- * Subtree Frequency Analysis Utilities
+ * Calculates the frequency of each unique jumping subtree across all tree pair solutions.
+ * Extracts subtrees from jumping_subtree_solutions which maps pivot edges to the subtrees
+ * that move at those pivots.
  *
- * Provides functions to analyze and rank subtree occurrences across the entire animation.
- */
-
-/**
- * Calculates the frequency of each subtree "jumping" event across all tree pair solutions.
- *
- * @param {Object} pairSolutions - Map of pairKey -> TreePairSolution
+ * @param {Object} pairSolutions - Map of pairKey -> TreePairSolution (tree_pair_solutions from JSON)
  * @returns {Array} Sorted array of subtree frequency objects
  */
 export function calculateSubtreeFrequencies(pairSolutions) {
-  if (!pairSolutions) return [];
+  if (!pairSolutions || typeof pairSolutions !== 'object') return [];
 
   const freqMap = new Map();
 
   // Iterate through all tree pairs
   Object.values(pairSolutions).forEach(solution => {
     const jumpingSolutions = solution?.jumping_subtree_solutions;
-
     if (!jumpingSolutions) return;
 
-    // jumping_subtree_solutions is usually:
-    // { [edgeKey]: Array<Array<Array<number>>> }
-    // We need to flatten this structure to get to the individual subtree split indices
+    // jumping_subtree_solutions structure:
+    // { "[pivot_edge_indices]": [ [ [subtree1], [subtree2] ] ] }
+    // The key is the pivot edge, the value contains the subtrees that move at that pivot
 
-    // 1. Get all edge solutions (arrays of arrays of subtrees)
-    const edgeSolutions = Object.values(jumpingSolutions);
-
-    edgeSolutions.forEach(solutionSet => {
-      // 2. solutionSet is Array<Array<subtree>> (options for this edge)
-      // Usually there's only one viable solution being used visually,
-      // but the data might contain multiple. We'll count all potential jumping subtrees
-      // present in the solution structure to be comprehensive.
-
-      solutionSet.forEach(subtreeGroup => {
-        // 3. subtreeGroup is Array<subtree>
+    Object.values(jumpingSolutions).forEach(solutionSets => {
+      // solutionSets is an array of solution options (usually just one)
+      solutionSets.forEach(subtreeGroup => {
+        // subtreeGroup is an array of subtrees for this pivot
         subtreeGroup.forEach(subtreeSplitIndices => {
-          // 4. subtreeSplitIndices is Array<number> (the actual leaf indices)
           if (!Array.isArray(subtreeSplitIndices) || subtreeSplitIndices.length === 0) return;
 
           // Create a stable signature for the subtree
-          // Sort indices to ensure uniqueness (should already be solved, but safety first)
           const sortedIndices = [...subtreeSplitIndices].sort((a, b) => a - b);
           const signature = sortedIndices.map(String).join(',');
 
@@ -82,10 +68,10 @@ export function getTopSubtrees(frequencies, n = 5) {
 }
 
 /**
- * Formats a subtree split list into a readable label
- * e.g., "A, B, C" or "A...Z (5 taxa)"
+ * Formats a subtree split list into a readable label showing all taxa names.
+ * e.g., "A, B, C, D, E"
  *
- * @param {Array<number>} splitIndices - Array of leaf indices
+ * @param {Array<number>} splitIndices - Array of leaf indices defining the subtree
  * @param {Array<string>} leafNames - Array of leaf names (optional)
  */
 export function formatSubtreeLabel(splitIndices, leafNames = []) {
@@ -100,43 +86,33 @@ export function formatSubtreeLabel(splitIndices, leafNames = []) {
 
     if (names.length === 0) {
       return `Nodes: ${splitIndices.join(", ")}`;
-    } else if (names.length <= 3) {
-      return names.join(", ");
-    } else {
-      return `${names[0]}, ${names[1]}... (+${names.length - 2})`;
     }
+    // Show all names
+    return names.join(", ");
   }
 
   // Fallback to indices if names not available
-  if (splitIndices.length <= 3) {
-    return `Nodes: ${splitIndices.join(", ")}`;
-  }
-  return `Subtree (${splitIndices.length} nodes)`;
+  return `Nodes: ${splitIndices.join(", ")}`;
 }
 
 /**
- * Calculates the temporal distribution of subtree jumps.
- * Returns a map of subtree signatures to their occurrence timeline.
+ * Calculates which tree pairs each subtree appears in.
+ * Returns a map of subtree signatures to their occurrence in pair solutions.
  *
  * @param {Object} pairSolutions - Map of pairKey -> TreePairSolution
- * @returns {Map<string, Map<number, number>>} Map of signature -> (pairIndex -> count)
+ * @returns {Map<string, Array<string>>} Map of signature -> array of pair keys where this subtree jumps
  */
 export function calculateSubtreeTemporalDistribution(pairSolutions) {
-  if (!pairSolutions) return new Map();
+  if (!pairSolutions || typeof pairSolutions !== 'object') return new Map();
 
-  const temporalMap = new Map(); // signature -> Map<pairIndex, count>
+  const temporalMap = new Map(); // signature -> array of pair keys
 
   Object.entries(pairSolutions).forEach(([pairKey, solution]) => {
-    // Parse pair index from key "pair_X_Y" -> uses X as the time step
-    const match = pairKey.match(/^pair_(\d+)_(\d+)$/);
-    if (!match) return;
-
-    const pairIndex = parseInt(match[1], 10);
     const jumpingSolutions = solution?.jumping_subtree_solutions;
     if (!jumpingSolutions) return;
 
-    Object.values(jumpingSolutions).forEach(solutionSet => {
-      solutionSet.forEach(subtreeGroup => {
+    Object.values(jumpingSolutions).forEach(solutionSets => {
+      solutionSets.forEach(subtreeGroup => {
         subtreeGroup.forEach(subtreeSplitIndices => {
           if (!Array.isArray(subtreeSplitIndices) || subtreeSplitIndices.length === 0) return;
 
@@ -144,11 +120,10 @@ export function calculateSubtreeTemporalDistribution(pairSolutions) {
           const signature = sortedIndices.map(String).join(',');
 
           if (!temporalMap.has(signature)) {
-            temporalMap.set(signature, new Map());
+            temporalMap.set(signature, []);
           }
 
-          const timeMap = temporalMap.get(signature);
-          timeMap.set(pairIndex, (timeMap.get(pairIndex) || 0) + 1);
+          temporalMap.get(signature).push(pairKey);
         });
       });
     });

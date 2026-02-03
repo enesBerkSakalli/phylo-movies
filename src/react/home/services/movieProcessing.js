@@ -1,3 +1,5 @@
+import { resolveApiUrl } from "@/js/services/data/apiConfig";
+
 /**
  * Electron loading helpers
  */
@@ -35,8 +37,10 @@ export async function processMovieData(formData, onProgress) {
   body.append('useGtr', formData.useGtr ? 'on' : '');
   body.append('useGamma', formData.useGamma ? 'on' : '');
   body.append('usePseudo', formData.usePseudo ? 'on' : '');
+  body.append('noMl', formData.noMl ? 'on' : '');
 
-  const resp = await fetch('/treedata/stream', { method: 'POST', body });
+  const streamUrl = await resolveApiUrl('/treedata/stream');
+  const resp = await fetch(streamUrl, { method: 'POST', body });
   if (!resp.ok) {
     let errorMsg = 'Upload failed!';
     try {
@@ -55,8 +59,9 @@ export async function processMovieData(formData, onProgress) {
 
   updateElectronProgress(10, 'Processing tree data...');
 
-  return new Promise((resolve, reject) => {
-    let eventSource = new EventSource(`/stream/progress/${channel_id}`);
+  return new Promise(async (resolve, reject) => {
+    const progressUrl = await resolveApiUrl(`/stream/progress/${channel_id}`);
+    let eventSource = new EventSource(progressUrl);
 
     // For chunked streaming (large datasets ≥ 500 trees)
     let chunkedMetadata = null;

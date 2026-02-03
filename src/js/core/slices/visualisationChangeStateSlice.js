@@ -8,7 +8,7 @@ import {
   clearEdgePreviews,
   getSubtreeAtIndex,
   getMovingSubtreeAtIndex,
-  getAllSubtreesForActiveEdge,
+  getAllSubtreesForPivotEdge,
   getSubtreeHistoryAtIndex,
   getSourceDestinationEdgesAtIndex,
   toSubtreeSets,
@@ -35,13 +35,13 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
   taxaColorVersion: 0,
 
   // ==========================================================================
-  // STATE: Active Change Edges (blue)
+  // STATE: Pivot Edges (blue)
   // ==========================================================================
-  activeChangeEdgesEnabled: true,
-  activeChangeEdgeColor: TREE_COLOR_CATEGORIES.activeChangeEdgeColor,
+  pivotEdgesEnabled: true,
+  pivotEdgeColor: TREE_COLOR_CATEGORIES.pivotEdgeColor,
 
   // ==========================================================================
-  // STATE: Marked Subtrees (red)
+  // STATE: Marked Subtrees (highlight)
   // ==========================================================================
   markedSubtreesEnabled: true,
   markedColor: TREE_COLOR_CATEGORIES.markedColor,
@@ -102,7 +102,7 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
 
     set({
       colorManager,
-      activeChangeEdgeColor: TREE_COLOR_CATEGORIES.activeChangeEdgeColor,
+      pivotEdgeColor: TREE_COLOR_CATEGORIES.pivotEdgeColor,
       markedColor: TREE_COLOR_CATEGORIES.markedColor,
       markedSubtreeMode: 'current',
       taxaGrouping: persistedGrouping || null,
@@ -113,12 +113,12 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
       const {
         getMarkedSubtreeData,
         updateColorManagerMarkedSubtrees,
-        updateColorManagerActiveChangeEdge,
-        getCurrentActiveChangeEdge
+        updateColorManagerPivotEdge,
+        getCurrentPivotEdge
       } = get();
 
       updateColorManagerMarkedSubtrees(getMarkedSubtreeData());
-      updateColorManagerActiveChangeEdge(getCurrentActiveChangeEdge());
+      updateColorManagerPivotEdge(getCurrentPivotEdge());
     }, 0);
   },
 
@@ -188,44 +188,51 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
   },
 
   updateTaxaColors: (newColorMap) => {
-    Object.assign(TREE_COLOR_CATEGORIES, { ...TREE_COLOR_CATEGORIES, ...newColorMap });
+    // DO NOT pollute TREE_COLOR_CATEGORIES with taxon names.
+    // Taxon colors are handled via the taxaGrouping store slice and individual lookups.
     set((s) => ({ taxaColorVersion: s.taxaColorVersion + 1 }));
     const { colorManager, treeControllers } = get();
     colorManager?.refreshColorCategories?.();
     renderTreeControllers(treeControllers);
-    persistCurrentColorCategories();
   },
 
   // ==========================================================================
   // ACTIONS: Change Colors
   // ==========================================================================
   updateChangeColor: (colorType, newColor) => {
-    Object.assign(TREE_COLOR_CATEGORIES, { [colorType]: newColor });
-    set({ [colorType]: newColor });
+    // Only allow updating known system color categories to prevent collisions
+    const isSystemKey = colorType in TREE_COLOR_CATEGORIES ||
+                       ['pivotEdgeColor', 'markedColor', 'defaultColor', 'strokeColor'].includes(colorType);
+
+    if (isSystemKey) {
+      Object.assign(TREE_COLOR_CATEGORIES, { [colorType]: newColor });
+      set({ [colorType]: newColor });
+    }
+
     const { colorManager, treeControllers } = get();
     colorManager?.refreshColorCategories?.();
     renderTreeControllers(treeControllers);
     persistCurrentColorCategories();
   },
 
-  setActiveChangeEdgeColor: (color) => get().updateChangeColor('activeChangeEdgeColor', color),
+  setPivotEdgeColor: (color) => get().updateChangeColor('pivotEdgeColor', color),
   setMarkedColor: (color) => get().updateChangeColor('markedColor', color),
 
   // ==========================================================================
-  // ACTIONS: Active Change Edges
+  // ACTIONS: Pivot Edges
   // ==========================================================================
-  getCurrentActiveChangeEdge: (indexOverride = null) => {
-    const { currentTreeIndex, activeChangeEdgeTracking } = get();
+  getCurrentPivotEdge: (indexOverride = null) => {
+    const { currentTreeIndex, pivotEdgeTracking } = get();
     const index = indexOverride ?? currentTreeIndex;
-    return activeChangeEdgeTracking?.[index] || [];
+    return pivotEdgeTracking?.[index] || [];
   },
 
-  updateColorManagerActiveChangeEdge: (edge) => {
+  updateColorManagerPivotEdge: (edge) => {
     const { colorManager } = get();
-    if (!colorManager?.updateActiveChangeEdge) return;
+    if (!colorManager?.updatePivotEdge) return;
 
     const normalized = Array.isArray(edge) || edge instanceof Set ? edge : [];
-    colorManager.updateActiveChangeEdge(normalized);
+    colorManager.updatePivotEdge(normalized);
     set((s) => ({ colorVersion: s.colorVersion + 1 }));
 
     // Manage pulse animation
@@ -236,10 +243,10 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
     }
   },
 
-  setActiveChangeEdgesEnabled: (enabled) => {
-    set({ activeChangeEdgesEnabled: enabled });
-    const { updateColorManagerActiveChangeEdge, getCurrentActiveChangeEdge } = get();
-    updateColorManagerActiveChangeEdge(enabled ? getCurrentActiveChangeEdge() : []);
+  setPivotEdgesEnabled: (enabled) => {
+    set({ pivotEdgesEnabled: enabled });
+    const { updateColorManagerPivotEdge, getCurrentPivotEdge } = get();
+    updateColorManagerPivotEdge(enabled ? getCurrentPivotEdge() : []);
   },
 
   // ==========================================================================
@@ -344,9 +351,9 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
   // ==========================================================================
   updateColorManagerForCurrentIndex: () => {
     const {
-      activeChangeEdgesEnabled, currentTreeIndex,
-      getMarkedSubtreeData, getCurrentActiveChangeEdge,
-      updateColorManagerMarkedSubtrees, updateColorManagerActiveChangeEdge,
+      pivotEdgesEnabled, currentTreeIndex,
+      getMarkedSubtreeData, getCurrentPivotEdge,
+      updateColorManagerMarkedSubtrees, updateColorManagerPivotEdge,
       updateColorManagerHistorySubtrees, getSubtreeHistoryData,
       updateColorManagerSourceDestinationEdges, getSourceDestinationEdgeData,
       updateColorManagerMovingSubtree, getCurrentMovingSubtreeData,
@@ -359,7 +366,7 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
     const markedSubtreeData = getMarkedSubtreeData();
 
     updateColorManagerMarkedSubtrees([...manual, ...markedSubtreeData]);
-    updateColorManagerActiveChangeEdge(activeChangeEdgesEnabled ? getCurrentActiveChangeEdge() : []);
+    updateColorManagerPivotEdge(pivotEdgesEnabled ? getCurrentPivotEdge() : []);
     updateColorManagerHistorySubtrees(getSubtreeHistoryData());
     const { source, dest } = getSourceDestinationEdgeData();
     updateColorManagerSourceDestinationEdges(source, dest);

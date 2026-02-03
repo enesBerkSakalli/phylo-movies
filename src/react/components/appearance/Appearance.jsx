@@ -1,11 +1,10 @@
 import React from 'react';
 import { useAppStore } from '../../../js/core/store.js';
+
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import {
-  SidebarGroup,
-  SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarMenuSub,
@@ -14,7 +13,7 @@ import {
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { ChevronDown, Link, Box, Info, Tag } from 'lucide-react';
 import { FocusHighlightingSection } from './FocusHighlightingSection';
-import { ActiveEdgeEffectsSection } from './ActiveEdgeEffectsSection';
+import { PivotEdgeEffectsSection } from './PivotEdgeEffectsSection';
 import { Switch } from '@/components/ui/switch';
 
 // ==========================================================================
@@ -35,10 +34,8 @@ const selectConnectorStrokeWidth = (s) => s.connectorStrokeWidth;
 const selectSetConnectorStrokeWidth = (s) => s.setConnectorStrokeWidth;
 const selectPulseEnabled = (s) => s.changePulseEnabled;
 const selectSetPulseEnabled = (s) => s.setChangePulseEnabled;
-const selectDashingEnabled = (s) => s.activeEdgeDashingEnabled;
-const selectSetDashingEnabled = (s) => s.setActiveEdgeDashingEnabled;
-const selectHighlightColorMode = (s) => s.highlightColorMode;
-const selectSetHighlightColorMode = (s) => s.setHighlightColorMode;
+const selectDashingEnabled = (s) => s.pivotEdgeDashingEnabled;
+const selectSetDashingEnabled = (s) => s.setPivotEdgeDashingEnabled;
 const selectUpcomingChangesEnabled = (s) => s.upcomingChangesEnabled;
 const selectSetUpcomingChangesEnabled = (s) => s.setUpcomingChangesEnabled;
 const selectTreeControllers = (s) => s.treeControllers;
@@ -52,6 +49,47 @@ const selectSetLabelsVisible = (s) => s.setLabelsVisible;
 // COMPONENT
 // ==========================================================================
 
+export function PerspectiveSection({ cameraMode, toggleCameraMode, treeControllers }) {
+  return (
+    <Collapsible defaultOpen asChild className="group/collapsible">
+      <SidebarMenuItem>
+        <CollapsibleTrigger asChild>
+          <SidebarMenuButton tooltip="Perspective">
+            <Box className="text-primary" />
+            <span>View Projection</span>
+            <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+          </SidebarMenuButton>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <SidebarMenuSub>
+            <SidebarMenuSubItem>
+              <div className="px-2 py-3">
+                <Button
+                  id="camera-mode-button"
+                  className="w-full text-xs h-9"
+                  variant="outline"
+                  onClick={() => {
+                    try {
+                      const newMode = toggleCameraMode();
+                      treeControllers.forEach(c => c?.setCameraMode?.(newMode));
+                    } catch { }
+                  }}
+                >
+                  <span id="camera-mode-text">{cameraMode === 'orbit' ? 'Switch to 2D' : 'Switch to 3D'}</span>
+                </Button>
+                <div className="flex items-start gap-2 text-2xs text-muted-foreground/80 italic mt-3 leading-relaxed">
+                  <Info className="size-3 shrink-0 mt-0.5" />
+                  <span>Toggle between flat 2D and interactive 3D camera for tree visualization.</span>
+                </div>
+              </div>
+            </SidebarMenuSubItem>
+          </SidebarMenuSub>
+        </CollapsibleContent>
+      </SidebarMenuItem>
+    </Collapsible>
+  );
+}
+
 export function Appearance() {
   const dimming = useAppStore(selectDimming);
   const dimmingOpacity = useAppStore(selectDimmingOpacity);
@@ -61,7 +99,6 @@ export function Appearance() {
   const connectorStrokeWidth = useAppStore(selectConnectorStrokeWidth);
   const pulseEnabled = useAppStore(selectPulseEnabled);
   const dashingEnabled = useAppStore(selectDashingEnabled);
-  const highlightColorMode = useAppStore(selectHighlightColorMode);
   const upcomingChangesEnabled = useAppStore(selectUpcomingChangesEnabled);
   const treeControllers = useAppStore(selectTreeControllers);
   const cameraMode = useAppStore(selectCameraMode);
@@ -107,9 +144,6 @@ export function Appearance() {
 
   const togglePulse = (value) => setPulseEnabled(!!value);
   const toggleDashing = (value) => setDashingEnabled(!!value);
-  const toggleHighContrast = async (value) => {
-    try { setHighContrastEnabled(!!value); await rerenderAll(); } catch { }
-  };
   const toggleUpcomingChanges = (value) => setUpcomingChangesEnabled(!!value);
 
   const toggleLabels = async (value) => {
@@ -129,7 +163,7 @@ export function Appearance() {
         onSubtreeDimmingOpacityChange={handleSubtreeDimmingOpacityChange}
       />
 
-      <ActiveEdgeEffectsSection
+      <PivotEdgeEffectsSection
         pulseEnabled={pulseEnabled}
         dashingEnabled={dashingEnabled}
         upcomingChangesEnabled={upcomingChangesEnabled}
@@ -147,42 +181,11 @@ export function Appearance() {
         labelsVisible={labelsVisible}
         onToggleLabels={toggleLabels}
       />
-      <Collapsible defaultOpen asChild className="group/collapsible">
-        <SidebarMenuItem>
-          <CollapsibleTrigger asChild>
-            <SidebarMenuButton tooltip="Perspective">
-              <Box className="text-primary" />
-              <span>Perspective</span>
-              <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-            </SidebarMenuButton>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <SidebarMenuSub>
-              <SidebarMenuSubItem>
-                <div className="px-2 py-3">
-                  <Button
-                    id="camera-mode-button"
-                    className="w-full text-xs h-9"
-                    variant="outline"
-                    onClick={() => {
-                      try {
-                        const newMode = toggleCameraMode();
-                        treeControllers.forEach(c => c?.setCameraMode?.(newMode));
-                      } catch { }
-                    }}
-                  >
-                    <span id="camera-mode-text">{cameraMode === 'orbit' ? 'Switch to 2D' : 'Switch to 3D'}</span>
-                  </Button>
-                  <div className="flex items-start gap-2 text-[10px] text-muted-foreground/80 italic mt-3 leading-relaxed">
-                    <Info className="size-3 shrink-0 mt-0.5" />
-                    <span>Toggle between flat 2D and interactive 3D camera for tree visualization.</span>
-                  </div>
-                </div>
-              </SidebarMenuSubItem>
-            </SidebarMenuSub>
-          </CollapsibleContent>
-        </SidebarMenuItem>
-      </Collapsible>
+      <PerspectiveSection
+        cameraMode={cameraMode}
+        toggleCameraMode={toggleCameraMode}
+        treeControllers={treeControllers}
+      />
     </>
   );
 }
@@ -192,14 +195,14 @@ export function Appearance() {
 // SUB-COMPONENTS
 // ==========================================================================
 
-function LabelsSection({ labelsVisible, onToggleLabels }) {
+export function LabelsSection({ labelsVisible, onToggleLabels }) {
   return (
     <Collapsible defaultOpen asChild className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
           <SidebarMenuButton tooltip="Labels">
             <Tag className="text-primary" />
-            <span>Labels</span>
+            <span>Taxa Labels</span>
             <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
           </SidebarMenuButton>
         </CollapsibleTrigger>
@@ -215,7 +218,7 @@ function LabelsSection({ labelsVisible, onToggleLabels }) {
                     onCheckedChange={onToggleLabels}
                   />
                 </div>
-                <div className="flex items-start gap-2 text-[10px] text-muted-foreground/80 italic mt-3 leading-relaxed">
+                <div className="flex items-start gap-2 text-2xs text-muted-foreground/80 italic mt-3 leading-relaxed">
                   <Info className="size-3 shrink-0 mt-0.5" />
                   <span>When hidden, labels are replaced with dots at leaf positions.</span>
                 </div>
@@ -228,14 +231,14 @@ function LabelsSection({ labelsVisible, onToggleLabels }) {
   );
 }
 
-function ConnectionsSection({ linkConnectionOpacity, connectorStrokeWidth, onLinkOpacityChange, onConnectorStrokeWidthChange }) {
+export function ConnectionsSection({ linkConnectionOpacity, connectorStrokeWidth, onLinkOpacityChange, onConnectorStrokeWidthChange }) {
   return (
     <Collapsible defaultOpen asChild className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton tooltip="Connections">
+          <SidebarMenuButton tooltip="Connecting Lines">
             <Link className="text-primary" />
-            <span>Connections</span>
+            <span>Connecting Lines</span>
             <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
           </SidebarMenuButton>
         </CollapsibleTrigger>

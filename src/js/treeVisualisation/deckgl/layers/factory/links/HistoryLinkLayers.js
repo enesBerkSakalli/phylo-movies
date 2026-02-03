@@ -58,7 +58,7 @@ const getHistoryLinkWidth = (link, layerStyles, cached, scale) =>
  * Internal prop builder to avoid repetition
  */
 const getLayerProps = (historyLinks, state, layerStyles, cached, { alphaScale, widthScale }) => {
-  const { taxaColorVersion, colorVersion, strokeWidth, activeEdgeDashingEnabled, upcomingChangesEnabled } = state || {};
+  const { taxaColorVersion, colorVersion, strokeWidth, pivotEdgeDashingEnabled, upcomingChangesEnabled } = state || {};
 
   return {
     data: historyLinks,
@@ -72,7 +72,7 @@ const getLayerProps = (historyLinks, state, layerStyles, cached, { alphaScale, w
     updateTriggers: {
       getColor: [colorVersion, taxaColorVersion, upcomingChangesEnabled],
       getWidth: [colorVersion, strokeWidth],
-      getDashArray: [colorVersion, activeEdgeDashingEnabled, upcomingChangesEnabled],
+      getDashArray: [colorVersion, pivotEdgeDashingEnabled, upcomingChangesEnabled],
       getPath: [historyLinks] // Only update if filtered list changes
     }
   };

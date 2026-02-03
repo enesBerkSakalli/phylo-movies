@@ -8,7 +8,6 @@ import { createLayer } from '../base/createLayer.js';
 import { addZOffsetToPath, getLinkHistoryZOffset } from '../../../utils/GeometryUtils.js';
 import {
   LAYER_CONFIGS,
-  HOVER_HIGHLIGHT_COLOR
 } from '../../config/layerConfigs.js';
 
 // ============================================================================
@@ -22,7 +21,7 @@ import {
 export function getLinkOutlinesLayerProps(links, state, layerStyles) {
   const {
     colorVersion, strokeWidth, changePulsePhase, changePulseEnabled,
-    activeEdgeDashingEnabled, upcomingChangesEnabled, markedSubtreesEnabled,
+    pivotEdgeDashingEnabled, upcomingChangesEnabled, markedSubtreesEnabled,
     highlightColorMode, highlightSourceEnabled, highlightDestinationEnabled,
     dimmingEnabled, dimmingOpacity, subtreeDimmingEnabled, subtreeDimmingOpacity,
     markedSubtreeOpacity
@@ -33,7 +32,7 @@ export function getLinkOutlinesLayerProps(links, state, layerStyles) {
   // Highlight Visibility Logic
   // Only show outlines when there are active highlights/changes to minimize overhead
   const hasHighlights = !!(
-    colorManager?.hasActiveChangeEdges?.() ||
+    colorManager?.hasPivotEdges?.() ||
     (colorManager?.sharedMarkedJumpingSubtrees?.length > 0) ||
     (upcomingChangesEnabled && colorManager?.hasUpcomingChangeEdges?.()) ||
     (upcomingChangesEnabled && colorManager?.hasCompletedChangeEdges?.())
@@ -63,7 +62,7 @@ export function getLinkOutlinesLayerProps(links, state, layerStyles) {
         upcomingChangesEnabled, markedSubtreesEnabled, highlightColorMode,
         highlightSourceEnabled, highlightDestinationEnabled
       ],
-      getDashArray: [colorVersion, activeEdgeDashingEnabled, upcomingChangesEnabled],
+      getDashArray: [colorVersion, pivotEdgeDashingEnabled, upcomingChangesEnabled],
       getPath: [links, colorVersion]
     }
   };
@@ -79,7 +78,7 @@ export function createLinkOutlinesLayer(links, state, layerStyles) {
 
 export function getLinksLayerProps(links, state, layerStyles) {
   const {
-    taxaColorVersion, colorVersion, strokeWidth, activeEdgeDashingEnabled,
+    taxaColorVersion, colorVersion, strokeWidth, pivotEdgeDashingEnabled,
     upcomingChangesEnabled, markedSubtreesEnabled, highlightColorMode,
     highlightSourceEnabled, highlightDestinationEnabled, dimmingEnabled,
     dimmingOpacity, subtreeDimmingEnabled, subtreeDimmingOpacity
@@ -89,9 +88,7 @@ export function getLinksLayerProps(links, state, layerStyles) {
 
   return {
     data: links,
-    pickable: true,
-    autoHighlight: true,
-    highlightColor: HOVER_HIGHLIGHT_COLOR,
+    pickable: false,
     getPath: d => addZOffsetToPath(d.path, getLinkHistoryZOffset(cached, d)),
     getColor: d => layerStyles.getLinkColor(d, cached),
     getWidth: d => layerStyles.getLinkWidth(d, cached),
@@ -107,7 +104,7 @@ export function getLinksLayerProps(links, state, layerStyles) {
         colorVersion, strokeWidth, upcomingChangesEnabled, markedSubtreesEnabled,
         highlightColorMode, highlightSourceEnabled, highlightDestinationEnabled
       ],
-      getDashArray: [colorVersion, activeEdgeDashingEnabled, upcomingChangesEnabled],
+      getDashArray: [colorVersion, pivotEdgeDashingEnabled, upcomingChangesEnabled],
       getPath: [links, colorVersion]
     }
   };

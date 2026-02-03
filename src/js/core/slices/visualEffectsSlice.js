@@ -10,7 +10,7 @@ export const createVisualEffectsSlice = (set, get) => ({
   // ==========================================================================
   changePulseEnabled: true,
   changePulsePhase: 0,
-  activeEdgeDashingEnabled: true,
+  pivotEdgeDashingEnabled: true,
   highlightColorMode: 'solid', // 'contrast' | 'taxa' | 'solid'
   linkConnectionOpacity: 0.6,
 
@@ -43,8 +43,8 @@ export const createVisualEffectsSlice = (set, get) => ({
     }
   },
 
-  setActiveEdgeDashingEnabled: (enabled) => {
-    set((s) => ({ activeEdgeDashingEnabled: enabled, colorVersion: s.colorVersion + 1 }));
+  setPivotEdgeDashingEnabled: (enabled) => {
+    set((s) => ({ pivotEdgeDashingEnabled: enabled, colorVersion: s.colorVersion + 1 }));
     renderTreeControllers(get().treeControllers);
   },
 
@@ -52,7 +52,7 @@ export const createVisualEffectsSlice = (set, get) => ({
     const { changePulseEnabled, colorManager } = get();
     if (!changePulseEnabled) return;
 
-    const hasChanges = colorManager?.hasActiveChangeEdges?.() || colorManager?.sharedMarkedJumpingSubtrees?.length > 0;
+    const hasChanges = colorManager?.hasPivotEdges?.() || colorManager?.sharedMarkedJumpingSubtrees?.length > 0;
     if (!hasChanges || pulseController?.isRunning) return;
 
     if (!pulseController) {
@@ -62,7 +62,7 @@ export const createVisualEffectsSlice = (set, get) => ({
         shouldContinue: () => {
           const s = get();
           const cm = s.colorManager;
-          return s.changePulseEnabled && (cm?.hasActiveChangeEdges?.() || cm?.sharedMarkedJumpingSubtrees?.length > 0);
+          return s.changePulseEnabled && (cm?.hasPivotEdges?.() || cm?.sharedMarkedJumpingSubtrees?.length > 0);
         }
       });
     }

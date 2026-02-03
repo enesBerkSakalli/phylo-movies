@@ -176,14 +176,14 @@ describe('Complex Data Layer Integration', () => {
       // For this test, we accept string keys "M1", "M2".
 
       // The builder expects `latticeSolutions` keys to be stringified arrays: "[u, v]"
-      // If we pass activeChangeEdge = ['edge1'], it looks up latticeSolutions['[edge1]'].
+      // If we pass pivotEdge = ['edge1'], it looks up latticeSolutions['[edge1]'].
 
       const movingSubtree = ['M1', 'M2']; // Restore definition
-      const activeEdge = ['edge1'];
+      const pivotEdge = ['edge1'];
       const edgeKey = '[edge1]';
 
       const mockColorManager = {
-        isNodeActiveEdge: () => false,
+        isNodePivotEdge: () => false,
         isNodeHistorySubtree: () => false,
         getOutputColor: () => [100, 100, 100],
         getTypeColor: () => [200, 200, 200]
@@ -193,7 +193,7 @@ describe('Complex Data Layer Integration', () => {
         leftPositions,
         rightPositions,
         latticeSolutions: { [edgeKey]: [movingSubtree] }, // Fix key format
-        activeChangeEdge: activeEdge,
+        pivotEdge: pivotEdge,
         colorManager: mockColorManager,
         subtreeTracking: [movingSubtree], // "Current tree" structure
         currentTreeIndex: 0,

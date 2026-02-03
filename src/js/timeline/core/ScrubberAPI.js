@@ -96,8 +96,8 @@ export class ScrubberAPI {
   }
 
   _updateColorManagerForScrub(state, treeIndex) {
-    const { colorManager, activeChangeEdgesEnabled,
-      getMarkedSubtreeData, getCurrentActiveChangeEdge,
+    const { colorManager, pivotEdgesEnabled,
+      getMarkedSubtreeData, getCurrentPivotEdge,
       getSubtreeHistoryData, updateColorManagerHistorySubtrees, markedSubtreesEnabled,
       getSourceDestinationEdgeData, updateColorManagerSourceDestinationEdges,
       getCurrentMovingSubtreeData, updateColorManagerMovingSubtree } = state;
@@ -108,8 +108,8 @@ export class ScrubberAPI {
     colorManager.updateMarkedSubtrees(
       getMarkedSubtreeData(treeIndex).map(toSet)
     );
-    colorManager.updateActiveChangeEdge(
-      activeChangeEdgesEnabled ? getCurrentActiveChangeEdge(treeIndex) : []
+    colorManager.updatePivotEdge(
+      pivotEdgesEnabled ? getCurrentPivotEdge(treeIndex) : []
     );
     if (updateColorManagerHistorySubtrees && getSubtreeHistoryData) {
       const history = markedSubtreesEnabled === false ? [] : getSubtreeHistoryData(treeIndex);
