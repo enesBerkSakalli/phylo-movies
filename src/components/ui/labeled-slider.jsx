@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
  * A reusable slider component with a label and value display,
  * designed to fit consistently in the application sidebars.
  */
-export function LabeledSlider({
+export const LabeledSlider = React.forwardRef(function LabeledSlider({
   id,
   label,
   value,
@@ -19,9 +19,9 @@ export function LabeledSlider({
   title,
   ariaLabel,
   className,
-}) {
+}, ref) {
   return (
-    <div className={cn("grid gap-2.5", className)}>
+    <div ref={ref} className={cn("grid gap-2.5", className)}>
       <div className="flex items-center justify-between">
         <Label
           htmlFor={id}
@@ -48,4 +48,5 @@ export function LabeledSlider({
       />
     </div>
   );
-}
+});
+LabeledSlider.displayName = 'LabeledSlider';

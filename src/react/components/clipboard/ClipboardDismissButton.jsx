@@ -5,9 +5,15 @@ import { useAppStore } from '../../../js/core/store.js';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+// ==========================================================================
+// STORE SELECTORS
+// ==========================================================================
+const selectClipboardTreeIndex = (s) => s.clipboardTreeIndex;
+const selectClearClipboard = (s) => s.clearClipboard;
+
 export function ClipboardDismissButton() {
-  const clipboardTreeIndex = useAppStore((s) => s.clipboardTreeIndex);
-  const clearClipboard = useAppStore((s) => s.clearClipboard);
+  const clipboardTreeIndex = useAppStore(selectClipboardTreeIndex);
+  const clearClipboard = useAppStore(selectClearClipboard);
 
   if (clipboardTreeIndex === null) return null;
 

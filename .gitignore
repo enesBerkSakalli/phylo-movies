@@ -45,3 +45,16 @@ docs
 dist-publish
 playwright.config.ts
 .kiro
+# Electron build outputs
+electron-app/frontend-dist/
+electron-app/release/
+electron-app/logs/
+electron-app/BranchArchitect/dist/
+electron-app/BranchArchitect/build/
+electron-app/BranchArchitect/.venv/
+electron-app/BranchArchitect/**/__pycache__/
+electron-app/BranchArchitect/**/*.pyc
+publication_data/MBE_DATA_CHECKLIST.md
+publication_data/audit_mbe_compliance.py
+publication_data/intro.md
+publication_data/norovirus/augur_subsampling/scripts/analyze_dataset_for_paper.py

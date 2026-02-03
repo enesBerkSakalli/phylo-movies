@@ -62,6 +62,9 @@ export class DeckTimelineRenderer {
     this._updateScheduled = false;
     this._width = 0;
 
+    // Bound handlers (for stable references)
+    this._boundHoverClick = (info) => this._handleHoverLayerClick(info);
+
     // Layer instances (initialized in init())
     this.separatorLayer = null;
     this.connectionLayer = null;
@@ -129,8 +132,8 @@ export class DeckTimelineRenderer {
     this.separatorLayer = createSeparatorLayer([], TIMELINE_THEME);
     this.connectionLayer = createConnectionLayer([], TIMELINE_THEME.connectionWidth);
     this.anchorLayer = createAnchorLayer([], TIMELINE_THEME.anchorStrokeWidth);
-    this.connectionHoverLayer = createConnectionHoverLayer([], TIMELINE_THEME.connectionHoverRGB, TIMELINE_THEME.connectionHoverWidth, (info) => this._handleHoverLayerClick(info));
-    this.anchorHoverLayer = createAnchorHoverLayer([], TIMELINE_THEME.connectionHoverRGB, (info) => this._handleHoverLayerClick(info));
+    this.connectionHoverLayer = createConnectionHoverLayer([], TIMELINE_THEME.connectionHoverRGB, TIMELINE_THEME.connectionHoverWidth, this._boundHoverClick);
+    this.anchorHoverLayer = createAnchorHoverLayer([], TIMELINE_THEME.connectionHoverRGB, this._boundHoverClick);
     this.connectionSelectionLayer = createConnectionSelectionLayer([], TIMELINE_THEME);
     this.anchorSelectionLayer = createAnchorSelectionLayer([], TIMELINE_THEME);
     this.scrubberLayer = createPathLayer('scrubber-layer', [], [0, 0, 0, 0], 1);
@@ -315,8 +318,6 @@ export class DeckTimelineRenderer {
     const clickMs = this._xToMs(x);
     const initialSegIndex = this._timeToSegmentIndex(clickMs);
 
-    console.log('[DeckTimelineRenderer] Click detected:', { x, clickMs, initialSegIndex });
-
     if (initialSegIndex === -1) {
       this.setSelection(null);
       this._emit('select', { id: null });
@@ -325,9 +326,6 @@ export class DeckTimelineRenderer {
 
     const targetIndex = getTargetSegmentIndex(initialSegIndex, clickMs, this.segments, this.timelineData.cumulativeDurations);
     const targetId = targetIndex + 1;
-    const segment = this.segments[targetIndex];
-
-    console.log('[DeckTimelineRenderer] Segment click:', { targetIndex, targetId, isFullTree: segment?.isFullTree });
 
     this.setSelection([targetId]);
     this._emit('select', { id: targetId, ms: clickMs, segment: this.segments[targetIndex] });
@@ -441,32 +439,42 @@ export class DeckTimelineRenderer {
     const theme = TIMELINE_THEME;
     const separatorWidth = calculateSeparatorWidth(this.segments?.length || 0, theme);
 
+    // Cache color arrays for updateTriggers (stable references for comparison)
+    const separatorColor = [theme.separatorRGB[0], theme.separatorRGB[1], theme.separatorRGB[2], 80];
+    const hoverColor = [theme.connectionHoverRGB[0], theme.connectionHoverRGB[1], theme.connectionHoverRGB[2], 160];
+    const selectionColor = [theme.connectionSelectionRGB[0], theme.connectionSelectionRGB[1], theme.connectionSelectionRGB[2], 230];
+
     return [
       this.separatorLayer.clone({
         data: separators,
-        getColor: [theme.separatorRGB[0], theme.separatorRGB[1], theme.separatorRGB[2], 80],
-        widthMinPixels: separatorWidth
+        getColor: separatorColor,
+        widthMinPixels: separatorWidth,
+        updateTriggers: { getColor: separatorColor }
       }),
       this.connectionLayer.clone({ data: connections, widthMinPixels: theme.connectionWidth }),
       this.connectionHoverLayer.clone({
         data: hoverConnections,
-        getColor: [theme.connectionHoverRGB[0], theme.connectionHoverRGB[1], theme.connectionHoverRGB[2], 160],
-        widthMinPixels: theme.connectionHoverWidth
+        getColor: hoverColor,
+        widthMinPixels: theme.connectionHoverWidth,
+        updateTriggers: { getColor: hoverColor }
       }),
       this.connectionSelectionLayer.clone({
         data: selectionConnections,
-        getColor: [theme.connectionSelectionRGB[0], theme.connectionSelectionRGB[1], theme.connectionSelectionRGB[2], 230],
-        widthMinPixels: theme.connectionSelectionWidth
+        getColor: selectionColor,
+        widthMinPixels: theme.connectionSelectionWidth,
+        updateTriggers: { getColor: selectionColor }
       }),
       this.scrubberLayer.clone(createScrubberLayer(this._scrubberMs, this._rangeStart, this._rangeEnd, width, height, theme, this._isScrubbing)),
       this.anchorLayer.clone({ data: anchorPoints, lineWidthMinPixels: theme.anchorStrokeWidth }),
       this.anchorHoverLayer.clone({
         data: hoverAnchors,
-        getLineColor: [theme.connectionHoverRGB[0], theme.connectionHoverRGB[1], theme.connectionHoverRGB[2], 160]
+        getLineColor: hoverColor,
+        updateTriggers: { getLineColor: hoverColor }
       }),
       this.anchorSelectionLayer.clone({
         data: selectionAnchors,
-        getLineColor: [theme.connectionSelectionRGB[0], theme.connectionSelectionRGB[1], theme.connectionSelectionRGB[2], 230]
+        getLineColor: selectionColor,
+        updateTriggers: { getLineColor: selectionColor }
       })
     ];
   }

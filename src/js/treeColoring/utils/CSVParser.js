@@ -189,21 +189,35 @@ function parseCSVLine(line) {
 }
 
 /**
- * Validate if taxa in CSV match available taxa names
+ * Validate if taxa in CSV match available taxa names (case-insensitive)
  * @param {Map} csvTaxaGroups - Map of taxon to group from CSV
  * @param {Array} availableTaxa - Array of available taxa names
- * @returns {Object} Validation result
+ * @returns {Object} Validation result with canonical mapping
  */
 export function validateCSVTaxa(csvTaxaGroups, availableTaxa) {
-  const availableSet = new Set(availableTaxa);
+  // Create lowercase lookup map: lowercase -> original_canonical_name
+  const availableLowerMap = new Map();
+  availableTaxa.forEach(name => {
+    const lower = name.toLowerCase();
+    // Only store first occurrence if there are duplicates (unlikely in tree)
+    if (!availableLowerMap.has(lower)) {
+      availableLowerMap.set(lower, name);
+    }
+  });
+
   const matched = [];
   const unmatched = [];
+  const canonicalMapping = new Map(); // CSV name -> Tree official name
 
-  for (const [taxon] of csvTaxaGroups) {
-    if (availableSet.has(taxon)) {
-      matched.push(taxon);
+  for (const [csvTaxon] of csvTaxaGroups) {
+    const csvTaxonLower = csvTaxon.toLowerCase();
+    
+    if (availableLowerMap.has(csvTaxonLower)) {
+      const treeOfficialName = availableLowerMap.get(csvTaxonLower);
+      matched.push(treeOfficialName);
+      canonicalMapping.set(csvTaxon, treeOfficialName);
     } else {
-      unmatched.push(taxon);
+      unmatched.push(csvTaxon);
     }
   }
 
@@ -211,6 +225,7 @@ export function validateCSVTaxa(csvTaxaGroups, availableTaxa) {
     isValid: matched.length > 0,
     matched,
     unmatched,
+    canonicalMapping,
     matchPercentage: Math.round((matched.length / csvTaxaGroups.size) * 100)
   };
 }

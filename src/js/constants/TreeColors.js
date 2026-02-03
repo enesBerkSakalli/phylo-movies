@@ -1,8 +1,14 @@
-// Tree color categories for phylogenetic visualization
-export const TREE_COLOR_CATEGORIES = {
+// Default system colors that shouldn't be overridden by taxon names
+export const SYSTEM_COLOR_DEFAULTS = {
   defaultColor: "#000000",
-  markedColor: "#ff5722",
+  markedColor: "#10b981",
   strokeColor: "#000000",
-  // Highlighting colors for different types
-  activeChangeEdgeColor: "#2196f3" // Color for edges where active changes are happening
+  pivotEdgeColor: "#2196f3"
 };
+
+/**
+ * TREE_COLOR_CATEGORIES is kept for backward compatibility and as a runtime
+ * container for system-level colors only.
+ * STOP adding individual taxon names to this object.
+ */
+export const TREE_COLOR_CATEGORIES = { ...SYSTEM_COLOR_DEFAULTS };

@@ -6,6 +6,7 @@ import {
   SidebarMenuSubItem
 } from '@/components/ui/sidebar';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
+import { Separator } from '@/components/ui/separator';
 import { ChevronDown, Eye } from 'lucide-react';
 import { ToggleWithSlider } from './ToggleWithSlider';
 
@@ -17,9 +18,9 @@ export function FocusHighlightingSection({
     <Collapsible defaultOpen asChild className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton tooltip="Focus & Dimming">
+          <SidebarMenuButton tooltip="Contextual Focus">
             <Eye className="text-primary" />
-            <span>Focus & Dimming</span>
+            <span>Contextual Focus</span>
             <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
           </SidebarMenuButton>
         </CollapsibleTrigger>
@@ -37,7 +38,7 @@ export function FocusHighlightingSection({
                   onSliderChange={onDimmingOpacityChange}
                   sliderLabel="Dimming Intensity"
                 />
-                <div className="h-px bg-muted/30 mx-1" />
+                <Separator className="mx-1" />
                 <ToggleWithSlider
                   id="dim-non-subtree"
                   label="Marked Subtree"

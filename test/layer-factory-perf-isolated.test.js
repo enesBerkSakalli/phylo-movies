@@ -19,7 +19,7 @@ describe('Layer factory perf (isolated, fake LayerStyles)', function () {
   it('verifies cloning strategy prevents repeated instantiation', function () {
     const fakeLayerStyles = {
       getCachedState: () => ({
-        colorManager: { hasActiveChangeEdges: () => false, sharedMarkedJumpingSubtrees: [] },
+        colorManager: { hasPivotEdges: () => false, sharedMarkedJumpingSubtrees: [] },
         dimmingEnabled: false,
         subtreeDimmingEnabled: false,
         pulseOpacity: 1.0,

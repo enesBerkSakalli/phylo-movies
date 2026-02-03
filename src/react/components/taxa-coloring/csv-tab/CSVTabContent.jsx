@@ -20,10 +20,10 @@ export function CSVTabContent({
   handleColorChange
 }) {
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <CSVUpload onFile={onFile} csvFileName={csvFileName} onReset={resetCSV} />
       {csvData && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           <CSVColumnSelector
             csvData={csvData}
             csvColumn={csvColumn}

@@ -97,7 +97,7 @@ export function GeometryDimensions({
             onChange={handleFontSizeChange}
           />
 
-          <div className="text-[10px] leading-relaxed text-muted-foreground/80 italic mt-2">
+          <div className="text-2xs leading-relaxed text-muted-foreground/80 italic mt-2">
             Line widths and label sizes scale with zoom to stay proportional to the tree.
           </div>
         </div>

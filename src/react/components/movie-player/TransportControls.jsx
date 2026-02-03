@@ -2,24 +2,40 @@ import React, { useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ChevronsLeft, ChevronLeft, Play, Pause, ChevronRight, ChevronsRight, GitCompare, Link2, Link2Off } from 'lucide-react';
-import { useAppStore } from '../../../js/core/store.js';
+import { useAppStore } from '@/js/core/store';
+
+// ==========================================================================
+// STORE SELECTORS
+// ==========================================================================
+const selectPlaying = (s) => s.playing;
+const selectCurrentTreeIndex = (s) => s.currentTreeIndex;
+const selectTreeListLength = (s) => s.treeList?.length || 0;
+const selectComparisonMode = (state) => state.comparisonMode;
+const selectToggleComparisonMode = (state) => state.toggleComparisonMode;
+const selectViewsConnected = (s) => s.viewsConnected;
+const selectSetViewsConnected = (s) => s.setViewsConnected;
+const selectStartAnimationPlayback = (s) => s.startAnimationPlayback;
+const selectStopAnimationPlayback = (s) => s.stopAnimationPlayback;
+const selectGoToNextAnchor = (s) => s.goToNextAnchor;
+const selectGoToPreviousAnchor = (s) => s.goToPreviousAnchor;
+const selectTransitionResolver = (s) => s.transitionResolver;
 
 export function TransportControls({
   onBackward,
   onForward,
 }) {
-  const playing = useAppStore((s) => s.playing);
-  const currentTreeIndex = useAppStore((s) => s.currentTreeIndex);
-  const treeListLen = useAppStore((s) => s.treeList?.length || 0);
-  const comparisonMode = useAppStore((state) => state.comparisonMode);
-  const toggleComparisonMode = useAppStore((state) => state.toggleComparisonMode);
-  const viewsConnected = useAppStore((s) => s.viewsConnected);
-  const setViewsConnected = useAppStore((s) => s.setViewsConnected);
-  const startAnimationPlayback = useAppStore((s) => s.startAnimationPlayback);
-  const stopAnimationPlayback = useAppStore((s) => s.stopAnimationPlayback);
-  const goToNextAnchor = useAppStore((s) => s.goToNextAnchor);
-  const goToPreviousAnchor = useAppStore((s) => s.goToPreviousAnchor);
-  const transitionResolver = useAppStore((s) => s.transitionResolver);
+  const playing = useAppStore(selectPlaying);
+  const currentTreeIndex = useAppStore(selectCurrentTreeIndex);
+  const treeListLen = useAppStore(selectTreeListLength);
+  const comparisonMode = useAppStore(selectComparisonMode);
+  const toggleComparisonMode = useAppStore(selectToggleComparisonMode);
+  const viewsConnected = useAppStore(selectViewsConnected);
+  const setViewsConnected = useAppStore(selectSetViewsConnected);
+  const startAnimationPlayback = useAppStore(selectStartAnimationPlayback);
+  const stopAnimationPlayback = useAppStore(selectStopAnimationPlayback);
+  const goToNextAnchor = useAppStore(selectGoToNextAnchor);
+  const goToPreviousAnchor = useAppStore(selectGoToPreviousAnchor);
+  const transitionResolver = useAppStore(selectTransitionResolver);
 
   // Get anchor indices for disabled state calculation
   const anchorIndices = useMemo(() => {

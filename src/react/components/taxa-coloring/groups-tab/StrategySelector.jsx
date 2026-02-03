@@ -57,7 +57,7 @@ export function StrategySelector({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="space-y-0.5 min-w-[120px]">
                <h3 className="text-sm font-medium leading-none">Grouping Pattern</h3>
-               <p className="text-[10px] text-muted-foreground">How taxa are parsed.</p>
+               <p className="text-2xs text-muted-foreground">How taxa are parsed.</p>
             </div>
             <div className="flex flex-wrap gap-1.5 bg-background/50 p-1 rounded-md border border-border/20">
               {strategies.map(s => (
@@ -120,7 +120,7 @@ export function StrategySelector({
                       />
                    </div>
                  </div>
-                 <p className="text-[10px] text-muted-foreground pl-[92px]">
+                 <p className="text-2xs text-muted-foreground pl-[92px]">
                    Split by separators, then pick the segment at the chosen index.
                  </p>
                </div>

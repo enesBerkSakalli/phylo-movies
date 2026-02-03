@@ -2,6 +2,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Separator } from "@/components/ui/separator";
 
 import { TaxaTabContent } from "./taxa-tab/TaxaTabContent.jsx";
 import { GroupsTabContent } from "./groups-tab/GroupsTabContent.jsx";
@@ -31,7 +32,7 @@ export function TaxaColoringWindow({ taxaNames = [], originalColorMap = {}, onAp
     onFile,
     onColumnChange,
     resetAll,
-    resetColorsToBlack,
+    resetToDefault,
     buildResult,
     handleColorChange
   } = useTaxaColoringState(taxaNames, originalColorMap, initialState);
@@ -51,37 +52,37 @@ export function TaxaColoringWindow({ taxaNames = [], originalColorMap = {}, onAp
 
   return (
     <div className="flex h-full flex-col gap-2 p-3 sm:p-4">
-      <header className="flex flex-col gap-3 border-b border-border/40 pb-3 md:flex-row md:items-center md:justify-between shrink-0">
-        <div className="space-y-0.5">
-          <h1 className="text-sm font-bold tracking-tight">Taxa Color Assignment</h1>
-          <p className="text-[10px] text-muted-foreground/80">Fine-tune palette presets, grouping strategies, or CSV imports.</p>
+      <header className="flex flex-col gap-3 pb-3 md:flex-row md:items-center md:justify-between shrink-0 border-b border-border/40">
+        <div className="space-y-1">
+          <h2 className="text-sm font-semibold tracking-tight">Taxa Color Assignment</h2>
+          <p className="text-2xs text-muted-foreground/80">Fine-tune palette presets, grouping strategies, or CSV imports.</p>
         </div>
         <div className="flex items-center gap-3 self-end md:self-auto">
-          <div className="flex items-center gap-1.5 bg-accent/30 p-1.5 rounded-lg border border-border/40 shadow-sm">
+          <div className="flex items-center gap-1.5 bg-muted/50 p-1 rounded-lg border border-border/40 shadow-sm">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-7 text-[11px] px-3 font-medium hover:bg-background/90 group/btn transition-all" onClick={resetColorsToBlack}>
+                <Button variant="ghost" size="sm" className="h-7 text-[11px] px-3 font-medium hover:bg-background/80 group/btn transition-all" onClick={resetToDefault}>
                   <RotateCcw className="size-3 mr-2 text-muted-foreground group-hover/btn:text-foreground transition-colors" />
-                  Black Only
+                  Clear All
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Reset colors to solid black</TooltipContent>
+              <TooltipContent>Clear all assignments and reset to default color</TooltipContent>
             </Tooltip>
 
-            <div className="w-px h-3.5 bg-border/50 mx-0.5" />
+            <Separator orientation="vertical" className="h-4 mx-0.5" />
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-7 text-[11px] px-3 font-medium hover:bg-background/90 group/btn transition-all" onClick={resetAll}>
+                <Button variant="ghost" size="sm" className="h-7 text-[11px] px-3 font-medium hover:bg-background/80 group/btn transition-all" onClick={resetAll}>
                   <RefreshCcw className="size-3 mr-2 text-muted-foreground group-hover/btn:text-foreground transition-colors" />
-                  Reset All
+                  Factory Reset
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Restore original colors & clear groups</TooltipContent>
+              <TooltipContent>Restore initial state & clear all grouping metadata</TooltipContent>
             </Tooltip>
           </div>
 
-          <Button size="sm" className="h-8.5 px-6 text-xs font-bold shadow-lg hover:scale-[1.03] active:scale-95 transition-all gap-2 bg-primary hover:bg-primary/90" onClick={applyAndClose}>
+          <Button size="sm" className="h-8 px-6 text-xs font-bold shadow-lg hover:scale-[1.03] active:scale-95 transition-all gap-2 bg-primary hover:bg-primary/90" onClick={applyAndClose}>
             <Check className="size-3.5" />
             Done
           </Button>

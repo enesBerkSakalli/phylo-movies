@@ -32,7 +32,7 @@ export function GroupingStatusSummary({ groupingResult }) {
       </div>
 
       {hasGroups && (
-        <div className="flex items-center gap-2.5 text-[10px] sm:text-xs">
+        <div className="flex items-center gap-2.5 text-2xs sm:text-xs">
           <span className="text-muted-foreground/80 font-medium">
              {groupedCount}/{totalTaxa} Taxa
           </span>

@@ -57,14 +57,14 @@ let mockStoreState = {
   activeEdgeDashingEnabled: false,
   getPulseOpacity: () => 1.0,
   getColorManager: () => ({
-    hasActiveChangeEdges: () => false,
+    hasPivotEdges: () => false,
     sharedMarkedJumpingSubtrees: [],
     getBranchColor: () => '#000000',
     getBranchColorForInnerLine: () => '#000000',
     getBranchColorWithHighlights: () => '#000000',
     getNodeColor: () => '#000000',
-    isDownstreamOfAnyActiveChangeEdge: () => false,
-    isNodeDownstreamOfAnyActiveChangeEdge: () => false
+    isDownstreamOfAnyPivotEdge: () => false,
+    isNodeDownstreamOfAnyPivotEdge: () => false
   })
 };
 
@@ -102,12 +102,77 @@ const {
   createExtensionsLayer
 } = require('../src/js/treeVisualisation/deckgl/layers/factory/index.js');
 const { LayerStyles } = require('../src/js/treeVisualisation/deckgl/layers/LayerStyles.js');
+const { isNodeInSubtree, isLinkInSubtree } = require('../src/js/treeVisualisation/utils/splitMatching.js');
+
+/**
+ * Helper to create a mock ColorManager with the required fast subtree methods.
+ * This ensures mocks include _markedLeavesUnion and fast path methods.
+ */
+function createMockColorManager(overrides = {}) {
+  const subtrees = overrides.sharedMarkedJumpingSubtrees || [];
+  // Build union of all leaf indices
+  const union = new Set();
+  for (const subtree of subtrees) {
+    for (const idx of subtree) {
+      union.add(idx);
+    }
+  }
+
+  const base = {
+    hasActiveChangeEdges: () => false,
+    sharedMarkedJumpingSubtrees: subtrees,
+    _markedLeavesUnion: union,
+    markedSubtreesColoringEnabled: true,
+    getBranchColor: () => '#000000',
+    getBranchColorForInnerLine: () => '#000000',
+    getBranchColorWithHighlights: () => '#000000',
+    getNodeColor: () => '#000000',
+    getNodeBaseColor: () => '#000000',
+    isDownstreamOfAnyActiveChangeEdge: () => false,
+    isNodeDownstreamOfAnyActiveChangeEdge: () => false,
+    isNodeSourceEdge: () => false,
+    isNodeDestinationEdge: () => false,
+    isActiveChangeEdge: () => false,
+    isNodeActiveChangeEdge: () => false,
+    isNodeInMarkedSubtreeFast: function(nodeData) {
+      if (this._markedLeavesUnion.size === 0) return false;
+      const splits = nodeData?.data?.split_indices || nodeData?.split_indices;
+      if (!splits?.length) return false;
+      for (let i = 0; i < splits.length; i++) {
+        if (!this._markedLeavesUnion.has(splits[i])) return false;
+      }
+      return isNodeInSubtree(nodeData, this.sharedMarkedJumpingSubtrees);
+    },
+    isLinkInMarkedSubtreeFast: function(linkData) {
+      if (this._markedLeavesUnion.size === 0) return false;
+      const splits = linkData?.target?.data?.split_indices || linkData?.target?.split_indices;
+      if (!splits?.length) return false;
+      for (let i = 0; i < splits.length; i++) {
+        if (!this._markedLeavesUnion.has(splits[i])) return false;
+      }
+      return isLinkInSubtree(linkData, this.sharedMarkedJumpingSubtrees);
+    }
+  };
+
+  // Apply overrides, but rebuild union if subtrees change
+  const result = { ...base, ...overrides };
+  if (overrides.sharedMarkedJumpingSubtrees && !overrides._markedLeavesUnion) {
+    const newUnion = new Set();
+    for (const subtree of overrides.sharedMarkedJumpingSubtrees) {
+      for (const idx of subtree) {
+        newUnion.add(idx);
+      }
+    }
+    result._markedLeavesUnion = newUnion;
+  }
+  return result;
+}
 
 describe('Layer Highlighting Configuration', () => {
   let layerStyles;
 
   beforeEach(() => {
-    // Reset mock state
+    // Reset mock state using the helper for ColorManager
     mockStoreState = {
       taxaColorVersion: 0,
       colorVersion: 0,
@@ -120,16 +185,7 @@ describe('Layer Highlighting Configuration', () => {
       changePulseEnabled: false,
       activeEdgeDashingEnabled: false,
       getPulseOpacity: () => 1.0,
-      getColorManager: () => ({
-        hasActiveChangeEdges: () => false,
-        sharedMarkedJumpingSubtrees: [],
-        getBranchColor: () => '#000000',
-        getBranchColorForInnerLine: () => '#000000',
-        getBranchColorWithHighlights: () => '#000000',
-        getNodeColor: () => '#000000',
-        isDownstreamOfAnyActiveChangeEdge: () => false,
-        isNodeDownstreamOfAnyActiveChangeEdge: () => false
-      })
+      getColorManager: () => createMockColorManager()
     };
     layerStyles = new LayerStyles();
   });
@@ -237,7 +293,7 @@ describe('Layer Highlighting Configuration', () => {
           hasActiveChangeEdges: () => false,
           sharedMarkedJumpingSubtrees: [new Set([1, 2, 3])],
           getBranchColor: () => '#000000',
-          getBranchColorWithHighlights: () => '#ff5722',
+          getBranchColorWithHighlights: () => '#10b981',
           getNodeColor: () => '#000000',
           isDownstreamOfAnyActiveChangeEdge: () => false,
           isNodeDownstreamOfAnyActiveChangeEdge: () => false
@@ -258,7 +314,7 @@ describe('Layer Highlighting Configuration', () => {
 
       const [r, g, b, a] = layer.props.highlightColor;
 
-      // Hover color should be distinct from blue (#2196f3) and red (#ff5722)
+      // Hover color should be distinct from blue (#2196f3) and emerald (#10b981)
       // Using cyan-ish color [0, 200, 220, 150]
       expect(g).to.be.greaterThan(100); // Has significant green
       expect(b).to.be.greaterThan(100); // Has significant blue
@@ -271,14 +327,8 @@ describe('Layer Highlighting Configuration', () => {
       // Mutate the mock store so LayerStyles.getCachedState() observes subtree settings
       mockStoreState.subtreeDimmingEnabled = true;
       mockStoreState.subtreeDimmingOpacity = 0.5;
-      mockStoreState.getColorManager = () => ({
-        hasActiveChangeEdges: () => false,
-        sharedMarkedJumpingSubtrees: [new Set([1, 2, 3])],
-        getBranchColor: () => '#000000',
-        getBranchColorWithHighlights: () => '#2196f3',
-        getNodeColor: () => '#000000',
-        isDownstreamOfAnyActiveChangeEdge: () => false,
-        isNodeDownstreamOfAnyActiveChangeEdge: () => false
+      mockStoreState.getColorManager = () => createMockColorManager({
+        sharedMarkedJumpingSubtrees: [new Set([1, 2, 3])]
       });
 
       const nodes = [
@@ -298,14 +348,8 @@ describe('Layer Highlighting Configuration', () => {
       // Mutate the mock store so LayerStyles.getCachedState() observes subtree settings
       mockStoreState.subtreeDimmingEnabled = true;
       mockStoreState.subtreeDimmingOpacity = 0.5;
-      mockStoreState.getColorManager = () => ({
-        hasActiveChangeEdges: () => false,
-        sharedMarkedJumpingSubtrees: [new Set([1, 2, 3])],
-        getBranchColor: () => '#000000',
-        getBranchColorWithHighlights: () => '#2196f3',
-        getNodeColor: () => '#000000',
-        isDownstreamOfAnyActiveChangeEdge: () => false,
-        isNodeDownstreamOfAnyActiveChangeEdge: () => false
+      mockStoreState.getColorManager = () => createMockColorManager({
+        sharedMarkedJumpingSubtrees: [new Set([1, 2, 3])]
       });
 
       const extensions = [
@@ -328,15 +372,8 @@ describe('Layer Highlighting Configuration', () => {
       mockStoreState.subtreeDimmingOpacity = 0.5;
       mockStoreState.markedSubtreesEnabled = false;
       // ColorManager has the subtree data (single source of truth)
-      mockStoreState.getColorManager = () => ({
-        hasActiveChangeEdges: () => false,
-        sharedMarkedJumpingSubtrees: [new Set([1])], // Data comes from ColorManager
-        getBranchColor: () => '#000000',
-        getBranchColorForInnerLine: () => '#000000',
-        getBranchColorWithHighlights: () => '#2196f3',
-        getNodeColor: () => '#000000',
-        isDownstreamOfAnyActiveChangeEdge: () => false,
-        isNodeDownstreamOfAnyActiveChangeEdge: () => false
+      mockStoreState.getColorManager = () => createMockColorManager({
+        sharedMarkedJumpingSubtrees: [new Set([1])]
       });
 
       const nodes = [
@@ -361,15 +398,8 @@ describe('Layer Highlighting Configuration', () => {
       mockStoreState.dimmingEnabled = false;
       mockStoreState.subtreeDimmingEnabled = false;
       // ColorManager has the subtree data for radius scaling
-      mockStoreState.getColorManager = () => ({
-        hasActiveChangeEdges: () => false,
-        sharedMarkedJumpingSubtrees: [new Set([1])], // Data comes from ColorManager
-        getBranchColor: () => '#123456',
-        getBranchColorForInnerLine: () => '#123456',
-        getBranchColorWithHighlights: () => '#123456',
-        getNodeColor: () => '#123456',
-        isDownstreamOfAnyActiveChangeEdge: () => false,
-        isNodeDownstreamOfAnyActiveChangeEdge: () => false
+      mockStoreState.getColorManager = () => createMockColorManager({
+        sharedMarkedJumpingSubtrees: [new Set([1])]
       });
 
       const markedNode = { position: [0, 0, 0], data: { split_indices: [1] }, radius: 4, opacity: 1 };
@@ -539,10 +569,9 @@ describe('dimmingUtils.applyDimmingWithCache() - Dimming Data Consistency', () =
   const { applyDimmingWithCache } = require('../src/js/treeVisualisation/deckgl/layers/styles/dimmingUtils.js');
 
   it('should use ColorManager subtree data for dimming', () => {
-    const colorManager = {
-      hasActiveChangeEdges: () => false,
+    const colorManager = createMockColorManager({
       sharedMarkedJumpingSubtrees: [new Set([1, 2, 3])]
-    };
+    });
 
     // Node inside subtree (split_indices contains 1)
     const nodeInside = { data: { split_indices: [1] } };
@@ -570,10 +599,9 @@ describe('dimmingUtils.applyDimmingWithCache() - Dimming Data Consistency', () =
   });
 
   it('should ignore markedSubtreeData parameter and use ColorManager', () => {
-    const colorManager = {
-      hasActiveChangeEdges: () => false,
+    const colorManager = createMockColorManager({
       sharedMarkedJumpingSubtrees: [new Set([100])] // ColorManager says node 100 is in subtree
-    };
+    });
 
     // Node with split_indices [100] - in ColorManager's subtree
     const node = { data: { split_indices: [100] } };
@@ -607,10 +635,9 @@ describe('dimmingUtils.applyDimmingWithCache() - Dimming Data Consistency', () =
   });
 
   it('should return full opacity when ColorManager has empty subtrees', () => {
-    const colorManager = {
-      hasActiveChangeEdges: () => false,
+    const colorManager = createMockColorManager({
       sharedMarkedJumpingSubtrees: [] // Empty
-    };
+    });
 
     const node = { data: { split_indices: [1] } };
 
@@ -626,11 +653,11 @@ describe('dimmingUtils.applyDimmingWithCache() - Dimming Data Consistency', () =
   });
 
   it('should apply active change edge dimming correctly', () => {
-    const colorManager = {
-      hasActiveChangeEdges: () => true,
+    const colorManager = createMockColorManager({
       sharedMarkedJumpingSubtrees: [],
+      hasActiveChangeEdges: () => true,
       isNodeDownstreamOfAnyActiveChangeEdge: (node) => node.data.isDownstream
-    };
+    });
 
     const downstreamNode = { data: { split_indices: [1], isDownstream: true } };
     const upstreamNode = { data: { split_indices: [2], isDownstream: false } };
@@ -678,15 +705,8 @@ describe('Scrubbing Highlighting Integration', () => {
     const tree5Subtrees = [new Set([50, 51, 52])];
     mockStoreState.currentTreeIndex = 0; // Store still has stale index
     mockStoreState.getMarkedSubtreeData = () => [new Set([1, 2, 3])]; // Store has stale data
-    mockStoreState.getColorManager = () => ({
-      hasActiveChangeEdges: () => false,
-      sharedMarkedJumpingSubtrees: tree5Subtrees, // ColorManager has correct data
-      getBranchColor: () => '#000000',
-      getBranchColorForInnerLine: () => '#000000',
-      getBranchColorWithHighlights: () => '#000000',
-      getNodeColor: () => '#000000',
-      isDownstreamOfAnyActiveChangeEdge: () => false,
-      isNodeDownstreamOfAnyActiveChangeEdge: () => false
+    mockStoreState.getColorManager = () => createMockColorManager({
+      sharedMarkedJumpingSubtrees: tree5Subtrees // ColorManager has correct data
     });
 
     const cached = layerStyles.getCachedState();
@@ -700,15 +720,8 @@ describe('Scrubbing Highlighting Integration', () => {
   it('should update highlighting as scrub position changes', () => {
     // First scrub position - tree index 3
     const tree3Subtrees = [new Set([30, 31])];
-    mockStoreState.getColorManager = () => ({
-      hasActiveChangeEdges: () => false,
-      sharedMarkedJumpingSubtrees: tree3Subtrees,
-      getBranchColor: () => '#000000',
-      getBranchColorForInnerLine: () => '#000000',
-      getBranchColorWithHighlights: () => '#000000',
-      getNodeColor: () => '#000000',
-      isDownstreamOfAnyActiveChangeEdge: () => false,
-      isNodeDownstreamOfAnyActiveChangeEdge: () => false
+    mockStoreState.getColorManager = () => createMockColorManager({
+      sharedMarkedJumpingSubtrees: tree3Subtrees
     });
 
     const cached1 = layerStyles.getCachedState();
@@ -719,15 +732,8 @@ describe('Scrubbing Highlighting Integration', () => {
 
     // Second scrub position - tree index 7
     const tree7Subtrees = [new Set([70, 71, 72])];
-    mockStoreState.getColorManager = () => ({
-      hasActiveChangeEdges: () => false,
-      sharedMarkedJumpingSubtrees: tree7Subtrees,
-      getBranchColor: () => '#000000',
-      getBranchColorForInnerLine: () => '#000000',
-      getBranchColorWithHighlights: () => '#000000',
-      getNodeColor: () => '#000000',
-      isDownstreamOfAnyActiveChangeEdge: () => false,
-      isNodeDownstreamOfAnyActiveChangeEdge: () => false
+    mockStoreState.getColorManager = () => createMockColorManager({
+      sharedMarkedJumpingSubtrees: tree7Subtrees
     });
 
     const cached2 = layerStyles.getCachedState();
@@ -740,15 +746,8 @@ describe('Scrubbing Highlighting Integration', () => {
     mockStoreState.subtreeDimmingOpacity = 0.4;
 
     // Scrub position has subtree with nodes 100, 101
-    mockStoreState.getColorManager = () => ({
-      hasActiveChangeEdges: () => false,
-      sharedMarkedJumpingSubtrees: [new Set([100, 101])],
-      getBranchColor: () => '#000000',
-      getBranchColorForInnerLine: () => '#000000',
-      getBranchColorWithHighlights: () => '#000000',
-      getNodeColor: () => '#000000',
-      isDownstreamOfAnyActiveChangeEdge: () => false,
-      isNodeDownstreamOfAnyActiveChangeEdge: () => false
+    mockStoreState.getColorManager = () => createMockColorManager({
+      sharedMarkedJumpingSubtrees: [new Set([100, 101])]
     });
 
     const nodeInSubtree = { position: [0, 0, 0], data: { split_indices: [100] }, opacity: 1 };
@@ -766,15 +765,8 @@ describe('Scrubbing Highlighting Integration', () => {
     mockStoreState.subtreeDimmingEnabled = true;
     mockStoreState.subtreeDimmingOpacity = 0.4;
 
-    mockStoreState.getColorManager = () => ({
-      hasActiveChangeEdges: () => false,
-      sharedMarkedJumpingSubtrees: [new Set([200, 201])],
-      getBranchColor: () => '#000000',
-      getBranchColorForInnerLine: () => '#000000',
-      getBranchColorWithHighlights: () => '#000000',
-      getNodeColor: () => '#000000',
-      isDownstreamOfAnyActiveChangeEdge: () => false,
-      isNodeDownstreamOfAnyActiveChangeEdge: () => false
+    mockStoreState.getColorManager = () => createMockColorManager({
+      sharedMarkedJumpingSubtrees: [new Set([200, 201])]
     });
 
     const linkInSubtree = {

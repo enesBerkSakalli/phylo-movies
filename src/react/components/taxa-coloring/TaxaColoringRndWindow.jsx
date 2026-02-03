@@ -12,16 +12,28 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-export function TaxaColoringRndWindow() {
-  const isOpen = useAppStore((s) => s.taxaColoringOpen);
-  const setOpen = useAppStore((s) => s.setTaxaColoringOpen);
-  const windowState = useAppStore((s) => s.taxaColoringWindow);
-  const setWindowState = useAppStore((s) => s.setTaxaColoringWindow);
+// ==========================================================================
+// STORE SELECTORS
+// ==========================================================================
+const selectTaxaColoringOpen = (s) => s.taxaColoringOpen;
+const selectSetTaxaColoringOpen = (s) => s.setTaxaColoringOpen;
+const selectTaxaColoringWindow = (s) => s.taxaColoringWindow;
+const selectSetTaxaColoringWindow = (s) => s.setTaxaColoringWindow;
+const selectMovieData = (s) => s.movieData;
+const selectTaxaGrouping = (s) => s.taxaGrouping;
+const selectUpdateTaxaColors = (s) => s.updateTaxaColors;
+const selectSetTaxaGrouping = (s) => s.setTaxaGrouping;
 
-  const movieData = useAppStore((s) => s.movieData);
-  const taxaGrouping = useAppStore((s) => s.taxaGrouping);
-  const updateTaxaColors = useAppStore((s) => s.updateTaxaColors);
-  const setTaxaGrouping = useAppStore((s) => s.setTaxaGrouping);
+export function TaxaColoringRndWindow() {
+  const isOpen = useAppStore(selectTaxaColoringOpen);
+  const setOpen = useAppStore(selectSetTaxaColoringOpen);
+  const windowState = useAppStore(selectTaxaColoringWindow);
+  const setWindowState = useAppStore(selectSetTaxaColoringWindow);
+
+  const movieData = useAppStore(selectMovieData);
+  const taxaGrouping = useAppStore(selectTaxaGrouping);
+  const updateTaxaColors = useAppStore(selectUpdateTaxaColors);
+  const setTaxaGrouping = useAppStore(selectSetTaxaGrouping);
 
   const taxaNames = useMemo(() => movieData?.sorted_leaves || [], [movieData]);
 
@@ -45,14 +57,18 @@ export function TaxaColoringRndWindow() {
     }
   }, [isOpen]);
 
-  // Create a complete color map that includes both system colors and current taxa colors
-  const completeColorMap = useMemo(() => {
-    const map = { ...TREE_COLOR_CATEGORIES };
+  // Create a clean color map for the UI to use as a baseline.
+  // We strictly isolate taxon names from system colors to prevent collisions.
+  const baselineColorMap = useMemo(() => {
+    const map = {};
+    const currentTaxaMap = taxaGrouping?.taxaColorMap || {};
+    
     taxaNames.forEach((taxon) => {
-      map[taxon] = TREE_COLOR_CATEGORIES[taxon] || TREE_COLOR_CATEGORIES.defaultColor || "#000000";
+      // Use assigned color if it exists, otherwise use system default
+      map[taxon] = currentTaxaMap[taxon] || TREE_COLOR_CATEGORIES.defaultColor || "#000000";
     });
     return map;
-  }, [taxaNames]);
+  }, [taxaNames, taxaGrouping]);
 
   const handleApply = useCallback((colorData) => {
     if (!taxaNames.length) return;
@@ -117,7 +133,7 @@ export function TaxaColoringRndWindow() {
             </div>
             <div className="flex flex-col gap-0.5 leading-none">
               <span className="text-foreground">Taxa Coloring</span>
-              <span className="text-[10px] font-normal text-muted-foreground/80 tracking-wide uppercase">Assignment Manager</span>
+              <span className="text-2xs font-normal text-muted-foreground/80 tracking-wide uppercase">Assignment Manager</span>
             </div>
           </div>
           <Tooltip>
@@ -137,7 +153,7 @@ export function TaxaColoringRndWindow() {
         <div className="flex-1 min-h-0 overflow-hidden bg-background/50">
           <TaxaColoringWindow
             taxaNames={taxaNames}
-            originalColorMap={completeColorMap}
+            originalColorMap={baselineColorMap}
             onApply={handleApply}
             onClose={handleClose}
             initialState={taxaGrouping || {}}

@@ -31,8 +31,8 @@ export function getLinkWidth(link, cached, helpers) {
 
   // Check if link is part of a MARKED subtree (persistent highlight)
   // Static, very thick stroke to ensure visibility without pulsing
-  // Active edge takes precedence
-  if (shouldHighlightMarkedSubtree(link, cached) && !cm?.isActiveChangeEdge?.(link)) {
+  // Pivot edge takes precedence
+  if (shouldHighlightMarkedSubtree(link, cached) && !cm?.isPivotEdge?.(link)) {
     // Only thicken the inner line in High Contrast Mode
     if (cached.highlightColorMode === 'contrast') {
       return getScaledWidth(2.0) * metricScale;
@@ -41,8 +41,8 @@ export function getLinkWidth(link, cached, helpers) {
     return baseWidth * metricScale;
   }
 
-  // History subtrees: slightly bolder stroke (reduced from 1.8 for subtler effect)
-  if (shouldHighlightHistorySubtree(link, cached) && !cm?.isActiveChangeEdge?.(link)) {
+  // History subtrees: slightly bolder stroke (reduced from 1.4 for subtler effect)
+  if (shouldHighlightHistorySubtree(link, cached) && !cm?.isPivotEdge?.(link)) {
     return getScaledWidth(1.4) * metricScale;
   }
 

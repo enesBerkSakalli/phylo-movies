@@ -1,4 +1,5 @@
 import localforage from 'localforage';
+import { resolveApiUrl } from "./apiConfig";
 
 /**
  * Unified data service for PhyloMovies
@@ -101,7 +102,8 @@ export const phyloData = {
 export const server = {
   async fetchTreeData(formData) {
     try {
-      const response = await fetch("/treedata", {
+      const url = await resolveApiUrl("/treedata");
+      const response = await fetch(url, {
         method: "POST",
         body: formData,
       });

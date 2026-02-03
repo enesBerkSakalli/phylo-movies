@@ -3,7 +3,7 @@
 import React from 'react';
 import { Palette } from 'lucide-react';
 import { formatScaleValue } from '../../../../js/domain/tree/scaleUtils.js';
-import type { HistogramBin, HistogramStats } from './types';
+import type { HistogramBin, HistogramStats } from '../Shared/types';
 
 interface BranchLengthHistogramProps {
   bins: HistogramBin[];
@@ -31,57 +31,56 @@ export const BranchLengthHistogram: React.FC<BranchLengthHistogramProps> = ({
       aria-label="Current Tree Branch Length Distribution"
     >
       {showHeader ? (
-        <div className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-wider text-muted-foreground/70">
           <Palette className="size-3" aria-hidden />
-          <span id="branch-lengths-label">Current Tree Branch Lengths</span>
+          <span id="branch-lengths-label">Length Distribution</span>
         </div>
       ) : null}
 
       {/* Histogram bars */}
       <div
-        className="grid items-end gap-1 w-full"
+        className="grid items-end gap-[2px] w-full bg-muted/20 p-1.5 rounded-sm border border-border/40"
         style={{
-          height: 64,
-          gridTemplateColumns: `repeat(${columnCount}, minmax(4px, 1fr))`
+          height: 72,
+          gridTemplateColumns: `repeat(${columnCount}, minmax(3px, 1fr))`
         }}
       >
         {hasData ? (
           bins.map((bin, idx) => {
             const heightPx = maxCount > 0
-              ? Math.max(6, (bin.count / maxCount) * 52)
+              ? Math.max(4, (bin.count / maxCount) * 58)
               : 0;
 
             return (
               <div
                 key={`${idx}-${bin.from}`}
-                className="flex flex-col items-center gap-1"
-                style={{ minWidth: 4 }}
+                className="flex flex-col items-center"
+                style={{ minWidth: 3 }}
               >
                 <div
                   title={`Range: ${formatScaleValue(bin.from)} – ${formatScaleValue(bin.to)}\nCount: ${bin.count}`}
                   aria-labelledby="branch-lengths-label"
+                  className="w-full bg-primary/80 rounded-[1px] hover:bg-primary transition-colors cursor-crosshair"
                   style={{
-                    width: '100%',
-                    background: 'var(--primary)',
                     height: `${heightPx}px`,
-                    borderRadius: 3,
-                    opacity: 0.8,
                   }}
                 />
               </div>
             );
           })
         ) : (
-          <span className="text-xs text-muted-foreground">No branch data</span>
+          <span className="text-2xs text-muted-foreground italic">Insufficient data</span>
         )}
       </div>
 
       {/* Statistics summary */}
       {hasData && (
-        <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-          <span>min: {formatScaleValue(stats.min)}</span>
-          <span>mean: {formatScaleValue(stats.mean)}</span>
-          <span>max: {formatScaleValue(stats.max)}</span>
+        <div className="flex items-center justify-between text-2xs text-muted-foreground/80 font-medium tabular-nums px-0.5">
+          <div className="flex gap-2">
+            <span>MIN: <span className="text-foreground/70">{formatScaleValue(stats.min)}</span></span>
+            <span>MEAN: <span className="text-foreground/70">{formatScaleValue(stats.mean)}</span></span>
+          </div>
+          <span>MAX: <span className="text-foreground/70">{formatScaleValue(stats.max)}</span></span>
         </div>
       )}
     </div>

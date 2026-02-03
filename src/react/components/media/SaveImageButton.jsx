@@ -2,18 +2,25 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Download } from 'lucide-react';
-import { useAppStore } from '../../../js/core/store.js';
+import { useAppStore } from '@/js/core/store';
 
-export function SaveImageButton() {
-  const treeControllers = useAppStore((s) => s.treeControllers);
-  const currentTreeIndex = useAppStore((s) => s.currentTreeIndex);
+
+// ==========================================================================
+// STORE SELECTORS
+// ==========================================================================
+const selectTreeControllers = (s) => s.treeControllers;
+const selectCurrentTreeIndex = (s) => s.currentTreeIndex;
+
+export function SaveImageButton({ disabled = false }) {
+  const treeControllers = useAppStore(selectTreeControllers);
+  const currentTreeIndex = useAppStore(selectCurrentTreeIndex);
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSaveImage = async () => {
     setIsSaving(true);
     try {
       // If no controller exists, we can't save
-      if (!treeControllers.length) {
+      if (!treeControllers || !treeControllers.length) {
         console.error("No tree controller available for saving PNG.");
         return;
       }
@@ -93,7 +100,7 @@ export function SaveImageButton() {
           id="save-button"
           variant="ghost"
           size="icon"
-          disabled={isSaving}
+          disabled={disabled || isSaving}
           onClick={handleSaveImage}
           aria-label="Save PNG"
         >

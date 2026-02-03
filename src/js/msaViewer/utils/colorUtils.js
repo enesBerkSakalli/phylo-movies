@@ -218,6 +218,9 @@ export function grayscaleColor(ch) {
  * @returns {Function} Color function
  */
 export function getColorScheme(scheme, type) {
+  if (scheme === 'none') {
+    return () => [255, 255, 255, 0]; // Transparent/White
+  }
   if (scheme === 'grayscale') return grayscaleColor;
 
   // Check if scheme exists in our new maps

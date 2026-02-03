@@ -34,7 +34,7 @@ export function ColorSwatchInput({ label, color, onChange }) {
           </PopoverTrigger>
           <PopoverContent className="w-64 space-y-4 p-4 border-border/60" align="start">
             <div className="space-y-2">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">Quick Colors</p>
+              <p className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground/70">Quick Colors</p>
               <div className="grid grid-cols-10 gap-1.5">
                 {quickColors.map((c) => (
                   <Tooltip key={c}>
@@ -48,14 +48,14 @@ export function ColorSwatchInput({ label, color, onChange }) {
                         onClick={() => { onChange(c); setOpen(false); }}
                       />
                     </TooltipTrigger>
-                    <TooltipContent side="top" className="text-[10px] py-1 px-2">{c}</TooltipContent>
+                    <TooltipContent side="top" className="text-2xs py-1 px-2">{c}</TooltipContent>
                   </Tooltip>
                 ))}
               </div>
             </div>
 
             <div className="space-y-2 pt-1 border-t border-border/40">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">Custom Color</p>
+              <p className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground/70">Custom Color</p>
               <div className="flex items-center gap-2">
                 <div className="relative group">
                   <Input

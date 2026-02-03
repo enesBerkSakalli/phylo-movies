@@ -14,30 +14,30 @@ import { findPreviousAnchorSequenceIndex, findNextAnchorSequenceIndex } from '..
 // ============================================================================
 
 export function calculateChangePreviews(state) {
-  const { upcomingChangesEnabled, currentTreeIndex, activeChangeEdgeTracking, movieData } = state;
+  const { upcomingChangesEnabled, currentTreeIndex, pivotEdgeTracking, movieData } = state;
 
   if (!upcomingChangesEnabled) {
     return { upcoming: [], completed: [] };
   }
 
   const anchors = movieData?.fullTreeIndices || [];
-  if (!anchors.length || !activeChangeEdgeTracking?.length) {
+  if (!anchors.length || !pivotEdgeTracking?.length) {
     return { upcoming: [], completed: [] };
   }
 
   const prevAnchor = findPreviousAnchorSequenceIndex(anchors, currentTreeIndex);
   const nextAnchor = findNextAnchorSequenceIndex(anchors, currentTreeIndex);
-  const currentEdge = activeChangeEdgeTracking[currentTreeIndex];
+  const currentEdge = pivotEdgeTracking[currentTreeIndex];
   // Must use toSubtreeKey to match how collectUniqueEdges generates keys (was JSON.stringify which caused mismatch)
   const currentKey = currentEdge?.length > 0 ? toSubtreeKey(currentEdge) : null;
 
-  const completed = collectUniqueEdges(activeChangeEdgeTracking, prevAnchor + 1, currentTreeIndex, currentKey);
+  const completed = collectUniqueEdges(pivotEdgeTracking, prevAnchor + 1, currentTreeIndex, currentKey);
 
   if (nextAnchor === null) {
     return { upcoming: [], completed };
   }
 
-  const upcoming = collectUniqueEdges(activeChangeEdgeTracking, currentTreeIndex + 1, nextAnchor, currentKey);
+  const upcoming = collectUniqueEdges(pivotEdgeTracking, currentTreeIndex + 1, nextAnchor, currentKey);
 
   return { upcoming, completed };
 }
@@ -110,7 +110,7 @@ export function resolveMarkedSubtrees(state, indexOverride = null) {
     return parseSubtreeTrackingEntry(subtree);
   }
 
-  return getAllSubtreesForActiveEdge(state, index);
+  return getAllSubtreesForPivotEdge(state, index);
 }
 
 export function getSubtreeAtIndex(state, index) {
@@ -123,8 +123,8 @@ export function getMovingSubtreeAtIndex(state, index) {
   return Array.isArray(subtree) ? subtree.flat() : [];
 }
 
-export function getAllSubtreesForActiveEdge(state, index) {
-  const edge = state.activeChangeEdgeTracking?.[index];
+export function getAllSubtreesForPivotEdge(state, index) {
+  const edge = state.pivotEdgeTracking?.[index];
   if (!Array.isArray(edge) || edge.length === 0) return [];
 
   const pairKey = state.movieData?.tree_metadata?.[index]?.tree_pair_key;
@@ -172,11 +172,11 @@ export function getSubtreeHistoryAtIndex(state, index) {
 export function getSourceDestinationEdgesAtIndex(state, index) {
   if (state.transitionResolver?.isFullTree?.(index)) return { source: [], dest: [] };
 
-  const activeEdge = state.activeChangeEdgeTracking?.[index];
+  const pivotEdge = state.pivotEdgeTracking?.[index];
   const subtrees = state.subtreeTracking?.[index];
 
   // Guard clauses for missing data
-  if (!Array.isArray(activeEdge) || activeEdge.length === 0) return { source: [], dest: [] };
+  if (!Array.isArray(pivotEdge) || pivotEdge.length === 0) return { source: [], dest: [] };
   if (!Array.isArray(subtrees) || subtrees.length === 0) return { source: [], dest: [] };
 
   // Retrieve Pair Solutions
@@ -189,8 +189,8 @@ export function getSourceDestinationEdgesAtIndex(state, index) {
   const destMap = pairSolution.solution_to_destination_map || {};
 
   // Find the edge in the source and destination context
-  const sourceEdgeMap = findSolutionEntry(sourceMap, activeEdge);
-  const destEdgeMap = findSolutionEntry(destMap, activeEdge);
+  const sourceEdgeMap = findSolutionEntry(sourceMap, pivotEdge);
+  const destEdgeMap = findSolutionEntry(destMap, pivotEdge);
   if (!sourceEdgeMap || !destEdgeMap) return { source: [], dest: [] };
 
   // Identify moving components to filter them out

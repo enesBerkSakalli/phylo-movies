@@ -23,9 +23,7 @@ export function getExtensionsLayerProps(extensions, state, layerStyles) {
 
   return {
     data: extensions,
-    pickable: true,
-    autoHighlight: true,
-    highlightColor: HOVER_HIGHLIGHT_COLOR,
+    pickable: false,
     getPath: d => addZOffsetToPath(d.path, getNodeHistoryZOffset(cached, d.leaf || d)),
     getColor: d => layerStyles.getExtensionColor(d.leaf, cached),
     getWidth: d => layerStyles.getExtensionWidth(d.leaf, cached),

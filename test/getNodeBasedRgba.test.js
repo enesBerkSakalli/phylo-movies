@@ -36,7 +36,7 @@ describe('getNodeBasedRgba', () => {
       highlightSourceEnabled: false,
       highlightDestinationEnabled: false,
       highlightColorMode: 'solid',
-      markedColor: '#ff5722'
+      markedColor: '#10b981'
     };
   });
 
@@ -46,7 +46,7 @@ describe('getNodeBasedRgba', () => {
 
     const result = getNodeBasedRgba(node, undefined, cached, helpers);
 
-    expect(result).to.deep.equal([255, 87, 34, 255]); // markedColor solid highlight
+    expect(result).to.deep.equal([16, 185, 129, 255]); // markedColor solid highlight
   });
 
   it('uses ColorManager base color when not highlighted', () => {

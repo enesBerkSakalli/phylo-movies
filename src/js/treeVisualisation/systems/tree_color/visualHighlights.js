@@ -2,7 +2,6 @@
  * Visual highlight detection utilities
  * Determines if tree elements are visually highlighted based on ColorManager state
  */
-import { isLinkInSubtree, isNodeInSubtree } from '../../utils/splitMatching.js';
 
 /**
  * Check if a link has different color when highlighted vs base
@@ -15,13 +14,13 @@ import { isLinkInSubtree, isNodeInSubtree } from '../../utils/splitMatching.js';
 export function isLinkVisuallyHighlighted(link, colorManager, markedSubtreesEnabled = true) {
   if (!colorManager) return false;
 
-  // Check if link is in a marked subtree (only if coloring is enabled)
-  const isMarked = markedSubtreesEnabled !== false && isLinkInSubtree(link, colorManager.sharedMarkedJumpingSubtrees);
+  // Check if link is in a marked subtree using fast path (only if coloring is enabled)
+  const isMarked = markedSubtreesEnabled !== false && colorManager.isLinkInMarkedSubtreeFast?.(link);
 
-  // Check if link IS the active change edge
-  const isActiveEdge = colorManager.isActiveChangeEdge?.(link);
+  // Check if link IS the pivot edge
+  const isPivotEdge = colorManager.isPivotEdge?.(link);
 
-  return isMarked || isActiveEdge;
+  return isMarked || isPivotEdge;
 }
 
 /**
@@ -34,13 +33,13 @@ export function isLinkVisuallyHighlighted(link, colorManager, markedSubtreesEnab
 export function isNodeVisuallyHighlighted(nodeData, colorManager, markedSubtreesEnabled = true) {
   if (!colorManager) return false;
 
-  // Only check marked subtrees if coloring is enabled
-  const isMarked = markedSubtreesEnabled !== false && isNodeInSubtree(nodeData, colorManager.sharedMarkedJumpingSubtrees);
+  // Use fast path for marked subtree check (only if coloring is enabled)
+  const isMarked = markedSubtreesEnabled !== false && colorManager.isNodeInMarkedSubtreeFast?.(nodeData);
 
-  // Check if node IS the active change edge by comparing colors
+  // Check if node IS the pivot edge by comparing colors
   const baseColor = colorManager.getNodeBaseColor?.(nodeData);
   const highlightedColor = colorManager.getNodeColor?.(nodeData);
-  const isActiveEdgeNode = baseColor !== highlightedColor;
+  const isPivotEdgeNode = baseColor !== highlightedColor;
 
-  return isMarked || isActiveEdgeNode;
+  return isMarked || isPivotEdgeNode;
 }
