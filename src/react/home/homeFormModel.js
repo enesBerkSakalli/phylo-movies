@@ -22,4 +22,5 @@ export const homeFormSchema = z.object({
   useGtr: z.boolean().default(true),  // GTR (General Time Reversible) model
   useGamma: z.boolean().default(true), // Gamma rate heterogeneity
   usePseudo: z.boolean().default(false), // Pseudocounts for gappy alignments
+  noMl: z.boolean().default(true), // Disable ML NNI updates for bifurcating trees
 });

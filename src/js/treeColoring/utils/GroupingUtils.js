@@ -274,3 +274,51 @@ export function applyColoringData(colorData, leaveOrder, defaultColorMap) {
 
   return newColorMap;
 }
+
+/**
+ * Get the color for a single taxon based on taxaGrouping config
+ * This is the single source of truth for taxon color resolution.
+ * 
+ * @param {string} taxonName - The taxon name to get color for
+ * @param {Object} taxaGrouping - The taxaGrouping object from store (mode, groupColorMap, etc.)
+ * @param {string} defaultColor - Default color if no group/taxa color found
+ * @returns {string|null} The color for the taxon, or null if no specific color
+ */
+export function getTaxonColor(taxonName, taxaGrouping, defaultColor = null) {
+  if (!taxonName || !taxaGrouping) {
+    return defaultColor;
+  }
+
+  const { mode, groupColorMap, taxaColorMap, csvTaxaMap, separators, separator, strategyType, segmentIndex, useRegex, regexPattern } = taxaGrouping;
+
+  if (mode === 'taxa') {
+    // Direct taxa coloring
+    const color = taxaColorMap?.[taxonName];
+    return color || defaultColor;
+  }
+
+  if (mode === 'groups') {
+    // Pattern-based grouping
+    const seps = separators || separator;
+    const options = { segmentIndex, useRegex, regexPattern };
+    const group = getGroupForTaxon(taxonName, seps, strategyType, options);
+    const groupKey = group != null ? String(group) : null;
+    const groupColor = groupKey != null ? groupColorMap?.[groupKey] : null;
+    return groupColor || defaultColor;
+  }
+
+  if (mode === 'csv') {
+    // CSV-based group coloring
+    let group = null;
+    if (csvTaxaMap instanceof Map) {
+      group = csvTaxaMap.get(taxonName);
+    } else if (csvTaxaMap && typeof csvTaxaMap === 'object') {
+      group = csvTaxaMap[taxonName];
+    }
+    const groupKey = group != null ? String(group) : null;
+    const groupColor = groupKey != null ? groupColorMap?.[groupKey] : null;
+    return groupColor || defaultColor;
+  }
+
+  return defaultColor;
+}

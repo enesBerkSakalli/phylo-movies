@@ -7,7 +7,7 @@ import { TREE_COLOR_CATEGORIES } from '../../../../constants/TreeColors.js';
  */
 export function computeConnectionColor(nodeForColor, isMoving, colorManager, markedSubtreesEnabled, linkConnectionOpacity) {
   const monophyleticEnabled = colorManager?.isMonophyleticColoringEnabled?.() ?? true;
-  const fallbackHex = TREE_COLOR_CATEGORIES.activeChangeEdgeColor || '#2196f3';
+  const fallbackHex = TREE_COLOR_CATEGORIES.pivotEdgeColor || '#2196f3';
   const colorHex = isMoving && markedSubtreesEnabled
     ? colorManager?.getNodeColor?.(nodeForColor)
     : getBaseNodeColor(nodeForColor, monophyleticEnabled);

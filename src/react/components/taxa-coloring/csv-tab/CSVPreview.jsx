@@ -24,7 +24,7 @@ export function CSVPreview({ csvValidation, csvGroups }) {
               {ok ? "Mapping Preview" : "Partial Mapping"}
             </CardTitle>
           </div>
-          <div className="text-[10px] font-bold text-muted-foreground bg-background/50 px-2 py-0.5 rounded border border-border/40">
+          <div className="text-2xs font-bold text-muted-foreground bg-background/50 px-2 py-0.5 rounded border border-border/40">
             {csvValidation.matched.length} Matched • {csvValidation.matchPercentage}%
           </div>
         </div>
@@ -37,11 +37,11 @@ export function CSVPreview({ csvValidation, csvGroups }) {
                 <div key={g.name} className="p-2.5 px-3 hover:bg-accent/30 transition-colors group">
                   <div className="flex items-center justify-between mb-0.5">
                     <span className="text-[11px] font-bold truncate pr-2">{g.name}</span>
-                    <span className="text-[10px] font-mono text-muted-foreground bg-muted/40 px-1.5 rounded uppercase">
+                    <span className="text-2xs font-mono text-muted-foreground bg-muted/40 px-1.5 rounded uppercase">
                       {g.count} taxa
                     </span>
                   </div>
-                  <div className="text-[10px] text-muted-foreground/70 truncate italic">
+                  <div className="text-2xs text-muted-foreground/70 truncate italic">
                     {g.members.slice(0, 4).join(", ")}{g.members.length > 4 ? "..." : ""}
                   </div>
                 </div>

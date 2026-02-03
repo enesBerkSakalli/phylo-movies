@@ -10,14 +10,33 @@ describe('dimmingUtils', () => {
     let nodeEntity;
 
     beforeEach(() => {
-      nodeEntity = { id: 'node1' };
+      nodeEntity = { id: 'node1', data: { split_indices: [1, 2, 3] } };
       mockColorManager = {
         isNodeSourceEdge: () => false,
         isNodeDestinationEdge: () => false,
         hasActiveChangeEdges: () => false,
         isNodeDownstreamOfAnyActiveChangeEdge: () => false,
         isDownstreamOfAnyActiveChangeEdge: () => false,
-        sharedMarkedJumpingSubtrees: []
+        sharedMarkedJumpingSubtrees: [],
+        _markedLeavesUnion: new Set(),
+        // Fast path methods for optimized subtree membership checks
+        isNodeInMarkedSubtreeFast: function(entity) {
+          if (this._markedLeavesUnion.size === 0) return false;
+          const splits = entity?.data?.split_indices || entity?.split_indices;
+          if (!splits?.length) return false;
+          for (const idx of splits) {
+            if (!this._markedLeavesUnion.has(idx)) return false;
+          }
+          // All splits in union - check full subset
+          for (const subtree of this.sharedMarkedJumpingSubtrees) {
+            const subtreeSet = subtree instanceof Set ? subtree : new Set(subtree);
+            if (splits.every(idx => subtreeSet.has(idx))) return true;
+          }
+          return false;
+        },
+        isLinkInMarkedSubtreeFast: function(linkData) {
+          return this.isNodeInMarkedSubtreeFast(linkData?.target);
+        }
       };
     });
 
@@ -46,15 +65,11 @@ describe('dimmingUtils', () => {
       // Setup: Node is Source, Subtree Dimming ON, Node NOT in subtree
       mockColorManager.isNodeSourceEdge = () => true;
 
-      // Mock subtree data (using simple array/logic since isNodeInSubtree is imported)
-      // We rely on isNodeInSubtree behavior from the actual module?
-      // Actually applyDimmingWithCache calls isNodeInSubtree.
-      // We need to make sure passed subtreeData makes isNodeInSubtree return false.
-      // Assuming empty subtreeData and a real node means it's NOT in subtree if checking logic holds.
-      // But let's check dimmingUtils.js imports. It imports isNodeInSubtree.
-      // If we pass an array like ['someOtherNode'], it should return false for 'node1'.
-      const markedSubtreeData = ['someOtherNode'];
+      // Set up marked subtree with different leaf indices than the node
+      // Node has split_indices [1, 2, 3], subtree has [7, 8, 9]
+      const markedSubtreeData = [new Set([7, 8, 9])];
       mockColorManager.sharedMarkedJumpingSubtrees = markedSubtreeData;
+      mockColorManager._markedLeavesUnion = new Set([7, 8, 9]); // Union of all marked leaves
 
       const result = applyDimmingWithCache(
         baseOpacity,

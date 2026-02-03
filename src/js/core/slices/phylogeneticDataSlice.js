@@ -26,7 +26,7 @@ export const createPhylogeneticDataSlice = (set, get) => ({
   // STATE: Change Tracking
   // ==========================================================================
   pairSolutions: {},
-  activeChangeEdgeTracking: [],
+  pivotEdgeTracking: [],
   subtreeTracking: [],
 
   // ==========================================================================
@@ -51,7 +51,7 @@ export const createPhylogeneticDataSlice = (set, get) => ({
       distanceWeightedRfd: [],
       scaleValues: [],
       pairSolutions: {},
-      activeChangeEdgeTracking: [],
+      pivotEdgeTracking: [],
       subtreeTracking: [],
       transitionResolver: null,
     });
@@ -123,7 +123,7 @@ export const createPhylogeneticDataSlice = (set, get) => ({
       distanceWeightedRfd,
       scaleValues,
       pairSolutions: movieData.tree_pair_solutions || {},
-      activeChangeEdgeTracking: movieData.pivot_edge_tracking || movieData.split_change_tracking || [],
+      pivotEdgeTracking: movieData.pivot_edge_tracking || movieData.split_change_tracking || [],
       subtreeTracking: movieData.subtree_tracking || [],
       transitionResolver: resolver,
       currentTreeIndex: 0,

@@ -192,11 +192,12 @@ export function useTaxaColoringState(taxaNames, originalColorMap, initialStatePa
     forceUpdate();
   }, [mgr, resetCSV, forceUpdate]);
 
-  const resetColorsToBlack = useCallback(function resetColorsToBlack() {
-    // Clear everything across all modes
-    taxaNames.forEach(name => { mgr.taxaColorMap[name] = "#000000"; });
-    groups.forEach(g => { mgr.groupColorMap[g.name] = "#000000"; });
-    csvGroups.forEach(g => { mgr.groupColorMap[g.name] = "#000000"; });
+  const resetToDefault = useCallback(function resetToDefault() {
+    // Clear everything across all modes - reset to standard system default
+    const defaultColor = "#000000";
+    taxaNames.forEach(name => { mgr.taxaColorMap[name] = defaultColor; });
+    groups.forEach(g => { mgr.groupColorMap[g.name] = defaultColor; });
+    csvGroups.forEach(g => { mgr.groupColorMap[g.name] = defaultColor; });
 
     forceUpdate();
   }, [taxaNames, groups, csvGroups, mgr, forceUpdate]);
@@ -247,7 +248,7 @@ export function useTaxaColoringState(taxaNames, originalColorMap, initialStatePa
     onColumnChange,
     resetCSV,
     resetAll,
-    resetColorsToBlack,
+    resetToDefault,
     buildResult,
     handleColorChange
   };

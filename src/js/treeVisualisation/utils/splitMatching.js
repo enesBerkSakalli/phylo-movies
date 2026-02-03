@@ -1,7 +1,7 @@
 /**
  * Split index matching utilities
  * Core functions for comparing tree elements based on their split_indices
- * (arrays of leaf indices that define subtrees/clades)
+ * (arrays of leaf indices that define subtrees)
  */
 
 /**

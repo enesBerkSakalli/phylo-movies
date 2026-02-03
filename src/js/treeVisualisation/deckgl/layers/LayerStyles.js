@@ -1,4 +1,5 @@
 import { useAppStore } from '../../../core/store.js';
+import { resetTaxonColorCache } from '../../systems/tree_color/monophyleticColoring.js';
 import {
   getLinkColor as resolveLinkColor,
   getLinkDashArray as resolveLinkDashArray
@@ -87,10 +88,10 @@ export class LayerStyles {
         highlightSourceEnabled: state.highlightSourceEnabled ?? false,
         highlightDestinationEnabled: state.highlightDestinationEnabled ?? false,
         pulseOpacity: pulseEnabled ? (state.getPulseOpacity?.() ?? 1.0) : 1.0,
-        dashingEnabled: state.activeEdgeDashingEnabled ?? true,
+        dashingEnabled: state.pivotEdgeDashingEnabled ?? true,
         upcomingChangesEnabled: state.upcomingChangesEnabled ?? false,
         highlightColorMode: state.highlightColorMode ?? 'contrast',
-        markedColor: state.markedColor ?? '#ff5722',
+        markedColor: state.markedColor ?? '#10b981',
         linkConnectionOpacity: state.linkConnectionOpacity ?? 0.6,
         // Density-based scaling: reduce highlight thickness for dense trees
         densityScale: this._calculateDensityScale(state)
@@ -105,6 +106,8 @@ export class LayerStyles {
    */
   clearRenderCache() {
     this._renderCache = null;
+    // Also reset the taxon color cache used by monophyletic coloring
+    resetTaxonColorCache();
   }
 
   /**
@@ -139,7 +142,7 @@ export class LayerStyles {
         state.markedSubtreeOpacity !== prevState.markedSubtreeOpacity ||
         state.highlightSourceEnabled !== prevState.highlightSourceEnabled ||
         state.highlightDestinationEnabled !== prevState.highlightDestinationEnabled ||
-        state.activeEdgeDashingEnabled !== prevState.activeEdgeDashingEnabled ||
+        state.pivotEdgeDashingEnabled !== prevState.pivotEdgeDashingEnabled ||
         state.upcomingChangesEnabled !== prevState.upcomingChangesEnabled ||
         state.highlightColorMode !== prevState.highlightColorMode ||
         state.markedColor !== prevState.markedColor ||

@@ -10,10 +10,10 @@ export {
 
 export {
   splitsEqual,
-  resolveActiveEdgeSet,
-  isLinkActiveChangeEdge,
-  isNodeActiveChangeEdge,
-  nodeOrParentMatchesActiveEdge,
+  resolvePivotEdgeSet,
+  isLinkPivotEdge,
+  isNodePivotEdge,
+  nodeOrParentMatchesPivotEdge,
   nodeOrParentMatchesAnyEdge,
   isLinkDownstreamOfChangeEdge,
   isNodeDownstreamOfChangeEdge

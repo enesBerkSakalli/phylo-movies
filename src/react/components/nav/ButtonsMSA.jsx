@@ -4,22 +4,27 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dna, RefreshCw, Info, Check, ChevronDown, AlignJustify } from 'lucide-react';
 import {
-  SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarGroup,
   SidebarMenuSub,
   SidebarMenuSubItem,
-  SidebarMenuSubButton,
 } from '@/components/ui/sidebar';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { toast } from 'sonner';
 
+// ==========================================================================
+// STORE SELECTORS
+// ==========================================================================
+const selectHasMsa = (s) => s.hasMsa;
+const selectSyncMSAEnabled = (s) => s.syncMSAEnabled;
+const selectSetSyncMSAEnabled = (s) => s.setSyncMSAEnabled;
+const selectOpenMsaViewer = (s) => s.openMsaViewer;
+
 export function ButtonsMSA() {
-  const hasMsa = useAppStore((s) => s.hasMsa);
-  const syncMSAEnabled = useAppStore((s) => s.syncMSAEnabled);
-  const setSyncMSAEnabled = useAppStore((s) => s.setSyncMSAEnabled);
-  const openMsaViewer = useAppStore((s) => s.openMsaViewer);
+  const hasMsa = useAppStore(selectHasMsa);
+  const syncMSAEnabled = useAppStore(selectSyncMSAEnabled);
+  const setSyncMSAEnabled = useAppStore(selectSetSyncMSAEnabled);
+  const openMsaViewer = useAppStore(selectOpenMsaViewer);
 
   const handleOpenViewer = async () => {
     if (!hasMsa) return;
@@ -46,7 +51,7 @@ export function ButtonsMSA() {
             <span className="truncate">Multiple Sequence Alignment</span>
             <div className="ml-auto flex items-center gap-1">
               {hasMsa && (
-                <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-none hover:bg-emerald-500/20 h-5 px-1.5 text-[10px] font-medium transition-colors">
+                <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-none hover:bg-emerald-500/20 h-5 px-1.5 text-2xs font-medium transition-colors">
                   Active
                 </Badge>
               )}
@@ -85,7 +90,7 @@ export function ButtonsMSA() {
 
             {!hasMsa && (
               <SidebarMenuSubItem className="px-2 py-2">
-                <div className="flex items-start gap-2 text-[10px] text-muted-foreground italic leading-tight">
+                <div className="flex items-start gap-2 text-2xs text-muted-foreground italic leading-tight">
                   <Info className="size-3 shrink-0 mt-0.5" />
                   <span>Upload an MSA file to enable alignment visualization and sync.</span>
                 </div>

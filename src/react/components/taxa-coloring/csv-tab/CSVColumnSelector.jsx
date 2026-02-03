@@ -28,7 +28,7 @@ export function CSVColumnSelector({ csvData, csvColumn, onColumnChange }) {
               variant={csvColumn === c.name ? "default" : "ghost"}
               onClick={() => onColumnChange(c.name)}
               className={cn(
-                "h-7 text-[10px] font-bold uppercase tracking-tight px-3 rounded-md",
+                "h-7 text-2xs font-bold uppercase tracking-tight px-3 rounded-md",
                 csvColumn === c.name
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-muted-foreground hover:bg-accent/50 hover:text-foreground border border-transparent hover:border-border/40"

@@ -27,6 +27,8 @@ export {
   createLabelsLayer,
   createSourceLabelsLayer,
   createDestinationLabelsLayer,
+  createHighlightLabelLayers,
+  partitionLabels,
   getLabelsLayerProps,
   getHighlightLabelsLayerProps
 } from './labels/LabelLayers.js';

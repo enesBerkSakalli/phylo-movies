@@ -86,51 +86,6 @@ export const createPlaybackSlice = (set, get) => ({
     }));
   },
 
-  updateAnimationProgress: (timestamp) => {
-    const { animationStartTime, animationSpeed, treeList, playing } = get();
-    if (!playing || !animationStartTime || !treeList.length) return false;
-
-    const elapsed = (timestamp - animationStartTime) / 1000;
-    const totalTrees = treeList.length;
-
-    if (totalTrees <= 1) {
-      set({ animationProgress: 1, currentTreeIndex: 0 });
-      return true;
-    }
-
-    const progress = (elapsed * animationSpeed) / (totalTrees - 1);
-    const clampedProgress = Math.min(progress, 1.0);
-    const exactTreeIndex = clampedProgress * (totalTrees - 1);
-    const discreteTreeIndex = Math.round(exactTreeIndex);
-
-    set({
-      animationProgress: clampedProgress,
-      currentTreeIndex: clamp(discreteTreeIndex, 0, totalTrees - 1)
-    });
-
-    return progress >= 1.0;
-  },
-
-  getAnimationInterpolationData: () => {
-    const { animationProgress, treeList, playing } = get();
-    if (!playing || !treeList.length) return null;
-
-    const totalTrees = treeList.length;
-    const exactTreeIndex = animationProgress * (totalTrees - 1);
-    const fromTreeIndex = Math.floor(exactTreeIndex);
-    const toTreeIndex = Math.min(fromTreeIndex + 1, totalTrees - 1);
-    const segmentProgress = exactTreeIndex - fromTreeIndex;
-
-    return {
-      exactTreeIndex,
-      fromTreeIndex,
-      toTreeIndex,
-      segmentProgress,
-      localT: segmentProgress, // Linear progress (0-1) within the current transition
-      progress: animationProgress
-    };
-  },
-
   // ==========================================================================
   // ACTIONS: Navigation
   // ==========================================================================

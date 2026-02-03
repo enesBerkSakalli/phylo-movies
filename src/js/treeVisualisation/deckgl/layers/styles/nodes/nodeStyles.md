@@ -79,8 +79,8 @@ nodeStyles.js
 │   ├── shouldHighlightNode
 │   ├── isHistorySubtreeNode
 │   ├── getHighlightColor
-│   ├── isNodeActiveEdge
-│   └── getActiveEdgeColor
+│   ├── isNodePivotEdge
+│   └── getPivotEdgeColor
 └── nodeRadiusStyles.js    # getNodeRadius
 ```
 

@@ -11,48 +11,48 @@ import {
 } from '../../utils/splitMatching.js';
 
 // Re-export shared functions for backward compatibility
-export { splitsEqual, toSplitSet as resolveActiveEdgeSet };
+export { splitsEqual, toSplitSet as resolvePivotEdgeSet };
 
 /**
- * Check if branch matches current active change edge
+ * Check if branch matches current pivot edge
  * @param {Object} linkData - D3 link data
- * @param {Set<number>} activeChangeEdge - Active change edge Set
- * @returns {boolean} True if this is the active change edge
+ * @param {Set<number>} pivotEdge - Pivot edge Set
+ * @returns {boolean} True if this is the pivot edge
  */
-export function isLinkActiveChangeEdge(linkData, activeChangeEdge) {
-  if (!activeChangeEdge || !linkData?.target?.data?.split_indices) return false;
-  return splitsEqual(linkData.target.data.split_indices, activeChangeEdge);
+export function isLinkPivotEdge(linkData, pivotEdge) {
+  if (!pivotEdge || !linkData?.target?.data?.split_indices) return false;
+  return splitsEqual(linkData.target.data.split_indices, pivotEdge);
 }
 
 /**
- * Check if node matches any active change edge
+ * Check if node matches any pivot edge
  * @param {Object} nodeData - Node data
- * @param {Set<number>} activeChangeEdge - Active change edge Set
- * @returns {boolean} True if node is the active change edge
+ * @param {Set<number>} pivotEdge - Pivot edge Set
+ * @returns {boolean} True if node is the pivot edge
  */
-export function isNodeActiveChangeEdge(nodeData, activeChangeEdge) {
+export function isNodePivotEdge(nodeData, pivotEdge) {
   const splits = getSplitIndices(nodeData);
-  if (!activeChangeEdge || !splits) return false;
-  return splitsEqual(splits, activeChangeEdge);
+  if (!pivotEdge || !splits) return false;
+  return splitsEqual(splits, pivotEdge);
 }
 
 /**
- * Check if a node is either the active edge, or the parent of a child that is the active edge
+ * Check if a node is either the pivot edge, or the parent of a child that is the pivot edge
  * @param {Object} nodeData - Node data
- * @param {Set<number>} activeChangeEdge - Active change edge Set
+ * @param {Set<number>} pivotEdge - Pivot edge Set
  * @returns {boolean} True if node or its child matches
  */
-export function nodeOrParentMatchesActiveEdge(nodeData, activeChangeEdge) {
-  if (!activeChangeEdge) return false;
+export function nodeOrParentMatchesPivotEdge(nodeData, pivotEdge) {
+  if (!pivotEdge) return false;
 
   // Exact match on the node itself
-  if (isNodeActiveChangeEdge(nodeData, activeChangeEdge)) return true;
+  if (isNodePivotEdge(nodeData, pivotEdge)) return true;
 
   // Immediate child match (parent highlight)
   if (Array.isArray(nodeData?.children) && nodeData.children.length > 0) {
     for (const child of nodeData.children) {
       const childSplits = getSplitIndices(child);
-      if (childSplits && splitsEqual(childSplits, activeChangeEdge)) {
+      if (childSplits && splitsEqual(childSplits, pivotEdge)) {
         return true;
       }
     }
@@ -71,7 +71,7 @@ export function nodeOrParentMatchesAnyEdge(nodeData, edgeSets) {
 
   for (const edge of edgeSets) {
     const edgeSet = toSplitSet(edge) || (edge instanceof Set ? edge : new Set(edge));
-    if (nodeOrParentMatchesActiveEdge(nodeData, edgeSet)) {
+    if (nodeOrParentMatchesPivotEdge(nodeData, edgeSet)) {
       return true;
     }
   }
@@ -80,21 +80,21 @@ export function nodeOrParentMatchesAnyEdge(nodeData, edgeSets) {
 }
 
 /**
- * Check if a branch is downstream of any active change edge
+ * Check if a branch is downstream of any pivot edge
  * @param {Object} linkData - D3 link data
- * @param {Array<Set<number>>} activeChangeEdges - Array of active change edge Sets
+ * @param {Array<Set<number>>} pivotEdges - Array of pivot edge Sets
  * @returns {boolean} True if downstream
  */
-export function isLinkDownstreamOfChangeEdge(linkData, activeChangeEdges) {
-  return isSubsetOfAny(linkData?.target, activeChangeEdges);
+export function isLinkDownstreamOfChangeEdge(linkData, pivotEdges) {
+  return isSubsetOfAny(linkData?.target, pivotEdges);
 }
 
 /**
- * Check if a node is downstream of any active change edge
+ * Check if a node is downstream of any pivot edge
  * @param {Object} nodeData - Node data
- * @param {Array<Set<number>>} activeChangeEdges - Array of active change edge Sets
+ * @param {Array<Set<number>>} pivotEdges - Array of pivot edge Sets
  * @returns {boolean} True if downstream
  */
-export function isNodeDownstreamOfChangeEdge(nodeData, activeChangeEdges) {
-  return isSubsetOfAny(nodeData, activeChangeEdges);
+export function isNodeDownstreamOfChangeEdge(nodeData, pivotEdges) {
+  return isSubsetOfAny(nodeData, pivotEdges);
 }

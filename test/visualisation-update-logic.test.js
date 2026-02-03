@@ -14,7 +14,7 @@ describe('Tree Visualisation - State Update Logic', () => {
       getSourceTreeIndex: (idx) => idx // Default mapping
     },
     upcomingChangesEnabled: true,
-    activeChangeEdgeTracking: [],
+    pivotEdgeTracking: [],
     movieData: { fullTreeIndices: [0, 10, 20] },
     ...overrides
   });
@@ -74,7 +74,7 @@ describe('Tree Visualisation - State Update Logic', () => {
         const state = createMockState({
             currentTreeIndex: index,
             markedSubtreeMode: 'all', // CAUSES SWITCH
-            activeChangeEdgeTracking: { [index]: activeEdge },
+            pivotEdgeTracking: { [index]: activeEdge },
             movieData: { tree_metadata: { [index]: { tree_pair_key: pairKey } } },
             pairSolutions: {
                 [pairKey]: {
@@ -127,15 +127,15 @@ describe('Tree Visualisation - State Update Logic', () => {
             [1, 2], // 4 (Duplicate of 1)
             [5, 6]  // 5 (Current)
         ];
-        
+
         const state = createMockState({
             currentTreeIndex: 5,
-            activeChangeEdgeTracking: edges,
+            pivotEdgeTracking: edges,
             movieData: { fullTreeIndices: [0, 10] }
         });
 
         const result = calculateChangePreviews(state);
-        
+
         expect(result.completed).to.have.lengthOf(2);
         const keys = result.completed.map(e => e.join(','));
         expect(keys).to.include('1,2');
@@ -146,18 +146,18 @@ describe('Tree Visualisation - State Update Logic', () => {
          // Range: Current (5) -> Next Anchor (10). Upcoming: 6, 7, 8, 9
          const edges = [];
          for(let i=0; i<15; i++) edges.push(null);
-         
+
          edges[6] = [7, 8];
          edges[8] = [9, 10];
-         
+
          const state = createMockState({
              currentTreeIndex: 5,
-             activeChangeEdgeTracking: edges,
+             pivotEdgeTracking: edges,
              movieData: { fullTreeIndices: [0, 10] }
          });
-         
+
          const result = calculateChangePreviews(state);
-         
+
          expect(result.upcoming).to.have.lengthOf(2);
          const keys = result.upcoming.map(e => e.join(','));
          expect(keys).to.include('7,8');
@@ -175,15 +175,15 @@ describe('Tree Visualisation - State Update Logic', () => {
             [1, 2], // 5: Current
             [1, 2]  // 6: Same as current
         ];
-        
+
         const state = createMockState({
             currentTreeIndex: 5,
-            activeChangeEdgeTracking: edges,
+            pivotEdgeTracking: edges,
             movieData: { fullTreeIndices: [0, 10] }
         });
 
         const result = calculateChangePreviews(state);
-        
+
         expect(result.completed).to.be.empty;
         expect(result.upcoming).to.be.empty;
     });

@@ -2,11 +2,21 @@
  * PolarNodeInterpolator - Interpolates node positions using polar coordinates
  * Handles smooth interpolation of tree nodes in radial layouts
  */
-import { unwrapAngle } from '../../../../domain/math/mathUtils.js';
+import { shortestAngle, crossesAngle, longArcDelta } from '../../../../domain/math/mathUtils.js';
 
 export class PolarNodeInterpolator {
   constructor() {
     this._angleCache = new Map();
+    // Root angle (where tree root is positioned) - default 0
+    this._rootAngle = 0;
+  }
+
+  /**
+   * Set the root angle for crossing detection
+   * @param {number} angle - Root angle in radians (default 0)
+   */
+  setRootAngle(angle) {
+    this._rootAngle = angle ?? 0;
   }
 
   /**
@@ -30,7 +40,8 @@ export class PolarNodeInterpolator {
 
   /**
    * Interpolate 3D position using polar coordinates
-   * Enables smooth arc-based movement in radial layouts
+   * Enables smooth arc-based movement in radial layouts.
+   * Avoids crossing through the root (0°) by taking the long arc when necessary.
    * @param {Object} fromNode - Source node with position/angle data
    * @param {Object} toNode - Target node with position/angle data
    * @param {number} t - Interpolation factor (0-1)
@@ -45,18 +56,21 @@ export class PolarNodeInterpolator {
     const toR = toNode.polarPosition ?? toNode.radius ?? 0;
     const interpolatedRadius = this._interpolateScalar(fromR, toR, t);
 
-    // Unwrap angles for continuous interpolation (prevents spinning)
-    const cacheId = toNode?.id ?? fromNode?.id;
-    const cachedAngle = cacheId != null ? this._angleCache.get(cacheId) : null;
+    // Get angles
+    const fromAngle = fromNode.angle || 0;
+    const toAngleRaw = toNode.angle || 0;
 
-    const fromAngle = unwrapAngle(fromNode.angle || 0, cachedAngle);
-    const toAngle = unwrapAngle(toNode.angle || 0, fromAngle);
-    const interpolatedAngle = fromAngle + (toAngle - fromAngle) * t;
+    // Calculate shortest angular delta
+    const shortDelta = shortestAngle(fromAngle, toAngleRaw);
 
-    // Cache final angle for next frame
-    if (cacheId != null && t === 1 && Number.isFinite(toAngle)) {
-      this._angleCache.set(cacheId, toAngle);
-    }
+    // Check if the short path would cross through the root (0°)
+    // If so, take the long arc instead to avoid visual crossing
+    const shortEndAngle = fromAngle + shortDelta;
+    const crossesRoot = crossesAngle(fromAngle, shortEndAngle, this._rootAngle);
+
+    // Use long arc if crossing root, otherwise use short arc
+    const delta = crossesRoot ? longArcDelta(shortDelta) : shortDelta;
+    const interpolatedAngle = fromAngle + delta * t;
 
     // Convert back to Cartesian coordinates
     const x = interpolatedRadius * Math.cos(interpolatedAngle);

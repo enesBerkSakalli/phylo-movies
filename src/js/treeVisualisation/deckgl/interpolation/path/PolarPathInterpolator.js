@@ -3,13 +3,34 @@
  * Used for animating tree branches and extensions in radial layouts
  */
 import { calculateInterpolatedBranchCoordinates } from '../../../layout/RadialTreeGeometry.js';
-import { unwrapAngle, shortestAngle } from '../../../../domain/math/mathUtils.js';
+import { shortestAngle, crossesAngle, longArcDelta } from '../../../../domain/math/mathUtils.js';
 import { ARC_SEGMENT_COUNT } from '../../builders/geometry/links/LinkGeometryBuilder.js';
 
 export class PolarPathInterpolator {
   constructor() {
     this.segmentCount = ARC_SEGMENT_COUNT;
     this._angleCache = new Map();
+    // Root angle (where tree root is positioned) - default 0
+    this._rootAngle = 0;
+  }
+
+  /**
+   * Set the root angle for crossing detection
+   * @param {number} angle - Root angle in radians (default 0)
+   */
+  setRootAngle(angle) {
+    this._rootAngle = angle ?? 0;
+  }
+
+  /**
+   * Calculate the correct delta for angle interpolation, avoiding root crossing.
+   * @private
+   */
+  _getAngleDelta(fromAngle, toAngle) {
+    const shortDelta = shortestAngle(fromAngle, toAngle);
+    const shortEndAngle = fromAngle + shortDelta;
+    const crossesRoot = crossesAngle(fromAngle, shortEndAngle, this._rootAngle);
+    return crossesRoot ? longArcDelta(shortDelta) : shortDelta;
   }
 
   /**
@@ -27,50 +48,67 @@ export class PolarPathInterpolator {
     }
 
     const t = Math.max(0, Math.min(1, timeFactor));
-    const linkId = toLink?.id ?? fromLink?.id;
 
-    // Unwrap angles for continuous interpolation (prevents spinning)
-    const cached = linkId != null ? this._angleCache.get(linkId) : null;
-    const fromSourceAngle = unwrapAngle(fromLink.polarData.source.angle, cached?.sourceAngle);
-    const fromTargetAngle = unwrapAngle(fromLink.polarData.target.angle, cached?.targetAngle);
-    const toSourceAngle = unwrapAngle(toLink.polarData.source.angle, fromSourceAngle);
-    const toTargetAngle = unwrapAngle(toLink.polarData.target.angle, fromTargetAngle);
+    // Get source angles
+    const fromSourceAngle = fromLink.polarData.source.angle;
+    const toSourceAngle = toLink.polarData.source.angle;
 
-    // Cache final angles for next frame
-    if (linkId != null && t === 1 && Number.isFinite(toSourceAngle) && Number.isFinite(toTargetAngle)) {
-      this._angleCache.set(linkId, {
-        sourceAngle: toSourceAngle,
-        targetAngle: toTargetAngle
-      });
-    }
+    // Get target angles
+    const fromTargetAngle = fromLink.polarData.target.angle;
+    const toTargetAngle = toLink.polarData.target.angle;
 
-    // Build link data for geometry calculation
+    // Calculate deltas that avoid crossing the root
+    const sourceDelta = this._getAngleDelta(fromSourceAngle, toSourceAngle);
+    const targetDelta = this._getAngleDelta(fromTargetAngle, toTargetAngle);
+
+    // Calculate interpolated angles
+    const interpSourceAngle = fromSourceAngle + sourceDelta * t;
+    const interpTargetAngle = fromTargetAngle + targetDelta * t;
+
+    // Interpolate radii
+    const interpSourceRadius = fromLink.polarData.source.radius +
+      (toLink.polarData.source.radius - fromLink.polarData.source.radius) * t;
+    const interpTargetRadius = fromLink.polarData.target.radius +
+      (toLink.polarData.target.radius - fromLink.polarData.target.radius) * t;
+
+    // Build link data for geometry calculation with interpolated values
     const linkData = {
       source: {
-        angle: toSourceAngle,
-        radius: toLink.polarData.source.radius,
-        x: toLink.sourcePosition[0],
-        y: toLink.sourcePosition[1]
+        angle: interpSourceAngle,
+        radius: interpSourceRadius,
+        x: interpSourceRadius * Math.cos(interpSourceAngle),
+        y: interpSourceRadius * Math.sin(interpSourceAngle)
       },
       target: {
-        angle: toTargetAngle,
-        radius: toLink.polarData.target.radius,
-        x: toLink.targetPosition[0],
-        y: toLink.targetPosition[1]
+        angle: interpTargetAngle,
+        radius: interpTargetRadius,
+        x: interpTargetRadius * Math.cos(interpTargetAngle),
+        y: interpTargetRadius * Math.sin(interpTargetAngle)
       }
     };
 
-    // Calculate interpolated branch coordinates
+    // Use static branch coordinates calculation (t=1, no further interpolation needed)
     const coordinates = calculateInterpolatedBranchCoordinates(
       linkData,
-      t,
-      fromSourceAngle,
-      fromLink.polarData.source.radius,
-      fromTargetAngle,
-      fromLink.polarData.target.radius,
+      1.0, // Already interpolated
+      interpSourceAngle,
+      interpSourceRadius,
+      interpTargetAngle,
+      interpTargetRadius,
       undefined,
-      { useShortestAngle: false }
+      { useShortestAngle: true } // OK to use shortest for arc within branch
     );
+
+    // Apply strict root crossing check on the generated geometry
+    if (coordinates.arcProperties) {
+      const { startAngle, angleDiff } = coordinates.arcProperties;
+      const endAngle = startAngle + angleDiff;
+
+      // If the generated arc cuts through the root gap, invert it to go the long way
+      if (crossesAngle(startAngle, endAngle, this._rootAngle)) {
+        coordinates.arcProperties.angleDiff = longArcDelta(angleDiff);
+      }
+    }
 
     return this._coordinatesToPath(coordinates);
   }

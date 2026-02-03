@@ -1,0 +1,47 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: "Sakalli"
+    given-names: "Enes Berk"
+    orcid: "https://orcid.org/0000-0000-0000-0000"  # TODO: Replace with your ORCID
+    affiliation: "University of Vienna"
+    email: "enes.sakalli@univie.ac.at"
+  # TODO: Add co-authors here if applicable
+  # - family-names: "Lastname"
+  #   given-names: "Firstname"
+  #   orcid: "https://orcid.org/0000-0000-0000-0000"
+  #   affiliation: "Institution"
+title: "Phylo-Movies: Interactive Phylogenetic Tree Interpolation and Visualization"
+version: 0.64.0
+date-released: 2026-02-03
+doi: "10.5281/zenodo.0000000"  # TODO: Replace with real Zenodo DOI after archiving
+url: "https://github.com/enesBerkSakalli/phylo-movies"
+repository-code: "https://github.com/enesBerkSakalli/phylo-movies"
+license: MIT
+keywords:
+  - phylogenetics
+  - visualization
+  - bioinformatics
+  - python
+  - react
+  - interpolation
+  - deck.gl
+  - tree-morphing
+  - robinson-foulds
+abstract: >-
+  PhyloMovies is a browser-based phylogenetic tree viewer with morphing animations for computational biologists.
+  It enables the visualization of transformations between phylogenetic trees on the same taxa set by decomposing
+  each tree into splits and detecting conflicts. It provides interactive playback of interpolated trees,
+  linked charts, and multiple-sequence alignment views.
+
+# Preferred citation for academic papers (uncomment and fill when published)
+# preferred-citation:
+#   type: article
+#   authors:
+#     - family-names: "Sakalli"
+#       given-names: "Enes Berk"
+#       orcid: "https://orcid.org/0000-0000-0000-0000"
+#   title: "Phylo-Movies: Interactive Phylogenetic Tree Interpolation and Visualization"
+#   journal: "Bioinformatics"  # or your target journal
+#   year: 2026
+#   doi: "10.1093/bioinformatics/XXXXX"

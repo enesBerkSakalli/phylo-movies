@@ -6,14 +6,14 @@ import { TabsContent } from "@/components/ui/tabs";
 export function ExampleTab({ loadingExample, submitting, handleLoadExample }) {
   return (
     <TabsContent value="example" className="mt-0">
-      <div className="flex flex-col items-center justify-center py-10 text-center space-y-4">
-        <div className="p-4 bg-secondary rounded-full">
+      <div className="flex flex-col items-center justify-center py-8 text-center space-y-4">
+        <div className="p-4 bg-secondary rounded-md">
           <Sparkles className="size-8 text-secondary-foreground" />
         </div>
         <div className="max-w-md space-y-2">
           <h3 className="text-lg font-semibold">Load Sample Dataset</h3>
           <p className="text-sm text-muted-foreground">
-            Explore the capabilities of Phylo-Movies with a pre-configured biological dataset (SARS-CoV-2 Spike Protein Evolution).
+            Explore the capabilities of Phylo-Movies with a pre-configured biological dataset (SARS-CoV-2 Spike Protein Phylogeny).
           </p>
         </div>
         <Button

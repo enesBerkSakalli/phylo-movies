@@ -82,9 +82,9 @@ describe('Real Data Integration (data/response.json)', () => {
         // This corresponds to ranges 1 to 19 inclusive.
         const indices1to19 = Array.from({length: 19}, (_, i) => i + 1);
 
-        // The builder expects activeChangeEdge to be the raw array of indices
+        // The builder expects pivotEdge to be the raw array of indices
         // It converts it internally to "[1, 2, 3...]" to verify against latticeSolutions
-        const activeChangeEdge = indices1to19;
+        const pivotEdge = indices1to19;
 
         // We also need to mark it as "currently moving" via subtreeTracking
         const subtreeTracking = [
@@ -95,7 +95,7 @@ describe('Real Data Integration (data/response.json)', () => {
             leftPositions,
             rightPositions,
             latticeSolutions: rawJumpSolutions,
-            activeChangeEdge: activeChangeEdge,
+            pivotEdge: pivotEdge,
             colorManager: mockColorManager,
             subtreeTracking: subtreeTracking,
             currentTreeIndex: 0,

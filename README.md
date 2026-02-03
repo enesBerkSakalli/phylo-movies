@@ -1,6 +1,23 @@
 # PhyloMovies
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.0000000.svg)](https://doi.org/10.5281/zenodo.0000000)
+
 PhyloMovies is a browser-based phylogenetic tree viewer for inspecting tree trajectories, morphing animations, and comparative evolutionary relationships. It targets computational biologists, outbreak analysts, and visualization researchers who need to interrogate tree dynamics without building bespoke tooling.
+
+## Availability and Implementation
+
+Source code is available under the MIT License at [github.com/enesBerkSakalli/phylo-movies](https://github.com/enesBerkSakalli/phylo-movies).
+The software is implemented in Python (backend) and JavaScript/React (frontend).
+All test datasets required to reproduce the benchmarks are located in `data/test-data`.
+
+## Citation
+
+If you use PhyloMovies in your research, please cite:
+
+> Sakalli, E. B. (2026). Phylo-Movies: Interactive Phylogenetic Tree Interpolation and Visualization. GitHub. https://github.com/enesBerkSakalli/phylo-movies
+
+Or use the provided `CITATION.cff` file.
 
 ## Demo Video
 

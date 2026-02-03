@@ -1,15 +1,20 @@
 import React, { useEffect, useRef } from 'react';
 import { useAppStore } from '../../../js/core/store.js';
 
+// ==========================================================================
+// STORE SELECTORS
+// ==========================================================================
+const selectPrimaryController = (state) => state.treeControllers?.[0];
+
 const DeckGLCanvas = React.memo(function DeckGLCanvas() {
-  const animationController = useAppStore((state) => state.treeControllers?.[0]);
+  const animationController = useAppStore(selectPrimaryController);
   const containerRef = useRef(null);
 
   useEffect(() => {
     if (animationController && containerRef.current) {
       animationController.mount(containerRef.current);
     }
-    
+
     // Cleanup function to detach controller when component unmounts
     return () => {
       if (animationController) {
@@ -24,8 +29,8 @@ const DeckGLCanvas = React.memo(function DeckGLCanvas() {
   }
 
   return (
-    <div 
-      id="webgl-container" 
+    <div
+      id="webgl-container"
       ref={containerRef}
       style={{ width: '100%', height: '100%' }}
     />

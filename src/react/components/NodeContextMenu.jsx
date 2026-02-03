@@ -1,12 +1,23 @@
 import React, { useEffect, useCallback, useRef } from 'react';
 import { ClipboardCopy, Highlighter, Crosshair, Info } from 'lucide-react';
 import { useAppStore } from '../../js/core/store.js';
+
 import { SubtreeExtractor } from '../../js/domain/tree/subtreeExtractor.js';
 import { toast } from 'sonner';
 
 // =============================================================================
 // MAIN COMPONENT
 // =============================================================================
+
+// ==========================================================================
+// STORE SELECTORS
+// ==========================================================================
+const selectContextMenuOpen = (s) => s.contextMenuOpen;
+const selectContextMenuPosition = (s) => s.contextMenuPosition;
+const selectContextMenuNode = (s) => s.contextMenuNode;
+const selectHideNodeContextMenu = (s) => s.hideNodeContextMenu;
+const selectSetManuallyMarkedNodes = (s) => s.setManuallyMarkedNodes;
+const selectTreeControllers = (s) => s.treeControllers;
 
 /**
  * NodeContextMenu - React component for tree node context menu.
@@ -19,12 +30,12 @@ export function NodeContextMenu() {
   const menuRef = useRef(null);
 
   // Store state
-  const isOpen = useAppStore((s) => s.contextMenuOpen);
-  const position = useAppStore((s) => s.contextMenuPosition);
-  const node = useAppStore((s) => s.contextMenuNode);
-  const hideMenu = useAppStore((s) => s.hideNodeContextMenu);
-  const setManuallyMarkedNodes = useAppStore((s) => s.setManuallyMarkedNodes);
-  const treeControllers = useAppStore((s) => s.treeControllers);
+  const isOpen = useAppStore(selectContextMenuOpen);
+  const position = useAppStore(selectContextMenuPosition);
+  const node = useAppStore(selectContextMenuNode);
+  const hideMenu = useAppStore(selectHideNodeContextMenu);
+  const setManuallyMarkedNodes = useAppStore(selectSetManuallyMarkedNodes);
+  const treeControllers = useAppStore(selectTreeControllers);
 
   // Close menu on click outside
   useEffect(() => {

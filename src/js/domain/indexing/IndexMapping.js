@@ -80,8 +80,8 @@ export function getPhaseMetadata(state = useAppStore.getState()) {
 }
 
 // MSA frame index for MSA anchoring:
-// - Full trees (activeChangeEdge: null) → advance MSA frame
-// - Interpolations (activeChangeEdge: array) → stay at current MSA frame
+// - Full trees (pivotEdge: null) → advance MSA frame
+// - Interpolations (pivotEdge: array) → stay at current MSA frame
 export function getMSAFrameIndex(state = useAppStore.getState()) {
   const { fullTreeIndex } = getIndexMappings(state);
 

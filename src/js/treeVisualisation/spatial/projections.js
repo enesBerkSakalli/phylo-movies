@@ -38,7 +38,7 @@ export function projectNodesToScreen(nodes, viewport, containerRect) {
       y: py + containerRect.top,
       width: 0,
       height: 0,
-      isLeaf: !node.children || node.children.length === 0
+      isLeaf: !node.children
     };
   });
 

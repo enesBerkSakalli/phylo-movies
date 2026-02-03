@@ -56,9 +56,10 @@ export function buildCellData(cellSize, sequences, visibleRange, maxCells) {
  * @param {Object} selection - Current selection state
  * @param {string} colorScheme - Color scheme name
  * @param {string} consensus - The consensus sequence (optional)
+ * @param {Object} previousSelection - Previous selection state (optional)
  * @returns {PolygonLayer} The cells layer
  */
-export function createCellsLayer(cellData, sequenceType, selection, colorScheme = 'default', consensus = null) {
+export function createCellsLayer(cellData, sequenceType, selection, colorScheme = 'default', consensus = null, previousSelection = null) {
   const colorFn = getColorScheme(colorScheme, sequenceType);
 
   return new PolygonLayer({
@@ -95,23 +96,39 @@ export function createCellsLayer(cellData, sequenceType, selection, colorScheme 
         baseColor = colorFn(d.ch);
       }
 
-      // Dim colors outside the selection
-      if (selection) {
-        const { startCol, endCol } = selection;
-        if (d.col < startCol - 1 || d.col > endCol - 1) {
-          // Dim by reducing saturation and brightness
-          return [
-            baseColor[0] * 0.3 + 180,  // Blend with gray
-            baseColor[1] * 0.3 + 180,
-            baseColor[2] * 0.3 + 180,
-            baseColor[3]
-          ];
-        }
+      // Check if column is in current selection
+      const inCurrentSelection = selection && 
+        d.col >= selection.startCol - 1 && d.col <= selection.endCol - 1;
+      
+      // Check if column is in previous selection
+      const inPreviousSelection = previousSelection && 
+        d.col >= previousSelection.startCol - 1 && d.col <= previousSelection.endCol - 1;
+
+      // Dim colors outside both selections
+      if ((selection || previousSelection) && !inCurrentSelection && !inPreviousSelection) {
+        // Dim by reducing saturation and brightness
+        return [
+          baseColor[0] * 0.3 + 180,  // Blend with gray
+          baseColor[1] * 0.3 + 180,
+          baseColor[2] * 0.3 + 180,
+          baseColor[3]
+        ];
       }
+      
+      // Slightly dim previous selection (not as bright as current)
+      if (inPreviousSelection && !inCurrentSelection) {
+        return [
+          baseColor[0] * 0.7 + 60,  // Slightly faded
+          baseColor[1] * 0.7 + 60,
+          baseColor[2] * 0.7 + 60,
+          baseColor[3]
+        ];
+      }
+      
       return baseColor;
     },
     updateTriggers: {
-      getFillColor: [colorScheme, selection, consensus]
+      getFillColor: [colorScheme, selection, previousSelection, consensus]
     }
   });
 }

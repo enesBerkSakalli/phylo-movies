@@ -1,5 +1,3 @@
-import { isLinkInSubtree, isNodeInSubtree } from '../../../utils/splitMatching.js';
-
 export function applyDimmingWithCache(
   opacity,
   colorManager,
@@ -18,11 +16,11 @@ export function applyDimmingWithCache(
     isSourceOrDest = isSource || isDestination;
   }
 
-  // Active change edge dimming
-  if (!isSourceOrDest && dimmingEnabled && colorManager?.hasActiveChangeEdges?.()) {
+  // Pivot edge dimming
+  if (!isSourceOrDest && dimmingEnabled && colorManager?.hasPivotEdges?.()) {
     const isDownstream = isNode
-      ? colorManager.isNodeDownstreamOfAnyActiveChangeEdge?.(entity)
-      : colorManager.isDownstreamOfAnyActiveChangeEdge?.(entity);
+      ? colorManager.isNodeDownstreamOfAnyPivotEdge?.(entity)
+      : colorManager.isDownstreamOfAnyPivotEdge?.(entity);
 
     if (!isDownstream) {
       opacity = Math.round(opacity * dimmingOpacity);
@@ -30,15 +28,11 @@ export function applyDimmingWithCache(
   }
 
   // Subtree dimming - dim elements NOT in the marked subtree
-  // Always use ColorManager as the authoritative source for subtree data
-  // This ensures consistency during scrubbing when ColorManager is updated
-  // with the correct tree index but the store's currentTreeIndex is stale
-  const subtreeData = colorManager?.sharedMarkedJumpingSubtrees || [];
-
-  if (subtreeDimmingEnabled && subtreeData.length > 0) {
+  // Use ColorManager's fast path for O(1) rejection
+  if (subtreeDimmingEnabled && colorManager?._markedLeavesUnion?.size > 0) {
     const isInSubtree = isNode
-      ? isNodeInSubtree(entity, subtreeData)
-      : isLinkInSubtree(entity, subtreeData);
+      ? colorManager.isNodeInMarkedSubtreeFast(entity)
+      : colorManager.isLinkInMarkedSubtreeFast(entity);
 
     if (!isInSubtree) {
       opacity = Math.round(opacity * subtreeDimmingOpacity);

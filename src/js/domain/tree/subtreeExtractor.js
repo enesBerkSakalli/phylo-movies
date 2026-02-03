@@ -88,28 +88,40 @@ export class SubtreeExtractor {
   }
 
   /**
-   * Get all descendant nodes from a given node
-   * @param {Object} node - Root node
+   * Get all descendant nodes from a given node.
+   * Uses D3 hierarchy's built-in descendants() method when available.
+   * @param {Object} node - D3 hierarchy node or raw tree node
    * @returns {Array} Array of all descendant nodes (including the root)
    */
   static getDescendants(node) {
-    const descendants = [node];
+    // Use D3's built-in descendants() method when available (preferred)
+    if (typeof node.descendants === 'function') {
+      return node.descendants();
+    }
 
+    // Fallback for raw tree data
+    const descendants = [node];
     if (node.children) {
       node.children.forEach(child => {
         descendants.push(...this.getDescendants(child));
       });
     }
-
     return descendants;
   }
 
   /**
-   * Get all leaf nodes from a given node
-   * @param {Object} node - Root node
+   * Get all leaf nodes from a given node.
+   * Uses D3 hierarchy's built-in leaves() method when available.
+   * @param {Object} node - D3 hierarchy node or raw tree node
    * @returns {Array} Array of all leaf nodes in the subtree
    */
   static getLeaves(node) {
+    // Use D3's built-in leaves() method when available (preferred)
+    if (typeof node.leaves === 'function') {
+      return node.leaves();
+    }
+
+    // Fallback for raw tree data
     if (!node.children || node.children.length === 0) {
       return [node];
     }
@@ -118,7 +130,6 @@ export class SubtreeExtractor {
     node.children.forEach(child => {
       leaves.push(...this.getLeaves(child));
     });
-
     return leaves;
   }
 

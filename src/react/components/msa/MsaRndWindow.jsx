@@ -1,14 +1,22 @@
 import React from 'react';
 import { Rnd } from 'react-rnd';
-import { useAppStore } from '../../../js/core/store.js';
+import { useAppStore } from '@/js/core/store';
 import { Button } from '@/components/ui/button';
 import { X, Columns } from 'lucide-react';
-import { MSAProvider, useMSA } from './MSAContext';
+import { useMSA } from './MSAContext';
 import { MSAControls } from './MSAControls';
 import { MSAViewer } from './MSAViewer';
 
+// ==========================================================================
+// STORE SELECTORS
+// ==========================================================================
+const selectCloseMsaViewer = (s) => s.closeMsaViewer;
+const selectIsMsaViewerOpen = (s) => s.isMsaViewerOpen;
+const selectMsaWindow = (s) => s.msaWindow;
+const selectSetMsaWindow = (s) => s.setMsaWindow;
+
 function MSAWindowContent() {
-  const closeMsaViewer = useAppStore((s) => s.closeMsaViewer);
+  const closeMsaViewer = useAppStore(selectCloseMsaViewer);
   const { processedData } = useMSA();
 
   const summary = processedData
@@ -16,17 +24,17 @@ function MSAWindowContent() {
     : 'No alignment loaded';
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="msa-rnd-header flex items-center justify-between gap-2 px-1.5 py-1 border-b border-border bg-card cursor-move select-none">
-        <div className="flex items-center gap-1.5">
+    <div className="flex flex-col h-full overflow-hidden rounded-md border border-border/40">
+      <div className="msa-rnd-header flex items-center justify-between gap-2 px-2.5 py-1.5 border-b border-border/40 bg-muted/20 backdrop-blur-sm cursor-move select-none shrink-0">
+        <div className="flex items-center gap-2">
           <Columns className="size-4 text-primary" aria-hidden />
-          <div>
-            <div className="text-sm font-semibold leading-tight">MSA Viewer</div>
-            <div className="text-[10px] text-muted-foreground leading-tight" aria-live="polite">{summary}</div>
+          <div className="flex flex-col">
+            <div className="text-xs font-bold leading-tight tracking-tight uppercase">MSA Viewer</div>
+            <div className="text-[9px] text-muted-foreground/80 leading-tight font-medium" aria-live="polite">{summary}</div>
           </div>
         </div>
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon-xs" onClick={closeMsaViewer} aria-label="Close MSA viewer">
+          <Button variant="ghost" size="icon-xs" onClick={closeMsaViewer} aria-label="Close MSA viewer" className="hover:bg-destructive/10 hover:text-destructive transition-colors">
             <X className="size-4" />
           </Button>
         </div>
@@ -40,9 +48,9 @@ function MSAWindowContent() {
 }
 
 export function MsaRndWindow() {
-  const isOpen = useAppStore((s) => s.isMsaViewerOpen);
-  const msaWindow = useAppStore((s) => s.msaWindow);
-  const setMsaWindow = useAppStore((s) => s.setMsaWindow);
+  const isOpen = useAppStore(selectIsMsaViewerOpen);
+  const msaWindow = useAppStore(selectMsaWindow);
+  const setMsaWindow = useAppStore(selectSetMsaWindow);
 
   if (!isOpen) return null;
 
@@ -78,9 +86,7 @@ export function MsaRndWindow() {
       }}
       className="fixed z-40 pointer-events-auto shadow-2xl bg-card"
     >
-      <MSAProvider>
-        <MSAWindowContent />
-      </MSAProvider>
+      <MSAWindowContent />
     </Rnd>
   );
 }

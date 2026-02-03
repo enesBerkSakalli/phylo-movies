@@ -1,9 +1,9 @@
-import { TIMELINE_CONSTANTS } from '../constants.js';
-import { TimelineDataProcessor } from '../data/TimelineDataProcessor.js';
-import { ScrubberAPI } from './ScrubberAPI.js';
-import { TimelineMathUtils } from '../math/TimelineMathUtils.js';
-import { useAppStore } from '../../core/store.js';
-import { DeckTimelineRenderer } from '../renderers/DeckTimelineRenderer.js';
+import { TIMELINE_CONSTANTS } from '@/js/timeline/constants';
+import { TimelineDataProcessor } from '@/js/timeline/data/TimelineDataProcessor';
+import { ScrubberAPI } from '@/js/timeline/core/ScrubberAPI';
+import { TimelineMathUtils } from '@/js/timeline/math/TimelineMathUtils';
+import { useAppStore } from '@/js/core/store';
+import { DeckTimelineRenderer } from '@/js/timeline/renderers/DeckTimelineRenderer';
 
 // ============================================================================
 // MOVIE TIMELINE MANAGER
@@ -73,6 +73,26 @@ export class MovieTimelineManager {
     // ==========================================================================
     // TIMELINE CREATION
     // ==========================================================================
+
+    /**
+     * Public API to ensure the timeline container is correctly initialized
+     * and attached to the DOM. Usually called by React components when they mount.
+     */
+    ensureTimelineInitialized() {
+        if (this.isDestroyed) return;
+
+        // Check if timeline exists and is attached to the DOM
+        const isTimelineAttached = this.timeline &&
+                                   this.timeline.container &&
+                                   document.body.contains(this.timeline.container);
+
+        if (!isTimelineAttached) {
+            this._createTimeline();
+            if (this.timeline) {
+                this._setupEvents();
+            }
+        }
+    }
 
     _createTimeline() {
         if (this.isDestroyed) return;

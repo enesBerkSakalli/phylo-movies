@@ -9,7 +9,7 @@ export function ProjectFileSection({ treesFile, msaFile, setTreesFile, setMsaFil
         <LayoutPanelLeft className="size-4" />
         <h3 className="text-sm font-semibold uppercase tracking-wider">File Selection</h3>
       </div>
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-2 gap-4">
         <FileUploadZone
           id="trees-input"
           label="Trees (.nwk, .newick, .json)"

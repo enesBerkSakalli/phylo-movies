@@ -1,20 +1,34 @@
 import React, { createContext, useContext, useState, useMemo } from 'react';
-import { useAppStore } from '../../../js/core/store.js';
-import { processPhyloData } from '../../../js/msaViewer/utils/dataUtils.js';
-import { TREE_COLOR_CATEGORIES } from '../../../js/constants/TreeColors.js';
-import { getGroupForTaxon } from '../../../js/treeColoring/utils/GroupingUtils.js';
+import { useAppStore } from '@/js/core/store';
+import { processPhyloData } from '@/js/msaViewer/utils/dataUtils';
+import { TREE_COLOR_CATEGORIES } from '@/js/constants/TreeColors';
+import { getGroupForTaxon } from '@/js/treeColoring/utils/GroupingUtils';
 
 const MSAContext = createContext(null);
 
+// ==========================================================================
+// STORE SELECTORS
+// ==========================================================================
+const selectMovieData = (s) => s.movieData;
+const selectHasMsa = (s) => s.hasMsa;
+const selectMsaRegion = (s) => s.msaRegion;
+const selectSetMsaRegion = (s) => s.setMsaRegion;
+const selectClearMsaRegion = (s) => s.clearMsaRegion;
+const selectMsaPreviousRegion = (s) => s.msaPreviousRegion;
+const selectMsaRowOrder = (s) => s.msaRowOrder;
+const selectTaxaGrouping = (s) => s.taxaGrouping;
+const selectTaxaColorVersion = (s) => s.taxaColorVersion;
+
 export function MSAProvider({ children }) {
-  const movieData = useAppStore((s) => s.movieData);
-  const hasMsa = useAppStore((s) => s.hasMsa);
-  const msaRegion = useAppStore((s) => s.msaRegion);
-  const setMsaRegion = useAppStore((s) => s.setMsaRegion);
-  const clearMsaRegion = useAppStore((s) => s.clearMsaRegion);
-  const msaRowOrder = useAppStore((s) => s.msaRowOrder);
-  const taxaGrouping = useAppStore((s) => s.taxaGrouping);
-  const taxaColorVersion = useAppStore((s) => s.taxaColorVersion);
+  const movieData = useAppStore(selectMovieData);
+  const hasMsa = useAppStore(selectHasMsa);
+  const msaRegion = useAppStore(selectMsaRegion);
+  const setMsaRegion = useAppStore(selectSetMsaRegion);
+  const clearMsaRegion = useAppStore(selectClearMsaRegion);
+  const msaPreviousRegion = useAppStore(selectMsaPreviousRegion);
+  const msaRowOrder = useAppStore(selectMsaRowOrder);
+  const taxaGrouping = useAppStore(selectTaxaGrouping);
+  const taxaColorVersion = useAppStore(selectTaxaColorVersion);
 
   const [showLetters, setShowLetters] = useState(true);
   const [colorScheme, setColorScheme] = useState('default');
@@ -107,9 +121,12 @@ export function MSAProvider({ children }) {
         }
       }
 
-      // Per-taxon explicit color (do not fall back to defaultColor; default -> no color)
-      if (!color && TREE_COLOR_CATEGORIES[id]) {
-        color = TREE_COLOR_CATEGORIES[id];
+      // Per-taxon explicit color (only if not a system key)
+      if (!color) {
+        const systemKeys = ['markedColor', 'pivotEdgeColor', 'strokeColor', 'defaultColor'];
+        if (!systemKeys.includes(id) && TREE_COLOR_CATEGORIES[id]) {
+          color = TREE_COLOR_CATEGORIES[id];
+        }
       }
 
       if (color) map[id] = color;
@@ -123,6 +140,7 @@ export function MSAProvider({ children }) {
     msaRegion,
     setMsaRegion,
     clearMsaRegion,
+    msaPreviousRegion,
     showLetters,
     setShowLetters,
     colorScheme,
@@ -140,6 +158,7 @@ export function MSAProvider({ children }) {
     msaRegion,
     setMsaRegion,
     clearMsaRegion,
+    msaPreviousRegion,
     showLetters,
     setShowLetters,
     colorScheme,

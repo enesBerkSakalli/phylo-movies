@@ -73,22 +73,16 @@ export class LayerManager {
 
   /**
    * Update layers with new data - deck.gl handles the diffing and optimization
+   *
+   * Note: No defensive cloning needed here. The interpolatedData from TreeInterpolator
+   * is already ephemeral (created fresh for each animation frame) and safely isolated
+   * from the store. Removing the clone eliminates unnecessary GC pressure at 60fps.
+   *
    * @param {Object} interpolatedData - New data to apply to layers
    * @returns {Array} New layers (deck.gl will handle updates internally)
    */
   updateLayersWithData(interpolatedData) {
-    return this.createTreeLayers(this._cloneLayerData(interpolatedData));
-  }
-
-  _cloneLayerData(data) {
-    if (!data) return data;
-    const next = { ...data };
-    if (Array.isArray(data.nodes)) next.nodes = [...data.nodes];
-    if (Array.isArray(data.links)) next.links = [...data.links];
-    if (Array.isArray(data.labels)) next.labels = [...data.labels];
-    if (Array.isArray(data.extensions)) next.extensions = [...data.extensions];
-    if (Array.isArray(data.connectors)) next.connectors = [...data.connectors];
-    return next;
+    return this.createTreeLayers(interpolatedData);
   }
 
   // ==========================================================================

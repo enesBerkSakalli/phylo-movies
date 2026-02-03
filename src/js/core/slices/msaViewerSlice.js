@@ -12,6 +12,7 @@ export const createMsaViewerSlice = (set, get) => ({
   msaStepSize: 50,
   msaColumnCount: 0,
   msaRegion: null,
+  msaPreviousRegion: null,
   msaRowOrder: null,
 
   // ==========================================================================
@@ -40,6 +41,7 @@ export const createMsaViewerSlice = (set, get) => ({
       msaStepSize: 50,
       msaColumnCount: 0,
       msaRegion: null,
+      msaPreviousRegion: null,
       msaRowOrder: null
     });
   },
@@ -67,6 +69,27 @@ export const createMsaViewerSlice = (set, get) => ({
   },
 
   clearMsaRegion: () => set({ msaRegion: null }),
+
+  setMsaPreviousRegion: (start, end) => {
+    const { msaColumnCount, msaPreviousRegion } = get();
+    if (!Number.isFinite(start) || !Number.isFinite(end)) {
+      if (msaPreviousRegion !== null) {
+        set({ msaPreviousRegion: null });
+      }
+      return;
+    }
+    const min = Math.min(start, end);
+    const max = Math.max(start, end);
+    const limit = msaColumnCount || Number.MAX_SAFE_INTEGER;
+    const clampedStart = clamp(min, 1, limit);
+    const clampedEnd = clamp(max, 1, limit);
+
+    if (!msaPreviousRegion || msaPreviousRegion.start !== clampedStart || msaPreviousRegion.end !== clampedEnd) {
+      set({ msaPreviousRegion: { start: clampedStart, end: clampedEnd } });
+    }
+  },
+
+  clearMsaPreviousRegion: () => set({ msaPreviousRegion: null }),
 
   // ==========================================================================
   // ACTIONS: Row Ordering

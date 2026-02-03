@@ -17,7 +17,7 @@ export function buildSubtreeConnectors(options) {
   var leftPositions = options.leftPositions;
   var rightPositions = options.rightPositions;
   var latticeSolutions = options.latticeSolutions;
-  var activeChangeEdge = options.activeChangeEdge;
+  var pivotEdge = options.pivotEdge;
   var colorManager = options.colorManager;
   var subtreeTracking = options.subtreeTracking;
   var currentTreeIndex = options.currentTreeIndex;
@@ -28,7 +28,7 @@ export function buildSubtreeConnectors(options) {
   var leftRadius = options.leftRadius;
   var rightRadius = options.rightRadius;
 
-  var edgeKey = "[" + activeChangeEdge.join(", ") + "]";
+  var edgeKey = "[" + pivotEdge.join(", ") + "]";
   var flattenedSubtrees = flattenSubtreeEntries(latticeSolutions[edgeKey] || []);
   if (flattenedSubtrees.length === 0) {
     return [];
@@ -329,11 +329,11 @@ function buildRawConnections(params) {
 
     // Use getNodeForColor to get the correct node for color determination (bug fix)
     var nodeForColor = getNodeForColor(leftInfo, splitIndices, jumpingSubtreeSets, leftPositions);
-    var isActiveEdge = colorManager && typeof colorManager.isNodeActiveEdge === 'function'
-      && colorManager.isNodeActiveEdge(nodeForColor);
+    var isPivotEdge = colorManager && typeof colorManager.isNodePivotEdge === 'function'
+      && colorManager.isNodePivotEdge(nodeForColor);
     var isHistorySubtree = colorManager && typeof colorManager.isNodeHistorySubtree === 'function'
       && colorManager.isNodeHistorySubtree(nodeForColor);
-    var effectiveMoving = isCurrentlyMoving || isActiveEdge || isHistorySubtree;
+    var effectiveMoving = isCurrentlyMoving || isPivotEdge || isHistorySubtree;
     var color = computeConnectionColor(nodeForColor, effectiveMoving, colorManager, markedSubtreesEnabled, linkConnectionOpacity);
 
     // Use createConnectionObject helper
@@ -423,7 +423,7 @@ function buildBundledConnectorPaths(params) {
         srcBundlePoint,
         dstBundlePoint,
         24,
-        { 
+        {
           bundlingStrength: bundlingStrength,
           sourceCenter: leftCenter,
           targetCenter: rightCenter
@@ -461,7 +461,7 @@ function buildBundledConnectorPaths(params) {
           groupBundlePoint,
           groupDstBundlePoint,
           24,
-          { 
+          {
             bundlingStrength: bundlingStrength,
             sourceCenter: leftCenter,
             targetCenter: rightCenter

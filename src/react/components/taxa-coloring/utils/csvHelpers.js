@@ -11,13 +11,28 @@ export function loadCSVColumn(csvData, colName, taxaNames) {
     };
   }
 
-  // Ensure map is a valid Map instance
-  let map = csvData.allGroupings[colName];
-  if (!(map instanceof Map)) {
-    map = new Map();
+  // Ensure map is a valid Map instance (contains CSV_NAME -> GROUP_VALUE)
+  let rawMap = csvData.allGroupings[colName];
+  if (!(rawMap instanceof Map)) {
+    rawMap = new Map();
   }
 
   const groups = csvData.columnGroups?.[colName] || [];
-  const validation = validateCSVTaxa(map, taxaNames);
-  return { map, groups, validation };
+  const validation = validateCSVTaxa(rawMap, taxaNames);
+
+  // Transform raw map (CSV names) into canonical map (Tree names)
+  const canonicalMap = new Map();
+  if (validation.canonicalMapping) {
+    for (const [csvName, treeName] of validation.canonicalMapping.entries()) {
+      if (rawMap.has(csvName)) {
+        canonicalMap.set(treeName, rawMap.get(csvName));
+      }
+    }
+  }
+
+  return { 
+    map: canonicalMap, 
+    groups, 
+    validation 
+  };
 }

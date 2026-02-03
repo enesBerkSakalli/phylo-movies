@@ -14,31 +14,55 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Highlighter, X } from 'lucide-react';
 
-export function ColoringPanel() {
-  const monophyletic = useAppStore((s) => s.monophyleticColoringEnabled);
-  const activeChange = useAppStore((s) => s.activeChangeEdgesEnabled);
-  const treeControllers = useAppStore((s) => s.treeControllers);
-  const activeChangeEdgeColor = useAppStore((s) => s.activeChangeEdgeColor);
-  const markedColor = useAppStore((s) => s.markedColor);
-  const setTaxaColoringOpen = useAppStore((s) => s.setTaxaColoringOpen);
+// ==========================================================================
+// STORE SELECTORS
+// ==========================================================================
+const selectMonophyleticColoringEnabled = (s) => s.monophyleticColoringEnabled;
+const selectPivotEdgesEnabled = (s) => s.pivotEdgesEnabled;
+const selectTreeControllers = (s) => s.treeControllers;
+const selectPivotEdgeColor = (s) => s.pivotEdgeColor;
+const selectMarkedColor = (s) => s.markedColor;
+const selectSetTaxaColoringOpen = (s) => s.setTaxaColoringOpen;
+const selectSetMonophyleticColoring = (s) => s.setMonophyleticColoring;
+const selectSetPivotEdgesEnabled = (s) => s.setPivotEdgesEnabled;
+const selectSetPivotEdgeColor = (s) => s.setPivotEdgeColor;
+const selectSetMarkedColor = (s) => s.setMarkedColor;
+const selectMarkedSubtreesEnabled = (s) => s.markedSubtreesEnabled;
+const selectMarkedSubtreeMode = (s) => s.markedSubtreeMode;
+const selectMarkedSubtreeOpacity = (s) => s.markedSubtreeOpacity;
+const selectHighlightColorMode = (s) => s.highlightColorMode;
+const selectManuallyMarkedNodes = (s) => s.manuallyMarkedNodes;
+const selectSetMarkedSubtreesEnabled = (s) => s.setMarkedSubtreesEnabled;
+const selectSetMarkedSubtreeMode = (s) => s.setMarkedSubtreeMode;
+const selectSetMarkedSubtreeOpacity = (s) => s.setMarkedSubtreeOpacity;
+const selectSetHighlightColorMode = (s) => s.setHighlightColorMode;
+const selectSetManuallyMarkedNodes = (s) => s.setManuallyMarkedNodes;
 
-  const setMonophyleticColoring = useAppStore((s) => s.setMonophyleticColoring);
-  const setActiveChangeEdgesEnabled = useAppStore((s) => s.setActiveChangeEdgesEnabled);
-  const setActiveChangeEdgeColor = useAppStore((s) => s.setActiveChangeEdgeColor);
-  const setMarkedColor = useAppStore((s) => s.setMarkedColor);
+export function ColoringPanel() {
+  const monophyletic = useAppStore(selectMonophyleticColoringEnabled);
+  const pivotEdgesEnabled = useAppStore(selectPivotEdgesEnabled);
+  const treeControllers = useAppStore(selectTreeControllers);
+  const pivotEdgeColor = useAppStore(selectPivotEdgeColor);
+  const markedColor = useAppStore(selectMarkedColor);
+  const setTaxaColoringOpen = useAppStore(selectSetTaxaColoringOpen);
+
+  const setMonophyleticColoring = useAppStore(selectSetMonophyleticColoring);
+  const setPivotEdgesEnabled = useAppStore(selectSetPivotEdgesEnabled);
+  const setPivotEdgeColor = useAppStore(selectSetPivotEdgeColor);
+  const setMarkedColor = useAppStore(selectSetMarkedColor);
 
   // Subtree Highlighting State
-  const markedSubtreesEnabled = useAppStore((s) => s.markedSubtreesEnabled);
-  const markedSubtreeMode = useAppStore((s) => s.markedSubtreeMode);
-  const markedSubtreeOpacity = useAppStore((s) => s.markedSubtreeOpacity);
-  const highlightColorMode = useAppStore((s) => s.highlightColorMode);
-  const manuallyMarkedNodes = useAppStore((s) => s.manuallyMarkedNodes);
+  const markedSubtreesEnabled = useAppStore(selectMarkedSubtreesEnabled);
+  const markedSubtreeMode = useAppStore(selectMarkedSubtreeMode);
+  const markedSubtreeOpacity = useAppStore(selectMarkedSubtreeOpacity);
+  const highlightColorMode = useAppStore(selectHighlightColorMode);
+  const manuallyMarkedNodes = useAppStore(selectManuallyMarkedNodes);
 
-  const setMarkedSubtreesEnabled = useAppStore((s) => s.setMarkedSubtreesEnabled);
-  const setMarkedSubtreeMode = useAppStore((s) => s.setMarkedSubtreeMode);
-  const setMarkedSubtreeOpacity = useAppStore((s) => s.setMarkedSubtreeOpacity);
-  const setHighlightColorMode = useAppStore((s) => s.setHighlightColorMode);
-  const setManuallyMarkedNodes = useAppStore((s) => s.setManuallyMarkedNodes);
+  const setMarkedSubtreesEnabled = useAppStore(selectSetMarkedSubtreesEnabled);
+  const setMarkedSubtreeMode = useAppStore(selectSetMarkedSubtreeMode);
+  const setMarkedSubtreeOpacity = useAppStore(selectSetMarkedSubtreeOpacity);
+  const setHighlightColorMode = useAppStore(selectSetHighlightColorMode);
+  const setManuallyMarkedNodes = useAppStore(selectSetManuallyMarkedNodes);
 
   const rerenderControllers = useCallback(async () => {
     try {
@@ -53,9 +77,9 @@ export function ColoringPanel() {
     await rerenderControllers();
   }, [setMonophyleticColoring, rerenderControllers]);
 
-  const onToggleActiveChange = useCallback(async (v) => {
-    setActiveChangeEdgesEnabled(!!v);
-  }, [setActiveChangeEdgesEnabled, rerenderControllers]);
+  const onTogglePivotEdges = useCallback(async (v) => {
+    setPivotEdgesEnabled(!!v);
+  }, [setPivotEdgesEnabled, rerenderControllers]);
 
   const toggleMarkedSubtrees = useCallback(async (v) => {
     setMarkedSubtreesEnabled(!!v);
@@ -69,15 +93,15 @@ export function ColoringPanel() {
           id="taxa-coloring-button"
           onClick={() => setTaxaColoringOpen(true)}
           variant="secondary"
-          className="w-full justify-start h-9 font-medium shadow-sm border border-input bg-card hover:bg-accent hover:text-accent-foreground"
+          className="w-full justify-start h-9 font-medium border-border/40"
         >
-          <Palette className="size-4 mr-2" />
+          <Palette className="size-4 mr-2 text-primary" />
           <span>Taxa Colors</span>
         </Button>
-        <div className="px-2 mt-1 mb-2">
-          <p className="text-[10px] text-muted-foreground/80 leading-tight italic flex gap-1.5 items-start">
+        <div className="px-2 mt-2 mb-1">
+          <p className="text-2xs text-muted-foreground/80 leading-tight italic flex gap-1.5 items-start">
             <Info className="size-3 shrink-0 mt-0.5" />
-            <span>Manage custom colors for specific taxa and clades in a separate window.</span>
+            <span>Manage custom colors for specific taxa and subtrees in a separate window.</span>
           </p>
         </div>
       </SidebarMenuSubItem>
@@ -101,23 +125,25 @@ export function ColoringPanel() {
       <SidebarMenuSubItem>
         <div className="flex items-center justify-between px-2 py-1.5 w-full">
           <div className="flex items-center gap-2 overflow-hidden">
-            <RefreshCw className="size-3.5 text-muted-foreground shrink-0" />
-            <span className="text-xs text-foreground/70 truncate">Active Change Edges</span>
+            <RefreshCw className="size-3.5 text-primary/80 shrink-0" />
+            <span className="text-xs text-foreground/70 truncate">Pivot Edges</span>
           </div>
           <div className="flex items-center gap-2">
-            <Input
-              type="color"
-              value={activeChangeEdgeColor || '#2196f3'}
-              className="size-5 p-0 border-none bg-transparent cursor-pointer rounded-full overflow-hidden"
-              onChange={async (e) => {
-                setActiveChangeEdgeColor(e.target.value);
-                await rerenderControllers();
-              }}
-            />
+            <div className="size-5 rounded-full border border-border/60 overflow-hidden shrink-0 group-hover:border-primary/40 transition-colors">
+              <Input
+                type="color"
+                value={pivotEdgeColor || '#2196f3'}
+                className="size-10 -m-2.5 p-0 border-none bg-transparent cursor-pointer"
+                onChange={async (e) => {
+                  setPivotEdgeColor(e.target.value);
+                  await rerenderControllers();
+                }}
+              />
+            </div>
             <Switch
-              id="active-change-edges-toggle"
-              checked={!!activeChange}
-              onCheckedChange={onToggleActiveChange}
+              id="pivot-edges-toggle"
+              checked={!!pivotEdgesEnabled}
+              onCheckedChange={onTogglePivotEdges}
             />
           </div>
         </div>
@@ -127,7 +153,7 @@ export function ColoringPanel() {
         <div className="flex flex-col">
           <div className="flex items-center justify-between px-2 py-1.5 w-full">
             <div className="flex items-center gap-2 overflow-hidden">
-              <Highlighter className="size-3.5 text-muted-foreground shrink-0" />
+              <Highlighter className="size-3.5 text-primary/80 shrink-0" />
               <span className="text-xs text-foreground/70 truncate">Subtree Highlight</span>
             </div>
             <Switch
@@ -138,10 +164,10 @@ export function ColoringPanel() {
           </div>
 
           {markedSubtreesEnabled && (
-            <div className="flex flex-col gap-4 pl-7 pr-2 pb-3 pt-1">
+            <div className="flex flex-col gap-4 mx-1.5 mb-2 p-2.5 rounded-md bg-muted/20 border border-border/30">
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="subtree-opacity-slider" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">Highlight Opacity</Label>
+                  <Label htmlFor="subtree-opacity-slider" className="text-2xs font-bold uppercase tracking-wider text-muted-foreground/80">Highlight Opacity</Label>
                   <span className="text-xs font-medium tabular-nums text-muted-foreground">{Math.round((markedSubtreeOpacity ?? 0.8) * 100)}%</span>
                 </div>
                 <Slider
@@ -154,10 +180,11 @@ export function ColoringPanel() {
                   className="w-full py-1"
                 />
               </div>
+
               <div className="flex flex-col gap-2">
-                <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">Highlight Scope</Label>
+                <Label className="text-2xs font-bold uppercase tracking-wider text-muted-foreground/80">Highlight Scope</Label>
                 <Select value={markedSubtreeMode || 'current'} onValueChange={setMarkedSubtreeMode}>
-                  <SelectTrigger className="w-full h-8 text-xs">
+                  <SelectTrigger className="w-full h-8 text-xs bg-background/50 border-border/40">
                     <SelectValue placeholder="Select mode" />
                   </SelectTrigger>
                   <SelectContent>
@@ -166,10 +193,11 @@ export function ColoringPanel() {
                   </SelectContent>
                 </Select>
               </div>
+
               <div className="flex flex-col gap-2">
-                 <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">Highlight Color</Label>
+                 <Label className="text-2xs font-bold uppercase tracking-wider text-muted-foreground/80">Highlight Color</Label>
                  <Select value={highlightColorMode || 'solid'} onValueChange={setHighlightColorMode}>
-                   <SelectTrigger className="w-full h-8 text-xs">
+                   <SelectTrigger className="w-full h-8 text-xs bg-background/50 border-border/40">
                      <SelectValue placeholder="Select color mode" />
                    </SelectTrigger>
                    <SelectContent>
@@ -179,29 +207,32 @@ export function ColoringPanel() {
                    </SelectContent>
                  </Select>
                  {highlightColorMode === 'solid' && (
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[10px] text-muted-foreground">Solid Color:</span>
-                      <Input
-                        type="color"
-                        value={markedColor || '#ff5722'}
-                        className="size-5 p-0 border-none bg-transparent cursor-pointer rounded-full overflow-hidden"
-                        onChange={async (e) => {
-                          setMarkedColor(e.target.value);
-                          await rerenderControllers();
-                        }}
-                      />
+                    <div className="flex items-center justify-between mt-1 px-1">
+                      <span className="text-2xs text-muted-foreground font-medium">Solid Picker:</span>
+                      <div className="size-5 rounded-full border border-border/60 overflow-hidden shrink-0">
+                        <Input
+                          type="color"
+                          value={markedColor || '#10b981'}
+                          className="size-10 -m-2.5 p-0 border-none bg-transparent cursor-pointer"
+                          onChange={async (e) => {
+                            setMarkedColor(e.target.value);
+                            await rerenderControllers();
+                          }}
+                        />
+                      </div>
                     </div>
                  )}
                </div>
+
               {manuallyMarkedNodes && manuallyMarkedNodes.length > 0 && (
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setManuallyMarkedNodes([])}
-                  className="w-full mt-2 h-8 text-xs border-muted-foreground/30 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50 transition-colors"
+                  className="w-full mt-1 h-7 text-2xs uppercase font-bold tracking-tight border-muted-foreground/20 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-all bg-background/40"
                 >
-                  <X className="w-3.5 h-3.5 mr-2" />
-                  Clear Active Selection
+                  <X className="w-3 h-3 mr-1.5" />
+                  Clear Selection
                 </Button>
               )}
             </div>

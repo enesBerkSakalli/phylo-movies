@@ -2,7 +2,7 @@ import { colorToRgb } from '../../../../../services/ui/colorUtils.js';
 import { TREE_COLOR_CATEGORIES } from '../../../../../constants/TreeColors.js';
 import { applyDimmingWithCache } from '../dimmingUtils.js';
 import { isNodeVisuallyHighlighted } from '../../../../systems/tree_color/visualHighlights.js';
-import { toColorManagerNode, shouldHighlightNode, isHistorySubtreeNode, getHighlightColor, isNodeActiveEdge, getActiveEdgeColor } from './nodeUtils.js';
+import { toColorManagerNode, shouldHighlightNode, isHistorySubtreeNode, getHighlightColor, isNodePivotEdge, getPivotEdgeColor } from './nodeUtils.js';
 // Re-export from dedicated file
 export { getNodeRadius } from './nodeRadiusStyles.js';
 export { getNodeLineWidth } from './nodeWidthStyles.js';
@@ -18,7 +18,7 @@ function resolveHistoryNodeColor(nodeData, cached, baseOpacity) {
   const { colorManager: cm, upcomingChangesEnabled } = cached;
 
   if (upcomingChangesEnabled) {
-    const historyColor = colorToRgb(TREE_COLOR_CATEGORIES.activeChangeEdgeColor);
+    const historyColor = colorToRgb(TREE_COLOR_CATEGORIES.pivotEdgeColor);
 
     if (cm.isNodeCompletedChangeEdge(nodeData)) {
       return [...historyColor, baseOpacity];
@@ -67,10 +67,10 @@ export function getNodeColor(node, cached, helpers) {
     return historyColor;
   }
 
-  // 2. Active Change Edge - blue color (same as links)
-  const isActive = isNodeActiveEdge(nodeData, cached);
-  if (isActive) {
-    const activeColor = getActiveEdgeColor();
+  // 2. Pivot Edge - blue color (same as links)
+  const isPivot = isNodePivotEdge(nodeData, cached);
+  if (isPivot) {
+    const pivotColor = getPivotEdgeColor();
     let opacity = baseOpacity;
     opacity = applyDimmingWithCache(
       opacity,
@@ -83,7 +83,7 @@ export function getNodeColor(node, cached, helpers) {
       subtreeDimmingOpacity,
       markedSubtreeData
     );
-    const result = [...activeColor, opacity];
+    const result = [...pivotColor, opacity];
     return result;
   }
 
@@ -124,10 +124,10 @@ export function getNodeBorderColor(node, cached, helpers) {
   // 2. Determine Border Color
   let rgb;
   const isHighlighted = shouldHighlightNode(nodeData, cached);
-  const isActive = isNodeActiveEdge(nodeData, cached);
+  const isActive = isNodePivotEdge(nodeData, cached);
 
   if (isActive) {
-    rgb = getActiveEdgeColor();
+    rgb = getPivotEdgeColor();
   } else if (isHighlighted) {
     rgb = getHighlightColor(nodeData, cached);
   } else {

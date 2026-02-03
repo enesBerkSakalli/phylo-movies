@@ -15,9 +15,9 @@ describe('Adaptive Visual Scaling', () => {
   const mockColorManager = {
     isCompletedChangeEdge: () => false,
     isUpcomingChangeEdge: () => false,
-    isActiveChangeEdge: () => false,
+    isPivotEdge: () => false,
     isNodeCompletedChangeEdge: () => false,
-    isNodeActiveChangeEdge: () => false, // Added missing method
+    isNodePivotEdge: () => false, // Added missing method
     getNodeBaseColor: () => '#000',      // Needed for isNodeVisuallyHighlighted
     getNodeColor: () => '#000'           // Needed for isNodeVisuallyHighlighted
   };

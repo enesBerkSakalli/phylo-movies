@@ -5,6 +5,7 @@ export default class TransitionIndexResolver {
         this.treePairSolutions = treePairSolutions;
         this.pairInterpolationRanges = Array.isArray(pairInterpolationRanges) ? pairInterpolationRanges : [];
         this._cachedFullTreeIndices = null;
+        this._cachedFullTreeIndicesSet = null;  // O(1) lookup Set
     }
 
     /**
@@ -46,7 +47,20 @@ export default class TransitionIndexResolver {
         }
 
         this._cachedFullTreeIndices = Array.from(indices).sort((a, b) => a - b);
+        this._cachedFullTreeIndicesSet = indices;  // Cache Set for O(1) lookup
         return this._cachedFullTreeIndices;
+    }
+
+    /**
+     * Returns the Set of full-tree indices for O(1) membership checks.
+     * @private
+     */
+    _getFullTreeIndicesSet() {
+        if (!this._cachedFullTreeIndicesSet) {
+            // Populate both caches
+            this.fullTreeIndices;
+        }
+        return this._cachedFullTreeIndicesSet;
     }
 
     /**
@@ -90,10 +104,11 @@ export default class TransitionIndexResolver {
 
     /**
      * Indicates whether the provided index corresponds to a full (non-interpolated) tree.
+     * Uses O(1) Set lookup instead of O(n) array.includes().
      */
     isFullTree(index) {
         if (!this.treeMetadata.length) {
-            return this.fullTreeIndices.includes(index);
+            return this._getFullTreeIndicesSet().has(index);
         }
 
         const clampedIndex = Math.min(Math.max(0, index), this.treeMetadata.length - 1);
@@ -102,6 +117,6 @@ export default class TransitionIndexResolver {
             return meta.is_full_tree;
         }
 
-        return this.fullTreeIndices.includes(clampedIndex);
+        return this._getFullTreeIndicesSet().has(clampedIndex);
     }
 }

@@ -7,10 +7,11 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { useAppStore } from '../../../js/core/store.js';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '../../../components/ui/chart.tsx';
+import { useAppStore } from '@/js/core/store';
 
-const CHART_MARGINS = { top: 2, right: 8, bottom: 4, left: 8 };
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+
+const CHART_MARGINS = { top: 4, right: 8, bottom: 4, left: 8 };
 
 const buildSeriesPoints = (barOptionValue, robinsonFouldsDistances, weightedRobinsonFouldsDistances, scaleList) => {
   if (barOptionValue === 'rfd') {
@@ -112,15 +113,30 @@ const useTimelineData = ({
     scaleList,
   ]);
 
+// ==========================================================================
+// STORE SELECTORS
+// ==========================================================================
+const selectBarOptionValue = (s) => s.barOptionValue;
+const selectCurrentTreeIndex = (s) => s.currentTreeIndex;
+const selectTransitionResolver = (s) => s.transitionResolver;
+const selectFullTreeIndices = (s) => s.movieData?.fullTreeIndices;
+const selectDistanceRfd = (s) => s.distanceRfd;
+const selectDistanceWeightedRfd = (s) => s.distanceWeightedRfd;
+
+const EMPTY_ARRAY = [];
+const selectScaleValues = (s) => s.scaleValues || EMPTY_ARRAY;
+
+const selectGoToPosition = (s) => s.goToPosition;
+
 export function DistanceChart() {
-  const barOptionValue = useAppStore((s) => s.barOptionValue);
-  const currentTreeIndex = useAppStore((s) => s.currentTreeIndex);
-  const transitionResolver = useAppStore((s) => s.transitionResolver);
-  const fullTreeIndices = useAppStore((s) => s.movieData?.fullTreeIndices);
-  const robinsonFouldsDistances = useAppStore((s) => s.distanceRfd);
-  const weightedRobinsonFouldsDistances = useAppStore((s) => s.distanceWeightedRfd);
-  const scaleList = useAppStore((s) => s.scaleValues || []);
-  const goToPosition = useAppStore((s) => s.goToPosition);
+  const barOptionValue = useAppStore(selectBarOptionValue);
+  const currentTreeIndex = useAppStore(selectCurrentTreeIndex);
+  const transitionResolver = useAppStore(selectTransitionResolver);
+  const fullTreeIndices = useAppStore(selectFullTreeIndices);
+  const robinsonFouldsDistances = useAppStore(selectDistanceRfd);
+  const weightedRobinsonFouldsDistances = useAppStore(selectDistanceWeightedRfd);
+  const scaleList = useAppStore(selectScaleValues);
+  const goToPosition = useAppStore(selectGoToPosition);
 
   const { points, yMax, currentX, hasData } = useTimelineData({
     barOptionValue,
@@ -134,7 +150,7 @@ export function DistanceChart() {
   const chartConfig = useMemo(() => ({
     dist: {
       label: barOptionValue === 'rfd' ? 'RFD' : barOptionValue === 'w-rfd' ? 'W-RFD' : 'Scale',
-      color: '#2563eb',
+      color: 'hsl(var(--primary))',
     },
   }), [barOptionValue]);
 
@@ -209,15 +225,15 @@ export function DistanceChart() {
           <Area
             dataKey="y"
             type="stepAfter"
-            fill="#2563eb"
+            fill="var(--color-dist)"
             fillOpacity={0.2}
-            stroke="#2563eb"
+            stroke="var(--color-dist)"
             strokeWidth={1.5}
             isAnimationActive={false}
           />
           <ReferenceLine
             x={currentX}
-            stroke="#2563eb"
+            stroke="var(--color-dist)"
             strokeWidth={2}
             isFront
           />

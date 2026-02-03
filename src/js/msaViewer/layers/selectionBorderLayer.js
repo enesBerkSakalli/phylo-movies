@@ -1,6 +1,6 @@
 /**
  * Selection Border Layer Module
- * Creates the selection border polygon layer
+ * Creates the selection border polygon layers for current and previous regions
  */
 
 import { PolygonLayer } from '@deck.gl/layers';
@@ -56,6 +56,25 @@ export function createSelectionBorderLayer(borderData) {
     filled: false,
     lineWidthMinPixels: 3,
     getPolygon: d => d.polygon,
-    getLineColor: [255, 140, 0, 255],  // Orange selection border
+    // High-contrast black for the active MSA selection box
+    getLineColor: [0, 0, 0, 255],
+  });
+}
+
+/**
+ * Creates the previous selection border polygon layer (behind current)
+ * @param {Array} borderData - The border data from buildSelectionBorder
+ * @returns {PolygonLayer} The previous selection border layer
+ */
+export function createPreviousSelectionBorderLayer(borderData) {
+  return new PolygonLayer({
+    id: 'previous-selection-border',
+    data: borderData,
+    pickable: false,
+    stroked: true,
+    filled: false,
+    lineWidthMinPixels: 2,
+    getPolygon: d => d.polygon,
+    getLineColor: [128, 128, 128, 180],  // Gray with transparency
   });
 }

@@ -59,3 +59,60 @@ export const unwrapAngle = (angle, reference) => {
   const TAU = Math.PI * 2;
   return angle + Math.round((reference - angle) / TAU) * TAU;
 };
+
+/**
+ * Check if an angular path from startAngle to endAngle crosses a target angle (e.g., root at 0°).
+ * Used to detect when interpolation would cross through the root of a radial tree.
+ *
+ * @param {number} startAngle - Starting angle in radians
+ * @param {number} endAngle - Ending angle in radians (after applying delta)
+ * @param {number} [targetAngle=0] - The angle to check for crossing (default: 0, the root)
+ * @returns {boolean} True if the path crosses the target angle
+ */
+export function crossesAngle(startAngle, endAngle, targetAngle = 0) {
+  const TAU = Math.PI * 2;
+
+  // Normalize all angles to [0, 2π)
+  const normalize = (a) => ((a % TAU) + TAU) % TAU;
+  const start = normalize(startAngle);
+  const end = normalize(endAngle);
+  const target = normalize(targetAngle);
+
+  // If start equals end, no crossing
+  if (Math.abs(start - end) < 1e-10) return false;
+
+  // Determine if we're going clockwise or counter-clockwise
+  const delta = endAngle - startAngle;
+
+  if (delta > 0) {
+    // Counter-clockwise (increasing angle)
+    if (start <= end) {
+      // Normal case: check if target is in [start, end]
+      return target >= start && target <= end;
+    } else {
+      // Wrapped case: path goes through 0, check if target is in [start, 2π) or [0, end]
+      return target >= start || target <= end;
+    }
+  } else {
+    // Clockwise (decreasing angle)
+    if (start >= end) {
+      // Normal case: check if target is in [end, start]
+      return target >= end && target <= start;
+    } else {
+      // Wrapped case: path goes through 0, check if target is in [0, start] or [end, 2π)
+      return target <= start || target >= end;
+    }
+  }
+}
+
+/**
+ * Calculate the "long arc" delta when the short arc would cross the root.
+ * Returns the opposite direction delta that avoids crossing the target angle.
+ *
+ * @param {number} shortDelta - The shortest angular delta
+ * @returns {number} The long arc delta (opposite direction)
+ */
+export function longArcDelta(shortDelta) {
+  const TAU = Math.PI * 2;
+  return -Math.sign(shortDelta) * (TAU - Math.abs(shortDelta));
+}

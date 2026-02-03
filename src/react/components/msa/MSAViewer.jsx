@@ -1,10 +1,17 @@
 import React, { useEffect, useRef } from 'react';
-import { MSADeckGLViewer } from '../../../js/msaViewer/MSADeckGLViewer.js';
+import { useAppStore } from '@/js/core/store';
+import { MSADeckGLViewer } from '@/js/msaViewer/MSADeckGLViewer';
 import { useMSA } from './MSAContext';
 import { MSAScrollbars } from './MSAScrollbars';
 
+// ==========================================================================
+// STORE SELECTORS
+// ==========================================================================
+const selectSyncMSAEnabled = (s) => s.syncMSAEnabled;
+
 export function MSAViewer() {
-  const { processedData, msaRegion, showLetters, movieData, viewAction, colorScheme, setVisibleRange, rowColorMap, visibleRange, scrollAction } = useMSA();
+  const { processedData, msaRegion, msaPreviousRegion, showLetters, movieData, viewAction, colorScheme, setVisibleRange, rowColorMap, visibleRange, scrollAction } = useMSA();
+  const syncMSAEnabled = useAppStore(selectSyncMSAEnabled);
   const containerRef = useRef(null);
   const viewerRef = useRef(null);
 
@@ -40,11 +47,28 @@ export function MSAViewer() {
     if (msaRegion) {
       if (viewerRef.current) {
         viewerRef.current.setRegion(msaRegion.start, msaRegion.end);
+
+        if (syncMSAEnabled) {
+          // Adjust for 1-based to 0-based conversion (approximate center)
+          const centerCol = (msaRegion.start + msaRegion.end) / 2 - 0.5;
+          viewerRef.current.scrollTo({ col: Math.max(0, centerCol) });
+        }
       }
     } else {
       viewerRef.current?.clearRegion();
     }
-  }, [msaRegion]);
+  }, [msaRegion, syncMSAEnabled]);
+
+  // Keep viewer in sync with previous region updates
+  useEffect(() => {
+    if (msaPreviousRegion) {
+      if (viewerRef.current) {
+        viewerRef.current.setPreviousRegion(msaPreviousRegion.start, msaPreviousRegion.end);
+      }
+    } else {
+      viewerRef.current?.clearPreviousRegion();
+    }
+  }, [msaPreviousRegion]);
 
   // Initialize DeckGL viewer once
   useEffect(() => {

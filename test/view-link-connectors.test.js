@@ -5,7 +5,7 @@ const { expect } = require('chai');
  * Verifies that connectors use the same subset logic as TreeColorManager._isComponentMarked
  *
  * Key distinction:
- * - currentActiveChangeEdges (blue) = entire subtree being animated
+ * - currentPivotEdges (blue) = entire subtree being animated
  * - marked (red) = specific jumping/moving subtrees - THIS is what connectors use
  */
 

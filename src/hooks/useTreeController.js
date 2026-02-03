@@ -100,6 +100,12 @@ export function useTreeController() {
 
       prevMsaFrameRef.current = frameIndex;
 
+      // Save current region as previous before updating
+      const currentRegion = state.msaRegion;
+      if (currentRegion) {
+        state.setMsaPreviousRegion(currentRegion.start, currentRegion.end);
+      }
+
       const windowData = calculateWindow(
         frameIndex,
         state.msaStepSize,
@@ -129,6 +135,7 @@ export function useTreeController() {
       }
 
       if (state.animationProgress !== prevState.animationProgress) {
+        syncMsaRegion();
         scheduleRender();
       }
 

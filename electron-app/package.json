@@ -1,19 +1,25 @@
 {
   "name": "phylo-movies-desktop",
-  "version": "0.1.0",
+  "version": "0.64.0",
   "description": "Phylo-Movies Desktop Application - Electron wrapper",
+  "author": "Enes Berk Sakalli <enes.sakalli@univie.ac.at>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/enesBerkSakalli/phylo-movies.git"
+  },
   "main": "main.js",
   "private": true,
   "scripts": {
     "start": "electron .",
     "dev": "NODE_ENV=development electron .",
-    "setup:backend": "cd backend && git clone https://github.com/EnesSakalliUniWien/BranchArchitect.git && cd BranchArchitect && poetry install",
-    "build:frontend": "cd .. && npm run build && cp -r dist electron-app/frontend-dist",
-    "build:backend": "cd backend && pip install -r requirements.txt && pyinstaller brancharchitect.spec --clean",
-    "build:mac": "npm run build:frontend && electron-builder --mac",
-    "build:win": "npm run build:frontend && electron-builder --win",
-    "build:linux": "npm run build:frontend && electron-builder --linux",
-    "dist": "npm run build:backend && npm run build:mac"
+    "setup:backend": "cd BranchArchitect && poetry install",
+    "build:frontend": "cd .. && ELECTRON_BUILD=true npm run build && rm -rf electron-app/frontend-dist && cp -r dist electron-app/frontend-dist",
+    "build:backend": "cd BranchArchitect && poetry export -f requirements.txt --output requirements.txt --without-hashes && poetry run pip install pyinstaller && poetry run pyinstaller brancharchitect.spec --noconfirm --clean",
+    "build:mac": "npm run build:backend && npm run build:frontend && electron-builder --mac",
+    "build:win": "npm run build:backend && npm run build:frontend && electron-builder --win",
+    "build:linux": "npm run build:backend && npm run build:frontend && electron-builder --linux",
+    "dist": "npm run build:mac"
   },
   "dependencies": {},
   "devDependencies": {
@@ -27,15 +33,24 @@
       "output": "release",
       "buildResources": "build"
     },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "enesBerkSakalli",
+        "repo": "phylo-movies"
+      }
+    ],
     "files": [
       "main.js",
       "preload.js",
+      "splash-preload.js",
+      "splash.html",
       "frontend-dist/**/*"
     ],
     "extraResources": [
       {
-        "from": "backend/dist/",
-        "to": "backend/",
+        "from": "BranchArchitect/dist/brancharchitect-server/",
+        "to": "BranchArchitect/brancharchitect-server/",
         "filter": [
           "**/*"
         ]

@@ -20,17 +20,13 @@ export function HomePage() {
 
   const {
     form,
-    treesFile,
-    msaFile,
     submitting,
     loadingExample,
-    progress,
+    operationState,
     alert,
     handleSubmit,
     handleLoadExample,
     reset,
-    setTreesFile,
-    setMsaFile
   } = useHomeUploadForm();
 
   const disabled = submitting || loadingExample;
@@ -39,19 +35,19 @@ export function HomePage() {
     <div className="home-page bg-background">
       <HomeHeader />
 
-      <main className="container mx-auto max-w-4xl py-10 space-y-10">
+      <main className="container mx-auto max-w-4xl py-8 space-y-8">
         <HomeHero />
 
         <Card className="shadow-lg border-muted">
           <Tabs defaultValue="upload" className="w-full">
-            <div className="px-6 pt-6">
+            <div className="px-4 pt-4">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="upload">New Project</TabsTrigger>
                 <TabsTrigger value="example">Load Example</TabsTrigger>
               </TabsList>
             </div>
 
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               {alert && (
                 <Alert variant="destructive" className="mb-6">
                   <AlertTitle>Error</AlertTitle>
@@ -62,11 +58,6 @@ export function HomePage() {
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleSubmit)}>
                   <NewProjectTab
-                    form={form}
-                    treesFile={treesFile}
-                    msaFile={msaFile}
-                    setTreesFile={setTreesFile}
-                    setMsaFile={setMsaFile}
                     disabled={disabled}
                     reset={reset}
                   />
@@ -83,7 +74,7 @@ export function HomePage() {
         </Card>
 
         {(submitting || loadingExample) && (
-          <ProcessingOverlay progress={progress} />
+          <ProcessingOverlay operationState={operationState} />
         )}
       </main>
     </div>

@@ -10,7 +10,7 @@ export function getLinkColor(link, cached, helpers) {
   const { colorManager: cm, dimmingEnabled, dimmingOpacity, upcomingChangesEnabled, markedSubtreeData } = cached;
 
   // History mode - use same blue color but different opacity
-  const historyColor = colorToRgb(TREE_COLOR_CATEGORIES.activeChangeEdgeColor);
+  const historyColor = colorToRgb(TREE_COLOR_CATEGORIES.pivotEdgeColor);
 
   // Check if this is a completed change edge (full opacity - clearly visible)
   if (upcomingChangesEnabled && cm?.isCompletedChangeEdge?.(link)) {
@@ -67,7 +67,7 @@ export function getLinkDashArray(link, cached) {
   }
 
   // Current: DASHED (when dashing enabled) - active, in progress
-  if (dashingEnabled && cm?.isActiveChangeEdge?.(link)) {
+  if (dashingEnabled && cm?.isPivotEdge?.(link)) {
     return calculateFlightDashArray(link.path);
   }
 

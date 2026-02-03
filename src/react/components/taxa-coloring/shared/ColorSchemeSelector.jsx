@@ -14,7 +14,7 @@ export function ColorSchemeSelector({ onApply, title = "Apply a Color Scheme", d
         <CardHeader className="flex flex-row items-center justify-between space-y-0 py-2 px-3">
           <div>
             <CardTitle className="text-xs font-bold uppercase tracking-wide">{title}</CardTitle>
-            {description && <CardDescription className="text-[10px] text-muted-foreground">{description}</CardDescription>}
+            {description && <CardDescription className="text-2xs text-muted-foreground">{description}</CardDescription>}
           </div>
           <CollapsibleTrigger asChild>
             <Button size="sm" variant="secondary" className="h-7 text-[11px] shrink-0">
@@ -37,7 +37,7 @@ export function ColorSchemeSelector({ onApply, title = "Apply a Color Scheme", d
                       onClick={() => onApply(id)}
                     >
                       <div className="h-4 w-12 shrink-0 rounded-sm shadow-sm" style={{ background: `linear-gradient(to right, ${colors.join(", ")})` }} />
-                      <div className="flex-1 truncate text-left text-[10px] font-medium leading-none">
+                      <div className="flex-1 truncate text-left text-2xs font-medium leading-none">
                         {id}
                       </div>
                       {info.colorBlindSafe && <Eye className="size-2.5 text-emerald-500 shrink-0" />}

@@ -10,6 +10,14 @@ export class PolarExtensionInterpolator {
   }
 
   /**
+   * Set the root angle for crossing detection
+   * @param {number} angle - Root angle in radians (default 0)
+   */
+  setRootAngle(angle) {
+    this.pathInterpolator.setRootAngle(angle);
+  }
+
+  /**
    * Interpolate extension data between two states
    * @param {Object} fromExt - Source extension data
    * @param {Object} toExt - Target extension data

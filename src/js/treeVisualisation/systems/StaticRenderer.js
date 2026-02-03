@@ -1,4 +1,5 @@
 import { useAppStore, selectCurrentTree } from '../../core/store.js';
+import { tagTreeSide } from '../utils/layerDataUtils.js';
 
 /**
  * Handles the static rendering of trees (non-animated states).
@@ -81,12 +82,7 @@ export class StaticRenderer {
     );
 
     // Tag data for interactive picking/dragging (always 'left' in single mode)
-    [
-      ...layerData.nodes,
-      ...(layerData.links || []),
-      ...(layerData.labels || []),
-      ...(layerData.extensions || [])
-    ].forEach(d => d.treeSide = 'left');
+    tagTreeSide(layerData, 'left');
 
     this.controller._updateLayersEfficiently(layerData);
 

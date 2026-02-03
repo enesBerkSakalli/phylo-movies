@@ -33,29 +33,29 @@ export function shouldHighlightNode(nodeData, cached) {
 }
 
 /**
- * Checks if a node is part of the current active change edge.
+ * Checks if a node is part of the current pivot edge.
  * Used to apply the same blue highlighting as links.
  */
-export function isNodeActiveEdge(nodeData, cached) {
+export function isNodePivotEdge(nodeData, cached) {
   const { colorManager } = cached;
 
-  let isActive = false;
+  let isPivot = false;
 
-  if (colorManager.isNodeActiveChangeEdge(nodeData)) {
-    isActive = true;
+  if (colorManager.isNodePivotEdge(nodeData)) {
+    isPivot = true;
   }
 
 
-  return isActive;
+  return isPivot;
 }
 
 
 
 /**
- * Gets the active change edge color (blue) for nodes.
+ * Gets the pivot edge color (blue) for nodes.
  */
-export function getActiveEdgeColor() {
-  return colorToRgb(TREE_COLOR_CATEGORIES.activeChangeEdgeColor);
+export function getPivotEdgeColor() {
+  return colorToRgb(TREE_COLOR_CATEGORIES.pivotEdgeColor);
 }
 
 /**

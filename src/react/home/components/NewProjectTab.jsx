@@ -1,4 +1,5 @@
 import React from 'react';
+import { useFormContext } from 'react-hook-form';
 import { SlidersHorizontal } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { TabsContent } from "@/components/ui/tabs";
@@ -10,14 +11,14 @@ import { TreeProcessingSection } from './project/TreeProcessingSection.jsx';
 import { ProjectActionFooter } from './project/ProjectActionFooter.jsx';
 
 export function NewProjectTab({
-  form,
-  treesFile,
-  msaFile,
-  setTreesFile,
-  setMsaFile,
   disabled: globalDisabled,
   reset
 }) {
+  const { watch, control, setValue } = useFormContext();
+  
+  const msaFile = watch('msaFile');
+  const treesFile = watch('treesFile');
+
   const hasMsa = !!msaFile;
   const hasTrees = !!treesFile;
   const canSubmit = hasMsa || hasTrees;
@@ -27,8 +28,8 @@ export function NewProjectTab({
       <ProjectFileSection
         treesFile={treesFile}
         msaFile={msaFile}
-        setTreesFile={setTreesFile}
-        setMsaFile={setMsaFile}
+        setTreesFile={(f) => setValue('treesFile', f, { shouldValidate: true })}
+        setMsaFile={(f) => setValue('msaFile', f, { shouldValidate: true })}
         disabled={globalDisabled}
       />
 
@@ -40,20 +41,20 @@ export function NewProjectTab({
             <SlidersHorizontal className="size-4" />
             <h3 className="text-sm font-semibold uppercase tracking-wider">Analysis Settings</h3>
           </div>
-          <Badge variant="outline" className="text-[10px] h-5 font-normal text-muted-foreground uppercase tracking-widest">
+          <Badge variant="outline" className="text-2xs h-5 font-normal text-muted-foreground uppercase tracking-widest">
             Configuration
           </Badge>
         </div>
 
         <div className="grid md:grid-cols-2 gap-8 px-1">
           <AlignmentAnalysisSection
-            control={form.control}
+            control={control}
             hasMsa={hasMsa}
             disabled={globalDisabled}
           />
 
           <TreeProcessingSection
-            control={form.control}
+            control={control}
             hasTrees={hasTrees}
             hasMsa={hasMsa}
             disabled={globalDisabled}

@@ -7,7 +7,7 @@ import { SaveImageButton } from '../media/SaveImageButton.jsx';
 import { TimelineScrollControls } from './TimelineScrollControls/TimelineScrollControls.jsx';
 import { PlaybackSpeedControl } from './PlaybackSpeedControl/PlaybackSpeedControl.jsx';
 import { TimelineSegmentTooltip } from '../timeline/TimelineSegmentTooltip.jsx';
-import { useAppStore } from '../../../js/core/store.js';
+import { useAppStore } from '@/js/core/store';
 import { useSidebar } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Menu, ChevronUp, ChevronDown } from 'lucide-react';
@@ -15,25 +15,47 @@ import { Menu, ChevronUp, ChevronDown } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
+// ==========================================================================
+// CONSTANTS
+// ==========================================================================
+const TOOLTIP_Y_OFFSET = 12;
+
+// ==========================================================================
+// STORE SELECTORS
+// ==========================================================================
+const selectForward = (s) => s.forward;
+const selectBackward = (s) => s.backward;
+const selectSetAnimationSpeed = (s) => s.setAnimationSpeed;
+const selectAnimationSpeed = (s) => s.animationSpeed;
+const selectBarOptionValue = (s) => s.barOptionValue;
+const selectSetBarOption = (s) => s.setBarOption;
+const selectHoveredSegmentIndex = (s) => s.hoveredSegmentIndex;
+const selectHoveredSegmentData = (s) => s.hoveredSegmentData;
+const selectHoveredSegmentPosition = (s) => s.hoveredSegmentPosition;
+const selectSetTooltipHovered = (s) => s.setTooltipHovered;
+const selectSetHoveredSegment = (s) => s.setHoveredSegment;
+const selectMovieData = (s) => s.movieData;
+const selectMovieTimelineManager = (s) => s.movieTimelineManager;
+
 export function MoviePlayerBar() {
   // ... existing hooks ...
-  const forward = useAppStore((s) => s.forward);
-  const backward = useAppStore((s) => s.backward);
-  const setAnimationSpeed = useAppStore((s) => s.setAnimationSpeed);
-  const animationSpeed = useAppStore((s) => s.animationSpeed);
-  const barOptionValue = useAppStore((s) => s.barOptionValue);
-  const setBarOption = useAppStore((s) => s.setBarOption);
+  const forward = useAppStore(selectForward);
+  const backward = useAppStore(selectBackward);
+  const setAnimationSpeed = useAppStore(selectSetAnimationSpeed);
+  const animationSpeed = useAppStore(selectAnimationSpeed);
+  const barOptionValue = useAppStore(selectBarOptionValue);
+  const setBarOption = useAppStore(selectSetBarOption);
   const [toolbarExpanded, setToolbarExpanded] = useState(true);
 
   // ... rest of state and effects ...
   // Timeline tooltip state
-  const hoveredSegmentIndex = useAppStore((s) => s.hoveredSegmentIndex);
-  const hoveredSegmentData = useAppStore((s) => s.hoveredSegmentData);
-  const hoveredSegmentPosition = useAppStore((s) => s.hoveredSegmentPosition);
-  const setTooltipHovered = useAppStore((s) => s.setTooltipHovered);
-  const setHoveredSegment = useAppStore((s) => s.setHoveredSegment);
-  const movieData = useAppStore((s) => s.movieData);
-  const movieTimelineManager = useAppStore((s) => s.movieTimelineManager);
+  const hoveredSegmentIndex = useAppStore(selectHoveredSegmentIndex);
+  const hoveredSegmentData = useAppStore(selectHoveredSegmentData);
+  const hoveredSegmentPosition = useAppStore(selectHoveredSegmentPosition);
+  const setTooltipHovered = useAppStore(selectSetTooltipHovered);
+  const setHoveredSegment = useAppStore(selectSetHoveredSegment);
+  const movieData = useAppStore(selectMovieData);
+  const movieTimelineManager = useAppStore(selectMovieTimelineManager);
   const tooltipRef = useRef(null);
 
   // Get segments from timeline manager
@@ -41,19 +63,7 @@ export function MoviePlayerBar() {
 
   // Reinitialize timeline when component mounts and container is available
   useEffect(() => {
-    if (movieTimelineManager) {
-      // Check if timeline exists and is attached to the DOM
-      const isTimelineAttached = movieTimelineManager.timeline &&
-                                 movieTimelineManager.timeline.container &&
-                                 document.body.contains(movieTimelineManager.timeline.container);
-
-      if (!isTimelineAttached) {
-        movieTimelineManager._createTimeline();
-        if (movieTimelineManager.timeline) {
-          movieTimelineManager._setupEvents();
-        }
-      }
-    }
+    movieTimelineManager?.ensureTimelineInitialized();
   }, [movieTimelineManager]);
 
   // Get leaf names function for tooltip
@@ -100,20 +110,20 @@ export function MoviePlayerBar() {
                 <TooltipContent>Toggle sidebar</TooltipContent>
               </Tooltip>
 
-              <Separator orientation="vertical" className="h-4 mx-0.5" />
+              <Separator orientation="vertical" className="h-4 mx-1" />
 
               {toolbarExpanded && (
                 <>
                   <TimelineScrollControls />
 
-                  <Separator orientation="vertical" className="h-4 mx-0.5" />
+                  <Separator orientation="vertical" className="h-4 mx-1" />
 
                   <PlaybackSpeedControl
                     value={animationSpeed}
                     setValue={setAnimationSpeed}
                   />
 
-                  <Separator orientation="vertical" className="h-4 mx-0.5" />
+                  <Separator orientation="vertical" className="h-4 mx-1" />
                 </>
               )}
 
@@ -124,17 +134,17 @@ export function MoviePlayerBar() {
 
               {toolbarExpanded && (
                 <>
-                  <Separator orientation="vertical" className="h-4 mx-0.5" />
+                  <Separator orientation="vertical" className="h-4 mx-1" />
 
-                  <RecordingControls />
+                  <RecordingControls disabled={!movieData} />
 
-                  <Separator orientation="vertical" className="h-4 mx-0.5" />
+                  <Separator orientation="vertical" className="h-4 mx-1" />
 
-                  <SaveImageButton />
+                  <SaveImageButton disabled={!movieData} />
                 </>
               )}
 
-              <Separator orientation="vertical" className="h-4 mx-0.5" />
+              <Separator orientation="vertical" className="h-4 mx-1" />
 
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -155,7 +165,7 @@ export function MoviePlayerBar() {
           </div>
 
           <div className="w-full">
-            <div className="interpolation-timeline-container min-h-[12px]">
+            <div className="interpolation-timeline-container min-h-3">
               {/* Timeline container will be created dynamically by MovieTimelineManager */}
             </div>
           </div>
@@ -173,7 +183,7 @@ export function MoviePlayerBar() {
           style={{
             position: 'fixed',
             left: `${hoveredSegmentPosition.x}px`,
-            top: `${hoveredSegmentPosition.y - 12}px`,
+            top: `${hoveredSegmentPosition.y - TOOLTIP_Y_OFFSET}px`,
             transform: 'translate(-50%, -100%)',
             zIndex: 10000,
             pointerEvents: 'auto',

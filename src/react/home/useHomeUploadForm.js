@@ -21,7 +21,7 @@ export function useHomeUploadForm() {
   const [submitting, setSubmitting] = useState(false);
   const [loadingExample, setLoadingExample] = useState(false);
   const [alert, setAlert] = useState(null);
-  const [progress, setProgress] = useState({ percent: 0, message: '' });
+  const [operationState, setOperationState] = useState({ percent: 0, message: '' });
 
   const form = useForm({
     resolver: zodResolver(homeFormSchema),
@@ -40,12 +40,7 @@ export function useHomeUploadForm() {
     mode: "onBlur",
   });
 
-  const { watch, setValue, reset: resetForm } = form;
-
-  // Watch values for reactive UI updates
-  const treesFile = watch('treesFile');
-  const msaFile = watch('msaFile');
-  const midpointRooting = watch('midpointRooting');
+  const { setValue, reset: resetForm } = form;
 
   const base = useMemo(() => {
     try {
@@ -77,17 +72,17 @@ export function useHomeUploadForm() {
     }
 
     setSubmitting(true);
-    setProgress({ percent: 0, message: 'Preparing upload...' });
+    setOperationState({ percent: 0, message: 'Preparing upload...' });
     showElectronLoading('Preparing upload...');
 
     try {
       updateElectronProgress(5, 'Uploading files...');
 
       // Process data via server stream
-      const resultData = await processMovieData(formData, setProgress);
+      const resultData = await processMovieData(formData, setOperationState);
 
       // Finalize saving and MSA workflows
-      await finalizeMovieData(resultData, formData, setProgress);
+      await finalizeMovieData(resultData, formData, setOperationState);
 
       // Brief delay to show completion sentiment
       await new Promise(resolve => setTimeout(resolve, 300));
@@ -108,11 +103,11 @@ export function useHomeUploadForm() {
   async function handleLoadExample() {
     clearAlert();
     setLoadingExample(true);
-    setProgress({ percent: 0, message: 'Loading example data...' });
+    setOperationState({ percent: 0, message: 'Loading example data...' });
     showElectronLoading('Loading example data...');
 
     try {
-      setProgress({ percent: 20, message: 'Fetching example...' });
+      setOperationState({ percent: 20, message: 'Fetching example...' });
       updateElectronProgress(20, 'Fetching example...');
 
       let exampleData = null;
@@ -134,13 +129,13 @@ export function useHomeUploadForm() {
       if (!exampleData) throw new Error('Example data not available');
       if (!exampleData.file_name) exampleData.file_name = 'example.json';
 
-      setProgress({ percent: 70, message: 'Saving data...' });
+      setOperationState({ percent: 70, message: 'Saving data...' });
       updateElectronProgress(70, 'Saving data...');
 
       const { phyloData } = await import('@/js/services/data/dataService.js');
       await phyloData.set(exampleData);
 
-      setProgress({ percent: 100, message: 'Complete!' });
+      setOperationState({ percent: 100, message: 'Complete!' });
       updateElectronProgress(100, 'Complete!');
       await new Promise(resolve => setTimeout(resolve, 200));
 
@@ -162,12 +157,9 @@ export function useHomeUploadForm() {
   return {
     form,
     // state
-    treesFile,
-    msaFile,
-    midpointRooting,
     submitting,
     loadingExample,
-    progress,
+    operationState,
     alert,
     showAlert,
     clearAlert,
@@ -177,9 +169,5 @@ export function useHomeUploadForm() {
     reset,
     // derived
     base,
-    // setters for custom UI components (controlled)
-    setTreesFile: (f) => setValue('treesFile', f, { shouldValidate: true }),
-    setMsaFile: (f) => setValue('msaFile', f, { shouldValidate: true }),
-    setMidpointRooting: (v) => setValue('midpointRooting', v, { shouldValidate: true }),
   };
 }

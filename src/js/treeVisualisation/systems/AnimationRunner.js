@@ -42,6 +42,9 @@ export class AnimationRunner {
     this._lastAnimationStage = null;
     this._lastProgressSyncTime = 0;
 
+    // Performance optimization: Cache stage detection to avoid O(N) set building every frame
+    this._stageCache = { fromIndex: -1, toIndex: -1, stage: null };
+
     // Bind loop to preserve 'this' context
     this._onFrame = this._onFrame.bind(this);
   }
@@ -150,7 +153,15 @@ export class AnimationRunner {
     }
 
     // 4. Stage Detection & Side Effects
-    const stage = detectAnimationStage(dataFrom, dataTo);
+    // OPTIMIZATION: Check cache first. This prevents iterating thousands of nodes 60 times/sec.
+    let stage;
+    if (this._stageCache.fromIndex === fromIndex && this._stageCache.toIndex === toIndex) {
+      stage = this._stageCache.stage;
+    } else {
+      stage = detectAnimationStage(dataFrom, dataTo);
+      this._stageCache = { fromIndex, toIndex, stage };
+    }
+
     this._syncStore(timestamp, progress, stage, isFinished);
 
     // 5. Easing & Render

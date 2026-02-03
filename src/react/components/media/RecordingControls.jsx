@@ -2,10 +2,10 @@ import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { CircleDot, StopCircle } from 'lucide-react';
-import { CanvasRecorder } from '../../../js/services/media/canvasRecorder.js';
+import { CanvasRecorder } from '@/js/services/media/canvasRecorder';
 import { toast } from 'sonner';
 
-export function RecordingControls() {
+export function RecordingControls({ disabled = false }) {
   const recorderRef = useRef(null);
   const [isRecording, setIsRecording] = useState(false);
 
@@ -68,7 +68,7 @@ export function RecordingControls() {
             className="record-button-danger"
             variant="ghost"
             size="icon"
-            disabled={isRecording}
+            disabled={disabled || isRecording}
             onClick={handleStartRecording}
             aria-label="Start recording"
           >
@@ -84,7 +84,7 @@ export function RecordingControls() {
             id="stop-record"
             variant="ghost"
             size="icon"
-            disabled={!isRecording}
+            disabled={disabled || !isRecording}
             onClick={handleStopRecording}
             aria-label="Stop recording"
           >
