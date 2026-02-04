@@ -4,6 +4,14 @@ import { calculateSubtreeFrequencies, getTopSubtrees, formatSubtreeLabel } from 
 import { TREE_COLOR_CATEGORIES } from '../../../../js/constants/TreeColors';
 import type { AppStoreState } from '../../../../types/store';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 // ==========================================================================
 // STORE SELECTORS
@@ -15,7 +23,7 @@ const selectSortedLeaves = (s: AppStoreState) => s.movieData?.sorted_leaves || E
 /**
  * SubtreeFrequencyBarChart
  *
- * Vertical list showing top N most frequent jumping subtrees with inline bars.
+ * Vertical list showing top N most frequent mobile subtrees with inline frequency bars.
  * Uses tree_pair_solutions.jumping_subtree_solutions as the data source.
  */
 export const SubtreeFrequencyBarChart = () => {
@@ -42,50 +50,83 @@ export const SubtreeFrequencyBarChart = () => {
     }, [data]);
 
     if (!data || data.length === 0) {
-        return <div className="text-center text-muted-foreground p-4">No mobility metrics available.</div>;
+        return (
+            <div className="flex items-center justify-center h-full p-4">
+                <span className="text-sm text-muted-foreground italic">
+                    No mobility metrics available
+                </span>
+            </div>
+        );
     }
 
     return (
-        <div className="w-full h-full overflow-auto p-2 space-y-2">
+        <div
+            className="w-full h-full overflow-auto p-2 space-y-2"
+            role="list"
+            aria-label="Subtree Mobility Frequency Ranking"
+        >
             {data.map((item) => (
-                <div
+                <Card
                     key={item.rank}
-                    className="group relative rounded-lg border border-border/40 bg-muted/5 hover:bg-muted/20 transition-colors p-3"
+                    className="border-border/40 bg-muted/5 hover:bg-muted/20 transition-colors py-3 gap-2 rounded-lg shadow-none"
+                    role="listitem"
+                    aria-label={`Rank ${item.rank}: ${item.subtree}, ${item.count} rearrangement events`}
                 >
-                    {/* Header row with rank, count badge, and percentage */}
-                    <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold text-muted-foreground/60 w-5">
-                                #{item.rank}
-                            </span>
-                            <Badge variant="secondary" className="font-mono text-xs tabular-nums">
-                                {item.count} events
-                            </Badge>
-                            <span className="text-2xs text-muted-foreground">
-                                ({item.taxaCount} taxa)
+                    <CardContent className="px-3 py-0 space-y-2">
+                        {/* Header row with rank, count badge, and percentage */}
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Label className="text-xs font-bold text-muted-foreground/60 w-5">
+                                    #{item.rank}
+                                </Label>
+                                <Badge variant="secondary" className="font-mono text-xs tabular-nums">
+                                    {item.count} events
+                                </Badge>
+                                <span className="text-2xs text-muted-foreground">
+                                    ({item.taxaCount} taxa)
+                                </span>
+                            </div>
+                            <span className="text-xs font-mono text-muted-foreground tabular-nums">
+                                {item.percentage.toFixed(1)}%
                             </span>
                         </div>
-                        <span className="text-xs font-mono text-muted-foreground tabular-nums">
-                            {item.percentage.toFixed(1)}%
-                        </span>
-                    </div>
 
-                    {/* Progress bar */}
-                    <div className="w-full h-2 bg-secondary/50 rounded-full overflow-hidden mb-2">
-                        <div
-                            className="h-full rounded-full transition-all"
-                            style={{
-                                width: `${(item.count / maxCount) * 100}%`,
-                                backgroundColor: TREE_COLOR_CATEGORIES.markedColor
-                            }}
-                        />
-                    </div>
+                        {/* Frequency bar */}
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div>
+                                    <Progress
+                                        value={(item.count / maxCount) * 100}
+                                        aria-label={`Frequency: ${item.percentage.toFixed(1)}%`}
+                                        className="h-2 bg-secondary/50"
+                                        style={{
+                                            // Override indicator color via CSS variable
+                                            '--progress-color': TREE_COLOR_CATEGORIES.markedColor
+                                        } as React.CSSProperties}
+                                    />
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="text-xs tabular-nums">
+                                <div className="flex flex-col gap-0.5">
+                                    <span>Rearrangements: {item.count}</span>
+                                    <span>Frequency: {item.percentage.toFixed(2)}%</span>
+                                </div>
+                            </TooltipContent>
+                        </Tooltip>
 
-                    {/* Full taxa names - wrapping allowed */}
-                    <div className="text-xs text-foreground/90 leading-relaxed break-words">
-                        {item.subtree}
-                    </div>
-                </div>
+                        {/* Full taxa names - wrapping allowed */}
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div className="text-xs text-foreground/90 leading-relaxed break-words cursor-default line-clamp-2">
+                                    {item.subtree}
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom" className="max-w-xs text-xs">
+                                <span className="break-words">{item.subtree}</span>
+                            </TooltipContent>
+                        </Tooltip>
+                    </CardContent>
+                </Card>
             ))}
         </div>
     );

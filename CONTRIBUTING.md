@@ -9,16 +9,19 @@ By participating in this project, you are expected to uphold a standard of condu
 ## How to Contribute
 
 ### Reporting Bugs
+
 - **Search existing issues** to avoid duplicates.
 - **Open a new issue** provided you can't find an existing one.
 - **Provide reproduction steps**: Include sample Newick strings or steps to reproduce the visual glitch.
 - **Environment**: State your browser, OS, and version.
 
 ### Suggesting Enhancements
+
 - Open an issue tagged as `enhancement`.
 - Describe the feature and its scientific utility (e.g., "Add Robinson-Foulds distance metric to the dashboard").
 
 ### Pull Requests
+
 1. **Fork the repository** and create a feature branch (`git checkout -b feature/amazing-feature`).
 2. **Follow the code style**:
    - Python: Follow PEP 8.
@@ -33,6 +36,7 @@ By participating in this project, you are expected to uphold a standard of condu
 ## Development Setup
 
 ### Backend (BranchArchitect)
+
 Located in `electron-app/BranchArchitect`.
 
 ```bash
@@ -42,6 +46,7 @@ poetry install
 ```
 
 ### Frontend
+
 Located in the root.
 
 ```bash

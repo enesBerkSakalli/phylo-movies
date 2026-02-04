@@ -111,17 +111,17 @@ export function MSAControls() {
             min={1}
             value={startValue}
             onChange={(e) => setStartValue(e.target.value)}
-            className="w-16 h-7 text-xs bg-background/50 border-border/40"
+            className="w-20 h-7 text-xs tabular-nums bg-background/50 border-border/40"
             aria-label="Start column"
           />
-          <span className="text-2xs text-muted-foreground font-medium">-</span>
+          <span className="text-2xs text-muted-foreground font-medium">–</span>
           <Input
             id="msa-end"
             type="number"
             min={1}
             value={endValue}
             onChange={(e) => setEndValue(e.target.value)}
-            className="w-16 h-7 text-xs bg-background/50 border-border/40"
+            className="w-20 h-7 text-xs tabular-nums bg-background/50 border-border/40"
             aria-label="End column"
           />
         </div>
@@ -161,10 +161,12 @@ export function MSAControls() {
         </>
       )}
 
-      <div className="flex items-center gap-2 ml-auto">
+      <Separator orientation="vertical" className="h-4 mx-1.5 opacity-40" />
+
+      <div className="flex items-center gap-2">
         <Label htmlFor="msa-color-scheme" className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Coloring</Label>
         <Select value={colorScheme} onValueChange={setColorScheme}>
-          <SelectTrigger id="msa-color-scheme" className="w-[140px] h-8 text-xs bg-background/50 border-border/40">
+          <SelectTrigger id="msa-color-scheme" className="w-[160px] h-7 text-xs bg-background/50 border-border/40">
             <SelectValue placeholder="Color Scheme" />
           </SelectTrigger>
           <SelectContent>
@@ -189,11 +191,16 @@ export function MSAControls() {
             <SelectItem value="grayscale">Grayscale</SelectItem>
           </SelectContent>
         </Select>
+      </div>
 
-        <Separator orientation="vertical" className="h-4 mx-1" />
+      <Separator orientation="vertical" className="h-4 mx-1.5 opacity-40" />
 
+      <div className="flex items-center gap-2">
         <Switch id="msa-toggle-letters" checked={showLetters} onCheckedChange={setShowLetters} aria-label="Toggle residue letters" className="scale-75" />
         <Label htmlFor="msa-toggle-letters" className="text-xs">Letters</Label>
+      </div>
+
+      <div className="ml-auto">
         {processedData ? (
           <Badge variant="secondary" className="text-xs">{processedData.type.toUpperCase()}</Badge>
         ) : (

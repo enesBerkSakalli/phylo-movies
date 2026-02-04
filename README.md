@@ -73,6 +73,7 @@ Or use the provided `CITATION.cff` file.
 ### Prerequisites
 
 **System Requirements:**
+
 - **Node.js**: Version 18.0.0 or newer (tested with v24.10.0)
 - **npm**: Version 8.0.0 or newer (comes with Node.js)
 - **Modern web browser**: Chrome, Firefox, Safari, or Edge with JavaScript enabled
@@ -229,6 +230,7 @@ npm test  # Runs full test suite
 ```
 
 **Success indicators:**
+
 - Dev server starts without errors
 - Browser shows the home page interface
 - "Load Example" button works and displays tree visualization
@@ -467,4 +469,5 @@ PhyloMovies: An Interactive Phylogenetic Tree Visualization Platform
 - **Storage**: 1GB free space for installation and temporary files
 - **Network**: Internet connection required for initial npm install
 - **Graphics**: WebGL-capable GPU recommended for optimal performance
+
 ---

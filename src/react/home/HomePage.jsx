@@ -22,6 +22,7 @@ export function HomePage() {
     form,
     submitting,
     loadingExample,
+    loadingExampleId,
     operationState,
     alert,
     handleSubmit,
@@ -66,6 +67,7 @@ export function HomePage() {
 
               <ExampleTab
                 loadingExample={loadingExample}
+                loadingExampleId={loadingExampleId}
                 submitting={submitting}
                 handleLoadExample={handleLoadExample}
               />
