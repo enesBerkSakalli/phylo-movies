@@ -6,10 +6,29 @@
  */
 
 const { app, BrowserWindow, dialog, ipcMain } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const path = require('path');
-const { spawn } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 const net = require('net');
 const fs = require('fs');
+
+// Capture early crashes before app lifecycle starts
+const earlyLogPath = '/tmp/phylo-movies-main.log';
+function earlyLog(message) {
+  try {
+    fs.appendFileSync(earlyLogPath, `[${new Date().toISOString()}] ${message}\n`);
+  } catch (err) {
+    // Avoid crashing if logging fails
+  }
+}
+
+process.on('uncaughtException', (err) => {
+  earlyLog(`uncaughtException: ${err && err.stack ? err.stack : String(err)}`);
+});
+
+process.on('unhandledRejection', (reason) => {
+  earlyLog(`unhandledRejection: ${reason && reason.stack ? reason.stack : String(reason)}`);
+});
 
 // Configuration
 const isDev = process.env.NODE_ENV === 'development';
@@ -20,6 +39,21 @@ let mainWindow = null;
 let splashWindow = null;
 let pythonProcess = null;
 let backendPort = DEFAULT_PORT;
+let backendRootDir = null;
+let launchLogPath = null;
+
+function logToFile(message) {
+  try {
+    if (!launchLogPath) {
+      const userDataDir = app.getPath('userData');
+      fs.mkdirSync(userDataDir, { recursive: true });
+      launchLogPath = path.join(userDataDir, 'launch.log');
+    }
+    fs.appendFileSync(launchLogPath, `[${new Date().toISOString()}] ${message}\n`);
+  } catch (err) {
+    // Avoid crashing if logging fails
+  }
+}
 
 /**
  * Create the splash/loading window
@@ -143,19 +177,73 @@ function getBackendPath() {
   const platform = process.platform;
   const execName = platform === 'win32' ? 'brancharchitect-server.exe' : 'brancharchitect-server';
 
-  const possiblePaths = [
-    path.join(process.resourcesPath, 'BranchArchitect', 'brancharchitect-server', execName),
-    path.join(__dirname, 'BranchArchitect', 'dist', 'brancharchitect-server', execName),
-  ];
-
-  for (const p of possiblePaths) {
-    if (fs.existsSync(p)) {
-      return p;
+  // Production: prefer archived backend to avoid huge copy trees during packaging
+  const archivePath = path.join(process.resourcesPath, 'BranchArchitect', 'brancharchitect-server.tar.gz');
+  if (fs.existsSync(archivePath)) {
+    logToFile(`Found backend archive at ${archivePath}`);
+    const extractedDir = ensureBackendExtracted(archivePath);
+    if (extractedDir) {
+      backendRootDir = extractedDir;
+      logToFile(`Using extracted backend at ${extractedDir}`);
+      return path.join(extractedDir, execName);
     }
   }
 
-  console.error('Backend executable not found. Checked:', possiblePaths);
+  // Fallback: backend is in extraResources as a directory
+  const backendPath = path.join(process.resourcesPath, 'BranchArchitect', 'brancharchitect-server', execName);
+  if (fs.existsSync(backendPath)) {
+    backendRootDir = path.dirname(backendPath);
+    logToFile(`Using bundled backend at ${backendRootDir}`);
+    return backendPath;
+  }
+
+  console.error('Backend executable not found at:', backendPath);
+  logToFile(`Backend executable not found at: ${backendPath}`);
   return null;
+}
+
+/**
+ * Extract backend archive into a user-writable location (once per app version)
+ */
+function ensureBackendExtracted(archivePath) {
+  const userDataDir = app.getPath('userData');
+  const targetRoot = path.join(userDataDir, 'BranchArchitect');
+  const markerPath = path.join(targetRoot, '.extracted-version');
+  const expectedVersion = app.getVersion();
+  const extractedDir = path.join(targetRoot, 'brancharchitect-server');
+
+  try {
+    logToFile(`Preparing backend extraction to ${targetRoot} (version ${expectedVersion})`);
+    if (fs.existsSync(markerPath) && fs.readFileSync(markerPath, 'utf8').trim() === expectedVersion) {
+      if (fs.existsSync(extractedDir)) {
+        logToFile('Backend already extracted for this version');
+        return extractedDir;
+      }
+    }
+
+    logToFile('Removing previous extracted backend (if any)');
+    fs.rmSync(targetRoot, { recursive: true, force: true });
+    fs.mkdirSync(targetRoot, { recursive: true });
+
+    logToFile(`Extracting backend archive: ${archivePath}`);
+    const result = spawnSync('tar', ['-xzf', archivePath, '-C', targetRoot], {
+      stdio: 'pipe',
+    });
+
+    if (result.status !== 0) {
+      const stderr = result.stderr ? result.stderr.toString().trim() : 'unknown error';
+      logToFile(`Backend extraction failed: ${stderr}`);
+      throw new Error(`Failed to extract backend archive: ${stderr}`);
+    }
+
+    fs.writeFileSync(markerPath, expectedVersion);
+    logToFile('Backend extraction completed');
+    return extractedDir;
+  } catch (err) {
+    console.error('Backend extraction failed:', err);
+    logToFile(`Backend extraction exception: ${err && err.message ? err.message : String(err)}`);
+    return null;
+  }
 }
 
 /**
@@ -163,16 +251,22 @@ function getBackendPath() {
  */
 function getFastTreePath() {
   const platform = process.platform;
+  // Map Node's process.platform to our bin folder names
+  const platformDir = platform === 'darwin' ? 'darwin' : platform === 'win32' ? 'win32' : 'linux';
   const execName = platform === 'win32' ? 'fasttree.exe' : 'fasttree';
 
-  const possiblePaths = [
-    path.join(__dirname, 'BranchArchitect', 'bin', platform, execName),
-    path.join(process.resourcesPath, 'BranchArchitect', 'brancharchitect-server', 'bin', platform, execName),
-  ];
-
-  for (const p of possiblePaths) {
-    if (fs.existsSync(p)) {
-      return p;
+  if (isDev) {
+    // Development: look in BranchArchitect/bin
+    const devPath = path.join(__dirname, 'BranchArchitect', 'bin', platformDir, execName);
+    if (fs.existsSync(devPath)) {
+      return devPath;
+    }
+  } else {
+    // Production: FastTree is bundled inside _internal by PyInstaller
+    const backendRoot = backendRootDir || path.join(process.resourcesPath, 'BranchArchitect', 'brancharchitect-server');
+    const prodPath = path.join(backendRoot, '_internal', 'bin', platformDir, execName);
+    if (fs.existsSync(prodPath)) {
+      return prodPath;
     }
   }
 
@@ -185,9 +279,12 @@ function getFastTreePath() {
 async function startBackend() {
   backendPort = await findAvailablePort(DEFAULT_PORT);
   console.log(`Starting backend on port ${backendPort}...`);
+  logToFile(`Starting backend on port ${backendPort}`);
 
   const backendPath = getBackendPath();
   const fasttreePath = getFastTreePath();
+  logToFile(`Backend path: ${backendPath || 'dev (poetry)'}`);
+  logToFile(`FastTree path: ${fasttreePath || 'not found'}`);
 
   if (isDev || !backendPath) {
     // Development: run Python through Poetry (BranchArchitect's venv)
@@ -197,6 +294,7 @@ async function startBackend() {
     const env = {
       ...process.env,
       FLASK_ENV: 'development',
+      FLASK_DEBUG: '1',
       PORT: backendPort.toString(),
     };
 
@@ -211,6 +309,7 @@ async function startBackend() {
       stdio: ['pipe', 'pipe', 'pipe'],
       shell: true,
     });
+    logToFile(`Spawned backend via poetry in ${branchArchitectDir}`);
   } else {
     // Production: run bundled executable
     const env = {
@@ -229,6 +328,7 @@ async function startBackend() {
       env: env,
       stdio: ['pipe', 'pipe', 'pipe'],
     });
+    logToFile(`Spawned backend binary at ${backendPath}`);
   }
 
   // Store stderr output for error reporting
@@ -237,6 +337,7 @@ async function startBackend() {
   pythonProcess.stdout.on('data', (data) => {
     try {
       console.log(`[Backend] ${data.toString().trim()}`);
+      logToFile(`[Backend] ${data.toString().trim()}`);
     } catch (e) {
       // Ignore logging errors
     }
@@ -247,6 +348,7 @@ async function startBackend() {
       const output = data.toString().trim();
       stderrBuffer += output + '\n';
       console.error(`[Backend Error] ${output}`);
+      logToFile(`[Backend Error] ${output}`);
     } catch (e) {
       // Ignore logging errors
     }
@@ -254,11 +356,13 @@ async function startBackend() {
 
   pythonProcess.on('error', (err) => {
     console.error('Failed to start backend:', err);
+    logToFile(`Backend process error: ${err && err.message ? err.message : String(err)}`);
     dialog.showErrorBox('Backend Error', `Failed to start backend: ${err.message}\n\n${stderrBuffer}`);
   });
 
   pythonProcess.on('exit', (code) => {
     console.log(`Backend exited with code ${code}`);
+    logToFile(`Backend exited with code ${code}`);
     if (code !== 0 && code !== null) {
       dialog.showErrorBox('Backend Crashed', `Backend exited with code ${code}\n\nError output:\n${stderrBuffer.slice(-2000)}`);
     }
@@ -268,9 +372,11 @@ async function startBackend() {
   try {
     await waitForBackend(backendPort);
     console.log('Backend is ready!');
+    logToFile('Backend is ready');
     return true;
   } catch (error) {
     console.error('Backend failed to start:', error);
+    logToFile(`Backend failed to start: ${error && error.message ? error.message : String(error)}`);
     return false;
   }
 }
@@ -313,9 +419,18 @@ function createWindow() {
 
   if (isDev) {
     mainWindow.loadURL(FRONTEND_DEV_URL);
+    mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(path.join(__dirname, 'frontend-dist', 'index.html'));
   }
+
+  // Enable DevTools shortcut in production (Cmd+Option+I / Ctrl+Shift+I)
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    if ((input.meta && input.alt && input.key === 'i') ||
+        (input.control && input.shift && input.key === 'I')) {
+      mainWindow.webContents.toggleDevTools();
+    }
+  });
 
   mainWindow.on('closed', () => {
     mainWindow = null;
@@ -358,6 +473,37 @@ function setupIpcHandlers() {
       mainWindow.setProgressBar(progress); // -1 to hide, 0-1 for progress
     }
   });
+}
+
+/**
+ * Configure auto-updates (runs only in production)
+ */
+function setupAutoUpdates() {
+  if (isDev) return; // Skip during development
+
+  autoUpdater.autoDownload = true; // pulls blockmap/differential packages when available
+
+  autoUpdater.on('error', (err) => {
+    console.error('Updater error:', err);
+    if (mainWindow) {
+      mainWindow.webContents.send('update-error', err == null ? 'unknown' : err.message);
+    }
+  });
+
+  autoUpdater.on('update-available', () => {
+    if (mainWindow) mainWindow.webContents.send('update-available');
+  });
+
+  autoUpdater.on('update-not-available', () => {
+    if (mainWindow) mainWindow.webContents.send('update-not-available');
+  });
+
+  autoUpdater.on('update-downloaded', () => {
+    // For silent background install; swap to an IPC-confirmed call if you prefer prompting
+    autoUpdater.quitAndInstall();
+  });
+
+  autoUpdater.checkForUpdatesAndNotify();
 }
 
 // Application lifecycle
@@ -403,6 +549,9 @@ app.whenReady().then(async () => {
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
+
+  // Start auto-updates (production only)
+  setupAutoUpdates();
 });
 
 app.on('window-all-closed', () => {

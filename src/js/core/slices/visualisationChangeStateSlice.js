@@ -1,5 +1,5 @@
 import { TREE_COLOR_CATEGORIES } from '../../constants/TreeColors.js';
-import { loadPersistedColorCategories, loadPersistedTaxaGrouping, persistTaxaGrouping } from '../../services/storage/colorPersistence.js';
+import { loadPersistedColorCategories, persistTaxaGrouping } from '../../services/storage/colorPersistence.js';
 import { TreeColorManager } from '../../treeVisualisation/systems/TreeColorManager.js';
 import {
   renderTreeControllers,
@@ -94,7 +94,10 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
   // ==========================================================================
   initializeColors: () => {
     applyPersistedColorPreferences();
-    const persistedGrouping = loadPersistedTaxaGrouping();
+    
+    // Clear persisted taxa grouping on new data load to prevent stale CSV data
+    // from previous sessions affecting the new dataset
+    persistTaxaGrouping(null);
 
     const colorManager = new TreeColorManager();
     const initialMonophyleticColoring = get().monophyleticColoringEnabled;
@@ -105,7 +108,7 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
       pivotEdgeColor: TREE_COLOR_CATEGORIES.pivotEdgeColor,
       markedColor: TREE_COLOR_CATEGORIES.markedColor,
       markedSubtreeMode: 'current',
-      taxaGrouping: persistedGrouping || null,
+      taxaGrouping: null,
     });
 
     // Sync color manager with initial state after a tick (data must be loaded)

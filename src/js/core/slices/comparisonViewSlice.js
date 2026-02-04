@@ -24,7 +24,6 @@ export const createComparisonViewSlice = (set) => ({
   viewOffsetX: 0,
   viewOffsetY: 0,
   viewsConnected: false,
-  viewsConnected: false,
   viewLinkMapping: createEmptyViewLinkMapping(),
 
   // ==========================================================================

@@ -1,9 +1,9 @@
-import { TIMELINE_CONSTANTS } from '@/js/timeline/constants';
-import { TimelineDataProcessor } from '@/js/timeline/data/TimelineDataProcessor';
-import { ScrubberAPI } from '@/js/timeline/core/ScrubberAPI';
-import { TimelineMathUtils } from '@/js/timeline/math/TimelineMathUtils';
-import { useAppStore } from '@/js/core/store';
-import { DeckTimelineRenderer } from '@/js/timeline/renderers/DeckTimelineRenderer';
+import { TIMELINE_CONSTANTS } from '../constants.js';
+import { TimelineDataProcessor } from '../data/TimelineDataProcessor.js';
+import { ScrubberAPI } from './ScrubberAPI.js';
+import { TimelineMathUtils } from '../math/TimelineMathUtils.js';
+import { useAppStore } from '../../core/store.js';
+import { DeckTimelineRenderer } from '../renderers/DeckTimelineRenderer.js';
 
 // ============================================================================
 // MOVIE TIMELINE MANAGER

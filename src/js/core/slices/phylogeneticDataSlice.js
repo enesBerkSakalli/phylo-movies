@@ -144,8 +144,7 @@ function createTransitionResolver(movieData, treeMetadata) {
     treeMetadata,
     movieData.distances?.robinson_foulds,
     movieData.tree_pair_solutions || {},
-    movieData.pair_interpolation_ranges || [],
-    true
+    movieData.pair_interpolation_ranges || []
   );
 }
 

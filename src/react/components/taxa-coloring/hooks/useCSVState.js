@@ -3,23 +3,26 @@ import { parseGroupCSV } from "@/js/treeColoring/utils/CSVParser.js";
 import { loadCSVColumn } from "../utils/csvHelpers.js";
 
 export function useCSVState(taxaNames, initialState = {}) {
-  const [csvData, setCsvData] = useState(initialState.csvData || null);
-  const [csvFileName, setCsvFileName] = useState(initialState.csvFileName || null);
-  const [csvGroups, setCsvGroups] = useState(initialState.csvGroups || []);
+  // Ensure initialState is always an object
+  const safeState = initialState || {};
+
+  const [csvData, setCsvData] = useState(safeState.csvData || null);
+  const [csvFileName, setCsvFileName] = useState(safeState.csvFileName || null);
+  const [csvGroups, setCsvGroups] = useState(Array.isArray(safeState.csvGroups) ? safeState.csvGroups : []);
   const [csvTaxaMap, setCsvTaxaMap] = useState(() => {
     // Convert object back to Map if restored from persistence
-    const saved = initialState.csvTaxaMap;
+    const saved = safeState.csvTaxaMap;
     if (saved instanceof Map) return saved;
     if (saved && typeof saved === 'object') return new Map(Object.entries(saved));
     return null;
   });
-  const [csvColumn, setCsvColumn] = useState(initialState.csvColumn || null);
+  const [csvColumn, setCsvColumn] = useState(safeState.csvColumn || null);
   const [csvValidation, setCsvValidation] = useState(null);
 
   // Recalculate validation when restoring from initial state
   useEffect(() => {
-    if (initialState.csvData && initialState.csvColumn && taxaNames.length > 0) {
-      const { validation } = loadCSVColumn(initialState.csvData, initialState.csvColumn, taxaNames);
+    if (safeState.csvData && safeState.csvColumn && taxaNames.length > 0) {
+      const { validation } = loadCSVColumn(safeState.csvData, safeState.csvColumn, taxaNames);
       setCsvValidation(validation);
     }
   }, []); // Run once on mount

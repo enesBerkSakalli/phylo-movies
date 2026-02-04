@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import path from 'node:path';
 import tailwindcss from '@tailwindcss/vite';
 import { fileURLToPath } from 'url';
+import fs from 'node:fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -17,17 +18,41 @@ function stripImportMapsOnBuild() {
   };
 }
 
+// Serve publication_data folder as /examples during development
+function servePublicationData() {
+  return {
+    name: 'serve-publication-data',
+    configureServer(server: import('vite').ViteDevServer) {
+      // Register middleware BEFORE Vite's built-in middleware (including SPA fallback)
+      server.middlewares.use((req, res, next) => {
+        if (req.url?.startsWith('/examples/')) {
+          const relativePath = req.url.replace('/examples/', '');
+          const filePath = path.join(__dirname, 'publication_data', relativePath);
+          if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+            res.setHeader('Content-Type', 'application/octet-stream');
+            fs.createReadStream(filePath).pipe(res);
+            return;
+          }
+        }
+        next();
+      });
+    }
+  };
+}
+
 export default defineConfig(async (): Promise<UserConfig> => {
   // Use relative paths for Electron builds
   const isElectronBuild = process.env.ELECTRON_BUILD === 'true';
 
   return {
     root: 'src',
+    publicDir: 'public',
     base: isElectronBuild ? './' : '/',
     plugins: [
       react(),
       stripImportMapsOnBuild(),
-      tailwindcss()
+      tailwindcss(),
+      servePublicationData()
     ],
     define: {
       global: 'globalThis',
@@ -56,6 +81,10 @@ export default defineConfig(async (): Promise<UserConfig> => {
         "/stream": "http://localhost:5002",
         "/msa": "http://localhost:5002",
         "/about": "http://localhost:5002"
+      },
+      // Allow serving files from publication_data
+      fs: {
+        allow: ['..']
       }
     },
     optimizeDeps: {

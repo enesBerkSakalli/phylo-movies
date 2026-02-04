@@ -42,9 +42,9 @@ export function useTaxaColoringState(taxaNames, originalColorMap, initialStatePa
 
   const [mode, setMode] = useState(initialState.mode || "taxa");
   const [selectedStrategy, setSelectedStrategy] = useState(initialState.strategyType || 'prefix');
-  const [separators, setSeparators] = useState(initialState.separators || []);
-  const [segmentIndex, setSegmentIndex] = useState(initialState.segmentIndex || 0);
-  const [useRegex, setUseRegex] = useState(initialState.useRegex || false);
+  const [separators, setSeparators] = useState(Array.isArray(initialState.separators) ? initialState.separators : []);
+  const [segmentIndex, setSegmentIndex] = useState(initialState.segmentIndex ?? 0);
+  const [useRegex, setUseRegex] = useState(initialState.useRegex ?? false);
   const [regexPattern, setRegexPattern] = useState(initialState.regexPattern || "");
   const [groups, setGroups] = useState([]);
   const [groupingResult, setGroupingResult] = useState(null);
@@ -206,7 +206,7 @@ export function useTaxaColoringState(taxaNames, originalColorMap, initialStatePa
     mode,
     taxaColorMap: toHexMap(mgr.taxaColorMap),
     groupColorMap: toHexMap(mgr.groupColorMap),
-    separators: separators.length > 0 ? separators : null,
+    separators: Array.isArray(separators) && separators.length > 0 ? separators : null,
     strategyType: selectedStrategy,
     segmentIndex,
     useRegex,

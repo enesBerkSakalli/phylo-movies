@@ -36,8 +36,8 @@ function ensureColorCache() {
   const state = useAppStore.getState();
   const taxaGrouping = state.taxaGrouping;
   
-  // If taxaGrouping reference changed, invalidate cache
-  if (_cachedTaxaGrouping !== taxaGrouping) {
+  // If cache is missing or taxaGrouping reference changed, (re)build cache
+  if (!_taxonColorCache || _cachedTaxaGrouping !== taxaGrouping) {
     _taxonColorCache = new Map();
     _cachedTaxaGrouping = taxaGrouping;
   }

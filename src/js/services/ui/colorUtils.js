@@ -192,6 +192,9 @@ export function rgbToHex(rgb) {
  * @returns {Object} New map with Hex values
  */
 export function toHexMap(map) {
+  if (!map || typeof map !== 'object') {
+    return {};
+  }
   const hexMap = {};
   Object.keys(map).forEach(key => {
     let val = map[key];

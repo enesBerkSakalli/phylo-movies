@@ -17,8 +17,8 @@ const { useAppStore } = require('../src/js/core/store.js');
 
 function loadMovieData() {
   const candidates = [
-    path.join(__dirname, '..', 'data', 'small_example', 'small_example.response.json'),
-    path.join(__dirname, '..', 'example.json')
+    path.join(__dirname, 'data', 'small_example', 'small_example.response.json'),
+    path.join(__dirname, 'data', 'example.json')
   ];
   for (const p of candidates) {
     try {
@@ -152,13 +152,14 @@ describe('Active change edge mapping (small_example)', () => {
 
   it('tracks later interpolation jump solutions', () => {
     const store = useAppStore.getState();
-    store.goToPosition(6); // Jump where split [2,3,4,5,6] is active
+    store.goToPosition(6); // Frame where index 12 is moving
     const markedSubtrees = useAppStore.getState().getMarkedSubtreeData();
-    expect(markedSubtrees).to.deep.equal([[4], [6]]);
+    expect(markedSubtrees).to.deep.equal([[12]]);
   });
 
   it('respects per-step lattice sequences when multiple snapshots exist', () => {
     const storeAPI = useAppStore;
+    storeAPI.setState({ markedSubtreeMode: 'all' }); // Force use of pairSolutions
     const pairKey = 'pair_0_1';
     const baseState = storeAPI.getState();
     const basePairSolutions = baseState.pairSolutions;

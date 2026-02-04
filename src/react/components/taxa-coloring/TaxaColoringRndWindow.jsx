@@ -24,6 +24,9 @@ const selectTaxaGrouping = (s) => s.taxaGrouping;
 const selectUpdateTaxaColors = (s) => s.updateTaxaColors;
 const selectSetTaxaGrouping = (s) => s.setTaxaGrouping;
 
+// Stable empty object to avoid creating new objects on each render
+const EMPTY_INITIAL_STATE = {};
+
 export function TaxaColoringRndWindow() {
   const isOpen = useAppStore(selectTaxaColoringOpen);
   const setOpen = useAppStore(selectSetTaxaColoringOpen);
@@ -36,6 +39,9 @@ export function TaxaColoringRndWindow() {
   const setTaxaGrouping = useAppStore(selectSetTaxaGrouping);
 
   const taxaNames = useMemo(() => movieData?.sorted_leaves || [], [movieData]);
+
+  // Stable initial state reference to prevent unnecessary re-renders
+  const initialState = useMemo(() => taxaGrouping || EMPTY_INITIAL_STATE, [taxaGrouping]);
 
   // Clamp window size to viewport if it exceeds it
   React.useEffect(() => {
@@ -62,7 +68,7 @@ export function TaxaColoringRndWindow() {
   const baselineColorMap = useMemo(() => {
     const map = {};
     const currentTaxaMap = taxaGrouping?.taxaColorMap || {};
-    
+
     taxaNames.forEach((taxon) => {
       // Use assigned color if it exists, otherwise use system default
       map[taxon] = currentTaxaMap[taxon] || TREE_COLOR_CATEGORIES.defaultColor || "#000000";
@@ -156,7 +162,7 @@ export function TaxaColoringRndWindow() {
             originalColorMap={baselineColorMap}
             onApply={handleApply}
             onClose={handleClose}
-            initialState={taxaGrouping || {}}
+            initialState={initialState}
           />
         </div>
       </div>

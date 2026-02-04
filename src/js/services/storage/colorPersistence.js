@@ -35,22 +35,6 @@ export function persistColorCategories(colorCategories) {
 }
 
 /**
- * Load persisted taxa grouping metadata (mode, separators, group colors)
- * @returns {Object|null} grouping data or null
- */
-export function loadPersistedTaxaGrouping() {
-  try {
-    if (typeof window === 'undefined' || !window.localStorage) return null;
-    const raw = window.localStorage.getItem(TAXA_GROUPING_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === 'object' ? parsed : null;
-  } catch (_) {
-    return null;
-  }
-}
-
-/**
  * Persist taxa grouping metadata for legend reconstruction
  * @param {Object|null} grouping
  */
