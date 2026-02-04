@@ -9,6 +9,7 @@ PhyloMovies is a browser-based phylogenetic tree viewer for inspecting tree traj
 
 Source code is available under the MIT License at [github.com/enesBerkSakalli/phylo-movies](https://github.com/enesBerkSakalli/phylo-movies).
 The software is implemented in Python (backend) and JavaScript/React (frontend).
+Tree interpolation and morphing are powered by [BranchArchitect](https://github.com/EnesSakalliUniWien/BranchArchitect), a Python library for phylogenetic tree transformations that computes geodesic paths between tree topologies.
 All test datasets required to reproduce the benchmarks are located in `data/test-data`.
 
 ## Citation

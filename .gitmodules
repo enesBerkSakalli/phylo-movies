@@ -1,0 +1,3 @@
+[submodule "electron-app/BranchArchitect"]
+	path = electron-app/BranchArchitect
+	url = https://github.com/EnesSakalliUniWien/BranchArchitect.git
