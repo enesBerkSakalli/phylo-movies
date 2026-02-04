@@ -3,6 +3,13 @@
 import React from 'react';
 import { Palette } from 'lucide-react';
 import { formatScaleValue } from '../../../../js/domain/tree/scaleUtils.js';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import type { HistogramBin, HistogramStats } from '../Shared/types';
 
 interface BranchLengthHistogramProps {
@@ -28,18 +35,24 @@ export const BranchLengthHistogram: React.FC<BranchLengthHistogramProps> = ({
   return (
     <div
       className="flex flex-col gap-2 w-full"
-      aria-label="Current Tree Branch Length Distribution"
+      role="figure"
+      aria-label="Branch Length Distribution Histogram"
     >
-      {showHeader ? (
-        <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-wider text-muted-foreground/70">
-          <Palette className="size-3" aria-hidden />
-          <span id="branch-lengths-label">Length Distribution</span>
-        </div>
-      ) : null}
+      {showHeader && (
+        <>
+          <Label className="text-2xs font-bold uppercase tracking-wider text-muted-foreground/70">
+            <Palette className="size-3" aria-hidden />
+            Length Distribution
+          </Label>
+          <Separator className="bg-white/5" />
+        </>
+      )}
 
       {/* Histogram bars */}
       <div
         className="grid items-end gap-[2px] w-full bg-muted/20 p-1.5 rounded-sm border border-border/40"
+        role="group"
+        aria-label="Distribution bars"
         style={{
           height: 72,
           gridTemplateColumns: `repeat(${columnCount}, minmax(3px, 1fr))`
@@ -52,20 +65,29 @@ export const BranchLengthHistogram: React.FC<BranchLengthHistogramProps> = ({
               : 0;
 
             return (
-              <div
-                key={`${idx}-${bin.from}`}
-                className="flex flex-col items-center"
-                style={{ minWidth: 3 }}
-              >
-                <div
-                  title={`Range: ${formatScaleValue(bin.from)} – ${formatScaleValue(bin.to)}\nCount: ${bin.count}`}
-                  aria-labelledby="branch-lengths-label"
-                  className="w-full bg-primary/80 rounded-[1px] hover:bg-primary transition-colors cursor-crosshair"
-                  style={{
-                    height: `${heightPx}px`,
-                  }}
-                />
-              </div>
+              <Tooltip key={`${idx}-${bin.from}`}>
+                <TooltipTrigger asChild>
+                  <div
+                    className="flex flex-col items-center"
+                    style={{ minWidth: 3 }}
+                  >
+                    <div
+                      role="img"
+                      aria-label={`Range ${formatScaleValue(bin.from)} to ${formatScaleValue(bin.to)}, count ${bin.count}`}
+                      className="w-full bg-primary/80 rounded-[1px] hover:bg-primary transition-colors cursor-crosshair"
+                      style={{
+                        height: `${heightPx}px`,
+                      }}
+                    />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs tabular-nums">
+                  <div className="flex flex-col gap-0.5">
+                    <span>Range: {formatScaleValue(bin.from)} – {formatScaleValue(bin.to)}</span>
+                    <span>Count: {bin.count}</span>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
             );
           })
         ) : (

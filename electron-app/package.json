@@ -14,14 +14,17 @@
     "start": "electron .",
     "dev": "NODE_ENV=development electron .",
     "setup:backend": "cd BranchArchitect && poetry install",
-    "build:frontend": "cd .. && ELECTRON_BUILD=true npm run build && rm -rf electron-app/frontend-dist && cp -r dist electron-app/frontend-dist",
-    "build:backend": "cd BranchArchitect && poetry export -f requirements.txt --output requirements.txt --without-hashes && poetry run pip install pyinstaller && poetry run pyinstaller brancharchitect.spec --noconfirm --clean",
-    "build:mac": "npm run build:backend && npm run build:frontend && electron-builder --mac",
-    "build:win": "npm run build:backend && npm run build:frontend && electron-builder --win",
-    "build:linux": "npm run build:backend && npm run build:frontend && electron-builder --linux",
+    "build:frontend": "cd .. && ELECTRON_BUILD=true npm run build && rm -rf electron-app/frontend-dist && cp -r dist electron-app/frontend-dist && mkdir -p electron-app/frontend-dist/examples/norovirus/augur_subsampling && cp publication_data/norovirus/augur_subsampling/noro_virus_example_350_gappyout_final.fasta electron-app/frontend-dist/examples/norovirus/augur_subsampling/",
+    "build:backend": "cd BranchArchitect && PYINSTALLER_CONFIG_DIR=/tmp/pyi-config poetry run pyinstaller brancharchitect.spec --distpath dist --workpath /tmp/pyinstaller-work --noconfirm --clean && tar -czf dist/brancharchitect-server.tar.gz -C dist brancharchitect-server",
+    "test:sse": "./sse_smoke.sh",
+    "build:mac": "./build.sh mac",
+    "build:win": "./build.sh win",
+    "build:linux": "./build.sh linux",
     "dist": "npm run build:mac"
   },
-  "dependencies": {},
+  "dependencies": {
+    "electron-updater": "^6.1.4"
+  },
   "devDependencies": {
     "electron": "^33.0.0",
     "electron-builder": "^25.0.0"
@@ -29,6 +32,7 @@
   "build": {
     "appId": "com.phylomovies.app",
     "productName": "Phylo-Movies",
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
     "directories": {
       "output": "release",
       "buildResources": "build"
@@ -49,11 +53,8 @@
     ],
     "extraResources": [
       {
-        "from": "BranchArchitect/dist/brancharchitect-server/",
-        "to": "BranchArchitect/brancharchitect-server/",
-        "filter": [
-          "**/*"
-        ]
+        "from": "BranchArchitect/dist/brancharchitect-server.tar.gz",
+        "to": "BranchArchitect/brancharchitect-server.tar.gz"
       }
     ],
     "mac": {
@@ -65,7 +66,8 @@
             "x64",
             "arm64"
           ]
-        }
+        },
+        "zip"
       ],
       "icon": "build/icon.icns"
     },
@@ -79,6 +81,9 @@
         }
       ],
       "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "differentialPackage": true
     },
     "linux": {
       "target": [

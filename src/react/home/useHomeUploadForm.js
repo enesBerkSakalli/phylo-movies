@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { homeFormSchema } from './homeFormModel.js';
+import { getExampleById } from './exampleDatasets.js';
 import {
   processMovieData,
   finalizeMovieData,
@@ -20,6 +21,7 @@ export function useHomeUploadForm() {
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
   const [loadingExample, setLoadingExample] = useState(false);
+  const [loadingExampleId, setLoadingExampleId] = useState(null);
   const [alert, setAlert] = useState(null);
   const [operationState, setOperationState] = useState({ percent: 0, message: '' });
 
@@ -98,54 +100,70 @@ export function useHomeUploadForm() {
   }
 
   /**
-   * Handler for loading the SARS-CoV-2 example project.
+   * Handler for loading example datasets.
+   * Fetches the example file and processes it through the normal pipeline.
+   * Supports both MSA files (sliding window) and pre-computed Newick tree files.
    */
-  async function handleLoadExample() {
+  async function handleLoadExample(exampleId) {
     clearAlert();
+
+    const example = getExampleById(exampleId);
+    if (!example) {
+      showAlert(`Example "${exampleId}" not found.`);
+      return;
+    }
+
     setLoadingExample(true);
-    setOperationState({ percent: 0, message: 'Loading example data...' });
-    showElectronLoading('Loading example data...');
+    setLoadingExampleId(exampleId);
+    setOperationState({ percent: 0, message: `Loading ${example.name}...` });
+    showElectronLoading(`Loading ${example.name}...`);
 
     try {
-      setOperationState({ percent: 20, message: 'Fetching example...' });
-      updateElectronProgress(20, 'Fetching example...');
+      setOperationState({ percent: 10, message: 'Fetching example file...' });
+      updateElectronProgress(10, 'Fetching example file...');
 
-      let exampleData = null;
-      const candidates = [
-        `${base}example.json`,
-        '/example.json',
-        'example.json',
-      ];
-      for (const url of candidates) {
-        try {
-          const resp = await fetch(url);
-          if (resp.ok) {
-            exampleData = await resp.json();
-            break;
-          }
-        } catch { }
+      // Fetch the example file from the public examples directory
+      const resp = await fetch(example.filePath);
+      if (!resp.ok) {
+        throw new Error(`Failed to fetch example file: ${resp.status} ${resp.statusText}`);
       }
 
-      if (!exampleData) throw new Error('Example data not available');
-      if (!exampleData.file_name) exampleData.file_name = 'example.json';
+      const blob = await resp.blob();
+      const file = new File([blob], example.fileName, { type: 'application/octet-stream' });
 
-      setOperationState({ percent: 70, message: 'Saving data...' });
-      updateElectronProgress(70, 'Saving data...');
+      setOperationState({ percent: 20, message: 'Processing data...' });
+      updateElectronProgress(20, 'Processing data...');
 
-      const { phyloData } = await import('@/js/services/data/dataService.js');
-      await phyloData.set(exampleData);
+      // Build form data based on file type:
+      // - 'msa' files use msaFile field and need window/step parameters
+      // - 'newick' files use treesFile field (pre-computed trees)
+      const formData = {
+        msaFile: example.fileType === 'msa' ? file : null,
+        treesFile: example.fileType === 'newick' ? file : null,
+        orderFile: null,
+        ...example.parameters,
+      };
 
-      setOperationState({ percent: 100, message: 'Complete!' });
-      updateElectronProgress(100, 'Complete!');
-      await new Promise(resolve => setTimeout(resolve, 200));
+      // Process through the standard pipeline
+      const resultData = await processMovieData(formData, setOperationState);
 
+      // Set the file name for display
+      resultData.file_name = example.fileName;
+
+      // Finalize saving and MSA workflows
+      await finalizeMovieData(resultData, formData, setOperationState);
+
+      // Brief delay to show completion
+      await new Promise(resolve => setTimeout(resolve, 300));
       navigate('/visualization');
+
     } catch (err) {
       console.error('[useHomeUploadForm] Failed to load example:', err);
       showAlert(`Failed to load example: ${err.message || err}`);
     } finally {
       hideElectronLoading();
       setLoadingExample(false);
+      setLoadingExampleId(null);
     }
   }
 
@@ -159,6 +177,7 @@ export function useHomeUploadForm() {
     // state
     submitting,
     loadingExample,
+    loadingExampleId,
     operationState,
     alert,
     showAlert,
