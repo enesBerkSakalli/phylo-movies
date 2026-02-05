@@ -29,8 +29,8 @@ Or use the provided `CITATION.cff` file.
 
 ### Interactive Tree Visualization
 
-- **Interpolated tree morphing**: Generate intermediate states between anchor trees to study incremental topological changes.
-- **Anchor vs. transition states**: Toggle between reference snapshots and interpolated frames to isolate where splits differ.
+- **Interpolated tree morphing**: Generate intermediate states between source-target trees to study incremental topological changes.
+- **Source-Target vs. transition states**: Toggle between reference snapshots and interpolated frames to isolate where splits differ.
 - **Adjustable rendering parameters**: Control branch thickness, font size, and color schemes to highlight specific taxa.
 - **Zoom and pan controls**: Inspect large trees using standard mouse or trackpad gestures.
 
@@ -131,6 +131,31 @@ Use for a public, dataset-backed demo hosted on GitHub Pages.
    The script sets `--base`, copies `example.json`, and writes a redirecting `dist/index.html`.
 2. Publish `dist/` via the `gh-pages` branch or the Pages configuration in repository settings.
 3. Access the deployment at `https://<username>.github.io/<repo>/home` (replace placeholders). Update the `build:gh` script if the repository name differs from `phylo-movies`.
+
+#### Method 4: Desktop App (Electron)
+
+Use for a standalone desktop application with integrated backend.
+
+**Download:** Pre-built installers are available on the [Releases](https://github.com/enesBerkSakalli/phylo-movies/releases) page.
+
+- **macOS**: Download the `.dmg` file for your architecture (Intel or Apple Silicon)
+- **Windows**: Download the `.exe` installer
+- **Linux**: Download the `.AppImage` file
+
+##### macOS Installation Note
+
+The app is not signed with an Apple Developer certificate. On first launch, macOS Gatekeeper will block the app. To open it:
+
+1. **Right-click** (or Control-click) the app in Finder
+2. Select **"Open"** from the context menu
+3. Click **"Open"** in the dialog that appears
+
+Alternatively, run this command in Terminal after installation:
+```bash
+xattr -cr /Applications/Phylo-Movies.app
+```
+
+This only needs to be done once. Subsequent launches will work normally.
 
 ---
 

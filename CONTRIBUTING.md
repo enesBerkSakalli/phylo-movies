@@ -37,10 +37,10 @@ By participating in this project, you are expected to uphold a standard of condu
 
 ### Backend (BranchArchitect)
 
-Located in `electron-app/BranchArchitect`.
+Located in `engine/BranchArchitect`.
 
 ```bash
-cd electron-app/BranchArchitect
+cd engine/BranchArchitect
 poetry install
 ./start_movie_server.sh
 ```
