@@ -1,0 +1,25 @@
+Rank,Subtree,Taxa Count,SPR Event Count,% of Total,Split Indices,Signature
+1,Ostrich,1,116,18.325434,20,20
+2,"ECtinamou, Gtinamou, Crypturellus",3,91,14.375987,13 14 15,"13,14,15"
+3,"Dinornis, EasternMoa, lbmoa",3,86,13.586098,10 11 12,"10,11,12"
+4,"GreatRhea, LesserRhea",2,83,13.112164,16 17,"16,17"
+5,"Cassowary, Emu",2,54,8.530806,18 19,"18,19"
+6,oystercatcher,1,44,6.951027,2,2
+7,LBPenguin,1,38,6.003160,4,4
+8,GaviaStellata,1,22,3.475513,5,5
+9,"BrownKiwi, gskiwi, LSKiwi",3,21,3.317536,21 22 23,"21,22,23"
+10,turnstone,1,19,3.001580,3,3
+11,"oystercatcher, turnstone, LBPenguin, GaviaStellata, BrushTurkey, Chicken, magpiegoose, duck",8,12,1.895735,2 3 4 5 6 7 8 9,"2,3,4,5,6,7,8,9"
+12,"GreatRhea, LesserRhea, Cassowary, Emu, Ostrich, BrownKiwi, gskiwi, LSKiwi",8,11,1.737757,16 17 18 19 20 21 22 23,"16,17,18,19,20,21,22,23"
+13,ECtinamou,1,10,1.579779,13,13
+14,BrushTurkey,1,6,0.947867,6,6
+15,Chicken,1,6,0.947867,7,7
+16,"Gtinamou, Crypturellus",2,4,0.631912,14 15,"14,15"
+17,"magpiegoose, duck",2,2,0.315956,8 9,"8,9"
+18,"Cassowary, Emu, BrownKiwi, gskiwi, LSKiwi",5,2,0.315956,18 19 21 22 23,"18,19,21,22,23"
+19,magpiegoose,1,1,0.157978,8,8
+20,duck,1,1,0.157978,9,9
+21,"Dinornis, EasternMoa, lbmoa, ECtinamou, Gtinamou, Crypturellus",6,1,0.157978,10 11 12 13 14 15,"10,11,12,13,14,15"
+22,"oystercatcher, turnstone, LBPenguin, GaviaStellata",4,1,0.157978,2 3 4 5,"2,3,4,5"
+23,"BrushTurkey, Chicken, magpiegoose, duck",4,1,0.157978,6 7 8 9,"6,7,8,9"
+24,"GreatRhea, LesserRhea, Cassowary, Emu",4,1,0.157978,16 17 18 19,"16,17,18,19"

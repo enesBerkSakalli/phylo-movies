@@ -1,0 +1,55 @@
+============================================================
+BOOTSTRAP ORDERING ANALYSIS - RUN LOG
+============================================================
+
+Run timestamp: 20260204_131140
+Output directory: out/runs/run_20260204_131140
+
+PARAMETERS
+----------------------------------------
+Tree inference program: fasttree
+Number of bootstrap replicates: 200
+Random seed: 42
+Number of threads: 4
+
+BOOTSTRAP ALIGNMENT GENERATION
+----------------------------------------
+Method: RAxML -f j (bootstrap alignment generation)
+  - Creates resampled alignments by sampling columns with replacement
+  - Each replicate has same dimensions as original alignment
+
+COMPOSITION DISTANCE METRIC
+----------------------------------------
+Formula: Euclidean distance of nucleotide composition vectors
+  - Composition vector: (count_A, count_C, count_G, count_T, count_Gap)
+  - Distance = sqrt(sum((comp_replicate - comp_original)^2))
+  - Lower distance = replicate more similar to original
+
+DATASETS PROCESSED
+----------------------------------------
+  24: /Users/berksakalli/Projects/rogue_taxa_analysis/online-data/data/datasets/alignments/24
+    Taxa: 24, Sites: 14190
+    Original composition (A,C,G,T,Gap): [65249, 68794, 46443, 71488, 892]
+  125: /Users/berksakalli/Projects/rogue_taxa_analysis/online-data/data/datasets/alignments/125
+    Taxa: 125, Sites: 29149
+    Original composition (A,C,G,T,Gap): [752084, 612788, 411853, 674581, 1192250]
+
+TREE INFERENCE
+----------------------------------------
+Program: FastTree (OpenMP multi-threaded)
+Command: FastTree -gtr -gamma -nt -mlacc 2 -slownni -nosupport -quiet
+Model: GTR + Gamma (rescaled branch lengths)
+Accuracy settings:
+  -mlacc 2: Optimize all 5 branches at each NNI in 2 rounds
+  -slownni: Disable heuristics to skip constant subtrees
+  -nosupport: Skip SH-like support calculation
+  -quiet: Suppress progress output
+  OpenMP: Uses all available CPU cores automatically
+
+OUTPUT FILES
+----------------------------------------
+Per dataset folder:
+  - bootstrap_order_<name>.txt: Ranked replicates by composition distance
+  - all_trees_<name>.nwk: All trees in ranked order (one per line)
+  - rep_<N>/: Per-replicate tree files
+  - <alignment>.BS<N>: Bootstrap replicate alignments
