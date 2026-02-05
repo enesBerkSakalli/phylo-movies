@@ -18,7 +18,7 @@ export function ColorSchemeSelector({ onApply, title = "Apply a Color Scheme", d
           </div>
           <CollapsibleTrigger asChild>
             <Button size="sm" variant="secondary" className="h-7 text-[11px] shrink-0">
-              <Palette className="mr-1.5 size-3.5" />
+              <Palette className="mr-2 size-3.5" />
               {open ? (<>Hide <ChevronUp className="ml-1 size-3" /></>) : (<>Browse Palettes <ChevronDown className="ml-1 size-3" /></>)}
             </Button>
           </CollapsibleTrigger>

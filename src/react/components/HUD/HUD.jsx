@@ -38,25 +38,38 @@ const selectClearClipboard = (s) => s.clearClipboard;
 
 const clamp01 = (value) => Math.max(0, Math.min(1, value || 0));
 
+/**
+ * Build interpolation text with full precision for scientific reproducibility.
+ * Returns both display value (4 decimals for compact display) and full precision (6+ decimals).
+ * Per UI guidelines #9: Never hide mathematical reality for aesthetics.
+ * @returns {{display: string, fullPrecision: string}} Display text and tooltip value
+ */
 function buildInterpolationText(sequenceIndex, totalSequenceLength, timelineProgress, animationProgress, playing) {
   if (playing && typeof animationProgress === 'number') {
-    return `${clamp01(animationProgress).toFixed(2)}`;
+    const clamped = clamp01(animationProgress);
+    return {
+      display: `${clamped.toFixed(4)}`,
+      fullPrecision: clamped.toString()
+    };
   }
 
   const explicitValue = typeof timelineProgress === 'number' ? timelineProgress : null;
   const derivedValue = totalSequenceLength > 1 ? (sequenceIndex / (totalSequenceLength - 1)) : 0;
   const interpolationValue = clamp01(explicitValue ?? derivedValue);
-  return `${interpolationValue.toFixed(2)}`;
+  return {
+    display: `${interpolationValue.toFixed(4)}`,
+    fullPrecision: interpolationValue.toString()
+  };
 }
 
 function buildSegmentText(sequenceIndex, transitionResolver) {
   const anchorIndices = transitionResolver?.fullTreeIndices || [];
-  if (!anchorIndices.length) return 'Between anchors (interp)';
+  if (!anchorIndices.length) return 'Between source-target trees (interp)';
 
   const anchorAtPosition = anchorIndices.indexOf(sequenceIndex);
-  if (anchorAtPosition === 0) return 'Start (Anchor 1)';
-  if (anchorAtPosition === anchorIndices.length - 1) return `End (Anchor ${anchorAtPosition + 1})`;
-  if (anchorAtPosition > 0) return `Anchor ${anchorAtPosition + 1}`;
+  if (anchorAtPosition === 0) return 'Start (Source-Target 1)';
+  if (anchorAtPosition === anchorIndices.length - 1) return `End (Source-Target ${anchorAtPosition + 1})`;
+  if (anchorAtPosition > 0) return `Source-Target ${anchorAtPosition + 1}`;
 
   let previousAnchorIdx = 0;
   for (let i = anchorIndices.length - 1; i >= 0; i--) {
@@ -72,10 +85,10 @@ function buildSegmentText(sequenceIndex, transitionResolver) {
     const to = anchorIndices[nextAnchorIdx];
     const span = Math.max(1, to - from);
     const pct = Math.round(((sequenceIndex - from) / span) * 100);
-    return `Anchor ${previousAnchorIdx + 1} → ${nextAnchorIdx + 1} (${pct}%)`;
+    return `Source-Target ${previousAnchorIdx + 1} → ${nextAnchorIdx + 1} (${pct}%)`;
   }
 
-  return `End (Anchor ${previousAnchorIdx + 1})`;
+  return `End (Source-Target ${previousAnchorIdx + 1})`;
 }
 
 function buildMsaWindow(hasMsa, indexState, msaStepSize, msaWindowSize, msaColumnCount) {
@@ -172,7 +185,11 @@ export function HUD() {
           {hasMsa && (
             <>
               <Separator orientation="vertical" className="h-6" />
-              <MSAWindowSection msaWindow={msaWindow} msaWindowSize={msaWindowSize} />
+              <MSAWindowSection 
+                msaWindow={msaWindow} 
+                msaWindowSize={msaWindowSize} 
+                msaStepSize={msaStepSize} 
+              />
             </>
           )}
 
@@ -200,9 +217,21 @@ function InterpolationCoordinateSection({ interpolationText, sliderMax, sliderVa
       <Film className="size-3.5 text-primary" aria-hidden />
       <div className="flex flex-col gap-0">
         <span className="text-2xs font-medium text-muted-foreground uppercase tracking-wider">Coordinate</span>
-        <span id="hudPositionInfo" aria-live="polite" className="text-xs font-bold text-foreground tabular-nums">
-          {interpolationText}
-        </span>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span id="hudPositionInfo" aria-live="polite" className="text-xs font-bold text-foreground tabular-nums cursor-help hover:text-primary/80 transition-colors">
+              {typeof interpolationText === 'object' ? interpolationText.display : interpolationText}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="text-2xs font-mono bg-zinc-950 border-border/60 text-foreground">
+            <div className="space-y-1">
+              <div>Full Precision:</div>
+              <div className="font-bold text-primary tabular-nums">
+                {typeof interpolationText === 'object' ? interpolationText.fullPrecision : interpolationText}
+              </div>
+            </div>
+          </TooltipContent>
+        </Tooltip>
       </div>
       <Slider
         aria-label="Interpolation position"
@@ -230,13 +259,13 @@ function InterpolationSection({ segmentText }) {
               id="hudSegmentInfo"
               aria-live="polite"
               variant="secondary"
-              className="h-5 px-1.5 text-2xs font-bold cursor-help"
+              className="h-5 px-2 text-2xs font-bold cursor-help"
             >
               {segmentText}
             </Badge>
           </TooltipTrigger>
           <TooltipContent side="top" className="max-w-xs">
-            Algorithmic interpolation between anchors: {segmentText}
+            Algorithmic interpolation between source-target trees: {segmentText}
           </TooltipContent>
         </Tooltip>
       </div>
@@ -244,18 +273,47 @@ function InterpolationSection({ segmentText }) {
   );
 }
 
-function MSAWindowSection({ msaWindow, msaWindowSize }) {
+function MSAWindowSection({ msaWindow, msaWindowSize, msaStepSize }) {
   return (
-    <div className="flex items-center gap-2" id="hud-msa-window-item">
+    <div className="flex items-center gap-3" id="hud-msa-window-item">
       <Dna className="size-3.5 text-primary" aria-hidden />
-      <div className="flex flex-col gap-0">
+      <div className="flex flex-col gap-1">
         <span className="text-2xs font-medium text-muted-foreground uppercase tracking-wider">MSA Window</span>
+        
+        {/* Primary: Window positions (bold, prominent) */}
         <div className="inline-flex items-center gap-1 text-xs font-bold text-foreground tabular-nums">
           <span id="hudWindowStart">{msaWindow?.startPosition ?? 1}</span>
           <span className="text-muted-foreground/50 text-2xs">-</span>
           <span id="hudWindowMid" className="text-primary">{msaWindow?.midPosition ?? 1}</span>
           <span className="text-muted-foreground/50 text-2xs">-</span>
           <span id="hudWindowEnd">{msaWindow?.endPosition ?? msaWindowSize ?? 100}</span>
+        </div>
+        
+        {/* Secondary: Parameters (prominent, not muted) */}
+        <div className="flex items-center gap-3 text-xs font-semibold text-foreground tabular-nums">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-1 px-2 py-1 rounded bg-primary/10 border border-primary/20 hover:border-primary/40 transition-colors cursor-help">
+                <span className="text-2xs text-muted-foreground">Size:</span>
+                <span className="text-primary">{msaWindowSize ?? '—'}</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-2xs">
+              Window size in alignment positions
+            </TooltipContent>
+          </Tooltip>
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-1 px-2 py-1 rounded bg-primary/10 border border-primary/20 hover:border-primary/40 transition-colors cursor-help">
+                <span className="text-2xs text-muted-foreground">Step:</span>
+                <span className="text-primary">{msaStepSize ?? '—'}</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-2xs">
+              Step size between frames
+            </TooltipContent>
+          </Tooltip>
         </div>
       </div>
     </div>
@@ -291,7 +349,7 @@ function ClipboardSection({ clipboardTreeIndex, anchorIndices, onShowAnchor, onC
   const getClipboardLabel = () => {
     if (!isShowing) return 'Off';
     const anchorPos = anchorIndices.indexOf(clipboardTreeIndex);
-    if (anchorPos >= 0) return `Anchor ${anchorPos + 1}`;
+    if (anchorPos >= 0) return `Source-Target ${anchorPos + 1}`;
     return `Tree ${clipboardTreeIndex + 1}`;
   };
 
@@ -309,17 +367,17 @@ function ClipboardSection({ clipboardTreeIndex, anchorIndices, onShowAnchor, onC
                 className="h-5 w-5 hover:bg-accent rounded-sm"
                 onClick={handlePrevAnchor}
                 disabled={!hasAnchors}
-                aria-label="Previous anchor tree"
+                aria-label="Previous source-target tree"
               >
                 <ChevronLeft className="size-3" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Previous anchor tree</TooltipContent>
+            <TooltipContent>Previous source-target tree</TooltipContent>
           </Tooltip>
 
           <Badge
             variant={isShowing ? "default" : "secondary"}
-            className="h-5 px-1.5 text-2xs font-bold min-w-[55px] justify-center tabular-nums"
+            className="h-5 px-2 text-2xs font-bold min-w-[55px] justify-center tabular-nums"
           >
             {getClipboardLabel()}
           </Badge>
@@ -332,12 +390,12 @@ function ClipboardSection({ clipboardTreeIndex, anchorIndices, onShowAnchor, onC
                 className="h-5 w-5 hover:bg-accent rounded-sm"
                 onClick={handleNextAnchor}
                 disabled={!hasAnchors}
-                aria-label="Next anchor tree"
+                aria-label="Next source-target tree"
               >
                 <ChevronRight className="size-3" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Next anchor tree</TooltipContent>
+            <TooltipContent>Next source-target tree</TooltipContent>
           </Tooltip>
 
           {isShowing && (
@@ -346,7 +404,7 @@ function ClipboardSection({ clipboardTreeIndex, anchorIndices, onShowAnchor, onC
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-5 w-5 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-sm ml-0.5"
+                  className="h-5 w-5 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-sm ml-1"
                   onClick={onClear}
                   aria-label="Hide clipboard"
                 >

@@ -13,9 +13,9 @@
   "scripts": {
     "start": "electron .",
     "dev": "NODE_ENV=development electron .",
-    "setup:backend": "cd BranchArchitect && poetry install",
+    "setup:backend": "cd ../engine/BranchArchitect && poetry install",
     "build:frontend": "cd .. && ELECTRON_BUILD=true npm run build && rm -rf electron-app/frontend-dist && cp -r dist electron-app/frontend-dist && mkdir -p electron-app/frontend-dist/examples/norovirus/augur_subsampling && cp publication_data/norovirus/augur_subsampling/noro_virus_example_350_gappyout_final.fasta electron-app/frontend-dist/examples/norovirus/augur_subsampling/",
-    "build:backend": "cd BranchArchitect && PYINSTALLER_CONFIG_DIR=/tmp/pyi-config poetry run pyinstaller brancharchitect.spec --distpath dist --workpath /tmp/pyinstaller-work --noconfirm --clean && tar -czf dist/brancharchitect-server.tar.gz -C dist brancharchitect-server",
+    "build:backend": "cd ../engine/BranchArchitect && PYINSTALLER_CONFIG_DIR=/tmp/pyi-config poetry run pyinstaller brancharchitect.spec --distpath dist --workpath /tmp/pyinstaller-work --noconfirm --clean && tar -czf dist/brancharchitect-server.tar.gz -C dist brancharchitect-server",
     "test:sse": "./sse_smoke.sh",
     "build:mac": "./build.sh mac",
     "build:win": "./build.sh win",
@@ -53,7 +53,7 @@
     ],
     "extraResources": [
       {
-        "from": "BranchArchitect/dist/brancharchitect-server.tar.gz",
+        "from": "../engine/BranchArchitect/dist/brancharchitect-server.tar.gz",
         "to": "BranchArchitect/brancharchitect-server.tar.gz"
       }
     ],

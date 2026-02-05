@@ -117,8 +117,8 @@ export const buildScaleLookup = (scaleList: ScaleListItem[] | null | undefined):
 };
 
 /**
- * Resolves the anchor tree index based on current position and transition state
- * Uses anchor trees (not interpolated) to avoid jitter in histogram during animation
+ * Resolves the source-target tree index based on current position and transition state
+ * Uses source-target trees (not interpolated) to avoid jitter in histogram during animation
  */
 export const resolveAnchorIndex = (
   currentTreeIndex: number,
@@ -136,7 +136,7 @@ export const resolveAnchorIndex = (
         : srcIdx!;
     }
 
-    // Find the most recent anchor tree at or before current position
+    // Find the most recent source-target tree at or before current position
     if (Array.isArray(fullTreeIndices) && fullTreeIndices.length > 0) {
       let chosen = fullTreeIndices[0];
       for (const fi of fullTreeIndices) {

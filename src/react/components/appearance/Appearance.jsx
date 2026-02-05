@@ -11,7 +11,7 @@ import {
   SidebarMenuSubItem
 } from '@/components/ui/sidebar';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
-import { ChevronDown, Link, Box, Info, Tag } from 'lucide-react';
+import { ChevronDown, Link, Box, Info } from 'lucide-react';
 import { FocusHighlightingSection } from './FocusHighlightingSection';
 import { PivotEdgeEffectsSection } from './PivotEdgeEffectsSection';
 import { Switch } from '@/components/ui/switch';
@@ -41,8 +41,6 @@ const selectSetUpcomingChangesEnabled = (s) => s.setUpcomingChangesEnabled;
 const selectTreeControllers = (s) => s.treeControllers;
 const selectCameraMode = (s) => s.cameraMode;
 const selectToggleCameraMode = (s) => s.toggleCameraMode;
-const selectLabelsVisible = (s) => s.labelsVisible;
-const selectSetLabelsVisible = (s) => s.setLabelsVisible;
 
 
 // ==========================================================================
@@ -78,7 +76,7 @@ export function PerspectiveSection({ cameraMode, toggleCameraMode, treeControlle
                   <span id="camera-mode-text">{cameraMode === 'orbit' ? 'Switch to 2D' : 'Switch to 3D'}</span>
                 </Button>
                 <div className="flex items-start gap-2 text-2xs text-muted-foreground/80 italic mt-3 leading-relaxed">
-                  <Info className="size-3 shrink-0 mt-0.5" />
+                  <Info className="size-3 shrink-0 mt-1" />
                   <span>Toggle between flat 2D and interactive 3D camera for tree visualization.</span>
                 </div>
               </div>
@@ -103,7 +101,6 @@ export function Appearance() {
   const treeControllers = useAppStore(selectTreeControllers);
   const cameraMode = useAppStore(selectCameraMode);
   const toggleCameraMode = useAppStore(selectToggleCameraMode);
-  const labelsVisible = useAppStore(selectLabelsVisible);
 
   // Setter functions - retrieve from store
   const setDimmingEnabled = useAppStore(selectSetDimmingEnabled);
@@ -115,7 +112,6 @@ export function Appearance() {
   const setPulseEnabled = useAppStore(selectSetPulseEnabled);
   const setDashingEnabled = useAppStore(selectSetDashingEnabled);
   const setUpcomingChangesEnabled = useAppStore(selectSetUpcomingChangesEnabled);
-  const setLabelsVisible = useAppStore(selectSetLabelsVisible);
 
   const rerenderAll = async () => {
     for (const controller of treeControllers) {
@@ -146,10 +142,6 @@ export function Appearance() {
   const toggleDashing = (value) => setDashingEnabled(!!value);
   const toggleUpcomingChanges = (value) => setUpcomingChangesEnabled(!!value);
 
-  const toggleLabels = async (value) => {
-    try { setLabelsVisible(!!value); await rerenderAll(); } catch { }
-  };
-
   return (
     <>
       <FocusHighlightingSection
@@ -176,10 +168,6 @@ export function Appearance() {
         connectorStrokeWidth={connectorStrokeWidth}
         onLinkOpacityChange={handleLinkOpacityChange}
         onConnectorStrokeWidthChange={handleConnectorStrokeWidthChange}
-      />
-      <LabelsSection
-        labelsVisible={labelsVisible}
-        onToggleLabels={toggleLabels}
       />
       <PerspectiveSection
         cameraMode={cameraMode}
@@ -219,7 +207,7 @@ export function LabelsSection({ labelsVisible, onToggleLabels }) {
                   />
                 </div>
                 <div className="flex items-start gap-2 text-2xs text-muted-foreground/80 italic mt-3 leading-relaxed">
-                  <Info className="size-3 shrink-0 mt-0.5" />
+                  <Info className="size-3 shrink-0 mt-1" />
                   <span>When hidden, labels are replaced with dots at leaf positions.</span>
                 </div>
               </div>

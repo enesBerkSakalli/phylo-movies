@@ -1,6 +1,9 @@
 import React, { useCallback, useRef } from 'react';
 import { LabeledSlider } from '@/components/ui/labeled-slider';
 import { SidebarMenuSub, SidebarMenuSubItem } from '@/components/ui/sidebar';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Info } from 'lucide-react';
 
 const clampValue = (value, fallback) => {
   const numeric = Number(value);
@@ -15,6 +18,8 @@ export function GeometryDimensions({
   fontSizeNumber,
   setFontSize,
   treeControllers,
+  labelsVisible,
+  onToggleLabels,
 }) {
   const isRenderingRef = useRef(false);
 
@@ -57,7 +62,7 @@ export function GeometryDimensions({
   return (
     <SidebarMenuSub>
       <SidebarMenuSubItem>
-        <div className="flex flex-col gap-5 px-1 py-2">
+        <div className="flex flex-col gap-4 px-1 py-2">
           <LabeledSlider
             id="node-size"
             label="Node Size"
@@ -74,8 +79,8 @@ export function GeometryDimensions({
           <LabeledSlider
             id="stroke-width"
             label="Branch Width"
-            title="Adjust branch line width (scales with zoom)"
-            ariaLabel="Branch width control (scales with zoom)"
+            title="Adjust branch line width (scales with magnitude)"
+            ariaLabel="Branch width control (scales with magnitude)"
             valueDisplay={clampValue(strokeWidth, 1).toFixed(1)}
             value={clampValue(strokeWidth, 1)}
             min={0.1}
@@ -87,8 +92,8 @@ export function GeometryDimensions({
           <LabeledSlider
             id="font-size"
             label="Label Size"
-            title="Adjust label text size (scales with zoom)"
-            ariaLabel="Label size control (scales with zoom)"
+            title="Adjust label text size (scales with magnitude)"
+            ariaLabel="Label size control (scales with magnitude)"
             valueDisplay={`${clampValue(fontSizeNumber, 1.8).toFixed(1)}em`}
             value={clampValue(fontSizeNumber, 1.8)}
             min={0.5}
@@ -98,7 +103,22 @@ export function GeometryDimensions({
           />
 
           <div className="text-2xs leading-relaxed text-muted-foreground/80 italic mt-2">
-            Line widths and label sizes scale with zoom to stay proportional to the tree.
+            Line widths and label sizes scale with magnitude to stay proportional to the tree.
+          </div>
+
+          <div className="border-t border-border/20 pt-4 mt-2">
+            <div className="flex items-center justify-between mb-3">
+              <Label htmlFor="labels-toggle" className="text-xs font-medium text-foreground/80">Show Labels</Label>
+              <Switch
+                id="labels-toggle"
+                checked={labelsVisible}
+                onCheckedChange={onToggleLabels}
+              />
+            </div>
+            <div className="flex items-start gap-2 text-2xs text-muted-foreground/80 italic leading-relaxed">
+              <Info className="size-3 shrink-0 mt-0.5" />
+              <span>When hidden, labels are replaced with dots at leaf positions.</span>
+            </div>
           </div>
         </div>
       </SidebarMenuSubItem>

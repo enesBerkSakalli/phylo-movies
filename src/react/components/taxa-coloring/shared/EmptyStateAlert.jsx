@@ -6,7 +6,7 @@ export function EmptyStateAlert({ mode }) {
   return (
     <Alert className="bg-muted/30 border-dashed border-muted-foreground/30 py-6">
       <div className="flex flex-col items-center text-center gap-2">
-        <div className="p-3 rounded-full bg-muted/50 mb-1">
+        <div className="p-3 rounded-md bg-muted/50 mb-1">
           <Info className="size-6 text-muted-foreground" />
         </div>
         <div>

@@ -20,7 +20,7 @@ export function ClipboardDismissButton() {
   return (
     <Button
       onClick={clearClipboard}
-      className="clipboard-dismiss-button gap-2 bg-black/70 hover:bg-black/80 text-white border-white/30 h-auto py-1.5 px-3 text-xs font-medium"
+      className="clipboard-dismiss-button gap-2 bg-black/70 hover:bg-black/80 text-white border-white/30 h-auto py-2 px-3 text-xs font-medium"
       title="Dismiss clipboard tree"
       style={{
         position: 'absolute',

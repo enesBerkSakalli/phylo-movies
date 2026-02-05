@@ -25,7 +25,7 @@ function MSAWindowContent() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden rounded-md border border-border/40">
-      <div className="msa-rnd-header flex items-center justify-between gap-2 px-2.5 py-1.5 border-b border-border/40 bg-muted/20 backdrop-blur-sm cursor-move select-none shrink-0">
+      <div className="msa-rnd-header flex items-center justify-between gap-2 px-2 py-2 border-b border-border/40 bg-muted/20 backdrop-blur-sm cursor-move select-none shrink-0">
         <div className="flex items-center gap-2">
           <Columns className="size-4 text-primary" aria-hidden />
           <div className="flex flex-col">

@@ -30,7 +30,7 @@ export const CurrentScaleDisplay: React.FC<CurrentScaleDisplayProps> = ({
   showHeader = true,
 }) => {
   return (
-    <div className="flex flex-col gap-2.5">
+    <div className="flex flex-col gap-2">
       {showHeader && (
         <>
           <Label className="text-2xs font-bold uppercase tracking-wider text-muted-foreground/70">
@@ -78,7 +78,7 @@ export const CurrentScaleDisplay: React.FC<CurrentScaleDisplayProps> = ({
       </div>
 
       {/* Depth ratio bar */}
-      <div className="flex flex-col gap-1.5" role="figure" aria-label="Tree depth ratio">
+      <div className="flex flex-col gap-2" role="figure" aria-label="Tree depth ratio">
         <div className="flex items-center justify-between text-2xs text-muted-foreground/70">
           <span className="font-medium">Depth Ratio</span>
           <span className="font-mono tabular-nums">{magnitudeFactor.toFixed(2)}</span>
@@ -94,7 +94,7 @@ export const CurrentScaleDisplay: React.FC<CurrentScaleDisplayProps> = ({
             </div>
           </TooltipTrigger>
           <TooltipContent side="bottom" className="text-xs tabular-nums">
-            <div className="flex flex-col gap-0.5">
+            <div className="flex flex-col gap-1">
               <span>Current: {formattedCurrent}</span>
               <span>Maximum: {formattedMax}</span>
               <span>Ratio: {(magnitudeFactor * 100).toFixed(1)}%</span>

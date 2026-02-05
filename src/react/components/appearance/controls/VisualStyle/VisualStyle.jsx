@@ -35,8 +35,19 @@ export function GeometryDimensionsSection() {
   const setStrokeWidth = useAppStore(selectSetStrokeWidth);
   const setFontSize = useAppStore(selectSetFontSize);
   const treeControllers = useAppStore(selectTreeControllers);
+  const labelsVisible = useAppStore((s) => s.labelsVisible);
+  const setLabelsVisible = useAppStore((s) => s.setLabelsVisible);
 
   const fontSizeNumber = useMemo(() => toNumericFontSize(fontSize), [fontSize]);
+
+  const handleToggleLabels = async (value) => {
+    try { 
+      setLabelsVisible(!!value); 
+      for (const controller of treeControllers) {
+        await controller?.renderAllElements?.();
+      }
+    } catch { }
+  };
 
   return (
     <Collapsible defaultOpen asChild className="group/collapsible">
@@ -57,6 +68,8 @@ export function GeometryDimensionsSection() {
             fontSizeNumber={fontSizeNumber}
             setFontSize={setFontSize}
             treeControllers={treeControllers}
+            labelsVisible={labelsVisible}
+            onToggleLabels={handleToggleLabels}
           />
         </CollapsibleContent>
       </SidebarMenuItem>

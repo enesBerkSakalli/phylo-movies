@@ -23,8 +23,13 @@ const selectSortedLeaves = (s: AppStoreState) => s.movieData?.sorted_leaves || E
 /**
  * SubtreeFrequencyBarChart
  *
- * Vertical list showing top N most frequent mobile subtrees with inline frequency bars.
+ * Vertical list showing top N most frequent SPR event subtrees with inline frequency bars.
  * Uses tree_pair_solutions.jumping_subtree_solutions as the data source.
+ *
+ * TUFTE PRINCIPLES:
+ * - Zero Baseline: All bars scale from 0 (implicit in Progress component)
+ * - Linear Scale: Bar width = (count / maxCount) * 100%, ensuring proportional ink
+ * - No Visual Inflation: Progress component uses semantic height; no minimum bar height distorts small values
  */
 export const SubtreeFrequencyBarChart = () => {
     const pairSolutions = useAppStore(selectPairSolutions);
@@ -53,7 +58,7 @@ export const SubtreeFrequencyBarChart = () => {
         return (
             <div className="flex items-center justify-center h-full p-4">
                 <span className="text-sm text-muted-foreground italic">
-                    No mobility metrics available
+                    No SPR event metrics available
                 </span>
             </div>
         );
@@ -63,7 +68,7 @@ export const SubtreeFrequencyBarChart = () => {
         <div
             className="w-full h-full overflow-auto p-2 space-y-2"
             role="list"
-            aria-label="Subtree Mobility Frequency Ranking"
+            aria-label="SPR Event Frequency Ranking"
         >
             {data.map((item) => (
                 <Card
@@ -91,7 +96,7 @@ export const SubtreeFrequencyBarChart = () => {
                             </span>
                         </div>
 
-                        {/* Frequency bar */}
+                        {/* Frequency bar - ZERO BASELINE, LINEAR SCALE */}
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <div>
@@ -107,7 +112,7 @@ export const SubtreeFrequencyBarChart = () => {
                                 </div>
                             </TooltipTrigger>
                             <TooltipContent side="top" className="text-xs tabular-nums">
-                                <div className="flex flex-col gap-0.5">
+                                <div className="flex flex-col gap-1">
                                     <span>Rearrangements: {item.count}</span>
                                     <span>Frequency: {item.percentage.toFixed(2)}%</span>
                                 </div>

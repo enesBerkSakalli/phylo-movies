@@ -55,18 +55,18 @@ export function StrategySelector({
         <div className="flex flex-col gap-3">
           {/* Header Row: Title & Strategy Buttons */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="space-y-0.5 min-w-[120px]">
+            <div className="space-y-1 min-w-[120px]">
                <h3 className="text-sm font-medium leading-none">Grouping Pattern</h3>
                <p className="text-2xs text-muted-foreground">How taxa are parsed.</p>
             </div>
-            <div className="flex flex-wrap gap-1.5 bg-background/50 p-1 rounded-md border border-border/20">
+            <div className="flex flex-wrap gap-2 bg-background/50 p-1 rounded-md border border-border/20">
               {strategies.map(s => (
                 <Button
                   key={s.value}
                   size="sm"
                   variant={selectedStrategy === s.value ? "secondary" : "ghost"}
                   onClick={() => handleStrategyChange(s.value)}
-                  className={`h-7 px-2.5 text-xs font-medium ${selectedStrategy === s.value ? "shadow-sm bg-background hover:bg-background border border-border/20" : "hover:bg-muted"}`}
+                  className={`h-7 px-2 text-xs font-medium ${selectedStrategy === s.value ? "shadow-sm bg-background hover:bg-background border border-border/20" : "hover:bg-muted"}`}
                 >
                   {s.label}
                 </Button>
@@ -120,7 +120,7 @@ export function StrategySelector({
                       />
                    </div>
                  </div>
-                 <p className="text-2xs text-muted-foreground pl-[92px]">
+                 <p className="text-2xs text-muted-foreground pl-24">
                    Split by separators, then pick the segment at the chosen index.
                  </p>
                </div>

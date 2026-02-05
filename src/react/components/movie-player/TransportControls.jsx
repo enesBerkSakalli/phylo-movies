@@ -77,14 +77,14 @@ export function TransportControls({
             id="backwardAnchorButton"
             variant="ghost"
             size="icon"
-            aria-label="Previous anchor tree"
+            aria-label="Previous source-target tree"
             disabled={!canGoToPreviousAnchor}
             onClick={onPreviousAnchor}
           >
             <ChevronsLeft className="size-4" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent>Go to previous anchor tree</TooltipContent>
+        <TooltipContent>Go to previous source-target tree</TooltipContent>
       </Tooltip>
 
       <Tooltip>
@@ -143,14 +143,14 @@ export function TransportControls({
             id="forwardAnchorButton"
             variant="ghost"
             size="icon"
-            aria-label="Next anchor tree"
+            aria-label="Next source-target tree"
             disabled={!canGoToNextAnchor}
             onClick={onNextAnchor}
           >
             <ChevronsRight className="size-4" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent>Go to next anchor tree</TooltipContent>
+        <TooltipContent>Go to next source-target tree</TooltipContent>
       </Tooltip>
 
       <Tooltip>

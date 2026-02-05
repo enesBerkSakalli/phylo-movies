@@ -18,7 +18,7 @@ export function ColorSwatchInput({ label, color, onChange }) {
   }, []);
 
   return (
-    <div className="flex flex-col gap-1 p-1.5 rounded-md border border-transparent hover:border-border/20 hover:bg-accent/5 transition-all group/swatch">
+    <div className="flex flex-col gap-1 p-2 rounded-md border border-transparent hover:border-border/20 hover:bg-accent/5 transition-all group/swatch">
       <div className="flex items-center gap-2">
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
@@ -35,7 +35,7 @@ export function ColorSwatchInput({ label, color, onChange }) {
           <PopoverContent className="w-64 space-y-4 p-4 border-border/60" align="start">
             <div className="space-y-2">
               <p className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground/70">Quick Colors</p>
-              <div className="grid grid-cols-10 gap-1.5">
+              <div className="grid grid-cols-10 gap-2">
                 {quickColors.map((c) => (
                   <Tooltip key={c}>
                     <TooltipTrigger asChild>
@@ -63,7 +63,7 @@ export function ColorSwatchInput({ label, color, onChange }) {
                     value={color || "#000000"}
                     aria-label="Pick custom color"
                     onChange={(e) => onChange(e.target.value)}
-                    className="h-9 w-14 cursor-pointer p-0.5 border-none bg-transparent"
+                    className="h-9 w-14 cursor-pointer p-1 border-none bg-transparent"
                   />
                   <div className="absolute inset-0 pointer-events-none rounded ring-1 ring-border group-hover:ring-primary/40 transition-shadow" />
                 </div>

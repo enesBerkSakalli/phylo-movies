@@ -12,7 +12,7 @@ export function CSVUpload({ onFile, csvFileName, onReset }) {
       <Card className="border-primary/20 bg-primary/5">
         <CardContent className="flex items-center justify-between p-4 px-6">
           <div className="flex items-center gap-4">
-            <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <div className="flex size-10 items-center justify-center rounded-md bg-primary/10 text-primary">
               <FileSpreadsheet className="size-5" />
             </div>
             <div>
@@ -26,7 +26,7 @@ export function CSVUpload({ onFile, csvFileName, onReset }) {
                variant="ghost"
                size="icon"
                onClick={onReset}
-               className="size-8 rounded-full hover:bg-destructive/10 hover:text-destructive group/reset"
+               className="size-8 rounded-md hover:bg-destructive/10 hover:text-destructive group/reset"
             >
               <Trash2 className="size-4" />
             </Button>
@@ -41,7 +41,7 @@ export function CSVUpload({ onFile, csvFileName, onReset }) {
       {/* Onboarding Info */}
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="flex gap-3 rounded-lg border border-border/50 bg-muted/20 p-3">
-          <div className="mt-0.5 rounded-full bg-blue-500/10 p-1.5 text-blue-600 dark:text-blue-400">
+          <div className="mt-1 rounded-md bg-blue-500/10 p-2 text-blue-600 dark:text-blue-400">
             <Info className="size-3.5" />
           </div>
           <div className="space-y-1">
@@ -52,7 +52,7 @@ export function CSVUpload({ onFile, csvFileName, onReset }) {
           </div>
         </div>
         <div className="flex gap-3 rounded-lg border border-border/50 bg-muted/20 p-3">
-          <div className="mt-0.5 rounded-full bg-amber-500/10 p-1.5 text-amber-600">
+          <div className="mt-1 rounded-md bg-amber-500/10 p-2 text-amber-600">
             <FileText className="size-3.5" />
           </div>
           <div className="space-y-1">
@@ -86,7 +86,7 @@ export function CSVUpload({ onFile, csvFileName, onReset }) {
              <Upload className="size-6 text-primary" />
           </div>
 
-          <div className="space-y-1.5 mb-5">
+          <div className="space-y-2 mb-5">
             <h3 className="text-sm font-bold tracking-tight">Import Taxa Mapping</h3>
             <p className="text-[11px] text-muted-foreground max-w-[240px] mx-auto leading-tight">
               Drag and drop your <code className="bg-muted px-1 rounded text-primary font-mono font-bold">.csv</code> file here.

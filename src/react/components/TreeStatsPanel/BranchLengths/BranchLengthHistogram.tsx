@@ -50,7 +50,7 @@ export const BranchLengthHistogram: React.FC<BranchLengthHistogramProps> = ({
 
       {/* Histogram bars */}
       <div
-        className="grid items-end gap-[2px] w-full bg-muted/20 p-1.5 rounded-sm border border-border/40"
+        className="grid items-end gap-1 w-full bg-muted/20 p-2 rounded-sm border border-border/40"
         role="group"
         aria-label="Distribution bars"
         style={{
@@ -74,7 +74,7 @@ export const BranchLengthHistogram: React.FC<BranchLengthHistogramProps> = ({
                     <div
                       role="img"
                       aria-label={`Range ${formatScaleValue(bin.from)} to ${formatScaleValue(bin.to)}, count ${bin.count}`}
-                      className="w-full bg-primary/80 rounded-[1px] hover:bg-primary transition-colors cursor-crosshair"
+                      className="w-full bg-primary/80 rounded-sm hover:bg-primary transition-colors cursor-crosshair"
                       style={{
                         height: `${heightPx}px`,
                       }}
@@ -82,7 +82,7 @@ export const BranchLengthHistogram: React.FC<BranchLengthHistogramProps> = ({
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-xs tabular-nums">
-                  <div className="flex flex-col gap-0.5">
+                  <div className="flex flex-col gap-1">
                     <span>Range: {formatScaleValue(bin.from)} – {formatScaleValue(bin.to)}</span>
                     <span>Count: {bin.count}</span>
                   </div>
@@ -97,7 +97,7 @@ export const BranchLengthHistogram: React.FC<BranchLengthHistogramProps> = ({
 
       {/* Statistics summary */}
       {hasData && (
-        <div className="flex items-center justify-between text-2xs text-muted-foreground/80 font-medium tabular-nums px-0.5">
+        <div className="flex items-center justify-between text-2xs text-muted-foreground/80 font-medium tabular-nums px-1">
           <div className="flex gap-2">
             <span>MIN: <span className="text-foreground/70">{formatScaleValue(stats.min)}</span></span>
             <span>MEAN: <span className="text-foreground/70">{formatScaleValue(stats.mean)}</span></span>

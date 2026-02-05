@@ -9,7 +9,7 @@ export function CSVGroupColors({ csvGroups, colorManager, onColorChange }) {
 
   return (
     <Card className="gap-0 py-0 border-border/30 shadow-none bg-accent/5">
-      <CardHeader className="space-y-0.5 pb-2 pt-3 px-4">
+      <CardHeader className="space-y-1 pb-2 pt-3 px-4">
         <CardTitle className="text-[13px] font-bold">CSV Grouping Colors ({csvGroups.length})</CardTitle>
         <CardDescription className="text-2xs">Adjust colors for each category found in your CSV.</CardDescription>
       </CardHeader>

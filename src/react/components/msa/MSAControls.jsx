@@ -101,7 +101,7 @@ export function MSAControls() {
   };
 
   return (
-    <div className="px-2 py-1 flex flex-wrap items-center gap-1.5 bg-muted/30 border-b border-border/60">
+    <div className="px-2 py-1 flex flex-wrap items-center gap-2 bg-muted/30 border-b border-border/60">
       <div className="flex items-center gap-2">
         <Label htmlFor="msa-start" className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Region</Label>
         <div className="flex items-center gap-1">
@@ -131,9 +131,9 @@ export function MSAControls() {
         </div>
       </div>
 
-      <Separator orientation="vertical" className="h-4 mx-1.5 opacity-40" />
+      <Separator orientation="vertical" className="h-4 mx-2 opacity-40" />
 
-      <div className="flex items-center gap-0.5">
+      <div className="flex items-center gap-1">
         <Button variant="ghost" size="icon-xs" onClick={() => triggerViewAction('ZOOM_IN')} title="Zoom In" className="text-muted-foreground hover:text-foreground hover:bg-background/80">
           <ZoomIn className="size-3.5" />
         </Button>
@@ -145,23 +145,23 @@ export function MSAControls() {
         </Button>
       </div>
 
-      <Separator orientation="vertical" className="h-4 mx-1.5 opacity-40" />
+      <Separator orientation="vertical" className="h-4 mx-2 opacity-40" />
 
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-2">
         <Button size="xs" variant="secondary" onClick={handleMatchTreeOrder} className="h-7 text-[11px] font-medium">Match Tree Order</Button>
         <Button size="xs" variant="outline" onClick={handleResetOrder} className="h-7 border-border/40 text-muted-foreground hover:text-foreground text-[11px]">Reset Order</Button>
       </div>
 
       {visibleRange && (
         <>
-          <Separator orientation="vertical" className="h-4 mx-1.5 opacity-40" />
+          <Separator orientation="vertical" className="h-4 mx-2 opacity-40" />
           <div className="text-2xs text-muted-foreground font-medium uppercase tracking-tight">
             Cols: {visibleRange.start}-{visibleRange.end}
           </div>
         </>
       )}
 
-      <Separator orientation="vertical" className="h-4 mx-1.5 opacity-40" />
+      <Separator orientation="vertical" className="h-4 mx-2 opacity-40" />
 
       <div className="flex items-center gap-2">
         <Label htmlFor="msa-color-scheme" className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Coloring</Label>
@@ -193,7 +193,7 @@ export function MSAControls() {
         </Select>
       </div>
 
-      <Separator orientation="vertical" className="h-4 mx-1.5 opacity-40" />
+      <Separator orientation="vertical" className="h-4 mx-2 opacity-40" />
 
       <div className="flex items-center gap-2">
         <Switch id="msa-toggle-letters" checked={showLetters} onCheckedChange={setShowLetters} aria-label="Toggle residue letters" className="scale-75" />

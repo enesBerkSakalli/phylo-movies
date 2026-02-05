@@ -45,7 +45,7 @@ export function TreeStructure() {
   return (
     <SidebarMenuSub>
       <SidebarMenuSubItem>
-        <div className="flex flex-col gap-2 px-2 py-1.5">
+        <div className="flex flex-col gap-2 px-2 py-2">
           <div className="flex items-center gap-2 text-muted-foreground">
             <GitGraph className="size-3.5" />
             <span className="text-[11px] font-medium uppercase tracking-wider">Branch Lengths</span>

@@ -124,7 +124,7 @@ export function MSAScrollbars({ containerRef }) {
         aria-valuemax={cols}
       >
         <div
-          className={`absolute top-0.5 bottom-0.5 rounded-full transition-colors ${
+          className={`absolute top-1 bottom-1 rounded-md transition-colors ${
             isDraggingH ? 'bg-primary/80' : 'bg-primary/50 hover:bg-primary/70'
           }`}
           style={{
@@ -151,7 +151,7 @@ export function MSAScrollbars({ containerRef }) {
         aria-valuemax={rows}
       >
         <div
-          className={`absolute left-0.5 right-0.5 rounded-full transition-colors ${
+          className={`absolute left-0.5 right-0.5 rounded-md transition-colors ${
             isDraggingV ? 'bg-primary/80' : 'bg-primary/50 hover:bg-primary/70'
           }`}
           style={{
