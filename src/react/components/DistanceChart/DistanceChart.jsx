@@ -13,6 +13,13 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 
 const CHART_MARGINS = { top: 4, right: 8, bottom: 4, left: 8 };
 
+// Okabe-Ito palette (colorblind-friendly, bright, non-semantic)
+const METRIC_COLORS = {
+  rfd: '#0072B2',
+  'w-rfd': '#E69F00',
+  scale: '#009E73',
+};
+
 const buildSeriesPoints = (barOptionValue, robinsonFouldsDistances, weightedRobinsonFouldsDistances, scaleList) => {
   if (barOptionValue === 'rfd') {
     return {
@@ -150,7 +157,7 @@ export function DistanceChart() {
   const chartConfig = useMemo(() => ({
     dist: {
       label: barOptionValue === 'rfd' ? 'RFD' : barOptionValue === 'w-rfd' ? 'W-RFD' : 'Scale',
-      color: 'hsl(var(--primary))',
+      color: METRIC_COLORS[barOptionValue] || METRIC_COLORS.rfd,
     },
   }), [barOptionValue]);
 

@@ -51,7 +51,7 @@ export function ButtonsMSA() {
             <span className="truncate">Multiple Sequence Alignment</span>
             <div className="ml-auto flex items-center gap-1">
               {hasMsa && (
-                <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-none hover:bg-emerald-500/20 h-5 px-1.5 text-2xs font-medium transition-colors">
+                <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-none hover:bg-emerald-500/20 h-5 px-2 text-2xs font-medium transition-colors">
                   Active
                 </Badge>
               )}
@@ -75,7 +75,7 @@ export function ButtonsMSA() {
             </SidebarMenuSubItem>
 
             <SidebarMenuSubItem>
-              <div className="px-2 py-1.5">
+              <div className="px-2 py-2">
                 <ToggleWithLabel
                   id="enable-msa-sync-btn"
                   label="Sync Window"
@@ -91,7 +91,7 @@ export function ButtonsMSA() {
             {!hasMsa && (
               <SidebarMenuSubItem className="px-2 py-2">
                 <div className="flex items-start gap-2 text-2xs text-muted-foreground italic leading-tight">
-                  <Info className="size-3 shrink-0 mt-0.5" />
+                  <Info className="size-3 shrink-0 mt-1" />
                   <span>Upload an MSA file to enable alignment visualization and sync.</span>
                 </div>
               </SidebarMenuSubItem>

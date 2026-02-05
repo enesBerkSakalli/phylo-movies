@@ -108,7 +108,7 @@ export function App() {
                     <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shrink-0">
                       <Film className="size-5" />
                     </div>
-                    <div className="flex flex-col gap-0.5 leading-none group-data-[collapsible=icon]:hidden overflow-hidden">
+                    <div className="flex flex-col gap-1 leading-none group-data-[collapsible=icon]:hidden overflow-hidden">
                       <span className="font-semibold truncate">Phylo-Movies</span>
                       <span className="text-2xs text-muted-foreground truncate">
                         {error ? `Error: ${error}` : fileName}

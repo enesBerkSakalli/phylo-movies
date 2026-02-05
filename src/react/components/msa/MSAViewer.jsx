@@ -143,7 +143,7 @@ export function MSAViewer() {
   return (
     <div className="msa-rnd-body flex-1 min-h-0 relative bg-white" ref={containerRef}>
       {visibleRange && Number.isFinite(visibleRange.r0) && Number.isFinite(visibleRange.c0) && (
-        <div className="absolute left-3 top-3 z-10 rounded-md bg-black/60 text-white text-[11px] px-3 py-1.5 shadow-md backdrop-blur-sm tabular-nums">
+        <div className="absolute left-3 top-3 z-10 rounded-md bg-black/60 text-white text-[11px] px-3 py-2 shadow-md backdrop-blur-sm tabular-nums">
           <div className="flex gap-3">
             <span>Rows: {visibleRange.r0 + 1}-{visibleRange.r1 + 1}</span>
             <span className="opacity-50">|</span>

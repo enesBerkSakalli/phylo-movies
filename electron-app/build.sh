@@ -8,7 +8,7 @@ set -e # Exit immediately if a command exits with a non-zero status
 # Directories
 HOST_DIR=$(pwd)
 PROJECT_ROOT="$(cd .. && pwd)" # Assumes we are in electron-app/
-BACKEND_DIR="./BranchArchitect"
+BACKEND_DIR="$PROJECT_ROOT/engine/BranchArchitect"
 FRONTEND_DIST="./frontend-dist"
 
 echo "=========================================="
@@ -32,13 +32,39 @@ echo "Clean complete."
 echo "[2/4] Building Python backend..."
 cd "$BACKEND_DIR"
 
-if ! command -v poetry &> /dev/null; then
-    echo "Error: Poetry is not installed or not in PATH."
-    exit 1
+# Use dedicated Python 3.11 build environment for PyInstaller compatibility
+BUILD_VENV="$BACKEND_DIR/.venv-build"
+PYTHON_BUILD="/opt/homebrew/opt/python@3.11/bin/python3.11"
+
+if [ ! -d "$BUILD_VENV" ]; then
+    echo "Creating Python 3.11 build environment..."
+    if [ ! -f "$PYTHON_BUILD" ]; then
+        echo "Error: Python 3.11 not found at $PYTHON_BUILD"
+        echo "Install with: brew install python@3.11"
+        exit 1
+    fi
+    "$PYTHON_BUILD" -m venv "$BUILD_VENV"
+    source "$BUILD_VENV/bin/activate"
+    pip install --upgrade pip
+    pip install poetry
+    poetry env use "$BUILD_VENV/bin/python"
+    poetry install --with build
+else
+    source "$BUILD_VENV/bin/activate"
+    # Ensure poetry and build dependencies are available in existing env
+    if ! command -v poetry >/dev/null 2>&1; then
+        python -m pip install --upgrade pip
+        python -m pip install poetry
+    fi
+    poetry env use "$BUILD_VENV/bin/python" >/dev/null 2>&1 || true
+    if ! poetry run pyinstaller --version >/dev/null 2>&1; then
+        echo "PyInstaller missing in build environment. Installing build dependencies..."
+        poetry install --with build
+    fi
 fi
 
-echo "Installing backend dependencies..."
-poetry install --no-root
+echo "Using Python: $(python --version)"
+echo "Using PyInstaller from build environment..."
 
 echo "Running PyInstaller..."
 # Builds the single-file executable into BranchArchitect/dist/brancharchitect-server
@@ -48,6 +74,8 @@ poetry run pyinstaller brancharchitect.spec \
     --workpath build/work \
     --noconfirm \
     --clean
+
+deactivate 2>/dev/null || true
 
 echo "Archiving backend for Electron packaging..."
 rm -f dist/brancharchitect-server.tar.gz
@@ -76,14 +104,8 @@ cp -r "$PROJECT_ROOT/dist" "$FRONTEND_DIST"
 # -----------------------------------------------------------------------------
 # 3.1 Inject Example Custom Data
 # -----------------------------------------------------------------------------
-# This fixes the issue where example files referenced in exampleDatasets.js
-# are missing from the production build.
-echo "Injecting example datasets..."
-
-EXAMPLE_DEST="$FRONTEND_DIST/examples/norovirus/augur_subsampling"
-mkdir -p "$EXAMPLE_DEST"
-
-cp "$PROJECT_ROOT/publication_data/norovirus/augur_subsampling/noro_virus_example_350_gappyout_final.fasta" "$EXAMPLE_DEST/"
+# Copy example datasets that are referenced in exampleDatasets.js
+"$PROJECT_ROOT/scripts/copy-examples.sh" "$FRONTEND_DIST"
 
 echo "Frontend prepared successfully."
 

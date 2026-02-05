@@ -138,7 +138,7 @@ describe('Active change edge mapping (small_example)', () => {
     useAppStore.getState().reset();
   });
 
-  it('leaves anchor tree indices unmarked', () => {
+  it('leaves source-target tree indices unmarked', () => {
     const markedSubtrees = useAppStore.getState().getMarkedSubtreeData();
     expect(markedSubtrees).to.deep.equal([]);
   });

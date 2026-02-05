@@ -76,7 +76,7 @@ export function TreeConstructionSection({ hasMsa, disabled }) {
                   disabled={disabled || !hasMsa}
                 />
               </FormControl>
-              <div className="space-y-0.5 leading-none">
+              <div className="space-y-1 leading-none">
                 <FormLabel className={`text-sm font-normal cursor-pointer ${!hasMsa ? 'text-muted-foreground' : ''}`}>
                   Gamma20 Likelihood
                 </FormLabel>
@@ -100,7 +100,7 @@ export function TreeConstructionSection({ hasMsa, disabled }) {
                   disabled={disabled || !hasMsa}
                 />
               </FormControl>
-              <div className="space-y-0.5 leading-none">
+              <div className="space-y-1 leading-none">
                 <FormLabel className={`text-sm font-normal cursor-pointer ${!hasMsa ? 'text-muted-foreground' : ''}`}>
                   Pseudocounts
                 </FormLabel>
@@ -124,7 +124,7 @@ export function TreeConstructionSection({ hasMsa, disabled }) {
                   disabled={disabled || !hasMsa}
                 />
               </FormControl>
-              <div className="space-y-0.5 leading-none">
+              <div className="space-y-1 leading-none">
                 <FormLabel className={`text-sm font-normal cursor-pointer ${!hasMsa ? 'text-muted-foreground' : ''}`}>
                   Skip ML Optimization
                 </FormLabel>

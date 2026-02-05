@@ -23,7 +23,7 @@ export function GroupingStatusSummary({ groupingResult }) {
   const StatusIcon = status.icon;
 
   return (
-    <div className={cn("flex items-center justify-between py-1.5 px-2.5 rounded-md border text-xs", status.bgColor, status.borderColor)}>
+    <div className={cn("flex items-center justify-between py-2 px-2 rounded-md border text-xs", status.bgColor, status.borderColor)}>
       <div className="flex items-center gap-2">
         <StatusIcon className={cn("size-3.5", status.color)} />
         <span className="font-medium text-foreground/90">
@@ -32,8 +32,8 @@ export function GroupingStatusSummary({ groupingResult }) {
       </div>
 
       {hasGroups && (
-        <div className="flex items-center gap-2.5 text-2xs sm:text-xs">
-          <span className="text-muted-foreground/80 font-medium">
+        <div className="flex items-center gap-2 text-2xs sm:text-xs">
+          <span className="text-muted-foreground/80 font-medium tabular-nums">
              {groupedCount}/{totalTaxa} Taxa
           </span>
           {ungroupedCount > 0 && (

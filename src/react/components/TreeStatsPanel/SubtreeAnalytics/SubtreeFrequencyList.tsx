@@ -79,7 +79,7 @@ export const SubtreeFrequencyList = () => {
         <CollapsibleTrigger className="flex items-center gap-2 w-full text-left hover:text-muted-foreground transition-colors">
           <Label className="text-2xs font-bold uppercase tracking-wider text-muted-foreground/70 cursor-pointer">
             <BarChart2 className="size-3" />
-            Subtree Mobility
+            SPR Event Frequency
           </Label>
           <ChevronRight className="ml-auto size-3 text-muted-foreground/70 transition-transform group-data-[state=open]/subtree:rotate-90" />
         </CollapsibleTrigger>
@@ -87,13 +87,13 @@ export const SubtreeFrequencyList = () => {
         <CollapsibleContent className="pt-2 space-y-2 animate-in slide-in-from-top-1 duration-200">
           {/* Explanation text */}
           <p className="text-2xs text-muted-foreground/70 leading-relaxed">
-            Subtrees ranked by rearrangement frequency across tree transitions. Click to highlight on tree.
+            Subtrees ranked by SPR event frequency across tree transitions. Click to highlight on tree.
           </p>
 
           <div
-            className="flex flex-col gap-1.5"
+            className="flex flex-col gap-2"
             role="list"
-            aria-label="Most mobile subtrees"
+            aria-label="Most frequent SPR event subtrees"
           >
             {topSubtrees.map((item) => {
               const signature = getSignature(item.splitIndices);
@@ -113,13 +113,13 @@ export const SubtreeFrequencyList = () => {
                     }
                   }}
                   className={cn(
-                    "cursor-pointer transition-all py-1.5 px-2 gap-1 rounded shadow-none group",
+                    "cursor-pointer transition-all py-2 px-2 gap-1 rounded shadow-none group",
                     isActive
                       ? "bg-primary/10 border-primary/30 ring-1 ring-primary/20"
                       : "bg-muted/30 border-border/40 hover:bg-muted/50 hover:border-border/60"
                   )}
                   aria-pressed={isActive}
-                  aria-label={`${subtreeLabel}, ${item.count} rearrangements, ${item.percentage.toFixed(1)}%`}
+                  aria-label={`${subtreeLabel}, ${item.count} SPR events, ${item.percentage.toFixed(1)}%`}
                 >
                   <CardContent className="p-0 space-y-1">
                     <div className="flex items-center justify-between">
@@ -144,7 +144,7 @@ export const SubtreeFrequencyList = () => {
                           </Badge>
                         </TooltipTrigger>
                         <TooltipContent side="top" className="text-xs">
-                          Topological rearrangements involving this subtree
+                          SPR events involving this subtree
                         </TooltipContent>
                       </Tooltip>
                     </div>
@@ -152,7 +152,7 @@ export const SubtreeFrequencyList = () => {
                     <Progress
                       value={item.percentage}
                       className="h-1 bg-secondary"
-                      aria-label={`${item.percentage.toFixed(1)}% of total rearrangements`}
+                      aria-label={`${item.percentage.toFixed(1)}% of total SPR events`}
                     />
                   </CardContent>
                 </Card>

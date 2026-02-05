@@ -68,7 +68,7 @@ export function LayoutTransform({
           />
 
           <div className="flex items-start gap-2 text-2xs text-muted-foreground/80 italic">
-            <Compass className="size-3 shrink-0 mt-0.5" />
+            <Compass className="size-3 shrink-0 mt-1" />
             <span>Angle affects the spread of branches, while rotation pivots the entire tree.</span>
           </div>
         </div>

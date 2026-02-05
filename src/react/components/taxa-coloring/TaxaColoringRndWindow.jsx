@@ -137,7 +137,7 @@ export function TaxaColoringRndWindow() {
             <div className="flex aspect-square size-9 items-center justify-center rounded-lg bg-primary/10 text-primary shadow-inner group-hover/header:rotate-12 transition-transform duration-300">
                <Palette className="size-5" />
             </div>
-            <div className="flex flex-col gap-0.5 leading-none">
+            <div className="flex flex-col gap-1 leading-none">
               <span className="text-foreground">Taxa Coloring</span>
               <span className="text-2xs font-normal text-muted-foreground/80 tracking-wide uppercase">Assignment Manager</span>
             </div>
@@ -148,7 +148,7 @@ export function TaxaColoringRndWindow() {
                 variant="ghost"
                 size="icon"
                 onClick={handleClose}
-                className="size-8 rounded-full hover:bg-destructive/10 hover:text-destructive transition-colors"
+                className="size-8 rounded-md hover:bg-destructive/10 hover:text-destructive transition-colors"
               >
                 <X className="size-4" />
               </Button>

@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 
 /**
  * Timeline segment tooltip content component.
- * Displays information about anchor trees or transitions between them.
+ * Displays information about source-target trees or transitions between them.
  *
  * @param {Object} props
  * @param {Object} props.segment - The segment data object
@@ -25,7 +25,7 @@ export function TimelineSegmentTooltip({ segment, segmentIndex, totalSegments, g
   const isAnchor = segment.isFullTree;
 
   return (
-    <div className="space-y-1.5 w-full">
+    <div className="space-y-2 w-full">
       <TooltipHeader
         isAnchor={isAnchor}
         segmentIndex={segmentIndex}
@@ -57,10 +57,10 @@ export function TimelineSegmentTooltip({ segment, segmentIndex, totalSegments, g
  */
 function TooltipHeader({ isAnchor, segmentIndex, totalSegments }) {
   const Icon = isAnchor ? Anchor : ArrowRightLeft;
-  const title = isAnchor ? 'Anchor' : 'Interpolation';
+  const title = isAnchor ? 'Source-Target' : 'Interpolation';
 
   return (
-    <div className="flex items-center gap-1.5 pb-1.5 border-b border-border">
+    <div className="flex items-center gap-2 pb-2 border-b border-border">
       <Icon className="size-3.5 text-primary shrink-0" />
       <span className="font-semibold text-xs truncate">{title}</span>
       <span className="text-xs text-muted-foreground ml-auto">
@@ -71,7 +71,7 @@ function TooltipHeader({ isAnchor, segmentIndex, totalSegments }) {
 }
 
 /**
- * Content for anchor tree segments.
+ * Content for source-target tree segments.
  * Displays tree name and original index.
  */
 function AnchorContent({ segment }) {
@@ -180,7 +180,7 @@ function SubtreeBadge({ names }) {
   return (
     <Badge
       variant="secondary"
-      className="text-2xs px-1.5 py-0 h-5 font-medium whitespace-nowrap"
+      className="text-2xs px-2 py-0 h-5 font-medium whitespace-nowrap"
     >
       {displayText}
     </Badge>

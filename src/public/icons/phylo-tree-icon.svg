@@ -1,0 +1,76 @@
+<svg width="260" height="260" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Branch 1 (0°) - Blue -->
+  <line x1="120" y1="120" x2="150" y2="120" stroke="#1e293b" stroke-width="3.5" stroke-linecap="round"/>
+  <line x1="150" y1="120" x2="180" y2="120" stroke="#475569" stroke-width="3" stroke-linecap="round"/>
+  <line x1="180" y1="120" x2="206.847" y2="106.847" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="180" y1="120" x2="206.847" y2="133.153" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="180" cy="120" r="3" fill="#475569"/>
+  <circle cx="206.847" cy="106.847" r="5" fill="#3b82f6"/>
+  <circle cx="206.847" cy="133.153" r="5" fill="#3b82f6"/>
+  
+  <!-- Branch 2 (45°) - Cyan -->
+  <line x1="120" y1="120" x2="141.213" y2="98.787" stroke="#1e293b" stroke-width="3.5" stroke-linecap="round"/>
+  <line x1="141.213" y1="98.787" x2="162.426" y2="77.574" stroke="#475569" stroke-width="3" stroke-linecap="round"/>
+  <line x1="162.426" y1="77.574" x2="179.553" y2="52.021" stroke="#06b6d4" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="162.426" y1="77.574" x2="189.679" y2="70.321" stroke="#06b6d4" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="162.426" cy="77.574" r="3" fill="#475569"/>
+  <circle cx="179.553" cy="52.021" r="5" fill="#06b6d4"/>
+  <circle cx="189.679" cy="70.321" r="5" fill="#06b6d4"/>
+  
+  <!-- Branch 3 (90°) - Purple -->
+  <line x1="120" y1="120" x2="120" y2="90" stroke="#1e293b" stroke-width="3.5" stroke-linecap="round"/>
+  <line x1="120" y1="90" x2="120" y2="60" stroke="#475569" stroke-width="3" stroke-linecap="round"/>
+  <line x1="120" y1="60" x2="106.847" y2="33.153" stroke="#8b5cf6" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="120" y1="60" x2="133.153" y2="33.153" stroke="#8b5cf6" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="120" cy="60" r="3" fill="#475569"/>
+  <circle cx="106.847" cy="33.153" r="5" fill="#8b5cf6"/>
+  <circle cx="133.153" cy="33.153" r="5" fill="#8b5cf6"/>
+  
+  <!-- Branch 4 (135°) - Light Purple -->
+  <line x1="120" y1="120" x2="98.787" y2="98.787" stroke="#1e293b" stroke-width="3.5" stroke-linecap="round"/>
+  <line x1="98.787" y1="98.787" x2="77.574" y2="77.574" stroke="#475569" stroke-width="3" stroke-linecap="round"/>
+  <line x1="77.574" y1="77.574" x2="52.021" y2="60.447" stroke="#a855f7" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="77.574" y1="77.574" x2="70.321" y2="50.321" stroke="#a855f7" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="77.574" cy="77.574" r="3" fill="#475569"/>
+  <circle cx="52.021" cy="60.447" r="5" fill="#a855f7"/>
+  <circle cx="70.321" cy="50.321" r="5" fill="#a855f7"/>
+  
+  <!-- Branch 5 (180°) - Pink -->
+  <line x1="120" y1="120" x2="90" y2="120" stroke="#1e293b" stroke-width="3.5" stroke-linecap="round"/>
+  <line x1="90" y1="120" x2="60" y2="120" stroke="#475569" stroke-width="3" stroke-linecap="round"/>
+  <line x1="60" y1="120" x2="33.153" y2="106.847" stroke="#ec4899" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="60" y1="120" x2="33.153" y2="133.153" stroke="#ec4899" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="60" cy="120" r="3" fill="#475569"/>
+  <circle cx="33.153" cy="106.847" r="5" fill="#ec4899"/>
+  <circle cx="33.153" cy="133.153" r="5" fill="#ec4899"/>
+  
+  <!-- Branch 6 (225°) - Rose -->
+  <line x1="120" y1="120" x2="98.787" y2="141.213" stroke="#1e293b" stroke-width="3.5" stroke-linecap="round"/>
+  <line x1="98.787" y1="141.213" x2="77.574" y2="162.426" stroke="#475569" stroke-width="3" stroke-linecap="round"/>
+  <line x1="77.574" y1="162.426" x2="60.447" y2="187.979" stroke="#f43f5e" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="77.574" y1="162.426" x2="50.321" y2="169.679" stroke="#f43f5e" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="77.574" cy="162.426" r="3" fill="#475569"/>
+  <circle cx="60.447" cy="187.979" r="5" fill="#f43f5e"/>
+  <circle cx="50.321" cy="169.679" r="5" fill="#f43f5e"/>
+  
+  <!-- Branch 7 (270°) - Green -->
+  <line x1="120" y1="120" x2="120" y2="150" stroke="#1e293b" stroke-width="3.5" stroke-linecap="round"/>
+  <line x1="120" y1="150" x2="120" y2="180" stroke="#475569" stroke-width="3" stroke-linecap="round"/>
+  <line x1="120" y1="180" x2="106.847" y2="206.847" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="120" y1="180" x2="133.153" y2="206.847" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="120" cy="180" r="3" fill="#475569"/>
+  <circle cx="106.847" cy="206.847" r="5" fill="#10b981"/>
+  <circle cx="133.153" cy="206.847" r="5" fill="#10b981"/>
+  
+  <!-- Branch 8 (315°) - Orange -->
+  <line x1="120" y1="120" x2="141.213" y2="141.213" stroke="#1e293b" stroke-width="3.5" stroke-linecap="round"/>
+  <line x1="141.213" y1="141.213" x2="162.426" y2="162.426" stroke="#475569" stroke-width="3" stroke-linecap="round"/>
+  <line x1="162.426" y1="162.426" x2="179.553" y2="187.979" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="162.426" y1="162.426" x2="189.679" y2="169.679" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="162.426" cy="162.426" r="3" fill="#475569"/>
+  <circle cx="179.553" cy="187.979" r="5" fill="#f59e0b"/>
+  <circle cx="189.679" cy="169.679" r="5" fill="#f59e0b"/>
+  
+  <!-- Center root node -->
+  <circle cx="120" cy="120" r="8" fill="#1e293b"/>
+</svg>

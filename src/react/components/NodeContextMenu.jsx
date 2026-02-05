@@ -212,7 +212,7 @@ Max Depth: ${stats.maxDepth}`;
       onClick={(e) => e.stopPropagation()}
     >
       {/* Header */}
-      <div className="flex flex-col gap-0.5 border-b border-border bg-muted/50 px-3 py-2">
+      <div className="flex flex-col gap-1 border-b border-border bg-muted/50 px-3 py-2">
         <span className="text-sm font-semibold text-foreground truncate">
           {nodeName}
         </span>

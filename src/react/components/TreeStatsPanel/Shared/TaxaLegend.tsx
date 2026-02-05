@@ -73,11 +73,11 @@ export const TaxaGroupsLegend: React.FC = () => {
                     return (
                       <div
                         key={name}
-                        className="flex items-center gap-2.5 px-2 py-1.5 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors group/legend cursor-default"
+                        className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors group/legend cursor-default"
                         role="listitem"
                       >
                         <span
-                          className="size-2 rounded-full ring-1 ring-border/20 group-hover/legend:scale-110 transition-transform shrink-0 shadow-sm"
+                          className="size-2 rounded-sm ring-1 ring-border/20 group-hover/legend:scale-110 transition-transform shrink-0 shadow-sm"
                           style={{ background: color }}
                         />
                         <span className="text-[11px] leading-none truncate font-medium" title={name}>

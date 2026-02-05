@@ -5,7 +5,6 @@ import { Form } from "@/components/ui/form";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { useHomeUploadForm } from './useHomeUploadForm.js';
-import { HomeHeader } from './components/HomeHeader.jsx';
 import { HomeHero } from './components/HomeHero.jsx';
 import { NewProjectTab } from './components/NewProjectTab.jsx';
 import { ExampleTab } from './components/ExampleTab.jsx';
@@ -34,8 +33,6 @@ export function HomePage() {
 
   return (
     <div className="home-page bg-background">
-      <HomeHeader />
-
       <main className="container mx-auto max-w-4xl py-8 space-y-8">
         <HomeHero />
 

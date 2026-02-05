@@ -256,8 +256,8 @@ function getFastTreePath() {
   const execName = platform === 'win32' ? 'fasttree.exe' : 'fasttree';
 
   if (isDev) {
-    // Development: look in BranchArchitect/bin
-    const devPath = path.join(__dirname, 'BranchArchitect', 'bin', platformDir, execName);
+    // Development: look in engine/BranchArchitect/bin
+    const devPath = path.join(__dirname, '..', 'engine', 'BranchArchitect', 'bin', platformDir, execName);
     if (fs.existsSync(devPath)) {
       return devPath;
     }
@@ -287,9 +287,9 @@ async function startBackend() {
   logToFile(`FastTree path: ${fasttreePath || 'not found'}`);
 
   if (isDev || !backendPath) {
-    // Development: run Python through Poetry (BranchArchitect's venv)
-    const serverScript = path.join(__dirname, 'BranchArchitect', 'webapp', 'run.py');
-    const branchArchitectDir = path.join(__dirname, 'BranchArchitect');
+    // Development: run Python through Poetry (engine/BranchArchitect's venv)
+    const serverScript = path.join(__dirname, '..', 'engine', 'BranchArchitect', 'webapp', 'run.py');
+    const branchArchitectDir = path.join(__dirname, '..', 'engine', 'BranchArchitect');
 
     const env = {
       ...process.env,

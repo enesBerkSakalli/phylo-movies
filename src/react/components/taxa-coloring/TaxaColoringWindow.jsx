@@ -58,7 +58,7 @@ export function TaxaColoringWindow({ taxaNames = [], originalColorMap = {}, onAp
           <p className="text-2xs text-muted-foreground/80">Fine-tune palette presets, grouping strategies, or CSV imports.</p>
         </div>
         <div className="flex items-center gap-3 self-end md:self-auto">
-          <div className="flex items-center gap-1.5 bg-muted/50 p-1 rounded-lg border border-border/40 shadow-sm">
+          <div className="flex items-center gap-2 bg-muted/50 p-1 rounded-lg border border-border/40 shadow-sm">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-7 text-[11px] px-3 font-medium hover:bg-background/80 group/btn transition-all" onClick={resetToDefault}>
@@ -69,7 +69,7 @@ export function TaxaColoringWindow({ taxaNames = [], originalColorMap = {}, onAp
               <TooltipContent>Clear all assignments and reset to default color</TooltipContent>
             </Tooltip>
 
-            <Separator orientation="vertical" className="h-4 mx-0.5" />
+            <Separator orientation="vertical" className="h-4 mx-1" />
 
             <Tooltip>
               <TooltipTrigger asChild>
@@ -90,7 +90,7 @@ export function TaxaColoringWindow({ taxaNames = [], originalColorMap = {}, onAp
       </header>
       <main className="flex-1 space-y-3 overflow-auto pr-1">
         <Tabs value={mode} onValueChange={setMode} className="space-y-4">
-          <TabsList className="h-8 p-0.5 bg-muted/70 w-fit mx-auto md:mx-0">
+          <TabsList className="h-8 p-1 bg-muted/70 w-fit mx-auto md:mx-0">
             <TabsTrigger value="taxa" className="h-7 text-xs font-medium px-4">Taxa</TabsTrigger>
             <TabsTrigger value="groups" className="h-7 text-xs font-medium px-4">Group by Pattern</TabsTrigger>
             <TabsTrigger value="csv" className="h-7 text-xs font-medium px-4">Import CSV</TabsTrigger>
