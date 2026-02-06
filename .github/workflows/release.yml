@@ -8,20 +8,21 @@ on:
 jobs:
   release:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: macos-latest
             platform: darwin
-            fasttree_subdir: osx-arm64
+            build_target: mac
           - os: macos-14
             platform: darwin-x64
-            fasttree_subdir: osx-64
+            build_target: mac
           - os: windows-latest
             platform: win32
-            fasttree_subdir: win-64
+            build_target: win
           - os: ubuntu-latest
             platform: linux
-            fasttree_subdir: linux-64
+            build_target: linux
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -58,37 +59,17 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-poetry-
 
-      - name: Setup Miniforge (for Bioconda)
-        uses: conda-incubator/setup-miniconda@v3
-        with:
-          miniforge-version: latest
-          channels: bioconda,conda-forge,defaults
-          activate-environment: fasttree-env
-          auto-activate-base: false
+      - name: Install C compiler (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install -y build-essential
 
-      - name: Download FastTree from Bioconda
-        shell: bash -l {0}
+      - name: Build FastTree from source
+        shell: bash
         run: |
-          # Install fasttree via conda
-          conda install -y fasttree
-
-          # Find the fasttree binary
-          FASTTREE_BIN=$(which fasttree || find $CONDA_PREFIX -name "fasttree*" -type f -executable | head -1)
-          echo "Found FastTree at: $FASTTREE_BIN"
-
-          # Create platform-specific bin directory
-          mkdir -p engine/BranchArchitect/bin/${{ matrix.platform }}
-
-          # Copy binary to the correct location
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            cp "$FASTTREE_BIN" engine/BranchArchitect/bin/${{ matrix.platform }}/fasttree.exe
-          else
-            cp "$FASTTREE_BIN" engine/BranchArchitect/bin/${{ matrix.platform }}/fasttree
-            chmod +x engine/BranchArchitect/bin/${{ matrix.platform }}/fasttree
-          fi
-
-          # Verify
-          ls -la engine/BranchArchitect/bin/${{ matrix.platform }}/
+          cd engine/BranchArchitect
+          chmod +x scripts/build_fasttree.sh
+          ./scripts/build_fasttree.sh build
+          ./scripts/build_fasttree.sh --check
 
       - name: Install Root Dependencies
         run: npm ci
@@ -99,32 +80,16 @@ jobs:
           npm ci
 
       - name: Install Python Backend Dependencies
+        shell: bash
         run: |
           cd engine/BranchArchitect
           poetry install --with build
 
-      - name: Build and Publish (macOS)
-        if: startsWith(matrix.os, 'macos')
-        run: |
-          cd electron-app
-          npm run build:mac -- -p always
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and Publish (Windows)
-        if: matrix.os == 'windows-latest'
+      - name: Build and Publish
         shell: bash
         run: |
           cd electron-app
-          npm run build:win -- -p always
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and Publish (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          cd electron-app
-          npm run build:linux -- -p always
+          npm run build:${{ matrix.build_target }} -- -p always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
