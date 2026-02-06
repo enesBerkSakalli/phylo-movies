@@ -23,11 +23,11 @@ If you use PhyloMovies in your research, please cite:
 
 Or use the provided `CITATION.cff` file.
 
-## Demo Video
+## Demo Videos
 
-- **Norovirus demonstration**: [Vimeo demo](https://vimeo.com/1162400544?share=copy&fl=sv&fe=ci) showing recombination breakpoint detection via animated tree morphing.
-- **Platform overview**: [High-level demo](https://www.youtube.com/watch?v=zf_UNh2EjUg) covering morphing, charting, and export flows.
-- **Norovirus walkthrough**: [Dataset-specific tour](https://www.youtube.com/watch?v=lqur97hfok0) showcasing how to trace clades frame by frame.
+- **Norovirus demonstration**: [Vimeo demo](https://vimeo.com/1162400544) showing recombination breakpoint detection via animated tree morphing.
+- **Rogue taxon example 1**: [Vimeo demo](https://vimeo.com/1162561152) illustrating how a rogue taxon shifts position across bootstrap replicates.
+- **Rogue taxon example 2**: [Vimeo demo](https://vimeo.com/1162563101) second rogue taxon scenario with different tree topology dynamics.
 
 ## Features
 
@@ -147,12 +147,12 @@ Use for a standalone desktop application with integrated backend.
 
 **Download pre-built installers from the [latest release](https://github.com/enesBerkSakalli/phylo-movies/releases/latest):**
 
-| Platform | Download | Architecture |
-|----------|----------|--------------|
-| **macOS** (Apple Silicon) | [`Phylo-Movies-0.64.0-mac-arm64.dmg`](https://github.com/enesBerkSakalli/phylo-movies/releases/latest/download/Phylo-Movies-0.64.0-mac-arm64.dmg) | ARM64 (M1/M2/M3/M4) |
-| **macOS** (Intel) | [`Phylo-Movies-0.64.0-mac-x64.dmg`](https://github.com/enesBerkSakalli/phylo-movies/releases/latest/download/Phylo-Movies-0.64.0-mac-x64.dmg) | x86_64 |
-| **Linux** | [`Phylo-Movies-0.64.0-linux-x86_64.AppImage`](https://github.com/enesBerkSakalli/phylo-movies/releases/latest/download/Phylo-Movies-0.64.0-linux-x86_64.AppImage) | x86_64 |
-| **Windows** | [`Phylo-Movies-0.64.0-win-x64.exe`](https://github.com/enesBerkSakalli/phylo-movies/releases/latest/download/Phylo-Movies-0.64.0-win-x64.exe) | x86_64 |
+| Platform                  | Download                                                                                                                                                          | Architecture        |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| **macOS** (Apple Silicon) | [`Phylo-Movies-0.64.0-mac-arm64.dmg`](https://github.com/enesBerkSakalli/phylo-movies/releases/latest/download/Phylo-Movies-0.64.0-mac-arm64.dmg)                 | ARM64 (M1/M2/M3/M4) |
+| **macOS** (Intel)         | [`Phylo-Movies-0.64.0-mac-x64.dmg`](https://github.com/enesBerkSakalli/phylo-movies/releases/latest/download/Phylo-Movies-0.64.0-mac-x64.dmg)                     | x86_64              |
+| **Linux**                 | [`Phylo-Movies-0.64.0-linux-x86_64.AppImage`](https://github.com/enesBerkSakalli/phylo-movies/releases/latest/download/Phylo-Movies-0.64.0-linux-x86_64.AppImage) | x86_64              |
+| **Windows**               | [`Phylo-Movies-0.64.0-win-x64.exe`](https://github.com/enesBerkSakalli/phylo-movies/releases/latest/download/Phylo-Movies-0.64.0-win-x64.exe)                     | x86_64              |
 
 ##### macOS Installation Note
 
