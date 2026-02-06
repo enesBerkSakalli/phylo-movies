@@ -2,9 +2,9 @@ name: CI - Test & Build
 
 on:
   push:
-    branches: [React, main]
+    branches: [main]
   pull_request:
-    branches: [React, main]
+    branches: [main]
 
 # Cancel in-progress runs for the same branch
 concurrency:
@@ -273,7 +273,7 @@ jobs:
     name: GitHub Pages Build
     runs-on: ubuntu-latest
     needs: [build]
-    if: github.ref == 'refs/heads/React' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
       - name: Checkout
