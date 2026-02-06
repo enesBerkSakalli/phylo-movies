@@ -101,20 +101,9 @@ function getEffectiveTaxonColor(taxonName) {
   
   let color = null;
   
-  // If taxaGrouping is active, use it
+  // Only use taxaGrouping for color resolution (no legacy TREE_COLOR_CATEGORIES fallback)
   if (taxaGrouping && taxaGrouping.mode) {
     color = getTaxonColor(taxonName, taxaGrouping, null);
-  }
-  
-  // Fallback to legacy TREE_COLOR_CATEGORIES (only if not a system key)
-  if (!color) {
-    const systemKeys = ['markedColor', 'pivotEdgeColor', 'strokeColor', 'defaultColor'];
-    if (!systemKeys.includes(taxonName)) {
-      const legacyColor = TREE_COLOR_CATEGORIES[taxonName];
-      if (legacyColor && legacyColor !== TREE_COLOR_CATEGORIES.defaultColor) {
-        color = legacyColor;
-      }
-    }
   }
   
   // Store in cache (even null values to avoid re-lookup)

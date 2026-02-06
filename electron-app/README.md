@@ -25,11 +25,11 @@ The unified startup script handles everything automatically:
 
 ```bash
 cd phylo-movies
-./start_frontend.sh
+./start.sh
 ```
 
 This script will:
-- Clone BranchArchitect if missing
+- Initialise the BranchArchitect submodule if missing
 - Install Poetry if not found
 - Install Python dependencies
 - Start the Flask engine (port 5002)

@@ -48,6 +48,13 @@ else
 fi
 echo "Using Python build interpreter: $PYTHON_BUILD"
 
+# Determine venv activation path (Unix: bin, Windows: Scripts)
+if [[ "$(uname -s)" == MINGW* || "$(uname -s)" == CYGWIN* || "$(uname -s)" == MSYS* ]]; then
+    VENV_BIN="Scripts"
+else
+    VENV_BIN="bin"
+fi
+
 if [ ! -d "$BUILD_VENV" ]; then
     echo "Creating Python 3.11 build environment..."
     if [ ! -f "$PYTHON_BUILD" ] && ! command -v "$PYTHON_BUILD" >/dev/null 2>&1; then
@@ -55,19 +62,19 @@ if [ ! -d "$BUILD_VENV" ]; then
         exit 1
     fi
     "$PYTHON_BUILD" -m venv "$BUILD_VENV"
-    source "$BUILD_VENV/bin/activate"
+    source "$BUILD_VENV/$VENV_BIN/activate"
     pip install --upgrade pip
     pip install poetry
-    poetry env use "$BUILD_VENV/bin/python"
+    poetry env use "$BUILD_VENV/$VENV_BIN/python"
     poetry install --with build
 else
-    source "$BUILD_VENV/bin/activate"
+    source "$BUILD_VENV/$VENV_BIN/activate"
     # Ensure poetry and build dependencies are available in existing env
     if ! command -v poetry >/dev/null 2>&1; then
         python -m pip install --upgrade pip
         python -m pip install poetry
     fi
-    poetry env use "$BUILD_VENV/bin/python" >/dev/null 2>&1 || true
+    poetry env use "$BUILD_VENV/$VENV_BIN/python" >/dev/null 2>&1 || true
     if ! poetry run pyinstaller --version >/dev/null 2>&1; then
         echo "PyInstaller missing in build environment. Installing build dependencies..."
         poetry install --with build

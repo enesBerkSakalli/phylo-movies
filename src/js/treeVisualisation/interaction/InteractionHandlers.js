@@ -112,7 +112,7 @@ export function handleContainerResize(controller) {
     const { playing } = useAppStore.getState();
     if (playing) return;
     // controller._lastFocusedTreeIndex = null; // Removed to prevent auto-focus reset on resize
-    controller.comparisonRenderer?.resetAutoFit?.();
+    controller.layerManager?.comparisonRenderer?.resetAutoFit?.();
     try {
       await controller.renderAllElements();
     } catch (err) {

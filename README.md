@@ -91,10 +91,15 @@ This project is a frontend-only application built with Vite and React. Start wit
 
 #### Base setup
 
+> **Note:** The BranchArchitect backend lives in a **git submodule**.
+> Running `npm install` will automatically initialise it **and** install
+> its Python dependencies (requires [Poetry](https://python-poetry.org/)).
+> If you prefer, you can also clone with `--recurse-submodules` upfront.
+
 ```bash
 git clone https://github.com/enesBerkSakalli/phylo-movies.git
 cd phylo-movies
-npm install
+npm install   # ← automatically fetches the BranchArchitect submodule
 ```
 
 #### Method 1: Local development (contributor workflow)
@@ -140,11 +145,14 @@ Use for a public, dataset-backed demo hosted on GitHub Pages.
 
 Use for a standalone desktop application with integrated backend.
 
-**Download:** Pre-built installers are available on the [Releases](https://github.com/enesBerkSakalli/phylo-movies/releases) page.
+**Download pre-built installers from the [latest release](https://github.com/enesBerkSakalli/phylo-movies/releases/latest):**
 
-- **macOS**: Download the `.dmg` file for your architecture (Intel or Apple Silicon)
-- **Windows**: Download the `.exe` installer
-- **Linux**: Download the `.AppImage` file
+| Platform | Download | Architecture |
+|----------|----------|--------------|
+| **macOS** (Apple Silicon) | [`Phylo-Movies-0.64.0-mac-arm64.dmg`](https://github.com/enesBerkSakalli/phylo-movies/releases/latest/download/Phylo-Movies-0.64.0-mac-arm64.dmg) | ARM64 (M1/M2/M3/M4) |
+| **macOS** (Intel) | [`Phylo-Movies-0.64.0-mac-x64.dmg`](https://github.com/enesBerkSakalli/phylo-movies/releases/latest/download/Phylo-Movies-0.64.0-mac-x64.dmg) | x86_64 |
+| **Linux** | [`Phylo-Movies-0.64.0-linux-x86_64.AppImage`](https://github.com/enesBerkSakalli/phylo-movies/releases/latest/download/Phylo-Movies-0.64.0-linux-x86_64.AppImage) | x86_64 |
+| **Windows** | [`Phylo-Movies-0.64.0-win-x64.exe`](https://github.com/enesBerkSakalli/phylo-movies/releases/latest/download/Phylo-Movies-0.64.0-win-x64.exe) | x86_64 |
 
 ##### macOS Installation Note
 

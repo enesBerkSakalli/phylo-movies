@@ -120,6 +120,12 @@ export function useTreeController() {
 
     const unsubscribe = useAppStore.subscribe((state, prevState) => {
       if (state.movieData !== prevState.movieData || state.comparisonMode !== prevState.comparisonMode) {
+        // Reset comparison auto-fit when toggling comparison mode so the camera
+        // refits properly for the new layout (single ↔ side-by-side).
+        const ctrl = controllerRef.current || state.treeControllers?.[0];
+        if (state.comparisonMode !== prevState.comparisonMode) {
+          ctrl?.layerManager?.comparisonRenderer?.resetAutoFit?.();
+        }
         ensureController();
         scheduleRender();
       }

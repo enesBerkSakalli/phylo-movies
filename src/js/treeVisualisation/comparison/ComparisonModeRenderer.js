@@ -31,6 +31,55 @@ const computeMaxRadius = (nodes = [], center = [0, 0]) => {
   }, 0);
 };
 
+/**
+ * Compute the visual extent of a tree including nodes, labels, and extensions.
+ * Also estimates label text width from the longest taxon name so that
+ * the offset keeps label text from overlapping the neighbouring tree.
+ */
+const computeVisualRadius = (layerData, center = [0, 0], labelSizePx = 0) => {
+  const dist = (p) => {
+    if (!p) return 0;
+    return Math.hypot((p[0] ?? 0) - center[0], (p[1] ?? 0) - center[1]);
+  };
+
+  let maxR = 0;
+
+  // Node positions
+  if (Array.isArray(layerData.nodes)) {
+    for (const n of layerData.nodes) {
+      maxR = Math.max(maxR, dist(n.position));
+    }
+  }
+
+  // Label positions (extend beyond nodes)
+  if (Array.isArray(layerData.labels)) {
+    for (const l of layerData.labels) {
+      maxR = Math.max(maxR, dist(l.position));
+    }
+  }
+
+  // Extension endpoints (radial extension lines beyond leaf nodes)
+  if (Array.isArray(layerData.extensions)) {
+    for (const ext of layerData.extensions) {
+      maxR = Math.max(maxR, dist(ext.sourcePosition), dist(ext.targetPosition));
+    }
+  }
+
+  // Estimate extra space needed for the longest label text.
+  // deck.gl TextLayer renders text at ~labelSizePx height; average char width ≈ 0.6× height.
+  if (labelSizePx > 0 && Array.isArray(layerData.labels) && layerData.labels.length > 0) {
+    let longestLen = 0;
+    for (const l of layerData.labels) {
+      const len = (l.text ?? l.data?.name ?? '').length;
+      if (len > longestLen) longestLen = len;
+    }
+    const estimatedTextWidth = longestLen * labelSizePx * 0.6;
+    maxR += estimatedTextWidth;
+  }
+
+  return maxR;
+};
+
 const computeSafeRadius = (nodes = [], labels = [], center = [0, 0], fontSizePx = 12) => {
   const dist = (p) => Math.hypot((p?.[0] ?? 0) - center[0], (p?.[1] ?? 0) - center[1]);
   const nodeRadius = nodes.reduce((m, n) => Math.max(m, dist(n.position)), 0);
@@ -134,11 +183,22 @@ export class ComparisonModeRenderer {
     const canvasWidth = this.controller.deckContext.getCanvasDimensions().width;
 
     const viewOffset = this.controller.viewportManager.getViewOffset();
-    const rightOffset = calculateRightOffset(canvasWidth, viewOffset);
 
     // Calculate real centers (layout is origin-centered; add offsets after)
     const leftCenterBase = computeCenter(leftLayerData.nodes);
     const rightCenterBase = computeCenter(rightLayerData.nodes);
+
+    // Resolve base label size in world-space pixels so computeVisualRadius
+    // can account for the width of the longest taxon name.
+    const fontSize = useAppStore.getState().fontSize ?? '2.6em';
+    const labelSizePx = parseFloat(fontSize) * 12 || 24;
+
+    // Compute tree radii including labels and extensions so the offset
+    // accounts for the full visual extent of each tree.
+    const leftRadius = computeVisualRadius(leftLayerData, leftCenterBase, labelSizePx);
+    const rightRadius = computeVisualRadius(rightLayerData, rightCenterBase, labelSizePx);
+
+    const rightOffset = calculateRightOffset(canvasWidth, viewOffset, leftRadius, rightRadius);
 
     // Apply independent offsets to both trees so centers/radii match screen coords
     applyOffset(leftLayerData, leftTreeOffsetX, leftTreeOffsetY);
@@ -173,7 +233,11 @@ export class ComparisonModeRenderer {
 
     this.controller._updateLayersEfficiently(combinedData);
 
-    if (this._lastFittedIndices === null) {
+    const indicesChanged = this._lastFittedIndices === null ||
+      this._lastFittedIndices.left !== leftIndex ||
+      this._lastFittedIndices.right !== rightIndex;
+
+    if (indicesChanged) {
       this.controller.viewportManager.focusOnTree(combinedData.nodes, combinedData.labels);
       this._lastFittedIndices = { left: leftIndex, right: rightIndex };
     }
@@ -226,11 +290,21 @@ export class ComparisonModeRenderer {
     const canvasWidth = this.controller.deckContext.getCanvasDimensions().width;
     const { leftTreeOffsetX = 0, leftTreeOffsetY = 0, viewsConnected } = useAppStore.getState();
     const viewOffset = this.controller.viewportManager.getViewOffset();
-    const rightOffset = calculateRightOffset(canvasWidth, viewOffset);
 
     // Centers before offsets
     const leftCenterBase = computeCenter(interpolatedData.nodes);
     const rightCenterBase = computeCenter(rightLayerData.nodes);
+
+    // Resolve base label size so computeVisualRadius accounts for text width.
+    const fontSize = useAppStore.getState().fontSize ?? '2.6em';
+    const labelSizePx = parseFloat(fontSize) * 12 || 24;
+
+    // Compute tree radii including labels and extensions so the offset
+    // accounts for the full visual extent of each tree.
+    const leftRadius = computeVisualRadius(interpolatedData, leftCenterBase, labelSizePx);
+    const rightRadius = computeVisualRadius(rightLayerData, rightCenterBase, labelSizePx);
+
+    const rightOffset = calculateRightOffset(canvasWidth, viewOffset, leftRadius, rightRadius);
 
     // Apply independent offsets to both trees
     applyOffset(interpolatedData, leftTreeOffsetX, leftTreeOffsetY);
@@ -267,9 +341,12 @@ export class ComparisonModeRenderer {
 
     this.controller._updateLayersEfficiently(combinedData);
 
-    // Only auto-fit on FIRST render of comparison mode, not every animation frame.
-    // Fitting every frame causes camera "jumping" that disrupts the viewing experience.
-    if (this._lastFittedIndices === null) {
+    // Auto-fit when entering comparison mode or when the right tree index changes.
+    // Don't refit every animation frame — that causes camera "jumping".
+    const indicesChanged = this._lastFittedIndices === null ||
+      this._lastFittedIndices.right !== rightIndex;
+
+    if (indicesChanged) {
       this.controller.viewportManager.focusOnTree(
         combinedData.nodes,
         combinedData.labels,

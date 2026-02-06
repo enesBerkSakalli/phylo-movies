@@ -54,16 +54,17 @@ ENGINE_PORT=5002
 
 echo "[engine] Checking if BranchArchitect engine exists at $ENGINE_DIR..."
 
-# Clone BranchArchitect if it doesn't exist
-if [ ! -d "$ENGINE_DIR" ]; then
-  echo "[engine] BranchArchitect not found. Cloning from GitHub..."
-  mkdir -p "$(dirname "$ENGINE_DIR")"
-  git clone "$ENGINE_REPO" "$ENGINE_DIR"
+# Initialise the git submodule if the directory is empty or missing key files
+if [ ! -f "$ENGINE_DIR/pyproject.toml" ]; then
+  echo "[engine] BranchArchitect submodule not initialised. Running git submodule update..."
+  cd "$PROJECT_ROOT"
+  git submodule update --init --recursive
   if [ $? -ne 0 ]; then
-    echo "[engine] ERROR: Failed to clone BranchArchitect from $ENGINE_REPO"
+    echo "[engine] ERROR: Failed to initialise BranchArchitect submodule."
+    echo "[engine] You can also try: git clone --recurse-submodules <repo-url>"
     exit 1
   fi
-  echo "[engine] Successfully cloned BranchArchitect"
+  echo "[engine] Successfully initialised BranchArchitect submodule"
 fi
 
 # Check if Poetry is installed
