@@ -13,7 +13,7 @@ jobs:
           - os: macos-latest
             platform: darwin
             fasttree_subdir: osx-arm64
-          - os: macos-13
+          - os: macos-14
             platform: darwin-x64
             fasttree_subdir: osx-64
           - os: windows-latest
