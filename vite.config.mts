@@ -71,6 +71,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
       }
     },
     server: {
+      host: '127.0.0.1', // Explicit IPv4 binding
       port: 5173,
       strictPort: true,
       watch: {
