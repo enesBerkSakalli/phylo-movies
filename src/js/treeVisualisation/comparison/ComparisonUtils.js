@@ -6,14 +6,22 @@
 
 /**
  * Calculate spacing offset for the right tree in comparison mode.
- * @param {number} canvasWidth - Canvas width
+ * Uses tree radii in world-space to determine appropriate spacing
+ * so that both trees are visible without overlap.
+ * @param {number} canvasWidth - Canvas width (unused, kept for API compat)
  * @param {Object} viewOffset - Current view offset {x, y}
- * @returns {number} Right tree offset
+ * @param {number} [leftRadius=0] - Left tree radius in world-space units
+ * @param {number} [rightRadius=0] - Right tree radius in world-space units
+ * @returns {number} Right tree offset in world-space units
  */
-export function calculateRightOffset(canvasWidth, viewOffset) {
-  const spacing = canvasWidth * 0.1;
-  const halfWidth = canvasWidth / 2;
-  return halfWidth + spacing + viewOffset.x;
+export function calculateRightOffset(canvasWidth, viewOffset, leftRadius = 0, rightRadius = 0) {
+  // Use tree radii if available; fall back to canvas-based estimate at zoom=0
+  const effectiveLeftRadius = leftRadius > 0 ? leftRadius : canvasWidth / 4;
+  const effectiveRightRadius = rightRadius > 0 ? rightRadius : canvasWidth / 4;
+  const gap = Math.max(effectiveLeftRadius, effectiveRightRadius) * 0.3;
+  // Ensure a minimum offset so trees never overlap even with tiny/degenerate layouts
+  const minOffset = canvasWidth * 0.25;
+  return Math.max(minOffset, effectiveLeftRadius + gap + effectiveRightRadius) + viewOffset.x;
 }
 
 /**

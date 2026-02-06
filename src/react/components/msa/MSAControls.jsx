@@ -101,7 +101,7 @@ export function MSAControls() {
   };
 
   return (
-    <div className="px-2 py-1 flex flex-wrap items-center gap-2 bg-muted/30 border-b border-border/60">
+    <div className="px-2 py-1 flex flex-wrap items-center gap-2 bg-muted/30 border-b border-border/60 shrink-0 overflow-x-auto overflow-y-hidden">
       <div className="flex items-center gap-2">
         <Label htmlFor="msa-start" className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Region</Label>
         <div className="flex items-center gap-1">

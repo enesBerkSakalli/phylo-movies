@@ -1,9 +1,7 @@
 import { TREE_COLOR_CATEGORIES } from '../../constants/TreeColors.js';
-import { loadPersistedColorCategories, persistTaxaGrouping } from '../../services/storage/colorPersistence.js';
 import { TreeColorManager } from '../../treeVisualisation/systems/TreeColorManager.js';
 import {
   renderTreeControllers,
-  persistCurrentColorCategories,
   toManualMarkedSets,
   clearEdgePreviews,
   getSubtreeAtIndex,
@@ -93,12 +91,6 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
   // ACTIONS: Initialize Colors (called after data loads)
   // ==========================================================================
   initializeColors: () => {
-    applyPersistedColorPreferences();
-    
-    // Clear persisted taxa grouping on new data load to prevent stale CSV data
-    // from previous sessions affecting the new dataset
-    persistTaxaGrouping(null);
-
     const colorManager = new TreeColorManager();
     const initialMonophyleticColoring = get().monophyleticColoringEnabled;
     colorManager.setMonophyleticColoring(initialMonophyleticColoring);
@@ -180,7 +172,6 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
       : null;
 
     set({ taxaGrouping: normalized });
-    persistTaxaGrouping(normalized);
   },
 
   setMonophyleticColoring: (enabled) => {
@@ -215,7 +206,6 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
     const { colorManager, treeControllers } = get();
     colorManager?.refreshColorCategories?.();
     renderTreeControllers(treeControllers);
-    persistCurrentColorCategories();
   },
 
   setPivotEdgeColor: (color) => get().updateChangeColor('pivotEdgeColor', color),
@@ -406,17 +396,4 @@ export const createVisualisationChangeStateSlice = (set, get) => ({
 
 });
 
-// ==========================================================================
-// Private Helper Functions
-// ==========================================================================
 
-function applyPersistedColorPreferences() {
-  try {
-    const persisted = loadPersistedColorCategories();
-    if (persisted) {
-      Object.assign(TREE_COLOR_CATEGORIES, persisted);
-    }
-  } catch (_) {
-    // Silently ignore errors
-  }
-}

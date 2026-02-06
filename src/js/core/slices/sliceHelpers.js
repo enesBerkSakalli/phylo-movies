@@ -1,5 +1,3 @@
-import { TREE_COLOR_CATEGORIES } from '../../constants/TreeColors.js';
-import { persistColorCategories } from '../../services/storage/colorPersistence.js';
 import {
   flattenSubtreeEntries,
   toSubtreeKey,
@@ -45,10 +43,6 @@ export function calculateChangePreviews(state) {
 export function renderTreeControllers(controllers) {
   if (!Array.isArray(controllers)) return;
   controllers.forEach((c) => c?.renderAllElements?.());
-}
-
-export function persistCurrentColorCategories() {
-  persistColorCategories(TREE_COLOR_CATEGORIES);
 }
 
 export function toManualMarkedSets(nodes) {

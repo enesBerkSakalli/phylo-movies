@@ -22,6 +22,8 @@
   ],
   "private": true,
   "scripts": {
+    "preinstall": "bash scripts/check-submodule.sh",
+    "postinstall": "bash scripts/check-submodule.sh",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",

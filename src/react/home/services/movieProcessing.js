@@ -67,14 +67,23 @@ export async function processMovieData(formData, onProgress) {
     let chunkedMetadata = null;
     let chunkedTrees = [];
 
+    // High-water mark prevents the progress bar from ever going backward
+    let highWaterMark = 10;
+    function reportProgress(percent, message) {
+      const clamped = Math.max(highWaterMark, Math.min(90, percent));
+      highWaterMark = clamped;
+      onProgress({ percent: clamped, message });
+      updateElectronProgress(clamped, message);
+    }
+
     eventSource.addEventListener('progress', (event) => {
       try {
         const progressData = JSON.parse(event.data);
         const percent = progressData.percent ?? progressData.current ?? 0;
         const message = progressData.message || 'Processing...';
-        const scaledPercent = Math.min(90, 10 + percent * 0.8);
-        onProgress({ percent: scaledPercent, message });
-        updateElectronProgress(scaledPercent, message);
+        // Backend 0-100 → frontend 10-90
+        const scaledPercent = 10 + percent * 0.8;
+        reportProgress(scaledPercent, message);
       } catch (err) {
         console.warn('[SSE] Failed to parse progress:', err);
       }
@@ -94,8 +103,7 @@ export async function processMovieData(formData, onProgress) {
         chunkedMetadata = result.metadata;
         chunkedTrees = []; // Reset trees array for incoming chunks
         console.log(`[SSE] Received metadata for ${chunkedMetadata.tree_count} trees (chunked mode)`);
-        onProgress({ percent: 50, message: `Streaming ${chunkedMetadata.tree_count} trees...` });
-        updateElectronProgress(50, `Streaming ${chunkedMetadata.tree_count} trees...`);
+        reportProgress(highWaterMark, `Streaming ${chunkedMetadata.tree_count} trees...`);
       } catch (err) {
         console.warn('[SSE] Failed to parse metadata:', err);
       }
@@ -106,10 +114,11 @@ export async function processMovieData(formData, onProgress) {
       try {
         const chunk = JSON.parse(event.data);
         chunkedTrees.push(...chunk.trees);
-        const percent = 50 + Math.floor((chunk.end_index / chunk.total) * 40);
+        // Map chunk progress into remaining space between current high-water and 90
+        const chunkRatio = chunk.end_index / chunk.total;
+        const percent = highWaterMark + chunkRatio * (90 - highWaterMark);
         const message = `Received ${chunk.end_index} / ${chunk.total} trees...`;
-        onProgress({ percent, message });
-        updateElectronProgress(percent, message);
+        reportProgress(percent, message);
         console.log(`[SSE] Received trees chunk: ${chunk.start_index}-${chunk.end_index} of ${chunk.total}`);
       } catch (err) {
         console.warn('[SSE] Failed to parse trees_chunk:', err);
