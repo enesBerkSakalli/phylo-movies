@@ -34,13 +34,24 @@ cd "$BACKEND_DIR"
 
 # Use dedicated Python 3.11 build environment for PyInstaller compatibility
 BUILD_VENV="$BACKEND_DIR/.venv-build"
-PYTHON_BUILD="/opt/homebrew/opt/python@3.11/bin/python3.11"
+
+# Find Python 3.11 from multiple sources (Homebrew, setup-python, system)
+if [ -f "/opt/homebrew/opt/python@3.11/bin/python3.11" ]; then
+    PYTHON_BUILD="/opt/homebrew/opt/python@3.11/bin/python3.11"
+elif command -v python3.11 >/dev/null 2>&1; then
+    PYTHON_BUILD="$(command -v python3.11)"
+elif command -v python3 >/dev/null 2>&1; then
+    PYTHON_BUILD="$(command -v python3)"
+else
+    echo "Error: No suitable Python found. Install Python 3.11."
+    exit 1
+fi
+echo "Using Python build interpreter: $PYTHON_BUILD"
 
 if [ ! -d "$BUILD_VENV" ]; then
     echo "Creating Python 3.11 build environment..."
-    if [ ! -f "$PYTHON_BUILD" ]; then
-        echo "Error: Python 3.11 not found at $PYTHON_BUILD"
-        echo "Install with: brew install python@3.11"
+    if [ ! -f "$PYTHON_BUILD" ] && ! command -v "$PYTHON_BUILD" >/dev/null 2>&1; then
+        echo "Error: Python not found at $PYTHON_BUILD"
         exit 1
     fi
     "$PYTHON_BUILD" -m venv "$BUILD_VENV"
@@ -124,8 +135,12 @@ else
     TARGET="--mac" # Default to Mac
 fi
 
-echo "Running electron-builder for target: $TARGET"
-npx electron-builder $TARGET
+# Collect extra args (e.g., -p always for CI publish)
+shift 2>/dev/null || true
+EXTRA_ARGS="$@"
+
+echo "Running electron-builder for target: $TARGET $EXTRA_ARGS"
+npx electron-builder $TARGET $EXTRA_ARGS
 
 echo "=========================================="
 echo "  Build Success!"
