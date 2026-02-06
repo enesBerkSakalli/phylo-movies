@@ -1,9 +1,12 @@
 # PhyloMovies
 
+[![CI](https://github.com/enesBerkSakalli/phylo-movies/actions/workflows/ci.yml/badge.svg)](https://github.com/enesBerkSakalli/phylo-movies/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.0000000.svg)](https://doi.org/10.5281/zenodo.0000000)
+<!-- [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX) -->
 
-PhyloMovies is a browser-based phylogenetic tree viewer for inspecting tree trajectories, morphing animations, and comparative evolutionary relationships. It targets computational biologists, outbreak analysts, and visualization researchers who need to interrogate tree dynamics without building bespoke tooling.
+Sliding-window phylogenetic analyses of multiple sequence alignments (MSAs) generate sequences of phylogenetic trees that can reveal recombination and other sources of phylogenetic conflict, yet comparing trees across genomic windows remains challenging. **Phylo-Movies** is a browser-based tool—also available as a standalone desktop application—that decomposes topological differences between consecutive phylogenetic trees into interpretable subtree migrations and animates these transformations.
+
+We demonstrate its utility in two contexts: identifying recombination breakpoints in norovirus genomes, where lineages shift from polymerase-based to capsid-based clustering at the ORF1/ORF2 junction, and detecting rogue taxa that change position across bootstrap replicates. Phylo-Movies complements summary statistics such as Robinson–Foulds distances by showing *which* lineages move, *where* they move from, and *which* new groupings they form.
 
 ## Availability and Implementation
 
@@ -22,6 +25,7 @@ Or use the provided `CITATION.cff` file.
 
 ## Demo Video
 
+- **Norovirus demonstration**: [Vimeo demo](https://vimeo.com/1162400544?share=copy&fl=sv&fe=ci) showing recombination breakpoint detection via animated tree morphing.
 - **Platform overview**: [High-level demo](https://www.youtube.com/watch?v=zf_UNh2EjUg) covering morphing, charting, and export flows.
 - **Norovirus walkthrough**: [Dataset-specific tour](https://www.youtube.com/watch?v=lqur97hfok0) showcasing how to trace clades frame by frame.
 
@@ -156,6 +160,27 @@ xattr -cr /Applications/Phylo-Movies.app
 ```
 
 This only needs to be done once. Subsequent launches will work normally.
+
+#### Method 5: Docker (containerized deployment)
+
+Run the full stack (frontend + BranchArchitect backend) in a single container:
+
+```bash
+# Clone with the backend submodule
+git clone --recurse-submodules https://github.com/enesBerkSakalli/phylo-movies.git
+cd phylo-movies
+
+# Build and start
+docker compose up --build
+```
+
+Open `http://localhost:8080/home`. The container bundles nginx (serving the Vite build) and the Flask backend — no local Node.js or Python installation required.
+
+For **development** (backend in Docker, frontend with hot-reload on host):
+```bash
+docker compose --profile dev up --build   # Backend at localhost:5002
+npm run dev                                # Frontend at localhost:5173
+```
 
 ---
 

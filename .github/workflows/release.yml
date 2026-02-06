@@ -1,0 +1,129 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            platform: darwin
+            fasttree_subdir: osx-arm64
+          - os: macos-13
+            platform: darwin-x64
+            fasttree_subdir: osx-64
+          - os: windows-latest
+            platform: win32
+            fasttree_subdir: win-64
+          - os: ubuntu-latest
+            platform: linux
+            fasttree_subdir: linux-64
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.7.1
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Cache Poetry dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            engine/BranchArchitect/.venv
+            ~/.cache/pypoetry
+          key: ${{ runner.os }}-poetry-${{ hashFiles('engine/BranchArchitect/poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-
+
+      - name: Setup Miniforge (for Bioconda)
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniforge-version: latest
+          channels: bioconda,conda-forge,defaults
+          activate-environment: fasttree-env
+          auto-activate-base: false
+
+      - name: Download FastTree from Bioconda
+        shell: bash -l {0}
+        run: |
+          # Install fasttree via conda
+          conda install -y fasttree
+
+          # Find the fasttree binary
+          FASTTREE_BIN=$(which fasttree || find $CONDA_PREFIX -name "fasttree*" -type f -executable | head -1)
+          echo "Found FastTree at: $FASTTREE_BIN"
+
+          # Create platform-specific bin directory
+          mkdir -p engine/BranchArchitect/bin/${{ matrix.platform }}
+
+          # Copy binary to the correct location
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            cp "$FASTTREE_BIN" engine/BranchArchitect/bin/${{ matrix.platform }}/fasttree.exe
+          else
+            cp "$FASTTREE_BIN" engine/BranchArchitect/bin/${{ matrix.platform }}/fasttree
+            chmod +x engine/BranchArchitect/bin/${{ matrix.platform }}/fasttree
+          fi
+
+          # Verify
+          ls -la engine/BranchArchitect/bin/${{ matrix.platform }}/
+
+      - name: Install Root Dependencies
+        run: npm ci
+
+      - name: Install Electron App Dependencies
+        run: |
+          cd electron-app
+          npm ci
+
+      - name: Install Python Backend Dependencies
+        run: |
+          cd engine/BranchArchitect
+          poetry install
+
+      - name: Build and Publish (macOS)
+        if: startsWith(matrix.os, 'macos')
+        run: |
+          cd electron-app
+          npm run build:mac -- -p always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Publish (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          cd electron-app
+          npm run build:win -- -p always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Publish (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cd electron-app
+          npm run build:linux -- -p always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

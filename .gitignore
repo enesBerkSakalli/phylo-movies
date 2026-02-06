@@ -5,6 +5,9 @@ node_modules
 env
 *.pyc
 
+# Copilot prompt files (local-only)
+.github/prompts/
+
 # local env files
 .env.local
 .env.*.local
@@ -69,5 +72,5 @@ publication_data/norovirus/augur_subsampling/scripts/analyze_dataset_for_paper.p
 plans
 data/
 bun.lock
-.github
 publication_data/norovirus/recan_recombination_analysis
+.github/copilot-instructions.md
