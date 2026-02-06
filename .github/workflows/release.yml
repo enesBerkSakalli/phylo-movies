@@ -101,7 +101,7 @@ jobs:
       - name: Install Python Backend Dependencies
         run: |
           cd engine/BranchArchitect
-          poetry install
+          poetry install --with build
 
       - name: Build and Publish (macOS)
         if: startsWith(matrix.os, 'macos')
@@ -113,6 +113,7 @@ jobs:
 
       - name: Build and Publish (Windows)
         if: matrix.os == 'windows-latest'
+        shell: bash
         run: |
           cd electron-app
           npm run build:win -- -p always
