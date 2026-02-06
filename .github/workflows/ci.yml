@@ -1,0 +1,331 @@
+name: CI - Test & Build
+
+on:
+  push:
+    branches: [React, main]
+  pull_request:
+    branches: [React, main]
+
+# Cancel in-progress runs for the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ===========================================================================
+  # Frontend Tests (fast, no backend needed)
+  # ===========================================================================
+  frontend-tests:
+    name: Frontend Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm run test:unit
+
+      - name: Run SCSS tests
+        run: npm run test:scss
+
+  # ===========================================================================
+  # Backend Tests
+  # ===========================================================================
+  backend-tests:
+    name: Backend Tests (Python)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: engine/BranchArchitect
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.7.1
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Cache Poetry dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            engine/BranchArchitect/.venv
+            ~/.cache/pypoetry
+          key: ${{ runner.os }}-poetry-${{ hashFiles('engine/BranchArchitect/poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Run type checking
+        run: poetry run mypy brancharchitect --ignore-missing-imports || true
+
+      - name: Run tests
+        run: poetry run pytest test/ -v --timeout=120
+
+  # ===========================================================================
+  # Build Verification
+  # ===========================================================================
+  build:
+    name: Build & Verify
+    runs-on: ubuntu-latest
+    needs: [frontend-tests]  # Only build if tests pass
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Verify build artifacts
+        run: |
+          echo "=== Build Verification ==="
+
+          # Check essential files
+          test -f dist/index.html || exit 1
+          test -d dist/assets || exit 1
+
+          # Report sizes
+          echo "Build contents:"
+          ls -lh dist/
+
+          echo ""
+          echo "Asset sizes:"
+          ls -lh dist/assets/ | head -20
+
+          echo ""
+          echo "Total build size:"
+          du -sh dist/
+
+          # Check bundle size limit (10MB warning)
+          TOTAL_KB=$(du -sk dist | cut -f1)
+          if [ "$TOTAL_KB" -gt 10240 ]; then
+            echo "⚠️ Warning: Build size exceeds 10MB"
+          fi
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: dist/
+          retention-days: 7
+
+  # ===========================================================================
+  # Integration Tests (requires backend)
+  # ===========================================================================
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [frontend-tests, backend-tests]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.7.1
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Cache Poetry dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            engine/BranchArchitect/.venv
+            ~/.cache/pypoetry
+          key: ${{ runner.os }}-poetry-${{ hashFiles('engine/BranchArchitect/poetry.lock') }}
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Install backend dependencies
+        run: cd engine/BranchArchitect && poetry install
+
+      - name: Start backend server
+        run: |
+          cd engine/BranchArchitect
+          poetry run python -m webapp.app &
+          echo "Waiting for backend to start..."
+          for i in {1..30}; do
+            if curl -s http://localhost:5002/health; then
+              echo "Backend is ready"
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Run integration tests
+        run: npm run test:backend-required
+
+      - name: Run MSA workflow tests
+        run: npm run test:msa
+
+  # ===========================================================================
+  # Docker Build & Smoke Test
+  # ===========================================================================
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: [frontend-tests, backend-tests]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: phylo-movies:ci-test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke test container
+        run: |
+          docker run -d --name phylo-test -p 8080:8080 phylo-movies:ci-test
+          echo "Waiting for container..."
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:8080/about >/dev/null 2>&1; then
+              echo "✅ Backend health check passed"
+              break
+            fi
+            if [ "$i" = "60" ]; then
+              echo "❌ Container failed to become healthy"
+              docker logs phylo-test
+              exit 1
+            fi
+            sleep 2
+          done
+
+          # Check frontend is served
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/)
+          if [ "$HTTP_STATUS" = "200" ]; then
+            echo "✅ Frontend served (HTTP $HTTP_STATUS)"
+          else
+            echo "❌ Frontend not served (HTTP $HTTP_STATUS)"
+            docker logs phylo-test
+            exit 1
+          fi
+
+          docker stop phylo-test
+          docker rm phylo-test
+          echo "✅ Docker smoke test passed"
+
+  # ===========================================================================
+  # GitHub Pages Build (on main branch only)
+  # ===========================================================================
+  gh-pages-build:
+    name: GitHub Pages Build
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.ref == 'refs/heads/React' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build for GitHub Pages
+        run: npm run build:gh
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/
+
+  # ===========================================================================
+  # Summary Job
+  # ===========================================================================
+  ci-success:
+    name: CI Success
+    runs-on: ubuntu-latest
+    needs: [frontend-tests, backend-tests, build, integration-tests, docker-build]
+    if: always()
+
+    steps:
+      - name: Check all jobs
+        run: |
+          if [ "${{ needs.frontend-tests.result }}" != "success" ]; then
+            echo "Frontend tests failed"
+            exit 1
+          fi
+          if [ "${{ needs.backend-tests.result }}" != "success" ]; then
+            echo "Backend tests failed"
+            exit 1
+          fi
+          if [ "${{ needs.build.result }}" != "success" ]; then
+            echo "Build failed"
+            exit 1
+          fi
+          if [ "${{ needs.integration-tests.result }}" != "success" ]; then
+            echo "Integration tests failed"
+            exit 1
+          fi
+          if [ "${{ needs.docker-build.result }}" != "success" ]; then
+            echo "Docker build failed"
+            exit 1
+          fi
+          echo "✅ All CI checks passed!"

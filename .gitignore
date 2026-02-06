@@ -66,5 +66,4 @@ publication_data/norovirus/augur_subsampling/scripts/analyze_dataset_for_paper.p
 plans
 data/
 bun.lock
-.github
 publication_data/norovirus/recan_recombination_analysis

@@ -29,10 +29,15 @@ keywords:
   - tree-morphing
   - robinson-foulds
 abstract: >-
-  PhyloMovies is a browser-based phylogenetic tree viewer with morphing animations for computational biologists.
-  It enables the visualization of transformations between phylogenetic trees on the same taxa set by decomposing
-  each tree into splits and detecting conflicts. It provides interactive playback of interpolated trees,
-  linked charts, and multiple-sequence alignment views.
+  Sliding-window phylogenetic analyses of multiple sequence alignments (MSAs) generate sequences of
+  phylogenetic trees that can reveal recombination and other sources of phylogenetic conflict, yet
+  comparing trees across genomic windows remains challenging. Phylo-Movies is a browser-based tool,
+  also available as a standalone desktop application, that decomposes topological differences between
+  consecutive phylogenetic trees into interpretable subtree migrations and animates these
+  transformations. We demonstrate its utility in identifying recombination breakpoints in norovirus
+  genomes and detecting rogue taxa that change position across bootstrap replicates. Phylo-Movies
+  complements summary statistics such as Robinson-Foulds distances by showing which lineages move,
+  where they move from, and which new groupings they form.
 
 # Preferred citation for academic papers (uncomment and fill when published)
 # preferred-citation:

@@ -1,3 +1,10 @@
 # Auto detect text files and perform LF normalization
 * text=auto
 
+# Fix GitHub language detection — mark generated/vendored files
+src/index.html linguist-documentation
+src/splash.html linguist-documentation
+electron-app/splash.html linguist-documentation
+*.lock linguist-generated
+package-lock.json linguist-generated
+

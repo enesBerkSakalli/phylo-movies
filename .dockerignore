@@ -1,0 +1,40 @@
+# ── Git ──────────────────────────────────────────────────────────
+.git
+.gitmodules
+
+# ── Node / Frontend ─────────────────────────────────────────────
+node_modules
+dist
+dist-publish
+.vite
+
+# ── Python / Backend ────────────────────────────────────────────
+__pycache__
+*.pyc
+*.pyo
+engine/BranchArchitect/.venv
+engine/BranchArchitect/dist
+engine/BranchArchitect/build
+engine/BranchArchitect/logs
+
+# ── Electron (not needed in Docker) ─────────────────────────────
+electron-app/frontend-dist
+electron-app/release
+electron-app/logs
+electron-app/node_modules
+
+# ── IDE / OS ────────────────────────────────────────────────────
+.idea
+.vscode
+.DS_Store
+*.sw?
+
+# ── CI / Docs ───────────────────────────────────────────────────
+.github
+docs
+plans
+publication_data
+*.md
+!README.md
+CITATION.cff
+LICENSE
