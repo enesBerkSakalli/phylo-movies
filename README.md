@@ -4,6 +4,12 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 <!-- [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX) -->
 
+<p align="center">
+  <img src="docs/screenshot.png" alt="PhyloMovies – interactive phylogenetic tree viewer with morphing animations" width="100%">
+</p>
+
+> **Keywords:** phylogenetics · tree visualization · tree morphing · SPR · subtree prune and regraft · recombination · multiple sequence alignment · MSA · Robinson-Foulds · sliding window · bootstrap · rogue taxa · bioinformatics · computational biology · deck.gl · React · Electron
+
 Sliding-window phylogenetic analyses of multiple sequence alignments (MSAs) generate sequences of phylogenetic trees that can reveal recombination and other sources of phylogenetic conflict, yet comparing trees across genomic windows remains challenging. **Phylo-Movies** is a browser-based tool—also available as a standalone desktop application—that decomposes topological differences between consecutive phylogenetic trees into interpretable subtree migrations and animates these transformations.
 
 We demonstrate its utility in two contexts: identifying recombination breakpoints in norovirus genomes, where lineages shift from polymerase-based to capsid-based clustering at the ORF1/ORF2 junction, and detecting rogue taxa that change position across bootstrap replicates. Phylo-Movies complements summary statistics such as Robinson–Foulds distances by showing *which* lineages move, *where* they move from, and *which* new groupings they form.
@@ -11,15 +17,18 @@ We demonstrate its utility in two contexts: identifying recombination breakpoint
 ## Availability and Implementation
 
 Source code is available under the MIT License at [github.com/enesBerkSakalli/phylo-movies](https://github.com/enesBerkSakalli/phylo-movies).
-The software is implemented in Python (backend) and JavaScript/React (frontend).
-Tree interpolation and morphing are powered by [BranchArchitect](https://github.com/EnesSakalliUniWien/BranchArchitect), a Python library for phylogenetic tree transformations that computes geodesic paths between tree topologies.
-All test datasets required to reproduce the benchmarks are located in `data/test-data`.
+The software consists of two components:
+
+- **Frontend** (JavaScript/React): The browser-based visualization, animation, and UI layer in `src/`.
+- **Backend** ([BranchArchitect](https://github.com/EnesSakalliUniWien/BranchArchitect)): A Python engine included as a git submodule in `engine/BranchArchitect/`. It computes SPR (Subtree Prune and Regraft) paths between trees, identifies which subtrees move, and generates interpolated intermediate frames that the frontend renders as smooth morphing animations. BranchArchitect exposes a Flask API (port 5002) that the frontend calls to retrieve tree data, interpolation sequences, and MSA window mappings.
+
+All test datasets required to reproduce the benchmarks are located in `publication_data/`.
 
 ## Citation
 
 If you use PhyloMovies in your research, please cite:
 
-> Sakalli, E. B. (2026). Phylo-Movies: Interactive Phylogenetic Tree Interpolation and Visualization. GitHub. https://github.com/enesBerkSakalli/phylo-movies
+> Sakalli, E. B. et al (2026). Phylo-Movies: Interactive Phylogenetic Tree Interpolation and Visualization. GitHub. <https://github.com/enesBerkSakalli/phylo-movies>
 
 Or use the provided `CITATION.cff` file.
 
@@ -80,6 +89,8 @@ Or use the provided `CITATION.cff` file.
 
 - **Node.js**: Version 18.0.0 or newer (tested with v24.10.0)
 - **npm**: Version 8.0.0 or newer (comes with Node.js)
+- **Python**: Version 3.11 or newer (required by the BranchArchitect backend)
+- **Poetry**: Python dependency manager ([install guide](https://python-poetry.org/docs/#installation)) — used to manage BranchArchitect's dependencies
 - **Modern web browser**: Chrome, Firefox, Safari, or Edge with JavaScript enabled
 - **Git**: For cloning the repository
 - **RAM**: 4GB minimum, 8GB recommended for large datasets
@@ -87,7 +98,33 @@ Or use the provided `CITATION.cff` file.
 
 ### Installation Methods
 
-This project is a frontend-only application built with Vite and React. Start with the base setup, then choose the workflow that fits your needs.
+Phylo-Movies has two parts: a React/Vite frontend and the [BranchArchitect](https://github.com/EnesSakalliUniWien/BranchArchitect) Python backend (included as a git submodule in `engine/BranchArchitect/`). Start with the base setup, then choose the workflow that fits your needs.
+
+#### Method 1: Desktop App (easiest)
+
+Download a pre-built installer — no Node.js, Python, or Poetry installation required.
+
+> **⚠️ macOS users:** The app is not signed with an Apple Developer certificate, so macOS Gatekeeper will block the first launch. This is expected for open-source software distributed outside the App Store. To open it:
+>
+> 1. **Right-click** (or Control-click) the app in Finder and select **"Open"**
+> 2. Click **"Open"** in the security dialog
+>
+> Or run `xattr -cr /Applications/Phylo-Movies.app` once in Terminal. Subsequent launches will work normally.
+
+**Download installers from the [Releases page](https://github.com/enesBerkSakalli/phylo-movies/releases):**
+
+| Platform                  | Filename pattern                               | Architecture        |
+| ------------------------- | ---------------------------------------------- | ------------------- |
+| **macOS** (Apple Silicon) | `Phylo-Movies-<version>-mac-arm64.dmg`         | ARM64 (M1/M2/M3/M4) |
+| **macOS** (Intel)         | `Phylo-Movies-<version>-mac-x64.dmg`           | x86_64              |
+| **Linux**                 | `Phylo-Movies-<version>-linux-x86_64.AppImage` | x86_64              |
+| **Windows**               | `Phylo-Movies-<version>-win-x64.exe`           | x86_64              |
+
+> **Note:** The frontend viewer works without the backend — you can upload Newick tree files and visualize them directly. The BranchArchitect backend is only needed for tree interpolation (morphing animations) and MSA-based workflows. If the desktop app has dependency issues on your system, you can also run the application from source using the methods below.
+
+---
+
+The following methods require cloning the repository. Start with the base setup:
 
 #### Base setup
 
@@ -102,72 +139,49 @@ cd phylo-movies
 npm install   # ← automatically fetches the BranchArchitect submodule
 ```
 
-#### Method 1: Local development (contributor workflow)
+#### Method 2: One-command start (recommended for local use)
+
+The included `start.sh` script handles **everything** — submodule init, dependency installation, starting the BranchArchitect Flask backend, and launching the Vite dev server:
+
+```bash
+./start.sh
+```
+
+It will check for prerequisites (Node.js, npm, Poetry), install Python and JS dependencies if needed, start the backend on port 5002, and open the frontend at `http://localhost:5173/home`. This is the fastest way to get a fully working environment.
+
+#### Method 3: Local development (contributor workflow)
 
 Use when modifying code or running tests with hot reload.
 
 1. Start the dev server:
+
    ```bash
    npm run dev
    ```
+
 2. Open `http://localhost:5173/home` or `http://localhost:5173/visualization`.
 3. Development mode provides HMR, source maps, and error overlays out of the box.
 
-#### Method 2: Production build (custom hosting)
+#### Method 4: Production build (custom hosting)
 
 Use when deploying optimized static assets to your own infrastructure.
 
 1. Build static files:
+
    ```bash
    npm run build
    ```
+
    Outputs go to `dist/` with minified JS/CSS and code splitting.
+
 2. Optionally preview locally:
+
    ```bash
    npm run preview
    ```
+
    Serves `dist/` at `http://localhost:4173`.
 3. Deploy the contents of `dist/` to your preferred web server or CDN.
-
-#### Method 3: GitHub Pages (static demo)
-
-Use for a public, dataset-backed demo hosted on GitHub Pages.
-
-1. Build with the GitHub Pages base path:
-   ```bash
-   npm run build:gh
-   ```
-   The script sets `--base`, copies `example.json`, and writes a redirecting `dist/index.html`.
-2. Publish `dist/` via the `gh-pages` branch or the Pages configuration in repository settings.
-3. Access the deployment at `https://<username>.github.io/<repo>/home` (replace placeholders). Update the `build:gh` script if the repository name differs from `phylo-movies`.
-
-#### Method 4: Desktop App (Electron)
-
-Use for a standalone desktop application with integrated backend.
-
-**Download pre-built installers from the [latest release](https://github.com/enesBerkSakalli/phylo-movies/releases/latest):**
-
-| Platform                  | Download                                                                                                                                                          | Architecture        |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
-| **macOS** (Apple Silicon) | [`Phylo-Movies-0.64.0-mac-arm64.dmg`](https://github.com/enesBerkSakalli/phylo-movies/releases/latest/download/Phylo-Movies-0.64.0-mac-arm64.dmg)                 | ARM64 (M1/M2/M3/M4) |
-| **macOS** (Intel)         | [`Phylo-Movies-0.64.0-mac-x64.dmg`](https://github.com/enesBerkSakalli/phylo-movies/releases/latest/download/Phylo-Movies-0.64.0-mac-x64.dmg)                     | x86_64              |
-| **Linux**                 | [`Phylo-Movies-0.64.0-linux-x86_64.AppImage`](https://github.com/enesBerkSakalli/phylo-movies/releases/latest/download/Phylo-Movies-0.64.0-linux-x86_64.AppImage) | x86_64              |
-| **Windows**               | [`Phylo-Movies-0.64.0-win-x64.exe`](https://github.com/enesBerkSakalli/phylo-movies/releases/latest/download/Phylo-Movies-0.64.0-win-x64.exe)                     | x86_64              |
-
-##### macOS Installation Note
-
-The app is not signed with an Apple Developer certificate. On first launch, macOS Gatekeeper will block the app. To open it:
-
-1. **Right-click** (or Control-click) the app in Finder
-2. Select **"Open"** from the context menu
-3. Click **"Open"** in the dialog that appears
-
-Alternatively, run this command in Terminal after installation:
-```bash
-xattr -cr /Applications/Phylo-Movies.app
-```
-
-This only needs to be done once. Subsequent launches will work normally.
 
 #### Method 5: Docker (containerized deployment)
 
@@ -185,6 +199,7 @@ docker compose up --build
 Open `http://localhost:8080/home`. The container bundles nginx (serving the Vite build) and the Flask backend — no local Node.js or Python installation required.
 
 For **development** (backend in Docker, frontend with hot-reload on host):
+
 ```bash
 docker compose --profile dev up --build   # Backend at localhost:5002
 npm run dev                                # Frontend at localhost:5173
@@ -197,23 +212,33 @@ npm run dev                                # Frontend at localhost:5173
 The project includes comprehensive test suites covering various functionalities.
 
 **Run all tests:**
+
 ```bash
 npm test
 ```
 
 **Run tests in watch mode:**
+
 ```bash
 npm run test:watch
 ```
 
 **Run specific test suites:**
+
 ```bash
 npm run test:unit          # Parser and file upload tests
 npm run test:msa           # MSA workflow tests
 npm run test:tree-animation # Tree animation tests
 ```
 
-Some targeted suites load fixtures from the `data/` directory; keep the sample datasets intact or update the paths before running CI locally.
+**Run BranchArchitect backend tests:**
+
+```bash
+cd engine/BranchArchitect
+poetry run pytest tests/ -v
+```
+
+Some targeted suites load fixtures from the `publication_data/` directory; keep the sample datasets intact or update the paths before running CI locally.
 
 ---
 
@@ -241,7 +266,8 @@ npm run dev
 ```
 
 Expected output should include:
-```
+
+```text
 VITE v5.4.20  ready in XXX ms
 Local: http://localhost:5173/
 ```
@@ -255,13 +281,15 @@ npm run build
 ```
 
 Expected output should end with:
-```
+
+```text
 Built in XXXs
 dist/index.html                              0.57 kB
 dist/assets/[various files listed]
 ```
 
 Check that `dist/` folder was created:
+
 ```bash
 ls -l dist/
 ```
@@ -349,14 +377,25 @@ npm run demo:msa-scrolling # Run MSA scrolling demonstration
 
 ### Architecture
 
+**Frontend:**
+
 - **Frontend Framework**: React 18.2.0 with modern hooks and state management
 - **Build Tool**: Vite 5.4.20 for fast development and optimized builds
 - **State Management**: Zustand 5.0.6 for global application state
 - **Tree Rendering**: Deck.gl 9.1.14 (GPU-accelerated WebGL) with D3.js 7.9.0 for tree layouts
 - **UI Components**: Radix UI primitives with Tailwind CSS 4.1.13 for styling
-- **MSA Viewer**: alignment-viewer-2 for sequence alignment visualization
+- **MSA Viewer**: Custom deck.gl-based MSA viewer for sequence alignment visualization
 - **Type Safety**: TypeScript 5.8.3 with JSDoc annotations
-- **Testing**: Mocha + Chai for unit tests, Playwright for E2E tests
+- **Testing**: Mocha + Chai for unit tests, Vitest for newer tests
+
+**Backend ([BranchArchitect](https://github.com/EnesSakalliUniWien/BranchArchitect)):**
+
+- **Language**: Python 3.11+, managed with Poetry
+- **Web Framework**: Flask, serving endpoints at `/treedata`, `/stream`, `/msa`, `/about`
+- **Tree Transformations**: SPR-based interpolation via lattice solvers that compute minimal subtree migrations between trees
+- **Pipeline**: Parse Newick → midpoint rooting → lattice solving (jumping taxa) → leaf ordering → 4-phase interpolation (collapse → reorder → expand → snap)
+- **MSA Support**: Sliding-window tree inference from FASTA alignments via the bundled `msa_to_trees` package
+- **Testing**: pytest + hypothesis + mypy
 
 ### Key Technologies
 
@@ -393,9 +432,9 @@ npm run demo:msa-scrolling # Run MSA scrolling demonstration
 
 ## Project Structure
 
-```
+```text
 phylo-movies/
-|-- src/                     # Source code
+|-- src/                     # Frontend source code
 |   |-- react/               # React components
 |   |   |-- components/      # UI components (HUD, nav, taxa-coloring, etc.)
 |   |   |-- home/            # Home page components
@@ -410,35 +449,37 @@ phylo-movies/
 |   |-- components/          # shadcn/ui components
 |   |-- lib/                 # Library utilities
 |   `-- index.css            # Global styles
-|-- data/                    # Example datasets
-|-- test/                    # Test suites
+|-- engine/
+|   `-- BranchArchitect/     # Python backend (git submodule)
+|       |-- brancharchitect/ # Core library (tree models, interpolation, lattice solvers)
+|       |-- webapp/          # Flask server (routes: /treedata, /stream, /msa, /about)
+|       |-- msa_to_trees/    # Sliding-window MSA → tree inference package
+|       `-- pyproject.toml   # Python dependencies (managed by Poetry)
+|-- electron-app/            # Electron desktop wrapper
+|-- publication_data/        # Datasets from the PhyloMovies manuscript
+|-- test/                    # Frontend test suites
+|-- start.sh                 # One-command startup (backend + frontend)
 |-- dist/                    # Production build output (generated)
 |-- package.json             # npm dependencies and scripts
-|-- vite.config.ts           # Vite configuration
+|-- vite.config.mts          # Vite configuration
 |-- tsconfig.json            # TypeScript configuration
-|-- tailwind.config.js       # Tailwind CSS configuration
 `-- README.md                # This file
 ```
 
 
-### The `data/` Folder
+### The `publication_data/` Folder
 
-The `data/` directory contains example datasets and sample files, including those from the original PhyloMovies publication. This folder is useful for:
+The `publication_data/` directory contains the datasets used in the PhyloMovies manuscript, enabling full reproduction of the published results:
 
-- **Reproducing Publication Results**: Includes datasets such as `norovirus_200_20/` and `simulation_trees/` used in the original paper, allowing you to replicate published analyses and figures.
-- **Quick Start & Demos**: Provides ready-to-use tree and alignment files so you can try out PhyloMovies features without needing to supply your own data.
-- **Testing**: Contains small and large example files to test performance and compatibility.
-- **Format Reference**: Includes files in supported formats (e.g., Newick for trees, FASTA for alignments) to serve as templates for your own data.
+- **`norovirus/`** — Norovirus recombination analysis data:
+  - `augur_subsampling/` — Subsampled alignment and trees used for the sliding-window demonstration
+  - `recan_recombination_analysis/` — ReCAN recombination detection outputs
+- **`bootstrap_example/`** — Rogue taxon detection via bootstrap replicates:
+  - `125/` and `24/` — Bootstrap replicate trees (200 replicates each) with SPR event frequency summaries
+  - `limitation test/` — Edge-case scenarios for the lattice solver
+- **`figure_example/`** — Tree files used to generate publication figures (e.g., `paper_example.tree`)
 
-**Typical contents:**
-
-- `norovirus_200_20/` - Dataset from the publication for norovirus phylogenies.
-- `simulation_trees/` - Simulated tree datasets as used in the paper.
-- `example_tree.nwk` - Example phylogenetic tree in Newick format.
-- `example_alignment.fasta` - Example multiple sequence alignment in FASTA format.
-- `README.txt` - (Optional) Describes the datasets included in the folder.
-
-You can add your own data files here for local testing, or use these samples to explore the application's capabilities and reproduce results from the publication.
+These datasets are referenced in the demo videos and can be loaded directly into the application to explore the use cases described in the paper.
 
 ## Contributing
 
@@ -459,14 +500,6 @@ Follow the standard GitHub workflow:
 ## License
 
 This project is open source. Please check the license file for specific terms and conditions.
-
-## Citation
-
-If you use PhyloMovies in your research, please consider citing:
-
-PhyloMovies: An Interactive Phylogenetic Tree Visualization Platform
-
-[Authors and publication details to be added]
 
 ## Support & Documentation
 

@@ -92,4 +92,9 @@ jobs:
           bash build.sh ${{ matrix.build_target }} -p always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # macOS: ad-hoc signing is configured via identity:"-" in package.json.
+          # Users will see "unidentified developer" (with "Open Anyway") instead of "damaged".
+          # To eliminate the warning entirely, add these secrets:
+          #   CSC_LINK, CSC_KEY_PASSWORD, APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID
+          # and change mac.identity in electron-app/package.json from "-" to null.
 

@@ -59,6 +59,17 @@
   }
   --animate-shimmer: shimmer 2s infinite;
   --animate-float: float 3s ease-in-out infinite;
+
+  @keyframes accordion-down {
+    from { height: 0; }
+    to { height: var(--radix-collapsible-content-height); }
+  }
+  @keyframes accordion-up {
+    from { height: var(--radix-collapsible-content-height); }
+    to { height: 0; }
+  }
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
 }
 
 :root {
