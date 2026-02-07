@@ -34,7 +34,7 @@ export const EXAMPLE_DATASETS = [
     parameters: {
       windowSize: null,
       stepSize: null,
-      midpointRooting: true,
+      midpointRooting: false,
       useGtr: false,
       useGamma: false,
       usePseudo: false,

@@ -8,7 +8,7 @@ import { BranchLengthHistogram } from './BranchLengths/BranchLengthHistogram';
 import { SubtreeFrequencyList } from './SubtreeAnalytics/SubtreeFrequencyList';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronRight, BarChart3 } from 'lucide-react';
-import { SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
+import { SidebarMenuItem, SidebarMenuButton, SidebarMenuSub, SidebarMenuSubItem } from '@/components/ui/sidebar';
 import type { AppStoreState } from '@/types/store';
 
 // ==========================================================================
@@ -71,25 +71,31 @@ export const TreeStatsPanel: React.FC = () => {
             <ChevronRight className="ml-auto size-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />
           </SidebarMenuButton>
         </CollapsibleTrigger>
-        <CollapsibleContent className="space-y-4 px-3 py-2">
-          {/* Current scale value and relative magnitude */}
-          <CurrentScaleDisplay
-            formattedCurrent={formattedCurrent}
-            formattedMax={formattedMax}
-            magnitudeFactor={scaleRatio}
-          />
+        <CollapsibleContent>
+          <SidebarMenuSub>
+            <SidebarMenuSubItem>
+              <div className="space-y-4 px-2 py-2">
+                {/* Current scale value and relative magnitude */}
+                <CurrentScaleDisplay
+                  formattedCurrent={formattedCurrent}
+                  formattedMax={formattedMax}
+                  magnitudeFactor={scaleRatio}
+                />
 
-          {/* Branch length histogram */}
-          {showBranchLengths ? (
-            <BranchLengthHistogram
-              bins={histogramBins}
-              maxCount={histogramMax}
-              stats={histogramStats}
-            />
-          ) : null}
+                {/* Branch length histogram */}
+                {showBranchLengths ? (
+                  <BranchLengthHistogram
+                    bins={histogramBins}
+                    maxCount={histogramMax}
+                    stats={histogramStats}
+                  />
+                ) : null}
 
-          {/* SPR Event Analytics */}
-          <SubtreeFrequencyList />
+                {/* SPR Event Analytics */}
+                <SubtreeFrequencyList />
+              </div>
+            </SidebarMenuSubItem>
+          </SidebarMenuSub>
         </CollapsibleContent>
       </SidebarMenuItem>
     </Collapsible>
