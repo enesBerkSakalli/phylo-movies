@@ -65,7 +65,7 @@ if [ ! -d "$BUILD_VENV" ]; then
     source "$BUILD_VENV/$VENV_BIN/activate"
     python -m pip install --upgrade pip
     python -m pip install poetry
-    poetry env use "$BUILD_VENV/$VENV_BIN/python"
+    poetry env use "$(which python)"
     poetry install --with build
 else
     source "$BUILD_VENV/$VENV_BIN/activate"
@@ -74,7 +74,7 @@ else
         python -m pip install --upgrade pip
         python -m pip install poetry
     fi
-    poetry env use "$BUILD_VENV/$VENV_BIN/python" >/dev/null 2>&1 || true
+    poetry env use "$(which python)" >/dev/null 2>&1 || true
     if ! poetry run pyinstaller --version >/dev/null 2>&1; then
         echo "PyInstaller missing in build environment. Installing build dependencies..."
         poetry install --with build
