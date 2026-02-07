@@ -45,7 +45,8 @@ debug_logs
 backend/brancharchitect-0.37.0.dist-info
 .env
 .vite/deps
-docs
+docs/*
+!docs/screenshot.png
 dist-publish
 playwright.config.ts
 # Electron build outputs
