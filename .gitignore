@@ -50,7 +50,8 @@ backend/brancharchitect-0.37.0.dist-info
 mcp
 .vite/deps
 .playwright-mcp
-docs
+docs/*
+!docs/screenshot.png
 dist-publish
 playwright.config.ts
 .kiro
