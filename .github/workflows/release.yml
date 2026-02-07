@@ -89,7 +89,7 @@ jobs:
         shell: bash
         run: |
           cd electron-app
-          npm run build:${{ matrix.build_target }} -- -p always
+          bash build.sh ${{ matrix.build_target }} -p always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
