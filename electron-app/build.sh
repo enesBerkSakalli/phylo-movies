@@ -63,8 +63,8 @@ if [ ! -d "$BUILD_VENV" ]; then
     fi
     "$PYTHON_BUILD" -m venv "$BUILD_VENV"
     source "$BUILD_VENV/$VENV_BIN/activate"
-    pip install --upgrade pip
-    pip install poetry
+    python -m pip install --upgrade pip
+    python -m pip install poetry
     poetry env use "$BUILD_VENV/$VENV_BIN/python"
     poetry install --with build
 else
