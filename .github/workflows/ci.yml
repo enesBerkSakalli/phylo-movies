@@ -11,6 +11,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   # ===========================================================================
   # Frontend Tests (fast, no backend needed)
@@ -295,10 +300,30 @@ jobs:
       - name: Build for GitHub Pages
         run: npm run build:gh
 
+      - name: Copy index.html to 404.html (SPA fallback)
+        run: cp dist/index.html dist/404.html
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist/
+
+  # ===========================================================================
+  # GitHub Pages Deploy (on main branch only)
+  # ===========================================================================
+  gh-pages-deploy:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: [gh-pages-build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 
   # ===========================================================================
   # Summary Job

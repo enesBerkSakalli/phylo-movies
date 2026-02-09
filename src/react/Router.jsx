@@ -8,9 +8,12 @@ import { isElectron } from '../js/services/data/apiConfig.js';
 // Use HashRouter for Electron (file:// protocol), BrowserRouter for web
 const RouterComponent = isElectron() ? HashRouter : BrowserRouter;
 
+// Resolve basename for GitHub Pages deployment (e.g. /phylo-movies/)
+const basename = isElectron() ? undefined : import.meta.env.BASE_URL?.replace(/\/$/, '') || '';
+
 export function Router() {
   return (
-    <RouterComponent>
+    <RouterComponent basename={basename}>
       <ErrorBoundary>
         <Routes>
           <Route path="/" element={<Navigate to="/home" replace />} />
