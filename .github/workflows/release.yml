@@ -74,6 +74,15 @@ jobs:
       - name: Install Root Dependencies
         run: npm ci
 
+      - name: Sync version from git tag
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "Setting version to $VERSION (from tag $GITHUB_REF_NAME)"
+          npm --no-git-tag-version version "$VERSION"
+          cd electron-app
+          npm --no-git-tag-version version "$VERSION"
+
       - name: Install Electron App Dependencies
         run: |
           cd electron-app
