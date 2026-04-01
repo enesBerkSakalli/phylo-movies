@@ -32,7 +32,7 @@
     "test:msa": "mocha --require @babel/register 'test/msa-workflow.test.js' 'test/msa-automated-scrolling.test.js'",
     "test:msa-scrolling": "mocha --require @babel/register 'test/msa-automated-scrolling.test.js'",
     "demo:msa-scrolling": "node test/msa-scrolling-demo.js",
-    "build:gh": "vite build --base=/phylo-movies/ && ./scripts/copy-examples.sh dist",
+    "build:gh": "VITE_DOCS_ONLY=true vite build --base=/phylo-movies/ && VITE_DOCS_ONLY=true node scripts/apply-gh-seo.js dist && ./scripts/copy-examples.sh dist",
     "copy-examples": "./scripts/copy-examples.sh dist",
     "test:backend-required": "mocha --require @babel/register 'test/integration.test.js' 'test/msa-workflow.test.js'",
     "test:unit": "mocha --require @babel/register 'test/parser.test.js' 'test/fileUpload.test.js'",
