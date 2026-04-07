@@ -21,6 +21,7 @@ export default defineConfig({
       'test/taxa-coloring.test.js',
       'test/TidyTreeLayout.test.js',
       'test/ViewLinkMapper.test.js',
+      'test/VelocityNormalizer.test.js',
       'test/domain/**/*.test.{js,ts}',
       'test/integration/**/*.test.{js,ts}',
     ],

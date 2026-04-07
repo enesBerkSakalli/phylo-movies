@@ -43,6 +43,9 @@ jobs:
       - name: Run SCSS tests
         run: npm run test:scss
 
+      - name: Run Vitest suite
+        run: npm run test:vitest
+
   # ===========================================================================
   # Backend Tests
   # ===========================================================================

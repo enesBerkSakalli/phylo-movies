@@ -7,6 +7,12 @@ import { toColorManagerNode, shouldHighlightNode, isHistorySubtreeNode, getHighl
 export { getNodeRadius } from './nodeRadiusStyles.js';
 export { getNodeLineWidth } from './nodeWidthStyles.js';
 
+// Reusable output buffers to avoid per-call array allocations (GC pressure at 60fps)
+const _historyColorOut = [0, 0, 0, 0];
+const _nodeColorOut = [0, 0, 0, 0];
+const _borderColorOut = [0, 0, 0, 0];
+const _nodeBasedOut = [0, 0, 0, 0];
+
 /**
  * Checks for history and upcoming change states and returns the appropriate color.
  * @param {Object} nodeData - The node data
@@ -21,11 +27,19 @@ function resolveHistoryNodeColor(nodeData, cached, baseOpacity) {
     const historyColor = colorToRgb(TREE_COLOR_CATEGORIES.pivotEdgeColor);
 
     if (cm.isNodeCompletedChangeEdge(nodeData)) {
-      return [...historyColor, baseOpacity];
+      _historyColorOut[0] = historyColor[0];
+      _historyColorOut[1] = historyColor[1];
+      _historyColorOut[2] = historyColor[2];
+      _historyColorOut[3] = baseOpacity;
+      return _historyColorOut;
     }
     if (cm.isNodeUpcomingChangeEdge(nodeData)) {
       // Upcoming changes are semi-transparent
-      return [...historyColor, Math.round(baseOpacity * 0.6)];
+      _historyColorOut[0] = historyColor[0];
+      _historyColorOut[1] = historyColor[1];
+      _historyColorOut[2] = historyColor[2];
+      _historyColorOut[3] = Math.round(baseOpacity * 0.6);
+      return _historyColorOut;
     }
   }
   return null;
@@ -54,7 +68,11 @@ export function getNodeColor(node, cached, helpers) {
   // Check raw node first (deck.gl datum)
   if (node.color) {
     // Expecting [r, g, b] in node.color
-    return [...node.color, helpers.getBaseOpacity(node.opacity)];
+    _nodeColorOut[0] = node.color[0];
+    _nodeColorOut[1] = node.color[1];
+    _nodeColorOut[2] = node.color[2];
+    _nodeColorOut[3] = helpers.getBaseOpacity(node.opacity);
+    return _nodeColorOut;
   }
 
   // Convert node data once
@@ -83,8 +101,11 @@ export function getNodeColor(node, cached, helpers) {
       subtreeDimmingOpacity,
       markedSubtreeData
     );
-    const result = [...pivotColor, opacity];
-    return result;
+    _nodeColorOut[0] = pivotColor[0];
+    _nodeColorOut[1] = pivotColor[1];
+    _nodeColorOut[2] = pivotColor[2];
+    _nodeColorOut[3] = opacity;
+    return _nodeColorOut;
   }
 
   // 3. Base Color Resolution
@@ -104,7 +125,11 @@ export function getNodeColor(node, cached, helpers) {
     markedSubtreeData
   );
 
-  return [...rgb, opacity];
+  _nodeColorOut[0] = rgb[0];
+  _nodeColorOut[1] = rgb[1];
+  _nodeColorOut[2] = rgb[2];
+  _nodeColorOut[3] = opacity;
+  return _nodeColorOut;
 }
 
 export function getNodeBorderColor(node, cached, helpers) {
@@ -117,8 +142,11 @@ export function getNodeBorderColor(node, cached, helpers) {
   const historyColor = resolveHistoryNodeColor(nodeData, cached, baseOpacity);
   if (historyColor) {
     // Darken: ~70% brightness
-    const [r, g, b, a] = historyColor;
-    return [Math.round(r * 0.7), Math.round(g * 0.7), Math.round(b * 0.7), a];
+    _borderColorOut[0] = Math.round(historyColor[0] * 0.7);
+    _borderColorOut[1] = Math.round(historyColor[1] * 0.7);
+    _borderColorOut[2] = Math.round(historyColor[2] * 0.7);
+    _borderColorOut[3] = historyColor[3];
+    return _borderColorOut;
   }
 
   // 2. Determine Border Color
@@ -171,7 +199,11 @@ export function getNodeBorderColor(node, cached, helpers) {
     markedSubtreeData
   );
 
-  return [...rgb, opacity];
+  _borderColorOut[0] = rgb[0];
+  _borderColorOut[1] = rgb[1];
+  _borderColorOut[2] = rgb[2];
+  _borderColorOut[3] = opacity;
+  return _borderColorOut;
 }
 
 export function getNodeBasedRgba(entity, baseEntityOpacity, cached, helpers) {
@@ -199,5 +231,9 @@ export function getNodeBasedRgba(entity, baseEntityOpacity, cached, helpers) {
     markedSubtreeData
   );
 
-  return [...rgb, opacity];
+  _nodeBasedOut[0] = rgb[0];
+  _nodeBasedOut[1] = rgb[1];
+  _nodeBasedOut[2] = rgb[2];
+  _nodeBasedOut[3] = opacity;
+  return _nodeBasedOut;
 }

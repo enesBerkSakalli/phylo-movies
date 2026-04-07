@@ -4,6 +4,9 @@
 import { createLayer } from '../base/createLayer.js';
 import { LAYER_CONFIGS } from '../../config/layerConfigs.js';
 
+// Reusable output buffer to avoid per-call array allocations
+const _connColorOut = [0, 0, 0, 0];
+
 /**
  * Create connectors layer (lines between trees)
  *
@@ -35,7 +38,11 @@ export function getConnectorsLayerProps(connectors, state) {
       // Apply global opacity to ALL connectors, including active/moving ones
       // This allows the slider to control visibility of highlighted elements as well
       const alpha = Math.round((linkConnectionOpacity ?? 0.6) * 255);
-      return [baseColor[0], baseColor[1], baseColor[2], alpha];
+      _connColorOut[0] = baseColor[0];
+      _connColorOut[1] = baseColor[1];
+      _connColorOut[2] = baseColor[2];
+      _connColorOut[3] = alpha;
+      return _connColorOut;
     },
     updateTriggers: {
       getPath: connectors.length,

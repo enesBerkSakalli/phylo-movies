@@ -1,3 +1,7 @@
+// Reusable output buffers to avoid per-call array allocations
+const _dashArrayOut = [0, 0];
+const _flightDashOut = [0, 0];
+
 export function calculatePathLength(path) {
   if (!path || path.length < 2) return 0;
 
@@ -40,7 +44,9 @@ export function calculateDashArray(path) {
     // Length = 2.5 * (1.5 * dash) = 3.75 * dash
     // dash = Length / 3.75
     const dash = Math.max(1, pathLength / 4);
-    return [dash, dash * 0.5];
+    _dashArrayOut[0] = dash;
+    _dashArrayOut[1] = dash * 0.5;
+    return _dashArrayOut;
   }
 
   // Scale dash pattern based on path length for longer paths
@@ -48,7 +54,9 @@ export function calculateDashArray(path) {
   const dashUnit = Math.max(4, Math.min(20, pathLength / (targetDashes * 1.5)));
   const gapUnit = dashUnit * 0.5;
 
-  return [dashUnit, gapUnit];
+  _dashArrayOut[0] = dashUnit;
+  _dashArrayOut[1] = gapUnit;
+  return _dashArrayOut;
 }
 
 export function calculateFlightDashArray(path) {
@@ -63,7 +71,9 @@ export function calculateFlightDashArray(path) {
   if (pathLength < 50) {
     const dotSize = Math.max(1.5, pathLength / 12);
     const gapSize = dotSize * 1.5; // Tighter gap for short paths
-    return [dotSize, gapSize];
+    _flightDashOut[0] = dotSize;
+    _flightDashOut[1] = gapSize;
+    return _flightDashOut;
   }
 
   // STANDARD PATHS:
@@ -74,5 +84,7 @@ export function calculateFlightDashArray(path) {
   // Gaps should be significantly larger (e.g., 3-4x dot size)
   const gapSize = dotSize * 3.5;
 
-  return [dotSize, gapSize];
+  _flightDashOut[0] = dotSize;
+  _flightDashOut[1] = gapSize;
+  return _flightDashOut;
 }

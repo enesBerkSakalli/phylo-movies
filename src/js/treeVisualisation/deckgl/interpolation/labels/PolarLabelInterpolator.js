@@ -26,8 +26,9 @@ export class PolarLabelInterpolator {
    * @param {number} t - Interpolation factor (0-1)
    * @returns {Object} Interpolated label data
    */
-  interpolateLabel(fromLabel, toLabel, t) {
-    const interpolatedPosition = this._interpolatePosition(fromLabel, toLabel, t);
+  interpolateLabel(fromLabel, toLabel, t, velocityEntry = null) {
+    const angularT = velocityEntry?.angularT ?? t;
+    const interpolatedPosition = this._interpolatePosition(fromLabel, toLabel, t, velocityEntry);
     const motionOpacity = 1;
 
     return {
@@ -37,7 +38,7 @@ export class PolarLabelInterpolator {
       rotation: this._interpolateRotation(
         fromLabel.rotation,
         toLabel.rotation,
-        t,
+        angularT,
         toLabel?.id ?? fromLabel?.id
       ),
       // Preserve properties from the target element
@@ -51,8 +52,10 @@ export class PolarLabelInterpolator {
    * Interpolate 3D position using polar coordinates
    * @private
    */
-  _interpolatePosition(fromLabel, toLabel, t) {
+  _interpolatePosition(fromLabel, toLabel, t, velocityEntry = null) {
     if (!fromLabel || !toLabel) return [0, 0, 0];
+
+    const angularT = velocityEntry?.angularT ?? t;
 
     // Use polarPosition (distance from center) for position interpolation
     const fromR = fromLabel.polarPosition ?? fromLabel.radius ?? 0;
@@ -73,7 +76,7 @@ export class PolarLabelInterpolator {
 
     // Use long arc if crossing root, otherwise use short arc
     const delta = crossesRoot ? longArcDelta(shortDelta) : shortDelta;
-    const interpolatedAngle = fromAngle + delta * t;
+    const interpolatedAngle = fromAngle + delta * angularT;
 
     // Convert back to Cartesian coordinates
     const x = interpolatedRadius * Math.cos(interpolatedAngle);
