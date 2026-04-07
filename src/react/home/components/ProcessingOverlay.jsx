@@ -11,18 +11,18 @@ import { Progress } from "@/components/ui/progress";
  */
 export function ProcessingOverlay({ operationState }) {
   return (
-    <div className="fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-md flex items-center justify-center animate-in fade-in duration-300">
-      <Card className="w-80 shadow-2xl border-white/10 bg-gradient-to-br from-splash-bg-from via-splash-bg-via to-splash-bg-to text-white">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-md animate-in fade-in duration-300">
+      <Card className="w-80 border-border/60 bg-card/95 text-card-foreground shadow-2xl">
         <CardContent className="pt-4 space-y-6">
           <div className="flex flex-col items-center text-center gap-4">
-            <div className="p-3 bg-splash-accent/10 rounded-md">
-              <Loader2 className="size-8 text-splash-accent animate-spin" />
+            <div className="rounded-md bg-primary/10 p-3">
+              <Loader2 className="size-8 animate-spin text-primary" />
             </div>
             <div className="space-y-1">
-              <p className="font-semibold text-white tracking-wide">
+              <p className="font-semibold tracking-wide text-card-foreground">
                 {operationState.message || 'Processing...'}
               </p>
-              <p className="text-xs text-splash-text-muted/60 font-light">
+              <p className="text-xs font-light text-muted-foreground">
                 Please wait while we process your data.
               </p>
             </div>
@@ -30,11 +30,11 @@ export function ProcessingOverlay({ operationState }) {
           <div className="space-y-2">
             <Progress
               value={operationState.percent}
-              className="h-1.5 bg-white/10 overflow-hidden"
+              className="h-1.5 overflow-hidden bg-muted"
             />
             <div className="flex justify-between items-center px-1">
-               <p className="text-2xs text-splash-text-muted/40 uppercase tracking-tighter">Status: Active</p>
-               <p className="text-2xs font-medium text-splash-accent-bright tabular-nums">
+               <p className="text-2xs uppercase tracking-tighter text-muted-foreground">Status: Active</p>
+               <p className="text-2xs font-medium tabular-nums text-primary">
                 {Math.round(operationState.percent)}%
               </p>
             </div>

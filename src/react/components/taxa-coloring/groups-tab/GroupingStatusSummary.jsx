@@ -11,13 +11,13 @@ export function GroupingStatusSummary({ groupingResult }) {
   const groupedCount = totalTaxa - ungroupedCount;
 
   // Determine status
-  let status = { icon: CheckCircle2, color: "text-emerald-500", bgColor: "bg-emerald-500/10", borderColor: "border-emerald-500/20" };
+  let status = { icon: CheckCircle2, color: "text-primary", bgColor: "bg-primary/10", borderColor: "border-primary/20" };
   if (!hasGroups) {
     status = { icon: AlertTriangle, color: "text-destructive", bgColor: "bg-destructive/10", borderColor: "border-destructive/20" };
   } else if (ungroupedPercent > 50) {
-    status = { icon: AlertTriangle, color: "text-amber-500", bgColor: "bg-amber-500/10", borderColor: "border-amber-500/20" };
+    status = { icon: AlertTriangle, color: "text-foreground", bgColor: "bg-muted/60", borderColor: "border-border" };
   } else if (ungroupedPercent > 20) {
-    status = { icon: Info, color: "text-blue-500", bgColor: "bg-blue-500/10", borderColor: "border-blue-500/20" };
+    status = { icon: Info, color: "text-muted-foreground", bgColor: "bg-accent/40", borderColor: "border-border" };
   }
 
   const StatusIcon = status.icon;

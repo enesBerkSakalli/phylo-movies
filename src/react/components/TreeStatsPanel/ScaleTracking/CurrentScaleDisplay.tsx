@@ -37,7 +37,7 @@ export const CurrentScaleDisplay: React.FC<CurrentScaleDisplayProps> = ({
             <Ruler className="size-3" />
             Tree Depth
           </Label>
-          <Separator className="bg-white/5" />
+          <Separator className="bg-border/40" />
         </>
       )}
 

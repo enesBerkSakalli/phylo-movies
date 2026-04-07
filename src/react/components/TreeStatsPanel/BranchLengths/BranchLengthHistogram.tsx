@@ -44,7 +44,7 @@ export const BranchLengthHistogram: React.FC<BranchLengthHistogramProps> = ({
             <Palette className="size-3" aria-hidden />
             Length Distribution
           </Label>
-          <Separator className="bg-white/5" />
+          <Separator className="bg-border/40" />
         </>
       )}
 
