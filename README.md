@@ -17,6 +17,7 @@ We demonstrate its utility in two contexts: identifying recombination breakpoint
 ## Availability and Implementation
 
 Source code is available under the MIT License at [github.com/enesBerkSakalli/phylo-movies](https://github.com/enesBerkSakalli/phylo-movies).
+Project information page is published at [enesberksakalli.github.io/phylo-movies](https://enesberksakalli.github.io/phylo-movies/) (**documentation only**). Full processing workflows require the full-stack app (Docker, local backend, or desktop build).
 The software consists of two components:
 
 - **Frontend** (JavaScript/React): The browser-based visualization, animation, and UI layer in `src/`.
