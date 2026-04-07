@@ -18,13 +18,13 @@ export class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="p-8 max-w-2xl mx-auto mt-10 border rounded-lg shadow-lg bg-destructive/10 text-destructive">
+        <div className="mx-auto mt-10 max-w-2xl rounded-lg border border-destructive/30 bg-destructive/10 p-8 shadow-lg text-destructive">
           <h1 className="text-2xl font-bold mb-4">Something went wrong</h1>
           <div className="mb-4">
             <p className="font-semibold">{this.state.error?.toString()}</p>
           </div>
           {this.state.errorInfo && (
-            <details className="whitespace-pre-wrap text-sm font-mono bg-white/50 p-4 rounded">
+            <details className="whitespace-pre-wrap rounded border border-border/60 bg-background/80 p-4 text-sm font-mono text-foreground">
               <summary className="cursor-pointer mb-2">Stack Trace</summary>
               {this.state.errorInfo.componentStack}
             </details>

@@ -73,7 +73,7 @@ export const SubtreeFrequencyList = () => {
 
   return (
     <div className="flex flex-col gap-2">
-      <Separator className="bg-white/5" />
+      <Separator className="bg-border/40" />
 
       <Collapsible defaultOpen={false} className="group/subtree">
         <CollapsibleTrigger className="flex items-center gap-2 w-full text-left hover:text-muted-foreground transition-colors">

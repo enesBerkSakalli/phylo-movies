@@ -51,7 +51,7 @@ export function ButtonsMSA() {
             <span className="truncate">Multiple Sequence Alignment</span>
             <div className="ml-auto flex items-center gap-1">
               {hasMsa && (
-                <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-none hover:bg-emerald-500/20 h-5 px-2 text-2xs font-medium transition-colors">
+                <Badge variant="secondary" className="h-5 px-2 text-2xs font-medium transition-colors">
                   Active
                 </Badge>
               )}
@@ -104,4 +104,3 @@ export function ButtonsMSA() {
 }
 
 export default ButtonsMSA;
-

@@ -1,13 +1,13 @@
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { Trees } from "lucide-react";
+import { GitBranch, Trees } from "lucide-react";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-export function TreeConstructionSection({ hasMsa, disabled }) {
+export function TreeConstructionSection({ hasMsa, hasTrees, disabled }) {
   const { control } = useFormContext();
 
   return (
@@ -34,6 +34,33 @@ export function TreeConstructionSection({ hasMsa, disabled }) {
       </div>
 
       <div className="space-y-3">
+        <FormField
+          control={control}
+          name="midpointRooting"
+          render={({ field }) => (
+            <FormItem className="rounded-lg border bg-muted/20 p-4 flex items-center justify-between gap-4 h-fit space-y-0 transition-colors hover:bg-muted/30">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <GitBranch className="size-4 text-primary" />
+                  <FormLabel className="font-medium cursor-pointer text-sm">
+                    Midpoint Rooting
+                  </FormLabel>
+                </div>
+                <FormDescription className="text-2xs leading-tight max-w-[24rem]">
+                  Establish the root at the branch that bisects the tree diameter. Applies to uploaded trees or trees inferred from MSA windows.
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                  disabled={disabled}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
         <FormField
           control={control}
           name="useGtr"
@@ -136,6 +163,12 @@ export function TreeConstructionSection({ hasMsa, disabled }) {
           )}
         />
       </div>
+
+      <p className="text-2xs text-muted-foreground italic leading-tight">
+        {hasTrees
+          ? "Inference options apply only when an MSA file is provided. Midpoint rooting still applies to uploaded trees."
+          : "Upload an MSA to infer trees here, or upload precomputed trees and use midpoint rooting only."}
+      </p>
     </div>
   );
 }

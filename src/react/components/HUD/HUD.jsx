@@ -223,7 +223,7 @@ function InterpolationCoordinateSection({ interpolationText, sliderMax, sliderVa
               {typeof interpolationText === 'object' ? interpolationText.display : interpolationText}
             </span>
           </TooltipTrigger>
-          <TooltipContent side="top" className="text-2xs font-mono bg-zinc-950 border-border/60 text-foreground">
+          <TooltipContent side="top" className="border-border/60 bg-popover text-2xs font-mono text-popover-foreground">
             <div className="space-y-1">
               <div>Full Precision:</div>
               <div className="font-bold text-primary tabular-nums">

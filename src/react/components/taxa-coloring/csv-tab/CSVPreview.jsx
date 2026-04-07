@@ -13,9 +13,9 @@ export function CSVPreview({ csvValidation, csvGroups }) {
         <div className="flex items-center justify-between">
           <CardTitle className="text-xs font-bold uppercase tracking-wider flex items-center gap-2">
             {ok ? (
-              <CheckCircle2 className="size-3 text-emerald-600" />
+              <CheckCircle2 className="size-3 text-primary" />
             ) : (
-              <AlertTriangle className="size-3 text-amber-600" />
+              <AlertTriangle className="size-3 text-foreground" />
             )}
             {ok ? "Mapping Preview" : "Partial Mapping"}
           </CardTitle>
