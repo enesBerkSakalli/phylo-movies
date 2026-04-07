@@ -4,6 +4,10 @@ import { calculateFlightDashArray } from '../dashUtils.js';
 import { applyDimmingWithCache } from '../../dimmingUtils.js';
 import { getInnerLinkColor } from '../linkUtils.js';
 
+// Reusable output buffers to avoid per-call array allocations
+const _linkColorOut = [0, 0, 0, 0];
+const _dashOut = [0, 0];
+
 
 
 export function getLinkColor(link, cached, helpers) {
@@ -16,14 +20,22 @@ export function getLinkColor(link, cached, helpers) {
   if (upcomingChangesEnabled && cm?.isCompletedChangeEdge?.(link)) {
     let opacity = helpers.getBaseOpacity(link.opacity);
     // Full opacity for completed - make it clearly visible
-    return [...historyColor, opacity];
+    _linkColorOut[0] = historyColor[0];
+    _linkColorOut[1] = historyColor[1];
+    _linkColorOut[2] = historyColor[2];
+    _linkColorOut[3] = opacity;
+    return _linkColorOut;
   }
 
   // Check if this is an upcoming change edge (semi-transparent - coming next)
   if (upcomingChangesEnabled && cm?.isUpcomingChangeEdge?.(link)) {
     let opacity = helpers.getBaseOpacity(link.opacity);
     opacity = Math.round(opacity * 0.6); // 60% opacity - semi-transparent
-    return [...historyColor, opacity];
+    _linkColorOut[0] = historyColor[0];
+    _linkColorOut[1] = historyColor[1];
+    _linkColorOut[2] = historyColor[2];
+    _linkColorOut[3] = opacity;
+    return _linkColorOut;
   }
 
   // Get color for inner line: active edges get blue, marked keep base color (unless contrast mode)
@@ -46,7 +58,11 @@ export function getLinkColor(link, cached, helpers) {
 
 
 
-  return [...rgb, opacity];
+  _linkColorOut[0] = rgb[0];
+  _linkColorOut[1] = rgb[1];
+  _linkColorOut[2] = rgb[2];
+  _linkColorOut[3] = opacity;
+  return _linkColorOut;
 }
 
 
@@ -63,7 +79,9 @@ export function getLinkDashArray(link, cached) {
   // Next: DOTTED (small dots) - future, anticipation
   if (upcomingChangesEnabled && cm?.isUpcomingChangeEdge?.(link)) {
     // Small dots pattern
-    return [3, 6]; // Short on, longer off = dotted
+    _dashOut[0] = 3;
+    _dashOut[1] = 6;
+    return _dashOut; // Short on, longer off = dotted
   }
 
   // Current: DASHED (when dashing enabled) - active, in progress

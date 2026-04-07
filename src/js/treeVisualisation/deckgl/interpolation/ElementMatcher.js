@@ -9,14 +9,17 @@ export class ElementMatcher {
    * @param {Array} toElements - Target elements
    * @param {number} timeFactor - Interpolation factor (0-1)
    * @param {Function} interpolateFn - Function to interpolate matched elements
-   * @param {Object} [precomputedMaps] - Optional cached maps { fromMap, toMap }
+   * @param {Object} [options] - Optional { fromMap, toMap, velocityMap }
+   *   - fromMap/toMap: precomputed id→element Maps
+   *   - velocityMap: Map<id, { angularT }> for angle-only normalisation
    * @returns {Array} Interpolated elements
    */
-  interpolateElements(fromElements, toElements, timeFactor, interpolateFn, precomputedMaps) {
+  interpolateElements(fromElements, toElements, timeFactor, interpolateFn, options) {
     // Use precomputed maps if available, otherwise create valid maps
     // Note: If passed, they MUST be Map objects or convertible to iterables
-    const fromMap = precomputedMaps?.fromMap || this._createElementMap(fromElements);
-    const toMap = precomputedMaps?.toMap || this._createElementMap(toElements);
+    const fromMap = options?.fromMap || this._createElementMap(fromElements);
+    const toMap = options?.toMap || this._createElementMap(toElements);
+    const velocityMap = options?.velocityMap || null;
 
     const result = [];
     const processedFromIds = new Set();
@@ -29,9 +32,12 @@ export class ElementMatcher {
         // Element exists in both - interpolate
         processedFromIds.add(id);
 
-        // Pass the full from/to elements to the interpolation function
-        // This allows the interpolator to access all necessary properties (e.g., for polar interpolation)
-        result.push(interpolateFn(fromElement, toElement, timeFactor, fromElement, toElement));
+        // Use per-element velocity entry when normalisation is active.
+        // velocityEntry is { angularT } or null.
+        const velocityEntry = velocityMap?.get(id) ?? null;
+
+        // Keep the base eased time unchanged and pass angular remapping separately.
+        result.push(interpolateFn(fromElement, toElement, timeFactor, fromElement, toElement, velocityEntry));
       } else {
         // Element is entering - use target state
         // We interpolate(to, to, 1.0) to ensure derived properties (like paths) are calculated

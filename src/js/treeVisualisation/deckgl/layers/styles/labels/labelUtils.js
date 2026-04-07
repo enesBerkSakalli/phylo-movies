@@ -1,5 +1,9 @@
 import { getLabelHistoryZOffset } from '../../../utils/GeometryUtils.js';
 
+// Reusable output buffers to avoid per-call array allocations
+const _positionOut = [0, 0, 0];
+const _alphaOut = [0, 0, 0, 0];
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Generic Utilities
 // ─────────────────────────────────────────────────────────────────────────────
@@ -10,8 +14,10 @@ import { getLabelHistoryZOffset } from '../../../utils/GeometryUtils.js';
 export function addZOffset(position, offset) {
   if (!offset) return position;
   // position is typically [x, y, z] or [x, y]
-  const z = (position[2] || 0) + offset;
-  return [position[0], position[1], z];
+  _positionOut[0] = position[0];
+  _positionOut[1] = position[1];
+  _positionOut[2] = (position[2] || 0) + offset;
+  return _positionOut;
 }
 
 /**
@@ -29,10 +35,12 @@ export function getHistoryOffset(cached, label) {
 export function boostAlpha(color, scale) {
   if (!scale || scale === 1) return color;
 
-  // Clone only when necessary
-  const next = [...color];
-  next[3] = Math.min(255, Math.round(next[3] * scale));
-  return next;
+  // Write into reusable buffer instead of cloning
+  _alphaOut[0] = color[0];
+  _alphaOut[1] = color[1];
+  _alphaOut[2] = color[2];
+  _alphaOut[3] = Math.min(255, Math.round(color[3] * scale));
+  return _alphaOut;
 }
 
 /**

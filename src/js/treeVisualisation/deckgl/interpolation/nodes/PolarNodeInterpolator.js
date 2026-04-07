@@ -26,10 +26,10 @@ export class PolarNodeInterpolator {
    * @param {number} t - Interpolation factor (0-1)
    * @returns {Object} Interpolated node data
    */
-  interpolateNode(fromNode, toNode, t) {
+  interpolateNode(fromNode, toNode, t, velocityEntry = null) {
     return {
       ...toNode,
-      position: this.interpolatePosition(fromNode, toNode, t),
+      position: this.interpolatePosition(fromNode, toNode, t, velocityEntry),
       radius: this._interpolateScalar(fromNode.radius, toNode.radius, t),
       // Preserve properties from target
       name: toNode.name,
@@ -47,8 +47,10 @@ export class PolarNodeInterpolator {
    * @param {number} t - Interpolation factor (0-1)
    * @returns {Array} [x, y, z] interpolated position
    */
-  interpolatePosition(fromNode, toNode, t) {
+  interpolatePosition(fromNode, toNode, t, velocityEntry = null) {
     if (!fromNode || !toNode) return [0, 0, 0];
+
+    const angularT = velocityEntry?.angularT ?? t;
 
     // Use polarPosition (distance from center) for position interpolation
     // Fallback to radius for backwards compatibility
@@ -70,7 +72,7 @@ export class PolarNodeInterpolator {
 
     // Use long arc if crossing root, otherwise use short arc
     const delta = crossesRoot ? longArcDelta(shortDelta) : shortDelta;
-    const interpolatedAngle = fromAngle + delta * t;
+    const interpolatedAngle = fromAngle + delta * angularT;
 
     // Convert back to Cartesian coordinates
     const x = interpolatedRadius * Math.cos(interpolatedAngle);

@@ -24,10 +24,10 @@ export class PolarExtensionInterpolator {
    * @param {number} t - Interpolation factor (0-1)
    * @returns {Object} Interpolated extension data
    */
-  interpolateExtension(fromExt, toExt, t) {
+  interpolateExtension(fromExt, toExt, t, velocityEntry = null) {
     return {
       ...toExt,
-      path: this.pathInterpolator.interpolatePath(fromExt, toExt, t),
+      path: this.pathInterpolator.interpolatePath(fromExt, toExt, t, velocityEntry),
       leaf: toExt.leaf // Preserve leaf reference
     };
   }

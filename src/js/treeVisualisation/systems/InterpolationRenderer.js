@@ -19,7 +19,7 @@ export class InterpolationRenderer {
       await this.controller.readyPromise;
     }
 
-    const { fromTreeIndex, toTreeIndex } = options;
+    const { fromTreeIndex, toTreeIndex, stage } = options;
     let t = Math.max(0, Math.min(1, timeFactor));
     if (fromTreeData === toTreeData) t = 0;
 
@@ -39,7 +39,8 @@ export class InterpolationRenderer {
       dataFrom,
       dataTo,
       t,
-      branchTransformation
+      branchTransformation,
+      stage
     );
     interpolatedData.targetData = dataTo; // Add target data for movement arrow endpoints
 
@@ -135,7 +136,8 @@ export class InterpolationRenderer {
 
     return this.renderSingleInterpolatedFrame(fromTree, toTree, t, {
       fromTreeIndex: fromIndex,
-      toTreeIndex: toIndex
+      toTreeIndex: toIndex,
+      stage
     });
   }
 }

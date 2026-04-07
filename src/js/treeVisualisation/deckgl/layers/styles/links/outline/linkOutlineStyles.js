@@ -5,6 +5,11 @@ import { applyDimmingWithCache } from '../../dimmingUtils.js';
 import { shouldHighlightMarkedSubtree, shouldHighlightHistorySubtree, getHistoryOutlineStyle, getMarkedHighlightColor } from '../linkUtils.js';
 import { isLinkVisuallyHighlighted } from '../../../../../systems/tree_color/visualHighlights.js';
 
+// Reusable output buffers to avoid per-call array allocations
+const _outlineColorOut = [0, 0, 0, 0];
+const _transparentColor = [0, 0, 0, 0];
+const _outlineDashOut = [0, 0];
+
 export function getLinkOutlineDashArray(link, cached) {
   const { colorManager: cm, dashingEnabled, upcomingChangesEnabled } = cached;
 
@@ -15,7 +20,9 @@ export function getLinkOutlineDashArray(link, cached) {
 
   // Next: dotted
   if (upcomingChangesEnabled && cm.isUpcomingChangeEdge(link)) {
-    return [3, 6];
+    _outlineDashOut[0] = 3;
+    _outlineDashOut[1] = 6;
+    return _outlineDashOut;
   }
 
   // Current: dashed (when enabled)
@@ -37,7 +44,11 @@ export function getLinkOutlineColor(link, cached) {
   } = cached;
 
   if (!cm) {
-    return [0, 0, 0, 0]; // Transparent if no ColorManager
+    _transparentColor[0] = 0;
+    _transparentColor[1] = 0;
+    _transparentColor[2] = 0;
+    _transparentColor[3] = 0;
+    return _transparentColor; // Transparent if no ColorManager
   }
 
   const historyColor = colorToRgb(TREE_COLOR_CATEGORIES.pivotEdgeColor);
@@ -80,7 +91,11 @@ export function getLinkOutlineColor(link, cached) {
   }
   // Otherwise: no outline
   else {
-    return [0, 0, 0, 0];
+    _transparentColor[0] = 0;
+    _transparentColor[1] = 0;
+    _transparentColor[2] = 0;
+    _transparentColor[3] = 0;
+    return _transparentColor;
   }
 
   // 2. Apply Dimming logic
@@ -99,7 +114,11 @@ export function getLinkOutlineColor(link, cached) {
 
 
 
-  return [...rgb, glowOpacity];
+  _outlineColorOut[0] = rgb[0];
+  _outlineColorOut[1] = rgb[1];
+  _outlineColorOut[2] = rgb[2];
+  _outlineColorOut[3] = glowOpacity;
+  return _outlineColorOut;
 }
 
 export function getLinkOutlineWidth(link, cached, helpers) {

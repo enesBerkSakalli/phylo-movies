@@ -41,13 +41,14 @@ export class PolarPathInterpolator {
    * @returns {Float32Array} Interpolated path points
    * @throws {Error} If polarData is missing
    */
-  interpolatePath(fromLink, toLink, timeFactor) {
+  interpolatePath(fromLink, toLink, timeFactor, velocityEntry = null) {
     // Fail-fast: polar data is required
     if (!fromLink?.polarData || !toLink?.polarData) {
       throw new Error(`Missing polarData for link interpolation: ${toLink?.id ?? fromLink?.id}`);
     }
 
     const t = Math.max(0, Math.min(1, timeFactor));
+    const angularT = velocityEntry?.angularT ?? t;
 
     // Get source angles
     const fromSourceAngle = fromLink.polarData.source.angle;
@@ -61,11 +62,11 @@ export class PolarPathInterpolator {
     const sourceDelta = this._getAngleDelta(fromSourceAngle, toSourceAngle);
     const targetDelta = this._getAngleDelta(fromTargetAngle, toTargetAngle);
 
-    // Calculate interpolated angles
-    const interpSourceAngle = fromSourceAngle + sourceDelta * t;
-    const interpTargetAngle = fromTargetAngle + targetDelta * t;
+    // Calculate interpolated angles (use angularT)
+    const interpSourceAngle = fromSourceAngle + sourceDelta * angularT;
+    const interpTargetAngle = fromTargetAngle + targetDelta * angularT;
 
-    // Interpolate radii
+    // Interpolate radii on the base eased timeline.
     const interpSourceRadius = fromLink.polarData.source.radius +
       (toLink.polarData.source.radius - fromLink.polarData.source.radius) * t;
     const interpTargetRadius = fromLink.polarData.target.radius +
