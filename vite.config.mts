@@ -61,7 +61,9 @@ export default defineConfig(async (): Promise<UserConfig> => {
     envPrefix: ['VITE_'],
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, './src')
+        '@': path.resolve(__dirname, './src'),
+        child_process: path.resolve(__dirname, './src/lib/shims/child-process-browser.js'),
+        'node:child_process': path.resolve(__dirname, './src/lib/shims/child-process-browser.js')
       }
     },
     css: {
