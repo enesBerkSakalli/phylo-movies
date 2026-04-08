@@ -10,7 +10,7 @@ import { calculateBranchCoordinates } from '../src/js/treeVisualisation/layout/R
 function createMockNode(id, length = 1, children = []) {
   return {
     id,
-    data: { branch_length: length }, // Simulate parsed Newick data
+    length,
     children
   };
 }
@@ -121,22 +121,22 @@ describe('Complex Data Layer Integration', () => {
     // Generate two trees, simulate a "move", generate connectors
     it('generates correct Active vs Passive connectors for a moving subtree', () => {
       // Setup Left Tree (Source)
-      // Root -> (Stay1, MoveGroup[M1, M2])
+      // Root -> (Stay1, MoveGroup[1, 2])
       const leftTreeData = createMockNode('rootL', 0, [
         createMockNode('Stay1', 10),
         createMockNode('MoveParent', 10, [
-          createMockNode('M1', 10),
-          createMockNode('M2', 10)
+          createMockNode('1', 10),
+          createMockNode('2', 10)
         ])
       ]);
 
       // Setup Right Tree (Dest)
-      // Root -> (Stay1, NewHome[M1, M2])
+      // Root -> (Stay1, NewHome[1, 2])
       const rightTreeData = createMockNode('rootR', 0, [
         createMockNode('Stay1', 10),
         createMockNode('NewHome', 10, [
-          createMockNode('M1', 10),
-          createMockNode('M2', 10)
+          createMockNode('1', 10),
+          createMockNode('2', 10)
         ])
       ]);
 
@@ -152,17 +152,16 @@ describe('Complex Data Layer Integration', () => {
           // Flatten split keys - simplified for test
           const key = node.id || node.data.id;
           if (!node.children) { // Leaves mainly
-             map.set(key, {
-               isLeaf: true,
-               name: key,
-               position: [node.x, node.y, 0], // x,y are Cartesian from TidyTreeLayout? No, Tidy output
-               // Wait, createTidyTreeLayout returns 'tree' with x,y in Cartesian (as generatedCoordinates is called)
-               // Yes, generateCoordinates converts radius/angle to x/y.
-               node: { originalNode: node }
-             });
+            map.set(key, {
+              isLeaf: true,
+              name: key,
+              position: [node.x, node.y, 0],
+              node: { originalNode: node }
+            });
+            return;
           }
-           // Add internal nodes too for bundling lookups
-           map.set(key, { node: { originalNode: node }, position: [node.x, node.y, 0] });
+          // Add internal nodes too for bundling lookups without overwriting leaf metadata.
+          map.set(key, { node: { originalNode: node }, position: [node.x, node.y, 0] });
         });
         return map;
       };
@@ -171,20 +170,19 @@ describe('Complex Data Layer Integration', () => {
       const rightPositions = mockPositionMap(rightResult.tree);
 
       // 3. Define the "Move"
-      // The edge leading to MoveParent (containing M1, M2) is the "active edge".
-      // Let's say M1 and M2 are tracked as split indices "1" and "2".
-      // For this test, we accept string keys "M1", "M2".
+      // The edge leading to MoveParent (containing leaves 1 and 2) is the active edge.
 
       // The builder expects `latticeSolutions` keys to be stringified arrays: "[u, v]"
       // If we pass pivotEdge = ['edge1'], it looks up latticeSolutions['[edge1]'].
 
-      const movingSubtree = ['M1', 'M2']; // Restore definition
+      const movingSubtree = [1, 2];
       const pivotEdge = ['edge1'];
       const edgeKey = '[edge1]';
 
       const mockColorManager = {
         isNodePivotEdge: () => false,
         isNodeHistorySubtree: () => false,
+        getNodeColor: () => '#646464',
         getOutputColor: () => [100, 100, 100],
         getTypeColor: () => [200, 200, 200]
       };
