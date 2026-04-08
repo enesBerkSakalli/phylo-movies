@@ -50,6 +50,9 @@ backend/brancharchitect-0.37.0.dist-info
 mcp
 .vite/deps
 .playwright-mcp
+!test/data/
+test/data/*
+!test/data/ostrich_bug_response.json
 docs/*
 !docs/screenshot.png
 dist-publish
@@ -78,3 +81,4 @@ publication_data/norovirus/recan_recombination_analysis
 scripts/rewrite-git-authors.sh
 scripts/
 Paper_Submission_TODO.md
+.qwen
