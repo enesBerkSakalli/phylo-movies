@@ -136,12 +136,6 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       }
     });
 
-    this.deckContext.onNodeHover((info, event) => {
-      if (this.interactionHandler) {
-        this.interactionHandler.handleNodeHover(info, event);
-      }
-    });
-
     this.deckContext.onDragStart((info, event) => handleDragStart(this, info));
     this.deckContext.onDrag((info, event) => handleDrag(this, info));
     this.deckContext.onDragEnd((info, event) => handleDragEnd(this));
@@ -345,15 +339,6 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
   // ==========================================================================
   // Delegated to InterpolationRenderer
-  async renderSingleInterpolatedFrame(fromTreeData, toTreeData, timeFactor, options = {}) {
-    return this.interpolationRenderer.renderSingleInterpolatedFrame(
-      fromTreeData,
-      toTreeData,
-      timeFactor,
-      options
-    );
-  }
-
   async renderComparisonAwareScrubFrame(fromTreeData, toTreeData, timeFactor, options = {}) {
     return this.interpolationRenderer.renderComparisonAwareScrubFrame(
       fromTreeData,

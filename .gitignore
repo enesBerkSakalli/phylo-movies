@@ -75,3 +75,6 @@ data/
 bun.lock
 publication_data/norovirus/recan_recombination_analysis
 .github/copilot-instructions.md
+scripts/rewrite-git-authors.sh
+scripts/
+Paper_Submission_TODO.md
