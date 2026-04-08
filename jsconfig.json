@@ -11,8 +11,18 @@
             "@/*": ["./src/*"]
         }
     },
+    "include": [
+        "src/**/*.js",
+        "src/**/*.jsx",
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "src/**/*.d.ts"
+    ],
     "exclude": [
         "node_modules",
-        "**/node_modules/*"
+        "**/node_modules/*",
+        "dist",
+        "node_modules/.cache",
+        "node_modules/.vite"
     ]
 }
