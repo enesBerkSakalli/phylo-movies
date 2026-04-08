@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/enesBerkSakalli/phylo-movies/actions/workflows/ci.yml/badge.svg)](https://github.com/enesBerkSakalli/phylo-movies/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![bioRxiv](https://img.shields.io/badge/bioRxiv-10.64898%2F2026.04.01.715821-B31B1B.svg)](https://doi.org/10.64898/2026.04.01.715821)
 <!-- [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX) -->
 
 <p align="center">
@@ -14,24 +15,27 @@ Sliding-window phylogenetic analyses of multiple sequence alignments (MSAs) gene
 
 We demonstrate its utility in two contexts: identifying recombination breakpoints in norovirus genomes, where lineages shift from polymerase-based to capsid-based clustering at the ORF1/ORF2 junction, and detecting rogue taxa that change position across bootstrap replicates. Phylo-Movies complements summary statistics such as Robinson–Foulds distances by showing *which* lineages move, *where* they move from, and *which* new groupings they form.
 
+The method and case studies are described in the bioRxiv preprint [Animating Phylogenetic Trees from Sliding-Window Analyses](https://doi.org/10.64898/2026.04.01.715821).
+
 ## Availability and Implementation
 
 Source code is available under the MIT License at [github.com/enesBerkSakalli/phylo-movies](https://github.com/enesBerkSakalli/phylo-movies).
+Preprint: [Animating Phylogenetic Trees from Sliding-Window Analyses](https://www.biorxiv.org/content/10.64898/2026.04.01.715821v1) ([DOI](https://doi.org/10.64898/2026.04.01.715821)).
 Project information page is published at [enesberksakalli.github.io/phylo-movies](https://enesberksakalli.github.io/phylo-movies/) (**documentation only**). Full processing workflows require the full-stack app (Docker, local backend, or desktop build).
 The software consists of two components:
 
 - **Frontend** (JavaScript/React): The browser-based visualization, animation, and UI layer in `src/`.
 - **Backend** ([BranchArchitect](https://github.com/EnesSakalliUniWien/BranchArchitect)): A Python engine included as a git submodule in `engine/BranchArchitect/`. It computes SPR (Subtree Prune and Regraft) paths between trees, identifies which subtrees move, and generates interpolated intermediate frames that the frontend renders as smooth morphing animations. BranchArchitect exposes a Flask API (port 5002) that the frontend calls to retrieve tree data, interpolation sequences, and MSA window mappings.
 
-All test datasets required to reproduce the benchmarks are located in `publication_data/`.
+All test datasets required to reproduce the preprint benchmarks are located in `publication_data/`.
 
 ## Citation
 
-If you use PhyloMovies in your research, please cite:
+If you use Phylo-Movies in your research, please cite the preprint:
 
-> Sakalli, E. B. et al (2026). Phylo-Movies: Interactive Phylogenetic Tree Interpolation and Visualization. GitHub. <https://github.com/enesBerkSakalli/phylo-movies>
+> Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026). Animating Phylogenetic Trees from Sliding-Window Analyses. bioRxiv. <https://doi.org/10.64898/2026.04.01.715821>
 
-Or use the provided `CITATION.cff` file.
+The software metadata and preferred citation are also available in `CITATION.cff`.
 
 ## Demo Videos
 
@@ -466,7 +470,6 @@ phylo-movies/
 |-- tsconfig.json            # TypeScript configuration
 `-- README.md                # This file
 ```
-
 
 ### The `publication_data/` Folder
 
