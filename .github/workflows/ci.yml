@@ -340,7 +340,7 @@ jobs:
         run: cd engine/BranchArchitect && poetry install --with build
 
       - name: Build desktop app (Linux smoke test)
-        run: cd electron-app && bash build.sh linux
+        run: cd electron-app && bash build.sh linux --publish never
 
       - name: Upload desktop build artifacts
         uses: actions/upload-artifact@v4

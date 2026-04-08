@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # build.sh - Comprehensive build script for Phylo-Movies Electron App
-# Usage: ./build.sh [macos|win|linux]
+# Usage: ./build.sh [mac|win|linux] [electron-builder args...]
 
 set -e # Exit immediately if a command exits with a non-zero status
 
@@ -143,12 +143,12 @@ else
     TARGET="--mac" # Default to Mac
 fi
 
-# Collect extra args (e.g., -p always for CI publish)
-shift 2>/dev/null || true
-EXTRA_ARGS="$@"
+# Collect extra args (e.g., --publish always for release builds)
+shift || true
+EXTRA_ARGS=("$@")
 
-echo "Running electron-builder for target: $TARGET $EXTRA_ARGS"
-npx electron-builder $TARGET $EXTRA_ARGS
+echo "Running electron-builder for target: $TARGET ${EXTRA_ARGS[*]}"
+npx electron-builder "$TARGET" "${EXTRA_ARGS[@]}"
 
 echo "=========================================="
 echo "  Build Success!"
