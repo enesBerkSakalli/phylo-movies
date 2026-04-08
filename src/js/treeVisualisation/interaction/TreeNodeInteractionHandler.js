@@ -1,4 +1,4 @@
-import { useAppStore, selectCurrentTree } from '../../core/store.js';
+import { useAppStore, selectCurrentTree } from '../../state/phyloStore/store.js';
 
 /**
  * Handles tree node interactions for deck.gl visualization

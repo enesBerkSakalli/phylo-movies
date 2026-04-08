@@ -7,7 +7,7 @@ import { AnimationRunner } from './systems/AnimationRunner.js';
 import { InterpolationRenderer } from './systems/InterpolationRenderer.js';
 import { StaticRenderer } from './systems/StaticRenderer.js';
 import { WebGLTreeAnimationController } from './WebGLTreeAnimationController.js';
-import { useAppStore } from '../core/store.js';
+import { useAppStore } from '../state/phyloStore/store.js';
 import { TreeNodeInteractionHandler } from './interaction/TreeNodeInteractionHandler.js';
 import { handleDragStart, handleDrag, handleDragEnd, handleContainerResize } from './interaction/InteractionHandlers.js';
 import { ViewportManager } from './viewport/ViewportManager.js';

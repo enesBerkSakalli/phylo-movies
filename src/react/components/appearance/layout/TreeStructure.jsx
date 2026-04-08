@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { useAppStore } from '../../../../js/core/store.js';
+import { useAppStore } from '../../../../js/state/phyloStore/store.js';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { SidebarMenuSub, SidebarMenuSubItem } from '@/components/ui/sidebar';
 import { GitGraph } from 'lucide-react';

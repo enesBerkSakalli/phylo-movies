@@ -1,48 +1,21 @@
-import TransitionIndexResolver from '../../domain/indexing/TransitionIndexResolver.js';
-import { extractMsaColumnCount, extractMsaWindowParameters, hasMsaData } from '../../domain/msa/msaDataExtractor.js';
-import { calculateTreeScales } from '../../domain/tree/scaleCalculator.js';
-import { MovieTimelineManager } from '../../timeline/core/MovieTimelineManager.js';
+import TransitionIndexResolver from '../../../../domain/indexing/TransitionIndexResolver.js';
+import { extractMsaColumnCount, extractMsaWindowParameters, hasMsaData } from '../../../../domain/msa/msaDataExtractor.js';
+import { calculateTreeScales } from '../../../../domain/tree/scaleCalculator.js';
+import { MovieTimelineManager } from '../../../../timeline/core/MovieTimelineManager.js';
 
-/**
- * Phylogenetic data slice: manages immutable phylogenetic tree data and initialization.
- */
-export const createPhylogeneticDataSlice = (set, get) => ({
-  // ==========================================================================
-  // STATE: Core Data
-  // ==========================================================================
-  movieData: null,
-  treeList: [],
-  fileName: null,
-  transitionResolver: null,
-
-  // ==========================================================================
-  // STATE: Distances & Scales
-  // ==========================================================================
-  distanceRfd: [],
-  distanceWeightedRfd: [],
-  scaleValues: [],
-
-  // ==========================================================================
-  // STATE: Change Tracking
-  // ==========================================================================
-  pairSolutions: {},
-  pivotEdgeTracking: [],
-  subtreeTracking: [],
-
+export const createDatasetLifecycleSlice = (set, get) => ({
   // ==========================================================================
   // ACTIONS: Reset
   // ==========================================================================
   reset: () => {
     const { resetMsaData, resetColors, resetPlayback, resetControllers, resetComparison } = get();
 
-    // Reset each slice via its own reset action
     resetControllers?.();
     resetPlayback?.();
     resetMsaData?.();
     resetColors?.();
     resetComparison?.();
 
-    // Reset this slice's own state
     set({
       movieData: null,
       treeList: [],
@@ -83,7 +56,6 @@ export const createPhylogeneticDataSlice = (set, get) => ({
 
     const sortedLeaves = movieData.sorted_leaves || [];
 
-    // Extract MSA data and set via MSA slice
     const msaColumnCount = extractMsaColumnCount(movieData);
     const { windowSize, stepSize } = extractMsaWindowParameters(movieData);
     const hasMsaContent = hasMsaData(movieData);
@@ -100,7 +72,6 @@ export const createPhylogeneticDataSlice = (set, get) => ({
     const distanceRfd = extractDistanceArray(movieData?.distances?.robinson_foulds);
     const distanceWeightedRfd = extractDistanceArray(movieData?.distances?.weighted_robinson_foulds);
 
-    // Destroy existing timeline manager before creating new one
     const existingManager = get().movieTimelineManager;
     existingManager?.destroy();
 
@@ -130,14 +101,9 @@ export const createPhylogeneticDataSlice = (set, get) => ({
       playing: false,
     });
 
-    // Initialize colors via visualisation slice (after data is set)
     initializeColors?.();
   },
 });
-
-// ==========================================================================
-// Private Helper Functions
-// ==========================================================================
 
 function createTransitionResolver(movieData, treeMetadata) {
   return new TransitionIndexResolver(

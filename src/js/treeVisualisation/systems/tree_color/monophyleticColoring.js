@@ -1,15 +1,15 @@
 /**
  * Monophyletic coloring utilities
  * Handles base color calculation for branches and nodes based on taxa colors
- * 
+ *
  * Now integrates with the dynamic taxaGrouping system from the store,
  * supporting taxa mode, group mode (separator-based), and CSV mode.
- * 
+ *
  * PERFORMANCE: Uses a render-cycle cache to avoid repeated store access.
  * Call `resetTaxonColorCache()` at the start of each render cycle.
  */
 import { TREE_COLOR_CATEGORIES } from '../../../constants/TreeColors.js';
-import { useAppStore } from '../../../core/store.js';
+import { useAppStore } from '../../../state/phyloStore/store.js';
 import { getTaxonColor } from '../../../treeColoring/utils/GroupingUtils.js';
 
 // =============================================================================
@@ -35,13 +35,13 @@ export function resetTaxonColorCache() {
 function ensureColorCache() {
   const state = useAppStore.getState();
   const taxaGrouping = state.taxaGrouping;
-  
+
   // If cache is missing or taxaGrouping reference changed, (re)build cache
   if (!_taxonColorCache || _cachedTaxaGrouping !== taxaGrouping) {
     _taxonColorCache = new Map();
     _cachedTaxaGrouping = taxaGrouping;
   }
-  
+
   return { cache: _taxonColorCache, taxaGrouping };
 }
 
@@ -85,27 +85,27 @@ function _collectLeafNamesRecursive(node) {
 /**
  * Get the effective color for a taxon, respecting taxaGrouping from store
  * Falls back to TREE_COLOR_CATEGORIES for legacy compatibility
- * 
+ *
  * PERFORMANCE: Uses render-cycle cache to avoid repeated lookups.
- * 
+ *
  * @param {string} taxonName - The taxon name
  * @returns {string|null} The color or null if default
  */
 function getEffectiveTaxonColor(taxonName) {
   const { cache, taxaGrouping } = ensureColorCache();
-  
+
   // Check cache first
   if (cache.has(taxonName)) {
     return cache.get(taxonName);
   }
-  
+
   let color = null;
-  
+
   // Only use taxaGrouping for color resolution (no legacy TREE_COLOR_CATEGORIES fallback)
   if (taxaGrouping && taxaGrouping.mode) {
     color = getTaxonColor(taxonName, taxaGrouping, null);
   }
-  
+
   // Store in cache (even null values to avoid re-lookup)
   cache.set(taxonName, color);
   return color;

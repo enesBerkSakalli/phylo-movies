@@ -7,7 +7,7 @@ import { SaveImageButton } from '../media/SaveImageButton.jsx';
 import { TimelineScrollControls } from './TimelineScrollControls/TimelineScrollControls.jsx';
 import { PlaybackSpeedControl } from './PlaybackSpeedControl/PlaybackSpeedControl.jsx';
 import { TimelineSegmentTooltip } from '../timeline/TimelineSegmentTooltip.jsx';
-import { useAppStore } from '@/js/core/store';
+import { useAppStore } from '../../../js/state/phyloStore/store.js';
 import { useSidebar } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Menu, ChevronUp, ChevronDown } from 'lucide-react';
@@ -38,7 +38,6 @@ const selectMovieData = (s) => s.movieData;
 const selectMovieTimelineManager = (s) => s.movieTimelineManager;
 
 export function MoviePlayerBar() {
-  // ... existing hooks ...
   const forward = useAppStore(selectForward);
   const backward = useAppStore(selectBackward);
   const setAnimationSpeed = useAppStore(selectSetAnimationSpeed);
@@ -47,8 +46,6 @@ export function MoviePlayerBar() {
   const setBarOption = useAppStore(selectSetBarOption);
   const [toolbarExpanded, setToolbarExpanded] = useState(true);
 
-  // ... rest of state and effects ...
-  // Timeline tooltip state
   const hoveredSegmentIndex = useAppStore(selectHoveredSegmentIndex);
   const hoveredSegmentData = useAppStore(selectHoveredSegmentData);
   const hoveredSegmentPosition = useAppStore(selectHoveredSegmentPosition);
@@ -57,16 +54,21 @@ export function MoviePlayerBar() {
   const movieData = useAppStore(selectMovieData);
   const movieTimelineManager = useAppStore(selectMovieTimelineManager);
   const tooltipRef = useRef(null);
+  const timelineHostRef = useRef(null);
 
-  // Get segments from timeline manager
   const segments = movieTimelineManager?.segments || [];
 
-  // Reinitialize timeline when component mounts and container is available
   useEffect(() => {
-    movieTimelineManager?.ensureTimelineInitialized();
+    const container = timelineHostRef.current;
+    if (!movieTimelineManager || !container) return;
+
+    movieTimelineManager.mount(container);
+
+    return () => {
+      movieTimelineManager.unmount();
+    };
   }, [movieTimelineManager]);
 
-  // Get leaf names function for tooltip
   const getLeafNames = useCallback((indices) => {
     const sortedLeaves = movieData?.sorted_leaves;
     if (!sortedLeaves || !Array.isArray(sortedLeaves)) return [];
@@ -89,7 +91,7 @@ export function MoviePlayerBar() {
 
   return (
     <>
-      <div className="sticky bottom-0 z-[1000] bg-card border-t shadow-[0_2px_4px_rgba(0,0,0,0.08)]" role="region" aria-label="Movie Player Controls">
+      <div className="sticky bottom-0 z-1000 bg-card border-t shadow-[0_2px_4px_rgba(0,0,0,0.08)]" role="region" aria-label="Movie Player Controls">
         <div className="flex flex-col gap-1">
           <div className="flex items-center justify-between" role="group" aria-label="Transport controls and chart controls">
             <div className="flex items-center gap-1 flex-wrap transition-all duration-300" role="group" aria-label="Transport controls and position">
@@ -165,8 +167,8 @@ export function MoviePlayerBar() {
           </div>
 
           <div className="w-full">
-            <div className="interpolation-timeline-container min-h-3">
-              {/* Timeline container will be created dynamically by MovieTimelineManager */}
+            <div className="interpolation-timeline-container">
+              <div ref={timelineHostRef} className="timeline-visual-layer" />
             </div>
           </div>
 

@@ -1,6 +1,21 @@
-import { useAppStore } from '../../core/store.js';
+import { useAppStore } from '../../state/phyloStore/store.js';
 
-let hoverTimeout = null;
+const HOVER_CLEAR_DELAY_MS = 150;
+
+function clearHoverTimeout(renderer) {
+  if (renderer._hoverTimeoutId !== null) {
+    clearTimeout(renderer._hoverTimeoutId);
+    renderer._hoverTimeoutId = null;
+  }
+}
+
+function scheduleHoveredSegmentClear(renderer) {
+  clearHoverTimeout(renderer);
+  renderer._hoverTimeoutId = setTimeout(() => {
+    renderer._hoverTimeoutId = null;
+    useAppStore.getState().setHoveredSegment(null, null);
+  }, HOVER_CLEAR_DELAY_MS);
+}
 
 /**
  * Handles mouse movement over the timeline when not scrubbing.
@@ -17,13 +32,10 @@ function handleTimelineMouseMove(renderer, event) {
   if (id !== renderer._lastHoverId) {
     if (renderer._lastHoverId != null) {
       renderer._emit('itemout', {});
-      clearTimeout(hoverTimeout);
-      hoverTimeout = setTimeout(() => {
-        useAppStore.getState().setHoveredSegment(null, null);
-      }, 150);
+      scheduleHoveredSegmentClear(renderer);
     }
     if (id != null) {
-      clearTimeout(hoverTimeout);
+      clearHoverTimeout(renderer);
       renderer._emit('itemover', { item: id, event });
 
       const segment = renderer.segments[segIndex];
@@ -64,7 +76,7 @@ function handleTimelineScrubMove(renderer, event) {
  * Routes mouse move events to either scrub or hover handler based on scrubbing state.
  */
 export function handleTimelineMouseMoveOrScrub(renderer, event) {
-  if (renderer._isScrubbing) {
+  if (renderer.isScrubbing()) {
     handleTimelineScrubMove(renderer, event);
   } else {
     handleTimelineMouseMove(renderer, event);
@@ -82,7 +94,8 @@ export function handleTimelineMouseDown(renderer, event) {
 
   if (dist < renderer._scrubThresholdPx) {
     renderer._wasScrubbingOnMouseDown = true;
-    renderer.setScrubbing(true);
+    renderer._emit('scrubstart', { id: 'scrubber', time: renderer._scrubberMs });
+    renderer.syncScrubState();
   } else {
     renderer._wasScrubbingOnMouseDown = false;
   }
@@ -92,8 +105,8 @@ export function handleTimelineMouseDown(renderer, event) {
  * Handles mouseup to end scrubbing. Emits 'timechanged' event with final position.
  */
 export function handleTimelineMouseUp(renderer) {
-  if (renderer._isScrubbing) {
-    renderer.setScrubbing(false);
+  if (renderer.isScrubbing()) {
+    renderer.syncScrubState();
     renderer._emit('timechanged', { id: 'scrubber', time: renderer._scrubberMs });
   }
 }
@@ -120,10 +133,7 @@ export function handleTimelineWheel(renderer, event) {
 export function handleTimelineMouseLeave(renderer) {
   if (renderer._lastHoverId != null) {
     renderer._emit('itemout', {});
-    clearTimeout(hoverTimeout);
-    hoverTimeout = setTimeout(() => {
-      useAppStore.getState().setHoveredSegment(null, null);
-    }, 150);
+    scheduleHoveredSegmentClear(renderer);
     renderer._lastHoverId = null;
     renderer._scheduleUpdate();
   }

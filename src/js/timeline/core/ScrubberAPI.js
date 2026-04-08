@@ -1,4 +1,4 @@
-import { useAppStore } from '../../core/store.js';
+import { useAppStore } from '../../state/phyloStore/store.js';
 import { TimelineMathUtils } from '../math/TimelineMathUtils.js';
 
 // ============================================================================
@@ -18,6 +18,8 @@ export class ScrubberAPI {
     this.timelineManager = timelineManager;
     this.currentProgress = 0;
     this.lastInterpolationState = null;
+    this.pendingProgress = null;
+    this.processingPromise = null;
   }
 
   // ==========================================================================
@@ -27,26 +29,38 @@ export class ScrubberAPI {
   async startScrubbing(progress) {
     this.currentProgress = TimelineMathUtils.clampProgress(progress ?? 0);
     this.lastInterpolationState = null;
+    this.pendingProgress = null;
   }
 
   async updatePosition(progress) {
-    await this._performScrubUpdate(TimelineMathUtils.clampProgress(progress));
+    const clampedProgress = TimelineMathUtils.clampProgress(progress);
+    this.currentProgress = clampedProgress;
+    this.pendingProgress = clampedProgress;
+    await this._flushPendingUpdates();
   }
 
   async endScrubbing(finalProgress = null) {
     if (finalProgress !== null) {
       const clamped = TimelineMathUtils.clampProgress(finalProgress);
-      if (Math.abs(clamped - this.currentProgress) > 1e-6) {
-        await this._performScrubUpdate(clamped);
+      if (Math.abs(clamped - this.currentProgress) > 1e-6 || this.pendingProgress !== null) {
+        this.currentProgress = clamped;
+        this.pendingProgress = clamped;
+        await this._flushPendingUpdates();
       }
+    } else if (this.processingPromise) {
+      await this.processingPromise;
     }
+
     const snapshot = this.lastInterpolationState;
     this.lastInterpolationState = null;
+    this.pendingProgress = null;
     return snapshot;
   }
 
   destroy() {
     this.lastInterpolationState = null;
+    this.pendingProgress = null;
+    this.processingPromise = null;
     this.treeController = null;
     this.transitionResolver = null;
   }
@@ -62,10 +76,35 @@ export class ScrubberAPI {
       if (!interpolationData) return;
 
       const direction = useAppStore.getState().navigationDirection;
+      const primaryTreeIndex = interpolationData.timeFactor < 0.5
+        ? interpolationData.fromIndex
+        : interpolationData.toIndex;
+
+      useAppStore.getState().setTimelineProgress(progress, primaryTreeIndex);
       await this._renderScrubFrame(interpolationData, direction);
 
       this.lastInterpolationState = { progress, interpolationData, direction };
     } catch (error) { }
+  }
+
+  async _flushPendingUpdates() {
+    if (this.processingPromise) {
+      return this.processingPromise;
+    }
+
+    this.processingPromise = (async () => {
+      while (this.pendingProgress !== null && this.treeController) {
+        const nextProgress = this.pendingProgress;
+        this.pendingProgress = null;
+        await this._performScrubUpdate(nextProgress);
+      }
+    })();
+
+    try {
+      await this.processingPromise;
+    } finally {
+      this.processingPromise = null;
+    }
   }
 
   // ==========================================================================

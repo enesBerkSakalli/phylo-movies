@@ -1,4 +1,4 @@
-import { useAppStore } from '../../core/store.js';
+import { useAppStore } from '../../state/phyloStore/store.js';
 import { detectAnimationStage } from '../deckgl/interpolation/stages/animationStageDetector.js';
 import { applyStageEasing } from '../deckgl/interpolation/stages/stageEasing.js';
 

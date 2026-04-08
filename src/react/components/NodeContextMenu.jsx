@@ -1,6 +1,6 @@
 import React, { useEffect, useCallback, useRef } from 'react';
 import { ClipboardCopy, Highlighter, Crosshair, Info } from 'lucide-react';
-import { useAppStore } from '../../js/core/store.js';
+import { useAppStore } from '../../js/state/phyloStore/store.js';
 
 import { SubtreeExtractor } from '../../js/domain/tree/subtreeExtractor.js';
 import { toast } from 'sonner';

@@ -5,7 +5,7 @@
  * Maintains LayerStyles instance for consistent styling across layers.
  */
 import { LayerStyles } from './LayerStyles.js';
-import { useAppStore } from '../../../core/store.js';
+import { useAppStore } from '../../../state/phyloStore/store.js';
 import { ComparisonModeRenderer } from '../../comparison/ComparisonModeRenderer.js';
 import { buildViewLinkMapping, derivePairKey } from '../../../domain/view/viewLinkMapper.js';
 import * as layerFactories from './factory/index.js';

@@ -5,7 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { BarChart, Activity, Info, ListTree, Hash, Zap, BookOpen, ChevronDown, Download } from 'lucide-react';
 import { SubtreeFrequencyBarChart } from './SubtreeAnalytics/SubtreeFrequencyBarChart';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAppStore } from '@/js/core/store';
+import { useAppStore } from '../../../js/state/phyloStore/store.js';
 import { calculateSubtreeFrequencies, formatSubtreeLabel } from '@/js/domain/tree/subtreeFrequencyUtils';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';

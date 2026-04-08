@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useMemo } from 'react';
-import { useAppStore } from '@/js/core/store';
+import { useAppStore } from '../../../js/state/phyloStore/store.js';
 import { processPhyloData } from '@/js/msaViewer/utils/dataUtils';
 import { TREE_COLOR_CATEGORIES } from '@/js/constants/TreeColors';
 import { getGroupForTaxon } from '@/js/treeColoring/utils/GroupingUtils';

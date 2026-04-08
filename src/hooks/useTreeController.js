@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { useAppStore } from '../js/core/store.js';
+import { useAppStore } from '../js/state/phyloStore/store.js';
 import { DeckGLTreeAnimationController } from '../js/treeVisualisation/DeckGLTreeAnimationController.js';
 import { calculateWindow } from '../js/domain/msa/msaWindowCalculator.js';
 import { getMSAFrameIndex } from '../js/domain/indexing/IndexMapping.js';
@@ -55,6 +55,7 @@ export function useTreeController() {
         if (disposed) return;
 
         const state = useAppStore.getState();
+        if (state.movieTimelineManager?.scrubController?.isScrubbing) return;
         if (state.playing) return;
 
         const controller = controllerRef.current || state.treeControllers?.[0];
@@ -119,6 +120,8 @@ export function useTreeController() {
     scheduleRender();
 
     const unsubscribe = useAppStore.subscribe((state, prevState) => {
+      const isTimelineScrubbing = state.movieTimelineManager?.scrubController?.isScrubbing ?? false;
+
       if (state.movieData !== prevState.movieData || state.comparisonMode !== prevState.comparisonMode) {
         // Reset comparison auto-fit when toggling comparison mode so the camera
         // refits properly for the new layout (single ↔ side-by-side).
@@ -135,14 +138,18 @@ export function useTreeController() {
       }
 
       if (state.currentTreeIndex !== prevState.currentTreeIndex) {
-        syncColorManager();
-        syncMsaRegion();
-        scheduleRender();
+        if (!isTimelineScrubbing) {
+          syncColorManager();
+          syncMsaRegion();
+          scheduleRender();
+        }
       }
 
       if (state.animationProgress !== prevState.animationProgress) {
-        syncMsaRegion();
-        scheduleRender();
+        if (!isTimelineScrubbing) {
+          syncMsaRegion();
+          scheduleRender();
+        }
       }
 
       if (state.clipboardTreeIndex !== prevState.clipboardTreeIndex) {

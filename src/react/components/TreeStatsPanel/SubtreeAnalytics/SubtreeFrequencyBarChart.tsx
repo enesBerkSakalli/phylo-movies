@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useAppStore } from '../../../../js/core/store';
+import { useAppStore } from '../../../../js/state/phyloStore/store.js';
 import { calculateSubtreeFrequencies, getTopSubtrees, formatSubtreeLabel } from '../../../../js/domain/tree/subtreeFrequencyUtils';
 import { TREE_COLOR_CATEGORIES } from '../../../../js/constants/TreeColors';
 import type { AppStoreState } from '../../../../types/store';

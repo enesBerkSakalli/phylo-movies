@@ -1,4 +1,4 @@
-import { useAppStore } from '../../core/store.js';
+import { useAppStore } from '../../state/phyloStore/store.js';
 
 // ==========================================================================
 // INTERACTIVE DRAGGING (Trees)

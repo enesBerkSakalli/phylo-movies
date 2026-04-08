@@ -11,7 +11,7 @@ const { expect } = require('chai');
 const { getPerfSnapshot, resetPerf } = require('../src/js/treeVisualisation/deckgl/layers/factory/index.js');
 const { createLinksLayer, createLinkOutlinesLayer, createExtensionsLayer, createNodesLayer, createLabelsLayer, createConnectorsLayer } = require('../src/js/treeVisualisation/deckgl/layers/factory/index.js');
 const { LayerStyles } = require('../src/js/treeVisualisation/deckgl/layers/LayerStyles.js');
-const { useAppStore } = require('../src/js/core/store.js');
+const { useAppStore } = require('../src/js/state/phyloStore/store.js');
 
 describe('Perf Baseline - Layer Instantiation', function () {
   it('collects layer creation metrics for representative tree sizes', function () {

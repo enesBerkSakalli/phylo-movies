@@ -6,7 +6,7 @@ import {
 } from '@deck.gl/core';
 import { easeInOutCubic } from '../../../domain/math/mathUtils.js';
 import { VIEW_IDS, DEFAULT_ORTHO_STATE, DEFAULT_ORBIT_STATE } from './viewConstants.js';
-import { useAppStore } from '../../../core/store.js';
+import { useAppStore } from '../../../state/phyloStore/store.js';
 import { getGroupForTaxon } from '../../../treeColoring/utils/GroupingUtils.js';
 
 /**

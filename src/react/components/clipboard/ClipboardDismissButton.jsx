@@ -1,7 +1,7 @@
 /**
  * ClipboardDismissButton - Button to dismiss the clipboard tree overlay
  */
-import { useAppStore } from '../../../js/core/store.js';
+import { useAppStore } from '../../../js/state/phyloStore/store.js';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 

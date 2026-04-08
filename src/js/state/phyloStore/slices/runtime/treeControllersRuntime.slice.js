@@ -1,12 +1,8 @@
-/**
- * Controllers slice: runtime controller instances and animation orchestration.
- */
-export const createControllersSlice = (set, get) => ({
+export const createTreeControllersRuntimeSlice = (set, get) => ({
   // ==========================================================================
   // STATE: Controllers
   // ==========================================================================
   treeControllers: [],
-  movieTimelineManager: null,
 
   // ==========================================================================
   // ACTIONS: Tree Controllers
@@ -52,14 +48,12 @@ export const createControllersSlice = (set, get) => ({
   resetControllers: () => {
     const { treeControllers, movieTimelineManager } = get();
 
-    // Destroy existing controllers
     treeControllers.forEach((controller) => {
       if (typeof controller?.destroy === 'function') {
         controller.destroy();
       }
     });
 
-    // Destroy timeline manager
     movieTimelineManager?.destroy();
 
     set({

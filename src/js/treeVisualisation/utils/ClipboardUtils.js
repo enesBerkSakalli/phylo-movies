@@ -1,6 +1,6 @@
 import { TextLayer } from '@deck.gl/layers';
 import { CLIPBOARD_LAYER_ID_PREFIX } from '../deckgl/layers/config/layerConfigs.js';
-import { useAppStore } from '../../core/store.js';
+import { useAppStore } from '../../state/phyloStore/store.js';
 import { calculateVisualBounds } from './TreeBoundsUtils.js';
 
 /**

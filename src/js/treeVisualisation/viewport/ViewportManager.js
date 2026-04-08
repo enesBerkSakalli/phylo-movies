@@ -4,7 +4,7 @@
  * Handles viewport calculations, camera positioning, bounds checking,
  * and screen space projections for tree visualization.
  */
-import { useAppStore } from '../../core/store.js';
+import { useAppStore } from '../../state/phyloStore/store.js';
 import { calculateVisualBounds } from '../utils/TreeBoundsUtils.js';
 import { projectNodesToScreen, applySafeAreaToTarget } from '../spatial/projections.js';
 import { areBoundsInView, expandBoundsForLabels } from '../spatial/bounds.js';

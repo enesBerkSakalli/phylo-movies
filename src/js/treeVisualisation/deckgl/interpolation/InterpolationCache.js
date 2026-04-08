@@ -1,4 +1,4 @@
-import { useAppStore } from '../../../core/store.js';
+import { useAppStore } from '../../../state/phyloStore/store.js';
 import memoizeOne from 'memoize-one';
 
 export class InterpolationCache {
@@ -139,8 +139,9 @@ export class InterpolationCache {
         canvasHeight: layout.height
       }
     );
-    // Attach metadata for adaptive scaling
-    layerData.max_radius = layout.max_radius;
+    if (layerData && typeof layerData === 'object') {
+      layerData.max_radius = layout.max_radius;
+    }
     return layerData;
   }
 }

@@ -1,4 +1,4 @@
-import { useAppStore } from '../../core/store.js';
+import { useAppStore } from '../../state/phyloStore/store.js';
 
 /**
  * Modern canvas recorder using native MediaRecorder API

@@ -74,20 +74,20 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
     // We assume default export or named export based on usage
 
     // Mock other heavy dependencies to avoid instantiating them
-    /* 
-       Proxyquire doesn't work well with ESM. 
-       We will rely on JSDOM to handle the real imports, and just stub the Worker 
-       which is the focus of this test. 
+    /*
+       Proxyquire doesn't work well with ESM.
+       We will rely on JSDOM to handle the real imports, and just stub the Worker
+       which is the focus of this test.
        If dependencies like LayerManager cause issues, we might need a more advanced ESM masker like 'esmock'.
     */
-    
+
     // Import the controller normally
     const module = await import('../src/js/treeVisualisation/DeckGLTreeAnimationController.js');
     ControllerClass = module.DeckGLTreeAnimationController;
-    
+
     // Import the real store to seed it with data
-    const { useAppStore } = await import('../src/js/core/store.js');
-    
+    const { useAppStore } = await import('../src/js/state/phyloStore/store.js');
+
     // Seed the store
     useAppStore.setState({
       treeList: [

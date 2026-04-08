@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAppStore } from '../../../js/core/store.js';
+import { useAppStore } from '../../../js/state/phyloStore/store.js';
 
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';

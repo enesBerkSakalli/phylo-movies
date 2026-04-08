@@ -1,7 +1,7 @@
 const { expect } = require('chai');
 
 // SUTs
-const { useAppStore } = require('../src/js/core/store.js');
+const { useAppStore } = require('../src/js/state/phyloStore/store.js');
 const { buildViewLinkMapping } = require('../src/js/domain/view/viewLinkMapper.js');
 
 describe('View link store wiring', () => {
@@ -11,7 +11,7 @@ describe('View link store wiring', () => {
       screenPositionsLeft: {},
       screenPositionsRight: {},
       viewLinkMapping: {},
-    }, true);
+    });
   });
 
   it('routes left positions via setScreenPositions', () => {

@@ -1,4 +1,5 @@
-import { clamp } from '../../domain/math/mathUtils.js';
+import { clamp } from '../../../../domain/math/mathUtils.js';
+import { renderTreeControllers } from '../../internal/changeTracking.helpers.js';
 
 // ==========================================================================
 // Private Helper Functions
@@ -12,7 +13,7 @@ function createEmptyViewLinkMapping() {
   };
 }
 
-export const createComparisonViewSlice = (set) => ({
+export const createComparisonViewSlice = (set, get) => ({
   // ==========================================================================
   // STATE
   // ==========================================================================
@@ -25,6 +26,10 @@ export const createComparisonViewSlice = (set) => ({
   viewOffsetY: 0,
   viewsConnected: false,
   viewLinkMapping: createEmptyViewLinkMapping(),
+  screenPositionsLeft: {},
+  screenPositionsRight: {},
+  connectorStrokeWidth: 1,
+  linkConnectionOpacity: 0.6,
 
   // ==========================================================================
   // ACTIONS
@@ -50,6 +55,23 @@ export const createComparisonViewSlice = (set) => ({
     set({ viewLinkMapping: mapping });
   },
 
+  setScreenPositions: (side, positions) => {
+    const nextPositions = positions && typeof positions === 'object' ? positions : {};
+    if (side === 'right') {
+      set({ screenPositionsRight: nextPositions });
+      return;
+    }
+    set({ screenPositionsLeft: nextPositions });
+  },
+
+  setConnectorStrokeWidth: (width) => set({ connectorStrokeWidth: Number(width) }),
+
+  setLinkConnectionOpacity: (opacity) => {
+    const value = Math.max(0, Math.min(1, Number(opacity)));
+    set((state) => ({ linkConnectionOpacity: value, colorVersion: state.colorVersion + 1 }));
+    renderTreeControllers(get().treeControllers);
+  },
+
   // ==========================================================================
   // ACTIONS: Reset
   // ==========================================================================
@@ -61,5 +83,9 @@ export const createComparisonViewSlice = (set) => ({
     viewOffsetY: 0,
     viewsConnected: false,
     viewLinkMapping: createEmptyViewLinkMapping(),
+    screenPositionsLeft: {},
+    screenPositionsRight: {},
+    connectorStrokeWidth: 1,
+    linkConnectionOpacity: 0.6,
   }),
 });
