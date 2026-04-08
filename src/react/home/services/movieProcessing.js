@@ -1,4 +1,5 @@
 import { resolveApiUrl } from "@/js/services/data/apiConfig";
+import { phyloData, workflows } from "@/js/services/data/dataService.js";
 
 /**
  * Electron loading helpers
@@ -58,10 +59,31 @@ export async function processMovieData(formData, onProgress) {
   }
 
   updateElectronProgress(10, 'Processing tree data...');
+  const progressUrl = await resolveApiUrl(`/stream/progress/${channel_id}`);
 
-  return new Promise(async (resolve, reject) => {
-    const progressUrl = await resolveApiUrl(`/stream/progress/${channel_id}`);
-    let eventSource = new EventSource(progressUrl);
+  return new Promise((resolve, reject) => {
+    const eventSource = new EventSource(progressUrl);
+    let settled = false;
+
+    const closeEventSource = () => {
+      try {
+        eventSource.close();
+      } catch {}
+    };
+
+    const resolveOnce = (value) => {
+      if (settled) return;
+      settled = true;
+      closeEventSource();
+      resolve(value);
+    };
+
+    const rejectOnce = (error) => {
+      if (settled) return;
+      settled = true;
+      closeEventSource();
+      reject(error instanceof Error ? error : new Error(String(error)));
+    };
 
     // For chunked streaming (large datasets ≥ 500 trees)
     let chunkedMetadata = null;
@@ -126,8 +148,6 @@ export async function processMovieData(formData, onProgress) {
     });
 
     eventSource.addEventListener('complete', (event) => {
-      eventSource.close();
-
       console.log('[SSE] Complete event received:', {
         hasData: !!event.data,
         dataLength: event.data?.length,
@@ -144,20 +164,20 @@ export async function processMovieData(formData, onProgress) {
           interpolated_trees: chunkedTrees,
         };
         console.log(`[SSE] Assembled chunked data: ${chunkedTrees.length} trees`);
-        resolve(result);
+        resolveOnce(result);
         return;
       }
 
       // Also check if we accumulated trees without metadata (edge case)
       if (chunkedTrees.length > 0) {
         console.warn('[SSE] Trees received without metadata, attempting to resolve with trees only');
-        resolve({ interpolated_trees: chunkedTrees });
+        resolveOnce({ interpolated_trees: chunkedTrees });
         return;
       }
 
       // Small dataset mode: complete event should contain everything
       if (!event.data || event.data.trim() === '') {
-        reject(new Error('Complete event received with no data'));
+        rejectOnce(new Error('Complete event received with no data'));
         return;
       }
 
@@ -165,33 +185,28 @@ export async function processMovieData(formData, onProgress) {
         const data = JSON.parse(event.data);
 
         if (data.error) {
-          reject(new Error(data.error));
+          rejectOnce(new Error(data.error));
         } else if (data.data) {
-          resolve(data.data);
+          resolveOnce(data.data);
         } else {
-          reject(new Error('No data in complete event'));
+          rejectOnce(new Error('No data in complete event'));
         }
       } catch (err) {
         console.error('[SSE] Failed to parse complete event:', event.data?.substring(0, 200));
-        reject(new Error('Failed to parse completion data: ' + err.message));
+        rejectOnce(new Error('Failed to parse completion data: ' + err.message));
       }
     });
 
-    eventSource.addEventListener('error', (event) => {
+    eventSource.onerror = (event) => {
+      if (settled) return;
+
       try {
         const error = JSON.parse(event.data);
-        eventSource.close();
-        reject(new Error(error.error || 'Processing failed'));
+        rejectOnce(new Error(error.error || 'Processing failed'));
       } catch {
         if (eventSource.readyState === EventSource.CLOSED) {
-          reject(new Error('Connection to server lost'));
+          rejectOnce(new Error('SSE connection closed unexpectedly'));
         }
-      }
-    });
-
-    eventSource.onerror = () => {
-      if (eventSource.readyState === EventSource.CLOSED) {
-        reject(new Error('SSE connection closed unexpectedly'));
       }
     };
   });
@@ -209,8 +224,7 @@ export async function finalizeMovieData(data, formData, onProgress) {
   updateElectronProgress(92, 'Saving data locally...');
 
   try {
-    const localforage = (await import('localforage')).default || (await import('localforage'));
-    await localforage.setItem('phyloMovieData', data);
+    await phyloData.set(data);
   } catch (storageError) {
     // Handle IndexedDB quota/memory errors with user-friendly message
     if (storageError.name === 'DataCloneError' || storageError.message?.includes('out of memory')) {
@@ -223,15 +237,19 @@ export async function finalizeMovieData(data, formData, onProgress) {
   onProgress({ percent: 95, message: 'Processing MSA data...' });
   updateElectronProgress(95, 'Processing MSA data...');
 
+  let msaWarning = null;
   try {
-    const { workflows } = await import('@/js/services/data/dataService.js');
     const fd = new FormData();
     if (formData.msaFile) fd.append('msaFile', formData.msaFile);
     await workflows.handleMSADataSaving(fd, data);
   } catch (err) {
     console.error('[MovieService] MSA workflow error:', err);
+    msaWarning = 'Tree data is ready, but MSA processing failed.';
+    onProgress({ percent: 95, message: msaWarning });
+    updateElectronProgress(95, msaWarning);
   }
 
-  onProgress({ percent: 100, message: 'Complete!' });
-  updateElectronProgress(100, 'Complete!');
+  const completionMessage = msaWarning || 'Complete!';
+  onProgress({ percent: 100, message: completionMessage });
+  updateElectronProgress(100, completionMessage);
 }
