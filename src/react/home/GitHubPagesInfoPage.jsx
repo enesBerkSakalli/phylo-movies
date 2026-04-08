@@ -40,8 +40,8 @@ const ACCESS_OPTIONS = [
     href: RELEASES_URL,
   },
   {
-    title: 'Browser Viewer',
-    description: 'Good for quick exploration of uploaded tree files and documentation-led evaluation of the interface.',
+    title: 'Browser Interface',
+    description: 'Use the web frontend as part of a local or deployed full-stack setup backed by BranchArchitect.',
     ctaLabel: 'Open README',
     href: README_URL,
   },
@@ -89,7 +89,7 @@ const FAQ_ITEMS = [
   },
   {
     question: 'Do I need the backend to use Phylo-Movies?',
-    answer: 'For viewing uploaded tree files, no. For interpolation, morphing animations, and MSA-driven workflows, yes: those require the BranchArchitect backend.'
+    answer: 'Yes. Phylo-Movies requires the BranchArchitect backend for uploaded tree files, interpolation, morphing animations, and MSA-driven workflows. The GitHub Pages site is documentation-only, not a standalone processing frontend.'
   },
   {
     question: 'Is Phylo-Movies also a desktop app?',

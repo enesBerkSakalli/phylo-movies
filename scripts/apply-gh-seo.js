@@ -52,7 +52,7 @@ const FAQ_ITEMS = [
   },
   {
     question: 'When do I need the backend?',
-    answer: 'The frontend can display uploaded tree files directly, but interpolation, morphing animations, and MSA-driven workflows require the BranchArchitect backend.'
+    answer: 'You need the BranchArchitect backend for uploaded tree files, interpolation, morphing animations, and MSA-driven workflows. The GitHub Pages site is documentation-only and does not provide standalone processing.'
   },
   {
     question: 'Is Phylo-Movies available as a desktop app?',
