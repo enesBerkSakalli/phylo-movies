@@ -45,6 +45,9 @@ debug_logs
 backend/brancharchitect-0.37.0.dist-info
 .env
 .vite/deps
+!test/data/
+test/data/*
+!test/data/ostrich_bug_response.json
 docs/*
 !docs/screenshot.png
 dist-publish
