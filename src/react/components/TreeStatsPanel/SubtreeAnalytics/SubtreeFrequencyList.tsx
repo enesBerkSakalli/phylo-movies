@@ -1,6 +1,6 @@
 
 import React, { useMemo } from 'react';
-import { useAppStore } from '../../../../js/core/store';
+import { useAppStore } from '../../../../js/state/phyloStore/store.js';
 import {
   calculateSubtreeFrequencies,
   getTopSubtrees,

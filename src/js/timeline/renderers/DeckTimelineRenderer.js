@@ -48,9 +48,10 @@ export class DeckTimelineRenderer {
     // Interaction state
     this._selectedId = null;
     this._lastHoverId = null;
-    this._isScrubbing = false;
+    this._getIsScrubbing = () => false;
     this._scrubThresholdPx = 10;
     this._wasScrubbingOnMouseDown = false;
+    this._hoverTimeoutId = null;
 
     // Timeline range
     this._totalDuration = timelineData.totalDuration;
@@ -60,6 +61,7 @@ export class DeckTimelineRenderer {
 
     // Rendering
     this._updateScheduled = false;
+    this._updateFrameId = null;
     this._width = 0;
 
     // Bound handlers (for stable references)
@@ -179,12 +181,16 @@ export class DeckTimelineRenderer {
     this._scheduleUpdate();
   }
 
-  /**
-   * Sets the scrubbing state. When true, the scrubber is visually highlighted.
-   * @param {boolean} enabled - Whether scrubbing is active
-   */
-  setScrubbing(enabled) {
-    this._isScrubbing = enabled;
+  bindScrubState({ getIsScrubbing } = {}) {
+    this._getIsScrubbing = typeof getIsScrubbing === 'function' ? getIsScrubbing : (() => false);
+    this._scheduleUpdate();
+  }
+
+  isScrubbing() {
+    return Boolean(this._getIsScrubbing?.());
+  }
+
+  syncScrubState() {
     this._scheduleUpdate();
   }
 
@@ -383,11 +389,17 @@ export class DeckTimelineRenderer {
   _scheduleUpdate() {
     if (this._updateScheduled) return;
     this._updateScheduled = true;
-    requestAnimationFrame(() => this._updateLayers());
+    this._updateFrameId = requestAnimationFrame(() => {
+      this._updateFrameId = null;
+      this._updateLayers();
+    });
   }
 
   _updateLayers() {
-    if (!this.deck) return;
+    if (!this.deck) {
+      this._updateScheduled = false;
+      return;
+    }
 
     const rect = this.container.getBoundingClientRect();
     const width = Math.max(1, Math.round(rect.width));
@@ -464,7 +476,7 @@ export class DeckTimelineRenderer {
         widthMinPixels: theme.connectionSelectionWidth,
         updateTriggers: { getColor: selectionColor }
       }),
-      this.scrubberLayer.clone(createScrubberLayer(this._scrubberMs, this._rangeStart, this._rangeEnd, width, height, theme, this._isScrubbing)),
+      this.scrubberLayer.clone(createScrubberLayer(this._scrubberMs, this._rangeStart, this._rangeEnd, width, height, theme, this.isScrubbing())),
       this.anchorLayer.clone({ data: anchorPoints, lineWidthMinPixels: theme.anchorStrokeWidth }),
       this.anchorHoverLayer.clone({
         data: hoverAnchors,
@@ -487,6 +499,16 @@ export class DeckTimelineRenderer {
    * Cleans up all resources: deck.gl instance, DOM elements, event listeners, observers.
    */
   destroy() {
+    if (this._updateFrameId !== null) {
+      cancelAnimationFrame(this._updateFrameId);
+      this._updateFrameId = null;
+    }
+
+    if (this._hoverTimeoutId !== null) {
+      clearTimeout(this._hoverTimeoutId);
+      this._hoverTimeoutId = null;
+    }
+
     if (this.deck) {
       this.deck.finalize();
       this.deck = null;
@@ -509,6 +531,8 @@ export class DeckTimelineRenderer {
     }
 
     this.container = null;
+    this._lastHoverId = null;
+    this._updateScheduled = false;
     this._handlers.clear();
   }
 }

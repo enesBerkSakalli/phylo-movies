@@ -1,5 +1,5 @@
 import * as d3 from "d3";
-import { useAppStore } from '../core/store.js';
+import { useAppStore } from '../state/phyloStore/store.js';
 import { transformBranchLengths } from "../domain/tree/branchTransform.js";
 import { TidyTreeLayout } from "./layout/TidyTreeLayout.js";
 import calculateScales, { getMaxScaleValue } from "../domain/tree/scaleUtils.js";

@@ -33,8 +33,8 @@ import {
   SidebarMenuButton,
 } from '@/components/ui/sidebar';
 
-import { Film, ArrowLeftFromLine } from 'lucide-react';
-import { useAppStore } from '../js/core/store.js';
+import { Film, ArrowLeft } from 'lucide-react';
+import { useAppStore } from '../js/state/phyloStore/store.js';
 import { getPhyloMovieData } from '../js/services/data/dataManager.js';
 import { useTreeController } from '../hooks/useTreeController.js';
 
@@ -59,7 +59,7 @@ export function App() {
   const navigate = useNavigate();
   const [error, setError] = React.useState(null);
   const handleReturnHome = React.useCallback(() => {
-    navigate('/home');
+    navigate('/');
   }, [navigate]);
 
   useEffect(() => {
@@ -71,7 +71,7 @@ export function App() {
 
         if (!parsedData) {
           console.warn('[App bootstrap] No data found, redirecting to home...');
-          navigate('/home');
+          navigate('/');
           return;
         }
 
@@ -127,11 +127,11 @@ export function App() {
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    tooltip="Back to upload page"
+                    tooltip="Back to upload screen"
                     onClick={handleReturnHome}
                   >
-                    <ArrowLeftFromLine className="size-4" />
-                    <span>Return to Home</span>
+                    <ArrowLeft className="size-4" />
+                    <span>Back to Upload</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <ButtonsMSA />
@@ -172,7 +172,7 @@ export function App() {
 
 
         <SidebarInset className="overflow-hidden">
-          <SidebarTrigger className="absolute top-2 left-2 z-[1200]" />
+          <SidebarTrigger className="absolute top-2 left-2 z-1200" />
           <div className="full-size-container" style={{ flex: 1, minHeight: 0, position: 'relative', overflow: 'hidden' }}>
             <DeckGLCanvas />
             <ClipboardDismissButton />

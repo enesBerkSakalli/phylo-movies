@@ -13,7 +13,7 @@ const RouterComponent = isElectron() ? HashRouter : BrowserRouter;
 const basename = isElectron() ? undefined : import.meta.env.BASE_URL?.replace(/\/$/, '') || '';
 const isDocsOnlyMode = import.meta.env.VITE_DOCS_ONLY === 'true';
 const landingElement = isDocsOnlyMode ? <GitHubPagesInfoPage /> : <HomePage />;
-const landingPath = isDocsOnlyMode ? '/' : '/home';
+const landingPath = '/';
 
 export function Router() {
   return (

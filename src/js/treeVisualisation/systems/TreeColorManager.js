@@ -8,7 +8,7 @@
  *
  * Used by LayerStyles.js to provide colors for DeckGL layers
  */
-import { useAppStore } from '../../core/store.js';
+import { useAppStore } from '../../state/phyloStore/store.js';
 import { TREE_COLOR_CATEGORIES } from '../../constants/TreeColors.js';
 import {
   getBaseBranchColor,

@@ -28,9 +28,4 @@ export const createClipboardSlice = (set, get) => ({
   setClipboardOffsetY: (offset) => set({ clipboardOffsetY: Number(offset) }),
 
   clearClipboard: () => set({ clipboardTreeIndex: null, clipboardOffsetX: 0, clipboardOffsetY: 0 }),
-
-  // ==========================================================================
-  // RESET
-  // ==========================================================================
-  resetClipboard: () => set({ clipboardTreeIndex: null, clipboardOffsetX: 0, clipboardOffsetY: 0 }),
 });

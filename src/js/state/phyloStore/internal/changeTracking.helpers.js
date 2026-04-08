@@ -4,8 +4,8 @@ import {
   parseSubtreeTrackingEntry,
   collectUniqueSubtrees,
   collectUniqueEdges
-} from '../../treeVisualisation/utils/splitMatching.js';
-import { findPreviousAnchorSequenceIndex, findNextAnchorSequenceIndex } from '../../domain/indexing/IndexMapping.js';
+} from '../../../treeVisualisation/utils/splitMatching.js';
+import { findPreviousAnchorSequenceIndex, findNextAnchorSequenceIndex } from '../../../domain/indexing/IndexMapping.js';
 
 // ============================================================================
 // SYSTEM HELPERS (Rendering, Persistence, Storage)

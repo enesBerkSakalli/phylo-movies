@@ -120,4 +120,56 @@ describe('DeckTimelineRenderer', () => {
     const hasData = (layer) => Array.isArray(layer?.props?.data) && layer.props.data.length >= 0;
     expect(hasData(anchorSel) || hasData(connSel)).to.equal(true);
   });
+
+  it('uses externally bound scrub state for scrubber highlighting', () => {
+    const { timelineData, segments } = makeTimelineFixture();
+    const container = makeContainer();
+    const renderer = new DeckTimelineRenderer(timelineData, segments).init(container);
+    const scrubState = { active: false };
+
+    renderer.bindScrubState({ getIsScrubbing: () => scrubState.active });
+    renderer._updateLayers();
+
+    let scrubber = renderer.deck.props.layers.find(l => l.id === 'scrubber-layer');
+    expect(scrubber.props.widthMinPixels).to.equal(7);
+    expect(renderer.isScrubbing()).to.equal(false);
+
+    scrubState.active = true;
+    renderer.syncScrubState();
+    renderer._updateLayers();
+
+    scrubber = renderer.deck.props.layers.find(l => l.id === 'scrubber-layer');
+    expect(scrubber.props.widthMinPixels).to.equal(10);
+    expect(renderer.isScrubbing()).to.equal(true);
+  });
+
+  it('cancels pending renderer work on destroy', () => {
+    const { timelineData, segments } = makeTimelineFixture();
+    const container = makeContainer();
+    const renderer = new DeckTimelineRenderer(timelineData, segments).init(container);
+
+    const originalCancelAnimationFrame = global.cancelAnimationFrame;
+    const originalClearTimeout = global.clearTimeout;
+    let canceledFrameId = null;
+    let clearedTimeoutId = null;
+
+    global.cancelAnimationFrame = (id) => {
+      canceledFrameId = id;
+    };
+    global.clearTimeout = (id) => {
+      clearedTimeoutId = id;
+    };
+
+    renderer._updateFrameId = 42;
+    renderer._hoverTimeoutId = 99;
+    renderer.destroy();
+
+    expect(canceledFrameId).to.equal(42);
+    expect(clearedTimeoutId).to.equal(99);
+    expect(renderer._updateFrameId).to.equal(null);
+    expect(renderer._hoverTimeoutId).to.equal(null);
+
+    global.cancelAnimationFrame = originalCancelAnimationFrame;
+    global.clearTimeout = originalClearTimeout;
+  });
 });

@@ -35,7 +35,6 @@ export const createPlaybackSlice = (set, get) => ({
   // STATE: Rendering
   // ==========================================================================
   renderInProgress: false,
-  autoFitOnTreeChange: true,
 
   // ==========================================================================
   // ACTIONS: Playback Control

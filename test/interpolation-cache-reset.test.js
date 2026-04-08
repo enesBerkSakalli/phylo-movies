@@ -1,7 +1,7 @@
 const { expect } = require('chai');
 const sinon = require('sinon');
 const { TreeInterpolator } = require('../src/js/treeVisualisation/deckgl/interpolation/TreeInterpolator.js');
-const { useAppStore } = require('../src/js/core/store.js');
+const { useAppStore } = require('../src/js/state/phyloStore/store.js');
 
 describe('Interpolation cache reset', () => {
   it('clears TreeInterpolator and PathInterpolator caches', () => {

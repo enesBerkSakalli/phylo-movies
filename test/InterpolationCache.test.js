@@ -2,7 +2,7 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { InterpolationCache } from '../src/js/treeVisualisation/deckgl/interpolation/InterpolationCache.js';
-import { useAppStore } from '../src/js/core/store.js';
+import { useAppStore } from '../src/js/state/phyloStore/store.js';
 
 describe('InterpolationCache', () => {
   let cache;
@@ -144,7 +144,7 @@ describe('InterpolationCache', () => {
     cache.getOrCacheInterpolationData(tree1, tree2, 0, 1); // populate cache
 
     cache.reset();
-    
+
     dependencies.calculateLayout.resetHistory();
 
     cache.getOrCacheInterpolationData(tree1, tree2, 0, 1); // should calc again

@@ -13,7 +13,7 @@ global.cancelAnimationFrame = dom.window.cancelAnimationFrame || ((id) => clearT
 // Pull in ES modules via Babel register (mocha command already uses @babel/register)
 const { TimelineDataProcessor } = require('../src/js/timeline/data/TimelineDataProcessor.js');
 const { TimelineMathUtils } = require('../src/js/timeline/math/TimelineMathUtils.js');
-const { useAppStore } = require('../src/js/core/store.js');
+const { useAppStore } = require('../src/js/state/phyloStore/store.js');
 
 function loadMovieData() {
   const candidates = [

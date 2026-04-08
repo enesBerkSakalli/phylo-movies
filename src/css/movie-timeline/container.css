@@ -1,5 +1,5 @@
 .interpolation-timeline-container {
-  min-height: 35px;
+  min-height: var(--timeline-height, 35px);
   padding: 0;
 }
 
@@ -9,7 +9,7 @@
   padding: 0 8px;
 }
 
-.interpolation-timeline-container .deck-canvas {
+.timeline-visual-layer .deck-canvas {
   background: transparent !important;
   pointer-events: auto;
 }

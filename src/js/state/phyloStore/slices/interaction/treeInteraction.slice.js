@@ -42,14 +42,4 @@ export const createContextMenuSlice = (set, get) => ({
       contextMenuTreeData: null,
     });
   },
-
-  // ==========================================================================
-  // RESET
-  // ==========================================================================
-  resetContextMenu: () => set({
-    contextMenuOpen: false,
-    contextMenuPosition: { x: 0, y: 0 },
-    contextMenuNode: null,
-    contextMenuTreeData: null,
-  }),
 });

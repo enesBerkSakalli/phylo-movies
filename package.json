@@ -27,7 +27,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "mocha --require @babel/register 'test/fileUpload.test.js' 'test/parser.test.js' 'test/integration.test.js' 'test/fileUploadTests.js' 'test/msaViewerIntegrationTests.js' 'test/msaViewerRefreshTest.js' 'test/tree-centering-verification.test.js' 'test/msa-workflow.test.js' 'test/scssModuleLoading.test.js' 'test/msa-automated-scrolling.test.js' 'test/timeline-construction.test.js' 'test/interpolation-cache-reset.test.js'",
+    "test": "mocha --require @babel/register 'test/fileUpload.test.js' 'test/parser.test.js' 'test/integration.test.js' 'test/fileUploadTests.js' 'test/msaViewerIntegrationTests.js' 'test/msaViewerRefreshTest.js' 'test/tree-centering-verification.test.js' 'test/msa-workflow.test.js' 'test/scssModuleLoading.test.js' 'test/msa-automated-scrolling.test.js' 'test/timeline-construction.test.js' 'test/timeline-math-utils.test.js' 'test/scrubber-api.test.js' 'test/timeline-manager-lifecycle.test.js' 'test/timeline-navigation-controller.test.js' 'test/interpolation-cache-reset.test.js'",
     "test:watch": "mocha --require @babel/register --watch 'test/fileUpload.test.js' 'test/parser.test.js' 'test/integration.test.js' 'test/fileUploadTests.js' 'test/msaViewerIntegrationTests.js' 'test/msaViewerRefreshTest.js' 'test/msa-workflow.test.js' 'test/msa-automated-scrolling.test.js'",
     "test:msa": "mocha --require @babel/register 'test/msa-workflow.test.js' 'test/msa-automated-scrolling.test.js'",
     "test:msa-scrolling": "mocha --require @babel/register 'test/msa-automated-scrolling.test.js'",

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Palette, ChevronRight } from 'lucide-react';
-import { useAppStore } from '../../../../js/core/store.js';
+import { useAppStore } from '../../../../js/state/phyloStore/store.js';
 import {
   SidebarMenuItem,
   SidebarMenuButton,

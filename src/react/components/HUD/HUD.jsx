@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import Draggable from 'react-draggable';
-import { useAppStore } from '@/js/core/store';
+import { useAppStore } from '../../../js/state/phyloStore/store.js';
 import { getIndexMappings, getMSAFrameIndex } from '@/js/domain/indexing/IndexMapping';
 import { calculateWindow } from '@/js/domain/msa/msaWindowCalculator';
 import { Film, BarChart2, Dna, Clipboard, ChevronLeft, ChevronRight, X, GripVertical } from 'lucide-react';
@@ -185,10 +185,10 @@ export function HUD() {
           {hasMsa && (
             <>
               <Separator orientation="vertical" className="h-6" />
-              <MSAWindowSection 
-                msaWindow={msaWindow} 
-                msaWindowSize={msaWindowSize} 
-                msaStepSize={msaStepSize} 
+              <MSAWindowSection
+                msaWindow={msaWindow}
+                msaWindowSize={msaWindowSize}
+                msaStepSize={msaStepSize}
               />
             </>
           )}
@@ -279,7 +279,7 @@ function MSAWindowSection({ msaWindow, msaWindowSize, msaStepSize }) {
       <Dna className="size-3.5 text-primary" aria-hidden />
       <div className="flex flex-col gap-1">
         <span className="text-2xs font-medium text-muted-foreground uppercase tracking-wider">MSA Window</span>
-        
+
         {/* Primary: Window positions (bold, prominent) */}
         <div className="inline-flex items-center gap-1 text-xs font-bold text-foreground tabular-nums">
           <span id="hudWindowStart">{msaWindow?.startPosition ?? 1}</span>
@@ -288,7 +288,7 @@ function MSAWindowSection({ msaWindow, msaWindowSize, msaStepSize }) {
           <span className="text-muted-foreground/50 text-2xs">-</span>
           <span id="hudWindowEnd">{msaWindow?.endPosition ?? msaWindowSize ?? 100}</span>
         </div>
-        
+
         {/* Secondary: Parameters (prominent, not muted) */}
         <div className="flex items-center gap-3 text-xs font-semibold text-foreground tabular-nums">
           <Tooltip>
@@ -302,7 +302,7 @@ function MSAWindowSection({ msaWindow, msaWindowSize, msaStepSize }) {
               Window size in alignment positions
             </TooltipContent>
           </Tooltip>
-          
+
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="flex items-center gap-1 px-2 py-1 rounded bg-primary/10 border border-primary/20 hover:border-primary/40 transition-colors cursor-help">
