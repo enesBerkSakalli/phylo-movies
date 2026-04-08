@@ -44,15 +44,6 @@ export class TreeNodeInteractionHandler {
   }
 
   /**
-   * Handle node hover events from deck.gl
-   * @param {Object} info - Deck.gl picking info
-   * @param {Event} event - DOM event
-   */
-  handleNodeHover(info, event) {
-    // No-op: linked highlighting is applied automatically when view link mapping is recomputed.
-  }
-
-  /**
    * Find the D3 tree node that corresponds to a layer data object
    * @param {Object} layerData - Data object from the layer
    * @param {Object} currentTreeData - Current tree data to search in
