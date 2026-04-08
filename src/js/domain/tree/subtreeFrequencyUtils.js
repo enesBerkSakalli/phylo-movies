@@ -1,4 +1,6 @@
 
+import { flattenSubtreeEntries } from '../../treeVisualisation/utils/splitMatching.js';
+
 /**
  * Calculates the frequency of each unique jumping subtree across all tree pair solutions.
  * Extracts subtrees from jumping_subtree_solutions which maps pivot edges to the subtrees
@@ -22,26 +24,23 @@ export function calculateSubtreeFrequencies(pairSolutions) {
     // The key is the pivot edge, the value contains the subtrees that move at that pivot
 
     Object.values(jumpingSolutions).forEach(solutionSets => {
-      // solutionSets is an array of solution options (usually just one)
-      solutionSets.forEach(subtreeGroup => {
-        // subtreeGroup is an array of subtrees for this pivot
-        subtreeGroup.forEach(subtreeSplitIndices => {
-          if (!Array.isArray(subtreeSplitIndices) || subtreeSplitIndices.length === 0) return;
+      const flattenedSubtrees = flattenSubtreeEntries(solutionSets);
 
-          // Create a stable signature for the subtree
-          const sortedIndices = [...subtreeSplitIndices].sort((a, b) => a - b);
-          const signature = sortedIndices.map(String).join(',');
+      flattenedSubtrees.forEach(subtreeSplitIndices => {
+        if (!Array.isArray(subtreeSplitIndices) || subtreeSplitIndices.length === 0) return;
 
-          if (!freqMap.has(signature)) {
-            freqMap.set(signature, {
-              signature,
-              splitIndices: sortedIndices,
-              count: 0
-            });
-          }
+        const sortedIndices = [...subtreeSplitIndices].sort((a, b) => a - b);
+        const signature = sortedIndices.map(String).join(',');
 
-          freqMap.get(signature).count++;
-        });
+        if (!freqMap.has(signature)) {
+          freqMap.set(signature, {
+            signature,
+            splitIndices: sortedIndices,
+            count: 0
+          });
+        }
+
+        freqMap.get(signature).count++;
       });
     });
   });
@@ -100,34 +99,45 @@ export function formatSubtreeLabel(splitIndices, leafNames = []) {
  * Returns a map of subtree signatures to their occurrence in pair solutions.
  *
  * @param {Object} pairSolutions - Map of pairKey -> TreePairSolution
- * @returns {Map<string, Array<string>>} Map of signature -> array of pair keys where this subtree jumps
+ * @returns {Map<string, Map<number, number>>} Map of signature -> per-time-index occurrence counts
  */
 export function calculateSubtreeTemporalDistribution(pairSolutions) {
   if (!pairSolutions || typeof pairSolutions !== 'object') return new Map();
 
-  const temporalMap = new Map(); // signature -> array of pair keys
+  const temporalMap = new Map(); // signature -> Map<timeIndex, count>
 
-  Object.entries(pairSolutions).forEach(([pairKey, solution]) => {
+  Object.entries(pairSolutions).forEach(([pairKey, solution], fallbackIndex) => {
     const jumpingSolutions = solution?.jumping_subtree_solutions;
     if (!jumpingSolutions) return;
 
+    const timeIndex = parsePairTimeIndex(pairKey, fallbackIndex);
+
     Object.values(jumpingSolutions).forEach(solutionSets => {
-      solutionSets.forEach(subtreeGroup => {
-        subtreeGroup.forEach(subtreeSplitIndices => {
-          if (!Array.isArray(subtreeSplitIndices) || subtreeSplitIndices.length === 0) return;
+      const flattenedSubtrees = flattenSubtreeEntries(solutionSets);
 
-          const sortedIndices = [...subtreeSplitIndices].sort((a, b) => a - b);
-          const signature = sortedIndices.map(String).join(',');
+      flattenedSubtrees.forEach(subtreeSplitIndices => {
+        if (!Array.isArray(subtreeSplitIndices) || subtreeSplitIndices.length === 0) return;
 
-          if (!temporalMap.has(signature)) {
-            temporalMap.set(signature, []);
-          }
+        const sortedIndices = [...subtreeSplitIndices].sort((a, b) => a - b);
+        const signature = sortedIndices.map(String).join(',');
 
-          temporalMap.get(signature).push(pairKey);
-        });
+        if (!temporalMap.has(signature)) {
+          temporalMap.set(signature, new Map());
+        }
+
+        const countsByTime = temporalMap.get(signature);
+        countsByTime.set(timeIndex, (countsByTime.get(timeIndex) || 0) + 1);
       });
     });
   });
 
   return temporalMap;
+}
+
+function parsePairTimeIndex(pairKey, fallbackIndex) {
+  const match = /^pair_(\d+)_\d+$/.exec(pairKey);
+  if (match) {
+    return Number(match[1]);
+  }
+  return fallbackIndex;
 }

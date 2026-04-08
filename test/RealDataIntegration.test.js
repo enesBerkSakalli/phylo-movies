@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import createTidyTreeLayout from '../src/js/treeVisualisation/layout/TidyTreeLayout.js';
 import { buildSubtreeConnectors } from '../src/js/treeVisualisation/deckgl/data/transforms/SubtreeConnectorBuilder.js';
+import { flattenSubtreeEntries } from '../src/js/treeVisualisation/utils/splitMatching.js';
 import fs from 'fs';
 import path from 'path';
 
 // Load Data Dynamically
-const responsePath = path.resolve(__dirname, '../response.json');
+const responsePath = path.resolve(__dirname, './data/ostrich_bug_response.json');
 const realData = JSON.parse(fs.readFileSync(responsePath, 'utf-8'));
 
 // Minimal mock
@@ -16,14 +17,33 @@ const mockColorManager = {
   getTypeColor: () => [200, 200, 200]
 };
 
-describe('Real Data Integration (data/response.json)', () => {
+describe('Real Data Integration (test/data/ostrich_bug_response.json)', () => {
+    const pairEntry = Object.entries(realData.tree_pair_solutions || {}).find(([, solution]) => {
+        const jumpingSolutions = solution?.jumping_subtree_solutions;
+        if (!jumpingSolutions) return false;
+        return Object.values(jumpingSolutions).some((solutionSets) => flattenSubtreeEntries(solutionSets).length > 0);
+    });
 
-    // We focus on pair_1_2 which contains a massive jump for [1..19]
-    // Even though pair_1_2 is between Tree 1 and 2, the clade [1..19] exists in Tree 0 as well.
-    const PAIR_KEY = 'pair_1_2';
+    if (!pairEntry) {
+        throw new Error('No jumping_subtree_solutions found in test/data/ostrich_bug_response.json');
+    }
+
+    const [PAIR_KEY, pairSolution] = pairEntry;
     const sourceTree = realData.interpolated_trees[0]; // Tree 0
-    // Use raw solutions directly (keys have spaces like "[1, 2, 3]")
-    const rawJumpSolutions = realData.tree_pair_solutions[PAIR_KEY].jumping_subtree_solutions;
+    const rawJumpSolutions = pairSolution.jumping_subtree_solutions;
+    const firstJumpEntry = Object.entries(rawJumpSolutions).find(([, solutionSets]) => flattenSubtreeEntries(solutionSets).length > 0);
+
+    if (!firstJumpEntry) {
+        throw new Error(`No usable jumping subtree entry found for ${PAIR_KEY}`);
+    }
+
+    const [edgeKey, solutionSets] = firstJumpEntry;
+    const pivotEdge = edgeKey
+        .replace(/[\[\]\s]/g, '')
+        .split(',')
+        .filter(Boolean)
+        .map((value) => Number(value));
+    const movingSubtree = flattenSubtreeEntries(solutionSets)[0];
 
     it('successfully lays out the real Ostrich dataset (Tree 0)', () => {
         const { tree, max_radius } = createTidyTreeLayout(sourceTree, 'none', { width: 1000, height: 1000 });
@@ -78,17 +98,9 @@ describe('Real Data Integration (data/response.json)', () => {
         const leftPositions = createPosMap(leftLayout.tree);
         const rightPositions = createPosMap(rightLayout.tree);
 
-        // 3. Extract the real Moving Subtree: [1..19]
-        // This corresponds to ranges 1 to 19 inclusive.
-        const indices1to19 = Array.from({length: 19}, (_, i) => i + 1);
-
-        // The builder expects pivotEdge to be the raw array of indices
-        // It converts it internally to "[1, 2, 3...]" to verify against latticeSolutions
-        const pivotEdge = indices1to19;
-
         // We also need to mark it as "currently moving" via subtreeTracking
         const subtreeTracking = [
-            [ indices1to19 ] // Index 0: Array of subtrees
+            [ movingSubtree ]
         ];
 
         const connectors = buildSubtreeConnectors({
@@ -127,6 +139,7 @@ describe('Real Data Integration (data/response.json)', () => {
         const dy = midPoint[1] - 0;
         const dist = Math.sqrt(dx*dx + dy*dy);
 
-        // Usually SubtreeConnectorBuilder pushes active bundles radius * 1.08 OR beyond        expect(dist).toBeGreaterThan(leftLayout.max_radius);
+        // Active bundling should still place the mid-path well away from the centerline origin.
+        expect(dist).toBeGreaterThan(100);
     });
 });

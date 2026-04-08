@@ -39,7 +39,7 @@ describe('SubtreeConnectorBuilder', function () {
       leftPositions,
       rightPositions,
       latticeSolutions,
-      activeChangeEdge: [0, 0],
+      pivotEdge: [0, 0],
       colorManager: mockColorManager,
       subtreeTracking: [[0]],
       currentTreeIndex: 0,
