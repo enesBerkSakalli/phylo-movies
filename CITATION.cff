@@ -14,7 +14,6 @@ authors:
 title: "Phylo-Movies: Interactive Phylogenetic Tree Interpolation and Visualization"
 version: 0.64.0
 date-released: 2026-02-03
-doi: "10.5281/zenodo.0000000"  # TODO: Replace with real Zenodo DOI after archiving
 url: "https://github.com/enesBerkSakalli/phylo-movies"
 repository-code: "https://github.com/enesBerkSakalli/phylo-movies"
 license: MIT
@@ -39,14 +38,21 @@ abstract: >-
   complements summary statistics such as Robinson-Foulds distances by showing which lineages move,
   where they move from, and which new groupings they form.
 
-# Preferred citation for academic papers (uncomment and fill when published)
-# preferred-citation:
-#   type: article
-#   authors:
-#     - family-names: "Sakalli"
-#       given-names: "Enes Berk"
-#       orcid: "https://orcid.org/0000-0000-0000-0000"
-#   title: "Phylo-Movies: Interactive Phylogenetic Tree Interpolation and Visualization"
-#   journal: "Bioinformatics"  # or your target journal
-#   year: 2026
-#   doi: "10.1093/bioinformatics/XXXXX"
+# Software DOI pending archival on Zenodo.
+
+preferred-citation:
+  type: article
+  authors:
+    - family-names: "Sakalli"
+      given-names: "E. B."
+    - family-names: "Haendeler"
+      given-names: "S. E."
+    - family-names: "von Haeseler"
+      given-names: "A."
+    - family-names: "Schmidt"
+      given-names: "H. A."
+  title: "Animating Phylogenetic Trees from Sliding-Window Analyses"
+  journal: "bioRxiv"
+  year: 2026
+  doi: "10.64898/2026.04.01.715821"
+  url: "https://www.biorxiv.org/content/10.64898/2026.04.01.715821v1"
