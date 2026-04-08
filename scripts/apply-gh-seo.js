@@ -16,21 +16,57 @@ const SOCIAL_IMAGE_URL = `${SITE_ROOT}/${SOCIAL_IMAGE_REL_PATH}`;
 const REPOSITORY_URL = 'https://github.com/enesBerkSakalli/phylo-movies';
 const README_URL = `${REPOSITORY_URL}#readme`;
 const RELEASES_URL = `${REPOSITORY_URL}/releases`;
+const PUBLICATION_URL = 'https://www.biorxiv.org/content/10.64898/2026.04.01.715821v1';
+const PUBLICATION_PDF_URL = 'https://www.biorxiv.org/content/10.64898/2026.04.01.715821v1.full.pdf';
+const PUBLICATION_DOI = '10.64898/2026.04.01.715821';
+const PUBLICATION_DOI_URL = `https://doi.org/${PUBLICATION_DOI}`;
+const PUBLICATION_TITLE = 'Animating Phylogenetic Trees from Sliding-Window Analyses';
+const PUBLICATION_DATE = '2026-04-01';
+const PUBLICATION_JOURNAL = 'bioRxiv';
+const PUBLICATION_AUTHORS = [
+  'E. B. Sakalli',
+  'S. E. Haendeler',
+  'A. von Haeseler',
+  'H. A. Schmidt'
+];
 const PRIMARY_URL = IS_DOCS_ONLY ? `${SITE_ROOT}/` : `${SITE_ROOT}/home`;
 const PAGE_TITLE = IS_DOCS_ONLY
-  ? 'Phylo-Movies | README, Documentation, and Deployment'
+  ? 'Phylo-Movies | Desktop App, Phylogenetic Tree Interpolation, and Publication'
   : 'Phylo-Movies | Interactive Phylogenetic Tree Visualization';
 const DESCRIPTION = IS_DOCS_ONLY
-  ? 'Interactive phylogenetic tree visualization and tree-morphing tool for sliding-window MSA analysis, recombination detection, and rogue taxa exploration. This GitHub Pages site provides README-style documentation and deployment guidance.'
+  ? 'Phylo-Movies is a desktop app and browser-based phylogenetic tree interpolation and visualization tool for sliding-window analyses, recombination detection, and rogue taxa exploration. This site provides publication details, citation metadata, desktop downloads, and setup guidance.'
   : 'Interactive phylogenetic tree visualization and tree-morphing tool for sliding-window MSA analysis, recombination detection, and rogue taxa exploration.';
 const OG_DESCRIPTION = IS_DOCS_ONLY
-  ? 'README-style project overview with links to the repository, desktop releases, example datasets, and full-stack deployment instructions.'
+  ? 'Landing page for the Phylo-Movies desktop app and web tool, with publication links, citation metadata, example use cases, datasets, and full-stack setup instructions.'
   : 'Visualize topological transitions between phylogenetic trees through smooth morphing animations, MSA-linked exploration, and lineage-aware analysis tools.';
 const KEYWORDS = IS_DOCS_ONLY
-  ? 'phylogenetics, phylogenetic trees, tree visualization, tree morphing, multiple sequence alignment, MSA, recombination, rogue taxa, Robinson-Foulds, computational biology, README, documentation'
+  ? 'phylogenetics, phylogenetic tree interpolation, phylogenetic tree visualization, tree morphing, sliding-window phylogenetics, desktop app, electron app, multiple sequence alignment, MSA, recombination detection, rogue taxa, Robinson-Foulds, computational biology, bioRxiv, scientific software'
   : 'phylogenetics, phylogenetic trees, tree visualization, tree morphing, bioinformatics, Robinson-Foulds, recombination, MSA, rogue taxa, computational biology';
 const OG_IMAGE_WIDTH = '1914';
 const OG_IMAGE_HEIGHT = '930';
+
+const FAQ_ITEMS = [
+  {
+    question: 'What does Phylo-Movies do?',
+    answer: 'Phylo-Movies visualizes topological changes between phylogenetic trees by animating subtree movements across sliding-window analyses, bootstrap replicates, and related workflows.'
+  },
+  {
+    question: 'When do I need the backend?',
+    answer: 'The frontend can display uploaded tree files directly, but interpolation, morphing animations, and MSA-driven workflows require the BranchArchitect backend.'
+  },
+  {
+    question: 'Is Phylo-Movies available as a desktop app?',
+    answer: 'Yes. Phylo-Movies is distributed both as a desktop application and as a browser-based tool. The landing page links directly to desktop releases for macOS, Windows, and Linux.'
+  },
+  {
+    question: 'Which problems is Phylo-Movies useful for?',
+    answer: 'Typical use cases include recombination breakpoint exploration, rogue taxon detection across bootstrap trees, and qualitative inspection of local phylogenetic conflict.'
+  },
+  {
+    question: 'How should I cite Phylo-Movies?',
+    answer: `Cite the bioRxiv preprint ${PUBLICATION_TITLE} using DOI ${PUBLICATION_DOI}.`
+  }
+];
 
 const STRUCTURED_DATA = [
   {
@@ -61,9 +97,62 @@ const STRUCTURED_DATA = [
     runtimePlatform: ['Web Browser', 'Electron', 'Docker'],
     applicationCategory: 'ScientificApplication',
     downloadUrl: RELEASES_URL,
-    sameAs: [REPOSITORY_URL, README_URL, RELEASES_URL],
+    citation: PUBLICATION_DOI_URL,
+    sameAs: [REPOSITORY_URL, README_URL, RELEASES_URL, PUBLICATION_URL, PUBLICATION_DOI_URL],
+    subjectOf: PUBLICATION_URL,
     keywords: KEYWORDS.split(',').map((keyword) => keyword.trim())
-  }
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'Phylo-Movies',
+    url: PRIMARY_URL,
+    description: DESCRIPTION,
+    applicationCategory: 'ScientificApplication',
+    operatingSystem: 'macOS, Windows, Linux, Web',
+    softwareVersion: '0.64.0',
+    downloadUrl: RELEASES_URL,
+    codeRepository: REPOSITORY_URL,
+    screenshot: SOCIAL_IMAGE_URL,
+    citation: PUBLICATION_DOI_URL,
+    keywords: KEYWORDS.split(',').map((keyword) => keyword.trim())
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'ScholarlyArticle',
+    headline: PUBLICATION_TITLE,
+    name: PUBLICATION_TITLE,
+    url: PUBLICATION_URL,
+    sameAs: PUBLICATION_DOI_URL,
+    identifier: PUBLICATION_DOI,
+    isPartOf: {
+      '@type': 'Periodical',
+      name: 'bioRxiv'
+    },
+    datePublished: PUBLICATION_DATE,
+    author: PUBLICATION_AUTHORS.map((name) => ({ '@type': 'Person', name })),
+    about: [
+      'Phylogenetics',
+      'Sliding-window analyses',
+      'Tree morphing',
+      'Recombination detection',
+      'Rogue taxa'
+    ]
+  },
+  ...(IS_DOCS_ONLY
+    ? [{
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: FAQ_ITEMS.map(({ question, answer }) => ({
+          '@type': 'Question',
+          name: question,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: answer
+          }
+        }))
+      }]
+    : [])
 ];
 
 function assertFileExists(filePath) {
@@ -108,6 +197,9 @@ function applyIndexSeo(indexHtml) {
   let html = replaceTitleTag(indexHtml, PAGE_TITLE);
   html = replaceDescriptionMeta(html, DESCRIPTION);
   const structuredDataJson = JSON.stringify(STRUCTURED_DATA, null, 2);
+  const citationAuthorTags = PUBLICATION_AUTHORS
+    .map((author) => `    <meta name="citation_author" content="${author}">`)
+    .join('\n');
 
   const injection = `
     <meta name="keywords" content="${KEYWORDS}">
@@ -136,6 +228,14 @@ function applyIndexSeo(indexHtml) {
     <meta name="twitter:url" content="${PRIMARY_URL}">
     <meta name="twitter:image" content="${SOCIAL_IMAGE_URL}">
     <meta name="twitter:image:alt" content="Phylo-Movies application interface">
+    <meta name="citation_title" content="${PUBLICATION_TITLE}">
+  ${citationAuthorTags}
+    <meta name="citation_journal_title" content="${PUBLICATION_JOURNAL}">
+    <meta name="citation_publication_date" content="${PUBLICATION_DATE}">
+    <meta name="citation_public_url" content="${PUBLICATION_URL}">
+    <meta name="citation_pdf_url" content="${PUBLICATION_PDF_URL}">
+    <meta name="citation_doi" content="${PUBLICATION_DOI}">
+    <meta property="article:published_time" content="${PUBLICATION_DATE}">
     <link rel="canonical" href="${PRIMARY_URL}">
     <link rel="alternate" hreflang="en" href="${PRIMARY_URL}">
     <link rel="alternate" hreflang="x-default" href="${PRIMARY_URL}">

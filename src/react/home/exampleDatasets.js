@@ -4,6 +4,8 @@
  * display metadata, and processing parameters.
  */
 
+const PUBLICATION_CITATION = 'Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026). Animating Phylogenetic Trees from Sliding-Window Analyses. bioRxiv. doi:10.64898/2026.04.01.715821';
+
 export const EXAMPLE_DATASETS = [
   {
     id: 'norovirus-350',
@@ -21,7 +23,7 @@ export const EXAMPLE_DATASETS = [
       useGamma: true,
       usePseudo: false,
     },
-    citation: 'Publication data for Phylo-Movies manuscript',
+    citation: PUBLICATION_CITATION,
     badge: 'Publication',
   },
   {
@@ -39,7 +41,7 @@ export const EXAMPLE_DATASETS = [
       useGamma: false,
       usePseudo: false,
     },
-    citation: 'Publication data for Phylo-Movies manuscript',
+    citation: PUBLICATION_CITATION,
     badge: 'Demo',
   },
   {
@@ -57,7 +59,7 @@ export const EXAMPLE_DATASETS = [
       useGamma: false,
       usePseudo: false,
     },
-    citation: 'Publication data for Phylo-Movies manuscript',
+    citation: PUBLICATION_CITATION,
     badge: 'Publication',
   },
   {
@@ -75,7 +77,7 @@ export const EXAMPLE_DATASETS = [
       useGamma: false,
       usePseudo: false,
     },
-    citation: 'Publication data for Phylo-Movies manuscript',
+    citation: PUBLICATION_CITATION,
     badge: 'Publication',
   },
 ];

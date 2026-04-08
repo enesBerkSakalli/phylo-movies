@@ -15,7 +15,7 @@ export function ExampleTab({ loadingExample, loadingExampleId, submitting, handl
           </div>
           <h3 className="text-lg font-semibold">Load Sample Dataset</h3>
           <p className="text-sm text-muted-foreground max-w-md">
-            Explore Phylo-Movies with curated biological datasets from our publication.
+            Explore Phylo-Movies with curated biological datasets from our bioRxiv preprint.
           </p>
         </div>
 
@@ -54,6 +54,9 @@ export function ExampleTab({ loadingExample, loadingExampleId, submitting, handl
                       <span>File: {example.fileName}</span>
                     )}
                   </div>
+                  <p className="text-xs text-muted-foreground/80">
+                    {example.citation}
+                  </p>
                 </div>
                 <div className="flex gap-2 shrink-0">
                   <Button
