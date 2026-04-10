@@ -1,5 +1,5 @@
 import { resolveApiUrl } from "@/services/data/apiConfig";
-import { phyloData, workflows } from "@/services/data/dataService.js";
+import { phyloData } from "@/services/data/dataService.js";
 
 /**
  * Electron loading helpers
@@ -241,7 +241,6 @@ export async function finalizeMovieData(data, formData, onProgress) {
   try {
     const fd = new FormData();
     if (formData.msaFile) fd.append('msaFile', formData.msaFile);
-    await workflows.handleMSADataSaving(fd, data);
   } catch (err) {
     console.error('[MovieService] MSA workflow error:', err);
     msaWarning = 'Tree data is ready, but MSA processing failed.';
