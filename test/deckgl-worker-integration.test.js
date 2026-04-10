@@ -86,7 +86,7 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
     ControllerClass = module.DeckGLTreeAnimationController;
 
     // Import the real store to seed it with data
-    const { useAppStore } = await import('../src/state/phyloStore/store.js');
+    const { useAppStore } = await import('../src/store/store.js');
 
     // Seed the store
     useAppStore.setState({

@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react';
-import { useAppStore } from '@/state/phyloStore/store.js';
+import { useAppStore } from '@/store/store.js';
 import { DeckGLTreeAnimationController } from '@/core/treeVisualisation/DeckGLTreeAnimationController.js';
-import { calculateWindow } from '@/domain/msa/msaWindowCalculator.js';
-import { getMSAFrameIndex } from '@/domain/indexing/IndexMapping.js';
+import { calculateWindow } from '@/utils/msa/msaWindowCalculator.js';
+import { getMSAFrameIndex } from '@/utils/indexing/IndexMapping.js';
 
 // =============================================================================
 // HOOK

@@ -8,7 +8,7 @@ import {
   shortestAngle,
   crossesAngle,
   longArcDelta
-} from '../src/domain/math/mathUtils.js';
+} from '../s../utils/math/mathUtils.js';
 import { PolarNodeInterpolator } from '../src/core/treeVisualisation/deckgl/interpolation/nodes/PolarNodeInterpolator.js';
 import { PolarPathInterpolator } from '../src/core/treeVisualisation/deckgl/interpolation/path/PolarPathInterpolator.js';
 

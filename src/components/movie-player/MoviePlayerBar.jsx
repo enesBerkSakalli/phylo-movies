@@ -7,7 +7,7 @@ import { SaveImageButton } from '@/components/media/SaveImageButton.jsx';
 import { TimelineScrollControls } from '@/components/movie-player/TimelineScrollControls/TimelineScrollControls.jsx';
 import { PlaybackSpeedControl } from '@/components/movie-player/PlaybackSpeedControl/PlaybackSpeedControl.jsx';
 import { TimelineSegmentTooltip } from '@/components/timeline/TimelineSegmentTooltip.jsx';
-import { useAppStore } from '@/state/phyloStore/store.js';
+import { useAppStore } from '@/store/store.js';
 import { useSidebar } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Menu, ChevronUp, ChevronDown } from 'lucide-react';

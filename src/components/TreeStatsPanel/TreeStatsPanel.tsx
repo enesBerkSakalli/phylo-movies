@@ -1,7 +1,7 @@
 // TreeStatsPanel.tsx - Main component for phylogenetic scale tracking and visualization
 
 import React from 'react';
-import { useAppStore } from '@/state/phyloStore/store.js';
+import { useAppStore } from '@/store/store.js';
 import { useScaleMetrics } from '@/components/TreeStatsPanel/ScaleTracking/useScaleMetrics';
 import { CurrentScaleDisplay } from '@/components/TreeStatsPanel/ScaleTracking/CurrentScaleDisplay';
 import { BranchLengthHistogram } from '@/components/TreeStatsPanel/BranchLengths/BranchLengthHistogram';

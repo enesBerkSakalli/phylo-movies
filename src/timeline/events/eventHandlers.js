@@ -1,4 +1,4 @@
-import { useAppStore } from '@/state/phyloStore/store.js';
+import { useAppStore } from '@/store/store.js';
 
 const HOVER_CLEAR_DELAY_MS = 150;
 

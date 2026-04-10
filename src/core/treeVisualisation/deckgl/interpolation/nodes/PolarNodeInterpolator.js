@@ -2,7 +2,7 @@
  * PolarNodeInterpolator - Interpolates node positions using polar coordinates
  * Handles smooth interpolation of tree nodes in radial layouts
  */
-import { shortestAngle, crossesAngle, longArcDelta } from '@/domain/math/mathUtils.js';
+import { shortestAngle, crossesAngle, longArcDelta } from '@/utils/math/mathUtils.js';
 
 export class PolarNodeInterpolator {
   constructor() {

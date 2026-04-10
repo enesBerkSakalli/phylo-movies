@@ -1,5 +1,5 @@
 import { buildSubtreeConnectors } from '@/core/treeVisualisation/deckgl/data/transforms/SubtreeConnectorBuilder.js';
-import { useAppStore } from '@/state/phyloStore/store.js';
+import { useAppStore } from '@/store/store.js';
 import { tagTreeSide } from '@/core/treeVisualisation/utils/layerDataUtils.js';
 import {
   calculateRightOffset,

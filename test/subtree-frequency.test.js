@@ -1,6 +1,6 @@
 
 import { describe, it, expect } from 'vitest';
-import { calculateSubtreeFrequencies, getTopSubtrees, formatSubtreeLabel } from '../src/domain/tree/subtreeFrequencyUtils';
+import { calculateSubtreeFrequencies, getTopSubtrees, formatSubtreeLabel } from '../s../utils/tree/subtreeFrequencyUtils';
 
 describe('subtreeFrequencyUtils', () => {
   describe('calculateSubtreeFrequencies', () => {

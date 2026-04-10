@@ -2,7 +2,7 @@ import React, { useMemo, useCallback } from 'react';
 import { Rnd } from 'react-rnd';
 import { Button } from '@/components/ui/button';
 import { Palette, X } from 'lucide-react';
-import { useAppStore } from '@/state/phyloStore/store.js';
+import { useAppStore } from '@/store/store.js';
 import { TaxaColoringWindow } from '@/components/taxa-coloring/TaxaColoringWindow.jsx';
 import { applyColoringData } from '@/core/treeColoring/utils/GroupingUtils.js';
 import { TREE_COLOR_CATEGORIES } from '@/constants/TreeColors.js';

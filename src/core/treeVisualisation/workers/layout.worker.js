@@ -1,7 +1,7 @@
 
 import { TidyTreeLayout } from '@/core/treeVisualisation/layout/TidyTreeLayout.js';
 import { DeckGLTreeLayerDataFactory } from '@/core/treeVisualisation/deckgl/DeckGLTreeLayerDataFactory.js';
-import { transformBranchLengths } from '@/domain/tree/branchTransform.js';
+import { transformBranchLengths } from '@/utils/tree/branchTransform.js';
 
 const dataFactory = new DeckGLTreeLayerDataFactory();
 

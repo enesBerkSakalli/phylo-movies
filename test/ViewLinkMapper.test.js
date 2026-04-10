@@ -1,6 +1,6 @@
 
 import { describe, it, expect } from 'vitest';
-import { derivePairKey, buildViewLinkMapping } from '../src/domain/view/viewLinkMapper.js';
+import { derivePairKey, buildViewLinkMapping } from '../s../utils/view/viewLinkMapper.js';
 
 describe('ViewLinkMapper', () => {
 

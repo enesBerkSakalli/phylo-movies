@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
-import { useAppStore } from '@/state/phyloStore/store.js';
+import { useAppStore } from '@/store/store.js';
 
 const clampPositive = (value) => Math.max(1, Math.round(Number(value) || 1));
 

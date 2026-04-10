@@ -2,7 +2,7 @@
  * PolarLabelInterpolator - Interpolates label positions and rotations
  * Handles smooth interpolation of tree labels in radial layouts
  */
-import { unwrapAngle, shortestAngle, crossesAngle, longArcDelta } from '@/domain/math/mathUtils.js';
+import { unwrapAngle, shortestAngle, crossesAngle, longArcDelta } from '@/utils/math/mathUtils.js';
 
 export class PolarLabelInterpolator {
   constructor() {

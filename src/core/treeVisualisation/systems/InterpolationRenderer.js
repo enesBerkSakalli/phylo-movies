@@ -1,4 +1,4 @@
-import { useAppStore } from '@/state/phyloStore/store.js';
+import { useAppStore } from '@/store/store.js';
 import { detectAnimationStage } from '@/core/treeVisualisation/deckgl/interpolation/stages/animationStageDetector.js';
 import { applyStageEasing } from '@/core/treeVisualisation/deckgl/interpolation/stages/stageEasing.js';
 import { calculateMetricScale } from '@/core/treeVisualisation/viewport/ViewportGeometryService.js';

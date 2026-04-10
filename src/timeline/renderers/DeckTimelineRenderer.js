@@ -1,6 +1,6 @@
 // Load timeline styles only in browser environments to keep Node-based tests happy
 if (typeof document !== 'undefined') {
-  import('../../css/movie-timeline/container.css');
+  import('./container.css');
 }
 import { Deck, OrthographicView } from '@deck.gl/core';
 import { TIMELINE_CONSTANTS, TIMELINE_THEME } from '@/timeline/constants.js';

@@ -4,9 +4,9 @@ import {
   OrbitView,
   LinearInterpolator
 } from '@deck.gl/core';
-import { easeInOutCubic } from '@/domain/math/mathUtils.js';
+import { easeInOutCubic } from '@/utils/math/mathUtils.js';
 import { VIEW_IDS, DEFAULT_ORTHO_STATE, DEFAULT_ORBIT_STATE } from '@/core/treeVisualisation/deckgl/context/viewConstants.js';
-import { useAppStore } from '@/state/phyloStore/store.js';
+import { useAppStore } from '@/store/store.js';
 import { getGroupForTaxon } from '@/core/treeColoring/utils/GroupingUtils.js';
 
 /**

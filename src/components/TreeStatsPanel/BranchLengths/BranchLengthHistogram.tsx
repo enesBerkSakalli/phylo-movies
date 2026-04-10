@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Palette } from 'lucide-react';
-import { formatScaleValue } from '@/domain/tree/scaleUtils.js';
+import { formatScaleValue } from '@/utils/tree/scaleUtils.js';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import {

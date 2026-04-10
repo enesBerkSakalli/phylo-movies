@@ -1,4 +1,4 @@
-import { useAppStore } from '@/state/phyloStore/store.js';
+import { useAppStore } from '@/store/store.js';
 import { ToggleWithLabel } from '@/components/ui/toggle-with-label';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

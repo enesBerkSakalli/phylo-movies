@@ -12,7 +12,7 @@
  * stays on the base eased timeline so branch-length changes do not distort
  * angular phase alignment across the tree.
  */
-import { shortestAngle, crossesAngle, longArcDelta } from '@/domain/math/mathUtils.js';
+import { shortestAngle, crossesAngle, longArcDelta } from '@/utils/math/mathUtils.js';
 
 /**
  * Compute the absolute angular displacement between two elements,

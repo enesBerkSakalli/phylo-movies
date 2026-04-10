@@ -1,8 +1,8 @@
 import * as d3 from "d3";
-import { useAppStore } from '@/state/phyloStore/store.js';
-import { transformBranchLengths } from '@/domain/tree/branchTransform.js';
+import { useAppStore } from '@/store/store.js';
+import { transformBranchLengths } from '@/utils/tree/branchTransform.js';
 import { TidyTreeLayout } from '@/core/treeVisualisation/layout/TidyTreeLayout.js';
-import calculateScales, { getMaxScaleValue } from '@/domain/tree/scaleUtils.js';
+import calculateScales, { getMaxScaleValue } from '@/utils/tree/scaleUtils.js';
 
 export class WebGLTreeAnimationController {
 

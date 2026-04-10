@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { useAppStore } from '@/state/phyloStore/store.js';
+import { useAppStore } from '@/store/store.js';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Palette, Info, Settings2, RefreshCw } from 'lucide-react';

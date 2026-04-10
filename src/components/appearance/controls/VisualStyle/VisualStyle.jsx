@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useAppStore } from '@/state/phyloStore/store.js';
+import { useAppStore } from '@/store/store.js';
 import { SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { ChevronDown, Circle, RotateCw } from 'lucide-react';

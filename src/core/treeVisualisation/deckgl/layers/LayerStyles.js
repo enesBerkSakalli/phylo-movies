@@ -1,4 +1,4 @@
-import { useAppStore } from '@/state/phyloStore/store.js';
+import { useAppStore } from '@/store/store.js';
 import { resetTaxonColorCache } from '@/core/treeVisualisation/systems/tree_color/monophyleticColoring.js';
 import {
   getLinkColor as resolveLinkColor,

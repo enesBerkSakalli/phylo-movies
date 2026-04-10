@@ -77,9 +77,9 @@ function createSplashWindow() {
   });
 
   if (isDev) {
-    splashWindow.loadURL(`${FRONTEND_DEV_URL}/splash.html`);
+    splashWindow.loadURL(`${FRONTEND_DEV_URL}/src/pages/Splash/splash.html`);
   } else {
-    splashWindow.loadFile(path.join(__dirname, 'frontend-dist', 'splash.html'));
+    splashWindow.loadFile(path.join(__dirname, 'frontend-dist', 'pages', 'Splash', 'splash.html'));
   }
 
   splashWindow.on('closed', () => {

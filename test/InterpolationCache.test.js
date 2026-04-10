@@ -2,7 +2,7 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { InterpolationCache } from '../src/core/treeVisualisation/deckgl/interpolation/InterpolationCache.js';
-import { useAppStore } from '../src/state/phyloStore/store.js';
+import { useAppStore } from '../src/store/store.js';
 
 describe('InterpolationCache', () => {
   let cache;

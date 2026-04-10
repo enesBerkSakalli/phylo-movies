@@ -3,7 +3,7 @@
  * Used for animating tree branches and extensions in radial layouts
  */
 import { calculateInterpolatedBranchCoordinates } from '@/core/treeVisualisation/layout/RadialTreeGeometry.js';
-import { shortestAngle, crossesAngle, longArcDelta } from '@/domain/math/mathUtils.js';
+import { shortestAngle, crossesAngle, longArcDelta } from '@/utils/math/mathUtils.js';
 import { ARC_SEGMENT_COUNT } from '@/core/treeVisualisation/deckgl/builders/geometry/links/LinkGeometryBuilder.js';
 
 export class PolarPathInterpolator {

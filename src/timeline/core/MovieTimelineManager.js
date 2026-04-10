@@ -4,7 +4,7 @@ import { ScrubberAPI } from '@/timeline/core/ScrubberAPI.js';
 import { TimelineNavigationController } from '@/timeline/core/TimelineNavigationController.js';
 import { TimelineScrubController } from '@/timeline/core/TimelineScrubController.js';
 import { TimelineStateSynchronizer } from '@/timeline/core/TimelineStateSynchronizer.js';
-import { useAppStore } from '@/state/phyloStore/store.js';
+import { useAppStore } from '@/store/store.js';
 import { DeckTimelineRenderer } from '@/timeline/renderers/DeckTimelineRenderer.js';
 
 // ============================================================================

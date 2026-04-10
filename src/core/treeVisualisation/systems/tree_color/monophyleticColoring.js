@@ -9,7 +9,7 @@
  * Call `resetTaxonColorCache()` at the start of each render cycle.
  */
 import { TREE_COLOR_CATEGORIES } from '@/constants/TreeColors.js';
-import { useAppStore } from '@/state/phyloStore/store.js';
+import { useAppStore } from '@/store/store.js';
 import { getTaxonColor } from '@/core/treeColoring/utils/GroupingUtils.js';
 
 // =============================================================================

@@ -1,4 +1,4 @@
-import { useAppStore, selectCurrentTree } from '@/state/phyloStore/store.js';
+import { useAppStore, selectCurrentTree } from '@/store/store.js';
 import { tagTreeSide } from '@/core/treeVisualisation/utils/layerDataUtils.js';
 
 /**

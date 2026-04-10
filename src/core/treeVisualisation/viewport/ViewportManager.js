@@ -4,7 +4,7 @@
  * Handles viewport calculations, camera positioning, bounds checking,
  * and screen space projections for tree visualization.
  */
-import { useAppStore } from '@/state/phyloStore/store.js';
+import { useAppStore } from '@/store/store.js';
 import { calculateVisualBounds } from '@/core/treeVisualisation/utils/TreeBoundsUtils.js';
 import { projectNodesToScreen, applySafeAreaToTarget } from '@/core/treeVisualisation/spatial/projections.js';
 import { areBoundsInView, expandBoundsForLabels } from '@/core/treeVisualisation/spatial/bounds.js';
@@ -144,7 +144,7 @@ export class ViewportManager {
     try {
       const deck = this.controller.deckContext.deck;
       const viewManager = deck.viewManager;
-      
+
       // deck.gl getViewports() asserts if width or height is 0 or internal state isn't ready
       if (!deck.width || !deck.height || !viewManager || !viewManager.viewports || viewManager.viewports.length === 0) return;
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { useAppStore } from '@/state/phyloStore/store.js';
+import { useAppStore } from '@/store/store.js';
 import { MSADeckGLViewer } from '@/core/msaViewer/MSADeckGLViewer';
 import { useMSA } from '@/components/msa/MSAContext';
 import { MSAScrollbars } from '@/components/msa/MSAScrollbars';

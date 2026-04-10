@@ -1,6 +1,6 @@
 import { detectAnimationStage } from '@/core/treeVisualisation/deckgl/interpolation/stages/animationStageDetector.js';
 import { applyStageEasing } from '@/core/treeVisualisation/deckgl/interpolation/stages/stageEasing.js';
-import { calculatePlaybackState } from '@/domain/animation/AnimationTiming.js';
+import { calculatePlaybackState } from '@/utils/animation/AnimationTiming.js';
 
 /**
  * AnimationRunner

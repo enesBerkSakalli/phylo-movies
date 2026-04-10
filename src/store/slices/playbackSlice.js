@@ -1,4 +1,4 @@
-import { clamp } from '@/domain/math/mathUtils.js';
+import { clamp } from '@/utils/math/mathUtils.js';
 
 /**
  * Playback slice: animation playback, navigation, scrubbing, and rendering guards.

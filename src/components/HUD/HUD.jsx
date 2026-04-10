@@ -1,8 +1,8 @@
 import React, { useCallback, useMemo } from 'react';
 import Draggable from 'react-draggable';
-import { useAppStore } from '@/state/phyloStore/store.js';
-import { getIndexMappings, getMSAFrameIndex } from '@/domain/indexing/IndexMapping';
-import { calculateWindow } from '@/domain/msa/msaWindowCalculator';
+import { useAppStore } from '@/store/store.js';
+import { getIndexMappings, getMSAFrameIndex } from '@/utils/indexing/IndexMapping';
+import { calculateWindow } from '@/utils/msa/msaWindowCalculator';
 import { Film, BarChart2, Dna, Clipboard, ChevronLeft, ChevronRight, X, GripVertical } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';

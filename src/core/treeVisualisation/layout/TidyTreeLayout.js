@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 import { getNodeKey } from '@/core/treeVisualisation/utils/KeyGenerator.js';
-import { transformBranchLengths } from '@/domain/tree/branchTransform.js';
+import { transformBranchLengths } from '@/utils/tree/branchTransform.js';
 
 /**
  * Tidy tree layout with radial projection and branch-length radii.

@@ -20,7 +20,7 @@ const {
   getConnectorsLayerProps
 } = require('../src/core/treeVisualisation/deckgl/layers/factory/index.js');
 const { LayerStyles } = require('../src/core/treeVisualisation/deckgl/layers/LayerStyles.js');
-const { useAppStore } = require('../src/state/phyloStore/store.js');
+const { useAppStore } = require('../src/store/store.js');
 
 describe('Layer factory strategies comparison', function () {
   it('measures instantiation count for instantiate-each-render vs base+clone', function () {

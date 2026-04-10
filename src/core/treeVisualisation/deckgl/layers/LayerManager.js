@@ -5,9 +5,9 @@
  * Maintains LayerStyles instance for consistent styling across layers.
  */
 import { LayerStyles } from '@/core/treeVisualisation/deckgl/layers/LayerStyles.js';
-import { useAppStore } from '@/state/phyloStore/store.js';
+import { useAppStore } from '@/store/store.js';
 import { ComparisonModeRenderer } from '@/core/treeVisualisation/comparison/ComparisonModeRenderer.js';
-import { buildViewLinkMapping, derivePairKey } from '@/domain/view/viewLinkMapper.js';
+import { buildViewLinkMapping, derivePairKey } from '@/utils/view/viewLinkMapper.js';
 import * as layerFactories from '@/core/treeVisualisation/deckgl/layers/factory/index.js';
 import { createClipboardLayers } from '@/core/treeVisualisation/deckgl/layers/factory/clipboard/ClipboardLayerFactory.js';
 

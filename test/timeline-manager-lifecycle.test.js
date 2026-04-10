@@ -53,7 +53,7 @@ Module._load = function (request, parent, isMain) {
 };
 
 const { MovieTimelineManager } = require('../src/timeline/core/MovieTimelineManager.js');
-const { useAppStore } = require('../src/state/phyloStore/store.js');
+const { useAppStore } = require('../src/store/store.js');
 
 function loadMovieData() {
   const candidates = [
