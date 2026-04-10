@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import calculateScales, { getMaxScaleValue } from '../s../utils/tree/scaleUtils.js';
+import calculateScales, { getMaxScaleValue } from '../src/utils/tree/scaleUtils.js';
 
 describe('scaleUtils', () => {
   describe('calculateScales', () => {

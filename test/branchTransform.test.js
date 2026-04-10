@@ -1,5 +1,5 @@
 const { expect } = require('chai');
-const { transformBranchLengths } = require('../s../utils/tree/branchTransform.js');
+const { transformBranchLengths } = require('../src/utils/tree/branchTransform.js');
 
 describe('Domain/Tree/BranchTransform', () => {
   const sampleTree = {

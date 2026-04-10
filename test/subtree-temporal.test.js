@@ -1,6 +1,6 @@
 
 import { describe, it, expect } from 'vitest';
-import { calculateSubtreeTemporalDistribution } from '../s../utils/tree/subtreeFrequencyUtils';
+import { calculateSubtreeTemporalDistribution } from '../src/utils/tree/subtreeFrequencyUtils';
 
 describe('calculateSubtreeTemporalDistribution', () => {
   it('should track subtree occurrences over time', () => {

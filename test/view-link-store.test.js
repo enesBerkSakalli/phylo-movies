@@ -2,7 +2,7 @@ const { expect } = require('chai');
 
 // SUTs
 const { useAppStore } = require('../src/store/store.js');
-const { buildViewLinkMapping } = require('../s../utils/view/viewLinkMapper.js');
+const { buildViewLinkMapping } = require('../src/utils/view/viewLinkMapper.js');
 
 describe('View link store wiring', () => {
   beforeEach(() => {

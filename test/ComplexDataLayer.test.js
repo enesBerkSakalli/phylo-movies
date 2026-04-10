@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import createTidyTreeLayout, { TidyTreeLayout } from '../src/core/treeVisualisation/layout/TidyTreeLayout.js';
 import { buildSubtreeConnectors } from '../src/core/treeVisualisation/deckgl/data/transforms/SubtreeConnectorBuilder.js';
 import { chooseBundlePoint, ensureOutside } from '../src/core/treeVisualisation/deckgl/data/transforms/ComparisonGeometryUtils.js';
-import { buildViewLinkMapping } from '../s../utils/view/viewLinkMapper.js';
+import { buildViewLinkMapping } from '../src/utils/view/viewLinkMapper.js';
 import { calculateBranchCoordinates } from '../src/core/treeVisualisation/layout/RadialTreeGeometry.js';
 
 // Mock Data Utilities
