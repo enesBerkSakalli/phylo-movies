@@ -1,4 +1,3 @@
-
 import { describe, it, expect } from 'vitest';
 import { calculateSubtreeFrequencies, getTopSubtrees, formatSubtreeLabel } from '../src/js/domain/tree/subtreeFrequencyUtils';
 

@@ -1,4 +1,3 @@
-
 import { expect } from 'chai';
 import { reconstructSortedLeavesFromTree } from '../src/js/domain/tree/treeReconstructionUtils.js';
 
