@@ -1,4 +1,3 @@
-
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { TidyTreeLayout } from '../src/js/treeVisualisation/layout/TidyTreeLayout.js';
