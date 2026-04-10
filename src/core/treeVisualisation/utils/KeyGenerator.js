@@ -1,4 +1,4 @@
-import { getSplitHash } from '@/core/treeVisualisation/utils/splitMatching.js';
+import { getSplitHash } from './splitMatching.js';
 
 /**
  * KeyGenerator - Centralized, robust key generation for D3 data binding

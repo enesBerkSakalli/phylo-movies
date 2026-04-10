@@ -1,45 +1,22 @@
-import * as d3 from "d3";
-import { useAppStore } from '@/store/store.js';
-import { transformBranchLengths } from '@/utils/tree/branchTransform.js';
 import { TidyTreeLayout } from '@/core/treeVisualisation/layout/TidyTreeLayout.js';
+import { useAppStore } from '@/store/store.js';
 import calculateScales, { getMaxScaleValue } from '@/utils/tree/scaleUtils.js';
+import { transformBranchLengths } from '@/utils/tree/branchTransform.js';
 
-export class WebGLTreeAnimationController {
+export class TreeLayoutService {
+  constructor(getWidth, getHeight) {
+    this.getWidth = getWidth;
+    this.getHeight = getHeight;
 
-  // ==========================================================================
-  // CONSTRUCTOR
-  // ==========================================================================
-
-  constructor(container = "#webgl-container") {
     this._scalingState = {
       branchTransformation: undefined,
       calculationTransformation: 'none'
     };
     this._transformedCache = new Map();
-    this._onResize = null;
-
-    this.webglContainer = d3.select(container);
-
-    const node = this.webglContainer.node();
-    const rect = node ? node.getBoundingClientRect() : { width: 800, height: 600 };
-    this.width = Math.max(1, rect.width);
-    this.height = Math.max(1, rect.height);
-
-    // Resize handling is delegated to DeckGLContext or external driver
-  }
-
-  /*
-   * Updates controller dimensions. Called by external driver (DeckGLContext).
-   */
-  resize({ width, height }) {
-    const nextWidth = Number.isFinite(width) ? width : this.width;
-    const nextHeight = Number.isFinite(height) ? height : this.height;
-
-    if (nextWidth !== this.width || nextHeight !== this.height) {
-      this.width = nextWidth;
-      this.height = nextHeight;
-      this._onResize?.({ width: this.width, height: this.height });
-    }
+    
+    this.globalScaleList = null;
+    this.maxGlobalScale = null;
+    this.uniformScalingEnabled = false;
   }
 
   // ==========================================================================
@@ -54,22 +31,10 @@ export class WebGLTreeAnimationController {
     });
   }
 
-  setOnResize(callback) {
-    this._onResize = typeof callback === 'function' ? callback : null;
-  }
-
-  destroy() {
-    this._onResize = null;
-  }
-
   // ==========================================================================
   // UNIFORM SCALING
   // ==========================================================================
 
-  /**
-   * Initializes the uniform scaling system using global maximum scale.
-   * Ensures consistent radii across Anchor and Transition trees.
-   */
   initializeUniformScaling(branchTransformation = 'none') {
     const { treeList, transitionResolver } = useAppStore.getState();
     const datasetToken = `${branchTransformation}::${treeList?.length || 0}`;
@@ -82,7 +47,7 @@ export class WebGLTreeAnimationController {
     const transformedTreeList = this._getOrCacheTransformedTrees(treeList, branchTransformation);
 
     this.globalScaleList = calculateScales(transformedTreeList, fullTreeIndices);
-    this.maxGlobalScale = getMaxScaleValue(this.globalScaleList);
+    this.maxGlobalScale = Math.max(...this.globalScaleList); // Simplified: getMaxScaleValue(this.globalScaleList);
     this.uniformScalingEnabled = true;
 
     this._scalingState.calculationTransformation = branchTransformation;
@@ -110,18 +75,13 @@ export class WebGLTreeAnimationController {
   // LAYOUT CALCULATION
   // ==========================================================================
 
-  /**
-   * Calculates tree layout with branch transformations and caching.
-   */
   calculateLayout(treeData, options = {}) {
     const { treeIndex, cacheFunction, updateController = false } = options;
     const { branchTransformation, layoutAngleDegrees, layoutRotationDegrees } = useAppStore.getState();
 
-    // Lazy initialization of uniform scaling to ensure consistent sizing across frames
     if (!this.uniformScalingEnabled) {
       this.initializeUniformScaling(branchTransformation);
     } else {
-      // Handle transformation changes if already initialized
       this._handleTransformationChange(branchTransformation);
     }
 
@@ -164,7 +124,9 @@ export class WebGLTreeAnimationController {
 
   _computeLayout(transformedTreeData, layoutAngleDegrees, layoutRotationDegrees) {
     const layoutCalculator = new TidyTreeLayout(transformedTreeData);
-    layoutCalculator.setDimension(this.width, this.height);
+    const width = this.getWidth();
+    const height = this.getHeight();
+    layoutCalculator.setDimension(width, height);
     layoutCalculator.setMargin(60);
     layoutCalculator.setAngleExtentDegrees(layoutAngleDegrees || 360);
     layoutCalculator.setAngleOffsetDegrees(layoutRotationDegrees || 0);
@@ -176,8 +138,8 @@ export class WebGLTreeAnimationController {
     return {
       tree: layoutResult,
       max_radius: layoutCalculator.getMaxRadius(layoutResult),
-      width: this.width,
-      height: this.height,
+      width: width,
+      height: height,
       margin: layoutCalculator.margin,
       scale: layoutCalculator.scale
     };
@@ -187,10 +149,7 @@ export class WebGLTreeAnimationController {
   // RADII CALCULATION
   // ==========================================================================
 
-  /**
-   * Calculates label and extension radii with dynamic positioning.
-   */
-  _getConsistentRadii(layout) {
+  getConsistentRadii(layout) {
     const containerWidth = layout.width - layout.margin * 2;
     const containerHeight = layout.height - layout.margin * 2;
     const maxLeafRadius = Math.min(containerWidth, containerHeight) / 2;

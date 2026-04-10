@@ -2,6 +2,7 @@ import { useAppStore } from '@/store/store.js';
 import { detectAnimationStage } from '@/core/treeVisualisation/deckgl/interpolation/stages/animationStageDetector.js';
 import { applyStageEasing } from '@/core/treeVisualisation/deckgl/interpolation/stages/stageEasing.js';
 import { calculateMetricScale } from '@/core/treeVisualisation/viewport/ViewportGeometryService.js';
+import { TreeInterpolator } from '@/core/treeVisualisation/deckgl/interpolation/TreeInterpolator.js';
 
 /**
  * Handles the rendering of interpolated frames for animation and scrubbing.
@@ -10,6 +11,7 @@ import { calculateMetricScale } from '@/core/treeVisualisation/viewport/Viewport
 export class InterpolationRenderer {
   constructor(controller) {
     this.controller = controller;
+    this.treeInterpolator = new TreeInterpolator();
   }
 
   // ==========================================================================
@@ -47,7 +49,7 @@ export class InterpolationRenderer {
     }
 
     const { branchTransformation } = useAppStore.getState();
-    const interpolatedData = this.controller.treeInterpolator.interpolateTreeData(dataFrom, dataTo, t, branchTransformation);
+    const interpolatedData = this.treeInterpolator.interpolateTreeData(dataFrom, dataTo, t, branchTransformation);
 
     // --- Adaptive Visual Scaling ---
     interpolatedData.metricScale = calculateMetricScale(
@@ -89,7 +91,7 @@ export class InterpolationRenderer {
 
     // Perform Geometry Interpolation
     const { branchTransformation } = useAppStore.getState();
-    const interpolatedData = this.controller.treeInterpolator.interpolateTreeData(
+    const interpolatedData = this.treeInterpolator.interpolateTreeData(
       dataFrom,
       dataTo,
       t,

@@ -1,12 +1,11 @@
 import { DeckGLTreeLayerDataFactory } from '@/core/treeVisualisation/deckgl/DeckGLTreeLayerDataFactory.js';
 import { DeckGLContext } from '@/core/treeVisualisation/deckgl/context/DeckGLContext.js';
 import { LayerManager } from '@/core/treeVisualisation/deckgl/layers/LayerManager.js';
-import { TreeInterpolator } from '@/core/treeVisualisation/deckgl/interpolation/TreeInterpolator.js';
 import { InterpolationCache } from '@/core/treeVisualisation/deckgl/interpolation/InterpolationCache.js';
 import { AnimationRunner } from '@/core/treeVisualisation/systems/AnimationRunner.js';
 import { InterpolationRenderer } from '@/core/treeVisualisation/systems/InterpolationRenderer.js';
 import { StaticRenderer } from '@/core/treeVisualisation/systems/StaticRenderer.js';
-import { WebGLTreeAnimationController } from '@/core/treeVisualisation/WebGLTreeAnimationController.js';
+import { TreeLayoutService } from '@/core/treeVisualisation/systems/TreeLayoutService.js';
 import { useAppStore } from '@/store/store.js';
 import { TreeNodeInteractionHandler } from '@/core/treeVisualisation/interaction/TreeNodeInteractionHandler.js';
 import { handleDragStart, handleDrag, handleDragEnd, handleContainerResize } from '@/core/treeVisualisation/interaction/InteractionHandlers.js';
@@ -16,16 +15,21 @@ import { getClipboardLayers } from '@/core/treeVisualisation/utils/ClipboardUtil
 import { LayoutWorkerManager } from '@/core/treeVisualisation/workers/LayoutWorkerManager.js';
 import * as d3 from 'd3';
 
-export class DeckGLTreeAnimationController extends WebGLTreeAnimationController {
+export class DeckGLTreeAnimationController {
 
   // ==========================================================================
   // CONSTRUCTOR
   // ==========================================================================
 
   constructor(container, { animations = true, viewSide = 'single', offset = null } = {}) {
-    super(container);
     this.animationsEnabled = animations;
     this.viewSide = viewSide;
+
+    // Explicit sizing
+    this.width = 800;
+    this.height = 600;
+    this._onResize = null;
+
     this.ready = false;
     this._resolveReady = null;
     this.readyPromise = new Promise((resolve) => {
@@ -35,10 +39,11 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     // Core components
     this.dataConverter = new DeckGLTreeLayerDataFactory();
     this.layerManager = new LayerManager();
-    this.treeInterpolator = new TreeInterpolator();
+    this.layoutService = new TreeLayoutService(() => this.width, () => this.height);
+
     this.interpolationCache = new InterpolationCache({
-      calculateLayout: this.calculateLayout.bind(this),
-      getConsistentRadii: this._getConsistentRadii.bind(this),
+      calculateLayout: this.layoutService.calculateLayout.bind(this.layoutService),
+      getConsistentRadii: this.layoutService.getConsistentRadii.bind(this.layoutService),
       convertTreeToLayerData: this.dataConverter.convertTreeToLayerData.bind(this.dataConverter),
       getDimensions: () => ({ width: this.width, height: this.height }),
       getBranchTransformation: () => useAppStore.getState().branchTransformation
@@ -108,6 +113,18 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
     // NOTE: deckContext is initialized via mount(container)
     this.deckContext = null;
+  }
+
+  // ==========================================================================
+  // LAYOUT PROXY METHODS
+  // ==========================================================================
+
+  calculateLayout(treeData, options = {}) {
+    return this.layoutService.calculateLayout(treeData, options);
+  }
+
+  _getConsistentRadii(layout) {
+    return this.layoutService.getConsistentRadii(layout);
   }
 
 
@@ -222,6 +239,21 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
   // PUBLIC API
   // ==========================================================================
 
+  resize({ width, height }) {
+    const nextWidth = Number.isFinite(width) ? width : this.width;
+    const nextHeight = Number.isFinite(height) ? height : this.height;
+
+    if (nextWidth !== this.width || nextHeight !== this.height) {
+      this.width = nextWidth;
+      this.height = nextHeight;
+      this._onResize?.({ width: this.width, height: this.height });
+    }
+  }
+
+  setOnResize(callback) {
+    this._onResize = typeof callback === 'function' ? callback : null;
+  }
+
   setCameraMode(mode) {
     this.deckContext.setCameraMode(mode, { preserveTarget: true });
     this.renderAllElements();
@@ -239,7 +271,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
   }
 
   destroy() {
-    super.destroy();
+    this._onResize = null;
     this.animationRunner.stop();
     // Cancel any pending debounced render
     if (this._pendingRenderRAF) {
@@ -253,7 +285,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
   resetInterpolationCaches() {
     this.interpolationCache?.reset();
-    this.treeInterpolator?.resetCaches?.();
+    this.interpolationRenderer?.treeInterpolator?.resetCaches?.();
     this.workerManager?.reset();
   }
 
@@ -269,11 +301,11 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     if (!treeData) return;
 
     // Ensure uniform scaling is initialized before dispatching to worker
-    if (!this.uniformScalingEnabled) {
-      this.initializeUniformScaling(state.branchTransformation);
+    if (!this.layoutService.uniformScalingEnabled) {
+      this.layoutService.initializeUniformScaling(state.branchTransformation);
     }
 
-    const layoutOptions = calculateLayoutOptions(this.width, this.height, state, this.maxGlobalScale);
+    const layoutOptions = calculateLayoutOptions(this.width, this.height, state, this.layoutService.maxGlobalScale);
 
     this.workerManager.prefetchFrame(treeIndex, treeData, layoutOptions);
   }

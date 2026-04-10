@@ -36,7 +36,7 @@ import {
 import { Film, ArrowLeft } from 'lucide-react';
 import { useAppStore } from '@/store/store.js';
 import { getPhyloMovieData } from '@/services/data/dataManager.js';
-import { useTreeController } from '@/hooks/useTreeController.js';
+import { useTreeController } from '@/core/treeVisualisation/useTreeController.js';
 
 // ==========================================================================
 // STORE SELECTORS
