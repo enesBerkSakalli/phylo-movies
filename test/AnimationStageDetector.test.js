@@ -1,5 +1,5 @@
 const { expect } = require('chai');
-const { detectAnimationStage, ANIMATION_STAGES } = require('../src/js/treeVisualisation/deckgl/interpolation/AnimationStageDetector.js');
+const { detectAnimationStage, ANIMATION_STAGES } = require('../src/core/treeVisualisation/deckgl/interpolation/AnimationStageDetector.js');
 
 describe('AnimationStageDetector', () => {
   describe('detectAnimationStage()', () => {

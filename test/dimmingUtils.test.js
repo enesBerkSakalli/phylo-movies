@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { applyDimmingWithCache } from '../src/js/treeVisualisation/deckgl/layers/styles/dimmingUtils.js';
+import { applyDimmingWithCache } from '../src/core/treeVisualisation/deckgl/layers/styles/dimmingUtils.js';
 
 describe('dimmingUtils', () => {
   describe('applyDimmingWithCache', () => {

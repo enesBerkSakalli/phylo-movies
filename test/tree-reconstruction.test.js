@@ -1,6 +1,6 @@
 
 import { expect } from 'chai';
-import { reconstructSortedLeavesFromTree } from '../src/js/domain/tree/treeReconstructionUtils.js';
+import { reconstructSortedLeavesFromTree } from '../src/domain/tree/treeReconstructionUtils.js';
 
 describe('treeReconstructionUtils', () => {
   describe('reconstructSortedLeavesFromTree', () => {

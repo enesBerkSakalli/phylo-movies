@@ -94,15 +94,15 @@ Module._load = function (request, parent, isMain) {
 };
 
 // Now require the SUT - using modular layer factories
-const { LayerManager } = require('../src/js/treeVisualisation/deckgl/layers/LayerManager.js');
+const { LayerManager } = require('../src/core/treeVisualisation/deckgl/layers/LayerManager.js');
 const {
   createLinksLayer,
   createNodesLayer,
   createLinkOutlinesLayer,
   createExtensionsLayer
-} = require('../src/js/treeVisualisation/deckgl/layers/factory/index.js');
-const { LayerStyles } = require('../src/js/treeVisualisation/deckgl/layers/LayerStyles.js');
-const { isNodeInSubtree, isLinkInSubtree } = require('../src/js/treeVisualisation/utils/splitMatching.js');
+} = require('../src/core/treeVisualisation/deckgl/layers/factory/index.js');
+const { LayerStyles } = require('../src/core/treeVisualisation/deckgl/layers/LayerStyles.js');
+const { isNodeInSubtree, isLinkInSubtree } = require('../src/core/treeVisualisation/utils/splitMatching.js');
 
 /**
  * Helper to create a mock ColorManager with the required fast subtree methods.
@@ -566,7 +566,7 @@ describe('LayerStyles.getCachedState() - ColorManager as Single Source of Truth'
  * Validates: Requirements 1.4, 2.4
  */
 describe('dimmingUtils.applyDimmingWithCache() - Dimming Data Consistency', () => {
-  const { applyDimmingWithCache } = require('../src/js/treeVisualisation/deckgl/layers/styles/dimmingUtils.js');
+  const { applyDimmingWithCache } = require('../src/core/treeVisualisation/deckgl/layers/styles/dimmingUtils.js');
 
   it('should use ColorManager subtree data for dimming', () => {
     const colorManager = createMockColorManager({

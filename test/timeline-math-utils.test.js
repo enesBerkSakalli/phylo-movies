@@ -2,8 +2,8 @@ const { expect } = require('chai');
 const fs = require('fs');
 const path = require('path');
 
-const { TimelineDataProcessor } = require('../src/js/timeline/data/TimelineDataProcessor.js');
-const { TimelineMathUtils } = require('../src/js/timeline/math/TimelineMathUtils.js');
+const { TimelineDataProcessor } = require('../src/timeline/data/TimelineDataProcessor.js');
+const { TimelineMathUtils } = require('../src/timeline/math/TimelineMathUtils.js');
 
 function loadMovieData() {
   const candidates = [

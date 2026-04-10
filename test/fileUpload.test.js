@@ -5,7 +5,7 @@ const {
   getLabelKey,
   getLinkKey,
   getExtensionKey,
-} = require('../src/js/treeVisualisation/utils/KeyGenerator.js');
+} = require('../src/core/treeVisualisation/utils/KeyGenerator.js');
 
 describe('KeyGenerator', () => {
   it('generates node keys from split_indices and falls back to name', () => {

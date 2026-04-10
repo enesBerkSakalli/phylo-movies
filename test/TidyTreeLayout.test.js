@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import createTidyTreeLayout, { TidyTreeLayout } from '../src/js/treeVisualisation/layout/TidyTreeLayout.js';
+import createTidyTreeLayout, { TidyTreeLayout } from '../src/core/treeVisualisation/layout/TidyTreeLayout.js';
 
 describe('TidyTreeLayout', () => {
   // Simple mock hierarchy

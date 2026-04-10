@@ -1,9 +1,9 @@
 
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { TidyTreeLayout } from '../src/js/treeVisualisation/layout/TidyTreeLayout.js';
-import { DeckGLTreeLayerDataFactory } from '../src/js/treeVisualisation/deckgl/DeckGLTreeLayerDataFactory.js';
-import { transformBranchLengths } from '../src/js/domain/tree/branchTransform.js';
+import { TidyTreeLayout } from '../src/core/treeVisualisation/layout/TidyTreeLayout.js';
+import { DeckGLTreeLayerDataFactory } from '../src/core/treeVisualisation/deckgl/DeckGLTreeLayerDataFactory.js';
+import { transformBranchLengths } from '../src/domain/tree/branchTransform.js';
 
 // Mock dependencies if needed, or use real ones to verify integration logic
 // Since the error was about data flow between TidyTreeLayout and Factory, using real ones is better.

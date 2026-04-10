@@ -3,7 +3,7 @@ const { expect } = require('chai');
 const {
   computeExtensionChangeMetrics,
   classifyExtensionChanges,
-} = require('../src/js/treeVisualisation/utils/ChangeMetricUtils.js');
+} = require('../src/core/treeVisualisation/utils/ChangeMetricUtils.js');
 
 // Include DeckTimelineRenderer tests (mocked deck.gl)
 require('./deck-timeline-renderer.test.js');

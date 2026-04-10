@@ -34,7 +34,7 @@ global.Worker = MockWorker;
 
 // Proxyquire allows us to mock the imports inside the controller
 // We need to verify that we are mocking the right paths.
-// The controller is in: src/js/treeVisualisation/DeckGLTreeAnimationController.js
+// The controller is in: src/core/treeVisualisation/DeckGLTreeAnimationController.js
 
 describe('DeckGLTreeAnimationController Worker Integration', () => {
   let ControllerClass;
@@ -82,11 +82,11 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
     */
 
     // Import the controller normally
-    const module = await import('../src/js/treeVisualisation/DeckGLTreeAnimationController.js');
+    const module = await import('../src/core/treeVisualisation/DeckGLTreeAnimationController.js');
     ControllerClass = module.DeckGLTreeAnimationController;
 
     // Import the real store to seed it with data
-    const { useAppStore } = await import('../src/js/state/phyloStore/store.js');
+    const { useAppStore } = await import('../src/state/phyloStore/store.js');
 
     // Seed the store
     useAppStore.setState({

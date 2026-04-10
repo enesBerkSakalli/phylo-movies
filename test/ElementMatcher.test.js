@@ -1,5 +1,5 @@
 const { expect } = require('chai');
-const { ElementMatcher } = require('../src/js/treeVisualisation/deckgl/interpolation/ElementMatcher.js');
+const { ElementMatcher } = require('../src/core/treeVisualisation/deckgl/interpolation/ElementMatcher.js');
 
 describe('TreeVisualisation/DeckGL/Interpolation/ElementMatcher', () => {
   let matcher;

@@ -1,6 +1,6 @@
 
 import { describe, it, expect } from 'vitest';
-import { ensureOutside, chooseBundlePoint } from '../src/js/treeVisualisation/deckgl/data/transforms/ComparisonGeometryUtils.js';
+import { ensureOutside, chooseBundlePoint } from '../src/core/treeVisualisation/deckgl/data/transforms/ComparisonGeometryUtils.js';
 
 describe('ComparisonGeometryUtils', () => {
     describe('ensureOutside', () => {

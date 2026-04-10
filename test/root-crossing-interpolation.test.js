@@ -8,9 +8,9 @@ import {
   shortestAngle,
   crossesAngle,
   longArcDelta
-} from '../src/js/domain/math/mathUtils.js';
-import { PolarNodeInterpolator } from '../src/js/treeVisualisation/deckgl/interpolation/nodes/PolarNodeInterpolator.js';
-import { PolarPathInterpolator } from '../src/js/treeVisualisation/deckgl/interpolation/path/PolarPathInterpolator.js';
+} from '../src/domain/math/mathUtils.js';
+import { PolarNodeInterpolator } from '../src/core/treeVisualisation/deckgl/interpolation/nodes/PolarNodeInterpolator.js';
+import { PolarPathInterpolator } from '../src/core/treeVisualisation/deckgl/interpolation/path/PolarPathInterpolator.js';
 
 
 describe('Root Crossing Detection', () => {

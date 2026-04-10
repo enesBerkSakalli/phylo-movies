@@ -46,7 +46,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
 
   return {
     root: 'src',
-    publicDir: 'public',
+    publicDir: '../public',
     base: isElectronBuild ? './' : '/',
     plugins: [
       react(),

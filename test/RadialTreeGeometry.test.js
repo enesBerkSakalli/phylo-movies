@@ -6,7 +6,7 @@ import {
   interpolateAngle,
   createPolarInterpolator,
   calculateBranchCoordinates
-} from '../src/js/treeVisualisation/layout/RadialTreeGeometry.js';
+} from '../src/core/treeVisualisation/layout/RadialTreeGeometry.js';
 
 describe('RadialTreeGeometry', () => {
 

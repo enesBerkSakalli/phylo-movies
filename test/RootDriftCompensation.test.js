@@ -1,5 +1,5 @@
 const { expect } = require('chai');
-const { TreeInterpolator } = require('../src/js/treeVisualisation/deckgl/interpolation/TreeInterpolator.js');
+const { TreeInterpolator } = require('../src/core/treeVisualisation/deckgl/interpolation/TreeInterpolator.js');
 
 describe('TreeInterpolator - Root Drift Compensation', () => {
   let interpolator;

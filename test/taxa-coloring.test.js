@@ -8,7 +8,7 @@ import {
   getGroupForTaxon,
   applyColoringData,
   detectBestSeparators
-} from '../src/js/treeColoring/utils/GroupingUtils.js';
+} from '../src/core/treeColoring/utils/GroupingUtils.js';
 
 describe('GroupingUtils', () => {
   describe('generateGroups', () => {

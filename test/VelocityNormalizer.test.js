@@ -4,8 +4,8 @@ import {
   computeAngularDistances,
   buildVelocityMap,
   buildGlobalVelocityMaps
-} from '../src/js/treeVisualisation/deckgl/interpolation/VelocityNormalizer.js';
-import { PolarNodeInterpolator } from '../src/js/treeVisualisation/deckgl/interpolation/nodes/PolarNodeInterpolator.js';
+} from '../src/core/treeVisualisation/deckgl/interpolation/VelocityNormalizer.js';
+import { PolarNodeInterpolator } from '../src/core/treeVisualisation/deckgl/interpolation/nodes/PolarNodeInterpolator.js';
 
 describe('VelocityNormalizer', () => {
   describe('computeAngularDistance', () => {

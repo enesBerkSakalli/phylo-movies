@@ -1,7 +1,7 @@
 
 import { describe, it, expect } from 'vitest';
-import { buildSubtreeConnectors } from '../src/js/treeVisualisation/deckgl/data/transforms/SubtreeConnectorBuilder.js';
-import { calculateBranchCoordinates } from '../src/js/treeVisualisation/layout/RadialTreeGeometry.js';
+import { buildSubtreeConnectors } from '../src/core/treeVisualisation/deckgl/data/transforms/SubtreeConnectorBuilder.js';
+import { calculateBranchCoordinates } from '../src/core/treeVisualisation/layout/RadialTreeGeometry.js';
 
 // Mock colorManager
 const mockColorManager = {

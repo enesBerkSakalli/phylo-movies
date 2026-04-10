@@ -1,7 +1,7 @@
 
 import { describe, it, expect } from 'vitest';
-import { getLinkWidth } from '../src/js/treeVisualisation/deckgl/layers/styles/links/linkWidthStyles.js';
-import { getNodeRadius } from '../src/js/treeVisualisation/deckgl/layers/styles/nodes/nodeRadiusStyles.js';
+import { getLinkWidth } from '../src/core/treeVisualisation/deckgl/layers/styles/links/linkWidthStyles.js';
+import { getNodeRadius } from '../src/core/treeVisualisation/deckgl/layers/styles/nodes/nodeRadiusStyles.js';
 
 describe('Adaptive Visual Scaling', () => {
 

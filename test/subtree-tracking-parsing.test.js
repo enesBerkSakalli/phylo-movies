@@ -4,8 +4,8 @@ import {
   parseSubtreeTrackingEntry,
   collectUniqueSubtrees,
   toSubtreeKey
-} from '../src/js/treeVisualisation/utils/splitMatching.js';
-import { getSourceDestinationEdgesAtIndex } from '../src/js/core/slices/sliceHelpers.js';
+} from '../src/core/treeVisualisation/utils/splitMatching.js';
+import { getSourceDestinationEdgesAtIndex } from '../src/store/slices/sliceHelpers.js';
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const focusTreesData = require('../data/test-data/focus_trees.json');

@@ -2,7 +2,7 @@ const { expect } = require('chai');
 
 const scheduledFrames = [];
 
-const { TimelineNavigationController } = require('../src/js/timeline/core/TimelineNavigationController.js');
+const { TimelineNavigationController } = require('../src/timeline/core/TimelineNavigationController.js');
 
 describe('TimelineNavigationController', () => {
   let originalRequestAnimationFrame;
