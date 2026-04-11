@@ -48,7 +48,6 @@
       "main.js",
       "preload.js",
       "splash-preload.js",
-      "splash.html",
       "frontend-dist/**/*"
     ],
     "extraResources": [
