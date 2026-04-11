@@ -7,7 +7,7 @@ const DIST_ARG = process.argv[2] || 'dist';
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 const DIST_DIR = path.resolve(PROJECT_ROOT, DIST_ARG);
 const INDEX_PATH = path.join(DIST_DIR, 'index.html');
-const SPLASH_PATH = path.join(DIST_DIR, 'splash.html');
+const SPLASH_PATH = path.join(DIST_DIR, 'pages', 'Splash', 'splash.html');
 const IS_DOCS_ONLY = process.env.VITE_DOCS_ONLY === 'true';
 
 const SITE_ROOT = 'https://enesberksakalli.github.io/phylo-movies';

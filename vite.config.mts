@@ -99,7 +99,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
       rollupOptions: {
         input: {
           main: path.resolve(__dirname, 'src/index.html'),
-          splash: path.resolve(__dirname, 'src/splash.html')
+          splash: path.resolve(__dirname, 'src/pages/Splash/splash.html')
         }
       }
     }
