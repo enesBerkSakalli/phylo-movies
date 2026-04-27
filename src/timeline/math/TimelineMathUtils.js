@@ -204,6 +204,91 @@ export class TimelineMathUtils {
         };
     }
 
+    static getInterpolationDataForTimelineProgress(progress, segments, timelineData, movieData) {
+        if (
+            !Array.isArray(segments) ||
+            segments.length === 0 ||
+            !timelineData ||
+            !Number.isFinite(timelineData.totalDuration) ||
+            timelineData.totalDuration <= 0
+        ) {
+            return null;
+        }
+
+        const currentTime = this.progressToTime(progress, timelineData.totalDuration);
+        const segmentIndex = this._binarySearchSegment(timelineData.cumulativeDurations, currentTime);
+        const segment = segments[segmentIndex];
+
+        if (!segment) {
+            return this._createStaticInterpolationResult(0, movieData);
+        }
+
+        if (segment.isFullTree || !segment.hasInterpolation) {
+            return this._createStaticInterpolationResult(segment.interpolationData[0].originalIndex, movieData);
+        }
+
+        const steps = segment.interpolationData.length;
+        if (steps <= 1) {
+            return this._createStaticInterpolationResult(segment.interpolationData[0].originalIndex, movieData);
+        }
+
+        const segmentStart = segmentIndex > 0 ? timelineData.cumulativeDurations[segmentIndex - 1] : 0;
+        const segmentDuration = timelineData.segmentDurations[segmentIndex];
+        const localProgress = this.clampProgress((currentTime - segmentStart) / segmentDuration);
+        const exactStep = localProgress * (steps - 1);
+        const fromStep = Math.floor(exactStep);
+        const toStep = Math.min(fromStep + 1, steps - 1);
+
+        return {
+            fromTree: movieData.interpolated_trees[segment.interpolationData[fromStep].originalIndex],
+            toTree: movieData.interpolated_trees[segment.interpolationData[toStep].originalIndex],
+            timeFactor: exactStep - fromStep,
+            fromIndex: segment.interpolationData[fromStep].originalIndex,
+            toIndex: segment.interpolationData[toStep].originalIndex
+        };
+    }
+
+    static getTimelineProgressForTreeIndex(segments, timelineData, treeIndex) {
+        if (
+            !Number.isInteger(treeIndex) ||
+            !Array.isArray(segments) ||
+            !timelineData ||
+            !Number.isFinite(timelineData.totalDuration) ||
+            timelineData.totalDuration <= 0
+        ) {
+            return null;
+        }
+
+        const lookup = this.findSegmentForTreeIndex(segments, treeIndex);
+        if (lookup.segmentIndex < 0 || !lookup.segment) {
+            return null;
+        }
+
+        const segmentStart = lookup.segmentIndex === 0 ? 0 : timelineData.cumulativeDurations[lookup.segmentIndex - 1];
+        return this.timeToProgress(segmentStart + lookup.timeInSegment, timelineData.totalDuration);
+    }
+
+    static getTimelineProgressForLinearTreeProgress(progress, treeCount, segments, timelineData) {
+        if (!Number.isFinite(treeCount) || treeCount <= 1) {
+            return this.getTimelineProgressForTreeIndex(segments, timelineData, 0);
+        }
+
+        const clampedProgress = this.clampProgress(progress);
+        const exactTreeIndex = clampedProgress * (treeCount - 1);
+        const fromIndex = Math.floor(exactTreeIndex);
+        const toIndex = Math.min(fromIndex + 1, treeCount - 1);
+        const timeFactor = exactTreeIndex - fromIndex;
+
+        const fromProgress = this.getTimelineProgressForTreeIndex(segments, timelineData, fromIndex);
+        const toProgress = this.getTimelineProgressForTreeIndex(segments, timelineData, toIndex);
+
+        if (fromProgress == null || toProgress == null) {
+            return clampedProgress;
+        }
+
+        return fromProgress + ((toProgress - fromProgress) * timeFactor);
+    }
+
     // ==========================================================================
     // BINARY SEARCH HELPERS
     // ==========================================================================
@@ -260,5 +345,10 @@ export class TimelineMathUtils {
         }
 
         return (stepIndex / (totalSteps - 1)) * segmentDuration;
+    }
+
+    static _createStaticInterpolationResult(idx, movieData) {
+        const tree = movieData?.interpolated_trees?.[idx];
+        return { fromTree: tree, toTree: tree, timeFactor: 0, fromIndex: idx, toIndex: idx };
     }
 }

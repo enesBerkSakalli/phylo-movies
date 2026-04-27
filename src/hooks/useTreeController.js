@@ -71,6 +71,8 @@ export function useTreeController() {
         try {
           if (state.comparisonMode) {
             await renderComparisonMode(controller, state.transitionResolver, state.currentTreeIndex);
+          } else if (state.timelineProgress != null && typeof controller.renderTimelineProgress === 'function') {
+            await controller.renderTimelineProgress(state.timelineProgress);
           } else {
             await controller.renderProgress(state.animationProgress);
           }
@@ -157,6 +159,12 @@ export function useTreeController() {
         }
       }
 
+      if (state.timelineProgress !== prevState.timelineProgress) {
+        if (!isTimelineScrubbing) {
+          scheduleRender();
+        }
+      }
+
       if (state.clipboardTreeIndex !== prevState.clipboardTreeIndex) {
         scheduleRender();
       }
@@ -213,7 +221,7 @@ export function useTreeController() {
 
 async function renderComparisonMode(controller, transitionResolver, currentTreeIndex) {
   const full = transitionResolver?.fullTreeIndices || [];
-  const sourceAnchorIndex = transitionResolver?.getSourceTreeIndex(currentTreeIndex) ?? 0;
+  const sourceAnchorIndex = transitionResolver?.getSourceGlobalIndex(currentTreeIndex) ?? 0;
   const rightIndex = full.find((i) => i > sourceAnchorIndex) ?? full[full.length - 1];
 
   await controller.renderAllElements({

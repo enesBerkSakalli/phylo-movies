@@ -40,11 +40,11 @@ export const createPlaybackSlice = (set, get) => ({
   // ACTIONS: Playback Control
   // ==========================================================================
   play: () => {
-    const { playing, animationProgress, timelineProgress, treeList, animationSpeed } = get();
+    const { playing, animationProgress, treeList, animationSpeed } = get();
     if (playing) return;
 
     const totalTrees = treeList.length;
-    const currentProgress = timelineProgress ?? animationProgress;
+    const currentProgress = animationProgress;
     const initialProgress = currentProgress >= 1.0 ? 0 : currentProgress;
     const timeOffset = (initialProgress * (totalTrees - 1) / animationSpeed) * 1000;
     const adjustedStartTime = performance.now() - timeOffset;
@@ -58,11 +58,17 @@ export const createPlaybackSlice = (set, get) => ({
   },
 
   stop: () => {
-    const { animationProgress } = get();
+    const state = get();
+    const { animationProgress, treeList } = state;
+    const weightedTimelineProgress = getWeightedTimelineProgressForLinearProgress(
+      animationProgress,
+      treeList?.length ?? 0,
+      state.movieTimelineManager
+    );
     set({
       playing: false,
       animationStartTime: null,
-      timelineProgress: animationProgress
+      timelineProgress: weightedTimelineProgress ?? animationProgress
     });
   },
 
@@ -91,7 +97,7 @@ export const createPlaybackSlice = (set, get) => ({
   setNavigationDirection: (direction) => set({ navigationDirection: direction }),
 
   goToPosition: (position, direction) => {
-    const { treeList, currentTreeIndex, renderInProgress } = get();
+    const { treeList, currentTreeIndex, renderInProgress, movieTimelineManager } = get();
     if (renderInProgress || !treeList?.length) return;
 
     const newIndex = clamp(position, 0, treeList.length - 1);
@@ -100,12 +106,13 @@ export const createPlaybackSlice = (set, get) => ({
     const navDirection = direction || (newIndex > currentTreeIndex ? 'forward' : 'backward');
     const totalTrees = treeList.length;
     const newAnimationProgress = totalTrees > 1 ? newIndex / (totalTrees - 1) : 0;
+    const newTimelineProgress = getWeightedTimelineProgressForTreeIndex(movieTimelineManager, newIndex);
 
     set({
       currentTreeIndex: newIndex,
       navigationDirection: navDirection,
       animationProgress: newAnimationProgress,
-      timelineProgress: newAnimationProgress
+      timelineProgress: newTimelineProgress ?? newAnimationProgress
     });
   },
 
@@ -189,11 +196,14 @@ export const createPlaybackSlice = (set, get) => ({
     const { treeList } = get();
     const maxIndex = Math.max(0, treeList.length - 1);
     const clampedProgress = clamp(progress, 0, 1);
+    const rawTreeIndex = Number.isFinite(treeIndex) ? treeIndex : 0;
+    const clampedTreeIndex = Math.round(clamp(rawTreeIndex, 0, maxIndex));
+    const animationProgress = maxIndex > 0 ? clampedTreeIndex / maxIndex : 0;
 
     set({
       timelineProgress: clampedProgress,
-      animationProgress: clampedProgress,
-      currentTreeIndex: clamp(treeIndex, 0, maxIndex),
+      animationProgress,
+      currentTreeIndex: clampedTreeIndex,
       navigationDirection: 'jump'
     });
   },
@@ -220,3 +230,11 @@ export const createPlaybackSlice = (set, get) => ({
     renderInProgress: false,
   }),
 });
+
+function getWeightedTimelineProgressForTreeIndex(movieTimelineManager, treeIndex) {
+  return movieTimelineManager?.getTimelineProgressForTreeIndex?.(treeIndex) ?? null;
+}
+
+function getWeightedTimelineProgressForLinearProgress(progress, treeCount, movieTimelineManager) {
+  return movieTimelineManager?.getTimelineProgressForLinearTreeProgress?.(progress, treeCount) ?? null;
+}

@@ -78,6 +78,34 @@ describe('TimelineMathUtils', () => {
     });
   });
 
+  it('maps linear tree progress onto weighted timeline progress', () => {
+    const firstInterpolationIndex = segments.findIndex(segment => (
+      segment.hasInterpolation && segment.interpolationData.length > 1
+    ));
+    const segment = segments[firstInterpolationIndex];
+    const entry = segment.interpolationData[segment.interpolationData.length - 1];
+    const linearProgress = entry.originalIndex / (loadMovieData().interpolated_trees.length - 1);
+
+    const weightedProgress = TimelineMathUtils.getTimelineProgressForLinearTreeProgress(
+      linearProgress,
+      loadMovieData().interpolated_trees.length,
+      segments,
+      timelineData
+    );
+
+    const currentTime = TimelineMathUtils.progressToTime(weightedProgress, timelineData.totalDuration);
+    const resolved = TimelineMathUtils.getTargetTreeForTime(
+      segments,
+      currentTime,
+      timelineData.segmentDurations,
+      'nearest',
+      timelineData.cumulativeDurations
+    );
+
+    expect(resolved.treeIndex).to.equal(entry.originalIndex);
+    expect(weightedProgress).to.not.equal(linearProgress);
+  });
+
   it('resolves exact timeline boundaries consistently', () => {
     const firstInterpolationIndex = segments.findIndex((segment, index) => (
       index > 0 && segment.hasInterpolation && segment.interpolationData.length > 1

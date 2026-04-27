@@ -1,5 +1,6 @@
 import { TIMELINE_CONSTANTS } from '../constants.js';
 import { TimelineDataProcessor } from '../data/TimelineDataProcessor.js';
+import { TimelineClock } from './TimelineClock.js';
 import { ScrubberAPI } from './ScrubberAPI.js';
 import { TimelineNavigationController } from './TimelineNavigationController.js';
 import { TimelineScrubController } from './TimelineScrubController.js';
@@ -29,9 +30,15 @@ export class MovieTimelineManager {
         this.timeline = null;
         this.segments = TimelineDataProcessor.createSegments(movieData);
         this.timelineData = TimelineDataProcessor.createTimelineData(this.segments);
+        this.timelineClock = new TimelineClock({
+            segments: this.segments,
+            timelineData: this.timelineData,
+            movieData: this.movieData
+        });
         this.stateSynchronizer = new TimelineStateSynchronizer(this.timelineData, this.segments, useAppStore);
         this.navigationController = new TimelineNavigationController({
             segments: this.segments,
+            timelineData: this.timelineData,
             store: useAppStore,
             onTimelinePositionUpdated: () => this.updateCurrentPosition()
         });
@@ -173,7 +180,10 @@ export class MovieTimelineManager {
 
     _onTimelineClick(properties) {
         if (properties.id && this.navigationController) {
-            this.navigationController.handleTimelineClick(properties.id - TIMELINE_CONSTANTS.INDEX_OFFSET_UI);
+            this.navigationController.handleTimelineClick(
+                properties.id - TIMELINE_CONSTANTS.INDEX_OFFSET_UI,
+                properties.ms
+            );
         }
     }
 
@@ -202,6 +212,22 @@ export class MovieTimelineManager {
         if (store.playing) store.stop();
     }
 
+    getSegmentCount() {
+        return this.timelineClock?.getSegmentCount() ?? 0;
+    }
+
+    getInterpolationDataForTimelineProgress(progress) {
+        return this.timelineClock?.getInterpolationDataForProgress(progress) ?? null;
+    }
+
+    getTimelineProgressForTreeIndex(treeIndex) {
+        return this.timelineClock?.getTimelineProgressForTreeIndex(treeIndex) ?? null;
+    }
+
+    getTimelineProgressForLinearTreeProgress(progress, treeCount) {
+        return this.timelineClock?.getTimelineProgressForLinearTreeProgress(progress, treeCount) ?? null;
+    }
+
     // ==========================================================================
     // CLEANUP
     // ==========================================================================
@@ -216,6 +242,7 @@ export class MovieTimelineManager {
 
         this.segments = null;
         this.timelineData = null;
+        this.timelineClock = null;
         this.navigationController = null;
         this.scrubberAPI = null;
         this.scrubController = null;

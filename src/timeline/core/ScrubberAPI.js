@@ -171,49 +171,12 @@ export class ScrubberAPI {
 
   async _getInterpolationData(progress) {
     const { treeList, movieData } = useAppStore.getState();
-    const segments = this.timelineManager?.segments;
-    const timelineData = this.timelineManager?.timelineData;
+    const timelineInterpolation = this.timelineManager?.getInterpolationDataForTimelineProgress?.(progress);
 
-    if (segments?.length && timelineData?.totalDuration > 0) {
-      return this._getSegmentAwareInterpolation(progress, segments, timelineData, movieData);
+    if (timelineInterpolation) {
+      return timelineInterpolation;
     }
+
     return TimelineMathUtils.getInterpolationDataForProgress(progress, treeList, movieData);
-  }
-
-  _getSegmentAwareInterpolation(progress, segments, timelineData, movieData) {
-    const { totalDuration, segmentDurations, cumulativeDurations } = timelineData;
-    const currentTime = TimelineMathUtils.progressToTime(progress, totalDuration);
-    const segIndex = TimelineMathUtils._binarySearchSegment(cumulativeDurations, currentTime);
-    const segment = segments[segIndex];
-
-    if (!segment) return this._createStaticResult(0, movieData);
-
-    if (segment.isFullTree || !segment.hasInterpolation) {
-      return this._createStaticResult(segment.interpolationData[0].originalIndex, movieData);
-    }
-
-    const steps = segment.interpolationData.length;
-    if (steps <= 1) {
-      return this._createStaticResult(segment.interpolationData[0].originalIndex, movieData);
-    }
-
-    const segStart = segIndex > 0 ? cumulativeDurations[segIndex - 1] : 0;
-    const localProgress = (currentTime - segStart) / segmentDurations[segIndex];
-    const exactStep = localProgress * (steps - 1);
-    const fromStep = Math.floor(exactStep);
-    const toStep = Math.min(fromStep + 1, steps - 1);
-
-    return {
-      fromTree: movieData.interpolated_trees[segment.interpolationData[fromStep].originalIndex],
-      toTree: movieData.interpolated_trees[segment.interpolationData[toStep].originalIndex],
-      timeFactor: exactStep - fromStep,
-      fromIndex: segment.interpolationData[fromStep].originalIndex,
-      toIndex: segment.interpolationData[toStep].originalIndex
-    };
-  }
-
-  _createStaticResult(idx, movieData) {
-    const tree = movieData.interpolated_trees[idx];
-    return { fromTree: tree, toTree: tree, timeFactor: 0, fromIndex: idx, toIndex: idx };
   }
 }
