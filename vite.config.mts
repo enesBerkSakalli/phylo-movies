@@ -77,7 +77,13 @@ export default defineConfig(async (): Promise<UserConfig> => {
       port: 5173,
       strictPort: true,
       watch: {
-        ignored: ['**/electron-app/**', '**/node_modules/**', '**/data/**', '**/*.ova']
+        ignored: [
+          '**/electron-app/**',
+          '**/node_modules/**',
+          path.join(__dirname, 'data/**'),
+          path.join(__dirname, 'test/data/**'),
+          '**/*.ova'
+        ]
       },
       proxy: {
         "/treedata": "http://localhost:5002",

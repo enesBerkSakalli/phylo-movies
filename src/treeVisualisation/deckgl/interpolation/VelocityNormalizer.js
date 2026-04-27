@@ -96,13 +96,3 @@ export function buildGlobalVelocityMaps(angularDistanceMaps, t) {
 
   return { velocityMaps, globalMaxAngle };
 }
-
-/**
- * Build a velocity map for a single element type (backward-compatible).
- * @deprecated Prefer buildGlobalVelocityMaps for cross-type consistency.
- */
-export function buildVelocityMap(fromMap, toMap, t, rootAngle = 0) {
-  const angularDists = computeAngularDistances(fromMap, toMap, rootAngle);
-  const { velocityMaps, globalMaxAngle } = buildGlobalVelocityMaps({ _: angularDists }, t);
-  return { velocityMap: velocityMaps._, maxAngle: globalMaxAngle };
-}

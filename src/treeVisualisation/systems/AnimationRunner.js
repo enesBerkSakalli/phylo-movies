@@ -35,7 +35,7 @@ export class AnimationRunner {
     this.stopAnimation = stopAnimation;
     this.requestRedraw = requestRedraw;
 
-    // State4
+    // State
     this.animationFrameId = null;
     this.isRunning = false;
     this._isRendering = false;
@@ -142,8 +142,6 @@ export class AnimationRunner {
 
     if (!fromTree) return true; // End of list safety
 
-    // Note: getOrCacheInterpolationData signature mismatch in previous thought?
-    // User code passed 4 args: (fromTree, toTree, fromIndex, toIndex)
     const { dataFrom, dataTo } = this.getOrCacheInterpolationData(fromTree, toTree, fromIndex, toIndex);
 
     // 3. Robustness: Missing Data Policy
@@ -235,19 +233,6 @@ function getPlaybackState(state, timestamp) {
 function getActiveTreeSequence(state) {
   // Prefer the TreeList model if available
   return state.treeList || state.movieData?.interpolated_trees;
-}
-
-/**
- * Access a tree from the sequence, handling both TreeList model and Array
- */
-function getTreeFromSequence(sequence, index) {
-  if (!sequence) return null;
-  // If it's a TreeList model (has .get method), use it
-  if (sequence instanceof Object && 'get' in sequence && typeof sequence.get === 'function') {
-    return sequence.get(index);
-  }
-  // Otherwise treat as array
-  return sequence[index];
 }
 
 /**

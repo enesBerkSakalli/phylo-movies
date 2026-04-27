@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import {
   computeAngularDistance,
   computeAngularDistances,
-  buildVelocityMap,
   buildGlobalVelocityMaps
 } from '../src/treeVisualisation/deckgl/interpolation/VelocityNormalizer.js';
 import { PolarNodeInterpolator } from '../src/treeVisualisation/deckgl/interpolation/nodes/PolarNodeInterpolator.js';
@@ -117,74 +116,6 @@ describe('VelocityNormalizer', () => {
 
       expect(interpolatedRadius).toBeCloseTo(75, 5);
       expect(interpolatedAngle).toBeCloseTo(Math.PI / 2, 5);
-    });
-  });
-
-  describe('buildVelocityMap (legacy)', () => {
-    function makeNode(id, angle) {
-      return { id, angle };
-    }
-
-    function toMap(nodes) {
-      return new Map(nodes.map(n => [n.id, n]));
-    }
-
-    it('returns empty map when no matched elements', () => {
-      const fromMap = toMap([makeNode('A', 0)]);
-      const toMap2 = toMap([makeNode('B', 1)]);
-      const { velocityMap, maxAngle } = buildVelocityMap(fromMap, toMap2, 0.5);
-      expect(velocityMap.size).toBe(0);
-      expect(maxAngle).toBe(0);
-    });
-
-    it('gives angularT=1 for all elements at global t=1', () => {
-      const from = [makeNode('A', 1.0), makeNode('B', 1.0)];
-      const to = [makeNode('A', 2.0), makeNode('B', 1.1)];
-      const { velocityMap } = buildVelocityMap(toMap(from), toMap(to), 1.0);
-      expect(velocityMap.get('A').angularT).toBe(1);
-      expect(velocityMap.get('B').angularT).toBe(1);
-    });
-
-    it('all elements get the same angularT when they have identical angular deltas', () => {
-      const from = [makeNode('A', 1.0), makeNode('B', 2.0)];
-      const to = [makeNode('A', 2.0), makeNode('B', 3.0)];
-      const { velocityMap } = buildVelocityMap(toMap(from), toMap(to), 0.5);
-      expect(velocityMap.get('A').angularT).toBeCloseTo(velocityMap.get('B').angularT, 10);
-    });
-
-    it('short-angle element gets higher angularT than large-angle element at t=0.5', () => {
-      const from = [makeNode('A', 1.0), makeNode('B', 1.0)];
-      const to = [makeNode('A', 1.1), makeNode('B', 3.0)];
-      const { velocityMap } = buildVelocityMap(toMap(from), toMap(to), 0.5);
-      expect(velocityMap.get('A').angularT).toBeGreaterThan(velocityMap.get('B').angularT);
-    });
-
-    it('largest-angle element gets the global t unchanged', () => {
-      const from = [makeNode('A', 1.0), makeNode('B', 1.0)];
-      const to = [makeNode('A', 1.1), makeNode('B', 3.0)];
-      const { velocityMap } = buildVelocityMap(toMap(from), toMap(to), 0.5);
-      expect(velocityMap.get('B').angularT).toBeCloseTo(0.5, 5);
-    });
-
-    it('returns the maximum angular distance for the matched set', () => {
-      const from = [makeNode('A', 1.0), makeNode('B', 1.0)];
-      const to = [makeNode('A', 1.5), makeNode('B', 3.0)];
-      const { maxAngle } = buildVelocityMap(toMap(from), toMap(to), 0.5);
-      expect(maxAngle).toBeCloseTo(2.0, 10);
-    });
-
-    it('short-angle element angularT is clamped to 1', () => {
-      const from = [makeNode('A', 1.0), makeNode('B', 1.0)];
-      const to = [makeNode('A', 1.001), makeNode('B', 4.0)];
-      const { velocityMap } = buildVelocityMap(toMap(from), toMap(to), 0.8);
-      expect(velocityMap.get('A').angularT).toBe(1);
-    });
-
-    it('elements with zero angular movement get the global t', () => {
-      const from = [makeNode('A', 1.0), makeNode('B', 1.0)];
-      const to = [makeNode('A', 1.0), makeNode('B', 3.0)];
-      const { velocityMap } = buildVelocityMap(toMap(from), toMap(to), 0.5);
-      expect(velocityMap.get('A').angularT).toBeCloseTo(0.5, 5);
     });
   });
 });

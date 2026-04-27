@@ -40,7 +40,6 @@ export class LayerManager {
     const storeState = useAppStore.getState();
 
     // Merge interpolationTime from data if present (for animations)
-    // Merge interpolationTime from data if present (for animations)
     const state = {
       ...storeState,
       interpolationTime: interpolationTime ?? storeState.interpolationTime ?? 0,
