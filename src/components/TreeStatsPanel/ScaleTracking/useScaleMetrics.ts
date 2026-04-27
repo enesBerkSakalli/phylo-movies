@@ -41,7 +41,7 @@ export const useScaleMetrics = ({
       scaleList?.length || 0
     );
 
-    // Use source-target tree (not interpolated) to avoid jitter during animation
+    // Use a tree window (not an interpolated frame) to avoid jitter during animation
     const displayIndex = clamp(anchorIndex, 0, Math.max(0, treeList.length - 1));
     const anchorTree = treeList[displayIndex];
 

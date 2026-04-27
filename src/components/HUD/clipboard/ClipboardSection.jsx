@@ -33,7 +33,7 @@ export function ClipboardSection({ clipboardTreeIndex, anchorIndices, onShowAnch
   const getClipboardLabel = () => {
     if (!isShowing) return 'Off';
     const anchorPos = anchorIndices.indexOf(clipboardTreeIndex);
-    if (anchorPos >= 0) return `Source-Target ${anchorPos + 1}`;
+    if (anchorPos >= 0) return `Tree window ${anchorPos + 1}`;
     return `Tree ${clipboardTreeIndex + 1}`;
   };
 
@@ -51,12 +51,12 @@ export function ClipboardSection({ clipboardTreeIndex, anchorIndices, onShowAnch
                 className="h-5 w-5 hover:bg-accent rounded-sm"
                 onClick={handlePrevAnchor}
                 disabled={!hasAnchors}
-                aria-label="Previous source-target tree"
+                aria-label="Previous tree window"
               >
                 <ChevronLeft className="size-3" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Previous source-target tree</TooltipContent>
+            <TooltipContent>Previous tree window</TooltipContent>
           </Tooltip>
 
           <Badge
@@ -74,12 +74,12 @@ export function ClipboardSection({ clipboardTreeIndex, anchorIndices, onShowAnch
                 className="h-5 w-5 hover:bg-accent rounded-sm"
                 onClick={handleNextAnchor}
                 disabled={!hasAnchors}
-                aria-label="Next source-target tree"
+                aria-label="Next tree window"
               >
                 <ChevronRight className="size-3" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Next source-target tree</TooltipContent>
+            <TooltipContent>Next tree window</TooltipContent>
           </Tooltip>
 
           {isShowing && (

@@ -7,7 +7,7 @@ import {
   resolveMarkedSubtrees
 } from '../../internal/changeTracking.helpers.js';
 
-export const createCladeSelectionSlice = (set, get) => ({
+export const createSubtreeSelectionSlice = (set, get) => ({
   // ==========================================================================
   // STATE
   // ==========================================================================

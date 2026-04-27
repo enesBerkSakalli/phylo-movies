@@ -13,7 +13,7 @@ import { createTaxonomyColoringSlice } from './slices/coloring/taxonomyColoring.
 import { createTreeHighlightOpacitySlice } from './slices/appearance/treeHighlightOpacity.slice.js';
 import { createMsaViewerSlice } from './slices/msa/msaSync.slice.js';
 import { createComparisonViewSlice } from './slices/comparison/treeComparison.slice.js';
-import { createCladeSelectionSlice } from './slices/treeChange/cladeSelection.slice.js';
+import { createSubtreeSelectionSlice } from './slices/treeChange/subtreeSelection.slice.js';
 import { createTreeHighlightStateSlice } from './slices/treeChange/treeHighlightState.slice.js';
 import { createTreeRuntimeSyncSlice } from './slices/treeChange/treeRuntimeSync.slice.js';
 import { createClipboardSlice } from './slices/interaction/treeClipboard.slice.js';
@@ -41,7 +41,7 @@ export const useAppStore = create((set, get) => ({
   ...createTreeHighlightOpacitySlice(set, get),
   ...createMsaViewerSlice(set, get),
   ...createComparisonViewSlice(set, get),
-  ...createCladeSelectionSlice(set, get),
+  ...createSubtreeSelectionSlice(set, get),
   ...createTreeHighlightStateSlice(set, get),
   ...createTreeRuntimeSyncSlice(set, get),
   ...createClipboardSlice(set, get),

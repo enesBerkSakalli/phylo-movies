@@ -38,12 +38,12 @@ export function buildInterpolationText(sequenceIndex, totalSequenceLength, timel
 
 export function buildSegmentText(sequenceIndex, transitionResolver) {
   const anchorIndices = transitionResolver?.fullTreeIndices || [];
-  if (!anchorIndices.length) return 'Between source-target trees (interp)';
+  if (!anchorIndices.length) return 'Between tree windows';
 
   const anchorAtPosition = anchorIndices.indexOf(sequenceIndex);
-  if (anchorAtPosition === 0) return 'Start (Source-Target 1)';
-  if (anchorAtPosition === anchorIndices.length - 1) return `End (Source-Target ${anchorAtPosition + 1})`;
-  if (anchorAtPosition > 0) return `Source-Target ${anchorAtPosition + 1}`;
+  if (anchorAtPosition === 0) return 'Start (tree window 1)';
+  if (anchorAtPosition === anchorIndices.length - 1) return `End (tree window ${anchorAtPosition + 1})`;
+  if (anchorAtPosition > 0) return `Tree window ${anchorAtPosition + 1}`;
 
   let previousAnchorIdx = 0;
   for (let i = anchorIndices.length - 1; i >= 0; i--) {
@@ -59,10 +59,10 @@ export function buildSegmentText(sequenceIndex, transitionResolver) {
     const to = anchorIndices[nextAnchorIdx];
     const span = Math.max(1, to - from);
     const pct = Math.round(((sequenceIndex - from) / span) * 100);
-    return `Source-Target ${previousAnchorIdx + 1} → ${nextAnchorIdx + 1} (${pct}%)`;
+    return `Transition ${previousAnchorIdx + 1} → ${nextAnchorIdx + 1} (${pct}%)`;
   }
 
-  return `End (Source-Target ${previousAnchorIdx + 1})`;
+  return `End (tree window ${previousAnchorIdx + 1})`;
 }
 
 export function buildMsaWindow(hasMsa, indexState, msaStepSize, msaWindowSize, msaColumnCount) {

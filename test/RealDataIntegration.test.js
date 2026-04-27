@@ -133,7 +133,7 @@ describe('Real Data Integration (test/data/ostrich_bug_response.json)', () => {
         expect(midPoint[2]).toBe(0);
 
         // Verify Outward Push
-        // Since we are moving [1..19] (a large clade) in the same tree (Tree 0 -> Tree 0),
+        // Since we are moving [1..19] (a large subtree) in the same tree (Tree 0 -> Tree 0),
         // the bundle point should be pushed away from the structure.
         const dx = midPoint[0] - (-300);
         const dy = midPoint[1] - 0;

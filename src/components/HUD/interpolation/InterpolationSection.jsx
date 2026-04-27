@@ -41,7 +41,7 @@ export function InterpolationSection() {
             </Badge>
           </TooltipTrigger>
           <TooltipContent side="top" className="max-w-xs">
-            Algorithmic interpolation between source-target trees: {segmentText}
+            Interpolated transition between neighboring tree windows: {segmentText}
           </TooltipContent>
         </Tooltip>
       </div>
