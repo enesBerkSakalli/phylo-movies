@@ -54,11 +54,13 @@ export class TidyTreeLayout {
     const effectiveLength = node.parent ? length : 0;
 
     const nodeKey = getNodeKey(node);
-    if (this.preserveRadius && this.previousNodeRadii.has(nodeKey)) {
+    if (nodeKey && this.preserveRadius && this.previousNodeRadii.has(nodeKey)) {
       node.radius = this.previousNodeRadii.get(nodeKey);
     } else {
       node.radius = effectiveLength + radius;
-      this.previousNodeRadii.set(nodeKey, node.radius);
+      if (nodeKey) {
+        this.previousNodeRadii.set(nodeKey, node.radius);
+      }
     }
 
     if (node.children) {

@@ -330,6 +330,9 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
           layoutRotationDegrees,
           extensionRadius,
           labelRadius,
+          treeIndex,
+          treeSide: 'left',
+          renderMode: 'animation',
           maxGlobalScale: this.maxGlobalScale // Pass global scale for consistent sizing
         }
       }
@@ -358,6 +361,10 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
   async renderProgress(progress) {
     return this.interpolationRenderer.renderProgress(progress);
+  }
+
+  async renderTimelineProgress(progress) {
+    return this.interpolationRenderer.renderTimelineProgress(progress);
   }
 
   // ==========================================================================

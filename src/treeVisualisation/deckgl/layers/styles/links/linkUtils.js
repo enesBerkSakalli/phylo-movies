@@ -24,13 +24,6 @@ export const shouldHighlightMarkedSubtree = (link, cached) => {
   return markedSubtreesEnabled !== false && markedSubtreeData && isLinkInSubtree(link, markedSubtreeData);
 };
 
-export const shouldHighlightHistorySubtree = (link, cached) => {
-  // History layer deactivated
-  return false;
-  // const { colorManager: cm, markedSubtreesEnabled } = cached;
-  // return markedSubtreesEnabled !== false && cm?.isLinkHistorySubtree?.(link);
-};
-
 export const getHistoryOutlineStyle = (link, cm, upcomingChangesEnabled, baseOpacity, historyColor) => {
   if (!upcomingChangesEnabled) return null;
 

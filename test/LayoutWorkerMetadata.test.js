@@ -4,11 +4,12 @@ import { calculateLayoutWorkerResult } from '../src/treeVisualisation/workers/la
 describe('layout worker metadata', () => {
   it('attaches max_radius to worker layout and layer data', () => {
     const treeData = {
-      id: 'root',
+      name: '',
       length: 0,
+      split_indices: [0, 1],
       children: [
-        { id: 'taxon_1', length: 0.2, children: [] },
-        { id: 'taxon_2', length: 0.3, children: [] }
+        { name: 'taxon_1', length: 0.2, split_indices: [0], children: [] },
+        { name: 'taxon_2', length: 0.3, split_indices: [1], children: [] }
       ]
     };
 

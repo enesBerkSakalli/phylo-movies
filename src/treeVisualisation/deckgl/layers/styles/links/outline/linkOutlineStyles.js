@@ -2,7 +2,7 @@ import { colorToRgb, getContrastingHighlightColor } from '../../../../../../serv
 import { SYSTEM_TREE_COLORS } from '../../../../../../constants/TreeColors.js';
 import { calculateFlightDashArray } from '../dashUtils.js';
 import { applyDimmingWithCache } from '../../dimmingUtils.js';
-import { shouldHighlightMarkedSubtree, shouldHighlightHistorySubtree, getHistoryOutlineStyle, getMarkedHighlightColor } from '../linkUtils.js';
+import { shouldHighlightMarkedSubtree, getHistoryOutlineStyle, getMarkedHighlightColor } from '../linkUtils.js';
 import { isLinkVisuallyHighlighted } from '../../../../../systems/tree_color/visualHighlights.js';
 
 // Reusable output buffers to avoid per-call array allocations
@@ -78,12 +78,6 @@ export function getLinkOutlineColor(link, cached) {
     glowOpacity = Math.round(baseOpacity * 255 * sensitivity);
   }
 
-  // History subtrees: base color silhouette without pulsing
-  // We remove the isPivotEdge constraint because history items may have left the active zone
-  else if (shouldHighlightHistorySubtree(link, cached)) {
-    rgb = colorToRgb(cm.getBranchColor(link));
-    glowOpacity = Math.round(baseOpacity * 100); // Reduced from 160 for subtler effect
-  }
   // Current Pivot Edge: strong pulsing glow
   else if (isLinkVisuallyHighlighted(link, cm, cached.markedSubtreesEnabled)) {
     rgb = colorToRgb(cm.getBranchColorWithHighlights(link));
@@ -145,11 +139,6 @@ export function getLinkOutlineWidth(link, cached, helpers) {
   // Moderate glow width (reduced from baseWidth * 2 + 8 for less aggressive highlighting)
   if (shouldHighlightMarkedSubtree(link, cached)) {
     return (baseWidth * 1.5 + 4) * metricScale; // Balanced glow for visibility without being too prominent
-  }
-
-  // History subtrees: subtle silhouette without pulse (reduced from baseWidth * 2 + 4)
-  if (shouldHighlightHistorySubtree(link, cached) && !cm?.isPivotEdge?.(link)) {
-    return (baseWidth * 1.5 + 2) * metricScale;
   }
 
   // Only show outline for highlighted branches

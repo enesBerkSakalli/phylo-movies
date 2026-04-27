@@ -1,6 +1,6 @@
 
 import { isLinkVisuallyHighlighted } from '../../../../systems/tree_color/visualHighlights.js';
-import { shouldHighlightMarkedSubtree, shouldHighlightHistorySubtree } from './linkUtils.js';
+import { shouldHighlightMarkedSubtree } from './linkUtils.js';
 
 export function getLinkWidth(link, cached, helpers) {
   const baseWidth = helpers.getBaseStrokeWidth();
@@ -38,11 +38,6 @@ export function getLinkWidth(link, cached, helpers) {
     }
     // In other modes ('taxa', 'solid'), keep standard width
     return baseWidth * metricScale;
-  }
-
-  // History subtrees: slightly bolder stroke (reduced from 1.4 for subtler effect)
-  if (shouldHighlightHistorySubtree(link, cached) && !cm?.isPivotEdge?.(link)) {
-    return getScaledWidth(1.4) * metricScale;
   }
 
   // Check if link should be highlighted (current active)

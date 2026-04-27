@@ -11,7 +11,7 @@ describe('Tree Visualisation - State Update Logic', () => {
     subtreeTracking: [],
     transitionResolver: {
       isFullTree: () => false,
-      getSourceTreeIndex: (idx) => idx // Default mapping
+      getSourceGlobalIndex: (idx) => idx // Default mapping
     },
     upcomingChangesEnabled: true,
     pivotEdgeTracking: [],
@@ -54,7 +54,7 @@ describe('Tree Visualisation - State Update Logic', () => {
         subtreeTracking: { [sourceIndex]: subtrees }, // Data at source only
         transitionResolver: {
           isFullTree: () => false,
-          getSourceTreeIndex: (idx) => (idx === index ? sourceIndex : idx)
+          getSourceGlobalIndex: (idx) => (idx === index ? sourceIndex : idx)
         },
         markedSubtreeMode: 'current'
       });

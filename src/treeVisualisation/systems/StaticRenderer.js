@@ -76,7 +76,10 @@ export class StaticRenderer {
         extensionRadius,
         labelRadius,
         canvasWidth: currentLayout.width,
-        canvasHeight: currentLayout.height
+        canvasHeight: currentLayout.height,
+        treeIndex: targetIndex,
+        treeSide: 'left',
+        renderMode: 'single'
       }
     );
 

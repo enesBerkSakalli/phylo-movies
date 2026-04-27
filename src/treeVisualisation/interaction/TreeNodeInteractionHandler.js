@@ -18,9 +18,12 @@ export class TreeNodeInteractionHandler {
    */
   handleNodeClick(info, event, canvas) {
     const state = useAppStore.getState();
-    const currentTreeData = selectCurrentTree(state);
-    const treeNode = info?.object?.originalNode ||
-      this._findTreeNodeFromLayerData(info?.object, currentTreeData);
+    const layerData = info?.object;
+    const treeContext = this._getTreeContext(layerData, state);
+    const treeData = treeContext?.tree ?? selectCurrentTree(state);
+    const treeIndex = treeContext?.treeIndex ?? state.currentTreeIndex;
+    const treeNode = layerData?.originalNode ||
+      this._findTreeNodeFromLayerData(layerData, treeData, treeIndex);
 
     let x, y;
     if (event.center) {
@@ -37,7 +40,7 @@ export class TreeNodeInteractionHandler {
     }
 
     if (state.showNodeContextMenu) {
-      state.showNodeContextMenu(treeNode, currentTreeData, x, y);
+      state.showNodeContextMenu(treeNode, treeData, x, y);
     } else {
       console.warn('showNodeContextMenu action not found in store');
     }
@@ -49,11 +52,10 @@ export class TreeNodeInteractionHandler {
    * @param {Object} currentTreeData - Current tree data to search in
    * @returns {Object|null} Corresponding D3 tree node
    */
-  _findTreeNodeFromLayerData(layerData, currentTreeData) {
+  _findTreeNodeFromLayerData(layerData, currentTreeData, treeIndex) {
     if (!layerData || !layerData.position || !currentTreeData) return null;
-    const { currentTreeIndex } = useAppStore.getState();
     const currentLayout = this.layoutCalculator.calculateLayout(currentTreeData, {
-      treeIndex: currentTreeIndex
+      treeIndex
     });
 
     const allNodes = currentLayout.tree.descendants();
@@ -63,5 +65,13 @@ export class TreeNodeInteractionHandler {
     return allNodes.find(node => {
       return Math.abs(node.x - targetX) < tolerance && Math.abs(node.y - targetY) < tolerance;
     }) || null;
+  }
+
+  _getTreeContext(layerData, state) {
+    const treeIndex = layerData?.treeIndex;
+    if (Number.isInteger(treeIndex) && typeof state.getTreeContext === 'function') {
+      return state.getTreeContext(treeIndex);
+    }
+    return null;
   }
 }

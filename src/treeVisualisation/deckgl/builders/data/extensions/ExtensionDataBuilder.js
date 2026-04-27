@@ -25,15 +25,30 @@ export class ExtensionDataBuilder {
    */
   _createExtensionData(leaf, extensionRadius) {
     const angle = leaf.rotatedAngle != null ? leaf.rotatedAngle : leaf.angle;
+    if (
+      !Number.isFinite(leaf?.x) ||
+      !Number.isFinite(leaf?.y) ||
+      !Number.isFinite(angle) ||
+      !Number.isFinite(extensionRadius)
+    ) {
+      console.warn('[ExtensionDataBuilder] Skipping extension with invalid layout coordinates:', leaf?.data?.split_indices);
+      return null;
+    }
+
     const extensionX = Math.cos(angle) * extensionRadius;
     const extensionY = Math.sin(angle) * extensionRadius;
 
     // Use leaf coordinates as source
-    const sourceX = leaf.x || 0;
-    const sourceY = leaf.y || 0;
+    const sourceX = leaf.x;
+    const sourceY = leaf.y;
+    const extensionKey = getExtensionKey(leaf);
+    if (!extensionKey) {
+      console.warn('[ExtensionDataBuilder] Skipping extension without split_indices:', leaf?.data?.name);
+      return null;
+    }
 
     return {
-      id: getExtensionKey(leaf),
+      id: extensionKey,
       sourcePosition: [sourceX, sourceY, 0],
       targetPosition: [extensionX, extensionY, 0],
       path: [[sourceX, sourceY, 0], [extensionX, extensionY, 0]],

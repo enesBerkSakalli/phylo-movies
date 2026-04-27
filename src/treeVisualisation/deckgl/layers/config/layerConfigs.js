@@ -9,7 +9,6 @@ import { PathStyleExtension } from '@deck.gl/extensions';
 export const HOVER_HIGHLIGHT_COLOR = [0, 200, 220, 150];
 
 export const LAYER_ID_PREFIX = 'phylo';
-export const HISTORY_LAYER_ID_PREFIX = `${LAYER_ID_PREFIX}-history`;
 export const CLIPBOARD_LAYER_ID_PREFIX = `${LAYER_ID_PREFIX}-clipboard`;
 
 // Minimum node radius for internal nodes
@@ -22,10 +21,8 @@ export const Z_NODE = 0.05;
 export const INNER_NODE_STROKE_WIDTH = 0.2;
 export const OUTER_NODE_STROKE_WIDTH = 0.2;
 
-// Z-offsets for "History" / Highlighted Subtrees
-// Order: Nodes (Highest) > Links > Labels
+// Z-offsets for previously moved subtree highlights.
 export const HISTORY_NODE_Z_OFFSET = 0.3;
-export const HISTORY_LINK_Z_OFFSET = 0.2;
 export const HISTORY_LABEL_Z_OFFSET = 0.1;
 
 const pathLayerDefaults = {
@@ -146,28 +143,5 @@ export const CLIPBOARD_LAYER_CONFIGS = {
   connectors: {
     ...LAYER_CONFIGS.connectors,
     id: `${CLIPBOARD_LAYER_ID_PREFIX}-connectors`
-  }
-};
-
-export const HISTORY_DEPTH_PARAMETERS = {
-  depthCompare: 'always',
-  depthWriteEnabled: false
-};
-
-export const HISTORY_LINKS_CONFIG = {
-  ...LAYER_CONFIGS.links,
-  id: `${HISTORY_LAYER_ID_PREFIX}-links`,
-  defaultProps: {
-    ...LAYER_CONFIGS.links.defaultProps,
-    parameters: HISTORY_DEPTH_PARAMETERS
-  }
-};
-
-export const HISTORY_LINKS_HALO_CONFIG = {
-  ...LAYER_CONFIGS.links,
-  id: `${HISTORY_LAYER_ID_PREFIX}-links-halo`,
-  defaultProps: {
-    ...LAYER_CONFIGS.links.defaultProps,
-    parameters: HISTORY_DEPTH_PARAMETERS
   }
 };

@@ -4,7 +4,6 @@ const proxyquire = require('proxyquire');
 // Mock dependencies
 const linkUtilsMock = {
   shouldHighlightMarkedSubtree: () => false,
-  shouldHighlightHistorySubtree: () => false,
   getHistoryOutlineStyle: () => null,
   getMarkedHighlightColor: () => [255, 0, 0],
 };

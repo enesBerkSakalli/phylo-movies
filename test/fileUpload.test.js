@@ -8,13 +8,13 @@ const {
 } = require('../src/treeVisualisation/utils/KeyGenerator.js');
 
 describe('KeyGenerator', () => {
-  it('generates node keys from split_indices and falls back to name', () => {
+  it('generates node keys from split_indices only', () => {
     const nodeA = { data: { split_indices: [1, 2, 3] } };
     // Hash for [1,2,3] is '09f8718777cb5b02'
     expect(getNodeKey(nodeA)).to.equal('node-09f8718777cb5b02');
 
     const nodeB = { data: { name: 'A B/C' } };
-    expect(getNodeKey(nodeB)).to.equal('node-A_B_C');
+    expect(getNodeKey(nodeB)).to.equal(null);
   });
 
   it('generates label/extension keys and link keys', () => {
@@ -30,4 +30,3 @@ describe('KeyGenerator', () => {
     expect(getLinkKey(link)).to.equal('link-78c951c908d5d6fd');
   });
 });
-

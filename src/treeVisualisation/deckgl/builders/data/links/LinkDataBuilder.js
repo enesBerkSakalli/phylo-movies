@@ -16,7 +16,9 @@ export class LinkDataBuilder {
    * @returns {Array} Array of link data objects
    */
   convertLinks(tree) {
-    return tree.links().map(link => this.createLinkData(link));
+    return tree.links()
+      .map(link => this.createLinkData(link))
+      .filter(Boolean);
   }
 
   /**
@@ -25,11 +27,23 @@ export class LinkDataBuilder {
    * @returns {Object} Link data for Deck.gl
    */
   createLinkData(link) {
+    if (!hasFiniteCoordinates(link?.source) || !hasFiniteCoordinates(link?.target)) {
+      console.warn('[LinkDataBuilder] Skipping link with invalid layout coordinates:', link?.target?.data?.split_indices);
+      return null;
+    }
+
     const linkData = this._extractLinkCoordinates(link);
     const linkPath = this.geometryBuilder.createLinkPath(linkData);
+    const linkKey = getLinkKey(link);
+    const sourceId = getNodeKey(link.source);
+    const targetId = getNodeKey(link.target);
+    if (!linkKey || !sourceId || !targetId) {
+      console.warn('[LinkDataBuilder] Skipping link without split_indices:', link?.target?.data?.name);
+      return null;
+    }
 
     return {
-      id: getLinkKey(link),
+      id: linkKey,
       depth: link.target.depth, // Depth for elongation-based cascade timing
       sourcePosition: [link.source.x, link.source.y, 0],
       targetPosition: [link.target.x, link.target.y, 0],
@@ -37,8 +51,8 @@ export class LinkDataBuilder {
       source: link.source,
       target: link.target,
       // Stable IDs for endpoints to enable subtree-aware interpolation
-      sourceId: getNodeKey(link.source),
-      targetId: getNodeKey(link.target),
+      sourceId,
+      targetId,
       polarData: this._extractPolarData(link)
     };
   }
@@ -80,4 +94,8 @@ export class LinkDataBuilder {
       }
     };
   }
+}
+
+function hasFiniteCoordinates(node) {
+  return Number.isFinite(node?.x) && Number.isFinite(node?.y);
 }

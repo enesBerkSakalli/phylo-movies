@@ -82,7 +82,7 @@ export class InterpolationCache {
       const layoutFrom = this._calculateLayout(fromTreeData, fromTreeIndex);
       if (layoutFrom) {
         const { extensionRadius, labelRadius } = this.getConsistentRadii(layoutFrom);
-        dataFrom = this._convertLayoutToLayerData(layoutFrom, extensionRadius, labelRadius);
+        dataFrom = this._convertLayoutToLayerData(layoutFrom, extensionRadius, labelRadius, fromTreeIndex);
       }
     }
 
@@ -95,7 +95,7 @@ export class InterpolationCache {
         // If we calculated layoutFrom, we use its radii. If not, we estimate from dims.
         // In practice, radii are constant for a given container size.
         const { extensionRadius, labelRadius } = getRadiiFromDims();
-        dataTo = this._convertLayoutToLayerData(layoutTo, extensionRadius, labelRadius);
+        dataTo = this._convertLayoutToLayerData(layoutTo, extensionRadius, labelRadius, toTreeIndex);
       }
     }
 
@@ -112,14 +112,17 @@ export class InterpolationCache {
     });
   }
 
-  _convertLayoutToLayerData(layout, extensionRadius, labelRadius) {
+  _convertLayoutToLayerData(layout, extensionRadius, labelRadius, treeIndex) {
     const layerData = this.convertTreeToLayerData(
       layout.tree,
       {
         extensionRadius,
         labelRadius,
         canvasWidth: layout.width,
-        canvasHeight: layout.height
+        canvasHeight: layout.height,
+        treeIndex,
+        treeSide: 'left',
+        renderMode: 'animation'
       }
     );
     if (layerData && typeof layerData === 'object') {

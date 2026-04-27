@@ -20,8 +20,6 @@ export {
   getExtensionsLayerProps
 } from './extensions/ExtensionLayers.js';
 
-export { createHistoryLayers } from './links/HistoryLinkLayers.js';
-
 export { createNodesLayer, getNodesLayerProps } from './nodes/NodeLayers.js';
 export {
   createLabelsLayer,

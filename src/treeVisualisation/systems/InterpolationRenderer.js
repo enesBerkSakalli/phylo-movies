@@ -140,4 +140,38 @@ export class InterpolationRenderer {
       stage
     });
   }
+
+  /*
+   * Render a weighted timeline progress value from the timeline subsystem.
+   * This keeps scrubbed timeline positions distinct from the linear playback clock.
+   */
+  async renderTimelineProgress(progress) {
+    if (!this.controller.ready) {
+      await this.controller.readyPromise;
+    }
+
+    const state = useAppStore.getState();
+    const interpolationData = state.movieTimelineManager?.getInterpolationDataForTimelineProgress?.(progress);
+
+    if (!interpolationData?.fromTree || !interpolationData?.toTree) {
+      return this.renderProgress(progress);
+    }
+
+    const { fromTree, toTree, fromIndex, toIndex } = interpolationData;
+    let t = interpolationData.timeFactor;
+
+    if (t <= 0.001 || fromIndex === toIndex || fromTree === toTree) {
+      return this.controller.renderAllElements({ treeIndex: fromIndex });
+    }
+
+    const { dataFrom, dataTo } = this.controller._getOrCacheInterpolationData(fromTree, toTree, fromIndex, toIndex);
+    const stage = detectAnimationStage(dataFrom, dataTo);
+    t = applyStageEasing(t, stage);
+
+    return this.renderSingleInterpolatedFrame(fromTree, toTree, t, {
+      fromTreeIndex: fromIndex,
+      toTreeIndex: toIndex,
+      stage
+    });
+  }
 }

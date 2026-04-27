@@ -59,9 +59,7 @@ export class LayerManager {
       layerFactories.createExtensionsLayer(extensions, state, this.layerStyles),
       layerFactories.createNodesLayer(nodes, state, this.layerStyles),
       labelsVisible && layerFactories.createLabelsLayer(labels, state, this.layerStyles),
-      !labelsVisible && layerFactories.createLabelDotsLayer(labels, state, this.layerStyles),
-      // History layers disabled for now
-      // ...layerFactories.createHistoryLayers(links, state, this.layerStyles)
+      !labelsVisible && layerFactories.createLabelDotsLayer(labels, state, this.layerStyles)
     ];
 
     const filteredLayers = layers.filter(Boolean);

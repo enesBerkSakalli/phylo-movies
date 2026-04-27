@@ -94,14 +94,16 @@ export class RadialTreeLayout {
 
     // Check if we should preserve radius for this node
     const nodeKey = getNodeKey(node);
-    if (this.preserveRadius && this.previousNodeRadii.has(nodeKey)) {
+    if (nodeKey && this.preserveRadius && this.previousNodeRadii.has(nodeKey)) {
       // Use preserved radius from previous calculation
       node.radius = this.previousNodeRadii.get(nodeKey);
     } else {
       // Calculate new radius normally
       node.radius = length + radius;
       // Store this radius for potential future preservation
-      this.previousNodeRadii.set(nodeKey, node.radius);
+      if (nodeKey) {
+        this.previousNodeRadii.set(nodeKey, node.radius);
+      }
     }
 
     if (node.children) {
