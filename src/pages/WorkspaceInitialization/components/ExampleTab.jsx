@@ -15,7 +15,7 @@ export function ExampleTab({ loadingExample, loadingExampleId, submitting, handl
           </div>
           <h3 className="text-lg font-semibold">Load Sample Dataset</h3>
           <p className="text-sm text-muted-foreground max-w-md">
-            Explore Phylo-Movies with curated biological datasets from our bioRxiv preprint.
+            Explore Phylo-Movies with publication datasets and a small alignment-sync demo.
           </p>
         </div>
 
@@ -23,6 +23,7 @@ export function ExampleTab({ loadingExample, loadingExampleId, submitting, handl
           {EXAMPLE_DATASETS.map((example) => {
             const isLoading = loadingExample && loadingExampleId === example.id;
             const isDisabled = loadingExample || submitting;
+            const includesAlignment = example.fileType === 'msa' || !!example.msaFilePath;
 
             return (
               <div
@@ -40,15 +41,19 @@ export function ExampleTab({ loadingExample, loadingExampleId, submitting, handl
                         {example.badge}
                       </Badge>
                     )}
+                    <Badge variant={includesAlignment ? 'default' : 'outline'} className="text-xs">
+                      {includesAlignment ? 'Includes alignment' : 'Trees only'}
+                    </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {example.description}
                   </p>
                   <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                    {example.fileType === 'msa' ? (
+                    {includesAlignment ? (
                       <>
                         <span>Window: {example.parameters.windowSize}</span>
                         <span>Step: {example.parameters.stepSize}</span>
+                        {example.msaFileName && <span>Trees + MSA</span>}
                       </>
                     ) : (
                       <span>File: {example.fileName}</span>
@@ -65,10 +70,22 @@ export function ExampleTab({ loadingExample, loadingExampleId, submitting, handl
                     asChild
                     title={`Download ${example.fileName}`}
                   >
-                    <a href={example.filePath} download={example.fileName}>
+                    <a href={example.filePath} download={example.fileName} aria-label={`Download ${example.fileName}`}>
                       <Download className="size-4" />
                     </a>
                   </Button>
+                  {example.msaFilePath && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      asChild
+                      title={`Download ${example.msaFileName}`}
+                    >
+                      <a href={example.msaFilePath} download={example.msaFileName} aria-label={`Download ${example.msaFileName}`}>
+                        <Download className="size-4" />
+                      </a>
+                    </Button>
+                  )}
                   <Button
                     variant="outline"
                     size="sm"

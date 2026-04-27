@@ -19,6 +19,13 @@ mkdir -p "$DEST/examples/norovirus/augur_subsampling"
 cp "$SOURCE/norovirus/augur_subsampling/noro_virus_example_350_gappyout_final.fasta" \
    "$DEST/examples/norovirus/augur_subsampling/"
 
+# Quick MSA demo (30 taxa, 10 supplied tree windows)
+mkdir -p "$DEST/examples/quick_msa_demo"
+cp "$SOURCE/quick_msa_demo/quick_msa_demo_30taxa_10trees.nwk" \
+   "$DEST/examples/quick_msa_demo/"
+cp "$SOURCE/quick_msa_demo/quick_msa_demo_30taxa_10windows.fasta" \
+   "$DEST/examples/quick_msa_demo/"
+
 # Paper figure example (12 taxa, 2 trees)
 mkdir -p "$DEST/examples/figure_example"
 cp "$SOURCE/figure_example/paper_example.tree" \
@@ -34,4 +41,4 @@ mkdir -p "$DEST/examples/bootstrap_example/125"
 cp "$SOURCE/bootstrap_example/125/all_trees_125.nwk" \
    "$DEST/examples/bootstrap_example/125/"
 
-echo "Done. Copied 4 example datasets."
+echo "Done. Copied 5 example datasets."
