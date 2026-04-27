@@ -10,8 +10,7 @@ import {
   isSubsetOfAny
 } from '../../utils/splitMatching.js';
 
-// Re-export shared functions for backward compatibility
-export { splitsEqual, toSplitSet as resolvePivotEdgeSet };
+export { splitsEqual, toSplitSet };
 
 /**
  * Check if branch matches current pivot edge

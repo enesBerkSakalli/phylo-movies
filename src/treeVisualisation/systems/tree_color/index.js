@@ -10,7 +10,7 @@ export {
 
 export {
   splitsEqual,
-  resolvePivotEdgeSet,
+  toSplitSet,
   isLinkPivotEdge,
   isNodePivotEdge,
   nodeOrParentMatchesPivotEdge,

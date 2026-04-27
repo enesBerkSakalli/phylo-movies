@@ -13,7 +13,7 @@ import { SYSTEM_TREE_COLORS } from '../../constants/TreeColors.js';
 import {
   getBaseBranchColor,
   getBaseNodeColor,
-  resolvePivotEdgeSet,
+  toSplitSet,
   isLinkPivotEdge,
   nodeOrParentMatchesPivotEdge,
   nodeOrParentMatchesAnyEdge,
@@ -115,7 +115,7 @@ export class TreeColorManager {
    * @returns {string} Hex color code
    */
   getNodeColor(nodeData, pivotEdges = []) {
-    const edgeSet = resolvePivotEdgeSet(pivotEdges, this.currentPivotEdges);
+    const edgeSet = toSplitSet(pivotEdges, this.currentPivotEdges);
     const marked = this.isNodeInMarkedSubtreeFast(nodeData);
     const isPivotEdgeNode = nodeOrParentMatchesPivotEdge(nodeData, edgeSet);
 

@@ -52,8 +52,8 @@ export class PolarNodeInterpolator {
 
     const angularT = velocityEntry?.angularT ?? t;
 
-    // Use polarPosition (distance from center) for position interpolation
-    // Fallback to radius for backwards compatibility
+    // Use polarPosition (distance from center) for position interpolation.
+    // Radius is still accepted because interpolated node data also carries it.
     const fromR = fromNode.polarPosition ?? fromNode.radius ?? 0;
     const toR = toNode.polarPosition ?? toNode.radius ?? 0;
     const interpolatedRadius = this._interpolateScalar(fromR, toR, t);

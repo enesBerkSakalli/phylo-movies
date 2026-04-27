@@ -136,9 +136,6 @@ export function flattenSplitSets(entries) {
   return flattened;
 }
 
-// Alias for backward compatibility
-export const flattenSubtreeEntries = flattenSplitSets;
-
 /**
  * Check if a link's split indices are a subset of any marked subtree
  * @param {Object} linkData - Link data with target.data.split_indices

@@ -3,7 +3,7 @@
  * Handles conversion of D3 links to Deck.gl layer format
  */
 import { getLinkKey, getNodeKey } from '../../../../utils/KeyGenerator.js';
-import { LinkGeometryBuilder, ARC_SEGMENT_COUNT } from '../../geometry/links/LinkGeometryBuilder.js';
+import { LinkGeometryBuilder } from '../../geometry/links/LinkGeometryBuilder.js';
 
 export class LinkDataBuilder {
   constructor() {
@@ -81,6 +81,3 @@ export class LinkDataBuilder {
     };
   }
 }
-
-// Re-export for backwards compatibility
-export { ARC_SEGMENT_COUNT };
