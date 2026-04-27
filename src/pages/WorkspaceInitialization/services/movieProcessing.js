@@ -1,6 +1,9 @@
 import { resolveApiUrl } from "@/services/data/apiConfig";
 import { phyloData, workflows } from "@/services/data/dataService.js";
 
+const UPLOAD_START_TIMEOUT_MS = 2 * 60 * 1000;
+const STREAM_IDLE_TIMEOUT_MS = 15 * 60 * 1000;
+
 /**
  * Electron loading helpers
  */
@@ -41,7 +44,20 @@ export async function processMovieData(formData, onProgress) {
   body.append('noMl', formData.noMl ? 'on' : '');
 
   const streamUrl = await resolveApiUrl('/treedata/stream');
-  const resp = await fetch(streamUrl, { method: 'POST', body });
+  const controller = new AbortController();
+  const uploadTimeoutId = setTimeout(() => controller.abort(), UPLOAD_START_TIMEOUT_MS);
+  let resp;
+  try {
+    resp = await fetch(streamUrl, { method: 'POST', body, signal: controller.signal });
+  } catch (error) {
+    if (error?.name === 'AbortError') {
+      throw new Error('The server did not start tree processing in time. Please check that the local processing server is running.');
+    }
+    throw error;
+  } finally {
+    clearTimeout(uploadTimeoutId);
+  }
+
   if (!resp.ok) {
     let errorMsg = 'Upload failed!';
     try {
@@ -64,8 +80,13 @@ export async function processMovieData(formData, onProgress) {
   return new Promise((resolve, reject) => {
     const eventSource = new EventSource(progressUrl);
     let settled = false;
+    let idleTimeoutId = null;
 
     const closeEventSource = () => {
+      if (idleTimeoutId) {
+        clearTimeout(idleTimeoutId);
+        idleTimeoutId = null;
+      }
       try {
         eventSource.close();
       } catch {}
@@ -85,6 +106,15 @@ export async function processMovieData(formData, onProgress) {
       reject(error instanceof Error ? error : new Error(String(error)));
     };
 
+    const refreshIdleTimeout = () => {
+      if (idleTimeoutId) clearTimeout(idleTimeoutId);
+      idleTimeoutId = setTimeout(() => {
+        rejectOnce(new Error('Tree processing stopped sending progress. Please check the local processing server and try again.'));
+      }, STREAM_IDLE_TIMEOUT_MS);
+    };
+
+    refreshIdleTimeout();
+
     // For chunked streaming (large datasets ≥ 500 trees)
     let chunkedMetadata = null;
     let chunkedTrees = [];
@@ -99,6 +129,7 @@ export async function processMovieData(formData, onProgress) {
     }
 
     eventSource.addEventListener('progress', (event) => {
+      refreshIdleTimeout();
       try {
         const progressData = JSON.parse(event.data);
         const percent = progressData.percent ?? progressData.current ?? 0;
@@ -112,6 +143,7 @@ export async function processMovieData(formData, onProgress) {
     });
 
     eventSource.addEventListener('log', (event) => {
+      refreshIdleTimeout();
       try {
         const log = JSON.parse(event.data);
         console.log(`[Backend] ${log.level}: ${log.message}`);
@@ -120,6 +152,7 @@ export async function processMovieData(formData, onProgress) {
 
     // Handle metadata event for large datasets (chunked mode)
     eventSource.addEventListener('metadata', (event) => {
+      refreshIdleTimeout();
       try {
         const result = JSON.parse(event.data);
         chunkedMetadata = result.metadata;
@@ -133,6 +166,7 @@ export async function processMovieData(formData, onProgress) {
 
     // Handle tree chunks for large datasets
     eventSource.addEventListener('trees_chunk', (event) => {
+      refreshIdleTimeout();
       try {
         const chunk = JSON.parse(event.data);
         chunkedTrees.push(...chunk.trees);
@@ -148,6 +182,7 @@ export async function processMovieData(formData, onProgress) {
     });
 
     eventSource.addEventListener('complete', (event) => {
+      refreshIdleTimeout();
       console.log('[SSE] Complete event received:', {
         hasData: !!event.data,
         dataLength: event.data?.length,
