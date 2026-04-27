@@ -125,7 +125,7 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
 
     expect(global.Worker.calledOnce).to.be.true;
     expect(controller.layoutWorker).to.be.instanceOf(MockWorker);
-    expect(controller.requestedFrames).to.be.instanceOf(Set);
+    expect(controller.prefetchedFrameIndices).to.be.instanceOf(Set);
 
     // Capture the worker instance
     mockWorkerInstance = controller.layoutWorker;
@@ -148,7 +148,7 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
     expect(callArgs.command).to.equal('CALCULATE_LAYOUT');
     expect(callArgs.data.treeData).to.deep.equal({ id: 'tree1' });
     expect(callArgs.data.options.branchTransformation).to.equal('linear');
-    expect(controller.requestedFrames.has(1)).to.be.true;
+    expect(controller.prefetchedFrameIndices.has(1)).to.be.true;
   });
 
   it('should skip prefetch if already requested', () => {
@@ -192,7 +192,7 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
 
   it('should handle worker errors gracefully', () => {
     controller = new ControllerClass('#container');
-    controller.requestedFrames.add(3);
+    controller.prefetchedFrameIndices.add(3);
 
     const errorResponse = {
       data: {
@@ -208,8 +208,8 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
     controller.layoutWorker.onmessage(errorResponse);
 
     expect(console.warn.called).to.be.true;
-    // Should remove from requestedFrames so it can be retried
-    expect(controller.requestedFrames.has(3)).to.be.false;
+    // Should remove from prefetchedFrameIndices so it can be retried
+    expect(controller.prefetchedFrameIndices.has(3)).to.be.false;
   });
 
   it('should trigger prefetch on animation progress update', () => {

@@ -19,7 +19,7 @@ export class StaticRenderer {
       await this.controller.readyPromise;
     }
 
-    if (!this.controller.useReactDeckGL && !this.controller.deckContext?.deck) return;
+    if (!this.controller.deckContext?.deck) return;
 
     const { treeIndex, leftIndex, rightIndex, comparisonMode } = options;
     const state = useAppStore.getState();
