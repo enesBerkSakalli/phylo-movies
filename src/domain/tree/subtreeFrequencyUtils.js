@@ -106,11 +106,12 @@ export function calculateSubtreeTemporalDistribution(pairSolutions) {
 
   const temporalMap = new Map(); // signature -> Map<timeIndex, count>
 
-  Object.entries(pairSolutions).forEach(([pairKey, solution], fallbackIndex) => {
+  Object.entries(pairSolutions).forEach(([pairKey, solution]) => {
     const jumpingSolutions = solution?.jumping_subtree_solutions;
     if (!jumpingSolutions) return;
 
-    const timeIndex = parsePairTimeIndex(pairKey, fallbackIndex);
+    const timeIndex = parsePairTimeIndex(pairKey);
+    if (timeIndex === null) return;
 
     Object.values(jumpingSolutions).forEach(solutionSets => {
       const flattenedSubtrees = flattenSplitSets(solutionSets);
@@ -134,10 +135,10 @@ export function calculateSubtreeTemporalDistribution(pairSolutions) {
   return temporalMap;
 }
 
-function parsePairTimeIndex(pairKey, fallbackIndex) {
+function parsePairTimeIndex(pairKey) {
   const match = /^pair_(\d+)_\d+$/.exec(pairKey);
   if (match) {
     return Number(match[1]);
   }
-  return fallbackIndex;
+  return null;
 }

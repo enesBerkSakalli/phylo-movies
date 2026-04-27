@@ -19,6 +19,10 @@ export const createDatasetLifecycleSlice = (set, get) => ({
     set({
       movieData: null,
       treeList: [],
+      treeMetadata: [],
+      fullTreeIndices: [],
+      pairInterpolationRanges: [],
+      treeIndexByPair: {},
       fileName: null,
       distanceRfd: [],
       distanceWeightedRfd: [],
@@ -39,9 +43,11 @@ export const createDatasetLifecycleSlice = (set, get) => ({
 
     const interpolatedTrees = movieData.interpolated_trees;
     const treeMetadata = movieData.tree_metadata;
+    const pairInterpolationRanges = movieData.pair_interpolation_ranges;
 
     const resolver = createTransitionResolver(movieData, treeMetadata);
     const fullTreeIndices = resolver.fullTreeIndices;
+    const treeIndexByPair = buildTreeIndexByPair(treeMetadata);
     const { scaleList, maxScale, scaleValues } = calculateTreeScales(interpolatedTrees, fullTreeIndices);
     const numberOfFullTrees = fullTreeIndices.length;
 
@@ -80,6 +86,10 @@ export const createDatasetLifecycleSlice = (set, get) => ({
       },
       movieTimelineManager,
       treeList: interpolatedTrees,
+      treeMetadata,
+      fullTreeIndices,
+      pairInterpolationRanges,
+      treeIndexByPair,
       fileName,
       distanceRfd,
       distanceWeightedRfd,
@@ -103,4 +113,17 @@ function createTransitionResolver(movieData, treeMetadata) {
     movieData.tree_pair_solutions,
     movieData.pair_interpolation_ranges
   );
+}
+
+function buildTreeIndexByPair(treeMetadata = []) {
+  return treeMetadata.reduce((indexByPair, metadata, treeIndex) => {
+    const pairKey = metadata?.tree_pair_key;
+    if (typeof pairKey === 'string' && pairKey.length > 0) {
+      if (!indexByPair[pairKey]) {
+        indexByPair[pairKey] = [];
+      }
+      indexByPair[pairKey].push(treeIndex);
+    }
+    return indexByPair;
+  }, {});
 }

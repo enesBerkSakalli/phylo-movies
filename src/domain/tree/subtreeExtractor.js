@@ -74,17 +74,17 @@ export class SubtreeExtractor {
     if (!node.children || node.children.length === 0) {
       // Leaf node
       const name = node.data.name || '';
-      const branchLength = node.data.branch_length || node.data.branchLength || '';
-      return branchLength ? `${name}:${branchLength}` : name;
+      const length = node.data.length ?? '';
+      return length !== '' ? `${name}:${length}` : name;
     }
 
     // Internal node - recursively build newick for children
     const childrenNewick = node.children.map(child => this._nodeToNewick(child)).join(',');
     const name = node.data.name || '';
-    const branchLength = node.data.branch_length || node.data.branchLength || '';
+    const length = node.data.length ?? '';
 
     const nodeNewick = `(${childrenNewick})${name}`;
-    return branchLength ? `${nodeNewick}:${branchLength}` : nodeNewick;
+    return length !== '' ? `${nodeNewick}:${length}` : nodeNewick;
   }
 
   /**

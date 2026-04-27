@@ -4,6 +4,10 @@ export interface AppStoreState {
   // From treeDataset.slice
   movieData: any;
   treeList: any[];
+  treeMetadata: any[];
+  fullTreeIndices: number[];
+  pairInterpolationRanges: Array<[number, number]>;
+  treeIndexByPair: Record<string, number[]>;
   fileName: string | null;
   transitionResolver: any;
   distanceRfd: number[];
@@ -139,6 +143,14 @@ export interface AppStoreState {
   // Actions
   initialize: (movieData: any) => void;
   reset: () => void;
+  getTreeContext: (index: number) => {
+    treeIndex: number;
+    tree: any;
+    metadata: any;
+    pairKey: string | null;
+    isOriginal: boolean;
+    isFullTree: boolean;
+  } | null;
 
   play: () => void;
   stop: () => void;

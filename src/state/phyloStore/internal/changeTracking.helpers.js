@@ -62,19 +62,11 @@ export function buildSolutionKey(arr) {
   return `[${arr.join(', ')}]`;
 }
 
-/**
- * Finds a solution entry in a map using standard or compact key formats.
- */
 export function findSolutionEntry(map, keyArr) {
   if (!map || !Array.isArray(keyArr) || keyArr.length === 0) return null;
 
-  // Try direct lookup with standard Python formatting "[1, 2]"
   const direct = buildSolutionKey(keyArr);
   if (map[direct]) return map[direct];
-
-  // Try compact formatting "[1,2]" as a fallback
-  const compact = `[${keyArr.join(',')}]`;
-  if (map[compact]) return map[compact];
 
   return null;
 }
@@ -93,8 +85,8 @@ export function resolveMarkedSubtrees(state, indexOverride = null) {
     let subtree = getSubtreeAtIndex(state, index);
 
     // If no subtree data at current index (interpolated frame), try mapping to source tree
-    if ((!subtree || subtree.length === 0) && transitionResolver?.getSourceTreeIndex) {
-      const sourceIndex = transitionResolver.getSourceTreeIndex(index);
+    if ((!subtree || subtree.length === 0) && transitionResolver?.getSourceGlobalIndex) {
+      const sourceIndex = transitionResolver.getSourceGlobalIndex(index);
       if (sourceIndex !== index) {
         subtree = getSubtreeAtIndex(state, sourceIndex);
       }
