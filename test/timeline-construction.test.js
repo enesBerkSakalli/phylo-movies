@@ -91,6 +91,17 @@ describe('Timeline construction from backend result', () => {
       if (firstOriginal && Number.isInteger(firstOriginal.global_index)) {
         expect(idxs).to.not.include(firstOriginal.global_index);
       }
+
+      expect(firstInterpSeg).to.include({
+        segmentType: 'transition',
+        transitionKind: 'split_event',
+        globalStart: gStart,
+        globalEnd: gEnd,
+        localStepStart: firstEvent.step_range_local[0],
+        localStepEnd: firstEvent.step_range_local[1]
+      });
+      expect(firstInterpSeg).to.not.have.property('phase');
+      expect(firstInterpSeg).to.not.have.property('stepInPair');
     }
 
     // Anchors: ensure number and indices match original events from backend

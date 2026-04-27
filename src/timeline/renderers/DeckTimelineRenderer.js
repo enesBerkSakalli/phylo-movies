@@ -350,8 +350,35 @@ export class DeckTimelineRenderer {
 
     if (targetIndex >= 0 && targetIndex < this.segments.length) {
       this.setSelection([targetId]);
-      this._emit('select', { id: targetId, segment });
+      this._emit('select', {
+        id: targetId,
+        ms: this._getClickMsFromPickingInfo(info),
+        segment
+      });
     }
+  }
+
+  _getClickMsFromPickingInfo(info) {
+    const coordinateX = Array.isArray(info?.coordinate) ? info.coordinate[0] : null;
+    if (Number.isFinite(coordinateX)) {
+      return this._xToMs(coordinateX + (this._width / 2));
+    }
+
+    const positionX = Array.isArray(info?.object?.position) ? info.object.position[0] : null;
+    if (Number.isFinite(positionX)) {
+      return this._xToMs(positionX + (this._width / 2));
+    }
+
+    const path = info?.object?.path;
+    if (Array.isArray(path) && path.length >= 2) {
+      const startX = path[0]?.[0];
+      const endX = path[path.length - 1]?.[0];
+      if (Number.isFinite(startX) && Number.isFinite(endX)) {
+        return this._xToMs(((startX + endX) / 2) + (this._width / 2));
+      }
+    }
+
+    return null;
   }
 
   _emit(event, payload) {

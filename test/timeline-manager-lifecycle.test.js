@@ -113,8 +113,8 @@ describe('MovieTimelineManager lifecycle', () => {
 
     expect(manager.timeline).to.equal(null);
     expect(manager.container).to.equal(null);
-    expect(Array.isArray(manager.segments)).to.equal(true);
-    expect(manager.timelineData).to.be.an('object');
+    expect(manager.getSegmentCount()).to.be.greaterThan(0);
+    expect(manager.getTimelineProgressForTreeIndex(0)).to.be.a('number');
 
     manager.destroy();
   });
@@ -135,7 +135,7 @@ describe('MovieTimelineManager lifecycle', () => {
     expect(manager.timeline).to.equal(null);
     expect(manager.container).to.equal(null);
     expect(host.children.length).to.equal(0);
-    expect(Array.isArray(manager.segments)).to.equal(true);
+    expect(manager.getSegmentCount()).to.be.greaterThan(0);
 
     manager.destroy();
   });

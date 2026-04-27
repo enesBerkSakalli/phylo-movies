@@ -90,6 +90,35 @@ describe('TimelineNavigationController', () => {
     expect(store.getState().goToPositionCalls).to.deep.equal([{ position: 2, direction: 'backward' }]);
   });
 
+  it('uses click time to resolve the nearest transition frame', () => {
+    const store = makeStore({ currentTreeIndex: 0 });
+    const controller = new TimelineNavigationController({
+      segments: [
+        {
+          index: 0,
+          isFullTree: false,
+          hasInterpolation: true,
+          interpolationData: [
+            { originalIndex: 2 },
+            { originalIndex: 3 },
+            { originalIndex: 4 }
+          ]
+        }
+      ],
+      timelineData: {
+        totalDuration: 3000,
+        segmentDurations: [3000],
+        cumulativeDurations: [3000]
+      },
+      store,
+      onTimelinePositionUpdated: () => {}
+    });
+
+    controller.handleTimelineClick(0, 2600);
+
+    expect(store.getState().goToPositionCalls).to.deep.equal([{ position: 4, direction: 'forward' }]);
+  });
+
   it('uses jump direction when clicking the already active tree', () => {
     const store = makeStore({ currentTreeIndex: 3 });
     const controller = new TimelineNavigationController({

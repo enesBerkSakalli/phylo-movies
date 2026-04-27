@@ -7,21 +7,15 @@ import { TimelineMathUtils } from '../math/TimelineMathUtils.js';
 export class TimelineDataProcessor {
     /**
      * Create timeline segments from movie data using TransitionIndexResolver
-     * @param {Object} movieData - Raw movie data OR serializer instance
+     * @param {Object} movieData - Validated backend movie data
      * @returns {Array} Timeline segments
      */
     static createSegments(movieData) {
-        // Check if movieData is a serializer instance
-        const isSerializer = !!movieData?.getTreeMetadata;
-
-        const tree_metadata = isSerializer ? movieData.getTreeMetadata() : movieData?.tree_metadata;
-        const interpolated_trees = isSerializer ? movieData.getTrees().interpolatedTrees : movieData?.interpolated_trees;
-
         const splitChangeTimeline = movieData?.split_change_timeline;
         return this._createSegmentsFromSplitChangeTimeline(
             splitChangeTimeline,
-            tree_metadata,
-            interpolated_trees,
+            movieData?.tree_metadata,
+            movieData?.interpolated_trees,
             movieData?.tree_pair_solutions
         );
     }
@@ -93,18 +87,18 @@ export class TimelineDataProcessor {
             const metadata = tree_metadata[arrayIdx];
             segments.push({
                 index: segments.length,
+                segmentType: 'anchor',
                 metadata,
                 tree: interpolated_trees[arrayIdx],
                 pivotEdge: null,
-                phase: 'Original',
                 pivotEdgeTracker: null,
                 treePairKey: null,
-                stepInPair: null,
                 treeName: entry.name || `Anchor Tree ${treeIndex + 1}`,
                 hasInterpolation: false,
                 isFullTree: true,
                 treeInfo: null,
                 subtreeMoveCount: 0,
+                globalIndex,
                 originalTreeIndex: treeIndex,  // Original anchor tree index (0-based)
                 interpolationData: [{
                     metadata,
@@ -117,14 +111,17 @@ export class TimelineDataProcessor {
 
     static _appendSplitEventSegment(entry, tree_metadata, interpolated_trees, tree_pair_solutions, segments) {
         const globalRange = entry.step_range_global;
-        if (!Array.isArray(globalRange) || globalRange.length < 2) {
+        const localRange = entry.step_range_local;
+        if (!Array.isArray(globalRange) || globalRange.length < 2 || !Array.isArray(localRange) || localRange.length < 2) {
             return;
         }
 
+        const [globalStart, globalEnd] = globalRange;
+        const [localStepStart, localStepEnd] = localRange;
         const interpolationData = [];
 
         // Collect all trees in this range using provided global indices directly
-        for (let globalIdx = globalRange[0]; globalIdx <= globalRange[1]; globalIdx++) {
+        for (let globalIdx = globalStart; globalIdx <= globalEnd; globalIdx++) {
             const arrayIdx = globalIdx;
             if (interpolated_trees?.[arrayIdx] != null) {
                 interpolationData.push({
@@ -160,14 +157,19 @@ export class TimelineDataProcessor {
 
         segments.push({
             index: segments.length,
+            segmentType: 'transition',
+            transitionKind: 'split_event',
             metadata: first.metadata,
             tree: first.tree,
             pivotEdge: entry.split || [],
             jumpingSubtrees: jumpingSubtrees,
-            phase: 'Original',
             pivotEdgeTracker: entry.split || [],
             treePairKey: entry.pair_key,
-            stepInPair: entry.step_range_local?.[0],
+            splitEvent: entry,
+            localStepStart,
+            localStepEnd,
+            globalStart,
+            globalEnd,
             treeName: `Transition ${entry.pair_key}`,
             hasInterpolation: true,
             isFullTree: false,

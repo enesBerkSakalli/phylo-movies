@@ -56,7 +56,7 @@ export function MoviePlayerBar() {
   const tooltipRef = useRef(null);
   const timelineHostRef = useRef(null);
 
-  const segments = movieTimelineManager?.segments || [];
+  const totalSegments = movieTimelineManager?.getSegmentCount?.() ?? 0;
 
   useEffect(() => {
     const container = timelineHostRef.current;
@@ -203,7 +203,7 @@ export function MoviePlayerBar() {
             <TimelineSegmentTooltip
               segment={hoveredSegmentData}
               segmentIndex={hoveredSegmentIndex}
-              totalSegments={segments.length}
+              totalSegments={totalSegments}
               getLeafNames={getLeafNames}
             />
           </div>

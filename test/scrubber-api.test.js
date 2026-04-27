@@ -1,6 +1,7 @@
 const { expect } = require('chai');
 
 const { ScrubberAPI } = require('../src/timeline/core/ScrubberAPI.js');
+const { TimelineClock } = require('../src/timeline/core/TimelineClock.js');
 const { useAppStore } = require('../src/state/phyloStore/store.js');
 
 function createMovieData() {
@@ -14,7 +15,7 @@ function createMovieData() {
 }
 
 function createTimelineManager(movieData) {
-  return {
+  const timelineClock = new TimelineClock({
     segments: [
       {
         isFullTree: false,
@@ -32,6 +33,11 @@ function createTimelineManager(movieData) {
       cumulativeDurations: [3000]
     },
     movieData
+  });
+
+  return {
+    getInterpolationDataForTimelineProgress: (progress) =>
+      timelineClock.getInterpolationDataForProgress(progress)
   };
 }
 
