@@ -8,7 +8,7 @@
  * PERFORMANCE: Uses a render-cycle cache to avoid repeated store access.
  * Call `resetTaxonColorCache()` at the start of each render cycle.
  */
-import { TREE_COLOR_CATEGORIES } from '../../../constants/TreeColors.js';
+import { SYSTEM_TREE_COLORS } from '../../../constants/TreeColors.js';
 import { useAppStore } from '../../../state/phyloStore/store.js';
 import { getTaxonColor } from '../../../treeColoring/utils/GroupingUtils.js';
 
@@ -84,7 +84,6 @@ function _collectLeafNamesRecursive(node) {
 
 /**
  * Get the effective color for a taxon, respecting taxaGrouping from store
- * Falls back to TREE_COLOR_CATEGORIES for legacy compatibility
  *
  * PERFORMANCE: Uses render-cycle cache to avoid repeated lookups.
  *
@@ -101,7 +100,6 @@ function getEffectiveTaxonColor(taxonName) {
 
   let color = null;
 
-  // Only use taxaGrouping for color resolution (no legacy TREE_COLOR_CATEGORIES fallback)
   if (taxaGrouping && taxaGrouping.mode) {
     color = getTaxonColor(taxonName, taxaGrouping, null);
   }
@@ -152,23 +150,23 @@ export function checkMonophyletic(node) {
  */
 export function getBaseBranchColor(linkData, monophyleticEnabled) {
   if (!linkData?.target) {
-    return TREE_COLOR_CATEGORIES.defaultColor;
+    return SYSTEM_TREE_COLORS.defaultColor;
   }
 
   // Leaf branches ALWAYS get their taxa color
   if (!linkData.target.children || linkData.target.children.length === 0) {
     const leafName = linkData.target.data?.name || linkData.target.name;
     const color = getEffectiveTaxonColor(leafName);
-    return color || TREE_COLOR_CATEGORIES.defaultColor;
+    return color || SYSTEM_TREE_COLORS.defaultColor;
   }
 
   // Internal branches: only apply monophyletic coloring if enabled
   if (!monophyleticEnabled) {
-    return TREE_COLOR_CATEGORIES.defaultColor;
+    return SYSTEM_TREE_COLORS.defaultColor;
   }
 
   const { isMonophyletic, color } = checkMonophyletic(linkData.target);
-  return isMonophyletic ? color : TREE_COLOR_CATEGORIES.defaultColor;
+  return isMonophyletic ? color : SYSTEM_TREE_COLORS.defaultColor;
 }
 
 /**
@@ -179,21 +177,21 @@ export function getBaseBranchColor(linkData, monophyleticEnabled) {
  */
 export function getBaseNodeColor(nodeData, monophyleticEnabled) {
   if (!nodeData) {
-    return TREE_COLOR_CATEGORIES.defaultColor;
+    return SYSTEM_TREE_COLORS.defaultColor;
   }
 
   // Leaf nodes ALWAYS get their taxa color
   if (!nodeData.children || nodeData.children.length === 0) {
     const name = nodeData.data?.name || nodeData.name;
     const color = getEffectiveTaxonColor(name);
-    return color || TREE_COLOR_CATEGORIES.defaultColor;
+    return color || SYSTEM_TREE_COLORS.defaultColor;
   }
 
   // Internal nodes: only apply monophyletic coloring if enabled
   if (!monophyleticEnabled) {
-    return TREE_COLOR_CATEGORIES.defaultColor;
+    return SYSTEM_TREE_COLORS.defaultColor;
   }
 
   const { isMonophyletic, color } = checkMonophyletic(nodeData);
-  return isMonophyletic ? color : TREE_COLOR_CATEGORIES.defaultColor;
+  return isMonophyletic ? color : SYSTEM_TREE_COLORS.defaultColor;
 }

@@ -9,7 +9,7 @@
  * Used by LayerStyles.js to provide colors for DeckGL layers
  */
 import { useAppStore } from '../../state/phyloStore/store.js';
-import { TREE_COLOR_CATEGORIES } from '../../constants/TreeColors.js';
+import { SYSTEM_TREE_COLORS } from '../../constants/TreeColors.js';
 import {
   getBaseBranchColor,
   getBaseNodeColor,
@@ -70,9 +70,9 @@ export class TreeColorManager {
     const isPivotEdge = isLinkPivotEdge(linkData, this.currentPivotEdges);
 
     if (isMarked) {
-      return TREE_COLOR_CATEGORIES.markedColor;
+      return SYSTEM_TREE_COLORS.markedColor;
     } else if (isPivotEdge) {
-      return TREE_COLOR_CATEGORIES.pivotEdgeColor;
+      return SYSTEM_TREE_COLORS.pivotEdgeColor;
     } else {
       return getBaseBranchColor(linkData, this.monophyleticColoringEnabled);
     }
@@ -88,7 +88,7 @@ export class TreeColorManager {
     const isPivotEdge = isLinkPivotEdge(linkData, this.currentPivotEdges);
 
     if (isPivotEdge) {
-      return TREE_COLOR_CATEGORIES.pivotEdgeColor;
+      return SYSTEM_TREE_COLORS.pivotEdgeColor;
     } else {
       // Marked branches keep their base color (taxa/monophyletic)
       return getBaseBranchColor(linkData, this.monophyleticColoringEnabled);
@@ -120,9 +120,9 @@ export class TreeColorManager {
     const isPivotEdgeNode = nodeOrParentMatchesPivotEdge(nodeData, edgeSet);
 
     if (marked) {
-      return TREE_COLOR_CATEGORIES.markedColor;
+      return SYSTEM_TREE_COLORS.markedColor;
     } else if (isPivotEdgeNode) {
-      return TREE_COLOR_CATEGORIES.pivotEdgeColor;
+      return SYSTEM_TREE_COLORS.pivotEdgeColor;
     } else {
       return getBaseNodeColor(nodeData, this.monophyleticColoringEnabled);
     }

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useMemo } from 'react';
 import { useAppStore } from '@/state/phyloStore/store.js';
 import { processPhyloData } from '@/msaViewer/utils/dataUtils';
-import { TREE_COLOR_CATEGORIES } from '@/constants/TreeColors';
+import { SYSTEM_TREE_COLORS } from '@/constants/TreeColors';
 import { getGroupForTaxon } from '@/treeColoring/utils/GroupingUtils';
 
 const MSAContext = createContext(null);
@@ -124,8 +124,8 @@ export function MSAProvider({ children }) {
       // Per-taxon explicit color (only if not a system key)
       if (!color) {
         const systemKeys = ['markedColor', 'pivotEdgeColor', 'strokeColor', 'defaultColor'];
-        if (!systemKeys.includes(id) && TREE_COLOR_CATEGORIES[id]) {
-          color = TREE_COLOR_CATEGORIES[id];
+        if (!systemKeys.includes(id) && SYSTEM_TREE_COLORS[id]) {
+          color = SYSTEM_TREE_COLORS[id];
         }
       }
 

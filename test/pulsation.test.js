@@ -36,7 +36,7 @@ const { getLinkOutlineWidth, getLinkOutlineColor } = proxyquire('../src/treeVisu
   '../dashUtils.js': dashUtilsMock,
   '../../dimmingUtils.js': dimmingUtilsMock,
   '../../../../../../services/ui/colorUtils.js': colorUtilsMock,
-  '../../../../../../constants/TreeColors.js': { TREE_COLOR_CATEGORIES: { activeChangeEdgeColor: '#0000FF' } }
+  '../../../../../../constants/TreeColors.js': { SYSTEM_TREE_COLORS: { activeChangeEdgeColor: '#0000FF' } }
 });
 
 describe('Link Outline Pulsation Logic', () => {

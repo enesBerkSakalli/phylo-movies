@@ -6,9 +6,6 @@ export const SYSTEM_COLOR_DEFAULTS = {
   pivotEdgeColor: "#2196f3"
 };
 
-/**
- * TREE_COLOR_CATEGORIES is kept for backward compatibility and as a runtime
- * container for system-level colors only.
- * STOP adding individual taxon names to this object.
- */
-export const TREE_COLOR_CATEGORIES = { ...SYSTEM_COLOR_DEFAULTS };
+// Runtime container for system-level tree colors only.
+// Do not add individual taxon names to this object.
+export const SYSTEM_TREE_COLORS = { ...SYSTEM_COLOR_DEFAULTS };
