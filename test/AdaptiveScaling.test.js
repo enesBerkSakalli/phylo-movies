@@ -1,6 +1,8 @@
 
 import { describe, it, expect } from 'vitest';
+import { LayerStyles } from '../src/treeVisualisation/deckgl/layers/LayerStyles.js';
 import { getLinkWidth } from '../src/treeVisualisation/deckgl/layers/styles/links/linkWidthStyles.js';
+import { getLinkOutlineWidth } from '../src/treeVisualisation/deckgl/layers/styles/links/outline/linkOutlineStyles.js';
 import { getNodeRadius } from '../src/treeVisualisation/deckgl/layers/styles/nodes/nodeRadiusStyles.js';
 
 describe('Adaptive Visual Scaling', () => {
@@ -18,9 +20,24 @@ describe('Adaptive Visual Scaling', () => {
     isPivotEdge: () => false,
     isNodeCompletedChangeEdge: () => false,
     isNodePivotEdge: () => false, // Added missing method
+    isNodeSourceEdge: () => false,
+    isNodeDestinationEdge: () => false,
     getNodeBaseColor: () => '#000',      // Needed for isNodeVisuallyHighlighted
     getNodeColor: () => '#000'           // Needed for isNodeVisuallyHighlighted
   };
+
+  describe('Render State Scaling', () => {
+    it('should cache metricScale from the layer render state', () => {
+      const layerStyles = new LayerStyles();
+      const cached = layerStyles.getCachedState({
+        metricScale: 0.25,
+        movieData: { sorted_leaves: [] }
+      });
+
+      expect(cached.metricScale).toBeCloseTo(0.25);
+      layerStyles.destroy();
+    });
+  });
 
   describe('Link Width Scaling', () => {
     it('should scale width by metricScale', () => {
@@ -62,6 +79,27 @@ describe('Adaptive Visual Scaling', () => {
       const link = { target: { data: { split_indices: [] } } };
       const width = getLinkWidth(link, cached, helpers);
       expect(width).toBeCloseTo(2.0);
+    });
+
+    it('should scale fallback width when no color manager is available', () => {
+      const cached = { metricScale: 0.5 };
+      const link = { target: { data: { split_indices: [] } } };
+      const width = getLinkWidth(link, cached, helpers);
+      expect(width).toBeCloseTo(1.0);
+    });
+
+    it('should scale highlighted outline width by metricScale', () => {
+      const cached = {
+        colorManager: {
+          ...mockColorManager,
+          isCompletedChangeEdge: () => true
+        },
+        upcomingChangesEnabled: true,
+        metricScale: 0.5
+      };
+      const link = { target: { data: { split_indices: [] } } };
+      const width = getLinkOutlineWidth(link, cached, helpers);
+      expect(width).toBeCloseTo(5.0);
     });
 
     it('should enforce minimum visibility (TODO: verify if we implement clamping)', () => {
@@ -120,6 +158,24 @@ describe('Adaptive Visual Scaling', () => {
       };
       const radius = getNodeRadius(node, 3, cached, helpers);
       expect(radius).toBeCloseTo(5.0);
+    });
+
+    it('should scale highlighted radius by metricScale', () => {
+      const cached = {
+        colorManager: {
+          ...mockColorManager,
+          isNodeCompletedChangeEdge: () => true
+        },
+        upcomingChangesEnabled: true,
+        densityScale: 1.0,
+        metricScale: 0.5
+      };
+      const node = {
+        radius: 5,
+        data: { split_indices: [] }
+      };
+      const radius = getNodeRadius(node, 3, cached, helpers);
+      expect(radius).toBeCloseTo(3.75);
     });
   });
 });

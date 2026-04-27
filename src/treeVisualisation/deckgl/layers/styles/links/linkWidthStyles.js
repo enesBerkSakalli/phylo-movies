@@ -4,15 +4,14 @@ import { shouldHighlightMarkedSubtree, shouldHighlightHistorySubtree } from './l
 
 export function getLinkWidth(link, cached, helpers) {
   const baseWidth = helpers.getBaseStrokeWidth();
-  const { colorManager: cm, upcomingChangesEnabled, densityScale } = cached;
+  const { colorManager: cm, upcomingChangesEnabled, densityScale, metricScale = 1.0 } = cached;
 
   if (!cm) {
-    return Math.max(baseWidth, 2); // Fallback without highlighting
+    return Math.max(baseWidth, 2) * metricScale; // Fallback without highlighting
   }
 
   // Helper to scale added thickness based on density
   // scale = 1.0 (sparse) to 0.3 (dense)
-  const { metricScale = 1.0 } = cached;
   const scale = densityScale !== undefined ? densityScale : 1.0;
   const getScaledWidth = (multiplier) => baseWidth * (1 + (multiplier - 1) * scale);
 

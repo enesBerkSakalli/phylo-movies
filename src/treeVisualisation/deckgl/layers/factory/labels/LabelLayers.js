@@ -81,7 +81,7 @@ export function createLabelsLayer(labels, state, layerStyles) {
  * @returns {{ sourceLayer: Layer|null, destinationLayer: Layer|null }}
  */
 export function createHighlightLabelLayers(labels, state, layerStyles) {
-  const cached = layerStyles.getCachedState();
+  const cached = layerStyles.getCachedState(state);
   const { source, destination } = partitionLabels(labels, cached);
 
   const sourceLayer = source.length > 0
@@ -118,7 +118,7 @@ export function createHighlightLabelLayers(labels, state, layerStyles) {
 }
 
 export function createSourceLabelsLayer(labels, state, layerStyles) {
-  const cached = layerStyles.getCachedState();
+  const cached = layerStyles.getCachedState(state);
   // Use single-pass partition for efficiency
   const { source: sourceLabels } = partitionLabels(labels, cached);
   if (!sourceLabels.length) return null;
@@ -137,7 +137,7 @@ export function createSourceLabelsLayer(labels, state, layerStyles) {
 }
 
 export function createDestinationLabelsLayer(labels, state, layerStyles) {
-  const cached = layerStyles.getCachedState();
+  const cached = layerStyles.getCachedState(state);
   // Use single-pass partition for efficiency
   const { destination: destinationLabels } = partitionLabels(labels, cached);
   if (!destinationLabels.length) return null;
@@ -204,7 +204,7 @@ export function getLabelsLayerProps(labels, state, layerStyles) {
   const { taxaColorVersion, colorVersion, fontSize, highlightColorMode } = state || {};
 
   // Get cached state once for all accessors
-  const cached = layerStyles.getCachedState();
+  const cached = layerStyles.getCachedState(state);
   // Render all labels in single layer (source/destination styling handled conditionally)
 
   return {

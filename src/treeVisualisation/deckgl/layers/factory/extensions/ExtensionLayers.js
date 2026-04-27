@@ -19,7 +19,7 @@ import {
 
 export function getExtensionsLayerProps(extensions, state, layerStyles) {
   const { taxaColorVersion, colorVersion, strokeWidth, highlightColorMode } = state || {};
-  const cached = layerStyles.getCachedState();
+  const cached = layerStyles.getCachedState(state);
 
   return {
     data: extensions,
