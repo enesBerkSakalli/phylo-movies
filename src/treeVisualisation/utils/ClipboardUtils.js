@@ -22,9 +22,7 @@ export function getClipboardLayers(controller) {
  */
 function createClipboardVisualLayers(controller, treeIndex, treeData) {
   const layout = controller.calculateLayout(treeData, {
-    treeIndex,
-    updateController: false,
-    rotationAlignmentKey: 'clipboard'
+    treeIndex
   });
 
   if (!layout?.tree) {
@@ -78,8 +76,7 @@ function getMainTreeBounds(controller) {
   // Use the current tree data to calculate bounds
   if (controller.currentTreeData) {
     const layout = controller.calculateLayout(controller.currentTreeData, {
-      treeIndex: useAppStore.getState().currentTreeIndex,
-      updateController: false
+      treeIndex: useAppStore.getState().currentTreeIndex
     });
     if (layout?.tree) {
       const { extensionRadius, labelRadius } = controller._getConsistentRadii(layout);

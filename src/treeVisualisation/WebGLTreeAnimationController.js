@@ -46,14 +46,6 @@ export class WebGLTreeAnimationController {
   // PUBLIC API
   // ==========================================================================
 
-  updateLayout(treeData, treeIndex = 0, cacheFunction = null) {
-    return this.calculateLayout(treeData, {
-      treeIndex,
-      cacheFunction,
-      updateController: true
-    });
-  }
-
   setOnResize(callback) {
     this._onResize = typeof callback === 'function' ? callback : null;
   }
@@ -124,7 +116,7 @@ export class WebGLTreeAnimationController {
    * Calculates tree layout with branch transformations and caching.
    */
   calculateLayout(treeData, options = {}) {
-    const { treeIndex, cacheFunction, updateController = false } = options;
+    const { treeIndex } = options;
     const { branchTransformation, layoutAngleDegrees, layoutRotationDegrees } = useAppStore.getState();
 
     // Lazy initialization of uniform scaling to ensure consistent sizing across frames
@@ -142,10 +134,6 @@ export class WebGLTreeAnimationController {
     }
 
     const layout = this._computeLayout(transformedTreeData, layoutAngleDegrees, layoutRotationDegrees);
-
-    if (updateController && cacheFunction && treeIndex !== undefined) {
-      cacheFunction(treeIndex, layout);
-    }
 
     return layout;
   }
