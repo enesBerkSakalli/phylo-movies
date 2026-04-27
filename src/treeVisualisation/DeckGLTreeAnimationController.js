@@ -24,11 +24,8 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     super(container);
     this.animationsEnabled = animations;
     this.viewSide = viewSide;
-    this.ready = false;
-    this._resolveReady = null;
-    this.readyPromise = new Promise((resolve) => {
-      this._resolveReady = resolve;
-    });
+    this._destroyed = false;
+    this._resetReadyPromise();
 
     // Core components
     this.dataConverter = new DeckGLTreeLayerDataFactory();
@@ -44,7 +41,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
     // --- WORKER INITIALIZATION ---
     this.layoutWorker = new Worker(new URL('./workers/layout.worker.js', import.meta.url), { type: 'module' });
-    this.requestedFrames = new Set();
+    this.prefetchedFrameIndices = new Set();
 
     this.layoutWorker.onmessage = (event) => {
       const { jobId, status, result, error } = event.data;
@@ -53,7 +50,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
         this.interpolationCache.setPrecomputedData(treeIndex, result);
       } else {
         console.warn(`[Worker] Layout failed for tree ${jobId}:`, error);
-        this.requestedFrames.delete(parseInt(jobId, 10)); // Allow retry
+        this.prefetchedFrameIndices.delete(parseInt(jobId, 10));
       }
     };
     // -----------------------------
@@ -121,6 +118,14 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     this.deckContext = null;
   }
 
+
+  _resetReadyPromise() {
+    this.ready = false;
+    this._resolveReady = null;
+    this.readyPromise = new Promise((resolve) => {
+      this._resolveReady = resolve;
+    });
+  }
 
   _configureDeckContextCallbacks() {
     this.deckContext.onWebGLInitialized((gl) => {
@@ -193,6 +198,8 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
   }
 
   mount(containerElement) {
+    if (this._destroyed) return;
+
     // If we are already mounted to the SAME container, do nothing.
     // If we are mounted to a DIFFERENT container, unmount first (though React cleanup should have handled this).
     if (this.deckContext) {
@@ -223,9 +230,11 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
   }
 
   unmount() {
+    if (this._destroyed) return;
+
     this.deckContext?.destroy();
     this.deckContext = null;
-    this.ready = false;
+    this._resetReadyPromise();
   }
 
 
@@ -251,6 +260,9 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
   }
 
   destroy() {
+    if (this._destroyed) return;
+    this._destroyed = true;
+
     super.destroy();
     this.animationRunner.stop();
     // Cancel any pending debounced render
@@ -259,14 +271,18 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       this._pendingRenderRAF = null;
     }
     this.deckContext?.destroy();
+    this.deckContext = null;
     this.layerManager?.destroy();
+    this.layerManager = null;
     this.layoutWorker?.terminate();
+    this.layoutWorker = null;
+    this.prefetchedFrameIndices?.clear();
   }
 
   resetInterpolationCaches() {
     this.interpolationCache?.reset();
     this.treeInterpolator?.resetCaches?.();
-    this.requestedFrames?.clear();
+    this.prefetchedFrameIndices?.clear();
   }
 
   // ==========================================================================
@@ -280,14 +296,9 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     // Bounds check
     if (!treeList || !treeList[treeIndex]) return;
 
-    // Deduplication check
-    if (this.requestedFrames.has(treeIndex)) return;
+    if (this.prefetchedFrameIndices.has(treeIndex)) return;
 
-    // Cache check (if main thread already calculated it, don't ask worker)
-    // Note: This relies on InterpolationCache having a way to peek,
-    // but requestedFrames is our main tracking for "in progress".
-
-    this.requestedFrames.add(treeIndex);
+    this.prefetchedFrameIndices.add(treeIndex);
 
     const treeData = treeList[treeIndex];
     const { branchTransformation, layoutAngleDegrees, layoutRotationDegrees, styleConfig } = state;
@@ -327,9 +338,6 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     this.layoutWorker.postMessage(payload);
   }
 
-  // ==========================================================================
-  //
-  // ==========================================================================
   // RENDERING - STATIC
   // ==========================================================================
 

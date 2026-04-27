@@ -74,6 +74,16 @@ export class WebGLTreeAnimationController {
     const { treeList, transitionResolver } = useAppStore.getState();
     const datasetToken = `${branchTransformation}::${treeList?.length || 0}`;
 
+    if (!Array.isArray(treeList) || treeList.length === 0) {
+      this.globalScaleList = [];
+      this.maxGlobalScale = 0;
+      this.uniformScalingEnabled = false;
+      this._scalingState.calculationTransformation = branchTransformation;
+      this._scalingState.datasetToken = datasetToken;
+      this._scalingState.datasetRef = treeList;
+      return;
+    }
+
     if (this._isScalingCacheValid(branchTransformation, datasetToken, treeList)) {
       return;
     }
@@ -212,6 +222,10 @@ export class WebGLTreeAnimationController {
   // ==========================================================================
 
   _getOrCacheTransformedTrees(treeList, branchTransformation) {
+    if (!Array.isArray(treeList)) {
+      return [];
+    }
+
     const cached = this._transformedCache.get(branchTransformation);
     if (cached && cached.sourceList === treeList) {
       return cached.transformedList;

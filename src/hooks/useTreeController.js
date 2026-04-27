@@ -39,8 +39,6 @@ export function useTreeController() {
 
       const controller = new DeckGLTreeAnimationController('#webgl-container', {
         animations: true,
-        comparisonMode: state.comparisonMode,
-        useReactDeckGL: true
       });
 
       state.setTreeControllers([controller]);
@@ -196,22 +194,14 @@ export function useTreeController() {
       }
       unsubscribe?.();
 
-      // Properly destroy the controller to clean up deck.gl instances and DOM elements
-      // This prevents React DOM reconciliation errors when the component unmounts
       const controller = controllerRef.current;
-      if (controller) {
-        try {
-          controller.destroy();
-        } catch (err) {
-          console.warn('[useTreeController] Failed to destroy controller:', err);
-        }
-        controllerRef.current = null;
-      }
-
-      // Clear tree controllers from store to prevent stale references
       const state = useAppStore.getState();
+      controllerRef.current = null;
+
       if (state.treeControllers?.length) {
         state.setTreeControllers([]);
+      } else if (controller) {
+        controller.destroy();
       }
     };
   }, []);

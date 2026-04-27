@@ -11,14 +11,22 @@ export function LayoutTransform({
   treeControllers,
 }) {
   const isRenderingRef = useRef(false);
+  const needsRenderRef = useRef(false);
 
   const renderControllers = useCallback(async () => {
-    if (isRenderingRef.current) return;
+    if (isRenderingRef.current) {
+      needsRenderRef.current = true;
+      return;
+    }
+
     isRenderingRef.current = true;
     try {
-      for (const controller of treeControllers ?? []) {
-        await controller?.renderAllElements?.();
-      }
+      do {
+        needsRenderRef.current = false;
+        for (const controller of treeControllers ?? []) {
+          await controller?.renderAllElements?.();
+        }
+      } while (needsRenderRef.current);
     } catch { }
     finally {
       isRenderingRef.current = false;
@@ -78,4 +86,3 @@ export function LayoutTransform({
 }
 
 export default LayoutTransform;
-

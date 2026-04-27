@@ -47,7 +47,7 @@ export class ViewportManager {
   // ==========================================================================
 
   areBoundsInView(bounds, paddingFactor = 1.05) {
-    const viewport = this.controller.deckContext?.deck?.getViewports?.()?.[0];
+    const viewport = this.controller.deckContext?.getPrimaryViewport?.();
     return areBoundsInView(bounds, viewport, paddingFactor);
   }
 
@@ -141,17 +141,16 @@ export class ViewportManager {
     const setScreenPositions = useAppStore.getState().setScreenPositions;
     if (typeof setScreenPositions !== 'function') return;
 
-    try {
-      const viewport = this.controller.deckContext.deck.getViewports()[0];
-      if (!viewport) return;
+    const viewport = this.controller.deckContext.getPrimaryViewport?.();
+    if (!viewport) return;
 
-      const containerRect = this.controller.webglContainer.node().getBoundingClientRect();
-      const positions = projectNodesToScreen(nodes, viewport, containerRect);
+    const containerNode = this.controller.webglContainer?.node?.();
+    if (!containerNode) return;
 
-      const side = sideOverride || this.controller.viewSide || 'single';
-      setScreenPositions(side, positions);
-    } catch (e) {
-      console.warn('[ViewportManager] Failed to projection screen positions:', e);
-    }
+    const containerRect = containerNode.getBoundingClientRect();
+    const positions = projectNodesToScreen(nodes, viewport, containerRect);
+
+    const side = sideOverride || this.controller.viewSide || 'single';
+    setScreenPositions(side, positions);
   }
 }

@@ -47,6 +47,9 @@ export class MSADeckGLViewer {
     this.MAX_ZOOM = MSA_VIEWER_CONSTANTS.MAX_ZOOM;
 
     this.frame = null;
+    this._destroyed = false;
+    this._initTimeoutId = null;
+    this._postLoadRenderTimeoutId = null;
     this._pendingFitToMSA = false;  // Track if we need to fit after deck init
     this.resizeObserver = null;     // ResizeObserver for container resize handling
     this._labelMeasuredWidth = this.DEFAULT_LABELS_WIDTH; // raw text-based width before zoom scaling
@@ -54,7 +57,7 @@ export class MSADeckGLViewer {
     this._handleWheel = this.handleWheel.bind(this);
 
     // Delay initialization to ensure container has dimensions
-    setTimeout(() => this.initializeDeck(), MSA_VIEWER_CONSTANTS.INIT_DELAY_MS);
+    this._initTimeoutId = setTimeout(() => this.initializeDeck(), MSA_VIEWER_CONSTANTS.INIT_DELAY_MS);
   }
 
   // =======================================================================
@@ -253,6 +256,8 @@ export class MSADeckGLViewer {
   }
 
   initializeDeck() {
+    if (this._destroyed || !this.container || this.state.deckgl) return;
+
     // Setup container and create canvas
     const canvas = this.setupContainerAndCanvas();
 
@@ -375,7 +380,7 @@ export class MSADeckGLViewer {
   }
 
   _applyProcessedData(processedData) {
-    if (!processedData) {
+    if (!processedData || this._destroyed) {
       return false;
     }
 
@@ -408,7 +413,13 @@ export class MSADeckGLViewer {
     }
 
     this.render();
-    setTimeout(() => this.render(), 100);
+    if (this._postLoadRenderTimeoutId) {
+      clearTimeout(this._postLoadRenderTimeoutId);
+    }
+    this._postLoadRenderTimeoutId = setTimeout(() => {
+      this._postLoadRenderTimeoutId = null;
+      this.render();
+    }, 100);
     return true;
   }
 
@@ -502,7 +513,7 @@ export class MSADeckGLViewer {
   // =======================================================================
 
   render() {
-    if (!this.state.deckgl) {
+    if (this._destroyed || !this.state.deckgl) {
       return;
     }
 
@@ -534,7 +545,7 @@ export class MSADeckGLViewer {
   }
 
   renderThrottled() {
-    if (this.frame) return;
+    if (this._destroyed || this.frame) return;
     this.frame = requestAnimationFrame(() => {
       this.frame = null;
       this.render();
@@ -913,6 +924,23 @@ export class MSADeckGLViewer {
   }
 
   destroy() {
+    this._destroyed = true;
+
+    if (this._initTimeoutId) {
+      clearTimeout(this._initTimeoutId);
+      this._initTimeoutId = null;
+    }
+
+    if (this._postLoadRenderTimeoutId) {
+      clearTimeout(this._postLoadRenderTimeoutId);
+      this._postLoadRenderTimeoutId = null;
+    }
+
+    if (this.frame) {
+      cancelAnimationFrame(this.frame);
+      this.frame = null;
+    }
+
     // Clean up resize observer
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();

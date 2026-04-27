@@ -498,6 +498,22 @@ export class DeckGLContext {
     return { ...this.viewStates[id] };
   }
 
+  getPrimaryViewport() {
+    const view = this.getActiveView();
+    const viewState = this.getViewState();
+    const { width, height } = this.getCanvasDimensions();
+
+    try {
+      if (view?.makeViewport) {
+        return view.makeViewport({ width, height, viewState });
+      }
+    } catch {
+      return null;
+    }
+
+    return null;
+  }
+
   // ==========================================================================
   // PUBLIC API - Animated Transitions
   // ==========================================================================
