@@ -97,7 +97,7 @@ export interface AppStoreState {
   connectorStrokeWidth: number;
   linkConnectionOpacity: number;
 
-  // From cladeSelection.slice
+  // From subtreeSelection.slice
   markedSubtreeMode: string;
   manuallyMarkedNodes: any[];
 

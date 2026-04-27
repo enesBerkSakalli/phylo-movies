@@ -29,7 +29,7 @@ const selectBranchTransformation = (s: AppStoreState) => s.branchTransformation;
  * - Relative scale magnitude indicator
  * - Taxa groups legend
  *
- * This component uses source-target trees (not interpolated trees) for histogram calculations
+ * This component uses tree windows (not interpolated trees) for histogram calculations
  * to prevent visual jitter during animation playback.
  */
 export const TreeStatsPanel: React.FC = () => {

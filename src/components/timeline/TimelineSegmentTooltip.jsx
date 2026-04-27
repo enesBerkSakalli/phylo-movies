@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 
 /**
  * Timeline segment tooltip content component.
- * Displays information about source-target trees or transitions between them.
+ * Displays information about tree windows or transitions between them.
  *
  * @param {Object} props
  * @param {Object} props.segment - The segment data object
@@ -57,7 +57,7 @@ export function TimelineSegmentTooltip({ segment, segmentIndex, totalSegments, g
  */
 function TooltipHeader({ isAnchor, segmentIndex, totalSegments }) {
   const Icon = isAnchor ? Anchor : ArrowRightLeft;
-  const title = isAnchor ? 'Source-Target' : 'Interpolation';
+  const title = isAnchor ? 'Tree window' : 'Transition';
 
   return (
     <div className="flex items-center gap-2 pb-2 border-b border-border">
@@ -71,7 +71,7 @@ function TooltipHeader({ isAnchor, segmentIndex, totalSegments }) {
 }
 
 /**
- * Content for source-target tree segments.
+ * Content for tree-window segments.
  * Displays tree name and original index.
  */
 function AnchorContent({ segment }) {

@@ -111,10 +111,10 @@ export function createClipboardLabelLayer(treeIndex, bounds, fullTreeIndices = [
   const avgX = (bounds.minX + bounds.maxX) / 2;
 
   let labelText = `Tree #${treeIndex + 1}`;
-  // Check if it's a source-target tree
+  // Check if it is one of the original tree windows
   const anchorIndex = fullTreeIndices.indexOf(treeIndex);
   if (anchorIndex >= 0) {
-      labelText = `Source-Target Tree (Sequence #${anchorIndex + 1})`; // 1-based index for user
+      labelText = `Tree window ${anchorIndex + 1}`; // 1-based index for user
   }
 
   return new TextLayer({

@@ -124,7 +124,7 @@ export const AnalyticsDashboard = () => {
                                         What is an SPR event?
                                     </div>
                                     <p className="text-2xs leading-relaxed text-muted-foreground">
-                                        A <strong>Subtree Prune and Regraft (SPR)</strong> event occurs when a subtree's logical attachment point changes between source-target trees in the phylogeny. This is a fundamental topological rearrangement operation in tree space. The BranchArchitect engine tracks these SPR events to identify which groups of taxa are the most mobile across the transition path.
+                                        A <strong>Subtree Prune and Regraft (SPR)</strong> event occurs when a subtree's logical attachment point changes between neighboring tree windows in the phylogeny. This is a fundamental topological rearrangement. Phylo-Movies tracks these SPR events to identify which groups of taxa are the most mobile across the transition path.
                                     </p>
                                 </Card>
 
