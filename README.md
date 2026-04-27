@@ -53,8 +53,8 @@ The software metadata and preferred citation are also available in `CITATION.cff
 
 ### Interactive Tree Visualization
 
-- **Interpolated tree morphing**: Generate intermediate states between source-target trees to study incremental topological changes.
-- **Source-Target vs. transition states**: Toggle between reference snapshots and interpolated frames to isolate where splits differ.
+- **Interpolated tree morphing**: Generate intermediate states between neighboring tree windows to study incremental topological changes.
+- **Tree windows vs. transition states**: Toggle between observed tree windows and interpolated frames to isolate where splits differ.
 - **Adjustable rendering parameters**: Control branch thickness, font size, and color schemes to highlight specific taxa.
 - **Zoom and pan controls**: Inspect large trees using standard mouse or trackpad gestures.
 
@@ -82,14 +82,14 @@ The software metadata and preferred citation are also available in `CITATION.cff
 ### Advanced Features
 
 - **Side-by-side comparison**: Render two trees simultaneously for qualitative inspection.
-- **Taxa color presets**: Store and reuse color palettes for clade highlighting.
+- **Taxa color presets**: Store and reuse color palettes for subtree highlighting.
 - **Scatter plot analysis**: Plot tree relationships in derived feature spaces.
 - **Responsive layout**: Layout adjusts between desktop and tablet breakpoints.
 
 ## Who It's For
 
 - **Pipeline authors** validating inference methods by replaying topology changes along a timeline.
-- **Surveillance teams** summarizing clade dynamics for operational briefings.
+- **Surveillance teams** summarizing subtree dynamics for operational briefings.
 - **Instructors or communicators** illustrating how sequence differences propagate to tree structure.
 
 ## Quick Start

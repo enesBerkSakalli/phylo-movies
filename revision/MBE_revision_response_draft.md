@@ -42,7 +42,7 @@ We thank the editor and reviewers for their constructive assessment. In the revi
 
 **Comment 5:** Rogue-taxon detection may be better quantified than visually inferred; many animated SPRs may reflect uncertainty rather than recombination, and filtering uncertainty while retaining animation is unclear.
 
-**Response:** We will revise the rogue-taxon section to make a narrower claim: Phylo-Movies complements quantitative instability metrics by showing where unstable taxa attach, which nearby clades are affected, and whether repeated movements have interpretable patterns. We will avoid presenting visual inspection as a substitute for quantitative rogue-taxon scoring. We will also clarify that animated differences may reflect uncertainty, model choice, or sampling noise, and that users should combine animation with support metrics, replicate structure, and external rogue-taxon methods.
+**Response:** We will revise the rogue-taxon section to make a narrower claim: Phylo-Movies complements quantitative instability metrics by showing where unstable taxa attach, which nearby subtrees are affected, and whether repeated movements have interpretable patterns. We will avoid presenting visual inspection as a substitute for quantitative rogue-taxon scoring. We will also clarify that animated differences may reflect uncertainty, model choice, or sampling noise, and that users should combine animation with support metrics, replicate structure, and external rogue-taxon methods.
 
 **Comment 6:** "Small step sizes" should clarify that this refers to the sliding window.
 
@@ -60,7 +60,7 @@ We thank the editor and reviewers for their constructive assessment. In the revi
 
 **Response:** We added an explicit HUD hide button with a restore control, and expanded the coordinate tooltip to explain the displayed timeline coordinate and full precision value.
 
-**Comment 10:** The MSA Viewer does not appear animated in sync with the tree, even when Sync Window is on.
+**Comment 10:** The MSA Viewer does not appear animated in sync with the tree, even when alignment-window following is on.
 
 **Response:** We strengthened the synchronization logic so the MSA window is initialized when the controller mounts and is force-updated when the transition resolver, sync toggle, window size, step size, or alignment length changes. We will also clarify in the manuscript that interpolated frames between two source windows retain the current source-window alignment interval until the next full-tree window is reached.
 

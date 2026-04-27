@@ -24,7 +24,7 @@ const USE_CASES = [
   },
   {
     title: 'Rogue Taxa Analysis',
-    description: 'Track taxa that jump between clades across bootstrap trees and identify which lineages move and where they attach.'
+    description: 'Track taxa that move between subtrees across bootstrap trees and identify which lineages move and where they attach.'
   },
   {
     title: 'Sliding-Window Phylogenetics',
