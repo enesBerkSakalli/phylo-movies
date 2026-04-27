@@ -1,6 +1,6 @@
 import React from 'react';
 import { Rnd } from 'react-rnd';
-import { useAppStore } from '@/js/state/phyloStore/store.js';
+import { useAppStore } from '@/state/phyloStore/store.js';
 import { Button } from '@/components/ui/button';
 import { X, Columns } from 'lucide-react';
 import { useMSA } from './MSAContext';

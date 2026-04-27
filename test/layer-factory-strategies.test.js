@@ -4,7 +4,7 @@ require.extensions['.scss'] = () => {};
 require.extensions['.sass'] = () => {};
 
 const { expect } = require('chai');
-const { resetPerf, getPerfSnapshot } = require('../src/js/treeVisualisation/deckgl/layers/factory/index.js');
+const { resetPerf, getPerfSnapshot } = require('../src/treeVisualisation/deckgl/layers/factory/index.js');
 const {
   createLinksLayer,
   createLinkOutlinesLayer,
@@ -18,9 +18,9 @@ const {
   getNodesLayerProps,
   getLabelsLayerProps,
   getConnectorsLayerProps
-} = require('../src/js/treeVisualisation/deckgl/layers/factory/index.js');
-const { LayerStyles } = require('../src/js/treeVisualisation/deckgl/layers/LayerStyles.js');
-const { useAppStore } = require('../src/js/state/phyloStore/store.js');
+} = require('../src/treeVisualisation/deckgl/layers/factory/index.js');
+const { LayerStyles } = require('../src/treeVisualisation/deckgl/layers/LayerStyles.js');
+const { useAppStore } = require('../src/state/phyloStore/store.js');
 
 describe('Layer factory strategies comparison', function () {
   it('measures instantiation count for instantiate-each-render vs base+clone', function () {

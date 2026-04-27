@@ -1,8 +1,8 @@
 const { expect } = require('chai');
 
 // SUTs
-const { useAppStore } = require('../src/js/state/phyloStore/store.js');
-const { buildViewLinkMapping } = require('../src/js/domain/view/viewLinkMapper.js');
+const { useAppStore } = require('../src/state/phyloStore/store.js');
+const { buildViewLinkMapping } = require('../src/domain/view/viewLinkMapper.js');
 
 describe('View link store wiring', () => {
   beforeEach(() => {

@@ -48,7 +48,7 @@ Module._load = function (request, parent, isMain) {
 };
 
 // Now require the SUT after mocks are in place
-const { DeckTimelineRenderer } = require('../src/js/timeline/renderers/DeckTimelineRenderer.js');
+const { DeckTimelineRenderer } = require('../src/timeline/renderers/DeckTimelineRenderer.js');
 
 describe('DeckTimelineRenderer', () => {
   function makeContainer(w = 800, h = 100) {

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import Draggable from 'react-draggable';
-import { useAppStore } from '@/js/state/phyloStore/store.js';
+import { useAppStore } from '@/state/phyloStore/store.js';
 import { GripVertical } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';

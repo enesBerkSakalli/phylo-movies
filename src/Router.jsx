@@ -4,7 +4,7 @@ import { WorkspaceInitializationPage } from './pages/WorkspaceInitialization/Wor
 import { GitHubPagesInfoPage } from './pages/GitHubPages/GitHubPagesInfoPage.jsx';
 import App from './App.jsx';
 import { ErrorBoundary } from './ErrorBoundary.jsx';
-import { isElectron } from '@/js/services/data/apiConfig.js';
+import { isElectron } from '@/services/data/apiConfig.js';
 
 // Use HashRouter for Electron (file:// protocol), BrowserRouter for web
 const RouterComponent = isElectron() ? HashRouter : BrowserRouter;

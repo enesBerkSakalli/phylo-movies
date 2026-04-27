@@ -7,7 +7,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { useAppStore } from '@/js/state/phyloStore/store.js';
+import { useAppStore } from '@/state/phyloStore/store.js';
 
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 

@@ -5,7 +5,7 @@ const {
   shortestAngle,
   clamp,
   easeInOutCubic,
-} = require('../src/js/domain/math/mathUtils.js');
+} = require('../src/domain/math/mathUtils.js');
 
 // const { applyInterpolationEasing } = require('../src/js/domain/math/easingUtils.js');
 

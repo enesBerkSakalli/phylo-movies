@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { ColorSwatchInput } from "./ColorSwatchInput.jsx";
-import { rgbToHex } from "@/js/services/ui/colorUtils.js";
+import { rgbToHex } from "@/services/ui/colorUtils.js";
 
 export function ColorInputGrid({ items, isGroup, colorManager, onColorChange }) {
   // Sort items alphabetically by name

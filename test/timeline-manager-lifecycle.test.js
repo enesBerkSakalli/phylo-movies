@@ -52,8 +52,8 @@ Module._load = function (request, parent, isMain) {
   return originalLoad.apply(this, arguments);
 };
 
-const { MovieTimelineManager } = require('../src/js/timeline/core/MovieTimelineManager.js');
-const { useAppStore } = require('../src/js/state/phyloStore/store.js');
+const { MovieTimelineManager } = require('../src/timeline/core/MovieTimelineManager.js');
+const { useAppStore } = require('../src/state/phyloStore/store.js');
 
 function loadMovieData() {
   const candidates = [

@@ -91,5 +91,3 @@ export function getLinkDashArray(link, cached) {
 
   return null; // Solid line for everything else
 }
-
-

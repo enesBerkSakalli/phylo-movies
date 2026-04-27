@@ -249,4 +249,3 @@ export function calculatePathLengthFromCoordinates(coordinates) {
   return length;
 }
 
-

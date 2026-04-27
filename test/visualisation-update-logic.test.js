@@ -1,6 +1,6 @@
 
 import { expect } from 'chai';
-import { resolveMarkedSubtrees, calculateChangePreviews } from '../src/js/core/slices/sliceHelpers.js';
+import { resolveMarkedSubtrees, calculateChangePreviews } from '../src/state/phyloStore/internal/changeTracking.helpers.js';
 
 describe('Tree Visualisation - State Update Logic', () => {
 

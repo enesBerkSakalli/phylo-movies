@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import createTidyTreeLayout from '../src/js/treeVisualisation/layout/TidyTreeLayout.js';
-import { buildSubtreeConnectors } from '../src/js/treeVisualisation/deckgl/data/transforms/SubtreeConnectorBuilder.js';
-import { flattenSubtreeEntries } from '../src/js/treeVisualisation/utils/splitMatching.js';
+import createTidyTreeLayout from '../src/treeVisualisation/layout/TidyTreeLayout.js';
+import { buildSubtreeConnectors } from '../src/treeVisualisation/deckgl/data/transforms/SubtreeConnectorBuilder.js';
+import { flattenSubtreeEntries } from '../src/treeVisualisation/utils/splitMatching.js';
 import fs from 'fs';
 import path from 'path';
 

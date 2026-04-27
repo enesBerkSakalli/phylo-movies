@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { server } from '../src/js/services/data/dataService.js';
+import { server } from '../src/services/data/dataService.js';
 
 describe('DataService - API Integration', () => {
   const originalFetch = global.fetch;

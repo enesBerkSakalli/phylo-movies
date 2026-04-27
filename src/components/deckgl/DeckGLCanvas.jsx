@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { useAppStore } from '@/js/state/phyloStore/store.js';
+import { useAppStore } from '@/state/phyloStore/store.js';
 
 // ==========================================================================
 // STORE SELECTORS

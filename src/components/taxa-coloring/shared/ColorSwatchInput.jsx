@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { CATEGORICAL_PALETTES } from "@/js/constants/ColorPalettes.js";
+import { CATEGORICAL_PALETTES } from "@/constants/ColorPalettes.js";
 
 export function ColorSwatchInput({ label, color, onChange }) {
   const [open, setOpen] = useState(false);

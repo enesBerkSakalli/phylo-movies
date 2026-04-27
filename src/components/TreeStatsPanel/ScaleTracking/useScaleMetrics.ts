@@ -1,7 +1,7 @@
 // useScaleMetrics.ts - Custom hook for computing scale metrics and histogram data
 
 import { useMemo } from 'react';
-import { formatScaleValue } from '@/js/domain/tree/scaleUtils.js';
+import { formatScaleValue } from '@/domain/tree/scaleUtils.js';
 import {
   buildScaleLookup,
   resolveAnchorIndex,

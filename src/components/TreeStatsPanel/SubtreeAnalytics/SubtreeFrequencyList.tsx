@@ -1,11 +1,11 @@
 
 import React, { useMemo } from 'react';
-import { useAppStore } from '@/js/state/phyloStore/store.js';
+import { useAppStore } from '@/state/phyloStore/store.js';
 import {
   calculateSubtreeFrequencies,
   getTopSubtrees,
   formatSubtreeLabel
-} from '@/js/domain/tree/subtreeFrequencyUtils';
+} from '@/domain/tree/subtreeFrequencyUtils';
 import { ChevronRight, BarChart2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';

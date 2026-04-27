@@ -1,4 +1,4 @@
-import { ALL_PALETTES } from '../src/js/constants/ColorPalettes.js';
+import { ALL_PALETTES } from '../src/constants/ColorPalettes.js';
 import Color from 'colorjs.io';
 
 const white = new Color("white");
