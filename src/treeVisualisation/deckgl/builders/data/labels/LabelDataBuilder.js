@@ -14,7 +14,9 @@ export class LabelDataBuilder {
   convertLabels(tree, extensionRadius) {
     if (!extensionRadius) return [];
 
-    return tree.leaves().map(leaf => this._createLabelData(leaf, extensionRadius));
+    return tree.leaves()
+      .map(leaf => this._createLabelData(leaf, extensionRadius))
+      .filter(Boolean);
   }
 
   /**
@@ -23,15 +25,30 @@ export class LabelDataBuilder {
    */
   _createLabelData(leaf, labelRadius) {
     const angleRad = leaf.rotatedAngle != null ? leaf.rotatedAngle : (leaf.angle || 0);
+    if (
+      !Number.isFinite(leaf?.x) ||
+      !Number.isFinite(leaf?.y) ||
+      !Number.isFinite(angleRad) ||
+      !Number.isFinite(labelRadius)
+    ) {
+      console.warn('[LabelDataBuilder] Skipping label with invalid layout coordinates:', leaf?.data?.split_indices);
+      return null;
+    }
+
     const distance = Math.sqrt(leaf.x * leaf.x + leaf.y * leaf.y);
 
     const needsFlip = this._shouldFlipLabel(angleRad);
     const textAnchor = this._calculateTextAnchor(needsFlip);
     const rotation = this._calculateLabelRotation(angleRad);
     const position = this._calculateLabelPosition(angleRad, labelRadius);
+    const labelKey = getLabelKey(leaf);
+    if (!labelKey) {
+      console.warn('[LabelDataBuilder] Skipping label without split_indices:', leaf?.data?.name);
+      return null;
+    }
 
     return {
-      id: getLabelKey(leaf),
+      id: labelKey,
       position: position,
       text: leaf.data.name || '',
       data: leaf.data,

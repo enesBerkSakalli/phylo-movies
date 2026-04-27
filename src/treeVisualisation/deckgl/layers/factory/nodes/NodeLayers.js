@@ -43,9 +43,13 @@ export function getNodesLayerProps(nodes = [], state, layerStyles) {
     highlightColor: HOVER_HIGHLIGHT_COLOR,
     getPosition: d => {
       const p = d?.position;
-      const x = p?.[0] ?? 0;
-      const y = p?.[1] ?? 0;
-      const z = p?.[2] ?? 0;
+      if (!Array.isArray(p) || !Number.isFinite(p[0]) || !Number.isFinite(p[1])) {
+        throw new Error('Invalid node layer data: position must contain finite x/y values');
+      }
+
+      const x = p[0];
+      const y = p[1];
+      const z = Number.isFinite(p[2]) ? p[2] : 0;
 
       return addZOffset([x, y, z + Z_NODE], getNodeHistoryZOffset(cached, d));
     },

@@ -14,11 +14,12 @@ describe('Layout Worker Logic Integration', () => {
     beforeEach(() => {
         // Simple tree structure
         treeData = {
-            id: 'root',
-            branch_length: 0.1,
+            name: '',
+            length: 0.1,
+            split_indices: [0, 1],
             children: [
-                { id: 'child1', branch_length: 0.2, children: [] },
-                { id: 'child2', branch_length: 0.3, children: [] }
+                { name: 'child1', length: 0.2, split_indices: [0], children: [] },
+                { name: 'child2', length: 0.3, split_indices: [1], children: [] }
             ]
         };
 
@@ -28,7 +29,7 @@ describe('Layout Worker Logic Integration', () => {
             margin: 60,
             layoutAngleDegrees: 360,
             layoutRotationDegrees: 0,
-            branchTransformation: 'linear',
+            branchTransformation: 'linear-scale',
             extensionRadius: 10,
             labelRadius: 20
         };
@@ -76,7 +77,7 @@ describe('Layout Worker Logic Integration', () => {
 
     it('should generate equivalent result passing width/height to convertTreeToLayerData', () => {
          // This tests the other part of the fix (passing canvas dims)
-         const transformedData = transformBranchLengths(treeData, 'linear');
+         const transformedData = transformBranchLengths(treeData, 'linear-scale');
          const layoutEngine = new TidyTreeLayout(transformedData);
          layoutEngine.setDimension(800, 600);
          const rootNode = layoutEngine.constructRadialTree();

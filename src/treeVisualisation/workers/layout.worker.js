@@ -38,7 +38,10 @@ export function calculateLayoutWorkerResult(treeData, options) {
         extensionRadius: options.extensionRadius,
         labelRadius: options.labelRadius,
         canvasWidth: options.width,
-        canvasHeight: options.height
+        canvasHeight: options.height,
+        treeIndex: options.treeIndex,
+        treeSide: options.treeSide,
+        renderMode: options.renderMode
     });
 
     if (layerData && typeof layerData === 'object') {

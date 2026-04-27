@@ -38,7 +38,10 @@ function createClipboardVisualLayers(controller, treeIndex, treeData) {
       extensionRadius,
       labelRadius,
       canvasWidth: layout.width,
-      canvasHeight: layout.height
+      canvasHeight: layout.height,
+      treeIndex,
+      treeSide: 'clipboard',
+      renderMode: 'clipboard'
     }
   );
 
@@ -82,7 +85,15 @@ function getMainTreeBounds(controller) {
       const { extensionRadius, labelRadius } = controller._getConsistentRadii(layout);
       const layerData = controller.dataConverter.convertTreeToLayerData(
         layout.tree,
-        { extensionRadius, labelRadius, canvasWidth: layout.width, canvasHeight: layout.height }
+        {
+          extensionRadius,
+          labelRadius,
+          canvasWidth: layout.width,
+          canvasHeight: layout.height,
+          treeIndex: useAppStore.getState().currentTreeIndex,
+          treeSide: 'clipboard',
+          renderMode: 'clipboard'
+        }
       );
       return calculateVisualBounds(layerData.nodes, layerData.labels);
     }

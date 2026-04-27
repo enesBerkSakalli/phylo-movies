@@ -5,7 +5,6 @@
  * - Leaf Extensions
  */
 import { createLayer } from '../base/createLayer.js';
-import { addZOffsetToPath, getLinkHistoryZOffset } from '../../../utils/GeometryUtils.js';
 import {
   LAYER_CONFIGS,
 } from '../../config/layerConfigs.js';
@@ -44,7 +43,7 @@ export function getLinkOutlinesLayerProps(links, state, layerStyles) {
     data: links,
     visible: hasHighlights,
     pickable: false,
-    getPath: d => addZOffsetToPath(d.path, getLinkHistoryZOffset(cached, d)),
+    getPath: d => d.path,
     getColor: d => layerStyles.getLinkOutlineColor(d, cached),
     getWidth: d => layerStyles.getLinkOutlineWidth(d, cached),
     getDashArray: d => layerStyles.getLinkOutlineDashArray(d, cached),
@@ -63,7 +62,7 @@ export function getLinkOutlinesLayerProps(links, state, layerStyles) {
         highlightSourceEnabled, highlightDestinationEnabled, metricScale
       ],
       getDashArray: [colorVersion, pivotEdgeDashingEnabled, upcomingChangesEnabled],
-      getPath: [links, colorVersion]
+      getPath: [links]
     }
   };
 }
@@ -89,7 +88,7 @@ export function getLinksLayerProps(links, state, layerStyles) {
   return {
     data: links,
     pickable: false,
-    getPath: d => addZOffsetToPath(d.path, getLinkHistoryZOffset(cached, d)),
+    getPath: d => d.path,
     getColor: d => layerStyles.getLinkColor(d, cached),
     getWidth: d => layerStyles.getLinkWidth(d, cached),
     getDashArray: d => layerStyles.getLinkDashArray(d, cached),
@@ -105,7 +104,7 @@ export function getLinksLayerProps(links, state, layerStyles) {
         highlightColorMode, highlightSourceEnabled, highlightDestinationEnabled, metricScale
       ],
       getDashArray: [colorVersion, pivotEdgeDashingEnabled, upcomingChangesEnabled],
-      getPath: [links, colorVersion]
+      getPath: [links]
     }
   };
 }

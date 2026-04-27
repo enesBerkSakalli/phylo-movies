@@ -163,7 +163,10 @@ export class ComparisonModeRenderer {
         extensionRadius,
         labelRadius,
         canvasWidth: leftLayout.width,
-        canvasHeight: leftLayout.height
+        canvasHeight: leftLayout.height,
+        treeIndex: clampedLeftIndex,
+        treeSide: 'left',
+        renderMode: 'comparison'
       }
     );
 
@@ -173,7 +176,10 @@ export class ComparisonModeRenderer {
         extensionRadius,
         labelRadius,
         canvasWidth: rightLayout.width,
-        canvasHeight: rightLayout.height
+        canvasHeight: rightLayout.height,
+        treeIndex: clampedRightIndex,
+        treeSide: 'right',
+        renderMode: 'comparison'
       }
     );
 
@@ -278,7 +284,10 @@ export class ComparisonModeRenderer {
         extensionRadius,
         labelRadius,
         canvasWidth: rightLayout.width,
-        canvasHeight: rightLayout.height
+        canvasHeight: rightLayout.height,
+        treeIndex: rightIndex,
+        treeSide: 'right',
+        renderMode: 'comparison'
       }
     );
 

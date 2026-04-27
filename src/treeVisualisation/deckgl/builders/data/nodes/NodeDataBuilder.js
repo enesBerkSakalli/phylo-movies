@@ -18,7 +18,9 @@ export class NodeDataBuilder {
    */
   convertNodes(tree, options = {}) {
     const nodeDotSizes = this.geometryBuilder.calculateNodeDotSizes(tree, options);
-    return tree.descendants().map(node => this._createNodeData(node, nodeDotSizes));
+    return tree.descendants()
+      .map(node => this._createNodeData(node, nodeDotSizes))
+      .filter(Boolean);
   }
 
   /**
@@ -26,12 +28,21 @@ export class NodeDataBuilder {
    * @private
    */
   _createNodeData(node, nodeDotSizes) {
+    if (!Number.isFinite(node?.x) || !Number.isFinite(node?.y)) {
+      console.warn('[NodeDataBuilder] Skipping node with invalid layout coordinates:', node?.data?.split_indices);
+      return null;
+    }
+
     const nodeKey = getNodeKey(node);
+    if (!nodeKey) {
+      console.warn('[NodeDataBuilder] Skipping node without split_indices:', node?.data?.name);
+      return null;
+    }
     const dotSize = nodeDotSizes?.get(nodeKey) || 2;
 
     return {
       id: nodeKey,
-      position: [node.x || 0, node.y || 0, 0],
+      position: [node.x, node.y, 0],
       dotSize: dotSize,
       isLeaf: !node.children,
       isInternal: !!node.children,
