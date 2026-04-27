@@ -1,5 +1,5 @@
 import { colorToRgb } from '../../../../../services/ui/colorUtils.js';
-import { TREE_COLOR_CATEGORIES } from '../../../../../constants/TreeColors.js';
+import { SYSTEM_TREE_COLORS } from '../../../../../constants/TreeColors.js';
 import { applyDimmingWithCache } from '../dimmingUtils.js';
 import { isNodeVisuallyHighlighted } from '../../../../systems/tree_color/visualHighlights.js';
 import { toColorManagerNode, shouldHighlightNode, isHistorySubtreeNode, getHighlightColor, isNodePivotEdge, getPivotEdgeColor } from './nodeUtils.js';
@@ -24,7 +24,7 @@ function resolveHistoryNodeColor(nodeData, cached, baseOpacity) {
   const { colorManager: cm, upcomingChangesEnabled } = cached;
 
   if (upcomingChangesEnabled) {
-    const historyColor = colorToRgb(TREE_COLOR_CATEGORIES.pivotEdgeColor);
+    const historyColor = colorToRgb(SYSTEM_TREE_COLORS.pivotEdgeColor);
 
     if (cm.isNodeCompletedChangeEdge(nodeData)) {
       _historyColorOut[0] = historyColor[0];
@@ -161,7 +161,7 @@ export function getNodeBorderColor(node, cached, helpers) {
   } else {
     // Standard Base Color (usually black stroke)
     // "Visually Highlighted" checks are implicitly covered by isActive/isHighlighted above
-    rgb = colorToRgb(TREE_COLOR_CATEGORIES.strokeColor || '#000000');
+    rgb = colorToRgb(SYSTEM_TREE_COLORS.strokeColor || '#000000');
   }
 
   // 3. Opacity Calculation

@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useAppStore } from '@/state/phyloStore/store.js';
 import { calculateSubtreeFrequencies, getTopSubtrees, formatSubtreeLabel } from '@/domain/tree/subtreeFrequencyUtils';
-import { TREE_COLOR_CATEGORIES } from '@/constants/TreeColors';
+import { SYSTEM_TREE_COLORS } from '@/constants/TreeColors';
 import type { AppStoreState } from '@/types/store';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -106,7 +106,7 @@ export const SubtreeFrequencyBarChart = () => {
                                         className="h-2 bg-secondary/50"
                                         style={{
                                             // Override indicator color via CSS variable
-                                            '--progress-color': TREE_COLOR_CATEGORIES.markedColor
+                                            '--progress-color': SYSTEM_TREE_COLORS.markedColor
                                         } as React.CSSProperties}
                                     />
                                 </div>

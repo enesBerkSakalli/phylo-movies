@@ -1,5 +1,5 @@
 import { colorToRgb, getContrastingHighlightColor } from '../../../../../../services/ui/colorUtils.js';
-import { TREE_COLOR_CATEGORIES } from '../../../../../../constants/TreeColors.js';
+import { SYSTEM_TREE_COLORS } from '../../../../../../constants/TreeColors.js';
 import { calculateFlightDashArray } from '../dashUtils.js';
 import { applyDimmingWithCache } from '../../dimmingUtils.js';
 import { shouldHighlightMarkedSubtree, shouldHighlightHistorySubtree, getHistoryOutlineStyle, getMarkedHighlightColor } from '../linkUtils.js';
@@ -51,7 +51,7 @@ export function getLinkOutlineColor(link, cached) {
     return _transparentColor; // Transparent if no ColorManager
   }
 
-  const historyColor = colorToRgb(TREE_COLOR_CATEGORIES.pivotEdgeColor);
+  const historyColor = colorToRgb(SYSTEM_TREE_COLORS.pivotEdgeColor);
   const baseOpacity = link.opacity !== undefined ? link.opacity : 1;
 
   // 1. Determine base RGB

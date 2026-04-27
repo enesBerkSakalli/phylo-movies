@@ -1,6 +1,6 @@
 import { isLinkInSubtree } from '../../../../utils/splitMatching.js';
 import { colorToRgb, getContrastingHighlightColor } from '../../../../../services/ui/colorUtils.js';
-import { TREE_COLOR_CATEGORIES } from '../../../../../constants/TreeColors.js';
+import { SYSTEM_TREE_COLORS } from '../../../../../constants/TreeColors.js';
 
 export const getMarkedHighlightColor = (link, cm, mode = 'solid', markedColor) => {
   if (mode === 'contrast') {
@@ -10,7 +10,7 @@ export const getMarkedHighlightColor = (link, cm, mode = 'solid', markedColor) =
     return colorToRgb(cm.getBranchColor(link));
   } else {
     // 'solid' mode - default Red
-    return colorToRgb(markedColor || TREE_COLOR_CATEGORIES.markedColor);
+    return colorToRgb(markedColor || SYSTEM_TREE_COLORS.markedColor);
   }
 };
 

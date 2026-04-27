@@ -71,7 +71,7 @@ Used by label styles to inherit node-based colors.
 ```
 nodeStyles.js
 ├── colorUtils.js          # colorToRgb
-├── TreeColors.js          # TREE_COLOR_CATEGORIES
+├── TreeColors.js          # SYSTEM_TREE_COLORS
 ├── dimmingUtils.js        # applyDimmingWithCache
 ├── visualHighlights.js    # isNodeVisuallyHighlighted
 ├── nodeUtils.js           # Helper functions

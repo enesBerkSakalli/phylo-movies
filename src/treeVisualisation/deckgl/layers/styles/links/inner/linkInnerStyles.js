@@ -1,5 +1,5 @@
 import { colorToRgb } from '../../../../../../services/ui/colorUtils.js';
-import { TREE_COLOR_CATEGORIES } from '../../../../../../constants/TreeColors.js';
+import { SYSTEM_TREE_COLORS } from '../../../../../../constants/TreeColors.js';
 import { calculateFlightDashArray } from '../dashUtils.js';
 import { applyDimmingWithCache } from '../../dimmingUtils.js';
 import { getInnerLinkColor } from '../linkUtils.js';
@@ -14,7 +14,7 @@ export function getLinkColor(link, cached, helpers) {
   const { colorManager: cm, dimmingEnabled, dimmingOpacity, upcomingChangesEnabled, markedSubtreeData } = cached;
 
   // History mode - use same blue color but different opacity
-  const historyColor = colorToRgb(TREE_COLOR_CATEGORIES.pivotEdgeColor);
+  const historyColor = colorToRgb(SYSTEM_TREE_COLORS.pivotEdgeColor);
 
   // Check if this is a completed change edge (full opacity - clearly visible)
   if (upcomingChangesEnabled && cm?.isCompletedChangeEdge?.(link)) {

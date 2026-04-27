@@ -1,4 +1,4 @@
-import { TREE_COLOR_CATEGORIES } from '../../../../constants/TreeColors.js';
+import { SYSTEM_TREE_COLORS } from '../../../../constants/TreeColors.js';
 import {
   clearEdgePreviews,
   renderTreeControllers,
@@ -10,9 +10,9 @@ export const createTreeHighlightStateSlice = (set, get) => ({
   // STATE
   // ==========================================================================
   pivotEdgesEnabled: true,
-  pivotEdgeColor: TREE_COLOR_CATEGORIES.pivotEdgeColor,
+  pivotEdgeColor: SYSTEM_TREE_COLORS.pivotEdgeColor,
   markedSubtreesEnabled: true,
-  markedColor: TREE_COLOR_CATEGORIES.markedColor,
+  markedColor: SYSTEM_TREE_COLORS.markedColor,
   dimmingEnabled: true,
   dimmingOpacity: 0.3,
   subtreeDimmingEnabled: false,
@@ -52,11 +52,11 @@ export const createTreeHighlightStateSlice = (set, get) => ({
   })),
 
   updateChangeColor: (colorType, newColor) => {
-    const isSystemKey = colorType in TREE_COLOR_CATEGORIES ||
+    const isSystemKey = colorType in SYSTEM_TREE_COLORS ||
       ['pivotEdgeColor', 'markedColor', 'defaultColor', 'strokeColor'].includes(colorType);
 
     if (isSystemKey) {
-      Object.assign(TREE_COLOR_CATEGORIES, { [colorType]: newColor });
+      Object.assign(SYSTEM_TREE_COLORS, { [colorType]: newColor });
       set({ [colorType]: newColor });
     }
 

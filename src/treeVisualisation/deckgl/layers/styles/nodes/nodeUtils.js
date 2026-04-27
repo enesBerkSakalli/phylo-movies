@@ -1,6 +1,6 @@
 import { isNodeInSubtree } from '../../../../utils/splitMatching.js';
 import { colorToRgb, getContrastingHighlightColor } from '../../../../../services/ui/colorUtils.js';
-import { TREE_COLOR_CATEGORIES } from '../../../../../constants/TreeColors.js';
+import { SYSTEM_TREE_COLORS } from '../../../../../constants/TreeColors.js';
 
 
 export function toColorManagerNode(node) {
@@ -55,7 +55,7 @@ export function isNodePivotEdge(nodeData, cached) {
  * Gets the pivot edge color (blue) for nodes.
  */
 export function getPivotEdgeColor() {
-  return colorToRgb(TREE_COLOR_CATEGORIES.pivotEdgeColor);
+  return colorToRgb(SYSTEM_TREE_COLORS.pivotEdgeColor);
 }
 
 /**
@@ -79,7 +79,7 @@ export function getHighlightColor(nodeData, cached) {
   }
 
   // 'solid' mode or default
-  return colorToRgb(markedColor || TREE_COLOR_CATEGORIES.markedColor);
+  return colorToRgb(markedColor || SYSTEM_TREE_COLORS.markedColor);
 }
 
 export function isHistorySubtreeNode(nodeData, cached) {

@@ -5,7 +5,7 @@ import { Palette, X } from 'lucide-react';
 import { useAppStore } from '@/state/phyloStore/store.js';
 import { TaxaColoringWindow } from './TaxaColoringWindow.jsx';
 import { applyColoringData } from '@/treeColoring/utils/GroupingUtils.js';
-import { TREE_COLOR_CATEGORIES } from '@/constants/TreeColors.js';
+import { SYSTEM_TREE_COLORS } from '@/constants/TreeColors.js';
 import {
   Tooltip,
   TooltipContent,
@@ -71,7 +71,7 @@ export function TaxaColoringRndWindow() {
 
     taxaNames.forEach((taxon) => {
       // Use assigned color if it exists, otherwise use system default
-      map[taxon] = currentTaxaMap[taxon] || TREE_COLOR_CATEGORIES.defaultColor || "#000000";
+      map[taxon] = currentTaxaMap[taxon] || SYSTEM_TREE_COLORS.defaultColor || "#000000";
     });
     return map;
   }, [taxaNames, taxaGrouping]);
