@@ -29,6 +29,12 @@ The software consists of two components:
 
 All test datasets required to reproduce the preprint benchmarks are located in `publication_data/`.
 
+## Current Limitations
+
+- The public GitHub Pages deployment is an information and documentation site. It does not run the BranchArchitect backend, so example loading, tree interpolation, and MSA-derived tree construction require the desktop app, Docker image, or local full-stack setup.
+- The bundled tree-inference workflow currently uses FastTree 2 for rapid exploratory sliding-window analyses. For publication-grade inference, users can generate window trees externally with IQ-TREE, RAxML-NG, or another preferred phylogenetic package and load the resulting ordered Newick trees into Phylo-Movies.
+- Large datasets are best handled with precomputed trees and conservative rendering settings. The WebGL renderer supports hundreds of taxa interactively on typical laptops; thousands of taxa are possible for inspection but depend strongly on label visibility, branch effects, hardware, and the number of interpolated frames.
+
 ## Citation
 
 If you use Phylo-Movies in your research, please cite the preprint:
