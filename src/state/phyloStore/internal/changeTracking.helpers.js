@@ -1,5 +1,5 @@
 import {
-  flattenSubtreeEntries,
+  flattenSplitSets,
   toSubtreeKey,
   parseSubtreeTrackingEntry,
   collectUniqueSubtrees,
@@ -125,7 +125,7 @@ export function getAllSubtreesForPivotEdge(state, index) {
   const solutions = state.pairSolutions?.[pairKey]?.jumping_subtree_solutions;
   if (!solutions) return [];
 
-  return flattenSubtreeEntries(solutions[`[${edge.join(', ')}]`]);
+  return flattenSplitSets(solutions[`[${edge.join(', ')}]`]);
 }
 
 /**

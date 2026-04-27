@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import createTidyTreeLayout from '../src/treeVisualisation/layout/TidyTreeLayout.js';
 import { buildSubtreeConnectors } from '../src/treeVisualisation/deckgl/data/transforms/SubtreeConnectorBuilder.js';
-import { flattenSubtreeEntries } from '../src/treeVisualisation/utils/splitMatching.js';
+import { flattenSplitSets } from '../src/treeVisualisation/utils/splitMatching.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -21,7 +21,7 @@ describe('Real Data Integration (test/data/ostrich_bug_response.json)', () => {
     const pairEntry = Object.entries(realData.tree_pair_solutions || {}).find(([, solution]) => {
         const jumpingSolutions = solution?.jumping_subtree_solutions;
         if (!jumpingSolutions) return false;
-        return Object.values(jumpingSolutions).some((solutionSets) => flattenSubtreeEntries(solutionSets).length > 0);
+        return Object.values(jumpingSolutions).some((solutionSets) => flattenSplitSets(solutionSets).length > 0);
     });
 
     if (!pairEntry) {
@@ -31,7 +31,7 @@ describe('Real Data Integration (test/data/ostrich_bug_response.json)', () => {
     const [PAIR_KEY, pairSolution] = pairEntry;
     const sourceTree = realData.interpolated_trees[0]; // Tree 0
     const rawJumpSolutions = pairSolution.jumping_subtree_solutions;
-    const firstJumpEntry = Object.entries(rawJumpSolutions).find(([, solutionSets]) => flattenSubtreeEntries(solutionSets).length > 0);
+    const firstJumpEntry = Object.entries(rawJumpSolutions).find(([, solutionSets]) => flattenSplitSets(solutionSets).length > 0);
 
     if (!firstJumpEntry) {
         throw new Error(`No usable jumping subtree entry found for ${PAIR_KEY}`);
@@ -43,7 +43,7 @@ describe('Real Data Integration (test/data/ostrich_bug_response.json)', () => {
         .split(',')
         .filter(Boolean)
         .map((value) => Number(value));
-    const movingSubtree = flattenSubtreeEntries(solutionSets)[0];
+    const movingSubtree = flattenSplitSets(solutionSets)[0];
 
     it('successfully lays out the real Ostrich dataset (Tree 0)', () => {
         const { tree, max_radius } = createTidyTreeLayout(sourceTree, 'none', { width: 1000, height: 1000 });

@@ -1,5 +1,5 @@
 
-import { flattenSubtreeEntries } from '../../treeVisualisation/utils/splitMatching.js';
+import { flattenSplitSets } from '../../treeVisualisation/utils/splitMatching.js';
 
 /**
  * Calculates the frequency of each unique jumping subtree across all tree pair solutions.
@@ -24,7 +24,7 @@ export function calculateSubtreeFrequencies(pairSolutions) {
     // The key is the pivot edge, the value contains the subtrees that move at that pivot
 
     Object.values(jumpingSolutions).forEach(solutionSets => {
-      const flattenedSubtrees = flattenSubtreeEntries(solutionSets);
+      const flattenedSubtrees = flattenSplitSets(solutionSets);
 
       flattenedSubtrees.forEach(subtreeSplitIndices => {
         if (!Array.isArray(subtreeSplitIndices) || subtreeSplitIndices.length === 0) return;
@@ -113,7 +113,7 @@ export function calculateSubtreeTemporalDistribution(pairSolutions) {
     const timeIndex = parsePairTimeIndex(pairKey, fallbackIndex);
 
     Object.values(jumpingSolutions).forEach(solutionSets => {
-      const flattenedSubtrees = flattenSubtreeEntries(solutionSets);
+      const flattenedSubtrees = flattenSplitSets(solutionSets);
 
       flattenedSubtrees.forEach(subtreeSplitIndices => {
         if (!Array.isArray(subtreeSplitIndices) || subtreeSplitIndices.length === 0) return;
