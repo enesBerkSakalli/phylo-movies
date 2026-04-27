@@ -75,5 +75,20 @@ describe('ViewLinkMapper', () => {
       const mapping = buildViewLinkMapping(0, 1, null);
       expect(mapping.sourceToDest).toEqual({});
     });
+
+    it('ignores malformed split groups instead of coercing them to keys', () => {
+      const pairSolution = {
+        solution_to_source_map: {
+          sol_A: ['[1, 2]']
+        },
+        solution_to_destination_map: {
+          sol_A: [[10]]
+        }
+      };
+
+      const mapping = buildViewLinkMapping(0, 1, pairSolution);
+
+      expect(mapping.sourceToDest).toEqual({});
+    });
   });
 });

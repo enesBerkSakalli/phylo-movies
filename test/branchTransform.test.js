@@ -4,24 +4,20 @@ const { transformBranchLengths } = require('../src/domain/tree/branchTransform.j
 describe('Domain/Tree/BranchTransform', () => {
   const sampleTree = {
     name: 'root',
-    branch_length: 0.1,
     length: 0.1,
     children: [
       {
         name: 'child1',
-        branch_length: 0.0,
         length: 0.0,
         children: []
       },
       {
         name: 'child2',
-        branch_length: 0.5,
         length: 0.5,
         children: []
       },
       {
         name: 'child3',
-        branch_length: -0.1, // Negative test case
         length: -0.1,
         children: []
       }
@@ -32,7 +28,6 @@ describe('Domain/Tree/BranchTransform', () => {
     it('should preserve 0.0 value', () => {
       const result = transformBranchLengths(sampleTree, 'none');
       expect(result.children[0].length).to.equal(0);
-      expect(result.children[0].branch_length).to.equal(0);
     });
 
     it('should preserve positive values', () => {

@@ -19,8 +19,8 @@ export function extractMsaColumnCount(movieData) {
  * @returns {Object} Window parameters { windowSize, stepSize }
  */
 export function extractMsaWindowParameters(movieData) {
-  const windowSize = movieData.window_size || movieData.msa?.window_size || 1000;
-  const stepSize = movieData.window_step_size || movieData.msa?.step_size || 50;
+  const windowSize = movieData?.msa?.window_size || 1000;
+  const stepSize = movieData?.msa?.step_size || 50;
   return { windowSize, stepSize };
 }
 

@@ -47,7 +47,7 @@ function _cloneTreeNode(node, cloneMap = new WeakMap()) {
 
 /**
  * Apply branch length transformation to a tree node and all its descendants
- * @param {Object} node - Tree node with children and branch_length properties
+ * @param {Object} node - Tree node with children and length properties
  * @param {string} transformType - Type of transformation to apply
  * @returns {Object} Transformed tree node
  */
@@ -86,9 +86,6 @@ function _applyIgnoreBranchLengthsRecursive(node) {
   if (node.length !== undefined && node.length !== null && node.length !== 0) {
     node.length = 1;
   }
-  if (node.branch_length !== undefined && node.branch_length !== null && node.branch_length !== 0) {
-    node.branch_length = 1;
-  }
 
   if (node.children && Array.isArray(node.children)) {
     node.children.forEach(child => {
@@ -106,13 +103,9 @@ function _applyIgnoreBranchLengthsRecursive(node) {
 function _applyTransformationRecursive(node, transformType) {
   if (!node) return;
 
-  // Transform this node's branch length
-  // Support both 'length' (used by LayoutCalculator) and 'branch_length' (for compatibility)
+  // Transform this node's backend branch length.
   if (node.length !== undefined && node.length !== null) {
     node.length = _transformSingleValue(node.length, transformType);
-  }
-  if (node.branch_length !== undefined && node.branch_length !== null) {
-    node.branch_length = _transformSingleValue(node.branch_length, transformType);
   }
 
   // Recursively transform children

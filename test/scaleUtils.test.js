@@ -12,6 +12,12 @@ describe('scaleUtils', () => {
       expect(result[0].index).toBe(0);
     });
 
+    it('ignores the backend root branch length because the layout does not render it', () => {
+      const tree = { length: 1, children: [{ length: 10 }] };
+      const result = calculateScales([tree], [0]);
+      expect(result[0].value).toBe(10);
+    });
+
     it('calculates max depth for a nested tree', () => {
       // Depth: Root(0) -> A(5) -> B(3) = 8
       // Depth: Root(0) -> C(2) = 2

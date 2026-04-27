@@ -18,6 +18,11 @@ describe('calculateSubtreeTemporalDistribution', () => {
         jumping_subtree_solutions: {
           'edge_3': [ [ [5, 6] ] ] // Subtree B at time 2
         }
+      },
+      malformed_pair: {
+        jumping_subtree_solutions: {
+          'edge_4': [ [ [9, 10] ] ]
+        }
       }
     };
 
@@ -34,5 +39,7 @@ describe('calculateSubtreeTemporalDistribution', () => {
     const timeMapB = result.get('5,6');
     expect(timeMapB).toBeDefined();
     expect(timeMapB.get(2)).toBe(1); // Occurred at pair 2
+
+    expect(result.has('9,10')).toBe(false);
   });
 });

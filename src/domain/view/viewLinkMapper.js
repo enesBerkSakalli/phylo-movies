@@ -45,15 +45,13 @@ export function derivePairKey(leftIndex, rightIndex, treeMetadata = []) {
 
 /**
  * Convert split indices array to a normalized string key.
- * @param {Array|string} key - Split indices
- * @returns {string} Normalized "x-y-z" format key
+ * @param {Array<number>} splitIndices - Split indices
+ * @returns {string|null} Normalized "x-y-z" format key
  */
-const toKey = (key) => {
-  if (Array.isArray(key)) return key.join('-');
-  if (typeof key === 'string') {
-    return key.replace(/[\[\]\s]/g, '').split(',').filter(Boolean).join('-');
-  }
-  return String(key || '');
+const arrayToKey = (splitIndices) => {
+  if (!Array.isArray(splitIndices) || splitIndices.length === 0) return null;
+  if (!splitIndices.every(Number.isFinite)) return null;
+  return splitIndices.join('-');
 };
 
 /**
@@ -79,13 +77,13 @@ function buildFromSolution(pairSolution, fromIndex, toIndex) {
 
     // Map each source group to all destination groups in this solution
     for (const src of srcEntries) {
-      if (!src.length) continue;
-      const sKey = toKey(src);
+      const sKey = arrayToKey(src);
+      if (!sKey) continue;
       if (!sourceToDest[sKey]) sourceToDest[sKey] = [];
 
       for (const dst of dstEntries) {
-        if (!dst.length) continue;
-        const dKey = toKey(dst);
+        const dKey = arrayToKey(dst);
+        if (!dKey) continue;
         if (!sourceToDest[sKey].includes(dKey)) {
           sourceToDest[sKey].push(dKey);
         }

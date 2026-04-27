@@ -27,15 +27,6 @@ export default class TransitionIndexResolver {
             indices.add(lastRange[1]);
         }
 
-        // Fallback to metadata flags when interpolation ranges are missing.
-        if (!indices.size && this.treeMetadata.length) {
-            this.treeMetadata.forEach((entry, idx) => {
-                if (entry?.is_full_tree) {
-                    indices.add(idx);
-                }
-            });
-        }
-
         // Always include first/last anchors as a final fallback.
         if (!indices.size && this.treeMetadata.length) {
             indices.add(0);
@@ -60,9 +51,9 @@ export default class TransitionIndexResolver {
     }
 
     /**
-     * Returns the 0-based source tree index for a given sequence position.
+     * Returns the global source tree index for a given sequence position.
      */
-    getSourceTreeIndex(position = 0) {
+    getSourceGlobalIndex(position = 0) {
         if (!this.treeMetadata.length) {
             return position;
         }
@@ -106,11 +97,6 @@ export default class TransitionIndexResolver {
         }
 
         const clampedIndex = Math.min(Math.max(0, index), this.treeMetadata.length - 1);
-        const meta = this.treeMetadata[clampedIndex];
-        if (typeof meta?.is_full_tree === 'boolean') {
-            return meta.is_full_tree;
-        }
-
         return this._getFullTreeIndicesSet().has(clampedIndex);
     }
 }

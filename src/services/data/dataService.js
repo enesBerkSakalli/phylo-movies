@@ -69,7 +69,6 @@ export const phyloData = {
   },
 
   async set(data) {
-    console.log('[DataService] Saving data - window_size:', data?.window_size, 'window_step_size:', data?.window_step_size);
     const validatedData = this.validate(data);
     await storage.set(STORAGE_KEYS.PHYLO_DATA, validatedData);
     return validatedData;
@@ -124,12 +123,6 @@ export const workflows = {
   },
 
   async handleMSADataSaving(formData, serverData) {
-    try {
-      console.log('[DataService] MSA data included in main data - window_size:', serverData.window_size, 'window_step_size:', serverData.window_step_size);
-      return true;
-    } catch (error) {
-      console.error("[DataService] Error handling MSA data:", error);
-      throw error;
-    }
+    return true;
   }
 };

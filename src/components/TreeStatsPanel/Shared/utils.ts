@@ -123,17 +123,14 @@ export const buildScaleLookup = (scaleList: ScaleListItem[] | null | undefined):
 export const resolveAnchorIndex = (
   currentTreeIndex: number,
   fullTreeIndices: number[] | null | undefined,
-  transitionResolver: { getSourceTreeIndex?: (index: number) => number } | null | undefined,
+  transitionResolver: { getSourceGlobalIndex?: (index: number) => number } | null | undefined,
   scaleListLength: number
 ): number => {
   try {
-    const srcIdx = transitionResolver?.getSourceTreeIndex?.(currentTreeIndex);
+    const sourceGlobalIndex = transitionResolver?.getSourceGlobalIndex?.(currentTreeIndex);
 
-    // If we have a valid source index from transition resolver
-    if (Number.isFinite(srcIdx) && srcIdx! >= 0) {
-      return Array.isArray(fullTreeIndices)
-        ? (fullTreeIndices[srcIdx!] ?? fullTreeIndices[0] ?? 0)
-        : srcIdx!;
+    if (Number.isFinite(sourceGlobalIndex) && sourceGlobalIndex! >= 0) {
+      return clamp(sourceGlobalIndex!, 0, Math.max(0, scaleListLength - 1));
     }
 
     // Find the most recent tree window at or before current position

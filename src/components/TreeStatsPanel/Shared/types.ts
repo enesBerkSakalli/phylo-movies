@@ -41,5 +41,5 @@ export interface ScaleListItem {
 }
 
 export interface TransitionResolver {
-  getSourceTreeIndex?: (index: number) => number;
+  getSourceGlobalIndex?: (index: number) => number;
 }

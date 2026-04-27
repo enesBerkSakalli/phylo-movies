@@ -56,13 +56,13 @@ export function getIndexMappings(state = useAppStore.getState()) {
   const seqIndex = state.currentTreeIndex || 0;
   const resolver = state.transitionResolver;
   const fti = resolver?.fullTreeIndices || [];
-  const distanceIndex = resolver ? resolver.getSourceTreeIndex(seqIndex) : 0;
+  const sourceGlobalIndex = resolver ? resolver.getSourceGlobalIndex(seqIndex) : 0;
   // Check if current position is exactly on a full tree
   const fullTreeIndex = fti.indexOf(seqIndex);
   const fullTreeSeqIndex = fullTreeIndex >= 0 ? (fti[fullTreeIndex] ?? -1) : -1;
   return {
     sequenceIndex: seqIndex,
-    distanceIndex,
+    sourceGlobalIndex,
     fullTreeIndex,            // index into fullTreeIndices (0..N-1) or -1 if not exactly on full tree
     fullTreeSeqIndex,         // sequence index of that full tree or -1
     totalSequenceLength: state.treeList?.length || 0,

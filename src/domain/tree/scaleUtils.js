@@ -82,17 +82,17 @@ export default function calculateScales(treeList, fullTreeIndices) {
   return scaleList;
 }
 
-function _calculateScale(node) {
+function _calculateScale(node, isRoot = true) {
   let maxRadius = 0;
   if (node.children) {
     node.children.forEach((child) => {
-      let child_scale = _calculateScale(child);
+      let child_scale = _calculateScale(child, false);
 
       if (maxRadius < child_scale) {
         maxRadius = child_scale;
       }
     });
   }
-  maxRadius = maxRadius + (parseFloat(node.length) || 0);
+  maxRadius = maxRadius + (isRoot ? 0 : (parseFloat(node.length) || 0));
   return maxRadius;
 }
