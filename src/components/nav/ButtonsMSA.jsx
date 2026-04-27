@@ -2,7 +2,7 @@ import { useAppStore } from '@/state/phyloStore/store.js';
 import { ToggleWithLabel } from '@/components/ui/toggle-with-label';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dna, RefreshCw, Info, Check, ChevronDown, AlignJustify } from 'lucide-react';
+import { Dna, Info, ChevronDown } from 'lucide-react';
 import {
   SidebarMenuItem,
   SidebarMenuButton,
@@ -78,7 +78,7 @@ export function ButtonsMSA() {
               <div className="px-2 py-2">
                 <ToggleWithLabel
                   id="enable-msa-sync-btn"
-                  label="Sync Window"
+                  label="Follow active alignment window"
                   checked={!!syncMSAEnabled && !!hasMsa}
                   onCheckedChange={(checked) => setSyncMSAEnabled(!!checked)}
                   disabled={!hasMsa}
@@ -92,7 +92,7 @@ export function ButtonsMSA() {
               <SidebarMenuSubItem className="px-2 py-2">
                 <div className="flex items-start gap-2 text-2xs text-muted-foreground italic leading-tight">
                   <Info className="size-3 shrink-0 mt-1" />
-                  <span>Upload an MSA file to enable alignment visualization and sync.</span>
+                  <span>This dataset does not include an alignment. Load the Norovirus or Quick MSA Demo example, or upload an MSA file.</span>
                 </div>
               </SidebarMenuSubItem>
             )}

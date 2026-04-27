@@ -122,14 +122,10 @@ export function useWorkspaceInitializationForm() {
       setOperationState({ percent: 10, message: 'Fetching example file...' });
       updateElectronProgress(10, 'Fetching example file...');
 
-      // Fetch the example file from the public examples directory
-      const resp = await fetch(example.filePath);
-      if (!resp.ok) {
-        throw new Error(`Failed to fetch example file: ${resp.status} ${resp.statusText}`);
-      }
-
-      const blob = await resp.blob();
-      const file = new File([blob], example.fileName, { type: 'application/octet-stream' });
+      const file = await fetchExampleFile(example.filePath, example.fileName);
+      const pairedMsaFile = example.msaFilePath
+        ? await fetchExampleFile(example.msaFilePath, example.msaFileName)
+        : null;
 
       setOperationState({ percent: 20, message: 'Processing data...' });
       updateElectronProgress(20, 'Processing data...');
@@ -137,9 +133,10 @@ export function useWorkspaceInitializationForm() {
       // Build form data based on file type:
       // - 'msa' files use msaFile field and need window/step parameters
       // - 'newick' files use treesFile field (pre-computed trees)
+      // - 'tree-msa' files pair supplied tree windows with an alignment
       const formData = {
-        msaFile: example.fileType === 'msa' ? file : null,
-        treesFile: example.fileType === 'newick' ? file : null,
+        msaFile: example.fileType === 'msa' ? file : pairedMsaFile,
+        treesFile: example.fileType === 'newick' || example.fileType === 'tree-msa' ? file : null,
         orderFile: null,
         ...example.parameters,
       };
@@ -189,4 +186,14 @@ export function useWorkspaceInitializationForm() {
     // derived
     base,
   };
+}
+
+async function fetchExampleFile(filePath, fileName) {
+  const resp = await fetch(filePath);
+  if (!resp.ok) {
+    throw new Error(`Failed to fetch ${fileName}: ${resp.status} ${resp.statusText}`);
+  }
+
+  const blob = await resp.blob();
+  return new File([blob], fileName, { type: 'application/octet-stream' });
 }
