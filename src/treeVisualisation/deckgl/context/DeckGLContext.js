@@ -92,7 +92,7 @@ export class DeckGLContext {
         antialias: true,
         preserveDrawingBuffer: true
       },
-      onViewStateChange: ({ viewState, viewId }) => this._handleViewStateChange(viewState, viewId, activeId),
+      onViewStateChange: ({ viewState, viewId }) => this._handleViewStateChange(viewState, viewId),
       onClick: (info, event) => this._handleClick(info, event),
       onHover: (info, event) => this._handleHover(info, event),
       onDragStart: (info, event) => this._handleDragStart(info, event),
@@ -202,8 +202,8 @@ export class DeckGLContext {
   // EVENT HANDLERS (Internal)
   // ==========================================================================
 
-  _handleViewStateChange(viewState, viewId, activeId) {
-    const id = viewId || activeId;
+  _handleViewStateChange(viewState, viewId) {
+    const id = viewId || this._activeViewId();
     this.viewStates[id] = { ...this.viewStates[id], ...viewState };
     this.deck.setProps({ viewState: this.viewStates[id] });
 
@@ -520,12 +520,17 @@ export class DeckGLContext {
 
   transitionTo({ target, zoom, duration = this._durations.fit, easing = this._defaultEasing, interpolator } = {}) {
     const id = this._activeViewId();
-    const clampedZoom = this._clampZoom(id, zoom);
+    const currentViewState = this.viewStates[id];
+    const clampedZoom = this._clampZoom(id, zoom ?? currentViewState.zoom);
     const transitionInterpolator = interpolator || this._interpolatorFor(id);
+    const patch = { zoom: clampedZoom };
+    if (target !== undefined) {
+      patch.target = target;
+    }
 
     this._applyViewState(
       id,
-      { target, zoom: clampedZoom },
+      patch,
       { transitionDuration: duration, transitionEasing: easing, transitionInterpolator }
     );
   }
@@ -583,7 +588,8 @@ export class DeckGLContext {
     const viewState = this.viewStates[viewId];
     const minZoom = viewState.minZoom ?? -Infinity;
     const maxZoom = viewState.maxZoom ?? Infinity;
-    return Math.max(minZoom, Math.min(maxZoom, zoom));
+    const value = Number.isFinite(zoom) ? zoom : viewState.zoom;
+    return Math.max(minZoom, Math.min(maxZoom, value));
   }
 
   _applyViewState(id, patch, transitionProps) {

@@ -9,6 +9,8 @@ export default defineConfig({
       'test/ComplexDataLayer.test.js',
       'test/ConnectorGeometryBuilder.test.js',
       'test/ConnectorIntegration.test.js',
+      'test/DeckGLContext.test.js',
+      'test/LayoutWorkerMetadata.test.js',
       'test/RadialTreeGeometry.test.js',
       'test/RadialTreeLayout.test.js',
       'test/RealDataIntegration.test.js',
