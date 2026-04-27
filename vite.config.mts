@@ -82,7 +82,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
       proxy: {
         "/treedata": "http://localhost:5002",
         "/stream": "http://localhost:5002",
-        "/msa": "http://localhost:5002",
+        "^/msa(?:/|$)": "http://localhost:5002",
         "/about": "http://localhost:5002"
       },
       // Allow serving files from publication_data

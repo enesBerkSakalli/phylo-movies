@@ -91,13 +91,19 @@ export function useTreeController() {
       }
     };
 
-    const syncMsaRegion = () => {
+    const syncMsaRegion = ({ force = false } = {}) => {
       const state = useAppStore.getState();
-      if (!state.syncMSAEnabled || !state.transitionResolver || !state.msaColumnCount) return;
+      if (!state.syncMSAEnabled || !state.transitionResolver || !state.msaColumnCount) {
+        if (force) {
+          state.clearMsaRegion?.();
+          state.clearMsaPreviousRegion?.();
+        }
+        return;
+      }
 
       const frameIndex = getMSAFrameIndex();
       if (frameIndex < 0) return;
-      if (frameIndex === prevMsaFrameRef.current) return;
+      if (!force && frameIndex === prevMsaFrameRef.current) return;
 
       prevMsaFrameRef.current = frameIndex;
 
@@ -117,6 +123,7 @@ export function useTreeController() {
     };
 
     ensureController();
+    syncMsaRegion({ force: true });
     scheduleRender();
 
     const unsubscribe = useAppStore.subscribe((state, prevState) => {
@@ -172,7 +179,7 @@ export function useTreeController() {
         state.msaStepSize !== prevState.msaStepSize ||
         state.msaColumnCount !== prevState.msaColumnCount
       ) {
-        syncMsaRegion();
+        syncMsaRegion({ force: true });
         scheduleRender();
       }
 

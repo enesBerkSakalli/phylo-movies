@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Draggable from 'react-draggable';
 import { useAppStore } from '@/state/phyloStore/store.js';
-import { GripVertical } from 'lucide-react';
+import { GripVertical, Eye, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -22,6 +23,7 @@ import {
 // ==========================================================================
 
 export function HUD() {
+  const [isVisible, setIsVisible] = useState(true);
   const hasMsa = useAppStore(selectHasMsa);
   const transitionResolver = useAppStore(selectTransitionResolver);
 
@@ -33,6 +35,28 @@ export function HUD() {
     () => transitionResolver?.fullTreeIndices || [],
     [transitionResolver]
   );
+
+  if (!isVisible) {
+    return (
+      <div className="phylo-hud-restore absolute bottom-48 left-4 z-50 pointer-events-auto">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              size="icon-xs"
+              variant="outline"
+              className="border-sidebar-border bg-sidebar/90 shadow-lg backdrop-blur-md"
+              aria-label="Show timeline status display"
+              onClick={() => setIsVisible(true)}
+            >
+              <Eye className="size-3.5" aria-hidden />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top">Show HUD</TooltipContent>
+        </Tooltip>
+      </div>
+    );
+  }
 
   return (
     <Draggable handle=".hud-drag-handle" bounds="parent">
@@ -73,6 +97,24 @@ export function HUD() {
             onShowAnchor={setClipboardTreeIndex}
             onClear={clearClipboard}
           />
+
+          <Separator orientation="vertical" className="h-6" />
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                size="icon-xs"
+                variant="ghost"
+                className="-mr-2 size-6 text-muted-foreground hover:text-foreground"
+                aria-label="Hide timeline status display"
+                onClick={() => setIsVisible(false)}
+              >
+                <X className="size-3.5" aria-hidden />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top">Hide HUD</TooltipContent>
+          </Tooltip>
         </Card>
       </div>
     </Draggable>

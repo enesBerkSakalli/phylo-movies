@@ -64,7 +64,8 @@ export function InterpolationCoordinateSection() {
           </TooltipTrigger>
           <TooltipContent side="top" className="border-border/60 bg-popover text-2xs font-mono text-popover-foreground">
             <div className="space-y-1">
-              <div>Full Precision:</div>
+              <div>Timeline coordinate, 0=start and 1=end.</div>
+              <div>Full precision:</div>
               <div className="font-bold text-primary tabular-nums">
                 {typeof interpolationText === 'object' ? interpolationText.fullPrecision : interpolationText}
               </div>
