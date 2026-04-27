@@ -48,7 +48,7 @@ describe('Tree Visualisation - State Update Logic', () => {
     it('should fallback to source tree index if current index has no data', () => {
       const index = 10;
       const sourceIndex = 5;
-      const subtrees = [1, 2, 3]; // Mixed flat array
+      const subtrees = [[1, 2, 3]];
       const state = createMockState({
         currentTreeIndex: index,
         subtreeTracking: { [sourceIndex]: subtrees }, // Data at source only
@@ -60,7 +60,6 @@ describe('Tree Visualisation - State Update Logic', () => {
       });
 
       const result = resolveMarkedSubtrees(state);
-      // Expected: [[1, 2, 3]] (Normalized from flat)
       expect(result).to.have.lengthOf(1);
       expect(result[0]).to.deep.equal([1, 2, 3]);
     });

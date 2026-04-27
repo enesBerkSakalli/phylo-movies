@@ -13,12 +13,10 @@ const focusTreesData = require('../data/test-data/focus_trees.json');
 describe('Tree Visualisation - Subtree Tracking & Parsing', () => {
 
   describe('parseSubtreeTrackingEntry', () => {
-    it('should parse a simple flat array as a single subtree', () => {
+    it('should reject a flat array entry', () => {
       const entry = [1, 2, 3];
       const result = parseSubtreeTrackingEntry(entry);
-      // Expected: [[1, 2, 3]]
-      expect(result).to.have.lengthOf(1);
-      expect(result[0]).to.deep.equal([1, 2, 3]);
+      expect(result).to.be.empty;
     });
 
     it('should parse a nested array as multiple subtrees', () => {
@@ -30,15 +28,10 @@ describe('Tree Visualisation - Subtree Tracking & Parsing', () => {
       expect(result[1]).to.deep.equal([3, 4]);
     });
 
-    it('should parse mixed format (numbers and arrays) as independent subtrees', () => { // Rule 3
+    it('should reject mixed number and array entries', () => {
         const entry = [1, [2, 3], 4];
         const result = parseSubtreeTrackingEntry(entry);
-        // Expected: [[1], [2, 3], [4]] where single numbers are wrapped
-        expect(result).to.have.lengthOf(3);
-        // Order matters as per map
-        expect(result[0]).to.deep.equal([1]);
-        expect(result[1]).to.deep.equal([2, 3]);
-        expect(result[2]).to.deep.equal([4]);
+        expect(result).to.be.empty;
     });
 
     it('should handle Sets correctly', () => {
@@ -54,18 +47,18 @@ describe('Tree Visualisation - Subtree Tracking & Parsing', () => {
       it('should collect unique subtrees across a time range', () => {
           // Mock tracking data: Array of entries
           const tracking = [
-              [1, 2],           // Frame 0: Single subtree {1,2}
+              [[1, 2]],         // Frame 0: Single subtree {1,2}
               [[1, 2], [3]],    // Frame 1: Two subtrees {1,2}, {3}
-              [3, 4]            // Frame 2: Single subtree {3,4}
+              [[3, 4]]          // Frame 2: Single subtree {3,4}
           ];
           
           // Collect from 0 to 3
           const result = collectUniqueSubtrees(tracking, 0, 3);
           
           // Unique subtrees: {1,2}, {3}, {3,4}
-          // Note: parseSubtreeTrackingEntry([1,2]) -> [[1,2]] key "1,2"
+          // Frame 0: [[1,2]] -> [[1,2]] key "1,2"
           // Frame 1: [[1,2], [3]] -> [[1,2], [3]] keys "1,2", "3"
-          // Frame 2: [3,4] -> [[3,4]] key "3,4"
+          // Frame 2: [[3,4]] -> [[3,4]] key "3,4"
           
           const keys = result.map(s => toSubtreeKey(s));
           // Used to be hashed 32-bit, now 64-bit Zobrist style
@@ -83,7 +76,7 @@ describe('Tree Visualisation - Subtree Tracking & Parsing', () => {
       });
 
       it('should exclude specified keys', () => {
-          const tracking = [[1, 2], [3]];
+          const tracking = [[[1, 2]], [[3]]];
           // Must exclude using the hash key
           const k12 = toSubtreeKey([1, 2]);
           const k3 = toSubtreeKey([3]);

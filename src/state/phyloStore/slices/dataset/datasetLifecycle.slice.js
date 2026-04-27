@@ -34,27 +34,18 @@ export const createDatasetLifecycleSlice = (set, get) => ({
   // ACTIONS: Initialize
   // ==========================================================================
   initialize: (movieData) => {
-    if (!movieData || typeof movieData !== 'object') {
-      console.error('[Store] initialize called without valid movieData');
-      return;
-    }
-
     const { resetInterpolationCaches } = get();
     resetInterpolationCaches?.();
 
-    const interpolatedTrees = Array.isArray(movieData.interpolated_trees)
-      ? movieData.interpolated_trees
-      : [];
-    const treeMetadata = Array.isArray(movieData.tree_metadata)
-      ? movieData.tree_metadata
-      : movieData.tree_metadata || [];
+    const interpolatedTrees = movieData.interpolated_trees;
+    const treeMetadata = movieData.tree_metadata;
 
     const resolver = createTransitionResolver(movieData, treeMetadata);
-    const fullTreeIndices = Array.isArray(resolver.fullTreeIndices) ? resolver.fullTreeIndices : [];
+    const fullTreeIndices = resolver.fullTreeIndices;
     const { scaleList, maxScale, scaleValues } = calculateTreeScales(interpolatedTrees, fullTreeIndices);
     const numberOfFullTrees = fullTreeIndices.length;
 
-    const sortedLeaves = movieData.sorted_leaves || [];
+    const sortedLeaves = movieData.sorted_leaves;
 
     const msaColumnCount = extractMsaColumnCount(movieData);
     const { windowSize, stepSize } = extractMsaWindowParameters(movieData);
@@ -68,9 +59,9 @@ export const createDatasetLifecycleSlice = (set, get) => ({
       columnCount: msaColumnCount
     });
 
-    const fileName = movieData.file_name || 'Unknown File';
-    const distanceRfd = extractDistanceArray(movieData?.distances?.robinson_foulds);
-    const distanceWeightedRfd = extractDistanceArray(movieData?.distances?.weighted_robinson_foulds);
+    const fileName = movieData.file_name;
+    const distanceRfd = [...movieData.distances.robinson_foulds];
+    const distanceWeightedRfd = [...movieData.distances.weighted_robinson_foulds];
 
     const existingManager = get().movieTimelineManager;
     existingManager?.destroy();
@@ -93,9 +84,9 @@ export const createDatasetLifecycleSlice = (set, get) => ({
       distanceRfd,
       distanceWeightedRfd,
       scaleValues,
-      pairSolutions: movieData.tree_pair_solutions || {},
-      pivotEdgeTracking: movieData.pivot_edge_tracking || movieData.split_change_tracking || [],
-      subtreeTracking: movieData.subtree_tracking || [],
+      pairSolutions: movieData.tree_pair_solutions,
+      pivotEdgeTracking: movieData.pivot_edge_tracking,
+      subtreeTracking: movieData.subtree_tracking,
       transitionResolver: resolver,
       currentTreeIndex: 0,
       playing: false,
@@ -108,12 +99,8 @@ export const createDatasetLifecycleSlice = (set, get) => ({
 function createTransitionResolver(movieData, treeMetadata) {
   return new TransitionIndexResolver(
     treeMetadata,
-    movieData.distances?.robinson_foulds,
-    movieData.tree_pair_solutions || {},
-    movieData.pair_interpolation_ranges || []
+    movieData.distances.robinson_foulds,
+    movieData.tree_pair_solutions,
+    movieData.pair_interpolation_ranges
   );
-}
-
-function extractDistanceArray(value) {
-  return Array.isArray(value) ? [...value] : [];
 }
