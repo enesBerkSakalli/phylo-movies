@@ -404,8 +404,6 @@ export class MSADeckGLViewer {
       this.state.selection = null;
     }
 
-    console.log(`[MSADeckGLViewer] Loaded ${this.state.rows} sequences, type: ${this.state.type}`);
-
     const isFirstLoad = !this._hasLoadedOnce;
     if (isFirstLoad) {
       this.initCameraPosition();
@@ -443,7 +441,6 @@ export class MSADeckGLViewer {
       zoom: initialZoom
     };
 
-    console.log(`[MSADeckGLViewer] Initializing Top-Left focus:`, newViewState.target);
     this.handleViewStateChange({ main: newViewState });
   }
 
