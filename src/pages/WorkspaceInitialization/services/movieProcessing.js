@@ -146,7 +146,12 @@ export async function processMovieData(formData, onProgress) {
       refreshIdleTimeout();
       try {
         const log = JSON.parse(event.data);
-        console.log(`[Backend] ${log.level}: ${log.message}`);
+        const level = String(log.level || '').toLowerCase();
+        if (level === 'warning' || level === 'warn') {
+          console.warn(`[Backend] ${log.message}`);
+        } else if (level === 'error') {
+          console.error(`[Backend] ${log.message}`);
+        }
       } catch { }
     });
 
@@ -157,7 +162,6 @@ export async function processMovieData(formData, onProgress) {
         const result = JSON.parse(event.data);
         chunkedMetadata = result.metadata;
         chunkedTrees = []; // Reset trees array for incoming chunks
-        console.log(`[SSE] Received metadata for ${chunkedMetadata.tree_count} trees (chunked mode)`);
         reportProgress(highWaterMark, `Streaming ${chunkedMetadata.tree_count} trees...`);
       } catch (err) {
         console.warn('[SSE] Failed to parse metadata:', err);
@@ -175,7 +179,6 @@ export async function processMovieData(formData, onProgress) {
         const percent = highWaterMark + chunkRatio * (90 - highWaterMark);
         const message = `Received ${chunk.end_index} / ${chunk.total} trees...`;
         reportProgress(percent, message);
-        console.log(`[SSE] Received trees chunk: ${chunk.start_index}-${chunk.end_index} of ${chunk.total}`);
       } catch (err) {
         console.warn('[SSE] Failed to parse trees_chunk:', err);
       }
@@ -183,13 +186,6 @@ export async function processMovieData(formData, onProgress) {
 
     eventSource.addEventListener('complete', (event) => {
       refreshIdleTimeout();
-      console.log('[SSE] Complete event received:', {
-        hasData: !!event.data,
-        dataLength: event.data?.length,
-        dataPreview: event.data?.substring(0, 100),
-        chunkedMetadata: !!chunkedMetadata,
-        chunkedTreesCount: chunkedTrees.length,
-      });
 
       // First check if we have accumulated chunked data (large dataset mode)
       // This takes priority regardless of what the complete event contains
@@ -198,7 +194,6 @@ export async function processMovieData(formData, onProgress) {
           ...chunkedMetadata,
           interpolated_trees: chunkedTrees,
         };
-        console.log(`[SSE] Assembled chunked data: ${chunkedTrees.length} trees`);
         resolveOnce(result);
         return;
       }
