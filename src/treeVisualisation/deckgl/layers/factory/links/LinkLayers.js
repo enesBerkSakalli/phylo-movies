@@ -24,7 +24,7 @@ export function getLinkOutlinesLayerProps(links, state, layerStyles) {
     pivotEdgeDashingEnabled, upcomingChangesEnabled, markedSubtreesEnabled,
     highlightColorMode, highlightSourceEnabled, highlightDestinationEnabled,
     dimmingEnabled, dimmingOpacity, subtreeDimmingEnabled, subtreeDimmingOpacity,
-    markedSubtreeOpacity
+    markedSubtreeOpacity, metricScale
   } = state || {};
 
   const colorManager = state?.getColorManager?.();
@@ -38,7 +38,7 @@ export function getLinkOutlinesLayerProps(links, state, layerStyles) {
     (upcomingChangesEnabled && colorManager?.hasCompletedChangeEdges?.())
   );
 
-  const cached = layerStyles.getCachedState();
+  const cached = layerStyles.getCachedState(state);
 
   return {
     data: links,
@@ -60,7 +60,7 @@ export function getLinkOutlinesLayerProps(links, state, layerStyles) {
       getWidth: [
         colorVersion, strokeWidth, changePulsePhase, changePulseEnabled,
         upcomingChangesEnabled, markedSubtreesEnabled, highlightColorMode,
-        highlightSourceEnabled, highlightDestinationEnabled
+        highlightSourceEnabled, highlightDestinationEnabled, metricScale
       ],
       getDashArray: [colorVersion, pivotEdgeDashingEnabled, upcomingChangesEnabled],
       getPath: [links, colorVersion]
@@ -81,10 +81,10 @@ export function getLinksLayerProps(links, state, layerStyles) {
     taxaColorVersion, colorVersion, strokeWidth, pivotEdgeDashingEnabled,
     upcomingChangesEnabled, markedSubtreesEnabled, highlightColorMode,
     highlightSourceEnabled, highlightDestinationEnabled, dimmingEnabled,
-    dimmingOpacity, subtreeDimmingEnabled, subtreeDimmingOpacity
+    dimmingOpacity, subtreeDimmingEnabled, subtreeDimmingOpacity, metricScale
   } = state || {};
 
-  const cached = layerStyles.getCachedState();
+  const cached = layerStyles.getCachedState(state);
 
   return {
     data: links,
@@ -102,7 +102,7 @@ export function getLinksLayerProps(links, state, layerStyles) {
       ],
       getWidth: [
         colorVersion, strokeWidth, upcomingChangesEnabled, markedSubtreesEnabled,
-        highlightColorMode, highlightSourceEnabled, highlightDestinationEnabled
+        highlightColorMode, highlightSourceEnabled, highlightDestinationEnabled, metricScale
       ],
       getDashArray: [colorVersion, pivotEdgeDashingEnabled, upcomingChangesEnabled],
       getPath: [links, colorVersion]
@@ -113,4 +113,3 @@ export function getLinksLayerProps(links, state, layerStyles) {
 export function createLinksLayer(links, state, layerStyles) {
   return createLayer(LAYER_CONFIGS.links, getLinksLayerProps(links, state, layerStyles));
 }
-

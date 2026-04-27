@@ -5,41 +5,27 @@ export function getNodeRadius(node, minRadius = 1, cached, helpers) {
   const { colorManager: cm, upcomingChangesEnabled, densityScale, metricScale = 1.0 } = cached;
   const nodeSize = helpers.nodeSize || 1;
   const baseRadius = (node.dotSize || node.radius || minRadius) * nodeSize;
+  let radius = baseRadius;
 
   if (node.isEntering || node.isExiting) {
-    return baseRadius * 0.7;
+    radius *= 0.7;
+  } else if (cm) {
+    const nodeData = toColorManagerNode(node);
+    const scale = densityScale !== undefined ? densityScale : 1.0;
+    const getScaledRadius = (multiplier) => baseRadius * (1 + (multiplier - 1) * scale);
+
+    if (upcomingChangesEnabled && cm.isNodeCompletedChangeEdge?.(nodeData)) {
+      radius = getScaledRadius(1.5);
+    } else if (isNodePivotEdge(nodeData, cached)) {
+      radius = getScaledRadius(1.5);
+    } else if (shouldHighlightNode(nodeData, cached)) {
+      radius = getScaledRadius(1.6);
+    } else if (isHistorySubtreeNode(nodeData, cached)) {
+      radius = getScaledRadius(1.15);
+    } else if (isNodeVisuallyHighlighted(nodeData, cm, cached.markedSubtreesEnabled)) {
+      radius = getScaledRadius(1.5);
+    }
   }
 
-  if (!cm) return baseRadius;
-
-  const nodeData = toColorManagerNode(node);
-
-  // Density scaling helper
-  const scale = densityScale !== undefined ? densityScale : 1.0;
-  const getScaledRadius = (multiplier) => baseRadius * (1 + (multiplier - 1) * scale);
-
-  // History mode - completed changes
-  if (upcomingChangesEnabled && cm.isNodeCompletedChangeEdge?.(nodeData)) {
-    return getScaledRadius(1.5);
-  }
-
-  // Pivot edge - same size as marked highlights
-  if (isNodePivotEdge(nodeData, cached)) {
-    return getScaledRadius(1.5);
-  }
-
-  // Marked subtree highlights
-  if (shouldHighlightNode(nodeData, cached)) {
-    return getScaledRadius(1.6);
-  }
-
-  // History subtree nodes (slightly larger, reduced from 1.3)
-  if (isHistorySubtreeNode(nodeData, cached)) {
-    return getScaledRadius(1.15);
-  }
-
-  // Visual highlight fallback
-  const isHighlighted = isNodeVisuallyHighlighted(nodeData, cm, cached.markedSubtreesEnabled);
-  const calculatedRadius = isHighlighted ? getScaledRadius(1.5) : baseRadius;
-  return calculatedRadius * metricScale;
+  return radius * metricScale;
 }

@@ -58,7 +58,7 @@ const getHistoryLinkWidth = (link, layerStyles, cached, scale) =>
  * Internal prop builder to avoid repetition
  */
 const getLayerProps = (historyLinks, state, layerStyles, cached, { alphaScale, widthScale }) => {
-  const { taxaColorVersion, colorVersion, strokeWidth, pivotEdgeDashingEnabled, upcomingChangesEnabled } = state || {};
+  const { taxaColorVersion, colorVersion, strokeWidth, pivotEdgeDashingEnabled, upcomingChangesEnabled, metricScale } = state || {};
 
   return {
     data: historyLinks,
@@ -71,7 +71,7 @@ const getLayerProps = (historyLinks, state, layerStyles, cached, { alphaScale, w
     dashJustified: false,
     updateTriggers: {
       getColor: [colorVersion, taxaColorVersion, upcomingChangesEnabled],
-      getWidth: [colorVersion, strokeWidth],
+      getWidth: [colorVersion, strokeWidth, metricScale],
       getDashArray: [colorVersion, pivotEdgeDashingEnabled, upcomingChangesEnabled],
       getPath: [historyLinks] // Only update if filtered list changes
     }
@@ -91,7 +91,7 @@ export function createHistoryLayers(links, state, layerStyles) {
   return [];
 
   /* Original implementation:
-  const cached = layerStyles.getCachedState();
+  const cached = layerStyles.getCachedState(state);
 
   // Single pass filtering
   const historyLinks = links.filter(link => isHistoryLink(link, cached));

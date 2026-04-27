@@ -54,7 +54,7 @@ export function createLabelDotsLayer(labels, state, layerStyles) {
  */
 export function getLabelDotsLayerProps(labels, state, layerStyles) {
   const { taxaColorVersion, colorVersion, fontSize, highlightColorMode } = state || {};
-  const cached = layerStyles.getCachedState();
+  const cached = layerStyles.getCachedState(state);
 
   return {
     data: labels,

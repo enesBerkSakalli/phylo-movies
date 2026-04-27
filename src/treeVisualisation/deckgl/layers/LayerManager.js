@@ -43,6 +43,7 @@ export class LayerManager {
     const state = {
       ...storeState,
       interpolationTime: interpolationTime ?? storeState.interpolationTime ?? 0,
+      metricScale: Number.isFinite(data?.metricScale) ? data.metricScale : 1,
       zoom: data?.zoom ?? storeState.viewState?.zoom // Prefer zoom from data/overrides, fallback to store
     };
 

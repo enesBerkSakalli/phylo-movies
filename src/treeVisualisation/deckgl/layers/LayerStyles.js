@@ -63,13 +63,15 @@ export class LayerStyles {
   /**
    * Get cached state for the current render cycle
    * Call this once at the start of layer creation, then pass to accessors
+   * @param {Object} [renderState] - Layer render state from LayerManager
    * @returns {Object} { state, colorManager }
    */
-  getCachedState() {
+  getCachedState(renderState = null) {
     if (!this._renderCache) {
-      const state = useAppStore.getState();
+      const state = renderState || useAppStore.getState();
       const colorManager = state.getColorManager?.();
       const pulseEnabled = state.changePulseEnabled ?? true;
+      const metricScale = Number.isFinite(state.metricScale) ? state.metricScale : 1;
       // Use ColorManager as single source of truth for marked subtree data
       // This ensures correct highlighting during scrubbing when ColorManager is updated
       // with the scrub position's tree index but store's currentTreeIndex is stale
@@ -93,6 +95,7 @@ export class LayerStyles {
         highlightColorMode: state.highlightColorMode ?? 'contrast',
         markedColor: state.markedColor ?? '#10b981',
         linkConnectionOpacity: state.linkConnectionOpacity ?? 0.6,
+        metricScale,
         // Density-based scaling: reduce highlight thickness for dense trees
         densityScale: this._calculateDensityScale(state)
       };

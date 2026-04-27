@@ -122,7 +122,7 @@ export function getLinkOutlineColor(link, cached) {
 }
 
 export function getLinkOutlineWidth(link, cached, helpers) {
-  const { colorManager: cm, pulseOpacity, upcomingChangesEnabled, markedSubtreeData } = cached;
+  const { colorManager: cm, pulseOpacity, upcomingChangesEnabled, markedSubtreeData, metricScale = 1.0 } = cached;
 
   if (!cm) {
     return 0;
@@ -133,23 +133,23 @@ export function getLinkOutlineWidth(link, cached, helpers) {
   // Done: large static glow (same size as current, but no pulse)
   if (upcomingChangesEnabled && cm.isCompletedChangeEdge?.(link)) {
     const highlightedWidth = baseWidth * 2;
-    return highlightedWidth + 6; // Same large glow as current
+    return (highlightedWidth + 6) * metricScale; // Same large glow as current
   }
 
   // Next: medium static glow
   if (upcomingChangesEnabled && cm.isUpcomingChangeEdge?.(link)) {
-    return baseWidth + 4;
+    return (baseWidth + 4) * metricScale;
   }
 
   // Check if link is part of a MARKED subtree (persistent highlight)
   // Moderate glow width (reduced from baseWidth * 2 + 8 for less aggressive highlighting)
   if (shouldHighlightMarkedSubtree(link, cached)) {
-    return baseWidth * 1.5 + 4; // Balanced glow for visibility without being too prominent
+    return (baseWidth * 1.5 + 4) * metricScale; // Balanced glow for visibility without being too prominent
   }
 
   // History subtrees: subtle silhouette without pulse (reduced from baseWidth * 2 + 4)
   if (shouldHighlightHistorySubtree(link, cached) && !cm?.isPivotEdge?.(link)) {
-    return baseWidth * 1.5 + 2;
+    return (baseWidth * 1.5 + 2) * metricScale;
   }
 
   // Only show outline for highlighted branches
@@ -161,7 +161,7 @@ export function getLinkOutlineWidth(link, cached, helpers) {
 
   // FIXED: Moving subtrees should have static highlight (like marked subtrees), not pulse
   if (cm.isLinkMovingSubtree?.(link)) {
-    return baseWidth * 2 + 8; // Static bold glow
+    return (baseWidth * 2 + 8) * metricScale; // Static bold glow
   }
 
   const highlightedWidth = baseWidth * 2;
@@ -170,5 +170,5 @@ export function getLinkOutlineWidth(link, cached, helpers) {
   const glowRange = maxGlow - minGlow;
   const pulseGlow = minGlow + (glowRange * pulseOpacity);
 
-  return highlightedWidth + pulseGlow;
+  return (highlightedWidth + pulseGlow) * metricScale;
 }
