@@ -3,7 +3,7 @@
 > Style resolution for Deck.gl node layers in phylogenetic tree visualization.
 
 ## File Location
-`src/js/treeVisualisation/deckgl/layers/styles/nodes/nodeStyles.js`
+`src/treeVisualisation/deckgl/layers/styles/nodes/nodeStyles.js`
 
 ---
 

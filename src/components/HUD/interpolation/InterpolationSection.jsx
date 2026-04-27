@@ -2,8 +2,8 @@ import React, { useMemo } from 'react';
 import { BarChart2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { getIndexMappings } from '@/js/domain/indexing/IndexMapping';
-import { useAppStore } from '@/js/state/phyloStore/store.js';
+import { getIndexMappings } from '@/domain/indexing/IndexMapping';
+import { useAppStore } from '@/state/phyloStore/store.js';
 import {
   buildSegmentText,
   selectCurrentTreeIndex,

@@ -30,7 +30,7 @@ const colorUtilsMock = {
 };
 
 // Import the module under test with mocks
-const { getLinkOutlineWidth, getLinkOutlineColor } = proxyquire('../src/js/treeVisualisation/deckgl/layers/styles/links/outline/linkOutlineStyles.js', {
+const { getLinkOutlineWidth, getLinkOutlineColor } = proxyquire('../src/treeVisualisation/deckgl/layers/styles/links/outline/linkOutlineStyles.js', {
   '../linkUtils.js': linkUtilsMock,
   '../../../../../systems/tree_color/visualHighlights.js': visualHighlightsMock,
   '../dashUtils.js': dashUtilsMock,

@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
-import { useAppStore } from '@/js/state/phyloStore/store.js';
-import { calculateSubtreeFrequencies, getTopSubtrees, formatSubtreeLabel } from '@/js/domain/tree/subtreeFrequencyUtils';
-import { TREE_COLOR_CATEGORIES } from '@/js/constants/TreeColors';
+import { useAppStore } from '@/state/phyloStore/store.js';
+import { calculateSubtreeFrequencies, getTopSubtrees, formatSubtreeLabel } from '@/domain/tree/subtreeFrequencyUtils';
+import { TREE_COLOR_CATEGORIES } from '@/constants/TreeColors';
 import type { AppStoreState } from '@/types/store';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';

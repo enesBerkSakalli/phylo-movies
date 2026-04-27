@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RotateCcw } from 'lucide-react';
-import { useAppStore } from '@/js/state/phyloStore/store.js';
+import { useAppStore } from '@/state/phyloStore/store.js';
 import { MSARegionOverrides, MSAViewActions, MSAVisibleRange } from './controls';
 
 // ==========================================================================

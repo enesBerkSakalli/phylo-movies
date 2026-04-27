@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Dna } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useAppStore } from '@/js/state/phyloStore/store.js';
+import { useAppStore } from '@/state/phyloStore/store.js';
 import {
   buildMsaWindow,
   selectCurrentTreeIndex,

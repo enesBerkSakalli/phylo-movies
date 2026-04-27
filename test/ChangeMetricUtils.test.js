@@ -11,7 +11,7 @@ import { expect } from 'chai';
 import {
   computeExtensionChangeMetrics,
   classifyExtensionChanges
-} from '../src/js/treeVisualisation/utils/ChangeMetricUtils.js';
+} from '../src/treeVisualisation/utils/ChangeMetricUtils.js';
 
 /**
  * Helper: Create a mock leaf node

@@ -1,4 +1,4 @@
-import { Tableau10 } from '../src/js/constants/ColorPalettes.js';
+import { Tableau10 } from '../src/constants/ColorPalettes.js';
 import Color from 'colorjs.io';
 
 const white = new Color("white");

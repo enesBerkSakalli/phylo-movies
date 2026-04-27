@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { getNodeBasedRgba } from '../src/js/treeVisualisation/deckgl/layers/styles/nodes/nodeStyles.js';
+import { getNodeBasedRgba } from '../src/treeVisualisation/deckgl/layers/styles/nodes/nodeStyles.js';
 
 // Minimal helper shim mirroring LayerStyles._styleHelpers
 const helpers = {

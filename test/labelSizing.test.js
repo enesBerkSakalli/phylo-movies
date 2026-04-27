@@ -9,7 +9,7 @@ const nodeUtilsMock = {
 };
 
 // Import the module under test with mocks
-const { getLabelSize } = proxyquire('../src/js/treeVisualisation/deckgl/layers/styles/labels/labelStyles.js', {
+const { getLabelSize } = proxyquire('../src/treeVisualisation/deckgl/layers/styles/labels/labelStyles.js', {
   '../nodes/nodeUtils.js': nodeUtilsMock,
 });
 
@@ -17,7 +17,7 @@ const { getLabelSize } = proxyquire('../src/js/treeVisualisation/deckgl/layers/s
 const {
   SOURCE_LABEL_SCALE,
   DESTINATION_LABEL_SCALE,
-} = require('../src/js/treeVisualisation/deckgl/layers/config/LabelConfig.js');
+} = require('../src/treeVisualisation/deckgl/layers/config/LabelConfig.js');
 
 describe('Label Sizing Logic (TDD)', () => {
   const DEFAULT_FONT_SIZE = 2.6; // Typical store value

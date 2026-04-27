@@ -1,5 +1,5 @@
 import localforage from 'localforage';
-import { resolveApiUrl } from "./apiConfig";
+import { resolveApiUrl } from '@/services/data/apiConfig';
 
 /**
  * Unified data service for PhyloMovies
@@ -22,7 +22,7 @@ const STORAGE_KEYS = {
 /**
  * Generic storage operations
  */
-export const storage = {
+const storage = {
   async get(key) {
     try {
       return await localforage.getItem(key);
@@ -35,7 +35,6 @@ export const storage = {
   async set(key, value) {
     try {
       await localforage.setItem(key, value);
-      return true;
     } catch (error) {
       // Handle IndexedDB quota/memory errors
       if (error.name === 'DataCloneError' || error.message?.includes('out of memory')) {
@@ -50,10 +49,8 @@ export const storage = {
   async remove(key) {
     try {
       await localforage.removeItem(key);
-      return true;
     } catch (error) {
       console.error(`[DataService] Error removing ${key}:`, error);
-      return false;
     }
   }
 };
@@ -70,26 +67,47 @@ export const phyloData = {
       return null;
     }
 
-    // Return the full hierarchical MovieData object
-    return this.validate(data);
+    try {
+      return this.validate(data);
+    } catch (error) {
+      await this.remove();
+      throw error;
+    }
   },
 
   async set(data) {
     console.log('[DataService] Saving data - window_size:', data?.window_size, 'window_step_size:', data?.window_step_size);
-    return await storage.set(STORAGE_KEYS.PHYLO_DATA, data);
+    const validatedData = this.validate(data);
+    await storage.set(STORAGE_KEYS.PHYLO_DATA, validatedData);
+    return validatedData;
   },
 
   async remove() {
-    return await storage.remove(STORAGE_KEYS.PHYLO_DATA);
+    await storage.remove(STORAGE_KEYS.PHYLO_DATA);
   },
 
   validate(data) {
+    if (!data || typeof data !== 'object') {
+      throw new Error('Invalid phyloMovieData payload');
+    }
+
     const missingFields = REQUIRED_PHYLO_FIELDS.filter(field => !(field in data));
 
     if (missingFields.length > 0) {
       console.error("[DataService] Missing required fields:", missingFields);
-      this.remove(); // Clear invalid data
       throw new Error(`Missing required data fields: ${missingFields.join(", ")}`);
+    }
+
+    if (!Array.isArray(data.interpolated_trees)) {
+      throw new Error('Invalid phyloMovieData payload: interpolated_trees must be an array');
+    }
+
+    if (!Array.isArray(data.tree_metadata)) {
+      throw new Error('Invalid phyloMovieData payload: tree_metadata must be an array');
+    }
+
+    if (!data.distances || typeof data.distances !== 'object') {
+      throw new Error('Invalid phyloMovieData payload: distances must be an object');
     }
 
     return data;
@@ -145,6 +163,3 @@ export const workflows = {
     }
   }
 };
-
-// Export constants for external use
-export { STORAGE_KEYS };

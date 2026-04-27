@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { getApiBaseUrl, resolveApiUrl, isElectron } from '../src/js/services/data/apiConfig.js';
+import { getApiBaseUrl, resolveApiUrl, isElectron } from '../src/services/data/apiConfig.js';
 
 describe('apiConfig - Multi-platform URL Resolution', () => {
   // Save original window if it exists (though it shouldn't in node)

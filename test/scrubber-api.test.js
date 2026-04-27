@@ -1,7 +1,7 @@
 const { expect } = require('chai');
 
-const { ScrubberAPI } = require('../src/js/timeline/core/ScrubberAPI.js');
-const { useAppStore } = require('../src/js/state/phyloStore/store.js');
+const { ScrubberAPI } = require('../src/timeline/core/ScrubberAPI.js');
+const { useAppStore } = require('../src/state/phyloStore/store.js');
 
 function createMovieData() {
   return {

@@ -1,6 +1,6 @@
 
 import { describe, it, expect } from 'vitest';
-import { calculateRadialBundlePoint, buildBundledBezierPath } from '../src/js/treeVisualisation/deckgl/builders/geometry/connectors/ConnectorGeometryBuilder.js';
+import { calculateRadialBundlePoint, buildBundledBezierPath } from '../src/treeVisualisation/deckgl/builders/geometry/connectors/ConnectorGeometryBuilder.js';
 
 describe('ConnectorGeometryBuilder', () => {
 

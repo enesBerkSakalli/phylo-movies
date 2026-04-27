@@ -34,8 +34,8 @@ import {
 } from '@/components/ui/sidebar';
 
 import { Film, ArrowLeft } from 'lucide-react';
-import { useAppStore } from '@/js/state/phyloStore/store.js';
-import { getPhyloMovieData } from '@/js/services/data/dataManager.js';
+import { useAppStore } from '@/state/phyloStore/store.js';
+import { getPhyloMovieData } from '@/services/data/dataManager.js';
 import { useTreeController } from './hooks/useTreeController.js';
 
 // ==========================================================================

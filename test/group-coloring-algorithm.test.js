@@ -6,8 +6,8 @@
  */
 
 import { expect } from 'chai';
-import { ColorSchemeManager } from '../src/js/treeColoring/utils/ColorSchemeManager.js';
-import { CATEGORICAL_PALETTES, getPalette } from '../src/js/constants/ColorPalettes.js';
+import { ColorSchemeManager } from '../src/treeColoring/utils/ColorSchemeManager.js';
+import { CATEGORICAL_PALETTES, getPalette } from '../src/constants/ColorPalettes.js';
 import fs from 'fs';
 import path from 'path';
 

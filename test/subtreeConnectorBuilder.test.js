@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildSubtreeConnectors } from '../src/js/treeVisualisation/deckgl/data/transforms/SubtreeConnectorBuilder.js';
+import { buildSubtreeConnectors } from '../src/treeVisualisation/deckgl/data/transforms/SubtreeConnectorBuilder.js';
 
 // Mock colorManager
 const mockColorManager = {

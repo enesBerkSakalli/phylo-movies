@@ -1,5 +1,5 @@
-import { getMSAFrameIndex } from '@/js/domain/indexing/IndexMapping';
-import { calculateWindow } from '@/js/domain/msa/msaWindowCalculator';
+import { getMSAFrameIndex } from '@/domain/indexing/IndexMapping';
+import { calculateWindow } from '@/domain/msa/msaWindowCalculator';
 
 export const selectHasMsa = (s) => s.hasMsa;
 export const selectCurrentTreeIndex = (s) => s.currentTreeIndex;

@@ -1,5 +1,5 @@
 import { useCallback, useState, useEffect } from "react";
-import { parseGroupCSV } from "@/js/treeColoring/utils/CSVParser.js";
+import { parseGroupCSV } from "@/treeColoring/utils/CSVParser.js";
 import { loadCSVColumn } from "../utils/csvHelpers.js";
 
 export function useCSVState(taxaNames, initialState = {}) {

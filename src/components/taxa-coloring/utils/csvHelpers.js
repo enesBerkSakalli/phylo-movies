@@ -1,4 +1,4 @@
-import { validateCSVTaxa } from "@/js/treeColoring/utils/CSVParser.js";
+import { validateCSVTaxa } from "@/treeColoring/utils/CSVParser.js";
 
 // Load and validate CSV column data
 export function loadCSVColumn(csvData, colName, taxaNames) {

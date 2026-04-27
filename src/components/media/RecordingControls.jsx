@@ -2,7 +2,7 @@ import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { CircleDot, StopCircle } from 'lucide-react';
-import { CanvasRecorder } from '@/js/services/media/canvasRecorder';
+import { CanvasRecorder } from '@/services/media/canvasRecorder';
 import { toast } from 'sonner';
 
 export function RecordingControls({ disabled = false }) {

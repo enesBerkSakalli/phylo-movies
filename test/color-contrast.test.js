@@ -1,5 +1,5 @@
 const { expect } = require('chai');
-const { getContrastingHighlightColor } = require('../src/js/services/ui/colorUtils.js');
+const { getContrastingHighlightColor } = require('../src/services/ui/colorUtils.js');
 
 describe('High Contrast Color Logic', () => {
     // Expected Constants

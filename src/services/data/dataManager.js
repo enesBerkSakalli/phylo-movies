@@ -1,4 +1,4 @@
-import { server, workflows, phyloData } from './dataService.js';
+import { server, phyloData } from '@/services/data/dataService.js';
 
 /**
  * Fetches tree data from the server and stores it in localForage.
@@ -9,7 +9,7 @@ import { server, workflows, phyloData } from './dataService.js';
 export async function fetchTreeData(formData) {
   try {
     const data = await server.fetchTreeData(formData);
-    await workflows.saveTreeDataWorkflow(data);
+    await phyloData.set(data);
     return data; // Return data instead of redirecting
   } catch (err) {
     console.error("[fetchTreeData] Error:", err);

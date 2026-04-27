@@ -58,4 +58,3 @@ export const getInnerLinkColor = (link, cached) => {
   // This already includes precedence logic: Marked (Red) > Active (Blue) > Base
   return colorToRgb(cm.getBranchColorForInnerLine(link));
 };
-

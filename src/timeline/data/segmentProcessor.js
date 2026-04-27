@@ -17,6 +17,18 @@ export function processSegments({
   startIdx, endIdx, width, height, visStart, visEnd, zoomScale, theme,
   timelineData, segments, selectedId, lastHoverId, rangeStart, rangeEnd
 }) {
+  if (!timelineData?.cumulativeDurations || !Array.isArray(segments) || segments.length === 0) {
+    return {
+      separators: [],
+      anchorPoints: [],
+      selectionAnchors: [],
+      hoverAnchors: [],
+      connections: [],
+      selectionConnections: [],
+      hoverConnections: []
+    };
+  }
+
   const snap = createSnapFunction(getDevicePixelRatio());
   const { cumulativeDurations } = timelineData;
 
@@ -26,7 +38,7 @@ export function processSegments({
 
   for (let i = startIdx; i <= endIdx; i++) {
     const segment = segments[i];
-    const segmentStart = i === 0 ? 0 : cumulativeDurations[i - 1];
+    const segmentStart = cumulativeDurations[i - 1] ?? 0;
     const segmentEnd = cumulativeDurations[i];
 
     if (segmentEnd < visStart || segmentStart > visEnd) continue;
@@ -37,14 +49,15 @@ export function processSegments({
     const startX = msToX(segmentStart, rangeStart, rangeEnd, width);
     const endX = msToX(segmentEnd, rangeStart, rangeEnd, width);
 
-    separators.push(createSeparator(startX, width, height, snap));
+    const separator = createSeparator(startX, width, height, snap);
+    if (separator) separators.push(separator);
 
     if (segment.isFullTree) {
       const anchor = createAnchor(
         segmentId, startX, endX, width, height,
         theme.anchorFillRGB, theme.anchorStrokeRGB, theme.anchorRadiusVar, zoomScale, snap
       );
-      anchorTrees[state].push(anchor);
+      if (anchor) anchorTrees[state].push(anchor);
     } else {
       const connection = createConnection(
         i, segmentId, startX, endX, width, height,
@@ -68,5 +81,12 @@ export function processSegments({
 function createSeparator(x, width, height, snap) {
   const centeredX = snap(x - width / 2);
   const h = Math.max(MIN_SEPARATOR_HEIGHT, Math.floor(height * SEPARATOR_HEIGHT_FRACTION));
-  return { path: [[centeredX, -h / 2], [centeredX, h / 2]] };
+  const halfHeight = h / 2;
+
+  return {
+    path: [
+      [centeredX, -halfHeight],
+      [centeredX, halfHeight]
+    ]
+  };
 }

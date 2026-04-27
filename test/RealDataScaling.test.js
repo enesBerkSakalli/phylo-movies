@@ -2,7 +2,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import fs from 'fs';
 import path from 'path';
-import createRadialTreeLayout from '../src/js/treeVisualisation/layout/RadialTreeLayout.js';
+import createRadialTreeLayout from '../src/treeVisualisation/layout/RadialTreeLayout.js';
 
 describe('Real Data Scaling Analysis', () => {
   let realData;

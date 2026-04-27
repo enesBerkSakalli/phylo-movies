@@ -1,5 +1,5 @@
 import { expect, describe, it, beforeEach } from 'vitest';
-import { RadialTreeLayout } from '../src/js/treeVisualisation/layout/RadialTreeLayout.js';
+import { RadialTreeLayout } from '../src/treeVisualisation/layout/RadialTreeLayout.js';
 
 describe('RadialTreeLayout - indexLeafNodes', () => {
   let layout;

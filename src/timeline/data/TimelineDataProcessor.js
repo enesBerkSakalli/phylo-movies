@@ -12,19 +12,18 @@ export class TimelineDataProcessor {
      */
     static createSegments(movieData) {
         // Check if movieData is a serializer instance
-        const isSerializer = movieData && typeof movieData.getTreeMetadata === 'function';
+        const isSerializer = !!movieData?.getTreeMetadata;
 
-        const tree_metadata = isSerializer ? movieData.getTreeMetadata() : movieData.tree_metadata;
-        const interpolated_trees = isSerializer ? movieData.getTrees().interpolatedTrees : movieData.interpolated_trees;
+        const tree_metadata = isSerializer ? movieData.getTreeMetadata() : movieData?.tree_metadata;
+        const interpolated_trees = isSerializer ? movieData.getTrees().interpolatedTrees : movieData?.interpolated_trees;
 
-        const splitChangeTimeline = movieData.split_change_timeline;
-        const segments = this._createSegmentsFromSplitChangeTimeline(
+        const splitChangeTimeline = movieData?.split_change_timeline;
+        return this._createSegmentsFromSplitChangeTimeline(
             splitChangeTimeline,
             tree_metadata,
             interpolated_trees,
-            movieData.tree_pair_solutions
+            movieData?.tree_pair_solutions
         );
-        return segments;
     }
 
     /**
@@ -33,6 +32,10 @@ export class TimelineDataProcessor {
      */
     static _createSegmentsFromSplitChangeTimeline(timeline, tree_metadata, interpolated_trees, tree_pair_solutions) {
         const segments = [];
+
+        if (!Array.isArray(timeline) || timeline.length === 0) {
+            return segments;
+        }
 
         for (const entry of timeline) {
             if (entry.type === 'original') {
@@ -52,6 +55,14 @@ export class TimelineDataProcessor {
      * @returns {{totalDuration: number, segmentDurations: number[], cumulativeDurations: number[]}} Timeline metadata
      */
     static createTimelineData(segments) {
+        if (!Array.isArray(segments) || segments.length === 0) {
+            return {
+                totalDuration: 0,
+                segmentDurations: [],
+                cumulativeDurations: []
+            };
+        }
+
         const segmentDurations = TimelineMathUtils.calculateSegmentDurations(segments);
         const cumulativeDurations = (() => {
             const arr = new Array(segmentDurations.length);
@@ -65,7 +76,11 @@ export class TimelineDataProcessor {
 
         const totalDuration = segmentDurations.reduce((sum, duration) => sum + duration, 0);
 
-        return { totalDuration, segmentDurations, cumulativeDurations };
+        return {
+            totalDuration,
+            segmentDurations,
+            cumulativeDurations
+        };
     }
 
     static _appendOriginalTreeSegment(entry, tree_metadata, interpolated_trees, segments) {
@@ -74,7 +89,7 @@ export class TimelineDataProcessor {
         const arrayIdx = globalIndex; // global_index is already 0-indexed in the data
         const treeIndex = entry.tree_index; // This is the original tree number (0, 1, 2)
 
-        if (arrayIdx >= 0 && arrayIdx < interpolated_trees.length) {
+        if (interpolated_trees?.[arrayIdx] != null) {
             const metadata = tree_metadata[arrayIdx];
             segments.push({
                 index: segments.length,
@@ -102,12 +117,16 @@ export class TimelineDataProcessor {
 
     static _appendSplitEventSegment(entry, tree_metadata, interpolated_trees, tree_pair_solutions, segments) {
         const globalRange = entry.step_range_global;
+        if (!Array.isArray(globalRange) || globalRange.length < 2) {
+            return;
+        }
+
         const interpolationData = [];
 
         // Collect all trees in this range using provided global indices directly
         for (let globalIdx = globalRange[0]; globalIdx <= globalRange[1]; globalIdx++) {
             const arrayIdx = globalIdx;
-            if (arrayIdx >= 0 && arrayIdx < interpolated_trees.length) {
+            if (interpolated_trees?.[arrayIdx] != null) {
                 interpolationData.push({
                     metadata: tree_metadata[arrayIdx],
                     tree: interpolated_trees[arrayIdx],
@@ -117,6 +136,9 @@ export class TimelineDataProcessor {
         }
 
         const first = interpolationData[0];
+        if (!first) {
+            return;
+        }
 
         // Calculate subtree changes from jumping subtree solutions
         let subtreeMoveCount = 0;

@@ -2,8 +2,8 @@ import React, { useCallback, useMemo } from 'react';
 import { Film } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { getIndexMappings } from '@/js/domain/indexing/IndexMapping';
-import { useAppStore } from '@/js/state/phyloStore/store.js';
+import { getIndexMappings } from '@/domain/indexing/IndexMapping';
+import { useAppStore } from '@/state/phyloStore/store.js';
 import {
   buildInterpolationText,
   selectAnimationProgress,

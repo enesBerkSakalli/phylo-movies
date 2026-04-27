@@ -1,5 +1,5 @@
-import { resolveApiUrl } from "@/js/services/data/apiConfig";
-import { phyloData, workflows } from "@/js/services/data/dataService.js";
+import { resolveApiUrl } from "@/services/data/apiConfig";
+import { phyloData, workflows } from "@/services/data/dataService.js";
 
 /**
  * Electron loading helpers

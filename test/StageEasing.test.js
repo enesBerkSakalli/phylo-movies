@@ -1,6 +1,6 @@
 const { expect } = require('chai');
-const { applyStageEasing, easeIn, easeOut, easeInOut } = require('../src/js/treeVisualisation/deckgl/interpolation/StageEasing.js');
-const { ANIMATION_STAGES } = require('../src/js/treeVisualisation/deckgl/interpolation/AnimationStageDetector.js');
+const { applyStageEasing, easeIn, easeOut, easeInOut } = require('../src/treeVisualisation/deckgl/interpolation/StageEasing.js');
+const { ANIMATION_STAGES } = require('../src/treeVisualisation/deckgl/interpolation/AnimationStageDetector.js');
 
 describe('StageEasing', () => {
   describe('applyStageEasing()', () => {
