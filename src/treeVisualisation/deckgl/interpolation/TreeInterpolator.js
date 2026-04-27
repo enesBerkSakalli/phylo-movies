@@ -92,7 +92,7 @@ export class TreeInterpolator {
 
   /**
    * Extract angle-only pseudo-nodes from link/extension maps
-   * so that buildVelocityMap can compute angular distances.
+   * so that velocity maps can compute angular distances.
    * Uses the target-end angle from polarData.
    * @private
    */

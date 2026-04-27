@@ -20,12 +20,9 @@ window.onerror = function(message, source, lineno, colno, error) {
   }
 };
 
-console.log("[main.jsx] bootstrapping...");
-
 try {
   const root = createRoot(rootEl);
   root.render(<Router />);
-  console.log("[main.jsx] render called");
 } catch (e) {
   console.error("[main.jsx] Render failed:", e);
   window.onerror(e.message, "main.jsx", 0, 0, e);

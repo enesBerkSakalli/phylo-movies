@@ -13,10 +13,6 @@ import { ProcessingOverlay } from './components/ProcessingOverlay.jsx';
 import '../../css/home.css';
 
 export function WorkspaceInitializationPage() {
-  React.useEffect(() => {
-    console.log("[WorkspaceInitializationPage] Mounted");
-  }, []);
-
   const {
     form,
     submitting,

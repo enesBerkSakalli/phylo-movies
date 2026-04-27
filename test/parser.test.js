@@ -7,8 +7,6 @@ const {
   easeInOutCubic,
 } = require('../src/domain/math/mathUtils.js');
 
-// const { applyInterpolationEasing } = require('../src/js/domain/math/easingUtils.js');
-
 describe('Utils/MathUtils', () => {
   it('kar2pol should convert cartesian to polar consistently', () => {
     const { r, angle } = kar2pol(1, Math.sqrt(3));
@@ -38,16 +36,5 @@ describe('Utils/MathUtils', () => {
     expect(mid).to.be.within(0, 1);
   });
 });
-
-// describe('Utils/easingUtils', () => {
-//   it('applyInterpolationEasing linear vs gentle', () => {
-//     const t = 0.25;
-//     const lin = applyInterpolationEasing(t, 'linear');
-//     const gen = applyInterpolationEasing(t, 'gentle');
-//     expect(lin).to.equal(0.25);
-//     // gentle should accelerate more slowly at start than linear
-//     expect(gen).to.be.below(lin);
-//   });
-// });
 
 // RadialTreeGeometry tests omitted in unit suite to avoid ESM loader conflicts with d3 during CJS tests
