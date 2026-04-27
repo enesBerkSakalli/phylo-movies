@@ -159,7 +159,7 @@
     {
       "name": "covers",
       "type": "array",
-      "description": "Coverage data for split tracking (legacy/experimental).",
+      "description": "Coverage data for split tracking.",
       "ordering": "N/A",
       "error_handling": "Missing array defaults to []",
       "notes": [
@@ -200,18 +200,6 @@
       "error_handling": "Missing array defaults to []",
       "notes": [
         "Consumed by: Timeline visualization"
-      ],
-      "test_status": "passed",
-      "json_shape": "scalar"
-    },
-    {
-      "name": "split_change_tracking",
-      "type": "array",
-      "description": "Tracking metadata for split changes (array of tracking records).",
-      "ordering": "Sequential tracking order",
-      "error_handling": "Missing array defaults to []",
-      "notes": [
-        "Consumed by: Change tracking analytics"
       ],
       "test_status": "passed",
       "json_shape": "scalar"

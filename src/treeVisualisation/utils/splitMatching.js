@@ -243,31 +243,24 @@ export function getSplitHash(indices) {
 /**
  * PARSER for Subtree Tracking Entries
  *
- * Rules:
- * 1. [1, 2, 3] (All numbers) -> ONE subtree: {1, 2, 3}
- * 2. [[1, 2], [3]] (All arrays) -> TWO subtrees: {1, 2} and {3}
- * 3. [1, [2, 3], 4] (Mixed) -> THREE subtrees: {1}, {2, 3}, {4}
+ * Each backend entry is an array of one or more moving subtrees:
+ * [[1, 2], [3]] -> TWO subtrees: {1, 2} and {3}
+ * Flat or mixed entries are invalid and are rejected by the backend validator.
+ * This helper keeps downstream rendering code on that same contract.
  *
- * Returns Array of Arrays (normalized subtrees)
  * @param {Array} entry - Raw tracking entry
- * @returns {Array<Array<number>>} Array of normalized subtree arrays
+ * @returns {Array<Array<number>>} Moving subtree arrays
  */
 export function parseSubtreeTrackingEntry(entry) {
   if (!Array.isArray(entry) || entry.length === 0) return [];
 
-  // Rule 1: Pure Flat Array -> Single Subtree
-  const isPureFlat = entry.every(item => typeof item === 'number');
-  if (isPureFlat) {
-    return [entry];
+  const subtrees = [];
+  for (const item of entry) {
+    const subtree = item instanceof Set ? Array.from(item) : item;
+    if (!Array.isArray(subtree) || subtree.length === 0) return [];
+    subtrees.push(subtree);
   }
-
-  // Rule 2 & 3: Mixed/Nested -> Multiple Independent Subtrees
-  return entry.map(item => {
-    if (typeof item === 'number') return [item]; // Naked number becomes isolated subtree
-    if (Array.isArray(item)) return item;        // Array remains subtree
-    if (item instanceof Set) return Array.from(item);
-    return null;
-  }).filter(item => Array.isArray(item) && item.length > 0);
+  return subtrees;
 }
 
 /**
@@ -293,7 +286,6 @@ export function collectUniqueEdges(tracking, start, end, excludeKey) {
 
 /**
  * Collect unique subtrees from tracking array.
- * Uses robust parsing to handle flat vs mixed/nested structures.
  * @param {Array} tracking - Timeline tracking array
  * @param {number} start - Start index (inclusive)
  * @param {number} end - End index (exclusive)

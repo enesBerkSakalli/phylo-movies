@@ -1,18 +1,11 @@
 import localforage from 'localforage';
 import { resolveApiUrl } from '@/services/data/apiConfig';
+import { validatePhyloMovieData } from '@/domain/backend/phyloMovieSchema.ts';
 
 /**
  * Unified data service for PhyloMovies
  * Consolidates data storage and retrieval operations to eliminate duplication
  */
-
-// Required fields for flat InterpolationSequence structure validation
-const REQUIRED_PHYLO_FIELDS = [
-  "interpolated_trees",
-  "tree_metadata",
-  "distances"
-];
-
 
 // Storage keys
 const STORAGE_KEYS = {
@@ -87,30 +80,7 @@ export const phyloData = {
   },
 
   validate(data) {
-    if (!data || typeof data !== 'object') {
-      throw new Error('Invalid phyloMovieData payload');
-    }
-
-    const missingFields = REQUIRED_PHYLO_FIELDS.filter(field => !(field in data));
-
-    if (missingFields.length > 0) {
-      console.error("[DataService] Missing required fields:", missingFields);
-      throw new Error(`Missing required data fields: ${missingFields.join(", ")}`);
-    }
-
-    if (!Array.isArray(data.interpolated_trees)) {
-      throw new Error('Invalid phyloMovieData payload: interpolated_trees must be an array');
-    }
-
-    if (!Array.isArray(data.tree_metadata)) {
-      throw new Error('Invalid phyloMovieData payload: tree_metadata must be an array');
-    }
-
-    if (!data.distances || typeof data.distances !== 'object') {
-      throw new Error('Invalid phyloMovieData payload: distances must be an object');
-    }
-
-    return data;
+    return validatePhyloMovieData(data);
   }
 };
 

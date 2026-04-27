@@ -35,7 +35,7 @@ const TEST_DATA_PATH = path.join(__dirname, '../data/small_example/small_example
  * @property {number} length - Branch length from parent (float, >= 0)
  * @property {number[]} split_indices - Array of leaf indices in this subtree (sorted ascending)
  * @property {TreeNode[]} children - Array of child nodes (empty for leaves)
- * @property {Object} [values] - Optional node attributes (deprecated/legacy)
+ * @property {Object} [values] - Optional node attributes
  */
 const TreeNodeSchema = {
   type: 'object',
@@ -247,7 +247,7 @@ const FIELD_MANIFEST = {
     type: 'array',
     itemType: null,
     required: false,
-    description: 'Coverage data for split tracking (legacy/experimental).',
+    description: 'Coverage data for split tracking.',
     ordering: 'N/A',
     consumers: ['Split tracking analytics'],
     errorHandling: 'Missing array defaults to []'
@@ -277,15 +277,6 @@ const FIELD_MANIFEST = {
     description: 'Timeline data structure for split changes (array of events).',
     ordering: 'Chronological order',
     consumers: ['Timeline visualization'],
-    errorHandling: 'Missing array defaults to []'
-  },
-  split_change_tracking: {
-    type: 'array',
-    itemType: null,
-    required: false,
-    description: 'Tracking metadata for split changes (array of tracking records).',
-    ordering: 'Sequential tracking order',
-    consumers: ['Change tracking analytics'],
     errorHandling: 'Missing array defaults to []'
   }
 };

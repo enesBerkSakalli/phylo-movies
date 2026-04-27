@@ -1,9 +1,9 @@
 export default class TransitionIndexResolver {
     constructor(treeMetadata = [], distanceData = null, treePairSolutions = null, pairInterpolationRanges = []) {
-        this.treeMetadata = Array.isArray(treeMetadata) ? treeMetadata : [];
+        this.treeMetadata = treeMetadata;
         this.distanceData = distanceData;
         this.treePairSolutions = treePairSolutions;
-        this.pairInterpolationRanges = Array.isArray(pairInterpolationRanges) ? pairInterpolationRanges : [];
+        this.pairInterpolationRanges = pairInterpolationRanges;
         this._cachedFullTreeIndices = null;
         this._cachedFullTreeIndicesSet = null;  // O(1) lookup Set
     }
@@ -21,14 +21,10 @@ export default class TransitionIndexResolver {
 
         if (this.pairInterpolationRanges.length) {
             for (const range of this.pairInterpolationRanges) {
-                if (Array.isArray(range) && typeof range[0] === 'number') {
-                    indices.add(range[0]);
-                }
+                indices.add(range[0]);
             }
             const lastRange = this.pairInterpolationRanges[this.pairInterpolationRanges.length - 1];
-            if (Array.isArray(lastRange) && typeof lastRange[1] === 'number') {
-                indices.add(lastRange[1]);
-            }
+            indices.add(lastRange[1]);
         }
 
         // Fallback to metadata flags when interpolation ranges are missing.
@@ -88,9 +84,7 @@ export default class TransitionIndexResolver {
         if (this.pairInterpolationRanges.length) {
             const clampedIndex = Math.min(Math.max(0, distanceIndex), this.pairInterpolationRanges.length - 1);
             const range = this.pairInterpolationRanges[clampedIndex];
-            if (Array.isArray(range) && typeof range[0] === 'number') {
-                return range[0];
-            }
+            return range[0];
         }
 
         const anchors = this.fullTreeIndices;
