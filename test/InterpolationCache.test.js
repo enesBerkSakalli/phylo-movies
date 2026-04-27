@@ -2,35 +2,14 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { InterpolationCache } from '../src/treeVisualisation/deckgl/interpolation/InterpolationCache.js';
-import { useAppStore } from '../src/state/phyloStore/store.js';
 
 describe('InterpolationCache', () => {
   let cache;
   let dependencies;
   let sandbox;
-  let mockState;
 
   beforeEach(() => {
     sandbox = sinon.createSandbox();
-
-    // Mock store state
-    mockState = {
-      transitionResolver: {
-        getSourceTreeIndex: sandbox.stub().returns(null)
-      },
-      subtreeTracking: {},
-    };
-
-    // Stub the singleton store's getState method
-    // Note: If useAppStore is a function (hook) attached with getState, we verify that structure.
-    // Based on previous files, useAppStore.getState() is standard vanilla zustand access.
-    if (useAppStore.getState) {
-      sandbox.stub(useAppStore, 'getState').returns(mockState);
-    } else {
-        // Fallback if structure is different
-        console.warn('Warning: useAppStore.getState not found to stub');
-    }
-
 
     dependencies = {
       calculateLayout: sandbox.stub(),
@@ -158,41 +137,6 @@ describe('InterpolationCache', () => {
      const result = cache.getOrCacheInterpolationData({}, {}, 0, 1);
 
      expect(result).to.deep.equal({ dataFrom: null, dataTo: null });
-  });
-
-  it('should use source tree index if transition resolver indicates mapping', () => {
-      // Setup state to trigger the source tree logic:
-      // if (state.transitionResolver?.getSourceTreeIndex) ...
-
-      const treeIndex = 5;
-      const sourceIndex = 2; // Different index
-
-      mockState.transitionResolver.getSourceTreeIndex.returns(sourceIndex);
-      // Ensure we hit the condition: !state.subtreeTracking?.[treeIndex] && state.subtreeTracking?.[sourceIndex]
-      mockState.subtreeTracking = {
-          [sourceIndex]: [[1, 2]] // some moving taxa at source
-      };
-      // No data at treeIndex (undefined)
-
-      const treeData = { id: 'tree' };
-
-      // We want to test _calculateLayout private logic calling calculateLayout with specific args
-
-      // Override calculateLayout stub to verify arguments
-      dependencies.calculateLayout.callsFake((data, options) => {
-          return { tree: data, width: 100, height: 100 };
-      });
-      dependencies.convertTreeToLayerData.returns({});
-
-      // Manually trigger calling internal logic via public method
-      cache.getOrCacheInterpolationData(treeData, treeData, treeIndex, treeIndex);
-
-      // Check that calculateLayout was called with rotationAlignmentExcludeTaxa from sourceIndex
-      expect(dependencies.calculateLayout.called).to.be.true;
-      const optionsArg = dependencies.calculateLayout.firstCall.args[1];
-
-      // The moving taxa from [sourceIndex] should be passed
-      expect(optionsArg.rotationAlignmentExcludeTaxa).to.deep.equal([1, 2]);
   });
 
 });

@@ -140,14 +140,11 @@ export class ComparisonModeRenderer {
     }
 
     const leftLayout = this.controller.calculateLayout(leftTreeData, {
-      treeIndex: clampedLeftIndex,
-      updateController: true
+      treeIndex: clampedLeftIndex
     });
 
     const rightLayout = this.controller.calculateLayout(rightTreeData, {
-      treeIndex: clampedRightIndex,
-      updateController: false,
-      rotationAlignmentKey: 'comparison-right'
+      treeIndex: clampedRightIndex
     });
 
     // Safety check for layout
@@ -263,9 +260,7 @@ export class ComparisonModeRenderer {
     }
 
     const rightLayout = this.controller.calculateLayout(rightTreeData, {
-      treeIndex: rightIndex,
-      updateController: false,
-      rotationAlignmentKey: 'comparison-right'
+      treeIndex: rightIndex
     });
 
     if (!rightLayout) {

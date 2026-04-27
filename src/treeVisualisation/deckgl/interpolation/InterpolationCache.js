@@ -1,4 +1,3 @@
-import { useAppStore } from '../../../state/phyloStore/store.js';
 import memoizeOne from 'memoize-one';
 
 export class InterpolationCache {
@@ -108,24 +107,8 @@ export class InterpolationCache {
   }
 
   _calculateLayout(treeData, treeIndex) {
-    const state = useAppStore.getState();
-
-    let trackingIndex = treeIndex;
-    if (state.transitionResolver?.getSourceTreeIndex) {
-      const sourceIndex = state.transitionResolver.getSourceTreeIndex(treeIndex);
-      if (!state.subtreeTracking?.[treeIndex] && state.subtreeTracking?.[sourceIndex]) {
-        trackingIndex = sourceIndex;
-      }
-    }
-
-    const movingTaxa = Array.isArray(state?.subtreeTracking?.[trackingIndex]) && state.subtreeTracking[trackingIndex]?.length
-      ? state.subtreeTracking[trackingIndex].flat()
-      : null;
-
     return this.calculateLayout(treeData, {
-      treeIndex,
-      updateController: false,
-      rotationAlignmentExcludeTaxa: movingTaxa
+      treeIndex
     });
   }
 

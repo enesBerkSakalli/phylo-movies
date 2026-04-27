@@ -53,8 +53,7 @@ export class TreeNodeInteractionHandler {
     if (!layerData || !layerData.position || !currentTreeData) return null;
     const { currentTreeIndex } = useAppStore.getState();
     const currentLayout = this.layoutCalculator.calculateLayout(currentTreeData, {
-      treeIndex: currentTreeIndex,
-      updateController: false
+      treeIndex: currentTreeIndex
     });
 
     const allNodes = currentLayout.tree.descendants();

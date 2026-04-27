@@ -43,16 +43,10 @@ export function TreeStructure() {
         if (updateId !== updateIdRef.current) return;
 
         try {
-          const state = useAppStore.getState();
           for (const controller of treeControllers) {
             if (updateId !== updateIdRef.current) return;
             controller?.resetInterpolationCaches?.();
             await controller?.initializeUniformScaling?.(normalized);
-            if (updateId !== updateIdRef.current) return;
-            await controller?.updateLayout?.(
-              state.treeList[state.currentTreeIndex],
-              state.currentTreeIndex
-            );
             if (updateId !== updateIdRef.current) return;
             await controller?.renderAllElements?.();
           }
