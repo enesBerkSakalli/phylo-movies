@@ -107,6 +107,43 @@ describe('DeckTimelineRenderer', () => {
     expect(path[1][0]).to.be.closeTo(0, 1e-6);
   });
 
+  it('draws input-window ticks without a transition strip for dense tree-only timelines', () => {
+    const segments = Array.from({ length: 100 }, () => ({ isFullTree: true }));
+    const timelineData = {
+      segmentDurations: segments.map(() => 1000),
+      totalDuration: 100000,
+      cumulativeDurations: segments.map((_, index) => (index + 1) * 1000)
+    };
+    const container = makeContainer(800, 120);
+    const renderer = new DeckTimelineRenderer(timelineData, segments).init(container);
+
+    const stripTrackLayer = renderer.deck.props.layers.find(l => l.id === 'strip-track-layer');
+    const tickLayer = renderer.deck.props.layers.find(l => l.id === 'anchor-tick-layer');
+    const anchorLayer = renderer.deck.props.layers.find(l => l.id === 'anchor-layer');
+    expect(stripTrackLayer).to.exist;
+    expect(stripTrackLayer.props.data).to.have.length(0);
+    expect(tickLayer).to.exist;
+    expect(tickLayer.props.data).to.have.length(100);
+    expect(anchorLayer.props.data).to.have.length(0);
+  });
+
+  it('draws a transition strip for dense timelines with transition frames', () => {
+    const segments = Array.from({ length: 100 }, (_, index) => ({
+      isFullTree: index % 2 === 0
+    }));
+    const timelineData = {
+      segmentDurations: segments.map(() => 1000),
+      totalDuration: 100000,
+      cumulativeDurations: segments.map((_, index) => (index + 1) * 1000)
+    };
+    const container = makeContainer(800, 120);
+    const renderer = new DeckTimelineRenderer(timelineData, segments).init(container);
+
+    const stripTrackLayer = renderer.deck.props.layers.find(l => l.id === 'strip-track-layer');
+    expect(stripTrackLayer).to.exist;
+    expect(stripTrackLayer.props.data).to.have.length(1);
+  });
+
   it('reflects selection in selection layers', () => {
     const { timelineData, segments } = makeTimelineFixture();
     const container = makeContainer();

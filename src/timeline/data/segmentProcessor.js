@@ -1,4 +1,4 @@
-import { getDevicePixelRatio, createSnapFunction, createAnchor, createConnection } from '../utils/layerFactories.js';
+import { getDevicePixelRatio, createSnapFunction, createAnchor, createAnchorTick, createConnection, createStripTrack } from '../utils/layerFactories.js';
 import { msToX } from '../math/coordinateUtils.js';
 
 const SEPARATOR_HEIGHT_FRACTION = 0.8;
@@ -19,8 +19,11 @@ export function processSegments({
 }) {
   if (!timelineData?.cumulativeDurations || !Array.isArray(segments) || segments.length === 0) {
     return {
+      anchorTicks: [],
+      stripTracks: [],
       separators: [],
       anchorPoints: [],
+      activeAnchorTicks: [],
       selectionAnchors: [],
       hoverAnchors: [],
       connections: [],
@@ -33,11 +36,18 @@ export function processSegments({
   const { cumulativeDurations } = timelineData;
 
   const anchorTrees = { normal: [], selected: [], hovered: [] };
+  const anchorTicks = { normal: [], active: [] };
   const transitions = { normal: [], selected: [], hovered: [] };
   const separators = [];
+  const hasTransitions = segments.some(segment => segment && !segment.isFullTree);
+  const markerProfile = getMarkerProfile(segments, width, theme);
+  const stripTracks = markerProfile.mode === 'strip' && hasTransitions
+    ? [createStripTrack(width, snap)]
+    : [];
 
   for (let i = startIdx; i <= endIdx; i++) {
     const segment = segments[i];
+
     const segmentStart = cumulativeDurations[i - 1] ?? 0;
     const segmentEnd = cumulativeDurations[i];
 
@@ -49,13 +59,22 @@ export function processSegments({
     const startX = msToX(segmentStart, rangeStart, rangeEnd, width);
     const endX = msToX(segmentEnd, rangeStart, rangeEnd, width);
 
-    const separator = createSeparator(startX, width, height, snap);
+    const separator = createSeparator(startX, width, height, snap, markerProfile.mode);
     if (separator) separators.push(separator);
 
     if (segment.isFullTree) {
+      if (markerProfile.mode === 'strip') {
+        const tick = createAnchorTick(startX, endX, width, height, theme, snap);
+        if (tick) {
+          const bucket = state === 'selected' || state === 'hovered' ? 'active' : 'normal';
+          anchorTicks[bucket].push(tick);
+        }
+        continue;
+      }
+
       const anchor = createAnchor(
         segmentId, startX, endX, width, height,
-        theme.anchorFillRGB, theme.anchorStrokeRGB, theme.anchorRadiusVar, zoomScale, snap
+        theme, zoomScale, snap
       );
       if (anchor) anchorTrees[state].push(anchor);
     } else {
@@ -68,8 +87,11 @@ export function processSegments({
   }
 
   return {
+    anchorTicks: anchorTicks.normal,
+    stripTracks,
     separators,
     anchorPoints: anchorTrees.normal,
+    activeAnchorTicks: anchorTicks.active,
     selectionAnchors: anchorTrees.selected,
     hoverAnchors: anchorTrees.hovered,
     connections: transitions.normal,
@@ -78,12 +100,25 @@ export function processSegments({
   };
 }
 
-function createSeparator(x, width, height, snap) {
+function getMarkerProfile(segments, width, theme) {
+  const anchorCount = segments.reduce((count, segment) => count + (segment?.isFullTree ? 1 : 0), 0);
+  if (anchorCount <= 1) return { mode: 'circle', anchorCount };
+
+  const pixelsPerAnchor = width / anchorCount;
+  if (pixelsPerAnchor < theme.anchorDenseThresholdPx) return { mode: 'strip', anchorCount };
+  return { mode: 'circle', anchorCount };
+}
+
+function createSeparator(x, width, height, snap, markerMode) {
+  if (markerMode === 'strip') return null;
+
   const centeredX = snap(x - width / 2);
-  const h = Math.max(MIN_SEPARATOR_HEIGHT, Math.floor(height * SEPARATOR_HEIGHT_FRACTION));
+  const heightFraction = SEPARATOR_HEIGHT_FRACTION;
+  const h = Math.max(MIN_SEPARATOR_HEIGHT, Math.floor(height * heightFraction));
   const halfHeight = h / 2;
 
   return {
+    markerMode,
     path: [
       [centeredX, -halfHeight],
       [centeredX, halfHeight]

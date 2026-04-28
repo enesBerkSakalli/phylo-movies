@@ -5,7 +5,7 @@ import { GripVertical, Eye, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { AppTooltip } from '@/components/ui/app-tooltip';
 import { ClipboardSection } from './clipboard/ClipboardSection.jsx';
 import { InterpolationCoordinateSection } from './interpolation/InterpolationCoordinateSection.jsx';
 import { InterpolationSection } from './interpolation/InterpolationSection.jsx';
@@ -39,21 +39,18 @@ export function HUD() {
   if (!isVisible) {
     return (
       <div className="phylo-hud-restore absolute bottom-48 left-4 z-50 pointer-events-auto">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              type="button"
-              size="icon-xs"
-              variant="outline"
-              className="border-sidebar-border bg-sidebar/90 shadow-lg backdrop-blur-md"
-              aria-label="Show timeline status display"
-              onClick={() => setIsVisible(true)}
-            >
-              <Eye className="size-3.5" aria-hidden />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="top">Show HUD</TooltipContent>
-        </Tooltip>
+        <AppTooltip content="Show HUD">
+          <Button
+            type="button"
+            size="icon-xs"
+            variant="outline"
+            className="border-sidebar-border bg-sidebar/90 shadow-lg backdrop-blur-md"
+            aria-label="Show timeline status display"
+            onClick={() => setIsVisible(true)}
+          >
+            <Eye className="size-3.5" aria-hidden />
+          </Button>
+        </AppTooltip>
       </div>
     );
   }
@@ -65,16 +62,13 @@ export function HUD() {
         role="complementary"
         aria-label="Timeline Status Display"
       >
-        <Card className="flex items-center gap-4 px-4 py-2 shadow-lg backdrop-blur-md border-sidebar-border bg-sidebar/90 cursor-default ring-1 ring-border/50">
+        <Card className="flex items-center gap-3 px-3 py-2 shadow-lg backdrop-blur-md border-sidebar-border bg-sidebar/90 cursor-default ring-1 ring-border/50">
           {/* Drag Handle */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="hud-drag-handle cursor-grab active:cursor-grabbing p-1 -ml-2 hover:bg-accent rounded transition-colors duration-200">
-                <GripVertical className="size-3.5 text-muted-foreground" />
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="top">Drag to move HUD</TooltipContent>
-          </Tooltip>
+          <AppTooltip content="Drag to move HUD">
+            <div className="hud-drag-handle cursor-grab active:cursor-grabbing p-1 -ml-2 hover:bg-accent rounded transition-colors duration-200">
+              <GripVertical className="size-3.5 text-muted-foreground" />
+            </div>
+          </AppTooltip>
 
           <InterpolationCoordinateSection />
 
@@ -100,21 +94,18 @@ export function HUD() {
 
           <Separator orientation="vertical" className="h-6" />
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                size="icon-xs"
-                variant="ghost"
-                className="-mr-2 size-6 text-muted-foreground hover:text-foreground"
-                aria-label="Hide timeline status display"
-                onClick={() => setIsVisible(false)}
-              >
-                <X className="size-3.5" aria-hidden />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="top">Hide HUD</TooltipContent>
-          </Tooltip>
+          <AppTooltip content="Hide HUD">
+            <Button
+              type="button"
+              size="icon-xs"
+              variant="ghost"
+              className="-mr-2 size-6 text-muted-foreground hover:text-foreground"
+              aria-label="Hide timeline status display"
+              onClick={() => setIsVisible(false)}
+            >
+              <X className="size-3.5" aria-hidden />
+            </Button>
+          </AppTooltip>
         </Card>
       </div>
     </Draggable>

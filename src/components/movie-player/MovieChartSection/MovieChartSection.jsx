@@ -5,8 +5,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export function MovieChartSection({ barOptionValue, onBarOptionChange }) {
   return (
     <div className="w-full" role="region" aria-label="Distance Chart">
+      <div className="px-2 pb-0.5 text-2xs font-medium uppercase tracking-wider text-muted-foreground">
+        Tree distance between neighboring windows
+      </div>
       <div className="flex items-center w-full">
-        <div className="flex-1 h-[70px] relative">
+        <div className="flex-1 h-[64px] relative">
             <DistanceChart />
         </div>
         <div className="flex-none relative ml-2" role="group" aria-label="Chart controls">

@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Menu, ChevronUp, ChevronDown } from 'lucide-react';
 
 import { Separator } from '@/components/ui/separator';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { AppTooltip } from '@/components/ui/app-tooltip';
 
 // ==========================================================================
 // CONSTANTS
@@ -57,6 +57,7 @@ export function MoviePlayerBar() {
   const timelineHostRef = useRef(null);
 
   const totalSegments = movieTimelineManager?.getSegmentCount?.() ?? 0;
+  const hasTransitionSegments = movieTimelineManager?.hasTransitionSegments?.() ?? false;
 
   useEffect(() => {
     const container = timelineHostRef.current;
@@ -95,22 +96,19 @@ export function MoviePlayerBar() {
         <div className="flex flex-col gap-1">
           <div className="flex items-center justify-between" role="group" aria-label="Transport controls and chart controls">
             <div className="flex items-center gap-1 flex-wrap transition-all duration-300" role="group" aria-label="Transport controls and position">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    id="nav-toggle-button"
-                    variant="ghost"
-                    size="icon-sm"
-                    aria-label="Toggle sidebar"
-                    aria-controls="app-sidebar"
-                    aria-expanded={open ? 'true' : 'false'}
-                    onClick={handleNavigationToggle}
-                  >
-                    <Menu className="size-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Toggle sidebar</TooltipContent>
-              </Tooltip>
+              <AppTooltip content="Toggle sidebar">
+                <Button
+                  id="nav-toggle-button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Toggle sidebar"
+                  aria-controls="app-sidebar"
+                  aria-expanded={open ? 'true' : 'false'}
+                  onClick={handleNavigationToggle}
+                >
+                  <Menu className="size-4" />
+                </Button>
+              </AppTooltip>
 
               <Separator orientation="vertical" className="h-4 mx-1" />
 
@@ -148,25 +146,23 @@ export function MoviePlayerBar() {
 
               <Separator orientation="vertical" className="h-4 mx-1" />
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    aria-label={toolbarExpanded ? "Collapse toolbar" : "Expand toolbar"}
-                    aria-expanded={toolbarExpanded}
-                    onClick={() => setToolbarExpanded(!toolbarExpanded)}
-                    className="hover:bg-accent"
-                  >
-                    {toolbarExpanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{toolbarExpanded ? "Collapse toolbar" : "Expand toolbar"}</TooltipContent>
-              </Tooltip>
+              <AppTooltip content={toolbarExpanded ? "Collapse toolbar" : "Expand toolbar"}>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={toolbarExpanded ? "Collapse toolbar" : "Expand toolbar"}
+                  aria-expanded={toolbarExpanded}
+                  onClick={() => setToolbarExpanded(!toolbarExpanded)}
+                  className="hover:bg-accent"
+                >
+                  {toolbarExpanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+                </Button>
+              </AppTooltip>
             </div>
           </div>
 
           <div className="w-full">
+            <TimelineLegend hasTransitionSegments={hasTransitionSegments} />
             <div className="interpolation-timeline-container">
               <div ref={timelineHostRef} className="timeline-visual-layer" />
             </div>
@@ -210,5 +206,35 @@ export function MoviePlayerBar() {
         </div>
       )}
     </>
+  );
+}
+
+function TimelineLegend({ hasTransitionSegments }) {
+  return (
+    <div className="flex items-center gap-4 px-2 pt-1 pb-0.5 text-2xs font-medium text-muted-foreground">
+      <LegendItem markerClassName="h-4 w-0.5 rounded bg-foreground/70" label="Tree window" />
+      {hasTransitionSegments && (
+        <LegendItem markerClassName="h-1 w-5 rounded bg-amber-600/85" label="Transition frames" />
+      )}
+      <LegendItem markerClassName="h-5 w-1 rounded bg-primary" label="Current frame" />
+      <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+        <span className="flex h-3 w-4 items-end gap-0.5" aria-hidden>
+          <span className="h-1.5 w-0.5 bg-primary/70" />
+          <span className="h-2.5 w-0.5 bg-primary/70" />
+          <span className="h-1 w-0.5 bg-primary/70" />
+          <span className="h-2 w-0.5 bg-primary/70" />
+        </span>
+        <span>Tree distance</span>
+      </span>
+    </div>
+  );
+}
+
+function LegendItem({ markerClassName, label }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+      <span className={markerClassName} aria-hidden />
+      <span>{label}</span>
+    </span>
   );
 }

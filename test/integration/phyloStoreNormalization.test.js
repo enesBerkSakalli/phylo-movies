@@ -23,6 +23,20 @@ function makeMovieData() {
       },
     },
     pair_interpolation_ranges: [[0, 2]],
+    split_change_events: {
+      pair_0_2: [{ split: [0], step_range: [1, 1] }],
+    },
+    split_change_timeline: [
+      { type: 'original', global_index: 0, tree_index: 0, name: 'Tree window 1' },
+      {
+        type: 'split_event',
+        pair_key: 'pair_0_2',
+        split: [0],
+        step_range_global: [1, 1],
+        step_range_local: [1, 1],
+      },
+      { type: 'original', global_index: 2, tree_index: 1, name: 'Tree window 2' },
+    ],
     pivot_edge_tracking: [null, [0], null],
     subtree_tracking: [null, [[1]], null],
     sorted_leaves: ['taxon-a', 'taxon-b'],

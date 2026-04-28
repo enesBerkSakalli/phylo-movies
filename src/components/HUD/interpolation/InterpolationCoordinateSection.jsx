@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { Film } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { AppTooltip } from '@/components/ui/app-tooltip';
 import { getIndexMappings } from '@/domain/indexing/IndexMapping';
 import { useAppStore } from '@/state/phyloStore/store.js';
 import {
@@ -32,10 +32,10 @@ export function InterpolationCoordinateSection() {
   const { interpolationText, sequenceIndex } = useMemo(() => {
     const { sequenceIndex, totalSequenceLength } = getIndexMappings(proxyState);
     return {
-      interpolationText: buildInterpolationText(sequenceIndex, totalSequenceLength, timelineProgress, animationProgress, playing),
+      interpolationText: buildInterpolationText(sequenceIndex, totalSequenceLength, transitionResolver, timelineProgress, animationProgress, playing),
       sequenceIndex,
     };
-  }, [proxyState, timelineProgress, animationProgress, playing]);
+  }, [proxyState, transitionResolver, timelineProgress, animationProgress, playing]);
 
   const sliderMax = Math.max(0, treeListLength - 1);
   const sliderValue = Math.min(sliderMax, Math.max(0, sequenceIndex || 0));
@@ -55,23 +55,22 @@ export function InterpolationCoordinateSection() {
     <div className="flex items-center gap-2">
       <Film className="size-3.5 text-primary" aria-hidden />
       <div className="flex flex-col gap-0">
-        <span className="text-2xs font-medium text-muted-foreground uppercase tracking-wider">Coordinate</span>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span id="hudPositionInfo" aria-live="polite" className="text-xs font-bold text-foreground tabular-nums cursor-help hover:text-primary/80 transition-colors">
-              {typeof interpolationText === 'object' ? interpolationText.display : interpolationText}
-            </span>
-          </TooltipTrigger>
-          <TooltipContent side="top" className="border-border/60 bg-popover text-2xs font-mono text-popover-foreground">
+        <span className="text-2xs font-medium text-muted-foreground uppercase tracking-wider">Position</span>
+        <AppTooltip
+          content={
             <div className="space-y-1">
-              <div>Timeline coordinate, 0=start and 1=end.</div>
-              <div>Full precision:</div>
+              <div>Timeline coordinate, 0=start and 1=end:</div>
               <div className="font-bold text-primary tabular-nums">
                 {typeof interpolationText === 'object' ? interpolationText.fullPrecision : interpolationText}
               </div>
             </div>
-          </TooltipContent>
-        </Tooltip>
+          }
+          contentClassName="border-border/60 bg-popover text-2xs font-mono text-popover-foreground"
+        >
+          <span id="hudPositionInfo" aria-live="polite" className="text-xs font-bold text-foreground cursor-help hover:text-primary/80 transition-colors max-w-[7.5rem] truncate">
+            {typeof interpolationText === 'object' ? interpolationText.display : interpolationText}
+          </span>
+        </AppTooltip>
       </div>
       <Slider
         aria-label="Interpolation position"
@@ -81,7 +80,7 @@ export function InterpolationCoordinateSection() {
         value={[sliderValue]}
         disabled={!canScrub}
         onValueCommit={onSliderCommit}
-        className="w-20 ml-1"
+        className="w-16 ml-1"
       />
     </div>
   );

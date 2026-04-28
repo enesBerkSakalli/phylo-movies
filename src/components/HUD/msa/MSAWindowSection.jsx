@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Dna } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { AppTooltip } from '@/components/ui/app-tooltip';
 import { useAppStore } from '@/state/phyloStore/store.js';
 import {
   buildMsaWindow,
@@ -42,28 +42,18 @@ export function MSAWindowSection() {
           <span id="hudWindowEnd">{msaWindow?.endPosition ?? msaWindowSize ?? 100}</span>
         </div>
         <div className="flex items-center gap-3 text-xs font-semibold text-foreground tabular-nums">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex items-center gap-1 px-2 py-1 rounded bg-primary/10 border border-primary/20 hover:border-primary/40 transition-colors cursor-help">
-                <span className="text-2xs text-muted-foreground">Size:</span>
-                <span className="text-primary">{msaWindowSize ?? '—'}</span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="text-2xs">
-              Window size in alignment positions
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex items-center gap-1 px-2 py-1 rounded bg-primary/10 border border-primary/20 hover:border-primary/40 transition-colors cursor-help">
-                <span className="text-2xs text-muted-foreground">Step:</span>
-                <span className="text-primary">{msaStepSize ?? '—'}</span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="text-2xs">
-              Step size between frames
-            </TooltipContent>
-          </Tooltip>
+          <AppTooltip content="Window size in alignment positions" contentClassName="text-2xs">
+            <div className="flex items-center gap-1 px-2 py-1 rounded bg-primary/10 border border-primary/20 hover:border-primary/40 transition-colors cursor-help">
+              <span className="text-2xs text-muted-foreground">Size:</span>
+              <span className="text-primary">{msaWindowSize ?? '—'}</span>
+            </div>
+          </AppTooltip>
+          <AppTooltip content="Step size between frames" contentClassName="text-2xs">
+            <div className="flex items-center gap-1 px-2 py-1 rounded bg-primary/10 border border-primary/20 hover:border-primary/40 transition-colors cursor-help">
+              <span className="text-2xs text-muted-foreground">Step:</span>
+              <span className="text-primary">{msaStepSize ?? '—'}</span>
+            </div>
+          </AppTooltip>
         </div>
       </div>
     </div>

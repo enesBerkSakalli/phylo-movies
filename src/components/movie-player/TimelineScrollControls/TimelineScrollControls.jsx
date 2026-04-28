@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { AppTooltip } from '@/components/ui/app-tooltip';
 import { ChevronsLeft, ChevronsRight, ZoomOut, ZoomIn, Scan } from 'lucide-react';
 import { useAppStore } from '@/state/phyloStore/store.js';
 
@@ -42,78 +42,70 @@ export function TimelineScrollControls() {
 
   return (
     <>
-      <div className="timeline-zoom-controls flex items-center" role="group" aria-label="Timeline zoom controls">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              id="zoomOutBtn"
-              variant="ghost"
-              size="icon"
-              onClick={handleZoomOut}
-            >
-              <ZoomOut className="size-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Zoom out timeline (Ctrl + -)</TooltipContent>
-        </Tooltip>
+      <div className="timeline-zoom-controls flex items-center gap-1" role="group" aria-label="Timeline zoom controls">
+        <span className="text-2xs font-medium uppercase tracking-wider text-muted-foreground px-1">Timeline zoom</span>
+        <AppTooltip content="Zoom out timeline (Ctrl + -)">
+          <Button
+            id="zoomOutBtn"
+            variant="ghost"
+            size="icon"
+            aria-label="Zoom out timeline"
+            onClick={handleZoomOut}
+          >
+            <ZoomOut className="size-4" />
+          </Button>
+        </AppTooltip>
 
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              id="fitToWindowBtn"
-              variant="ghost"
-              size="icon"
-              onClick={handleFitTimeline}
-            >
-              <Scan className="size-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Fit entire timeline to window (Ctrl + 0)</TooltipContent>
-        </Tooltip>
+        <AppTooltip content="Fit entire timeline to window (Ctrl + 0)">
+          <Button
+            id="fitToWindowBtn"
+            variant="ghost"
+            size="icon"
+            aria-label="Fit entire timeline to window"
+            onClick={handleFitTimeline}
+          >
+            <Scan className="size-4" />
+          </Button>
+        </AppTooltip>
 
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              id="zoomInBtn"
-              variant="ghost"
-              size="icon"
-              onClick={handleZoomIn}
-            >
-              <ZoomIn className="size-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Zoom in timeline (Ctrl + +)</TooltipContent>
-        </Tooltip>
+        <AppTooltip content="Zoom in timeline (Ctrl + +)">
+          <Button
+            id="zoomInBtn"
+            variant="ghost"
+            size="icon"
+            aria-label="Zoom in timeline"
+            onClick={handleZoomIn}
+          >
+            <ZoomIn className="size-4" />
+          </Button>
+        </AppTooltip>
       </div>
 
-      <div className="timeline-scroll-controls flex items-center" role="group" aria-label="Timeline scroll controls">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              id="scrollToStartBtn"
-              variant="ghost"
-              size="icon"
-              onClick={handleScrollToStart}
-            >
-              <ChevronsLeft className="size-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Scroll to start (Home)</TooltipContent>
-        </Tooltip>
+      <div className="timeline-scroll-controls flex items-center gap-1" role="group" aria-label="Timeline scroll controls">
+        <span className="text-2xs font-medium uppercase tracking-wider text-muted-foreground px-1">Timeline pan</span>
+        <AppTooltip content="Scroll to start (Home)">
+          <Button
+            id="scrollToStartBtn"
+            variant="ghost"
+            size="icon"
+            aria-label="Scroll timeline to start"
+            onClick={handleScrollToStart}
+          >
+            <ChevronsLeft className="size-4" />
+          </Button>
+        </AppTooltip>
 
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              id="scrollToEndBtn"
-              variant="ghost"
-              size="icon"
-              onClick={handleScrollToEnd}
-            >
-              <ChevronsRight className="size-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Scroll to end (End)</TooltipContent>
-        </Tooltip>
+        <AppTooltip content="Scroll to end (End)">
+          <Button
+            id="scrollToEndBtn"
+            variant="ghost"
+            size="icon"
+            aria-label="Scroll timeline to end"
+            onClick={handleScrollToEnd}
+          >
+            <ChevronsRight className="size-4" />
+          </Button>
+        </AppTooltip>
       </div>
     </>
   );

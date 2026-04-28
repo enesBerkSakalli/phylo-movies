@@ -18,32 +18,65 @@ export const selectClearClipboard = (s) => s.clearClipboard;
 
 const clamp01 = (value) => Math.max(0, Math.min(1, value || 0));
 
-export function buildInterpolationText(sequenceIndex, totalSequenceLength, timelineProgress, animationProgress, playing) {
+export function buildInterpolationText(sequenceIndex, totalSequenceLength, transitionResolver, timelineProgress, animationProgress, playing) {
+  const coordinateValue = getCoordinateValue(sequenceIndex, totalSequenceLength, timelineProgress, animationProgress, playing);
+  return {
+    display: buildReadablePositionText(sequenceIndex, totalSequenceLength, transitionResolver),
+    fullPrecision: coordinateValue.toString()
+  };
+}
+
+function getCoordinateValue(sequenceIndex, totalSequenceLength, timelineProgress, animationProgress, playing) {
+  const explicitValue = typeof timelineProgress === 'number' ? timelineProgress : null;
+  if (explicitValue != null) return clamp01(explicitValue);
+
   if (playing && typeof animationProgress === 'number') {
-    const clamped = clamp01(animationProgress);
-    return {
-      display: `${clamped.toFixed(4)}`,
-      fullPrecision: clamped.toString()
-    };
+    return clamp01(animationProgress);
   }
 
-  const explicitValue = typeof timelineProgress === 'number' ? timelineProgress : null;
   const derivedValue = totalSequenceLength > 1 ? (sequenceIndex / (totalSequenceLength - 1)) : 0;
-  const interpolationValue = clamp01(explicitValue ?? derivedValue);
-  return {
-    display: `${interpolationValue.toFixed(4)}`,
-    fullPrecision: interpolationValue.toString()
-  };
+  return clamp01(derivedValue);
+}
+
+function buildReadablePositionText(sequenceIndex, totalSequenceLength, transitionResolver) {
+  const anchorIndices = transitionResolver?.fullTreeIndices || [];
+  const safeSequenceIndex = Number.isFinite(sequenceIndex) ? sequenceIndex : 0;
+
+  if (!anchorIndices.length) {
+    return `Frame ${safeSequenceIndex + 1} of ${Math.max(1, totalSequenceLength)}`;
+  }
+
+  const anchorAtPosition = anchorIndices.indexOf(safeSequenceIndex);
+  if (anchorAtPosition >= 0) {
+    return `Window ${anchorAtPosition + 1}/${anchorIndices.length}`;
+  }
+
+  let previousAnchorIdx = -1;
+  for (let i = anchorIndices.length - 1; i >= 0; i--) {
+    if (anchorIndices[i] < safeSequenceIndex) {
+      previousAnchorIdx = i;
+      break;
+    }
+  }
+
+  const nextAnchorIdx = previousAnchorIdx + 1;
+  if (previousAnchorIdx >= 0 && nextAnchorIdx < anchorIndices.length) {
+    const from = anchorIndices[previousAnchorIdx];
+    const to = anchorIndices[nextAnchorIdx];
+    const frameCount = Math.max(1, to - from - 1);
+    const frameNumber = Math.max(1, Math.min(frameCount, safeSequenceIndex - from));
+    return `${previousAnchorIdx + 1}->${nextAnchorIdx + 1} frame ${frameNumber}/${frameCount}`;
+  }
+
+  return `Frame ${safeSequenceIndex + 1} of ${Math.max(1, totalSequenceLength)}`;
 }
 
 export function buildSegmentText(sequenceIndex, transitionResolver) {
   const anchorIndices = transitionResolver?.fullTreeIndices || [];
-  if (!anchorIndices.length) return 'Between tree windows';
+  if (!anchorIndices.length) return 'Timeline frame';
 
   const anchorAtPosition = anchorIndices.indexOf(sequenceIndex);
-  if (anchorAtPosition === 0) return 'Start (tree window 1)';
-  if (anchorAtPosition === anchorIndices.length - 1) return `End (tree window ${anchorAtPosition + 1})`;
-  if (anchorAtPosition > 0) return `Tree window ${anchorAtPosition + 1}`;
+  if (anchorAtPosition >= 0) return 'Tree window';
 
   let previousAnchorIdx = 0;
   for (let i = anchorIndices.length - 1; i >= 0; i--) {
@@ -55,14 +88,10 @@ export function buildSegmentText(sequenceIndex, transitionResolver) {
   const nextAnchorIdx = previousAnchorIdx + 1;
 
   if (nextAnchorIdx < anchorIndices.length) {
-    const from = anchorIndices[previousAnchorIdx];
-    const to = anchorIndices[nextAnchorIdx];
-    const span = Math.max(1, to - from);
-    const pct = Math.round(((sequenceIndex - from) / span) * 100);
-    return `Transition ${previousAnchorIdx + 1} → ${nextAnchorIdx + 1} (${pct}%)`;
+    return `Transition ${previousAnchorIdx + 1} -> ${nextAnchorIdx + 1}`;
   }
 
-  return `End (tree window ${previousAnchorIdx + 1})`;
+  return 'Tree window';
 }
 
 export function buildMsaWindow(hasMsa, indexState, msaStepSize, msaWindowSize, msaColumnCount) {

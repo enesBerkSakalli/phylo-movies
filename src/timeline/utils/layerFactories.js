@@ -32,7 +32,11 @@ export function createPathLayer(id, data, color, width, options = {}) {
     },
     ...options
   };
-  props.getColor = Array.isArray(color) ? color : (d => d.color);
+  if (Array.isArray(color)) {
+    props.getColor = color;
+  } else if (!props.getColor) {
+    props.getColor = d => d.color;
+  }
   return new PathLayer(props);
 }
 
@@ -61,9 +65,31 @@ export function createAnchorLayer(anchorPoints, anchorStrokeWidth) {
     stroked: true,
     filled: true,
     getRadius: d => d.radius,
-    lineWidthMinPixels: anchorStrokeWidth,
+    getLineWidth: d => d.lineWidth ?? anchorStrokeWidth,
     radiusUnits: 'pixels'
   });
+}
+
+export function createAnchorTickLayer(anchorTicks, theme, active = false) {
+  return createPathLayer(
+    active ? 'active-anchor-tick-layer' : 'anchor-tick-layer',
+    anchorTicks,
+    active
+      ? [theme.scrubberCoreRGB[0], theme.scrubberCoreRGB[1], theme.scrubberCoreRGB[2], 255]
+      : [theme.anchorTickRGB[0], theme.anchorTickRGB[1], theme.anchorTickRGB[2], theme.anchorTickAlpha],
+    active ? theme.activeAnchorTickWidth : theme.anchorTickWidth,
+    { capRounded: true }
+  );
+}
+
+export function createStripTrackLayer(stripTracks, theme) {
+  return createPathLayer(
+    'strip-track-layer',
+    stripTracks,
+    [theme.stripTrackRGB[0], theme.stripTrackRGB[1], theme.stripTrackRGB[2], theme.stripTrackAlpha],
+    theme.stripTrackWidth,
+    { capRounded: true }
+  );
 }
 
 export function createConnectionLayer(connections, connectionWidth) {
@@ -111,7 +137,12 @@ export function createAnchorSelectionLayer(selectionAnchors, theme) {
 }
 
 export function createSeparatorLayer(separators, theme, widthOverride = 1) {
-  return createPathLayer('separator-layer', separators, [theme.separatorRGB[0], theme.separatorRGB[1], theme.separatorRGB[2], 80], widthOverride);
+  return createPathLayer('separator-layer', separators, null, widthOverride, {
+    getColor: d => {
+      const alpha = d.markerMode === 'circle' ? theme.separatorAlpha : theme.separatorDenseAlpha;
+      return [theme.separatorRGB[0], theme.separatorRGB[1], theme.separatorRGB[2], alpha];
+    }
+  });
 }
 
 /**
@@ -192,18 +223,44 @@ function calculateConnectionGaps(i, segments, anchorRadius, gapDefault) {
   };
 }
 
-export function createAnchor(id, x0, x1, width, height, anchorFillRGB, anchorStrokeRGB, anchorRadiusVar, zoomScale, snap) {
+export function createAnchor(id, x0, x1, width, height, theme, zoomScale, snap) {
   const center = (x0 + x1) / 2;
-  const radius = calculateRadius(anchorRadiusVar, height, zoomScale);
+  const radius = calculateRadius(theme.anchorRadiusVar, height, zoomScale);
   const centeredX = toCanvasCentered(center, width);
   const clampedX = clampToViewport(centeredX, radius, width);
 
   return {
     id,
     position: [snap(clampedX), 0],
-    fillColor: rgba(...anchorFillRGB),
-    borderColor: rgba(...anchorStrokeRGB),
-    radius
+    fillColor: rgba(...theme.anchorFillRGB),
+    borderColor: rgba(...theme.anchorStrokeRGB),
+    radius,
+    lineWidth: theme.anchorStrokeWidth
+  };
+}
+
+export function createAnchorTick(x0, x1, width, height, theme, snap) {
+  const center = (x0 + x1) / 2;
+  const x = snap(toCanvasCentered(center, width));
+  const halfHeight = Math.max(5, Math.min(11, height * 0.34));
+
+  return {
+    path: [
+      [x, -halfHeight],
+      [x, halfHeight]
+    ]
+  };
+}
+
+export function createStripTrack(width, snap) {
+  const left = snap(-width / 2);
+  const right = snap(width / 2);
+
+  return {
+    path: [
+      [left, 0],
+      [right, 0]
+    ]
   };
 }
 
