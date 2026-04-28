@@ -11,7 +11,7 @@ import {
   SidebarMenuSubItem
 } from '@/components/ui/sidebar';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
-import { ChevronDown, Link, Box, Info } from 'lucide-react';
+import { ChevronDown, Link, Box, Info, Tag } from 'lucide-react';
 import { FocusHighlightingSection } from './FocusHighlightingSection';
 import { PivotEdgeEffectsSection } from './PivotEdgeEffectsSection';
 import { Switch } from '@/components/ui/switch';
