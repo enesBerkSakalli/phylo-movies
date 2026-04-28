@@ -162,10 +162,7 @@ export const createPlaybackSlice = (set, get) => ({
   // ACTIONS: Scrubbing / Timeline Progress
   // ==========================================================================
   updateTimelineState: (timelineState) => {
-    const { timelineProgress: existingProgress } = get();
-    const newTimelineProgress = existingProgress != null
-      ? existingProgress
-      : clamp(timelineState.timelineProgress, 0, 1);
+    const newTimelineProgress = clamp(timelineState.timelineProgress, 0, 1);
 
     set({
       currentSegmentIndex: timelineState.currentSegmentIndex,
