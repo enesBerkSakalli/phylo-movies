@@ -163,8 +163,10 @@ function leafKey(leaf) {
 // EXPORTS
 // ============================================================================
 
-// CommonJS export for tests that use require()
-module.exports = Object.assign(module.exports || {}, {
-  computeExtensionChangeMetrics,
-  classifyExtensionChanges
-});
+// CommonJS export for tests that use require() through Babel.
+if (typeof module !== 'undefined') {
+  module.exports = Object.assign(module.exports || {}, {
+    computeExtensionChangeMetrics,
+    classifyExtensionChanges
+  });
+}

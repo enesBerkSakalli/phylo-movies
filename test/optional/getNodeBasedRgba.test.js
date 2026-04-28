@@ -20,8 +20,9 @@ describe('getNodeBasedRgba', () => {
       getNodeBaseColor: () => '#000000',
       isNodeSourceEdge: () => false,
       isNodeDestinationEdge: () => false,
-      hasActiveChangeEdges: () => false,
-      isNodeDownstreamOfAnyActiveChangeEdge: () => false,
+      isNodePivotEdge: () => false,
+      hasPivotEdges: () => false,
+      isNodeDownstreamOfAnyPivotEdge: () => false,
       sharedMarkedJumpingSubtrees: []
     };
 
@@ -58,11 +59,11 @@ describe('getNodeBasedRgba', () => {
     expect(result).to.deep.equal([17, 34, 51, 128]); // 0.5 * 255 rounded
   });
 
-  it('applies dimming when active change edges are present and node is unrelated', () => {
+  it('applies dimming when pivot edges are present and node is unrelated', () => {
     cached.dimmingEnabled = true;
     cached.dimmingOpacity = 0.3;
-    colorManager.hasActiveChangeEdges = () => true;
-    colorManager.isNodeDownstreamOfAnyActiveChangeEdge = () => false;
+    colorManager.hasPivotEdges = () => true;
+    colorManager.isNodeDownstreamOfAnyPivotEdge = () => false;
 
     const result = getNodeBasedRgba(node, 1, cached, helpers);
 
