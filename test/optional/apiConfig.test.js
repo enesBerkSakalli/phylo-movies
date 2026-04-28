@@ -4,15 +4,18 @@ import { getApiBaseUrl, resolveApiUrl, isElectron } from '../../src/services/dat
 describe('apiConfig - Multi-platform URL Resolution', () => {
   // Save original window if it exists (though it shouldn't in node)
   const originalWindow = global.window;
+  const originalWarn = console.warn;
 
   beforeEach(() => {
     // Reset global.window before each test
     global.window = undefined;
+    console.warn = () => {};
   });
 
   after(() => {
     // Restore global.window after all tests
     global.window = originalWindow;
+    console.warn = originalWarn;
   });
 
   describe('Web Mode Detection', () => {
