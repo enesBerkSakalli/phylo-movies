@@ -5,10 +5,6 @@ const {
   classifyExtensionChanges,
 } = require('../src/treeVisualisation/utils/ChangeMetricUtils.js');
 
-// Include DeckTimelineRenderer tests (mocked deck.gl)
-require('./deck-timeline-renderer.test.js');
-
-
 describe('ChangeMetricUtils – extension deltas & classification', () => {
   const mkLeaf = (id, angle, radius) => ({
     data: { split_indices: [id] },
