@@ -622,26 +622,24 @@ describe('ChangeMetricUtils', () => {
 
   describe('classifyExtensionChanges - Input Validation', () => {
 
-    it('should return empty result when layoutFrom is null', () => {
+    it('should classify target leaves as entering when layoutFrom is null', () => {
       const layoutTo = createMockLayout([{ id: 'leaf1', angle: 0, radius: 1 }]);
       const result = classifyExtensionChanges(null, layoutTo);
 
-      expect(result).to.deep.equal({
-        enter: [],
-        update: [],
-        exit: []
-      });
+      expect(result.enter).to.have.lengthOf(1);
+      expect(result.enter[0].data.name).to.equal('leaf1');
+      expect(result.update).to.have.lengthOf(0);
+      expect(result.exit).to.have.lengthOf(0);
     });
 
-    it('should return empty result when layoutTo is null', () => {
+    it('should classify source leaves as exiting when layoutTo is null', () => {
       const layoutFrom = createMockLayout([{ id: 'leaf1', angle: 0, radius: 1 }]);
       const result = classifyExtensionChanges(layoutFrom, null);
 
-      expect(result).to.deep.equal({
-        enter: [],
-        update: [],
-        exit: []
-      });
+      expect(result.enter).to.have.lengthOf(0);
+      expect(result.update).to.have.lengthOf(0);
+      expect(result.exit).to.have.lengthOf(1);
+      expect(result.exit[0].data.name).to.equal('leaf1');
     });
 
     it('should handle empty layouts', () => {
@@ -700,8 +698,7 @@ describe('ChangeMetricUtils', () => {
 
       expect(result.enter).to.have.lengthOf(0);
       expect(result.update).to.have.lengthOf(1);
-      expect(result.update[0].from.data.name).to.equal('leaf1');
-      expect(result.update[0].to.data.name).to.equal('leaf1');
+      expect(result.update[0].data.name).to.equal('leaf1');
       expect(result.exit).to.have.lengthOf(0);
     });
 
@@ -720,8 +717,7 @@ describe('ChangeMetricUtils', () => {
       expect(result.enter).to.have.lengthOf(1);
       expect(result.enter[0].data.name).to.equal('leaf3');
       expect(result.update).to.have.lengthOf(1);
-      expect(result.update[0].from.data.name).to.equal('leaf2');
-      expect(result.update[0].to.data.name).to.equal('leaf2');
+      expect(result.update[0].data.name).to.equal('leaf2');
       expect(result.exit).to.have.lengthOf(1);
       expect(result.exit[0].data.name).to.equal('leaf1');
     });
@@ -748,10 +744,8 @@ describe('ChangeMetricUtils', () => {
 
       const result = classifyExtensionChanges(layoutFrom, layoutTo);
 
-      expect(result.update[0].to.angle).to.equal(Math.PI);
-      expect(result.update[0].to.radius).to.equal(2);
-      expect(result.update[0].from.angle).to.equal(0);
-      expect(result.update[0].from.radius).to.equal(1);
+      expect(result.update[0].angle).to.equal(Math.PI);
+      expect(result.update[0].radius).to.equal(2);
     });
 
     it('should return leaf nodes from layoutFrom for exit', () => {
@@ -803,8 +797,7 @@ describe('ChangeMetricUtils', () => {
       // Only leaf1 is compared/updated
       expect(metrics.compared).to.equal(1);
       expect(classifications.update.length).to.equal(1);
-      expect(classifications.update[0].from.data.name).to.equal('leaf1');
-      expect(classifications.update[0].to.data.name).to.equal('leaf1');
+      expect(classifications.update[0].data.name).to.equal('leaf1');
     });
   });
 

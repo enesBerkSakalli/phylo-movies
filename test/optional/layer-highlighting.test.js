@@ -54,7 +54,7 @@ let mockStoreState = {
   dimmingOpacity: 0.3,
   linkConnectionOpacity: 0.6,
   changePulseEnabled: false,
-  activeEdgeDashingEnabled: false,
+  pivotEdgeDashingEnabled: false,
   getPulseOpacity: () => 1.0,
   getColorManager: () => ({
     hasPivotEdges: () => false,
@@ -64,7 +64,11 @@ let mockStoreState = {
     getBranchColorWithHighlights: () => '#000000',
     getNodeColor: () => '#000000',
     isDownstreamOfAnyPivotEdge: () => false,
-    isNodeDownstreamOfAnyPivotEdge: () => false
+    isNodeDownstreamOfAnyPivotEdge: () => false,
+    isPivotEdge: () => false,
+    isNodePivotEdge: () => false,
+    isNodeSourceEdge: () => false,
+    isNodeDestinationEdge: () => false
   })
 };
 
@@ -82,6 +86,7 @@ Module._load = function (request, parent, isMain) {
   if (request.includes('store.js') || request.includes('store')) return { useAppStore: mockUseAppStore };
   if (request.includes('colorUtils')) return {
     colorToRgb: (hex) => {
+      if (Array.isArray(hex)) return hex;
       // Basic hex -> RGB for testing
       const trimmed = (hex || '').replace('#', '');
       const num = parseInt(trimmed || '000000', 16);
@@ -119,7 +124,7 @@ function createMockColorManager(overrides = {}) {
   }
 
   const base = {
-    hasActiveChangeEdges: () => false,
+    hasPivotEdges: () => false,
     sharedMarkedJumpingSubtrees: subtrees,
     _markedLeavesUnion: union,
     markedSubtreesColoringEnabled: true,
@@ -128,12 +133,12 @@ function createMockColorManager(overrides = {}) {
     getBranchColorWithHighlights: () => '#000000',
     getNodeColor: () => '#000000',
     getNodeBaseColor: () => '#000000',
-    isDownstreamOfAnyActiveChangeEdge: () => false,
-    isNodeDownstreamOfAnyActiveChangeEdge: () => false,
+    isDownstreamOfAnyPivotEdge: () => false,
+    isNodeDownstreamOfAnyPivotEdge: () => false,
     isNodeSourceEdge: () => false,
     isNodeDestinationEdge: () => false,
-    isActiveChangeEdge: () => false,
-    isNodeActiveChangeEdge: () => false,
+    isPivotEdge: () => false,
+    isNodePivotEdge: () => false,
     isNodeInMarkedSubtreeFast: function(nodeData) {
       if (this._markedLeavesUnion.size === 0) return false;
       const splits = nodeData?.data?.split_indices || nodeData?.split_indices;
@@ -183,7 +188,7 @@ describe('Layer Highlighting Configuration', () => {
       dimmingOpacity: 0.3,
       linkConnectionOpacity: 0.6,
       changePulseEnabled: false,
-      activeEdgeDashingEnabled: false,
+      pivotEdgeDashingEnabled: false,
       getPulseOpacity: () => 1.0,
       getColorManager: () => createMockColorManager()
     };
@@ -191,13 +196,12 @@ describe('Layer Highlighting Configuration', () => {
   });
 
   describe('autoHighlight configuration', () => {
-    it('should enable autoHighlight on links layer', () => {
+    it('should keep main links non-pickable', () => {
       const links = [{ path: [[0, 0, 0], [1, 1, 0]], target: { data: { split_indices: [1] } } }];
       const layer = createLinksLayer(links, mockStoreState, layerStyles);
 
-      expect(layer.props.autoHighlight).to.equal(true);
-      expect(layer.props.highlightColor).to.be.an('array');
-      expect(layer.props.highlightColor).to.have.lengthOf(4);
+      expect(layer.props.pickable).to.equal(false);
+      expect(layer.props.autoHighlight).to.be.undefined;
     });
 
     it('should enable autoHighlight on nodes layer', () => {
@@ -260,23 +264,15 @@ describe('Layer Highlighting Configuration', () => {
       const links = [{ path: [[0, 0, 0], [1, 1, 0]], target: { data: { split_indices: [1] } } }];
       const layer = createLinkOutlinesLayer(links, mockStoreState, layerStyles);
 
-      // Debug: inspect props
-      console.log('linkOutlines props:', layer.props);
-
       expect(layer.props.visible).to.equal(false);
     });
 
-    it('should show link outlines when active change edges exist', () => {
+    it('should show link outlines when pivot edges exist', () => {
       const stateWithHighlights = {
         ...mockStoreState,
-        getColorManager: () => ({
-          hasActiveChangeEdges: () => true,
-          sharedMarkedJumpingSubtrees: [],
-          getBranchColor: () => '#000000',
-          getBranchColorWithHighlights: () => '#2196f3',
-          getNodeColor: () => '#000000',
-          isDownstreamOfAnyActiveChangeEdge: () => false,
-          isNodeDownstreamOfAnyActiveChangeEdge: () => false
+        getColorManager: () => createMockColorManager({
+          hasPivotEdges: () => true,
+          getBranchColorWithHighlights: () => '#2196f3'
         })
       };
 
@@ -289,14 +285,9 @@ describe('Layer Highlighting Configuration', () => {
     it('should show link outlines when marked components exist', () => {
       const stateWithMarked = {
         ...mockStoreState,
-        getColorManager: () => ({
-          hasActiveChangeEdges: () => false,
+        getColorManager: () => createMockColorManager({
           sharedMarkedJumpingSubtrees: [new Set([1, 2, 3])],
-          getBranchColor: () => '#000000',
-          getBranchColorWithHighlights: () => '#10b981',
-          getNodeColor: () => '#000000',
-          isDownstreamOfAnyActiveChangeEdge: () => false,
-          isNodeDownstreamOfAnyActiveChangeEdge: () => false
+          getBranchColorWithHighlights: () => '#10b981'
         })
       };
 
@@ -338,8 +329,8 @@ describe('Layer Highlighting Configuration', () => {
 
       const layer = createNodesLayer(nodes, mockStoreState, layerStyles);
 
-      const outsideColor = layer.props.getFillColor(nodes[0]);
-      const insideColor = layer.props.getFillColor(nodes[1]);
+      const outsideColor = layer.props.getFillColor(nodes[0]).slice();
+      const insideColor = layer.props.getFillColor(nodes[1]).slice();
 
       expect(outsideColor[3]).to.be.lessThan(insideColor[3]);
     });
@@ -359,8 +350,8 @@ describe('Layer Highlighting Configuration', () => {
 
       const layer = createExtensionsLayer(extensions, mockStoreState, layerStyles);
 
-      const outsideColor = layer.props.getColor(extensions[0]);
-      const insideColor = layer.props.getColor(extensions[1]);
+      const outsideColor = layer.props.getColor(extensions[0]).slice();
+      const insideColor = layer.props.getColor(extensions[1]).slice();
 
       expect(outsideColor[3]).to.be.lessThan(insideColor[3]);
     });
@@ -382,8 +373,8 @@ describe('Layer Highlighting Configuration', () => {
       ];
 
       const cached = layerStyles.getCachedState();
-      const outsideColor = layerStyles.getNodeColor(nodes[0], cached);
-      const insideColor = layerStyles.getNodeColor(nodes[1], cached);
+      const outsideColor = layerStyles.getNodeColor(nodes[0], cached).slice();
+      const insideColor = layerStyles.getNodeColor(nodes[1], cached).slice();
 
       expect(outsideColor[3]).to.be.lessThan(insideColor[3]);
     });
@@ -452,14 +443,14 @@ describe('LayerStyles.getCachedState() - ColorManager as Single Source of Truth'
     // Set up store with DIFFERENT subtree data (simulating stale store state)
     mockStoreState.getMarkedSubtreeData = () => [new Set([1, 2, 3])]; // This should be ignored
     mockStoreState.getColorManager = () => ({
-      hasActiveChangeEdges: () => false,
+      hasPivotEdges: () => false,
       sharedMarkedJumpingSubtrees: colorManagerSubtrees,
       getBranchColor: () => '#000000',
       getBranchColorForInnerLine: () => '#000000',
       getBranchColorWithHighlights: () => '#000000',
       getNodeColor: () => '#000000',
-      isDownstreamOfAnyActiveChangeEdge: () => false,
-      isNodeDownstreamOfAnyActiveChangeEdge: () => false
+      isDownstreamOfAnyPivotEdge: () => false,
+      isNodeDownstreamOfAnyPivotEdge: () => false
     });
 
     const cached = layerStyles.getCachedState();
@@ -479,14 +470,14 @@ describe('LayerStyles.getCachedState() - ColorManager as Single Source of Truth'
 
   it('should return empty array when ColorManager.sharedMarkedJumpingSubtrees is undefined', () => {
     mockStoreState.getColorManager = () => ({
-      hasActiveChangeEdges: () => false,
+      hasPivotEdges: () => false,
       // sharedMarkedJumpingSubtrees is undefined
       getBranchColor: () => '#000000',
       getBranchColorForInnerLine: () => '#000000',
       getBranchColorWithHighlights: () => '#000000',
       getNodeColor: () => '#000000',
-      isDownstreamOfAnyActiveChangeEdge: () => false,
-      isNodeDownstreamOfAnyActiveChangeEdge: () => false
+      isDownstreamOfAnyPivotEdge: () => false,
+      isNodeDownstreamOfAnyPivotEdge: () => false
     });
 
     const cached = layerStyles.getCachedState();
@@ -498,14 +489,14 @@ describe('LayerStyles.getCachedState() - ColorManager as Single Source of Truth'
     // First call with initial data
     const initialSubtrees = [new Set([1, 2])];
     mockStoreState.getColorManager = () => ({
-      hasActiveChangeEdges: () => false,
+      hasPivotEdges: () => false,
       sharedMarkedJumpingSubtrees: initialSubtrees,
       getBranchColor: () => '#000000',
       getBranchColorForInnerLine: () => '#000000',
       getBranchColorWithHighlights: () => '#000000',
       getNodeColor: () => '#000000',
-      isDownstreamOfAnyActiveChangeEdge: () => false,
-      isNodeDownstreamOfAnyActiveChangeEdge: () => false
+      isDownstreamOfAnyPivotEdge: () => false,
+      isNodeDownstreamOfAnyPivotEdge: () => false
     });
 
     const cached1 = layerStyles.getCachedState();
@@ -517,14 +508,14 @@ describe('LayerStyles.getCachedState() - ColorManager as Single Source of Truth'
     // Update ColorManager with new data
     const updatedSubtrees = [new Set([5, 6, 7])];
     mockStoreState.getColorManager = () => ({
-      hasActiveChangeEdges: () => false,
+      hasPivotEdges: () => false,
       sharedMarkedJumpingSubtrees: updatedSubtrees,
       getBranchColor: () => '#000000',
       getBranchColorForInnerLine: () => '#000000',
       getBranchColorWithHighlights: () => '#000000',
       getNodeColor: () => '#000000',
-      isDownstreamOfAnyActiveChangeEdge: () => false,
-      isNodeDownstreamOfAnyActiveChangeEdge: () => false
+      isDownstreamOfAnyPivotEdge: () => false,
+      isNodeDownstreamOfAnyPivotEdge: () => false
     });
 
     // Second call should get new data
@@ -539,14 +530,14 @@ describe('LayerStyles.getCachedState() - ColorManager as Single Source of Truth'
     mockStoreState.getColorManager = () => {
       callCount++;
       return {
-        hasActiveChangeEdges: () => false,
+        hasPivotEdges: () => false,
         sharedMarkedJumpingSubtrees: subtrees,
         getBranchColor: () => '#000000',
         getBranchColorForInnerLine: () => '#000000',
         getBranchColorWithHighlights: () => '#000000',
         getNodeColor: () => '#000000',
-        isDownstreamOfAnyActiveChangeEdge: () => false,
-        isNodeDownstreamOfAnyActiveChangeEdge: () => false
+        isDownstreamOfAnyPivotEdge: () => false,
+        isNodeDownstreamOfAnyPivotEdge: () => false
       };
     };
 
@@ -652,11 +643,11 @@ describe('dimmingUtils.applyDimmingWithCache() - Dimming Data Consistency', () =
     expect(opacity).to.equal(255);
   });
 
-  it('should apply active change edge dimming correctly', () => {
+  it('should apply pivot edge dimming correctly', () => {
     const colorManager = createMockColorManager({
       sharedMarkedJumpingSubtrees: [],
-      hasActiveChangeEdges: () => true,
-      isNodeDownstreamOfAnyActiveChangeEdge: (node) => node.data.isDownstream
+      hasPivotEdges: () => true,
+      isNodeDownstreamOfAnyPivotEdge: (node) => node.data.isDownstream
     });
 
     const downstreamNode = { data: { split_indices: [1], isDownstream: true } };
@@ -754,8 +745,8 @@ describe('Scrubbing Highlighting Integration', () => {
     const nodeOutsideSubtree = { position: [0, 0, 0], data: { split_indices: [999] }, opacity: 1 };
 
     const cached = layerStyles.getCachedState();
-    const colorInside = layerStyles.getNodeColor(nodeInSubtree, cached);
-    const colorOutside = layerStyles.getNodeColor(nodeOutsideSubtree, cached);
+    const colorInside = layerStyles.getNodeColor(nodeInSubtree, cached).slice();
+    const colorOutside = layerStyles.getNodeColor(nodeOutsideSubtree, cached).slice();
 
     // Node inside subtree should have higher opacity than node outside
     expect(colorInside[3]).to.be.greaterThan(colorOutside[3]);
@@ -781,8 +772,8 @@ describe('Scrubbing Highlighting Integration', () => {
     };
 
     const cached = layerStyles.getCachedState();
-    const colorInside = layerStyles.getLinkColor(linkInSubtree, cached);
-    const colorOutside = layerStyles.getLinkColor(linkOutsideSubtree, cached);
+    const colorInside = layerStyles.getLinkColor(linkInSubtree, cached).slice();
+    const colorOutside = layerStyles.getLinkColor(linkOutsideSubtree, cached).slice();
 
     // Link inside subtree should have higher opacity than link outside
     expect(colorInside[3]).to.be.greaterThan(colorOutside[3]);

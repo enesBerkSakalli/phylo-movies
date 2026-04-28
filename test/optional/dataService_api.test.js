@@ -1,32 +1,20 @@
 import { expect } from 'chai';
-import { server } from '../../src/services/data/dataService.js';
+import { resolveApiUrl } from '../../src/services/data/apiConfig.js';
 
 describe('DataService - API Integration', () => {
-  const originalFetch = global.fetch;
   const originalWindow = global.window;
 
   beforeEach(() => {
-    global.window = undefined;
-    // Mock fetch
-    global.fetch = async (url, options) => {
-      return {
-        ok: true,
-        json: async () => ({ success: true, url }), // Return the URL used for verification
-        status: 200,
-        statusText: 'OK'
-      };
-    };
+    global.window = {};
   });
 
   after(() => {
-    global.fetch = originalFetch;
     global.window = originalWindow;
   });
 
   it('should use relative path in Web Mode', async () => {
-    global.window = {}; // Simulate browser
-    const result = await server.fetchTreeData(new FormData());
-    expect(result.url).to.equal('/treedata');
+    const url = await resolveApiUrl('/treedata');
+    expect(url).to.equal('/treedata');
   });
 
   it('should use absolute Electron URL in Electron Mode', async () => {
@@ -36,7 +24,7 @@ describe('DataService - API Integration', () => {
       }
     };
 
-    const result = await server.fetchTreeData(new FormData());
-    expect(result.url).to.equal('http://localhost:9999/treedata');
+    const url = await resolveApiUrl('/treedata');
+    expect(url).to.equal('http://localhost:9999/treedata');
   });
 });

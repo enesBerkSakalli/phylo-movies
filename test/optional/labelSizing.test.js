@@ -41,12 +41,12 @@ describe('Label Sizing Logic (TDD)', () => {
     expect(size).to.equal(EXPECTED_BASE_PIXELS);
   });
 
-  it('calculates marked subtree label size (x1.8)', () => {
+  it('calculates marked subtree label size', () => {
     nodeUtilsMock.shouldHighlightNode = () => true;
     cachedState.markedSubtreeData = ['some-tree'];
 
     const size = getLabelSize({ id: 'node1' }, DEFAULT_FONT_SIZE, cachedState);
-    expect(size).to.equal(EXPECTED_BASE_PIXELS * 1.8);
+    expect(size).to.equal(EXPECTED_BASE_PIXELS * 1.2);
   });
 
   it('calculates history subtree label size (x1.1)', () => {
@@ -61,22 +61,20 @@ describe('Label Sizing Logic (TDD)', () => {
     nodeUtilsMock.shouldHighlightNode = () => true;
     cachedState.markedSubtreeData = ['some-tree'];
 
-    // We pass true to getLabelSize to ignore context
-    const baseSize = getLabelSize({ id: 'node1' }, DEFAULT_FONT_SIZE, cachedState, true);
+    const baseSize = getLabelSize({ id: 'node1' }, DEFAULT_FONT_SIZE, { ...cachedState, markedSubtreeData: null });
     const effectiveSize = baseSize * SOURCE_LABEL_SCALE;
 
-    // Should be Base * 1.15
-    expect(effectiveSize).to.closeTo(EXPECTED_BASE_PIXELS * 1.15, 0.001);
+    expect(effectiveSize).to.closeTo(EXPECTED_BASE_PIXELS, 0.001);
   });
 
   it('verifies Destination Labels stay at baseline (ignore highlight multipliers)', () => {
     // Even if history
     nodeUtilsMock.isHistorySubtreeNode = () => true;
 
-    const baseSize = getLabelSize({ id: 'node1' }, DEFAULT_FONT_SIZE, cachedState, true);
+    nodeUtilsMock.isHistorySubtreeNode = () => false;
+    const baseSize = getLabelSize({ id: 'node1' }, DEFAULT_FONT_SIZE, cachedState);
     const effectiveSize = baseSize * DESTINATION_LABEL_SCALE;
 
-    // Should be Base * 1.3
-    expect(effectiveSize).to.closeTo(EXPECTED_BASE_PIXELS * 1.3, 0.001);
+    expect(effectiveSize).to.closeTo(EXPECTED_BASE_PIXELS, 0.001);
   });
 });

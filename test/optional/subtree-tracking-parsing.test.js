@@ -121,7 +121,7 @@ describe('Tree Visualisation - Subtree Tracking & Parsing', () => {
           // Mock State
           const state = {
               subtreeTracking: [ [[1, 2]] ], // The moving subtree is {1,2}
-              activeChangeEdgeTracking: [ activeEdge ],
+              pivotEdgeTracking: [ activeEdge ],
               movieData: {
                   tree_metadata: [ { tree_pair_key: pairKey } ]
               },
@@ -165,7 +165,7 @@ describe('Tree Visualisation - Subtree Tracking & Parsing', () => {
         
         const state = {
             subtreeTracking: [ subtrees ],
-            activeChangeEdgeTracking: [ [1, 2] ], // active edge might be relevant for lookup keys
+            pivotEdgeTracking: [ [1, 2] ], // pivot edge lookup key
             movieData: { tree_metadata: [{ tree_pair_key: pairKey }] },
             pairSolutions: {
                 [pairKey]: {

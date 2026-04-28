@@ -14,9 +14,9 @@ describe('dimmingUtils', () => {
       mockColorManager = {
         isNodeSourceEdge: () => false,
         isNodeDestinationEdge: () => false,
-        hasActiveChangeEdges: () => false,
-        isNodeDownstreamOfAnyActiveChangeEdge: () => false,
-        isDownstreamOfAnyActiveChangeEdge: () => false,
+        hasPivotEdges: () => false,
+        isNodeDownstreamOfAnyPivotEdge: () => false,
+        isDownstreamOfAnyPivotEdge: () => false,
         sharedMarkedJumpingSubtrees: [],
         _markedLeavesUnion: new Set(),
         // Fast path methods for optimized subtree membership checks
@@ -40,10 +40,10 @@ describe('dimmingUtils', () => {
       };
     });
 
-    it('should not dim source/destination nodes when only active change dimming is enabled', () => {
-      // Setup: Node is Source, Active Change Dimming ON
+    it('should not dim source/destination nodes when only pivot edge dimming is enabled', () => {
+      // Setup: Node is Source, Pivot Edge Dimming ON
       mockColorManager.isNodeSourceEdge = () => true;
-      mockColorManager.hasActiveChangeEdges = () => true;
+      mockColorManager.hasPivotEdges = () => true;
 
       const result = applyDimmingWithCache(
         baseOpacity,
@@ -57,7 +57,7 @@ describe('dimmingUtils', () => {
         [] // markedSubtreeData
       );
 
-      // Should remain full opacity (Source nodes are exempt from Active Change Dimming)
+      // Should remain full opacity (source nodes are exempt from pivot edge dimming)
       expect(result).to.equal(baseOpacity);
     });
 
@@ -88,10 +88,10 @@ describe('dimmingUtils', () => {
       expect(result).to.equal(expected);
     });
 
-    it('should dim unrelated nodes when active change dimming is enabled', () => {
-         // Setup: Node unrelated, Active Change Dimming ON, Node NOT downstream
-         mockColorManager.hasActiveChangeEdges = () => true;
-         mockColorManager.isNodeDownstreamOfAnyActiveChangeEdge = () => false;
+    it('should dim unrelated nodes when pivot edge dimming is enabled', () => {
+         // Setup: Node unrelated, Pivot Edge Dimming ON, Node NOT downstream
+         mockColorManager.hasPivotEdges = () => true;
+         mockColorManager.isNodeDownstreamOfAnyPivotEdge = () => false;
 
          const result = applyDimmingWithCache(
            baseOpacity,
