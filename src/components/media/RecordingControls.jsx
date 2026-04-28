@@ -1,6 +1,6 @@
 import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { AppTooltip } from '@/components/ui/app-tooltip';
 import { CircleDot, StopCircle } from 'lucide-react';
 import { CanvasRecorder } from '@/services/media/canvasRecorder';
 import { toast } from 'sonner';
@@ -61,38 +61,32 @@ export function RecordingControls({ disabled = false }) {
     <>
       <div className="vertical-divider"></div>
 
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            id="start-record"
-            className="record-button-danger"
-            variant="ghost"
-            size="icon"
-            disabled={disabled || isRecording}
-            onClick={handleStartRecording}
-            aria-label="Start recording"
-          >
-            <CircleDot className="size-4" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>Start screen recording</TooltipContent>
-      </Tooltip>
+      <AppTooltip content="Start screen recording">
+        <Button
+          id="start-record"
+          className="record-button-danger"
+          variant="ghost"
+          size="icon"
+          disabled={disabled || isRecording}
+          onClick={handleStartRecording}
+          aria-label="Start recording"
+        >
+          <CircleDot className="size-4" />
+        </Button>
+      </AppTooltip>
 
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            id="stop-record"
-            variant="ghost"
-            size="icon"
-            disabled={disabled || !isRecording}
-            onClick={handleStopRecording}
-            aria-label="Stop recording"
-          >
-            <StopCircle className="size-4" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>Stop screen recording</TooltipContent>
-      </Tooltip>
+      <AppTooltip content="Stop screen recording">
+        <Button
+          id="stop-record"
+          variant="ghost"
+          size="icon"
+          disabled={disabled || !isRecording}
+          onClick={handleStopRecording}
+          aria-label="Stop recording"
+        >
+          <StopCircle className="size-4" />
+        </Button>
+      </AppTooltip>
     </>
   );
 }

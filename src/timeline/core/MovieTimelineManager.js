@@ -216,6 +216,10 @@ export class MovieTimelineManager {
         return this.timelineClock?.getSegmentCount() ?? 0;
     }
 
+    hasTransitionSegments() {
+        return Array.isArray(this.segments) && this.segments.some(segment => segment && !segment.isFullTree);
+    }
+
     getInterpolationDataForTimelineProgress(progress) {
         return this.timelineClock?.getInterpolationDataForProgress(progress) ?? null;
     }

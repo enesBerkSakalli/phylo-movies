@@ -5,7 +5,7 @@ if (typeof document !== 'undefined') {
 import { Deck, OrthographicView } from '@deck.gl/core';
 import { TIMELINE_CONSTANTS, TIMELINE_THEME } from '../constants.js';
 import { handleTimelineMouseMoveOrScrub, handleTimelineMouseDown, handleTimelineMouseUp, handleTimelineWheel, handleTimelineMouseLeave } from '../events/eventHandlers.js';
-import { createPathLayer, createAnchorLayer, createConnectionLayer, createAnchorHoverLayer, createConnectionHoverLayer, createAnchorSelectionLayer, createConnectionSelectionLayer, createSeparatorLayer, createScrubberLayer, getDevicePixelRatio, calculateSeparatorWidth } from '../utils/layerFactories.js';
+import { createPathLayer, createStripTrackLayer, createAnchorTickLayer, createAnchorLayer, createConnectionLayer, createAnchorHoverLayer, createConnectionHoverLayer, createAnchorSelectionLayer, createConnectionSelectionLayer, createSeparatorLayer, createScrubberLayer, getDevicePixelRatio, calculateSeparatorWidth } from '../utils/layerFactories.js';
 import { msToX, xToMs, calculateZoomScale } from '../math/coordinateUtils.js';
 import { timeToSegmentIndex } from '../utils/searchUtils.js';
 import { getTargetSegmentIndex } from '../utils/segmentUtils.js';
@@ -132,6 +132,9 @@ export class DeckTimelineRenderer {
 
   _createLayers() {
     this.separatorLayer = createSeparatorLayer([], TIMELINE_THEME);
+    this.stripTrackLayer = createStripTrackLayer([], TIMELINE_THEME);
+    this.anchorTickLayer = createAnchorTickLayer([], TIMELINE_THEME);
+    this.activeAnchorTickLayer = createAnchorTickLayer([], TIMELINE_THEME, true);
     this.connectionLayer = createConnectionLayer([], TIMELINE_THEME.connectionWidth);
     this.anchorLayer = createAnchorLayer([], TIMELINE_THEME.anchorStrokeWidth);
     this.connectionHoverLayer = createConnectionHoverLayer([], TIMELINE_THEME.connectionHoverRGB, TIMELINE_THEME.connectionHoverWidth, this._boundHoverClick);
@@ -436,7 +439,7 @@ export class DeckTimelineRenderer {
     const { rangeStart, rangeEnd, visStart, visEnd, startIdx, endIdx, zoomScale } = this._computeVisibleRange();
 
     const {
-      separators, anchorPoints, selectionAnchors, hoverAnchors,
+      anchorTicks, stripTracks, separators, anchorPoints, activeAnchorTicks, selectionAnchors, hoverAnchors,
       connections, selectionConnections, hoverConnections
     } = processSegments({
       startIdx, endIdx, width, height, visStart, visEnd, zoomScale,
@@ -449,7 +452,7 @@ export class DeckTimelineRenderer {
     });
 
     const layers = this._buildLayers({
-      separators, anchorPoints, selectionAnchors, hoverAnchors,
+      anchorTicks, stripTracks, separators, anchorPoints, activeAnchorTicks, selectionAnchors, hoverAnchors,
       connections, selectionConnections, hoverConnections,
       width, height
     });
@@ -474,22 +477,22 @@ export class DeckTimelineRenderer {
     return { rangeStart, rangeEnd, visStart, visEnd, startIdx, endIdx, zoomScale };
   }
 
-  _buildLayers({ separators, anchorPoints, selectionAnchors, hoverAnchors, connections, selectionConnections, hoverConnections, width, height }) {
+  _buildLayers({ anchorTicks, stripTracks, separators, anchorPoints, activeAnchorTicks, selectionAnchors, hoverAnchors, connections, selectionConnections, hoverConnections, width, height }) {
     const theme = TIMELINE_THEME;
     const separatorWidth = calculateSeparatorWidth(this.segments?.length || 0, theme);
 
     // Cache color arrays for updateTriggers (stable references for comparison)
-    const separatorColor = [theme.separatorRGB[0], theme.separatorRGB[1], theme.separatorRGB[2], 80];
     const hoverColor = [theme.connectionHoverRGB[0], theme.connectionHoverRGB[1], theme.connectionHoverRGB[2], 160];
     const selectionColor = [theme.connectionSelectionRGB[0], theme.connectionSelectionRGB[1], theme.connectionSelectionRGB[2], 230];
 
     return [
       this.separatorLayer.clone({
         data: separators,
-        getColor: separatorColor,
         widthMinPixels: separatorWidth,
-        updateTriggers: { getColor: separatorColor }
+        updateTriggers: { getColor: [theme.separatorAlpha, theme.separatorDenseAlpha] }
       }),
+      this.stripTrackLayer.clone({ data: stripTracks }),
+      this.anchorTickLayer.clone({ data: anchorTicks }),
       this.connectionLayer.clone({ data: connections, widthMinPixels: theme.connectionWidth }),
       this.connectionHoverLayer.clone({
         data: hoverConnections,
@@ -504,6 +507,7 @@ export class DeckTimelineRenderer {
         updateTriggers: { getColor: selectionColor }
       }),
       this.scrubberLayer.clone(createScrubberLayer(this._scrubberMs, this._rangeStart, this._rangeEnd, width, height, theme, this.isScrubbing())),
+      this.activeAnchorTickLayer.clone({ data: activeAnchorTicks }),
       this.anchorLayer.clone({ data: anchorPoints, lineWidthMinPixels: theme.anchorStrokeWidth }),
       this.anchorHoverLayer.clone({
         data: hoverAnchors,

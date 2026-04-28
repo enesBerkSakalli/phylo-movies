@@ -131,6 +131,20 @@ describe('Timeline construction from backend result', () => {
     // eslint-disable-next-line no-console
     console.log(`[timeline-construction.test] Used: ${source}`);
   });
+
+  it('rejects movie data without split-change timeline entries', () => {
+    const tree = { name: '', length: 0, split_indices: [0], children: [] };
+    const movieData = {
+      interpolated_trees: [tree, tree, tree],
+      tree_metadata: [
+        { tree_pair_key: null, step_in_pair: null, source_tree_global_index: null },
+        { tree_pair_key: null, step_in_pair: null, source_tree_global_index: null },
+        { tree_pair_key: null, step_in_pair: null, source_tree_global_index: null }
+      ]
+    };
+
+    expect(() => TimelineDataProcessor.createSegments(movieData)).to.throw(/split_change_timeline is required/);
+  });
 });
 
 describe('Active change edge mapping (small_example)', () => {

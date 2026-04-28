@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { AppTooltip } from '@/components/ui/app-tooltip';
 import { Download } from 'lucide-react';
 import { useAppStore } from '@/state/phyloStore/store.js';
 
@@ -94,20 +94,17 @@ export function SaveImageButton({ disabled = false }) {
   };
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          id="save-button"
-          variant="ghost"
-          size="icon"
-          disabled={disabled || isSaving}
-          onClick={handleSaveImage}
-          aria-label="Save PNG"
-        >
-          <Download className="size-4" />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>Save current tree visualization as PNG</TooltipContent>
-    </Tooltip>
+    <AppTooltip content="Save current tree visualization as PNG">
+      <Button
+        id="save-button"
+        variant="ghost"
+        size="icon"
+        disabled={disabled || isSaving}
+        onClick={handleSaveImage}
+        aria-label="Save PNG"
+      >
+        <Download className="size-4" />
+      </Button>
+    </AppTooltip>
   );
 }

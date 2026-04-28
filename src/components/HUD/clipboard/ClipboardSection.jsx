@@ -2,7 +2,7 @@ import React from 'react';
 import { Clipboard, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { AppTooltip } from '@/components/ui/app-tooltip';
 
 export function ClipboardSection({ clipboardTreeIndex, anchorIndices, onShowAnchor, onClear }) {
   const hasAnchors = anchorIndices.length > 0;
@@ -41,23 +41,20 @@ export function ClipboardSection({ clipboardTreeIndex, anchorIndices, onShowAnch
     <div className="flex items-center gap-3" id="hud-clipboard-section">
       <Clipboard className="size-3.5 text-primary" aria-hidden />
       <div className="flex flex-col gap-0">
-        <span className="text-2xs font-medium text-muted-foreground uppercase tracking-wider">Clipboard</span>
+        <span className="text-2xs font-medium text-muted-foreground uppercase tracking-wider">Compare with</span>
         <div className="flex items-center gap-1 mt-1">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-5 w-5 hover:bg-accent rounded-sm"
-                onClick={handlePrevAnchor}
-                disabled={!hasAnchors}
-                aria-label="Previous tree window"
-              >
-                <ChevronLeft className="size-3" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Previous tree window</TooltipContent>
-          </Tooltip>
+          <AppTooltip content="Previous comparison tree window">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5 hover:bg-accent rounded-sm"
+              onClick={handlePrevAnchor}
+              disabled={!hasAnchors}
+              aria-label="Previous comparison tree window"
+            >
+              <ChevronLeft className="size-3" />
+            </Button>
+          </AppTooltip>
 
           <Badge
             variant={isShowing ? 'default' : 'secondary'}
@@ -66,37 +63,31 @@ export function ClipboardSection({ clipboardTreeIndex, anchorIndices, onShowAnch
             {getClipboardLabel()}
           </Badge>
 
-          <Tooltip>
-            <TooltipTrigger asChild>
+          <AppTooltip content="Next comparison tree window">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5 hover:bg-accent rounded-sm"
+              onClick={handleNextAnchor}
+              disabled={!hasAnchors}
+              aria-label="Next comparison tree window"
+            >
+              <ChevronRight className="size-3" />
+            </Button>
+          </AppTooltip>
+
+          {isShowing && (
+            <AppTooltip content="Hide comparison tree">
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-5 w-5 hover:bg-accent rounded-sm"
-                onClick={handleNextAnchor}
-                disabled={!hasAnchors}
-                aria-label="Next tree window"
+                className="h-5 w-5 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-sm ml-1"
+                onClick={onClear}
+                aria-label="Hide comparison tree"
               >
-                <ChevronRight className="size-3" />
+                <X className="size-3" />
               </Button>
-            </TooltipTrigger>
-            <TooltipContent>Next tree window</TooltipContent>
-          </Tooltip>
-
-          {isShowing && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-5 w-5 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-sm ml-1"
-                  onClick={onClear}
-                  aria-label="Hide clipboard"
-                >
-                  <X className="size-3" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Hide clipboard</TooltipContent>
-            </Tooltip>
+            </AppTooltip>
           )}
         </div>
       </div>

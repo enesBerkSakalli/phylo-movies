@@ -8,8 +8,7 @@ describe('Real Data Scaling Analysis', () => {
   let realData;
 
   beforeEach(() => {
-    // Load the real data generated from backend
-    const dataPath = path.resolve(__dirname, '../data/test-data/52_bootstrap.response.json');
+    const dataPath = path.resolve(__dirname, 'data/ostrich_bug_response.json');
     if (fs.existsSync(dataPath)) {
       try {
         const rawData = fs.readFileSync(dataPath, 'utf-8');

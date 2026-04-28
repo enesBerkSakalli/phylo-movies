@@ -12,6 +12,10 @@ export class TimelineDataProcessor {
      */
     static createSegments(movieData) {
         const splitChangeTimeline = movieData?.split_change_timeline;
+        if (!Array.isArray(splitChangeTimeline) || splitChangeTimeline.length === 0) {
+            throw new Error('[TimelineDataProcessor] split_change_timeline is required for timeline construction');
+        }
+
         return this._createSegmentsFromSplitChangeTimeline(
             splitChangeTimeline,
             movieData?.tree_metadata,
@@ -41,7 +45,6 @@ export class TimelineDataProcessor {
 
         return segments;
     }
-
 
     /**
      * Creates timeline data structures from segments.
