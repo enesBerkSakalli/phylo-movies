@@ -70,7 +70,7 @@ function printGroup(label, files) {
 
 printGroup('Default Mocha specs', mochaSpecs);
 printGroup('Default Vitest specs', vitestSpecs);
-printGroup('Optional/non-default specs', optionalSpecs);
+printGroup('Optional Mocha specs', optionalSpecs);
 
 if (orphanSpecs.length > 0) {
   printGroup('Orphan specs', orphanSpecs);

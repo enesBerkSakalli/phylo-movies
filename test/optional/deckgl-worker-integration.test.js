@@ -202,8 +202,8 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
       }
     };
 
-    // Spy on console.warn to verify error logging
-    sandbox.spy(console, 'warn');
+    // Stub console.warn to verify error logging without noisy test output.
+    sandbox.stub(console, 'warn');
 
     controller.layoutWorker.onmessage(errorResponse);
 
