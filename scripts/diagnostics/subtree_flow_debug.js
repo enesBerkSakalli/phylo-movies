@@ -4,7 +4,7 @@
 const fs = require('fs');
 
 // Load actual backend response
-const data = JSON.parse(fs.readFileSync('./data/ostrich_bug_response.json', 'utf8'));
+const data = JSON.parse(fs.readFileSync('./test/data/ostrich_bug_response.json', 'utf8'));
 
 console.log("=== SUBTREE FLOW DEBUG ===\n");
 

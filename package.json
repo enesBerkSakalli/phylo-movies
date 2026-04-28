@@ -33,7 +33,6 @@
     "test:watch": "mocha --require @babel/register --watch 'test/fileUpload.test.js' 'test/parser.test.js' 'test/integration.test.js' 'test/fileUploadTests.js' 'test/msaViewerIntegrationTests.js' 'test/msaViewerRefreshTest.js' 'test/msa-workflow.test.js' 'test/msa-automated-scrolling.test.js'",
     "test:msa": "mocha --require @babel/register 'test/msa-workflow.test.js' 'test/msa-automated-scrolling.test.js'",
     "test:msa-scrolling": "mocha --require @babel/register 'test/msa-automated-scrolling.test.js'",
-    "demo:msa-scrolling": "node test/msa-scrolling-demo.js",
     "build:gh": "VITE_DOCS_ONLY=true vite build --base=/phylo-movies/ && VITE_DOCS_ONLY=true node scripts/apply-gh-seo.js dist && ./scripts/copy-examples.sh dist",
     "copy-examples": "./scripts/copy-examples.sh dist",
     "test:backend-required": "mocha --require @babel/register 'test/integration.test.js' 'test/msa-workflow.test.js'",
