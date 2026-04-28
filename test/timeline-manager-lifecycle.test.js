@@ -210,6 +210,27 @@ describe('MovieTimelineManager lifecycle', () => {
     manager.destroy();
   });
 
+  it('updates stored timeline progress while playback advances', () => {
+    useAppStore.setState({
+      playing: true,
+      timelineProgress: 0.2
+    });
+
+    useAppStore.getState().updateTimelineState({
+      currentSegmentIndex: 1,
+      totalSegments: 4,
+      treeInSegment: 2,
+      treesInSegment: 3,
+      timelineProgress: 0.7
+    });
+
+    const state = useAppStore.getState();
+    expect(state.timelineProgress).to.equal(0.7);
+    expect(state.currentSegmentIndex).to.equal(1);
+    expect(state.treeInSegment).to.equal(2);
+    expect(state.treesInSegment).to.equal(3);
+  });
+
   it('binds renderer scrub state to the scrub controller', async () => {
     const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] });
     const host = makeContainer();
