@@ -37,14 +37,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run unit tests
-        run: npm run test:unit
-
-      - name: Run SCSS tests
-        run: npm run test:scss
-
-      - name: Run Vitest suite
-        run: npm run test:vitest
+      - name: Run frontend tests
+        run: npm run test:all
 
   # ===========================================================================
   # Backend Tests
@@ -89,12 +83,10 @@ jobs:
         run: poetry install
 
       - name: Run type checking
-        run: poetry run mypy brancharchitect --ignore-missing-imports || true
+        run: poetry run mypy brancharchitect --ignore-missing-imports
 
       - name: Run tests
-        run: poetry run pytest test/ -v --timeout=120 || true
-        # Note: Some pre-existing failures in submodule are expected.
-        # The || true prevents blocking CI while backend stabilizes.
+        run: poetry run pytest test/ -v --timeout=120
 
   # ===========================================================================
   # Build Verification
