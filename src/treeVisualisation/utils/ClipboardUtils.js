@@ -119,10 +119,10 @@ export function createClipboardLabelLayer(treeIndex, bounds, fullTreeIndices = [
   const avgX = (bounds.minX + bounds.maxX) / 2;
 
   let labelText = `Tree #${treeIndex + 1}`;
-  // Check if it is one of the original tree windows
+  // Check if it is one of the original anchor trees.
   const anchorIndex = fullTreeIndices.indexOf(treeIndex);
   if (anchorIndex >= 0) {
-      labelText = `Tree window ${anchorIndex + 1}`; // 1-based index for user
+      labelText = `Anchor tree ${anchorIndex + 1}`; // 1-based index for user
   }
 
   return new TextLayer({

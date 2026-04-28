@@ -212,7 +212,7 @@ export function MoviePlayerBar() {
 function TimelineLegend({ hasTransitionSegments }) {
   return (
     <div className="flex items-center gap-4 px-2 pt-1 pb-0.5 text-2xs font-medium text-muted-foreground">
-      <LegendItem markerClassName="h-4 w-0.5 rounded bg-foreground/70" label="Tree window" />
+      <LegendItem markerClassName="h-4 w-0.5 rounded bg-foreground/70" label="Anchor tree" />
       {hasTransitionSegments && (
         <LegendItem markerClassName="h-1 w-5 rounded bg-amber-600/85" label="Transition frames" />
       )}

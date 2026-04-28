@@ -33,7 +33,7 @@ export function ClipboardSection({ clipboardTreeIndex, anchorIndices, onShowAnch
   const getClipboardLabel = () => {
     if (!isShowing) return 'Off';
     const anchorPos = anchorIndices.indexOf(clipboardTreeIndex);
-    if (anchorPos >= 0) return `Tree window ${anchorPos + 1}`;
+    if (anchorPos >= 0) return `Anchor tree ${anchorPos + 1}`;
     return `Tree ${clipboardTreeIndex + 1}`;
   };
 
@@ -43,14 +43,14 @@ export function ClipboardSection({ clipboardTreeIndex, anchorIndices, onShowAnch
       <div className="flex flex-col gap-0">
         <span className="text-2xs font-medium text-muted-foreground uppercase tracking-wider">Compare with</span>
         <div className="flex items-center gap-1 mt-1">
-          <AppTooltip content="Previous comparison tree window">
+          <AppTooltip content="Previous comparison anchor tree">
             <Button
               variant="ghost"
               size="icon"
               className="h-5 w-5 hover:bg-accent rounded-sm"
               onClick={handlePrevAnchor}
               disabled={!hasAnchors}
-              aria-label="Previous comparison tree window"
+              aria-label="Previous comparison anchor tree"
             >
               <ChevronLeft className="size-3" />
             </Button>
@@ -63,14 +63,14 @@ export function ClipboardSection({ clipboardTreeIndex, anchorIndices, onShowAnch
             {getClipboardLabel()}
           </Badge>
 
-          <AppTooltip content="Next comparison tree window">
+          <AppTooltip content="Next comparison anchor tree">
             <Button
               variant="ghost"
               size="icon"
               className="h-5 w-5 hover:bg-accent rounded-sm"
               onClick={handleNextAnchor}
               disabled={!hasAnchors}
-              aria-label="Next comparison tree window"
+              aria-label="Next comparison anchor tree"
             >
               <ChevronRight className="size-3" />
             </Button>

@@ -29,7 +29,7 @@ export const EXAMPLE_DATASETS = [
   {
     id: 'quick-msa-demo',
     name: 'Quick MSA Demo',
-    description: 'Synthetic 30-taxon alignment with 10 supplied tree windows for fast alignment-sync testing',
+    description: 'Synthetic 30-taxon alignment with 10 supplied anchor trees for fast alignment-sync testing',
     fileName: 'quick_msa_demo_30taxa_10trees.nwk',
     filePath: import.meta.env.BASE_URL + 'examples/quick_msa_demo/quick_msa_demo_30taxa_10trees.nwk',
     msaFileName: 'quick_msa_demo_30taxa_10windows.fasta',
