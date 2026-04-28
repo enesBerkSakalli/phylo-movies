@@ -48,8 +48,13 @@ backend/brancharchitect-0.37.0.dist-info
 !test/data/
 test/data/*
 !test/data/ostrich_bug_response.json
-docs/*
-!docs/screenshot.png
+!test/data/example.json
+!test/data/small_example/
+test/data/small_example/*
+!test/data/small_example/small_example.response.json
+!test/data/test-data/
+test/data/test-data/*
+!test/data/test-data/focus_trees.json
 dist-publish
 playwright.config.ts
 # Electron build outputs
@@ -67,9 +72,7 @@ publication_data/MBE_DATA_CHECKLIST.md
 publication_data/audit_mbe_compliance.py
 publication_data/intro.md
 publication_data/norovirus/augur_subsampling/scripts/analyze_dataset_for_paper.py
-plans
 /data/
 bun.lock
 publication_data/norovirus/recan_recombination_analysis
-scripts/
 Paper_Submission_TODO.md
