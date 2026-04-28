@@ -5,8 +5,8 @@ import { useAppStore } from '../../state/phyloStore/store.js';
 // ===========================
 
 /**
- * Find the index (into anchorIndices array) of the last anchor at or before the given position
- * @param {Array<number>} anchorIndices - Sorted array of anchor sequence indices
+ * Find the index (into anchorIndices array) of the last anchor tree at or before the given position.
+ * @param {Array<number>} anchorIndices - Sorted sequence indices for anchor trees
  * @param {number} position - Current sequence position
  * @returns {number} Index into anchorIndices array (0 if none found before position)
  */
@@ -21,10 +21,10 @@ export function findPreviousAnchorIndex(anchorIndices, position) {
 }
 
 /**
- * Find the sequence index of the previous anchor (last anchor at or before position)
- * @param {Array<number>} anchorIndices - Sorted array of anchor sequence indices
+ * Find the sequence index of the previous anchor tree.
+ * @param {Array<number>} anchorIndices - Sorted sequence indices for anchor trees
  * @param {number} position - Current sequence position
- * @returns {number} Sequence index of previous anchor
+ * @returns {number} Sequence index of previous anchor tree
  */
 export function findPreviousAnchorSequenceIndex(anchorIndices, position) {
   if (!anchorIndices?.length) return 0;
@@ -33,8 +33,8 @@ export function findPreviousAnchorSequenceIndex(anchorIndices, position) {
 }
 
 /**
- * Find the sequence index of the next anchor after the given position
- * @param {Array<number>} anchorIndices - Sorted array of anchor sequence indices
+ * Find the sequence index of the next anchor tree after the given position.
+ * @param {Array<number>} anchorIndices - Sorted sequence indices for anchor trees
  * @param {number} position - Current sequence position
  * @returns {number|null} Sequence index of next anchor, or null if none exists
  */
@@ -79,9 +79,9 @@ export function getPhaseMetadata(state = useAppStore.getState()) {
   return state.movieData?.tree_metadata?.[targetSeqIndex] ?? null;
 }
 
-// MSA frame index for MSA anchoring:
-// - Full trees (pivotEdge: null) → advance MSA frame
-// - Interpolations (pivotEdge: array) → stay at current MSA frame
+// MSA window index:
+// - Anchor trees (pivotEdge: null) advance the active MSA window.
+// - Transition frames (pivotEdge: array) stay on the source MSA window.
 export function getMSAFrameIndex(state = useAppStore.getState()) {
   const { fullTreeIndex } = getIndexMappings(state);
 

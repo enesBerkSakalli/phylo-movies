@@ -37,12 +37,12 @@ export function TransportControls({
   const goToPreviousAnchor = useAppStore(selectGoToPreviousAnchor);
   const transitionResolver = useAppStore(selectTransitionResolver);
 
-  // Get anchor indices for disabled state calculation
+  // Get anchor-tree indices for disabled state calculation.
   const anchorIndices = useMemo(() => {
     return transitionResolver?.fullTreeIndices || [];
   }, [transitionResolver]);
 
-  // Check if we can navigate to previous/next anchor
+  // Check if we can navigate to previous/next anchor tree.
   const canGoToPreviousAnchor = useMemo(() => {
     return anchorIndices.some(idx => idx < currentTreeIndex);
   }, [anchorIndices, currentTreeIndex]);
@@ -70,13 +70,13 @@ export function TransportControls({
 
   return (
     <>
-      <AppTooltip content="Previous input tree window">
+      <AppTooltip content="Previous anchor tree">
         <Button
           className="transport-button"
           id="backwardAnchorButton"
           variant="ghost"
           size="icon"
-          aria-label="Previous tree window"
+          aria-label="Previous anchor tree"
           disabled={!canGoToPreviousAnchor}
           onClick={onPreviousAnchor}
         >
@@ -124,13 +124,13 @@ export function TransportControls({
         </Button>
       </AppTooltip>
 
-      <AppTooltip content="Next input tree window">
+      <AppTooltip content="Next anchor tree">
         <Button
           className="transport-button"
           id="forwardAnchorButton"
           variant="ghost"
           size="icon"
-          aria-label="Next tree window"
+          aria-label="Next anchor tree"
           disabled={!canGoToNextAnchor}
           onClick={onNextAnchor}
         >

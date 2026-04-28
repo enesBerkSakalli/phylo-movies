@@ -46,11 +46,11 @@ export function InterpolationSection() {
 }
 
 function getTimelineTooltipText(segmentText) {
-  if (segmentText === 'Tree window') {
-    return 'A real input tree from one alignment window.';
+  if (segmentText === 'Anchor tree') {
+    return 'An observed input tree from one alignment window or bootstrap replicate.';
   }
-  if (segmentText === 'Timeline frame') {
-    return 'A frame in the tree sequence timeline.';
+  if (segmentText === 'Transition frame') {
+    return 'A generated transition frame in the tree sequence timeline.';
   }
-  return 'Interpolated frames between neighboring tree windows.';
+  return 'Transition frames between neighboring anchor trees.';
 }

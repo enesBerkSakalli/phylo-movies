@@ -21,7 +21,7 @@ IT{i}_up_{j}     → Reference topology with target weights        (branch lengt
 IT{i}_ref_{j}    → Complete transformation with reference weights (branch lengths change)
 ```
 
-On the frontend, consecutive interpolated frames fall into three stages detected by `animationStageDetector.js`:
+On the frontend, consecutive transition frames fall into three stages detected by `animationStageDetector.js`:
 
 | Stage | What happens | Frontend detection |
 |-------|-------------|-------------------|
@@ -42,7 +42,7 @@ During REORDER frames, elements can move in two orthogonal dimensions in polar s
 
 | Dimension | What changes | Example |
 |-----------|-------------|---------|
-| **Angular** (Δθ) | Subtree rotates to new position | A clade moves from 45° to 120° |
+| **Angular** (Δθ) | Subtree rotates to new position | A subtree moves from 45° to 120° |
 | **Radial** (Δr) | Branch length changes | A branch of length 0.3 collapses to 0 |
 
 Both should be normalised with the same strategy: **find the longest path, make it the reference, and let shorter paths arrive early.**

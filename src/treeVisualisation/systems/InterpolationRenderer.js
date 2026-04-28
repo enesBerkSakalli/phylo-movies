@@ -3,7 +3,7 @@ import { detectAnimationStage } from '../deckgl/interpolation/stages/animationSt
 import { applyStageEasing } from '../deckgl/interpolation/stages/stageEasing.js';
 
 /**
- * Handles the rendering of interpolated frames for animation and scrubbing.
+ * Handles the rendering of transition frames for animation and scrubbing.
  * Coordinates between InterpolationCache, TreeInterpolator, and Deck/Layer Managers.
  */
 export class InterpolationRenderer {

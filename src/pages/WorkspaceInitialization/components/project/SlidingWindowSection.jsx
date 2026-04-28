@@ -31,7 +31,7 @@ export function SlidingWindowSection({ hasMsa, disabled }) {
       </div>
 
       <p className="text-2xs text-muted-foreground leading-relaxed">
-        The alignment is partitioned into overlapping windows. Each window yields one inferred tree. When stride &lt; window size, consecutive windows share alignment columns.
+        The alignment is divided into overlapping sliding windows. Each window yields one anchor tree. When stride &lt; window size, consecutive windows share alignment columns.
       </p>
 
       <FormField
@@ -54,7 +54,7 @@ export function SlidingWindowSection({ hasMsa, disabled }) {
               />
             </FormControl>
             <FormDescription className="text-2xs leading-tight">
-              Number of nucleotide columns per sliding window frame.
+              Number of nucleotide columns per sliding window.
             </FormDescription>
             <FormMessage />
           </FormItem>

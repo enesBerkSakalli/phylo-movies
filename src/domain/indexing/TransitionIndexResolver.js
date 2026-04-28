@@ -10,7 +10,8 @@ export default class TransitionIndexResolver {
 
     /**
      * Returns a sorted list of full-tree indices derived from interpolation ranges.
-     * Ensures that both the start of each range and the final anchor are included.
+     * These indices are anchor trees in the timeline vocabulary.
+     * Ensures that both the start of each range and the final anchor tree are included.
      */
     get fullTreeIndices() {
         if (this._cachedFullTreeIndices) {
@@ -27,7 +28,7 @@ export default class TransitionIndexResolver {
             indices.add(lastRange[1]);
         }
 
-        // Always include first/last anchors as a final fallback.
+        // Always include first/last anchor trees as a final fallback.
         if (!indices.size && this.treeMetadata.length) {
             indices.add(0);
             indices.add(this.treeMetadata.length - 1);

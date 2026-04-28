@@ -1,12 +1,16 @@
 /**
- * TimelineDataProcessor - Handles data transformation for timeline visualization
- * Leverages existing TransitionIndexResolver for most data operations
+ * TimelineDataProcessor - Handles data transformation for timeline visualization.
+ *
+ * Terminology:
+ * - anchor tree: observed input tree from a sliding window or bootstrap replicate
+ * - transition frame: generated interpolated state between anchor trees
+ * - timeline segment: scrubber interval containing either an anchor tree or transition frames
  */
 import { TimelineMathUtils } from '../math/TimelineMathUtils.js';
 
 export class TimelineDataProcessor {
     /**
-     * Create timeline segments from movie data using TransitionIndexResolver
+     * Create timeline segments from movie data.
      * @param {Object} movieData - Validated backend movie data
      * @returns {Array} Timeline segments
      */
@@ -25,7 +29,8 @@ export class TimelineDataProcessor {
     }
 
     /**
-     * Create segments from split_change_timeline data structure
+     * Create segments from the backend split_change_timeline structure.
+     * Backend split names are API vocabulary; frontend segments are timeline vocabulary.
      * @private
      */
     static _createSegmentsFromSplitChangeTimeline(timeline, tree_metadata, interpolated_trees, tree_pair_solutions) {
@@ -81,10 +86,10 @@ export class TimelineDataProcessor {
     }
 
     static _appendOriginalTreeSegment(entry, tree_metadata, interpolated_trees, segments) {
-        // Full tree anchor point - use global_index for array access
+        // Anchor tree segment - use global_index for array access.
         const globalIndex = entry.global_index;
         const arrayIdx = globalIndex; // global_index is already 0-indexed in the data
-        const treeIndex = entry.tree_index; // This is the original tree number (0, 1, 2)
+        const treeIndex = entry.tree_index; // Original anchor tree number (0, 1, 2).
 
         if (interpolated_trees?.[arrayIdx] != null) {
             const metadata = tree_metadata[arrayIdx];

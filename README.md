@@ -17,6 +17,8 @@ We demonstrate its utility in two contexts: identifying recombination breakpoint
 
 The method and case studies are described in the bioRxiv preprint [Animating Phylogenetic Trees from Sliding-Window Analyses](https://doi.org/10.64898/2026.04.01.715821).
 
+Project terminology is standardized in [docs/terminology.md](docs/terminology.md). In short: observed input trees are **anchor trees**, generated intermediate states are **transition frames**, moving topology-defined groups are **subtrees**, and `split` names are reserved for backend/API representations.
+
 ## Availability and Implementation
 
 Source code is available under the MIT License at [github.com/enesBerkSakalli/phylo-movies](https://github.com/enesBerkSakalli/phylo-movies).
@@ -25,7 +27,7 @@ Project information page is published at [enesberksakalli.github.io/phylo-movies
 The software consists of two components:
 
 - **Frontend** (JavaScript/React): The browser-based visualization, animation, and UI layer in `src/`.
-- **Backend** ([BranchArchitect](https://github.com/EnesSakalliUniWien/BranchArchitect)): A Python engine included as a git submodule in `engine/BranchArchitect/`. It computes SPR (Subtree Prune and Regraft) paths between trees, identifies which subtrees move, and generates interpolated intermediate frames that the frontend renders as smooth morphing animations. BranchArchitect exposes a Flask API (port 5002) that the frontend calls to retrieve tree data, interpolation sequences, and MSA window mappings.
+- **Backend** ([BranchArchitect](https://github.com/EnesSakalliUniWien/BranchArchitect)): A Python engine included as a git submodule in `engine/BranchArchitect/`. It computes SPR (Subtree Prune and Regraft) paths between anchor trees, identifies which subtrees move, and generates transition frames that the frontend renders as smooth morphing animations. BranchArchitect exposes a Flask API (port 5002) that the frontend calls to retrieve tree data, interpolation sequences, and MSA window mappings.
 
 All test datasets required to reproduce the preprint benchmarks are located in `publication_data/`.
 
@@ -33,7 +35,7 @@ All test datasets required to reproduce the preprint benchmarks are located in `
 
 - The public GitHub Pages deployment is an information and documentation site. It does not run the BranchArchitect backend, so example loading, tree interpolation, and MSA-derived tree construction require the desktop app, Docker image, or local full-stack setup.
 - The bundled tree-inference workflow currently uses FastTree 2 for rapid exploratory sliding-window analyses. For publication-grade inference, users can generate window trees externally with IQ-TREE, RAxML-NG, or another preferred phylogenetic package and load the resulting ordered Newick trees into Phylo-Movies.
-- Large datasets are best handled with precomputed trees and conservative rendering settings. The WebGL renderer supports hundreds of taxa interactively on typical laptops; thousands of taxa are possible for inspection but depend strongly on label visibility, branch effects, hardware, and the number of interpolated frames.
+- Large datasets are best handled with precomputed trees and conservative rendering settings. The WebGL renderer supports hundreds of taxa interactively on typical laptops; thousands of taxa are possible for inspection but depend strongly on label visibility, branch effects, hardware, and the number of transition frames.
 
 ## Citation
 
@@ -53,8 +55,8 @@ The software metadata and preferred citation are also available in `CITATION.cff
 
 ### Interactive Tree Visualization
 
-- **Interpolated tree morphing**: Generate intermediate states between neighboring tree windows to study incremental topological changes.
-- **Tree windows vs. transition states**: Toggle between observed tree windows and interpolated frames to isolate where splits differ.
+- **Interpolated tree morphing**: Generate transition frames between neighboring anchor trees to study incremental topological changes.
+- **Anchor trees vs. transition frames**: Toggle between observed anchor trees and generated transition frames to isolate where backend split events move subtrees.
 - **Adjustable rendering parameters**: Control branch thickness, font size, and color schemes to highlight specific taxa.
 - **Zoom and pan controls**: Inspect large trees using standard mouse or trackpad gestures.
 
@@ -358,7 +360,7 @@ npm run demo:msa-scrolling # Run MSA scrolling demonstration
 ### Navigation Controls
 
 - **Play/Pause**: Start or stop tree animation sequences
-- **Step Forward/Backward**: Navigate frame by frame through tree transitions
+- **Step Forward/Backward**: Navigate transition frame by transition frame through tree changes
 - **Tree Navigation**: Jump between major tree states
 - **Speed Control**: Adjust animation speed (1x to 10x)
 
@@ -403,7 +405,7 @@ npm run demo:msa-scrolling # Run MSA scrolling demonstration
 
 - **Language**: Python 3.11+, managed with Poetry
 - **Web Framework**: Flask, serving endpoints at `/treedata`, `/stream`, `/msa`, `/about`
-- **Tree Transformations**: SPR-based interpolation via lattice solvers that compute minimal subtree migrations between trees
+- **Tree Transformations**: SPR-based interpolation via lattice solvers that compute minimal subtree migrations between anchor trees
 - **Pipeline**: Parse Newick → midpoint rooting → lattice solving (jumping taxa) → leaf ordering → 4-phase interpolation (collapse → reorder → expand → snap)
 - **MSA Support**: Sliding-window tree inference from FASTA alignments via the bundled `msa_to_trees` package
 - **Testing**: pytest + hypothesis + mypy

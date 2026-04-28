@@ -43,12 +43,12 @@ function buildReadablePositionText(sequenceIndex, totalSequenceLength, transitio
   const safeSequenceIndex = Number.isFinite(sequenceIndex) ? sequenceIndex : 0;
 
   if (!anchorIndices.length) {
-    return `Frame ${safeSequenceIndex + 1} of ${Math.max(1, totalSequenceLength)}`;
+    return `Transition frame ${safeSequenceIndex + 1} of ${Math.max(1, totalSequenceLength)}`;
   }
 
   const anchorAtPosition = anchorIndices.indexOf(safeSequenceIndex);
   if (anchorAtPosition >= 0) {
-    return `Window ${anchorAtPosition + 1}/${anchorIndices.length}`;
+    return `Anchor ${anchorAtPosition + 1}/${anchorIndices.length}`;
   }
 
   let previousAnchorIdx = -1;
@@ -65,18 +65,18 @@ function buildReadablePositionText(sequenceIndex, totalSequenceLength, transitio
     const to = anchorIndices[nextAnchorIdx];
     const frameCount = Math.max(1, to - from - 1);
     const frameNumber = Math.max(1, Math.min(frameCount, safeSequenceIndex - from));
-    return `${previousAnchorIdx + 1}->${nextAnchorIdx + 1} frame ${frameNumber}/${frameCount}`;
+    return `${previousAnchorIdx + 1}->${nextAnchorIdx + 1} transition frame ${frameNumber}/${frameCount}`;
   }
 
-  return `Frame ${safeSequenceIndex + 1} of ${Math.max(1, totalSequenceLength)}`;
+  return `Transition frame ${safeSequenceIndex + 1} of ${Math.max(1, totalSequenceLength)}`;
 }
 
 export function buildSegmentText(sequenceIndex, transitionResolver) {
   const anchorIndices = transitionResolver?.fullTreeIndices || [];
-  if (!anchorIndices.length) return 'Timeline frame';
+  if (!anchorIndices.length) return 'Transition frame';
 
   const anchorAtPosition = anchorIndices.indexOf(sequenceIndex);
-  if (anchorAtPosition >= 0) return 'Tree window';
+  if (anchorAtPosition >= 0) return 'Anchor tree';
 
   let previousAnchorIdx = 0;
   for (let i = anchorIndices.length - 1; i >= 0; i--) {
@@ -91,7 +91,7 @@ export function buildSegmentText(sequenceIndex, transitionResolver) {
     return `Transition ${previousAnchorIdx + 1} -> ${nextAnchorIdx + 1}`;
   }
 
-  return 'Tree window';
+  return 'Anchor tree';
 }
 
 export function buildMsaWindow(hasMsa, indexState, msaStepSize, msaWindowSize, msaColumnCount) {

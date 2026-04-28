@@ -1,5 +1,5 @@
 /**
- * Clipboard slice: manages the tree clipboard state for displaying tree windows.
+ * Clipboard slice: manages the tree clipboard state for displaying anchor trees.
  */
 export const createClipboardSlice = (set, get) => ({
   // ==========================================================================
