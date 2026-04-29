@@ -10,7 +10,7 @@ import { getSplitIndices } from '../utils/splitMatching.js';
  * Calculate spacing offset for the right tree in comparison mode.
  * Uses tree radii in world-space to determine appropriate spacing
  * so that both trees are visible without overlap.
- * @param {number} canvasWidth - Canvas width (unused, kept for API compat)
+ * @param {number} canvasWidth - Canvas width used for degenerate-layout fallback spacing
  * @param {Object} viewOffset - Current view offset {x, y}
  * @param {number} [leftRadius=0] - Left tree radius in world-space units
  * @param {number} [rightRadius=0] - Right tree radius in world-space units
@@ -49,16 +49,7 @@ export function applyOffset(layerData, offsetX, offsetY) {
     link.targetPosition = [link.targetPosition[0] + offsetX, link.targetPosition[1] + offsetY, link.targetPosition[2]];
 
     if (link.path) {
-      if (link.path instanceof Float32Array || link.path instanceof Float64Array) {
-        // Handle typed arrays (flat format [x, y, z, ...]) used in animation
-        for (let i = 0; i < link.path.length; i += 3) {
-          link.path[i] += offsetX;
-          link.path[i + 1] += offsetY;
-        }
-      } else if (Array.isArray(link.path)) {
-        // Handle standard arrays (nested format [[x,y,z], ...]) used in static view
-        link.path = link.path.map(point => [point[0] + offsetX, point[1] + offsetY, point[2]]);
-      }
+      offsetFlatPath(link.path, offsetX, offsetY);
     }
   });
 
@@ -67,16 +58,7 @@ export function applyOffset(layerData, offsetX, offsetY) {
     ext.targetPosition = [ext.targetPosition[0] + offsetX, ext.targetPosition[1] + offsetY, ext.targetPosition[2]];
 
     if (ext.path) {
-      if (ext.path instanceof Float32Array || ext.path instanceof Float64Array) {
-        // Handle typed arrays (flat format [x, y, z, ...]) used in animation
-        for (let i = 0; i < ext.path.length; i += 3) {
-          ext.path[i] += offsetX;
-          ext.path[i + 1] += offsetY;
-        }
-      } else if (Array.isArray(ext.path)) {
-        // Handle standard arrays (nested format [[x,y,z], ...]) used in static view
-        ext.path = ext.path.map(point => [point[0] + offsetX, point[1] + offsetY, point[2]]);
-      }
+      offsetFlatPath(ext.path, offsetX, offsetY);
     }
   });
 
@@ -85,20 +67,12 @@ export function applyOffset(layerData, offsetX, offsetY) {
   });
 }
 
-/**
- * Calculate bounds from combined elements.
- * @param {Array} elements - Combined nodes and labels
- * @returns {Object} bounds {minX, maxX, minY, maxY}
- */
-export function calculateBounds(elements) {
-  return elements.reduce((acc, el) => {
-    const [x, y] = el.position;
-    acc.minX = Math.min(acc.minX, x);
-    acc.maxX = Math.max(acc.maxX, x);
-    acc.minY = Math.min(acc.minY, y);
-    acc.maxY = Math.max(acc.maxY, y);
-    return acc;
-  }, { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity });
+function offsetFlatPath(path, offsetX, offsetY) {
+  if (!ArrayBuffer.isView(path)) return;
+  for (let i = 0; i < path.length; i += 3) {
+    path[i] += offsetX;
+    path[i + 1] += offsetY;
+  }
 }
 
 /**
@@ -153,8 +127,8 @@ export function buildPositionMap(nodes, labels = []) {
         id: node.id,
         parentId: node.parentId ?? null,
         position,
+        split_indices: splitIndices,
         isLeaf: node.isLeaf,
-        node,
         name: node.name ? String(node.name) : null,
         depth: node.depth
       });

@@ -1,48 +1,60 @@
 
 import { describe, it, expect } from 'vitest';
 import { buildSubtreeConnectors } from '../src/treeVisualisation/deckgl/data/transforms/SubtreeConnectorBuilder.js';
-import { calculateBranchCoordinates } from '../src/treeVisualisation/layout/RadialTreeGeometry.js';
 
 // Mock colorManager
 const mockColorManager = {
+  getNodeColor: () => '#ff0000',
   getConnectionColor: () => [255, 0, 0, 255],
+  isMonophyleticColoringEnabled: () => true,
   isNodeActiveEdge: () => false,
   isNodeHistorySubtree: () => false
 };
 
 describe('Connector Integration', function () {
-  it('generates bundled paths with radial constraints', function () {
-    // Left Tree: Root at -200, Leaf at -150 (Radius 50)
+  it('generates a flat bundled connector path', function () {
     const leftCenter = [-200, 0];
     const leftPositions = new Map();
-    leftPositions.set('LeafL', {
+    leftPositions.set('0', {
+      id: 'left-0',
+      parentId: null,
+      split_indices: [0],
       isLeaf: true,
       name: 'CommonLeaf',
-      position: [-150, 0, 0], // East relative to center (-200)
-      node: { id: 'LeafL', depth: 3, parent: { depth: 2, parent: { depth: 1, parent: { depth: 0 } } } }
+      depth: 1,
+      position: [-150, 0, 0]
     });
 
-    // Right Tree: Root at 200, Leaf at 150 (Radius 50)
     const rightCenter = [200, 0];
     const rightPositions = new Map();
-    rightPositions.set('LeafR', {
+    rightPositions.set('0', {
+      id: 'right-0',
+      parentId: null,
+      split_indices: [0],
       isLeaf: true,
       name: 'CommonLeaf',
-      position: [150, 0, 0], // West relative to center (200)
-      node: { id: 'LeafR', depth: 3 }
+      depth: 1,
+      position: [150, 0, 0]
     });
 
-    const latticeSolutions = {'root': []}; // Mock
-    // Trick: we need 'CommonLeaf' to be found.
-    // buildRawConnections iterates leftPositions.
-    // It checks splitIndices.
-    // And it needs to matchingSubtree.
-    // Let's simplified setup:
+    const connectors = buildSubtreeConnectors({
+      leftPositions,
+      rightPositions,
+      latticeSolutions: { '[0, 0]': [[0]] },
+      pivotEdge: [0, 0],
+      colorManager: mockColorManager,
+      subtreeTracking: [[0]],
+      currentTreeIndex: 0,
+      markedSubtreesEnabled: true,
+      linkConnectionOpacity: 0.6,
+      leftCenter,
+      rightCenter,
+      leftRadius: 50,
+      rightRadius: 50
+    });
 
-    // Actually, SubtreeConnectorBuilder is complex to mock fully because of the lattice/jumping logic
-    // But we can verify that IF it produces connections, they have the right properties.
-
-    // Simpler: Test the Geometry Utilities directly with tree-like inputs
-    // to confirm the "crossing" fix logic (ensureOutside + depth) works.
+    expect(connectors.length).toBe(1);
+    expect(connectors[0].path).toBeInstanceOf(Float32Array);
+    expect(connectors[0].path.length % 3).toBe(0);
   });
 });

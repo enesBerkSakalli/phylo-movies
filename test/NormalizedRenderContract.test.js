@@ -12,6 +12,7 @@ import { NodeDataBuilder } from '../src/treeVisualisation/deckgl/builders/data/n
 import { LinkDataBuilder } from '../src/treeVisualisation/deckgl/builders/data/links/LinkDataBuilder.js';
 import { LabelDataBuilder } from '../src/treeVisualisation/deckgl/builders/data/labels/LabelDataBuilder.js';
 import { ExtensionDataBuilder } from '../src/treeVisualisation/deckgl/builders/data/extensions/ExtensionDataBuilder.js';
+import { LAYER_CONFIGS } from '../src/treeVisualisation/deckgl/layers/config/layerConfigs.js';
 
 describe('normalized render contract', () => {
   let initialState;
@@ -73,7 +74,7 @@ describe('normalized render contract', () => {
       split_indices: [0],
       name: 'Taxon_A',
       isLeaf: true,
-      path: [[0, 0, 0], [1, 1, 0]],
+      path: new Float32Array([0, 0, 0, 1, 1, 0]),
     };
     const seen = [];
     const layerStyles = {
@@ -112,6 +113,13 @@ describe('normalized render contract', () => {
     expect(cached.colorManager.isNodeSourceEdge).toHaveBeenCalledWith(label);
   });
 
+  it('configures tree path layers for flat open paths', () => {
+    expect(LAYER_CONFIGS.linkOutlines.defaultProps._pathType).toBe('open');
+    expect(LAYER_CONFIGS.links.defaultProps._pathType).toBe('open');
+    expect(LAYER_CONFIGS.extensions.defaultProps._pathType).toBe('open');
+    expect(LAYER_CONFIGS.connectors.defaultProps._pathType).toBe('open');
+  });
+
   it('builders emit normalized metadata without legacy hierarchy references', () => {
     const root = hierarchy({
       name: 'root',
@@ -147,6 +155,8 @@ describe('normalized render contract', () => {
       name: 'Taxon_A',
       isLeaf: true,
     });
+    expect(links[0].path).toBeInstanceOf(Float32Array);
+    expect(links[0].path.length % 3).toBe(0);
     expect(labels[0]).toMatchObject({
       split_indices: [0],
       name: 'Taxon_A',
@@ -157,6 +167,8 @@ describe('normalized render contract', () => {
       name: 'Taxon_A',
       isLeaf: true,
     });
+    expect(extensions[0].path).toBeInstanceOf(Float32Array);
+    expect(extensions[0].path.length).toBe(6);
 
     expect(nodes.find((node) => node.name === 'root')).not.toHaveProperty('originalNode');
     expect(nodes.find((node) => node.name === 'root')).not.toHaveProperty('data');

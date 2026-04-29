@@ -92,15 +92,15 @@ export function buildSubtreeConnectors(options) {
 // ---------- helpers ----------
 
 /**
- * Get the appropriate node for color determination.
- * For leaves that are part of a larger marked subtree, finds the internal node representing the full subtree.
+ * Get the normalized entry used for color determination.
+ * For leaves inside a larger marked subtree, use the internal entry representing the full subtree.
  * @param {Object} leftInfo - Position map entry for the leaf
  * @param {Array} splitIndices - Split indices for the current leaf
  * @param {Array<Set>} jumpingSubtreeSets - Array of jumping subtree sets
  * @param {Map} leftPositions - Position map for left tree
- * @returns {Object} Node to use for color determination
+ * @returns {Object} Normalized entry to use for color determination
  */
-function getNodeForColor(leftInfo, splitIndices, jumpingSubtreeSets, leftPositions) {
+function getColorEntry(leftInfo, splitIndices, jumpingSubtreeSets, leftPositions) {
   // Find which jumping subtree this leaf belongs to
   var matchingSubtree = null;
   for (var i = 0; i < jumpingSubtreeSets.length; i++) {
@@ -111,24 +111,22 @@ function getNodeForColor(leftInfo, splitIndices, jumpingSubtreeSets, leftPositio
     }
   }
 
-  // If this leaf is part of a larger subtree, try to find the internal node
+  // If this leaf is part of a larger subtree, try to find the internal entry.
   if (matchingSubtree && splitIndices.length < matchingSubtree.size) {
-    // Build the key for the internal node representing the full subtree
+    // Build the key for the internal entry representing the full subtree.
     // split_indices are always sorted ascending, so we must sort the subtree array
     var subtreeArray = Array.from(matchingSubtree).sort(function (a, b) { return a - b; });
     var internalKey = subtreeArray.join('-');
 
-    // Look up the internal node in the position map
     if (leftPositions.has(internalKey)) {
       var internalInfo = leftPositions.get(internalKey);
-      if (internalInfo && internalInfo.node) {
-        return internalInfo.node;
+      if (internalInfo) {
+        return internalInfo;
       }
     }
   }
 
-  // Fallback to the leaf node
-  return leftInfo.node || leftInfo;
+  return leftInfo;
 }
 
 // ========== Validation Helpers ==========
@@ -180,7 +178,7 @@ function createConnectionObject(params) {
 /**
  * Create a path object from a connection and computed path.
  * @param {Object} connection - Base connection object
- * @param {Array} path - Computed Bezier path array
+ * @param {Float32Array} path - Computed flat XYZ Bezier path
  * @param {string} idSuffix - String to append to ID
  * @param {number} width - Line width
  * @returns {Object} Path object with all properties
@@ -316,14 +314,13 @@ function buildRawConnections(params) {
     var srcPos = [leftInfo.position[0], leftInfo.position[1], 0];
     var dstPos = [rightMatch.info.position[0], rightMatch.info.position[1], 0];
 
-    // Use getNodeForColor to get the correct node for color determination (bug fix)
-    var nodeForColor = getNodeForColor(leftInfo, splitIndices, jumpingSubtreeSets, leftPositions);
+    var colorEntry = getColorEntry(leftInfo, splitIndices, jumpingSubtreeSets, leftPositions);
     var isPivotEdge = colorManager && typeof colorManager.isNodePivotEdge === 'function'
-      && colorManager.isNodePivotEdge(nodeForColor);
+      && colorManager.isNodePivotEdge(colorEntry);
     var isHistorySubtree = colorManager && typeof colorManager.isNodeHistorySubtree === 'function'
-      && colorManager.isNodeHistorySubtree(nodeForColor);
+      && colorManager.isNodeHistorySubtree(colorEntry);
     var effectiveMoving = isCurrentlyMoving || isPivotEdge || isHistorySubtree;
-    var color = computeConnectionColor(nodeForColor, effectiveMoving, colorManager, markedSubtreesEnabled, linkConnectionOpacity);
+    var color = computeConnectionColor(colorEntry, effectiveMoving, colorManager, markedSubtreesEnabled, linkConnectionOpacity);
 
     // Use createConnectionObject helper
     connections.push(createConnectionObject({
@@ -430,7 +427,7 @@ function buildBundledConnectorPaths(params) {
     groups.forEach(function (group) {
       var groupBundlePoint = chooseBundlePoint(
         group.connections,
-        group.leftCenterNode,
+        group.leftCenterEntry,
         leftCenter,
         leftRadius,
         true,
@@ -438,7 +435,7 @@ function buildBundledConnectorPaths(params) {
       );
       var groupDstBundlePoint = chooseBundlePoint(
         group.connections,
-        group.rightCenterNode,
+        group.rightCenterEntry,
         rightCenter,
         rightRadius,
         false,
@@ -477,17 +474,17 @@ function groupPassiveConnections(passiveConnections, leftInfoById, rightInfoById
     var targetInfo = conn.targetInfo;
     if (!sourceInfo || !targetInfo) return;
 
-    var leftBundleNode = getBundleAncestor(sourceInfo, leftInfoById, 2) || getParentInfo(sourceInfo, leftInfoById);
-    var rightBundleNode = getBundleAncestor(targetInfo, rightInfoById, 2) || getParentInfo(targetInfo, rightInfoById);
+    var leftBundleEntry = getBundleAncestor(sourceInfo, leftInfoById, 2) || getParentInfo(sourceInfo, leftInfoById);
+    var rightBundleEntry = getBundleAncestor(targetInfo, rightInfoById, 2) || getParentInfo(targetInfo, rightInfoById);
 
-    var leftKey = leftBundleNode ? leftBundleNode.id : 'rootL';
-    var rightKey = rightBundleNode ? rightBundleNode.id : 'rootR';
+    var leftKey = leftBundleEntry ? leftBundleEntry.id : 'rootL';
+    var rightKey = rightBundleEntry ? rightBundleEntry.id : 'rootR';
     var groupKey = leftKey + "|" + rightKey;
 
     if (!groups.has(groupKey)) {
       groups.set(groupKey, {
-        leftCenterNode: leftBundleNode,
-        rightCenterNode: rightBundleNode,
+        leftCenterEntry: leftBundleEntry,
+        rightCenterEntry: rightBundleEntry,
         connections: []
       });
     }

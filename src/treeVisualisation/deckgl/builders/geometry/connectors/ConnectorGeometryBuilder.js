@@ -3,6 +3,7 @@
  * Used for bundled edge visualization between trees in comparison mode
  */
 import { Bezier } from 'bezier-js';
+import { pointsToFloat32Path } from '../../../utils/pathFormat.js';
 
 /**
  * Calculate a "radial bundle point" that pulls the bundle OUTWARD from the tree center.
@@ -49,10 +50,10 @@ export function calculateRadialBundlePoint(points, treeCenter) {
  * @param {Array<number>} srcBundlePoint - Source bundle control point
  * @param {Array<number>} dstBundlePoint - Destination bundle control point
  * @param {number} [samples=24] - Number of points in resulting path
- * @returns {Array<Array<number>>} Array of points along the curve
+ * @returns {Float32Array} Flat XYZ points along the curve
  */
 export function buildBundledBezierPath(from, to, srcBundlePoint, dstBundlePoint, samples = 24, options = {}) {
-  if (!from || !to) return [];
+  if (!from || !to) return new Float32Array(0);
 
   // Bundling strength - allow override for active edges
   // Default to 0.65 for looser bundles (readability), use lower for active edges
@@ -113,5 +114,5 @@ export function buildBundledBezierPath(from, to, srcBundlePoint, dstBundlePoint,
   // Create cubic Bezier curve
   const curve = new Bezier(p0[0], p0[1], p1[0], p1[1], p2[0], p2[1], p3[0], p3[1]);
   const lut = curve.getLUT(samples);
-  return lut.map(p => [p.x, p.y, 0]);
+  return pointsToFloat32Path(lut);
 }
