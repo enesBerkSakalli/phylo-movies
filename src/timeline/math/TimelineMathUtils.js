@@ -177,9 +177,8 @@ export class TimelineMathUtils {
     // INTERPOLATION DATA
     // ==========================================================================
 
-    static getInterpolationDataForProgress(progress, treeList, movieData) {
-        const interpolatedTrees = Array.isArray(movieData?.interpolated_trees) ? movieData.interpolated_trees : [];
-        if (!Array.isArray(treeList) || treeList.length === 0 || interpolatedTrees.length === 0) {
+    static getInterpolationDataForProgress(progress, treeList) {
+        if (!Array.isArray(treeList) || treeList.length === 0) {
             return {
                 fromTree: null,
                 toTree: null,
@@ -196,18 +195,20 @@ export class TimelineMathUtils {
         const toIndex = Math.min(fromIndex + 1, totalTrees - 1);
 
         return {
-            fromTree: interpolatedTrees[fromIndex],
-            toTree: interpolatedTrees[toIndex],
+            fromTree: treeList[fromIndex],
+            toTree: treeList[toIndex],
             timeFactor: exactIndex - fromIndex,
             fromIndex,
             toIndex
         };
     }
 
-    static getInterpolationDataForTimelineProgress(progress, segments, timelineData, movieData) {
+    static getInterpolationDataForTimelineProgress(progress, segments, timelineData, treeList) {
         if (
             !Array.isArray(segments) ||
             segments.length === 0 ||
+            !Array.isArray(treeList) ||
+            treeList.length === 0 ||
             !timelineData ||
             !Number.isFinite(timelineData.totalDuration) ||
             timelineData.totalDuration <= 0
@@ -220,16 +221,16 @@ export class TimelineMathUtils {
         const segment = segments[segmentIndex];
 
         if (!segment) {
-            return this._createStaticInterpolationResult(0, movieData);
+            return this._createStaticInterpolationResult(0, treeList);
         }
 
         if (segment.isFullTree || !segment.hasInterpolation) {
-            return this._createStaticInterpolationResult(segment.interpolationData[0].originalIndex, movieData);
+            return this._createStaticInterpolationResult(segment.interpolationData[0].originalIndex, treeList);
         }
 
         const steps = segment.interpolationData.length;
         if (steps <= 1) {
-            return this._createStaticInterpolationResult(segment.interpolationData[0].originalIndex, movieData);
+            return this._createStaticInterpolationResult(segment.interpolationData[0].originalIndex, treeList);
         }
 
         const segmentStart = segmentIndex > 0 ? timelineData.cumulativeDurations[segmentIndex - 1] : 0;
@@ -240,8 +241,8 @@ export class TimelineMathUtils {
         const toStep = Math.min(fromStep + 1, steps - 1);
 
         return {
-            fromTree: movieData.interpolated_trees[segment.interpolationData[fromStep].originalIndex],
-            toTree: movieData.interpolated_trees[segment.interpolationData[toStep].originalIndex],
+            fromTree: treeList[segment.interpolationData[fromStep].originalIndex],
+            toTree: treeList[segment.interpolationData[toStep].originalIndex],
             timeFactor: exactStep - fromStep,
             fromIndex: segment.interpolationData[fromStep].originalIndex,
             toIndex: segment.interpolationData[toStep].originalIndex
@@ -347,8 +348,8 @@ export class TimelineMathUtils {
         return (stepIndex / (totalSteps - 1)) * segmentDuration;
     }
 
-    static _createStaticInterpolationResult(idx, movieData) {
-        const tree = movieData?.interpolated_trees?.[idx];
+    static _createStaticInterpolationResult(idx, treeList) {
+        const tree = treeList?.[idx];
         return { fromTree: tree, toTree: tree, timeFactor: 0, fromIndex: idx, toIndex: idx };
     }
 }

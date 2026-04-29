@@ -170,13 +170,13 @@ export class ScrubberAPI {
   // ==========================================================================
 
   async _getInterpolationData(progress) {
-    const { treeList, movieData } = useAppStore.getState();
+    const { treeList } = useAppStore.getState();
     const timelineInterpolation = this.timelineManager?.getInterpolationDataForTimelineProgress?.(progress);
 
     if (timelineInterpolation) {
       return timelineInterpolation;
     }
 
-    return TimelineMathUtils.getInterpolationDataForProgress(progress, treeList, movieData);
+    return TimelineMathUtils.getInterpolationDataForProgress(progress, treeList);
   }
 }
