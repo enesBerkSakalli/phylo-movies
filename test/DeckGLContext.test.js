@@ -30,7 +30,7 @@ describe('DeckGLContext view state handling', () => {
   });
 
   function createContext() {
-    const context = new DeckGLContext(null);
+    const context = new DeckGLContext(document.createElement('div'));
     context.deck = { setProps: vi.fn() };
     return context;
   }

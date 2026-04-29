@@ -22,19 +22,19 @@ interface SprActivityTimelineProps {
 
 const chartConfig = {
     moverOccurrences: {
-        label: 'Mover occurrences',
+        label: 'Moved groups',
         color: '#0072B2',
     },
     transitionEvents: {
-        label: 'Transition events',
+        label: 'Solver steps',
         color: '#009E73',
     },
     rfDistance: {
-        label: 'RFD',
+        label: 'Tree change',
         color: '#E69F00',
     },
     weightedRfDistance: {
-        label: 'W-RFD',
+        label: 'Weighted change',
         color: '#D55E00',
     },
 };
@@ -59,7 +59,7 @@ export const SprActivityTimeline = ({ rows }: SprActivityTimelineProps) => {
         <div
             className="h-full w-full"
             role="img"
-            aria-label="SPR activity timeline showing mover occurrences, transition events, RFD, and W-RFD by tree pair"
+            aria-label="Chart showing moved groups, solver steps, tree change, and weighted change by tree pair"
         >
             <ChartContainer config={chartConfig} className="h-full w-full">
                 <ComposedChart
@@ -88,7 +88,7 @@ export const SprActivityTimeline = ({ rows }: SprActivityTimelineProps) => {
                         tickCount={5}
                         fontSize={9}
                         label={{
-                            value: 'Mover occurrences',
+                            value: 'Moved groups',
                             angle: -90,
                             position: 'insideLeft',
                             style: { fontSize: 10, fill: 'currentColor' },
@@ -116,7 +116,7 @@ export const SprActivityTimeline = ({ rows }: SprActivityTimelineProps) => {
                     <Bar
                         yAxisId="activity"
                         dataKey="moverOccurrences"
-                        name="Mover occurrences"
+                        name="Moved groups"
                         fill="var(--color-moverOccurrences)"
                         radius={[2, 2, 0, 0]}
                         isAnimationActive={false}
@@ -124,7 +124,7 @@ export const SprActivityTimeline = ({ rows }: SprActivityTimelineProps) => {
                     <Line
                         yAxisId="activity"
                         dataKey="transitionEvents"
-                        name="Transition events"
+                        name="Solver steps"
                         type="monotone"
                         stroke="var(--color-transitionEvents)"
                         strokeWidth={1.5}
@@ -134,7 +134,7 @@ export const SprActivityTimeline = ({ rows }: SprActivityTimelineProps) => {
                     <Line
                         yAxisId="distance"
                         dataKey="rfDistance"
-                        name="RFD"
+                        name="Tree change"
                         type="monotone"
                         stroke="var(--color-rfDistance)"
                         strokeWidth={1.5}
@@ -145,7 +145,7 @@ export const SprActivityTimeline = ({ rows }: SprActivityTimelineProps) => {
                     <Line
                         yAxisId="distance"
                         dataKey="weightedRfDistance"
-                        name="W-RFD"
+                        name="Weighted change"
                         type="monotone"
                         stroke="var(--color-weightedRfDistance)"
                         strokeWidth={1.5}

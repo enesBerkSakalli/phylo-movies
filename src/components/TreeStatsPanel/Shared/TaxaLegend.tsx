@@ -53,9 +53,9 @@ export const TaxaGroupsLegend: React.FC = () => {
     <SidebarMenuItem>
       <Collapsible defaultOpen className="group/taxa-legend">
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton tooltip="Taxa Group Legend">
+          <SidebarMenuButton tooltip="Taxa Color Groups">
             <Palette className="size-4 text-primary" />
-            <span className="font-medium">Taxa Groups</span>
+            <span className="font-medium">Taxa Color Groups</span>
             <ChevronRight className="ml-auto size-4 transition-transform group-data-[state=open]/taxa-legend:rotate-90" />
           </SidebarMenuButton>
         </CollapsibleTrigger>
@@ -66,7 +66,7 @@ export const TaxaGroupsLegend: React.FC = () => {
                 <div
                   className="flex flex-col gap-1 p-3"
                   role="list"
-                  aria-label="Taxa groups legend list"
+                  aria-label="Taxa color groups list"
                 >
                   {groupNames.map((name) => {
                     const color = (groupColorMap && groupColorMap[name]) || '#666';

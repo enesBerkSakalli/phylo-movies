@@ -35,13 +35,13 @@ describe('InterpolationCache', () => {
   it('should calculate data on first call', () => {
     const tree1 = { id: 1 };
     const tree2 = { id: 2 };
-    const layout1 = { tree: tree1, width: 800, height: 600 };
-    const layout2 = { tree: tree2, width: 800, height: 600 };
+    const layout1 = { layoutTree: tree1, width: 800, height: 600 };
+    const layout2 = { layoutTree: tree2, width: 800, height: 600 };
 
     dependencies.calculateLayout.withArgs(tree1).returns(layout1);
     dependencies.calculateLayout.withArgs(tree2).returns(layout2);
-    dependencies.convertTreeToLayerData.withArgs(tree1).returns('layerData1');
-    dependencies.convertTreeToLayerData.withArgs(tree2).returns('layerData2');
+    dependencies.convertTreeToLayerData.withArgs(layout1).returns('layerData1');
+    dependencies.convertTreeToLayerData.withArgs(layout2).returns('layerData2');
 
     const result = cache.getOrCacheInterpolationData(tree1, tree2, 0, 1);
 
@@ -53,8 +53,8 @@ describe('InterpolationCache', () => {
   it('should return cached data on subsequent identical calls', () => {
     const tree1 = { id: 1 };
     const tree2 = { id: 2 };
-    const layout1 = { tree: tree1, width: 800, height: 600 };
-    const layout2 = { tree: tree2, width: 800, height: 600 };
+    const layout1 = { layoutTree: tree1, width: 800, height: 600 };
+    const layout2 = { layoutTree: tree2, width: 800, height: 600 };
 
     dependencies.calculateLayout.returns(layout1);
     dependencies.convertTreeToLayerData.returns('layerData');
@@ -107,6 +107,26 @@ describe('InterpolationCache', () => {
 
     // Change transformation
     dependencies.getBranchTransformation.returns('sigmoid');
+
+    cache.getOrCacheInterpolationData(tree1, tree2, 0, 1);
+
+    expect(dependencies.calculateLayout.called).to.be.true;
+  });
+
+  it('should re-calculate if the shared layout cache key changes', () => {
+    const tree1 = { id: 1 };
+    const tree2 = { id: 2 };
+    let layoutVersion = 'initial';
+    dependencies.getLayoutCacheKey = sandbox.stub().callsFake((treeIndex) => `layout-${treeIndex}-${layoutVersion}`);
+    cache = new InterpolationCache(dependencies);
+
+    dependencies.calculateLayout.returns({});
+    dependencies.convertTreeToLayerData.returns({});
+
+    cache.getOrCacheInterpolationData(tree1, tree2, 0, 1);
+
+    dependencies.calculateLayout.resetHistory();
+    layoutVersion = 'next';
 
     cache.getOrCacheInterpolationData(tree1, tree2, 0, 1);
 

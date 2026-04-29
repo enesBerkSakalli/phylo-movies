@@ -14,9 +14,9 @@ export function PivotEdgeEffectsSection({ pulseEnabled, dashingEnabled, upcoming
     <Collapsible defaultOpen asChild className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton tooltip="Pivot Edge Effects (Blue)">
+          <SidebarMenuButton tooltip="Changed Edge Effects">
             <Activity className="text-primary" />
-            <span>Pivot Edge Effects (Blue)</span>
+            <span>Changed Edge Effects</span>
             <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
           </SidebarMenuButton>
         </CollapsibleTrigger>
@@ -24,9 +24,9 @@ export function PivotEdgeEffectsSection({ pulseEnabled, dashingEnabled, upcoming
           <SidebarMenuSub>
             <SidebarMenuSubItem>
               <div className="flex flex-col gap-3 px-1 py-3">
-                <ToggleWithLabel id="pulse-animation" label="Pulse Animation" description="Breathing effect on edges" checked={!!pulseEnabled} onCheckedChange={onTogglePulse} switchPosition="left" />
-                <ToggleWithLabel id="dashing" label="Dashed Lines" description="Show with dashed pattern" checked={dashingEnabled !== false} onCheckedChange={onToggleDashing} switchPosition="left" />
-                <ToggleWithLabel id="upcoming-changes" label="Change History" description="Indicators for past/future" checked={!!upcomingChangesEnabled} onCheckedChange={onToggleUpcomingChanges} switchPosition="left" />
+                <ToggleWithLabel id="pulse-animation" label="Pulse" description="Animate changed edges" checked={!!pulseEnabled} onCheckedChange={onTogglePulse} switchPosition="left" />
+                <ToggleWithLabel id="dashing" label="Dashed Edges" description="Draw changed edges as dashed lines" checked={dashingEnabled !== false} onCheckedChange={onToggleDashing} switchPosition="left" />
+                <ToggleWithLabel id="upcoming-changes" label="Past/Future Changes" description="Show previous and upcoming changes" checked={!!upcomingChangesEnabled} onCheckedChange={onToggleUpcomingChanges} switchPosition="left" />
               </div>
             </SidebarMenuSubItem>
           </SidebarMenuSub>

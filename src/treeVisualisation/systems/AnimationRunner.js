@@ -1,6 +1,7 @@
 import { detectAnimationStage } from '../deckgl/interpolation/stages/animationStageDetector.js';
 import { applyStageEasing } from '../deckgl/interpolation/stages/stageEasing.js';
 import { calculatePlaybackState } from '../../domain/animation/AnimationTiming.js';
+import { selectActiveTreeList } from '../../state/phyloStore/selectors/treeSelectors.js';
 
 /**
  * AnimationRunner
@@ -215,7 +216,8 @@ export class AnimationRunner {
  * Extracts and calculates basic timing info
  */
 function getPlaybackState(state, timestamp) {
-  const { animationStartTime, animationSpeed, treeList } = state;
+  const { animationStartTime, animationSpeed } = state;
+  const treeList = selectActiveTreeList(state);
   // Guard: Invalid config
   if (!animationStartTime || !treeList || treeList.length === 0) return null;
 
@@ -231,20 +233,20 @@ function getPlaybackState(state, timestamp) {
  * Determines which tree list to use (Standard vs Movie mode)
  */
 function getActiveTreeSequence(state) {
-  // Prefer the TreeList model if available
-  return state.treeList || state.movieData?.interpolated_trees;
+  return selectActiveTreeList(state);
 }
 
 /**
  * Encapsulates logic for finding the comparison tree
  */
 function getComparisonTarget(state, fromIndex, toIndex) {
-  const { transitionResolver, movieData } = state;
+  const { transitionResolver } = state;
+  const treeList = selectActiveTreeList(state);
   const full = Array.isArray(transitionResolver?.fullTreeIndices) ? transitionResolver.fullTreeIndices : [];
 
   // Find the next full tree in the sequence to compare against
   const rightIdx = full.find((i) => i > fromIndex) ?? full[full.length - 1] ?? toIndex;
-  const rightTree = movieData?.interpolated_trees?.[rightIdx];
+  const rightTree = treeList[rightIdx];
 
   return rightTree ? { rightTree, rightTreeIndex: rightIdx } : null;
 }

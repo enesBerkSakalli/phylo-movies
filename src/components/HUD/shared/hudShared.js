@@ -43,12 +43,12 @@ function buildReadablePositionText(sequenceIndex, totalSequenceLength, transitio
   const safeSequenceIndex = Number.isFinite(sequenceIndex) ? sequenceIndex : 0;
 
   if (!anchorIndices.length) {
-    return `Transition frame ${safeSequenceIndex + 1} of ${Math.max(1, totalSequenceLength)}`;
+    return `Frame ${safeSequenceIndex + 1} of ${Math.max(1, totalSequenceLength)}`;
   }
 
   const anchorAtPosition = anchorIndices.indexOf(safeSequenceIndex);
   if (anchorAtPosition >= 0) {
-    return `Anchor ${anchorAtPosition + 1}/${anchorIndices.length}`;
+    return `Source ${anchorAtPosition + 1}/${anchorIndices.length}`;
   }
 
   let previousAnchorIdx = -1;
@@ -65,18 +65,18 @@ function buildReadablePositionText(sequenceIndex, totalSequenceLength, transitio
     const to = anchorIndices[nextAnchorIdx];
     const frameCount = Math.max(1, to - from - 1);
     const frameNumber = Math.max(1, Math.min(frameCount, safeSequenceIndex - from));
-    return `${previousAnchorIdx + 1}->${nextAnchorIdx + 1} transition frame ${frameNumber}/${frameCount}`;
+    return `${previousAnchorIdx + 1}->${nextAnchorIdx + 1} frame ${frameNumber}/${frameCount}`;
   }
 
-  return `Transition frame ${safeSequenceIndex + 1} of ${Math.max(1, totalSequenceLength)}`;
+  return `Frame ${safeSequenceIndex + 1} of ${Math.max(1, totalSequenceLength)}`;
 }
 
 export function buildSegmentText(sequenceIndex, transitionResolver) {
   const anchorIndices = transitionResolver?.fullTreeIndices || [];
-  if (!anchorIndices.length) return 'Transition frame';
+  if (!anchorIndices.length) return 'Generated frame';
 
   const anchorAtPosition = anchorIndices.indexOf(sequenceIndex);
-  if (anchorAtPosition >= 0) return 'Anchor tree';
+  if (anchorAtPosition >= 0) return 'Source tree';
 
   let previousAnchorIdx = 0;
   for (let i = anchorIndices.length - 1; i >= 0; i--) {
@@ -88,10 +88,10 @@ export function buildSegmentText(sequenceIndex, transitionResolver) {
   const nextAnchorIdx = previousAnchorIdx + 1;
 
   if (nextAnchorIdx < anchorIndices.length) {
-    return `Transition ${previousAnchorIdx + 1} -> ${nextAnchorIdx + 1}`;
+    return `Between ${previousAnchorIdx + 1} -> ${nextAnchorIdx + 1}`;
   }
 
-  return 'Anchor tree';
+  return 'Source tree';
 }
 
 export function buildMsaWindow(hasMsa, indexState, msaStepSize, msaWindowSize, msaColumnCount) {

@@ -12,9 +12,17 @@ function flatPathPoint(path, index) {
 
 // Mock Data Utilities
 function createMockNode(id, length = 1, children = []) {
+  const numericId = Number(id);
+  const childSplits = children.flatMap(child => child.split_indices || []);
+  const split_indices = childSplits.length > 0
+    ? childSplits
+    : (Number.isFinite(numericId) ? [numericId] : []);
+
   return {
     id,
+    name: id,
     length,
+    split_indices,
     children
   };
 }
@@ -41,7 +49,7 @@ describe('Complex Data Layer Integration', () => {
         ])
       ]);
 
-      const { tree, max_radius } = createTidyTreeLayout(treeData, 'none', {
+      const { nodes: layoutNodes, max_radius } = createTidyTreeLayout(treeData, 'none', {
         width: 1000,
         height: 1000,
         uniformScale: 1 // Keep scale 1:1 for easy radius math
@@ -49,7 +57,7 @@ describe('Complex Data Layer Integration', () => {
 
       // BFS to find nodes
       const nodes = {};
-      tree.each(n => { nodes[n.id || n.data.id] = n; });
+      layoutNodes.forEach(n => { nodes[n.name] = n; });
 
       // Check Root
       // Root radius should be exactly 0 (fixed in previous step)
@@ -85,12 +93,11 @@ describe('Complex Data Layer Integration', () => {
         createMockNode('Sparse2', 1, [createMockNode('S2')])
       ]);
 
-      const { tree } = createTidyTreeLayout(treeData, 'none', { width: 1000, height: 1000 });
+      const { nodes: layoutNodes } = createTidyTreeLayout(treeData, 'none', { width: 1000, height: 1000 });
 
       // Calculate angular sector size for "Crowded" vs "Sparse1"
-      // Node.x is the angle in radians
       const nodes = {};
-      tree.each(n => { nodes[n.id || n.data.id] = n; });
+      layoutNodes.forEach(n => { nodes[n.name] = n; });
 
       // We need to look at the leaves to see the spread
       const crowdedNode = nodes['Crowded'];
@@ -100,8 +107,8 @@ describe('Complex Data Layer Integration', () => {
       // The layout assigns x (angle) to all nodes
       // We expect the children of Crowded to span a large delta
       const crowdedChildren = crowdedNode.children;
-      const minAngle = Math.min(...crowdedChildren.map(c => c.x));
-      const maxAngle = Math.max(...crowdedChildren.map(c => c.x));
+      const minAngle = Math.min(...crowdedChildren.map(c => c.angle));
+      const maxAngle = Math.max(...crowdedChildren.map(c => c.angle));
       const crowdedSector = maxAngle - minAngle;
 
       // Sparse children (only 1) implies the sector is effectively just its own width,
@@ -111,7 +118,7 @@ describe('Complex Data Layer Integration', () => {
       // AND that Crowded node angle is significantly far from Sparse node angle.
 
       // Angle distance
-      const dist1 = Math.abs(crowdedNode.x - sparseNode1.x);
+      const dist1 = Math.abs(crowdedNode.angle - sparseNode1.angle);
       // Tidy tree should push them apart based on weight.
       // 10 leaves vs 1 leaf means roughly 10x space.
       // Since it's radial 2PI (approx 6.28), 12 leaves total.
@@ -150,28 +157,41 @@ describe('Complex Data Layer Integration', () => {
       const rightResult = createTidyTreeLayout(rightTreeData, 'none', layoutOpt);
 
       // 2. Mock Position Maps (simulating what happens in ComparisonModeRenderer)
-      const mockPositionMap = (treeRoot, centerOffset) => {
+      const mockPositionMap = (nodes) => {
         const map = new Map();
-        treeRoot.each(node => {
-          // Flatten split keys - simplified for test
-          const key = node.id || node.data.id;
-          if (!node.children) { // Leaves mainly
+        nodes.forEach(node => {
+          const key = node.split_indices?.length ? node.split_indices.join('-') : node.name;
+          const parent = nodes.find(candidate => candidate.id === node.parentId);
+          const parentId = parent?.split_indices?.length ? parent.split_indices.join('-') : null;
+
+          if (node.isLeaf) {
             map.set(key, {
+              id: key,
+              parentId,
               isLeaf: true,
-              name: key,
-              position: [node.x, node.y, 0],
-              node
+              name: node.name,
+              position: node.position,
+              split_indices: node.split_indices,
+              depth: node.depth
             });
             return;
           }
           // Add internal nodes too for bundling lookups without overwriting leaf metadata.
-          map.set(key, { node, position: [node.x, node.y, 0] });
+          map.set(key, {
+            id: key,
+            parentId,
+            isLeaf: false,
+            name: node.name,
+            position: node.position,
+            split_indices: node.split_indices,
+            depth: node.depth
+          });
         });
         return map;
       };
 
-      const leftPositions = mockPositionMap(leftResult.tree);
-      const rightPositions = mockPositionMap(rightResult.tree);
+      const leftPositions = mockPositionMap(leftResult.nodes);
+      const rightPositions = mockPositionMap(rightResult.nodes);
 
       // 3. Define the "Move"
       // The edge leading to MoveParent (containing leaves 1 and 2) is the active edge.

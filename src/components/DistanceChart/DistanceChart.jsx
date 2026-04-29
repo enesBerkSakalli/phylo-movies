@@ -156,7 +156,7 @@ export function DistanceChart() {
 
   const chartConfig = useMemo(() => ({
     dist: {
-      label: barOptionValue === 'rfd' ? 'RFD' : barOptionValue === 'w-rfd' ? 'W-RFD' : 'Scale',
+      label: barOptionValue === 'rfd' ? 'Tree Change' : barOptionValue === 'w-rfd' ? 'Weighted Change' : 'Tree Size',
       color: METRIC_COLORS[barOptionValue] || METRIC_COLORS.rfd,
     },
   }), [barOptionValue]);
@@ -195,8 +195,8 @@ export function DistanceChart() {
       id="lineChart"
       className="h-full w-full"
       role="img"
-      aria-label="Interactive distance chart"
-      title="Interactive chart: Click points to navigate"
+      aria-label="Interactive tree difference chart"
+      title="Click points to navigate"
     >
       <ChartContainer config={chartConfig} className="h-full w-full">
         <AreaChart

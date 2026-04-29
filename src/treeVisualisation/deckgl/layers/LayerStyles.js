@@ -72,6 +72,7 @@ export class LayerStyles {
       const colorManager = state.getColorManager?.();
       const pulseEnabled = state.changePulseEnabled ?? true;
       const metricScale = Number.isFinite(state.metricScale) ? state.metricScale : 1;
+      const visualScale = this._calculateVisualScale(state);
       // Use ColorManager as single source of truth for marked subtree data
       // This ensures correct highlighting during scrubbing when ColorManager is updated
       // with the scrub position's tree index but store's currentTreeIndex is stale
@@ -96,6 +97,7 @@ export class LayerStyles {
         markedColor: state.markedColor ?? '#10b981',
         linkConnectionOpacity: state.linkConnectionOpacity ?? 0.6,
         metricScale,
+        visualScale,
         // Density-based scaling: reduce highlight thickness for dense trees
         densityScale: this._calculateDensityScale(state)
       };
@@ -346,6 +348,12 @@ export class LayerStyles {
     const taxaCount = state.movieData?.sorted_leaves?.length || 10;
     // Scale inversely to taxa count: 10 taxa -> 1.0, 100 taxa -> 0.1 (clamped to 0.3)
     return Math.max(0.3, Math.min(1.0, 10 / taxaCount));
+  }
+
+  _calculateVisualScale(state) {
+    const taxaCount = state.movieData?.sorted_leaves?.length || 0;
+    if (taxaCount <= 50) return 1;
+    return Math.max(0.5, Math.min(1.0, Math.sqrt(50 / taxaCount)));
   }
 
   /**

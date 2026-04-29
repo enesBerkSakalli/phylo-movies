@@ -1,5 +1,5 @@
 /**
- * SubtreeExtractor - Utility for extracting subtrees from D3 hierarchy trees
+ * SubtreeExtractor - Utility for extracting subtrees from normalized tree nodes
  * Provides methods for extracting subtrees, converting back to newick format,
  * and managing tree navigation operations
  */
@@ -12,20 +12,19 @@ export class SubtreeExtractor {
    * @returns {Object} New tree data containing only the subtree
    */
   static extractSubtree(node, originalTreeData) {
-    if (!node) {
-      throw new Error('Node is required for subtree extraction');
-    }
+    this._assertNormalizedNode(node);
 
     // Clone the node and all its descendants to avoid modifying original tree
     const subtreeRoot = this._cloneNode(node);
+    const subtreeRootName = node.name || 'node';
 
     // Create new tree data object
     const subtreeData = {
       ...originalTreeData,
-      name: originalTreeData.name ? `${originalTreeData.name}_subtree_${node.data.name || 'node'}` : `subtree_${node.data.name || 'node'}`,
-      originalTreeName: originalTreeData.name,
+      name: originalTreeData?.name ? `${originalTreeData.name}_subtree_${subtreeRootName}` : `subtree_${subtreeRootName}`,
+      originalTreeName: originalTreeData?.name,
       isSubtree: true,
-      subtreeRoot: node.data.name || 'unnamed_node',
+      subtreeRoot: node.name || 'unnamed_node',
       parentTreeData: originalTreeData
     };
 
@@ -41,24 +40,22 @@ export class SubtreeExtractor {
    * @returns {Object} Cloned node with all descendants
    * @private
    */
-  static _cloneNode(node) {
-    const clonedData = { ...node.data };
+  static _cloneNode(node, depth = 0) {
+    this._assertNormalizedNode(node);
+
     const cloned = {
-      data: clonedData,
-      depth: 0, // Reset depth for subtree root
-      height: node.height,
-      parent: null, // Subtree root has no parent
-      children: null
+      name: node.name || '',
+      length: node.length ?? 0,
+      split_indices: Array.isArray(node.split_indices) ? [...node.split_indices] : [],
+      depth,
+      height: node.height ?? 0,
+      path: Array.isArray(node.path) ? [...node.path] : undefined,
+      children: []
     };
 
     // Recursively clone children
-    if (node.children && node.children.length > 0) {
-      cloned.children = node.children.map(child => {
-        const clonedChild = this._cloneNode(child);
-        clonedChild.parent = cloned;
-        clonedChild.depth = cloned.depth + 1;
-        return clonedChild;
-      });
+    if (Array.isArray(node.children) && node.children.length > 0) {
+      cloned.children = node.children.map(child => this._cloneNode(child, depth + 1));
     }
 
     return cloned;
@@ -71,37 +68,34 @@ export class SubtreeExtractor {
    * @private
    */
   static _nodeToNewick(node) {
+    this._assertNormalizedNode(node);
+
     if (!node.children || node.children.length === 0) {
       // Leaf node
-      const name = node.data.name || '';
-      const length = node.data.length ?? '';
+      const name = node.name || '';
+      const length = node.length ?? '';
       return length !== '' ? `${name}:${length}` : name;
     }
 
     // Internal node - recursively build newick for children
     const childrenNewick = node.children.map(child => this._nodeToNewick(child)).join(',');
-    const name = node.data.name || '';
-    const length = node.data.length ?? '';
+    const name = node.name || '';
+    const length = node.length ?? '';
 
     const nodeNewick = `(${childrenNewick})${name}`;
     return length !== '' ? `${nodeNewick}:${length}` : nodeNewick;
   }
 
   /**
-   * Get all descendant nodes from a given node.
-   * Uses D3 hierarchy's built-in descendants() method when available.
-   * @param {Object} node - D3 hierarchy node or raw tree node
+   * Get all descendant nodes from a normalized plain tree node.
+   * @param {Object} node - Normalized plain tree node
    * @returns {Array} Array of all descendant nodes (including the root)
    */
   static getDescendants(node) {
-    // Use D3's built-in descendants() method when available (preferred)
-    if (typeof node.descendants === 'function') {
-      return node.descendants();
-    }
+    this._assertNormalizedNode(node);
 
-    // Fallback for raw tree data
     const descendants = [node];
-    if (node.children) {
+    if (Array.isArray(node.children)) {
       node.children.forEach(child => {
         descendants.push(...this.getDescendants(child));
       });
@@ -110,18 +104,13 @@ export class SubtreeExtractor {
   }
 
   /**
-   * Get all leaf nodes from a given node.
-   * Uses D3 hierarchy's built-in leaves() method when available.
-   * @param {Object} node - D3 hierarchy node or raw tree node
+   * Get all leaf nodes from a normalized plain tree node.
+   * @param {Object} node - Normalized plain tree node
    * @returns {Array} Array of all leaf nodes in the subtree
    */
   static getLeaves(node) {
-    // Use D3's built-in leaves() method when available (preferred)
-    if (typeof node.leaves === 'function') {
-      return node.leaves();
-    }
+    this._assertNormalizedNode(node);
 
-    // Fallback for raw tree data
     if (!node.children || node.children.length === 0) {
       return [node];
     }
@@ -147,7 +136,7 @@ export class SubtreeExtractor {
       leafCount: leaves.length,
       internalNodes: descendants.length - leaves.length,
       maxDepth: Math.max(...descendants.map(n => n.depth || 0)),
-      rootName: node.data.name || 'unnamed'
+      rootName: node.name || 'unnamed'
     };
   }
 
@@ -159,6 +148,8 @@ export class SubtreeExtractor {
    * @returns {boolean} Whether subtree extraction is recommended
    */
   static isValidSubtreeRoot(node, minNodes = 3) {
+    this._assertNormalizedNode(node);
+
     if (!node.children || node.children.length === 0) {
       return false; // Can't extract subtree from leaf
     }
@@ -173,6 +164,7 @@ export class SubtreeExtractor {
    * @returns {string} Newick format string
    */
   static nodeToNewick(node) {
+    this._assertNormalizedNode(node);
     return this._nodeToNewick(node);
   }
 
@@ -182,15 +174,13 @@ export class SubtreeExtractor {
    * @returns {Array} Array of node names from root to target
    */
   static getNodePath(node) {
-    const path = [];
-    let current = node;
+    this._assertNormalizedNode(node);
 
-    while (current) {
-      path.unshift(current.data.name || `depth_${current.depth}`);
-      current = current.parent;
+    if (Array.isArray(node.path) && node.path.length > 0) {
+      return node.path;
     }
 
-    return path;
+    return [node.name || `depth_${node.depth ?? 0}`];
   }
 
   /**
@@ -202,5 +192,14 @@ export class SubtreeExtractor {
   static createBreadcrumb(node, separator = ' > ') {
     const path = this.getNodePath(node);
     return path.join(separator);
+  }
+
+  static _assertNormalizedNode(node) {
+    if (!node || typeof node !== 'object') {
+      throw new Error('SubtreeExtractor requires a normalized plain tree node');
+    }
+    if ('data' in node || typeof node.descendants === 'function' || typeof node.leaves === 'function') {
+      throw new Error('SubtreeExtractor requires a normalized plain tree node, not a D3 hierarchy node');
+    }
   }
 }

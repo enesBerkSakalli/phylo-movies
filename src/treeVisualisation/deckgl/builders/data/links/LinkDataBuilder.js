@@ -1,6 +1,5 @@
 /**
- * LinkDataBuilder - Builds link data objects from D3 hierarchy
- * Handles conversion of D3 links to Deck.gl layer format
+ * LinkDataBuilder - Builds link data objects from normalized layout links
  */
 import { getLinkKey, getNodeKey } from '../../../../utils/KeyGenerator.js';
 import { LinkGeometryBuilder } from '../../geometry/links/LinkGeometryBuilder.js';
@@ -11,57 +10,51 @@ export class LinkDataBuilder {
   }
 
   /**
-   * Convert links from D3 hierarchy to Deck.gl format
-   * @param {Object} tree - D3 hierarchy tree
+   * Convert normalized layout links to Deck.gl format
+   * @param {Array} links - Normalized layout links
    * @returns {Array} Array of link data objects
    */
-  convertLinks(tree) {
-    return tree.links()
+  convertLinks(links) {
+    return (Array.isArray(links) ? links : [])
       .map(link => this.createLinkData(link))
       .filter(Boolean);
   }
 
   /**
-   * Create link data object from D3 hierarchy link
-   * @param {Object} link - D3 hierarchy link with source/target
+   * Create link data object from normalized layout link
    * @returns {Object} Link data for Deck.gl
    */
   createLinkData(link) {
     if (!hasFiniteCoordinates(link?.source) || !hasFiniteCoordinates(link?.target)) {
-      console.warn('[LinkDataBuilder] Skipping link with invalid layout coordinates:', link?.target?.data?.split_indices);
+      console.warn('[LinkDataBuilder] Skipping link with invalid layout coordinates:', link?.targetSplitIndices);
       return null;
     }
 
     const linkData = this._extractLinkCoordinates(link);
     const linkPath = this.geometryBuilder.createLinkPath(linkData);
-    const targetData = link.target.data || {};
-    const sourceData = link.source.data || {};
-    const linkKey = getLinkKey({ split_indices: targetData.split_indices });
-    const sourceId = getNodeKey({ split_indices: sourceData.split_indices });
-    const targetId = getNodeKey({ split_indices: targetData.split_indices });
+    const linkKey = getLinkKey({ split_indices: link.targetSplitIndices });
+    const sourceId = getNodeKey({ split_indices: link.sourceSplitIndices });
+    const targetId = getNodeKey({ split_indices: link.targetSplitIndices });
     if (!linkKey || !sourceId || !targetId) {
-      console.warn('[LinkDataBuilder] Skipping link without split_indices:', link?.target?.data?.name);
+      console.warn('[LinkDataBuilder] Skipping link without split_indices:', link?.targetName);
       return null;
     }
 
-    const targetIsLeaf = !link.target.children || link.target.children.length === 0;
-
     return {
       id: linkKey,
-      depth: link.target.depth, // Depth for elongation-based cascade timing
-      sourcePosition: [link.source.x, link.source.y, 0],
-      targetPosition: [link.target.x, link.target.y, 0],
+      depth: link.depth,
+      sourcePosition: link.sourcePosition,
+      targetPosition: link.targetPosition,
       path: linkPath,
-      name: targetData.name || '',
-      targetName: targetData.name || '',
-      isLeaf: targetIsLeaf,
-      isInternal: !targetIsLeaf,
-      split_indices: targetData.split_indices,
-      // Stable IDs for endpoints to enable subtree-aware interpolation
+      name: link.name || '',
+      targetName: link.targetName || '',
+      isLeaf: link.isLeaf === true,
+      isInternal: link.isInternal === true,
+      split_indices: link.targetSplitIndices,
       sourceId,
       targetId,
-      sourceSplitIndices: sourceData.split_indices,
-      targetSplitIndices: targetData.split_indices,
+      sourceSplitIndices: link.sourceSplitIndices,
+      targetSplitIndices: link.targetSplitIndices,
       polarData: this._extractPolarData(link)
     };
   }
@@ -75,13 +68,13 @@ export class LinkDataBuilder {
       source: {
         x: link.source.x,
         y: link.source.y,
-        angle: link.source.rotatedAngle != null ? link.source.rotatedAngle : link.source.angle,
+        angle: link.source.angle,
         radius: link.source.radius
       },
       target: {
         x: link.target.x,
         y: link.target.y,
-        angle: link.target.rotatedAngle != null ? link.target.rotatedAngle : link.target.angle,
+        angle: link.target.angle,
         radius: link.target.radius
       }
     };
@@ -94,11 +87,11 @@ export class LinkDataBuilder {
   _extractPolarData(link) {
     return {
       source: {
-        angle: link.source.rotatedAngle != null ? link.source.rotatedAngle : link.source.angle,
+        angle: link.source.angle,
         radius: link.source.radius
       },
       target: {
-        angle: link.target.rotatedAngle != null ? link.target.rotatedAngle : link.target.angle,
+        angle: link.target.angle,
         radius: link.target.radius
       }
     };

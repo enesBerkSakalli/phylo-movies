@@ -62,13 +62,13 @@ const resolveMoverContext = (row: any, selectedMoverSignature: string | null) =>
         const selectedMover = movers.find((mover: any) => mover.signature === selectedMoverSignature);
         return {
             mover: selectedMover || null,
-            mode: selectedMover ? 'Selected mover' : 'Selected mover absent',
+            mode: selectedMover ? 'Selected group' : 'Selected group absent',
         };
     }
 
     return {
         mover: row.topMover || null,
-        mode: row.topMover ? 'Top mover' : 'No mover',
+        mode: row.topMover ? 'Top group' : 'No group',
     };
 };
 
@@ -79,18 +79,18 @@ export const SprPairActivityTable = ({ rows, sortedLeaves, selectedMoverIndices 
         : null;
 
     return (
-        <table className="min-w-[912px] w-full table-fixed text-xs">
+        <table className="min-w-[980px] w-full table-fixed text-xs">
             <thead className="bg-muted/40 text-muted-foreground font-bold sticky top-0 z-10">
                 <tr>
                     <th className="w-20 px-3 py-2 text-left font-bold uppercase tracking-wider text-2xs">Pair</th>
-                    <th className="w-16 px-3 py-2 text-right font-bold uppercase tracking-wider text-2xs">Movers</th>
+                    <th className="w-16 px-3 py-2 text-right font-bold uppercase tracking-wider text-2xs">Moves</th>
                     <th className="w-16 px-3 py-2 text-right font-bold uppercase tracking-wider text-2xs">Unique</th>
-                    <th className="w-16 px-3 py-2 text-right font-bold uppercase tracking-wider text-2xs">Events</th>
-                    <th className="w-16 px-3 py-2 text-right font-bold uppercase tracking-wider text-2xs">RFD</th>
-                    <th className="w-20 px-3 py-2 text-right font-bold uppercase tracking-wider text-2xs">W-RFD</th>
-                    <th className="w-36 px-3 py-2 text-left font-bold uppercase tracking-wider text-2xs">Mover Context</th>
-                    <th className="w-44 px-3 py-2 text-left font-bold uppercase tracking-wider text-2xs">Source Attachment</th>
-                    <th className="w-44 px-3 py-2 text-left font-bold uppercase tracking-wider text-2xs">Destination Attachment</th>
+                    <th className="w-16 px-3 py-2 text-right font-bold uppercase tracking-wider text-2xs">Steps</th>
+                    <th className="w-24 px-3 py-2 text-right font-bold uppercase tracking-wider text-2xs">Tree Change</th>
+                    <th className="w-28 px-3 py-2 text-right font-bold uppercase tracking-wider text-2xs">Weighted Change</th>
+                    <th className="w-36 px-3 py-2 text-left font-bold uppercase tracking-wider text-2xs">Group</th>
+                    <th className="w-44 px-3 py-2 text-left font-bold uppercase tracking-wider text-2xs">From</th>
+                    <th className="w-44 px-3 py-2 text-left font-bold uppercase tracking-wider text-2xs">To</th>
                 </tr>
             </thead>
             <tbody className="divide-y divide-border/10">
@@ -123,10 +123,10 @@ export const SprPairActivityTable = ({ rows, sortedLeaves, selectedMoverIndices 
                                 <div className="truncate font-medium">{moverLabel}</div>
                                 {mover ? (
                                     <div className="text-2xs text-muted-foreground/70">
-                                        {mode} · {mover.count} occurrences · {mover.percentage.toFixed(1)}%
+                                        {mode} · {mover.count} moves · {mover.percentage.toFixed(1)}%
                                     </div>
                                 ) : selectedMoverSignature ? (
-                                    <div className="text-2xs text-muted-foreground/70">Selected mover absent</div>
+                                    <div className="text-2xs text-muted-foreground/70">Selected group absent</div>
                                 ) : null}
                             </td>
                             <td
@@ -141,7 +141,7 @@ export const SprPairActivityTable = ({ rows, sortedLeaves, selectedMoverIndices 
                                         className="truncate text-2xs text-muted-foreground/70"
                                         title={formatAttachment(primaryContext.pivotEdge, sortedLeaves)}
                                     >
-                                        Pivot {formatCompactAttachment(primaryContext.pivotEdge, sortedLeaves)}{extraContextLabel}
+                                        Cut side {formatCompactAttachment(primaryContext.pivotEdge, sortedLeaves)}{extraContextLabel}
                                     </div>
                                 ) : null}
                             </td>
@@ -154,7 +154,7 @@ export const SprPairActivityTable = ({ rows, sortedLeaves, selectedMoverIndices 
                                 </div>
                                 {primaryContext ? (
                                     <div className="truncate text-2xs text-muted-foreground/70">
-                                        Regraft context{extraContextLabel}
+                                        New attachment{extraContextLabel}
                                     </div>
                                 ) : null}
                             </td>
@@ -164,7 +164,7 @@ export const SprPairActivityTable = ({ rows, sortedLeaves, selectedMoverIndices 
                 {rows.length === 0 && (
                     <tr>
                         <td colSpan={9} className="px-4 py-12 text-center text-muted-foreground italic">
-                            No pair-level SPR activity available for this dataset.
+                        No tree-pair moves available for this dataset.
                         </td>
                     </tr>
                 )}

@@ -13,11 +13,9 @@ export class DeckGLTreeLayerDataFactory {
   }
 
   /**
-   * Convert D3 hierarchy tree to Deck.gl layer data format
-   * Uses the same geometry approach as PolylineGeometryFactory and WebGLLinkRenderer
-   * Matches the same data structure as WebGL renderers
+   * Convert normalized layout data to Deck.gl layer data format.
    */
-  convertTreeToLayerData(tree, options = {}) {
+  convertTreeToLayerData(layout, options = {}) {
     const {
       extensionRadius = null,
       labelRadius = null,
@@ -31,11 +29,11 @@ export class DeckGLTreeLayerDataFactory {
     } = options;
 
     // Convert each type of data
-    const nodes = this.nodeDataBuilder.convertNodes(tree, { canvasWidth, canvasHeight, radiusConfig });
-    const links = this.linkDataBuilder.convertLinks(tree);
-    const labels = this.labelDataBuilder.convertLabels(tree, labelRadius || extensionRadius);
+    const nodes = this.nodeDataBuilder.convertNodes(layout.nodes, { canvasWidth, canvasHeight, radiusConfig });
+    const links = this.linkDataBuilder.convertLinks(layout.links);
+    const labels = this.labelDataBuilder.convertLabels(layout.leaves, labelRadius || extensionRadius);
     // Extensions should reach to labelRadius (where labels start) for visual connection
-    const extensions = this.extensionDataBuilder.convertExtensions(tree, labelRadius || extensionRadius);
+    const extensions = this.extensionDataBuilder.convertExtensions(layout.leaves, labelRadius || extensionRadius);
 
     const layerData = { nodes, links, labels, extensions };
     applyRenderContext(layerData, { treeIndex, treeSide, renderMode });

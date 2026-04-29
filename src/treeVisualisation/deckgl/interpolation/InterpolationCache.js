@@ -1,4 +1,5 @@
 import memoizeOne from 'memoize-one';
+import { createLayoutCacheKey } from '../../utils/layoutCacheKey.js';
 
 export class InterpolationCache {
   constructor({
@@ -6,13 +7,15 @@ export class InterpolationCache {
     getConsistentRadii,
     convertTreeToLayerData,
     getDimensions,
-    getBranchTransformation
+    getBranchTransformation,
+    getLayoutCacheKey
   }) {
     this.calculateLayout = calculateLayout;
     this.getConsistentRadii = getConsistentRadii;
     this.convertTreeToLayerData = convertTreeToLayerData;
     this.getDimensions = getDimensions;
     this.getBranchTransformation = getBranchTransformation;
+    this.getLayoutCacheKey = getLayoutCacheKey;
 
     this._precomputedCache = new Map();
     this._createMemoizedFunction();
@@ -29,8 +32,8 @@ export class InterpolationCache {
 
   _createMemoizedFunction() {
     this._memoizedGet = memoizeOne(
-      (fromTreeData, toTreeData, fromTreeIndex, toTreeIndex, width, height, branchTransformation) => {
-        // width, height, and branchTransformation are passed to invalidate cache on change.
+      (fromTreeData, toTreeData, fromTreeIndex, toTreeIndex, fromLayoutCacheKey, toLayoutCacheKey) => {
+        // Layout cache keys carry the render-affecting inputs that invalidate cached layer data.
         const { dataFrom, dataTo } = this.buildInterpolationInputs(
           fromTreeData,
           toTreeData,
@@ -48,18 +51,33 @@ export class InterpolationCache {
   }
 
   getOrCacheInterpolationData(fromTreeData, toTreeData, fromTreeIndex, toTreeIndex) {
-    const branchTransformation = this.getBranchTransformation?.();
-    const { width, height } = this.getDimensions?.() || {};
+    const fromLayoutCacheKey = this._getLayoutCacheKey(fromTreeIndex);
+    const toLayoutCacheKey = this._getLayoutCacheKey(toTreeIndex);
 
     return this._memoizedGet(
       fromTreeData,
       toTreeData,
       fromTreeIndex,
       toTreeIndex,
-      width,
-      height,
-      branchTransformation
+      fromLayoutCacheKey,
+      toLayoutCacheKey
     );
+  }
+
+  _getLayoutCacheKey(treeIndex) {
+    if (typeof this.getLayoutCacheKey === 'function') {
+      return this.getLayoutCacheKey(treeIndex);
+    }
+
+    const { width, height } = this.getDimensions?.() || {};
+    return createLayoutCacheKey({
+      state: {
+        branchTransformation: this.getBranchTransformation?.()
+      },
+      treeIndex,
+      width,
+      height
+    });
   }
 
   buildInterpolationInputs(fromTreeData, toTreeData, fromTreeIndex, toTreeIndex) {
@@ -105,7 +123,7 @@ export class InterpolationCache {
 
   _convertLayoutToLayerData(layout, extensionRadius, labelRadius, treeIndex) {
     const layerData = this.convertTreeToLayerData(
-      layout.tree,
+      layout,
       {
         extensionRadius,
         labelRadius,

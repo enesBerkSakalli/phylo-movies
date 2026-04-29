@@ -8,7 +8,7 @@ export const createContextMenuSlice = (set, get) => ({
   // ==========================================================================
   contextMenuOpen: false,
   contextMenuPosition: { x: 0, y: 0 },
-  contextMenuNode: null,      // The D3 tree node that was clicked
+  contextMenuNode: null,      // Normalized node data for the clicked tree element
   contextMenuTreeData: null,  // The current tree data
 
   // ==========================================================================
@@ -18,7 +18,7 @@ export const createContextMenuSlice = (set, get) => ({
   /**
    * Show the context menu at a specific position for a tree node.
    * Called from DeckGL's picking handler.
-   * @param {Object} node - The D3 tree node
+   * @param {Object} node - Normalized plain tree node
    * @param {Object} treeData - The current tree data
    * @param {number} x - Screen X coordinate
    * @param {number} y - Screen Y coordinate

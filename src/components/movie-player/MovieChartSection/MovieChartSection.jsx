@@ -4,9 +4,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export function MovieChartSection({ barOptionValue, onBarOptionChange }) {
   return (
-    <div className="w-full" role="region" aria-label="Distance Chart">
+    <div className="w-full" role="region" aria-label="Tree Difference Chart">
       <div className="px-2 pb-0.5 text-2xs font-medium uppercase tracking-wider text-muted-foreground">
-        Tree distance between neighboring windows
+        Tree difference across source trees
       </div>
       <div className="flex items-center w-full">
         <div className="flex-1 h-[64px] relative">
@@ -14,16 +14,16 @@ export function MovieChartSection({ barOptionValue, onBarOptionChange }) {
         </div>
         <div className="flex-none relative ml-2" role="group" aria-label="Chart controls">
           <Select value={barOptionValue} onValueChange={onBarOptionChange}>
-            <SelectTrigger className="w-[100px] h-8">
+            <SelectTrigger className="w-[140px] h-8">
               <SelectValue placeholder="Metric" />
             </SelectTrigger>
             <SelectContent className="z-[2000]">
-              <SelectItem value="rfd" title="Robinson-Foulds Distance: Measures topological differences between trees">RFD</SelectItem>
-              <SelectItem value="w-rfd" title="Weighted Robinson-Foulds: Includes branch length differences">W-RFD</SelectItem>
-              <SelectItem value="scale" title="Tree scale: Shows relative size changes">Scale</SelectItem>
+              <SelectItem value="rfd" title="Tree-change score based on topology differences">Tree Change</SelectItem>
+              <SelectItem value="w-rfd" title="Tree-change score including branch length differences">Weighted Change</SelectItem>
+              <SelectItem value="scale" title="Relative tree size changes">Tree Size</SelectItem>
             </SelectContent>
           </Select>
-          <div id="chart-select-help" className="sr-only">Choose data series: RFD shows tree differences, W-RFD includes branch lengths, Scale shows tree size</div>
+          <div id="chart-select-help" className="sr-only">Choose data series: Tree Change shows topology differences, Weighted Change includes branch lengths, Tree Size shows tree size.</div>
         </div>
       </div>
     </div>

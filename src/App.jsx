@@ -124,15 +124,15 @@ export function App() {
           <SidebarContent>
             {/* Main Navigation Group */}
             <SidebarGroup>
-              <SidebarGroupLabel>Platform</SidebarGroupLabel>
+              <SidebarGroupLabel>Data</SidebarGroupLabel>
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    tooltip="Back to upload screen"
+                    tooltip="Change dataset"
                     onClick={handleReturnHome}
                   >
                     <ArrowLeft className="size-4" />
-                    <span>Back to Upload</span>
+                    <span>Change Dataset</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <ButtonsMSA />
@@ -144,7 +144,7 @@ export function App() {
 
             {/* Analytics & Insights Group */}
             <SidebarGroup>
-              <SidebarGroupLabel>Analysis & Metrics</SidebarGroupLabel>
+              <SidebarGroupLabel>Analysis</SidebarGroupLabel>
               <SidebarMenu>
                 <AnalyticsDashboard />
                 <TaxaGroupsLegend />
@@ -156,7 +156,7 @@ export function App() {
 
             {/* Visualization Controls Group */}
             <SidebarGroup>
-              <SidebarGroupLabel>Visualization</SidebarGroupLabel>
+              <SidebarGroupLabel>Display</SidebarGroupLabel>
               <SidebarMenu>
                 <VisualElements />
                 <Appearance />

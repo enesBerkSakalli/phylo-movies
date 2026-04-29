@@ -101,7 +101,7 @@ export class TimelineDataProcessor {
                 pivotEdge: null,
                 pivotEdgeTracker: null,
                 treePairKey: null,
-                treeName: entry.name || `Anchor Tree ${treeIndex + 1}`,
+                treeName: entry.name || `Source Tree ${treeIndex + 1}`,
                 hasInterpolation: false,
                 isFullTree: true,
                 treeInfo: null,

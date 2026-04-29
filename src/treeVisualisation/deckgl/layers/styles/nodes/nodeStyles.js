@@ -47,7 +47,7 @@ function resolveHistoryNodeColor(nodeData, cached, baseOpacity) {
 
 /**
  * Resolves the base RGB color for a node, considering highlights and marked subtrees.
- * @param {Object} nodeData - The node data (D3 hierarchy node)
+ * @param {Object} nodeData - Normalized node data
  * @param {Object} cached - Cached state from LayerStyles
  * @param {Object} cm - ColorManager instance
  * @returns {Array} [r, g, b] color array

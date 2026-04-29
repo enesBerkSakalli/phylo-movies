@@ -59,7 +59,7 @@ export function InterpolationCoordinateSection() {
         <AppTooltip
           content={
             <div className="space-y-1">
-              <div>Timeline coordinate, 0=start and 1=end:</div>
+              <div>Sequence position, 0=start and 1=end:</div>
               <div className="font-bold text-primary tabular-nums">
                 {typeof interpolationText === 'object' ? interpolationText.fullPrecision : interpolationText}
               </div>
@@ -73,7 +73,7 @@ export function InterpolationCoordinateSection() {
         </AppTooltip>
       </div>
       <Slider
-        aria-label="Interpolation position"
+        aria-label="Timeline position"
         min={0}
         max={sliderMax}
         step={1}

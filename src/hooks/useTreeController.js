@@ -37,7 +37,7 @@ export function useTreeController() {
         return;
       }
 
-      const controller = new DeckGLTreeAnimationController('#webgl-container', {
+      const controller = new DeckGLTreeAnimationController({
         animations: true,
       });
 

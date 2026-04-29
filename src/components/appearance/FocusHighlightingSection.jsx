@@ -18,9 +18,9 @@ export function FocusHighlightingSection({
     <Collapsible defaultOpen asChild className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton tooltip="Contextual Focus">
+          <SidebarMenuButton tooltip="Focus & Dimming">
             <Eye className="text-primary" />
-            <span>Contextual Focus</span>
+            <span>Focus & Dimming</span>
             <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
           </SidebarMenuButton>
         </CollapsibleTrigger>
@@ -30,24 +30,24 @@ export function FocusHighlightingSection({
               <div className="flex flex-col gap-5 px-1 py-3">
                 <ToggleWithSlider
                   id="dim-non-descendants"
-                  label="Active Subtree"
-                  description="Dim non-descendants of the active edge"
+                  label="Current Change"
+                  description="Dim branches outside the current changed edge"
                   checked={!!dimming}
                   onToggle={onToggleDimming}
                   sliderValue={dimmingOpacity}
                   onSliderChange={onDimmingOpacityChange}
-                  sliderLabel="Dimming Intensity"
+                  sliderLabel="Dim Strength"
                 />
                 <Separator className="mx-1" />
                 <ToggleWithSlider
                   id="dim-non-subtree"
-                  label="Marked Subtree"
-                  description="Dim elements outside the marked subtree"
+                  label="Marked Group"
+                  description="Dim branches outside the marked group"
                   checked={!!subtreeDimming}
                   onToggle={onToggleSubtreeDimming}
                   sliderValue={subtreeDimmingOpacity}
                   onSliderChange={onSubtreeDimmingOpacityChange}
-                  sliderLabel="Dimming Intensity"
+                  sliderLabel="Dim Strength"
                 />
               </div>
             </SidebarMenuSubItem>

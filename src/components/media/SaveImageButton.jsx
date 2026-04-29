@@ -27,27 +27,10 @@ export function SaveImageButton({ disabled = false }) {
 
       const treeController = treeControllers[treeControllers.length - 1]; // Save the right-most view
 
-      let canvas = treeController.deckContext?.canvas;
-
-        // Fallback: try to find canvas in DOM if not in manager
-      if (!canvas) {
-        console.warn("DeckGLContext canvas reference missing, attempting DOM lookup via ID...");
-        const container = document.getElementById('webgl-container');
-        if (container) {
-          canvas = container.querySelector('canvas');
-        } else {
-             console.warn("Container #webgl-container NOT FOUND in DOM.");
-        }
-      }
-
-      // Last resort: find ANY canvas on the page (usually there is only one main one)
-      if (!canvas) {
-        console.warn("Canvas not found in container, searching document...");
-        canvas = document.querySelector('canvas');
-      }
+      const canvas = treeController.deckContext?.canvas;
 
       if (!canvas) {
-        console.error("Deck.gl canvas not found for saving PNG. Checked DeckGLContext and DOM.");
+        console.error("Deck.gl canvas not found for saving PNG. DeckGLContext has not exposed a canvas.");
         return;
       }
 

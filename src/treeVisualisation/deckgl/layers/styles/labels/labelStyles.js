@@ -6,7 +6,8 @@ import { MARKED_LABEL_SCALE, HISTORY_LABEL_SCALE } from '../../config/LabelConfi
  * Calculates label size based on state (highlighting, history, etc.)
  */
 export function getLabelSize(label, fontSize, cached) {
-  const baseSize = parseFloat(fontSize) * 12 || 24;
+  const visualScale = Number.isFinite(cached?.visualScale) ? cached.visualScale : 1;
+  const baseSize = (parseFloat(fontSize) * 12 || 24) * visualScale;
   if (!label) return baseSize;
 
   const nodeData = toColorManagerNode(label);

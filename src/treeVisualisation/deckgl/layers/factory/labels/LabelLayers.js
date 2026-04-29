@@ -165,6 +165,7 @@ export function createDestinationLabelsLayer(labels, state, layerStyles) {
  */
 export function getHighlightLabelsLayerProps(labels, state, layerStyles, cached, options) {
   const { taxaColorVersion, colorVersion, fontSize, highlightColorMode } = state || {};
+  const taxaCount = state?.movieData?.sorted_leaves?.length || 0;
   const {
     sizeScale = 1,
     fontWeight,
@@ -194,7 +195,7 @@ export function getHighlightLabelsLayerProps(labels, state, layerStyles, cached,
 
     updateTriggers: {
       getColor: [colorVersion, taxaColorVersion, highlightColorMode],
-      getSize: [fontSize, colorVersion, taxaColorVersion],
+      getSize: [fontSize, colorVersion, taxaColorVersion, taxaCount],
       getPosition: [colorVersion]
     }
   };
@@ -202,6 +203,7 @@ export function getHighlightLabelsLayerProps(labels, state, layerStyles, cached,
 
 export function getLabelsLayerProps(labels, state, layerStyles) {
   const { taxaColorVersion, colorVersion, fontSize, highlightColorMode } = state || {};
+  const taxaCount = state?.movieData?.sorted_leaves?.length || 0;
 
   // Get cached state once for all accessors
   const cached = layerStyles.getCachedState(state);
@@ -230,7 +232,7 @@ export function getLabelsLayerProps(labels, state, layerStyles) {
 
     updateTriggers: {
       getColor: [colorVersion, taxaColorVersion, highlightColorMode],
-      getSize: [fontSize, colorVersion, taxaColorVersion],
+      getSize: [fontSize, colorVersion, taxaColorVersion, taxaCount],
       getPosition: [colorVersion]
     }
   };

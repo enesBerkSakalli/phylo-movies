@@ -3,7 +3,7 @@ import { NodeGeometryBuilder } from '../../geometry/nodes/NodeGeometryBuilder.js
 import { Z_NODE } from '../../../constants/zOffsets.js';
 
 /**
- * NodeDataBuilder - Converts D3 hierarchy nodes to Deck.gl format
+ * NodeDataBuilder - Converts normalized layout nodes to Deck.gl format
  * Handles node coordinate validation, sizing, and polar data preparation.
  */
 export class NodeDataBuilder {
@@ -12,14 +12,15 @@ export class NodeDataBuilder {
   }
 
   /**
-   * Convert D3 hierarchy tree to Deck.gl node data
-   * @param {Object} tree - D3 hierarchy root
+   * Convert layout nodes to Deck.gl node data
+   * @param {Array} nodes - Normalized layout nodes
    * @param {Object} options - Configuration options for sizing
    * @returns {Array} Array of Deck.gl node objects
    */
-  convertNodes(tree, options = {}) {
-    const nodeDotSizes = this.geometryBuilder.calculateNodeDotSizes(tree, options);
-    return tree.descendants()
+  convertNodes(nodes, options = {}) {
+    const layoutNodes = Array.isArray(nodes) ? nodes : [];
+    const nodeDotSizes = this.geometryBuilder.calculateNodeDotSizes(layoutNodes, options);
+    return layoutNodes
       .map(node => this._createNodeData(node, nodeDotSizes))
       .filter(Boolean);
   }
@@ -30,48 +31,35 @@ export class NodeDataBuilder {
    */
   _createNodeData(node, nodeDotSizes) {
     if (!Number.isFinite(node?.x) || !Number.isFinite(node?.y)) {
-      console.warn('[NodeDataBuilder] Skipping node with invalid layout coordinates:', node?.data?.split_indices);
+      console.warn('[NodeDataBuilder] Skipping node with invalid layout coordinates:', node?.split_indices);
       return null;
     }
 
-    const splitIndices = node.data?.split_indices;
+    const splitIndices = node.split_indices;
     const nodeKey = getNodeKey({ split_indices: splitIndices });
     if (!nodeKey) {
-      console.warn('[NodeDataBuilder] Skipping node without split_indices:', node?.data?.name);
+      console.warn('[NodeDataBuilder] Skipping node without split_indices:', node?.name);
       return null;
     }
     const dotSize = nodeDotSizes?.get(nodeKey) || 2;
-    const parentId = node.parent
-      ? getNodeKey({ split_indices: node.parent.data?.split_indices })
-      : null;
 
-    const isLeaf = !node.children || node.children.length === 0;
+    const isLeaf = node.isLeaf === true;
 
     return {
       id: nodeKey,
-      parentId,
+      parentId: node.parentId,
       position: [node.x, node.y, 0],
       renderPosition: [node.x, node.y, Z_NODE],
       dotSize: dotSize,
       isLeaf,
       isInternal: !isLeaf,
-      name: node.data.name || '',
+      name: node.name || '',
       depth: node.depth,
       height: node.height,
-      angle: node.rotatedAngle != null ? node.rotatedAngle : (node.angle || 0),
+      angle: node.angle || 0,
       polarPosition: node.radius,
-      // Pass split_indices for movement analysis matching
       split_indices: splitIndices,
-      child_split_indices: getChildSplitIndices(node)
+      child_split_indices: node.child_split_indices || []
     };
   }
-
-
-}
-
-function getChildSplitIndices(node) {
-  if (!Array.isArray(node?.children)) return [];
-  return node.children
-    .map((child) => child?.data?.split_indices)
-    .filter(Array.isArray);
 }

@@ -33,7 +33,7 @@ export function ButtonsMSA() {
       const data = useAppStore.getState().movieData;
 
       if (!data?.msa?.sequences) {
-        toast.warning('No alignment data available. Please upload an MSA file.');
+        toast.warning('No alignment data available. Please upload an alignment file.');
         return;
       }
 
@@ -46,9 +46,9 @@ export function ButtonsMSA() {
     <Collapsible defaultOpen asChild className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton tooltip="Multiple Sequence Alignment">
+          <SidebarMenuButton tooltip="Sequence Alignment">
             <Dna className="text-primary" />
-            <span className="truncate">Multiple Sequence Alignment</span>
+            <span className="truncate">Sequence Alignment</span>
             <div className="ml-auto flex items-center gap-1">
               {hasMsa && (
                 <Badge variant="secondary" className="h-5 px-2 text-2xs font-medium transition-colors">
@@ -70,7 +70,7 @@ export function ButtonsMSA() {
                 className="w-full justify-start h-8 text-xs font-normal"
               >
                 <Dna className="size-3.5 mr-2" />
-                <span>Open Viewer</span>
+                <span>Open Alignment</span>
               </Button>
             </SidebarMenuSubItem>
 
@@ -78,7 +78,7 @@ export function ButtonsMSA() {
               <div className="px-2 py-2">
                 <ToggleWithLabel
                   id="enable-msa-sync-btn"
-                  label="Follow active alignment window"
+                  label="Follow Current Window"
                   checked={!!syncMSAEnabled && !!hasMsa}
                   onCheckedChange={(checked) => setSyncMSAEnabled(!!checked)}
                   disabled={!hasMsa}
@@ -92,7 +92,7 @@ export function ButtonsMSA() {
               <SidebarMenuSubItem className="px-2 py-2">
                 <div className="flex items-start gap-2 text-2xs text-muted-foreground italic leading-tight">
                   <Info className="size-3 shrink-0 mt-1" />
-                  <span>This dataset does not include an alignment. Load the Norovirus or Quick MSA Demo example, or upload an MSA file.</span>
+                  <span>This dataset does not include an alignment. Load an alignment demo or upload an alignment file.</span>
                 </div>
               </SidebarMenuSubItem>
             )}

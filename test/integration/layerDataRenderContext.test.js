@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DeckGLTreeLayerDataFactory } from '../../src/treeVisualisation/deckgl/DeckGLTreeLayerDataFactory.js';
 import { TreeNodeInteractionHandler } from '../../src/treeVisualisation/interaction/TreeNodeInteractionHandler.js';
 import { useAppStore } from '../../src/state/phyloStore/store.js';
+import { createLayoutResult } from '../../src/treeVisualisation/layout/LayoutResultAdapter.js';
 
 function makeLayoutTree() {
   const root = hierarchy({
@@ -23,7 +24,13 @@ function makeLayoutTree() {
     node.radius = index * 10;
   });
 
-  return root;
+  return createLayoutResult(root, {
+    max_radius: 20,
+    width: 100,
+    height: 100,
+    margin: 0,
+    scale: 1,
+  });
 }
 
 describe('deck.gl layer render context', () => {
@@ -34,9 +41,9 @@ describe('deck.gl layer render context', () => {
 
   it('adds tree context and split keys to layer data without mutating backend nodes', () => {
     const factory = new DeckGLTreeLayerDataFactory();
-    const tree = makeLayoutTree();
+    const layout = makeLayoutTree();
 
-    const layerData = factory.convertTreeToLayerData(tree, {
+    const layerData = factory.convertTreeToLayerData(layout, {
       extensionRadius: 40,
       labelRadius: 50,
       treeIndex: 7,
@@ -56,17 +63,17 @@ describe('deck.gl layer render context', () => {
       expect(element.splitKey).toEqual(expect.any(String));
     }
 
-    expect(tree.data.treeIndex).toBeUndefined();
-    expect(tree.children[0].data.treeSide).toBeUndefined();
+    expect(layout.layoutTree).not.toHaveProperty('treeIndex');
+    expect(layout.layoutTree.children[0]).not.toHaveProperty('treeSide');
   });
 
   it('skips invalid layout coordinates instead of rendering them at the origin', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const factory = new DeckGLTreeLayerDataFactory();
-    const tree = makeLayoutTree();
-    tree.children[0].x = undefined;
+    const layout = makeLayoutTree();
+    layout.nodes.find((node) => node.name === 'taxon-a').x = undefined;
 
-    const layerData = factory.convertTreeToLayerData(tree, {
+    const layerData = factory.convertTreeToLayerData(layout, {
       extensionRadius: 40,
       labelRadius: 50,
     });
@@ -92,9 +99,9 @@ describe('deck.gl layer render context', () => {
       showNodeContextMenu,
     });
 
-    const layoutTree = makeLayoutTree();
+    const layout = makeLayoutTree();
     const handler = new TreeNodeInteractionHandler({
-      calculateLayout: vi.fn(() => ({ tree: layoutTree })),
+      calculateLayout: vi.fn(() => layout),
     });
     handler.handleNodeClick(
       { object: { treeIndex: 1, split_indices: [1], position: [999, 999, 0] }, x: 10, y: 20 },
@@ -102,7 +109,15 @@ describe('deck.gl layer render context', () => {
       null
     );
 
-    expect(showNodeContextMenu.mock.calls[0][0]?.data?.split_indices).toEqual([1]);
+    const contextNode = showNodeContextMenu.mock.calls[0][0];
+    expect(contextNode).toEqual(expect.objectContaining({
+      name: 'taxon-b',
+      split_indices: [1],
+      depth: 1,
+    }));
+    expect(contextNode).not.toHaveProperty('data');
+    expect(contextNode).not.toHaveProperty('parent');
+    expect(contextNode?.descendants).toBeUndefined();
     expect(showNodeContextMenu).toHaveBeenCalledWith(expect.any(Object), treeB, 12, 34);
   });
 
@@ -116,9 +131,9 @@ describe('deck.gl layer render context', () => {
       showNodeContextMenu,
     });
 
-    const layoutTree = makeLayoutTree();
+    const layout = makeLayoutTree();
     const handler = new TreeNodeInteractionHandler({
-      calculateLayout: vi.fn(() => ({ tree: layoutTree })),
+      calculateLayout: vi.fn(() => layout),
     });
 
     handler.handleNodeClick(
