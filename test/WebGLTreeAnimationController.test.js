@@ -1,7 +1,14 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
+import { useAppStore } from '../src/state/phyloStore/store.js';
 import { WebGLTreeAnimationController } from '../src/treeVisualisation/WebGLTreeAnimationController.js';
 
 describe('WebGLTreeAnimationController radii', () => {
+  const initialState = useAppStore.getState();
+
+  afterEach(() => {
+    useAppStore.setState(initialState, true);
+  });
+
   it('places labels and extensions from the actual layout radius', () => {
     const controller = new WebGLTreeAnimationController(null);
 
@@ -37,5 +44,61 @@ describe('WebGLTreeAnimationController radii', () => {
       expect(Number.isFinite(node.y)).toBe(true);
       expect(Number.isFinite(node.radius)).toBe(true);
     });
+  });
+
+  it('recalculates uniform scaling on the first branch transformation change', () => {
+    const treeList = [{
+      id: 'root',
+      length: 0,
+      children: [{ id: 'child', length: 1 }]
+    }];
+    useAppStore.setState({
+      treeList,
+      branchTransformation: 'none',
+      layoutAngleDegrees: 360,
+      layoutRotationDegrees: 0,
+      transitionResolver: { fullTreeIndices: [0] }
+    });
+
+    const controller = new WebGLTreeAnimationController(null);
+    controller.initializeUniformScaling('none');
+    expect(controller.maxGlobalScale).toBe(1);
+
+    useAppStore.setState({ branchTransformation: 'linear-scale' });
+    controller.calculateLayout(treeList[0], { treeIndex: 0 });
+
+    expect(controller.maxGlobalScale).toBe(2);
+    expect(controller._scalingState.branchTransformation).toBe('linear-scale');
+    expect(controller._scalingState).not.toHaveProperty('calculationTransformation');
+  });
+
+  it('recalculates transformed trees and scaling when the dataset changes with the same transform', () => {
+    const firstTreeList = [{
+      id: 'old-root',
+      length: 0,
+      children: [{ id: 'old-child', length: 1 }]
+    }];
+    const nextTreeList = [{
+      id: 'new-root',
+      length: 0,
+      children: [{ id: 'new-child', length: 5 }]
+    }];
+    useAppStore.setState({
+      treeList: firstTreeList,
+      branchTransformation: 'none',
+      layoutAngleDegrees: 360,
+      layoutRotationDegrees: 0,
+      transitionResolver: { fullTreeIndices: [0] }
+    });
+
+    const controller = new WebGLTreeAnimationController(null);
+    controller.initializeUniformScaling('none');
+    expect(controller.maxGlobalScale).toBe(1);
+
+    useAppStore.setState({ treeList: nextTreeList });
+    const layout = controller.calculateLayout(nextTreeList[0], { treeIndex: 0 });
+
+    expect(controller.maxGlobalScale).toBe(5);
+    expect(layout.tree.data.id).toBe('new-root');
   });
 });

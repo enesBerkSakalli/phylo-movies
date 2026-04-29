@@ -75,4 +75,45 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
 
     expect(setPrecomputedData).not.toHaveBeenCalled();
   });
+
+  it('includes comparison connectors when fitting the current tree data', () => {
+    const controller = Object.create(ControllerClass.prototype);
+    const node = { id: 'node-1', position: [0, 0, 0] };
+    const label = { id: 'label-1', position: [1, 1, 0] };
+    const link = { id: 'link-1', path: new Float32Array([0, 0, 0, 1, 1, 0]) };
+    const connector = { id: 'connector-1', path: new Float32Array([1, 1, 0, 10, 10, 0]) };
+    controller._lastLayerData = {
+      nodes: [node],
+      labels: [label],
+      links: [link],
+      connectors: [connector],
+    };
+    controller.viewportManager = {
+      focusOnTree: vi.fn(),
+    };
+
+    controller.fitTreeToViewport();
+
+    expect(controller.viewportManager.focusOnTree).toHaveBeenCalledWith([node], [label], {
+      includeLabels: false,
+      duration: 350,
+      padding: undefined,
+      links: [link, connector],
+    });
+  });
+
+  it('clears prefetch bookkeeping when style changes reset interpolation data', () => {
+    controller = new ControllerClass(null);
+    controller.renderAllElements = vi.fn();
+    controller.prefetchedFrameIndices.add(1);
+    controller._prefetchRequestTokens.set(1, 'stale-token');
+    const generation = controller._layoutRequestGeneration;
+
+    controller._handleStyleChange();
+
+    expect(controller.prefetchedFrameIndices.size).toBe(0);
+    expect(controller._prefetchRequestTokens.size).toBe(0);
+    expect(controller._layoutRequestGeneration).toBe(generation + 1);
+    expect(controller.renderAllElements).toHaveBeenCalledOnce();
+  });
 });

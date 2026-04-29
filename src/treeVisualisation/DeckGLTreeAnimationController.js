@@ -255,12 +255,16 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
   fitTreeToViewport(options = {}) {
     const nodes = this._lastLayerData?.nodes;
     if (!Array.isArray(nodes) || nodes.length === 0 || !this.viewportManager) return;
+    const links = [
+      ...(this._lastLayerData.links || []),
+      ...(this._lastLayerData.connectors || [])
+    ];
 
     this.viewportManager.focusOnTree(nodes, this._lastLayerData.labels, {
       includeLabels: options.includeLabels === true,
       duration: options.duration ?? 350,
       padding: options.padding,
-      links: this._lastLayerData.links
+      links
     });
   }
 
@@ -502,7 +506,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
   }
 
   _handleStyleChange() {
-    this.interpolationCache?.reset();
+    this.resetInterpolationCaches();
     this.renderAllElements();
   }
 }

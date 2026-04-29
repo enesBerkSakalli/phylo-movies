@@ -11,8 +11,7 @@ export class WebGLTreeAnimationController {
 
   constructor(container = "#webgl-container") {
     this._scalingState = {
-      branchTransformation: undefined,
-      calculationTransformation: 'none'
+      branchTransformation: 'none'
     };
     this._transformedCache = new Map();
     this._onResize = null;
@@ -69,7 +68,7 @@ export class WebGLTreeAnimationController {
       this.globalScaleList = [];
       this.maxGlobalScale = 0;
       this.uniformScalingEnabled = false;
-      this._scalingState.calculationTransformation = branchTransformation;
+      this._scalingState.branchTransformation = branchTransformation;
       this._scalingState.datasetToken = datasetToken;
       this._scalingState.datasetRef = treeList;
       return;
@@ -86,7 +85,7 @@ export class WebGLTreeAnimationController {
     this.maxGlobalScale = getMaxScaleValue(this.globalScaleList);
     this.uniformScalingEnabled = true;
 
-    this._scalingState.calculationTransformation = branchTransformation;
+    this._scalingState.branchTransformation = branchTransformation;
     this._scalingState.datasetToken = datasetToken;
     this._scalingState.datasetRef = treeList;
   }
@@ -95,16 +94,10 @@ export class WebGLTreeAnimationController {
     return (
       this.uniformScalingEnabled &&
       Number.isFinite(Number(this.maxGlobalScale)) &&
-      this._scalingState.calculationTransformation === branchTransformation &&
+      this._scalingState.branchTransformation === branchTransformation &&
       this._scalingState.datasetToken === datasetToken &&
       this._scalingState.datasetRef === treeList
     );
-  }
-
-  _recalculateUniformScalingForTransformation(newTransformation) {
-    if (this._scalingState.calculationTransformation !== newTransformation) {
-      this.initializeUniformScaling(newTransformation);
-    }
   }
 
   // ==========================================================================
@@ -116,17 +109,17 @@ export class WebGLTreeAnimationController {
    */
   calculateLayout(treeData, options = {}) {
     const { treeIndex } = options;
-    const { branchTransformation, layoutAngleDegrees, layoutRotationDegrees } = useAppStore.getState();
+    const {
+      branchTransformation,
+      layoutAngleDegrees,
+      layoutRotationDegrees,
+      treeList
+    } = useAppStore.getState();
 
-    // Lazy initialization of uniform scaling to ensure consistent sizing across frames
-    if (!this.uniformScalingEnabled) {
-      this.initializeUniformScaling(branchTransformation);
-    } else {
-      // Handle transformation changes if already initialized
-      this._handleTransformationChange(branchTransformation);
-    }
+    // initializeUniformScaling is cache-guarded and also catches dataset reference changes.
+    this.initializeUniformScaling(branchTransformation);
 
-    const transformedTreeData = this._getTransformedTreeData(treeData, branchTransformation, treeIndex);
+    const transformedTreeData = this._getTransformedTreeData(treeData, branchTransformation, treeIndex, treeList);
     if (!transformedTreeData) {
       console.warn('calculateLayout: No tree data available');
       return null;
@@ -137,20 +130,14 @@ export class WebGLTreeAnimationController {
     return layout;
   }
 
-  _handleTransformationChange(branchTransformation) {
-    const transformationChanged = this._scalingState.branchTransformation !== undefined &&
-      this._scalingState.branchTransformation !== branchTransformation;
-
-    if (transformationChanged && this.uniformScalingEnabled) {
-      this._recalculateUniformScalingForTransformation(branchTransformation);
-    }
-
-    this._scalingState.branchTransformation = branchTransformation;
-  }
-
-  _getTransformedTreeData(treeData, branchTransformation, treeIndex) {
+  _getTransformedTreeData(treeData, branchTransformation, treeIndex, sourceList) {
     const cached = this._transformedCache.get(branchTransformation);
-    if (cached && cached.transformedList && typeof treeIndex === 'number') {
+    if (
+      cached &&
+      cached.sourceList === sourceList &&
+      cached.transformedList &&
+      typeof treeIndex === 'number'
+    ) {
       return cached.transformedList[treeIndex];
     }
     if (treeData) {
