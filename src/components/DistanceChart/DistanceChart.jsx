@@ -8,9 +8,13 @@ import {
   YAxis,
 } from 'recharts';
 import {
+  selectBarOptionValue,
   selectCurrentTreeIndex,
+  selectDistanceRfd,
+  selectDistanceWeightedRfd,
   selectFullTreeIndices,
-  selectScaleValues,
+  selectGoToPosition,
+  selectScaleList,
   selectTransitionResolver,
   useAppStore
 } from '@/state/phyloStore/store.js';
@@ -126,15 +130,6 @@ const useTimelineData = ({
     scaleList,
   ]);
 
-// ==========================================================================
-// STORE SELECTORS
-// ==========================================================================
-const selectBarOptionValue = (s) => s.barOptionValue;
-const selectDistanceRfd = (s) => s.distanceRfd;
-const selectDistanceWeightedRfd = (s) => s.distanceWeightedRfd;
-
-const selectGoToPosition = (s) => s.goToPosition;
-
 export function DistanceChart() {
   const barOptionValue = useAppStore(selectBarOptionValue);
   const currentTreeIndex = useAppStore(selectCurrentTreeIndex);
@@ -142,7 +137,7 @@ export function DistanceChart() {
   const fullTreeIndices = useAppStore(selectFullTreeIndices);
   const robinsonFouldsDistances = useAppStore(selectDistanceRfd);
   const weightedRobinsonFouldsDistances = useAppStore(selectDistanceWeightedRfd);
-  const scaleList = useAppStore(selectScaleValues);
+  const scaleList = useAppStore(selectScaleList);
   const goToPosition = useAppStore(selectGoToPosition);
 
   const { points, yMax, currentX, hasData } = useTimelineData({

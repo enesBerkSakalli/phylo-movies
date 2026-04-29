@@ -35,21 +35,19 @@ import {
 } from '@/components/ui/sidebar';
 
 import { Film, ArrowLeft } from 'lucide-react';
-import { useAppStore } from '@/state/phyloStore/store.js';
+import {
+  selectFileName,
+  selectHasMsa,
+  selectInitialize,
+  selectReset,
+  useAppStore
+} from '@/state/phyloStore/store.js';
 import { getPhyloMovieData } from '@/services/data/dataManager.js';
 import { useTreeController } from './hooks/useTreeController.js';
 
-// ==========================================================================
-// STORE SELECTORS
-// ==========================================================================
-const selectFileName = (s) => s.fileName || 'Loading...';
-const selectHasMsa = (s) => s.hasMsa;
-const selectInitialize = (s) => s.initialize;
-const selectReset = (s) => s.reset;
-
 export function App() {
 
-  const fileName = useAppStore(selectFileName);
+  const fileName = useAppStore(selectFileName) || 'Loading...';
   const hasMsa = useAppStore(selectHasMsa);
   const initializeStore = useAppStore(selectInitialize);
   const resetStore = useAppStore(selectReset);

@@ -1,6 +1,12 @@
 
 import React, { useMemo } from 'react';
-import { selectLeafNamesByIndex, useAppStore } from '@/state/phyloStore/store.js';
+import {
+  selectLeafNamesByIndex,
+  selectMarkedNodes,
+  selectPairSolutions,
+  selectSetManuallyMarkedNodes,
+  useAppStore
+} from '@/state/phyloStore/store.js';
 import {
   calculateSprMoverFrequencies,
   getTopSprMovers,
@@ -19,15 +25,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import type { AppStoreState } from '@/types/store';
-
-// ==========================================================================
-// STORE SELECTORS
-// ==========================================================================
-const selectPairSolutions = (s: AppStoreState) => s.pairSolutions;
-const selectSetManuallyMarkedNodes = (s: AppStoreState) => s.setManuallyMarkedNodes;
-const selectMarkedNodes = (s: AppStoreState) => s.manuallyMarkedNodes;
-
 /**
  * SubtreeFrequencyList
  *

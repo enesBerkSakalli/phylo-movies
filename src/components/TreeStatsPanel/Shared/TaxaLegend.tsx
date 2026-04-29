@@ -1,6 +1,6 @@
 import React from 'react';
 import { Palette, ChevronRight } from 'lucide-react';
-import { useAppStore } from '@/state/phyloStore/store.js';
+import { selectTaxaGrouping, useAppStore } from '@/state/phyloStore/store.js';
 import {
   SidebarMenuItem,
   SidebarMenuButton,
@@ -13,13 +13,6 @@ import {
   CollapsibleTrigger
 } from '@/components/ui/collapsible';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import type { AppStoreState } from '@/types/store';
-
-// ==========================================================================
-// STORE SELECTORS
-// ==========================================================================
-const selectTaxaGrouping = (s: AppStoreState) => s.taxaGrouping;
-
 /**
  * Taxa groups legend - displays color-coded groups when taxa coloring is applied.
  * Now integrated as a SidebarMenuItem for consistent UI placement.

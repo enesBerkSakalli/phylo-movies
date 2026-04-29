@@ -2,7 +2,17 @@ import React, { useMemo, useCallback } from 'react';
 import { Rnd } from 'react-rnd';
 import { Button } from '@/components/ui/button';
 import { Palette, X } from 'lucide-react';
-import { selectLeafNamesByIndex, useAppStore } from '@/state/phyloStore/store.js';
+import {
+  selectLeafNamesByIndex,
+  selectSetTaxaColoringOpen,
+  selectSetTaxaColoringWindow,
+  selectSetTaxaGrouping,
+  selectTaxaColoringOpen,
+  selectTaxaColoringWindow,
+  selectTaxaGrouping,
+  selectUpdateTaxaColors,
+  useAppStore
+} from '@/state/phyloStore/store.js';
 import { TaxaColoringWindow } from './TaxaColoringWindow.jsx';
 import { applyColoringData } from '@/treeColoring/utils/GroupingUtils.js';
 import { SYSTEM_TREE_COLORS } from '@/constants/TreeColors.js';
@@ -11,17 +21,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-
-// ==========================================================================
-// STORE SELECTORS
-// ==========================================================================
-const selectTaxaColoringOpen = (s) => s.taxaColoringOpen;
-const selectSetTaxaColoringOpen = (s) => s.setTaxaColoringOpen;
-const selectTaxaColoringWindow = (s) => s.taxaColoringWindow;
-const selectSetTaxaColoringWindow = (s) => s.setTaxaColoringWindow;
-const selectTaxaGrouping = (s) => s.taxaGrouping;
-const selectUpdateTaxaColors = (s) => s.updateTaxaColors;
-const selectSetTaxaGrouping = (s) => s.setTaxaGrouping;
 
 // Stable empty object to avoid creating new objects on each render
 const EMPTY_INITIAL_STATE = {};

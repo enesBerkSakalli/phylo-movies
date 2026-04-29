@@ -70,11 +70,13 @@ describe('Tree Visualisation - State Update Logic', () => {
         const index = 10;
         const activeEdge = [1, 2];
         const pairKey = 'pair_1';
+        const treeMetadata = [];
+        treeMetadata[index] = { tree_pair_key: pairKey };
         const state = createMockState({
             currentTreeIndex: index,
             markedSubtreeMode: 'all', // CAUSES SWITCH
             pivotEdgeTracking: { [index]: activeEdge },
-            movieData: { tree_metadata: { [index]: { tree_pair_key: pairKey } } },
+            treeMetadata,
             pairSolutions: {
                 [pairKey]: {
                     jumping_subtree_solutions: {

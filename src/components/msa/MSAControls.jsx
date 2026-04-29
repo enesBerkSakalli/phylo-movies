@@ -6,43 +6,31 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RotateCcw } from 'lucide-react';
-import { selectCurrentTreeIndex, selectTreeControllers, useAppStore } from '@/state/phyloStore/store.js';
+import {
+  selectClearMsaRowOrder,
+  selectCurrentTree,
+  selectCurrentTreeIndex,
+  selectSetMsaRowOrder,
+  selectTreeControllers,
+  useAppStore
+} from '@/state/phyloStore/store.js';
 import { MSARegionOverrides, MSAViewActions, MSAVisibleRange } from './controls';
-
-// ==========================================================================
-// STORE SELECTORS
-// ==========================================================================
-const selectSetMsaRowOrder = (s) => s.setMsaRowOrder;
-const selectClearMsaRowOrder = (s) => s.clearMsaRowOrder;
 
 export function MSAControls() {
   const { processedData, showLetters, setShowLetters, colorScheme, setColorScheme } = useMSA();
   const treeControllers = useAppStore(selectTreeControllers);
+  const currentTree = useAppStore(selectCurrentTree);
   const currentTreeIndex = useAppStore(selectCurrentTreeIndex);
   const setMsaRowOrder = useAppStore(selectSetMsaRowOrder);
   const clearMsaRowOrder = useAppStore(selectClearMsaRowOrder);
-
-  // Pull selector directly to avoid extra subscription in useAppStore
-  const getCurrentTree = () => {
-    try {
-      const state = useAppStore.getState();
-      const { treeList, currentTreeIndex: idx } = state;
-      if (!Array.isArray(treeList) || typeof idx !== 'number') return null;
-      return treeList[idx] ?? null;
-    } catch {
-      return null;
-    }
-  };
 
   const handleMatchTreeOrder = () => {
     const controller = Array.isArray(treeControllers) ? treeControllers[0] : null;
     if (!controller?.calculateLayout) return;
 
-    const tree = getCurrentTree();
-    if (!tree) return;
+    if (!currentTree) return;
 
-    const layout = controller.calculateLayout(tree, { treeIndex: currentTreeIndex });
+    const layout = controller.calculateLayout(currentTree, { treeIndex: currentTreeIndex });
     if (!Array.isArray(layout?.leaves)) return;
 
     const leaves = [...layout.leaves].sort((a, b) => (a.angle ?? 0) - (b.angle ?? 0));

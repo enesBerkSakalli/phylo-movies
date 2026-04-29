@@ -96,7 +96,7 @@ describe('Tree Visualisation - Subtree Tracking & Parsing', () => {
           subtreeTracking: [],
           activeChangeEdgeTracking: [],
           pairSolutions: {},
-          movieData: { tree_metadata: [] },
+          treeMetadata: [],
           transitionResolver: { isFullTree: () => false }
       };
 
@@ -122,9 +122,7 @@ describe('Tree Visualisation - Subtree Tracking & Parsing', () => {
           const state = {
               subtreeTracking: [ [[1, 2]] ], // The moving subtree is {1,2}
               pivotEdgeTracking: [ activeEdge ],
-              movieData: {
-                  tree_metadata: [ { tree_pair_key: pairKey } ]
-              },
+              treeMetadata: [ { tree_pair_key: pairKey } ],
               pairSolutions: {
                   [pairKey]: {
                       // Map active activeEdge to a Subtree Map
@@ -166,7 +164,7 @@ describe('Tree Visualisation - Subtree Tracking & Parsing', () => {
         const state = {
             subtreeTracking: [ subtrees ],
             pivotEdgeTracking: [ [1, 2] ], // pivot edge lookup key
-            movieData: { tree_metadata: [{ tree_pair_key: pairKey }] },
+            treeMetadata: [{ tree_pair_key: pairKey }],
             pairSolutions: {
                 [pairKey]: {
                     solution_to_source_map: {

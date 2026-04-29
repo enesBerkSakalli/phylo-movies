@@ -1,13 +1,12 @@
 import React, { useCallback } from 'react';
-import { selectBranchTransformation, useAppStore } from '@/state/phyloStore/store.js';
+import {
+  selectBranchTransformation,
+  selectSetBranchTransformation,
+  useAppStore
+} from '@/state/phyloStore/store.js';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { SidebarMenuSub, SidebarMenuSubItem } from '@/components/ui/sidebar';
 import { GitGraph } from 'lucide-react';
-
-// ==========================================================================
-// STORE SELECTORS
-// ==========================================================================
-const selectSetBranchTransformation = (s) => s.setBranchTransformation;
 
 export function TreeStructure() {
   const branchTransformation = useAppStore(selectBranchTransformation);

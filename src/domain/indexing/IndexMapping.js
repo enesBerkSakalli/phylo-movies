@@ -1,4 +1,5 @@
 import { useAppStore } from '../../state/phyloStore/store.js';
+import { selectTreeMetadataAtIndex } from '../../state/phyloStore/selectors/treeSelectors.js';
 
 // ===========================
 // ANCHOR NAVIGATION UTILITIES
@@ -76,7 +77,7 @@ export function getPhaseMetadata(state = useAppStore.getState()) {
   const targetSeqIndex = fullTreeIndex >= 0
     ? state.transitionResolver.fullTreeIndices[fullTreeIndex]
     : sequenceIndex;
-  return state.movieData?.tree_metadata?.[targetSeqIndex] ?? null;
+  return selectTreeMetadataAtIndex(state, targetSeqIndex);
 }
 
 // MSA window index:

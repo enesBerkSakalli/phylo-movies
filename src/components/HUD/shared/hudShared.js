@@ -2,24 +2,37 @@ import { getMSAFrameIndex } from '@/domain/indexing/IndexMapping';
 import { calculateWindow } from '@/domain/msa/msaWindowCalculator';
 import {
   selectActiveTreeListLength,
+  selectAnimationProgress,
+  selectClearClipboard,
+  selectClipboardTreeIndex,
   selectCurrentTreeIndex,
+  selectGoToPosition,
+  selectHasMsa,
+  selectMsaColumnCount,
+  selectMsaStepSize,
+  selectMsaWindowSize,
+  selectPlaying,
+  selectSetClipboardTreeIndex,
+  selectTimelineProgress,
   selectTransitionResolver
 } from '@/state/phyloStore/store.js';
 
-export { selectCurrentTreeIndex, selectTransitionResolver };
-export { selectActiveTreeListLength };
-
-export const selectHasMsa = (s) => s.hasMsa;
-export const selectTimelineProgress = (s) => s.timelineProgress;
-export const selectAnimationProgress = (s) => s.animationProgress;
-export const selectPlaying = (s) => s.playing;
-export const selectMsaWindowSize = (s) => s.msaWindowSize;
-export const selectMsaStepSize = (s) => s.msaStepSize;
-export const selectMsaColumnCount = (s) => s.msaColumnCount;
-export const selectGoToPosition = (s) => s.goToPosition;
-export const selectClipboardTreeIndex = (s) => s.clipboardTreeIndex;
-export const selectSetClipboardTreeIndex = (s) => s.setClipboardTreeIndex;
-export const selectClearClipboard = (s) => s.clearClipboard;
+export {
+  selectActiveTreeListLength,
+  selectAnimationProgress,
+  selectClearClipboard,
+  selectClipboardTreeIndex,
+  selectCurrentTreeIndex,
+  selectGoToPosition,
+  selectHasMsa,
+  selectMsaColumnCount,
+  selectMsaStepSize,
+  selectMsaWindowSize,
+  selectPlaying,
+  selectSetClipboardTreeIndex,
+  selectTimelineProgress,
+  selectTransitionResolver
+};
 
 const clamp01 = (value) => Math.max(0, Math.min(1, value || 0));
 

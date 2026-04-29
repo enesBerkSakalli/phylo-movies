@@ -1,5 +1,20 @@
 import { useMemo } from 'react';
-import { selectTreeControllers, useAppStore } from '@/state/phyloStore/store.js';
+import {
+  selectFontSize,
+  selectLabelsVisible,
+  selectLayoutAngleDegrees,
+  selectLayoutRotationDegrees,
+  selectNodeSize,
+  selectSetFontSize,
+  selectSetLabelsVisible,
+  selectSetLayoutAngleDegrees,
+  selectSetLayoutRotationDegrees,
+  selectSetNodeSize,
+  selectSetStrokeWidth,
+  selectStrokeWidth,
+  selectTreeControllers,
+  useAppStore
+} from '@/state/phyloStore/store.js';
 import { SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { ChevronDown, Circle, RotateCw } from 'lucide-react';
@@ -12,20 +27,6 @@ const toNumericFontSize = (size) => {
   return Number.isFinite(parsed) ? parsed : 1.8;
 };
 
-// ==========================================================================
-// STORE SELECTORS
-// ==========================================================================
-const selectFontSize = (s) => s.fontSize;
-const selectStrokeWidth = (s) => s.strokeWidth;
-const selectNodeSize = (s) => s.nodeSize;
-const selectSetFontSize = (s) => s.setFontSize;
-const selectSetStrokeWidth = (s) => s.setStrokeWidth;
-const selectSetNodeSize = (s) => s.setNodeSize;
-const selectLayoutAngleDegrees = (s) => s.layoutAngleDegrees;
-const selectSetLayoutAngleDegrees = (s) => s.setLayoutAngleDegrees;
-const selectLayoutRotationDegrees = (s) => s.layoutRotationDegrees;
-const selectSetLayoutRotationDegrees = (s) => s.setLayoutRotationDegrees;
-
 export function GeometryDimensionsSection() {
   const nodeSize = useAppStore(selectNodeSize);
   const strokeWidth = useAppStore(selectStrokeWidth);
@@ -34,8 +35,8 @@ export function GeometryDimensionsSection() {
   const setStrokeWidth = useAppStore(selectSetStrokeWidth);
   const setFontSize = useAppStore(selectSetFontSize);
   const treeControllers = useAppStore(selectTreeControllers);
-  const labelsVisible = useAppStore((s) => s.labelsVisible);
-  const setLabelsVisible = useAppStore((s) => s.setLabelsVisible);
+  const labelsVisible = useAppStore(selectLabelsVisible);
+  const setLabelsVisible = useAppStore(selectSetLabelsVisible);
 
   const fontSizeNumber = useMemo(() => toNumericFontSize(fontSize), [fontSize]);
 

@@ -4,23 +4,19 @@ import { AppTooltip } from '@/components/ui/app-tooltip';
 import { ChevronsLeft, ChevronLeft, Play, Pause, ChevronRight, ChevronsRight, GitCompare, Link2, Link2Off } from 'lucide-react';
 import {
   selectActiveTreeListLength,
+  selectComparisonMode,
   selectCurrentTreeIndex,
+  selectGoToNextAnchor,
+  selectGoToPreviousAnchor,
+  selectPlaying,
+  selectSetViewsConnected,
+  selectStartAnimationPlayback,
+  selectStopAnimationPlayback,
+  selectToggleComparisonMode,
   selectTransitionResolver,
+  selectViewsConnected,
   useAppStore
 } from '@/state/phyloStore/store.js';
-
-// ==========================================================================
-// STORE SELECTORS
-// ==========================================================================
-const selectPlaying = (s) => s.playing;
-const selectComparisonMode = (state) => state.comparisonMode;
-const selectToggleComparisonMode = (state) => state.toggleComparisonMode;
-const selectViewsConnected = (s) => s.viewsConnected;
-const selectSetViewsConnected = (s) => s.setViewsConnected;
-const selectStartAnimationPlayback = (s) => s.startAnimationPlayback;
-const selectStopAnimationPlayback = (s) => s.stopAnimationPlayback;
-const selectGoToNextAnchor = (s) => s.goToNextAnchor;
-const selectGoToPreviousAnchor = (s) => s.goToPreviousAnchor;
 
 export function TransportControls({
   onBackward,

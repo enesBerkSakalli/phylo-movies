@@ -1,19 +1,17 @@
 import React from 'react';
 import { Rnd } from 'react-rnd';
-import { useAppStore } from '@/state/phyloStore/store.js';
+import {
+  selectCloseMsaViewer,
+  selectIsMsaViewerOpen,
+  selectMsaWindow,
+  selectSetMsaWindow,
+  useAppStore
+} from '@/state/phyloStore/store.js';
 import { Button } from '@/components/ui/button';
 import { X, Columns } from 'lucide-react';
 import { useMSA } from './MSAContext';
 import { MSAControls } from './MSAControls';
 import { MSAViewer } from './MSAViewer';
-
-// ==========================================================================
-// STORE SELECTORS
-// ==========================================================================
-const selectCloseMsaViewer = (s) => s.closeMsaViewer;
-const selectIsMsaViewerOpen = (s) => s.isMsaViewerOpen;
-const selectMsaWindow = (s) => s.msaWindow;
-const selectSetMsaWindow = (s) => s.setMsaWindow;
 
 function MSAWindowContent() {
   const closeMsaViewer = useAppStore(selectCloseMsaViewer);

@@ -1,4 +1,10 @@
-import { useAppStore } from '@/state/phyloStore/store.js';
+import {
+  selectHasMsa,
+  selectOpenMsaViewer,
+  selectSetSyncMsaEnabled,
+  selectSyncMsaEnabled,
+  useAppStore
+} from '@/state/phyloStore/store.js';
 import { ToggleWithLabel } from '@/components/ui/toggle-with-label';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,18 +18,10 @@ import {
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { toast } from 'sonner';
 
-// ==========================================================================
-// STORE SELECTORS
-// ==========================================================================
-const selectHasMsa = (s) => s.hasMsa;
-const selectSyncMSAEnabled = (s) => s.syncMSAEnabled;
-const selectSetSyncMSAEnabled = (s) => s.setSyncMSAEnabled;
-const selectOpenMsaViewer = (s) => s.openMsaViewer;
-
 export function ButtonsMSA() {
   const hasMsa = useAppStore(selectHasMsa);
-  const syncMSAEnabled = useAppStore(selectSyncMSAEnabled);
-  const setSyncMSAEnabled = useAppStore(selectSetSyncMSAEnabled);
+  const syncMSAEnabled = useAppStore(selectSyncMsaEnabled);
+  const setSyncMSAEnabled = useAppStore(selectSetSyncMsaEnabled);
   const openMsaViewer = useAppStore(selectOpenMsaViewer);
 
   const handleOpenViewer = async () => {

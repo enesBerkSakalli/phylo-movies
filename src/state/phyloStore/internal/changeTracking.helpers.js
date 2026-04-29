@@ -6,7 +6,7 @@ import {
   collectUniqueEdges
 } from '../../../treeVisualisation/utils/splitMatching.js';
 import { findPreviousAnchorSequenceIndex, findNextAnchorSequenceIndex } from '../../../domain/indexing/IndexMapping.js';
-import { selectFullTreeIndices } from '../selectors/treeSelectors.js';
+import { selectFullTreeIndices, selectTreePairKeyAtIndex } from '../selectors/treeSelectors.js';
 
 // ============================================================================
 // SYSTEM HELPERS (Rendering, Persistence, Storage)
@@ -117,7 +117,8 @@ export function getAllSubtreesForPivotEdge(state, index) {
   const edge = state.pivotEdgeTracking?.[index];
   if (!Array.isArray(edge) || edge.length === 0) return [];
 
-  const pairKey = state.movieData?.tree_metadata?.[index]?.tree_pair_key;
+  const pairKey = selectTreePairKeyAtIndex(state, index);
+  if (!pairKey) return [];
   const solutions = state.pairSolutions?.[pairKey]?.jumping_subtree_solutions;
   if (!solutions) return [];
 
@@ -170,7 +171,7 @@ export function getSourceDestinationEdgesAtIndex(state, index) {
   if (!Array.isArray(subtrees) || subtrees.length === 0) return { source: [], dest: [] };
 
   // Retrieve Pair Solutions
-  const pairKey = state.movieData?.tree_metadata?.[index]?.tree_pair_key;
+  const pairKey = selectTreePairKeyAtIndex(state, index);
   const pairSolution = pairKey ? state.pairSolutions?.[pairKey] : null;
   if (!pairSolution) return { source: [], dest: [] };
 

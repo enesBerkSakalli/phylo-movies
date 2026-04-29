@@ -1,8 +1,7 @@
 import React, { useMemo } from 'react';
-import { selectLeafNamesByIndex, useAppStore } from '@/state/phyloStore/store.js';
+import { selectLeafNamesByIndex, selectPairSolutions, useAppStore } from '@/state/phyloStore/store.js';
 import { calculateSprMoverFrequencies, getTopSprMovers, formatSubtreeLabel } from '@/domain/tree/sprAnalyticsUtils';
 import { SYSTEM_TREE_COLORS } from '@/constants/TreeColors';
-import type { AppStoreState } from '@/types/store';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -12,11 +11,6 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
-
-// ==========================================================================
-// STORE SELECTORS
-// ==========================================================================
-const selectPairSolutions = (s: AppStoreState) => s.pairSolutions;
 
 /**
  * SubtreeFrequencyBarChart

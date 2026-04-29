@@ -1,5 +1,28 @@
 import React from 'react';
-import { selectTreeControllers, useAppStore } from '@/state/phyloStore/store.js';
+import {
+  selectCameraMode,
+  selectChangePulseEnabled,
+  selectConnectorStrokeWidth,
+  selectDimmingEnabled,
+  selectDimmingOpacity,
+  selectLinkConnectionOpacity,
+  selectPivotEdgeDashingEnabled,
+  selectSetChangePulseEnabled,
+  selectSetConnectorStrokeWidth,
+  selectSetDimmingEnabled,
+  selectSetDimmingOpacity,
+  selectSetLinkConnectionOpacity,
+  selectSetPivotEdgeDashingEnabled,
+  selectSetSubtreeDimmingEnabled,
+  selectSetSubtreeDimmingOpacity,
+  selectSetUpcomingChangesEnabled,
+  selectSubtreeDimmingEnabled,
+  selectSubtreeDimmingOpacity,
+  selectToggleCameraMode,
+  selectTreeControllers,
+  selectUpcomingChangesEnabled,
+  useAppStore
+} from '@/state/phyloStore/store.js';
 
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -15,31 +38,6 @@ import { ChevronDown, Link, Box, Info, Tag } from 'lucide-react';
 import { FocusHighlightingSection } from './FocusHighlightingSection';
 import { PivotEdgeEffectsSection } from './PivotEdgeEffectsSection';
 import { Switch } from '@/components/ui/switch';
-
-// ==========================================================================
-// STORE SELECTORS
-// ==========================================================================
-
-const selectDimming = (s) => s.dimmingEnabled;
-const selectDimmingOpacity = (s) => s.dimmingOpacity;
-const selectSetDimmingEnabled = (s) => s.setDimmingEnabled;
-const selectSetDimmingOpacity = (s) => s.setDimmingOpacity;
-const selectSubtreeDimming = (s) => s.subtreeDimmingEnabled;
-const selectSubtreeDimmingOpacity = (s) => s.subtreeDimmingOpacity;
-const selectSetSubtreeDimmingEnabled = (s) => s.setSubtreeDimmingEnabled;
-const selectSetSubtreeDimmingOpacity = (s) => s.setSubtreeDimmingOpacity;
-const selectLinkConnectionOpacity = (s) => s.linkConnectionOpacity;
-const selectSetLinkConnectionOpacity = (s) => s.setLinkConnectionOpacity;
-const selectConnectorStrokeWidth = (s) => s.connectorStrokeWidth;
-const selectSetConnectorStrokeWidth = (s) => s.setConnectorStrokeWidth;
-const selectPulseEnabled = (s) => s.changePulseEnabled;
-const selectSetPulseEnabled = (s) => s.setChangePulseEnabled;
-const selectDashingEnabled = (s) => s.pivotEdgeDashingEnabled;
-const selectSetDashingEnabled = (s) => s.setPivotEdgeDashingEnabled;
-const selectUpcomingChangesEnabled = (s) => s.upcomingChangesEnabled;
-const selectSetUpcomingChangesEnabled = (s) => s.setUpcomingChangesEnabled;
-const selectCameraMode = (s) => s.cameraMode;
-const selectToggleCameraMode = (s) => s.toggleCameraMode;
 
 
 // ==========================================================================
@@ -88,14 +86,14 @@ export function PerspectiveSection({ cameraMode, toggleCameraMode, treeControlle
 }
 
 export function Appearance() {
-  const dimming = useAppStore(selectDimming);
+  const dimming = useAppStore(selectDimmingEnabled);
   const dimmingOpacity = useAppStore(selectDimmingOpacity);
-  const subtreeDimming = useAppStore(selectSubtreeDimming);
+  const subtreeDimming = useAppStore(selectSubtreeDimmingEnabled);
   const subtreeDimmingOpacity = useAppStore(selectSubtreeDimmingOpacity);
   const linkConnectionOpacity = useAppStore(selectLinkConnectionOpacity);
   const connectorStrokeWidth = useAppStore(selectConnectorStrokeWidth);
-  const pulseEnabled = useAppStore(selectPulseEnabled);
-  const dashingEnabled = useAppStore(selectDashingEnabled);
+  const pulseEnabled = useAppStore(selectChangePulseEnabled);
+  const dashingEnabled = useAppStore(selectPivotEdgeDashingEnabled);
   const upcomingChangesEnabled = useAppStore(selectUpcomingChangesEnabled);
   const treeControllers = useAppStore(selectTreeControllers);
   const cameraMode = useAppStore(selectCameraMode);
@@ -108,8 +106,8 @@ export function Appearance() {
   const setSubtreeDimmingOpacity = useAppStore(selectSetSubtreeDimmingOpacity);
   const setLinkConnectionOpacity = useAppStore(selectSetLinkConnectionOpacity);
   const setConnectorStrokeWidth = useAppStore(selectSetConnectorStrokeWidth);
-  const setPulseEnabled = useAppStore(selectSetPulseEnabled);
-  const setDashingEnabled = useAppStore(selectSetDashingEnabled);
+  const setPulseEnabled = useAppStore(selectSetChangePulseEnabled);
+  const setDashingEnabled = useAppStore(selectSetPivotEdgeDashingEnabled);
   const setUpcomingChangesEnabled = useAppStore(selectSetUpcomingChangesEnabled);
 
   const rerenderAll = async () => {
