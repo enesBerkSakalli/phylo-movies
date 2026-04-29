@@ -1,23 +1,21 @@
 import React, { createContext, useContext, useState, useMemo } from 'react';
-import { useAppStore } from '@/state/phyloStore/store.js';
+import {
+  selectClearMsaRegion,
+  selectHasMsa,
+  selectMovieData,
+  selectMsaPreviousRegion,
+  selectMsaRegion,
+  selectMsaRowOrder,
+  selectSetMsaRegion,
+  selectTaxaColorVersion,
+  selectTaxaGrouping,
+  useAppStore
+} from '@/state/phyloStore/store.js';
 import { processPhyloData } from '@/msaViewer/utils/dataUtils';
 import { SYSTEM_TREE_COLORS } from '@/constants/TreeColors';
 import { getGroupForTaxon } from '@/treeColoring/utils/GroupingUtils';
 
 const MSAContext = createContext(null);
-
-// ==========================================================================
-// STORE SELECTORS
-// ==========================================================================
-const selectMovieData = (s) => s.movieData;
-const selectHasMsa = (s) => s.hasMsa;
-const selectMsaRegion = (s) => s.msaRegion;
-const selectSetMsaRegion = (s) => s.setMsaRegion;
-const selectClearMsaRegion = (s) => s.clearMsaRegion;
-const selectMsaPreviousRegion = (s) => s.msaPreviousRegion;
-const selectMsaRowOrder = (s) => s.msaRowOrder;
-const selectTaxaGrouping = (s) => s.taxaGrouping;
-const selectTaxaColorVersion = (s) => s.taxaColorVersion;
 
 export function MSAProvider({ children }) {
   const movieData = useAppStore(selectMovieData);

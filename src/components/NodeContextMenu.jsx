@@ -1,6 +1,14 @@
 import React, { useEffect, useCallback, useRef } from 'react';
 import { ClipboardCopy, Highlighter, Crosshair, Info } from 'lucide-react';
-import { selectTreeControllers, useAppStore } from '@/state/phyloStore/store.js';
+import {
+  selectContextMenuNode,
+  selectContextMenuOpen,
+  selectContextMenuPosition,
+  selectHideNodeContextMenu,
+  selectSetManuallyMarkedNodes,
+  selectTreeControllers,
+  useAppStore
+} from '@/state/phyloStore/store.js';
 
 import { SubtreeExtractor } from '@/domain/tree/subtreeExtractor.js';
 import { toast } from 'sonner';
@@ -8,15 +16,6 @@ import { toast } from 'sonner';
 // =============================================================================
 // MAIN COMPONENT
 // =============================================================================
-
-// ==========================================================================
-// STORE SELECTORS
-// ==========================================================================
-const selectContextMenuOpen = (s) => s.contextMenuOpen;
-const selectContextMenuPosition = (s) => s.contextMenuPosition;
-const selectContextMenuNode = (s) => s.contextMenuNode;
-const selectHideNodeContextMenu = (s) => s.hideNodeContextMenu;
-const selectSetManuallyMarkedNodes = (s) => s.setManuallyMarkedNodes;
 
 /**
  * NodeContextMenu - React component for tree node context menu.

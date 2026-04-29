@@ -7,7 +7,23 @@ import { SaveImageButton } from '../media/SaveImageButton.jsx';
 import { TimelineScrollControls } from './TimelineScrollControls/TimelineScrollControls.jsx';
 import { PlaybackSpeedControl } from './PlaybackSpeedControl/PlaybackSpeedControl.jsx';
 import { TimelineSegmentTooltip } from '../timeline/TimelineSegmentTooltip.jsx';
-import { selectLeafNamesByIndex, useAppStore } from '@/state/phyloStore/store.js';
+import {
+  selectAnimationSpeed,
+  selectBackward,
+  selectBarOptionValue,
+  selectForward,
+  selectHoveredSegmentData,
+  selectHoveredSegmentIndex,
+  selectHoveredSegmentPosition,
+  selectLeafNamesByIndex,
+  selectMovieData,
+  selectMovieTimelineManager,
+  selectSetAnimationSpeed,
+  selectSetBarOption,
+  selectSetHoveredSegment,
+  selectSetTooltipHovered,
+  useAppStore
+} from '@/state/phyloStore/store.js';
 import { useSidebar } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Menu, ChevronUp, ChevronDown } from 'lucide-react';
@@ -19,23 +35,6 @@ import { AppTooltip } from '@/components/ui/app-tooltip';
 // CONSTANTS
 // ==========================================================================
 const TOOLTIP_Y_OFFSET = 12;
-
-// ==========================================================================
-// STORE SELECTORS
-// ==========================================================================
-const selectForward = (s) => s.forward;
-const selectBackward = (s) => s.backward;
-const selectSetAnimationSpeed = (s) => s.setAnimationSpeed;
-const selectAnimationSpeed = (s) => s.animationSpeed;
-const selectBarOptionValue = (s) => s.barOptionValue;
-const selectSetBarOption = (s) => s.setBarOption;
-const selectHoveredSegmentIndex = (s) => s.hoveredSegmentIndex;
-const selectHoveredSegmentData = (s) => s.hoveredSegmentData;
-const selectHoveredSegmentPosition = (s) => s.hoveredSegmentPosition;
-const selectSetTooltipHovered = (s) => s.setTooltipHovered;
-const selectSetHoveredSegment = (s) => s.setHoveredSegment;
-const selectMovieData = (s) => s.movieData;
-const selectMovieTimelineManager = (s) => s.movieTimelineManager;
 
 export function MoviePlayerBar() {
   const forward = useAppStore(selectForward);

@@ -1,17 +1,12 @@
 import React, { useEffect, useRef } from 'react';
-import { useAppStore } from '@/state/phyloStore/store.js';
+import { selectSyncMsaEnabled, useAppStore } from '@/state/phyloStore/store.js';
 import { MSADeckGLViewer } from '@/msaViewer/MSADeckGLViewer';
 import { useMSA } from './MSAContext';
 import { MSAScrollbars } from './MSAScrollbars';
 
-// ==========================================================================
-// STORE SELECTORS
-// ==========================================================================
-const selectSyncMSAEnabled = (s) => s.syncMSAEnabled;
-
 export function MSAViewer() {
   const { processedData, msaRegion, msaPreviousRegion, showLetters, movieData, viewAction, colorScheme, setVisibleRange, rowColorMap, visibleRange, scrollAction } = useMSA();
-  const syncMSAEnabled = useAppStore(selectSyncMSAEnabled);
+  const syncMSAEnabled = useAppStore(selectSyncMsaEnabled);
   const containerRef = useRef(null);
   const viewerRef = useRef(null);
 

@@ -1,5 +1,27 @@
 import React, { useCallback } from 'react';
-import { selectTreeControllers, useAppStore } from '@/state/phyloStore/store.js';
+import {
+  selectHighlightColorMode,
+  selectMarkedColor,
+  selectMarkedNodes,
+  selectMarkedSubtreeMode,
+  selectMarkedSubtreeOpacity,
+  selectMarkedSubtreesEnabled,
+  selectMonophyleticColoringEnabled,
+  selectPivotEdgeColor,
+  selectPivotEdgesEnabled,
+  selectSetHighlightColorMode,
+  selectSetManuallyMarkedNodes,
+  selectSetMarkedColor,
+  selectSetMarkedSubtreeMode,
+  selectSetMarkedSubtreeOpacity,
+  selectSetMarkedSubtreesEnabled,
+  selectSetMonophyleticColoring,
+  selectSetPivotEdgeColor,
+  selectSetPivotEdgesEnabled,
+  selectSetTaxaColoringOpen,
+  selectTreeControllers,
+  useAppStore
+} from '@/state/phyloStore/store.js';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Palette, Info, Settings2, RefreshCw } from 'lucide-react';
@@ -13,29 +35,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Highlighter, X } from 'lucide-react';
-
-// ==========================================================================
-// STORE SELECTORS
-// ==========================================================================
-const selectMonophyleticColoringEnabled = (s) => s.monophyleticColoringEnabled;
-const selectPivotEdgesEnabled = (s) => s.pivotEdgesEnabled;
-const selectPivotEdgeColor = (s) => s.pivotEdgeColor;
-const selectMarkedColor = (s) => s.markedColor;
-const selectSetTaxaColoringOpen = (s) => s.setTaxaColoringOpen;
-const selectSetMonophyleticColoring = (s) => s.setMonophyleticColoring;
-const selectSetPivotEdgesEnabled = (s) => s.setPivotEdgesEnabled;
-const selectSetPivotEdgeColor = (s) => s.setPivotEdgeColor;
-const selectSetMarkedColor = (s) => s.setMarkedColor;
-const selectMarkedSubtreesEnabled = (s) => s.markedSubtreesEnabled;
-const selectMarkedSubtreeMode = (s) => s.markedSubtreeMode;
-const selectMarkedSubtreeOpacity = (s) => s.markedSubtreeOpacity;
-const selectHighlightColorMode = (s) => s.highlightColorMode;
-const selectManuallyMarkedNodes = (s) => s.manuallyMarkedNodes;
-const selectSetMarkedSubtreesEnabled = (s) => s.setMarkedSubtreesEnabled;
-const selectSetMarkedSubtreeMode = (s) => s.setMarkedSubtreeMode;
-const selectSetMarkedSubtreeOpacity = (s) => s.setMarkedSubtreeOpacity;
-const selectSetHighlightColorMode = (s) => s.setHighlightColorMode;
-const selectSetManuallyMarkedNodes = (s) => s.setManuallyMarkedNodes;
 
 export function ColoringPanel() {
   const monophyletic = useAppStore(selectMonophyleticColoringEnabled);
@@ -55,7 +54,7 @@ export function ColoringPanel() {
   const markedSubtreeMode = useAppStore(selectMarkedSubtreeMode);
   const markedSubtreeOpacity = useAppStore(selectMarkedSubtreeOpacity);
   const highlightColorMode = useAppStore(selectHighlightColorMode);
-  const manuallyMarkedNodes = useAppStore(selectManuallyMarkedNodes);
+  const manuallyMarkedNodes = useAppStore(selectMarkedNodes);
 
   const setMarkedSubtreesEnabled = useAppStore(selectSetMarkedSubtreesEnabled);
   const setMarkedSubtreeMode = useAppStore(selectSetMarkedSubtreeMode);

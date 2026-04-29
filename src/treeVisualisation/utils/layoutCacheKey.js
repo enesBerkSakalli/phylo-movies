@@ -1,5 +1,6 @@
 import {
   selectActiveTreeList,
+  selectFileName,
   selectFullTreeIndices
 } from '../../state/phyloStore/selectors/treeSelectors.js';
 
@@ -46,7 +47,7 @@ function normalizedOptionalNumber(value) {
 
 export function getDatasetCacheId(state = {}, treeList = null) {
   const resolvedTreeList = resolveTreeList(state, treeList);
-  const fileName = state?.fileName || state?.movieData?.file_name || 'dataset';
+  const fileName = selectFileName(state) || 'dataset';
   const treeCount = Array.isArray(resolvedTreeList) ? resolvedTreeList.length : 0;
   const referenceId = getReferenceId(resolvedTreeList);
   if (Number.isInteger(state?.datasetVersion)) {

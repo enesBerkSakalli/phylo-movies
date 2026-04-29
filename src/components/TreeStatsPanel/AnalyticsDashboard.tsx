@@ -14,27 +14,27 @@ import {
     downloadCsvFile,
 } from './SubtreeAnalytics/sprFrequencyCsv';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { selectLeafNamesByIndex, useAppStore } from '@/state/phyloStore/store.js';
+import {
+    selectDistanceRfd,
+    selectDistanceWeightedRfd,
+    selectFileName,
+    selectLeafNamesByIndex,
+    selectMarkedNodes,
+    selectPairInterpolationRanges,
+    selectPairSolutions,
+    useAppStore
+} from '@/state/phyloStore/store.js';
 import {
     calculateSprDatasetSummary,
     calculateSprMoverFrequencies,
     calculateSprPairActivity,
 } from '@/domain/tree/sprAnalyticsUtils';
 import { Button } from '@/components/ui/button';
-import { AppStoreState } from '@/types/store';
 import { SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 
 // ==========================================================================
 // STORE SELECTORS
 // ==========================================================================
-const EMPTY_ARRAY: any[] = [];
-const selectPairSolutions = (s: AppStoreState) => s.pairSolutions;
-const selectFileName = (s: AppStoreState) => s.fileName || s.movieData?.file_name || 'dataset';
-const selectDistanceRfd = (s: AppStoreState) => s.distanceRfd || EMPTY_ARRAY;
-const selectDistanceWeightedRfd = (s: AppStoreState) => s.distanceWeightedRfd || EMPTY_ARRAY;
-const selectPairInterpolationRanges = (s: AppStoreState) => s.pairInterpolationRanges || EMPTY_ARRAY;
-const selectMarkedNodes = (s: AppStoreState) => s.manuallyMarkedNodes || EMPTY_ARRAY;
-
 interface SprDatasetSummary {
     pairCount: number;
     activePairCount: number;
@@ -50,7 +50,7 @@ interface SprDatasetSummary {
 export const AnalyticsDashboard = () => {
     const pairSolutions = useAppStore(selectPairSolutions);
     const leafNamesByIndex = useAppStore(selectLeafNamesByIndex);
-    const fileName = useAppStore(selectFileName);
+    const fileName = useAppStore(selectFileName) || 'dataset';
     const robinsonFouldsDistances = useAppStore(selectDistanceRfd);
     const weightedRobinsonFouldsDistances = useAppStore(selectDistanceWeightedRfd);
     const pairInterpolationRanges = useAppStore(selectPairInterpolationRanges);
