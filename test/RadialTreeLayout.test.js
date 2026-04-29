@@ -344,6 +344,23 @@ describe('RadialTreeLayout - Geometry & Calculations', () => {
       // Grandchild (3) -> 5 + 3 = 8
       expect(l.root.children[0].children[0].radius).to.equal(8);
     });
+
+    it('should ignore root branch length when accumulating radii', () => {
+      const stemTree = {
+        length: 5,
+        children: [
+          { length: 2 },
+          { length: 3 }
+        ]
+      };
+      const l = new RadialTreeLayout(stemTree);
+
+      l.calcRadius(l.root, 0);
+
+      expect(l.root.radius).to.equal(0);
+      expect(l.root.children[0].radius).to.equal(2);
+      expect(l.root.children[1].radius).to.equal(3);
+    });
   });
 
   describe('generateCoordinates (Polar to Cartesian)', () => {

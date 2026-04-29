@@ -91,6 +91,7 @@ export class RadialTreeLayout {
     // Backend standardizes on 'length'.
     const rawLength = d.length ?? 0;
     const length = Number(rawLength) || 0;
+    const effectiveLength = node.parent ? length : 0;
 
     // Check if we should preserve radius for this node
     const nodeKey = getNodeKey(node);
@@ -99,7 +100,7 @@ export class RadialTreeLayout {
       node.radius = this.previousNodeRadii.get(nodeKey);
     } else {
       // Calculate new radius normally
-      node.radius = length + radius;
+      node.radius = effectiveLength + radius;
       // Store this radius for potential future preservation
       if (nodeKey) {
         this.previousNodeRadii.set(nodeKey, node.radius);
