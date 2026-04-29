@@ -1,4 +1,4 @@
-import { toSubtreeKey } from '../utils/splitMatching.js';
+import { getSplitIndices, toSubtreeKey } from '../utils/splitMatching.js';
 import { LinkDataBuilder } from './builders/data/links/LinkDataBuilder.js';
 import { NodeDataBuilder } from './builders/data/nodes/NodeDataBuilder.js';
 import { LabelDataBuilder } from './builders/data/labels/LabelDataBuilder.js';
@@ -62,21 +62,11 @@ function applyRenderContext(layerData, context) {
         element.renderMode = context.renderMode;
       }
 
-      const splitIndices = getElementSplitIndices(element);
+      const splitIndices = getSplitIndices(element);
       if (Array.isArray(splitIndices) && splitIndices.length > 0) {
         element.split_indices = splitIndices;
         element.splitKey = toSubtreeKey(splitIndices);
       }
     }
   }
-}
-
-function getElementSplitIndices(element) {
-  return (
-    element.split_indices ||
-    element.data?.split_indices ||
-    element.target?.data?.split_indices ||
-    element.leaf?.data?.split_indices ||
-    null
-  );
 }

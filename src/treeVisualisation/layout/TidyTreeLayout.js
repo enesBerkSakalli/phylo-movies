@@ -1,4 +1,4 @@
-import * as d3 from "d3";
+import { cluster, hierarchy } from "d3-hierarchy";
 import { getNodeKey } from '../utils/KeyGenerator.js';
 import { transformBranchLengths } from '../../domain/tree/branchTransform.js';
 
@@ -9,7 +9,7 @@ import { transformBranchLengths } from '../../domain/tree/branchTransform.js';
 export class TidyTreeLayout {
   constructor(root) {
     const isHierarchyNode = root && typeof root.each === 'function' && root.data !== undefined;
-    this.root = isHierarchyNode ? root : d3.hierarchy(root);
+    this.root = isHierarchyNode ? root : hierarchy(root);
     this.containerWidth = 0;
     this.containerHeight = 0;
     this.margin = 0;
@@ -53,7 +53,7 @@ export class TidyTreeLayout {
     // regardless of what the data property says (some formats assign stem length to root)
     const effectiveLength = node.parent ? length : 0;
 
-    const nodeKey = getNodeKey(node);
+    const nodeKey = getNodeKey({ split_indices: d.split_indices });
     if (nodeKey && this.preserveRadius && this.previousNodeRadii.has(nodeKey)) {
       node.radius = this.previousNodeRadii.get(nodeKey);
     } else {
@@ -138,7 +138,7 @@ export class TidyTreeLayout {
     this.cacheLeafCounts();
 
     // Use cluster (tidy radial) to spread leaves with subtree-aware separation
-    const tidy = d3.cluster()
+    const tidy = cluster()
       .size([this.angleExtent, 1])
       .separation((a, b) => {
         const leafWeight = Math.max(1, ((a.leafCount || 1) + (b.leafCount || 1)) / 2);

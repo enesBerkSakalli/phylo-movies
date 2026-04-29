@@ -155,12 +155,12 @@ describe('Complex Data Layer Integration', () => {
               isLeaf: true,
               name: key,
               position: [node.x, node.y, 0],
-              node: { originalNode: node }
+              node
             });
             return;
           }
           // Add internal nodes too for bundling lookups without overwriting leaf metadata.
-          map.set(key, { node: { originalNode: node }, position: [node.x, node.y, 0] });
+          map.set(key, { node, position: [node.x, node.y, 0] });
         });
         return map;
       };

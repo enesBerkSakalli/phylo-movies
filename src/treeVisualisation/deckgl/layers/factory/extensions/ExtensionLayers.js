@@ -24,9 +24,9 @@ export function getExtensionsLayerProps(extensions, state, layerStyles) {
   return {
     data: extensions,
     pickable: false,
-    getPath: d => addZOffsetToPath(d.path, getNodeHistoryZOffset(cached, d.leaf || d)),
-    getColor: d => layerStyles.getExtensionColor(d.leaf, cached),
-    getWidth: d => layerStyles.getExtensionWidth(d.leaf, cached),
+    getPath: d => addZOffsetToPath(d.path, getNodeHistoryZOffset(cached, d)),
+    getColor: d => layerStyles.getExtensionColor(d, cached),
+    getWidth: d => layerStyles.getExtensionWidth(d, cached),
     getDashArray: [2, 3], // Dotted line
     dashJustified: true,
     updateTriggers: {

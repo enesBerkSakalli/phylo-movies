@@ -107,7 +107,12 @@ const {
   createExtensionsLayer
 } = require('../../src/treeVisualisation/deckgl/layers/factory/index.js');
 const { LayerStyles } = require('../../src/treeVisualisation/deckgl/layers/LayerStyles.js');
-const { isNodeInSubtree, isLinkInSubtree } = require('../../src/treeVisualisation/utils/splitMatching.js');
+const {
+  getLinkSplitIndices,
+  getSplitIndices,
+  isNodeInSubtree,
+  isLinkInSubtree
+} = require('../../src/treeVisualisation/utils/splitMatching.js');
 
 /**
  * Helper to create a mock ColorManager with the required fast subtree methods.
@@ -141,7 +146,7 @@ function createMockColorManager(overrides = {}) {
     isNodePivotEdge: () => false,
     isNodeInMarkedSubtreeFast: function(nodeData) {
       if (this._markedLeavesUnion.size === 0) return false;
-      const splits = nodeData?.data?.split_indices || nodeData?.split_indices;
+      const splits = getSplitIndices(nodeData);
       if (!splits?.length) return false;
       for (let i = 0; i < splits.length; i++) {
         if (!this._markedLeavesUnion.has(splits[i])) return false;
@@ -150,7 +155,7 @@ function createMockColorManager(overrides = {}) {
     },
     isLinkInMarkedSubtreeFast: function(linkData) {
       if (this._markedLeavesUnion.size === 0) return false;
-      const splits = linkData?.target?.data?.split_indices || linkData?.target?.split_indices;
+      const splits = getLinkSplitIndices(linkData);
       if (!splits?.length) return false;
       for (let i = 0; i < splits.length; i++) {
         if (!this._markedLeavesUnion.has(splits[i])) return false;
@@ -197,7 +202,7 @@ describe('Layer Highlighting Configuration', () => {
 
   describe('autoHighlight configuration', () => {
     it('should keep main links non-pickable', () => {
-      const links = [{ path: [[0, 0, 0], [1, 1, 0]], target: { data: { split_indices: [1] } } }];
+      const links = [{ path: [[0, 0, 0], [1, 1, 0]], split_indices: [1] }];
       const layer = createLinksLayer(links, mockStoreState, layerStyles);
 
       expect(layer.props.pickable).to.equal(false);
@@ -205,7 +210,7 @@ describe('Layer Highlighting Configuration', () => {
     });
 
     it('should enable autoHighlight on nodes layer', () => {
-      const nodes = [{ position: [0, 0, 0], data: { split_indices: [1] } }];
+      const nodes = [{ position: [0, 0, 0], split_indices: [1] }];
       const layer = createNodesLayer(nodes, mockStoreState, layerStyles);
 
       expect(layer.props.autoHighlight).to.equal(true);
@@ -214,7 +219,7 @@ describe('Layer Highlighting Configuration', () => {
     });
 
     it('should NOT enable autoHighlight on non-pickable layers (outlines)', () => {
-      const links = [{ path: [[0, 0, 0], [1, 1, 0]], target: { data: { split_indices: [1] } } }];
+      const links = [{ path: [[0, 0, 0], [1, 1, 0]], split_indices: [1] }];
       const layer = createLinkOutlinesLayer(links, mockStoreState, layerStyles);
 
       expect(layer.props.pickable).to.equal(false);
@@ -225,7 +230,7 @@ describe('Layer Highlighting Configuration', () => {
 
   describe('updateTriggers stability', () => {
     it('should use scalar colorVersion in links updateTriggers', () => {
-      const links = [{ path: [[0, 0, 0], [1, 1, 0]], target: { data: { split_indices: [1] } } }];
+      const links = [{ path: [[0, 0, 0], [1, 1, 0]], split_indices: [1] }];
       const layer = createLinksLayer(links, mockStoreState, layerStyles);
 
       const colorTrigger = layer.props.updateTriggers.getColor;
@@ -237,7 +242,7 @@ describe('Layer Highlighting Configuration', () => {
     });
 
     it('should use scalar colorVersion in nodes updateTriggers', () => {
-      const nodes = [{ position: [0, 0, 0], data: { split_indices: [1] } }];
+      const nodes = [{ position: [0, 0, 0], split_indices: [1] }];
       const layer = createNodesLayer(nodes, mockStoreState, layerStyles);
 
       const colorTrigger = layer.props.updateTriggers.getFillColor;
@@ -251,7 +256,7 @@ describe('Layer Highlighting Configuration', () => {
       // Simulate color version increment
       mockStoreState.colorVersion = initialVersion + 1;
 
-      const links = [{ path: [[0, 0, 0], [1, 1, 0]], target: { data: { split_indices: [1] } } }];
+      const links = [{ path: [[0, 0, 0], [1, 1, 0]], split_indices: [1] }];
       const layer = createLinksLayer(links, mockStoreState, layerStyles);
 
       const colorTrigger = layer.props.updateTriggers.getColor;
@@ -261,7 +266,7 @@ describe('Layer Highlighting Configuration', () => {
 
   describe('conditional layer visibility', () => {
     it('should hide link outlines when no highlights are active', () => {
-      const links = [{ path: [[0, 0, 0], [1, 1, 0]], target: { data: { split_indices: [1] } } }];
+      const links = [{ path: [[0, 0, 0], [1, 1, 0]], split_indices: [1] }];
       const layer = createLinkOutlinesLayer(links, mockStoreState, layerStyles);
 
       expect(layer.props.visible).to.equal(false);
@@ -276,7 +281,7 @@ describe('Layer Highlighting Configuration', () => {
         })
       };
 
-      const links = [{ path: [[0, 0, 0], [1, 1, 0]], target: { data: { split_indices: [1] } } }];
+      const links = [{ path: [[0, 0, 0], [1, 1, 0]], split_indices: [1] }];
       const layer = createLinkOutlinesLayer(links, stateWithHighlights, layerStyles);
 
       expect(layer.props.visible).to.equal(true);
@@ -291,7 +296,7 @@ describe('Layer Highlighting Configuration', () => {
         })
       };
 
-      const links = [{ path: [[0, 0, 0], [1, 1, 0]], target: { data: { split_indices: [1] } } }];
+      const links = [{ path: [[0, 0, 0], [1, 1, 0]], split_indices: [1] }];
       const layer = createLinkOutlinesLayer(links, stateWithMarked, layerStyles);
 
       expect(layer.props.visible).to.equal(true);
@@ -300,7 +305,7 @@ describe('Layer Highlighting Configuration', () => {
 
   describe('highlight color contrast', () => {
     it('should use a distinct hover highlight color', () => {
-      const nodes = [{ position: [0, 0, 0], data: { split_indices: [1] } }];
+      const nodes = [{ position: [0, 0, 0], split_indices: [1] }];
       const layer = createNodesLayer(nodes, mockStoreState, layerStyles);
 
       const [r, g, b, a] = layer.props.highlightColor;
@@ -323,8 +328,8 @@ describe('Layer Highlighting Configuration', () => {
       });
 
       const nodes = [
-        { position: [0, 0, 0], data: { split_indices: [4] }, opacity: 1 }, // outside
-        { position: [0, 0, 0], data: { split_indices: [1] }, opacity: 1 }  // inside
+        { position: [0, 0, 0], split_indices: [4], opacity: 1 }, // outside
+        { position: [0, 0, 0], split_indices: [1], opacity: 1 }  // inside
       ];
 
       const layer = createNodesLayer(nodes, mockStoreState, layerStyles);
@@ -344,8 +349,8 @@ describe('Layer Highlighting Configuration', () => {
       });
 
       const extensions = [
-        { path: [[0, 0, 0], [1, 1, 0]], leaf: { data: { split_indices: [4] }, opacity: 1 } }, // outside
-        { path: [[0, 0, 0], [1, 1, 0]], leaf: { data: { split_indices: [1] }, opacity: 1 } }  // inside
+        { path: [[0, 0, 0], [1, 1, 0]], split_indices: [4], opacity: 1 }, // outside
+        { path: [[0, 0, 0], [1, 1, 0]], split_indices: [1], opacity: 1 }  // inside
       ];
 
       const layer = createExtensionsLayer(extensions, mockStoreState, layerStyles);
@@ -368,8 +373,8 @@ describe('Layer Highlighting Configuration', () => {
       });
 
       const nodes = [
-        { position: [0, 0, 0], data: { split_indices: [2] }, opacity: 1 },
-        { position: [0, 0, 0], data: { split_indices: [1] }, opacity: 1 }
+        { position: [0, 0, 0], split_indices: [2], opacity: 1 },
+        { position: [0, 0, 0], split_indices: [1], opacity: 1 }
       ];
 
       const cached = layerStyles.getCachedState();
@@ -393,7 +398,7 @@ describe('Layer Highlighting Configuration', () => {
         sharedMarkedJumpingSubtrees: [new Set([1])]
       });
 
-      const markedNode = { position: [0, 0, 0], data: { split_indices: [1] }, radius: 4, opacity: 1 };
+      const markedNode = { position: [0, 0, 0], split_indices: [1], radius: 4, opacity: 1 };
 
       const cachedWithColor = layerStyles.getCachedState();
       const radiusWithColoring = layerStyles.getNodeRadius(markedNode, 3, cachedWithColor);
@@ -565,9 +570,9 @@ describe('dimmingUtils.applyDimmingWithCache() - Dimming Data Consistency', () =
     });
 
     // Node inside subtree (split_indices contains 1)
-    const nodeInside = { data: { split_indices: [1] } };
+    const nodeInside = { split_indices: [1] };
     // Node outside subtree (split_indices contains 99)
-    const nodeOutside = { data: { split_indices: [99] } };
+    const nodeOutside = { split_indices: [99] };
 
     const opacityInside = applyDimmingWithCache(
       255, colorManager, nodeInside, true,
@@ -595,7 +600,7 @@ describe('dimmingUtils.applyDimmingWithCache() - Dimming Data Consistency', () =
     });
 
     // Node with split_indices [100] - in ColorManager's subtree
-    const node = { data: { split_indices: [100] } };
+    const node = { split_indices: [100] };
 
     // Pass DIFFERENT data in markedSubtreeData parameter (should be ignored)
     const staleMarkedData = [new Set([1, 2, 3])]; // This would NOT include node 100
@@ -612,7 +617,7 @@ describe('dimmingUtils.applyDimmingWithCache() - Dimming Data Consistency', () =
   });
 
   it('should return full opacity when ColorManager is null', () => {
-    const node = { data: { split_indices: [1] } };
+    const node = { split_indices: [1] };
 
     const opacity = applyDimmingWithCache(
       255, null, node, true,
@@ -630,7 +635,7 @@ describe('dimmingUtils.applyDimmingWithCache() - Dimming Data Consistency', () =
       sharedMarkedJumpingSubtrees: [] // Empty
     });
 
-    const node = { data: { split_indices: [1] } };
+    const node = { split_indices: [1] };
 
     const opacity = applyDimmingWithCache(
       255, colorManager, node, true,
@@ -647,11 +652,11 @@ describe('dimmingUtils.applyDimmingWithCache() - Dimming Data Consistency', () =
     const colorManager = createMockColorManager({
       sharedMarkedJumpingSubtrees: [],
       hasPivotEdges: () => true,
-      isNodeDownstreamOfAnyPivotEdge: (node) => node.data.isDownstream
+      isNodeDownstreamOfAnyPivotEdge: (node) => node.isDownstream
     });
 
-    const downstreamNode = { data: { split_indices: [1], isDownstream: true } };
-    const upstreamNode = { data: { split_indices: [2], isDownstream: false } };
+    const downstreamNode = { split_indices: [1], isDownstream: true };
+    const upstreamNode = { split_indices: [2], isDownstream: false };
 
     const opacityDownstream = applyDimmingWithCache(
       255, colorManager, downstreamNode, true,
@@ -741,8 +746,8 @@ describe('Scrubbing Highlighting Integration', () => {
       sharedMarkedJumpingSubtrees: [new Set([100, 101])]
     });
 
-    const nodeInSubtree = { position: [0, 0, 0], data: { split_indices: [100] }, opacity: 1 };
-    const nodeOutsideSubtree = { position: [0, 0, 0], data: { split_indices: [999] }, opacity: 1 };
+    const nodeInSubtree = { position: [0, 0, 0], split_indices: [100], opacity: 1 };
+    const nodeOutsideSubtree = { position: [0, 0, 0], split_indices: [999], opacity: 1 };
 
     const cached = layerStyles.getCachedState();
     const colorInside = layerStyles.getNodeColor(nodeInSubtree, cached).slice();
@@ -762,12 +767,12 @@ describe('Scrubbing Highlighting Integration', () => {
 
     const linkInSubtree = {
       path: [[0, 0, 0], [1, 1, 0]],
-      target: { data: { split_indices: [200] } },
+      split_indices: [200],
       opacity: 1
     };
     const linkOutsideSubtree = {
       path: [[0, 0, 0], [1, 1, 0]],
-      target: { data: { split_indices: [888] } },
+      split_indices: [888],
       opacity: 1
     };
 

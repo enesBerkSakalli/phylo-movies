@@ -133,8 +133,8 @@ export class TreeInterpolator {
       (from, to, t, fromLink, toLink, velocityEntry) => ({
         ...to,
         path: this.pathInterpolator.interpolatePath(fromLink, toLink, t, velocityEntry),
-        sourcePosition: this.nodeInterpolator.interpolatePosition(fromLink.source, toLink.source, t, velocityEntry),
-        targetPosition: this.nodeInterpolator.interpolatePosition(fromLink.target, toLink.target, t, velocityEntry),
+        sourcePosition: this.nodeInterpolator.interpolatePosition(fromLink.polarData?.source, toLink.polarData?.source, t, velocityEntry),
+        targetPosition: this.nodeInterpolator.interpolatePosition(fromLink.polarData?.target, toLink.polarData?.target, t, velocityEntry),
         // Preserve highlighting and metadata
         polarData: to.polarData,
         split_indices: to.split_indices,

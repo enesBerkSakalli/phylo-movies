@@ -76,6 +76,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
       host: '127.0.0.1', // Explicit IPv4 binding
       port: 5173,
       strictPort: true,
+      hmr: { host: '127.0.0.1' }, // Force HMR WebSocket to same IPv4 (avoids localhost→::1 mismatch)
       watch: {
         ignored: [
           '**/electron-app/**',
@@ -97,7 +98,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
       }
     },
     optimizeDeps: {
-      include: ["d3", "winbox", "winbox/src/js/winbox.js"]
+      include: ["d3-hierarchy", "d3-scale-chromatic", "winbox", "winbox/src/js/winbox.js"]
     },
     build: {
       outDir: "../dist",

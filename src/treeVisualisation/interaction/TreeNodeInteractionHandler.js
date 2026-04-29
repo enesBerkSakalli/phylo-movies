@@ -1,4 +1,5 @@
 import { useAppStore, selectCurrentTree } from '../../state/phyloStore/store.js';
+import { getSplitKey } from '../utils/splitMatching.js';
 
 /**
  * Handles tree node interactions for deck.gl visualization
@@ -22,8 +23,7 @@ export class TreeNodeInteractionHandler {
     const treeContext = this._getTreeContext(layerData, state);
     const treeData = treeContext?.tree ?? selectCurrentTree(state);
     const treeIndex = treeContext?.treeIndex ?? state.currentTreeIndex;
-    const treeNode = layerData?.originalNode ||
-      this._findTreeNodeFromLayerData(layerData, treeData, treeIndex);
+    const treeNode = this._findTreeNodeFromLayerData(layerData, treeData, treeIndex);
 
     let x, y;
     if (event.center) {
@@ -58,7 +58,15 @@ export class TreeNodeInteractionHandler {
       treeIndex
     });
 
-    const allNodes = currentLayout.tree.descendants();
+    const allNodes = currentLayout?.tree?.descendants?.();
+    if (!Array.isArray(allNodes)) return null;
+
+    const targetSplitKey = getSplitKey(layerData);
+    if (targetSplitKey) {
+      const matchedBySplit = allNodes.find(node => getSplitKey(node?.data?.split_indices) === targetSplitKey);
+      if (matchedBySplit) return matchedBySplit;
+    }
+
     const [targetX, targetY] = layerData.position;
     const tolerance = 0.001;
 

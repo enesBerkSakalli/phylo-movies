@@ -8,7 +8,23 @@
  * All palettes are automatically processed to ensure APCA > 60 contrast against white.
  */
 
-import * as d3 from 'd3';
+import {
+  interpolateCividis,
+  interpolatePRGn,
+  interpolateRainbow,
+  interpolateRdBu,
+  interpolateSinebow,
+  interpolateSpectral,
+  interpolateTurbo,
+  interpolateViridis,
+  schemeAccent,
+  schemeCategory10,
+  schemeDark2,
+  schemePaired,
+  schemeSet1,
+  schemeSet3,
+  schemeTableau10,
+} from 'd3-scale-chromatic';
 import Color from 'colorjs.io';
 
 // ============================================
@@ -91,13 +107,13 @@ export function generatePalette(n, scheme = 'sinebow') {
   if (n === 1) return createAccessiblePalette(['#4E79A7']); // Tableau blue
 
   const interpolators = {
-    sinebow: d3.interpolateSinebow,
-    rainbow: d3.interpolateRainbow,
-    turbo: d3.interpolateTurbo,
-    spectral: d3.interpolateSpectral,
+    sinebow: interpolateSinebow,
+    rainbow: interpolateRainbow,
+    turbo: interpolateTurbo,
+    spectral: interpolateSpectral,
   };
 
-  const interpolator = interpolators[scheme] || d3.interpolateSinebow;
+  const interpolator = interpolators[scheme] || interpolateSinebow;
   const palette = [];
 
   for (let i = 0; i < n; i++) {
@@ -116,7 +132,7 @@ export function generatePalette(n, scheme = 'sinebow') {
 /**
  * Tableau 10 - Sourced from D3
  */
-export const Tableau10 = createAccessiblePalette(d3.schemeTableau10);
+export const Tableau10 = createAccessiblePalette(schemeTableau10);
 
 /**
  * Tableau 20 - Manual Definition (D3 export often missing schemeTableau20 in standard bundle)
@@ -139,35 +155,35 @@ export const Tableau20 = createAccessiblePalette([
  * D3 ColorBrewer Paired - 12 colors in light/dark pairs
  * Good for related categories (e.g., genotype variants)
  */
-export const Paired = createAccessiblePalette(d3.schemePaired);
+export const Paired = createAccessiblePalette(schemePaired);
 
 /**
  * D3 ColorBrewer Set3 - 12 pastel colors
  * Good for many categories with softer appearance
  */
-export const Set3 = createAccessiblePalette(d3.schemeSet3);
+export const Set3 = createAccessiblePalette(schemeSet3);
 
 /**
  * D3 ColorBrewer Set1 - 9 bold colors
  * High saturation, very distinct
  */
-export const Set1 = createAccessiblePalette(d3.schemeSet1);
+export const Set1 = createAccessiblePalette(schemeSet1);
 
 /**
  * D3 ColorBrewer Dark2 - 8 darker colors
  * Good contrast on white backgrounds
  */
-export const Dark2 = createAccessiblePalette(d3.schemeDark2);
+export const Dark2 = createAccessiblePalette(schemeDark2);
 
 /**
  * D3 ColorBrewer Accent - 8 accent colors
  */
-export const Accent = createAccessiblePalette(d3.schemeAccent);
+export const Accent = createAccessiblePalette(schemeAccent);
 
 /**
  * D3 Category10 - Classic D3 categorical palette
  */
-export const Category10 = createAccessiblePalette(d3.schemeCategory10);
+export const Category10 = createAccessiblePalette(schemeCategory10);
 
 // ============================================
 // ACCESSIBLE CATEGORICAL PALETTES (Legacy/Custom)
@@ -237,24 +253,24 @@ export const Extended30 = createAccessiblePalette([
 // SEQUENTIAL PALETTES (Sourced from D3)
 // ============================================
 
-export const ViridisWhiteBG = sampleInterpolator(d3.interpolateViridis, 8);
-export const CividisWhiteBG = sampleInterpolator(d3.interpolateCividis, 8);
-export const TurboWhiteBG = sampleInterpolator(d3.interpolateTurbo, 8);
+export const ViridisWhiteBG = sampleInterpolator(interpolateViridis, 8);
+export const CividisWhiteBG = sampleInterpolator(interpolateCividis, 8);
+export const TurboWhiteBG = sampleInterpolator(interpolateTurbo, 8);
 
 // Keep originals (also fixed, just in case used on white)
-export const Viridis = sampleInterpolator(d3.interpolateViridis, 10);
-export const Cividis = sampleInterpolator(d3.interpolateCividis, 10);
-export const Turbo = sampleInterpolator(d3.interpolateTurbo, 10);
+export const Viridis = sampleInterpolator(interpolateViridis, 10);
+export const Cividis = sampleInterpolator(interpolateCividis, 10);
+export const Turbo = sampleInterpolator(interpolateTurbo, 10);
 
 // ============================================
 // DIVERGING PALETTES (Sourced from D3)
 // ============================================
 
 // CoolWarm equivalent -> RdBu (Red-Blue) reversed usually
-export const CoolWarmWhiteBG = sampleInterpolator(t => d3.interpolateRdBu(1 - t), 9);
+export const CoolWarmWhiteBG = sampleInterpolator(t => interpolateRdBu(1 - t), 9);
 
 // PurpleGreen -> PRGn
-export const PurpleGreenWhiteBG = sampleInterpolator(d3.interpolatePRGn, 9);
+export const PurpleGreenWhiteBG = sampleInterpolator(interpolatePRGn, 9);
 
 
 // ============================================

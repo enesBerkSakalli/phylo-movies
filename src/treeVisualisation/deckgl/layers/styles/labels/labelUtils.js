@@ -113,7 +113,7 @@ function isValidTargetNode(cached, label) {
   const side = label?.treeSide;
   if (side === 'right' || side === 'clipboard') return false;
 
-  const node = label?.leaf || label;
+  const node = label;
   // Exclude moving subtrees (drag-and-drop ghosts)
   if (cm.isNodeMovingSubtree?.(node)) return false;
 
@@ -125,8 +125,7 @@ function isValidTargetNode(cached, label) {
  */
 export function isLabelSource(cached, label) {
   if (!isValidTargetNode(cached, label)) return false;
-  const node = label.leaf || label;
-  return !!cached.colorManager.isNodeSourceEdge?.(node);
+  return !!cached.colorManager.isNodeSourceEdge?.(label);
 }
 
 /**
@@ -134,8 +133,7 @@ export function isLabelSource(cached, label) {
  */
 export function isLabelDestination(cached, label) {
   if (!isValidTargetNode(cached, label)) return false;
-  const node = label.leaf || label;
-  return !!cached.colorManager.isNodeDestinationEdge?.(node);
+  return !!cached.colorManager.isNodeDestinationEdge?.(label);
 }
 
 /**

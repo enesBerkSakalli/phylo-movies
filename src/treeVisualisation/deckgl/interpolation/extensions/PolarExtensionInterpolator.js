@@ -27,8 +27,7 @@ export class PolarExtensionInterpolator {
   interpolateExtension(fromExt, toExt, t, velocityEntry = null) {
     return {
       ...toExt,
-      path: this.pathInterpolator.interpolatePath(fromExt, toExt, t, velocityEntry),
-      leaf: toExt.leaf // Preserve leaf reference
+      path: this.pathInterpolator.interpolatePath(fromExt, toExt, t, velocityEntry)
     };
   }
 

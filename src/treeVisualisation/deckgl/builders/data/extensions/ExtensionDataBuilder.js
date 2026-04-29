@@ -41,7 +41,8 @@ export class ExtensionDataBuilder {
     // Use leaf coordinates as source
     const sourceX = leaf.x;
     const sourceY = leaf.y;
-    const extensionKey = getExtensionKey(leaf);
+    const splitIndices = leaf.data?.split_indices;
+    const extensionKey = getExtensionKey({ split_indices: splitIndices });
     if (!extensionKey) {
       console.warn('[ExtensionDataBuilder] Skipping extension without split_indices:', leaf?.data?.name);
       return null;
@@ -52,7 +53,9 @@ export class ExtensionDataBuilder {
       sourcePosition: [sourceX, sourceY, 0],
       targetPosition: [extensionX, extensionY, 0],
       path: [[sourceX, sourceY, 0], [extensionX, extensionY, 0]],
-      leaf: leaf, // Store leaf reference for coloring
+      name: leaf.data.name || '',
+      isLeaf: true,
+      split_indices: splitIndices,
       // Provide polar metadata so PathInterpolator can perform
       // polar-aware interpolation for extension paths
       polarData: {

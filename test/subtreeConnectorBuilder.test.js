@@ -13,7 +13,7 @@ describe('SubtreeConnectorBuilder', function () {
       isLeaf: true,
       name: 'A',
       position: [0, 0, 0],
-      node: { originalNode: { id: 'A' } }
+      node: { id: 'A' }
     });
 
     const rightPositions = new Map();
@@ -21,7 +21,7 @@ describe('SubtreeConnectorBuilder', function () {
       isLeaf: true,
       name: 'A',
       position: [100, 0, 0],
-      node: { originalNode: { id: 'A' } }
+      node: { id: 'A' }
     });
 
     // Provide latticeSolutions where edge [0,0] maps to subtree [[0]]

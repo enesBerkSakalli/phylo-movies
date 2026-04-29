@@ -1,4 +1,4 @@
-import * as d3 from "d3";
+import { hierarchy } from "d3-hierarchy";
 import { getNodeKey } from '../utils/KeyGenerator.js';
 import { transformBranchLengths } from '../../domain/tree/branchTransform.js';
 
@@ -7,7 +7,7 @@ export class RadialTreeLayout {
   constructor(root) {
     //node element of d3
 
-    this.root = d3.hierarchy(root);
+    this.root = hierarchy(root);
 
     //width of container
     this.containerWidth = 0;
@@ -94,7 +94,7 @@ export class RadialTreeLayout {
     const effectiveLength = node.parent ? length : 0;
 
     // Check if we should preserve radius for this node
-    const nodeKey = getNodeKey(node);
+    const nodeKey = getNodeKey({ split_indices: d.split_indices });
     if (nodeKey && this.preserveRadius && this.previousNodeRadii.has(nodeKey)) {
       // Use preserved radius from previous calculation
       node.radius = this.previousNodeRadii.get(nodeKey);

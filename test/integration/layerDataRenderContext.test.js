@@ -1,11 +1,11 @@
-import * as d3 from 'd3';
+import { hierarchy } from 'd3-hierarchy';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DeckGLTreeLayerDataFactory } from '../../src/treeVisualisation/deckgl/DeckGLTreeLayerDataFactory.js';
 import { TreeNodeInteractionHandler } from '../../src/treeVisualisation/interaction/TreeNodeInteractionHandler.js';
 import { useAppStore } from '../../src/state/phyloStore/store.js';
 
 function makeLayoutTree() {
-  const root = d3.hierarchy({
+  const root = hierarchy({
     name: '',
     length: 0,
     split_indices: [0, 1],
@@ -76,10 +76,9 @@ describe('deck.gl layer render context', () => {
     expect(warn).toHaveBeenCalled();
   });
 
-  it('resolves node clicks from the picked layer tree index', () => {
+  it('resolves node clicks from normalized split identity and picked layer tree index', () => {
     const treeA = { id: 'tree-a' };
     const treeB = { id: 'tree-b' };
-    const pickedNode = { data: { split_indices: [1] } };
     const showNodeContextMenu = vi.fn();
 
     useAppStore.setState({
@@ -93,13 +92,17 @@ describe('deck.gl layer render context', () => {
       showNodeContextMenu,
     });
 
-    const handler = new TreeNodeInteractionHandler({ calculateLayout: vi.fn() });
+    const layoutTree = makeLayoutTree();
+    const handler = new TreeNodeInteractionHandler({
+      calculateLayout: vi.fn(() => ({ tree: layoutTree })),
+    });
     handler.handleNodeClick(
-      { object: { treeIndex: 1, originalNode: pickedNode }, x: 10, y: 20 },
+      { object: { treeIndex: 1, split_indices: [1], position: [999, 999, 0] }, x: 10, y: 20 },
       { center: { x: 12, y: 34 } },
       null
     );
 
-    expect(showNodeContextMenu).toHaveBeenCalledWith(pickedNode, treeB, 12, 34);
+    expect(showNodeContextMenu.mock.calls[0][0]?.data?.split_indices).toEqual([1]);
+    expect(showNodeContextMenu).toHaveBeenCalledWith(expect.any(Object), treeB, 12, 34);
   });
 });

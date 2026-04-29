@@ -88,18 +88,6 @@ export function buildSubtreeConnectors(options) {
 
 // ---------- helpers ----------
 
-// ========== Node Resolution ==========
-
-/**
- * Resolve the original node reference from a node that may have been wrapped.
- * @param {Object} node - Node object that may have an originalNode property
- * @returns {Object|null} The originalNode if it exists, otherwise the node itself, or null
- */
-function resolveOriginalNode(node) {
-  if (!node) return null;
-  return node.originalNode || node;
-}
-
 /**
  * Get the appropriate node for color determination.
  * For leaves that are part of a larger marked subtree, finds the internal node representing the full subtree.
@@ -131,13 +119,13 @@ function getNodeForColor(leftInfo, splitIndices, jumpingSubtreeSets, leftPositio
     if (leftPositions.has(internalKey)) {
       var internalInfo = leftPositions.get(internalKey);
       if (internalInfo && internalInfo.node) {
-        return resolveOriginalNode(internalInfo.node);
+        return internalInfo.node;
       }
     }
   }
 
   // Fallback to the leaf node
-  return resolveOriginalNode(leftInfo.node) || leftInfo;
+  return leftInfo.node || leftInfo;
 }
 
 // ========== Validation Helpers ==========
@@ -482,16 +470,16 @@ function groupPassiveConnections(passiveConnections, rightPositions) {
   var groups = new Map();
 
   passiveConnections.forEach(function (conn) {
-    var sourceNode = resolveOriginalNode(conn.sourceNode);
+    var sourceNode = conn.sourceNode;
     var leftBundleNode = getBundleAncestor(sourceNode, 2) || (sourceNode && sourceNode.parent);
 
     var targetKey = conn.targetNodeKey || conn.targetKey || null;
     var rightNode = null;
     if (targetKey && rightPositions && rightPositions.has(targetKey)) {
       var rightEntry = rightPositions.get(targetKey);
-      rightNode = resolveOriginalNode(rightEntry.node) || rightEntry;
+      rightNode = rightEntry.node || rightEntry;
     } else if (conn.targetNode) {
-      rightNode = resolveOriginalNode(conn.targetNode);
+      rightNode = conn.targetNode;
     } else {
       return;
     }

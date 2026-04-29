@@ -43,8 +43,7 @@ export class PolarLabelInterpolator {
       ),
       // Preserve properties from the target element
       text: toLabel.text,
-      textAnchor: toLabel.textAnchor,
-      leaf: toLabel.leaf
+      textAnchor: toLabel.textAnchor
     };
   }
 

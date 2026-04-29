@@ -5,22 +5,34 @@
  */
 
 /**
- * Get split indices from an element (node or link target)
- * Handles various data shapes from D3 hierarchy and deck.gl converters
+ * Get split indices from a normalized render element.
  * @param {Object} element - Node or link data
  * @returns {Array<number>|null} Split indices array or null
  */
 export function getSplitIndices(element) {
-  return element.data.split_indices || element?.split_indices || null;
+  return getElementSplitIndices(element);
 }
 
 /**
- * Get split indices from a link's target node
- * @param {Object} linkData - Link data with target property
+ * Get split indices from the render/data shapes used across the tree view.
+ * Boundary code must unwrap D3/backend shapes before calling this helper.
+ * @param {Object} element - Tree render/data element
+ * @returns {Array<number>|null} Split indices array or null
+ */
+export function getElementSplitIndices(element) {
+  return (
+    element?.split_indices ||
+    null
+  );
+}
+
+/**
+ * Get split indices from a normalized link datum.
+ * @param {Object} linkData - Link data
  * @returns {Array<number>|null} Split indices array or null
  */
 export function getLinkSplitIndices(linkData) {
-  return getSplitIndices(linkData?.target);
+  return getElementSplitIndices(linkData);
 }
 
 /**
@@ -64,7 +76,7 @@ export function isSubset(smaller, larger) {
 
 /**
  * Check if an element's splits match any target set exactly
- * @param {Object} element - Node or link target with split_indices
+ * @param {Object} element - Node or link datum with split_indices
  * @param {Set<number>} targetSet - Target split set to match
  * @returns {boolean} True if exact match
  */
@@ -76,7 +88,7 @@ export function isExactMatch(element, targetSet) {
 
 /**
  * Check if an element's splits are a subset of any target set
- * @param {Object} element - Node or link target with split_indices
+ * @param {Object} element - Node or link datum with split_indices
  * @param {Array<Set|Array>} targetSets - Array of target sets
  * @returns {boolean} True if element is subset of any target
  */
@@ -92,9 +104,9 @@ export function isSubsetOfAny(element, targetSets) {
 
 /**
  * Check if a link's target splits are a subset of any target set
- * @param {Object} linkData - Link data with target.data.split_indices
+ * @param {Object} linkData - Link data with split indices
  * @param {Array<Set|Array>} targetSets - Array of target sets
- * @returns {boolean} True if link target is subset of any target
+ * @returns {boolean} True if link split is subset of any target
  */
 export function isLinkSubsetOfAny(linkData, targetSets) {
   const splits = getLinkSplitIndices(linkData);
@@ -138,17 +150,17 @@ export function flattenSplitSets(entries) {
 
 /**
  * Check if a link's split indices are a subset of any marked subtree
- * @param {Object} linkData - Link data with target.data.split_indices
+ * @param {Object} linkData - Link data with split indices
  * @param {Array<Set|Array>} subtreeSets - Array of subtree sets to check against
  * @returns {boolean} True if link is within any subtree
  */
 export function isLinkInSubtree(linkData, subtreeSets) {
-  return isSubsetOfAny(linkData?.target, subtreeSets);
+  return isSubsetOfAny(linkData, subtreeSets);
 }
 
 /**
  * Check if a node's split indices are a subset of any marked subtree
- * @param {Object} nodeData - Node data with data.split_indices
+ * @param {Object} nodeData - Node data with normalized split_indices
  * @param {Array<Set|Array>} subtreeSets - Array of subtree sets to check against
  * @returns {boolean} True if node is within any subtree
  */
@@ -193,6 +205,29 @@ export function toSubtreeKey(subtree) {
   }
 
   return getSplitHash(indices);
+}
+
+/**
+ * Generate the canonical hashed key for an element or raw split collection.
+ * @param {Object|Array<number>|Set<number>} elementOrSplits
+ * @returns {string|null}
+ */
+export function getSplitKey(elementOrSplits) {
+  const indices = resolveSplitCollection(elementOrSplits);
+  if (indices instanceof Set) {
+    return indices.size > 0 ? toSubtreeKey(indices) : null;
+  }
+  if (Array.isArray(indices)) {
+    return indices.length > 0 ? toSubtreeKey(indices) : null;
+  }
+  return null;
+}
+
+function resolveSplitCollection(elementOrSplits) {
+  if (elementOrSplits instanceof Set || Array.isArray(elementOrSplits)) {
+    return elementOrSplits;
+  }
+  return getElementSplitIndices(elementOrSplits);
 }
 
 /**

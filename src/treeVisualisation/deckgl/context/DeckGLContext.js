@@ -20,7 +20,7 @@ export class DeckGLContext {
   // ==========================================================================
 
   constructor(container, options = {}) {
-    this.container = container;
+    this.container = resolveContainerElement(container);
     this.deck = null;
     this.canvas = null;
     this._resizeObserver = null;
@@ -75,7 +75,7 @@ export class DeckGLContext {
   // ==========================================================================
 
   initialize() {
-    this.container.selectAll('*').remove();
+    removeChildren(this.container);
     this._createCanvas();
 
     const activeId = this._activeViewId();
@@ -116,11 +116,15 @@ export class DeckGLContext {
   }
 
   _createCanvas() {
+    if (!this.container) {
+      throw new Error('DeckGLContext: container element is required to initialize deck.gl');
+    }
+
     this.canvas = document.createElement('canvas');
     this.canvas.style.width = '100%';
     this.canvas.style.height = '100%';
     this.canvas.style.display = 'block';
-    this.container.node().appendChild(this.canvas);
+    this.container.appendChild(this.canvas);
   }
 
   _getControllerConfig() {
@@ -276,7 +280,7 @@ export class DeckGLContext {
     if (!obj) return null;
 
     // Prioritize explicit label text, fallback to node name
-    const taxonName = obj.text || obj?.leaf?.data?.name || obj?.data?.name;
+    const taxonName = obj.text || obj.name;
     if (!taxonName) return null;
 
     // Build tooltip content with all available info
@@ -600,26 +604,25 @@ export class DeckGLContext {
 
   _setupResizeObserver() {
     try {
-      if (!this.container?.node || typeof ResizeObserver === 'undefined') return;
+      if (!this.container || typeof ResizeObserver === 'undefined') return;
 
       // Cleanup existing observer to prevent memory leaks or duplicate events
       if (this._resizeObserver) {
         this._resizeObserver.disconnect();
       }
 
-      const element = this.container.node();
       this._resizeObserver = new ResizeObserver(() => {
         this._updateDeckSize(true);
       });
-      this._resizeObserver.observe(element);
+      this._resizeObserver.observe(this.container);
     } catch (err) {
       console.warn('[DeckGLContext] ResizeObserver unavailable:', err);
     }
   }
 
   _updateDeckSize(forceRedraw = false) {
-    if (!this.container?.node) return;
-    const rect = this.container.node().getBoundingClientRect();
+    if (!this.container) return;
+    const rect = this.container.getBoundingClientRect();
     const width = Math.max(1, Math.round(rect.width));
     const height = Math.max(1, Math.round(rect.height));
 
@@ -630,12 +633,35 @@ export class DeckGLContext {
 
     // Only push updates when size actually changes
     if (this.deck.props?.width !== width || this.deck.props?.height !== height) {
-      this.deck.setProps({ width, height });
-      if (forceRedraw) {
+      this.deck.setProps?.({ width, height });
+      if (forceRedraw && typeof this.deck.redraw === 'function') {
         this.deck.redraw(true);
       }
     }
   }
 
 
+}
+
+function resolveContainerElement(container) {
+  if (container && typeof container.node === 'function') {
+    return container.node();
+  }
+
+  if (typeof container === 'string') {
+    return typeof document !== 'undefined' ? document.querySelector(container) : null;
+  }
+
+  return container || null;
+}
+
+function removeChildren(element) {
+  if (!element) return;
+  if (typeof element.replaceChildren === 'function') {
+    element.replaceChildren();
+    return;
+  }
+  while (element.firstChild) {
+    element.removeChild(element.firstChild);
+  }
 }

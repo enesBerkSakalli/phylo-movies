@@ -1,4 +1,4 @@
-import { getSplitHash } from './splitMatching.js';
+import { getSplitKey } from './splitMatching.js';
 
 /**
  * KeyGenerator - Centralized, robust key generation for D3 data binding
@@ -9,11 +9,11 @@ import { getSplitHash } from './splitMatching.js';
 
 /**
  * Generates a robust, unique key for tree nodes (leaves and internal nodes)
- * @param {Object} node - D3 hierarchy node with data.split_indices
+ * @param {Object} node - Tree node or render datum with split indices
  * @returns {string|null} Unique node key, or null when split indices are missing
  */
 export function getNodeKey(node) {
-  const splitKey = normalizeSplitIndices(node?.data?.split_indices);
+  const splitKey = normalizeSplitIndices(node);
   if (splitKey) return `node-${splitKey}`;
   return null;
 }
@@ -21,38 +21,38 @@ export function getNodeKey(node) {
 
 /**
  * Generates a robust, unique key for tree labels
- * @param {Object} leaf - D3 hierarchy leaf node with data.split_indices
+ * @param {Object} leaf - Tree leaf or render datum with split indices
  * @returns {string|null} Unique label key, or null when split indices are missing
  */
 export function getLabelKey(leaf) {
-  const splitKey = normalizeSplitIndices(leaf?.data?.split_indices);
+  const splitKey = normalizeSplitIndices(leaf);
   if (splitKey) return `label-${splitKey}`;
   return null;
 }
 
 /**
  * Internal helper to generate node ID from split indices
- * @param {Object} node - D3 hierarchy node
+ * @param {Object} node - Tree node or render datum
  * @returns {string} Node ID without prefix
  */
 const getNodeId = (node) => {
-  const splitKey = normalizeSplitIndices(node?.data?.split_indices);
+  const splitKey = normalizeSplitIndices(node);
   if (splitKey) return splitKey;
   return null;
 };
 
 
 /**
- * Generates a robust, unique key for tree links (branches)
- * @param {Object} link - D3 link object with source and target nodes
+ * Generates a robust, unique key for normalized tree links (branches)
+ * @param {Object} link - Normalized link datum with split indices
  * @returns {string} Unique link key (e.g., "link-0-1-2")
  */
 export function getLinkKey(link) {
-  if (!link || !link.source || !link.target) {
+  if (!link) {
     throw new Error('Invalid link object');
   }
 
-  const targetId = getNodeId(link.target);
+  const targetId = getNodeId(link);
   if (!targetId) return null;
 
   return `link-${targetId}`;
@@ -60,11 +60,11 @@ export function getLinkKey(link) {
 
 /**
  * Generates a robust, unique key for link extensions (dashed lines to labels)
- * @param {Object} leaf - D3 leaf node
+ * @param {Object} leaf - Tree leaf or render datum with split indices
  * @returns {string|null} Unique extension key, or null when split indices are missing
  */
 export function getExtensionKey(leaf) {
-  const splitKey = normalizeSplitIndices(leaf?.data?.split_indices);
+  const splitKey = normalizeSplitIndices(leaf);
   if (splitKey) return `ext-${splitKey}`;
   return null;
 }
@@ -76,6 +76,5 @@ export function getExtensionKey(leaf) {
  * @returns {string|null}
  */
 const normalizeSplitIndices = (splitIndices) => {
-  if (!Array.isArray(splitIndices) || splitIndices.length === 0) return null;
-  return getSplitHash(splitIndices);
+  return getSplitKey(splitIndices);
 };

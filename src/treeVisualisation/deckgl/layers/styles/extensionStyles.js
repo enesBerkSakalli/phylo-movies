@@ -6,7 +6,7 @@ export function getExtensionColor(extension, cached, helpers) {
   const color = getNodeBasedRgba(extension, extension.opacity, cached, helpers);
 
   // History highlighting for extensions deactivated
-  const nodeData = extension?.leaf || toColorManagerNode(extension);
+  const nodeData = toColorManagerNode(extension);
   if (nodeData && cached?.colorManager?.isNodeHistorySubtree?.(nodeData)) {
     color[3] = Math.min(255, Math.round(color[3] * 1.3));
   }
@@ -16,7 +16,7 @@ export function getExtensionColor(extension, cached, helpers) {
 
 export function getExtensionWidth(extension, baseStrokeWidth, cached) {
   const { markedSubtreeData, markedSubtreesEnabled } = cached || {};
-  const nodeData = extension?.leaf || toColorManagerNode(extension);
+  const nodeData = toColorManagerNode(extension);
 
   // History highlighting for extensions deactivated
   // if (nodeData && colorManager?.isNodeHistorySubtree?.(nodeData)) {

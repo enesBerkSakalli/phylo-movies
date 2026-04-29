@@ -12,7 +12,9 @@ export function getNodeLineWidth(node, cached) {
   const nodeData = toColorManagerNode(node);
 
   // Outer nodes are leaves
-  const isOuter = node.leaf || (node.children && node.children.length === 0);
+  const isOuter = typeof nodeData?.isLeaf === 'boolean'
+    ? nodeData.isLeaf
+    : !nodeData?.children || nodeData.children.length === 0;
 
   return isOuter ? OUTER_NODE_STROKE_WIDTH : INNER_NODE_STROKE_WIDTH;
 }

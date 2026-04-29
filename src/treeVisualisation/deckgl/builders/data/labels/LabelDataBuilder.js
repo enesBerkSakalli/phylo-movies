@@ -41,7 +41,8 @@ export class LabelDataBuilder {
     const textAnchor = this._calculateTextAnchor(needsFlip);
     const rotation = this._calculateLabelRotation(angleRad);
     const position = this._calculateLabelPosition(angleRad, labelRadius);
-    const labelKey = getLabelKey(leaf);
+    const splitIndices = leaf.data?.split_indices;
+    const labelKey = getLabelKey({ split_indices: splitIndices });
     if (!labelKey) {
       console.warn('[LabelDataBuilder] Skipping label without split_indices:', leaf?.data?.name);
       return null;
@@ -51,13 +52,14 @@ export class LabelDataBuilder {
       id: labelKey,
       position: position,
       text: leaf.data.name || '',
-      data: leaf.data,
+      name: leaf.data.name || '',
+      isLeaf: true,
+      split_indices: splitIndices,
       angle: angleRad,
       distance: distance,
       polarPosition: labelRadius,
       textAnchor: textAnchor,
-      rotation: rotation, // in RADIANS
-      leaf: leaf // Store leaf reference for coloring
+      rotation: rotation // in RADIANS
     };
   }
 

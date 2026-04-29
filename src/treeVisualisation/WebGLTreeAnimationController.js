@@ -1,4 +1,3 @@
-import * as d3 from "d3";
 import { useAppStore } from '../state/phyloStore/store.js';
 import { transformBranchLengths } from "../domain/tree/branchTransform.js";
 import { TidyTreeLayout } from "./layout/TidyTreeLayout.js";
@@ -18,9 +17,9 @@ export class WebGLTreeAnimationController {
     this._transformedCache = new Map();
     this._onResize = null;
 
-    this.webglContainer = d3.select(container);
+    this.webglContainer = resolveContainerElement(container);
 
-    const node = this.webglContainer.node();
+    const node = this.webglContainer;
     const rect = node ? node.getBoundingClientRect() : { width: 800, height: 600 };
     this.width = Math.max(1, rect.width);
     this.height = Math.max(1, rect.height);
@@ -230,4 +229,16 @@ export class WebGLTreeAnimationController {
 
     return transformedList;
   }
+}
+
+function resolveContainerElement(container) {
+  if (container && typeof container.node === 'function') {
+    return container.node();
+  }
+
+  if (typeof container === 'string') {
+    return typeof document !== 'undefined' ? document.querySelector(container) : null;
+  }
+
+  return container || null;
 }
