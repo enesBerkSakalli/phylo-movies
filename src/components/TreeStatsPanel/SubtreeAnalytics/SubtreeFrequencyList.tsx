@@ -2,10 +2,10 @@
 import React, { useMemo } from 'react';
 import { useAppStore } from '@/state/phyloStore/store.js';
 import {
-  calculateSubtreeFrequencies,
-  getTopSubtrees,
+  calculateSprMoverFrequencies,
+  getTopSprMovers,
   formatSubtreeLabel
-} from '@/domain/tree/subtreeFrequencyUtils';
+} from '@/domain/tree/sprAnalyticsUtils';
 import { ChevronRight, BarChart2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -46,8 +46,8 @@ export const SubtreeFrequencyList = () => {
   // Calculate frequencies (memoized)
   const topSubtrees = useMemo(() => {
     if (!pairSolutions || Object.keys(pairSolutions).length === 0) return [];
-    const allFreqs = calculateSubtreeFrequencies(pairSolutions);
-    return getTopSubtrees(allFreqs, 5); // Show top 5
+    const allFreqs = calculateSprMoverFrequencies(pairSolutions);
+    return getTopSprMovers(allFreqs, 5);
   }, [pairSolutions]);
 
   if (!topSubtrees.length) return null;
@@ -79,7 +79,7 @@ export const SubtreeFrequencyList = () => {
         <CollapsibleTrigger className="flex items-center gap-2 w-full text-left hover:text-muted-foreground transition-colors">
           <Label className="text-2xs font-bold uppercase tracking-wider text-muted-foreground/70 cursor-pointer">
             <BarChart2 className="size-3" />
-            SPR Event Frequency
+            SPR Mover Frequency
           </Label>
           <ChevronRight className="ml-auto size-3 text-muted-foreground/70 transition-transform group-data-[state=open]/subtree:rotate-90" />
         </CollapsibleTrigger>
@@ -87,13 +87,13 @@ export const SubtreeFrequencyList = () => {
         <CollapsibleContent className="pt-2 space-y-2 animate-in slide-in-from-top-1 duration-200">
           {/* Explanation text */}
           <p className="text-2xs text-muted-foreground/70 leading-relaxed">
-            Subtrees ranked by SPR event frequency across tree transitions. Click to highlight on tree.
+            Subtrees ranked by moving-subtree occurrence frequency across backend SPR solutions. Click to highlight on tree.
           </p>
 
           <div
             className="flex flex-col gap-2"
             role="list"
-            aria-label="Most frequent SPR event subtrees"
+            aria-label="Most frequent moving subtrees"
           >
             {topSubtrees.map((item) => {
               const signature = getSignature(item.splitIndices);
@@ -119,7 +119,7 @@ export const SubtreeFrequencyList = () => {
                       : "bg-muted/30 border-border/40 hover:bg-muted/50 hover:border-border/60"
                   )}
                   aria-pressed={isActive}
-                  aria-label={`${subtreeLabel}, ${item.count} SPR events, ${item.percentage.toFixed(1)}%`}
+                  aria-label={`${subtreeLabel}, ${item.count} mover occurrences, ${item.percentage.toFixed(1)}%`}
                 >
                   <CardContent className="p-0 space-y-1">
                     <div className="flex items-center justify-between">
@@ -144,7 +144,7 @@ export const SubtreeFrequencyList = () => {
                           </Badge>
                         </TooltipTrigger>
                         <TooltipContent side="top" className="text-xs">
-                          SPR events involving this subtree
+                          Mover occurrences involving this subtree
                         </TooltipContent>
                       </Tooltip>
                     </div>
@@ -152,7 +152,7 @@ export const SubtreeFrequencyList = () => {
                     <Progress
                       value={item.percentage}
                       className="h-1 bg-secondary"
-                      aria-label={`${item.percentage.toFixed(1)}% of total SPR events`}
+                      aria-label={`${item.percentage.toFixed(1)}% of mover occurrences`}
                     />
                   </CardContent>
                 </Card>
