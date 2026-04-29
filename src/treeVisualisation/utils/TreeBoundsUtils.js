@@ -143,3 +143,68 @@ export function calculateBranchBounds(nodes, links = []) {
 
   return hasPoint ? { minX, maxX, minY, maxY } : { minX: 0, maxX: 0, minY: 0, maxY: 0 };
 }
+
+export function calculatePositionCenter(nodes = []) {
+  if (!Array.isArray(nodes) || nodes.length === 0) return [0, 0];
+
+  const [sumX, sumY] = nodes.reduce(
+    (acc, node) => {
+      acc[0] += node.position?.[0] ?? 0;
+      acc[1] += node.position?.[1] ?? 0;
+      return acc;
+    },
+    [0, 0]
+  );
+
+  return [sumX / nodes.length, sumY / nodes.length];
+}
+
+export function calculateMaxPositionRadius(items = [], center = [0, 0]) {
+  if (!Array.isArray(items) || items.length === 0) return 0;
+
+  return items.reduce((maxRadius, item) => {
+    const position = item?.position || [0, 0];
+    const radius = Math.hypot(position[0] - center[0], position[1] - center[1]);
+    return radius > maxRadius ? radius : maxRadius;
+  }, 0);
+}
+
+export function calculateTreeVisualRadius(layerData = {}, center = [0, 0], labelSizePx = 0) {
+  const dist = (position) => {
+    if (!position) return 0;
+    return Math.hypot((position[0] ?? 0) - center[0], (position[1] ?? 0) - center[1]);
+  };
+
+  let maxRadius = 0;
+
+  for (const node of layerData.nodes || []) {
+    maxRadius = Math.max(maxRadius, dist(node.position));
+  }
+
+  for (const label of layerData.labels || []) {
+    maxRadius = Math.max(maxRadius, dist(label.position));
+  }
+
+  for (const extension of layerData.extensions || []) {
+    maxRadius = Math.max(maxRadius, dist(extension.sourcePosition), dist(extension.targetPosition));
+  }
+
+  if (labelSizePx > 0 && Array.isArray(layerData.labels) && layerData.labels.length > 0) {
+    let longestLabelLength = 0;
+    for (const label of layerData.labels) {
+      const length = (label.text ?? label.name ?? '').length;
+      if (length > longestLabelLength) longestLabelLength = length;
+    }
+    maxRadius += longestLabelLength * labelSizePx * 0.6;
+  }
+
+  return maxRadius;
+}
+
+export function calculateSafeVisualRadius(nodes = [], labels = [], center = [0, 0], fontSizePx = 12) {
+  const baseRadius = Math.max(
+    calculateMaxPositionRadius(nodes, center),
+    calculateMaxPositionRadius(labels, center)
+  );
+  return baseRadius + Math.max(fontSizePx * 1.5, baseRadius * 0.04);
+}

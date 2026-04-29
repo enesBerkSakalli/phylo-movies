@@ -1,27 +1,31 @@
 import { hierarchy } from "d3-hierarchy";
-import { getNodeKey } from '../utils/KeyGenerator.js';
 import { transformBranchLengths } from '../../domain/tree/branchTransform.js';
 import { createLayoutResult } from './LayoutResultAdapter.js';
+import {
+  calculateBranchLengthRadii,
+  calculateContainerScale,
+  calculateUniformScale,
+  generatePolarCoordinates,
+  getMaxRadius,
+  getMinContainerDimension,
+  initializeLayoutState,
+  normalizeLayoutOptions,
+  normalizeUniformScale,
+  scaleRadius,
+  setAngleExtentDegrees,
+  setAngleExtentRadians,
+  setAngleOffsetDegrees,
+  setAngleOffsetRadians,
+  setLayoutDimensions,
+  setLayoutMargin,
+  setRadiusPreservation
+} from './LayoutBaseUtils.js';
 
 /** Class for calculating radial tree layout coordinates. */
 export class RadialTreeLayout {
   constructor(root) {
-    //node element of d3
-
     this.root = hierarchy(root);
-
-    //width of container
-    this.containerWidth = 0;
-    //height of container
-    this.containerHeight = 0;
-    this.margin = 0;
-    this.scale = 0;
-    this.angleExtent = Math.PI * 2; // total angular span in radians (default 360°)
-    this.angleOffset = 0; // rotation offset in radians
-
-    // Radius preservation for IT → C transitions
-    this.preserveRadius = false;
-    this.previousNodeRadii = new Map();
+    initializeLayoutState(this);
   }
 
   /**
@@ -31,14 +35,12 @@ export class RadialTreeLayout {
    * @return {Number}
    */
   indexLeafNodes(node, i = 0) {
-    const self = this; // Get a reference to your object.
-
     if (!node.children) {
       node.index = i;
       i++;
     } else {
-      node.children.forEach(function (child) {
-        i = self.indexLeafNodes(child, i);
+      node.children.forEach((child) => {
+        i = this.indexLeafNodes(child, i);
       });
     }
 
@@ -50,8 +52,7 @@ export class RadialTreeLayout {
    * @param {number} degrees
    */
   setAngleExtentDegrees(degrees = 360) {
-    const clamped = typeof degrees === 'number' && isFinite(degrees) ? degrees : 360;
-    this.angleExtent = (clamped * Math.PI) / 180;
+    setAngleExtentDegrees(this, degrees);
   }
 
   /**
@@ -59,8 +60,7 @@ export class RadialTreeLayout {
    * @param {number} radians
    */
   setAngleExtentRadians(radians = Math.PI * 2) {
-    const span = typeof radians === 'number' && isFinite(radians) ? radians : Math.PI * 2;
-    this.angleExtent = span;
+    setAngleExtentRadians(this, radians);
   }
 
   /**
@@ -68,8 +68,7 @@ export class RadialTreeLayout {
    * @param {number} degrees
    */
   setAngleOffsetDegrees(degrees = 0) {
-    const value = typeof degrees === 'number' && isFinite(degrees) ? degrees : 0;
-    this.angleOffset = (value * Math.PI) / 180;
+    setAngleOffsetDegrees(this, degrees);
   }
 
   /**
@@ -77,8 +76,7 @@ export class RadialTreeLayout {
    * @param {number} radians
    */
   setAngleOffsetRadians(radians = 0) {
-    const value = typeof radians === 'number' && isFinite(radians) ? radians : 0;
-    this.angleOffset = value;
+    setAngleOffsetRadians(this, radians);
   }
 
   /**
@@ -88,31 +86,7 @@ export class RadialTreeLayout {
    * @return {void}
    */
   calcRadius(node, radius = 0) {
-    const d = node.data || {};
-    // Backend standardizes on 'length'.
-    const rawLength = d.length ?? 0;
-    const length = Number(rawLength) || 0;
-    const effectiveLength = node.parent ? length : 0;
-
-    // Check if we should preserve radius for this node
-    const nodeKey = getNodeKey({ split_indices: d.split_indices });
-    if (nodeKey && this.preserveRadius && this.previousNodeRadii.has(nodeKey)) {
-      // Use preserved radius from previous calculation
-      node.radius = this.previousNodeRadii.get(nodeKey);
-    } else {
-      // Calculate new radius normally
-      node.radius = effectiveLength + radius;
-      // Store this radius for potential future preservation
-      if (nodeKey) {
-        this.previousNodeRadii.set(nodeKey, node.radius);
-      }
-    }
-
-    if (node.children) {
-      node.children.forEach((child) => {
-        this.calcRadius(child, node.radius);
-      });
-    }
+    calculateBranchLengthRadii(this, node, radius);
   }
 
 
@@ -121,7 +95,7 @@ export class RadialTreeLayout {
    * @param {boolean} preserve - Whether to preserve radii
    */
   setRadiusPreservation(preserve) {
-    this.preserveRadius = preserve;
+    setRadiusPreservation(this, preserve);
   }
 
   /**
@@ -132,14 +106,13 @@ export class RadialTreeLayout {
    * @return {Number}
    */
   calcAngle(node, angle, countLeaves) {
-    const self = this; // Get a reference to your object.
     if (!node.children) {
       node.angle = (angle / countLeaves) * node.index;
     } else {
       const childrenAngle = [];
 
       node.children.forEach((node) => {
-        childrenAngle.push(self.calcAngle(node, angle, countLeaves));
+        childrenAngle.push(this.calcAngle(node, angle, countLeaves));
       });
 
       node.angle = 0;
@@ -165,11 +138,7 @@ export class RadialTreeLayout {
    * @return {void}
    */
   setDimension(width, height) {
-    // Store original dimensions to prevent accumulation
-    this.originalWidth = width;
-    this.originalHeight = height;
-    this.containerWidth = width;
-    this.containerHeight = height;
+    setLayoutDimensions(this, width, height);
   }
 
   /**
@@ -178,12 +147,7 @@ export class RadialTreeLayout {
    * @param margin
    */
   setMargin(margin) {
-    this.margin = margin;
-    // Calculate from original dimensions to avoid accumulation
-    const baseWidth = this.originalWidth || this.containerWidth;
-    const baseHeight = this.originalHeight || this.containerHeight;
-    this.containerWidth = Math.max(1, baseWidth - this.margin * 2);
-    this.containerHeight = Math.max(1, baseHeight - this.margin * 2);
+    setLayoutMargin(this, margin);
   }
 
   /**
@@ -192,15 +156,7 @@ export class RadialTreeLayout {
    * @return {void}
    */
   generateCoordinates(root) {
-    const offset = this.angleOffset || 0;
-    root.each((d) => {
-      const baseAngle = d.angle || 0;
-      const theta = baseAngle + offset;
-      d.rotatedAngle = theta;
-      d.offset = offset;
-      d.x = d.radius * Math.cos(theta);
-      d.y = d.radius * Math.sin(theta);
-    });
+    generatePolarCoordinates(root, (node) => node.angle, this.angleOffset);
   }
 
   /**
@@ -209,13 +165,7 @@ export class RadialTreeLayout {
    * @return {Number}
    */
   getMaxRadius(root) {
-    let maxRadius = 0;
-    root.leaves().forEach(function (d) {
-      if (d.radius > maxRadius) {
-        maxRadius = d.radius;
-      }
-    });
-    return maxRadius;
+    return getMaxRadius(root, { leavesOnly: true });
   }
 
   /**
@@ -225,9 +175,7 @@ export class RadialTreeLayout {
    * @return {void}
    */
   scaleRadius(root, scale) {
-    root.each(function (d) {
-      d.radius = d.radius * scale;
-    });
+    scaleRadius(root, scale);
   }
 
   /**
@@ -237,12 +185,8 @@ export class RadialTreeLayout {
    * @return {Number}
    */
   getMinContainerDimension(width, height) {
-    return Math.min(width, height);
+    return getMinContainerDimension(width, height);
   }
-
-
-
-
 
   /**
    * Construct radial tree with uniform scaling applied.
@@ -258,7 +202,7 @@ export class RadialTreeLayout {
 
     // Apply uniform scaling based on max global scale
     const minWindowSize = this.getMinContainerDimension(this.containerWidth, this.containerHeight);
-    const uniformScale = minWindowSize / (2.0 * maxGlobalScale);
+    const uniformScale = calculateUniformScale(minWindowSize, maxGlobalScale);
     this.scaleRadius(this.root, uniformScale);
     this.generateCoordinates(this.root);
     this.scale = uniformScale;
@@ -272,12 +216,6 @@ export class RadialTreeLayout {
    * @return {root}
    */
   constructRadialTree(useUniformScaling = false, options = {}) {
-    // CRITICAL FIX: Removed `this.root.data.length = 0` line that was mutating shared tree data
-    // This mutation was corrupting previous tree data and causing position diffing to fail,
-    // leading to duplicate element creation in WebGL renderer
-
-    // Removed debug log: Constructing tree layout - preserving original data integrity
-
     this.calcRadius(this.root, 0);
     this.indexLeafNodes(this.root);
     this.calcAngle(this.root, this.angleExtent, this.root.leaves().length);
@@ -314,12 +252,7 @@ export class RadialTreeLayout {
    * Calculate the scale factor to fit tree within container dimensions
    */
   calculateContainerScale(minWindowSize, maxRadius, factor) {
-    // For comparison views, use more aggressive scaling to ensure trees fit
-    const isComparison = this.containerWidth < 600 || this.containerHeight < 600;
-    const adjustedFactor = isComparison ? factor * 0.8 : factor; // More conservative for comparisons
-
-    const safeMaxRadius = Math.max(Number(maxRadius) || 0, 1e-6);
-    return minWindowSize / adjustedFactor / safeMaxRadius;
+    return calculateContainerScale(this.containerWidth, this.containerHeight, minWindowSize, maxRadius, factor);
   }
 
 }
@@ -330,23 +263,11 @@ export default function createRadialTreeLayout(
   options = {}
 ) {
   // Apply branch length transformation before layout
-  let transformedTree = transformBranchLengths(tree, branchTransformation);
-
-  let treeLayout = new RadialTreeLayout(transformedTree);
-
-  let width, height, margin;
-
-  width = options.width || 800;
-  height = options.height || 600;
-
-  // Ensure minimum dimensions for tree rendering
-  width = Math.max(width, 200);
-  height = Math.max(height, 200);
+  const transformedTree = transformBranchLengths(tree, branchTransformation);
+  const treeLayout = new RadialTreeLayout(transformedTree);
+  const { width, height, margin } = normalizeLayoutOptions(options);
 
   treeLayout.setDimension(width, height);
-
-  // Use default margin if not provided
-  margin = options.margin || 40;
 
   treeLayout.setMargin(margin);
 
@@ -355,8 +276,7 @@ export default function createRadialTreeLayout(
   let root_;
 
   if (useUniformScaling) {
-    const s = Number(options.uniformScale);
-    const uniformScale = Number.isFinite(s) && s > 0 ? s : 1;
+    const uniformScale = normalizeUniformScale(options.uniformScale);
 
     root_ = treeLayout.constructRadialTree(true, { generateCoords: false });
     treeLayout.scaleRadius(root_, uniformScale);

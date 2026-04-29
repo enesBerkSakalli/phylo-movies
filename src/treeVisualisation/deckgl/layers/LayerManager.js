@@ -6,10 +6,11 @@
  */
 import { LayerStyles } from './LayerStyles.js';
 import { useAppStore } from '../../../state/phyloStore/store.js';
+import { selectTreeMetadata } from '../../../state/phyloStore/selectors/treeSelectors.js';
 import { ComparisonModeRenderer } from '../../comparison/ComparisonModeRenderer.js';
 import { buildViewLinkMapping, derivePairKey } from '../../../domain/view/viewLinkMapper.js';
-import * as layerFactories from './factory/index.js';
 import { createClipboardLayers } from './factory/clipboard/ClipboardLayerFactory.js';
+import { createTreeLayerSet } from './factory/LayerSetFactory.js';
 
 // ==========================================================================
 // CONSTANTS
@@ -50,19 +51,11 @@ export class LayerManager {
     // Clear render cache before creating layers (ensures fresh state snapshot)
     this.layerStyles.clearRenderCache();
 
-    // Create layers directly - simpler and more reliable than cloning
-    const labelsVisible = state.labelsVisible !== false;
-    const layers = [
-      layerFactories.createConnectorsLayer(connectors || [], state),
-      layerFactories.createLinkOutlinesLayer(links, state, this.layerStyles),
-      layerFactories.createLinksLayer(links, state, this.layerStyles),
-      layerFactories.createExtensionsLayer(extensions, state, this.layerStyles),
-      layerFactories.createNodesLayer(nodes, state, this.layerStyles),
-      labelsVisible && layerFactories.createLabelsLayer(labels, state, this.layerStyles),
-      !labelsVisible && layerFactories.createLabelDotsLayer(labels, state, this.layerStyles)
-    ];
-
-    const filteredLayers = layers.filter(Boolean);
+    const filteredLayers = createTreeLayerSet({
+      data: { nodes, links, labels, extensions, connectors: connectors || [] },
+      state,
+      layerStyles: this.layerStyles
+    });
 
     // Cache is cleared at start of next createTreeLayers() call, no need to clear here
 
@@ -150,13 +143,14 @@ export class LayerManager {
       return;
     }
 
-    const { treeList, pairSolutions, setViewLinkMapping, movieData } = useAppStore.getState();
+    const state = useAppStore.getState();
+    const { treeList, pairSolutions, setViewLinkMapping } = state;
     if (!setViewLinkMapping || !Array.isArray(treeList)) return;
 
     this._lastMappedLeftIndex = leftIndex;
     this._lastMappedRightIndex = rightIndex;
 
-    const pairKey = derivePairKey(leftIndex, rightIndex, movieData?.tree_metadata);
+    const pairKey = derivePairKey(leftIndex, rightIndex, selectTreeMetadata(state));
     const pairSolution = pairKey ? pairSolutions?.[pairKey] : null;
 
     if (pairSolution) {

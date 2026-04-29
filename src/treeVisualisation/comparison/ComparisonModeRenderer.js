@@ -1,5 +1,6 @@
 import { buildSubtreeConnectors } from '../deckgl/data/transforms/SubtreeConnectorBuilder.js';
 import { useAppStore } from '../../state/phyloStore/store.js';
+import { selectTreePairKeyAtIndex } from '../../state/phyloStore/selectors/treeSelectors.js';
 import { tagTreeSide } from '../utils/layerDataUtils.js';
 import {
   calculateRightOffset,
@@ -7,86 +8,11 @@ import {
   combineLayerData,
   buildPositionMap
 } from './ComparisonUtils.js';
-
-const computeCenter = (nodes = []) => {
-  if (!Array.isArray(nodes) || nodes.length === 0) return [0, 0];
-  const [sx, sy] = nodes.reduce(
-    (acc, n) => {
-      acc[0] += n.position?.[0] ?? 0;
-      acc[1] += n.position?.[1] ?? 0;
-      return acc;
-    },
-    [0, 0]
-  );
-  return [sx / nodes.length, sy / nodes.length];
-};
-
-const computeMaxRadius = (nodes = [], center = [0, 0]) => {
-  if (!Array.isArray(nodes) || nodes.length === 0) return 0;
-  return nodes.reduce((max, n) => {
-    const pos = n.position || [0, 0];
-    const r = Math.hypot(pos[0] - center[0], pos[1] - center[1]);
-    return r > max ? r : max;
-  }, 0);
-};
-
-/**
- * Compute the visual extent of a tree including nodes, labels, and extensions.
- * Also estimates label text width from the longest taxon name so that
- * the offset keeps label text from overlapping the neighbouring tree.
- */
-const computeVisualRadius = (layerData, center = [0, 0], labelSizePx = 0) => {
-  const dist = (p) => {
-    if (!p) return 0;
-    return Math.hypot((p[0] ?? 0) - center[0], (p[1] ?? 0) - center[1]);
-  };
-
-  let maxR = 0;
-
-  // Node positions
-  if (Array.isArray(layerData.nodes)) {
-    for (const n of layerData.nodes) {
-      maxR = Math.max(maxR, dist(n.position));
-    }
-  }
-
-  // Label positions (extend beyond nodes)
-  if (Array.isArray(layerData.labels)) {
-    for (const l of layerData.labels) {
-      maxR = Math.max(maxR, dist(l.position));
-    }
-  }
-
-  // Extension endpoints (radial extension lines beyond leaf nodes)
-  if (Array.isArray(layerData.extensions)) {
-    for (const ext of layerData.extensions) {
-      maxR = Math.max(maxR, dist(ext.sourcePosition), dist(ext.targetPosition));
-    }
-  }
-
-  // Estimate extra space needed for the longest label text.
-  // deck.gl TextLayer renders text at ~labelSizePx height; average char width ≈ 0.6× height.
-  if (labelSizePx > 0 && Array.isArray(layerData.labels) && layerData.labels.length > 0) {
-    let longestLen = 0;
-    for (const l of layerData.labels) {
-      const len = (l.text ?? l.name ?? '').length;
-      if (len > longestLen) longestLen = len;
-    }
-    const estimatedTextWidth = longestLen * labelSizePx * 0.6;
-    maxR += estimatedTextWidth;
-  }
-
-  return maxR;
-};
-
-const computeSafeRadius = (nodes = [], labels = [], center = [0, 0], fontSizePx = 12) => {
-  const dist = (p) => Math.hypot((p?.[0] ?? 0) - center[0], (p?.[1] ?? 0) - center[1]);
-  const nodeRadius = nodes.reduce((m, n) => Math.max(m, dist(n.position)), 0);
-  const labelRadius = labels.reduce((m, l) => Math.max(m, dist(l.position)), 0);
-  const base = Math.max(nodeRadius, labelRadius);
-  const padding = Math.max(fontSizePx * 1.5, base * 0.04);
-  return base + padding;
-};
+import {
+  calculatePositionCenter,
+  calculateSafeVisualRadius,
+  calculateTreeVisualRadius
+} from '../utils/TreeBoundsUtils.js';
 
 /**
  * ComparisonModeRenderer
@@ -187,18 +113,18 @@ export class ComparisonModeRenderer {
     const viewOffset = this.controller.viewportManager.getViewOffset();
 
     // Calculate real centers (layout is origin-centered; add offsets after)
-    const leftCenterBase = computeCenter(leftLayerData.nodes);
-    const rightCenterBase = computeCenter(rightLayerData.nodes);
+    const leftCenterBase = calculatePositionCenter(leftLayerData.nodes);
+    const rightCenterBase = calculatePositionCenter(rightLayerData.nodes);
 
-    // Resolve base label size in world-space pixels so computeVisualRadius
+    // Resolve base label size in world-space pixels so calculateTreeVisualRadius
     // can account for the width of the longest taxon name.
     const fontSize = useAppStore.getState().fontSize ?? '2.6em';
     const labelSizePx = parseFloat(fontSize) * 12 || 24;
 
     // Compute tree radii including labels and extensions so the offset
     // accounts for the full visual extent of each tree.
-    const leftRadius = computeVisualRadius(leftLayerData, leftCenterBase, labelSizePx);
-    const rightRadius = computeVisualRadius(rightLayerData, rightCenterBase, labelSizePx);
+    const leftRadius = calculateTreeVisualRadius(leftLayerData, leftCenterBase, labelSizePx);
+    const rightRadius = calculateTreeVisualRadius(rightLayerData, rightCenterBase, labelSizePx);
 
     const rightOffset = calculateRightOffset(canvasWidth, viewOffset, leftRadius, rightRadius);
 
@@ -209,8 +135,8 @@ export class ComparisonModeRenderer {
     const leftCenter = [leftCenterBase[0] + leftTreeOffsetX, leftCenterBase[1] + leftTreeOffsetY];
     const rightCenter = [rightCenterBase[0] + rightOffset, rightCenterBase[1] + viewOffset.y];
 
-    const leftSafeRadius = computeSafeRadius(leftLayerData.nodes, leftLayerData.labels, leftCenter);
-    const rightSafeRadius = computeSafeRadius(rightLayerData.nodes, rightLayerData.labels, rightCenter);
+    const leftSafeRadius = calculateSafeVisualRadius(leftLayerData.nodes, leftLayerData.labels, leftCenter);
+    const rightSafeRadius = calculateSafeVisualRadius(rightLayerData.nodes, rightLayerData.labels, rightCenter);
 
     // Build connectors between trees if views are linked
     const connectors = viewsConnected
@@ -294,17 +220,17 @@ export class ComparisonModeRenderer {
     const viewOffset = this.controller.viewportManager.getViewOffset();
 
     // Centers before offsets
-    const leftCenterBase = computeCenter(interpolatedData.nodes);
-    const rightCenterBase = computeCenter(rightLayerData.nodes);
+    const leftCenterBase = calculatePositionCenter(interpolatedData.nodes);
+    const rightCenterBase = calculatePositionCenter(rightLayerData.nodes);
 
-    // Resolve base label size so computeVisualRadius accounts for text width.
+    // Resolve base label size so calculateTreeVisualRadius accounts for text width.
     const fontSize = useAppStore.getState().fontSize ?? '2.6em';
     const labelSizePx = parseFloat(fontSize) * 12 || 24;
 
     // Compute tree radii including labels and extensions so the offset
     // accounts for the full visual extent of each tree.
-    const leftRadius = computeVisualRadius(interpolatedData, leftCenterBase, labelSizePx);
-    const rightRadius = computeVisualRadius(rightLayerData, rightCenterBase, labelSizePx);
+    const leftRadius = calculateTreeVisualRadius(interpolatedData, leftCenterBase, labelSizePx);
+    const rightRadius = calculateTreeVisualRadius(rightLayerData, rightCenterBase, labelSizePx);
 
     const rightOffset = calculateRightOffset(canvasWidth, viewOffset, leftRadius, rightRadius);
 
@@ -315,8 +241,8 @@ export class ComparisonModeRenderer {
     const leftCenter = [leftCenterBase[0] + leftTreeOffsetX, leftCenterBase[1] + leftTreeOffsetY];
     const rightCenter = [rightCenterBase[0] + rightOffset, rightCenterBase[1] + viewOffset.y];
 
-    const leftSafeRadius = computeSafeRadius(interpolatedData.nodes, interpolatedData.labels, leftCenter);
-    const rightSafeRadius = computeSafeRadius(rightLayerData.nodes, rightLayerData.labels, rightCenter);
+    const leftSafeRadius = calculateSafeVisualRadius(interpolatedData.nodes, interpolatedData.labels, leftCenter);
+    const rightSafeRadius = calculateSafeVisualRadius(rightLayerData.nodes, rightLayerData.labels, rightCenter);
 
     const connectors = viewsConnected
       ? this._buildConnectors(
@@ -373,6 +299,10 @@ export class ComparisonModeRenderer {
     const currentTreeIndex = state?.currentTreeIndex ?? 0;
     const pivotEdgeTracking = state?.pivotEdgeTracking || [];
     const pivotEdge = pivotEdgeTracking[currentTreeIndex];
+    const pairKey = selectTreePairKeyAtIndex(state, currentTreeIndex);
+    const latticeSolutions = pairKey
+      ? state?.pairSolutions?.[pairKey]?.jumping_subtree_solutions || {}
+      : {};
 
     if (!Array.isArray(pivotEdge) || pivotEdge.length === 0) {
       return [];
@@ -381,7 +311,7 @@ export class ComparisonModeRenderer {
     return buildSubtreeConnectors({
       leftPositions,
       rightPositions,
-      latticeSolutions: state?.pairSolutions?.[state?.movieData?.tree_metadata?.[currentTreeIndex]?.tree_pair_key]?.jumping_subtree_solutions || {},
+      latticeSolutions,
       pivotEdge,
       colorManager: state?.colorManager,
       subtreeTracking: state?.subtreeTracking || [],
