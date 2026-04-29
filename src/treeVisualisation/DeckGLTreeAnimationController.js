@@ -41,15 +41,23 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     // --- WORKER INITIALIZATION ---
     this.layoutWorker = new Worker(new URL('./workers/layout.worker.js', import.meta.url), { type: 'module' });
     this.prefetchedFrameIndices = new Set();
+    this._prefetchRequestTokens = new Map();
+    this._layoutRequestGeneration = 0;
 
     this.layoutWorker.onmessage = (event) => {
-      const { jobId, status, result, error } = event.data;
+      const { jobId, requestToken, status, result, error } = event.data;
+      const treeIndex = parseInt(jobId, 10);
+      const pendingToken = this._prefetchRequestTokens.get(treeIndex);
+      if (requestToken !== pendingToken || requestToken !== this._createLayoutRequestToken(treeIndex)) {
+        return;
+      }
+
       if (status === 'SUCCESS') {
-        const treeIndex = parseInt(jobId, 10);
         this.interpolationCache.setPrecomputedData(treeIndex, result);
       } else {
         console.warn(`[Worker] Layout failed for tree ${jobId}:`, error);
-        this.prefetchedFrameIndices.delete(parseInt(jobId, 10));
+        this.prefetchedFrameIndices.delete(treeIndex);
+        this._prefetchRequestTokens.delete(treeIndex);
       }
     };
     // -----------------------------
@@ -65,6 +73,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     this._pendingRenderRAF = null;
     this._lastRenderTime = 0;
     this._renderDebounceMs = 16; // ~60fps max
+    this._lastLayerData = null;
 
     // Resize clears cache because dimensions affect layout radius/position
     this.setOnResize(() => {
@@ -243,6 +252,30 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     this.renderAllElements();
   }
 
+  fitTreeToViewport(options = {}) {
+    const nodes = this._lastLayerData?.nodes;
+    if (!Array.isArray(nodes) || nodes.length === 0 || !this.viewportManager) return;
+
+    this.viewportManager.focusOnTree(nodes, this._lastLayerData.labels, {
+      includeLabels: options.includeLabels === true,
+      duration: options.duration ?? 350,
+      padding: options.padding,
+      links: this._lastLayerData.links
+    });
+  }
+
+  zoomIn() {
+    this.deckContext?.zoomBy?.(0.5);
+  }
+
+  zoomOut() {
+    this.deckContext?.zoomBy?.(-0.5);
+  }
+
+  resetTreeView() {
+    this.deckContext?.resetView?.();
+  }
+
   startAnimation() {
     if (!this.animationsEnabled) return;
     const { play } = useAppStore.getState();
@@ -272,12 +305,15 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     this.layoutWorker?.terminate();
     this.layoutWorker = null;
     this.prefetchedFrameIndices?.clear();
+    this._prefetchRequestTokens?.clear();
   }
 
   resetInterpolationCaches() {
     this.interpolationCache?.reset();
     this.treeInterpolator?.resetCaches?.();
     this.prefetchedFrameIndices?.clear();
+    this._prefetchRequestTokens?.clear();
+    this._layoutRequestGeneration += 1;
   }
 
   // ==========================================================================
@@ -299,20 +335,16 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     const { branchTransformation, layoutAngleDegrees, layoutRotationDegrees, styleConfig } = state;
     const offsets = styleConfig?.labelOffsets || { DEFAULT: 20, EXTENSION: 5 };
 
-    // Layout configuration
-    const containerWidth = this.width - 120; // 60 margin * 2
-    const containerHeight = this.height - 120;
-    const maxLeafRadius = Math.min(containerWidth, containerHeight) / 2;
-    const extensionRadius = maxLeafRadius + (offsets.EXTENSION ?? 5);
-    const labelRadius = extensionRadius + (offsets.DEFAULT ?? 20);
-
     // Ensure uniform scaling is initialized before dispatching to worker
     if (!this.uniformScalingEnabled) {
       this.initializeUniformScaling(branchTransformation);
     }
+    const requestToken = this._createLayoutRequestToken(treeIndex, state);
+    this._prefetchRequestTokens.set(treeIndex, requestToken);
 
     const payload = {
       jobId: String(treeIndex),
+      requestToken,
       command: 'CALCULATE_LAYOUT', // Must match worker
       data: {
         treeData,
@@ -323,8 +355,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
           branchTransformation,
           layoutAngleDegrees,
           layoutRotationDegrees,
-          extensionRadius,
-          labelRadius,
+          labelOffsets: offsets,
           treeIndex,
           treeSide: 'left',
           renderMode: 'animation',
@@ -334,6 +365,23 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     };
 
     this.layoutWorker.postMessage(payload);
+  }
+
+  _createLayoutRequestToken(treeIndex, state = useAppStore.getState()) {
+    const styleConfig = state?.styleConfig || {};
+    const offsets = styleConfig.labelOffsets || {};
+    return [
+      this._layoutRequestGeneration,
+      treeIndex,
+      this.width,
+      this.height,
+      state?.branchTransformation ?? 'none',
+      state?.layoutAngleDegrees ?? 360,
+      state?.layoutRotationDegrees ?? 0,
+      offsets.DEFAULT ?? 20,
+      offsets.EXTENSION ?? 5,
+      this.maxGlobalScale ?? 0
+    ].join('|');
   }
 
   // RENDERING - STATIC
@@ -402,9 +450,11 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
     // --- Adaptive Visual Scaling ---
     // Interpolate max_radius from cached metadata
-    const rFrom = dataFrom.max_radius || 300;
-    const rTo = dataTo.max_radius || 300;
-    const currentMaxRadius = rFrom + (rTo - rFrom) * t;
+    const rFrom = Number(dataFrom.max_radius);
+    const rTo = Number(dataTo.max_radius);
+    const currentMaxRadius = Number.isFinite(interpolatedData.max_radius)
+      ? interpolatedData.max_radius
+      : (Number.isFinite(rFrom) && Number.isFinite(rTo) ? rFrom + (rTo - rFrom) * t : 300);
 
     // Calculate metricScale: min(1.0, currentMaxRadius / idealRadius)
     // Ideal radius is roughly half the screen dimension (e.g. 300-400px)
@@ -442,6 +492,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     if (interpolatedFrameData) {
       interpolatedFrameData.zoom = this.deckContext?.getViewState()?.zoom;
     }
+    this._lastLayerData = interpolatedFrameData || null;
     const layers = this.layerManager.updateLayersWithData(interpolatedFrameData);
 
     // Add clipboard layers if clipboard is active

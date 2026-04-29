@@ -9,6 +9,7 @@ import { TreeStatsPanel } from './components/TreeStatsPanel/TreeStatsPanel.tsx';
 import { TaxaGroupsLegend } from './components/TreeStatsPanel/Shared/TaxaLegend';
 import AnalyticsDashboard from './components/TreeStatsPanel/AnalyticsDashboard.tsx';
 import { DeckGLCanvas } from './components/deckgl/DeckGLCanvas.jsx';
+import { TreeViewportControls } from './components/deckgl/TreeViewportControls.jsx';
 import { MsaRndWindow } from './components/msa/MsaRndWindow.jsx';
 import { MSAProvider } from './components/msa/MSAContext';
 import { TaxaColoringRndWindow } from './components/taxa-coloring/TaxaColoringRndWindow.jsx';
@@ -175,6 +176,7 @@ export function App() {
           <SidebarTrigger className="absolute top-2 left-2 z-1200" />
           <div className="full-size-container" style={{ flex: 1, minHeight: 0, position: 'relative', overflow: 'hidden' }}>
             <DeckGLCanvas />
+            <TreeViewportControls />
             <ClipboardDismissButton />
             <HUD />
           </div>

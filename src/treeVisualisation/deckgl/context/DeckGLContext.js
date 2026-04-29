@@ -539,6 +539,34 @@ export class DeckGLContext {
     );
   }
 
+  zoomBy(delta, { duration = 180, easing = this._defaultEasing } = {}) {
+    const id = this._activeViewId();
+    const currentViewState = this.viewStates[id];
+    const currentZoom = Number.isFinite(currentViewState.zoom) ? currentViewState.zoom : 0;
+
+    this.transitionTo({
+      zoom: currentZoom + delta,
+      duration,
+      easing,
+      interpolator: this._interpolatorFor(id)
+    });
+  }
+
+  resetView({ duration = 250, easing = this._defaultEasing } = {}) {
+    const id = this._activeViewId();
+    const defaultState = this._defaultViewStateFor(id);
+
+    this._applyViewState(
+      id,
+      defaultState,
+      {
+        transitionDuration: duration,
+        transitionEasing: easing,
+        transitionInterpolator: this._interpolatorFor(id)
+      }
+    );
+  }
+
   // ==========================================================================
   // CLEANUP
   // ==========================================================================
@@ -586,6 +614,12 @@ export class DeckGLContext {
 
   _interpolatorFor(id) {
     return id === VIEW_IDS.ORTHO ? this.interpolatorOrtho : this.interpolatorOrbit;
+  }
+
+  _defaultViewStateFor(id) {
+    return id === VIEW_IDS.ORTHO
+      ? { ...DEFAULT_ORTHO_STATE }
+      : { ...DEFAULT_ORBIT_STATE };
   }
 
   _clampZoom(viewId, zoom) {

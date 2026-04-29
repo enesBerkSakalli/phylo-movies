@@ -67,4 +67,26 @@ describe('DeckGLContext view state handling', () => {
     expect(container.contains(oldChild)).toBe(false);
     expect(container.querySelector('canvas')).toBe(context.canvas);
   });
+
+  it('zooms the active view around its current target', () => {
+    const context = createContext();
+    context.viewStates[VIEW_IDS.ORTHO].zoom = 1;
+    context.viewStates[VIEW_IDS.ORTHO].target = [4, 5, 0];
+
+    context.zoomBy(0.5, { duration: 0 });
+
+    expect(context.viewStates[VIEW_IDS.ORTHO].zoom).toBe(1.5);
+    expect(context.viewStates[VIEW_IDS.ORTHO].target).toEqual([4, 5, 0]);
+  });
+
+  it('resets the active view to its default camera state', () => {
+    const context = createContext();
+    context.viewStates[VIEW_IDS.ORTHO].zoom = 3;
+    context.viewStates[VIEW_IDS.ORTHO].target = [40, -10, 0];
+
+    context.resetView({ duration: 0 });
+
+    expect(context.viewStates[VIEW_IDS.ORTHO].zoom).toBe(0);
+    expect(context.viewStates[VIEW_IDS.ORTHO].target).toEqual([0, 0, 0]);
+  });
 });

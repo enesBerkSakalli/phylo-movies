@@ -166,6 +166,10 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
 
   it('should verify worker response updates the cache', () => {
     controller = new ControllerClass('#container');
+    mockWorkerInstance = controller.layoutWorker;
+    sandbox.spy(mockWorkerInstance, 'postMessage');
+    controller._prefetchFrame(2);
+    const requestToken = mockWorkerInstance.postMessage.firstCall.args[0].requestToken;
 
     // Spy on cache setPrecomputedData (InterpolationCache is real, so method exists)
     sandbox.spy(controller.interpolationCache, 'setPrecomputedData');
@@ -174,6 +178,7 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
     const workerResponse = {
       data: {
         jobId: '2',
+        requestToken,
         status: 'SUCCESS',
         result: {
            layout: { some: 'layout' },
@@ -192,11 +197,15 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
 
   it('should handle worker errors gracefully', () => {
     controller = new ControllerClass('#container');
-    controller.prefetchedFrameIndices.add(3);
+    mockWorkerInstance = controller.layoutWorker;
+    sandbox.spy(mockWorkerInstance, 'postMessage');
+    controller._prefetchFrame(3);
+    const requestToken = mockWorkerInstance.postMessage.firstCall.args[0].requestToken;
 
     const errorResponse = {
       data: {
         jobId: '3',
+        requestToken,
         status: 'ERROR',
         error: 'Calculation exploded'
       }

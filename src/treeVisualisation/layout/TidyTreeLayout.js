@@ -121,7 +121,8 @@ export class TidyTreeLayout {
   calculateContainerScale(minWindowSize, maxRadius, factor) {
     const isComparison = this.containerWidth < 600 || this.containerHeight < 600;
     const adjustedFactor = isComparison ? factor * 0.8 : factor;
-    return minWindowSize / adjustedFactor / maxRadius;
+    const safeMaxRadius = Math.max(Number(maxRadius) || 0, 1e-6);
+    return minWindowSize / adjustedFactor / safeMaxRadius;
   }
 
   cacheLeafCounts() {

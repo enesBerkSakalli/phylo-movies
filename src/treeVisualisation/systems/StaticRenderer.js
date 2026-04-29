@@ -89,7 +89,9 @@ export class StaticRenderer {
     this.controller._updateLayersEfficiently(layerData);
 
     if (this.controller._lastFocusedTreeIndex === null) {
-      this.controller.viewportManager.focusOnTree(layerData.nodes, layerData.labels);
+      this.controller.viewportManager.focusOnTree(layerData.nodes, layerData.labels, {
+        links: layerData.links
+      });
       this.controller._lastFocusedTreeIndex = targetIndex;
     }
 
