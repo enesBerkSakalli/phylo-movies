@@ -4,6 +4,7 @@ import { LayerStyles } from '../src/treeVisualisation/deckgl/layers/LayerStyles.
 import { getLinkWidth } from '../src/treeVisualisation/deckgl/layers/styles/links/linkWidthStyles.js';
 import { getLinkOutlineWidth } from '../src/treeVisualisation/deckgl/layers/styles/links/outline/linkOutlineStyles.js';
 import { getNodeRadius } from '../src/treeVisualisation/deckgl/layers/styles/nodes/nodeRadiusStyles.js';
+import { getLabelSize } from '../src/treeVisualisation/deckgl/layers/styles/labels/labelStyles.js';
 
 describe('Adaptive Visual Scaling', () => {
 
@@ -35,6 +36,26 @@ describe('Adaptive Visual Scaling', () => {
       });
 
       expect(cached.metricScale).toBeCloseTo(0.25);
+      layerStyles.destroy();
+    });
+
+    it('should leave visual scale unchanged for sparse trees', () => {
+      const layerStyles = new LayerStyles();
+      const cached = layerStyles.getCachedState({
+        movieData: { sorted_leaves: new Array(25) }
+      });
+
+      expect(cached.visualScale).toBeCloseTo(1);
+      layerStyles.destroy();
+    });
+
+    it('should reduce visual scale for dense trees', () => {
+      const layerStyles = new LayerStyles();
+      const cached = layerStyles.getCachedState({
+        movieData: { sorted_leaves: new Array(200) }
+      });
+
+      expect(cached.visualScale).toBeCloseTo(0.5);
       layerStyles.destroy();
     });
   });
@@ -171,6 +192,34 @@ describe('Adaptive Visual Scaling', () => {
       };
       const radius = getNodeRadius(node, 3, cached, helpers);
       expect(radius).toBeCloseTo(3.75);
+    });
+
+    it('should apply adaptive visual scale before metric scale', () => {
+      const cached = {
+        colorManager: mockColorManager,
+        metricScale: 0.5,
+        visualScale: 0.5
+      };
+      const node = {
+        radius: 5,
+        data: { split_indices: [] }
+      };
+
+      const radius = getNodeRadius(node, 3, cached, helpers);
+
+      expect(radius).toBeCloseTo(1.25);
+    });
+  });
+
+  describe('Label Size Scaling', () => {
+    it('should apply adaptive visual scale to base label size', () => {
+      const cached = {
+        visualScale: 0.5
+      };
+
+      const size = getLabelSize({ id: 'node1' }, '2em', cached);
+
+      expect(size).toBeCloseTo(12);
     });
   });
 });

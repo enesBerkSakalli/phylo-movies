@@ -51,12 +51,12 @@ describe('Real Data Integration (test/data/ostrich_bug_response.json)', () => {
     const movingSubtree = flattenSplitSets(solutionSets)[0];
 
     it('successfully lays out the real Ostrich dataset (Tree 0)', () => {
-        const { tree, max_radius } = createTidyTreeLayout(sourceTree, 'none', { width: 1000, height: 1000 });
+        const { nodes, max_radius } = createTidyTreeLayout(sourceTree, 'none', { width: 1000, height: 1000 });
 
         let nodeCount = 0;
         let maxDepth = 0;
 
-        tree.each(node => {
+        nodes.forEach(node => {
             nodeCount++;
             if (node.depth > maxDepth) maxDepth = node.depth;
             // Layout Validity Checks
@@ -75,16 +75,17 @@ describe('Real Data Integration (test/data/ostrich_bug_response.json)', () => {
         const rightLayout = createTidyTreeLayout(sourceTree, 'none', layoutOpt);
 
         // 2. Mock Position Maps
-        const createPosMap = (root) => {
+        const createPosMap = (nodes) => {
             const map = new Map();
-            root.each(node => {
+            nodes.forEach(node => {
                 // Use simple sorting for key generation in map
                 // Note: The builder iterates the map values, so key equality is less critical
                 // unless it does direct lookups (which it does for internal nodes).
-                const indices = node.data.split_indices || [];
+                const indices = node.split_indices || [];
                 const sorted = [...indices].sort((a,b) => a - b);
                 const id = sorted.join('-') || 'root';
-                const parentIndices = node.parent?.data?.split_indices || [];
+                const parent = nodes.find(candidate => candidate.id === node.parentId);
+                const parentIndices = parent?.split_indices || [];
                 const parentId = parentIndices.length ? [...parentIndices].sort((a,b) => a - b).join('-') : null;
                 const key = JSON.stringify(sorted);
 
@@ -92,9 +93,9 @@ describe('Real Data Integration (test/data/ostrich_bug_response.json)', () => {
                     id,
                     parentId,
                     split_indices: sorted,
-                    position: [node.x, node.y, 0],
-                    isLeaf: !node.children,
-                    name: node.data.name || "",
+                    position: node.position,
+                    isLeaf: node.isLeaf,
+                    name: node.name || "",
                     depth: node.depth
                 };
 
@@ -106,8 +107,8 @@ describe('Real Data Integration (test/data/ostrich_bug_response.json)', () => {
             return map;
         };
 
-        const leftPositions = createPosMap(leftLayout.tree);
-        const rightPositions = createPosMap(rightLayout.tree);
+        const leftPositions = createPosMap(leftLayout.nodes);
+        const rightPositions = createPosMap(rightLayout.nodes);
 
         // We also need to mark it as "currently moving" via subtreeTracking
         const subtreeTracking = [

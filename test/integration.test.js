@@ -7,16 +7,14 @@ const {
 
 describe('ChangeMetricUtils – extension deltas & classification', () => {
   const mkLeaf = (id, angle, radius) => ({
-    data: { split_indices: [id] },
+    split_indices: [id],
     angle,
     radius,
   });
 
   const mkLayout = (leaves) => ({
     max_radius: Math.max(...leaves.map(l => l.radius)),
-    tree: {
-      leaves: () => leaves,
-    },
+    leaves,
   });
 
   it('computes average weighted change between two layouts', () => {
@@ -47,6 +45,26 @@ describe('ChangeMetricUtils – extension deltas & classification', () => {
     expect(update).to.have.length(1);
     expect(exit).to.have.length(1);
     expect(enter).to.have.length(1);
+  });
+
+  it('does not match leaves by legacy name/id fallback', () => {
+    const leafWithoutSplit = (name, angle, radius) => ({
+      name,
+      id: name,
+      angle,
+      radius,
+    });
+
+    const layoutA = mkLayout([leafWithoutSplit('same-name', 0.0, 10)]);
+    const layoutB = mkLayout([leafWithoutSplit('same-name', 0.5, 20)]);
+
+    const metrics = computeExtensionChangeMetrics(layoutA, layoutB);
+    const classes = classifyExtensionChanges(layoutA, layoutB);
+
+    expect(metrics.compared).to.equal(0);
+    expect(classes.enter).to.have.length(0);
+    expect(classes.update).to.have.length(0);
+    expect(classes.exit).to.have.length(0);
   });
 });
 

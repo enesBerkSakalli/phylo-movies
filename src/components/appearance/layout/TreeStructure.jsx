@@ -76,10 +76,10 @@ export function TreeStructure() {
             <SelectContent>
               <SelectItem value="use">Use Branch Lengths</SelectItem>
               <SelectItem value="ignore">Ignore Branch Lengths</SelectItem>
-              <SelectItem value="log">Log Transform</SelectItem>
-              <SelectItem value="sqrt">Square Root</SelectItem>
-              <SelectItem value="power2">Power (x²)</SelectItem>
-              <SelectItem value="linear-scale">Linear Scale (2x)</SelectItem>
+              <SelectItem value="log">Log Scale</SelectItem>
+              <SelectItem value="sqrt">Square Root Scale</SelectItem>
+              <SelectItem value="power2">Square Values (x²)</SelectItem>
+              <SelectItem value="linear-scale">Double Lengths (2x)</SelectItem>
             </SelectContent>
           </Select>
         </div>

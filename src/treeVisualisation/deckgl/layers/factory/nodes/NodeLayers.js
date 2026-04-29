@@ -32,6 +32,7 @@ export function createNodesLayer(nodes, state, layerStyles) {
  */
 export function getNodesLayerProps(nodes = [], state, layerStyles) {
   const { taxaColorVersion, colorVersion, nodeSize, upcomingChangesEnabled, highlightColorMode, metricScale } = state || {};
+  const taxaCount = state?.movieData?.sorted_leaves?.length || 0;
 
   // Get cached state once for all accessors
   const cached = layerStyles.getCachedState(state);
@@ -67,7 +68,7 @@ export function getNodesLayerProps(nodes = [], state, layerStyles) {
       getFillColor: [colorVersion, taxaColorVersion, upcomingChangesEnabled, highlightColorMode],
       getLineColor: [colorVersion, taxaColorVersion, upcomingChangesEnabled, highlightColorMode],
       getPosition: [colorVersion],
-      getRadius: [nodeSize, colorVersion, metricScale]
+      getRadius: [nodeSize, colorVersion, metricScale, taxaCount]
     }
   };
 }

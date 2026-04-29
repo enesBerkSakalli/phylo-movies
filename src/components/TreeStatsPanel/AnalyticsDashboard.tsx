@@ -93,25 +93,25 @@ export const AnalyticsDashboard = () => {
         <Dialog>
             <SidebarMenuItem>
                 <DialogTrigger asChild>
-                    <SidebarMenuButton tooltip="Open SPR Analytics" aria-label="Open SPR Analytics">
+                    <SidebarMenuButton tooltip="Open SPR Moves" aria-label="Open SPR Moves">
                         <Activity className="text-primary" />
-                        <span>SPR Analytics</span>
+                        <span>SPR Moves</span>
                     </SidebarMenuButton>
                 </DialogTrigger>
             </SidebarMenuItem>
             <DialogContent className="sm:max-w-6xl max-h-[85vh] h-full flex flex-col overflow-hidden">
                 <DialogHeader className="shrink-0 pr-10 pb-4 border-b border-border/20">
-                    <DialogTitle className="text-xl font-bold tracking-tight">SPR Analytics</DialogTitle>
+                    <DialogTitle className="text-xl font-bold tracking-tight">SPR Moves</DialogTitle>
                     <DialogDescription className="text-sm text-muted-foreground/80">
-                        Identify subtrees with frequent moving-subtree occurrences across backend SPR solutions.
+                        See which groups of taxa move between neighboring trees.
                     </DialogDescription>
                 </DialogHeader>
 
                 <Tabs defaultValue="overview" className="flex flex-col flex-1 min-h-0 pt-4 overflow-hidden">
                     <TabsList className="w-full justify-start mb-4 shrink-0 bg-muted/30 p-1">
                         <TabsTrigger value="overview" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">Overview</TabsTrigger>
-                        <TabsTrigger value="pairs" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">Pair Activity</TabsTrigger>
-                        <TabsTrigger value="details" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">Detailed Stats</TabsTrigger>
+                        <TabsTrigger value="pairs" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">Tree Pairs</TabsTrigger>
+                        <TabsTrigger value="details" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">All Groups</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="overview" className="flex-1 min-h-0 mt-0 focus-visible:outline-none">
@@ -120,10 +120,10 @@ export const AnalyticsDashboard = () => {
                                 <Card className="bg-primary/5 border-primary/20 p-3 flex flex-col gap-2">
                                     <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-wider text-primary">
                                         <BookOpen className="size-3" />
-                                        What is an SPR event?
+                                        What is being counted?
                                     </div>
                                     <p className="text-2xs leading-relaxed text-muted-foreground">
-                                        A <strong>Subtree Prune and Regraft (SPR)</strong> event occurs when a subtree's logical attachment point changes between neighboring anchor trees in the phylogeny. Counts shown here are flattened moving-subtree occurrences from backend SPR solutions, not unique transition-frame counts.
+                                        <strong>SPR</strong> is the solver operation that moves a group of taxa from one attachment point to another between neighboring trees. Each count is one moved group, not an animation frame.
                                     </p>
                                 </Card>
 
@@ -140,10 +140,10 @@ export const AnalyticsDashboard = () => {
                                     <CardHeader className="pb-3 bg-muted/20 shrink-0">
                                         <CardTitle className="flex items-center gap-2 text-base font-bold">
                                             <Activity className="size-4 text-primary" />
-                                            SPR Activity Timeline
+                                            Moves Across Tree Pairs
                                         </CardTitle>
                                         <CardDescription className="text-xs">
-                                            Mover occurrences per neighboring anchor-tree pair with transition-event, RFD, and W-RFD context.
+                                            Moved groups per neighboring tree pair, with tree-change scores for context.
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent className="flex-1 min-h-0 p-2">
@@ -155,10 +155,10 @@ export const AnalyticsDashboard = () => {
                                     <CardHeader className="pb-3 bg-muted/20 shrink-0">
                                         <CardTitle className="flex items-center gap-2 text-base font-bold">
                                             <BarChart className="size-4 text-primary" />
-                                            Subtrees with Most Mover Occurrences
+                                            Groups That Move Most Often
                                         </CardTitle>
                                         <CardDescription className="text-xs">
-                                            Frequency distribution of the most frequently moving subtrees identified by the BranchArchitect engine.
+                                            Top taxa groups that moved in the SPR solver results.
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent className="flex-1 min-h-0 p-2">
@@ -174,10 +174,10 @@ export const AnalyticsDashboard = () => {
                             <CardHeader className="pb-3 bg-muted/20 shrink-0">
                                 <CardTitle className="flex items-center gap-2 text-base font-bold">
                                     <Activity className="size-4 text-primary" />
-                                    SPR Activity by Tree Pair
+                                    Moves by Tree Pair
                                 </CardTitle>
                                 <CardDescription className="text-xs">
-                                    Mover occurrences, transition events, RFD/W-RFD context, and selected-mover attachment points for each neighboring anchor-tree pair.
+                                    Moves, solver steps, tree-change scores, and from/to attachment context for each neighboring tree pair.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="p-0 flex-1 min-h-0 overflow-auto">
@@ -195,10 +195,10 @@ export const AnalyticsDashboard = () => {
                             <CardHeader className="pb-3 bg-muted/20 shrink-0">
                                 <CardTitle className="flex items-center gap-2 text-base font-bold">
                                     <ListTree className="size-4 text-primary" />
-                                    Complete Mover Occurrence List
+                                    All Moved Groups
                                 </CardTitle>
                                 <CardDescription className="text-xs flex items-center justify-between gap-2">
-                                    <span>Flattened moving-subtree occurrence counts from backend SPR solutions.</span>
+                                    <span>Every moved group counted from SPR solver results.</span>
                                     <div className="flex items-center gap-2 shrink-0">
                                         {allFreqs.length > 5 && (
                                             <span className="flex items-center gap-1 text-muted-foreground/60 shrink-0 ml-2">

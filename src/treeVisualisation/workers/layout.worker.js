@@ -1,5 +1,6 @@
 
 import { TidyTreeLayout } from '../layout/TidyTreeLayout.js';
+import { createLayoutResult } from '../layout/LayoutResultAdapter.js';
 import { DeckGLTreeLayerDataFactory } from '../deckgl/DeckGLTreeLayerDataFactory.js';
 import { transformBranchLengths } from '../../domain/tree/branchTransform.js';
 
@@ -31,6 +32,14 @@ export function calculateLayoutWorkerResult(treeData, options) {
         ? layoutEngine.constructRadialTreeWithUniformScaling(Number(options.maxGlobalScale))
         : layoutEngine.constructRadialTree();
     const maxRadius = layoutEngine.getMaxRadius(rootNode);
+    const layoutResult = createLayoutResult(rootNode, {
+        max_radius: maxRadius,
+        width: options.width,
+        height: options.height,
+        margin: layoutEngine.margin,
+        scale: layoutEngine.scale,
+        layoutCacheKey: options.layoutCacheKey
+    });
     const offsets = options.labelOffsets || { DEFAULT: 20, EXTENSION: 5 };
     const extensionRadius = maxRadius + (offsets.EXTENSION ?? 5);
     const labelRadius = extensionRadius + (offsets.DEFAULT ?? 20);
@@ -38,7 +47,7 @@ export function calculateLayoutWorkerResult(treeData, options) {
     // 3. Convert to Layer Data
     // The data factory is purely mathematical, it generates JS Arrays/TypedArrays
     // Pass width/height to data factory so it can calculate node sizes
-    const layerData = dataFactory.convertTreeToLayerData(rootNode, {
+    const layerData = dataFactory.convertTreeToLayerData(layoutResult, {
         extensionRadius,
         labelRadius,
         canvasWidth: options.width,
@@ -50,18 +59,8 @@ export function calculateLayoutWorkerResult(treeData, options) {
 
     if (layerData && typeof layerData === 'object') {
         layerData.max_radius = maxRadius;
+        layerData.layoutCacheKey = options.layoutCacheKey;
     }
-
-    // The Controller's calculateLayout returns:
-    // { tree: root, max_radius, width, height, margin, scale }
-    const layoutResult = {
-        tree: rootNode,
-        max_radius: maxRadius,
-        width: options.width,
-        height: options.height,
-        margin: layoutEngine.margin,
-        scale: layoutEngine.scale
-    };
 
     return { layout: layoutResult, layerData };
 }

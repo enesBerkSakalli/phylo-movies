@@ -18,9 +18,9 @@ export const SprFrequencyTable = ({ frequencies, sortedLeaves }: SprFrequencyTab
         <thead className="bg-muted/40 text-muted-foreground font-bold sticky top-0 z-10">
             <tr>
                 <th className="px-4 py-2 text-left font-bold uppercase tracking-wider text-2xs">Rank</th>
-                <th className="px-4 py-2 text-left font-bold uppercase tracking-wider text-2xs">Subtree</th>
-                <th className="px-4 py-2 text-right font-bold uppercase tracking-wider text-2xs">Count</th>
-                <th className="px-4 py-2 text-right font-bold uppercase tracking-wider text-2xs">% of mover occurrences</th>
+                <th className="px-4 py-2 text-left font-bold uppercase tracking-wider text-2xs">Moved Group</th>
+                <th className="px-4 py-2 text-right font-bold uppercase tracking-wider text-2xs">Moves</th>
+                <th className="px-4 py-2 text-right font-bold uppercase tracking-wider text-2xs">% of moves</th>
             </tr>
         </thead>
         <tbody className="divide-y divide-border/10">
@@ -56,7 +56,7 @@ export const SprFrequencyTable = ({ frequencies, sortedLeaves }: SprFrequencyTab
             {frequencies.length === 0 && (
                 <tr>
                     <td colSpan={4} className="px-4 py-12 text-center text-muted-foreground italic">
-                        No moving-subtree occurrences detected for this dataset.
+                        No moved groups detected for this dataset.
                     </td>
                 </tr>
             )}

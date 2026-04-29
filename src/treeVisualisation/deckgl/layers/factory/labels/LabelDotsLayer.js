@@ -54,6 +54,7 @@ export function createLabelDotsLayer(labels, state, layerStyles) {
  */
 export function getLabelDotsLayerProps(labels, state, layerStyles) {
   const { taxaColorVersion, colorVersion, fontSize, highlightColorMode } = state || {};
+  const taxaCount = state?.movieData?.sorted_leaves?.length || 0;
   const cached = layerStyles.getCachedState(state);
 
   return {
@@ -69,8 +70,8 @@ export function getLabelDotsLayerProps(labels, state, layerStyles) {
     updateTriggers: {
       getFillColor: [colorVersion, taxaColorVersion, highlightColorMode],
       getPosition: [colorVersion],
-      getRadius: [fontSize, colorVersion, taxaColorVersion],
-      getLineWidth: [fontSize, colorVersion, taxaColorVersion]
+      getRadius: [fontSize, colorVersion, taxaColorVersion, taxaCount],
+      getLineWidth: [fontSize, colorVersion, taxaColorVersion, taxaCount]
     }
   };
 }

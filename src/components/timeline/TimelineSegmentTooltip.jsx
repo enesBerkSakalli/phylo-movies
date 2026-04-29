@@ -57,7 +57,7 @@ export function TimelineSegmentTooltip({ segment, segmentIndex, totalSegments, g
  */
 function TooltipHeader({ isAnchor, segmentIndex, totalSegments }) {
   const Icon = isAnchor ? Anchor : ArrowRightLeft;
-  const title = isAnchor ? 'Anchor tree' : 'Transition';
+  const title = isAnchor ? 'Source tree' : 'Generated frames';
 
   return (
     <div className="flex items-center gap-2 pb-2 border-b border-border">
@@ -75,9 +75,13 @@ function TooltipHeader({ isAnchor, segmentIndex, totalSegments }) {
  * Displays tree name and original index.
  */
 function AnchorContent({ segment }) {
+  const treeName = typeof segment.treeName === 'string'
+    ? segment.treeName.replace(/^Anchor Tree\b/i, 'Source Tree')
+    : segment.treeName;
+
   return (
     <div className="text-muted-foreground">
-      {segment.treeName}
+      {treeName}
       {typeof segment.originalTreeIndex === 'number' && (
         <span className="ml-2 text-xs opacity-70">
           (#{segment.originalTreeIndex + 1})
@@ -111,11 +115,11 @@ function TransitionContent({ segment, getLeafNames, isExpanded, onToggleExpanded
       />
 
       <div className="text-2xs text-muted-foreground">
-        Algorithmic interpolation frames (not time)
+        Generated tree frames, not elapsed time
       </div>
 
       <div className="flex items-center justify-between pt-1 text-muted-foreground border-t border-border/50 mt-1">
-        <span>{frames} frames</span>
+        <span>{frames} generated frames</span>
         <span>{taxaCount} taxa</span>
       </div>
     </>
@@ -135,7 +139,7 @@ function MovingSubtreesSection({ subtreeGroups, isExpanded, onToggleExpanded }) 
       {/* Section header with expand/collapse button */}
       <div className="flex items-center justify-between">
         <span className="text-muted-foreground font-medium text-2xs uppercase tracking-wider">
-          Moving subtrees
+          Moved groups
         </span>
         {hasManyGroups && (
           <Button

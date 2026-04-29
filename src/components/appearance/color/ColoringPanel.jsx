@@ -101,7 +101,7 @@ export function ColoringPanel() {
         <div className="px-2 mt-2 mb-1">
           <p className="text-2xs text-muted-foreground/80 leading-tight italic flex gap-2 items-start">
             <Info className="size-3 shrink-0 mt-1" />
-            <span>Manage custom colors for specific taxa and subtrees in a separate window.</span>
+            <span>Set colors for taxa or groups in a separate window.</span>
           </p>
         </div>
       </SidebarMenuSubItem>
@@ -112,7 +112,7 @@ export function ColoringPanel() {
         <div className="flex items-center justify-between px-2 py-2 w-full">
           <div className="flex items-center gap-2 overflow-hidden">
             <Settings2 className="size-4 text-muted-foreground shrink-0" />
-            <span className="text-xs text-foreground/70 truncate">Monophyletic Coloring</span>
+            <span className="text-xs text-foreground/70 truncate">Group Branches</span>
           </div>
           <Switch
             id="monophyletic-coloring"
@@ -126,7 +126,7 @@ export function ColoringPanel() {
         <div className="flex items-center justify-between px-2 py-2 w-full">
           <div className="flex items-center gap-2 overflow-hidden">
             <RefreshCw className="size-4 text-primary/80 shrink-0" />
-            <span className="text-xs text-foreground/70 truncate">Pivot Edges</span>
+            <span className="text-xs text-foreground/70 truncate">Changes</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="size-5 rounded-md border border-border/60 overflow-hidden shrink-0 group-hover:border-primary/40 transition-colors">
@@ -154,7 +154,7 @@ export function ColoringPanel() {
           <div className="flex items-center justify-between px-2 py-2 w-full">
             <div className="flex items-center gap-2 overflow-hidden">
             <Highlighter className="size-4 text-primary/80 shrink-0" />
-              <span className="text-xs text-foreground/70 truncate">Subtree Highlight</span>
+              <span className="text-xs text-foreground/70 truncate">Moved Group</span>
             </div>
             <Switch
               id="enable-marked-subtrees"
@@ -188,14 +188,14 @@ export function ColoringPanel() {
                     <SelectValue placeholder="Select mode" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Entire Edge Structure</SelectItem>
-                    <SelectItem value="current">Active Subtree Only</SelectItem>
+                    <SelectItem value="all">All Affected Edges</SelectItem>
+                    <SelectItem value="current">Current Group</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="flex flex-col gap-2">
-                 <Label className="text-2xs font-bold uppercase tracking-wider text-muted-foreground/80">Highlight Color</Label>
+                 <Label className="text-2xs font-bold uppercase tracking-wider text-muted-foreground/80">Highlight Style</Label>
                  <Select value={highlightColorMode || 'solid'} onValueChange={setHighlightColorMode}>
                    <SelectTrigger className="w-full h-8 text-xs bg-background/50 border-border/40">
                      <SelectValue placeholder="Select color mode" />
@@ -208,7 +208,7 @@ export function ColoringPanel() {
                  </Select>
                  {highlightColorMode === 'solid' && (
                     <div className="flex items-center justify-between mt-1 px-1">
-                      <span className="text-2xs text-muted-foreground font-medium">Solid Picker:</span>
+                      <span className="text-2xs text-muted-foreground font-medium">Solid Color</span>
                       <div className="size-5 rounded-md border border-border/60 overflow-hidden shrink-0">
                         <Input
                           type="color"
@@ -232,7 +232,7 @@ export function ColoringPanel() {
                   className="w-full mt-1 h-7 text-2xs uppercase font-bold tracking-tight border-muted-foreground/20 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-all bg-background/40"
                 >
                   <X className="w-3 h-3 mr-2" />
-                  Clear Selection
+                  Clear Marked Group
                 </Button>
               )}
             </div>

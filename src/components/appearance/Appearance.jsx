@@ -52,9 +52,9 @@ export function PerspectiveSection({ cameraMode, toggleCameraMode, treeControlle
     <Collapsible defaultOpen asChild className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton tooltip="Perspective">
+          <SidebarMenuButton tooltip="View Mode">
             <Box className="text-primary" />
-            <span>View Projection</span>
+            <span>View Mode</span>
             <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
           </SidebarMenuButton>
         </CollapsibleTrigger>
@@ -77,7 +77,7 @@ export function PerspectiveSection({ cameraMode, toggleCameraMode, treeControlle
                 </Button>
                 <div className="flex items-start gap-2 text-2xs text-muted-foreground/80 italic mt-3 leading-relaxed">
                   <Info className="size-3 shrink-0 mt-1" />
-                  <span>Toggle between flat 2D and interactive 3D camera for tree visualization.</span>
+                  <span>Switch between flat 2D and interactive 3D tree views.</span>
                 </div>
               </div>
             </SidebarMenuSubItem>
@@ -224,9 +224,9 @@ export function ConnectionsSection({ linkConnectionOpacity, connectorStrokeWidth
     <Collapsible defaultOpen asChild className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton tooltip="Connecting Lines">
+          <SidebarMenuButton tooltip="Group Connectors">
             <Link className="text-primary" />
-            <span>Connecting Lines</span>
+            <span>Group Connectors</span>
             <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
           </SidebarMenuButton>
         </CollapsibleTrigger>

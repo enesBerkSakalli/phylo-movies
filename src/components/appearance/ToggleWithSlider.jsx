@@ -23,7 +23,7 @@ export function ToggleWithSlider({ id, label, description, checked, onToggle, sl
             className="w-full py-1"
           />
           <div className="text-2xs text-muted-foreground/80 leading-tight">
-            Lower opacity increases dimming intensity for non-focused elements.
+            Lower values make unfocused branches fainter.
           </div>
         </div>
       )}

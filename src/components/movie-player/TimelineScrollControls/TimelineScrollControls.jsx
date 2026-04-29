@@ -42,38 +42,38 @@ export function TimelineScrollControls() {
 
   return (
     <>
-      <div className="timeline-zoom-controls flex items-center gap-1" role="group" aria-label="Timeline zoom controls">
-        <span className="text-2xs font-medium uppercase tracking-wider text-muted-foreground px-1">Timeline zoom</span>
-        <AppTooltip content="Zoom out timeline (Ctrl + -)">
+      <div className="timeline-zoom-controls flex items-center gap-1" role="group" aria-label="Sequence zoom controls">
+        <span className="text-2xs font-medium uppercase tracking-wider text-muted-foreground px-1">Zoom</span>
+        <AppTooltip content="Zoom out sequence (Ctrl + -)">
           <Button
             id="zoomOutBtn"
             variant="ghost"
             size="icon"
-            aria-label="Zoom out timeline"
+            aria-label="Zoom out sequence"
             onClick={handleZoomOut}
           >
             <ZoomOut className="size-4" />
           </Button>
         </AppTooltip>
 
-        <AppTooltip content="Fit entire timeline to window (Ctrl + 0)">
+        <AppTooltip content="Fit entire sequence to window (Ctrl + 0)">
           <Button
             id="fitToWindowBtn"
             variant="ghost"
             size="icon"
-            aria-label="Fit entire timeline to window"
+            aria-label="Fit entire sequence to window"
             onClick={handleFitTimeline}
           >
             <Scan className="size-4" />
           </Button>
         </AppTooltip>
 
-        <AppTooltip content="Zoom in timeline (Ctrl + +)">
+        <AppTooltip content="Zoom in sequence (Ctrl + +)">
           <Button
             id="zoomInBtn"
             variant="ghost"
             size="icon"
-            aria-label="Zoom in timeline"
+            aria-label="Zoom in sequence"
             onClick={handleZoomIn}
           >
             <ZoomIn className="size-4" />
@@ -81,14 +81,14 @@ export function TimelineScrollControls() {
         </AppTooltip>
       </div>
 
-      <div className="timeline-scroll-controls flex items-center gap-1" role="group" aria-label="Timeline scroll controls">
-        <span className="text-2xs font-medium uppercase tracking-wider text-muted-foreground px-1">Timeline pan</span>
+      <div className="timeline-scroll-controls flex items-center gap-1" role="group" aria-label="Sequence pan controls">
+        <span className="text-2xs font-medium uppercase tracking-wider text-muted-foreground px-1">Pan</span>
         <AppTooltip content="Scroll to start (Home)">
           <Button
             id="scrollToStartBtn"
             variant="ghost"
             size="icon"
-            aria-label="Scroll timeline to start"
+            aria-label="Scroll sequence to start"
             onClick={handleScrollToStart}
           >
             <ChevronsLeft className="size-4" />
@@ -100,7 +100,7 @@ export function TimelineScrollControls() {
             id="scrollToEndBtn"
             variant="ghost"
             size="icon"
-            aria-label="Scroll timeline to end"
+            aria-label="Scroll sequence to end"
             onClick={handleScrollToEnd}
           >
             <ChevronsRight className="size-4" />

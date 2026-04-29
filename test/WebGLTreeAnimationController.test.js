@@ -39,7 +39,7 @@ describe('WebGLTreeAnimationController radii', () => {
     }, 360, 0);
 
     expect(layout.scale).toBe(240);
-    layout.tree.each((node) => {
+    layout.nodes.forEach((node) => {
       expect(Number.isFinite(node.x)).toBe(true);
       expect(Number.isFinite(node.y)).toBe(true);
       expect(Number.isFinite(node.radius)).toBe(true);
@@ -68,7 +68,7 @@ describe('WebGLTreeAnimationController radii', () => {
     controller.calculateLayout(treeList[0], { treeIndex: 0 });
 
     expect(controller.maxGlobalScale).toBe(2);
-    expect(controller._scalingState.branchTransformation).toBe('linear-scale');
+    expect(controller._scalingState.cacheKey).toContain('branch=linear-scale');
     expect(controller._scalingState).not.toHaveProperty('calculationTransformation');
   });
 
@@ -99,6 +99,6 @@ describe('WebGLTreeAnimationController radii', () => {
     const layout = controller.calculateLayout(nextTreeList[0], { treeIndex: 0 });
 
     expect(controller.maxGlobalScale).toBe(5);
-    expect(layout.tree.data.id).toBe('new-root');
+    expect(layout.layoutTree.name).toBe('new-root');
   });
 });

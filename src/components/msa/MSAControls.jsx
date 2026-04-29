@@ -45,15 +45,14 @@ export function MSAControls() {
     if (!tree) return;
 
     const layout = controller.calculateLayout(tree, { treeIndex: currentTreeIndex });
-    if (!layout?.tree?.leaves) return;
+    if (!Array.isArray(layout?.leaves)) return;
 
-    const leaves = layout.tree.leaves();
-    leaves.sort((a, b) => (a.rotatedAngle ?? a.angle ?? 0) - (b.rotatedAngle ?? b.angle ?? 0));
+    const leaves = [...layout.leaves].sort((a, b) => (a.angle ?? 0) - (b.angle ?? 0));
 
     const seen = new Set();
     const order = [];
     for (const l of leaves) {
-      const id = l?.data?.name;
+      const id = l?.name;
       if (typeof id === 'string' && id.length > 0 && !seen.has(id)) {
         seen.add(id);
         order.push(id);

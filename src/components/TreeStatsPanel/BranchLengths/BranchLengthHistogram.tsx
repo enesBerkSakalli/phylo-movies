@@ -36,13 +36,13 @@ export const BranchLengthHistogram: React.FC<BranchLengthHistogramProps> = ({
     <div
       className="flex flex-col gap-2 w-full"
       role="figure"
-      aria-label="Branch Length Distribution Histogram"
+      aria-label="Branch length spread"
     >
       {showHeader && (
         <>
           <Label className="text-2xs font-bold uppercase tracking-wider text-muted-foreground/70">
             <Palette className="size-3" aria-hidden />
-            Length Distribution
+            Branch Lengths
           </Label>
           <Separator className="bg-border/40" />
         </>
@@ -100,7 +100,7 @@ export const BranchLengthHistogram: React.FC<BranchLengthHistogramProps> = ({
         <div className="flex items-center justify-between text-2xs text-muted-foreground/80 font-medium tabular-nums px-1">
           <div className="flex gap-2">
             <span>MIN: <span className="text-foreground/70">{formatScaleValue(stats.min)}</span></span>
-            <span>MEAN: <span className="text-foreground/70">{formatScaleValue(stats.mean)}</span></span>
+            <span>AVG: <span className="text-foreground/70">{formatScaleValue(stats.mean)}</span></span>
           </div>
           <span>MAX: <span className="text-foreground/70">{formatScaleValue(stats.max)}</span></span>
         </div>

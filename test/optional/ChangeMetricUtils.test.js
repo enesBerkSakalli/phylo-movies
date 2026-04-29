@@ -18,25 +18,23 @@ import {
  * @param {string} id - Unique identifier
  * @param {number} angle - Angle in radians
  * @param {number} radius - Radius value
- * @returns {Object} Mock D3 hierarchy node
+ * @returns {Object} Mock normalized leaf node
  */
 function createMockLeaf(id, angle, radius) {
   return {
-    data: {
-      name: id,
-      split_indices: [parseInt(id.replace('leaf', ''), 10)]
-    },
-    children: undefined, // Leaf node
-    angle: angle,
-    radius: radius
+    name: id,
+    split_indices: [parseInt(id.replace('leaf', ''), 10)],
+    isLeaf: true,
+    angle,
+    radius
   };
 }
 
 /**
- * Helper: Create a mock layout with tree and leaves
+ * Helper: Create a mock layout with normalized leaves
  * @param {Array<{id: string, angle: number, radius: number}>} leafSpecs
  * @param {number} [maxRadius] - Optional max_radius value
- * @returns {Object} Mock layout object with tree.leaves() method
+ * @returns {Object} Mock normalized layout object
  */
 function createMockLayout(leafSpecs, maxRadius = null) {
   const leaves = leafSpecs.map(spec =>
@@ -49,9 +47,7 @@ function createMockLayout(leafSpecs, maxRadius = null) {
     : leaves.reduce((max, leaf) => Math.max(max, Math.abs(leaf.radius)), 0);
 
   return {
-    tree: {
-      leaves: () => leaves
-    },
+    leaves,
     max_radius: calculatedMaxRadius
   };
 }
@@ -104,7 +100,7 @@ describe('ChangeMetricUtils', () => {
       });
     });
 
-    it('should return empty result when layoutFrom does not have tree property', () => {
+    it('should return empty result when layoutFrom does not have leaves array', () => {
       const layoutTo = createMockLayout([{ id: 'leaf1', angle: 0, radius: 1 }]);
       const result = computeExtensionChangeMetrics({}, layoutTo);
 
@@ -115,7 +111,7 @@ describe('ChangeMetricUtils', () => {
       });
     });
 
-    it('should return empty result when layoutTo does not have tree property', () => {
+    it('should return empty result when layoutTo does not have leaves array', () => {
       const layoutFrom = createMockLayout([{ id: 'leaf1', angle: 0, radius: 1 }]);
       const result = computeExtensionChangeMetrics(layoutFrom, {});
 
@@ -627,7 +623,7 @@ describe('ChangeMetricUtils', () => {
       const result = classifyExtensionChanges(null, layoutTo);
 
       expect(result.enter).to.have.lengthOf(1);
-      expect(result.enter[0].data.name).to.equal('leaf1');
+      expect(result.enter[0].name).to.equal('leaf1');
       expect(result.update).to.have.lengthOf(0);
       expect(result.exit).to.have.lengthOf(0);
     });
@@ -639,7 +635,7 @@ describe('ChangeMetricUtils', () => {
       expect(result.enter).to.have.lengthOf(0);
       expect(result.update).to.have.lengthOf(0);
       expect(result.exit).to.have.lengthOf(1);
-      expect(result.exit[0].data.name).to.equal('leaf1');
+      expect(result.exit[0].name).to.equal('leaf1');
     });
 
     it('should handle empty layouts', () => {
@@ -667,7 +663,7 @@ describe('ChangeMetricUtils', () => {
       const result = classifyExtensionChanges(layoutFrom, layoutTo);
 
       expect(result.enter).to.have.lengthOf(1);
-      expect(result.enter[0].data.name).to.equal('leaf1');
+      expect(result.enter[0].name).to.equal('leaf1');
       expect(result.update).to.have.lengthOf(0);
       expect(result.exit).to.have.lengthOf(0);
     });
@@ -683,7 +679,7 @@ describe('ChangeMetricUtils', () => {
       expect(result.enter).to.have.lengthOf(0);
       expect(result.update).to.have.lengthOf(0);
       expect(result.exit).to.have.lengthOf(1);
-      expect(result.exit[0].data.name).to.equal('leaf1');
+      expect(result.exit[0].name).to.equal('leaf1');
     });
 
     it('should classify updating leaves', () => {
@@ -698,7 +694,7 @@ describe('ChangeMetricUtils', () => {
 
       expect(result.enter).to.have.lengthOf(0);
       expect(result.update).to.have.lengthOf(1);
-      expect(result.update[0].data.name).to.equal('leaf1');
+      expect(result.update[0].name).to.equal('leaf1');
       expect(result.exit).to.have.lengthOf(0);
     });
 
@@ -715,11 +711,11 @@ describe('ChangeMetricUtils', () => {
       const result = classifyExtensionChanges(layoutFrom, layoutTo);
 
       expect(result.enter).to.have.lengthOf(1);
-      expect(result.enter[0].data.name).to.equal('leaf3');
+      expect(result.enter[0].name).to.equal('leaf3');
       expect(result.update).to.have.lengthOf(1);
-      expect(result.update[0].data.name).to.equal('leaf2');
+      expect(result.update[0].name).to.equal('leaf2');
       expect(result.exit).to.have.lengthOf(1);
-      expect(result.exit[0].data.name).to.equal('leaf1');
+      expect(result.exit[0].name).to.equal('leaf1');
     });
 
     it('should return leaf nodes from layoutTo for enter', () => {
@@ -797,7 +793,7 @@ describe('ChangeMetricUtils', () => {
       // Only leaf1 is compared/updated
       expect(metrics.compared).to.equal(1);
       expect(classifications.update.length).to.equal(1);
-      expect(classifications.update[0].data.name).to.equal('leaf1');
+      expect(classifications.update[0].name).to.equal('leaf1');
     });
   });
 

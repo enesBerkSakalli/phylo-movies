@@ -65,9 +65,9 @@ export const TreeStatsPanel: React.FC = () => {
     <Collapsible defaultOpen asChild className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton tooltip="View Phylogenetic Statistics">
+          <SidebarMenuButton tooltip="Tree Metrics">
             <BarChart3 className="size-4 text-primary" />
-            <span>Tree Statistics</span>
+            <span>Tree Metrics</span>
             <ChevronRight className="ml-auto size-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />
           </SidebarMenuButton>
         </CollapsibleTrigger>

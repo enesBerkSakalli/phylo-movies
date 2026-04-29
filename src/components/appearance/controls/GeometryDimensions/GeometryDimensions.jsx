@@ -87,8 +87,8 @@ export function GeometryDimensions({
           <LabeledSlider
             id="stroke-width"
             label="Branch Width"
-            title="Adjust branch line width (scales with magnitude)"
-            ariaLabel="Branch width control (scales with magnitude)"
+            title="Adjust branch line width"
+            ariaLabel="Branch width control"
             valueDisplay={clampValue(strokeWidth, 1).toFixed(1)}
             value={clampValue(strokeWidth, 1)}
             min={0.1}
@@ -100,8 +100,8 @@ export function GeometryDimensions({
           <LabeledSlider
             id="font-size"
             label="Label Size"
-            title="Adjust label text size (scales with magnitude)"
-            ariaLabel="Label size control (scales with magnitude)"
+            title="Adjust label text size"
+            ariaLabel="Label size control"
             valueDisplay={`${clampValue(fontSizeNumber, 1.8).toFixed(1)}em`}
             value={clampValue(fontSizeNumber, 1.8)}
             min={0.5}
@@ -111,7 +111,7 @@ export function GeometryDimensions({
           />
 
           <div className="text-2xs leading-relaxed text-muted-foreground/80 italic mt-2">
-            Line widths and label sizes scale with magnitude to stay proportional to the tree.
+            Branches and labels adjust with tree size so proportions stay stable.
           </div>
 
           <div className="border-t border-border/20 pt-4 mt-2">

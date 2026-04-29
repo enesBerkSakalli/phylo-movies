@@ -1,5 +1,20 @@
 // types/store.ts - Type definitions for the Zustand store
 
+export interface ContextMenuPosition {
+  x: number;
+  y: number;
+}
+
+export interface ContextMenuNode {
+  name: string;
+  length: number;
+  split_indices: number[];
+  depth: number;
+  height: number;
+  path?: string[];
+  children: ContextMenuNode[];
+}
+
 export interface AppStoreState {
   // From treeDataset.slice
   movieData: any;
@@ -136,9 +151,9 @@ export interface AppStoreState {
 
   // From treeInteraction.slice
   contextMenuOpen: boolean;
-  contextMenuPosition: any;
-  contextMenuNode: any;
-  contextMenuTreeData: any;
+  contextMenuPosition: ContextMenuPosition;
+  contextMenuNode: ContextMenuNode | null;
+  contextMenuTreeData: unknown | null;
 
   // Actions
   initialize: (movieData: any) => void;
@@ -271,6 +286,6 @@ export interface AppStoreState {
   setClipboardOffsetY: (offset: number) => void;
   clearClipboard: () => void;
 
-  showNodeContextMenu: (node: any, treeData: any, x: number, y: number) => void;
+  showNodeContextMenu: (node: ContextMenuNode | null, treeData: unknown | null, x: number, y: number) => void;
   hideNodeContextMenu: () => void;
 }

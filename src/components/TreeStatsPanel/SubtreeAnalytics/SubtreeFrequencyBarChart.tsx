@@ -54,7 +54,7 @@ export const SubtreeFrequencyBarChart = () => {
         return (
             <div className="flex items-center justify-center h-full p-4">
                 <span className="text-sm text-muted-foreground italic">
-                    No SPR mover metrics available
+                    No SPR move metrics available
                 </span>
             </div>
         );
@@ -64,14 +64,14 @@ export const SubtreeFrequencyBarChart = () => {
         <div
             className="w-full h-full overflow-auto p-2 space-y-2"
             role="list"
-            aria-label="SPR mover occurrence ranking"
+            aria-label="SPR moved group ranking"
         >
             {data.map((item) => (
                 <Card
                     key={item.rank}
                     className="border-border/40 bg-muted/5 hover:bg-muted/20 transition-colors py-3 gap-2 rounded-lg shadow-none"
                     role="listitem"
-                    aria-label={`Rank ${item.rank}: ${item.subtree}, ${item.count} mover occurrences`}
+                    aria-label={`Rank ${item.rank}: ${item.subtree}, ${item.count} moves`}
                 >
                     <CardContent className="px-3 py-0 space-y-2">
                         {/* Header row with rank, count badge, and percentage */}
@@ -81,7 +81,7 @@ export const SubtreeFrequencyBarChart = () => {
                                     #{item.rank}
                                 </Label>
                                 <Badge variant="secondary" className="font-mono text-xs tabular-nums">
-                                    {item.count} occurrences
+                                    {item.count} moves
                                 </Badge>
                                 <span className="text-2xs text-muted-foreground">
                                     ({item.taxaCount} taxa)
@@ -98,7 +98,7 @@ export const SubtreeFrequencyBarChart = () => {
                                 <div>
                                     <Progress
                                         value={item.percentage}
-                                        aria-label={`Share of mover occurrences: ${item.percentage.toFixed(1)}%`}
+                                        aria-label={`Share of moves: ${item.percentage.toFixed(1)}%`}
                                         className="h-2 bg-secondary/50"
                                         style={{
                                             // Override indicator color via CSS variable
@@ -109,7 +109,7 @@ export const SubtreeFrequencyBarChart = () => {
                             </TooltipTrigger>
                             <TooltipContent side="top" className="text-xs tabular-nums">
                                 <div className="flex flex-col gap-1">
-                                    <span>Mover occurrences: {item.count}</span>
+                                    <span>Moves: {item.count}</span>
                                     <span>Share: {item.percentage.toFixed(2)}%</span>
                                 </div>
                             </TooltipContent>

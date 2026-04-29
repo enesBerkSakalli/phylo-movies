@@ -21,11 +21,14 @@ describe('layout worker metadata', () => {
       layoutAngleDegrees: 360,
       layoutRotationDegrees: 0,
       extensionRadius: 245,
-      labelRadius: 265
+      labelRadius: 265,
+      layoutCacheKey: 'layout-key-0'
     });
 
     expect(result.layout.max_radius).toBeGreaterThan(0);
     expect(result.layerData.max_radius).toBe(result.layout.max_radius);
+    expect(result.layout.layoutCacheKey).toBe('layout-key-0');
+    expect(result.layerData.layoutCacheKey).toBe('layout-key-0');
   });
 
   it('treats zero maxGlobalScale as an intentional uniform scale input', () => {

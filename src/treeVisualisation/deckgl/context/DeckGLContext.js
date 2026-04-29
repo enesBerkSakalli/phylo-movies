@@ -20,7 +20,7 @@ export class DeckGLContext {
   // ==========================================================================
 
   constructor(container, options = {}) {
-    this.container = resolveContainerElement(container);
+    this.container = container || null;
     this.deck = null;
     this.canvas = null;
     this._resizeObserver = null;
@@ -675,18 +675,6 @@ export class DeckGLContext {
   }
 
 
-}
-
-function resolveContainerElement(container) {
-  if (container && typeof container.node === 'function') {
-    return container.node();
-  }
-
-  if (typeof container === 'string') {
-    return typeof document !== 'undefined' ? document.querySelector(container) : null;
-  }
-
-  return container || null;
 }
 
 function removeChildren(element) {

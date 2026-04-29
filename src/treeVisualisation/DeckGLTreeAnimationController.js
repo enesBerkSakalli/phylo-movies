@@ -7,11 +7,12 @@ import { AnimationRunner } from './systems/AnimationRunner.js';
 import { InterpolationRenderer } from './systems/InterpolationRenderer.js';
 import { StaticRenderer } from './systems/StaticRenderer.js';
 import { WebGLTreeAnimationController } from './WebGLTreeAnimationController.js';
-import { useAppStore } from '../state/phyloStore/store.js';
+import { selectActiveTreeList, useAppStore } from '../state/phyloStore/store.js';
 import { TreeNodeInteractionHandler } from './interaction/TreeNodeInteractionHandler.js';
 import { handleDragStart, handleDrag, handleDragEnd, handleContainerResize } from './interaction/InteractionHandlers.js';
 import { ViewportManager } from './viewport/ViewportManager.js';
 import { getClipboardLayers } from './utils/ClipboardUtils.js';
+import { createLayoutCacheKey } from './utils/layoutCacheKey.js';
 
 export class DeckGLTreeAnimationController extends WebGLTreeAnimationController {
 
@@ -19,8 +20,9 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
   // CONSTRUCTOR
   // ==========================================================================
 
-  constructor(container, { animations = true, viewSide = 'single', offset = null } = {}) {
-    super(container);
+  constructor(options = {}) {
+    const { animations = true, viewSide = 'single', offset = null } = options || {};
+    super(null);
     this.animationsEnabled = animations;
     this.viewSide = viewSide;
     this._destroyed = false;
@@ -35,7 +37,8 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       getConsistentRadii: this._getConsistentRadii.bind(this),
       convertTreeToLayerData: this.dataConverter.convertTreeToLayerData.bind(this.dataConverter),
       getDimensions: () => ({ width: this.width, height: this.height }),
-      getBranchTransformation: () => useAppStore.getState().branchTransformation
+      getBranchTransformation: () => useAppStore.getState().branchTransformation,
+      getLayoutCacheKey: (treeIndex) => this._createLayoutCacheKey(treeIndex)
     });
 
     // --- WORKER INITIALIZATION ---
@@ -101,7 +104,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       updateProgress: (progress) => {
         // Manual store update to keep UI in sync without driving logic
         const state = useAppStore.getState();
-        const treeList = state.movieData?.interpolated_trees || state.treeList;
+        const treeList = selectActiveTreeList(state);
         const totalTrees = treeList?.length || 0;
         const currentTreeIndex = Math.min(Math.floor(progress * (totalTrees - 1)), totalTrees - 1);
         useAppStore.setState({ animationProgress: progress, currentTreeIndex });
@@ -326,7 +329,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
   _prefetchFrame(treeIndex) {
     const state = useAppStore.getState();
-    const treeList = state.movieData?.interpolated_trees || state.treeList;
+    const treeList = selectActiveTreeList(state);
 
     // Bounds check
     if (!treeList || !treeList[treeIndex]) return;
@@ -340,11 +343,10 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     const offsets = styleConfig?.labelOffsets || { DEFAULT: 20, EXTENSION: 5 };
 
     // Ensure uniform scaling is initialized before dispatching to worker
-    if (!this.uniformScalingEnabled) {
-      this.initializeUniformScaling(branchTransformation);
-    }
+    this.initializeUniformScaling(branchTransformation);
     const requestToken = this._createLayoutRequestToken(treeIndex, state);
     this._prefetchRequestTokens.set(treeIndex, requestToken);
+    const layoutCacheKey = this._createLayoutCacheKey(treeIndex, state);
 
     const payload = {
       jobId: String(treeIndex),
@@ -363,6 +365,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
           treeIndex,
           treeSide: 'left',
           renderMode: 'animation',
+          layoutCacheKey,
           maxGlobalScale: this.maxGlobalScale // Pass global scale for consistent sizing
         }
       }
@@ -371,21 +374,20 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     this.layoutWorker.postMessage(payload);
   }
 
-  _createLayoutRequestToken(treeIndex, state = useAppStore.getState()) {
-    const styleConfig = state?.styleConfig || {};
-    const offsets = styleConfig.labelOffsets || {};
-    return [
-      this._layoutRequestGeneration,
+  _createLayoutCacheKey(treeIndex, state = useAppStore.getState()) {
+    const treeList = selectActiveTreeList(state);
+    return createLayoutCacheKey({
+      state,
+      treeList,
       treeIndex,
-      this.width,
-      this.height,
-      state?.branchTransformation ?? 'none',
-      state?.layoutAngleDegrees ?? 360,
-      state?.layoutRotationDegrees ?? 0,
-      offsets.DEFAULT ?? 20,
-      offsets.EXTENSION ?? 5,
-      this.maxGlobalScale ?? 0
-    ].join('|');
+      width: this.width,
+      height: this.height,
+      maxGlobalScale: this.maxGlobalScale
+    });
+  }
+
+  _createLayoutRequestToken(treeIndex, state = useAppStore.getState()) {
+    return `${this._layoutRequestGeneration}|${this._createLayoutCacheKey(treeIndex, state)}`;
   }
 
   // RENDERING - STATIC

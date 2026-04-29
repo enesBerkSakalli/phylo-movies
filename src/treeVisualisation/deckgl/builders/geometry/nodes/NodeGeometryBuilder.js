@@ -7,12 +7,12 @@ import { getNodeKey } from '../../../../utils/KeyGenerator.js';
 export class NodeGeometryBuilder {
   /**
    * Calculate node dot sizes for visual display based on canvas dimensions
-   * @param {Object} tree - D3 hierarchy root
+   * @param {Array} nodes - Normalized layout nodes
    * @param {Object} options - Canvas and radius configuration
    * @returns {Map<string, number>} Map of node IDs to radius pixels
    */
-  calculateNodeDotSizes(tree, options = {}) {
-    const nodes = tree.descendants();
+  calculateNodeDotSizes(nodes, options = {}) {
+    const layoutNodes = Array.isArray(nodes) ? nodes : [];
     const radiiMap = new Map();
 
     // Extract canvas dimensions (fallbacks if not provided)
@@ -42,10 +42,10 @@ export class NodeGeometryBuilder {
     const internalPx = Math.max(1, Math.round(baseLeafPx * config.ratio));
 
     // Assign fixed radii: leaves same size, internal smaller
-    nodes.forEach(node => {
-      const nodeKey = getNodeKey({ split_indices: node.data?.split_indices });
+    layoutNodes.forEach(node => {
+      const nodeKey = getNodeKey({ split_indices: node.split_indices });
       if (!nodeKey) return;
-      const isLeaf = !node.children;
+      const isLeaf = node.isLeaf === true;
       const radiusPx = isLeaf ? baseLeafPx : internalPx;
       radiiMap.set(nodeKey, radiusPx);
     });

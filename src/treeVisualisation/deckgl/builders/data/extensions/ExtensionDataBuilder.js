@@ -7,15 +7,15 @@ import { twoPointFloat32Path } from '../../../utils/pathFormat.js';
  */
 export class ExtensionDataBuilder {
   /**
-   * Convert tree leaves to Deck.gl extension line data
-   * @param {Object} tree - D3 hierarchy root
+   * Convert layout leaves to Deck.gl extension line data
+   * @param {Array} leaves - Normalized layout leaves
    * @param {number} extensionRadius - Outer radius for extensions
    * @returns {Array} Array of extension line objects
    */
-  convertExtensions(tree, extensionRadius) {
+  convertExtensions(leaves, extensionRadius) {
     if (!extensionRadius) return [];
 
-    return tree.leaves()
+    return (Array.isArray(leaves) ? leaves : [])
       .map(leaf => this._createExtensionData(leaf, extensionRadius))
       .filter(Boolean);
   }
@@ -25,14 +25,14 @@ export class ExtensionDataBuilder {
    * @private
    */
   _createExtensionData(leaf, extensionRadius) {
-    const angle = leaf.rotatedAngle != null ? leaf.rotatedAngle : leaf.angle;
+    const angle = leaf.angle;
     if (
       !Number.isFinite(leaf?.x) ||
       !Number.isFinite(leaf?.y) ||
       !Number.isFinite(angle) ||
       !Number.isFinite(extensionRadius)
     ) {
-      console.warn('[ExtensionDataBuilder] Skipping extension with invalid layout coordinates:', leaf?.data?.split_indices);
+      console.warn('[ExtensionDataBuilder] Skipping extension with invalid layout coordinates:', leaf?.split_indices);
       return null;
     }
 
@@ -42,10 +42,10 @@ export class ExtensionDataBuilder {
     // Use leaf coordinates as source
     const sourceX = leaf.x;
     const sourceY = leaf.y;
-    const splitIndices = leaf.data?.split_indices;
+    const splitIndices = leaf.split_indices;
     const extensionKey = getExtensionKey({ split_indices: splitIndices });
     if (!extensionKey) {
-      console.warn('[ExtensionDataBuilder] Skipping extension without split_indices:', leaf?.data?.name);
+      console.warn('[ExtensionDataBuilder] Skipping extension without split_indices:', leaf?.name);
       return null;
     }
 
@@ -54,7 +54,7 @@ export class ExtensionDataBuilder {
       sourcePosition: [sourceX, sourceY, 0],
       targetPosition: [extensionX, extensionY, 0],
       path: twoPointFloat32Path([sourceX, sourceY, 0], [extensionX, extensionY, 0]),
-      name: leaf.data.name || '',
+      name: leaf.name || '',
       isLeaf: true,
       split_indices: splitIndices,
       // Provide polar metadata so PathInterpolator can perform

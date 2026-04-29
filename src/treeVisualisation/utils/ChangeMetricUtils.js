@@ -8,11 +8,11 @@
 // ============================================================================
 
 /**
- * Computes weighted change metrics between two tree layouts based on leaf positions.
+ * Computes weighted change metrics between two normalized tree layouts based on leaf positions.
  * Considers both radial (radius) and angular (angle) changes.
  *
- * @param {Object} layoutFrom - The source tree layout object
- * @param {Object} layoutTo - The target tree layout object
+ * @param {Object} layoutFrom - The source layout object with a leaves array
+ * @param {Object} layoutTo - The target layout object with a leaves array
  * @param {Object} [options={}] - Configuration options
  * @param {number} [options.radiusWeight=0.6] - Weight for radial distance changes (0-1)
  * @param {number} [options.angleWeight=0.4] - Weight for angular distance changes (0-1)
@@ -135,28 +135,22 @@ function signedShortestAngle(from, to) {
 }
 
 /**
- * Safely extracts leaves from a layout object.
- * @param {Object} layout - Layout object containing a tree
- * @returns {Array} Array of leaf nodes
+ * Safely extracts normalized leaves from a layout object.
+ * @param {Object} layout - Layout object containing a leaves array
+ * @returns {Array} Array of normalized leaf nodes
  */
 function safeLeaves(layout) {
-  if (!layout || !layout.tree || typeof layout.tree.leaves !== 'function') return [];
-  try { return layout.tree.leaves() || []; } catch (e) { return []; }
+  return Array.isArray(layout?.leaves) ? layout.leaves : [];
 }
 
 /**
- * Generates a unique key for a leaf node.
- * Tries split_indices, then name, then id.
+ * Generates a unique key for a leaf node from split identity only.
  * @param {Object} leaf - The leaf node
  * @returns {string|null} Unique string key or null
  */
 function leafKey(leaf) {
-  if (!leaf || !leaf.data) return null;
-  const d = leaf.data;
-  if (Array.isArray(d.split_indices) && d.split_indices.length > 0) return String(d.split_indices[0]);
-  if (d.name !== undefined && d.name !== null) return String(d.name);
-  if (d.id !== undefined && d.id !== null) return String(d.id);
-  return null;
+  if (!leaf || !Array.isArray(leaf.split_indices) || leaf.split_indices.length === 0) return null;
+  return leaf.split_indices.slice().sort((a, b) => a - b).join(',');
 }
 
 // ============================================================================

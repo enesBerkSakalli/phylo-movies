@@ -13,6 +13,7 @@ import { LinkDataBuilder } from '../src/treeVisualisation/deckgl/builders/data/l
 import { LabelDataBuilder } from '../src/treeVisualisation/deckgl/builders/data/labels/LabelDataBuilder.js';
 import { ExtensionDataBuilder } from '../src/treeVisualisation/deckgl/builders/data/extensions/ExtensionDataBuilder.js';
 import { LAYER_CONFIGS } from '../src/treeVisualisation/deckgl/layers/config/layerConfigs.js';
+import { createLayoutResult } from '../src/treeVisualisation/layout/LayoutResultAdapter.js';
 
 describe('normalized render contract', () => {
   let initialState;
@@ -136,10 +137,11 @@ describe('normalized render contract', () => {
       node.angle = node.depth;
     });
 
-    const nodes = new NodeDataBuilder().convertNodes(root);
-    const links = new LinkDataBuilder().convertLinks(root);
-    const labels = new LabelDataBuilder().convertLabels(root, 10);
-    const extensions = new ExtensionDataBuilder().convertExtensions(root, 10);
+    const layout = createLayoutResult(root, { max_radius: 1, width: 100, height: 100, margin: 0, scale: 1 });
+    const nodes = new NodeDataBuilder().convertNodes(layout.nodes);
+    const links = new LinkDataBuilder().convertLinks(layout.links);
+    const labels = new LabelDataBuilder().convertLabels(layout.leaves, 10);
+    const extensions = new ExtensionDataBuilder().convertExtensions(layout.leaves, 10);
 
     const rootNode = nodes.find((node) => node.name === 'root');
     expect(rootNode).toMatchObject({

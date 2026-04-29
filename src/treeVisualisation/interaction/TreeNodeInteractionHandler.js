@@ -23,7 +23,7 @@ export class TreeNodeInteractionHandler {
     const treeContext = this._getTreeContext(layerData, state);
     const treeData = treeContext?.tree ?? selectCurrentTree(state);
     const treeIndex = treeContext?.treeIndex ?? state.currentTreeIndex;
-    const treeNode = this._findTreeNodeFromLayerData(layerData, treeData, treeIndex);
+    const treeNode = this._findContextNodeFromLayerData(layerData, treeData, treeIndex);
 
     let x, y;
     if (event.center) {
@@ -47,12 +47,12 @@ export class TreeNodeInteractionHandler {
   }
 
   /**
-   * Find the D3 tree node that corresponds to a layer data object
+   * Find the normalized tree node that corresponds to a layer data object
    * @param {Object} layerData - Data object from the layer
    * @param {Object} currentTreeData - Current tree data to search in
-   * @returns {Object|null} Corresponding D3 tree node
+   * @returns {Object|null} Plain context-menu node
    */
-  _findTreeNodeFromLayerData(layerData, currentTreeData, treeIndex) {
+  _findContextNodeFromLayerData(layerData, currentTreeData, treeIndex) {
     if (!layerData || !currentTreeData) return null;
 
     const targetSplitKey = getSplitKey(layerData);
@@ -62,10 +62,11 @@ export class TreeNodeInteractionHandler {
       treeIndex
     });
 
-    const allNodes = currentLayout?.tree?.descendants?.();
+    const allNodes = currentLayout?.nodes;
     if (!Array.isArray(allNodes)) return null;
 
-    return allNodes.find(node => getSplitKey(node?.data?.split_indices) === targetSplitKey) || null;
+    const layoutNode = allNodes.find(node => getSplitKey(node?.split_indices) === targetSplitKey);
+    return layoutNode ? toContextMenuNode(layoutNode) : null;
   }
 
   _getTreeContext(layerData, state) {
@@ -75,4 +76,32 @@ export class TreeNodeInteractionHandler {
     }
     return null;
   }
+}
+
+function toContextMenuNode(node, path = null) {
+  const currentPath = path || getNodePath(node);
+  const children = Array.isArray(node.children)
+    ? node.children.map(child => toContextMenuNode(child, [...currentPath, getNodeName(child)]))
+    : [];
+
+  return {
+    name: node.name || '',
+    length: node.length ?? 0,
+    split_indices: Array.isArray(node.split_indices) ? [...node.split_indices] : [],
+    depth: node.depth ?? 0,
+    height: node.height ?? 0,
+    path: currentPath,
+    children,
+  };
+}
+
+function getNodePath(node) {
+  if (Array.isArray(node?.path) && node.path.length > 0) {
+    return [...node.path];
+  }
+  return [getNodeName(node)];
+}
+
+function getNodeName(node) {
+  return node?.name || `depth_${node?.depth ?? 0}`;
 }

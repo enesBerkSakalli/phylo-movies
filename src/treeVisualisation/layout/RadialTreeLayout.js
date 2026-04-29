@@ -1,6 +1,7 @@
 import { hierarchy } from "d3-hierarchy";
 import { getNodeKey } from '../utils/KeyGenerator.js';
 import { transformBranchLengths } from '../../domain/tree/branchTransform.js';
+import { createLayoutResult } from './LayoutResultAdapter.js';
 
 /** Class for calculating radial tree layout coordinates. */
 export class RadialTreeLayout {
@@ -333,31 +334,10 @@ export default function createRadialTreeLayout(
 
   let treeLayout = new RadialTreeLayout(transformedTree);
 
-  let container;
   let width, height, margin;
 
-  if (options.containerId) {
-    container = document.getElementById(`${options.containerId}`);
-    if (!container) {
-      throw new Error(
-        `RadialTreeLayout: Container element with id "${options.containerId}" not found.`
-      );
-    }
-
-    // Handle different container types more robustly
-    if (container instanceof SVGSVGElement) {
-      const rect = container.getBoundingClientRect();
-      width = options.width || rect.width || container.clientWidth || 400;
-      height = options.height || rect.height || container.clientHeight || 400;
-    } else {
-      const rect = container.getBoundingClientRect();
-      width = options.width || rect.width || container.clientWidth || 400;
-      height = options.height || rect.height || container.clientHeight || 400;
-    }
-  } else {
-    width = options.width || 800;
-    height = options.height || 600;
-  }
+  width = options.width || 800;
+  height = options.height || 600;
 
   // Ensure minimum dimensions for tree rendering
   width = Math.max(width, 200);
@@ -387,24 +367,11 @@ export default function createRadialTreeLayout(
     root_ = treeLayout.constructRadialTree(false);
   }
 
-  // For comparison views, ensure the tree is sized appropriately
-  const isComparison = options.containerId && options.containerId.includes('comparison');
-  if (isComparison && options.maxRadius && !useUniformScaling) {
-    const currentMaxRadius = treeLayout.getMaxRadius(root_);
-    if (currentMaxRadius > options.maxRadius) {
-      const adjustmentScale = options.maxRadius / currentMaxRadius * 0.9;
-      treeLayout.scaleRadius(root_, adjustmentScale);
-      treeLayout.scale *= adjustmentScale;
-      treeLayout.generateCoordinates(root_);
-    }
-  }
-
-  return {
-    tree: root_,
+  return createLayoutResult(root_, {
     max_radius: treeLayout.getMaxRadius(root_),
-    width: width,
-    height: height,
-    margin: margin,
+    width,
+    height,
+    margin,
     scale: treeLayout.scale
-  };
+  });
 }

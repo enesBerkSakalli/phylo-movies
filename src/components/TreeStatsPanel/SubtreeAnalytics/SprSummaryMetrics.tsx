@@ -42,42 +42,42 @@ export const SprSummaryMetrics = ({
     <div className="grid grid-cols-3 gap-3 mb-4">
         <SummaryTile
             icon={<Hash className="size-3 text-primary" />}
-            label="Distinct Moving Subtrees"
+            label="Unique Moved Groups"
         >
             <div className="text-2xl font-black tracking-tighter tabular-nums">{distinctMoverCount}</div>
         </SummaryTile>
 
         <SummaryTile
             icon={<Zap className="size-3 text-primary" />}
-            label="Mover Occurrences"
+            label="Total Moves"
         >
             <div className="text-2xl font-black tracking-tighter tabular-nums">{totalMoverOccurrences}</div>
         </SummaryTile>
 
         <SummaryTile
             icon={<ListTree className="size-3 text-primary" />}
-            label="Transition Events"
+            label="Solver Steps"
         >
             <div className="text-2xl font-black tracking-tighter tabular-nums">{transitionEventCount}</div>
         </SummaryTile>
 
         <SummaryTile
             icon={<Activity className="size-3 text-primary" />}
-            label="Active Pairs"
+            label="Tree Pairs With Moves"
         >
             <div className="text-2xl font-black tracking-tighter tabular-nums">{activePairCount}</div>
         </SummaryTile>
 
         <SummaryTile
             icon={<Split className="size-3 text-primary" />}
-            label="Singleton Share"
+            label="Single-Taxon Moves"
         >
             <div className="text-2xl font-black tracking-tighter tabular-nums">{singletonMoverPercentage.toFixed(1)}%</div>
         </SummaryTile>
 
         <SummaryTile
             icon={<Info className="size-3 text-primary" />}
-            label="Top Mover Share"
+            label="Largest Group Share"
         >
             {topMoverPercentage !== null ? (
                 <Tooltip>

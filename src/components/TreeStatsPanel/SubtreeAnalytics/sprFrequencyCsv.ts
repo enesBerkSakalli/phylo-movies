@@ -15,10 +15,10 @@ export const createSprFrequencyCsv = (
 ): string => {
     const headers = [
         'Rank',
-        'Subtree',
+        'Moved Group',
         'Taxa Count',
-        'Mover Occurrence Count',
-        '% of Mover Occurrences',
+        'Move Count',
+        '% of Moves',
         'Split Indices',
         'Signature'
     ];

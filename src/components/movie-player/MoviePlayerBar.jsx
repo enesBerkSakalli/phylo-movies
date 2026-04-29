@@ -92,7 +92,7 @@ export function MoviePlayerBar() {
 
   return (
     <>
-      <div className="sticky bottom-0 z-1000 bg-card border-t shadow-[0_2px_4px_rgba(0,0,0,0.08)]" role="region" aria-label="Movie Player Controls">
+      <div className="sticky bottom-0 z-1000 bg-card border-t shadow-[0_2px_4px_rgba(0,0,0,0.08)]" role="region" aria-label="Tree Sequence Controls">
         <div className="flex flex-col gap-1">
           <div className="flex items-center justify-between" role="group" aria-label="Transport controls and chart controls">
             <div className="flex items-center gap-1 flex-wrap transition-all duration-300" role="group" aria-label="Transport controls and position">
@@ -212,11 +212,11 @@ export function MoviePlayerBar() {
 function TimelineLegend({ hasTransitionSegments }) {
   return (
     <div className="flex items-center gap-4 px-2 pt-1 pb-0.5 text-2xs font-medium text-muted-foreground">
-      <LegendItem markerClassName="h-4 w-0.5 rounded bg-foreground/70" label="Anchor tree" />
+      <LegendItem markerClassName="h-4 w-0.5 rounded bg-foreground/70" label="Source tree" />
       {hasTransitionSegments && (
-        <LegendItem markerClassName="h-1 w-5 rounded bg-amber-600/85" label="Transition frames" />
+        <LegendItem markerClassName="h-1 w-5 rounded bg-amber-600/85" label="Generated frames" />
       )}
-      <LegendItem markerClassName="h-5 w-1 rounded bg-primary" label="Current frame" />
+      <LegendItem markerClassName="h-5 w-1 rounded bg-primary" label="Current position" />
       <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
         <span className="flex h-3 w-4 items-end gap-0.5" aria-hidden>
           <span className="h-1.5 w-0.5 bg-primary/70" />
@@ -224,7 +224,7 @@ function TimelineLegend({ hasTransitionSegments }) {
           <span className="h-1 w-0.5 bg-primary/70" />
           <span className="h-2 w-0.5 bg-primary/70" />
         </span>
-        <span>Tree distance</span>
+        <span>Tree difference</span>
       </span>
     </div>
   );

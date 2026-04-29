@@ -51,9 +51,9 @@ export function LayoutTransform({
         <div className="flex flex-col gap-6 px-1 py-3">
           <LabeledSlider
             id="layout-angle"
-            label="Layout Angle"
-            title="Angular span for radial layout"
-            ariaLabel="Layout angle control"
+            label="Tree Spread"
+            title="Set how much of the circle the radial tree uses"
+            ariaLabel="Tree spread control"
             valueDisplay={`${layoutAngleDegrees || 360}°`}
             value={Number(layoutAngleDegrees || 360)}
             min={90}
@@ -65,8 +65,8 @@ export function LayoutTransform({
           <LabeledSlider
             id="layout-rotation"
             label="Rotation"
-            title="Rotate the radial layout"
-            ariaLabel="Layout rotation control"
+            title="Rotate the tree"
+            ariaLabel="Tree rotation control"
             valueDisplay={`${layoutRotationDegrees || 0}°`}
             value={Number(layoutRotationDegrees || 0)}
             min={0}
@@ -77,7 +77,7 @@ export function LayoutTransform({
 
           <div className="flex items-start gap-2 text-2xs text-muted-foreground/80 italic">
             <Compass className="size-3 shrink-0 mt-1" />
-            <span>Angle affects the spread of branches, while rotation pivots the entire tree.</span>
+            <span>Spread controls how open the tree is; rotation turns the whole tree.</span>
           </div>
         </div>
       </SidebarMenuSubItem>

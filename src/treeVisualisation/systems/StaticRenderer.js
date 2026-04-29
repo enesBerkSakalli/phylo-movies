@@ -67,11 +67,12 @@ export class StaticRenderer {
     const currentLayout = this.controller.calculateLayout(targetTreeData, {
       treeIndex: targetIndex
     });
+    if (!currentLayout) return;
 
     const { extensionRadius, labelRadius } = this.controller._getConsistentRadii(currentLayout);
 
     const layerData = this.controller.dataConverter.convertTreeToLayerData(
-      currentLayout.tree,
+      currentLayout,
       {
         extensionRadius,
         labelRadius,

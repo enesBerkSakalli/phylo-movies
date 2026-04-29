@@ -116,4 +116,20 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     expect(controller._layoutRequestGeneration).toBe(generation + 1);
     expect(controller.renderAllElements).toHaveBeenCalledOnce();
   });
+
+  it('includes dataset identity in worker layout request tokens', () => {
+    controller = new ControllerClass(null);
+    const firstToken = controller._createLayoutRequestToken(1, useAppStore.getState());
+
+    useAppStore.setState({
+      treeList: [
+        { id: 'replacement-tree-0', split_indices: [0], children: [] },
+        { id: 'replacement-tree-1', split_indices: [1], children: [] }
+      ]
+    });
+
+    const secondToken = controller._createLayoutRequestToken(1, useAppStore.getState());
+
+    expect(secondToken).not.toBe(firstToken);
+  });
 });

@@ -8,9 +8,9 @@ export function TreeStructureGroup() {
     <Collapsible defaultOpen asChild className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton tooltip="Tree Structure">
+          <SidebarMenuButton tooltip="Branch Scaling">
             <GitBranch className="text-primary" />
-            <span>Tree Structure</span>
+            <span>Branch Scaling</span>
             <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
           </SidebarMenuButton>
         </CollapsibleTrigger>

@@ -4,7 +4,8 @@ import { toColorManagerNode, shouldHighlightNode, isHistorySubtreeNode, isNodePi
 export function getNodeRadius(node, minRadius = 1, cached, helpers) {
   const { colorManager: cm, upcomingChangesEnabled, densityScale, metricScale = 1.0 } = cached;
   const nodeSize = helpers.nodeSize || 1;
-  const baseRadius = (node.dotSize || node.radius || minRadius) * nodeSize;
+  const visualScale = Number.isFinite(cached?.visualScale) ? cached.visualScale : 1;
+  const baseRadius = (node.dotSize || node.radius || minRadius) * nodeSize * visualScale;
   let radius = baseRadius;
 
   if (node.isEntering || node.isExiting) {

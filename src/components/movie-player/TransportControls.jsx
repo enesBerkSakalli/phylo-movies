@@ -70,13 +70,13 @@ export function TransportControls({
 
   return (
     <>
-      <AppTooltip content="Previous anchor tree">
+      <AppTooltip content="Previous source tree">
         <Button
           className="transport-button"
           id="backwardAnchorButton"
           variant="ghost"
           size="icon"
-          aria-label="Previous anchor tree"
+          aria-label="Previous source tree"
           disabled={!canGoToPreviousAnchor}
           onClick={onPreviousAnchor}
         >
@@ -84,13 +84,13 @@ export function TransportControls({
         </Button>
       </AppTooltip>
 
-      <AppTooltip content="Previous transition frame">
+      <AppTooltip content="Previous generated frame">
         <Button
           className="transport-button"
           id="backward-button"
           variant="ghost"
           size="icon"
-          aria-label="Previous transition frame"
+          aria-label="Previous generated frame"
           onClick={onBackward}
         >
           <ChevronLeft className="size-4" />
@@ -111,26 +111,26 @@ export function TransportControls({
         </Button>
       </AppTooltip>
 
-      <AppTooltip content="Next transition frame">
+      <AppTooltip content="Next generated frame">
         <Button
           className="transport-button"
           id="forward-button"
           variant="ghost"
           size="icon"
-          aria-label="Next transition frame"
+          aria-label="Next generated frame"
           onClick={onForward}
         >
           <ChevronRight className="size-4" />
         </Button>
       </AppTooltip>
 
-      <AppTooltip content="Next anchor tree">
+      <AppTooltip content="Next source tree">
         <Button
           className="transport-button"
           id="forwardAnchorButton"
           variant="ghost"
           size="icon"
-          aria-label="Next anchor tree"
+          aria-label="Next source tree"
           disabled={!canGoToNextAnchor}
           onClick={onNextAnchor}
         >

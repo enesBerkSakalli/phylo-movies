@@ -29,7 +29,7 @@ export function InterpolationSection() {
     <div className="flex items-center gap-2">
       <BarChart2 className="size-3.5 text-primary" aria-hidden />
       <div className="flex flex-col gap-0">
-        <span className="text-2xs font-medium text-muted-foreground uppercase tracking-wider">Timeline</span>
+        <span className="text-2xs font-medium text-muted-foreground uppercase tracking-wider">Tree Type</span>
         <AppTooltip content={tooltipText} contentClassName="max-w-xs">
           <Badge
             id="hudSegmentInfo"
@@ -46,11 +46,11 @@ export function InterpolationSection() {
 }
 
 function getTimelineTooltipText(segmentText) {
-  if (segmentText === 'Anchor tree') {
-    return 'An observed input tree from one alignment window or bootstrap replicate.';
+  if (segmentText === 'Source tree') {
+    return 'An observed tree from one alignment window or uploaded tree set.';
   }
-  if (segmentText === 'Transition frame') {
-    return 'A generated transition frame in the tree sequence timeline.';
+  if (segmentText === 'Generated frame') {
+    return 'A generated tree frame in the sequence.';
   }
-  return 'Transition frames between neighboring anchor trees.';
+  return 'Generated frames between neighboring source trees.';
 }

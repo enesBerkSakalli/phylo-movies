@@ -35,7 +35,7 @@ export const CurrentScaleDisplay: React.FC<CurrentScaleDisplayProps> = ({
         <>
           <Label className="text-2xs font-bold uppercase tracking-wider text-muted-foreground/70">
             <Ruler className="size-3" />
-            Tree Depth
+            Tree Size
           </Label>
           <Separator className="bg-border/40" />
         </>
@@ -43,7 +43,7 @@ export const CurrentScaleDisplay: React.FC<CurrentScaleDisplayProps> = ({
 
       {/* Explanation text */}
       <p className="text-2xs text-muted-foreground/70 leading-relaxed">
-        Maximum root-to-tip distance in the current tree, relative to the deepest tree in the sequence.
+        Longest distance from the root to any leaf, compared with the largest tree in the sequence.
       </p>
 
       {/* Current and max values */}
@@ -58,7 +58,7 @@ export const CurrentScaleDisplay: React.FC<CurrentScaleDisplayProps> = ({
             </Badge>
           </TooltipTrigger>
           <TooltipContent side="top" className="text-xs">
-            Current tree depth (substitutions per site)
+            Current tree size
           </TooltipContent>
         </Tooltip>
         <span className="text-2xs text-muted-foreground/50">/</span>
@@ -72,15 +72,15 @@ export const CurrentScaleDisplay: React.FC<CurrentScaleDisplayProps> = ({
             </Badge>
           </TooltipTrigger>
           <TooltipContent side="top" className="text-xs">
-            Maximum tree depth across all trees
+            Largest tree size across the sequence
           </TooltipContent>
         </Tooltip>
       </div>
 
       {/* Depth ratio bar */}
-      <div className="flex flex-col gap-2" role="figure" aria-label="Tree depth ratio">
+      <div className="flex flex-col gap-2" role="figure" aria-label="Relative tree size">
         <div className="flex items-center justify-between text-2xs text-muted-foreground/70">
-          <span className="font-medium">Depth Ratio</span>
+          <span className="font-medium">Relative Size</span>
           <span className="font-mono tabular-nums">{magnitudeFactor.toFixed(2)}</span>
         </div>
         <Tooltip>
@@ -88,7 +88,7 @@ export const CurrentScaleDisplay: React.FC<CurrentScaleDisplayProps> = ({
             <div>
               <Progress
                 value={magnitudeFactor * 100}
-                aria-label={`Tree depth ratio: ${(magnitudeFactor * 100).toFixed(0)}%`}
+                aria-label={`Relative tree size: ${(magnitudeFactor * 100).toFixed(0)}%`}
                 className="h-1.5 cursor-default"
               />
             </div>
@@ -97,7 +97,7 @@ export const CurrentScaleDisplay: React.FC<CurrentScaleDisplayProps> = ({
             <div className="flex flex-col gap-1">
               <span>Current: {formattedCurrent}</span>
               <span>Maximum: {formattedMax}</span>
-              <span>Ratio: {(magnitudeFactor * 100).toFixed(1)}%</span>
+              <span>Relative size: {(magnitudeFactor * 100).toFixed(1)}%</span>
             </div>
           </TooltipContent>
         </Tooltip>

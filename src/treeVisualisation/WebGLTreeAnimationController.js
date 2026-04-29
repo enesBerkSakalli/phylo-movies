@@ -1,7 +1,9 @@
-import { useAppStore } from '../state/phyloStore/store.js';
+import { selectActiveTreeList, useAppStore } from '../state/phyloStore/store.js';
 import { transformBranchLengths } from "../domain/tree/branchTransform.js";
 import { TidyTreeLayout } from "./layout/TidyTreeLayout.js";
 import calculateScales, { getMaxScaleValue } from "../domain/tree/scaleUtils.js";
+import { createTransformCacheKey, createUniformScalingCacheKey } from './utils/layoutCacheKey.js';
+import { createLayoutResult } from './layout/LayoutResultAdapter.js';
 
 export class WebGLTreeAnimationController {
 
@@ -9,14 +11,14 @@ export class WebGLTreeAnimationController {
   // CONSTRUCTOR
   // ==========================================================================
 
-  constructor(container = "#webgl-container") {
+  constructor(container = null) {
     this._scalingState = {
-      branchTransformation: 'none'
+      cacheKey: null
     };
     this._transformedCache = new Map();
     this._onResize = null;
 
-    this.webglContainer = resolveContainerElement(container);
+    this.webglContainer = container || null;
 
     const node = this.webglContainer;
     const rect = node ? node.getBoundingClientRect() : { width: 800, height: 600 };
@@ -61,42 +63,38 @@ export class WebGLTreeAnimationController {
    * Ensures consistent radii across Anchor and Transition trees.
    */
   initializeUniformScaling(branchTransformation = 'none') {
-    const { treeList, transitionResolver } = useAppStore.getState();
-    const datasetToken = `${branchTransformation}::${treeList?.length || 0}`;
+    const state = useAppStore.getState();
+    const treeList = selectActiveTreeList(state);
+    const { transitionResolver } = state;
+    const scalingCacheKey = createUniformScalingCacheKey({ state, treeList, branchTransformation });
 
     if (!Array.isArray(treeList) || treeList.length === 0) {
       this.globalScaleList = [];
       this.maxGlobalScale = 0;
       this.uniformScalingEnabled = false;
-      this._scalingState.branchTransformation = branchTransformation;
-      this._scalingState.datasetToken = datasetToken;
-      this._scalingState.datasetRef = treeList;
+      this._scalingState.cacheKey = scalingCacheKey;
       return;
     }
 
-    if (this._isScalingCacheValid(branchTransformation, datasetToken, treeList)) {
+    if (this._isScalingCacheValid(scalingCacheKey)) {
       return;
     }
 
     const fullTreeIndices = transitionResolver?.fullTreeIndices || Array.from({ length: treeList.length }, (_, i) => i);
-    const transformedTreeList = this._getOrCacheTransformedTrees(treeList, branchTransformation);
+    const transformedTreeList = this._getOrCacheTransformedTrees(treeList, branchTransformation, state);
 
     this.globalScaleList = calculateScales(transformedTreeList, fullTreeIndices);
     this.maxGlobalScale = getMaxScaleValue(this.globalScaleList);
     this.uniformScalingEnabled = true;
 
-    this._scalingState.branchTransformation = branchTransformation;
-    this._scalingState.datasetToken = datasetToken;
-    this._scalingState.datasetRef = treeList;
+    this._scalingState.cacheKey = scalingCacheKey;
   }
 
-  _isScalingCacheValid(branchTransformation, datasetToken, treeList) {
+  _isScalingCacheValid(scalingCacheKey) {
     return (
       this.uniformScalingEnabled &&
       Number.isFinite(Number(this.maxGlobalScale)) &&
-      this._scalingState.branchTransformation === branchTransformation &&
-      this._scalingState.datasetToken === datasetToken &&
-      this._scalingState.datasetRef === treeList
+      this._scalingState.cacheKey === scalingCacheKey
     );
   }
 
@@ -109,17 +107,19 @@ export class WebGLTreeAnimationController {
    */
   calculateLayout(treeData, options = {}) {
     const { treeIndex } = options;
+    const state = useAppStore.getState();
     const {
       branchTransformation,
       layoutAngleDegrees,
       layoutRotationDegrees,
-      treeList
-    } = useAppStore.getState();
+    } = state;
+    const treeList = selectActiveTreeList(state);
 
     // initializeUniformScaling is cache-guarded and also catches dataset reference changes.
     this.initializeUniformScaling(branchTransformation);
 
-    const transformedTreeData = this._getTransformedTreeData(treeData, branchTransformation, treeIndex, treeList);
+    const transformCacheKey = createTransformCacheKey({ state, treeList, branchTransformation });
+    const transformedTreeData = this._getTransformedTreeData(treeData, branchTransformation, treeIndex, transformCacheKey);
     if (!transformedTreeData) {
       console.warn('calculateLayout: No tree data available');
       return null;
@@ -130,11 +130,10 @@ export class WebGLTreeAnimationController {
     return layout;
   }
 
-  _getTransformedTreeData(treeData, branchTransformation, treeIndex, sourceList) {
-    const cached = this._transformedCache.get(branchTransformation);
+  _getTransformedTreeData(treeData, branchTransformation, treeIndex, transformCacheKey) {
+    const cached = this._transformedCache.get(transformCacheKey);
     if (
       cached &&
-      cached.sourceList === sourceList &&
       cached.transformedList &&
       typeof treeIndex === 'number'
     ) {
@@ -161,14 +160,13 @@ export class WebGLTreeAnimationController {
       ? layoutCalculator.constructRadialTreeWithUniformScaling(this.maxGlobalScale)
       : layoutCalculator.constructRadialTree();
 
-    return {
-      tree: layoutResult,
+    return createLayoutResult(layoutResult, {
       max_radius: layoutCalculator.getMaxRadius(layoutResult),
       width: this.width,
       height: this.height,
       margin: layoutCalculator.margin,
       scale: layoutCalculator.scale
-    };
+    });
   }
 
   // ==========================================================================
@@ -199,13 +197,14 @@ export class WebGLTreeAnimationController {
   // TREE TRANSFORMATION CACHE
   // ==========================================================================
 
-  _getOrCacheTransformedTrees(treeList, branchTransformation) {
+  _getOrCacheTransformedTrees(treeList, branchTransformation, state = useAppStore.getState()) {
     if (!Array.isArray(treeList)) {
       return [];
     }
 
-    const cached = this._transformedCache.get(branchTransformation);
-    if (cached && cached.sourceList === treeList) {
+    const transformCacheKey = createTransformCacheKey({ state, treeList, branchTransformation });
+    const cached = this._transformedCache.get(transformCacheKey);
+    if (cached) {
       return cached.transformedList;
     }
 
@@ -213,23 +212,10 @@ export class WebGLTreeAnimationController {
       ? treeList.map(treeData => transformBranchLengths(treeData, branchTransformation))
       : treeList;
 
-    this._transformedCache.set(branchTransformation, {
-      sourceList: treeList,
+    this._transformedCache.set(transformCacheKey, {
       transformedList
     });
 
     return transformedList;
   }
-}
-
-function resolveContainerElement(container) {
-  if (container && typeof container.node === 'function') {
-    return container.node();
-  }
-
-  if (typeof container === 'string') {
-    return typeof document !== 'undefined' ? document.querySelector(container) : null;
-  }
-
-  return container || null;
 }

@@ -6,15 +6,15 @@ import { getLabelKey } from '../../../../utils/KeyGenerator.js';
  */
 export class LabelDataBuilder {
   /**
-   * Convert tree leaves to Deck.gl label data
-   * @param {Object} tree - D3 hierarchy root
+   * Convert layout leaves to Deck.gl label data
+   * @param {Array} leaves - Normalized layout leaves
    * @param {number} extensionRadius - Radius where labels should be placed
    * @returns {Array} Array of label objects
    */
-  convertLabels(tree, extensionRadius) {
+  convertLabels(leaves, extensionRadius) {
     if (!extensionRadius) return [];
 
-    return tree.leaves()
+    return (Array.isArray(leaves) ? leaves : [])
       .map(leaf => this._createLabelData(leaf, extensionRadius))
       .filter(Boolean);
   }
@@ -24,14 +24,14 @@ export class LabelDataBuilder {
    * @private
    */
   _createLabelData(leaf, labelRadius) {
-    const angleRad = leaf.rotatedAngle != null ? leaf.rotatedAngle : (leaf.angle || 0);
+    const angleRad = leaf.angle || 0;
     if (
       !Number.isFinite(leaf?.x) ||
       !Number.isFinite(leaf?.y) ||
       !Number.isFinite(angleRad) ||
       !Number.isFinite(labelRadius)
     ) {
-      console.warn('[LabelDataBuilder] Skipping label with invalid layout coordinates:', leaf?.data?.split_indices);
+      console.warn('[LabelDataBuilder] Skipping label with invalid layout coordinates:', leaf?.split_indices);
       return null;
     }
 
@@ -41,18 +41,18 @@ export class LabelDataBuilder {
     const textAnchor = this._calculateTextAnchor(needsFlip);
     const rotation = this._calculateLabelRotation(angleRad);
     const position = this._calculateLabelPosition(angleRad, labelRadius);
-    const splitIndices = leaf.data?.split_indices;
+    const splitIndices = leaf.split_indices;
     const labelKey = getLabelKey({ split_indices: splitIndices });
     if (!labelKey) {
-      console.warn('[LabelDataBuilder] Skipping label without split_indices:', leaf?.data?.name);
+      console.warn('[LabelDataBuilder] Skipping label without split_indices:', leaf?.name);
       return null;
     }
 
     return {
       id: labelKey,
       position: position,
-      text: leaf.data.name || '',
-      name: leaf.data.name || '',
+      text: leaf.name || '',
+      name: leaf.name || '',
       isLeaf: true,
       split_indices: splitIndices,
       angle: angleRad,

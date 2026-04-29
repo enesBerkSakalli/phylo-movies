@@ -12,9 +12,9 @@ export function VisualElements() {
       <Collapsible defaultOpen asChild className="group/collapsible">
         <SidebarMenuItem>
           <CollapsibleTrigger asChild>
-            <SidebarMenuButton tooltip="Coloring & Styling">
+            <SidebarMenuButton tooltip="Colors & Highlights">
               <Palette className="text-primary" />
-              <span>Coloring & Styling</span>
+              <span>Colors & Highlights</span>
               <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
             </SidebarMenuButton>
           </CollapsibleTrigger>

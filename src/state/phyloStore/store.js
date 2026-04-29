@@ -18,6 +18,7 @@ import { createTreeHighlightStateSlice } from './slices/treeChange/treeHighlight
 import { createTreeRuntimeSyncSlice } from './slices/treeChange/treeRuntimeSync.slice.js';
 import { createClipboardSlice } from './slices/interaction/treeClipboard.slice.js';
 import { createContextMenuSlice } from './slices/interaction/treeInteraction.slice.js';
+export { selectActiveTreeList, selectCurrentTree } from './selectors/treeSelectors.js';
 
 /**
  * @typedef {import('../../../types/store.ts').AppStoreState} AppStoreState
@@ -57,12 +58,3 @@ useAppStore.subscribe((state, prevState) => {
     state.updateColorManagerForCurrentIndex?.();
   }
 });
-
-// Lightweight selector to access the current tree consistently
-export const selectCurrentTree = (state = useAppStore.getState()) => {
-  const { treeList, currentTreeIndex } = state || {};
-  if (!Array.isArray(treeList) || typeof currentTreeIndex !== 'number') {
-    return null;
-  }
-  return treeList[currentTreeIndex] ?? null;
-};

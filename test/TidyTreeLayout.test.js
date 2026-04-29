@@ -23,11 +23,10 @@ describe('TidyTreeLayout', () => {
   it('initializes and calculates coordinates', () => {
     const layout = createTidyTreeLayout(mockData, 'none', { width: 500, height: 500 });
 
-    expect(layout.tree).toBeDefined();
+    expect(layout.layoutTree).toBeDefined();
     expect(layout.max_radius).toBeGreaterThan(0);
 
-    const root = layout.tree;
-    // TidyTreeLayout converts to d3 hierarchy
+    const root = layout.layoutTree;
     expect(root.x).toBeDefined(); // x is Cartesian X now after generateCoordinates
     expect(root.y).toBeDefined(); // y is Cartesian Y now
 

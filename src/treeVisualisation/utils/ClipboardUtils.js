@@ -25,7 +25,7 @@ function createClipboardVisualLayers(controller, treeIndex, treeData) {
     treeIndex
   });
 
-  if (!layout?.tree) {
+  if (!layout?.layoutTree) {
     console.warn('[DeckGLTreeAnimationController] Clipboard layout not available');
     return [];
   }
@@ -33,7 +33,7 @@ function createClipboardVisualLayers(controller, treeIndex, treeData) {
   const { extensionRadius, labelRadius } = controller._getConsistentRadii(layout);
 
   const layerData = controller.dataConverter.convertTreeToLayerData(
-    layout.tree,
+    layout,
     {
       extensionRadius,
       labelRadius,
@@ -81,10 +81,10 @@ function getMainTreeBounds(controller) {
     const layout = controller.calculateLayout(controller.currentTreeData, {
       treeIndex: useAppStore.getState().currentTreeIndex
     });
-    if (layout?.tree) {
+    if (layout?.layoutTree) {
       const { extensionRadius, labelRadius } = controller._getConsistentRadii(layout);
       const layerData = controller.dataConverter.convertTreeToLayerData(
-        layout.tree,
+        layout,
         {
           extensionRadius,
           labelRadius,

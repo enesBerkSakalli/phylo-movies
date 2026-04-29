@@ -103,7 +103,7 @@ export function NodeContextMenu() {
     try {
       const newick = SubtreeExtractor.nodeToNewick(node);
       navigator.clipboard.writeText(newick).then(() => {
-        const nodeName = node.data?.name || `Node (depth ${node.depth})`;
+        const nodeName = node.name || `Node (depth ${node.depth})`;
         toast.success(`Subtree copied from ${nodeName}`);
       }).catch(() => {
         // Fallback for clipboard API failure
@@ -125,7 +125,7 @@ export function NodeContextMenu() {
   const handleHighlightDescendants = useCallback(() => {
     if (!node) return;
 
-    const splitIndices = node.data?.split_indices || node.split_indices;
+    const splitIndices = node.split_indices;
 
     if (splitIndices && setManuallyMarkedNodes) {
       setManuallyMarkedNodes(splitIndices);
@@ -155,7 +155,7 @@ export function NodeContextMenu() {
       const stats = SubtreeExtractor.getSubtreeStats(node);
       const breadcrumb = SubtreeExtractor.createBreadcrumb(node);
 
-      const info = `Node: ${node.data?.name || 'unnamed'}
+      const info = `Node: ${node.name || 'unnamed'}
 Path: ${breadcrumb}
 Descendants: ${stats.totalNodes}
 Leaves: ${stats.leafCount}
@@ -185,7 +185,7 @@ Max Depth: ${stats.maxDepth}`;
 
   if (!isOpen || !node) return null;
 
-  const nodeName = node.data?.name || `Node (depth ${node.depth})`;
+  const nodeName = node.name || `Node (depth ${node.depth})`;
   let nodeStats = '';
   let canExtract = false;
 

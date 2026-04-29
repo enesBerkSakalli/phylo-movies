@@ -1,6 +1,7 @@
 import { cluster, hierarchy } from "d3-hierarchy";
 import { getNodeKey } from '../utils/KeyGenerator.js';
 import { transformBranchLengths } from '../../domain/tree/branchTransform.js';
+import { createLayoutResult } from './LayoutResultAdapter.js';
 
 /**
  * Tidy tree layout with radial projection and branch-length radii.
@@ -194,21 +195,10 @@ export default function createTidyTreeLayout(
   const transformedTree = transformBranchLengths(tree, branchTransformation);
   const treeLayout = new TidyTreeLayout(transformedTree);
 
-  let container;
   let width, height, margin;
 
-  if (options.containerId) {
-    container = document.getElementById(`${options.containerId}`);
-    if (!container) {
-      throw new Error(`TidyTreeLayout: Container element with id "${options.containerId}" not found.`);
-    }
-    const rect = container.getBoundingClientRect();
-    width = options.width || rect.width || container.clientWidth || 400;
-    height = options.height || rect.height || container.clientHeight || 400;
-  } else {
-    width = options.width || 800;
-    height = options.height || 600;
-  }
+  width = options.width || 800;
+  height = options.height || 600;
 
   width = Math.max(width, 200);
   height = Math.max(height, 200);
@@ -231,23 +221,11 @@ export default function createTidyTreeLayout(
     root_ = treeLayout.constructRadialTree(false);
   }
 
-  const isComparison = options.containerId && options.containerId.includes('comparison');
-  if (isComparison && options.maxRadius && !useUniformScaling) {
-    const currentMaxRadius = treeLayout.getMaxRadius(root_);
-    if (currentMaxRadius > options.maxRadius) {
-      const adjustmentScale = (options.maxRadius / currentMaxRadius) * 0.9;
-      treeLayout.scaleRadius(root_, adjustmentScale);
-      treeLayout.scale *= adjustmentScale;
-      treeLayout.generateCoordinates(root_);
-    }
-  }
-
-  return {
-    tree: root_,
+  return createLayoutResult(root_, {
     max_radius: treeLayout.getMaxRadius(root_),
     width,
     height,
     margin,
     scale: treeLayout.scale,
-  };
+  });
 }

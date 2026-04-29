@@ -78,19 +78,16 @@ describe('Real Data Scaling Analysis', () => {
       uniformScale: uniformScaleFactor
     });
 
-    const { tree: root, max_radius } = smallTreeResult;
+    const { nodes, links, max_radius } = smallTreeResult;
     console.log(`\nSmall Tree (${smallTreeIndex}) under Uniform Scaling:`);
     console.log(`  Rendered Radius: ${max_radius.toFixed(2)}px`);
-
-    const nodes = root.descendants();
-    const links = root.links();
 
     // Analyze average branch length VISUAL size
     let totalLength = 0;
     let nonZeroCount = 0;
     links.forEach(link => {
-      const dx = link.target.x - link.source.x;
-      const dy = link.target.y - link.source.y;
+      const dx = link.targetPosition[0] - link.sourcePosition[0];
+      const dy = link.targetPosition[1] - link.sourcePosition[1];
       const dist = Math.sqrt(dx * dx + dy * dy);
       totalLength += dist;
       if (dist > 0.001) nonZeroCount++;

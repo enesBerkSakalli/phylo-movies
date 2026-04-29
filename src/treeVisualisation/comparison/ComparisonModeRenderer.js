@@ -157,7 +157,7 @@ export class ComparisonModeRenderer {
     );
 
     const leftLayerData = this.controller.dataConverter.convertTreeToLayerData(
-      leftLayout.tree,
+      leftLayout,
       {
         extensionRadius,
         labelRadius,
@@ -170,7 +170,7 @@ export class ComparisonModeRenderer {
     );
 
     const rightLayerData = this.controller.dataConverter.convertTreeToLayerData(
-      rightLayout.tree,
+      rightLayout,
       {
         extensionRadius,
         labelRadius,
@@ -277,7 +277,7 @@ export class ComparisonModeRenderer {
     );
 
     const rightLayerData = this.controller.dataConverter.convertTreeToLayerData(
-      rightLayout.tree,
+      rightLayout,
       {
         extensionRadius,
         labelRadius,

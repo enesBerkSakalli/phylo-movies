@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { TidyTreeLayout } from '../../src/treeVisualisation/layout/TidyTreeLayout.js';
+import { createLayoutResult } from '../../src/treeVisualisation/layout/LayoutResultAdapter.js';
 import { DeckGLTreeLayerDataFactory } from '../../src/treeVisualisation/deckgl/DeckGLTreeLayerDataFactory.js';
 import { transformBranchLengths } from '../../src/domain/tree/branchTransform.js';
 
@@ -54,13 +55,18 @@ describe('Layout Worker Logic Integration', () => {
         expect(layoutResult).to.have.property('children'); // D3 Node has children
         expect(layoutResult).to.not.have.property('tree'); // It should be the node itself, not a wrapper
 
-        // 3. Convert to Layer Data
+        // 3. Convert to normalized layout data, then layer data
         // Replicate logic in layout.worker.js
         const dataFactory = new DeckGLTreeLayerDataFactory();
+        const normalizedLayout = createLayoutResult(layoutResult, {
+            max_radius: layoutEngine.getMaxRadius(layoutResult),
+            width: options.width,
+            height: options.height,
+            margin: layoutEngine.margin,
+            scale: layoutEngine.scale,
+        });
 
-        // This call typically failed with "Cannot access descendants of undefined" if the input was wrong
-        // Use the exact call signature from the worker
-        const layerData = dataFactory.convertTreeToLayerData(layoutResult, {
+        const layerData = dataFactory.convertTreeToLayerData(normalizedLayout, {
             extensionRadius: options.extensionRadius,
             labelRadius: options.labelRadius,
             canvasWidth: options.width,
@@ -81,10 +87,17 @@ describe('Layout Worker Logic Integration', () => {
          const layoutEngine = new TidyTreeLayout(transformedData);
          layoutEngine.setDimension(800, 600);
          const rootNode = layoutEngine.constructRadialTree();
+         const normalizedLayout = createLayoutResult(rootNode, {
+             max_radius: layoutEngine.getMaxRadius(rootNode),
+             width: 800,
+             height: 600,
+             margin: layoutEngine.margin,
+             scale: layoutEngine.scale,
+         });
 
          const dataFactory = new DeckGLTreeLayerDataFactory();
 
-         const layerData = dataFactory.convertTreeToLayerData(rootNode, {
+         const layerData = dataFactory.convertTreeToLayerData(normalizedLayout, {
              extensionRadius: 10,
              labelRadius: 20,
              canvasWidth: 800,
