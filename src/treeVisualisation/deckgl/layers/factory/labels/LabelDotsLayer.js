@@ -13,7 +13,7 @@ const FONT_SIZE_TO_DOT_RADIUS_SCALE = 0.25;
 /**
  * Layer config for label dots
  */
-const LABEL_DOTS_CONFIG = {
+export const LABEL_DOTS_CONFIG = {
   id: `${LAYER_ID_PREFIX}-label-dots`,
   LayerClass: ScatterplotLayer,
   defaultProps: {

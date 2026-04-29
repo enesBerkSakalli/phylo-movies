@@ -1,7 +1,25 @@
 import { cluster, hierarchy } from "d3-hierarchy";
-import { getNodeKey } from '../utils/KeyGenerator.js';
 import { transformBranchLengths } from '../../domain/tree/branchTransform.js';
 import { createLayoutResult } from './LayoutResultAdapter.js';
+import {
+  calculateBranchLengthRadii,
+  calculateContainerScale,
+  calculateUniformScale,
+  generatePolarCoordinates,
+  getMaxRadius,
+  getMinContainerDimension,
+  initializeLayoutState,
+  normalizeLayoutOptions,
+  normalizeUniformScale,
+  scaleRadius,
+  setAngleExtentDegrees,
+  setAngleExtentRadians,
+  setAngleOffsetDegrees,
+  setAngleOffsetRadians,
+  setLayoutDimensions,
+  setLayoutMargin,
+  setRadiusPreservation
+} from './LayoutBaseUtils.js';
 
 /**
  * Tidy tree layout with radial projection and branch-length radii.
@@ -11,119 +29,59 @@ export class TidyTreeLayout {
   constructor(root) {
     const isHierarchyNode = root && typeof root.each === 'function' && root.data !== undefined;
     this.root = isHierarchyNode ? root : hierarchy(root);
-    this.containerWidth = 0;
-    this.containerHeight = 0;
-    this.margin = 0;
-    this.scale = 0;
-    this.angleExtent = Math.PI * 2;
-    this.angleOffset = 0;
-    this.preserveRadius = false;
-    this.previousNodeRadii = new Map();
+    initializeLayoutState(this);
   }
 
   setAngleExtentDegrees(degrees = 360) {
-    const clamped = typeof degrees === 'number' && isFinite(degrees) ? degrees : 360;
-    this.angleExtent = (clamped * Math.PI) / 180;
+    setAngleExtentDegrees(this, degrees);
   }
 
   setAngleExtentRadians(radians = Math.PI * 2) {
-    const span = typeof radians === 'number' && isFinite(radians) ? radians : Math.PI * 2;
-    this.angleExtent = span;
+    setAngleExtentRadians(this, radians);
   }
 
   setAngleOffsetDegrees(degrees = 0) {
-    const value = typeof degrees === 'number' && isFinite(degrees) ? degrees : 0;
-    this.angleOffset = (value * Math.PI) / 180;
+    setAngleOffsetDegrees(this, degrees);
   }
 
   setAngleOffsetRadians(radians = 0) {
-    const value = typeof radians === 'number' && isFinite(radians) ? radians : 0;
-    this.angleOffset = value;
+    setAngleOffsetRadians(this, radians);
   }
 
   calcRadius(node, radius = 0) {
-    // Check various common property names for branch length
-    // Handle both direct properties and nested 'data' objects (d3 vs raw vs phylo formats)
-    const d = node.data || {};
-    // Backend standardizes on 'length'.
-    const rawLength = d.length ?? 0;
-
-    const length = Number(rawLength) || 0;
-
-    // Root must always have 0 effective length to ensure it sits at the calculated center
-    // regardless of what the data property says (some formats assign stem length to root)
-    const effectiveLength = node.parent ? length : 0;
-
-    const nodeKey = getNodeKey({ split_indices: d.split_indices });
-    if (nodeKey && this.preserveRadius && this.previousNodeRadii.has(nodeKey)) {
-      node.radius = this.previousNodeRadii.get(nodeKey);
-    } else {
-      node.radius = effectiveLength + radius;
-      if (nodeKey) {
-        this.previousNodeRadii.set(nodeKey, node.radius);
-      }
-    }
-
-    if (node.children) {
-      node.children.forEach((child) => {
-        this.calcRadius(child, node.radius);
-      });
-    }
+    calculateBranchLengthRadii(this, node, radius);
   }
 
   setRadiusPreservation(preserve) {
-    this.preserveRadius = preserve;
+    setRadiusPreservation(this, preserve);
   }
 
   setDimension(width, height) {
-    this.originalWidth = width;
-    this.originalHeight = height;
-    this.containerWidth = width;
-    this.containerHeight = height;
+    setLayoutDimensions(this, width, height);
   }
 
   setMargin(margin) {
-    this.margin = margin;
-    const baseWidth = this.originalWidth || this.containerWidth;
-    const baseHeight = this.originalHeight || this.containerHeight;
-    this.containerWidth = Math.max(1, baseWidth - this.margin * 2);
-    this.containerHeight = Math.max(1, baseHeight - this.margin * 2);
+    setLayoutMargin(this, margin);
   }
 
   generateCoordinates(root) {
-    const offset = this.angleOffset || 0;
-    root.each((d) => {
-      const theta = (d.x || 0) + offset;
-      d.rotatedAngle = theta;
-      d.offset = offset;
-      d.x = d.radius * Math.cos(theta);
-      d.y = d.radius * Math.sin(theta);
-    });
+    generatePolarCoordinates(root, (node) => node.x, this.angleOffset);
   }
 
   getMaxRadius(root) {
-    let maxRadius = 0;
-    root.each((d) => {
-      if (d.radius > maxRadius) maxRadius = d.radius;
-    });
-    return maxRadius;
+    return getMaxRadius(root);
   }
 
   scaleRadius(root, scale) {
-    root.each((d) => {
-      d.radius = d.radius * scale;
-    });
+    scaleRadius(root, scale);
   }
 
   getMinContainerDimension(width, height) {
-    return Math.min(width, height);
+    return getMinContainerDimension(width, height);
   }
 
   calculateContainerScale(minWindowSize, maxRadius, factor) {
-    const isComparison = this.containerWidth < 600 || this.containerHeight < 600;
-    const adjustedFactor = isComparison ? factor * 0.8 : factor;
-    const safeMaxRadius = Math.max(Number(maxRadius) || 0, 1e-6);
-    return minWindowSize / adjustedFactor / safeMaxRadius;
+    return calculateContainerScale(this.containerWidth, this.containerHeight, minWindowSize, maxRadius, factor);
   }
 
   cacheLeafCounts() {
@@ -160,9 +118,7 @@ export class TidyTreeLayout {
     this.applyTidyLayout();
 
     const minWindowSize = this.getMinContainerDimension(this.containerWidth, this.containerHeight);
-    // Guard against zero maxGlobalScale to prevent Infinity/NaN
-    const safeMaxScale = (maxGlobalScale && maxGlobalScale > 0) ? maxGlobalScale : 1;
-    const uniformScale = minWindowSize / (2.0 * safeMaxScale);
+    const uniformScale = calculateUniformScale(minWindowSize, maxGlobalScale);
     this.scaleRadius(this.root, uniformScale);
     this.generateCoordinates(this.root);
     this.scale = uniformScale;
@@ -194,17 +150,9 @@ export default function createTidyTreeLayout(
 ) {
   const transformedTree = transformBranchLengths(tree, branchTransformation);
   const treeLayout = new TidyTreeLayout(transformedTree);
-
-  let width, height, margin;
-
-  width = options.width || 800;
-  height = options.height || 600;
-
-  width = Math.max(width, 200);
-  height = Math.max(height, 200);
+  const { width, height, margin } = normalizeLayoutOptions(options);
 
   treeLayout.setDimension(width, height);
-  margin = options.margin || 40;
   treeLayout.setMargin(margin);
 
   const useUniformScaling = options.uniformScale !== undefined;
@@ -214,9 +162,10 @@ export default function createTidyTreeLayout(
     treeLayout.calcRadius(treeLayout.root, 0);
     treeLayout.applyTidyLayout();
     root_ = treeLayout.root;
-    treeLayout.scaleRadius(root_, options.uniformScale);
+    const uniformScale = normalizeUniformScale(options.uniformScale);
+    treeLayout.scaleRadius(root_, uniformScale);
     treeLayout.generateCoordinates(root_);
-    treeLayout.scale = options.uniformScale;
+    treeLayout.scale = uniformScale;
   } else {
     root_ = treeLayout.constructRadialTree(false);
   }
