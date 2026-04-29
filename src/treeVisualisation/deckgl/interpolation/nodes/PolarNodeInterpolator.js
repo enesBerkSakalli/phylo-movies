@@ -3,6 +3,7 @@
  * Handles smooth interpolation of tree nodes in radial layouts
  */
 import { shortestAngle, crossesAngle, longArcDelta } from '../../../../domain/math/mathUtils.js';
+import { Z_NODE } from '../../constants/zOffsets.js';
 
 export class PolarNodeInterpolator {
   constructor() {
@@ -27,9 +28,11 @@ export class PolarNodeInterpolator {
    * @returns {Object} Interpolated node data
    */
   interpolateNode(fromNode, toNode, t, velocityEntry = null) {
+    const position = this.interpolatePosition(fromNode, toNode, t, velocityEntry);
     return {
       ...toNode,
-      position: this.interpolatePosition(fromNode, toNode, t, velocityEntry),
+      position,
+      renderPosition: [position[0], position[1], (position[2] ?? 0) + Z_NODE],
       radius: this._interpolateScalar(fromNode.radius, toNode.radius, t),
       // Preserve properties from target
       name: toNode.name,

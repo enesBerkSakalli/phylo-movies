@@ -26,15 +26,15 @@ export const createTaxonomyColoringSlice = (set, get) => ({
 
   setMonophyleticColoring: (enabled) => {
     set((s) => ({ monophyleticColoringEnabled: enabled, taxaColorVersion: s.taxaColorVersion + 1 }));
-    const { colorManager, treeControllers } = get();
+    const { colorManager } = get();
     colorManager?.setMonophyleticColoring(enabled);
-    renderTreeControllers(treeControllers);
+    renderTreeControllers(get());
   },
 
   updateTaxaColors: (newColorMap) => {
     set((s) => ({ taxaColorVersion: s.taxaColorVersion + 1 }));
-    const { colorManager, treeControllers } = get();
+    const { colorManager } = get();
     colorManager?.refreshColorCategories?.();
-    renderTreeControllers(treeControllers);
+    renderTreeControllers(get());
   },
 });

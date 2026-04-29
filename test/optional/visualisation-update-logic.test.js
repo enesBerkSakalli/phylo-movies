@@ -1,6 +1,6 @@
 
 import { expect } from 'chai';
-import { resolveMarkedSubtrees, calculateChangePreviews } from '../../src/state/phyloStore/internal/changeTracking.helpers.js';
+import { resolveMarkedSubtrees, calculateChangePreviews, renderTreeControllers } from '../../src/state/phyloStore/internal/changeTracking.helpers.js';
 
 describe('Tree Visualisation - State Update Logic', () => {
 
@@ -187,6 +187,34 @@ describe('Tree Visualisation - State Update Logic', () => {
         expect(result.upcoming).to.be.empty;
     });
 
+  });
+
+  describe('renderTreeControllers (Playback Render Ownership)', () => {
+    it('renders registered controllers when playback is paused', () => {
+      let renderCount = 0;
+
+      renderTreeControllers({
+        playing: false,
+        treeControllers: [
+          { renderAllElements: () => { renderCount += 1; } }
+        ]
+      });
+
+      expect(renderCount).to.equal(1);
+    });
+
+    it('does not render registered controllers while playback owns frames', () => {
+      let renderCount = 0;
+
+      renderTreeControllers({
+        playing: true,
+        treeControllers: [
+          { renderAllElements: () => { renderCount += 1; } }
+        ]
+      });
+
+      expect(renderCount).to.equal(0);
+    });
   });
 
 });
