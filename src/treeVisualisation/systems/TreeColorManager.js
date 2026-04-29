@@ -23,7 +23,9 @@ import {
 import {
   isLinkInSubtree,
   isNodeInSubtree,
-  isNodeSubtreeRoot
+  isNodeSubtreeRoot,
+  getLinkSplitIndices,
+  getSplitIndices
 } from '../utils/splitMatching.js';
 
 export class TreeColorManager {
@@ -62,7 +64,7 @@ export class TreeColorManager {
   /**
    * Get branch color with highlighting logic
    * Priority: Marked (red, if enabled) > Pivot edge (blue) > Base color
-   * @param {Object} linkData - D3 link data
+   * @param {Object} linkData - Normalized link data
    * @returns {string} Hex color code
    */
   getBranchColorWithHighlights(linkData) {
@@ -81,7 +83,7 @@ export class TreeColorManager {
   /**
    * Get branch color for the inner/main line
    * Pivot edges get highlight color, marked branches keep base color
-   * @param {Object} linkData - D3 link data
+   * @param {Object} linkData - Normalized link data
    * @returns {string} Hex color code
    */
   getBranchColorForInnerLine(linkData) {
@@ -97,7 +99,7 @@ export class TreeColorManager {
 
   /**
    * Get base branch color (without highlighting)
-   * @param {Object} linkData - D3 link data
+   * @param {Object} linkData - Normalized link data
    * @returns {string} Hex color code
    */
   getBranchColor(linkData) {
@@ -172,14 +174,14 @@ export class TreeColorManager {
   /**
    * Fast check if a node could possibly be in any marked subtree.
    * Uses pre-built union for O(1) rejection - if any leaf is NOT in union, node can't be in subtree.
-   * @param {Object} nodeData - Node with data.split_indices
+   * @param {Object} nodeData - Node with normalized split_indices
    * @returns {boolean} True if node is definitely in a subtree, false if definitely not or needs full check
    */
   isNodeInMarkedSubtreeFast(nodeData) {
     if (!this.markedSubtreesColoringEnabled || this._markedLeavesUnion.size === 0) {
       return false;
     }
-    const splits = nodeData?.data?.split_indices || nodeData?.split_indices;
+    const splits = getSplitIndices(nodeData);
     if (!splits?.length) return false;
 
     // Fast rejection: if any leaf is NOT in union, node can't be in any subtree
@@ -195,14 +197,14 @@ export class TreeColorManager {
 
   /**
    * Fast check if a link's target is in any marked subtree.
-   * @param {Object} linkData - Link with target.data.split_indices
-   * @returns {boolean} True if link target is in a subtree
+   * @param {Object} linkData - Link with normalized split metadata
+   * @returns {boolean} True if link split is in a subtree
    */
   isLinkInMarkedSubtreeFast(linkData) {
     if (!this.markedSubtreesColoringEnabled || this._markedLeavesUnion.size === 0) {
       return false;
     }
-    const splits = linkData?.target?.data?.split_indices || linkData?.target?.split_indices;
+    const splits = getLinkSplitIndices(linkData);
     if (!splits?.length) return false;
 
     // Fast rejection: if any leaf is NOT in union, link can't be in any subtree

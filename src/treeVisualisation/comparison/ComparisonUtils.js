@@ -1,3 +1,5 @@
+import { getSplitIndices } from '../utils/splitMatching.js';
+
 /**
  * ComparisonUtils
  *
@@ -120,20 +122,21 @@ export function buildPositionMap(nodes, labels = []) {
   const labelPositionByLeaf = new Map();
 
   labels.forEach(label => {
-    if (label.leaf) {
-      labelPositionByLeaf.set(label.leaf, label.position);
+    const splitIndices = getSplitIndices(label);
+    if (Array.isArray(splitIndices) && splitIndices.length > 0) {
+      labelPositionByLeaf.set(splitIndices.join('-'), label.position);
     }
   });
 
   nodes.forEach(node => {
-    const splitIndices = node.data?.split_indices;
+    const splitIndices = getSplitIndices(node);
     if (Array.isArray(splitIndices) && splitIndices.length > 0) {
       const key = splitIndices.join('-');
       let position = node.position;
 
       // For leaf nodes, use label position (tip)
-      if (node.isLeaf && node.originalNode) {
-        const labelPos = labelPositionByLeaf.get(node.originalNode);
+      if (node.isLeaf) {
+        const labelPos = labelPositionByLeaf.get(key);
         if (labelPos) {
           position = labelPos;
         }
@@ -143,7 +146,7 @@ export function buildPositionMap(nodes, labels = []) {
         position,
         isLeaf: node.isLeaf,
         node,
-        name: node.data?.name ? String(node.data.name) : null
+        name: node.name ? String(node.name) : null
       });
     }
   });

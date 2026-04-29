@@ -11,6 +11,7 @@
 import { SYSTEM_TREE_COLORS } from '../../../constants/TreeColors.js';
 import { useAppStore } from '../../../state/phyloStore/store.js';
 import { getTaxonColor } from '../../../treeColoring/utils/GroupingUtils.js';
+import { getSplitIndices } from '../../utils/splitMatching.js';
 
 // =============================================================================
 // RENDER-CYCLE CACHE
@@ -47,21 +48,26 @@ function ensureColorCache() {
 
 /**
  * Collect all leaf names in a subtree.
- * Uses D3 hierarchy's built-in leaves() method when available for better performance.
- * @param {Object} node - D3 hierarchy node or raw tree node
+ * @param {Object} node - Normalized tree render node
  * @returns {Array<string>} Array of leaf names
  */
 export function getSubtreeLeaves(node) {
   if (!node) return [];
 
-  // Use D3's built-in leaves() method when available (preferred)
-  if (typeof node.leaves === 'function') {
-    return node.leaves()
-      .map(leaf => leaf.data?.name || leaf.name)
-      .filter(Boolean);
+  if (Array.isArray(node.leafNames)) {
+    return node.leafNames.filter(Boolean);
   }
 
-  // Fallback for raw tree data (non-D3 nodes)
+  if (isLeafNode(node)) {
+    const name = getNodeName(node);
+    if (name) return [name];
+  }
+
+  const leafNamesFromSplits = getLeafNamesFromSplitIndices(node);
+  if (leafNamesFromSplits.length > 0) {
+    return leafNamesFromSplits;
+  }
+
   return _collectLeafNamesRecursive(node);
 }
 
@@ -70,8 +76,8 @@ export function getSubtreeLeaves(node) {
  * @private
  */
 function _collectLeafNamesRecursive(node) {
-  if (!node.children || node.children.length === 0) {
-    const name = node.data?.name || node.name;
+  if (isLeafNode(node)) {
+    const name = getNodeName(node);
     return name ? [name] : [];
   }
 
@@ -144,18 +150,19 @@ export function checkMonophyletic(node) {
 
 /**
  * Get base branch color (no highlighting)
- * @param {Object} linkData - D3 link data
+ * @param {Object} linkData - Normalized link data
  * @param {boolean} monophyleticEnabled - Whether monophyletic coloring is enabled
  * @returns {string} Hex color code
  */
 export function getBaseBranchColor(linkData, monophyleticEnabled) {
-  if (!linkData?.target) {
+  const branchNode = getBranchNode(linkData);
+  if (!branchNode) {
     return SYSTEM_TREE_COLORS.defaultColor;
   }
 
   // Leaf branches ALWAYS get their taxa color
-  if (!linkData.target.children || linkData.target.children.length === 0) {
-    const leafName = linkData.target.data?.name || linkData.target.name;
+  if (isLeafNode(branchNode)) {
+    const leafName = getNodeName(branchNode);
     const color = getEffectiveTaxonColor(leafName);
     return color || SYSTEM_TREE_COLORS.defaultColor;
   }
@@ -165,7 +172,7 @@ export function getBaseBranchColor(linkData, monophyleticEnabled) {
     return SYSTEM_TREE_COLORS.defaultColor;
   }
 
-  const { isMonophyletic, color } = checkMonophyletic(linkData.target);
+  const { isMonophyletic, color } = checkMonophyletic(branchNode);
   return isMonophyletic ? color : SYSTEM_TREE_COLORS.defaultColor;
 }
 
@@ -181,8 +188,8 @@ export function getBaseNodeColor(nodeData, monophyleticEnabled) {
   }
 
   // Leaf nodes ALWAYS get their taxa color
-  if (!nodeData.children || nodeData.children.length === 0) {
-    const name = nodeData.data?.name || nodeData.name;
+  if (isLeafNode(nodeData)) {
+    const name = getNodeName(nodeData);
     const color = getEffectiveTaxonColor(name);
     return color || SYSTEM_TREE_COLORS.defaultColor;
   }
@@ -194,4 +201,35 @@ export function getBaseNodeColor(nodeData, monophyleticEnabled) {
 
   const { isMonophyletic, color } = checkMonophyletic(nodeData);
   return isMonophyletic ? color : SYSTEM_TREE_COLORS.defaultColor;
+}
+
+function getBranchNode(linkData) {
+  if (!linkData) return null;
+  return linkData;
+}
+
+function isLeafNode(node) {
+  if (typeof node?.isLeaf === 'boolean') return node.isLeaf;
+  return !node?.children || node.children.length === 0;
+}
+
+function getNodeName(node) {
+  return (
+    node?.name ||
+    node?.text ||
+    node?.targetName ||
+    ''
+  );
+}
+
+function getLeafNamesFromSplitIndices(node) {
+  const splitIndices = getSplitIndices(node);
+  if (!Array.isArray(splitIndices) || splitIndices.length === 0) return [];
+
+  const sortedLeaves = useAppStore.getState()?.movieData?.sorted_leaves;
+  if (!Array.isArray(sortedLeaves) || sortedLeaves.length === 0) return [];
+
+  return splitIndices
+    .map((index) => sortedLeaves[index])
+    .filter(Boolean);
 }

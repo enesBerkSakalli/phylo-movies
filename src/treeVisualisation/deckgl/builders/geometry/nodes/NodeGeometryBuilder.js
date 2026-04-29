@@ -43,7 +43,7 @@ export class NodeGeometryBuilder {
 
     // Assign fixed radii: leaves same size, internal smaller
     nodes.forEach(node => {
-      const nodeKey = getNodeKey(node);
+      const nodeKey = getNodeKey({ split_indices: node.data?.split_indices });
       if (!nodeKey) return;
       const isLeaf = !node.children;
       const radiusPx = isLeaf ? baseLeafPx : internalPx;

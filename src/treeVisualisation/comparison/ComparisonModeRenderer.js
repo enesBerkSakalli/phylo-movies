@@ -70,7 +70,7 @@ const computeVisualRadius = (layerData, center = [0, 0], labelSizePx = 0) => {
   if (labelSizePx > 0 && Array.isArray(layerData.labels) && layerData.labels.length > 0) {
     let longestLen = 0;
     for (const l of layerData.labels) {
-      const len = (l.text ?? l.data?.name ?? '').length;
+      const len = (l.text ?? l.name ?? '').length;
       if (len > longestLen) longestLen = len;
     }
     const estimatedTextWidth = longestLen * labelSizePx * 0.6;

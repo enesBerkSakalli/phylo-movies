@@ -4,16 +4,6 @@ import { SYSTEM_TREE_COLORS } from '../../../../../constants/TreeColors.js';
 
 
 export function toColorManagerNode(node) {
-  if (node?.leaf) {
-    return node.leaf;
-  }
-
-  // If the node has an originalNode reference (from NodeConverter), use that
-  if (node?.originalNode) {
-    return node.originalNode;
-  }
-
-  // Fallback for direct D3 hierarchy nodes
   return node;
 }
 

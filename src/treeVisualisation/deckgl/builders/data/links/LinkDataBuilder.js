@@ -34,13 +34,17 @@ export class LinkDataBuilder {
 
     const linkData = this._extractLinkCoordinates(link);
     const linkPath = this.geometryBuilder.createLinkPath(linkData);
-    const linkKey = getLinkKey(link);
-    const sourceId = getNodeKey(link.source);
-    const targetId = getNodeKey(link.target);
+    const targetData = link.target.data || {};
+    const sourceData = link.source.data || {};
+    const linkKey = getLinkKey({ split_indices: targetData.split_indices });
+    const sourceId = getNodeKey({ split_indices: sourceData.split_indices });
+    const targetId = getNodeKey({ split_indices: targetData.split_indices });
     if (!linkKey || !sourceId || !targetId) {
       console.warn('[LinkDataBuilder] Skipping link without split_indices:', link?.target?.data?.name);
       return null;
     }
+
+    const targetIsLeaf = !link.target.children || link.target.children.length === 0;
 
     return {
       id: linkKey,
@@ -48,11 +52,16 @@ export class LinkDataBuilder {
       sourcePosition: [link.source.x, link.source.y, 0],
       targetPosition: [link.target.x, link.target.y, 0],
       path: linkPath,
-      source: link.source,
-      target: link.target,
+      name: targetData.name || '',
+      targetName: targetData.name || '',
+      isLeaf: targetIsLeaf,
+      isInternal: !targetIsLeaf,
+      split_indices: targetData.split_indices,
       // Stable IDs for endpoints to enable subtree-aware interpolation
       sourceId,
       targetId,
+      sourceSplitIndices: sourceData.split_indices,
+      targetSplitIndices: targetData.split_indices,
       polarData: this._extractPolarData(link)
     };
   }

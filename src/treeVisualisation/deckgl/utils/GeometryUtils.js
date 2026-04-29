@@ -23,9 +23,7 @@ export function getNodeHistoryZOffset(cached, node) {
  * @returns {number} The Z offset to apply
  */
 export function getLabelHistoryZOffset(cached, label) {
-  // Labels often wrap the actual node data in a 'leaf' property
-  const node = label?.leaf || label;
-  return cached?.colorManager?.isNodeHistorySubtree?.(node) ? HISTORY_LABEL_Z_OFFSET : 0;
+  return cached?.colorManager?.isNodeHistorySubtree?.(label) ? HISTORY_LABEL_Z_OFFSET : 0;
 }
 
 

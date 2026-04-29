@@ -7,6 +7,7 @@ import {
   splitsEqual,
   toSplitSet,
   getSplitIndices,
+  getLinkSplitIndices,
   isSubsetOfAny
 } from '../../utils/splitMatching.js';
 
@@ -14,13 +15,14 @@ export { splitsEqual, toSplitSet };
 
 /**
  * Check if branch matches current pivot edge
- * @param {Object} linkData - D3 link data
+ * @param {Object} linkData - Normalized link data
  * @param {Set<number>} pivotEdge - Pivot edge Set
  * @returns {boolean} True if this is the pivot edge
  */
 export function isLinkPivotEdge(linkData, pivotEdge) {
-  if (!pivotEdge || !linkData?.target?.data?.split_indices) return false;
-  return splitsEqual(linkData.target.data.split_indices, pivotEdge);
+  const splits = getLinkSplitIndices(linkData);
+  if (!pivotEdge || !splits) return false;
+  return splitsEqual(splits, pivotEdge);
 }
 
 /**
@@ -56,6 +58,15 @@ export function nodeOrParentMatchesPivotEdge(nodeData, pivotEdge) {
       }
     }
   }
+
+  if (Array.isArray(nodeData?.child_split_indices) && nodeData.child_split_indices.length > 0) {
+    for (const childSplits of nodeData.child_split_indices) {
+      if (childSplits && splitsEqual(childSplits, pivotEdge)) {
+        return true;
+      }
+    }
+  }
+
   return false;
 }
 
@@ -80,12 +91,12 @@ export function nodeOrParentMatchesAnyEdge(nodeData, edgeSets) {
 
 /**
  * Check if a branch is downstream of any pivot edge
- * @param {Object} linkData - D3 link data
+ * @param {Object} linkData - Normalized link data
  * @param {Array<Set<number>>} pivotEdges - Array of pivot edge Sets
  * @returns {boolean} True if downstream
  */
 export function isLinkDownstreamOfChangeEdge(linkData, pivotEdges) {
-  return isSubsetOfAny(linkData?.target, pivotEdges);
+  return isSubsetOfAny(linkData, pivotEdges);
 }
 
 /**

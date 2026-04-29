@@ -19,7 +19,7 @@ describe('Connector Integration', function () {
       isLeaf: true,
       name: 'CommonLeaf',
       position: [-150, 0, 0], // East relative to center (-200)
-      node: { originalNode: { id: 'LeafL', depth: 3, parent: { depth: 2, parent: { depth: 1, parent: { depth: 0 } } } } }
+      node: { id: 'LeafL', depth: 3, parent: { depth: 2, parent: { depth: 1, parent: { depth: 0 } } } }
     });
 
     // Right Tree: Root at 200, Leaf at 150 (Radius 50)
@@ -29,7 +29,7 @@ describe('Connector Integration', function () {
       isLeaf: true,
       name: 'CommonLeaf',
       position: [150, 0, 0], // West relative to center (200)
-      node: { originalNode: { id: 'LeafR', depth: 3 } }
+      node: { id: 'LeafR', depth: 3 }
     });
 
     const latticeSolutions = {'root': []}; // Mock

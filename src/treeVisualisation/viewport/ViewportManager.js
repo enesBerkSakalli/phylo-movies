@@ -118,7 +118,7 @@ export class ViewportManager {
   // ==========================================================================
 
   getSafeAreaPadding() {
-    return calculateSafeAreaPadding(this.controller.webglContainer?.node?.());
+    return calculateSafeAreaPadding(this.controller.webglContainer);
   }
 
   _calculateDensityPadding(nodes) {
@@ -144,7 +144,7 @@ export class ViewportManager {
     const viewport = this.controller.deckContext.getPrimaryViewport?.();
     if (!viewport) return;
 
-    const containerNode = this.controller.webglContainer?.node?.();
+    const containerNode = this.controller.webglContainer;
     if (!containerNode) return;
 
     const containerRect = containerNode.getBoundingClientRect();

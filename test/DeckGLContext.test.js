@@ -1,6 +1,20 @@
+// @vitest-environment jsdom
+
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { DeckGLContext } from '../src/treeVisualisation/deckgl/context/DeckGLContext.js';
 import { VIEW_IDS } from '../src/treeVisualisation/deckgl/context/viewConstants.js';
+
+vi.mock('@deck.gl/core', async () => {
+  const actual = await vi.importActual('@deck.gl/core');
+  return {
+    ...actual,
+    Deck: vi.fn().mockImplementation(() => ({
+      setProps: vi.fn(),
+      finalize: vi.fn(),
+      redraw: vi.fn(),
+    })),
+  };
+});
 
 describe('DeckGLContext view state handling', () => {
   beforeEach(() => {
@@ -40,5 +54,17 @@ describe('DeckGLContext view state handling', () => {
 
     expect(context.viewStates[VIEW_IDS.ORBIT].zoom).toBe(3);
     expect(context.viewStates[VIEW_IDS.ORTHO].zoom).toBe(0);
+  });
+
+  it('initializes against a native HTMLElement container', () => {
+    const container = document.createElement('div');
+    const oldChild = document.createElement('span');
+    container.appendChild(oldChild);
+
+    const context = new DeckGLContext(container);
+    context.initialize();
+
+    expect(container.contains(oldChild)).toBe(false);
+    expect(container.querySelector('canvas')).toBe(context.canvas);
   });
 });

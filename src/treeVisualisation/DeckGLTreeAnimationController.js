@@ -12,7 +12,6 @@ import { TreeNodeInteractionHandler } from './interaction/TreeNodeInteractionHan
 import { handleDragStart, handleDrag, handleDragEnd, handleContainerResize } from './interaction/InteractionHandlers.js';
 import { ViewportManager } from './viewport/ViewportManager.js';
 import { getClipboardLayers } from './utils/ClipboardUtils.js';
-import * as d3 from 'd3';
 
 export class DeckGLTreeAnimationController extends WebGLTreeAnimationController {
 
@@ -203,10 +202,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     // If we are already mounted to the SAME container, do nothing.
     // If we are mounted to a DIFFERENT container, unmount first (though React cleanup should have handled this).
     if (this.deckContext) {
-      // Check if webglContainer exists first to avoid crash if internal state is weird
-      const existingNode = this.webglContainer && typeof this.webglContainer.node === 'function'
-        ? this.webglContainer.node()
-        : null;
+      const existingNode = this.webglContainer || null;
 
       if (existingNode === containerElement) {
         return;
@@ -215,11 +211,10 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       this.unmount();
     }
 
-    // Bridge D3 selection (if used internally)
-    this.webglContainer = d3.select(containerElement);
+    this.webglContainer = containerElement;
 
     // Create DeckGLContext attached to this container
-    this.deckContext = new DeckGLContext(this.webglContainer);
+    this.deckContext = new DeckGLContext(containerElement);
     this.deckContext.initialize();
 
     this._configureDeckContextCallbacks();

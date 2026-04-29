@@ -47,13 +47,8 @@ describe('Adaptive Visual Scaling', () => {
         densityScale: 1.0,
         metricScale: 0.5 // Simulated collapsed tree (50% scale)
       };
-      // Mock link with data structure expected by splitMatching.js
-      // D3 links connect nodes, and attributes are often on the target node
       const link = {
-        target: {
-          data: { split_indices: [] }
-        },
-        source: {}
+        split_indices: []
       };
 
       // Base width is 2.0
@@ -68,7 +63,7 @@ describe('Adaptive Visual Scaling', () => {
         colorManager: mockColorManager,
         metricScale: 0.5
       };
-      const link = { target: { data: { split_indices: [] } } };
+      const link = { split_indices: [] };
       const width = getLinkWidth(link, cached, customHelpers);
       // Base 4.0 * 0.5 = 2.0
       expect(width).toBeCloseTo(2.0);
@@ -76,14 +71,14 @@ describe('Adaptive Visual Scaling', () => {
 
     it('should use default metricScale of 1.0 if missing', () => {
       const cached = { colorManager: mockColorManager }; // No metricScale
-      const link = { target: { data: { split_indices: [] } } };
+      const link = { split_indices: [] };
       const width = getLinkWidth(link, cached, helpers);
       expect(width).toBeCloseTo(2.0);
     });
 
     it('should scale fallback width when no color manager is available', () => {
       const cached = { metricScale: 0.5 };
-      const link = { target: { data: { split_indices: [] } } };
+      const link = { split_indices: [] };
       const width = getLinkWidth(link, cached, helpers);
       expect(width).toBeCloseTo(1.0);
     });
@@ -97,7 +92,7 @@ describe('Adaptive Visual Scaling', () => {
         upcomingChangesEnabled: true,
         metricScale: 0.5
       };
-      const link = { target: { data: { split_indices: [] } } };
+      const link = { split_indices: [] };
       const width = getLinkOutlineWidth(link, cached, helpers);
       expect(width).toBeCloseTo(5.0);
     });

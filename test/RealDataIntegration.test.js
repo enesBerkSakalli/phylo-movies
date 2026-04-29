@@ -83,7 +83,7 @@ describe('Real Data Integration (test/data/ostrich_bug_response.json)', () => {
                 const info = {
                     position: [node.x, node.y, 0],
                     isLeaf: !node.children,
-                    node: { originalNode: node },
+                    node,
                     name: node.data.name || ""
                 };
 

@@ -40,7 +40,7 @@ export const getBundleAncestor = (node, targetDepth = 2) => {
 
 export const chooseBundlePoint = (connections, fallbackNode, center, radius, isLeft) => {
   const nodes = connections
-    .map(c => (isLeft ? c.sourceNode : c.targetNode)?.originalNode || (isLeft ? c.sourceNode : c.targetNode))
+    .map(c => (isLeft ? c.sourceNode : c.targetNode))
     .filter(Boolean);
   const lca = findLowestCommonAncestor(nodes);
 

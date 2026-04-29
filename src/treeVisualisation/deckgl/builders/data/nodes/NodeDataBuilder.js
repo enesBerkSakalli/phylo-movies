@@ -33,30 +33,39 @@ export class NodeDataBuilder {
       return null;
     }
 
-    const nodeKey = getNodeKey(node);
+    const splitIndices = node.data?.split_indices;
+    const nodeKey = getNodeKey({ split_indices: splitIndices });
     if (!nodeKey) {
       console.warn('[NodeDataBuilder] Skipping node without split_indices:', node?.data?.name);
       return null;
     }
     const dotSize = nodeDotSizes?.get(nodeKey) || 2;
 
+    const isLeaf = !node.children || node.children.length === 0;
+
     return {
       id: nodeKey,
       position: [node.x, node.y, 0],
       dotSize: dotSize,
-      isLeaf: !node.children,
-      isInternal: !!node.children,
-      data: node.data,
+      isLeaf,
+      isInternal: !isLeaf,
+      name: node.data.name || '',
       depth: node.depth,
       height: node.height,
       angle: node.rotatedAngle != null ? node.rotatedAngle : (node.angle || 0),
       polarPosition: node.radius,
       // Pass split_indices for movement analysis matching
-      split_indices: node.data.split_indices,
-      // Store reference to original node for ColorManager access
-      originalNode: node
+      split_indices: splitIndices,
+      child_split_indices: getChildSplitIndices(node)
     };
   }
 
 
+}
+
+function getChildSplitIndices(node) {
+  if (!Array.isArray(node?.children)) return [];
+  return node.children
+    .map((child) => child?.data?.split_indices)
+    .filter(Array.isArray);
 }

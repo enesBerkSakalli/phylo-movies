@@ -1,3 +1,5 @@
+import { getSplitIndices } from '../utils/splitMatching.js';
+
 /**
  * Projections.js
  *
@@ -24,8 +26,9 @@ export function projectNodesToScreen(nodes, viewport, containerRect) {
   const positions = {};
 
   nodes.forEach((node) => {
-    const key = Array.isArray(node.data?.split_indices)
-      ? node.data.split_indices.join('-')
+    const splitIndices = getSplitIndices(node);
+    const key = Array.isArray(splitIndices)
+      ? splitIndices.join('-')
       : null;
     if (!key) return;
     if (!node.position || !Array.isArray(node.position)) return;
@@ -38,7 +41,7 @@ export function projectNodesToScreen(nodes, viewport, containerRect) {
       y: py + containerRect.top,
       width: 0,
       height: 0,
-      isLeaf: !node.children
+      isLeaf: typeof node.isLeaf === 'boolean' ? node.isLeaf : !node.children
     };
   });
 
