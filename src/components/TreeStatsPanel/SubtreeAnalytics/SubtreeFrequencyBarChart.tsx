@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useAppStore } from '@/state/phyloStore/store.js';
-import { calculateSubtreeFrequencies, getTopSubtrees, formatSubtreeLabel } from '@/domain/tree/subtreeFrequencyUtils';
+import { calculateSprMoverFrequencies, getTopSprMovers, formatSubtreeLabel } from '@/domain/tree/sprAnalyticsUtils';
 import { SYSTEM_TREE_COLORS } from '@/constants/TreeColors';
 import type { AppStoreState } from '@/types/store';
 import { Badge } from '@/components/ui/badge';
@@ -23,12 +23,12 @@ const selectSortedLeaves = (s: AppStoreState) => s.movieData?.sorted_leaves || E
 /**
  * SubtreeFrequencyBarChart
  *
- * Vertical list showing top N most frequent SPR event subtrees with inline frequency bars.
+ * Vertical list showing top N most frequent moving subtrees with inline frequency bars.
  * Uses tree_pair_solutions.jumping_subtree_solutions as the data source.
  *
  * TUFTE PRINCIPLES:
  * - Zero Baseline: All bars scale from 0 (implicit in Progress component)
- * - Linear Scale: Bar width = (count / maxCount) * 100%, ensuring proportional ink
+ * - Linear Scale: Bar width = percentage of mover occurrences, ensuring proportional ink
  * - No Visual Inflation: Progress component uses semantic height; no minimum bar height distorts small values
  */
 export const SubtreeFrequencyBarChart = () => {
@@ -38,8 +38,8 @@ export const SubtreeFrequencyBarChart = () => {
     const data = useMemo(() => {
         if (!pairSolutions || Object.keys(pairSolutions).length === 0) return [];
 
-        const allFreqs = calculateSubtreeFrequencies(pairSolutions);
-        const topSubtrees = getTopSubtrees(allFreqs, 10); // Top 10
+        const allFreqs = calculateSprMoverFrequencies(pairSolutions);
+        const topSubtrees = getTopSprMovers(allFreqs, 10);
 
         return topSubtrees.map((item: any, idx: number) => ({
             rank: idx + 1,
@@ -50,15 +50,11 @@ export const SubtreeFrequencyBarChart = () => {
         }));
     }, [pairSolutions, sortedLeaves]);
 
-    const maxCount = useMemo(() => {
-        return data.length > 0 ? Math.max(...data.map(d => d.count)) : 1;
-    }, [data]);
-
     if (!data || data.length === 0) {
         return (
             <div className="flex items-center justify-center h-full p-4">
                 <span className="text-sm text-muted-foreground italic">
-                    No SPR event metrics available
+                    No SPR mover metrics available
                 </span>
             </div>
         );
@@ -68,14 +64,14 @@ export const SubtreeFrequencyBarChart = () => {
         <div
             className="w-full h-full overflow-auto p-2 space-y-2"
             role="list"
-            aria-label="SPR Event Frequency Ranking"
+            aria-label="SPR mover occurrence ranking"
         >
             {data.map((item) => (
                 <Card
                     key={item.rank}
                     className="border-border/40 bg-muted/5 hover:bg-muted/20 transition-colors py-3 gap-2 rounded-lg shadow-none"
                     role="listitem"
-                    aria-label={`Rank ${item.rank}: ${item.subtree}, ${item.count} rearrangement events`}
+                    aria-label={`Rank ${item.rank}: ${item.subtree}, ${item.count} mover occurrences`}
                 >
                     <CardContent className="px-3 py-0 space-y-2">
                         {/* Header row with rank, count badge, and percentage */}
@@ -85,7 +81,7 @@ export const SubtreeFrequencyBarChart = () => {
                                     #{item.rank}
                                 </Label>
                                 <Badge variant="secondary" className="font-mono text-xs tabular-nums">
-                                    {item.count} events
+                                    {item.count} occurrences
                                 </Badge>
                                 <span className="text-2xs text-muted-foreground">
                                     ({item.taxaCount} taxa)
@@ -101,8 +97,8 @@ export const SubtreeFrequencyBarChart = () => {
                             <TooltipTrigger asChild>
                                 <div>
                                     <Progress
-                                        value={(item.count / maxCount) * 100}
-                                        aria-label={`Frequency: ${item.percentage.toFixed(1)}%`}
+                                        value={item.percentage}
+                                        aria-label={`Share of mover occurrences: ${item.percentage.toFixed(1)}%`}
                                         className="h-2 bg-secondary/50"
                                         style={{
                                             // Override indicator color via CSS variable
@@ -113,8 +109,8 @@ export const SubtreeFrequencyBarChart = () => {
                             </TooltipTrigger>
                             <TooltipContent side="top" className="text-xs tabular-nums">
                                 <div className="flex flex-col gap-1">
-                                    <span>Rearrangements: {item.count}</span>
-                                    <span>Frequency: {item.percentage.toFixed(2)}%</span>
+                                    <span>Mover occurrences: {item.count}</span>
+                                    <span>Share: {item.percentage.toFixed(2)}%</span>
                                 </div>
                             </TooltipContent>
                         </Tooltip>

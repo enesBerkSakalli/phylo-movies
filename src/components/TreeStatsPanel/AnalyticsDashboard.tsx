@@ -2,13 +2,23 @@ import React, { useMemo } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { BarChart, Activity, Info, ListTree, Hash, Zap, BookOpen, ChevronDown, Download } from 'lucide-react';
+import { BarChart, Activity, ListTree, BookOpen, ChevronDown, Download } from 'lucide-react';
 import { SubtreeFrequencyBarChart } from './SubtreeAnalytics/SubtreeFrequencyBarChart';
+import { SprFrequencyTable } from './SubtreeAnalytics/SprFrequencyTable';
+import { SprPairActivityTable } from './SubtreeAnalytics/SprPairActivityTable';
+import { SprSummaryMetrics } from './SubtreeAnalytics/SprSummaryMetrics';
+import {
+    createSprFrequencyCsv,
+    createSprFrequencyExportName,
+    downloadCsvFile,
+} from './SubtreeAnalytics/sprFrequencyCsv';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAppStore } from '@/state/phyloStore/store.js';
-import { calculateSubtreeFrequencies, formatSubtreeLabel } from '@/domain/tree/subtreeFrequencyUtils';
-import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+    calculateSprDatasetSummary,
+    calculateSprMoverFrequencies,
+    calculateSprPairActivity,
+} from '@/domain/tree/sprAnalyticsUtils';
 import { Button } from '@/components/ui/button';
 import { AppStoreState } from '@/types/store';
 import { SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
@@ -20,98 +30,84 @@ const EMPTY_ARRAY: any[] = [];
 const selectPairSolutions = (s: AppStoreState) => s.pairSolutions;
 const selectSortedLeaves = (s: AppStoreState) => s.movieData?.sorted_leaves || EMPTY_ARRAY;
 const selectFileName = (s: AppStoreState) => s.fileName || s.movieData?.file_name || 'dataset';
+const selectDistanceRfd = (s: AppStoreState) => s.distanceRfd || EMPTY_ARRAY;
+const selectDistanceWeightedRfd = (s: AppStoreState) => s.distanceWeightedRfd || EMPTY_ARRAY;
+const selectPairInterpolationRanges = (s: AppStoreState) => s.pairInterpolationRanges || EMPTY_ARRAY;
 
-const escapeCsvValue = (value: unknown): string => {
-    const str = value === null || value === undefined ? '' : String(value);
-    if (/[",\n\r]/.test(str)) {
-        return `"${str.replace(/"/g, '""')}"`;
-    }
-    return str;
-};
+interface SprDatasetSummary {
+    pairCount: number;
+    activePairCount: number;
+    transitionEventCount: number;
+    moverOccurrenceCount: number;
+    uniqueMovingSubtreeCount: number;
+    singletonMoverOccurrences: number;
+    cladeMoverOccurrences: number;
+    maxPairMoverOccurrenceCount: number;
+    topMoverSharePercentage: number;
+}
 
 export const AnalyticsDashboard = () => {
     const pairSolutions = useAppStore(selectPairSolutions);
     const sortedLeaves = useAppStore(selectSortedLeaves);
     const fileName = useAppStore(selectFileName);
+    const robinsonFouldsDistances = useAppStore(selectDistanceRfd);
+    const weightedRobinsonFouldsDistances = useAppStore(selectDistanceWeightedRfd);
+    const pairInterpolationRanges = useAppStore(selectPairInterpolationRanges);
+
+    const sprOptions = useMemo(() => ({
+        robinsonFouldsDistances,
+        weightedRobinsonFouldsDistances,
+        pairInterpolationRanges,
+    }), [robinsonFouldsDistances, weightedRobinsonFouldsDistances, pairInterpolationRanges]);
 
     const allFreqs = useMemo(() => {
         if (!pairSolutions || Object.keys(pairSolutions).length === 0) return [];
-        return calculateSubtreeFrequencies(pairSolutions);
+        return calculateSprMoverFrequencies(pairSolutions);
     }, [pairSolutions]);
 
-    const totalSprEvents = useMemo(() => {
-        return allFreqs.reduce((sum: number, item: any) => sum + item.count, 0);
-    }, [allFreqs]);
+    const sprSummary = useMemo<SprDatasetSummary>(() => {
+        return calculateSprDatasetSummary(pairSolutions, sprOptions) as SprDatasetSummary;
+    }, [pairSolutions, sprOptions]);
+
+    const pairActivityRows = useMemo(() => {
+        return calculateSprPairActivity(pairSolutions, sprOptions);
+    }, [pairSolutions, sprOptions]);
+
+    const singletonMoverPercentage = sprSummary.moverOccurrenceCount > 0
+        ? (sprSummary.singletonMoverOccurrences / sprSummary.moverOccurrenceCount) * 100
+        : 0;
 
     const csvContent = useMemo(() => {
-        const headers = [
-            'Rank',
-            'Subtree',
-            'Taxa Count',
-            'SPR Event Count',
-            '% of Total',
-            'Split Indices',
-            'Signature'
-        ];
-
-        const rows = allFreqs.map((item, idx) => {
-            const label = formatSubtreeLabel(item.splitIndices, sortedLeaves);
-            return [
-                idx + 1,
-                label,
-                item.splitIndices.length,
-                item.count,
-                item.percentage.toFixed(6),
-                item.splitIndices.join(' '),
-                item.signature
-            ];
-        });
-
-        return [headers, ...rows]
-            .map(row => row.map(escapeCsvValue).join(','))
-            .join('\n');
+        return createSprFrequencyCsv(allFreqs, sortedLeaves);
     }, [allFreqs, sortedLeaves]);
 
     const handleExportCsv = () => {
         if (!csvContent) return;
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        const dateStamp = new Date().toISOString().slice(0, 10);
-        const baseName = (fileName || 'dataset')
-            .replace(/\.[^/.]+$/, '')
-            .replace(/[^a-zA-Z0-9_-]+/g, '-')
-            .replace(/-+/g, '-')
-            .replace(/^-+|-+$/g, '') || 'dataset';
-        link.href = url;
-        link.download = `${baseName}-${dateStamp}.csv`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        downloadCsvFile(csvContent, createSprFrequencyExportName(fileName));
     };
 
     return (
         <Dialog>
             <SidebarMenuItem>
                 <DialogTrigger asChild>
-                    <SidebarMenuButton tooltip="Open SPR Event Analytics" aria-label="Open SPR Event Analytics">
+                    <SidebarMenuButton tooltip="Open SPR Analytics" aria-label="Open SPR Analytics">
                         <Activity className="text-primary" />
-                        <span>SPR Event Analytics</span>
+                        <span>SPR Analytics</span>
                     </SidebarMenuButton>
                 </DialogTrigger>
             </SidebarMenuItem>
             <DialogContent className="sm:max-w-4xl max-h-[85vh] h-full flex flex-col overflow-hidden">
                 <DialogHeader className="shrink-0 pr-10 pb-4 border-b border-border/20">
-                    <DialogTitle className="text-xl font-bold tracking-tight">SPR Event Analytics</DialogTitle>
+                    <DialogTitle className="text-xl font-bold tracking-tight">SPR Analytics</DialogTitle>
                     <DialogDescription className="text-sm text-muted-foreground/80">
-                        Identify regions where subtrees undergo frequent SPR events across the transition path.
+                        Identify subtrees with frequent moving-subtree occurrences across backend SPR solutions.
                     </DialogDescription>
                 </DialogHeader>
 
                 <Tabs defaultValue="overview" className="flex flex-col flex-1 min-h-0 pt-4 overflow-hidden">
                     <TabsList className="w-full justify-start mb-4 shrink-0 bg-muted/30 p-1">
                         <TabsTrigger value="overview" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">Overview</TabsTrigger>
+                        <TabsTrigger value="pairs" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">Pair Activity</TabsTrigger>
                         <TabsTrigger value="details" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">Detailed Stats</TabsTrigger>
                     </TabsList>
 
@@ -124,60 +120,27 @@ export const AnalyticsDashboard = () => {
                                         What is an SPR event?
                                     </div>
                                     <p className="text-2xs leading-relaxed text-muted-foreground">
-                                        A <strong>Subtree Prune and Regraft (SPR)</strong> event occurs when a subtree's logical attachment point changes between neighboring anchor trees in the phylogeny. This is a fundamental topological rearrangement. Phylo-Movies tracks these SPR events to identify which groups of taxa are the most mobile across the transition path.
+                                        A <strong>Subtree Prune and Regraft (SPR)</strong> event occurs when a subtree's logical attachment point changes between neighboring anchor trees in the phylogeny. Counts shown here are flattened moving-subtree occurrences from backend SPR solutions, not unique transition-frame counts.
                                     </p>
                                 </Card>
 
-                                <div className="grid grid-cols-3 gap-3 mb-4">
-                                    <div className="bg-muted/10 p-3 flex flex-col rounded-md">
-                                        <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-wider text-muted-foreground/80 mb-2">
-                                            <Hash className="size-3 text-primary" />
-                                            Distinct SPR Event Subtrees
-                                        </div>
-                                        <div className="text-2xl font-black tracking-tighter tabular-nums">{allFreqs.length}</div>
-                                    </div>
-                                    <div className="bg-muted/10 p-3 flex flex-col rounded-md">
-                                        <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-wider text-muted-foreground/80 mb-2">
-                                            <Zap className="size-3 text-primary" />
-                                            Total SPR Events
-                                        </div>
-                                        <div className="text-2xl font-black tracking-tighter tabular-nums">{totalSprEvents}</div>
-                                    </div>
-                                    <div className="bg-muted/10 p-3 flex flex-col rounded-md">
-                                        <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-wider text-muted-foreground/80 mb-2">
-                                            <Info className="size-3 text-primary" />
-                                            Top SPR Event %
-                                        </div>
-                                        {allFreqs[0] ? (
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <div className="text-2xl font-black tracking-tighter tabular-nums cursor-help text-primary hover:text-primary/80 transition-colors">
-                                                        {allFreqs[0].percentage.toFixed(1)}%
-                                                    </div>
-                                                </TooltipTrigger>
-                                                <TooltipContent side="top" className="text-2xs font-mono bg-popover border-border">
-                                                    <div className="space-y-1">
-                                                        <div>Full Precision:</div>
-                                                        <div className="font-bold text-primary">
-                                                            {allFreqs[0].percentage.toFixed(6)}%
-                                                        </div>
-                                                    </div>
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        ) : (
-                                            <div className="text-2xl font-black tracking-tighter tabular-nums">0%</div>
-                                        )}
-                                    </div>
-                                </div>
+                                <SprSummaryMetrics
+                                    distinctMoverCount={sprSummary.uniqueMovingSubtreeCount}
+                                    totalMoverOccurrences={sprSummary.moverOccurrenceCount}
+                                    transitionEventCount={sprSummary.transitionEventCount}
+                                    activePairCount={sprSummary.activePairCount}
+                                    singletonMoverPercentage={singletonMoverPercentage}
+                                    topMoverPercentage={sprSummary.topMoverSharePercentage}
+                                />
 
                                 <Card className="shadow-sm bg-muted/10 h-96 flex flex-col">
                                     <CardHeader className="pb-3 bg-muted/20 shrink-0">
                                         <CardTitle className="flex items-center gap-2 text-base font-bold">
                                             <BarChart className="size-4 text-primary" />
-                                            Subtrees with Most SPR Events
+                                            Subtrees with Most Mover Occurrences
                                         </CardTitle>
                                         <CardDescription className="text-xs">
-                                            Frequency distribution of the most mobile subtrees identified by the BranchArchitect engine.
+                                            Frequency distribution of the most frequently moving subtrees identified by the BranchArchitect engine.
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent className="flex-1 min-h-0 p-2">
@@ -188,15 +151,32 @@ export const AnalyticsDashboard = () => {
                         </ScrollArea>
                     </TabsContent>
 
+                    <TabsContent value="pairs" className="flex-1 min-h-0 mt-0 focus-visible:outline-none flex flex-col">
+                        <Card className="shadow-sm bg-muted/10 flex-1 flex flex-col min-h-0">
+                            <CardHeader className="pb-3 bg-muted/20 shrink-0">
+                                <CardTitle className="flex items-center gap-2 text-base font-bold">
+                                    <Activity className="size-4 text-primary" />
+                                    SPR Activity by Tree Pair
+                                </CardTitle>
+                                <CardDescription className="text-xs">
+                                    Mover occurrences, transition events, and RF context for each neighboring anchor-tree pair.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="p-0 flex-1 min-h-0 overflow-y-auto">
+                                <SprPairActivityTable rows={pairActivityRows} sortedLeaves={sortedLeaves} />
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
                     <TabsContent value="details" className="flex-1 min-h-0 mt-0 focus-visible:outline-none flex flex-col">
                         <Card className="shadow-sm bg-muted/10 flex-1 flex flex-col min-h-0">
                             <CardHeader className="pb-3 bg-muted/20 shrink-0">
                                 <CardTitle className="flex items-center gap-2 text-base font-bold">
                                     <ListTree className="size-4 text-primary" />
-                                    Complete SPR Event Frequency List
+                                    Complete Mover Occurrence List
                                 </CardTitle>
                                 <CardDescription className="text-xs flex items-center justify-between gap-2">
-                                    <span>Individual SPR event counts for every unique subtree detected across all transition microsteps.</span>
+                                    <span>Flattened moving-subtree occurrence counts from backend SPR solutions.</span>
                                     <div className="flex items-center gap-2 shrink-0">
                                         {allFreqs.length > 5 && (
                                             <span className="flex items-center gap-1 text-muted-foreground/60 shrink-0 ml-2">
@@ -219,54 +199,7 @@ export const AnalyticsDashboard = () => {
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="p-0 flex-1 min-h-0 overflow-y-auto">
-                                <table className="w-full text-xs">
-                                    <thead className="bg-muted/40 text-muted-foreground font-bold sticky top-0 z-10">
-                                                    <tr>
-                                                        <th className="px-4 py-2 text-left font-bold uppercase tracking-wider text-2xs">Rank</th>
-                                                        <th className="px-4 py-2 text-left font-bold uppercase tracking-wider text-2xs">Subtree</th>
-                                                        <th className="px-4 py-2 text-right font-bold uppercase tracking-wider text-2xs">Count</th>
-                                                        <th className="px-4 py-2 text-right font-bold uppercase tracking-wider text-2xs">% of total SPR events</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-border/10">
-                                                    {allFreqs.map((item, idx) => (
-                                                        <tr key={item.signature} className="hover:bg-primary/5 transition-colors">
-                                                            <td className="px-4 py-2 font-medium text-muted-foreground/60 tabular-nums text-right">{idx + 1}</td>
-                                                            <td className="px-4 py-2 font-semibold">
-                                                                {formatSubtreeLabel(item.splitIndices, sortedLeaves)}
-                                                                <div className="text-2xs font-normal text-muted-foreground/70 mt-1">
-                                                                    {item.splitIndices.length} taxa
-                                                                </div>
-                                                            </td>
-                                                            <td className="px-4 py-2 text-right">
-                                                                <Badge variant="secondary" className="font-mono tabular-nums">{item.count}</Badge>
-                                                            </td>
-                                                            <td className="px-4 py-2 text-right font-mono text-muted-foreground tabular-nums">
-                                                                <Tooltip>
-                                                                    <TooltipTrigger className="cursor-help hover:text-foreground transition-colors">
-                                                                        {item.percentage.toFixed(1)}%
-                                                                    </TooltipTrigger>
-                                                                    <TooltipContent side="left" className="text-2xs font-mono bg-popover border-border">
-                                                                        <div className="space-y-1">
-                                                                            <div>Full Precision:</div>
-                                                                            <div className="font-bold text-primary">
-                                                                                {item.percentage.toFixed(6)}%
-                                                                            </div>
-                                                                        </div>
-                                                                    </TooltipContent>
-                                                                </Tooltip>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                    {allFreqs.length === 0 && (
-                                                        <tr>
-                                                            <td colSpan={4} className="px-4 py-12 text-center text-muted-foreground italic">
-                                                                No SPR events detected for this dataset.
-                                                            </td>
-                                                        </tr>
-                                                    )}
-                                    </tbody>
-                                </table>
+                                <SprFrequencyTable frequencies={allFreqs} sortedLeaves={sortedLeaves} />
                             </CardContent>
                         </Card>
                     </TabsContent>
