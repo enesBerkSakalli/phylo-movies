@@ -1,5 +1,5 @@
 import { calculateRadialBundlePoint } from '../../builders/geometry/connectors/ConnectorGeometryBuilder.js';
-import { findLowestCommonAncestor } from '../../builders/geometry/connectors/CommonAncestorBuilder.js';
+import { findLowestCommonAncestorById } from '../../builders/geometry/connectors/CommonAncestorBuilder.js';
 
 export const ensureOutside = (pt, center, minRadius, depthOffset = 0) => {
   const dx = pt[0] - center[0];
@@ -31,20 +31,27 @@ export const getAngle = (nodeOrPoint, center) => {
   return Math.atan2(pt[1] - center[1], pt[0] - center[0]);
 };
 
-export const getBundleAncestor = (node, targetDepth = 2) => {
+export function getBundleAncestor(node, nodeById, targetDepth = 2) {
+  if (!(nodeById instanceof Map)) return null;
   let curr = node;
   if (!curr) return null;
-  while (curr.parent && curr.depth > targetDepth) curr = curr.parent;
+
+  while (getParentId(curr) && getDepth(curr) > targetDepth) {
+    const next = nodeById.get(getParentId(curr));
+    if (!next) break;
+    curr = next;
+  }
   return curr;
-};
+}
 
-export const chooseBundlePoint = (connections, fallbackNode, center, radius, isLeft) => {
-  const nodes = connections
-    .map(c => (isLeft ? c.sourceNode : c.targetNode))
+export const chooseBundlePoint = (connections, fallbackNode, center, radius, isLeft, nodeById = null) => {
+  const entries = connections
+    .map(c => (isLeft ? c.sourceInfo : c.targetInfo))
     .filter(Boolean);
-  const lca = findLowestCommonAncestor(nodes);
+  const lca = nodeById ? findLowestCommonAncestorById(entries, nodeById) : null;
+  const lcaPosition = getPosition(lca);
 
-  if (lca && lca.x !== undefined && lca.y !== undefined) {
+  if (lcaPosition) {
     // Hierarchical layering:
     // Root/Shallow nodes -> Further out
     // Deep/Leaf nodes -> Closer in
@@ -53,7 +60,7 @@ export const chooseBundlePoint = (connections, fallbackNode, center, radius, isL
 
     // Default max depth guess if not provided
     const maxDepth = 15;
-    const depth = lca.depth !== undefined ? lca.depth : 5;
+    const depth = getDepth(lca, 5);
 
     // Invert depth: Lower depth (Root) = 0 => High Offset
     // Higher depth (Leaf) = maxDepth => Low Offset
@@ -61,13 +68,29 @@ export const chooseBundlePoint = (connections, fallbackNode, center, radius, isL
     const spacingPerLevel = 5; // Distance between hierarchical lanes
     const depthOffset = depthFactor * spacingPerLevel;
 
-    return ensureOutside([lca.x + center[0], lca.y + center[1], 0], center, radius || 0, depthOffset);
+    return ensureOutside(lcaPosition, center, radius || 0, depthOffset);
   }
 
-  if (fallbackNode && fallbackNode.x !== undefined && fallbackNode.y !== undefined) {
-    return ensureOutside([fallbackNode.x + center[0], fallbackNode.y + center[1], 0], center, radius || 0, 20);
+  const fallbackPosition = getPosition(fallbackNode);
+  if (fallbackPosition) {
+    return ensureOutside(fallbackPosition, center, radius || 0, 20);
   }
 
   const points = connections.map(c => (isLeft ? c.source : c.target));
   return ensureOutside(calculateRadialBundlePoint(points, center), center, radius || 0, 10);
 };
+
+function getPosition(entry) {
+  if (!entry) return null;
+  if (Array.isArray(entry.position)) return entry.position;
+  return null;
+}
+
+function getDepth(entry, fallback = 0) {
+  const depth = entry?.depth;
+  return Number.isFinite(depth) ? depth : fallback;
+}
+
+function getParentId(entry) {
+  return entry?.parentId ?? null;
+}

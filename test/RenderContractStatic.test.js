@@ -8,6 +8,7 @@ const scannedDirs = [
   'src/treeVisualisation/comparison',
   'src/treeVisualisation/deckgl/context',
   'src/treeVisualisation/deckgl/data/transforms',
+  'src/treeVisualisation/deckgl/builders/geometry/connectors',
   'src/treeVisualisation/deckgl/interpolation',
   'src/treeVisualisation/deckgl/layers',
   'src/treeVisualisation/spatial',
@@ -21,6 +22,9 @@ const forbiddenPatterns = [
   { name: 'legacy target data split access', pattern: /target\??\.\s*data\??\.\s*split_indices\b/ },
   { name: 'raw data split access', pattern: /data\??\.\s*split_indices\b/ },
   { name: 'raw data name access', pattern: /data\??\.\s*name\b/ },
+  { name: 'legacy connector source node wrapper', pattern: /\bsourceNode\b/ },
+  { name: 'legacy connector target node wrapper', pattern: /\btargetNode\b/ },
+  { name: 'raw hierarchy parent walk in connector code', pattern: /\.\s*parent\b/ },
 ];
 
 describe('render data contract static guard', () => {

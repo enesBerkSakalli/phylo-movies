@@ -4,7 +4,7 @@ import { calculateRadialBundlePoint, buildBundledBezierPath } from '../src/treeV
 
 describe('ConnectorGeometryBuilder', () => {
 
-  describe('calculateRadialBundlePoint', () => {
+    describe('calculateRadialBundlePoint', () => {
     it('should return treeCenter if no points are provided', () => {
       const center = [100, 100];
       const result = calculateRadialBundlePoint([], center);
@@ -33,6 +33,13 @@ describe('ConnectorGeometryBuilder', () => {
 
       expect(angle).toBeCloseTo(Math.PI / 4, 2);
       expect(radius).toBeCloseTo(120);
+    });
+
+    it('uses a deterministic vertical lane when group centroid is centered', () => {
+      const result = calculateRadialBundlePoint([[100, 0], [-100, 0]], [0, 0]);
+
+      expect(Math.abs(result[0])).toBeLessThan(1e-6);
+      expect(result[1]).toBeLessThan(0);
     });
   });
 

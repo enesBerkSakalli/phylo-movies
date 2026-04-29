@@ -21,7 +21,8 @@ export function calculateRadialBundlePoint(points, treeCenter) {
   // 2. Calculate vector from tree center to centroid
   const dx = centroid[0] - treeCenter[0];
   const dy = centroid[1] - treeCenter[1];
-  const angle = Math.atan2(dy, dx);
+  const hasDirection = Math.hypot(dx, dy) > 1e-9;
+  const angle = hasDirection ? Math.atan2(dy, dx) : -Math.PI / 2;
 
   // 3. Find the maximum radius in this group of points (relative to tree center)
   let maxRadius = 0;

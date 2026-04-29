@@ -35,6 +35,13 @@ export function calculateRightOffset(canvasWidth, viewOffset, leftRadius = 0, ri
 export function applyOffset(layerData, offsetX, offsetY) {
   layerData.nodes.forEach(node => {
     node.position = [node.position[0] + offsetX, node.position[1] + offsetY, node.position[2]];
+    if (Array.isArray(node.renderPosition)) {
+      node.renderPosition = [
+        node.renderPosition[0] + offsetX,
+        node.renderPosition[1] + offsetY,
+        node.renderPosition[2]
+      ];
+    }
   });
 
   (layerData.links || []).forEach(link => {
@@ -143,10 +150,13 @@ export function buildPositionMap(nodes, labels = []) {
       }
 
       positionMap.set(key, {
+        id: node.id,
+        parentId: node.parentId ?? null,
         position,
         isLeaf: node.isLeaf,
         node,
-        name: node.name ? String(node.name) : null
+        name: node.name ? String(node.name) : null,
+        depth: node.depth
       });
     }
   });
