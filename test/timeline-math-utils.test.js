@@ -67,7 +67,7 @@ describe('TimelineMathUtils', () => {
   });
 
   it('returns a safe empty interpolation result for empty input', () => {
-    const result = TimelineMathUtils.getInterpolationDataForProgress(0.25, [], { interpolated_trees: [] });
+    const result = TimelineMathUtils.getInterpolationDataForProgress(0.25, []);
 
     expect(result).to.deep.equal({
       fromTree: null,

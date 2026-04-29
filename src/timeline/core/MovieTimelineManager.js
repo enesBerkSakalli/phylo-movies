@@ -21,8 +21,13 @@ import { DeckTimelineRenderer } from '../renderers/DeckTimelineRenderer.js';
  * - store subscription wiring
  */
 export class MovieTimelineManager {
-    constructor(movieData, transitionIndexResolver) {
+    constructor(movieData, transitionIndexResolver, treeList) {
+        if (!Array.isArray(treeList) || treeList.length === 0) {
+            throw new Error('MovieTimelineManager requires a non-empty normalized treeList');
+        }
+
         this.movieData = movieData;
+        this.treeList = treeList;
         this.transitionResolver = transitionIndexResolver;
         this.isDestroyed = false;
         this.container = null;
@@ -33,7 +38,7 @@ export class MovieTimelineManager {
         this.timelineClock = new TimelineClock({
             segments: this.segments,
             timelineData: this.timelineData,
-            movieData: this.movieData
+            treeList: this.treeList
         });
         this.stateSynchronizer = new TimelineStateSynchronizer(this.timelineData, this.segments, useAppStore);
         this.navigationController = new TimelineNavigationController({

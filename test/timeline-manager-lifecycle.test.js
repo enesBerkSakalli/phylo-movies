@@ -108,8 +108,13 @@ describe('MovieTimelineManager lifecycle', () => {
     });
   });
 
+  it('requires an explicit normalized tree list', () => {
+    expect(() => new MovieTimelineManager(movieData, { fullTreeIndices: [] }))
+      .to.throw('MovieTimelineManager requires a non-empty normalized treeList');
+  });
+
   it('can exist before a host container is available', () => {
-    const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] });
+    const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] }, movieData.interpolated_trees);
 
     expect(manager.timeline).to.equal(null);
     expect(manager.container).to.equal(null);
@@ -120,7 +125,7 @@ describe('MovieTimelineManager lifecycle', () => {
   });
 
   it('mounts into an explicit host and unmounts cleanly', () => {
-    const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] });
+    const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] }, movieData.interpolated_trees);
     const host = makeContainer();
 
     manager.mount(host);
@@ -141,7 +146,7 @@ describe('MovieTimelineManager lifecycle', () => {
   });
 
   it('remounts into a new host without leaving stale DOM behind', () => {
-    const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] });
+    const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] }, movieData.interpolated_trees);
     const firstHost = makeContainer(640, 60);
     const secondHost = makeContainer(720, 90);
 
@@ -160,7 +165,7 @@ describe('MovieTimelineManager lifecycle', () => {
   });
 
   it('clears transient tooltip and hover state on unmount', () => {
-    const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] });
+    const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] }, movieData.interpolated_trees);
     const host = makeContainer();
 
     useAppStore.setState({
@@ -183,7 +188,7 @@ describe('MovieTimelineManager lifecycle', () => {
   });
 
   it('restores scrubber position and segment selection on remount from store state', () => {
-    const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] });
+    const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] }, movieData.interpolated_trees);
     const firstHost = makeContainer(640, 60);
     const secondHost = makeContainer(640, 60);
 
@@ -232,7 +237,7 @@ describe('MovieTimelineManager lifecycle', () => {
   });
 
   it('binds renderer scrub state to the scrub controller', async () => {
-    const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] });
+    const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] }, movieData.interpolated_trees);
     const host = makeContainer();
 
     manager.mount(host);
@@ -248,7 +253,7 @@ describe('MovieTimelineManager lifecycle', () => {
   });
 
   it('treats unmount after destroy as a no-op', () => {
-    const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] });
+    const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] }, movieData.interpolated_trees);
     const host = makeContainer();
 
     manager.mount(host);

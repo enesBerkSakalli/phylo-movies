@@ -32,7 +32,7 @@ function createTimelineManager(movieData) {
       segmentDurations: [3000],
       cumulativeDurations: [3000]
     },
-    movieData
+    treeList: movieData.interpolated_trees
   });
 
   return {

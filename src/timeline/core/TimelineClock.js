@@ -1,10 +1,10 @@
 import { TimelineMathUtils } from '../math/TimelineMathUtils.js';
 
 export class TimelineClock {
-  constructor({ segments, timelineData, movieData }) {
+  constructor({ segments, timelineData, treeList }) {
     this.segments = segments;
     this.timelineData = timelineData;
-    this.movieData = movieData;
+    this.treeList = Array.isArray(treeList) ? treeList : [];
   }
 
   hasTimeline() {
@@ -24,7 +24,7 @@ export class TimelineClock {
       progress,
       this.segments,
       this.timelineData,
-      this.movieData
+      this.treeList
     );
   }
 

@@ -80,7 +80,7 @@ export const createDatasetLifecycleSlice = (set, get) => ({
     const existingManager = get().movieTimelineManager;
     existingManager?.destroy();
 
-    const movieTimelineManager = new MovieTimelineManager(movieData, resolver);
+    const movieTimelineManager = new MovieTimelineManager(movieData, resolver, interpolatedTrees);
 
     set({
       movieData: {
