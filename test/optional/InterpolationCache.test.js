@@ -7,16 +7,21 @@ describe('InterpolationCache', () => {
   let cache;
   let dependencies;
   let sandbox;
+  let dimensions;
+  let branchTransformation;
 
   beforeEach(() => {
     sandbox = sinon.createSandbox();
+    dimensions = { width: 800, height: 600 };
+    branchTransformation = 'linear';
 
     dependencies = {
       calculateLayout: sandbox.stub(),
       getConsistentRadii: sandbox.stub().returns({ extensionRadius: 10, labelRadius: 20 }),
       convertTreeToLayerData: sandbox.stub().returns({ some: 'layerData' }),
-      getDimensions: sandbox.stub().returns({ width: 800, height: 600 }),
-      getBranchTransformation: sandbox.stub().returns('linear')
+      getLayoutCacheKey: sandbox.stub().callsFake((treeIndex) => (
+        `layout-${treeIndex}-${dimensions.width}-${dimensions.height}-${branchTransformation}`
+      ))
     };
 
     cache = new InterpolationCache(dependencies);
@@ -24,6 +29,11 @@ describe('InterpolationCache', () => {
 
   afterEach(() => {
     sandbox.restore();
+  });
+
+  it('requires a layout cache key provider', () => {
+    const { getLayoutCacheKey, ...missingKeyDependencies } = dependencies;
+    expect(() => new InterpolationCache(missingKeyDependencies)).to.throw('getLayoutCacheKey');
   });
 
   /* Wrapper for internal state check - removed in refactor
@@ -87,7 +97,7 @@ describe('InterpolationCache', () => {
     dependencies.calculateLayout.resetHistory();
 
     // Change dimensions
-    dependencies.getDimensions.returns({ width: 900, height: 600 });
+    dimensions = { width: 900, height: 600 };
 
     cache.getOrCacheInterpolationData(tree1, tree2, 0, 1);
 
@@ -106,7 +116,7 @@ describe('InterpolationCache', () => {
     dependencies.calculateLayout.resetHistory();
 
     // Change transformation
-    dependencies.getBranchTransformation.returns('sigmoid');
+    branchTransformation = 'sigmoid';
 
     cache.getOrCacheInterpolationData(tree1, tree2, 0, 1);
 
@@ -131,6 +141,35 @@ describe('InterpolationCache', () => {
     cache.getOrCacheInterpolationData(tree1, tree2, 0, 1);
 
     expect(dependencies.calculateLayout.called).to.be.true;
+  });
+
+  it('ignores precomputed worker data with stale layout cache keys', () => {
+    const tree1 = { id: 1 };
+    const tree2 = { id: 2 };
+    const layout1 = { layoutTree: tree1, width: 800, height: 600, layoutCacheKey: 'current-0', max_radius: 42 };
+    dependencies.getLayoutCacheKey = sandbox.stub().callsFake((treeIndex) => `current-${treeIndex}`);
+    cache = new InterpolationCache(dependencies);
+
+    cache.setPrecomputedData(0, {
+      layerData: { layoutCacheKey: 'stale-0', source: 'stale-from' }
+    });
+    cache.setPrecomputedData(1, {
+      layerData: { layoutCacheKey: 'current-1', source: 'precomputed-to' }
+    });
+    dependencies.calculateLayout.withArgs(tree1).returns(layout1);
+    dependencies.convertTreeToLayerData.withArgs(layout1).returns({
+      layoutCacheKey: 'current-0',
+      source: 'recalculated-from'
+    });
+
+    const result = cache.getOrCacheInterpolationData(tree1, tree2, 0, 1);
+
+    expect(dependencies.calculateLayout.calledOnce).to.be.true;
+    expect(dependencies.calculateLayout.firstCall.args[0]).to.equal(tree1);
+    expect(result).to.deep.equal({
+      dataFrom: { layoutCacheKey: 'current-0', source: 'recalculated-from', max_radius: 42 },
+      dataTo: { layoutCacheKey: 'current-1', source: 'precomputed-to' }
+    });
   });
 
   it('should reset cache via reset()', () => {

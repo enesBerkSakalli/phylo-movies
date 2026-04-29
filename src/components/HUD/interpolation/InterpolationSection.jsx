@@ -6,15 +6,15 @@ import { getIndexMappings } from '@/domain/indexing/IndexMapping';
 import { useAppStore } from '@/state/phyloStore/store.js';
 import {
   buildSegmentText,
+  selectActiveTreeListLength,
   selectCurrentTreeIndex,
   selectTransitionResolver,
-  selectTreeListLength,
 } from '../shared/hudShared.js';
 
 export function InterpolationSection() {
   const currentTreeIndex = useAppStore(selectCurrentTreeIndex);
   const transitionResolver = useAppStore(selectTransitionResolver);
-  const treeListLength = useAppStore(selectTreeListLength);
+  const treeListLength = useAppStore(selectActiveTreeListLength);
 
   const proxyState = useMemo(
     () => ({ currentTreeIndex, transitionResolver, treeList: { length: treeListLength } }),

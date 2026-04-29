@@ -4,6 +4,7 @@ import { createLayoutCacheKey } from '../src/treeVisualisation/utils/layoutCache
 describe('layout cache key', () => {
   const baseState = {
     treeList: [{ id: 'tree-0' }],
+    datasetVersion: 1,
     branchTransformation: 'none',
     layoutAngleDegrees: 360,
     layoutRotationDegrees: 0,
@@ -21,7 +22,7 @@ describe('layout cache key', () => {
   it('changes for each layout-affecting input', () => {
     const baseKey = createLayoutCacheKey(baseOptions);
 
-    expect(createLayoutCacheKey({ ...baseOptions, state: { ...baseState, treeList: [{ id: 'tree-0' }] } })).not.toBe(baseKey);
+    expect(createLayoutCacheKey({ ...baseOptions, state: { ...baseState, datasetVersion: 2 } })).not.toBe(baseKey);
     expect(createLayoutCacheKey({ ...baseOptions, treeIndex: 1 })).not.toBe(baseKey);
     expect(createLayoutCacheKey({ ...baseOptions, state: { ...baseState, branchTransformation: 'log' } })).not.toBe(baseKey);
     expect(createLayoutCacheKey({ ...baseOptions, width: 900 })).not.toBe(baseKey);

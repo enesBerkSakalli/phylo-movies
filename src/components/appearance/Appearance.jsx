@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAppStore } from '@/state/phyloStore/store.js';
+import { selectTreeControllers, useAppStore } from '@/state/phyloStore/store.js';
 
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -38,7 +38,6 @@ const selectDashingEnabled = (s) => s.pivotEdgeDashingEnabled;
 const selectSetDashingEnabled = (s) => s.setPivotEdgeDashingEnabled;
 const selectUpcomingChangesEnabled = (s) => s.upcomingChangesEnabled;
 const selectSetUpcomingChangesEnabled = (s) => s.setUpcomingChangesEnabled;
-const selectTreeControllers = (s) => s.treeControllers;
 const selectCameraMode = (s) => s.cameraMode;
 const selectToggleCameraMode = (s) => s.toggleCameraMode;
 

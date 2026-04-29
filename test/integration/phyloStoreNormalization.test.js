@@ -68,6 +68,8 @@ describe('phylo store dataset normalization', () => {
     const state = useAppStore.getState();
     expect(state.treeList).toBe(movieData.interpolated_trees);
     expect(state.treeMetadata).toBe(movieData.tree_metadata);
+    expect(state.leafNamesByIndex).toEqual(['taxon-a', 'taxon-b']);
+    expect(state.movieData.sorted_leaves).toBeUndefined();
     expect(state.fullTreeIndices).toEqual([0, 2]);
     expect(state.pairInterpolationRanges).toEqual([[0, 2]]);
     expect(state.treeIndexByPair).toEqual({ pair_0_2: [1] });

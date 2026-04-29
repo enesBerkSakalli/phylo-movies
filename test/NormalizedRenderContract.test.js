@@ -21,9 +21,7 @@ describe('normalized render contract', () => {
   beforeEach(() => {
     initialState = useAppStore.getState();
     useAppStore.setState({
-      movieData: {
-        sorted_leaves: ['Taxon_A', 'Taxon_B', 'Taxon_C'],
-      },
+      leafNamesByIndex: ['Taxon_A', 'Taxon_B', 'Taxon_C'],
       taxaGrouping: {
         mode: 'taxa',
         taxaColorMap: {

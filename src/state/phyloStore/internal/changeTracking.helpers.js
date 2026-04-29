@@ -6,19 +6,20 @@ import {
   collectUniqueEdges
 } from '../../../treeVisualisation/utils/splitMatching.js';
 import { findPreviousAnchorSequenceIndex, findNextAnchorSequenceIndex } from '../../../domain/indexing/IndexMapping.js';
+import { selectFullTreeIndices } from '../selectors/treeSelectors.js';
 
 // ============================================================================
 // SYSTEM HELPERS (Rendering, Persistence, Storage)
 // ============================================================================
 
 export function calculateChangePreviews(state) {
-  const { upcomingChangesEnabled, currentTreeIndex, pivotEdgeTracking, movieData } = state;
+  const { upcomingChangesEnabled, currentTreeIndex, pivotEdgeTracking } = state;
 
   if (!upcomingChangesEnabled) {
     return { upcoming: [], completed: [] };
   }
 
-  const anchors = movieData?.fullTreeIndices || [];
+  const anchors = selectFullTreeIndices(state);
   if (!anchors.length || !pivotEdgeTracking?.length) {
     return { upcoming: [], completed: [] };
   }
@@ -131,7 +132,7 @@ export function getSubtreeHistoryAtIndex(state, index) {
   const tracking = state.subtreeTracking;
   if (!Array.isArray(tracking) || tracking.length === 0) return [];
 
-  const anchors = state.movieData?.fullTreeIndices || state.transitionResolver?.fullTreeIndices || [];
+  const anchors = selectFullTreeIndices(state);
   if (!anchors.length) return [];
 
   const prevAnchor = findPreviousAnchorSequenceIndex(anchors, index);

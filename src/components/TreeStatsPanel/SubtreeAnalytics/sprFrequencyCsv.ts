@@ -11,7 +11,7 @@ const escapeCsvValue = (value: unknown): string => {
 
 export const createSprFrequencyCsv = (
     frequencies: SprMoverFrequency[],
-    sortedLeaves: string[]
+    leafNamesByIndex: string[]
 ): string => {
     const headers = [
         'Rank',
@@ -24,7 +24,7 @@ export const createSprFrequencyCsv = (
     ];
 
     const rows = frequencies.map((item, idx) => {
-        const label = formatSubtreeLabel(item.splitIndices, sortedLeaves);
+        const label = formatSubtreeLabel(item.splitIndices, leafNamesByIndex);
         return [
             idx + 1,
             label,

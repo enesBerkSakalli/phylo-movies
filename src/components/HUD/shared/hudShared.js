@@ -1,13 +1,18 @@
 import { getMSAFrameIndex } from '@/domain/indexing/IndexMapping';
 import { calculateWindow } from '@/domain/msa/msaWindowCalculator';
+import {
+  selectActiveTreeListLength,
+  selectCurrentTreeIndex,
+  selectTransitionResolver
+} from '@/state/phyloStore/store.js';
+
+export { selectCurrentTreeIndex, selectTransitionResolver };
+export { selectActiveTreeListLength };
 
 export const selectHasMsa = (s) => s.hasMsa;
-export const selectCurrentTreeIndex = (s) => s.currentTreeIndex;
 export const selectTimelineProgress = (s) => s.timelineProgress;
 export const selectAnimationProgress = (s) => s.animationProgress;
 export const selectPlaying = (s) => s.playing;
-export const selectTransitionResolver = (s) => s.transitionResolver;
-export const selectTreeListLength = (s) => s.treeList?.length || 0;
 export const selectMsaWindowSize = (s) => s.msaWindowSize;
 export const selectMsaStepSize = (s) => s.msaStepSize;
 export const selectMsaColumnCount = (s) => s.msaColumnCount;

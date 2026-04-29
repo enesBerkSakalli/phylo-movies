@@ -10,6 +10,7 @@
  */
 import { SYSTEM_TREE_COLORS } from '../../../constants/TreeColors.js';
 import { useAppStore } from '../../../state/phyloStore/store.js';
+import { selectLeafNamesByIndex } from '../../../state/phyloStore/selectors/treeSelectors.js';
 import { getTaxonColor } from '../../../treeColoring/utils/GroupingUtils.js';
 import { getSplitIndices } from '../../utils/splitMatching.js';
 
@@ -230,10 +231,10 @@ function getLeafNamesFromSplitIndices(node) {
   const splitIndices = getSplitIndices(node);
   if (!Array.isArray(splitIndices) || splitIndices.length === 0) return [];
 
-  const sortedLeaves = useAppStore.getState()?.movieData?.sorted_leaves;
-  if (!Array.isArray(sortedLeaves) || sortedLeaves.length === 0) return [];
+  const leafNamesByIndex = selectLeafNamesByIndex(useAppStore.getState());
+  if (!Array.isArray(leafNamesByIndex) || leafNamesByIndex.length === 0) return [];
 
   return splitIndices
-    .map((index) => sortedLeaves[index])
+    .map((index) => leafNamesByIndex[index])
     .filter(Boolean);
 }

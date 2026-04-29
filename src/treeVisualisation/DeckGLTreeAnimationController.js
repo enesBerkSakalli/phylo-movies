@@ -36,14 +36,12 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       calculateLayout: this.calculateLayout.bind(this),
       getConsistentRadii: this._getConsistentRadii.bind(this),
       convertTreeToLayerData: this.dataConverter.convertTreeToLayerData.bind(this.dataConverter),
-      getDimensions: () => ({ width: this.width, height: this.height }),
-      getBranchTransformation: () => useAppStore.getState().branchTransformation,
       getLayoutCacheKey: (treeIndex) => this._createLayoutCacheKey(treeIndex)
     });
 
     // --- WORKER INITIALIZATION ---
     this.layoutWorker = new Worker(new URL('./workers/layout.worker.js', import.meta.url), { type: 'module' });
-    this.prefetchedFrameIndices = new Set();
+    this.prefetchedLayoutCacheKeys = new Map();
     this._prefetchRequestTokens = new Map();
     this._layoutRequestGeneration = 0;
 
@@ -59,7 +57,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
         this.interpolationCache.setPrecomputedData(treeIndex, result);
       } else {
         console.warn(`[Worker] Layout failed for tree ${jobId}:`, error);
-        this.prefetchedFrameIndices.delete(treeIndex);
+        this.prefetchedLayoutCacheKeys.delete(treeIndex);
         this._prefetchRequestTokens.delete(treeIndex);
       }
     };
@@ -311,14 +309,14 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     this.layerManager = null;
     this.layoutWorker?.terminate();
     this.layoutWorker = null;
-    this.prefetchedFrameIndices?.clear();
+    this.prefetchedLayoutCacheKeys?.clear();
     this._prefetchRequestTokens?.clear();
   }
 
   resetInterpolationCaches() {
     this.interpolationCache?.reset();
     this.treeInterpolator?.resetCaches?.();
-    this.prefetchedFrameIndices?.clear();
+    this.prefetchedLayoutCacheKeys?.clear();
     this._prefetchRequestTokens?.clear();
     this._layoutRequestGeneration += 1;
   }
@@ -334,19 +332,18 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     // Bounds check
     if (!treeList || !treeList[treeIndex]) return;
 
-    if (this.prefetchedFrameIndices.has(treeIndex)) return;
-
-    this.prefetchedFrameIndices.add(treeIndex);
-
     const treeData = treeList[treeIndex];
     const { branchTransformation, layoutAngleDegrees, layoutRotationDegrees, styleConfig } = state;
     const offsets = styleConfig?.labelOffsets || { DEFAULT: 20, EXTENSION: 5 };
 
     // Ensure uniform scaling is initialized before dispatching to worker
     this.initializeUniformScaling(branchTransformation);
+    const layoutCacheKey = this._createLayoutCacheKey(treeIndex, state);
+    if (this.prefetchedLayoutCacheKeys.get(treeIndex) === layoutCacheKey) return;
+
+    this.prefetchedLayoutCacheKeys.set(treeIndex, layoutCacheKey);
     const requestToken = this._createLayoutRequestToken(treeIndex, state);
     this._prefetchRequestTokens.set(treeIndex, requestToken);
-    const layoutCacheKey = this._createLayoutCacheKey(treeIndex, state);
 
     const payload = {
       jobId: String(treeIndex),

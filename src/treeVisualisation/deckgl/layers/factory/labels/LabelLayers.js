@@ -2,6 +2,7 @@
  * Factory for labels layer
  */
 import { createLayer } from '../base/createLayer.js';
+import { selectLeafNamesByIndex } from '../../../../../state/phyloStore/selectors/treeSelectors.js';
 import { LAYER_CONFIGS, LAYER_ID_PREFIX } from '../../config/layerConfigs.js';
 import {
   SOURCE_LABEL_SCALE,
@@ -165,7 +166,7 @@ export function createDestinationLabelsLayer(labels, state, layerStyles) {
  */
 export function getHighlightLabelsLayerProps(labels, state, layerStyles, cached, options) {
   const { taxaColorVersion, colorVersion, fontSize, highlightColorMode } = state || {};
-  const taxaCount = state?.movieData?.sorted_leaves?.length || 0;
+  const taxaCount = selectLeafNamesByIndex(state).length;
   const {
     sizeScale = 1,
     fontWeight,
@@ -203,7 +204,7 @@ export function getHighlightLabelsLayerProps(labels, state, layerStyles, cached,
 
 export function getLabelsLayerProps(labels, state, layerStyles) {
   const { taxaColorVersion, colorVersion, fontSize, highlightColorMode } = state || {};
-  const taxaCount = state?.movieData?.sorted_leaves?.length || 0;
+  const taxaCount = selectLeafNamesByIndex(state).length;
 
   // Get cached state once for all accessors
   const cached = layerStyles.getCachedState(state);

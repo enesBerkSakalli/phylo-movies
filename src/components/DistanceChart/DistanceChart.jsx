@@ -7,7 +7,13 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { useAppStore } from '@/state/phyloStore/store.js';
+import {
+  selectCurrentTreeIndex,
+  selectFullTreeIndices,
+  selectScaleValues,
+  selectTransitionResolver,
+  useAppStore
+} from '@/state/phyloStore/store.js';
 
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 
@@ -124,14 +130,8 @@ const useTimelineData = ({
 // STORE SELECTORS
 // ==========================================================================
 const selectBarOptionValue = (s) => s.barOptionValue;
-const selectCurrentTreeIndex = (s) => s.currentTreeIndex;
-const selectTransitionResolver = (s) => s.transitionResolver;
-const selectFullTreeIndices = (s) => s.movieData?.fullTreeIndices;
 const selectDistanceRfd = (s) => s.distanceRfd;
 const selectDistanceWeightedRfd = (s) => s.distanceWeightedRfd;
-
-const EMPTY_ARRAY = [];
-const selectScaleValues = (s) => s.scaleValues || EMPTY_ARRAY;
 
 const selectGoToPosition = (s) => s.goToPosition;
 

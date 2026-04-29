@@ -1,4 +1,7 @@
-import { selectActiveTreeList } from '../../state/phyloStore/selectors/treeSelectors.js';
+import {
+  selectActiveTreeList,
+  selectFullTreeIndices
+} from '../../state/phyloStore/selectors/treeSelectors.js';
 
 const datasetIds = new WeakMap();
 let nextDatasetId = 1;
@@ -45,7 +48,12 @@ export function getDatasetCacheId(state = {}, treeList = null) {
   const resolvedTreeList = resolveTreeList(state, treeList);
   const fileName = state?.fileName || state?.movieData?.file_name || 'dataset';
   const treeCount = Array.isArray(resolvedTreeList) ? resolvedTreeList.length : 0;
-  return `${fileName}:${treeCount}:${getReferenceId(resolvedTreeList)}`;
+  const referenceId = getReferenceId(resolvedTreeList);
+  if (Number.isInteger(state?.datasetVersion)) {
+    return `${fileName}:${treeCount}:v${state.datasetVersion}:r${referenceId}`;
+  }
+
+  return `${fileName}:${treeCount}:r${referenceId}`;
 }
 
 export function createUniformScalingCacheKey({
@@ -54,7 +62,7 @@ export function createUniformScalingCacheKey({
   branchTransformation = state?.branchTransformation ?? 'none'
 } = {}) {
   const resolvedTreeList = resolveTreeList(state, treeList);
-  const fullTreeIndices = state?.transitionResolver?.fullTreeIndices || state?.movieData?.fullTreeIndices || [];
+  const fullTreeIndices = selectFullTreeIndices(state);
   return [
     `dataset=${getDatasetCacheId(state, resolvedTreeList)}`,
     `branch=${branchTransformation}`,

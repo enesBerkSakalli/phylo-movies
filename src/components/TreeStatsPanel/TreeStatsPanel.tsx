@@ -1,7 +1,16 @@
 // TreeStatsPanel.tsx - Main component for phylogenetic scale tracking and visualization
 
 import React from 'react';
-import { useAppStore } from '@/state/phyloStore/store.js';
+import {
+  selectActiveTreeList,
+  selectBranchTransformation,
+  selectCurrentTreeIndex,
+  selectFullTreeIndices,
+  selectMaxScale,
+  selectScaleList,
+  selectTransitionResolver,
+  useAppStore
+} from '@/state/phyloStore/store.js';
 import { useScaleMetrics } from './ScaleTracking/useScaleMetrics';
 import { CurrentScaleDisplay } from './ScaleTracking/CurrentScaleDisplay';
 import { BranchLengthHistogram } from './BranchLengths/BranchLengthHistogram';
@@ -9,19 +18,6 @@ import { SubtreeFrequencyList } from './SubtreeAnalytics/SubtreeFrequencyList';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronRight, BarChart3 } from 'lucide-react';
 import { SidebarMenuItem, SidebarMenuButton, SidebarMenuSub, SidebarMenuSubItem } from '@/components/ui/sidebar';
-import type { AppStoreState } from '@/types/store';
-
-// ==========================================================================
-// STORE SELECTORS
-// ==========================================================================
-const selectCurrentTreeIndex = (s: AppStoreState) => s.currentTreeIndex;
-const selectTreeList = (s: AppStoreState) => s.treeList;
-const selectScaleList = (s: AppStoreState) => s.movieData?.scaleList;
-const selectMaxScale = (s: AppStoreState) => s.movieData?.maxScale || 0;
-const selectFullTreeIndices = (s: AppStoreState) => s.movieData?.fullTreeIndices;
-const selectTransitionResolver = (s: AppStoreState) => s.transitionResolver;
-const selectBranchTransformation = (s: AppStoreState) => s.branchTransformation;
-
 /**
  * TreeStatsPanel component displays phylogenetic scale metrics for the current tree:
  * - Current tree scale (maximum root-to-tip distance)
@@ -35,7 +31,7 @@ const selectBranchTransformation = (s: AppStoreState) => s.branchTransformation;
 export const TreeStatsPanel: React.FC = () => {
   // Zustand state: Use granular selectors to minimize re-renders
   const currentTreeIndex = useAppStore(selectCurrentTreeIndex);
-  const treeList = useAppStore(selectTreeList);
+  const treeList = useAppStore(selectActiveTreeList);
   const scaleList = useAppStore(selectScaleList);
   const maxScale = useAppStore(selectMaxScale);
   const fullTreeIndices = useAppStore(selectFullTreeIndices);

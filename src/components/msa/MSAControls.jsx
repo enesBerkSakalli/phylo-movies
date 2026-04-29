@@ -7,14 +7,12 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RotateCcw } from 'lucide-react';
-import { useAppStore } from '@/state/phyloStore/store.js';
+import { selectCurrentTreeIndex, selectTreeControllers, useAppStore } from '@/state/phyloStore/store.js';
 import { MSARegionOverrides, MSAViewActions, MSAVisibleRange } from './controls';
 
 // ==========================================================================
 // STORE SELECTORS
 // ==========================================================================
-const selectTreeControllers = (s) => s.treeControllers;
-const selectCurrentTreeIndex = (s) => s.currentTreeIndex;
 const selectSetMsaRowOrder = (s) => s.setMsaRowOrder;
 const selectClearMsaRowOrder = (s) => s.clearMsaRowOrder;
 

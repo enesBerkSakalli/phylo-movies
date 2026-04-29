@@ -10,10 +10,10 @@ import type { SprMoverFrequency } from './types';
 
 interface SprFrequencyTableProps {
     frequencies: SprMoverFrequency[];
-    sortedLeaves: string[];
+    leafNamesByIndex: string[];
 }
 
-export const SprFrequencyTable = ({ frequencies, sortedLeaves }: SprFrequencyTableProps) => (
+export const SprFrequencyTable = ({ frequencies, leafNamesByIndex }: SprFrequencyTableProps) => (
     <table className="w-full text-xs">
         <thead className="bg-muted/40 text-muted-foreground font-bold sticky top-0 z-10">
             <tr>
@@ -28,7 +28,7 @@ export const SprFrequencyTable = ({ frequencies, sortedLeaves }: SprFrequencyTab
                 <tr key={item.signature} className="hover:bg-primary/5 transition-colors">
                     <td className="px-4 py-2 font-medium text-muted-foreground/60 tabular-nums text-right">{idx + 1}</td>
                     <td className="px-4 py-2 font-semibold">
-                        {formatSubtreeLabel(item.splitIndices, sortedLeaves)}
+                        {formatSubtreeLabel(item.splitIndices, leafNamesByIndex)}
                         <div className="text-2xs font-normal text-muted-foreground/70 mt-1">
                             {item.splitIndices.length} taxa
                         </div>

@@ -2,12 +2,10 @@ import React, { useCallback } from 'react';
 import { Maximize2, RotateCcw, ZoomIn, ZoomOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AppTooltip } from '@/components/ui/app-tooltip';
-import { useAppStore } from '@/state/phyloStore/store.js';
-
-const selectPrimaryController = (state) => state.treeControllers?.[0] || null;
+import { selectPrimaryTreeController, useAppStore } from '@/state/phyloStore/store.js';
 
 export function TreeViewportControls() {
-  const controller = useAppStore(selectPrimaryController);
+  const controller = useAppStore(selectPrimaryTreeController);
   const disabled = !controller;
 
   const fitTree = useCallback(() => {

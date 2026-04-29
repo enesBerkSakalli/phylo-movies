@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useRef } from 'react';
-import { useAppStore } from '@/state/phyloStore/store.js';
+import React, { useCallback } from 'react';
+import { selectBranchTransformation, useAppStore } from '@/state/phyloStore/store.js';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { SidebarMenuSub, SidebarMenuSubItem } from '@/components/ui/sidebar';
 import { GitGraph } from 'lucide-react';
@@ -7,55 +7,18 @@ import { GitGraph } from 'lucide-react';
 // ==========================================================================
 // STORE SELECTORS
 // ==========================================================================
-const selectBranchTransformation = (s) => s.branchTransformation;
 const selectSetBranchTransformation = (s) => s.setBranchTransformation;
-const selectTreeControllers = (s) => s.treeControllers;
 
 export function TreeStructure() {
   const branchTransformation = useAppStore(selectBranchTransformation);
   const setBranchTransformation = useAppStore(selectSetBranchTransformation);
-  const treeControllers = useAppStore(selectTreeControllers);
-  const frameRef = useRef(null);
-  const updateIdRef = useRef(0);
-
-  useEffect(() => {
-    return () => {
-      if (frameRef.current) {
-        cancelAnimationFrame(frameRef.current);
-      }
-    };
-  }, []);
 
   const handleBranchOptionChange = useCallback(
-    async (rawValue) => {
+    (rawValue) => {
       const normalized = rawValue === 'use' || !rawValue ? 'none' : rawValue;
-      const updateId = updateIdRef.current + 1;
-      updateIdRef.current = updateId;
-
       setBranchTransformation(normalized);
-
-      if (frameRef.current) {
-        cancelAnimationFrame(frameRef.current);
-      }
-
-      frameRef.current = requestAnimationFrame(async () => {
-        frameRef.current = null;
-        if (updateId !== updateIdRef.current) return;
-
-        try {
-          for (const controller of treeControllers) {
-            if (updateId !== updateIdRef.current) return;
-            controller?.resetInterpolationCaches?.();
-            await controller?.initializeUniformScaling?.(normalized);
-            if (updateId !== updateIdRef.current) return;
-            await controller?.renderAllElements?.();
-          }
-        } catch (error) {
-          console.warn('[TreeStructure] Failed to update layout for branch transformation:', error);
-        }
-      });
     },
-    [setBranchTransformation, treeControllers]
+    [setBranchTransformation]
   );
 
   return (

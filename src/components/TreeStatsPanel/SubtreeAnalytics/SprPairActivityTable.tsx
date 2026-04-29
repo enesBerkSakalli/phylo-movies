@@ -4,7 +4,7 @@ import { formatSubtreeLabel } from '@/domain/tree/sprAnalyticsUtils';
 
 interface SprPairActivityTableProps {
     rows: any[];
-    sortedLeaves: string[];
+    leafNamesByIndex: string[];
     selectedMoverIndices?: number[];
 }
 
@@ -21,24 +21,24 @@ const formatPairLabel = (row: any): string => {
     return row.pairKey;
 };
 
-const formatAttachment = (attachment: number[] | undefined, sortedLeaves: string[]): string => {
+const formatAttachment = (attachment: number[] | undefined, leafNamesByIndex: string[]): string => {
     if (!Array.isArray(attachment) || attachment.length === 0) return '-';
-    return formatSubtreeLabel(attachment, sortedLeaves);
+    return formatSubtreeLabel(attachment, leafNamesByIndex);
 };
 
 const formatCompactAttachment = (
     attachment: number[] | undefined,
-    sortedLeaves: string[],
+    leafNamesByIndex: string[],
     maxNames = 2,
 ): string => {
     if (!Array.isArray(attachment) || attachment.length === 0) return '-';
 
-    const fullLabel = formatSubtreeLabel(attachment, sortedLeaves);
+    const fullLabel = formatSubtreeLabel(attachment, leafNamesByIndex);
     if (attachment.length <= maxNames) return fullLabel;
 
     const names = attachment
         .slice(0, maxNames)
-        .map((idx) => sortedLeaves[idx])
+        .map((idx) => leafNamesByIndex[idx])
         .filter(Boolean);
     const prefix = names.length > 0 ? names.join(', ') : `Nodes ${attachment.slice(0, maxNames).join(', ')}`;
     return `${prefix} +${attachment.length - maxNames} more`;
@@ -72,10 +72,10 @@ const resolveMoverContext = (row: any, selectedMoverSignature: string | null) =>
     };
 };
 
-export const SprPairActivityTable = ({ rows, sortedLeaves, selectedMoverIndices = [] }: SprPairActivityTableProps) => {
+export const SprPairActivityTable = ({ rows, leafNamesByIndex, selectedMoverIndices = [] }: SprPairActivityTableProps) => {
     const selectedMoverSignature = getSignature(selectedMoverIndices);
     const selectedMoverLabel = selectedMoverSignature
-        ? formatCompactAttachment(selectedMoverIndices, sortedLeaves, 3)
+        ? formatCompactAttachment(selectedMoverIndices, leafNamesByIndex, 3)
         : null;
 
     return (
@@ -97,10 +97,10 @@ export const SprPairActivityTable = ({ rows, sortedLeaves, selectedMoverIndices 
                 {rows.map((row) => {
                     const { mover, mode } = resolveMoverContext(row, selectedMoverSignature);
                     const moverLabel = mover
-                        ? formatCompactAttachment(mover.splitIndices, sortedLeaves, 3)
+                        ? formatCompactAttachment(mover.splitIndices, leafNamesByIndex, 3)
                         : '-';
                     const fullMoverLabel = mover
-                        ? formatAttachment(mover.splitIndices, sortedLeaves)
+                        ? formatAttachment(mover.splitIndices, leafNamesByIndex)
                         : selectedMoverLabel || '-';
                     const primaryContext = getPrimaryAttachmentContext(mover);
                     const contextCount = mover?.attachmentContexts?.length || 0;
@@ -131,26 +131,26 @@ export const SprPairActivityTable = ({ rows, sortedLeaves, selectedMoverIndices 
                             </td>
                             <td
                                 className="px-3 py-3"
-                                title={primaryContext ? formatAttachment(primaryContext.sourceAttachment, sortedLeaves) : undefined}
+                                title={primaryContext ? formatAttachment(primaryContext.sourceAttachment, leafNamesByIndex) : undefined}
                             >
                                 <div className="truncate font-medium">
-                                    {formatCompactAttachment(primaryContext?.sourceAttachment, sortedLeaves)}
+                                    {formatCompactAttachment(primaryContext?.sourceAttachment, leafNamesByIndex)}
                                 </div>
                                 {primaryContext ? (
                                     <div
                                         className="truncate text-2xs text-muted-foreground/70"
-                                        title={formatAttachment(primaryContext.pivotEdge, sortedLeaves)}
+                                        title={formatAttachment(primaryContext.pivotEdge, leafNamesByIndex)}
                                     >
-                                        Cut side {formatCompactAttachment(primaryContext.pivotEdge, sortedLeaves)}{extraContextLabel}
+                                        Cut side {formatCompactAttachment(primaryContext.pivotEdge, leafNamesByIndex)}{extraContextLabel}
                                     </div>
                                 ) : null}
                             </td>
                             <td
                                 className="px-3 py-3"
-                                title={primaryContext ? formatAttachment(primaryContext.destinationAttachment, sortedLeaves) : undefined}
+                                title={primaryContext ? formatAttachment(primaryContext.destinationAttachment, leafNamesByIndex) : undefined}
                             >
                                 <div className="truncate font-medium">
-                                    {formatCompactAttachment(primaryContext?.destinationAttachment, sortedLeaves)}
+                                    {formatCompactAttachment(primaryContext?.destinationAttachment, leafNamesByIndex)}
                                 </div>
                                 {primaryContext ? (
                                     <div className="truncate text-2xs text-muted-foreground/70">
