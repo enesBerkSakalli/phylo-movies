@@ -60,9 +60,9 @@ export const createTreeHighlightStateSlice = (set, get) => ({
       set({ [colorType]: newColor });
     }
 
-    const { colorManager, treeControllers } = get();
+    const { colorManager } = get();
     colorManager?.refreshColorCategories?.();
-    renderTreeControllers(treeControllers);
+    renderTreeControllers(get());
   },
 
   setPivotEdgeColor: (color) => get().updateChangeColor('pivotEdgeColor', color),
@@ -94,9 +94,9 @@ export const createTreeHighlightStateSlice = (set, get) => ({
 
   setUpcomingChangesEnabled: (enabled) => {
     set({ upcomingChangesEnabled: enabled });
-    const { updateUpcomingChanges, treeControllers } = get();
+    const { updateUpcomingChanges } = get();
     updateUpcomingChanges();
-    renderTreeControllers(treeControllers);
+    renderTreeControllers(get());
   },
 
   updateUpcomingChanges: () => {
@@ -116,7 +116,7 @@ export const createTreeHighlightStateSlice = (set, get) => ({
 
   setHighlightColorMode: (mode) => {
     set((s) => ({ highlightColorMode: mode, colorVersion: s.colorVersion + 1 }));
-    renderTreeControllers(get().treeControllers);
+    renderTreeControllers(get());
   },
 
   setChangePulseEnabled: (enabled) => {
@@ -125,12 +125,12 @@ export const createTreeHighlightStateSlice = (set, get) => ({
       get().startPulseAnimation();
     } else {
       get().stopPulseAnimation();
-      renderTreeControllers(get().treeControllers);
+      renderTreeControllers(get());
     }
   },
 
   setPivotEdgeDashingEnabled: (enabled) => {
     set((s) => ({ pivotEdgeDashingEnabled: enabled, colorVersion: s.colorVersion + 1 }));
-    renderTreeControllers(get().treeControllers);
+    renderTreeControllers(get());
   },
 });

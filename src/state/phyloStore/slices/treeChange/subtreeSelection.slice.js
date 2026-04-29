@@ -48,19 +48,19 @@ export const createSubtreeSelectionSlice = (set, get) => ({
   setMarkedSubtreeMode: (mode) => {
     if (mode !== 'all' && mode !== 'current') return;
     set({ markedSubtreeMode: mode });
-    const { markedSubtreesEnabled, getMarkedSubtreeData, updateColorManagerMarkedSubtrees, manuallyMarkedNodes, treeControllers } = get();
+    const { markedSubtreesEnabled, getMarkedSubtreeData, updateColorManagerMarkedSubtrees, manuallyMarkedNodes } = get();
     if (markedSubtreesEnabled) {
       updateColorManagerMarkedSubtrees([...toManualMarkedSets(manuallyMarkedNodes), ...getMarkedSubtreeData()]);
     }
-    renderTreeControllers(treeControllers);
+    renderTreeControllers(get());
   },
 
   setManuallyMarkedNodes: (nodeIds = []) => {
     const nodes = Array.isArray(nodeIds) ? nodeIds.filter(Boolean) : [];
     set({ manuallyMarkedNodes: nodes });
-    const { getMarkedSubtreeData, updateColorManagerMarkedSubtrees, treeControllers } = get();
+    const { getMarkedSubtreeData, updateColorManagerMarkedSubtrees } = get();
     const manual = toManualMarkedSets(nodes);
     updateColorManagerMarkedSubtrees([...manual, ...getMarkedSubtreeData()]);
-    renderTreeControllers(treeControllers);
+    renderTreeControllers(get());
   },
 });

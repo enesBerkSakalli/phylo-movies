@@ -69,7 +69,7 @@ export const createComparisonViewSlice = (set, get) => ({
   setLinkConnectionOpacity: (opacity) => {
     const value = Math.max(0, Math.min(1, Number(opacity)));
     set((state) => ({ linkConnectionOpacity: value, colorVersion: state.colorVersion + 1 }));
-    renderTreeControllers(get().treeControllers);
+    renderTreeControllers(get());
   },
 
   // ==========================================================================

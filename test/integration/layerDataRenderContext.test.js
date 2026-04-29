@@ -105,4 +105,28 @@ describe('deck.gl layer render context', () => {
     expect(showNodeContextMenu.mock.calls[0][0]?.data?.split_indices).toEqual([1]);
     expect(showNodeContextMenu).toHaveBeenCalledWith(expect.any(Object), treeB, 12, 34);
   });
+
+  it('does not fall back to coordinate matching when normalized split identity is missing', () => {
+    const tree = { id: 'tree' };
+    const showNodeContextMenu = vi.fn();
+
+    useAppStore.setState({
+      treeList: [tree],
+      currentTreeIndex: 0,
+      showNodeContextMenu,
+    });
+
+    const layoutTree = makeLayoutTree();
+    const handler = new TreeNodeInteractionHandler({
+      calculateLayout: vi.fn(() => ({ tree: layoutTree })),
+    });
+
+    handler.handleNodeClick(
+      { object: { position: [10, 5, 0] }, x: 10, y: 20 },
+      { center: { x: 12, y: 34 } },
+      null
+    );
+
+    expect(showNodeContextMenu).toHaveBeenCalledWith(null, tree, 12, 34);
+  });
 });

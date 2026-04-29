@@ -40,7 +40,10 @@ export function calculateChangePreviews(state) {
   return { upcoming, completed };
 }
 
-export function renderTreeControllers(controllers) {
+export function renderTreeControllers(state) {
+  if (state?.playing) return;
+
+  const controllers = state?.treeControllers;
   if (!Array.isArray(controllers)) return;
   controllers.forEach((c) => c?.renderAllElements?.());
 }

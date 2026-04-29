@@ -53,7 +53,11 @@ export class TreeNodeInteractionHandler {
    * @returns {Object|null} Corresponding D3 tree node
    */
   _findTreeNodeFromLayerData(layerData, currentTreeData, treeIndex) {
-    if (!layerData || !layerData.position || !currentTreeData) return null;
+    if (!layerData || !currentTreeData) return null;
+
+    const targetSplitKey = getSplitKey(layerData);
+    if (!targetSplitKey) return null;
+
     const currentLayout = this.layoutCalculator.calculateLayout(currentTreeData, {
       treeIndex
     });
@@ -61,18 +65,7 @@ export class TreeNodeInteractionHandler {
     const allNodes = currentLayout?.tree?.descendants?.();
     if (!Array.isArray(allNodes)) return null;
 
-    const targetSplitKey = getSplitKey(layerData);
-    if (targetSplitKey) {
-      const matchedBySplit = allNodes.find(node => getSplitKey(node?.data?.split_indices) === targetSplitKey);
-      if (matchedBySplit) return matchedBySplit;
-    }
-
-    const [targetX, targetY] = layerData.position;
-    const tolerance = 0.001;
-
-    return allNodes.find(node => {
-      return Math.abs(node.x - targetX) < tolerance && Math.abs(node.y - targetY) < tolerance;
-    }) || null;
+    return allNodes.find(node => getSplitKey(node?.data?.split_indices) === targetSplitKey) || null;
   }
 
   _getTreeContext(layerData, state) {

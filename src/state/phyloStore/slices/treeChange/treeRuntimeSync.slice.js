@@ -86,8 +86,7 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
 
     colorManager.updateMarkedSubtrees(asSets);
 
-    const { treeControllers } = get();
-    renderTreeControllers(treeControllers);
+    renderTreeControllers(get());
 
     set((s) => ({ colorVersion: s.colorVersion + 1 }));
   },

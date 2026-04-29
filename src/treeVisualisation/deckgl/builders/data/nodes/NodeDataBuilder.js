@@ -1,5 +1,6 @@
 import { getNodeKey } from '../../../../utils/KeyGenerator.js';
 import { NodeGeometryBuilder } from '../../geometry/nodes/NodeGeometryBuilder.js';
+import { Z_NODE } from '../../../constants/zOffsets.js';
 
 /**
  * NodeDataBuilder - Converts D3 hierarchy nodes to Deck.gl format
@@ -40,12 +41,17 @@ export class NodeDataBuilder {
       return null;
     }
     const dotSize = nodeDotSizes?.get(nodeKey) || 2;
+    const parentId = node.parent
+      ? getNodeKey({ split_indices: node.parent.data?.split_indices })
+      : null;
 
     const isLeaf = !node.children || node.children.length === 0;
 
     return {
       id: nodeKey,
+      parentId,
       position: [node.x, node.y, 0],
+      renderPosition: [node.x, node.y, Z_NODE],
       dotSize: dotSize,
       isLeaf,
       isInternal: !isLeaf,

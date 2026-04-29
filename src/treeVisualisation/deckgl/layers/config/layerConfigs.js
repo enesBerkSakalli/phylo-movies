@@ -4,6 +4,7 @@
  */
 import { PathLayer, ScatterplotLayer, TextLayer } from '@deck.gl/layers';
 import { PathStyleExtension } from '@deck.gl/extensions';
+import { HISTORY_LABEL_Z_OFFSET, HISTORY_NODE_Z_OFFSET, Z_NODE } from '../../constants/zOffsets.js';
 
 // Hover highlight color: semi-transparent cyan for good contrast with blue/red data highlights
 export const HOVER_HIGHLIGHT_COLOR = [0, 200, 220, 150];
@@ -15,15 +16,14 @@ export const CLIPBOARD_LAYER_ID_PREFIX = `${LAYER_ID_PREFIX}-clipboard`;
 export const MIN_NODE_RADIUS = 3;
 
 // Base Z-offset for nodes to prevent Z-fighting and ensure they render above links
-export const Z_NODE = 0.05;
+export { Z_NODE };
 
 // Node border (stroke) widths
 export const INNER_NODE_STROKE_WIDTH = 0.2;
 export const OUTER_NODE_STROKE_WIDTH = 0.2;
 
 // Z-offsets for previously moved subtree highlights.
-export const HISTORY_NODE_Z_OFFSET = 0.3;
-export const HISTORY_LABEL_Z_OFFSET = 0.1;
+export { HISTORY_NODE_Z_OFFSET, HISTORY_LABEL_Z_OFFSET };
 
 const pathLayerDefaults = {
   widthUnits: 'common',

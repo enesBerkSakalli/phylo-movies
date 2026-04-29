@@ -133,10 +133,14 @@ describe('normalized render contract', () => {
     const labels = new LabelDataBuilder().convertLabels(root, 10);
     const extensions = new ExtensionDataBuilder().convertExtensions(root, 10);
 
-    expect(nodes.find((node) => node.name === 'root')).toMatchObject({
+    const rootNode = nodes.find((node) => node.name === 'root');
+    expect(rootNode).toMatchObject({
       split_indices: [0, 1],
       isLeaf: false,
       child_split_indices: [[0], [1]],
+    });
+    expect(nodes.find((node) => node.name === 'Taxon_A')).toMatchObject({
+      parentId: rootNode.id,
     });
     expect(links[0]).toMatchObject({
       split_indices: [0],

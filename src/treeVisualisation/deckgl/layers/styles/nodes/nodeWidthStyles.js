@@ -11,10 +11,9 @@ import { toColorManagerNode } from './nodeUtils.js';
 export function getNodeLineWidth(node, cached) {
   const nodeData = toColorManagerNode(node);
 
-  // Outer nodes are leaves
-  const isOuter = typeof nodeData?.isLeaf === 'boolean'
-    ? nodeData.isLeaf
-    : !nodeData?.children || nodeData.children.length === 0;
+  if (typeof nodeData?.isLeaf !== 'boolean') {
+    throw new Error('Node line width requires normalized isLeaf state');
+  }
 
-  return isOuter ? OUTER_NODE_STROKE_WIDTH : INNER_NODE_STROKE_WIDTH;
+  return nodeData.isLeaf ? OUTER_NODE_STROKE_WIDTH : INNER_NODE_STROKE_WIDTH;
 }
