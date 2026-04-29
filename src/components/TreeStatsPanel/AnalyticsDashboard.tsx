@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { BarChart, Activity, ListTree, BookOpen, ChevronDown, Download } from 'lucide-react';
+import { SprActivityTimeline } from './SubtreeAnalytics/SprActivityTimeline';
 import { SubtreeFrequencyBarChart } from './SubtreeAnalytics/SubtreeFrequencyBarChart';
 import { SprFrequencyTable } from './SubtreeAnalytics/SprFrequencyTable';
 import { SprPairActivityTable } from './SubtreeAnalytics/SprPairActivityTable';
@@ -33,6 +34,7 @@ const selectFileName = (s: AppStoreState) => s.fileName || s.movieData?.file_nam
 const selectDistanceRfd = (s: AppStoreState) => s.distanceRfd || EMPTY_ARRAY;
 const selectDistanceWeightedRfd = (s: AppStoreState) => s.distanceWeightedRfd || EMPTY_ARRAY;
 const selectPairInterpolationRanges = (s: AppStoreState) => s.pairInterpolationRanges || EMPTY_ARRAY;
+const selectMarkedNodes = (s: AppStoreState) => s.manuallyMarkedNodes || EMPTY_ARRAY;
 
 interface SprDatasetSummary {
     pairCount: number;
@@ -53,6 +55,7 @@ export const AnalyticsDashboard = () => {
     const robinsonFouldsDistances = useAppStore(selectDistanceRfd);
     const weightedRobinsonFouldsDistances = useAppStore(selectDistanceWeightedRfd);
     const pairInterpolationRanges = useAppStore(selectPairInterpolationRanges);
+    const selectedMoverIndices = useAppStore(selectMarkedNodes);
 
     const sprOptions = useMemo(() => ({
         robinsonFouldsDistances,
@@ -96,7 +99,7 @@ export const AnalyticsDashboard = () => {
                     </SidebarMenuButton>
                 </DialogTrigger>
             </SidebarMenuItem>
-            <DialogContent className="sm:max-w-4xl max-h-[85vh] h-full flex flex-col overflow-hidden">
+            <DialogContent className="sm:max-w-6xl max-h-[85vh] h-full flex flex-col overflow-hidden">
                 <DialogHeader className="shrink-0 pr-10 pb-4 border-b border-border/20">
                     <DialogTitle className="text-xl font-bold tracking-tight">SPR Analytics</DialogTitle>
                     <DialogDescription className="text-sm text-muted-foreground/80">
@@ -133,6 +136,21 @@ export const AnalyticsDashboard = () => {
                                     topMoverPercentage={sprSummary.topMoverSharePercentage}
                                 />
 
+                                <Card className="shadow-sm bg-muted/10 h-80 flex flex-col">
+                                    <CardHeader className="pb-3 bg-muted/20 shrink-0">
+                                        <CardTitle className="flex items-center gap-2 text-base font-bold">
+                                            <Activity className="size-4 text-primary" />
+                                            SPR Activity Timeline
+                                        </CardTitle>
+                                        <CardDescription className="text-xs">
+                                            Mover occurrences per neighboring anchor-tree pair with transition-event, RFD, and W-RFD context.
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="flex-1 min-h-0 p-2">
+                                        <SprActivityTimeline rows={pairActivityRows} />
+                                    </CardContent>
+                                </Card>
+
                                 <Card className="shadow-sm bg-muted/10 h-96 flex flex-col">
                                     <CardHeader className="pb-3 bg-muted/20 shrink-0">
                                         <CardTitle className="flex items-center gap-2 text-base font-bold">
@@ -159,11 +177,15 @@ export const AnalyticsDashboard = () => {
                                     SPR Activity by Tree Pair
                                 </CardTitle>
                                 <CardDescription className="text-xs">
-                                    Mover occurrences, transition events, and RF context for each neighboring anchor-tree pair.
+                                    Mover occurrences, transition events, RFD/W-RFD context, and selected-mover attachment points for each neighboring anchor-tree pair.
                                 </CardDescription>
                             </CardHeader>
-                            <CardContent className="p-0 flex-1 min-h-0 overflow-y-auto">
-                                <SprPairActivityTable rows={pairActivityRows} sortedLeaves={sortedLeaves} />
+                            <CardContent className="p-0 flex-1 min-h-0 overflow-auto">
+                                <SprPairActivityTable
+                                    rows={pairActivityRows}
+                                    sortedLeaves={sortedLeaves}
+                                    selectedMoverIndices={selectedMoverIndices}
+                                />
                             </CardContent>
                         </Card>
                     </TabsContent>
