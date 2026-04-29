@@ -27,4 +27,27 @@ describe('layout worker metadata', () => {
     expect(result.layout.max_radius).toBeGreaterThan(0);
     expect(result.layerData.max_radius).toBe(result.layout.max_radius);
   });
+
+  it('treats zero maxGlobalScale as an intentional uniform scale input', () => {
+    const treeData = {
+      name: '',
+      length: 0,
+      split_indices: [0, 1],
+      children: [
+        { name: 'taxon_1', length: 0, split_indices: [0], children: [] },
+        { name: 'taxon_2', length: 0, split_indices: [1], children: [] }
+      ]
+    };
+
+    const result = calculateLayoutWorkerResult(treeData, {
+      width: 800,
+      height: 600,
+      margin: 60,
+      branchTransformation: 'none',
+      maxGlobalScale: 0
+    });
+
+    expect(result.layout.scale).toBe(240);
+    expect(result.layerData.nodes).toHaveLength(3);
+  });
 });

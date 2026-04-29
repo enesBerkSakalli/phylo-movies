@@ -66,13 +66,6 @@ export class InterpolationCache {
     const preFrom = this._precomputedCache.get(fromTreeIndex);
     const preTo = this._precomputedCache.get(toTreeIndex);
 
-    // Helper to get radii from dimensions (mirroring _getConsistentRadii logic)
-    const getRadiiFromDims = () => {
-      const { width, height } = this.getDimensions?.() || { width: 800, height: 600 };
-      // Mock layout for getConsistentRadii
-      return this.getConsistentRadii({ width, height, margin: 60 });
-    };
-
     let dataFrom, dataTo;
 
     // 1. Get Data From (Cache or Calc)
@@ -92,9 +85,7 @@ export class InterpolationCache {
     } else {
       const layoutTo = this._calculateLayout(toTreeData, toTreeIndex);
       if (layoutTo) {
-        // If we calculated layoutFrom, we use its radii. If not, we estimate from dims.
-        // In practice, radii are constant for a given container size.
-        const { extensionRadius, labelRadius } = getRadiiFromDims();
+        const { extensionRadius, labelRadius } = this.getConsistentRadii(layoutTo);
         dataTo = this._convertLayoutToLayerData(layoutTo, extensionRadius, labelRadius, toTreeIndex);
       }
     }

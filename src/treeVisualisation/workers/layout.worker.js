@@ -26,17 +26,21 @@ export function calculateLayoutWorkerResult(treeData, options) {
         layoutEngine.setMargin(options.margin);
     }
 
-    const rootNode = options.maxGlobalScale
-        ? layoutEngine.constructRadialTreeWithUniformScaling(options.maxGlobalScale)
+    const hasMaxGlobalScale = Number.isFinite(Number(options.maxGlobalScale));
+    const rootNode = hasMaxGlobalScale
+        ? layoutEngine.constructRadialTreeWithUniformScaling(Number(options.maxGlobalScale))
         : layoutEngine.constructRadialTree();
     const maxRadius = layoutEngine.getMaxRadius(rootNode);
+    const offsets = options.labelOffsets || { DEFAULT: 20, EXTENSION: 5 };
+    const extensionRadius = maxRadius + (offsets.EXTENSION ?? 5);
+    const labelRadius = extensionRadius + (offsets.DEFAULT ?? 20);
 
     // 3. Convert to Layer Data
     // The data factory is purely mathematical, it generates JS Arrays/TypedArrays
     // Pass width/height to data factory so it can calculate node sizes
     const layerData = dataFactory.convertTreeToLayerData(rootNode, {
-        extensionRadius: options.extensionRadius,
-        labelRadius: options.labelRadius,
+        extensionRadius,
+        labelRadius,
         canvasWidth: options.width,
         canvasHeight: options.height,
         treeIndex: options.treeIndex,
@@ -71,7 +75,7 @@ export function calculateLayoutWorkerResult(treeData, options) {
  */
 if (typeof self !== 'undefined') {
     self.onmessage = ({ data: payload }) => {
-        const { jobId, command, data } = payload;
+        const { jobId, requestToken, command, data } = payload;
 
         if (command !== 'CALCULATE_LAYOUT') return;
 
@@ -81,6 +85,7 @@ if (typeof self !== 'undefined') {
 
             self.postMessage({
                 jobId,
+                requestToken,
                 status: 'SUCCESS',
                 result
             });
@@ -89,6 +94,7 @@ if (typeof self !== 'undefined') {
             console.error('Worker Calculation Error:', error);
             self.postMessage({
                 jobId,
+                requestToken,
                 status: 'ERROR',
                 error: error.message
             });

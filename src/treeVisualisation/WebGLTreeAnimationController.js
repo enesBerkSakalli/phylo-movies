@@ -94,7 +94,7 @@ export class WebGLTreeAnimationController {
   _isScalingCacheValid(branchTransformation, datasetToken, treeList) {
     return (
       this.uniformScalingEnabled &&
-      this.maxGlobalScale &&
+      Number.isFinite(Number(this.maxGlobalScale)) &&
       this._scalingState.calculationTransformation === branchTransformation &&
       this._scalingState.datasetToken === datasetToken &&
       this._scalingState.datasetRef === treeList
@@ -166,7 +166,11 @@ export class WebGLTreeAnimationController {
     layoutCalculator.setAngleExtentDegrees(layoutAngleDegrees || 360);
     layoutCalculator.setAngleOffsetDegrees(layoutRotationDegrees || 0);
 
-    const layoutResult = this.uniformScalingEnabled && this.globalScaleList && this.maxGlobalScale
+    const hasUniformScale = this.uniformScalingEnabled &&
+      this.globalScaleList &&
+      Number.isFinite(Number(this.maxGlobalScale));
+
+    const layoutResult = hasUniformScale
       ? layoutCalculator.constructRadialTreeWithUniformScaling(this.maxGlobalScale)
       : layoutCalculator.constructRadialTree();
 
@@ -188,14 +192,14 @@ export class WebGLTreeAnimationController {
    * Calculates label and extension radii with dynamic positioning.
    */
   _getConsistentRadii(layout) {
-    const containerWidth = layout.width - layout.margin * 2;
-    const containerHeight = layout.height - layout.margin * 2;
-    const maxLeafRadius = Math.min(containerWidth, containerHeight) / 2;
-
     const { styleConfig } = useAppStore.getState();
     const offsets = styleConfig?.labelOffsets || { DEFAULT: 20, EXTENSION: 5 };
+    const layoutRadius = Number(layout?.max_radius);
+    const baseRadius = Number.isFinite(layoutRadius)
+      ? Math.max(0, layoutRadius)
+      : Math.max(0, Math.min(layout.width - layout.margin * 2, layout.height - layout.margin * 2) / 2);
 
-    const extensionRadius = maxLeafRadius + (offsets.EXTENSION ?? 5);
+    const extensionRadius = baseRadius + (offsets.EXTENSION ?? 5);
     const labelRadius = extensionRadius + (offsets.DEFAULT ?? 20);
 
     return {

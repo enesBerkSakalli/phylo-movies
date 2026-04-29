@@ -98,4 +98,27 @@ describe('TidyTreeLayout', () => {
     expect(layoutEngine.scale).toBeLessThan(Infinity);
     expect(Number.isFinite(layoutEngine.scale)).toBe(true);
   });
+
+  it('keeps all-zero branch length layouts finite', () => {
+    const zeroLengthTree = {
+      id: 'root',
+      length: 0,
+      children: [
+        { id: 'child1', length: 0 },
+        { id: 'child2', length: 0 }
+      ]
+    };
+    const layoutEngine = new TidyTreeLayout(zeroLengthTree);
+    layoutEngine.setDimension(800, 600);
+    layoutEngine.setMargin(60);
+
+    const root = layoutEngine.constructRadialTree();
+
+    expect(Number.isFinite(layoutEngine.scale)).toBe(true);
+    root.each((node) => {
+      expect(Number.isFinite(node.x)).toBe(true);
+      expect(Number.isFinite(node.y)).toBe(true);
+      expect(Number.isFinite(node.radius)).toBe(true);
+    });
+  });
 });

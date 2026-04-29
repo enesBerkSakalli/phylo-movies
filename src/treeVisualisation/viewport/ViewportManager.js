@@ -5,7 +5,7 @@
  * and screen space projections for tree visualization.
  */
 import { useAppStore } from '../../state/phyloStore/store.js';
-import { calculateVisualBounds } from '../utils/TreeBoundsUtils.js';
+import { calculateBranchBounds, calculateVisualBounds } from '../utils/TreeBoundsUtils.js';
 import { projectNodesToScreen, applySafeAreaToTarget } from '../spatial/projections.js';
 import { areBoundsInView, expandBoundsForLabels } from '../spatial/bounds.js';
 import { calculateSafeAreaPadding, normalizeSafeArea } from '../spatial/layout.js';
@@ -58,18 +58,23 @@ export class ViewportManager {
   focusOnTree(nodes, labels, options = {}) {
     const { playing } = useAppStore.getState();
     if (playing && !options.allowDuringPlayback) return;
-    const bounds = calculateVisualBounds(nodes, labels);
+    const includeLabels = options.includeLabels === true;
+    const bounds = includeLabels
+      ? calculateVisualBounds(nodes, labels)
+      : calculateBranchBounds(nodes, options.links);
     const { width: canvasWidth, height: canvasHeight } = this.controller.deckContext.getCanvasDimensions();
     const densityPadding = this._calculateDensityPadding(nodes);
     const safeArea = this.getSafeAreaPadding();
-    const padding = options.padding ?? (1.25 + densityPadding);
+    const padding = options.padding ?? ((includeLabels ? 1.25 : 1.12) + densityPadding);
     const labelSizePx = options.labelSizePx;
     const getLabelSize = options.getLabelSize ?? this.controller.layerManager.layerStyles.getLabelSize?.bind(
       this.controller.layerManager.layerStyles
     );
 
-    // 1. Expand bounds for labels
-    const expandedBounds = expandBoundsForLabels(bounds, labels, labelSizePx, getLabelSize);
+    // 1. Keep the default fit branch-focused so labels/extensions do not shrink the tree.
+    const expandedBounds = includeLabels
+      ? expandBoundsForLabels(bounds, labels, labelSizePx, getLabelSize)
+      : bounds;
 
     // 2. Calculate Center & Dimensions
     const centerX = (expandedBounds.minX + expandedBounds.maxX) / 2;

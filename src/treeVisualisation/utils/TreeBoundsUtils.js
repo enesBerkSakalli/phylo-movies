@@ -91,3 +91,55 @@ export function calculateNodeBounds(nodes) {
   }
   return { minX, maxX, minY, maxY };
 }
+
+/**
+ * Calculate bounds from node positions plus rendered branch path geometry.
+ * @param {Array} nodes
+ * @param {Array} links
+ */
+export function calculateBranchBounds(nodes, links = []) {
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  let hasPoint = false;
+
+  const includePoint = (point) => {
+    if (!Array.isArray(point)) return;
+    const [x, y] = point;
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+
+    hasPoint = true;
+    if (x < minX) minX = x;
+    if (x > maxX) maxX = x;
+    if (y < minY) minY = y;
+    if (y > maxY) maxY = y;
+  };
+
+  const includePath = (path) => {
+    if (!path) return;
+    if (Array.isArray(path)) {
+      if (Array.isArray(path[0])) {
+        for (const point of path) includePoint(point);
+      }
+      return;
+    }
+    if (ArrayBuffer.isView(path)) {
+      for (let i = 0; i < path.length; i += 3) {
+        includePoint([path[i], path[i + 1], path[i + 2]]);
+      }
+    }
+  };
+
+  for (const node of nodes || []) {
+    includePoint(node?.position);
+  }
+
+  for (const link of links || []) {
+    if (link?.path) {
+      includePath(link.path);
+    } else {
+      includePoint(link?.sourcePosition);
+      includePoint(link?.targetPosition);
+    }
+  }
+
+  return hasPoint ? { minX, maxX, minY, maxY } : { minX: 0, maxX: 0, minY: 0, maxY: 0 };
+}
