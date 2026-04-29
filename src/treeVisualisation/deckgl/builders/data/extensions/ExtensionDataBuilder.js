@@ -1,4 +1,5 @@
 import { getExtensionKey } from '../../../../utils/KeyGenerator.js';
+import { twoPointFloat32Path } from '../../../utils/pathFormat.js';
 
 /**
  * ExtensionDataBuilder - Generates extension lines for leaf nodes
@@ -52,7 +53,7 @@ export class ExtensionDataBuilder {
       id: extensionKey,
       sourcePosition: [sourceX, sourceY, 0],
       targetPosition: [extensionX, extensionY, 0],
-      path: [[sourceX, sourceY, 0], [extensionX, extensionY, 0]],
+      path: twoPointFloat32Path([sourceX, sourceY, 0], [extensionX, extensionY, 0]),
       name: leaf.data.name || '',
       isLeaf: true,
       split_indices: splitIndices,

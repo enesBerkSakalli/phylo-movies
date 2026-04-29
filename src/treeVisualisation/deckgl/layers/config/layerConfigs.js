@@ -26,6 +26,7 @@ export const OUTER_NODE_STROKE_WIDTH = 0.2;
 export { HISTORY_NODE_Z_OFFSET, HISTORY_LABEL_Z_OFFSET };
 
 const pathLayerDefaults = {
+  _pathType: 'open',
   widthUnits: 'common',
   widthMinPixels: 1,
   jointRounded: false, // Optimization: save attribute slots

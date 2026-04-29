@@ -10,18 +10,22 @@ describe('SubtreeConnectorBuilder', function () {
   it('builds connectors when positions are Maps', function () {
     const leftPositions = new Map();
     leftPositions.set('0', {
+      id: 'node:0',
+      parentId: null,
+      split_indices: [0],
       isLeaf: true,
       name: 'A',
-      position: [0, 0, 0],
-      node: { id: 'A' }
+      position: [0, 0, 0]
     });
 
     const rightPositions = new Map();
     rightPositions.set('0', {
+      id: 'node:0',
+      parentId: null,
+      split_indices: [0],
       isLeaf: true,
       name: 'A',
-      position: [100, 0, 0],
-      node: { id: 'A' }
+      position: [100, 0, 0]
     });
 
     // Provide latticeSolutions where edge [0,0] maps to subtree [[0]]
@@ -59,7 +63,8 @@ describe('SubtreeConnectorBuilder', function () {
     // Should have 'path' and 'color'
     const firstConn = connectors[0];
     expect(firstConn.path).toBeDefined();
-    expect(Array.isArray(firstConn.path)).toBe(true);
+    expect(firstConn.path).toBeInstanceOf(Float32Array);
+    expect(firstConn.path.length % 3).toBe(0);
     expect(firstConn.color).toHaveLength(4);
   });
 });

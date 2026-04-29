@@ -3,6 +3,7 @@
  * Handles arc + radial line paths for phylogenetic tree visualization
  */
 import { calculateBranchCoordinates } from '../../../../layout/RadialTreeGeometry.js';
+import { twoPointFloat32Path } from '../../../utils/pathFormat.js';
 
 /** Default number of segments for arc generation */
 export const ARC_SEGMENT_COUNT = 15;
@@ -17,7 +18,7 @@ export class LinkGeometryBuilder {
    * Generates a smooth arc by sampling points.
    * @param {Object} linkData - Link data with source/target coordinates
    * @param {number} segmentCount - Number of arc segments
-   * @returns {Array} Path points array
+   * @returns {Float32Array} Flat XYZ path points
    */
   createLinkPath(linkData, segmentCount = this.segmentCount) {
     const branchCoords = calculateBranchCoordinates(linkData);
@@ -34,10 +35,10 @@ export class LinkGeometryBuilder {
    * @private
    */
   _createStraightPath(branchCoords) {
-    return [
+    return twoPointFloat32Path(
       [branchCoords.movePoint.x, branchCoords.movePoint.y, 0],
       [branchCoords.lineEndPoint.x, branchCoords.lineEndPoint.y, 0]
-    ];
+    );
   }
 
   /**
@@ -45,38 +46,29 @@ export class LinkGeometryBuilder {
    * @private
    */
   _createCurvedPath(branchCoords, segmentCount) {
-    const points = [];
     const { radius, startAngle, endAngle, angleDiff, center } = branchCoords.arcProperties;
+    const path = new Float32Array((segmentCount + 3) * 3);
+    let offset = 0;
 
-    // Start with move point (source position)
-    points.push([branchCoords.movePoint.x, branchCoords.movePoint.y, 0]);
+    path[offset++] = branchCoords.movePoint.x;
+    path[offset++] = branchCoords.movePoint.y;
+    path[offset++] = 0;
 
-    // Generate arc segment points
-    points.push(...this._generateArcPoints(radius, startAngle, endAngle, angleDiff, center, segmentCount));
-
-    // Add the final line endpoint
-    points.push([branchCoords.lineEndPoint.x, branchCoords.lineEndPoint.y, 0]);
-
-    return points;
-  }
-
-  /**
-   * Generate points along an arc
-   * @private
-   */
-  _generateArcPoints(radius, startAngle, endAngle, angleDiff, center, segmentCount) {
-    const points = [];
     const delta = Number.isFinite(angleDiff) ? angleDiff : (endAngle - startAngle);
 
     for (let i = 0; i <= segmentCount; i++) {
       const t = i / segmentCount;
       const angle = startAngle + delta * t;
-      const x = center.x + radius * Math.cos(angle);
-      const y = center.y + radius * Math.sin(angle);
-      points.push([x, y, 0]);
+      path[offset++] = center.x + radius * Math.cos(angle);
+      path[offset++] = center.y + radius * Math.sin(angle);
+      path[offset++] = 0;
     }
 
-    return points;
+    path[offset++] = branchCoords.lineEndPoint.x;
+    path[offset++] = branchCoords.lineEndPoint.y;
+    path[offset] = 0;
+
+    return path;
   }
 
   /**

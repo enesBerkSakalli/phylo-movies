@@ -31,24 +31,24 @@ export const getAngle = (nodeOrPoint, center) => {
   return Math.atan2(pt[1] - center[1], pt[0] - center[0]);
 };
 
-export function getBundleAncestor(node, nodeById, targetDepth = 2) {
-  if (!(nodeById instanceof Map)) return null;
-  let curr = node;
-  if (!curr) return null;
+export function getBundleAncestor(entry, entryById, targetDepth = 2) {
+  if (!(entryById instanceof Map)) return null;
+  let current = entry;
+  if (!current) return null;
 
-  while (getParentId(curr) && getDepth(curr) > targetDepth) {
-    const next = nodeById.get(getParentId(curr));
+  while (getParentId(current) && getDepth(current) > targetDepth) {
+    const next = entryById.get(getParentId(current));
     if (!next) break;
-    curr = next;
+    current = next;
   }
-  return curr;
+  return current;
 }
 
-export const chooseBundlePoint = (connections, fallbackNode, center, radius, isLeft, nodeById = null) => {
+export const chooseBundlePoint = (connections, fallbackEntry, center, radius, isLeft, entryById = null) => {
   const entries = connections
     .map(c => (isLeft ? c.sourceInfo : c.targetInfo))
     .filter(Boolean);
-  const lca = nodeById ? findLowestCommonAncestorById(entries, nodeById) : null;
+  const lca = entryById ? findLowestCommonAncestorById(entries, entryById) : null;
   const lcaPosition = getPosition(lca);
 
   if (lcaPosition) {
@@ -71,7 +71,7 @@ export const chooseBundlePoint = (connections, fallbackNode, center, radius, isL
     return ensureOutside(lcaPosition, center, radius || 0, depthOffset);
   }
 
-  const fallbackPosition = getPosition(fallbackNode);
+  const fallbackPosition = getPosition(fallbackEntry);
   if (fallbackPosition) {
     return ensureOutside(fallbackPosition, center, radius || 0, 20);
   }

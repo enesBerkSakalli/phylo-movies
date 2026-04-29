@@ -5,6 +5,11 @@ import { chooseBundlePoint, ensureOutside } from '../src/treeVisualisation/deckg
 import { buildViewLinkMapping } from '../src/domain/view/viewLinkMapper.js';
 import { calculateBranchCoordinates } from '../src/treeVisualisation/layout/RadialTreeGeometry.js';
 
+function flatPathPoint(path, index) {
+  const offset = index * 3;
+  return [path[offset], path[offset + 1], path[offset + 2]];
+}
+
 // Mock Data Utilities
 function createMockNode(id, length = 1, children = []) {
   return {
@@ -245,12 +250,14 @@ describe('Complex Data Layer Integration', () => {
       // Bundle point should be projected OUT (e.g. y != 0, or x < -200 / x > 200).
       // Since specific geometry might vary, we assume the path has length and valid coords.
       const path = activeConns[0].path;
+      expect(path).toBeInstanceOf(Float32Array);
       expect(path.length).toBeGreaterThan(20);
-      const firstPt = path[0];
-      const midPt = path[Math.floor(path.length/2)];
+      const firstPt = flatPathPoint(path, 0);
+      const midPt = flatPathPoint(path, Math.floor((path.length / 3) / 2));
 
       // Basic sanity check: z is 0
       expect(firstPt[2]).toBe(0);
+      expect(midPt[2]).toBe(0);
 
       // Check color alpha
       // Active edges should usually be opaque or highlighted

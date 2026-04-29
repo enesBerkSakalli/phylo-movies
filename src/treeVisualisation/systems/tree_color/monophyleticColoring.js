@@ -81,6 +81,10 @@ function _collectLeafNamesRecursive(node) {
     return name ? [name] : [];
   }
 
+  if (!Array.isArray(node.children)) {
+    return [];
+  }
+
   const leaves = [];
   node.children.forEach(child => {
     leaves.push(..._collectLeafNamesRecursive(child));

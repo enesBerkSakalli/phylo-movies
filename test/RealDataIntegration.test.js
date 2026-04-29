@@ -5,6 +5,11 @@ import { flattenSplitSets } from '../src/treeVisualisation/utils/splitMatching.j
 import fs from 'fs';
 import path from 'path';
 
+function flatPathPoint(path, index) {
+    const offset = index * 3;
+    return [path[offset], path[offset + 1], path[offset + 2]];
+}
+
 // Load Data Dynamically
 const responsePath = path.resolve(__dirname, './data/ostrich_bug_response.json');
 const realData = JSON.parse(fs.readFileSync(responsePath, 'utf-8'));
@@ -78,16 +83,22 @@ describe('Real Data Integration (test/data/ostrich_bug_response.json)', () => {
                 // unless it does direct lookups (which it does for internal nodes).
                 const indices = node.data.split_indices || [];
                 const sorted = [...indices].sort((a,b) => a - b);
+                const id = sorted.join('-') || 'root';
+                const parentIndices = node.parent?.data?.split_indices || [];
+                const parentId = parentIndices.length ? [...parentIndices].sort((a,b) => a - b).join('-') : null;
                 const key = JSON.stringify(sorted);
 
                 const info = {
+                    id,
+                    parentId,
+                    split_indices: sorted,
                     position: [node.x, node.y, 0],
                     isLeaf: !node.children,
-                    node,
-                    name: node.data.name || ""
+                    name: node.data.name || "",
+                    depth: node.depth
                 };
 
-                if (node.id) map.set(node.id, info);
+                map.set(id, info);
                 if (key) map.set(key, info);
                 // Also add join-with-hyphens style if needed by internal lookups
                 if (sorted.length > 0) map.set(sorted.join('-'), info);
@@ -127,7 +138,8 @@ describe('Real Data Integration (test/data/ostrich_bug_response.json)', () => {
 
         // 5. Geometry Check (Middle Point Embedding)
         const path = activeConns[0].path;
-        const midPoint = path[Math.floor(path.length / 2)];
+        expect(path).toBeInstanceOf(Float32Array);
+        const midPoint = flatPathPoint(path, Math.floor((path.length / 3) / 2));
 
         // Verify Planar
         expect(midPoint[2]).toBe(0);

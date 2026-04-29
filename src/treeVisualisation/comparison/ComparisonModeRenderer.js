@@ -4,7 +4,6 @@ import { tagTreeSide } from '../utils/layerDataUtils.js';
 import {
   calculateRightOffset,
   applyOffset,
-  calculateBounds,
   combineLayerData,
   buildPositionMap
 } from './ComparisonUtils.js';
@@ -230,9 +229,6 @@ export class ComparisonModeRenderer {
     tagTreeSide(rightLayerData, 'right');
 
     const combinedData = combineLayerData(leftLayerData, rightLayerData, connectors);
-
-    const elements = [...combinedData.nodes, ...(combinedData.labels || [])];
-    const bounds = calculateBounds(elements);
 
     this.controller._updateLayersEfficiently(combinedData);
 
