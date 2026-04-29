@@ -20,13 +20,17 @@ export interface AppStoreState {
   movieData: any;
   treeList: any[];
   treeMetadata: any[];
+  leafNamesByIndex: string[];
   fullTreeIndices: number[];
   pairInterpolationRanges: Array<[number, number]>;
   treeIndexByPair: Record<string, number[]>;
   fileName: string | null;
+  datasetVersion: number;
   transitionResolver: any;
   distanceRfd: number[];
   distanceWeightedRfd: number[];
+  scaleList: Array<{ index?: number; value?: number }>;
+  maxScale: number;
   scaleValues: number[];
   pairSolutions: any;
   pivotEdgeTracking: any[];

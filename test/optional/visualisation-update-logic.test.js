@@ -15,7 +15,7 @@ describe('Tree Visualisation - State Update Logic', () => {
     },
     upcomingChangesEnabled: true,
     pivotEdgeTracking: [],
-    movieData: { fullTreeIndices: [0, 10, 20] },
+    fullTreeIndices: [0, 10, 20],
     ...overrides
   });
 
@@ -109,7 +109,7 @@ describe('Tree Visualisation - State Update Logic', () => {
     });
 
     it('should return empty arrays if no anchor data', () => {
-        const state = createMockState({ movieData: null });
+        const state = createMockState({ fullTreeIndices: [] });
         const result = calculateChangePreviews(state);
         expect(result.upcoming).to.deep.equal([]);
         expect(result.completed).to.deep.equal([]);
@@ -130,7 +130,7 @@ describe('Tree Visualisation - State Update Logic', () => {
         const state = createMockState({
             currentTreeIndex: 5,
             pivotEdgeTracking: edges,
-            movieData: { fullTreeIndices: [0, 10] }
+            fullTreeIndices: [0, 10]
         });
 
         const result = calculateChangePreviews(state);
@@ -152,7 +152,7 @@ describe('Tree Visualisation - State Update Logic', () => {
          const state = createMockState({
              currentTreeIndex: 5,
              pivotEdgeTracking: edges,
-             movieData: { fullTreeIndices: [0, 10] }
+             fullTreeIndices: [0, 10]
          });
 
          const result = calculateChangePreviews(state);
@@ -178,7 +178,7 @@ describe('Tree Visualisation - State Update Logic', () => {
         const state = createMockState({
             currentTreeIndex: 5,
             pivotEdgeTracking: edges,
-            movieData: { fullTreeIndices: [0, 10] }
+            fullTreeIndices: [0, 10]
         });
 
         const result = calculateChangePreviews(state);

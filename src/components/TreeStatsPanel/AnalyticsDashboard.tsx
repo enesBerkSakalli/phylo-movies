@@ -14,7 +14,7 @@ import {
     downloadCsvFile,
 } from './SubtreeAnalytics/sprFrequencyCsv';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAppStore } from '@/state/phyloStore/store.js';
+import { selectLeafNamesByIndex, useAppStore } from '@/state/phyloStore/store.js';
 import {
     calculateSprDatasetSummary,
     calculateSprMoverFrequencies,
@@ -29,7 +29,6 @@ import { SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 // ==========================================================================
 const EMPTY_ARRAY: any[] = [];
 const selectPairSolutions = (s: AppStoreState) => s.pairSolutions;
-const selectSortedLeaves = (s: AppStoreState) => s.movieData?.sorted_leaves || EMPTY_ARRAY;
 const selectFileName = (s: AppStoreState) => s.fileName || s.movieData?.file_name || 'dataset';
 const selectDistanceRfd = (s: AppStoreState) => s.distanceRfd || EMPTY_ARRAY;
 const selectDistanceWeightedRfd = (s: AppStoreState) => s.distanceWeightedRfd || EMPTY_ARRAY;
@@ -50,7 +49,7 @@ interface SprDatasetSummary {
 
 export const AnalyticsDashboard = () => {
     const pairSolutions = useAppStore(selectPairSolutions);
-    const sortedLeaves = useAppStore(selectSortedLeaves);
+    const leafNamesByIndex = useAppStore(selectLeafNamesByIndex);
     const fileName = useAppStore(selectFileName);
     const robinsonFouldsDistances = useAppStore(selectDistanceRfd);
     const weightedRobinsonFouldsDistances = useAppStore(selectDistanceWeightedRfd);
@@ -81,8 +80,8 @@ export const AnalyticsDashboard = () => {
         : 0;
 
     const csvContent = useMemo(() => {
-        return createSprFrequencyCsv(allFreqs, sortedLeaves);
-    }, [allFreqs, sortedLeaves]);
+        return createSprFrequencyCsv(allFreqs, leafNamesByIndex);
+    }, [allFreqs, leafNamesByIndex]);
 
     const handleExportCsv = () => {
         if (!csvContent) return;
@@ -183,7 +182,7 @@ export const AnalyticsDashboard = () => {
                             <CardContent className="p-0 flex-1 min-h-0 overflow-auto">
                                 <SprPairActivityTable
                                     rows={pairActivityRows}
-                                    sortedLeaves={sortedLeaves}
+                                    leafNamesByIndex={leafNamesByIndex}
                                     selectedMoverIndices={selectedMoverIndices}
                                 />
                             </CardContent>
@@ -221,7 +220,7 @@ export const AnalyticsDashboard = () => {
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="p-0 flex-1 min-h-0 overflow-y-auto">
-                                <SprFrequencyTable frequencies={allFreqs} sortedLeaves={sortedLeaves} />
+                                <SprFrequencyTable frequencies={allFreqs} leafNamesByIndex={leafNamesByIndex} />
                             </CardContent>
                         </Card>
                     </TabsContent>

@@ -1,20 +1,19 @@
 import memoizeOne from 'memoize-one';
-import { createLayoutCacheKey } from '../../utils/layoutCacheKey.js';
 
 export class InterpolationCache {
   constructor({
     calculateLayout,
     getConsistentRadii,
     convertTreeToLayerData,
-    getDimensions,
-    getBranchTransformation,
     getLayoutCacheKey
   }) {
+    if (typeof getLayoutCacheKey !== 'function') {
+      throw new Error('InterpolationCache requires getLayoutCacheKey');
+    }
+
     this.calculateLayout = calculateLayout;
     this.getConsistentRadii = getConsistentRadii;
     this.convertTreeToLayerData = convertTreeToLayerData;
-    this.getDimensions = getDimensions;
-    this.getBranchTransformation = getBranchTransformation;
     this.getLayoutCacheKey = getLayoutCacheKey;
 
     this._precomputedCache = new Map();
@@ -38,7 +37,9 @@ export class InterpolationCache {
           fromTreeData,
           toTreeData,
           fromTreeIndex,
-          toTreeIndex
+          toTreeIndex,
+          fromLayoutCacheKey,
+          toLayoutCacheKey
         );
 
         if (!dataFrom || !dataTo) {
@@ -65,29 +66,24 @@ export class InterpolationCache {
   }
 
   _getLayoutCacheKey(treeIndex) {
-    if (typeof this.getLayoutCacheKey === 'function') {
-      return this.getLayoutCacheKey(treeIndex);
-    }
-
-    const { width, height } = this.getDimensions?.() || {};
-    return createLayoutCacheKey({
-      state: {
-        branchTransformation: this.getBranchTransformation?.()
-      },
-      treeIndex,
-      width,
-      height
-    });
+    return this.getLayoutCacheKey(treeIndex);
   }
 
-  buildInterpolationInputs(fromTreeData, toTreeData, fromTreeIndex, toTreeIndex) {
+  buildInterpolationInputs(
+    fromTreeData,
+    toTreeData,
+    fromTreeIndex,
+    toTreeIndex,
+    fromLayoutCacheKey = this._getLayoutCacheKey(fromTreeIndex),
+    toLayoutCacheKey = this._getLayoutCacheKey(toTreeIndex)
+  ) {
     const preFrom = this._precomputedCache.get(fromTreeIndex);
     const preTo = this._precomputedCache.get(toTreeIndex);
 
     let dataFrom, dataTo;
 
     // 1. Get Data From (Cache or Calc)
-    if (preFrom) {
+    if (this._hasMatchingLayoutCacheKey(preFrom, fromLayoutCacheKey)) {
       dataFrom = preFrom.layerData;
     } else {
       const layoutFrom = this._calculateLayout(fromTreeData, fromTreeIndex);
@@ -98,7 +94,7 @@ export class InterpolationCache {
     }
 
     // 2. Get Data To (Cache or Calc)
-    if (preTo) {
+    if (this._hasMatchingLayoutCacheKey(preTo, toLayoutCacheKey)) {
       dataTo = preTo.layerData;
     } else {
       const layoutTo = this._calculateLayout(toTreeData, toTreeIndex);
@@ -113,6 +109,13 @@ export class InterpolationCache {
     }
 
     return { dataFrom, dataTo };
+  }
+
+  _hasMatchingLayoutCacheKey(precomputed, expectedLayoutCacheKey) {
+    return Boolean(
+      precomputed?.layerData &&
+      precomputed.layerData.layoutCacheKey === expectedLayoutCacheKey
+    );
   }
 
   _calculateLayout(treeData, treeIndex) {

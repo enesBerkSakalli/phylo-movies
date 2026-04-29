@@ -101,4 +101,31 @@ describe('WebGLTreeAnimationController radii', () => {
     expect(controller.maxGlobalScale).toBe(5);
     expect(layout.layoutTree.name).toBe('new-root');
   });
+
+  it('does not replace explicit tree data with the indexed active tree', () => {
+    const activeTreeList = [{
+      name: 'active-root',
+      length: 0,
+      children: [{ name: 'active-child', length: 1 }]
+    }];
+    const explicitTree = {
+      name: 'explicit-root',
+      length: 0,
+      children: [{ name: 'explicit-child', length: 2 }]
+    };
+    useAppStore.setState({
+      treeList: activeTreeList,
+      branchTransformation: 'none',
+      layoutAngleDegrees: 360,
+      layoutRotationDegrees: 0,
+      transitionResolver: { fullTreeIndices: [0] }
+    });
+
+    const controller = new WebGLTreeAnimationController(null);
+    controller.initializeUniformScaling('none');
+
+    const layout = controller.calculateLayout(explicitTree, { treeIndex: 0 });
+
+    expect(layout.layoutTree.name).toBe('explicit-root');
+  });
 });

@@ -4,20 +4,20 @@ import { AppTooltip } from '@/components/ui/app-tooltip';
 import { useAppStore } from '@/state/phyloStore/store.js';
 import {
   buildMsaWindow,
+  selectActiveTreeListLength,
   selectCurrentTreeIndex,
   selectHasMsa,
   selectMsaColumnCount,
   selectMsaStepSize,
   selectMsaWindowSize,
   selectTransitionResolver,
-  selectTreeListLength,
 } from '../shared/hudShared.js';
 
 export function MSAWindowSection() {
   const hasMsa = useAppStore(selectHasMsa);
   const currentTreeIndex = useAppStore(selectCurrentTreeIndex);
   const transitionResolver = useAppStore(selectTransitionResolver);
-  const treeListLength = useAppStore(selectTreeListLength);
+  const treeListLength = useAppStore(selectActiveTreeListLength);
   const msaWindowSize = useAppStore(selectMsaWindowSize);
   const msaStepSize = useAppStore(selectMsaStepSize);
   const msaColumnCount = useAppStore(selectMsaColumnCount);

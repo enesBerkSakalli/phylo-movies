@@ -1,4 +1,5 @@
 import { useAppStore } from '../../../state/phyloStore/store.js';
+import { selectLeafNamesByIndex } from '../../../state/phyloStore/selectors/treeSelectors.js';
 import { resetTaxonColorCache } from '../../systems/tree_color/monophyleticColoring.js';
 import {
   getLinkColor as resolveLinkColor,
@@ -156,7 +157,7 @@ export class LayerStyles {
         state.changePulsePhase !== prevState.changePulsePhase ||
         state.colorVersion !== prevState.colorVersion ||
         state.taxaColorVersion !== prevState.taxaColorVersion ||
-        (state.movieData?.sorted_leaves?.length || 0) !== (prevState.movieData?.sorted_leaves?.length || 0)
+        selectLeafNamesByIndex(state).length !== selectLeafNamesByIndex(prevState).length
       ) {
         styleChanged = true;
       }
@@ -345,13 +346,13 @@ export class LayerStyles {
    * @private
    */
   _calculateDensityScale(state) {
-    const taxaCount = state.movieData?.sorted_leaves?.length || 10;
+    const taxaCount = selectLeafNamesByIndex(state).length || 10;
     // Scale inversely to taxa count: 10 taxa -> 1.0, 100 taxa -> 0.1 (clamped to 0.3)
     return Math.max(0.3, Math.min(1.0, 10 / taxaCount));
   }
 
   _calculateVisualScale(state) {
-    const taxaCount = state.movieData?.sorted_leaves?.length || 0;
+    const taxaCount = selectLeafNamesByIndex(state).length;
     if (taxaCount <= 50) return 1;
     return Math.max(0.5, Math.min(1.0, Math.sqrt(50 / taxaCount)));
   }

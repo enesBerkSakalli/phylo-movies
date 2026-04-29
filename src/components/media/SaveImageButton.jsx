@@ -2,15 +2,12 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { AppTooltip } from '@/components/ui/app-tooltip';
 import { Download } from 'lucide-react';
-import { useAppStore } from '@/state/phyloStore/store.js';
+import { selectCurrentTreeIndex, selectTreeControllers, useAppStore } from '@/state/phyloStore/store.js';
 
 
 // ==========================================================================
 // STORE SELECTORS
 // ==========================================================================
-const selectTreeControllers = (s) => s.treeControllers;
-const selectCurrentTreeIndex = (s) => s.currentTreeIndex;
-
 export function SaveImageButton({ disabled = false }) {
   const treeControllers = useAppStore(selectTreeControllers);
   const currentTreeIndex = useAppStore(selectCurrentTreeIndex);

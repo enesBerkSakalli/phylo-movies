@@ -2,6 +2,7 @@
  * Factory for label dots layer - shows dots instead of text labels
  */
 import { createLayer } from '../base/createLayer.js';
+import { selectLeafNamesByIndex } from '../../../../../state/phyloStore/selectors/treeSelectors.js';
 import { LAYER_ID_PREFIX } from '../../config/layerConfigs.js';
 import { ScatterplotLayer } from '@deck.gl/layers';
 import { getHistoryOffset, addZOffset, withSideSuffix } from '../../styles/labels/labelUtils.js';
@@ -54,7 +55,7 @@ export function createLabelDotsLayer(labels, state, layerStyles) {
  */
 export function getLabelDotsLayerProps(labels, state, layerStyles) {
   const { taxaColorVersion, colorVersion, fontSize, highlightColorMode } = state || {};
-  const taxaCount = state?.movieData?.sorted_leaves?.length || 0;
+  const taxaCount = selectLeafNamesByIndex(state).length;
   const cached = layerStyles.getCachedState(state);
 
   return {

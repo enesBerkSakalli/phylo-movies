@@ -1,13 +1,8 @@
 import React, { useEffect, useRef } from 'react';
-import { useAppStore } from '@/state/phyloStore/store.js';
-
-// ==========================================================================
-// STORE SELECTORS
-// ==========================================================================
-const selectPrimaryController = (state) => state.treeControllers?.[0];
+import { selectPrimaryTreeController, useAppStore } from '@/state/phyloStore/store.js';
 
 const DeckGLCanvas = React.memo(function DeckGLCanvas() {
-  const animationController = useAppStore(selectPrimaryController);
+  const animationController = useAppStore(selectPrimaryTreeController);
   const containerRef = useRef(null);
 
   useEffect(() => {
@@ -39,4 +34,3 @@ const DeckGLCanvas = React.memo(function DeckGLCanvas() {
 
 export { DeckGLCanvas };
 export default DeckGLCanvas;
-

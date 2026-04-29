@@ -119,7 +119,13 @@ export class WebGLTreeAnimationController {
     this.initializeUniformScaling(branchTransformation);
 
     const transformCacheKey = createTransformCacheKey({ state, treeList, branchTransformation });
-    const transformedTreeData = this._getTransformedTreeData(treeData, branchTransformation, treeIndex, transformCacheKey);
+    const transformedTreeData = this._getTransformedTreeData(
+      treeData,
+      branchTransformation,
+      treeIndex,
+      transformCacheKey,
+      treeList
+    );
     if (!transformedTreeData) {
       console.warn('calculateLayout: No tree data available');
       return null;
@@ -130,12 +136,17 @@ export class WebGLTreeAnimationController {
     return layout;
   }
 
-  _getTransformedTreeData(treeData, branchTransformation, treeIndex, transformCacheKey) {
+  _getTransformedTreeData(treeData, branchTransformation, treeIndex, transformCacheKey, treeList = null) {
     const cached = this._transformedCache.get(transformCacheKey);
+    const canUseIndexedCache = (
+      typeof treeIndex === 'number' &&
+      Array.isArray(treeList) &&
+      treeList[treeIndex] === treeData
+    );
     if (
       cached &&
       cached.transformedList &&
-      typeof treeIndex === 'number'
+      canUseIndexedCache
     ) {
       return cached.transformedList[treeIndex];
     }

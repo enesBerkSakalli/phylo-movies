@@ -7,7 +7,7 @@ import { SaveImageButton } from '../media/SaveImageButton.jsx';
 import { TimelineScrollControls } from './TimelineScrollControls/TimelineScrollControls.jsx';
 import { PlaybackSpeedControl } from './PlaybackSpeedControl/PlaybackSpeedControl.jsx';
 import { TimelineSegmentTooltip } from '../timeline/TimelineSegmentTooltip.jsx';
-import { useAppStore } from '@/state/phyloStore/store.js';
+import { selectLeafNamesByIndex, useAppStore } from '@/state/phyloStore/store.js';
 import { useSidebar } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Menu, ChevronUp, ChevronDown } from 'lucide-react';
@@ -53,6 +53,7 @@ export function MoviePlayerBar() {
   const setHoveredSegment = useAppStore(selectSetHoveredSegment);
   const movieData = useAppStore(selectMovieData);
   const movieTimelineManager = useAppStore(selectMovieTimelineManager);
+  const leafNamesByIndex = useAppStore(selectLeafNamesByIndex);
   const tooltipRef = useRef(null);
   const timelineHostRef = useRef(null);
 
@@ -71,17 +72,16 @@ export function MoviePlayerBar() {
   }, [movieTimelineManager]);
 
   const getLeafNames = useCallback((indices) => {
-    const sortedLeaves = movieData?.sorted_leaves;
-    if (!sortedLeaves || !Array.isArray(sortedLeaves)) return [];
+    if (!leafNamesByIndex || !Array.isArray(leafNamesByIndex)) return [];
 
     const leafNames = [];
     for (const idx of indices) {
-      if (Number.isInteger(idx) && idx >= 0 && idx < sortedLeaves.length) {
-        leafNames.push(sortedLeaves[idx]);
+      if (Number.isInteger(idx) && idx >= 0 && idx < leafNamesByIndex.length) {
+        leafNames.push(leafNamesByIndex[idx]);
       }
     }
     return leafNames;
-  }, [movieData?.sorted_leaves]);
+  }, [leafNamesByIndex]);
 
   const { open, toggleSidebar } = useSidebar();
   const handleNavigationToggle = useCallback(() => {

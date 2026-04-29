@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useAppStore } from '@/state/phyloStore/store.js';
+import { selectLeafNamesByIndex, useAppStore } from '@/state/phyloStore/store.js';
 import { calculateSprMoverFrequencies, getTopSprMovers, formatSubtreeLabel } from '@/domain/tree/sprAnalyticsUtils';
 import { SYSTEM_TREE_COLORS } from '@/constants/TreeColors';
 import type { AppStoreState } from '@/types/store';
@@ -16,9 +16,7 @@ import {
 // ==========================================================================
 // STORE SELECTORS
 // ==========================================================================
-const EMPTY_ARRAY: any[] = [];
 const selectPairSolutions = (s: AppStoreState) => s.pairSolutions;
-const selectSortedLeaves = (s: AppStoreState) => s.movieData?.sorted_leaves || EMPTY_ARRAY;
 
 /**
  * SubtreeFrequencyBarChart
@@ -33,7 +31,7 @@ const selectSortedLeaves = (s: AppStoreState) => s.movieData?.sorted_leaves || E
  */
 export const SubtreeFrequencyBarChart = () => {
     const pairSolutions = useAppStore(selectPairSolutions);
-    const sortedLeaves = useAppStore(selectSortedLeaves);
+    const leafNamesByIndex = useAppStore(selectLeafNamesByIndex);
 
     const data = useMemo(() => {
         if (!pairSolutions || Object.keys(pairSolutions).length === 0) return [];
@@ -43,12 +41,12 @@ export const SubtreeFrequencyBarChart = () => {
 
         return topSubtrees.map((item: any, idx: number) => ({
             rank: idx + 1,
-            subtree: formatSubtreeLabel(item.splitIndices, sortedLeaves),
+            subtree: formatSubtreeLabel(item.splitIndices, leafNamesByIndex),
             taxaCount: item.splitIndices.length,
             count: item.count,
             percentage: item.percentage
         }));
-    }, [pairSolutions, sortedLeaves]);
+    }, [pairSolutions, leafNamesByIndex]);
 
     if (!data || data.length === 0) {
         return (

@@ -5,10 +5,12 @@ export const createTreeDatasetSlice = (_set, get) => ({
   movieData: null,
   treeList: [],
   treeMetadata: [],
+  leafNamesByIndex: [],
   fullTreeIndices: [],
   pairInterpolationRanges: [],
   treeIndexByPair: {},
   fileName: null,
+  datasetVersion: 0,
   transitionResolver: null,
 
   // ==========================================================================
@@ -16,6 +18,8 @@ export const createTreeDatasetSlice = (_set, get) => ({
   // ==========================================================================
   distanceRfd: [],
   distanceWeightedRfd: [],
+  scaleList: [],
+  maxScale: 0,
   scaleValues: [],
 
   // ==========================================================================

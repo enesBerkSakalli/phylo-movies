@@ -2,14 +2,17 @@ import React, { useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { AppTooltip } from '@/components/ui/app-tooltip';
 import { ChevronsLeft, ChevronLeft, Play, Pause, ChevronRight, ChevronsRight, GitCompare, Link2, Link2Off } from 'lucide-react';
-import { useAppStore } from '@/state/phyloStore/store.js';
+import {
+  selectActiveTreeListLength,
+  selectCurrentTreeIndex,
+  selectTransitionResolver,
+  useAppStore
+} from '@/state/phyloStore/store.js';
 
 // ==========================================================================
 // STORE SELECTORS
 // ==========================================================================
 const selectPlaying = (s) => s.playing;
-const selectCurrentTreeIndex = (s) => s.currentTreeIndex;
-const selectTreeListLength = (s) => s.treeList?.length || 0;
 const selectComparisonMode = (state) => state.comparisonMode;
 const selectToggleComparisonMode = (state) => state.toggleComparisonMode;
 const selectViewsConnected = (s) => s.viewsConnected;
@@ -18,7 +21,6 @@ const selectStartAnimationPlayback = (s) => s.startAnimationPlayback;
 const selectStopAnimationPlayback = (s) => s.stopAnimationPlayback;
 const selectGoToNextAnchor = (s) => s.goToNextAnchor;
 const selectGoToPreviousAnchor = (s) => s.goToPreviousAnchor;
-const selectTransitionResolver = (s) => s.transitionResolver;
 
 export function TransportControls({
   onBackward,
@@ -26,7 +28,7 @@ export function TransportControls({
 }) {
   const playing = useAppStore(selectPlaying);
   const currentTreeIndex = useAppStore(selectCurrentTreeIndex);
-  const treeListLen = useAppStore(selectTreeListLength);
+  const treeListLen = useAppStore(selectActiveTreeListLength);
   const comparisonMode = useAppStore(selectComparisonMode);
   const toggleComparisonMode = useAppStore(selectToggleComparisonMode);
   const viewsConnected = useAppStore(selectViewsConnected);

@@ -2,6 +2,7 @@
  * Factory for nodes layer
  */
 import { createLayer } from '../base/createLayer.js';
+import { selectLeafNamesByIndex } from '../../../../../state/phyloStore/selectors/treeSelectors.js';
 import { LAYER_CONFIGS, HOVER_HIGHLIGHT_COLOR, MIN_NODE_RADIUS, Z_NODE } from '../../config/layerConfigs.js';
 import { getNodeHistoryZOffset } from '../../../utils/GeometryUtils.js';
 
@@ -32,7 +33,7 @@ export function createNodesLayer(nodes, state, layerStyles) {
  */
 export function getNodesLayerProps(nodes = [], state, layerStyles) {
   const { taxaColorVersion, colorVersion, nodeSize, upcomingChangesEnabled, highlightColorMode, metricScale } = state || {};
-  const taxaCount = state?.movieData?.sorted_leaves?.length || 0;
+  const taxaCount = selectLeafNamesByIndex(state).length;
 
   // Get cached state once for all accessors
   const cached = layerStyles.getCachedState(state);

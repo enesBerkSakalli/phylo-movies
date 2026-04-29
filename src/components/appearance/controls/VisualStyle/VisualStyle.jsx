@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useAppStore } from '@/state/phyloStore/store.js';
+import { selectTreeControllers, useAppStore } from '@/state/phyloStore/store.js';
 import { SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { ChevronDown, Circle, RotateCw } from 'lucide-react';
@@ -25,7 +25,6 @@ const selectLayoutAngleDegrees = (s) => s.layoutAngleDegrees;
 const selectSetLayoutAngleDegrees = (s) => s.setLayoutAngleDegrees;
 const selectLayoutRotationDegrees = (s) => s.layoutRotationDegrees;
 const selectSetLayoutRotationDegrees = (s) => s.setLayoutRotationDegrees;
-const selectTreeControllers = (s) => s.treeControllers;
 
 export function GeometryDimensionsSection() {
   const nodeSize = useAppStore(selectNodeSize);
@@ -82,7 +81,6 @@ export function LayoutTransformSection() {
   const setLayoutAngleDegrees = useAppStore(selectSetLayoutAngleDegrees);
   const layoutRotationDegrees = useAppStore(selectLayoutRotationDegrees);
   const setLayoutRotationDegrees = useAppStore(selectSetLayoutRotationDegrees);
-  const treeControllers = useAppStore(selectTreeControllers);
 
   return (
     <Collapsible defaultOpen asChild className="group/collapsible">
@@ -100,7 +98,6 @@ export function LayoutTransformSection() {
             setLayoutAngleDegrees={setLayoutAngleDegrees}
             layoutRotationDegrees={layoutRotationDegrees}
             setLayoutRotationDegrees={setLayoutRotationDegrees}
-            treeControllers={treeControllers}
           />
         </CollapsibleContent>
       </SidebarMenuItem>

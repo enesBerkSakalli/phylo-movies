@@ -105,13 +105,13 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
   it('clears prefetch bookkeeping when style changes reset interpolation data', () => {
     controller = new ControllerClass(null);
     controller.renderAllElements = vi.fn();
-    controller.prefetchedFrameIndices.add(1);
+    controller.prefetchedLayoutCacheKeys.set(1, 'stale-layout-key');
     controller._prefetchRequestTokens.set(1, 'stale-token');
     const generation = controller._layoutRequestGeneration;
 
     controller._handleStyleChange();
 
-    expect(controller.prefetchedFrameIndices.size).toBe(0);
+    expect(controller.prefetchedLayoutCacheKeys.size).toBe(0);
     expect(controller._prefetchRequestTokens.size).toBe(0);
     expect(controller._layoutRequestGeneration).toBe(generation + 1);
     expect(controller.renderAllElements).toHaveBeenCalledOnce();
@@ -131,5 +131,22 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     const secondToken = controller._createLayoutRequestToken(1, useAppStore.getState());
 
     expect(secondToken).not.toBe(firstToken);
+  });
+
+  it('re-prefetches the same tree index when its layout cache key changes', () => {
+    controller = new ControllerClass(null);
+
+    controller._prefetchFrame(1);
+    expect(controller.layoutWorker.messages).toHaveLength(1);
+    const firstKey = controller.layoutWorker.messages[0].data.options.layoutCacheKey;
+
+    useAppStore.setState({ layoutRotationDegrees: 90 });
+
+    controller._prefetchFrame(1);
+    expect(controller.layoutWorker.messages).toHaveLength(2);
+    const secondKey = controller.layoutWorker.messages[1].data.options.layoutCacheKey;
+
+    expect(secondKey).not.toBe(firstKey);
+    expect(controller.prefetchedLayoutCacheKeys.get(1)).toBe(secondKey);
   });
 });

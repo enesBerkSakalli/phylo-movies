@@ -1,6 +1,6 @@
 
 import React, { useMemo } from 'react';
-import { useAppStore } from '@/state/phyloStore/store.js';
+import { selectLeafNamesByIndex, useAppStore } from '@/state/phyloStore/store.js';
 import {
   calculateSprMoverFrequencies,
   getTopSprMovers,
@@ -24,9 +24,7 @@ import type { AppStoreState } from '@/types/store';
 // ==========================================================================
 // STORE SELECTORS
 // ==========================================================================
-const EMPTY_ARRAY: any[] = [];
 const selectPairSolutions = (s: AppStoreState) => s.pairSolutions;
-const selectSortedLeaves = (s: AppStoreState) => s.movieData?.sorted_leaves || EMPTY_ARRAY;
 const selectSetManuallyMarkedNodes = (s: AppStoreState) => s.setManuallyMarkedNodes;
 const selectMarkedNodes = (s: AppStoreState) => s.manuallyMarkedNodes;
 
@@ -39,7 +37,7 @@ const selectMarkedNodes = (s: AppStoreState) => s.manuallyMarkedNodes;
 export const SubtreeFrequencyList = () => {
   // Get data from store
   const pairSolutions = useAppStore(selectPairSolutions);
-  const sortedLeaves = useAppStore(selectSortedLeaves);
+  const leafNamesByIndex = useAppStore(selectLeafNamesByIndex);
   const setManuallyMarkedNodes = useAppStore(selectSetManuallyMarkedNodes);
   const markedNodes = useAppStore(selectMarkedNodes);
 
@@ -98,7 +96,7 @@ export const SubtreeFrequencyList = () => {
             {topSubtrees.map((item) => {
               const signature = getSignature(item.splitIndices);
               const isActive = signature === currentSignature;
-              const subtreeLabel = formatSubtreeLabel(item.splitIndices, sortedLeaves);
+              const subtreeLabel = formatSubtreeLabel(item.splitIndices, leafNamesByIndex);
 
               return (
                 <Card

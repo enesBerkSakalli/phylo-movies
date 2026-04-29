@@ -20,12 +20,16 @@ export const createDatasetLifecycleSlice = (set, get) => ({
       movieData: null,
       treeList: [],
       treeMetadata: [],
+      leafNamesByIndex: [],
       fullTreeIndices: [],
       pairInterpolationRanges: [],
       treeIndexByPair: {},
       fileName: null,
+      datasetVersion: (get().datasetVersion ?? 0) + 1,
       distanceRfd: [],
       distanceWeightedRfd: [],
+      scaleList: [],
+      maxScale: 0,
       scaleValues: [],
       pairSolutions: {},
       pivotEdgeTracking: [],
@@ -41,6 +45,11 @@ export const createDatasetLifecycleSlice = (set, get) => ({
     const { resetInterpolationCaches } = get();
     resetInterpolationCaches?.();
 
+    const {
+      sorted_leaves: leafNamesByIndex,
+      distances,
+      ...storedMovieData
+    } = movieData;
     const interpolatedTrees = movieData.interpolated_trees;
     const treeMetadata = movieData.tree_metadata;
     const pairInterpolationRanges = movieData.pair_interpolation_ranges;
@@ -50,8 +59,6 @@ export const createDatasetLifecycleSlice = (set, get) => ({
     const treeIndexByPair = buildTreeIndexByPair(treeMetadata);
     const { scaleList, maxScale, scaleValues } = calculateTreeScales(interpolatedTrees, fullTreeIndices);
     const numberOfFullTrees = fullTreeIndices.length;
-
-    const sortedLeaves = movieData.sorted_leaves;
 
     const msaColumnCount = extractMsaColumnCount(movieData);
     const { windowSize, stepSize } = extractMsaWindowParameters(movieData);
@@ -66,8 +73,9 @@ export const createDatasetLifecycleSlice = (set, get) => ({
     });
 
     const fileName = movieData.file_name;
-    const distanceRfd = [...movieData.distances.robinson_foulds];
-    const distanceWeightedRfd = [...movieData.distances.weighted_robinson_foulds];
+    const datasetVersion = (get().datasetVersion ?? 0) + 1;
+    const distanceRfd = [...distances.robinson_foulds];
+    const distanceWeightedRfd = [...distances.weighted_robinson_foulds];
 
     const existingManager = get().movieTimelineManager;
     existingManager?.destroy();
@@ -76,9 +84,7 @@ export const createDatasetLifecycleSlice = (set, get) => ({
 
     set({
       movieData: {
-        ...movieData,
-        sorted_leaves: sortedLeaves,
-        distances: undefined,
+        ...storedMovieData,
         scaleList,
         maxScale,
         fullTreeIndices,
@@ -87,12 +93,16 @@ export const createDatasetLifecycleSlice = (set, get) => ({
       movieTimelineManager,
       treeList: interpolatedTrees,
       treeMetadata,
+      leafNamesByIndex,
       fullTreeIndices,
       pairInterpolationRanges,
       treeIndexByPair,
       fileName,
+      datasetVersion,
       distanceRfd,
       distanceWeightedRfd,
+      scaleList,
+      maxScale,
       scaleValues,
       pairSolutions: movieData.tree_pair_solutions,
       pivotEdgeTracking: movieData.pivot_edge_tracking,

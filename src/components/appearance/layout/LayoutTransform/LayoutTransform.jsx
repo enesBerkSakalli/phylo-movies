@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback } from 'react';
 import { LabeledSlider } from '@/components/ui/labeled-slider';
 import { SidebarMenuSub, SidebarMenuSubItem } from '@/components/ui/sidebar';
 import {  Compass } from 'lucide-react';
@@ -8,42 +8,16 @@ export function LayoutTransform({
   setLayoutAngleDegrees,
   layoutRotationDegrees,
   setLayoutRotationDegrees,
-  treeControllers,
 }) {
-  const isRenderingRef = useRef(false);
-  const needsRenderRef = useRef(false);
-
-  const renderControllers = useCallback(async () => {
-    if (isRenderingRef.current) {
-      needsRenderRef.current = true;
-      return;
-    }
-
-    isRenderingRef.current = true;
-    try {
-      do {
-        needsRenderRef.current = false;
-        for (const controller of treeControllers ?? []) {
-          await controller?.renderAllElements?.();
-        }
-      } while (needsRenderRef.current);
-    } catch { }
-    finally {
-      isRenderingRef.current = false;
-    }
-  }, [treeControllers]);
-
   const handleAngleChange = useCallback((vals) => {
     const v = Array.isArray(vals) ? vals[0] : 360;
     setLayoutAngleDegrees(v);
-    renderControllers();
-  }, [setLayoutAngleDegrees, renderControllers]);
+  }, [setLayoutAngleDegrees]);
 
   const handleRotationChange = useCallback((vals) => {
     const v = Array.isArray(vals) ? vals[0] : 0;
     setLayoutRotationDegrees(v);
-    renderControllers();
-  }, [setLayoutRotationDegrees, renderControllers]);
+  }, [setLayoutRotationDegrees]);
 
   return (
     <SidebarMenuSub>

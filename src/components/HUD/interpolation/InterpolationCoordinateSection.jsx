@@ -6,13 +6,13 @@ import { getIndexMappings } from '@/domain/indexing/IndexMapping';
 import { useAppStore } from '@/state/phyloStore/store.js';
 import {
   buildInterpolationText,
+  selectActiveTreeListLength,
   selectAnimationProgress,
   selectCurrentTreeIndex,
   selectGoToPosition,
   selectPlaying,
   selectTimelineProgress,
   selectTransitionResolver,
-  selectTreeListLength,
 } from '../shared/hudShared.js';
 
 export function InterpolationCoordinateSection() {
@@ -21,7 +21,7 @@ export function InterpolationCoordinateSection() {
   const animationProgress = useAppStore(selectAnimationProgress);
   const playing = useAppStore(selectPlaying);
   const transitionResolver = useAppStore(selectTransitionResolver);
-  const treeListLength = useAppStore(selectTreeListLength);
+  const treeListLength = useAppStore(selectActiveTreeListLength);
   const goToPosition = useAppStore(selectGoToPosition);
 
   const proxyState = useMemo(
