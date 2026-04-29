@@ -241,7 +241,9 @@ export class ComparisonModeRenderer {
       this._lastFittedIndices.right !== rightIndex;
 
     if (indicesChanged) {
-      this.controller.viewportManager.focusOnTree(combinedData.nodes, combinedData.labels);
+      this.controller.viewportManager.focusOnTree(combinedData.nodes, combinedData.labels, {
+        links: [...combinedData.links, ...(combinedData.connectors || [])]
+      });
       this._lastFittedIndices = { left: leftIndex, right: rightIndex };
     }
 
@@ -354,7 +356,7 @@ export class ComparisonModeRenderer {
       this.controller.viewportManager.focusOnTree(
         combinedData.nodes,
         combinedData.labels,
-        { allowDuringPlayback: true, duration: 0 }
+        { allowDuringPlayback: true, duration: 0, links: [...combinedData.links, ...(combinedData.connectors || [])] }
       );
       this._lastFittedIndices = { left: -1, right: rightIndex };
     }

@@ -25,4 +25,41 @@ describe('ComparisonGeometryUtils', () => {
             expect(result[0]).toBeCloseTo(40);
         });
     });
+
+    describe('chooseBundlePoint', () => {
+        it('uses normalized parent ids to bundle at the common ancestor', () => {
+            const center = [0, 0];
+            const parent = {
+                id: 'node-parent',
+                parentId: null,
+                depth: 1,
+                position: [0, 80, 0]
+            };
+            const left = {
+                id: 'node-left',
+                parentId: 'node-parent',
+                depth: 2,
+                position: [-100, 0, 0]
+            };
+            const right = {
+                id: 'node-right',
+                parentId: 'node-parent',
+                depth: 2,
+                position: [100, 0, 0]
+            };
+            const infoById = new Map([
+                [parent.id, parent],
+                [left.id, left],
+                [right.id, right]
+            ]);
+
+            const point = chooseBundlePoint([
+                { sourceInfo: left, source: left.position },
+                { sourceInfo: right, source: right.position }
+            ], null, center, 100, true, infoById);
+
+            expect(Math.abs(point[0])).toBeLessThan(1e-6);
+            expect(point[1]).toBeGreaterThan(150);
+        });
+    });
 });

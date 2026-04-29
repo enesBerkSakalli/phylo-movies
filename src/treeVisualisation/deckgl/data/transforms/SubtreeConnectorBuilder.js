@@ -7,7 +7,6 @@ import {
   getBundleAncestor,
   chooseBundlePoint
 } from './ComparisonGeometryUtils.js';
-import { findLowestCommonAncestor } from '../../builders/geometry/connectors/CommonAncestorBuilder.js';
 
 /**
  * SubtreeConnectorBuilder
@@ -27,6 +26,8 @@ export function buildSubtreeConnectors(options) {
   var rightCenter = options.rightCenter || [0, 0];
   var leftRadius = options.leftRadius;
   var rightRadius = options.rightRadius;
+  var leftInfoById = buildInfoById(leftPositions);
+  var rightInfoById = buildInfoById(rightPositions);
 
   var edgeKey = "[" + pivotEdge.join(", ") + "]";
   var flattenedSubtrees = flattenSplitSets(latticeSolutions[edgeKey] || []);
@@ -60,11 +61,12 @@ export function buildSubtreeConnectors(options) {
 
   var passivePaths = buildBundledConnectorPaths({
     connections: passiveConnections,
-    rightPositions: rightPositions,
     leftCenter: leftCenter,
     rightCenter: rightCenter,
     leftRadius: leftRadius,
     rightRadius: rightRadius,
+    leftInfoById: leftInfoById,
+    rightInfoById: rightInfoById,
     isActive: false,
     bundlingStrength: 0.85,
     width: 1.5
@@ -72,11 +74,12 @@ export function buildSubtreeConnectors(options) {
 
   var activePaths = buildBundledConnectorPaths({
     connections: activeConnections,
-    rightPositions: rightPositions,
     leftCenter: leftCenter,
     rightCenter: rightCenter,
     leftRadius: leftRadius,
     rightRadius: rightRadius,
+    leftInfoById: leftInfoById,
+    rightInfoById: rightInfoById,
     isActive: true,
     bundlingStrength: 0.5,
     width: 3.0,
@@ -162,9 +165,8 @@ function createConnectionObject(params) {
     target: params.target,
     color: params.color,
     isCurrentlyMoving: params.isCurrentlyMoving,
-    sourceNode: params.sourceNode,
-    targetNode: params.targetNode,
-    targetNodeKey: params.targetNodeKey
+    sourceInfo: params.sourceInfo,
+    targetInfo: params.targetInfo
   };
   if (params.path !== undefined) {
     obj.path = params.path;
@@ -190,9 +192,8 @@ function createPathObject(connection, path, idSuffix, width) {
     target: connection.target,
     color: connection.color,
     isCurrentlyMoving: connection.isCurrentlyMoving,
-    sourceNode: connection.sourceNode,
-    targetNode: connection.targetNode,
-    targetNodeKey: connection.targetNodeKey,
+    sourceInfo: connection.sourceInfo,
+    targetInfo: connection.targetInfo,
     path: path,
     width: width
   });
@@ -331,9 +332,8 @@ function buildRawConnections(params) {
       target: dstPos,
       color: color,
       isCurrentlyMoving: effectiveMoving,
-      sourceNode: nodeForColor,
-      targetNode: rightMatch.info.node || rightMatch.info,
-      targetNodeKey: rightMatch.key
+      sourceInfo: leftInfo,
+      targetInfo: rightMatch.info
     }));
   }
 
@@ -342,13 +342,13 @@ function buildRawConnections(params) {
 
 function sortConnectionsByAngle(connections, leftCenter, rightCenter) {
   return connections.slice().sort(function (a, b) {
-    var aSrc = getAngle(a.sourceNode || a.source, leftCenter);
-    var bSrc = getAngle(b.sourceNode || b.source, leftCenter);
+    var aSrc = getAngle(a.sourceInfo, leftCenter);
+    var bSrc = getAngle(b.sourceInfo, leftCenter);
     if (aSrc !== bSrc) {
       return aSrc - bSrc;
     }
-    var aDst = getAngle(a.targetNode || a.target, rightCenter);
-    var bDst = getAngle(b.targetNode || b.target, rightCenter);
+    var aDst = getAngle(a.targetInfo, rightCenter);
+    var bDst = getAngle(b.targetInfo, rightCenter);
     return aDst - bDst;
   });
 }
@@ -376,11 +376,12 @@ function splitActivePassive(connections) {
  */
 function buildBundledConnectorPaths(params) {
   var connections = params.connections;
-  var rightPositions = params.rightPositions;
   var leftCenter = params.leftCenter;
   var rightCenter = params.rightCenter;
   var leftRadius = params.leftRadius;
   var rightRadius = params.rightRadius;
+  var leftInfoById = params.leftInfoById;
+  var rightInfoById = params.rightInfoById;
   var isActive = params.isActive;
   var bundlingStrength = params.bundlingStrength;
   var width = params.width;
@@ -395,8 +396,8 @@ function buildBundledConnectorPaths(params) {
   if (isActive) {
     // Active connections: Calculate a SHARED bundle point for the entire group
     // This ensures visually coherent bundling instead of individual rays
-    var srcBundlePoint = chooseBundlePoint(connections, null, leftCenter, leftRadius, true);
-    var dstBundlePoint = chooseBundlePoint(connections, null, rightCenter, rightRadius, false);
+    var srcBundlePoint = chooseBundlePoint(connections, null, leftCenter, leftRadius, true, leftInfoById);
+    var dstBundlePoint = chooseBundlePoint(connections, null, rightCenter, rightRadius, false, rightInfoById);
 
     if (outwardPushFactor) {
       srcBundlePoint = pushOutward(srcBundlePoint, leftCenter, outwardPushFactor);
@@ -424,7 +425,7 @@ function buildBundledConnectorPaths(params) {
     });
   } else {
     // Passive: group by bundle ancestors
-    var groups = groupPassiveConnections(connections, rightPositions);
+    var groups = groupPassiveConnections(connections, leftInfoById, rightInfoById);
 
     groups.forEach(function (group) {
       var groupBundlePoint = chooseBundlePoint(
@@ -432,14 +433,16 @@ function buildBundledConnectorPaths(params) {
         group.leftCenterNode,
         leftCenter,
         leftRadius,
-        true
+        true,
+        leftInfoById
       );
       var groupDstBundlePoint = chooseBundlePoint(
         group.connections,
         group.rightCenterNode,
         rightCenter,
         rightRadius,
-        false
+        false,
+        rightInfoById
       );
 
       group.connections.forEach(function (conn, idx) {
@@ -466,27 +469,19 @@ function buildBundledConnectorPaths(params) {
   return results;
 }
 
-function groupPassiveConnections(passiveConnections, rightPositions) {
+function groupPassiveConnections(passiveConnections, leftInfoById, rightInfoById) {
   var groups = new Map();
 
   passiveConnections.forEach(function (conn) {
-    var sourceNode = conn.sourceNode;
-    var leftBundleNode = getBundleAncestor(sourceNode, 2) || (sourceNode && sourceNode.parent);
+    var sourceInfo = conn.sourceInfo;
+    var targetInfo = conn.targetInfo;
+    if (!sourceInfo || !targetInfo) return;
 
-    var targetKey = conn.targetNodeKey || conn.targetKey || null;
-    var rightNode = null;
-    if (targetKey && rightPositions && rightPositions.has(targetKey)) {
-      var rightEntry = rightPositions.get(targetKey);
-      rightNode = rightEntry.node || rightEntry;
-    } else if (conn.targetNode) {
-      rightNode = conn.targetNode;
-    } else {
-      return;
-    }
-    var rightBundleNode = getBundleAncestor(rightNode, 2) || (rightNode && rightNode.parent);
+    var leftBundleNode = getBundleAncestor(sourceInfo, leftInfoById, 2) || getParentInfo(sourceInfo, leftInfoById);
+    var rightBundleNode = getBundleAncestor(targetInfo, rightInfoById, 2) || getParentInfo(targetInfo, rightInfoById);
 
-    var leftKey = leftBundleNode ? leftBundleNode.id || leftBundleNode.name : 'rootL';
-    var rightKey = rightBundleNode ? rightBundleNode.id || rightBundleNode.name : 'rootR';
+    var leftKey = leftBundleNode ? leftBundleNode.id : 'rootL';
+    var rightKey = rightBundleNode ? rightBundleNode.id : 'rootR';
     var groupKey = leftKey + "|" + rightKey;
 
     if (!groups.has(groupKey)) {
@@ -500,4 +495,19 @@ function groupPassiveConnections(passiveConnections, rightPositions) {
   });
 
   return groups;
+}
+
+function buildInfoById(positionMap) {
+  var map = new Map();
+  if (!positionMap || typeof positionMap.values !== 'function') return map;
+  for (var info of positionMap.values()) {
+    var id = info && info.id;
+    if (id) map.set(id, info);
+  }
+  return map;
+}
+
+function getParentInfo(info, infoById) {
+  var parentId = info && info.parentId;
+  return parentId && infoById ? infoById.get(parentId) : null;
 }
