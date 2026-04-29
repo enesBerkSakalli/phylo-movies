@@ -179,7 +179,7 @@ export function calculateSprDatasetSummary(pairSolutions, options = {}) {
 /**
  * Format pair activity rows for charting SPR activity over neighboring anchor-tree pairs.
  *
- * SPR activity is represented as mover occurrences per pair. RF and W-RF are carried
+ * SPR activity is represented as mover occurrences per pair. RFD and W-RFD are carried
  * as topology-distance context, not folded into the activity score.
  *
  * @param {Array} pairActivityRows - Result from calculateSprPairActivity
