@@ -11,6 +11,7 @@ export function PlaybackSpeedControl({ value, setValue }) {
 
   return (
     <div className="speed-control" role="group" aria-labelledby="speed-control-label">
+      <span id="speed-control-label" className="sr-only">Playback speed</span>
       <AppTooltip content={<p>Playback Speed: {value}x</p>}>
         <Gauge className="size-4" />
       </AppTooltip>
