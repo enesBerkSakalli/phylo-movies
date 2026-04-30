@@ -108,6 +108,11 @@ export const createDatasetLifecycleSlice = (set, get) => ({
       pivotEdgeTracking: movieData.pivot_edge_tracking,
       subtreeTracking: movieData.subtree_tracking,
       transitionResolver: resolver,
+      playhead: {
+        animationProgress: 0,
+        timelineProgress: null,
+        currentTreeIndex: 0
+      },
       currentTreeIndex: 0,
       playing: false,
     });

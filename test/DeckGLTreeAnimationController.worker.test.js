@@ -42,7 +42,11 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
       layoutAngleDegrees: 360,
       layoutRotationDegrees: 0,
       styleConfig: { labelOffsets: { DEFAULT: 20, EXTENSION: 5 } },
-      animationProgress: 0,
+      playhead: {
+        animationProgress: 0,
+        timelineProgress: null,
+        currentTreeIndex: 0
+      },
       currentTreeIndex: 0
     });
   });

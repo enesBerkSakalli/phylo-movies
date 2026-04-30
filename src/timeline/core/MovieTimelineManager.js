@@ -68,7 +68,7 @@ export class MovieTimelineManager {
 
         this.unsubscribeFromStore = useAppStore.subscribe((state, prevState) => {
             if (state.currentTreeIndex !== prevState.currentTreeIndex ||
-                state.animationProgress !== prevState.animationProgress) {
+                state.playhead !== prevState.playhead) {
                 if (!this.scrubController?.isScrubbing) {
                     requestAnimationFrame(() => this.updateCurrentPosition());
                 }

@@ -11,13 +11,13 @@ export class TimelineStateSynchronizer {
   }
 
   getEffectivePlaybackState(lastScrubEndTime) {
-    const { animationProgress, timelineProgress, playing, treeList } = this.store.getState();
+    const { playhead, playing, treeList } = this.store.getState();
     const withinGracePeriod = lastScrubEndTime > 0 &&
       (performance.now() - lastScrubEndTime) < SCRUB_GRACE_PERIOD_MS;
-    const preservingScrubPosition = (withinGracePeriod || !playing) && timelineProgress != null;
+    const preservingScrubPosition = (withinGracePeriod || !playing) && playhead?.timelineProgress != null;
     const progress = preservingScrubPosition
-      ? timelineProgress
-      : this._mapAnimationProgressToTimelineProgress(animationProgress, treeList?.length ?? 0);
+      ? playhead.timelineProgress
+      : this._mapAnimationProgressToTimelineProgress(playhead?.animationProgress ?? 0, treeList?.length ?? 0);
 
     return { progress, preservingScrubPosition };
   }

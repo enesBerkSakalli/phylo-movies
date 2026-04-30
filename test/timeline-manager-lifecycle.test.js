@@ -98,8 +98,11 @@ describe('MovieTimelineManager lifecycle', () => {
   afterEach(() => {
     useAppStore.setState({
       playing: false,
-      animationProgress: 0,
-      timelineProgress: null,
+      playhead: {
+        animationProgress: 0,
+        timelineProgress: null,
+        currentTreeIndex: 0
+      },
       currentTreeIndex: 0,
       hoveredSegmentIndex: null,
       hoveredSegmentData: null,
@@ -194,8 +197,11 @@ describe('MovieTimelineManager lifecycle', () => {
 
     useAppStore.setState({
       playing: false,
-      animationProgress: 0.1,
-      timelineProgress: 0.6
+      playhead: {
+        animationProgress: 0.1,
+        timelineProgress: 0.6,
+        currentTreeIndex: 0
+      }
     });
 
     manager.mount(firstHost);
@@ -215,10 +221,95 @@ describe('MovieTimelineManager lifecycle', () => {
     manager.destroy();
   });
 
+  it('keeps fractional timeline position when playback resumes after scrubbing', () => {
+    const previousPerformance = global.performance;
+    const now = 10_000;
+    global.performance = {
+      ...(previousPerformance || {}),
+      now: () => now
+    };
+
+    try {
+      const trees = [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }, { id: 'e' }];
+      const timelineProgress = 0.42;
+      const manager = {
+        getInterpolationDataForTimelineProgress: (progress) => {
+          expect(progress).to.equal(timelineProgress);
+          return {
+            fromIndex: 1,
+            toIndex: 2,
+            timeFactor: 0.25
+          };
+        },
+        getTimelineProgressForLinearTreeProgress: () => timelineProgress
+      };
+
+      useAppStore.setState({
+        treeList: trees,
+        movieTimelineManager: manager,
+        animationSpeed: 1,
+        playhead: {
+          animationProgress: 0,
+          timelineProgress,
+          currentTreeIndex: 0
+        },
+        playing: false
+      });
+
+      useAppStore.getState().play();
+
+      const state = useAppStore.getState();
+      expect(state.playhead).to.deep.equal({
+        animationProgress: 0.3125,
+        timelineProgress,
+        currentTreeIndex: 1
+      });
+      expect(state.animationStartTime).to.equal(now - 1250);
+    } finally {
+      global.performance = previousPerformance;
+    }
+  });
+
+  it('maps generic scrub position through weighted timeline progress', () => {
+    const trees = [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }, { id: 'e' }];
+    const manager = {
+      getTimelineProgressForLinearTreeProgress: (progress, treeCount) => {
+        expect(progress).to.equal(0.25);
+        expect(treeCount).to.equal(trees.length);
+        return 0.6;
+      }
+    };
+
+    useAppStore.setState({
+      treeList: trees,
+      movieTimelineManager: manager,
+      playhead: {
+        animationProgress: 0,
+        timelineProgress: null,
+        currentTreeIndex: 0
+      },
+      currentTreeIndex: 0
+    });
+
+    useAppStore.getState().setScrubPosition(0.25);
+
+    const state = useAppStore.getState();
+    expect(state.currentTreeIndex).to.equal(1);
+    expect(state.playhead).to.deep.equal({
+      animationProgress: 0.25,
+      timelineProgress: 0.6,
+      currentTreeIndex: 1
+    });
+  });
+
   it('updates stored timeline progress while playback advances', () => {
     useAppStore.setState({
       playing: true,
-      timelineProgress: 0.2
+      playhead: {
+        animationProgress: 0,
+        timelineProgress: 0.2,
+        currentTreeIndex: 0
+      }
     });
 
     useAppStore.getState().updateTimelineState({
@@ -230,7 +321,7 @@ describe('MovieTimelineManager lifecycle', () => {
     });
 
     const state = useAppStore.getState();
-    expect(state.timelineProgress).to.equal(0.7);
+    expect(state.playhead.timelineProgress).to.equal(0.7);
     expect(state.currentSegmentIndex).to.equal(1);
     expect(state.treeInSegment).to.equal(2);
     expect(state.treesInSegment).to.equal(3);

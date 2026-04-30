@@ -2,7 +2,6 @@ import { getMSAFrameIndex } from '@/domain/indexing/IndexMapping';
 import { calculateWindow } from '@/domain/msa/msaWindowCalculator';
 import {
   selectActiveTreeListLength,
-  selectAnimationProgress,
   selectClearClipboard,
   selectClipboardTreeIndex,
   selectCurrentTreeIndex,
@@ -11,15 +10,13 @@ import {
   selectMsaColumnCount,
   selectMsaStepSize,
   selectMsaWindowSize,
-  selectPlaying,
+  selectPlayhead,
   selectSetClipboardTreeIndex,
-  selectTimelineProgress,
   selectTransitionResolver
 } from '@/state/phyloStore/store.js';
 
 export {
   selectActiveTreeListLength,
-  selectAnimationProgress,
   selectClearClipboard,
   selectClipboardTreeIndex,
   selectCurrentTreeIndex,
@@ -28,28 +25,27 @@ export {
   selectMsaColumnCount,
   selectMsaStepSize,
   selectMsaWindowSize,
-  selectPlaying,
+  selectPlayhead,
   selectSetClipboardTreeIndex,
-  selectTimelineProgress,
   selectTransitionResolver
 };
 
 const clamp01 = (value) => Math.max(0, Math.min(1, value || 0));
 
-export function buildInterpolationText(sequenceIndex, totalSequenceLength, transitionResolver, timelineProgress, animationProgress, playing) {
-  const coordinateValue = getCoordinateValue(sequenceIndex, totalSequenceLength, timelineProgress, animationProgress, playing);
+export function buildInterpolationText(sequenceIndex, totalSequenceLength, transitionResolver, playhead) {
+  const coordinateValue = getCoordinateValue(sequenceIndex, totalSequenceLength, playhead);
   return {
     display: buildReadablePositionText(sequenceIndex, totalSequenceLength, transitionResolver),
     fullPrecision: coordinateValue.toString()
   };
 }
 
-function getCoordinateValue(sequenceIndex, totalSequenceLength, timelineProgress, animationProgress, playing) {
-  const explicitValue = typeof timelineProgress === 'number' ? timelineProgress : null;
+function getCoordinateValue(sequenceIndex, totalSequenceLength, playhead) {
+  const explicitValue = typeof playhead?.timelineProgress === 'number' ? playhead.timelineProgress : null;
   if (explicitValue != null) return clamp01(explicitValue);
 
-  if (playing && typeof animationProgress === 'number') {
-    return clamp01(animationProgress);
+  if (typeof playhead?.animationProgress === 'number') {
+    return clamp01(playhead.animationProgress);
   }
 
   const derivedValue = totalSequenceLength > 1 ? (sequenceIndex / (totalSequenceLength - 1)) : 0;

@@ -106,6 +106,22 @@ describe('TimelineMathUtils', () => {
     expect(weightedProgress).to.not.equal(linearProgress);
   });
 
+  it('uses interpolation intervals, not frame count, for transition segment duration', () => {
+    const durations = TimelineMathUtils.calculateSegmentDurations([
+      {
+        isFullTree: false,
+        hasInterpolation: true,
+        interpolationData: [
+          { originalIndex: 0 },
+          { originalIndex: 1 },
+          { originalIndex: 2 }
+        ]
+      }
+    ]);
+
+    expect(durations).to.deep.equal([2000]);
+  });
+
   it('resolves exact timeline boundaries consistently', () => {
     const firstInterpolationIndex = segments.findIndex((segment, index) => (
       index > 0 && segment.hasInterpolation && segment.interpolationData.length > 1

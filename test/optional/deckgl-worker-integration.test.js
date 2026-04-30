@@ -59,7 +59,11 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
       layoutAngleDegrees: 360,
       layoutRotationDegrees: 0,
       styleConfig: { labelOffsets: { DEFAULT: 20, EXTENSION: 5 } },
-      animationProgress: 0,
+      playhead: {
+        animationProgress: 0,
+        timelineProgress: null,
+        currentTreeIndex: 0
+      },
       currentTreeIndex: 0,
       setAnimationStage: sandbox.stub(),
       stop: sandbox.stub(),
@@ -101,7 +105,11 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
       layoutAngleDegrees: 360,
       layoutRotationDegrees: 0,
       styleConfig: { labelOffsets: { DEFAULT: 20, EXTENSION: 5 } },
-      animationProgress: 0,
+      playhead: {
+        animationProgress: 0,
+        timelineProgress: null,
+        currentTreeIndex: 0
+      },
       currentTreeIndex: 0,
       // Ensure functions exist if called
       setAnimationStage: sandbox.stub(),

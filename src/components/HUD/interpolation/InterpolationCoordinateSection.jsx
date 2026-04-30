@@ -7,19 +7,15 @@ import { useAppStore } from '@/state/phyloStore/store.js';
 import {
   buildInterpolationText,
   selectActiveTreeListLength,
-  selectAnimationProgress,
   selectCurrentTreeIndex,
   selectGoToPosition,
-  selectPlaying,
-  selectTimelineProgress,
+  selectPlayhead,
   selectTransitionResolver,
 } from '../shared/hudShared.js';
 
 export function InterpolationCoordinateSection() {
   const currentTreeIndex = useAppStore(selectCurrentTreeIndex);
-  const timelineProgress = useAppStore(selectTimelineProgress);
-  const animationProgress = useAppStore(selectAnimationProgress);
-  const playing = useAppStore(selectPlaying);
+  const playhead = useAppStore(selectPlayhead);
   const transitionResolver = useAppStore(selectTransitionResolver);
   const treeListLength = useAppStore(selectActiveTreeListLength);
   const goToPosition = useAppStore(selectGoToPosition);
@@ -32,10 +28,10 @@ export function InterpolationCoordinateSection() {
   const { interpolationText, sequenceIndex } = useMemo(() => {
     const { sequenceIndex, totalSequenceLength } = getIndexMappings(proxyState);
     return {
-      interpolationText: buildInterpolationText(sequenceIndex, totalSequenceLength, transitionResolver, timelineProgress, animationProgress, playing),
+      interpolationText: buildInterpolationText(sequenceIndex, totalSequenceLength, transitionResolver, playhead),
       sequenceIndex,
     };
-  }, [proxyState, transitionResolver, timelineProgress, animationProgress, playing]);
+  }, [proxyState, transitionResolver, playhead]);
 
   const sliderMax = Math.max(0, treeListLength - 1);
   const sliderValue = Math.min(sliderMax, Math.max(0, sequenceIndex || 0));
