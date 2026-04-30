@@ -59,8 +59,6 @@ export function RecordingControls({ disabled = false }) {
 
   return (
     <>
-      <div className="vertical-divider"></div>
-
       <AppTooltip content="Start screen recording">
         <Button
           id="start-record"

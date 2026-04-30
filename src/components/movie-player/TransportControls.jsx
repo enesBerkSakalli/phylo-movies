@@ -8,6 +8,7 @@ import {
   selectCurrentTreeIndex,
   selectGoToNextAnchor,
   selectGoToPreviousAnchor,
+  selectMovieData,
   selectPlaying,
   selectSetViewsConnected,
   selectStartAnimationPlayback,
@@ -25,6 +26,7 @@ export function TransportControls({
   const playing = useAppStore(selectPlaying);
   const currentTreeIndex = useAppStore(selectCurrentTreeIndex);
   const treeListLen = useAppStore(selectActiveTreeListLength);
+  const movieData = useAppStore(selectMovieData);
   const comparisonMode = useAppStore(selectComparisonMode);
   const toggleComparisonMode = useAppStore(selectToggleComparisonMode);
   const viewsConnected = useAppStore(selectViewsConnected);
@@ -34,6 +36,12 @@ export function TransportControls({
   const goToNextAnchor = useAppStore(selectGoToNextAnchor);
   const goToPreviousAnchor = useAppStore(selectGoToPreviousAnchor);
   const transitionResolver = useAppStore(selectTransitionResolver);
+  const hasDataset = Boolean(movieData);
+  const hasSequence = hasDataset && treeListLen > 0;
+  const hasAnimationSequence = hasDataset && treeListLen > 1;
+  const canTogglePlayback = hasAnimationSequence || playing;
+  const canStepBackward = hasAnimationSequence && currentTreeIndex > 0;
+  const canStepForward = hasAnimationSequence && currentTreeIndex < treeListLen - 1;
 
   // Get anchor-tree indices for disabled state calculation.
   const anchorIndices = useMemo(() => {
@@ -75,7 +83,7 @@ export function TransportControls({
           variant="ghost"
           size="icon"
           aria-label="Previous source tree"
-          disabled={!canGoToPreviousAnchor}
+          disabled={!hasSequence || !canGoToPreviousAnchor}
           onClick={onPreviousAnchor}
         >
           <ChevronsLeft className="size-4" />
@@ -89,6 +97,7 @@ export function TransportControls({
           variant="ghost"
           size="icon"
           aria-label="Previous generated frame"
+          disabled={!canStepBackward}
           onClick={onBackward}
         >
           <ChevronLeft className="size-4" />
@@ -102,6 +111,7 @@ export function TransportControls({
           variant="ghost"
           size="icon"
           aria-label="Play/Pause animation"
+          disabled={!canTogglePlayback}
           onClick={onPlayClick}
           data-state={playing ? 'playing' : 'paused'}
         >
@@ -116,6 +126,7 @@ export function TransportControls({
           variant="ghost"
           size="icon"
           aria-label="Next generated frame"
+          disabled={!canStepForward}
           onClick={onForward}
         >
           <ChevronRight className="size-4" />
@@ -129,7 +140,7 @@ export function TransportControls({
           variant="ghost"
           size="icon"
           aria-label="Next source tree"
-          disabled={!canGoToNextAnchor}
+          disabled={!hasSequence || !canGoToNextAnchor}
           onClick={onNextAnchor}
         >
           <ChevronsRight className="size-4" />
@@ -143,6 +154,7 @@ export function TransportControls({
           variant="ghost"
           size="icon"
           aria-label="Toggle comparison mode"
+          disabled={!hasAnimationSequence && !comparisonMode}
           onClick={toggleComparisonMode}
           data-state={comparisonMode ? 'active' : 'inactive'}
         >
@@ -158,6 +170,7 @@ export function TransportControls({
             variant="ghost"
             size="icon"
             aria-label="Toggle view linking"
+            disabled={!hasAnimationSequence}
             onClick={() => setViewsConnected(!viewsConnected)}
             data-state={viewsConnected ? 'active' : 'inactive'}
           >
