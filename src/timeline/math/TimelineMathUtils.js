@@ -167,7 +167,7 @@ export class TimelineMathUtils {
                 return TIMELINE_CONSTANTS.UNIT_DURATION_MS * 0.5;
             }
             if (segment.hasInterpolation && segment.interpolationData?.length > 1) {
-                return segment.interpolationData.length * TIMELINE_CONSTANTS.UNIT_DURATION_MS;
+                return (segment.interpolationData.length - 1) * TIMELINE_CONSTANTS.UNIT_DURATION_MS;
             }
             return TIMELINE_CONSTANTS.UNIT_DURATION_MS;
         });
@@ -324,7 +324,7 @@ export class TimelineMathUtils {
             return TIMELINE_CONSTANTS.UNIT_DURATION_MS * 0.5;
         }
         if (segment.hasInterpolation && segment.interpolationData?.length > 1) {
-            return segment.interpolationData.length * TIMELINE_CONSTANTS.UNIT_DURATION_MS;
+            return (segment.interpolationData.length - 1) * TIMELINE_CONSTANTS.UNIT_DURATION_MS;
         }
         return TIMELINE_CONSTANTS.UNIT_DURATION_MS;
     }

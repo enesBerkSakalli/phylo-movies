@@ -71,10 +71,10 @@ export function useTreeController() {
         try {
           if (state.comparisonMode) {
             await renderComparisonMode(controller, state.transitionResolver, state.currentTreeIndex);
-          } else if (state.timelineProgress != null && typeof controller.renderTimelineProgress === 'function') {
-            await controller.renderTimelineProgress(state.timelineProgress);
+          } else if (state.playhead?.timelineProgress != null && typeof controller.renderTimelineProgress === 'function') {
+            await controller.renderTimelineProgress(state.playhead.timelineProgress);
           } else {
-            await controller.renderProgress(state.animationProgress);
+            await controller.renderProgress(state.playhead?.animationProgress ?? 0);
           }
         } catch (error) {
           console.error('Error during tree rendering:', error);
@@ -152,15 +152,9 @@ export function useTreeController() {
         }
       }
 
-      if (state.animationProgress !== prevState.animationProgress) {
+      if (state.playhead !== prevState.playhead) {
         if (!isTimelineScrubbing) {
           syncMsaRegion();
-          scheduleRender();
-        }
-      }
-
-      if (state.timelineProgress !== prevState.timelineProgress) {
-        if (!isTimelineScrubbing) {
           scheduleRender();
         }
       }

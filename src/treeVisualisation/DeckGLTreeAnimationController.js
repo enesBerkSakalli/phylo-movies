@@ -105,7 +105,12 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
         const treeList = selectActiveTreeList(state);
         const totalTrees = treeList?.length || 0;
         const currentTreeIndex = Math.min(Math.floor(progress * (totalTrees - 1)), totalTrees - 1);
-        useAppStore.setState({ animationProgress: progress, currentTreeIndex });
+        const timelineProgress = state.movieTimelineManager?.getTimelineProgressForLinearTreeProgress?.(progress, totalTrees) ?? progress;
+        state.setPlayhead({
+          animationProgress: progress,
+          timelineProgress,
+          currentTreeIndex
+        });
 
         // Prefetch next frames
         if (this.animationsEnabled && totalTrees > 0) {

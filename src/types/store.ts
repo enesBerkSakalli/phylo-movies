@@ -15,6 +15,12 @@ export interface ContextMenuNode {
   children: ContextMenuNode[];
 }
 
+export interface PlaybackPlayhead {
+  animationProgress: number;
+  timelineProgress: number | null;
+  currentTreeIndex: number;
+}
+
 export interface AppStoreState {
   // From treeDataset.slice
   movieData: any;
@@ -40,7 +46,7 @@ export interface AppStoreState {
 
   // From playbackSlice
   playing: boolean;
-  animationProgress: number;
+  playhead: PlaybackPlayhead;
   animationStartTime: number | null;
   animationSpeed: number;
   transitionDuration: number;
@@ -51,7 +57,6 @@ export interface AppStoreState {
   totalSegments: number;
   treeInSegment: number;
   treesInSegment: number;
-  timelineProgress: number | null;
   renderInProgress: boolean;
 
   // From treeControllersRuntime.slice
@@ -184,6 +189,7 @@ export interface AppStoreState {
   updateTimelineState: (timelineState: any) => void;
   setScrubPosition: (progress: number) => void;
   setTimelineProgress: (progress: number, treeIndex: number) => void;
+  setPlayhead: (playhead: Partial<PlaybackPlayhead>) => void;
   setRenderInProgress: (inProgress: boolean) => void;
   resetPlayback: () => void;
 

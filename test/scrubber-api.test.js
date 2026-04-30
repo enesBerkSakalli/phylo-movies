@@ -108,7 +108,7 @@ describe('ScrubberAPI', () => {
     await Promise.all([firstUpdate, secondUpdate, thirdUpdate]);
 
     expect(api.lastInterpolationState.progress).to.equal(0.8);
-    expect(useAppStore.getState().timelineProgress).to.equal(0.8);
+    expect(useAppStore.getState().playhead.timelineProgress).to.equal(0.8);
     expect(useAppStore.getState().currentTreeIndex).to.equal(2);
   });
 
