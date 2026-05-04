@@ -11,6 +11,7 @@ import { ComparisonModeRenderer } from '../../comparison/ComparisonModeRenderer.
 import { buildViewLinkMapping, derivePairKey } from '../../../domain/view/viewLinkMapper.js';
 import { createClipboardLayers } from './factory/clipboard/ClipboardLayerFactory.js';
 import { createTreeLayerSet } from './factory/LayerSetFactory.js';
+import { measureFrameStep } from '../../performance/frameInstrumentation.js';
 
 // ==========================================================================
 // CONSTANTS
@@ -73,7 +74,9 @@ export class LayerManager {
    * @returns {Array} New layers (deck.gl will handle updates internally)
    */
   updateLayersWithData(interpolatedData) {
-    return this.createTreeLayers(interpolatedData);
+    return measureFrameStep('layerManager.updateLayersWithData', () =>
+      this.createTreeLayers(interpolatedData)
+    );
   }
 
   // ==========================================================================

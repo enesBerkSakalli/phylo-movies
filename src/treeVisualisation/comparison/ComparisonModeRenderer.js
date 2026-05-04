@@ -13,6 +13,7 @@ import {
   calculateSafeVisualRadius,
   calculateTreeVisualRadius
 } from '../utils/TreeBoundsUtils.js';
+import { measureFrameStepAsync } from '../performance/frameInstrumentation.js';
 
 /**
  * ComparisonModeRenderer
@@ -179,6 +180,12 @@ export class ComparisonModeRenderer {
    * @param {number} rightIndex - Right tree index
    */
   async renderAnimated(interpolatedData, rightTreeData, rightIndex) {
+    return measureFrameStepAsync('comparisonMode.renderAnimated', () =>
+      this._renderAnimated(interpolatedData, rightTreeData, rightIndex)
+    );
+  }
+
+  async _renderAnimated(interpolatedData, rightTreeData, rightIndex) {
     // Guard against null/undefined data
     if (!interpolatedData || !rightTreeData) {
       console.warn('ComparisonModeRenderer.renderAnimated: Missing data', {
