@@ -1,5 +1,7 @@
 import { clamp } from '../../domain/math/mathUtils.js';
 
+const TIMELINE_PROGRESS_EPSILON = 1e-9;
+
 /**
  * Playback slice: animation playback, navigation, scrubbing, and rendering guards.
  */
@@ -190,7 +192,18 @@ export const createPlaybackSlice = (set, get) => ({
   // ==========================================================================
   updateTimelineState: (timelineState) => {
     const newTimelineProgress = clamp(timelineState.timelineProgress, 0, 1);
-    const currentPlayhead = getCurrentPlayhead(get());
+    const state = get();
+    const currentPlayhead = getCurrentPlayhead(state);
+
+    if (
+      state.currentSegmentIndex === timelineState.currentSegmentIndex &&
+      state.totalSegments === timelineState.totalSegments &&
+      state.treeInSegment === timelineState.treeInSegment &&
+      state.treesInSegment === timelineState.treesInSegment &&
+      areTimelineProgressValuesEqual(currentPlayhead.timelineProgress, newTimelineProgress)
+    ) {
+      return;
+    }
 
     set({
       currentSegmentIndex: timelineState.currentSegmentIndex,
@@ -298,6 +311,12 @@ function createPlayheadState(playhead = {}) {
     playhead: nextPlayhead,
     currentTreeIndex: nextPlayhead.currentTreeIndex
   };
+}
+
+function areTimelineProgressValuesEqual(currentProgress, nextProgress) {
+  if (currentProgress === nextProgress) return true;
+  if (!Number.isFinite(currentProgress) || !Number.isFinite(nextProgress)) return false;
+  return Math.abs(currentProgress - nextProgress) <= TIMELINE_PROGRESS_EPSILON;
 }
 
 function getCurrentPlayhead(state) {
