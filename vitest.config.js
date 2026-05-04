@@ -23,6 +23,8 @@ export default defineConfig({
       'test/LayoutWorkerMetadata.test.js',
       'test/LayoutCacheKey.test.js',
       'test/LayoutFactoryContract.test.js',
+      'test/InteractionHandlers.test.js',
+      'test/MSADeckGLViewerLifecycle.test.js',
       'test/NodeLayers.test.js',
       'test/NormalizedRenderContract.test.js',
       'test/ProjectionDataContract.test.js',
