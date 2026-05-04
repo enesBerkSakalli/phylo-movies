@@ -33,6 +33,7 @@ export class MovieTimelineManager {
         this.container = null;
         this.scrubberAPI = null;
         this.timeline = null;
+        this._timelineUpdateFrameId = null;
         this.segments = TimelineDataProcessor.createSegments(movieData);
         this.timelineData = TimelineDataProcessor.createTimelineData(this.segments);
         this.timelineClock = new TimelineClock({
@@ -70,7 +71,7 @@ export class MovieTimelineManager {
             if (state.currentTreeIndex !== prevState.currentTreeIndex ||
                 state.playhead !== prevState.playhead) {
                 if (!this.scrubController?.isScrubbing) {
-                    requestAnimationFrame(() => this.updateCurrentPosition());
+                    this._scheduleCurrentPositionUpdate();
                 }
             }
 
@@ -82,7 +83,16 @@ export class MovieTimelineManager {
             }
         });
 
-        requestAnimationFrame(() => this.updateCurrentPosition());
+        this._scheduleCurrentPositionUpdate();
+    }
+
+    _scheduleCurrentPositionUpdate() {
+        if (this.isDestroyed || this._timelineUpdateFrameId !== null) return;
+
+        this._timelineUpdateFrameId = requestAnimationFrame(() => {
+            this._timelineUpdateFrameId = null;
+            this.updateCurrentPosition();
+        });
     }
 
     _initializeScrubberAPI(controllerOverride = null) {
@@ -244,6 +254,10 @@ export class MovieTimelineManager {
     destroy() {
         this.isDestroyed = true;
         this.unsubscribeFromStore?.();
+        if (this._timelineUpdateFrameId !== null) {
+            cancelAnimationFrame(this._timelineUpdateFrameId);
+            this._timelineUpdateFrameId = null;
+        }
 
         this.unmount();
         this.scrubberAPI?.destroy();

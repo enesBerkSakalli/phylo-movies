@@ -503,6 +503,91 @@ describe('MovieTimelineManager lifecycle', () => {
     expect(state.treesInSegment).to.equal(3);
   });
 
+  it('does not publish a new playhead when timeline state is unchanged', () => {
+    useAppStore.setState({
+      playing: true,
+      currentSegmentIndex: 1,
+      totalSegments: 4,
+      treeInSegment: 2,
+      treesInSegment: 3,
+      playhead: {
+        animationProgress: 0.4,
+        timelineProgress: 0.7,
+        currentTreeIndex: 2
+      },
+      currentTreeIndex: 2
+    });
+
+    const previousPlayhead = useAppStore.getState().playhead;
+    let updateCount = 0;
+    const unsubscribe = useAppStore.subscribe(() => {
+      updateCount += 1;
+    });
+
+    try {
+      useAppStore.getState().updateTimelineState({
+        currentSegmentIndex: 1,
+        totalSegments: 4,
+        treeInSegment: 2,
+        treesInSegment: 3,
+        timelineProgress: 0.7
+      });
+    } finally {
+      unsubscribe();
+    }
+
+    const state = useAppStore.getState();
+    expect(updateCount).to.equal(0);
+    expect(state.playhead).to.equal(previousPlayhead);
+  });
+
+  it('coalesces repeated timeline store notifications into one pending frame', () => {
+    const previousRequestAnimationFrame = global.requestAnimationFrame;
+    const previousCancelAnimationFrame = global.cancelAnimationFrame;
+    const frameCallbacks = [];
+    let nextFrameId = 1;
+    let scheduledCount = 0;
+
+    global.requestAnimationFrame = (callback) => {
+      scheduledCount += 1;
+      frameCallbacks.push(callback);
+      return nextFrameId++;
+    };
+    global.cancelAnimationFrame = () => {};
+
+    try {
+      const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] }, movieData.interpolated_trees);
+      frameCallbacks.pop()?.(0);
+      scheduledCount = 0;
+
+      useAppStore.setState({
+        playhead: { animationProgress: 0.1, timelineProgress: 0.1, currentTreeIndex: 0 }
+      });
+      useAppStore.setState({
+        playhead: { animationProgress: 0.2, timelineProgress: 0.2, currentTreeIndex: 0 }
+      });
+      useAppStore.setState({
+        playhead: { animationProgress: 0.3, timelineProgress: 0.3, currentTreeIndex: 0 }
+      });
+
+      expect(scheduledCount).to.equal(1);
+
+      frameCallbacks.pop()?.(1_000);
+      scheduledCount = 0;
+
+      useAppStore.setState({
+        playhead: { animationProgress: 0.4, timelineProgress: 0.4, currentTreeIndex: 0 }
+      });
+
+      expect(scheduledCount).to.equal(1);
+
+      manager.destroy();
+    } finally {
+      global.requestAnimationFrame = previousRequestAnimationFrame;
+      global.cancelAnimationFrame = previousCancelAnimationFrame;
+    }
+  });
+
   it('binds renderer scrub state to the scrub controller', async () => {
     const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] }, movieData.interpolated_trees);
     const host = makeContainer();
