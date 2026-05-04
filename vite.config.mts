@@ -4,8 +4,35 @@ import path from 'node:path';
 import tailwindcss from '@tailwindcss/vite';
 import { fileURLToPath } from 'url';
 import fs from 'node:fs';
+import { stat } from 'node:fs/promises';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const publicationDataRoot = path.resolve(__dirname, 'publication_data');
+
+export function resolvePublicationDataPath(requestUrl: string | undefined, baseDir = publicationDataRoot): string | null {
+  if (!requestUrl?.startsWith('/examples/')) return null;
+
+  let pathname: string;
+  try {
+    pathname = new URL(requestUrl, 'http://localhost').pathname;
+  } catch {
+    return null;
+  }
+
+  if (!pathname.startsWith('/examples/')) return null;
+
+  let relativePath: string;
+  try {
+    relativePath = decodeURIComponent(pathname.slice('/examples/'.length));
+  } catch {
+    return null;
+  }
+
+  const filePath = path.resolve(baseDir, relativePath);
+  const relativeToBase = path.relative(baseDir, filePath);
+  if (relativeToBase.startsWith('..') || path.isAbsolute(relativeToBase)) return null;
+  return filePath;
+}
 
 // Strip importmap blocks from built HTML (not during dev)
 function stripImportMapsOnBuild() {
@@ -24,17 +51,33 @@ function servePublicationData() {
     name: 'serve-publication-data',
     configureServer(server: import('vite').ViteDevServer) {
       // Register middleware BEFORE Vite's built-in middleware (including SPA fallback)
-      server.middlewares.use((req, res, next) => {
-        if (req.url?.startsWith('/examples/')) {
-          const relativePath = req.url.replace('/examples/', '');
-          const filePath = path.join(__dirname, 'publication_data', relativePath);
-          if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-            res.setHeader('Content-Type', 'application/octet-stream');
-            fs.createReadStream(filePath).pipe(res);
+      server.middlewares.use(async (req, res, next) => {
+        const isExamplesRequest = req.url?.startsWith('/examples/');
+        const filePath = resolvePublicationDataPath(req.url);
+        if (!filePath) {
+          if (isExamplesRequest) {
+            res.statusCode = 404;
+            res.end('Not found');
             return;
           }
+          next();
+          return;
         }
-        next();
+
+        try {
+          const fileStats = await stat(filePath);
+          if (!fileStats.isFile()) {
+            res.statusCode = 404;
+            res.end('Not found');
+            return;
+          }
+
+          res.setHeader('Content-Type', 'application/octet-stream');
+          fs.createReadStream(filePath).on('error', next).pipe(res);
+        } catch {
+          res.statusCode = 404;
+          res.end('Not found');
+        }
       });
     }
   };
@@ -62,6 +105,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
+        // @loaders.gl/worker-utils imports child_process from a Node-only export path.
         child_process: path.resolve(__dirname, './src/lib/shims/child-process-browser.js'),
         'node:child_process': path.resolve(__dirname, './src/lib/shims/child-process-browser.js')
       }
@@ -98,7 +142,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
       }
     },
     optimizeDeps: {
-      include: ["d3-hierarchy", "d3-scale-chromatic", "winbox", "winbox/src/js/winbox.js"]
+      include: ["d3-hierarchy", "d3-scale-chromatic"]
     },
     build: {
       outDir: "../dist",

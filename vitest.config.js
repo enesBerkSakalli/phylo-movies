@@ -41,6 +41,7 @@ export default defineConfig({
       'test/TidyTreeLayout.test.js',
       'test/TreeInterpolatorLabelRadius.test.js',
       'test/ViewportManager.test.js',
+      'test/ViteConfig.test.ts',
       'test/ViewLinkMapper.test.js',
       'test/VelocityNormalizer.test.js',
       'test/WebGLTreeAnimationController.test.js',
