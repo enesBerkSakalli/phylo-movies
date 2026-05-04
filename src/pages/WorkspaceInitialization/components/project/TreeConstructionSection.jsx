@@ -4,11 +4,14 @@ import { GitBranch, Trees } from "lucide-react";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function TreeConstructionSection({ hasMsa, hasTrees, disabled }) {
-  const { control } = useFormContext();
+  const { control, watch } = useFormContext();
+  const treeInferenceEngine = watch('treeInferenceEngine') || 'iqtree';
+  const isFastTree = treeInferenceEngine === 'fasttree';
 
   return (
     <div className={`space-y-4 p-4 rounded-xl border transition-all duration-300 ${!hasMsa ? 'bg-muted/30 opacity-60 border-dashed' : 'bg-card border-solid shadow-sm'}`}>
@@ -16,7 +19,7 @@ export function TreeConstructionSection({ hasMsa, hasTrees, disabled }) {
         <div className="flex items-center gap-2">
           <Trees className={`size-4 ${!hasMsa ? 'text-muted-foreground' : 'text-primary'}`} />
           <span className="text-sm font-bold">
-            Tree Construction via <a href="https://morgannprice.github.io/fasttree/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">FastTree 2</a>
+            Tree Construction
           </span>
         </div>
         {!hasMsa && (
@@ -34,6 +37,38 @@ export function TreeConstructionSection({ hasMsa, hasTrees, disabled }) {
       </div>
 
       <div className="space-y-3">
+        <FormField
+          control={control}
+          name="treeInferenceEngine"
+          render={({ field }) => (
+            <FormItem className="space-y-2">
+              <FormLabel className={`text-sm font-normal ${!hasMsa ? 'text-muted-foreground' : ''}`}>
+                Inference Engine
+              </FormLabel>
+              <Select
+                value={field.value || 'iqtree'}
+                onValueChange={field.onChange}
+                disabled={disabled || !hasMsa}
+              >
+                <FormControl>
+                  <SelectTrigger className="h-9 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="iqtree">IQ-TREE</SelectItem>
+                  <SelectItem value="fasttree">FastTree 2</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormDescription className="text-2xs leading-tight">
+                {isFastTree
+                  ? "FastTree is faster for exploratory sliding-window runs and exposes FastTree-specific pseudocount and no-ML options."
+                  : "IQ-TREE is the default maximum-likelihood engine using fast search for responsive MSA window inference."}
+              </FormDescription>
+            </FormItem>
+          )}
+        />
+
         <FormField
           control={control}
           name="midpointRooting"
@@ -105,10 +140,10 @@ export function TreeConstructionSection({ hasMsa, hasTrees, disabled }) {
               </FormControl>
               <div className="space-y-1 leading-none">
                 <FormLabel className={`text-sm font-normal cursor-pointer ${!hasMsa ? 'text-muted-foreground' : ''}`}>
-                  Gamma20 Likelihood
+                  Gamma Rate Heterogeneity
                 </FormLabel>
                 <FormDescription className="text-2xs leading-tight">
-                  Rescales branch lengths and computes likelihood under a discrete gamma distribution with 20 rate categories. Makes likelihoods comparable across runs (~5% slower).
+                  Adds gamma-distributed site-rate variation to the selected engine's substitution model.
                 </FormDescription>
               </div>
             </FormItem>
@@ -124,15 +159,15 @@ export function TreeConstructionSection({ hasMsa, hasTrees, disabled }) {
                 <Checkbox
                   checked={field.value}
                   onCheckedChange={field.onChange}
-                  disabled={disabled || !hasMsa}
+                  disabled={disabled || !hasMsa || !isFastTree}
                 />
               </FormControl>
               <div className="space-y-1 leading-none">
-                <FormLabel className={`text-sm font-normal cursor-pointer ${!hasMsa ? 'text-muted-foreground' : ''}`}>
+                <FormLabel className={`text-sm font-normal cursor-pointer ${!hasMsa || !isFastTree ? 'text-muted-foreground' : ''}`}>
                   Pseudocounts
                 </FormLabel>
                 <FormDescription className="text-2xs leading-tight">
-                  Regularization for fragmentary sequences. Recommended when alignments contain partial sequences with limited overlap.
+                  FastTree-only regularization for fragmentary sequences with limited overlap.
                 </FormDescription>
               </div>
             </FormItem>
@@ -148,15 +183,15 @@ export function TreeConstructionSection({ hasMsa, hasTrees, disabled }) {
                 <Checkbox
                   checked={field.value}
                   onCheckedChange={field.onChange}
-                  disabled={disabled || !hasMsa}
+                  disabled={disabled || !hasMsa || !isFastTree}
                 />
               </FormControl>
               <div className="space-y-1 leading-none">
-                <FormLabel className={`text-sm font-normal cursor-pointer ${!hasMsa ? 'text-muted-foreground' : ''}`}>
+                <FormLabel className={`text-sm font-normal cursor-pointer ${!hasMsa || !isFastTree ? 'text-muted-foreground' : ''}`}>
                   Skip ML Optimization
                 </FormLabel>
                 <FormDescription className="text-2xs leading-tight">
-                  Skip the maximum-likelihood NNI phase and use only minimum-evolution criteria. Faster but less accurate; branch lengths may be negative.
+                  FastTree-only option that skips maximum-likelihood NNI updates. Faster but less accurate; branch lengths may be negative.
                 </FormDescription>
               </div>
             </FormItem>

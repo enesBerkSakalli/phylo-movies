@@ -53,6 +53,8 @@ Module._load = function (request, parent, isMain) {
 };
 
 const { MovieTimelineManager } = require('../src/timeline/core/MovieTimelineManager.js');
+const { AnimationRunner } = require('../src/treeVisualisation/systems/AnimationRunner.js');
+const { calculatePlaybackState } = require('../src/domain/animation/AnimationTiming.js');
 const { useAppStore } = require('../src/state/phyloStore/store.js');
 
 function loadMovieData() {
@@ -98,12 +100,18 @@ describe('MovieTimelineManager lifecycle', () => {
   afterEach(() => {
     useAppStore.setState({
       playing: false,
+      animationStartTime: null,
+      animationSpeed: 1,
+      transitionDuration: 1,
+      pauseDuration: 0,
       playhead: {
         animationProgress: 0,
         timelineProgress: null,
         currentTreeIndex: 0
       },
       currentTreeIndex: 0,
+      treeList: [],
+      movieTimelineManager: null,
       hoveredSegmentIndex: null,
       hoveredSegmentData: null,
       hoveredSegmentPosition: null,
@@ -267,6 +275,174 @@ describe('MovieTimelineManager lifecycle', () => {
       expect(state.animationStartTime).to.equal(now - 1250);
     } finally {
       global.performance = previousPerformance;
+    }
+  });
+
+  it('uses configured transition and pause duration when playback resumes', () => {
+    const previousPerformance = global.performance;
+    const now = 10_000;
+    global.performance = {
+      ...(previousPerformance || {}),
+      now: () => now
+    };
+
+    try {
+      const trees = [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }, { id: 'e' }];
+      const timelineProgress = 0.42;
+      const manager = {
+        getInterpolationDataForTimelineProgress: () => ({
+          fromIndex: 1,
+          toIndex: 2,
+          timeFactor: 0.25
+        }),
+        getTimelineProgressForLinearTreeProgress: () => timelineProgress
+      };
+
+      useAppStore.setState({
+        treeList: trees,
+        movieTimelineManager: manager,
+        animationSpeed: 1,
+        transitionDuration: 2,
+        pauseDuration: 0.5,
+        playhead: {
+          animationProgress: 0,
+          timelineProgress,
+          currentTreeIndex: 0
+        },
+        playing: false
+      });
+
+      useAppStore.getState().play();
+
+      const state = useAppStore.getState();
+      expect(state.playhead.animationProgress).to.equal(0.3125);
+      expect(state.animationStartTime).to.equal(now - 3000);
+
+      const resumedPlayback = calculatePlaybackState({
+        timestamp: now,
+        startTime: state.animationStartTime,
+        speed: state.animationSpeed,
+        totalItems: trees.length,
+        transitionDuration: state.transitionDuration,
+        pauseDuration: state.pauseDuration
+      });
+      expect(resumedPlayback.fromIndex).to.equal(1);
+      expect(resumedPlayback.toIndex).to.equal(2);
+      expect(resumedPlayback.localT).to.equal(0.25);
+    } finally {
+      global.performance = previousPerformance;
+    }
+  });
+
+  it('uses configured transition duration when advancing animation frames', async () => {
+    let renderOptions = null;
+    let renderedT = null;
+    let syncedProgress = null;
+
+    const runner = new AnimationRunner({
+      getState: () => ({
+        playing: true,
+        animationStartTime: 1_000,
+        animationSpeed: 1,
+        transitionDuration: 2,
+        pauseDuration: 0,
+        treeList: [{ id: 'a' }, { id: 'b' }, { id: 'c' }],
+        comparisonMode: false
+      }),
+      getOrCacheInterpolationData: () => ({
+        dataFrom: { nodes: [] },
+        dataTo: { nodes: [] }
+      }),
+      renderSingleFrame: async (_fromTree, _toTree, easedT, options) => {
+        renderedT = easedT;
+        renderOptions = options;
+      },
+      renderComparisonFrame: async () => {},
+      setAnimationStage: () => {},
+      updateProgress: (progress) => {
+        syncedProgress = progress;
+      },
+      stopAnimation: () => {},
+      requestRedraw: () => {}
+    });
+
+    runner.isRunning = true;
+    const shouldStop = await runner._processFrame(2_000);
+
+    expect(shouldStop).to.equal(false);
+    expect(syncedProgress).to.equal(0.25);
+    expect(renderOptions.fromTreeIndex).to.equal(0);
+    expect(renderOptions.toTreeIndex).to.equal(1);
+    expect(renderedT).to.equal(0.5);
+  });
+
+  it('does not overlap renders when playback restarts before a frame settles', async () => {
+    const previousRequestAnimationFrame = global.requestAnimationFrame;
+    const previousCancelAnimationFrame = global.cancelAnimationFrame;
+    const frameCallbacks = [];
+    let nextFrameId = 1;
+    let releaseRender;
+    let renderCount = 0;
+    let redrawCount = 0;
+
+    global.requestAnimationFrame = (callback) => {
+      frameCallbacks.push(callback);
+      return nextFrameId++;
+    };
+    global.cancelAnimationFrame = () => {};
+
+    const renderPromise = new Promise((resolve) => {
+      releaseRender = resolve;
+    });
+
+    try {
+      const runner = new AnimationRunner({
+        getState: () => ({
+          playing: true,
+          animationStartTime: 1_000,
+          animationSpeed: 1,
+          transitionDuration: 2,
+          pauseDuration: 0,
+          treeList: [{ id: 'a' }, { id: 'b' }, { id: 'c' }],
+          comparisonMode: false
+        }),
+        getOrCacheInterpolationData: () => ({
+          dataFrom: { nodes: [] },
+          dataTo: { nodes: [] }
+        }),
+        renderSingleFrame: async () => {
+          renderCount += 1;
+          await renderPromise;
+        },
+        renderComparisonFrame: async () => {},
+        setAnimationStage: () => {},
+        updateProgress: () => {},
+        stopAnimation: () => {},
+        requestRedraw: () => {
+          redrawCount += 1;
+        }
+      });
+
+      runner.start();
+      const firstFrame = frameCallbacks[0](2_000);
+      await Promise.resolve();
+      expect(renderCount).to.equal(1);
+
+      runner.stop();
+      runner.start();
+      const secondFrame = frameCallbacks[1](2_005);
+      await Promise.resolve();
+
+      expect(renderCount).to.equal(1);
+
+      releaseRender();
+      await firstFrame;
+      await secondFrame;
+
+      expect(redrawCount).to.equal(0);
+    } finally {
+      global.requestAnimationFrame = previousRequestAnimationFrame;
+      global.cancelAnimationFrame = previousCancelAnimationFrame;
     }
   });
 

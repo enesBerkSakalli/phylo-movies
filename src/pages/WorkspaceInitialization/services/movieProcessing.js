@@ -37,6 +37,7 @@ export async function processMovieData(formData, onProgress) {
   body.append('windowSize', String(formData.windowSize ?? 1));
   body.append('windowStepSize', String(formData.stepSize ?? 1));
   body.append('midpointRooting', formData.midpointRooting ? 'on' : '');
+  body.append('treeInferenceEngine', formData.treeInferenceEngine || 'iqtree');
   // Tree inference model options (checkboxes: "on" = enabled)
   body.append('useGtr', formData.useGtr ? 'on' : '');
   body.append('useGamma', formData.useGamma ? 'on' : '');
