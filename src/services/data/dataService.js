@@ -107,22 +107,3 @@ export const server = {
     }
   }
 };
-
-/**
- * High-level workflow operations
- */
-export const workflows = {
-  async saveTreeDataWorkflow(serverData) {
-    try {
-      await phyloData.set(serverData);
-      return true;
-    } catch (error) {
-      console.error("[DataService] Error in save workflow:", error);
-      throw error;
-    }
-  },
-
-  async handleMSADataSaving(formData, serverData) {
-    return true;
-  }
-};
