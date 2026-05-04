@@ -118,15 +118,18 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
           this._prefetchFrame(currentTreeIndex + 2);
         }
       },
-      stopAnimation: () => useAppStore.getState().stop(),
-      requestRedraw: () => this.deckContext?.deck?.redraw(true)
+      stopAnimation: () => useAppStore.getState().stop()
     });
 
     // Viewport manager for camera and screen projections
     this.viewportManager = new ViewportManager(this);
     this.viewportManager.initializeOffsets(offset);
 
-    this.layerManager.layerStyles.setStyleChangeCallback(() => this._handleStyleChange());
+    this.layerManager.layerStyles.setStyleChangeCallback({
+      onLayoutChange: () => this._handleStyleChange(),
+      onLayerDataChange: () => this._handleLayerDataChange(),
+      onPaintChange: () => this._handlePaintChange()
+    });
 
     // NOTE: deckContext is initialized via mount(container)
     this.deckContext = null;
@@ -511,6 +514,21 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
   _handleStyleChange() {
     this.resetInterpolationCaches();
+    this.renderAllElements();
+  }
+
+  _handleLayerDataChange() {
+    if (this.animationRunner?.isRunning) {
+      this.deckContext?.deck?.redraw(true);
+      return;
+    }
+    this.renderAllElements();
+  }
+
+  _handlePaintChange() {
+    if (this.animationRunner?.isRunning) {
+      return;
+    }
     this.renderAllElements();
   }
 }

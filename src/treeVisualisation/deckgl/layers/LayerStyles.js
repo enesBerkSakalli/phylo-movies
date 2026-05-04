@@ -50,6 +50,9 @@ export class LayerStyles {
     const getBaseStrokeWidth = this._getBaseStrokeWidth.bind(this);
     this._styleHelpers = { getBaseOpacity, getBaseStrokeWidth };
     this._nodeHelpers = { getBaseOpacity, getBaseStrokeWidth, nodeSize: 1 };
+    this.onLayoutChange = null;
+    this.onLayerDataChange = null;
+    this.onPaintChange = null;
 
     const initialState = useAppStore.getState();
     this._cache.strokeWidth = initialState.strokeWidth;
@@ -122,21 +125,31 @@ export class LayerStyles {
    */
   _setupStoreSubscription() {
     this.unsubscribe = useAppStore.subscribe((state, prevState) => {
-      // Track if any style properties changed
-      let styleChanged = false;
+      let layoutChanged = false;
+      let layerDataChanged = false;
+      let paintChanged = false;
+      const labelOffsets = state.styleConfig?.labelOffsets || {};
+      const prevLabelOffsets = prevState.styleConfig?.labelOffsets || {};
+
+      if (
+        labelOffsets.DEFAULT !== prevLabelOffsets.DEFAULT ||
+        labelOffsets.EXTENSION !== prevLabelOffsets.EXTENSION
+      ) {
+        layoutChanged = true;
+      }
 
       // Update cache when relevant values change
       if (state.strokeWidth !== prevState.strokeWidth) {
         this._cache.strokeWidth = state.strokeWidth;
-        styleChanged = true;
+        layerDataChanged = true;
       }
       if (state.fontSize !== prevState.fontSize) {
         this._cache.fontSize = state.fontSize;
-        styleChanged = true;
+        layerDataChanged = true;
       }
       if (state.nodeSize !== prevState.nodeSize) {
         this._cache.nodeSize = state.nodeSize;
-        styleChanged = true;
+        layerDataChanged = true;
       }
 
       if (
@@ -156,18 +169,25 @@ export class LayerStyles {
         state.changePulseEnabled !== prevState.changePulseEnabled ||
         state.changePulsePhase !== prevState.changePulsePhase ||
         state.colorVersion !== prevState.colorVersion ||
-        state.taxaColorVersion !== prevState.taxaColorVersion ||
-        selectLeafNamesByIndex(state).length !== selectLeafNamesByIndex(prevState).length
+        state.taxaColorVersion !== prevState.taxaColorVersion
       ) {
-        styleChanged = true;
+        paintChanged = true;
+      }
+
+      if (selectLeafNamesByIndex(state).length !== selectLeafNamesByIndex(prevState).length) {
+        layerDataChanged = true;
       }
 
       // Notify listeners when styles change
-      if (styleChanged) {
+      if (layoutChanged || layerDataChanged || paintChanged) {
         this._renderCache = null;
       }
-      if (styleChanged && this.onStyleChange) {
-        this.onStyleChange();
+      if (layoutChanged && this.onLayoutChange) {
+        this.onLayoutChange();
+      } else if (layerDataChanged && this.onLayerDataChange) {
+        this.onLayerDataChange();
+      } else if (paintChanged && this.onPaintChange) {
+        this.onPaintChange();
       }
     });
   }
@@ -375,10 +395,19 @@ export class LayerStyles {
 
   /**
    * Set style change callback
-   * @param {Function} callback - Function to call when styles change
+   * @param {Function|Object} callback - Function or categorized callbacks to call when styles change
    */
   setStyleChangeCallback(callback) {
-    this.onStyleChange = callback;
+    if (typeof callback === 'function') {
+      this.onLayoutChange = callback;
+      this.onLayerDataChange = callback;
+      this.onPaintChange = callback;
+      return;
+    }
+
+    this.onLayoutChange = callback?.onLayoutChange || null;
+    this.onLayerDataChange = callback?.onLayerDataChange || null;
+    this.onPaintChange = callback?.onPaintChange || null;
   }
 
   /**

@@ -23,8 +23,7 @@ export class AnimationRunner {
     renderComparisonFrame,
     setAnimationStage,
     updateProgress,
-    stopAnimation,
-    requestRedraw
+    stopAnimation
   }) {
     // Dependencies
     this.getState = getState;
@@ -34,7 +33,6 @@ export class AnimationRunner {
     this.setAnimationStage = setAnimationStage;
     this.updateProgress = updateProgress;
     this.stopAnimation = stopAnimation;
-    this.requestRedraw = requestRedraw;
 
     // State
     this.animationFrameId = null;
@@ -115,9 +113,6 @@ export class AnimationRunner {
         this.stop();          // Stop local loop
         return;
       }
-
-      // 3. Render Request: Mark as dirty for deck.gl
-      this.requestRedraw();
 
     } catch (err) {
       if (runToken !== this._runToken) return;
