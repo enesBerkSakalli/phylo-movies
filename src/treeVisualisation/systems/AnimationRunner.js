@@ -40,6 +40,7 @@ export class AnimationRunner {
     this.animationFrameId = null;
     this.isRunning = false;
     this._isRendering = false;
+    this._runToken = 0;
     this._lastAnimationStage = null;
     this._lastProgressSyncTime = 0;
 
@@ -57,20 +58,25 @@ export class AnimationRunner {
   start() {
     if (this.isRunning) return;
     this.isRunning = true;
-    this.animationFrameId = requestAnimationFrame(this._onFrame);
+    this._runToken += 1;
+    this._scheduleFrame(this._runToken);
   }
 
   /**
    * Stops the animation loop immediately.
-   * Cancels any pending frame and prevents async renders from committing.
+   * Cancels any pending frame and invalidates stale frame callbacks.
    */
   stop() {
     this.isRunning = false;
-    this._isRendering = false; // Reset lock
+    this._runToken += 1;
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
     }
+  }
+
+  _scheduleFrame(runToken) {
+    this.animationFrameId = requestAnimationFrame((timestamp) => this._onFrame(timestamp, runToken));
   }
 
   /**
@@ -78,9 +84,9 @@ export class AnimationRunner {
    * Ensures one render completes before the next is scheduled.
    * @param {number} timestamp - Provided by requestAnimationFrame
    */
-  async _onFrame(timestamp) {
+  async _onFrame(timestamp, runToken = this._runToken) {
     // 1. Safety Check: If stopped or paused externally, exit.
-    if (!this.isRunning) return;
+    if (!this.isRunning || runToken !== this._runToken) return;
 
     const { playing } = this.getState();
     if (!playing) {
@@ -91,14 +97,18 @@ export class AnimationRunner {
     // 2. Overlap Protection: Skip this rAF if previous render is still working.
     // This allows the loop to "wait" for heavy renders without stacking frames.
     if (this._isRendering) {
-      this.animationFrameId = requestAnimationFrame(this._onFrame);
+      this._scheduleFrame(runToken);
       return;
     }
 
     this._isRendering = true;
 
     try {
-      const shouldStop = await this._processFrame(timestamp);
+      const shouldStop = await this._processFrame(timestamp, runToken);
+
+      if (!this.isRunning || runToken !== this._runToken) {
+        return;
+      }
 
       if (shouldStop) {
         this.stopAnimation(); // Dispatch 'playing: false' to store
@@ -110,6 +120,7 @@ export class AnimationRunner {
       this.requestRedraw();
 
     } catch (err) {
+      if (runToken !== this._runToken) return;
       console.error('[AnimationRunner] Frame error:', err);
       // On critical error, stop to prevent log spam
       this.stop();
@@ -118,8 +129,8 @@ export class AnimationRunner {
       this._isRendering = false;
 
       // 4. Schedule Next: Only AFTER work is done (prevents "Spiral of Death")
-      if (this.isRunning) {
-        this.animationFrameId = requestAnimationFrame(this._onFrame);
+      if (this.isRunning && runToken === this._runToken) {
+        this._scheduleFrame(runToken);
       }
     }
   }
@@ -127,7 +138,7 @@ export class AnimationRunner {
   /**
    * Processes a single frame: Calculations -> Data Fetch -> Render -> Side Effects
    */
-  async _processFrame(timestamp) {
+  async _processFrame(timestamp, runToken = this._runToken) {
     const state = this.getState();
 
     // 1. Timing Calculation (Pure)
@@ -164,8 +175,8 @@ export class AnimationRunner {
     this._syncStore(timestamp, progress, stage, isFinished);
 
     // 5. Easing & Render
-    // Check running state again before expensive async render/interpolation
-    if (!this.isRunning) return isFinished;
+    // Check running state again before expensive async render/interpolation.
+    if (!this.isRunning || runToken !== this._runToken) return isFinished;
 
     const easedT = applyStageEasing(localT, stage);
 
@@ -216,7 +227,7 @@ export class AnimationRunner {
  * Extracts and calculates basic timing info
  */
 function getPlaybackState(state, timestamp) {
-  const { animationStartTime, animationSpeed } = state;
+  const { animationStartTime, animationSpeed, transitionDuration, pauseDuration } = state;
   const treeList = selectActiveTreeList(state);
   // Guard: Invalid config
   if (!animationStartTime || !treeList || treeList.length === 0) return null;
@@ -225,7 +236,9 @@ function getPlaybackState(state, timestamp) {
     timestamp,
     startTime: animationStartTime,
     speed: animationSpeed,
-    totalItems: treeList.length
+    totalItems: treeList.length,
+    transitionDuration,
+    pauseDuration
   });
 }
 

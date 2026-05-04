@@ -19,6 +19,7 @@ export const workspaceInitializationFormSchema = z.object({
     .max(STEP_MAX, `Must be ${STEP_MAX} or less`),
   midpointRooting: z.boolean().default(false),
   // Tree inference model options (MSA → trees pipeline)
+  treeInferenceEngine: z.enum(['iqtree', 'fasttree']).default('iqtree'),
   useGtr: z.boolean().default(true),  // GTR (General Time Reversible) model
   useGamma: z.boolean().default(true), // Gamma rate heterogeneity
   usePseudo: z.boolean().default(false), // Pseudocounts for gappy alignments

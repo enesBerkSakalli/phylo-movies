@@ -35,9 +35,11 @@ export function useWorkspaceInitializationForm() {
       msaFile: null,
       orderFile: null,
       // Tree inference model options (enabled by default for viral data)
+      treeInferenceEngine: 'iqtree',
       useGtr: true,   // GTR (General Time Reversible) model - more realistic
       useGamma: true, // Gamma rate heterogeneity - accounts for rate variation
       usePseudo: false, // Pseudocounts - off by default, enable for gappy alignments
+      noMl: true,
     },
     mode: "onBlur",
   });

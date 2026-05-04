@@ -40,7 +40,7 @@ export const createPlaybackSlice = (set, get) => ({
   // ==========================================================================
   play: () => {
     const state = get();
-    const { playing, treeList, animationSpeed, movieTimelineManager } = state;
+    const { playing, treeList, animationSpeed, movieTimelineManager, transitionDuration, pauseDuration } = state;
     if (playing) return;
 
     const totalTrees = treeList.length;
@@ -57,7 +57,14 @@ export const createPlaybackSlice = (set, get) => ({
       : (typeof timelineProgress === 'number'
         ? timelineProgress
         : (getWeightedTimelineProgressForLinearProgress(initialProgress, totalTrees, movieTimelineManager) ?? initialProgress));
-    const timeOffset = (initialProgress * (totalTrees - 1) / animationSpeed) * 1000;
+    const safeSpeed = Number.isFinite(animationSpeed) && animationSpeed > 0 ? animationSpeed : 1;
+    const playbackTimeSeconds = getPlaybackTimeSecondsForLinearProgress(
+      initialProgress,
+      totalTrees,
+      transitionDuration,
+      pauseDuration
+    );
+    const timeOffset = (playbackTimeSeconds / safeSpeed) * 1000;
     const adjustedStartTime = performance.now() - timeOffset;
 
     set({
@@ -331,4 +338,42 @@ function getLinearProgressForTimelineProgress(movieTimelineManager, timelineProg
   const exactTreeIndex = fromIndex + ((safeToIndex - fromIndex) * safeTimeFactor);
 
   return clamp(exactTreeIndex / (treeCount - 1), 0, 1);
+}
+
+function getPlaybackDurationSeconds(treeCount, transitionDuration = 1, pauseDuration = 0) {
+  if (!Number.isFinite(treeCount) || treeCount <= 1) return 0;
+
+  const segmentCount = treeCount - 1;
+  const safeTransitionDuration = Number.isFinite(transitionDuration) && transitionDuration > 0
+    ? transitionDuration
+    : 1;
+  const safePauseDuration = Number.isFinite(pauseDuration) && pauseDuration > 0
+    ? pauseDuration
+    : 0;
+
+  return (segmentCount * safeTransitionDuration) +
+    (Math.max(0, segmentCount - 1) * safePauseDuration);
+}
+
+function getPlaybackTimeSecondsForLinearProgress(progress, treeCount, transitionDuration = 1, pauseDuration = 0) {
+  if (!Number.isFinite(treeCount) || treeCount <= 1) return 0;
+
+  const clampedProgress = clamp(progress, 0, 1);
+  if (clampedProgress >= 1) {
+    return getPlaybackDurationSeconds(treeCount, transitionDuration, pauseDuration);
+  }
+
+  const segmentCount = treeCount - 1;
+  const safeTransitionDuration = Number.isFinite(transitionDuration) && transitionDuration > 0
+    ? transitionDuration
+    : 1;
+  const safePauseDuration = Number.isFinite(pauseDuration) && pauseDuration > 0
+    ? pauseDuration
+    : 0;
+  const exactTreeIndex = clampedProgress * segmentCount;
+  const fromIndex = Math.min(Math.floor(exactTreeIndex), segmentCount - 1);
+  const timeFactor = exactTreeIndex - fromIndex;
+
+  return (fromIndex * (safeTransitionDuration + safePauseDuration)) +
+    (timeFactor * safeTransitionDuration);
 }

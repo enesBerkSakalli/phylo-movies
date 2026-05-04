@@ -1,12 +1,13 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { selectSyncMsaEnabled, useAppStore } from '@/state/phyloStore/store.js';
 import { MSADeckGLViewer } from '@/msaViewer/MSADeckGLViewer';
 import { useMSA } from './MSAContext';
 import { MSAScrollbars } from './MSAScrollbars';
 
 export function MSAViewer() {
-  const { processedData, msaRegion, msaPreviousRegion, showLetters, movieData, viewAction, colorScheme, setVisibleRange, rowColorMap, visibleRange, scrollAction } = useMSA();
+  const { processedData, msaRegion, msaPreviousRegion, showLetters, viewAction, colorScheme, setVisibleRange, rowColorMap, visibleRange, scrollAction } = useMSA();
   const syncMSAEnabled = useAppStore(selectSyncMsaEnabled);
+  const [layoutMetrics, setLayoutMetrics] = useState(null);
   const containerRef = useRef(null);
   const viewerRef = useRef(null);
 
@@ -73,22 +74,25 @@ export function MSAViewer() {
     viewerRef.current = viewer;
 
     // Handle view state changes
-    let lastUpdate = 0;
-    viewer.onViewStateChange = ({ range }) => {
+    let lastRangeUpdate = 0;
+    viewer.onViewStateChange = ({ range, layoutMetrics }) => {
       const now = Date.now();
-      if (range && now - lastUpdate > 33) {
+      if (layoutMetrics) {
+        setLayoutMetrics((current) => {
+          if (
+            current?.labelsWidth === layoutMetrics.labelsWidth &&
+            current?.axisHeight === layoutMetrics.axisHeight
+          ) {
+            return current;
+          }
+          return layoutMetrics;
+        });
+      }
+      if (range && now - lastRangeUpdate > 33) {
         setVisibleRange(range);
-        lastUpdate = now;
+        lastRangeUpdate = now;
       }
     };
-
-    // If data already present when viewer mounts, load immediately
-    if (processedData) {
-      viewer.loadFromPhyloData(movieData);
-      if (msaRegion) {
-        viewer.setRegion(msaRegion.start, msaRegion.end);
-      }
-    }
 
     return () => {
       viewer.destroy();
@@ -107,8 +111,12 @@ export function MSAViewer() {
     } else {
       viewer.clearRegion();
     }
-    viewer.render?.();
-  }, [processedData, msaRegion]);
+    if (msaPreviousRegion) {
+      viewer.setPreviousRegion(msaPreviousRegion.start, msaPreviousRegion.end);
+    } else {
+      viewer.clearPreviousRegion();
+    }
+  }, [processedData]);
 
   // Toggle letters without recreating viewer
   useEffect(() => {
@@ -146,7 +154,7 @@ export function MSAViewer() {
           </div>
         </div>
       )}
-      <MSAScrollbars containerRef={containerRef} />
+      <MSAScrollbars layoutMetrics={layoutMetrics} />
     </div>
   );
 }

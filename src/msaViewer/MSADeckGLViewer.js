@@ -4,7 +4,7 @@
  */
 
 import { Deck, OrthographicView, OrthographicController } from '@deck.gl/core';
-import { processPhyloData, calculateConsensus } from './utils/dataUtils.js';
+import { calculateConsensus } from './utils/dataUtils.js';
 import { createCellsLayer, buildCellData } from './layers/cellsLayer.js';
 import { createSelectionBorderLayer, createPreviousSelectionBorderLayer, buildSelectionBorder } from './layers/selectionBorderLayer.js';
 import { createLettersLayer, buildTextData } from './layers/lettersLayer.js';
@@ -84,6 +84,13 @@ export class MSADeckGLViewer {
    */
   hasSequences() {
     return this.state.seqs && this.state.seqs.length > 0;
+  }
+
+  getLayoutMetrics() {
+    return {
+      labelsWidth: this.LABELS_WIDTH,
+      axisHeight: this.AXIS_HEIGHT
+    };
   }
 
   // =======================================================================
@@ -169,7 +176,11 @@ export class MSADeckGLViewer {
         this.state.rows,
         this.state.cols
       );
-      this.onViewStateChange({ viewState: activeClamped, range });
+      this.onViewStateChange({
+        viewState: activeClamped,
+        range,
+        layoutMetrics: this.getLayoutMetrics()
+      });
     }
   }
 
@@ -369,11 +380,6 @@ export class MSADeckGLViewer {
   // =======================================================================
   // DATA LOADING
   // =======================================================================
-
-  loadFromPhyloData(data) {
-    const processedData = processPhyloData(data);
-    return this._applyProcessedData(processedData);
-  }
 
   loadFromProcessedData(processedData) {
     return this._applyProcessedData(processedData);

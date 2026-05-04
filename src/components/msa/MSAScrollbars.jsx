@@ -1,17 +1,20 @@
 import React, { useCallback, useRef, useState, useMemo } from 'react';
 import { useMSA } from './MSAContext';
+import { MSA_VIEWER_CONSTANTS } from '@/msaViewer/config.js';
 
 /**
  * Custom scrollbar overlays that show viewport position within the MSA alignment
  * and allow clicking/dragging to control the DeckGL view state.
  */
-export function MSAScrollbars({ containerRef }) {
+export function MSAScrollbars({ layoutMetrics = null }) {
   const { processedData, visibleRange, scrollToPosition } = useMSA();
 
   const [isDraggingH, setIsDraggingH] = useState(false);
   const [isDraggingV, setIsDraggingV] = useState(false);
   const hTrackRef = useRef(null);
   const vTrackRef = useRef(null);
+  const labelsWidth = layoutMetrics?.labelsWidth ?? MSA_VIEWER_CONSTANTS.DEFAULT_LABELS_WIDTH;
+  const axisHeight = layoutMetrics?.axisHeight ?? MSA_VIEWER_CONSTANTS.AXIS_HEIGHT;
 
   // Memoize calculations - will return defaults if data not available
   const { rows, cols, r0, r1, c0, c1, hThumbWidth, hThumbLeft, vThumbHeight, vThumbTop } = useMemo(() => {
@@ -115,7 +118,7 @@ export function MSAScrollbars({ containerRef }) {
         ref={hTrackRef}
         className="absolute bottom-0 left-0 right-3 h-3 bg-muted/50 backdrop-blur-sm cursor-pointer z-20 border-t border-border"
         onClick={handleHTrackClick}
-        style={{ marginLeft: '140px' }} // Match LABELS_WIDTH
+        style={{ marginLeft: `${labelsWidth}px` }}
         aria-label="Horizontal scroll track"
         role="scrollbar"
         aria-orientation="horizontal"
@@ -142,7 +145,7 @@ export function MSAScrollbars({ containerRef }) {
         ref={vTrackRef}
         className="absolute top-0 right-0 bottom-3 w-3 bg-muted/50 backdrop-blur-sm cursor-pointer z-20 border-l border-border"
         onClick={handleVTrackClick}
-        style={{ marginTop: '28px' }} // Match AXIS_HEIGHT
+        style={{ marginTop: `${axisHeight}px` }}
         aria-label="Vertical scroll track"
         role="scrollbar"
         aria-orientation="vertical"
