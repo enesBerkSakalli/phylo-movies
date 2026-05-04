@@ -121,6 +121,61 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     expect(controller.renderAllElements).toHaveBeenCalledOnce();
   });
 
+  it('resets interpolation caches when label layout offsets change', () => {
+    useAppStore.setState({ styleConfig: { labelOffsets: { DEFAULT: 20, EXTENSION: 5 } } });
+    controller = new ControllerClass(null);
+    controller.renderAllElements = vi.fn();
+    controller.prefetchedLayoutCacheKeys.set(1, 'stale-layout-key');
+    controller._prefetchRequestTokens.set(1, 'stale-token');
+    const generation = controller._layoutRequestGeneration;
+
+    useAppStore.setState({ styleConfig: { labelOffsets: { DEFAULT: 30, EXTENSION: 5 } } });
+
+    expect(controller.prefetchedLayoutCacheKeys.size).toBe(0);
+    expect(controller._prefetchRequestTokens.size).toBe(0);
+    expect(controller._layoutRequestGeneration).toBe(generation + 1);
+    expect(controller.renderAllElements).toHaveBeenCalledOnce();
+  });
+
+  it('keeps interpolation caches when pulse phase only changes paint', () => {
+    useAppStore.setState({ changePulsePhase: 0 });
+    controller = new ControllerClass(null);
+    controller.renderAllElements = vi.fn();
+    const resetCaches = vi.spyOn(controller, 'resetInterpolationCaches');
+
+    useAppStore.setState({ changePulsePhase: 0.25 });
+
+    expect(resetCaches).not.toHaveBeenCalled();
+    expect(controller.renderAllElements).toHaveBeenCalledOnce();
+  });
+
+  it('does not request redundant redraws for pulse paint while animation is running', () => {
+    useAppStore.setState({ changePulsePhase: 0 });
+    controller = new ControllerClass(null);
+    controller.renderAllElements = vi.fn();
+    controller.animationRunner.isRunning = true;
+    controller.deckContext = { deck: { redraw: vi.fn() }, destroy: vi.fn() };
+    const resetCaches = vi.spyOn(controller, 'resetInterpolationCaches');
+
+    useAppStore.setState({ changePulsePhase: 0.25 });
+
+    expect(resetCaches).not.toHaveBeenCalled();
+    expect(controller.renderAllElements).not.toHaveBeenCalled();
+    expect(controller.deckContext.deck.redraw).not.toHaveBeenCalled();
+  });
+
+  it('keeps interpolation caches when stroke width changes layer data only', () => {
+    useAppStore.setState({ strokeWidth: 1 });
+    controller = new ControllerClass(null);
+    controller.renderAllElements = vi.fn();
+    const resetCaches = vi.spyOn(controller, 'resetInterpolationCaches');
+
+    useAppStore.setState({ strokeWidth: 2 });
+
+    expect(resetCaches).not.toHaveBeenCalled();
+    expect(controller.renderAllElements).toHaveBeenCalledOnce();
+  });
+
   it('includes dataset identity in worker layout request tokens', () => {
     controller = new ControllerClass(null);
     const firstToken = controller._createLayoutRequestToken(1, useAppStore.getState());

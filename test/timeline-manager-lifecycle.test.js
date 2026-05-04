@@ -376,6 +376,54 @@ describe('MovieTimelineManager lifecycle', () => {
     expect(renderedT).to.equal(0.5);
   });
 
+  it('does not force a redraw after animation render updates layers', async () => {
+    const previousRequestAnimationFrame = global.requestAnimationFrame;
+    const previousCancelAnimationFrame = global.cancelAnimationFrame;
+    let renderCount = 0;
+    let redrawCount = 0;
+
+    global.requestAnimationFrame = () => 1;
+    global.cancelAnimationFrame = () => {};
+
+    try {
+      const runner = new AnimationRunner({
+        getState: () => ({
+          playing: true,
+          animationStartTime: 1_000,
+          animationSpeed: 1,
+          transitionDuration: 2,
+          pauseDuration: 0,
+          treeList: [{ id: 'a' }, { id: 'b' }, { id: 'c' }],
+          comparisonMode: false
+        }),
+        getOrCacheInterpolationData: () => ({
+          dataFrom: { nodes: [] },
+          dataTo: { nodes: [] }
+        }),
+        renderSingleFrame: async () => {
+          renderCount += 1;
+        },
+        renderComparisonFrame: async () => {},
+        setAnimationStage: () => {},
+        updateProgress: () => {},
+        stopAnimation: () => {},
+        requestRedraw: () => {
+          redrawCount += 1;
+        }
+      });
+
+      runner.isRunning = true;
+      await runner._onFrame(2_000, runner._runToken);
+      runner.stop();
+
+      expect(renderCount).to.equal(1);
+      expect(redrawCount).to.equal(0);
+    } finally {
+      global.requestAnimationFrame = previousRequestAnimationFrame;
+      global.cancelAnimationFrame = previousCancelAnimationFrame;
+    }
+  });
+
   it('does not overlap renders when playback restarts before a frame settles', async () => {
     const previousRequestAnimationFrame = global.requestAnimationFrame;
     const previousCancelAnimationFrame = global.cancelAnimationFrame;
