@@ -11,6 +11,8 @@ import { getMSAFrameIndex } from '@/domain/indexing/IndexMapping.js';
 export function useTreeController() {
   const controllerRef = useRef(null);
   const renderRafRef = useRef(null);
+  const renderInFlightRef = useRef(false);
+  const renderQueuedRef = useRef(false);
   const prevMsaFrameRef = useRef(-1);
 
   useEffect(() => {
@@ -46,40 +48,58 @@ export function useTreeController() {
     };
 
     const scheduleRender = () => {
+      if (disposed) return;
+
+      if (renderInFlightRef.current) {
+        renderQueuedRef.current = true;
+        return;
+      }
+
       if (renderRafRef.current != null) return;
 
       renderRafRef.current = schedule(async () => {
         renderRafRef.current = null;
         if (disposed) return;
+        renderInFlightRef.current = true;
+        renderQueuedRef.current = false;
 
-        const state = useAppStore.getState();
-        if (state.movieTimelineManager?.scrubController?.isScrubbing) return;
-        if (state.playing) return;
-
-        const controller = controllerRef.current || state.treeControllers?.[0];
-        if (!controller || !state.movieData) return;
-
-        if (!controller.ready) {
-          try {
-            await controller.readyPromise;
-          } catch {
-            return;
-          }
-        }
-
-        state.setRenderInProgress(true);
         try {
-          if (state.comparisonMode) {
-            await renderComparisonMode(controller, state.transitionResolver, state.currentTreeIndex);
-          } else if (state.playhead?.timelineProgress != null && typeof controller.renderTimelineProgress === 'function') {
-            await controller.renderTimelineProgress(state.playhead.timelineProgress);
-          } else {
-            await controller.renderProgress(state.playhead?.animationProgress ?? 0);
+          const state = useAppStore.getState();
+          if (state.movieTimelineManager?.scrubController?.isScrubbing) return;
+          if (state.playing) return;
+
+          const controller = controllerRef.current || state.treeControllers?.[0];
+          if (!controller || !state.movieData) return;
+
+          if (!controller.ready) {
+            try {
+              await controller.readyPromise;
+            } catch {
+              return;
+            }
           }
-        } catch (error) {
-          console.error('Error during tree rendering:', error);
+
+          state.setRenderInProgress(true);
+          try {
+            if (state.comparisonMode) {
+              await renderComparisonMode(controller, state.transitionResolver, state.currentTreeIndex);
+            } else if (state.playhead?.timelineProgress != null && typeof controller.renderTimelineProgress === 'function') {
+              await controller.renderTimelineProgress(state.playhead.timelineProgress);
+            } else {
+              await controller.renderProgress(state.playhead?.animationProgress ?? 0);
+            }
+          } catch (error) {
+            console.error('Error during tree rendering:', error);
+          } finally {
+            if (!disposed) {
+              state.setRenderInProgress(false);
+            }
+          }
         } finally {
-          state.setRenderInProgress(false);
+          renderInFlightRef.current = false;
+          if (renderQueuedRef.current && !disposed) {
+            scheduleRender();
+          }
         }
       });
     };
@@ -194,6 +214,8 @@ export function useTreeController() {
         cancelSchedule(renderRafRef.current);
         renderRafRef.current = null;
       }
+      renderQueuedRef.current = false;
+      renderInFlightRef.current = false;
       unsubscribe?.();
 
       const controller = controllerRef.current;
