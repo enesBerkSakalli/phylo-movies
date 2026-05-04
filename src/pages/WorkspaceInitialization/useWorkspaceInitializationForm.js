@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,6 +19,7 @@ import {
  */
 export function useWorkspaceInitializationForm() {
   const navigate = useNavigate();
+  const operationRef = useRef({ id: 0, controller: null, mounted: true });
   const [submitting, setSubmitting] = useState(false);
   const [loadingExample, setLoadingExample] = useState(false);
   const [loadingExampleId, setLoadingExampleId] = useState(null);
@@ -45,6 +46,15 @@ export function useWorkspaceInitializationForm() {
   });
 
   const { setValue, reset: resetForm } = form;
+
+  useEffect(() => {
+    return () => {
+      operationRef.current.mounted = false;
+      operationRef.current.id += 1;
+      operationRef.current.controller?.abort();
+      hideElectronLoading();
+    };
+  }, []);
 
   const base = useMemo(() => {
     try {
@@ -75,6 +85,7 @@ export function useWorkspaceInitializationForm() {
       return;
     }
 
+    const operation = beginOperation(operationRef);
     setSubmitting(true);
     setOperationState({ percent: 0, message: 'Preparing upload...' });
     showElectronLoading('Preparing upload...');
@@ -83,21 +94,36 @@ export function useWorkspaceInitializationForm() {
       updateElectronProgress(5, 'Uploading files...');
 
       // Process data via server stream
-      const resultData = await processMovieData(formData, setOperationState);
+      const resultData = await processMovieData(
+        formData,
+        (progress) => setOperationStateIfCurrent(operationRef, operation, progress, setOperationState),
+        { signal: operation.controller.signal }
+      );
+      if (!isCurrentOperation(operationRef, operation)) return;
 
-      // Finalize saving and MSA workflows
-      await finalizeMovieData(resultData, formData, setOperationState);
+      // Finalize saving
+      await finalizeMovieData(
+        resultData,
+        formData,
+        (progress) => setOperationStateIfCurrent(operationRef, operation, progress, setOperationState)
+      );
+      if (!isCurrentOperation(operationRef, operation)) return;
 
       // Brief delay to show completion sentiment
       await new Promise(resolve => setTimeout(resolve, 300));
+      if (!isCurrentOperation(operationRef, operation)) return;
       navigate('/visualization');
 
     } catch (err) {
+      if (!isCurrentOperation(operationRef, operation) || err?.name === 'AbortError') return;
       console.error('[useWorkspaceInitializationForm] Submission error:', err);
       showAlert(err.message || String(err));
     } finally {
-      hideElectronLoading();
-      setSubmitting(false);
+      if (isCurrentOperation(operationRef, operation)) {
+        hideElectronLoading();
+        setSubmitting(false);
+        finishOperation(operationRef, operation);
+      }
     }
   }
 
@@ -115,6 +141,7 @@ export function useWorkspaceInitializationForm() {
       return;
     }
 
+    const operation = beginOperation(operationRef);
     setLoadingExample(true);
     setLoadingExampleId(exampleId);
     setOperationState({ percent: 0, message: `Loading ${example.name}...` });
@@ -144,25 +171,40 @@ export function useWorkspaceInitializationForm() {
       };
 
       // Process through the standard pipeline
-      const resultData = await processMovieData(formData, setOperationState);
+      const resultData = await processMovieData(
+        formData,
+        (progress) => setOperationStateIfCurrent(operationRef, operation, progress, setOperationState),
+        { signal: operation.controller.signal }
+      );
+      if (!isCurrentOperation(operationRef, operation)) return;
 
       // Set the file name for display
       resultData.file_name = example.fileName;
 
-      // Finalize saving and MSA workflows
-      await finalizeMovieData(resultData, formData, setOperationState);
+      // Finalize saving
+      await finalizeMovieData(
+        resultData,
+        formData,
+        (progress) => setOperationStateIfCurrent(operationRef, operation, progress, setOperationState)
+      );
+      if (!isCurrentOperation(operationRef, operation)) return;
 
       // Brief delay to show completion
       await new Promise(resolve => setTimeout(resolve, 300));
+      if (!isCurrentOperation(operationRef, operation)) return;
       navigate('/visualization');
 
     } catch (err) {
+      if (!isCurrentOperation(operationRef, operation) || err?.name === 'AbortError') return;
       console.error('[useWorkspaceInitializationForm] Failed to load example:', err);
       showAlert(`Failed to load example: ${err.message || err}`);
     } finally {
-      hideElectronLoading();
-      setLoadingExample(false);
-      setLoadingExampleId(null);
+      if (isCurrentOperation(operationRef, operation)) {
+        hideElectronLoading();
+        setLoadingExample(false);
+        setLoadingExampleId(null);
+        finishOperation(operationRef, operation);
+      }
     }
   }
 
@@ -198,4 +240,33 @@ async function fetchExampleFile(filePath, fileName) {
 
   const blob = await resp.blob();
   return new File([blob], fileName, { type: 'application/octet-stream' });
+}
+
+function beginOperation(operationRef) {
+  operationRef.current.controller?.abort();
+  const controller = new AbortController();
+  const id = operationRef.current.id + 1;
+  operationRef.current.id = id;
+  operationRef.current.controller = controller;
+  return { id, controller };
+}
+
+function isCurrentOperation(operationRef, operation) {
+  return (
+    operationRef.current.mounted &&
+    operationRef.current.id === operation.id &&
+    operationRef.current.controller === operation.controller
+  );
+}
+
+function finishOperation(operationRef, operation) {
+  if (operationRef.current.controller === operation.controller) {
+    operationRef.current.controller = null;
+  }
+}
+
+function setOperationStateIfCurrent(operationRef, operation, progress, setOperationState) {
+  if (isCurrentOperation(operationRef, operation)) {
+    setOperationState(progress);
+  }
 }

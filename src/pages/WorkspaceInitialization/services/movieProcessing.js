@@ -1,5 +1,5 @@
 import { resolveApiUrl } from "@/services/data/apiConfig";
-import { phyloData, workflows } from "@/services/data/dataService.js";
+import { phyloData } from "@/services/data/dataService.js";
 
 const UPLOAD_START_TIMEOUT_MS = 2 * 60 * 1000;
 const STREAM_IDLE_TIMEOUT_MS = 15 * 60 * 1000;
@@ -29,7 +29,10 @@ export function updateElectronProgress(progress, message) {
 /**
  * Service to handle tree data streaming and local processing
  */
-export async function processMovieData(formData, onProgress) {
+export async function processMovieData(formData, onProgress, options = {}) {
+  const { signal } = options;
+  throwIfAborted(signal);
+
   const body = new FormData();
   if (formData.treesFile) body.append('treeFile', formData.treesFile);
   if (formData.orderFile) body.append('orderFile', formData.orderFile);
@@ -46,18 +49,25 @@ export async function processMovieData(formData, onProgress) {
 
   const streamUrl = await resolveApiUrl('/treedata/stream');
   const controller = new AbortController();
+  const removeUploadAbortListener = addAbortListener(signal, () => controller.abort());
   const uploadTimeoutId = setTimeout(() => controller.abort(), UPLOAD_START_TIMEOUT_MS);
   let resp;
   try {
     resp = await fetch(streamUrl, { method: 'POST', body, signal: controller.signal });
   } catch (error) {
+    if (signal?.aborted) {
+      throw createAbortError();
+    }
     if (error?.name === 'AbortError') {
       throw new Error('The server did not start tree processing in time. Please check that the local processing server is running.');
     }
     throw error;
   } finally {
     clearTimeout(uploadTimeoutId);
+    removeUploadAbortListener();
   }
+
+  throwIfAborted(signal);
 
   if (!resp.ok) {
     let errorMsg = 'Upload failed!';
@@ -75,6 +85,8 @@ export async function processMovieData(formData, onProgress) {
     throw new Error('No channel_id returned from server');
   }
 
+  throwIfAborted(signal);
+
   updateElectronProgress(10, 'Processing tree data...');
   const progressUrl = await resolveApiUrl(`/stream/progress/${channel_id}`);
 
@@ -82,12 +94,14 @@ export async function processMovieData(formData, onProgress) {
     const eventSource = new EventSource(progressUrl);
     let settled = false;
     let idleTimeoutId = null;
+    let removeStreamAbortListener = () => {};
 
     const closeEventSource = () => {
       if (idleTimeoutId) {
         clearTimeout(idleTimeoutId);
         idleTimeoutId = null;
       }
+      removeStreamAbortListener();
       try {
         eventSource.close();
       } catch {}
@@ -108,11 +122,16 @@ export async function processMovieData(formData, onProgress) {
     };
 
     const refreshIdleTimeout = () => {
+      if (settled) return;
       if (idleTimeoutId) clearTimeout(idleTimeoutId);
       idleTimeoutId = setTimeout(() => {
         rejectOnce(new Error('Tree processing stopped sending progress. Please check the local processing server and try again.'));
       }, STREAM_IDLE_TIMEOUT_MS);
     };
+
+    removeStreamAbortListener = addAbortListener(signal, () => {
+      rejectOnce(createAbortError());
+    });
 
     refreshIdleTimeout();
 
@@ -123,6 +142,7 @@ export async function processMovieData(formData, onProgress) {
     // High-water mark prevents the progress bar from ever going backward
     let highWaterMark = 10;
     function reportProgress(percent, message) {
+      if (settled || signal?.aborted) return;
       const clamped = Math.max(highWaterMark, Math.min(90, percent));
       highWaterMark = clamped;
       onProgress({ percent: clamped, message });
@@ -243,8 +263,30 @@ export async function processMovieData(formData, onProgress) {
   });
 }
 
+function createAbortError() {
+  const error = new Error('Processing cancelled');
+  error.name = 'AbortError';
+  return error;
+}
+
+function throwIfAborted(signal) {
+  if (signal?.aborted) {
+    throw createAbortError();
+  }
+}
+
+function addAbortListener(signal, onAbort) {
+  if (!signal || typeof onAbort !== 'function') return () => {};
+  if (signal.aborted) {
+    onAbort();
+    return () => {};
+  }
+  signal.addEventListener('abort', onAbort, { once: true });
+  return () => signal.removeEventListener('abort', onAbort);
+}
+
 /**
- * Handles saving the processed data and MSA workflow
+ * Handles saving the processed data
  */
 export async function finalizeMovieData(data, formData, onProgress) {
   if (formData.treesFile && formData.treesFile.name) {
@@ -265,22 +307,6 @@ export async function finalizeMovieData(data, formData, onProgress) {
     throw storageError;
   }
 
-  onProgress({ percent: 95, message: 'Processing MSA data...' });
-  updateElectronProgress(95, 'Processing MSA data...');
-
-  let msaWarning = null;
-  try {
-    const fd = new FormData();
-    if (formData.msaFile) fd.append('msaFile', formData.msaFile);
-    await workflows.handleMSADataSaving(fd, data);
-  } catch (err) {
-    console.error('[MovieService] MSA workflow error:', err);
-    msaWarning = 'Tree data is ready, but MSA processing failed.';
-    onProgress({ percent: 95, message: msaWarning });
-    updateElectronProgress(95, msaWarning);
-  }
-
-  const completionMessage = msaWarning || 'Complete!';
-  onProgress({ percent: 100, message: completionMessage });
-  updateElectronProgress(100, completionMessage);
+  onProgress({ percent: 100, message: 'Complete!' });
+  updateElectronProgress(100, 'Complete!');
 }
