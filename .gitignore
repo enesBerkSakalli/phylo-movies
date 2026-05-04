@@ -8,6 +8,9 @@ env
 # Copilot prompt files (local-only)
 .github/prompts/
 
+# Local agent/planning artifacts
+docs/superpowers/
+
 # local env files
 .env.local
 .env.*.local
