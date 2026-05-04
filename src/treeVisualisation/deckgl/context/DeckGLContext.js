@@ -8,6 +8,7 @@ import { easeInOutCubic } from '../../../domain/math/mathUtils.js';
 import { VIEW_IDS, DEFAULT_ORTHO_STATE, DEFAULT_ORBIT_STATE } from './viewConstants.js';
 import { useAppStore } from '../../../state/phyloStore/store.js';
 import { getGroupForTaxon } from '../../../treeColoring/utils/GroupingUtils.js';
+import { measureFrameStep } from '../../performance/frameInstrumentation.js';
 
 /**
  * DeckGLContext - Manages the Deck.gl instance lifecycle
@@ -419,10 +420,12 @@ export class DeckGLContext {
   }
 
   setLayers(layers) {
-    // Notify listeners (e.g. to update React ref cache)
-    this._layerListeners.forEach(listener => listener(layers));
+    return measureFrameStep('deckContext.setLayers', () => {
+      // Notify listeners (e.g. to update React ref cache)
+      this._layerListeners.forEach(listener => listener(layers));
 
-    this.setProps({ layers });
+      this.setProps({ layers });
+    });
   }
 
   addLayerListener(listener) {

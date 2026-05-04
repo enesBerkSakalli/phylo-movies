@@ -5,6 +5,7 @@ import { PolarLabelInterpolator } from './labels/PolarLabelInterpolator.js';
 import { PolarExtensionInterpolator } from './extensions/PolarExtensionInterpolator.js';
 import { computeAngularDistances, buildGlobalVelocityMaps } from './VelocityNormalizer.js';
 import { ANIMATION_STAGES } from './stages/animationStageDetector.js';
+import { measureFrameStep } from '../../performance/frameInstrumentation.js';
 
 /**
  * TreeInterpolator - Orchestrates tree data interpolation
@@ -27,6 +28,12 @@ export class TreeInterpolator {
    * @returns {Object} Interpolated tree data
    */
   interpolateTreeData(dataFrom, dataTo, timeFactor, branchTransformation = 'none', stage = null) {
+    return measureFrameStep('treeInterpolator.interpolateTreeData', () =>
+      this._interpolateTreeData(dataFrom, dataTo, timeFactor, branchTransformation, stage)
+    );
+  }
+
+  _interpolateTreeData(dataFrom, dataTo, timeFactor, branchTransformation = 'none', stage = null) {
     // Ensure timeFactor is clamped
     const t = Math.max(0, Math.min(1, timeFactor));
 
