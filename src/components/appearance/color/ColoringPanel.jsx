@@ -152,7 +152,7 @@ export function ColoringPanel() {
           <div className="flex items-center justify-between px-2 py-2 w-full">
             <div className="flex items-center gap-2 overflow-hidden">
             <Highlighter className="size-4 text-primary/80 shrink-0" />
-              <span className="text-xs text-foreground/70 truncate">Moved Group</span>
+              <span className="text-xs text-foreground/70 truncate">Moved Subtree</span>
             </div>
             <Switch
               id="enable-marked-subtrees"
@@ -187,7 +187,7 @@ export function ColoringPanel() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Affected Edges</SelectItem>
-                    <SelectItem value="current">Current Group</SelectItem>
+                    <SelectItem value="current">Current Subtree</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -230,7 +230,7 @@ export function ColoringPanel() {
                   className="w-full mt-1 h-7 text-2xs uppercase font-bold tracking-tight border-muted-foreground/20 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-all bg-background/40"
                 >
                   <X className="w-3 h-3 mr-2" />
-                  Clear Marked Group
+                  Clear Marked Subtree
                 </Button>
               )}
             </div>
