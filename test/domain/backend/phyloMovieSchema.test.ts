@@ -199,6 +199,51 @@ describe('validatePhyloMovieData', () => {
     }))).toThrow(/jumping_subtree_solutions/);
   });
 
+  it('keeps SPR move path metrics on validated tree pair solutions', () => {
+    const result = validatePhyloMovieData(makePayload({
+      tree_pair_solutions: {
+        pair_0_1: {
+          jumping_subtree_solutions: {
+            '[0, 1]': [[[0]]],
+          },
+          solution_to_source_map: {},
+          solution_to_destination_map: {},
+          split_change_events: [{
+            split: [0, 1],
+            step_range: [0, 0],
+          }],
+          spr_move_events: [{
+            pivot_edge: [0, 1],
+            moving_subtree: [0],
+            step_range: [0, 0],
+            collapse_path: [{
+              split: [0, 1],
+              branch_length: 0.25,
+            }],
+            expand_path: [{
+              split: [0],
+              branch_length: 0.5,
+            }],
+            collapse_hops: 1,
+            expand_hops: 2,
+            total_hops: 3,
+            collapse_branch_length: 0.25,
+            expand_branch_length: 0.5,
+            total_branch_length: 0.75,
+          }],
+        },
+      },
+    }));
+
+    expect(result.tree_pair_solutions.pair_0_1.spr_move_events?.[0]).toMatchObject({
+      moving_subtree: [0],
+      collapse_hops: 1,
+      expand_hops: 2,
+      total_hops: 3,
+      total_branch_length: 0.75,
+    });
+  });
+
   it('rejects top-level split_change_events that are not keyed by pair', () => {
     expect(() => validatePhyloMovieData(makePayload({
       split_change_events: [],

@@ -13,6 +13,18 @@ interface SprSummaryMetricsProps {
     activePairCount: number;
     singletonMoverPercentage: number;
     topMoverPercentage: number | null;
+    totalPathHops: number;
+    averagePathHops: number;
+    totalPathLength: number;
+    averagePathLength: number;
+    farthestMover: {
+        label: string;
+        fullLabel: string;
+        totalPathHops: number;
+        totalPathLength: number;
+        averagePathHops: number;
+        averagePathLength: number;
+    } | null;
 }
 
 interface SummaryTileProps {
@@ -38,6 +50,11 @@ export const SprSummaryMetrics = ({
     activePairCount,
     singletonMoverPercentage,
     topMoverPercentage,
+    totalPathHops,
+    averagePathHops,
+    totalPathLength,
+    averagePathLength,
+    farthestMover,
 }: SprSummaryMetricsProps) => (
     <div className="grid grid-cols-3 gap-3 mb-4">
         <SummaryTile
@@ -97,6 +114,79 @@ export const SprSummaryMetrics = ({
                 </Tooltip>
             ) : (
                 <div className="text-2xl font-black tracking-tighter tabular-nums">0%</div>
+            )}
+        </SummaryTile>
+
+        <SummaryTile
+            icon={<Activity className="size-3 text-primary" />}
+            label="Path Hops"
+        >
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <div className="text-2xl font-black tracking-tighter tabular-nums cursor-help text-primary hover:text-primary/80 transition-colors">
+                        {totalPathHops}
+                    </div>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-2xs font-mono bg-popover border-border">
+                    <div className="space-y-1">
+                        <div>Average per move:</div>
+                        <div className="font-bold text-primary">
+                            {averagePathHops.toFixed(3)}
+                        </div>
+                    </div>
+                </TooltipContent>
+            </Tooltip>
+        </SummaryTile>
+
+        <SummaryTile
+            icon={<ListTree className="size-3 text-primary" />}
+            label="Path Length"
+        >
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <div className="text-2xl font-black tracking-tighter tabular-nums cursor-help text-primary hover:text-primary/80 transition-colors">
+                        {totalPathLength.toFixed(3)}
+                    </div>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-2xs font-mono bg-popover border-border">
+                    <div className="space-y-1">
+                        <div>Average per move:</div>
+                        <div className="font-bold text-primary">
+                            {averagePathLength.toFixed(6)}
+                        </div>
+                    </div>
+                </TooltipContent>
+            </Tooltip>
+        </SummaryTile>
+
+        <SummaryTile
+            icon={<Split className="size-3 text-primary" />}
+            label="Farthest Group"
+        >
+            {farthestMover ? (
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <div className="cursor-help">
+                            <div className="truncate text-sm font-black tracking-tight text-primary hover:text-primary/80 transition-colors">
+                                {farthestMover.label}
+                            </div>
+                            <div className="text-2xs font-mono text-muted-foreground/80 tabular-nums">
+                                {farthestMover.totalPathLength.toFixed(3)} length · {farthestMover.totalPathHops} hops
+                            </div>
+                        </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="text-2xs bg-popover border-border max-w-sm">
+                        <div className="space-y-1">
+                            <div className="font-bold text-primary break-words">{farthestMover.fullLabel}</div>
+                            <div className="font-mono">Total length: {farthestMover.totalPathLength.toFixed(6)}</div>
+                            <div className="font-mono">Average length: {farthestMover.averagePathLength.toFixed(6)}</div>
+                            <div className="font-mono">Total hops: {farthestMover.totalPathHops}</div>
+                            <div className="font-mono">Average hops: {farthestMover.averagePathHops.toFixed(3)}</div>
+                        </div>
+                    </TooltipContent>
+                </Tooltip>
+            ) : (
+                <div className="text-2xl font-black tracking-tighter tabular-nums">-</div>
             )}
         </SummaryTile>
     </div>

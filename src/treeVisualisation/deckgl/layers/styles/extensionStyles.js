@@ -15,7 +15,7 @@ export function getExtensionColor(extension, cached, helpers) {
 }
 
 export function getExtensionWidth(extension, baseStrokeWidth, cached) {
-  const { markedSubtreeData, markedSubtreesEnabled } = cached || {};
+  const { markedSubtreeData, markedSubtreesEnabled, metricScale = 1.0 } = cached || {};
   const nodeData = toColorManagerNode(extension);
 
   // History highlighting for extensions deactivated
@@ -25,9 +25,9 @@ export function getExtensionWidth(extension, baseStrokeWidth, cached) {
 
   if (markedSubtreesEnabled !== false && markedSubtreeData && extension) {
     if (isNodeInSubtree(nodeData, markedSubtreeData)) {
-      return baseStrokeWidth * 3; // Thick for marked extensions
+      return baseStrokeWidth * 3 * metricScale; // Thick for marked extensions
     }
   }
 
-  return baseStrokeWidth; // Match link width for consistent appearance
+  return baseStrokeWidth * metricScale; // Match link width for consistent appearance
 }

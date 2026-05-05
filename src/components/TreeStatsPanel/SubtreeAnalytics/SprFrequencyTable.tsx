@@ -21,6 +21,8 @@ export const SprFrequencyTable = ({ frequencies, leafNamesByIndex }: SprFrequenc
                 <th className="px-4 py-2 text-left font-bold uppercase tracking-wider text-2xs">Moved Group</th>
                 <th className="px-4 py-2 text-right font-bold uppercase tracking-wider text-2xs">Moves</th>
                 <th className="px-4 py-2 text-right font-bold uppercase tracking-wider text-2xs">% of moves</th>
+                <th className="px-4 py-2 text-right font-bold uppercase tracking-wider text-2xs">Path Hops</th>
+                <th className="px-4 py-2 text-right font-bold uppercase tracking-wider text-2xs">Path Length</th>
             </tr>
         </thead>
         <tbody className="divide-y divide-border/10">
@@ -51,11 +53,23 @@ export const SprFrequencyTable = ({ frequencies, leafNamesByIndex }: SprFrequenc
                             </TooltipContent>
                         </Tooltip>
                     </td>
+                    <td className="px-4 py-2 text-right font-mono text-muted-foreground tabular-nums">
+                        <div>{item.totalPathHops}</div>
+                        <div className="text-2xs text-muted-foreground/60">
+                            avg {item.averagePathHops.toFixed(1)}
+                        </div>
+                    </td>
+                    <td className="px-4 py-2 text-right font-mono text-muted-foreground tabular-nums">
+                        <div>{item.totalPathLength.toFixed(3)}</div>
+                        <div className="text-2xs text-muted-foreground/60">
+                            avg {item.averagePathLength.toFixed(3)}
+                        </div>
+                    </td>
                 </tr>
             ))}
             {frequencies.length === 0 && (
                 <tr>
-                    <td colSpan={4} className="px-4 py-12 text-center text-muted-foreground italic">
+                    <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground italic">
                         No moved groups detected for this dataset.
                     </td>
                 </tr>

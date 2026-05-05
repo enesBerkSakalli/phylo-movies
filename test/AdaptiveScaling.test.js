@@ -5,6 +5,7 @@ import { getLinkWidth } from '../src/treeVisualisation/deckgl/layers/styles/link
 import { getLinkOutlineWidth } from '../src/treeVisualisation/deckgl/layers/styles/links/outline/linkOutlineStyles.js';
 import { getNodeRadius } from '../src/treeVisualisation/deckgl/layers/styles/nodes/nodeRadiusStyles.js';
 import { getLabelSize } from '../src/treeVisualisation/deckgl/layers/styles/labels/labelStyles.js';
+import { getExtensionWidth } from '../src/treeVisualisation/deckgl/layers/styles/extensionStyles.js';
 
 describe('Adaptive Visual Scaling', () => {
 
@@ -208,6 +209,19 @@ describe('Adaptive Visual Scaling', () => {
       const radius = getNodeRadius(node, 3, cached, helpers);
 
       expect(radius).toBeCloseTo(1.25);
+    });
+  });
+
+  describe('Extension Width Scaling', () => {
+    it('should scale width by metricScale', () => {
+      const cached = {
+        metricScale: 0.5
+      };
+      const extension = { split_indices: [] };
+
+      const width = getExtensionWidth(extension, 2.0, cached);
+
+      expect(width).toBeCloseTo(1.0);
     });
   });
 

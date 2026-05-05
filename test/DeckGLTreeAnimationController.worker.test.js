@@ -99,7 +99,7 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     controller.fitTreeToViewport();
 
     expect(controller.viewportManager.focusOnTree).toHaveBeenCalledWith([node], [label], {
-      includeLabels: false,
+      includeLabels: true,
       duration: 350,
       padding: undefined,
       links: [link, connector],

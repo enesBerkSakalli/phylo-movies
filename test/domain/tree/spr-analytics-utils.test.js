@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildSprActivityTimelinePoints,
   calculateSprDatasetSummary,
+  calculateSprMoverFrequencies,
   calculateSprPairActivity,
 } from '../../../src/domain/tree/sprAnalyticsUtils.js';
 
@@ -38,6 +39,35 @@ describe('SPR analytics model', () => {
           '[1]': [1, 11],
         },
       },
+      spr_move_events: [
+        {
+          moving_subtree: [1],
+          collapse_hops: 1,
+          expand_hops: 2,
+          total_hops: 3,
+          collapse_branch_length: 0.2,
+          expand_branch_length: 0.4,
+          total_branch_length: 0.6,
+        },
+        {
+          moving_subtree: [2, 3],
+          collapse_hops: 1,
+          expand_hops: 0,
+          total_hops: 1,
+          collapse_branch_length: 0.5,
+          expand_branch_length: 0,
+          total_branch_length: 0.5,
+        },
+        {
+          moving_subtree: [1],
+          collapse_hops: 1,
+          expand_hops: 1,
+          total_hops: 2,
+          collapse_branch_length: 0.1,
+          expand_branch_length: 0.15,
+          total_branch_length: 0.25,
+        },
+      ],
     },
     pair_1_2: {
       jumping_subtree_solutions: {
@@ -58,6 +88,17 @@ describe('SPR analytics model', () => {
           '[4, 5, 6]': [4, 5, 6, 12],
         },
       },
+      spr_move_events: [
+        {
+          moving_subtree: [4, 5, 6],
+          collapse_hops: 2,
+          expand_hops: 2,
+          total_hops: 4,
+          collapse_branch_length: 0.7,
+          expand_branch_length: 0.5,
+          total_branch_length: 1.2,
+        },
+      ],
     },
   };
 
@@ -82,12 +123,22 @@ describe('SPR analytics model', () => {
       singletonMoverOccurrences: 2,
       cladeMoverOccurrences: 1,
       transitionEventCount: 2,
+      sprMoveEventCount: 3,
+      totalPathHops: 6,
+      averagePathHops: 2,
+      totalPathLength: 1.35,
+      averagePathLength: 0.45,
     });
     expect(rows[0].topMover).toMatchObject({
       signature: '1',
       splitIndices: [1],
       count: 2,
       percentage: 66.66666666666666,
+      pathEventCount: 2,
+      totalPathHops: 5,
+      averagePathHops: 2.5,
+      totalPathLength: 0.85,
+      averagePathLength: 0.425,
     });
     expect(rows[0].topMover.attachmentContexts).toEqual([
       {
@@ -109,6 +160,30 @@ describe('SPR analytics model', () => {
       singletonMoverOccurrences: 0,
       cladeMoverOccurrences: 1,
       transitionEventCount: 1,
+      sprMoveEventCount: 1,
+      totalPathHops: 4,
+      averagePathHops: 4,
+      totalPathLength: 1.2,
+      averagePathLength: 1.2,
+    });
+  });
+
+  it('aggregates path travel by moved group', () => {
+    const frequencies = calculateSprMoverFrequencies(pairSolutions);
+
+    expect(frequencies[0]).toMatchObject({
+      signature: '1',
+      count: 2,
+      totalPathHops: 5,
+      averagePathHops: 2.5,
+      totalPathLength: 0.85,
+      averagePathLength: 0.425,
+    });
+    expect(frequencies.find((item) => item.signature === '2,3')).toMatchObject({
+      totalPathHops: 1,
+      averagePathHops: 1,
+      totalPathLength: 0.5,
+      averagePathLength: 0.5,
     });
   });
 
@@ -125,6 +200,20 @@ describe('SPR analytics model', () => {
       cladeMoverOccurrences: 2,
       maxPairMoverOccurrenceCount: 3,
       topMoverSharePercentage: 50,
+      sprMoveEventCount: 4,
+      totalPathHops: 10,
+      averagePathHops: 2.5,
+      totalPathLength: 2.55,
+      averagePathLength: 0.6375,
+    });
+    expect(summary.farthestMover).toMatchObject({
+      signature: '4,5,6',
+      splitIndices: [4, 5, 6],
+      count: 1,
+      totalPathHops: 4,
+      averagePathHops: 4,
+      totalPathLength: 1.2,
+      averagePathLength: 1.2,
     });
   });
 
@@ -146,6 +235,10 @@ describe('SPR analytics model', () => {
         cladeMoverOccurrences: 1,
         rfDistance: 0.25,
         weightedRfDistance: 1.25,
+        totalPathHops: 6,
+        averagePathHops: 2,
+        totalPathLength: 1.35,
+        averagePathLength: 0.45,
         topMoverSignature: '1',
       },
       {
@@ -159,6 +252,10 @@ describe('SPR analytics model', () => {
         cladeMoverOccurrences: 1,
         rfDistance: 0.5,
         weightedRfDistance: 1.5,
+        totalPathHops: 4,
+        averagePathHops: 4,
+        totalPathLength: 1.2,
+        averagePathLength: 1.2,
         topMoverSignature: '4,5,6',
       },
     ]);

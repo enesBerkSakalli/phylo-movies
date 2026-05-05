@@ -9,6 +9,11 @@ const escapeCsvValue = (value: unknown): string => {
     return str;
 };
 
+const formatFixed = (value: unknown): string => {
+    const number = Number(value);
+    return Number.isFinite(number) ? number.toFixed(6) : '0.000000';
+};
+
 export const createSprFrequencyCsv = (
     frequencies: SprMoverFrequency[],
     leafNamesByIndex: string[]
@@ -19,6 +24,11 @@ export const createSprFrequencyCsv = (
         'Taxa Count',
         'Move Count',
         '% of Moves',
+        'Path Event Count',
+        'Total Path Hops',
+        'Avg Path Hops',
+        'Total Path Length',
+        'Avg Path Length',
         'Split Indices',
         'Signature'
     ];
@@ -30,7 +40,12 @@ export const createSprFrequencyCsv = (
             label,
             item.splitIndices.length,
             item.count,
-            item.percentage.toFixed(6),
+            formatFixed(item.percentage),
+            item.pathEventCount,
+            item.totalPathHops,
+            formatFixed(item.averagePathHops),
+            formatFixed(item.totalPathLength),
+            formatFixed(item.averagePathLength),
             item.splitIndices.join(' '),
             item.signature
         ];
