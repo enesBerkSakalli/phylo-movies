@@ -41,6 +41,7 @@ export async function processMovieData(formData, onProgress, options = {}) {
   body.append('windowStepSize', String(formData.stepSize ?? 1));
   body.append('midpointRooting', formData.midpointRooting ? 'on' : '');
   body.append('treeInferenceEngine', formData.treeInferenceEngine || 'iqtree');
+  body.append('iqtreeFastSearch', formData.iqtreeFastSearch ? 'on' : '');
   // Tree inference model options (checkboxes: "on" = enabled)
   body.append('useGtr', formData.useGtr ? 'on' : '');
   body.append('useGamma', formData.useGamma ? 'on' : '');

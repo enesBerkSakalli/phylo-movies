@@ -12,6 +12,7 @@ export function TreeConstructionSection({ hasMsa, hasTrees, disabled }) {
   const { control, watch } = useFormContext();
   const treeInferenceEngine = watch('treeInferenceEngine') || 'iqtree';
   const isFastTree = treeInferenceEngine === 'fasttree';
+  const isIqTree = treeInferenceEngine === 'iqtree';
 
   return (
     <div className={`space-y-4 p-4 rounded-xl border transition-all duration-300 ${!hasMsa ? 'bg-muted/30 opacity-60 border-dashed' : 'bg-card border-solid shadow-sm'}`}>
@@ -63,8 +64,32 @@ export function TreeConstructionSection({ hasMsa, hasTrees, disabled }) {
               <FormDescription className="text-2xs leading-tight">
                 {isFastTree
                   ? "FastTree is faster for exploratory sliding-window runs and exposes FastTree-specific pseudocount and no-ML options."
-                  : "IQ-TREE is the default maximum-likelihood engine using fast search for responsive MSA window inference."}
+                  : "IQ-TREE is the default maximum-likelihood engine. Fast search is enabled by default for responsive MSA window inference."}
               </FormDescription>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={control}
+          name="iqtreeFastSearch"
+          render={({ field }) => (
+            <FormItem className="flex items-start space-x-3 space-y-0">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                  disabled={disabled || !hasMsa || !isIqTree}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel className={`text-sm font-normal cursor-pointer ${!hasMsa || !isIqTree ? 'text-muted-foreground' : ''}`}>
+                  Fast Search
+                </FormLabel>
+                <FormDescription className="text-2xs leading-tight">
+                  IQ-TREE -fast mode optimizes two starting trees with NNI search. Disable for a slower, more thorough search.
+                </FormDescription>
+              </div>
             </FormItem>
           )}
         />
