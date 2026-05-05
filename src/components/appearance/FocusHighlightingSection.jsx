@@ -41,8 +41,8 @@ export function FocusHighlightingSection({
                 <Separator className="mx-1" />
                 <ToggleWithSlider
                   id="dim-non-subtree"
-                  label="Marked Group"
-                  description="Dim branches outside the marked group"
+                  label="Marked Subtree"
+                  description="Dim branches outside the marked subtree"
                   checked={!!subtreeDimming}
                   onToggle={onToggleSubtreeDimming}
                   sliderValue={subtreeDimmingOpacity}
