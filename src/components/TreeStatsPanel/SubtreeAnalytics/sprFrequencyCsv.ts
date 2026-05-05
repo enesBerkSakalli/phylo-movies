@@ -1,5 +1,5 @@
-import { formatSubtreeLabel } from '../../../domain/tree/sprAnalyticsUtils';
-import type { SprMoverFrequency } from './types';
+import { formatSubtreeLabel } from '../../../domain/spr/sprAnalytics';
+import type { SprMoverFrequency, SprMoveEventRow } from './types';
 
 const escapeCsvValue = (value: unknown): string => {
     const str = value === null || value === undefined ? '' : String(value);
@@ -14,16 +14,23 @@ const formatFixed = (value: unknown): string => {
     return Number.isFinite(number) ? number.toFixed(6) : '0.000000';
 };
 
+const formatOptionalFixed = (value: unknown): string => {
+    if (value === null || value === undefined) return '';
+    const number = Number(value);
+    return Number.isFinite(number) ? number.toFixed(6) : '';
+};
+
 export const createSprFrequencyCsv = (
     frequencies: SprMoverFrequency[],
     leafNamesByIndex: string[]
 ): string => {
     const headers = [
         'Rank',
-        'Moved Group',
+        'Moved Subtree',
         'Taxa Count',
-        'Move Count',
-        '% of Moves',
+        'SPR Event Count',
+        '% of SPR Events',
+        'Tree Pair Count',
         'Path Event Count',
         'Total Path Hops',
         'Avg Path Hops',
@@ -41,6 +48,7 @@ export const createSprFrequencyCsv = (
             item.splitIndices.length,
             item.count,
             formatFixed(item.percentage),
+            item.pairCount ?? item.pairKeys?.length ?? '',
             item.pathEventCount,
             item.totalPathHops,
             formatFixed(item.averagePathHops),
@@ -56,6 +64,69 @@ export const createSprFrequencyCsv = (
         .join('\n');
 };
 
+const formatIndexList = (indices: number[] | undefined): string => (
+    Array.isArray(indices) ? indices.join(' ') : ''
+);
+
+const formatLabel = (indices: number[] | undefined, leafNamesByIndex: string[]): string => (
+    Array.isArray(indices) && indices.length > 0
+        ? formatSubtreeLabel(indices, leafNamesByIndex)
+        : ''
+);
+
+const formatStepRange = (stepRange: [number, number] | null | undefined): string => (
+    Array.isArray(stepRange) && stepRange.length >= 2
+        ? `${stepRange[0]}-${stepRange[1]}`
+        : ''
+);
+
+export const createSprMoveEventCsv = (
+    events: SprMoveEventRow[],
+    leafNamesByIndex: string[]
+): string => {
+    const headers = [
+        'Event ID',
+        'Tree Pair',
+        'Pair Key',
+        'Event Index',
+        'Moved Subtree',
+        'Taxa Count',
+        'Pivot Edge',
+        'From Attachment',
+        'To Attachment',
+        'Step Range',
+        'Path Hops',
+        'Path Length',
+        'Tree Change',
+        'Weighted Tree Change',
+        'Measured Path',
+        'Split Indices'
+    ];
+
+    const rows = events.map((event) => [
+        event.eventId,
+        event.pairLabel,
+        event.pairKey,
+        event.eventIndex,
+        formatLabel(event.splitIndices, leafNamesByIndex),
+        event.splitIndices.length,
+        formatLabel(event.pivotEdge, leafNamesByIndex),
+        formatLabel(event.sourceAttachment, leafNamesByIndex),
+        formatLabel(event.destinationAttachment, leafNamesByIndex),
+        formatStepRange(event.stepRange),
+        event.totalPathHops,
+        formatFixed(event.totalPathLength),
+        formatOptionalFixed(event.rfDistance),
+        formatOptionalFixed(event.weightedRfDistance),
+        event.hasMeasuredPath ? 'yes' : 'no',
+        formatIndexList(event.splitIndices)
+    ]);
+
+    return [headers, ...rows]
+        .map(row => row.map(escapeCsvValue).join(','))
+        .join('\n');
+};
+
 export const createSprFrequencyExportName = (fileName: string, date = new Date()): string => {
     const dateStamp = date.toISOString().slice(0, 10);
     const baseName = (fileName || 'dataset')
@@ -65,6 +136,17 @@ export const createSprFrequencyExportName = (fileName: string, date = new Date()
         .replace(/^-+|-+$/g, '') || 'dataset';
 
     return `${baseName}-${dateStamp}.csv`;
+};
+
+export const createSprMoveEventExportName = (fileName: string, date = new Date()): string => {
+    const dateStamp = date.toISOString().slice(0, 10);
+    const baseName = (fileName || 'dataset')
+        .replace(/\.[^/.]+$/, '')
+        .replace(/[^a-zA-Z0-9_-]+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-+|-+$/g, '') || 'dataset';
+
+    return `${baseName}-spr-move-events-${dateStamp}.csv`;
 };
 
 export const downloadCsvFile = (content: string, downloadName: string): void => {

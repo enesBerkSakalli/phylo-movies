@@ -59,14 +59,14 @@ export const SprSummaryMetrics = ({
     <div className="grid grid-cols-3 gap-3 mb-4">
         <SummaryTile
             icon={<Hash className="size-3 text-primary" />}
-            label="Unique Moved Groups"
+            label="Unique Moved Subtrees"
         >
             <div className="text-2xl font-black tracking-tighter tabular-nums">{distinctMoverCount}</div>
         </SummaryTile>
 
         <SummaryTile
             icon={<Zap className="size-3 text-primary" />}
-            label="Total Moves"
+            label="SPR Move Events"
         >
             <div className="text-2xl font-black tracking-tighter tabular-nums">{totalMoverOccurrences}</div>
         </SummaryTile>
@@ -94,7 +94,7 @@ export const SprSummaryMetrics = ({
 
         <SummaryTile
             icon={<Info className="size-3 text-primary" />}
-            label="Largest Group Share"
+            label="Top Subtree Share"
         >
             {topMoverPercentage !== null ? (
                 <Tooltip>
@@ -129,7 +129,7 @@ export const SprSummaryMetrics = ({
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-2xs font-mono bg-popover border-border">
                     <div className="space-y-1">
-                        <div>Average per move:</div>
+                        <div>Average per SPR event:</div>
                         <div className="font-bold text-primary">
                             {averagePathHops.toFixed(3)}
                         </div>
@@ -150,7 +150,7 @@ export const SprSummaryMetrics = ({
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-2xs font-mono bg-popover border-border">
                     <div className="space-y-1">
-                        <div>Average per move:</div>
+                        <div>Average per SPR event:</div>
                         <div className="font-bold text-primary">
                             {averagePathLength.toFixed(6)}
                         </div>
@@ -161,7 +161,7 @@ export const SprSummaryMetrics = ({
 
         <SummaryTile
             icon={<Split className="size-3 text-primary" />}
-            label="Farthest Group"
+            label="Farthest Subtree"
         >
             {farthestMover ? (
                 <Tooltip>

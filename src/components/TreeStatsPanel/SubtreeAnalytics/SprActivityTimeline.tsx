@@ -14,32 +14,20 @@ import {
     ChartTooltip,
     ChartTooltipContent,
 } from '@/components/ui/chart';
-import { buildSprActivityTimelinePoints } from '@/domain/tree/sprAnalyticsUtils';
+import { buildSprActivityTimelinePoints } from '@/domain/spr/sprAnalytics';
 
 interface SprActivityTimelineProps {
     rows: any[];
 }
 
 const chartConfig = {
-    moverOccurrences: {
-        label: 'Moved groups',
+    sprMoveEvents: {
+        label: 'SPR events',
         color: '#0072B2',
     },
-    transitionEvents: {
-        label: 'Solver steps',
+    uniqueMovers: {
+        label: 'Unique subtrees',
         color: '#009E73',
-    },
-    totalPathHops: {
-        label: 'Path hops',
-        color: '#CC79A7',
-    },
-    rfDistance: {
-        label: 'Tree change',
-        color: '#E69F00',
-    },
-    weightedRfDistance: {
-        label: 'Weighted change',
-        color: '#D55E00',
     },
 };
 
@@ -63,7 +51,7 @@ export const SprActivityTimeline = ({ rows }: SprActivityTimelineProps) => {
         <div
             className="h-full w-full"
             role="img"
-            aria-label="Chart showing moved groups, solver steps, path hops, tree change, and weighted change by tree pair"
+            aria-label="Chart showing SPR move event counts and unique moved subtree counts by tree pair"
         >
             <ChartContainer config={chartConfig} className="h-full w-full">
                 <ComposedChart
@@ -92,22 +80,11 @@ export const SprActivityTimeline = ({ rows }: SprActivityTimelineProps) => {
                         tickCount={5}
                         fontSize={9}
                         label={{
-                            value: 'Moved groups',
+                            value: 'SPR events',
                             angle: -90,
                             position: 'insideLeft',
                             style: { fontSize: 10, fill: 'currentColor' },
                         }}
-                    />
-                    <YAxis
-                        yAxisId="distance"
-                        type="number"
-                        orientation="right"
-                        domain={[0, 'auto']}
-                        tickLine={false}
-                        axisLine
-                        tickMargin={4}
-                        tickCount={5}
-                        fontSize={9}
                     />
                     <ChartTooltip
                         cursor={false}
@@ -119,53 +96,21 @@ export const SprActivityTimeline = ({ rows }: SprActivityTimelineProps) => {
                     />
                     <Bar
                         yAxisId="activity"
-                        dataKey="moverOccurrences"
-                        name="Moved groups"
-                        fill="var(--color-moverOccurrences)"
+                        dataKey="sprMoveEvents"
+                        name="SPR events"
+                        fill="var(--color-sprMoveEvents)"
                         radius={[2, 2, 0, 0]}
                         isAnimationActive={false}
                     />
                     <Line
                         yAxisId="activity"
-                        dataKey="transitionEvents"
-                        name="Solver steps"
+                        dataKey="uniqueMovers"
+                        name="Unique subtrees"
                         type="monotone"
-                        stroke="var(--color-transitionEvents)"
+                        stroke="var(--color-uniqueMovers)"
                         strokeWidth={1.5}
                         dot={false}
                         isAnimationActive={false}
-                    />
-                    <Line
-                        yAxisId="activity"
-                        dataKey="totalPathHops"
-                        name="Path hops"
-                        type="monotone"
-                        stroke="var(--color-totalPathHops)"
-                        strokeWidth={1.5}
-                        dot={false}
-                        isAnimationActive={false}
-                    />
-                    <Line
-                        yAxisId="distance"
-                        dataKey="rfDistance"
-                        name="Tree change"
-                        type="monotone"
-                        stroke="var(--color-rfDistance)"
-                        strokeWidth={1.5}
-                        dot={false}
-                        isAnimationActive={false}
-                        connectNulls
-                    />
-                    <Line
-                        yAxisId="distance"
-                        dataKey="weightedRfDistance"
-                        name="Weighted change"
-                        type="monotone"
-                        stroke="var(--color-weightedRfDistance)"
-                        strokeWidth={1.5}
-                        dot={false}
-                        isAnimationActive={false}
-                        connectNulls
                     />
                 </ComposedChart>
             </ChartContainer>

@@ -1,16 +1,18 @@
 import React, { useMemo } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { createPortal } from 'react-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { BarChart, Activity, ListTree, BookOpen, ChevronDown, Download } from 'lucide-react';
+import { BarChart, Activity, ListTree, BookOpen, ChevronDown, Download, X } from 'lucide-react';
 import { SprActivityTimeline } from './SubtreeAnalytics/SprActivityTimeline';
 import { SubtreeFrequencyBarChart } from './SubtreeAnalytics/SubtreeFrequencyBarChart';
 import { SprFrequencyTable } from './SubtreeAnalytics/SprFrequencyTable';
-import { SprPairActivityTable } from './SubtreeAnalytics/SprPairActivityTable';
+import { SprMoveEventTable } from './SubtreeAnalytics/SprMoveEventTable';
 import { SprSummaryMetrics } from './SubtreeAnalytics/SprSummaryMetrics';
 import {
     createSprFrequencyCsv,
     createSprFrequencyExportName,
+    createSprMoveEventCsv,
+    createSprMoveEventExportName,
     downloadCsvFile,
 } from './SubtreeAnalytics/sprFrequencyCsv';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,17 +27,24 @@ import {
     useAppStore
 } from '@/state/phyloStore/store.js';
 import {
+    buildSprMoveEventRows,
     calculateSprDatasetSummary,
     calculateSprMoverFrequencies,
     calculateSprPairActivity,
     formatSubtreeLabel,
-} from '@/domain/tree/sprAnalyticsUtils';
+} from '@/domain/spr/sprAnalytics';
 import { Button } from '@/components/ui/button';
 import { SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 
 // ==========================================================================
 // STORE SELECTORS
 // ==========================================================================
+interface AnalyticsDashboardProps {
+    isOpen?: boolean;
+    onOpen?: () => void;
+    onClose?: () => void;
+}
+
 interface SprDatasetSummary {
     pairCount: number;
     activePairCount: number;
@@ -63,7 +72,7 @@ interface SprDatasetSummary {
     } | null;
 }
 
-export const AnalyticsDashboard = () => {
+export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: AnalyticsDashboardProps) => {
     const pairSolutions = useAppStore(selectPairSolutions);
     const leafNamesByIndex = useAppStore(selectLeafNamesByIndex);
     const fileName = useAppStore(selectFileName) || 'dataset';
@@ -91,6 +100,10 @@ export const AnalyticsDashboard = () => {
         return calculateSprPairActivity(pairSolutions, sprOptions);
     }, [pairSolutions, sprOptions]);
 
+    const sprMoveEvents = useMemo(() => {
+        return buildSprMoveEventRows(pairSolutions, sprOptions);
+    }, [pairSolutions, sprOptions]);
+
     const singletonMoverPercentage = sprSummary.moverOccurrenceCount > 0
         ? (sprSummary.singletonMoverOccurrences / sprSummary.moverOccurrenceCount) * 100
         : 0;
@@ -113,159 +126,206 @@ export const AnalyticsDashboard = () => {
         };
     }, [sprSummary.farthestMover, leafNamesByIndex]);
 
-    const csvContent = useMemo(() => {
+    const frequencyCsvContent = useMemo(() => {
         return createSprFrequencyCsv(allFreqs, leafNamesByIndex);
     }, [allFreqs, leafNamesByIndex]);
 
-    const handleExportCsv = () => {
-        if (!csvContent) return;
-        downloadCsvFile(csvContent, createSprFrequencyExportName(fileName));
+    const eventCsvContent = useMemo(() => {
+        return createSprMoveEventCsv(sprMoveEvents, leafNamesByIndex);
+    }, [sprMoveEvents, leafNamesByIndex]);
+
+    const handleExportFrequencyCsv = () => {
+        if (!frequencyCsvContent) return;
+        downloadCsvFile(frequencyCsvContent, createSprFrequencyExportName(fileName));
     };
 
+    const handleExportEventCsv = () => {
+        if (!eventCsvContent) return;
+        downloadCsvFile(eventCsvContent, createSprMoveEventExportName(fileName));
+    };
+
+    const panelRoot = typeof document !== 'undefined'
+        ? document.getElementById('spr-analytics-panel-root')
+        : null;
+
     return (
-        <Dialog>
+        <>
             <SidebarMenuItem>
-                <DialogTrigger asChild>
-                    <SidebarMenuButton tooltip="Open SPR Moves" aria-label="Open SPR Moves">
-                        <Activity className="text-primary" />
-                        <span>SPR Moves</span>
-                    </SidebarMenuButton>
-                </DialogTrigger>
+                <SidebarMenuButton
+                    tooltip="Open SPR Moves"
+                    aria-label="Open SPR Moves"
+                    onClick={onOpen}
+                >
+                    <Activity className="text-primary" />
+                    <span>SPR Moves</span>
+                </SidebarMenuButton>
             </SidebarMenuItem>
-            <DialogContent className="sm:max-w-6xl max-h-[85vh] h-full flex flex-col overflow-hidden">
-                <DialogHeader className="shrink-0 pr-10 pb-4 border-b border-border/20">
-                    <DialogTitle className="text-xl font-bold tracking-tight">SPR Moves</DialogTitle>
-                    <DialogDescription className="text-sm text-muted-foreground/80">
-                        See which groups of taxa move between neighboring trees.
-                    </DialogDescription>
-                </DialogHeader>
 
-                <Tabs defaultValue="overview" className="flex flex-col flex-1 min-h-0 pt-4 overflow-hidden">
-                    <TabsList className="w-full justify-start mb-4 shrink-0 bg-muted/30 p-1">
-                        <TabsTrigger value="overview" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">Overview</TabsTrigger>
-                        <TabsTrigger value="pairs" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">Tree Pairs</TabsTrigger>
-                        <TabsTrigger value="details" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">All Groups</TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="overview" className="flex-1 min-h-0 mt-0 focus-visible:outline-none">
-                        <ScrollArea className="h-full -mx-6 px-6">
-                            <div className="pb-6 space-y-4">
-                                <Card className="bg-primary/5 border-primary/20 p-3 flex flex-col gap-2">
-                                    <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-wider text-primary">
-                                        <BookOpen className="size-3" />
-                                        What is being counted?
+            {isOpen && panelRoot && createPortal(
+                <div className="flex flex-col h-full overflow-hidden bg-card">
+                    <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-border/40 bg-muted/20 backdrop-blur-sm shrink-0">
+                            <div className="flex items-center gap-2 min-w-0">
+                                <Activity className="size-4 text-primary shrink-0" aria-hidden />
+                                <div className="flex flex-col min-w-0">
+                                    <div className="text-xs font-bold leading-tight tracking-tight uppercase">SPR Moves</div>
+                                    <div className="text-[9px] text-muted-foreground/80 leading-tight font-medium truncate">
+                                        Audit SPR move events and recurrent moved subtrees between neighboring trees.
                                     </div>
-                                    <p className="text-2xs leading-relaxed text-muted-foreground">
-                                        <strong>SPR</strong> is the solver operation that moves a group of taxa from one attachment point to another between neighboring trees. Each count is one moved group, not an animation frame.
-                                    </p>
-                                </Card>
-
-                                <SprSummaryMetrics
-                                    distinctMoverCount={sprSummary.uniqueMovingSubtreeCount}
-                                    totalMoverOccurrences={sprSummary.moverOccurrenceCount}
-                                    transitionEventCount={sprSummary.transitionEventCount}
-                                    activePairCount={sprSummary.activePairCount}
-                                    singletonMoverPercentage={singletonMoverPercentage}
-                                    topMoverPercentage={sprSummary.topMoverSharePercentage}
-                                    totalPathHops={sprSummary.totalPathHops}
-                                    averagePathHops={sprSummary.averagePathHops}
-                                    totalPathLength={sprSummary.totalPathLength}
-                                    averagePathLength={sprSummary.averagePathLength}
-                                    farthestMover={farthestMover}
-                                />
-
-                                <Card className="shadow-sm bg-muted/10 h-80 flex flex-col">
-                                    <CardHeader className="pb-3 bg-muted/20 shrink-0">
-                                        <CardTitle className="flex items-center gap-2 text-base font-bold">
-                                            <Activity className="size-4 text-primary" />
-                                            Moves Across Tree Pairs
-                                        </CardTitle>
-                                        <CardDescription className="text-xs">
-                                            Moved groups per neighboring tree pair, with path travel and tree-change scores for context.
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardContent className="flex-1 min-h-0 p-2">
-                                        <SprActivityTimeline rows={pairActivityRows} />
-                                    </CardContent>
-                                </Card>
-
-                                <Card className="shadow-sm bg-muted/10 h-96 flex flex-col">
-                                    <CardHeader className="pb-3 bg-muted/20 shrink-0">
-                                        <CardTitle className="flex items-center gap-2 text-base font-bold">
-                                            <BarChart className="size-4 text-primary" />
-                                            Groups That Move Most Often
-                                        </CardTitle>
-                                        <CardDescription className="text-xs">
-                                            Top taxa groups that moved in the SPR solver results.
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardContent className="flex-1 min-h-0 p-2">
-                                        <SubtreeFrequencyBarChart />
-                                    </CardContent>
-                                </Card>
+                                </div>
                             </div>
-                        </ScrollArea>
-                    </TabsContent>
+                            <Button
+                                variant="ghost"
+                                size="icon-xs"
+                                onClick={onClose}
+                                aria-label="Close SPR moves"
+                                className="hover:bg-destructive/10 hover:text-destructive transition-colors"
+                            >
+                                <X className="size-4" />
+                            </Button>
+                        </div>
 
-                    <TabsContent value="pairs" className="flex-1 min-h-0 mt-0 focus-visible:outline-none flex flex-col">
-                        <Card className="shadow-sm bg-muted/10 flex-1 flex flex-col min-h-0">
-                            <CardHeader className="pb-3 bg-muted/20 shrink-0">
-                                <CardTitle className="flex items-center gap-2 text-base font-bold">
-                                    <Activity className="size-4 text-primary" />
-                                    Moves by Tree Pair
-                                </CardTitle>
-                                <CardDescription className="text-xs">
-                                    Moves, solver steps, path travel, tree-change scores, and from/to attachment context for each neighboring tree pair.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="p-0 flex-1 min-h-0 overflow-auto">
-                                <SprPairActivityTable
-                                    rows={pairActivityRows}
-                                    leafNamesByIndex={leafNamesByIndex}
-                                    selectedMoverIndices={selectedMoverIndices}
-                                />
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
+                        <div className="flex flex-col flex-1 min-h-0 overflow-hidden p-4">
+                            <Tabs defaultValue="overview" className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                                <TabsList className="w-full justify-start mb-4 shrink-0 bg-muted/30 p-1">
+                                    <TabsTrigger value="overview" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">Overview</TabsTrigger>
+                                    <TabsTrigger value="events" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">Move Events</TabsTrigger>
+                                    <TabsTrigger value="details" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">Recurrent Subtrees</TabsTrigger>
+                                </TabsList>
 
-                    <TabsContent value="details" className="flex-1 min-h-0 mt-0 focus-visible:outline-none flex flex-col">
-                        <Card className="shadow-sm bg-muted/10 flex-1 flex flex-col min-h-0">
-                            <CardHeader className="pb-3 bg-muted/20 shrink-0">
-                                <CardTitle className="flex items-center gap-2 text-base font-bold">
-                                    <ListTree className="size-4 text-primary" />
-                                    All Moved Groups
-                                </CardTitle>
-                                <CardDescription className="text-xs flex items-center justify-between gap-2">
-                                    <span>Every moved group counted from SPR solver results.</span>
-                                    <div className="flex items-center gap-2 shrink-0">
-                                        {allFreqs.length > 5 && (
-                                            <span className="flex items-center gap-1 text-muted-foreground/60 shrink-0 ml-2">
-                                                <ChevronDown className="size-3 animate-bounce" />
-                                                <span className="text-2xs">{allFreqs.length} items · scroll</span>
-                                            </span>
-                                        )}
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="xs"
-                                            className="gap-1"
-                                            onClick={handleExportCsv}
-                                            disabled={allFreqs.length === 0}
-                                        >
-                                            <Download className="size-3" />
-                                            Export CSV
-                                        </Button>
-                                    </div>
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="p-0 flex-1 min-h-0 overflow-y-auto">
-                                <SprFrequencyTable frequencies={allFreqs} leafNamesByIndex={leafNamesByIndex} />
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-                </Tabs>
-            </DialogContent>
-        </Dialog>
+                                <TabsContent value="overview" className="flex-1 min-h-0 mt-0 focus-visible:outline-none">
+                                    <ScrollArea className="h-full">
+                                        <div className="pb-6 space-y-4 pr-3">
+                                            <Card className="bg-primary/5 border-primary/20 p-3 flex flex-col gap-2">
+                                                <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-wider text-primary">
+                                                    <BookOpen className="size-3" />
+                                                    What is being counted?
+                                                </div>
+                                                <p className="text-2xs leading-relaxed text-muted-foreground">
+                                                    <strong>SPR</strong> is represented here as an event ledger: one row is one moved subtree from one attachment context to another between neighboring trees. Pair and subtree summaries are derived from those same event rows.
+                                                </p>
+                                            </Card>
+
+                                            <SprSummaryMetrics
+                                                distinctMoverCount={sprSummary.uniqueMovingSubtreeCount}
+                                                totalMoverOccurrences={sprSummary.moverOccurrenceCount}
+                                                transitionEventCount={sprSummary.transitionEventCount}
+                                                activePairCount={sprSummary.activePairCount}
+                                                singletonMoverPercentage={singletonMoverPercentage}
+                                                topMoverPercentage={sprSummary.topMoverSharePercentage}
+                                                totalPathHops={sprSummary.totalPathHops}
+                                                averagePathHops={sprSummary.averagePathHops}
+                                                totalPathLength={sprSummary.totalPathLength}
+                                                averagePathLength={sprSummary.averagePathLength}
+                                                farthestMover={farthestMover}
+                                            />
+
+                                            <Card className="shadow-sm bg-muted/10 h-80 flex flex-col">
+                                                <CardHeader className="pb-3 bg-muted/20 shrink-0">
+                                                    <CardTitle className="flex items-center gap-2 text-base font-bold">
+                                                        <Activity className="size-4 text-primary" />
+                                                        Moves Across Tree Pairs
+                                                    </CardTitle>
+                                                    <CardDescription className="text-xs">
+                                                        SPR move events and unique moved subtrees per neighboring tree pair.
+                                                    </CardDescription>
+                                                </CardHeader>
+                                                <CardContent className="flex-1 min-h-0 p-2">
+                                                    <SprActivityTimeline rows={pairActivityRows} />
+                                                </CardContent>
+                                            </Card>
+
+                                            <Card className="shadow-sm bg-muted/10 h-96 flex flex-col">
+                                                <CardHeader className="pb-3 bg-muted/20 shrink-0">
+                                                    <CardTitle className="flex items-center gap-2 text-base font-bold">
+                                                        <BarChart className="size-4 text-primary" />
+                                                        Subtrees That Move Most Often
+                                                    </CardTitle>
+                                                    <CardDescription className="text-xs">
+                                                        Recurrent moved subtrees derived from the SPR move event ledger.
+                                                    </CardDescription>
+                                                </CardHeader>
+                                                <CardContent className="flex-1 min-h-0 p-2">
+                                                    <SubtreeFrequencyBarChart />
+                                                </CardContent>
+                                            </Card>
+                                        </div>
+                                    </ScrollArea>
+                                </TabsContent>
+
+                                <TabsContent value="events" className="flex-1 min-h-0 mt-0 focus-visible:outline-none flex flex-col">
+                                    <Card className="shadow-sm bg-muted/10 flex-1 flex flex-col min-h-0">
+                                        <CardHeader className="pb-3 bg-muted/20 shrink-0">
+                                            <CardTitle className="flex items-center gap-2 text-base font-bold">
+                                                <Activity className="size-4 text-primary" />
+                                                SPR Move Event Ledger
+                                            </CardTitle>
+                                            <CardDescription className="text-xs flex items-center justify-between gap-2">
+                                                <span>One auditable row per SPR move event, including moved subtree, pivot edge, and from/to attachment context.</span>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="xs"
+                                                    className="gap-1 shrink-0"
+                                                    onClick={handleExportEventCsv}
+                                                    disabled={sprMoveEvents.length === 0}
+                                                >
+                                                    <Download className="size-3" />
+                                                    Export CSV
+                                                </Button>
+                                            </CardDescription>
+                                        </CardHeader>
+                                        <CardContent className="p-0 flex-1 min-h-0 overflow-auto">
+                                            <SprMoveEventTable
+                                                events={sprMoveEvents}
+                                                leafNamesByIndex={leafNamesByIndex}
+                                                selectedMoverIndices={selectedMoverIndices}
+                                            />
+                                        </CardContent>
+                                    </Card>
+                                </TabsContent>
+
+                                <TabsContent value="details" className="flex-1 min-h-0 mt-0 focus-visible:outline-none flex flex-col">
+                                    <Card className="shadow-sm bg-muted/10 flex-1 flex flex-col min-h-0">
+                                        <CardHeader className="pb-3 bg-muted/20 shrink-0">
+                                            <CardTitle className="flex items-center gap-2 text-base font-bold">
+                                                <ListTree className="size-4 text-primary" />
+                                                Recurrent Moved Subtrees
+                                            </CardTitle>
+                                            <CardDescription className="text-xs flex items-center justify-between gap-2">
+                                                <span>Moved subtrees summarized from the event ledger, ranked by repeated SPR events.</span>
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    {allFreqs.length > 5 && (
+                                                        <span className="flex items-center gap-1 text-muted-foreground/60 shrink-0 ml-2">
+                                                            <ChevronDown className="size-3 animate-bounce" />
+                                                            <span className="text-2xs">{allFreqs.length} items · scroll</span>
+                                                        </span>
+                                                    )}
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="xs"
+                                                        className="gap-1"
+                                                        onClick={handleExportFrequencyCsv}
+                                                        disabled={allFreqs.length === 0}
+                                                    >
+                                                        <Download className="size-3" />
+                                                        Export CSV
+                                                    </Button>
+                                                </div>
+                                            </CardDescription>
+                                        </CardHeader>
+                                        <CardContent className="p-0 flex-1 min-h-0 overflow-y-auto">
+                                            <SprFrequencyTable frequencies={allFreqs} leafNamesByIndex={leafNamesByIndex} />
+                                        </CardContent>
+                                    </Card>
+                                </TabsContent>
+                            </Tabs>
+                        </div>
+                    </div>
+                ,
+                panelRoot
+            )}
+        </>
     );
 };
 

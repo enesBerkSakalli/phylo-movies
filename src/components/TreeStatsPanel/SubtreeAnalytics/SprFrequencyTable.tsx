@@ -5,7 +5,7 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { formatSubtreeLabel } from '@/domain/tree/sprAnalyticsUtils';
+import { formatSubtreeLabel } from '@/domain/spr/sprAnalytics';
 import type { SprMoverFrequency } from './types';
 
 interface SprFrequencyTableProps {
@@ -18,9 +18,10 @@ export const SprFrequencyTable = ({ frequencies, leafNamesByIndex }: SprFrequenc
         <thead className="bg-muted/40 text-muted-foreground font-bold sticky top-0 z-10">
             <tr>
                 <th className="px-4 py-2 text-left font-bold uppercase tracking-wider text-2xs">Rank</th>
-                <th className="px-4 py-2 text-left font-bold uppercase tracking-wider text-2xs">Moved Group</th>
-                <th className="px-4 py-2 text-right font-bold uppercase tracking-wider text-2xs">Moves</th>
-                <th className="px-4 py-2 text-right font-bold uppercase tracking-wider text-2xs">% of moves</th>
+                <th className="px-4 py-2 text-left font-bold uppercase tracking-wider text-2xs">Moved Subtree</th>
+                <th className="px-4 py-2 text-right font-bold uppercase tracking-wider text-2xs">SPR Events</th>
+                <th className="px-4 py-2 text-right font-bold uppercase tracking-wider text-2xs">Tree Pairs</th>
+                <th className="px-4 py-2 text-right font-bold uppercase tracking-wider text-2xs">% of events</th>
                 <th className="px-4 py-2 text-right font-bold uppercase tracking-wider text-2xs">Path Hops</th>
                 <th className="px-4 py-2 text-right font-bold uppercase tracking-wider text-2xs">Path Length</th>
             </tr>
@@ -37,6 +38,9 @@ export const SprFrequencyTable = ({ frequencies, leafNamesByIndex }: SprFrequenc
                     </td>
                     <td className="px-4 py-2 text-right">
                         <Badge variant="secondary" className="font-mono tabular-nums">{item.count}</Badge>
+                    </td>
+                    <td className="px-4 py-2 text-right font-mono text-muted-foreground tabular-nums">
+                        {item.pairCount ?? item.pairKeys?.length ?? '-'}
                     </td>
                     <td className="px-4 py-2 text-right font-mono text-muted-foreground tabular-nums">
                         <Tooltip>
@@ -69,8 +73,8 @@ export const SprFrequencyTable = ({ frequencies, leafNamesByIndex }: SprFrequenc
             ))}
             {frequencies.length === 0 && (
                 <tr>
-                    <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground italic">
-                        No moved groups detected for this dataset.
+                    <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground italic">
+                        No moved subtrees detected for this dataset.
                     </td>
                 </tr>
             )}

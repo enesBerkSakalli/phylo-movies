@@ -3,4 +3,4 @@ export {
   calculateSprTemporalDistribution as calculateSubtreeTemporalDistribution,
   formatSubtreeLabel,
   getTopSprMovers as getTopSubtrees,
-} from './sprAnalyticsUtils.js';
+} from '../spr/sprAnalytics.js';
