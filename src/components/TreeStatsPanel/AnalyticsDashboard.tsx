@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import { Rnd } from 'react-rnd';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { BarChart, Activity, ListTree, BookOpen, ChevronDown, Download, X } from 'lucide-react';
@@ -45,6 +46,21 @@ interface AnalyticsDashboardProps {
     onClose?: () => void;
 }
 
+const getInitialWindowRect = () => {
+    if (typeof window === 'undefined') {
+        return { x: 280, y: 40, width: 900, height: 720 };
+    }
+
+    const width = Math.min(900, Math.max(620, window.innerWidth - 80));
+    const height = Math.min(720, Math.max(480, window.innerHeight - 80));
+    return {
+        x: Math.max(24, Math.min(280, window.innerWidth - width - 24)),
+        y: 40,
+        width,
+        height,
+    };
+};
+
 interface SprDatasetSummary {
     pairCount: number;
     activePairCount: number;
@@ -73,6 +89,7 @@ interface SprDatasetSummary {
 }
 
 export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: AnalyticsDashboardProps) => {
+    const [windowRect, setWindowRect] = React.useState(getInitialWindowRect);
     const pairSolutions = useAppStore(selectPairSolutions);
     const leafNamesByIndex = useAppStore(selectLeafNamesByIndex);
     const fileName = useAppStore(selectFileName) || 'dataset';
@@ -144,8 +161,8 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
         downloadCsvFile(eventCsvContent, createSprMoveEventExportName(fileName));
     };
 
-    const panelRoot = typeof document !== 'undefined'
-        ? document.getElementById('spr-analytics-panel-root')
+    const portalRoot = typeof document !== 'undefined'
+        ? document.body
         : null;
 
     return (
@@ -161,9 +178,32 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
                 </SidebarMenuButton>
             </SidebarMenuItem>
 
-            {isOpen && panelRoot && createPortal(
+            {isOpen && portalRoot && createPortal(
+                <Rnd
+                    bounds="window"
+                    minWidth={620}
+                    minHeight={480}
+                    size={{ width: windowRect.width, height: windowRect.height }}
+                    position={{ x: windowRect.x, y: windowRect.y }}
+                    onDragStop={(_event, data) => setWindowRect((current) => ({
+                        ...current,
+                        x: data.x,
+                        y: data.y,
+                    }))}
+                    onResizeStop={(_event, _direction, ref, _delta, position) => {
+                        setWindowRect({
+                            width: parseInt(ref.style.width, 10),
+                            height: parseInt(ref.style.height, 10),
+                            x: position.x,
+                            y: position.y,
+                        });
+                    }}
+                    dragHandleClassName="spr-analytics-drag-handle"
+                    cancel=".spr-analytics-no-drag"
+                    className="fixed z-50 pointer-events-auto shadow-2xl border border-border/60 rounded-md bg-card overflow-hidden"
+                >
                 <div className="flex flex-col h-full overflow-hidden bg-card">
-                    <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-border/40 bg-muted/20 backdrop-blur-sm shrink-0">
+                    <div className="spr-analytics-drag-handle flex items-center justify-between gap-2 px-3 py-2 border-b border-border/40 bg-muted/20 backdrop-blur-sm shrink-0 cursor-move select-none">
                             <div className="flex items-center gap-2 min-w-0">
                                 <Activity className="size-4 text-primary shrink-0" aria-hidden />
                                 <div className="flex flex-col min-w-0">
@@ -178,7 +218,7 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
                                 size="icon-xs"
                                 onClick={onClose}
                                 aria-label="Close SPR moves"
-                                className="hover:bg-destructive/10 hover:text-destructive transition-colors"
+                                className="spr-analytics-no-drag hover:bg-destructive/10 hover:text-destructive transition-colors"
                             >
                                 <X className="size-4" />
                             </Button>
@@ -322,8 +362,9 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
                             </Tabs>
                         </div>
                     </div>
+                </Rnd>
                 ,
-                panelRoot
+                portalRoot
             )}
         </>
     );

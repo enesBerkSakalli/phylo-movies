@@ -178,20 +178,12 @@ export function App() {
 
         <SidebarInset className="overflow-hidden">
           <SidebarTrigger className="absolute top-2 left-2 z-1200" />
-          <div className="flex flex-1 min-h-0 overflow-hidden">
-            <div
-              id="spr-analytics-panel-root"
-              className={sprAnalyticsOpen
-                ? 'w-[min(900px,45vw)] min-w-[520px] max-w-[900px] shrink-0 border-r border-border/40 bg-card overflow-hidden'
-                : 'hidden'}
-            />
-            <div className="full-size-container" style={{ flex: 1, minHeight: 0, position: 'relative', overflow: 'hidden' }}>
-              <DeckGLCanvas />
-              <TreeViewportControls />
-              <CanvasCaptureControls />
-              <ClipboardDismissButton />
-              <HUD />
-            </div>
+          <div className="full-size-container" style={{ flex: 1, minHeight: 0, position: 'relative', overflow: 'hidden' }}>
+            <DeckGLCanvas />
+            <TreeViewportControls />
+            <CanvasCaptureControls />
+            <ClipboardDismissButton />
+            <HUD />
           </div>
           <MoviePlayerBar />
         </SidebarInset>
