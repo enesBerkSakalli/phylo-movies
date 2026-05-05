@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildSprMoveEventRows,
   buildSprActivityTimelinePoints,
   calculateSprDatasetSummary,
   calculateSprMoverFrequencies,
   calculateSprPairActivity,
-} from '../../../src/domain/tree/sprAnalyticsUtils.js';
+} from '../../../src/domain/spr/sprAnalytics.js';
 
 describe('SPR analytics model', () => {
   const pairSolutions = {
@@ -41,7 +42,9 @@ describe('SPR analytics model', () => {
       },
       spr_move_events: [
         {
+          pivot_edge: [9],
           moving_subtree: [1],
+          step_range: [0, 4],
           collapse_hops: 1,
           expand_hops: 2,
           total_hops: 3,
@@ -50,7 +53,9 @@ describe('SPR analytics model', () => {
           total_branch_length: 0.6,
         },
         {
+          pivot_edge: [9],
           moving_subtree: [2, 3],
+          step_range: [0, 4],
           collapse_hops: 1,
           expand_hops: 0,
           total_hops: 1,
@@ -59,7 +64,9 @@ describe('SPR analytics model', () => {
           total_branch_length: 0.5,
         },
         {
+          pivot_edge: [10],
           moving_subtree: [1],
+          step_range: [5, 9],
           collapse_hops: 1,
           expand_hops: 1,
           total_hops: 2,
@@ -90,7 +97,9 @@ describe('SPR analytics model', () => {
       },
       spr_move_events: [
         {
+          pivot_edge: [8],
           moving_subtree: [4, 5, 6],
+          step_range: [0, 4],
           collapse_hops: 2,
           expand_hops: 2,
           total_hops: 4,
@@ -102,7 +111,46 @@ describe('SPR analytics model', () => {
     },
   };
 
-  it('builds per-pair SPR activity with distance and size-class context', () => {
+  it('builds an auditable SPR move event ledger with one row per backend move event', () => {
+    const events = buildSprMoveEventRows(pairSolutions, {
+      robinsonFouldsDistances: [0.25, 0.5],
+      weightedRobinsonFouldsDistances: [1.25, 1.5],
+      pairInterpolationRanges: [[0, 10], [10, 20]],
+    });
+
+    expect(events).toHaveLength(4);
+    expect(events[0]).toMatchObject({
+      eventId: 'pair_0_1:0',
+      pairKey: 'pair_0_1',
+      pairIndex: 0,
+      pairLabel: '0 -> 1',
+      eventIndex: 0,
+      signature: '1',
+      splitIndices: [1],
+      pivotEdge: [9],
+      sourceAttachment: [7, 8],
+      destinationAttachment: [5, 6],
+      stepRange: [0, 4],
+      totalPathHops: 3,
+      totalPathLength: 0.6,
+      rfDistance: 0.25,
+      weightedRfDistance: 1.25,
+      hasMeasuredPath: true,
+    });
+    expect(events[2]).toMatchObject({
+      eventId: 'pair_0_1:2',
+      signature: '1',
+      splitIndices: [1],
+      pivotEdge: [10],
+      sourceAttachment: [4],
+      destinationAttachment: [11],
+      stepRange: [5, 9],
+      totalPathHops: 2,
+      totalPathLength: 0.25,
+    });
+  });
+
+  it('builds per-pair SPR activity from event-ledger rows', () => {
     const rows = calculateSprPairActivity(pairSolutions, {
       robinsonFouldsDistances: [0.25, 0.5],
       weightedRobinsonFouldsDistances: [1.25, 1.5],
@@ -124,11 +172,13 @@ describe('SPR analytics model', () => {
       cladeMoverOccurrences: 1,
       transitionEventCount: 2,
       sprMoveEventCount: 3,
+      pathEventCount: 3,
       totalPathHops: 6,
       averagePathHops: 2,
       totalPathLength: 1.35,
       averagePathLength: 0.45,
     });
+    expect(rows[0].events).toHaveLength(3);
     expect(rows[0].topMover).toMatchObject({
       signature: '1',
       splitIndices: [1],
@@ -140,7 +190,7 @@ describe('SPR analytics model', () => {
       totalPathLength: 0.85,
       averagePathLength: 0.425,
     });
-    expect(rows[0].topMover.attachmentContexts).toEqual([
+    expect(rows[0].topMover.attachmentContexts).toMatchObject([
       {
         pivotEdge: [9],
         sourceAttachment: [7, 8],
@@ -161,6 +211,7 @@ describe('SPR analytics model', () => {
       cladeMoverOccurrences: 1,
       transitionEventCount: 1,
       sprMoveEventCount: 1,
+      pathEventCount: 1,
       totalPathHops: 4,
       averagePathHops: 4,
       totalPathLength: 1.2,
@@ -168,7 +219,7 @@ describe('SPR analytics model', () => {
     });
   });
 
-  it('aggregates path travel by moved group', () => {
+  it('aggregates path travel by moved subtree', () => {
     const frequencies = calculateSprMoverFrequencies(pairSolutions);
 
     expect(frequencies[0]).toMatchObject({
@@ -178,6 +229,7 @@ describe('SPR analytics model', () => {
       averagePathHops: 2.5,
       totalPathLength: 0.85,
       averagePathLength: 0.425,
+      pairCount: 1,
     });
     expect(frequencies.find((item) => item.signature === '2,3')).toMatchObject({
       totalPathHops: 1,
@@ -201,6 +253,7 @@ describe('SPR analytics model', () => {
       maxPairMoverOccurrenceCount: 3,
       topMoverSharePercentage: 50,
       sprMoveEventCount: 4,
+      pathEventCount: 4,
       totalPathHops: 10,
       averagePathHops: 2.5,
       totalPathLength: 2.55,
@@ -217,6 +270,50 @@ describe('SPR analytics model', () => {
     });
   });
 
+  it('counts inferred legacy rows as SPR events without measured path metrics', () => {
+    const legacyPairSolutions = {
+      pair_0_1: {
+        jumping_subtree_solutions: {
+          '[9]': [
+            [[1], [2, 3]],
+          ],
+        },
+        split_change_events: [
+          { split: [9], step_range: [0, 4] },
+        ],
+        solution_to_source_map: {},
+        solution_to_destination_map: {},
+      },
+    };
+
+    const events = buildSprMoveEventRows(legacyPairSolutions);
+    const rows = calculateSprPairActivity(legacyPairSolutions);
+    const summary = calculateSprDatasetSummary(legacyPairSolutions);
+    const timeline = buildSprActivityTimelinePoints(rows);
+
+    expect(events).toHaveLength(2);
+    expect(events.every((event) => event.hasMeasuredPath === false)).toBe(true);
+    expect(rows[0]).toMatchObject({
+      moverOccurrenceCount: 2,
+      sprMoveEventCount: 2,
+      pathEventCount: 0,
+      totalPathHops: 0,
+      averagePathHops: 0,
+      totalPathLength: 0,
+      averagePathLength: 0,
+    });
+    expect(summary).toMatchObject({
+      moverOccurrenceCount: 2,
+      sprMoveEventCount: 2,
+      pathEventCount: 0,
+      totalPathHops: 0,
+      averagePathHops: 0,
+      totalPathLength: 0,
+      averagePathLength: 0,
+    });
+    expect(timeline[0].sprMoveEvents).toBe(2);
+  });
+
   it('formats pair activity rows for the SPR activity timeline', () => {
     const rows = calculateSprPairActivity(pairSolutions, {
       robinsonFouldsDistances: [0.25, 0.5],
@@ -229,16 +326,10 @@ describe('SPR analytics model', () => {
         pairKey: 'pair_0_1',
         pairLabel: '0 -> 1',
         moverOccurrences: 3,
-        transitionEvents: 2,
+        sprMoveEvents: 3,
         uniqueMovers: 2,
         singletonMoverOccurrences: 2,
         cladeMoverOccurrences: 1,
-        rfDistance: 0.25,
-        weightedRfDistance: 1.25,
-        totalPathHops: 6,
-        averagePathHops: 2,
-        totalPathLength: 1.35,
-        averagePathLength: 0.45,
         topMoverSignature: '1',
       },
       {
@@ -246,16 +337,10 @@ describe('SPR analytics model', () => {
         pairKey: 'pair_1_2',
         pairLabel: '1 -> 2',
         moverOccurrences: 1,
-        transitionEvents: 1,
+        sprMoveEvents: 1,
         uniqueMovers: 1,
         singletonMoverOccurrences: 0,
         cladeMoverOccurrences: 1,
-        rfDistance: 0.5,
-        weightedRfDistance: 1.5,
-        totalPathHops: 4,
-        averagePathHops: 4,
-        totalPathLength: 1.2,
-        averagePathLength: 1.2,
         topMoverSignature: '4,5,6',
       },
     ]);

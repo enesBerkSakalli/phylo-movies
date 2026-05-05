@@ -8,4 +8,24 @@ export interface SprMoverFrequency {
     averagePathHops: number;
     totalPathLength: number;
     averagePathLength: number;
+    pairCount?: number;
+    pairKeys?: string[];
+}
+
+export interface SprMoveEventRow {
+    eventId: string;
+    pairLabel: string;
+    pairKey: string;
+    eventIndex: number;
+    signature: string;
+    splitIndices: number[];
+    pivotEdge: number[];
+    sourceAttachment: number[];
+    destinationAttachment: number[];
+    stepRange: [number, number] | null;
+    totalPathHops: number;
+    totalPathLength: number;
+    rfDistance: number | null;
+    weightedRfDistance: number | null;
+    hasMeasuredPath: boolean;
 }

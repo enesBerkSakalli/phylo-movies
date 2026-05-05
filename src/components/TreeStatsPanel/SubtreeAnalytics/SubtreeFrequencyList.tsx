@@ -11,7 +11,7 @@ import {
   calculateSprMoverFrequencies,
   getTopSprMovers,
   formatSubtreeLabel
-} from '@/domain/tree/sprAnalyticsUtils';
+} from '@/domain/spr/sprAnalytics';
 import { ChevronRight, BarChart2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -74,7 +74,7 @@ export const SubtreeFrequencyList = () => {
         <CollapsibleTrigger className="flex items-center gap-2 w-full text-left hover:text-muted-foreground transition-colors">
           <Label className="text-2xs font-bold uppercase tracking-wider text-muted-foreground/70 cursor-pointer">
             <BarChart2 className="size-3" />
-            Moved Groups
+            Moved Subtrees
           </Label>
           <ChevronRight className="ml-auto size-3 text-muted-foreground/70 transition-transform group-data-[state=open]/subtree:rotate-90" />
         </CollapsibleTrigger>
@@ -82,13 +82,13 @@ export const SubtreeFrequencyList = () => {
         <CollapsibleContent className="pt-2 space-y-2 animate-in slide-in-from-top-1 duration-200">
           {/* Explanation text */}
           <p className="text-2xs text-muted-foreground/70 leading-relaxed">
-            Groups ranked by how often they move in the SPR solver results. Click a group to highlight it.
+            Subtrees ranked by how often they move in the SPR solver results. Click a subtree to highlight it.
           </p>
 
           <div
             className="flex flex-col gap-2"
             role="list"
-            aria-label="Groups that move most often"
+            aria-label="Subtrees that move most often"
           >
             {topSubtrees.map((item) => {
               const signature = getSignature(item.splitIndices);
@@ -139,7 +139,7 @@ export const SubtreeFrequencyList = () => {
                           </Badge>
                         </TooltipTrigger>
                         <TooltipContent side="top" className="text-xs">
-                          Times this group moved
+                          Times this subtree moved
                         </TooltipContent>
                       </Tooltip>
                     </div>

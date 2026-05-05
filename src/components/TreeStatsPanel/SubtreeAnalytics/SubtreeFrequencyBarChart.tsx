@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { selectLeafNamesByIndex, selectPairSolutions, useAppStore } from '@/state/phyloStore/store.js';
-import { calculateSprMoverFrequencies, getTopSprMovers, formatSubtreeLabel } from '@/domain/tree/sprAnalyticsUtils';
+import { calculateSprMoverFrequencies, getTopSprMovers, formatSubtreeLabel } from '@/domain/spr/sprAnalytics';
 import { SYSTEM_TREE_COLORS } from '@/constants/TreeColors';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -56,7 +56,7 @@ export const SubtreeFrequencyBarChart = () => {
         <div
             className="w-full h-full overflow-auto p-2 space-y-2"
             role="list"
-            aria-label="SPR moved group ranking"
+            aria-label="SPR moved subtree ranking"
         >
             {data.map((item) => (
                 <Card
