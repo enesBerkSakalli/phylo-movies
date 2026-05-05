@@ -42,7 +42,7 @@ export class ElementMatcher {
         // Element is entering - use target state
         // We interpolate(to, to, 1.0) to ensure derived properties (like paths) are calculated
         const computed = interpolateFn(toElement, toElement, 1.0, toElement, toElement);
-        result.push(this._createEnteringElement(computed, timeFactor));
+        result.push(this._createEnteringElement(computed, timeFactor, toElement));
       }
     }
 
@@ -52,7 +52,7 @@ export class ElementMatcher {
         // Element is exiting - use source state
         // We interpolate(from, from, 0.0) to ensure derived properties are calculated
         const computed = interpolateFn(fromElement, fromElement, 0.0, fromElement, fromElement);
-        result.push(this._createExitingElement(computed));
+        result.push(this._createExitingElement(computed, timeFactor, fromElement));
       }
     }
 
@@ -68,13 +68,14 @@ export class ElementMatcher {
   }
 
   /**
-   * Create entering element - appears instantly
+   * Create entering element with fade-in effect
    * @private
    */
-  _createEnteringElement(element, timeFactor) {
+  _createEnteringElement(element, timeFactor, sourceElement = element) {
+    const baseOpacity = this._baseOpacity(sourceElement);
     return {
       ...element,
-      opacity: 1,  // Instant appearance, no fade-in
+      opacity: baseOpacity * this._clampTime(timeFactor),
       isEntering: true
     };
   }
@@ -83,12 +84,21 @@ export class ElementMatcher {
    * Create exiting element with fade-out effect
    * @private
    */
-  _createExitingElement(element) {
+  _createExitingElement(element, timeFactor, sourceElement = element) {
+    const baseOpacity = this._baseOpacity(sourceElement);
     return {
       ...element,
-      opacity: 1,
+      opacity: baseOpacity * (1 - this._clampTime(timeFactor)),
       isExiting: true
     };
+  }
+
+  _baseOpacity(element) {
+    return Number.isFinite(element?.opacity) ? element.opacity : 1;
+  }
+
+  _clampTime(timeFactor) {
+    return Math.max(0, Math.min(1, Number.isFinite(timeFactor) ? timeFactor : 0));
   }
 
 

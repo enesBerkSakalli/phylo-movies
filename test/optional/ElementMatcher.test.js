@@ -44,7 +44,7 @@ describe('TreeVisualisation/DeckGL/Interpolation/ElementMatcher', () => {
       expect(result).to.have.lengthOf(1);
       expect(result[0]).to.deep.include({
         id: 'B',
-        opacity: 1,
+        opacity: 0.5,
         isEntering: true
       });
     });
@@ -59,9 +59,22 @@ describe('TreeVisualisation/DeckGL/Interpolation/ElementMatcher', () => {
       expect(result).to.have.lengthOf(1);
       expect(result[0]).to.deep.include({
         id: 'C',
-        opacity: 1,
+        opacity: 0.5,
         isExiting: true
       });
+    });
+
+    it('should preserve existing opacity while fading entering and exiting elements', () => {
+      const from = [{ id: 'C', val: 5, opacity: 0.4 }];
+      const to = [{ id: 'B', val: 10, opacity: 0.8 }];
+      const t = 0.25;
+
+      const result = matcher.interpolateElements(from, to, t, interpolateFn);
+      const entering = result.find(r => r.id === 'B');
+      const exiting = result.find(r => r.id === 'C');
+
+      expect(entering.opacity).to.be.closeTo(0.2, 1e-12);
+      expect(exiting.opacity).to.be.closeTo(0.3, 1e-12);
     });
 
     it('should handle complex mixed case', () => {

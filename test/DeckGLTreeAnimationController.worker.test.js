@@ -208,4 +208,22 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     expect(secondKey).not.toBe(firstKey);
     expect(controller.prefetchedLayoutCacheKeys.get(1)).toBe(secondKey);
   });
+
+  it('updates projected node positions on pan-only viewport changes without rerendering layers', () => {
+    const controller = Object.create(ControllerClass.prototype);
+    const nodes = [{ id: 'n1', position: [0, 0, 0] }];
+    controller.animationRunner = { isRunning: false };
+    controller._lastZoom = 2;
+    controller._lastLayerData = { nodes };
+    controller.viewSide = 'left';
+    controller.viewportManager = {
+      updateScreenPositions: vi.fn()
+    };
+    controller._scheduleRender = vi.fn();
+
+    controller._handleViewStateChange({ zoom: 2.001 });
+
+    expect(controller.viewportManager.updateScreenPositions).toHaveBeenCalledWith(nodes, 'left');
+    expect(controller._scheduleRender).not.toHaveBeenCalled();
+  });
 });
