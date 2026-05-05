@@ -110,7 +110,7 @@ export function getSubtreeAtIndex(state, index) {
 
 export function getMovingSubtreeAtIndex(state, index) {
   const subtree = state.subtreeTracking?.[index];
-  return Array.isArray(subtree) ? subtree.flat() : [];
+  return parseSubtreeTrackingEntry(subtree);
 }
 
 export function getAllSubtreesForPivotEdge(state, index) {

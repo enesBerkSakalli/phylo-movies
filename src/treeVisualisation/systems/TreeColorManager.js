@@ -41,7 +41,7 @@ export class TreeColorManager {
     this.historySubtrees = []; // Subtrees that already moved in the current transition
     this.sourceEdgeLeaves = [];
     this.destinationEdgeLeaves = [];
-    this.currentMovingSubtree = new Set();
+    this.currentMovingSubtrees = [];
   }
 
   /**
@@ -256,11 +256,21 @@ export class TreeColorManager {
 
   updateCurrentMovingSubtree(subtree) {
     if (subtree instanceof Set) {
-      this.currentMovingSubtree = subtree;
+      this.currentMovingSubtrees = [subtree];
     } else if (Array.isArray(subtree)) {
-      this.currentMovingSubtree = new Set(subtree);
+      if (subtree.length > 0 && typeof subtree[0] === 'number') {
+        this.currentMovingSubtrees = [new Set(subtree)];
+      } else {
+        this.currentMovingSubtrees = subtree
+          .map((entry) => {
+            if (entry instanceof Set) return entry;
+            if (Array.isArray(entry)) return new Set(entry);
+            return null;
+          })
+          .filter(Boolean);
+      }
     } else {
-      this.currentMovingSubtree = new Set();
+      this.currentMovingSubtrees = [];
     }
   }
 
@@ -362,13 +372,13 @@ export class TreeColorManager {
   }
 
   isNodeMovingSubtree(nodeData) {
-    if (!this.currentMovingSubtree || this.currentMovingSubtree.size === 0) return false;
-    return isNodeInSubtree(nodeData, [this.currentMovingSubtree]);
+    if (!this.currentMovingSubtrees || this.currentMovingSubtrees.length === 0) return false;
+    return isNodeInSubtree(nodeData, this.currentMovingSubtrees);
   }
 
   isLinkMovingSubtree(linkData) {
-    if (!this.currentMovingSubtree || this.currentMovingSubtree.size === 0) return false;
-    return isLinkInSubtree(linkData, [this.currentMovingSubtree]);
+    if (!this.currentMovingSubtrees || this.currentMovingSubtrees.length === 0) return false;
+    return isLinkInSubtree(linkData, this.currentMovingSubtrees);
   }
   /**
    * Enable/disable monophyletic group coloring
