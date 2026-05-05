@@ -18,7 +18,7 @@ import {
 // ============================================================================
 
 export function getExtensionsLayerProps(extensions, state, layerStyles) {
-  const { taxaColorVersion, colorVersion, strokeWidth, highlightColorMode } = state || {};
+  const { taxaColorVersion, colorVersion, strokeWidth, highlightColorMode, metricScale } = state || {};
   const cached = layerStyles.getCachedState(state);
 
   return {
@@ -32,7 +32,7 @@ export function getExtensionsLayerProps(extensions, state, layerStyles) {
     updateTriggers: {
       getColor: [colorVersion, taxaColorVersion, highlightColorMode],
       getPath: [extensions, colorVersion],
-      getWidth: [extensions.length, strokeWidth, colorVersion]
+      getWidth: [extensions.length, strokeWidth, colorVersion, metricScale]
     }
   };
 }

@@ -16,11 +16,31 @@ export interface SplitChangeEvent {
   step_range: [number, number];
 }
 
+export interface SprPathSegment {
+  split: number[];
+  branch_length: number;
+}
+
+export interface SprMoveEvent {
+  pivot_edge: number[];
+  moving_subtree: number[];
+  step_range: [number, number];
+  collapse_path: SprPathSegment[];
+  expand_path: SprPathSegment[];
+  collapse_hops: number;
+  expand_hops: number;
+  total_hops: number;
+  collapse_branch_length: number;
+  expand_branch_length: number;
+  total_branch_length: number;
+}
+
 export interface TreePairSolution {
   jumping_subtree_solutions: Record<string, number[][][]>;
   solution_to_source_map: Record<string, unknown>;
   solution_to_destination_map: Record<string, unknown>;
   split_change_events: SplitChangeEvent[];
+  spr_move_events?: SprMoveEvent[];
 }
 
 export interface OriginalTimelineEntry {

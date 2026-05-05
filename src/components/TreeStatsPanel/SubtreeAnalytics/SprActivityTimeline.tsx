@@ -29,6 +29,10 @@ const chartConfig = {
         label: 'Solver steps',
         color: '#009E73',
     },
+    totalPathHops: {
+        label: 'Path hops',
+        color: '#CC79A7',
+    },
     rfDistance: {
         label: 'Tree change',
         color: '#E69F00',
@@ -59,7 +63,7 @@ export const SprActivityTimeline = ({ rows }: SprActivityTimelineProps) => {
         <div
             className="h-full w-full"
             role="img"
-            aria-label="Chart showing moved groups, solver steps, tree change, and weighted change by tree pair"
+            aria-label="Chart showing moved groups, solver steps, path hops, tree change, and weighted change by tree pair"
         >
             <ChartContainer config={chartConfig} className="h-full w-full">
                 <ComposedChart
@@ -127,6 +131,16 @@ export const SprActivityTimeline = ({ rows }: SprActivityTimelineProps) => {
                         name="Solver steps"
                         type="monotone"
                         stroke="var(--color-transitionEvents)"
+                        strokeWidth={1.5}
+                        dot={false}
+                        isAnimationActive={false}
+                    />
+                    <Line
+                        yAxisId="activity"
+                        dataKey="totalPathHops"
+                        name="Path hops"
+                        type="monotone"
+                        stroke="var(--color-totalPathHops)"
                         strokeWidth={1.5}
                         dot={false}
                         isAnimationActive={false}

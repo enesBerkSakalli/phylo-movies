@@ -73,11 +73,23 @@ export function calculateSprMoverFrequencies(pairSolutions) {
             signature,
             splitIndices,
             count: 0,
+            pathEventCount: 0,
+            totalPathHops: 0,
+            totalPathLength: 0,
           });
         }
 
         freqMap.get(signature).count++;
       });
+    });
+
+    aggregateMoverPathStats(solution).forEach((pathStats, signature) => {
+      if (!freqMap.has(signature)) return;
+
+      const mover = freqMap.get(signature);
+      mover.pathEventCount += pathStats.pathEventCount;
+      mover.totalPathHops += pathStats.totalPathHops;
+      mover.totalPathLength += pathStats.totalPathLength;
     });
   });
 
@@ -90,6 +102,12 @@ export function calculateSprMoverFrequencies(pairSolutions) {
       ...item,
       percentage: totalMoverOccurrences > 0
         ? (item.count / totalMoverOccurrences) * 100
+        : 0,
+      averagePathHops: item.pathEventCount > 0
+        ? item.totalPathHops / item.pathEventCount
+        : 0,
+      averagePathLength: item.pathEventCount > 0
+        ? item.totalPathLength / item.pathEventCount
         : 0,
     }));
 }
@@ -121,6 +139,7 @@ export function calculateSprPairActivity(pairSolutions, options = {}) {
       const moverOccurrenceCount = moverCounts.movers
         .reduce((sum, item) => sum + item.count, 0);
       const topMover = moverCounts.movers[0] || null;
+      const pathStats = summarizeSprPathEvents(solution?.spr_move_events);
 
       return {
         pairKey,
@@ -139,6 +158,11 @@ export function calculateSprPairActivity(pairSolutions, options = {}) {
         transitionEventCount: Array.isArray(solution?.split_change_events)
           ? solution.split_change_events.length
           : 0,
+        sprMoveEventCount: pathStats.pathEventCount,
+        totalPathHops: pathStats.totalPathHops,
+        averagePathHops: pathStats.averagePathHops,
+        totalPathLength: pathStats.totalPathLength,
+        averagePathLength: pathStats.averagePathLength,
         topMover,
         movers: moverCounts.movers,
       };
@@ -158,6 +182,12 @@ export function calculateSprDatasetSummary(pairSolutions, options = {}) {
   const moverFrequencies = calculateSprMoverFrequencies(pairSolutions);
   const moverOccurrenceCount = pairActivity
     .reduce((sum, row) => sum + row.moverOccurrenceCount, 0);
+  const sprMoveEventCount = pairActivity
+    .reduce((sum, row) => sum + row.sprMoveEventCount, 0);
+  const totalPathHops = pairActivity
+    .reduce((sum, row) => sum + row.totalPathHops, 0);
+  const totalPathLength = pairActivity
+    .reduce((sum, row) => sum + row.totalPathLength, 0);
 
   return {
     pairCount: pairActivity.length,
@@ -173,6 +203,16 @@ export function calculateSprDatasetSummary(pairSolutions, options = {}) {
     maxPairMoverOccurrenceCount: pairActivity
       .reduce((max, row) => Math.max(max, row.moverOccurrenceCount), 0),
     topMoverSharePercentage: moverFrequencies[0]?.percentage ?? 0,
+    sprMoveEventCount,
+    totalPathHops,
+    averagePathHops: sprMoveEventCount > 0
+      ? totalPathHops / sprMoveEventCount
+      : 0,
+    totalPathLength,
+    averagePathLength: sprMoveEventCount > 0
+      ? totalPathLength / sprMoveEventCount
+      : 0,
+    farthestMover: selectFarthestMover(moverFrequencies),
   };
 }
 
@@ -199,6 +239,10 @@ export function buildSprActivityTimelinePoints(pairActivityRows) {
     cladeMoverOccurrences: row.cladeMoverOccurrences,
     rfDistance: row.rfDistance,
     weightedRfDistance: row.weightedRfDistance,
+    totalPathHops: row.totalPathHops,
+    averagePathHops: row.averagePathHops,
+    totalPathLength: row.totalPathLength,
+    averagePathLength: row.averagePathLength,
     topMoverSignature: row.topMover?.signature ?? null,
   }));
 }
@@ -303,6 +347,9 @@ function calculateMoverCountsForSolution(solution) {
           signature,
           splitIndices,
           count: 0,
+          pathEventCount: 0,
+          totalPathHops: 0,
+          totalPathLength: 0,
           attachmentContexts: [],
         });
       }
@@ -316,6 +363,15 @@ function calculateMoverCountsForSolution(solution) {
     });
   });
 
+  aggregateMoverPathStats(solution).forEach((pathStats, signature) => {
+    if (!freqMap.has(signature)) return;
+
+    const mover = freqMap.get(signature);
+    mover.pathEventCount += pathStats.pathEventCount;
+    mover.totalPathHops += pathStats.totalPathHops;
+    mover.totalPathLength += pathStats.totalPathLength;
+  });
+
   const total = Array.from(freqMap.values())
     .reduce((sum, item) => sum + item.count, 0);
   const movers = Array.from(freqMap.values())
@@ -323,6 +379,12 @@ function calculateMoverCountsForSolution(solution) {
     .map((item) => ({
       ...item,
       percentage: total > 0 ? (item.count / total) * 100 : 0,
+      averagePathHops: item.pathEventCount > 0
+        ? item.totalPathHops / item.pathEventCount
+        : 0,
+      averagePathLength: item.pathEventCount > 0
+        ? item.totalPathLength / item.pathEventCount
+        : 0,
     }));
 
   return {
@@ -330,6 +392,96 @@ function calculateMoverCountsForSolution(solution) {
     singletonMoverOccurrences,
     cladeMoverOccurrences,
   };
+}
+
+function summarizeSprPathEvents(events) {
+  if (!Array.isArray(events) || events.length === 0) {
+    return {
+      pathEventCount: 0,
+      totalPathHops: 0,
+      averagePathHops: 0,
+      totalPathLength: 0,
+      averagePathLength: 0,
+    };
+  }
+
+  const totals = events.reduce((sum, event) => {
+    sum.totalPathHops += resolvePathHops(event);
+    sum.totalPathLength += resolvePathLength(event);
+    return sum;
+  }, { totalPathHops: 0, totalPathLength: 0 });
+
+  return {
+    pathEventCount: events.length,
+    totalPathHops: totals.totalPathHops,
+    averagePathHops: totals.totalPathHops / events.length,
+    totalPathLength: totals.totalPathLength,
+    averagePathLength: totals.totalPathLength / events.length,
+  };
+}
+
+function aggregateMoverPathStats(solution) {
+  const statsByMover = new Map();
+  const events = Array.isArray(solution?.spr_move_events)
+    ? solution.spr_move_events
+    : [];
+
+  events.forEach((event) => {
+    const signature = getSubtreeSignature(event?.moving_subtree);
+    if (!signature) return;
+
+    if (!statsByMover.has(signature)) {
+      statsByMover.set(signature, {
+        pathEventCount: 0,
+        totalPathHops: 0,
+        totalPathLength: 0,
+      });
+    }
+
+    const stats = statsByMover.get(signature);
+    stats.pathEventCount++;
+    stats.totalPathHops += resolvePathHops(event);
+    stats.totalPathLength += resolvePathLength(event);
+  });
+
+  return statsByMover;
+}
+
+function selectFarthestMover(movers) {
+  if (!Array.isArray(movers) || movers.length === 0) return null;
+
+  const candidates = movers.filter((mover) => mover.pathEventCount > 0);
+  if (candidates.length === 0) return null;
+
+  return candidates
+    .slice()
+    .sort((a, b) => {
+      const lengthDelta = b.totalPathLength - a.totalPathLength;
+      if (lengthDelta !== 0) return lengthDelta;
+
+      const hopDelta = b.totalPathHops - a.totalPathHops;
+      if (hopDelta !== 0) return hopDelta;
+
+      return b.count - a.count;
+    })[0];
+}
+
+function resolvePathHops(event) {
+  const total = numberOrNull(event?.total_hops);
+  if (total !== null) return total;
+
+  const collapse = numberOrNull(event?.collapse_hops) ?? 0;
+  const expand = numberOrNull(event?.expand_hops) ?? 0;
+  return collapse + expand;
+}
+
+function resolvePathLength(event) {
+  const total = numberOrNull(event?.total_branch_length);
+  if (total !== null) return total;
+
+  const collapse = numberOrNull(event?.collapse_branch_length) ?? 0;
+  const expand = numberOrNull(event?.expand_branch_length) ?? 0;
+  return collapse + expand;
 }
 
 function resolveAttachmentContext(solution, pivotKey, splitIndices) {

@@ -68,6 +68,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
     // Track last tree index we auto-fit to
     this._lastFocusedTreeIndex = null;
+    this._hasUserViewportInteraction = false;
 
     // --- PERFORMANCE OPTIMIZATION: Throttle & Debounce ---
     this._lastZoom = null;
@@ -158,7 +159,13 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       }
     });
 
-    this.deckContext.onDragStart((info, event) => handleDragStart(this, info));
+    this.deckContext.onDragStart((info, event) => {
+      const handledTreeDrag = handleDragStart(this, info);
+      if (!handledTreeDrag) {
+        this._hasUserViewportInteraction = true;
+      }
+      return handledTreeDrag;
+    });
     this.deckContext.onDrag((info, event) => handleDrag(this, info));
     this.deckContext.onDragEnd((info, event) => handleDragEnd(this));
 
@@ -177,6 +184,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       if (zoomDelta < 0.01) return; // Threshold: ~1% zoom change
 
       this._lastZoom = zoom;
+      this._hasUserViewportInteraction = true;
       this._scheduleRender();
     });
   }
@@ -236,6 +244,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     this.deckContext.initialize();
 
     this._configureDeckContextCallbacks();
+    this.resize(this.deckContext.getCanvasDimensions());
     this._markReady();
 
     // Initial render
@@ -270,7 +279,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     ];
 
     this.viewportManager.focusOnTree(nodes, this._lastLayerData.labels, {
-      includeLabels: options.includeLabels === true,
+      includeLabels: options.includeLabels !== false,
       duration: options.duration ?? 350,
       padding: options.padding,
       links
@@ -278,14 +287,17 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
   }
 
   zoomIn() {
+    this._hasUserViewportInteraction = true;
     this.deckContext?.zoomBy?.(0.5);
   }
 
   zoomOut() {
+    this._hasUserViewportInteraction = true;
     this.deckContext?.zoomBy?.(-0.5);
   }
 
   resetTreeView() {
+    this._hasUserViewportInteraction = true;
     this.deckContext?.resetView?.();
   }
 
@@ -324,6 +336,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
   resetInterpolationCaches() {
     this.interpolationCache?.reset();
     this.treeInterpolator?.resetCaches?.();
+    this.clearLayoutCache?.();
     this.prefetchedLayoutCacheKeys?.clear();
     this._prefetchRequestTokens?.clear();
     this._layoutRequestGeneration += 1;

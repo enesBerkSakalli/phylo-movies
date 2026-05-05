@@ -1,5 +1,6 @@
-import type { SplitChangeEvent, TreePairSolution } from './phyloMovieTypes';
+import type { SplitChangeEvent, SprMoveEvent, SprPathSegment, TreePairSolution } from './phyloMovieTypes';
 import {
+  assertFiniteNumber,
   assertRecord,
   requiredArray,
   requiredNumberArray,
@@ -42,6 +43,47 @@ export function validateSplitChangeEventList(value: unknown, fieldName: string):
   return events.map((event, index) => validateSplitChangeEvent(event, `${fieldName}[${index}]`));
 }
 
+function validateFiniteNumber(value: unknown, fieldName: string): number {
+  assertFiniteNumber(value, fieldName);
+  return value;
+}
+
+function validateSprPathSegment(value: unknown, fieldName: string): SprPathSegment {
+  const segment = requiredRecord(value, fieldName);
+  return {
+    split: requiredNumberArray(segment.split, `${fieldName}.split`),
+    branch_length: validateFiniteNumber(segment.branch_length, `${fieldName}.branch_length`),
+  };
+}
+
+function validateSprPath(value: unknown, fieldName: string): SprPathSegment[] {
+  const path = requiredArray(value, fieldName);
+  return path.map((segment, index) => validateSprPathSegment(segment, `${fieldName}[${index}]`));
+}
+
+function validateSprMoveEvent(value: unknown, fieldName: string): SprMoveEvent {
+  const event = requiredRecord(value, fieldName);
+
+  return {
+    pivot_edge: requiredNumberArray(event.pivot_edge, `${fieldName}.pivot_edge`),
+    moving_subtree: requiredNumberArray(event.moving_subtree, `${fieldName}.moving_subtree`),
+    step_range: validateRangeTuple(event.step_range, `${fieldName}.step_range`),
+    collapse_path: validateSprPath(event.collapse_path, `${fieldName}.collapse_path`),
+    expand_path: validateSprPath(event.expand_path, `${fieldName}.expand_path`),
+    collapse_hops: validateFiniteNumber(event.collapse_hops, `${fieldName}.collapse_hops`),
+    expand_hops: validateFiniteNumber(event.expand_hops, `${fieldName}.expand_hops`),
+    total_hops: validateFiniteNumber(event.total_hops, `${fieldName}.total_hops`),
+    collapse_branch_length: validateFiniteNumber(event.collapse_branch_length, `${fieldName}.collapse_branch_length`),
+    expand_branch_length: validateFiniteNumber(event.expand_branch_length, `${fieldName}.expand_branch_length`),
+    total_branch_length: validateFiniteNumber(event.total_branch_length, `${fieldName}.total_branch_length`),
+  };
+}
+
+function validateSprMoveEventList(value: unknown, fieldName: string): SprMoveEvent[] {
+  const events = requiredArray(value, fieldName);
+  return events.map((event, index) => validateSprMoveEvent(event, `${fieldName}[${index}]`));
+}
+
 export function validateSplitChangeEventsByPair(value: unknown): Record<string, SplitChangeEvent[]> {
   const eventsByPair = requiredRecord(value, 'split_change_events');
   const validated: Record<string, SplitChangeEvent[]> = {};
@@ -60,7 +102,7 @@ export function validateTreePairSolutions(value: unknown): Record<string, TreePa
   for (const [pairKey, solution] of Object.entries(pairSolutions)) {
     assertRecord(solution, `tree_pair_solutions.${pairKey}`);
     const fieldName = `tree_pair_solutions.${pairKey}`;
-    validated[pairKey] = {
+    const validatedSolution: TreePairSolution = {
       jumping_subtree_solutions: validateJumpingSubtreeSolutions(
         solution.jumping_subtree_solutions,
         `${fieldName}.jumping_subtree_solutions`
@@ -72,6 +114,15 @@ export function validateTreePairSolutions(value: unknown): Record<string, TreePa
       ),
       split_change_events: validateSplitChangeEventList(solution.split_change_events, `${fieldName}.split_change_events`),
     };
+
+    if (solution.spr_move_events !== undefined) {
+      validatedSolution.spr_move_events = validateSprMoveEventList(
+        solution.spr_move_events,
+        `${fieldName}.spr_move_events`
+      );
+    }
+
+    validated[pairKey] = validatedSolution;
   }
 
   return validated;

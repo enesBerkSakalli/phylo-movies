@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useAppStore } from '../src/state/phyloStore/store.js';
 import { WebGLTreeAnimationController } from '../src/treeVisualisation/WebGLTreeAnimationController.js';
 
@@ -127,5 +127,30 @@ describe('WebGLTreeAnimationController radii', () => {
     const layout = controller.calculateLayout(explicitTree, { treeIndex: 0 });
 
     expect(layout.layoutTree.name).toBe('explicit-root');
+  });
+
+  it('reuses cached layout results for unchanged layout inputs', () => {
+    const treeList = [{
+      name: 'root',
+      length: 0,
+      children: [{ name: 'child', length: 1 }]
+    }];
+    useAppStore.setState({
+      treeList,
+      branchTransformation: 'none',
+      layoutAngleDegrees: 360,
+      layoutRotationDegrees: 0,
+      styleConfig: { labelOffsets: { DEFAULT: 1, EXTENSION: 1 } },
+      transitionResolver: { fullTreeIndices: [0] }
+    });
+
+    const controller = new WebGLTreeAnimationController(null);
+    const computeLayout = vi.spyOn(controller, '_computeLayout');
+
+    const first = controller.calculateLayout(treeList[0], { treeIndex: 0 });
+    const second = controller.calculateLayout(treeList[0], { treeIndex: 0 });
+
+    expect(second).toBe(first);
+    expect(computeLayout).toHaveBeenCalledOnce();
   });
 });

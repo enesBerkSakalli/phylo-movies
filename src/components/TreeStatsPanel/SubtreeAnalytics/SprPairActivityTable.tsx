@@ -79,13 +79,15 @@ export const SprPairActivityTable = ({ rows, leafNamesByIndex, selectedMoverIndi
         : null;
 
     return (
-        <table className="min-w-[980px] w-full table-fixed text-xs">
+        <table className="min-w-[1120px] w-full table-fixed text-xs">
             <thead className="bg-muted/40 text-muted-foreground font-bold sticky top-0 z-10">
                 <tr>
                     <th className="w-20 px-3 py-2 text-left font-bold uppercase tracking-wider text-2xs">Pair</th>
                     <th className="w-16 px-3 py-2 text-right font-bold uppercase tracking-wider text-2xs">Moves</th>
                     <th className="w-16 px-3 py-2 text-right font-bold uppercase tracking-wider text-2xs">Unique</th>
                     <th className="w-16 px-3 py-2 text-right font-bold uppercase tracking-wider text-2xs">Steps</th>
+                    <th className="w-20 px-3 py-2 text-right font-bold uppercase tracking-wider text-2xs">Path Hops</th>
+                    <th className="w-24 px-3 py-2 text-right font-bold uppercase tracking-wider text-2xs">Path Length</th>
                     <th className="w-24 px-3 py-2 text-right font-bold uppercase tracking-wider text-2xs">Tree Change</th>
                     <th className="w-28 px-3 py-2 text-right font-bold uppercase tracking-wider text-2xs">Weighted Change</th>
                     <th className="w-36 px-3 py-2 text-left font-bold uppercase tracking-wider text-2xs">Group</th>
@@ -117,6 +119,8 @@ export const SprPairActivityTable = ({ rows, leafNamesByIndex, selectedMoverIndi
                             </td>
                             <td className="px-3 py-3 text-right font-mono tabular-nums">{row.uniqueMoverCount}</td>
                             <td className="px-3 py-3 text-right font-mono tabular-nums">{row.transitionEventCount}</td>
+                            <td className="px-3 py-3 text-right font-mono tabular-nums">{row.totalPathHops}</td>
+                            <td className="px-3 py-3 text-right font-mono tabular-nums">{formatMetric(row.totalPathLength)}</td>
                             <td className="px-3 py-3 text-right font-mono tabular-nums">{formatMetric(row.rfDistance)}</td>
                             <td className="px-3 py-3 text-right font-mono tabular-nums">{formatMetric(row.weightedRfDistance)}</td>
                             <td className="px-3 py-3" title={fullMoverLabel}>
@@ -163,7 +167,7 @@ export const SprPairActivityTable = ({ rows, leafNamesByIndex, selectedMoverIndi
                 })}
                 {rows.length === 0 && (
                     <tr>
-                        <td colSpan={9} className="px-4 py-12 text-center text-muted-foreground italic">
+                        <td colSpan={11} className="px-4 py-12 text-center text-muted-foreground italic">
                         No tree-pair moves available for this dataset.
                         </td>
                     </tr>

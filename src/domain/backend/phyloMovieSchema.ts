@@ -22,6 +22,8 @@ export type {
   SplitChangeEvent,
   SplitChangeTimelineEntry,
   SplitEventTimelineEntry,
+  SprMoveEvent,
+  SprPathSegment,
   TreeMetadata,
   TreeNode,
   TreePairSolution,

@@ -2,7 +2,7 @@ import { selectActiveTreeList, useAppStore } from '../state/phyloStore/store.js'
 import { transformBranchLengths } from "../domain/tree/branchTransform.js";
 import { TidyTreeLayout } from "./layout/TidyTreeLayout.js";
 import calculateScales, { getMaxScaleValue } from "../domain/tree/scaleUtils.js";
-import { createTransformCacheKey, createUniformScalingCacheKey } from './utils/layoutCacheKey.js';
+import { createLayoutCacheKey, createTransformCacheKey, createUniformScalingCacheKey } from './utils/layoutCacheKey.js';
 import { createLayoutResult } from './layout/LayoutResultAdapter.js';
 
 export class WebGLTreeAnimationController {
@@ -16,6 +16,7 @@ export class WebGLTreeAnimationController {
       cacheKey: null
     };
     this._transformedCache = new Map();
+    this._layoutResultCache = new Map();
     this._onResize = null;
 
     this.webglContainer = container || null;
@@ -52,6 +53,11 @@ export class WebGLTreeAnimationController {
 
   destroy() {
     this._onResize = null;
+    this.clearLayoutCache();
+  }
+
+  clearLayoutCache() {
+    this._layoutResultCache?.clear();
   }
 
   // ==========================================================================
@@ -131,9 +137,43 @@ export class WebGLTreeAnimationController {
       return null;
     }
 
+    const layoutCacheKey = this._getLayoutResultCacheKey({
+      state,
+      treeList,
+      treeData,
+      treeIndex
+    });
+    if (layoutCacheKey) {
+      const cachedLayout = this._layoutResultCache.get(layoutCacheKey);
+      if (cachedLayout) return cachedLayout;
+    }
+
     const layout = this._computeLayout(transformedTreeData, layoutAngleDegrees, layoutRotationDegrees);
+    if (layoutCacheKey && layout) {
+      layout.layoutCacheKey = layoutCacheKey;
+      this._layoutResultCache.set(layoutCacheKey, layout);
+    }
 
     return layout;
+  }
+
+  _getLayoutResultCacheKey({ state, treeList, treeData, treeIndex }) {
+    if (
+      !Number.isInteger(treeIndex) ||
+      !Array.isArray(treeList) ||
+      treeList[treeIndex] !== treeData
+    ) {
+      return null;
+    }
+
+    return createLayoutCacheKey({
+      state,
+      treeList,
+      treeIndex,
+      width: this.width,
+      height: this.height,
+      maxGlobalScale: this.maxGlobalScale
+    });
   }
 
   _getTransformedTreeData(treeData, branchTransformation, treeIndex, transformCacheKey, treeList = null) {

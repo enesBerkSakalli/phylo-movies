@@ -119,6 +119,10 @@ describe('normalized render contract', () => {
     expect(LAYER_CONFIGS.connectors.defaultProps._pathType).toBe('open');
   });
 
+  it('does not enable picking on comparison connector lines', () => {
+    expect(LAYER_CONFIGS.connectors.defaultProps.pickable).toBe(false);
+  });
+
   it('builders emit normalized metadata without legacy hierarchy references', () => {
     const root = hierarchy({
       name: 'root',

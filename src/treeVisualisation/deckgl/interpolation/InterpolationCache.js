@@ -139,6 +139,7 @@ export class InterpolationCache {
     );
     if (layerData && typeof layerData === 'object') {
       layerData.max_radius = layout.max_radius;
+      layerData.layoutCacheKey = layout.layoutCacheKey;
     }
     return layerData;
   }

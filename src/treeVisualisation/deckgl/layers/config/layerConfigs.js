@@ -101,7 +101,7 @@ export const LAYER_CONFIGS = {
     defaultProps: {
       ...pathLayerDefaults,
       widthMinPixels: 1,
-      pickable: true
+      pickable: false
     }
   }
 };

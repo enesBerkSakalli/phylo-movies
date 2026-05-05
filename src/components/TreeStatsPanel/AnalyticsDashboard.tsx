@@ -28,6 +28,7 @@ import {
     calculateSprDatasetSummary,
     calculateSprMoverFrequencies,
     calculateSprPairActivity,
+    formatSubtreeLabel,
 } from '@/domain/tree/sprAnalyticsUtils';
 import { Button } from '@/components/ui/button';
 import { SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
@@ -45,6 +46,21 @@ interface SprDatasetSummary {
     cladeMoverOccurrences: number;
     maxPairMoverOccurrenceCount: number;
     topMoverSharePercentage: number;
+    sprMoveEventCount: number;
+    totalPathHops: number;
+    averagePathHops: number;
+    totalPathLength: number;
+    averagePathLength: number;
+    farthestMover: {
+        signature: string;
+        splitIndices: number[];
+        count: number;
+        pathEventCount: number;
+        totalPathHops: number;
+        averagePathHops: number;
+        totalPathLength: number;
+        averagePathLength: number;
+    } | null;
 }
 
 export const AnalyticsDashboard = () => {
@@ -78,6 +94,24 @@ export const AnalyticsDashboard = () => {
     const singletonMoverPercentage = sprSummary.moverOccurrenceCount > 0
         ? (sprSummary.singletonMoverOccurrences / sprSummary.moverOccurrenceCount) * 100
         : 0;
+
+    const farthestMover = useMemo(() => {
+        if (!sprSummary.farthestMover) return null;
+
+        const fullLabel = formatSubtreeLabel(sprSummary.farthestMover.splitIndices, leafNamesByIndex);
+        const label = fullLabel.length > 28
+            ? `${fullLabel.slice(0, 25)}...`
+            : fullLabel;
+
+        return {
+            label,
+            fullLabel,
+            totalPathHops: sprSummary.farthestMover.totalPathHops,
+            totalPathLength: sprSummary.farthestMover.totalPathLength,
+            averagePathHops: sprSummary.farthestMover.averagePathHops,
+            averagePathLength: sprSummary.farthestMover.averagePathLength,
+        };
+    }, [sprSummary.farthestMover, leafNamesByIndex]);
 
     const csvContent = useMemo(() => {
         return createSprFrequencyCsv(allFreqs, leafNamesByIndex);
@@ -133,6 +167,11 @@ export const AnalyticsDashboard = () => {
                                     activePairCount={sprSummary.activePairCount}
                                     singletonMoverPercentage={singletonMoverPercentage}
                                     topMoverPercentage={sprSummary.topMoverSharePercentage}
+                                    totalPathHops={sprSummary.totalPathHops}
+                                    averagePathHops={sprSummary.averagePathHops}
+                                    totalPathLength={sprSummary.totalPathLength}
+                                    averagePathLength={sprSummary.averagePathLength}
+                                    farthestMover={farthestMover}
                                 />
 
                                 <Card className="shadow-sm bg-muted/10 h-80 flex flex-col">
@@ -142,7 +181,7 @@ export const AnalyticsDashboard = () => {
                                             Moves Across Tree Pairs
                                         </CardTitle>
                                         <CardDescription className="text-xs">
-                                            Moved groups per neighboring tree pair, with tree-change scores for context.
+                                            Moved groups per neighboring tree pair, with path travel and tree-change scores for context.
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent className="flex-1 min-h-0 p-2">
@@ -176,7 +215,7 @@ export const AnalyticsDashboard = () => {
                                     Moves by Tree Pair
                                 </CardTitle>
                                 <CardDescription className="text-xs">
-                                    Moves, solver steps, tree-change scores, and from/to attachment context for each neighboring tree pair.
+                                    Moves, solver steps, path travel, tree-change scores, and from/to attachment context for each neighboring tree pair.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="p-0 flex-1 min-h-0 overflow-auto">

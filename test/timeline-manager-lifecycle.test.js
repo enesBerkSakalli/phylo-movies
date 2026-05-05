@@ -376,6 +376,52 @@ describe('MovieTimelineManager lifecycle', () => {
     expect(renderedT).to.equal(0.5);
   });
 
+  it('recomputes animation stage when interpolation data changes for the same tree indices', async () => {
+    const renderedTValues = [];
+    let callCount = 0;
+
+    const runner = new AnimationRunner({
+      getState: () => ({
+        playing: true,
+        animationStartTime: 1_000,
+        animationSpeed: 1,
+        transitionDuration: 2,
+        pauseDuration: 0,
+        treeList: [{ id: 'a' }, { id: 'b' }],
+        comparisonMode: false
+      }),
+      getOrCacheInterpolationData: () => {
+        callCount += 1;
+        if (callCount === 1) {
+          return {
+            dataFrom: { layoutCacheKey: 'from-1', nodes: [{ id: 'node-a' }] },
+            dataTo: { layoutCacheKey: 'to-1', nodes: [{ id: 'node-a' }] }
+          };
+        }
+
+        return {
+          dataFrom: { layoutCacheKey: 'from-2', nodes: [{ id: 'node-a' }, { id: 'node-b' }] },
+          dataTo: { layoutCacheKey: 'to-2', nodes: [{ id: 'node-a' }] }
+        };
+      },
+      renderSingleFrame: async (_fromTree, _toTree, easedT) => {
+        renderedTValues.push(easedT);
+      },
+      renderComparisonFrame: async () => {},
+      setAnimationStage: () => {},
+      updateProgress: () => {},
+      stopAnimation: () => {}
+    });
+
+    runner.isRunning = true;
+    await runner._processFrame(1_500);
+    await runner._processFrame(1_500);
+
+    expect(renderedTValues).to.have.lengthOf(2);
+    expect(renderedTValues[0]).to.equal(0.0625);
+    expect(renderedTValues[1]).to.be.greaterThan(0.5);
+  });
+
   it('does not force a redraw after animation render updates layers', async () => {
     const previousRequestAnimationFrame = global.requestAnimationFrame;
     const previousCancelAnimationFrame = global.cancelAnimationFrame;
