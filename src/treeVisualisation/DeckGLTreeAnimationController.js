@@ -175,18 +175,28 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
     // Rerender when camera moves to update dynamic halo scaling (outlineWidth depends on zoom)
     // OPTIMIZATION: Throttle to avoid redundant renders during pan/zoom
-    this.deckContext.addViewStateListener(({ zoom }) => {
-      // Skip if animation is running (AnimationRunner handles its own renders)
-      if (this.animationRunner.isRunning) return;
+    this.deckContext.addViewStateListener((viewState) => this._handleViewStateChange(viewState));
+  }
 
-      // Skip if zoom hasn't changed significantly (avoid pan-only redundant renders)
-      const zoomDelta = this._lastZoom !== null ? Math.abs(zoom - this._lastZoom) : Infinity;
-      if (zoomDelta < 0.01) return; // Threshold: ~1% zoom change
+  _handleViewStateChange({ zoom } = {}) {
+    this._updateScreenPositionsFromLastLayerData();
 
-      this._lastZoom = zoom;
-      this._hasUserViewportInteraction = true;
-      this._scheduleRender();
-    });
+    // Skip layer rebuilds if animation is running (AnimationRunner handles its own renders).
+    if (this.animationRunner.isRunning) return;
+
+    // Skip if zoom hasn't changed significantly (avoid pan-only redundant renders).
+    const zoomDelta = this._lastZoom !== null ? Math.abs(zoom - this._lastZoom) : Infinity;
+    if (zoomDelta < 0.01) return; // Threshold: ~1% zoom change
+
+    this._lastZoom = zoom;
+    this._hasUserViewportInteraction = true;
+    this._scheduleRender();
+  }
+
+  _updateScreenPositionsFromLastLayerData() {
+    const nodes = this._lastLayerData?.nodes;
+    if (!Array.isArray(nodes) || nodes.length === 0) return;
+    this.viewportManager?.updateScreenPositions(nodes, this.viewSide);
   }
 
   /**
