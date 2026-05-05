@@ -52,6 +52,7 @@ export function App() {
   const hasMsa = useAppStore(selectHasMsa);
   const initializeStore = useAppStore(selectInitialize);
   const resetStore = useAppStore(selectReset);
+  const [sprAnalyticsOpen, setSprAnalyticsOpen] = React.useState(false);
 
   // Initialize Tree Controller and Rendering Logic
   useTreeController();
@@ -145,7 +146,11 @@ export function App() {
             <SidebarGroup>
               <SidebarGroupLabel>Analysis</SidebarGroupLabel>
               <SidebarMenu>
-                <AnalyticsDashboard />
+                <AnalyticsDashboard
+                  isOpen={sprAnalyticsOpen}
+                  onOpen={() => setSprAnalyticsOpen(true)}
+                  onClose={() => setSprAnalyticsOpen(false)}
+                />
                 <TaxaGroupsLegend />
                 <TreeStatsPanel />
               </SidebarMenu>
@@ -173,12 +178,20 @@ export function App() {
 
         <SidebarInset className="overflow-hidden">
           <SidebarTrigger className="absolute top-2 left-2 z-1200" />
-          <div className="full-size-container" style={{ flex: 1, minHeight: 0, position: 'relative', overflow: 'hidden' }}>
-            <DeckGLCanvas />
-            <TreeViewportControls />
-            <CanvasCaptureControls />
-            <ClipboardDismissButton />
-            <HUD />
+          <div className="flex flex-1 min-h-0 overflow-hidden">
+            <div
+              id="spr-analytics-panel-root"
+              className={sprAnalyticsOpen
+                ? 'w-[min(900px,45vw)] min-w-[520px] max-w-[900px] shrink-0 border-r border-border/40 bg-card overflow-hidden'
+                : 'hidden'}
+            />
+            <div className="full-size-container" style={{ flex: 1, minHeight: 0, position: 'relative', overflow: 'hidden' }}>
+              <DeckGLCanvas />
+              <TreeViewportControls />
+              <CanvasCaptureControls />
+              <ClipboardDismissButton />
+              <HUD />
+            </div>
           </div>
           <MoviePlayerBar />
         </SidebarInset>
