@@ -10,6 +10,8 @@ export function MSAViewer() {
   const [layoutMetrics, setLayoutMetrics] = useState(null);
   const containerRef = useRef(null);
   const viewerRef = useRef(null);
+  const pendingRangeRef = useRef(null);
+  const rangeFrameRef = useRef(null);
 
   // Handle view actions (zoom/reset)
   useEffect(() => {
@@ -45,9 +47,7 @@ export function MSAViewer() {
         viewerRef.current.setRegion(msaRegion.start, msaRegion.end);
 
         if (syncMSAEnabled) {
-          // Adjust for 1-based to 0-based conversion (approximate center)
-          const centerCol = (msaRegion.start + msaRegion.end) / 2 - 0.5;
-          viewerRef.current.scrollTo({ col: Math.max(0, centerCol) });
+          viewerRef.current.scrollToRegion(msaRegion.start, msaRegion.end, { align: 'center' });
         }
       }
     } else {
@@ -73,10 +73,7 @@ export function MSAViewer() {
     const viewer = new MSADeckGLViewer(containerRef.current, { showLetters, colorScheme, rowColorMap });
     viewerRef.current = viewer;
 
-    // Handle view state changes
-    let lastRangeUpdate = 0;
     viewer.onViewStateChange = ({ range, layoutMetrics }) => {
-      const now = Date.now();
       if (layoutMetrics) {
         setLayoutMetrics((current) => {
           if (
@@ -88,13 +85,27 @@ export function MSAViewer() {
           return layoutMetrics;
         });
       }
-      if (range && now - lastRangeUpdate > 33) {
-        setVisibleRange(range);
-        lastRangeUpdate = now;
+      if (range) {
+        pendingRangeRef.current = range;
+        if (rangeFrameRef.current === null) {
+          rangeFrameRef.current = requestAnimationFrame(() => {
+            rangeFrameRef.current = null;
+            const pendingRange = pendingRangeRef.current;
+            pendingRangeRef.current = null;
+            if (pendingRange) {
+              setVisibleRange(pendingRange);
+            }
+          });
+        }
       }
     };
 
     return () => {
+      if (rangeFrameRef.current !== null) {
+        cancelAnimationFrame(rangeFrameRef.current);
+        rangeFrameRef.current = null;
+      }
+      pendingRangeRef.current = null;
       viewer.destroy();
       viewerRef.current = null;
     };
@@ -103,11 +114,25 @@ export function MSAViewer() {
   // Load/refresh data into existing viewer
   useEffect(() => {
     const viewer = viewerRef.current;
-    if (!viewer || !processedData) return;
+    if (!viewer) return;
+    if (!processedData) {
+      if (rangeFrameRef.current !== null) {
+        cancelAnimationFrame(rangeFrameRef.current);
+        rangeFrameRef.current = null;
+      }
+      pendingRangeRef.current = null;
+      viewer.clearData();
+      setVisibleRange(null);
+      setLayoutMetrics(null);
+      return;
+    }
     // Use preprocessed data to avoid re-parsing and keep order intact
     viewer.loadFromProcessedData(processedData);
     if (msaRegion) {
       viewer.setRegion(msaRegion.start, msaRegion.end);
+      if (syncMSAEnabled) {
+        viewer.scrollToRegion(msaRegion.start, msaRegion.end, { align: 'center' });
+      }
     } else {
       viewer.clearRegion();
     }
@@ -116,7 +141,7 @@ export function MSAViewer() {
     } else {
       viewer.clearPreviousRegion();
     }
-  }, [processedData]);
+  }, [processedData, syncMSAEnabled]);
 
   // Toggle letters without recreating viewer
   useEffect(() => {

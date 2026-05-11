@@ -1,6 +1,5 @@
 /**
- * MSA DeckGL Viewer Module
- * Extracted from msa_viewer.html for integration with WinBox
+ * DeckGL-backed multiple sequence alignment viewer.
  */
 
 import { Deck, OrthographicView, OrthographicController } from '@deck.gl/core';
@@ -48,16 +47,14 @@ export class MSADeckGLViewer {
 
     this.frame = null;
     this._destroyed = false;
-    this._initTimeoutId = null;
     this._postLoadRenderTimeoutId = null;
-    this._pendingFitToMSA = false;  // Track if we need to fit after deck init
+    this._initialLayoutObserver = null;
     this.resizeObserver = null;     // ResizeObserver for container resize handling
     this._labelMeasuredWidth = this.DEFAULT_LABELS_WIDTH; // raw text-based width before zoom scaling
     this._scrollZoomSpeed = 0.08;   // Custom wheel zoom speed multiplier
     this._handleWheel = this.handleWheel.bind(this);
 
-    // Delay initialization to ensure container has dimensions
-    this._initTimeoutId = setTimeout(() => this.initializeDeck(), MSA_VIEWER_CONSTANTS.INIT_DELAY_MS);
+    this.initializeDeckWhenReady();
   }
 
   // =======================================================================
@@ -91,6 +88,27 @@ export class MSADeckGLViewer {
       labelsWidth: this.LABELS_WIDTH,
       axisHeight: this.AXIS_HEIGHT
     };
+  }
+
+  hasUsableContainerSize() {
+    return (this.container?.clientWidth || 0) > 0 && (this.container?.clientHeight || 0) > 0;
+  }
+
+  initializeDeckWhenReady() {
+    if (this._destroyed || !this.container || this.state.deckgl) return;
+
+    if (this.hasUsableContainerSize() || typeof ResizeObserver === 'undefined') {
+      this.initializeDeck();
+      return;
+    }
+
+    this._initialLayoutObserver = new ResizeObserver(() => {
+      if (!this.hasUsableContainerSize()) return;
+      this._initialLayoutObserver?.disconnect();
+      this._initialLayoutObserver = null;
+      this.initializeDeck();
+    });
+    this._initialLayoutObserver.observe(this.container);
   }
 
   // =======================================================================
@@ -153,12 +171,11 @@ export class MSADeckGLViewer {
         this.state.deckgl.setProps({
           viewState: {
             main: activeClamped,
-            minimap: this.state.minimapViewState,
-          labels: labelsViewState,
-          axis: axisViewState,
-          corner: cornerViewState
-        }
-      });
+            labels: labelsViewState,
+            axis: axisViewState,
+            corner: cornerViewState
+          }
+        });
     }
 
     // Only render if we have data
@@ -269,6 +286,9 @@ export class MSADeckGLViewer {
   initializeDeck() {
     if (this._destroyed || !this.container || this.state.deckgl) return;
 
+    this._initialLayoutObserver?.disconnect();
+    this._initialLayoutObserver = null;
+
     // Setup container and create canvas
     const canvas = this.setupContainerAndCanvas();
 
@@ -359,14 +379,17 @@ export class MSADeckGLViewer {
     // Attach wheel handler for custom pan/zoom behavior
     this.container.addEventListener('wheel', this._handleWheel, { passive: false });
 
-    // If data was loaded before deck was ready, set initial camera now
-    if (this._pendingFitToMSA && this.hasSequences()) {
-      this._pendingFitToMSA = false;
-      this.initCameraPosition();
+    if (this.hasSequences()) {
       this.render();
     }
 
-    // Setup resize observer to update layout components without auto-zooming
+    this.startResizeObserver();
+  }
+
+  startResizeObserver() {
+    if (!this.container || typeof ResizeObserver === 'undefined') return;
+
+    this.resizeObserver?.disconnect();
     this.resizeObserver = new ResizeObserver(() => {
       if (this.hasSequences()) {
         this.adjustLabelWidth();
@@ -383,6 +406,18 @@ export class MSADeckGLViewer {
 
   loadFromProcessedData(processedData) {
     return this._applyProcessedData(processedData);
+  }
+
+  clearData() {
+    this.state.seqs = [];
+    this.state.type = 'protein';
+    this.state.rows = 0;
+    this.state.cols = 0;
+    this.state.consensus = null;
+    this.state.selection = null;
+    this.state.previousSelection = null;
+    this._hasLoadedOnce = false;
+    this.render();
   }
 
   _applyProcessedData(processedData) {
@@ -616,15 +651,6 @@ export class MSADeckGLViewer {
   }
 
   /**
-   * Build the cells polygon layer for the MINIMAP (Global overview, downsampled)
-   * @param {number} cellSize - Size of each cell
-   * @returns {PolygonLayer} The cells layer for minimap
-   */
-  buildMinimapCellsLayer(_cellSize) {
-    return null; // Minimap disabled
-  }
-
-  /**
    * Build the selection border polygon layer
    * @param {number} cellSize - Size of each cell
    * @returns {PolygonLayer} The selection border layer
@@ -793,29 +819,32 @@ export class MSADeckGLViewer {
     });
   }
 
-  /**
-   * Reset camera to initial MSA overview
-   */
-  resetCamera() {
-    if (this.hasSequences()) {
-      this.fitToMSA();
-    } else {
-      // Reset to default view if no data loaded
-      const defaultViewState = {
-        target: [0, 0, 0],
-        zoom: -1
-      };
-      this.state.viewState = defaultViewState;
-      if (this.state.deckgl) {
-        this.state.deckgl.setProps({
-          viewState: {
-            main: defaultViewState,
-            labels: defaultViewState,
-            axis: defaultViewState
-          }
-        });
-      }
+  scrollToRegion(startCol, endCol, options = {}) {
+    if (!this.hasSequences()) return;
+
+    const align = options.align || 'center';
+    const start = Number(startCol);
+    const end = Number(endCol);
+    if (!Number.isFinite(start) || !Number.isFinite(end)) return;
+
+    const minCol = Math.max(1, Math.min(start, end));
+    const maxCol = Math.max(1, Math.max(start, end));
+    let targetCol;
+
+    switch (align) {
+      case 'start':
+        targetCol = minCol - 1;
+        break;
+      case 'end':
+        targetCol = maxCol - 1;
+        break;
+      case 'center':
+      default:
+        targetCol = ((minCol + maxCol) / 2) - 0.5;
+        break;
     }
+
+    this.scrollTo({ col: Math.max(0, targetCol) });
   }
 
   /**
@@ -929,10 +958,8 @@ export class MSADeckGLViewer {
   destroy() {
     this._destroyed = true;
 
-    if (this._initTimeoutId) {
-      clearTimeout(this._initTimeoutId);
-      this._initTimeoutId = null;
-    }
+    this._initialLayoutObserver?.disconnect();
+    this._initialLayoutObserver = null;
 
     if (this._postLoadRenderTimeoutId) {
       clearTimeout(this._postLoadRenderTimeoutId);
