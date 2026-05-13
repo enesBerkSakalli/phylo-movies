@@ -23,6 +23,23 @@ describe('WebGLTreeAnimationController radii', () => {
     expect(radii.labelRadius).toBe(122);
   });
 
+  it('places labels and extensions from the stable global radius when uniform scaling is active', () => {
+    const controller = new WebGLTreeAnimationController(null);
+    controller.uniformScalingEnabled = true;
+    controller.maxGlobalScale = 20;
+
+    const radii = controller._getConsistentRadii({
+      width: 1000,
+      height: 1000,
+      margin: 60,
+      max_radius: 120,
+      scale: 10
+    });
+
+    expect(radii.extensionRadius).toBe(201);
+    expect(radii.labelRadius).toBe(202);
+  });
+
   it('uses zero maxGlobalScale as an intentional uniform scale input', () => {
     const controller = new WebGLTreeAnimationController(null);
     controller.uniformScalingEnabled = true;

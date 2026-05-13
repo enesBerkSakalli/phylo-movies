@@ -12,7 +12,7 @@ import { TreeNodeInteractionHandler } from './interaction/TreeNodeInteractionHan
 import { handleDragStart, handleDrag, handleDragEnd, handleContainerResize } from './interaction/InteractionHandlers.js';
 import { ViewportManager } from './viewport/ViewportManager.js';
 import { getClipboardLayers } from './utils/ClipboardUtils.js';
-import { createLayoutCacheKey } from './utils/layoutCacheKey.js';
+import { createLayoutCacheKey, getRotationAlignmentExcludeTaxa } from './utils/layoutCacheKey.js';
 
 export class DeckGLTreeAnimationController extends WebGLTreeAnimationController {
 
@@ -36,7 +36,8 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       calculateLayout: this.calculateLayout.bind(this),
       getConsistentRadii: this._getConsistentRadii.bind(this),
       convertTreeToLayerData: this.dataConverter.convertTreeToLayerData.bind(this.dataConverter),
-      getLayoutCacheKey: (treeIndex) => this._createLayoutCacheKey(treeIndex)
+      getLayoutCacheKey: (treeIndex) => this._createLayoutCacheKey(treeIndex),
+      getRotationAlignmentExcludeTaxa: (treeIndex) => this._getRotationAlignmentExcludeTaxa(treeIndex)
     });
 
     // --- WORKER INITIALIZATION ---
@@ -370,6 +371,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     // Ensure uniform scaling is initialized before dispatching to worker
     this.initializeUniformScaling(branchTransformation);
     const layoutCacheKey = this._createLayoutCacheKey(treeIndex, state);
+    const rotationAlignmentExcludeTaxa = this._getRotationAlignmentExcludeTaxa(treeIndex, state);
     if (this.prefetchedLayoutCacheKeys.get(treeIndex) === layoutCacheKey) return;
 
     this.prefetchedLayoutCacheKeys.set(treeIndex, layoutCacheKey);
@@ -390,6 +392,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
           layoutAngleDegrees,
           layoutRotationDegrees,
           labelOffsets: offsets,
+          rotationAlignmentExcludeTaxa,
           treeIndex,
           treeSide: 'left',
           renderMode: 'animation',
@@ -412,6 +415,10 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       height: this.height,
       maxGlobalScale: this.maxGlobalScale
     });
+  }
+
+  _getRotationAlignmentExcludeTaxa(treeIndex, state = useAppStore.getState()) {
+    return getRotationAlignmentExcludeTaxa(state, treeIndex);
   }
 
   _createLayoutRequestToken(treeIndex, state = useAppStore.getState()) {
@@ -467,7 +474,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
   _buildInterpolatedData(fromTreeData, toTreeData, t, options = {}) {
     const { fromTreeIndex, toTreeIndex } = options;
-    const { dataFrom, dataTo } = this.interpolationCache.buildInterpolationInputs(
+    const { dataFrom, dataTo, transitionChangeModel } = this.interpolationCache.buildInterpolationInputs(
       fromTreeData,
       toTreeData,
       fromTreeIndex,
@@ -479,8 +486,10 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       return { nodes: [], links: [], labels: [], extensions: [] };
     }
 
-    const { branchTransformation } = useAppStore.getState();
-    const interpolatedData = this.treeInterpolator.interpolateTreeData(dataFrom, dataTo, t, branchTransformation);
+    const interpolatedData = this.treeInterpolator.interpolateTreeData(dataFrom, dataTo, t, {
+      transitionChangeModel,
+      rawTimeFactor: options.rawTimeFactor
+    });
 
     // --- Adaptive Visual Scaling ---
     // Interpolate max_radius from cached metadata
@@ -502,7 +511,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
   }
 
   _getOrCacheInterpolationData(fromTreeData, toTreeData, fromTreeIndex, toTreeIndex) {
-    const { dataFrom, dataTo } = this.interpolationCache.getOrCacheInterpolationData(
+    const { dataFrom, dataTo, transitionChangeModel } = this.interpolationCache.getOrCacheInterpolationData(
       fromTreeData,
       toTreeData,
       fromTreeIndex,
@@ -511,10 +520,10 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
     if (!dataFrom || !dataTo) {
       console.warn('[DeckGLTreeAnimationController] Layout calculation failed, skipping frame');
-      return { dataFrom: null, dataTo: null };
+      return { dataFrom: null, dataTo: null, transitionChangeModel: null };
     }
 
-    return { dataFrom, dataTo };
+    return { dataFrom, dataTo, transitionChangeModel };
   }
 
   // ==========================================================================

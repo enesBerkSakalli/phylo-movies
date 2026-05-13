@@ -24,23 +24,27 @@ export class InterpolationRenderer {
     if (fromTreeData === toTreeData) t = 0;
 
     // Delegate to controller to fetch cached Layout Data
-    const { dataFrom, dataTo } = this.controller._getOrCacheInterpolationData(
+    const cachedInputs = this.controller._getOrCacheInterpolationData(
       fromTreeData,
       toTreeData,
       fromTreeIndex,
       toTreeIndex
     );
+    const { dataFrom, dataTo } = cachedInputs;
+    const transitionChangeModel = options.transitionChangeModel || cachedInputs.transitionChangeModel;
 
     if (!dataFrom || !dataTo) return;
 
     // Perform Geometry Interpolation
-    const { branchTransformation } = useAppStore.getState();
     const interpolatedData = this.controller.treeInterpolator.interpolateTreeData(
       dataFrom,
       dataTo,
       t,
-      branchTransformation,
-      stage
+      {
+        stage,
+        transitionChangeModel,
+        rawTimeFactor: options.rawTimeFactor
+      }
     );
     interpolatedData.targetData = dataTo; // Add target data for movement arrow endpoints
 
@@ -128,15 +132,18 @@ export class InterpolationRenderer {
 
     // Stage detection logic for visual consistency during scrubbing
     // (We reuse the controller's logic to fetch cached layout data to check stages)
-    const { dataFrom, dataTo } = this.controller._getOrCacheInterpolationData(fromTree, toTree, fromIndex, toIndex);
+    const { dataFrom, dataTo, transitionChangeModel } = this.controller._getOrCacheInterpolationData(fromTree, toTree, fromIndex, toIndex);
 
     const stage = detectAnimationStage(dataFrom, dataTo);
+    const rawTimeFactor = t;
     t = applyStageEasing(t, stage);
 
     return this.renderSingleInterpolatedFrame(fromTree, toTree, t, {
       fromTreeIndex: fromIndex,
       toTreeIndex: toIndex,
-      stage
+      stage,
+      transitionChangeModel,
+      rawTimeFactor
     });
   }
 
@@ -163,14 +170,17 @@ export class InterpolationRenderer {
       return this.controller.renderAllElements({ treeIndex: fromIndex });
     }
 
-    const { dataFrom, dataTo } = this.controller._getOrCacheInterpolationData(fromTree, toTree, fromIndex, toIndex);
+    const { dataFrom, dataTo, transitionChangeModel } = this.controller._getOrCacheInterpolationData(fromTree, toTree, fromIndex, toIndex);
     const stage = detectAnimationStage(dataFrom, dataTo);
+    const rawTimeFactor = t;
     t = applyStageEasing(t, stage);
 
     return this.renderSingleInterpolatedFrame(fromTree, toTree, t, {
       fromTreeIndex: fromIndex,
       toTreeIndex: toIndex,
-      stage
+      stage,
+      transitionChangeModel,
+      rawTimeFactor
     });
   }
 }

@@ -2,7 +2,8 @@
  * PolarLabelInterpolator - Interpolates label positions and rotations
  * Handles smooth interpolation of tree labels in radial layouts
  */
-import { unwrapAngle, shortestAngle, crossesAngle, longArcDelta } from '../../../../domain/math/mathUtils.js';
+import { unwrapAngle } from '../../../../domain/math/mathUtils.js';
+import { interpolatePolarPosition } from '../../../utils/polarGeometry.js';
 
 export class PolarLabelInterpolator {
   constructor() {
@@ -52,37 +53,10 @@ export class PolarLabelInterpolator {
    * @private
    */
   _interpolatePosition(fromLabel, toLabel, t, velocityEntry = null) {
-    if (!fromLabel || !toLabel) return [0, 0, 0];
-
-    const angularT = velocityEntry?.angularT ?? t;
-
-    // Use polarPosition (distance from center) for position interpolation
-    const fromR = fromLabel.polarPosition ?? fromLabel.radius ?? 0;
-    const toR = toLabel.polarPosition ?? toLabel.radius ?? 0;
-    const interpolatedRadius = fromR + (toR - fromR) * t;
-
-    // Get angles
-    const fromAngle = fromLabel.angle || 0;
-    const toAngleRaw = toLabel.angle || 0;
-
-    // Calculate shortest angular delta
-    const shortDelta = shortestAngle(fromAngle, toAngleRaw);
-
-    // Check if the short path would cross through the root (0°)
-    // If so, take the long arc instead to avoid visual crossing
-    const shortEndAngle = fromAngle + shortDelta;
-    const crossesRoot = crossesAngle(fromAngle, shortEndAngle, this._rootAngle);
-
-    // Use long arc if crossing root, otherwise use short arc
-    const delta = crossesRoot ? longArcDelta(shortDelta) : shortDelta;
-    const interpolatedAngle = fromAngle + delta * angularT;
-
-    // Convert back to Cartesian coordinates
-    const x = interpolatedRadius * Math.cos(interpolatedAngle);
-    const y = interpolatedRadius * Math.sin(interpolatedAngle);
-    const z = 0;
-
-    return [x, y, z];
+    return interpolatePolarPosition(fromLabel, toLabel, t, {
+      velocityEntry,
+      rootAngle: this._rootAngle
+    });
   }
 
   /**

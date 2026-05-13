@@ -188,7 +188,7 @@ export class AnimationRunner {
 
     const easedT = applyStageEasing(localT, stage);
 
-    await this._render(state, fromTree, toTree, easedT, fromIndex, toIndex, stage);
+    await this._render(state, fromTree, toTree, easedT, fromIndex, toIndex, stage, localT);
 
     return isFinished;
   }
@@ -207,7 +207,7 @@ export class AnimationRunner {
     }
   }
 
-  async _render(state, fromTree, toTree, easedT, fromIndex, toIndex, stage) {
+  async _render(state, fromTree, toTree, easedT, fromIndex, toIndex, stage, rawTimeFactor = easedT) {
     if (state.comparisonMode) {
       const rightParams = getComparisonTarget(state, fromIndex, toIndex);
       // Only render comparison if we have a valid right tree
@@ -216,6 +216,7 @@ export class AnimationRunner {
           fromTreeIndex: fromIndex,
           toTreeIndex: toIndex,
           stage,
+          rawTimeFactor,
           ...rightParams
         });
       }
@@ -223,7 +224,8 @@ export class AnimationRunner {
       await this.renderSingleFrame(fromTree, toTree, easedT, {
         fromTreeIndex: fromIndex,
         toTreeIndex: toIndex,
-        stage
+        stage,
+        rawTimeFactor
       });
     }
   }

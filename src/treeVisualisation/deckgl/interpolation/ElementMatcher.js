@@ -42,7 +42,11 @@ export class ElementMatcher {
         // Element is entering - use target state
         // We interpolate(to, to, 1.0) to ensure derived properties (like paths) are calculated
         const computed = interpolateFn(toElement, toElement, 1.0, toElement, toElement);
-        result.push(this._createEnteringElement(computed, timeFactor, toElement));
+        result.push(this._createEnteringElement(
+          computed,
+          options?.enterTimeFactor ?? timeFactor,
+          toElement
+        ));
       }
     }
 
@@ -52,7 +56,11 @@ export class ElementMatcher {
         // Element is exiting - use source state
         // We interpolate(from, from, 0.0) to ensure derived properties are calculated
         const computed = interpolateFn(fromElement, fromElement, 0.0, fromElement, fromElement);
-        result.push(this._createExitingElement(computed, timeFactor, fromElement));
+        result.push(this._createExitingElement(
+          computed,
+          options?.exitTimeFactor ?? timeFactor,
+          fromElement
+        ));
       }
     }
 

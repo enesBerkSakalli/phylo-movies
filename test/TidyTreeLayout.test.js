@@ -120,4 +120,32 @@ describe('TidyTreeLayout', () => {
       expect(Number.isFinite(node.radius)).toBe(true);
     });
   });
+
+  it('reduces moving taxa influence on tidy angular spacing when excluded from rotation alignment', () => {
+    const tree = {
+      name: 'root',
+      length: 0,
+      split_indices: [0, 1, 2, 3],
+      children: [
+        { name: 'A', length: 1, split_indices: [0] },
+        { name: 'B', length: 1, split_indices: [1] },
+        { name: 'C', length: 1, split_indices: [2] },
+        { name: 'D', length: 1, split_indices: [3] },
+      ],
+    };
+    const layoutEngine = new TidyTreeLayout(tree);
+    layoutEngine.setDimension(800, 600);
+    layoutEngine.setMargin(60);
+
+    const root = layoutEngine.constructRadialTree(false, {
+      rotationAlignmentExcludeTaxa: [1],
+    });
+    const angles = Object.fromEntries(
+      root.leaves().map((leaf) => [leaf.data.name, leaf.rotatedAngle])
+    );
+
+    const excludedGap = angles.B - angles.A;
+    const stableGap = angles.D - angles.C;
+    expect(excludedGap).toBeLessThan(stableGap);
+  });
 });

@@ -2,8 +2,8 @@
  * PolarNodeInterpolator - Interpolates node positions using polar coordinates
  * Handles smooth interpolation of tree nodes in radial layouts
  */
-import { shortestAngle, crossesAngle, longArcDelta } from '../../../../domain/math/mathUtils.js';
 import { Z_NODE } from '../../constants/zOffsets.js';
+import { interpolatePolarPosition, interpolateScalar } from '../../../utils/polarGeometry.js';
 
 export class PolarNodeInterpolator {
   constructor() {
@@ -33,7 +33,7 @@ export class PolarNodeInterpolator {
       ...toNode,
       position,
       renderPosition: [position[0], position[1], (position[2] ?? 0) + Z_NODE],
-      radius: this._interpolateScalar(fromNode.radius, toNode.radius, t),
+      radius: interpolateScalar(fromNode.radius, toNode.radius, t),
       // Preserve properties from target
       name: toNode.name,
       isLeaf: toNode.isLeaf,
@@ -51,48 +51,10 @@ export class PolarNodeInterpolator {
    * @returns {Array} [x, y, z] interpolated position
    */
   interpolatePosition(fromNode, toNode, t, velocityEntry = null) {
-    if (!fromNode || !toNode) return [0, 0, 0];
-
-    const angularT = velocityEntry?.angularT ?? t;
-
-    // Use polarPosition (distance from center) for position interpolation.
-    // Radius is still accepted because interpolated node data also carries it.
-    const fromR = fromNode.polarPosition ?? fromNode.radius ?? 0;
-    const toR = toNode.polarPosition ?? toNode.radius ?? 0;
-    const interpolatedRadius = this._interpolateScalar(fromR, toR, t);
-
-    // Get angles
-    const fromAngle = fromNode.angle || 0;
-    const toAngleRaw = toNode.angle || 0;
-
-    // Calculate shortest angular delta
-    const shortDelta = shortestAngle(fromAngle, toAngleRaw);
-
-    // Check if the short path would cross through the root (0°)
-    // If so, take the long arc instead to avoid visual crossing
-    const shortEndAngle = fromAngle + shortDelta;
-    const crossesRoot = crossesAngle(fromAngle, shortEndAngle, this._rootAngle);
-
-    // Use long arc if crossing root, otherwise use short arc
-    const delta = crossesRoot ? longArcDelta(shortDelta) : shortDelta;
-    const interpolatedAngle = fromAngle + delta * angularT;
-
-    // Convert back to Cartesian coordinates
-    const x = interpolatedRadius * Math.cos(interpolatedAngle);
-    const y = interpolatedRadius * Math.sin(interpolatedAngle);
-    const z = 0; // 2D tree in 3D space
-
-    return [x, y, z];
-  }
-
-  /**
-   * Interpolate scalar value
-   * @private
-   */
-  _interpolateScalar(from, to, t) {
-    const fromVal = Number.isFinite(from) ? from : 0;
-    const toVal = Number.isFinite(to) ? to : fromVal;
-    return fromVal + (toVal - fromVal) * t;
+    return interpolatePolarPosition(fromNode, toNode, t, {
+      velocityEntry,
+      rootAngle: this._rootAngle
+    });
   }
 
   /**

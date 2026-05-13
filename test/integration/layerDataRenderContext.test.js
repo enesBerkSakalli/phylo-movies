@@ -67,6 +67,19 @@ describe('deck.gl layer render context', () => {
     expect(layout.layoutTree.children[0]).not.toHaveProperty('treeSide');
   });
 
+  it('places extension targets on the extension radius and labels on the label radius', () => {
+    const factory = new DeckGLTreeLayerDataFactory();
+    const layout = makeLayoutTree();
+
+    const layerData = factory.convertTreeToLayerData(layout, {
+      extensionRadius: 40,
+      labelRadius: 50,
+    });
+
+    expect(layerData.labels[0].polarPosition).toBe(50);
+    expect(layerData.extensions[0].polarData.target.radius).toBe(40);
+  });
+
   it('skips invalid layout coordinates instead of rendering them at the origin', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const factory = new DeckGLTreeLayerDataFactory();

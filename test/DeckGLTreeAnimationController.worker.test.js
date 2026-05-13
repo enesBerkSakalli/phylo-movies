@@ -209,6 +209,20 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     expect(controller.prefetchedLayoutCacheKeys.get(1)).toBe(secondKey);
   });
 
+  it('passes per-frame moving taxa exclusion to worker layout prefetch', () => {
+    useAppStore.setState({
+      subtreeTracking: [null, [[2, 3], [4]]]
+    });
+    controller = new ControllerClass(null);
+
+    controller._prefetchFrame(1);
+
+    expect(controller.layoutWorker.messages[0].data.options.rotationAlignmentExcludeTaxa).toEqual([2, 3, 4]);
+    expect(controller.layoutWorker.messages[0].data.options.layoutCacheKey).toContain(
+      'rotationAlignmentExcludeTaxa=2,3,4'
+    );
+  });
+
   it('updates projected node positions on pan-only viewport changes without rerendering layers', () => {
     const controller = Object.create(ControllerClass.prototype);
     const nodes = [{ id: 'n1', position: [0, 0, 0] }];

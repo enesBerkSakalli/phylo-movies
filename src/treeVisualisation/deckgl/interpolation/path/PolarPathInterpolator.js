@@ -5,6 +5,7 @@
 import { calculateInterpolatedBranchCoordinates } from '../../../layout/RadialTreeGeometry.js';
 import { shortestAngle, crossesAngle, longArcDelta } from '../../../../domain/math/mathUtils.js';
 import { ARC_SEGMENT_COUNT } from '../../builders/geometry/links/LinkGeometryBuilder.js';
+import { rootAwareAngleDelta } from '../../../utils/polarGeometry.js';
 
 export class PolarPathInterpolator {
   constructor() {
@@ -20,17 +21,6 @@ export class PolarPathInterpolator {
    */
   setRootAngle(angle) {
     this._rootAngle = angle ?? 0;
-  }
-
-  /**
-   * Calculate the correct delta for angle interpolation, avoiding root crossing.
-   * @private
-   */
-  _getAngleDelta(fromAngle, toAngle) {
-    const shortDelta = shortestAngle(fromAngle, toAngle);
-    const shortEndAngle = fromAngle + shortDelta;
-    const crossesRoot = crossesAngle(fromAngle, shortEndAngle, this._rootAngle);
-    return crossesRoot ? longArcDelta(shortDelta) : shortDelta;
   }
 
   /**
@@ -59,8 +49,8 @@ export class PolarPathInterpolator {
     const toTargetAngle = toLink.polarData.target.angle;
 
     // Calculate deltas that avoid crossing the root
-    const sourceDelta = this._getAngleDelta(fromSourceAngle, toSourceAngle);
-    const targetDelta = this._getAngleDelta(fromTargetAngle, toTargetAngle);
+    const sourceDelta = rootAwareAngleDelta(fromSourceAngle, toSourceAngle, this._rootAngle);
+    const targetDelta = rootAwareAngleDelta(fromTargetAngle, toTargetAngle, this._rootAngle);
 
     // Calculate interpolated angles (use angularT)
     const interpSourceAngle = fromSourceAngle + sourceDelta * angularT;

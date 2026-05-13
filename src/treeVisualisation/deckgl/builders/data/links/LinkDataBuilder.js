@@ -51,6 +51,7 @@ export class LinkDataBuilder {
       isLeaf: link.isLeaf === true,
       isInternal: link.isInternal === true,
       split_indices: link.targetSplitIndices,
+      radialLength: this._calculateRadialLength(link),
       sourceId,
       targetId,
       sourceSplitIndices: link.sourceSplitIndices,
@@ -95,6 +96,13 @@ export class LinkDataBuilder {
         radius: link.target.radius
       }
     };
+  }
+
+  _calculateRadialLength(link) {
+    const sourceRadius = Number(link?.source?.radius);
+    const targetRadius = Number(link?.target?.radius);
+    if (!Number.isFinite(sourceRadius) || !Number.isFinite(targetRadius)) return 0;
+    return Math.max(0, targetRadius - sourceRadius);
   }
 }
 

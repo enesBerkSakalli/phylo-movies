@@ -32,8 +32,7 @@ export class DeckGLTreeLayerDataFactory {
     const nodes = this.nodeDataBuilder.convertNodes(layout.nodes, { canvasWidth, canvasHeight, radiusConfig });
     const links = this.linkDataBuilder.convertLinks(layout.links);
     const labels = this.labelDataBuilder.convertLabels(layout.leaves, labelRadius || extensionRadius);
-    // Extensions should reach to labelRadius (where labels start) for visual connection
-    const extensions = this.extensionDataBuilder.convertExtensions(layout.leaves, labelRadius || extensionRadius);
+    const extensions = this.extensionDataBuilder.convertExtensions(layout.leaves, extensionRadius || labelRadius);
 
     const layerData = { nodes, links, labels, extensions };
     applyRenderContext(layerData, { treeIndex, treeSide, renderMode });
