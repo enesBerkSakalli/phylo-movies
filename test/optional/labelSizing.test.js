@@ -56,13 +56,13 @@ describe('Label Sizing Logic (TDD)', () => {
     expect(size).to.equal(EXPECTED_BASE_PIXELS * 1.1);
   });
 
-  it('hides labels inside actively moving subtrees', () => {
+  it('keeps labels visible inside actively moving subtrees', () => {
     cachedState.colorManager = {
       isNodeMovingSubtree: (node) => node?.id === 'moving-label'
     };
 
     const size = getLabelSize({ id: 'moving-label' }, DEFAULT_FONT_SIZE, cachedState);
-    expect(size).to.equal(0);
+    expect(size).to.equal(EXPECTED_BASE_PIXELS);
   });
 
   it('verifies Source Labels stay at baseline (ignore highlight multipliers)', () => {

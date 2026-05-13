@@ -121,31 +121,46 @@ describe('TidyTreeLayout', () => {
     });
   });
 
-  it('reduces moving taxa influence on tidy angular spacing when excluded from rotation alignment', () => {
+  it('does not compress moving subtree angles when taxa are excluded from rotation alignment', () => {
     const tree = {
       name: 'root',
       length: 0,
-      split_indices: [0, 1, 2, 3],
+      split_indices: [0, 1, 2, 3, 4, 5],
       children: [
         { name: 'A', length: 1, split_indices: [0] },
-        { name: 'B', length: 1, split_indices: [1] },
-        { name: 'C', length: 1, split_indices: [2] },
-        { name: 'D', length: 1, split_indices: [3] },
+        {
+          name: 'moving',
+          length: 1,
+          split_indices: [1, 2, 3],
+          children: [
+            { name: 'B', length: 1, split_indices: [1] },
+            { name: 'C', length: 1, split_indices: [2] },
+            { name: 'D', length: 1, split_indices: [3] },
+          ],
+        },
+        { name: 'E', length: 1, split_indices: [4] },
+        { name: 'F', length: 1, split_indices: [5] },
       ],
     };
-    const layoutEngine = new TidyTreeLayout(tree);
-    layoutEngine.setDimension(800, 600);
-    layoutEngine.setMargin(60);
+    const buildAngles = (options = {}) => {
+      const layoutEngine = new TidyTreeLayout(tree);
+      layoutEngine.setDimension(800, 600);
+      layoutEngine.setMargin(60);
+      const root = layoutEngine.constructRadialTree(false, options);
+      return Object.fromEntries(
+        root.leaves().map((leaf) => [leaf.data.name, leaf.rotatedAngle])
+      );
+    };
 
-    const root = layoutEngine.constructRadialTree(false, {
-      rotationAlignmentExcludeTaxa: [1],
+    const baseline = buildAngles();
+    const withMovingTaxaExcluded = buildAngles({
+      rotationAlignmentExcludeTaxa: [1, 2, 3],
     });
-    const angles = Object.fromEntries(
-      root.leaves().map((leaf) => [leaf.data.name, leaf.rotatedAngle])
-    );
 
-    const excludedGap = angles.B - angles.A;
-    const stableGap = angles.D - angles.C;
-    expect(excludedGap).toBeLessThan(stableGap);
+    expect(withMovingTaxaExcluded.B).to.be.closeTo(baseline.B, 1e-9);
+    expect(withMovingTaxaExcluded.C).to.be.closeTo(baseline.C, 1e-9);
+    expect(withMovingTaxaExcluded.D).to.be.closeTo(baseline.D, 1e-9);
+    expect(withMovingTaxaExcluded.D - withMovingTaxaExcluded.B)
+      .to.be.closeTo(baseline.D - baseline.B, 1e-9);
   });
 });
