@@ -301,6 +301,65 @@ describe('Layer Highlighting Configuration', () => {
 
       expect(layer.props.visible).to.equal(true);
     });
+
+    it('should show link outlines when lifecycle links are expanding or collapsing', () => {
+      const links = [
+        { path: [[0, 0, 0], [1, 1, 0]], split_indices: [1], lifecycle: 'reviving' }
+      ];
+      const layer = createLinkOutlinesLayer(links, mockStoreState, layerStyles);
+
+      expect(layer.props.visible).to.equal(true);
+    });
+  });
+
+  describe('lifecycle link highlighting', () => {
+    it('colors and thickens expanding lifecycle links', () => {
+      const link = {
+        path: [[0, 0, 0], [1, 1, 0]],
+        split_indices: [1],
+        lifecycle: 'reviving',
+        opacity: 1
+      };
+      const linksLayer = createLinksLayer([link], mockStoreState, layerStyles);
+      const outlineLayer = createLinkOutlinesLayer([link], mockStoreState, layerStyles);
+
+      expect(linksLayer.props.getColor(link).slice()).to.deep.equal([34, 197, 94, 255]);
+      expect(linksLayer.props.getWidth(link)).to.be.greaterThan(mockStoreState.strokeWidth);
+      expect(outlineLayer.props.getColor(link).slice()).to.deep.equal([34, 197, 94, 179]);
+      expect(outlineLayer.props.getWidth(link)).to.be.greaterThan(0);
+    });
+
+    it('colors and thickens collapsing lifecycle links', () => {
+      const link = {
+        path: [[0, 0, 0], [1, 1, 0]],
+        split_indices: [1],
+        lifecycle: 'zeroing',
+        opacity: 1
+      };
+      const linksLayer = createLinksLayer([link], mockStoreState, layerStyles);
+      const outlineLayer = createLinkOutlinesLayer([link], mockStoreState, layerStyles);
+
+      expect(linksLayer.props.getColor(link).slice()).to.deep.equal([245, 158, 11, 255]);
+      expect(linksLayer.props.getWidth(link)).to.be.greaterThan(mockStoreState.strokeWidth);
+      expect(outlineLayer.props.getColor(link).slice()).to.deep.equal([245, 158, 11, 179]);
+      expect(outlineLayer.props.getWidth(link)).to.be.greaterThan(0);
+    });
+
+    it('does not lifecycle-highlight unchanged links', () => {
+      const link = {
+        path: [[0, 0, 0], [1, 1, 0]],
+        split_indices: [1],
+        lifecycle: 'unchanged',
+        opacity: 1
+      };
+      const linksLayer = createLinksLayer([link], mockStoreState, layerStyles);
+      const outlineLayer = createLinkOutlinesLayer([link], mockStoreState, layerStyles);
+
+      expect(linksLayer.props.getColor(link).slice()).to.deep.equal([0, 0, 0, 255]);
+      expect(linksLayer.props.getWidth(link)).to.equal(mockStoreState.strokeWidth);
+      expect(outlineLayer.props.getColor(link).slice()).to.deep.equal([0, 0, 0, 0]);
+      expect(outlineLayer.props.getWidth(link)).to.equal(0);
+    });
   });
 
   describe('highlight color contrast', () => {

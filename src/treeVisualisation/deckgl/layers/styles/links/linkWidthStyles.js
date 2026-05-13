@@ -1,20 +1,23 @@
 
 import { isLinkVisuallyHighlighted } from '../../../../systems/tree_color/visualHighlights.js';
-import { shouldHighlightMarkedSubtree } from './linkUtils.js';
+import { getLifecycleLinkHighlight, shouldHighlightMarkedSubtree } from './linkUtils.js';
 
 export function getLinkWidth(link, cached, helpers) {
   const baseWidth = helpers.getBaseStrokeWidth();
   const { colorManager: cm, upcomingChangesEnabled, densityScale, metricScale = 1.0 } = cached;
-
-  if (!cm) {
-    return Math.max(baseWidth, 2) * metricScale; // Fallback without highlighting
-  }
 
   // Helper to scale added thickness based on density
   // scale = 1.0 (sparse) to 0.3 (dense)
   const scale = densityScale !== undefined ? densityScale : 1.0;
   const getScaledWidth = (multiplier) => baseWidth * (1 + (multiplier - 1) * scale);
 
+  if (getLifecycleLinkHighlight(link)) {
+    return getScaledWidth(2.0) * metricScale;
+  }
+
+  if (!cm) {
+    return Math.max(baseWidth, 2) * metricScale; // Fallback without highlighting
+  }
 
   // History mode - different thickness for each state
   // Done: thick (1.8x) - prominent, clearly visible

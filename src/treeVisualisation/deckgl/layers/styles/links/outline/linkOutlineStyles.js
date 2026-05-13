@@ -1,8 +1,13 @@
-import { colorToRgb, getContrastingHighlightColor } from '../../../../../../services/ui/colorUtils.js';
+import { colorToRgb } from '../../../../../../services/ui/colorUtils.js';
 import { SYSTEM_TREE_COLORS } from '../../../../../../constants/TreeColors.js';
 import { calculateFlightDashArray } from '../dashUtils.js';
 import { applyDimmingWithCache } from '../../dimmingUtils.js';
-import { shouldHighlightMarkedSubtree, getHistoryOutlineStyle, getMarkedHighlightColor } from '../linkUtils.js';
+import {
+  getLifecycleLinkHighlight,
+  shouldHighlightMarkedSubtree,
+  getHistoryOutlineStyle,
+  getMarkedHighlightColor
+} from '../linkUtils.js';
 import { isLinkVisuallyHighlighted } from '../../../../../systems/tree_color/visualHighlights.js';
 
 // Reusable output buffers to avoid per-call array allocations
@@ -14,19 +19,19 @@ export function getLinkOutlineDashArray(link, cached) {
   const { colorManager: cm, dashingEnabled, upcomingChangesEnabled } = cached;
 
   // Done: solid
-  if (upcomingChangesEnabled && cm.isCompletedChangeEdge(link)) {
+  if (upcomingChangesEnabled && cm?.isCompletedChangeEdge?.(link)) {
     return null;
   }
 
   // Next: dotted
-  if (upcomingChangesEnabled && cm.isUpcomingChangeEdge(link)) {
+  if (upcomingChangesEnabled && cm?.isUpcomingChangeEdge?.(link)) {
     _outlineDashOut[0] = 3;
     _outlineDashOut[1] = 6;
     return _outlineDashOut;
   }
 
   // Current: dashed (when enabled)
-  if (dashingEnabled && cm.isPivotEdge(link)) {
+  if (dashingEnabled && cm?.isPivotEdge?.(link)) {
     return calculateFlightDashArray(link.path);
   }
 
@@ -39,11 +44,13 @@ export function getLinkOutlineColor(link, cached) {
     pulseOpacity,
     upcomingChangesEnabled,
     markedSubtreeData,
-    highlightColorMode,
     markedSubtreeOpacity,
   } = cached;
+  const lifecycleHighlight = getLifecycleLinkHighlight(link);
+  const historyColor = colorToRgb(SYSTEM_TREE_COLORS.pivotEdgeColor);
+  const baseOpacity = link.opacity !== undefined ? link.opacity : 1;
 
-  if (!cm) {
+  if (!cm && !lifecycleHighlight) {
     _transparentColor[0] = 0;
     _transparentColor[1] = 0;
     _transparentColor[2] = 0;
@@ -51,40 +58,50 @@ export function getLinkOutlineColor(link, cached) {
     return _transparentColor; // Transparent if no ColorManager
   }
 
-  const historyColor = colorToRgb(SYSTEM_TREE_COLORS.pivotEdgeColor);
-  const baseOpacity = link.opacity !== undefined ? link.opacity : 1;
-
   // 1. Determine base RGB
   let rgb = [0, 0, 0];
   let glowOpacity = 0;
+  let hasOutline = false;
+
+  if (lifecycleHighlight) {
+    rgb = lifecycleHighlight.rgb;
+    glowOpacity = Math.round(baseOpacity * 179);
+    hasOutline = true;
+  }
 
   // Check for history/upcoming changes using shared helper
-  const historyStyle = getHistoryOutlineStyle(link, cm, upcomingChangesEnabled, baseOpacity, historyColor);
-  if (historyStyle) {
-    rgb = historyStyle.rgb;
-    glowOpacity = historyStyle.glowOpacity;
-  }
-
-  // Check if link is part of a MARKED subtree (persistent highlight)
-  // Priority: Marked (Red) > Pivot (Blue)
-  // We allow Marked highlight even if it's part of the pivot edge, so the specific jumping subtree stands out
-  // from the broader pivot edge.
-  else if (shouldHighlightMarkedSubtree(link, cached)) {
-    const mode = cached.highlightColorMode || 'solid';
-    rgb = getMarkedHighlightColor(link, cm, mode, cached.markedColor);
-
-    // Apply adjustable opacity from slider
-    const sensitivity = markedSubtreeOpacity ?? 0.8;
-    glowOpacity = Math.round(baseOpacity * 255 * sensitivity);
-  }
-
-  // Current Pivot Edge: strong pulsing glow
-  else if (isLinkVisuallyHighlighted(link, cm, cached.markedSubtreesEnabled)) {
-    rgb = colorToRgb(cm.getBranchColorWithHighlights(link));
-    glowOpacity = Math.round(baseOpacity * 128 * pulseOpacity);
-  }
-  // Otherwise: no outline
   else {
+    const historyStyle = getHistoryOutlineStyle(link, cm, upcomingChangesEnabled, baseOpacity, historyColor);
+    if (historyStyle) {
+      rgb = historyStyle.rgb;
+      glowOpacity = historyStyle.glowOpacity;
+      hasOutline = true;
+    }
+
+    // Check if link is part of a MARKED subtree (persistent highlight)
+    // Priority: Marked (Red) > Pivot (Blue)
+    // We allow Marked highlight even if it's part of the pivot edge, so the specific jumping subtree stands out
+    // from the broader pivot edge.
+    else if (shouldHighlightMarkedSubtree(link, cached)) {
+      const mode = cached.highlightColorMode || 'solid';
+      rgb = getMarkedHighlightColor(link, cm, mode, cached.markedColor);
+
+      // Apply adjustable opacity from slider
+      const sensitivity = markedSubtreeOpacity ?? 0.8;
+      glowOpacity = Math.round(baseOpacity * 255 * sensitivity);
+      hasOutline = true;
+    }
+
+    // Current Pivot Edge: strong pulsing glow
+    else if (isLinkVisuallyHighlighted(link, cm, cached.markedSubtreesEnabled)) {
+      rgb = colorToRgb(cm.getBranchColorWithHighlights(link));
+      glowOpacity = Math.round(baseOpacity * 128 * pulseOpacity);
+      hasOutline = true;
+    }
+  }
+
+  // Otherwise: no outline
+  if (!hasOutline) {
     _transparentColor[0] = 0;
     _transparentColor[1] = 0;
     _transparentColor[2] = 0;
@@ -117,12 +134,15 @@ export function getLinkOutlineColor(link, cached) {
 
 export function getLinkOutlineWidth(link, cached, helpers) {
   const { colorManager: cm, pulseOpacity, upcomingChangesEnabled, markedSubtreeData, metricScale = 1.0 } = cached;
+  const baseWidth = helpers.getBaseStrokeWidth();
+
+  if (getLifecycleLinkHighlight(link)) {
+    return (baseWidth * 2 + 6) * metricScale;
+  }
 
   if (!cm) {
     return 0;
   }
-
-  const baseWidth = helpers.getBaseStrokeWidth();
 
   // Done: large static glow (same size as current, but no pulse)
   if (upcomingChangesEnabled && cm.isCompletedChangeEdge?.(link)) {
