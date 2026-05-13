@@ -92,7 +92,7 @@ export class TidyTreeLayout {
   cacheLeafCounts() {
     this.root.eachAfter((d) => {
       if (!d.children || d.children.length === 0) {
-        d.leafCount = isExcludedLeaf(d, this.rotationAlignmentExcludeTaxa) ? 0 : 1;
+        d.leafCount = 1;
       } else {
         d.leafCount = d.children.reduce((sum, child) => sum + (child.leafCount || 0), 0);
       }
@@ -196,11 +196,4 @@ function normalizeTaxaSet(value) {
       .map((item) => Number(item))
       .filter(Number.isFinite)
   );
-}
-
-function isExcludedLeaf(node, excludedTaxa) {
-  if (!excludedTaxa || excludedTaxa.size === 0) return false;
-  const splitIndices = node?.data?.split_indices;
-  if (!Array.isArray(splitIndices) || splitIndices.length === 0) return false;
-  return splitIndices.every((item) => excludedTaxa.has(Number(item)));
 }
