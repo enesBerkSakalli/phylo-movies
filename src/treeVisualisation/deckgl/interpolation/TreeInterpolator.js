@@ -7,6 +7,7 @@ import { PolarLinkInterpolator } from './PolarLinkInterpolator.js';
 import { OuterRadiusInterpolator } from './OuterRadiusInterpolator.js';
 import { computeAngularDistances, buildGlobalVelocityMaps } from './VelocityNormalizer.js';
 import { ANIMATION_STAGES } from './stages/animationStageDetector.js';
+import { LINK_LIFECYCLES, createLifecycleClocks } from './TransitionChangeModel.js';
 import { measureFrameStep } from '../../performance/frameInstrumentation.js';
 
 /**
@@ -56,6 +57,10 @@ export class TreeInterpolator {
     // Ensure timeFactor is clamped
     const t = Math.max(0, Math.min(1, timeFactor));
     const structuralOpacity = structuralOpacityOptions(interpolationOptions);
+    const lifecycleClocks = hasCollapsingLifecycleChanges(interpolationOptions.transitionChangeModel)
+      ? createLifecycleClocks(interpolationOptions.rawTimeFactor ?? t)
+      : null;
+    const angularTimeFactor = lifecycleClocks?.moveT ?? t;
 
     // Build element maps for all types
     const nodeFromMap = this.elementMatcher._createElementMap(dataFrom.nodes);
@@ -67,12 +72,14 @@ export class TreeInterpolator {
     const extFromMap = this.elementMatcher._createElementMap(dataFrom.extensions);
     const extToMap = this.elementMatcher._createElementMap(dataTo.extensions);
 
-    // Velocity normalisation: only during REORDER and only for angle.
-    // Radial interpolation stays on the base eased timeline.
+    // Velocity normalisation: only for angle. During collapsing lifecycles,
+    // angles wait for the move phase while radii stay on the base timeline.
     let velocityMaps = null;
-    const isReorder = !interpolationOptions.stage || interpolationOptions.stage === ANIMATION_STAGES.REORDER;
+    const shouldNormalizeAngles = Boolean(lifecycleClocks) ||
+      !interpolationOptions.stage ||
+      interpolationOptions.stage === ANIMATION_STAGES.REORDER;
 
-    if (isReorder) {
+    if (shouldNormalizeAngles) {
       const rootAngle = this._rootAngle;
 
       // Angular distances for all element types
@@ -88,7 +95,7 @@ export class TreeInterpolator {
       };
 
       // Build velocity maps with a single global angular maximum across all types
-      ({ velocityMaps } = buildGlobalVelocityMaps(angularDistanceMaps, t));
+      ({ velocityMaps } = buildGlobalVelocityMaps(angularDistanceMaps, angularTimeFactor));
     }
 
     // Interpolate each element type
@@ -107,6 +114,7 @@ export class TreeInterpolator {
       nodeToMap,
       nodeVelocityMap: velocityMaps?.nodes ?? null,
       transitionChangeModel: interpolationOptions.transitionChangeModel,
+      lifecycleClocks,
       rawTimeFactor: interpolationOptions.rawTimeFactor
     });
     const interpolatedLabels = this._interpolateLabels(dataFrom.labels, dataTo.labels, t, {
@@ -252,4 +260,20 @@ function structuralOpacityOptions(options) {
   }
 
   return result;
+}
+
+function hasCollapsingLifecycleChanges(transitionChangeModel) {
+  const linkChanges = transitionChangeModel?.linkChanges;
+  if (!linkChanges || typeof linkChanges.values !== 'function') return false;
+
+  for (const change of linkChanges.values()) {
+    if (
+      change?.lifecycle === LINK_LIFECYCLES.EXITING ||
+      change?.lifecycle === LINK_LIFECYCLES.ZEROING
+    ) {
+      return true;
+    }
+  }
+
+  return false;
 }
