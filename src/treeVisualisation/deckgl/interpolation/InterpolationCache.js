@@ -7,8 +7,7 @@ export class InterpolationCache {
     getConsistentRadii,
     convertTreeToLayerData,
     getLayoutCacheKey,
-    getRotationAlignmentExcludeTaxa = () => [],
-    getLinkGeometryMode = () => 'radial-elbow'
+    getRotationAlignmentExcludeTaxa = () => []
   }) {
     if (typeof getLayoutCacheKey !== 'function') {
       throw new Error('InterpolationCache requires getLayoutCacheKey');
@@ -19,7 +18,6 @@ export class InterpolationCache {
     this.convertTreeToLayerData = convertTreeToLayerData;
     this.getLayoutCacheKey = getLayoutCacheKey;
     this.getRotationAlignmentExcludeTaxa = getRotationAlignmentExcludeTaxa;
-    this.getLinkGeometryMode = getLinkGeometryMode;
 
     this._precomputedCache = new Map();
     this._createMemoizedFunction();
@@ -148,8 +146,7 @@ export class InterpolationCache {
         canvasHeight: layout.height,
         treeIndex,
         treeSide: 'left',
-        renderMode: 'animation',
-        linkGeometryMode: this.getLinkGeometryMode()
+        renderMode: 'animation'
       }
     );
     if (layerData && typeof layerData === 'object') {

@@ -107,8 +107,7 @@ export class TreeInterpolator {
       nodeToMap,
       nodeVelocityMap: velocityMaps?.nodes ?? null,
       transitionChangeModel: interpolationOptions.transitionChangeModel,
-      rawTimeFactor: interpolationOptions.rawTimeFactor,
-      linkGeometryMode: interpolationOptions.linkGeometryMode
+      rawTimeFactor: interpolationOptions.rawTimeFactor
     });
     const interpolatedLabels = this._interpolateLabels(dataFrom.labels, dataTo.labels, t, {
       fromMap: labelFromMap,
@@ -230,8 +229,7 @@ function normalizeInterpolationOptions(options = {}) {
       ? input.exitTimeFactor
       : null,
     hasExplicitEnterTimeFactor: Number.isFinite(input.enterTimeFactor),
-    hasExplicitExitTimeFactor: Number.isFinite(input.exitTimeFactor),
-    linkGeometryMode: input.linkGeometryMode || 'radial-elbow'
+    hasExplicitExitTimeFactor: Number.isFinite(input.exitTimeFactor)
   };
 }
 
