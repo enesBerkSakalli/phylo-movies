@@ -27,6 +27,31 @@ describe('TreeInterpolator label radius smoothing', () => {
     expect(byId.get('node-exit-1').opacity).toBeCloseTo(0.75);
   });
 
+  it('uses straight direct paths during interpolation when straight link geometry is selected', () => {
+    const interpolator = new TreeInterpolator();
+    const result = interpolator.interpolateTreeData(
+      {
+        max_radius: 40,
+        nodes: [],
+        links: [link('link-1', 10, 20, 0, Math.PI / 2)],
+        labels: [],
+        extensions: [],
+      },
+      {
+        max_radius: 40,
+        nodes: [],
+        links: [link('link-1', 10, 20, 0, Math.PI / 2)],
+        labels: [],
+        extensions: [],
+      },
+      0.5,
+      { linkGeometryMode: 'straight' }
+    );
+
+    expect(result.links[0].path).toHaveLength(6);
+    expectPathCloseTo(result.links[0].path, [10, 0, 0, 0, 20, 0]);
+  });
+
   it('places entering labels on the interpolated label radius', () => {
     const interpolator = new TreeInterpolator();
     const fromData = {
@@ -195,6 +220,34 @@ function node(id, radius, angle, splitIndices = [1]) {
     opacity: 1,
     position: position(radius, angle),
   };
+}
+
+function link(id, sourceRadius, targetRadius, sourceAngle, targetAngle) {
+  const sourcePosition = position(sourceRadius, sourceAngle);
+  const targetPosition = position(targetRadius, targetAngle);
+
+  return {
+    id,
+    splitKey: id,
+    split_indices: [1],
+    radialLength: Math.max(0, targetRadius - sourceRadius),
+    opacity: 1,
+    sourcePosition,
+    targetPosition,
+    polarData: {
+      source: { angle: sourceAngle, radius: sourceRadius },
+      target: { angle: targetAngle, radius: targetRadius },
+    },
+    path: new Float32Array([...sourcePosition, ...targetPosition]),
+  };
+}
+
+function expectPathCloseTo(path, expected) {
+  const actual = Array.from(path);
+  expect(actual).toHaveLength(expected.length);
+  actual.forEach((value, index) => {
+    expect(value).toBeCloseTo(expected[index], 6);
+  });
 }
 
 function position(radius, angle) {

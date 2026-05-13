@@ -37,7 +37,8 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       getConsistentRadii: this._getConsistentRadii.bind(this),
       convertTreeToLayerData: this.dataConverter.convertTreeToLayerData.bind(this.dataConverter),
       getLayoutCacheKey: (treeIndex) => this._createLayoutCacheKey(treeIndex),
-      getRotationAlignmentExcludeTaxa: (treeIndex) => this._getRotationAlignmentExcludeTaxa(treeIndex)
+      getRotationAlignmentExcludeTaxa: (treeIndex) => this._getRotationAlignmentExcludeTaxa(treeIndex),
+      getLinkGeometryMode: () => this._getLinkGeometryMode()
     });
 
     // --- WORKER INITIALIZATION ---
@@ -494,7 +495,8 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
     const interpolatedData = this.treeInterpolator.interpolateTreeData(dataFrom, dataTo, t, {
       transitionChangeModel,
-      rawTimeFactor: options.rawTimeFactor
+      rawTimeFactor: options.rawTimeFactor,
+      linkGeometryMode: this._getLinkGeometryMode()
     });
 
     // --- Adaptive Visual Scaling ---
