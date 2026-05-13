@@ -80,6 +80,17 @@ describe('deck.gl layer render context', () => {
     expect(layerData.extensions[0].polarData.target.radius).toBe(40);
   });
 
+  it('passes straight link geometry mode through layer data conversion', () => {
+    const factory = new DeckGLTreeLayerDataFactory();
+    const layout = makeLayoutTree();
+
+    const layerData = factory.convertTreeToLayerData(layout, {
+      linkGeometryMode: 'straight',
+    });
+
+    expect(layerData.links[0].path).toHaveLength(6);
+  });
+
   it('skips invalid layout coordinates instead of rendering them at the origin', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const factory = new DeckGLTreeLayerDataFactory();

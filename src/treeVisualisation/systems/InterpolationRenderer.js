@@ -43,7 +43,8 @@ export class InterpolationRenderer {
       {
         stage,
         transitionChangeModel,
-        rawTimeFactor: options.rawTimeFactor
+        rawTimeFactor: options.rawTimeFactor,
+        linkGeometryMode: useAppStore.getState().linkGeometryMode || 'radial-elbow'
       }
     );
     interpolatedData.targetData = dataTo; // Add target data for movement arrow endpoints

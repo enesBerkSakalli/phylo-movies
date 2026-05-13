@@ -81,6 +81,7 @@ export interface AppStoreState {
 
   // From treeLayout.slice
   branchTransformation: string;
+  linkGeometryMode: 'radial-elbow' | 'straight';
   layoutAngleDegrees: number;
   layoutRotationDegrees: number;
 
@@ -214,6 +215,7 @@ export interface AppStoreState {
   setLabelsVisible: (visible: boolean) => void;
 
   setBranchTransformation: (transform: string) => void;
+  setLinkGeometryMode: (mode: 'radial-elbow' | 'straight') => void;
   setLayoutAngleDegrees: (degrees: number) => void;
   setLayoutRotationDegrees: (degrees: number) => void;
 

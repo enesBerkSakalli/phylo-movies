@@ -24,6 +24,7 @@ export class StaticRenderer {
     const { treeIndex, leftIndex, rightIndex, comparisonMode } = options;
     const state = useAppStore.getState();
     const { currentTreeIndex, treeList, transitionResolver, comparisonMode: comparisonModeFromStore } = state;
+    const linkGeometryMode = state.linkGeometryMode || 'radial-elbow';
 
     // Handle comparison mode (explicit or inferred from store)
     const useComparison = comparisonMode ?? comparisonModeFromStore;
@@ -32,7 +33,7 @@ export class StaticRenderer {
     }
 
     // Single tree mode
-    this._renderSingleTree(treeIndex, currentTreeIndex, treeList, state);
+    this._renderSingleTree(treeIndex, currentTreeIndex, treeList, state, linkGeometryMode);
   }
 
   /*
@@ -50,7 +51,7 @@ export class StaticRenderer {
   /*
    * Helper to render a single tree in static mode.
    */
-  _renderSingleTree(treeIndex, currentTreeIndex, treeList, state) {
+  _renderSingleTree(treeIndex, currentTreeIndex, treeList, state, linkGeometryMode = 'radial-elbow') {
     if (!treeList?.length) return;
 
     const targetIndex = Number.isInteger(treeIndex)
@@ -80,7 +81,8 @@ export class StaticRenderer {
         canvasHeight: currentLayout.height,
         treeIndex: targetIndex,
         treeSide: 'left',
-        renderMode: 'single'
+        renderMode: 'single',
+        linkGeometryMode
       }
     );
 

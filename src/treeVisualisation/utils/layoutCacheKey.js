@@ -128,6 +128,7 @@ export function createLayoutCacheKey({
     `dataset=${getDatasetCacheId(state, resolvedTreeList)}`,
     `tree=${treeIndex}`,
     `branch=${state?.branchTransformation ?? 'none'}`,
+    `linkGeometry=${state?.linkGeometryMode ?? 'radial-elbow'}`,
     `width=${finiteNumber(width, 0)}`,
     `height=${finiteNumber(height, 0)}`,
     `angle=${finiteNumber(state?.layoutAngleDegrees, 360)}`,

@@ -7,6 +7,7 @@ import {
   createPolarInterpolator,
   calculateBranchCoordinates
 } from '../src/treeVisualisation/layout/RadialTreeGeometry.js';
+import { LinkGeometryBuilder } from '../src/treeVisualisation/deckgl/builders/geometry/links/LinkGeometryBuilder.js';
 
 describe('RadialTreeGeometry', () => {
 
@@ -95,6 +96,19 @@ describe('RadialTreeGeometry', () => {
       expect(res.arcProperties.endAngle).toBe(Math.PI / 2);
       expect(res.arcEndPoint.x).toBeCloseTo(0); // radius 10 at 90deg
       expect(res.arcEndPoint.y).toBeCloseTo(10);
+    });
+  });
+
+  describe('LinkGeometryBuilder', () => {
+    it('can render direct straight source-to-target link geometry', () => {
+      const builder = new LinkGeometryBuilder({ geometryMode: 'straight' });
+      const path = Array.from(builder.createLinkPath({
+        source: { radius: 10, angle: 0, x: 10, y: 0 },
+        target: { radius: 20, angle: Math.PI / 2, x: 0, y: 20 },
+      }));
+
+      expect(path).toHaveLength(6);
+      expect(path).toEqual([10, 0, 0, 0, 20, 0]);
     });
   });
 });

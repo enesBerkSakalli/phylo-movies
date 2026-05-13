@@ -25,12 +25,13 @@ export class DeckGLTreeLayerDataFactory {
       radiusConfig = {},
       treeIndex = null,
       treeSide = null,
-      renderMode = 'single'
+      renderMode = 'single',
+      linkGeometryMode = 'radial-elbow'
     } = options;
 
     // Convert each type of data
     const nodes = this.nodeDataBuilder.convertNodes(layout.nodes, { canvasWidth, canvasHeight, radiusConfig });
-    const links = this.linkDataBuilder.convertLinks(layout.links);
+    const links = this.linkDataBuilder.convertLinks(layout.links, { linkGeometryMode });
     const labels = this.labelDataBuilder.convertLabels(layout.leaves, labelRadius || extensionRadius);
     const extensions = this.extensionDataBuilder.convertExtensions(layout.leaves, extensionRadius || labelRadius);
 

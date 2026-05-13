@@ -35,6 +35,10 @@ describe('layout cache key', () => {
     })).not.toBe(baseKey);
     expect(createLayoutCacheKey({
       ...baseOptions,
+      state: { ...baseState, linkGeometryMode: 'straight' }
+    })).not.toBe(baseKey);
+    expect(createLayoutCacheKey({
+      ...baseOptions,
       state: { ...baseState, styleConfig: { labelOffsets: { DEFAULT: 30, EXTENSION: 5 } } }
     })).not.toBe(baseKey);
     expect(createLayoutCacheKey({

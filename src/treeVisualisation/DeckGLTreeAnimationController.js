@@ -37,7 +37,8 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       getConsistentRadii: this._getConsistentRadii.bind(this),
       convertTreeToLayerData: this.dataConverter.convertTreeToLayerData.bind(this.dataConverter),
       getLayoutCacheKey: (treeIndex) => this._createLayoutCacheKey(treeIndex),
-      getRotationAlignmentExcludeTaxa: (treeIndex) => this._getRotationAlignmentExcludeTaxa(treeIndex)
+      getRotationAlignmentExcludeTaxa: (treeIndex) => this._getRotationAlignmentExcludeTaxa(treeIndex),
+      getLinkGeometryMode: () => this._getLinkGeometryMode()
     });
 
     // --- WORKER INITIALIZATION ---
@@ -367,6 +368,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     const treeData = treeList[treeIndex];
     const { branchTransformation, layoutAngleDegrees, layoutRotationDegrees, styleConfig } = state;
     const offsets = styleConfig?.labelOffsets || { DEFAULT: 20, EXTENSION: 5 };
+    const linkGeometryMode = this._getLinkGeometryMode(state);
 
     // Ensure uniform scaling is initialized before dispatching to worker
     this.initializeUniformScaling(branchTransformation);
@@ -396,6 +398,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
           treeIndex,
           treeSide: 'left',
           renderMode: 'animation',
+          linkGeometryMode,
           layoutCacheKey,
           maxGlobalScale: this.maxGlobalScale // Pass global scale for consistent sizing
         }
@@ -419,6 +422,10 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
   _getRotationAlignmentExcludeTaxa(treeIndex, state = useAppStore.getState()) {
     return getRotationAlignmentExcludeTaxa(state, treeIndex);
+  }
+
+  _getLinkGeometryMode(state = useAppStore.getState()) {
+    return state?.linkGeometryMode === 'straight' ? 'straight' : 'radial-elbow';
   }
 
   _createLayoutRequestToken(treeIndex, state = useAppStore.getState()) {
@@ -488,7 +495,8 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
     const interpolatedData = this.treeInterpolator.interpolateTreeData(dataFrom, dataTo, t, {
       transitionChangeModel,
-      rawTimeFactor: options.rawTimeFactor
+      rawTimeFactor: options.rawTimeFactor,
+      linkGeometryMode: this._getLinkGeometryMode()
     });
 
     // --- Adaptive Visual Scaling ---

@@ -7,10 +7,24 @@ import { twoPointFloat32Path } from '../../../utils/pathFormat.js';
 
 /** Default number of segments for arc generation */
 export const ARC_SEGMENT_COUNT = 15;
+export const LINK_GEOMETRY_MODES = Object.freeze({
+  RADIAL_ELBOW: 'radial-elbow',
+  STRAIGHT: 'straight',
+});
+
+export function normalizeLinkGeometryMode(mode) {
+  return mode === LINK_GEOMETRY_MODES.STRAIGHT
+    ? LINK_GEOMETRY_MODES.STRAIGHT
+    : LINK_GEOMETRY_MODES.RADIAL_ELBOW;
+}
 
 export class LinkGeometryBuilder {
-  constructor(segmentCount = ARC_SEGMENT_COUNT) {
-    this.segmentCount = segmentCount;
+  constructor(options = {}) {
+    const config = typeof options === 'number' ? { segmentCount: options } : options;
+    this.segmentCount = Number.isFinite(config.segmentCount)
+      ? Math.max(1, Math.floor(config.segmentCount))
+      : ARC_SEGMENT_COUNT;
+    this.geometryMode = normalizeLinkGeometryMode(config.geometryMode);
   }
 
   /**
@@ -20,7 +34,17 @@ export class LinkGeometryBuilder {
    * @param {number} segmentCount - Number of arc segments
    * @returns {Float32Array} Flat XYZ path points
    */
-  createLinkPath(linkData, segmentCount = this.segmentCount) {
+  createLinkPath(linkData, options = {}) {
+    const config = typeof options === 'number' ? { segmentCount: options } : options;
+    const segmentCount = Number.isFinite(config.segmentCount)
+      ? Math.max(1, Math.floor(config.segmentCount))
+      : this.segmentCount;
+    const geometryMode = normalizeLinkGeometryMode(config.geometryMode || this.geometryMode);
+
+    if (geometryMode === LINK_GEOMETRY_MODES.STRAIGHT) {
+      return this._createDirectPath(linkData);
+    }
+
     const branchCoords = calculateBranchCoordinates(linkData);
 
     if (branchCoords.arcProperties === null) {
@@ -38,6 +62,15 @@ export class LinkGeometryBuilder {
     return twoPointFloat32Path(
       [branchCoords.movePoint.x, branchCoords.movePoint.y, 0],
       [branchCoords.lineEndPoint.x, branchCoords.lineEndPoint.y, 0]
+    );
+  }
+
+  _createDirectPath(linkData) {
+    const source = linkData?.source || {};
+    const target = linkData?.target || {};
+    return twoPointFloat32Path(
+      [finiteCoordinate(source.x, source.radius * Math.cos(source.angle)), finiteCoordinate(source.y, source.radius * Math.sin(source.angle)), 0],
+      [finiteCoordinate(target.x, target.radius * Math.cos(target.angle)), finiteCoordinate(target.y, target.radius * Math.sin(target.angle)), 0]
     );
   }
 
@@ -79,4 +112,8 @@ export class LinkGeometryBuilder {
     this.segmentCount = Math.max(1, Math.floor(count));
   }
 
+}
+
+function finiteCoordinate(value, fallback = 0) {
+  return Number.isFinite(value) ? value : (Number.isFinite(fallback) ? fallback : 0);
 }

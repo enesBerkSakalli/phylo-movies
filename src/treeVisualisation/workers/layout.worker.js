@@ -62,7 +62,8 @@ export function calculateLayoutWorkerResult(treeData, options) {
         canvasHeight: options.height,
         treeIndex: options.treeIndex,
         treeSide: options.treeSide,
-        renderMode: options.renderMode
+        renderMode: options.renderMode,
+        linkGeometryMode: options.linkGeometryMode || 'radial-elbow'
     });
 
     if (layerData && typeof layerData === 'object') {
