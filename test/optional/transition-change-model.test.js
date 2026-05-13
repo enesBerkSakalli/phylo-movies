@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import { buildTransitionChangeModel, createLifecycleClocks } from '../../src/treeVisualisation/deckgl/interpolation/TransitionChangeModel.js';
 import { TreeInterpolator } from '../../src/treeVisualisation/deckgl/interpolation/TreeInterpolator.js';
 import { getNodeKey } from '../../src/treeVisualisation/utils/KeyGenerator.js';
+import { ANIMATION_STAGES } from '../../src/treeVisualisation/deckgl/interpolation/stages/animationStageDetector.js';
 
 function link(id, sourceRadius, targetRadius, angle = 0) {
   return {
@@ -452,6 +453,39 @@ describe('TreeInterpolator lifecycle-aware links', () => {
 
     expect(firstPathRadius(result.links[0].path)).to.be.closeTo(sourceRadius, 0.001);
     expect(lastPathRadius(result.links[0].path)).to.be.closeTo(expectedTargetRadius, 0.001);
+  });
+
+  it('keeps retained node angles frozen while an exiting branch collapses', () => {
+    const exiting = {
+      ...link('exit-3', 20, 30, 0),
+      sourceId: 'node-parent-1',
+      targetId: 'node-exit-3'
+    };
+    const from = frame([exiting], [
+      node('node-parent-1', 20, 0),
+      node('node-exit-3', 30, 0)
+    ]);
+    const to = frame([], [
+      node('node-parent-1', 20, Math.PI / 2)
+    ]);
+    const transitionChangeModel = buildTransitionChangeModel(from, to);
+    const rawTimeFactor = 0.2;
+    const frameTimeFactor = 1 - Math.pow(1 - rawTimeFactor, 3);
+
+    const result = new TreeInterpolator().interpolateTreeData(from, to, frameTimeFactor, {
+      stage: ANIMATION_STAGES.COLLAPSE,
+      transitionChangeModel,
+      rawTimeFactor
+    });
+
+    const clocks = createLifecycleClocks(rawTimeFactor);
+    const parentNode = result.nodes.find((item) => item.id === 'node-parent-1');
+    const exitingLink = result.links.find((item) => item.id === 'exit-3');
+
+    expect(clocks.moveT).to.equal(0);
+    expect(clocks.collapseT).to.be.greaterThan(0);
+    expect(pointAngle(parentNode.position)).to.be.closeTo(0, 0.001);
+    expect(pointAngle(exitingLink.sourcePosition)).to.be.closeTo(0, 0.001);
   });
 
   it('does not create an arc ring when lifecycle branch length is zero', () => {
