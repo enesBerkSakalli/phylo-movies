@@ -30,6 +30,20 @@ export function getSubtreeSignature(subtreeSplitIndices) {
   return sortedIndices.map(String).join(',');
 }
 
+function normalizeHighlightGroup(highlightGroup) {
+  if (!Array.isArray(highlightGroup)) return [];
+
+  return highlightGroup
+    .map(normalizeSubtreeIndices)
+    .filter((subtree) => subtree.length > 0);
+}
+
+function flattenHighlightGroup(highlightGroup) {
+  return normalizeSubtreeIndices(
+    Array.from(new Set(highlightGroup.flatMap((subtree) => subtree)))
+  );
+}
+
 /**
  * Extract moving subtrees from one backend jumping_subtree_solutions value.
  *
@@ -85,14 +99,19 @@ export function buildSprMoveEventRows(pairSolutions, options = {}) {
         : buildInferredMoveEvents(solution);
 
       return rawEvents.map(({ event, eventIndex, hasMeasuredPath }) => {
-        const splitIndices = normalizeSubtreeIndices(event?.moving_subtree);
+        const driverSplitIndices = normalizeSubtreeIndices(event?.driver_subtree);
+        const highlightGroup = normalizeHighlightGroup(event?.highlight_group);
+        const eventGroup = highlightGroup.length > 0
+          ? highlightGroup
+          : (driverSplitIndices.length > 0 ? [driverSplitIndices] : []);
+        const splitIndices = flattenHighlightGroup(eventGroup);
         const signature = getSubtreeSignature(splitIndices);
         if (!signature) return null;
 
         const pivotEdge = normalizeSubtreeIndices(event?.pivot_edge);
         const pivotKey = pivotEdge.length > 0 ? buildSolutionKey(pivotEdge) : null;
         const attachmentContext = pivotKey
-          ? resolveAttachmentContext(solution, pivotKey, splitIndices)
+          ? resolveGroupAttachmentContext(solution, pivotKey, eventGroup, splitIndices)
           : null;
         const stepRange = normalizeStepRange(event?.step_range)
           ?? resolveStepRangeForPivot(solution, pivotEdge);
@@ -113,6 +132,9 @@ export function buildSprMoveEventRows(pairSolutions, options = {}) {
           eventIndex,
           signature,
           splitIndices,
+          driverSplitIndices,
+          highlightGroup: eventGroup,
+          groupSize: eventGroup.length,
           taxaCount: splitIndices.length,
           pivotEdge,
           sourceAttachment: attachmentContext?.sourceAttachment ?? [],
@@ -159,6 +181,9 @@ function aggregateMoverRows(eventRows) {
       freqMap.set(event.signature, {
         signature: event.signature,
         splitIndices: event.splitIndices,
+        driverSplitIndices: event.driverSplitIndices,
+        highlightGroup: event.highlightGroup,
+        groupSize: event.groupSize,
         count: 0,
         pathEventCount: 0,
         totalPathHops: 0,
@@ -438,7 +463,8 @@ function buildInferredMoveEvents(solution) {
         hasMeasuredPath: false,
         event: {
           pivot_edge: pivotEdge,
-          moving_subtree: movingSubtree,
+          driver_subtree: movingSubtree,
+          highlight_group: [movingSubtree],
           step_range: stepRange,
         },
       }));
@@ -519,7 +545,38 @@ function resolvePathLength(event) {
   return collapse + expand;
 }
 
-function resolveAttachmentContext(solution, pivotKey, splitIndices) {
+function resolveGroupAttachmentContext(solution, pivotKey, highlightGroup, groupSplitIndices) {
+  const groupContext = resolveAttachmentContext(
+    solution,
+    pivotKey,
+    groupSplitIndices,
+    groupSplitIndices
+  );
+  if (groupContext) return groupContext;
+
+  const contexts = highlightGroup
+    .map((subtree) => resolveAttachmentContext(
+      solution,
+      pivotKey,
+      subtree,
+      groupSplitIndices
+    ))
+    .filter(Boolean);
+
+  if (contexts.length === 0) return null;
+
+  return {
+    pivotEdge: contexts[0].pivotEdge,
+    sourceAttachment: mergeIndexLists(
+      contexts.map((context) => context.sourceAttachment)
+    ),
+    destinationAttachment: mergeIndexLists(
+      contexts.map((context) => context.destinationAttachment)
+    ),
+  };
+}
+
+function resolveAttachmentContext(solution, pivotKey, splitIndices, excludedIndices = splitIndices) {
   const sourceMap = getMapValueBySplitKey(solution?.solution_to_source_map, pivotKey);
   const destinationMap = getMapValueBySplitKey(solution?.solution_to_destination_map, pivotKey);
   if (!sourceMap && !destinationMap) return null;
@@ -529,12 +586,20 @@ function resolveAttachmentContext(solution, pivotKey, splitIndices) {
   const destinationEdge = getMapValueBySplitKey(destinationMap, moverKey);
   if (!Array.isArray(sourceEdge) && !Array.isArray(destinationEdge)) return null;
 
-  const movingSet = new Set(splitIndices);
+  const movingSet = new Set(excludedIndices);
   return {
     pivotEdge: parseSplitKey(pivotKey),
     sourceAttachment: filterMovingNodes(sourceEdge, movingSet),
     destinationAttachment: filterMovingNodes(destinationEdge, movingSet),
   };
+}
+
+function mergeIndexLists(lists) {
+  return normalizeSubtreeIndices(
+    Array.from(new Set(lists.flatMap((list) => (
+      Array.isArray(list) ? list : []
+    ))))
+  );
 }
 
 function filterMovingNodes(edge, movingSet) {

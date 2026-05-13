@@ -43,7 +43,8 @@ describe('SPR analytics model', () => {
       spr_move_events: [
         {
           pivot_edge: [9],
-          moving_subtree: [1],
+          driver_subtree: [1],
+          highlight_group: [[1]],
           step_range: [0, 4],
           collapse_hops: 1,
           expand_hops: 2,
@@ -54,7 +55,8 @@ describe('SPR analytics model', () => {
         },
         {
           pivot_edge: [9],
-          moving_subtree: [2, 3],
+          driver_subtree: [2, 3],
+          highlight_group: [[2, 3]],
           step_range: [0, 4],
           collapse_hops: 1,
           expand_hops: 0,
@@ -65,7 +67,8 @@ describe('SPR analytics model', () => {
         },
         {
           pivot_edge: [10],
-          moving_subtree: [1],
+          driver_subtree: [1],
+          highlight_group: [[1]],
           step_range: [5, 9],
           collapse_hops: 1,
           expand_hops: 1,
@@ -98,7 +101,8 @@ describe('SPR analytics model', () => {
       spr_move_events: [
         {
           pivot_edge: [8],
-          moving_subtree: [4, 5, 6],
+          driver_subtree: [4, 5, 6],
+          highlight_group: [[4, 5, 6]],
           step_range: [0, 4],
           collapse_hops: 2,
           expand_hops: 2,
@@ -217,6 +221,74 @@ describe('SPR analytics model', () => {
       totalPathLength: 1.2,
       averagePathLength: 1.2,
     });
+  });
+
+  it('attributes measured grouped SPR events to the mover group', () => {
+    const groupedPairSolutions = {
+      pair_0_1: {
+        jumping_subtree_solutions: {
+          '[9]': [
+            [[1], [2]],
+          ],
+        },
+        split_change_events: [
+          { split: [9], step_range: [0, 3] },
+        ],
+        solution_to_source_map: {
+          '[9]': {
+            '[1]': [1, 7],
+            '[2]': [2, 8],
+          },
+        },
+        solution_to_destination_map: {
+          '[9]': {
+            '[1]': [1, 9],
+            '[2]': [2, 10],
+          },
+        },
+        spr_move_events: [
+          {
+            pivot_edge: [9],
+            driver_subtree: [1],
+            highlight_group: [[1], [2]],
+            step_range: [0, 3],
+            collapse_hops: 1,
+            expand_hops: 2,
+            total_hops: 3,
+            collapse_branch_length: 0.1,
+            expand_branch_length: 0.4,
+            total_branch_length: 0.5,
+          },
+        ],
+      },
+    };
+
+    const events = buildSprMoveEventRows(groupedPairSolutions);
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      signature: '1,2',
+      splitIndices: [1, 2],
+      driverSplitIndices: [1],
+      highlightGroup: [[1], [2]],
+      groupSize: 2,
+      sourceAttachment: [7, 8],
+      destinationAttachment: [9, 10],
+      totalPathHops: 3,
+      totalPathLength: 0.5,
+    });
+
+    const frequencies = calculateSprMoverFrequencies(groupedPairSolutions);
+    expect(frequencies).toHaveLength(1);
+    expect(frequencies[0]).toMatchObject({
+      signature: '1,2',
+      splitIndices: [1, 2],
+      driverSplitIndices: [1],
+      highlightGroup: [[1], [2]],
+      groupSize: 2,
+      totalPathHops: 3,
+      totalPathLength: 0.5,
+    });
+    expect(frequencies.find((item) => item.signature === '1')).toBeUndefined();
   });
 
   it('aggregates path travel by moved subtree', () => {

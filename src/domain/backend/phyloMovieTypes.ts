@@ -23,7 +23,10 @@ export interface SprPathSegment {
 
 export interface SprMoveEvent {
   pivot_edge: number[];
-  moving_subtree: number[];
+  /** Planner-selected subtree that physically moves for this SPR event. */
+  driver_subtree: number[];
+  /** Visual context for this event; may include related non-driver subtrees. */
+  highlight_group: number[][];
   step_range: [number, number];
   collapse_path: SprPathSegment[];
   expand_path: SprPathSegment[];
@@ -77,6 +80,7 @@ export interface PhyloMovieData {
   tree_pair_solutions: Record<string, TreePairSolution>;
   pair_interpolation_ranges: Array<[number, number]>;
   pivot_edge_tracking: Array<number[] | null>;
+  /** Legacy backend field name: per-frame visual/highlight groups, not movement ownership. */
   subtree_tracking: Array<number[][] | null>;
   msa: MsaData;
   sorted_leaves: string[];

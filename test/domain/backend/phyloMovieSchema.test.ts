@@ -214,7 +214,8 @@ describe('validatePhyloMovieData', () => {
           }],
           spr_move_events: [{
             pivot_edge: [0, 1],
-            moving_subtree: [0],
+            driver_subtree: [0],
+            highlight_group: [[0]],
             step_range: [0, 0],
             collapse_path: [{
               split: [0, 1],
@@ -236,12 +237,81 @@ describe('validatePhyloMovieData', () => {
     }));
 
     expect(result.tree_pair_solutions.pair_0_1.spr_move_events?.[0]).toMatchObject({
-      moving_subtree: [0],
+      driver_subtree: [0],
+      highlight_group: [[0]],
       collapse_hops: 1,
       expand_hops: 2,
       total_hops: 3,
       total_branch_length: 0.75,
     });
+  });
+
+  it('normalizes legacy SPR moving_subtree events to explicit driver and highlight fields', () => {
+    const result = validatePhyloMovieData(makePayload({
+      tree_pair_solutions: {
+        pair_0_1: {
+          jumping_subtree_solutions: {
+            '[0, 1]': [[[0]]],
+          },
+          solution_to_source_map: {},
+          solution_to_destination_map: {},
+          split_change_events: [],
+          spr_move_events: [{
+            pivot_edge: [0, 1],
+            moving_subtree: [0],
+            step_range: [0, 0],
+            collapse_path: [],
+            expand_path: [],
+            collapse_hops: 0,
+            expand_hops: 0,
+            total_hops: 0,
+            collapse_branch_length: 0,
+            expand_branch_length: 0,
+            total_branch_length: 0,
+          }],
+        },
+      },
+    }));
+
+    expect(result.tree_pair_solutions.pair_0_1.spr_move_events?.[0]).toMatchObject({
+      driver_subtree: [0],
+      highlight_group: [[0]],
+    });
+    expect(result.tree_pair_solutions.pair_0_1.spr_move_events?.[0]).not.toHaveProperty('moving_subtree');
+  });
+
+  it('normalizes legacy SPR moving_subtree_group events to explicit driver and highlight fields', () => {
+    const result = validatePhyloMovieData(makePayload({
+      tree_pair_solutions: {
+        pair_0_1: {
+          jumping_subtree_solutions: {
+            '[0, 1]': [[[0], [1]]],
+          },
+          solution_to_source_map: {},
+          solution_to_destination_map: {},
+          split_change_events: [],
+          spr_move_events: [{
+            pivot_edge: [0, 1],
+            moving_subtree_group: [[0], [1]],
+            step_range: [0, 0],
+            collapse_path: [],
+            expand_path: [],
+            collapse_hops: 0,
+            expand_hops: 0,
+            total_hops: 0,
+            collapse_branch_length: 0,
+            expand_branch_length: 0,
+            total_branch_length: 0,
+          }],
+        },
+      },
+    }));
+
+    expect(result.tree_pair_solutions.pair_0_1.spr_move_events?.[0]).toMatchObject({
+      driver_subtree: [0],
+      highlight_group: [[0], [1]],
+    });
+    expect(result.tree_pair_solutions.pair_0_1.spr_move_events?.[0]).not.toHaveProperty('moving_subtree_group');
   });
 
   it('rejects top-level split_change_events that are not keyed by pair', () => {
