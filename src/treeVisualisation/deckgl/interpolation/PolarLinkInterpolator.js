@@ -112,7 +112,7 @@ export class PolarLinkInterpolator {
       return computed;
     };
 
-    return this._attachChildSourcesToRenderedParents(entries.map(resolveEntry), options);
+    return this._attachChildSourcesToRenderedParents(entries.map(resolveEntry));
   }
 
   _computeLifecycleEntry(entry, timeFactor, options = {}) {
@@ -221,10 +221,7 @@ export class PolarLinkInterpolator {
   }
 
   _interpolateLinkDatum(fromLink, toLink, t, options = {}) {
-    const path = this.pathInterpolator.interpolatePath(fromLink, toLink, t, {
-      velocityEntry: options.velocityEntry ?? null,
-      linkGeometryMode: options.linkGeometryMode
-    });
+    const path = this.pathInterpolator.interpolatePath(fromLink, toLink, t, options.velocityEntry ?? null);
     const sourcePosition = this.nodeInterpolator.interpolatePosition(
       fromLink.polarData?.source,
       toLink.polarData?.source,
@@ -268,10 +265,7 @@ export class PolarLinkInterpolator {
 
     return {
       ...link,
-      path: this.pathInterpolator.interpolatePath(positionedLink, positionedLink, 1, {
-        velocityEntry: options.velocityEntry ?? null,
-        linkGeometryMode: options.linkGeometryMode
-      }),
+      path: this.pathInterpolator.interpolatePath(positionedLink, positionedLink, 1, options.velocityEntry ?? null),
       sourcePosition,
       targetPosition,
       polarData: positionedLink.polarData,
@@ -285,7 +279,7 @@ export class PolarLinkInterpolator {
     };
   }
 
-  _attachChildSourcesToRenderedParents(links, options = {}) {
+  _attachChildSourcesToRenderedParents(links) {
     const parentLinkByTargetId = new Map();
     for (const link of links) {
       if (link?.targetId) parentLinkByTargetId.set(link.targetId, link);
@@ -303,8 +297,7 @@ export class PolarLinkInterpolator {
         link.targetPosition,
         {
           lifecycle: link.lifecycle,
-          transitionPhase: link.transitionPhase,
-          linkGeometryMode: options.linkGeometryMode
+          transitionPhase: link.transitionPhase
         }
       );
     });
