@@ -3,6 +3,7 @@ import { buildTransitionChangeModel, createLifecycleClocks } from '../../src/tre
 import { TreeInterpolator } from '../../src/treeVisualisation/deckgl/interpolation/TreeInterpolator.js';
 import { getNodeKey } from '../../src/treeVisualisation/utils/KeyGenerator.js';
 import { ANIMATION_STAGES } from '../../src/treeVisualisation/deckgl/interpolation/stages/animationStageDetector.js';
+import { rootAwareAngleDelta } from '../../src/treeVisualisation/utils/polarGeometry.js';
 
 function link(id, sourceRadius, targetRadius, angle = 0) {
   return {
@@ -455,7 +456,7 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     expect(lastPathRadius(result.links[0].path)).to.be.closeTo(expectedTargetRadius, 0.001);
   });
 
-  it('keeps retained node angles frozen while an exiting branch collapses', () => {
+  it('keeps retained node angles interpolating while an exiting branch collapses', () => {
     const exiting = {
       ...link('exit-3', 20, 30, 0),
       sourceId: 'node-parent-1',
@@ -481,11 +482,12 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     const clocks = createLifecycleClocks(rawTimeFactor);
     const parentNode = result.nodes.find((item) => item.id === 'node-parent-1');
     const exitingLink = result.links.find((item) => item.id === 'exit-3');
+    const expectedAngle = rootAwareAngleDelta(0, Math.PI / 2, 0) * frameTimeFactor;
 
     expect(clocks.moveT).to.equal(0);
     expect(clocks.collapseT).to.be.greaterThan(0);
-    expect(pointAngle(parentNode.position)).to.be.closeTo(0, 0.001);
-    expect(pointAngle(exitingLink.sourcePosition)).to.be.closeTo(0, 0.001);
+    expect(pointAngle(parentNode.position)).to.be.closeTo(expectedAngle, 0.001);
+    expect(pointAngle(exitingLink.sourcePosition)).to.be.closeTo(expectedAngle, 0.001);
   });
 
   it('does not create an arc ring when lifecycle branch length is zero', () => {
