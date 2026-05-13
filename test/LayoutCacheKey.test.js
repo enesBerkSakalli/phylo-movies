@@ -31,6 +31,10 @@ describe('layout cache key', () => {
     expect(createLayoutCacheKey({ ...baseOptions, state: { ...baseState, layoutRotationDegrees: 45 } })).not.toBe(baseKey);
     expect(createLayoutCacheKey({
       ...baseOptions,
+      state: { ...baseState, subtreeTracking: [[[2, 3]]] }
+    })).not.toBe(baseKey);
+    expect(createLayoutCacheKey({
+      ...baseOptions,
       state: { ...baseState, styleConfig: { labelOffsets: { DEFAULT: 30, EXTENSION: 5 } } }
     })).not.toBe(baseKey);
     expect(createLayoutCacheKey({
@@ -47,5 +51,22 @@ describe('layout cache key', () => {
     expect(zeroScaleKey).toContain('maxGlobalScale=0');
     expect(missingScaleKey).toContain('maxGlobalScale=none');
     expect(zeroScaleKey).not.toBe(missingScaleKey);
+  });
+
+  it('uses source-frame subtree tracking when transition frames omit their own highlight group', () => {
+    const key = createLayoutCacheKey({
+      ...baseOptions,
+      treeIndex: 1,
+      state: {
+        ...baseState,
+        treeList: [{ id: 'tree-0' }, { id: 'tree-1' }],
+        subtreeTracking: [[[5], [3]], null],
+        transitionResolver: {
+          getSourceTreeIndex: () => 0
+        }
+      }
+    });
+
+    expect(key).toContain('rotationAlignmentExcludeTaxa=3,5');
   });
 });

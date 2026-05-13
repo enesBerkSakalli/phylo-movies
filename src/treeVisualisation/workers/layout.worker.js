@@ -28,9 +28,12 @@ export function calculateLayoutWorkerResult(treeData, options) {
     }
 
     const hasMaxGlobalScale = Number.isFinite(Number(options.maxGlobalScale));
+    const layoutOptions = {
+        rotationAlignmentExcludeTaxa: options.rotationAlignmentExcludeTaxa
+    };
     const rootNode = hasMaxGlobalScale
-        ? layoutEngine.constructRadialTreeWithUniformScaling(Number(options.maxGlobalScale))
-        : layoutEngine.constructRadialTree();
+        ? layoutEngine.constructRadialTreeWithUniformScaling(Number(options.maxGlobalScale), layoutOptions)
+        : layoutEngine.constructRadialTree(false, layoutOptions);
     const maxRadius = layoutEngine.getMaxRadius(rootNode);
     const layoutResult = createLayoutResult(rootNode, {
         max_radius: maxRadius,
@@ -41,7 +44,12 @@ export function calculateLayoutWorkerResult(treeData, options) {
         layoutCacheKey: options.layoutCacheKey
     });
     const offsets = options.labelOffsets || { DEFAULT: 20, EXTENSION: 5 };
-    const extensionRadius = maxRadius + (offsets.EXTENSION ?? 5);
+    const baseRadius = getStableGlobalRenderedRadius({
+        maxGlobalScale: options.maxGlobalScale,
+        layoutScale: layoutEngine.scale,
+        hasMaxGlobalScale
+    }) ?? maxRadius;
+    const extensionRadius = baseRadius + (offsets.EXTENSION ?? 5);
     const labelRadius = extensionRadius + (offsets.DEFAULT ?? 20);
 
     // 3. Convert to Layer Data
@@ -63,6 +71,16 @@ export function calculateLayoutWorkerResult(treeData, options) {
     }
 
     return { layout: layoutResult, layerData };
+}
+
+function getStableGlobalRenderedRadius({ maxGlobalScale, layoutScale, hasMaxGlobalScale }) {
+    if (!hasMaxGlobalScale) return null;
+
+    const maxScale = Number(maxGlobalScale);
+    const scale = Number(layoutScale);
+    if (!Number.isFinite(maxScale) || !Number.isFinite(scale)) return null;
+
+    return Math.max(0, maxScale * scale);
 }
 
 /**

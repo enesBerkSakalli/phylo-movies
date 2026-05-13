@@ -45,6 +45,31 @@ function normalizedOptionalNumber(value) {
   return Number.isFinite(number) ? number : 'none';
 }
 
+function normalizedTaxaList(value) {
+  if (!Array.isArray(value)) return [];
+
+  return Array.from(new Set(value.flat(Infinity)
+    .map((item) => Number(item))
+    .filter(Number.isFinite)))
+    .sort((a, b) => a - b);
+}
+
+export function getRotationAlignmentExcludeTaxa(state = {}, treeIndex = 'none') {
+  if (!Number.isInteger(treeIndex)) return [];
+
+  let trackingIndex = treeIndex;
+  const ownTracking = state?.subtreeTracking?.[treeIndex];
+  if ((!Array.isArray(ownTracking) || ownTracking.length === 0) &&
+      typeof state?.transitionResolver?.getSourceTreeIndex === 'function') {
+    const sourceIndex = state.transitionResolver.getSourceTreeIndex(treeIndex);
+    if (Number.isInteger(sourceIndex) && Array.isArray(state?.subtreeTracking?.[sourceIndex])) {
+      trackingIndex = sourceIndex;
+    }
+  }
+
+  return normalizedTaxaList(state?.subtreeTracking?.[trackingIndex]);
+}
+
 export function getDatasetCacheId(state = {}, treeList = null) {
   const resolvedTreeList = resolveTreeList(state, treeList);
   const fileName = selectFileName(state) || 'dataset';
@@ -89,11 +114,15 @@ export function createLayoutCacheKey({
   treeIndex = 'none',
   width = 0,
   height = 0,
-  maxGlobalScale = null
+  maxGlobalScale = null,
+  rotationAlignmentExcludeTaxa = null
 } = {}) {
   const resolvedTreeList = resolveTreeList(state, treeList);
   const offsets = normalizedOffsets(state);
   const scale = normalizedOptionalNumber(maxGlobalScale);
+  const alignmentExcludeTaxa = Array.isArray(rotationAlignmentExcludeTaxa)
+    ? normalizedTaxaList(rotationAlignmentExcludeTaxa)
+    : getRotationAlignmentExcludeTaxa(state, treeIndex);
 
   return [
     `dataset=${getDatasetCacheId(state, resolvedTreeList)}`,
@@ -105,6 +134,7 @@ export function createLayoutCacheKey({
     `rotation=${finiteNumber(state?.layoutRotationDegrees, 0)}`,
     `labelOffset=${offsets.label}`,
     `extensionOffset=${offsets.extension}`,
+    `rotationAlignmentExcludeTaxa=${alignmentExcludeTaxa.length ? alignmentExcludeTaxa.join(',') : 'none'}`,
     `maxGlobalScale=${scale}`
   ].join('|');
 }

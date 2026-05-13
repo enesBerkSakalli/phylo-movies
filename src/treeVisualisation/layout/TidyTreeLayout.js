@@ -30,6 +30,7 @@ export class TidyTreeLayout {
     const isHierarchyNode = root && typeof root.each === 'function' && root.data !== undefined;
     this.root = isHierarchyNode ? root : hierarchy(root);
     initializeLayoutState(this);
+    this.rotationAlignmentExcludeTaxa = new Set();
   }
 
   setAngleExtentDegrees(degrees = 360) {
@@ -54,6 +55,10 @@ export class TidyTreeLayout {
 
   setRadiusPreservation(preserve) {
     setRadiusPreservation(this, preserve);
+  }
+
+  setRotationAlignmentExcludeTaxa(taxa = []) {
+    this.rotationAlignmentExcludeTaxa = normalizeTaxaSet(taxa);
   }
 
   setDimension(width, height) {
@@ -87,7 +92,7 @@ export class TidyTreeLayout {
   cacheLeafCounts() {
     this.root.eachAfter((d) => {
       if (!d.children || d.children.length === 0) {
-        d.leafCount = 1;
+        d.leafCount = isExcludedLeaf(d, this.rotationAlignmentExcludeTaxa) ? 0 : 1;
       } else {
         d.leafCount = d.children.reduce((sum, child) => sum + (child.leafCount || 0), 0);
       }
@@ -101,7 +106,9 @@ export class TidyTreeLayout {
     const tidy = cluster()
       .size([this.angleExtent, 1])
       .separation((a, b) => {
-        const leafWeight = Math.max(1, ((a.leafCount || 1) + (b.leafCount || 1)) / 2);
+        const aLeafCount = a.leafCount ?? 1;
+        const bLeafCount = b.leafCount ?? 1;
+        const leafWeight = Math.max(0.1, (aLeafCount + bLeafCount) / 2);
         return (a.parent === b.parent ? 2 : 4) * leafWeight;
       });
 
@@ -113,7 +120,8 @@ export class TidyTreeLayout {
     });
   }
 
-  constructRadialTreeWithUniformScaling(maxGlobalScale) {
+  constructRadialTreeWithUniformScaling(maxGlobalScale, options = {}) {
+    this.setRotationAlignmentExcludeTaxa(options.rotationAlignmentExcludeTaxa);
     this.calcRadius(this.root, 0);
     this.applyTidyLayout();
 
@@ -126,7 +134,8 @@ export class TidyTreeLayout {
     return this.root;
   }
 
-  constructRadialTree(useUniformScaling = false) {
+  constructRadialTree(useUniformScaling = false, options = {}) {
+    this.setRotationAlignmentExcludeTaxa(options.rotationAlignmentExcludeTaxa);
     this.calcRadius(this.root, 0);
     this.applyTidyLayout();
 
@@ -159,6 +168,7 @@ export default function createTidyTreeLayout(
   let root_;
 
   if (useUniformScaling) {
+    treeLayout.setRotationAlignmentExcludeTaxa(options.rotationAlignmentExcludeTaxa);
     treeLayout.calcRadius(treeLayout.root, 0);
     treeLayout.applyTidyLayout();
     root_ = treeLayout.root;
@@ -167,7 +177,7 @@ export default function createTidyTreeLayout(
     treeLayout.generateCoordinates(root_);
     treeLayout.scale = uniformScale;
   } else {
-    root_ = treeLayout.constructRadialTree(false);
+    root_ = treeLayout.constructRadialTree(false, options);
   }
 
   return createLayoutResult(root_, {
@@ -177,4 +187,20 @@ export default function createTidyTreeLayout(
     margin,
     scale: treeLayout.scale,
   });
+}
+
+function normalizeTaxaSet(value) {
+  if (!Array.isArray(value)) return new Set();
+  return new Set(
+    value.flat(Infinity)
+      .map((item) => Number(item))
+      .filter(Number.isFinite)
+  );
+}
+
+function isExcludedLeaf(node, excludedTaxa) {
+  if (!excludedTaxa || excludedTaxa.size === 0) return false;
+  const splitIndices = node?.data?.split_indices;
+  if (!Array.isArray(splitIndices) || splitIndices.length === 0) return false;
+  return splitIndices.every((item) => excludedTaxa.has(Number(item)));
 }

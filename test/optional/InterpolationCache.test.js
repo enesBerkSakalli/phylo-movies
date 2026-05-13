@@ -21,7 +21,8 @@ describe('InterpolationCache', () => {
       convertTreeToLayerData: sandbox.stub().returns({ some: 'layerData' }),
       getLayoutCacheKey: sandbox.stub().callsFake((treeIndex) => (
         `layout-${treeIndex}-${dimensions.width}-${dimensions.height}-${branchTransformation}`
-      ))
+      )),
+      getRotationAlignmentExcludeTaxa: sandbox.stub().returns([])
     };
 
     cache = new InterpolationCache(dependencies);
@@ -58,6 +59,28 @@ describe('InterpolationCache', () => {
     expect(dependencies.calculateLayout.calledTwice).to.be.true;
     expect(dependencies.convertTreeToLayerData.calledTwice).to.be.true;
     expect(result).to.deep.equal({ dataFrom: 'layerData1', dataTo: 'layerData2' });
+  });
+
+  it('passes moving taxa exclusion into layout calculation', () => {
+    const tree1 = { id: 1 };
+    const tree2 = { id: 2 };
+    const layout1 = { layoutTree: tree1, width: 800, height: 600 };
+    const layout2 = { layoutTree: tree2, width: 800, height: 600 };
+    dependencies.getRotationAlignmentExcludeTaxa.withArgs(0).returns([2, 3]);
+    dependencies.getRotationAlignmentExcludeTaxa.withArgs(1).returns([4]);
+    dependencies.calculateLayout.withArgs(tree1).returns(layout1);
+    dependencies.calculateLayout.withArgs(tree2).returns(layout2);
+
+    cache.getOrCacheInterpolationData(tree1, tree2, 0, 1);
+
+    expect(dependencies.calculateLayout.firstCall.args[1]).to.include({
+      treeIndex: 0
+    });
+    expect(dependencies.calculateLayout.firstCall.args[1].rotationAlignmentExcludeTaxa).to.deep.equal([2, 3]);
+    expect(dependencies.calculateLayout.secondCall.args[1]).to.include({
+      treeIndex: 1
+    });
+    expect(dependencies.calculateLayout.secondCall.args[1].rotationAlignmentExcludeTaxa).to.deep.equal([4]);
   });
 
   it('should return cached data on subsequent identical calls', () => {

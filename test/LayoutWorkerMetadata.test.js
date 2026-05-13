@@ -53,4 +53,32 @@ describe('layout worker metadata', () => {
     expect(result.layout.scale).toBe(240);
     expect(result.layerData.nodes).toHaveLength(3);
   });
+
+  it('uses the stable global rendered radius for worker label and extension rings', () => {
+    const treeData = {
+      name: '',
+      length: 0,
+      split_indices: [0, 1],
+      children: [
+        { name: 'taxon_1', length: 1, split_indices: [0], children: [] },
+        { name: 'taxon_2', length: 1, split_indices: [1], children: [] }
+      ]
+    };
+
+    const result = calculateLayoutWorkerResult(treeData, {
+      width: 800,
+      height: 600,
+      margin: 60,
+      branchTransformation: 'none',
+      layoutAngleDegrees: 360,
+      layoutRotationDegrees: 0,
+      maxGlobalScale: 10,
+      labelOffsets: { DEFAULT: 2, EXTENSION: 1 }
+    });
+
+    const stableRadius = result.layout.scale * 10;
+    expect(result.layout.max_radius).toBeLessThan(stableRadius);
+    expect(result.layerData.extensions[0].polarData.target.radius).toBe(stableRadius + 1);
+    expect(result.layerData.labels[0].polarPosition).toBe(stableRadius + 3);
+  });
 });

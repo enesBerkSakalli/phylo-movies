@@ -1,4 +1,10 @@
 import { getLabelKey } from '../../../../utils/KeyGenerator.js';
+import {
+  labelRotation,
+  labelTextAnchor,
+  positionFromPolar,
+  shouldFlipLabel
+} from '../../../../utils/polarGeometry.js';
 
 /**
  * LabelDataBuilder - Generates label data for tree leaves
@@ -37,10 +43,10 @@ export class LabelDataBuilder {
 
     const distance = Math.sqrt(leaf.x * leaf.x + leaf.y * leaf.y);
 
-    const needsFlip = this._shouldFlipLabel(angleRad);
-    const textAnchor = this._calculateTextAnchor(needsFlip);
-    const rotation = this._calculateLabelRotation(angleRad);
-    const position = this._calculateLabelPosition(angleRad, labelRadius);
+    const needsFlip = shouldFlipLabel(angleRad);
+    const textAnchor = labelTextAnchor(needsFlip);
+    const rotation = labelRotation(angleRad, needsFlip);
+    const position = positionFromPolar(labelRadius, angleRad);
     const splitIndices = leaf.split_indices;
     const labelKey = getLabelKey({ split_indices: splitIndices });
     if (!labelKey) {
@@ -63,42 +69,4 @@ export class LabelDataBuilder {
     };
   }
 
-  /**
-   * Check if label should be flipped based on angle
-   * @private
-   */
-  _shouldFlipLabel(angleRad) {
-    // Flip if on left side (90° to 270°)
-    return angleRad > Math.PI / 2 && angleRad < Math.PI * 1.5;
-  }
-
-  /**
-   * Calculate text anchor position
-   * @private
-   */
-  _calculateTextAnchor(needsFlip) {
-    return needsFlip ? 'end' : 'start';
-  }
-
-  /**
-   * Calculate label rotation in radians
-   * @private
-   */
-  _calculateLabelRotation(angleRad) {
-    let finalRotation = 0 - angleRad;
-    if (this._shouldFlipLabel(angleRad)) {
-      finalRotation += Math.PI;
-    }
-    return finalRotation;
-  }
-
-  /**
-   * Calculate final label Cartesian position
-   * @private
-   */
-  _calculateLabelPosition(angleRad, labelRadius) {
-    const x = labelRadius * Math.cos(angleRad);
-    const y = labelRadius * Math.sin(angleRad);
-    return [x, y, 0];
-  }
 }

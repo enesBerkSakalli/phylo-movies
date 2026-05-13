@@ -1,11 +1,13 @@
 import memoizeOne from 'memoize-one';
+import { buildTransitionChangeModel } from './TransitionChangeModel.js';
 
 export class InterpolationCache {
   constructor({
     calculateLayout,
     getConsistentRadii,
     convertTreeToLayerData,
-    getLayoutCacheKey
+    getLayoutCacheKey,
+    getRotationAlignmentExcludeTaxa = () => []
   }) {
     if (typeof getLayoutCacheKey !== 'function') {
       throw new Error('InterpolationCache requires getLayoutCacheKey');
@@ -15,6 +17,7 @@ export class InterpolationCache {
     this.getConsistentRadii = getConsistentRadii;
     this.convertTreeToLayerData = convertTreeToLayerData;
     this.getLayoutCacheKey = getLayoutCacheKey;
+    this.getRotationAlignmentExcludeTaxa = getRotationAlignmentExcludeTaxa;
 
     this._precomputedCache = new Map();
     this._createMemoizedFunction();
@@ -33,7 +36,7 @@ export class InterpolationCache {
     this._memoizedGet = memoizeOne(
       (fromTreeData, toTreeData, fromTreeIndex, toTreeIndex, fromLayoutCacheKey, toLayoutCacheKey) => {
         // Layout cache keys carry the render-affecting inputs that invalidate cached layer data.
-        const { dataFrom, dataTo } = this.buildInterpolationInputs(
+        const { dataFrom, dataTo, transitionChangeModel } = this.buildInterpolationInputs(
           fromTreeData,
           toTreeData,
           fromTreeIndex,
@@ -46,7 +49,9 @@ export class InterpolationCache {
           return { dataFrom: null, dataTo: null };
         }
 
-        return { dataFrom, dataTo };
+        const result = { dataFrom, dataTo };
+        if (transitionChangeModel) result.transitionChangeModel = transitionChangeModel;
+        return result;
       }
     );
   }
@@ -108,7 +113,12 @@ export class InterpolationCache {
       return { dataFrom: null, dataTo: null };
     }
 
-    return { dataFrom, dataTo };
+    const transitionChangeModel = buildTransitionChangeModel(dataFrom, dataTo);
+    const result = { dataFrom, dataTo };
+    if (transitionChangeModel.hasLifecycleChanges) {
+      result.transitionChangeModel = transitionChangeModel;
+    }
+    return result;
   }
 
   _hasMatchingLayoutCacheKey(precomputed, expectedLayoutCacheKey) {
@@ -119,8 +129,10 @@ export class InterpolationCache {
   }
 
   _calculateLayout(treeData, treeIndex) {
+    const rotationAlignmentExcludeTaxa = this.getRotationAlignmentExcludeTaxa(treeIndex);
     return this.calculateLayout(treeData, {
-      treeIndex
+      treeIndex,
+      rotationAlignmentExcludeTaxa
     });
   }
 

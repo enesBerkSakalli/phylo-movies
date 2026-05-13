@@ -34,7 +34,7 @@ describe('tree animation frame instrumentation', () => {
       labels: [],
       extensions: []
     };
-    treeInterpolator.interpolateTreeData(data, data, 0.5, 'none', 'COLLAPSE');
+    treeInterpolator.interpolateTreeData(data, data, 0.5, { stage: 'COLLAPSE' });
 
     const layerManager = Object.create(LayerManager.prototype);
     layerManager.createTreeLayers = vi.fn(() => []);
