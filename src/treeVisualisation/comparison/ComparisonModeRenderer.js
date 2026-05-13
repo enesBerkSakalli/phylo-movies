@@ -41,7 +41,13 @@ export class ComparisonModeRenderer {
    * @param {number} rightIndex - Right tree index
    */
   async renderStatic(leftIndex, rightIndex) {
-    const { treeList, leftTreeOffsetX = 0, leftTreeOffsetY = 0, viewsConnected } = useAppStore.getState();
+    const {
+      treeList,
+      leftTreeOffsetX = 0,
+      leftTreeOffsetY = 0,
+      viewsConnected,
+      linkGeometryMode = 'radial-elbow'
+    } = useAppStore.getState();
 
     const clampIndex = (idx) => {
       if (!Array.isArray(treeList)) return 0;
@@ -92,7 +98,8 @@ export class ComparisonModeRenderer {
         canvasHeight: leftLayout.height,
         treeIndex: clampedLeftIndex,
         treeSide: 'left',
-        renderMode: 'comparison'
+        renderMode: 'comparison',
+        linkGeometryMode
       }
     );
 
@@ -105,7 +112,8 @@ export class ComparisonModeRenderer {
         canvasHeight: rightLayout.height,
         treeIndex: clampedRightIndex,
         treeSide: 'right',
-        renderMode: 'comparison'
+        renderMode: 'comparison',
+        linkGeometryMode
       }
     );
 
@@ -218,7 +226,8 @@ export class ComparisonModeRenderer {
         canvasHeight: rightLayout.height,
         treeIndex: rightIndex,
         treeSide: 'right',
-        renderMode: 'comparison'
+        renderMode: 'comparison',
+        linkGeometryMode: useAppStore.getState().linkGeometryMode || 'radial-elbow'
       }
     );
 

@@ -14,9 +14,9 @@ export class LinkDataBuilder {
    * @param {Array} links - Normalized layout links
    * @returns {Array} Array of link data objects
    */
-  convertLinks(links) {
+  convertLinks(links, options = {}) {
     return (Array.isArray(links) ? links : [])
-      .map(link => this.createLinkData(link))
+      .map(link => this.createLinkData(link, options))
       .filter(Boolean);
   }
 
@@ -24,14 +24,16 @@ export class LinkDataBuilder {
    * Create link data object from normalized layout link
    * @returns {Object} Link data for Deck.gl
    */
-  createLinkData(link) {
+  createLinkData(link, options = {}) {
     if (!hasFiniteCoordinates(link?.source) || !hasFiniteCoordinates(link?.target)) {
       console.warn('[LinkDataBuilder] Skipping link with invalid layout coordinates:', link?.targetSplitIndices);
       return null;
     }
 
     const linkData = this._extractLinkCoordinates(link);
-    const linkPath = this.geometryBuilder.createLinkPath(linkData);
+    const linkPath = this.geometryBuilder.createLinkPath(linkData, {
+      geometryMode: options.linkGeometryMode
+    });
     const linkKey = getLinkKey({ split_indices: link.targetSplitIndices });
     const sourceId = getNodeKey({ split_indices: link.sourceSplitIndices });
     const targetId = getNodeKey({ split_indices: link.targetSplitIndices });

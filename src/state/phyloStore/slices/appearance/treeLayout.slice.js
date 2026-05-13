@@ -14,6 +14,7 @@ export const createTreeLayoutSlice = (set, get) => ({
   // STATE
   // ==========================================================================
   branchTransformation: 'none',
+  linkGeometryMode: 'radial-elbow',
   layoutAngleDegrees: 360,
   layoutRotationDegrees: 0,
 
@@ -24,6 +25,13 @@ export const createTreeLayoutSlice = (set, get) => ({
     const nextTransform = transform || 'none';
     if (get().branchTransformation === nextTransform) return;
     set({ branchTransformation: nextTransform });
+    invalidateTreeLayout(get);
+  },
+
+  setLinkGeometryMode: (mode) => {
+    const nextMode = mode === 'straight' ? 'straight' : 'radial-elbow';
+    if (get().linkGeometryMode === nextMode) return;
+    set({ linkGeometryMode: nextMode });
     invalidateTreeLayout(get);
   },
 

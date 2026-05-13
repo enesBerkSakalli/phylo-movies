@@ -4,8 +4,9 @@
  */
 import { calculateInterpolatedBranchCoordinates } from '../../../layout/RadialTreeGeometry.js';
 import { shortestAngle, crossesAngle, longArcDelta } from '../../../../domain/math/mathUtils.js';
-import { ARC_SEGMENT_COUNT } from '../../builders/geometry/links/LinkGeometryBuilder.js';
+import { ARC_SEGMENT_COUNT, LINK_GEOMETRY_MODES, normalizeLinkGeometryMode } from '../../builders/geometry/links/LinkGeometryBuilder.js';
 import { rootAwareAngleDelta } from '../../../utils/polarGeometry.js';
+import { twoPointFloat32Path } from '../../utils/pathFormat.js';
 
 export class PolarPathInterpolator {
   constructor() {
@@ -31,13 +32,21 @@ export class PolarPathInterpolator {
    * @returns {Float32Array} Interpolated path points
    * @throws {Error} If polarData is missing
    */
-  interpolatePath(fromLink, toLink, timeFactor, velocityEntry = null) {
+  interpolatePath(fromLink, toLink, timeFactor, options = {}) {
+    const pathOptions = options && (
+      Object.prototype.hasOwnProperty.call(options, 'velocityEntry') ||
+      Object.prototype.hasOwnProperty.call(options, 'linkGeometryMode')
+    )
+      ? options
+      : { velocityEntry: options };
+
     // Fail-fast: polar data is required
     if (!fromLink?.polarData || !toLink?.polarData) {
       throw new Error(`Missing polarData for link interpolation: ${toLink?.id ?? fromLink?.id}`);
     }
 
     const t = Math.max(0, Math.min(1, timeFactor));
+    const velocityEntry = pathOptions?.velocityEntry ?? null;
     const angularT = velocityEntry?.angularT ?? t;
 
     // Get source angles
@@ -77,6 +86,13 @@ export class PolarPathInterpolator {
         y: interpTargetRadius * Math.sin(interpTargetAngle)
       }
     };
+
+    if (normalizeLinkGeometryMode(pathOptions.linkGeometryMode) === LINK_GEOMETRY_MODES.STRAIGHT) {
+      return twoPointFloat32Path(
+        [linkData.source.x, linkData.source.y, 0],
+        [linkData.target.x, linkData.target.y, 0]
+      );
+    }
 
     // Use static branch coordinates calculation (t=1, no further interpolation needed)
     const coordinates = calculateInterpolatedBranchCoordinates(

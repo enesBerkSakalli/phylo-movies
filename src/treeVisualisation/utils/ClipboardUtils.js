@@ -21,6 +21,7 @@ export function getClipboardLayers(controller) {
  * Create clipboard tree layers with visual positioning.
  */
 function createClipboardVisualLayers(controller, treeIndex, treeData) {
+  const linkGeometryMode = useAppStore.getState().linkGeometryMode || 'radial-elbow';
   const layout = controller.calculateLayout(treeData, {
     treeIndex
   });
@@ -41,7 +42,8 @@ function createClipboardVisualLayers(controller, treeIndex, treeData) {
       canvasHeight: layout.height,
       treeIndex,
       treeSide: 'clipboard',
-      renderMode: 'clipboard'
+      renderMode: 'clipboard',
+      linkGeometryMode
     }
   );
 
@@ -76,10 +78,12 @@ function createClipboardVisualLayers(controller, treeIndex, treeData) {
  * Get bounds of the currently rendered main tree
  */
 function getMainTreeBounds(controller) {
+  const state = useAppStore.getState();
+  const linkGeometryMode = state.linkGeometryMode || 'radial-elbow';
   // Use the current tree data to calculate bounds
   if (controller.currentTreeData) {
     const layout = controller.calculateLayout(controller.currentTreeData, {
-      treeIndex: useAppStore.getState().currentTreeIndex
+      treeIndex: state.currentTreeIndex
     });
     if (layout?.layoutTree) {
       const { extensionRadius, labelRadius } = controller._getConsistentRadii(layout);
@@ -90,9 +94,10 @@ function getMainTreeBounds(controller) {
           labelRadius,
           canvasWidth: layout.width,
           canvasHeight: layout.height,
-          treeIndex: useAppStore.getState().currentTreeIndex,
+          treeIndex: state.currentTreeIndex,
           treeSide: 'clipboard',
-          renderMode: 'clipboard'
+          renderMode: 'clipboard',
+          linkGeometryMode
         }
       );
       return calculateVisualBounds(layerData.nodes, layerData.labels);
