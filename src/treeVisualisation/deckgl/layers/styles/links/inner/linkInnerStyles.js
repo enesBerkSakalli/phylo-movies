@@ -2,7 +2,7 @@ import { colorToRgb } from '../../../../../../services/ui/colorUtils.js';
 import { SYSTEM_TREE_COLORS } from '../../../../../../constants/TreeColors.js';
 import { calculateFlightDashArray } from '../dashUtils.js';
 import { applyDimmingWithCache } from '../../dimmingUtils.js';
-import { getInnerLinkColor } from '../linkUtils.js';
+import { getInnerLinkColor, getLifecycleLinkHighlight } from '../linkUtils.js';
 
 // Reusable output buffers to avoid per-call array allocations
 const _linkColorOut = [0, 0, 0, 0];
@@ -12,6 +12,16 @@ const _dashOut = [0, 0];
 
 export function getLinkColor(link, cached, helpers) {
   const { colorManager: cm, dimmingEnabled, dimmingOpacity, upcomingChangesEnabled, markedSubtreeData } = cached;
+  const lifecycleHighlight = getLifecycleLinkHighlight(link);
+
+  if (lifecycleHighlight) {
+    const opacity = helpers.getBaseOpacity(link.opacity);
+    _linkColorOut[0] = lifecycleHighlight.rgb[0];
+    _linkColorOut[1] = lifecycleHighlight.rgb[1];
+    _linkColorOut[2] = lifecycleHighlight.rgb[2];
+    _linkColorOut[3] = opacity;
+    return _linkColorOut;
+  }
 
   // History mode - use same blue color but different opacity
   const historyColor = colorToRgb(SYSTEM_TREE_COLORS.pivotEdgeColor);

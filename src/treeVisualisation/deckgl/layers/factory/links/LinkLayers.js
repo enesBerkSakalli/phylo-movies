@@ -8,6 +8,7 @@ import { createLayer } from '../base/createLayer.js';
 import {
   LAYER_CONFIGS,
 } from '../../config/layerConfigs.js';
+import { hasLifecycleHighlightedLinks } from '../../styles/links/linkUtils.js';
 
 // ============================================================================
 // HELPERS
@@ -34,7 +35,8 @@ export function getLinkOutlinesLayerProps(links, state, layerStyles) {
     colorManager?.hasPivotEdges?.() ||
     (colorManager?.sharedMarkedJumpingSubtrees?.length > 0) ||
     (upcomingChangesEnabled && colorManager?.hasUpcomingChangeEdges?.()) ||
-    (upcomingChangesEnabled && colorManager?.hasCompletedChangeEdges?.())
+    (upcomingChangesEnabled && colorManager?.hasCompletedChangeEdges?.()) ||
+    hasLifecycleHighlightedLinks(links)
   );
 
   const cached = layerStyles.getCachedState(state);
