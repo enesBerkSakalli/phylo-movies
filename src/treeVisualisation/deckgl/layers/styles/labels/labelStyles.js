@@ -12,6 +12,10 @@ export function getLabelSize(label, fontSize, cached) {
 
   const nodeData = toColorManagerNode(label);
 
+  if (cached?.colorManager?.isNodeMovingSubtree?.(nodeData)) {
+    return 0;
+  }
+
   if (cached?.markedSubtreeData && shouldHighlightNode(nodeData, cached)) {
     return baseSize * MARKED_LABEL_SCALE; // Scaled for marked labels
   }
