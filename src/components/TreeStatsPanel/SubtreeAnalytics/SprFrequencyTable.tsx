@@ -11,10 +11,10 @@ import {
     selectSetManuallyMarkedNodes,
     useAppStore,
 } from '@/state/phyloStore/store.js';
-import type { SprMoverFrequency } from './types';
+import type { SprMovedSubtreeFrequency } from './types';
 
 interface SprFrequencyTableProps {
-    frequencies: SprMoverFrequency[];
+    frequencies: SprMovedSubtreeFrequency[];
     leafNamesByIndex: string[];
 }
 

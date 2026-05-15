@@ -1,5 +1,5 @@
 import { formatSubtreeLabel } from '../../../domain/spr/sprAnalytics';
-import type { SprMoverFrequency, SprMoveEventRow } from './types';
+import type { SprMovedSubtreeFrequency, SprMoveEventRow } from './types';
 
 const escapeCsvValue = (value: unknown): string => {
     const str = value === null || value === undefined ? '' : String(value);
@@ -21,7 +21,7 @@ const formatOptionalFixed = (value: unknown): string => {
 };
 
 export const createSprFrequencyCsv = (
-    frequencies: SprMoverFrequency[],
+    frequencies: SprMovedSubtreeFrequency[],
     leafNamesByIndex: string[]
 ): string => {
     const headers = [

@@ -1,11 +1,20 @@
 import { describe, it, expect } from 'vitest';
-import {
-  calculateSprMoverFrequencies as calculateSubtreeFrequencies,
-  getTopSprMovers as getTopSubtrees,
-  formatSubtreeLabel,
-} from '../src/domain/spr/sprAnalytics.js';
+import * as sprAnalytics from '../src/domain/spr/sprAnalytics.js';
 
-describe('SPR mover frequencies', () => {
+const {
+  calculateSprMovedSubtreeFrequencies: calculateSubtreeFrequencies,
+  getTopSprMovedSubtrees: getTopSubtrees,
+  formatSubtreeLabel,
+} = sprAnalytics;
+
+describe('SPR moved subtree frequencies', () => {
+  it('exports moved-subtree frequency helpers without legacy mover names', () => {
+    expect(sprAnalytics.calculateSprMovedSubtreeFrequencies).toBeTypeOf('function');
+    expect(sprAnalytics.getTopSprMovedSubtrees).toBeTypeOf('function');
+    expect(sprAnalytics.calculateSprMoverFrequencies).toBeUndefined();
+    expect(sprAnalytics.getTopSprMovers).toBeUndefined();
+  });
+
   describe('calculateSubtreeFrequencies', () => {
     it('should return empty array for null/undefined input', () => {
       expect(calculateSubtreeFrequencies(null)).toEqual([]);

@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import {
+import * as sprAnalytics from '../../../src/domain/spr/sprAnalytics.js';
+
+const {
   buildSprMoveEventRows,
   buildSprActivityTimelinePoints,
   calculateSprDatasetSummary,
-  calculateSprMoverFrequencies,
+  calculateSprMovedSubtreeFrequencies,
   calculateSprPairActivity,
-} from '../../../src/domain/spr/sprAnalytics.js';
+} = sprAnalytics;
 
 describe('SPR analytics model', () => {
   const pairSolutions = {
@@ -170,7 +172,7 @@ describe('SPR analytics model', () => {
       interpolationRange: [0, 10],
       rfDistance: 0.25,
       weightedRfDistance: 1.25,
-      uniqueMoverCount: 2,
+      uniqueMovedSubtreeCount: 2,
       singleTaxonMoveEventCount: 2,
       multiTaxonMoveEventCount: 1,
       transitionEventCount: 2,
@@ -184,8 +186,11 @@ describe('SPR analytics model', () => {
     expect(rows[0]).not.toHaveProperty('moverOccurrenceCount');
     expect(rows[0]).not.toHaveProperty('singletonMoverOccurrences');
     expect(rows[0]).not.toHaveProperty('cladeMoverOccurrences');
+    expect(rows[0]).not.toHaveProperty('uniqueMoverCount');
+    expect(rows[0]).not.toHaveProperty('topMover');
+    expect(rows[0]).not.toHaveProperty('movers');
     expect(rows[0].events).toHaveLength(3);
-    expect(rows[0].topMover).toMatchObject({
+    expect(rows[0].topMovedSubtree).toMatchObject({
       signature: '1',
       splitIndices: [1],
       count: 2,
@@ -195,8 +200,8 @@ describe('SPR analytics model', () => {
       totalPathLength: 0.85,
       averagePathLength: 0.425,
     });
-    expect(rows[0].topMover).not.toHaveProperty('pathEventCount');
-    expect(rows[0].topMover.attachmentContexts).toMatchObject([
+    expect(rows[0].topMovedSubtree).not.toHaveProperty('pathEventCount');
+    expect(rows[0].topMovedSubtree.attachmentContexts).toMatchObject([
       {
         pivotEdge: [9],
         sourceAttachment: [7, 8],
@@ -211,7 +216,7 @@ describe('SPR analytics model', () => {
     expect(rows[1]).toMatchObject({
       pairKey: 'pair_1_2',
       pairIndex: 1,
-      uniqueMoverCount: 1,
+      uniqueMovedSubtreeCount: 1,
       singleTaxonMoveEventCount: 0,
       multiTaxonMoveEventCount: 1,
       transitionEventCount: 1,
@@ -225,6 +230,9 @@ describe('SPR analytics model', () => {
     expect(rows[1]).not.toHaveProperty('moverOccurrenceCount');
     expect(rows[1]).not.toHaveProperty('singletonMoverOccurrences');
     expect(rows[1]).not.toHaveProperty('cladeMoverOccurrences');
+    expect(rows[1]).not.toHaveProperty('uniqueMoverCount');
+    expect(rows[1]).not.toHaveProperty('topMover');
+    expect(rows[1]).not.toHaveProperty('movers');
   });
 
   it('keeps backend highlight context separate from the physical moved subtree', () => {
@@ -282,7 +290,7 @@ describe('SPR analytics model', () => {
       totalPathLength: 0.5,
     });
 
-    const frequencies = calculateSprMoverFrequencies(groupedPairSolutions);
+    const frequencies = calculateSprMovedSubtreeFrequencies(groupedPairSolutions);
     expect(frequencies).toHaveLength(1);
     expect(frequencies[0]).toMatchObject({
       signature: '1',
@@ -370,7 +378,7 @@ describe('SPR analytics model', () => {
   });
 
   it('aggregates path travel by moved subtree', () => {
-    const frequencies = calculateSprMoverFrequencies(pairSolutions);
+    const frequencies = calculateSprMovedSubtreeFrequencies(pairSolutions);
 
     expect(frequencies[0]).toMatchObject({
       signature: '1',
@@ -389,17 +397,17 @@ describe('SPR analytics model', () => {
     });
   });
 
-  it('summarizes dataset-level SPR activity without conflating events and movers', () => {
+  it('summarizes dataset-level SPR activity without conflating events and moved subtrees', () => {
     const summary = calculateSprDatasetSummary(pairSolutions);
 
     expect(summary).toMatchObject({
       pairCount: 2,
       activePairCount: 2,
       transitionEventCount: 3,
-      uniqueMovingSubtreeCount: 3,
+      uniqueMovedSubtreeCount: 3,
       singleTaxonMoveEventCount: 2,
       multiTaxonMoveEventCount: 2,
-      topMoverSharePercentage: 50,
+      topMovedSubtreeSharePercentage: 50,
       sprMoveEventCount: 4,
       totalPathHops: 10,
       averagePathHops: 2.5,
@@ -411,7 +419,10 @@ describe('SPR analytics model', () => {
     expect(summary).not.toHaveProperty('maxPairMoverOccurrenceCount');
     expect(summary).not.toHaveProperty('singletonMoverOccurrences');
     expect(summary).not.toHaveProperty('cladeMoverOccurrences');
-    expect(summary.farthestMover).toMatchObject({
+    expect(summary).not.toHaveProperty('uniqueMovingSubtreeCount');
+    expect(summary).not.toHaveProperty('topMoverSharePercentage');
+    expect(summary).not.toHaveProperty('farthestMover');
+    expect(summary.farthestMovedSubtree).toMatchObject({
       signature: '4,5,6',
       splitIndices: [4, 5, 6],
       count: 1,
@@ -441,13 +452,13 @@ describe('SPR analytics model', () => {
     const events = buildSprMoveEventRows(legacyPairSolutions);
     const rows = calculateSprPairActivity(legacyPairSolutions);
     const summary = calculateSprDatasetSummary(legacyPairSolutions);
-    const frequencies = calculateSprMoverFrequencies(legacyPairSolutions);
+    const frequencies = calculateSprMovedSubtreeFrequencies(legacyPairSolutions);
     const timeline = buildSprActivityTimelinePoints(rows);
 
     expect(events).toHaveLength(0);
     expect(frequencies).toHaveLength(0);
     expect(rows[0]).toMatchObject({
-      uniqueMoverCount: 0,
+      uniqueMovedSubtreeCount: 0,
       sprMoveEventCount: 0,
       totalPathHops: 0,
       averagePathHops: 0,
@@ -458,10 +469,13 @@ describe('SPR analytics model', () => {
     expect(rows[0]).not.toHaveProperty('moverOccurrenceCount');
     expect(rows[0]).not.toHaveProperty('singletonMoverOccurrences');
     expect(rows[0]).not.toHaveProperty('cladeMoverOccurrences');
+    expect(rows[0]).not.toHaveProperty('uniqueMoverCount');
+    expect(rows[0]).not.toHaveProperty('topMover');
+    expect(rows[0]).not.toHaveProperty('movers');
     expect(summary).toMatchObject({
       pairCount: 1,
       activePairCount: 0,
-      uniqueMovingSubtreeCount: 0,
+      uniqueMovedSubtreeCount: 0,
       sprMoveEventCount: 0,
       totalPathHops: 0,
       averagePathHops: 0,
@@ -473,10 +487,15 @@ describe('SPR analytics model', () => {
     expect(summary).not.toHaveProperty('maxPairMoverOccurrenceCount');
     expect(summary).not.toHaveProperty('singletonMoverOccurrences');
     expect(summary).not.toHaveProperty('cladeMoverOccurrences');
+    expect(summary).not.toHaveProperty('uniqueMovingSubtreeCount');
+    expect(summary).not.toHaveProperty('topMoverSharePercentage');
+    expect(summary).not.toHaveProperty('farthestMover');
     expect(timeline[0].sprMoveEvents).toBe(0);
     expect(timeline[0]).not.toHaveProperty('moverOccurrences');
     expect(timeline[0]).not.toHaveProperty('singletonMoverOccurrences');
     expect(timeline[0]).not.toHaveProperty('cladeMoverOccurrences');
+    expect(timeline[0]).not.toHaveProperty('uniqueMovers');
+    expect(timeline[0]).not.toHaveProperty('topMoverSignature');
   });
 
   it('formats pair activity rows for the SPR activity timeline', () => {
@@ -491,20 +510,20 @@ describe('SPR analytics model', () => {
         pairKey: 'pair_0_1',
         pairLabel: '0 -> 1',
         sprMoveEvents: 3,
-        uniqueMovers: 2,
+        uniqueMovedSubtrees: 2,
         singleTaxonMoveEventCount: 2,
         multiTaxonMoveEventCount: 1,
-        topMoverSignature: '1',
+        topMovedSubtreeSignature: '1',
       },
       {
         pairIndex: 1,
         pairKey: 'pair_1_2',
         pairLabel: '1 -> 2',
         sprMoveEvents: 1,
-        uniqueMovers: 1,
+        uniqueMovedSubtrees: 1,
         singleTaxonMoveEventCount: 0,
         multiTaxonMoveEventCount: 1,
-        topMoverSignature: '4,5,6',
+        topMovedSubtreeSignature: '4,5,6',
       },
     ]);
   });

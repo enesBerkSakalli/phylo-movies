@@ -25,7 +25,7 @@ const chartConfig = {
         label: 'Movements',
         color: '#0072B2',
     },
-    uniqueMovers: {
+    uniqueMovedSubtrees: {
         label: 'Unique subtrees',
         color: '#009E73',
     },
@@ -104,10 +104,10 @@ export const SprActivityTimeline = ({ rows }: SprActivityTimelineProps) => {
                     />
                     <Line
                         yAxisId="activity"
-                        dataKey="uniqueMovers"
+                        dataKey="uniqueMovedSubtrees"
                         name="Unique subtrees"
                         type="monotone"
-                        stroke="var(--color-uniqueMovers)"
+                        stroke="var(--color-uniqueMovedSubtrees)"
                         strokeWidth={1.5}
                         dot={false}
                         isAnimationActive={false}

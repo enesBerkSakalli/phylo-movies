@@ -1,4 +1,4 @@
-export interface SprMoverFrequency {
+export interface SprMovedSubtreeFrequency {
     signature: string;
     splitIndices: number[];
     driverSplitIndices?: number[];

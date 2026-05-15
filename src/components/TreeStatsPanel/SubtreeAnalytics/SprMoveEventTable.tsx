@@ -17,7 +17,7 @@ import { buildSprMoveEventSearchText } from './sprMoveEventSearch';
 interface SprMoveEventTableProps {
     events: SprMoveEventRow[];
     leafNamesByIndex: string[];
-    selectedMoverIndices?: number[];
+    selectedMovedSubtreeIndices?: number[];
 }
 
 const formatMetric = (value: unknown): string => {
@@ -67,9 +67,9 @@ const sprMoveEventFilter: FilterFn<SprMoveEventRow> = (row, columnId, filterValu
     return queryTerms.every((term) => searchableText.includes(term));
 };
 
-export const SprMoveEventTable = ({ events, leafNamesByIndex, selectedMoverIndices = [] }: SprMoveEventTableProps) => {
+export const SprMoveEventTable = ({ events, leafNamesByIndex, selectedMovedSubtreeIndices = [] }: SprMoveEventTableProps) => {
     const [globalFilter, setGlobalFilter] = React.useState('');
-    const selectedMoverSignature = getSignature(selectedMoverIndices);
+    const selectedMovedSubtreeSignature = getSignature(selectedMovedSubtreeIndices);
     const columns = React.useMemo<ColumnDef<SprMoveEventRow>[]>(
         () => [
             {
@@ -143,7 +143,7 @@ export const SprMoveEventTable = ({ events, leafNamesByIndex, selectedMoverIndic
                     <tbody className="divide-y divide-border/10">
                         {filteredRows.map((row) => {
                             const event = row.original;
-                            const isSelected = selectedMoverSignature === event.signature;
+                            const isSelected = selectedMovedSubtreeSignature === event.signature;
                             const subtreeLabel = formatCompactAttachment(event.splitIndices, leafNamesByIndex, 4);
                             const fullSubtreeLabel = formatAttachment(event.splitIndices, leafNamesByIndex);
                             const contextSignature = getSignature(event.contextSplitIndices);

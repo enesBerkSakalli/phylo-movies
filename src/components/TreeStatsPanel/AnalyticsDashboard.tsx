@@ -30,7 +30,7 @@ import {
 import {
     buildSprMoveEventRows,
     calculateSprDatasetSummary,
-    calculateSprMoverFrequencies,
+    calculateSprMovedSubtreeFrequencies,
     calculateSprPairActivity,
     formatSubtreeLabel,
 } from '@/domain/spr/sprAnalytics';
@@ -65,16 +65,16 @@ interface SprDatasetSummary {
     pairCount: number;
     activePairCount: number;
     transitionEventCount: number;
-    uniqueMovingSubtreeCount: number;
+    uniqueMovedSubtreeCount: number;
     singleTaxonMoveEventCount: number;
     multiTaxonMoveEventCount: number;
-    topMoverSharePercentage: number;
+    topMovedSubtreeSharePercentage: number;
     sprMoveEventCount: number;
     totalPathHops: number;
     averagePathHops: number;
     totalPathLength: number;
     averagePathLength: number;
-    farthestMover: {
+    farthestMovedSubtree: {
         signature: string;
         splitIndices: number[];
         count: number;
@@ -93,7 +93,7 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
     const robinsonFouldsDistances = useAppStore(selectDistanceRfd);
     const weightedRobinsonFouldsDistances = useAppStore(selectDistanceWeightedRfd);
     const pairInterpolationRanges = useAppStore(selectPairInterpolationRanges);
-    const selectedMoverIndices = useAppStore(selectMarkedNodes);
+    const selectedMovedSubtreeIndices = useAppStore(selectMarkedNodes);
 
     const sprOptions = useMemo(() => ({
         robinsonFouldsDistances,
@@ -101,9 +101,9 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
         pairInterpolationRanges,
     }), [robinsonFouldsDistances, weightedRobinsonFouldsDistances, pairInterpolationRanges]);
 
-    const allFreqs = useMemo(() => {
+    const movedSubtreeFrequencies = useMemo(() => {
         if (!pairSolutions || Object.keys(pairSolutions).length === 0) return [];
-        return calculateSprMoverFrequencies(pairSolutions);
+        return calculateSprMovedSubtreeFrequencies(pairSolutions);
     }, [pairSolutions]);
 
     const sprSummary = useMemo<SprDatasetSummary>(() => {
@@ -122,10 +122,10 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
         ? (sprSummary.singleTaxonMoveEventCount / sprSummary.sprMoveEventCount) * 100
         : 0;
 
-    const farthestMover = useMemo(() => {
-        if (!sprSummary.farthestMover) return null;
+    const farthestMovedSubtree = useMemo(() => {
+        if (!sprSummary.farthestMovedSubtree) return null;
 
-        const fullLabel = formatSubtreeLabel(sprSummary.farthestMover.splitIndices, leafNamesByIndex);
+        const fullLabel = formatSubtreeLabel(sprSummary.farthestMovedSubtree.splitIndices, leafNamesByIndex);
         const label = fullLabel.length > 28
             ? `${fullLabel.slice(0, 25)}...`
             : fullLabel;
@@ -133,16 +133,16 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
         return {
             label,
             fullLabel,
-            totalPathHops: sprSummary.farthestMover.totalPathHops,
-            totalPathLength: sprSummary.farthestMover.totalPathLength,
-            averagePathHops: sprSummary.farthestMover.averagePathHops,
-            averagePathLength: sprSummary.farthestMover.averagePathLength,
+            totalPathHops: sprSummary.farthestMovedSubtree.totalPathHops,
+            totalPathLength: sprSummary.farthestMovedSubtree.totalPathLength,
+            averagePathHops: sprSummary.farthestMovedSubtree.averagePathHops,
+            averagePathLength: sprSummary.farthestMovedSubtree.averagePathLength,
         };
-    }, [sprSummary.farthestMover, leafNamesByIndex]);
+    }, [sprSummary.farthestMovedSubtree, leafNamesByIndex]);
 
     const frequencyCsvContent = useMemo(() => {
-        return createSprFrequencyCsv(allFreqs, leafNamesByIndex);
-    }, [allFreqs, leafNamesByIndex]);
+        return createSprFrequencyCsv(movedSubtreeFrequencies, leafNamesByIndex);
+    }, [movedSubtreeFrequencies, leafNamesByIndex]);
 
     const eventCsvContent = useMemo(() => {
         return createSprMoveEventCsv(sprMoveEvents, leafNamesByIndex);
@@ -243,18 +243,18 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
                                             </Card>
 
                                             <SprSummaryMetrics
-                                                distinctMoverCount={sprSummary.uniqueMovingSubtreeCount}
+                                                uniqueMovedSubtreeCount={sprSummary.uniqueMovedSubtreeCount}
                                                 sprMovementCount={sprSummary.sprMoveEventCount}
                                                 transitionEventCount={sprSummary.transitionEventCount}
                                                 activePairCount={sprSummary.activePairCount}
                                                 singleTaxonMoveEventPercentage={singleTaxonMoveEventPercentage}
-                                                topMoverPercentage={sprSummary.topMoverSharePercentage}
+                                                topMovedSubtreePercentage={sprSummary.topMovedSubtreeSharePercentage}
                                                 sprMoveEventCount={sprSummary.sprMoveEventCount}
                                                 totalPathHops={sprSummary.totalPathHops}
                                                 averagePathHops={sprSummary.averagePathHops}
                                                 totalPathLength={sprSummary.totalPathLength}
                                                 averagePathLength={sprSummary.averagePathLength}
-                                                farthestMover={farthestMover}
+                                                farthestMovedSubtree={farthestMovedSubtree}
                                             />
 
                                             <Card className="shadow-sm bg-muted/10 h-80 flex flex-col">
@@ -316,7 +316,7 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
                                             <SprMoveEventTable
                                                 events={sprMoveEvents}
                                                 leafNamesByIndex={leafNamesByIndex}
-                                                selectedMoverIndices={selectedMoverIndices}
+                                                selectedMovedSubtreeIndices={selectedMovedSubtreeIndices}
                                             />
                                         </CardContent>
                                     </Card>
@@ -332,10 +332,10 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
                                             <CardDescription className="text-xs flex items-center justify-between gap-2">
                                                 <span>Moved subtrees summarized from movements, ranked by repeat count.</span>
                                                 <div className="flex items-center gap-2 shrink-0">
-                                                    {allFreqs.length > 5 && (
+                                                    {movedSubtreeFrequencies.length > 5 && (
                                                         <span className="flex items-center gap-1 text-muted-foreground/60 shrink-0 ml-2">
                                                             <ChevronDown className="size-3 animate-bounce" />
-                                                            <span className="text-2xs">{allFreqs.length} items · scroll</span>
+                                                            <span className="text-2xs">{movedSubtreeFrequencies.length} items · scroll</span>
                                                         </span>
                                                     )}
                                                     <Button
@@ -344,7 +344,7 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
                                                         size="xs"
                                                         className="gap-1"
                                                         onClick={handleExportFrequencyCsv}
-                                                        disabled={allFreqs.length === 0}
+                                                        disabled={movedSubtreeFrequencies.length === 0}
                                                     >
                                                         <Download className="size-3" />
                                                         Export CSV
@@ -353,7 +353,7 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
                                             </CardDescription>
                                         </CardHeader>
                                         <CardContent className="p-0 flex-1 min-h-0 overflow-y-auto">
-                                            <SprFrequencyTable frequencies={allFreqs} leafNamesByIndex={leafNamesByIndex} />
+                                            <SprFrequencyTable frequencies={movedSubtreeFrequencies} leafNamesByIndex={leafNamesByIndex} />
                                         </CardContent>
                                     </Card>
                                 </TabsContent>

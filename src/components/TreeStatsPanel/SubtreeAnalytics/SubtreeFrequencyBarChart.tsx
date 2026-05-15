@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { selectLeafNamesByIndex, selectPairSolutions, useAppStore } from '@/state/phyloStore/store.js';
-import { calculateSprMoverFrequencies, getTopSprMovers, formatSubtreeLabel } from '@/domain/spr/sprAnalytics';
+import { calculateSprMovedSubtreeFrequencies, getTopSprMovedSubtrees, formatSubtreeLabel } from '@/domain/spr/sprAnalytics';
 import { SYSTEM_TREE_COLORS } from '@/constants/TreeColors';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -20,7 +20,7 @@ import {
  *
  * TUFTE PRINCIPLES:
  * - Zero Baseline: All bars scale from 0 (implicit in Progress component)
- * - Linear Scale: Bar width = percentage of mover occurrences, ensuring proportional ink
+ * - Linear Scale: Bar width = percentage of movements, ensuring proportional ink
  * - No Visual Inflation: Progress component uses semantic height; no minimum bar height distorts small values
  */
 export const SubtreeFrequencyBarChart = () => {
@@ -30,8 +30,8 @@ export const SubtreeFrequencyBarChart = () => {
     const data = useMemo(() => {
         if (!pairSolutions || Object.keys(pairSolutions).length === 0) return [];
 
-        const allFreqs = calculateSprMoverFrequencies(pairSolutions);
-        const topSubtrees = getTopSprMovers(allFreqs, 10);
+        const movedSubtreeFrequencies = calculateSprMovedSubtreeFrequencies(pairSolutions);
+        const topSubtrees = getTopSprMovedSubtrees(movedSubtreeFrequencies, 10);
 
         return topSubtrees.map((item: any, idx: number) => ({
             rank: idx + 1,
