@@ -1,4 +1,5 @@
 import type { SplitChangeEvent, SprMoveEvent, SprPathSegment, TreePairSolution } from './phyloMovieTypes';
+import { isCanonicalBackendSplitKey } from '../tree/splits.js';
 import {
   assertFiniteNumber,
   assertRecord,
@@ -8,6 +9,12 @@ import {
   validateRangeTuple,
 } from './schemaValidation';
 
+function assertCanonicalBackendSplitKey(key: string, fieldName: string): void {
+  if (!isCanonicalBackendSplitKey(key)) {
+    throw new Error(`Invalid phyloMovieData payload: ${fieldName} key "${key}" must be a canonical backend split key`);
+  }
+}
+
 function validateJumpingSubtreeSolutions(
   value: unknown,
   fieldName: string
@@ -15,6 +22,7 @@ function validateJumpingSubtreeSolutions(
   const solutions = requiredRecord(value, fieldName);
 
   for (const [pivotKey, solutionSets] of Object.entries(solutions)) {
+    assertCanonicalBackendSplitKey(pivotKey, fieldName);
     const sets = requiredArray(solutionSets, `${fieldName}.${pivotKey}`);
     for (const [setIndex, set] of sets.entries()) {
       const subtrees = requiredArray(set, `${fieldName}.${pivotKey}[${setIndex}]`);
@@ -25,6 +33,21 @@ function validateJumpingSubtreeSolutions(
   }
 
   return solutions as Record<string, number[][][]>;
+}
+
+function validateBackendSplitKeyedRecord(value: unknown, fieldName: string): Record<string, unknown> {
+  const map = requiredRecord(value, fieldName);
+
+  for (const [pivotKey, nestedMap] of Object.entries(map)) {
+    assertCanonicalBackendSplitKey(pivotKey, fieldName);
+    if (!nestedMap || typeof nestedMap !== 'object' || Array.isArray(nestedMap)) continue;
+
+    for (const moverKey of Object.keys(nestedMap)) {
+      assertCanonicalBackendSplitKey(moverKey, `${fieldName}.${pivotKey}`);
+    }
+  }
+
+  return map;
 }
 
 function validateSplitChangeEvent(value: unknown, fieldName: string): SplitChangeEvent {
@@ -113,8 +136,11 @@ export function validateTreePairSolutions(value: unknown): Record<string, TreePa
         solution.jumping_subtree_solutions,
         `${fieldName}.jumping_subtree_solutions`
       ),
-      solution_to_source_map: requiredRecord(solution.solution_to_source_map, `${fieldName}.solution_to_source_map`),
-      solution_to_destination_map: requiredRecord(
+      solution_to_source_map: validateBackendSplitKeyedRecord(
+        solution.solution_to_source_map,
+        `${fieldName}.solution_to_source_map`
+      ),
+      solution_to_destination_map: validateBackendSplitKeyedRecord(
         solution.solution_to_destination_map,
         `${fieldName}.solution_to_destination_map`
       ),

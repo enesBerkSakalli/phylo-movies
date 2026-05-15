@@ -99,9 +99,9 @@ describe('Tree Visualisation - State Update Logic', () => {
         expect(result[1]).to.deep.equal([12]);
     });
 
-    it('should resolve all-mode active edge history by split identity', () => {
+    it('should resolve all-mode active edge history by canonical backend split key', () => {
         const index = 10;
-        const activeEdge = [1, 2];
+        const activeEdge = [2, 1];
         const pairKey = 'pair_1';
         const treeMetadata = [];
         treeMetadata[index] = { tree_pair_key: pairKey };
@@ -113,7 +113,7 @@ describe('Tree Visualisation - State Update Logic', () => {
             pairSolutions: {
                 [pairKey]: {
                     jumping_subtree_solutions: {
-                        "[2,1]": [[10]]
+                        "[1, 2]": [[10]]
                     }
                 }
             }
