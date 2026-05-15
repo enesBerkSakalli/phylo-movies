@@ -4,11 +4,13 @@ import { afterEach, describe, expect, it } from 'vitest';
 import * as spatialLayout from '../src/treeVisualisation/spatial/layout.js';
 
 const {
+  clampSafeAreaPadding,
   calculateRectOverlap,
   calculateSafeAreaPadding,
   calculateSafeAreaPaddingForRect,
   classifySafeAreaBar,
-  normalizeSafeArea
+  normalizeSafeArea,
+  scaleSafeAreaToMinimumVisibleViewport
 } = spatialLayout;
 
 function rect(left, top, width, height) {
@@ -90,6 +92,34 @@ describe('spatial safe-area layout helpers', () => {
       right: 0,
       bottom: 0,
       left: 40
+    });
+  });
+
+  it('clamps raw safe-area padding to canvas dimensions', () => {
+    expect(clampSafeAreaPadding({
+      top: 900,
+      right: 1200,
+      bottom: -10,
+      left: Number.NaN
+    }, 1000, 800)).toEqual({
+      top: 800,
+      right: 1000,
+      bottom: 0,
+      left: 0
+    });
+  });
+
+  it('scales opposing safe-area padding to preserve the minimum visible viewport', () => {
+    expect(scaleSafeAreaToMinimumVisibleViewport({
+      top: 700,
+      right: 500,
+      bottom: 700,
+      left: 500
+    }, 1000, 800)).toEqual({
+      top: 240,
+      right: 300,
+      bottom: 240,
+      left: 300
     });
   });
 
