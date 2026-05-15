@@ -1,9 +1,11 @@
-import { isSubset } from '../../../utils/splitMatching.js';
 import { computeConnectionColor } from './ComparisonColorUtils.js';
 import { createConnectorConnection } from './ConnectorConnectionObjects.js';
 import { resolveConnectorColorEntry } from './ConnectorColorEntryResolver.js';
 import { indexConnectorLeavesByName } from './ConnectorLeafIndex.js';
-import { normalizeConnectorSplitValue } from './ConnectorSplitNormalization.js';
+import {
+  getEligibleConnectorSplitIndices,
+  isConnectorSplitInAnySubtree
+} from './ConnectorSplitEligibility.js';
 
 export function buildRawConnectorConnections(params) {
   const {
@@ -22,18 +24,14 @@ export function buildRawConnectorConnections(params) {
     if (!leftInfo.isLeaf || !leftInfo.name) continue;
     if (!leftInfo.position || leftInfo.position.length < 2) continue;
 
-    const splitIndices = key.split('-')
-      .map((val) => normalizeConnectorSplitValue(val))
-      .filter((n) => n !== null);
-    if (!splitIndices.length) continue;
-
-    if (!isSplitSubsetOfAny(splitIndices, jumpingSubtreeSets)) continue;
+    const splitIndices = getEligibleConnectorSplitIndices(key, jumpingSubtreeSets);
+    if (!splitIndices) continue;
 
     const rightMatch = rightLeavesByName.get(leftInfo.name);
     if (!rightMatch) continue;
     if (!rightMatch.info.position || rightMatch.info.position.length < 2) continue;
 
-    const isCurrentlyMoving = isSplitSubsetOfAny(splitIndices, currentSubtreeSets);
+    const isCurrentlyMoving = isConnectorSplitInAnySubtree(splitIndices, currentSubtreeSets);
     const source = [leftInfo.position[0], leftInfo.position[1], 0];
     const target = [rightMatch.info.position[0], rightMatch.info.position[1], 0];
 
@@ -63,11 +61,4 @@ export function buildRawConnectorConnections(params) {
   }
 
   return connections;
-}
-
-function isSplitSubsetOfAny(splitIndices, subtreeSets) {
-  for (const subtreeSet of subtreeSets || []) {
-    if (isSubset(splitIndices, subtreeSet)) return true;
-  }
-  return false;
 }
