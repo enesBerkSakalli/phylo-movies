@@ -63,10 +63,10 @@ describe('View Link Connectors - Subset Logic', () => {
   describe('filterLeavesInMarkedComponents', () => {
     it('returns leaves whose split is a subset of any marked component', () => {
       // Marked components represent the specific moving subtrees (red highlighting)
-      // In this example, leaves 10,11 are one mover, leaves 12,13 are another mover
+      // In this example, leaves 10,11 are one moved subtree, leaves 12,13 are another.
       const markedComponents = [
-        new Set([10, 11]),  // First mover
-        new Set([12, 13]),  // Second mover
+        new Set([10, 11]),  // First moved subtree
+        new Set([12, 13]),  // Second moved subtree
       ];
 
       // Position map with various leaves
@@ -90,10 +90,10 @@ describe('View Link Connectors - Subset Logic', () => {
 
     it('only connects leaves within marked components, not entire active subtree', () => {
       // Active change edge might be [10,11,12,13,14,15] (whole subtree)
-      // But marked is only [10,11] (the specific mover)
+      // But marked is only [10,11] (the specific moved subtree)
       // Connectors should only show for 10,11
       const markedComponents = [
-        new Set([10, 11]),  // Only this subtree is the "mover"
+        new Set([10, 11]),  // Only this subtree is actively moved
       ];
 
       const leftPositions = new Map([
@@ -194,12 +194,12 @@ describe('View Link Connectors - Subset Logic', () => {
 
       // Test cases: [split_indices, expected_result]
       const testCases = [
-        [[10], true],              // Single leaf in mover
-        [[11], true],              // Single leaf in mover
+        [[10], true],              // Single leaf in moved subtree
+        [[11], true],              // Single leaf in moved subtree
         [[10, 11], true],          // Internal node split - subset
         [[10, 11, 12, 13], true],  // Exact match (root of moving subtree)
-        [[5], false],              // Leaf outside mover
-        [[5, 6], false],           // Internal node outside mover
+        [[5], false],              // Leaf outside moved subtree
+        [[5, 6], false],           // Internal node outside moved subtree
         [[10, 99], false],         // Partial overlap - NOT a subset
         [[], false],               // Empty split
       ];
@@ -212,4 +212,3 @@ describe('View Link Connectors - Subset Logic', () => {
     });
   });
 });
-

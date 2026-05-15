@@ -3,7 +3,7 @@ import { getMovingSubtreeAtIndex } from '../../src/state/phyloStore/internal/cha
 import { TreeColorManager } from '../../src/treeVisualisation/systems/TreeColorManager.js';
 
 describe('moving subtree highlighting', () => {
-  it('does not merge simultaneous small movers into a larger highlighted clade', () => {
+  it('does not merge simultaneous moved subtrees into a larger highlighted clade', () => {
     const state = {
       subtreeTracking: [
         [[1], [2]],
