@@ -87,7 +87,7 @@ export const TreeStatsPanel: React.FC = () => {
                   />
                 ) : null}
 
-                {/* SPR mover analytics */}
+                {/* SPR moved-subtree analytics */}
                 <MovedSubtreeRecurrenceList />
               </div>
             </SidebarMenuSubItem>
