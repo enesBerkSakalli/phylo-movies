@@ -11,19 +11,19 @@ import { getSplitIndices } from '../utils/splitMatching.js';
  * Uses tree radii in world-space to determine appropriate spacing
  * so that both trees are visible without overlap.
  * @param {number} canvasWidth - Canvas width used for degenerate-layout fallback spacing
- * @param {Object} viewOffset - Current view offset {x, y}
+ * @param {Object} rightTreeOffset - Current right tree offset {x, y}
  * @param {number} [leftRadius=0] - Left tree radius in world-space units
  * @param {number} [rightRadius=0] - Right tree radius in world-space units
  * @returns {number} Right tree offset in world-space units
  */
-export function calculateRightOffset(canvasWidth, viewOffset, leftRadius = 0, rightRadius = 0) {
+export function calculateRightOffset(canvasWidth, rightTreeOffset, leftRadius = 0, rightRadius = 0) {
   // Use tree radii if available; fall back to canvas-based estimate at zoom=0
   const effectiveLeftRadius = leftRadius > 0 ? leftRadius : canvasWidth / 4;
   const effectiveRightRadius = rightRadius > 0 ? rightRadius : canvasWidth / 4;
   const gap = Math.max(effectiveLeftRadius, effectiveRightRadius) * 0.3;
   // Ensure a minimum offset so trees never overlap even with tiny/degenerate layouts
   const minOffset = canvasWidth * 0.25;
-  return Math.max(minOffset, effectiveLeftRadius + gap + effectiveRightRadius) + viewOffset.x;
+  return Math.max(minOffset, effectiveLeftRadius + gap + effectiveRightRadius) + rightTreeOffset.x;
 }
 
 /**

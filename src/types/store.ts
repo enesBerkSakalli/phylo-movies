@@ -118,8 +118,8 @@ export interface AppStoreState {
   comparisonMode: boolean;
   leftTreeOffsetX: number;
   leftTreeOffsetY: number;
-  viewOffsetX: number;
-  viewOffsetY: number;
+  rightTreeOffsetX: number;
+  rightTreeOffsetY: number;
   viewsConnected: boolean;
   connectorStrokeWidth: number;
   linkConnectionOpacity: number;
@@ -242,8 +242,8 @@ export interface AppStoreState {
   toggleComparisonMode: () => void;
   setLeftTreeOffsetX: (offset: number) => void;
   setLeftTreeOffsetY: (offset: number) => void;
-  setViewOffsetX: (offset: number) => void;
-  setViewOffsetY: (offset: number) => void;
+  setRightTreeOffsetX: (offset: number) => void;
+  setRightTreeOffsetY: (offset: number) => void;
   setViewsConnected: (enabled: boolean) => void;
   setConnectorStrokeWidth: (width: number) => void;
   setLinkConnectionOpacity: (opacity: number) => void;

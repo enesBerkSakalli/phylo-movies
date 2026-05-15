@@ -9,9 +9,8 @@ export const createComparisonViewSlice = (set, get) => ({
   // Left tree offsets
   leftTreeOffsetX: 0,
   leftTreeOffsetY: 0,
-  // Right tree offsets (replacing/aliasing viewOffset)
-  viewOffsetX: 0,
-  viewOffsetY: 0,
+  rightTreeOffsetX: 0,
+  rightTreeOffsetY: 0,
   viewsConnected: false,
   connectorStrokeWidth: 1,
   linkConnectionOpacity: 0.6,
@@ -24,13 +23,12 @@ export const createComparisonViewSlice = (set, get) => ({
   setLeftTreeOffsetX: (offset) => set({ leftTreeOffsetX: clamp(Number(offset), -5000, 5000) }),
   setLeftTreeOffsetY: (offset) => set({ leftTreeOffsetY: clamp(Number(offset), -5000, 5000) }),
 
-  // viewOffset acts as rightTreeOffset for compatibility
-  setViewOffsetX: (offset) => {
-    set({ viewOffsetX: clamp(Number(offset), -5000, 5000) });
+  setRightTreeOffsetX: (offset) => {
+    set({ rightTreeOffsetX: clamp(Number(offset), -5000, 5000) });
   },
 
-  setViewOffsetY: (offset) => {
-    set({ viewOffsetY: clamp(Number(offset), -5000, 5000) });
+  setRightTreeOffsetY: (offset) => {
+    set({ rightTreeOffsetY: clamp(Number(offset), -5000, 5000) });
   },
 
   setViewsConnected: (enabled) => set({ viewsConnected: !!enabled }),
@@ -50,8 +48,8 @@ export const createComparisonViewSlice = (set, get) => ({
     comparisonMode: false,
     leftTreeOffsetX: 0,
     leftTreeOffsetY: 0,
-    viewOffsetX: 0,
-    viewOffsetY: 0,
+    rightTreeOffsetX: 0,
+    rightTreeOffsetY: 0,
     viewsConnected: false,
     connectorStrokeWidth: 1,
     linkConnectionOpacity: 0.6,

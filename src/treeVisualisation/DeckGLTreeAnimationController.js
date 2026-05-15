@@ -22,7 +22,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
   // ==========================================================================
 
   constructor(options = {}) {
-    const { animations = true, viewSide = 'single', offset = null } = options || {};
+    const { animations = true, viewSide = 'single', rightTreeOffset = null } = options || {};
     super(null);
     this.animationsEnabled = animations;
     this.viewSide = viewSide;
@@ -127,7 +127,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
     // Viewport manager for camera and screen projections
     this.viewportManager = new ViewportManager(this);
-    this.viewportManager.initializeOffsets(offset);
+    this.viewportManager.initializeRightTreeOffset(rightTreeOffset);
 
     this.layerManager.layerStyles.setStyleChangeCallback({
       onLayoutChange: () => this._handleStyleChange(),

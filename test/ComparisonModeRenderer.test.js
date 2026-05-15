@@ -30,6 +30,8 @@ describe('ComparisonModeRenderer', () => {
       viewsConnected: true,
       leftTreeOffsetX: 0,
       leftTreeOffsetY: 0,
+      rightTreeOffsetX: 0,
+      rightTreeOffsetY: 0,
     });
 
     const renderer = new ComparisonModeRenderer({
@@ -42,7 +44,7 @@ describe('ComparisonModeRenderer', () => {
         getCanvasDimensions: () => ({ width: 800, height: 600 }),
       },
       viewportManager: {
-        getViewOffset: () => ({ x: 0, y: 0 }),
+        getRightTreeOffset: () => ({ x: 0, y: 0 }),
         focusOnTree,
       },
       _updateLayersEfficiently: vi.fn(),
