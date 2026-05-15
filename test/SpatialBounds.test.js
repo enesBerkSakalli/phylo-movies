@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import * as spatialBounds from '../src/treeVisualisation/spatial/bounds.js';
 
-const { areBoundsInView, expandBoundsForLabels } = spatialBounds;
+const {
+  areBoundsInView,
+  expandBoundsForLabels,
+  resolveLabelBoundsSize
+} = spatialBounds;
 
 describe('areBoundsInView', () => {
   it('returns false when no viewport bounds API is available', () => {
@@ -47,6 +51,15 @@ describe('expandBoundsForLabels', () => {
     expect(spatialBounds.LABEL_BOUNDS_LINE_HEIGHT_RATIO).toBe(1.2);
     expect(spatialBounds.LABEL_BOUNDS_MAX_WIDTH_PX).toBe(2000);
     expect(spatialBounds.LABEL_BOUNDS_DEFAULT_SIZE_PX).toBe(16);
+  });
+
+  it('resolves label bounds size from explicit size, provider, then default', () => {
+    expect(typeof resolveLabelBoundsSize).toBe('function');
+    expect(resolveLabelBoundsSize(12, () => {
+      throw new Error('provider should not be called');
+    })).toBe(12);
+    expect(resolveLabelBoundsSize(undefined, () => 14)).toBe(14);
+    expect(resolveLabelBoundsSize(undefined, null)).toBe(spatialBounds.LABEL_BOUNDS_DEFAULT_SIZE_PX);
   });
 
   it('returns original bounds when there are no labels', () => {
