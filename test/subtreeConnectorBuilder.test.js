@@ -83,6 +83,18 @@ describe('SubtreeConnectorBuilder', function () {
     expect(connectors).toEqual([]);
   });
 
+  it('resolves lattice solutions by pivot split identity instead of exact key text', function () {
+    const connectors = buildSubtreeConnectors(buildOptions({
+      latticeSolutions: { '[11,10]': [[10]] },
+      pivotEdge: [10, 11],
+      subtreeTracking: [[[10]]],
+    }));
+
+    expect(connectors).toHaveLength(1);
+    expect(connectors[0].sourceInfo.name).toBe('A');
+    expect(connectors[0].isCurrentlyMoving).toBe(true);
+  });
+
   it('builds all lattice connectors while only the current moved subtree is active', function () {
     const connectors = buildSubtreeConnectors(buildOptions({
       latticeSolutions: { '[99]': [[[10, 11], [12, 13]]] },

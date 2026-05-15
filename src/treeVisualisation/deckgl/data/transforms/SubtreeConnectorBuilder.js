@@ -1,5 +1,5 @@
 import { buildBundledBezierPath } from '../../builders/geometry/connectors/ConnectorGeometryBuilder.js';
-import { flattenSplitSets } from '../../../utils/splitMatching.js';
+import { flattenSplitSets, toSubtreeKey } from '../../../utils/splitMatching.js';
 import { computeConnectionColor } from './ComparisonColorUtils.js';
 import {
   pushOutward,
@@ -8,88 +8,128 @@ import {
   chooseBundlePoint
 } from './ComparisonGeometryUtils.js';
 
+const DEFAULT_CENTER = [0, 0];
+const CONNECTOR_PATH_SAMPLES = 24;
+const PASSIVE_CONNECTOR_STYLE = Object.freeze({
+  isActive: false,
+  bundlingStrength: 0.85,
+  width: 1.5,
+});
+const ACTIVE_CONNECTOR_STYLE = Object.freeze({
+  isActive: true,
+  bundlingStrength: 0.5,
+  width: 3.0,
+  outwardPushFactor: 1.08,
+});
+const ROOT_LEFT_GROUP_ID = 'rootL';
+const ROOT_RIGHT_GROUP_ID = 'rootR';
+
 /**
  * SubtreeConnectorBuilder
- * Prepares connector data for jumping subtrees between two trees.
+ * Prepares connector data for moving subtrees between two comparison trees.
  */
 export function buildSubtreeConnectors(options) {
-  var leftPositions = options.leftPositions;
-  var rightPositions = options.rightPositions;
-  var latticeSolutions = options.latticeSolutions;
-  var pivotEdge = options.pivotEdge;
-  var colorManager = options.colorManager;
-  var subtreeTracking = options.subtreeTracking;
-  var currentTreeIndex = options.currentTreeIndex;
-  var markedSubtreesEnabled = options.markedSubtreesEnabled === undefined ? true : options.markedSubtreesEnabled;
-  var linkConnectionOpacity = options.linkConnectionOpacity === undefined ? 0.6 : options.linkConnectionOpacity;
-  var leftCenter = options.leftCenter || [0, 0];
-  var rightCenter = options.rightCenter || [0, 0];
-  var leftRadius = options.leftRadius;
-  var rightRadius = options.rightRadius;
-  var leftInfoById = buildInfoById(leftPositions);
-  var rightInfoById = buildInfoById(rightPositions);
+  const {
+    leftPositions,
+    rightPositions,
+    latticeSolutions,
+    pivotEdge,
+    colorManager,
+    subtreeTracking,
+    currentTreeIndex,
+    markedSubtreesEnabled = true,
+    linkConnectionOpacity = 0.6,
+    leftCenter = DEFAULT_CENTER,
+    rightCenter = DEFAULT_CENTER,
+    leftRadius,
+    rightRadius,
+  } = options;
 
-  var edgeKey = "[" + pivotEdge.join(", ") + "]";
-  var flattenedSubtrees = flattenSplitSets(latticeSolutions[edgeKey] || []);
+  const solutionForPivot = resolveLatticeSolutionForPivot(latticeSolutions, pivotEdge);
+  const flattenedSubtrees = flattenSplitSets(solutionForPivot || []);
   if (flattenedSubtrees.length === 0) {
     return [];
   }
 
-  var currentSubtreeSets = normalizeToSets(subtreeTracking[currentTreeIndex]);
-  var jumpingSubtreeSets = flattenedSubtrees.map(function (st) {
-    return new Set(normalizeSplitArray(st));
-  });
-  var rightLeavesByName = indexRightLeaves(rightPositions);
-
-  var rawConnections = buildRawConnections({
-    leftPositions: leftPositions,
-    rightLeavesByName: rightLeavesByName,
-    jumpingSubtreeSets: jumpingSubtreeSets,
-    currentSubtreeSets: currentSubtreeSets,
-    colorManager: colorManager,
-    markedSubtreesEnabled: markedSubtreesEnabled,
-    linkConnectionOpacity: linkConnectionOpacity
+  const jumpingSubtreeSets = toNormalizedSetList(flattenedSubtrees);
+  const currentSubtreeSets = normalizeSubtreeTrackingToSets(subtreeTracking?.[currentTreeIndex]);
+  const rawConnections = buildRawConnections({
+    leftPositions,
+    rightLeavesByName: indexRightLeaves(rightPositions),
+    jumpingSubtreeSets,
+    currentSubtreeSets,
+    colorManager,
+    markedSubtreesEnabled,
+    linkConnectionOpacity,
   });
   if (!rawConnections.length) {
     return [];
   }
 
-  var sortedConnections = sortConnectionsByAngle(rawConnections, leftCenter, rightCenter);
-  var split = splitActivePassive(sortedConnections);
-  var activeConnections = split.activeConnections;
-  var passiveConnections = split.passiveConnections;
-
-  var passivePaths = buildBundledConnectorPaths({
-    connections: passiveConnections,
-    leftCenter: leftCenter,
-    rightCenter: rightCenter,
-    leftRadius: leftRadius,
-    rightRadius: rightRadius,
-    leftInfoById: leftInfoById,
-    rightInfoById: rightInfoById,
-    isActive: false,
-    bundlingStrength: 0.85,
-    width: 1.5
+  const sortedConnections = sortConnectionsByAngle(rawConnections, leftCenter, rightCenter);
+  const { activeConnections, passiveConnections } = splitActivePassive(sortedConnections);
+  return buildConnectorPaths({
+    activeConnections,
+    passiveConnections,
+    leftCenter,
+    rightCenter,
+    leftRadius,
+    rightRadius,
+    leftInfoById: buildInfoById(leftPositions),
+    rightInfoById: buildInfoById(rightPositions),
   });
-
-  var activePaths = buildBundledConnectorPaths({
-    connections: activeConnections,
-    leftCenter: leftCenter,
-    rightCenter: rightCenter,
-    leftRadius: leftRadius,
-    rightRadius: rightRadius,
-    leftInfoById: leftInfoById,
-    rightInfoById: rightInfoById,
-    isActive: true,
-    bundlingStrength: 0.5,
-    width: 3.0,
-    outwardPushFactor: 1.08
-  });
-
-  return passivePaths.concat(activePaths);
 }
 
-// ---------- helpers ----------
+// ---------- lattice solution lookup ----------
+
+function resolveLatticeSolutionForPivot(latticeSolutions, pivotEdge) {
+  if (!latticeSolutions || !Array.isArray(pivotEdge) || pivotEdge.length === 0) {
+    return null;
+  }
+
+  const directKey = formatLegacySplitKey(pivotEdge);
+  if (Object.prototype.hasOwnProperty.call(latticeSolutions, directKey)) {
+    return latticeSolutions[directKey];
+  }
+
+  const pivotIdentity = getNumericSplitIdentity(normalizeSplitArray(pivotEdge));
+  if (!pivotIdentity || typeof latticeSolutions !== 'object') {
+    return null;
+  }
+
+  for (const [candidateKey, solution] of Object.entries(latticeSolutions)) {
+    const candidateIdentity = getNumericSplitIdentity(parseLegacySplitKey(candidateKey));
+    if (candidateIdentity === pivotIdentity) {
+      return solution;
+    }
+  }
+
+  return null;
+}
+
+function formatLegacySplitKey(split) {
+  return `[${split.join(', ')}]`;
+}
+
+function parseLegacySplitKey(splitKey) {
+  if (typeof splitKey !== 'string') return null;
+
+  try {
+    const parsed = JSON.parse(splitKey);
+    return Array.isArray(parsed) ? normalizeSplitArray(parsed) : null;
+  } catch {
+    return null;
+  }
+}
+
+function getNumericSplitIdentity(split) {
+  if (!Array.isArray(split) || split.length === 0 || !split.every(Number.isFinite)) {
+    return null;
+  }
+  return toSubtreeKey(split);
+}
+
+// ---------- color entry resolution ----------
 
 /**
  * Get the normalized entry used for color determination.
@@ -101,29 +141,18 @@ export function buildSubtreeConnectors(options) {
  * @returns {Object} Normalized entry to use for color determination
  */
 function getColorEntry(leftInfo, splitIndices, jumpingSubtreeSets, leftPositions) {
-  // Find which jumping subtree this leaf belongs to
-  var matchingSubtree = null;
-  for (var i = 0; i < jumpingSubtreeSets.length; i++) {
-    var subtreeSet = jumpingSubtreeSets[i];
+  let matchingSubtree = null;
+  for (const subtreeSet of jumpingSubtreeSets) {
     if (isSubsetOf(splitIndices, subtreeSet)) {
       matchingSubtree = subtreeSet;
       break;
     }
   }
 
-  // If this leaf is part of a larger subtree, try to find the internal entry.
   if (matchingSubtree && splitIndices.length < matchingSubtree.size) {
-    // Build the key for the internal entry representing the full subtree.
-    // split_indices are always sorted ascending, so we must sort the subtree array
-    var subtreeArray = Array.from(matchingSubtree).sort(function (a, b) { return a - b; });
-    var internalKey = subtreeArray.join('-');
-
-    if (leftPositions.has(internalKey)) {
-      var internalInfo = leftPositions.get(internalKey);
-      if (internalInfo) {
-        return internalInfo;
-      }
-    }
+    const subtreeArray = Array.from(matchingSubtree).sort((a, b) => a - b);
+    const internalInfo = leftPositions.get(subtreeArray.join('-'));
+    if (internalInfo) return internalInfo;
   }
 
   return leftInfo;
@@ -144,9 +173,7 @@ function isSubsetOf(array, set) {
   if (array.length > set.size) {
     return false;
   }
-  return array.every(function (element) {
-    return set.has(element);
-  });
+  return array.every((element) => set.has(element));
 }
 
 // ========== Connection Object Creation ==========
@@ -157,22 +184,22 @@ function isSubsetOf(array, set) {
  * @returns {Object} Connection object with all properties
  */
 function createConnectionObject(params) {
-  var obj = {
+  const connection = {
     id: params.id,
     source: params.source,
     target: params.target,
     color: params.color,
     isCurrentlyMoving: params.isCurrentlyMoving,
     sourceInfo: params.sourceInfo,
-    targetInfo: params.targetInfo
+    targetInfo: params.targetInfo,
   };
   if (params.path !== undefined) {
-    obj.path = params.path;
+    connection.path = params.path;
   }
   if (params.width !== undefined) {
-    obj.width = params.width;
+    connection.width = params.width;
   }
-  return obj;
+  return connection;
 }
 
 /**
@@ -192,29 +219,23 @@ function createPathObject(connection, path, idSuffix, width) {
     isCurrentlyMoving: connection.isCurrentlyMoving,
     sourceInfo: connection.sourceInfo,
     targetInfo: connection.targetInfo,
-    path: path,
-    width: width
+    path,
+    width,
   });
 }
 
 // ========== Normalization Helpers ==========
 
-function normalizeToSets(val) {
+function normalizeSubtreeTrackingToSets(val) {
   if (!val) return [];
 
-  // If it's already an array of arrays (list of subtrees), convert each to a Set
   if (Array.isArray(val)) {
-    // Check if this is a list of subtrees: [[12, 13, 14], [20, 21]]
     if (val.length > 0 && Array.isArray(val[0])) {
-      return val.map(function (subtree) {
-        return new Set(normalizeSplitArray(subtree));
-      });
+      return val.map((subtree) => new Set(normalizeSplitArray(subtree)));
     }
-    // Single subtree as array: [12, 13, 14]
     return [new Set(normalizeSplitArray(val))];
   }
 
-  // Single Set
   if (val instanceof Set) {
     return [val];
   }
@@ -222,15 +243,19 @@ function normalizeToSets(val) {
   return [];
 }
 
+function toNormalizedSetList(subtrees) {
+  return subtrees.map((subtree) => new Set(normalizeSplitArray(subtree)));
+}
+
 function indexRightLeaves(rightPositions) {
-  var map = new Map();
-  var iterator = rightPositions.entries();
-  var entry = iterator.next();
+  const map = new Map();
+  const iterator = rightPositions.entries();
+  let entry = iterator.next();
   while (!entry.done) {
-    var key = entry.value[0];
-    var info = entry.value[1];
+    const key = entry.value[0];
+    const info = entry.value[1];
     if (info && info.isLeaf && info.name) {
-      map.set(info.name, { key: key, info: info });
+      map.set(info.name, { key, info });
     }
     entry = iterator.next();
   }
@@ -238,8 +263,8 @@ function indexRightLeaves(rightPositions) {
 }
 
 function normalizeSplitValue(val) {
-  var num = Number(val);
-  if (!isNaN(num)) {
+  const num = Number(val);
+  if (!Number.isNaN(num)) {
     return num;
   }
   if (val === null || val === undefined) {
@@ -252,259 +277,289 @@ function normalizeSplitArray(arr) {
   if (!Array.isArray(arr)) {
     return [];
   }
-  var result = [];
-  for (var i = 0; i < arr.length; i += 1) {
-    var v = normalizeSplitValue(arr[i]);
-    if (v !== null) {
-      result.push(v);
+  const result = [];
+  for (const item of arr) {
+    const value = normalizeSplitValue(item);
+    if (value !== null) {
+      result.push(value);
     }
   }
   return result;
 }
 
 function buildRawConnections(params) {
-  var leftPositions = params.leftPositions;
-  var rightLeavesByName = params.rightLeavesByName;
-  var jumpingSubtreeSets = params.jumpingSubtreeSets;
-  var currentSubtreeSets = params.currentSubtreeSets;
-  var colorManager = params.colorManager;
-  var markedSubtreesEnabled = params.markedSubtreesEnabled;
-  var linkConnectionOpacity = params.linkConnectionOpacity;
+  const {
+    leftPositions,
+    rightLeavesByName,
+    jumpingSubtreeSets,
+    currentSubtreeSets,
+    colorManager,
+    markedSubtreesEnabled,
+    linkConnectionOpacity,
+  } = params;
+  const connections = [];
 
-  var connections = [];
-
-  for (var entry of leftPositions.entries()) {
-    var key = entry[0];
-    var leftInfo = entry[1];
-
+  for (const [key, leftInfo] of leftPositions.entries()) {
     if (!leftInfo.isLeaf || !leftInfo.name) continue;
     if (!leftInfo.position || leftInfo.position.length < 2) continue;
 
-    var splitIndices = key.split('-')
-      .map(function (val) { return normalizeSplitValue(val); })
-      .filter(function (n) { return n !== null; });
+    const splitIndices = key.split('-')
+      .map((val) => normalizeSplitValue(val))
+      .filter((n) => n !== null);
     if (!splitIndices.length) continue;
 
-    // Check if in jumping subtrees using isSubsetOf helper
-    var inJumping = false;
-    for (var i = 0; i < jumpingSubtreeSets.length; i += 1) {
-      var subtreeSet = jumpingSubtreeSets[i];
-      if (isSubsetOf(splitIndices, subtreeSet)) {
-        inJumping = true;
-        break;
-      }
-    }
-    if (!inJumping) continue;
+    if (!isSubsetOfAny(splitIndices, jumpingSubtreeSets)) continue;
 
-    var rightMatch = rightLeavesByName.get(leftInfo.name);
+    const rightMatch = rightLeavesByName.get(leftInfo.name);
     if (!rightMatch) continue;
     if (!rightMatch.info.position || rightMatch.info.position.length < 2) continue;
 
-    // Check if currently moving - check against ALL current subtrees
-    var isCurrentlyMoving = false;
-    if (currentSubtreeSets && currentSubtreeSets.length > 0) {
-      for (var i = 0; i < currentSubtreeSets.length; i += 1) {
-        if (isSubsetOf(splitIndices, currentSubtreeSets[i])) {
-          isCurrentlyMoving = true;
-          break;
-        }
-      }
-    }
+    const isCurrentlyMoving = isSubsetOfAny(splitIndices, currentSubtreeSets);
+    const source = [leftInfo.position[0], leftInfo.position[1], 0];
+    const target = [rightMatch.info.position[0], rightMatch.info.position[1], 0];
 
-    var srcPos = [leftInfo.position[0], leftInfo.position[1], 0];
-    var dstPos = [rightMatch.info.position[0], rightMatch.info.position[1], 0];
-
-    var colorEntry = getColorEntry(leftInfo, splitIndices, jumpingSubtreeSets, leftPositions);
-    var isPivotEdge = colorManager && typeof colorManager.isNodePivotEdge === 'function'
+    const colorEntry = getColorEntry(leftInfo, splitIndices, jumpingSubtreeSets, leftPositions);
+    const isPivotEdge = colorManager && typeof colorManager.isNodePivotEdge === 'function'
       && colorManager.isNodePivotEdge(colorEntry);
-    var isHistorySubtree = colorManager && typeof colorManager.isNodeHistorySubtree === 'function'
+    const isHistorySubtree = colorManager && typeof colorManager.isNodeHistorySubtree === 'function'
       && colorManager.isNodeHistorySubtree(colorEntry);
-    var effectiveMoving = isCurrentlyMoving || isPivotEdge || isHistorySubtree;
-    var color = computeConnectionColor(colorEntry, effectiveMoving, colorManager, markedSubtreesEnabled, linkConnectionOpacity);
+    const effectiveMoving = isCurrentlyMoving || isPivotEdge || isHistorySubtree;
+    const color = computeConnectionColor(
+      colorEntry,
+      effectiveMoving,
+      colorManager,
+      markedSubtreesEnabled,
+      linkConnectionOpacity
+    );
 
-    // Use createConnectionObject helper
     connections.push(createConnectionObject({
-      id: "connector-" + key + "-" + rightMatch.key,
-      source: srcPos,
-      target: dstPos,
-      color: color,
+      id: `connector-${key}-${rightMatch.key}`,
+      source,
+      target,
+      color,
       isCurrentlyMoving: effectiveMoving,
       sourceInfo: leftInfo,
-      targetInfo: rightMatch.info
+      targetInfo: rightMatch.info,
     }));
   }
 
   return connections;
 }
 
+function isSubsetOfAny(splitIndices, subtreeSets) {
+  for (const subtreeSet of subtreeSets || []) {
+    if (isSubsetOf(splitIndices, subtreeSet)) return true;
+  }
+  return false;
+}
+
 function sortConnectionsByAngle(connections, leftCenter, rightCenter) {
-  return connections.slice().sort(function (a, b) {
-    var aSrc = getAngle(a.sourceInfo, leftCenter);
-    var bSrc = getAngle(b.sourceInfo, leftCenter);
+  return connections.slice().sort((a, b) => {
+    const aSrc = getAngle(a.sourceInfo, leftCenter);
+    const bSrc = getAngle(b.sourceInfo, leftCenter);
     if (aSrc !== bSrc) {
       return aSrc - bSrc;
     }
-    var aDst = getAngle(a.targetInfo, rightCenter);
-    var bDst = getAngle(b.targetInfo, rightCenter);
+    const aDst = getAngle(a.targetInfo, rightCenter);
+    const bDst = getAngle(b.targetInfo, rightCenter);
     return aDst - bDst;
   });
 }
 
 function splitActivePassive(connections) {
-  var activeConnections = [];
-  var passiveConnections = [];
-  connections.forEach(function (conn) {
-    if (conn.isCurrentlyMoving) {
-      activeConnections.push(conn);
+  const activeConnections = [];
+  const passiveConnections = [];
+  connections.forEach((connection) => {
+    if (connection.isCurrentlyMoving) {
+      activeConnections.push(connection);
     } else {
-      passiveConnections.push(conn);
+      passiveConnections.push(connection);
     }
   });
-  return { activeConnections: activeConnections, passiveConnections: passiveConnections };
+  return { activeConnections, passiveConnections };
 }
 
 // ========== Bundle Building ==========
 
+function buildConnectorPaths(params) {
+  const {
+    activeConnections,
+    passiveConnections,
+    leftCenter,
+    rightCenter,
+    leftRadius,
+    rightRadius,
+    leftInfoById,
+    rightInfoById,
+  } = params;
+
+  const passivePaths = buildBundledConnectorPaths({
+    connections: passiveConnections,
+    leftCenter,
+    rightCenter,
+    leftRadius,
+    rightRadius,
+    leftInfoById,
+    rightInfoById,
+    ...PASSIVE_CONNECTOR_STYLE,
+  });
+
+  const activePaths = buildBundledConnectorPaths({
+    connections: activeConnections,
+    leftCenter,
+    rightCenter,
+    leftRadius,
+    rightRadius,
+    leftInfoById,
+    rightInfoById,
+    ...ACTIVE_CONNECTOR_STYLE,
+  });
+
+  return passivePaths.concat(activePaths);
+}
+
 /**
- * Build bundled connector paths for both active and passive connections.
- * Unified function that handles both modes with different styling parameters.
+ * Build bundled connector paths with separate style parameters for active and passive connections.
  * @param {Object} params - Configuration parameters
  * @returns {Array} Array of path objects
  */
 function buildBundledConnectorPaths(params) {
-  var connections = params.connections;
-  var leftCenter = params.leftCenter;
-  var rightCenter = params.rightCenter;
-  var leftRadius = params.leftRadius;
-  var rightRadius = params.rightRadius;
-  var leftInfoById = params.leftInfoById;
-  var rightInfoById = params.rightInfoById;
-  var isActive = params.isActive;
-  var bundlingStrength = params.bundlingStrength;
-  var width = params.width;
-  var outwardPushFactor = params.outwardPushFactor;
+  const {
+    connections,
+    leftCenter,
+    rightCenter,
+    leftRadius,
+    rightRadius,
+    leftInfoById,
+    rightInfoById,
+    isActive,
+    bundlingStrength,
+    width,
+    outwardPushFactor,
+  } = params;
 
   if (!connections.length) {
     return [];
   }
 
-  var results = [];
+  const results = [];
 
   if (isActive) {
-    // Active connections: Calculate a SHARED bundle point for the entire group
-    // This ensures visually coherent bundling instead of individual rays
-    var srcBundlePoint = chooseBundlePoint(connections, null, leftCenter, leftRadius, true, leftInfoById);
-    var dstBundlePoint = chooseBundlePoint(connections, null, rightCenter, rightRadius, false, rightInfoById);
+    let srcBundlePoint = chooseBundlePoint(connections, null, leftCenter, leftRadius, true, leftInfoById);
+    let dstBundlePoint = chooseBundlePoint(connections, null, rightCenter, rightRadius, false, rightInfoById);
 
     if (outwardPushFactor) {
       srcBundlePoint = pushOutward(srcBundlePoint, leftCenter, outwardPushFactor);
       dstBundlePoint = pushOutward(dstBundlePoint, rightCenter, outwardPushFactor);
     }
 
-    connections.forEach(function (conn, idx) {
-      // Use the shared bundle points for all paths in this active group
-      var path = buildBundledBezierPath(
-        conn.source,
-        conn.target,
+    connections.forEach((connection, index) => {
+      const path = buildPathForConnection(
+        connection,
         srcBundlePoint,
         dstBundlePoint,
-        24,
-        {
-          bundlingStrength: bundlingStrength,
-          sourceCenter: leftCenter,
-          targetCenter: rightCenter
-        }
+        leftCenter,
+        rightCenter,
+        bundlingStrength
       );
 
       if (path.length) {
-        results.push(createPathObject(conn, path, "-active-" + idx, width));
+        results.push(createPathObject(connection, path, `-active-${index}`, width));
       }
     });
-  } else {
-    // Passive: group by bundle ancestors
-    var groups = groupPassiveConnections(connections, leftInfoById, rightInfoById);
+    return results;
+  }
 
-    groups.forEach(function (group) {
-      var groupBundlePoint = chooseBundlePoint(
-        group.connections,
-        group.leftCenterEntry,
+  for (const group of groupPassiveConnections(connections, leftInfoById, rightInfoById)) {
+    const groupBundlePoint = chooseBundlePoint(
+      group.connections,
+      group.leftCenterEntry,
+      leftCenter,
+      leftRadius,
+      true,
+      leftInfoById
+    );
+    const groupDstBundlePoint = chooseBundlePoint(
+      group.connections,
+      group.rightCenterEntry,
+      rightCenter,
+      rightRadius,
+      false,
+      rightInfoById
+    );
+
+    group.connections.forEach((connection, index) => {
+      const path = buildPathForConnection(
+        connection,
+        groupBundlePoint,
+        groupDstBundlePoint,
         leftCenter,
-        leftRadius,
-        true,
-        leftInfoById
-      );
-      var groupDstBundlePoint = chooseBundlePoint(
-        group.connections,
-        group.rightCenterEntry,
         rightCenter,
-        rightRadius,
-        false,
-        rightInfoById
+        bundlingStrength
       );
 
-      group.connections.forEach(function (conn, idx) {
-        var path = buildBundledBezierPath(
-          conn.source,
-          conn.target,
-          groupBundlePoint,
-          groupDstBundlePoint,
-          24,
-          {
-            bundlingStrength: bundlingStrength,
-            sourceCenter: leftCenter,
-            targetCenter: rightCenter
-          }
-        );
-
-        if (path.length) {
-          results.push(createPathObject(conn, path, "-" + idx, width));
-        }
-      });
+      if (path.length) {
+        results.push(createPathObject(connection, path, `-${index}`, width));
+      }
     });
   }
 
   return results;
 }
 
-function groupPassiveConnections(passiveConnections, leftInfoById, rightInfoById) {
-  var groups = new Map();
+function buildPathForConnection(connection, srcBundlePoint, dstBundlePoint, leftCenter, rightCenter, bundlingStrength) {
+  return buildBundledBezierPath(
+    connection.source,
+    connection.target,
+    srcBundlePoint,
+    dstBundlePoint,
+    CONNECTOR_PATH_SAMPLES,
+    {
+      bundlingStrength,
+      sourceCenter: leftCenter,
+      targetCenter: rightCenter,
+    }
+  );
+}
 
-  passiveConnections.forEach(function (conn) {
-    var sourceInfo = conn.sourceInfo;
-    var targetInfo = conn.targetInfo;
+function groupPassiveConnections(passiveConnections, leftInfoById, rightInfoById) {
+  const groups = new Map();
+
+  passiveConnections.forEach((connection) => {
+    const { sourceInfo, targetInfo } = connection;
     if (!sourceInfo || !targetInfo) return;
 
-    var leftBundleEntry = getBundleAncestor(sourceInfo, leftInfoById, 2) || getParentInfo(sourceInfo, leftInfoById);
-    var rightBundleEntry = getBundleAncestor(targetInfo, rightInfoById, 2) || getParentInfo(targetInfo, rightInfoById);
+    const leftBundleEntry = getBundleAncestor(sourceInfo, leftInfoById, 2) || getParentInfo(sourceInfo, leftInfoById);
+    const rightBundleEntry = getBundleAncestor(targetInfo, rightInfoById, 2) || getParentInfo(targetInfo, rightInfoById);
 
-    var leftKey = leftBundleEntry ? leftBundleEntry.id : 'rootL';
-    var rightKey = rightBundleEntry ? rightBundleEntry.id : 'rootR';
-    var groupKey = leftKey + "|" + rightKey;
+    const leftKey = leftBundleEntry ? leftBundleEntry.id : ROOT_LEFT_GROUP_ID;
+    const rightKey = rightBundleEntry ? rightBundleEntry.id : ROOT_RIGHT_GROUP_ID;
+    const groupKey = `${leftKey}|${rightKey}`;
 
     if (!groups.has(groupKey)) {
       groups.set(groupKey, {
         leftCenterEntry: leftBundleEntry,
         rightCenterEntry: rightBundleEntry,
-        connections: []
+        connections: [],
       });
     }
-    groups.get(groupKey).connections.push(conn);
+    groups.get(groupKey).connections.push(connection);
   });
 
-  return groups;
+  return Array.from(groups.values());
 }
 
 function buildInfoById(positionMap) {
-  var map = new Map();
+  const map = new Map();
   if (!positionMap || typeof positionMap.values !== 'function') return map;
-  for (var info of positionMap.values()) {
-    var id = info && info.id;
+  for (const info of positionMap.values()) {
+    const id = info && info.id;
     if (id) map.set(id, info);
   }
   return map;
 }
 
 function getParentInfo(info, infoById) {
-  var parentId = info && info.parentId;
+  const parentId = info && info.parentId;
   return parentId && infoById ? infoById.get(parentId) : null;
 }
