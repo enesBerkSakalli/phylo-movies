@@ -37,6 +37,17 @@ export function calculateViewportBoundsPadding(viewBounds, paddingFactor) {
   };
 }
 
+export function isBoundsInsidePaddedViewport(bounds, viewBounds, padding) {
+  const [viewMinX, viewMinY, viewMaxX, viewMaxY] = viewBounds;
+
+  return (
+    bounds.minX >= viewMinX - padding.x &&
+    bounds.maxX <= viewMaxX + padding.x &&
+    bounds.minY >= viewMinY - padding.y &&
+    bounds.maxY <= viewMaxY + padding.y
+  );
+}
+
 /**
  * Checks if a bounding box is within the current Viewport.
  * Uses a relaxed intersection test (paddingFactor) to prevent aggressive culling
@@ -52,16 +63,9 @@ export function areBoundsInView(bounds, viewport, paddingFactor = 1.05) {
 
   // Viewport Bounds (Frustum Projection to Z=0 Plane)
   const viewBounds = viewport.getBounds();
-  const [viewMinX, viewMinY, viewMaxX, viewMaxY] = viewBounds;
-  const { x: padX, y: padY } = calculateViewportBoundsPadding(viewBounds, paddingFactor);
+  const padding = calculateViewportBoundsPadding(viewBounds, paddingFactor);
 
-  // AABB Intersection Test
-  return (
-    bounds.minX >= viewMinX - padX &&
-    bounds.maxX <= viewMaxX + padX &&
-    bounds.minY >= viewMinY - padY &&
-    bounds.maxY <= viewMaxY + padY
-  );
+  return isBoundsInsidePaddedViewport(bounds, viewBounds, padding);
 }
 
 /**
