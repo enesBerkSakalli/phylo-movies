@@ -23,6 +23,14 @@ async function importConnectorColorEntryResolver() {
   }
 }
 
+async function importConnectorLeafIndex() {
+  try {
+    return await import('../src/treeVisualisation/deckgl/data/transforms/ConnectorLeafIndex.js');
+  } catch {
+    return null;
+  }
+}
+
 async function importConnectorSplitNormalization() {
   try {
     return await import('../src/treeVisualisation/deckgl/data/transforms/ConnectorSplitNormalization.js');
@@ -148,6 +156,37 @@ describe('SubtreeConnectorBuilder', function () {
 
     expect(source).toMatch(/from\s+['"]\.\/ConnectorColorEntryResolver\.js['"]/);
     expect(source).not.toMatch(/function\s+getColorEntry\s*\(/);
+  });
+
+  it('indexes connector leaves by name through a dedicated helper', async function () {
+    const leafIndex = await importConnectorLeafIndex();
+
+    expect(leafIndex).not.toBeNull();
+
+    const leafA = { id: 'leaf-a', isLeaf: true, name: 'A' };
+    const leafB = { id: 'leaf-b', isLeaf: true, name: 'B' };
+    const internalA = { id: 'internal-a', isLeaf: false, name: 'A' };
+    const namelessLeaf = { id: 'nameless', isLeaf: true };
+    const positions = new Map([
+      ['10', leafA],
+      ['10-11', internalA],
+      ['11', namelessLeaf],
+      ['12', leafB],
+      ['missing', null],
+    ]);
+
+    expect(Array.from(leafIndex.indexConnectorLeavesByName(positions).entries())).toEqual([
+      ['A', { key: '10', info: leafA }],
+      ['B', { key: '12', info: leafB }],
+    ]);
+  });
+
+  it('keeps connector leaf indexing outside the builder', function () {
+    const source = readFileSync(builderSourcePath, 'utf8');
+
+    expect(source).toMatch(/from\s+['"]\.\/ConnectorLeafIndex\.js['"]/);
+    expect(source).not.toMatch(/function\s+indexRightLeaves\s*\(/);
+    expect(source).not.toMatch(/iterator\.next\s*\(/);
   });
 
   it('builds connectors when positions are Maps', function () {

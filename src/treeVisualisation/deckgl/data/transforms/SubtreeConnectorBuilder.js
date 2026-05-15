@@ -7,6 +7,7 @@ import {
   toConnectorSubtreeSetList
 } from './ConnectorSplitNormalization.js';
 import { resolveConnectorColorEntry } from './ConnectorColorEntryResolver.js';
+import { indexConnectorLeavesByName } from './ConnectorLeafIndex.js';
 import {
   pushOutward,
   getAngle,
@@ -61,7 +62,7 @@ export function buildSubtreeConnectors(options) {
   const currentSubtreeSets = normalizeConnectorSubtreeTrackingToSets(subtreeTracking?.[currentTreeIndex]);
   const rawConnections = buildRawConnections({
     leftPositions,
-    rightLeavesByName: indexRightLeaves(rightPositions),
+    rightLeavesByName: indexConnectorLeavesByName(rightPositions),
     jumpingSubtreeSets,
     currentSubtreeSets,
     colorManager,
@@ -132,21 +133,6 @@ function createPathObject(connection, path, idSuffix, width) {
     path,
     width,
   });
-}
-
-function indexRightLeaves(rightPositions) {
-  const map = new Map();
-  const iterator = rightPositions.entries();
-  let entry = iterator.next();
-  while (!entry.done) {
-    const key = entry.value[0];
-    const info = entry.value[1];
-    if (info && info.isLeaf && info.name) {
-      map.set(info.name, { key, info });
-    }
-    entry = iterator.next();
-  }
-  return map;
 }
 
 function buildRawConnections(params) {
