@@ -13,7 +13,7 @@ describe('Tree Visualisation - State Update Logic', () => {
   // Mock State Factory
   const createMockState = (overrides = {}) => ({
     currentTreeIndex: 10,
-    markedSubtreeMode: 'current',
+    markedSubtreeScope: 'current',
     subtreeTracking: [],
     transitionResolver: {
       isFullTree: () => false,
@@ -41,7 +41,7 @@ describe('Tree Visualisation - State Update Logic', () => {
       const state = createMockState({
         currentTreeIndex: index,
         subtreeTracking: { [index]: subtrees },
-        markedSubtreeMode: 'current'
+        markedSubtreeScope: 'current'
       });
 
       const result = resolveMarkedSubtrees(state);
@@ -62,7 +62,7 @@ describe('Tree Visualisation - State Update Logic', () => {
           isFullTree: () => false,
           getSourceGlobalIndex: (idx) => (idx === index ? sourceIndex : idx)
         },
-        markedSubtreeMode: 'current'
+        markedSubtreeScope: 'current'
       });
 
       const result = resolveMarkedSubtrees(state);
@@ -80,7 +80,7 @@ describe('Tree Visualisation - State Update Logic', () => {
         treeMetadata[index] = { tree_pair_key: pairKey };
         const state = createMockState({
             currentTreeIndex: index,
-            markedSubtreeMode: 'all', // CAUSES SWITCH
+            markedSubtreeScope: 'all', // CAUSES SWITCH
             pivotEdgeTracking: { [index]: activeEdge },
             treeMetadata,
             pairSolutions: {
@@ -107,7 +107,7 @@ describe('Tree Visualisation - State Update Logic', () => {
         treeMetadata[index] = { tree_pair_key: pairKey };
         const state = createMockState({
             currentTreeIndex: index,
-            markedSubtreeMode: 'all',
+            markedSubtreeScope: 'all',
             pivotEdgeTracking: { [index]: activeEdge },
             treeMetadata,
             pairSolutions: {

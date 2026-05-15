@@ -36,7 +36,7 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
       colorManager,
       pivotEdgeColor: get().pivotEdgeColor,
       markedColor: get().markedColor,
-      markedSubtreeMode: 'current',
+      markedSubtreeScope: 'current',
       taxaGrouping: null,
     });
 

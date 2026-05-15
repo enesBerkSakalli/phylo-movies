@@ -125,7 +125,7 @@ export interface AppStoreState {
   linkConnectionOpacity: number;
 
   // From subtreeSelection.slice
-  markedSubtreeMode: string;
+  markedSubtreeScope: string;
   manuallyMarkedNodes: any[];
 
   // From treeHighlightState.slice
@@ -254,7 +254,7 @@ export interface AppStoreState {
   getSubtreeHistoryData: (indexOverride?: number | null) => any;
   getCurrentMovingSubtreeData: (indexOverride?: number | null) => any;
   getSourceDestinationEdgeData: (indexOverride?: number | null) => { source: any[]; dest: any[] };
-  setMarkedSubtreeMode: (mode: string) => void;
+  setMarkedSubtreeScope: (scope: string) => void;
   setManuallyMarkedNodes: (nodeIds: any[]) => void;
 
   setDimmingEnabled: (enabled: boolean) => void;

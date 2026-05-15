@@ -11,7 +11,7 @@ export const createSubtreeSelectionSlice = (set, get) => ({
   // ==========================================================================
   // STATE
   // ==========================================================================
-  markedSubtreeMode: 'current', // 'all' | 'current'
+  markedSubtreeScope: 'current', // 'all' | 'current'
   manuallyMarkedNodes: [],
 
   // ==========================================================================
@@ -45,9 +45,9 @@ export const createSubtreeSelectionSlice = (set, get) => ({
     return getSourceDestinationEdgesAtIndex(get(), index);
   },
 
-  setMarkedSubtreeMode: (mode) => {
-    if (mode !== 'all' && mode !== 'current') return;
-    set({ markedSubtreeMode: mode });
+  setMarkedSubtreeScope: (scope) => {
+    if (scope !== 'all' && scope !== 'current') return;
+    set({ markedSubtreeScope: scope });
     const { markedSubtreesEnabled, getMarkedSubtreeData, updateColorManagerMarkedSubtrees, manuallyMarkedNodes } = get();
     if (markedSubtreesEnabled) {
       updateColorManagerMarkedSubtrees([...toManualMarkedSets(manuallyMarkedNodes), ...getMarkedSubtreeData()]);

@@ -3,7 +3,7 @@ import {
   selectHighlightColorMode,
   selectMarkedColor,
   selectMarkedNodes,
-  selectMarkedSubtreeMode,
+  selectMarkedSubtreeScope,
   selectMarkedSubtreeOpacity,
   selectMarkedSubtreesEnabled,
   selectMonophyleticColoringEnabled,
@@ -12,7 +12,7 @@ import {
   selectSetHighlightColorMode,
   selectSetManuallyMarkedNodes,
   selectSetMarkedColor,
-  selectSetMarkedSubtreeMode,
+  selectSetMarkedSubtreeScope,
   selectSetMarkedSubtreeOpacity,
   selectSetMarkedSubtreesEnabled,
   selectSetMonophyleticColoring,
@@ -51,13 +51,13 @@ export function ColoringPanel() {
 
   // Subtree Highlighting State
   const markedSubtreesEnabled = useAppStore(selectMarkedSubtreesEnabled);
-  const markedSubtreeMode = useAppStore(selectMarkedSubtreeMode);
+  const markedSubtreeScope = useAppStore(selectMarkedSubtreeScope);
   const markedSubtreeOpacity = useAppStore(selectMarkedSubtreeOpacity);
   const highlightColorMode = useAppStore(selectHighlightColorMode);
   const manuallyMarkedNodes = useAppStore(selectMarkedNodes);
 
   const setMarkedSubtreesEnabled = useAppStore(selectSetMarkedSubtreesEnabled);
-  const setMarkedSubtreeMode = useAppStore(selectSetMarkedSubtreeMode);
+  const setMarkedSubtreeScope = useAppStore(selectSetMarkedSubtreeScope);
   const setMarkedSubtreeOpacity = useAppStore(selectSetMarkedSubtreeOpacity);
   const setHighlightColorMode = useAppStore(selectSetHighlightColorMode);
   const setManuallyMarkedNodes = useAppStore(selectSetManuallyMarkedNodes);
@@ -181,7 +181,7 @@ export function ColoringPanel() {
 
               <div className="flex flex-col gap-2">
                 <Label className="text-2xs font-bold uppercase tracking-wider text-muted-foreground/80">Highlight Scope</Label>
-                <Select value={markedSubtreeMode || 'current'} onValueChange={setMarkedSubtreeMode}>
+                <Select value={markedSubtreeScope || 'current'} onValueChange={setMarkedSubtreeScope}>
                   <SelectTrigger className="w-full h-8 text-xs bg-background/50 border-border/40">
                     <SelectValue placeholder="Select mode" />
                   </SelectTrigger>
