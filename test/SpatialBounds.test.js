@@ -6,6 +6,7 @@ const {
   calculateViewportBoundsPadding,
   estimateLabelBoundsPadding,
   expandBoundsForLabels,
+  isBoundsInsidePaddedViewport,
   resolveLabelBoundsSize
 } = spatialBounds;
 
@@ -20,6 +21,24 @@ describe('areBoundsInView', () => {
       x: 0,
       y: 0,
     });
+  });
+
+  it('checks whether bounds sit inside a padded viewport', () => {
+    expect(typeof isBoundsInsidePaddedViewport).toBe('function');
+
+    const viewBounds = [0, 0, 100, 100];
+    const padding = { x: 10, y: 20 };
+
+    expect(isBoundsInsidePaddedViewport(
+      { minX: -10, maxX: 110, minY: -20, maxY: 120 },
+      viewBounds,
+      padding
+    )).toBe(true);
+    expect(isBoundsInsidePaddedViewport(
+      { minX: -11, maxX: 110, minY: -20, maxY: 120 },
+      viewBounds,
+      padding
+    )).toBe(false);
   });
 
   it('returns false when no viewport bounds API is available', () => {
