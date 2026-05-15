@@ -13,6 +13,7 @@ global.cancelAnimationFrame = dom.window.cancelAnimationFrame || ((id) => clearT
 // Pull in ES modules via Babel register (mocha command already uses @babel/register)
 const { TimelineDataProcessor } = require('../src/timeline/data/TimelineDataProcessor.js');
 const { TimelineMathUtils } = require('../src/timeline/math/TimelineMathUtils.js');
+const { ScrubberAPI } = require('../src/timeline/core/ScrubberAPI.js');
 const { useAppStore } = require('../src/state/phyloStore/store.js');
 
 function loadMovieData() {
@@ -28,6 +29,10 @@ function loadMovieData() {
     } catch { }
   }
   throw new Error('No input JSON found for timeline construction test.');
+}
+
+function setsToSortedArrays(sets) {
+  return (sets || []).map((set) => Array.from(set).sort((a, b) => a - b));
 }
 
 describe('Timeline construction from backend result', () => {
@@ -228,5 +233,46 @@ describe('Active change edge mapping (small_example)', () => {
     markedSubtrees = storeAPI.getState().getMarkedSubtreeData();
     const last = markedSubtrees[markedSubtrees.length - 1];
     expect(last).to.deep.equal([99]);
+  });
+
+  it('syncs all-mode marked subtrees and active edge context into the color manager on navigation', () => {
+    const storeAPI = useAppStore;
+    storeAPI.getState().setMarkedSubtreeMode('all');
+
+    storeAPI.getState().goToPosition(1);
+
+    const state = storeAPI.getState();
+    const colorManager = state.getColorManager();
+
+    expect(state.currentTreeIndex).to.equal(1);
+    expect(setsToSortedArrays(colorManager.sharedMarkedJumpingSubtrees)).to.deep.equal([[13], [12]]);
+    expect(Array.from(colorManager.currentPivotEdges).sort((a, b) => a - b)).to.deep.equal([10, 11, 12, 13]);
+    expect(setsToSortedArrays(colorManager.sourceEdgeLeaves)).to.deep.equal([[10, 11, 12]]);
+    expect(setsToSortedArrays(colorManager.destinationEdgeLeaves)).to.deep.equal([[10, 11, 12]]);
+    expect(setsToSortedArrays(colorManager.currentMovingSubtrees)).to.deep.equal([[13]]);
+  });
+
+  it('syncs the color manager from the scrubbed tree index without changing navigation state', () => {
+    const storeAPI = useAppStore;
+    storeAPI.getState().setMarkedSubtreeMode('all');
+    storeAPI.getState().goToPosition(1);
+
+    const scrubberAPI = new ScrubberAPI(
+      { renderComparisonAwareScrubFrame: async () => {} },
+      {},
+      { getInterpolationDataForTimelineProgress: () => null }
+    );
+
+    scrubberAPI._updateColorManagerForScrub(storeAPI.getState(), 11);
+
+    const state = storeAPI.getState();
+    const colorManager = state.getColorManager();
+
+    expect(state.currentTreeIndex).to.equal(1);
+    expect(setsToSortedArrays(colorManager.sharedMarkedJumpingSubtrees)).to.deep.equal([[4], [6]]);
+    expect(Array.from(colorManager.currentPivotEdges).sort((a, b) => a - b)).to.deep.equal([2, 3, 4, 5, 6]);
+    expect(setsToSortedArrays(colorManager.sourceEdgeLeaves)).to.deep.equal([[2, 3, 5, 6]]);
+    expect(setsToSortedArrays(colorManager.destinationEdgeLeaves)).to.deep.equal([[2, 3, 5, 6]]);
+    expect(setsToSortedArrays(colorManager.currentMovingSubtrees)).to.deep.equal([[4]]);
   });
 });
