@@ -222,10 +222,10 @@ describe('SubtreeConnectorBuilder', function () {
     expect(connectors).toEqual([]);
   });
 
-  it('resolves lattice solutions by pivot split identity instead of exact key text', function () {
+  it('canonicalizes pivot splits before backend lattice lookup', function () {
     const connectors = buildSubtreeConnectors(buildOptions({
-      latticeSolutions: { '[11,10]': [[10]] },
-      pivotEdge: [10, 11],
+      latticeSolutions: { '[10, 11]': [[10]] },
+      pivotEdge: [11, 10],
       subtreeTracking: [[[10]]],
     }));
 

@@ -1,7 +1,7 @@
 import {
   flattenSplitSets,
   toSubtreeKey,
-  getMapValueBySplitIdentity,
+  getBackendSplitMapValue,
   parseSubtreeTrackingEntry,
   collectUniqueSubtrees,
   collectUniqueEdges
@@ -110,7 +110,7 @@ export function getAffectedSubtreesForPivotEdge(state, index) {
   const solutions = state.pairSolutions?.[pairKey]?.jumping_subtree_solutions;
   if (!solutions) return [];
 
-  return flattenSplitSets(getMapValueBySplitIdentity(solutions, edge));
+  return flattenSplitSets(getBackendSplitMapValue(solutions, edge));
 }
 
 /**
@@ -168,8 +168,8 @@ export function getSourceDestinationEdgesAtIndex(state, index) {
   const destMap = pairSolution.solution_to_destination_map || {};
 
   // Find the edge in the source and destination context
-  const sourceEdgeMap = getMapValueBySplitIdentity(sourceMap, pivotEdge);
-  const destEdgeMap = getMapValueBySplitIdentity(destMap, pivotEdge);
+  const sourceEdgeMap = getBackendSplitMapValue(sourceMap, pivotEdge);
+  const destEdgeMap = getBackendSplitMapValue(destMap, pivotEdge);
   if (!sourceEdgeMap || !destEdgeMap) return { source: [], dest: [] };
 
   // Identify moving components to filter them out
@@ -189,8 +189,8 @@ function resolveEdgeMappings(subtreeList, sourceEdgeMap, destEdgeMap, movingSet)
   const destEdges = [];
 
   for (const subtree of subtreeList) {
-    const sourceEdge = getMapValueBySplitIdentity(sourceEdgeMap, subtree);
-    const destEdge = getMapValueBySplitIdentity(destEdgeMap, subtree);
+    const sourceEdge = getBackendSplitMapValue(sourceEdgeMap, subtree);
+    const destEdge = getBackendSplitMapValue(destEdgeMap, subtree);
 
     if (sourceEdge) {
       const trimmed = filterMovingNodes(sourceEdge, movingSet);

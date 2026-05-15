@@ -120,46 +120,41 @@ export function toSubtreeKey(subtree) {
 }
 
 export function toBackendSplitKey(splitIndices) {
-  return Array.isArray(splitIndices) ? `[${splitIndices.join(', ')}]` : String(splitIndices);
+  if (splitIndices instanceof Set) {
+    return `[${normalizeNumericSplit(Array.from(splitIndices)).join(', ')}]`;
+  }
+  return Array.isArray(splitIndices)
+    ? `[${normalizeNumericSplit(splitIndices).join(', ')}]`
+    : String(splitIndices);
+}
+
+export function isCanonicalBackendSplitKey(splitKey) {
+  if (typeof splitKey !== 'string') return false;
+  try {
+    const parsed = JSON.parse(splitKey);
+    return Array.isArray(parsed) && splitKey === toBackendSplitKey(parsed);
+  } catch {
+    return false;
+  }
 }
 
 export function parseBackendSplitKey(splitKey) {
-  if (typeof splitKey !== 'string') return [];
-
-  try {
-    const parsed = JSON.parse(splitKey);
-    if (Array.isArray(parsed)) return normalizeNumericSplit(parsed);
-  } catch {
-    // Fall through to tolerate historic bracketed keys with loose formatting.
-  }
-
-  return normalizeNumericSplit(
-    splitKey
-      .replace(/^\[/, '')
-      .replace(/\]$/, '')
-      .split(',')
-  );
+  if (!isCanonicalBackendSplitKey(splitKey)) return [];
+  return JSON.parse(splitKey);
 }
 
-export function getMapValueBySplitIdentity(map, split) {
+export function getBackendSplitMapValue(map, split) {
   if (!map || typeof map !== 'object') return undefined;
 
-  const directKey = typeof split === 'string' ? split : toBackendSplitKey(split);
+  const directKey = typeof split === 'string'
+    ? split
+    : toBackendSplitKey(split);
+  if (!isCanonicalBackendSplitKey(directKey)) return undefined;
   if (Object.prototype.hasOwnProperty.call(map, directKey)) {
     return map[directKey];
   }
 
-  const identity = getSplitIdentityKey(split);
-  if (!identity) return undefined;
-
-  const matchingKey = Object.keys(map)
-    .find((key) => getSplitIdentityKey(key) === identity);
-  return matchingKey ? map[matchingKey] : undefined;
-}
-
-export function getSplitIdentityKey(split) {
-  const indices = normalizeNumericSplit(split);
-  return indices.length > 0 ? toSubtreeKey(indices) : null;
+  return undefined;
 }
 
 function normalizeNumericSplit(split) {

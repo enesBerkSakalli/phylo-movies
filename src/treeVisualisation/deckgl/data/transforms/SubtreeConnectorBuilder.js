@@ -1,5 +1,5 @@
 import { buildBundledBezierPath } from '../../builders/geometry/connectors/ConnectorGeometryBuilder.js';
-import { flattenSplitSets, getMapValueBySplitIdentity, isSubset } from '../../../utils/splitMatching.js';
+import { flattenSplitSets, getBackendSplitMapValue, isSubset } from '../../../utils/splitMatching.js';
 import { computeConnectionColor } from './ComparisonColorUtils.js';
 import {
   normalizeConnectorSplitValue,
@@ -52,7 +52,7 @@ export function buildSubtreeConnectors(options) {
     rightRadius,
   } = options;
 
-  const solutionForPivot = getMapValueBySplitIdentity(latticeSolutions, pivotEdge);
+  const solutionForPivot = getBackendSplitMapValue(latticeSolutions, pivotEdge);
   const flattenedSubtrees = flattenSplitSets(solutionForPivot || []);
   if (flattenedSubtrees.length === 0) {
     return [];

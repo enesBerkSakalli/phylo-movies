@@ -196,8 +196,8 @@ describe('Complex Data Layer Integration', () => {
       // The edge leading to MoveParent (containing leaves 1 and 2) is the active edge.
 
       const movingSubtree = [1, 2];
-      const pivotEdge = ['edge1'];
-      const edgeKey = '[edge1]';
+      const pivotEdge = [2, 1];
+      const edgeKey = '[1, 2]';
 
       const mockColorManager = {
         isNodePivotEdge: () => false,

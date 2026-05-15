@@ -3,7 +3,6 @@ import * as splitPrimitives from '../../../src/domain/tree/splits.js';
 
 const {
   flattenSplitSets,
-  getMapValueBySplitIdentity,
   getSplitIndices,
   toSubtreeKey,
 } = splitPrimitives;
@@ -35,11 +34,16 @@ describe('domain tree split primitives', () => {
     expect(splitPrimitives).not.toHaveProperty('parseLegacySplitKey');
   });
 
-  it('resolves backend split-keyed maps by numeric split identity', () => {
+  it('uses canonical backend split keys as the only backend-map lookup contract', () => {
     const value = [[10]];
 
-    expect(getMapValueBySplitIdentity({ '[2,1]': value }, [1, 2])).toBe(value);
-    expect(splitPrimitives.toBackendSplitKey([2, 1])).toBe('[2, 1]');
-    expect(splitPrimitives.parseBackendSplitKey('[2,1]')).toEqual([1, 2]);
+    expect(splitPrimitives.toBackendSplitKey([2, 1])).toBe('[1, 2]');
+    expect(splitPrimitives.isCanonicalBackendSplitKey('[1, 2]')).toBe(true);
+    expect(splitPrimitives.isCanonicalBackendSplitKey('[2,1]')).toBe(false);
+    expect(splitPrimitives.getBackendSplitMapValue({ '[1, 2]': value }, [2, 1])).toBe(value);
+    expect(splitPrimitives.getBackendSplitMapValue({ '[2,1]': value }, [1, 2])).toBeUndefined();
+    expect(splitPrimitives.parseBackendSplitKey('[2,1]')).toEqual([]);
+    expect(splitPrimitives).not.toHaveProperty('getMapValueBySplitIdentity');
+    expect(splitPrimitives).not.toHaveProperty('getSplitIdentityKey');
   });
 });

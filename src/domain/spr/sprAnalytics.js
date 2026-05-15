@@ -1,6 +1,6 @@
 import {
   flattenSplitSets,
-  getMapValueBySplitIdentity,
+  getBackendSplitMapValue,
   parseBackendSplitKey,
   toBackendSplitKey,
 } from '../tree/splits.js';
@@ -568,13 +568,13 @@ function resolveGroupAttachmentContext(solution, pivotKey, highlightGroup, group
 }
 
 function resolveAttachmentContext(solution, pivotKey, splitIndices, excludedIndices = splitIndices) {
-  const sourceMap = getMapValueBySplitIdentity(solution?.solution_to_source_map, pivotKey);
-  const destinationMap = getMapValueBySplitIdentity(solution?.solution_to_destination_map, pivotKey);
+  const sourceMap = getBackendSplitMapValue(solution?.solution_to_source_map, pivotKey);
+  const destinationMap = getBackendSplitMapValue(solution?.solution_to_destination_map, pivotKey);
   if (!sourceMap && !destinationMap) return null;
 
   const moverKey = toBackendSplitKey(splitIndices);
-  const sourceEdge = getMapValueBySplitIdentity(sourceMap, moverKey);
-  const destinationEdge = getMapValueBySplitIdentity(destinationMap, moverKey);
+  const sourceEdge = getBackendSplitMapValue(sourceMap, moverKey);
+  const destinationEdge = getBackendSplitMapValue(destinationMap, moverKey);
   if (!Array.isArray(sourceEdge) && !Array.isArray(destinationEdge)) return null;
 
   const movingSet = new Set(excludedIndices);

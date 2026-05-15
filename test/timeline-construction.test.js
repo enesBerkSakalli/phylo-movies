@@ -151,14 +151,14 @@ describe('Timeline construction from backend result', () => {
     expect(() => TimelineDataProcessor.createSegments(movieData)).to.throw(/split_change_timeline is required/);
   });
 
-  it('resolves transition jumping subtrees by split identity', () => {
+  it('canonicalizes transition splits before backend lattice lookup', () => {
     const tree = { name: '', length: 0, split_indices: [0], children: [] };
     const movieData = {
       interpolated_trees: [null, tree],
       tree_metadata: [null, { tree_pair_key: 'pair_0_1' }],
       split_change_timeline: [{
         type: 'split_event',
-        split: [10, 11],
+        split: [11, 10],
         pair_key: 'pair_0_1',
         step_range_global: [1, 1],
         step_range_local: [0, 0]
@@ -166,7 +166,7 @@ describe('Timeline construction from backend result', () => {
       tree_pair_solutions: {
         pair_0_1: {
           jumping_subtree_solutions: {
-            '[11,10]': [[[13], [12]]]
+            '[10, 11]': [[[13], [12]]]
           }
         }
       }

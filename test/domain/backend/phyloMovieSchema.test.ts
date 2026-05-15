@@ -199,6 +199,38 @@ describe('validatePhyloMovieData', () => {
     }))).toThrow(/jumping_subtree_solutions/);
   });
 
+  it('rejects noncanonical backend split-map keys', () => {
+    expect(() => validatePhyloMovieData(makePayload({
+      tree_pair_solutions: {
+        pair_0_1: {
+          jumping_subtree_solutions: {
+            '[1,0]': [[[0]]],
+          },
+          solution_to_source_map: {},
+          solution_to_destination_map: {},
+          split_change_events: [],
+        },
+      },
+    }))).toThrow(/canonical backend split key/);
+
+    expect(() => validatePhyloMovieData(makePayload({
+      tree_pair_solutions: {
+        pair_0_1: {
+          jumping_subtree_solutions: {
+            '[0, 1]': [[[0]]],
+          },
+          solution_to_source_map: {
+            '[0, 1]': {
+              '[1,0]': [1],
+            },
+          },
+          solution_to_destination_map: {},
+          split_change_events: [],
+        },
+      },
+    }))).toThrow(/canonical backend split key/);
+  });
+
   it('requires jumping_subtree_solutions even when SPR move events are present', () => {
     expect(() => validatePhyloMovieData(makePayload({
       tree_pair_solutions: {
