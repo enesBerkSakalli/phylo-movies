@@ -8,7 +8,6 @@ Vite's module loader:
 
 ```sh
 npx vite-node scripts/diagnostics/check_d3_exports.js
-node scripts/diagnostics/subtree_flow_debug.js
 ```
 
 Authoritative frontend tests live in `test/` and are run by `npm run test:all`.
