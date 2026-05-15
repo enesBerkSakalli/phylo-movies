@@ -1,11 +1,9 @@
 import { computeConnectionColor } from './ComparisonColorUtils.js';
 import { createConnectorConnection } from './ConnectorConnectionObjects.js';
 import { resolveConnectorColorEntry } from './ConnectorColorEntryResolver.js';
+import { getConnectorLeafPairCandidate } from './ConnectorLeafPairCandidates.js';
 import { indexConnectorLeavesByName } from './ConnectorLeafIndex.js';
-import {
-  getEligibleConnectorSplitIndices,
-  isConnectorSplitInAnySubtree
-} from './ConnectorSplitEligibility.js';
+import { isConnectorSplitInAnySubtree } from './ConnectorSplitEligibility.js';
 
 export function buildRawConnectorConnections(params) {
   const {
@@ -21,21 +19,21 @@ export function buildRawConnectorConnections(params) {
   const connections = [];
 
   for (const [key, leftInfo] of leftPositions.entries()) {
-    if (!leftInfo.isLeaf || !leftInfo.name) continue;
-    if (!leftInfo.position || leftInfo.position.length < 2) continue;
+    const candidate = getConnectorLeafPairCandidate({
+      key,
+      leftInfo,
+      rightLeavesByName,
+      jumpingSubtreeSets,
+    });
+    if (!candidate) continue;
 
-    const splitIndices = getEligibleConnectorSplitIndices(key, jumpingSubtreeSets);
-    if (!splitIndices) continue;
-
-    const rightMatch = rightLeavesByName.get(leftInfo.name);
-    if (!rightMatch) continue;
-    if (!rightMatch.info.position || rightMatch.info.position.length < 2) continue;
-
-    const isCurrentlyMoving = isConnectorSplitInAnySubtree(splitIndices, currentSubtreeSets);
-    const source = [leftInfo.position[0], leftInfo.position[1], 0];
-    const target = [rightMatch.info.position[0], rightMatch.info.position[1], 0];
-
-    const colorEntry = resolveConnectorColorEntry(leftInfo, splitIndices, jumpingSubtreeSets, leftPositions);
+    const isCurrentlyMoving = isConnectorSplitInAnySubtree(candidate.splitIndices, currentSubtreeSets);
+    const colorEntry = resolveConnectorColorEntry(
+      candidate.leftInfo,
+      candidate.splitIndices,
+      jumpingSubtreeSets,
+      leftPositions
+    );
     const isPivotEdge = colorManager && typeof colorManager.isNodePivotEdge === 'function'
       && colorManager.isNodePivotEdge(colorEntry);
     const isHistorySubtree = colorManager && typeof colorManager.isNodeHistorySubtree === 'function'
@@ -50,13 +48,13 @@ export function buildRawConnectorConnections(params) {
     );
 
     connections.push(createConnectorConnection({
-      id: `connector-${key}-${rightMatch.key}`,
-      source,
-      target,
+      id: `connector-${candidate.leftKey}-${candidate.rightKey}`,
+      source: candidate.source,
+      target: candidate.target,
       color,
       isCurrentlyMoving: effectiveMoving,
-      sourceInfo: leftInfo,
-      targetInfo: rightMatch.info,
+      sourceInfo: candidate.leftInfo,
+      targetInfo: candidate.rightInfo,
     }));
   }
 
