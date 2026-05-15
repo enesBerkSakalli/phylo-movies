@@ -32,3 +32,14 @@ Do not rename these fields just to match prose:
 - `tree_pair_solutions`
 
 When wrapping those fields in frontend code, use names that describe the app concept. For example, keep `split_indices` at the parser boundary, but prefer `subtree`, `pivotEdge`, `anchorTree`, and `transitionFrame` in local variables where that is what the value represents.
+
+## SPR Movement Data
+
+The backend currently exposes two related tree-pair contracts that should not be merged casually:
+
+| Field | Use For | Notes |
+|-------|---------|-------|
+| `spr_move_events` | Per-SPR movement analytics: moved subtree ownership, visual highlight group, step range, path hops, and branch-length metrics. | New code should use `driver_subtree` for the physically moved subtree and `highlight_group` for visual context. |
+| `jumping_subtree_solutions` | Transition topology data used by timeline construction, comparison connectors, and fallback movement inference for older result files. | This field is legacy-shaped but still active in runtime UI paths. Do not remove it until those consumers have an explicit replacement. |
+
+Older saved payloads may contain `moving_subtree` or `moving_subtree_group` inside `spr_move_events`. The frontend schema normalizes those accepted input shapes to `driver_subtree` and `highlight_group`; current backend output should not emit the legacy names.
