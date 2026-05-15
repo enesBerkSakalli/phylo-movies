@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Input } from "../../ui/input";
+import { Badge } from "../../ui/badge";
+import { Button } from "../../ui/button";
 import { X } from "lucide-react";
 
 export function SeparatorInput({ separators = [], onChange, detectedSeparators = [] }) {

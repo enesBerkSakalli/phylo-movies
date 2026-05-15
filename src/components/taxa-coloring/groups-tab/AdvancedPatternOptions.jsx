@@ -1,12 +1,12 @@
 import React from "react";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../../ui/accordion";
+import { Label } from "../../ui/label";
+import { Input } from "../../ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
 // Switch removed as it is now encapsulated in ToggleWithLabel
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription } from "../../ui/alert";
 import { Info } from "lucide-react";
-import { ToggleWithLabel } from "@/components/ui/toggle-with-label";
+import { ToggleWithLabel } from "../../ui/toggle-with-label";
 
 export function AdvancedPatternOptions({
   strategy,

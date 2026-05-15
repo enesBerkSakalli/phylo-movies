@@ -97,19 +97,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
       tailwindcss(),
       servePublicationData()
     ],
-    define: {
-      global: 'globalThis',
-      'process.env': {}
-    },
     envPrefix: ['VITE_'],
-    resolve: {
-      alias: {
-        '@': path.resolve(__dirname, './src'),
-        // @loaders.gl/worker-utils imports child_process from a Node-only export path.
-        child_process: path.resolve(__dirname, './src/lib/shims/child-process-browser.js'),
-        'node:child_process': path.resolve(__dirname, './src/lib/shims/child-process-browser.js')
-      }
-    },
     css: {
       modules: {
         localsConvention: 'camelCase',

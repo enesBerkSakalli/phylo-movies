@@ -13,8 +13,8 @@ import {
     ChartLegendContent,
     ChartTooltip,
     ChartTooltipContent,
-} from '@/components/ui/chart';
-import { buildSprActivityTimelinePoints } from '@/domain/spr/sprAnalytics';
+} from '../../ui/chart';
+import { buildSprActivityTimelinePoints } from '../../../domain/spr/sprAnalytics';
 
 interface SprActivityTimelineProps {
     rows: any[];

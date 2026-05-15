@@ -1,8 +1,8 @@
 import React from 'react';
 import { Sparkles, Loader2, FileText, BookOpen, Download } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { TabsContent } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "../../../components/ui/button";
+import { TabsContent } from "../../../components/ui/tabs";
+import { Badge } from "../../../components/ui/badge";
 import { EXAMPLE_DATASETS } from '../exampleDatasets.js';
 
 export function ExampleTab({ loadingExample, loadingExampleId, submitting, handleLoadExample }) {

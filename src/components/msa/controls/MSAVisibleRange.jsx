@@ -1,6 +1,6 @@
 import React from 'react';
 import { useMSA } from '../MSAContext';
-import { Separator } from '@/components/ui/separator';
+import { Separator } from '../../ui/separator';
 
 export function MSAVisibleRange() {
   const { visibleRange } = useMSA();

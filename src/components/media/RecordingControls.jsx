@@ -1,8 +1,8 @@
 import React, { useCallback, useRef, useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { AppTooltip } from '@/components/ui/app-tooltip';
+import { Button } from '../ui/button';
+import { AppTooltip } from '../ui/app-tooltip';
 import { CircleDot, StopCircle } from 'lucide-react';
-import { CanvasRecorder } from '@/services/media/canvasRecorder';
+import { CanvasRecorder } from '../../services/media/canvasRecorder';
 import { toast } from 'sonner';
 
 export function RecordingControls({ disabled = false }) {

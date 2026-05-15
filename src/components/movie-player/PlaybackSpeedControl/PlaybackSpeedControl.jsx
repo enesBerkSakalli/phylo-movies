@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
-import { Slider } from '@/components/ui/slider';
-import { AppTooltip } from '@/components/ui/app-tooltip';
+import { Slider } from '../../ui/slider';
+import { AppTooltip } from '../../ui/app-tooltip';
 import { Gauge } from 'lucide-react';
 
 export function PlaybackSpeedControl({ value, setValue }) {

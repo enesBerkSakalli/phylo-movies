@@ -1,7 +1,7 @@
 import React from 'react';
-import { RecordingControls } from '@/components/media/RecordingControls.jsx';
-import { SaveImageButton } from '@/components/media/SaveImageButton.jsx';
-import { selectMovieData, useAppStore } from '@/state/phyloStore/store.js';
+import { RecordingControls } from '../media/RecordingControls.jsx';
+import { SaveImageButton } from '../media/SaveImageButton.jsx';
+import { selectMovieData, useAppStore } from '../../state/phyloStore/store.js';
 
 export function CanvasCaptureControls() {
   const movieData = useAppStore(selectMovieData);

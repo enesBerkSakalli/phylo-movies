@@ -1,4 +1,4 @@
-import { server, phyloData } from '@/services/data/dataService.js';
+import { server, phyloData } from './dataService.js';
 
 /**
  * Fetches tree data from the server and stores it in localForage.

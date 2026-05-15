@@ -1,6 +1,6 @@
 import React from 'react';
-import { CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { CardFooter } from "../../../../components/ui/card";
+import { Button } from "../../../../components/ui/button";
 
 export function ProjectActionFooter({ disabled, reset, canSubmit }) {
   return (

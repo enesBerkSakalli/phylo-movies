@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
-import { LabeledSlider } from '@/components/ui/labeled-slider';
-import { SidebarMenuSub, SidebarMenuSubItem } from '@/components/ui/sidebar';
+import { LabeledSlider } from '../../../ui/labeled-slider';
+import { SidebarMenuSub, SidebarMenuSubItem } from '../../../ui/sidebar';
 import {  Compass } from 'lucide-react';
 
 export function LayoutTransform({

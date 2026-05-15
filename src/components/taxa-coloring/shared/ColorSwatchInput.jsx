@@ -1,10 +1,10 @@
 import React, { useMemo, useState, useId } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { CATEGORICAL_PALETTES } from "@/constants/ColorPalettes.js";
+import { Button } from "../../ui/button";
+import { Input } from "../../ui/input";
+import { Label } from "../../ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "../../ui/popover";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../../ui/tooltip";
+import { CATEGORICAL_PALETTES } from "../../../constants/ColorPalettes.js";
 
 export function ColorSwatchInput({ label, color, onChange }) {
   const [open, setOpen] = useState(false);

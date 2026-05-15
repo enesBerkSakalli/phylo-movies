@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { AppTooltip } from '@/components/ui/app-tooltip';
+import { Button } from '../../ui/button';
+import { AppTooltip } from '../../ui/app-tooltip';
 import { ChevronsLeft, ChevronsRight, ZoomOut, ZoomIn, Scan } from 'lucide-react';
 import {
   selectFitTimeline,
@@ -9,7 +9,7 @@ import {
   selectZoomInTimeline,
   selectZoomOutTimeline,
   useAppStore
-} from '@/state/phyloStore/store.js';
+} from '../../../state/phyloStore/store.js';
 
 export function TimelineScrollControls() {
   const scrollToStartTimeline = useAppStore(selectScrollToStartTimeline);

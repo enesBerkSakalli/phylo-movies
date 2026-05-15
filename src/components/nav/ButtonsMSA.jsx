@@ -4,18 +4,18 @@ import {
   selectSetSyncMsaEnabled,
   selectSyncMsaEnabled,
   useAppStore
-} from '@/state/phyloStore/store.js';
-import { ToggleWithLabel } from '@/components/ui/toggle-with-label';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+} from '../../state/phyloStore/store.js';
+import { ToggleWithLabel } from '../ui/toggle-with-label';
+import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
 import { Dna, Info, ChevronDown } from 'lucide-react';
 import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarMenuSub,
   SidebarMenuSubItem,
-} from '@/components/ui/sidebar';
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
+} from '../ui/sidebar';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../ui/collapsible';
 import { toast } from 'sonner';
 
 export function ButtonsMSA() {

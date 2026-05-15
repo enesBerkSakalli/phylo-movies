@@ -1,15 +1,15 @@
 // CurrentScaleDisplay.tsx - Displays current tree scale value with progress indicator
 
 import React from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
+import { Badge } from '../../ui/badge';
+import { Label } from '../../ui/label';
+import { Progress } from '../../ui/progress';
+import { Separator } from '../../ui/separator';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from '../../ui/tooltip';
 import { Ruler } from 'lucide-react';
 
 interface CurrentScaleDisplayProps {

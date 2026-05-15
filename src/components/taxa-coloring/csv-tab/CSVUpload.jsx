@@ -1,9 +1,9 @@
 import React, { useRef, useState } from "react";
 import { CheckCircle2, FileSpreadsheet, FileText, Info, Trash2, Upload } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { Button } from "../../ui/button";
+import { Card, CardContent } from "../../ui/card";
+import { Label } from "../../ui/label";
 
 const MAX_CSV_SIZE = 5 * 1024 * 1024;
 

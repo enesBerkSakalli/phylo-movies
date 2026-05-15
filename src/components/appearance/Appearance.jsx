@@ -22,18 +22,18 @@ import {
   selectTreeControllers,
   selectUpcomingChangesEnabled,
   useAppStore
-} from '@/state/phyloStore/store.js';
+} from '../../state/phyloStore/store.js';
 
-import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
-import { Label } from '@/components/ui/label';
+import { Button } from '../ui/button';
+import { Slider } from '../ui/slider';
+import { Label } from '../ui/label';
 import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarMenuSub,
   SidebarMenuSubItem
-} from '@/components/ui/sidebar';
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
+} from '../ui/sidebar';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../ui/collapsible';
 import { ChevronDown, Link, Box, Info } from 'lucide-react';
 import { FocusHighlightingSection } from './FocusHighlightingSection';
 import { PivotEdgeEffectsSection } from './PivotEdgeEffectsSection';

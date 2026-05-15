@@ -14,9 +14,9 @@ import {
   selectStrokeWidth,
   selectTreeControllers,
   useAppStore
-} from '@/state/phyloStore/store.js';
-import { SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
+} from '../../../../state/phyloStore/store.js';
+import { SidebarMenuItem, SidebarMenuButton } from '../../../ui/sidebar';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../../../ui/collapsible';
 import { ChevronDown, Circle, RotateCw } from 'lucide-react';
 
 import { LayoutTransform } from '../../layout/LayoutTransform/LayoutTransform.jsx';

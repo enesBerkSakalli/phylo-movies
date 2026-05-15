@@ -4,9 +4,9 @@ import {
   SidebarMenuButton,
   SidebarMenuSub,
   SidebarMenuSubItem
-} from '@/components/ui/sidebar';
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
-import { Separator } from '@/components/ui/separator';
+} from '../ui/sidebar';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../ui/collapsible';
+import { Separator } from '../ui/separator';
 import { ChevronDown, Eye } from 'lucide-react';
 import { ToggleWithSlider } from './ToggleWithSlider';
 

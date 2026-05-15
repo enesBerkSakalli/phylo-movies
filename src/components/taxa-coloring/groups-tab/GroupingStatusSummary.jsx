@@ -1,7 +1,7 @@
 import React from "react";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "../../ui/badge";
 import { CheckCircle2, AlertTriangle, Info } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "../../../lib/utils";
 
 export function GroupingStatusSummary({ groupingResult }) {
   if (!groupingResult) return null;

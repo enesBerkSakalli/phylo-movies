@@ -1,8 +1,8 @@
 import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Form } from "@/components/ui/form";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "../../components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "../../components/ui/alert";
+import { Form } from "../../components/ui/form";
+import { Tabs, TabsList, TabsTrigger } from "../../components/ui/tabs";
 
 import { useWorkspaceInitializationForm } from './useWorkspaceInitializationForm.js';
 import { WorkspaceInitializationHero } from './components/WorkspaceInitializationHero.jsx';

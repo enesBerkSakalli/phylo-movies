@@ -1,7 +1,7 @@
 import React from 'react';
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "../../../components/ui/card";
 import { Loader2 } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
+import { Progress } from "../../../components/ui/progress";
 
 /**
  * ProcessingOverlay

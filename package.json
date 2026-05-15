@@ -93,7 +93,6 @@
     "@babel/preset-env": "^7.27.2",
     "@babel/preset-react": "^7.26.3",
     "@babel/register": "^7.27.1",
-    "babel-plugin-module-resolver": "^5.0.2",
     "@tailwindcss/vite": "^4.1.13",
     "@types/node": "^24.6.0",
     "@types/react": "^18.2.79",

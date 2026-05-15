@@ -1,6 +1,6 @@
 import React from 'react';
 import { LayoutPanelLeft } from "lucide-react";
-import { FileUploadZone } from "@/components/ui/file-upload-zone";
+import { FileUploadZone } from "../../../../components/ui/file-upload-zone";
 
 export function ProjectFileSection({ treesFile, msaFile, setTreesFile, setMsaFile, disabled }) {
   return (

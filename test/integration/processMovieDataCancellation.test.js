@@ -2,7 +2,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/services/data/apiConfig', () => ({
+vi.mock('../../src/services/data/apiConfig', () => ({
   resolveApiUrl: vi.fn(async (endpoint) => endpoint)
 }));
 
@@ -44,7 +44,7 @@ describe('processMovieData cancellation', () => {
   });
 
   it('closes the progress stream and stops reporting progress when aborted', async () => {
-    const { processMovieData } = await import('@/pages/WorkspaceInitialization/services/movieProcessing.js');
+    const { processMovieData } = await import('../../src/pages/WorkspaceInitialization/services/movieProcessing.js');
     const controller = new AbortController();
     const onProgress = vi.fn();
 

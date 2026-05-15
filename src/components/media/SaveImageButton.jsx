@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { AppTooltip } from '@/components/ui/app-tooltip';
+import { Button } from '../ui/button';
+import { AppTooltip } from '../ui/app-tooltip';
 import { Download } from 'lucide-react';
-import { selectCurrentTreeIndex, selectTreeControllers, useAppStore } from '@/state/phyloStore/store.js';
+import { selectCurrentTreeIndex, selectTreeControllers, useAppStore } from '../../state/phyloStore/store.js';
 
 
 // ==========================================================================

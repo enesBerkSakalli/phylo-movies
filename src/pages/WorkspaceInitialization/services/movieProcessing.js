@@ -1,5 +1,5 @@
-import { resolveApiUrl } from "@/services/data/apiConfig";
-import { phyloData } from "@/services/data/dataService.js";
+import { resolveApiUrl } from "../../../services/data/apiConfig";
+import { phyloData } from "../../../services/data/dataService.js";
 
 const UPLOAD_START_TIMEOUT_MS = 2 * 60 * 1000;
 const STREAM_IDLE_TIMEOUT_MS = 15 * 60 * 1000;

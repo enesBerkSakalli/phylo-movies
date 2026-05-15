@@ -21,6 +21,10 @@ const obsoleteDiagnostics = [
   join(repoRoot, 'test', ['reproduce', 'tooltip', 'issue.test.js'].join('_')),
 ];
 
+const obsoleteShimFiles = [
+  join(repoRoot, 'src', 'lib', 'shims', 'child-process-browser.js'),
+];
+
 function collectSourceFiles(directory) {
   return readdirSync(directory).flatMap((entry) => {
     const fullPath = join(directory, entry);
@@ -35,6 +39,28 @@ function collectSourceFiles(directory) {
 }
 
 describe('legacy module aliases', () => {
+  it('does not use the source path alias in imports or test mocks', () => {
+    const files = [
+      ...collectSourceFiles(join(repoRoot, 'src')),
+      ...collectSourceFiles(join(repoRoot, 'test')),
+    ];
+    const currentTestFile = fileURLToPath(import.meta.url);
+    const sourceAliasPatterns = [
+      /\bfrom\s*['"]@\//,
+      /\bimport\s*['"]@\//,
+      /\bimport\s*\(\s*['"]@\//,
+      /\brequire\s*\(\s*['"]@\//,
+      /\b(?:vi\.)?(?:mock|doMock|unmock)\s*\(\s*['"]@\//,
+    ];
+
+    const aliasReferences = files
+      .filter((file) => file !== currentTestFile)
+      .filter((file) => sourceAliasPatterns.some((pattern) => pattern.test(readFileSync(file, 'utf8'))))
+      .map((file) => relative(repoRoot, file));
+
+    expect(aliasReferences).toEqual([]);
+  });
+
   it('are removed from source and test imports', () => {
     const files = [
       ...collectSourceFiles(join(repoRoot, 'src')),
@@ -57,5 +83,37 @@ describe('legacy module aliases', () => {
     for (const filePath of obsoleteDiagnostics) {
       expect(existsSync(filePath), relative(repoRoot, filePath)).toBe(false);
     }
+  });
+
+  it('does not keep unused Babel alias tooling', () => {
+    const packageJson = JSON.parse(readFileSync(join(repoRoot, 'package.json'), 'utf8'));
+    const dependencyNames = new Set([
+      ...Object.keys(packageJson.dependencies || {}),
+      ...Object.keys(packageJson.devDependencies || {}),
+    ]);
+
+    expect(dependencyNames.has('babel-plugin-module-resolver')).toBe(false);
+
+    const babelConfigSource = readFileSync(join(repoRoot, '.babelrc'), 'utf8');
+    expect(babelConfigSource).not.toContain('module-resolver');
+    expect(babelConfigSource).not.toMatch(/"@"\s*:\s*"\\.\/src"/);
+
+    const componentsConfig = JSON.parse(readFileSync(join(repoRoot, 'components.json'), 'utf8'));
+    for (const aliasPath of Object.values(componentsConfig.aliases || {})) {
+      expect(aliasPath).not.toMatch(/^@\//);
+    }
+  });
+
+  it('does not keep browser-only Node module shims', () => {
+    for (const filePath of obsoleteShimFiles) {
+      expect(existsSync(filePath), relative(repoRoot, filePath)).toBe(false);
+    }
+
+    const viteConfigSource = readFileSync(join(repoRoot, 'vite.config.mts'), 'utf8');
+    expect(viteConfigSource).not.toContain('child-process-browser');
+    expect(viteConfigSource).not.toContain('node:child_process');
+    expect(viteConfigSource).not.toMatch(/\bchild_process\s*:/);
+    expect(viteConfigSource).not.toMatch(/\bdefine\s*:\s*\{[\s\S]*\bglobal\s*:\s*['"]globalThis['"]/);
+    expect(viteConfigSource).not.toMatch(/\bdefine\s*:\s*\{[\s\S]*['"]process\.env['"]\s*:/);
   });
 });

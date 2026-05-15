@@ -7,13 +7,5 @@
       "modules": "commonjs"
     }],
     ["@babel/preset-react", { "runtime": "automatic" }]
-  ],
-  "plugins": [
-    ["module-resolver", {
-      "root": ["."],
-      "alias": {
-        "@": "./src"
-      }
-    }]
   ]
 }

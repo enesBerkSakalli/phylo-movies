@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from "react";
-import { ColorSchemeManager } from "@/treeColoring/utils/ColorSchemeManager.js";
-import { generateGroups } from "@/treeColoring/utils/GroupingUtils.js";
+import { ColorSchemeManager } from "../../../treeColoring/utils/ColorSchemeManager.js";
+import { generateGroups } from "../../../treeColoring/utils/GroupingUtils.js";
 import { syncGroupColors, normalizeSeparator } from "../utils/colorManagement.js";
 import { useCSVState } from "./useCSVState.js";
-import { rgbToHex, toHexMap } from "@/services/ui/colorUtils.js";
+import { rgbToHex, toHexMap } from "../../../services/ui/colorUtils.js";
 
 
 export function useTaxaColoringState(taxaNames, originalColorMap, initialStateParam = {}) {

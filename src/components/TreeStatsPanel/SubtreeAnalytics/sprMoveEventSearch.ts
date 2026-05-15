@@ -1,4 +1,4 @@
-import { formatSubtreeLabel } from '@/domain/spr/sprAnalytics';
+import { formatSubtreeLabel } from '../../../domain/spr/sprAnalytics';
 import type { SprMoveEventRow } from './types';
 
 const formatIndices = (indices?: number[] | null): string => {

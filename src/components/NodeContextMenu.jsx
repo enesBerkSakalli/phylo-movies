@@ -8,9 +8,9 @@ import {
   selectSetManuallyMarkedNodes,
   selectTreeControllers,
   useAppStore
-} from '@/state/phyloStore/store.js';
+} from '../state/phyloStore/store.js';
 
-import { SubtreeExtractor } from '@/domain/tree/subtreeExtractor.js';
+import { SubtreeExtractor } from '../domain/tree/subtreeExtractor.js';
 import { toast } from 'sonner';
 
 // =============================================================================
@@ -261,7 +261,7 @@ Max Depth: ${stats.maxDepth}`;
 /**
  * Individual menu item with icon and label.
  */
-import { Button } from '@/components/ui/button';
+import { Button } from './ui/button';
 
 function MenuItem({ icon: Icon, label, onClick, disabled = false }) {
   return (

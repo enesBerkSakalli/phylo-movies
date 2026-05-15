@@ -10,14 +10,14 @@ import {
   selectScaleList,
   selectTransitionResolver,
   useAppStore
-} from '@/state/phyloStore/store.js';
+} from '../../state/phyloStore/store.js';
 import { useScaleMetrics } from './ScaleTracking/useScaleMetrics';
 import { CurrentScaleDisplay } from './ScaleTracking/CurrentScaleDisplay';
 import { BranchLengthHistogram } from './BranchLengths/BranchLengthHistogram';
 import { MovedSubtreeRecurrenceList } from './SubtreeAnalytics/MovedSubtreeRecurrenceList';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 import { ChevronRight, BarChart3 } from 'lucide-react';
-import { SidebarMenuItem, SidebarMenuButton, SidebarMenuSub, SidebarMenuSubItem } from '@/components/ui/sidebar';
+import { SidebarMenuItem, SidebarMenuButton, SidebarMenuSub, SidebarMenuSubItem } from '../ui/sidebar';
 /**
  * TreeStatsPanel component displays phylogenetic scale metrics for the current tree:
  * - Current tree scale (maximum root-to-tip distance)

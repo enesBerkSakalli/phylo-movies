@@ -31,19 +31,19 @@ class MockDeckGLTreeAnimationController {
   }
 }
 
-vi.mock('@/treeVisualisation/DeckGLTreeAnimationController.js', () => ({
+vi.mock('../../src/treeVisualisation/DeckGLTreeAnimationController.js', () => ({
   DeckGLTreeAnimationController: MockDeckGLTreeAnimationController
 }));
 
-vi.mock('@/domain/msa/msaWindowCalculator.js', () => ({
+vi.mock('../../src/domain/msa/msaWindowCalculator.js', () => ({
   calculateWindow: vi.fn(() => ({ startPosition: 1, endPosition: 10 }))
 }));
 
-vi.mock('@/domain/indexing/IndexMapping.js', () => ({
+vi.mock('../../src/domain/indexing/IndexMapping.js', () => ({
   getMSAFrameIndex: vi.fn(() => -1)
 }));
 
-vi.mock('@/state/phyloStore/store.js', () => ({
+vi.mock('../../src/state/phyloStore/store.js', () => ({
   useAppStore: {
     getState: () => storeState,
     subscribe: (listener) => {
@@ -73,7 +73,7 @@ function updateStore(patch) {
 }
 
 async function renderHookHarness() {
-  const { useTreeController } = await import('@/hooks/useTreeController.js');
+  const { useTreeController } = await import('../../src/hooks/useTreeController.js');
   const container = document.createElement('div');
   document.body.appendChild(container);
   const root = createRoot(container);

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { Button } from "../../ui/button";
+import { Separator } from "../../ui/separator";
 // Card imports removed
 import {
   Select,
@@ -8,7 +8,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "../../ui/select";
 import { SeparatorInput } from "./SeparatorInput.jsx";
 import { AdvancedPatternOptions } from "./AdvancedPatternOptions.jsx";
 export function StrategySelector({

@@ -1,12 +1,12 @@
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
 import { GitBranch, Trees } from "lucide-react";
-import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/components/ui/form";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "../../../../components/ui/form";
+import { Badge } from "../../../../components/ui/badge";
+import { Checkbox } from "../../../../components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../../components/ui/select";
+import { Switch } from "../../../../components/ui/switch";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../../../components/ui/tooltip";
 
 export function TreeConstructionSection({ hasMsa, hasTrees, disabled }) {
   const { control, watch } = useFormContext();

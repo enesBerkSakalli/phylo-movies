@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
 import { BarChart2 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { AppTooltip } from '@/components/ui/app-tooltip';
-import { getIndexMappings } from '@/domain/indexing/IndexMapping';
-import { useAppStore } from '@/state/phyloStore/store.js';
+import { Badge } from '../../ui/badge';
+import { AppTooltip } from '../../ui/app-tooltip';
+import { getIndexMappings } from '../../../domain/indexing/IndexMapping';
+import { useAppStore } from '../../../state/phyloStore/store.js';
 import {
   buildSegmentText,
   selectActiveTreeListLength,

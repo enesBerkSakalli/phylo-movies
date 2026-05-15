@@ -1,6 +1,6 @@
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { TabsContent } from "@/components/ui/tabs";
+import { TabsContent } from "../../../components/ui/tabs";
 
 import { ProjectFileSection } from './project/ProjectFileSection.jsx';
 import { SlidingWindowSection } from './project/SlidingWindowSection.jsx';

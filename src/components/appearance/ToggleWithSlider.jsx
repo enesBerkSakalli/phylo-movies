@@ -1,7 +1,7 @@
 import React from 'react';
-import { ToggleWithLabel } from '@/components/ui/toggle-with-label';
-import { Slider } from '@/components/ui/slider';
-import { Label } from '@/components/ui/label';
+import { ToggleWithLabel } from '../ui/toggle-with-label';
+import { Slider } from '../ui/slider';
+import { Label } from '../ui/label';
 
 export function ToggleWithSlider({ id, label, description, checked, onToggle, sliderValue, onSliderChange, sliderLabel }) {
   return (

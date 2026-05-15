@@ -1,6 +1,6 @@
 import React from 'react';
 import { useMSA } from '../MSAContext';
-import { Button } from '@/components/ui/button';
+import { Button } from '../../ui/button';
 import { ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 
 export function MSAViewActions() {

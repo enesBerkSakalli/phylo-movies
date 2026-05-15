@@ -20,13 +20,13 @@ import {
   selectSetHoveredSegment,
   selectSetTooltipHovered,
   useAppStore
-} from '@/state/phyloStore/store.js';
-import { useSidebar } from '@/components/ui/sidebar';
-import { Button } from '@/components/ui/button';
+} from '../../state/phyloStore/store.js';
+import { useSidebar } from '../ui/sidebar';
+import { Button } from '../ui/button';
 import { Menu, ChevronUp, ChevronDown } from 'lucide-react';
 
-import { Separator } from '@/components/ui/separator';
-import { AppTooltip } from '@/components/ui/app-tooltip';
+import { Separator } from '../ui/separator';
+import { AppTooltip } from '../ui/app-tooltip';
 
 // ==========================================================================
 // CONSTANTS

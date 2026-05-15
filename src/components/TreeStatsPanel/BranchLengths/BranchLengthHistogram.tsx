@@ -2,14 +2,14 @@
 
 import React from 'react';
 import { Palette } from 'lucide-react';
-import { formatScaleValue } from '@/domain/tree/scaleUtils.js';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
+import { formatScaleValue } from '../../../domain/tree/scaleUtils.js';
+import { Label } from '../../ui/label';
+import { Separator } from '../../ui/separator';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from '../../ui/tooltip';
 import type { HistogramBin, HistogramStats } from '../Shared/types';
 
 interface BranchLengthHistogramProps {

@@ -6,10 +6,10 @@ import {
     type ColumnDef,
     type FilterFn,
 } from '@tanstack/react-table';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { formatSubtreeLabel } from '@/domain/spr/sprAnalytics';
+import { Badge } from '../../ui/badge';
+import { Button } from '../../ui/button';
+import { Input } from '../../ui/input';
+import { formatSubtreeLabel } from '../../../domain/spr/sprAnalytics';
 import { Search, X } from 'lucide-react';
 import type { SprMoveEventRow } from './types';
 import { buildSprMoveEventSearchText } from './sprMoveEventSearch';

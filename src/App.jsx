@@ -16,8 +16,8 @@ import { MSAProvider } from './components/msa/MSAContext';
 import { TaxaColoringRndWindow } from './components/taxa-coloring/TaxaColoringRndWindow.jsx';
 import { ClipboardDismissButton } from './components/HUD/clipboard/ClipboardDismissButton.jsx';
 import { NodeContextMenu } from './components/NodeContextMenu.jsx';
-import { Toaster } from '@/components/ui/sonner';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import { Toaster } from './components/ui/sonner';
+import { TooltipProvider } from './components/ui/tooltip';
 import { HUD } from './components/HUD/HUD.jsx';
 import {
   SidebarProvider,
@@ -33,7 +33,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-} from '@/components/ui/sidebar';
+} from './components/ui/sidebar';
 
 import { Film, ArrowLeft } from 'lucide-react';
 import {
@@ -42,8 +42,8 @@ import {
   selectInitialize,
   selectReset,
   useAppStore
-} from '@/state/phyloStore/store.js';
-import { getPhyloMovieData } from '@/services/data/dataManager.js';
+} from './state/phyloStore/store.js';
+import { getPhyloMovieData } from './services/data/dataManager.js';
 import { useTreeController } from './hooks/useTreeController.js';
 
 export function App() {

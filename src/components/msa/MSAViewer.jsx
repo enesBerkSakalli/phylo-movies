@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { selectSyncMsaEnabled, useAppStore } from '@/state/phyloStore/store.js';
-import { MSADeckGLViewer } from '@/msaViewer/MSADeckGLViewer';
+import { selectSyncMsaEnabled, useAppStore } from '../../state/phyloStore/store.js';
+import { MSADeckGLViewer } from '../../msaViewer/MSADeckGLViewer';
 import { useMSA } from './MSAContext';
 import { MSAScrollbars } from './MSAScrollbars';
 

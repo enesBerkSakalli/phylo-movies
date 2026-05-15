@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Rnd } from 'react-rnd';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { ScrollArea } from '../ui/scroll-area';
 import { BarChart, Activity, ListTree, BookOpen, ChevronDown, Download, X } from 'lucide-react';
 import { SprActivityTimeline } from './SubtreeAnalytics/SprActivityTimeline';
 import { MovedSubtreeRecurrenceChart } from './SubtreeAnalytics/MovedSubtreeRecurrenceChart';
@@ -16,7 +16,7 @@ import {
     createSprMoveEventExportName,
     downloadCsvFile,
 } from './SubtreeAnalytics/sprAnalyticsCsv';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import {
     selectDistanceRfd,
     selectDistanceWeightedRfd,
@@ -26,16 +26,16 @@ import {
     selectPairInterpolationRanges,
     selectPairSolutions,
     useAppStore
-} from '@/state/phyloStore/store.js';
+} from '../../state/phyloStore/store.js';
 import {
     buildSprMoveEventRows,
     calculateSprDatasetSummary,
     calculateSprMovedSubtreeRecurrences,
     calculateSprPairActivity,
     formatSubtreeLabel,
-} from '@/domain/spr/sprAnalytics';
-import { Button } from '@/components/ui/button';
-import { SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
+} from '../../domain/spr/sprAnalytics';
+import { Button } from '../ui/button';
+import { SidebarMenuItem, SidebarMenuButton } from '../ui/sidebar';
 
 // ==========================================================================
 // STORE SELECTORS

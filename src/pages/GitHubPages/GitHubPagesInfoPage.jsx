@@ -1,14 +1,14 @@
 import React from 'react';
 import phyloTreeIcon from '/icons/phylo-tree-icon.svg';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Badge } from '../../components/ui/badge';
+import { Button } from '../../components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
+} from '../../components/ui/card';
 
 const REPO_URL = 'https://github.com/enesBerkSakalli/phylo-movies';
 const README_URL = `${REPO_URL}#readme`;

@@ -1,7 +1,7 @@
 import * as React from "react"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
-import { cn } from "@/lib/utils"
+import { Switch } from "./switch"
+import { Label } from "./label"
+import { cn } from "../../lib/utils"
 
 export interface ToggleWithLabelProps extends React.HTMLAttributes<HTMLLabelElement> {
   id: string

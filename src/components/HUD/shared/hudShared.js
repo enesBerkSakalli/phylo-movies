@@ -1,5 +1,5 @@
-import { getMSAFrameIndex } from '@/domain/indexing/IndexMapping';
-import { calculateWindow } from '@/domain/msa/msaWindowCalculator';
+import { getMSAFrameIndex } from '../../../domain/indexing/IndexMapping';
+import { calculateWindow } from '../../../domain/msa/msaWindowCalculator';
 import {
   selectActiveTreeListLength,
   selectClearClipboard,
@@ -13,7 +13,7 @@ import {
   selectPlayhead,
   selectSetClipboardTreeIndex,
   selectTransitionResolver
-} from '@/state/phyloStore/store.js';
+} from '../../../state/phyloStore/store.js';
 
 export {
   selectActiveTreeListLength,
