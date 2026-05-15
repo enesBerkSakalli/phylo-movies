@@ -3,12 +3,25 @@ import * as spatialBounds from '../src/treeVisualisation/spatial/bounds.js';
 
 const {
   areBoundsInView,
+  calculateViewportBoundsPadding,
   estimateLabelBoundsPadding,
   expandBoundsForLabels,
   resolveLabelBoundsSize
 } = spatialBounds;
 
 describe('areBoundsInView', () => {
+  it('calculates viewport bounds padding from bounds and padding factor', () => {
+    expect(typeof calculateViewportBoundsPadding).toBe('function');
+    expect(calculateViewportBoundsPadding([10, 20, 110, 220], 1.5)).toEqual({
+      x: 25,
+      y: 50,
+    });
+    expect(calculateViewportBoundsPadding([10, 20, 110, 220], 1)).toEqual({
+      x: 0,
+      y: 0,
+    });
+  });
+
   it('returns false when no viewport bounds API is available', () => {
     expect(areBoundsInView(
       { minX: 0, maxX: 1, minY: 0, maxY: 1 },
