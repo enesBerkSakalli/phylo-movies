@@ -10,7 +10,7 @@ const {
   resolveLabelBoundsSize
 } = spatialBounds;
 
-describe('areBoundsInView', () => {
+describe('viewport bounds helpers', () => {
   it('calculates viewport bounds padding from bounds and padding factor', () => {
     expect(typeof calculateViewportBoundsPadding).toBe('function');
     expect(calculateViewportBoundsPadding([10, 20, 110, 220], 1.5)).toEqual({
@@ -40,7 +40,9 @@ describe('areBoundsInView', () => {
       padding
     )).toBe(false);
   });
+});
 
+describe('areBoundsInView', () => {
   it('returns false when no viewport bounds API is available', () => {
     expect(areBoundsInView(
       { minX: 0, maxX: 1, minY: 0, maxY: 1 },
@@ -78,14 +80,16 @@ describe('areBoundsInView', () => {
   });
 });
 
-describe('expandBoundsForLabels', () => {
+describe('label bounds constants', () => {
   it('exports named label bounds heuristic constants', () => {
     expect(spatialBounds.LABEL_BOUNDS_CHAR_WIDTH_RATIO).toBe(0.6);
     expect(spatialBounds.LABEL_BOUNDS_LINE_HEIGHT_RATIO).toBe(1.2);
     expect(spatialBounds.LABEL_BOUNDS_MAX_WIDTH_PX).toBe(2000);
     expect(spatialBounds.LABEL_BOUNDS_DEFAULT_SIZE_PX).toBe(16);
   });
+});
 
+describe('label bounds helpers', () => {
   it('resolves label bounds size from explicit size, provider, then default', () => {
     expect(typeof resolveLabelBoundsSize).toBe('function');
     expect(resolveLabelBoundsSize(12, () => {
@@ -115,7 +119,9 @@ describe('expandBoundsForLabels', () => {
       height: 12,
     });
   });
+});
 
+describe('expandBoundsForLabels', () => {
   it('returns original bounds when there are no labels', () => {
     const bounds = { minX: 0, maxX: 10, minY: 0, maxY: 20 };
 
