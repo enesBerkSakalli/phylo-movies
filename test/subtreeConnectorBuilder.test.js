@@ -23,6 +23,15 @@ const rawConnectionsSourcePath = join(
   'transforms',
   'ConnectorRawConnections.js'
 );
+const splitEligibilitySourcePath = join(
+  repoRoot,
+  'src',
+  'treeVisualisation',
+  'deckgl',
+  'data',
+  'transforms',
+  'ConnectorSplitEligibility.js'
+);
 const passiveGroupsSourcePath = join(
   repoRoot,
   'src',
@@ -79,6 +88,14 @@ async function importConnectorLeafIndex() {
 async function importConnectorRawConnections() {
   try {
     return await import('../src/treeVisualisation/deckgl/data/transforms/ConnectorRawConnections.js');
+  } catch {
+    return null;
+  }
+}
+
+async function importConnectorSplitEligibility() {
+  try {
+    return await import('../src/treeVisualisation/deckgl/data/transforms/ConnectorSplitEligibility.js');
   } catch {
     return null;
   }
@@ -173,11 +190,30 @@ const buildOptions = (overrides = {}) => {
 };
 
 describe('SubtreeConnectorBuilder', function () {
-  it('reuses the shared split subset helper instead of a local copy', function () {
+  it('delegates connector split subset checks instead of keeping a local copy', function () {
     const rawSource = readFileSync(rawConnectionsSourcePath, 'utf8');
 
-    expect(rawSource).toMatch(/import\s+\{[^}]*\bisSubset\b[^}]*\}\s+from\s+['"][^'"]*splitMatching\.js['"]/s);
+    expect(rawSource).toMatch(/from\s+['"]\.\/ConnectorSplitEligibility\.js['"]/);
     expect(rawSource).not.toMatch(/function\s+isSubsetOf\s*\(/);
+    expect(rawSource).not.toMatch(/function\s+isSplitSubsetOfAny\s*\(/);
+  });
+
+  it('filters connector split keys through a dedicated pure helper', async function () {
+    const splitEligibility = await importConnectorSplitEligibility();
+
+    expect(splitEligibility).not.toBeNull();
+    expect(splitEligibility.getConnectorSplitIndicesFromKey('10-11')).toEqual([10, 11]);
+    expect(splitEligibility.isConnectorSplitInAnySubtree([10], [new Set([10, 11])])).toBe(true);
+    expect(splitEligibility.isConnectorSplitInAnySubtree([12], [new Set([10, 11])])).toBe(false);
+    expect(splitEligibility.getEligibleConnectorSplitIndices('10', [new Set([10, 11])])).toEqual([10]);
+    expect(splitEligibility.getEligibleConnectorSplitIndices('12', [new Set([10, 11])])).toBeNull();
+
+    const rawSource = readFileSync(rawConnectionsSourcePath, 'utf8');
+    const splitEligibilitySource = readFileSync(splitEligibilitySourcePath, 'utf8');
+    expect(rawSource).toMatch(/getEligibleConnectorSplitIndices/);
+    expect(rawSource).toMatch(/isConnectorSplitInAnySubtree/);
+    expect(rawSource).not.toMatch(/key\.split\('-'\)/);
+    expect(splitEligibilitySource).toMatch(/from\s+['"][^'"]*splitMatching\.js['"]/);
   });
 
   it('normalizes connector split values through an isolated helper module', async function () {
