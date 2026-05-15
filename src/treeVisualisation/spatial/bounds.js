@@ -20,26 +20,22 @@
  * @returns {boolean}
  */
 export function areBoundsInView(bounds, viewport, paddingFactor = 1.05) {
-  try {
-    if (!viewport?.getBounds) return false;
+  if (typeof viewport?.getBounds !== 'function') return false;
 
-    // Viewport Bounds (Frustum Projection to Z=0 Plane)
-    const [viewMinX, viewMinY, viewMaxX, viewMaxY] = viewport.getBounds();
+  // Viewport Bounds (Frustum Projection to Z=0 Plane)
+  const [viewMinX, viewMinY, viewMaxX, viewMaxY] = viewport.getBounds();
 
-    // Expand viewport bounds by padding for looser culling
-    const padX = (viewMaxX - viewMinX) * (paddingFactor - 1) / 2;
-    const padY = (viewMaxY - viewMinY) * (paddingFactor - 1) / 2;
+  // Expand viewport bounds by padding for looser culling
+  const padX = (viewMaxX - viewMinX) * (paddingFactor - 1) / 2;
+  const padY = (viewMaxY - viewMinY) * (paddingFactor - 1) / 2;
 
-    // AABB Intersection Test
-    return (
-      bounds.minX >= viewMinX - padX &&
-      bounds.maxX <= viewMaxX + padX &&
-      bounds.minY >= viewMinY - padY &&
-      bounds.maxY <= viewMaxY + padY
-    );
-  } catch {
-    return false;
-  }
+  // AABB Intersection Test
+  return (
+    bounds.minX >= viewMinX - padX &&
+    bounds.maxX <= viewMaxX + padX &&
+    bounds.minY >= viewMinY - padY &&
+    bounds.maxY <= viewMaxY + padY
+  );
 }
 
 /**
@@ -56,21 +52,17 @@ export function areBoundsInView(bounds, viewport, paddingFactor = 1.05) {
 export function expandBoundsForLabels(bounds, labels, labelSizePx, getLabelSize) {
   if (!labels || !labels.length) return bounds;
 
-  try {
-    const sizePx = labelSizePx || (typeof getLabelSize === 'function' ? getLabelSize() : 16);
-    // Heuristic: Estimate max text width
-    const maxChars = labels.reduce((m, l) => Math.max(m, (l.text || '').length), 0);
-    const estCharWidth = 0.6 * sizePx;
-    const estLabelWidth = Math.min(2000, maxChars * estCharWidth);
-    const estLabelHeight = 1.2 * sizePx;
+  const sizePx = labelSizePx || (typeof getLabelSize === 'function' ? getLabelSize() : 16);
+  // Heuristic: Estimate max text width
+  const maxChars = labels.reduce((m, l) => Math.max(m, (l.text || '').length), 0);
+  const estCharWidth = 0.6 * sizePx;
+  const estLabelWidth = Math.min(2000, maxChars * estCharWidth);
+  const estLabelHeight = 1.2 * sizePx;
 
-    return {
-      minX: bounds.minX - estLabelWidth,
-      maxX: bounds.maxX + estLabelWidth,
-      minY: bounds.minY - estLabelHeight,
-      maxY: bounds.maxY + estLabelHeight
-    };
-  } catch {
-    return bounds;
-  }
+  return {
+    minX: bounds.minX - estLabelWidth,
+    maxX: bounds.maxX + estLabelWidth,
+    minY: bounds.minY - estLabelHeight,
+    maxY: bounds.maxY + estLabelHeight
+  };
 }

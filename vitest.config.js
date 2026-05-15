@@ -29,6 +29,7 @@ export default defineConfig({
       'test/RealDataScaling.test.js',
       'test/RenderContractStatic.test.js',
       'test/SplitIdentity.test.js',
+      'test/SpatialBounds.test.js',
       'test/SpatialLayout.test.js',
       'test/scaleUtils.test.js',
       'test/moved-subtree-recurrence.test.js',
