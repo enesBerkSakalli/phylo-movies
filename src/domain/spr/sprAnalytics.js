@@ -1,8 +1,8 @@
 import {
   flattenSplitSets,
   getMapValueBySplitIdentity,
-  parseLegacySplitKey,
-  toLegacySplitKey,
+  parseBackendSplitKey,
+  toBackendSplitKey,
 } from '../tree/splits.js';
 
 /**
@@ -114,7 +114,7 @@ export function buildSprMoveEventRows(pairSolutions, options = {}) {
         if (!signature) return null;
 
         const pivotEdge = normalizeSubtreeIndices(event?.pivot_edge);
-        const pivotKey = pivotEdge.length > 0 ? toLegacySplitKey(pivotEdge) : null;
+        const pivotKey = pivotEdge.length > 0 ? toBackendSplitKey(pivotEdge) : null;
         const attachmentContext = pivotKey
           ? resolveMoveAttachmentContext(
             solution,
@@ -572,14 +572,14 @@ function resolveAttachmentContext(solution, pivotKey, splitIndices, excludedIndi
   const destinationMap = getMapValueBySplitIdentity(solution?.solution_to_destination_map, pivotKey);
   if (!sourceMap && !destinationMap) return null;
 
-  const moverKey = toLegacySplitKey(splitIndices);
+  const moverKey = toBackendSplitKey(splitIndices);
   const sourceEdge = getMapValueBySplitIdentity(sourceMap, moverKey);
   const destinationEdge = getMapValueBySplitIdentity(destinationMap, moverKey);
   if (!Array.isArray(sourceEdge) && !Array.isArray(destinationEdge)) return null;
 
   const movingSet = new Set(excludedIndices);
   return {
-    pivotEdge: parseLegacySplitKey(pivotKey),
+    pivotEdge: parseBackendSplitKey(pivotKey),
     sourceAttachment: filterMovingNodes(sourceEdge, movingSet),
     destinationAttachment: filterMovingNodes(destinationEdge, movingSet),
   };

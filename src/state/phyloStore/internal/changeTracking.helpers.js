@@ -86,7 +86,7 @@ export function resolveMarkedSubtrees(state, indexOverride = null) {
 
   // "all" mode intentionally uses pair-level jump solutions for the active
   // pivot edge, not just the subtree currently moving at this frame.
-  return getAllSubtreesForPivotEdge(state, index);
+  return getAffectedSubtreesForPivotEdge(state, index);
 }
 
 export function getSubtreeAtIndex(state, index) {
@@ -99,7 +99,7 @@ export function getMovingSubtreeAtIndex(state, index) {
   return parseSubtreeTrackingEntry(subtree);
 }
 
-export function getAllSubtreesForPivotEdge(state, index) {
+export function getAffectedSubtreesForPivotEdge(state, index) {
   const edge = state.pivotEdgeTracking?.[index];
   if (!Array.isArray(edge) || edge.length === 0) return [];
 

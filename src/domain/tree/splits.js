@@ -119,11 +119,11 @@ export function toSubtreeKey(subtree) {
   return getSplitHash(indices);
 }
 
-export function toLegacySplitKey(splitIndices) {
+export function toBackendSplitKey(splitIndices) {
   return Array.isArray(splitIndices) ? `[${splitIndices.join(', ')}]` : String(splitIndices);
 }
 
-export function parseLegacySplitKey(splitKey) {
+export function parseBackendSplitKey(splitKey) {
   if (typeof splitKey !== 'string') return [];
 
   try {
@@ -144,7 +144,7 @@ export function parseLegacySplitKey(splitKey) {
 export function getMapValueBySplitIdentity(map, split) {
   if (!map || typeof map !== 'object') return undefined;
 
-  const directKey = typeof split === 'string' ? split : toLegacySplitKey(split);
+  const directKey = typeof split === 'string' ? split : toBackendSplitKey(split);
   if (Object.prototype.hasOwnProperty.call(map, directKey)) {
     return map[directKey];
   }
@@ -165,7 +165,7 @@ export function getSplitIdentityKey(split) {
 function normalizeNumericSplit(split) {
   const values = split instanceof Set
     ? Array.from(split)
-    : (typeof split === 'string' ? parseLegacySplitKey(split) : split);
+    : (typeof split === 'string' ? parseBackendSplitKey(split) : split);
 
   if (!Array.isArray(values)) return [];
 

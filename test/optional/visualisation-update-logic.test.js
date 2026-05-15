@@ -1,6 +1,12 @@
 
 import { expect } from 'chai';
-import { resolveMarkedSubtrees, calculateChangePreviews, renderTreeControllers } from '../../src/state/phyloStore/internal/changeTracking.helpers.js';
+import * as changeTrackingHelpers from '../../src/state/phyloStore/internal/changeTracking.helpers.js';
+
+const {
+  resolveMarkedSubtrees,
+  calculateChangePreviews,
+  renderTreeControllers,
+} = changeTrackingHelpers;
 
 describe('Tree Visualisation - State Update Logic', () => {
 
@@ -116,6 +122,11 @@ describe('Tree Visualisation - State Update Logic', () => {
         const result = resolveMarkedSubtrees(state);
 
         expect(result).to.deep.equal([[10]]);
+    });
+
+    it('exposes affected-subtree resolution without the old all-subtrees helper name', () => {
+        expect(changeTrackingHelpers.getAffectedSubtreesForPivotEdge).to.be.a('function');
+        expect(changeTrackingHelpers).not.to.have.property('getAllSubtreesForPivotEdge');
     });
 
     it('should handle missing transitionResolver gracefully', () => {
