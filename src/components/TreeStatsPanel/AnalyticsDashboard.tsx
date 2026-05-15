@@ -65,11 +65,9 @@ interface SprDatasetSummary {
     pairCount: number;
     activePairCount: number;
     transitionEventCount: number;
-    moverOccurrenceCount: number;
     uniqueMovingSubtreeCount: number;
     singletonMoverOccurrences: number;
     cladeMoverOccurrences: number;
-    maxPairMoverOccurrenceCount: number;
     topMoverSharePercentage: number;
     sprMoveEventCount: number;
     totalPathHops: number;
@@ -120,8 +118,8 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
         return buildSprMoveEventRows(pairSolutions, sprOptions);
     }, [pairSolutions, sprOptions]);
 
-    const singletonMoverPercentage = sprSummary.moverOccurrenceCount > 0
-        ? (sprSummary.singletonMoverOccurrences / sprSummary.moverOccurrenceCount) * 100
+    const singletonMoverPercentage = sprSummary.sprMoveEventCount > 0
+        ? (sprSummary.singletonMoverOccurrences / sprSummary.sprMoveEventCount) * 100
         : 0;
 
     const farthestMover = useMemo(() => {

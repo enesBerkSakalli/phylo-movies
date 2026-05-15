@@ -40,6 +40,6 @@ The backend currently exposes two related tree-pair contracts that should not be
 | Field | Use For | Notes |
 |-------|---------|-------|
 | `spr_move_events` | Per-SPR movement analytics: moved subtree ownership, visual highlight group, step range, path hops, and branch-length metrics. | New code should use `driver_subtree` for the physically moved subtree and `highlight_group` for visual context. |
-| `jumping_subtree_solutions` | Transition topology data used by timeline construction, comparison connectors, and fallback movement inference for older result files. | This field is legacy-shaped but still active in runtime UI paths. Do not remove it until those consumers have an explicit replacement. |
+| `jumping_subtree_solutions` | Transition topology data used by timeline construction, comparison connectors, and all-mode subtree highlighting. | This field is legacy-shaped but still active in runtime UI paths. Do not remove it until those consumers have an explicit replacement. |
 
 `moving_subtree` and `moving_subtree_group` are no longer accepted inside `spr_move_events`. Regenerate or migrate older saved payloads so each event provides explicit `driver_subtree` and `highlight_group` fields.
