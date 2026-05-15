@@ -176,24 +176,24 @@ describe('SPR analytics model', () => {
       cladeMoverOccurrences: 1,
       transitionEventCount: 2,
       sprMoveEventCount: 3,
-      pathEventCount: 3,
       totalPathHops: 6,
       averagePathHops: 2,
       totalPathLength: 1.35,
       averagePathLength: 0.45,
     });
+    expect(rows[0]).not.toHaveProperty('pathEventCount');
     expect(rows[0].events).toHaveLength(3);
     expect(rows[0].topMover).toMatchObject({
       signature: '1',
       splitIndices: [1],
       count: 2,
       percentage: 66.66666666666666,
-      pathEventCount: 2,
       totalPathHops: 5,
       averagePathHops: 2.5,
       totalPathLength: 0.85,
       averagePathLength: 0.425,
     });
+    expect(rows[0].topMover).not.toHaveProperty('pathEventCount');
     expect(rows[0].topMover.attachmentContexts).toMatchObject([
       {
         pivotEdge: [9],
@@ -215,12 +215,12 @@ describe('SPR analytics model', () => {
       cladeMoverOccurrences: 1,
       transitionEventCount: 1,
       sprMoveEventCount: 1,
-      pathEventCount: 1,
       totalPathHops: 4,
       averagePathHops: 4,
       totalPathLength: 1.2,
       averagePathLength: 1.2,
     });
+    expect(rows[1]).not.toHaveProperty('pathEventCount');
   });
 
   it('keeps backend highlight context separate from the physical moved subtree', () => {
@@ -399,12 +399,12 @@ describe('SPR analytics model', () => {
       maxPairMoverOccurrenceCount: 3,
       topMoverSharePercentage: 50,
       sprMoveEventCount: 4,
-      pathEventCount: 4,
       totalPathHops: 10,
       averagePathHops: 2.5,
       totalPathLength: 2.55,
       averagePathLength: 0.6375,
     });
+    expect(summary).not.toHaveProperty('pathEventCount');
     expect(summary.farthestMover).toMatchObject({
       signature: '4,5,6',
       splitIndices: [4, 5, 6],
@@ -444,24 +444,24 @@ describe('SPR analytics model', () => {
       moverOccurrenceCount: 0,
       uniqueMoverCount: 0,
       sprMoveEventCount: 0,
-      pathEventCount: 0,
       totalPathHops: 0,
       averagePathHops: 0,
       totalPathLength: 0,
       averagePathLength: 0,
     });
+    expect(rows[0]).not.toHaveProperty('pathEventCount');
     expect(summary).toMatchObject({
       pairCount: 1,
       activePairCount: 0,
       moverOccurrenceCount: 0,
       uniqueMovingSubtreeCount: 0,
       sprMoveEventCount: 0,
-      pathEventCount: 0,
       totalPathHops: 0,
       averagePathHops: 0,
       totalPathLength: 0,
       averagePathLength: 0,
     });
+    expect(summary).not.toHaveProperty('pathEventCount');
     expect(timeline[0].sprMoveEvents).toBe(0);
   });
 

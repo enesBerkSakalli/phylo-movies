@@ -72,7 +72,6 @@ interface SprDatasetSummary {
     maxPairMoverOccurrenceCount: number;
     topMoverSharePercentage: number;
     sprMoveEventCount: number;
-    pathEventCount: number;
     totalPathHops: number;
     averagePathHops: number;
     totalPathLength: number;
@@ -81,7 +80,6 @@ interface SprDatasetSummary {
         signature: string;
         splitIndices: number[];
         count: number;
-        pathEventCount: number;
         totalPathHops: number;
         averagePathHops: number;
         totalPathLength: number;
@@ -254,7 +252,6 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
                                                 singletonMoverPercentage={singletonMoverPercentage}
                                                 topMoverPercentage={sprSummary.topMoverSharePercentage}
                                                 sprMoveEventCount={sprSummary.sprMoveEventCount}
-                                                pathEventCount={sprSummary.pathEventCount}
                                                 totalPathHops={sprSummary.totalPathHops}
                                                 averagePathHops={sprSummary.averagePathHops}
                                                 totalPathLength={sprSummary.totalPathLength}
