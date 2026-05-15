@@ -14,6 +14,8 @@ const sourceChecks = [
       ['screenPositions', 'Right'],
       ['setViewLink', 'Mapping'],
       ['setScreen', 'Positions'],
+      ['view', 'Offset'],
+      ['setView', 'Offset'],
     ],
   },
   {
@@ -30,12 +32,15 @@ const sourceChecks = [
     terms: [
       ['updateScreen', 'Positions'],
       ['setScreen', 'Positions'],
+      ['getView', 'Offset'],
+      ['initialize', 'Offsets'],
     ],
   },
   {
     file: join(repoRoot, 'src', 'treeVisualisation', 'comparison', 'ComparisonModeRenderer.js'),
     terms: [
       ['updateScreen', 'Positions'],
+      ['getView', 'Offset'],
     ],
   },
   {
@@ -46,12 +51,14 @@ const sourceChecks = [
       ['screenPositions', 'Right'],
       ['setViewLink', 'Mapping'],
       ['setScreen', 'Positions'],
+      ['view', 'Offset'],
+      ['setView', 'Offset'],
     ],
   },
 ];
 
 describe('comparison legacy state plumbing', () => {
-  it('does not keep unused view-link mapping or projected screen-position state', () => {
+  it('does not keep unused view-link, screen-position, or view-offset state', () => {
     const legacyMapper = join(repoRoot, 'src', 'domain', 'view', ['viewLink', 'Mapper.js'].join(''));
     expect(existsSync(legacyMapper), relative(repoRoot, legacyMapper)).toBe(false);
 

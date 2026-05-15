@@ -21,24 +21,24 @@ export class ViewportManager {
   }
 
   // ==========================================================================
-  // VIEW OFFSET
+  // COMPARISON OFFSETS
   // ==========================================================================
 
-  getViewOffset() {
-    const { viewOffsetX = 0, viewOffsetY = 0 } = useAppStore.getState();
-    const x = Number.isFinite(Number(viewOffsetX)) ? Number(viewOffsetX) : 0;
-    const y = Number.isFinite(Number(viewOffsetY)) ? Number(viewOffsetY) : 0;
+  getRightTreeOffset() {
+    const { rightTreeOffsetX = 0, rightTreeOffsetY = 0 } = useAppStore.getState();
+    const x = Number.isFinite(Number(rightTreeOffsetX)) ? Number(rightTreeOffsetX) : 0;
+    const y = Number.isFinite(Number(rightTreeOffsetY)) ? Number(rightTreeOffsetY) : 0;
     return { x, y };
   }
 
-  initializeOffsets(offset) {
+  initializeRightTreeOffset(offset) {
     if (!offset) return;
-    const { setViewOffsetX, setViewOffsetY } = useAppStore.getState();
-    if (typeof setViewOffsetX === 'function' && offset.x !== undefined) {
-      setViewOffsetX(offset.x);
+    const { setRightTreeOffsetX, setRightTreeOffsetY } = useAppStore.getState();
+    if (typeof setRightTreeOffsetX === 'function' && offset.x !== undefined) {
+      setRightTreeOffsetX(offset.x);
     }
-    if (typeof setViewOffsetY === 'function' && offset.y !== undefined) {
-      setViewOffsetY(offset.y);
+    if (typeof setRightTreeOffsetY === 'function' && offset.y !== undefined) {
+      setRightTreeOffsetY(offset.y);
     }
   }
 

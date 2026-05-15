@@ -16,7 +16,7 @@ export function handleDragStart(controller, info) {
   if (treeSide === 'left') {
     startOffset = { x: state.leftTreeOffsetX, y: state.leftTreeOffsetY };
   } else if (treeSide === 'right') {
-    startOffset = { x: state.viewOffsetX, y: state.viewOffsetY };
+    startOffset = { x: state.rightTreeOffsetX, y: state.rightTreeOffsetY };
   } else if (treeSide === 'clipboard') {
     startOffset = { x: state.clipboardOffsetX, y: state.clipboardOffsetY };
   } else {
@@ -68,8 +68,8 @@ export function handleDrag(controller, info) {
     state.setLeftTreeOffsetX(startOffset.x + worldDeltaX);
     state.setLeftTreeOffsetY(startOffset.y + worldDeltaY);
   } else if (side === 'right') {
-    state.setViewOffsetX(startOffset.x + worldDeltaX);
-    state.setViewOffsetY(startOffset.y + worldDeltaY);
+    state.setRightTreeOffsetX(startOffset.x + worldDeltaX);
+    state.setRightTreeOffsetY(startOffset.y + worldDeltaY);
   } else if (side === 'clipboard') {
     state.setClipboardOffsetX(startOffset.x + worldDeltaX);
     state.setClipboardOffsetY(startOffset.y + worldDeltaY);

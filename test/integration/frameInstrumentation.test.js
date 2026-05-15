@@ -61,7 +61,7 @@ describe('tree animation frame instrumentation', () => {
         getCanvasDimensions: vi.fn(() => ({ width: 100, height: 100 }))
       },
       viewportManager: {
-        getViewOffset: vi.fn(() => ({ x: 0, y: 0 })),
+        getRightTreeOffset: vi.fn(() => ({ x: 0, y: 0 })),
         focusOnTree: vi.fn()
       },
       _updateLayersEfficiently: vi.fn()

@@ -119,7 +119,7 @@ export class ComparisonModeRenderer {
 
     const canvasWidth = this.controller.deckContext.getCanvasDimensions().width;
 
-    const viewOffset = this.controller.viewportManager.getViewOffset();
+    const rightTreeOffset = this.controller.viewportManager.getRightTreeOffset();
 
     // Calculate real centers (layout is origin-centered; add offsets after)
     const leftCenterBase = calculatePositionCenter(leftLayerData.nodes);
@@ -135,14 +135,14 @@ export class ComparisonModeRenderer {
     const leftRadius = calculateTreeVisualRadius(leftLayerData, leftCenterBase, labelSizePx);
     const rightRadius = calculateTreeVisualRadius(rightLayerData, rightCenterBase, labelSizePx);
 
-    const rightOffset = calculateRightOffset(canvasWidth, viewOffset, leftRadius, rightRadius);
+    const rightOffset = calculateRightOffset(canvasWidth, rightTreeOffset, leftRadius, rightRadius);
 
     // Apply independent offsets to both trees so centers/radii match screen coords
     applyOffset(leftLayerData, leftTreeOffsetX, leftTreeOffsetY);
-    applyOffset(rightLayerData, rightOffset, viewOffset.y);
+    applyOffset(rightLayerData, rightOffset, rightTreeOffset.y);
 
     const leftCenter = [leftCenterBase[0] + leftTreeOffsetX, leftCenterBase[1] + leftTreeOffsetY];
-    const rightCenter = [rightCenterBase[0] + rightOffset, rightCenterBase[1] + viewOffset.y];
+    const rightCenter = [rightCenterBase[0] + rightOffset, rightCenterBase[1] + rightTreeOffset.y];
 
     const leftSafeRadius = calculateSafeVisualRadius(leftLayerData.nodes, leftLayerData.labels, leftCenter);
     const rightSafeRadius = calculateSafeVisualRadius(rightLayerData.nodes, rightLayerData.labels, rightCenter);
@@ -232,7 +232,7 @@ export class ComparisonModeRenderer {
 
     const canvasWidth = this.controller.deckContext.getCanvasDimensions().width;
     const { leftTreeOffsetX = 0, leftTreeOffsetY = 0, viewsConnected } = useAppStore.getState();
-    const viewOffset = this.controller.viewportManager.getViewOffset();
+    const rightTreeOffset = this.controller.viewportManager.getRightTreeOffset();
 
     // Centers before offsets
     const leftCenterBase = calculatePositionCenter(interpolatedData.nodes);
@@ -247,14 +247,14 @@ export class ComparisonModeRenderer {
     const leftRadius = calculateTreeVisualRadius(interpolatedData, leftCenterBase, labelSizePx);
     const rightRadius = calculateTreeVisualRadius(rightLayerData, rightCenterBase, labelSizePx);
 
-    const rightOffset = calculateRightOffset(canvasWidth, viewOffset, leftRadius, rightRadius);
+    const rightOffset = calculateRightOffset(canvasWidth, rightTreeOffset, leftRadius, rightRadius);
 
     // Apply independent offsets to both trees
     applyOffset(interpolatedData, leftTreeOffsetX, leftTreeOffsetY);
-    applyOffset(rightLayerData, rightOffset, viewOffset.y);
+    applyOffset(rightLayerData, rightOffset, rightTreeOffset.y);
 
     const leftCenter = [leftCenterBase[0] + leftTreeOffsetX, leftCenterBase[1] + leftTreeOffsetY];
-    const rightCenter = [rightCenterBase[0] + rightOffset, rightCenterBase[1] + viewOffset.y];
+    const rightCenter = [rightCenterBase[0] + rightOffset, rightCenterBase[1] + rightTreeOffset.y];
 
     const leftSafeRadius = calculateSafeVisualRadius(interpolatedData.nodes, interpolatedData.labels, leftCenter);
     const rightSafeRadius = calculateSafeVisualRadius(rightLayerData.nodes, rightLayerData.labels, rightCenter);
