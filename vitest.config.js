@@ -45,7 +45,6 @@ export default defineConfig({
       'test/TreeInterpolatorLabelRadius.test.js',
       'test/ViewportManager.test.js',
       'test/ViteConfig.test.ts',
-      'test/ViewLinkMapper.test.js',
       'test/VelocityNormalizer.test.js',
       'test/WebGLTreeAnimationController.test.js',
       'test/domain/**/*.test.{js,ts}',

@@ -6,9 +6,7 @@
  */
 import { LayerStyles } from './LayerStyles.js';
 import { useAppStore } from '../../../state/phyloStore/store.js';
-import { selectTreeMetadata } from '../../../state/phyloStore/selectors/treeSelectors.js';
 import { ComparisonModeRenderer } from '../../comparison/ComparisonModeRenderer.js';
-import { buildViewLinkMapping, derivePairKey } from '../../../domain/view/viewLinkMapper.js';
 import { createClipboardLayers } from './factory/clipboard/ClipboardLayerFactory.js';
 import { createTreeLayerSet } from './factory/LayerSetFactory.js';
 import { measureFrameStep } from '../../performance/frameInstrumentation.js';
@@ -24,8 +22,6 @@ export class LayerManager {
     // Initialize LayerStyles for consistent styling
     this.layerStyles = new LayerStyles();
     this.comparisonRenderer = null;
-    this._lastMappedLeftIndex = null;
-    this._lastMappedRightIndex = null;
   }
 
   // ==========================================================================
@@ -123,45 +119,16 @@ export class LayerManager {
 
   setComparisonContext(controller) {
     this.comparisonRenderer = controller ? new ComparisonModeRenderer(controller) : null;
-    this._lastMappedLeftIndex = null;
-    this._lastMappedRightIndex = null;
   }
 
   renderComparisonStatic(leftIndex, rightIndex) {
     if (!this.comparisonRenderer) return null;
-    this._updateViewLinkMapping(leftIndex, rightIndex);
     return this.comparisonRenderer.renderStatic(leftIndex, rightIndex);
   }
 
   renderComparisonAnimated({ interpolatedData, rightTree, rightIndex, leftIndex }) {
     if (!this.comparisonRenderer) return null;
-    if (Number.isInteger(leftIndex) && Number.isInteger(rightIndex)) {
-      this._updateViewLinkMapping(leftIndex, rightIndex);
-    }
     return this.comparisonRenderer.renderAnimated(interpolatedData, rightTree, rightIndex);
-  }
-
-  _updateViewLinkMapping(leftIndex, rightIndex) {
-    if (this._lastMappedLeftIndex === leftIndex && this._lastMappedRightIndex === rightIndex) {
-      return;
-    }
-
-    const state = useAppStore.getState();
-    const { treeList, pairSolutions, setViewLinkMapping } = state;
-    if (!setViewLinkMapping || !Array.isArray(treeList)) return;
-
-    this._lastMappedLeftIndex = leftIndex;
-    this._lastMappedRightIndex = rightIndex;
-
-    const pairKey = derivePairKey(leftIndex, rightIndex, selectTreeMetadata(state));
-    const pairSolution = pairKey ? pairSolutions?.[pairKey] : null;
-
-    if (pairSolution) {
-      const mapping = buildViewLinkMapping(leftIndex, rightIndex, pairSolution);
-      setViewLinkMapping(mapping);
-    } else {
-      setViewLinkMapping(null);
-    }
   }
 
   // ==========================================================================

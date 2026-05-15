@@ -6,7 +6,7 @@
  */
 import { useAppStore } from '../../state/phyloStore/store.js';
 import { calculateBranchBounds, calculateVisualBounds } from '../utils/TreeBoundsUtils.js';
-import { projectNodesToScreen, applySafeAreaToTarget } from '../spatial/projections.js';
+import { applySafeAreaToTarget } from '../spatial/projections.js';
 import { areBoundsInView, expandBoundsForLabels } from '../spatial/bounds.js';
 import { calculateSafeAreaPadding, normalizeSafeArea } from '../spatial/layout.js';
 
@@ -136,26 +136,4 @@ export class ViewportManager {
     return 0;
   }
 
-  // ==========================================================================
-  // SCREEN PROJECTION
-  // ==========================================================================
-
-  updateScreenPositions(nodes, sideOverride = null) {
-    if (!this.controller.deckContext?.deck || !nodes) return;
-
-    const setScreenPositions = useAppStore.getState().setScreenPositions;
-    if (typeof setScreenPositions !== 'function') return;
-
-    const viewport = this.controller.deckContext.getPrimaryViewport?.();
-    if (!viewport) return;
-
-    const containerNode = this.controller.webglContainer;
-    if (!containerNode) return;
-
-    const containerRect = containerNode.getBoundingClientRect();
-    const positions = projectNodesToScreen(nodes, viewport, containerRect);
-
-    const side = sideOverride || this.controller.viewSide || 'single';
-    setScreenPositions(side, positions);
-  }
 }

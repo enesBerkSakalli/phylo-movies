@@ -44,7 +44,6 @@ describe('ComparisonModeRenderer', () => {
       viewportManager: {
         getViewOffset: () => ({ x: 0, y: 0 }),
         focusOnTree,
-        updateScreenPositions: vi.fn(),
       },
       _updateLayersEfficiently: vi.fn(),
     });
