@@ -140,8 +140,15 @@ export function NodeContextMenu() {
     if (treeControllers && treeControllers.length > 0) {
       const controller = treeControllers[0];
       if (controller && typeof controller.focusOnNode === 'function') {
-        controller.focusOnNode(node);
+        const focused = controller.focusOnNode(node);
+        if (!focused) {
+          toast.warning('Could not focus on node');
+        }
+      } else {
+        toast.warning('Could not focus on node');
       }
+    } else {
+      toast.warning('Could not focus on node');
     }
     hideMenu();
   }, [node, treeControllers, hideMenu]);

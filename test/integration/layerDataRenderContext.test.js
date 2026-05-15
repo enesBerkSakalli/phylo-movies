@@ -128,7 +128,7 @@ describe('deck.gl layer render context', () => {
       calculateLayout: vi.fn(() => layout),
     });
     handler.handleNodeClick(
-      { object: { treeIndex: 1, split_indices: [1], position: [999, 999, 0] }, x: 10, y: 20 },
+      { object: { treeIndex: 1, treeSide: 'right', split_indices: [1], position: [999, 999, 0] }, x: 10, y: 20 },
       { center: { x: 12, y: 34 } },
       null
     );
@@ -138,6 +138,9 @@ describe('deck.gl layer render context', () => {
       name: 'taxon-b',
       split_indices: [1],
       depth: 1,
+      treeIndex: 1,
+      treeSide: 'right',
+      splitKey: expect.any(String),
     }));
     expect(contextNode).not.toHaveProperty('data');
     expect(contextNode).not.toHaveProperty('parent');

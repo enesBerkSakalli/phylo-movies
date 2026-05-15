@@ -9,6 +9,9 @@ export interface ContextMenuNode {
   name: string;
   length: number;
   split_indices: number[];
+  splitKey?: string;
+  treeIndex?: number;
+  treeSide?: string;
   depth: number;
   height: number;
   path?: string[];
