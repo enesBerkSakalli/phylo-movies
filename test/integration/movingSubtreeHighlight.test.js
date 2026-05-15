@@ -3,6 +3,20 @@ import { getMovingSubtreeAtIndex } from '../../src/state/phyloStore/internal/cha
 import { TreeColorManager } from '../../src/treeVisualisation/systems/TreeColorManager.js';
 
 describe('moving subtree highlighting', () => {
+  it('stores marked subtrees under the current ColorManager contract name', () => {
+    const colorManager = new TreeColorManager();
+    const oldMarkedSubtreeField = ['sharedMarked', 'JumpingSubtrees'].join('');
+
+    expect(colorManager.markedSubtreeSets).toEqual([]);
+    expect(Object.prototype.hasOwnProperty.call(colorManager, oldMarkedSubtreeField)).toBe(false);
+
+    colorManager.updateMarkedSubtrees([[1, 2]]);
+
+    expect(colorManager.markedSubtreeSets).toHaveLength(1);
+    expect([...colorManager.markedSubtreeSets[0]]).toEqual([1, 2]);
+    expect(Object.prototype.hasOwnProperty.call(colorManager, oldMarkedSubtreeField)).toBe(false);
+  });
+
   it('does not merge simultaneous moved subtrees into a larger highlighted clade', () => {
     const state = {
       subtreeTracking: [
