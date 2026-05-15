@@ -131,6 +131,8 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
     } = get();
 
     const manual = toManualMarkedSets(manuallyMarkedNodes);
+    // Normal navigation sync uses currentTreeIndex through the store selectors.
+    // Scrubbing mirrors this update against an explicit tree index in ScrubberAPI.
     const markedSubtreeData = getMarkedSubtreeData();
 
     updateColorManagerMarkedSubtrees([...manual, ...markedSubtreeData]);

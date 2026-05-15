@@ -100,6 +100,8 @@ export function resolveMarkedSubtrees(state, indexOverride = null) {
     return parseSubtreeTrackingEntry(subtree);
   }
 
+  // "all" mode intentionally uses pair-level jump solutions for the active
+  // pivot edge, not just the subtree currently moving at this frame.
   return getAllSubtreesForPivotEdge(state, index);
 }
 
@@ -119,6 +121,8 @@ export function getAllSubtreesForPivotEdge(state, index) {
 
   const pairKey = selectTreePairKeyAtIndex(state, index);
   if (!pairKey) return [];
+  // Keep this tied to jumping_subtree_solutions: comparison connectors and
+  // all-mode highlighting both rely on the full lattice solution set.
   const solutions = state.pairSolutions?.[pairKey]?.jumping_subtree_solutions;
   if (!solutions) return [];
 

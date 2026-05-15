@@ -142,6 +142,8 @@ export class ScrubberAPI {
       getCurrentMovingSubtreeData, updateColorManagerMovingSubtree } = state;
     if (!colorManager) return;
 
+    // Scrubbing can preview a treeIndex that differs from store.currentTreeIndex.
+    // Keep all ColorManager inputs keyed to this explicit index.
     // Always update subtree data for dimming purposes
     // The markedSubtreesEnabled flag controls coloring, not the data availability
     colorManager.updateMarkedSubtrees(
