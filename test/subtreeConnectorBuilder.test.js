@@ -15,6 +15,14 @@ const builderSourcePath = join(
   'SubtreeConnectorBuilder.js'
 );
 
+async function importConnectorSplitNormalization() {
+  try {
+    return await import('../src/treeVisualisation/deckgl/data/transforms/ConnectorSplitNormalization.js');
+  } catch {
+    return null;
+  }
+}
+
 const makeLeaf = (index, name, position, parentId = null) => ({
   id: `leaf-${index}`,
   parentId,
@@ -69,6 +77,43 @@ describe('SubtreeConnectorBuilder', function () {
 
     expect(source).toMatch(/import\s+\{[^}]*\bisSubset\b[^}]*\}\s+from\s+['"][^'"]*splitMatching\.js['"]/s);
     expect(source).not.toMatch(/function\s+isSubsetOf\s*\(/);
+  });
+
+  it('normalizes connector split values through an isolated helper module', async function () {
+    const normalization = await importConnectorSplitNormalization();
+
+    expect(normalization).not.toBeNull();
+    expect(normalization.normalizeConnectorSplitValue('10')).toBe(10);
+    expect(normalization.normalizeConnectorSplitValue(11)).toBe(11);
+    expect(normalization.normalizeConnectorSplitValue('taxon-a')).toBe('taxon-a');
+    expect(normalization.normalizeConnectorSplitValue(null)).toBe(0);
+    expect(normalization.normalizeConnectorSplitValue(undefined)).toBeNull();
+    expect(normalization.normalizeConnectorSplitArray(['10', 11, null, 'taxon-a'])).toEqual([10, 11, 0, 'taxon-a']);
+    expect(normalization.normalizeConnectorSplitArray(new Set([10]))).toEqual([]);
+  });
+
+  it('normalizes connector subtree inputs through an isolated helper module', async function () {
+    const normalization = await importConnectorSplitNormalization();
+
+    expect(normalization).not.toBeNull();
+    expect(normalization.normalizeConnectorSubtreeTrackingToSets(null)).toEqual([]);
+    expect(normalization.normalizeConnectorSubtreeTrackingToSets([]).map((set) => Array.from(set))).toEqual([[]]);
+    expect(normalization.normalizeConnectorSubtreeTrackingToSets(['10', 11]).map((set) => Array.from(set))).toEqual([[10, 11]]);
+    expect(normalization.normalizeConnectorSubtreeTrackingToSets([['10', 11], [12, '13']]).map((set) => Array.from(set))).toEqual([[10, 11], [12, 13]]);
+
+    const existingSet = new Set([10, 11]);
+    expect(normalization.normalizeConnectorSubtreeTrackingToSets(existingSet)).toEqual([existingSet]);
+    expect(normalization.toConnectorSubtreeSetList([['10', 11], [12, '13']]).map((set) => Array.from(set))).toEqual([[10, 11], [12, 13]]);
+  });
+
+  it('keeps connector split normalization outside the builder', function () {
+    const source = readFileSync(builderSourcePath, 'utf8');
+
+    expect(source).toMatch(/from\s+['"]\.\/ConnectorSplitNormalization\.js['"]/);
+    expect(source).not.toMatch(/function\s+normalizeSubtreeTrackingToSets\s*\(/);
+    expect(source).not.toMatch(/function\s+toNormalizedSetList\s*\(/);
+    expect(source).not.toMatch(/function\s+normalizeSplitValue\s*\(/);
+    expect(source).not.toMatch(/function\s+normalizeSplitArray\s*\(/);
   });
 
   it('builds connectors when positions are Maps', function () {
