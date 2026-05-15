@@ -11,10 +11,10 @@ import {
     selectSetManuallyMarkedNodes,
     useAppStore,
 } from '@/state/phyloStore/store.js';
-import type { SprMovedSubtreeFrequency } from './types';
+import type { SprMovedSubtreeRecurrence } from './types';
 
-interface SprFrequencyTableProps {
-    frequencies: SprMovedSubtreeFrequency[];
+interface MovedSubtreeRecurrenceTableProps {
+    recurrences: SprMovedSubtreeRecurrence[];
     leafNamesByIndex: string[];
 }
 
@@ -23,7 +23,7 @@ const getSignature = (indices?: number[]): string => {
     return [...indices].sort((a, b) => a - b).join(',');
 };
 
-export const SprFrequencyTable = ({ frequencies, leafNamesByIndex }: SprFrequencyTableProps) => {
+export const MovedSubtreeRecurrenceTable = ({ recurrences, leafNamesByIndex }: MovedSubtreeRecurrenceTableProps) => {
     const markedNodes = useAppStore(selectMarkedNodes);
     const setManuallyMarkedNodes = useAppStore(selectSetManuallyMarkedNodes);
     const currentSignature = getSignature(markedNodes);
@@ -51,7 +51,7 @@ export const SprFrequencyTable = ({ frequencies, leafNamesByIndex }: SprFrequenc
                 </tr>
             </thead>
             <tbody className="divide-y divide-border/10">
-                {frequencies.map((item, idx) => {
+                {recurrences.map((item, idx) => {
                     const isActive = getSignature(item.splitIndices) === currentSignature;
                     const subtreeLabel = formatSubtreeLabel(item.splitIndices, leafNamesByIndex);
 
@@ -117,7 +117,7 @@ export const SprFrequencyTable = ({ frequencies, leafNamesByIndex }: SprFrequenc
                         </tr>
                     );
                 })}
-                {frequencies.length === 0 && (
+                {recurrences.length === 0 && (
                     <tr>
                         <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground italic">
                             No moved subtrees detected for this dataset.

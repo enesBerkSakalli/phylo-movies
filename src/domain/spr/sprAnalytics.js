@@ -170,12 +170,12 @@ export function buildSprMoveEventRows(pairSolutions, options = {}) {
 }
 
 /**
- * Calculates the frequency of each unique moving subtree across SPR move events.
+ * Calculates recurrence rows for each unique moved subtree across SPR move events.
  *
  * @param {Object} pairSolutions - Map of pairKey -> TreePairSolution
- * @returns {Array} Sorted array of moving subtree frequency objects
+ * @returns {Array} Sorted array of moved subtree recurrence objects
  */
-export function calculateSprMovedSubtreeFrequencies(pairSolutions) {
+export function calculateSprMovedSubtreeRecurrences(pairSolutions) {
   return aggregateMovedSubtreeRows(buildSprMoveEventRows(pairSolutions));
 }
 
@@ -313,7 +313,7 @@ export function calculateSprPairActivity(pairSolutions, options = {}) {
  */
 export function calculateSprDatasetSummary(pairSolutions, options = {}) {
   const pairActivity = calculateSprPairActivity(pairSolutions, options);
-  const movedSubtreeFrequencies = calculateSprMovedSubtreeFrequencies(pairSolutions);
+  const movedSubtreeRecurrences = calculateSprMovedSubtreeRecurrences(pairSolutions);
   const sprMoveEventCount = pairActivity
     .reduce((sum, row) => sum + row.sprMoveEventCount, 0);
   const totalPathHops = pairActivity
@@ -326,12 +326,12 @@ export function calculateSprDatasetSummary(pairSolutions, options = {}) {
     activePairCount: pairActivity.filter((row) => row.sprMoveEventCount > 0).length,
     transitionEventCount: pairActivity
       .reduce((sum, row) => sum + row.transitionEventCount, 0),
-    uniqueMovedSubtreeCount: movedSubtreeFrequencies.length,
+    uniqueMovedSubtreeCount: movedSubtreeRecurrences.length,
     singleTaxonMoveEventCount: pairActivity
       .reduce((sum, row) => sum + row.singleTaxonMoveEventCount, 0),
     multiTaxonMoveEventCount: pairActivity
       .reduce((sum, row) => sum + row.multiTaxonMoveEventCount, 0),
-    topMovedSubtreeSharePercentage: movedSubtreeFrequencies[0]?.percentage ?? 0,
+    topMovedSubtreeSharePercentage: movedSubtreeRecurrences[0]?.percentage ?? 0,
     sprMoveEventCount,
     totalPathHops,
     averagePathHops: sprMoveEventCount > 0
@@ -341,7 +341,7 @@ export function calculateSprDatasetSummary(pairSolutions, options = {}) {
     averagePathLength: sprMoveEventCount > 0
       ? totalPathLength / sprMoveEventCount
       : 0,
-    farthestMovedSubtree: selectFarthestMovedSubtree(movedSubtreeFrequencies),
+    farthestMovedSubtree: selectFarthestMovedSubtree(movedSubtreeRecurrences),
   };
 }
 
@@ -370,13 +370,13 @@ export function buildSprActivityTimelinePoints(pairActivityRows) {
 }
 
 /**
- * Returns the top N most frequent moving subtrees.
+ * Returns the top N recurrent moved subtrees.
  *
- * @param {Array} frequencies - Result from calculateSprMovedSubtreeFrequencies
+ * @param {Array} recurrences - Result from calculateSprMovedSubtreeRecurrences
  * @param {number} n - Number of top items to return
  */
-export function getTopSprMovedSubtrees(frequencies, n = 5) {
-  return frequencies.slice(0, n);
+export function getTopSprMovedSubtreeRecurrences(recurrences, n = 5) {
+  return recurrences.slice(0, n);
 }
 
 /**

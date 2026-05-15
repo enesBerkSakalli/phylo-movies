@@ -2,30 +2,32 @@ import { describe, it, expect } from 'vitest';
 import * as sprAnalytics from '../src/domain/spr/sprAnalytics.js';
 
 const {
-  calculateSprMovedSubtreeFrequencies: calculateSubtreeFrequencies,
-  getTopSprMovedSubtrees: getTopSubtrees,
+  calculateSprMovedSubtreeRecurrences: calculateSubtreeRecurrences,
+  getTopSprMovedSubtreeRecurrences: getTopSubtreeRecurrences,
   formatSubtreeLabel,
 } = sprAnalytics;
 
-describe('SPR moved subtree frequencies', () => {
-  it('exports moved-subtree frequency helpers without legacy mover names', () => {
-    expect(sprAnalytics.calculateSprMovedSubtreeFrequencies).toBeTypeOf('function');
-    expect(sprAnalytics.getTopSprMovedSubtrees).toBeTypeOf('function');
+describe('SPR moved subtree recurrences', () => {
+  it('exports moved-subtree recurrence helpers without legacy frequency names', () => {
+    expect(sprAnalytics.calculateSprMovedSubtreeRecurrences).toBeTypeOf('function');
+    expect(sprAnalytics.getTopSprMovedSubtreeRecurrences).toBeTypeOf('function');
+    expect(sprAnalytics.calculateSprMovedSubtreeFrequencies).toBeUndefined();
+    expect(sprAnalytics.getTopSprMovedSubtrees).toBeUndefined();
     expect(sprAnalytics.calculateSprMoverFrequencies).toBeUndefined();
     expect(sprAnalytics.getTopSprMovers).toBeUndefined();
   });
 
-  describe('calculateSubtreeFrequencies', () => {
+  describe('calculateSubtreeRecurrences', () => {
     it('should return empty array for null/undefined input', () => {
-      expect(calculateSubtreeFrequencies(null)).toEqual([]);
-      expect(calculateSubtreeFrequencies(undefined)).toEqual([]);
+      expect(calculateSubtreeRecurrences(null)).toEqual([]);
+      expect(calculateSubtreeRecurrences(undefined)).toEqual([]);
     });
 
     it('should return empty array for empty object', () => {
-      expect(calculateSubtreeFrequencies({})).toEqual([]);
+      expect(calculateSubtreeRecurrences({})).toEqual([]);
     });
 
-    it('should calculate frequencies from spr_move_events', () => {
+    it('should calculate recurrences from spr_move_events', () => {
       const mockPairSolutions = {
         'pair_0_1': {
           spr_move_events: [
@@ -57,7 +59,7 @@ describe('SPR moved subtree frequencies', () => {
         }
       };
 
-      const result = calculateSubtreeFrequencies(mockPairSolutions);
+      const result = calculateSubtreeRecurrences(mockPairSolutions);
 
       // Expected:
       // [13] -> count 2 (appears in pair_0_1 and pair_2_3)
@@ -89,14 +91,14 @@ describe('SPR moved subtree frequencies', () => {
         }
       };
 
-      const result = calculateSubtreeFrequencies(mockPairSolutions);
+      const result = calculateSubtreeRecurrences(mockPairSolutions);
 
       expect(result).toHaveLength(1);
       expect(result[0].splitIndices).toEqual([9, 10, 11, 12, 13]);
       expect(result[0].count).toBe(1);
     });
 
-    it('should not infer frequencies from jumping_subtree_solutions without spr_move_events', () => {
+    it('should not infer recurrences from jumping_subtree_solutions without spr_move_events', () => {
       const mockPairSolutions = {
         'pair_0_1': {
           jumping_subtree_solutions: {
@@ -110,7 +112,7 @@ describe('SPR moved subtree frequencies', () => {
         }
       };
 
-      const result = calculateSubtreeFrequencies(mockPairSolutions);
+      const result = calculateSubtreeRecurrences(mockPairSolutions);
       expect(result).toEqual([]);
     });
   });

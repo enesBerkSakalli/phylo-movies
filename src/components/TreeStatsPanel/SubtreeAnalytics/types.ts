@@ -1,4 +1,4 @@
-export interface SprMovedSubtreeFrequency {
+export interface SprMovedSubtreeRecurrence {
     signature: string;
     splitIndices: number[];
     driverSplitIndices?: number[];

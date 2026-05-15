@@ -37,7 +37,7 @@ export default defineConfig({
       'test/SplitIdentity.test.js',
       'test/reproduce_tooltip_issue.test.js',
       'test/scaleUtils.test.js',
-      'test/subtree-frequency.test.js',
+      'test/moved-subtree-recurrence.test.js',
       'test/subtree-temporal.test.js',
       'test/subtreeConnectorBuilder.test.js',
       'test/taxa-coloring.test.js',

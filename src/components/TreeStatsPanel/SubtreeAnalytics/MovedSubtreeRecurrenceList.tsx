@@ -8,8 +8,8 @@ import {
   useAppStore
 } from '@/state/phyloStore/store.js';
 import {
-  calculateSprMovedSubtreeFrequencies,
-  getTopSprMovedSubtrees,
+  calculateSprMovedSubtreeRecurrences,
+  getTopSprMovedSubtreeRecurrences,
   formatSubtreeLabel
 } from '@/domain/spr/sprAnalytics';
 import { ChevronRight, BarChart2 } from 'lucide-react';
@@ -26,23 +26,23 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 /**
- * SubtreeFrequencyList
+ * MovedSubtreeRecurrenceList
  *
  * Displays the most frequently rearranged subtrees across tree transitions.
  * Click a subtree to highlight it on the tree visualization.
  */
-export const SubtreeFrequencyList = () => {
+export const MovedSubtreeRecurrenceList = () => {
   // Get data from store
   const pairSolutions = useAppStore(selectPairSolutions);
   const leafNamesByIndex = useAppStore(selectLeafNamesByIndex);
   const setManuallyMarkedNodes = useAppStore(selectSetManuallyMarkedNodes);
   const markedNodes = useAppStore(selectMarkedNodes);
 
-  // Calculate frequencies (memoized)
+  // Calculate recurrences (memoized)
   const topSubtrees = useMemo(() => {
     if (!pairSolutions || Object.keys(pairSolutions).length === 0) return [];
-    const movedSubtreeFrequencies = calculateSprMovedSubtreeFrequencies(pairSolutions);
-    return getTopSprMovedSubtrees(movedSubtreeFrequencies, 5);
+    const movedSubtreeRecurrences = calculateSprMovedSubtreeRecurrences(pairSolutions);
+    return getTopSprMovedSubtreeRecurrences(movedSubtreeRecurrences, 5);
   }, [pairSolutions]);
 
   if (!topSubtrees.length) return null;

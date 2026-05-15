@@ -5,17 +5,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { BarChart, Activity, ListTree, BookOpen, ChevronDown, Download, X } from 'lucide-react';
 import { SprActivityTimeline } from './SubtreeAnalytics/SprActivityTimeline';
-import { SubtreeFrequencyBarChart } from './SubtreeAnalytics/SubtreeFrequencyBarChart';
-import { SprFrequencyTable } from './SubtreeAnalytics/SprFrequencyTable';
+import { MovedSubtreeRecurrenceChart } from './SubtreeAnalytics/MovedSubtreeRecurrenceChart';
+import { MovedSubtreeRecurrenceTable } from './SubtreeAnalytics/MovedSubtreeRecurrenceTable';
 import { SprMoveEventTable } from './SubtreeAnalytics/SprMoveEventTable';
 import { SprSummaryMetrics } from './SubtreeAnalytics/SprSummaryMetrics';
 import {
-    createSprFrequencyCsv,
-    createSprFrequencyExportName,
+    createSprMovedSubtreeRecurrenceCsv,
+    createSprMovedSubtreeRecurrenceExportName,
     createSprMoveEventCsv,
     createSprMoveEventExportName,
     downloadCsvFile,
-} from './SubtreeAnalytics/sprFrequencyCsv';
+} from './SubtreeAnalytics/sprAnalyticsCsv';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     selectDistanceRfd,
@@ -30,7 +30,7 @@ import {
 import {
     buildSprMoveEventRows,
     calculateSprDatasetSummary,
-    calculateSprMovedSubtreeFrequencies,
+    calculateSprMovedSubtreeRecurrences,
     calculateSprPairActivity,
     formatSubtreeLabel,
 } from '@/domain/spr/sprAnalytics';
@@ -101,9 +101,9 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
         pairInterpolationRanges,
     }), [robinsonFouldsDistances, weightedRobinsonFouldsDistances, pairInterpolationRanges]);
 
-    const movedSubtreeFrequencies = useMemo(() => {
+    const movedSubtreeRecurrences = useMemo(() => {
         if (!pairSolutions || Object.keys(pairSolutions).length === 0) return [];
-        return calculateSprMovedSubtreeFrequencies(pairSolutions);
+        return calculateSprMovedSubtreeRecurrences(pairSolutions);
     }, [pairSolutions]);
 
     const sprSummary = useMemo<SprDatasetSummary>(() => {
@@ -140,17 +140,17 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
         };
     }, [sprSummary.farthestMovedSubtree, leafNamesByIndex]);
 
-    const frequencyCsvContent = useMemo(() => {
-        return createSprFrequencyCsv(movedSubtreeFrequencies, leafNamesByIndex);
-    }, [movedSubtreeFrequencies, leafNamesByIndex]);
+    const recurrenceCsvContent = useMemo(() => {
+        return createSprMovedSubtreeRecurrenceCsv(movedSubtreeRecurrences, leafNamesByIndex);
+    }, [movedSubtreeRecurrences, leafNamesByIndex]);
 
     const eventCsvContent = useMemo(() => {
         return createSprMoveEventCsv(sprMoveEvents, leafNamesByIndex);
     }, [sprMoveEvents, leafNamesByIndex]);
 
-    const handleExportFrequencyCsv = () => {
-        if (!frequencyCsvContent) return;
-        downloadCsvFile(frequencyCsvContent, createSprFrequencyExportName(fileName));
+    const handleExportRecurrenceCsv = () => {
+        if (!recurrenceCsvContent) return;
+        downloadCsvFile(recurrenceCsvContent, createSprMovedSubtreeRecurrenceExportName(fileName));
     };
 
     const handleExportEventCsv = () => {
@@ -283,7 +283,7 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
                                                     </CardDescription>
                                                 </CardHeader>
                                                 <CardContent className="flex-1 min-h-0 p-2">
-                                                    <SubtreeFrequencyBarChart />
+                                                    <MovedSubtreeRecurrenceChart />
                                                 </CardContent>
                                             </Card>
                                         </div>
@@ -332,10 +332,10 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
                                             <CardDescription className="text-xs flex items-center justify-between gap-2">
                                                 <span>Moved subtrees summarized from movements, ranked by repeat count.</span>
                                                 <div className="flex items-center gap-2 shrink-0">
-                                                    {movedSubtreeFrequencies.length > 5 && (
+                                                    {movedSubtreeRecurrences.length > 5 && (
                                                         <span className="flex items-center gap-1 text-muted-foreground/60 shrink-0 ml-2">
                                                             <ChevronDown className="size-3 animate-bounce" />
-                                                            <span className="text-2xs">{movedSubtreeFrequencies.length} items · scroll</span>
+                                                            <span className="text-2xs">{movedSubtreeRecurrences.length} items · scroll</span>
                                                         </span>
                                                     )}
                                                     <Button
@@ -343,8 +343,8 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
                                                         variant="outline"
                                                         size="xs"
                                                         className="gap-1"
-                                                        onClick={handleExportFrequencyCsv}
-                                                        disabled={movedSubtreeFrequencies.length === 0}
+                                                        onClick={handleExportRecurrenceCsv}
+                                                        disabled={movedSubtreeRecurrences.length === 0}
                                                     >
                                                         <Download className="size-3" />
                                                         Export CSV
@@ -353,7 +353,7 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
                                             </CardDescription>
                                         </CardHeader>
                                         <CardContent className="p-0 flex-1 min-h-0 overflow-y-auto">
-                                            <SprFrequencyTable frequencies={movedSubtreeFrequencies} leafNamesByIndex={leafNamesByIndex} />
+                                            <MovedSubtreeRecurrenceTable recurrences={movedSubtreeRecurrences} leafNamesByIndex={leafNamesByIndex} />
                                         </CardContent>
                                     </Card>
                                 </TabsContent>
