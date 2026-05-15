@@ -267,8 +267,7 @@ export function calculateSprPairActivity(pairSolutions, options = {}) {
       const pairIndex = resolvePairArrayIndex(pairKey, parsedPair, entryIndex, pairInterpolationRanges);
       const events = eventsByPair.get(pairKey) ?? [];
       const movers = aggregateMoverRows(events);
-      const moverOccurrenceCount = movers
-        .reduce((sum, item) => sum + item.count, 0);
+      const sprMoveEventCount = events.length;
       const singletonMoverOccurrences = events
         .filter((event) => event.splitIndices.length === 1).length;
       const cladeMoverOccurrences = events
@@ -286,14 +285,13 @@ export function calculateSprPairActivity(pairSolutions, options = {}) {
           : null,
         rfDistance: numberOrNull(robinsonFouldsDistances[pairIndex]),
         weightedRfDistance: numberOrNull(weightedRobinsonFouldsDistances[pairIndex]),
-        moverOccurrenceCount,
         uniqueMoverCount: movers.length,
         singletonMoverOccurrences,
         cladeMoverOccurrences,
         transitionEventCount: Array.isArray(solution?.split_change_events)
           ? solution.split_change_events.length
           : 0,
-        sprMoveEventCount: events.length,
+        sprMoveEventCount,
         totalPathHops: pathStats.totalPathHops,
         averagePathHops: pathStats.averagePathHops,
         totalPathLength: pathStats.totalPathLength,
@@ -316,8 +314,6 @@ export function calculateSprPairActivity(pairSolutions, options = {}) {
 export function calculateSprDatasetSummary(pairSolutions, options = {}) {
   const pairActivity = calculateSprPairActivity(pairSolutions, options);
   const moverFrequencies = calculateSprMoverFrequencies(pairSolutions);
-  const moverOccurrenceCount = pairActivity
-    .reduce((sum, row) => sum + row.moverOccurrenceCount, 0);
   const sprMoveEventCount = pairActivity
     .reduce((sum, row) => sum + row.sprMoveEventCount, 0);
   const totalPathHops = pairActivity
@@ -327,17 +323,14 @@ export function calculateSprDatasetSummary(pairSolutions, options = {}) {
 
   return {
     pairCount: pairActivity.length,
-    activePairCount: pairActivity.filter((row) => row.moverOccurrenceCount > 0).length,
+    activePairCount: pairActivity.filter((row) => row.sprMoveEventCount > 0).length,
     transitionEventCount: pairActivity
       .reduce((sum, row) => sum + row.transitionEventCount, 0),
-    moverOccurrenceCount,
     uniqueMovingSubtreeCount: moverFrequencies.length,
     singletonMoverOccurrences: pairActivity
       .reduce((sum, row) => sum + row.singletonMoverOccurrences, 0),
     cladeMoverOccurrences: pairActivity
       .reduce((sum, row) => sum + row.cladeMoverOccurrences, 0),
-    maxPairMoverOccurrenceCount: pairActivity
-      .reduce((max, row) => Math.max(max, row.moverOccurrenceCount), 0),
     topMoverSharePercentage: moverFrequencies[0]?.percentage ?? 0,
     sprMoveEventCount,
     totalPathHops,
@@ -368,7 +361,6 @@ export function buildSprActivityTimelinePoints(pairActivityRows) {
     pairIndex: row.pairIndex,
     pairKey: row.pairKey,
     pairLabel: formatPairLabel(row),
-    moverOccurrences: row.moverOccurrenceCount,
     sprMoveEvents: row.sprMoveEventCount,
     uniqueMovers: row.uniqueMoverCount,
     singletonMoverOccurrences: row.singletonMoverOccurrences,

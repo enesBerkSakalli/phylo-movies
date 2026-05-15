@@ -170,7 +170,6 @@ describe('SPR analytics model', () => {
       interpolationRange: [0, 10],
       rfDistance: 0.25,
       weightedRfDistance: 1.25,
-      moverOccurrenceCount: 3,
       uniqueMoverCount: 2,
       singletonMoverOccurrences: 2,
       cladeMoverOccurrences: 1,
@@ -182,6 +181,7 @@ describe('SPR analytics model', () => {
       averagePathLength: 0.45,
     });
     expect(rows[0]).not.toHaveProperty('pathEventCount');
+    expect(rows[0]).not.toHaveProperty('moverOccurrenceCount');
     expect(rows[0].events).toHaveLength(3);
     expect(rows[0].topMover).toMatchObject({
       signature: '1',
@@ -209,7 +209,6 @@ describe('SPR analytics model', () => {
     expect(rows[1]).toMatchObject({
       pairKey: 'pair_1_2',
       pairIndex: 1,
-      moverOccurrenceCount: 1,
       uniqueMoverCount: 1,
       singletonMoverOccurrences: 0,
       cladeMoverOccurrences: 1,
@@ -221,6 +220,7 @@ describe('SPR analytics model', () => {
       averagePathLength: 1.2,
     });
     expect(rows[1]).not.toHaveProperty('pathEventCount');
+    expect(rows[1]).not.toHaveProperty('moverOccurrenceCount');
   });
 
   it('keeps backend highlight context separate from the physical moved subtree', () => {
@@ -392,11 +392,9 @@ describe('SPR analytics model', () => {
       pairCount: 2,
       activePairCount: 2,
       transitionEventCount: 3,
-      moverOccurrenceCount: 4,
       uniqueMovingSubtreeCount: 3,
       singletonMoverOccurrences: 2,
       cladeMoverOccurrences: 2,
-      maxPairMoverOccurrenceCount: 3,
       topMoverSharePercentage: 50,
       sprMoveEventCount: 4,
       totalPathHops: 10,
@@ -405,6 +403,8 @@ describe('SPR analytics model', () => {
       averagePathLength: 0.6375,
     });
     expect(summary).not.toHaveProperty('pathEventCount');
+    expect(summary).not.toHaveProperty('moverOccurrenceCount');
+    expect(summary).not.toHaveProperty('maxPairMoverOccurrenceCount');
     expect(summary.farthestMover).toMatchObject({
       signature: '4,5,6',
       splitIndices: [4, 5, 6],
@@ -441,7 +441,6 @@ describe('SPR analytics model', () => {
     expect(events).toHaveLength(0);
     expect(frequencies).toHaveLength(0);
     expect(rows[0]).toMatchObject({
-      moverOccurrenceCount: 0,
       uniqueMoverCount: 0,
       sprMoveEventCount: 0,
       totalPathHops: 0,
@@ -450,10 +449,10 @@ describe('SPR analytics model', () => {
       averagePathLength: 0,
     });
     expect(rows[0]).not.toHaveProperty('pathEventCount');
+    expect(rows[0]).not.toHaveProperty('moverOccurrenceCount');
     expect(summary).toMatchObject({
       pairCount: 1,
       activePairCount: 0,
-      moverOccurrenceCount: 0,
       uniqueMovingSubtreeCount: 0,
       sprMoveEventCount: 0,
       totalPathHops: 0,
@@ -462,7 +461,10 @@ describe('SPR analytics model', () => {
       averagePathLength: 0,
     });
     expect(summary).not.toHaveProperty('pathEventCount');
+    expect(summary).not.toHaveProperty('moverOccurrenceCount');
+    expect(summary).not.toHaveProperty('maxPairMoverOccurrenceCount');
     expect(timeline[0].sprMoveEvents).toBe(0);
+    expect(timeline[0]).not.toHaveProperty('moverOccurrences');
   });
 
   it('formats pair activity rows for the SPR activity timeline', () => {
@@ -476,7 +478,6 @@ describe('SPR analytics model', () => {
         pairIndex: 0,
         pairKey: 'pair_0_1',
         pairLabel: '0 -> 1',
-        moverOccurrences: 3,
         sprMoveEvents: 3,
         uniqueMovers: 2,
         singletonMoverOccurrences: 2,
@@ -487,7 +488,6 @@ describe('SPR analytics model', () => {
         pairIndex: 1,
         pairKey: 'pair_1_2',
         pairLabel: '1 -> 2',
-        moverOccurrences: 1,
         sprMoveEvents: 1,
         uniqueMovers: 1,
         singletonMoverOccurrences: 0,
