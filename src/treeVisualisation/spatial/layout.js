@@ -33,6 +33,10 @@ function mergeSafeAreaPadding(target, next) {
   target.left = Math.max(target.left, next.left);
 }
 
+function clampSafeAreaValue(value, max) {
+  return Math.max(0, Math.min(Number.isFinite(value) ? value : 0, max));
+}
+
 export function calculateRectOverlap(rect, bounds) {
   return {
     x: Math.max(0, Math.min(rect.right, bounds.right) - Math.max(rect.left, bounds.left)),
@@ -73,6 +77,33 @@ export function calculateSafeAreaPaddingForRect(rect, canvasRect) {
   }
 
   return padding;
+}
+
+export function clampSafeAreaPadding(safeArea, canvasWidth, canvasHeight) {
+  if (!safeArea) return createEmptySafeAreaPadding();
+
+  return {
+    top: clampSafeAreaValue(safeArea.top, canvasHeight),
+    right: clampSafeAreaValue(safeArea.right, canvasWidth),
+    bottom: clampSafeAreaValue(safeArea.bottom, canvasHeight),
+    left: clampSafeAreaValue(safeArea.left, canvasWidth)
+  };
+}
+
+function scaleOpposingPadding(first, second, maxTotal) {
+  if (first + second <= maxTotal) return [first, second];
+
+  const scale = maxTotal / Math.max(1, first + second);
+  return [first * scale, second * scale];
+}
+
+export function scaleSafeAreaToMinimumVisibleViewport(padding, canvasWidth, canvasHeight) {
+  const maxTotalX = canvasWidth * (1 - SAFE_AREA_MIN_VISIBLE_FRACTION);
+  const maxTotalY = canvasHeight * (1 - SAFE_AREA_MIN_VISIBLE_FRACTION);
+  const [left, right] = scaleOpposingPadding(padding.left, padding.right, maxTotalX);
+  const [top, bottom] = scaleOpposingPadding(padding.top, padding.bottom, maxTotalY);
+
+  return { top, right, bottom, left };
 }
 
 /**
@@ -119,28 +150,9 @@ export function calculateSafeAreaPadding(webglContainerNode) {
  * @returns {Object} Normalized padding
  */
 export function normalizeSafeArea(safeArea, canvasWidth, canvasHeight) {
-  const clamp = (value, max) => Math.max(0, Math.min(Number.isFinite(value) ? value : 0, max));
-  if (!safeArea) return { top: 0, right: 0, bottom: 0, left: 0 };
-  let top = clamp(safeArea.top, canvasHeight);
-  let right = clamp(safeArea.right, canvasWidth);
-  let bottom = clamp(safeArea.bottom, canvasHeight);
-  let left = clamp(safeArea.left, canvasWidth);
-
-  // Prevent UI from consuming more than 60% of visible area.
-  const maxTotalX = canvasWidth * (1 - SAFE_AREA_MIN_VISIBLE_FRACTION);
-  const maxTotalY = canvasHeight * (1 - SAFE_AREA_MIN_VISIBLE_FRACTION);
-
-  if (left + right > maxTotalX) {
-    const scale = maxTotalX / Math.max(1, left + right);
-    left *= scale;
-    right *= scale;
-  }
-
-  if (top + bottom > maxTotalY) {
-    const scale = maxTotalY / Math.max(1, top + bottom);
-    top *= scale;
-    bottom *= scale;
-  }
-
-  return { top, right, bottom, left };
+  return scaleSafeAreaToMinimumVisibleViewport(
+    clampSafeAreaPadding(safeArea, canvasWidth, canvasHeight),
+    canvasWidth,
+    canvasHeight
+  );
 }
