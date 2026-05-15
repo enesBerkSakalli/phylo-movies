@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { applyOffset, buildPositionMap } from '../src/treeVisualisation/comparison/ComparisonUtils.js';
+import * as ComparisonUtils from '../src/treeVisualisation/comparison/ComparisonUtils.js';
+
+const { applyOffset, buildPositionMap } = ComparisonUtils;
 
 describe('ComparisonUtils', () => {
   it('offsets node render positions with canonical positions', () => {
@@ -71,5 +73,48 @@ describe('ComparisonUtils', () => {
       depth: 1
     });
     expect(entry).not.toHaveProperty('node');
+  });
+
+  it('calculates comparison frame geometry from one shared helper without mutating layer data', () => {
+    expect(typeof ComparisonUtils.calculateComparisonFrameGeometry).toBe('function');
+
+    const leftLayerData = {
+      nodes: [
+        { position: [0, 0, 0] },
+        { position: [10, 0, 0] }
+      ],
+      labels: [{ position: [30, 0, 0], name: 'left' }],
+      extensions: []
+    };
+    const rightLayerData = {
+      nodes: [
+        { position: [100, 0, 0] },
+        { position: [120, 0, 0] }
+      ],
+      labels: [{ position: [145, 0, 0], name: 'right' }],
+      extensions: []
+    };
+
+    const geometry = ComparisonUtils.calculateComparisonFrameGeometry({
+      leftLayerData,
+      rightLayerData,
+      canvasWidth: 800,
+      rightTreeOffset: { x: 7, y: -3 },
+      leftTreeOffsetX: 5,
+      leftTreeOffsetY: 11,
+      fontSize: '3em'
+    });
+
+    expect(leftLayerData.nodes[0].position).toEqual([0, 0, 0]);
+    expect(rightLayerData.nodes[0].position).toEqual([100, 0, 0]);
+    expect(geometry.leftCenterBase).toEqual([5, 0]);
+    expect(geometry.rightCenterBase).toEqual([110, 0]);
+    expect(geometry.labelSizePx).toBe(36);
+    expect(geometry.leftCenter).toEqual([10, 11]);
+    expect(geometry.rightCenter).toEqual([geometry.rightOffset + 110, -3]);
+    expect(geometry.leftRadius).toBeGreaterThan(0);
+    expect(geometry.rightRadius).toBeGreaterThan(0);
+    expect(geometry.leftSafeRadius).toBeGreaterThan(0);
+    expect(geometry.rightSafeRadius).toBeGreaterThan(0);
   });
 });

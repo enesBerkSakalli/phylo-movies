@@ -1,4 +1,9 @@
 import { getSplitIndices } from '../utils/splitMatching.js';
+import {
+  calculatePositionCenter,
+  calculateSafeVisualRadius,
+  calculateTreeVisualRadius
+} from '../utils/TreeBoundsUtils.js';
 
 /**
  * ComparisonUtils
@@ -24,6 +29,42 @@ export function calculateRightOffset(canvasWidth, rightTreeOffset, leftRadius = 
   // Ensure a minimum offset so trees never overlap even with tiny/degenerate layouts
   const minOffset = canvasWidth * 0.25;
   return Math.max(minOffset, effectiveLeftRadius + gap + effectiveRightRadius) + rightTreeOffset.x;
+}
+
+export function calculateComparisonFrameGeometry({
+  leftLayerData,
+  rightLayerData,
+  canvasWidth,
+  rightTreeOffset = { x: 0, y: 0 },
+  leftTreeOffsetX = 0,
+  leftTreeOffsetY = 0,
+  fontSize = '2.6em'
+}) {
+  const leftCenterBase = calculatePositionCenter(leftLayerData?.nodes);
+  const rightCenterBase = calculatePositionCenter(rightLayerData?.nodes);
+  const labelSizePx = parseFloat(fontSize) * 12 || 24;
+  const leftRadius = calculateTreeVisualRadius(leftLayerData, leftCenterBase, labelSizePx);
+  const rightRadius = calculateTreeVisualRadius(rightLayerData, rightCenterBase, labelSizePx);
+  const rightOffset = calculateRightOffset(canvasWidth, rightTreeOffset, leftRadius, rightRadius);
+  const rightOffsetY = rightTreeOffset.y;
+  const leftCenter = [leftCenterBase[0] + leftTreeOffsetX, leftCenterBase[1] + leftTreeOffsetY];
+  const rightCenter = [rightCenterBase[0] + rightOffset, rightCenterBase[1] + rightOffsetY];
+  const leftSafeRadius = calculateSafeVisualRadius(leftLayerData?.nodes, leftLayerData?.labels, leftCenter);
+  const rightSafeRadius = calculateSafeVisualRadius(rightLayerData?.nodes, rightLayerData?.labels, rightCenter);
+
+  return {
+    leftCenterBase,
+    rightCenterBase,
+    labelSizePx,
+    leftRadius,
+    rightRadius,
+    rightOffset,
+    rightOffsetY,
+    leftCenter,
+    rightCenter,
+    leftSafeRadius,
+    rightSafeRadius
+  };
 }
 
 /**
