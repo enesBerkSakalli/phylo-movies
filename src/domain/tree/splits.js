@@ -119,6 +119,62 @@ export function toSubtreeKey(subtree) {
   return getSplitHash(indices);
 }
 
+export function toLegacySplitKey(splitIndices) {
+  return Array.isArray(splitIndices) ? `[${splitIndices.join(', ')}]` : String(splitIndices);
+}
+
+export function parseLegacySplitKey(splitKey) {
+  if (typeof splitKey !== 'string') return [];
+
+  try {
+    const parsed = JSON.parse(splitKey);
+    if (Array.isArray(parsed)) return normalizeNumericSplit(parsed);
+  } catch {
+    // Fall through to tolerate historic bracketed keys with loose formatting.
+  }
+
+  return normalizeNumericSplit(
+    splitKey
+      .replace(/^\[/, '')
+      .replace(/\]$/, '')
+      .split(',')
+  );
+}
+
+export function getMapValueBySplitIdentity(map, split) {
+  if (!map || typeof map !== 'object') return undefined;
+
+  const directKey = typeof split === 'string' ? split : toLegacySplitKey(split);
+  if (Object.prototype.hasOwnProperty.call(map, directKey)) {
+    return map[directKey];
+  }
+
+  const identity = getSplitIdentityKey(split);
+  if (!identity) return undefined;
+
+  const matchingKey = Object.keys(map)
+    .find((key) => getSplitIdentityKey(key) === identity);
+  return matchingKey ? map[matchingKey] : undefined;
+}
+
+export function getSplitIdentityKey(split) {
+  const indices = normalizeNumericSplit(split);
+  return indices.length > 0 ? toSubtreeKey(indices) : null;
+}
+
+function normalizeNumericSplit(split) {
+  const values = split instanceof Set
+    ? Array.from(split)
+    : (typeof split === 'string' ? parseLegacySplitKey(split) : split);
+
+  if (!Array.isArray(values)) return [];
+
+  return values
+    .map((value) => Number(value))
+    .filter(Number.isFinite)
+    .sort((a, b) => a - b);
+}
+
 export function getSplitKey(elementOrSplits) {
   const indices = resolveSplitCollection(elementOrSplits);
   if (indices instanceof Set) {

@@ -1,5 +1,5 @@
 import { buildBundledBezierPath } from '../../builders/geometry/connectors/ConnectorGeometryBuilder.js';
-import { flattenSplitSets, toSubtreeKey } from '../../../utils/splitMatching.js';
+import { flattenSplitSets, getMapValueBySplitIdentity } from '../../../utils/splitMatching.js';
 import { computeConnectionColor } from './ComparisonColorUtils.js';
 import {
   pushOutward,
@@ -45,7 +45,7 @@ export function buildSubtreeConnectors(options) {
     rightRadius,
   } = options;
 
-  const solutionForPivot = resolveLatticeSolutionForPivot(latticeSolutions, pivotEdge);
+  const solutionForPivot = getMapValueBySplitIdentity(latticeSolutions, pivotEdge);
   const flattenedSubtrees = flattenSplitSets(solutionForPivot || []);
   if (flattenedSubtrees.length === 0) {
     return [];
@@ -78,55 +78,6 @@ export function buildSubtreeConnectors(options) {
     leftInfoById: buildInfoById(leftPositions),
     rightInfoById: buildInfoById(rightPositions),
   });
-}
-
-// ---------- lattice solution lookup ----------
-
-function resolveLatticeSolutionForPivot(latticeSolutions, pivotEdge) {
-  if (!latticeSolutions || !Array.isArray(pivotEdge) || pivotEdge.length === 0) {
-    return null;
-  }
-
-  const directKey = formatLegacySplitKey(pivotEdge);
-  if (Object.prototype.hasOwnProperty.call(latticeSolutions, directKey)) {
-    return latticeSolutions[directKey];
-  }
-
-  const pivotIdentity = getNumericSplitIdentity(normalizeSplitArray(pivotEdge));
-  if (!pivotIdentity || typeof latticeSolutions !== 'object') {
-    return null;
-  }
-
-  for (const [candidateKey, solution] of Object.entries(latticeSolutions)) {
-    const candidateIdentity = getNumericSplitIdentity(parseLegacySplitKey(candidateKey));
-    if (candidateIdentity === pivotIdentity) {
-      return solution;
-    }
-  }
-
-  return null;
-}
-
-function formatLegacySplitKey(split) {
-  return `[${split.join(', ')}]`;
-}
-
-function parseLegacySplitKey(splitKey) {
-  if (typeof splitKey !== 'string') return null;
-
-  try {
-    const parsed = JSON.parse(splitKey);
-    return Array.isArray(parsed) ? normalizeSplitArray(parsed) : null;
-  } catch {
-    return null;
-  }
-}
-
-function getNumericSplitIdentity(split) {
-  if (!Array.isArray(split) || split.length === 0 || !split.every(Number.isFinite)) {
-    return null;
-  }
-  return toSubtreeKey(split);
 }
 
 // ---------- color entry resolution ----------

@@ -93,6 +93,31 @@ describe('Tree Visualisation - State Update Logic', () => {
         expect(result[1]).to.deep.equal([12]);
     });
 
+    it('should resolve all-mode active edge history by split identity', () => {
+        const index = 10;
+        const activeEdge = [1, 2];
+        const pairKey = 'pair_1';
+        const treeMetadata = [];
+        treeMetadata[index] = { tree_pair_key: pairKey };
+        const state = createMockState({
+            currentTreeIndex: index,
+            markedSubtreeMode: 'all',
+            pivotEdgeTracking: { [index]: activeEdge },
+            treeMetadata,
+            pairSolutions: {
+                [pairKey]: {
+                    jumping_subtree_solutions: {
+                        "[2,1]": [[10]]
+                    }
+                }
+            }
+        });
+
+        const result = resolveMarkedSubtrees(state);
+
+        expect(result).to.deep.equal([[10]]);
+    });
+
     it('should handle missing transitionResolver gracefully', () => {
         const state = { currentTreeIndex: 0 }; // No resolver
         const result = resolveMarkedSubtrees(state);

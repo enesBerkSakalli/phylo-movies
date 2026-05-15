@@ -1,6 +1,7 @@
 import {
   flattenSplitSets,
   toSubtreeKey,
+  getMapValueBySplitIdentity,
   parseSubtreeTrackingEntry,
   collectUniqueSubtrees,
   collectUniqueEdges
@@ -59,23 +60,6 @@ export function clearEdgePreviews(colorManager) {
 }
 
 // ============================================================================
-// MAPPING & KEYS
-// ============================================================================
-
-export function buildSolutionKey(arr) {
-  return `[${arr.join(', ')}]`;
-}
-
-export function findSolutionEntry(map, keyArr) {
-  if (!map || !Array.isArray(keyArr) || keyArr.length === 0) return null;
-
-  const direct = buildSolutionKey(keyArr);
-  if (map[direct]) return map[direct];
-
-  return null;
-}
-
-// ============================================================================
 // STATE SELECTORS & LOGIC
 // ============================================================================
 
@@ -126,7 +110,7 @@ export function getAllSubtreesForPivotEdge(state, index) {
   const solutions = state.pairSolutions?.[pairKey]?.jumping_subtree_solutions;
   if (!solutions) return [];
 
-  return flattenSplitSets(solutions[`[${edge.join(', ')}]`]);
+  return flattenSplitSets(getMapValueBySplitIdentity(solutions, edge));
 }
 
 /**
@@ -184,8 +168,8 @@ export function getSourceDestinationEdgesAtIndex(state, index) {
   const destMap = pairSolution.solution_to_destination_map || {};
 
   // Find the edge in the source and destination context
-  const sourceEdgeMap = findSolutionEntry(sourceMap, pivotEdge);
-  const destEdgeMap = findSolutionEntry(destMap, pivotEdge);
+  const sourceEdgeMap = getMapValueBySplitIdentity(sourceMap, pivotEdge);
+  const destEdgeMap = getMapValueBySplitIdentity(destMap, pivotEdge);
   if (!sourceEdgeMap || !destEdgeMap) return { source: [], dest: [] };
 
   // Identify moving components to filter them out
@@ -205,8 +189,8 @@ function resolveEdgeMappings(subtreeList, sourceEdgeMap, destEdgeMap, movingSet)
   const destEdges = [];
 
   for (const subtree of subtreeList) {
-    const sourceEdge = findSolutionEntry(sourceEdgeMap, subtree);
-    const destEdge = findSolutionEntry(destEdgeMap, subtree);
+    const sourceEdge = getMapValueBySplitIdentity(sourceEdgeMap, subtree);
+    const destEdge = getMapValueBySplitIdentity(destEdgeMap, subtree);
 
     if (sourceEdge) {
       const trimmed = filterMovingNodes(sourceEdge, movingSet);

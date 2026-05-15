@@ -1,4 +1,9 @@
-import { flattenSplitSets } from '../tree/splits.js';
+import {
+  flattenSplitSets,
+  getMapValueBySplitIdentity,
+  parseLegacySplitKey,
+  toLegacySplitKey,
+} from '../tree/splits.js';
 
 /**
  * Normalize a moving subtree split into a stable, sorted list of leaf indices.
@@ -109,7 +114,7 @@ export function buildSprMoveEventRows(pairSolutions, options = {}) {
         if (!signature) return null;
 
         const pivotEdge = normalizeSubtreeIndices(event?.pivot_edge);
-        const pivotKey = pivotEdge.length > 0 ? buildSolutionKey(pivotEdge) : null;
+        const pivotKey = pivotEdge.length > 0 ? toLegacySplitKey(pivotEdge) : null;
         const attachmentContext = pivotKey
           ? resolveMoveAttachmentContext(
             solution,
@@ -563,18 +568,18 @@ function resolveGroupAttachmentContext(solution, pivotKey, highlightGroup, group
 }
 
 function resolveAttachmentContext(solution, pivotKey, splitIndices, excludedIndices = splitIndices) {
-  const sourceMap = getMapValueBySplitKey(solution?.solution_to_source_map, pivotKey);
-  const destinationMap = getMapValueBySplitKey(solution?.solution_to_destination_map, pivotKey);
+  const sourceMap = getMapValueBySplitIdentity(solution?.solution_to_source_map, pivotKey);
+  const destinationMap = getMapValueBySplitIdentity(solution?.solution_to_destination_map, pivotKey);
   if (!sourceMap && !destinationMap) return null;
 
-  const moverKey = buildSolutionKey(splitIndices);
-  const sourceEdge = getMapValueBySplitKey(sourceMap, moverKey);
-  const destinationEdge = getMapValueBySplitKey(destinationMap, moverKey);
+  const moverKey = toLegacySplitKey(splitIndices);
+  const sourceEdge = getMapValueBySplitIdentity(sourceMap, moverKey);
+  const destinationEdge = getMapValueBySplitIdentity(destinationMap, moverKey);
   if (!Array.isArray(sourceEdge) && !Array.isArray(destinationEdge)) return null;
 
   const movingSet = new Set(excludedIndices);
   return {
-    pivotEdge: parseSplitKey(pivotKey),
+    pivotEdge: parseLegacySplitKey(pivotKey),
     sourceAttachment: filterMovingNodes(sourceEdge, movingSet),
     destinationAttachment: filterMovingNodes(destinationEdge, movingSet),
   };
@@ -591,33 +596,6 @@ function mergeIndexLists(lists) {
 function filterMovingNodes(edge, movingSet) {
   if (!Array.isArray(edge)) return [];
   return normalizeSubtreeIndices(edge).filter((leaf) => !movingSet.has(leaf));
-}
-
-function buildSolutionKey(splitIndices) {
-  return `[${normalizeSubtreeIndices(splitIndices).join(', ')}]`;
-}
-
-function getMapValueBySplitKey(map, splitKey) {
-  if (!map || typeof map !== 'object') return undefined;
-  if (Object.prototype.hasOwnProperty.call(map, splitKey)) return map[splitKey];
-
-  const signature = getSubtreeSignature(parseSplitKey(splitKey));
-  if (!signature) return undefined;
-
-  const matchingKey = Object.keys(map)
-    .find((key) => getSubtreeSignature(parseSplitKey(key)) === signature);
-  return matchingKey ? map[matchingKey] : undefined;
-}
-
-function parseSplitKey(splitKey) {
-  if (typeof splitKey !== 'string') return [];
-  return splitKey
-    .replace(/^\[/, '')
-    .replace(/\]$/, '')
-    .split(',')
-    .map((value) => Number(value.trim()))
-    .filter(Number.isFinite)
-    .sort((a, b) => a - b);
 }
 
 function normalizeStepRange(stepRange) {
