@@ -1,8 +1,41 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ViewportManager } from '../src/treeVisualisation/viewport/ViewportManager.js';
+import {
+  calculateFocusViewport,
+  ViewportManager
+} from '../src/treeVisualisation/viewport/ViewportManager.js';
 import { calculateBranchBounds } from '../src/treeVisualisation/utils/TreeBoundsUtils.js';
 
 describe('ViewportManager', () => {
+  it('calculates branch-focused viewport state without transition side effects', () => {
+    const result = calculateFocusViewport({
+      nodes: [
+        { position: [0, 0, 0], radius: 2 },
+        { position: [100, 0, 0], radius: 2 },
+      ],
+      labels: [],
+      links: [
+        {
+          path: [
+            [0, 0, 0],
+            [50, 500, 0],
+            [100, 0, 0],
+          ],
+        },
+      ],
+      padding: 1,
+      canvasWidth: 1000,
+      canvasHeight: 1000,
+      safeArea: null,
+      activeView: null,
+      currentViewState: { target: [0, 0, 0], zoom: 0 },
+    });
+
+    expect(result).toEqual({
+      target: [50, 250, 0],
+      zoom: 1,
+    });
+  });
+
   it('fits branch structure by default instead of distant labels', () => {
     const transitionTo = vi.fn();
     const manager = new ViewportManager({
