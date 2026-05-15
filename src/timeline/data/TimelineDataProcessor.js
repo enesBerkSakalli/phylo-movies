@@ -7,6 +7,7 @@
  * - timeline segment: scrubber interval containing either an anchor tree or transition frames
  */
 import { TimelineMathUtils } from '../math/TimelineMathUtils.js';
+import { getMapValueBySplitIdentity } from '../../domain/tree/splits.js';
 
 export class TimelineDataProcessor {
     /**
@@ -154,8 +155,7 @@ export class TimelineDataProcessor {
 
         if (activeChangingSplits && pairKey && tree_pair_solutions && tree_pair_solutions[pairKey]) {
             const jumpingSolutions = tree_pair_solutions[pairKey].jumping_subtree_solutions;
-            const edgeKey = `[${activeChangingSplits.join(', ')}]`;
-            const solutions = jumpingSolutions?.[edgeKey];
+            const solutions = getMapValueBySplitIdentity(jumpingSolutions, activeChangingSplits);
 
             if (solutions) {
                 jumpingSubtrees = solutions;
