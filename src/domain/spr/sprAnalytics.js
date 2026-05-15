@@ -175,11 +175,11 @@ export function buildSprMoveEventRows(pairSolutions, options = {}) {
  * @param {Object} pairSolutions - Map of pairKey -> TreePairSolution
  * @returns {Array} Sorted array of moving subtree frequency objects
  */
-export function calculateSprMoverFrequencies(pairSolutions) {
-  return aggregateMoverRows(buildSprMoveEventRows(pairSolutions));
+export function calculateSprMovedSubtreeFrequencies(pairSolutions) {
+  return aggregateMovedSubtreeRows(buildSprMoveEventRows(pairSolutions));
 }
 
-function aggregateMoverRows(eventRows) {
+function aggregateMovedSubtreeRows(eventRows) {
   const freqMap = new Map();
 
   eventRows.forEach((event) => {
@@ -199,13 +199,13 @@ function aggregateMoverRows(eventRows) {
       });
     }
 
-    const mover = freqMap.get(event.signature);
-    mover.count++;
-    mover.pairKeys.add(event.pairKey);
-    mover.totalPathHops += event.totalPathHops;
-    mover.totalPathLength += event.totalPathLength;
+    const movedSubtree = freqMap.get(event.signature);
+    movedSubtree.count++;
+    movedSubtree.pairKeys.add(event.pairKey);
+    movedSubtree.totalPathHops += event.totalPathHops;
+    movedSubtree.totalPathLength += event.totalPathLength;
     if (event.sourceAttachment.length > 0 || event.destinationAttachment.length > 0 || event.pivotEdge.length > 0) {
-      mover.attachmentContexts.push({
+      movedSubtree.attachmentContexts.push({
         pivotEdge: event.pivotEdge,
         sourceAttachment: event.sourceAttachment,
         destinationAttachment: event.destinationAttachment,
@@ -214,15 +214,15 @@ function aggregateMoverRows(eventRows) {
     }
   });
 
-  const totalMoverOccurrences = Array.from(freqMap.values())
+  const totalMoveEvents = Array.from(freqMap.values())
     .reduce((sum, item) => sum + item.count, 0);
 
   return Array.from(freqMap.values())
     .sort((a, b) => b.count - a.count)
     .map((item) => ({
       ...item,
-      percentage: totalMoverOccurrences > 0
-        ? (item.count / totalMoverOccurrences) * 100
+      percentage: totalMoveEvents > 0
+        ? (item.count / totalMoveEvents) * 100
         : 0,
       averagePathHops: item.count > 0
         ? item.totalPathHops / item.count
@@ -266,13 +266,13 @@ export function calculateSprPairActivity(pairSolutions, options = {}) {
       const parsedPair = parsePairKey(pairKey);
       const pairIndex = resolvePairArrayIndex(pairKey, parsedPair, entryIndex, pairInterpolationRanges);
       const events = eventsByPair.get(pairKey) ?? [];
-      const movers = aggregateMoverRows(events);
+      const movedSubtrees = aggregateMovedSubtreeRows(events);
       const sprMoveEventCount = events.length;
       const singleTaxonMoveEventCount = events
         .filter((event) => event.splitIndices.length === 1).length;
       const multiTaxonMoveEventCount = events
         .filter((event) => event.splitIndices.length > 1).length;
-      const topMover = movers[0] || null;
+      const topMovedSubtree = movedSubtrees[0] || null;
       const pathStats = summarizeSprEventRows(events);
 
       return {
@@ -285,7 +285,7 @@ export function calculateSprPairActivity(pairSolutions, options = {}) {
           : null,
         rfDistance: numberOrNull(robinsonFouldsDistances[pairIndex]),
         weightedRfDistance: numberOrNull(weightedRobinsonFouldsDistances[pairIndex]),
-        uniqueMoverCount: movers.length,
+        uniqueMovedSubtreeCount: movedSubtrees.length,
         singleTaxonMoveEventCount,
         multiTaxonMoveEventCount,
         transitionEventCount: Array.isArray(solution?.split_change_events)
@@ -296,8 +296,8 @@ export function calculateSprPairActivity(pairSolutions, options = {}) {
         averagePathHops: pathStats.averagePathHops,
         totalPathLength: pathStats.totalPathLength,
         averagePathLength: pathStats.averagePathLength,
-        topMover,
-        movers,
+        topMovedSubtree,
+        movedSubtrees,
         events,
       };
     })
@@ -305,7 +305,7 @@ export function calculateSprPairActivity(pairSolutions, options = {}) {
 }
 
 /**
- * Summarize dataset-level SPR activity without conflating transition events and movers.
+ * Summarize dataset-level SPR activity without conflating transition events and moved subtrees.
  *
  * @param {Object} pairSolutions - Map of pairKey -> TreePairSolution
  * @param {Object} options - Same options accepted by calculateSprPairActivity
@@ -313,7 +313,7 @@ export function calculateSprPairActivity(pairSolutions, options = {}) {
  */
 export function calculateSprDatasetSummary(pairSolutions, options = {}) {
   const pairActivity = calculateSprPairActivity(pairSolutions, options);
-  const moverFrequencies = calculateSprMoverFrequencies(pairSolutions);
+  const movedSubtreeFrequencies = calculateSprMovedSubtreeFrequencies(pairSolutions);
   const sprMoveEventCount = pairActivity
     .reduce((sum, row) => sum + row.sprMoveEventCount, 0);
   const totalPathHops = pairActivity
@@ -326,12 +326,12 @@ export function calculateSprDatasetSummary(pairSolutions, options = {}) {
     activePairCount: pairActivity.filter((row) => row.sprMoveEventCount > 0).length,
     transitionEventCount: pairActivity
       .reduce((sum, row) => sum + row.transitionEventCount, 0),
-    uniqueMovingSubtreeCount: moverFrequencies.length,
+    uniqueMovedSubtreeCount: movedSubtreeFrequencies.length,
     singleTaxonMoveEventCount: pairActivity
       .reduce((sum, row) => sum + row.singleTaxonMoveEventCount, 0),
     multiTaxonMoveEventCount: pairActivity
       .reduce((sum, row) => sum + row.multiTaxonMoveEventCount, 0),
-    topMoverSharePercentage: moverFrequencies[0]?.percentage ?? 0,
+    topMovedSubtreeSharePercentage: movedSubtreeFrequencies[0]?.percentage ?? 0,
     sprMoveEventCount,
     totalPathHops,
     averagePathHops: sprMoveEventCount > 0
@@ -341,7 +341,7 @@ export function calculateSprDatasetSummary(pairSolutions, options = {}) {
     averagePathLength: sprMoveEventCount > 0
       ? totalPathLength / sprMoveEventCount
       : 0,
-    farthestMover: selectFarthestMover(moverFrequencies),
+    farthestMovedSubtree: selectFarthestMovedSubtree(movedSubtreeFrequencies),
   };
 }
 
@@ -362,20 +362,20 @@ export function buildSprActivityTimelinePoints(pairActivityRows) {
     pairKey: row.pairKey,
     pairLabel: formatPairLabel(row),
     sprMoveEvents: row.sprMoveEventCount,
-    uniqueMovers: row.uniqueMoverCount,
+    uniqueMovedSubtrees: row.uniqueMovedSubtreeCount,
     singleTaxonMoveEventCount: row.singleTaxonMoveEventCount,
     multiTaxonMoveEventCount: row.multiTaxonMoveEventCount,
-    topMoverSignature: row.topMover?.signature ?? null,
+    topMovedSubtreeSignature: row.topMovedSubtree?.signature ?? null,
   }));
 }
 
 /**
  * Returns the top N most frequent moving subtrees.
  *
- * @param {Array} frequencies - Result from calculateSprMoverFrequencies
+ * @param {Array} frequencies - Result from calculateSprMovedSubtreeFrequencies
  * @param {number} n - Number of top items to return
  */
-export function getTopSprMovers(frequencies, n = 5) {
+export function getTopSprMovedSubtrees(frequencies, n = 5) {
   return frequencies.slice(0, n);
 }
 
@@ -463,10 +463,10 @@ function summarizeSprEventRows(events) {
   };
 }
 
-function selectFarthestMover(movers) {
-  if (!Array.isArray(movers) || movers.length === 0) return null;
+function selectFarthestMovedSubtree(movedSubtrees) {
+  if (!Array.isArray(movedSubtrees) || movedSubtrees.length === 0) return null;
 
-  const candidates = movers.filter((mover) => mover.count > 0);
+  const candidates = movedSubtrees.filter((movedSubtree) => movedSubtree.count > 0);
   if (candidates.length === 0) return null;
 
   return candidates

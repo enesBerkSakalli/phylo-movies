@@ -7,18 +7,18 @@ import {
 } from '@/components/ui/tooltip';
 
 interface SprSummaryMetricsProps {
-    distinctMoverCount: number;
+    uniqueMovedSubtreeCount: number;
     sprMovementCount: number;
     transitionEventCount: number;
     activePairCount: number;
     singleTaxonMoveEventPercentage: number;
-    topMoverPercentage: number | null;
+    topMovedSubtreePercentage: number | null;
     sprMoveEventCount: number;
     totalPathHops: number;
     averagePathHops: number;
     totalPathLength: number;
     averagePathLength: number;
-    farthestMover: {
+    farthestMovedSubtree: {
         label: string;
         fullLabel: string;
         totalPathHops: number;
@@ -45,25 +45,25 @@ const SummaryTile = ({ icon, label, children }: SummaryTileProps) => (
 );
 
 export const SprSummaryMetrics = ({
-    distinctMoverCount,
+    uniqueMovedSubtreeCount,
     sprMovementCount,
     transitionEventCount,
     activePairCount,
     singleTaxonMoveEventPercentage,
-    topMoverPercentage,
+    topMovedSubtreePercentage,
     sprMoveEventCount,
     totalPathHops,
     averagePathHops,
     totalPathLength,
     averagePathLength,
-    farthestMover,
+    farthestMovedSubtree,
 }: SprSummaryMetricsProps) => (
     <div className="grid grid-cols-3 gap-3 mb-4">
         <SummaryTile
             icon={<Hash className="size-3 text-primary" />}
             label="Unique Moved Subtrees"
         >
-            <div className="text-2xl font-black tracking-tighter tabular-nums">{distinctMoverCount}</div>
+            <div className="text-2xl font-black tracking-tighter tabular-nums">{uniqueMovedSubtreeCount}</div>
         </SummaryTile>
 
         <SummaryTile
@@ -98,18 +98,18 @@ export const SprSummaryMetrics = ({
             icon={<Info className="size-3 text-primary" />}
             label="Top Subtree Share"
         >
-            {topMoverPercentage !== null ? (
+            {topMovedSubtreePercentage !== null ? (
                 <Tooltip>
                     <TooltipTrigger asChild>
                         <div className="text-2xl font-black tracking-tighter tabular-nums cursor-help text-primary hover:text-primary/80 transition-colors">
-                            {topMoverPercentage.toFixed(1)}%
+                            {topMovedSubtreePercentage.toFixed(1)}%
                         </div>
                     </TooltipTrigger>
                     <TooltipContent side="top" className="text-2xs font-mono bg-popover border-border">
                         <div className="space-y-1">
                             <div>Full Precision:</div>
                             <div className="font-bold text-primary">
-                                {topMoverPercentage.toFixed(6)}%
+                                {topMovedSubtreePercentage.toFixed(6)}%
                             </div>
                         </div>
                     </TooltipContent>
@@ -171,25 +171,25 @@ export const SprSummaryMetrics = ({
             icon={<Split className="size-3 text-primary" />}
             label="Farthest Subtree"
         >
-            {farthestMover ? (
+            {farthestMovedSubtree ? (
                 <Tooltip>
                     <TooltipTrigger asChild>
                         <div className="cursor-help">
                             <div className="truncate text-sm font-black tracking-tight text-primary hover:text-primary/80 transition-colors">
-                                {farthestMover.label}
+                                {farthestMovedSubtree.label}
                             </div>
                             <div className="text-2xs font-mono text-muted-foreground/80 tabular-nums">
-                                {farthestMover.totalPathLength.toFixed(3)} length · {farthestMover.totalPathHops} hops
+                                {farthestMovedSubtree.totalPathLength.toFixed(3)} length · {farthestMovedSubtree.totalPathHops} hops
                             </div>
                         </div>
                     </TooltipTrigger>
                     <TooltipContent side="top" className="text-2xs bg-popover border-border max-w-sm">
                         <div className="space-y-1">
-                            <div className="font-bold text-primary break-words">{farthestMover.fullLabel}</div>
-                            <div className="font-mono">Total length: {farthestMover.totalPathLength.toFixed(6)}</div>
-                            <div className="font-mono">Average length: {farthestMover.averagePathLength.toFixed(6)}</div>
-                            <div className="font-mono">Total hops: {farthestMover.totalPathHops}</div>
-                            <div className="font-mono">Average hops: {farthestMover.averagePathHops.toFixed(3)}</div>
+                            <div className="font-bold text-primary break-words">{farthestMovedSubtree.fullLabel}</div>
+                            <div className="font-mono">Total length: {farthestMovedSubtree.totalPathLength.toFixed(6)}</div>
+                            <div className="font-mono">Average length: {farthestMovedSubtree.averagePathLength.toFixed(6)}</div>
+                            <div className="font-mono">Total hops: {farthestMovedSubtree.totalPathHops}</div>
+                            <div className="font-mono">Average hops: {farthestMovedSubtree.averagePathHops.toFixed(3)}</div>
                         </div>
                     </TooltipContent>
                 </Tooltip>

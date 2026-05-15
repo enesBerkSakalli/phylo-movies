@@ -8,8 +8,8 @@ import {
   useAppStore
 } from '@/state/phyloStore/store.js';
 import {
-  calculateSprMoverFrequencies,
-  getTopSprMovers,
+  calculateSprMovedSubtreeFrequencies,
+  getTopSprMovedSubtrees,
   formatSubtreeLabel
 } from '@/domain/spr/sprAnalytics';
 import { ChevronRight, BarChart2 } from 'lucide-react';
@@ -41,8 +41,8 @@ export const SubtreeFrequencyList = () => {
   // Calculate frequencies (memoized)
   const topSubtrees = useMemo(() => {
     if (!pairSolutions || Object.keys(pairSolutions).length === 0) return [];
-    const allFreqs = calculateSprMoverFrequencies(pairSolutions);
-    return getTopSprMovers(allFreqs, 5);
+    const movedSubtreeFrequencies = calculateSprMovedSubtreeFrequencies(pairSolutions);
+    return getTopSprMovedSubtrees(movedSubtreeFrequencies, 5);
   }, [pairSolutions]);
 
   if (!topSubtrees.length) return null;
