@@ -3,6 +3,7 @@ import * as spatialBounds from '../src/treeVisualisation/spatial/bounds.js';
 
 const {
   areBoundsInView,
+  estimateLabelBoundsPadding,
   expandBoundsForLabels,
   resolveLabelBoundsSize
 } = spatialBounds;
@@ -60,6 +61,27 @@ describe('expandBoundsForLabels', () => {
     })).toBe(12);
     expect(resolveLabelBoundsSize(undefined, () => 14)).toBe(14);
     expect(resolveLabelBoundsSize(undefined, null)).toBe(spatialBounds.LABEL_BOUNDS_DEFAULT_SIZE_PX);
+  });
+
+  it('estimates label bounds padding from longest label and size', () => {
+    expect(typeof estimateLabelBoundsPadding).toBe('function');
+    expect(estimateLabelBoundsPadding(
+      [{ text: 'abc' }, { text: 'abcdef' }],
+      10
+    )).toEqual({
+      width: 36,
+      height: 12,
+    });
+  });
+
+  it('caps estimated label bounds padding width', () => {
+    expect(estimateLabelBoundsPadding(
+      [{ text: 'x'.repeat(400) }],
+      10
+    )).toEqual({
+      width: spatialBounds.LABEL_BOUNDS_MAX_WIDTH_PX,
+      height: 12,
+    });
   });
 
   it('returns original bounds when there are no labels', () => {

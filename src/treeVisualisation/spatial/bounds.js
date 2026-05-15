@@ -18,6 +18,16 @@ export function resolveLabelBoundsSize(labelSizePx, getLabelSize) {
   return labelSizePx || (typeof getLabelSize === 'function' ? getLabelSize() : LABEL_BOUNDS_DEFAULT_SIZE_PX);
 }
 
+export function estimateLabelBoundsPadding(labels, sizePx) {
+  const maxChars = labels.reduce((m, l) => Math.max(m, (l.text || '').length), 0);
+  const estimatedCharWidth = LABEL_BOUNDS_CHAR_WIDTH_RATIO * sizePx;
+
+  return {
+    width: Math.min(LABEL_BOUNDS_MAX_WIDTH_PX, maxChars * estimatedCharWidth),
+    height: LABEL_BOUNDS_LINE_HEIGHT_RATIO * sizePx
+  };
+}
+
 /**
  * Checks if a bounding box is within the current Viewport.
  * Uses a relaxed intersection test (paddingFactor) to prevent aggressive culling
@@ -62,16 +72,12 @@ export function expandBoundsForLabels(bounds, labels, labelSizePx, getLabelSize)
   if (!labels || !labels.length) return bounds;
 
   const sizePx = resolveLabelBoundsSize(labelSizePx, getLabelSize);
-  // Heuristic: Estimate max text width
-  const maxChars = labels.reduce((m, l) => Math.max(m, (l.text || '').length), 0);
-  const estCharWidth = LABEL_BOUNDS_CHAR_WIDTH_RATIO * sizePx;
-  const estLabelWidth = Math.min(LABEL_BOUNDS_MAX_WIDTH_PX, maxChars * estCharWidth);
-  const estLabelHeight = LABEL_BOUNDS_LINE_HEIGHT_RATIO * sizePx;
+  const { width, height } = estimateLabelBoundsPadding(labels, sizePx);
 
   return {
-    minX: bounds.minX - estLabelWidth,
-    maxX: bounds.maxX + estLabelWidth,
-    minY: bounds.minY - estLabelHeight,
-    maxY: bounds.maxY + estLabelHeight
+    minX: bounds.minX - width,
+    maxX: bounds.maxX + width,
+    minY: bounds.minY - height,
+    maxY: bounds.maxY + height
   };
 }
