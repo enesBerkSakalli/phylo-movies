@@ -10,6 +10,63 @@ import { applySafeAreaToTarget } from '../spatial/projections.js';
 import { areBoundsInView, expandBoundsForLabels } from '../spatial/bounds.js';
 import { calculateSafeAreaPadding, normalizeSafeArea } from '../spatial/layout.js';
 
+export function calculateFocusViewport({
+  nodes,
+  labels,
+  links,
+  includeLabels = false,
+  padding,
+  labelSizePx,
+  getLabelSize,
+  canvasWidth,
+  canvasHeight,
+  safeArea,
+  activeView,
+  currentViewState
+}) {
+  const bounds = includeLabels
+    ? calculateVisualBounds(nodes, labels)
+    : calculateBranchBounds(nodes, links);
+  const densityPadding = calculateDensityPadding(nodes);
+  const effectivePadding = padding ?? ((includeLabels ? 1.25 : 1.12) + densityPadding);
+
+  const expandedBounds = includeLabels
+    ? expandBoundsForLabels(bounds, labels, labelSizePx, getLabelSize)
+    : bounds;
+
+  const centerX = (expandedBounds.minX + expandedBounds.maxX) / 2;
+  const centerY = (expandedBounds.minY + expandedBounds.maxY) / 2;
+  const w = Math.max(1e-6, expandedBounds.maxX - expandedBounds.minX);
+  const h = Math.max(1e-6, expandedBounds.maxY - expandedBounds.minY);
+
+  const safe = normalizeSafeArea(safeArea, canvasWidth, canvasHeight);
+  const safeWidth = Math.max(1, canvasWidth - safe.left - safe.right);
+  const safeHeight = Math.max(1, canvasHeight - safe.top - safe.bottom);
+  const zoom = Math.log2(Math.min(safeWidth / (w * effectivePadding), safeHeight / (h * effectivePadding)));
+
+  const target = applySafeAreaToTarget(
+    activeView,
+    [centerX, centerY, 0],
+    zoom,
+    safe,
+    canvasWidth,
+    canvasHeight,
+    safeWidth,
+    safeHeight,
+    currentViewState
+  );
+
+  return { target, zoom };
+}
+
+function calculateDensityPadding(nodes) {
+  const leafCount = Array.isArray(nodes) ? nodes.length : 0;
+  if (leafCount > 400) return 0.15;
+  if (leafCount > 200) return 0.1;
+  if (leafCount > 100) return 0.05;
+  return 0;
+}
+
 export class ViewportManager {
 
   // ==========================================================================
@@ -59,56 +116,28 @@ export class ViewportManager {
     const { playing } = useAppStore.getState();
     if (playing && !options.allowDuringPlayback) return;
     const includeLabels = options.includeLabels === true;
-    const bounds = includeLabels
-      ? calculateVisualBounds(nodes, labels)
-      : calculateBranchBounds(nodes, options.links);
     const { width: canvasWidth, height: canvasHeight } = this.controller.deckContext.getCanvasDimensions();
-    const densityPadding = this._calculateDensityPadding(nodes);
     const safeArea = this.getSafeAreaPadding();
-    const padding = options.padding ?? ((includeLabels ? 1.25 : 1.12) + densityPadding);
-    const labelSizePx = options.labelSizePx;
     const getLabelSize = options.getLabelSize ?? this.controller.layerManager.layerStyles.getLabelSize?.bind(
       this.controller.layerManager.layerStyles
     );
-
-    // 1. Keep the default fit branch-focused so labels/extensions do not shrink the tree.
-    const expandedBounds = includeLabels
-      ? expandBoundsForLabels(bounds, labels, labelSizePx, getLabelSize)
-      : bounds;
-
-    // 2. Calculate Center & Dimensions
-    const centerX = (expandedBounds.minX + expandedBounds.maxX) / 2;
-    const centerY = (expandedBounds.minY + expandedBounds.maxY) / 2;
-    const w = Math.max(1e-6, expandedBounds.maxX - expandedBounds.minX);
-    const h = Math.max(1e-6, expandedBounds.maxY - expandedBounds.minY);
-
-    // 3. Normalize Safe Area
-    const safe = normalizeSafeArea(safeArea, canvasWidth, canvasHeight);
-    const safeWidth = Math.max(1, canvasWidth - safe.left - safe.right);
-    const safeHeight = Math.max(1, canvasHeight - safe.top - safe.bottom);
-
-    // 4. Calculate Zoom (log2 scale)
-    // Note: Clamping happens in DeckGLContext.transitionTo
-    const zoom = Math.log2(Math.min(safeWidth / (w * padding), safeHeight / (h * padding)));
-
-    // 5. Apply Safe Area offset to Target
-    // We need the active view to properly unproject the safe center
     const activeView = this.controller.deckContext.getActiveView();
     const currentViewState = this.controller.deckContext.getViewState();
-
-    const target = applySafeAreaToTarget(
-      activeView,
-      [centerX, centerY, 0],
-      zoom,
-      safe,
+    const { target, zoom } = calculateFocusViewport({
+      nodes,
+      labels,
+      links: options.links,
+      includeLabels,
+      padding: options.padding,
+      labelSizePx: options.labelSizePx,
+      getLabelSize,
       canvasWidth,
       canvasHeight,
-      safeWidth,
-      safeHeight,
+      safeArea,
+      activeView,
       currentViewState
-    );
+    });
 
-    // 6. Execute Transition
     this.controller.deckContext.transitionTo({
       target,
       zoom,
@@ -124,16 +153,6 @@ export class ViewportManager {
 
   getSafeAreaPadding() {
     return calculateSafeAreaPadding(this.controller.webglContainer);
-  }
-
-  _calculateDensityPadding(nodes) {
-    // Density-based padding to ensure readability for dense trees.
-    // Base padding is applied in focusOnTree.
-    const leafCount = Array.isArray(nodes) ? nodes.length : 0;
-    if (leafCount > 400) return 0.15;
-    if (leafCount > 200) return 0.1;
-    if (leafCount > 100) return 0.05;
-    return 0;
   }
 
 }
