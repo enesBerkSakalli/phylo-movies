@@ -14,6 +14,15 @@ const builderSourcePath = join(
   'transforms',
   'SubtreeConnectorBuilder.js'
 );
+const rawConnectionsSourcePath = join(
+  repoRoot,
+  'src',
+  'treeVisualisation',
+  'deckgl',
+  'data',
+  'transforms',
+  'ConnectorRawConnections.js'
+);
 
 async function importConnectorColorEntryResolver() {
   try {
@@ -26,6 +35,14 @@ async function importConnectorColorEntryResolver() {
 async function importConnectorLeafIndex() {
   try {
     return await import('../src/treeVisualisation/deckgl/data/transforms/ConnectorLeafIndex.js');
+  } catch {
+    return null;
+  }
+}
+
+async function importConnectorRawConnections() {
+  try {
+    return await import('../src/treeVisualisation/deckgl/data/transforms/ConnectorRawConnections.js');
   } catch {
     return null;
   }
@@ -89,10 +106,10 @@ const buildOptions = (overrides = {}) => {
 
 describe('SubtreeConnectorBuilder', function () {
   it('reuses the shared split subset helper instead of a local copy', function () {
-    const source = readFileSync(builderSourcePath, 'utf8');
+    const rawSource = readFileSync(rawConnectionsSourcePath, 'utf8');
 
-    expect(source).toMatch(/import\s+\{[^}]*\bisSubset\b[^}]*\}\s+from\s+['"][^'"]*splitMatching\.js['"]/s);
-    expect(source).not.toMatch(/function\s+isSubsetOf\s*\(/);
+    expect(rawSource).toMatch(/import\s+\{[^}]*\bisSubset\b[^}]*\}\s+from\s+['"][^'"]*splitMatching\.js['"]/s);
+    expect(rawSource).not.toMatch(/function\s+isSubsetOf\s*\(/);
   });
 
   it('normalizes connector split values through an isolated helper module', async function () {
@@ -152,10 +169,12 @@ describe('SubtreeConnectorBuilder', function () {
   });
 
   it('keeps connector color entry resolution outside the builder', function () {
-    const source = readFileSync(builderSourcePath, 'utf8');
+    const builderSource = readFileSync(builderSourcePath, 'utf8');
+    const rawSource = readFileSync(rawConnectionsSourcePath, 'utf8');
 
-    expect(source).toMatch(/from\s+['"]\.\/ConnectorColorEntryResolver\.js['"]/);
-    expect(source).not.toMatch(/function\s+getColorEntry\s*\(/);
+    expect(rawSource).toMatch(/from\s+['"]\.\/ConnectorColorEntryResolver\.js['"]/);
+    expect(builderSource).not.toMatch(/ConnectorColorEntryResolver\.js/);
+    expect(builderSource).not.toMatch(/function\s+getColorEntry\s*\(/);
   });
 
   it('indexes connector leaves by name through a dedicated helper', async function () {
@@ -182,11 +201,46 @@ describe('SubtreeConnectorBuilder', function () {
   });
 
   it('keeps connector leaf indexing outside the builder', function () {
-    const source = readFileSync(builderSourcePath, 'utf8');
+    const builderSource = readFileSync(builderSourcePath, 'utf8');
+    const rawSource = readFileSync(rawConnectionsSourcePath, 'utf8');
 
-    expect(source).toMatch(/from\s+['"]\.\/ConnectorLeafIndex\.js['"]/);
-    expect(source).not.toMatch(/function\s+indexRightLeaves\s*\(/);
-    expect(source).not.toMatch(/iterator\.next\s*\(/);
+    expect(rawSource).toMatch(/from\s+['"]\.\/ConnectorLeafIndex\.js['"]/);
+    expect(builderSource).not.toMatch(/ConnectorLeafIndex\.js/);
+    expect(builderSource).not.toMatch(/function\s+indexRightLeaves\s*\(/);
+    expect(builderSource).not.toMatch(/iterator\.next\s*\(/);
+  });
+
+  it('builds raw connector connections through a dedicated helper', async function () {
+    const rawConnections = await importConnectorRawConnections();
+
+    expect(rawConnections).not.toBeNull();
+
+    const connections = rawConnections.buildRawConnectorConnections({
+      leftPositions: makePositionMap(0),
+      rightPositions: makePositionMap(160),
+      jumpingSubtreeSets: [new Set([10])],
+      currentSubtreeSets: [new Set([10])],
+      colorManager: makeColorManager(),
+      markedSubtreesEnabled: true,
+      linkConnectionOpacity: 0.6,
+    });
+
+    expect(connections).toHaveLength(1);
+    expect(connections[0]).toMatchObject({
+      id: 'connector-10-10',
+      source: [-30, -20, 0],
+      target: [130, -20, 0],
+      isCurrentlyMoving: true,
+      sourceInfo: { name: 'A' },
+      targetInfo: { name: 'A' },
+    });
+    expect(connections[0].color).toHaveLength(4);
+    expect(connections[0]).not.toHaveProperty('path');
+    expect(connections[0]).not.toHaveProperty('width');
+
+    const builderSource = readFileSync(builderSourcePath, 'utf8');
+    expect(builderSource).toMatch(/from\s+['"]\.\/ConnectorRawConnections\.js['"]/);
+    expect(builderSource).not.toMatch(/function\s+buildRawConnections\s*\(/);
   });
 
   it('builds connectors when positions are Maps', function () {
