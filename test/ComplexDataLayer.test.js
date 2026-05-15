@@ -195,9 +195,6 @@ describe('Complex Data Layer Integration', () => {
       // 3. Define the "Move"
       // The edge leading to MoveParent (containing leaves 1 and 2) is the active edge.
 
-      // The builder expects `latticeSolutions` keys to be stringified arrays: "[u, v]"
-      // If we pass pivotEdge = ['edge1'], it looks up latticeSolutions['[edge1]'].
-
       const movingSubtree = [1, 2];
       const pivotEdge = ['edge1'];
       const edgeKey = '[edge1]';
@@ -213,7 +210,7 @@ describe('Complex Data Layer Integration', () => {
       const connectors = buildSubtreeConnectors({
         leftPositions,
         rightPositions,
-        latticeSolutions: { [edgeKey]: [movingSubtree] }, // Fix key format
+        latticeSolutions: { [edgeKey]: [movingSubtree] },
         pivotEdge: pivotEdge,
         colorManager: mockColorManager,
         subtreeTracking: [movingSubtree], // "Current tree" structure
@@ -228,30 +225,8 @@ describe('Complex Data Layer Integration', () => {
       // 4. Assertions
       expect(connectors.length).toBeGreaterThan(0);
 
-      // We expect connectors for M1->M1, M2->M2 (Active)
-      // And Stay1->Stay1 (Passive, if logic finds it)
-      // Note: SubtreeConnectorBuilder.buildRawConnections verifies:
-      // "Check if in jumping subtrees"
-      // If a leaf is NOT in jumpingSubtreeSets (derived from latticeSolutions), it is skipped?
-
-      // Reading SubtreeConnectorBuilder:
-      // "if (!inJumping) continue;"
-      // This helper ONLY builds the "Jumping" connectors?
-      // If so, we only see Active ones.
-      // Wait, let's re-read the code for SubtreeConnectorBuilder.
-
-      // It iterates leftPositions.
-      // Calculates splitIndices.
-      // Helper `isSubsetOf` checks if indices are in `jumpingSubtreeSets`.
-      // IF matches, it creates the connector.
-
-      // THEN it calls `splitActivePassive`.
-      // "Active" = currently moving.
-      // "Passive" = part of the jumping solution but NOT currently moving?
-      // No, `isCurrentlyMoving` logic checks `currentSubtreeSets`.
-
-      // So if `subtreeTracking` says M1, M2 are current, then they are Active.
-      // If `subtreeTracking` did NOT contain them, but `latticeSolutions` DID (historical jump?), they are Passive.
+      // Connectors are emitted for leaves in the lattice solution. They are
+      // active only when also present in the current subtree tracking entry.
 
       // Verify Active Connectors
       const activeConns = connectors.filter(c => c.id.includes('active'));

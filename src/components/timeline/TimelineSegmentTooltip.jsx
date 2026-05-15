@@ -202,7 +202,7 @@ function SubtreeBadge({ names }) {
  * @param {Function} getLeafNamesByIndices - Function to convert indices to names
  * @returns {Array<string[]>} Array of leaf name arrays for each subtree group
  */
-function extractMovingSubtreeGroups(jumpingSubtrees, getLeafNamesByIndices) {
+export function extractMovingSubtreeGroups(jumpingSubtrees, getLeafNamesByIndices) {
   if (!jumpingSubtrees?.length || !getLeafNamesByIndices) {
     return [];
   }

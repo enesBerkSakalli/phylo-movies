@@ -16,6 +16,11 @@ const legacyModules = [
   },
 ];
 
+const obsoleteDiagnostics = [
+  join(repoRoot, 'scripts', 'diagnostics', ['subtree', 'logic', 'debug.js'].join('_')),
+  join(repoRoot, 'test', ['reproduce', 'tooltip', 'issue.test.js'].join('_')),
+];
+
 function collectSourceFiles(directory) {
   return readdirSync(directory).flatMap((entry) => {
     const fullPath = join(directory, entry);
@@ -45,6 +50,12 @@ describe('legacy module aliases', () => {
         .map((file) => relative(repoRoot, file));
 
       expect(importReferences, legacyModule.importPath).toEqual([]);
+    }
+  });
+
+  it('does not keep obsolete one-off diagnostic scripts', () => {
+    for (const filePath of obsoleteDiagnostics) {
+      expect(existsSync(filePath), relative(repoRoot, filePath)).toBe(false);
     }
   });
 });
