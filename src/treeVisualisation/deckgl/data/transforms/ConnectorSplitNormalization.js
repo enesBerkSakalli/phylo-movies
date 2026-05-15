@@ -1,10 +1,10 @@
 export function normalizeConnectorSplitValue(value) {
+  if (value === null || value === undefined) {
+    return null;
+  }
   const num = Number(value);
   if (!Number.isNaN(num)) {
     return num;
-  }
-  if (value === null || value === undefined) {
-    return null;
   }
   return String(value);
 }
