@@ -1,6 +1,6 @@
-import { createConnectorConnection } from './ConnectorConnectionObjects.js';
 import { getConnectorLeafPairCandidate } from './ConnectorLeafPairCandidates.js';
 import { indexConnectorLeavesByName } from './ConnectorLeafIndex.js';
+import { createRawConnectorConnectionFromCandidate } from './ConnectorRawConnectionFactory.js';
 import { resolveConnectorVisualState } from './ConnectorVisualState.js';
 
 export function buildRawConnectorConnections(params) {
@@ -36,15 +36,7 @@ export function buildRawConnectorConnections(params) {
       linkConnectionOpacity,
     });
 
-    connections.push(createConnectorConnection({
-      id: `connector-${candidate.leftKey}-${candidate.rightKey}`,
-      source: candidate.source,
-      target: candidate.target,
-      color: visualState.color,
-      isCurrentlyMoving: visualState.isMoving,
-      sourceInfo: candidate.leftInfo,
-      targetInfo: candidate.rightInfo,
-    }));
+    connections.push(createRawConnectorConnectionFromCandidate(candidate, visualState));
   }
 
   return connections;
