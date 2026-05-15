@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import {
-  areBoundsInView,
-  expandBoundsForLabels
-} from '../src/treeVisualisation/spatial/bounds.js';
+import * as spatialBounds from '../src/treeVisualisation/spatial/bounds.js';
+
+const { areBoundsInView, expandBoundsForLabels } = spatialBounds;
 
 describe('areBoundsInView', () => {
   it('returns false when no viewport bounds API is available', () => {
@@ -43,6 +42,12 @@ describe('areBoundsInView', () => {
 });
 
 describe('expandBoundsForLabels', () => {
+  it('exports named label bounds heuristic constants', () => {
+    expect(spatialBounds.LABEL_BOUNDS_CHAR_WIDTH_RATIO).toBe(0.6);
+    expect(spatialBounds.LABEL_BOUNDS_LINE_HEIGHT_RATIO).toBe(1.2);
+    expect(spatialBounds.LABEL_BOUNDS_MAX_WIDTH_PX).toBe(2000);
+  });
+
   it('returns original bounds when there are no labels', () => {
     const bounds = { minX: 0, maxX: 10, minY: 0, maxY: 20 };
 
@@ -57,6 +62,19 @@ describe('expandBoundsForLabels', () => {
     )).toEqual({
       minX: -18,
       maxX: 28,
+      minY: -12,
+      maxY: 32,
+    });
+  });
+
+  it('caps estimated label width at the named maximum', () => {
+    expect(expandBoundsForLabels(
+      { minX: 0, maxX: 10, minY: 0, maxY: 20 },
+      [{ position: [0, 0, 0], text: 'x'.repeat(400) }],
+      10
+    )).toEqual({
+      minX: -spatialBounds.LABEL_BOUNDS_MAX_WIDTH_PX,
+      maxX: 10 + spatialBounds.LABEL_BOUNDS_MAX_WIDTH_PX,
       minY: -12,
       maxY: 32,
     });

@@ -9,6 +9,10 @@
  * - Frustum Culling: Checking if an object is within the camera's view.
  */
 
+export const LABEL_BOUNDS_CHAR_WIDTH_RATIO = 0.6;
+export const LABEL_BOUNDS_LINE_HEIGHT_RATIO = 1.2;
+export const LABEL_BOUNDS_MAX_WIDTH_PX = 2000;
+
 /**
  * Checks if a bounding box is within the current Viewport.
  * Uses a relaxed intersection test (paddingFactor) to prevent aggressive culling
@@ -55,9 +59,9 @@ export function expandBoundsForLabels(bounds, labels, labelSizePx, getLabelSize)
   const sizePx = labelSizePx || (typeof getLabelSize === 'function' ? getLabelSize() : 16);
   // Heuristic: Estimate max text width
   const maxChars = labels.reduce((m, l) => Math.max(m, (l.text || '').length), 0);
-  const estCharWidth = 0.6 * sizePx;
-  const estLabelWidth = Math.min(2000, maxChars * estCharWidth);
-  const estLabelHeight = 1.2 * sizePx;
+  const estCharWidth = LABEL_BOUNDS_CHAR_WIDTH_RATIO * sizePx;
+  const estLabelWidth = Math.min(LABEL_BOUNDS_MAX_WIDTH_PX, maxChars * estCharWidth);
+  const estLabelHeight = LABEL_BOUNDS_LINE_HEIGHT_RATIO * sizePx;
 
   return {
     minX: bounds.minX - estLabelWidth,
