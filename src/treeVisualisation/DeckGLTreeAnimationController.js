@@ -13,6 +13,7 @@ import { handleDragStart, handleDrag, handleDragEnd, handleContainerResize } fro
 import { ViewportManager } from './viewport/ViewportManager.js';
 import { getClipboardLayers } from './utils/ClipboardUtils.js';
 import { createLayoutCacheKey, getRotationAlignmentExcludeTaxa } from './utils/layoutCacheKey.js';
+import { getSplitKey } from './utils/splitMatching.js';
 
 export class DeckGLTreeAnimationController extends WebGLTreeAnimationController {
 
@@ -288,6 +289,48 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       padding: options.padding,
       links
     });
+  }
+
+  focusOnNode(contextNode, options = {}) {
+    const renderedNode = this._findRenderedNodeForContext(contextNode);
+    if (!renderedNode || !this.deckContext || typeof this.deckContext.transitionTo !== 'function') {
+      return false;
+    }
+
+    const position = Array.isArray(renderedNode.position)
+      ? renderedNode.position
+      : renderedNode.renderPosition;
+    if (!Array.isArray(position) || position.length < 2) {
+      return false;
+    }
+
+    this._hasUserViewportInteraction = true;
+    this.deckContext.transitionTo({
+      target: [position[0], position[1], position[2] ?? 0],
+      duration: options.duration ?? 550,
+    });
+    return true;
+  }
+
+  _findRenderedNodeForContext(contextNode) {
+    if (!contextNode) return null;
+
+    const nodes = this._lastLayerData?.nodes;
+    if (!Array.isArray(nodes) || nodes.length === 0) return null;
+
+    const targetSplitKey = contextNode.splitKey || getSplitKey(contextNode);
+    if (!targetSplitKey) return null;
+
+    const hasTreeIndex = Number.isInteger(contextNode.treeIndex);
+    const hasTreeSide = typeof contextNode.treeSide === 'string' && contextNode.treeSide.length > 0;
+
+    return nodes.find((node) => {
+      const nodeSplitKey = node?.splitKey || getSplitKey(node);
+      if (nodeSplitKey !== targetSplitKey) return false;
+      if (hasTreeIndex && node?.treeIndex !== contextNode.treeIndex) return false;
+      if (hasTreeSide && node?.treeSide !== contextNode.treeSide) return false;
+      return true;
+    }) || null;
   }
 
   zoomIn() {

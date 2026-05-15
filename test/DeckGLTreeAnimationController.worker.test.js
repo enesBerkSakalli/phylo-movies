@@ -106,6 +106,67 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     });
   });
 
+  it('pans to the matching rendered node without changing zoom', () => {
+    const controller = Object.create(ControllerClass.prototype);
+    const transitionTo = vi.fn();
+    controller.deckContext = { transitionTo };
+    controller._lastLayerData = {
+      nodes: [
+        {
+          id: 'node-other',
+          splitKey: 'other',
+          treeIndex: 1,
+          treeSide: 'right',
+          position: [10, 20, 0],
+        },
+        {
+          id: 'node-target',
+          splitKey: 'target',
+          treeIndex: 1,
+          treeSide: 'right',
+          position: [100, 200, 0],
+        },
+      ],
+    };
+
+    const result = controller.focusOnNode({
+      splitKey: 'target',
+      treeIndex: 1,
+      treeSide: 'right',
+    });
+
+    expect(result).toBe(true);
+    expect(transitionTo).toHaveBeenCalledWith({
+      target: [100, 200, 0],
+      duration: 550,
+    });
+  });
+
+  it('does not pan when the context node is not in the rendered layer data', () => {
+    const controller = Object.create(ControllerClass.prototype);
+    const transitionTo = vi.fn();
+    controller.deckContext = { transitionTo };
+    controller._lastLayerData = {
+      nodes: [
+        {
+          splitKey: 'target',
+          treeIndex: 0,
+          treeSide: 'left',
+          position: [100, 200, 0],
+        },
+      ],
+    };
+
+    const result = controller.focusOnNode({
+      splitKey: 'target',
+      treeIndex: 1,
+      treeSide: 'right',
+    });
+
+    expect(result).toBe(false);
+    expect(transitionTo).not.toHaveBeenCalled();
+  });
+
   it('clears prefetch bookkeeping when style changes reset interpolation data', () => {
     controller = new ControllerClass(null);
     controller.renderAllElements = vi.fn();

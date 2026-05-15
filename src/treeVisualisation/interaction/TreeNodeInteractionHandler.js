@@ -66,7 +66,11 @@ export class TreeNodeInteractionHandler {
     if (!Array.isArray(allNodes)) return null;
 
     const layoutNode = allNodes.find(node => getSplitKey(node?.split_indices) === targetSplitKey);
-    return layoutNode ? toContextMenuNode(layoutNode) : null;
+    return layoutNode ? toContextMenuNode(layoutNode, null, {
+      splitKey: layerData?.splitKey || targetSplitKey,
+      treeIndex,
+      treeSide: layerData?.treeSide
+    }) : null;
   }
 
   _getTreeContext(layerData, state) {
@@ -78,11 +82,17 @@ export class TreeNodeInteractionHandler {
   }
 }
 
-function toContextMenuNode(node, path = null) {
+function toContextMenuNode(node, path = null, renderContext = null) {
   const currentPath = path || getNodePath(node);
   const children = Array.isArray(node.children)
     ? node.children.map(child => toContextMenuNode(child, [...currentPath, getNodeName(child)]))
     : [];
+
+  const context = renderContext ? {
+    splitKey: renderContext.splitKey,
+    treeIndex: renderContext.treeIndex,
+    treeSide: renderContext.treeSide,
+  } : {};
 
   return {
     name: node.name || '',
@@ -92,6 +102,7 @@ function toContextMenuNode(node, path = null) {
     height: node.height ?? 0,
     path: currentPath,
     children,
+    ...context,
   };
 }
 
