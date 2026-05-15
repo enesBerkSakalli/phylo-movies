@@ -41,6 +41,15 @@ const connectionObjectsSourcePath = join(
   'transforms',
   'ConnectorConnectionObjects.js'
 );
+const connectionOrderingSourcePath = join(
+  repoRoot,
+  'src',
+  'treeVisualisation',
+  'deckgl',
+  'data',
+  'transforms',
+  'ConnectorConnectionOrdering.js'
+);
 
 async function importConnectorColorEntryResolver() {
   try {
@@ -77,6 +86,14 @@ async function importConnectorPassiveGroups() {
 async function importConnectorConnectionObjects() {
   try {
     return await import('../src/treeVisualisation/deckgl/data/transforms/ConnectorConnectionObjects.js');
+  } catch {
+    return null;
+  }
+}
+
+async function importConnectorConnectionOrdering() {
+  try {
+    return await import('../src/treeVisualisation/deckgl/data/transforms/ConnectorConnectionOrdering.js');
   } catch {
     return null;
   }
@@ -384,6 +401,54 @@ describe('SubtreeConnectorBuilder', function () {
     expect(builderSource).not.toMatch(/function\s+createConnectionObject\s*\(/);
     expect(builderSource).not.toMatch(/function\s+createPathObject\s*\(/);
     expect(connectionObjectsSource).toMatch(/export\s+function\s+createConnectorConnection\s*\(/);
+  });
+
+  it('orders and splits connector connections through a dedicated helper', async function () {
+    const connectionOrdering = await importConnectorConnectionOrdering();
+
+    expect(connectionOrdering).not.toBeNull();
+
+    const activeLowTarget = {
+      id: 'active-low-target',
+      isCurrentlyMoving: true,
+      sourceInfo: { angle: 2 },
+      targetInfo: { angle: 1 },
+    };
+    const passiveLowestSource = {
+      id: 'passive-lowest-source',
+      isCurrentlyMoving: false,
+      sourceInfo: { angle: 1 },
+      targetInfo: { angle: 3 },
+    };
+    const passiveHighTarget = {
+      id: 'passive-high-target',
+      isCurrentlyMoving: false,
+      sourceInfo: { angle: 2 },
+      targetInfo: { angle: 4 },
+    };
+    const ordered = connectionOrdering.sortConnectorConnectionsByAngle(
+      [passiveHighTarget, activeLowTarget, passiveLowestSource],
+      [0, 0],
+      [160, 0]
+    );
+
+    expect(ordered.map((connection) => connection.id)).toEqual([
+      'passive-lowest-source',
+      'active-low-target',
+      'passive-high-target',
+    ]);
+
+    const split = connectionOrdering.splitActivePassiveConnectorConnections(ordered);
+    expect(split.activeConnections).toEqual([activeLowTarget]);
+    expect(split.passiveConnections).toEqual([passiveLowestSource, passiveHighTarget]);
+
+    const builderSource = readFileSync(builderSourcePath, 'utf8');
+    const orderingSource = readFileSync(connectionOrderingSourcePath, 'utf8');
+    expect(builderSource).toMatch(/from\s+['"]\.\/ConnectorConnectionOrdering\.js['"]/);
+    expect(builderSource).not.toMatch(/function\s+sortConnectionsByAngle\s*\(/);
+    expect(builderSource).not.toMatch(/function\s+splitActivePassive\s*\(/);
+    expect(builderSource).not.toMatch(/\bgetAngle\b/);
+    expect(orderingSource).toMatch(/from\s+['"]\.\/ComparisonGeometryUtils\.js['"]/);
   });
 
   it('builds connectors when positions are Maps', function () {

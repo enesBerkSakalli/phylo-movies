@@ -7,11 +7,14 @@ import {
 import { buildRawConnectorConnections } from './ConnectorRawConnections.js';
 import {
   pushOutward,
-  getAngle,
   chooseBundlePoint
 } from './ComparisonGeometryUtils.js';
 import { groupPassiveConnectorConnections } from './ConnectorPassiveGroups.js';
 import { createConnectorPathConnection } from './ConnectorConnectionObjects.js';
+import {
+  sortConnectorConnectionsByAngle,
+  splitActivePassiveConnectorConnections
+} from './ConnectorConnectionOrdering.js';
 
 const DEFAULT_CENTER = [0, 0];
 const CONNECTOR_PATH_SAMPLES = 24;
@@ -69,8 +72,8 @@ export function buildSubtreeConnectors(options) {
     return [];
   }
 
-  const sortedConnections = sortConnectionsByAngle(rawConnections, leftCenter, rightCenter);
-  const { activeConnections, passiveConnections } = splitActivePassive(sortedConnections);
+  const sortedConnections = sortConnectorConnectionsByAngle(rawConnections, leftCenter, rightCenter);
+  const { activeConnections, passiveConnections } = splitActivePassiveConnectorConnections(sortedConnections);
   return buildConnectorPaths({
     activeConnections,
     passiveConnections,
@@ -81,32 +84,6 @@ export function buildSubtreeConnectors(options) {
     leftInfoById: buildInfoById(leftPositions),
     rightInfoById: buildInfoById(rightPositions),
   });
-}
-
-function sortConnectionsByAngle(connections, leftCenter, rightCenter) {
-  return connections.slice().sort((a, b) => {
-    const aSrc = getAngle(a.sourceInfo, leftCenter);
-    const bSrc = getAngle(b.sourceInfo, leftCenter);
-    if (aSrc !== bSrc) {
-      return aSrc - bSrc;
-    }
-    const aDst = getAngle(a.targetInfo, rightCenter);
-    const bDst = getAngle(b.targetInfo, rightCenter);
-    return aDst - bDst;
-  });
-}
-
-function splitActivePassive(connections) {
-  const activeConnections = [];
-  const passiveConnections = [];
-  connections.forEach((connection) => {
-    if (connection.isCurrentlyMoving) {
-      activeConnections.push(connection);
-    } else {
-      passiveConnections.push(connection);
-    }
-  });
-  return { activeConnections, passiveConnections };
 }
 
 // ========== Bundle Building ==========
