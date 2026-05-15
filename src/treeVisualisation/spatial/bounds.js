@@ -14,6 +14,10 @@ export const LABEL_BOUNDS_LINE_HEIGHT_RATIO = 1.2;
 export const LABEL_BOUNDS_MAX_WIDTH_PX = 2000;
 export const LABEL_BOUNDS_DEFAULT_SIZE_PX = 16;
 
+export function resolveLabelBoundsSize(labelSizePx, getLabelSize) {
+  return labelSizePx || (typeof getLabelSize === 'function' ? getLabelSize() : LABEL_BOUNDS_DEFAULT_SIZE_PX);
+}
+
 /**
  * Checks if a bounding box is within the current Viewport.
  * Uses a relaxed intersection test (paddingFactor) to prevent aggressive culling
@@ -57,7 +61,7 @@ export function areBoundsInView(bounds, viewport, paddingFactor = 1.05) {
 export function expandBoundsForLabels(bounds, labels, labelSizePx, getLabelSize) {
   if (!labels || !labels.length) return bounds;
 
-  const sizePx = labelSizePx || (typeof getLabelSize === 'function' ? getLabelSize() : LABEL_BOUNDS_DEFAULT_SIZE_PX);
+  const sizePx = resolveLabelBoundsSize(labelSizePx, getLabelSize);
   // Heuristic: Estimate max text width
   const maxChars = labels.reduce((m, l) => Math.max(m, (l.text || '').length), 0);
   const estCharWidth = LABEL_BOUNDS_CHAR_WIDTH_RATIO * sizePx;
