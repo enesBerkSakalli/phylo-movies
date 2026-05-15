@@ -32,6 +32,15 @@ const splitEligibilitySourcePath = join(
   'transforms',
   'ConnectorSplitEligibility.js'
 );
+const leafPairCandidatesSourcePath = join(
+  repoRoot,
+  'src',
+  'treeVisualisation',
+  'deckgl',
+  'data',
+  'transforms',
+  'ConnectorLeafPairCandidates.js'
+);
 const passiveGroupsSourcePath = join(
   repoRoot,
   'src',
@@ -96,6 +105,14 @@ async function importConnectorRawConnections() {
 async function importConnectorSplitEligibility() {
   try {
     return await import('../src/treeVisualisation/deckgl/data/transforms/ConnectorSplitEligibility.js');
+  } catch {
+    return null;
+  }
+}
+
+async function importConnectorLeafPairCandidates() {
+  try {
+    return await import('../src/treeVisualisation/deckgl/data/transforms/ConnectorLeafPairCandidates.js');
   } catch {
     return null;
   }
@@ -312,6 +329,52 @@ describe('SubtreeConnectorBuilder', function () {
     expect(builderSource).not.toMatch(/ConnectorLeafIndex\.js/);
     expect(builderSource).not.toMatch(/function\s+indexRightLeaves\s*\(/);
     expect(builderSource).not.toMatch(/iterator\.next\s*\(/);
+  });
+
+  it('matches connector leaf pair candidates through a dedicated pure helper', async function () {
+    const leafPairCandidates = await importConnectorLeafPairCandidates();
+
+    expect(leafPairCandidates).not.toBeNull();
+
+    const leftInfo = makeLeaf(10, 'A', [-30, -20, 0]);
+    const rightInfo = makeLeaf(10, 'A', [130, -20, 0]);
+    const rightLeavesByName = new Map([
+      ['A', { key: '10', info: rightInfo }],
+    ]);
+
+    expect(leafPairCandidates.getConnectorLeafPairCandidate({
+      key: '10',
+      leftInfo,
+      rightLeavesByName,
+      jumpingSubtreeSets: [new Set([10, 11])],
+    })).toEqual({
+      leftKey: '10',
+      rightKey: '10',
+      leftInfo,
+      rightInfo,
+      splitIndices: [10],
+      source: [-30, -20, 0],
+      target: [130, -20, 0],
+    });
+    expect(leafPairCandidates.getConnectorLeafPairCandidate({
+      key: '12',
+      leftInfo: makeLeaf(12, 'Missing', [30, -20, 0]),
+      rightLeavesByName,
+      jumpingSubtreeSets: [new Set([10, 11])],
+    })).toBeNull();
+    expect(leafPairCandidates.getConnectorLeafPairCandidate({
+      key: '10',
+      leftInfo: makeLeaf(10, 'Missing', [-30, -20, 0]),
+      rightLeavesByName,
+      jumpingSubtreeSets: [new Set([10, 11])],
+    })).toBeNull();
+
+    const rawSource = readFileSync(rawConnectionsSourcePath, 'utf8');
+    const leafPairCandidatesSource = readFileSync(leafPairCandidatesSourcePath, 'utf8');
+    expect(rawSource).toMatch(/from\s+['"]\.\/ConnectorLeafPairCandidates\.js['"]/);
+    expect(rawSource).not.toMatch(/rightLeavesByName\.get/);
+    expect(rawSource).not.toMatch(/rightMatch\.info\.position/);
+    expect(leafPairCandidatesSource).toMatch(/from\s+['"]\.\/ConnectorSplitEligibility\.js['"]/);
   });
 
   it('builds raw connector connections through a dedicated helper', async function () {
