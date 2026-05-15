@@ -8,9 +8,9 @@ import { buildRawConnectorConnections } from './ConnectorRawConnections.js';
 import {
   pushOutward,
   getAngle,
-  getBundleAncestor,
   chooseBundlePoint
 } from './ComparisonGeometryUtils.js';
+import { groupPassiveConnectorConnections } from './ConnectorPassiveGroups.js';
 
 const DEFAULT_CENTER = [0, 0];
 const CONNECTOR_PATH_SAMPLES = 24;
@@ -25,8 +25,6 @@ const ACTIVE_CONNECTOR_STYLE = Object.freeze({
   width: 3.0,
   outwardPushFactor: 1.08,
 });
-const ROOT_LEFT_GROUP_ID = 'rootL';
-const ROOT_RIGHT_GROUP_ID = 'rootR';
 
 /**
  * SubtreeConnectorBuilder
@@ -249,7 +247,7 @@ function buildBundledConnectorPaths(params) {
     return results;
   }
 
-  for (const group of groupPassiveConnections(connections, leftInfoById, rightInfoById)) {
+  for (const group of groupPassiveConnectorConnections(connections, leftInfoById, rightInfoById)) {
     const groupBundlePoint = chooseBundlePoint(
       group.connections,
       group.leftCenterEntry,
@@ -301,33 +299,6 @@ function buildPathForConnection(connection, srcBundlePoint, dstBundlePoint, left
   );
 }
 
-function groupPassiveConnections(passiveConnections, leftInfoById, rightInfoById) {
-  const groups = new Map();
-
-  passiveConnections.forEach((connection) => {
-    const { sourceInfo, targetInfo } = connection;
-    if (!sourceInfo || !targetInfo) return;
-
-    const leftBundleEntry = getBundleAncestor(sourceInfo, leftInfoById, 2) || getParentInfo(sourceInfo, leftInfoById);
-    const rightBundleEntry = getBundleAncestor(targetInfo, rightInfoById, 2) || getParentInfo(targetInfo, rightInfoById);
-
-    const leftKey = leftBundleEntry ? leftBundleEntry.id : ROOT_LEFT_GROUP_ID;
-    const rightKey = rightBundleEntry ? rightBundleEntry.id : ROOT_RIGHT_GROUP_ID;
-    const groupKey = `${leftKey}|${rightKey}`;
-
-    if (!groups.has(groupKey)) {
-      groups.set(groupKey, {
-        leftCenterEntry: leftBundleEntry,
-        rightCenterEntry: rightBundleEntry,
-        connections: [],
-      });
-    }
-    groups.get(groupKey).connections.push(connection);
-  });
-
-  return Array.from(groups.values());
-}
-
 function buildInfoById(positionMap) {
   const map = new Map();
   if (!positionMap || typeof positionMap.values !== 'function') return map;
@@ -336,9 +307,4 @@ function buildInfoById(positionMap) {
     if (id) map.set(id, info);
   }
   return map;
-}
-
-function getParentInfo(info, infoById) {
-  const parentId = info && info.parentId;
-  return parentId && infoById ? infoById.get(parentId) : null;
 }
