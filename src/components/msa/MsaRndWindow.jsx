@@ -82,7 +82,7 @@ export function MsaRndWindow() {
           y: pos.y,
         });
       }}
-      className="fixed z-40 pointer-events-auto shadow-2xl bg-card"
+      className="fixed z-[1100] pointer-events-auto shadow-2xl bg-card"
     >
       <MSAWindowContent />
     </Rnd>
