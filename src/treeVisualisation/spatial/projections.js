@@ -68,30 +68,26 @@ export function applySafeAreaToTarget(view, baseTarget, zoom, safe, canvasWidth,
   if (!safe || (!safe.top && !safe.right && !safe.bottom && !safe.left)) {
     return baseTarget;
   }
-  try {
-    if (!view?.makeViewport) return baseTarget;
 
-    // Construct a hypothetical viewport state at the target zoom/center
-    const viewState = { ...currentViewState, target: baseTarget, zoom };
-    const viewport = view.makeViewport({ width: canvasWidth, height: canvasHeight, viewState });
-    if (!viewport?.unproject) return baseTarget;
+  if (typeof view?.makeViewport !== 'function') return baseTarget;
 
-    // Calculate Geometrical Center of the Safe Area in Screen Space
-    const safeCenterX = safe.left + safeWidth / 2;
-    const safeCenterY = safe.top + safeHeight / 2;
+  // Construct a hypothetical viewport state at the target zoom/center.
+  const viewState = { ...currentViewState, target: baseTarget, zoom };
+  const viewport = view.makeViewport({ width: canvasWidth, height: canvasHeight, viewState });
+  if (typeof viewport?.unproject !== 'function') return baseTarget;
 
-    // specific Unprojection: Screen -> World
-    const safeWorld = viewport.unproject([safeCenterX, safeCenterY]);
-    if (!safeWorld) return baseTarget;
+  // Calculate geometrical center of the safe area in screen space.
+  const safeCenterX = safe.left + safeWidth / 2;
+  const safeCenterY = safe.top + safeHeight / 2;
 
-    // Apply the delta to the target
-    return [
-      baseTarget[0] + (baseTarget[0] - safeWorld[0]),
-      baseTarget[1] + (baseTarget[1] - safeWorld[1]),
-      baseTarget[2] ?? 0
-    ];
-  } catch (e) {
-    console.warn('[Spatial/Projections] Error applying safe area:', e);
+  const safeWorld = viewport.unproject([safeCenterX, safeCenterY]);
+  if (!safeWorld) {
     return baseTarget;
   }
+
+  return [
+    baseTarget[0] + (baseTarget[0] - safeWorld[0]),
+    baseTarget[1] + (baseTarget[1] - safeWorld[1]),
+    baseTarget[2] ?? 0
+  ];
 }
