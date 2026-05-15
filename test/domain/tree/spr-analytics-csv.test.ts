@@ -1,13 +1,23 @@
 import { describe, expect, it } from 'vitest';
-import {
-  createSprFrequencyCsv,
+import * as sprAnalyticsCsv from '../../../src/components/TreeStatsPanel/SubtreeAnalytics/sprAnalyticsCsv';
+
+const {
+  createSprMovedSubtreeRecurrenceCsv,
+  createSprMovedSubtreeRecurrenceExportName,
   createSprMoveEventExportName,
   createSprMoveEventCsv,
-} from '../../../src/components/TreeStatsPanel/SubtreeAnalytics/sprFrequencyCsv';
+} = sprAnalyticsCsv;
 
-describe('createSprFrequencyCsv', () => {
+describe('createSprMovedSubtreeRecurrenceCsv', () => {
+  it('exports moved-subtree recurrence helpers without legacy frequency names', () => {
+    expect(sprAnalyticsCsv.createSprMovedSubtreeRecurrenceCsv).toBeTypeOf('function');
+    expect(sprAnalyticsCsv.createSprMovedSubtreeRecurrenceExportName).toBeTypeOf('function');
+    expect(sprAnalyticsCsv.createSprFrequencyCsv).toBeUndefined();
+    expect(sprAnalyticsCsv.createSprFrequencyExportName).toBeUndefined();
+  });
+
   it('uses movement terminology in exported headers', () => {
-    const csv = createSprFrequencyCsv([], []);
+    const csv = createSprMovedSubtreeRecurrenceCsv([], []);
     const header = csv.split('\n')[0];
 
     expect(header).toContain('Movement Count');
@@ -21,7 +31,7 @@ describe('createSprFrequencyCsv', () => {
   });
 
   it('exports path travel metrics for moved subtrees', () => {
-    const csv = createSprFrequencyCsv([
+    const csv = createSprMovedSubtreeRecurrenceCsv([
       {
         signature: '1,2',
         splitIndices: [1, 2],
@@ -39,6 +49,11 @@ describe('createSprFrequencyCsv', () => {
     expect(row).toContain('3.500000');
     expect(row).toContain('1.250000');
     expect(row).toContain('0.625000');
+  });
+
+  it('uses moved-subtree terminology in exported filenames', () => {
+    expect(createSprMovedSubtreeRecurrenceExportName('sample.tree', new Date('2026-05-15T00:00:00.000Z')))
+      .toBe('sample-recurrent-moved-subtrees-2026-05-15.csv');
   });
 });
 

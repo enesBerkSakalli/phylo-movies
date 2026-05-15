@@ -1,5 +1,5 @@
 import { formatSubtreeLabel } from '../../../domain/spr/sprAnalytics';
-import type { SprMovedSubtreeFrequency, SprMoveEventRow } from './types';
+import type { SprMovedSubtreeRecurrence, SprMoveEventRow } from './types';
 
 const escapeCsvValue = (value: unknown): string => {
     const str = value === null || value === undefined ? '' : String(value);
@@ -20,8 +20,8 @@ const formatOptionalFixed = (value: unknown): string => {
     return Number.isFinite(number) ? number.toFixed(6) : '';
 };
 
-export const createSprFrequencyCsv = (
-    frequencies: SprMovedSubtreeFrequency[],
+export const createSprMovedSubtreeRecurrenceCsv = (
+    recurrences: SprMovedSubtreeRecurrence[],
     leafNamesByIndex: string[]
 ): string => {
     const headers = [
@@ -39,7 +39,7 @@ export const createSprFrequencyCsv = (
         'Signature'
     ];
 
-    const rows = frequencies.map((item, idx) => {
+    const rows = recurrences.map((item, idx) => {
         const label = formatSubtreeLabel(item.splitIndices, leafNamesByIndex);
         return [
             idx + 1,
@@ -127,7 +127,7 @@ export const createSprMoveEventCsv = (
         .join('\n');
 };
 
-export const createSprFrequencyExportName = (fileName: string, date = new Date()): string => {
+export const createSprMovedSubtreeRecurrenceExportName = (fileName: string, date = new Date()): string => {
     const dateStamp = date.toISOString().slice(0, 10);
     const baseName = (fileName || 'dataset')
         .replace(/\.[^/.]+$/, '')
@@ -135,7 +135,7 @@ export const createSprFrequencyExportName = (fileName: string, date = new Date()
         .replace(/-+/g, '-')
         .replace(/^-+|-+$/g, '') || 'dataset';
 
-    return `${baseName}-${dateStamp}.csv`;
+    return `${baseName}-recurrent-moved-subtrees-${dateStamp}.csv`;
 };
 
 export const createSprMoveEventExportName = (fileName: string, date = new Date()): string => {

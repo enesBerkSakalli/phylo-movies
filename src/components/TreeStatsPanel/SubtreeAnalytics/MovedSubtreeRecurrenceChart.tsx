@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { selectLeafNamesByIndex, selectPairSolutions, useAppStore } from '@/state/phyloStore/store.js';
-import { calculateSprMovedSubtreeFrequencies, getTopSprMovedSubtrees, formatSubtreeLabel } from '@/domain/spr/sprAnalytics';
+import { calculateSprMovedSubtreeRecurrences, getTopSprMovedSubtreeRecurrences, formatSubtreeLabel } from '@/domain/spr/sprAnalytics';
 import { SYSTEM_TREE_COLORS } from '@/constants/TreeColors';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,9 +13,9 @@ import {
 } from '@/components/ui/tooltip';
 
 /**
- * SubtreeFrequencyBarChart
+ * MovedSubtreeRecurrenceChart
  *
- * Vertical list showing top N most frequent moving subtrees with inline frequency bars.
+ * Vertical list showing top recurrent moved subtrees with inline recurrence bars.
  * Uses backend spr_move_events for movement analytics.
  *
  * TUFTE PRINCIPLES:
@@ -23,15 +23,15 @@ import {
  * - Linear Scale: Bar width = percentage of movements, ensuring proportional ink
  * - No Visual Inflation: Progress component uses semantic height; no minimum bar height distorts small values
  */
-export const SubtreeFrequencyBarChart = () => {
+export const MovedSubtreeRecurrenceChart = () => {
     const pairSolutions = useAppStore(selectPairSolutions);
     const leafNamesByIndex = useAppStore(selectLeafNamesByIndex);
 
     const data = useMemo(() => {
         if (!pairSolutions || Object.keys(pairSolutions).length === 0) return [];
 
-        const movedSubtreeFrequencies = calculateSprMovedSubtreeFrequencies(pairSolutions);
-        const topSubtrees = getTopSprMovedSubtrees(movedSubtreeFrequencies, 10);
+        const movedSubtreeRecurrences = calculateSprMovedSubtreeRecurrences(pairSolutions);
+        const topSubtrees = getTopSprMovedSubtreeRecurrences(movedSubtreeRecurrences, 10);
 
         return topSubtrees.map((item: any, idx: number) => ({
             rank: idx + 1,
@@ -84,7 +84,7 @@ export const SubtreeFrequencyBarChart = () => {
                             </span>
                         </div>
 
-                        {/* Frequency bar - ZERO BASELINE, LINEAR SCALE */}
+                        {/* Recurrence bar - ZERO BASELINE, LINEAR SCALE */}
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <div>

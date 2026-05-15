@@ -5,7 +5,7 @@ const {
   buildSprMoveEventRows,
   buildSprActivityTimelinePoints,
   calculateSprDatasetSummary,
-  calculateSprMovedSubtreeFrequencies,
+  calculateSprMovedSubtreeRecurrences,
   calculateSprPairActivity,
 } = sprAnalytics;
 
@@ -290,9 +290,9 @@ describe('SPR analytics model', () => {
       totalPathLength: 0.5,
     });
 
-    const frequencies = calculateSprMovedSubtreeFrequencies(groupedPairSolutions);
-    expect(frequencies).toHaveLength(1);
-    expect(frequencies[0]).toMatchObject({
+    const recurrences = calculateSprMovedSubtreeRecurrences(groupedPairSolutions);
+    expect(recurrences).toHaveLength(1);
+    expect(recurrences[0]).toMatchObject({
       signature: '1',
       splitIndices: [1],
       driverSplitIndices: [1],
@@ -302,7 +302,7 @@ describe('SPR analytics model', () => {
       totalPathHops: 3,
       totalPathLength: 0.5,
     });
-    expect(frequencies.find((item) => item.signature === '1,2')).toBeUndefined();
+    expect(recurrences.find((item) => item.signature === '1,2')).toBeUndefined();
   });
 
   it('maps pair-level distance arrays by interpolation range when pair keys use global tree indices', () => {
@@ -378,9 +378,9 @@ describe('SPR analytics model', () => {
   });
 
   it('aggregates path travel by moved subtree', () => {
-    const frequencies = calculateSprMovedSubtreeFrequencies(pairSolutions);
+    const recurrences = calculateSprMovedSubtreeRecurrences(pairSolutions);
 
-    expect(frequencies[0]).toMatchObject({
+    expect(recurrences[0]).toMatchObject({
       signature: '1',
       count: 2,
       totalPathHops: 5,
@@ -389,7 +389,7 @@ describe('SPR analytics model', () => {
       averagePathLength: 0.425,
       pairCount: 1,
     });
-    expect(frequencies.find((item) => item.signature === '2,3')).toMatchObject({
+    expect(recurrences.find((item) => item.signature === '2,3')).toMatchObject({
       totalPathHops: 1,
       averagePathHops: 1,
       totalPathLength: 0.5,
@@ -452,11 +452,11 @@ describe('SPR analytics model', () => {
     const events = buildSprMoveEventRows(legacyPairSolutions);
     const rows = calculateSprPairActivity(legacyPairSolutions);
     const summary = calculateSprDatasetSummary(legacyPairSolutions);
-    const frequencies = calculateSprMovedSubtreeFrequencies(legacyPairSolutions);
+    const recurrences = calculateSprMovedSubtreeRecurrences(legacyPairSolutions);
     const timeline = buildSprActivityTimelinePoints(rows);
 
     expect(events).toHaveLength(0);
-    expect(frequencies).toHaveLength(0);
+    expect(recurrences).toHaveLength(0);
     expect(rows[0]).toMatchObject({
       uniqueMovedSubtreeCount: 0,
       sprMoveEventCount: 0,

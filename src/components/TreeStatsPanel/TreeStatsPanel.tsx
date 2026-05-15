@@ -14,7 +14,7 @@ import {
 import { useScaleMetrics } from './ScaleTracking/useScaleMetrics';
 import { CurrentScaleDisplay } from './ScaleTracking/CurrentScaleDisplay';
 import { BranchLengthHistogram } from './BranchLengths/BranchLengthHistogram';
-import { SubtreeFrequencyList } from './SubtreeAnalytics/SubtreeFrequencyList';
+import { MovedSubtreeRecurrenceList } from './SubtreeAnalytics/MovedSubtreeRecurrenceList';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronRight, BarChart3 } from 'lucide-react';
 import { SidebarMenuItem, SidebarMenuButton, SidebarMenuSub, SidebarMenuSubItem } from '@/components/ui/sidebar';
@@ -88,7 +88,7 @@ export const TreeStatsPanel: React.FC = () => {
                 ) : null}
 
                 {/* SPR mover analytics */}
-                <SubtreeFrequencyList />
+                <MovedSubtreeRecurrenceList />
               </div>
             </SidebarMenuSubItem>
           </SidebarMenuSub>

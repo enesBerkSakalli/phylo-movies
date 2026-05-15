@@ -5,12 +5,12 @@ import { describe, expect, it } from 'vitest';
 const SPR_FILES = [
   'src/components/TreeStatsPanel/AnalyticsDashboard.tsx',
   'src/components/TreeStatsPanel/SubtreeAnalytics/SprSummaryMetrics.tsx',
-  'src/components/TreeStatsPanel/SubtreeAnalytics/SprFrequencyTable.tsx',
+  'src/components/TreeStatsPanel/SubtreeAnalytics/MovedSubtreeRecurrenceTable.tsx',
   'src/components/TreeStatsPanel/SubtreeAnalytics/SprMoveEventTable.tsx',
   'src/components/TreeStatsPanel/SubtreeAnalytics/SprActivityTimeline.tsx',
-  'src/components/TreeStatsPanel/SubtreeAnalytics/SubtreeFrequencyList.tsx',
-  'src/components/TreeStatsPanel/SubtreeAnalytics/SubtreeFrequencyBarChart.tsx',
-  'src/components/TreeStatsPanel/SubtreeAnalytics/sprFrequencyCsv.ts',
+  'src/components/TreeStatsPanel/SubtreeAnalytics/MovedSubtreeRecurrenceList.tsx',
+  'src/components/TreeStatsPanel/SubtreeAnalytics/MovedSubtreeRecurrenceChart.tsx',
+  'src/components/TreeStatsPanel/SubtreeAnalytics/sprAnalyticsCsv.ts',
   'src/components/appearance/color/ColoringPanel.jsx',
   'src/components/appearance/FocusHighlightingSection.jsx',
 ];
@@ -80,7 +80,7 @@ describe('SPR analytics phylogenetic language', () => {
 
   it('makes the main recurrent-subtree table highlightable like the sidebar summary', () => {
     const source = fs.readFileSync(
-      path.join(process.cwd(), 'src/components/TreeStatsPanel/SubtreeAnalytics/SprFrequencyTable.tsx'),
+      path.join(process.cwd(), 'src/components/TreeStatsPanel/SubtreeAnalytics/MovedSubtreeRecurrenceTable.tsx'),
       'utf8',
     );
 
