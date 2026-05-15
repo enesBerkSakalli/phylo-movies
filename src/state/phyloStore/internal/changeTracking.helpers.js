@@ -64,12 +64,12 @@ export function clearEdgePreviews(colorManager) {
 // ============================================================================
 
 export function resolveMarkedSubtrees(state, indexOverride = null) {
-  const { currentTreeIndex, transitionResolver, markedSubtreeMode } = state;
+  const { currentTreeIndex, transitionResolver, markedSubtreeScope } = state;
   const index = indexOverride ?? currentTreeIndex;
 
   if (transitionResolver?.isFullTree?.(index)) return [];
 
-  if (markedSubtreeMode === 'current') {
+  if (markedSubtreeScope === 'current') {
     let subtree = getSubtreeAtIndex(state, index);
 
     // If no subtree data at current index (interpolated frame), try mapping to source tree

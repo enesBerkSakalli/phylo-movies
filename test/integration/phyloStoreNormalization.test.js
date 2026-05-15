@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useAppStore } from '../../src/state/phyloStore/store.js';
+import * as phyloStoreModule from '../../src/state/phyloStore/store.js';
+
+const { useAppStore } = phyloStoreModule;
 
 const tree0 = { name: '', length: 0, split_indices: [0, 1], children: [] };
 const tree1 = { name: '', length: 0, split_indices: [0, 1], children: [] };
@@ -86,6 +88,19 @@ describe('phylo store dataset normalization', () => {
     ]);
     expect(state.maxScale).toBe(0);
     expect(Object.prototype.hasOwnProperty.call(state, legacyScaleKey)).toBe(false);
+  });
+
+  it('stores marked subtree scope without the legacy mode contract', () => {
+    const state = useAppStore.getState();
+
+    expect(state.markedSubtreeScope).toBe('current');
+    expect(typeof state.setMarkedSubtreeScope).toBe('function');
+    expect(Object.prototype.hasOwnProperty.call(state, 'markedSubtreeMode')).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(state, 'setMarkedSubtreeMode')).toBe(false);
+    expect(typeof phyloStoreModule.selectMarkedSubtreeScope).toBe('function');
+    expect(typeof phyloStoreModule.selectSetMarkedSubtreeScope).toBe('function');
+    expect(phyloStoreModule).not.toHaveProperty('selectMarkedSubtreeMode');
+    expect(phyloStoreModule).not.toHaveProperty('selectSetMarkedSubtreeMode');
   });
 
   it('returns explicit tree context for original and interpolated tree indices', () => {

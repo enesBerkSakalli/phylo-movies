@@ -217,7 +217,7 @@ describe('Active change edge mapping (small_example)', () => {
 
   it('respects per-step lattice sequences when multiple snapshots exist', () => {
     const storeAPI = useAppStore;
-    storeAPI.setState({ markedSubtreeMode: 'all' }); // Force use of pairSolutions
+    storeAPI.setState({ markedSubtreeScope: 'all' }); // Force use of pairSolutions
     const pairKey = 'pair_0_1';
     const baseState = storeAPI.getState();
     const basePairSolutions = baseState.pairSolutions;
@@ -265,7 +265,7 @@ describe('Active change edge mapping (small_example)', () => {
 
   it('syncs all-mode marked subtrees and active edge context into the color manager on navigation', () => {
     const storeAPI = useAppStore;
-    storeAPI.getState().setMarkedSubtreeMode('all');
+    storeAPI.getState().setMarkedSubtreeScope('all');
 
     storeAPI.getState().goToPosition(1);
 
@@ -282,7 +282,7 @@ describe('Active change edge mapping (small_example)', () => {
 
   it('syncs the color manager from the scrubbed tree index without changing navigation state', () => {
     const storeAPI = useAppStore;
-    storeAPI.getState().setMarkedSubtreeMode('all');
+    storeAPI.getState().setMarkedSubtreeScope('all');
     storeAPI.getState().goToPosition(1);
 
     const scrubberAPI = new ScrubberAPI(
