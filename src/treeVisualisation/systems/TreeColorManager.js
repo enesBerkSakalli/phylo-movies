@@ -36,7 +36,7 @@ export class TreeColorManager {
     this.upcomingChangeEdges = []; // Array of Sets for upcoming edges
     this.completedChangeEdges = []; // Array of Sets for completed edges
     this.prominentHistoryHashes = new Set(); // Set of hashes for prominent history (added + moved structures)
-    this.sharedMarkedJumpingSubtrees = []; // Shared jumping subtrees across views
+    this.markedSubtreeSets = []; // Marked subtree sets used for highlighting and dimming
     this._markedLeavesUnion = new Set(); // Pre-built union of all marked leaf indices for O(1) rejection
     this.historySubtrees = []; // Subtrees that already moved in the current transition
     this.sourceEdgeLeaves = [];
@@ -145,7 +145,7 @@ export class TreeColorManager {
   // =======================
 
   /**
-   * Update shared marked jumping subtrees (red highlighting)
+   * Update marked subtree sets used for red highlighting and dimming.
    * Pre-converts to Sets and builds a union index for O(1) rejection in hot paths.
    */
   updateMarkedSubtrees(markedSubtrees) {
@@ -157,14 +157,14 @@ export class TreeColorManager {
     }
 
     // Cache as Sets immediately to avoid recreation in render checks
-    this.sharedMarkedJumpingSubtrees = subtrees.map(s =>
+    this.markedSubtreeSets = subtrees.map(s =>
       s instanceof Set ? s : new Set(s)
     );
 
     // Build union of all marked leaf indices for fast O(1) rejection
     // A node can only be in a subtree if ALL its leaves are in this union
     this._markedLeavesUnion = new Set();
-    for (const subtree of this.sharedMarkedJumpingSubtrees) {
+    for (const subtree of this.markedSubtreeSets) {
       for (const leafIdx of subtree) {
         this._markedLeavesUnion.add(leafIdx);
       }
@@ -192,7 +192,7 @@ export class TreeColorManager {
     }
 
     // All leaves are in union - do full subset check against individual subtrees
-    return isNodeInSubtree(nodeData, this.sharedMarkedJumpingSubtrees);
+    return isNodeInSubtree(nodeData, this.markedSubtreeSets);
   }
 
   /**
@@ -215,7 +215,7 @@ export class TreeColorManager {
     }
 
     // All leaves are in union - do full subset check
-    return isLinkInSubtree(linkData, this.sharedMarkedJumpingSubtrees);
+    return isLinkInSubtree(linkData, this.markedSubtreeSets);
   }
 
   /**
@@ -275,10 +275,10 @@ export class TreeColorManager {
   }
 
   /**
-   * Check if a node is the root of any shared marked jumping subtree.
+   * Check if a node is the root of any marked subtree set.
    */
   isNodeMarkedSubtreeRoot(nodeData) {
-    return isNodeSubtreeRoot(nodeData, this.sharedMarkedJumpingSubtrees);
+    return isNodeSubtreeRoot(nodeData, this.markedSubtreeSets);
   }
 
   /**

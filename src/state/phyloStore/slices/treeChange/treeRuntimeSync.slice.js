@@ -74,7 +74,7 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
 
     const { changePulseEnabled, startPulseAnimation, stopPulseAnimation } = get();
     if (changePulseEnabled) {
-      const hasChanges = normalized.length > 0 || colorManager.sharedMarkedJumpingSubtrees?.length > 0;
+      const hasChanges = normalized.length > 0 || colorManager.markedSubtreeSets?.length > 0;
       hasChanges ? startPulseAnimation() : stopPulseAnimation();
     }
   },
@@ -153,7 +153,7 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
     const { changePulseEnabled, colorManager } = get();
     if (!changePulseEnabled) return;
 
-    const hasChanges = colorManager?.hasPivotEdges?.() || colorManager?.sharedMarkedJumpingSubtrees?.length > 0;
+    const hasChanges = colorManager?.hasPivotEdges?.() || colorManager?.markedSubtreeSets?.length > 0;
     if (!hasChanges || pulseController?.isRunning) return;
 
     if (!pulseController) {
@@ -162,7 +162,7 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
         shouldContinue: () => {
           const s = get();
           const cm = s.colorManager;
-          return s.changePulseEnabled && (cm?.hasPivotEdges?.() || cm?.sharedMarkedJumpingSubtrees?.length > 0);
+          return s.changePulseEnabled && (cm?.hasPivotEdges?.() || cm?.markedSubtreeSets?.length > 0);
         }
       });
     }

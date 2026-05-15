@@ -33,7 +33,7 @@ export function getLinkOutlinesLayerProps(links, state, layerStyles) {
   // Only show outlines when there are active highlights/changes to minimize overhead
   const hasHighlights = !!(
     colorManager?.hasPivotEdges?.() ||
-    (colorManager?.sharedMarkedJumpingSubtrees?.length > 0) ||
+    (colorManager?.markedSubtreeSets?.length > 0) ||
     (upcomingChangesEnabled && colorManager?.hasUpcomingChangeEdges?.()) ||
     (upcomingChangesEnabled && colorManager?.hasCompletedChangeEdges?.()) ||
     hasLifecycleHighlightedLinks(links)

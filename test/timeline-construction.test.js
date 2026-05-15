@@ -245,7 +245,7 @@ describe('Active change edge mapping (small_example)', () => {
     const colorManager = state.getColorManager();
 
     expect(state.currentTreeIndex).to.equal(1);
-    expect(setsToSortedArrays(colorManager.sharedMarkedJumpingSubtrees)).to.deep.equal([[13], [12]]);
+    expect(setsToSortedArrays(colorManager.markedSubtreeSets)).to.deep.equal([[13], [12]]);
     expect(Array.from(colorManager.currentPivotEdges).sort((a, b) => a - b)).to.deep.equal([10, 11, 12, 13]);
     expect(setsToSortedArrays(colorManager.sourceEdgeLeaves)).to.deep.equal([[10, 11, 12]]);
     expect(setsToSortedArrays(colorManager.destinationEdgeLeaves)).to.deep.equal([[10, 11, 12]]);
@@ -269,7 +269,7 @@ describe('Active change edge mapping (small_example)', () => {
     const colorManager = state.getColorManager();
 
     expect(state.currentTreeIndex).to.equal(1);
-    expect(setsToSortedArrays(colorManager.sharedMarkedJumpingSubtrees)).to.deep.equal([[4], [6]]);
+    expect(setsToSortedArrays(colorManager.markedSubtreeSets)).to.deep.equal([[4], [6]]);
     expect(Array.from(colorManager.currentPivotEdges).sort((a, b) => a - b)).to.deep.equal([2, 3, 4, 5, 6]);
     expect(setsToSortedArrays(colorManager.sourceEdgeLeaves)).to.deep.equal([[2, 3, 5, 6]]);
     expect(setsToSortedArrays(colorManager.destinationEdgeLeaves)).to.deep.equal([[2, 3, 5, 6]]);

@@ -23,7 +23,7 @@ describe('getNodeBasedRgba', () => {
       isNodePivotEdge: () => false,
       hasPivotEdges: () => false,
       isNodeDownstreamOfAnyPivotEdge: () => false,
-      sharedMarkedJumpingSubtrees: []
+      markedSubtreeSets: []
     };
 
     cached = {

@@ -17,7 +17,7 @@ describe('dimmingUtils', () => {
         hasPivotEdges: () => false,
         isNodeDownstreamOfAnyPivotEdge: () => false,
         isDownstreamOfAnyPivotEdge: () => false,
-        sharedMarkedJumpingSubtrees: [],
+        markedSubtreeSets: [],
         _markedLeavesUnion: new Set(),
         // Fast path methods for optimized subtree membership checks
         isNodeInMarkedSubtreeFast: function(entity) {
@@ -28,7 +28,7 @@ describe('dimmingUtils', () => {
             if (!this._markedLeavesUnion.has(idx)) return false;
           }
           // All splits in union - check full subset
-          for (const subtree of this.sharedMarkedJumpingSubtrees) {
+          for (const subtree of this.markedSubtreeSets) {
             const subtreeSet = subtree instanceof Set ? subtree : new Set(subtree);
             if (splits.every(idx => subtreeSet.has(idx))) return true;
           }
@@ -68,7 +68,7 @@ describe('dimmingUtils', () => {
       // Set up marked subtree with different leaf indices than the node
       // Node has split_indices [1, 2, 3], subtree has [7, 8, 9]
       const markedSubtreeData = [new Set([7, 8, 9])];
-      mockColorManager.sharedMarkedJumpingSubtrees = markedSubtreeData;
+      mockColorManager.markedSubtreeSets = markedSubtreeData;
       mockColorManager._markedLeavesUnion = new Set([7, 8, 9]); // Union of all marked leaves
 
       const result = applyDimmingWithCache(
