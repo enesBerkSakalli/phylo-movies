@@ -21,7 +21,6 @@ const baseEvent: SprMoveEventRow = {
   totalPathLength: 0.42,
   rfDistance: 0.75,
   weightedRfDistance: 1.25,
-  hasMeasuredPath: true,
 };
 
 describe('SPR move event search text', () => {
@@ -51,6 +50,8 @@ describe('SPR move event search text', () => {
     expect(text).toContain('4-8');
     expect(text).toContain('0.75');
     expect(text).toContain('1.25');
+    expect(text).not.toContain('measured');
+    expect(text).not.toContain('inferred');
   });
 
   it('indexes taxa names hidden behind compact pivot or attachment labels', () => {

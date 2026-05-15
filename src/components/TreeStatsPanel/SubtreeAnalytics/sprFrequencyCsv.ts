@@ -100,7 +100,6 @@ export const createSprMoveEventCsv = (
         'Path Length',
         'RF Distance',
         'Weighted RF Distance',
-        'Measured Path',
         'Split Indices',
         'Context Split Indices'
     ];
@@ -121,7 +120,6 @@ export const createSprMoveEventCsv = (
         formatFixed(event.totalPathLength),
         formatOptionalFixed(event.rfDistance),
         formatOptionalFixed(event.weightedRfDistance),
-        event.hasMeasuredPath ? 'yes' : 'no',
         formatIndexList(event.splitIndices),
         formatIndexList(event.contextSplitIndices)
     ]);

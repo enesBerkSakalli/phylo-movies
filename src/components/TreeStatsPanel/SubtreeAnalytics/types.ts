@@ -35,5 +35,4 @@ export interface SprMoveEventRow {
     totalPathLength: number;
     rfDistance: number | null;
     weightedRfDistance: number | null;
-    hasMeasuredPath: boolean;
 }

@@ -159,9 +159,6 @@ export const SprMoveEventTable = ({ events, leafNamesByIndex, selectedMoverIndic
                                 <tr key={event.eventId} className="hover:bg-primary/5 transition-colors align-top">
                                     <td className="px-3 py-3 font-mono tabular-nums text-muted-foreground">
                                         <div>{event.eventId}</div>
-                                        {!event.hasMeasuredPath ? (
-                                            <div className="text-2xs text-muted-foreground/70">inferred</div>
-                                        ) : null}
                                     </td>
                                     <td className="px-3 py-3 font-semibold">
                                         <div>{event.pairLabel}</div>

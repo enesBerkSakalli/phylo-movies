@@ -133,12 +133,12 @@ export const SprSummaryMetrics = ({
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-2xs font-mono bg-popover border-border">
                     <div className="space-y-1">
-                        <div>Average per measured path event:</div>
+                        <div>Average per movement:</div>
                         <div className="font-bold text-primary">
                             {averagePathHops.toFixed(3)}
                         </div>
                         <div className="text-muted-foreground">
-                            Measured paths: {pathEventCount} / {sprMoveEventCount}
+                            Movements with path metrics: {pathEventCount} / {sprMoveEventCount}
                         </div>
                     </div>
                 </TooltipContent>
@@ -157,12 +157,12 @@ export const SprSummaryMetrics = ({
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-2xs font-mono bg-popover border-border">
                     <div className="space-y-1">
-                        <div>Average per measured path event:</div>
+                        <div>Average per movement:</div>
                         <div className="font-bold text-primary">
                             {averagePathLength.toFixed(6)}
                         </div>
                         <div className="text-muted-foreground">
-                            Measured paths: {pathEventCount} / {sprMoveEventCount}
+                            Movements with path metrics: {pathEventCount} / {sprMoveEventCount}
                         </div>
                     </div>
                 </TooltipContent>
