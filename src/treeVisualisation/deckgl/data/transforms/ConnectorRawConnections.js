@@ -1,5 +1,6 @@
 import { isSubset } from '../../../utils/splitMatching.js';
 import { computeConnectionColor } from './ComparisonColorUtils.js';
+import { createConnectorConnection } from './ConnectorConnectionObjects.js';
 import { resolveConnectorColorEntry } from './ConnectorColorEntryResolver.js';
 import { indexConnectorLeavesByName } from './ConnectorLeafIndex.js';
 import { normalizeConnectorSplitValue } from './ConnectorSplitNormalization.js';
@@ -50,7 +51,7 @@ export function buildRawConnectorConnections(params) {
       linkConnectionOpacity
     );
 
-    connections.push({
+    connections.push(createConnectorConnection({
       id: `connector-${key}-${rightMatch.key}`,
       source,
       target,
@@ -58,7 +59,7 @@ export function buildRawConnectorConnections(params) {
       isCurrentlyMoving: effectiveMoving,
       sourceInfo: leftInfo,
       targetInfo: rightMatch.info,
-    });
+    }));
   }
 
   return connections;
