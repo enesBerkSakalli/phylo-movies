@@ -181,8 +181,6 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
   }
 
   _handleViewStateChange({ zoom } = {}) {
-    this._updateScreenPositionsFromLastLayerData();
-
     // Skip layer rebuilds if animation is running (AnimationRunner handles its own renders).
     if (this.animationRunner.isRunning) return;
 
@@ -193,12 +191,6 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     this._lastZoom = zoom;
     this._hasUserViewportInteraction = true;
     this._scheduleRender();
-  }
-
-  _updateScreenPositionsFromLastLayerData() {
-    const nodes = this._lastLayerData?.nodes;
-    if (!Array.isArray(nodes) || nodes.length === 0) return;
-    this.viewportManager?.updateScreenPositions(nodes, this.viewSide);
   }
 
   /**

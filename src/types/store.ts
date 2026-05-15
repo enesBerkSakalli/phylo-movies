@@ -118,9 +118,6 @@ export interface AppStoreState {
   viewOffsetX: number;
   viewOffsetY: number;
   viewsConnected: boolean;
-  viewLinkMapping: any;
-  screenPositionsLeft: Record<string, any>;
-  screenPositionsRight: Record<string, any>;
   connectorStrokeWidth: number;
   linkConnectionOpacity: number;
 
@@ -245,8 +242,6 @@ export interface AppStoreState {
   setViewOffsetX: (offset: number) => void;
   setViewOffsetY: (offset: number) => void;
   setViewsConnected: (enabled: boolean) => void;
-  setViewLinkMapping: (mapping: any) => void;
-  setScreenPositions: (side: string, positions: Record<string, any>) => void;
   setConnectorStrokeWidth: (width: number) => void;
   setLinkConnectionOpacity: (opacity: number) => void;
   resetComparison: () => void;

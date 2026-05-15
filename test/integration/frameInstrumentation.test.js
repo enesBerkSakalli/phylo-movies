@@ -62,8 +62,7 @@ describe('tree animation frame instrumentation', () => {
       },
       viewportManager: {
         getViewOffset: vi.fn(() => ({ x: 0, y: 0 })),
-        focusOnTree: vi.fn(),
-        updateScreenPositions: vi.fn()
+        focusOnTree: vi.fn()
       },
       _updateLayersEfficiently: vi.fn()
     };

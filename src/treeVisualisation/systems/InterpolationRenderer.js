@@ -51,7 +51,6 @@ export class InterpolationRenderer {
 
     // Update Visuals
     this.controller._updateLayersEfficiently(interpolatedData);
-    this.controller.viewportManager.updateScreenPositions(interpolatedData.nodes, this.controller.viewSide);
 
     // NOTE: Auto-fit during playback is intentionally disabled here.
     // Fitting every interpolation frame causes camera "jumping" that disrupts the viewing experience.

@@ -178,7 +178,6 @@ export class ComparisonModeRenderer {
       this._lastFittedIndices = { left: leftIndex, right: rightIndex };
     }
 
-    this.controller.viewportManager.updateScreenPositions(leftLayerData.nodes);
   }
 
   /**
@@ -299,7 +298,6 @@ export class ComparisonModeRenderer {
       this._lastFittedIndices = { left: -1, right: rightIndex };
     }
 
-    this.controller.viewportManager.updateScreenPositions(interpolatedData.nodes);
   }
 
   // ==========================================================================

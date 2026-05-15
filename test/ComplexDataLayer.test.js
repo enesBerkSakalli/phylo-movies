@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import createTidyTreeLayout, { TidyTreeLayout } from '../src/treeVisualisation/layout/TidyTreeLayout.js';
 import { buildSubtreeConnectors } from '../src/treeVisualisation/deckgl/data/transforms/SubtreeConnectorBuilder.js';
 import { chooseBundlePoint, ensureOutside } from '../src/treeVisualisation/deckgl/data/transforms/ComparisonGeometryUtils.js';
-import { buildViewLinkMapping } from '../src/domain/view/viewLinkMapper.js';
 import { calculateBranchCoordinates } from '../src/treeVisualisation/layout/RadialTreeGeometry.js';
 
 function flatPathPoint(path, index) {

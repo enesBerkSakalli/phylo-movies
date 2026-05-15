@@ -99,6 +99,5 @@ export class StaticRenderer {
       this.controller._lastFocusedTreeIndex = targetIndex;
     }
 
-    this.controller.viewportManager.updateScreenPositions(layerData.nodes, this.controller.viewSide);
   }
 }
