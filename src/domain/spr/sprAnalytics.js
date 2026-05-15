@@ -192,7 +192,6 @@ function aggregateMoverRows(eventRows) {
         highlightGroup: event.highlightGroup,
         groupSize: event.groupSize,
         count: 0,
-        pathEventCount: 0,
         totalPathHops: 0,
         totalPathLength: 0,
         pairKeys: new Set(),
@@ -203,7 +202,6 @@ function aggregateMoverRows(eventRows) {
     const mover = freqMap.get(event.signature);
     mover.count++;
     mover.pairKeys.add(event.pairKey);
-    mover.pathEventCount++;
     mover.totalPathHops += event.totalPathHops;
     mover.totalPathLength += event.totalPathLength;
     if (event.sourceAttachment.length > 0 || event.destinationAttachment.length > 0 || event.pivotEdge.length > 0) {
@@ -226,11 +224,11 @@ function aggregateMoverRows(eventRows) {
       percentage: totalMoverOccurrences > 0
         ? (item.count / totalMoverOccurrences) * 100
         : 0,
-      averagePathHops: item.pathEventCount > 0
-        ? item.totalPathHops / item.pathEventCount
+      averagePathHops: item.count > 0
+        ? item.totalPathHops / item.count
         : 0,
-      averagePathLength: item.pathEventCount > 0
-        ? item.totalPathLength / item.pathEventCount
+      averagePathLength: item.count > 0
+        ? item.totalPathLength / item.count
         : 0,
       pairCount: item.pairKeys.size,
       pairKeys: Array.from(item.pairKeys).sort(),
@@ -296,7 +294,6 @@ export function calculateSprPairActivity(pairSolutions, options = {}) {
           ? solution.split_change_events.length
           : 0,
         sprMoveEventCount: events.length,
-        pathEventCount: pathStats.pathEventCount,
         totalPathHops: pathStats.totalPathHops,
         averagePathHops: pathStats.averagePathHops,
         totalPathLength: pathStats.totalPathLength,
@@ -323,8 +320,6 @@ export function calculateSprDatasetSummary(pairSolutions, options = {}) {
     .reduce((sum, row) => sum + row.moverOccurrenceCount, 0);
   const sprMoveEventCount = pairActivity
     .reduce((sum, row) => sum + row.sprMoveEventCount, 0);
-  const pathEventCount = pairActivity
-    .reduce((sum, row) => sum + row.pathEventCount, 0);
   const totalPathHops = pairActivity
     .reduce((sum, row) => sum + row.totalPathHops, 0);
   const totalPathLength = pairActivity
@@ -345,14 +340,13 @@ export function calculateSprDatasetSummary(pairSolutions, options = {}) {
       .reduce((max, row) => Math.max(max, row.moverOccurrenceCount), 0),
     topMoverSharePercentage: moverFrequencies[0]?.percentage ?? 0,
     sprMoveEventCount,
-    pathEventCount,
     totalPathHops,
-    averagePathHops: pathEventCount > 0
-      ? totalPathHops / pathEventCount
+    averagePathHops: sprMoveEventCount > 0
+      ? totalPathHops / sprMoveEventCount
       : 0,
     totalPathLength,
-    averagePathLength: pathEventCount > 0
-      ? totalPathLength / pathEventCount
+    averagePathLength: sprMoveEventCount > 0
+      ? totalPathLength / sprMoveEventCount
       : 0,
     farthestMover: selectFarthestMover(moverFrequencies),
   };
@@ -456,7 +450,6 @@ export function calculateSprTemporalDistribution(pairSolutions) {
 function summarizeSprEventRows(events) {
   if (!Array.isArray(events) || events.length === 0) {
     return {
-      pathEventCount: 0,
       totalPathHops: 0,
       averagePathHops: 0,
       totalPathLength: 0,
@@ -471,7 +464,6 @@ function summarizeSprEventRows(events) {
   }, { totalPathHops: 0, totalPathLength: 0 });
 
   return {
-    pathEventCount: events.length,
     totalPathHops: totals.totalPathHops,
     averagePathHops: totals.totalPathHops / events.length,
     totalPathLength: totals.totalPathLength,
@@ -482,7 +474,7 @@ function summarizeSprEventRows(events) {
 function selectFarthestMover(movers) {
   if (!Array.isArray(movers) || movers.length === 0) return null;
 
-  const candidates = movers.filter((mover) => mover.pathEventCount > 0);
+  const candidates = movers.filter((mover) => mover.count > 0);
   if (candidates.length === 0) return null;
 
   return candidates

@@ -7,7 +7,6 @@ export interface SprMoverFrequency {
     groupSize?: number;
     count: number;
     percentage: number;
-    pathEventCount: number;
     totalPathHops: number;
     averagePathHops: number;
     totalPathLength: number;

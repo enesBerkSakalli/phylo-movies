@@ -14,7 +14,6 @@ interface SprSummaryMetricsProps {
     singletonMoverPercentage: number;
     topMoverPercentage: number | null;
     sprMoveEventCount: number;
-    pathEventCount: number;
     totalPathHops: number;
     averagePathHops: number;
     totalPathLength: number;
@@ -53,7 +52,6 @@ export const SprSummaryMetrics = ({
     singletonMoverPercentage,
     topMoverPercentage,
     sprMoveEventCount,
-    pathEventCount,
     totalPathHops,
     averagePathHops,
     totalPathLength,
@@ -138,7 +136,7 @@ export const SprSummaryMetrics = ({
                             {averagePathHops.toFixed(3)}
                         </div>
                         <div className="text-muted-foreground">
-                            Movements with path metrics: {pathEventCount} / {sprMoveEventCount}
+                            Movements: {sprMoveEventCount}
                         </div>
                     </div>
                 </TooltipContent>
@@ -162,7 +160,7 @@ export const SprSummaryMetrics = ({
                             {averagePathLength.toFixed(6)}
                         </div>
                         <div className="text-muted-foreground">
-                            Movements with path metrics: {pathEventCount} / {sprMoveEventCount}
+                            Movements: {sprMoveEventCount}
                         </div>
                     </div>
                 </TooltipContent>

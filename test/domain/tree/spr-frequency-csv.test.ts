@@ -15,6 +15,7 @@ describe('createSprFrequencyCsv', () => {
     expect(header).toContain('Tree Pair Count');
     expect(header).toContain('Total Path Hops');
     expect(header).toContain('Total Path Length');
+    expect(header).not.toContain('Path Event Count');
     expect(header).not.toContain('SPR Event Count');
     expect(header).not.toContain('Mover Occurrence Count');
   });
@@ -26,7 +27,6 @@ describe('createSprFrequencyCsv', () => {
         splitIndices: [1, 2],
         count: 3,
         percentage: 50,
-        pathEventCount: 2,
         totalPathHops: 7,
         averagePathHops: 3.5,
         totalPathLength: 1.25,
