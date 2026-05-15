@@ -9,6 +9,14 @@
  * - DOM Intersections: Calculating overlap between 2D DOMRects.
  */
 
+export const SAFE_AREA_UI_SELECTORS = Object.freeze([
+  '.movie-player-bar',
+  '#top-scale-bar-container'
+]);
+export const SAFE_AREA_EDGE_THRESHOLD_PX = 24;
+export const SAFE_AREA_EXTRA_PADDING_PX = 20;
+export const SAFE_AREA_MIN_VISIBLE_FRACTION = 0.4;
+
 /**
  * Scans the DOM for specific UI elements that float over the canvas
  * and calculates the "Safe Padding" needed to avoid them.
@@ -23,11 +31,9 @@ export function calculateSafeAreaPadding(webglContainerNode) {
   const canvasRect = webglContainerNode.getBoundingClientRect();
   if (!canvasRect?.width || !canvasRect?.height) return null;
 
-  const selectors = ['.movie-player-bar', '#top-scale-bar-container'];
   const padding = { top: 0, right: 0, bottom: 0, left: 0 };
-  const edgeThreshold = 24;
 
-  selectors.forEach((selector) => {
+  SAFE_AREA_UI_SELECTORS.forEach((selector) => {
     const el = document.querySelector(selector);
     if (!el?.getBoundingClientRect) return;
     const rect = el.getBoundingClientRect();
@@ -43,19 +49,19 @@ export function calculateSafeAreaPadding(webglContainerNode) {
     const isVerticalBar = rect.height > canvasRect.height * 0.5;
 
     if (isHorizontalBar) {
-      if (rect.top <= canvasRect.top + edgeThreshold) {
+      if (rect.top <= canvasRect.top + SAFE_AREA_EDGE_THRESHOLD_PX) {
         padding.top = Math.max(padding.top, Math.min(rect.bottom - canvasRect.top, canvasRect.height));
       }
-      if (rect.bottom >= canvasRect.bottom - edgeThreshold) {
+      if (rect.bottom >= canvasRect.bottom - SAFE_AREA_EDGE_THRESHOLD_PX) {
         padding.bottom = Math.max(padding.bottom, Math.min(canvasRect.bottom - rect.top, canvasRect.height));
       }
     }
 
     if (isVerticalBar) {
-      if (rect.left <= canvasRect.left + edgeThreshold) {
+      if (rect.left <= canvasRect.left + SAFE_AREA_EDGE_THRESHOLD_PX) {
         padding.left = Math.max(padding.left, Math.min(rect.right - canvasRect.left, canvasRect.width));
       }
-      if (rect.right >= canvasRect.right - edgeThreshold) {
+      if (rect.right >= canvasRect.right - SAFE_AREA_EDGE_THRESHOLD_PX) {
         padding.right = Math.max(padding.right, Math.min(canvasRect.right - rect.left, canvasRect.width));
       }
     }
@@ -63,12 +69,11 @@ export function calculateSafeAreaPadding(webglContainerNode) {
 
   if (!padding.top && !padding.right && !padding.bottom && !padding.left) return null;
 
-  const extraPadding = 20;
   return {
-    top: padding.top ? padding.top + extraPadding : 0,
-    right: padding.right ? padding.right + extraPadding : 0,
-    bottom: padding.bottom ? padding.bottom + extraPadding : 0,
-    left: padding.left ? padding.left + extraPadding : 0
+    top: padding.top ? padding.top + SAFE_AREA_EXTRA_PADDING_PX : 0,
+    right: padding.right ? padding.right + SAFE_AREA_EXTRA_PADDING_PX : 0,
+    bottom: padding.bottom ? padding.bottom + SAFE_AREA_EXTRA_PADDING_PX : 0,
+    left: padding.left ? padding.left + SAFE_AREA_EXTRA_PADDING_PX : 0
   };
 }
 
@@ -88,10 +93,9 @@ export function normalizeSafeArea(safeArea, canvasWidth, canvasHeight) {
   let bottom = clamp(safeArea.bottom, canvasHeight);
   let left = clamp(safeArea.left, canvasWidth);
 
-  // Prevent UI from consuming more than 60% of vehicle area
-  const minVisibleFraction = 0.4;
-  const maxTotalX = canvasWidth * (1 - minVisibleFraction);
-  const maxTotalY = canvasHeight * (1 - minVisibleFraction);
+  // Prevent UI from consuming more than 60% of visible area.
+  const maxTotalX = canvasWidth * (1 - SAFE_AREA_MIN_VISIBLE_FRACTION);
+  const maxTotalY = canvasHeight * (1 - SAFE_AREA_MIN_VISIBLE_FRACTION);
 
   if (left + right > maxTotalX) {
     const scale = maxTotalX / Math.max(1, left + right);
