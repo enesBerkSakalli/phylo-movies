@@ -50,6 +50,15 @@ const connectionOrderingSourcePath = join(
   'transforms',
   'ConnectorConnectionOrdering.js'
 );
+const pathBuilderSourcePath = join(
+  repoRoot,
+  'src',
+  'treeVisualisation',
+  'deckgl',
+  'data',
+  'transforms',
+  'ConnectorPathBuilder.js'
+);
 
 async function importConnectorColorEntryResolver() {
   try {
@@ -94,6 +103,14 @@ async function importConnectorConnectionObjects() {
 async function importConnectorConnectionOrdering() {
   try {
     return await import('../src/treeVisualisation/deckgl/data/transforms/ConnectorConnectionOrdering.js');
+  } catch {
+    return null;
+  }
+}
+
+async function importConnectorPathBuilder() {
+  try {
+    return await import('../src/treeVisualisation/deckgl/data/transforms/ConnectorPathBuilder.js');
   } catch {
     return null;
   }
@@ -449,6 +466,72 @@ describe('SubtreeConnectorBuilder', function () {
     expect(builderSource).not.toMatch(/function\s+splitActivePassive\s*\(/);
     expect(builderSource).not.toMatch(/\bgetAngle\b/);
     expect(orderingSource).toMatch(/from\s+['"]\.\/ComparisonGeometryUtils\.js['"]/);
+  });
+
+  it('builds connector paths through a dedicated helper', async function () {
+    const pathBuilder = await importConnectorPathBuilder();
+
+    expect(pathBuilder).not.toBeNull();
+
+    const leftPositions = makePositionMap(0);
+    const rightPositions = makePositionMap(160);
+    const activeConnection = {
+      id: 'connector-10-10',
+      source: [-30, -20, 0],
+      target: [130, -20, 0],
+      color: [16, 185, 129, 255],
+      isCurrentlyMoving: true,
+      sourceInfo: leftPositions.get('10'),
+      targetInfo: rightPositions.get('10'),
+    };
+    const passiveConnection = {
+      id: 'connector-12-12',
+      source: [30, -20, 0],
+      target: [190, -20, 0],
+      color: [16, 185, 129, 153],
+      isCurrentlyMoving: false,
+      sourceInfo: leftPositions.get('12'),
+      targetInfo: rightPositions.get('12'),
+    };
+
+    const paths = pathBuilder.buildConnectorPathConnections({
+      activeConnections: [activeConnection],
+      passiveConnections: [passiveConnection],
+      leftCenter: [0, 0],
+      rightCenter: [160, 0],
+      leftRadius: 50,
+      rightRadius: 50,
+      leftPositions,
+      rightPositions,
+    });
+
+    expect(paths).toHaveLength(2);
+    expect(paths[0]).toMatchObject({
+      id: 'connector-12-12-0',
+      width: 1.5,
+      isCurrentlyMoving: false,
+      sourceInfo: passiveConnection.sourceInfo,
+      targetInfo: passiveConnection.targetInfo,
+    });
+    expect(paths[0].path).toBeInstanceOf(Float32Array);
+    expect(paths[1]).toMatchObject({
+      id: 'connector-10-10-active-0',
+      width: 3.0,
+      isCurrentlyMoving: true,
+      sourceInfo: activeConnection.sourceInfo,
+      targetInfo: activeConnection.targetInfo,
+    });
+    expect(paths[1].path).toBeInstanceOf(Float32Array);
+
+    const builderSource = readFileSync(builderSourcePath, 'utf8');
+    const pathBuilderSource = readFileSync(pathBuilderSourcePath, 'utf8');
+    expect(builderSource).toMatch(/from\s+['"]\.\/ConnectorPathBuilder\.js['"]/);
+    expect(builderSource).not.toMatch(/buildBundledConnectorPaths/);
+    expect(builderSource).not.toMatch(/buildPathForConnection/);
+    expect(builderSource).not.toMatch(/CONNECTOR_PATH_SAMPLES/);
+    expect(builderSource).not.toMatch(/PASSIVE_CONNECTOR_STYLE/);
+    expect(builderSource).not.toMatch(/ACTIVE_CONNECTOR_STYLE/);
+    expect(pathBuilderSource).toMatch(/from\s+['"][^'"]*ConnectorGeometryBuilder\.js['"]/);
   });
 
   it('builds connectors when positions are Maps', function () {
