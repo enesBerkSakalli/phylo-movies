@@ -41,6 +41,15 @@ const leafPairCandidatesSourcePath = join(
   'transforms',
   'ConnectorLeafPairCandidates.js'
 );
+const movementStateSourcePath = join(
+  repoRoot,
+  'src',
+  'treeVisualisation',
+  'deckgl',
+  'data',
+  'transforms',
+  'ConnectorMovementState.js'
+);
 const passiveGroupsSourcePath = join(
   repoRoot,
   'src',
@@ -113,6 +122,14 @@ async function importConnectorSplitEligibility() {
 async function importConnectorLeafPairCandidates() {
   try {
     return await import('../src/treeVisualisation/deckgl/data/transforms/ConnectorLeafPairCandidates.js');
+  } catch {
+    return null;
+  }
+}
+
+async function importConnectorMovementState() {
+  try {
+    return await import('../src/treeVisualisation/deckgl/data/transforms/ConnectorMovementState.js');
   } catch {
     return null;
   }
@@ -375,6 +392,69 @@ describe('SubtreeConnectorBuilder', function () {
     expect(rawSource).not.toMatch(/rightLeavesByName\.get/);
     expect(rawSource).not.toMatch(/rightMatch\.info\.position/);
     expect(leafPairCandidatesSource).toMatch(/from\s+['"]\.\/ConnectorSplitEligibility\.js['"]/);
+  });
+
+  it('resolves connector movement state through a dedicated pure helper', async function () {
+    const movementState = await importConnectorMovementState();
+
+    expect(movementState).not.toBeNull();
+
+    const colorEntry = { id: 'subtree-10' };
+    const pivotManager = makeColorManager({
+      isNodePivotEdge: (entry) => entry === colorEntry,
+      isNodeHistorySubtree: () => false,
+    });
+    const historyManager = makeColorManager({
+      isNodePivotEdge: () => false,
+      isNodeHistorySubtree: (entry) => entry === colorEntry,
+    });
+
+    expect(movementState.resolveConnectorMovementState({
+      splitIndices: [10],
+      currentSubtreeSets: [new Set([10, 11])],
+      colorEntry,
+      colorManager: makeColorManager(),
+    })).toEqual({
+      isCurrentSubtree: true,
+      isPivotEdge: false,
+      isHistorySubtree: false,
+      isMoving: true,
+    });
+    expect(movementState.resolveConnectorMovementState({
+      splitIndices: [12],
+      currentSubtreeSets: [new Set([10, 11])],
+      colorEntry,
+      colorManager: pivotManager,
+    })).toEqual({
+      isCurrentSubtree: false,
+      isPivotEdge: true,
+      isHistorySubtree: false,
+      isMoving: true,
+    });
+    expect(movementState.resolveConnectorMovementState({
+      splitIndices: [12],
+      currentSubtreeSets: [new Set([10, 11])],
+      colorEntry,
+      colorManager: historyManager,
+    })).toEqual({
+      isCurrentSubtree: false,
+      isPivotEdge: false,
+      isHistorySubtree: true,
+      isMoving: true,
+    });
+    expect(movementState.resolveConnectorMovementState({
+      splitIndices: [12],
+      currentSubtreeSets: [new Set([10, 11])],
+      colorEntry,
+      colorManager: null,
+    }).isMoving).toBe(false);
+
+    const rawSource = readFileSync(rawConnectionsSourcePath, 'utf8');
+    const movementStateSource = readFileSync(movementStateSourcePath, 'utf8');
+    expect(rawSource).toMatch(/from\s+['"]\.\/ConnectorMovementState\.js['"]/);
+    expect(rawSource).not.toMatch(/isNodePivotEdge/);
+    expect(rawSource).not.toMatch(/isNodeHistorySubtree/);
+    expect(movementStateSource).toMatch(/from\s+['"]\.\/ConnectorSplitEligibility\.js['"]/);
   });
 
   it('builds raw connector connections through a dedicated helper', async function () {
