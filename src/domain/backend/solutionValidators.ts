@@ -66,44 +66,13 @@ function validateHighlightGroup(value: unknown, fieldName: string): number[][] {
   return group.map((subtree, index) => requiredNumberArray(subtree, `${fieldName}[${index}]`));
 }
 
-function resolveDriverSubtree(event: Record<string, unknown>, fieldName: string): number[] {
-  if (event.driver_subtree !== undefined) {
-    return requiredNumberArray(event.driver_subtree, `${fieldName}.driver_subtree`);
-  }
-
-  if (event.moving_subtree !== undefined) {
-    return requiredNumberArray(event.moving_subtree, `${fieldName}.moving_subtree`);
-  }
-
-  if (event.moving_subtree_group !== undefined) {
-    const legacyGroup = validateHighlightGroup(event.moving_subtree_group, `${fieldName}.moving_subtree_group`);
-    if (legacyGroup.length > 0) return legacyGroup[0];
-  }
-
-  return requiredNumberArray(event.driver_subtree, `${fieldName}.driver_subtree`);
-}
-
-function resolveHighlightGroup(event: Record<string, unknown>, driverSubtree: number[], fieldName: string): number[][] {
-  if (event.highlight_group !== undefined) {
-    return validateHighlightGroup(event.highlight_group, `${fieldName}.highlight_group`);
-  }
-
-  if (event.moving_subtree_group !== undefined) {
-    return validateHighlightGroup(event.moving_subtree_group, `${fieldName}.moving_subtree_group`);
-  }
-
-  return [driverSubtree];
-}
-
 function validateSprMoveEvent(value: unknown, fieldName: string): SprMoveEvent {
   const event = requiredRecord(value, fieldName);
-  const driverSubtree = resolveDriverSubtree(event, fieldName);
-  const highlightGroup = resolveHighlightGroup(event, driverSubtree, fieldName);
 
   return {
     pivot_edge: requiredNumberArray(event.pivot_edge, `${fieldName}.pivot_edge`),
-    driver_subtree: driverSubtree,
-    highlight_group: highlightGroup,
+    driver_subtree: requiredNumberArray(event.driver_subtree, `${fieldName}.driver_subtree`),
+    highlight_group: validateHighlightGroup(event.highlight_group, `${fieldName}.highlight_group`),
     step_range: validateRangeTuple(event.step_range, `${fieldName}.step_range`),
     collapse_path: validateSprPath(event.collapse_path, `${fieldName}.collapse_path`),
     expand_path: validateSprPath(event.expand_path, `${fieldName}.expand_path`),
