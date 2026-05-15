@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useMSA } from '../MSAContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button } from '../../ui/button';
+import { Input } from '../../ui/input';
 
 const clampPositive = (value) => Math.max(1, Math.round(Number(value) || 1));
 

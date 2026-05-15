@@ -1,11 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import Draggable from 'react-draggable';
-import { useAppStore } from '@/state/phyloStore/store.js';
+import { useAppStore } from '../../state/phyloStore/store.js';
 import { GripVertical, Eye, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { AppTooltip } from '@/components/ui/app-tooltip';
+import { Button } from '../ui/button';
+import { Card } from '../ui/card';
+import { Separator } from '../ui/separator';
+import { AppTooltip } from '../ui/app-tooltip';
 import { ClipboardSection } from './clipboard/ClipboardSection.jsx';
 import { InterpolationCoordinateSection } from './interpolation/InterpolationCoordinateSection.jsx';
 import { InterpolationSection } from './interpolation/InterpolationSection.jsx';

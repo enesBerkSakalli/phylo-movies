@@ -1,9 +1,9 @@
 import React, { useCallback, useMemo } from 'react';
 import { Film } from 'lucide-react';
-import { Slider } from '@/components/ui/slider';
-import { AppTooltip } from '@/components/ui/app-tooltip';
-import { getIndexMappings } from '@/domain/indexing/IndexMapping';
-import { useAppStore } from '@/state/phyloStore/store.js';
+import { Slider } from '../../ui/slider';
+import { AppTooltip } from '../../ui/app-tooltip';
+import { getIndexMappings } from '../../../domain/indexing/IndexMapping';
+import { useAppStore } from '../../../state/phyloStore/store.js';
 import {
   buildInterpolationText,
   selectActiveTreeListLength,

@@ -17,9 +17,9 @@ import {
   selectScaleList,
   selectTransitionResolver,
   useAppStore
-} from '@/state/phyloStore/store.js';
+} from '../../state/phyloStore/store.js';
 
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '../ui/chart';
 
 const CHART_MARGINS = { top: 4, right: 8, bottom: 4, left: 8 };
 

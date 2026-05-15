@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { useMSA } from './MSAContext';
-import { MSA_VIEWER_CONSTANTS } from '@/msaViewer/config.js';
+import { MSA_VIEWER_CONSTANTS } from '../../msaViewer/config.js';
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 

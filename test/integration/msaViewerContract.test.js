@@ -9,11 +9,11 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 let msaContext;
 const viewerInstances = [];
 
-vi.mock('@/components/msa/MSAContext', () => ({
+vi.mock('../../src/components/msa/MSAContext', () => ({
   useMSA: () => msaContext
 }));
 
-vi.mock('@/msaViewer/MSADeckGLViewer', () => ({
+vi.mock('../../src/msaViewer/MSADeckGLViewer', () => ({
   MSADeckGLViewer: class MockMSADeckGLViewer {
     constructor() {
       this.loadFromProcessedData = vi.fn();
@@ -82,7 +82,7 @@ afterEach(() => {
 
 describe('MSA viewer contract', () => {
   it('loads processed alignment data only when processed data changes', async () => {
-    const { MSAViewer } = await import('@/components/msa/MSAViewer.jsx');
+    const { MSAViewer } = await import('../../src/components/msa/MSAViewer.jsx');
 
     msaContext = createContext({ msaRegion: { start: 1, end: 2 } });
     const { root } = await renderReact(React.createElement(MSAViewer));
@@ -105,7 +105,7 @@ describe('MSA viewer contract', () => {
   });
 
   it('delegates synced region centering to the viewer API', async () => {
-    const { MSAViewer } = await import('@/components/msa/MSAViewer.jsx');
+    const { MSAViewer } = await import('../../src/components/msa/MSAViewer.jsx');
 
     msaContext = createContext({ msaRegion: { start: 2, end: 4 } });
     const { root } = await renderReact(React.createElement(MSAViewer));
@@ -121,7 +121,7 @@ describe('MSA viewer contract', () => {
   });
 
   it('applies an initial previous region after the viewer is created', async () => {
-    const { MSAViewer } = await import('@/components/msa/MSAViewer.jsx');
+    const { MSAViewer } = await import('../../src/components/msa/MSAViewer.jsx');
 
     msaContext = createContext({ msaPreviousRegion: { start: 3, end: 4 } });
     const { root } = await renderReact(React.createElement(MSAViewer));
@@ -136,7 +136,7 @@ describe('MSA viewer contract', () => {
   });
 
   it('clears rendered alignment data when processed data disappears', async () => {
-    const { MSAViewer } = await import('@/components/msa/MSAViewer.jsx');
+    const { MSAViewer } = await import('../../src/components/msa/MSAViewer.jsx');
 
     msaContext = createContext();
     const { root } = await renderReact(React.createElement(MSAViewer));
@@ -162,7 +162,7 @@ describe('MSA viewer contract', () => {
   });
 
   it('publishes the latest visible range on the next animation frame', async () => {
-    const { MSAViewer } = await import('@/components/msa/MSAViewer.jsx');
+    const { MSAViewer } = await import('../../src/components/msa/MSAViewer.jsx');
     const setVisibleRange = vi.fn();
     const rafCallbacks = [];
     const requestAnimationFrameSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
@@ -212,7 +212,7 @@ describe('MSA viewer contract', () => {
   });
 
   it('positions custom scrollbars from viewer layout metrics', async () => {
-    const { MSAScrollbars } = await import('@/components/msa/MSAScrollbars.jsx');
+    const { MSAScrollbars } = await import('../../src/components/msa/MSAScrollbars.jsx');
 
     msaContext = createContext();
     const { container, root } = await renderReact(
@@ -235,7 +235,7 @@ describe('MSA viewer contract', () => {
   });
 
   it('caps custom scrollbar thumbs inside their tracks', async () => {
-    const { MSAScrollbars } = await import('@/components/msa/MSAScrollbars.jsx');
+    const { MSAScrollbars } = await import('../../src/components/msa/MSAScrollbars.jsx');
 
     msaContext = createContext({
       processedData: { ...processedData, rows: 100, cols: 100 },
@@ -258,7 +258,7 @@ describe('MSA viewer contract', () => {
   });
 
   it('supports keyboard and pointer scrollbar controls', async () => {
-    const { MSAScrollbars } = await import('@/components/msa/MSAScrollbars.jsx');
+    const { MSAScrollbars } = await import('../../src/components/msa/MSAScrollbars.jsx');
     const scrollToPosition = vi.fn();
 
     msaContext = createContext({
@@ -304,7 +304,7 @@ describe('MSA viewer contract', () => {
   });
 
   it('removes active drag listeners when scrollbars unmount mid-drag', async () => {
-    const { MSAScrollbars } = await import('@/components/msa/MSAScrollbars.jsx');
+    const { MSAScrollbars } = await import('../../src/components/msa/MSAScrollbars.jsx');
     const addEventListenerSpy = vi.spyOn(window, 'addEventListener');
     const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
 
@@ -344,7 +344,7 @@ describe('MSA viewer contract', () => {
   });
 
   it('clamps custom scrollbar track clicks to the final row and column', async () => {
-    const { MSAScrollbars } = await import('@/components/msa/MSAScrollbars.jsx');
+    const { MSAScrollbars } = await import('../../src/components/msa/MSAScrollbars.jsx');
     const scrollToPosition = vi.fn();
 
     msaContext = createContext({

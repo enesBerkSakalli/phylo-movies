@@ -1,8 +1,8 @@
 import React from 'react';
 import { ColoringPanel } from '../../color/ColoringPanel.jsx';
 import { VisualStyle } from '../VisualStyle/VisualStyle.jsx';
-import { SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
+import { SidebarMenuItem, SidebarMenuButton } from '../../../ui/sidebar';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../../../ui/collapsible';
 import { ChevronDown, Palette } from 'lucide-react';
 
 export function VisualElements() {

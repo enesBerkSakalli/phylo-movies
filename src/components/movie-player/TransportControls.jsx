@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
-import { AppTooltip } from '@/components/ui/app-tooltip';
+import { Button } from '../ui/button';
+import { AppTooltip } from '../ui/app-tooltip';
 import { ChevronsLeft, ChevronLeft, Play, Pause, ChevronRight, ChevronsRight, GitCompare, Link2, Link2Off } from 'lucide-react';
 import {
   selectActiveTreeListLength,
@@ -17,7 +17,7 @@ import {
   selectTransitionResolver,
   selectViewsConnected,
   useAppStore
-} from '@/state/phyloStore/store.js';
+} from '../../state/phyloStore/store.js';
 
 export function TransportControls({
   onBackward,

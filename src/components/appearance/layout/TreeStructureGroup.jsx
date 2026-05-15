@@ -1,7 +1,7 @@
 import { TreeStructure } from './TreeStructure.jsx';
 import { GitBranch, ChevronDown } from 'lucide-react';
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
-import { SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../../ui/collapsible';
+import { SidebarMenuItem, SidebarMenuButton } from '../../ui/sidebar';
 
 export function TreeStructureGroup() {
   return (

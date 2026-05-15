@@ -1,8 +1,8 @@
 import React from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "../../ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
 import { LayoutPanelLeft } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "../../../lib/utils";
 
 export function CSVColumnSelector({ csvData, csvColumn, onColumnChange }) {
   if (!csvData || csvData.groupingColumns.length <= 1) {

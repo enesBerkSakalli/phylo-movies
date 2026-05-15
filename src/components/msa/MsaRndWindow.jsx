@@ -6,8 +6,8 @@ import {
   selectMsaWindow,
   selectSetMsaWindow,
   useAppStore
-} from '@/state/phyloStore/store.js';
-import { Button } from '@/components/ui/button';
+} from '../../state/phyloStore/store.js';
+import { Button } from '../ui/button';
 import { X, Columns } from 'lucide-react';
 import { useMSA } from './MSAContext';
 import { MSAControls } from './MSAControls';

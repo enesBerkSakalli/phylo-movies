@@ -6,25 +6,25 @@ import {
   selectPairSolutions,
   selectSetManuallyMarkedNodes,
   useAppStore
-} from '@/state/phyloStore/store.js';
+} from '../../../state/phyloStore/store.js';
 import {
   calculateSprMovedSubtreeRecurrences,
   getTopSprMovedSubtreeRecurrences,
   formatSubtreeLabel
-} from '@/domain/spr/sprAnalytics';
+} from '../../../domain/spr/sprAnalytics';
 import { ChevronRight, BarChart2 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
+import { Badge } from '../../ui/badge';
+import { Card, CardContent } from '../../ui/card';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../../ui/collapsible';
+import { Label } from '../../ui/label';
+import { Progress } from '../../ui/progress';
+import { Separator } from '../../ui/separator';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+} from '../../ui/tooltip';
+import { cn } from '../../../lib/utils';
 /**
  * MovedSubtreeRecurrenceList
  *

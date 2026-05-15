@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../ui/card";
 import { ColorInputGrid } from "../shared/ColorInputGrid.jsx";
 
 export function CSVGroupColors({ csvGroups, colorManager, onColorChange }) {

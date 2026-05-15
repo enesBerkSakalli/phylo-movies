@@ -15,7 +15,7 @@ vi.mock('react-router-dom', () => ({
   useNavigate: () => navigateMock
 }));
 
-vi.mock('@/pages/WorkspaceInitialization/services/movieProcessing.js', () => ({
+vi.mock('../../src/pages/WorkspaceInitialization/services/movieProcessing.js', () => ({
   processMovieData: (...args) => processMovieDataMock(...args),
   finalizeMovieData: (...args) => finalizeMovieDataMock(...args),
   showElectronLoading: vi.fn(),
@@ -23,7 +23,7 @@ vi.mock('@/pages/WorkspaceInitialization/services/movieProcessing.js', () => ({
   updateElectronProgress: vi.fn()
 }));
 
-vi.mock('@/pages/WorkspaceInitialization/exampleDatasets.js', () => ({
+vi.mock('../../src/pages/WorkspaceInitialization/exampleDatasets.js', () => ({
   getExampleById: vi.fn()
 }));
 
@@ -38,7 +38,7 @@ function deferred() {
 }
 
 async function renderHookHarness() {
-  const { useWorkspaceInitializationForm } = await import('@/pages/WorkspaceInitialization/useWorkspaceInitializationForm.js');
+  const { useWorkspaceInitializationForm } = await import('../../src/pages/WorkspaceInitialization/useWorkspaceInitializationForm.js');
   const container = document.createElement('div');
   document.body.appendChild(container);
   const root = createRoot(container);

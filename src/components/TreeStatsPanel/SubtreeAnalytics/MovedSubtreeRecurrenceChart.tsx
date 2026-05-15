@@ -1,16 +1,16 @@
 import React, { useMemo } from 'react';
-import { selectLeafNamesByIndex, selectPairSolutions, useAppStore } from '@/state/phyloStore/store.js';
-import { calculateSprMovedSubtreeRecurrences, getTopSprMovedSubtreeRecurrences, formatSubtreeLabel } from '@/domain/spr/sprAnalytics';
-import { SYSTEM_TREE_COLORS } from '@/constants/TreeColors';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
+import { selectLeafNamesByIndex, selectPairSolutions, useAppStore } from '../../../state/phyloStore/store.js';
+import { calculateSprMovedSubtreeRecurrences, getTopSprMovedSubtreeRecurrences, formatSubtreeLabel } from '../../../domain/spr/sprAnalytics';
+import { SYSTEM_TREE_COLORS } from '../../../constants/TreeColors';
+import { Badge } from '../../ui/badge';
+import { Card, CardContent } from '../../ui/card';
+import { Label } from '../../ui/label';
+import { Progress } from '../../ui/progress';
 import {
     Tooltip,
     TooltipContent,
     TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from '../../ui/tooltip';
 
 /**
  * MovedSubtreeRecurrenceChart

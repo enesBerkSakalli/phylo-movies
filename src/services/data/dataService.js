@@ -1,6 +1,6 @@
 import localforage from 'localforage';
-import { resolveApiUrl } from '@/services/data/apiConfig';
-import { validatePhyloMovieData } from '@/domain/backend/phyloMovieSchema.ts';
+import { resolveApiUrl } from './apiConfig';
+import { validatePhyloMovieData } from '../../domain/backend/phyloMovieSchema.ts';
 
 /**
  * Unified data service for PhyloMovies

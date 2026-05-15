@@ -1,12 +1,12 @@
 import React from 'react';
-import { ToggleWithLabel } from '@/components/ui/toggle-with-label';
+import { ToggleWithLabel } from '../ui/toggle-with-label';
 import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarMenuSub,
   SidebarMenuSubItem
-} from '@/components/ui/sidebar';
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
+} from '../ui/sidebar';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../ui/collapsible';
 import { ChevronDown, Activity } from 'lucide-react';
 
 export function PivotEdgeEffectsSection({ pulseEnabled, dashingEnabled, upcomingChangesEnabled, onTogglePulse, onToggleDashing, onToggleUpcomingChanges }) {

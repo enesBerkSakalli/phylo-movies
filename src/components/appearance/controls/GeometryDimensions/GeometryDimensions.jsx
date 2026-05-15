@@ -1,8 +1,8 @@
 import React, { useCallback, useRef } from 'react';
-import { LabeledSlider } from '@/components/ui/labeled-slider';
-import { SidebarMenuSub, SidebarMenuSubItem } from '@/components/ui/sidebar';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
+import { LabeledSlider } from '../../../ui/labeled-slider';
+import { SidebarMenuSub, SidebarMenuSubItem } from '../../../ui/sidebar';
+import { Label } from '../../../ui/label';
+import { Switch } from '../../../ui/switch';
 import { Info } from 'lucide-react';
 
 const clampValue = (value, fallback) => {

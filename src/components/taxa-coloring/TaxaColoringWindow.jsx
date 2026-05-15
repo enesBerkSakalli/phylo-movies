@@ -1,8 +1,8 @@
 import React from "react";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Separator } from "@/components/ui/separator";
+import { Button } from "../ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { Separator } from "../ui/separator";
 
 import { TaxaTabContent } from "./taxa-tab/TaxaTabContent.jsx";
 import { GroupsTabContent } from "./groups-tab/GroupsTabContent.jsx";

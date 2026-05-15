@@ -106,10 +106,10 @@ Example of a perfectly structured high-density control component:
 
 ```jsx
 import React from 'react';
-import { useAppStore } from '@/js/core/store';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
+import { useAppStore } from '../../state/phyloStore/store';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Label } from '../ui/label';
+import { Separator } from '../ui/separator';
 import { Settings2 } from 'lucide-react';
 
 // 1. Logic-free Selectors

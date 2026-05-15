@@ -1,8 +1,8 @@
 import React from 'react';
 import { Clipboard, ChevronLeft, ChevronRight, X } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { AppTooltip } from '@/components/ui/app-tooltip';
+import { Badge } from '../../ui/badge';
+import { Button } from '../../ui/button';
+import { AppTooltip } from '../../ui/app-tooltip';
 
 export function ClipboardSection({ clipboardTreeIndex, anchorIndices, onShowAnchor, onClear }) {
   const hasAnchors = anchorIndices.length > 0;

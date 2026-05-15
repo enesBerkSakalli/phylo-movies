@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "../../ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../../ui/collapsible";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../ui/card";
 import { Palette, Eye, ChevronDown, ChevronUp } from "lucide-react";
-import { CATEGORICAL_PALETTES, getPaletteInfo } from "@/constants/ColorPalettes.js";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { CATEGORICAL_PALETTES, getPaletteInfo } from "../../../constants/ColorPalettes.js";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../../ui/tooltip";
 
 export function ColorSchemeSelector({ onApply, title = "Apply a Color Scheme", description = "Browse curated palettes to jump-start coloring." }) {
   const [open, setOpen] = useState(false);

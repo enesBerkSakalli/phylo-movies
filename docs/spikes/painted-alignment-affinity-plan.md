@@ -161,8 +161,8 @@ setAffinityColorMode: (enabled) => set({ affinityColorMode: enabled }),
 
 ```javascript
 import { useMemo } from 'react';
-import { useAppStore } from '@/js/core/store.js';
-import { computeAffinityForTree } from '@/js/domain/msa/phylogeneticAffinity.js';
+import { useAppStore } from '../state/phyloStore/store.js';
+import { computeAffinityForTree } from '../domain/msa/phylogeneticAffinity.js';
 
 /**
  * Hook that computes phylogenetic affinity for all trees.

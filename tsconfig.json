@@ -16,10 +16,7 @@
     "noFallthroughCasesInSwitch": true,
     "allowJs": true,
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    "allowSyntheticDefaultImports": true
   },
   "include": [
     "src/**/*.js",

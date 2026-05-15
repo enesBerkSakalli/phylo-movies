@@ -1,6 +1,6 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ScrollArea } from "../../ui/scroll-area";
+import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../ui/tooltip";
 import { CheckCircle2, AlertTriangle } from "lucide-react";
 
 export function CSVPreview({ csvValidation, csvGroups }) {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { DistanceChart } from '../../DistanceChart/DistanceChart.jsx';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
 
 export function MovieChartSection({ barOptionValue, onBarOptionChange }) {
   return (

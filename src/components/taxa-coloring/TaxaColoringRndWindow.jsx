@@ -1,6 +1,6 @@
 import React, { useMemo, useCallback } from 'react';
 import { Rnd } from 'react-rnd';
-import { Button } from '@/components/ui/button';
+import { Button } from '../ui/button';
 import { Palette, X } from 'lucide-react';
 import {
   selectLeafNamesByIndex,
@@ -12,15 +12,15 @@ import {
   selectTaxaGrouping,
   selectUpdateTaxaColors,
   useAppStore
-} from '@/state/phyloStore/store.js';
+} from '../../state/phyloStore/store.js';
 import { TaxaColoringWindow } from './TaxaColoringWindow.jsx';
-import { applyColoringData } from '@/treeColoring/utils/GroupingUtils.js';
-import { SYSTEM_TREE_COLORS } from '@/constants/TreeColors.js';
+import { applyColoringData } from '../../treeColoring/utils/GroupingUtils.js';
+import { SYSTEM_TREE_COLORS } from '../../constants/TreeColors.js';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "../ui/tooltip";
 
 // Stable empty object to avoid creating new objects on each render
 const EMPTY_INITIAL_STATE = {};

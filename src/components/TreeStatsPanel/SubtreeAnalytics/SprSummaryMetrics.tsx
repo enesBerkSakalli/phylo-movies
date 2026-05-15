@@ -4,7 +4,7 @@ import {
     Tooltip,
     TooltipContent,
     TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from '../../ui/tooltip';
 
 interface SprSummaryMetricsProps {
     uniqueMovedSubtreeCount: number;

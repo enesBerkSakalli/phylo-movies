@@ -1,8 +1,8 @@
 import React, { useCallback } from 'react';
 import { Maximize2, RotateCcw, ZoomIn, ZoomOut } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { AppTooltip } from '@/components/ui/app-tooltip';
-import { selectPrimaryTreeController, useAppStore } from '@/state/phyloStore/store.js';
+import { Button } from '../ui/button';
+import { AppTooltip } from '../ui/app-tooltip';
+import { selectPrimaryTreeController, useAppStore } from '../../state/phyloStore/store.js';
 
 export function TreeViewportControls() {
   const controller = useAppStore(selectPrimaryTreeController);

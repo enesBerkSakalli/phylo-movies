@@ -21,19 +21,19 @@ import {
   selectSetTaxaColoringOpen,
   selectTreeControllers,
   useAppStore
-} from '@/state/phyloStore/store.js';
-import { Switch } from '@/components/ui/switch';
-import { Input } from '@/components/ui/input';
+} from '../../../state/phyloStore/store.js';
+import { Switch } from '../../ui/switch';
+import { Input } from '../../ui/input';
 import { Palette, Info, Settings2, RefreshCw } from 'lucide-react';
 import {
   SidebarMenuSub,
   SidebarMenuSubItem,
   SidebarMenuSubButton,
-} from '@/components/ui/sidebar';
-import { Slider } from '@/components/ui/slider';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
+} from '../../ui/sidebar';
+import { Slider } from '../../ui/slider';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
+import { Label } from '../../ui/label';
+import { Button } from '../../ui/button';
 import { Highlighter, X } from 'lucide-react';
 
 export function ColoringPanel() {

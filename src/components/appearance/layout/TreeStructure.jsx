@@ -5,9 +5,9 @@ import {
   selectSetBranchTransformation,
   selectSetLinkGeometryMode,
   useAppStore
-} from '@/state/phyloStore/store.js';
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
-import { SidebarMenuSub, SidebarMenuSubItem } from '@/components/ui/sidebar';
+} from '../../../state/phyloStore/store.js';
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '../../ui/select';
+import { SidebarMenuSub, SidebarMenuSubItem } from '../../ui/sidebar';
 import { GitGraph } from 'lucide-react';
 
 export function TreeStructure() {

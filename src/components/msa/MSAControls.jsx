@@ -1,11 +1,11 @@
 import React from 'react';
 import { useMSA } from './MSAContext';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '../ui/button';
+import { Switch } from '../ui/switch';
+import { Badge } from '../ui/badge';
+import { Label } from '../ui/label';
+import { Separator } from '../ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import {
   selectClearMsaRowOrder,
   selectCurrentTree,
@@ -13,7 +13,7 @@ import {
   selectSetMsaRowOrder,
   selectTreeControllers,
   useAppStore
-} from '@/state/phyloStore/store.js';
+} from '../../state/phyloStore/store.js';
 import { MSARegionOverrides, MSAViewActions, MSAVisibleRange } from './controls';
 
 export function MSAControls() {

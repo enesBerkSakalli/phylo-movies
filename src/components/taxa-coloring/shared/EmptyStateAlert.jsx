@@ -1,5 +1,5 @@
 import React from "react";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertTitle, AlertDescription } from "../../ui/alert";
 import { Info } from "lucide-react";
 
 export function EmptyStateAlert({ mode }) {

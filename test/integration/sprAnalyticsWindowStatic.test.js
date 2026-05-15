@@ -17,7 +17,7 @@ describe('SPR analytics window shell', () => {
     expect(dashboardSource).toContain('dragHandleClassName="spr-analytics-drag-handle"');
     expect(dashboardSource).toContain('bounds="window"');
     expect(dashboardSource).toContain('z-[1200]');
-    expect(dashboardSource).not.toContain('@/components/ui/dialog');
+    expect(dashboardSource).not.toContain('../ui/dialog');
     expect(dashboardSource).not.toContain('<Dialog');
     expect(dashboardSource).not.toContain('DialogContent');
     expect(appSource).not.toContain('spr-analytics-panel-root');

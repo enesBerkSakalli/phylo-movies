@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Progress } from '@/components/ui/progress';
+import { Progress } from '../../components/ui/progress';
 import phyloTreeIcon from '/icons/phylo-tree-icon.svg';
 
 const SplashApp = () => {

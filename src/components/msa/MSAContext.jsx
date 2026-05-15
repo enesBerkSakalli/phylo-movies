@@ -10,10 +10,10 @@ import {
   selectTaxaColorVersion,
   selectTaxaGrouping,
   useAppStore
-} from '@/state/phyloStore/store.js';
-import { processPhyloData } from '@/msaViewer/utils/dataUtils';
-import { SYSTEM_TREE_COLORS } from '@/constants/TreeColors';
-import { getGroupForTaxon } from '@/treeColoring/utils/GroupingUtils';
+} from '../../state/phyloStore/store.js';
+import { processPhyloData } from '../../msaViewer/utils/dataUtils';
+import { SYSTEM_TREE_COLORS } from '../../constants/TreeColors';
+import { getGroupForTaxon } from '../../treeColoring/utils/GroupingUtils';
 
 const MSAContext = createContext(null);
 

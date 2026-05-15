@@ -1,9 +1,9 @@
 /**
  * ClipboardDismissButton - Button to dismiss the clipboard tree overlay
  */
-import { selectClearClipboard, selectClipboardTreeIndex, useAppStore } from '@/state/phyloStore/store.js';
+import { selectClearClipboard, selectClipboardTreeIndex, useAppStore } from '../../../state/phyloStore/store.js';
 import { X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '../../ui/button';
 
 export function ClipboardDismissButton() {
   const clipboardTreeIndex = useAppStore(selectClipboardTreeIndex);

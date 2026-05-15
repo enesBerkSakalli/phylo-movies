@@ -1,16 +1,16 @@
 import React from 'react';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '../../ui/badge';
 import {
     Tooltip,
     TooltipContent,
     TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { formatSubtreeLabel } from '@/domain/spr/sprAnalytics';
+} from '../../ui/tooltip';
+import { formatSubtreeLabel } from '../../../domain/spr/sprAnalytics';
 import {
     selectMarkedNodes,
     selectSetManuallyMarkedNodes,
     useAppStore,
-} from '@/state/phyloStore/store.js';
+} from '../../../state/phyloStore/store.js';
 import type { SprMovedSubtreeRecurrence } from './types';
 
 interface MovedSubtreeRecurrenceTableProps {

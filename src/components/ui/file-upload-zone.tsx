@@ -2,9 +2,9 @@ import * as React from "react"
 import { type FileRejection, useDropzone } from "react-dropzone"
 import { File, Upload, X } from "lucide-react"
 
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
+import { cn } from "../../lib/utils"
+import { Button } from "./button"
+import { Label } from "./label"
 
 interface FileUploadZoneProps extends React.HTMLAttributes<HTMLDivElement> {
   onFileSelect: (file: File | null) => void

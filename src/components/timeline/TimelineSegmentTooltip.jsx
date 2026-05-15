@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Anchor, ArrowRightLeft, ChevronDown, ChevronUp } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
 
 // =============================================================================
 // MAIN COMPONENT
