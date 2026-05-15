@@ -46,6 +46,7 @@ describe('expandBoundsForLabels', () => {
     expect(spatialBounds.LABEL_BOUNDS_CHAR_WIDTH_RATIO).toBe(0.6);
     expect(spatialBounds.LABEL_BOUNDS_LINE_HEIGHT_RATIO).toBe(1.2);
     expect(spatialBounds.LABEL_BOUNDS_MAX_WIDTH_PX).toBe(2000);
+    expect(spatialBounds.LABEL_BOUNDS_DEFAULT_SIZE_PX).toBe(16);
   });
 
   it('returns original bounds when there are no labels', () => {
@@ -77,6 +78,18 @@ describe('expandBoundsForLabels', () => {
       maxX: 10 + spatialBounds.LABEL_BOUNDS_MAX_WIDTH_PX,
       minY: -12,
       maxY: 32,
+    });
+  });
+
+  it('uses the named default label size when no size is provided', () => {
+    expect(expandBoundsForLabels(
+      { minX: 0, maxX: 10, minY: 0, maxY: 20 },
+      [{ position: [0, 0, 0], text: 'abc' }]
+    )).toEqual({
+      minX: -28.799999999999997,
+      maxX: 38.8,
+      minY: -19.2,
+      maxY: 39.2,
     });
   });
 
