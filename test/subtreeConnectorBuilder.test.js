@@ -32,6 +32,15 @@ const passiveGroupsSourcePath = join(
   'transforms',
   'ConnectorPassiveGroups.js'
 );
+const connectionObjectsSourcePath = join(
+  repoRoot,
+  'src',
+  'treeVisualisation',
+  'deckgl',
+  'data',
+  'transforms',
+  'ConnectorConnectionObjects.js'
+);
 
 async function importConnectorColorEntryResolver() {
   try {
@@ -60,6 +69,14 @@ async function importConnectorRawConnections() {
 async function importConnectorPassiveGroups() {
   try {
     return await import('../src/treeVisualisation/deckgl/data/transforms/ConnectorPassiveGroups.js');
+  } catch {
+    return null;
+  }
+}
+
+async function importConnectorConnectionObjects() {
+  try {
+    return await import('../src/treeVisualisation/deckgl/data/transforms/ConnectorConnectionObjects.js');
   } catch {
     return null;
   }
@@ -308,6 +325,65 @@ describe('SubtreeConnectorBuilder', function () {
     expect(builderSource).not.toMatch(/function\s+groupPassiveConnections\s*\(/);
     expect(builderSource).not.toMatch(/ROOT_LEFT_GROUP_ID/);
     expect(passiveGroupsSource).toMatch(/from\s+['"]\.\/ComparisonGeometryUtils\.js['"]/);
+  });
+
+  it('creates connector objects through a shared helper', async function () {
+    const connectionObjects = await importConnectorConnectionObjects();
+
+    expect(connectionObjects).not.toBeNull();
+
+    const sourceInfo = { name: 'A' };
+    const targetInfo = { name: 'A' };
+    const rawConnection = connectionObjects.createConnectorConnection({
+      id: 'connector-10-10',
+      source: [-30, -20, 0],
+      target: [130, -20, 0],
+      color: [16, 185, 129, 255],
+      isCurrentlyMoving: true,
+      sourceInfo,
+      targetInfo,
+    });
+
+    expect(rawConnection).toEqual({
+      id: 'connector-10-10',
+      source: [-30, -20, 0],
+      target: [130, -20, 0],
+      color: [16, 185, 129, 255],
+      isCurrentlyMoving: true,
+      sourceInfo,
+      targetInfo,
+    });
+    expect(rawConnection).not.toHaveProperty('path');
+    expect(rawConnection).not.toHaveProperty('width');
+
+    const path = new Float32Array([0, 1, 0, 2, 3, 0]);
+    const pathConnection = connectionObjects.createConnectorPathConnection(
+      rawConnection,
+      path,
+      '-active-0',
+      3
+    );
+
+    expect(pathConnection).toMatchObject({
+      id: 'connector-10-10-active-0',
+      source: rawConnection.source,
+      target: rawConnection.target,
+      color: rawConnection.color,
+      isCurrentlyMoving: true,
+      sourceInfo,
+      targetInfo,
+      path,
+      width: 3,
+    });
+
+    const builderSource = readFileSync(builderSourcePath, 'utf8');
+    const rawSource = readFileSync(rawConnectionsSourcePath, 'utf8');
+    const connectionObjectsSource = readFileSync(connectionObjectsSourcePath, 'utf8');
+    expect(builderSource).toMatch(/from\s+['"]\.\/ConnectorConnectionObjects\.js['"]/);
+    expect(rawSource).toMatch(/from\s+['"]\.\/ConnectorConnectionObjects\.js['"]/);
+    expect(builderSource).not.toMatch(/function\s+createConnectionObject\s*\(/);
+    expect(builderSource).not.toMatch(/function\s+createPathObject\s*\(/);
+    expect(connectionObjectsSource).toMatch(/export\s+function\s+createConnectorConnection\s*\(/);
   });
 
   it('builds connectors when positions are Maps', function () {

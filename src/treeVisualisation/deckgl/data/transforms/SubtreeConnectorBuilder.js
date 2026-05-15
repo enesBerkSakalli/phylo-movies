@@ -11,6 +11,7 @@ import {
   chooseBundlePoint
 } from './ComparisonGeometryUtils.js';
 import { groupPassiveConnectorConnections } from './ConnectorPassiveGroups.js';
+import { createConnectorPathConnection } from './ConnectorConnectionObjects.js';
 
 const DEFAULT_CENTER = [0, 0];
 const CONNECTOR_PATH_SAMPLES = 24;
@@ -79,54 +80,6 @@ export function buildSubtreeConnectors(options) {
     rightRadius,
     leftInfoById: buildInfoById(leftPositions),
     rightInfoById: buildInfoById(rightPositions),
-  });
-}
-
-// ========== Connection Object Creation ==========
-
-/**
- * Create a standardized connection object.
- * @param {Object} params - Connection parameters
- * @returns {Object} Connection object with all properties
- */
-function createConnectionObject(params) {
-  const connection = {
-    id: params.id,
-    source: params.source,
-    target: params.target,
-    color: params.color,
-    isCurrentlyMoving: params.isCurrentlyMoving,
-    sourceInfo: params.sourceInfo,
-    targetInfo: params.targetInfo,
-  };
-  if (params.path !== undefined) {
-    connection.path = params.path;
-  }
-  if (params.width !== undefined) {
-    connection.width = params.width;
-  }
-  return connection;
-}
-
-/**
- * Create a path object from a connection and computed path.
- * @param {Object} connection - Base connection object
- * @param {Float32Array} path - Computed flat XYZ Bezier path
- * @param {string} idSuffix - String to append to ID
- * @param {number} width - Line width
- * @returns {Object} Path object with all properties
- */
-function createPathObject(connection, path, idSuffix, width) {
-  return createConnectionObject({
-    id: connection.id + idSuffix,
-    source: connection.source,
-    target: connection.target,
-    color: connection.color,
-    isCurrentlyMoving: connection.isCurrentlyMoving,
-    sourceInfo: connection.sourceInfo,
-    targetInfo: connection.targetInfo,
-    path,
-    width,
   });
 }
 
@@ -241,7 +194,7 @@ function buildBundledConnectorPaths(params) {
       );
 
       if (path.length) {
-        results.push(createPathObject(connection, path, `-active-${index}`, width));
+        results.push(createConnectorPathConnection(connection, path, `-active-${index}`, width));
       }
     });
     return results;
@@ -276,7 +229,7 @@ function buildBundledConnectorPaths(params) {
       );
 
       if (path.length) {
-        results.push(createPathObject(connection, path, `-${index}`, width));
+        results.push(createConnectorPathConnection(connection, path, `-${index}`, width));
       }
     });
   }
