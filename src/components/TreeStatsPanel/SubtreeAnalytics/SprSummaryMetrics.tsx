@@ -11,7 +11,7 @@ interface SprSummaryMetricsProps {
     sprMovementCount: number;
     transitionEventCount: number;
     activePairCount: number;
-    singletonMoverPercentage: number;
+    singleTaxonMoveEventPercentage: number;
     topMoverPercentage: number | null;
     sprMoveEventCount: number;
     totalPathHops: number;
@@ -49,7 +49,7 @@ export const SprSummaryMetrics = ({
     sprMovementCount,
     transitionEventCount,
     activePairCount,
-    singletonMoverPercentage,
+    singleTaxonMoveEventPercentage,
     topMoverPercentage,
     sprMoveEventCount,
     totalPathHops,
@@ -91,7 +91,7 @@ export const SprSummaryMetrics = ({
             icon={<Split className="size-3 text-primary" />}
             label="Single-Taxon Moves"
         >
-            <div className="text-2xl font-black tracking-tighter tabular-nums">{singletonMoverPercentage.toFixed(1)}%</div>
+            <div className="text-2xl font-black tracking-tighter tabular-nums">{singleTaxonMoveEventPercentage.toFixed(1)}%</div>
         </SummaryTile>
 
         <SummaryTile

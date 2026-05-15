@@ -268,9 +268,9 @@ export function calculateSprPairActivity(pairSolutions, options = {}) {
       const events = eventsByPair.get(pairKey) ?? [];
       const movers = aggregateMoverRows(events);
       const sprMoveEventCount = events.length;
-      const singletonMoverOccurrences = events
+      const singleTaxonMoveEventCount = events
         .filter((event) => event.splitIndices.length === 1).length;
-      const cladeMoverOccurrences = events
+      const multiTaxonMoveEventCount = events
         .filter((event) => event.splitIndices.length > 1).length;
       const topMover = movers[0] || null;
       const pathStats = summarizeSprEventRows(events);
@@ -286,8 +286,8 @@ export function calculateSprPairActivity(pairSolutions, options = {}) {
         rfDistance: numberOrNull(robinsonFouldsDistances[pairIndex]),
         weightedRfDistance: numberOrNull(weightedRobinsonFouldsDistances[pairIndex]),
         uniqueMoverCount: movers.length,
-        singletonMoverOccurrences,
-        cladeMoverOccurrences,
+        singleTaxonMoveEventCount,
+        multiTaxonMoveEventCount,
         transitionEventCount: Array.isArray(solution?.split_change_events)
           ? solution.split_change_events.length
           : 0,
@@ -327,10 +327,10 @@ export function calculateSprDatasetSummary(pairSolutions, options = {}) {
     transitionEventCount: pairActivity
       .reduce((sum, row) => sum + row.transitionEventCount, 0),
     uniqueMovingSubtreeCount: moverFrequencies.length,
-    singletonMoverOccurrences: pairActivity
-      .reduce((sum, row) => sum + row.singletonMoverOccurrences, 0),
-    cladeMoverOccurrences: pairActivity
-      .reduce((sum, row) => sum + row.cladeMoverOccurrences, 0),
+    singleTaxonMoveEventCount: pairActivity
+      .reduce((sum, row) => sum + row.singleTaxonMoveEventCount, 0),
+    multiTaxonMoveEventCount: pairActivity
+      .reduce((sum, row) => sum + row.multiTaxonMoveEventCount, 0),
     topMoverSharePercentage: moverFrequencies[0]?.percentage ?? 0,
     sprMoveEventCount,
     totalPathHops,
@@ -348,7 +348,7 @@ export function calculateSprDatasetSummary(pairSolutions, options = {}) {
 /**
  * Format pair activity rows for charting SPR activity over neighboring anchor-tree pairs.
  *
- * SPR activity is represented as mover occurrences per pair. RFD and W-RFD are carried
+ * SPR activity is represented as move events per pair. RFD and W-RFD are carried
  * as topology-distance context, not folded into the activity score.
  *
  * @param {Array} pairActivityRows - Result from calculateSprPairActivity
@@ -363,8 +363,8 @@ export function buildSprActivityTimelinePoints(pairActivityRows) {
     pairLabel: formatPairLabel(row),
     sprMoveEvents: row.sprMoveEventCount,
     uniqueMovers: row.uniqueMoverCount,
-    singletonMoverOccurrences: row.singletonMoverOccurrences,
-    cladeMoverOccurrences: row.cladeMoverOccurrences,
+    singleTaxonMoveEventCount: row.singleTaxonMoveEventCount,
+    multiTaxonMoveEventCount: row.multiTaxonMoveEventCount,
     topMoverSignature: row.topMover?.signature ?? null,
   }));
 }

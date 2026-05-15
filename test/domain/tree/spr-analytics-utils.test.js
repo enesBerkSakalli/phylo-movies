@@ -171,8 +171,8 @@ describe('SPR analytics model', () => {
       rfDistance: 0.25,
       weightedRfDistance: 1.25,
       uniqueMoverCount: 2,
-      singletonMoverOccurrences: 2,
-      cladeMoverOccurrences: 1,
+      singleTaxonMoveEventCount: 2,
+      multiTaxonMoveEventCount: 1,
       transitionEventCount: 2,
       sprMoveEventCount: 3,
       totalPathHops: 6,
@@ -182,6 +182,8 @@ describe('SPR analytics model', () => {
     });
     expect(rows[0]).not.toHaveProperty('pathEventCount');
     expect(rows[0]).not.toHaveProperty('moverOccurrenceCount');
+    expect(rows[0]).not.toHaveProperty('singletonMoverOccurrences');
+    expect(rows[0]).not.toHaveProperty('cladeMoverOccurrences');
     expect(rows[0].events).toHaveLength(3);
     expect(rows[0].topMover).toMatchObject({
       signature: '1',
@@ -210,8 +212,8 @@ describe('SPR analytics model', () => {
       pairKey: 'pair_1_2',
       pairIndex: 1,
       uniqueMoverCount: 1,
-      singletonMoverOccurrences: 0,
-      cladeMoverOccurrences: 1,
+      singleTaxonMoveEventCount: 0,
+      multiTaxonMoveEventCount: 1,
       transitionEventCount: 1,
       sprMoveEventCount: 1,
       totalPathHops: 4,
@@ -221,6 +223,8 @@ describe('SPR analytics model', () => {
     });
     expect(rows[1]).not.toHaveProperty('pathEventCount');
     expect(rows[1]).not.toHaveProperty('moverOccurrenceCount');
+    expect(rows[1]).not.toHaveProperty('singletonMoverOccurrences');
+    expect(rows[1]).not.toHaveProperty('cladeMoverOccurrences');
   });
 
   it('keeps backend highlight context separate from the physical moved subtree', () => {
@@ -393,8 +397,8 @@ describe('SPR analytics model', () => {
       activePairCount: 2,
       transitionEventCount: 3,
       uniqueMovingSubtreeCount: 3,
-      singletonMoverOccurrences: 2,
-      cladeMoverOccurrences: 2,
+      singleTaxonMoveEventCount: 2,
+      multiTaxonMoveEventCount: 2,
       topMoverSharePercentage: 50,
       sprMoveEventCount: 4,
       totalPathHops: 10,
@@ -405,6 +409,8 @@ describe('SPR analytics model', () => {
     expect(summary).not.toHaveProperty('pathEventCount');
     expect(summary).not.toHaveProperty('moverOccurrenceCount');
     expect(summary).not.toHaveProperty('maxPairMoverOccurrenceCount');
+    expect(summary).not.toHaveProperty('singletonMoverOccurrences');
+    expect(summary).not.toHaveProperty('cladeMoverOccurrences');
     expect(summary.farthestMover).toMatchObject({
       signature: '4,5,6',
       splitIndices: [4, 5, 6],
@@ -450,6 +456,8 @@ describe('SPR analytics model', () => {
     });
     expect(rows[0]).not.toHaveProperty('pathEventCount');
     expect(rows[0]).not.toHaveProperty('moverOccurrenceCount');
+    expect(rows[0]).not.toHaveProperty('singletonMoverOccurrences');
+    expect(rows[0]).not.toHaveProperty('cladeMoverOccurrences');
     expect(summary).toMatchObject({
       pairCount: 1,
       activePairCount: 0,
@@ -463,8 +471,12 @@ describe('SPR analytics model', () => {
     expect(summary).not.toHaveProperty('pathEventCount');
     expect(summary).not.toHaveProperty('moverOccurrenceCount');
     expect(summary).not.toHaveProperty('maxPairMoverOccurrenceCount');
+    expect(summary).not.toHaveProperty('singletonMoverOccurrences');
+    expect(summary).not.toHaveProperty('cladeMoverOccurrences');
     expect(timeline[0].sprMoveEvents).toBe(0);
     expect(timeline[0]).not.toHaveProperty('moverOccurrences');
+    expect(timeline[0]).not.toHaveProperty('singletonMoverOccurrences');
+    expect(timeline[0]).not.toHaveProperty('cladeMoverOccurrences');
   });
 
   it('formats pair activity rows for the SPR activity timeline', () => {
@@ -480,8 +492,8 @@ describe('SPR analytics model', () => {
         pairLabel: '0 -> 1',
         sprMoveEvents: 3,
         uniqueMovers: 2,
-        singletonMoverOccurrences: 2,
-        cladeMoverOccurrences: 1,
+        singleTaxonMoveEventCount: 2,
+        multiTaxonMoveEventCount: 1,
         topMoverSignature: '1',
       },
       {
@@ -490,8 +502,8 @@ describe('SPR analytics model', () => {
         pairLabel: '1 -> 2',
         sprMoveEvents: 1,
         uniqueMovers: 1,
-        singletonMoverOccurrences: 0,
-        cladeMoverOccurrences: 1,
+        singleTaxonMoveEventCount: 0,
+        multiTaxonMoveEventCount: 1,
         topMoverSignature: '4,5,6',
       },
     ]);
