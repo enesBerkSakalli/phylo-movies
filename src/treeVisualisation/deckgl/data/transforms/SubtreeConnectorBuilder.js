@@ -2,6 +2,11 @@ import { buildBundledBezierPath } from '../../builders/geometry/connectors/Conne
 import { flattenSplitSets, getMapValueBySplitIdentity, isSubset } from '../../../utils/splitMatching.js';
 import { computeConnectionColor } from './ComparisonColorUtils.js';
 import {
+  normalizeConnectorSplitValue,
+  normalizeConnectorSubtreeTrackingToSets,
+  toConnectorSubtreeSetList
+} from './ConnectorSplitNormalization.js';
+import {
   pushOutward,
   getAngle,
   getBundleAncestor,
@@ -51,8 +56,8 @@ export function buildSubtreeConnectors(options) {
     return [];
   }
 
-  const jumpingSubtreeSets = toNormalizedSetList(flattenedSubtrees);
-  const currentSubtreeSets = normalizeSubtreeTrackingToSets(subtreeTracking?.[currentTreeIndex]);
+  const jumpingSubtreeSets = toConnectorSubtreeSetList(flattenedSubtrees);
+  const currentSubtreeSets = normalizeConnectorSubtreeTrackingToSets(subtreeTracking?.[currentTreeIndex]);
   const rawConnections = buildRawConnections({
     leftPositions,
     rightLeavesByName: indexRightLeaves(rightPositions),
@@ -157,29 +162,6 @@ function createPathObject(connection, path, idSuffix, width) {
   });
 }
 
-// ========== Normalization Helpers ==========
-
-function normalizeSubtreeTrackingToSets(val) {
-  if (!val) return [];
-
-  if (Array.isArray(val)) {
-    if (val.length > 0 && Array.isArray(val[0])) {
-      return val.map((subtree) => new Set(normalizeSplitArray(subtree)));
-    }
-    return [new Set(normalizeSplitArray(val))];
-  }
-
-  if (val instanceof Set) {
-    return [val];
-  }
-
-  return [];
-}
-
-function toNormalizedSetList(subtrees) {
-  return subtrees.map((subtree) => new Set(normalizeSplitArray(subtree)));
-}
-
 function indexRightLeaves(rightPositions) {
   const map = new Map();
   const iterator = rightPositions.entries();
@@ -193,31 +175,6 @@ function indexRightLeaves(rightPositions) {
     entry = iterator.next();
   }
   return map;
-}
-
-function normalizeSplitValue(val) {
-  const num = Number(val);
-  if (!Number.isNaN(num)) {
-    return num;
-  }
-  if (val === null || val === undefined) {
-    return null;
-  }
-  return String(val);
-}
-
-function normalizeSplitArray(arr) {
-  if (!Array.isArray(arr)) {
-    return [];
-  }
-  const result = [];
-  for (const item of arr) {
-    const value = normalizeSplitValue(item);
-    if (value !== null) {
-      result.push(value);
-    }
-  }
-  return result;
 }
 
 function buildRawConnections(params) {
@@ -237,7 +194,7 @@ function buildRawConnections(params) {
     if (!leftInfo.position || leftInfo.position.length < 2) continue;
 
     const splitIndices = key.split('-')
-      .map((val) => normalizeSplitValue(val))
+      .map((val) => normalizeConnectorSplitValue(val))
       .filter((n) => n !== null);
     if (!splitIndices.length) continue;
 
