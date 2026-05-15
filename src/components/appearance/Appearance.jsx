@@ -34,10 +34,9 @@ import {
   SidebarMenuSubItem
 } from '@/components/ui/sidebar';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
-import { ChevronDown, Link, Box, Info, Tag } from 'lucide-react';
+import { ChevronDown, Link, Box, Info } from 'lucide-react';
 import { FocusHighlightingSection } from './FocusHighlightingSection';
 import { PivotEdgeEffectsSection } from './PivotEdgeEffectsSection';
-import { Switch } from '@/components/ui/switch';
 
 
 // ==========================================================================
@@ -179,42 +178,6 @@ export function Appearance() {
 // ==========================================================================
 // SUB-COMPONENTS
 // ==========================================================================
-
-export function LabelsSection({ labelsVisible, onToggleLabels }) {
-  return (
-    <Collapsible defaultOpen asChild className="group/collapsible">
-      <SidebarMenuItem>
-        <CollapsibleTrigger asChild>
-          <SidebarMenuButton tooltip="Labels">
-            <Tag className="text-primary" />
-            <span>Taxa Labels</span>
-            <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-          </SidebarMenuButton>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <SidebarMenuSub>
-            <SidebarMenuSubItem>
-              <div className="px-2 py-3">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="labels-toggle" className="text-xs font-medium text-foreground/80">Show Labels</Label>
-                  <Switch
-                    id="labels-toggle"
-                    checked={labelsVisible}
-                    onCheckedChange={onToggleLabels}
-                  />
-                </div>
-                <div className="flex items-start gap-2 text-2xs text-muted-foreground/80 italic mt-3 leading-relaxed">
-                  <Info className="size-3 shrink-0 mt-1" />
-                  <span>When hidden, labels are replaced with dots at leaf positions.</span>
-                </div>
-              </div>
-            </SidebarMenuSubItem>
-          </SidebarMenuSub>
-        </CollapsibleContent>
-      </SidebarMenuItem>
-    </Collapsible>
-  );
-}
 
 export function ConnectionsSection({ linkConnectionOpacity, connectorStrokeWidth, onLinkOpacityChange, onConnectorStrokeWidthChange }) {
   return (

@@ -37,7 +37,6 @@ export interface AppStoreState {
   distanceWeightedRfd: number[];
   scaleList: Array<{ index?: number; value?: number }>;
   maxScale: number;
-  scaleValues: number[];
   pairSolutions: any;
   pivotEdgeTracking: any[];
   subtreeTracking: any[];
@@ -109,7 +108,6 @@ export interface AppStoreState {
   msaPreviousRegion: any;
   msaRowOrder: any;
   isMsaViewerOpen: boolean;
-  msaViewerDetached: boolean;
   syncMSAEnabled: boolean;
   msaWindow: any;
 
@@ -163,7 +161,6 @@ export interface AppStoreState {
   contextMenuOpen: boolean;
   contextMenuPosition: ContextMenuPosition;
   contextMenuNode: ContextMenuNode | null;
-  contextMenuTreeData: unknown | null;
 
   // Actions
   initialize: (movieData: any) => void;
@@ -239,7 +236,6 @@ export interface AppStoreState {
   clearMsaRowOrder: () => void;
   openMsaViewer: () => void;
   closeMsaViewer: () => void;
-  setMsaViewerDetached: (detached: boolean) => void;
   setMsaWindow: (partial: any) => void;
   setSyncMSAEnabled: (enabled: boolean) => void;
 

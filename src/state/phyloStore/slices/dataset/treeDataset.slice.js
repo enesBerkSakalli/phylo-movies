@@ -22,7 +22,6 @@ export const createTreeDatasetSlice = (_set, get) => ({
   distanceWeightedRfd: [],
   scaleList: [],
   maxScale: 0,
-  scaleValues: [],
 
   // ==========================================================================
   // STATE: Change Tracking

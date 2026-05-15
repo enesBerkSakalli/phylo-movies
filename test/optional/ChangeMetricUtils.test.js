@@ -1,17 +1,17 @@
 /**
- * Comprehensive Test Suite for ChangeMetricUtils
+ * Comprehensive test suite for extension change metrics
  *
  * Tests the tree change metric calculation utilities that quantify
  * the magnitude of transformations between tree layouts.
  *
- * @module test/ChangeMetricUtils.test
+ * @module test/extension-change-metrics
  */
 
 import { expect } from 'chai';
 import {
   computeExtensionChangeMetrics,
   classifyExtensionChanges
-} from '../../src/treeVisualisation/utils/ChangeMetricUtils.js';
+} from '../helpers/extensionChangeMetrics.js';
 
 /**
  * Helper: Create a mock leaf node
@@ -52,7 +52,7 @@ function createMockLayout(leafSpecs, maxRadius = null) {
   };
 }
 
-describe('ChangeMetricUtils', () => {
+describe('extension change metrics', () => {
 
   describe('computeExtensionChangeMetrics - Input Validation', () => {
 
