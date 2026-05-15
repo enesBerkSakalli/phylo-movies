@@ -1,5 +1,5 @@
 import { buildBundledBezierPath } from '../../builders/geometry/connectors/ConnectorGeometryBuilder.js';
-import { flattenSplitSets, getMapValueBySplitIdentity } from '../../../utils/splitMatching.js';
+import { flattenSplitSets, getMapValueBySplitIdentity, isSubset } from '../../../utils/splitMatching.js';
 import { computeConnectionColor } from './ComparisonColorUtils.js';
 import {
   pushOutward,
@@ -94,7 +94,7 @@ export function buildSubtreeConnectors(options) {
 function getColorEntry(leftInfo, splitIndices, jumpingSubtreeSets, leftPositions) {
   let matchingSubtree = null;
   for (const subtreeSet of jumpingSubtreeSets) {
-    if (isSubsetOf(splitIndices, subtreeSet)) {
+    if (isSubset(splitIndices, subtreeSet)) {
       matchingSubtree = subtreeSet;
       break;
     }
@@ -107,24 +107,6 @@ function getColorEntry(leftInfo, splitIndices, jumpingSubtreeSets, leftPositions
   }
 
   return leftInfo;
-}
-
-// ========== Validation Helpers ==========
-
-/**
- * Check if all elements of an array exist in a set (subset check).
- * @param {Array} array - Array of elements to check
- * @param {Set} set - Set to check against
- * @returns {boolean} True if all array elements exist in the set
- */
-function isSubsetOf(array, set) {
-  if (!Array.isArray(array) || !set || !(set instanceof Set)) {
-    return false;
-  }
-  if (array.length > set.size) {
-    return false;
-  }
-  return array.every((element) => set.has(element));
 }
 
 // ========== Connection Object Creation ==========
@@ -259,13 +241,13 @@ function buildRawConnections(params) {
       .filter((n) => n !== null);
     if (!splitIndices.length) continue;
 
-    if (!isSubsetOfAny(splitIndices, jumpingSubtreeSets)) continue;
+    if (!isSplitSubsetOfAny(splitIndices, jumpingSubtreeSets)) continue;
 
     const rightMatch = rightLeavesByName.get(leftInfo.name);
     if (!rightMatch) continue;
     if (!rightMatch.info.position || rightMatch.info.position.length < 2) continue;
 
-    const isCurrentlyMoving = isSubsetOfAny(splitIndices, currentSubtreeSets);
+    const isCurrentlyMoving = isSplitSubsetOfAny(splitIndices, currentSubtreeSets);
     const source = [leftInfo.position[0], leftInfo.position[1], 0];
     const target = [rightMatch.info.position[0], rightMatch.info.position[1], 0];
 
@@ -297,9 +279,9 @@ function buildRawConnections(params) {
   return connections;
 }
 
-function isSubsetOfAny(splitIndices, subtreeSets) {
+function isSplitSubsetOfAny(splitIndices, subtreeSets) {
   for (const subtreeSet of subtreeSets || []) {
-    if (isSubsetOf(splitIndices, subtreeSet)) return true;
+    if (isSubset(splitIndices, subtreeSet)) return true;
   }
   return false;
 }

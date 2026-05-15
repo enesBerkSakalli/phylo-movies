@@ -1,5 +1,19 @@
 import { describe, it, expect, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { buildSubtreeConnectors } from '../src/treeVisualisation/deckgl/data/transforms/SubtreeConnectorBuilder.js';
+
+const repoRoot = dirname(dirname(fileURLToPath(import.meta.url)));
+const builderSourcePath = join(
+  repoRoot,
+  'src',
+  'treeVisualisation',
+  'deckgl',
+  'data',
+  'transforms',
+  'SubtreeConnectorBuilder.js'
+);
 
 const makeLeaf = (index, name, position, parentId = null) => ({
   id: `leaf-${index}`,
@@ -50,6 +64,13 @@ const buildOptions = (overrides = {}) => {
 };
 
 describe('SubtreeConnectorBuilder', function () {
+  it('reuses the shared split subset helper instead of a local copy', function () {
+    const source = readFileSync(builderSourcePath, 'utf8');
+
+    expect(source).toMatch(/import\s+\{[^}]*\bisSubset\b[^}]*\}\s+from\s+['"][^'"]*splitMatching\.js['"]/s);
+    expect(source).not.toMatch(/function\s+isSubsetOf\s*\(/);
+  });
+
   it('builds connectors when positions are Maps', function () {
     const connectors = buildSubtreeConnectors(buildOptions({
       latticeSolutions: { '[99]': [[10]] },
