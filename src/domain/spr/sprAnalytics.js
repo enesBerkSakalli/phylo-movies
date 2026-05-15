@@ -84,7 +84,7 @@ export function buildSprMoveEventRows(pairSolutions, options = {}) {
   return Object.entries(pairSolutions)
     .flatMap(([pairKey, solution], entryIndex) => {
       const parsedPair = parsePairKey(pairKey);
-      const pairIndex = parsedPair?.sourceTreeIndex ?? entryIndex;
+      const pairIndex = resolvePairArrayIndex(pairKey, parsedPair, entryIndex, pairInterpolationRanges);
       const sourceTreeIndex = parsedPair?.sourceTreeIndex ?? null;
       const destinationTreeIndex = parsedPair?.destinationTreeIndex ?? null;
       const measuredEvents = Array.isArray(solution?.spr_move_events)
@@ -104,14 +104,23 @@ export function buildSprMoveEventRows(pairSolutions, options = {}) {
         const eventGroup = highlightGroup.length > 0
           ? highlightGroup
           : (driverSplitIndices.length > 0 ? [driverSplitIndices] : []);
-        const splitIndices = flattenHighlightGroup(eventGroup);
+        const contextSplitIndices = flattenHighlightGroup(eventGroup);
+        const splitIndices = driverSplitIndices.length > 0
+          ? driverSplitIndices
+          : contextSplitIndices;
         const signature = getSubtreeSignature(splitIndices);
         if (!signature) return null;
 
         const pivotEdge = normalizeSubtreeIndices(event?.pivot_edge);
         const pivotKey = pivotEdge.length > 0 ? buildSolutionKey(pivotEdge) : null;
         const attachmentContext = pivotKey
-          ? resolveGroupAttachmentContext(solution, pivotKey, eventGroup, splitIndices)
+          ? resolveMoveAttachmentContext(
+            solution,
+            pivotKey,
+            splitIndices,
+            eventGroup,
+            contextSplitIndices
+          )
           : null;
         const stepRange = normalizeStepRange(event?.step_range)
           ?? resolveStepRangeForPivot(solution, pivotEdge);
@@ -133,6 +142,7 @@ export function buildSprMoveEventRows(pairSolutions, options = {}) {
           signature,
           splitIndices,
           driverSplitIndices,
+          contextSplitIndices,
           highlightGroup: eventGroup,
           groupSize: eventGroup.length,
           taxaCount: splitIndices.length,
@@ -182,6 +192,7 @@ function aggregateMoverRows(eventRows) {
         signature: event.signature,
         splitIndices: event.splitIndices,
         driverSplitIndices: event.driverSplitIndices,
+        contextSplitIndices: event.contextSplitIndices,
         highlightGroup: event.highlightGroup,
         groupSize: event.groupSize,
         count: 0,
@@ -261,7 +272,7 @@ export function calculateSprPairActivity(pairSolutions, options = {}) {
   return Object.entries(pairSolutions)
     .map(([pairKey, solution], entryIndex) => {
       const parsedPair = parsePairKey(pairKey);
-      const pairIndex = parsedPair?.sourceTreeIndex ?? entryIndex;
+      const pairIndex = resolvePairArrayIndex(pairKey, parsedPair, entryIndex, pairInterpolationRanges);
       const events = eventsByPair.get(pairKey) ?? [];
       const movers = aggregateMoverRows(events);
       const moverOccurrenceCount = movers
@@ -527,6 +538,20 @@ function selectFarthestMover(movers) {
     })[0];
 }
 
+function resolvePairArrayIndex(pairKey, parsedPair, entryIndex, pairInterpolationRanges) {
+  if (parsedPair && Array.isArray(pairInterpolationRanges)) {
+    const rangeIndex = pairInterpolationRanges.findIndex((range) => (
+      Array.isArray(range)
+      && range[0] === parsedPair.sourceTreeIndex
+      && range[1] === parsedPair.destinationTreeIndex
+    ));
+    if (rangeIndex >= 0) return rangeIndex;
+  }
+
+  if (parsedPair?.sourceTreeIndex !== undefined) return parsedPair.sourceTreeIndex;
+  return entryIndex;
+}
+
 function resolvePathHops(event) {
   const total = numberOrNull(event?.total_hops);
   if (total !== null) return total;
@@ -543,6 +568,23 @@ function resolvePathLength(event) {
   const collapse = numberOrNull(event?.collapse_branch_length) ?? 0;
   const expand = numberOrNull(event?.expand_branch_length) ?? 0;
   return collapse + expand;
+}
+
+function resolveMoveAttachmentContext(solution, pivotKey, splitIndices, highlightGroup, contextSplitIndices) {
+  const driverContext = resolveAttachmentContext(
+    solution,
+    pivotKey,
+    splitIndices,
+    splitIndices
+  );
+  if (driverContext) return driverContext;
+
+  return resolveGroupAttachmentContext(
+    solution,
+    pivotKey,
+    highlightGroup,
+    contextSplitIndices
+  );
 }
 
 function resolveGroupAttachmentContext(solution, pivotKey, highlightGroup, groupSplitIndices) {

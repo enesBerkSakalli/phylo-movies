@@ -8,11 +8,13 @@ import {
 
 interface SprSummaryMetricsProps {
     distinctMoverCount: number;
-    totalMoverOccurrences: number;
+    sprMovementCount: number;
     transitionEventCount: number;
     activePairCount: number;
     singletonMoverPercentage: number;
     topMoverPercentage: number | null;
+    sprMoveEventCount: number;
+    pathEventCount: number;
     totalPathHops: number;
     averagePathHops: number;
     totalPathLength: number;
@@ -45,11 +47,13 @@ const SummaryTile = ({ icon, label, children }: SummaryTileProps) => (
 
 export const SprSummaryMetrics = ({
     distinctMoverCount,
-    totalMoverOccurrences,
+    sprMovementCount,
     transitionEventCount,
     activePairCount,
     singletonMoverPercentage,
     topMoverPercentage,
+    sprMoveEventCount,
+    pathEventCount,
     totalPathHops,
     averagePathHops,
     totalPathLength,
@@ -66,9 +70,9 @@ export const SprSummaryMetrics = ({
 
         <SummaryTile
             icon={<Zap className="size-3 text-primary" />}
-            label="SPR Move Events"
+            label="SPR Movements"
         >
-            <div className="text-2xl font-black tracking-tighter tabular-nums">{totalMoverOccurrences}</div>
+            <div className="text-2xl font-black tracking-tighter tabular-nums">{sprMovementCount}</div>
         </SummaryTile>
 
         <SummaryTile
@@ -129,9 +133,12 @@ export const SprSummaryMetrics = ({
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-2xs font-mono bg-popover border-border">
                     <div className="space-y-1">
-                        <div>Average per SPR event:</div>
+                        <div>Average per measured path event:</div>
                         <div className="font-bold text-primary">
                             {averagePathHops.toFixed(3)}
+                        </div>
+                        <div className="text-muted-foreground">
+                            Measured paths: {pathEventCount} / {sprMoveEventCount}
                         </div>
                     </div>
                 </TooltipContent>
@@ -150,9 +157,12 @@ export const SprSummaryMetrics = ({
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-2xs font-mono bg-popover border-border">
                     <div className="space-y-1">
-                        <div>Average per SPR event:</div>
+                        <div>Average per measured path event:</div>
                         <div className="font-bold text-primary">
                             {averagePathLength.toFixed(6)}
+                        </div>
+                        <div className="text-muted-foreground">
+                            Measured paths: {pathEventCount} / {sprMoveEventCount}
                         </div>
                     </div>
                 </TooltipContent>

@@ -139,7 +139,7 @@ function MovingSubtreesSection({ subtreeGroups, isExpanded, onToggleExpanded }) 
       {/* Section header with expand/collapse button */}
       <div className="flex items-center justify-between">
         <span className="text-muted-foreground font-medium text-2xs uppercase tracking-wider">
-          Moved groups
+          Moved subtrees
         </span>
         {hasManyGroups && (
           <Button
