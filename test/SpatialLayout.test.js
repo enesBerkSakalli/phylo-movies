@@ -3,7 +3,13 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import * as spatialLayout from '../src/treeVisualisation/spatial/layout.js';
 
-const { calculateSafeAreaPadding, normalizeSafeArea } = spatialLayout;
+const {
+  calculateRectOverlap,
+  calculateSafeAreaPadding,
+  calculateSafeAreaPaddingForRect,
+  classifySafeAreaBar,
+  normalizeSafeArea
+} = spatialLayout;
 
 function rect(left, top, width, height) {
   return {
@@ -38,6 +44,53 @@ describe('spatial safe-area layout helpers', () => {
     expect(spatialLayout.SAFE_AREA_EDGE_THRESHOLD_PX).toBe(24);
     expect(spatialLayout.SAFE_AREA_EXTRA_PADDING_PX).toBe(20);
     expect(spatialLayout.SAFE_AREA_MIN_VISIBLE_FRACTION).toBe(0.4);
+    expect(spatialLayout.SAFE_AREA_BAR_COVERAGE_FRACTION).toBe(0.5);
+  });
+
+  it('calculates rectangle overlap without DOM access', () => {
+    expect(calculateRectOverlap(
+      rect(50, 75, 200, 100),
+      rect(0, 0, 150, 125)
+    )).toEqual({ x: 100, y: 50 });
+
+    expect(calculateRectOverlap(
+      rect(200, 200, 50, 50),
+      rect(0, 0, 100, 100)
+    )).toEqual({ x: 0, y: 0 });
+  });
+
+  it('classifies safe-area bars by canvas coverage', () => {
+    const canvasRect = rect(0, 0, 1000, 800);
+
+    expect(classifySafeAreaBar(rect(0, 740, 501, 60), canvasRect)).toEqual({
+      horizontal: true,
+      vertical: false
+    });
+    expect(classifySafeAreaBar(rect(960, 0, 40, 401), canvasRect)).toEqual({
+      horizontal: false,
+      vertical: true
+    });
+    expect(classifySafeAreaBar(rect(960, 740, 40, 60), canvasRect)).toEqual({
+      horizontal: false,
+      vertical: false
+    });
+  });
+
+  it('calculates raw edge padding for one overlapping safe-area element', () => {
+    const canvasRect = rect(0, 0, 1000, 800);
+
+    expect(calculateSafeAreaPaddingForRect(rect(0, 740, 1000, 60), canvasRect)).toEqual({
+      top: 0,
+      right: 0,
+      bottom: 60,
+      left: 0
+    });
+    expect(calculateSafeAreaPaddingForRect(rect(0, 0, 40, 800), canvasRect)).toEqual({
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 40
+    });
   });
 
   it('adds extra bottom padding for an overlapping movie player bar', () => {

@@ -16,6 +16,64 @@ export const SAFE_AREA_UI_SELECTORS = Object.freeze([
 export const SAFE_AREA_EDGE_THRESHOLD_PX = 24;
 export const SAFE_AREA_EXTRA_PADDING_PX = 20;
 export const SAFE_AREA_MIN_VISIBLE_FRACTION = 0.4;
+export const SAFE_AREA_BAR_COVERAGE_FRACTION = 0.5;
+
+function createEmptySafeAreaPadding() {
+  return { top: 0, right: 0, bottom: 0, left: 0 };
+}
+
+function hasSafeAreaPadding(padding) {
+  return Boolean(padding.top || padding.right || padding.bottom || padding.left);
+}
+
+function mergeSafeAreaPadding(target, next) {
+  target.top = Math.max(target.top, next.top);
+  target.right = Math.max(target.right, next.right);
+  target.bottom = Math.max(target.bottom, next.bottom);
+  target.left = Math.max(target.left, next.left);
+}
+
+export function calculateRectOverlap(rect, bounds) {
+  return {
+    x: Math.max(0, Math.min(rect.right, bounds.right) - Math.max(rect.left, bounds.left)),
+    y: Math.max(0, Math.min(rect.bottom, bounds.bottom) - Math.max(rect.top, bounds.top))
+  };
+}
+
+export function classifySafeAreaBar(rect, canvasRect) {
+  return {
+    horizontal: rect.width > canvasRect.width * SAFE_AREA_BAR_COVERAGE_FRACTION,
+    vertical: rect.height > canvasRect.height * SAFE_AREA_BAR_COVERAGE_FRACTION
+  };
+}
+
+export function calculateSafeAreaPaddingForRect(rect, canvasRect) {
+  const padding = createEmptySafeAreaPadding();
+  const overlap = calculateRectOverlap(rect, canvasRect);
+  if (overlap.x <= 0 || overlap.y <= 0) return padding;
+
+  const { horizontal, vertical } = classifySafeAreaBar(rect, canvasRect);
+
+  if (horizontal) {
+    if (rect.top <= canvasRect.top + SAFE_AREA_EDGE_THRESHOLD_PX) {
+      padding.top = Math.min(rect.bottom - canvasRect.top, canvasRect.height);
+    }
+    if (rect.bottom >= canvasRect.bottom - SAFE_AREA_EDGE_THRESHOLD_PX) {
+      padding.bottom = Math.min(canvasRect.bottom - rect.top, canvasRect.height);
+    }
+  }
+
+  if (vertical) {
+    if (rect.left <= canvasRect.left + SAFE_AREA_EDGE_THRESHOLD_PX) {
+      padding.left = Math.min(rect.right - canvasRect.left, canvasRect.width);
+    }
+    if (rect.right >= canvasRect.right - SAFE_AREA_EDGE_THRESHOLD_PX) {
+      padding.right = Math.min(canvasRect.right - rect.left, canvasRect.width);
+    }
+  }
+
+  return padding;
+}
 
 /**
  * Scans the DOM for specific UI elements that float over the canvas
@@ -31,7 +89,7 @@ export function calculateSafeAreaPadding(webglContainerNode) {
   const canvasRect = webglContainerNode.getBoundingClientRect();
   if (!canvasRect?.width || !canvasRect?.height) return null;
 
-  const padding = { top: 0, right: 0, bottom: 0, left: 0 };
+  const padding = createEmptySafeAreaPadding();
 
   SAFE_AREA_UI_SELECTORS.forEach((selector) => {
     const el = document.querySelector(selector);
@@ -39,35 +97,10 @@ export function calculateSafeAreaPadding(webglContainerNode) {
     const rect = el.getBoundingClientRect();
     if (rect.width <= 0 || rect.height <= 0) return;
 
-    // Intersection Overlap Logic
-    const overlapX = Math.max(0, Math.min(rect.right, canvasRect.right) - Math.max(rect.left, canvasRect.left));
-    const overlapY = Math.max(0, Math.min(rect.bottom, canvasRect.bottom) - Math.max(rect.top, canvasRect.top));
-    if (overlapX <= 0 || overlapY <= 0) return;
-
-    // Heuristic: Only consider an element as a "bar" (top/bottom/side) if it covers > 50% of the edge.
-    const isHorizontalBar = rect.width > canvasRect.width * 0.5;
-    const isVerticalBar = rect.height > canvasRect.height * 0.5;
-
-    if (isHorizontalBar) {
-      if (rect.top <= canvasRect.top + SAFE_AREA_EDGE_THRESHOLD_PX) {
-        padding.top = Math.max(padding.top, Math.min(rect.bottom - canvasRect.top, canvasRect.height));
-      }
-      if (rect.bottom >= canvasRect.bottom - SAFE_AREA_EDGE_THRESHOLD_PX) {
-        padding.bottom = Math.max(padding.bottom, Math.min(canvasRect.bottom - rect.top, canvasRect.height));
-      }
-    }
-
-    if (isVerticalBar) {
-      if (rect.left <= canvasRect.left + SAFE_AREA_EDGE_THRESHOLD_PX) {
-        padding.left = Math.max(padding.left, Math.min(rect.right - canvasRect.left, canvasRect.width));
-      }
-      if (rect.right >= canvasRect.right - SAFE_AREA_EDGE_THRESHOLD_PX) {
-        padding.right = Math.max(padding.right, Math.min(canvasRect.right - rect.left, canvasRect.width));
-      }
-    }
+    mergeSafeAreaPadding(padding, calculateSafeAreaPaddingForRect(rect, canvasRect));
   });
 
-  if (!padding.top && !padding.right && !padding.bottom && !padding.left) return null;
+  if (!hasSafeAreaPadding(padding)) return null;
 
   return {
     top: padding.top ? padding.top + SAFE_AREA_EXTRA_PADDING_PX : 0,
