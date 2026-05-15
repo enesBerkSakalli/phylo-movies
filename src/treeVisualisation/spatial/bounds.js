@@ -28,6 +28,15 @@ export function estimateLabelBoundsPadding(labels, sizePx) {
   };
 }
 
+export function calculateViewportBoundsPadding(viewBounds, paddingFactor) {
+  const [viewMinX, viewMinY, viewMaxX, viewMaxY] = viewBounds;
+
+  return {
+    x: (viewMaxX - viewMinX) * (paddingFactor - 1) / 2,
+    y: (viewMaxY - viewMinY) * (paddingFactor - 1) / 2
+  };
+}
+
 /**
  * Checks if a bounding box is within the current Viewport.
  * Uses a relaxed intersection test (paddingFactor) to prevent aggressive culling
@@ -42,11 +51,9 @@ export function areBoundsInView(bounds, viewport, paddingFactor = 1.05) {
   if (typeof viewport?.getBounds !== 'function') return false;
 
   // Viewport Bounds (Frustum Projection to Z=0 Plane)
-  const [viewMinX, viewMinY, viewMaxX, viewMaxY] = viewport.getBounds();
-
-  // Expand viewport bounds by padding for looser culling
-  const padX = (viewMaxX - viewMinX) * (paddingFactor - 1) / 2;
-  const padY = (viewMaxY - viewMinY) * (paddingFactor - 1) / 2;
+  const viewBounds = viewport.getBounds();
+  const [viewMinX, viewMinY, viewMaxX, viewMaxY] = viewBounds;
+  const { x: padX, y: padY } = calculateViewportBoundsPadding(viewBounds, paddingFactor);
 
   // AABB Intersection Test
   return (
