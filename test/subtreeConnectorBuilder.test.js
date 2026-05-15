@@ -86,9 +86,9 @@ describe('SubtreeConnectorBuilder', function () {
     expect(normalization.normalizeConnectorSplitValue('10')).toBe(10);
     expect(normalization.normalizeConnectorSplitValue(11)).toBe(11);
     expect(normalization.normalizeConnectorSplitValue('taxon-a')).toBe('taxon-a');
-    expect(normalization.normalizeConnectorSplitValue(null)).toBe(0);
+    expect(normalization.normalizeConnectorSplitValue(null)).toBeNull();
     expect(normalization.normalizeConnectorSplitValue(undefined)).toBeNull();
-    expect(normalization.normalizeConnectorSplitArray(['10', 11, null, 'taxon-a'])).toEqual([10, 11, 0, 'taxon-a']);
+    expect(normalization.normalizeConnectorSplitArray(['10', 11, null, 'taxon-a'])).toEqual([10, 11, 'taxon-a']);
     expect(normalization.normalizeConnectorSplitArray(new Set([10]))).toEqual([]);
   });
 
