@@ -6,6 +6,7 @@ import {
   normalizeConnectorSubtreeTrackingToSets,
   toConnectorSubtreeSetList
 } from './ConnectorSplitNormalization.js';
+import { resolveConnectorColorEntry } from './ConnectorColorEntryResolver.js';
 import {
   pushOutward,
   getAngle,
@@ -83,35 +84,6 @@ export function buildSubtreeConnectors(options) {
     leftInfoById: buildInfoById(leftPositions),
     rightInfoById: buildInfoById(rightPositions),
   });
-}
-
-// ---------- color entry resolution ----------
-
-/**
- * Get the normalized entry used for color determination.
- * For leaves inside a larger marked subtree, use the internal entry representing the full subtree.
- * @param {Object} leftInfo - Position map entry for the leaf
- * @param {Array} splitIndices - Split indices for the current leaf
- * @param {Array<Set>} jumpingSubtreeSets - Array of jumping subtree sets
- * @param {Map} leftPositions - Position map for left tree
- * @returns {Object} Normalized entry to use for color determination
- */
-function getColorEntry(leftInfo, splitIndices, jumpingSubtreeSets, leftPositions) {
-  let matchingSubtree = null;
-  for (const subtreeSet of jumpingSubtreeSets) {
-    if (isSubset(splitIndices, subtreeSet)) {
-      matchingSubtree = subtreeSet;
-      break;
-    }
-  }
-
-  if (matchingSubtree && splitIndices.length < matchingSubtree.size) {
-    const subtreeArray = Array.from(matchingSubtree).sort((a, b) => a - b);
-    const internalInfo = leftPositions.get(subtreeArray.join('-'));
-    if (internalInfo) return internalInfo;
-  }
-
-  return leftInfo;
 }
 
 // ========== Connection Object Creation ==========
@@ -208,7 +180,7 @@ function buildRawConnections(params) {
     const source = [leftInfo.position[0], leftInfo.position[1], 0];
     const target = [rightMatch.info.position[0], rightMatch.info.position[1], 0];
 
-    const colorEntry = getColorEntry(leftInfo, splitIndices, jumpingSubtreeSets, leftPositions);
+    const colorEntry = resolveConnectorColorEntry(leftInfo, splitIndices, jumpingSubtreeSets, leftPositions);
     const isPivotEdge = colorManager && typeof colorManager.isNodePivotEdge === 'function'
       && colorManager.isNodePivotEdge(colorEntry);
     const isHistorySubtree = colorManager && typeof colorManager.isNodeHistorySubtree === 'function'

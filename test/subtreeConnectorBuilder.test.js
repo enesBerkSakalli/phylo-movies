@@ -15,6 +15,14 @@ const builderSourcePath = join(
   'SubtreeConnectorBuilder.js'
 );
 
+async function importConnectorColorEntryResolver() {
+  try {
+    return await import('../src/treeVisualisation/deckgl/data/transforms/ConnectorColorEntryResolver.js');
+  } catch {
+    return null;
+  }
+}
+
 async function importConnectorSplitNormalization() {
   try {
     return await import('../src/treeVisualisation/deckgl/data/transforms/ConnectorSplitNormalization.js');
@@ -114,6 +122,32 @@ describe('SubtreeConnectorBuilder', function () {
     expect(source).not.toMatch(/function\s+toNormalizedSetList\s*\(/);
     expect(source).not.toMatch(/function\s+normalizeSplitValue\s*\(/);
     expect(source).not.toMatch(/function\s+normalizeSplitArray\s*\(/);
+  });
+
+  it('resolves connector color entries through a dedicated helper', async function () {
+    const resolver = await importConnectorColorEntryResolver();
+
+    expect(resolver).not.toBeNull();
+
+    const leafInfo = { id: 'leaf-10', split_indices: [10] };
+    const subtreeInfo = { id: 'subtree-10-11', split_indices: [10, 11] };
+    const leftPositions = new Map([['10-11', subtreeInfo]]);
+
+    expect(
+      resolver.resolveConnectorColorEntry(
+        leafInfo,
+        [10],
+        [new Set([10, 11])],
+        leftPositions
+      )
+    ).toBe(subtreeInfo);
+  });
+
+  it('keeps connector color entry resolution outside the builder', function () {
+    const source = readFileSync(builderSourcePath, 'utf8');
+
+    expect(source).toMatch(/from\s+['"]\.\/ConnectorColorEntryResolver\.js['"]/);
+    expect(source).not.toMatch(/function\s+getColorEntry\s*\(/);
   });
 
   it('builds connectors when positions are Maps', function () {
