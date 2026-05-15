@@ -16,25 +16,35 @@ describe('SPR mover frequencies', () => {
       expect(calculateSubtreeFrequencies({})).toEqual([]);
     });
 
-    it('should calculate frequencies from tree_pair_solutions structure', () => {
-      // Mock tree_pair_solutions with jumping_subtree_solutions
+    it('should calculate frequencies from spr_move_events', () => {
       const mockPairSolutions = {
         'pair_0_1': {
-          jumping_subtree_solutions: {
-            '[10, 11, 12, 13]': [  // pivot edge
-              [[13]]               // subtree that jumps at this pivot
-            ],
-            '[2, 3, 4, 5, 6]': [   // another pivot edge
-              [[4], [6]]           // two subtrees jump at this pivot
-            ]
-          }
+          spr_move_events: [
+            {
+              pivot_edge: [10, 11, 12, 13],
+              driver_subtree: [13],
+              highlight_group: [[13]]
+            },
+            {
+              pivot_edge: [2, 3, 4, 5, 6],
+              driver_subtree: [4],
+              highlight_group: [[4]]
+            },
+            {
+              pivot_edge: [2, 3, 4, 5, 6],
+              driver_subtree: [6],
+              highlight_group: [[6]]
+            }
+          ]
         },
         'pair_2_3': {
-          jumping_subtree_solutions: {
-            '[10, 11, 12, 13]': [
-              [[13]]               // same subtree jumps again
-            ]
-          }
+          spr_move_events: [
+            {
+              pivot_edge: [10, 11, 12, 13],
+              driver_subtree: [13],
+              highlight_group: [[13]]
+            }
+          ]
         }
       };
 
@@ -60,11 +70,13 @@ describe('SPR mover frequencies', () => {
     it('should handle multi-taxon subtrees', () => {
       const mockPairSolutions = {
         'pair_0_1': {
-          jumping_subtree_solutions: {
-            '[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]': [
-              [[[9, 10, 11, 12, 13]]]  // multi-taxon subtree
-            ]
-          }
+          spr_move_events: [
+            {
+              pivot_edge: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+              driver_subtree: [9, 10, 11, 12, 13],
+              highlight_group: [[9, 10, 11, 12, 13]]
+            }
+          ]
         }
       };
 
@@ -75,13 +87,17 @@ describe('SPR mover frequencies', () => {
       expect(result[0].count).toBe(1);
     });
 
-    it('should skip empty jumping_subtree_solutions', () => {
+    it('should not infer frequencies from jumping_subtree_solutions without spr_move_events', () => {
       const mockPairSolutions = {
         'pair_0_1': {
-          jumping_subtree_solutions: {}
+          jumping_subtree_solutions: {
+            '[10, 11, 12, 13]': [
+              [[13]]
+            ]
+          }
         },
         'pair_1_2': {
-          // no jumping_subtree_solutions key
+          // no spr_move_events key
         }
       };
 

@@ -416,7 +416,7 @@ describe('SPR analytics model', () => {
     });
   });
 
-  it('counts inferred legacy rows as SPR events without measured path metrics', () => {
+  it('does not infer SPR analytics rows from legacy jumping subtree solutions', () => {
     const legacyPairSolutions = {
       pair_0_1: {
         jumping_subtree_solutions: {
@@ -435,13 +435,15 @@ describe('SPR analytics model', () => {
     const events = buildSprMoveEventRows(legacyPairSolutions);
     const rows = calculateSprPairActivity(legacyPairSolutions);
     const summary = calculateSprDatasetSummary(legacyPairSolutions);
+    const frequencies = calculateSprMoverFrequencies(legacyPairSolutions);
     const timeline = buildSprActivityTimelinePoints(rows);
 
-    expect(events).toHaveLength(2);
-    expect(events.every((event) => event.hasMeasuredPath === false)).toBe(true);
+    expect(events).toHaveLength(0);
+    expect(frequencies).toHaveLength(0);
     expect(rows[0]).toMatchObject({
-      moverOccurrenceCount: 2,
-      sprMoveEventCount: 2,
+      moverOccurrenceCount: 0,
+      uniqueMoverCount: 0,
+      sprMoveEventCount: 0,
       pathEventCount: 0,
       totalPathHops: 0,
       averagePathHops: 0,
@@ -449,15 +451,18 @@ describe('SPR analytics model', () => {
       averagePathLength: 0,
     });
     expect(summary).toMatchObject({
-      moverOccurrenceCount: 2,
-      sprMoveEventCount: 2,
+      pairCount: 1,
+      activePairCount: 0,
+      moverOccurrenceCount: 0,
+      uniqueMovingSubtreeCount: 0,
+      sprMoveEventCount: 0,
       pathEventCount: 0,
       totalPathHops: 0,
       averagePathHops: 0,
       totalPathLength: 0,
       averagePathLength: 0,
     });
-    expect(timeline[0].sprMoveEvents).toBe(2);
+    expect(timeline[0].sprMoveEvents).toBe(0);
   });
 
   it('formats pair activity rows for the SPR activity timeline', () => {

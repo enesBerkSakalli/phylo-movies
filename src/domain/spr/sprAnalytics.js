@@ -62,8 +62,8 @@ export function extractMovingSubtrees(solutionSets) {
 /**
  * Build the canonical SPR move-event ledger.
  *
- * One row represents one backend spr_move_events entry. Older result files that lack
- * spr_move_events fall back to one inferred row per jumping_subtree_solutions mover.
+ * One row represents one backend spr_move_events entry. Pair solutions without
+ * spr_move_events do not produce SPR analytics rows.
  *
  * @param {Object} pairSolutions - Map of pairKey -> TreePairSolution
  * @param {Object} options
@@ -90,13 +90,11 @@ export function buildSprMoveEventRows(pairSolutions, options = {}) {
       const measuredEvents = Array.isArray(solution?.spr_move_events)
         ? solution.spr_move_events
         : [];
-      const rawEvents = measuredEvents.length > 0
-        ? measuredEvents.map((event, eventIndex) => ({
-          event,
-          eventIndex,
-          hasMeasuredPath: true,
-        }))
-        : buildInferredMoveEvents(solution);
+      const rawEvents = measuredEvents.map((event, eventIndex) => ({
+        event,
+        eventIndex,
+        hasMeasuredPath: true,
+      }));
 
       return rawEvents.map(({ event, eventIndex, hasMeasuredPath }) => {
         const driverSplitIndices = normalizeSubtreeIndices(event?.driver_subtree);
@@ -457,29 +455,6 @@ export function calculateSprTemporalDistribution(pairSolutions) {
   });
 
   return temporalMap;
-}
-
-function buildInferredMoveEvents(solution) {
-  const jumpingSolutions = solution?.jumping_subtree_solutions;
-  if (!jumpingSolutions) return [];
-
-  let eventIndex = 0;
-  return Object.entries(jumpingSolutions)
-    .flatMap(([pivotKey, solutionSets]) => {
-      const pivotEdge = parseSplitKey(pivotKey);
-      const stepRange = resolveStepRangeForPivot(solution, pivotEdge);
-
-      return extractMovingSubtrees(solutionSets).map((movingSubtree) => ({
-        eventIndex: eventIndex++,
-        hasMeasuredPath: false,
-        event: {
-          pivot_edge: pivotEdge,
-          driver_subtree: movingSubtree,
-          highlight_group: [movingSubtree],
-          step_range: stepRange,
-        },
-      }));
-    });
 }
 
 function summarizeSprEventRows(events) {
