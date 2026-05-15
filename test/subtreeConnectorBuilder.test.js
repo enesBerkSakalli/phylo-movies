@@ -50,6 +50,15 @@ const movementStateSourcePath = join(
   'transforms',
   'ConnectorMovementState.js'
 );
+const visualStateSourcePath = join(
+  repoRoot,
+  'src',
+  'treeVisualisation',
+  'deckgl',
+  'data',
+  'transforms',
+  'ConnectorVisualState.js'
+);
 const passiveGroupsSourcePath = join(
   repoRoot,
   'src',
@@ -130,6 +139,14 @@ async function importConnectorLeafPairCandidates() {
 async function importConnectorMovementState() {
   try {
     return await import('../src/treeVisualisation/deckgl/data/transforms/ConnectorMovementState.js');
+  } catch {
+    return null;
+  }
+}
+
+async function importConnectorVisualState() {
+  try {
+    return await import('../src/treeVisualisation/deckgl/data/transforms/ConnectorVisualState.js');
   } catch {
     return null;
   }
@@ -455,6 +472,49 @@ describe('SubtreeConnectorBuilder', function () {
     expect(rawSource).not.toMatch(/isNodePivotEdge/);
     expect(rawSource).not.toMatch(/isNodeHistorySubtree/);
     expect(movementStateSource).toMatch(/from\s+['"]\.\/ConnectorSplitEligibility\.js['"]/);
+  });
+
+  it('resolves connector visual state through a dedicated helper', async function () {
+    const visualState = await importConnectorVisualState();
+
+    expect(visualState).not.toBeNull();
+
+    const leafInfo = makeLeaf(10, 'A', [-30, -20, 0]);
+    const subtreeInfo = { id: 'subtree-10-11', split_indices: [10, 11] };
+    const leftPositions = new Map([['10-11', subtreeInfo]]);
+    const getNodeColor = vi.fn(() => '#ff0000');
+
+    expect(visualState.resolveConnectorVisualState({
+      leftInfo: leafInfo,
+      splitIndices: [10],
+      jumpingSubtreeSets: [new Set([10, 11])],
+      leftPositions,
+      currentSubtreeSets: [new Set([10, 11])],
+      colorManager: makeColorManager({ getNodeColor }),
+      markedSubtreesEnabled: true,
+      linkConnectionOpacity: 0.6,
+    })).toEqual({
+      colorEntry: subtreeInfo,
+      movementState: {
+        isCurrentSubtree: true,
+        isPivotEdge: false,
+        isHistorySubtree: false,
+        isMoving: true,
+      },
+      color: [255, 0, 0, 255],
+      isMoving: true,
+    });
+    expect(getNodeColor).toHaveBeenCalledWith(subtreeInfo);
+
+    const rawSource = readFileSync(rawConnectionsSourcePath, 'utf8');
+    const visualStateSource = readFileSync(visualStateSourcePath, 'utf8');
+    expect(rawSource).toMatch(/from\s+['"]\.\/ConnectorVisualState\.js['"]/);
+    expect(rawSource).not.toMatch(/resolveConnectorColorEntry/);
+    expect(rawSource).not.toMatch(/resolveConnectorMovementState/);
+    expect(rawSource).not.toMatch(/computeConnectionColor/);
+    expect(visualStateSource).toMatch(/from\s+['"]\.\/ConnectorColorEntryResolver\.js['"]/);
+    expect(visualStateSource).toMatch(/from\s+['"]\.\/ConnectorMovementState\.js['"]/);
+    expect(visualStateSource).toMatch(/from\s+['"]\.\/ComparisonColorUtils\.js['"]/);
   });
 
   it('builds raw connector connections through a dedicated helper', async function () {

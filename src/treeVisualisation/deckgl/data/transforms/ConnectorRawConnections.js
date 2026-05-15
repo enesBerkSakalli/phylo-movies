@@ -1,9 +1,7 @@
-import { computeConnectionColor } from './ComparisonColorUtils.js';
 import { createConnectorConnection } from './ConnectorConnectionObjects.js';
-import { resolveConnectorColorEntry } from './ConnectorColorEntryResolver.js';
 import { getConnectorLeafPairCandidate } from './ConnectorLeafPairCandidates.js';
 import { indexConnectorLeavesByName } from './ConnectorLeafIndex.js';
-import { resolveConnectorMovementState } from './ConnectorMovementState.js';
+import { resolveConnectorVisualState } from './ConnectorVisualState.js';
 
 export function buildRawConnectorConnections(params) {
   const {
@@ -27,32 +25,23 @@ export function buildRawConnectorConnections(params) {
     });
     if (!candidate) continue;
 
-    const colorEntry = resolveConnectorColorEntry(
-      candidate.leftInfo,
-      candidate.splitIndices,
-      jumpingSubtreeSets,
-      leftPositions
-    );
-    const movementState = resolveConnectorMovementState({
+    const visualState = resolveConnectorVisualState({
+      leftInfo: candidate.leftInfo,
       splitIndices: candidate.splitIndices,
+      jumpingSubtreeSets,
+      leftPositions,
       currentSubtreeSets,
-      colorEntry,
-      colorManager,
-    });
-    const color = computeConnectionColor(
-      colorEntry,
-      movementState.isMoving,
       colorManager,
       markedSubtreesEnabled,
-      linkConnectionOpacity
-    );
+      linkConnectionOpacity,
+    });
 
     connections.push(createConnectorConnection({
       id: `connector-${candidate.leftKey}-${candidate.rightKey}`,
       source: candidate.source,
       target: candidate.target,
-      color,
-      isCurrentlyMoving: movementState.isMoving,
+      color: visualState.color,
+      isCurrentlyMoving: visualState.isMoving,
       sourceInfo: candidate.leftInfo,
       targetInfo: candidate.rightInfo,
     }));
