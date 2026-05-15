@@ -19,7 +19,6 @@ export const createMsaViewerSlice = (set, get) => ({
   // STATE: MSA Viewer UI
   // ==========================================================================
   isMsaViewerOpen: false,
-  msaViewerDetached: false,
   syncMSAEnabled: true,
   msaWindow: { x: 40, y: 40, width: 960, height: 620 },
 
@@ -109,8 +108,7 @@ export const createMsaViewerSlice = (set, get) => ({
   // ACTIONS: MSA Viewer UI
   // ==========================================================================
   openMsaViewer: () => set({ isMsaViewerOpen: true }),
-  closeMsaViewer: () => set({ isMsaViewerOpen: false, msaViewerDetached: false }),
-  setMsaViewerDetached: (detached) => set({ msaViewerDetached: !!detached }),
+  closeMsaViewer: () => set({ isMsaViewerOpen: false }),
   setMsaWindow: (partial) => set((state) => ({
     msaWindow: { ...state.msaWindow, ...partial }
   })),

@@ -70,7 +70,6 @@ export { selectPlaying } from './selectPlaying.js';
 export { selectPlayhead } from './selectPlayhead.js';
 export { selectPrimaryTreeController } from './selectPrimaryTreeController.js';
 export { selectScaleList } from './selectScaleList.js';
-export { selectScaleValues } from './selectScaleValues.js';
 export { selectReset } from './selectReset.js';
 export { selectScrollToEndTimeline } from './selectScrollToEndTimeline.js';
 export { selectScrollToStartTimeline } from './selectScrollToStartTimeline.js';

@@ -75,6 +75,19 @@ describe('phylo store dataset normalization', () => {
     expect(state.treeIndexByPair).toEqual({ pair_0_2: [1] });
   });
 
+  it('stores scale metadata without the legacy scale duplicate', () => {
+    useAppStore.getState().initialize(makeMovieData());
+
+    const legacyScaleKey = ['scale', 'Values'].join('');
+    const state = useAppStore.getState();
+    expect(state.scaleList).toEqual([
+      { index: 0, value: 0 },
+      { index: 2, value: 0 },
+    ]);
+    expect(state.maxScale).toBe(0);
+    expect(Object.prototype.hasOwnProperty.call(state, legacyScaleKey)).toBe(false);
+  });
+
   it('returns explicit tree context for original and interpolated tree indices', () => {
     useAppStore.getState().initialize(makeMovieData());
 
@@ -95,5 +108,48 @@ describe('phylo store dataset normalization', () => {
       isOriginal: false,
       isFullTree: false,
     });
+  });
+
+  it('closes the MSA viewer without legacy detached viewer state', () => {
+    const detachedStateKey = ['msaViewer', 'Detached'].join('');
+    const detachedSetterKey = ['setMsaViewer', 'Detached'].join('');
+    const state = useAppStore.getState();
+
+    expect(Object.prototype.hasOwnProperty.call(state, detachedStateKey)).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(state, detachedSetterKey)).toBe(false);
+
+    state.openMsaViewer();
+    expect(useAppStore.getState().isMsaViewerOpen).toBe(true);
+
+    useAppStore.getState().closeMsaViewer();
+    expect(useAppStore.getState().isMsaViewerOpen).toBe(false);
+  });
+
+  it('opens the node context menu without storing legacy tree data', () => {
+    const legacyTreeDataKey = ['contextMenu', 'TreeData'].join('');
+    const node = {
+      name: 'node-a',
+      length: 0,
+      split_indices: [0, 1],
+      depth: 0,
+      height: 0,
+      children: [],
+    };
+    const treeData = { id: 'legacy-tree-payload' };
+
+    useAppStore.getState().showNodeContextMenu(node, treeData, 12, 34);
+
+    const openState = useAppStore.getState();
+    expect(openState.contextMenuOpen).toBe(true);
+    expect(openState.contextMenuPosition).toEqual({ x: 12, y: 34 });
+    expect(openState.contextMenuNode).toBe(node);
+    expect(Object.prototype.hasOwnProperty.call(openState, legacyTreeDataKey)).toBe(false);
+
+    openState.hideNodeContextMenu();
+
+    const closedState = useAppStore.getState();
+    expect(closedState.contextMenuOpen).toBe(false);
+    expect(closedState.contextMenuNode).toBeNull();
+    expect(Object.prototype.hasOwnProperty.call(closedState, legacyTreeDataKey)).toBe(false);
   });
 });

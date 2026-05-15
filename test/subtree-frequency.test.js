@@ -1,7 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { calculateSubtreeFrequencies, getTopSubtrees, formatSubtreeLabel } from '../src/domain/tree/subtreeFrequencyUtils';
+import {
+  calculateSprMoverFrequencies as calculateSubtreeFrequencies,
+  getTopSprMovers as getTopSubtrees,
+  formatSubtreeLabel,
+} from '../src/domain/spr/sprAnalytics.js';
 
-describe('subtreeFrequencyUtils', () => {
+describe('SPR mover frequencies', () => {
   describe('calculateSubtreeFrequencies', () => {
     it('should return empty array for null/undefined input', () => {
       expect(calculateSubtreeFrequencies(null)).toEqual([]);

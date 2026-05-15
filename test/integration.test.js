@@ -3,9 +3,9 @@ const { expect } = require('chai');
 const {
   computeExtensionChangeMetrics,
   classifyExtensionChanges,
-} = require('../src/treeVisualisation/utils/ChangeMetricUtils.js');
+} = require('./helpers/extensionChangeMetrics.js');
 
-describe('ChangeMetricUtils – extension deltas & classification', () => {
+describe('extension change metrics – deltas and classification', () => {
   const mkLeaf = (id, angle, radius) => ({
     split_indices: [id],
     angle,

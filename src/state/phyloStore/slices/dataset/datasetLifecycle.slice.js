@@ -30,7 +30,6 @@ export const createDatasetLifecycleSlice = (set, get) => ({
       distanceWeightedRfd: [],
       scaleList: [],
       maxScale: 0,
-      scaleValues: [],
       pairSolutions: {},
       pivotEdgeTracking: [],
       subtreeTracking: [],
@@ -57,7 +56,7 @@ export const createDatasetLifecycleSlice = (set, get) => ({
     const resolver = createTransitionResolver(movieData, treeMetadata);
     const fullTreeIndices = resolver.fullTreeIndices;
     const treeIndexByPair = buildTreeIndexByPair(treeMetadata);
-    const { scaleList, maxScale, scaleValues } = calculateTreeScales(interpolatedTrees, fullTreeIndices);
+    const { scaleList, maxScale } = calculateTreeScales(interpolatedTrees, fullTreeIndices);
     const numberOfFullTrees = fullTreeIndices.length;
 
     const msaColumnCount = extractMsaColumnCount(movieData);
@@ -103,7 +102,6 @@ export const createDatasetLifecycleSlice = (set, get) => ({
       distanceWeightedRfd,
       scaleList,
       maxScale,
-      scaleValues,
       pairSolutions: movieData.tree_pair_solutions,
       pivotEdgeTracking: movieData.pivot_edge_tracking,
       subtreeTracking: movieData.subtree_tracking,
