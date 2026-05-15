@@ -2,6 +2,7 @@ export interface SprMoverFrequency {
     signature: string;
     splitIndices: number[];
     driverSplitIndices?: number[];
+    contextSplitIndices?: number[];
     highlightGroup?: number[][];
     groupSize?: number;
     count: number;
@@ -23,6 +24,7 @@ export interface SprMoveEventRow {
     signature: string;
     splitIndices: number[];
     driverSplitIndices: number[];
+    contextSplitIndices: number[];
     highlightGroup: number[][];
     groupSize: number;
     pivotEdge: number[];

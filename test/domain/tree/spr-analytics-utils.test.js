@@ -223,7 +223,7 @@ describe('SPR analytics model', () => {
     });
   });
 
-  it('attributes measured grouped SPR events to the mover group', () => {
+  it('keeps backend highlight context separate from the physical moved subtree', () => {
     const groupedPairSolutions = {
       pair_0_1: {
         jumping_subtree_solutions: {
@@ -266,13 +266,14 @@ describe('SPR analytics model', () => {
     const events = buildSprMoveEventRows(groupedPairSolutions);
     expect(events).toHaveLength(1);
     expect(events[0]).toMatchObject({
-      signature: '1,2',
-      splitIndices: [1, 2],
+      signature: '1',
+      splitIndices: [1],
       driverSplitIndices: [1],
+      contextSplitIndices: [1, 2],
       highlightGroup: [[1], [2]],
       groupSize: 2,
-      sourceAttachment: [7, 8],
-      destinationAttachment: [9, 10],
+      sourceAttachment: [7],
+      destinationAttachment: [9],
       totalPathHops: 3,
       totalPathLength: 0.5,
     });
@@ -280,15 +281,88 @@ describe('SPR analytics model', () => {
     const frequencies = calculateSprMoverFrequencies(groupedPairSolutions);
     expect(frequencies).toHaveLength(1);
     expect(frequencies[0]).toMatchObject({
-      signature: '1,2',
-      splitIndices: [1, 2],
+      signature: '1',
+      splitIndices: [1],
       driverSplitIndices: [1],
+      contextSplitIndices: [1, 2],
       highlightGroup: [[1], [2]],
       groupSize: 2,
       totalPathHops: 3,
       totalPathLength: 0.5,
     });
-    expect(frequencies.find((item) => item.signature === '1')).toBeUndefined();
+    expect(frequencies.find((item) => item.signature === '1,2')).toBeUndefined();
+  });
+
+  it('maps pair-level distance arrays by interpolation range when pair keys use global tree indices', () => {
+    const sparsePairSolutions = {
+      pair_0_2: {
+        jumping_subtree_solutions: {},
+        solution_to_source_map: {},
+        solution_to_destination_map: {},
+        split_change_events: [],
+        spr_move_events: [],
+      },
+      pair_2_4: {
+        jumping_subtree_solutions: {
+          '[8]': [
+            [[4]],
+          ],
+        },
+        split_change_events: [
+          { split: [8], step_range: [0, 1] },
+        ],
+        solution_to_source_map: {
+          '[8]': {
+            '[4]': [4, 7],
+          },
+        },
+        solution_to_destination_map: {
+          '[8]': {
+            '[4]': [4, 9],
+          },
+        },
+        spr_move_events: [
+          {
+            pivot_edge: [8],
+            driver_subtree: [4],
+            highlight_group: [[4]],
+            step_range: [0, 1],
+            collapse_hops: 1,
+            expand_hops: 1,
+            total_hops: 2,
+            collapse_branch_length: 0.1,
+            expand_branch_length: 0.2,
+            total_branch_length: 0.3,
+          },
+        ],
+      },
+    };
+
+    const rows = calculateSprPairActivity(sparsePairSolutions, {
+      robinsonFouldsDistances: [0.25, 0.75],
+      weightedRobinsonFouldsDistances: [1.25, 1.75],
+      pairInterpolationRanges: [[0, 2], [2, 4]],
+    });
+    const events = buildSprMoveEventRows(sparsePairSolutions, {
+      robinsonFouldsDistances: [0.25, 0.75],
+      weightedRobinsonFouldsDistances: [1.25, 1.75],
+      pairInterpolationRanges: [[0, 2], [2, 4]],
+    });
+
+    expect(rows[1]).toMatchObject({
+      pairKey: 'pair_2_4',
+      pairIndex: 1,
+      interpolationRange: [2, 4],
+      rfDistance: 0.75,
+      weightedRfDistance: 1.75,
+    });
+    expect(events[0]).toMatchObject({
+      pairKey: 'pair_2_4',
+      pairIndex: 1,
+      interpolationRange: [2, 4],
+      rfDistance: 0.75,
+      weightedRfDistance: 1.75,
+    });
   });
 
   it('aggregates path travel by moved subtree', () => {

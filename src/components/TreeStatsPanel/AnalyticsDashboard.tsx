@@ -72,6 +72,7 @@ interface SprDatasetSummary {
     maxPairMoverOccurrenceCount: number;
     topMoverSharePercentage: number;
     sprMoveEventCount: number;
+    pathEventCount: number;
     totalPathHops: number;
     averagePathHops: number;
     totalPathLength: number;
@@ -169,12 +170,12 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
         <>
             <SidebarMenuItem>
                 <SidebarMenuButton
-                    tooltip="Open SPR Moves"
-                    aria-label="Open SPR Moves"
+                    tooltip="Open movements"
+                    aria-label="Open movements"
                     onClick={onOpen}
                 >
                     <Activity className="text-primary" />
-                    <span>SPR Moves</span>
+                    <span>Movements</span>
                 </SidebarMenuButton>
             </SidebarMenuItem>
 
@@ -200,16 +201,16 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
                     }}
                     dragHandleClassName="spr-analytics-drag-handle"
                     cancel=".spr-analytics-no-drag"
-                    className="fixed z-50 pointer-events-auto shadow-2xl border border-border/60 rounded-md bg-card overflow-hidden"
+                    className="fixed z-[1200] pointer-events-auto shadow-2xl border border-border/60 rounded-md bg-card overflow-hidden"
                 >
                 <div className="flex flex-col h-full overflow-hidden bg-card">
                     <div className="spr-analytics-drag-handle flex items-center justify-between gap-2 px-3 py-2 border-b border-border/40 bg-muted/20 backdrop-blur-sm shrink-0 cursor-move select-none">
                             <div className="flex items-center gap-2 min-w-0">
                                 <Activity className="size-4 text-primary shrink-0" aria-hidden />
                                 <div className="flex flex-col min-w-0">
-                                    <div className="text-xs font-bold leading-tight tracking-tight uppercase">SPR Moves</div>
+                                    <div className="text-xs font-bold leading-tight tracking-tight uppercase">Movements</div>
                                     <div className="text-[9px] text-muted-foreground/80 leading-tight font-medium truncate">
-                                        Audit SPR move events and recurrent moved subtrees between neighboring trees.
+                                        Review what moved between neighboring trees and which subtrees move repeatedly.
                                     </div>
                                 </div>
                             </div>
@@ -217,7 +218,7 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
                                 variant="ghost"
                                 size="icon-xs"
                                 onClick={onClose}
-                                aria-label="Close SPR moves"
+                                aria-label="Close movements"
                                 className="spr-analytics-no-drag hover:bg-destructive/10 hover:text-destructive transition-colors"
                             >
                                 <X className="size-4" />
@@ -228,7 +229,7 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
                             <Tabs defaultValue="overview" className="flex flex-col flex-1 min-h-0 overflow-hidden">
                                 <TabsList className="w-full justify-start mb-4 shrink-0 bg-muted/30 p-1">
                                     <TabsTrigger value="overview" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">Overview</TabsTrigger>
-                                    <TabsTrigger value="events" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">Move Events</TabsTrigger>
+                                    <TabsTrigger value="events" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">Movements</TabsTrigger>
                                     <TabsTrigger value="details" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">Recurrent Subtrees</TabsTrigger>
                                 </TabsList>
 
@@ -241,17 +242,19 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
                                                     What is being counted?
                                                 </div>
                                                 <p className="text-2xs leading-relaxed text-muted-foreground">
-                                                    <strong>SPR</strong> is represented here as an event ledger: one row is one moved subtree from one attachment context to another between neighboring trees. Pair and subtree summaries are derived from those same event rows.
+                                                    A movement is one subtree that changes attachment between two neighboring trees. Each row shows what moved, where it moved from, and where it moved to.
                                                 </p>
                                             </Card>
 
                                             <SprSummaryMetrics
                                                 distinctMoverCount={sprSummary.uniqueMovingSubtreeCount}
-                                                totalMoverOccurrences={sprSummary.moverOccurrenceCount}
+                                                sprMovementCount={sprSummary.sprMoveEventCount}
                                                 transitionEventCount={sprSummary.transitionEventCount}
                                                 activePairCount={sprSummary.activePairCount}
                                                 singletonMoverPercentage={singletonMoverPercentage}
                                                 topMoverPercentage={sprSummary.topMoverSharePercentage}
+                                                sprMoveEventCount={sprSummary.sprMoveEventCount}
+                                                pathEventCount={sprSummary.pathEventCount}
                                                 totalPathHops={sprSummary.totalPathHops}
                                                 averagePathHops={sprSummary.averagePathHops}
                                                 totalPathLength={sprSummary.totalPathLength}
@@ -263,10 +266,10 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
                                                 <CardHeader className="pb-3 bg-muted/20 shrink-0">
                                                     <CardTitle className="flex items-center gap-2 text-base font-bold">
                                                         <Activity className="size-4 text-primary" />
-                                                        Moves Across Tree Pairs
+                                                        Movements Across Tree Pairs
                                                     </CardTitle>
                                                     <CardDescription className="text-xs">
-                                                        SPR move events and unique moved subtrees per neighboring tree pair.
+                                                        Movements and unique moved subtrees per neighboring tree pair.
                                                     </CardDescription>
                                                 </CardHeader>
                                                 <CardContent className="flex-1 min-h-0 p-2">
@@ -281,7 +284,7 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
                                                         Subtrees That Move Most Often
                                                     </CardTitle>
                                                     <CardDescription className="text-xs">
-                                                        Recurrent moved subtrees derived from the SPR move event ledger.
+                                                        Recurrent moved subtrees ranked by how often they move.
                                                     </CardDescription>
                                                 </CardHeader>
                                                 <CardContent className="flex-1 min-h-0 p-2">
@@ -297,10 +300,10 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
                                         <CardHeader className="pb-3 bg-muted/20 shrink-0">
                                             <CardTitle className="flex items-center gap-2 text-base font-bold">
                                                 <Activity className="size-4 text-primary" />
-                                                SPR Move Event Ledger
+                                                SPR Movements
                                             </CardTitle>
                                             <CardDescription className="text-xs flex items-center justify-between gap-2">
-                                                <span>One auditable row per SPR move event, including moved subtree, pivot edge, and from/to attachment context.</span>
+                                                <span>One row per movement, including moved subtree, pivot, and from/to attachments.</span>
                                                 <Button
                                                     type="button"
                                                     variant="outline"
@@ -314,7 +317,7 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
                                                 </Button>
                                             </CardDescription>
                                         </CardHeader>
-                                        <CardContent className="p-0 flex-1 min-h-0 overflow-auto">
+                                        <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
                                             <SprMoveEventTable
                                                 events={sprMoveEvents}
                                                 leafNamesByIndex={leafNamesByIndex}
@@ -332,7 +335,7 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
                                                 Recurrent Moved Subtrees
                                             </CardTitle>
                                             <CardDescription className="text-xs flex items-center justify-between gap-2">
-                                                <span>Moved subtrees summarized from the event ledger, ranked by repeated SPR events.</span>
+                                                <span>Moved subtrees summarized from movements, ranked by repeat count.</span>
                                                 <div className="flex items-center gap-2 shrink-0">
                                                     {allFreqs.length > 5 && (
                                                         <span className="flex items-center gap-1 text-muted-foreground/60 shrink-0 ml-2">

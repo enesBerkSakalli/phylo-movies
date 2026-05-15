@@ -16,7 +16,8 @@ import {
  * SubtreeFrequencyBarChart
  *
  * Vertical list showing top N most frequent moving subtrees with inline frequency bars.
- * Uses tree_pair_solutions.jumping_subtree_solutions as the data source.
+ * Uses backend spr_move_events when available and falls back to legacy
+ * jumping_subtree_solutions for older datasets.
  *
  * TUFTE PRINCIPLES:
  * - Zero Baseline: All bars scale from 0 (implicit in Progress component)

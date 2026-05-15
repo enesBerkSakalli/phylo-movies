@@ -40,4 +40,53 @@ describe('SPR analytics phylogenetic language', () => {
     expect(source).toContain('Moved Subtree');
     expect(source).toContain('Recurrent Subtrees');
   });
+
+  it('uses movement terminology instead of exposing event-ledger setup in the UI', () => {
+    const dashboardSource = fs.readFileSync(
+      path.join(process.cwd(), 'src/components/TreeStatsPanel/AnalyticsDashboard.tsx'),
+      'utf8',
+    );
+    const summarySource = fs.readFileSync(
+      path.join(process.cwd(), 'src/components/TreeStatsPanel/SubtreeAnalytics/SprSummaryMetrics.tsx'),
+      'utf8',
+    );
+    const tableSource = fs.readFileSync(
+      path.join(process.cwd(), 'src/components/TreeStatsPanel/SubtreeAnalytics/SprMoveEventTable.tsx'),
+      'utf8',
+    );
+    const timelineTooltipSource = fs.readFileSync(
+      path.join(process.cwd(), 'src/components/timeline/TimelineSegmentTooltip.jsx'),
+      'utf8',
+    );
+
+    expect(dashboardSource).toContain('<span>Movements</span>');
+    expect(dashboardSource).toContain('TabsTrigger value="events"');
+    expect(dashboardSource).toContain('>Movements</TabsTrigger>');
+    expect(dashboardSource).toContain('A movement is one subtree that changes attachment between two neighboring trees.');
+    expect(dashboardSource).not.toContain('event ledger');
+    expect(dashboardSource).not.toContain('backend driver subtree');
+
+    expect(summarySource).toContain('label="SPR Movements"');
+    expect(summarySource).not.toContain('label="SPR Move Events"');
+
+    expect(tableSource).toContain('aria-label="Search movements"');
+    expect(tableSource).toContain('No movements match this search.');
+    expect(tableSource).toContain('>Movement</th>');
+    expect(tableSource).not.toContain('Search SPR move events');
+
+    expect(timelineTooltipSource).toContain('Moved subtrees');
+    expect(timelineTooltipSource).not.toContain('Moved groups');
+  });
+
+  it('makes the main recurrent-subtree table highlightable like the sidebar summary', () => {
+    const source = fs.readFileSync(
+      path.join(process.cwd(), 'src/components/TreeStatsPanel/SubtreeAnalytics/SprFrequencyTable.tsx'),
+      'utf8',
+    );
+
+    expect(source).toContain('selectSetManuallyMarkedNodes');
+    expect(source).toContain('onClick={() => handleSubtreeClick(item.splitIndices)}');
+    expect(source).toContain('onKeyDown=');
+    expect(source).toContain('aria-pressed={isActive}');
+  });
 });

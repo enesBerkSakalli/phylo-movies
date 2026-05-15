@@ -28,8 +28,8 @@ export const createSprFrequencyCsv = (
         'Rank',
         'Moved Subtree',
         'Taxa Count',
-        'SPR Event Count',
-        '% of SPR Events',
+        'Movement Count',
+        '% of Movements',
         'Tree Pair Count',
         'Path Event Count',
         'Total Path Hops',
@@ -85,11 +85,12 @@ export const createSprMoveEventCsv = (
     leafNamesByIndex: string[]
 ): string => {
     const headers = [
-        'Event ID',
+        'Movement ID',
         'Tree Pair',
         'Pair Key',
-        'Event Index',
+        'Movement Index',
         'Moved Subtree',
+        'Context Subtree',
         'Taxa Count',
         'Pivot Edge',
         'From Attachment',
@@ -97,10 +98,11 @@ export const createSprMoveEventCsv = (
         'Step Range',
         'Path Hops',
         'Path Length',
-        'Tree Change',
-        'Weighted Tree Change',
+        'RF Distance',
+        'Weighted RF Distance',
         'Measured Path',
-        'Split Indices'
+        'Split Indices',
+        'Context Split Indices'
     ];
 
     const rows = events.map((event) => [
@@ -109,6 +111,7 @@ export const createSprMoveEventCsv = (
         event.pairKey,
         event.eventIndex,
         formatLabel(event.splitIndices, leafNamesByIndex),
+        formatLabel(event.contextSplitIndices, leafNamesByIndex),
         event.splitIndices.length,
         formatLabel(event.pivotEdge, leafNamesByIndex),
         formatLabel(event.sourceAttachment, leafNamesByIndex),
@@ -119,7 +122,8 @@ export const createSprMoveEventCsv = (
         formatOptionalFixed(event.rfDistance),
         formatOptionalFixed(event.weightedRfDistance),
         event.hasMeasuredPath ? 'yes' : 'no',
-        formatIndexList(event.splitIndices)
+        formatIndexList(event.splitIndices),
+        formatIndexList(event.contextSplitIndices)
     ]);
 
     return [headers, ...rows]
@@ -146,7 +150,7 @@ export const createSprMoveEventExportName = (fileName: string, date = new Date()
         .replace(/-+/g, '-')
         .replace(/^-+|-+$/g, '') || 'dataset';
 
-    return `${baseName}-spr-move-events-${dateStamp}.csv`;
+    return `${baseName}-spr-movements-${dateStamp}.csv`;
 };
 
 export const downloadCsvFile = (content: string, downloadName: string): void => {

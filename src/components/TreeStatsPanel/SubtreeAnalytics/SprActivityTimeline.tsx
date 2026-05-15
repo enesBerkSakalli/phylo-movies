@@ -22,7 +22,7 @@ interface SprActivityTimelineProps {
 
 const chartConfig = {
     sprMoveEvents: {
-        label: 'SPR events',
+        label: 'Movements',
         color: '#0072B2',
     },
     uniqueMovers: {
@@ -51,7 +51,7 @@ export const SprActivityTimeline = ({ rows }: SprActivityTimelineProps) => {
         <div
             className="h-full w-full"
             role="img"
-            aria-label="Chart showing SPR move event counts and unique moved subtree counts by tree pair"
+            aria-label="Chart showing movement counts and unique moved subtree counts by tree pair"
         >
             <ChartContainer config={chartConfig} className="h-full w-full">
                 <ComposedChart
@@ -80,7 +80,7 @@ export const SprActivityTimeline = ({ rows }: SprActivityTimelineProps) => {
                         tickCount={5}
                         fontSize={9}
                         label={{
-                            value: 'SPR events',
+                            value: 'Movements',
                             angle: -90,
                             position: 'insideLeft',
                             style: { fontSize: 10, fill: 'currentColor' },
@@ -97,7 +97,7 @@ export const SprActivityTimeline = ({ rows }: SprActivityTimelineProps) => {
                     <Bar
                         yAxisId="activity"
                         dataKey="sprMoveEvents"
-                        name="SPR events"
+                        name="Movements"
                         fill="var(--color-sprMoveEvents)"
                         radius={[2, 2, 0, 0]}
                         isAnimationActive={false}

@@ -16,10 +16,35 @@ describe('SPR analytics window shell', () => {
     expect(dashboardSource).toContain("import { Rnd } from 'react-rnd'");
     expect(dashboardSource).toContain('dragHandleClassName="spr-analytics-drag-handle"');
     expect(dashboardSource).toContain('bounds="window"');
+    expect(dashboardSource).toContain('z-[1200]');
     expect(dashboardSource).not.toContain('@/components/ui/dialog');
     expect(dashboardSource).not.toContain('<Dialog');
     expect(dashboardSource).not.toContain('DialogContent');
     expect(appSource).not.toContain('spr-analytics-panel-root');
     expect(appSource).toContain('sprAnalyticsOpen');
+  });
+
+  it('keeps the move ledger compact enough for the default analysis window', () => {
+    const tableSource = fs.readFileSync(
+      path.join(process.cwd(), 'src/components/TreeStatsPanel/SubtreeAnalytics/SprMoveEventTable.tsx'),
+      'utf8',
+    );
+
+    expect(tableSource).toContain('min-w-[820px]');
+    expect(tableSource).not.toContain('min-w-[1180px]');
+    expect(tableSource).toContain('RF Distance');
+    expect(tableSource).toContain('Weighted RF');
+  });
+
+  it('uses TanStack global filtering for the SPR move ledger search', () => {
+    const tableSource = fs.readFileSync(
+      path.join(process.cwd(), 'src/components/TreeStatsPanel/SubtreeAnalytics/SprMoveEventTable.tsx'),
+      'utf8',
+    );
+
+    expect(tableSource).toContain("@tanstack/react-table");
+    expect(tableSource).toContain("getFilteredRowModel");
+    expect(tableSource).toContain("Search movements");
+    expect(tableSource).toContain("No movements match this search.");
   });
 });
