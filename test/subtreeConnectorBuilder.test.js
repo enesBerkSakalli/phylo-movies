@@ -23,6 +23,15 @@ const rawConnectionsSourcePath = join(
   'transforms',
   'ConnectorRawConnections.js'
 );
+const passiveGroupsSourcePath = join(
+  repoRoot,
+  'src',
+  'treeVisualisation',
+  'deckgl',
+  'data',
+  'transforms',
+  'ConnectorPassiveGroups.js'
+);
 
 async function importConnectorColorEntryResolver() {
   try {
@@ -43,6 +52,14 @@ async function importConnectorLeafIndex() {
 async function importConnectorRawConnections() {
   try {
     return await import('../src/treeVisualisation/deckgl/data/transforms/ConnectorRawConnections.js');
+  } catch {
+    return null;
+  }
+}
+
+async function importConnectorPassiveGroups() {
+  try {
+    return await import('../src/treeVisualisation/deckgl/data/transforms/ConnectorPassiveGroups.js');
   } catch {
     return null;
   }
@@ -241,6 +258,56 @@ describe('SubtreeConnectorBuilder', function () {
     const builderSource = readFileSync(builderSourcePath, 'utf8');
     expect(builderSource).toMatch(/from\s+['"]\.\/ConnectorRawConnections\.js['"]/);
     expect(builderSource).not.toMatch(/function\s+buildRawConnections\s*\(/);
+  });
+
+  it('groups passive connector connections through a dedicated helper', async function () {
+    const passiveGroups = await importConnectorPassiveGroups();
+
+    expect(passiveGroups).not.toBeNull();
+
+    const leftParent = { id: 'left-parent', depth: 2, position: [-20, 0, 0] };
+    const rightParent = { id: 'right-parent', depth: 2, position: [180, 0, 0] };
+    const leftLeafA = { id: 'left-a', parentId: 'left-parent', depth: 4 };
+    const leftLeafB = { id: 'left-b', parentId: 'left-parent', depth: 4 };
+    const rightLeafA = { id: 'right-a', parentId: 'right-parent', depth: 4 };
+    const rightLeafB = { id: 'right-b', parentId: 'right-parent', depth: 4 };
+    const standaloneLeft = { id: 'left-rootless' };
+    const standaloneRight = { id: 'right-rootless' };
+    const firstConnection = { sourceInfo: leftLeafA, targetInfo: rightLeafA };
+    const secondConnection = { sourceInfo: leftLeafB, targetInfo: rightLeafB };
+    const standaloneConnection = { sourceInfo: standaloneLeft, targetInfo: standaloneRight };
+    const skippedConnection = { sourceInfo: null, targetInfo: rightLeafA };
+    const leftInfoById = new Map([
+      [leftParent.id, leftParent],
+      [leftLeafA.id, leftLeafA],
+      [leftLeafB.id, leftLeafB],
+    ]);
+    const rightInfoById = new Map([
+      [rightParent.id, rightParent],
+      [rightLeafA.id, rightLeafA],
+      [rightLeafB.id, rightLeafB],
+    ]);
+
+    const groups = passiveGroups.groupPassiveConnectorConnections(
+      [firstConnection, secondConnection, standaloneConnection, skippedConnection],
+      leftInfoById,
+      rightInfoById
+    );
+
+    expect(groups).toHaveLength(2);
+    expect(groups[0].leftCenterEntry).toBe(leftParent);
+    expect(groups[0].rightCenterEntry).toBe(rightParent);
+    expect(groups[0].connections).toEqual([firstConnection, secondConnection]);
+    expect(groups[1].leftCenterEntry).toBe(standaloneLeft);
+    expect(groups[1].rightCenterEntry).toBe(standaloneRight);
+    expect(groups[1].connections).toEqual([standaloneConnection]);
+
+    const builderSource = readFileSync(builderSourcePath, 'utf8');
+    const passiveGroupsSource = readFileSync(passiveGroupsSourcePath, 'utf8');
+    expect(builderSource).toMatch(/from\s+['"]\.\/ConnectorPassiveGroups\.js['"]/);
+    expect(builderSource).not.toMatch(/function\s+groupPassiveConnections\s*\(/);
+    expect(builderSource).not.toMatch(/ROOT_LEFT_GROUP_ID/);
+    expect(passiveGroupsSource).toMatch(/from\s+['"]\.\/ComparisonGeometryUtils\.js['"]/);
   });
 
   it('builds connectors when positions are Maps', function () {
