@@ -93,10 +93,9 @@ export function buildSprMoveEventRows(pairSolutions, options = {}) {
       const rawEvents = measuredEvents.map((event, eventIndex) => ({
         event,
         eventIndex,
-        hasMeasuredPath: true,
       }));
 
-      return rawEvents.map(({ event, eventIndex, hasMeasuredPath }) => {
+      return rawEvents.map(({ event, eventIndex }) => {
         const driverSplitIndices = normalizeSubtreeIndices(event?.driver_subtree);
         const highlightGroup = normalizeHighlightGroup(event?.highlight_group);
         const eventGroup = highlightGroup.length > 0
@@ -150,13 +149,12 @@ export function buildSprMoveEventRows(pairSolutions, options = {}) {
           stepRange,
           collapseHops: numberOrNull(event?.collapse_hops) ?? 0,
           expandHops: numberOrNull(event?.expand_hops) ?? 0,
-          totalPathHops: hasMeasuredPath ? resolvePathHops(event) : 0,
+          totalPathHops: resolvePathHops(event),
           collapsePathLength,
           expandPathLength,
-          totalPathLength: hasMeasuredPath ? resolvePathLength(event) : 0,
+          totalPathLength: resolvePathLength(event),
           collapsePath: Array.isArray(event?.collapse_path) ? event.collapse_path : [],
           expandPath: Array.isArray(event?.expand_path) ? event.expand_path : [],
-          hasMeasuredPath,
           interpolationRange: Array.isArray(pairInterpolationRanges[pairIndex])
             ? pairInterpolationRanges[pairIndex]
             : null,
@@ -205,11 +203,9 @@ function aggregateMoverRows(eventRows) {
     const mover = freqMap.get(event.signature);
     mover.count++;
     mover.pairKeys.add(event.pairKey);
-    if (event.hasMeasuredPath) {
-      mover.pathEventCount++;
-      mover.totalPathHops += event.totalPathHops;
-      mover.totalPathLength += event.totalPathLength;
-    }
+    mover.pathEventCount++;
+    mover.totalPathHops += event.totalPathHops;
+    mover.totalPathLength += event.totalPathLength;
     if (event.sourceAttachment.length > 0 || event.destinationAttachment.length > 0 || event.pivotEdge.length > 0) {
       mover.attachmentContexts.push({
         pivotEdge: event.pivotEdge,
@@ -468,29 +464,18 @@ function summarizeSprEventRows(events) {
     };
   }
 
-  const measuredEvents = events.filter((event) => event.hasMeasuredPath);
-  if (measuredEvents.length === 0) {
-    return {
-      pathEventCount: 0,
-      totalPathHops: 0,
-      averagePathHops: 0,
-      totalPathLength: 0,
-      averagePathLength: 0,
-    };
-  }
-
-  const totals = measuredEvents.reduce((sum, event) => {
+  const totals = events.reduce((sum, event) => {
     sum.totalPathHops += event.totalPathHops;
     sum.totalPathLength += event.totalPathLength;
     return sum;
   }, { totalPathHops: 0, totalPathLength: 0 });
 
   return {
-    pathEventCount: measuredEvents.length,
+    pathEventCount: events.length,
     totalPathHops: totals.totalPathHops,
-    averagePathHops: totals.totalPathHops / measuredEvents.length,
+    averagePathHops: totals.totalPathHops / events.length,
     totalPathLength: totals.totalPathLength,
-    averagePathLength: totals.totalPathLength / measuredEvents.length,
+    averagePathLength: totals.totalPathLength / events.length,
   };
 }
 

@@ -57,7 +57,6 @@ export function buildSprMoveEventSearchText(
         event.pairKey,
         String(event.eventIndex),
         event.signature,
-        event.hasMeasuredPath ? 'measured' : 'inferred',
         formatSubtreeSearchLabel(event.splitIndices, leafNamesByIndex),
         formatSubtreeSearchLabel(event.driverSplitIndices, leafNamesByIndex),
         formatCompactSubtreeSearchLabel(event.contextSplitIndices, leafNamesByIndex, 4),

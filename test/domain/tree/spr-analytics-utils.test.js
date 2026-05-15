@@ -139,8 +139,8 @@ describe('SPR analytics model', () => {
       totalPathLength: 0.6,
       rfDistance: 0.25,
       weightedRfDistance: 1.25,
-      hasMeasuredPath: true,
     });
+    expect(events[0]).not.toHaveProperty('hasMeasuredPath');
     expect(events[2]).toMatchObject({
       eventId: 'pair_0_1:2',
       signature: '1',

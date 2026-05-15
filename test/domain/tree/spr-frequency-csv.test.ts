@@ -61,7 +61,6 @@ describe('createSprMoveEventCsv', () => {
         totalPathLength: 0.6,
         rfDistance: 0.25,
         weightedRfDistance: 1.25,
-        hasMeasuredPath: true,
       },
     ], ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j']);
 
@@ -72,12 +71,15 @@ describe('createSprMoveEventCsv', () => {
     expect(header).toContain('Context Subtree');
     expect(header).toContain('From Attachment');
     expect(header).toContain('To Attachment');
+    expect(header).not.toContain('Measured Path');
     expect(header).not.toContain('Event ID');
     expect(row).toContain('pair_0_1:0');
     expect(row).toContain('"b, c"');
     expect(row).toContain('"h, i"');
     expect(row).toContain('"f, g"');
     expect(row).toContain('0.600000');
+    expect(row).not.toContain(',yes,');
+    expect(row).not.toContain(',no,');
   });
 
   it('leaves missing optional tree-change metrics blank', () => {
@@ -98,7 +100,6 @@ describe('createSprMoveEventCsv', () => {
         totalPathLength: 0,
         rfDistance: null,
         weightedRfDistance: null,
-        hasMeasuredPath: false,
       },
     ], ['a', 'b']);
 
@@ -106,7 +107,7 @@ describe('createSprMoveEventCsv', () => {
 
     expect(row[13]).toBe('');
     expect(row[14]).toBe('');
-    expect(row[15]).toBe('no');
+    expect(row[15]).toBe('1');
   });
 
   it('uses movement terminology in exported filenames', () => {
