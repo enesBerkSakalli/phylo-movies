@@ -404,7 +404,7 @@ npm run demo:msa-scrolling # Run MSA scrolling demonstration
 **Backend ([BranchArchitect](https://github.com/EnesSakalliUniWien/BranchArchitect)):**
 
 - **Language**: Python 3.11+, managed with Poetry
-- **Web Framework**: Flask, serving endpoints at `/treedata`, `/stream`, `/msa`, `/about`
+- **Web Framework**: Flask, serving endpoints at `/treedata/stream`, `/stream/progress/<channel_id>`, and `/about`
 - **Tree Transformations**: SPR-based interpolation via lattice solvers that compute minimal subtree migrations between anchor trees
 - **Pipeline**: Parse Newick → midpoint rooting → lattice solving (jumping taxa) → leaf ordering → 4-phase interpolation (collapse → reorder → expand → snap)
 - **MSA Support**: Sliding-window tree inference from FASTA alignments via the bundled `msa_to_trees` package
@@ -465,7 +465,7 @@ phylo-movies/
 |-- engine/
 |   `-- BranchArchitect/     # Python backend (git submodule)
 |       |-- brancharchitect/ # Core library (tree models, interpolation, lattice solvers)
-|       |-- webapp/          # Flask server (routes: /treedata, /stream, /msa, /about)
+|       |-- webapp/          # Flask server (routes: /treedata/stream, /stream/progress, /about)
 |       |-- msa_to_trees/    # Sliding-window MSA → tree inference package
 |       `-- pyproject.toml   # Python dependencies (managed by Poetry)
 |-- electron-app/            # Electron desktop wrapper
