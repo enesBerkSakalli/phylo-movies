@@ -3,7 +3,7 @@
  */
 import { createLayer } from '../base/createLayer.js';
 import { selectLeafNamesByIndex } from '../../../../../state/phyloStore/selectors/treeSelectors.js';
-import { LAYER_CONFIGS, HOVER_HIGHLIGHT_COLOR, MIN_NODE_RADIUS, Z_NODE } from '../../config/layerConfigs.js';
+import { LAYER_CONFIGS, HOVER_HIGHLIGHT_COLOR, MIN_NODE_RADIUS } from '../../config/layerConfigs.js';
 import { getNodeHistoryZOffset } from '../../../utils/GeometryUtils.js';
 
 const addZOffset = (position, offset) => {
@@ -50,16 +50,11 @@ export function getNodesLayerProps(nodes = [], state, layerStyles) {
       }
 
       const historyOffset = getNodeHistoryZOffset(cached, d);
-      if (!historyOffset && Array.isArray(d.renderPosition)) {
+      if (!historyOffset) {
         return d.renderPosition;
       }
 
-      const x = p[0];
-      const y = p[1];
-      const z = Number.isFinite(p[2]) ? p[2] : 0;
-      const basePosition = Array.isArray(d.renderPosition) ? d.renderPosition : [x, y, z + Z_NODE];
-
-      return addZOffset(basePosition, historyOffset);
+      return addZOffset(d.renderPosition, historyOffset);
     },
     getRadius: d => layerStyles.getNodeRadius(d, MIN_NODE_RADIUS, cached),
     getFillColor: d => layerStyles.getNodeColor(d, cached),
