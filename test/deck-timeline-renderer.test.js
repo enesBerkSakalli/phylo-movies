@@ -8,17 +8,37 @@ require.extensions['.css'] = () => { };
 const dom = new JSDOM('<!doctype html><html><body></body></html>');
 global.window = dom.window;
 global.document = dom.window.document;
+global.requestAnimationFrame = dom.window.requestAnimationFrame || ((cb) => setTimeout(cb, 0));
+global.cancelAnimationFrame = dom.window.cancelAnimationFrame || ((id) => clearTimeout(id));
 
 // ---- Minimal deck.gl mocks to avoid ESM + WebGL in tests ----
 const mockDeckGLCore = {
   Deck: class {
     constructor(props) {
       this.props = props || {};
+      this.eventListeners = [];
+      this.canvas = global.document.createElement('canvas');
+      this.canvas.getBoundingClientRect = () => this.props.parent.getBoundingClientRect();
+      const addEventListener = this.canvas.addEventListener.bind(this.canvas);
+      const removeEventListener = this.canvas.removeEventListener.bind(this.canvas);
+      this.canvas.addEventListener = (event, handler, options) => {
+        this.eventListeners.push({ event, handler, options });
+        addEventListener(event, handler, options);
+      };
+      this.canvas.removeEventListener = (event, handler, options) => {
+        this.eventListeners = this.eventListeners.filter(
+          (entry) => entry.event !== event || entry.handler !== handler
+        );
+        removeEventListener(event, handler, options);
+      };
+      this.props.parent.appendChild(this.canvas);
     }
     setProps(p) {
       this.props = { ...this.props, ...p };
     }
-    finalize() { }
+    finalize() {
+      this.canvas?.remove();
+    }
   },
   OrthographicView: class { constructor(opts) { this.opts = opts; } },
   COORDINATE_SYSTEM: { CARTESIAN: 1 }
@@ -53,14 +73,20 @@ const { DeckTimelineRenderer } = require('../src/timeline/renderers/DeckTimeline
 describe('DeckTimelineRenderer', () => {
   function makeContainer(w = 800, h = 100) {
     const container = global.document.createElement('div');
+    let width = w;
+    let height = h;
     container.getBoundingClientRect = () => ({
-      width: w,
-      height: h,
+      width,
+      height,
       top: 0,
       left: 0,
-      right: w,
-      bottom: h
+      right: width,
+      bottom: height
     });
+    container.setTestSize = (nextWidth, nextHeight = height) => {
+      width = nextWidth;
+      height = nextHeight;
+    };
     global.document.body.appendChild(container);
     return container;
   }
@@ -78,6 +104,21 @@ describe('DeckTimelineRenderer', () => {
       cumulativeDurations: [1000, 2000, 3000]
     };
     return { timelineData, segments };
+  }
+
+  function clickTimeline(renderer, ms) {
+    const x = (ms / renderer.timelineData.totalDuration) * renderer._width;
+    renderer.deck.canvas.dispatchEvent(new global.window.MouseEvent('click', {
+      bubbles: true,
+      clientX: x,
+      clientY: 10
+    }));
+  }
+
+  function collectSelections(renderer) {
+    const selections = [];
+    renderer.on('select', (payload) => selections.push(payload));
+    return selections;
   }
 
   it('initializes and sets layers with a fresh timeline', () => {
@@ -156,6 +197,81 @@ describe('DeckTimelineRenderer', () => {
     // At least one selection layer should have data when a selection is set
     const hasData = (layer) => Array.isArray(layer?.props?.data) && layer.props.data.length >= 0;
     expect(hasData(anchorSel) || hasData(connSel)).to.equal(true);
+  });
+
+  it('binds timeline pointer handlers to the deck canvas', () => {
+    const { timelineData, segments } = makeTimelineFixture();
+    const container = makeContainer();
+    const renderer = new DeckTimelineRenderer(timelineData, segments).init(container);
+
+    const boundEvents = renderer.deck.eventListeners.map((entry) => entry.event);
+
+    expect(boundEvents).to.include.members(['mousemove', 'mousedown', 'click', 'wheel', 'mouseleave']);
+  });
+
+  it('selects an anchor/source segment from a deck canvas click', () => {
+    const { timelineData, segments } = makeTimelineFixture();
+    const container = makeContainer();
+    const renderer = new DeckTimelineRenderer(timelineData, segments).init(container);
+    const selections = collectSelections(renderer);
+
+    clickTimeline(renderer, 500);
+
+    expect(selections).to.have.length(1);
+    expect(selections[0].id).to.equal(1);
+    expect(selections[0].segment).to.equal(segments[0]);
+    expect(renderer._selectedId).to.equal(1);
+  });
+
+  it('selects a generated transition segment from a deck canvas click', () => {
+    const { timelineData, segments } = makeTimelineFixture();
+    const container = makeContainer();
+    const renderer = new DeckTimelineRenderer(timelineData, segments).init(container);
+    const selections = collectSelections(renderer);
+
+    clickTimeline(renderer, 1500);
+
+    expect(selections).to.have.length(1);
+    expect(selections[0].id).to.equal(2);
+    expect(selections[0].segment).to.equal(segments[1]);
+    expect(renderer._selectedId).to.equal(2);
+  });
+
+  it('selects the expected segment in dense timelines', () => {
+    const segments = Array.from({ length: 100 }, (_, index) => ({
+      isFullTree: index % 2 === 0
+    }));
+    const timelineData = {
+      segmentDurations: segments.map(() => 1000),
+      totalDuration: 100000,
+      cumulativeDurations: segments.map((_, index) => (index + 1) * 1000)
+    };
+    const container = makeContainer(800, 120);
+    const renderer = new DeckTimelineRenderer(timelineData, segments).init(container);
+    const selections = collectSelections(renderer);
+
+    clickTimeline(renderer, 51500);
+
+    expect(selections).to.have.length(1);
+    expect(selections[0].id).to.equal(52);
+    expect(selections[0].segment).to.equal(segments[51]);
+    expect(renderer._selectedId).to.equal(52);
+  });
+
+  it('keeps click selection accurate after the timeline host resizes', () => {
+    const { timelineData, segments } = makeTimelineFixture();
+    const container = makeContainer(800, 120);
+    const renderer = new DeckTimelineRenderer(timelineData, segments).init(container);
+    const selections = collectSelections(renderer);
+
+    container.setTestSize(480, 120);
+    renderer._updateLayers();
+    clickTimeline(renderer, 2500);
+
+    expect(selections).to.have.length(1);
+    expect(selections[0].id).to.equal(3);
+    expect(selections[0].segment).to.equal(segments[2]);
+    expect(renderer._selectedId).to.equal(3);
   });
 
   it('uses externally bound scrub state for scrubber highlighting', () => {

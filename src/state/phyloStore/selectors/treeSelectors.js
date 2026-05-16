@@ -84,6 +84,8 @@ export { selectSetDimmingOpacity } from './selectSetDimmingOpacity.js';
 export { selectSetFontSize } from './selectSetFontSize.js';
 export { selectSetHighlightColorMode } from './selectSetHighlightColorMode.js';
 export { selectSetHoveredSegment } from './selectSetHoveredSegment.js';
+export { selectSelectedTimelineSegmentIndex } from './selectSelectedTimelineSegmentIndex.js';
+export { selectSetSelectedTimelineSegment } from './selectSetSelectedTimelineSegment.js';
 export { selectSetLabelsVisible } from './selectSetLabelsVisible.js';
 export { selectSetLayoutAngleDegrees } from './selectSetLayoutAngleDegrees.js';
 export { selectSetLayoutRotationDegrees } from './selectSetLayoutRotationDegrees.js';

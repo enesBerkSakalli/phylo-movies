@@ -115,6 +115,7 @@ describe('MovieTimelineManager lifecycle', () => {
       hoveredSegmentIndex: null,
       hoveredSegmentData: null,
       hoveredSegmentPosition: null,
+      selectedTimelineSegmentIndex: null,
       isTooltipHovered: false
     });
   });
@@ -194,6 +195,59 @@ describe('MovieTimelineManager lifecycle', () => {
     expect(state.hoveredSegmentIndex).to.equal(null);
     expect(state.hoveredSegmentData).to.equal(null);
     expect(state.hoveredSegmentPosition).to.equal(null);
+
+    manager.destroy();
+  });
+
+  it('stores clicked timeline selection by segment index only', () => {
+    const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] }, movieData.interpolated_trees);
+    const selectedSegment = manager.getSegment(1);
+
+    manager._onTimelineClick({
+      id: 2,
+      ms: 0,
+      segment: { stale: 'renderer payload should not be stored' }
+    });
+
+    const state = useAppStore.getState();
+    expect(state.selectedTimelineSegmentIndex).to.equal(1);
+    expect(Object.prototype.hasOwnProperty.call(state, 'selectedTimelineSegmentData')).to.equal(false);
+    expect(manager.getSegment(state.selectedTimelineSegmentIndex)).to.equal(selectedSegment);
+
+    manager.destroy();
+  });
+
+  it('clears selected timeline segment on dataset reset', () => {
+    useAppStore.setState({ selectedTimelineSegmentIndex: 2 });
+
+    useAppStore.getState().reset();
+
+    const state = useAppStore.getState();
+    expect(state.selectedTimelineSegmentIndex).to.equal(null);
+    expect(Object.prototype.hasOwnProperty.call(state, 'selectedTimelineSegmentData')).to.equal(false);
+  });
+
+  it('keeps clicked inspector selection pinned while playhead sync changes renderer selection', () => {
+    const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] }, movieData.interpolated_trees);
+    const host = makeContainer();
+
+    useAppStore.setState({
+      treeList: movieData.interpolated_trees,
+      selectedTimelineSegmentIndex: 0,
+      playing: true,
+      playhead: {
+        animationProgress: 0.9,
+        timelineProgress: null,
+        currentTreeIndex: 0
+      }
+    });
+
+    manager.mount(host);
+    manager.updateCurrentPosition();
+
+    const rendererSelectionIndex = manager.timeline._selectedId - 1;
+    expect(rendererSelectionIndex).to.not.equal(0);
+    expect(useAppStore.getState().selectedTimelineSegmentIndex).to.equal(0);
 
     manager.destroy();
   });

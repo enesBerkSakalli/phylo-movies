@@ -16,6 +16,7 @@ import { MSAProvider } from './components/msa/MSAContext';
 import { TaxaColoringRndWindow } from './components/taxa-coloring/TaxaColoringRndWindow.jsx';
 import { ClipboardDismissButton } from './components/HUD/clipboard/ClipboardDismissButton.jsx';
 import { NodeContextMenu } from './components/NodeContextMenu.jsx';
+import { TransitionInspectorPanel } from './components/TransitionInspectorPanel.jsx';
 import { Toaster } from './components/ui/sonner';
 import { TooltipProvider } from './components/ui/tooltip';
 import { HUD } from './components/HUD/HUD.jsx';
@@ -184,6 +185,7 @@ export function App() {
             <CanvasCaptureControls />
             <ClipboardDismissButton />
             <HUD />
+            <TransitionInspectorPanel />
           </div>
           <MoviePlayerBar />
         </SidebarInset>

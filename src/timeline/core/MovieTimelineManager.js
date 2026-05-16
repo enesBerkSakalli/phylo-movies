@@ -194,11 +194,14 @@ export class MovieTimelineManager {
     }
 
     _onTimelineClick(properties) {
-        if (properties.id && this.navigationController) {
-            this.navigationController.handleTimelineClick(
-                properties.id - TIMELINE_CONSTANTS.INDEX_OFFSET_UI,
-                properties.ms
-            );
+        const segmentIndex = properties.id
+            ? properties.id - TIMELINE_CONSTANTS.INDEX_OFFSET_UI
+            : null;
+
+        useAppStore.getState().setSelectedTimelineSegment(segmentIndex);
+
+        if (segmentIndex !== null && this.navigationController) {
+            this.navigationController.handleTimelineClick(segmentIndex, properties.ms);
         }
     }
 
@@ -229,6 +232,10 @@ export class MovieTimelineManager {
 
     getSegmentCount() {
         return this.timelineClock?.getSegmentCount() ?? 0;
+    }
+
+    getSegment(index) {
+        return Number.isInteger(index) ? this.segments?.[index] ?? null : null;
     }
 
     hasTransitionSegments() {
