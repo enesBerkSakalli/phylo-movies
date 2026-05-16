@@ -363,16 +363,3 @@ export function getPaletteInfo(name) {
     description: 'Custom palette'
   };
 }
-
-export function getRecommendedPalettes(options = {}) {
-  const { numColors = 5, colorBlindSafe = true, type = 'categorical' } = options;
-
-  return Object.keys(ALL_PALETTES).filter(name => {
-    const info = getPaletteInfo(name);
-    return (
-      info.type === type &&
-      (!colorBlindSafe || info.colorBlindSafe) &&
-      info.maxColors >= numColors
-    );
-  });
-}

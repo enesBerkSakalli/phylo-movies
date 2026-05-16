@@ -1,11 +1,6 @@
 import { expect } from 'chai';
 import Color from 'colorjs.io';
 import { ColorSchemeManager } from '../../src/treeColoring/utils/ColorSchemeManager.js';
-import { getThemeBackgroundColor } from '../../src/services/ui/colorUtils.js';
-
-// Mock browser environment for certain tests if needed
-// global.window = { getComputedStyle: () => ({ backgroundColor: 'rgb(255, 255, 255)' }) };
-// (We might need to mock this better if getThemeBackgroundColor relies on DOM)
 
 describe('Color System TDD (Performance & Quality)', () => {
   let colorManager;

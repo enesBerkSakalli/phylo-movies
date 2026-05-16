@@ -4,7 +4,7 @@
  */
 
 import { TextLayer } from '@deck.gl/layers';
-import { colorToRgb, colorToRgba } from '../../services/ui/colorUtils.js';
+import { colorToRgb } from '../../services/ui/colorUtils.js';
 
 /**
  * Pick contrasting text color based on background luminance

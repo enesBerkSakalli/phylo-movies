@@ -4,41 +4,6 @@
  */
 
 /**
- * Parses FASTA-aligned sequences from a string
- * @param {string} fasta - FASTA formatted string
- * @returns {Array<{id: string, seq: string}>} Array of sequence objects
- * @throws {Error} If sequences have different lengths or no sequences found
- */
-export function parseFastaAligned(fasta) {
-  const lines = (fasta || '').trim().split(/\r?\n/);
-  const recs = [];
-  let id = null;
-  let seq = [];
-
-  for (const line of lines) {
-    if (!line) continue;
-    if (line[0] === '>') {
-      if (id) recs.push({ id, seq: seq.join('').toUpperCase() });
-      id = line.slice(1).trim();
-      seq = [];
-    } else {
-      seq.push(line.trim());
-    }
-  }
-
-  if (id) recs.push({ id, seq: seq.join('').toUpperCase() });
-  if (!recs.length) throw new Error('No sequences parsed.');
-
-  const L = recs[0].seq.length;
-  for (const r of recs) {
-    if (r.seq.length !== L) {
-      throw new Error(`Sequences must be equal length (got ${L} and ${r.seq.length}).`);
-    }
-  }
-  return recs;
-}
-
-/**
  * Guesses the sequence type (DNA or protein) from sequence data
  * @param {Array<{id: string, seq: string}>} recs - Array of sequence objects
  * @returns {string} Either 'dna' or 'protein'

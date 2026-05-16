@@ -125,51 +125,6 @@ export function getContrastingHighlightColor(baseColorRgb) {
 }
 
 /**
- * Detect the current theme background color from the DOM.
- * Returns a normalized [r, g, b, a] array (0-1) suitable for WebGL clearColor.
- * @returns {number[]} [r, g, b, a] where each component is 0-1
- */
-export function getThemeBackgroundColor() {
-  if (typeof window === 'undefined') return [1, 1, 1, 1];
-
-  // Try multiple elements in case body is transparent
-  const elementsToTry = [
-    document.body,
-    document.documentElement,
-    document.querySelector('.sidebar-inset'),
-    document.querySelector('#root')
-  ];
-
-  for (const el of elementsToTry) {
-    if (!el) continue;
-    const bg = window.getComputedStyle(el).backgroundColor;
-    // parse rgb(r, g, b) or rgba(r, g, b, a) - now handles optional alpha correctly
-    const match = bg.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d?(?:\.\d+)?))?\)/);
-    if (match) {
-      const [, r, g, b, a] = match;
-      const alpha = (a !== undefined && a !== '') ? parseFloat(a) : 1;
-
-      // If alpha is 0, this element is transparent, skip it
-      if (alpha === 0) continue;
-
-      return [
-        parseInt(r, 10) / 255,
-        parseInt(g, 10) / 255,
-        parseInt(b, 10) / 255,
-        1 // Force opaque for WebGL clear
-      ];
-    }
-  }
-
-  // Final fallback based on theme class
-  if (document.documentElement.classList.contains('dark')) {
-    return [0.145, 0.145, 0.145, 1];
-  }
-
-  return [1, 1, 1, 1]; // Default white
-}
-
-/**
  * Convert RGB array to Hex string
  * Handles NaN, out-of-range values, and clamps to valid 0-255 range
  * @param {number[]} rgb - [r, g, b]
@@ -204,66 +159,4 @@ export function toHexMap(map) {
     hexMap[key] = val;
   });
   return hexMap;
-}
-
-// ============================================================================
-// NEW: APCA & DeltaE Utilities (using colorjs.io)
-// ============================================================================
-import Color from 'colorjs.io';
-
-/**
- * Calculate sRGB luminance
- * @param {number[]} rgb - [r, g, b]
- * @returns {number} Luminance (0-1)
- */
-export function calculateLuminance(rgb) {
-  const [r, g, b] = rgb.map(v => {
-    v /= 255;
-    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
-  });
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-}
-
-/**
- * Convert RGB to Lab (via colorjs.io)
- * @param {number} r - Red (0-255)
- * @param {number} g - Green (0-255)
- * @param {number} b - Blue (0-255)
- * @returns {Object} { l, a, b }
- */
-export function rgbToLab(r, g, b) {
-  const c = new Color("srgb", [r / 255, g / 255, b / 255]).to("lab");
-  return { L: c.coords[0], a: c.coords[1], b: c.coords[2] };
-}
-
-/**
- * Calculate DeltaE 2000 Distance
- * @param {Object} lab1 - {L, a, b} or Color object
- * @param {Object} lab2 - {L, a, b} or Color object
- * @returns {number} Distance
- */
-export function getDeltaE00(lab1, lab2) {
-  // If inputs are already Color objects, use them directly
-  if (lab1 instanceof Color && lab2 instanceof Color) {
-    return lab1.deltaE(lab2, "2000");
-  }
-
-  // Otherwise assume manual objects {L, a, b} and wrap them
-  // Note: This is slightly inefficient if calling in loop.
-  // Prefer passing Color objects if performance is critical.
-  const c1 = new Color("lab", [lab1.L, lab1.a, lab1.b]);
-  const c2 = new Color("lab", [lab2.L, lab2.a, lab2.b]);
-  return c1.deltaE(c2, "2000");
-}
-
-/**
- * Calculate APCA Contrast
- * @param {number[]} rgb1 - [r, g, b]
- * @param {number[]} rgb2 - [r, g, b]
- * @returns {number} Absolute contrast value (Lc)
- */
-export function getAPCAContrast(rgb1, rgb2) {
-  const c1 = new Color("srgb", [rgb1[0] / 255, rgb1[1] / 255, rgb1[2] / 255]);
-  const c2 = new Color("srgb", [rgb2[0] / 255, rgb2[1] / 255, rgb2[2] / 255]);
-  return Math.abs(c1.contrast(c2, "APCA"));
 }

@@ -112,10 +112,3 @@ export const EXAMPLE_DATASETS = [
 export function getExampleById(id) {
   return EXAMPLE_DATASETS.find((ex) => ex.id === id);
 }
-
-/**
- * Get the default example to show
- */
-export function getDefaultExample() {
-  return EXAMPLE_DATASETS[0];
-}

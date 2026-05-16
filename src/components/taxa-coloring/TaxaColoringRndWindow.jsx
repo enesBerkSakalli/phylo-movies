@@ -30,6 +30,7 @@ export function TaxaColoringRndWindow() {
   const setOpen = useAppStore(selectSetTaxaColoringOpen);
   const windowState = useAppStore(selectTaxaColoringWindow);
   const setWindowState = useAppStore(selectSetTaxaColoringWindow);
+  const { width, height, x, y } = windowState;
 
   const taxaNames = useAppStore(selectLeafNamesByIndex);
   const taxaGrouping = useAppStore(selectTaxaGrouping);
@@ -42,11 +43,10 @@ export function TaxaColoringRndWindow() {
   // Clamp window size to viewport if it exceeds it
   React.useEffect(() => {
     if (!isOpen) return;
-    const { width, height, x, y } = windowState;
     const vw = window.innerWidth;
     const vh = window.innerHeight;
 
-    let next = { ...windowState };
+    let next = { width, height, x, y };
     let changed = false;
 
     if (width > vw - 40) { next.width = vw - 40; changed = true; }
@@ -57,7 +57,7 @@ export function TaxaColoringRndWindow() {
     if (changed) {
       setWindowState(next);
     }
-  }, [isOpen]);
+  }, [height, isOpen, setWindowState, width, x, y]);
 
   // Create a clean color map for the UI to use as a baseline.
   // We strictly isolate taxon names from system colors to prevent collisions.
@@ -119,8 +119,8 @@ export function TaxaColoringRndWindow() {
       bounds="window"
       minWidth={500}
       minHeight={520}
-      size={{ width: windowState.width, height: windowState.height }}
-      position={{ x: windowState.x, y: windowState.y }}
+      size={{ width, height }}
+      position={{ x, y }}
       onDragStop={onDragStop}
       onResizeStop={onResizeStop}
       dragHandleClassName="taxa-coloring-drag-handle"

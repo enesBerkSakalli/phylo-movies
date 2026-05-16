@@ -1,20 +1,12 @@
 const { expect } = require('chai');
 
 const {
-  kar2pol,
   shortestAngle,
   clamp,
   easeInOutCubic,
 } = require('../src/domain/math/mathUtils.js');
 
 describe('Utils/MathUtils', () => {
-  it('kar2pol should convert cartesian to polar consistently', () => {
-    const { r, angle } = kar2pol(1, Math.sqrt(3));
-    expect(r).to.be.closeTo(2, 1e-9);
-    // arctan(sqrt(3)/1) = pi/3, but function normalizes special cases; allow tolerance
-    expect(angle).to.be.closeTo(Math.PI / 3, 1e-6);
-  });
-
   it('shortestAngle should take minimal wrapped difference', () => {
     // from near -pi to +pi should be small negative delta
     const a = -Math.PI + 0.1;
