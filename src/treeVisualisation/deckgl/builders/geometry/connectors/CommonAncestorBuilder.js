@@ -11,7 +11,6 @@
  * @returns {Object|null} LCA entry, or null if no common ancestor found.
  */
 export function findLowestCommonAncestorById(entries, entryById) {
-  if (!entries || entries.length === 0 || !entryById) return null;
   if (entries.length === 1) return entries[0];
 
   let commonAncestors = getLineageById(entries[0], entryById);
@@ -43,9 +42,9 @@ function getLineageById(entry, entryById) {
 }
 
 function getEntryId(entry) {
-  return entry?.id ?? null;
+  return entry.id ?? null;
 }
 
 function getParentId(entry) {
-  return entry?.parentId ?? null;
+  return entry.parentId ?? null;
 }

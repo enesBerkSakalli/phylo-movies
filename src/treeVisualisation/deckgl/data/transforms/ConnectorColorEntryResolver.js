@@ -1,4 +1,4 @@
-import { isSubset } from '../../../utils/splitMatching.js';
+import { isSubset } from '../../../../domain/tree/splits.js';
 
 export function resolveConnectorColorEntry(leftInfo, splitIndices, jumpingSubtreeSets, leftPositions) {
   let matchingSubtree = null;

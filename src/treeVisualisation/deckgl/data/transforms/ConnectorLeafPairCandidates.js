@@ -28,5 +28,5 @@ export function getConnectorLeafPairCandidate(params) {
 }
 
 function hasConnectorLeafPosition(info) {
-  return Boolean(info?.isLeaf && info.name && info.position && info.position.length >= 2);
+  return Boolean(info.isLeaf && info.name && info.position && info.position.length >= 2);
 }

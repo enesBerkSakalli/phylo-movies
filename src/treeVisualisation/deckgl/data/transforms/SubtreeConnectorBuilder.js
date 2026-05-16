@@ -1,4 +1,4 @@
-import { flattenSplitSets, getBackendSplitMapValue } from '../../../utils/splitMatching.js';
+import { flattenSplitSets, getBackendSplitMapValue } from '../../../../domain/tree/splits.js';
 import {
   normalizeConnectorSubtreeTrackingToSets,
   toConnectorSubtreeSetList
@@ -8,6 +8,7 @@ import {
   sortConnectorConnectionsByAngle,
   splitActivePassiveConnectorConnections
 } from './ConnectorConnectionOrdering.js';
+import { groupPassiveConnectorConnections } from './ConnectorPassiveGroups.js';
 import { buildConnectorPathConnections } from './ConnectorPathBuilder.js';
 
 const DEFAULT_CENTER = [0, 0];
@@ -56,9 +57,10 @@ export function buildSubtreeConnectors(options) {
 
   const sortedConnections = sortConnectorConnectionsByAngle(rawConnections, leftCenter, rightCenter);
   const { activeConnections, passiveConnections } = splitActivePassiveConnectorConnections(sortedConnections);
+  const passiveConnectionGroups = groupPassiveConnectorConnections(passiveConnections, leftPositions, rightPositions);
   return buildConnectorPathConnections({
     activeConnections,
-    passiveConnections,
+    passiveConnectionGroups,
     leftCenter,
     rightCenter,
     leftRadius,
