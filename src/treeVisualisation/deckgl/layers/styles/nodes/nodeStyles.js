@@ -2,7 +2,7 @@ import { colorToRgb } from '../../../../../services/ui/colorUtils.js';
 import { SYSTEM_TREE_COLORS } from '../../../../../constants/TreeColors.js';
 import { applyDimmingWithCache } from '../dimmingUtils.js';
 import { isNodeVisuallyHighlighted } from '../../../../systems/tree_color/visualHighlights.js';
-import { toColorManagerNode, shouldHighlightNode, isHistorySubtreeNode, getHighlightColor, isNodePivotEdge, getPivotEdgeColor } from './nodeUtils.js';
+import { shouldHighlightNode, isHistorySubtreeNode, getHighlightColor, isNodePivotEdge, getPivotEdgeColor } from './nodeUtils.js';
 // Re-export from dedicated file
 export { getNodeRadius } from './nodeRadiusStyles.js';
 export { getNodeLineWidth } from './nodeWidthStyles.js';
@@ -62,7 +62,7 @@ function resolveBaseNodeColor(nodeData, cached, cm) {
 }
 
 export function getNodeColor(node, cached, helpers) {
-  const { colorManager: cm, dimmingEnabled, dimmingOpacity, upcomingChangesEnabled, markedSubtreeData, subtreeDimmingEnabled, subtreeDimmingOpacity } = cached;
+  const { colorManager: cm, dimmingEnabled, dimmingOpacity, markedSubtreeData, subtreeDimmingEnabled, subtreeDimmingOpacity } = cached;
 
   // 0. Explicit Color Override (ConnectorLayers pattern)
   // Check raw node first (deck.gl datum)
@@ -75,8 +75,7 @@ export function getNodeColor(node, cached, helpers) {
     return _nodeColorOut;
   }
 
-  // Convert node data once
-  const nodeData = toColorManagerNode(node);
+  const nodeData = node;
   const baseOpacity = helpers.getBaseOpacity(node.opacity);
 
   // 1. History & Change Management State
@@ -89,9 +88,8 @@ export function getNodeColor(node, cached, helpers) {
   const isPivot = isNodePivotEdge(nodeData, cached);
   if (isPivot) {
     const pivotColor = getPivotEdgeColor();
-    let opacity = baseOpacity;
-    opacity = applyDimmingWithCache(
-      opacity,
+    const opacity = applyDimmingWithCache(
+      baseOpacity,
       cm,
       nodeData,
       true,
@@ -133,8 +131,8 @@ export function getNodeColor(node, cached, helpers) {
 }
 
 export function getNodeBorderColor(node, cached, helpers) {
-  const { colorManager: cm, upcomingChangesEnabled, highlightColorMode, pulseOpacity } = cached;
-  const nodeData = toColorManagerNode(node);
+  const { colorManager: cm } = cached;
+  const nodeData = node;
 
   const baseOpacity = helpers.getBaseOpacity(node.opacity);
 
@@ -165,7 +163,7 @@ export function getNodeBorderColor(node, cached, helpers) {
   }
 
   // 3. Opacity Calculation
-  let opacity = 255;
+  let opacity;
 
   if (isHighlighted || isActive) {
     // Highlighted/Active: Full base opacity
@@ -209,7 +207,7 @@ export function getNodeBorderColor(node, cached, helpers) {
 export function getNodeBasedRgba(entity, baseEntityOpacity, cached, helpers) {
   const { colorManager: cm, dimmingEnabled, dimmingOpacity, subtreeDimmingEnabled, subtreeDimmingOpacity, markedSubtreeData } = cached;
 
-  const node = toColorManagerNode(entity);
+  const node = entity;
 
   const isHighlighted = shouldHighlightNode(node, cached) || isNodeVisuallyHighlighted(node, cm, cached.markedSubtreesEnabled);
 

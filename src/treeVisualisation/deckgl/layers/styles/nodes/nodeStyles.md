@@ -75,7 +75,6 @@ nodeStyles.js
 ├── dimmingUtils.js        # applyDimmingWithCache
 ├── visualHighlights.js    # isNodeVisuallyHighlighted
 ├── nodeUtils.js           # Helper functions
-│   ├── toColorManagerNode
 │   ├── shouldHighlightNode
 │   ├── isHistorySubtreeNode
 │   ├── getHighlightColor

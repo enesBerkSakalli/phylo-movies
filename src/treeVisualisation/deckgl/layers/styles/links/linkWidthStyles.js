@@ -1,6 +1,6 @@
 
 import { isLinkVisuallyHighlighted } from '../../../../systems/tree_color/visualHighlights.js';
-import { getLifecycleLinkHighlight, shouldHighlightMarkedSubtree } from './linkUtils.js';
+import { getLifecycleLinkHighlight, shouldHighlightLink } from './linkUtils.js';
 
 export function getLinkWidth(link, cached, helpers) {
   const baseWidth = helpers.getBaseStrokeWidth();
@@ -31,10 +31,10 @@ export function getLinkWidth(link, cached, helpers) {
     return getScaledWidth(1.2) * metricScale; // Medium for upcoming
   }
 
-  // Check if link is part of a MARKED subtree (persistent highlight)
+  // Check if link is part of a marked subtree highlight
   // Static, very thick stroke to ensure visibility without pulsing
   // Pivot edge takes precedence
-  if (shouldHighlightMarkedSubtree(link, cached) && !cm?.isPivotEdge?.(link)) {
+  if (shouldHighlightLink(link, cached) && !cm?.isPivotEdge?.(link)) {
     // Only thicken the inner line in High Contrast Mode
     if (cached.highlightColorMode === 'contrast') {
       return getScaledWidth(2.0) * metricScale;

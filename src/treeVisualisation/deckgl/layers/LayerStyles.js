@@ -92,8 +92,6 @@ export class LayerStyles {
         markedSubtreeData,
         markedSubtreesEnabled: state.markedSubtreesEnabled ?? true,
         markedSubtreeOpacity: state.markedSubtreeOpacity ?? 0.8,
-        highlightSourceEnabled: state.highlightSourceEnabled ?? false,
-        highlightDestinationEnabled: state.highlightDestinationEnabled ?? false,
         pulseOpacity: pulseEnabled ? (state.getPulseOpacity?.() ?? 1.0) : 1.0,
         dashingEnabled: state.pivotEdgeDashingEnabled ?? true,
         upcomingChangesEnabled: state.upcomingChangesEnabled ?? false,
@@ -159,8 +157,6 @@ export class LayerStyles {
         state.subtreeDimmingOpacity !== prevState.subtreeDimmingOpacity ||
         state.markedSubtreesEnabled !== prevState.markedSubtreesEnabled ||
         state.markedSubtreeOpacity !== prevState.markedSubtreeOpacity ||
-        state.highlightSourceEnabled !== prevState.highlightSourceEnabled ||
-        state.highlightDestinationEnabled !== prevState.highlightDestinationEnabled ||
         state.pivotEdgeDashingEnabled !== prevState.pivotEdgeDashingEnabled ||
         state.upcomingChangesEnabled !== prevState.upcomingChangesEnabled ||
         state.highlightColorMode !== prevState.highlightColorMode ||

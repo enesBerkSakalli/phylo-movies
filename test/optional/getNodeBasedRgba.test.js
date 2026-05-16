@@ -34,20 +34,9 @@ describe('getNodeBasedRgba', () => {
       subtreeDimmingOpacity: 0.3,
       markedSubtreeData: null,
       markedSubtreesEnabled: false, // disable subtree checks to avoid split index lookups
-      highlightSourceEnabled: false,
-      highlightDestinationEnabled: false,
       highlightColorMode: 'solid',
       markedColor: '#10b981'
     };
-  });
-
-  it('returns highlight color when source highlight is enabled', () => {
-    cached.highlightSourceEnabled = true;
-    colorManager.isNodeSourceEdge = () => true;
-
-    const result = getNodeBasedRgba(node, undefined, cached, helpers);
-
-    expect(result).to.deep.equal([16, 185, 129, 255]); // markedColor solid highlight
   });
 
   it('uses ColorManager base color when not highlighted', () => {

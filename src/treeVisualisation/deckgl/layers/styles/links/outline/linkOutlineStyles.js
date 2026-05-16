@@ -4,7 +4,7 @@ import { calculateFlightDashArray } from '../dashUtils.js';
 import { applyDimmingWithCache } from '../../dimmingUtils.js';
 import {
   getLifecycleLinkHighlight,
-  shouldHighlightMarkedSubtree,
+  shouldHighlightLink,
   getHistoryOutlineStyle,
   getMarkedHighlightColor
 } from '../linkUtils.js';
@@ -78,11 +78,11 @@ export function getLinkOutlineColor(link, cached) {
       hasOutline = true;
     }
 
-    // Check if link is part of a MARKED subtree (persistent highlight)
+    // Check if link is part of a marked subtree highlight
     // Priority: Marked (Red) > Pivot (Blue)
     // We allow Marked highlight even if it's part of the pivot edge, so the specific jumping subtree stands out
     // from the broader pivot edge.
-    else if (shouldHighlightMarkedSubtree(link, cached)) {
+    else if (shouldHighlightLink(link, cached)) {
       const mode = cached.highlightColorMode || 'solid';
       rgb = getMarkedHighlightColor(link, cm, mode, cached.markedColor);
 
@@ -133,7 +133,7 @@ export function getLinkOutlineColor(link, cached) {
 }
 
 export function getLinkOutlineWidth(link, cached, helpers) {
-  const { colorManager: cm, pulseOpacity, upcomingChangesEnabled, markedSubtreeData, metricScale = 1.0 } = cached;
+  const { colorManager: cm, pulseOpacity, upcomingChangesEnabled, metricScale = 1.0 } = cached;
   const baseWidth = helpers.getBaseStrokeWidth();
 
   if (getLifecycleLinkHighlight(link)) {
@@ -155,9 +155,9 @@ export function getLinkOutlineWidth(link, cached, helpers) {
     return (baseWidth + 4) * metricScale;
   }
 
-  // Check if link is part of a MARKED subtree (persistent highlight)
+  // Check if link is part of a marked subtree highlight
   // Moderate glow width (reduced from baseWidth * 2 + 8 for less aggressive highlighting)
-  if (shouldHighlightMarkedSubtree(link, cached)) {
+  if (shouldHighlightLink(link, cached)) {
     return (baseWidth * 1.5 + 4) * metricScale; // Balanced glow for visibility without being too prominent
   }
 

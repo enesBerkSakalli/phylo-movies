@@ -2,12 +2,7 @@
  * Factory for extension-related layers
  * - Leaf Extensions (Dotted lines from leaves to alignment edge)
  */
-import { createLayer } from '../base/createLayer.js';
 import { addZOffsetToPath, getNodeHistoryZOffset } from '../../../utils/GeometryUtils.js';
-import {
-  LAYER_CONFIGS,
-  HOVER_HIGHLIGHT_COLOR
-} from '../../config/layerConfigs.js';
 
 // ============================================================================
 // HELPERS
@@ -35,8 +30,4 @@ export function getExtensionsLayerProps(extensions, state, layerStyles) {
       getWidth: [extensions.length, strokeWidth, colorVersion, metricScale]
     }
   };
-}
-
-export function createExtensionsLayer(extensions, state, layerStyles) {
-  return createLayer(LAYER_CONFIGS.extensions, getExtensionsLayerProps(extensions, state, layerStyles));
 }

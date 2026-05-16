@@ -80,7 +80,7 @@ const mockUseAppStore = {
 
 // Patch module loader
 const originalLoad = Module._load;
-Module._load = function (request, parent, isMain) {
+Module._load = function (request, _parent, _isMain) {
   if (request === '@deck.gl/core') return mockDeckGLCore;
   if (request === '@deck.gl/layers') return mockDeckGLLayers;
   if (request === '@deck.gl/extensions') return mockDeckGLExtensions;
@@ -100,12 +100,11 @@ Module._load = function (request, parent, isMain) {
 };
 
 // Now require the SUT - using modular layer factories
-const { LayerManager } = require('../../src/treeVisualisation/deckgl/layers/LayerManager.js');
 const {
-  createLinksLayer,
-  createNodesLayer,
-  createLinkOutlinesLayer,
-  createExtensionsLayer
+  getLinksLayerProps,
+  getNodesLayerProps,
+  getLinkOutlinesLayerProps,
+  getExtensionsLayerProps
 } = require('../../src/treeVisualisation/deckgl/layers/factory/index.js');
 const { LayerStyles } = require('../../src/treeVisualisation/deckgl/layers/LayerStyles.js');
 const {
@@ -114,6 +113,8 @@ const {
   isNodeInSubtree,
   isLinkInSubtree
 } = require('../../src/domain/tree/splits.js');
+const { shouldHighlightLink } = require('../../src/treeVisualisation/deckgl/layers/styles/links/linkUtils.js');
+const { shouldHighlightNode } = require('../../src/treeVisualisation/deckgl/layers/styles/nodes/nodeUtils.js');
 
 /**
  * Helper to create a mock ColorManager with the required fast subtree methods.
@@ -179,6 +180,38 @@ function createMockColorManager(overrides = {}) {
   return result;
 }
 
+describe('marked subtree highlight helpers', () => {
+  it('keeps marked subtree link highlighting behind the marked-subtree toggle', () => {
+    const link = { split_indices: [3] };
+    const cached = {
+      markedSubtreesEnabled: false,
+      markedSubtreeData: [new Set([3])],
+      colorManager: createMockColorManager()
+    };
+
+    expect(shouldHighlightLink(link, cached)).to.equal(false);
+
+    cached.markedSubtreesEnabled = true;
+
+    expect(shouldHighlightLink(link, cached)).to.equal(true);
+  });
+
+  it('keeps marked subtree node highlighting behind the marked-subtree toggle', () => {
+    const node = { split_indices: [6] };
+    const cached = {
+      markedSubtreesEnabled: false,
+      markedSubtreeData: [new Set([6])],
+      colorManager: createMockColorManager()
+    };
+
+    expect(shouldHighlightNode(node, cached)).to.equal(false);
+
+    cached.markedSubtreesEnabled = true;
+
+    expect(shouldHighlightNode(node, cached)).to.equal(true);
+  });
+});
+
 describe('Layer Highlighting Configuration', () => {
   let layerStyles;
 
@@ -205,37 +238,37 @@ describe('Layer Highlighting Configuration', () => {
   describe('autoHighlight configuration', () => {
     it('should keep main links non-pickable', () => {
       const links = [{ path: [[0, 0, 0], [1, 1, 0]], split_indices: [1] }];
-      const layer = createLinksLayer(links, mockStoreState, layerStyles);
+      const layer = getLinksLayerProps(links, mockStoreState, layerStyles);
 
-      expect(layer.props.pickable).to.equal(false);
-      expect(layer.props.autoHighlight).to.be.undefined;
+      expect(layer.pickable).to.equal(false);
+      expect(layer.autoHighlight).to.be.undefined;
     });
 
     it('should enable autoHighlight on nodes layer', () => {
       const nodes = [{ position: [0, 0, 0], split_indices: [1] }];
-      const layer = createNodesLayer(nodes, mockStoreState, layerStyles);
+      const layer = getNodesLayerProps(nodes, mockStoreState, layerStyles);
 
-      expect(layer.props.autoHighlight).to.equal(true);
-      expect(layer.props.highlightColor).to.be.an('array');
-      expect(layer.props.highlightColor).to.have.lengthOf(4);
+      expect(layer.autoHighlight).to.equal(true);
+      expect(layer.highlightColor).to.be.an('array');
+      expect(layer.highlightColor).to.have.lengthOf(4);
     });
 
     it('should NOT enable autoHighlight on non-pickable layers (outlines)', () => {
       const links = [{ path: [[0, 0, 0], [1, 1, 0]], split_indices: [1] }];
-      const layer = createLinkOutlinesLayer(links, mockStoreState, layerStyles);
+      const layer = getLinkOutlinesLayerProps(links, mockStoreState, layerStyles);
 
-      expect(layer.props.pickable).to.equal(false);
+      expect(layer.pickable).to.equal(false);
       // autoHighlight should not be set on non-pickable layers
-      expect(layer.props.autoHighlight).to.be.undefined;
+      expect(layer.autoHighlight).to.be.undefined;
     });
   });
 
   describe('updateTriggers stability', () => {
     it('should use scalar colorVersion in links updateTriggers', () => {
       const links = [{ path: [[0, 0, 0], [1, 1, 0]], split_indices: [1] }];
-      const layer = createLinksLayer(links, mockStoreState, layerStyles);
+      const layer = getLinksLayerProps(links, mockStoreState, layerStyles);
 
-      const colorTrigger = layer.props.updateTriggers.getColor;
+      const colorTrigger = layer.updateTriggers.getColor;
       // Should be an array of scalars, not containing the links array itself
       expect(colorTrigger).to.be.an('array');
       expect(colorTrigger).to.not.deep.include(links);
@@ -245,9 +278,9 @@ describe('Layer Highlighting Configuration', () => {
 
     it('should use scalar colorVersion in nodes updateTriggers', () => {
       const nodes = [{ position: [0, 0, 0], split_indices: [1] }];
-      const layer = createNodesLayer(nodes, mockStoreState, layerStyles);
+      const layer = getNodesLayerProps(nodes, mockStoreState, layerStyles);
 
-      const colorTrigger = layer.props.updateTriggers.getFillColor;
+      const colorTrigger = layer.updateTriggers.getFillColor;
       expect(colorTrigger).to.be.an('array');
       expect(colorTrigger).to.not.deep.include(nodes);
     });
@@ -259,9 +292,9 @@ describe('Layer Highlighting Configuration', () => {
       mockStoreState.colorVersion = initialVersion + 1;
 
       const links = [{ path: [[0, 0, 0], [1, 1, 0]], split_indices: [1] }];
-      const layer = createLinksLayer(links, mockStoreState, layerStyles);
+      const layer = getLinksLayerProps(links, mockStoreState, layerStyles);
 
-      const colorTrigger = layer.props.updateTriggers.getColor;
+      const colorTrigger = layer.updateTriggers.getColor;
       expect(colorTrigger).to.deep.include(initialVersion + 1);
     });
   });
@@ -269,9 +302,9 @@ describe('Layer Highlighting Configuration', () => {
   describe('conditional layer visibility', () => {
     it('should hide link outlines when no highlights are active', () => {
       const links = [{ path: [[0, 0, 0], [1, 1, 0]], split_indices: [1] }];
-      const layer = createLinkOutlinesLayer(links, mockStoreState, layerStyles);
+      const layer = getLinkOutlinesLayerProps(links, mockStoreState, layerStyles);
 
-      expect(layer.props.visible).to.equal(false);
+      expect(layer.visible).to.equal(false);
     });
 
     it('should show link outlines when pivot edges exist', () => {
@@ -284,9 +317,9 @@ describe('Layer Highlighting Configuration', () => {
       };
 
       const links = [{ path: [[0, 0, 0], [1, 1, 0]], split_indices: [1] }];
-      const layer = createLinkOutlinesLayer(links, stateWithHighlights, layerStyles);
+      const layer = getLinkOutlinesLayerProps(links, stateWithHighlights, layerStyles);
 
-      expect(layer.props.visible).to.equal(true);
+      expect(layer.visible).to.equal(true);
     });
 
     it('should show link outlines when marked components exist', () => {
@@ -299,19 +332,20 @@ describe('Layer Highlighting Configuration', () => {
       };
 
       const links = [{ path: [[0, 0, 0], [1, 1, 0]], split_indices: [1] }];
-      const layer = createLinkOutlinesLayer(links, stateWithMarked, layerStyles);
+      const layer = getLinkOutlinesLayerProps(links, stateWithMarked, layerStyles);
 
-      expect(layer.props.visible).to.equal(true);
+      expect(layer.visible).to.equal(true);
     });
 
     it('should show link outlines when lifecycle links are expanding or collapsing', () => {
       const links = [
         { path: [[0, 0, 0], [1, 1, 0]], split_indices: [1], lifecycle: 'reviving' }
       ];
-      const layer = createLinkOutlinesLayer(links, mockStoreState, layerStyles);
+      const layer = getLinkOutlinesLayerProps(links, mockStoreState, layerStyles);
 
-      expect(layer.props.visible).to.equal(true);
+      expect(layer.visible).to.equal(true);
     });
+
   });
 
   describe('lifecycle link highlighting', () => {
@@ -322,13 +356,13 @@ describe('Layer Highlighting Configuration', () => {
         lifecycle: 'reviving',
         opacity: 1
       };
-      const linksLayer = createLinksLayer([link], mockStoreState, layerStyles);
-      const outlineLayer = createLinkOutlinesLayer([link], mockStoreState, layerStyles);
+      const linksLayer = getLinksLayerProps([link], mockStoreState, layerStyles);
+      const outlineLayer = getLinkOutlinesLayerProps([link], mockStoreState, layerStyles);
 
-      expect(linksLayer.props.getColor(link).slice()).to.deep.equal([34, 197, 94, 255]);
-      expect(linksLayer.props.getWidth(link)).to.be.greaterThan(mockStoreState.strokeWidth);
-      expect(outlineLayer.props.getColor(link).slice()).to.deep.equal([34, 197, 94, 179]);
-      expect(outlineLayer.props.getWidth(link)).to.be.greaterThan(0);
+      expect(linksLayer.getColor(link).slice()).to.deep.equal([34, 197, 94, 255]);
+      expect(linksLayer.getWidth(link)).to.be.greaterThan(mockStoreState.strokeWidth);
+      expect(outlineLayer.getColor(link).slice()).to.deep.equal([34, 197, 94, 179]);
+      expect(outlineLayer.getWidth(link)).to.be.greaterThan(0);
     });
 
     it('colors and thickens collapsing lifecycle links', () => {
@@ -338,13 +372,13 @@ describe('Layer Highlighting Configuration', () => {
         lifecycle: 'zeroing',
         opacity: 1
       };
-      const linksLayer = createLinksLayer([link], mockStoreState, layerStyles);
-      const outlineLayer = createLinkOutlinesLayer([link], mockStoreState, layerStyles);
+      const linksLayer = getLinksLayerProps([link], mockStoreState, layerStyles);
+      const outlineLayer = getLinkOutlinesLayerProps([link], mockStoreState, layerStyles);
 
-      expect(linksLayer.props.getColor(link).slice()).to.deep.equal([245, 158, 11, 255]);
-      expect(linksLayer.props.getWidth(link)).to.be.greaterThan(mockStoreState.strokeWidth);
-      expect(outlineLayer.props.getColor(link).slice()).to.deep.equal([245, 158, 11, 179]);
-      expect(outlineLayer.props.getWidth(link)).to.be.greaterThan(0);
+      expect(linksLayer.getColor(link).slice()).to.deep.equal([245, 158, 11, 255]);
+      expect(linksLayer.getWidth(link)).to.be.greaterThan(mockStoreState.strokeWidth);
+      expect(outlineLayer.getColor(link).slice()).to.deep.equal([245, 158, 11, 179]);
+      expect(outlineLayer.getWidth(link)).to.be.greaterThan(0);
     });
 
     it('does not lifecycle-highlight unchanged links', () => {
@@ -354,22 +388,22 @@ describe('Layer Highlighting Configuration', () => {
         lifecycle: 'unchanged',
         opacity: 1
       };
-      const linksLayer = createLinksLayer([link], mockStoreState, layerStyles);
-      const outlineLayer = createLinkOutlinesLayer([link], mockStoreState, layerStyles);
+      const linksLayer = getLinksLayerProps([link], mockStoreState, layerStyles);
+      const outlineLayer = getLinkOutlinesLayerProps([link], mockStoreState, layerStyles);
 
-      expect(linksLayer.props.getColor(link).slice()).to.deep.equal([0, 0, 0, 255]);
-      expect(linksLayer.props.getWidth(link)).to.equal(mockStoreState.strokeWidth);
-      expect(outlineLayer.props.getColor(link).slice()).to.deep.equal([0, 0, 0, 0]);
-      expect(outlineLayer.props.getWidth(link)).to.equal(0);
+      expect(linksLayer.getColor(link).slice()).to.deep.equal([0, 0, 0, 255]);
+      expect(linksLayer.getWidth(link)).to.equal(mockStoreState.strokeWidth);
+      expect(outlineLayer.getColor(link).slice()).to.deep.equal([0, 0, 0, 0]);
+      expect(outlineLayer.getWidth(link)).to.equal(0);
     });
   });
 
   describe('highlight color contrast', () => {
     it('should use a distinct hover highlight color', () => {
       const nodes = [{ position: [0, 0, 0], split_indices: [1] }];
-      const layer = createNodesLayer(nodes, mockStoreState, layerStyles);
+      const layer = getNodesLayerProps(nodes, mockStoreState, layerStyles);
 
-      const [r, g, b, a] = layer.props.highlightColor;
+      const [, g, b, a] = layer.highlightColor;
 
       // Hover color should be distinct from blue (#2196f3) and emerald (#10b981)
       // Using cyan-ish color [0, 200, 220, 150]
@@ -393,10 +427,10 @@ describe('Layer Highlighting Configuration', () => {
         { position: [0, 0, 0], split_indices: [1], opacity: 1 }  // inside
       ];
 
-      const layer = createNodesLayer(nodes, mockStoreState, layerStyles);
+      const layer = getNodesLayerProps(nodes, mockStoreState, layerStyles);
 
-      const outsideColor = layer.props.getFillColor(nodes[0]).slice();
-      const insideColor = layer.props.getFillColor(nodes[1]).slice();
+      const outsideColor = layer.getFillColor(nodes[0]).slice();
+      const insideColor = layer.getFillColor(nodes[1]).slice();
 
       expect(outsideColor[3]).to.be.lessThan(insideColor[3]);
     });
@@ -414,10 +448,10 @@ describe('Layer Highlighting Configuration', () => {
         { path: [[0, 0, 0], [1, 1, 0]], split_indices: [1], opacity: 1 }  // inside
       ];
 
-      const layer = createExtensionsLayer(extensions, mockStoreState, layerStyles);
+      const layer = getExtensionsLayerProps(extensions, mockStoreState, layerStyles);
 
-      const outsideColor = layer.props.getColor(extensions[0]).slice();
-      const insideColor = layer.props.getColor(extensions[1]).slice();
+      const outsideColor = layer.getColor(extensions[0]).slice();
+      const insideColor = layer.getColor(extensions[1]).slice();
 
       expect(outsideColor[3]).to.be.lessThan(insideColor[3]);
     });

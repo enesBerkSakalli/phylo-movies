@@ -2,23 +2,12 @@ import { isNodeInSubtree } from '../../../../../domain/tree/splits.js';
 import { colorToRgb, getContrastingHighlightColor } from '../../../../../services/ui/colorUtils.js';
 import { SYSTEM_TREE_COLORS } from '../../../../../constants/TreeColors.js';
 
-
-export function toColorManagerNode(node) {
-  return node;
-}
-
 /**
- * Checks if a node should be highlighted due to active interaction or persistent marking.
- * Combines ephemeral highlights (source/dest) and persistent marked subtrees.
+ * Checks if a node should be highlighted due to persistent subtree marking.
  */
 export function shouldHighlightNode(nodeData, cached) {
-  const { markedSubtreesEnabled, highlightSourceEnabled, highlightDestinationEnabled, markedSubtreeData, colorManager } = cached;
+  const { markedSubtreesEnabled, markedSubtreeData } = cached;
 
-  // Ephemeral Highlights (Interaction)
-  if (highlightSourceEnabled && colorManager.isNodeSourceEdge(nodeData)) return true;
-  if (highlightDestinationEnabled && colorManager.isNodeDestinationEdge(nodeData)) return true;
-
-  // Persistent Highlights (Marked Subtrees)
   return markedSubtreesEnabled !== false && markedSubtreeData && isNodeInSubtree(nodeData, markedSubtreeData);
 }
 

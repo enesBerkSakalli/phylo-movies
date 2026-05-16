@@ -3,7 +3,7 @@ const proxyquire = require('proxyquire');
 
 // Mock dependencies
 const linkUtilsMock = {
-  shouldHighlightMarkedSubtree: () => false,
+  shouldHighlightLink: () => false,
   getHistoryOutlineStyle: () => null,
   getMarkedHighlightColor: () => [255, 0, 0],
 };
@@ -29,7 +29,7 @@ const colorUtilsMock = {
 };
 
 // Import the module under test with mocks
-const { getLinkOutlineWidth, getLinkOutlineColor } = proxyquire('../../src/treeVisualisation/deckgl/layers/styles/links/outline/linkOutlineStyles.js', {
+const { getLinkOutlineWidth } = proxyquire('../../src/treeVisualisation/deckgl/layers/styles/links/outline/linkOutlineStyles.js', {
   '../linkUtils.js': linkUtilsMock,
   '../../../../../systems/tree_color/visualHighlights.js': visualHighlightsMock,
   '../dashUtils.js': dashUtilsMock,

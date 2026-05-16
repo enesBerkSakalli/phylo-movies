@@ -1,11 +1,10 @@
 /**
  * Factory for label dots layer - shows dots instead of text labels
  */
-import { createLayer } from '../base/createLayer.js';
 import { selectLeafNamesByIndex } from '../../../../../state/phyloStore/selectors/treeSelectors.js';
 import { LAYER_ID_PREFIX } from '../../config/layerConfigs.js';
 import { ScatterplotLayer } from '@deck.gl/layers';
-import { getHistoryOffset, addZOffset, withSideSuffix } from '../../styles/labels/labelUtils.js';
+import { getHistoryOffset, addZOffset } from '../../styles/labels/labelUtils.js';
 
 // Scale factor to convert font size to dot radius (adjust as needed)
 const FONT_SIZE_TO_DOT_RADIUS_SCALE = 0.25;
@@ -27,23 +26,6 @@ export const LABEL_DOTS_CONFIG = {
     billboard: true
   }
 };
-
-/**
- * Create label dots layer (dots at label positions when text is hidden)
- *
- * @param {Array} labels - Label data array
- * @param {Object} state - Store state snapshot
- * @param {Object} layerStyles - LayerStyles instance
- * @returns {Layer} deck.gl ScatterplotLayer
- */
-export function createLabelDotsLayer(labels, state, layerStyles) {
-  if (!labels || labels.length === 0) return null;
-
-  return createLayer(
-    { ...LABEL_DOTS_CONFIG, id: withSideSuffix(LABEL_DOTS_CONFIG.id, labels) },
-    getLabelDotsLayerProps(labels, state, layerStyles)
-  );
-}
 
 /**
  * Build props for the label dots layer

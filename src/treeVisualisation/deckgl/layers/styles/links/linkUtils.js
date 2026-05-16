@@ -39,12 +39,8 @@ export const getMarkedHighlightColor = (link, cm, mode = 'solid', markedColor) =
   }
 };
 
-export const shouldHighlightMarkedSubtree = (link, cached) => {
-  const { markedSubtreesEnabled, highlightSourceEnabled, highlightDestinationEnabled, markedSubtreeData, colorManager } = cached;
-
-  // Specific toggles override specific subset checks
-  if (highlightSourceEnabled && colorManager?.isLinkSourceEdge?.(link)) return true;
-  if (highlightDestinationEnabled && colorManager?.isLinkDestinationEdge?.(link)) return true;
+export const shouldHighlightLink = (link, cached) => {
+  const { markedSubtreesEnabled, markedSubtreeData } = cached;
 
   return markedSubtreesEnabled !== false && markedSubtreeData && isLinkInSubtree(link, markedSubtreeData);
 };
