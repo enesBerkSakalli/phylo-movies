@@ -10,6 +10,15 @@ import { applySafeAreaToTarget } from '../spatial/projections.js';
 import { areBoundsInView, expandBoundsForLabels } from '../spatial/bounds.js';
 import { calculateSafeAreaPadding, normalizeSafeArea } from '../spatial/layout.js';
 
+export const VIEWPORT_LABEL_FIT_PADDING = 1.25;
+export const VIEWPORT_BRANCH_FIT_PADDING = 1.12;
+export const VIEWPORT_HIGH_DENSITY_NODE_THRESHOLD = 400;
+export const VIEWPORT_MEDIUM_DENSITY_NODE_THRESHOLD = 200;
+export const VIEWPORT_LOW_DENSITY_NODE_THRESHOLD = 100;
+export const VIEWPORT_HIGH_DENSITY_PADDING = 0.15;
+export const VIEWPORT_MEDIUM_DENSITY_PADDING = 0.1;
+export const VIEWPORT_LOW_DENSITY_PADDING = 0.05;
+
 export function calculateFocusViewport({
   nodes,
   labels,
@@ -28,7 +37,8 @@ export function calculateFocusViewport({
     ? calculateVisualBounds(nodes, labels)
     : calculateBranchBounds(nodes, links);
   const densityPadding = calculateDensityPadding(nodes);
-  const effectivePadding = padding ?? ((includeLabels ? 1.25 : 1.12) + densityPadding);
+  const fitPadding = includeLabels ? VIEWPORT_LABEL_FIT_PADDING : VIEWPORT_BRANCH_FIT_PADDING;
+  const effectivePadding = padding ?? (fitPadding + densityPadding);
 
   const expandedBounds = includeLabels
     ? expandBoundsForLabels(bounds, labels, labelSizePx, getLabelSize)
@@ -60,10 +70,10 @@ export function calculateFocusViewport({
 }
 
 function calculateDensityPadding(nodes) {
-  const leafCount = Array.isArray(nodes) ? nodes.length : 0;
-  if (leafCount > 400) return 0.15;
-  if (leafCount > 200) return 0.1;
-  if (leafCount > 100) return 0.05;
+  const leafCount = nodes.length;
+  if (leafCount > VIEWPORT_HIGH_DENSITY_NODE_THRESHOLD) return VIEWPORT_HIGH_DENSITY_PADDING;
+  if (leafCount > VIEWPORT_MEDIUM_DENSITY_NODE_THRESHOLD) return VIEWPORT_MEDIUM_DENSITY_PADDING;
+  if (leafCount > VIEWPORT_LOW_DENSITY_NODE_THRESHOLD) return VIEWPORT_LOW_DENSITY_PADDING;
   return 0;
 }
 
@@ -86,17 +96,6 @@ export class ViewportManager {
     const x = Number.isFinite(Number(rightTreeOffsetX)) ? Number(rightTreeOffsetX) : 0;
     const y = Number.isFinite(Number(rightTreeOffsetY)) ? Number(rightTreeOffsetY) : 0;
     return { x, y };
-  }
-
-  initializeRightTreeOffset(offset) {
-    if (!offset) return;
-    const { setRightTreeOffsetX, setRightTreeOffsetY } = useAppStore.getState();
-    if (typeof setRightTreeOffsetX === 'function' && offset.x !== undefined) {
-      setRightTreeOffsetX(offset.x);
-    }
-    if (typeof setRightTreeOffsetY === 'function' && offset.y !== undefined) {
-      setRightTreeOffsetY(offset.y);
-    }
   }
 
   // ==========================================================================
