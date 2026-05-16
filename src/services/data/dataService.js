@@ -1,5 +1,5 @@
 import localforage from 'localforage';
-import { resolveApiUrl } from './apiConfig';
+import { toPhyloMovieAppData } from '../../domain/backend/phyloMovieAdapter.ts';
 import { validatePhyloMovieData } from '../../domain/backend/phyloMovieSchema.ts';
 
 /**
@@ -69,9 +69,9 @@ export const phyloData = {
   },
 
   async set(data) {
-    const validatedData = this.validate(data);
-    await storage.set(STORAGE_KEYS.PHYLO_DATA, validatedData);
-    return validatedData;
+    const validatedBackendData = validatePhyloMovieData(data);
+    await storage.set(STORAGE_KEYS.PHYLO_DATA, validatedBackendData);
+    return toPhyloMovieAppData(validatedBackendData);
   },
 
   async remove() {
@@ -79,31 +79,6 @@ export const phyloData = {
   },
 
   validate(data) {
-    return validatePhyloMovieData(data);
-  }
-};
-
-/**
- * Server communication operations
- */
-export const server = {
-  async fetchTreeData(formData) {
-    try {
-      const url = await resolveApiUrl("/treedata");
-      const response = await fetch(url, {
-        method: "POST",
-        body: formData,
-      });
-      if (!response.ok) {
-        throw new Error(`Server returned ${response.status}: ${response.statusText}`);
-      }
-      const data = await response.json();
-      if (data.error) {
-        throw new Error(`Server error: ${data.error}`);
-      }
-      return data; // Return the fetched data
-    } catch (error) {
-      throw error;
-    }
+    return toPhyloMovieAppData(validatePhyloMovieData(data));
   }
 };

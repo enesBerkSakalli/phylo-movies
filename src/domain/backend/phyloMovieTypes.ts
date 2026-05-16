@@ -69,6 +69,8 @@ export interface MsaData {
   step_size?: number;
 }
 
+export type SubtreeHighlightTracking = Array<number[][] | null>;
+
 export interface PhyloMovieData {
   interpolated_trees: TreeNode[];
   tree_metadata: TreeMetadata[];
@@ -81,11 +83,15 @@ export interface PhyloMovieData {
   pair_interpolation_ranges: Array<[number, number]>;
   pivot_edge_tracking: Array<number[] | null>;
   /** Legacy backend field name: per-frame visual/highlight groups, not movement ownership. */
-  subtree_tracking: Array<number[][] | null>;
+  subtree_tracking: SubtreeHighlightTracking;
   msa: MsaData;
   sorted_leaves: string[];
   file_name: string;
   split_change_events: Record<string, SplitChangeEvent[]>;
   split_change_timeline: SplitChangeTimelineEntry[];
   [key: string]: unknown;
+}
+
+export interface PhyloMovieAppData extends Omit<PhyloMovieData, 'subtree_tracking' | 'split_change_events'> {
+  subtreeHighlightTracking: SubtreeHighlightTracking;
 }

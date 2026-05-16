@@ -31,6 +31,11 @@ function loadMovieData() {
   throw new Error('No input JSON found for timeline construction test.');
 }
 
+function toAppMovieData(data) {
+  const { subtree_tracking: subtreeHighlightTracking, ...appData } = data;
+  return { ...appData, subtreeHighlightTracking };
+}
+
 function setsToSortedArrays(sets) {
   return (sets || []).map((set) => Array.from(set).sort((a, b) => a - b));
 }
@@ -216,7 +221,7 @@ describe('Active change edge mapping (small_example)', () => {
 
   before(() => {
     const { data } = loadMovieData();
-    movieData = data;
+    movieData = toAppMovieData(data);
   });
 
   beforeEach(() => {
