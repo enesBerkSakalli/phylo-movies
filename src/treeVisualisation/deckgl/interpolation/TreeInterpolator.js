@@ -26,6 +26,7 @@ export class TreeInterpolator {
       pathInterpolator: this.pathInterpolator,
       nodeInterpolator: this.nodeInterpolator
     });
+    this._elementMapCache = new WeakMap();
     this._rootAngle = 0;
   }
 
@@ -57,15 +58,15 @@ export class TreeInterpolator {
     const t = Math.max(0, Math.min(1, timeFactor));
     const structuralOpacity = structuralOpacityOptions(interpolationOptions);
 
-    // Build element maps for all types
-    const nodeFromMap = this.elementMatcher._createElementMap(dataFrom.nodes);
-    const nodeToMap = this.elementMatcher._createElementMap(dataTo.nodes);
-    const labelFromMap = this.elementMatcher._createElementMap(dataFrom.labels);
-    const labelToMap = this.elementMatcher._createElementMap(dataTo.labels);
-    const linkFromMap = this.elementMatcher._createElementMap(dataFrom.links);
-    const linkToMap = this.elementMatcher._createElementMap(dataTo.links);
-    const extFromMap = this.elementMatcher._createElementMap(dataFrom.extensions);
-    const extToMap = this.elementMatcher._createElementMap(dataTo.extensions);
+    // Cached layout data is reused across animation frames; its id maps can be reused too.
+    const nodeFromMap = this._getElementMap(dataFrom.nodes);
+    const nodeToMap = this._getElementMap(dataTo.nodes);
+    const labelFromMap = this._getElementMap(dataFrom.labels);
+    const labelToMap = this._getElementMap(dataTo.labels);
+    const linkFromMap = this._getElementMap(dataFrom.links);
+    const linkToMap = this._getElementMap(dataTo.links);
+    const extFromMap = this._getElementMap(dataFrom.extensions);
+    const extToMap = this._getElementMap(dataTo.extensions);
 
     // Velocity normalisation: only during REORDER and only for angle.
     // Radial interpolation stays on the base eased timeline.
@@ -159,6 +160,15 @@ export class TreeInterpolator {
     return result;
   }
 
+  _getElementMap(elements) {
+    const cached = this._elementMapCache.get(elements);
+    if (cached) return cached;
+
+    const map = this.elementMatcher._createElementMap(elements);
+    this._elementMapCache.set(elements, map);
+    return map;
+  }
+
   /**
    * Interpolate nodes between two states
    * @private
@@ -212,6 +222,7 @@ export class TreeInterpolator {
     this.nodeInterpolator?.resetCache?.();
     this.labelInterpolator?.resetCache?.();
     this.extensionInterpolator?.resetCache?.();
+    this._elementMapCache = new WeakMap();
   }
 }
 
