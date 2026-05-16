@@ -72,6 +72,7 @@ export interface AppStoreState {
   hoveredSegmentIndex: number | null;
   hoveredSegmentData: any;
   hoveredSegmentPosition: any;
+  selectedTimelineSegmentIndex: number | null;
   isTooltipHovered: boolean;
 
   // From treeAppearance.slice
@@ -199,6 +200,7 @@ export interface AppStoreState {
 
   setHoveredSegment: (segmentIndex: number | null, segmentData?: any, position?: any) => void;
   setTooltipHovered: (isHovered: boolean) => void;
+  setSelectedTimelineSegment: (segmentIndex: number | null) => void;
   setBarOption: (option: string) => void;
   zoomInTimeline: () => void;
   zoomOutTimeline: () => void;

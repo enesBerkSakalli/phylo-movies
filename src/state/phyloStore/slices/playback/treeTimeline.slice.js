@@ -9,6 +9,7 @@ export const createTimelineSlice = (set, get) => ({
   hoveredSegmentIndex: null,
   hoveredSegmentData: null,
   hoveredSegmentPosition: null,
+  selectedTimelineSegmentIndex: null,
   isTooltipHovered: false,
 
   // ==========================================================================
@@ -25,6 +26,12 @@ export const createTimelineSlice = (set, get) => ({
   },
 
   setTooltipHovered: (isHovered) => set({ isTooltipHovered: isHovered }),
+
+  setSelectedTimelineSegment: (segmentIndex) => {
+    set({
+      selectedTimelineSegmentIndex: segmentIndex,
+    });
+  },
 
   // ==========================================================================
   // ACTIONS: Chart

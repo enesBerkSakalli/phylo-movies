@@ -296,13 +296,14 @@ export class DeckTimelineRenderer {
   // ==========================================================================
 
   _bindMouseEvents() {
+    const pointerTarget = this.deck?.canvas ?? this.canvas;
     const eventConfigs = [
-      { event: 'mousemove', handler: (e) => handleTimelineMouseMoveOrScrub(this, e), target: this.canvas },
-      { event: 'mousedown', handler: (e) => handleTimelineMouseDown(this, e), target: this.canvas },
+      { event: 'mousemove', handler: (e) => handleTimelineMouseMoveOrScrub(this, e), target: pointerTarget },
+      { event: 'mousedown', handler: (e) => handleTimelineMouseDown(this, e), target: pointerTarget },
       { event: 'mouseup', handler: () => this._handleMouseUp(), target: window },
-      { event: 'click', handler: (e) => this._handleClick(e), target: this.canvas },
-      { event: 'wheel', handler: (e) => handleTimelineWheel(this, e), target: this.canvas, options: { passive: false } },
-      { event: 'mouseleave', handler: () => handleTimelineMouseLeave(this), target: this.canvas }
+      { event: 'click', handler: (e) => this._handleClick(e), target: pointerTarget },
+      { event: 'wheel', handler: (e) => handleTimelineWheel(this, e), target: pointerTarget, options: { passive: false } },
+      { event: 'mouseleave', handler: () => handleTimelineMouseLeave(this), target: pointerTarget }
     ];
 
     eventConfigs.forEach(({ event, handler, target, options }) => {
