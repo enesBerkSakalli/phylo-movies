@@ -32,6 +32,15 @@ const splitEligibilitySourcePath = join(
   'transforms',
   'ConnectorSplitEligibility.js'
 );
+const leafIndexSourcePath = join(
+  repoRoot,
+  'src',
+  'treeVisualisation',
+  'deckgl',
+  'data',
+  'transforms',
+  'ConnectorLeafIndex.js'
+);
 const leafPairCandidatesSourcePath = join(
   repoRoot,
   'src',
@@ -104,6 +113,15 @@ const pathBuilderSourcePath = join(
   'transforms',
   'ConnectorPathBuilder.js'
 );
+const infoIndexSourcePath = join(
+  repoRoot,
+  'src',
+  'treeVisualisation',
+  'deckgl',
+  'data',
+  'transforms',
+  'ConnectorInfoIndex.js'
+);
 
 async function importConnectorColorEntryResolver() {
   try {
@@ -172,6 +190,14 @@ async function importConnectorRawConnectionFactory() {
 async function importConnectorPassiveGroups() {
   try {
     return await import('../src/treeVisualisation/deckgl/data/transforms/ConnectorPassiveGroups.js');
+  } catch {
+    return null;
+  }
+}
+
+async function importConnectorInfoIndex() {
+  try {
+    return await import('../src/treeVisualisation/deckgl/data/transforms/ConnectorInfoIndex.js');
   } catch {
     return null;
   }
@@ -291,7 +317,9 @@ describe('SubtreeConnectorBuilder', function () {
     expect(rawSource).not.toMatch(/key\.split\('-'\)/);
     expect(leafPairCandidatesSource).toMatch(/getEligibleConnectorSplitIndices/);
     expect(movementStateSource).toMatch(/isConnectorSplitInAnySubtree/);
-    expect(splitEligibilitySource).toMatch(/from\s+['"][^'"]*splitMatching\.js['"]/);
+    expect(splitEligibilitySource).toMatch(/from\s+['"][^'"]*domain\/tree\/splits\.js['"]/);
+    expect(splitEligibilitySource).not.toMatch(/subtreeSets\s*\|\|\s*\[\]/);
+    expect(splitEligibilitySource).not.toMatch(/splitMatching\.js/);
   });
 
   it('normalizes connector split values through an isolated helper module', async function () {
@@ -375,13 +403,15 @@ describe('SubtreeConnectorBuilder', function () {
       ['10-11', internalA],
       ['11', namelessLeaf],
       ['12', leafB],
-      ['missing', null],
     ]);
 
     expect(Array.from(leafIndex.indexConnectorLeavesByName(positions).entries())).toEqual([
       ['A', { key: '10', info: leafA }],
       ['B', { key: '12', info: leafB }],
     ]);
+
+    const leafIndexSource = readFileSync(leafIndexSourcePath, 'utf8');
+    expect(leafIndexSource).not.toMatch(/info\s*&&\s*info\.isLeaf/);
   });
 
   it('keeps connector leaf indexing outside the builder', function () {
@@ -438,6 +468,7 @@ describe('SubtreeConnectorBuilder', function () {
     expect(rawSource).not.toMatch(/rightLeavesByName\.get/);
     expect(rawSource).not.toMatch(/rightMatch\.info\.position/);
     expect(leafPairCandidatesSource).toMatch(/from\s+['"]\.\/ConnectorSplitEligibility\.js['"]/);
+    expect(leafPairCandidatesSource).not.toMatch(/info\?\.isLeaf/);
   });
 
   it('resolves connector movement state through a dedicated pure helper', async function () {
@@ -502,6 +533,8 @@ describe('SubtreeConnectorBuilder', function () {
     expect(rawSource).not.toMatch(/isNodePivotEdge/);
     expect(rawSource).not.toMatch(/isNodeHistorySubtree/);
     expect(movementStateSource).toMatch(/from\s+['"]\.\/ConnectorSplitEligibility\.js['"]/);
+    expect(movementStateSource).not.toMatch(/typeof\s+colorManager\.isNodePivotEdge/);
+    expect(movementStateSource).not.toMatch(/typeof\s+colorManager\.isNodeHistorySubtree/);
     expect(visualStateSource).toMatch(/from\s+['"]\.\/ConnectorMovementState\.js['"]/);
   });
 
@@ -637,7 +670,6 @@ describe('SubtreeConnectorBuilder', function () {
     const firstConnection = { sourceInfo: leftLeafA, targetInfo: rightLeafA };
     const secondConnection = { sourceInfo: leftLeafB, targetInfo: rightLeafB };
     const standaloneConnection = { sourceInfo: standaloneLeft, targetInfo: standaloneRight };
-    const skippedConnection = { sourceInfo: null, targetInfo: rightLeafA };
     const leftInfoById = new Map([
       [leftParent.id, leftParent],
       [leftLeafA.id, leftLeafA],
@@ -650,7 +682,7 @@ describe('SubtreeConnectorBuilder', function () {
     ]);
 
     const groups = passiveGroups.groupPassiveConnectorConnections(
-      [firstConnection, secondConnection, standaloneConnection, skippedConnection],
+      [firstConnection, secondConnection, standaloneConnection],
       leftInfoById,
       rightInfoById
     );
@@ -669,6 +701,38 @@ describe('SubtreeConnectorBuilder', function () {
     expect(builderSource).not.toMatch(/function\s+groupPassiveConnections\s*\(/);
     expect(builderSource).not.toMatch(/ROOT_LEFT_GROUP_ID/);
     expect(passiveGroupsSource).toMatch(/from\s+['"]\.\/ComparisonGeometryUtils\.js['"]/);
+    expect(passiveGroupsSource).not.toMatch(/!sourceInfo\s*\|\|\s*!targetInfo/);
+    expect(passiveGroupsSource).not.toMatch(/info\s*&&\s*info\.parentId/);
+    expect(passiveGroupsSource).not.toMatch(/infoById\s*\?/);
+  });
+
+  it('indexes connector info by id through a dedicated helper', async function () {
+    const infoIndex = await importConnectorInfoIndex();
+
+    expect(infoIndex).not.toBeNull();
+
+    const withId = { id: 'leaf-10', name: 'A' };
+    const withoutId = { name: 'missing-id' };
+    const indexed = infoIndex.buildConnectorInfoById(new Map([
+      ['10', withId],
+      ['missing', withoutId],
+    ]));
+
+    expect(indexed).toBeInstanceOf(Map);
+    expect(indexed.get('leaf-10')).toBe(withId);
+    expect(indexed.has('missing')).toBe(false);
+
+    const pathBuilderSource = readFileSync(pathBuilderSourcePath, 'utf8');
+    const passiveGroupsSource = readFileSync(passiveGroupsSourcePath, 'utf8');
+    const infoIndexSource = readFileSync(infoIndexSourcePath, 'utf8');
+    expect(pathBuilderSource).toMatch(/from\s+['"]\.\/ConnectorInfoIndex\.js['"]/);
+    expect(passiveGroupsSource).toMatch(/from\s+['"]\.\/ConnectorInfoIndex\.js['"]/);
+    expect(pathBuilderSource).not.toMatch(/function\s+buildInfoById\s*\(/);
+    expect(passiveGroupsSource).not.toMatch(/function\s+toInfoByIdMap\s*\(/);
+    expect(infoIndexSource).toMatch(/export\s+function\s+buildConnectorInfoById\s*\(/);
+    expect(infoIndexSource).not.toMatch(/!infoSource/);
+    expect(infoIndexSource).not.toMatch(/typeof\s+infoSource\.values/);
+    expect(infoIndexSource).not.toMatch(/info\s*&&\s*info\.id/);
   });
 
   it('creates connector objects through a shared helper', async function () {
@@ -805,17 +869,25 @@ describe('SubtreeConnectorBuilder', function () {
       sourceInfo: leftPositions.get('12'),
       targetInfo: rightPositions.get('12'),
     };
+    const passiveConnectionGroups = [{
+      leftCenterEntry: passiveConnection.sourceInfo,
+      rightCenterEntry: passiveConnection.targetInfo,
+      connections: [passiveConnection],
+    }];
 
-    const paths = pathBuilder.buildConnectorPathConnections({
-      activeConnections: [activeConnection],
-      passiveConnections: [passiveConnection],
-      leftCenter: [0, 0],
-      rightCenter: [160, 0],
-      leftRadius: 50,
-      rightRadius: 50,
-      leftPositions,
-      rightPositions,
-    });
+    let paths;
+    expect(() => {
+      paths = pathBuilder.buildConnectorPathConnections({
+        activeConnections: [activeConnection],
+        passiveConnectionGroups,
+        leftCenter: [0, 0],
+        rightCenter: [160, 0],
+        leftRadius: 50,
+        rightRadius: 50,
+        leftPositions,
+        rightPositions,
+      });
+    }).not.toThrow();
 
     expect(paths).toHaveLength(2);
     expect(paths[0]).toMatchObject({
@@ -844,6 +916,9 @@ describe('SubtreeConnectorBuilder', function () {
     expect(builderSource).not.toMatch(/PASSIVE_CONNECTOR_STYLE/);
     expect(builderSource).not.toMatch(/ACTIVE_CONNECTOR_STYLE/);
     expect(pathBuilderSource).toMatch(/from\s+['"][^'"]*ConnectorGeometryBuilder\.js['"]/);
+    expect(pathBuilderSource).not.toMatch(/ConnectorPassiveGroups\.js/);
+    expect(pathBuilderSource).not.toMatch(/groupPassiveConnectorConnections/);
+    expect(pathBuilderSource).not.toMatch(/\bpassiveConnections\b/);
   });
 
   it('builds connectors when positions are Maps', function () {

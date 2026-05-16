@@ -1,7 +1,7 @@
 import { buildBundledBezierPath } from '../../builders/geometry/connectors/ConnectorGeometryBuilder.js';
 import { pushOutward, chooseBundlePoint } from './ComparisonGeometryUtils.js';
 import { createConnectorPathConnection } from './ConnectorConnectionObjects.js';
-import { groupPassiveConnectorConnections } from './ConnectorPassiveGroups.js';
+import { buildConnectorInfoById } from './ConnectorInfoIndex.js';
 
 const CONNECTOR_PATH_SAMPLES = 24;
 const PASSIVE_CONNECTOR_STYLE = Object.freeze({
@@ -19,7 +19,7 @@ const ACTIVE_CONNECTOR_STYLE = Object.freeze({
 export function buildConnectorPathConnections(params) {
   const {
     activeConnections,
-    passiveConnections,
+    passiveConnectionGroups = [],
     leftCenter,
     rightCenter,
     leftRadius,
@@ -27,11 +27,11 @@ export function buildConnectorPathConnections(params) {
     leftPositions,
     rightPositions,
   } = params;
-  const leftInfoById = buildInfoById(leftPositions);
-  const rightInfoById = buildInfoById(rightPositions);
+  const leftInfoById = buildConnectorInfoById(leftPositions);
+  const rightInfoById = buildConnectorInfoById(rightPositions);
 
   const passivePaths = buildBundledConnectorPaths({
-    connections: passiveConnections,
+    connectionGroups: passiveConnectionGroups,
     leftCenter,
     rightCenter,
     leftRadius,
@@ -57,7 +57,8 @@ export function buildConnectorPathConnections(params) {
 
 function buildBundledConnectorPaths(params) {
   const {
-    connections,
+    connections = [],
+    connectionGroups = [],
     leftCenter,
     rightCenter,
     leftRadius,
@@ -70,13 +71,13 @@ function buildBundledConnectorPaths(params) {
     outwardPushFactor,
   } = params;
 
-  if (!connections.length) {
-    return [];
-  }
-
   const results = [];
 
   if (isActive) {
+    if (!connections.length) {
+      return [];
+    }
+
     let srcBundlePoint = chooseBundlePoint(connections, null, leftCenter, leftRadius, true, leftInfoById);
     let dstBundlePoint = chooseBundlePoint(connections, null, rightCenter, rightRadius, false, rightInfoById);
 
@@ -102,7 +103,7 @@ function buildBundledConnectorPaths(params) {
     return results;
   }
 
-  for (const group of groupPassiveConnectorConnections(connections, leftInfoById, rightInfoById)) {
+  for (const group of connectionGroups) {
     const groupBundlePoint = chooseBundlePoint(
       group.connections,
       group.leftCenterEntry,
@@ -152,14 +153,4 @@ function buildPathForConnection(connection, srcBundlePoint, dstBundlePoint, left
       targetCenter: rightCenter,
     }
   );
-}
-
-function buildInfoById(positionMap) {
-  const map = new Map();
-  if (!positionMap || typeof positionMap.values !== 'function') return map;
-  for (const info of positionMap.values()) {
-    const id = info && info.id;
-    if (id) map.set(id, info);
-  }
-  return map;
 }

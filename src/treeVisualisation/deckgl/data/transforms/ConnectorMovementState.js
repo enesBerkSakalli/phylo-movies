@@ -9,16 +9,8 @@ export function resolveConnectorMovementState(params) {
   } = params;
 
   const isCurrentSubtree = isConnectorSplitInAnySubtree(splitIndices, currentSubtreeSets);
-  const isPivotEdge = Boolean(
-    colorManager
-      && typeof colorManager.isNodePivotEdge === 'function'
-      && colorManager.isNodePivotEdge(colorEntry)
-  );
-  const isHistorySubtree = Boolean(
-    colorManager
-      && typeof colorManager.isNodeHistorySubtree === 'function'
-      && colorManager.isNodeHistorySubtree(colorEntry)
-  );
+  const isPivotEdge = Boolean(colorManager?.isNodePivotEdge?.(colorEntry));
+  const isHistorySubtree = Boolean(colorManager?.isNodeHistorySubtree?.(colorEntry));
 
   return {
     isCurrentSubtree,

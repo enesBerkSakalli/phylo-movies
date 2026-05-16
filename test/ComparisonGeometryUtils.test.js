@@ -1,6 +1,11 @@
 
 import { describe, it, expect } from 'vitest';
-import { ensureOutside, chooseBundlePoint } from '../src/treeVisualisation/deckgl/data/transforms/ComparisonGeometryUtils.js';
+import { readFileSync } from 'node:fs';
+import {
+    ensureOutside,
+    chooseBundlePoint,
+    getBundleAncestor
+} from '../src/treeVisualisation/deckgl/data/transforms/ComparisonGeometryUtils.js';
 
 describe('ComparisonGeometryUtils', () => {
     describe('ensureOutside', () => {
@@ -60,6 +65,44 @@ describe('ComparisonGeometryUtils', () => {
 
             expect(Math.abs(point[0])).toBeLessThan(1e-6);
             expect(point[1]).toBeGreaterThan(150);
+        });
+    });
+
+    describe('getBundleAncestor', () => {
+        it('walks the connector info map without legacy shape guards', () => {
+            const root = { id: 'root', parentId: null, depth: 0 };
+            const parent = { id: 'parent', parentId: 'root', depth: 1 };
+            const leaf = { id: 'leaf', parentId: 'parent', depth: 3 };
+            const infoById = new Map([
+                [root.id, root],
+                [parent.id, parent],
+                [leaf.id, leaf]
+            ]);
+
+            expect(getBundleAncestor(leaf, infoById, 1)).toBe(parent);
+
+            const source = readFileSync(new URL(
+                '../src/treeVisualisation/deckgl/data/transforms/ComparisonGeometryUtils.js',
+                import.meta.url
+            ), 'utf8');
+            expect(source).not.toMatch(/instanceof\s+Map/);
+            expect(source).not.toMatch(/if\s*\(!current\)/);
+            expect(source).not.toMatch(/entry\?\.depth/);
+            expect(source).not.toMatch(/entry\?\.parentId/);
+        });
+    });
+
+    describe('common ancestor builder', () => {
+        it('uses normalized connector entries without legacy null guards', () => {
+            const source = readFileSync(new URL(
+                '../src/treeVisualisation/deckgl/builders/geometry/connectors/CommonAncestorBuilder.js',
+                import.meta.url
+            ), 'utf8');
+
+            expect(source).not.toMatch(/!entries/);
+            expect(source).not.toMatch(/!entryById/);
+            expect(source).not.toMatch(/entry\?\.id/);
+            expect(source).not.toMatch(/entry\?\.parentId/);
         });
     });
 });

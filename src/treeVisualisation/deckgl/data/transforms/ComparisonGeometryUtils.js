@@ -32,9 +32,7 @@ export const getAngle = (nodeOrPoint, center) => {
 };
 
 export function getBundleAncestor(entry, entryById, targetDepth = 2) {
-  if (!(entryById instanceof Map)) return null;
   let current = entry;
-  if (!current) return null;
 
   while (getParentId(current) && getDepth(current) > targetDepth) {
     const next = entryById.get(getParentId(current));
@@ -87,10 +85,10 @@ function getPosition(entry) {
 }
 
 function getDepth(entry, fallback = 0) {
-  const depth = entry?.depth;
+  const depth = entry.depth;
   return Number.isFinite(depth) ? depth : fallback;
 }
 
 function getParentId(entry) {
-  return entry?.parentId ?? null;
+  return entry.parentId ?? null;
 }

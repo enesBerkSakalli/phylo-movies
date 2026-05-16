@@ -1,4 +1,4 @@
-import { isSubset } from '../../../utils/splitMatching.js';
+import { isSubset } from '../../../../domain/tree/splits.js';
 import { normalizeConnectorSplitValue } from './ConnectorSplitNormalization.js';
 
 export function getConnectorSplitIndicesFromKey(key) {
@@ -8,7 +8,7 @@ export function getConnectorSplitIndicesFromKey(key) {
 }
 
 export function isConnectorSplitInAnySubtree(splitIndices, subtreeSets) {
-  for (const subtreeSet of subtreeSets || []) {
+  for (const subtreeSet of subtreeSets) {
     if (isSubset(splitIndices, subtreeSet)) return true;
   }
   return false;
