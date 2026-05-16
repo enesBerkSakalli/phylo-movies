@@ -1,4 +1,4 @@
-import { clamp } from '../../../../domain/math/mathUtils.js';
+import { normalizeMsaRegionRange } from '../../../../domain/msa/msaRegionRange.js';
 
 /**
  * MSA Viewer slice: MSA data, viewer state, and region selection.
@@ -51,20 +51,17 @@ export const createMsaViewerSlice = (set, get) => ({
   // ==========================================================================
   setMsaRegion: (start, end) => {
     const { msaColumnCount, msaRegion } = get();
-    if (!Number.isFinite(start) || !Number.isFinite(end)) {
+    const nextRegion = normalizeMsaRegionRange(start, end, msaColumnCount);
+
+    if (!nextRegion) {
       if (msaRegion !== null) {
         set({ msaRegion: null });
       }
       return;
     }
-    const min = Math.min(start, end);
-    const max = Math.max(start, end);
-    const limit = msaColumnCount || Number.MAX_SAFE_INTEGER;
-    const clampedStart = clamp(min, 1, limit);
-    const clampedEnd = clamp(max, 1, limit);
 
-    if (!msaRegion || msaRegion.start !== clampedStart || msaRegion.end !== clampedEnd) {
-      set({ msaRegion: { start: clampedStart, end: clampedEnd } });
+    if (!msaRegion || msaRegion.start !== nextRegion.start || msaRegion.end !== nextRegion.end) {
+      set({ msaRegion: nextRegion });
     }
   },
 
@@ -72,20 +69,17 @@ export const createMsaViewerSlice = (set, get) => ({
 
   setMsaPreviousRegion: (start, end) => {
     const { msaColumnCount, msaPreviousRegion } = get();
-    if (!Number.isFinite(start) || !Number.isFinite(end)) {
+    const nextRegion = normalizeMsaRegionRange(start, end, msaColumnCount);
+
+    if (!nextRegion) {
       if (msaPreviousRegion !== null) {
         set({ msaPreviousRegion: null });
       }
       return;
     }
-    const min = Math.min(start, end);
-    const max = Math.max(start, end);
-    const limit = msaColumnCount || Number.MAX_SAFE_INTEGER;
-    const clampedStart = clamp(min, 1, limit);
-    const clampedEnd = clamp(max, 1, limit);
 
-    if (!msaPreviousRegion || msaPreviousRegion.start !== clampedStart || msaPreviousRegion.end !== clampedEnd) {
-      set({ msaPreviousRegion: { start: clampedStart, end: clampedEnd } });
+    if (!msaPreviousRegion || msaPreviousRegion.start !== nextRegion.start || msaPreviousRegion.end !== nextRegion.end) {
+      set({ msaPreviousRegion: nextRegion });
     }
   },
 
