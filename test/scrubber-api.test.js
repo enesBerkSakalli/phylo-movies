@@ -146,4 +146,38 @@ describe('ScrubberAPI', () => {
     expect(snapshot.interpolationData.fromIndex).to.equal(1);
     expect(snapshot.interpolationData.toIndex).to.equal(2);
   });
+
+  it('reports scrub render failures without throwing away the scrub session', async () => {
+    const movieData = createMovieData();
+    const timelineManager = createTimelineManager(movieData);
+    const renderError = new Error('render failed');
+    const originalError = console.error;
+    const errorCalls = [];
+
+    console.error = (...args) => {
+      errorCalls.push(args);
+    };
+
+    try {
+      const treeController = {
+        renderComparisonAwareScrubFrame: async () => {
+          throw renderError;
+        }
+      };
+
+      const api = new ScrubberAPI(treeController, {}, timelineManager);
+      await api.startScrubbing(0);
+
+      await api.updatePosition(0.5);
+      const snapshot = await api.endScrubbing();
+
+      expect(snapshot).to.equal(null);
+      expect(errorCalls).to.have.length(1);
+      expect(errorCalls[0][0]).to.equal('[ScrubberAPI] Scrub update failed:');
+      expect(errorCalls[0][1]).to.deep.include({ progress: 0.5, error: renderError });
+      expect(useAppStore.getState().playhead.timelineProgress).to.equal(0.5);
+    } finally {
+      console.error = originalError;
+    }
+  });
 });
