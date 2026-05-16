@@ -95,7 +95,11 @@ describe('label bounds helpers', () => {
     expect(resolveLabelBoundsSize(12, () => {
       throw new Error('provider should not be called');
     })).toBe(12);
+    expect(resolveLabelBoundsSize(0, () => {
+      throw new Error('provider should not be called');
+    })).toBe(0);
     expect(resolveLabelBoundsSize(undefined, () => 14)).toBe(14);
+    expect(resolveLabelBoundsSize(null, () => 14)).toBe(14);
     expect(resolveLabelBoundsSize(undefined, null)).toBe(spatialBounds.LABEL_BOUNDS_DEFAULT_SIZE_PX);
   });
 

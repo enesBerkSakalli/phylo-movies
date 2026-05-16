@@ -15,7 +15,8 @@ export const LABEL_BOUNDS_MAX_WIDTH_PX = 2000;
 export const LABEL_BOUNDS_DEFAULT_SIZE_PX = 16;
 
 export function resolveLabelBoundsSize(labelSizePx, getLabelSize) {
-  return labelSizePx || (typeof getLabelSize === 'function' ? getLabelSize() : LABEL_BOUNDS_DEFAULT_SIZE_PX);
+  if (labelSizePx !== undefined && labelSizePx !== null) return labelSizePx;
+  return typeof getLabelSize === 'function' ? getLabelSize() : LABEL_BOUNDS_DEFAULT_SIZE_PX;
 }
 
 export function estimateLabelBoundsPadding(labels, sizePx) {
