@@ -9,7 +9,7 @@ import {
   getSplitIndices,
   getLinkSplitIndices,
   isSubsetOfAny
-} from '../../utils/splitMatching.js';
+} from '../../../domain/tree/splits.js';
 
 export { splitsEqual, toSplitSet };
 

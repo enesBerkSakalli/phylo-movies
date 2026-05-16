@@ -1,5 +1,5 @@
 import { useAppStore, selectCurrentTree } from '../../state/phyloStore/store.js';
-import { getSplitKey } from '../utils/splitMatching.js';
+import { getSplitKey } from '../../domain/tree/splits.js';
 
 /**
  * Handles tree node interactions for deck.gl visualization
@@ -95,7 +95,7 @@ function toContextMenuNode(node, path = null, renderContext = null) {
   } : {};
 
   return {
-    name: node.name || '',
+    name: node.name,
     length: node.length ?? 0,
     split_indices: Array.isArray(node.split_indices) ? [...node.split_indices] : [],
     depth: node.depth ?? 0,

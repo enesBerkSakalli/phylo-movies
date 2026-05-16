@@ -68,9 +68,7 @@ describe('Layout Worker Logic Integration', () => {
 
         const layerData = dataFactory.convertTreeToLayerData(normalizedLayout, {
             extensionRadius: options.extensionRadius,
-            labelRadius: options.labelRadius,
-            canvasWidth: options.width,
-            canvasHeight: options.height
+            labelRadius: options.labelRadius
         });
 
         // Verify successful generation
@@ -81,8 +79,7 @@ describe('Layout Worker Logic Integration', () => {
         expect(layerData.nodes.length).to.be.greaterThan(0);
     });
 
-    it('should generate equivalent result passing width/height to convertTreeToLayerData', () => {
-         // This tests the other part of the fix (passing canvas dims)
+    it('should generate node sizes from normalized layout dimensions', () => {
          const transformedData = transformBranchLengths(treeData, 'linear-scale');
          const layoutEngine = new TidyTreeLayout(transformedData);
          layoutEngine.setDimension(800, 600);
@@ -99,12 +96,10 @@ describe('Layout Worker Logic Integration', () => {
 
          const layerData = dataFactory.convertTreeToLayerData(normalizedLayout, {
              extensionRadius: 10,
-             labelRadius: 20,
-             canvasWidth: 800,
-             canvasHeight: 600
+             labelRadius: 20
          });
 
-         // Check if node sizes are calculated (requires canvas dims in NodeGeometryBuilder)
+         // Check if node sizes are calculated from normalized layout metadata.
          // We can't easily inspect internal size logic without deep introspection,
          // but we can ensure it runs without error.
          expect(layerData.nodes.length).to.equal(3);

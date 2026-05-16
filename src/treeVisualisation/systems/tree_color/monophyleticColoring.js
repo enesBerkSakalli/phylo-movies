@@ -12,7 +12,7 @@ import { SYSTEM_TREE_COLORS } from '../../../constants/TreeColors.js';
 import { useAppStore } from '../../../state/phyloStore/store.js';
 import { selectLeafNamesByIndex } from '../../../state/phyloStore/selectors/treeSelectors.js';
 import { getTaxonColor } from '../../../treeColoring/utils/GroupingUtils.js';
-import { getSplitIndices } from '../../utils/splitMatching.js';
+import { getSplitIndices } from '../../../domain/tree/splits.js';
 
 // =============================================================================
 // RENDER-CYCLE CACHE

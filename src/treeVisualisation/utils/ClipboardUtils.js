@@ -38,8 +38,6 @@ function createClipboardVisualLayers(controller, treeIndex, treeData) {
     {
       extensionRadius,
       labelRadius,
-      canvasWidth: layout.width,
-      canvasHeight: layout.height,
       treeIndex,
       treeSide: 'clipboard',
       renderMode: 'clipboard',
@@ -92,8 +90,6 @@ function getMainTreeBounds(controller) {
         {
           extensionRadius,
           labelRadius,
-          canvasWidth: layout.width,
-          canvasHeight: layout.height,
           treeIndex: state.currentTreeIndex,
           treeSide: 'clipboard',
           renderMode: 'clipboard',

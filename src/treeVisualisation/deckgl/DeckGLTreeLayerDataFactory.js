@@ -1,4 +1,4 @@
-import { getSplitIndices, toSubtreeKey } from '../utils/splitMatching.js';
+import { getSplitIndices, toSubtreeKey } from '../../domain/tree/splits.js';
 import { LinkDataBuilder } from './builders/data/links/LinkDataBuilder.js';
 import { NodeDataBuilder } from './builders/data/nodes/NodeDataBuilder.js';
 import { LabelDataBuilder } from './builders/data/labels/LabelDataBuilder.js';
@@ -19,9 +19,6 @@ export class DeckGLTreeLayerDataFactory {
     const {
       extensionRadius = null,
       labelRadius = null,
-      // Optional canvas dimensions to adapt node radii
-      canvasWidth = null,
-      canvasHeight = null,
       radiusConfig = {},
       treeIndex = null,
       treeSide = null,
@@ -30,7 +27,11 @@ export class DeckGLTreeLayerDataFactory {
     } = options;
 
     // Convert each type of data
-    const nodes = this.nodeDataBuilder.convertNodes(layout.nodes, { canvasWidth, canvasHeight, radiusConfig });
+    const nodes = this.nodeDataBuilder.convertNodes(layout.nodes, {
+      canvasWidth: layout.width,
+      canvasHeight: layout.height,
+      radiusConfig
+    });
     const links = this.linkDataBuilder.convertLinks(layout.links, { linkGeometryMode });
     const labels = this.labelDataBuilder.convertLabels(layout.leaves, labelRadius || extensionRadius);
     const extensions = this.extensionDataBuilder.convertExtensions(layout.leaves, extensionRadius || labelRadius);

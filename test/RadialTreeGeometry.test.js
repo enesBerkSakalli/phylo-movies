@@ -73,6 +73,14 @@ describe('RadialTreeGeometry', () => {
     });
   });
 
+  describe('createPolarInterpolator', () => {
+    it('uses the shared shortest-angle helper directly', () => {
+      const interpolate = createPolarInterpolator(0, 1, Math.PI, 1);
+
+      expect(interpolate(1).angle).toBeCloseTo(-Math.PI);
+    });
+  });
+
   describe('calculateBranchCoordinates', () => {
     it('returns straight line for very small angle delta', () => {
       const d = {

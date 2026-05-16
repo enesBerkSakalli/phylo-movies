@@ -14,6 +14,10 @@ const legacyModules = [
     filePath: join(repoRoot, 'src', 'treeVisualisation', 'utils', ['Change', 'Metric', 'Utils.js'].join('')),
     importPath: ['treeVisualisation', 'utils', ['Change', 'Metric', 'Utils'].join('')].join('/'),
   },
+  {
+    filePath: join(repoRoot, 'src', 'treeVisualisation', 'utils', ['split', 'Matching.js'].join('')),
+    importPath: ['utils', ['split', 'Matching.js'].join('')].join('/'),
+  },
 ];
 
 const obsoleteDiagnostics = [

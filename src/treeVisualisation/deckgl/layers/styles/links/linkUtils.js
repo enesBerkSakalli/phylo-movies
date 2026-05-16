@@ -1,4 +1,4 @@
-import { isLinkInSubtree } from '../../../../utils/splitMatching.js';
+import { isLinkInSubtree } from '../../../../../domain/tree/splits.js';
 import { colorToRgb, getContrastingHighlightColor } from '../../../../../services/ui/colorUtils.js';
 import { SYSTEM_TREE_COLORS } from '../../../../../constants/TreeColors.js';
 

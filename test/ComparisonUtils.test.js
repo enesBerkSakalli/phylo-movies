@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import * as ComparisonUtils from '../src/treeVisualisation/comparison/ComparisonUtils.js';
 
-const { applyOffset, buildPositionMap } = ComparisonUtils;
+const { applyOffset, buildPositionMap, combineLayerData } = ComparisonUtils;
 
 describe('ComparisonUtils', () => {
   it('offsets node render positions with canonical positions', () => {
@@ -116,5 +116,29 @@ describe('ComparisonUtils', () => {
     expect(geometry.rightRadius).toBeGreaterThan(0);
     expect(geometry.leftSafeRadius).toBeGreaterThan(0);
     expect(geometry.rightSafeRadius).toBeGreaterThan(0);
+  });
+
+  it('combines normalized layer data arrays directly', () => {
+    const leftData = {
+      nodes: [{ id: 'left-node' }],
+      links: [{ id: 'left-link' }],
+      extensions: [{ id: 'left-extension' }],
+      labels: [{ id: 'left-label' }]
+    };
+    const rightData = {
+      nodes: [{ id: 'right-node' }],
+      links: [{ id: 'right-link' }],
+      extensions: [{ id: 'right-extension' }],
+      labels: [{ id: 'right-label' }]
+    };
+    const connectors = [{ id: 'connector' }];
+
+    expect(combineLayerData(leftData, rightData, connectors)).toEqual({
+      nodes: [...leftData.nodes, ...rightData.nodes],
+      links: [...leftData.links, ...rightData.links],
+      extensions: [...leftData.extensions, ...rightData.extensions],
+      labels: [...leftData.labels, ...rightData.labels],
+      connectors
+    });
   });
 });

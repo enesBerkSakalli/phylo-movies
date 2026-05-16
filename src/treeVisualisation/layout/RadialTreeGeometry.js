@@ -1,4 +1,4 @@
-import { shortestAngle as signedShortestAngleExt } from "../../domain/math/mathUtils.js";
+import { shortestAngle } from "../../domain/math/mathUtils.js";
 
 /* ─────────────────────────── ANGLE & COORDINATE HELPERS ─────────────────────────── */
 
@@ -34,15 +34,6 @@ export function polarToCartesian(radius, angle, center = { x: 0, y: 0, z: 0 }) {
 /* ─────────────────────────── INTERPOLATION ─────────────────────────── */
 
 /**
- * Interpolates node position in polar coords.
- * @param {Object} fromNode - Source node with angle and radius
- * @param {Object} toNode - Target node with angle and radius
- * @param {number} t - Interpolation factor (0-1)
- * @returns {Object} Interpolated position {x,y}
- */
-// Removed unused helper: interpolatePolarPosition
-
-/**
  * Interpolates between two angles with wrap-around handling.
  * @param {number} from - Source angle in radians
  * @param {number} to - Target angle in radians
@@ -69,8 +60,7 @@ export function interpolateAngle(from, to, t) {
 export function createPolarInterpolator(oldAngle, oldRadius, newAngle, newRadius, options = {}) {
   const useShortestAngle = options?.useShortestAngle !== false;
   const angleDiff = useShortestAngle
-    ? (signedShortestAngleExt ? signedShortestAngleExt(oldAngle, newAngle)
-                              : signedShortestAngle(oldAngle, newAngle))
+    ? shortestAngle(oldAngle, newAngle)
     : (newAngle - oldAngle);
   const radiusDiff = newRadius - oldRadius;
 
@@ -248,4 +238,3 @@ export function calculatePathLengthFromCoordinates(coordinates) {
 
   return length;
 }
-

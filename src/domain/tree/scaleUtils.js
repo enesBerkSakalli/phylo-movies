@@ -4,25 +4,6 @@
  */
 
 /**
- * Get the current scale value for a given tree index
- * @param {Array} scaleList - Array of scale objects
- * @param {number} currentTreeIndex - Current tree index
- * @returns {number} Current scale value
- */
-export function getCurrentScaleValue(scaleList, currentTreeIndex) {
-  if (!scaleList || !Array.isArray(scaleList) || currentTreeIndex < 0) {
-    return 0;
-  }
-
-  if (scaleList[currentTreeIndex] !== undefined) {
-    const scaleItem = scaleList[currentTreeIndex];
-    return typeof scaleItem === 'object' ? scaleItem.value : scaleItem;
-  }
-
-  return 0;
-}
-
-/**
  * Get the maximum scale value from the scale list
  * @param {Array} scaleList - Array of scale objects
  * @returns {number} Maximum scale value
@@ -36,14 +17,6 @@ export function getMaxScaleValue(scaleList) {
     typeof item === 'object' ? item.value : item
   ));
 }
-
-/**
- * Calculate percentage of current scale relative to maximum
- * @param {number} currentScale - Current scale value
- * @param {number} maxScale - Maximum scale value
- * @returns {number} Percentage (0-100)
- */
-// Removed unused helper: calculateScalePercentage
 
 /**
  * Format scale value for display
@@ -65,15 +38,11 @@ export function formatScaleValue(value, decimals = 3) {
  * @returns {Array} Array of scale objects for full trees
  */
 export default function calculateScales(treeList, fullTreeIndices) {
-  let scaleList = [];
   if (!Array.isArray(fullTreeIndices)) {
-    // fallback: calculate for all trees if no indices provided
-    for (let i = 0; i < treeList.length; i++) {
-      const scale = _calculateScale(treeList[i]);
-      scaleList.push({ value: scale, index: i });
-    }
-    return scaleList;
+    throw new TypeError('calculateScales requires explicit fullTreeIndices');
   }
+
+  let scaleList = [];
   for (let i = 0; i < fullTreeIndices.length; i++) {
     const idx = fullTreeIndices[i];
     const scale = _calculateScale(treeList[idx]);

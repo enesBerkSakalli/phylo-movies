@@ -1,4 +1,4 @@
-import { getSplitKey } from '../../utils/splitMatching.js';
+import { getSplitKey } from '../../../domain/tree/splits.js';
 
 export const LINK_LIFECYCLES = Object.freeze({
   UNCHANGED: 'unchanged',

@@ -90,8 +90,6 @@ export class ComparisonModeRenderer {
       {
         extensionRadius,
         labelRadius,
-        canvasWidth: leftLayout.width,
-        canvasHeight: leftLayout.height,
         treeIndex: clampedLeftIndex,
         treeSide: 'left',
         renderMode: 'comparison',
@@ -104,8 +102,6 @@ export class ComparisonModeRenderer {
       {
         extensionRadius,
         labelRadius,
-        canvasWidth: rightLayout.width,
-        canvasHeight: rightLayout.height,
         treeIndex: clampedRightIndex,
         treeSide: 'right',
         renderMode: 'comparison',
@@ -157,7 +153,7 @@ export class ComparisonModeRenderer {
 
     if (indicesChanged) {
       this.controller.viewportManager.focusOnTree(combinedData.nodes, combinedData.labels, {
-        links: [...combinedData.links, ...(combinedData.connectors || [])]
+        links: [...combinedData.links, ...combinedData.connectors]
       });
       this._lastFittedIndices = { left: leftIndex, right: rightIndex };
     }
@@ -205,8 +201,6 @@ export class ComparisonModeRenderer {
       {
         extensionRadius,
         labelRadius,
-        canvasWidth: rightLayout.width,
-        canvasHeight: rightLayout.height,
         treeIndex: rightIndex,
         treeSide: 'right',
         renderMode: 'comparison',
@@ -252,13 +246,7 @@ export class ComparisonModeRenderer {
     tagTreeSide(interpolatedData, 'left');
     tagTreeSide(rightLayerData, 'right');
 
-    const combinedData = {
-      nodes: [...(interpolatedData.nodes || []), ...(rightLayerData.nodes || [])],
-      links: [...(interpolatedData.links || []), ...(rightLayerData.links || [])],
-      extensions: [...(interpolatedData.extensions || []), ...(rightLayerData.extensions || [])],
-      labels: [...(interpolatedData.labels || []), ...(rightLayerData.labels || [])],
-      connectors
-    };
+    const combinedData = combineLayerData(interpolatedData, rightLayerData, connectors);
 
     this.controller._updateLayersEfficiently(combinedData);
 
@@ -271,7 +259,7 @@ export class ComparisonModeRenderer {
       this.controller.viewportManager.focusOnTree(
         combinedData.nodes,
         combinedData.labels,
-        { allowDuringPlayback: true, duration: 0, links: [...combinedData.links, ...(combinedData.connectors || [])] }
+        { allowDuringPlayback: true, duration: 0, links: [...combinedData.links, ...combinedData.connectors] }
       );
       this._lastFittedIndices = { left: -1, right: rightIndex };
     }

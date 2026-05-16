@@ -138,7 +138,7 @@ describe('Adaptive Visual Scaling', () => {
         colorManager: mockColorManager,
         metricScale: 0.5
       };
-      // Mock node with data structure for splitMatching
+      // Mock node with normalized split metadata
       const node = {
         radius: 5,
         data: { split_indices: [] }

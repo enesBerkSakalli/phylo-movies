@@ -17,10 +17,9 @@ export class NodeDataBuilder {
    * @param {Object} options - Configuration options for sizing
    * @returns {Array} Array of Deck.gl node objects
    */
-  convertNodes(nodes, options = {}) {
-    const layoutNodes = Array.isArray(nodes) ? nodes : [];
-    const nodeDotSizes = this.geometryBuilder.calculateNodeDotSizes(layoutNodes, options);
-    return layoutNodes
+  convertNodes(nodes, options) {
+    const nodeDotSizes = this.geometryBuilder.calculateNodeDotSizes(nodes, options);
+    return nodes
       .map(node => this._createNodeData(node, nodeDotSizes))
       .filter(Boolean);
   }
@@ -30,18 +29,18 @@ export class NodeDataBuilder {
    * @private
    */
   _createNodeData(node, nodeDotSizes) {
-    if (!Number.isFinite(node?.x) || !Number.isFinite(node?.y)) {
-      console.warn('[NodeDataBuilder] Skipping node with invalid layout coordinates:', node?.split_indices);
+    if (!Number.isFinite(node.x) || !Number.isFinite(node.y)) {
+      console.warn('[NodeDataBuilder] Skipping node with invalid layout coordinates:', node.split_indices);
       return null;
     }
 
     const splitIndices = node.split_indices;
     const nodeKey = getNodeKey({ split_indices: splitIndices });
     if (!nodeKey) {
-      console.warn('[NodeDataBuilder] Skipping node without split_indices:', node?.name);
+      console.warn('[NodeDataBuilder] Skipping node without split_indices:', node.name);
       return null;
     }
-    const dotSize = nodeDotSizes?.get(nodeKey) || 2;
+    const dotSize = nodeDotSizes.get(nodeKey);
 
     const isLeaf = node.isLeaf === true;
 
@@ -53,13 +52,13 @@ export class NodeDataBuilder {
       dotSize: dotSize,
       isLeaf,
       isInternal: !isLeaf,
-      name: node.name || '',
+      name: node.name,
       depth: node.depth,
       height: node.height,
-      angle: node.angle || 0,
+      angle: node.angle,
       polarPosition: node.radius,
       split_indices: splitIndices,
-      child_split_indices: node.child_split_indices || []
+      child_split_indices: node.child_split_indices
     };
   }
 }

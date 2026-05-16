@@ -3,7 +3,7 @@ import {
   getLinkSplitIndices,
   getSplitIndices,
   toSubtreeKey,
-} from '../src/treeVisualisation/utils/splitMatching.js';
+} from '../src/domain/tree/splits.js';
 import {
   getExtensionKey,
   getLabelKey,
