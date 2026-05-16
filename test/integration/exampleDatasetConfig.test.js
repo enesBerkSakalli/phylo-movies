@@ -3,6 +3,15 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 describe('example dataset configuration', () => {
+  it('copies publication example assets into production builds', () => {
+    const packageJson = JSON.parse(fs.readFileSync(
+      path.join(process.cwd(), 'package.json'),
+      'utf8',
+    ));
+
+    expect(packageJson.scripts.build).toContain('./scripts/copy-examples.sh dist');
+  });
+
   it('keeps the norovirus example on the default IQ-TREE fast-search path', () => {
     const source = fs.readFileSync(
       path.join(process.cwd(), 'src/pages/WorkspaceInitialization/exampleDatasets.js'),

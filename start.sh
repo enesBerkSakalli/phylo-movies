@@ -89,50 +89,52 @@ fi
 echo "[engine] Python dependencies installed successfully"
 cd "$PROJECT_ROOT"
 
-# Check if Flask server is already running on port 5002
+# Always start the backend through the project launcher so stdout/stderr are owned.
 if lsof -i :$ENGINE_PORT | grep -q LISTEN; then
-  echo "[engine] Flask server is already running on port $ENGINE_PORT"
-else
-  echo "[engine] Flask server not running. Starting it..."
+  echo "[engine] Existing process on port $ENGINE_PORT found. Restarting it..."
+  lsof -ti :$ENGINE_PORT | xargs kill -9 2>/dev/null || true
+  sleep 1
+fi
 
-  # Check if start_movie_server.sh exists
-  if [ ! -f "$ENGINE_DIR/start_movie_server.sh" ]; then
-    echo "[engine] ERROR: start_movie_server.sh not found in $ENGINE_DIR"
-    exit 1
+echo "[engine] Starting Flask server..."
+
+# Check if start_movie_server.sh exists
+if [ ! -f "$ENGINE_DIR/start_movie_server.sh" ]; then
+  echo "[engine] ERROR: start_movie_server.sh not found in $ENGINE_DIR"
+  exit 1
+fi
+
+# Start the Flask server in the background
+cd "$ENGINE_DIR"
+chmod +x start_movie_server.sh
+./start_movie_server.sh >engine.log 2>&1 &
+ENGINE_PID=$!
+
+echo "[engine] Flask server starting (PID: $ENGINE_PID)..."
+
+# Wait for engine to be ready
+echo "[engine] Waiting for Flask server to start on port $ENGINE_PORT..."
+for i in {1..30}; do
+  if curl -s http://127.0.0.1:$ENGINE_PORT/about >/dev/null 2>&1; then
+    echo "[engine] Flask server is ready!"
+    break
   fi
-
-  # Start the Flask server in the background
-  cd "$ENGINE_DIR"
-  chmod +x start_movie_server.sh
-  ./start_movie_server.sh >engine.log 2>&1 &
-  ENGINE_PID=$!
-
-  echo "[engine] Flask server starting (PID: $ENGINE_PID)..."
-
-  # Wait for engine to be ready
-  echo "[engine] Waiting for Flask server to start on port $ENGINE_PORT..."
-  for i in {1..30}; do
-    if lsof -i :$ENGINE_PORT | grep -q LISTEN; then
-      echo "[engine] Flask server is ready!"
-      break
-    fi
-    if ! kill -0 $ENGINE_PID 2>/dev/null; then
-      echo "[engine] ERROR: Flask server process failed to start"
-      echo "[engine] --- Engine logs ---"
-      cat engine.log
-      exit 1
-    fi
-    echo "[engine] Waiting for Flask server... ($i/30)"
-    sleep 1
-  done
-
-  if ! lsof -i :$ENGINE_PORT | grep -q LISTEN; then
-    echo "[engine] ERROR: Flask server failed to start within 30 seconds"
-    kill $ENGINE_PID 2>/dev/null
+  if ! kill -0 $ENGINE_PID 2>/dev/null; then
+    echo "[engine] ERROR: Flask server process failed to start"
     echo "[engine] --- Engine logs ---"
     cat engine.log
     exit 1
   fi
+  echo "[engine] Waiting for Flask server... ($i/30)"
+  sleep 1
+done
+
+if ! curl -s http://127.0.0.1:$ENGINE_PORT/about >/dev/null 2>&1; then
+  echo "[engine] ERROR: Flask server failed to start within 30 seconds"
+  kill $ENGINE_PID 2>/dev/null
+  echo "[engine] --- Engine logs ---"
+  cat engine.log
+  exit 1
 fi
 
 # Return to project root
