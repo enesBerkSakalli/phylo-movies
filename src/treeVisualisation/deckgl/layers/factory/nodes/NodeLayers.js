@@ -1,27 +1,14 @@
 /**
  * Factory for nodes layer
  */
-import { createLayer } from '../base/createLayer.js';
 import { selectLeafNamesByIndex } from '../../../../../state/phyloStore/selectors/treeSelectors.js';
-import { LAYER_CONFIGS, HOVER_HIGHLIGHT_COLOR, MIN_NODE_RADIUS } from '../../config/layerConfigs.js';
+import { HOVER_HIGHLIGHT_COLOR, MIN_NODE_RADIUS } from '../../config/layerConfigs.js';
 import { getNodeHistoryZOffset } from '../../../utils/GeometryUtils.js';
 
 const addZOffset = (position, offset) => {
   if (!offset) return position;
   return [position[0], position[1], (position[2] || 0) + offset];
 };
-
-/**
- * Create nodes layer (scatter plot for tree nodes)
- *
- * @param {Array} nodes - Node data array
- * @param {Object} state - Store state snapshot
- * @param {Object} layerStyles - LayerStyles instance
- * @returns {Layer} deck.gl ScatterplotLayer
- */
-export function createNodesLayer(nodes, state, layerStyles) {
-  return createLayer(LAYER_CONFIGS.nodes, getNodesLayerProps(nodes, state, layerStyles));
-}
 
 /**
  * Build props for the nodes layer so callers can reuse base instances via clone

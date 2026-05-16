@@ -1,8 +1,6 @@
 /**
  * Factory for connectors layer (lines between trees in comparison mode)
  */
-import { createLayer } from '../base/createLayer.js';
-import { LAYER_CONFIGS } from '../../config/layerConfigs.js';
 
 // Reusable output buffer to avoid per-call array allocations
 const _connColorOut = [0, 0, 0, 0];
@@ -50,8 +48,4 @@ export function getConnectorsLayerProps(connectors, state) {
       getColor: [connectors.length, linkConnectionOpacity, colorVersion]
     }
   };
-}
-
-export function createConnectorsLayer(connectors, state) {
-  return createLayer(LAYER_CONFIGS.connectors, getConnectorsLayerProps(connectors, state));
 }

@@ -3,7 +3,6 @@ const proxyquire = require('proxyquire');
 
 // Mock dependencies
 const nodeUtilsMock = {
-  toColorManagerNode: (node) => node, // Pass through
   shouldHighlightNode: () => false,
   isHistorySubtreeNode: () => false,
 };
@@ -12,12 +11,6 @@ const nodeUtilsMock = {
 const { getLabelSize } = proxyquire('../../src/treeVisualisation/deckgl/layers/styles/labels/labelStyles.js', {
   '../nodes/nodeUtils.js': nodeUtilsMock,
 });
-
-// Import constants directly (no dependencies)
-const {
-  SOURCE_LABEL_SCALE,
-  DESTINATION_LABEL_SCALE,
-} = require('../../src/treeVisualisation/deckgl/layers/config/LabelConfig.js');
 
 describe('Label Sizing Logic (TDD)', () => {
   const DEFAULT_FONT_SIZE = 2.6; // Typical store value
@@ -65,25 +58,4 @@ describe('Label Sizing Logic (TDD)', () => {
     expect(size).to.equal(EXPECTED_BASE_PIXELS);
   });
 
-  it('verifies Source Labels stay at baseline (ignore highlight multipliers)', () => {
-    // Even if marked
-    nodeUtilsMock.shouldHighlightNode = () => true;
-    cachedState.markedSubtreeData = ['some-tree'];
-
-    const baseSize = getLabelSize({ id: 'node1' }, DEFAULT_FONT_SIZE, { ...cachedState, markedSubtreeData: null });
-    const effectiveSize = baseSize * SOURCE_LABEL_SCALE;
-
-    expect(effectiveSize).to.closeTo(EXPECTED_BASE_PIXELS, 0.001);
-  });
-
-  it('verifies Destination Labels stay at baseline (ignore highlight multipliers)', () => {
-    // Even if history
-    nodeUtilsMock.isHistorySubtreeNode = () => true;
-
-    nodeUtilsMock.isHistorySubtreeNode = () => false;
-    const baseSize = getLabelSize({ id: 'node1' }, DEFAULT_FONT_SIZE, cachedState);
-    const effectiveSize = baseSize * DESTINATION_LABEL_SCALE;
-
-    expect(effectiveSize).to.closeTo(EXPECTED_BASE_PIXELS, 0.001);
-  });
 });

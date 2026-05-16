@@ -20,8 +20,6 @@ export const createTreeHighlightStateSlice = (set, get) => ({
   upcomingChangesEnabled: false,
   upcomingChangeEdges: [],
   completedChangeEdges: [],
-  highlightSourceEnabled: false,
-  highlightDestinationEnabled: false,
   changePulseEnabled: true,
   pivotEdgeDashingEnabled: true,
   highlightColorMode: 'solid', // 'contrast' | 'taxa' | 'solid'

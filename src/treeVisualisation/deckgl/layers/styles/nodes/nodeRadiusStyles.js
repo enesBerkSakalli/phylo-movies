@@ -1,5 +1,5 @@
 import { isNodeVisuallyHighlighted } from '../../../../systems/tree_color/visualHighlights.js';
-import { toColorManagerNode, shouldHighlightNode, isHistorySubtreeNode, isNodePivotEdge } from './nodeUtils.js';
+import { shouldHighlightNode, isHistorySubtreeNode, isNodePivotEdge } from './nodeUtils.js';
 
 export function getNodeRadius(node, minRadius = 1, cached, helpers) {
   const { colorManager: cm, upcomingChangesEnabled, densityScale, metricScale = 1.0 } = cached;
@@ -11,7 +11,7 @@ export function getNodeRadius(node, minRadius = 1, cached, helpers) {
   if (node.isEntering || node.isExiting) {
     radius *= 0.7;
   } else if (cm) {
-    const nodeData = toColorManagerNode(node);
+    const nodeData = node;
     const scale = densityScale !== undefined ? densityScale : 1.0;
     const getScaledRadius = (multiplier) => baseRadius * (1 + (multiplier - 1) * scale);
 

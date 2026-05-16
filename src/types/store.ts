@@ -141,8 +141,6 @@ export interface AppStoreState {
   upcomingChangesEnabled: boolean;
   upcomingChangeEdges: any[];
   completedChangeEdges: any[];
-  highlightSourceEnabled: boolean;
-  highlightDestinationEnabled: boolean;
   changePulseEnabled: boolean;
   pivotEdgeDashingEnabled: boolean;
   highlightColorMode: string;

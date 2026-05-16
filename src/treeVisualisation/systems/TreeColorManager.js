@@ -356,16 +356,8 @@ export class TreeColorManager {
     return isNodeInSubtree(nodeData, this.sourceEdgeLeaves);
   }
 
-  isLinkSourceEdge(linkData) {
-    return isLinkInSubtree(linkData, this.sourceEdgeLeaves);
-  }
-
   isNodeDestinationEdge(nodeData) {
     return isNodeInSubtree(nodeData, this.destinationEdgeLeaves);
-  }
-
-  isLinkDestinationEdge(linkData) {
-    return isLinkInSubtree(linkData, this.destinationEdgeLeaves);
   }
 
   isNodeMovingSubtree(nodeData) {

@@ -4,10 +4,6 @@
  * - Main Links
  * - Leaf Extensions
  */
-import { createLayer } from '../base/createLayer.js';
-import {
-  LAYER_CONFIGS,
-} from '../../config/layerConfigs.js';
 import { hasLifecycleHighlightedLinks } from '../../styles/links/linkUtils.js';
 
 // ============================================================================
@@ -22,7 +18,7 @@ export function getLinkOutlinesLayerProps(links, state, layerStyles) {
   const {
     colorVersion, strokeWidth, changePulsePhase, changePulseEnabled,
     pivotEdgeDashingEnabled, upcomingChangesEnabled, markedSubtreesEnabled,
-    highlightColorMode, highlightSourceEnabled, highlightDestinationEnabled,
+    highlightColorMode,
     dimmingEnabled, dimmingOpacity, subtreeDimmingEnabled, subtreeDimmingOpacity,
     markedSubtreeOpacity, metricScale
   } = state || {};
@@ -53,24 +49,18 @@ export function getLinkOutlinesLayerProps(links, state, layerStyles) {
     updateTriggers: {
       getColor: [
         colorVersion, changePulsePhase, changePulseEnabled, upcomingChangesEnabled,
-        markedSubtreesEnabled, highlightColorMode, highlightSourceEnabled,
-        highlightDestinationEnabled, dimmingEnabled, dimmingOpacity,
+        markedSubtreesEnabled, highlightColorMode, dimmingEnabled, dimmingOpacity,
         subtreeDimmingEnabled, subtreeDimmingOpacity,
         markedSubtreeOpacity
       ],
       getWidth: [
         colorVersion, strokeWidth, changePulsePhase, changePulseEnabled,
-        upcomingChangesEnabled, markedSubtreesEnabled, highlightColorMode,
-        highlightSourceEnabled, highlightDestinationEnabled, metricScale
+        upcomingChangesEnabled, markedSubtreesEnabled, highlightColorMode, metricScale
       ],
       getDashArray: [colorVersion, pivotEdgeDashingEnabled, upcomingChangesEnabled],
       getPath: [links]
     }
   };
-}
-
-export function createLinkOutlinesLayer(links, state, layerStyles) {
-  return createLayer(LAYER_CONFIGS.linkOutlines, getLinkOutlinesLayerProps(links, state, layerStyles));
 }
 
 // ============================================================================
@@ -81,8 +71,8 @@ export function getLinksLayerProps(links, state, layerStyles) {
   const {
     taxaColorVersion, colorVersion, strokeWidth, pivotEdgeDashingEnabled,
     upcomingChangesEnabled, markedSubtreesEnabled, highlightColorMode,
-    highlightSourceEnabled, highlightDestinationEnabled, dimmingEnabled,
-    dimmingOpacity, subtreeDimmingEnabled, subtreeDimmingOpacity, metricScale
+    dimmingEnabled, dimmingOpacity, subtreeDimmingEnabled, subtreeDimmingOpacity,
+    metricScale
   } = state || {};
 
   const cached = layerStyles.getCachedState(state);
@@ -98,19 +88,15 @@ export function getLinksLayerProps(links, state, layerStyles) {
     updateTriggers: {
       getColor: [
         colorVersion, taxaColorVersion, upcomingChangesEnabled, markedSubtreesEnabled,
-        highlightColorMode, highlightSourceEnabled, highlightDestinationEnabled,
-        dimmingEnabled, dimmingOpacity, subtreeDimmingEnabled, subtreeDimmingOpacity
+        highlightColorMode, dimmingEnabled, dimmingOpacity, subtreeDimmingEnabled,
+        subtreeDimmingOpacity
       ],
       getWidth: [
         colorVersion, strokeWidth, upcomingChangesEnabled, markedSubtreesEnabled,
-        highlightColorMode, highlightSourceEnabled, highlightDestinationEnabled, metricScale
+        highlightColorMode, metricScale
       ],
       getDashArray: [colorVersion, pivotEdgeDashingEnabled, upcomingChangesEnabled],
       getPath: [links]
     }
   };
-}
-
-export function createLinksLayer(links, state, layerStyles) {
-  return createLayer(LAYER_CONFIGS.links, getLinksLayerProps(links, state, layerStyles));
 }

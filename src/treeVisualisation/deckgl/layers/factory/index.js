@@ -8,27 +8,17 @@ export { createLayer, resetPerf, getPerfSnapshot } from './base/createLayer.js';
 
 // Specific layer factories
 export {
-  createLinkOutlinesLayer,
-  createLinksLayer,
-
   getLinkOutlinesLayerProps,
   getLinksLayerProps,
 } from './links/LinkLayers.js';
 
 export {
-  createExtensionsLayer,
   getExtensionsLayerProps
 } from './extensions/ExtensionLayers.js';
 
-export { createNodesLayer, getNodesLayerProps } from './nodes/NodeLayers.js';
+export { getNodesLayerProps } from './nodes/NodeLayers.js';
 export {
-  createLabelsLayer,
-  createSourceLabelsLayer,
-  createDestinationLabelsLayer,
-  createHighlightLabelLayers,
-  partitionLabels,
   getLabelsLayerProps,
-  getHighlightLabelsLayerProps
 } from './labels/LabelLayers.js';
-export { createLabelDotsLayer, getLabelDotsLayerProps } from './labels/LabelDotsLayer.js';
-export { createConnectorsLayer, getConnectorsLayerProps } from './connectors/ConnectorLayers.js';
+export { getLabelDotsLayerProps } from './labels/LabelDotsLayer.js';
+export { getConnectorsLayerProps } from './connectors/ConnectorLayers.js';

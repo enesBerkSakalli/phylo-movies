@@ -8,9 +8,7 @@ import {
   getBaseBranchColor,
   getBaseNodeColor,
 } from '../src/treeVisualisation/systems/tree_color/monophyleticColoring.js';
-import { toColorManagerNode } from '../src/treeVisualisation/deckgl/layers/styles/nodes/nodeUtils.js';
 import { getExtensionsLayerProps } from '../src/treeVisualisation/deckgl/layers/factory/extensions/ExtensionLayers.js';
-import { isLabelSource } from '../src/treeVisualisation/deckgl/layers/styles/labels/labelUtils.js';
 import { NodeDataBuilder } from '../src/treeVisualisation/deckgl/builders/data/nodes/NodeDataBuilder.js';
 import { LinkDataBuilder } from '../src/treeVisualisation/deckgl/builders/data/links/LinkDataBuilder.js';
 import { LabelDataBuilder } from '../src/treeVisualisation/deckgl/builders/data/labels/LabelDataBuilder.js';
@@ -63,15 +61,6 @@ describe('normalized render contract', () => {
     expect(getBaseNodeColor(monophyleticBranch, true)).toBe('#ff0000');
   });
 
-  it('passes normalized node data through as the ColorManager input', () => {
-    const normalized = {
-      split_indices: [0, 1],
-      isLeaf: false,
-    };
-
-    expect(toColorManagerNode(normalized)).toBe(normalized);
-  });
-
   it('passes normalized extension data to style accessors', () => {
     const extension = {
       id: 'ext-a',
@@ -98,23 +87,6 @@ describe('normalized render contract', () => {
     props.getWidth(extension);
 
     expect(seen).toEqual([extension, extension]);
-  });
-
-  it('passes normalized label data to highlight checks', () => {
-    const label = {
-      split_indices: [0],
-      name: 'Taxon_A',
-      isLeaf: true,
-    };
-    const cached = {
-      colorManager: {
-        isNodeMovingSubtree: vi.fn(() => false),
-        isNodeSourceEdge: vi.fn((datum) => datum === label),
-      },
-    };
-
-    expect(isLabelSource(cached, label)).toBe(true);
-    expect(cached.colorManager.isNodeSourceEdge).toHaveBeenCalledWith(label);
   });
 
   it('configures tree path layers for flat open paths', () => {

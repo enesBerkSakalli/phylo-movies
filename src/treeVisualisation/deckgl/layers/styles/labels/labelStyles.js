@@ -1,4 +1,4 @@
-import { toColorManagerNode, shouldHighlightNode, isHistorySubtreeNode } from '../nodes/nodeUtils.js';
+import { shouldHighlightNode, isHistorySubtreeNode } from '../nodes/nodeUtils.js';
 import { getNodeBasedRgba } from '../nodes/nodeStyles.js';
 import { MARKED_LABEL_SCALE, HISTORY_LABEL_SCALE } from '../../config/LabelConfig.js';
 
@@ -10,7 +10,7 @@ export function getLabelSize(label, fontSize, cached) {
   const baseSize = (parseFloat(fontSize) * 12 || 24) * visualScale;
   if (!label) return baseSize;
 
-  const nodeData = toColorManagerNode(label);
+  const nodeData = label;
 
   if (cached?.markedSubtreeData && shouldHighlightNode(nodeData, cached)) {
     return baseSize * MARKED_LABEL_SCALE; // Scaled for marked labels
@@ -26,7 +26,7 @@ export function getLabelSize(label, fontSize, cached) {
 export function getLabelColor(label, cached, helpers) {
   const color = getNodeBasedRgba(label, label.opacity, cached, helpers);
 
-  if (isHistorySubtreeNode(toColorManagerNode(label), cached)) {
+  if (isHistorySubtreeNode(label, cached)) {
     // Subtle alpha for history labels (reduced from 1.2)
     color[3] = Math.min(255, Math.round(color[3] * 1.0));
   }
