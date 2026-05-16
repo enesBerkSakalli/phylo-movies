@@ -1,1 +1,1 @@
-export const selectAnimationSpeed = (state = {}) => state?.animationSpeed;
+export const selectAnimationSpeed = (state) => state.animationSpeed;

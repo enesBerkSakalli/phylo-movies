@@ -1,1 +1,1 @@
-export const selectIsMsaViewerOpen = (state = {}) => !!state?.isMsaViewerOpen;
+export const selectIsMsaViewerOpen = (state) => !!state.isMsaViewerOpen;

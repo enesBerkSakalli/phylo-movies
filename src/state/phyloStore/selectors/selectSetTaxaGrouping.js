@@ -1,1 +1,1 @@
-export const selectSetTaxaGrouping = (state = {}) => state?.setTaxaGrouping;
+export const selectSetTaxaGrouping = (state) => state.setTaxaGrouping;

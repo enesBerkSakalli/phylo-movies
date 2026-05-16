@@ -19,7 +19,7 @@ export const createClipboardSlice = (set, get) => ({
       return;
     }
     // Clamp to valid range
-    const maxIndex = Math.max(0, (treeList?.length || 1) - 1);
+    const maxIndex = Math.max(0, (treeList.length || 1) - 1);
     const clampedIndex = Math.max(0, Math.min(index, maxIndex));
     set({ clipboardTreeIndex: clampedIndex });
   },

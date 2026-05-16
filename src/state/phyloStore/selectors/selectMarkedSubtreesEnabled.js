@@ -1,1 +1,1 @@
-export const selectMarkedSubtreesEnabled = (state = {}) => !!state?.markedSubtreesEnabled;
+export const selectMarkedSubtreesEnabled = (state) => !!state.markedSubtreesEnabled;

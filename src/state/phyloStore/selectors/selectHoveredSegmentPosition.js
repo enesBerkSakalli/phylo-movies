@@ -1,1 +1,1 @@
-export const selectHoveredSegmentPosition = (state = {}) => state?.hoveredSegmentPosition;
+export const selectHoveredSegmentPosition = (state) => state.hoveredSegmentPosition;

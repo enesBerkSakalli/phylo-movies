@@ -1,1 +1,1 @@
-export const selectPlaying = (state = {}) => !!state?.playing;
+export const selectPlaying = (state) => !!state.playing;

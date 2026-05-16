@@ -1,1 +1,1 @@
-export const selectPairSolutions = (state = {}) => state?.pairSolutions ?? {};
+export const selectPairSolutions = (state) => state.pairSolutions;

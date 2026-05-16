@@ -1,1 +1,1 @@
-export const selectSetLinkGeometryMode = (state = {}) => state?.setLinkGeometryMode;
+export const selectSetLinkGeometryMode = (state) => state.setLinkGeometryMode;

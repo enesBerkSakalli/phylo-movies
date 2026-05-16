@@ -17,7 +17,7 @@ export function SaveImageButton({ disabled = false }) {
     setIsSaving(true);
     try {
       // If no controller exists, we can't save
-      if (!treeControllers || !treeControllers.length) {
+      if (!treeControllers.length) {
         console.error("No tree controller available for saving PNG.");
         return;
       }

@@ -1,1 +1,1 @@
-export const selectTaxaColoringWindow = (state = {}) => state?.taxaColoringWindow ?? null;
+export const selectTaxaColoringWindow = (state) => state.taxaColoringWindow;

@@ -1,1 +1,1 @@
-export const selectClearClipboard = (state = {}) => state?.clearClipboard;
+export const selectClearClipboard = (state) => state.clearClipboard;

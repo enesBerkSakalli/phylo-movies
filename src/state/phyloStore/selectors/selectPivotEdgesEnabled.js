@@ -1,1 +1,1 @@
-export const selectPivotEdgesEnabled = (state = {}) => !!state?.pivotEdgesEnabled;
+export const selectPivotEdgesEnabled = (state) => !!state.pivotEdgesEnabled;

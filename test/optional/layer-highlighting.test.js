@@ -50,6 +50,7 @@ let mockStoreState = {
   strokeWidth: 2,
   fontSize: '2.6em',
   nodeSize: 1,
+  leafNamesByIndex: [],
   dimmingEnabled: false,
   dimmingOpacity: 0.3,
   linkConnectionOpacity: 0.6,
@@ -112,7 +113,7 @@ const {
   getSplitIndices,
   isNodeInSubtree,
   isLinkInSubtree
-} = require('../../src/treeVisualisation/utils/splitMatching.js');
+} = require('../../src/domain/tree/splits.js');
 
 /**
  * Helper to create a mock ColorManager with the required fast subtree methods.
@@ -189,6 +190,7 @@ describe('Layer Highlighting Configuration', () => {
       strokeWidth: 2,
       fontSize: '2.6em',
       nodeSize: 1,
+      leafNamesByIndex: [],
       dimmingEnabled: false,
       dimmingOpacity: 0.3,
       linkConnectionOpacity: 0.6,

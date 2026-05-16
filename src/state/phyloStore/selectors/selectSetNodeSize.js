@@ -1,1 +1,1 @@
-export const selectSetNodeSize = (state = {}) => state?.setNodeSize;
+export const selectSetNodeSize = (state) => state.setNodeSize;

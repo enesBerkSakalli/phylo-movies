@@ -33,9 +33,7 @@ export class CanvasRecorder {
 
   _resolveCanvas() {
     const { treeControllers } = useAppStore.getState();
-    const primaryController = Array.isArray(treeControllers) && treeControllers.length > 0
-      ? treeControllers[0]
-      : null;
+    const primaryController = treeControllers[0] ?? null;
 
     const canvas = primaryController?.deckContext?.canvas || document.querySelector('#webgl-container canvas');
     if (!canvas) {

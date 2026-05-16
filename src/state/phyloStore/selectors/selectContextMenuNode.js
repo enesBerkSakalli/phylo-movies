@@ -1,1 +1,1 @@
-export const selectContextMenuNode = (state = {}) => state?.contextMenuNode ?? null;
+export const selectContextMenuNode = (state) => state.contextMenuNode;

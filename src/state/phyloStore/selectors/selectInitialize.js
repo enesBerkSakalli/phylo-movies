@@ -1,1 +1,1 @@
-export const selectInitialize = (state = {}) => state?.initialize;
+export const selectInitialize = (state) => state.initialize;

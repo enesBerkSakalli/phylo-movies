@@ -1,1 +1,1 @@
-export const selectSetUpcomingChangesEnabled = (state = {}) => state?.setUpcomingChangesEnabled;
+export const selectSetUpcomingChangesEnabled = (state) => state.setUpcomingChangesEnabled;

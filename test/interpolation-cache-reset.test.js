@@ -78,7 +78,12 @@ describe('Controller cache reset hook', () => {
 
   it('dispatches cache reset to registered controllers', () => {
     const resetSpy = sinon.spy();
-    const controller = { resetInterpolationCaches: resetSpy };
+    const controller = {
+      resetInterpolationCaches: resetSpy,
+      startAnimation: sinon.spy(),
+      stopAnimation: sinon.spy(),
+      destroy: sinon.spy()
+    };
 
     useAppStore.getState().setTreeControllers([controller]);
     useAppStore.getState().resetInterpolationCaches();

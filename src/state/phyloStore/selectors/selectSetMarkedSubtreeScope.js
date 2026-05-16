@@ -1,1 +1,1 @@
-export const selectSetMarkedSubtreeScope = (state = {}) => state?.setMarkedSubtreeScope;
+export const selectSetMarkedSubtreeScope = (state) => state.setMarkedSubtreeScope;

@@ -1,1 +1,1 @@
-export const selectSetLayoutRotationDegrees = (state = {}) => state?.setLayoutRotationDegrees;
+export const selectSetLayoutRotationDegrees = (state) => state.setLayoutRotationDegrees;

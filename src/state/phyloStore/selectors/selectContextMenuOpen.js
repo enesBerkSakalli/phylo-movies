@@ -1,1 +1,1 @@
-export const selectContextMenuOpen = (state = {}) => !!state?.contextMenuOpen;
+export const selectContextMenuOpen = (state) => !!state.contextMenuOpen;

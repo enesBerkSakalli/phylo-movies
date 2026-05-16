@@ -1,1 +1,1 @@
-export const selectSyncMsaEnabled = (state = {}) => !!state?.syncMSAEnabled;
+export const selectSyncMsaEnabled = (state) => !!state.syncMSAEnabled;

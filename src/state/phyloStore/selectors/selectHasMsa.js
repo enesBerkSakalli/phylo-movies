@@ -1,1 +1,1 @@
-export const selectHasMsa = (state = {}) => !!state?.hasMsa;
+export const selectHasMsa = (state) => !!state.hasMsa;

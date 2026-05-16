@@ -1,1 +1,1 @@
-export const selectMsaWindow = (state = {}) => state?.msaWindow ?? null;
+export const selectMsaWindow = (state) => state.msaWindow;

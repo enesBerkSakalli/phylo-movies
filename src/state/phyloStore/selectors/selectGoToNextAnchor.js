@@ -1,1 +1,1 @@
-export const selectGoToNextAnchor = (state = {}) => state?.goToNextAnchor;
+export const selectGoToNextAnchor = (state) => state.goToNextAnchor;

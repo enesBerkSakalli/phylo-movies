@@ -65,7 +65,7 @@ export function PerspectiveSection({ cameraMode, toggleCameraMode, treeControlle
                   onClick={() => {
                     try {
                       const newMode = toggleCameraMode();
-                      treeControllers.forEach(c => c?.setCameraMode?.(newMode));
+                      treeControllers.forEach((controller) => controller.setCameraMode(newMode));
                     } catch { }
                   }}
                 >
@@ -111,7 +111,7 @@ export function Appearance() {
 
   const rerenderAll = async () => {
     for (const controller of treeControllers) {
-      await controller?.renderAllElements?.();
+      await controller.renderAllElements();
     }
   };
 

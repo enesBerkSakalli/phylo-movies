@@ -1,1 +1,1 @@
-export const selectBarOptionValue = (state = {}) => state?.barOptionValue;
+export const selectBarOptionValue = (state) => state.barOptionValue;

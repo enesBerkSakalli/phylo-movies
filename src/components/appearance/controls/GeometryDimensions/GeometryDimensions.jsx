@@ -35,7 +35,7 @@ export function GeometryDimensions({
       do {
         needsRenderRef.current = false;
         for (const controller of treeControllers) {
-          await controller?.renderAllElements?.();
+          await controller.renderAllElements();
         }
       } while (needsRenderRef.current);
     } catch {}

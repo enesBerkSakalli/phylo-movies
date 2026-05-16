@@ -1,1 +1,1 @@
-export const selectOpenMsaViewer = (state = {}) => state?.openMsaViewer;
+export const selectOpenMsaViewer = (state) => state.openMsaViewer;

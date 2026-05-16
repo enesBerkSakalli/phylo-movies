@@ -1,1 +1,1 @@
-export const selectSetPivotEdgeColor = (state = {}) => state?.setPivotEdgeColor;
+export const selectSetPivotEdgeColor = (state) => state.setPivotEdgeColor;

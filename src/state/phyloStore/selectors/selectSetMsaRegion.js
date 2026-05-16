@@ -1,1 +1,1 @@
-export const selectSetMsaRegion = (state = {}) => state?.setMsaRegion;
+export const selectSetMsaRegion = (state) => state.setMsaRegion;

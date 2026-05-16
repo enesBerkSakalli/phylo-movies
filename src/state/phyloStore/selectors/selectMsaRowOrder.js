@@ -1,1 +1,1 @@
-export const selectMsaRowOrder = (state = {}) => state?.msaRowOrder;
+export const selectMsaRowOrder = (state) => state.msaRowOrder;

@@ -1,1 +1,1 @@
-export const selectSetLayoutAngleDegrees = (state = {}) => state?.setLayoutAngleDegrees;
+export const selectSetLayoutAngleDegrees = (state) => state.setLayoutAngleDegrees;

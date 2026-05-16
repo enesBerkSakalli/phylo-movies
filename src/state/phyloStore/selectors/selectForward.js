@@ -1,1 +1,1 @@
-export const selectForward = (state = {}) => state?.forward;
+export const selectForward = (state) => state.forward;

@@ -1,1 +1,1 @@
-export const selectMovieData = (state = {}) => state?.movieData ?? null;
+export const selectMovieData = (state) => state.movieData;

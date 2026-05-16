@@ -1,1 +1,1 @@
-export const selectScrollToStartTimeline = (state = {}) => state?.scrollToStartTimeline;
+export const selectScrollToStartTimeline = (state) => state.scrollToStartTimeline;

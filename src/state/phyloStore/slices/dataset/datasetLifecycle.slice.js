@@ -10,11 +10,11 @@ export const createDatasetLifecycleSlice = (set, get) => ({
   reset: () => {
     const { resetMsaData, resetColors, resetPlayback, resetControllers, resetComparison } = get();
 
-    resetControllers?.();
-    resetPlayback?.();
-    resetMsaData?.();
-    resetColors?.();
-    resetComparison?.();
+    resetControllers();
+    resetPlayback();
+    resetMsaData();
+    resetColors();
+    resetComparison();
 
     set({
       movieData: null,
@@ -42,7 +42,7 @@ export const createDatasetLifecycleSlice = (set, get) => ({
   // ==========================================================================
   initialize: (movieData) => {
     const { resetInterpolationCaches } = get();
-    resetInterpolationCaches?.();
+    resetInterpolationCaches();
 
     const {
       sorted_leaves: leafNamesByIndex,
@@ -64,7 +64,7 @@ export const createDatasetLifecycleSlice = (set, get) => ({
     const hasMsaContent = hasMsaData(movieData);
 
     const { setMsaData, initializeColors } = get();
-    setMsaData?.({
+    setMsaData({
       hasMsa: hasMsaContent,
       windowSize,
       stepSize,
@@ -115,7 +115,7 @@ export const createDatasetLifecycleSlice = (set, get) => ({
       playing: false,
     });
 
-    initializeColors?.();
+    initializeColors();
   },
 });
 

@@ -1,1 +1,1 @@
-export const selectSubtreeDimmingOpacity = (state = {}) => state?.subtreeDimmingOpacity;
+export const selectSubtreeDimmingOpacity = (state) => state.subtreeDimmingOpacity;

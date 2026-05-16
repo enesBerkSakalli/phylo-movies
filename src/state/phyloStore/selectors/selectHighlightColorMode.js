@@ -1,1 +1,1 @@
-export const selectHighlightColorMode = (state = {}) => state?.highlightColorMode;
+export const selectHighlightColorMode = (state) => state.highlightColorMode;

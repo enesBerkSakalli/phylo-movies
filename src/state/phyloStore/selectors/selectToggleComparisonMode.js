@@ -1,1 +1,1 @@
-export const selectToggleComparisonMode = (state = {}) => state?.toggleComparisonMode;
+export const selectToggleComparisonMode = (state) => state.toggleComparisonMode;

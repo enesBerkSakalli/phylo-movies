@@ -1,1 +1,1 @@
-export const selectSetViewsConnected = (state = {}) => state?.setViewsConnected;
+export const selectSetViewsConnected = (state) => state.setViewsConnected;

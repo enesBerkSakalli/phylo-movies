@@ -1,1 +1,1 @@
-export const selectCurrentTreeIndex = (state = {}) => state?.currentTreeIndex;
+export const selectCurrentTreeIndex = (state) => state.currentTreeIndex;

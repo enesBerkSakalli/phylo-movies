@@ -1,1 +1,1 @@
-export const selectConnectorStrokeWidth = (state = {}) => state?.connectorStrokeWidth;
+export const selectConnectorStrokeWidth = (state) => state.connectorStrokeWidth;

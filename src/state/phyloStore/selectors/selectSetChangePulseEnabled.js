@@ -1,1 +1,1 @@
-export const selectSetChangePulseEnabled = (state = {}) => state?.setChangePulseEnabled;
+export const selectSetChangePulseEnabled = (state) => state.setChangePulseEnabled;

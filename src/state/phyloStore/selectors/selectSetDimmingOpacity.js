@@ -1,1 +1,1 @@
-export const selectSetDimmingOpacity = (state = {}) => state?.setDimmingOpacity;
+export const selectSetDimmingOpacity = (state) => state.setDimmingOpacity;

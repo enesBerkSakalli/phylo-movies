@@ -1,1 +1,1 @@
-export const selectStartAnimationPlayback = (state = {}) => state?.startAnimationPlayback;
+export const selectStartAnimationPlayback = (state) => state.startAnimationPlayback;

@@ -1,1 +1,1 @@
-export const selectSetMsaWindow = (state = {}) => state?.setMsaWindow;
+export const selectSetMsaWindow = (state) => state.setMsaWindow;

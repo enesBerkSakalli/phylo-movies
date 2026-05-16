@@ -1,1 +1,1 @@
-export const selectFitTimeline = (state = {}) => state?.fitTimeline;
+export const selectFitTimeline = (state) => state.fitTimeline;

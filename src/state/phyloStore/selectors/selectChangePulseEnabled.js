@@ -1,1 +1,1 @@
-export const selectChangePulseEnabled = (state = {}) => !!state?.changePulseEnabled;
+export const selectChangePulseEnabled = (state) => !!state.changePulseEnabled;

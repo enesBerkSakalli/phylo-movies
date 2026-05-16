@@ -1,1 +1,1 @@
-export const selectSetBranchTransformation = (state = {}) => state?.setBranchTransformation;
+export const selectSetBranchTransformation = (state) => state.setBranchTransformation;

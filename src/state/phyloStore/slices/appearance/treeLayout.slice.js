@@ -1,9 +1,9 @@
 function invalidateTreeLayout(get) {
   const state = get();
-  state.resetInterpolationCaches?.();
+  state.resetInterpolationCaches();
 
-  for (const controller of state.treeControllers || []) {
-    Promise.resolve(controller?.renderAllElements?.()).catch((error) => {
+  for (const controller of state.treeControllers) {
+    Promise.resolve(controller.renderAllElements()).catch((error) => {
       console.warn('[treeLayout] Failed to render layout update:', error);
     });
   }

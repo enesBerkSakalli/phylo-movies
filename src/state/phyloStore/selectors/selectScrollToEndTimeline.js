@@ -1,1 +1,1 @@
-export const selectScrollToEndTimeline = (state = {}) => state?.scrollToEndTimeline;
+export const selectScrollToEndTimeline = (state) => state.scrollToEndTimeline;

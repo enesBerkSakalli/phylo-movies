@@ -26,7 +26,7 @@ import {
   isNodeSubtreeRoot,
   getLinkSplitIndices,
   getSplitIndices
-} from '../utils/splitMatching.js';
+} from '../../domain/tree/splits.js';
 
 export class TreeColorManager {
   constructor() {
@@ -49,11 +49,8 @@ export class TreeColorManager {
    */
   refreshColorCategories() {
     const store = useAppStore.getState();
-    const controllers = store.treeControllers || [];
-    for (const controller of controllers) {
-      if (controller?.renderAllElements) {
-        controller.renderAllElements();
-      }
+    for (const controller of store.treeControllers) {
+      controller.renderAllElements();
     }
   }
 

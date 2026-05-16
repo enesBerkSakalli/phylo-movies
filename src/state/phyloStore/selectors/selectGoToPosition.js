@@ -1,1 +1,1 @@
-export const selectGoToPosition = (state = {}) => state?.goToPosition;
+export const selectGoToPosition = (state) => state.goToPosition;

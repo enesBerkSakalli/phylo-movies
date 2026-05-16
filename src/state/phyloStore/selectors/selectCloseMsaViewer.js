@@ -1,1 +1,1 @@
-export const selectCloseMsaViewer = (state = {}) => state?.closeMsaViewer;
+export const selectCloseMsaViewer = (state) => state.closeMsaViewer;
