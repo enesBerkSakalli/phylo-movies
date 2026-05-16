@@ -210,7 +210,7 @@ describe('Complex Data Layer Integration', () => {
       const connectors = buildSubtreeConnectors({
         leftPositions,
         rightPositions,
-        latticeSolutions: { [edgeKey]: [movingSubtree] },
+        affectedSubtreesBySplit: { [edgeKey]: [movingSubtree] },
         pivotEdge: pivotEdge,
         colorManager: mockColorManager,
         subtreeTracking: [movingSubtree], // "Current tree" structure
@@ -225,7 +225,7 @@ describe('Complex Data Layer Integration', () => {
       // 4. Assertions
       expect(connectors.length).toBeGreaterThan(0);
 
-      // Connectors are emitted for leaves in the lattice solution. They are
+      // Connectors are emitted for leaves in the affected-subtree entry. They are
       // active only when also present in the current subtree tracking entry.
 
       // Verify Active Connectors

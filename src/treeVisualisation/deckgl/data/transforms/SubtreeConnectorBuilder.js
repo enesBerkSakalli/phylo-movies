@@ -21,7 +21,7 @@ export function buildSubtreeConnectors(options) {
   const {
     leftPositions,
     rightPositions,
-    latticeSolutions,
+    affectedSubtreesBySplit,
     pivotEdge,
     colorManager,
     subtreeTracking,
@@ -34,8 +34,8 @@ export function buildSubtreeConnectors(options) {
     rightRadius,
   } = options;
 
-  const solutionForPivot = getBackendSplitMapValue(latticeSolutions, pivotEdge);
-  const flattenedSubtrees = flattenSplitSets(solutionForPivot || []);
+  const subtreesForPivot = getBackendSplitMapValue(affectedSubtreesBySplit, pivotEdge);
+  const flattenedSubtrees = flattenSplitSets(subtreesForPivot || []);
   if (flattenedSubtrees.length === 0) {
     return [];
   }

@@ -26,9 +26,8 @@ function makeBackendMovieData() {
     },
     tree_pair_solutions: {
       pair_0_2: {
-        jumping_subtree_solutions: {},
-        solution_to_source_map: {},
-        solution_to_destination_map: {},
+        affected_subtrees_by_split: {},
+        attachment_edges_by_split: {},
       },
     },
     pair_interpolation_ranges: [[0, 2]],

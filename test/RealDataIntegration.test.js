@@ -24,25 +24,25 @@ const mockColorManager = {
 
 describe('Real Data Integration (test/data/ostrich_bug_response.json)', () => {
     const pairEntry = Object.entries(realData.tree_pair_solutions || {}).find(([, solution]) => {
-        const jumpingSolutions = solution?.jumping_subtree_solutions;
-        if (!jumpingSolutions) return false;
-        return Object.values(jumpingSolutions).some((solutionSets) => flattenSplitSets(solutionSets).length > 0);
+        const affectedSubtreesBySplit = solution?.affected_subtrees_by_split;
+        if (!affectedSubtreesBySplit) return false;
+        return Object.values(affectedSubtreesBySplit).some((subtreeSets) => flattenSplitSets(subtreeSets).length > 0);
     });
 
     if (!pairEntry) {
-        throw new Error('No jumping_subtree_solutions found in test/data/ostrich_bug_response.json');
+        throw new Error('No affected_subtrees_by_split found in test/data/ostrich_bug_response.json');
     }
 
     const [PAIR_KEY, pairSolution] = pairEntry;
     const sourceTree = realData.interpolated_trees[0]; // Tree 0
-    const rawJumpSolutions = pairSolution.jumping_subtree_solutions;
-    const firstJumpEntry = Object.entries(rawJumpSolutions).find(([, solutionSets]) => flattenSplitSets(solutionSets).length > 0);
+    const affectedSubtreesBySplit = pairSolution.affected_subtrees_by_split;
+    const firstAffectedSubtreeEntry = Object.entries(affectedSubtreesBySplit).find(([, subtreeSets]) => flattenSplitSets(subtreeSets).length > 0);
 
-    if (!firstJumpEntry) {
-        throw new Error(`No usable jumping subtree entry found for ${PAIR_KEY}`);
+    if (!firstAffectedSubtreeEntry) {
+        throw new Error(`No usable affected subtree entry found for ${PAIR_KEY}`);
     }
 
-    const [edgeKey, solutionSets] = firstJumpEntry;
+    const [edgeKey, solutionSets] = firstAffectedSubtreeEntry;
     const pivotEdge = edgeKey
         .replace(/[\[\]\s]/g, '')
         .split(',')
@@ -118,7 +118,7 @@ describe('Real Data Integration (test/data/ostrich_bug_response.json)', () => {
         const connectors = buildSubtreeConnectors({
             leftPositions,
             rightPositions,
-            latticeSolutions: rawJumpSolutions,
+            affectedSubtreesBySplit,
             pivotEdge: pivotEdge,
             colorManager: mockColorManager,
             subtreeTracking: subtreeTracking,

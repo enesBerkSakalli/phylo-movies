@@ -80,7 +80,7 @@ export function getLinkOutlineColor(link, cached) {
 
     // Check if link is part of a marked subtree highlight
     // Priority: Marked (Red) > Pivot (Blue)
-    // We allow Marked highlight even if it's part of the pivot edge, so the specific jumping subtree stands out
+    // We allow Marked highlight even if it's part of the pivot edge, so the specific affected subtree stands out
     // from the broader pivot edge.
     else if (shouldHighlightLink(link, cached)) {
       const mode = cached.highlightColorMode || 'solid';

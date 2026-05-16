@@ -12,7 +12,7 @@ const {
 describe('SPR analytics model', () => {
   const pairSolutions = {
     pair_0_1: {
-      jumping_subtree_solutions: {
+      affected_subtrees_by_split: {
         '[9]': [
           [[1], [2, 3]],
         ],
@@ -20,22 +20,22 @@ describe('SPR analytics model', () => {
           [[1]],
         ],
       },
-      solution_to_source_map: {
+      attachment_edges_by_split: {
         '[9]': {
-          '[1]': [1, 7, 8],
-          '[2, 3]': [2, 3, 8],
+          '[1]': {
+            source: [1, 7, 8],
+            destination: [1, 5, 6],
+          },
+          '[2, 3]': {
+            source: [2, 3, 8],
+            destination: [2, 3, 9],
+          },
         },
         '[10]': {
-          '[1]': [1, 4],
-        },
-      },
-      solution_to_destination_map: {
-        '[9]': {
-          '[1]': [1, 5, 6],
-          '[2, 3]': [2, 3, 9],
-        },
-        '[10]': {
-          '[1]': [1, 11],
+          '[1]': {
+            source: [1, 4],
+            destination: [1, 11],
+          },
         },
       },
       spr_move_events: [
@@ -78,19 +78,17 @@ describe('SPR analytics model', () => {
       ],
     },
     pair_1_2: {
-      jumping_subtree_solutions: {
+      affected_subtrees_by_split: {
         '[8]': [
           [[4, 5, 6]],
         ],
       },
-      solution_to_source_map: {
+      attachment_edges_by_split: {
         '[8]': {
-          '[4, 5, 6]': [4, 5, 6, 7],
-        },
-      },
-      solution_to_destination_map: {
-        '[8]': {
-          '[4, 5, 6]': [4, 5, 6, 12],
+          '[4, 5, 6]': {
+            source: [4, 5, 6, 7],
+            destination: [4, 5, 6, 12],
+          },
         },
       },
       spr_move_events: [
@@ -256,21 +254,21 @@ describe('SPR analytics model', () => {
   it('keeps backend highlight context separate from the physical moved subtree', () => {
     const groupedPairSolutions = {
       pair_0_1: {
-        jumping_subtree_solutions: {
+        affected_subtrees_by_split: {
           '[9]': [
             [[1], [2]],
           ],
         },
-        solution_to_source_map: {
+        attachment_edges_by_split: {
           '[9]': {
-            '[1]': [1, 7],
-            '[2]': [2, 8],
-          },
-        },
-        solution_to_destination_map: {
-          '[9]': {
-            '[1]': [1, 9],
-            '[2]': [2, 10],
+            '[1]': {
+              source: [1, 7],
+              destination: [1, 9],
+            },
+            '[2]': {
+              source: [2, 8],
+              destination: [2, 10],
+            },
           },
         },
         spr_move_events: [
@@ -323,25 +321,22 @@ describe('SPR analytics model', () => {
   it('maps pair-level distance arrays by interpolation range when pair keys use global tree indices', () => {
     const sparsePairSolutions = {
       pair_0_2: {
-        jumping_subtree_solutions: {},
-        solution_to_source_map: {},
-        solution_to_destination_map: {},
+        affected_subtrees_by_split: {},
+        attachment_edges_by_split: {},
         spr_move_events: [],
       },
       pair_2_4: {
-        jumping_subtree_solutions: {
+        affected_subtrees_by_split: {
           '[8]': [
             [[4]],
           ],
         },
-        solution_to_source_map: {
+        attachment_edges_by_split: {
           '[8]': {
-            '[4]': [4, 7],
-          },
-        },
-        solution_to_destination_map: {
-          '[8]': {
-            '[4]': [4, 9],
+            '[4]': {
+              source: [4, 7],
+              destination: [4, 9],
+            },
           },
         },
         spr_move_events: [
@@ -444,23 +439,22 @@ describe('SPR analytics model', () => {
     });
   });
 
-  it('does not infer SPR analytics rows from legacy jumping subtree solutions', () => {
-    const legacyPairSolutions = {
+  it('does not infer SPR analytics rows from affected-subtree entries without spr_move_events', () => {
+    const pairSolutionsWithoutEvents = {
       pair_0_1: {
-        jumping_subtree_solutions: {
+        affected_subtrees_by_split: {
           '[9]': [
             [[1], [2, 3]],
           ],
         },
-        solution_to_source_map: {},
-        solution_to_destination_map: {},
+        attachment_edges_by_split: {},
       },
     };
 
-    const events = buildSprMoveEventRows(legacyPairSolutions);
-    const rows = calculateSprPairActivity(legacyPairSolutions);
-    const summary = calculateSprDatasetSummary(legacyPairSolutions);
-    const recurrences = calculateSprMovedSubtreeRecurrences(legacyPairSolutions);
+    const events = buildSprMoveEventRows(pairSolutionsWithoutEvents);
+    const rows = calculateSprPairActivity(pairSolutionsWithoutEvents);
+    const summary = calculateSprDatasetSummary(pairSolutionsWithoutEvents);
+    const recurrences = calculateSprMovedSubtreeRecurrences(pairSolutionsWithoutEvents);
     const timeline = buildSprActivityTimelinePoints(rows);
 
     expect(events).toHaveLength(0);
