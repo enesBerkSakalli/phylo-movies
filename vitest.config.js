@@ -33,7 +33,6 @@ export default defineConfig({
       'test/SpatialLayout.test.js',
       'test/scaleUtils.test.js',
       'test/moved-subtree-recurrence.test.js',
-      'test/subtree-temporal.test.js',
       'test/subtreeConnectorBuilder.test.js',
       'test/taxa-coloring.test.js',
       'test/TidyTreeLayout.test.js',
