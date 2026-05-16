@@ -19,6 +19,26 @@ function collectSourceFiles(directory) {
 }
 
 describe('workspace initialization input contract', () => {
+  it('does not keep a frontend client for the old synchronous treedata endpoint', () => {
+    const serviceFiles = [
+      join(repoRoot, 'src', 'services', 'data', 'dataManager.js'),
+      join(repoRoot, 'src', 'services', 'data', 'dataService.js'),
+    ];
+    const workspaceFiles = collectSourceFiles(
+      join(repoRoot, 'src', 'pages', 'WorkspaceInitialization')
+    );
+    const checkedFiles = [...serviceFiles, ...workspaceFiles];
+
+    const oldEndpointReferences = checkedFiles
+      .filter((file) => {
+        const source = readFileSync(file, 'utf8');
+        return /['"]\/treedata['"]/.test(source) || /\bfetchTreeData\b/.test(source);
+      })
+      .map((file) => relative(repoRoot, file));
+
+    expect(oldEndpointReferences).toEqual([]);
+  });
+
   it('does not keep the stale orderFile input field contract', () => {
     const workspaceFiles = collectSourceFiles(
       join(repoRoot, 'src', 'pages', 'WorkspaceInitialization')

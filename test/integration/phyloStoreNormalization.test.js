@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { phyloData } from '../../src/services/data/dataService.js';
 import * as phyloStoreModule from '../../src/state/phyloStore/store.js';
 
 const { useAppStore } = phyloStoreModule;
@@ -11,7 +12,7 @@ const tree0 = { name: '', length: 0, split_indices: [0, 1], children: [] };
 const tree1 = { name: '', length: 0, split_indices: [0, 1], children: [] };
 const tree2 = { name: '', length: 0, split_indices: [0, 1], children: [] };
 
-function makeMovieData() {
+function makeBackendMovieData() {
   return {
     interpolated_trees: [tree0, tree1, tree2],
     tree_metadata: [
@@ -26,6 +27,9 @@ function makeMovieData() {
     tree_pair_solutions: {
       pair_0_2: {
         jumping_subtree_solutions: {},
+        solution_to_source_map: {},
+        solution_to_destination_map: {},
+        split_change_events: [],
       },
     },
     pair_interpolation_ranges: [[0, 2]],
@@ -52,7 +56,14 @@ function makeMovieData() {
       step_size: 1,
     },
     file_name: 'normalization-test.json',
+    pipeline_info: { model_used: 'iqtree' },
+    warnings: ['example warning'],
+    tree_count: 3,
   };
+}
+
+function makeMovieData() {
+  return phyloData.validate(makeBackendMovieData());
 }
 
 describe('phylo store dataset normalization', () => {
@@ -76,6 +87,13 @@ describe('phylo store dataset normalization', () => {
     expect(state.treeMetadata).toBe(movieData.tree_metadata);
     expect(state.leafNamesByIndex).toEqual(['taxon-a', 'taxon-b']);
     expect(state.movieData.sorted_leaves).toBeUndefined();
+    expect(state.movieData.subtree_tracking).toBeUndefined();
+    expect(state.movieData.subtreeHighlightTracking).toBeUndefined();
+    expect(state.movieData.split_change_events).toBeUndefined();
+    expect(state.movieData.pipeline_info).toBeUndefined();
+    expect(state.movieData.warnings).toBeUndefined();
+    expect(state.movieData.tree_count).toBeUndefined();
+    expect(state.subtreeTracking).toEqual([null, [[1]], null]);
     expect(state.fullTreeIndices).toEqual([0, 2]);
     expect(state.pairInterpolationRanges).toEqual([[0, 2]]);
     expect(state.treeIndexByPair).toEqual({ pair_0_2: [1] });

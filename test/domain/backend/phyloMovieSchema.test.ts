@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { validatePhyloMovieData } from '../../../src/domain/backend/phyloMovieSchema';
+import { phyloData } from '../../../src/services/data/dataService';
 
 const minimalTree = {
   name: 'root',
@@ -83,6 +84,22 @@ describe('validatePhyloMovieData', () => {
     expect(result.tree_metadata[0].source_tree_global_index).toBeNull();
     expect(result.file_name).toBe('example.nwk');
     expect(result.msa?.sequences?.['taxon-a']).toBe('ACGT');
+  });
+
+  it('exposes subtree highlight tracking under the app contract after service validation', () => {
+    const result = phyloData.validate(makePayload({
+      subtree_tracking: [[[0]]],
+      pipeline_info: { model_used: 'iqtree' },
+      warnings: ['example warning'],
+      tree_count: 1,
+    }));
+
+    expect(result.subtreeHighlightTracking).toEqual([[[0]]]);
+    expect(result).not.toHaveProperty('subtree_tracking');
+    expect(result).not.toHaveProperty('split_change_events');
+    expect(result).not.toHaveProperty('pipeline_info');
+    expect(result).not.toHaveProperty('warnings');
+    expect(result).not.toHaveProperty('tree_count');
   });
 
   it('does not keep metadata fields outside the app contract', () => {

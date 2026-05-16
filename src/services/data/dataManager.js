@@ -1,21 +1,4 @@
-import { server, phyloData } from './dataService.js';
-
-/**
- * Fetches tree data from the server and stores it in localForage.
- * Returns the processed data for navigation handling by the caller.
- * @param {FormData} formData The form data containing the tree file and other options.
- * @returns {Promise<Object>} The processed tree data
- */
-export async function fetchTreeData(formData) {
-  try {
-    const data = await server.fetchTreeData(formData);
-    await phyloData.set(data);
-    return data; // Return data instead of redirecting
-  } catch (err) {
-    console.error("[fetchTreeData] Error:", err);
-    throw new Error(`Error processing tree data: ${err.message}`);
-  }
-}
+import { phyloData } from './dataService.js';
 
 /**
  * Retrieves and validates phyloMovieData from localForage.

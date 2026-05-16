@@ -48,6 +48,7 @@ export const createDatasetLifecycleSlice = (set, get) => ({
     const {
       sorted_leaves: leafNamesByIndex,
       distances,
+      subtreeHighlightTracking,
       ...storedMovieData
     } = movieData;
     const interpolatedTrees = movieData.interpolated_trees;
@@ -105,7 +106,7 @@ export const createDatasetLifecycleSlice = (set, get) => ({
       maxScale,
       pairSolutions: movieData.tree_pair_solutions,
       pivotEdgeTracking: movieData.pivot_edge_tracking,
-      subtreeTracking: movieData.subtree_tracking,
+      subtreeTracking: subtreeHighlightTracking,
       transitionResolver: resolver,
       selectedTimelineSegmentIndex: null,
       playhead: {
