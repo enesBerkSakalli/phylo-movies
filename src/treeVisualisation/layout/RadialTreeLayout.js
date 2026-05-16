@@ -2,6 +2,7 @@ import { hierarchy } from "d3-hierarchy";
 import { transformBranchLengths } from '../../domain/tree/branchTransform.js';
 import { createLayoutResult } from './LayoutResultAdapter.js';
 import {
+  assignLayoutNodeIds,
   calculateBranchLengthRadii,
   calculateContainerScale,
   calculateUniformScale,
@@ -26,6 +27,7 @@ export class RadialTreeLayout {
   constructor(root) {
     this.root = hierarchy(root);
     initializeLayoutState(this);
+    assignLayoutNodeIds(this.root);
   }
 
   /**

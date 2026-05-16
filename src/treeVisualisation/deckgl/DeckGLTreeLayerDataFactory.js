@@ -64,7 +64,9 @@ function applyRenderContext(layerData, context) {
       const splitIndices = getSplitIndices(element);
       if (Array.isArray(splitIndices) && splitIndices.length > 0) {
         element.split_indices = splitIndices;
-        element.splitKey = toSubtreeKey(splitIndices);
+        if (!element.splitKey) {
+          element.splitKey = toSubtreeKey(splitIndices);
+        }
       }
     }
   }

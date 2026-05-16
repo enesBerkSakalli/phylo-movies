@@ -253,6 +253,17 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     expect(secondToken).not.toBe(firstToken);
   });
 
+  it('reuses the prefetch layout cache key when creating request tokens', () => {
+    controller = new ControllerClass(null);
+    const createLayoutCacheKey = vi.spyOn(controller, '_createLayoutCacheKey');
+
+    controller._prefetchFrame(1);
+
+    const message = controller.layoutWorker.messages[0];
+    expect(createLayoutCacheKey).toHaveBeenCalledTimes(1);
+    expect(message.requestToken).toBe(`${controller._layoutRequestGeneration}|${message.data.options.layoutCacheKey}`);
+  });
+
   it('re-prefetches the same tree index when its layout cache key changes', () => {
     controller = new ControllerClass(null);
 

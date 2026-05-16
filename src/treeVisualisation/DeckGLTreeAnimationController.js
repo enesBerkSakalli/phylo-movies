@@ -409,7 +409,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     if (this.prefetchedLayoutCacheKeys.get(treeIndex) === layoutCacheKey) return;
 
     this.prefetchedLayoutCacheKeys.set(treeIndex, layoutCacheKey);
-    const requestToken = this._createLayoutRequestToken(treeIndex, state);
+    const requestToken = this._createLayoutRequestToken(treeIndex, state, layoutCacheKey);
     this._prefetchRequestTokens.set(treeIndex, requestToken);
 
     const payload = {
@@ -455,8 +455,8 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     return state?.linkGeometryMode === 'straight' ? 'straight' : 'radial-elbow';
   }
 
-  _createLayoutRequestToken(treeIndex, state = useAppStore.getState()) {
-    return `${this._layoutRequestGeneration}|${this._createLayoutCacheKey(treeIndex, state)}`;
+  _createLayoutRequestToken(treeIndex, state = useAppStore.getState(), layoutCacheKey = null) {
+    return `${this._layoutRequestGeneration}|${layoutCacheKey ?? this._createLayoutCacheKey(treeIndex, state)}`;
   }
 
   // RENDERING - STATIC

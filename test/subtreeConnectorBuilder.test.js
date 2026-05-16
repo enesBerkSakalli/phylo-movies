@@ -294,19 +294,16 @@ describe('SubtreeConnectorBuilder', function () {
     expect(rawSource).not.toMatch(/isConnectorSplitInAnySubtree/);
     expect(rawSource).not.toMatch(/function\s+isSubsetOf\s*\(/);
     expect(rawSource).not.toMatch(/function\s+isSplitSubsetOfAny\s*\(/);
-    expect(leafPairCandidatesSource).toMatch(/from\s+['"]\.\/ConnectorSplitEligibility\.js['"]/);
+    expect(leafPairCandidatesSource).not.toMatch(/ConnectorSplitEligibility\.js/);
     expect(movementStateSource).toMatch(/from\s+['"]\.\/ConnectorSplitEligibility\.js['"]/);
   });
 
-  it('filters connector split keys through a dedicated pure helper', async function () {
+  it('checks connector split arrays through a dedicated pure helper', async function () {
     const splitEligibility = await importConnectorSplitEligibility();
 
     expect(splitEligibility).not.toBeNull();
-    expect(splitEligibility.getConnectorSplitIndicesFromKey('10-11')).toEqual([10, 11]);
     expect(splitEligibility.isConnectorSplitInAnySubtree([10], [new Set([10, 11])])).toBe(true);
     expect(splitEligibility.isConnectorSplitInAnySubtree([12], [new Set([10, 11])])).toBe(false);
-    expect(splitEligibility.getEligibleConnectorSplitIndices('10', [new Set([10, 11])])).toEqual([10]);
-    expect(splitEligibility.getEligibleConnectorSplitIndices('12', [new Set([10, 11])])).toBeNull();
 
     const rawSource = readFileSync(rawConnectionsSourcePath, 'utf8');
     const leafPairCandidatesSource = readFileSync(leafPairCandidatesSourcePath, 'utf8');
@@ -315,9 +312,12 @@ describe('SubtreeConnectorBuilder', function () {
     expect(rawSource).not.toMatch(/getEligibleConnectorSplitIndices/);
     expect(rawSource).not.toMatch(/isConnectorSplitInAnySubtree/);
     expect(rawSource).not.toMatch(/key\.split\('-'\)/);
-    expect(leafPairCandidatesSource).toMatch(/getEligibleConnectorSplitIndices/);
+    expect(leafPairCandidatesSource).not.toMatch(/getEligibleConnectorSplitIndices/);
     expect(movementStateSource).toMatch(/isConnectorSplitInAnySubtree/);
     expect(splitEligibilitySource).toMatch(/from\s+['"][^'"]*domain\/tree\/splits\.js['"]/);
+    expect(splitEligibilitySource).not.toMatch(/key\.split/);
+    expect(splitEligibilitySource).not.toMatch(/getConnectorSplitIndicesFromKey/);
+    expect(splitEligibilitySource).not.toMatch(/getEligibleConnectorSplitIndices/);
     expect(splitEligibilitySource).not.toMatch(/subtreeSets\s*\|\|\s*\[\]/);
     expect(splitEligibilitySource).not.toMatch(/splitMatching\.js/);
   });
@@ -450,6 +450,20 @@ describe('SubtreeConnectorBuilder', function () {
       target: [130, -20, 0],
     });
     expect(leafPairCandidates.getConnectorLeafPairCandidate({
+      key: 'raw-left-key',
+      leftInfo,
+      rightLeavesByName,
+      jumpingSubtreeSets: [new Set([10, 11])],
+    })).toEqual({
+      leftKey: 'raw-left-key',
+      rightKey: '10',
+      leftInfo,
+      rightInfo,
+      splitIndices: [10],
+      source: [-30, -20, 0],
+      target: [130, -20, 0],
+    });
+    expect(leafPairCandidates.getConnectorLeafPairCandidate({
       key: '12',
       leftInfo: makeLeaf(12, 'Missing', [30, -20, 0]),
       rightLeavesByName,
@@ -467,7 +481,8 @@ describe('SubtreeConnectorBuilder', function () {
     expect(rawSource).toMatch(/from\s+['"]\.\/ConnectorLeafPairCandidates\.js['"]/);
     expect(rawSource).not.toMatch(/rightLeavesByName\.get/);
     expect(rawSource).not.toMatch(/rightMatch\.info\.position/);
-    expect(leafPairCandidatesSource).toMatch(/from\s+['"]\.\/ConnectorSplitEligibility\.js['"]/);
+    expect(leafPairCandidatesSource).not.toMatch(/ConnectorSplitEligibility\.js/);
+    expect(leafPairCandidatesSource).not.toMatch(/getEligibleConnectorSplitIndices/);
     expect(leafPairCandidatesSource).not.toMatch(/info\?\.isLeaf/);
   });
 

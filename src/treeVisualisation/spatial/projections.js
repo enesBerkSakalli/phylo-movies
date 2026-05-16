@@ -1,5 +1,3 @@
-import { getSplitIndices } from '../../domain/tree/splits.js';
-
 /**
  * Projections.js
  *
@@ -12,41 +10,6 @@ import { getSplitIndices } from '../../domain/tree/splits.js';
  * - Safe Area Compensation: Adjusting the look-at target to center content
  *   within a specific sub-rect of the screen.
  */
-
-/**
- * Projects a set of tree nodes from World Space to Screen Space.
- * Used for positioning HTML overlays (Tooltips, Context Menus).
- *
- * @param {Array} nodes - List of tree nodes with {position: [x, y]}
- * @param {Object} viewport - Deck.gl Viewport instance
- * @param {DOMRect} containerRect - Bounding rect of the canvas container
- * @returns {Object} Map of node keys to screen coordinates {x, y, width, height}
- */
-export function projectNodesToScreen(nodes, viewport, containerRect) {
-  const positions = {};
-
-  nodes.forEach((node) => {
-    const splitIndices = getSplitIndices(node);
-    const key = Array.isArray(splitIndices)
-      ? splitIndices.join('-')
-      : null;
-    if (!key) return;
-    if (!node.position || !Array.isArray(node.position)) return;
-    if (!Number.isFinite(node.position[0]) || !Number.isFinite(node.position[1])) return;
-
-    // Projection: World -> Screen
-    const [px, py] = viewport.project(node.position);
-    positions[key] = {
-      x: px + containerRect.left,
-      y: py + containerRect.top,
-      width: 0,
-      height: 0,
-      isLeaf: typeof node.isLeaf === 'boolean' ? node.isLeaf : !node.children
-    };
-  });
-
-  return positions;
-}
 
 /**
  * Calculates a new World Space target to center content within a specific Safe Area.

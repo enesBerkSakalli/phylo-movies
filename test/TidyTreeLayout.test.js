@@ -121,7 +121,7 @@ describe('TidyTreeLayout', () => {
     });
   });
 
-  it('does not compress moving subtree angles when the legacy exclusion option is present', () => {
+  it('preserves moving subtree internal angle span during tidy spacing', () => {
     const tree = {
       name: 'root',
       length: 0,
@@ -142,25 +142,20 @@ describe('TidyTreeLayout', () => {
         { name: 'F', length: 1, split_indices: [5] },
       ],
     };
-    const buildAngles = (options = {}) => {
+    const buildAngles = () => {
       const layoutEngine = new TidyTreeLayout(tree);
       layoutEngine.setDimension(800, 600);
       layoutEngine.setMargin(60);
-      const root = layoutEngine.constructRadialTree(false, options);
+      const root = layoutEngine.constructRadialTree(false);
       return Object.fromEntries(
         root.leaves().map((leaf) => [leaf.data.name, leaf.rotatedAngle])
       );
     };
 
-    const baseline = buildAngles();
-    const withMovingTaxaExcluded = buildAngles({
-      rotationAlignmentExcludeTaxa: [1, 2, 3],
-    });
+    const angles = buildAngles();
 
-    expect(withMovingTaxaExcluded.B).to.be.closeTo(baseline.B, 1e-9);
-    expect(withMovingTaxaExcluded.C).to.be.closeTo(baseline.C, 1e-9);
-    expect(withMovingTaxaExcluded.D).to.be.closeTo(baseline.D, 1e-9);
-    expect(withMovingTaxaExcluded.D - withMovingTaxaExcluded.B)
-      .to.be.closeTo(baseline.D - baseline.B, 1e-9);
+    expect(angles.B).to.be.lessThan(angles.C);
+    expect(angles.C).to.be.lessThan(angles.D);
+    expect(angles.D - angles.B).to.be.closeTo(Math.PI / 2, 1e-9);
   });
 });

@@ -2,6 +2,7 @@ import { cluster, hierarchy } from "d3-hierarchy";
 import { transformBranchLengths } from '../../domain/tree/branchTransform.js';
 import { createLayoutResult } from './LayoutResultAdapter.js';
 import {
+  assignLayoutNodeIds,
   calculateBranchLengthRadii,
   calculateContainerScale,
   calculateUniformScale,
@@ -30,6 +31,7 @@ export class TidyTreeLayout {
     const isHierarchyNode = root && typeof root.each === 'function' && root.data !== undefined;
     this.root = isHierarchyNode ? root : hierarchy(root);
     initializeLayoutState(this);
+    assignLayoutNodeIds(this.root);
   }
 
   setAngleExtentDegrees(degrees = 360) {

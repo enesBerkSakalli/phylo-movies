@@ -1,5 +1,3 @@
-import { getNodeKey } from '../utils/KeyGenerator.js';
-
 export function createLayoutResult(root, metadata = {}) {
   const layoutTree = normalizeLayoutNode(root);
   const nodes = [];
@@ -25,7 +23,7 @@ export function createLayoutResult(root, metadata = {}) {
 function normalizeLayoutNode(node, parent = null, path = []) {
   const data = node?.data || {};
   const splitIndices = copySplitIndices(data.split_indices);
-  const id = getNodeKey({ split_indices: splitIndices });
+  const id = node.id;
   const parentId = parent?.id ?? null;
   const name = data.name || data.id || '';
   const currentPath = [...path, name || `depth_${node?.depth ?? 0}`];
@@ -77,7 +75,6 @@ function collectLayoutData(node, nodes, leaves, links) {
 
   for (const child of node.children) {
     links.push({
-      id: child.id ? `link-${child.id.replace(/^node-/, '')}` : null,
       sourceId: node.id,
       targetId: child.id,
       sourcePosition: node.position,

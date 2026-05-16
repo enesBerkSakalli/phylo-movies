@@ -1,15 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   getLinkSplitIndices,
+  getNodeKey,
   getSplitIndices,
   toSubtreeKey,
 } from '../src/domain/tree/splits.js';
-import {
-  getExtensionKey,
-  getLabelKey,
-  getLinkKey,
-  getNodeKey,
-} from '../src/treeVisualisation/utils/KeyGenerator.js';
 
 describe('split identity contract', () => {
   it('reads split indices from normalized render elements only', () => {
@@ -37,9 +32,5 @@ describe('split identity contract', () => {
 
     expect(getNodeKey(normalized)).toBe(`node-${splitKey}`);
     expect(getNodeKey(d3Node)).toBeNull();
-    expect(getLabelKey(normalized)).toBe(`label-${splitKey}`);
-    expect(getExtensionKey(normalized)).toBe(`ext-${splitKey}`);
-    expect(getLinkKey({ split_indices: [7] })).toBe(`link-${splitKey}`);
-    expect(getLinkKey({ target: d3Node })).toBeNull();
   });
 });

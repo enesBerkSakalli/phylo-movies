@@ -35,24 +35,8 @@ export function isSubset(smaller, larger) {
   return smaller.length <= largerSet.size && smaller.every(x => largerSet.has(x));
 }
 
-export function isExactMatch(element, targetSet) {
-  const splits = getSplitIndices(element);
-  if (!splits || !targetSet) return false;
-  return splitsEqual(splits, targetSet);
-}
-
 export function isSubsetOfAny(element, targetSets) {
   const splits = getSplitIndices(element);
-  if (!splits || !targetSets?.length) return false;
-
-  for (const target of targetSets) {
-    if (isSubset(splits, target)) return true;
-  }
-  return false;
-}
-
-export function isLinkSubsetOfAny(linkData, targetSets) {
-  const splits = getLinkSplitIndices(linkData);
   if (!splits || !targetSets?.length) return false;
 
   for (const target of targetSets) {
@@ -179,6 +163,11 @@ export function getSplitKey(elementOrSplits) {
     return indices.length > 0 ? toSubtreeKey(indices) : null;
   }
   return null;
+}
+
+export function getNodeKey(elementOrSplits) {
+  const splitKey = getSplitKey(elementOrSplits);
+  return splitKey ? `node-${splitKey}` : null;
 }
 
 function resolveSplitCollection(elementOrSplits) {

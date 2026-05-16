@@ -1,7 +1,7 @@
 /**
  * LinkDataBuilder - Builds link data objects from normalized layout links
  */
-import { getLinkKey, getNodeKey } from '../../../../utils/KeyGenerator.js';
+import { getSplitKey } from '../../../../../domain/tree/splits.js';
 import { LinkGeometryBuilder } from '../../geometry/links/LinkGeometryBuilder.js';
 
 export class LinkDataBuilder {
@@ -34,11 +34,12 @@ export class LinkDataBuilder {
     const linkPath = this.geometryBuilder.createLinkPath(linkData, {
       geometryMode: options.linkGeometryMode
     });
-    const linkKey = getLinkKey({ split_indices: link.targetSplitIndices });
-    const sourceId = getNodeKey({ split_indices: link.sourceSplitIndices });
-    const targetId = getNodeKey({ split_indices: link.targetSplitIndices });
+    const splitKey = getSplitKey({ split_indices: link.targetSplitIndices });
+    const linkKey = splitKey ? `link-${splitKey}` : null;
+    const sourceId = link.sourceId;
+    const targetId = link.targetId;
     if (!linkKey || !sourceId || !targetId) {
-      console.warn('[LinkDataBuilder] Skipping link without split_indices:', link.targetName);
+      console.warn('[LinkDataBuilder] Skipping link without normalized ids:', link.targetName);
       return null;
     }
 
@@ -53,6 +54,7 @@ export class LinkDataBuilder {
       isLeaf: link.isLeaf === true,
       isInternal: link.isInternal === true,
       split_indices: link.targetSplitIndices,
+      splitKey,
       radialLength: this._calculateRadialLength(link),
       sourceId,
       targetId,
