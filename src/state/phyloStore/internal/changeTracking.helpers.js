@@ -13,8 +13,9 @@ import { selectFullTreeIndices, selectTreePairKeyAtIndex } from '../selectors/tr
 // SYSTEM HELPERS (Rendering, Persistence, Storage)
 // ============================================================================
 
-export function calculateChangePreviews(state) {
-  const { upcomingChangesEnabled, currentTreeIndex, pivotEdgeTracking } = state;
+export function calculateChangePreviews(state, indexOverride = null) {
+  const { upcomingChangesEnabled, currentTreeIndex: stateCurrentTreeIndex, pivotEdgeTracking } = state;
+  const currentTreeIndex = Number.isInteger(indexOverride) ? indexOverride : stateCurrentTreeIndex;
 
   if (!upcomingChangesEnabled) {
     return { upcoming: [], completed: [] };

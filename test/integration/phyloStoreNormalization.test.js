@@ -29,13 +29,9 @@ function makeBackendMovieData() {
         jumping_subtree_solutions: {},
         solution_to_source_map: {},
         solution_to_destination_map: {},
-        split_change_events: [],
       },
     },
     pair_interpolation_ranges: [[0, 2]],
-    split_change_events: {
-      pair_0_2: [{ split: [0], step_range: [1, 1] }],
-    },
     split_change_timeline: [
       { type: 'original', global_index: 0, tree_index: 0, name: 'Anchor tree 1' },
       {
@@ -86,14 +82,10 @@ describe('phylo store dataset normalization', () => {
     expect(state.treeList).toBe(movieData.interpolated_trees);
     expect(state.treeMetadata).toBe(movieData.tree_metadata);
     expect(state.leafNamesByIndex).toEqual(['taxon-a', 'taxon-b']);
-    expect(state.movieData.sorted_leaves).toBeUndefined();
-    expect(state.movieData.subtree_tracking).toBeUndefined();
-    expect(state.movieData.subtreeHighlightTracking).toBeUndefined();
-    expect(state.movieData.split_change_events).toBeUndefined();
-    expect(state.movieData.pipeline_info).toBeUndefined();
-    expect(state.movieData.warnings).toBeUndefined();
-    expect(state.movieData.tree_count).toBeUndefined();
+    expect(Object.prototype.hasOwnProperty.call(state, 'movieData')).toBe(false);
+    expect(state.msaSequences).toBe(movieData.msa.sequences);
     expect(state.subtreeTracking).toEqual([null, [[1]], null]);
+    expect(state.splitChangeTimeline).toBe(movieData.split_change_timeline);
     expect(state.fullTreeIndices).toEqual([0, 2]);
     expect(state.pairInterpolationRanges).toEqual([[0, 2]]);
     expect(state.treeIndexByPair).toEqual({ pair_0_2: [1] });
@@ -218,7 +210,6 @@ describe('phylo store dataset normalization', () => {
       ['selectCurrentTree.js', 'typeof currentTreeIndex'],
       ['selectFileName.js', 'typeof state.fileName'],
       ['selectLabelsVisible.js', '!== false'],
-      ['selectMovieData.js', '?? null'],
       ['selectMovieTimelineManager.js', '?? null'],
       ['selectMsaWindow.js', '?? null'],
       ['selectPairSolutions.js', '?? {}'],

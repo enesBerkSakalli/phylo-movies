@@ -102,6 +102,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       renderSingleFrame: this.interpolationRenderer.renderSingleInterpolatedFrame.bind(this.interpolationRenderer),
       renderComparisonFrame: this._renderComparisonFrameForRunner.bind(this),
       setAnimationStage: (stage) => useAppStore.getState().setAnimationStage(stage),
+      syncHighlightsForIndex: (treeIndex) => useAppStore.getState().updateColorManagerForIndex?.(treeIndex),
       updateProgress: (progress) => {
         // Manual store update to keep UI in sync without driving logic
         const state = useAppStore.getState();
@@ -147,7 +148,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
   }
 
   _configureDeckContextCallbacks() {
-    this.deckContext.onWebGLInitialized((gl) => {
+    this.deckContext.onWebGLInitialized((_gl) => {
       this._markReady();
     });
 
@@ -160,15 +161,15 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       }
     });
 
-    this.deckContext.onDragStart((info, event) => {
+    this.deckContext.onDragStart((info, _event) => {
       const handledTreeDrag = handleDragStart(this, info);
       if (!handledTreeDrag) {
         this._hasUserViewportInteraction = true;
       }
       return handledTreeDrag;
     });
-    this.deckContext.onDrag((info, event) => handleDrag(this, info));
-    this.deckContext.onDragEnd((info, event) => handleDragEnd(this));
+    this.deckContext.onDrag((info, _event) => handleDrag(this, info));
+    this.deckContext.onDragEnd((_info, _event) => handleDragEnd(this));
 
     this.deckContext.onResize((dimensions) => {
       this.resize(dimensions);
@@ -491,13 +492,15 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
   // Exposed for AnimationRunner
   async _renderComparisonFrameForRunner(fromTree, toTree, easedT, options) {
-    const { rightTreeIndex, rightTree } = options;
+    const { rightTreeIndex, rightTree, fromTreeIndex, toTreeIndex, rawTimeFactor } = options;
 
     const interpolatedData = this._buildInterpolatedData(fromTree, toTree, easedT, options);
+    const activeTreeIndex = rawTimeFactor < 0.5 ? fromTreeIndex : toTreeIndex;
     await this.layerManager.renderComparisonAnimated({
       interpolatedData,
       rightTree,
-      rightIndex: rightTreeIndex
+      rightIndex: rightTreeIndex,
+      activeTreeIndex
     });
   }
 

@@ -54,7 +54,6 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
         { id: 'tree2' },
         { id: 'tree3' }
       ],
-      movieData: null,
       branchTransformation: 'linear',
       layoutAngleDegrees: 360,
       layoutRotationDegrees: 0,
@@ -100,7 +99,6 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
         { id: 'tree2' },
         { id: 'tree3' }
       ],
-      movieData: null,
       branchTransformation: 'linear',
       layoutAngleDegrees: 360,
       layoutRotationDegrees: 0,

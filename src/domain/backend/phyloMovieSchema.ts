@@ -10,7 +10,6 @@ import {
   validateTreeMetadataList,
 } from './treePayloadValidators';
 import {
-  validateSplitChangeEventsByPair,
   validateTreePairSolutions,
 } from './solutionValidators';
 import { validateSplitChangeTimeline } from './timelineValidators';
@@ -18,9 +17,7 @@ import { validateSplitChangeTimeline } from './timelineValidators';
 export type {
   MsaData,
   OriginalTimelineEntry,
-  PhyloMovieAppData,
   PhyloMovieData,
-  SplitChangeEvent,
   SplitChangeTimelineEntry,
   SplitEventTimelineEntry,
   SprMoveEvent,
@@ -48,7 +45,6 @@ export function validatePhyloMovieData(data: unknown): PhyloMovieData {
   const subtreeTracking = validateSubtreeTracking(data.subtree_tracking, interpolatedTrees.length);
   const sortedLeaves = requiredStringArray(data.sorted_leaves, 'sorted_leaves');
   const msa = validateMsa(data.msa);
-  const splitChangeEvents = validateSplitChangeEventsByPair(data.split_change_events);
   const splitChangeTimeline = validateSplitChangeTimeline(
     data.split_change_timeline,
     interpolatedTrees.length,
@@ -61,7 +57,6 @@ export function validatePhyloMovieData(data: unknown): PhyloMovieData {
   }
 
   return {
-    ...data,
     interpolated_trees: interpolatedTrees,
     tree_metadata: treeMetadata,
     distances,
@@ -72,7 +67,6 @@ export function validatePhyloMovieData(data: unknown): PhyloMovieData {
     sorted_leaves: sortedLeaves,
     msa,
     file_name: data.file_name,
-    split_change_events: splitChangeEvents,
     split_change_timeline: splitChangeTimeline,
-  } as PhyloMovieData;
+  };
 }

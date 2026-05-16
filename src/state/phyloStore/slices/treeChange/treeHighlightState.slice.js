@@ -97,9 +97,9 @@ export const createTreeHighlightStateSlice = (set, get) => ({
     renderTreeControllers(get());
   },
 
-  updateUpcomingChanges: () => {
+  updateUpcomingChanges: (indexOverride = null) => {
     const { upcomingChangesEnabled, colorManager, calculateHighlightChangePreviews } = get();
-    const { upcoming, completed } = calculateHighlightChangePreviews();
+    const { upcoming, completed } = calculateHighlightChangePreviews(indexOverride);
 
     if (!upcomingChangesEnabled) {
       set({ upcomingChangeEdges: [], completedChangeEdges: [] });

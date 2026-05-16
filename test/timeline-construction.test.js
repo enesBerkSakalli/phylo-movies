@@ -13,7 +13,6 @@ global.cancelAnimationFrame = dom.window.cancelAnimationFrame || ((id) => clearT
 // Pull in ES modules via Babel register (mocha command already uses @babel/register)
 const { TimelineDataProcessor } = require('../src/timeline/data/TimelineDataProcessor.js');
 const { TimelineMathUtils } = require('../src/timeline/math/TimelineMathUtils.js');
-const { ScrubberAPI } = require('../src/timeline/core/ScrubberAPI.js');
 const { useAppStore } = require('../src/state/phyloStore/store.js');
 
 function loadMovieData() {
@@ -29,11 +28,6 @@ function loadMovieData() {
     } catch { }
   }
   throw new Error('No input JSON found for timeline construction test.');
-}
-
-function toAppMovieData(data) {
-  const { subtree_tracking: subtreeHighlightTracking, ...appData } = data;
-  return { ...appData, subtreeHighlightTracking };
 }
 
 function setsToSortedArrays(sets) {
@@ -169,7 +163,6 @@ describe('Timeline construction from backend result', () => {
     }
 
     // Report which dataset was used for clarity when reading logs
-    // eslint-disable-next-line no-console
     console.log(`[timeline-construction.test] Used: ${source}`);
   });
 
@@ -221,11 +214,15 @@ describe('Active change edge mapping (small_example)', () => {
 
   before(() => {
     const { data } = loadMovieData();
-    movieData = toAppMovieData(data);
+    movieData = data;
   });
 
   beforeEach(() => {
     useAppStore.getState().initialize(movieData);
+    useAppStore.setState({
+      pivotEdgesEnabled: true,
+      markedSubtreesEnabled: true
+    });
   });
 
   afterEach(() => {
@@ -258,7 +255,9 @@ describe('Active change edge mapping (small_example)', () => {
     const baseState = storeAPI.getState();
     const basePairSolutions = baseState.pairSolutions;
     const pairEntry = basePairSolutions[pairKey];
-    const pivotSplit = pairEntry.split_change_events[0].split;
+    const pivotSplit = movieData.split_change_timeline
+      .find(entry => entry && entry.type === 'split_event' && entry.pair_key === pairKey)
+      .split;
     const pivotKey = `[${pivotSplit.join(', ')}]`;
 
     const modifiedPairEntry = {
@@ -277,14 +276,8 @@ describe('Active change edge mapping (small_example)', () => {
       [pairKey]: modifiedPairEntry
     };
 
-    const movieDataWithOverride = {
-      ...baseState.movieData,
-      tree_pair_solutions: modifiedPairSolutions
-    };
-
     storeAPI.setState({
-      pairSolutions: modifiedPairSolutions,
-      movieData: movieDataWithOverride
+      pairSolutions: modifiedPairSolutions
     });
 
     const store = storeAPI.getState();
@@ -316,18 +309,12 @@ describe('Active change edge mapping (small_example)', () => {
     expect(setsToSortedArrays(colorManager.currentMovingSubtrees)).to.deep.equal([[13]]);
   });
 
-  it('syncs the color manager from the scrubbed tree index without changing navigation state', () => {
+  it('syncs the color manager from an explicit tree index without changing navigation state', () => {
     const storeAPI = useAppStore;
     storeAPI.getState().setMarkedSubtreeScope('all');
     storeAPI.getState().goToPosition(1);
 
-    const scrubberAPI = new ScrubberAPI(
-      { renderComparisonAwareScrubFrame: async () => {} },
-      {},
-      { getInterpolationDataForTimelineProgress: () => null }
-    );
-
-    scrubberAPI._updateColorManagerForScrub(storeAPI.getState(), 11);
+    storeAPI.getState().updateColorManagerForIndex(11);
 
     const state = storeAPI.getState();
     const colorManager = state.getColorManager();
@@ -338,5 +325,22 @@ describe('Active change edge mapping (small_example)', () => {
     expect(setsToSortedArrays(colorManager.sourceEdgeLeaves)).to.deep.equal([[2, 3, 5, 6]]);
     expect(setsToSortedArrays(colorManager.destinationEdgeLeaves)).to.deep.equal([[2, 3, 5, 6]]);
     expect(setsToSortedArrays(colorManager.currentMovingSubtrees)).to.deep.equal([[4]]);
+  });
+
+  it('calculates upcoming and completed previews from the explicit sync index', () => {
+    const storeAPI = useAppStore;
+    storeAPI.setState({ upcomingChangesEnabled: true });
+    storeAPI.getState().goToPosition(1);
+
+    storeAPI.getState().updateColorManagerForIndex(11);
+
+    const state = storeAPI.getState();
+    const colorManager = state.getColorManager();
+
+    expect(state.currentTreeIndex).to.equal(1);
+    expect(state.completedChangeEdges).to.deep.equal([[10, 11, 12, 13]]);
+    expect(state.upcomingChangeEdges).to.deep.equal([[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]]);
+    expect(setsToSortedArrays(colorManager.completedChangeEdges)).to.deep.equal([[10, 11, 12, 13]]);
+    expect(setsToSortedArrays(colorManager.upcomingChangeEdges)).to.deep.equal([[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]]);
   });
 });

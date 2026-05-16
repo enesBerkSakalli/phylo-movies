@@ -2,24 +2,24 @@ import React, { createContext, useContext, useState, useMemo } from 'react';
 import {
   selectClearMsaRegion,
   selectHasMsa,
-  selectMovieData,
   selectMsaPreviousRegion,
   selectMsaRegion,
   selectMsaRowOrder,
+  selectMsaSequences,
   selectSetMsaRegion,
   selectTaxaColorVersion,
   selectTaxaGrouping,
   useAppStore
 } from '../../state/phyloStore/store.js';
-import { processPhyloData } from '../../msaViewer/utils/dataUtils';
+import { processMsaSequences } from '../../msaViewer/utils/dataUtils';
 import { SYSTEM_TREE_COLORS } from '../../constants/TreeColors';
 import { getGroupForTaxon } from '../../treeColoring/utils/GroupingUtils';
 
 const MSAContext = createContext(null);
 
 export function MSAProvider({ children }) {
-  const movieData = useAppStore(selectMovieData);
   const hasMsa = useAppStore(selectHasMsa);
+  const msaSequences = useAppStore(selectMsaSequences);
   const msaRegion = useAppStore(selectMsaRegion);
   const setMsaRegion = useAppStore(selectSetMsaRegion);
   const clearMsaRegion = useAppStore(selectClearMsaRegion);
@@ -45,9 +45,9 @@ export function MSAProvider({ children }) {
 
   // Process data
   const processedData = useMemo(() => {
-    if (!hasMsa || !movieData) return null;
+    if (!hasMsa || !msaSequences) return null;
     try {
-      const parsed = processPhyloData(movieData);
+      const parsed = processMsaSequences(msaSequences);
       if (!parsed) return null;
 
       // Apply optional row ordering based on msaRowOrder (taxon IDs)
@@ -79,7 +79,7 @@ export function MSAProvider({ children }) {
       console.warn('[MSA Context] Failed to process MSA data:', err);
       return null;
     }
-  }, [hasMsa, movieData, msaRowOrder]);
+  }, [hasMsa, msaSequences, msaRowOrder]);
 
   // Map each taxon id to its assigned color (group > per-taxon palette)
   const rowColorMap = useMemo(() => {
@@ -133,7 +133,6 @@ export function MSAProvider({ children }) {
   }, [processedData, taxaGrouping, taxaColorVersion]);
 
   const value = useMemo(() => ({
-    movieData,
     processedData,
     msaRegion,
     setMsaRegion,
@@ -151,7 +150,6 @@ export function MSAProvider({ children }) {
     scrollAction,
     scrollToPosition,
   }), [
-    movieData,
     processedData,
     msaRegion,
     setMsaRegion,

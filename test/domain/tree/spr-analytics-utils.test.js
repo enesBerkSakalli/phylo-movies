@@ -20,10 +20,6 @@ describe('SPR analytics model', () => {
           [[1]],
         ],
       },
-      split_change_events: [
-        { split: [9], step_range: [0, 4] },
-        { split: [10], step_range: [5, 9] },
-      ],
       solution_to_source_map: {
         '[9]': {
           '[1]': [1, 7, 8],
@@ -87,9 +83,6 @@ describe('SPR analytics model', () => {
           [[4, 5, 6]],
         ],
       },
-      split_change_events: [
-        { split: [8], step_range: [0, 4] },
-      ],
       solution_to_source_map: {
         '[8]': {
           '[4, 5, 6]': [4, 5, 6, 7],
@@ -116,6 +109,30 @@ describe('SPR analytics model', () => {
       ],
     },
   };
+
+  const splitChangeTimeline = [
+    {
+      type: 'split_event',
+      pair_key: 'pair_0_1',
+      split: [9],
+      step_range_local: [0, 4],
+      step_range_global: [1, 5],
+    },
+    {
+      type: 'split_event',
+      pair_key: 'pair_0_1',
+      split: [10],
+      step_range_local: [5, 9],
+      step_range_global: [6, 10],
+    },
+    {
+      type: 'split_event',
+      pair_key: 'pair_1_2',
+      split: [8],
+      step_range_local: [0, 4],
+      step_range_global: [11, 15],
+    },
+  ];
 
   it('builds an auditable SPR move event ledger with one row per backend move event', () => {
     const events = buildSprMoveEventRows(pairSolutions, {
@@ -161,6 +178,7 @@ describe('SPR analytics model', () => {
       robinsonFouldsDistances: [0.25, 0.5],
       weightedRobinsonFouldsDistances: [1.25, 1.5],
       pairInterpolationRanges: [[0, 10], [10, 20]],
+      splitChangeTimeline,
     });
 
     expect(rows).toHaveLength(2);
@@ -243,9 +261,6 @@ describe('SPR analytics model', () => {
             [[1], [2]],
           ],
         },
-        split_change_events: [
-          { split: [9], step_range: [0, 3] },
-        ],
         solution_to_source_map: {
           '[9]': {
             '[1]': [1, 7],
@@ -311,7 +326,6 @@ describe('SPR analytics model', () => {
         jumping_subtree_solutions: {},
         solution_to_source_map: {},
         solution_to_destination_map: {},
-        split_change_events: [],
         spr_move_events: [],
       },
       pair_2_4: {
@@ -320,9 +334,6 @@ describe('SPR analytics model', () => {
             [[4]],
           ],
         },
-        split_change_events: [
-          { split: [8], step_range: [0, 1] },
-        ],
         solution_to_source_map: {
           '[8]': {
             '[4]': [4, 7],
@@ -398,7 +409,7 @@ describe('SPR analytics model', () => {
   });
 
   it('summarizes dataset-level SPR activity without conflating events and moved subtrees', () => {
-    const summary = calculateSprDatasetSummary(pairSolutions);
+    const summary = calculateSprDatasetSummary(pairSolutions, { splitChangeTimeline });
 
     expect(summary).toMatchObject({
       pairCount: 2,
@@ -441,9 +452,6 @@ describe('SPR analytics model', () => {
             [[1], [2, 3]],
           ],
         },
-        split_change_events: [
-          { split: [9], step_range: [0, 4] },
-        ],
         solution_to_source_map: {},
         solution_to_destination_map: {},
       },

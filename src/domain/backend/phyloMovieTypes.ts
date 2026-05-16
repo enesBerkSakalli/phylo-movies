@@ -11,11 +11,6 @@ export interface TreeMetadata {
   source_tree_global_index: number | null;
 }
 
-export interface SplitChangeEvent {
-  split: number[];
-  step_range: [number, number];
-}
-
 export interface SprPathSegment {
   split: number[];
   branch_length: number;
@@ -42,7 +37,6 @@ export interface TreePairSolution {
   jumping_subtree_solutions: Record<string, number[][][]>;
   solution_to_source_map: Record<string, unknown>;
   solution_to_destination_map: Record<string, unknown>;
-  split_change_events: SplitChangeEvent[];
   spr_move_events?: SprMoveEvent[];
 }
 
@@ -82,16 +76,10 @@ export interface PhyloMovieData {
   tree_pair_solutions: Record<string, TreePairSolution>;
   pair_interpolation_ranges: Array<[number, number]>;
   pivot_edge_tracking: Array<number[] | null>;
-  /** Legacy backend field name: per-frame visual/highlight groups, not movement ownership. */
+  /** Per-frame visual/highlight groups, not movement ownership. */
   subtree_tracking: SubtreeHighlightTracking;
   msa: MsaData;
   sorted_leaves: string[];
   file_name: string;
-  split_change_events: Record<string, SplitChangeEvent[]>;
   split_change_timeline: SplitChangeTimelineEntry[];
-  [key: string]: unknown;
-}
-
-export interface PhyloMovieAppData extends Omit<PhyloMovieData, 'subtree_tracking' | 'split_change_events'> {
-  subtreeHighlightTracking: SubtreeHighlightTracking;
 }

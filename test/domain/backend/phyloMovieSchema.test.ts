@@ -41,10 +41,6 @@ function makePayload(overrides: Record<string, unknown> = {}) {
         },
         solution_to_source_map: {},
         solution_to_destination_map: {},
-        split_change_events: [{
-          split: [0, 1],
-          step_range: [0, 0],
-        }],
       },
     },
     pair_interpolation_ranges: [[0, 0]],
@@ -59,12 +55,6 @@ function makePayload(overrides: Record<string, unknown> = {}) {
       step_size: 1,
     },
     file_name: 'example.nwk',
-    split_change_events: {
-      pair_0_1: [{
-        split: [0, 1],
-        step_range: [0, 0],
-      }],
-    },
     split_change_timeline: [{
       type: 'original',
       tree_index: 0,
@@ -86,7 +76,7 @@ describe('validatePhyloMovieData', () => {
     expect(result.msa?.sequences?.['taxon-a']).toBe('ACGT');
   });
 
-  it('exposes subtree highlight tracking under the app contract after service validation', () => {
+  it('returns one explicit backend movie contract after service validation', () => {
     const result = phyloData.validate(makePayload({
       subtree_tracking: [[[0]]],
       pipeline_info: { model_used: 'iqtree' },
@@ -94,8 +84,7 @@ describe('validatePhyloMovieData', () => {
       tree_count: 1,
     }));
 
-    expect(result.subtreeHighlightTracking).toEqual([[[0]]]);
-    expect(result).not.toHaveProperty('subtree_tracking');
+    expect(result.subtree_tracking).toEqual([[[0]]]);
     expect(result).not.toHaveProperty('split_change_events');
     expect(result).not.toHaveProperty('pipeline_info');
     expect(result).not.toHaveProperty('warnings');
@@ -210,7 +199,6 @@ describe('validatePhyloMovieData', () => {
           },
           solution_to_source_map: {},
           solution_to_destination_map: {},
-          split_change_events: [],
         },
       },
     }))).toThrow(/jumping_subtree_solutions/);
@@ -225,7 +213,6 @@ describe('validatePhyloMovieData', () => {
           },
           solution_to_source_map: {},
           solution_to_destination_map: {},
-          split_change_events: [],
         },
       },
     }))).toThrow(/canonical backend split key/);
@@ -242,7 +229,6 @@ describe('validatePhyloMovieData', () => {
             },
           },
           solution_to_destination_map: {},
-          split_change_events: [],
         },
       },
     }))).toThrow(/canonical backend split key/);
@@ -254,7 +240,6 @@ describe('validatePhyloMovieData', () => {
         pair_0_1: {
           solution_to_source_map: {},
           solution_to_destination_map: {},
-          split_change_events: [],
           spr_move_events: [{
             pivot_edge: [0, 1],
             driver_subtree: [0],
@@ -283,10 +268,6 @@ describe('validatePhyloMovieData', () => {
           },
           solution_to_source_map: {},
           solution_to_destination_map: {},
-          split_change_events: [{
-            split: [0, 1],
-            step_range: [0, 0],
-          }],
           spr_move_events: [{
             pivot_edge: [0, 1],
             driver_subtree: [0],
@@ -330,7 +311,6 @@ describe('validatePhyloMovieData', () => {
           },
           solution_to_source_map: {},
           solution_to_destination_map: {},
-          split_change_events: [],
           spr_move_events: [{
             pivot_edge: [0, 1],
             moving_subtree: [0],
@@ -359,7 +339,6 @@ describe('validatePhyloMovieData', () => {
           },
           solution_to_source_map: {},
           solution_to_destination_map: {},
-          split_change_events: [],
           spr_move_events: [{
             pivot_edge: [0, 1],
             driver_subtree: [0],
@@ -377,23 +356,6 @@ describe('validatePhyloMovieData', () => {
         },
       },
     }))).toThrow(/spr_move_events\[0\]\.highlight_group must be an array/);
-  });
-
-  it('rejects top-level split_change_events that are not keyed by pair', () => {
-    expect(() => validatePhyloMovieData(makePayload({
-      split_change_events: [],
-    }))).toThrow(/split_change_events must be an object/);
-  });
-
-  it('rejects malformed split_change_events entries', () => {
-    expect(() => validatePhyloMovieData(makePayload({
-      split_change_events: {
-        pair_0_1: [{
-          split: [0, 1],
-          step_range: [0],
-        }],
-      },
-    }))).toThrow(/split_change_events\.pair_0_1\[0\]\.step_range must be \[number, number\]/);
   });
 
   it('validates split_change_timeline against anchor-inclusive pair ranges', () => {

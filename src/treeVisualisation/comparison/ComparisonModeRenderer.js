@@ -135,7 +135,8 @@ export class ComparisonModeRenderer {
         comparisonGeometry.leftCenter,
         comparisonGeometry.rightCenter,
         comparisonGeometry.leftSafeRadius,
-        comparisonGeometry.rightSafeRadius
+        comparisonGeometry.rightSafeRadius,
+        clampedLeftIndex
       )
       : [];
 
@@ -166,13 +167,13 @@ export class ComparisonModeRenderer {
    * @param {Object} rightTreeData - Right tree data
    * @param {number} rightIndex - Right tree index
    */
-  async renderAnimated(interpolatedData, rightTreeData, rightIndex) {
+  async renderAnimated(interpolatedData, rightTreeData, rightIndex, options = {}) {
     return measureFrameStepAsync('comparisonMode.renderAnimated', () =>
-      this._renderAnimated(interpolatedData, rightTreeData, rightIndex)
+      this._renderAnimated(interpolatedData, rightTreeData, rightIndex, options)
     );
   }
 
-  async _renderAnimated(interpolatedData, rightTreeData, rightIndex) {
+  async _renderAnimated(interpolatedData, rightTreeData, rightIndex, options = {}) {
     // Guard against null/undefined data
     if (!interpolatedData || !rightTreeData) {
       console.warn('ComparisonModeRenderer.renderAnimated: Missing data', {
@@ -238,7 +239,8 @@ export class ComparisonModeRenderer {
         comparisonGeometry.leftCenter,
         comparisonGeometry.rightCenter,
         comparisonGeometry.leftSafeRadius,
-        comparisonGeometry.rightSafeRadius
+        comparisonGeometry.rightSafeRadius,
+        options.activeTreeIndex
       )
       : [];
 
@@ -274,9 +276,11 @@ export class ComparisonModeRenderer {
    * Build connectors for comparison mode.
    * Delegated to buildSubtreeConnectors transform.
    */
-  _buildConnectors(leftPositions, rightPositions, leftCenter = [0, 0], rightCenter = [0, 0], leftRadius, rightRadius) {
+  _buildConnectors(leftPositions, rightPositions, leftCenter = [0, 0], rightCenter = [0, 0], leftRadius, rightRadius, activeTreeIndex = null) {
     const state = useAppStore.getState();
-    const currentTreeIndex = state?.currentTreeIndex ?? 0;
+    const currentTreeIndex = Number.isInteger(activeTreeIndex)
+      ? activeTreeIndex
+      : (state?.currentTreeIndex ?? 0);
     const pivotEdgeTracking = state?.pivotEdgeTracking || [];
     const pivotEdge = pivotEdgeTracking[currentTreeIndex];
     const pairKey = selectTreePairKeyAtIndex(state, currentTreeIndex);

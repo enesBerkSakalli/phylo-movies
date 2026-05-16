@@ -1,11 +1,11 @@
 import React from 'react';
 import { RecordingControls } from '../media/RecordingControls.jsx';
 import { SaveImageButton } from '../media/SaveImageButton.jsx';
-import { selectMovieData, useAppStore } from '../../state/phyloStore/store.js';
+import { selectActiveTreeListLength, useAppStore } from '../../state/phyloStore/store.js';
 
 export function CanvasCaptureControls() {
-  const movieData = useAppStore(selectMovieData);
-  const disabled = !movieData;
+  const treeListLength = useAppStore(selectActiveTreeListLength);
+  const disabled = treeListLength === 0;
 
   return (
     <div
