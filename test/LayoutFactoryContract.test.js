@@ -24,4 +24,27 @@ describe('layout factory contract', () => {
 
     expect(violations).toEqual([]);
   });
+
+  it('keeps angle input normalization at the state boundary', () => {
+    const layoutBaseSource = fs.readFileSync(
+      path.join(repoRoot, 'src/treeVisualisation/layout/LayoutBaseUtils.js'),
+      'utf8'
+    );
+    const treeLayoutSliceSource = fs.readFileSync(
+      path.join(repoRoot, 'src/state/phyloStore/slices/appearance/treeLayout.slice.js'),
+      'utf8'
+    );
+    const webglControllerSource = fs.readFileSync(
+      path.join(repoRoot, 'src/treeVisualisation/WebGLTreeAnimationController.js'),
+      'utf8'
+    );
+
+    expect(treeLayoutSliceSource).toMatch(/setLayoutAngleDegrees:\s*\(degrees\)\s*=>\s*\{/);
+    expect(treeLayoutSliceSource).toMatch(/Number\.isFinite\(degrees\)\s*\?\s*degrees\s*:\s*360/);
+    expect(treeLayoutSliceSource).toMatch(/Number\.isFinite\(degrees\)\s*\?\s*degrees\s*:\s*0/);
+    expect(webglControllerSource).not.toMatch(/layoutAngleDegrees\s*\|\|\s*360/);
+    expect(webglControllerSource).not.toMatch(/layoutRotationDegrees\s*\|\|\s*0/);
+    expect(layoutBaseSource).not.toMatch(/function\s+finiteNumber\s*\(/);
+    expect(layoutBaseSource).not.toMatch(/finiteNumber\(/);
+  });
 });

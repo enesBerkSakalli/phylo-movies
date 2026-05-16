@@ -1,4 +1,4 @@
-import { getSplitKey } from './splitMatching.js';
+import { getSplitKey } from '../../domain/tree/splits.js';
 
 /**
  * KeyGenerator - Centralized, robust key generation for D3 data binding

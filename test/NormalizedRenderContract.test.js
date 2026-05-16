@@ -1,4 +1,7 @@
 import { hierarchy } from 'd3-hierarchy';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAppStore } from '../src/state/phyloStore/store.js';
 import {
@@ -14,6 +17,8 @@ import { LabelDataBuilder } from '../src/treeVisualisation/deckgl/builders/data/
 import { ExtensionDataBuilder } from '../src/treeVisualisation/deckgl/builders/data/extensions/ExtensionDataBuilder.js';
 import { LAYER_CONFIGS } from '../src/treeVisualisation/deckgl/layers/config/layerConfigs.js';
 import { createLayoutResult } from '../src/treeVisualisation/layout/LayoutResultAdapter.js';
+
+const repoRoot = fileURLToPath(new URL('..', import.meta.url));
 
 describe('normalized render contract', () => {
   let initialState;
@@ -140,7 +145,10 @@ describe('normalized render contract', () => {
     });
 
     const layout = createLayoutResult(root, { max_radius: 1, width: 100, height: 100, margin: 0, scale: 1 });
-    const nodes = new NodeDataBuilder().convertNodes(layout.nodes);
+    const nodes = new NodeDataBuilder().convertNodes(layout.nodes, {
+      canvasWidth: layout.width,
+      canvasHeight: layout.height,
+    });
     const links = new LinkDataBuilder().convertLinks(layout.links);
     const labels = new LabelDataBuilder().convertLabels(layout.leaves, 10);
     const extensions = new ExtensionDataBuilder().convertExtensions(layout.leaves, 10);
@@ -181,5 +189,44 @@ describe('normalized render contract', () => {
     expect(labels[0]).not.toHaveProperty('leaf');
     expect(labels[0]).not.toHaveProperty('data');
     expect(extensions[0]).not.toHaveProperty('leaf');
+  });
+
+  it('keeps data builders on normalized layout arrays', () => {
+    const sourcePaths = [
+      'src/treeVisualisation/deckgl/builders/data/nodes/NodeDataBuilder.js',
+      'src/treeVisualisation/deckgl/builders/data/links/LinkDataBuilder.js',
+      'src/treeVisualisation/deckgl/builders/data/labels/LabelDataBuilder.js',
+      'src/treeVisualisation/deckgl/builders/data/extensions/ExtensionDataBuilder.js',
+      'src/treeVisualisation/deckgl/builders/geometry/nodes/NodeGeometryBuilder.js',
+    ];
+
+    for (const sourcePath of sourcePaths) {
+      const source = readFileSync(join(repoRoot, sourcePath), 'utf8');
+      expect(source).not.toMatch(/Array\.isArray\((nodes|links|leaves)\)/);
+      expect(source).not.toMatch(/const\s+layoutNodes\s*=/);
+      expect(source).not.toMatch(/\b(node|leaf|link)\?\./);
+      expect(source).not.toMatch(/nodeDotSizes\?\./);
+      expect(source).not.toMatch(/nodeDotSizes\.get\([^)]*\)\s*\|\|/);
+      expect(source).not.toMatch(/\b(name|text|targetName|angle|child_split_indices):\s*(node|leaf|link)\.[^,\n]*\|\|/);
+      expect(source).not.toMatch(/const\s+angleRad\s*=\s*leaf\.angle\s*\|\|/);
+    }
+  });
+
+  it('uses normalized layout dimensions as the node sizing source', () => {
+    const factorySource = readFileSync(
+      join(repoRoot, 'src/treeVisualisation/deckgl/DeckGLTreeLayerDataFactory.js'),
+      'utf8'
+    );
+    const nodeGeometrySource = readFileSync(
+      join(repoRoot, 'src/treeVisualisation/deckgl/builders/geometry/nodes/NodeGeometryBuilder.js'),
+      'utf8'
+    );
+
+    expect(factorySource).toMatch(/canvasWidth:\s*layout\.width/);
+    expect(factorySource).toMatch(/canvasHeight:\s*layout\.height/);
+    expect(factorySource).not.toMatch(/canvasWidth\s*=\s*null/);
+    expect(factorySource).not.toMatch(/canvasHeight\s*=\s*null/);
+    expect(nodeGeometrySource).not.toMatch(/Number\.isFinite\(canvasWidth\)/);
+    expect(nodeGeometrySource).not.toMatch(/Number\.isFinite\(canvasHeight\)/);
   });
 });

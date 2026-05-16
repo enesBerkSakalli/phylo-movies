@@ -55,6 +55,12 @@ describe('scaleUtils', () => {
       expect(result[1].value).toBe(30); // Index 2
       expect(result[1].index).toBe(2);
     });
+
+    it('requires explicit full tree indices', () => {
+      const tree = { length: 0, children: [{ length: 10 }] };
+
+      expect(() => calculateScales([tree])).toThrow('fullTreeIndices');
+    });
   });
 
   describe('getMaxScaleValue', () => {

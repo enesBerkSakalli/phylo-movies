@@ -169,7 +169,7 @@ export function calculateMaxPositionRadius(items = [], center = [0, 0]) {
   }, 0);
 }
 
-export function calculateTreeVisualRadius(layerData = {}, center = [0, 0], labelSizePx = 0) {
+export function calculateTreeVisualRadius(layerData, center = [0, 0], labelSizePx = 0) {
   const dist = (position) => {
     if (!position) return 0;
     return Math.hypot((position[0] ?? 0) - center[0], (position[1] ?? 0) - center[1]);
@@ -177,19 +177,19 @@ export function calculateTreeVisualRadius(layerData = {}, center = [0, 0], label
 
   let maxRadius = 0;
 
-  for (const node of layerData.nodes || []) {
+  for (const node of layerData.nodes) {
     maxRadius = Math.max(maxRadius, dist(node.position));
   }
 
-  for (const label of layerData.labels || []) {
+  for (const label of layerData.labels) {
     maxRadius = Math.max(maxRadius, dist(label.position));
   }
 
-  for (const extension of layerData.extensions || []) {
+  for (const extension of layerData.extensions) {
     maxRadius = Math.max(maxRadius, dist(extension.sourcePosition), dist(extension.targetPosition));
   }
 
-  if (labelSizePx > 0 && Array.isArray(layerData.labels) && layerData.labels.length > 0) {
+  if (labelSizePx > 0 && layerData.labels.length > 0) {
     let longestLabelLength = 0;
     for (const label of layerData.labels) {
       const length = (label.text ?? label.name ?? '').length;

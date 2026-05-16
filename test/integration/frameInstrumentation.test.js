@@ -51,7 +51,7 @@ describe('tree animation frame instrumentation', () => {
       _getConsistentRadii: vi.fn(() => ({ extensionRadius: 1, labelRadius: 2 })),
       dataConverter: {
         convertTreeToLayerData: vi.fn(() => ({
-          nodes: [{ id: 'right-node', position: [0, 0, 0] }],
+          nodes: [{ id: 'right-node', position: [0, 0, 0], renderPosition: [0, 0, 0.1] }],
           links: [],
           extensions: [],
           labels: []
@@ -69,7 +69,7 @@ describe('tree animation frame instrumentation', () => {
     comparisonRenderer._buildConnectors = vi.fn(() => []);
     comparisonRenderer._lastFittedIndices = { right: 0 };
     await comparisonRenderer.renderAnimated(
-      { nodes: [{ id: 'left-node', position: [0, 0, 0] }], links: [], labels: [], extensions: [] },
+      { nodes: [{ id: 'left-node', position: [0, 0, 0], renderPosition: [0, 0, 0.1] }], links: [], labels: [], extensions: [] },
       { id: 'right-tree' },
       0
     );

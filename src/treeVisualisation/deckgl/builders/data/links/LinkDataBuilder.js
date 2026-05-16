@@ -15,7 +15,7 @@ export class LinkDataBuilder {
    * @returns {Array} Array of link data objects
    */
   convertLinks(links, options = {}) {
-    return (Array.isArray(links) ? links : [])
+    return links
       .map(link => this.createLinkData(link, options))
       .filter(Boolean);
   }
@@ -25,8 +25,8 @@ export class LinkDataBuilder {
    * @returns {Object} Link data for Deck.gl
    */
   createLinkData(link, options = {}) {
-    if (!hasFiniteCoordinates(link?.source) || !hasFiniteCoordinates(link?.target)) {
-      console.warn('[LinkDataBuilder] Skipping link with invalid layout coordinates:', link?.targetSplitIndices);
+    if (!hasFiniteCoordinates(link.source) || !hasFiniteCoordinates(link.target)) {
+      console.warn('[LinkDataBuilder] Skipping link with invalid layout coordinates:', link.targetSplitIndices);
       return null;
     }
 
@@ -38,7 +38,7 @@ export class LinkDataBuilder {
     const sourceId = getNodeKey({ split_indices: link.sourceSplitIndices });
     const targetId = getNodeKey({ split_indices: link.targetSplitIndices });
     if (!linkKey || !sourceId || !targetId) {
-      console.warn('[LinkDataBuilder] Skipping link without split_indices:', link?.targetName);
+      console.warn('[LinkDataBuilder] Skipping link without split_indices:', link.targetName);
       return null;
     }
 
@@ -48,8 +48,8 @@ export class LinkDataBuilder {
       sourcePosition: link.sourcePosition,
       targetPosition: link.targetPosition,
       path: linkPath,
-      name: link.name || '',
-      targetName: link.targetName || '',
+      name: link.name,
+      targetName: link.targetName,
       isLeaf: link.isLeaf === true,
       isInternal: link.isInternal === true,
       split_indices: link.targetSplitIndices,
@@ -101,13 +101,13 @@ export class LinkDataBuilder {
   }
 
   _calculateRadialLength(link) {
-    const sourceRadius = Number(link?.source?.radius);
-    const targetRadius = Number(link?.target?.radius);
+    const sourceRadius = Number(link.source.radius);
+    const targetRadius = Number(link.target.radius);
     if (!Number.isFinite(sourceRadius) || !Number.isFinite(targetRadius)) return 0;
     return Math.max(0, targetRadius - sourceRadius);
   }
 }
 
 function hasFiniteCoordinates(node) {
-  return Number.isFinite(node?.x) && Number.isFinite(node?.y);
+  return Number.isFinite(node.x) && Number.isFinite(node.y);
 }

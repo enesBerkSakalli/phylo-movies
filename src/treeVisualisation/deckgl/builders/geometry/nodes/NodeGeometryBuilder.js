@@ -11,15 +11,11 @@ export class NodeGeometryBuilder {
    * @param {Object} options - Canvas and radius configuration
    * @returns {Map<string, number>} Map of node IDs to radius pixels
    */
-  calculateNodeDotSizes(nodes, options = {}) {
-    const layoutNodes = Array.isArray(nodes) ? nodes : [];
+  calculateNodeDotSizes(nodes, options) {
     const radiiMap = new Map();
 
-    // Extract canvas dimensions (fallbacks if not provided)
     const { canvasWidth, canvasHeight, radiusConfig = {} } = options;
-    const w = Number.isFinite(canvasWidth) ? canvasWidth : 800;
-    const h = Number.isFinite(canvasHeight) ? canvasHeight : 600;
-    const shortSide = Math.max(1, Math.min(w, h));
+    const shortSide = Math.max(1, Math.min(canvasWidth, canvasHeight));
 
     // Configuration with sensible defaults
     const config = {
@@ -42,7 +38,7 @@ export class NodeGeometryBuilder {
     const internalPx = Math.max(1, Math.round(baseLeafPx * config.ratio));
 
     // Assign fixed radii: leaves same size, internal smaller
-    layoutNodes.forEach(node => {
+    nodes.forEach(node => {
       const nodeKey = getNodeKey({ split_indices: node.split_indices });
       if (!nodeKey) return;
       const isLeaf = node.isLeaf === true;

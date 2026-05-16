@@ -45,6 +45,16 @@ describe('render data contract static guard', () => {
 
     expect(violations).toEqual([]);
   });
+
+  it('keeps layer set creation on normalized array data', () => {
+    const source = fs.readFileSync(
+      path.join(repoRoot, 'src/treeVisualisation/deckgl/layers/factory/LayerSetFactory.js'),
+      'utf8'
+    );
+
+    expect(source).not.toMatch(/const\s+toArray\s*=/);
+    expect(source).not.toMatch(/Array\.isArray/);
+  });
 });
 
 function listSourceFiles(dirs) {

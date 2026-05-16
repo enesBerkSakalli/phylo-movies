@@ -6,11 +6,6 @@ const DEFAULT_MARGIN = 40;
 const MIN_DIMENSION = 200;
 const MIN_RADIUS = 1e-6;
 
-function finiteNumber(value, fallback) {
-  const number = Number(value);
-  return Number.isFinite(number) ? number : fallback;
-}
-
 export function initializeLayoutState(layout) {
   layout.containerWidth = 0;
   layout.containerHeight = 0;
@@ -23,19 +18,19 @@ export function initializeLayoutState(layout) {
 }
 
 export function setAngleExtentDegrees(layout, degrees = 360) {
-  layout.angleExtent = (finiteNumber(degrees, 360) * Math.PI) / 180;
+  layout.angleExtent = (degrees * Math.PI) / 180;
 }
 
 export function setAngleExtentRadians(layout, radians = Math.PI * 2) {
-  layout.angleExtent = finiteNumber(radians, Math.PI * 2);
+  layout.angleExtent = radians;
 }
 
 export function setAngleOffsetDegrees(layout, degrees = 0) {
-  layout.angleOffset = (finiteNumber(degrees, 0) * Math.PI) / 180;
+  layout.angleOffset = (degrees * Math.PI) / 180;
 }
 
 export function setAngleOffsetRadians(layout, radians = 0) {
-  layout.angleOffset = finiteNumber(radians, 0);
+  layout.angleOffset = radians;
 }
 
 export function setLayoutDimensions(layout, width, height) {

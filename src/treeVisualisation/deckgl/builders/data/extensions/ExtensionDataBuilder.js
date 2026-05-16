@@ -15,7 +15,7 @@ export class ExtensionDataBuilder {
   convertExtensions(leaves, extensionRadius) {
     if (!extensionRadius) return [];
 
-    return (Array.isArray(leaves) ? leaves : [])
+    return leaves
       .map(leaf => this._createExtensionData(leaf, extensionRadius))
       .filter(Boolean);
   }
@@ -27,12 +27,12 @@ export class ExtensionDataBuilder {
   _createExtensionData(leaf, extensionRadius) {
     const angle = leaf.angle;
     if (
-      !Number.isFinite(leaf?.x) ||
-      !Number.isFinite(leaf?.y) ||
+      !Number.isFinite(leaf.x) ||
+      !Number.isFinite(leaf.y) ||
       !Number.isFinite(angle) ||
       !Number.isFinite(extensionRadius)
     ) {
-      console.warn('[ExtensionDataBuilder] Skipping extension with invalid layout coordinates:', leaf?.split_indices);
+      console.warn('[ExtensionDataBuilder] Skipping extension with invalid layout coordinates:', leaf.split_indices);
       return null;
     }
 
@@ -45,7 +45,7 @@ export class ExtensionDataBuilder {
     const splitIndices = leaf.split_indices;
     const extensionKey = getExtensionKey({ split_indices: splitIndices });
     if (!extensionKey) {
-      console.warn('[ExtensionDataBuilder] Skipping extension without split_indices:', leaf?.name);
+      console.warn('[ExtensionDataBuilder] Skipping extension without split_indices:', leaf.name);
       return null;
     }
 
@@ -54,7 +54,7 @@ export class ExtensionDataBuilder {
       sourcePosition: [sourceX, sourceY, 0],
       targetPosition: [extensionX, extensionY, 0],
       path: twoPointFloat32Path([sourceX, sourceY, 0], [extensionX, extensionY, 0]),
-      name: leaf.name || '',
+      name: leaf.name,
       isLeaf: true,
       split_indices: splitIndices,
       // Provide polar metadata so PathInterpolator can perform

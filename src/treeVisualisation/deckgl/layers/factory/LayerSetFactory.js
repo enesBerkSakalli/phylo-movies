@@ -13,15 +13,12 @@ export const DEFAULT_LAYER_SET_CONFIGS = {
   labelDots: LABEL_DOTS_CONFIG
 };
 
-const toArray = (value) => (Array.isArray(value) ? value : []);
-
 const addTreeSide = (items, treeSide) => {
-  const list = toArray(items);
-  return treeSide ? list.map((item) => ({ ...item, treeSide })) : list;
+  return treeSide ? items.map((item) => ({ ...item, treeSide })) : items;
 };
 
 const shouldCreateLayer = (data, skipEmpty) => {
-  return !skipEmpty || toArray(data).length > 0;
+  return !skipEmpty || data.length > 0;
 };
 
 const withOptionalModelMatrix = (props, modelMatrix) => {

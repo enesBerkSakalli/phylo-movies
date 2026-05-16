@@ -1,5 +1,5 @@
 import { getNodeBasedRgba } from './nodes/nodeStyles.js';
-import { isNodeInSubtree } from '../../../utils/splitMatching.js';
+import { isNodeInSubtree } from '../../../../domain/tree/splits.js';
 import { toColorManagerNode } from './nodes/nodeUtils.js';
 
 export function getExtensionColor(extension, cached, helpers) {

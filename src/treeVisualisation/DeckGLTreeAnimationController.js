@@ -13,7 +13,7 @@ import { handleDragStart, handleDrag, handleDragEnd, handleContainerResize } fro
 import { ViewportManager } from './viewport/ViewportManager.js';
 import { getClipboardLayers } from './utils/ClipboardUtils.js';
 import { createLayoutCacheKey, getRotationAlignmentExcludeTaxa } from './utils/layoutCacheKey.js';
-import { getSplitKey } from './utils/splitMatching.js';
+import { getSplitKey } from '../domain/tree/splits.js';
 
 export class DeckGLTreeAnimationController extends WebGLTreeAnimationController {
 

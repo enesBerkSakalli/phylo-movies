@@ -204,8 +204,8 @@ export class WebGLTreeAnimationController {
     const layoutCalculator = new TidyTreeLayout(transformedTreeData);
     layoutCalculator.setDimension(this.width, this.height);
     layoutCalculator.setMargin(60);
-    layoutCalculator.setAngleExtentDegrees(layoutAngleDegrees || 360);
-    layoutCalculator.setAngleOffsetDegrees(layoutRotationDegrees || 0);
+    layoutCalculator.setAngleExtentDegrees(layoutAngleDegrees);
+    layoutCalculator.setAngleOffsetDegrees(layoutRotationDegrees);
 
     const hasUniformScale = this.uniformScalingEnabled &&
       this.globalScaleList &&

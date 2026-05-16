@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import createTidyTreeLayout from '../src/treeVisualisation/layout/TidyTreeLayout.js';
 import { buildSubtreeConnectors } from '../src/treeVisualisation/deckgl/data/transforms/SubtreeConnectorBuilder.js';
-import { flattenSplitSets } from '../src/treeVisualisation/utils/splitMatching.js';
+import { flattenSplitSets } from '../src/domain/tree/splits.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -95,7 +95,7 @@ describe('Real Data Integration (test/data/ostrich_bug_response.json)', () => {
                     split_indices: sorted,
                     position: node.position,
                     isLeaf: node.isLeaf,
-                    name: node.name || "",
+                    name: node.name,
                     depth: node.depth
                 };
 

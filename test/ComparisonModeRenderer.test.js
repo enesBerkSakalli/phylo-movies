@@ -11,13 +11,13 @@ describe('ComparisonModeRenderer', () => {
 
   it('passes connector Bezier paths into branch-focused fit', async () => {
     const leftData = {
-      nodes: [{ id: 'node-0', position: [0, 0, 0], split_indices: [0], isLeaf: true, name: 'A' }],
+      nodes: [{ id: 'node-0', position: [0, 0, 0], renderPosition: [0, 0, 0.1], split_indices: [0], isLeaf: true, name: 'A' }],
       links: [],
       labels: [],
       extensions: [],
     };
     const rightData = {
-      nodes: [{ id: 'node-0', position: [100, 0, 0], split_indices: [0], isLeaf: true, name: 'A' }],
+      nodes: [{ id: 'node-0', position: [100, 0, 0], renderPosition: [100, 0, 0.1], split_indices: [0], isLeaf: true, name: 'A' }],
       links: [],
       labels: [],
       extensions: [],

@@ -54,12 +54,9 @@ export function calculateLayoutWorkerResult(treeData, options) {
 
     // 3. Convert to Layer Data
     // The data factory is purely mathematical, it generates JS Arrays/TypedArrays
-    // Pass width/height to data factory so it can calculate node sizes
     const layerData = dataFactory.convertTreeToLayerData(layoutResult, {
         extensionRadius,
         labelRadius,
-        canvasWidth: options.width,
-        canvasHeight: options.height,
         treeIndex: options.treeIndex,
         treeSide: options.treeSide,
         renderMode: options.renderMode,

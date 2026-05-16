@@ -4,7 +4,7 @@ import {
   parseSubtreeTrackingEntry,
   collectUniqueSubtrees,
   toSubtreeKey
-} from '../../src/treeVisualisation/utils/splitMatching.js';
+} from '../../src/domain/tree/splits.js';
 import { getSourceDestinationEdgesAtIndex } from '../../src/state/phyloStore/internal/changeTracking.helpers.js';
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);

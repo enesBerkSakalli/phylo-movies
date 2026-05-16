@@ -1,4 +1,4 @@
-import { getSplitIndices } from '../utils/splitMatching.js';
+import { getSplitIndices } from '../../domain/tree/splits.js';
 
 /**
  * Projections.js

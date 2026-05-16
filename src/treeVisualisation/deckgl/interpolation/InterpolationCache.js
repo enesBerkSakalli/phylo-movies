@@ -144,8 +144,6 @@ export class InterpolationCache {
       {
         extensionRadius,
         labelRadius,
-        canvasWidth: layout.width,
-        canvasHeight: layout.height,
         treeIndex,
         treeSide: 'left',
         renderMode: 'animation',
