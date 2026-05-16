@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { TreeInterpolator } from '../src/treeVisualisation/deckgl/interpolation/TreeInterpolator.js';
 
 describe('TreeInterpolator label radius smoothing', () => {
@@ -177,7 +177,33 @@ describe('TreeInterpolator label radius smoothing', () => {
     const normalizedAngle = normalizeAngle(result.labels[0].angle);
     expect(Math.abs(normalizedAngle - Math.PI / 2)).toBeGreaterThan(0.5);
   });
+
+  it('reuses element lookup maps across frames for the same layout data', () => {
+    const interpolator = new TreeInterpolator();
+    const createMap = vi.spyOn(interpolator.elementMatcher, '_createElementMap');
+    const fromData = treeData('from', 0);
+    const toData = treeData('to', Math.PI / 4);
+
+    try {
+      interpolator.interpolateTreeData(fromData, toData, 0.25);
+      interpolator.interpolateTreeData(fromData, toData, 0.5);
+
+      expect(createMap).toHaveBeenCalledTimes(8);
+    } finally {
+      createMap.mockRestore();
+    }
+  });
 });
+
+function treeData(prefix, angle) {
+  return {
+    max_radius: 40,
+    nodes: [node(`${prefix}:node`, 10, angle)],
+    links: [link(`${prefix}:link`, 5, 10, angle, angle)],
+    labels: [label(`${prefix}:label`, 12, angle)],
+    extensions: [extension(`${prefix}:extension`, 10, 12, angle)],
+  };
+}
 
 function extension(id, sourceRadius, targetRadius, angle) {
   const sourcePosition = position(sourceRadius, angle);
