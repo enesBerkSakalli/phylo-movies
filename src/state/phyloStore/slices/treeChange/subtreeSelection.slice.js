@@ -20,7 +20,7 @@ export const createSubtreeSelectionSlice = (set, get) => ({
   getCurrentPivotEdge: (indexOverride = null) => {
     const { currentTreeIndex, pivotEdgeTracking } = get();
     const index = indexOverride ?? currentTreeIndex;
-    return pivotEdgeTracking?.[index] || [];
+    return pivotEdgeTracking[index] || [];
   },
 
   getMarkedSubtreeData: (indexOverride = null) => {

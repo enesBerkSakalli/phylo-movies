@@ -1,1 +1,1 @@
-export const selectSetManuallyMarkedNodes = (state = {}) => state?.setManuallyMarkedNodes;
+export const selectSetManuallyMarkedNodes = (state) => state.setManuallyMarkedNodes;

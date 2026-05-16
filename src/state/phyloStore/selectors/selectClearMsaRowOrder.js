@@ -1,1 +1,1 @@
-export const selectClearMsaRowOrder = (state = {}) => state?.clearMsaRowOrder;
+export const selectClearMsaRowOrder = (state) => state.clearMsaRowOrder;

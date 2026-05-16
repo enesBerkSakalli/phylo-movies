@@ -1,1 +1,1 @@
-export const selectMarkedSubtreeOpacity = (state = {}) => state?.markedSubtreeOpacity;
+export const selectMarkedSubtreeOpacity = (state) => state.markedSubtreeOpacity;

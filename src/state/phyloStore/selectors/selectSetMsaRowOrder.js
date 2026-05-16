@@ -1,1 +1,1 @@
-export const selectSetMsaRowOrder = (state = {}) => state?.setMsaRowOrder;
+export const selectSetMsaRowOrder = (state) => state.setMsaRowOrder;

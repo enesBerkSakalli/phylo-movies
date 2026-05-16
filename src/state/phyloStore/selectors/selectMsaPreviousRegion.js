@@ -1,1 +1,1 @@
-export const selectMsaPreviousRegion = (state = {}) => state?.msaPreviousRegion;
+export const selectMsaPreviousRegion = (state) => state.msaPreviousRegion;

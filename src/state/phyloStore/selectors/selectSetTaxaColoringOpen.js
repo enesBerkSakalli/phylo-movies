@@ -1,1 +1,1 @@
-export const selectSetTaxaColoringOpen = (state = {}) => state?.setTaxaColoringOpen;
+export const selectSetTaxaColoringOpen = (state) => state.setTaxaColoringOpen;

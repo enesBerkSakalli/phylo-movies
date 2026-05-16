@@ -64,8 +64,8 @@ export function ColoringPanel() {
 
   const rerenderControllers = useCallback(async () => {
     try {
-      for (const controller of treeControllers ?? []) {
-        await controller?.renderAllElements?.();
+      for (const controller of treeControllers) {
+        await controller.renderAllElements();
       }
     } catch { }
   }, [treeControllers]);

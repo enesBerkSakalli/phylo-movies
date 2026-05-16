@@ -1,1 +1,1 @@
-export const selectMonophyleticColoringEnabled = (state = {}) => !!state?.monophyleticColoringEnabled;
+export const selectMonophyleticColoringEnabled = (state) => !!state.monophyleticColoringEnabled;

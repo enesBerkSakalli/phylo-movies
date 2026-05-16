@@ -1,1 +1,1 @@
-export const selectReset = (state = {}) => state?.reset;
+export const selectReset = (state) => state.reset;

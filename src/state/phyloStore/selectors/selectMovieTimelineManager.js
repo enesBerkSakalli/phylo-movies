@@ -1,1 +1,1 @@
-export const selectMovieTimelineManager = (state = {}) => state?.movieTimelineManager ?? null;
+export const selectMovieTimelineManager = (state) => state.movieTimelineManager;

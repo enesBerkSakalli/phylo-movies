@@ -1,1 +1,1 @@
-export const selectUpdateTaxaColors = (state = {}) => state?.updateTaxaColors;
+export const selectUpdateTaxaColors = (state) => state.updateTaxaColors;

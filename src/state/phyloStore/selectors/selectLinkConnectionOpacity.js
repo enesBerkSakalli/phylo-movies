@@ -1,1 +1,1 @@
-export const selectLinkConnectionOpacity = (state = {}) => state?.linkConnectionOpacity;
+export const selectLinkConnectionOpacity = (state) => state.linkConnectionOpacity;

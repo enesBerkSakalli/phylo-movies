@@ -1,1 +1,1 @@
-export const selectTransitionResolver = (state = {}) => state?.transitionResolver ?? null;
+export const selectTransitionResolver = (state) => state.transitionResolver;

@@ -1,1 +1,1 @@
-export const selectSetDimmingEnabled = (state = {}) => state?.setDimmingEnabled;
+export const selectSetDimmingEnabled = (state) => state.setDimmingEnabled;

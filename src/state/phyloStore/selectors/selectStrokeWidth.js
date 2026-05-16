@@ -1,1 +1,1 @@
-export const selectStrokeWidth = (state = {}) => state?.strokeWidth;
+export const selectStrokeWidth = (state) => state.strokeWidth;

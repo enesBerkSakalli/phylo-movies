@@ -9,11 +9,11 @@ export const createTreeControllersRuntimeSlice = (set, get) => ({
   // ==========================================================================
   setTreeControllers: (controllers) => {
     const { treeControllers: currentControllers } = get();
-    const nextControllers = Array.isArray(controllers) ? controllers : [];
+    const nextControllers = controllers;
     const nextSet = new Set(nextControllers);
 
     currentControllers.forEach((controller) => {
-      if (!nextSet.has(controller) && typeof controller?.destroy === 'function') {
+      if (!nextSet.has(controller)) {
         controller.destroy();
       }
     });
@@ -28,17 +28,17 @@ export const createTreeControllersRuntimeSlice = (set, get) => ({
     const { playing } = get();
     if (playing) return;
     const controllers = get().treeControllers;
-    controllers.forEach(c => c?.startAnimation?.());
+    controllers.forEach((controller) => controller.startAnimation());
   },
 
   resetInterpolationCaches: () => {
     const { treeControllers } = get();
-    treeControllers.forEach(c => c?.resetInterpolationCaches?.());
+    treeControllers.forEach((controller) => controller.resetInterpolationCaches());
   },
 
   stopAnimationPlayback: () => {
     const { treeControllers, stop } = get();
-    treeControllers.forEach(c => c?.stopAnimation?.());
+    treeControllers.forEach((controller) => controller.stopAnimation());
     stop();
   },
 
@@ -49,9 +49,7 @@ export const createTreeControllersRuntimeSlice = (set, get) => ({
     const { treeControllers, movieTimelineManager } = get();
 
     treeControllers.forEach((controller) => {
-      if (typeof controller?.destroy === 'function') {
-        controller.destroy();
-      }
+      controller.destroy();
     });
 
     movieTimelineManager?.destroy();

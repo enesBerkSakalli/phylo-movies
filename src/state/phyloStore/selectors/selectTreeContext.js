@@ -2,7 +2,7 @@ import { selectActiveTreeList } from './selectActiveTreeList.js';
 import { selectFullTreeIndices } from './selectFullTreeIndices.js';
 import { selectTreeMetadataAtIndex } from './selectTreeMetadataAtIndex.js';
 
-export const selectTreeContext = (state = {}, index) => {
+export const selectTreeContext = (state, index) => {
   const treeIndex = Number(index);
   if (!Number.isInteger(treeIndex) || treeIndex < 0) return null;
 

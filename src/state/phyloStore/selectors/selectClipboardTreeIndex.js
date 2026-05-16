@@ -1,1 +1,1 @@
-export const selectClipboardTreeIndex = (state = {}) => state?.clipboardTreeIndex;
+export const selectClipboardTreeIndex = (state) => state.clipboardTreeIndex;

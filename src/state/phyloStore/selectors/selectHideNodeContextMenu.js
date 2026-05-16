@@ -1,1 +1,1 @@
-export const selectHideNodeContextMenu = (state = {}) => state?.hideNodeContextMenu;
+export const selectHideNodeContextMenu = (state) => state.hideNodeContextMenu;

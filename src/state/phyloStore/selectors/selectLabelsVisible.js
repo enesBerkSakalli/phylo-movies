@@ -1,1 +1,1 @@
-export const selectLabelsVisible = (state = {}) => state?.labelsVisible !== false;
+export const selectLabelsVisible = (state) => state.labelsVisible;

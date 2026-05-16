@@ -1,1 +1,1 @@
-export const selectMsaStepSize = (state = {}) => state?.msaStepSize;
+export const selectMsaStepSize = (state) => state.msaStepSize;

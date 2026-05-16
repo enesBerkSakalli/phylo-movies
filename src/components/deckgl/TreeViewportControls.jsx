@@ -9,19 +9,23 @@ export function TreeViewportControls() {
   const disabled = !controller;
 
   const fitTree = useCallback(() => {
-    controller?.fitTreeToViewport?.();
+    if (!controller) return;
+    controller.fitTreeToViewport();
   }, [controller]);
 
   const zoomOut = useCallback(() => {
-    controller?.zoomOut?.();
+    if (!controller) return;
+    controller.zoomOut();
   }, [controller]);
 
   const zoomIn = useCallback(() => {
-    controller?.zoomIn?.();
+    if (!controller) return;
+    controller.zoomIn();
   }, [controller]);
 
   const resetView = useCallback(() => {
-    controller?.resetTreeView?.();
+    if (!controller) return;
+    controller.resetTreeView();
   }, [controller]);
 
   return (

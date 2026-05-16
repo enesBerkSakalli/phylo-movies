@@ -1,1 +1,1 @@
-export const selectViewsConnected = (state = {}) => !!state?.viewsConnected;
+export const selectViewsConnected = (state) => !!state.viewsConnected;

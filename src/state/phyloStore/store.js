@@ -55,6 +55,6 @@ useAppStore.subscribe((state, prevState) => {
     if (state.movieTimelineManager?.scrubController?.isScrubbing) {
       return;
     }
-    state.updateColorManagerForCurrentIndex?.();
+    state.updateColorManagerForCurrentIndex();
   }
 });

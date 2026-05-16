@@ -1,1 +1,1 @@
-export const selectToggleCameraMode = (state = {}) => state?.toggleCameraMode;
+export const selectToggleCameraMode = (state) => state.toggleCameraMode;

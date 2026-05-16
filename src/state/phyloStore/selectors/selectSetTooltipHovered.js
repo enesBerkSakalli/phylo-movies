@@ -1,1 +1,1 @@
-export const selectSetTooltipHovered = (state = {}) => state?.setTooltipHovered;
+export const selectSetTooltipHovered = (state) => state.setTooltipHovered;

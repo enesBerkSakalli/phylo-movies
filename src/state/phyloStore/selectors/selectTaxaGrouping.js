@@ -1,1 +1,1 @@
-export const selectTaxaGrouping = (state = {}) => state?.taxaGrouping ?? null;
+export const selectTaxaGrouping = (state) => state.taxaGrouping;

@@ -1,1 +1,1 @@
-export const selectZoomOutTimeline = (state = {}) => state?.zoomOutTimeline;
+export const selectZoomOutTimeline = (state) => state.zoomOutTimeline;

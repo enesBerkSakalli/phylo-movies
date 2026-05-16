@@ -1,1 +1,1 @@
-export const selectSetFontSize = (state = {}) => state?.setFontSize;
+export const selectSetFontSize = (state) => state.setFontSize;

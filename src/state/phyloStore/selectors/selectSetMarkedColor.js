@@ -1,1 +1,1 @@
-export const selectSetMarkedColor = (state = {}) => state?.setMarkedColor;
+export const selectSetMarkedColor = (state) => state.setMarkedColor;

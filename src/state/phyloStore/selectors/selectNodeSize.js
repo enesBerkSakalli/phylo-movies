@@ -1,1 +1,1 @@
-export const selectNodeSize = (state = {}) => state?.nodeSize;
+export const selectNodeSize = (state) => state.nodeSize;

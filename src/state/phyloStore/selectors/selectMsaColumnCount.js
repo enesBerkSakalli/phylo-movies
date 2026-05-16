@@ -1,1 +1,1 @@
-export const selectMsaColumnCount = (state = {}) => state?.msaColumnCount;
+export const selectMsaColumnCount = (state) => state.msaColumnCount;

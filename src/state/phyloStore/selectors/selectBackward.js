@@ -1,1 +1,1 @@
-export const selectBackward = (state = {}) => state?.backward;
+export const selectBackward = (state) => state.backward;

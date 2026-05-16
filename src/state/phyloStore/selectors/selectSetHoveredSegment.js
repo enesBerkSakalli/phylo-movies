@@ -1,1 +1,1 @@
-export const selectSetHoveredSegment = (state = {}) => state?.setHoveredSegment;
+export const selectSetHoveredSegment = (state) => state.setHoveredSegment;

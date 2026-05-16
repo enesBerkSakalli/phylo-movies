@@ -1,1 +1,1 @@
-export const selectClearMsaRegion = (state = {}) => state?.clearMsaRegion;
+export const selectClearMsaRegion = (state) => state.clearMsaRegion;

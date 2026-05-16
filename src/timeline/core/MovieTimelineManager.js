@@ -104,7 +104,7 @@ export class MovieTimelineManager {
 
     _selectScrubberController() {
         const { treeControllers } = useAppStore.getState();
-        return treeControllers?.[0] || null;
+        return treeControllers[0] || null;
     }
 
     // ==========================================================================

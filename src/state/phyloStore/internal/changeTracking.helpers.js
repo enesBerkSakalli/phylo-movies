@@ -5,7 +5,7 @@ import {
   parseSubtreeTrackingEntry,
   collectUniqueSubtrees,
   collectUniqueEdges
-} from '../../../treeVisualisation/utils/splitMatching.js';
+} from '../../../domain/tree/splits.js';
 import { findPreviousAnchorSequenceIndex, findNextAnchorSequenceIndex } from '../../../domain/indexing/IndexMapping.js';
 import { selectFullTreeIndices, selectTreePairKeyAtIndex } from '../selectors/treeSelectors.js';
 
@@ -43,11 +43,9 @@ export function calculateChangePreviews(state) {
 }
 
 export function renderTreeControllers(state) {
-  if (state?.playing) return;
+  if (state.playing) return;
 
-  const controllers = state?.treeControllers;
-  if (!Array.isArray(controllers)) return;
-  controllers.forEach((c) => c?.renderAllElements?.());
+  state.treeControllers.forEach((controller) => controller.renderAllElements());
 }
 
 export function toManualMarkedSets(nodes) {

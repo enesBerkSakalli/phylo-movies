@@ -25,9 +25,8 @@ export function MSAControls() {
   const clearMsaRowOrder = useAppStore(selectClearMsaRowOrder);
 
   const handleMatchTreeOrder = () => {
-    const controller = Array.isArray(treeControllers) ? treeControllers[0] : null;
-    if (!controller?.calculateLayout) return;
-
+    const controller = treeControllers[0];
+    if (!controller) return;
     if (!currentTree) return;
 
     const layout = controller.calculateLayout(currentTree, { treeIndex: currentTreeIndex });

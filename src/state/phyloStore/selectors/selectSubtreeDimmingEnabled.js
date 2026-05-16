@@ -1,1 +1,1 @@
-export const selectSubtreeDimmingEnabled = (state = {}) => !!state?.subtreeDimmingEnabled;
+export const selectSubtreeDimmingEnabled = (state) => !!state.subtreeDimmingEnabled;

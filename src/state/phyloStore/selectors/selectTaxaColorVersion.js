@@ -1,1 +1,1 @@
-export const selectTaxaColorVersion = (state = {}) => state?.taxaColorVersion;
+export const selectTaxaColorVersion = (state) => state.taxaColorVersion;

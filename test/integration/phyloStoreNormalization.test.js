@@ -1,7 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { readFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import * as phyloStoreModule from '../../src/state/phyloStore/store.js';
 
 const { useAppStore } = phyloStoreModule;
+const repoRoot = fileURLToPath(new URL('../..', import.meta.url));
 
 const tree0 = { name: '', length: 0, split_indices: [0, 1], children: [] };
 const tree1 = { name: '', length: 0, split_indices: [0, 1], children: [] };
@@ -166,5 +170,187 @@ describe('phylo store dataset normalization', () => {
     expect(closedState.contextMenuOpen).toBe(false);
     expect(closedState.contextMenuNode).toBeNull();
     expect(Object.prototype.hasOwnProperty.call(closedState, legacyTreeDataKey)).toBe(false);
+  });
+
+  it('keeps selectors on the Zustand state contract without empty object shims', () => {
+    const selectorsDir = join(repoRoot, 'src/state/phyloStore/selectors');
+    const violations = [];
+
+    for (const entry of readdirSync(selectorsDir, { withFileTypes: true })) {
+      if (!entry.isFile() || !entry.name.endsWith('.js')) continue;
+      const source = readFileSync(join(selectorsDir, entry.name), 'utf8');
+      if (/\(\s*state\s*=\s*\{\s*\}/.test(source)) {
+        violations.push(`${entry.name}: default empty state parameter`);
+      }
+      if (/state\?\./.test(source)) {
+        violations.push(`${entry.name}: optional state access`);
+      }
+      if (/Array\.isArray\(state\./.test(source)) {
+        violations.push(`${entry.name}: defensive store-array check`);
+      }
+    }
+
+    expect(violations).toEqual([]);
+  });
+
+  it('keeps initialized selector fields free of duplicate fallback defaults', () => {
+    const selectorFallbackChecks = [
+      ['selectContextMenuNode.js', '?? null'],
+      ['selectContextMenuPosition.js', '??'],
+      ['selectCurrentTree.js', 'typeof currentTreeIndex'],
+      ['selectFileName.js', 'typeof state.fileName'],
+      ['selectLabelsVisible.js', '!== false'],
+      ['selectMovieData.js', '?? null'],
+      ['selectMovieTimelineManager.js', '?? null'],
+      ['selectMsaWindow.js', '?? null'],
+      ['selectPairSolutions.js', '?? {}'],
+      ['selectPlayhead.js', '??'],
+      ['selectTaxaColoringWindow.js', '?? null'],
+      ['selectTaxaGrouping.js', '?? null'],
+      ['selectTransitionResolver.js', '?? null'],
+    ];
+
+    const violations = selectorFallbackChecks.flatMap(([fileName, legacyPattern]) => {
+      const source = readFileSync(join(repoRoot, 'src/state/phyloStore/selectors', fileName), 'utf8');
+      return source.includes(legacyPattern) ? [`${fileName}: ${legacyPattern}`] : [];
+    });
+
+    expect(violations).toEqual([]);
+  });
+
+  it('keeps store-internal calls on the composed Zustand store contract', () => {
+    const sourceChecks = [
+      {
+        file: 'src/state/phyloStore/store.js',
+        patterns: ['updateColorManagerForCurrentIndex?.('],
+      },
+      {
+        file: 'src/state/phyloStore/slices/dataset/datasetLifecycle.slice.js',
+        patterns: [
+          'resetControllers?.(',
+          'resetPlayback?.(',
+          'resetMsaData?.(',
+          'resetColors?.(',
+          'resetComparison?.(',
+          'resetInterpolationCaches?.(',
+          'setMsaData?.(',
+          'initializeColors?.(',
+        ],
+      },
+      {
+        file: 'src/state/phyloStore/slices/appearance/treeLayout.slice.js',
+        patterns: [
+          'resetInterpolationCaches?.(',
+          'state.treeControllers || []',
+          'controller?.renderAllElements?.(',
+        ],
+      },
+      {
+        file: 'src/state/phyloStore/slices/interaction/treeClipboard.slice.js',
+        patterns: ['treeList?.length'],
+      },
+      {
+        file: 'src/state/phyloStore/slices/treeChange/subtreeSelection.slice.js',
+        patterns: ['pivotEdgeTracking?.[index]'],
+      },
+      {
+        file: 'src/state/phyloStore/internal/changeTracking.helpers.js',
+        patterns: [
+          'state?.playing',
+          'state?.treeControllers',
+          'Array.isArray(controllers)',
+          'c?.renderAllElements?.(',
+        ],
+      },
+      {
+        file: 'src/state/phyloStore/slices/runtime/treeControllersRuntime.slice.js',
+        patterns: [
+          'Array.isArray(controllers)',
+          'controller?.destroy',
+          'c?.startAnimation?.(',
+          'c?.resetInterpolationCaches?.(',
+          'c?.stopAnimation?.(',
+          "typeof controller?.destroy === 'function'",
+        ],
+      },
+    ];
+
+    const violations = sourceChecks.flatMap(({ file, patterns }) => {
+      const source = readFileSync(join(repoRoot, file), 'utf8');
+      return patterns
+        .filter((pattern) => source.includes(pattern))
+        .map((pattern) => `${file}: ${pattern}`);
+    });
+
+    expect(violations).toEqual([]);
+  });
+
+  it('keeps controller consumers on the composed controller-array contract', () => {
+    const sourceChecks = [
+      {
+        file: 'src/hooks/useTreeController.js',
+        patterns: [
+          'Array.isArray(state.treeControllers)',
+          'state.treeControllers?.[0]',
+          'state.treeControllers?.length',
+          'controller?.resetInterpolationCaches?.(',
+          'controller?.initializeUniformScaling?.(',
+        ],
+      },
+      {
+        file: 'src/components/msa/MSAControls.jsx',
+        patterns: ['Array.isArray(treeControllers)', 'controller?.calculateLayout'],
+      },
+      {
+        file: 'src/services/media/canvasRecorder.js',
+        patterns: ['Array.isArray(treeControllers)'],
+      },
+      {
+        file: 'src/components/media/SaveImageButton.jsx',
+        patterns: ['!treeControllers ||'],
+      },
+      {
+        file: 'src/treeVisualisation/systems/TreeColorManager.js',
+        patterns: ['store.treeControllers || []', 'controller?.renderAllElements'],
+      },
+      {
+        file: 'src/components/appearance/Appearance.jsx',
+        patterns: ['c?.setCameraMode?.(', 'controller?.renderAllElements?.('],
+      },
+      {
+        file: 'src/components/appearance/color/ColoringPanel.jsx',
+        patterns: ['treeControllers ?? []', 'controller?.renderAllElements?.('],
+      },
+      {
+        file: 'src/components/appearance/controls/GeometryDimensions/GeometryDimensions.jsx',
+        patterns: ['controller?.renderAllElements?.('],
+      },
+      {
+        file: 'src/components/appearance/controls/VisualStyle/VisualStyle.jsx',
+        patterns: ['controller?.renderAllElements?.('],
+      },
+      {
+        file: 'src/components/deckgl/TreeViewportControls.jsx',
+        patterns: [
+          'controller?.fitTreeToViewport?.(',
+          'controller?.zoomOut?.(',
+          'controller?.zoomIn?.(',
+          'controller?.resetTreeView?.(',
+        ],
+      },
+      {
+        file: 'src/timeline/core/MovieTimelineManager.js',
+        patterns: ['treeControllers?.[0]'],
+      },
+    ];
+
+    const violations = sourceChecks.flatMap(({ file, patterns }) => {
+      const source = readFileSync(join(repoRoot, file), 'utf8');
+      return patterns
+        .filter((pattern) => source.includes(pattern))
+        .map((pattern) => `${file}: ${pattern}`);
+    });
+
+    expect(violations).toEqual([]);
   });
 });

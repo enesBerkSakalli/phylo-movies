@@ -1,1 +1,1 @@
-export const selectPivotEdgeDashingEnabled = (state = {}) => !!state?.pivotEdgeDashingEnabled;
+export const selectPivotEdgeDashingEnabled = (state) => !!state.pivotEdgeDashingEnabled;
