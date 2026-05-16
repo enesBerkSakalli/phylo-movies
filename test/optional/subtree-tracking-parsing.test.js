@@ -111,8 +111,7 @@ describe('Tree Visualisation - Subtree Tracking & Parsing', () => {
           // Setup:
           // Active Edge: [1, 2]
           // Subtree: [[1, 2]] (The subtree currently moving)
-          // Source Solution maps [1, 2] -> edge [1, 2, 5] (example)
-          // Dest Solution maps [1, 2] -> edge [1, 2, 6]
+          // Attachment edges map [1, 2] -> source/destination edges.
           
           const index = 0;
           const activeEdge = [1, 2];
@@ -125,16 +124,13 @@ describe('Tree Visualisation - Subtree Tracking & Parsing', () => {
               treeMetadata: [ { tree_pair_key: pairKey } ],
               pairSolutions: {
                   [pairKey]: {
-                      // Map active activeEdge to a Subtree Map
-                      solution_to_source_map: {
+                      // Map active activeEdge to attachment edges.
+                      attachment_edges_by_split: {
                           "[1, 2]": {
-                              "[1, 2]": [1, 2, 5] // Subtree -> Source Edge
-                          }
-                      },
-                      // Map active activeEdge to a Subtree Map
-                      solution_to_destination_map: {
-                          "[1, 2]": {
-                              "[1, 2]": [1, 2, 6] // Subtree -> Dest Edge
+                              "[1, 2]": {
+                                  source: [1, 2, 5],
+                                  destination: [1, 2, 6]
+                              }
                           }
                       }
                   }
@@ -167,16 +163,16 @@ describe('Tree Visualisation - Subtree Tracking & Parsing', () => {
             treeMetadata: [{ tree_pair_key: pairKey }],
             pairSolutions: {
                 [pairKey]: {
-                    solution_to_source_map: {
+                    attachment_edges_by_split: {
                         "[1, 2]": {
-                            "[1]": [1, 5],
-                            "[2]": [2, 6]
-                        }
-                    },
-                    solution_to_destination_map: {
-                        "[1, 2]": {
-                            "[1]": [1, 7],
-                            "[2]": [2, 8]
+                            "[1]": {
+                                source: [1, 5],
+                                destination: [1, 7]
+                            },
+                            "[2]": {
+                                source: [2, 6],
+                                destination: [2, 8]
+                            }
                         }
                     }
                 }

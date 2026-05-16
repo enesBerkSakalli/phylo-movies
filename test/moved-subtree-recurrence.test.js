@@ -98,10 +98,10 @@ describe('SPR moved subtree recurrences', () => {
       expect(result[0].count).toBe(1);
     });
 
-    it('should not infer recurrences from jumping_subtree_solutions without spr_move_events', () => {
+    it('should not infer recurrences from affected_subtrees_by_split without spr_move_events', () => {
       const mockPairSolutions = {
         'pair_0_1': {
-          jumping_subtree_solutions: {
+          affected_subtrees_by_split: {
             '[10, 11, 12, 13]': [
               [[13]]
             ]

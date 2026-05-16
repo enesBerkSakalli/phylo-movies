@@ -268,7 +268,7 @@ const buildOptions = (overrides = {}) => {
   return {
     leftPositions,
     rightPositions,
-    latticeSolutions: { '[99]': [[[10, 11], [12, 13]]] },
+    affectedSubtreesBySplit: { '[99]': [[[10, 11], [12, 13]]] },
     pivotEdge: [99],
     colorManager: makeColorManager(),
     subtreeTracking: [[[10, 11]]],
@@ -938,7 +938,7 @@ describe('SubtreeConnectorBuilder', function () {
 
   it('builds connectors when positions are Maps', function () {
     const connectors = buildSubtreeConnectors(buildOptions({
-      latticeSolutions: { '[99]': [[10]] },
+      affectedSubtreesBySplit: { '[99]': [[10]] },
       subtreeTracking: [[[10]]],
     }));
 
@@ -960,18 +960,18 @@ describe('SubtreeConnectorBuilder', function () {
     expect(connectors).toEqual([]);
   });
 
-  it('returns no connectors when the active pivot edge has no lattice solution', function () {
+  it('returns no connectors when the active pivot edge has no affected-subtree entry', function () {
     const connectors = buildSubtreeConnectors(buildOptions({
-      latticeSolutions: { '[88]': [[10, 11]] },
+      affectedSubtreesBySplit: { '[88]': [[10, 11]] },
       pivotEdge: [99],
     }));
 
     expect(connectors).toEqual([]);
   });
 
-  it('canonicalizes pivot splits before backend lattice lookup', function () {
+  it('canonicalizes pivot splits before affected-subtree lookup', function () {
     const connectors = buildSubtreeConnectors(buildOptions({
-      latticeSolutions: { '[10, 11]': [[10]] },
+      affectedSubtreesBySplit: { '[10, 11]': [[10]] },
       pivotEdge: [11, 10],
       subtreeTracking: [[[10]]],
     }));
@@ -981,9 +981,9 @@ describe('SubtreeConnectorBuilder', function () {
     expect(connectors[0].isCurrentlyMoving).toBe(true);
   });
 
-  it('builds all lattice connectors while only the current moved subtree is active', function () {
+  it('builds all affected-subtree connectors while only the current moved subtree is active', function () {
     const connectors = buildSubtreeConnectors(buildOptions({
-      latticeSolutions: { '[99]': [[[10, 11], [12, 13]]] },
+      affectedSubtreesBySplit: { '[99]': [[[10, 11], [12, 13]]] },
       subtreeTracking: [[[10, 11]]],
     }));
 
@@ -999,9 +999,9 @@ describe('SubtreeConnectorBuilder', function () {
     expect(passive.every((connector) => connector.width === 1.5)).toBe(true);
   });
 
-  it('uses link opacity for passive lattice connectors', function () {
+  it('uses link opacity for passive affected-subtree connectors', function () {
     const connectors = buildSubtreeConnectors(buildOptions({
-      latticeSolutions: { '[99]': [[10]] },
+      affectedSubtreesBySplit: { '[99]': [[10]] },
       subtreeTracking: [[]],
       linkConnectionOpacity: 0.25,
     }));
@@ -1016,7 +1016,7 @@ describe('SubtreeConnectorBuilder', function () {
     const getNodeColor = vi.fn(() => '#ff0000');
 
     const connectors = buildSubtreeConnectors(buildOptions({
-      latticeSolutions: { '[99]': [[10]] },
+      affectedSubtreesBySplit: { '[99]': [[10]] },
       subtreeTracking: [[[10]]],
       colorManager: makeColorManager({ getNodeColor }),
       markedSubtreesEnabled: false,

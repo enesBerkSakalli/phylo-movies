@@ -193,7 +193,7 @@ function buildInspectorDetails({
   if (!segment) return null;
 
   const getLeafNames = (indices) => getLeafNamesByIndices(indices, leafNamesByIndex);
-  const subtreeGroups = extractMovingSubtreeGroups(segment.jumpingSubtrees, getLeafNames);
+  const subtreeGroups = extractMovingSubtreeGroups(segment.affectedSubtrees, getLeafNames);
   const pair = parsePairKey(segment.treePairKey);
   const sourceGlobalIndex = resolveSourceGlobalIndex(segment);
   const scaleValue = getScaleValue(scaleList, sourceGlobalIndex);

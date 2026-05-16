@@ -284,8 +284,8 @@ export class ComparisonModeRenderer {
     const pivotEdgeTracking = state?.pivotEdgeTracking || [];
     const pivotEdge = pivotEdgeTracking[currentTreeIndex];
     const pairKey = selectTreePairKeyAtIndex(state, currentTreeIndex);
-    const latticeSolutions = pairKey
-      ? state?.pairSolutions?.[pairKey]?.jumping_subtree_solutions || {}
+    const affectedSubtreesBySplit = pairKey
+      ? state?.pairSolutions?.[pairKey]?.affected_subtrees_by_split || {}
       : {};
 
     if (!Array.isArray(pivotEdge) || pivotEdge.length === 0) {
@@ -295,7 +295,7 @@ export class ComparisonModeRenderer {
     return buildSubtreeConnectors({
       leftPositions,
       rightPositions,
-      latticeSolutions,
+      affectedSubtreesBySplit,
       pivotEdge,
       colorManager: state?.colorManager,
       subtreeTracking: state?.subtreeTracking || [],

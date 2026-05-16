@@ -180,7 +180,7 @@ describe('Timeline construction from backend result', () => {
     expect(() => TimelineDataProcessor.createSegments(movieData)).to.throw(/split_change_timeline is required/);
   });
 
-  it('canonicalizes transition splits before backend lattice lookup', () => {
+  it('canonicalizes transition splits before affected-subtree lookup', () => {
     const tree = { name: '', length: 0, split_indices: [0], children: [] };
     const movieData = {
       interpolated_trees: [null, tree],
@@ -194,7 +194,7 @@ describe('Timeline construction from backend result', () => {
       }],
       tree_pair_solutions: {
         pair_0_1: {
-          jumping_subtree_solutions: {
+          affected_subtrees_by_split: {
             '[10, 11]': [[[13], [12]]]
           }
         }
@@ -204,7 +204,7 @@ describe('Timeline construction from backend result', () => {
     const segments = TimelineDataProcessor.createSegments(movieData);
 
     expect(segments).to.have.lengthOf(1);
-    expect(segments[0].jumpingSubtrees).to.deep.equal([[[13], [12]]]);
+    expect(segments[0].affectedSubtrees).to.deep.equal([[[13], [12]]]);
     expect(segments[0].subtreeMoveCount).to.equal(2);
   });
 });
@@ -241,14 +241,14 @@ describe('Active change edge mapping (small_example)', () => {
     expect(markedSubtrees).to.deep.equal([[13]]);
   });
 
-  it('tracks later interpolation jump solutions', () => {
+  it('tracks later interpolation affected subtrees', () => {
     const store = useAppStore.getState();
     store.goToPosition(6); // Frame where index 12 is moving
     const markedSubtrees = useAppStore.getState().getMarkedSubtreeData();
     expect(markedSubtrees).to.deep.equal([[12]]);
   });
 
-  it('respects per-step lattice sequences when multiple snapshots exist', () => {
+  it('respects per-step affected-subtree sequences when multiple snapshots exist', () => {
     const storeAPI = useAppStore;
     storeAPI.setState({ markedSubtreeScope: 'all' }); // Force use of pairSolutions
     const pairKey = 'pair_0_1';
@@ -262,8 +262,8 @@ describe('Active change edge mapping (small_example)', () => {
 
     const modifiedPairEntry = {
       ...pairEntry,
-      jumping_subtree_solutions: {
-        ...pairEntry.jumping_subtree_solutions,
+      affected_subtrees_by_split: {
+        ...pairEntry.affected_subtrees_by_split,
         [pivotKey]: [
           [[13]],
           [[99]]

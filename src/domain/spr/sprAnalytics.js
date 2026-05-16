@@ -515,13 +515,13 @@ function resolveGroupAttachmentContext(solution, pivotKey, highlightGroup, group
 }
 
 function resolveAttachmentContext(solution, pivotKey, splitIndices, excludedIndices = splitIndices) {
-  const sourceMap = getBackendSplitMapValue(solution?.solution_to_source_map, pivotKey);
-  const destinationMap = getBackendSplitMapValue(solution?.solution_to_destination_map, pivotKey);
-  if (!sourceMap && !destinationMap) return null;
+  const attachmentEdgesBySplit = getBackendSplitMapValue(solution?.attachment_edges_by_split, pivotKey);
+  if (!attachmentEdgesBySplit) return null;
 
   const moverKey = toBackendSplitKey(splitIndices);
-  const sourceEdge = getBackendSplitMapValue(sourceMap, moverKey);
-  const destinationEdge = getBackendSplitMapValue(destinationMap, moverKey);
+  const attachmentEdges = getBackendSplitMapValue(attachmentEdgesBySplit, moverKey);
+  const sourceEdge = attachmentEdges?.source;
+  const destinationEdge = attachmentEdges?.destination;
   if (!Array.isArray(sourceEdge) && !Array.isArray(destinationEdge)) return null;
 
   const movingSet = new Set(excludedIndices);

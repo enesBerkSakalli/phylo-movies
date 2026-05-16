@@ -33,10 +33,14 @@ export interface SprMoveEvent {
   total_branch_length: number;
 }
 
+export interface AttachmentEdges {
+  source: number[];
+  destination: number[];
+}
+
 export interface TreePairSolution {
-  jumping_subtree_solutions: Record<string, number[][][]>;
-  solution_to_source_map: Record<string, unknown>;
-  solution_to_destination_map: Record<string, unknown>;
+  affected_subtrees_by_split: Record<string, number[][][]>;
+  attachment_edges_by_split: Record<string, Record<string, AttachmentEdges>>;
   spr_move_events?: SprMoveEvent[];
 }
 

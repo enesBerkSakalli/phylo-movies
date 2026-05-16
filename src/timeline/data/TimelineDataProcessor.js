@@ -146,20 +146,20 @@ export class TimelineDataProcessor {
             return;
         }
 
-        // Calculate subtree changes from jumping subtree solutions
+        // Calculate subtree changes from the affected-subtree contract.
         let subtreeMoveCount = 0;
-        let jumpingSubtrees = null;
+        let affectedSubtrees = null;
 
         const activeChangingSplits = entry.split;
         const pairKey = entry.pair_key;
 
         if (activeChangingSplits && pairKey && tree_pair_solutions && tree_pair_solutions[pairKey]) {
-            const jumpingSolutions = tree_pair_solutions[pairKey].jumping_subtree_solutions;
-            const solutions = getBackendSplitMapValue(jumpingSolutions, activeChangingSplits);
+            const affectedSubtreesBySplit = tree_pair_solutions[pairKey].affected_subtrees_by_split;
+            const subtreesForSplit = getBackendSplitMapValue(affectedSubtreesBySplit, activeChangingSplits);
 
-            if (solutions) {
-                jumpingSubtrees = solutions;
-                subtreeMoveCount = Array.from(solutions.flat(2)).length;
+            if (subtreesForSplit) {
+                affectedSubtrees = subtreesForSplit;
+                subtreeMoveCount = Array.from(subtreesForSplit.flat(2)).length;
             }
         }
 
@@ -170,7 +170,7 @@ export class TimelineDataProcessor {
             metadata: first.metadata,
             tree: first.tree,
             pivotEdge: entry.split || [],
-            jumpingSubtrees: jumpingSubtrees,
+            affectedSubtrees,
             pivotEdgeTracker: entry.split || [],
             treePairKey: entry.pair_key,
             splitEvent: entry,

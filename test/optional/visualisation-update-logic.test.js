@@ -85,7 +85,7 @@ describe('Tree Visualisation - State Update Logic', () => {
             treeMetadata,
             pairSolutions: {
                 [pairKey]: {
-                    jumping_subtree_solutions: {
+                    affected_subtrees_by_split: {
                         "[1, 2]": [[10, 11], [12]] // The history/all solutions
                     }
                 }
@@ -112,7 +112,7 @@ describe('Tree Visualisation - State Update Logic', () => {
             treeMetadata,
             pairSolutions: {
                 [pairKey]: {
-                    jumping_subtree_solutions: {
+                    affected_subtrees_by_split: {
                         "[1, 2]": [[10]]
                     }
                 }

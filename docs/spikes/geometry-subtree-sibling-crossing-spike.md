@@ -266,12 +266,12 @@ Have BranchArchitect generate more intermediate frames for "crossing" transition
 subtree_tracking[treeIndex] = [[8, 9], [17, 18]]  // Two subtrees moving
 ```
 
-**From Backend (jumping_subtree_solutions):**
+**From Backend (affected_subtrees_by_split):**
 ```javascript
-// Maps pivot edge → list of subtrees that "jump" across root
+// Maps pivot edge → list of subtrees affected by this transition
 {
   "[0,1,2,...,18]": [        // For pivot edge containing all taxa
-    [[10], [8,9], [17,18]]   // Subtrees that cross the root
+    [[10], [8,9], [17,18]]   // Affected subtrees
   ]
 }
 ```

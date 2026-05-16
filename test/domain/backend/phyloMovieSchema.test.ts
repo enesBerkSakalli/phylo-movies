@@ -36,11 +36,10 @@ function makePayload(overrides: Record<string, unknown> = {}) {
     },
     tree_pair_solutions: {
       pair_0_1: {
-        jumping_subtree_solutions: {
+        affected_subtrees_by_split: {
           '[0, 1]': [[[2], [3, 4]]],
         },
-        solution_to_source_map: {},
-        solution_to_destination_map: {},
+        attachment_edges_by_split: {},
       },
     },
     pair_interpolation_ranges: [[0, 0]],
@@ -190,29 +189,27 @@ describe('validatePhyloMovieData', () => {
     }))).toThrow(/subtree_tracking length \(2\) must match interpolated_trees length \(1\)/);
   });
 
-  it('rejects flat jumping_subtree_solutions entries', () => {
+  it('rejects flat affected_subtrees_by_split entries', () => {
     expect(() => validatePhyloMovieData(makePayload({
       tree_pair_solutions: {
         pair_0_1: {
-          jumping_subtree_solutions: {
+          affected_subtrees_by_split: {
             '[0, 1]': [[2, 3]],
           },
-          solution_to_source_map: {},
-          solution_to_destination_map: {},
+          attachment_edges_by_split: {},
         },
       },
-    }))).toThrow(/jumping_subtree_solutions/);
+    }))).toThrow(/affected_subtrees_by_split/);
   });
 
   it('rejects noncanonical backend split-map keys', () => {
     expect(() => validatePhyloMovieData(makePayload({
       tree_pair_solutions: {
         pair_0_1: {
-          jumping_subtree_solutions: {
+          affected_subtrees_by_split: {
             '[1,0]': [[[0]]],
           },
-          solution_to_source_map: {},
-          solution_to_destination_map: {},
+          attachment_edges_by_split: {},
         },
       },
     }))).toThrow(/canonical backend split key/);
@@ -220,26 +217,27 @@ describe('validatePhyloMovieData', () => {
     expect(() => validatePhyloMovieData(makePayload({
       tree_pair_solutions: {
         pair_0_1: {
-          jumping_subtree_solutions: {
+          affected_subtrees_by_split: {
             '[0, 1]': [[[0]]],
           },
-          solution_to_source_map: {
+          attachment_edges_by_split: {
             '[0, 1]': {
-              '[1,0]': [1],
+              '[1,0]': {
+                source: [1],
+                destination: [2],
+              },
             },
           },
-          solution_to_destination_map: {},
         },
       },
     }))).toThrow(/canonical backend split key/);
   });
 
-  it('requires jumping_subtree_solutions even when SPR move events are present', () => {
+  it('requires affected_subtrees_by_split even when SPR move events are present', () => {
     expect(() => validatePhyloMovieData(makePayload({
       tree_pair_solutions: {
         pair_0_1: {
-          solution_to_source_map: {},
-          solution_to_destination_map: {},
+          attachment_edges_by_split: {},
           spr_move_events: [{
             pivot_edge: [0, 1],
             driver_subtree: [0],
@@ -256,18 +254,17 @@ describe('validatePhyloMovieData', () => {
           }],
         },
       },
-    }))).toThrow(/jumping_subtree_solutions must be an object/);
+    }))).toThrow(/affected_subtrees_by_split must be an object/);
   });
 
   it('keeps SPR move path metrics on validated tree pair solutions', () => {
     const result = validatePhyloMovieData(makePayload({
       tree_pair_solutions: {
         pair_0_1: {
-          jumping_subtree_solutions: {
+          affected_subtrees_by_split: {
             '[0, 1]': [[[0]]],
           },
-          solution_to_source_map: {},
-          solution_to_destination_map: {},
+          attachment_edges_by_split: {},
           spr_move_events: [{
             pivot_edge: [0, 1],
             driver_subtree: [0],
@@ -306,11 +303,10 @@ describe('validatePhyloMovieData', () => {
     expect(() => validatePhyloMovieData(makePayload({
       tree_pair_solutions: {
         pair_0_1: {
-          jumping_subtree_solutions: {
+          affected_subtrees_by_split: {
             '[0, 1]': [[[0]]],
           },
-          solution_to_source_map: {},
-          solution_to_destination_map: {},
+          attachment_edges_by_split: {},
           spr_move_events: [{
             pivot_edge: [0, 1],
             moving_subtree: [0],
@@ -334,11 +330,10 @@ describe('validatePhyloMovieData', () => {
     expect(() => validatePhyloMovieData(makePayload({
       tree_pair_solutions: {
         pair_0_1: {
-          jumping_subtree_solutions: {
+          affected_subtrees_by_split: {
             '[0, 1]': [[[0], [1]]],
           },
-          solution_to_source_map: {},
-          solution_to_destination_map: {},
+          attachment_edges_by_split: {},
           spr_move_events: [{
             pivot_edge: [0, 1],
             driver_subtree: [0],

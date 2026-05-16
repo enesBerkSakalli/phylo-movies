@@ -1,4 +1,4 @@
-import type { SprMoveEvent, SprPathSegment, TreePairSolution } from './phyloMovieTypes';
+import type { AttachmentEdges, SprMoveEvent, SprPathSegment, TreePairSolution } from './phyloMovieTypes';
 import { isCanonicalBackendSplitKey } from '../tree/splits.js';
 import {
   assertFiniteNumber,
@@ -15,39 +15,50 @@ function assertCanonicalBackendSplitKey(key: string, fieldName: string): void {
   }
 }
 
-function validateJumpingSubtreeSolutions(
+function validateAffectedSubtreesBySplit(
   value: unknown,
   fieldName: string
 ): Record<string, number[][][]> {
-  const solutions = requiredRecord(value, fieldName);
+  const subtreesBySplit = requiredRecord(value, fieldName);
+  const validated: Record<string, number[][][]> = {};
 
-  for (const [pivotKey, solutionSets] of Object.entries(solutions)) {
+  for (const [pivotKey, subtreeSets] of Object.entries(subtreesBySplit)) {
     assertCanonicalBackendSplitKey(pivotKey, fieldName);
-    const sets = requiredArray(solutionSets, `${fieldName}.${pivotKey}`);
-    for (const [setIndex, set] of sets.entries()) {
+    const sets = requiredArray(subtreeSets, `${fieldName}.${pivotKey}`);
+    validated[pivotKey] = sets.map((set, setIndex) => {
       const subtrees = requiredArray(set, `${fieldName}.${pivotKey}[${setIndex}]`);
-      for (const [subtreeIndex, subtree] of subtrees.entries()) {
-        requiredNumberArray(subtree, `${fieldName}.${pivotKey}[${setIndex}][${subtreeIndex}]`);
-      }
-    }
+      return subtrees.map((subtree, subtreeIndex) => (
+        requiredNumberArray(subtree, `${fieldName}.${pivotKey}[${setIndex}][${subtreeIndex}]`)
+      ));
+    });
   }
 
-  return solutions as Record<string, number[][][]>;
+  return validated;
 }
 
-function validateBackendSplitKeyedRecord(value: unknown, fieldName: string): Record<string, unknown> {
-  const map = requiredRecord(value, fieldName);
+function validateAttachmentEdgesBySplit(
+  value: unknown,
+  fieldName: string
+): Record<string, Record<string, AttachmentEdges>> {
+  const attachmentsBySplit = requiredRecord(value, fieldName);
+  const validated: Record<string, Record<string, AttachmentEdges>> = {};
 
-  for (const [pivotKey, nestedMap] of Object.entries(map)) {
+  for (const [pivotKey, movedSubtrees] of Object.entries(attachmentsBySplit)) {
     assertCanonicalBackendSplitKey(pivotKey, fieldName);
-    if (!nestedMap || typeof nestedMap !== 'object' || Array.isArray(nestedMap)) continue;
+    const subtreeEntries = requiredRecord(movedSubtrees, `${fieldName}.${pivotKey}`);
+    validated[pivotKey] = {};
 
-    for (const moverKey of Object.keys(nestedMap)) {
+    for (const [moverKey, attachment] of Object.entries(subtreeEntries)) {
       assertCanonicalBackendSplitKey(moverKey, `${fieldName}.${pivotKey}`);
+      const attachmentEdges = requiredRecord(attachment, `${fieldName}.${pivotKey}.${moverKey}`);
+      validated[pivotKey][moverKey] = {
+        source: requiredNumberArray(attachmentEdges.source, `${fieldName}.${pivotKey}.${moverKey}.source`),
+        destination: requiredNumberArray(attachmentEdges.destination, `${fieldName}.${pivotKey}.${moverKey}.destination`),
+      };
     }
   }
 
-  return map;
+  return validated;
 }
 
 function validateFiniteNumber(value: unknown, fieldName: string): number {
@@ -105,17 +116,13 @@ export function validateTreePairSolutions(value: unknown): Record<string, TreePa
     assertRecord(solution, `tree_pair_solutions.${pairKey}`);
     const fieldName = `tree_pair_solutions.${pairKey}`;
     const validatedSolution: TreePairSolution = {
-      jumping_subtree_solutions: validateJumpingSubtreeSolutions(
-        solution.jumping_subtree_solutions,
-        `${fieldName}.jumping_subtree_solutions`
+      affected_subtrees_by_split: validateAffectedSubtreesBySplit(
+        solution.affected_subtrees_by_split,
+        `${fieldName}.affected_subtrees_by_split`
       ),
-      solution_to_source_map: validateBackendSplitKeyedRecord(
-        solution.solution_to_source_map,
-        `${fieldName}.solution_to_source_map`
-      ),
-      solution_to_destination_map: validateBackendSplitKeyedRecord(
-        solution.solution_to_destination_map,
-        `${fieldName}.solution_to_destination_map`
+      attachment_edges_by_split: validateAttachmentEdgesBySplit(
+        solution.attachment_edges_by_split,
+        `${fieldName}.attachment_edges_by_split`
       ),
     };
 

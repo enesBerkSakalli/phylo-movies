@@ -100,7 +100,7 @@ function TransitionContent({ segment, getLeafNames, isExpanded, onToggleExpanded
     ? segment.subtreeMoveCount
     : 0;
 
-  const subtreeGroups = extractMovingSubtreeGroups(segment.jumpingSubtrees, getLeafNames);
+  const subtreeGroups = extractMovingSubtreeGroups(segment.affectedSubtrees, getLeafNames);
 
   return (
     <>
@@ -192,20 +192,20 @@ function SubtreeBadge({ names }) {
 // =============================================================================
 
 /**
- * Extracts jumping subtree groups from the segment data.
+ * Extracts affected subtree groups from the segment data.
  *
- * @param {Array} jumpingSubtrees - Array of solutions with leaf indices
+ * @param {Array} affectedSubtrees - Array of affected subtree groups with leaf indices
  * @param {Function} getLeafNamesByIndices - Function to convert indices to names
  * @returns {Array<string[]>} Array of leaf name arrays for each subtree group
  */
-export function extractMovingSubtreeGroups(jumpingSubtrees, getLeafNamesByIndices) {
-  if (!jumpingSubtrees?.length || !getLeafNamesByIndices) {
+export function extractMovingSubtreeGroups(affectedSubtrees, getLeafNamesByIndices) {
+  if (!affectedSubtrees?.length || !getLeafNamesByIndices) {
     return [];
   }
 
   const subtreeGroups = [];
 
-  for (const item of jumpingSubtrees) {
+  for (const item of affectedSubtrees) {
     if (!Array.isArray(item)) continue;
 
     // Check depth: is this a group of indices [1, 2] or a solution containing groups [[1, 2]]?

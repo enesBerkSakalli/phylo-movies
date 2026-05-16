@@ -83,7 +83,7 @@ export function resolveMarkedSubtrees(state, indexOverride = null) {
     return parseSubtreeTrackingEntry(subtree);
   }
 
-  // "all" mode intentionally uses pair-level jump solutions for the active
+  // "all" mode intentionally uses pair-level affected subtrees for the active
   // pivot edge, not just the subtree currently moving at this frame.
   return getAffectedSubtreesForPivotEdge(state, index);
 }
@@ -104,12 +104,10 @@ export function getAffectedSubtreesForPivotEdge(state, index) {
 
   const pairKey = selectTreePairKeyAtIndex(state, index);
   if (!pairKey) return [];
-  // Keep this tied to jumping_subtree_solutions: comparison connectors and
-  // all-mode highlighting both rely on the full lattice solution set.
-  const solutions = state.pairSolutions?.[pairKey]?.jumping_subtree_solutions;
-  if (!solutions) return [];
+  const affectedSubtreesBySplit = state.pairSolutions?.[pairKey]?.affected_subtrees_by_split;
+  if (!affectedSubtreesBySplit) return [];
 
-  return flattenSplitSets(getBackendSplitMapValue(solutions, edge));
+  return flattenSplitSets(getBackendSplitMapValue(affectedSubtreesBySplit, edge));
 }
 
 /**
@@ -162,34 +160,30 @@ export function getSourceDestinationEdgesAtIndex(state, index) {
   const pairSolution = pairKey ? state.pairSolutions?.[pairKey] : null;
   if (!pairSolution) return { source: [], dest: [] };
 
-  // Get mappings
-  const sourceMap = pairSolution.solution_to_source_map || {};
-  const destMap = pairSolution.solution_to_destination_map || {};
-
-  // Find the edge in the source and destination context
-  const sourceEdgeMap = getBackendSplitMapValue(sourceMap, pivotEdge);
-  const destEdgeMap = getBackendSplitMapValue(destMap, pivotEdge);
-  if (!sourceEdgeMap || !destEdgeMap) return { source: [], dest: [] };
+  const attachmentEdgesBySplit = pairSolution.attachment_edges_by_split || {};
+  const attachmentEdgesForPivot = getBackendSplitMapValue(attachmentEdgesBySplit, pivotEdge);
+  if (!attachmentEdgesForPivot) return { source: [], dest: [] };
 
   // Identify moving components to filter them out
   const subtreeList = parseSubtreeTrackingEntry(subtrees);
   const movingSet = new Set(subtreeList.flat(Infinity));
 
   // Process subtrees to find their source/dest counterparts
-  return resolveEdgeMappings(subtreeList, sourceEdgeMap, destEdgeMap, movingSet);
+  return resolveEdgeMappings(subtreeList, attachmentEdgesForPivot, movingSet);
 }
 
 /**
  * Helper to iterate subtrees and resolve their source/dest edges,
  * trimming out any nodes that are currently moving.
  */
-function resolveEdgeMappings(subtreeList, sourceEdgeMap, destEdgeMap, movingSet) {
+function resolveEdgeMappings(subtreeList, attachmentEdgesForPivot, movingSet) {
   const sourceEdges = [];
   const destEdges = [];
 
   for (const subtree of subtreeList) {
-    const sourceEdge = getBackendSplitMapValue(sourceEdgeMap, subtree);
-    const destEdge = getBackendSplitMapValue(destEdgeMap, subtree);
+    const attachmentEdges = getBackendSplitMapValue(attachmentEdgesForPivot, subtree);
+    const sourceEdge = attachmentEdges?.source;
+    const destEdge = attachmentEdges?.destination;
 
     if (sourceEdge) {
       const trimmed = filterMovingNodes(sourceEdge, movingSet);
