@@ -55,7 +55,7 @@ export const createTreeHighlightStateSlice = (set, get) => ({
 
     if (isSystemKey) {
       Object.assign(SYSTEM_TREE_COLORS, { [colorType]: newColor });
-      set({ [colorType]: newColor });
+      set((s) => ({ [colorType]: newColor, colorVersion: (s.colorVersion ?? 0) + 1 }));
     }
 
     const { colorManager } = get();
