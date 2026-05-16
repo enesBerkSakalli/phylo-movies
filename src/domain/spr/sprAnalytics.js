@@ -1,5 +1,4 @@
 import {
-  flattenSplitSets,
   getBackendSplitMapValue,
   parseBackendSplitKey,
   toBackendSplitKey,
@@ -47,21 +46,6 @@ function flattenHighlightGroup(highlightGroup) {
   return normalizeSubtreeIndices(
     Array.from(new Set(highlightGroup.flatMap((subtree) => subtree)))
   );
-}
-
-/**
- * Extract moving subtrees from one backend jumping_subtree_solutions value.
- *
- * Backend shape:
- * { "[pivot_edge_indices]": [ [ [subtree1], [subtree2] ] ] }
- *
- * @param {Array} solutionSets
- * @returns {Array<Array<number>>}
- */
-export function extractMovingSubtrees(solutionSets) {
-  return flattenSplitSets(solutionSets)
-    .map(normalizeSubtreeIndices)
-    .filter((subtree) => subtree.length > 0);
 }
 
 /**
@@ -408,42 +392,6 @@ export function formatSubtreeLabel(splitIndices, leafNames = []) {
   return `Nodes: ${splitIndices.join(', ')}`;
 }
 
-/**
- * Calculates which tree pairs each moving subtree appears in.
- *
- * @param {Object} pairSolutions - Map of pairKey -> TreePairSolution
- * @returns {Map<string, Map<number, number>>} Map of signature -> per-pair occurrence counts
- */
-export function calculateSprTemporalDistribution(pairSolutions) {
-  if (!pairSolutions || typeof pairSolutions !== 'object') return new Map();
-
-  const temporalMap = new Map();
-
-  Object.entries(pairSolutions).forEach(([pairKey, solution]) => {
-    const jumpingSolutions = solution?.jumping_subtree_solutions;
-    if (!jumpingSolutions) return;
-
-    const timeIndex = parsePairTimeIndex(pairKey);
-    if (timeIndex === null) return;
-
-    Object.values(jumpingSolutions).forEach((solutionSets) => {
-      extractMovingSubtrees(solutionSets).forEach((splitIndices) => {
-        const signature = getSubtreeSignature(splitIndices);
-        if (!signature) return;
-
-        if (!temporalMap.has(signature)) {
-          temporalMap.set(signature, new Map());
-        }
-
-        const countsByTime = temporalMap.get(signature);
-        countsByTime.set(timeIndex, (countsByTime.get(timeIndex) || 0) + 1);
-      });
-    });
-  });
-
-  return temporalMap;
-}
-
 function summarizeSprEventRows(events) {
   if (!Array.isArray(events) || events.length === 0) {
     return {
@@ -635,12 +583,4 @@ function parsePairKey(pairKey) {
     sourceTreeIndex: Number(match[1]),
     destinationTreeIndex: Number(match[2]),
   };
-}
-
-export function parsePairTimeIndex(pairKey) {
-  const match = /^pair_(\d+)_\d+$/.exec(pairKey);
-  if (match) {
-    return Number(match[1]);
-  }
-  return null;
 }
