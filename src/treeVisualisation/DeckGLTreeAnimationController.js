@@ -491,14 +491,13 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
   // Exposed for AnimationRunner
   async _renderComparisonFrameForRunner(fromTree, toTree, easedT, options) {
-    const { fromTreeIndex, rightTreeIndex, rightTree } = options;
+    const { rightTreeIndex, rightTree } = options;
 
     const interpolatedData = this._buildInterpolatedData(fromTree, toTree, easedT, options);
     await this.layerManager.renderComparisonAnimated({
       interpolatedData,
       rightTree,
-      rightIndex: rightTreeIndex,
-      leftIndex: fromTreeIndex
+      rightIndex: rightTreeIndex
     });
   }
 
