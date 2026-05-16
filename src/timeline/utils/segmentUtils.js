@@ -1,3 +1,5 @@
+import { getSegmentBounds } from './segmentTiming.js';
+
 export function getTargetSegmentIndex(initialSegIndex, clickMs, segments, cumulativeDurations) {
   const segment = segments[initialSegIndex];
   // If the initially clicked segment is not a full tree (anchor), it's unambiguous.
@@ -7,9 +9,11 @@ export function getTargetSegmentIndex(initialSegIndex, clickMs, segments, cumula
 
   // For anchor segments, calculate if the click is closer to the anchor center
   // or to an adjacent connection center
-  const segStart = initialSegIndex > 0 ? cumulativeDurations[initialSegIndex - 1] : 0;
-  const segEnd = cumulativeDurations[initialSegIndex];
-  const anchorCenter = (segStart + segEnd) / 2;
+  const timelineData = { cumulativeDurations };
+  const bounds = getSegmentBounds(initialSegIndex, timelineData);
+  if (!bounds) return initialSegIndex;
+
+  const anchorCenter = (bounds.start + bounds.end) / 2;
   const anchorDist = Math.abs(clickMs - anchorCenter);
 
   let targetIndex = initialSegIndex;
@@ -17,12 +21,12 @@ export function getTargetSegmentIndex(initialSegIndex, clickMs, segments, cumula
 
   // Check the previous segment (left connection)
   if (initialSegIndex > 0 && !segments[initialSegIndex - 1]?.isFullTree) {
-    const prevStart = initialSegIndex > 1 ? cumulativeDurations[initialSegIndex - 2] : 0;
-    const prevEnd = cumulativeDurations[initialSegIndex - 1];
-    const prevCenter = (prevStart + prevEnd) / 2;
-    const prevDist = Math.abs(clickMs - prevCenter);
+    const prevBounds = getSegmentBounds(initialSegIndex - 1, timelineData);
+    const prevDist = prevBounds
+      ? Math.abs(clickMs - ((prevBounds.start + prevBounds.end) / 2))
+      : null;
 
-    if (prevDist < minDist) {
+    if (prevDist !== null && prevDist < minDist) {
       minDist = prevDist;
       targetIndex = initialSegIndex - 1;
     }
@@ -30,12 +34,12 @@ export function getTargetSegmentIndex(initialSegIndex, clickMs, segments, cumula
 
   // Check the next segment (right connection)
   if (initialSegIndex < segments.length - 1 && !segments[initialSegIndex + 1]?.isFullTree) {
-    const nextStart = segEnd;
-    const nextEnd = cumulativeDurations[initialSegIndex + 1];
-    const nextCenter = (nextStart + nextEnd) / 2;
-    const nextDist = Math.abs(clickMs - nextCenter);
+    const nextBounds = getSegmentBounds(initialSegIndex + 1, timelineData);
+    const nextDist = nextBounds
+      ? Math.abs(clickMs - ((nextBounds.start + nextBounds.end) / 2))
+      : null;
 
-    if (nextDist < minDist) {
+    if (nextDist !== null && nextDist < minDist) {
       targetIndex = initialSegIndex + 1;
     }
   }

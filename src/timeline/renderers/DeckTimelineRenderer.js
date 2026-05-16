@@ -7,7 +7,7 @@ import { TIMELINE_CONSTANTS, TIMELINE_THEME } from '../constants.js';
 import { handleTimelineMouseMoveOrScrub, handleTimelineMouseDown, handleTimelineMouseUp, handleTimelineWheel, handleTimelineMouseLeave } from '../events/eventHandlers.js';
 import { createPathLayer, createStripTrackLayer, createAnchorTickLayer, createAnchorLayer, createConnectionLayer, createAnchorHoverLayer, createConnectionHoverLayer, createAnchorSelectionLayer, createConnectionSelectionLayer, createSeparatorLayer, createScrubberLayer, getDevicePixelRatio, calculateSeparatorWidth } from '../utils/layerFactories.js';
 import { msToX, xToMs, calculateZoomScale } from '../math/coordinateUtils.js';
-import { timeToSegmentIndex } from '../utils/searchUtils.js';
+import { timeToSegmentIndex, toSegmentIndex, toTimelineItemId } from '../utils/segmentTiming.js';
 import { getTargetSegmentIndex } from '../utils/segmentUtils.js';
 import { processSegments } from '../data/segmentProcessor.js';
 
@@ -335,7 +335,7 @@ export class DeckTimelineRenderer {
     }
 
     const targetIndex = getTargetSegmentIndex(initialSegIndex, clickMs, this.segments, this.timelineData.cumulativeDurations);
-    const targetId = targetIndex + 1;
+    const targetId = toTimelineItemId(targetIndex);
 
     this.setSelection([targetId]);
     this._emit('select', { id: targetId, ms: clickMs, segment: this.segments[targetIndex] });
@@ -348,7 +348,7 @@ export class DeckTimelineRenderer {
   _handleHoverLayerClick(info) {
     if (!info?.object?.id) return;
 
-    const targetIndex = info.object.id - 1;
+    const targetIndex = toSegmentIndex(info.object.id);
     const targetId = info.object.id;
     const segment = this.segments[targetIndex];
 
@@ -402,7 +402,7 @@ export class DeckTimelineRenderer {
   // ==========================================================================
 
   _timeToSegmentIndex(ms) {
-    return timeToSegmentIndex(ms, this.timelineData.cumulativeDurations);
+    return timeToSegmentIndex(ms, this.timelineData);
   }
 
   _xToMs(x) {
@@ -469,8 +469,8 @@ export class DeckTimelineRenderer {
     const visStart = rangeStart - buffer;
     const visEnd = rangeEnd + buffer;
 
-    const startIdx = Math.max(0, timeToSegmentIndex(Math.max(0, visStart), this.timelineData.cumulativeDurations) - 1);
-    const rawEndIdx = timeToSegmentIndex(Math.min(this._totalDuration - 1, visEnd), this.timelineData.cumulativeDurations);
+    const startIdx = Math.max(0, timeToSegmentIndex(Math.max(0, visStart), this.timelineData) - 1);
+    const rawEndIdx = timeToSegmentIndex(Math.min(this._totalDuration - 1, visEnd), this.timelineData);
     const endIdx = Math.min(this.segments.length - 1, rawEndIdx + 1);
 
     const zoomScale = calculateZoomScale(rangeStart, rangeEnd, this._totalDuration);

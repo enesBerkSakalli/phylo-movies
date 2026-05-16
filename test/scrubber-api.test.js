@@ -180,4 +180,28 @@ describe('ScrubberAPI', () => {
       console.error = originalError;
     }
   });
+
+  it('does not fall back to linear interpolation without timeline interpolation data', async () => {
+    const renderCalls = [];
+    const originalError = console.error;
+
+    console.error = () => {};
+
+    try {
+      const treeController = {
+        renderComparisonAwareScrubFrame: async (...args) => {
+          renderCalls.push(args);
+        }
+      };
+
+      const api = new ScrubberAPI(treeController, {}, null);
+      await api.startScrubbing(0);
+      await api.updatePosition(0.5);
+
+      expect(renderCalls).to.deep.equal([]);
+      expect(api.lastInterpolationState).to.equal(null);
+    } finally {
+      console.error = originalError;
+    }
+  });
 });

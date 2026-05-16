@@ -159,7 +159,7 @@ export class InterpolationRenderer {
     const interpolationData = state.movieTimelineManager?.getInterpolationDataForTimelineProgress?.(progress);
 
     if (!interpolationData?.fromTree || !interpolationData?.toTree) {
-      return this.renderProgress(progress);
+      return;
     }
 
     const { fromTree, toTree, fromIndex, toIndex } = interpolationData;

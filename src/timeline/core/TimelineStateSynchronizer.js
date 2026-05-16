@@ -1,5 +1,6 @@
 import { TIMELINE_CONSTANTS } from '../constants.js';
 import { TimelineMathUtils } from '../math/TimelineMathUtils.js';
+import { toTimelineItemId } from '../utils/segmentTiming.js';
 
 const SCRUB_GRACE_PERIOD_MS = 150;
 
@@ -43,7 +44,7 @@ export class TimelineStateSynchronizer {
       return null;
     }
 
-    timeline.setSelection([segmentIndex + TIMELINE_CONSTANTS.INDEX_OFFSET_UI]);
+    timeline.setSelection([toTimelineItemId(segmentIndex)]);
     return { currentTime, treeIndex, segment, preservingScrubPosition };
   }
 

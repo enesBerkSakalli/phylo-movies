@@ -1,4 +1,5 @@
 import { TIMELINE_CONSTANTS } from '../constants.js';
+import { getSegmentBounds, timeToSegmentIndex } from '../utils/segmentTiming.js';
 
 /**
  * Timeline math utilities for progress/time conversion, segment lookup, and duration calculations.
@@ -84,9 +85,16 @@ export class TimelineMathUtils {
             };
         }
 
-        const cumulative = cumulativeDurations || this._buildCumulative(segmentDurations);
-        const segmentIndex = this._binarySearchSegment(cumulative, currentTime);
-        const segmentStartTime = segmentIndex === 0 ? 0 : cumulative[segmentIndex - 1];
+        const timelineData = {
+            segmentDurations,
+            cumulativeDurations: cumulativeDurations || this._buildCumulative(segmentDurations)
+        };
+        const segmentIndex = timeToSegmentIndex(currentTime, timelineData, {
+            preferLastAtSameTime: false,
+            includeEnd: true
+        });
+        const bounds = getSegmentBounds(segmentIndex, timelineData);
+        const segmentStartTime = bounds?.start ?? 0;
         const segmentDuration = segmentDurations[segmentIndex];
         const segment = segments[segmentIndex];
 
@@ -217,7 +225,10 @@ export class TimelineMathUtils {
         }
 
         const currentTime = this.progressToTime(progress, timelineData.totalDuration);
-        const segmentIndex = this._binarySearchSegment(timelineData.cumulativeDurations, currentTime);
+        const segmentIndex = timeToSegmentIndex(currentTime, timelineData, {
+            preferLastAtSameTime: false,
+            includeEnd: true
+        });
         const segment = segments[segmentIndex];
 
         if (!segment) {
@@ -233,7 +244,8 @@ export class TimelineMathUtils {
             return this._createStaticInterpolationResult(segment.interpolationData[0].originalIndex, treeList);
         }
 
-        const segmentStart = segmentIndex > 0 ? timelineData.cumulativeDurations[segmentIndex - 1] : 0;
+        const bounds = getSegmentBounds(segmentIndex, timelineData);
+        const segmentStart = bounds?.start ?? 0;
         const segmentDuration = timelineData.segmentDurations[segmentIndex];
         const localProgress = this.clampProgress((currentTime - segmentStart) / segmentDuration);
         const exactStep = localProgress * (steps - 1);
@@ -265,8 +277,9 @@ export class TimelineMathUtils {
             return null;
         }
 
-        const segmentStart = lookup.segmentIndex === 0 ? 0 : timelineData.cumulativeDurations[lookup.segmentIndex - 1];
-        return this.timeToProgress(segmentStart + lookup.timeInSegment, timelineData.totalDuration);
+        const bounds = getSegmentBounds(lookup.segmentIndex, timelineData);
+        if (!bounds) return null;
+        return this.timeToProgress(bounds.start + lookup.timeInSegment, timelineData.totalDuration);
     }
 
     static getTimelineProgressForLinearTreeProgress(progress, treeCount, segments, timelineData) {
@@ -293,21 +306,6 @@ export class TimelineMathUtils {
     // ==========================================================================
     // BINARY SEARCH HELPERS
     // ==========================================================================
-
-    static _binarySearchSegment(cumulativeDurations, time) {
-        let lo = 0;
-        let hi = cumulativeDurations.length - 1;
-
-        while (lo < hi) {
-            const mid = (lo + hi) >>> 1;
-            if (cumulativeDurations[mid] <= time) {
-                lo = mid + 1;
-            } else {
-                hi = mid;
-            }
-        }
-        return lo;
-    }
 
     static _buildCumulative(segmentDurations) {
         const arr = new Array(segmentDurations.length);

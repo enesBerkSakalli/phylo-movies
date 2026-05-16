@@ -1,6 +1,7 @@
 const { expect } = require('chai');
 const sinon = require('sinon');
 const { TreeInterpolator } = require('../src/treeVisualisation/deckgl/interpolation/TreeInterpolator.js');
+const { InterpolationRenderer } = require('../src/treeVisualisation/systems/InterpolationRenderer.js');
 const { useAppStore } = require('../src/state/phyloStore/store.js');
 
 describe('Interpolation cache reset', () => {
@@ -89,5 +90,33 @@ describe('Controller cache reset hook', () => {
     useAppStore.getState().resetInterpolationCaches();
 
     expect(resetSpy.calledOnce).to.be.true;
+  });
+});
+
+describe('InterpolationRenderer timeline progress', () => {
+  afterEach(() => {
+    useAppStore.getState().reset();
+  });
+
+  it('does not fall back to linear progress when timeline interpolation is unavailable', async () => {
+    useAppStore.setState({
+      movieTimelineManager: {
+        destroy: () => {},
+        getInterpolationDataForTimelineProgress: () => null
+      }
+    });
+
+    const controller = {
+      ready: true,
+      readyPromise: Promise.resolve(),
+      renderAllElements: sinon.spy()
+    };
+    const renderer = new InterpolationRenderer(controller);
+    const renderProgress = sinon.stub(renderer, 'renderProgress').resolves();
+
+    await renderer.renderTimelineProgress(0.5);
+
+    expect(renderProgress.called).to.equal(false);
+    expect(controller.renderAllElements.called).to.equal(false);
   });
 });

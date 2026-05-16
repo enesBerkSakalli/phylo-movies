@@ -36,6 +36,37 @@ function setsToSortedArrays(sets) {
 }
 
 describe('Timeline construction from backend result', () => {
+  it('does not keep unused timeline constants or old anchor label compatibility', () => {
+    const constantsSource = fs.readFileSync(path.join(__dirname, '..', 'src', 'timeline', 'constants.js'), 'utf8');
+    const removedConstantNames = [
+      'MIN_ZOOM_MS',
+      'ZOOM_PERCENTAGE_UI',
+      'TIMELINE_HEIGHT',
+      'MAX_ZOOM_FACTOR',
+      'SCRUB_END_TIMEOUT_MS',
+      'DEFAULT_TREE_INDEX',
+      'MAX_TOOLTIP_LEAVES',
+      'DURATION_COMPLEXITY_WEIGHT',
+      'EDGE_COMPLEXITY_WEIGHT',
+      'DEFAULT_COMPLEXITY',
+      'DEFAULT_MAX_EDGES',
+      'FALLBACK_MAX_EDGES',
+    ];
+
+    const remainingConstants = removedConstantNames.filter((name) => constantsSource.includes(name));
+    expect(remainingConstants).to.deep.equal([]);
+
+    const labelCompatibilityFiles = [
+      path.join(__dirname, '..', 'src', 'components', 'timeline', 'TimelineSegmentTooltip.jsx'),
+      path.join(__dirname, '..', 'src', 'components', 'TransitionInspectorPanel.jsx'),
+    ];
+
+    const remainingAnchorLabelCompatibility = labelCompatibilityFiles.filter((filePath) => (
+      /\bAnchor Tree\b/.test(fs.readFileSync(filePath, 'utf8'))
+    ));
+    expect(remainingAnchorLabelCompatibility).to.deep.equal([]);
+  });
+
   it('creates segments and consistent timeline data', () => {
     const { data, source } = loadMovieData();
 

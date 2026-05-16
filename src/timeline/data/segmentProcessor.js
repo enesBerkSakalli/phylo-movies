@@ -1,9 +1,9 @@
 import { getDevicePixelRatio, createSnapFunction, createAnchor, createAnchorTick, createConnection, createStripTrack } from '../utils/layerFactories.js';
 import { msToX } from '../math/coordinateUtils.js';
+import { getSegmentBounds, toTimelineItemId } from '../utils/segmentTiming.js';
 
 const SEPARATOR_HEIGHT_FRACTION = 0.8;
 const MIN_SEPARATOR_HEIGHT = 6;
-const SEGMENT_ID_OFFSET = 1;
 
 /**
  * Converts timeline segments into visual elements for rendering.
@@ -33,7 +33,6 @@ export function processSegments({
   }
 
   const snap = createSnapFunction(getDevicePixelRatio());
-  const { cumulativeDurations } = timelineData;
 
   const anchorTrees = { normal: [], selected: [], hovered: [] };
   const anchorTicks = { normal: [], active: [] };
@@ -48,16 +47,16 @@ export function processSegments({
   for (let i = startIdx; i <= endIdx; i++) {
     const segment = segments[i];
 
-    const segmentStart = cumulativeDurations[i - 1] ?? 0;
-    const segmentEnd = cumulativeDurations[i];
+    const bounds = getSegmentBounds(i, timelineData);
+    if (!bounds) continue;
 
-    if (segmentEnd < visStart || segmentStart > visEnd) continue;
+    if (bounds.end < visStart || bounds.start > visEnd) continue;
 
-    const segmentId = i + SEGMENT_ID_OFFSET;
+    const segmentId = toTimelineItemId(i);
     const state = segmentId === selectedId ? 'selected' : segmentId === lastHoverId ? 'hovered' : 'normal';
 
-    const startX = msToX(segmentStart, rangeStart, rangeEnd, width);
-    const endX = msToX(segmentEnd, rangeStart, rangeEnd, width);
+    const startX = msToX(bounds.start, rangeStart, rangeEnd, width);
+    const endX = msToX(bounds.end, rangeStart, rangeEnd, width);
 
     const separator = createSeparator(startX, width, height, snap, markerProfile.mode);
     if (separator) separators.push(separator);

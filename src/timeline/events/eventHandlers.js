@@ -1,4 +1,5 @@
 import { useAppStore } from '../../state/phyloStore/store.js';
+import { getSegmentBounds, toTimelineItemId } from '../utils/segmentTiming.js';
 
 const HOVER_CLEAR_DELAY_MS = 150;
 
@@ -27,7 +28,7 @@ function handleTimelineMouseMove(renderer, event) {
   const x = event.clientX - rect.left;
   const ms = renderer._xToMs(x);
   const segIndex = renderer._timeToSegmentIndex(ms);
-  const id = segIndex >= 0 ? segIndex + 1 : null;
+  const id = segIndex >= 0 ? toTimelineItemId(segIndex) : null;
 
   if (id !== renderer._lastHoverId) {
     if (renderer._lastHoverId != null) {
@@ -39,10 +40,10 @@ function handleTimelineMouseMove(renderer, event) {
       renderer._emit('itemover', { item: id, event });
 
       const segment = renderer.segments[segIndex];
-      const segmentStartMs = renderer.timelineData.cumulativeDurations[segIndex] - renderer.timelineData.segmentDurations[segIndex];
-      const segmentEndMs = renderer.timelineData.cumulativeDurations[segIndex];
-      const startX = renderer._msToX(segmentStartMs);
-      const endX = renderer._msToX(segmentEndMs);
+      const bounds = getSegmentBounds(segIndex, renderer.timelineData);
+      if (!bounds) return;
+      const startX = renderer._msToX(bounds.start);
+      const endX = renderer._msToX(bounds.end);
       const centerX = (startX + endX) / 2;
 
       const position = {
