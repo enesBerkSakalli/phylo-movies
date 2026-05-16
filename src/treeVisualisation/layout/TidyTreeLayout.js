@@ -30,7 +30,6 @@ export class TidyTreeLayout {
     const isHierarchyNode = root && typeof root.each === 'function' && root.data !== undefined;
     this.root = isHierarchyNode ? root : hierarchy(root);
     initializeLayoutState(this);
-    this.rotationAlignmentExcludeTaxa = new Set();
   }
 
   setAngleExtentDegrees(degrees = 360) {
@@ -55,10 +54,6 @@ export class TidyTreeLayout {
 
   setRadiusPreservation(preserve) {
     setRadiusPreservation(this, preserve);
-  }
-
-  setRotationAlignmentExcludeTaxa(taxa = []) {
-    this.rotationAlignmentExcludeTaxa = normalizeTaxaSet(taxa);
   }
 
   setDimension(width, height) {
@@ -120,8 +115,7 @@ export class TidyTreeLayout {
     });
   }
 
-  constructRadialTreeWithUniformScaling(maxGlobalScale, options = {}) {
-    this.setRotationAlignmentExcludeTaxa(options.rotationAlignmentExcludeTaxa);
+  constructRadialTreeWithUniformScaling(maxGlobalScale) {
     this.calcRadius(this.root, 0);
     this.applyTidyLayout();
 
@@ -134,8 +128,7 @@ export class TidyTreeLayout {
     return this.root;
   }
 
-  constructRadialTree(useUniformScaling = false, options = {}) {
-    this.setRotationAlignmentExcludeTaxa(options.rotationAlignmentExcludeTaxa);
+  constructRadialTree(useUniformScaling = false) {
     this.calcRadius(this.root, 0);
     this.applyTidyLayout();
 
@@ -168,7 +161,6 @@ export default function createTidyTreeLayout(
   let root_;
 
   if (useUniformScaling) {
-    treeLayout.setRotationAlignmentExcludeTaxa(options.rotationAlignmentExcludeTaxa);
     treeLayout.calcRadius(treeLayout.root, 0);
     treeLayout.applyTidyLayout();
     root_ = treeLayout.root;
@@ -177,7 +169,7 @@ export default function createTidyTreeLayout(
     treeLayout.generateCoordinates(root_);
     treeLayout.scale = uniformScale;
   } else {
-    root_ = treeLayout.constructRadialTree(false, options);
+    root_ = treeLayout.constructRadialTree(false);
   }
 
   return createLayoutResult(root_, {
@@ -187,13 +179,4 @@ export default function createTidyTreeLayout(
     margin,
     scale: treeLayout.scale,
   });
-}
-
-function normalizeTaxaSet(value) {
-  if (!Array.isArray(value)) return new Set();
-  return new Set(
-    value.flat(Infinity)
-      .map((item) => Number(item))
-      .filter(Number.isFinite)
-  );
 }

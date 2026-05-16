@@ -121,7 +121,7 @@ describe('TidyTreeLayout', () => {
     });
   });
 
-  it('does not compress moving subtree angles when taxa are excluded from rotation alignment', () => {
+  it('does not compress moving subtree angles when the legacy exclusion option is present', () => {
     const tree = {
       name: 'root',
       length: 0,

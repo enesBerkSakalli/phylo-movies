@@ -28,12 +28,9 @@ export function calculateLayoutWorkerResult(treeData, options) {
     }
 
     const hasMaxGlobalScale = Number.isFinite(Number(options.maxGlobalScale));
-    const layoutOptions = {
-        rotationAlignmentExcludeTaxa: options.rotationAlignmentExcludeTaxa
-    };
     const rootNode = hasMaxGlobalScale
-        ? layoutEngine.constructRadialTreeWithUniformScaling(Number(options.maxGlobalScale), layoutOptions)
-        : layoutEngine.constructRadialTree(false, layoutOptions);
+        ? layoutEngine.constructRadialTreeWithUniformScaling(Number(options.maxGlobalScale))
+        : layoutEngine.constructRadialTree(false);
     const maxRadius = layoutEngine.getMaxRadius(rootNode);
     const layoutResult = createLayoutResult(rootNode, {
         max_radius: maxRadius,

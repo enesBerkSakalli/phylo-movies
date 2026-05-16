@@ -270,7 +270,7 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     expect(controller.prefetchedLayoutCacheKeys.get(1)).toBe(secondKey);
   });
 
-  it('passes per-frame moving taxa exclusion to worker layout prefetch', () => {
+  it('keeps moving taxa tracking out of worker layout prefetch payloads', () => {
     useAppStore.setState({
       subtreeTracking: [null, [[2, 3], [4]]]
     });
@@ -278,10 +278,23 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
 
     controller._prefetchFrame(1);
 
-    expect(controller.layoutWorker.messages[0].data.options.rotationAlignmentExcludeTaxa).toEqual([2, 3, 4]);
-    expect(controller.layoutWorker.messages[0].data.options.layoutCacheKey).toContain(
-      'rotationAlignmentExcludeTaxa=2,3,4'
-    );
+    expect(controller.layoutWorker.messages[0].data.options).not.toHaveProperty('rotationAlignmentExcludeTaxa');
+    expect(controller.layoutWorker.messages[0].data.options.layoutCacheKey).not.toContain('rotationAlignmentExcludeTaxa');
+  });
+
+  it('does not re-prefetch when only moving taxa tracking changes', () => {
+    controller = new ControllerClass(null);
+
+    controller._prefetchFrame(1);
+    expect(controller.layoutWorker.messages).toHaveLength(1);
+
+    useAppStore.setState({
+      subtreeTracking: [null, [[2, 3], [4]]]
+    });
+
+    controller._prefetchFrame(1);
+
+    expect(controller.layoutWorker.messages).toHaveLength(1);
   });
 
   it('skips layer rerendering on pan-only viewport changes', () => {

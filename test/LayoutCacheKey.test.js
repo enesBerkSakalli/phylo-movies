@@ -31,10 +31,6 @@ describe('layout cache key', () => {
     expect(createLayoutCacheKey({ ...baseOptions, state: { ...baseState, layoutRotationDegrees: 45 } })).not.toBe(baseKey);
     expect(createLayoutCacheKey({
       ...baseOptions,
-      state: { ...baseState, subtreeTracking: [[[2, 3]]] }
-    })).not.toBe(baseKey);
-    expect(createLayoutCacheKey({
-      ...baseOptions,
       state: { ...baseState, linkGeometryMode: 'straight' }
     })).not.toBe(baseKey);
     expect(createLayoutCacheKey({
@@ -57,20 +53,36 @@ describe('layout cache key', () => {
     expect(zeroScaleKey).not.toBe(missingScaleKey);
   });
 
-  it('uses source-frame subtree tracking when transition frames omit their own highlight group', () => {
-    const key = createLayoutCacheKey({
-      ...baseOptions,
-      treeIndex: 1,
-      state: {
-        ...baseState,
-        treeList: [{ id: 'tree-0' }, { id: 'tree-1' }],
-        subtreeTracking: [[[5], [3]], null],
-        transitionResolver: {
-          getSourceTreeIndex: () => 0
-        }
+  it('keeps moving-subtree tracking out of render-affecting layout cache keys', () => {
+    const treeList = [{ id: 'tree-0' }, { id: 'tree-1' }];
+    const transitionState = {
+      ...baseState,
+      treeList,
+      subtreeTracking: [[[5], [3]], null],
+      transitionResolver: {
+        getSourceTreeIndex: () => 0
       }
+    };
+    const key = createLayoutCacheKey({
+      state: transitionState,
+      treeIndex: 1,
+      width: 800,
+      height: 600,
+      maxGlobalScale: 12
+    });
+    const keyWithoutTracking = createLayoutCacheKey({
+      state: {
+        ...transitionState,
+        subtreeTracking: null,
+        transitionResolver: null
+      },
+      treeIndex: 1,
+      width: 800,
+      height: 600,
+      maxGlobalScale: 12
     });
 
-    expect(key).toContain('rotationAlignmentExcludeTaxa=3,5');
+    expect(key).toBe(keyWithoutTracking);
+    expect(key).not.toContain('rotationAlignmentExcludeTaxa');
   });
 });
