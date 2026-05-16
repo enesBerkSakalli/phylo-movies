@@ -112,7 +112,7 @@ export class WebGLTreeAnimationController {
    * Calculates tree layout with branch transformations and caching.
    */
   calculateLayout(treeData, options = {}) {
-    const { treeIndex, rotationAlignmentExcludeTaxa = null } = options;
+    const { treeIndex } = options;
     const state = useAppStore.getState();
     const {
       branchTransformation,
@@ -141,17 +141,14 @@ export class WebGLTreeAnimationController {
       state,
       treeList,
       treeData,
-      treeIndex,
-      rotationAlignmentExcludeTaxa
+      treeIndex
     });
     if (layoutCacheKey) {
       const cachedLayout = this._layoutResultCache.get(layoutCacheKey);
       if (cachedLayout) return cachedLayout;
     }
 
-    const layout = this._computeLayout(transformedTreeData, layoutAngleDegrees, layoutRotationDegrees, {
-      rotationAlignmentExcludeTaxa
-    });
+    const layout = this._computeLayout(transformedTreeData, layoutAngleDegrees, layoutRotationDegrees);
     if (layoutCacheKey && layout) {
       layout.layoutCacheKey = layoutCacheKey;
       this._layoutResultCache.set(layoutCacheKey, layout);
@@ -160,7 +157,7 @@ export class WebGLTreeAnimationController {
     return layout;
   }
 
-  _getLayoutResultCacheKey({ state, treeList, treeData, treeIndex, rotationAlignmentExcludeTaxa = null }) {
+  _getLayoutResultCacheKey({ state, treeList, treeData, treeIndex }) {
     if (
       !Number.isInteger(treeIndex) ||
       !Array.isArray(treeList) ||
@@ -175,8 +172,7 @@ export class WebGLTreeAnimationController {
       treeIndex,
       width: this.width,
       height: this.height,
-      maxGlobalScale: this.maxGlobalScale,
-      rotationAlignmentExcludeTaxa
+      maxGlobalScale: this.maxGlobalScale
     });
   }
 
@@ -200,7 +196,7 @@ export class WebGLTreeAnimationController {
     return null;
   }
 
-  _computeLayout(transformedTreeData, layoutAngleDegrees, layoutRotationDegrees, options = {}) {
+  _computeLayout(transformedTreeData, layoutAngleDegrees, layoutRotationDegrees) {
     const layoutCalculator = new TidyTreeLayout(transformedTreeData);
     layoutCalculator.setDimension(this.width, this.height);
     layoutCalculator.setMargin(60);
@@ -212,8 +208,8 @@ export class WebGLTreeAnimationController {
       Number.isFinite(Number(this.maxGlobalScale));
 
     const layoutResult = hasUniformScale
-      ? layoutCalculator.constructRadialTreeWithUniformScaling(this.maxGlobalScale, options)
-      : layoutCalculator.constructRadialTree(false, options);
+      ? layoutCalculator.constructRadialTreeWithUniformScaling(this.maxGlobalScale)
+      : layoutCalculator.constructRadialTree(false);
 
     return createLayoutResult(layoutResult, {
       max_radius: layoutCalculator.getMaxRadius(layoutResult),

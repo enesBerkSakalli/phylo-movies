@@ -12,7 +12,7 @@ import { TreeNodeInteractionHandler } from './interaction/TreeNodeInteractionHan
 import { handleDragStart, handleDrag, handleDragEnd, handleContainerResize } from './interaction/InteractionHandlers.js';
 import { ViewportManager } from './viewport/ViewportManager.js';
 import { getClipboardLayers } from './utils/ClipboardUtils.js';
-import { createLayoutCacheKey, getRotationAlignmentExcludeTaxa } from './utils/layoutCacheKey.js';
+import { createLayoutCacheKey } from './utils/layoutCacheKey.js';
 import { getSplitKey } from '../domain/tree/splits.js';
 
 export class DeckGLTreeAnimationController extends WebGLTreeAnimationController {
@@ -38,7 +38,6 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       getConsistentRadii: this._getConsistentRadii.bind(this),
       convertTreeToLayerData: this.dataConverter.convertTreeToLayerData.bind(this.dataConverter),
       getLayoutCacheKey: (treeIndex) => this._createLayoutCacheKey(treeIndex),
-      getRotationAlignmentExcludeTaxa: (treeIndex) => this._getRotationAlignmentExcludeTaxa(treeIndex),
       getLinkGeometryMode: () => this._getLinkGeometryMode()
     });
 
@@ -407,7 +406,6 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     // Ensure uniform scaling is initialized before dispatching to worker
     this.initializeUniformScaling(branchTransformation);
     const layoutCacheKey = this._createLayoutCacheKey(treeIndex, state);
-    const rotationAlignmentExcludeTaxa = this._getRotationAlignmentExcludeTaxa(treeIndex, state);
     if (this.prefetchedLayoutCacheKeys.get(treeIndex) === layoutCacheKey) return;
 
     this.prefetchedLayoutCacheKeys.set(treeIndex, layoutCacheKey);
@@ -428,7 +426,6 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
           layoutAngleDegrees,
           layoutRotationDegrees,
           labelOffsets: offsets,
-          rotationAlignmentExcludeTaxa,
           treeIndex,
           treeSide: 'left',
           renderMode: 'animation',
@@ -452,10 +449,6 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       height: this.height,
       maxGlobalScale: this.maxGlobalScale
     });
-  }
-
-  _getRotationAlignmentExcludeTaxa(treeIndex, state = useAppStore.getState()) {
-    return getRotationAlignmentExcludeTaxa(state, treeIndex);
   }
 
   _getLinkGeometryMode(state = useAppStore.getState()) {
