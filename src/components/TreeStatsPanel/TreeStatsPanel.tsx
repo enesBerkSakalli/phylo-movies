@@ -16,7 +16,7 @@ import { CurrentScaleDisplay } from './ScaleTracking/CurrentScaleDisplay';
 import { BranchLengthHistogram } from './BranchLengths/BranchLengthHistogram';
 import { MovedSubtreeRecurrenceList } from './SubtreeAnalytics/MovedSubtreeRecurrenceList';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
-import { ChevronRight, BarChart3 } from 'lucide-react';
+import { ChevronDown, BarChart3 } from 'lucide-react';
 import { SidebarMenuItem, SidebarMenuButton, SidebarMenuSub, SidebarMenuSubItem } from '../ui/sidebar';
 /**
  * TreeStatsPanel component displays phylogenetic scale metrics for the current tree:
@@ -58,13 +58,13 @@ export const TreeStatsPanel: React.FC = () => {
   const showBranchLengths = branchTransformation !== 'ignore' && histogramBins.length > 0;
 
   return (
-    <Collapsible defaultOpen asChild className="group/collapsible">
+    <Collapsible asChild className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
           <SidebarMenuButton tooltip="Tree Metrics">
             <BarChart3 className="size-4 text-primary" />
             <span>Tree Metrics</span>
-            <ChevronRight className="ml-auto size-4 transition-transform group-data-[state=open]/collapsible:rotate-90" />
+            <ChevronDown className="ml-auto size-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
           </SidebarMenuButton>
         </CollapsibleTrigger>
         <CollapsibleContent>

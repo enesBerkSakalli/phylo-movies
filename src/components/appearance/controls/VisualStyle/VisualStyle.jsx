@@ -50,7 +50,7 @@ export function GeometryDimensionsSection() {
   };
 
   return (
-    <Collapsible defaultOpen asChild className="group/collapsible">
+    <Collapsible asChild className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
           <SidebarMenuButton tooltip="Display Sizes">
@@ -84,7 +84,7 @@ export function LayoutTransformSection() {
   const setLayoutRotationDegrees = useAppStore(selectSetLayoutRotationDegrees);
 
   return (
-    <Collapsible defaultOpen asChild className="group/collapsible">
+    <Collapsible asChild className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
           <SidebarMenuButton tooltip="Tree Layout">

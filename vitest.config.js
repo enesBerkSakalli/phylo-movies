@@ -13,6 +13,7 @@ export default defineConfig({
       'test/ComparisonUtils.test.js',
       'test/DeckGLTreeAnimationController.worker.test.js',
       'test/DeckGLContext.test.js',
+      'test/FloatingWindowGeometry.test.js',
       'test/GeometryHelperCentralization.test.js',
       'test/ActiveTreeListSelector.test.js',
       'test/LayoutWorkerMetadata.test.js',

@@ -12,7 +12,7 @@ import {
   getTopSprMovedSubtreeRecurrences,
   formatSubtreeLabel
 } from '../../../domain/spr/sprAnalytics';
-import { ChevronRight, BarChart2 } from 'lucide-react';
+import { ChevronDown, BarChart2 } from 'lucide-react';
 import { Badge } from '../../ui/badge';
 import { Card, CardContent } from '../../ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../../ui/collapsible';
@@ -70,13 +70,13 @@ export const MovedSubtreeRecurrenceList = () => {
     <div className="flex flex-col gap-2">
       <Separator className="bg-border/40" />
 
-      <Collapsible defaultOpen={false} className="group/subtree">
+      <Collapsible className="group/subtree">
         <CollapsibleTrigger className="flex items-center gap-2 w-full text-left hover:text-muted-foreground transition-colors">
           <Label className="text-2xs font-bold uppercase tracking-wider text-muted-foreground/70 cursor-pointer">
             <BarChart2 className="size-3" />
             Moved Subtrees
           </Label>
-          <ChevronRight className="ml-auto size-3 text-muted-foreground/70 transition-transform group-data-[state=open]/subtree:rotate-90" />
+          <ChevronDown className="ml-auto size-3 text-muted-foreground/70 transition-transform group-data-[state=open]/subtree:rotate-180" />
         </CollapsibleTrigger>
 
         <CollapsibleContent className="pt-2 space-y-2 animate-in slide-in-from-top-1 duration-200">

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Palette, ChevronRight } from 'lucide-react';
+import { Palette, ChevronDown } from 'lucide-react';
 import { selectTaxaGrouping, useAppStore } from '../../../state/phyloStore/store.js';
 import {
   SidebarMenuItem,
@@ -44,12 +44,12 @@ export const TaxaGroupsLegend: React.FC = () => {
 
   return (
     <SidebarMenuItem>
-      <Collapsible defaultOpen className="group/taxa-legend">
+      <Collapsible className="group/taxa-legend">
         <CollapsibleTrigger asChild>
           <SidebarMenuButton tooltip="Taxa Color Groups">
             <Palette className="size-4 text-primary" />
             <span className="font-medium">Taxa Color Groups</span>
-            <ChevronRight className="ml-auto size-4 transition-transform group-data-[state=open]/taxa-legend:rotate-90" />
+            <ChevronDown className="ml-auto size-4 transition-transform group-data-[state=open]/taxa-legend:rotate-180" />
           </SidebarMenuButton>
         </CollapsibleTrigger>
         <CollapsibleContent>

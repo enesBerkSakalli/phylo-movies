@@ -5,7 +5,7 @@ import { SidebarMenuItem, SidebarMenuButton } from '../../ui/sidebar';
 
 export function TreeStructureGroup() {
   return (
-    <Collapsible defaultOpen asChild className="group/collapsible">
+    <Collapsible asChild className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
           <SidebarMenuButton tooltip="Branch Scaling">

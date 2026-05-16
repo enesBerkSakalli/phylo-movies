@@ -15,7 +15,7 @@ export function FocusHighlightingSection({
   onToggleDimming, onDimmingOpacityChange, onToggleSubtreeDimming, onSubtreeDimmingOpacityChange
 }) {
   return (
-    <Collapsible defaultOpen asChild className="group/collapsible">
+    <Collapsible asChild className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
           <SidebarMenuButton tooltip="Focus & Dimming">

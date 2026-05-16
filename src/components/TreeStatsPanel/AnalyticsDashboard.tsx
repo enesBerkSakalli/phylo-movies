@@ -25,6 +25,7 @@ import {
     selectMarkedNodes,
     selectPairInterpolationRanges,
     selectPairSolutions,
+    selectSplitChangeTimeline,
     useAppStore
 } from '../../state/phyloStore/store.js';
 import {
@@ -36,30 +37,46 @@ import {
 } from '../../domain/spr/sprAnalytics';
 import { Button } from '../ui/button';
 import { SidebarMenuItem, SidebarMenuButton } from '../ui/sidebar';
+import {
+    fitFloatingWindowRect,
+    getBrowserViewportSize,
+    getFloatingWindowViewportInsets,
+    hasFloatingWindowRectChanged,
+    toFloatingWindowRect,
+} from '../ui/floatingWindowGeometry.js';
 
 // ==========================================================================
 // STORE SELECTORS
 // ==========================================================================
 interface AnalyticsDashboardProps {
     isOpen?: boolean;
+    isActive?: boolean;
     onOpen?: () => void;
     onClose?: () => void;
+    onFocus?: () => void;
 }
 
-const getInitialWindowRect = () => {
-    if (typeof window === 'undefined') {
-        return { x: 280, y: 40, width: 900, height: 720 };
-    }
-
-    const width = Math.min(900, Math.max(620, window.innerWidth - 80));
-    const height = Math.min(720, Math.max(480, window.innerHeight - 80));
-    return {
-        x: Math.max(24, Math.min(280, window.innerWidth - width - 24)),
-        y: 40,
-        width,
-        height,
-    };
+const ANALYTICS_WINDOW_BOUNDS = {
+    minWidth: 620,
+    minHeight: 480,
+    margin: 24,
 };
+
+const fitAnalyticsWindowRect = (rect: { x: number; y: number; width: number; height: number }) => {
+    const viewport = getBrowserViewportSize();
+    const insets = getFloatingWindowViewportInsets();
+    return fitFloatingWindowRect(rect, {
+        ...ANALYTICS_WINDOW_BOUNDS,
+        viewportWidth: viewport.width,
+        viewportHeight: viewport.height,
+        leftInset: insets.left,
+        rightInset: insets.right,
+        topInset: insets.top,
+        bottomInset: insets.bottom,
+    });
+};
+
+const getInitialWindowRect = () => toFloatingWindowRect(fitAnalyticsWindowRect({ x: 280, y: 40, width: 900, height: 720 }));
 
 interface SprDatasetSummary {
     pairCount: number;
@@ -85,21 +102,24 @@ interface SprDatasetSummary {
     } | null;
 }
 
-export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: AnalyticsDashboardProps) => {
+export const AnalyticsDashboard = ({ isOpen = false, isActive = false, onOpen, onClose, onFocus }: AnalyticsDashboardProps) => {
     const [windowRect, setWindowRect] = React.useState(getInitialWindowRect);
+    const fittedWindow = fitAnalyticsWindowRect(windowRect);
     const pairSolutions = useAppStore(selectPairSolutions);
     const leafNamesByIndex = useAppStore(selectLeafNamesByIndex);
     const fileName = useAppStore(selectFileName) || 'dataset';
     const robinsonFouldsDistances = useAppStore(selectDistanceRfd);
     const weightedRobinsonFouldsDistances = useAppStore(selectDistanceWeightedRfd);
     const pairInterpolationRanges = useAppStore(selectPairInterpolationRanges);
+    const splitChangeTimeline = useAppStore(selectSplitChangeTimeline);
     const selectedMovedSubtreeIndices = useAppStore(selectMarkedNodes);
 
     const sprOptions = useMemo(() => ({
         robinsonFouldsDistances,
         weightedRobinsonFouldsDistances,
         pairInterpolationRanges,
-    }), [robinsonFouldsDistances, weightedRobinsonFouldsDistances, pairInterpolationRanges]);
+        splitChangeTimeline,
+    }), [robinsonFouldsDistances, weightedRobinsonFouldsDistances, pairInterpolationRanges, splitChangeTimeline]);
 
     const movedSubtreeRecurrences = useMemo(() => {
         if (!pairSolutions || Object.keys(pairSolutions).length === 0) return [];
@@ -162,6 +182,27 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
         ? document.body
         : null;
 
+    React.useEffect(() => {
+        if (!isOpen) return undefined;
+
+        const fitWindow = () => {
+            setWindowRect((current) => {
+                const nextRect = fitAnalyticsWindowRect(current);
+                return hasFloatingWindowRectChanged(current, nextRect)
+                    ? toFloatingWindowRect(nextRect)
+                    : current;
+            });
+        };
+
+        fitWindow();
+        window.addEventListener('resize', fitWindow);
+        return () => window.removeEventListener('resize', fitWindow);
+    }, [isOpen]);
+
+    React.useEffect(() => {
+        if (isOpen) onFocus?.();
+    }, [isOpen, onFocus]);
+
     return (
         <>
             <SidebarMenuItem>
@@ -178,26 +219,28 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
             {isOpen && portalRoot && createPortal(
                 <Rnd
                     bounds="window"
-                    minWidth={620}
-                    minHeight={480}
-                    size={{ width: windowRect.width, height: windowRect.height }}
-                    position={{ x: windowRect.x, y: windowRect.y }}
-                    onDragStop={(_event, data) => setWindowRect((current) => ({
+                    minWidth={fittedWindow.minWidth}
+                    minHeight={fittedWindow.minHeight}
+                    size={{ width: fittedWindow.width, height: fittedWindow.height }}
+                    position={{ x: fittedWindow.x, y: fittedWindow.y }}
+                    onMouseDown={onFocus}
+                    onDragStop={(_event, data) => setWindowRect((current) => toFloatingWindowRect(fitAnalyticsWindowRect({
                         ...current,
                         x: data.x,
                         y: data.y,
-                    }))}
+                    })))}
                     onResizeStop={(_event, _direction, ref, _delta, position) => {
-                        setWindowRect({
+                        const nextRect = fitAnalyticsWindowRect({
                             width: parseInt(ref.style.width, 10),
                             height: parseInt(ref.style.height, 10),
                             x: position.x,
                             y: position.y,
                         });
+                        setWindowRect(toFloatingWindowRect(nextRect));
                     }}
                     dragHandleClassName="spr-analytics-drag-handle"
                     cancel=".spr-analytics-no-drag"
-                    className="fixed z-[1200] pointer-events-auto shadow-2xl border border-border/60 rounded-md bg-card overflow-hidden"
+                    className={`fixed ${isActive ? 'z-[1200]' : 'z-[1100]'} pointer-events-auto shadow-2xl border border-border/60 rounded-md bg-card overflow-hidden`}
                 >
                 <div className="flex flex-col h-full overflow-hidden bg-card">
                     <div className="spr-analytics-drag-handle flex items-center justify-between gap-2 px-3 py-2 border-b border-border/40 bg-muted/20 backdrop-blur-sm shrink-0 cursor-move select-none">
