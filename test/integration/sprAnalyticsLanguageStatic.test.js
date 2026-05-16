@@ -59,14 +59,16 @@ describe('SPR analytics phylogenetic language', () => {
       'utf8',
     );
 
-    expect(dashboardSource).toContain('<span>Movements</span>');
+    expect(dashboardSource).toContain('<span>Moving Subtrees</span>');
+    expect(dashboardSource).toContain('Quantifies which taxa or clades change attachment across neighboring trees.');
     expect(dashboardSource).toContain('TabsTrigger value="events"');
-    expect(dashboardSource).toContain('>Movements</TabsTrigger>');
+    expect(dashboardSource).toContain('>Movement Events</TabsTrigger>');
     expect(dashboardSource).toContain('A movement is one subtree that changes attachment between two neighboring trees.');
     expect(dashboardSource).not.toContain('event ledger');
     expect(dashboardSource).not.toContain('backend driver subtree');
 
-    expect(summarySource).toContain('label="SPR Movements"');
+    expect(summarySource).toContain('label="Movement Events"');
+    expect(summarySource).not.toContain('label="SPR Movements"');
     expect(summarySource).not.toContain('label="SPR Move Events"');
 
     expect(tableSource).toContain('aria-label="Search movements"');
