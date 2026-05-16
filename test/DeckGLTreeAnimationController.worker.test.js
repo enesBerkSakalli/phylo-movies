@@ -37,7 +37,6 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
         { id: 'tree-0', split_indices: [0], children: [] },
         { id: 'tree-1', split_indices: [1], children: [] }
       ],
-      movieData: null,
       branchTransformation: 'linear',
       layoutAngleDegrees: 360,
       layoutRotationDegrees: 0,

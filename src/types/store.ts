@@ -1,4 +1,5 @@
 // types/store.ts - Type definitions for the Zustand store
+import type { PhyloMovieData, SplitChangeTimelineEntry } from '../domain/backend/phyloMovieTypes';
 
 export interface ContextMenuPosition {
   x: number;
@@ -26,7 +27,6 @@ export interface PlaybackPlayhead {
 
 export interface AppStoreState {
   // From treeDataset.slice
-  movieData: any;
   treeList: any[];
   treeMetadata: any[];
   leafNamesByIndex: string[];
@@ -43,6 +43,7 @@ export interface AppStoreState {
   pairSolutions: any;
   pivotEdgeTracking: any[];
   subtreeTracking: any[];
+  splitChangeTimeline: SplitChangeTimelineEntry[];
 
   // From datasetLifecycle.slice
 
@@ -105,6 +106,7 @@ export interface AppStoreState {
 
   // From msaSync.slice
   hasMsa: boolean;
+  msaSequences: Record<string, string> | null;
   msaWindowSize: number;
   msaStepSize: number;
   msaColumnCount: number;
@@ -162,7 +164,7 @@ export interface AppStoreState {
   contextMenuNode: ContextMenuNode | null;
 
   // Actions
-  initialize: (movieData: any) => void;
+  initialize: (movieData: PhyloMovieData) => void;
   reset: () => void;
   getTreeContext: (index: number) => {
     treeIndex: number;
@@ -226,7 +228,13 @@ export interface AppStoreState {
 
   setMarkedSubtreeOpacity: (opacity: number) => void;
 
-  setMsaData: (data: { hasMsa: boolean; windowSize: number; stepSize: number; columnCount: number }) => void;
+  setMsaData: (data: {
+    hasMsa: boolean;
+    windowSize: number;
+    stepSize: number;
+    columnCount: number;
+    sequences: Record<string, string> | null;
+  }) => void;
   resetMsaData: () => void;
   setMsaRegion: (start: number, end: number) => void;
   clearMsaRegion: () => void;
@@ -267,14 +275,14 @@ export interface AppStoreState {
   setPivotEdgesEnabled: (enabled: boolean) => void;
   setMarkedSubtreesEnabled: (enabled: boolean) => void;
   setUpcomingChangesEnabled: (enabled: boolean) => void;
-  updateUpcomingChanges: () => void;
+  updateUpcomingChanges: (index?: number | null) => void;
   setHighlightColorMode: (mode: string) => void;
   setChangePulseEnabled: (enabled: boolean) => void;
   setPivotEdgeDashingEnabled: (enabled: boolean) => void;
 
   setAnimationStage: (stage: 'COLLAPSE' | 'EXPAND' | 'REORDER' | null) => void;
   getColorManager: () => any;
-  calculateHighlightChangePreviews: () => { upcoming: any[]; completed: any[] };
+  calculateHighlightChangePreviews: (index?: number | null) => { upcoming: any[]; completed: any[] };
   initializeColors: () => void;
   resetColors: () => void;
   updateColorManagerPivotEdge: (edge: any) => void;
@@ -282,6 +290,7 @@ export interface AppStoreState {
   updateColorManagerHistorySubtrees: (subtrees: any[]) => void;
   updateColorManagerSourceDestinationEdges: (sourceEdges: any[], destEdges: any[]) => void;
   updateColorManagerMovingSubtree: (subtree: any) => void;
+  updateColorManagerForIndex: (index?: number | null) => void;
   updateColorManagerForCurrentIndex: () => void;
   getPulseOpacity: () => number;
   startPulseAnimation: () => void;

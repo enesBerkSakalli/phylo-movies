@@ -19,34 +19,34 @@ function guessTypeFromSeqs(recs) {
 }
 
 /**
- * Converts phylo data format to internal sequence format
- * @param {object} data - Phylo data with msa.sequences
+ * Converts MSA sequence records to internal row format
+ * @param {Record<string, string>} sequences - Taxon name to aligned sequence
  * @returns {Array<{id: string, seq: string}>} Array of sequence objects
  */
-function convertPhyloToSequences(data) {
-  if (!data?.msa?.sequences) {
+function convertMsaSequencesToRows(sequences) {
+  if (!sequences) {
     return [];
   }
 
-  return Object.entries(data.msa.sequences).map(([name, seq]) => ({
+  return Object.entries(sequences).map(([name, seq]) => ({
     id: name,
     seq: seq.toUpperCase()
   }));
 }
 
 /**
- * Processes phylo data and returns formatted sequences with metadata
- * @param {object} data - Raw phylo data
+ * Processes MSA sequences and returns formatted rows with metadata
+ * @param {Record<string, string>} sequences - Taxon name to aligned sequence
  * @returns {object} Processed data with sequences, type, and dimensions
  */
-export function processPhyloData(data) {
-  if (!data?.msa?.sequences) {
+export function processMsaSequences(sequences) {
+  if (!sequences) {
     console.warn('[MSADeckGLViewer] No MSA sequences found in data');
     return null;
   }
 
   // Convert dictionary to array format expected by deck.gl viewer
-  const seqs = convertPhyloToSequences(data);
+  const seqs = convertMsaSequencesToRows(sequences);
   const dataType = guessTypeFromSeqs(seqs);
 
   return {

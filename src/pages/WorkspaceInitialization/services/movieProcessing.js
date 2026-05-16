@@ -59,7 +59,7 @@ export async function processMovieData(formData, onProgress, options = {}) {
       throw createAbortError();
     }
     if (error?.name === 'AbortError') {
-      throw new Error('The server did not start tree processing in time. Please check that the local processing server is running.');
+      throw new Error('The server did not start tree processing in time. Please check that the local processing server is running.', { cause: error });
     }
     throw error;
   } finally {
@@ -135,9 +135,9 @@ export async function processMovieData(formData, onProgress, options = {}) {
 
     refreshIdleTimeout();
 
-    // For chunked streaming (large datasets ≥ 500 trees)
-    let chunkedMetadata = null;
-    let chunkedTrees = [];
+    // Live backend contract: metadata, zero or more tree chunks, then complete.
+    let streamMetadata = null;
+    let streamedTrees = [];
 
     // High-water mark prevents the progress bar from ever going backward
     let highWaterMark = 10;
@@ -176,72 +176,75 @@ export async function processMovieData(formData, onProgress, options = {}) {
       } catch { }
     });
 
-    // Handle metadata event for large datasets (chunked mode)
     eventSource.addEventListener('metadata', (event) => {
       refreshIdleTimeout();
       try {
         const result = JSON.parse(event.data);
-        chunkedMetadata = result.metadata;
-        chunkedTrees = []; // Reset trees array for incoming chunks
-        reportProgress(highWaterMark, `Streaming ${chunkedMetadata.tree_count} trees...`);
+        if (!result.metadata || typeof result.metadata !== 'object') {
+          rejectOnce(new Error('Invalid metadata event from tree processing stream'));
+          return;
+        }
+        streamMetadata = result.metadata;
+        streamedTrees = [];
+        reportProgress(highWaterMark, 'Streaming trees...');
       } catch (err) {
-        console.warn('[SSE] Failed to parse metadata:', err);
+        rejectOnce(new Error('Failed to parse metadata event: ' + err.message));
       }
     });
 
-    // Handle tree chunks for large datasets
     eventSource.addEventListener('trees_chunk', (event) => {
       refreshIdleTimeout();
       try {
+        if (!streamMetadata) {
+          rejectOnce(new Error('Received tree chunk before metadata event'));
+          return;
+        }
         const chunk = JSON.parse(event.data);
-        chunkedTrees.push(...chunk.trees);
+        if (!Array.isArray(chunk.trees)) {
+          rejectOnce(new Error('Invalid tree chunk from tree processing stream'));
+          return;
+        }
+        streamedTrees.push(...chunk.trees);
         // Map chunk progress into remaining space between current high-water and 90
         const chunkRatio = chunk.end_index / chunk.total;
         const percent = highWaterMark + chunkRatio * (90 - highWaterMark);
         const message = `Received ${chunk.end_index} / ${chunk.total} trees...`;
         reportProgress(percent, message);
       } catch (err) {
-        console.warn('[SSE] Failed to parse trees_chunk:', err);
+        rejectOnce(new Error('Failed to parse tree chunk event: ' + err.message));
       }
     });
 
     eventSource.addEventListener('complete', (event) => {
       refreshIdleTimeout();
 
-      // First check if we have accumulated chunked data (large dataset mode)
-      // This takes priority regardless of what the complete event contains
-      if (chunkedMetadata) {
+      try {
+        const completion = JSON.parse(event.data || '{}');
+        if (completion.error) {
+          rejectOnce(new Error(completion.error));
+          return;
+        }
+
+        const completeData = completion.data;
+        if (!streamMetadata) {
+          rejectOnce(new Error('Complete event received before metadata event'));
+          return;
+        }
+        if (!completeData || !Number.isInteger(completeData.tree_count)) {
+          rejectOnce(new Error('Unexpected complete event from tree processing stream'));
+          return;
+        }
+        if (completeData.tree_count !== streamedTrees.length) {
+          rejectOnce(new Error(`Tree stream ended after ${streamedTrees.length} trees, expected ${completeData.tree_count}`));
+          return;
+        }
+
         const result = {
-          ...chunkedMetadata,
-          interpolated_trees: chunkedTrees,
+          ...streamMetadata,
+          interpolated_trees: streamedTrees,
         };
         resolveOnce(result);
         return;
-      }
-
-      // Also check if we accumulated trees without metadata (edge case)
-      if (chunkedTrees.length > 0) {
-        console.warn('[SSE] Trees received without metadata, attempting to resolve with trees only');
-        resolveOnce({ interpolated_trees: chunkedTrees });
-        return;
-      }
-
-      // Small dataset mode: complete event should contain everything
-      if (!event.data || event.data.trim() === '') {
-        rejectOnce(new Error('Complete event received with no data'));
-        return;
-      }
-
-      try {
-        const data = JSON.parse(event.data);
-
-        if (data.error) {
-          rejectOnce(new Error(data.error));
-        } else if (data.data) {
-          resolveOnce(data.data);
-        } else {
-          rejectOnce(new Error('No data in complete event'));
-        }
       } catch (err) {
         console.error('[SSE] Failed to parse complete event:', event.data?.substring(0, 200));
         rejectOnce(new Error('Failed to parse completion data: ' + err.message));
@@ -302,7 +305,7 @@ export async function finalizeMovieData(data, formData, onProgress) {
     // Handle IndexedDB quota/memory errors with user-friendly message
     if (storageError.name === 'DataCloneError' || storageError.message?.includes('out of memory')) {
       const treeCount = data?.interpolated_trees?.length || 'unknown';
-      throw new Error(`Dataset too large for browser storage (${treeCount} trees). Try reducing window size or number of input trees.`);
+      throw new Error(`Dataset too large for browser storage (${treeCount} trees). Try reducing window size or number of input trees.`, { cause: storageError });
     }
     throw storageError;
   }

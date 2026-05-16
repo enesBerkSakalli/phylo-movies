@@ -1,5 +1,4 @@
 import localforage from 'localforage';
-import { toPhyloMovieAppData } from '../../domain/backend/phyloMovieAdapter.ts';
 import { validatePhyloMovieData } from '../../domain/backend/phyloMovieSchema.ts';
 
 /**
@@ -32,7 +31,7 @@ const storage = {
       // Handle IndexedDB quota/memory errors
       if (error.name === 'DataCloneError' || error.message?.includes('out of memory')) {
         console.error(`[DataService] Data too large to store in IndexedDB. Trees: ${value?.interpolated_trees?.length || 'unknown'}`);
-        throw new Error(`Dataset too large for browser storage. Try reducing the number of trees or window size.`);
+        throw new Error(`Dataset too large for browser storage. Try reducing the number of trees or window size.`, { cause: error });
       }
       console.error(`[DataService] Error storing ${key}:`, error);
       throw error;
@@ -71,7 +70,7 @@ export const phyloData = {
   async set(data) {
     const validatedBackendData = validatePhyloMovieData(data);
     await storage.set(STORAGE_KEYS.PHYLO_DATA, validatedBackendData);
-    return toPhyloMovieAppData(validatedBackendData);
+    return validatedBackendData;
   },
 
   async remove() {
@@ -79,6 +78,6 @@ export const phyloData = {
   },
 
   validate(data) {
-    return toPhyloMovieAppData(validatePhyloMovieData(data));
+    return validatePhyloMovieData(data);
   }
 };

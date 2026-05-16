@@ -4,7 +4,6 @@ export const createTreeDatasetSlice = (_set, get) => ({
   // ==========================================================================
   // STATE: Core Data
   // ==========================================================================
-  movieData: null,
   treeList: [],
   treeMetadata: [],
   leafNamesByIndex: [],
@@ -29,6 +28,7 @@ export const createTreeDatasetSlice = (_set, get) => ({
   pairSolutions: {},
   pivotEdgeTracking: [],
   subtreeTracking: [],
+  splitChangeTimeline: [],
 
   getTreeContext: (index) => {
     return selectTreeContext(get(), index);

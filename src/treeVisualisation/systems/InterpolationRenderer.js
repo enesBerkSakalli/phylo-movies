@@ -83,7 +83,8 @@ export class InterpolationRenderer {
         await this.controller.layerManager.renderComparisonAnimated({
           interpolatedData,
           rightTree,
-          rightIndex: rightTreeIndex
+          rightIndex: rightTreeIndex,
+          activeTreeIndex: timeFactor < 0.5 ? options.fromTreeIndex : options.toTreeIndex
         });
         return;
       }

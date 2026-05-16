@@ -68,4 +68,68 @@ describe('processMovieData cancellation', () => {
     expect(onProgress).not.toHaveBeenCalled();
     await expect(processing).rejects.toMatchObject({ name: 'AbortError' });
   });
+
+  it('resolves only after the movie stream contract completes', async () => {
+    const { processMovieData } = await import('../../src/pages/WorkspaceInitialization/services/movieProcessing.js');
+    const onProgress = vi.fn();
+
+    const processing = processMovieData(
+      { treesFile: new File(['(a);'], 'tree.nwk') },
+      onProgress
+    );
+
+    await vi.waitFor(() => {
+      expect(MockEventSource.instances).toHaveLength(1);
+    });
+
+    const eventSource = MockEventSource.instances[0];
+    const metadata = {
+      file_name: 'tree.nwk',
+      tree_metadata: [],
+    };
+
+    eventSource.emit('metadata', JSON.stringify({ metadata }));
+    eventSource.emit('trees_chunk', JSON.stringify({
+      trees: [{ name: 'a' }],
+      start_index: 0,
+      end_index: 1,
+      total: 2,
+    }));
+    eventSource.emit('trees_chunk', JSON.stringify({
+      trees: [{ name: 'b' }],
+      start_index: 1,
+      end_index: 2,
+      total: 2,
+    }));
+    eventSource.emit('complete', JSON.stringify({
+      data: { tree_count: 2 },
+    }));
+
+    await expect(processing).resolves.toEqual({
+      ...metadata,
+      interpolated_trees: [{ name: 'a' }, { name: 'b' }],
+    });
+    expect(eventSource.close).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects legacy complete-event movie payloads without stream metadata', async () => {
+    const { processMovieData } = await import('../../src/pages/WorkspaceInitialization/services/movieProcessing.js');
+
+    const processing = processMovieData(
+      { treesFile: new File(['(a);'], 'tree.nwk') },
+      vi.fn()
+    );
+
+    await vi.waitFor(() => {
+      expect(MockEventSource.instances).toHaveLength(1);
+    });
+
+    const eventSource = MockEventSource.instances[0];
+    eventSource.emit('complete', JSON.stringify({
+      data: { interpolated_trees: [] },
+    }));
+
+    await expect(processing).rejects.toThrow('Complete event received before metadata event');
+    expect(eventSource.close).toHaveBeenCalledTimes(1);
+  });
 });

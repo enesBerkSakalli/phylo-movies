@@ -32,7 +32,7 @@ export function useTreeController() {
 
     const ensureController = () => {
       const state = useAppStore.getState();
-      if (!state.movieData) return;
+      if (state.treeList.length === 0) return;
 
       if (state.treeControllers.length > 0) {
         controllerRef.current = state.treeControllers[0];
@@ -69,7 +69,7 @@ export function useTreeController() {
           if (state.playing) return;
 
           const controller = controllerRef.current || state.treeControllers[0];
-          if (!controller || !state.movieData) return;
+          if (!controller || state.treeList.length === 0) return;
 
           if (!controller.ready) {
             try {
@@ -149,7 +149,7 @@ export function useTreeController() {
     const unsubscribe = useAppStore.subscribe((state, prevState) => {
       const isTimelineScrubbing = state.movieTimelineManager?.scrubController?.isScrubbing ?? false;
 
-      if (state.movieData !== prevState.movieData || state.comparisonMode !== prevState.comparisonMode) {
+      if (state.treeList !== prevState.treeList || state.comparisonMode !== prevState.comparisonMode) {
         // Reset comparison auto-fit when toggling comparison mode so the camera
         // refits properly for the new layout (single ↔ side-by-side).
         const ctrl = controllerRef.current || state.treeControllers[0];

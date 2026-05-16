@@ -389,6 +389,44 @@ describe('MovieTimelineManager lifecycle', () => {
     expect(renderedT).to.equal(0.5);
   });
 
+  it('syncs highlight state to the rendered playback frame before drawing', async () => {
+    const highlightIndices = [];
+    const renderOrder = [];
+
+    const runner = new AnimationRunner({
+      getState: () => ({
+        playing: true,
+        animationStartTime: 1_000,
+        animationSpeed: 1,
+        transitionDuration: 2,
+        pauseDuration: 0,
+        treeList: [{ id: 'a' }, { id: 'b' }],
+        comparisonMode: false
+      }),
+      getOrCacheInterpolationData: () => ({
+        dataFrom: { nodes: [] },
+        dataTo: { nodes: [] }
+      }),
+      renderSingleFrame: async () => {
+        renderOrder.push('render');
+      },
+      renderComparisonFrame: async () => {},
+      setAnimationStage: () => {},
+      syncHighlightsForIndex: (treeIndex) => {
+        highlightIndices.push(treeIndex);
+        renderOrder.push('sync');
+      },
+      updateProgress: () => {},
+      stopAnimation: () => {}
+    });
+
+    runner.isRunning = true;
+    await runner._processFrame(2_100);
+
+    expect(highlightIndices).to.deep.equal([1]);
+    expect(renderOrder).to.deep.equal(['sync', 'render']);
+  });
+
   it('recomputes animation stage when interpolation data changes for the same tree indices', async () => {
     const renderedTValues = [];
     let callCount = 0;

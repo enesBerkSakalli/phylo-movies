@@ -8,6 +8,7 @@ export const createMsaViewerSlice = (set, get) => ({
   // STATE: MSA Data
   // ==========================================================================
   hasMsa: false,
+  msaSequences: null,
   msaWindowSize: 1000,
   msaStepSize: 50,
   msaColumnCount: 0,
@@ -25,9 +26,10 @@ export const createMsaViewerSlice = (set, get) => ({
   // ==========================================================================
   // ACTIONS: MSA Data
   // ==========================================================================
-  setMsaData: ({ hasMsa, windowSize, stepSize, columnCount }) => {
+  setMsaData: ({ hasMsa, windowSize, stepSize, columnCount, sequences }) => {
     set({
       hasMsa: !!hasMsa,
+      msaSequences: sequences ?? null,
       msaWindowSize: windowSize,
       msaStepSize: stepSize,
       msaColumnCount: columnCount
@@ -37,6 +39,7 @@ export const createMsaViewerSlice = (set, get) => ({
   resetMsaData: () => {
     set({
       hasMsa: false,
+      msaSequences: null,
       msaWindowSize: 1000,
       msaStepSize: 50,
       msaColumnCount: 0,

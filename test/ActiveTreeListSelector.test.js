@@ -8,9 +8,8 @@ const repoRoot = path.resolve(__dirname, '..');
 describe('active tree list selector', () => {
   it('uses treeList as the canonical active tree sequence', () => {
     const treeList = [{ id: 'tree-list-0' }];
-    const movieTrees = [{ id: 'movie-tree-0' }, { id: 'movie-tree-1' }];
 
-    expect(selectActiveTreeList({ treeList, movieData: { interpolated_trees: movieTrees } })).toBe(treeList);
+    expect(selectActiveTreeList({ treeList })).toBe(treeList);
   });
 
   it('keeps active tree source selection out of visualization callers', () => {

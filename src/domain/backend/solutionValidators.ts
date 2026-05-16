@@ -1,4 +1,4 @@
-import type { SplitChangeEvent, SprMoveEvent, SprPathSegment, TreePairSolution } from './phyloMovieTypes';
+import type { SprMoveEvent, SprPathSegment, TreePairSolution } from './phyloMovieTypes';
 import { isCanonicalBackendSplitKey } from '../tree/splits.js';
 import {
   assertFiniteNumber,
@@ -50,22 +50,6 @@ function validateBackendSplitKeyedRecord(value: unknown, fieldName: string): Rec
   return map;
 }
 
-function validateSplitChangeEvent(value: unknown, fieldName: string): SplitChangeEvent {
-  const event = requiredRecord(value, fieldName);
-  const split = requiredNumberArray(event.split, `${fieldName}.split`);
-  const stepRange = validateRangeTuple(event.step_range, `${fieldName}.step_range`);
-
-  return {
-    split,
-    step_range: stepRange,
-  };
-}
-
-function validateSplitChangeEventList(value: unknown, fieldName: string): SplitChangeEvent[] {
-  const events = requiredArray(value, fieldName);
-  return events.map((event, index) => validateSplitChangeEvent(event, `${fieldName}[${index}]`));
-}
-
 function validateFiniteNumber(value: unknown, fieldName: string): number {
   assertFiniteNumber(value, fieldName);
   return value;
@@ -113,17 +97,6 @@ function validateSprMoveEventList(value: unknown, fieldName: string): SprMoveEve
   return events.map((event, index) => validateSprMoveEvent(event, `${fieldName}[${index}]`));
 }
 
-export function validateSplitChangeEventsByPair(value: unknown): Record<string, SplitChangeEvent[]> {
-  const eventsByPair = requiredRecord(value, 'split_change_events');
-  const validated: Record<string, SplitChangeEvent[]> = {};
-
-  for (const [pairKey, events] of Object.entries(eventsByPair)) {
-    validated[pairKey] = validateSplitChangeEventList(events, `split_change_events.${pairKey}`);
-  }
-
-  return validated;
-}
-
 export function validateTreePairSolutions(value: unknown): Record<string, TreePairSolution> {
   const pairSolutions = requiredRecord(value, 'tree_pair_solutions');
   const validated: Record<string, TreePairSolution> = {};
@@ -144,7 +117,6 @@ export function validateTreePairSolutions(value: unknown): Record<string, TreePa
         solution.solution_to_destination_map,
         `${fieldName}.solution_to_destination_map`
       ),
-      split_change_events: validateSplitChangeEventList(solution.split_change_events, `${fieldName}.split_change_events`),
     };
 
     if (solution.spr_move_events !== undefined) {

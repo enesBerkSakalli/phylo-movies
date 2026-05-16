@@ -108,8 +108,7 @@ export function buildSprMoveEventRows(pairSolutions, options = {}) {
             contextSplitIndices
           )
           : null;
-        const stepRange = normalizeStepRange(event?.step_range)
-          ?? resolveStepRangeForPivot(solution, pivotEdge);
+        const stepRange = normalizeStepRange(event?.step_range);
         const collapsePathLength = numberOrNull(event?.collapse_branch_length) ?? 0;
         const expandPathLength = numberOrNull(event?.expand_branch_length) ?? 0;
 
@@ -241,17 +240,19 @@ export function calculateSprPairActivity(pairSolutions, options = {}) {
     robinsonFouldsDistances = [],
     weightedRobinsonFouldsDistances = [],
     pairInterpolationRanges = [],
+    splitChangeTimeline = [],
   } = options;
 
   const eventRows = buildSprMoveEventRows(pairSolutions, options);
+  const transitionEventCounts = countSplitChangeTimelineEventsByPair(splitChangeTimeline);
   const eventsByPair = eventRows.reduce((map, event) => {
     if (!map.has(event.pairKey)) map.set(event.pairKey, []);
     map.get(event.pairKey).push(event);
     return map;
   }, new Map());
 
-  return Object.entries(pairSolutions)
-    .map(([pairKey, solution], entryIndex) => {
+  return Object.keys(pairSolutions)
+    .map((pairKey, entryIndex) => {
       const parsedPair = parsePairKey(pairKey);
       const pairIndex = resolvePairArrayIndex(pairKey, parsedPair, entryIndex, pairInterpolationRanges);
       const events = eventsByPair.get(pairKey) ?? [];
@@ -277,9 +278,7 @@ export function calculateSprPairActivity(pairSolutions, options = {}) {
         uniqueMovedSubtreeCount: movedSubtrees.length,
         singleTaxonMoveEventCount,
         multiTaxonMoveEventCount,
-        transitionEventCount: Array.isArray(solution?.split_change_events)
-          ? solution.split_change_events.length
-          : 0,
+        transitionEventCount: transitionEventCounts.get(pairKey) ?? 0,
         sprMoveEventCount,
         totalPathHops: pathStats.totalPathHops,
         averagePathHops: pathStats.averagePathHops,
@@ -553,19 +552,21 @@ function normalizeStepRange(stepRange) {
   return start !== null && end !== null ? [start, end] : null;
 }
 
-function resolveStepRangeForPivot(solution, pivotEdge) {
-  const pivotSignature = getSubtreeSignature(pivotEdge);
-  if (!pivotSignature || !Array.isArray(solution?.split_change_events)) return null;
-
-  const match = solution.split_change_events.find((event) => (
-    getSubtreeSignature(event?.split) === pivotSignature
-  ));
-  return normalizeStepRange(match?.step_range);
-}
-
 function numberOrNull(value) {
   const number = Number(value);
   return Number.isFinite(number) ? number : null;
+}
+
+function countSplitChangeTimelineEventsByPair(splitChangeTimeline) {
+  const counts = new Map();
+  if (!Array.isArray(splitChangeTimeline)) return counts;
+
+  for (const entry of splitChangeTimeline) {
+    if (entry?.type !== 'split_event' || typeof entry.pair_key !== 'string') continue;
+    counts.set(entry.pair_key, (counts.get(entry.pair_key) ?? 0) + 1);
+  }
+
+  return counts;
 }
 
 function formatPairLabel(row) {

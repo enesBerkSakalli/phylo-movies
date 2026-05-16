@@ -25,7 +25,7 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
 
   getColorManager: () => get().colorManager,
 
-  calculateHighlightChangePreviews: () => calculateChangePreviews(get()),
+  calculateHighlightChangePreviews: (indexOverride = null) => calculateChangePreviews(get(), indexOverride),
 
   initializeColors: () => {
     const colorManager = new TreeColorManager();
@@ -75,7 +75,11 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
     const { changePulseEnabled, startPulseAnimation, stopPulseAnimation } = get();
     if (changePulseEnabled) {
       const hasChanges = normalized.length > 0 || colorManager.markedSubtreeSets?.length > 0;
-      hasChanges ? startPulseAnimation() : stopPulseAnimation();
+      if (hasChanges) {
+        startPulseAnimation();
+      } else {
+        stopPulseAnimation();
+      }
     }
   },
 
@@ -113,8 +117,9 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
     set((s) => ({ colorVersion: s.colorVersion + 1 }));
   },
 
-  updateColorManagerForCurrentIndex: () => {
+  updateColorManagerForIndex: (indexOverride = null) => {
     const {
+      currentTreeIndex,
       pivotEdgesEnabled,
       getMarkedSubtreeData,
       getCurrentPivotEdge,
@@ -130,18 +135,21 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
       manuallyMarkedNodes
     } = get();
 
+    const targetIndex = Number.isInteger(indexOverride) ? indexOverride : currentTreeIndex;
     const manual = toManualMarkedSets(manuallyMarkedNodes);
-    // Normal navigation sync uses currentTreeIndex through the store selectors.
-    // Scrubbing mirrors this update against an explicit tree index in ScrubberAPI.
-    const markedSubtreeData = getMarkedSubtreeData();
+    const markedSubtreeData = getMarkedSubtreeData(targetIndex);
 
     updateColorManagerMarkedSubtrees([...manual, ...markedSubtreeData]);
-    updateColorManagerPivotEdge(pivotEdgesEnabled ? getCurrentPivotEdge() : []);
-    updateColorManagerHistorySubtrees(getSubtreeHistoryData());
-    const { source, dest } = getSourceDestinationEdgeData();
+    updateColorManagerPivotEdge(pivotEdgesEnabled ? getCurrentPivotEdge(targetIndex) : []);
+    updateColorManagerHistorySubtrees(getSubtreeHistoryData(targetIndex));
+    const { source, dest } = getSourceDestinationEdgeData(targetIndex);
     updateColorManagerSourceDestinationEdges(source, dest);
-    updateColorManagerMovingSubtree(getCurrentMovingSubtreeData());
-    updateUpcomingChanges();
+    updateColorManagerMovingSubtree(getCurrentMovingSubtreeData(targetIndex));
+    updateUpcomingChanges(targetIndex);
+  },
+
+  updateColorManagerForCurrentIndex: () => {
+    get().updateColorManagerForIndex();
   },
 
   getPulseOpacity: () => {

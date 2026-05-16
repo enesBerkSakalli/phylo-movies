@@ -17,7 +17,6 @@ export const createDatasetLifecycleSlice = (set, get) => ({
     resetComparison();
 
     set({
-      movieData: null,
       treeList: [],
       treeMetadata: [],
       leafNamesByIndex: [],
@@ -33,6 +32,7 @@ export const createDatasetLifecycleSlice = (set, get) => ({
       pairSolutions: {},
       pivotEdgeTracking: [],
       subtreeTracking: [],
+      splitChangeTimeline: [],
       transitionResolver: null,
       selectedTimelineSegmentIndex: null,
     });
@@ -46,20 +46,21 @@ export const createDatasetLifecycleSlice = (set, get) => ({
     resetInterpolationCaches();
 
     const {
+      interpolated_trees: interpolatedTrees,
+      tree_metadata: treeMetadata,
+      tree_pair_solutions: treePairSolutions,
+      pivot_edge_tracking: pivotEdgeTracking,
+      pair_interpolation_ranges: pairInterpolationRanges,
+      split_change_timeline: splitChangeTimeline,
       sorted_leaves: leafNamesByIndex,
       distances,
-      subtreeHighlightTracking,
-      ...storedMovieData
+      subtree_tracking,
     } = movieData;
-    const interpolatedTrees = movieData.interpolated_trees;
-    const treeMetadata = movieData.tree_metadata;
-    const pairInterpolationRanges = movieData.pair_interpolation_ranges;
 
     const resolver = createTransitionResolver(movieData, treeMetadata);
     const fullTreeIndices = resolver.fullTreeIndices;
     const treeIndexByPair = buildTreeIndexByPair(treeMetadata);
     const { scaleList, maxScale } = calculateTreeScales(interpolatedTrees, fullTreeIndices);
-    const numberOfFullTrees = fullTreeIndices.length;
 
     const msaColumnCount = extractMsaColumnCount(movieData);
     const { windowSize, stepSize } = extractMsaWindowParameters(movieData);
@@ -70,7 +71,8 @@ export const createDatasetLifecycleSlice = (set, get) => ({
       hasMsa: hasMsaContent,
       windowSize,
       stepSize,
-      columnCount: msaColumnCount
+      columnCount: msaColumnCount,
+      sequences: movieData.msa?.sequences ?? null,
     });
 
     const fileName = movieData.file_name;
@@ -84,13 +86,6 @@ export const createDatasetLifecycleSlice = (set, get) => ({
     const movieTimelineManager = new MovieTimelineManager(movieData, resolver, interpolatedTrees);
 
     set({
-      movieData: {
-        ...storedMovieData,
-        scaleList,
-        maxScale,
-        fullTreeIndices,
-        numberOfFullTrees
-      },
       movieTimelineManager,
       treeList: interpolatedTrees,
       treeMetadata,
@@ -104,9 +99,10 @@ export const createDatasetLifecycleSlice = (set, get) => ({
       distanceWeightedRfd,
       scaleList,
       maxScale,
-      pairSolutions: movieData.tree_pair_solutions,
-      pivotEdgeTracking: movieData.pivot_edge_tracking,
-      subtreeTracking: subtreeHighlightTracking,
+      pairSolutions: treePairSolutions,
+      pivotEdgeTracking,
+      subtreeTracking: subtree_tracking,
+      splitChangeTimeline,
       transitionResolver: resolver,
       selectedTimelineSegmentIndex: null,
       playhead: {

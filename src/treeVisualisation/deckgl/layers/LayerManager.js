@@ -126,9 +126,11 @@ export class LayerManager {
     return this.comparisonRenderer.renderStatic(leftIndex, rightIndex);
   }
 
-  renderComparisonAnimated({ interpolatedData, rightTree, rightIndex }) {
+  renderComparisonAnimated({ interpolatedData, rightTree, rightIndex, activeTreeIndex }) {
     if (!this.comparisonRenderer) return null;
-    return this.comparisonRenderer.renderAnimated(interpolatedData, rightTree, rightIndex);
+    return this.comparisonRenderer.renderAnimated(interpolatedData, rightTree, rightIndex, {
+      activeTreeIndex
+    });
   }
 
   // ==========================================================================

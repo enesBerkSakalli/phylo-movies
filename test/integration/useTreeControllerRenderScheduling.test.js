@@ -105,7 +105,7 @@ describe('useTreeController static render scheduling', () => {
     rafQueue = [];
     controllerInstance = null;
     storeState = {
-      movieData: { ok: true },
+      treeList: [{ id: 'tree-0' }],
       treeControllers: [],
       setTreeControllers: (controllers) => {
         storeState = { ...storeState, treeControllers: controllers };

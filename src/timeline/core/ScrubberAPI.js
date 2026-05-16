@@ -2,12 +2,6 @@ import { useAppStore } from '../../state/phyloStore/store.js';
 import { TimelineMathUtils } from '../math/TimelineMathUtils.js';
 
 // ============================================================================
-// HELPERS
-// ============================================================================
-
-const toSet = (v) => v instanceof Set ? v : new Set(v);
-
-// ============================================================================
 // SCRUBBER API
 // ============================================================================
 
@@ -121,7 +115,7 @@ export class ScrubberAPI {
     const state = useAppStore.getState();
     const primaryTreeIndex = timeFactor < 0.5 ? fromIndex : toIndex;
 
-    this._updateColorManagerForScrub(state, primaryTreeIndex);
+    state.updateColorManagerForIndex?.(primaryTreeIndex);
 
     const options = {
       scrubMode: true,
@@ -138,40 +132,6 @@ export class ScrubberAPI {
 
     await this.treeController.renderComparisonAwareScrubFrame(fromTree, toTree, timeFactor, options);
   }
-
-  _updateColorManagerForScrub(state, treeIndex) {
-    const { colorManager, pivotEdgesEnabled,
-      getMarkedSubtreeData, getCurrentPivotEdge,
-      getSubtreeHistoryData, updateColorManagerHistorySubtrees, markedSubtreesEnabled,
-      getSourceDestinationEdgeData, updateColorManagerSourceDestinationEdges,
-      getCurrentMovingSubtreeData, updateColorManagerMovingSubtree } = state;
-    if (!colorManager) return;
-
-    // Scrubbing can preview a treeIndex that differs from store.currentTreeIndex.
-    // Keep all ColorManager inputs keyed to this explicit index.
-    // Always update subtree data for dimming purposes
-    // The markedSubtreesEnabled flag controls coloring, not the data availability
-    colorManager.updateMarkedSubtrees(
-      getMarkedSubtreeData(treeIndex).map(toSet)
-    );
-    colorManager.updatePivotEdge(
-      pivotEdgesEnabled ? getCurrentPivotEdge(treeIndex) : []
-    );
-    if (updateColorManagerHistorySubtrees && getSubtreeHistoryData) {
-      const history = markedSubtreesEnabled === false ? [] : getSubtreeHistoryData(treeIndex);
-      updateColorManagerHistorySubtrees(history);
-    }
-
-    if (updateColorManagerSourceDestinationEdges && getSourceDestinationEdgeData) {
-      const { source, dest } = getSourceDestinationEdgeData(treeIndex);
-      updateColorManagerSourceDestinationEdges(source, dest);
-    }
-
-    if (updateColorManagerMovingSubtree && getCurrentMovingSubtreeData) {
-      updateColorManagerMovingSubtree(getCurrentMovingSubtreeData(treeIndex));
-    }
-  }
-
   // ==========================================================================
   // INTERPOLATION DATA
   // ==========================================================================

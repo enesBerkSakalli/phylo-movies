@@ -8,7 +8,6 @@ import {
   selectCurrentTreeIndex,
   selectGoToNextAnchor,
   selectGoToPreviousAnchor,
-  selectMovieData,
   selectPlaying,
   selectSetViewsConnected,
   selectStartAnimationPlayback,
@@ -26,7 +25,6 @@ export function TransportControls({
   const playing = useAppStore(selectPlaying);
   const currentTreeIndex = useAppStore(selectCurrentTreeIndex);
   const treeListLen = useAppStore(selectActiveTreeListLength);
-  const movieData = useAppStore(selectMovieData);
   const comparisonMode = useAppStore(selectComparisonMode);
   const toggleComparisonMode = useAppStore(selectToggleComparisonMode);
   const viewsConnected = useAppStore(selectViewsConnected);
@@ -36,9 +34,8 @@ export function TransportControls({
   const goToNextAnchor = useAppStore(selectGoToNextAnchor);
   const goToPreviousAnchor = useAppStore(selectGoToPreviousAnchor);
   const transitionResolver = useAppStore(selectTransitionResolver);
-  const hasDataset = Boolean(movieData);
-  const hasSequence = hasDataset && treeListLen > 0;
-  const hasAnimationSequence = hasDataset && treeListLen > 1;
+  const hasSequence = treeListLen > 0;
+  const hasAnimationSequence = treeListLen > 1;
   const canTogglePlayback = hasAnimationSequence || playing;
   const canStepBackward = hasAnimationSequence && currentTreeIndex > 0;
   const canStepForward = hasAnimationSequence && currentTreeIndex < treeListLen - 1;

@@ -22,6 +22,7 @@ export class AnimationRunner {
     renderSingleFrame,
     renderComparisonFrame,
     setAnimationStage,
+    syncHighlightsForIndex = () => {},
     updateProgress,
     stopAnimation
   }) {
@@ -31,6 +32,7 @@ export class AnimationRunner {
     this.renderSingleFrame = renderSingleFrame;
     this.renderComparisonFrame = renderComparisonFrame;
     this.setAnimationStage = setAnimationStage;
+    this.syncHighlightsForIndex = syncHighlightsForIndex;
     this.updateProgress = updateProgress;
     this.stopAnimation = stopAnimation;
 
@@ -181,6 +183,7 @@ export class AnimationRunner {
     }
 
     this._syncStore(timestamp, progress, stage, isFinished);
+    this.syncHighlightsForIndex(localT < 0.5 ? fromIndex : toIndex);
 
     // 5. Easing & Render
     // Check running state again before expensive async render/interpolation.
