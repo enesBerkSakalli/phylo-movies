@@ -4,7 +4,7 @@
  * @param {string} hslString - HSL color string
  * @returns {number[]} RGB array [r, g, b]
  */
-export function hslToRgb(hslString) {
+function hslToRgb(hslString) {
   // Parse HSL string like "hsl(144, 70%, 60%)"
   const match = hslString.match(/hsl\((\d+),\s*(\d+)%\,\s*(\d+)%\)/);
   if (!match) {
@@ -76,17 +76,6 @@ export function colorToRgb(color) {
   const b = parseInt(hex.substring(4, 6), 16) || 0;
 
   return [r, g, b];
-}
-
-/**
- * Convert color string to RGBA array (0-255 per channel)
- * @param {string|Array<number>} color - hex/hsl string or RGB array
- * @param {number} alpha - alpha 0-255 (defaults to 255)
- * @returns {number[]} RGBA array [r, g, b, a]
- */
-export function colorToRgba(color, alpha = 255) {
-  const [r, g, b] = colorToRgb(color);
-  return [r, g, b, alpha];
 }
 
 /**

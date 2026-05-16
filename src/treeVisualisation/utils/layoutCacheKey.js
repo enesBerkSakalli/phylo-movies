@@ -45,7 +45,7 @@ function normalizedOptionalNumber(value) {
   return Number.isFinite(number) ? number : 'none';
 }
 
-export function getDatasetCacheId(state = {}, treeList = null) {
+function getDatasetCacheId(state = {}, treeList = null) {
   const resolvedTreeList = resolveTreeList(state, treeList);
   const fileName = selectFileName(state) || 'dataset';
   const treeCount = Array.isArray(resolvedTreeList) ? resolvedTreeList.length : 0;

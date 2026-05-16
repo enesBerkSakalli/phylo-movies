@@ -8,7 +8,7 @@
  * @param {Array<{id: string, seq: string}>} recs - Array of sequence objects
  * @returns {string} Either 'dna' or 'protein'
  */
-export function guessTypeFromSeqs(recs) {
+function guessTypeFromSeqs(recs) {
   const letters = new Set('ACGTU-');
   for (const r of recs) {
     for (const ch of r.seq) {
@@ -23,7 +23,7 @@ export function guessTypeFromSeqs(recs) {
  * @param {object} data - Phylo data with msa.sequences
  * @returns {Array<{id: string, seq: string}>} Array of sequence objects
  */
-export function convertPhyloToSequences(data) {
+function convertPhyloToSequences(data) {
   if (!data?.msa?.sequences) {
     return [];
   }

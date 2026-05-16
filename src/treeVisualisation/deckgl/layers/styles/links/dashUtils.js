@@ -1,7 +1,7 @@
 // Reusable output buffers to avoid per-call array allocations
 const _flightDashOut = [0, 0];
 
-export function calculatePathLength(path) {
+function calculatePathLength(path) {
   if (!path || path.length < 2) return 0;
 
   let length = 0;

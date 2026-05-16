@@ -101,12 +101,14 @@ Module._load = function (request, _parent, _isMain) {
 
 // Now require the SUT - using modular layer factories
 const {
-  getLinksLayerProps,
-  getNodesLayerProps,
   getLinkOutlinesLayerProps,
-  getExtensionsLayerProps
-} = require('../../src/treeVisualisation/deckgl/layers/factory/index.js');
-const { LayerStyles } = require('../../src/treeVisualisation/deckgl/layers/LayerStyles.js');
+  getLinksLayerProps
+} = require('../../src/treeVisualisation/deckgl/layers/factory/links/LinkLayers.js');
+const { getNodesLayerProps } = require('../../src/treeVisualisation/deckgl/layers/factory/nodes/NodeLayers.js');
+const { getExtensionsLayerProps } = require('../../src/treeVisualisation/deckgl/layers/factory/extensions/ExtensionLayers.js');
+const {
+  LayerStyles
+} = require('../../src/treeVisualisation/deckgl/layers/LayerStyles.js');
 const {
   getLinkSplitIndices,
   getSplitIndices,

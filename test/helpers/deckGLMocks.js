@@ -107,5 +107,4 @@ function clearTimelineModuleCache() {
 module.exports = {
   clearTimelineModuleCache,
   installDeckGLMocks,
-  restoreDeckGLMocks,
 };

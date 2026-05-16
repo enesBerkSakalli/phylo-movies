@@ -10,7 +10,7 @@ import {
  * @param {Array<number>|Set<number>} subtreeSplitIndices
  * @returns {Array<number>}
  */
-export function normalizeSubtreeIndices(subtreeSplitIndices) {
+function normalizeSubtreeIndices(subtreeSplitIndices) {
   const values = subtreeSplitIndices instanceof Set
     ? Array.from(subtreeSplitIndices)
     : subtreeSplitIndices;
@@ -28,7 +28,7 @@ export function normalizeSubtreeIndices(subtreeSplitIndices) {
  * @param {Array<number>|Set<number>} subtreeSplitIndices
  * @returns {string|null}
  */
-export function getSubtreeSignature(subtreeSplitIndices) {
+function getSubtreeSignature(subtreeSplitIndices) {
   const sortedIndices = normalizeSubtreeIndices(subtreeSplitIndices);
   if (sortedIndices.length === 0) return null;
   return sortedIndices.map(String).join(',');

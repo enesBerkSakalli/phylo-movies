@@ -7,7 +7,7 @@ export function getSplitIndices(element) {
   return getElementSplitIndices(element);
 }
 
-export function getElementSplitIndices(element) {
+function getElementSplitIndices(element) {
   return element?.split_indices || null;
 }
 
@@ -177,7 +177,7 @@ function resolveSplitCollection(elementOrSplits) {
   return getElementSplitIndices(elementOrSplits);
 }
 
-export function getSplitHash(indices) {
+function getSplitHash(indices) {
   let hLow = 0;
   let hHigh = 0;
 
