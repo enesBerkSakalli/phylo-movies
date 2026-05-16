@@ -224,7 +224,7 @@ export class DeckGLContext {
   }
 
   _handleClick(info, event) {
-    if (info.layer?.id === 'phylo-nodes' && this._onNodeClick) {
+    if (isTreeNodeLayer(info.layer?.id) && this._onNodeClick) {
       event?.stopPropagation?.();
       event?.preventDefault?.();
       this._onNodeClick(info, event);
@@ -234,7 +234,8 @@ export class DeckGLContext {
   }
 
   _handleHover(info, event) {
-    if ((info.layer?.id === 'phylo-nodes' || info.layer?.id?.includes('label-dots')) && this._onNodeHover) {
+    const layerId = info.layer?.id;
+    if ((isTreeNodeLayer(layerId) || layerId?.includes('label-dots')) && this._onNodeHover) {
       this._onNodeHover(info, event);
     }
   }
@@ -689,4 +690,8 @@ function removeChildren(element) {
   while (element.firstChild) {
     element.removeChild(element.firstChild);
   }
+}
+
+function isTreeNodeLayer(layerId) {
+  return layerId === 'phylo-nodes' || layerId?.startsWith('phylo-nodes-');
 }

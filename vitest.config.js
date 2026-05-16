@@ -37,6 +37,7 @@ export default defineConfig({
       'test/subtreeConnectorBuilder.test.js',
       'test/taxa-coloring.test.js',
       'test/TidyTreeLayout.test.js',
+      'test/treeLayerTopology.test.js',
       'test/TreeInterpolatorLabelRadius.test.js',
       'test/TimelineSegmentTooltip.test.js',
       'test/ViewportManager.test.js',
