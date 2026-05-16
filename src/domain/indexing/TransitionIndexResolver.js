@@ -45,8 +45,7 @@ export default class TransitionIndexResolver {
      */
     _getFullTreeIndicesSet() {
         if (!this._cachedFullTreeIndicesSet) {
-            // Populate both caches
-            this.fullTreeIndices;
+            this._cachedFullTreeIndicesSet = new Set(this.fullTreeIndices);
         }
         return this._cachedFullTreeIndicesSet;
     }

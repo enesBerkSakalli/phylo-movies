@@ -2,7 +2,6 @@ import React from "react";
 // Card imports removed
 import { StrategySelector } from "./StrategySelector.jsx";
 import { ColorSchemeSelector } from "../shared/ColorSchemeSelector.jsx";
-import { GroupingStatusSummary } from "./GroupingStatusSummary.jsx";
 import { EmptyStateAlert } from "../shared/EmptyStateAlert.jsx";
 import { ColorInputGrid } from "../shared/ColorInputGrid.jsx";
 

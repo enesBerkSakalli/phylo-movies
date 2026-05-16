@@ -1,7 +1,6 @@
 import React, { useMemo, useState, useId } from "react";
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
-import { Label } from "../../ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "../../ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../ui/tooltip";
 import { CATEGORICAL_PALETTES } from "../../../constants/ColorPalettes.js";
