@@ -68,7 +68,7 @@ export const SprSummaryMetrics = ({
 
         <SummaryTile
             icon={<Zap className="size-3 text-primary" />}
-            label="SPR Movements"
+            label="Movement Events"
         >
             <div className="text-2xl font-black tracking-tighter tabular-nums">{sprMovementCount}</div>
         </SummaryTile>

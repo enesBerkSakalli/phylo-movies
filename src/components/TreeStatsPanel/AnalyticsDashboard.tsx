@@ -166,12 +166,12 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
         <>
             <SidebarMenuItem>
                 <SidebarMenuButton
-                    tooltip="Open movements"
-                    aria-label="Open movements"
+                    tooltip="Open moving subtrees"
+                    aria-label="Open moving subtrees"
                     onClick={onOpen}
                 >
                     <Activity className="text-primary" />
-                    <span>Movements</span>
+                    <span>Moving Subtrees</span>
                 </SidebarMenuButton>
             </SidebarMenuItem>
 
@@ -204,9 +204,9 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
                             <div className="flex items-center gap-2 min-w-0">
                                 <Activity className="size-4 text-primary shrink-0" aria-hidden />
                                 <div className="flex flex-col min-w-0">
-                                    <div className="text-xs font-bold leading-tight tracking-tight uppercase">Movements</div>
+                                    <div className="text-xs font-bold leading-tight tracking-tight uppercase">Moving Subtrees</div>
                                     <div className="text-[9px] text-muted-foreground/80 leading-tight font-medium truncate">
-                                        Review what moved between neighboring trees and which subtrees move repeatedly.
+                                        Quantifies which taxa or clades change attachment across neighboring trees.
                                     </div>
                                 </div>
                             </div>
@@ -214,7 +214,7 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
                                 variant="ghost"
                                 size="icon-xs"
                                 onClick={onClose}
-                                aria-label="Close movements"
+                                aria-label="Close moving subtrees"
                                 className="spr-analytics-no-drag hover:bg-destructive/10 hover:text-destructive transition-colors"
                             >
                                 <X className="size-4" />
@@ -225,7 +225,7 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
                             <Tabs defaultValue="overview" className="flex flex-col flex-1 min-h-0 overflow-hidden">
                                 <TabsList className="w-full justify-start mb-4 shrink-0 bg-muted/30 p-1">
                                     <TabsTrigger value="overview" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">Overview</TabsTrigger>
-                                    <TabsTrigger value="events" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">Movements</TabsTrigger>
+                                    <TabsTrigger value="events" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">Movement Events</TabsTrigger>
                                     <TabsTrigger value="details" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">Recurrent Subtrees</TabsTrigger>
                                 </TabsList>
 
@@ -261,10 +261,10 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
                                                 <CardHeader className="pb-3 bg-muted/20 shrink-0">
                                                     <CardTitle className="flex items-center gap-2 text-base font-bold">
                                                         <Activity className="size-4 text-primary" />
-                                                        Movements Across Tree Pairs
+                                                        Moving Subtrees Across Tree Pairs
                                                     </CardTitle>
                                                     <CardDescription className="text-xs">
-                                                        Movements and unique moved subtrees per neighboring tree pair.
+                                                        Movement events and unique moved subtrees per neighboring tree pair.
                                                     </CardDescription>
                                                 </CardHeader>
                                                 <CardContent className="flex-1 min-h-0 p-2">
@@ -276,7 +276,7 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
                                                 <CardHeader className="pb-3 bg-muted/20 shrink-0">
                                                     <CardTitle className="flex items-center gap-2 text-base font-bold">
                                                         <BarChart className="size-4 text-primary" />
-                                                        Subtrees That Move Most Often
+                                                        Recurrent Moving Subtrees
                                                     </CardTitle>
                                                     <CardDescription className="text-xs">
                                                         Recurrent moved subtrees ranked by how often they move.
@@ -295,7 +295,7 @@ export const AnalyticsDashboard = ({ isOpen = false, onOpen, onClose }: Analytic
                                         <CardHeader className="pb-3 bg-muted/20 shrink-0">
                                             <CardTitle className="flex items-center gap-2 text-base font-bold">
                                                 <Activity className="size-4 text-primary" />
-                                                SPR Movements
+                                                Movement Events
                                             </CardTitle>
                                             <CardDescription className="text-xs flex items-center justify-between gap-2">
                                                 <span>One row per movement, including moved subtree, pivot, and from/to attachments.</span>
