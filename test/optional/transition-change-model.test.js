@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { buildTransitionChangeModel, createLifecycleClocks } from '../../src/treeVisualisation/deckgl/interpolation/TransitionChangeModel.js';
 import { TreeInterpolator } from '../../src/treeVisualisation/deckgl/interpolation/TreeInterpolator.js';
-import { getNodeKey } from '../../src/treeVisualisation/utils/KeyGenerator.js';
+import { getNodeKey } from '../../src/domain/tree/splits.js';
 import { ANIMATION_STAGES } from '../../src/treeVisualisation/deckgl/interpolation/stages/animationStageDetector.js';
 import { rootAwareAngleDelta } from '../../src/treeVisualisation/utils/polarGeometry.js';
 

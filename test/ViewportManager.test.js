@@ -15,7 +15,6 @@ import {
 import {
   calculateBranchBounds,
   calculateMaxPositionRadius,
-  calculateNodeBounds,
   calculatePositionCenter,
   calculateSafeVisualRadius,
   calculateTreeVisualRadius,
@@ -172,7 +171,6 @@ describe('ViewportManager', () => {
 describe('TreeBoundsUtils normalized data contract', () => {
   it('keeps empty normalized arrays as zero bounds', () => {
     expect(calculateVisualBounds([], [])).toEqual({ minX: 0, maxX: 0, minY: 0, maxY: 0 });
-    expect(calculateNodeBounds([])).toEqual({ minX: 0, maxX: 0, minY: 0, maxY: 0 });
     expect(calculateBranchBounds([], [])).toEqual({ minX: 0, maxX: 0, minY: 0, maxY: 0 });
     expect(calculatePositionCenter([])).toEqual([0, 0]);
     expect(calculateMaxPositionRadius([])).toBe(0);

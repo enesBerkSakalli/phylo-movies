@@ -1,5 +1,3 @@
-import { getNodeKey } from '../../../../utils/KeyGenerator.js';
-
 /**
  * NodeGeometryBuilder - Calculates visual properties for nodes
  * Handles size, radius, and geometry logic separable from data conversion
@@ -39,7 +37,7 @@ export class NodeGeometryBuilder {
 
     // Assign fixed radii: leaves same size, internal smaller
     nodes.forEach(node => {
-      const nodeKey = getNodeKey({ split_indices: node.split_indices });
+      const nodeKey = node.id;
       if (!nodeKey) return;
       const isLeaf = node.isLeaf === true;
       const radiusPx = isLeaf ? baseLeafPx : internalPx;

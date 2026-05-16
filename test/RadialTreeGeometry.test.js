@@ -3,7 +3,6 @@ import { describe, it, expect } from 'vitest';
 import {
   signedShortestAngle,
   polarToCartesian,
-  interpolateAngle,
   createPolarInterpolator,
   calculateBranchCoordinates
 } from '../src/treeVisualisation/layout/RadialTreeGeometry.js';
@@ -53,23 +52,6 @@ describe('RadialTreeGeometry', () => {
       const res = polarToCartesian(10, 0, center);
       expect(res.x).toBeCloseTo(110);
       expect(res.y).toBeCloseTo(50);
-    });
-  });
-
-  describe('interpolateAngle', () => {
-    it('interpolates linearly when close', () => {
-      expect(interpolateAngle(0, 1, 0.5)).toBeCloseTo(0.5);
-    });
-
-    it('interpolates across boundary', () => {
-      // 350 deg to 10 deg (in radians)
-      const start = (350 * Math.PI) / 180;
-      const end = (10 * Math.PI) / 180;
-      // Midpoint should be 0 (or 360)
-      const mid = interpolateAngle(start, end, 0.5);
-      // Math: start ~ 6.1, end ~ 0.17. diff = -5.9, adjust +2PI = +0.34. mid = 6.1 + 0.17 = 6.27 (~0)
-      // Easier check: cos(mid) should be 1
-      expect(Math.cos(mid)).toBeCloseTo(1);
     });
   });
 

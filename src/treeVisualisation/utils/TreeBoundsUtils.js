@@ -74,25 +74,6 @@ export function calculateVisualBounds(nodes, labels) {
 }
 
 /**
- * Calculate bounds from node positions only
- * @param {Array} nodes
- */
-export function calculateNodeBounds(nodes) {
-  if (nodes.length === 0) {
-    return { minX: 0, maxX: 0, minY: 0, maxY: 0 };
-  }
-  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-  for (const node of nodes) {
-    const [x, y] = node.position;
-    if (x < minX) minX = x;
-    if (x > maxX) maxX = x;
-    if (y < minY) minY = y;
-    if (y > maxY) maxY = y;
-  }
-  return { minX, maxX, minY, maxY };
-}
-
-/**
  * Calculate bounds from node positions plus rendered branch path geometry.
  * @param {Array} nodes
  * @param {Array} links

@@ -15,6 +15,12 @@ import { LabelDataBuilder } from '../src/treeVisualisation/deckgl/builders/data/
 import { ExtensionDataBuilder } from '../src/treeVisualisation/deckgl/builders/data/extensions/ExtensionDataBuilder.js';
 import { LAYER_CONFIGS } from '../src/treeVisualisation/deckgl/layers/config/layerConfigs.js';
 import { createLayoutResult } from '../src/treeVisualisation/layout/LayoutResultAdapter.js';
+import {
+  assignLayoutNodeIds,
+  calculateBranchLengthRadii,
+} from '../src/treeVisualisation/layout/LayoutBaseUtils.js';
+import { TidyTreeLayout } from '../src/treeVisualisation/layout/TidyTreeLayout.js';
+import { RadialTreeLayout } from '../src/treeVisualisation/layout/RadialTreeLayout.js';
 
 const repoRoot = fileURLToPath(new URL('..', import.meta.url));
 
@@ -100,6 +106,74 @@ describe('normalized render contract', () => {
     expect(LAYER_CONFIGS.connectors.defaultProps.pickable).toBe(false);
   });
 
+  it('prepares render ids explicitly on layout nodes', () => {
+    const tree = {
+      name: 'root',
+      split_indices: [0, 1],
+      children: [
+        { name: 'Taxon_A', split_indices: [0], children: [] },
+        { name: 'Taxon_B', split_indices: [1], children: [] },
+      ],
+    };
+
+    const tidyLayout = new TidyTreeLayout(tree);
+    const radialLayout = new RadialTreeLayout(tree);
+
+    expect(tidyLayout.root.id).toEqual(expect.stringMatching(/^node-/));
+    expect(tidyLayout.root.children[0].id).toEqual(expect.stringMatching(/^node-/));
+    expect(radialLayout.root.id).toEqual(expect.stringMatching(/^node-/));
+    expect(radialLayout.root.children[0].id).toEqual(expect.stringMatching(/^node-/));
+  });
+
+  it('uses prepared layout node ids for radius preservation', () => {
+    const root = hierarchy({
+      name: 'root',
+      length: 0,
+      split_indices: [0, 1],
+      children: [
+        { name: 'Taxon_A', length: 4, split_indices: [0], children: [] },
+      ],
+    });
+    assignLayoutNodeIds(root);
+    const child = root.children[0];
+    const preparedChildId = child.id;
+    const layout = { preserveRadius: false, previousNodeRadii: new Map() };
+
+    calculateBranchLengthRadii(layout, root, 0);
+    child.data.split_indices = [999];
+    layout.preserveRadius = true;
+    layout.previousNodeRadii.set(preparedChildId, 42);
+    calculateBranchLengthRadii(layout, root, 0);
+
+    expect(child.radius).toBe(42);
+  });
+
+  it('copies prepared layout node ids during normalization', () => {
+    const root = hierarchy({
+      name: 'root',
+      split_indices: [0, 1],
+      children: [
+        { name: 'Taxon_A', split_indices: [0], children: [] },
+      ],
+    });
+    root.each((node) => {
+      node.x = node.depth;
+      node.y = node.depth + 1;
+      node.radius = node.depth;
+      node.angle = node.depth;
+    });
+    assignLayoutNodeIds(root);
+    root.children[0].id = 'node-prepared-leaf';
+
+    const layout = createLayoutResult(root, { max_radius: 1, width: 100, height: 100, margin: 0, scale: 1 });
+
+    expect(layout.nodes.find((node) => node.name === 'Taxon_A')).toMatchObject({
+      id: 'node-prepared-leaf',
+      parentId: root.id,
+    });
+    expect(layout.links[0].targetId).toBe('node-prepared-leaf');
+  });
+
   it('builders emit normalized metadata without legacy hierarchy references', () => {
     const root = hierarchy({
       name: 'root',
@@ -115,8 +189,11 @@ describe('normalized render contract', () => {
       node.radius = node.depth;
       node.angle = node.depth;
     });
+    assignLayoutNodeIds(root);
 
     const layout = createLayoutResult(root, { max_radius: 1, width: 100, height: 100, margin: 0, scale: 1 });
+    expect(layout.links[0]).not.toHaveProperty('id');
+
     const nodes = new NodeDataBuilder().convertNodes(layout.nodes, {
       canvasWidth: layout.width,
       canvasHeight: layout.height,
@@ -133,9 +210,11 @@ describe('normalized render contract', () => {
     });
     expect(nodes.find((node) => node.name === 'Taxon_A')).toMatchObject({
       parentId: rootNode.id,
+      splitKey: expect.any(String),
     });
     expect(links[0]).toMatchObject({
       split_indices: [0],
+      splitKey: expect.any(String),
       name: 'Taxon_A',
       isLeaf: true,
     });
@@ -143,11 +222,13 @@ describe('normalized render contract', () => {
     expect(links[0].path.length % 3).toBe(0);
     expect(labels[0]).toMatchObject({
       split_indices: [0],
+      splitKey: expect.any(String),
       name: 'Taxon_A',
       isLeaf: true,
     });
     expect(extensions[0]).toMatchObject({
       split_indices: [0],
+      splitKey: expect.any(String),
       name: 'Taxon_A',
       isLeaf: true,
     });
@@ -161,6 +242,40 @@ describe('normalized render contract', () => {
     expect(labels[0]).not.toHaveProperty('leaf');
     expect(labels[0]).not.toHaveProperty('data');
     expect(extensions[0]).not.toHaveProperty('leaf');
+  });
+
+  it('builders reuse normalized layout ids instead of recalculating render ids', () => {
+    const root = hierarchy({
+      name: 'root',
+      split_indices: [0, 1],
+      children: [
+        { name: 'Taxon_A', split_indices: [0], children: [] },
+      ],
+    });
+    root.each((node) => {
+      node.x = node.depth;
+      node.y = node.depth + 1;
+      node.radius = node.depth;
+      node.angle = node.depth;
+    });
+    assignLayoutNodeIds(root);
+
+    const layout = createLayoutResult(root, { max_radius: 1, width: 100, height: 100, margin: 0, scale: 1 });
+    const leafNode = layout.nodes.find((node) => node.name === 'Taxon_A');
+    leafNode.id = 'node-upstream-leaf';
+    layout.links[0].targetId = 'node-upstream-leaf';
+
+    const nodes = new NodeDataBuilder().convertNodes(layout.nodes, {
+      canvasWidth: layout.width,
+      canvasHeight: layout.height,
+    });
+    const links = new LinkDataBuilder().convertLinks(layout.links);
+
+    expect(nodes.find((node) => node.name === 'Taxon_A')).toMatchObject({
+      id: 'node-upstream-leaf',
+      dotSize: expect.any(Number),
+    });
+    expect(links[0].targetId).toBe('node-upstream-leaf');
   });
 
   it('keeps data builders on normalized layout arrays', () => {
@@ -181,6 +296,7 @@ describe('normalized render contract', () => {
       expect(source).not.toMatch(/nodeDotSizes\.get\([^)]*\)\s*\|\|/);
       expect(source).not.toMatch(/\b(name|text|targetName|angle|child_split_indices):\s*(node|leaf|link)\.[^,\n]*\|\|/);
       expect(source).not.toMatch(/const\s+angleRad\s*=\s*leaf\.angle\s*\|\|/);
+      expect(source).not.toMatch(/get(Node|Link|Label|Extension)Key/);
     }
   });
 

@@ -30,22 +30,7 @@ export function polarToCartesian(radius, angle, center = { x: 0, y: 0, z: 0 }) {
     z: center.z ?? 0
   };
 }
-
 /* ─────────────────────────── INTERPOLATION ─────────────────────────── */
-
-/**
- * Interpolates between two angles with wrap-around handling.
- * @param {number} from - Source angle in radians
- * @param {number} to - Target angle in radians
- * @param {number} t - Interpolation factor (0-1)
- * @returns {number} Interpolated angle
- */
-export function interpolateAngle(from, to, t) {
-  let delta = to - from;
-  if (delta > Math.PI) delta -= 2 * Math.PI;
-  if (delta < -Math.PI) delta += 2 * Math.PI;
-  return from + delta * t;
-}
 
 /**
  * Creates a polar interpolator for angle & radius.
@@ -204,37 +189,4 @@ export function calculateInterpolatedBranchCoordinates(
       center
     }
   };
-}
-
-
-/* ─────────────────────────── LINK ANALYSIS ─────────────────────────── */
-
-/**
- * Calculates the total length of a path from coordinate data.
- * @param {Object} coordinates - Coordinate data with movePoint, arcEndPoint, lineEndPoint, arcProperties
- * @returns {number} Total path length
- */
-export function calculatePathLengthFromCoordinates(coordinates) {
-  if (!coordinates || !coordinates.movePoint) return 0;
-
-  const { movePoint, arcEndPoint, lineEndPoint, arcProperties } = coordinates;
-  let length = 0;
-
-  if (arcProperties && arcProperties.radius && arcProperties.angleDiff) {
-    length += Math.abs(arcProperties.angleDiff) * arcProperties.radius;
-
-    if (lineEndPoint && arcEndPoint) {
-      const dx = lineEndPoint.x - arcEndPoint.x;
-      const dy = lineEndPoint.y - arcEndPoint.y;
-      const dz = (lineEndPoint.z || 0) - (arcEndPoint.z || 0);
-      length += Math.sqrt(dx * dx + dy * dy + dz * dz);
-    }
-  } else if (lineEndPoint) {
-    const dx = lineEndPoint.x - movePoint.x;
-    const dy = lineEndPoint.y - movePoint.y;
-    const dz = (lineEndPoint.z || 0) - (movePoint.z || 0);
-    length += Math.sqrt(dx * dx + dy * dy + dz * dz);
-  }
-
-  return length;
 }

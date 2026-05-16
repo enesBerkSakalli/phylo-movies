@@ -72,6 +72,30 @@ describe('render data contract static guard', () => {
     expect(source).not.toMatch(/Array\.isArray\(nodes\)/);
     expect(source).not.toMatch(/Array\.isArray\(items\)/);
   });
+
+  it('does not keep unused key-based legacy helpers', () => {
+    const projectionsSource = fs.readFileSync(
+      path.join(repoRoot, 'src/treeVisualisation/spatial/projections.js'),
+      'utf8'
+    );
+    const colorManagerSource = fs.readFileSync(
+      path.join(repoRoot, 'src/treeVisualisation/systems/TreeColorManager.js'),
+      'utf8'
+    );
+
+    expect(projectionsSource).not.toMatch(/projectNodesToScreen/);
+    expect(colorManagerSource).not.toMatch(/prominentHistory/);
+    expect(colorManagerSource).not.toMatch(/isProminentHistoryStructure/);
+  });
+
+  it('keeps layout normalization from recalculating prepared render ids', () => {
+    const source = fs.readFileSync(
+      path.join(repoRoot, 'src/treeVisualisation/layout/LayoutResultAdapter.js'),
+      'utf8'
+    );
+
+    expect(source).not.toMatch(/getNodeKey/);
+  });
 });
 
 function listSourceFiles(dirs) {

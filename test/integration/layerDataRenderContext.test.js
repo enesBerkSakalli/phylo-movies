@@ -4,6 +4,7 @@ import { DeckGLTreeLayerDataFactory } from '../../src/treeVisualisation/deckgl/D
 import { TreeNodeInteractionHandler } from '../../src/treeVisualisation/interaction/TreeNodeInteractionHandler.js';
 import { useAppStore } from '../../src/state/phyloStore/store.js';
 import { createLayoutResult } from '../../src/treeVisualisation/layout/LayoutResultAdapter.js';
+import { assignLayoutNodeIds } from '../../src/treeVisualisation/layout/LayoutBaseUtils.js';
 
 function makeLayoutTree() {
   const root = hierarchy({
@@ -23,6 +24,7 @@ function makeLayoutTree() {
     node.rotatedAngle = index;
     node.radius = index * 10;
   });
+  assignLayoutNodeIds(root);
 
   return createLayoutResult(root, {
     max_radius: 20,

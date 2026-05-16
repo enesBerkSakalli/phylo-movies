@@ -1,4 +1,4 @@
-import { getLabelKey } from '../../../../utils/KeyGenerator.js';
+import { getSplitKey } from '../../../../../domain/tree/splits.js';
 import {
   labelRotation,
   labelTextAnchor,
@@ -48,7 +48,8 @@ export class LabelDataBuilder {
     const rotation = labelRotation(angleRad, needsFlip);
     const position = positionFromPolar(labelRadius, angleRad);
     const splitIndices = leaf.split_indices;
-    const labelKey = getLabelKey({ split_indices: splitIndices });
+    const splitKey = getSplitKey({ split_indices: splitIndices });
+    const labelKey = splitKey ? `label-${splitKey}` : null;
     if (!labelKey) {
       console.warn('[LabelDataBuilder] Skipping label without split_indices:', leaf.name);
       return null;
@@ -61,6 +62,7 @@ export class LabelDataBuilder {
       name: leaf.name,
       isLeaf: true,
       split_indices: splitIndices,
+      splitKey,
       angle: angleRad,
       distance: distance,
       polarPosition: labelRadius,

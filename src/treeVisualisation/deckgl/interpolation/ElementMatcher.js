@@ -15,14 +15,13 @@ export class ElementMatcher {
    * @returns {Array} Interpolated elements
    */
   interpolateElements(fromElements, toElements, timeFactor, interpolateFn, options) {
-    // Use precomputed maps if available, otherwise create valid maps
-    // Note: If passed, they MUST be Map objects or convertible to iterables
+    // Use precomputed maps if available, otherwise create valid maps.
+    // Passed maps must support Map iteration plus get/has lookup.
     const fromMap = options?.fromMap || this._createElementMap(fromElements);
     const toMap = options?.toMap || this._createElementMap(toElements);
     const velocityMap = options?.velocityMap || null;
 
     const result = [];
-    const processedFromIds = new Set();
 
     // Process elements in target (handles updating and entering)
     for (const [id, toElement] of toMap) {
@@ -30,8 +29,6 @@ export class ElementMatcher {
 
       if (fromElement) {
         // Element exists in both - interpolate
-        processedFromIds.add(id);
-
         // Use per-element velocity entry when normalisation is active.
         // velocityEntry is { angularT } or null.
         const velocityEntry = velocityMap?.get(id) ?? null;
@@ -52,7 +49,7 @@ export class ElementMatcher {
 
     // Process exiting elements (in source but not in target)
     for (const [id, fromElement] of fromMap) {
-      if (!processedFromIds.has(id)) {
+      if (!toMap.has(id)) {
         // Element is exiting - use source state
         // We interpolate(from, from, 0.0) to ensure derived properties are calculated
         const computed = interpolateFn(fromElement, fromElement, 0.0, fromElement, fromElement);
@@ -72,7 +69,11 @@ export class ElementMatcher {
    * @private
    */
   _createElementMap(elements) {
-    return new Map(elements.map(el => [el.id, el]));
+    const map = new Map();
+    for (const element of elements) {
+      map.set(element.id, element);
+    }
+    return map;
   }
 
   /**

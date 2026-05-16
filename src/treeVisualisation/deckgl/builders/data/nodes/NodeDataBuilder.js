@@ -1,4 +1,4 @@
-import { getNodeKey } from '../../../../utils/KeyGenerator.js';
+import { getSplitKey } from '../../../../../domain/tree/splits.js';
 import { NodeGeometryBuilder } from '../../geometry/nodes/NodeGeometryBuilder.js';
 import { Z_NODE } from '../../../constants/zOffsets.js';
 
@@ -35,12 +35,13 @@ export class NodeDataBuilder {
     }
 
     const splitIndices = node.split_indices;
-    const nodeKey = getNodeKey({ split_indices: splitIndices });
+    const nodeKey = node.id;
     if (!nodeKey) {
-      console.warn('[NodeDataBuilder] Skipping node without split_indices:', node.name);
+      console.warn('[NodeDataBuilder] Skipping node without normalized id:', node.name);
       return null;
     }
     const dotSize = nodeDotSizes.get(nodeKey);
+    const splitKey = getSplitKey({ split_indices: splitIndices });
 
     const isLeaf = node.isLeaf === true;
 
@@ -58,6 +59,7 @@ export class NodeDataBuilder {
       angle: node.angle,
       polarPosition: node.radius,
       split_indices: splitIndices,
+      splitKey,
       child_split_indices: node.child_split_indices
     };
   }

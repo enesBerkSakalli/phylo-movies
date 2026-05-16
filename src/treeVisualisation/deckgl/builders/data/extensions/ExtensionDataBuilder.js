@@ -1,4 +1,4 @@
-import { getExtensionKey } from '../../../../utils/KeyGenerator.js';
+import { getSplitKey } from '../../../../../domain/tree/splits.js';
 import { twoPointFloat32Path } from '../../../utils/pathFormat.js';
 
 /**
@@ -43,7 +43,8 @@ export class ExtensionDataBuilder {
     const sourceX = leaf.x;
     const sourceY = leaf.y;
     const splitIndices = leaf.split_indices;
-    const extensionKey = getExtensionKey({ split_indices: splitIndices });
+    const splitKey = getSplitKey({ split_indices: splitIndices });
+    const extensionKey = splitKey ? `ext-${splitKey}` : null;
     if (!extensionKey) {
       console.warn('[ExtensionDataBuilder] Skipping extension without split_indices:', leaf.name);
       return null;
@@ -57,6 +58,7 @@ export class ExtensionDataBuilder {
       name: leaf.name,
       isLeaf: true,
       split_indices: splitIndices,
+      splitKey,
       // Provide polar metadata so PathInterpolator can perform
       // polar-aware interpolation for extension paths
       polarData: {

@@ -187,7 +187,7 @@ describe('TreeVisualisation/DeckGL/Interpolation/ElementMatcher', () => {
       const fromExt = { id: 'ext_leaf_1', targetPosition: [100, 0, 0] };
       const toExt = { id: 'ext_leaf_1', targetPosition: [120, 0, 0] };
 
-      const interpolateExtFn = (from, to, t) => ({
+      const interpolateExtFn = (from, to, _t) => ({
         id: to.id,
         targetPosition: [110, 0, 0], // manually solved for t=0.5
         type: 'update'
@@ -198,6 +198,18 @@ describe('TreeVisualisation/DeckGL/Interpolation/ElementMatcher', () => {
       expect(result).to.have.lengthOf(1);
       expect(result[0].id).to.equal('ext_leaf_1');
       expect(result[0].targetPosition).to.deep.equal([110, 0, 0]);
+    });
+
+    it('creates element maps without allocating an intermediate mapped array', () => {
+      const elements = [createEl('A', 1), createEl('B', 2)];
+      elements.map = () => {
+        throw new Error('Array.map should not be used for element map construction');
+      };
+
+      const result = matcher._createElementMap(elements);
+
+      expect(result.get('A')).to.equal(elements[0]);
+      expect(result.get('B')).to.equal(elements[1]);
     });
   });
 });

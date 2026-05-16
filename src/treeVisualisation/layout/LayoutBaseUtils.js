@@ -1,4 +1,4 @@
-import { getNodeKey } from '../utils/KeyGenerator.js';
+import { getNodeKey } from '../../domain/tree/splits.js';
 
 const DEFAULT_WIDTH = 800;
 const DEFAULT_HEIGHT = 600;
@@ -15,6 +15,13 @@ export function initializeLayoutState(layout) {
   layout.angleOffset = 0;
   layout.preserveRadius = false;
   layout.previousNodeRadii = new Map();
+}
+
+export function assignLayoutNodeIds(root) {
+  root.each((node) => {
+    node.id = getNodeKey({ split_indices: node.data.split_indices });
+  });
+  return root;
 }
 
 export function setAngleExtentDegrees(layout, degrees = 360) {
@@ -81,7 +88,7 @@ export function calculateBranchLengthRadii(layout, node, radius = 0) {
   const length = Number(data.length ?? 0) || 0;
   const effectiveLength = node.parent ? length : 0;
 
-  const nodeKey = getNodeKey({ split_indices: data.split_indices });
+  const nodeKey = node.id;
   if (nodeKey && layout.preserveRadius && layout.previousNodeRadii.has(nodeKey)) {
     node.radius = layout.previousNodeRadii.get(nodeKey);
   } else {
