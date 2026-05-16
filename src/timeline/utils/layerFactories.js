@@ -40,7 +40,7 @@ export function createPathLayer(id, data, color, width, options = {}) {
   return new PathLayer(props);
 }
 
-export function createScatterplotLayer(id, data, options = {}) {
+function createScatterplotLayer(id, data, options = {}) {
   return new ScatterplotLayer({
     id,
     data,
@@ -204,7 +204,7 @@ function clampToViewport(x, radius, width) {
   return Math.max(-halfWidth + radius, Math.min(halfWidth - radius, x));
 }
 
-export function calculateRadius(anchorRadiusVar, height, zoomScale) {
+function calculateRadius(anchorRadiusVar, height, zoomScale) {
   const baseRadius = Number.isFinite(anchorRadiusVar)
     ? anchorRadiusVar
     : Math.max(3, Math.min(6, Math.floor(height * 0.18)));

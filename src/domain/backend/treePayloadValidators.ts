@@ -11,7 +11,7 @@ import {
   validateRangeTuple,
 } from './schemaValidation';
 
-export function validateTreeNode(value: unknown, fieldName: string): TreeNode {
+function validateTreeNode(value: unknown, fieldName: string): TreeNode {
   assertRecord(value, fieldName);
 
   if (typeof value.name !== 'string') {
@@ -43,7 +43,7 @@ export function validateTreeList(value: unknown): TreeNode[] {
   return trees.map((tree, index) => validateTreeNode(tree, `interpolated_trees[${index}]`));
 }
 
-export function validateTreeMetadata(value: unknown, index: number): TreeMetadata {
+function validateTreeMetadata(value: unknown, index: number): TreeMetadata {
   const metadata = requiredRecord(value, `tree_metadata[${index}]`);
 
   if (metadata.tree_pair_key !== null && typeof metadata.tree_pair_key !== 'string') {

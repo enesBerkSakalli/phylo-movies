@@ -21,7 +21,7 @@ import { createContextMenuSlice } from './slices/interaction/treeInteraction.sli
 export * from './selectors/treeSelectors.js';
 
 /**
- * @typedef {import('../../../types/store.ts').AppStoreState} AppStoreState
+ * @typedef {import('../../types/store.ts').AppStoreState} AppStoreState
  */
 
 /**

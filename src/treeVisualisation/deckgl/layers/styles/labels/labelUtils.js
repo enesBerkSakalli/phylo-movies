@@ -59,7 +59,7 @@ export function normalizeTextAnchor(anchor) {
  * Checks if all labels belong to the same tree side.
  * Optimization: Fails fast on the first mismatch.
  */
-export function getSingleTreeSide(labels) {
+function getSingleTreeSide(labels) {
   if (!labels || labels.length === 0) return null;
 
   const firstSide = labels[0]?.treeSide;

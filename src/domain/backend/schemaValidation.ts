@@ -1,4 +1,4 @@
-export function isRecord(value: unknown): value is Record<string, unknown> {
+function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
@@ -8,7 +8,7 @@ export function assertRecord(value: unknown, fieldName: string): asserts value i
   }
 }
 
-export function assertArray(value: unknown, fieldName: string): asserts value is unknown[] {
+function assertArray(value: unknown, fieldName: string): asserts value is unknown[] {
   if (!Array.isArray(value)) {
     throw new Error(`Invalid phyloMovieData payload: ${fieldName} must be an array`);
   }

@@ -169,7 +169,7 @@ Object.keys(SCHEMES).forEach(scheme => {
  * @param {string} ch - Single nucleotide character
  * @returns {number[]} RGBA color array
  */
-export function dnaColor(ch) {
+function dnaColor(ch) {
   switch (ch) {
     case 'A': return rgba(0, 200, 0);      // Bright green
     case 'C': return rgba(0, 100, 255);    // Bright blue
@@ -186,7 +186,7 @@ export function dnaColor(ch) {
  * @param {string} ch - Single amino acid character
  * @returns {number[]} RGBA color array
  */
-export function proteinColor(ch) {
+function proteinColor(ch) {
   // Amino acid classification sets
   const hydrophobic = new Set(['A', 'V', 'I', 'L', 'M', 'F', 'W', 'Y', 'P']);
   const polar = new Set(['S', 'T', 'N', 'Q', 'C', 'G']);
@@ -206,7 +206,7 @@ export function proteinColor(ch) {
  * @param {string} ch - Single character
  * @returns {number[]} RGBA color array
  */
-export function grayscaleColor(ch) {
+function grayscaleColor(ch) {
   if (ch === '-') return gray(240);
   return gray(150);
 }

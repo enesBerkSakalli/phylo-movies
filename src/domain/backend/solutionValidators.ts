@@ -61,7 +61,7 @@ function validateSplitChangeEvent(value: unknown, fieldName: string): SplitChang
   };
 }
 
-export function validateSplitChangeEventList(value: unknown, fieldName: string): SplitChangeEvent[] {
+function validateSplitChangeEventList(value: unknown, fieldName: string): SplitChangeEvent[] {
   const events = requiredArray(value, fieldName);
   return events.map((event, index) => validateSplitChangeEvent(event, `${fieldName}[${index}]`));
 }

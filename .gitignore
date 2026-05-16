@@ -45,6 +45,7 @@ debug_logs
 backend/brancharchitect-0.37.0.dist-info
 .env
 .vite/deps
+.qmd/
 !test/data/
 test/data/*
 !test/data/ostrich_bug_response.json
@@ -66,6 +67,9 @@ electron-app/logs/
 engine/BranchArchitect/dist/
 engine/BranchArchitect/build/
 engine/BranchArchitect/.venv/
+engine/BranchArchitect/.venv-build/
+engine/BranchArchitect/webapp/.venv/
+engine/BranchArchitect/test/output/
 engine/BranchArchitect/**/__pycache__/
 engine/BranchArchitect/**/*.pyc
 publication_data/MBE_DATA_CHECKLIST.md

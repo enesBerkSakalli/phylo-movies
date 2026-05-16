@@ -25,8 +25,3 @@ export function syncGroupColors(colorManager, groups) {
     }
   }
 }
-
-// Normalize separator value to null if empty/undefined
-export function normalizeSeparator(separator) {
-  return separator === null || separator === 'null' || separator === undefined ? null : separator;
-}

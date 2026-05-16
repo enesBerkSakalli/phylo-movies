@@ -74,7 +74,7 @@ export function getGroupForTaxon(taxon, separators, strategyType, options = {}) 
  * @param {Object} options - Additional options (segmentIndex for segment selection)
  * @returns {string|null} The group name or null if no group found
  */
-export function getGroupForStrategy(taxonName, separators, strategyType, options = {}) {
+function getGroupForStrategy(taxonName, separators, strategyType, options = {}) {
   const parts = splitByMultipleSeparators(taxonName, separators);
 
   if (parts.length <= 1) {
