@@ -1,9 +1,26 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
 import {
   calculateFocusViewport,
+  VIEWPORT_BRANCH_FIT_PADDING,
+  VIEWPORT_HIGH_DENSITY_NODE_THRESHOLD,
+  VIEWPORT_HIGH_DENSITY_PADDING,
+  VIEWPORT_LABEL_FIT_PADDING,
+  VIEWPORT_LOW_DENSITY_NODE_THRESHOLD,
+  VIEWPORT_LOW_DENSITY_PADDING,
+  VIEWPORT_MEDIUM_DENSITY_NODE_THRESHOLD,
+  VIEWPORT_MEDIUM_DENSITY_PADDING,
   ViewportManager
 } from '../src/treeVisualisation/viewport/ViewportManager.js';
-import { calculateBranchBounds } from '../src/treeVisualisation/utils/TreeBoundsUtils.js';
+import {
+  calculateBranchBounds,
+  calculateMaxPositionRadius,
+  calculateNodeBounds,
+  calculatePositionCenter,
+  calculateSafeVisualRadius,
+  calculateTreeVisualRadius,
+  calculateVisualBounds
+} from '../src/treeVisualisation/utils/TreeBoundsUtils.js';
 
 describe('ViewportManager', () => {
   it('calculates branch-focused viewport state without transition side effects', () => {
@@ -129,5 +146,76 @@ describe('ViewportManager', () => {
     );
 
     expect(bounds.maxY).toBe(100);
+  });
+
+  it('keeps density padding on the normalized node array contract', () => {
+    const source = readFileSync(
+      new URL('../src/treeVisualisation/viewport/ViewportManager.js', import.meta.url),
+      'utf8'
+    );
+
+    expect(source).not.toMatch(/Array\.isArray\(nodes\)/);
+  });
+
+  it('pins viewport fit padding constants', () => {
+    expect(VIEWPORT_LABEL_FIT_PADDING).toBe(1.25);
+    expect(VIEWPORT_BRANCH_FIT_PADDING).toBe(1.12);
+    expect(VIEWPORT_HIGH_DENSITY_NODE_THRESHOLD).toBe(400);
+    expect(VIEWPORT_MEDIUM_DENSITY_NODE_THRESHOLD).toBe(200);
+    expect(VIEWPORT_LOW_DENSITY_NODE_THRESHOLD).toBe(100);
+    expect(VIEWPORT_HIGH_DENSITY_PADDING).toBe(0.15);
+    expect(VIEWPORT_MEDIUM_DENSITY_PADDING).toBe(0.1);
+    expect(VIEWPORT_LOW_DENSITY_PADDING).toBe(0.05);
+  });
+});
+
+describe('TreeBoundsUtils normalized data contract', () => {
+  it('keeps empty normalized arrays as zero bounds', () => {
+    expect(calculateVisualBounds([], [])).toEqual({ minX: 0, maxX: 0, minY: 0, maxY: 0 });
+    expect(calculateNodeBounds([])).toEqual({ minX: 0, maxX: 0, minY: 0, maxY: 0 });
+    expect(calculateBranchBounds([], [])).toEqual({ minX: 0, maxX: 0, minY: 0, maxY: 0 });
+    expect(calculatePositionCenter([])).toEqual([0, 0]);
+    expect(calculateMaxPositionRadius([])).toBe(0);
+  });
+
+  it('calculates branch bounds from normalized nodes and links', () => {
+    expect(calculateBranchBounds(
+      [
+        { position: [10, 20, 0] },
+        { position: [-5, 8, 0] }
+      ],
+      [
+        {
+          sourcePosition: [1, 2, 0],
+          targetPosition: [30, -10, 0]
+        }
+      ]
+    )).toEqual({
+      minX: -5,
+      maxX: 30,
+      minY: -10,
+      maxY: 20
+    });
+  });
+
+  it('calculates centers and radii from normalized positions', () => {
+    const items = [
+      { position: [0, 0, 0] },
+      { position: [10, 20, 0] }
+    ];
+
+    expect(calculatePositionCenter(items)).toEqual([5, 10]);
+    expect(calculateMaxPositionRadius(items, [0, 0])).toBeCloseTo(Math.hypot(10, 20));
+  });
+
+  it('keeps the existing tree visual radius label heuristic unchanged', () => {
+    const layerData = {
+      nodes: [{ position: [3, 4, 0] }],
+      labels: [{ position: [0, 10, 0], text: 'abcd' }],
+      extensions: [{ sourcePosition: [0, 12, 0], targetPosition: [0, 20, 0] }]
+    };
+
+    expect(calculateTreeVisualRadius(layerData, [0, 0], 10)).toBe(44);
+    expect(calculateSafeVisualRadius(layerData.nodes, layerData.labels, [0, 0], 12)).toBe(28);
   });
 });

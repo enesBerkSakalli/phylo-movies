@@ -55,6 +55,23 @@ describe('render data contract static guard', () => {
     expect(source).not.toMatch(/const\s+toArray\s*=/);
     expect(source).not.toMatch(/Array\.isArray/);
   });
+
+  it('keeps tree bounds helpers on normalized layer arrays', () => {
+    const source = fs.readFileSync(
+      path.join(repoRoot, 'src/treeVisualisation/utils/TreeBoundsUtils.js'),
+      'utf8'
+    );
+
+    expect(source).not.toMatch(/nodes\?\./);
+    expect(source).not.toMatch(/labels\s*&&/);
+    expect(source).not.toMatch(/nodes\s*\|\|\s*\[\]/);
+    expect(source).not.toMatch(/links\s*\|\|\s*\[\]/);
+    expect(source).not.toMatch(/node\?\.position/);
+    expect(source).not.toMatch(/link\?\./);
+    expect(source).not.toMatch(/item\?\.position\s*\|\|/);
+    expect(source).not.toMatch(/Array\.isArray\(nodes\)/);
+    expect(source).not.toMatch(/Array\.isArray\(items\)/);
+  });
 });
 
 function listSourceFiles(dirs) {

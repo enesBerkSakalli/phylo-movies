@@ -4,7 +4,7 @@
  * @param {Array} labels
  */
 export function calculateVisualBounds(nodes, labels) {
-  if (!nodes?.length) {
+  if (nodes.length === 0) {
     return { minX: 0, maxX: 0, minY: 0, maxY: 0 };
   }
 
@@ -22,7 +22,7 @@ export function calculateVisualBounds(nodes, labels) {
   }
 
   // 2. Include Labels
-  if (labels && labels.length > 0) {
+  if (labels.length > 0) {
     const CHAR_WIDTH = 10;
     const FONT_HEIGHT = 16;
 
@@ -78,7 +78,7 @@ export function calculateVisualBounds(nodes, labels) {
  * @param {Array} nodes
  */
 export function calculateNodeBounds(nodes) {
-  if (!nodes?.length) {
+  if (nodes.length === 0) {
     return { minX: 0, maxX: 0, minY: 0, maxY: 0 };
   }
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
@@ -128,29 +128,29 @@ export function calculateBranchBounds(nodes, links = []) {
     }
   };
 
-  for (const node of nodes || []) {
-    includePoint(node?.position);
+  for (const node of nodes) {
+    includePoint(node.position);
   }
 
-  for (const link of links || []) {
-    if (link?.path) {
+  for (const link of links) {
+    if (link.path) {
       includePath(link.path);
     } else {
-      includePoint(link?.sourcePosition);
-      includePoint(link?.targetPosition);
+      includePoint(link.sourcePosition);
+      includePoint(link.targetPosition);
     }
   }
 
   return hasPoint ? { minX, maxX, minY, maxY } : { minX: 0, maxX: 0, minY: 0, maxY: 0 };
 }
 
-export function calculatePositionCenter(nodes = []) {
-  if (!Array.isArray(nodes) || nodes.length === 0) return [0, 0];
+export function calculatePositionCenter(nodes) {
+  if (nodes.length === 0) return [0, 0];
 
   const [sumX, sumY] = nodes.reduce(
     (acc, node) => {
-      acc[0] += node.position?.[0] ?? 0;
-      acc[1] += node.position?.[1] ?? 0;
+      acc[0] += node.position[0];
+      acc[1] += node.position[1];
       return acc;
     },
     [0, 0]
@@ -159,11 +159,11 @@ export function calculatePositionCenter(nodes = []) {
   return [sumX / nodes.length, sumY / nodes.length];
 }
 
-export function calculateMaxPositionRadius(items = [], center = [0, 0]) {
-  if (!Array.isArray(items) || items.length === 0) return 0;
+export function calculateMaxPositionRadius(items, center = [0, 0]) {
+  if (items.length === 0) return 0;
 
   return items.reduce((maxRadius, item) => {
-    const position = item?.position || [0, 0];
+    const position = item.position;
     const radius = Math.hypot(position[0] - center[0], position[1] - center[1]);
     return radius > maxRadius ? radius : maxRadius;
   }, 0);
@@ -171,8 +171,7 @@ export function calculateMaxPositionRadius(items = [], center = [0, 0]) {
 
 export function calculateTreeVisualRadius(layerData, center = [0, 0], labelSizePx = 0) {
   const dist = (position) => {
-    if (!position) return 0;
-    return Math.hypot((position[0] ?? 0) - center[0], (position[1] ?? 0) - center[1]);
+    return Math.hypot(position[0] - center[0], position[1] - center[1]);
   };
 
   let maxRadius = 0;
@@ -201,7 +200,7 @@ export function calculateTreeVisualRadius(layerData, center = [0, 0], labelSizeP
   return maxRadius;
 }
 
-export function calculateSafeVisualRadius(nodes = [], labels = [], center = [0, 0], fontSizePx = 12) {
+export function calculateSafeVisualRadius(nodes, labels, center = [0, 0], fontSizePx = 12) {
   const baseRadius = Math.max(
     calculateMaxPositionRadius(nodes, center),
     calculateMaxPositionRadius(labels, center)

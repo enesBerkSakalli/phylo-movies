@@ -80,7 +80,7 @@ export function areBoundsInView(bounds, viewport, paddingFactor = 1.05) {
  * @returns {Object} Expanded bounds
  */
 export function expandBoundsForLabels(bounds, labels, labelSizePx, getLabelSize) {
-  if (!labels || !labels.length) return bounds;
+  if (labels.length === 0) return bounds;
 
   const sizePx = resolveLabelBoundsSize(labelSizePx, getLabelSize);
   const { width, height } = estimateLabelBoundsPadding(labels, sizePx);

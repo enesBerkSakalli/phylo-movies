@@ -128,6 +128,12 @@ describe('expandBoundsForLabels', () => {
     expect(expandBoundsForLabels(bounds, [])).toBe(bounds);
   });
 
+  it('surfaces invalid labels outside the normalized data contract', () => {
+    const bounds = { minX: 0, maxX: 10, minY: 0, maxY: 20 };
+
+    expect(() => expandBoundsForLabels(bounds, null)).toThrow();
+  });
+
   it('expands bounds using label text length and size', () => {
     expect(expandBoundsForLabels(
       { minX: 0, maxX: 10, minY: 0, maxY: 20 },
