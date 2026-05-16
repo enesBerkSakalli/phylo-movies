@@ -34,7 +34,6 @@ export function useWorkspaceInitializationForm() {
       midpointRooting: false,
       treesFile: null,
       msaFile: null,
-      orderFile: null,
       // Tree inference model options (enabled by default for viral data)
       treeInferenceEngine: 'iqtree',
       iqtreeFastSearch: true,
@@ -167,7 +166,6 @@ export function useWorkspaceInitializationForm() {
       const formData = {
         msaFile: example.fileType === 'msa' ? file : pairedMsaFile,
         treesFile: example.fileType === 'newick' || example.fileType === 'tree-msa' ? file : null,
-        orderFile: null,
         ...example.parameters,
       };
 

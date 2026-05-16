@@ -35,7 +35,6 @@ export async function processMovieData(formData, onProgress, options = {}) {
 
   const body = new FormData();
   if (formData.treesFile) body.append('treeFile', formData.treesFile);
-  if (formData.orderFile) body.append('orderFile', formData.orderFile);
   if (formData.msaFile) body.append('msaFile', formData.msaFile);
   body.append('windowSize', String(formData.windowSize ?? 1));
   body.append('windowStepSize', String(formData.stepSize ?? 1));

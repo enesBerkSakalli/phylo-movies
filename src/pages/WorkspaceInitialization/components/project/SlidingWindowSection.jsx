@@ -5,6 +5,7 @@ import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessa
 import { Input } from "../../../../components/ui/input";
 import { Badge } from "../../../../components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../../../components/ui/tooltip";
+import { STEP_MAX, STEP_MIN, WINDOW_MAX, WINDOW_MIN } from "../../workspaceInitializationFormModel.js";
 
 export function SlidingWindowSection({ hasMsa, disabled }) {
   const { control } = useFormContext();
@@ -43,8 +44,8 @@ export function SlidingWindowSection({ hasMsa, disabled }) {
             <FormControl>
               <Input
                 type="number"
-                min={1}
-                max={100000}
+                min={WINDOW_MIN}
+                max={WINDOW_MAX}
                 step={1}
                 inputMode="numeric"
                 pattern="[0-9]*"
@@ -70,8 +71,8 @@ export function SlidingWindowSection({ hasMsa, disabled }) {
             <FormControl>
               <Input
                 type="number"
-                min={1}
-                max={100000}
+                min={STEP_MIN}
+                max={STEP_MAX}
                 step={1}
                 inputMode="numeric"
                 pattern="[0-9]*"

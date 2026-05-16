@@ -8,7 +8,6 @@ export const STEP_MAX = 100000;
 export const workspaceInitializationFormSchema = z.object({
   treesFile: z.any().optional(),
   msaFile: z.any().optional(),
-  orderFile: z.any().optional(),
   windowSize: z.coerce.number()
     .int("Must be a whole number")
     .min(WINDOW_MIN, `Must be at least ${WINDOW_MIN}`)
