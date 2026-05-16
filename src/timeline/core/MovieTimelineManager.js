@@ -1,4 +1,3 @@
-import { TIMELINE_CONSTANTS } from '../constants.js';
 import { TimelineDataProcessor } from '../data/TimelineDataProcessor.js';
 import { TimelineClock } from './TimelineClock.js';
 import { ScrubberAPI } from './ScrubberAPI.js';
@@ -7,6 +6,7 @@ import { TimelineScrubController } from './TimelineScrubController.js';
 import { TimelineStateSynchronizer } from './TimelineStateSynchronizer.js';
 import { useAppStore } from '../../state/phyloStore/store.js';
 import { DeckTimelineRenderer } from '../renderers/DeckTimelineRenderer.js';
+import { toSegmentIndex } from '../utils/segmentTiming.js';
 
 // ============================================================================
 // MOVIE TIMELINE MANAGER
@@ -194,9 +194,7 @@ export class MovieTimelineManager {
     }
 
     _onTimelineClick(properties) {
-        const segmentIndex = properties.id
-            ? properties.id - TIMELINE_CONSTANTS.INDEX_OFFSET_UI
-            : null;
+        const segmentIndex = toSegmentIndex(properties.id);
 
         useAppStore.getState().setSelectedTimelineSegment(segmentIndex);
 

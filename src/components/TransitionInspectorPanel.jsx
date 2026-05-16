@@ -281,7 +281,7 @@ function getPairMetric(values, pair) {
 
 function formatTreeName(segment) {
   if (typeof segment.treeName === 'string' && segment.treeName.trim()) {
-    return segment.treeName.replace(/^Anchor Tree\b/i, 'Source Tree');
+    return segment.treeName;
   }
   if (segment.isFullTree && Number.isInteger(segment.originalTreeIndex)) {
     return `Source Tree ${segment.originalTreeIndex + 1}`;

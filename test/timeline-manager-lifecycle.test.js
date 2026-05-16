@@ -2,7 +2,7 @@ const { expect } = require('chai');
 const fs = require('fs');
 const path = require('path');
 const { JSDOM } = require('jsdom');
-const Module = require('module');
+const { clearTimelineModuleCache, installDeckGLMocks } = require('./helpers/deckGLMocks.js');
 
 require.extensions['.css'] = () => { };
 
@@ -12,45 +12,8 @@ global.document = dom.window.document;
 global.requestAnimationFrame = dom.window.requestAnimationFrame || ((cb) => setTimeout(cb, 0));
 global.cancelAnimationFrame = dom.window.cancelAnimationFrame || ((id) => clearTimeout(id));
 
-const mockDeckGLCore = {
-  Deck: class {
-    constructor(props) {
-      this.props = props || {};
-    }
-    setProps(nextProps) {
-      this.props = { ...this.props, ...nextProps };
-    }
-    finalize() { }
-  },
-  OrthographicView: class {
-    constructor(opts) {
-      this.opts = opts;
-    }
-  },
-  COORDINATE_SYSTEM: { CARTESIAN: 1 }
-};
-
-class MockLayer {
-  constructor(props) {
-    this.props = props || {};
-    this.id = this.props.id;
-  }
-  clone(nextProps) {
-    return new this.constructor({ ...this.props, ...nextProps });
-  }
-}
-
-const mockDeckGLLayers = {
-  PathLayer: class PathLayer extends MockLayer { },
-  ScatterplotLayer: class ScatterplotLayer extends MockLayer { }
-};
-
-const originalLoad = Module._load;
-Module._load = function (request, parent, isMain) {
-  if (request === '@deck.gl/core') return mockDeckGLCore;
-  if (request === '@deck.gl/layers') return mockDeckGLLayers;
-  return originalLoad.apply(this, arguments);
-};
+installDeckGLMocks();
+clearTimelineModuleCache();
 
 const { MovieTimelineManager } = require('../src/timeline/core/MovieTimelineManager.js');
 const { AnimationRunner } = require('../src/treeVisualisation/systems/AnimationRunner.js');
@@ -91,10 +54,6 @@ describe('MovieTimelineManager lifecycle', () => {
 
   before(() => {
     movieData = loadMovieData();
-  });
-
-  after(() => {
-    Module._load = originalLoad;
   });
 
   afterEach(() => {

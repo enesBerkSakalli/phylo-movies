@@ -1,6 +1,6 @@
 const { expect } = require('chai');
 const { JSDOM } = require('jsdom');
-const Module = require('module');
+const { clearTimelineModuleCache, installDeckGLMocks } = require('./helpers/deckGLMocks.js');
 // Ignore CSS imports from the renderer in test environment
 require.extensions['.css'] = () => { };
 
@@ -11,61 +11,8 @@ global.document = dom.window.document;
 global.requestAnimationFrame = dom.window.requestAnimationFrame || ((cb) => setTimeout(cb, 0));
 global.cancelAnimationFrame = dom.window.cancelAnimationFrame || ((id) => clearTimeout(id));
 
-// ---- Minimal deck.gl mocks to avoid ESM + WebGL in tests ----
-const mockDeckGLCore = {
-  Deck: class {
-    constructor(props) {
-      this.props = props || {};
-      this.eventListeners = [];
-      this.canvas = global.document.createElement('canvas');
-      this.canvas.getBoundingClientRect = () => this.props.parent.getBoundingClientRect();
-      const addEventListener = this.canvas.addEventListener.bind(this.canvas);
-      const removeEventListener = this.canvas.removeEventListener.bind(this.canvas);
-      this.canvas.addEventListener = (event, handler, options) => {
-        this.eventListeners.push({ event, handler, options });
-        addEventListener(event, handler, options);
-      };
-      this.canvas.removeEventListener = (event, handler, options) => {
-        this.eventListeners = this.eventListeners.filter(
-          (entry) => entry.event !== event || entry.handler !== handler
-        );
-        removeEventListener(event, handler, options);
-      };
-      this.props.parent.appendChild(this.canvas);
-    }
-    setProps(p) {
-      this.props = { ...this.props, ...p };
-    }
-    finalize() {
-      this.canvas?.remove();
-    }
-  },
-  OrthographicView: class { constructor(opts) { this.opts = opts; } },
-  COORDINATE_SYSTEM: { CARTESIAN: 1 }
-};
-
-class MockLayer {
-  constructor(props) {
-    this.props = props || {};
-    this.id = this.props.id;
-  }
-  clone(nextProps) {
-    return new this.constructor({ ...this.props, ...nextProps });
-  }
-}
-
-const mockDeckGLLayers = {
-  PathLayer: class PathLayer extends MockLayer { },
-  ScatterplotLayer: class ScatterplotLayer extends MockLayer { }
-};
-
-// Patch module loader to substitute deck.gl packages before requiring SUT
-const originalLoad = Module._load;
-Module._load = function (request, parent, isMain) {
-  if (request === '@deck.gl/core') return mockDeckGLCore;
-  if (request === '@deck.gl/layers') return mockDeckGLLayers;
-  return originalLoad.apply(this, arguments);
-};
+installDeckGLMocks();
+clearTimelineModuleCache();
 
 // Now require the SUT after mocks are in place
 const { DeckTimelineRenderer } = require('../src/timeline/renderers/DeckTimelineRenderer.js');

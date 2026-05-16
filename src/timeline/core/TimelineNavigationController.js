@@ -7,6 +7,7 @@
  * - dispatch directional navigation through the store
  */
 import { TimelineMathUtils } from '../math/TimelineMathUtils.js';
+import { getSegmentBounds } from '../utils/segmentTiming.js';
 
 export class TimelineNavigationController {
   constructor({ segments, timelineData, store, onTimelinePositionUpdated }) {
@@ -56,13 +57,12 @@ export class TimelineNavigationController {
       return fallbackIndex;
     }
 
-    const segmentStart = segmentIndex === 0 ? 0 : this.timelineData.cumulativeDurations[segmentIndex - 1];
-    const segmentEnd = this.timelineData.cumulativeDurations[segmentIndex];
-    if (!Number.isFinite(segmentStart) || !Number.isFinite(segmentEnd) || segmentEnd < segmentStart) {
+    const bounds = getSegmentBounds(segmentIndex, this.timelineData);
+    if (!bounds || bounds.end < bounds.start) {
       return fallbackIndex;
     }
 
-    const boundedTime = this._boundClickTimeToSegment(clickTimeMs, segmentStart, segmentEnd);
+    const boundedTime = this._boundClickTimeToSegment(clickTimeMs, bounds.start, bounds.end);
     const target = TimelineMathUtils.getTargetTreeForTime(
       this.segments,
       boundedTime,

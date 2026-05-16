@@ -75,13 +75,9 @@ function TooltipHeader({ isAnchor, segmentIndex, totalSegments }) {
  * Displays tree name and original index.
  */
 function AnchorContent({ segment }) {
-  const treeName = typeof segment.treeName === 'string'
-    ? segment.treeName.replace(/^Anchor Tree\b/i, 'Source Tree')
-    : segment.treeName;
-
   return (
     <div className="text-muted-foreground">
-      {treeName}
+      {segment.treeName}
       {typeof segment.originalTreeIndex === 'number' && (
         <span className="ml-2 text-xs opacity-70">
           (#{segment.originalTreeIndex + 1})
