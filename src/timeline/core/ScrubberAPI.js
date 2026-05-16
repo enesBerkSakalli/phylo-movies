@@ -84,7 +84,12 @@ export class ScrubberAPI {
       await this._renderScrubFrame(interpolationData, direction);
 
       this.lastInterpolationState = { progress, interpolationData, direction };
-    } catch (error) { }
+    } catch (error) {
+      console.error('[ScrubberAPI] Scrub update failed:', {
+        progress,
+        error
+      });
+    }
   }
 
   async _flushPendingUpdates() {
