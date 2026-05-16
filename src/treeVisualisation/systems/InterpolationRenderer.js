@@ -72,7 +72,7 @@ export class InterpolationRenderer {
       await this.controller.readyPromise;
     }
 
-    const { comparisonMode, rightTreeIndex, fromTreeIndex } = options;
+    const { comparisonMode, rightTreeIndex } = options;
 
     if (comparisonMode && typeof rightTreeIndex === 'number') {
       const rightTree = selectActiveTreeList(useAppStore.getState())[rightTreeIndex];
@@ -83,8 +83,7 @@ export class InterpolationRenderer {
         await this.controller.layerManager.renderComparisonAnimated({
           interpolatedData,
           rightTree,
-          rightIndex: rightTreeIndex,
-          leftIndex: fromTreeIndex
+          rightIndex: rightTreeIndex
         });
         return;
       }
