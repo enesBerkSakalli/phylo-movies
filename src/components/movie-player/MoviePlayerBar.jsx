@@ -87,7 +87,7 @@ export function MoviePlayerBar() {
 
   return (
     <>
-      <div className="movie-player-bar sticky bottom-0 z-1000 bg-card border-t shadow-[0_2px_4px_rgba(0,0,0,0.08)]" role="region" aria-label="Tree Sequence Controls">
+      <div className="movie-player-bar sticky bottom-0 z-[1000] bg-card border-t shadow-[0_2px_4px_rgba(0,0,0,0.08)]" role="region" aria-label="Tree Sequence Controls">
         <div className="flex flex-col gap-1">
           <div className="flex items-center justify-between" role="group" aria-label="Transport controls and chart controls">
             <div className="flex items-center gap-1 flex-wrap transition-all duration-300" role="group" aria-label="Transport controls and position">

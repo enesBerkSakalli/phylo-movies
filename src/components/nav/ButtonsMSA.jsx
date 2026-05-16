@@ -16,7 +16,6 @@ import {
   SidebarMenuSubItem,
 } from '../ui/sidebar';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../ui/collapsible';
-import { toast } from 'sonner';
 
 export function ButtonsMSA() {
   const hasMsa = useAppStore(selectHasMsa);
@@ -26,22 +25,10 @@ export function ButtonsMSA() {
 
   const handleOpenViewer = async () => {
     if (!hasMsa) return;
-
-    try {
-      const data = useAppStore.getState().movieData;
-
-      if (!data?.msa?.sequences) {
-        toast.warning('No alignment data available. Please upload an alignment file.');
-        return;
-      }
-
-      openMsaViewer();
-    } catch (error) {
-      console.error('[ButtonsMSA] Failed to open MSA viewer:', error);
-    }
+    openMsaViewer();
   };
   return (
-    <Collapsible defaultOpen asChild className="group/collapsible">
+    <Collapsible asChild className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
           <SidebarMenuButton tooltip="Sequence Alignment">

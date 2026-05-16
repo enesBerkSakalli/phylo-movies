@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  selectCameraMode,
   selectChangePulseEnabled,
   selectConnectorStrokeWidth,
   selectDimmingEnabled,
@@ -18,7 +17,6 @@ import {
   selectSetUpcomingChangesEnabled,
   selectSubtreeDimmingEnabled,
   selectSubtreeDimmingOpacity,
-  selectToggleCameraMode,
   selectTreeControllers,
   selectUpcomingChangesEnabled,
   useAppStore
@@ -45,7 +43,7 @@ import { PivotEdgeEffectsSection } from './PivotEdgeEffectsSection';
 
 export function PerspectiveSection({ cameraMode, toggleCameraMode, treeControllers }) {
   return (
-    <Collapsible defaultOpen asChild className="group/collapsible">
+    <Collapsible asChild className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
           <SidebarMenuButton tooltip="View Mode">
@@ -95,8 +93,6 @@ export function Appearance() {
   const dashingEnabled = useAppStore(selectPivotEdgeDashingEnabled);
   const upcomingChangesEnabled = useAppStore(selectUpcomingChangesEnabled);
   const treeControllers = useAppStore(selectTreeControllers);
-  const cameraMode = useAppStore(selectCameraMode);
-  const toggleCameraMode = useAppStore(selectToggleCameraMode);
 
   // Setter functions - retrieve from store
   const setDimmingEnabled = useAppStore(selectSetDimmingEnabled);
@@ -165,11 +161,6 @@ export function Appearance() {
         onLinkOpacityChange={handleLinkOpacityChange}
         onConnectorStrokeWidthChange={handleConnectorStrokeWidthChange}
       />
-      <PerspectiveSection
-        cameraMode={cameraMode}
-        toggleCameraMode={toggleCameraMode}
-        treeControllers={treeControllers}
-      />
     </>
   );
 }
@@ -181,7 +172,7 @@ export function Appearance() {
 
 export function ConnectionsSection({ linkConnectionOpacity, connectorStrokeWidth, onLinkOpacityChange, onConnectorStrokeWidthChange }) {
   return (
-    <Collapsible defaultOpen asChild className="group/collapsible">
+    <Collapsible asChild className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
           <SidebarMenuButton tooltip="Group Connectors">

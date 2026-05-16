@@ -1,13 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ButtonsMSA } from './components/nav/ButtonsMSA.jsx';
-import { Appearance } from './components/appearance/Appearance.jsx';
-import { VisualElements } from './components/appearance/controls/VisualElements/VisualElements.jsx';
-import { TreeStructureGroup } from './components/appearance/layout/TreeStructureGroup.jsx';
 import { MoviePlayerBar } from './components/movie-player/MoviePlayerBar.jsx';
-import { TreeStatsPanel } from './components/TreeStatsPanel/TreeStatsPanel.tsx';
-import { TaxaGroupsLegend } from './components/TreeStatsPanel/Shared/TaxaLegend';
-import AnalyticsDashboard from './components/TreeStatsPanel/AnalyticsDashboard.tsx';
+import { ToolsSidebar } from './components/sidebar/ToolsSidebar.jsx';
 import { DeckGLCanvas } from './components/deckgl/DeckGLCanvas.jsx';
 import { TreeViewportControls } from './components/deckgl/TreeViewportControls.jsx';
 import { CanvasCaptureControls } from './components/deckgl/CanvasCaptureControls.jsx';
@@ -22,21 +16,10 @@ import { TooltipProvider } from './components/ui/tooltip';
 import { HUD } from './components/HUD/HUD.jsx';
 import {
   SidebarProvider,
-  Sidebar,
-  SidebarHeader,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupLabel,
   SidebarInset,
-  SidebarSeparator,
   SidebarTrigger,
-  SidebarRail,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
 } from './components/ui/sidebar';
 
-import { Film, ArrowLeft } from 'lucide-react';
 import {
   selectFileName,
   selectHasMsa,
@@ -54,15 +37,24 @@ export function App() {
   const initializeStore = useAppStore(selectInitialize);
   const resetStore = useAppStore(selectReset);
   const [sprAnalyticsOpen, setSprAnalyticsOpen] = React.useState(false);
+  const [activeFloatingWindow, setActiveFloatingWindow] = React.useState(null);
 
   // Initialize Tree Controller and Rendering Logic
   useTreeController();
 
   const navigate = useNavigate();
   const [error, setError] = React.useState(null);
-  const handleReturnHome = React.useCallback(() => {
-    navigate('/');
-  }, [navigate]);
+  const focusMsaWindow = React.useCallback(() => setActiveFloatingWindow('msa'), []);
+  const focusTaxaColoringWindow = React.useCallback(() => setActiveFloatingWindow('taxa-coloring'), []);
+  const focusSprAnalyticsWindow = React.useCallback(() => setActiveFloatingWindow('spr-analytics'), []);
+  const openSprAnalyticsWindow = React.useCallback(() => {
+    setSprAnalyticsOpen(true);
+    setActiveFloatingWindow('spr-analytics');
+  }, []);
+  const closeSprAnalyticsWindow = React.useCallback(() => {
+    setSprAnalyticsOpen(false);
+    setActiveFloatingWindow((activeWindow) => activeWindow === 'spr-analytics' ? null : activeWindow);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -101,84 +93,30 @@ export function App() {
   return (
     <TooltipProvider>
       <SidebarProvider>
-                <Sidebar collapsible="icon">
-          <SidebarHeader>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton size="lg" asChild className="md:h-12">
-                  <div className="flex items-center gap-3 w-full">
-                    <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shrink-0">
-                      <Film className="size-5" />
-                    </div>
-                    <div className="flex flex-col gap-1 leading-none group-data-[collapsible=icon]:hidden overflow-hidden">
-                      <span className="font-semibold truncate">Phylo-Movies</span>
-                      <span className="text-2xs text-muted-foreground truncate">
-                        {error ? `Error: ${error}` : fileName}
-                      </span>
-                    </div>
-                  </div>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarHeader>
-
-          <SidebarContent>
-            {/* Main Navigation Group */}
-            <SidebarGroup>
-              <SidebarGroupLabel>Data</SidebarGroupLabel>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    tooltip="Change dataset"
-                    onClick={handleReturnHome}
-                  >
-                    <ArrowLeft className="size-4" />
-                    <span>Change Dataset</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <ButtonsMSA />
-                <TreeStructureGroup />
-              </SidebarMenu>
-            </SidebarGroup>
-
-            <SidebarSeparator />
-
-            {/* Analytics & Insights Group */}
-            <SidebarGroup>
-              <SidebarGroupLabel>Analysis</SidebarGroupLabel>
-              <SidebarMenu>
-                <AnalyticsDashboard
-                  isOpen={sprAnalyticsOpen}
-                  onOpen={() => setSprAnalyticsOpen(true)}
-                  onClose={() => setSprAnalyticsOpen(false)}
-                />
-                <TaxaGroupsLegend />
-                <TreeStatsPanel />
-              </SidebarMenu>
-            </SidebarGroup>
-
-            <SidebarSeparator />
-
-            {/* Visualization Controls Group */}
-            <SidebarGroup>
-              <SidebarGroupLabel>Display</SidebarGroupLabel>
-              <SidebarMenu>
-                <VisualElements />
-                <Appearance />
-              </SidebarMenu>
-            </SidebarGroup>
-          </SidebarContent>
-          <SidebarRail />
-        </Sidebar>
+        <ToolsSidebar
+          fileName={fileName}
+          error={error}
+          sprAnalyticsOpen={sprAnalyticsOpen}
+          isSprAnalyticsActive={activeFloatingWindow === 'spr-analytics'}
+          onOpenSprAnalytics={openSprAnalyticsWindow}
+          onCloseSprAnalytics={closeSprAnalyticsWindow}
+          onFocusSprAnalytics={focusSprAnalyticsWindow}
+        />
 
         <MSAProvider>
-          <MsaRndWindow />
+          <MsaRndWindow
+            isActive={activeFloatingWindow === 'msa'}
+            onFocus={focusMsaWindow}
+          />
         </MSAProvider>
-        <TaxaColoringRndWindow />
+        <TaxaColoringRndWindow
+          isActive={activeFloatingWindow === 'taxa-coloring'}
+          onFocus={focusTaxaColoringWindow}
+        />
 
 
         <SidebarInset className="overflow-hidden">
-          <SidebarTrigger className="absolute top-2 left-2 z-1200" />
+          <SidebarTrigger className="absolute top-2 left-2 z-[1200]" />
           <div className="full-size-container" style={{ flex: 1, minHeight: 0, position: 'relative', overflow: 'hidden' }}>
             <DeckGLCanvas />
             <TreeViewportControls />

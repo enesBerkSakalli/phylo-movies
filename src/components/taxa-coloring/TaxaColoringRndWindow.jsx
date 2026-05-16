@@ -21,16 +21,42 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "../ui/tooltip";
+import {
+  fitFloatingWindowRect,
+  getBrowserViewportSize,
+  getFloatingWindowViewportInsets,
+  hasFloatingWindowRectChanged,
+  toFloatingWindowRect,
+} from '../ui/floatingWindowGeometry.js';
 
 // Stable empty object to avoid creating new objects on each render
 const EMPTY_INITIAL_STATE = {};
+const TAXA_COLORING_WINDOW_BOUNDS = {
+  minWidth: 500,
+  minHeight: 520,
+  margin: 16,
+};
 
-export function TaxaColoringRndWindow() {
+function fitTaxaColoringWindowRect(rect) {
+  const viewport = getBrowserViewportSize();
+  const insets = getFloatingWindowViewportInsets();
+  return fitFloatingWindowRect(rect, {
+    ...TAXA_COLORING_WINDOW_BOUNDS,
+    viewportWidth: viewport.width,
+    viewportHeight: viewport.height,
+    leftInset: insets.left,
+    rightInset: insets.right,
+    topInset: insets.top,
+    bottomInset: insets.bottom,
+  });
+}
+
+export function TaxaColoringRndWindow({ isActive = false, onFocus } = {}) {
   const isOpen = useAppStore(selectTaxaColoringOpen);
   const setOpen = useAppStore(selectSetTaxaColoringOpen);
   const windowState = useAppStore(selectTaxaColoringWindow);
   const setWindowState = useAppStore(selectSetTaxaColoringWindow);
-  const { width, height, x, y } = windowState;
+  const fittedWindow = fitTaxaColoringWindowRect(windowState);
 
   const taxaNames = useAppStore(selectLeafNamesByIndex);
   const taxaGrouping = useAppStore(selectTaxaGrouping);
@@ -40,24 +66,25 @@ export function TaxaColoringRndWindow() {
   // Stable initial state reference to prevent unnecessary re-renders
   const initialState = useMemo(() => taxaGrouping || EMPTY_INITIAL_STATE, [taxaGrouping]);
 
-  // Clamp window size to viewport if it exceeds it
   React.useEffect(() => {
-    if (!isOpen) return;
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
+    if (!isOpen) return undefined;
 
-    let next = { width, height, x, y };
-    let changed = false;
+    const fitWindow = () => {
+      const currentRect = useAppStore.getState().taxaColoringWindow;
+      const nextRect = fitTaxaColoringWindowRect(currentRect);
+      if (hasFloatingWindowRectChanged(currentRect, nextRect)) {
+        setWindowState(toFloatingWindowRect(nextRect));
+      }
+    };
 
-    if (width > vw - 40) { next.width = vw - 40; changed = true; }
-    if (height > vh - 40) { next.height = vh - 40; changed = true; }
-    if (x + next.width > vw) { next.x = Math.max(0, vw - next.width - 20); changed = true; }
-    if (y + next.height > vh) { next.y = Math.max(0, vh - next.height - 20); changed = true; }
+    fitWindow();
+    window.addEventListener('resize', fitWindow);
+    return () => window.removeEventListener('resize', fitWindow);
+  }, [isOpen, setWindowState]);
 
-    if (changed) {
-      setWindowState(next);
-    }
-  }, [height, isOpen, setWindowState, width, x, y]);
+  React.useEffect(() => {
+    if (isOpen) onFocus?.();
+  }, [isOpen, onFocus]);
 
   // Create a clean color map for the UI to use as a baseline.
   // We strictly isolate taxon names from system colors to prevent collisions.
@@ -100,16 +127,18 @@ export function TaxaColoringRndWindow() {
   const handleClose = useCallback(() => setOpen(false), [setOpen]);
 
   const onDragStop = useCallback((_e, d) => {
-      setWindowState({ x: d.x, y: d.y });
-  }, [setWindowState]);
+    const nextRect = fitTaxaColoringWindowRect({ ...fittedWindow, x: d.x, y: d.y });
+    setWindowState(toFloatingWindowRect(nextRect));
+  }, [fittedWindow, setWindowState]);
 
   const onResizeStop = useCallback((_e, _dir, ref, _delta, pos) => {
-        setWindowState({
-          width: parseInt(ref.style.width, 10),
-          height: parseInt(ref.style.height, 10),
-          x: pos.x,
-          y: pos.y,
-        });
+    const nextRect = fitTaxaColoringWindowRect({
+      width: parseInt(ref.style.width, 10),
+      height: parseInt(ref.style.height, 10),
+      x: pos.x,
+      y: pos.y,
+    });
+    setWindowState(toFloatingWindowRect(nextRect));
   }, [setWindowState]);
 
   if (!isOpen || !taxaNames.length) return null;
@@ -117,14 +146,15 @@ export function TaxaColoringRndWindow() {
   return (
     <Rnd
       bounds="window"
-      minWidth={500}
-      minHeight={520}
-      size={{ width, height }}
-      position={{ x, y }}
+      minWidth={fittedWindow.minWidth}
+      minHeight={fittedWindow.minHeight}
+      size={{ width: fittedWindow.width, height: fittedWindow.height }}
+      position={{ x: fittedWindow.x, y: fittedWindow.y }}
+      onMouseDown={onFocus}
       onDragStop={onDragStop}
       onResizeStop={onResizeStop}
       dragHandleClassName="taxa-coloring-drag-handle"
-      className="fixed z-50 pointer-events-auto shadow-2xl border border-border/60 rounded-xl bg-card/95 overflow-hidden"
+      className={`fixed ${isActive ? 'z-[1200]' : 'z-[1100]'} pointer-events-auto shadow-2xl border border-border/60 rounded-xl bg-card/95 overflow-hidden`}
       style={{ backdropFilter: 'blur(12px)' }}
     >
       <div className="flex h-full flex-col">
