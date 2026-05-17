@@ -282,7 +282,7 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
 
   it('keeps moving taxa tracking out of worker layout prefetch payloads', () => {
     useAppStore.setState({
-      subtreeTracking: [null, [[2, 3], [4]]]
+      subtreeHighlightTracking: [null, [[2, 3], [4]]]
     });
     controller = new ControllerClass(null);
 
@@ -299,7 +299,7 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     expect(controller.layoutWorker.messages).toHaveLength(1);
 
     useAppStore.setState({
-      subtreeTracking: [null, [[2, 3], [4]]]
+      subtreeHighlightTracking: [null, [[2, 3], [4]]]
     });
 
     controller._prefetchFrame(1);
