@@ -456,6 +456,12 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     return state?.linkGeometryMode === 'straight' ? 'straight' : 'radial-elbow';
   }
 
+  _syncInterpolatorRootAngle(state = useAppStore.getState()) {
+    const degrees = Number(state?.layoutRotationDegrees);
+    const radians = Number.isFinite(degrees) ? (degrees * Math.PI) / 180 : 0;
+    this.treeInterpolator?.setRootAngle?.(radians);
+  }
+
   _createLayoutRequestToken(treeIndex, state = useAppStore.getState(), layoutCacheKey = null) {
     return `${this._layoutRequestGeneration}|${layoutCacheKey ?? this._createLayoutCacheKey(treeIndex, state)}`;
   }
@@ -522,6 +528,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       return { nodes: [], links: [], labels: [], extensions: [] };
     }
 
+    this._syncInterpolatorRootAngle();
     const interpolatedData = this.treeInterpolator.interpolateTreeData(dataFrom, dataTo, t, {
       transitionChangeModel,
       rawTimeFactor: options.rawTimeFactor,

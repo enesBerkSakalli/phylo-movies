@@ -292,6 +292,35 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     expect(controller.layoutWorker.messages[0].data.options.layoutCacheKey).not.toContain('rotationAlignmentExcludeTaxa');
   });
 
+  it('syncs polar interpolation root angle from layout rotation before interpolation', () => {
+    const controller = Object.create(ControllerClass.prototype);
+    const interpolatedData = {};
+    controller.width = 800;
+    controller.height = 600;
+    controller.interpolationCache = {
+      buildInterpolationInputs: vi.fn(() => ({
+        dataFrom: { max_radius: 100 },
+        dataTo: { max_radius: 120 },
+        transitionChangeModel: { changed: true },
+      }))
+    };
+    controller.treeInterpolator = {
+      setRootAngle: vi.fn(),
+      interpolateTreeData: vi.fn(() => interpolatedData),
+    };
+
+    useAppStore.setState({ layoutRotationDegrees: 90 });
+
+    const result = controller._buildInterpolatedData({ id: 'a' }, { id: 'b' }, 0.5, {
+      fromTreeIndex: 0,
+      toTreeIndex: 1,
+    });
+
+    expect(controller.treeInterpolator.setRootAngle).toHaveBeenCalledWith(Math.PI / 2);
+    expect(controller.treeInterpolator.interpolateTreeData).toHaveBeenCalledOnce();
+    expect(result).toBe(interpolatedData);
+  });
+
   it('does not re-prefetch when only moving taxa tracking changes', () => {
     controller = new ControllerClass(null);
 

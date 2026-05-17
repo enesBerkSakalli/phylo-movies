@@ -43,6 +43,10 @@ describe('TimelineMathUtils', () => {
         : timelineData.cumulativeDurations[segmentIndex - 1];
 
       segment.interpolationData.forEach((entry) => {
+        if (entry.originalIndex === segment.contextStart) {
+          return;
+        }
+
         const lookup = TimelineMathUtils.findSegmentForTreeIndex(segments, entry.originalIndex);
         const absoluteTime = segmentStartTime + lookup.timeInSegment;
         const resolved = TimelineMathUtils.getTargetTreeForTime(

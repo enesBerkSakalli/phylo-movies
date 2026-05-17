@@ -106,7 +106,8 @@ export function TransitionInspectorPanel() {
 
         <Section title="Movement">
           <KeyValue label="Moving taxa" value={details.movingTaxaLabel} />
-          <KeyValue label="Generated frames" value={details.frameCountLabel} />
+          <KeyValue label="Generated frames" value={details.generatedFrameLabel} />
+          <KeyValue label="Animation steps" value={details.animationStepLabel} />
           <KeyValue label="Changing split" value={details.pivotEdgeLabel} />
           <SubtreeList groups={details.subtreeGroups} />
         </Section>
@@ -208,7 +209,8 @@ function buildInspectorDetails({
     globalRangeLabel: formatRange(segment.globalStart, segment.globalEnd),
     localStepLabel: formatRange(segment.localStepStart, segment.localStepEnd),
     movingTaxaLabel: formatCount(segment.subtreeMoveCount, 'taxon', 'taxa'),
-    frameCountLabel: formatCount(segment.interpolationData?.length, 'frame', 'frames'),
+    generatedFrameLabel: formatCount(resolveGeneratedFrameCount(segment), 'frame', 'frames'),
+    animationStepLabel: formatCount(resolveAnimationStepCount(segment), 'step', 'steps'),
     pivotEdgeLabel: Array.isArray(segment.pivotEdge) && segment.pivotEdge.length
       ? formatCount(segment.pivotEdge.length, 'taxon', 'taxa')
       : null,
@@ -241,13 +243,21 @@ function parsePairKey(pairKey) {
 
 function resolveSourceGlobalIndex(segment) {
   if (Number.isInteger(segment.globalIndex)) return segment.globalIndex;
-  if (Number.isInteger(segment.metadata?.source_tree_global_index)) {
-    return segment.metadata.source_tree_global_index;
-  }
+  if (Number.isInteger(segment.sourceGlobalIndex)) return segment.sourceGlobalIndex;
   if (Number.isInteger(segment.interpolationData?.[0]?.metadata?.source_tree_global_index)) {
     return segment.interpolationData[0].metadata.source_tree_global_index;
   }
   return null;
+}
+
+function resolveGeneratedFrameCount(segment) {
+  if (Number.isInteger(segment.generatedFrameCount)) return segment.generatedFrameCount;
+  return segment.interpolationData?.length;
+}
+
+function resolveAnimationStepCount(segment) {
+  if (Number.isInteger(segment.animationStepCount)) return segment.animationStepCount;
+  return Array.isArray(segment.interpolationData) ? Math.max(0, segment.interpolationData.length - 1) : null;
 }
 
 function resolveMsaFrameIndex(segment, pair) {
@@ -286,7 +296,7 @@ function formatTreeName(segment) {
   if (segment.isFullTree && Number.isInteger(segment.originalTreeIndex)) {
     return `Source Tree ${segment.originalTreeIndex + 1}`;
   }
-  return segment.segmentType === 'transition' ? 'Generated transition frames' : null;
+  return segment.isFullTree ? null : 'Generated transition frames';
 }
 
 function formatRange(start, end) {

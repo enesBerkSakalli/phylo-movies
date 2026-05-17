@@ -92,9 +92,12 @@ function AnchorContent({ segment }) {
  * Displays moving subtrees, step count, and taxa count.
  */
 function TransitionContent({ segment, getLeafNames, isExpanded, onToggleExpanded }) {
-  const frames = segment.hasInterpolation && Array.isArray(segment.interpolationData)
-    ? segment.interpolationData.length
-    : 1;
+  const generatedFrames = Number.isInteger(segment.generatedFrameCount)
+    ? segment.generatedFrameCount
+    : (Array.isArray(segment.interpolationData) ? segment.interpolationData.length : 1);
+  const animationSteps = Number.isInteger(segment.animationStepCount)
+    ? segment.animationStepCount
+    : (Array.isArray(segment.interpolationData) ? Math.max(0, segment.interpolationData.length - 1) : 0);
 
   const taxaCount = typeof segment.subtreeMoveCount === 'number'
     ? segment.subtreeMoveCount
@@ -110,13 +113,9 @@ function TransitionContent({ segment, getLeafNames, isExpanded, onToggleExpanded
         onToggleExpanded={onToggleExpanded}
       />
 
-      <div className="text-2xs text-muted-foreground">
-        Generated tree frames, not elapsed time
-      </div>
-
       <div className="flex items-center justify-between pt-1 text-muted-foreground border-t border-border/50 mt-1">
-        <span>{frames} generated frames</span>
-        <span>{taxaCount} taxa</span>
+        <span>{generatedFrames} generated frames</span>
+        <span>{animationSteps} steps, {taxaCount} taxa</span>
       </div>
     </>
   );

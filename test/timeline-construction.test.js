@@ -110,7 +110,8 @@ describe('Timeline construction from backend result', () => {
       expect(timeInSegment).to.be.at.most(segDur);
     }
 
-    // Additional correctness check: first interpolation segment indices should match step_range_global exactly
+    // Additional correctness check: first interpolation segment keeps the backend range,
+    // while including the predecessor frame needed to animate into the first generated state.
     const firstEvent = (data.split_change_timeline || []).find(e => e && e.type === 'split_event');
     const firstInterpSeg = segments.find(s => s && s.hasInterpolation && !s.isFullTree);
     if (firstEvent && firstInterpSeg && Array.isArray(firstInterpSeg.interpolationData)) {
@@ -118,25 +119,37 @@ describe('Timeline construction from backend result', () => {
       const minIdx = Math.min(...idxs);
       const maxIdx = Math.max(...idxs);
       const [gStart, gEnd] = firstEvent.step_range_global || [];
-      // Expect no off-by-one: constructed indices must equal the provided global range
-      expect(minIdx).to.equal(gStart);
+      const expectedContextStart = Math.max(0, gStart - 1);
+
+      expect(minIdx).to.equal(expectedContextStart);
       expect(maxIdx).to.equal(gEnd);
-      // And must not include the preceding anchor index if present
-      const firstOriginal = (data.split_change_timeline || []).find(e => e && e.type === 'original');
-      if (firstOriginal && Number.isInteger(firstOriginal.global_index)) {
-        expect(idxs).to.not.include(firstOriginal.global_index);
-      }
 
       expect(firstInterpSeg).to.include({
-        segmentType: 'transition',
-        transitionKind: 'split_event',
         globalStart: gStart,
         globalEnd: gEnd,
+        contextStart: expectedContextStart,
         localStepStart: firstEvent.step_range_local[0],
         localStepEnd: firstEvent.step_range_local[1]
       });
-      expect(firstInterpSeg).to.not.have.property('phase');
-      expect(firstInterpSeg).to.not.have.property('stepInPair');
+      expect(firstInterpSeg.generatedFrameCount).to.equal(gEnd - gStart + 1);
+      expect(firstInterpSeg.animationStepCount).to.equal(firstInterpSeg.interpolationData.length - 1);
+    }
+
+    const redundantSegmentFields = [
+      'segmentType',
+      'transitionKind',
+      'pivotEdgeTracker',
+      'treeInfo',
+      'splitEvent',
+      'metadata',
+      'tree',
+      'phase',
+      'stepInPair'
+    ];
+    for (const segment of segments) {
+      for (const field of redundantSegmentFields) {
+        expect(segment).to.not.have.property(field);
+      }
     }
 
     // Anchors: ensure number and indices match original events from backend
@@ -149,18 +162,20 @@ describe('Timeline construction from backend result', () => {
       expect(anchorIndices.has(idx)).to.equal(true);
     }
 
-    // Interpolation segments count should equal backend split_event entries
+    // Interpolation segments include split events plus topology-preserving branch-length updates.
     const splitEvents = (data.split_change_timeline || []).filter(e => e && e.type === 'split_event');
     const interpSegments = segments.filter(s => s && s.hasInterpolation && !s.isFullTree);
-    expect(interpSegments.length).to.equal(splitEvents.length);
+    expect(interpSegments.length).to.be.at.least(splitEvents.length);
 
-    // No anchor index should appear inside any interpolationData
-    const allInterpIndices = new Set(
-      [].concat(...interpSegments.map(s => (s.interpolationData || []).map(d => d.originalIndex)))
-    );
-    for (const idx of anchorIndices) {
-      expect(allInterpIndices.has(idx)).to.equal(false);
-    }
+    const branchOnlySegment = interpSegments.find(segment => (
+      segment.treePairKey === 'pair_1_2' &&
+      segment.generatedFrameCount === 0 &&
+      segment.globalStart === 36 &&
+      segment.globalEnd === 37
+    ));
+    expect(branchOnlySegment).to.be.ok;
+    expect(branchOnlySegment.animationStepCount).to.equal(1);
+    expect(branchOnlySegment.interpolationData.map(d => d.originalIndex)).to.deep.equal([36, 37]);
 
     // Report which dataset was used for clarity when reading logs
     console.log(`[timeline-construction.test] Used: ${source}`);
