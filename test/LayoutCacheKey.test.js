@@ -53,12 +53,12 @@ describe('layout cache key', () => {
     expect(zeroScaleKey).not.toBe(missingScaleKey);
   });
 
-  it('keeps moving-subtree tracking out of render-affecting layout cache keys', () => {
+  it('keeps moving-subtree highlights out of render-affecting layout cache keys', () => {
     const treeList = [{ id: 'tree-0' }, { id: 'tree-1' }];
     const transitionState = {
       ...baseState,
       treeList,
-      subtreeTracking: [[[5], [3]], null],
+      subtreeHighlightTracking: [[[5], [3]], null],
       transitionResolver: {
         getSourceTreeIndex: () => 0
       }
@@ -73,7 +73,7 @@ describe('layout cache key', () => {
     const keyWithoutTracking = createLayoutCacheKey({
       state: {
         ...transitionState,
-        subtreeTracking: null,
+        subtreeHighlightTracking: null,
         transitionResolver: null
       },
       treeIndex: 1,

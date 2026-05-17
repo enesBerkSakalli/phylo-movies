@@ -1,7 +1,7 @@
-// test/subtree-tracking-parsing.test.js
+// test/subtree-highlight-parsing.test.js
 import { expect } from 'chai';
 import {
-  parseSubtreeTrackingEntry,
+  parseSubtreeHighlightEntry,
   collectUniqueSubtrees,
   toSubtreeKey
 } from '../../src/domain/tree/splits.js';
@@ -10,18 +10,18 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const focusTreesData = require('../data/test-data/focus_trees.json');
 
-describe('Tree Visualisation - Subtree Tracking & Parsing', () => {
+describe('Tree Visualisation - Subtree Highlight Parsing', () => {
 
-  describe('parseSubtreeTrackingEntry', () => {
+  describe('parseSubtreeHighlightEntry', () => {
     it('should reject a flat array entry', () => {
       const entry = [1, 2, 3];
-      const result = parseSubtreeTrackingEntry(entry);
+      const result = parseSubtreeHighlightEntry(entry);
       expect(result).to.be.empty;
     });
 
     it('should parse a nested array as multiple subtrees', () => {
       const entry = [[1, 2], [3, 4]];
-      const result = parseSubtreeTrackingEntry(entry);
+      const result = parseSubtreeHighlightEntry(entry);
       // Expected: [[1, 2], [3, 4]]
       expect(result).to.have.lengthOf(2);
       expect(result[0]).to.deep.equal([1, 2]);
@@ -30,22 +30,22 @@ describe('Tree Visualisation - Subtree Tracking & Parsing', () => {
 
     it('should reject mixed number and array entries', () => {
         const entry = [1, [2, 3], 4];
-        const result = parseSubtreeTrackingEntry(entry);
+        const result = parseSubtreeHighlightEntry(entry);
         expect(result).to.be.empty;
     });
 
     it('should handle Sets correctly', () => {
         const entry = [new Set([1, 2]), [3]];
-        const result = parseSubtreeTrackingEntry(entry);
+        const result = parseSubtreeHighlightEntry(entry);
         expect(result).to.have.lengthOf(2);
         expect(result[0]).to.deep.equal([1, 2]);
         expect(result[1]).to.deep.equal([3]);
     });
   });
 
-  describe('collectUniqueSubtrees (Tracking History)', () => {
+  describe('collectUniqueSubtrees (Highlight History)', () => {
       it('should collect unique subtrees across a time range', () => {
-          // Mock tracking data: Array of entries
+          // Mock highlight data: array of per-frame entries.
           const tracking = [
               [[1, 2]],         // Frame 0: Single subtree {1,2}
               [[1, 2], [3]],    // Frame 1: Two subtrees {1,2}, {3}
@@ -93,7 +93,7 @@ describe('Tree Visualisation - Subtree Tracking & Parsing', () => {
   describe('activeChangeEdgeTracking (Source/Destination Parsing)', () => {
       // Mock State Construction for getSourceDestinationEdgesAtIndex
       const mockStructure = {
-          subtreeTracking: [],
+          subtreeHighlightTracking: [],
           activeChangeEdgeTracking: [],
           pairSolutions: {},
           treeMetadata: [],
@@ -119,7 +119,7 @@ describe('Tree Visualisation - Subtree Tracking & Parsing', () => {
           
           // Mock State
           const state = {
-              subtreeTracking: [ [[1, 2]] ], // The moving subtree is {1,2}
+              subtreeHighlightTracking: [ [[1, 2]] ], // The moving subtree is {1,2}
               pivotEdgeTracking: [ activeEdge ],
               treeMetadata: [ { tree_pair_key: pairKey } ],
               pairSolutions: {
@@ -158,7 +158,7 @@ describe('Tree Visualisation - Subtree Tracking & Parsing', () => {
         const pairKey = "pair_multi";
         
         const state = {
-            subtreeTracking: [ subtrees ],
+            subtreeHighlightTracking: [ subtrees ],
             pivotEdgeTracking: [ [1, 2] ], // pivot edge lookup key
             treeMetadata: [{ tree_pair_key: pairKey }],
             pairSolutions: {

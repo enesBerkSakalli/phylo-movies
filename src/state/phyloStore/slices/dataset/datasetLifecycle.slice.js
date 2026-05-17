@@ -1,5 +1,4 @@
 import TransitionIndexResolver from '../../../../domain/indexing/TransitionIndexResolver.js';
-import { extractMsaColumnCount, extractMsaWindowParameters, hasMsaData } from '../../../../domain/msa/msaDataExtractor.js';
 import { calculateTreeScales } from '../../../../domain/tree/scaleCalculator.js';
 import { MovieTimelineManager } from '../../../../timeline/core/MovieTimelineManager.js';
 
@@ -31,7 +30,7 @@ export const createDatasetLifecycleSlice = (set, get) => ({
       maxScale: 0,
       pairSolutions: {},
       pivotEdgeTracking: [],
-      subtreeTracking: [],
+      subtreeHighlightTracking: [],
       splitChangeTimeline: [],
       transitionResolver: null,
       selectedTimelineSegmentIndex: null,
@@ -54,7 +53,7 @@ export const createDatasetLifecycleSlice = (set, get) => ({
       split_change_timeline: splitChangeTimeline,
       sorted_leaves: leafNamesByIndex,
       distances,
-      subtree_tracking,
+      subtree_highlight_tracking: subtreeHighlightTracking,
     } = movieData;
 
     const resolver = createTransitionResolver(movieData, treeMetadata);
@@ -62,9 +61,14 @@ export const createDatasetLifecycleSlice = (set, get) => ({
     const treeIndexByPair = buildTreeIndexByPair(treeMetadata);
     const { scaleList, maxScale } = calculateTreeScales(interpolatedTrees, fullTreeIndices);
 
-    const msaColumnCount = extractMsaColumnCount(movieData);
-    const { windowSize, stepSize } = extractMsaWindowParameters(movieData);
-    const hasMsaContent = hasMsaData(movieData);
+    const {
+      sequences: msaSequences,
+      window_size: windowSize,
+      step_size: stepSize,
+    } = movieData.msa;
+    const firstMsaSequence = msaSequences ? Object.values(msaSequences)[0] : null;
+    const msaColumnCount = typeof firstMsaSequence === 'string' ? firstMsaSequence.length : 0;
+    const hasMsaContent = !!(msaSequences && Object.keys(msaSequences).length > 0);
 
     const { setMsaData, initializeColors } = get();
     setMsaData({
@@ -72,7 +76,7 @@ export const createDatasetLifecycleSlice = (set, get) => ({
       windowSize,
       stepSize,
       columnCount: msaColumnCount,
-      sequences: movieData.msa?.sequences ?? null,
+      sequences: msaSequences,
     });
 
     const fileName = movieData.file_name;
@@ -101,7 +105,7 @@ export const createDatasetLifecycleSlice = (set, get) => ({
       maxScale,
       pairSolutions: treePairSolutions,
       pivotEdgeTracking,
-      subtreeTracking: subtree_tracking,
+      subtreeHighlightTracking,
       splitChangeTimeline,
       transitionResolver: resolver,
       selectedTimelineSegmentIndex: null,

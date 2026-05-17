@@ -202,7 +202,7 @@ function getSplitHash(indices) {
   return highStr + lowStr;
 }
 
-export function parseSubtreeTrackingEntry(entry) {
+export function parseSubtreeHighlightEntry(entry) {
   if (!Array.isArray(entry) || entry.length === 0) return [];
 
   const subtrees = [];
@@ -233,7 +233,7 @@ export function collectUniqueSubtrees(tracking, start, end, excludeKeys = new Se
     const entry = tracking[i];
     if (!Array.isArray(entry) || entry.length === 0) continue;
 
-    const subtrees = parseSubtreeTrackingEntry(entry);
+    const subtrees = parseSubtreeHighlightEntry(entry);
 
     for (const subtree of subtrees) {
       const key = toSubtreeKey(subtree);

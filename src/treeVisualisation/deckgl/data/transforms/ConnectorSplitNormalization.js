@@ -23,7 +23,7 @@ export function normalizeConnectorSplitArray(values) {
   return result;
 }
 
-export function normalizeConnectorSubtreeTrackingToSets(value) {
+export function normalizeConnectorSubtreeHighlightsToSets(value) {
   if (!value) return [];
 
   if (Array.isArray(value)) {

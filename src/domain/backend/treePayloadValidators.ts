@@ -5,6 +5,7 @@ import {
   requiredArray,
   requiredNumberArray,
   requiredRecord,
+  validateInteger,
   validateIndex,
   validateNullableNumber,
   validateParallelLength,
@@ -77,16 +78,33 @@ export function validateMsa(value: unknown): MsaData {
   assertRecord(value, 'msa');
 
   const sequences = value.sequences;
+  let validatedSequences: Record<string, string> | null = null;
   if (sequences !== undefined && sequences !== null) {
     assertRecord(sequences, 'msa.sequences');
+    validatedSequences = {};
     for (const [name, sequence] of Object.entries(sequences)) {
       if (typeof sequence !== 'string') {
         throw new Error(`Invalid phyloMovieData payload: msa.sequences.${name} must be a string`);
       }
+      validatedSequences[name] = sequence;
     }
   }
 
-  return value as unknown as MsaData;
+  const windowSize = validateInteger(value.window_size, 'msa.window_size');
+  if (windowSize <= 0) {
+    throw new Error('Invalid phyloMovieData payload: msa.window_size must be positive');
+  }
+
+  const stepSize = validateInteger(value.step_size, 'msa.step_size');
+  if (stepSize <= 0) {
+    throw new Error('Invalid phyloMovieData payload: msa.step_size must be positive');
+  }
+
+  return {
+    sequences: validatedSequences,
+    window_size: windowSize,
+    step_size: stepSize,
+  };
 }
 
 export function validatePairInterpolationRanges(value: unknown, treeCount: number): Array<[number, number]> {
@@ -111,7 +129,6 @@ export function validateDistances(value: unknown): PhyloMovieData['distances'] {
   assertRecord(value, 'distances');
 
   return {
-    ...value,
     robinson_foulds: requiredNumberArray(value.robinson_foulds, 'distances.robinson_foulds'),
     weighted_robinson_foulds: requiredNumberArray(
       value.weighted_robinson_foulds,
@@ -134,14 +151,15 @@ export function validateNullableNumberArrayTracking(
   return tracking as Array<number[] | null>;
 }
 
-export function validateSubtreeTracking(value: unknown, treeCount: number): Array<number[][] | null> {
-  const tracking = requiredArray(value, 'subtree_tracking');
-  validateParallelLength(tracking, 'subtree_tracking', treeCount);
+export function validateSubtreeHighlightTracking(value: unknown, treeCount: number): Array<number[][] | null> {
+  const fieldName = 'subtree_highlight_tracking';
+  const tracking = requiredArray(value, fieldName);
+  validateParallelLength(tracking, fieldName, treeCount);
   for (const [index, entry] of tracking.entries()) {
     if (entry === null) continue;
-    const groups = requiredArray(entry, `subtree_tracking[${index}]`);
+    const groups = requiredArray(entry, `${fieldName}[${index}]`);
     for (const [groupIndex, group] of groups.entries()) {
-      requiredNumberArray(group, `subtree_tracking[${index}][${groupIndex}]`);
+      requiredNumberArray(group, `${fieldName}[${index}][${groupIndex}]`);
     }
   }
   return tracking as Array<number[][] | null>;

@@ -213,7 +213,7 @@ describe('Complex Data Layer Integration', () => {
         affectedSubtreesBySplit: { [edgeKey]: [movingSubtree] },
         pivotEdge: pivotEdge,
         colorManager: mockColorManager,
-        subtreeTracking: [movingSubtree], // "Current tree" structure
+        subtreeHighlightTracking: [movingSubtree], // "Current tree" structure
         currentTreeIndex: 0,
         markedSubtreesEnabled: true,
         leftCenter: [-200, 0],
@@ -226,7 +226,7 @@ describe('Complex Data Layer Integration', () => {
       expect(connectors.length).toBeGreaterThan(0);
 
       // Connectors are emitted for leaves in the affected-subtree entry. They are
-      // active only when also present in the current subtree tracking entry.
+      // active only when also present in the current subtree highlight entry.
 
       // Verify Active Connectors
       const activeConns = connectors.filter(c => c.id.includes('active'));

@@ -2,7 +2,7 @@ import {
   flattenSplitSets,
   toSubtreeKey,
   getBackendSplitMapValue,
-  parseSubtreeTrackingEntry,
+  parseSubtreeHighlightEntry,
   collectUniqueSubtrees,
   collectUniqueEdges
 } from '../../../domain/tree/splits.js';
@@ -80,7 +80,7 @@ export function resolveMarkedSubtrees(state, indexOverride = null) {
     }
 
     // Normalize before returning to ensure we don't return raw ambiguous arrays
-    return parseSubtreeTrackingEntry(subtree);
+    return parseSubtreeHighlightEntry(subtree);
   }
 
   // "all" mode intentionally uses pair-level affected subtrees for the active
@@ -89,13 +89,13 @@ export function resolveMarkedSubtrees(state, indexOverride = null) {
 }
 
 export function getSubtreeAtIndex(state, index) {
-  const subtree = state.subtreeTracking?.[index];
+  const subtree = state.subtreeHighlightTracking?.[index];
   return Array.isArray(subtree) ? subtree : [];
 }
 
 export function getMovingSubtreeAtIndex(state, index) {
-  const subtree = state.subtreeTracking?.[index];
-  return parseSubtreeTrackingEntry(subtree);
+  const subtree = state.subtreeHighlightTracking?.[index];
+  return parseSubtreeHighlightEntry(subtree);
 }
 
 export function getAffectedSubtreesForPivotEdge(state, index) {
@@ -115,7 +115,7 @@ export function getAffectedSubtreesForPivotEdge(state, index) {
  */
 export function getSubtreeHistoryAtIndex(state, index) {
   if (state.transitionResolver?.isFullTree?.(index)) return [];
-  const tracking = state.subtreeTracking;
+  const tracking = state.subtreeHighlightTracking;
   if (!Array.isArray(tracking) || tracking.length === 0) return [];
 
   const anchors = selectFullTreeIndices(state);
@@ -131,7 +131,7 @@ export function getSubtreeHistoryAtIndex(state, index) {
   const excludeKeys = new Set();
 
   if (Array.isArray(current) && current.length > 0) {
-    const currentSubtrees = parseSubtreeTrackingEntry(current);
+    const currentSubtrees = parseSubtreeHighlightEntry(current);
     for (const s of currentSubtrees) {
       excludeKeys.add(toSubtreeKey(s));
     }
@@ -149,7 +149,7 @@ export function getSourceDestinationEdgesAtIndex(state, index) {
   if (state.transitionResolver?.isFullTree?.(index)) return { source: [], dest: [] };
 
   const pivotEdge = state.pivotEdgeTracking?.[index];
-  const subtrees = state.subtreeTracking?.[index];
+  const subtrees = state.subtreeHighlightTracking?.[index];
 
   // Guard clauses for missing data
   if (!Array.isArray(pivotEdge) || pivotEdge.length === 0) return { source: [], dest: [] };
@@ -165,7 +165,7 @@ export function getSourceDestinationEdgesAtIndex(state, index) {
   if (!attachmentEdgesForPivot) return { source: [], dest: [] };
 
   // Identify moving components to filter them out
-  const subtreeList = parseSubtreeTrackingEntry(subtrees);
+  const subtreeList = parseSubtreeHighlightEntry(subtrees);
   const movingSet = new Set(subtreeList.flat(Infinity));
 
   // Process subtrees to find their source/dest counterparts

@@ -147,7 +147,7 @@ describe('deck.gl layer render context', () => {
     expect(contextNode).not.toHaveProperty('data');
     expect(contextNode).not.toHaveProperty('parent');
     expect(contextNode?.descendants).toBeUndefined();
-    expect(showNodeContextMenu).toHaveBeenCalledWith(expect.any(Object), treeB, 12, 34);
+    expect(showNodeContextMenu).toHaveBeenCalledWith(expect.any(Object), { x: 12, y: 34 });
   });
 
   it('does not fall back to coordinate matching when normalized split identity is missing', () => {
@@ -171,6 +171,6 @@ describe('deck.gl layer render context', () => {
       null
     );
 
-    expect(showNodeContextMenu).toHaveBeenCalledWith(null, tree, 12, 34);
+    expect(showNodeContextMenu).toHaveBeenCalledWith(null, { x: 12, y: 34 });
   });
 });

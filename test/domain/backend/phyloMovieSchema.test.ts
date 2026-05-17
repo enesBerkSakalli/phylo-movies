@@ -44,7 +44,7 @@ function makePayload(overrides: Record<string, unknown> = {}) {
     },
     pair_interpolation_ranges: [[0, 0]],
     pivot_edge_tracking: [null],
-    subtree_tracking: [null],
+    subtree_highlight_tracking: [null],
     sorted_leaves: ['taxon-a', 'taxon-b'],
     msa: {
       sequences: {
@@ -77,13 +77,13 @@ describe('validatePhyloMovieData', () => {
 
   it('returns one explicit backend movie contract after service validation', () => {
     const result = phyloData.validate(makePayload({
-      subtree_tracking: [[[0]]],
+      subtree_highlight_tracking: [[[0]]],
       pipeline_info: { model_used: 'iqtree' },
       warnings: ['example warning'],
       tree_count: 1,
     }));
 
-    expect(result.subtree_tracking).toEqual([[[0]]]);
+    expect(result.subtree_highlight_tracking).toEqual([[[0]]]);
     expect(result).not.toHaveProperty('split_change_events');
     expect(result).not.toHaveProperty('pipeline_info');
     expect(result).not.toHaveProperty('warnings');
@@ -105,6 +105,55 @@ describe('validatePhyloMovieData', () => {
       step_in_pair: 2,
       source_tree_global_index: 0,
     });
+  });
+
+  it('does not keep nested MSA or distance fields outside the app contract', () => {
+    const result = validatePhyloMovieData(makePayload({
+      distances: {
+        robinson_foulds: [1],
+        weighted_robinson_foulds: [1.5],
+        cosine_distance: [0.25],
+      },
+      msa: {
+        sequences: {
+          'taxon-a': 'ACGT',
+        },
+        window_size: 4,
+        step_size: 1,
+        alignment_length: 4,
+        windows_are_overlapping: true,
+      },
+    }));
+
+    expect(result.distances).toEqual({
+      robinson_foulds: [1],
+      weighted_robinson_foulds: [1.5],
+    });
+    expect(result.msa).toEqual({
+      sequences: {
+        'taxon-a': 'ACGT',
+      },
+      window_size: 4,
+      step_size: 1,
+    });
+  });
+
+  it('requires positive integer MSA window dimensions', () => {
+    expect(() => validatePhyloMovieData(makePayload({
+      msa: {
+        sequences: null,
+        window_size: 0,
+        step_size: 1,
+      },
+    }))).toThrow(/msa\.window_size must be positive/);
+
+    expect(() => validatePhyloMovieData(makePayload({
+      msa: {
+        sequences: null,
+        window_size: 1,
+        step_size: 1.5,
+      },
+    }))).toThrow(/msa\.step_size must be an integer/);
   });
 
   it('rejects missing required fields', () => {
@@ -173,10 +222,20 @@ describe('validatePhyloMovieData', () => {
     expect(() => validatePhyloMovieData(payload)).toThrow(/pivot_edge_tracking must be an array/);
   });
 
-  it('rejects flat subtree_tracking entries', () => {
+  it('rejects legacy subtree API payloads without the canonical highlight key', () => {
+    const legacySubtreeApiKey = ['subtree', 'tracking'].join('_');
+    const payload = makePayload({
+      subtree_highlight_tracking: undefined,
+      [legacySubtreeApiKey]: [null],
+    });
+
+    expect(() => validatePhyloMovieData(payload)).toThrow(/subtree_highlight_tracking must be an array/);
+  });
+
+  it('rejects flat subtree_highlight_tracking entries', () => {
     expect(() => validatePhyloMovieData(makePayload({
-      subtree_tracking: [[2, 3]],
-    }))).toThrow(/subtree_tracking\[0\]\[0\] must be an array/);
+      subtree_highlight_tracking: [[2, 3]],
+    }))).toThrow(/subtree_highlight_tracking\[0\]\[0\] must be an array/);
   });
 
   it('rejects tracking data whose length does not match interpolated_trees', () => {
@@ -185,8 +244,8 @@ describe('validatePhyloMovieData', () => {
     }))).toThrow(/pivot_edge_tracking length \(2\) must match interpolated_trees length \(1\)/);
 
     expect(() => validatePhyloMovieData(makePayload({
-      subtree_tracking: [null, [[0]]],
-    }))).toThrow(/subtree_tracking length \(2\) must match interpolated_trees length \(1\)/);
+      subtree_highlight_tracking: [null, [[0]]],
+    }))).toThrow(/subtree_highlight_tracking length \(2\) must match interpolated_trees length \(1\)/);
   });
 
   it('rejects flat affected_subtrees_by_split entries', () => {
@@ -375,7 +434,7 @@ describe('validatePhyloMovieData', () => {
       ],
       pair_interpolation_ranges: [[0, 2]],
       pivot_edge_tracking: [null, [0, 1], null],
-      subtree_tracking: [null, [[0]], null],
+      subtree_highlight_tracking: [null, [[0]], null],
       split_change_timeline: [
         {
           type: 'original',
@@ -429,7 +488,7 @@ describe('validatePhyloMovieData', () => {
       ],
       pair_interpolation_ranges: [[0, 2]],
       pivot_edge_tracking: [null, [0, 1], null],
-      subtree_tracking: [null, [[0]], null],
+      subtree_highlight_tracking: [null, [[0]], null],
       split_change_timeline: [
         {
           type: 'original',
@@ -474,7 +533,7 @@ describe('validatePhyloMovieData', () => {
       ],
       pair_interpolation_ranges: [[0, 3]],
       pivot_edge_tracking: [null, [0, 1], [0, 1], null],
-      subtree_tracking: [null, [[0]], [[0]], null],
+      subtree_highlight_tracking: [null, [[0]], [[0]], null],
       split_change_timeline: [
         {
           type: 'original',

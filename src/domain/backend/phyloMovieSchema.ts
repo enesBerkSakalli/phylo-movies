@@ -5,7 +5,7 @@ import {
   validateMsa,
   validateNullableNumberArrayTracking,
   validatePairInterpolationRanges,
-  validateSubtreeTracking,
+  validateSubtreeHighlightTracking,
   validateTreeList,
   validateTreeMetadataList,
 } from './treePayloadValidators';
@@ -42,7 +42,10 @@ export function validatePhyloMovieData(data: unknown): PhyloMovieData {
     'pivot_edge_tracking',
     interpolatedTrees.length
   );
-  const subtreeTracking = validateSubtreeTracking(data.subtree_tracking, interpolatedTrees.length);
+  const subtreeHighlightTracking = validateSubtreeHighlightTracking(
+    data.subtree_highlight_tracking,
+    interpolatedTrees.length
+  );
   const sortedLeaves = requiredStringArray(data.sorted_leaves, 'sorted_leaves');
   const msa = validateMsa(data.msa);
   const splitChangeTimeline = validateSplitChangeTimeline(
@@ -63,7 +66,7 @@ export function validatePhyloMovieData(data: unknown): PhyloMovieData {
     tree_pair_solutions: treePairSolutions,
     pair_interpolation_ranges: pairInterpolationRanges,
     pivot_edge_tracking: pivotEdgeTracking,
-    subtree_tracking: subtreeTracking,
+    subtree_highlight_tracking: subtreeHighlightTracking,
     sorted_leaves: sortedLeaves,
     msa,
     file_name: data.file_name,
