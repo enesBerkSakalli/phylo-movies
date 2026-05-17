@@ -36,6 +36,7 @@ export class InterpolationRenderer {
     if (!dataFrom || !dataTo) return;
 
     // Perform Geometry Interpolation
+    this.controller._syncInterpolatorRootAngle?.();
     const interpolatedData = this.controller.treeInterpolator.interpolateTreeData(
       dataFrom,
       dataTo,
