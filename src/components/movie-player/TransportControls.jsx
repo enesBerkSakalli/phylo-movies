@@ -72,7 +72,7 @@ export function TransportControls({
   }, [goToNextAnchor, stopAnimationPlayback]);
 
   return (
-    <>
+    <div className="flex shrink-0 items-center gap-0.5" role="group" aria-label="Playback controls">
       <AppTooltip content="Previous source tree">
         <Button
           className="transport-button"
@@ -175,6 +175,6 @@ export function TransportControls({
           </Button>
         </AppTooltip>
       )}
-    </>
+    </div>
   );
 }

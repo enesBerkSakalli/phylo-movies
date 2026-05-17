@@ -156,6 +156,31 @@ describe('DeckTimelineRenderer', () => {
     expect(boundEvents).to.include.members(['mousemove', 'mousedown', 'click', 'wheel', 'mouseleave']);
   });
 
+  it('publishes hovered segments through a bound hover callback', () => {
+    const { timelineData, segments } = makeTimelineFixture();
+    const container = makeContainer();
+    const renderer = new DeckTimelineRenderer(timelineData, segments).init(container);
+    const hoverUpdates = [];
+
+    renderer.bindHoverState({
+      setHoveredSegment: (segmentIndex, segment, position) => {
+        hoverUpdates.push({ segmentIndex, segment, position });
+      }
+    });
+
+    renderer.deck.canvas.dispatchEvent(new global.window.MouseEvent('mousemove', {
+      bubbles: true,
+      clientX: 100,
+      clientY: 10
+    }));
+
+    expect(hoverUpdates).to.have.length(1);
+    expect(hoverUpdates[0].segmentIndex).to.equal(0);
+    expect(hoverUpdates[0].segment).to.equal(segments[0]);
+    expect(hoverUpdates[0].position.x).to.be.closeTo(400 / 3, 1e-6);
+    expect(hoverUpdates[0].position.y).to.equal(0);
+  });
+
   it('selects an anchor/source segment from a deck canvas click', () => {
     const { timelineData, segments } = makeTimelineFixture();
     const container = makeContainer();

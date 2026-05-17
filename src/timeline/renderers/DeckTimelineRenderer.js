@@ -4,12 +4,13 @@ if (typeof document !== 'undefined') {
 }
 import { Deck, OrthographicView } from '@deck.gl/core';
 import { TIMELINE_CONSTANTS, TIMELINE_THEME } from '../constants.js';
-import { handleTimelineMouseMoveOrScrub, handleTimelineMouseDown, handleTimelineMouseUp, handleTimelineWheel, handleTimelineMouseLeave } from '../events/eventHandlers.js';
 import { createPathLayer, createStripTrackLayer, createAnchorTickLayer, createAnchorLayer, createConnectionLayer, createAnchorHoverLayer, createConnectionHoverLayer, createAnchorSelectionLayer, createConnectionSelectionLayer, createSeparatorLayer, createScrubberLayer, getDevicePixelRatio, calculateSeparatorWidth } from '../utils/layerFactories.js';
 import { msToX, xToMs, calculateZoomScale } from '../math/coordinateUtils.js';
-import { timeToSegmentIndex, toSegmentIndex, toTimelineItemId } from '../utils/segmentTiming.js';
+import { getSegmentBounds, timeToSegmentIndex, toSegmentIndex, toTimelineItemId } from '../utils/segmentTiming.js';
 import { getTargetSegmentIndex } from '../utils/segmentUtils.js';
 import { processSegments } from '../data/segmentProcessor.js';
+
+const HOVER_CLEAR_DELAY_MS = 150;
 
 /**
  * WebGL-based timeline renderer using deck.gl.
@@ -49,6 +50,7 @@ export class DeckTimelineRenderer {
     this._selectedId = null;
     this._lastHoverId = null;
     this._getIsScrubbing = () => false;
+    this._setHoveredSegment = () => { };
     this._scrubThresholdPx = 10;
     this._wasScrubbingOnMouseDown = false;
     this._hoverTimeoutId = null;
@@ -189,6 +191,14 @@ export class DeckTimelineRenderer {
     this._scheduleUpdate();
   }
 
+  bindHoverState({ setHoveredSegment } = {}) {
+    this._setHoveredSegment = typeof setHoveredSegment === 'function' ? setHoveredSegment : (() => { });
+  }
+
+  setHoveredSegment(segmentIndex, segmentData = null, position = null) {
+    this._setHoveredSegment(segmentIndex, segmentData, position);
+  }
+
   isScrubbing() {
     return Boolean(this._getIsScrubbing?.());
   }
@@ -298,12 +308,12 @@ export class DeckTimelineRenderer {
   _bindMouseEvents() {
     const pointerTarget = this.deck?.canvas ?? this.canvas;
     const eventConfigs = [
-      { event: 'mousemove', handler: (e) => handleTimelineMouseMoveOrScrub(this, e), target: pointerTarget },
-      { event: 'mousedown', handler: (e) => handleTimelineMouseDown(this, e), target: pointerTarget },
+      { event: 'mousemove', handler: (e) => this._handleMouseMoveOrScrub(e), target: pointerTarget },
+      { event: 'mousedown', handler: (e) => this._handleMouseDown(e), target: pointerTarget },
       { event: 'mouseup', handler: () => this._handleMouseUp(), target: window },
       { event: 'click', handler: (e) => this._handleClick(e), target: pointerTarget },
-      { event: 'wheel', handler: (e) => handleTimelineWheel(this, e), target: pointerTarget, options: { passive: false } },
-      { event: 'mouseleave', handler: () => handleTimelineMouseLeave(this), target: pointerTarget }
+      { event: 'wheel', handler: (e) => this._handleWheel(e), target: pointerTarget, options: { passive: false } },
+      { event: 'mouseleave', handler: () => this._handleMouseLeave(), target: pointerTarget }
     ];
 
     eventConfigs.forEach(({ event, handler, target, options }) => {
@@ -315,6 +325,79 @@ export class DeckTimelineRenderer {
         target.removeEventListener(event, handler, options);
       });
     };
+  }
+
+  _handleMouseMoveOrScrub(event) {
+    if (this.isScrubbing()) {
+      this._handleTimelineScrubMove(event);
+      return;
+    }
+
+    this._handleTimelineMouseMove(event);
+  }
+
+  _handleTimelineMouseMove(event) {
+    const rect = this.container.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const ms = this._xToMs(x);
+    const segIndex = this._timeToSegmentIndex(ms);
+    const id = segIndex >= 0 ? toTimelineItemId(segIndex) : null;
+
+    if (id !== this._lastHoverId) {
+      if (this._lastHoverId != null) {
+        this._emit('itemout', {});
+        this._scheduleHoveredSegmentClear();
+      }
+
+      if (id != null) {
+        this._clearHoverTimeout();
+        this._emit('itemover', { item: id, event });
+
+        const segment = this.segments[segIndex];
+        const bounds = getSegmentBounds(segIndex, this.timelineData);
+        if (!bounds) return;
+
+        const startX = this._msToX(bounds.start);
+        const endX = this._msToX(bounds.end);
+        const centerX = (startX + endX) / 2;
+
+        this.setHoveredSegment(segIndex, segment, {
+          x: rect.left + centerX,
+          y: rect.top
+        });
+      }
+
+      this._lastHoverId = id;
+      this._scheduleUpdate();
+    }
+
+    this._emit('mouseMove', { event });
+  }
+
+  _handleTimelineScrubMove(event) {
+    const rect = this.container.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const ms = Math.max(0, Math.min(this._xToMs(x), this._totalDuration));
+
+    this._scrubberMs = ms;
+    this._emit('timechange', { id: 'scrubber', time: ms });
+    this._scheduleUpdate();
+  }
+
+  _handleMouseDown(event) {
+    const rect = this.container.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const scrubX = this._msToX(this._scrubberMs);
+    const distance = Math.abs(x - scrubX);
+
+    if (distance < this._scrubThresholdPx) {
+      this._wasScrubbingOnMouseDown = true;
+      this._emit('scrubstart', { id: 'scrubber', time: this._scrubberMs });
+      this.syncScrubState();
+      return;
+    }
+
+    this._wasScrubbingOnMouseDown = false;
   }
 
   _handleClick(event) {
@@ -342,7 +425,48 @@ export class DeckTimelineRenderer {
   }
 
   _handleMouseUp() {
-    handleTimelineMouseUp(this);
+    if (this.isScrubbing()) {
+      this.syncScrubState();
+      this._emit('timechanged', { id: 'scrubber', time: this._scrubberMs });
+    }
+  }
+
+  _handleWheel(event) {
+    const rect = this.container.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const msCenter = this._xToMs(x);
+    const span = this._rangeEnd - this._rangeStart;
+    const delta = Math.sign(event.deltaY) < 0 ? -0.2 : 0.2;
+    const newSpan = Math.max(1, Math.min(this._totalDuration, span * (1 + delta)));
+
+    this._rangeStart = Math.max(0, msCenter - newSpan / 2);
+    this._rangeEnd = Math.min(this._totalDuration, msCenter + newSpan / 2);
+    this._scheduleUpdate();
+    event.preventDefault();
+  }
+
+  _handleMouseLeave() {
+    if (this._lastHoverId == null) return;
+
+    this._emit('itemout', {});
+    this._scheduleHoveredSegmentClear();
+    this._lastHoverId = null;
+    this._scheduleUpdate();
+  }
+
+  _clearHoverTimeout() {
+    if (this._hoverTimeoutId !== null) {
+      clearTimeout(this._hoverTimeoutId);
+      this._hoverTimeoutId = null;
+    }
+  }
+
+  _scheduleHoveredSegmentClear() {
+    this._clearHoverTimeout();
+    this._hoverTimeoutId = setTimeout(() => {
+      this._hoverTimeoutId = null;
+      this.setHoveredSegment(null, null);
+    }, HOVER_CLEAR_DELAY_MS);
   }
 
   _handleHoverLayerClick(info) {

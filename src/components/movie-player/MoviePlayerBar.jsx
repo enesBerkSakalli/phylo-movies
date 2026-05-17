@@ -194,21 +194,16 @@ export function MoviePlayerBar() {
 
 function TimelineLegend({ hasTransitionSegments }) {
   return (
-    <div className="flex items-center gap-4 px-2 pt-1 pb-0.5 text-2xs font-medium text-muted-foreground">
-      <LegendItem markerClassName="h-4 w-0.5 rounded bg-foreground/70" label="Source tree" />
+    <div
+      className="flex items-center gap-4 px-2 pt-1 pb-0.5 text-2xs font-medium text-muted-foreground"
+      role="group"
+      aria-label="Timeline legend"
+    >
+      <LegendItem markerClassName="h-2.5 w-2.5 rounded-full border-2 border-foreground/70 bg-background" label="Source trees" />
       {hasTransitionSegments && (
         <LegendItem markerClassName="h-1 w-5 rounded bg-amber-600/85" label="Generated frames" />
       )}
       <LegendItem markerClassName="h-5 w-1 rounded bg-primary" label="Current position" />
-      <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-        <span className="flex h-3 w-4 items-end gap-0.5" aria-hidden>
-          <span className="h-1.5 w-0.5 bg-primary/70" />
-          <span className="h-2.5 w-0.5 bg-primary/70" />
-          <span className="h-1 w-0.5 bg-primary/70" />
-          <span className="h-2 w-0.5 bg-primary/70" />
-        </span>
-        <span>Tree difference</span>
-      </span>
     </div>
   );
 }

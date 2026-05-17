@@ -83,7 +83,7 @@ describe('ScrubberAPI', () => {
       }
     };
 
-    const api = new ScrubberAPI(treeController, {}, timelineManager);
+    const api = new ScrubberAPI(treeController, {}, timelineManager, useAppStore);
     await api.startScrubbing(0);
 
     const firstUpdate = api.updatePosition(0.2);
@@ -125,7 +125,7 @@ describe('ScrubberAPI', () => {
       }
     };
 
-    const api = new ScrubberAPI(treeController, {}, timelineManager);
+    const api = new ScrubberAPI(treeController, {}, timelineManager, useAppStore);
     await api.startScrubbing(0);
 
     const updatePromise = api.updatePosition(0.2);
@@ -165,7 +165,7 @@ describe('ScrubberAPI', () => {
         }
       };
 
-      const api = new ScrubberAPI(treeController, {}, timelineManager);
+      const api = new ScrubberAPI(treeController, {}, timelineManager, useAppStore);
       await api.startScrubbing(0);
 
       await api.updatePosition(0.5);
@@ -181,6 +181,39 @@ describe('ScrubberAPI', () => {
     }
   });
 
+  it('uses the injected transition resolver for comparison scrub anchors', async () => {
+    const movieData = createMovieData();
+    const timelineManager = createTimelineManager(movieData);
+    const renderCalls = [];
+
+    useAppStore.setState({
+      comparisonMode: true,
+      transitionResolver: { fullTreeIndices: [99] }
+    });
+
+    const treeController = {
+      renderComparisonAwareScrubFrame: async (...args) => {
+        renderCalls.push(args);
+      }
+    };
+
+    const api = new ScrubberAPI(
+      treeController,
+      { fullTreeIndices: [0, 2] },
+      timelineManager,
+      useAppStore
+    );
+
+    await api.startScrubbing(0);
+    await api.updatePosition(0.2);
+
+    expect(renderCalls).to.have.length(1);
+    expect(renderCalls[0][3]).to.include({
+      comparisonMode: true,
+      rightTreeIndex: 2
+    });
+  });
+
   it('does not fall back to linear interpolation without timeline interpolation data', async () => {
     const renderCalls = [];
     const originalError = console.error;
@@ -194,7 +227,7 @@ describe('ScrubberAPI', () => {
         }
       };
 
-      const api = new ScrubberAPI(treeController, {}, null);
+      const api = new ScrubberAPI(treeController, {}, null, useAppStore);
       await api.startScrubbing(0);
       await api.updatePosition(0.5);
 

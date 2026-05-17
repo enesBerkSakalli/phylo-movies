@@ -99,7 +99,7 @@ export class MovieTimelineManager {
         const controller = controllerOverride || this._selectScrubberController();
         if (!controller) return;
 
-        this.scrubberAPI = new ScrubberAPI(controller, this.transitionResolver, this);
+        this.scrubberAPI = new ScrubberAPI(controller, this.transitionResolver, this, useAppStore);
     }
 
     _selectScrubberController() {
@@ -161,6 +161,11 @@ export class MovieTimelineManager {
         this.timeline = new DeckTimelineRenderer(this.timelineData, this.segments).init(this.container);
         this.timeline.bindScrubState({
             getIsScrubbing: () => this.scrubController?.isScrubbing ?? false
+        });
+        this.timeline.bindHoverState({
+            setHoveredSegment: (segmentIndex, segmentData, position) => {
+                useAppStore.getState().setHoveredSegment(segmentIndex, segmentData, position);
+            }
         });
     }
 
@@ -238,6 +243,34 @@ export class MovieTimelineManager {
 
     hasTransitionSegments() {
         return Array.isArray(this.segments) && this.segments.some(segment => segment && !segment.isFullTree);
+    }
+
+    zoomIn(factor = 0.2) {
+        this.timeline?.zoomIn?.(factor);
+    }
+
+    zoomOut(factor = 0.2) {
+        this.timeline?.zoomOut?.(factor);
+    }
+
+    fit() {
+        this.timeline?.fit?.();
+    }
+
+    scrollToStart() {
+        this.timeline?.moveTo?.(0);
+    }
+
+    scrollToEnd() {
+        const total = this.timeline?.getTotalDuration?.();
+        const range = this.timeline?.getVisibleTimeRange?.();
+
+        if (!Number.isFinite(total) || !range || !Number.isFinite(range.min) || !Number.isFinite(range.max)) {
+            return;
+        }
+
+        const visibleDuration = Math.max(0, range.max - range.min);
+        this.timeline?.moveTo?.(Math.max(0, total - visibleDuration));
     }
 
     getInterpolationDataForTimelineProgress(progress) {

@@ -1,4 +1,3 @@
-import { useAppStore } from '../../state/phyloStore/store.js';
 import { TimelineMathUtils } from '../math/TimelineMathUtils.js';
 
 // ============================================================================
@@ -6,10 +5,11 @@ import { TimelineMathUtils } from '../math/TimelineMathUtils.js';
 // ============================================================================
 
 export class ScrubberAPI {
-  constructor(treeController, transitionResolver, timelineManager = null) {
+  constructor(treeController, transitionResolver, timelineManager = null, store) {
     this.treeController = treeController;
     this.transitionResolver = transitionResolver;
     this.timelineManager = timelineManager;
+    this.store = store;
     this.currentProgress = 0;
     this.lastInterpolationState = null;
     this.pendingProgress = null;
@@ -57,6 +57,7 @@ export class ScrubberAPI {
     this.processingPromise = null;
     this.treeController = null;
     this.transitionResolver = null;
+    this.store = null;
   }
 
   // ==========================================================================
@@ -69,12 +70,13 @@ export class ScrubberAPI {
       const interpolationData = await this._getInterpolationData(progress);
       if (!interpolationData) return;
 
-      const direction = useAppStore.getState().navigationDirection;
+      const state = this.store.getState();
+      const direction = state.navigationDirection;
       const primaryTreeIndex = interpolationData.timeFactor < 0.5
         ? interpolationData.fromIndex
         : interpolationData.toIndex;
 
-      useAppStore.getState().setTimelineProgress(progress, primaryTreeIndex);
+      state.setTimelineProgress(progress, primaryTreeIndex);
       await this._renderScrubFrame(interpolationData, direction);
 
       this.lastInterpolationState = { progress, interpolationData, direction };
@@ -112,7 +114,7 @@ export class ScrubberAPI {
 
   async _renderScrubFrame(interpolationData, direction) {
     const { fromTree, toTree, timeFactor, fromIndex, toIndex } = interpolationData;
-    const state = useAppStore.getState();
+    const state = this.store.getState();
     const primaryTreeIndex = timeFactor < 0.5 ? fromIndex : toIndex;
 
     state.updateColorManagerForIndex?.(primaryTreeIndex);
@@ -125,7 +127,7 @@ export class ScrubberAPI {
     };
 
     if (state.comparisonMode) {
-      const anchors = state.transitionResolver.fullTreeIndices;
+      const anchors = this.transitionResolver?.fullTreeIndices ?? [];
       options.comparisonMode = true;
       options.rightTreeIndex = anchors.find((i) => i > fromIndex) ?? anchors[anchors.length - 1];
     }
