@@ -112,6 +112,39 @@ describe('processMovieData cancellation', () => {
     expect(eventSource.close).toHaveBeenCalledTimes(1);
   });
 
+  it('rejects tree chunks whose indexes do not match the stream contract', async () => {
+    const { processMovieData } = await import('../../src/pages/WorkspaceInitialization/services/movieProcessing.js');
+
+    const processing = processMovieData(
+      { treesFile: new File(['(a);'], 'tree.nwk') },
+      vi.fn()
+    );
+
+    await vi.waitFor(() => {
+      expect(MockEventSource.instances).toHaveLength(1);
+    });
+
+    const eventSource = MockEventSource.instances[0];
+    eventSource.emit('metadata', JSON.stringify({
+      metadata: {
+        file_name: 'tree.nwk',
+        tree_metadata: [],
+      },
+    }));
+    eventSource.emit('trees_chunk', JSON.stringify({
+      trees: [{ name: 'a' }],
+      start_index: 0,
+      end_index: '1',
+      total: 1,
+    }));
+    eventSource.emit('complete', JSON.stringify({
+      data: { tree_count: 1 },
+    }));
+
+    await expect(processing).rejects.toThrow('Invalid tree chunk indexes from tree processing stream');
+    expect(eventSource.close).toHaveBeenCalledTimes(1);
+  });
+
   it('rejects legacy complete-event movie payloads without stream metadata', async () => {
     const { processMovieData } = await import('../../src/pages/WorkspaceInitialization/services/movieProcessing.js');
 

@@ -13,8 +13,8 @@ describe('DataService - API Integration', () => {
   });
 
   it('should use relative path in Web Mode', async () => {
-    const url = await resolveApiUrl('/treedata');
-    expect(url).to.equal('/treedata');
+    const url = await resolveApiUrl('/treedata/stream');
+    expect(url).to.equal('/treedata/stream');
   });
 
   it('should use absolute Electron URL in Electron Mode', async () => {
@@ -24,7 +24,7 @@ describe('DataService - API Integration', () => {
       }
     };
 
-    const url = await resolveApiUrl('/treedata');
-    expect(url).to.equal('http://localhost:9999/treedata');
+    const url = await resolveApiUrl('/treedata/stream');
+    expect(url).to.equal('http://localhost:9999/treedata/stream');
   });
 });

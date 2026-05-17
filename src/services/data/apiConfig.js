@@ -27,7 +27,7 @@ export async function getApiBaseUrl() {
 
 /**
  * Helper to construct a full API URL.
- * @param {string} endpoint - The API endpoint (e.g., '/treedata')
+ * @param {string} endpoint - The API endpoint (e.g., '/treedata/stream')
  * @returns {Promise<string>} The full URL.
  */
 export async function resolveApiUrl(endpoint) {

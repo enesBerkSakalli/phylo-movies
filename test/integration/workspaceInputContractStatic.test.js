@@ -21,7 +21,7 @@ function collectSourceFiles(directory) {
 describe('workspace initialization input contract', () => {
   it('does not keep a frontend client for the old synchronous treedata endpoint', () => {
     const serviceFiles = [
-      join(repoRoot, 'src', 'services', 'data', 'dataManager.js'),
+      join(repoRoot, 'src', 'services', 'data', 'apiConfig.js'),
       join(repoRoot, 'src', 'services', 'data', 'dataService.js'),
     ];
     const workspaceFiles = collectSourceFiles(

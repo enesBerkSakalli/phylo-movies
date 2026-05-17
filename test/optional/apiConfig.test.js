@@ -36,14 +36,14 @@ describe('apiConfig - Multi-platform URL Resolution', () => {
 
     it('resolveApiUrl() should return relative path in Web Mode', async () => {
       global.window = {};
-      const url = await resolveApiUrl('/treedata');
-      expect(url).to.equal('/treedata');
+      const url = await resolveApiUrl('/treedata/stream');
+      expect(url).to.equal('/treedata/stream');
     });
 
     it('resolveApiUrl() should handle endpoints without leading slash in Web Mode', async () => {
       global.window = {};
-      const url = await resolveApiUrl('treedata');
-      expect(url).to.equal('/treedata');
+      const url = await resolveApiUrl('treedata/stream');
+      expect(url).to.equal('/treedata/stream');
     });
   });
 
@@ -89,8 +89,8 @@ describe('apiConfig - Multi-platform URL Resolution', () => {
           getBackendUrl: async () => 'http://localhost:5002'
         }
       };
-      const url = await resolveApiUrl('/treedata');
-      expect(url).to.equal('http://localhost:5002/treedata');
+      const url = await resolveApiUrl('/treedata/stream');
+      expect(url).to.equal('http://localhost:5002/treedata/stream');
     });
 
     it('resolveApiUrl() should handle endpoints without leading slash in Electron', async () => {
@@ -99,8 +99,8 @@ describe('apiConfig - Multi-platform URL Resolution', () => {
           getBackendUrl: async () => 'http://localhost:5002'
         }
       };
-      const url = await resolveApiUrl('treedata');
-      expect(url).to.equal('http://localhost:5002/treedata');
+      const url = await resolveApiUrl('treedata/stream');
+      expect(url).to.equal('http://localhost:5002/treedata/stream');
     });
   });
 });
