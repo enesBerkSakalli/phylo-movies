@@ -204,11 +204,30 @@ export async function processMovieData(formData, onProgress, options = {}) {
           rejectOnce(new Error('Invalid tree chunk from tree processing stream'));
           return;
         }
+        const startIndex = chunk.start_index;
+        const endIndex = chunk.end_index;
+        const total = chunk.total;
+        if (
+          !Number.isInteger(startIndex) ||
+          !Number.isInteger(endIndex) ||
+          !Number.isInteger(total) ||
+          startIndex < 0 ||
+          endIndex < startIndex ||
+          endIndex > total ||
+          total <= 0
+        ) {
+          rejectOnce(new Error('Invalid tree chunk indexes from tree processing stream'));
+          return;
+        }
+        if (startIndex !== streamedTrees.length || endIndex !== startIndex + chunk.trees.length) {
+          rejectOnce(new Error('Tree chunk indexes do not match received tree count'));
+          return;
+        }
         streamedTrees.push(...chunk.trees);
         // Map chunk progress into remaining space between current high-water and 90
-        const chunkRatio = chunk.end_index / chunk.total;
+        const chunkRatio = endIndex / total;
         const percent = highWaterMark + chunkRatio * (90 - highWaterMark);
-        const message = `Received ${chunk.end_index} / ${chunk.total} trees...`;
+        const message = `Received ${endIndex} / ${total} trees...`;
         reportProgress(percent, message);
       } catch (err) {
         rejectOnce(new Error('Failed to parse tree chunk event: ' + err.message));
