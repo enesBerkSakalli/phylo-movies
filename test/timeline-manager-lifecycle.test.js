@@ -116,6 +116,66 @@ describe('MovieTimelineManager lifecycle', () => {
     manager.destroy();
   });
 
+  it('keeps timeline viewport controls behind the manager API', () => {
+    const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] }, movieData.interpolated_trees);
+    const calls = [];
+
+    manager.timeline = {
+      zoomIn: (factor) => calls.push(['zoomIn', factor]),
+      zoomOut: (factor) => calls.push(['zoomOut', factor]),
+      fit: () => calls.push(['fit']),
+      moveTo: (time) => calls.push(['moveTo', time]),
+      getTotalDuration: () => 5000,
+      getVisibleTimeRange: () => ({ min: 1000, max: 3000 }),
+      destroy: () => calls.push(['destroy'])
+    };
+
+    manager.zoomIn();
+    manager.zoomOut();
+    manager.fit();
+    manager.scrollToStart();
+    manager.scrollToEnd();
+
+    expect(calls).to.deep.equal([
+      ['zoomIn', 0.2],
+      ['zoomOut', 0.2],
+      ['fit'],
+      ['moveTo', 0],
+      ['moveTo', 3000],
+    ]);
+
+    manager.timeline = null;
+    manager.destroy();
+  });
+
+  it('routes store timeline controls through manager methods', () => {
+    const calls = [];
+    useAppStore.setState({
+      movieTimelineManager: {
+        zoomIn: () => calls.push('zoomIn'),
+        zoomOut: () => calls.push('zoomOut'),
+        fit: () => calls.push('fit'),
+        scrollToStart: () => calls.push('scrollToStart'),
+        scrollToEnd: () => calls.push('scrollToEnd')
+      }
+    });
+
+    const store = useAppStore.getState();
+    store.zoomInTimeline();
+    store.zoomOutTimeline();
+    store.fitTimeline();
+    store.scrollToStartTimeline();
+    store.scrollToEndTimeline();
+
+    expect(calls).to.deep.equal([
+      'zoomIn',
+      'zoomOut',
+      'fit',
+      'scrollToStart',
+      'scrollToEnd'
+    ]);
+  });
+
   it('remounts into a new host without leaving stale DOM behind', () => {
     const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] }, movieData.interpolated_trees);
     const firstHost = makeContainer(640, 60);

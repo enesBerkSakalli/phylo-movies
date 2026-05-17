@@ -1,9 +1,10 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import { Button } from '../../ui/button';
 import { AppTooltip } from '../../ui/app-tooltip';
 import { ChevronsLeft, ChevronsRight, ZoomOut, ZoomIn, Scan } from 'lucide-react';
 import {
   selectFitTimeline,
+  selectMovieTimelineManager,
   selectScrollToEndTimeline,
   selectScrollToStartTimeline,
   selectZoomInTimeline,
@@ -17,94 +18,69 @@ export function TimelineScrollControls() {
   const zoomOutTimeline = useAppStore(selectZoomOutTimeline);
   const zoomInTimeline = useAppStore(selectZoomInTimeline);
   const fitTimeline = useAppStore(selectFitTimeline);
+  const movieTimelineManager = useAppStore(selectMovieTimelineManager);
+  const disabled = !movieTimelineManager;
 
-  const handleScrollToStart = useCallback(() => {
-    scrollToStartTimeline();
-  }, [scrollToStartTimeline]);
-
-  const handleScrollToEnd = useCallback(() => {
-    scrollToEndTimeline();
-  }, [scrollToEndTimeline]);
-
-  const handleZoomOut = useCallback(() => {
-    zoomOutTimeline();
-  }, [zoomOutTimeline]);
-
-  const handleZoomIn = useCallback(() => {
-    zoomInTimeline();
-  }, [zoomInTimeline]);
-
-  const handleFitTimeline = useCallback(() => {
-    fitTimeline();
-  }, [fitTimeline]);
+  const controls = [
+    {
+      id: 'scrollToStartBtn',
+      label: 'Scroll sequence to start',
+      tooltip: 'Scroll to start',
+      Icon: ChevronsLeft,
+      onClick: scrollToStartTimeline
+    },
+    {
+      id: 'zoomOutBtn',
+      label: 'Zoom out sequence',
+      tooltip: 'Zoom out sequence',
+      Icon: ZoomOut,
+      onClick: zoomOutTimeline
+    },
+    {
+      id: 'fitToWindowBtn',
+      label: 'Fit entire sequence to window',
+      tooltip: 'Fit entire sequence',
+      Icon: Scan,
+      onClick: fitTimeline
+    },
+    {
+      id: 'zoomInBtn',
+      label: 'Zoom in sequence',
+      tooltip: 'Zoom in sequence',
+      Icon: ZoomIn,
+      onClick: zoomInTimeline
+    },
+    {
+      id: 'scrollToEndBtn',
+      label: 'Scroll sequence to end',
+      tooltip: 'Scroll to end',
+      Icon: ChevronsRight,
+      onClick: scrollToEndTimeline
+    }
+  ];
 
   return (
-    <>
-      <div className="timeline-zoom-controls flex items-center gap-1" role="group" aria-label="Sequence zoom controls">
-        <span className="text-2xs font-medium uppercase tracking-wider text-muted-foreground px-1">Zoom</span>
-        <AppTooltip content="Zoom out sequence (Ctrl + -)">
+    <div
+      className="timeline-view-controls flex items-center gap-0.5 rounded-md bg-muted/40 p-0.5"
+      role="group"
+      aria-label="Timeline view controls"
+    >
+      {controls.map(({ id, label, tooltip, Icon, onClick }) => (
+        <AppTooltip key={id} content={tooltip}>
           <Button
-            id="zoomOutBtn"
+            id={id}
+            type="button"
             variant="ghost"
-            size="icon"
-            aria-label="Zoom out sequence"
-            onClick={handleZoomOut}
+            size="icon-xs"
+            aria-label={label}
+            disabled={disabled}
+            onClick={onClick}
+            className="text-muted-foreground hover:text-foreground"
           >
-            <ZoomOut className="size-4" />
+            <Icon className="size-3.5" aria-hidden />
           </Button>
         </AppTooltip>
-
-        <AppTooltip content="Fit entire sequence to window (Ctrl + 0)">
-          <Button
-            id="fitToWindowBtn"
-            variant="ghost"
-            size="icon"
-            aria-label="Fit entire sequence to window"
-            onClick={handleFitTimeline}
-          >
-            <Scan className="size-4" />
-          </Button>
-        </AppTooltip>
-
-        <AppTooltip content="Zoom in sequence (Ctrl + +)">
-          <Button
-            id="zoomInBtn"
-            variant="ghost"
-            size="icon"
-            aria-label="Zoom in sequence"
-            onClick={handleZoomIn}
-          >
-            <ZoomIn className="size-4" />
-          </Button>
-        </AppTooltip>
-      </div>
-
-      <div className="timeline-scroll-controls flex items-center gap-1" role="group" aria-label="Sequence pan controls">
-        <span className="text-2xs font-medium uppercase tracking-wider text-muted-foreground px-1">Pan</span>
-        <AppTooltip content="Scroll to start (Home)">
-          <Button
-            id="scrollToStartBtn"
-            variant="ghost"
-            size="icon"
-            aria-label="Scroll sequence to start"
-            onClick={handleScrollToStart}
-          >
-            <ChevronsLeft className="size-4" />
-          </Button>
-        </AppTooltip>
-
-        <AppTooltip content="Scroll to end (End)">
-          <Button
-            id="scrollToEndBtn"
-            variant="ghost"
-            size="icon"
-            aria-label="Scroll sequence to end"
-            onClick={handleScrollToEnd}
-          >
-            <ChevronsRight className="size-4" />
-          </Button>
-        </AppTooltip>
-      </div>
-    </>
+      ))}
+    </div>
   );
 }

@@ -42,56 +42,31 @@ export const createTimelineSlice = (set, get) => ({
   // ACTIONS: Timeline Controls
   // ==========================================================================
   zoomInTimeline: () => {
-    const { movieTimelineManager } = get();
-    try {
-      movieTimelineManager?.timeline?.zoomIn?.(0.2);
-    } catch (e) {
-      console.warn('[Store] zoomInTimeline failed:', e);
-    }
+    callTimelineManager(get, 'zoomInTimeline', 'zoomIn');
   },
 
   zoomOutTimeline: () => {
-    const { movieTimelineManager } = get();
-    try {
-      movieTimelineManager?.timeline?.zoomOut?.(0.2);
-    } catch (e) {
-      console.warn('[Store] zoomOutTimeline failed:', e);
-    }
+    callTimelineManager(get, 'zoomOutTimeline', 'zoomOut');
   },
 
   fitTimeline: () => {
-    const { movieTimelineManager } = get();
-    try {
-      movieTimelineManager?.timeline?.fit?.();
-    } catch (e) {
-      console.warn('[Store] fitTimeline failed:', e);
-    }
+    callTimelineManager(get, 'fitTimeline', 'fit');
   },
 
   scrollToStartTimeline: () => {
-    const { movieTimelineManager } = get();
-    try {
-      movieTimelineManager?.timeline?.moveTo?.(0);
-    } catch (e) {
-      console.warn('[Store] scrollToStartTimeline failed:', e);
-    }
+    callTimelineManager(get, 'scrollToStartTimeline', 'scrollToStart');
   },
 
   scrollToEndTimeline: () => {
-    const { movieTimelineManager } = get();
-    try {
-      const timeline = movieTimelineManager?.timeline;
-      if (!timeline) return;
-
-      const total = timeline.getTotalDuration?.();
-      const range = timeline.getVisibleTimeRange?.();
-
-      if (typeof total === 'number' && range && typeof range.min === 'number' && typeof range.max === 'number') {
-        const visible = Math.max(0, range.max - range.min);
-        timeline.moveTo(Math.max(0, total - visible));
-      }
-    } catch (e) {
-      console.warn('[Store] scrollToEndTimeline failed:', e);
-    }
+    callTimelineManager(get, 'scrollToEndTimeline', 'scrollToEnd');
   },
 });
+
+function callTimelineManager(get, actionName, managerMethodName) {
+  try {
+    const manager = get().movieTimelineManager;
+    manager?.[managerMethodName]?.();
+  } catch (e) {
+    console.warn(`[Store] ${actionName} failed:`, e);
+  }
+}
