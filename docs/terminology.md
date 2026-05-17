@@ -1,6 +1,6 @@
 # Terminology
 
-This project uses the terms below consistently in user-facing text, docs, tests, and new code. Existing backend field names are kept when they are part of the serialized API.
+This project uses the terms below consistently in user-facing text, docs, tests, and new code. Backend field names should match the scientific or UI meaning of the serialized data.
 
 ## Tree And Timeline Terms
 
@@ -20,19 +20,19 @@ This project uses the terms below consistently in user-facing text, docs, tests,
 | Split | The internal/backend representation of a bipartition, usually serialized as `split`, `split_indices`, `pivot_edge`, or `split_change_timeline`. | User-facing descriptions of moving groups. |
 | Partition | Generic programming/data partitioning only. Do not use it as a synonym for split or subtree. | Phylogenetic topology concepts unless an external algorithm explicitly says partition. |
 
-## Compatibility Names
+## Serialized Contract Names
 
-Do not rename these fields just to match prose:
+These fields are part of the current serialized API:
 
 - `split_indices`
 - `split_change_timeline`
 - `pivot_edge`
-- `subtree_tracking`
+- `subtree_highlight_tracking`
 - `affected_subtrees_by_split`
 - `attachment_edges_by_split`
 - `tree_pair_solutions`
 
-When wrapping those fields in frontend code, use names that describe the app concept. For example, keep `split_indices` at the parser boundary, but prefer `subtree`, `pivotEdge`, `anchorTree`, and `transitionFrame` in local variables where that is what the value represents.
+When wrapping those fields in frontend code, use names that describe the app concept. For example, keep `split_indices` at the parser boundary, but prefer `subtree`, `subtreeHighlightTracking`, `pivotEdge`, `anchorTree`, and `transitionFrame` in local variables where that is what the value represents.
 
 ## SPR Movement Data
 

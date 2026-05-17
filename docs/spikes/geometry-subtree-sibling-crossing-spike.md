@@ -67,7 +67,7 @@ tags: ["technical-spike", "geometry", "animation", "interpolation", "radial-tree
 
 **Dependencies:**
 
-- Backend provides `subtree_tracking` data identifying which taxa are moving
+- Backend provides `subtree_highlight_tracking` data identifying per-frame subtree highlight groups
 - Layout system provides polar coordinates (angle, radius) for each node
 
 **Constraints:**
@@ -260,10 +260,11 @@ Have BranchArchitect generate more intermediate frames for "crossing" transition
 }
 ```
 
-**From Backend (subtree_tracking):**
+**From Backend (subtree_highlight_tracking):**
 ```javascript
-// Per tree-index, lists which taxa are "moving" (changing topology)
-subtree_tracking[treeIndex] = [[8, 9], [17, 18]]  // Two subtrees moving
+// Per tree-index, lists taxa groups highlighted for this interpolation frame.
+// This is visual context, not authoritative SPR mover ownership.
+subtree_highlight_tracking[treeIndex] = [[8, 9], [17, 18]]  // Two highlighted subtree groups
 ```
 
 **From Backend (affected_subtrees_by_split):**
@@ -460,9 +461,9 @@ Option A: **At interpolation start (per tree pair)**
 ```javascript
 // In InterpolationCache or TreeInterpolator
 prepareInterpolation(dataFrom, dataTo, treeIndex) {
-  const movingTaxa = subtreeTracking[treeIndex]?.flat() || [];
+  const highlightedTaxa = subtreeHighlightTracking[treeIndex]?.flat() || [];
   const forbiddenSectors = this.computeForbiddenSectorsForMovingTaxa(
-    movingTaxa, dataFrom, dataTo
+    highlightedTaxa, dataFrom, dataTo
   );
   this.currentForbiddenSectors = forbiddenSectors;
 }

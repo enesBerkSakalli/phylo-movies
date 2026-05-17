@@ -67,7 +67,7 @@ flowchart TD
 
 The backend sends node-bearing tree frames plus separate transition metadata.
 `frontend_builder.py` serializes interpolated trees, `tree_metadata`,
-`tree_pair_solutions`, `pivot_edge_tracking`, `subtree_tracking`,
+`tree_pair_solutions`, `pivot_edge_tracking`, `subtree_highlight_tracking`,
 `pair_interpolation_ranges`, and `split_change_timeline` into the frontend
 payload.
 
@@ -80,7 +80,8 @@ The relevant backend-to-frontend meanings are:
   solutions per source/target pair.
 - `pivot_edge_tracking` is derived per global tree index from split-change
   events.
-- `subtree_tracking` carries moving-subtree state per frame.
+- `subtree_highlight_tracking` carries moving-subtree highlight state per
+  frame.
 - `split_change_timeline` is the weighted timeline input used to build anchor
   and transition segments.
 

@@ -132,3 +132,14 @@ Append-only chronological log of wiki operations.
 - Outputs:
   - [[tree-node-highlight-timing-flow]]
 - Secrets used: none
+
+## [2026-05-16] maintenance | Subtree highlight contract terminology cleanup
+
+- Operation ID: `op-20260516-subtree-highlight-contract-terminology-cleanup`
+- Inputs:
+  - `knowledge/wiki/analyses/tree-node-highlight-timing-flow.md`
+  - `src/domain/backend/phyloMovieSchema.ts`
+  - `engine/BranchArchitect/webapp/services/trees/frontend_builder.py`
+- Outputs:
+  - [[tree-node-highlight-timing-flow]]
+- Secrets used: none
