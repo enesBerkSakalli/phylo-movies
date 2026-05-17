@@ -120,4 +120,27 @@ describe('legacy module aliases', () => {
     expect(viteConfigSource).not.toMatch(/\bdefine\s*:\s*\{[\s\S]*\bglobal\s*:\s*['"]globalThis['"]/);
     expect(viteConfigSource).not.toMatch(/\bdefine\s*:\s*\{[\s\S]*['"]process\.env['"]\s*:/);
   });
+
+  it('does not keep the legacy home route or home page UI wrapper', () => {
+    const routerSource = readFileSync(join(repoRoot, 'src', 'Router.jsx'), 'utf8');
+    const docsLandingSource = readFileSync(
+      join(repoRoot, 'src', 'pages', 'GitHubPages', 'GitHubPagesInfoPage.jsx'),
+      'utf8',
+    );
+    const workspaceLandingSource = readFileSync(
+      join(repoRoot, 'src', 'pages', 'WorkspaceInitialization', 'WorkspaceInitializationPage.jsx'),
+      'utf8',
+    );
+    const seoScriptSource = readFileSync(join(repoRoot, 'scripts', 'apply-gh-seo.js'), 'utf8');
+    const readmeSource = readFileSync(join(repoRoot, 'README.md'), 'utf8');
+
+    expect(routerSource).not.toContain('path="/home"');
+    expect(docsLandingSource).not.toContain('/home');
+    expect(docsLandingSource).not.toContain('home-page');
+    expect(workspaceLandingSource).not.toContain('home.css');
+    expect(workspaceLandingSource).not.toContain('home-page');
+    expect(seoScriptSource).not.toContain('/home');
+    expect(readmeSource).not.toContain('/home');
+    expect(existsSync(join(repoRoot, 'src', 'css', 'home.css'))).toBe(false);
+  });
 });

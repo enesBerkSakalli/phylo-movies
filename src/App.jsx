@@ -22,18 +22,16 @@ import {
 
 import {
   selectFileName,
-  selectHasMsa,
   selectInitialize,
   selectReset,
   useAppStore
 } from './state/phyloStore/store.js';
-import { getPhyloMovieData } from './services/data/dataManager.js';
+import { phyloData } from './services/data/dataService.js';
 import { useTreeController } from './hooks/useTreeController.js';
 
 export function App() {
 
   const fileName = useAppStore(selectFileName) || 'Loading...';
-  const hasMsa = useAppStore(selectHasMsa);
   const initializeStore = useAppStore(selectInitialize);
   const resetStore = useAppStore(selectReset);
   const [sprAnalyticsOpen, setSprAnalyticsOpen] = React.useState(false);
@@ -60,7 +58,7 @@ export function App() {
     let cancelled = false;
     (async () => {
       try {
-        const parsedData = await getPhyloMovieData();
+        const parsedData = await phyloData.get();
         if (cancelled) return;
 
         if (!parsedData) {
@@ -83,12 +81,6 @@ export function App() {
       resetStore();
     };
   }, [initializeStore, resetStore, navigate]);
-
-  useEffect(() => {
-    try {
-      document.documentElement.setAttribute('data-has-msa', hasMsa ? 'true' : 'false');
-    } catch { }
-  }, [hasMsa]);
 
   return (
     <TooltipProvider>
@@ -117,7 +109,7 @@ export function App() {
 
         <SidebarInset className="overflow-hidden">
           <SidebarTrigger className="absolute top-2 left-2 z-[1200]" />
-          <div className="full-size-container" style={{ flex: 1, minHeight: 0, position: 'relative', overflow: 'hidden' }}>
+          <div className="relative min-h-0 flex-1 overflow-hidden">
             <DeckGLCanvas />
             <TreeViewportControls />
             <CanvasCaptureControls />

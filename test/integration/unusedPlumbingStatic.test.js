@@ -130,4 +130,39 @@ describe('unused plumbing cleanup', () => {
     const branchArchitectGitignore = readFileSync(join(repoRoot, 'engine', 'BranchArchitect', '.gitignore'), 'utf8');
     expect(branchArchitectGitignore).toContain('/test/output/');
   });
+
+  it('does not keep unused global UI styles or marker attributes', () => {
+    const globalCss = readFileSync(join(repoRoot, 'src', 'css', 'index.css'), 'utf8');
+    const appSource = readFileSync(join(repoRoot, 'src', 'App.jsx'), 'utf8');
+
+    expect(globalCss).not.toContain('animate-shimmer');
+    expect(globalCss).not.toContain('animate-float');
+    expect(globalCss).not.toContain('@keyframes shimmer');
+    expect(globalCss).not.toContain('@keyframes float');
+    expect(globalCss).not.toContain('HUD styles are imported');
+    expect(globalCss).not.toContain('@source "../index.html"');
+
+    expect(appSource).not.toContain('data-has-msa');
+    expect(appSource).not.toContain('full-size-container');
+  });
+
+  it('does not keep dead UI imports or initializer assignments', () => {
+    const coloringPanelSource = readFileSync(
+      join(repoRoot, 'src', 'components', 'appearance', 'color', 'ColoringPanel.jsx'),
+      'utf8'
+    );
+    const workspaceFormSource = readFileSync(
+      join(repoRoot, 'src', 'pages', 'WorkspaceInitialization', 'useWorkspaceInitializationForm.js'),
+      'utf8'
+    );
+    const msaScrollbarsSource = readFileSync(
+      join(repoRoot, 'src', 'components', 'msa', 'MSAScrollbars.jsx'),
+      'utf8'
+    );
+
+    expect(coloringPanelSource).not.toContain('SidebarMenuSubButton');
+    expect(workspaceFormSource).not.toContain('setValue, reset: resetForm');
+    expect(msaScrollbarsSource).not.toContain('let targetCol = null');
+    expect(msaScrollbarsSource).not.toContain('let targetRow = null');
+  });
 });

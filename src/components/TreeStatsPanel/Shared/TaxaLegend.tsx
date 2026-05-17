@@ -26,17 +26,14 @@ export const TaxaGroupsLegend: React.FC = () => {
   }
 
   const { mode, groupColorMap, groups, csvGroups } = taxaGrouping;
-  let groupNames: string[] = [];
-
-  // Determine which groups to show based on the active mode
-  if (mode === 'csv' && csvGroups) {
-    groupNames = csvGroups.map((g: any) => g.name);
-  } else if (mode === 'groups' && groups) {
-    groupNames = groups.map((g: any) => g.name);
-  } else {
-    // Fallback if specific lists are missing
-    groupNames = Object.keys(groupColorMap || {});
-  }
+  const namedGroups = mode === 'csv' ? csvGroups : mode === 'groups' ? groups : null;
+  const groupNames = Array.isArray(namedGroups)
+    ? namedGroups
+        .map((group: { name?: unknown } | string) => (
+          typeof group === 'string' ? group : String(group.name ?? '')
+        ))
+        .filter(Boolean)
+    : Object.keys(groupColorMap || {});
 
   if (groupNames.length === 0) {
     return null;

@@ -17,7 +17,7 @@ import {
 } from '../ui/sidebar';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../ui/collapsible';
 
-export function ButtonsMSA() {
+export function MsaSidebarSection() {
   const hasMsa = useAppStore(selectHasMsa);
   const syncMSAEnabled = useAppStore(selectSyncMsaEnabled);
   const setSyncMSAEnabled = useAppStore(selectSetSyncMsaEnabled);
@@ -27,6 +27,7 @@ export function ButtonsMSA() {
     if (!hasMsa) return;
     openMsaViewer();
   };
+
   return (
     <Collapsible asChild className="group/collapsible">
       <SidebarMenuItem>
@@ -88,4 +89,4 @@ export function ButtonsMSA() {
   );
 }
 
-export default ButtonsMSA;
+export default MsaSidebarSection;

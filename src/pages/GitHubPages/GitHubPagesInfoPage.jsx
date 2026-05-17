@@ -111,7 +111,7 @@ docker compose up --build`;
 
 export function GitHubPagesInfoPage() {
   return (
-    <div className="home-page bg-background">
+    <div className="fixed inset-0 overflow-y-auto overflow-x-hidden bg-background">
       <main className="container mx-auto max-w-4xl py-8 space-y-8">
         <section className="text-center space-y-4">
           <div className="flex justify-center">
@@ -356,7 +356,7 @@ export function GitHubPagesInfoPage() {
               <code>{DOCKER_QUICKSTART}</code>
             </pre>
             <p className="text-muted-foreground">
-              Then open <code>http://localhost:8080/home</code> to use the app
+              Then open <code>http://localhost:8080/</code> to use the app
               with backend-powered processing.
             </p>
           </CardContent>

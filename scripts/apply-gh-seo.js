@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/* eslint-disable no-console */
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -29,7 +28,7 @@ const PUBLICATION_AUTHORS = [
   'A. von Haeseler',
   'H. A. Schmidt'
 ];
-const PRIMARY_URL = IS_DOCS_ONLY ? `${SITE_ROOT}/` : `${SITE_ROOT}/home`;
+const PRIMARY_URL = `${SITE_ROOT}/`;
 const PAGE_TITLE = IS_DOCS_ONLY
   ? 'Phylo-Movies | Desktop App, Phylogenetic Tree Interpolation, and Publication'
   : 'Phylo-Movies | Interactive Phylogenetic Tree Visualization';
@@ -267,7 +266,7 @@ function writeSitemapXml() {
   const today = new Date().toISOString().slice(0, 10);
   const urls = IS_DOCS_ONLY
     ? [`${SITE_ROOT}/`]
-    : [`${SITE_ROOT}/`, `${SITE_ROOT}/home`, `${SITE_ROOT}/visualization`];
+    : [`${SITE_ROOT}/`, `${SITE_ROOT}/visualization`];
 
   const entries = urls
     .map((url) => `  <url>
@@ -288,7 +287,7 @@ function writeWebManifest() {
     name: 'Phylo-Movies',
     short_name: 'PhyloMovies',
     description: DESCRIPTION,
-    start_url: IS_DOCS_ONLY ? '/phylo-movies/' : '/phylo-movies/home',
+    start_url: '/phylo-movies/',
     scope: '/phylo-movies/',
     display: 'standalone',
     background_color: '#0b1220',

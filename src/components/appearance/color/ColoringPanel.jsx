@@ -28,7 +28,6 @@ import { Palette, Info, Settings2, RefreshCw } from 'lucide-react';
 import {
   SidebarMenuSub,
   SidebarMenuSubItem,
-  SidebarMenuSubButton,
 } from '../../ui/sidebar';
 import { Slider } from '../../ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
@@ -77,7 +76,7 @@ export function ColoringPanel() {
 
   const onTogglePivotEdges = useCallback(async (v) => {
     setPivotEdgesEnabled(!!v);
-  }, [setPivotEdgesEnabled, rerenderControllers]);
+  }, [setPivotEdgesEnabled]);
 
   const toggleMarkedSubtrees = useCallback(async (v) => {
     setMarkedSubtreesEnabled(!!v);

@@ -45,7 +45,7 @@ export function useWorkspaceInitializationForm() {
     mode: "onBlur",
   });
 
-  const { setValue, reset: resetForm } = form;
+  const { reset: resetForm } = form;
 
   useEffect(() => {
     return () => {
