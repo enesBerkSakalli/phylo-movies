@@ -1,6 +1,6 @@
 import { flattenSplitSets, getBackendSplitMapValue } from '../../../../domain/tree/splits.js';
 import {
-  normalizeConnectorSubtreeTrackingToSets,
+  normalizeConnectorSubtreeHighlightsToSets,
   toConnectorSubtreeSetList
 } from './ConnectorSplitNormalization.js';
 import { buildRawConnectorConnections } from './ConnectorRawConnections.js';
@@ -24,7 +24,7 @@ export function buildSubtreeConnectors(options) {
     affectedSubtreesBySplit,
     pivotEdge,
     colorManager,
-    subtreeTracking,
+    subtreeHighlightTracking,
     currentTreeIndex,
     markedSubtreesEnabled = true,
     linkConnectionOpacity = 0.6,
@@ -41,7 +41,7 @@ export function buildSubtreeConnectors(options) {
   }
 
   const jumpingSubtreeSets = toConnectorSubtreeSetList(flattenedSubtrees);
-  const currentSubtreeSets = normalizeConnectorSubtreeTrackingToSets(subtreeTracking?.[currentTreeIndex]);
+  const currentSubtreeSets = normalizeConnectorSubtreeHighlightsToSets(subtreeHighlightTracking?.[currentTreeIndex]);
   const rawConnections = buildRawConnectorConnections({
     leftPositions,
     rightPositions,

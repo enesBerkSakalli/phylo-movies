@@ -63,8 +63,8 @@ export type SplitChangeTimelineEntry = OriginalTimelineEntry | SplitEventTimelin
 
 export interface MsaData {
   sequences: Record<string, string> | null;
-  window_size?: number;
-  step_size?: number;
+  window_size: number;
+  step_size: number;
 }
 
 export type SubtreeHighlightTracking = Array<number[][] | null>;
@@ -75,13 +75,12 @@ export interface PhyloMovieData {
   distances: {
     robinson_foulds: number[];
     weighted_robinson_foulds: number[];
-    [key: string]: unknown;
   };
   tree_pair_solutions: Record<string, TreePairSolution>;
   pair_interpolation_ranges: Array<[number, number]>;
   pivot_edge_tracking: Array<number[] | null>;
   /** Per-frame visual/highlight groups, not movement ownership. */
-  subtree_tracking: SubtreeHighlightTracking;
+  subtree_highlight_tracking: SubtreeHighlightTracking;
   msa: MsaData;
   sorted_leaves: string[];
   file_name: string;

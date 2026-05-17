@@ -42,7 +42,7 @@ export interface AppStoreState {
   maxScale: number;
   pairSolutions: any;
   pivotEdgeTracking: any[];
-  subtreeTracking: any[];
+  subtreeHighlightTracking: any[];
   splitChangeTimeline: SplitChangeTimelineEntry[];
 
   // From datasetLifecycle.slice
@@ -301,6 +301,6 @@ export interface AppStoreState {
   setClipboardOffsetY: (offset: number) => void;
   clearClipboard: () => void;
 
-  showNodeContextMenu: (node: ContextMenuNode | null, treeData: unknown | null, x: number, y: number) => void;
+  showNodeContextMenu: (node: ContextMenuNode | null, position: ContextMenuPosition) => void;
   hideNodeContextMenu: () => void;
 }

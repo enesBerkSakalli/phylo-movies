@@ -40,7 +40,7 @@ export class TreeNodeInteractionHandler {
     }
 
     if (state.showNodeContextMenu) {
-      state.showNodeContextMenu(treeNode, treeData, x, y);
+      state.showNodeContextMenu(treeNode, { x, y });
     } else {
       console.warn('showNodeContextMenu action not found in store');
     }

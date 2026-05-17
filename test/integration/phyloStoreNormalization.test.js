@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { phyloData } from '../../src/services/data/dataService.js';
@@ -43,7 +43,7 @@ function makeBackendMovieData() {
       { type: 'original', global_index: 2, tree_index: 1, name: 'Anchor tree 2' },
     ],
     pivot_edge_tracking: [null, [0], null],
-    subtree_tracking: [null, [[1]], null],
+    subtree_highlight_tracking: [null, [[1]], null],
     sorted_leaves: ['taxon-a', 'taxon-b'],
     msa: {
       sequences: null,
@@ -83,7 +83,7 @@ describe('phylo store dataset normalization', () => {
     expect(state.leafNamesByIndex).toEqual(['taxon-a', 'taxon-b']);
     expect(Object.prototype.hasOwnProperty.call(state, 'movieData')).toBe(false);
     expect(state.msaSequences).toBe(movieData.msa.sequences);
-    expect(state.subtreeTracking).toEqual([null, [[1]], null]);
+    expect(state.subtreeHighlightTracking).toEqual([null, [[1]], null]);
     expect(state.splitChangeTimeline).toBe(movieData.split_change_timeline);
     expect(state.fullTreeIndices).toEqual([0, 2]);
     expect(state.pairInterpolationRanges).toEqual([[0, 2]]);
@@ -153,7 +153,7 @@ describe('phylo store dataset normalization', () => {
     expect(useAppStore.getState().isMsaViewerOpen).toBe(false);
   });
 
-  it('opens the node context menu without storing legacy tree data', () => {
+  it('opens the node context menu from normalized node data and screen position only', () => {
     const legacyTreeDataKey = ['contextMenu', 'TreeData'].join('');
     const node = {
       name: 'node-a',
@@ -163,9 +163,8 @@ describe('phylo store dataset normalization', () => {
       height: 0,
       children: [],
     };
-    const treeData = { id: 'legacy-tree-payload' };
 
-    useAppStore.getState().showNodeContextMenu(node, treeData, 12, 34);
+    useAppStore.getState().showNodeContextMenu(node, { x: 12, y: 34 });
 
     const openState = useAppStore.getState();
     expect(openState.contextMenuOpen).toBe(true);
@@ -179,6 +178,13 @@ describe('phylo store dataset normalization', () => {
     expect(closedState.contextMenuOpen).toBe(false);
     expect(closedState.contextMenuNode).toBeNull();
     expect(Object.prototype.hasOwnProperty.call(closedState, legacyTreeDataKey)).toBe(false);
+
+    const interactionSliceSource = readFileSync(
+      join(repoRoot, 'src/state/phyloStore/slices/interaction/treeInteraction.slice.js'),
+      'utf8',
+    );
+    expect(interactionSliceSource).not.toContain('_treeData');
+    expect(interactionSliceSource).not.toContain('Legacy caller payload');
   });
 
   it('keeps selectors on the Zustand state contract without empty object shims', () => {
@@ -221,6 +227,53 @@ describe('phylo store dataset normalization', () => {
     const violations = selectorFallbackChecks.flatMap(([fileName, legacyPattern]) => {
       const source = readFileSync(join(repoRoot, 'src/state/phyloStore/selectors', fileName), 'utf8');
       return source.includes(legacyPattern) ? [`${fileName}: ${legacyPattern}`] : [];
+    });
+
+    expect(violations).toEqual([]);
+  });
+
+  it('uses validated backend MSA fields without extractor fallback aliases', () => {
+    const lifecycleSource = readFileSync(
+      join(repoRoot, 'src/state/phyloStore/slices/dataset/datasetLifecycle.slice.js'),
+      'utf8'
+    );
+    const extractorPath = join(repoRoot, 'src/domain/msa/msaDataExtractor.js');
+    const violations = [];
+
+    if (lifecycleSource.includes('msaDataExtractor')) {
+      violations.push('datasetLifecycle.slice.js: msaDataExtractor');
+    }
+
+    if (existsSync(extractorPath)) {
+      const extractorSource = readFileSync(extractorPath, 'utf8');
+      for (const pattern of ['window_size || 1000', 'step_size || 50']) {
+        if (extractorSource.includes(pattern)) {
+          violations.push(`msaDataExtractor.js: ${pattern}`);
+        }
+      }
+    }
+
+    expect(violations).toEqual([]);
+  });
+
+  it('does not leak legacy subtree API or state names into frontend state', () => {
+    const sourceChecks = [
+      'src/state/phyloStore/slices/dataset/treeDataset.slice.js',
+      'src/state/phyloStore/slices/dataset/datasetLifecycle.slice.js',
+      'src/state/phyloStore/internal/changeTracking.helpers.js',
+      'src/treeVisualisation/comparison/ComparisonModeRenderer.js',
+      'src/treeVisualisation/deckgl/data/transforms/SubtreeConnectorBuilder.js',
+      'src/types/store.ts',
+    ];
+
+    const legacyStateName = ['subtree', 'Tracking'].join('');
+    const legacyApiKey = ['subtree', 'tracking'].join('_');
+    const violations = sourceChecks.flatMap((file) => {
+      const source = readFileSync(join(repoRoot, file), 'utf8');
+      return [
+        source.includes(legacyStateName) ? `${file}: ${legacyStateName}` : null,
+        source.includes(legacyApiKey) ? `${file}: ${legacyApiKey}` : null,
+      ].filter(Boolean);
     });
 
     expect(violations).toEqual([]);

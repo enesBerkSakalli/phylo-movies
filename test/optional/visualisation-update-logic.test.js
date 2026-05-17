@@ -14,7 +14,7 @@ describe('Tree Visualisation - State Update Logic', () => {
   const createMockState = (overrides = {}) => ({
     currentTreeIndex: 10,
     markedSubtreeScope: 'current',
-    subtreeTracking: [],
+    subtreeHighlightTracking: [],
     transitionResolver: {
       isFullTree: () => false,
       getSourceGlobalIndex: (idx) => idx // Default mapping
@@ -40,7 +40,7 @@ describe('Tree Visualisation - State Update Logic', () => {
       const subtrees = [[1, 2], [3]];
       const state = createMockState({
         currentTreeIndex: index,
-        subtreeTracking: { [index]: subtrees },
+        subtreeHighlightTracking: { [index]: subtrees },
         markedSubtreeScope: 'current'
       });
 
@@ -57,7 +57,7 @@ describe('Tree Visualisation - State Update Logic', () => {
       const subtrees = [[1, 2, 3]];
       const state = createMockState({
         currentTreeIndex: index,
-        subtreeTracking: { [sourceIndex]: subtrees }, // Data at source only
+        subtreeHighlightTracking: { [sourceIndex]: subtrees }, // Data at source only
         transitionResolver: {
           isFullTree: () => false,
           getSourceGlobalIndex: (idx) => (idx === index ? sourceIndex : idx)

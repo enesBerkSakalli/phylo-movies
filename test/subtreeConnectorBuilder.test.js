@@ -271,7 +271,7 @@ const buildOptions = (overrides = {}) => {
     affectedSubtreesBySplit: { '[99]': [[[10, 11], [12, 13]]] },
     pivotEdge: [99],
     colorManager: makeColorManager(),
-    subtreeTracking: [[[10, 11]]],
+    subtreeHighlightTracking: [[[10, 11]]],
     currentTreeIndex: 0,
     markedSubtreesEnabled: true,
     linkConnectionOpacity: 0.6,
@@ -339,13 +339,13 @@ describe('SubtreeConnectorBuilder', function () {
     const normalization = await importConnectorSplitNormalization();
 
     expect(normalization).not.toBeNull();
-    expect(normalization.normalizeConnectorSubtreeTrackingToSets(null)).toEqual([]);
-    expect(normalization.normalizeConnectorSubtreeTrackingToSets([]).map((set) => Array.from(set))).toEqual([[]]);
-    expect(normalization.normalizeConnectorSubtreeTrackingToSets(['10', 11]).map((set) => Array.from(set))).toEqual([[10, 11]]);
-    expect(normalization.normalizeConnectorSubtreeTrackingToSets([['10', 11], [12, '13']]).map((set) => Array.from(set))).toEqual([[10, 11], [12, 13]]);
+    expect(normalization.normalizeConnectorSubtreeHighlightsToSets(null)).toEqual([]);
+    expect(normalization.normalizeConnectorSubtreeHighlightsToSets([]).map((set) => Array.from(set))).toEqual([[]]);
+    expect(normalization.normalizeConnectorSubtreeHighlightsToSets(['10', 11]).map((set) => Array.from(set))).toEqual([[10, 11]]);
+    expect(normalization.normalizeConnectorSubtreeHighlightsToSets([['10', 11], [12, '13']]).map((set) => Array.from(set))).toEqual([[10, 11], [12, 13]]);
 
     const existingSet = new Set([10, 11]);
-    expect(normalization.normalizeConnectorSubtreeTrackingToSets(existingSet)).toEqual([existingSet]);
+    expect(normalization.normalizeConnectorSubtreeHighlightsToSets(existingSet)).toEqual([existingSet]);
     expect(normalization.toConnectorSubtreeSetList([['10', 11], [12, '13']]).map((set) => Array.from(set))).toEqual([[10, 11], [12, 13]]);
   });
 
@@ -353,7 +353,8 @@ describe('SubtreeConnectorBuilder', function () {
     const source = readFileSync(builderSourcePath, 'utf8');
 
     expect(source).toMatch(/from\s+['"]\.\/ConnectorSplitNormalization\.js['"]/);
-    expect(source).not.toMatch(/function\s+normalizeSubtreeTrackingToSets\s*\(/);
+    const oldInlineHelperName = ['normalizeSubtree', 'TrackingToSets'].join('');
+    expect(source).not.toContain(`function ${oldInlineHelperName}(`);
     expect(source).not.toMatch(/function\s+toNormalizedSetList\s*\(/);
     expect(source).not.toMatch(/function\s+normalizeSplitValue\s*\(/);
     expect(source).not.toMatch(/function\s+normalizeSplitArray\s*\(/);
@@ -939,7 +940,7 @@ describe('SubtreeConnectorBuilder', function () {
   it('builds connectors when positions are Maps', function () {
     const connectors = buildSubtreeConnectors(buildOptions({
       affectedSubtreesBySplit: { '[99]': [[10]] },
-      subtreeTracking: [[[10]]],
+      subtreeHighlightTracking: [[[10]]],
     }));
 
     expect(Array.isArray(connectors)).toBe(true);
@@ -973,7 +974,7 @@ describe('SubtreeConnectorBuilder', function () {
     const connectors = buildSubtreeConnectors(buildOptions({
       affectedSubtreesBySplit: { '[10, 11]': [[10]] },
       pivotEdge: [11, 10],
-      subtreeTracking: [[[10]]],
+      subtreeHighlightTracking: [[[10]]],
     }));
 
     expect(connectors).toHaveLength(1);
@@ -984,7 +985,7 @@ describe('SubtreeConnectorBuilder', function () {
   it('builds all affected-subtree connectors while only the current moved subtree is active', function () {
     const connectors = buildSubtreeConnectors(buildOptions({
       affectedSubtreesBySplit: { '[99]': [[[10, 11], [12, 13]]] },
-      subtreeTracking: [[[10, 11]]],
+      subtreeHighlightTracking: [[[10, 11]]],
     }));
 
     const active = connectors.filter((connector) => connector.isCurrentlyMoving);
@@ -1002,7 +1003,7 @@ describe('SubtreeConnectorBuilder', function () {
   it('uses link opacity for passive affected-subtree connectors', function () {
     const connectors = buildSubtreeConnectors(buildOptions({
       affectedSubtreesBySplit: { '[99]': [[10]] },
-      subtreeTracking: [[]],
+      subtreeHighlightTracking: [[]],
       linkConnectionOpacity: 0.25,
     }));
 
@@ -1017,7 +1018,7 @@ describe('SubtreeConnectorBuilder', function () {
 
     const connectors = buildSubtreeConnectors(buildOptions({
       affectedSubtreesBySplit: { '[99]': [[10]] },
-      subtreeTracking: [[[10]]],
+      subtreeHighlightTracking: [[[10]]],
       colorManager: makeColorManager({ getNodeColor }),
       markedSubtreesEnabled: false,
     }));

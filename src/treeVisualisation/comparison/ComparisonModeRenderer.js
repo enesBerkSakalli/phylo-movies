@@ -298,7 +298,7 @@ export class ComparisonModeRenderer {
       affectedSubtreesBySplit,
       pivotEdge,
       colorManager: state?.colorManager,
-      subtreeTracking: state?.subtreeTracking || [],
+      subtreeHighlightTracking: state?.subtreeHighlightTracking || [],
       currentTreeIndex,
       markedSubtreesEnabled: state?.markedSubtreesEnabled ?? true,
       linkConnectionOpacity: state?.linkConnectionOpacity ?? 0.6,

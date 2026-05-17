@@ -19,7 +19,7 @@ describe('moving subtree highlighting', () => {
 
   it('does not merge simultaneous moved subtrees into a larger highlighted clade', () => {
     const state = {
-      subtreeTracking: [
+      subtreeHighlightTracking: [
         [[1], [2]],
       ],
     };

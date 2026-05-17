@@ -27,7 +27,7 @@ export const createTreeDatasetSlice = (_set, get) => ({
   // ==========================================================================
   pairSolutions: {},
   pivotEdgeTracking: [],
-  subtreeTracking: [],
+  subtreeHighlightTracking: [],
   splitChangeTimeline: [],
 
   getTreeContext: (index) => {

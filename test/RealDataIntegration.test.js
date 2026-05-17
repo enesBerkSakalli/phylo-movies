@@ -110,8 +110,8 @@ describe('Real Data Integration (test/data/ostrich_bug_response.json)', () => {
         const leftPositions = createPosMap(leftLayout.nodes);
         const rightPositions = createPosMap(rightLayout.nodes);
 
-        // We also need to mark it as "currently moving" via subtreeTracking
-        const subtreeTracking = [
+        // We also need to mark it as "currently moving" via subtreeHighlightTracking
+        const subtreeHighlightTracking = [
             [ movingSubtree ]
         ];
 
@@ -121,7 +121,7 @@ describe('Real Data Integration (test/data/ostrich_bug_response.json)', () => {
             affectedSubtreesBySplit,
             pivotEdge: pivotEdge,
             colorManager: mockColorManager,
-            subtreeTracking: subtreeTracking,
+            subtreeHighlightTracking: subtreeHighlightTracking,
             currentTreeIndex: 0,
             markedSubtreesEnabled: true,
             leftCenter: [-300, 0],
@@ -134,7 +134,7 @@ describe('Real Data Integration (test/data/ostrich_bug_response.json)', () => {
         // Filter for the active active connectors
         const activeConns = connectors.filter(c => c.isCurrentlyMoving);
 
-        // With correct subtreeTracking, we expect active connections
+        // With correct subtreeHighlightTracking, we expect active connections
         expect(activeConns.length).toBeGreaterThan(0);
 
         // 5. Geometry Check (Middle Point Embedding)
