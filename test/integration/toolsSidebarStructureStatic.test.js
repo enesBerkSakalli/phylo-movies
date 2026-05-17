@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const repoRoot = process.cwd();
@@ -18,6 +18,15 @@ describe('tools sidebar structure', () => {
     expect(appSource).not.toContain("from './components/nav/ButtonsMSA.jsx'");
     expect(appSource).not.toContain("from './components/appearance/Appearance.jsx'");
     expect(appSource).not.toContain("from './components/appearance/controls/VisualElements/VisualElements.jsx'");
+  });
+
+  it('does not keep the legacy MSA nav button component', () => {
+    const legacyPath = join(repoRoot, 'src/components/nav/ButtonsMSA.jsx');
+    const sidebarSource = source('src/components/sidebar/ToolsSidebar.jsx');
+
+    expect(existsSync(legacyPath)).toBe(false);
+    expect(sidebarSource).not.toContain('ButtonsMSA');
+    expect(sidebarSource).not.toContain('../nav/ButtonsMSA.jsx');
   });
 
   it('orders tools by the research workflow', () => {
@@ -39,7 +48,7 @@ describe('tools sidebar structure', () => {
 
   it('keeps expandable tool panels closed by default for scanability', () => {
     const expandableToolFiles = [
-      'src/components/nav/ButtonsMSA.jsx',
+      'src/components/sidebar/MsaSidebarSection.jsx',
       'src/components/appearance/layout/TreeStructureGroup.jsx',
       'src/components/appearance/controls/VisualStyle/VisualStyle.jsx',
       'src/components/appearance/controls/VisualElements/VisualElements.jsx',
@@ -65,7 +74,7 @@ describe('tools sidebar structure', () => {
 
   it('uses one expandable-tool chevron convention', () => {
     const expandableToolFiles = [
-      'src/components/nav/ButtonsMSA.jsx',
+      'src/components/sidebar/MsaSidebarSection.jsx',
       'src/components/appearance/layout/TreeStructureGroup.jsx',
       'src/components/appearance/controls/VisualStyle/VisualStyle.jsx',
       'src/components/appearance/controls/VisualElements/VisualElements.jsx',

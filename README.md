@@ -160,7 +160,7 @@ The included `start.sh` script handles **everything** — submodule init, depend
 ./start.sh
 ```
 
-It will check for prerequisites (Node.js, npm, Poetry), install Python and JS dependencies if needed, start the backend on port 5002, and open the frontend at `http://localhost:5173/home`. This is the fastest way to get a fully working environment.
+It will check for prerequisites (Node.js, npm, Poetry), install Python and JS dependencies if needed, start the backend on port 5002, and open the frontend at `http://localhost:5173/`. This is the fastest way to get a fully working environment.
 
 #### Method 3: Local development (contributor workflow)
 
@@ -172,7 +172,7 @@ Use when modifying code or running tests with hot reload.
    npm run dev
    ```
 
-2. Open `http://localhost:5173/home` or `http://localhost:5173/visualization`.
+2. Open `http://localhost:5173/` or `http://localhost:5173/visualization`.
 3. Development mode provides HMR, source maps, and error overlays out of the box.
 
 #### Method 4: Production build (custom hosting)
@@ -209,7 +209,7 @@ cd phylo-movies
 docker compose up --build
 ```
 
-Open `http://localhost:8080/home`. The container bundles nginx (serving the Vite build) and the Flask backend — no local Node.js or Python installation required.
+Open `http://localhost:8080/`. The container bundles nginx (serving the Vite build) and the Flask backend — no local Node.js or Python installation required.
 
 For **development** (backend in Docker, frontend with hot-reload on host):
 
@@ -285,7 +285,7 @@ VITE v5.4.20  ready in XXX ms
 Local: http://localhost:5173/
 ```
 
-Open `http://localhost:5173/home` in your browser. You should see the PhyloMovies home page.
+Open `http://localhost:5173/` in your browser. You should see the PhyloMovies project setup page.
 
 **4. Test production build:**
 
@@ -313,12 +313,12 @@ ls -l dist/
 npm run preview
 ```
 
-Access at `http://localhost:4173/home`
+Access at `http://localhost:4173/`
 
 **6. Test with example data:**
 
 - Start dev server: `npm run dev`
-- Navigate to `http://localhost:5173/home`
+- Navigate to `http://localhost:5173/`
 - Click "Load Example" button
 - Should load example phylogenetic tree visualization
 

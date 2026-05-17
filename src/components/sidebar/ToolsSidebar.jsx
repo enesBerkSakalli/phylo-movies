@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Film, ArrowLeft } from 'lucide-react';
-import { ButtonsMSA } from '../nav/ButtonsMSA.jsx';
+import { MsaSidebarSection } from './MsaSidebarSection.jsx';
 import { TreeStructureGroup } from '../appearance/layout/TreeStructureGroup.jsx';
 import { VisualStyle } from '../appearance/controls/VisualStyle/VisualStyle.jsx';
 import { ViewModeSection } from '../appearance/ViewModeSection.jsx';
@@ -72,7 +72,7 @@ export function ToolsSidebar({
                 <span>Change Dataset</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            <ButtonsMSA />
+            <MsaSidebarSection />
           </SidebarMenu>
         </SidebarGroup>
 

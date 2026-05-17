@@ -13,7 +13,6 @@ const RouterComponent = isElectron() ? HashRouter : BrowserRouter;
 const basename = isElectron() ? undefined : import.meta.env.BASE_URL?.replace(/\/$/, '') || '';
 const isDocsOnlyMode = import.meta.env.VITE_DOCS_ONLY === 'true';
 const landingElement = isDocsOnlyMode ? <GitHubPagesInfoPage /> : <WorkspaceInitializationPage />;
-const landingPath = '/';
 
 export function Router() {
   return (
@@ -21,12 +20,11 @@ export function Router() {
       <ErrorBoundary>
         <Routes>
           <Route path="/" element={landingElement} />
-          <Route path="/home" element={<Navigate to={landingPath} replace />} />
           <Route
             path="/visualization"
             element={isDocsOnlyMode ? <Navigate to="/" replace /> : <App />}
           />
-          <Route path="*" element={<Navigate to={landingPath} replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </ErrorBoundary>
     </RouterComponent>

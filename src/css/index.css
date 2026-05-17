@@ -1,5 +1,4 @@
 @import "tailwindcss" source(none);
-@source "../index.html";
 @source "../**";
 @plugin "tailwindcss-animate";
 
@@ -40,17 +39,6 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-
-  @keyframes shimmer {
-    from { transform: translateX(-100%); }
-    to { transform: translateX(100%); }
-  }
-  @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-5px); }
-  }
-  --animate-shimmer: shimmer 2s infinite;
-  --animate-float: float 3s ease-in-out infinite;
 
   @keyframes accordion-down {
     from { height: 0; }
@@ -140,6 +128,3 @@
     height: 100%;
   }
 }
-
-/* HUD styles are imported via component */
-

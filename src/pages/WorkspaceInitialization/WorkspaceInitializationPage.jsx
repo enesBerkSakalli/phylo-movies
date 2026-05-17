@@ -10,8 +10,6 @@ import { NewProjectTab } from './components/NewProjectTab.jsx';
 import { ExampleTab } from './components/ExampleTab.jsx';
 import { ProcessingOverlay } from './components/ProcessingOverlay.jsx';
 
-import '../../css/home.css';
-
 export function WorkspaceInitializationPage() {
   const {
     form,
@@ -28,7 +26,7 @@ export function WorkspaceInitializationPage() {
   const disabled = submitting || loadingExample;
 
   return (
-    <div className="home-page bg-background">
+    <div className="fixed inset-0 overflow-y-auto overflow-x-hidden bg-background">
       <main className="container mx-auto max-w-4xl py-8 space-y-8">
         <WorkspaceInitializationHero />
 

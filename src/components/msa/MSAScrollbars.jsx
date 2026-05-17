@@ -67,7 +67,7 @@ export function MSAScrollbars({ layoutMetrics = null }) {
     if (!scrollToPosition || !cols) return;
 
     const visibleCols = Math.max(1, c1 - c0 + 1);
-    let targetCol = null;
+    let targetCol;
 
     switch (e.key) {
       case 'ArrowLeft':
@@ -102,7 +102,7 @@ export function MSAScrollbars({ layoutMetrics = null }) {
     if (!scrollToPosition || !rows) return;
 
     const visibleRows = Math.max(1, r1 - r0 + 1);
-    let targetRow = null;
+    let targetRow;
 
     switch (e.key) {
       case 'ArrowUp':
