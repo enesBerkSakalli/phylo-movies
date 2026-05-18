@@ -9,7 +9,7 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 let msaContext;
 const viewerInstances = [];
 
-vi.mock('../../src/components/msa/MSAContext', () => ({
+vi.mock('../../src/components/msa/useMSA.js', () => ({
   useMSA: () => msaContext
 }));
 

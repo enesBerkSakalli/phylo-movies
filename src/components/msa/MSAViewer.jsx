@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { selectSyncMsaEnabled, useAppStore } from '../../state/phyloStore/store.js';
 import { MSADeckGLViewer } from '../../msaViewer/MSADeckGLViewer';
-import { useMSA } from './MSAContext';
+import { useMSA } from './useMSA.js';
 import { MSAScrollbars } from './MSAScrollbars';
 
 export function MSAViewer() {
@@ -12,6 +12,35 @@ export function MSAViewer() {
   const viewerRef = useRef(null);
   const pendingRangeRef = useRef(null);
   const rangeFrameRef = useRef(null);
+  const latestViewerInputsRef = useRef({
+    showLetters,
+    colorScheme,
+    rowColorMap,
+    setVisibleRange,
+    msaRegion,
+    msaPreviousRegion,
+    syncMSAEnabled,
+  });
+
+  useEffect(() => {
+    latestViewerInputsRef.current = {
+      showLetters,
+      colorScheme,
+      rowColorMap,
+      setVisibleRange,
+      msaRegion,
+      msaPreviousRegion,
+      syncMSAEnabled,
+    };
+  }, [
+    showLetters,
+    colorScheme,
+    rowColorMap,
+    setVisibleRange,
+    msaRegion,
+    msaPreviousRegion,
+    syncMSAEnabled,
+  ]);
 
   // Handle view actions (zoom/reset)
   useEffect(() => {
@@ -70,6 +99,7 @@ export function MSAViewer() {
   useEffect(() => {
     if (!containerRef.current || viewerRef.current) return undefined;
 
+    const { showLetters, colorScheme, rowColorMap } = latestViewerInputsRef.current;
     const viewer = new MSADeckGLViewer(containerRef.current, { showLetters, colorScheme, rowColorMap });
     viewerRef.current = viewer;
 
@@ -93,7 +123,7 @@ export function MSAViewer() {
             const pendingRange = pendingRangeRef.current;
             pendingRangeRef.current = null;
             if (pendingRange) {
-              setVisibleRange(pendingRange);
+              latestViewerInputsRef.current.setVisibleRange(pendingRange);
             }
           });
         }
@@ -122,12 +152,13 @@ export function MSAViewer() {
       }
       pendingRangeRef.current = null;
       viewer.clearData();
-      setVisibleRange(null);
+      latestViewerInputsRef.current.setVisibleRange(null);
       setLayoutMetrics(null);
       return;
     }
     // Use preprocessed data to avoid re-parsing and keep order intact
     viewer.loadFromProcessedData(processedData);
+    const { msaRegion, msaPreviousRegion, syncMSAEnabled } = latestViewerInputsRef.current;
     if (msaRegion) {
       viewer.setRegion(msaRegion.start, msaRegion.end);
       if (syncMSAEnabled) {
@@ -141,7 +172,7 @@ export function MSAViewer() {
     } else {
       viewer.clearPreviousRegion();
     }
-  }, [processedData, syncMSAEnabled]);
+  }, [processedData]);
 
   // Toggle letters without recreating viewer
   useEffect(() => {

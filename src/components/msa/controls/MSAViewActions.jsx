@@ -1,5 +1,5 @@
 import React from 'react';
-import { useMSA } from '../MSAContext';
+import { useMSA } from '../useMSA.js';
 import { Button } from '../../ui/button';
 import { ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 

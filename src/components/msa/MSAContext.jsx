@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   selectClearMsaRegion,
   selectHasMsa,
@@ -14,8 +14,7 @@ import {
 import { processMsaSequences } from '../../msaViewer/utils/dataUtils';
 import { SYSTEM_TREE_COLORS } from '../../constants/TreeColors';
 import { getGroupForTaxon } from '../../treeColoring/utils/GroupingUtils';
-
-const MSAContext = createContext(null);
+import { MSAContext } from './MSAContextValue.js';
 
 export function MSAProvider({ children }) {
   const hasMsa = useAppStore(selectHasMsa);
@@ -34,14 +33,19 @@ export function MSAProvider({ children }) {
   const [visibleRange, setVisibleRange] = useState(null);
   const [scrollAction, setScrollAction] = useState(null);
 
-  const triggerViewAction = (action) => {
+  const triggerViewAction = useCallback((action) => {
     setViewAction({ action, id: Date.now() });
-  };
+  }, []);
 
   // Trigger a scroll to a specific row/col position from scrollbars
-  const scrollToPosition = (position) => {
+  const scrollToPosition = useCallback((position) => {
     setScrollAction({ ...position, id: Date.now() });
-  };
+  }, []);
+
+  const systemTreeColors = useMemo(() => ({
+    version: taxaColorVersion,
+    colors: { ...SYSTEM_TREE_COLORS },
+  }), [taxaColorVersion]);
 
   // Process data
   const processedData = useMemo(() => {
@@ -122,15 +126,15 @@ export function MSAProvider({ children }) {
       // Per-taxon explicit color (only if not a system key)
       if (!color) {
         const systemKeys = ['markedColor', 'pivotEdgeColor', 'strokeColor', 'defaultColor'];
-        if (!systemKeys.includes(id) && SYSTEM_TREE_COLORS[id]) {
-          color = SYSTEM_TREE_COLORS[id];
+        if (!systemKeys.includes(id) && systemTreeColors.colors[id]) {
+          color = systemTreeColors.colors[id];
         }
       }
 
       if (color) map[id] = color;
     });
     return map;
-  }, [processedData, taxaGrouping, taxaColorVersion]);
+  }, [processedData, taxaGrouping, systemTreeColors]);
 
   const value = useMemo(() => ({
     processedData,
@@ -173,12 +177,4 @@ export function MSAProvider({ children }) {
       {children}
     </MSAContext.Provider>
   );
-}
-
-export function useMSA() {
-  const context = useContext(MSAContext);
-  if (!context) {
-    throw new Error('useMSA must be used within an MSAProvider');
-  }
-  return context;
 }

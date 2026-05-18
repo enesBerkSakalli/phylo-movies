@@ -9,7 +9,7 @@ import {
 } from '../../state/phyloStore/store.js';
 import { Button } from '../ui/button';
 import { X, Columns } from 'lucide-react';
-import { useMSA } from './MSAContext';
+import { useMSA } from './useMSA.js';
 import { MSAControls } from './MSAControls';
 import { MSAViewer } from './MSAViewer';
 import {
