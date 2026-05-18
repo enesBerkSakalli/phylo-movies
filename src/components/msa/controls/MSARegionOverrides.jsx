@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useMSA } from '../MSAContext';
+import { useMSA } from '../useMSA.js';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 

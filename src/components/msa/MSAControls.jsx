@@ -1,5 +1,5 @@
 import React from 'react';
-import { useMSA } from './MSAContext';
+import { useMSA } from './useMSA.js';
 import { Button } from '../ui/button';
 import { Switch } from '../ui/switch';
 import { Badge } from '../ui/badge';
