@@ -1,5 +1,6 @@
 import { TIMING_PROFILE } from '../constants.js';
 import { toBackendSplitKey } from '../../domain/tree/splits.js';
+import { TimelineInterval, TIMELINE_HOLD_KIND } from '../time/TimelineInterval.js';
 
 export class TimelineTimingBuilder {
     static buildAnchorTiming(globalIndex) {
@@ -7,12 +8,11 @@ export class TimelineTimingBuilder {
             return [];
         }
 
-        return [{
-            type: 'hold',
+        return [TimelineInterval.hold({
             holdIndex: globalIndex,
-            holdKind: 'anchor',
+            holdKind: TIMELINE_HOLD_KIND.ANCHOR,
             durationMs: TIMING_PROFILE.anchorHoldMs
-        }];
+        })];
     }
 
     static buildTransitionTiming({
@@ -36,7 +36,7 @@ export class TimelineTimingBuilder {
             this._addHoldInterval(
                 holdsByIndex,
                 splitEvent.step_range_global[1],
-                'pivot',
+                TIMELINE_HOLD_KIND.PIVOT,
                 TIMING_PROFILE.pivotHoldMs,
                 frameIndexSet
             );
@@ -70,7 +70,7 @@ export class TimelineTimingBuilder {
             this._addHoldInterval(
                 holdsByIndex,
                 holdIndex,
-                'mover',
+                TIMELINE_HOLD_KIND.MOVER,
                 TIMING_PROFILE.moverHoldMs,
                 frameIndexSet
             );
@@ -81,12 +81,11 @@ export class TimelineTimingBuilder {
             const fromIndex = frameIndices[i - 1];
             const toIndex = frameIndices[i];
 
-            timing.push({
-                type: 'motion',
+            timing.push(TimelineInterval.motion({
                 fromIndex,
                 toIndex,
                 durationMs: TIMING_PROFILE.motionStepMs
-            });
+            }));
 
             const hold = holdsByIndex.get(toIndex);
             if (hold) {
@@ -134,12 +133,11 @@ export class TimelineTimingBuilder {
 
         const existing = holdsByIndex.get(holdIndex);
         if (!existing || durationMs > existing.durationMs) {
-            holdsByIndex.set(holdIndex, {
-                type: 'hold',
+            holdsByIndex.set(holdIndex, TimelineInterval.hold({
                 holdIndex,
                 holdKind,
                 durationMs
-            });
+            }));
         }
     }
 }

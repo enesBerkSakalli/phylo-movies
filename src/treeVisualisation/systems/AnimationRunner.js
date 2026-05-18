@@ -5,6 +5,7 @@ import {
   resolveTransitionSemanticIndex
 } from '../../domain/animation/AnimationTiming.js';
 import { selectActiveTreeList } from '../../state/phyloStore/selectors/treeSelectors.js';
+import { PlaybackCursor } from '../../timeline/time/PlaybackCursor.js';
 
 /**
  * AnimationRunner
@@ -304,21 +305,26 @@ function getSemanticTimelinePlaybackState(state, timestamp, treeList) {
   const localT = Number.isFinite(interpolation.timeFactor)
     ? Math.max(0, Math.min(1, interpolation.timeFactor))
     : 0;
-  const exactTreeIndex = fromIndex + ((toIndex - fromIndex) * localT);
-  const progress = treeList.length > 1
-    ? Math.max(0, Math.min(1, exactTreeIndex / (treeList.length - 1)))
-    : 1;
+  const cursor = PlaybackCursor.fromInterpolation({
+    timelineProgress,
+    fromIndex,
+    toIndex,
+    timeFactor: localT,
+    treeCount: treeList.length,
+    holdKind: interpolation.holdKind
+  });
+  const playbackState = cursor.toPlaybackState();
 
   return {
-    progress,
-    timelineProgress,
+    progress: playbackState.animationProgress,
+    timelineProgress: playbackState.timelineProgress,
     isFinished: rawProgress >= 1,
     fromIndex,
     toIndex,
     localT,
     isInPause: Boolean(interpolation.holdKind),
-    holdKind: interpolation.holdKind,
-    currentTreeIndex: resolveTransitionSemanticIndex(fromIndex, toIndex, localT)
+    holdKind: playbackState.holdKind,
+    currentTreeIndex: playbackState.currentTreeIndex
   };
 }
 

@@ -1,3 +1,5 @@
+import { TimelineInterval } from '../time/TimelineInterval.js';
+
 export class TimelineTimingResolver {
     static hasSemanticTiming(segment) {
         return Array.isArray(segment?.timing) && segment.timing.length > 0;
@@ -9,8 +11,7 @@ export class TimelineTimingResolver {
         }
 
         return segment.timing.reduce((total, interval) => {
-            const duration = Number(interval?.durationMs);
-            return total + (Number.isFinite(duration) && duration > 0 ? duration : 0);
+            return total + TimelineInterval.durationMs(interval);
         }, 0);
     }
 
@@ -19,7 +20,7 @@ export class TimelineTimingResolver {
 
         for (let i = 0; i < timing.length; i++) {
             const interval = timing[i];
-            const duration = Math.max(0, Number(interval?.durationMs) || 0);
+            const duration = TimelineInterval.durationMs(interval);
             const end = elapsed + duration;
             const isLast = i === timing.length - 1;
 
@@ -42,9 +43,9 @@ export class TimelineTimingResolver {
         let elapsed = 0;
 
         for (const interval of segment.timing) {
-            const duration = Math.max(0, Number(interval?.durationMs) || 0);
+            const duration = TimelineInterval.durationMs(interval);
 
-            if (interval.type === 'motion') {
+            if (TimelineInterval.isMotion(interval)) {
                 if (interval.fromIndex === treeIndex) {
                     return elapsed;
                 }
@@ -54,7 +55,7 @@ export class TimelineTimingResolver {
                         ? Math.max(0, segmentDuration - epsilonMs)
                         : targetTime;
                 }
-            } else if (interval.type === 'hold' && interval.holdIndex === treeIndex) {
+            } else if (TimelineInterval.isHold(interval) && interval.holdIndex === treeIndex) {
                 return elapsed;
             }
 
@@ -73,7 +74,7 @@ export class TimelineTimingResolver {
             return createStaticResult(fallbackIndex, treeList);
         }
 
-        if (interval.type === 'hold') {
+        if (TimelineInterval.isHold(interval)) {
             return createStaticResult(interval.holdIndex, treeList, {
                 holdKind: interval.holdKind
             });
@@ -106,7 +107,7 @@ export class TimelineTimingResolver {
             };
         }
 
-        if (interval.type === 'hold') {
+        if (TimelineInterval.isHold(interval)) {
             return {
                 treeIndex: interval.holdIndex,
                 segmentIndex,
