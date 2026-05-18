@@ -1,7 +1,7 @@
 import { selectActiveTreeList, useAppStore } from '../../state/phyloStore/store.js';
 import { detectAnimationStage } from '../deckgl/interpolation/stages/animationStageDetector.js';
 import { applyStageEasing } from '../deckgl/interpolation/stages/stageEasing.js';
-import { resolveComparisonActiveTreeIndex } from '../../domain/indexing/treeIndexSemantics.js';
+import { TransitionFrame } from '../../timeline/time/TransitionFrame.js';
 
 /**
  * Handles the rendering of transition frames for animation and scrubbing.
@@ -20,19 +20,18 @@ export class InterpolationRenderer {
       await this.controller.readyPromise;
     }
 
-    const { fromTreeIndex, toTreeIndex, stage } = options;
-    let t = Math.max(0, Math.min(1, timeFactor));
-    if (fromTreeData === toTreeData) t = 0;
+    const transitionFrame = createRenderFrame(fromTreeData, toTreeData, timeFactor, options);
+    const t = transitionFrame.isStatic ? 0 : transitionFrame.renderProgress;
 
     // Delegate to controller to fetch cached Layout Data
     const cachedInputs = this.controller._getOrCacheInterpolationData(
-      fromTreeData,
-      toTreeData,
-      fromTreeIndex,
-      toTreeIndex
+      transitionFrame.sourceTree,
+      transitionFrame.targetTree,
+      transitionFrame.sourceTreeIndex,
+      transitionFrame.targetTreeIndex
     );
     const { dataFrom, dataTo } = cachedInputs;
-    const transitionChangeModel = options.transitionChangeModel || cachedInputs.transitionChangeModel;
+    const transitionChangeModel = transitionFrame.transitionChangeModel || cachedInputs.transitionChangeModel;
 
     if (!dataFrom || !dataTo) return;
 
@@ -43,9 +42,9 @@ export class InterpolationRenderer {
       dataTo,
       t,
       {
-        stage,
+        stage: transitionFrame.stage,
         transitionChangeModel,
-        rawTimeFactor: options.rawTimeFactor,
+        rawTimeFactor: transitionFrame.transitionProgress,
         linkGeometryMode: this.controller._getLinkGeometryMode?.() ?? 'radial-elbow'
       }
     );
@@ -75,29 +74,36 @@ export class InterpolationRenderer {
     }
 
     const { comparisonMode, rightTreeIndex } = options;
+    const transitionFrame = createRenderFrame(fromTreeData, toTreeData, timeFactor, options);
 
     if (comparisonMode && typeof rightTreeIndex === 'number') {
       const rightTree = selectActiveTreeList(useAppStore.getState())[rightTreeIndex];
 
       if (rightTree) {
         // Build raw interpolation inputs for comparison renderer
-        const interpolatedData = this.controller._buildInterpolatedData(fromTreeData, toTreeData, timeFactor, options);
+        const interpolatedData = this.controller._buildInterpolatedData(
+          transitionFrame.sourceTree,
+          transitionFrame.targetTree,
+          transitionFrame.renderProgress,
+          transitionFrame.toRenderOptions(options)
+        );
         await this.controller.layerManager.renderComparisonAnimated({
           interpolatedData,
           rightTree,
           rightIndex: rightTreeIndex,
-          activeTreeIndex: resolveComparisonActiveTreeIndex(
-            options.fromTreeIndex,
-            options.toTreeIndex,
-            timeFactor
-          )
+          activeTreeIndex: transitionFrame.comparisonActiveTreeIndex
         });
         return;
       }
     }
 
     // Default to single view behavior
-    await this.renderSingleInterpolatedFrame(fromTreeData, toTreeData, timeFactor, options);
+    await this.renderSingleInterpolatedFrame(
+      transitionFrame.sourceTree,
+      transitionFrame.targetTree,
+      transitionFrame.renderProgress,
+      transitionFrame.toRenderOptions(options)
+    );
   }
 
   /*
@@ -135,22 +141,36 @@ export class InterpolationRenderer {
     // Get tree data
     const fromTree = treeList[fromIndex];
     const toTree = treeList[toIndex];
+    const transitionFrame = TransitionFrame.from({
+      sourceTree: fromTree,
+      targetTree: toTree,
+      sourceTreeIndex: fromIndex,
+      targetTreeIndex: toIndex,
+      transitionProgress: t
+    });
 
     // Stage detection logic for visual consistency during scrubbing
     // (We reuse the controller's logic to fetch cached layout data to check stages)
-    const { dataFrom, dataTo, transitionChangeModel } = this.controller._getOrCacheInterpolationData(fromTree, toTree, fromIndex, toIndex);
+    const { dataFrom, dataTo, transitionChangeModel } = this.controller._getOrCacheInterpolationData(
+      transitionFrame.sourceTree,
+      transitionFrame.targetTree,
+      transitionFrame.sourceTreeIndex,
+      transitionFrame.targetTreeIndex
+    );
 
     const stage = detectAnimationStage(dataFrom, dataTo, transitionChangeModel);
-    const rawTimeFactor = t;
-    t = applyStageEasing(t, stage);
-
-    return this.renderSingleInterpolatedFrame(fromTree, toTree, t, {
-      fromTreeIndex: fromIndex,
-      toTreeIndex: toIndex,
+    const renderFrame = transitionFrame.withRenderState({
+      renderProgress: applyStageEasing(t, stage),
       stage,
-      transitionChangeModel,
-      rawTimeFactor
+      transitionChangeModel
     });
+
+    return this.renderSingleInterpolatedFrame(
+      renderFrame.sourceTree,
+      renderFrame.targetTree,
+      renderFrame.renderProgress,
+      renderFrame.toRenderOptions()
+    );
   }
 
   /*
@@ -163,30 +183,50 @@ export class InterpolationRenderer {
     }
 
     const state = useAppStore.getState();
-    const interpolationData = state.movieTimelineManager?.getInterpolationDataForTimelineProgress?.(progress);
+    const transitionFrame = state.movieTimelineManager?.getTransitionFrameForTimelineProgress?.(progress);
 
-    if (!interpolationData?.fromTree || !interpolationData?.toTree) {
+    if (!transitionFrame?.sourceTree || !transitionFrame?.targetTree) {
       return;
     }
 
-    const { fromTree, toTree, fromIndex, toIndex } = interpolationData;
-    let t = interpolationData.timeFactor;
-
-    if (t <= 0.001 || fromIndex === toIndex || fromTree === toTree) {
-      return this.controller.renderAllElements({ treeIndex: fromIndex });
+    if (transitionFrame.transitionProgress <= 0.001 || transitionFrame.isStatic) {
+      return this.controller.renderAllElements({ treeIndex: transitionFrame.sourceTreeIndex });
     }
 
-    const { dataFrom, dataTo, transitionChangeModel } = this.controller._getOrCacheInterpolationData(fromTree, toTree, fromIndex, toIndex);
+    const { dataFrom, dataTo, transitionChangeModel } = this.controller._getOrCacheInterpolationData(
+      transitionFrame.sourceTree,
+      transitionFrame.targetTree,
+      transitionFrame.sourceTreeIndex,
+      transitionFrame.targetTreeIndex
+    );
     const stage = detectAnimationStage(dataFrom, dataTo, transitionChangeModel);
-    const rawTimeFactor = t;
-    t = applyStageEasing(t, stage);
-
-    return this.renderSingleInterpolatedFrame(fromTree, toTree, t, {
-      fromTreeIndex: fromIndex,
-      toTreeIndex: toIndex,
+    const renderFrame = transitionFrame.withRenderState({
+      renderProgress: applyStageEasing(transitionFrame.transitionProgress, stage),
       stage,
-      transitionChangeModel,
-      rawTimeFactor
+      transitionChangeModel
     });
+
+    return this.renderSingleInterpolatedFrame(
+      renderFrame.sourceTree,
+      renderFrame.targetTree,
+      renderFrame.renderProgress,
+      renderFrame.toRenderOptions()
+    );
   }
+}
+
+function createRenderFrame(fromTreeData, toTreeData, timeFactor, options = {}) {
+  const transitionProgress = options.rawTimeFactor ?? timeFactor;
+  return TransitionFrame.from({
+    sourceTree: fromTreeData,
+    targetTree: toTreeData,
+    sourceTreeIndex: options.fromTreeIndex,
+    targetTreeIndex: options.toTreeIndex,
+    transitionProgress,
+    holdKind: options.holdKind
+  }, {
+    renderProgress: timeFactor,
+    stage: options.stage,
+    transitionChangeModel: options.transitionChangeModel
+  });
 }

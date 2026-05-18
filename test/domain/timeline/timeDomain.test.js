@@ -13,6 +13,7 @@ import {
 } from '../../../src/timeline/time/TimelineInterval.js';
 import { TimelineContext } from '../../../src/timeline/time/TimelineContext.js';
 import { PlaybackCursor } from '../../../src/timeline/time/PlaybackCursor.js';
+import { TransitionFrame } from '../../../src/timeline/time/TransitionFrame.js';
 
 describe('timeline time domain', () => {
   it('defines named axes with explicit time types', () => {
@@ -72,13 +73,15 @@ describe('timeline time domain', () => {
   });
 
   it('creates fixed contexts that can carry independent playback cursors', () => {
-    const cursor = PlaybackCursor.fromInterpolation({
-      timelineProgress: 0.25,
-      fromIndex: 1,
-      toIndex: 1,
-      timeFactor: 0,
-      treeCount: 4,
+    const cursor = PlaybackCursor.fromTransitionFrame(TransitionFrame.from({
+      sourceTreeIndex: 1,
+      targetTreeIndex: 1,
+      transitionProgress: 0,
       holdKind: TIMELINE_HOLD_KIND.MOVER,
+    }, {
+      timelineProgress: 0.25,
+    }), {
+      treeCount: 4,
     });
     const context = TimelineContext.fixed({
       start: 0,

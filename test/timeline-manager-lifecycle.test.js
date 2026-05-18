@@ -18,6 +18,7 @@ clearTimelineModuleCache();
 const { MovieTimelineManager } = require('../src/timeline/core/MovieTimelineManager.js');
 const { AnimationRunner } = require('../src/treeVisualisation/systems/AnimationRunner.js');
 const { calculatePlaybackState } = require('../src/domain/animation/AnimationTiming.js');
+const { TransitionFrame } = require('../src/timeline/time/TransitionFrame.js');
 const { useAppStore } = require('../src/state/phyloStore/store.js');
 
 function loadMovieData() {
@@ -327,13 +328,13 @@ describe('MovieTimelineManager lifecycle', () => {
       const trees = [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }, { id: 'e' }];
       const timelineProgress = 0.42;
       const manager = {
-        getInterpolationDataForTimelineProgress: (progress) => {
+        getTransitionFrameForTimelineProgress: (progress) => {
           expect(progress).to.equal(timelineProgress);
-          return {
-            fromIndex: 1,
-            toIndex: 2,
-            timeFactor: 0.25
-          };
+          return TransitionFrame.from({
+            sourceTreeIndex: 1,
+            targetTreeIndex: 2,
+            transitionProgress: 0.25
+          });
         },
         getTimelineProgressForLinearTreeProgress: () => timelineProgress
       };
@@ -375,10 +376,10 @@ describe('MovieTimelineManager lifecycle', () => {
       const trees = [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }, { id: 'e' }];
       const timelineProgress = 0.42;
       const manager = {
-        getInterpolationDataForTimelineProgress: () => ({
-          fromIndex: 1,
-          toIndex: 2,
-          timeFactor: 0.25
+        getTransitionFrameForTimelineProgress: () => TransitionFrame.from({
+          sourceTreeIndex: 1,
+          targetTreeIndex: 2,
+          transitionProgress: 0.25
         }),
         getTimelineProgressForLinearTreeProgress: () => timelineProgress
       };
@@ -431,10 +432,10 @@ describe('MovieTimelineManager lifecycle', () => {
       const timelineProgress = 1100 / 4100;
       const manager = {
         timelineData: { totalDuration: 4100 },
-        getInterpolationDataForTimelineProgress: () => ({
-          fromIndex: 1,
-          toIndex: 1,
-          timeFactor: 0,
+        getTransitionFrameForTimelineProgress: () => TransitionFrame.from({
+          sourceTreeIndex: 1,
+          targetTreeIndex: 1,
+          transitionProgress: 0,
           holdKind: 'mover'
         }),
         getTimelineProgressForLinearTreeProgress: () => timelineProgress
@@ -514,14 +515,16 @@ describe('MovieTimelineManager lifecycle', () => {
     let syncedMeta = null;
     const manager = {
       timelineData: { totalDuration: 4100 },
-      getInterpolationDataForTimelineProgress: (progress) => {
+      getTransitionFrameForTimelineProgress: (progress) => {
         timelineProgressSeen = progress;
-        return {
-          fromIndex: 1,
-          toIndex: 1,
-          timeFactor: 0,
+        return TransitionFrame.from({
+          sourceTree: trees[1],
+          targetTree: trees[1],
+          sourceTreeIndex: 1,
+          targetTreeIndex: 1,
+          transitionProgress: 0,
           holdKind: 'mover'
-        };
+        });
       }
     };
 

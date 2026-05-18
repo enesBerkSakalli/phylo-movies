@@ -287,8 +287,8 @@ export class MovieTimelineManager {
         this.timeline?.moveTo?.(Math.max(0, total - visibleDuration));
     }
 
-    getInterpolationDataForTimelineProgress(progress) {
-        return this.timelineClock?.getInterpolationDataForProgress(progress) ?? null;
+    getTransitionFrameForTimelineProgress(progress) {
+        return this.timelineClock?.getTransitionFrameForProgress(progress) ?? null;
     }
 
     getTimelineProgressForTreeIndex(treeIndex) {

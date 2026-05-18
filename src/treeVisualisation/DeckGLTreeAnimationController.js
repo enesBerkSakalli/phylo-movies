@@ -15,7 +15,7 @@ import { ViewportManager } from './viewport/ViewportManager.js';
 import { getClipboardLayers } from './utils/ClipboardUtils.js';
 import { createLayoutCacheKey } from './utils/layoutCacheKey.js';
 import { getSplitKey } from '../domain/tree/splits.js';
-import { resolveComparisonActiveTreeIndex } from '../domain/indexing/treeIndexSemantics.js';
+import { TransitionFrame } from '../timeline/time/TransitionFrame.js';
 
 export class DeckGLTreeAnimationController extends TreeLayoutController {
 
@@ -479,15 +479,30 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
 
   // Exposed for AnimationRunner
   async _renderComparisonFrameForRunner(fromTree, toTree, easedT, options) {
-    const { rightTreeIndex, rightTree, fromTreeIndex, toTreeIndex, rawTimeFactor } = options;
+    const { rightTreeIndex, rightTree } = options;
+    const transitionFrame = TransitionFrame.from({
+      sourceTree: fromTree,
+      targetTree: toTree,
+      sourceTreeIndex: options.fromTreeIndex,
+      targetTreeIndex: options.toTreeIndex,
+      transitionProgress: options.rawTimeFactor ?? easedT
+    }, {
+      renderProgress: easedT,
+      stage: options.stage,
+      transitionChangeModel: options.transitionChangeModel
+    });
 
-    const interpolatedData = this._buildInterpolatedData(fromTree, toTree, easedT, options);
-    const activeTreeIndex = resolveComparisonActiveTreeIndex(fromTreeIndex, toTreeIndex, rawTimeFactor);
+    const interpolatedData = this._buildInterpolatedData(
+      transitionFrame.sourceTree,
+      transitionFrame.targetTree,
+      transitionFrame.renderProgress,
+      transitionFrame.toRenderOptions(options)
+    );
     await this.layerManager.renderComparisonAnimated({
       interpolatedData,
       rightTree,
       rightIndex: rightTreeIndex,
-      activeTreeIndex
+      activeTreeIndex: transitionFrame.comparisonActiveTreeIndex
     });
   }
 

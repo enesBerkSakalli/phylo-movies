@@ -350,17 +350,17 @@ function getLinearProgressForTimelineProgress(movieTimelineManager, timelineProg
     return null;
   }
 
-  const interpolationData = movieTimelineManager?.getInterpolationDataForTimelineProgress?.(timelineProgress);
-  if (!interpolationData) return null;
+  const transitionFrame = movieTimelineManager?.getTransitionFrameForTimelineProgress?.(timelineProgress);
+  if (!transitionFrame) return null;
 
-  const fromIndex = Number(interpolationData.fromIndex);
-  const toIndex = Number(interpolationData.toIndex);
-  const timeFactor = Number(interpolationData.timeFactor);
+  const fromIndex = Number(transitionFrame.sourceTreeIndex);
+  const toIndex = Number(transitionFrame.targetTreeIndex);
+  const transitionProgress = Number(transitionFrame.transitionProgress);
   if (!Number.isFinite(fromIndex)) return null;
 
   const safeToIndex = Number.isFinite(toIndex) ? toIndex : fromIndex;
-  const safeTimeFactor = Number.isFinite(timeFactor) ? clamp(timeFactor, 0, 1) : 0;
-  const exactTreeIndex = fromIndex + ((safeToIndex - fromIndex) * safeTimeFactor);
+  const safeTransitionProgress = Number.isFinite(transitionProgress) ? clamp(transitionProgress, 0, 1) : 0;
+  const exactTreeIndex = fromIndex + ((safeToIndex - fromIndex) * safeTransitionProgress);
 
   return clamp(exactTreeIndex / (treeCount - 1), 0, 1);
 }
