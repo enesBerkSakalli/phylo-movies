@@ -3,6 +3,8 @@ node_modules
 /dist
 
 env
+.venv/
+.pytest_cache/
 *.pyc
 
 # local env files
@@ -15,6 +17,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 *.log
+*.pid
 
 # Test coverage
 coverage/
