@@ -1,5 +1,4 @@
 export const TIMELINE_CONSTANTS = {
-    UNIT_DURATION_MS: 1000,
     SCRUB_THROTTLE_MS: 16,
     DEFAULT_SEGMENT_INDEX: -1,
     DEFAULT_PROGRESS: 0,
@@ -8,6 +7,13 @@ export const TIMELINE_CONSTANTS = {
     DEFAULT_TREE_IN_SEGMENT: 1,
     DEFAULT_TREES_IN_SEGMENT: 1,
     INDEX_OFFSET_UI: 1,
+};
+
+export const TIMING_PROFILE = {
+    motionStepMs: 1000,
+    moverHoldMs: 200,
+    pivotHoldMs: 900,
+    anchorHoldMs: 1500
 };
 
 export const TIMELINE_THEME = {

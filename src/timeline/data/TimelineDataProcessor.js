@@ -7,6 +7,7 @@
  * - timeline segment: scrubber interval containing either an anchor tree or transition frames
  */
 import { TimelineMathUtils } from '../math/TimelineMathUtils.js';
+import { TimelineTimingBuilder } from './TimelineTimingBuilder.js';
 import { flattenSplitSets, getBackendSplitMapValue } from '../../domain/tree/splits.js';
 
 export class TimelineDataProcessor {
@@ -137,6 +138,7 @@ export class TimelineDataProcessor {
                 subtreeMoveCount: 0,
                 globalIndex,
                 originalTreeIndex: treeIndex,  // Original anchor tree index (0-based)
+                timing: TimelineTimingBuilder.buildAnchorTiming(globalIndex),
                 interpolationData: [{
                     metadata,
                     tree: interpolated_trees[arrayIdx],
@@ -296,6 +298,13 @@ export class TimelineDataProcessor {
             hasInterpolation: true,
             isFullTree: false,
             subtreeMoveCount,
+            timing: TimelineTimingBuilder.buildTransitionTiming({
+                interpolationData,
+                pairKey: entry.pair_key,
+                splitEvent: entry,
+                sourceGlobalIndex,
+                tree_pair_solutions
+            }),
             interpolationData
         });
     }
@@ -336,6 +345,12 @@ export class TimelineDataProcessor {
             hasInterpolation: true,
             isFullTree: false,
             subtreeMoveCount: 0,
+            timing: TimelineTimingBuilder.buildTransitionTiming({
+                interpolationData,
+                pairKey,
+                sourceGlobalIndex: globalStart,
+                tree_pair_solutions: null
+            }),
             interpolationData
         });
     }
@@ -360,4 +375,5 @@ export class TimelineDataProcessor {
 
         return interpolationData;
     }
+
 }
