@@ -314,6 +314,43 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     expect(pointAngle(targetPoint)).to.be.closeTo(Math.PI / 2 + (Math.PI / 2 * Math.pow(rawTimeFactor, 3)), 0.001);
   });
 
+  it('derives lifecycle target node positions from rendered link endpoints', () => {
+    const rootId = 'node-root-1';
+    const targetId = 'node-target-2';
+    const zeroingFrom = {
+      ...link('zero-target-2', 10, 30),
+      sourceId: rootId,
+      targetId
+    };
+    const zeroingTo = {
+      ...link('zero-target-2', 20, 20),
+      sourceId: rootId,
+      targetId
+    };
+    const from = frame([zeroingFrom], [
+      node(rootId, 10),
+      node(targetId, 30)
+    ]);
+    const to = frame([zeroingTo], [
+      node(rootId, 20),
+      node(targetId, 20)
+    ]);
+    const transitionChangeModel = buildTransitionChangeModel(from, to);
+
+    const result = new TreeInterpolator().interpolateTreeData(from, to, 0.25, {
+      transitionChangeModel
+    });
+
+    const targetNode = result.nodes.find((item) => item.id === targetId);
+    const zeroingLink = result.links.find((item) => item.id === 'zero-target-2');
+
+    expect(lastPathRadius(zeroingLink.path)).to.be.closeTo(25.625, 0.001);
+    expect(targetNode.position[0]).to.be.closeTo(zeroingLink.targetPosition[0], 0.001);
+    expect(targetNode.position[1]).to.be.closeTo(zeroingLink.targetPosition[1], 0.001);
+    expect(targetNode.renderPosition[0]).to.be.closeTo(zeroingLink.targetPosition[0], 0.001);
+    expect(targetNode.renderPosition[1]).to.be.closeTo(zeroingLink.targetPosition[1], 0.001);
+  });
+
   it('shrinks a retained branch continuously toward its zero-length target', () => {
     const from = frame([
       link('zero-1', 10, 30)
@@ -614,7 +651,7 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     expect(result.links[0].radialLength).to.be.closeTo(0, 0.001);
   });
 
-  it('keeps zero-length lifecycle target nodes on their frame angle', () => {
+  it('keeps zero-length lifecycle target nodes on the rendered link endpoint', () => {
     const entering = {
       ...link('enter-3', 20, 30, Math.PI / 2),
       sourceId: 'node-parent-1',
@@ -638,7 +675,11 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     });
 
     const enteringNode = result.nodes.find((item) => item.id === 'node-enter-3');
-    expect(pointAngle(enteringNode.position)).to.be.closeTo(Math.PI / 2, 0.001);
+    const enteringLink = result.links.find((item) => item.id === 'enter-3');
+
+    expect(enteringNode.position[0]).to.be.closeTo(enteringLink.targetPosition[0], 0.001);
+    expect(enteringNode.position[1]).to.be.closeTo(enteringLink.targetPosition[1], 0.001);
+    expect(pointAngle(enteringNode.position)).to.be.closeTo(pointAngle(enteringLink.targetPosition), 0.001);
   });
 
   it('keeps nested entering child branch sources attached to the growing parent branch', () => {
