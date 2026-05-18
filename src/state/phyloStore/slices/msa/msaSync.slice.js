@@ -1,4 +1,5 @@
 import { normalizeMsaRegionRange } from '../../../../domain/msa/msaRegionRange.js';
+import { getMsaColumnCount } from '../../../../domain/msa/msaSequenceSummary.js';
 
 /**
  * MSA Viewer slice: MSA data, viewer state, and region selection.
@@ -7,11 +8,9 @@ export const createMsaViewerSlice = (set, get) => ({
   // ==========================================================================
   // STATE: MSA Data
   // ==========================================================================
-  hasMsa: false,
   msaSequences: null,
   msaWindowSize: 1000,
   msaStepSize: 50,
-  msaColumnCount: 0,
   msaRegion: null,
   msaPreviousRegion: null,
   msaRowOrder: null,
@@ -26,23 +25,19 @@ export const createMsaViewerSlice = (set, get) => ({
   // ==========================================================================
   // ACTIONS: MSA Data
   // ==========================================================================
-  setMsaData: ({ hasMsa, windowSize, stepSize, columnCount, sequences }) => {
+  setMsaData: ({ windowSize, stepSize, sequences }) => {
     set({
-      hasMsa: !!hasMsa,
       msaSequences: sequences ?? null,
       msaWindowSize: windowSize,
-      msaStepSize: stepSize,
-      msaColumnCount: columnCount
+      msaStepSize: stepSize
     });
   },
 
   resetMsaData: () => {
     set({
-      hasMsa: false,
       msaSequences: null,
       msaWindowSize: 1000,
       msaStepSize: 50,
-      msaColumnCount: 0,
       msaRegion: null,
       msaPreviousRegion: null,
       msaRowOrder: null
@@ -53,7 +48,8 @@ export const createMsaViewerSlice = (set, get) => ({
   // ACTIONS: MSA Region
   // ==========================================================================
   setMsaRegion: (start, end) => {
-    const { msaColumnCount, msaRegion } = get();
+    const { msaSequences, msaRegion } = get();
+    const msaColumnCount = getMsaColumnCount(msaSequences);
     const nextRegion = normalizeMsaRegionRange(start, end, msaColumnCount);
 
     if (!nextRegion) {
@@ -71,7 +67,8 @@ export const createMsaViewerSlice = (set, get) => ({
   clearMsaRegion: () => set({ msaRegion: null }),
 
   setMsaPreviousRegion: (start, end) => {
-    const { msaColumnCount, msaPreviousRegion } = get();
+    const { msaSequences, msaPreviousRegion } = get();
+    const msaColumnCount = getMsaColumnCount(msaSequences);
     const nextRegion = normalizeMsaRegionRange(start, end, msaColumnCount);
 
     if (!nextRegion) {

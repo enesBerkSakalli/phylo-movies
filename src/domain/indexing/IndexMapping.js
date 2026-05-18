@@ -52,9 +52,9 @@ export function findNextAnchorSequenceIndex(anchorIndices, position) {
 // INDEX MAPPING FUNCTIONS
 // ===========================
 
-export function getIndexMappings(state = useAppStore.getState()) {
-  const seqIndex = state.currentTreeIndex || 0;
-  const resolver = state.transitionResolver;
+export function getIndexMappingValues(sequenceIndex = 0, totalSequenceLength = 0, transitionResolver = null) {
+  const seqIndex = sequenceIndex || 0;
+  const resolver = transitionResolver;
   const fti = resolver?.fullTreeIndices || [];
   const sourceGlobalIndex = resolver ? resolver.getSourceGlobalIndex(seqIndex) : 0;
   // Check if current position is exactly on a full tree
@@ -65,16 +65,24 @@ export function getIndexMappings(state = useAppStore.getState()) {
     sourceGlobalIndex,
     fullTreeIndex,            // index into fullTreeIndices (0..N-1) or -1 if not exactly on full tree
     fullTreeSeqIndex,         // sequence index of that full tree or -1
-    totalSequenceLength: state.treeList?.length || 0,
+    totalSequenceLength,
     totalFullTrees: fti.length,
   };
+}
+
+export function getIndexMappings(state = useAppStore.getState()) {
+  return getIndexMappingValues(
+    state.currentTreeIndex || 0,
+    state.treeList?.length || 0,
+    state.transitionResolver
+  );
 }
 
 // MSA window index:
 // - Anchor trees (pivotEdge: null) advance the active MSA window.
 // - Transition frames (pivotEdge: array) stay on the source MSA window.
-export function getMSAFrameIndex(state = useAppStore.getState()) {
-  const { fullTreeIndex } = getIndexMappings(state);
+export function getMSAFrameIndexForTimelineIndex(sequenceIndex = 0, transitionResolver = null) {
+  const { fullTreeIndex } = getIndexMappingValues(sequenceIndex, 0, transitionResolver);
 
   // If exactly on a full tree, use its index
   if (fullTreeIndex >= 0) {
@@ -82,9 +90,15 @@ export function getMSAFrameIndex(state = useAppStore.getState()) {
   }
 
   // For interpolations, find the source full tree (last full tree before current position)
-  const seqIndex = state.currentTreeIndex || 0;
-  const resolver = state.transitionResolver;
-  const fullTreeIndices = resolver?.fullTreeIndices || [];
+  const seqIndex = sequenceIndex || 0;
+  const fullTreeIndices = transitionResolver?.fullTreeIndices || [];
 
   return findPreviousAnchorIndex(fullTreeIndices, seqIndex);
+}
+
+export function getMSAFrameIndex(state = useAppStore.getState()) {
+  return getMSAFrameIndexForTimelineIndex(
+    state.currentTreeIndex || 0,
+    state.transitionResolver
+  );
 }

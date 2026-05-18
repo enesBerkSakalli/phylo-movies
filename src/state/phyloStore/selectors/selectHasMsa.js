@@ -1,1 +1,3 @@
-export const selectHasMsa = (state) => !!state.hasMsa;
+import { hasMsaSequences } from '../../../domain/msa/msaSequenceSummary.js';
+
+export const selectHasMsa = (state) => hasMsaSequences(state.msaSequences);

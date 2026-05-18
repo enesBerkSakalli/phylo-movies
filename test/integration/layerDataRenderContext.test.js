@@ -120,7 +120,7 @@ describe('deck.gl layer render context', () => {
         { tree_pair_key: null, step_in_pair: null, source_tree_global_index: null },
         { tree_pair_key: 'pair_0_1', step_in_pair: 1, source_tree_global_index: 0 },
       ],
-      fullTreeIndices: [0],
+      transitionResolver: { fullTreeIndices: [0] },
       currentTreeIndex: 0,
       showNodeContextMenu,
     });

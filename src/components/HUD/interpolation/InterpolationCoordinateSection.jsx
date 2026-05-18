@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from 'react';
 import { Film } from 'lucide-react';
 import { Slider } from '../../ui/slider';
 import { AppTooltip } from '../../ui/app-tooltip';
-import { getIndexMappings } from '../../../domain/indexing/IndexMapping';
+import { getIndexMappingValues } from '../../../domain/indexing/IndexMapping';
 import { useAppStore } from '../../../state/phyloStore/store.js';
 import {
   buildInterpolationText,
@@ -20,18 +20,17 @@ export function InterpolationCoordinateSection() {
   const treeListLength = useAppStore(selectActiveTreeListLength);
   const goToPosition = useAppStore(selectGoToPosition);
 
-  const proxyState = useMemo(
-    () => ({ currentTreeIndex, transitionResolver, treeList: { length: treeListLength } }),
-    [currentTreeIndex, transitionResolver, treeListLength]
-  );
-
   const { interpolationText, sequenceIndex } = useMemo(() => {
-    const { sequenceIndex, totalSequenceLength } = getIndexMappings(proxyState);
+    const { sequenceIndex, totalSequenceLength } = getIndexMappingValues(
+      currentTreeIndex,
+      treeListLength,
+      transitionResolver
+    );
     return {
       interpolationText: buildInterpolationText(sequenceIndex, totalSequenceLength, transitionResolver, playhead),
       sequenceIndex,
     };
-  }, [proxyState, transitionResolver, playhead]);
+  }, [currentTreeIndex, treeListLength, transitionResolver, playhead]);
 
   const sliderMax = Math.max(0, treeListLength - 1);
   const sliderValue = Math.min(sliderMax, Math.max(0, sequenceIndex || 0));

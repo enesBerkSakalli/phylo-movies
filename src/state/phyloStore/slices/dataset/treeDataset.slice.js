@@ -7,9 +7,6 @@ export const createTreeDatasetSlice = (_set, get) => ({
   treeList: [],
   treeMetadata: [],
   leafNamesByIndex: [],
-  fullTreeIndices: [],
-  pairInterpolationRanges: [],
-  treeIndexByPair: {},
   fileName: null,
   datasetVersion: 0,
   transitionResolver: null,
@@ -17,10 +14,7 @@ export const createTreeDatasetSlice = (_set, get) => ({
   // ==========================================================================
   // STATE: Distances & Scales
   // ==========================================================================
-  distanceRfd: [],
-  distanceWeightedRfd: [],
-  scaleList: [],
-  maxScale: 0,
+  treeDistances: null,
 
   // ==========================================================================
   // STATE: Change Tracking

@@ -96,6 +96,9 @@ describe('validatePhyloMovieData', () => {
         tree_pair_key: 'pair_0_1',
         step_in_pair: 2,
         source_tree_global_index: 0,
+        frame_type: 'interpolation_frame',
+        state_semantics: 'algorithmic_intermediate',
+        is_observed_input: false,
         unused_extra_field: 'ignored',
       }],
     }));
@@ -104,14 +107,31 @@ describe('validatePhyloMovieData', () => {
       tree_pair_key: 'pair_0_1',
       step_in_pair: 2,
       source_tree_global_index: 0,
+      frame_type: 'interpolation_frame',
+      state_semantics: 'algorithmic_intermediate',
+      is_observed_input: false,
     });
   });
 
-  it('does not keep nested MSA or distance fields outside the app contract', () => {
+  it('keeps distance semantics while dropping fields outside the app contract', () => {
     const result = validatePhyloMovieData(makePayload({
       distances: {
         robinson_foulds: [1],
         weighted_robinson_foulds: [1.5],
+        semantics: {
+          robinson_foulds: {
+            topology: 'rooted_clades',
+            normalization: 'symmetric_difference_over_union',
+            scope: 'adjacent_processed_input_trees',
+            unused_metric_field: 'ignored',
+          },
+          weighted_robinson_foulds: {
+            topology: 'rooted_clades',
+            includes_branch_lengths: true,
+            includes_terminal_and_root_splits: true,
+            scope: 'adjacent_processed_input_trees',
+          },
+        },
         cosine_distance: [0.25],
       },
       msa: {
@@ -128,6 +148,19 @@ describe('validatePhyloMovieData', () => {
     expect(result.distances).toEqual({
       robinson_foulds: [1],
       weighted_robinson_foulds: [1.5],
+      semantics: {
+        robinson_foulds: {
+          topology: 'rooted_clades',
+          normalization: 'symmetric_difference_over_union',
+          scope: 'adjacent_processed_input_trees',
+        },
+        weighted_robinson_foulds: {
+          topology: 'rooted_clades',
+          includes_branch_lengths: true,
+          includes_terminal_and_root_splits: true,
+          scope: 'adjacent_processed_input_trees',
+        },
+      },
     });
     expect(result.msa).toEqual({
       sequences: {
@@ -179,6 +212,24 @@ describe('validatePhyloMovieData', () => {
     expect(() => validatePhyloMovieData(makePayload({
       tree_metadata: [],
     }))).toThrow(/tree_metadata length \(0\) must match interpolated_trees length \(1\)/);
+  });
+
+  it('requires tree metadata indices to be integers', () => {
+    expect(() => validatePhyloMovieData(makePayload({
+      tree_metadata: [{
+        tree_pair_key: 'pair_0_1',
+        step_in_pair: 1.5,
+        source_tree_global_index: 0,
+      }],
+    }))).toThrow(/tree_metadata\[0\]\.step_in_pair must be an integer/);
+
+    expect(() => validatePhyloMovieData(makePayload({
+      tree_metadata: [{
+        tree_pair_key: 'pair_0_1',
+        step_in_pair: 1,
+        source_tree_global_index: 0.5,
+      }],
+    }))).toThrow(/tree_metadata\[0\]\.source_tree_global_index must be an integer/);
   });
 
   it('rejects malformed recursive tree nodes', () => {

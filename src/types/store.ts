@@ -22,7 +22,6 @@ export interface ContextMenuNode {
 export interface PlaybackPlayhead {
   animationProgress: number;
   timelineProgress: number | null;
-  currentTreeIndex: number;
 }
 
 export interface AppStoreState {
@@ -30,16 +29,10 @@ export interface AppStoreState {
   treeList: any[];
   treeMetadata: any[];
   leafNamesByIndex: string[];
-  fullTreeIndices: number[];
-  pairInterpolationRanges: Array<[number, number]>;
-  treeIndexByPair: Record<string, number[]>;
   fileName: string | null;
   datasetVersion: number;
   transitionResolver: any;
-  distanceRfd: number[];
-  distanceWeightedRfd: number[];
-  scaleList: Array<{ index?: number; value?: number }>;
-  maxScale: number;
+  treeDistances: PhyloMovieData['distances'] | null;
   pairSolutions: any;
   pivotEdgeTracking: any[];
   subtreeHighlightTracking: any[];
@@ -105,11 +98,9 @@ export interface AppStoreState {
   markedSubtreeOpacity: number;
 
   // From msaSync.slice
-  hasMsa: boolean;
   msaSequences: Record<string, string> | null;
   msaWindowSize: number;
   msaStepSize: number;
-  msaColumnCount: number;
   msaRegion: any;
   msaPreviousRegion: any;
   msaRowOrder: any;
@@ -229,10 +220,8 @@ export interface AppStoreState {
   setMarkedSubtreeOpacity: (opacity: number) => void;
 
   setMsaData: (data: {
-    hasMsa: boolean;
     windowSize: number;
     stepSize: number;
-    columnCount: number;
     sequences: Record<string, string> | null;
   }) => void;
   resetMsaData: () => void;

@@ -1,8 +1,6 @@
 export default class TransitionIndexResolver {
-    constructor(treeMetadata = [], distanceData = null, treePairSolutions = null, pairInterpolationRanges = []) {
+    constructor(treeMetadata = [], pairInterpolationRanges = []) {
         this.treeMetadata = treeMetadata;
-        this.distanceData = distanceData;
-        this.treePairSolutions = treePairSolutions;
         this.pairInterpolationRanges = pairInterpolationRanges;
         this._cachedFullTreeIndices = null;
         this._cachedFullTreeIndicesSet = null;  // O(1) lookup Set
