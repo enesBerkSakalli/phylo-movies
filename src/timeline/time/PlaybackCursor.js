@@ -1,0 +1,74 @@
+import { TIMELINE_AXIS } from './TimelineAxis.js';
+import { TimelinePoint } from './TimelinePoint.js';
+
+const clamp01 = (value) => {
+    if (!Number.isFinite(value)) return 0;
+    return Math.max(0, Math.min(1, value));
+};
+
+export class PlaybackCursor {
+    static fromInterpolation({
+        timelineProgress,
+        fromIndex,
+        toIndex,
+        timeFactor,
+        treeCount,
+        holdKind = null
+    }) {
+        const safeFrom = Number.isInteger(fromIndex) ? fromIndex : 0;
+        const safeTo = Number.isInteger(toIndex) ? toIndex : safeFrom;
+        const safeT = clamp01(timeFactor);
+        const exactFrameIndex = safeFrom + ((safeTo - safeFrom) * safeT);
+        const animationProgress = Number.isFinite(treeCount) && treeCount > 1
+            ? clamp01(exactFrameIndex / (treeCount - 1))
+            : 1;
+        const currentTreeIndex = resolveSemanticTreeIndex(safeFrom, safeTo, safeT);
+
+        return new PlaybackCursor({
+            point: TimelinePoint.from({
+                [TIMELINE_AXIS.FRAME_INDEX]: exactFrameIndex,
+                [TIMELINE_AXIS.TIMELINE_PROGRESS]: clamp01(timelineProgress)
+            }),
+            animationProgress,
+            timelineProgress: clamp01(timelineProgress),
+            currentTreeIndex,
+            holdKind
+        });
+    }
+
+    constructor({
+        point,
+        animationProgress,
+        timelineProgress,
+        currentTreeIndex,
+        holdKind = null
+    }) {
+        this.point = point;
+        this.animationProgress = clamp01(animationProgress);
+        this.timelineProgress = clamp01(timelineProgress);
+        this.currentTreeIndex = Number.isInteger(currentTreeIndex) ? currentTreeIndex : 0;
+        this.holdKind = holdKind;
+    }
+
+    toPlaybackState() {
+        return {
+            animationProgress: this.animationProgress,
+            timelineProgress: this.timelineProgress,
+            currentTreeIndex: this.currentTreeIndex,
+            holdKind: this.holdKind
+        };
+    }
+
+    toJSON() {
+        return {
+            point: this.point?.toJSON?.() ?? null,
+            ...this.toPlaybackState()
+        };
+    }
+}
+
+function resolveSemanticTreeIndex(fromIndex, toIndex, timeFactor) {
+    if (timeFactor <= 0) return fromIndex;
+    if (timeFactor >= 1) return toIndex;
+    return timeFactor < 0.5 ? fromIndex : toIndex;
+}
