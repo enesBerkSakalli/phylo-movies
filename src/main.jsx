@@ -4,11 +4,12 @@ import { createRoot } from 'react-dom/client';
 import { Router } from './Router.jsx';
 
 const rootEl = document.getElementById('root');
+let reactRootOwnsDom = false;
 
 // Global error handler for startup issues
 window.onerror = function(message, source, lineno, colno, error) {
   console.error("Global Error:", message, source, lineno, colno, error);
-  if (rootEl) {
+  if (rootEl && !reactRootOwnsDom) {
     rootEl.innerHTML = `
       <div style="color: red; padding: 20px; font-family: monospace;">
         <h1>Startup Error</h1>
@@ -22,8 +23,10 @@ window.onerror = function(message, source, lineno, colno, error) {
 
 try {
   const root = createRoot(rootEl);
+  reactRootOwnsDom = true;
   root.render(<Router />);
 } catch (e) {
+  reactRootOwnsDom = false;
   console.error("[main.jsx] Render failed:", e);
   window.onerror(e.message, "main.jsx", 0, 0, e);
 }
