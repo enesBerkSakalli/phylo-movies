@@ -1,5 +1,6 @@
 import { TIMELINE_CONSTANTS } from '../constants.js';
 import { TimelineMathUtils } from '../math/TimelineMathUtils.js';
+import { resolveCursorTreeIndex } from '../../domain/indexing/treeIndexSemantics.js';
 
 /**
  * Owns the scrub gesture state machine for the timeline.
@@ -98,7 +99,7 @@ export class TimelineScrubController {
 
     if (lastState?.interpolationData) {
       const { fromIndex, toIndex, timeFactor } = lastState.interpolationData;
-      const primaryTreeIndex = timeFactor < 0.5 ? fromIndex : toIndex;
+      const primaryTreeIndex = resolveCursorTreeIndex(fromIndex, toIndex, timeFactor);
       this.store.getState().setTimelineProgress(finalProgress, primaryTreeIndex);
       return;
     }

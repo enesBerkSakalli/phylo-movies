@@ -1,9 +1,7 @@
 import { detectAnimationStage } from '../deckgl/interpolation/stages/animationStageDetector.js';
 import { applyStageEasing } from '../deckgl/interpolation/stages/stageEasing.js';
-import {
-  calculatePlaybackState,
-  resolveTransitionSemanticIndex
-} from '../../domain/animation/AnimationTiming.js';
+import { calculatePlaybackState } from '../../domain/animation/AnimationTiming.js';
+import { resolveHighlightTreeIndex } from '../../domain/indexing/treeIndexSemantics.js';
 import { selectActiveTreeList } from '../../state/phyloStore/selectors/treeSelectors.js';
 import { PlaybackCursor } from '../../timeline/time/PlaybackCursor.js';
 
@@ -196,7 +194,7 @@ export class AnimationRunner {
     }
 
     this._syncStore(timestamp, progress, stage, isFinished, playback);
-    this.syncHighlightsForIndex(resolveTransitionSemanticIndex(fromIndex, toIndex, localT));
+    this.syncHighlightsForIndex(resolveHighlightTreeIndex(fromIndex, toIndex, localT));
 
     // 5. Easing & Render
     // Check running state again before expensive async render/interpolation.

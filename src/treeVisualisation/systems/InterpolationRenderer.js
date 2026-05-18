@@ -1,6 +1,7 @@
 import { selectActiveTreeList, useAppStore } from '../../state/phyloStore/store.js';
 import { detectAnimationStage } from '../deckgl/interpolation/stages/animationStageDetector.js';
 import { applyStageEasing } from '../deckgl/interpolation/stages/stageEasing.js';
+import { resolveComparisonActiveTreeIndex } from '../../domain/indexing/treeIndexSemantics.js';
 
 /**
  * Handles the rendering of transition frames for animation and scrubbing.
@@ -85,7 +86,11 @@ export class InterpolationRenderer {
           interpolatedData,
           rightTree,
           rightIndex: rightTreeIndex,
-          activeTreeIndex: timeFactor < 0.5 ? options.fromTreeIndex : options.toTreeIndex
+          activeTreeIndex: resolveComparisonActiveTreeIndex(
+            options.fromTreeIndex,
+            options.toTreeIndex,
+            timeFactor
+          )
         });
         return;
       }

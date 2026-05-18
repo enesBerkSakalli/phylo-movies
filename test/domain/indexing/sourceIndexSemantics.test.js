@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import TransitionIndexResolver from '../../../src/domain/indexing/TransitionIndexResolver.js';
+import { getMSAFrameIndexForTimelineIndex } from '../../../src/domain/indexing/IndexMapping.js';
 import { resolveAnchorIndex } from '../../../src/components/TreeStatsPanel/Shared/utils.ts';
 
 describe('source tree index semantics', () => {
@@ -23,5 +24,17 @@ describe('source tree index semantics', () => {
     };
 
     expect(resolveAnchorIndex(4, [0, 3, 5], resolver, 6)).toBe(3);
+  });
+
+  it('keeps generated timeline frames on the previous MSA source frame', () => {
+    const transitionResolver = {
+      fullTreeIndices: [0, 3, 5],
+    };
+
+    expect(getMSAFrameIndexForTimelineIndex(0, transitionResolver)).toBe(0);
+    expect(getMSAFrameIndexForTimelineIndex(2, transitionResolver)).toBe(0);
+    expect(getMSAFrameIndexForTimelineIndex(3, transitionResolver)).toBe(1);
+    expect(getMSAFrameIndexForTimelineIndex(4, transitionResolver)).toBe(1);
+    expect(getMSAFrameIndexForTimelineIndex(5, transitionResolver)).toBe(2);
   });
 });
