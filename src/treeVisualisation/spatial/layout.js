@@ -110,14 +110,14 @@ export function scaleSafeAreaToMinimumVisibleViewport(padding, canvasWidth, canv
  * Scans the DOM for specific UI elements that float over the canvas
  * and calculates the "Safe Padding" needed to avoid them.
  *
- * @param {HTMLElement} webglContainerNode
+ * @param {HTMLElement} containerElement
  * @returns {Object|null} Padding {top, right, bottom, left} or null
  */
-export function calculateSafeAreaPadding(webglContainerNode) {
+export function calculateSafeAreaPadding(containerElement) {
   if (typeof document === 'undefined') return null;
-  if (!webglContainerNode?.getBoundingClientRect) return null;
+  if (!containerElement?.getBoundingClientRect) return null;
 
-  const canvasRect = webglContainerNode.getBoundingClientRect();
+  const canvasRect = containerElement.getBoundingClientRect();
   if (!canvasRect?.width || !canvasRect?.height) return null;
 
   const padding = createEmptySafeAreaPadding();

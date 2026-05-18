@@ -55,8 +55,8 @@ describe('ViewportManager', () => {
   it('fits branch structure by default instead of distant labels', () => {
     const transitionTo = vi.fn();
     const manager = new ViewportManager({
-      webglContainer: null,
       deckContext: {
+        container: null,
         getCanvasDimensions: () => ({ width: 1000, height: 1000 }),
         getActiveView: () => null,
         getViewState: () => ({ target: [0, 0, 0], zoom: 0 }),
@@ -87,8 +87,8 @@ describe('ViewportManager', () => {
   it('includes link path geometry in branch-focused fit bounds', () => {
     const transitionTo = vi.fn();
     const manager = new ViewportManager({
-      webglContainer: null,
       deckContext: {
+        container: null,
         getCanvasDimensions: () => ({ width: 1000, height: 1000 }),
         getActiveView: () => null,
         getViewState: () => ({ target: [0, 0, 0], zoom: 0 }),

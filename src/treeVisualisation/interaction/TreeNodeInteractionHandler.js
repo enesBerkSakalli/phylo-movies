@@ -49,16 +49,16 @@ export class TreeNodeInteractionHandler {
   /**
    * Find the normalized tree node that corresponds to a layer data object
    * @param {Object} layerData - Data object from the layer
-   * @param {Object} currentTreeData - Current tree data to search in
+   * @param {Object} treeData - Canonical tree data to search in
    * @returns {Object|null} Plain context-menu node
    */
-  _findContextNodeFromLayerData(layerData, currentTreeData, treeIndex) {
-    if (!layerData || !currentTreeData) return null;
+  _findContextNodeFromLayerData(layerData, treeData, treeIndex) {
+    if (!layerData || !treeData) return null;
 
     const targetSplitKey = getSplitKey(layerData);
     if (!targetSplitKey) return null;
 
-    const currentLayout = this.layoutCalculator.calculateLayout(currentTreeData, {
+    const currentLayout = this.layoutCalculator.calculateLayout(treeData, {
       treeIndex
     });
 

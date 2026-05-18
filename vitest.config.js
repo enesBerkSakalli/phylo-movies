@@ -44,7 +44,7 @@ export default defineConfig({
       'test/ViewportManager.test.js',
       'test/ViteConfig.test.ts',
       'test/VelocityNormalizer.test.js',
-      'test/WebGLTreeAnimationController.test.js',
+      'test/TreeLayoutController.test.js',
       'test/domain/**/*.test.{js,ts}',
       'test/integration/**/*.test.{js,ts}',
     ],

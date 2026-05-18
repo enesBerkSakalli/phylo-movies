@@ -7,9 +7,9 @@ import { transformBranchLengths } from '../../domain/tree/branchTransform.js';
 const dataFactory = new DeckGLTreeLayerDataFactory();
 
 export function calculateLayoutWorkerResult(treeData, options) {
-    // 1. Transform Branches
-    // Note: transformBranchLengths is pure and safe for workers
-    const transformedData = transformBranchLengths(treeData, options.branchTransformation);
+    const transformedData = options.branchTransformation === 'none'
+        ? treeData
+        : transformBranchLengths(treeData, options.branchTransformation);
 
     // 2. Calculate Layout
     // Note: TidyTreeLayout must not touch the DOM.
@@ -27,7 +27,7 @@ export function calculateLayoutWorkerResult(treeData, options) {
         layoutEngine.setMargin(options.margin);
     }
 
-    const hasMaxGlobalScale = Number.isFinite(Number(options.maxGlobalScale));
+    const hasMaxGlobalScale = hasUniformScaleValue(options.maxGlobalScale);
     const rootNode = hasMaxGlobalScale
         ? layoutEngine.constructRadialTreeWithUniformScaling(Number(options.maxGlobalScale))
         : layoutEngine.constructRadialTree(false);
@@ -76,6 +76,10 @@ function getStableGlobalRenderedRadius({ maxGlobalScale, layoutScale, hasMaxGlob
     if (!Number.isFinite(maxScale) || !Number.isFinite(scale)) return null;
 
     return Math.max(0, maxScale * scale);
+}
+
+function hasUniformScaleValue(value) {
+    return value !== null && value !== undefined && Number.isFinite(Number(value));
 }
 
 /**

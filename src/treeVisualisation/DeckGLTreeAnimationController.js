@@ -6,7 +6,7 @@ import { InterpolationCache } from './deckgl/interpolation/InterpolationCache.js
 import { AnimationRunner } from './systems/AnimationRunner.js';
 import { InterpolationRenderer } from './systems/InterpolationRenderer.js';
 import { StaticRenderer } from './systems/StaticRenderer.js';
-import { WebGLTreeAnimationController } from './WebGLTreeAnimationController.js';
+import { TreeLayoutController } from './TreeLayoutController.js';
 import { selectActiveTreeList, useAppStore } from '../state/phyloStore/store.js';
 import { TreeNodeInteractionHandler } from './interaction/TreeNodeInteractionHandler.js';
 import { handleDragStart, handleDrag, handleDragEnd, handleContainerResize } from './interaction/InteractionHandlers.js';
@@ -15,7 +15,7 @@ import { getClipboardLayers } from './utils/ClipboardUtils.js';
 import { createLayoutCacheKey } from './utils/layoutCacheKey.js';
 import { getSplitKey } from '../domain/tree/splits.js';
 
-export class DeckGLTreeAnimationController extends WebGLTreeAnimationController {
+export class DeckGLTreeAnimationController extends TreeLayoutController {
 
   // ==========================================================================
   // CONSTRUCTOR
@@ -25,7 +25,6 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     const { animations = true, viewSide = 'single' } = options || {};
     super(null);
     this.animationsEnabled = animations;
-    this.viewSide = viewSide;
     this._destroyed = false;
     this._resetReadyPromise();
 
@@ -43,15 +42,14 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
 
     // --- WORKER INITIALIZATION ---
     this.layoutWorker = new Worker(new URL('./workers/layout.worker.js', import.meta.url), { type: 'module' });
-    this.prefetchedLayoutCacheKeys = new Map();
-    this._prefetchRequestTokens = new Map();
+    this._layoutPrefetchTokens = new Map();
     this._layoutRequestGeneration = 0;
 
     this.layoutWorker.onmessage = (event) => {
       const { jobId, requestToken, status, result, error } = event.data;
       const treeIndex = parseInt(jobId, 10);
-      const pendingToken = this._prefetchRequestTokens.get(treeIndex);
-      if (requestToken !== pendingToken || requestToken !== this._createLayoutRequestToken(treeIndex)) {
+      const expectedToken = this._layoutPrefetchTokens.get(treeIndex);
+      if (requestToken !== expectedToken || requestToken !== this._createLayoutRequestToken(treeIndex)) {
         return;
       }
 
@@ -59,14 +57,12 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
         this.interpolationCache.setPrecomputedData(treeIndex, result);
       } else {
         console.warn(`[Worker] Layout failed for tree ${jobId}:`, error);
-        this.prefetchedLayoutCacheKeys.delete(treeIndex);
-        this._prefetchRequestTokens.delete(treeIndex);
+        this._layoutPrefetchTokens.delete(treeIndex);
       }
     };
     // -----------------------------
 
-    this.currentTreeData = null;
-    this.interactionHandler = new TreeNodeInteractionHandler(this, this.viewSide);
+    this.interactionHandler = new TreeNodeInteractionHandler(this, viewSide);
 
     // Track last tree index we auto-fit to
     this._lastFocusedTreeIndex = null;
@@ -108,12 +104,13 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
         const state = useAppStore.getState();
         const treeList = selectActiveTreeList(state);
         const totalTrees = treeList?.length || 0;
-        const currentTreeIndex = Math.min(Math.floor(progress * (totalTrees - 1)), totalTrees - 1);
+        const currentTreeIndex = totalTrees > 0
+          ? Math.min(Math.floor(progress * (totalTrees - 1)), totalTrees - 1)
+          : 0;
         const timelineProgress = state.movieTimelineManager?.getTimelineProgressForLinearTreeProgress?.(progress, totalTrees) ?? progress;
         state.setPlayhead({
           animationProgress: progress,
-          timelineProgress,
-          currentTreeIndex
+          timelineProgress
         });
 
         // Prefetch next frames
@@ -232,7 +229,7 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     // If we are already mounted to the SAME container, do nothing.
     // If we are mounted to a DIFFERENT container, unmount first (though React cleanup should have handled this).
     if (this.deckContext) {
-      const existingNode = this.webglContainer || null;
+      const existingNode = this.deckContext.container || null;
 
       if (existingNode === containerElement) {
         return;
@@ -240,8 +237,6 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
       console.warn('[DeckGLTreeAnimationController] Remounting to new container');
       this.unmount();
     }
-
-    this.webglContainer = containerElement;
 
     // Create DeckGLContext attached to this container
     this.deckContext = new DeckGLContext(containerElement);
@@ -375,16 +370,14 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     this.layerManager = null;
     this.layoutWorker?.terminate();
     this.layoutWorker = null;
-    this.prefetchedLayoutCacheKeys?.clear();
-    this._prefetchRequestTokens?.clear();
+    this._layoutPrefetchTokens?.clear();
   }
 
   resetInterpolationCaches() {
     this.interpolationCache?.reset();
     this.treeInterpolator?.resetCaches?.();
     this.clearLayoutCache?.();
-    this.prefetchedLayoutCacheKeys?.clear();
-    this._prefetchRequestTokens?.clear();
+    this._layoutPrefetchTokens?.clear();
     this._layoutRequestGeneration += 1;
   }
 
@@ -407,11 +400,10 @@ export class DeckGLTreeAnimationController extends WebGLTreeAnimationController 
     // Ensure uniform scaling is initialized before dispatching to worker
     this.initializeUniformScaling(branchTransformation);
     const layoutCacheKey = this._createLayoutCacheKey(treeIndex, state);
-    if (this.prefetchedLayoutCacheKeys.get(treeIndex) === layoutCacheKey) return;
-
-    this.prefetchedLayoutCacheKeys.set(treeIndex, layoutCacheKey);
     const requestToken = this._createLayoutRequestToken(treeIndex, state, layoutCacheKey);
-    this._prefetchRequestTokens.set(treeIndex, requestToken);
+    if (this._layoutPrefetchTokens.get(treeIndex) === requestToken) return;
+
+    this._layoutPrefetchTokens.set(treeIndex, requestToken);
 
     const payload = {
       jobId: String(treeIndex),
