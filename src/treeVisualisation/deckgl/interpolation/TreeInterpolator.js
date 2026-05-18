@@ -8,6 +8,7 @@ import { OuterRadiusInterpolator } from './OuterRadiusInterpolator.js';
 import { computeAngularDistances, buildGlobalVelocityMaps } from './VelocityNormalizer.js';
 import { ANIMATION_STAGES } from './stages/animationStageDetector.js';
 import { measureFrameStep } from '../../performance/frameInstrumentation.js';
+import { Z_NODE } from '../constants/zOffsets.js';
 
 /**
  * TreeInterpolator - Orchestrates tree data interpolation
@@ -131,9 +132,11 @@ export class TreeInterpolator {
     const maxRadius = this.outerRadiusInterpolator.interpolateMaxRadius(dataFrom, dataTo, t);
     const { labelRadius, extensionRadius } = this.outerRadiusInterpolator.interpolateRadii(dataFrom, dataTo, t, maxRadius);
 
+    const endpointAlignedNodes = alignNodesToRenderedLinkTargets(interpolatedNodes, interpolatedLinks);
+
     return {
       max_radius: maxRadius,
-      nodes: interpolatedNodes,
+      nodes: endpointAlignedNodes,
       links: interpolatedLinks,
       labels: Number.isFinite(labelRadius)
         ? this.outerRadiusInterpolator.applyLabelRadius(interpolatedLabels, labelRadius)
@@ -265,4 +268,44 @@ function structuralOpacityOptions(options) {
   }
 
   return result;
+}
+
+function alignNodesToRenderedLinkTargets(nodes, links) {
+  const targetPositionByNodeId = new Map();
+
+  for (const link of links || []) {
+    if (!link?.targetId || !isFinitePoint(link.targetPosition)) continue;
+    targetPositionByNodeId.set(link.targetId, link.targetPosition);
+  }
+
+  if (targetPositionByNodeId.size === 0) return nodes;
+
+  let changed = false;
+  const alignedNodes = nodes.map((node) => {
+    const linkTargetPosition = targetPositionByNodeId.get(node?.id);
+    if (!linkTargetPosition) return node;
+
+    changed = true;
+    const position = [
+      linkTargetPosition[0],
+      linkTargetPosition[1],
+      Number.isFinite(linkTargetPosition[2]) ? linkTargetPosition[2] : 0
+    ];
+
+    return {
+      ...node,
+      position,
+      renderPosition: [position[0], position[1], position[2] + Z_NODE],
+      angle: Math.atan2(position[1], position[0]),
+      polarPosition: Math.hypot(position[0], position[1])
+    };
+  });
+
+  return changed ? alignedNodes : nodes;
+}
+
+function isFinitePoint(point) {
+  return Array.isArray(point) &&
+    Number.isFinite(point[0]) &&
+    Number.isFinite(point[1]);
 }
