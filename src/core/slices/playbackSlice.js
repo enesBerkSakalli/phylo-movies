@@ -1,4 +1,5 @@
 import { clamp } from '../../domain/math/mathUtils.js';
+import { PlaybackCursor } from '../../timeline/time/PlaybackCursor.js';
 
 const TIMELINE_PROGRESS_EPSILON = 1e-9;
 
@@ -261,15 +262,20 @@ export const createPlaybackSlice = (set, get) => ({
   },
 
   setPlayhead: (nextPlayhead, currentTreeIndexOverride = null) => {
-    const playhead = createPlayhead(nextPlayhead);
     const treeCount = get().treeList?.length ?? 0;
     const maxIndex = Math.max(0, treeCount - 1);
-    const currentTreeIndex = Number.isFinite(currentTreeIndexOverride)
+    const inferredTreeIndex = progressToTreeIndex(nextPlayhead?.animationProgress, treeCount);
+    const playheadTreeIndex = Number.isFinite(nextPlayhead?.currentTreeIndex)
+      ? clamp(Math.floor(nextPlayhead.currentTreeIndex), 0, maxIndex)
+      : null;
+    const requestedTreeIndex = Number.isFinite(currentTreeIndexOverride)
       ? clamp(Math.floor(currentTreeIndexOverride), 0, maxIndex)
-      : progressToTreeIndex(playhead.animationProgress, treeCount);
+      : (playheadTreeIndex ?? inferredTreeIndex);
+    const cursor = createPlaybackCursor(nextPlayhead, requestedTreeIndex);
+
     set({
-      playhead,
-      currentTreeIndex
+      playhead: cursor.toPlayhead(),
+      currentTreeIndex: cursor.currentTreeIndex
     });
   },
 
@@ -294,28 +300,22 @@ export const createPlaybackSlice = (set, get) => ({
   }),
 });
 
-function createPlayhead(playhead = {}) {
-  const animationProgress = Number.isFinite(playhead.animationProgress)
-    ? clamp(playhead.animationProgress, 0, 1)
-    : 0;
-  const timelineProgress = Number.isFinite(playhead.timelineProgress)
-    ? clamp(playhead.timelineProgress, 0, 1)
-    : null;
+function createPlaybackCursor(playhead = {}, currentTreeIndex = 0) {
+  return PlaybackCursor.fromPlayhead({
+    ...playhead,
+    currentTreeIndex
+  });
+}
 
-  return {
-    animationProgress,
-    timelineProgress
-  };
+function createPlayhead(playhead = {}, currentTreeIndex = 0) {
+  return createPlaybackCursor(playhead, currentTreeIndex).toPlayhead();
 }
 
 function createPlayheadState(playhead = {}, currentTreeIndex = 0) {
-  const nextPlayhead = createPlayhead(playhead);
-  const nextTreeIndex = Number.isFinite(currentTreeIndex)
-    ? Math.max(0, Math.floor(currentTreeIndex))
-    : 0;
+  const cursor = createPlaybackCursor(playhead, currentTreeIndex);
   return {
-    playhead: nextPlayhead,
-    currentTreeIndex: nextTreeIndex
+    playhead: cursor.toPlayhead(),
+    currentTreeIndex: cursor.currentTreeIndex
   };
 }
 
@@ -326,7 +326,7 @@ function areTimelineProgressValuesEqual(currentProgress, nextProgress) {
 }
 
 function getCurrentPlayhead(state) {
-  return createPlayhead(state.playhead);
+  return createPlayhead(state.playhead, state.currentTreeIndex);
 }
 
 function progressToTreeIndex(progress, treeCount) {

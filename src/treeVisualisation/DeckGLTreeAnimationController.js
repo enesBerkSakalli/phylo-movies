@@ -5,6 +5,7 @@ import { TreeInterpolator } from './deckgl/interpolation/TreeInterpolator.js';
 import { InterpolationCache } from './deckgl/interpolation/InterpolationCache.js';
 import { AnimationRunner } from './systems/AnimationRunner.js';
 import { InterpolationRenderer } from './systems/InterpolationRenderer.js';
+import { createPlaybackProgressSynchronizer } from './systems/PlaybackProgressSynchronizer.js';
 import { StaticRenderer } from './systems/StaticRenderer.js';
 import { TreeLayoutController } from './TreeLayoutController.js';
 import { selectActiveTreeList, useAppStore } from '../state/phyloStore/store.js';
@@ -92,6 +93,12 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
     this.staticRenderer = new StaticRenderer(this);
 
     // Animation Runner
+    const syncPlaybackProgress = createPlaybackProgressSynchronizer({
+      getState: () => useAppStore.getState(),
+      isPrefetchEnabled: () => this.animationsEnabled,
+      prefetchFrame: (treeIndex) => this._prefetchFrame(treeIndex)
+    });
+
     this.animationRunner = new AnimationRunner({
       getState: () => useAppStore.getState(),
       getOrCacheInterpolationData: this._getOrCacheInterpolationData.bind(this),
@@ -99,31 +106,7 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
       renderComparisonFrame: this._renderComparisonFrameForRunner.bind(this),
       setAnimationStage: (stage) => useAppStore.getState().setAnimationStage(stage),
       syncHighlightsForIndex: (treeIndex) => useAppStore.getState().updateColorManagerForIndex?.(treeIndex),
-      updateProgress: (progress, playbackState = {}) => {
-        // Manual store update to keep UI in sync without driving logic
-        const state = useAppStore.getState();
-        const treeList = selectActiveTreeList(state);
-        const totalTrees = treeList?.length || 0;
-        const derivedTreeIndex = totalTrees > 0
-          ? Math.min(Math.floor(progress * (totalTrees - 1)), totalTrees - 1)
-          : 0;
-        const currentTreeIndex = Number.isInteger(playbackState.currentTreeIndex)
-          ? playbackState.currentTreeIndex
-          : derivedTreeIndex;
-        const timelineProgress = Number.isFinite(playbackState.timelineProgress)
-          ? playbackState.timelineProgress
-          : (state.movieTimelineManager?.getTimelineProgressForLinearTreeProgress?.(progress, totalTrees) ?? progress);
-        state.setPlayhead({
-          animationProgress: progress,
-          timelineProgress
-        }, currentTreeIndex);
-
-        // Prefetch next frames
-        if (this.animationsEnabled && totalTrees > 0) {
-          this._prefetchFrame(currentTreeIndex + 1);
-          this._prefetchFrame(currentTreeIndex + 2);
-        }
-      },
+      updateProgress: syncPlaybackProgress,
       stopAnimation: () => useAppStore.getState().stop()
     });
 
