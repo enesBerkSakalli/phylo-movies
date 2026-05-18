@@ -98,4 +98,21 @@ describe('timeline time domain', () => {
       },
     });
   });
+
+  it('normalizes store playheads into cursor-shaped state without inventing timeline progress', () => {
+    const cursor = PlaybackCursor.fromPlayhead({
+      animationProgress: 1.4,
+      timelineProgress: null,
+      currentTreeIndex: 2.8,
+    });
+
+    expect(cursor.currentTreeIndex).toBe(2);
+    expect(cursor.toPlayhead()).toEqual({
+      animationProgress: 1,
+      timelineProgress: null,
+    });
+    expect(cursor.point.toJSON()).toEqual({
+      [TIMELINE_AXIS.FRAME_INDEX]: 2,
+    });
+  });
 });

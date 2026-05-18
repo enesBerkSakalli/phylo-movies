@@ -1,4 +1,4 @@
-import { useAppStore, selectCurrentTree } from '../../state/phyloStore/store.js';
+import { selectActiveTreeList, selectCurrentTree, useAppStore } from '../../state/phyloStore/store.js';
 import { tagTreeSide } from '../utils/layerDataUtils.js';
 
 /**
@@ -23,8 +23,9 @@ export class StaticRenderer {
 
     const { treeIndex, leftIndex, rightIndex, comparisonMode } = options;
     const state = useAppStore.getState();
-    const { currentTreeIndex, treeList, transitionResolver, comparisonMode: comparisonModeFromStore } = state;
-    const linkGeometryMode = state.linkGeometryMode || 'radial-elbow';
+    const { currentTreeIndex, transitionResolver, comparisonMode: comparisonModeFromStore } = state;
+    const treeList = selectActiveTreeList(state);
+    const linkGeometryMode = this.controller._getLinkGeometryMode?.(state) ?? 'radial-elbow';
 
     // Handle comparison mode (explicit or inferred from store)
     const useComparison = comparisonMode ?? comparisonModeFromStore;

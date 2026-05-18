@@ -24,6 +24,13 @@ export interface PlaybackPlayhead {
   timelineProgress: number | null;
 }
 
+export interface PlaybackCursorState extends PlaybackPlayhead {
+  currentTreeIndex: number;
+  holdKind?: string | null;
+}
+
+export type PlaybackPlayheadUpdate = Partial<PlaybackCursorState>;
+
 export interface AppStoreState {
   // From treeDataset.slice
   treeList: any[];
@@ -179,7 +186,7 @@ export interface AppStoreState {
   updateTimelineState: (timelineState: any) => void;
   setScrubPosition: (progress: number) => void;
   setTimelineProgress: (progress: number, treeIndex: number) => void;
-  setPlayhead: (playhead: Partial<PlaybackPlayhead>, currentTreeIndex?: number) => void;
+  setPlayhead: (playhead: PlaybackPlayheadUpdate, currentTreeIndex?: number) => void;
   setRenderInProgress: (inProgress: boolean) => void;
   resetPlayback: () => void;
 
