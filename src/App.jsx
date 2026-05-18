@@ -84,16 +84,30 @@ export function App() {
 
   return (
     <TooltipProvider>
-      <SidebarProvider>
-        <ToolsSidebar
-          fileName={fileName}
-          error={error}
-          sprAnalyticsOpen={sprAnalyticsOpen}
-          isSprAnalyticsActive={activeFloatingWindow === 'spr-analytics'}
-          onOpenSprAnalytics={openSprAnalyticsWindow}
-          onCloseSprAnalytics={closeSprAnalyticsWindow}
-          onFocusSprAnalytics={focusSprAnalyticsWindow}
-        />
+      <SidebarProvider className="flex-col">
+        <div className="flex min-h-0 w-full flex-1 overflow-hidden">
+          <ToolsSidebar
+            fileName={fileName}
+            error={error}
+            sprAnalyticsOpen={sprAnalyticsOpen}
+            isSprAnalyticsActive={activeFloatingWindow === 'spr-analytics'}
+            onOpenSprAnalytics={openSprAnalyticsWindow}
+            onCloseSprAnalytics={closeSprAnalyticsWindow}
+            onFocusSprAnalytics={focusSprAnalyticsWindow}
+          />
+
+          <SidebarInset className="min-w-0 overflow-hidden">
+            <SidebarTrigger className="absolute top-2 left-2 z-[1200]" />
+            <div className="relative min-h-0 flex-1 overflow-hidden">
+              <DeckGLCanvas />
+              <TreeViewportControls />
+              <CanvasCaptureControls />
+              <ClipboardDismissButton />
+              <HUD />
+              <TransitionInspectorPanel />
+            </div>
+          </SidebarInset>
+        </div>
 
         <MSAProvider>
           <MsaRndWindow
@@ -106,19 +120,7 @@ export function App() {
           onFocus={focusTaxaColoringWindow}
         />
 
-
-        <SidebarInset className="overflow-hidden">
-          <SidebarTrigger className="absolute top-2 left-2 z-[1200]" />
-          <div className="relative min-h-0 flex-1 overflow-hidden">
-            <DeckGLCanvas />
-            <TreeViewportControls />
-            <CanvasCaptureControls />
-            <ClipboardDismissButton />
-            <HUD />
-            <TransitionInspectorPanel />
-          </div>
-          <MoviePlayerBar />
-        </SidebarInset>
+        <MoviePlayerBar />
         <NodeContextMenu />
         <Toaster />
       </SidebarProvider>
