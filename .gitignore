@@ -3,6 +3,8 @@ node_modules
 /dist
 
 env
+.venv/
+.pytest_cache/
 *.pyc
 
 # Copilot prompt files (local-only)
@@ -21,6 +23,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 *.log
+*.pid
 
 # Test coverage
 coverage/

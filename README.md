@@ -242,16 +242,31 @@ npm run test:watch
 npm run test:unit          # Parser and file upload tests
 npm run test:msa           # MSA workflow tests
 npm run test:tree-animation # Tree animation tests
+npm run test:vitest        # Frontend/domain Vitest suite
+npm run test:optional      # Optional Mocha regression suite
 ```
 
 **Run BranchArchitect backend tests:**
 
 ```bash
 cd engine/BranchArchitect
-poetry run pytest tests/ -v
+poetry run pytest test/ -v
 ```
 
 Some targeted suites load fixtures from the `publication_data/` directory; keep the sample datasets intact or update the paths before running CI locally.
+
+### Validation Responsibilities
+
+The repository intentionally uses separate toolchains for the browser app, Python engine, and desktop wrapper. Run validation in the directory that owns the layer you changed:
+
+| Layer | Directory | Install command | Validation command | Scope |
+| --- | --- | --- | --- | --- |
+| Frontend | repository root | `npm install` | `npm run validate` | ESLint, TypeScript, frontend/domain tests, production build |
+| Backend engine | `engine/BranchArchitect` | `poetry install` | `poetry run mypy brancharchitect --ignore-missing-imports && poetry run pytest test/ -v --timeout=120` | Python typing and BranchArchitect scientific/Flask tests |
+| Desktop wrapper | `electron-app` | `npm install` | `npm run test:sse` after backend setup; use `npm run build:mac`, `npm run build:win`, or `npm run build:linux` for packaging checks | Electron shell and packaged backend/frontend integration |
+| Full stack container | repository root | Docker | `docker compose up --build` | nginx frontend plus BranchArchitect backend in one container |
+
+Root `npm run validate` validates the frontend application only. It does not hide backend or Electron failures; validate those layers explicitly when their code or contracts change.
 
 ---
 
@@ -328,6 +343,12 @@ Access at `http://localhost:4173/`
 npm test  # Runs full test suite
 ```
 
+**8. Run the full frontend validation path:**
+
+```bash
+npm run validate
+```
+
 **Success indicators:**
 
 - Dev server starts without errors
@@ -342,12 +363,22 @@ npm test  # Runs full test suite
 
 ### Development Scripts
 
-Additional utility scripts for development:
+The main root-level commands are:
 
 ```bash
-npm run lint:store-usage   # Check Zustand store usage patterns
-npm run demo:msa-scrolling # Run MSA scrolling demonstration
+npm run dev          # Start the Vite frontend dev server
+npm run build        # Build the frontend and copy example data
+npm run preview      # Preview the production build
+npm run lint         # Run ESLint
+npm run typecheck    # Run TypeScript without emitting files
+npm run format       # Apply Prettier formatting and ESLint autofixes
+npm run format:check # Check Prettier formatting without editing files
+npm run test         # Run all frontend test suites
+npm run validate     # Lint, typecheck, test, and build
+npm run dev:electron # Start the Electron wrapper workflow
 ```
+
+Formatting policy: Prettier owns whitespace, wrapping, quote style, and trailing commas for supported text/code files. ESLint owns JavaScript/TypeScript correctness, React hook rules, and project-specific static checks. Do not reformat large unrelated files during behavioral changes; run `npm run format` only on a focused branch or before a dedicated formatting-only commit. `npm run format:check` is available for formatting-baseline work, but it is intentionally not part of `npm run validate` until the existing source tree has been normalized in a separate formatting-only change.
 
 ## Usage Guide
 
@@ -395,7 +426,7 @@ npm run demo:msa-scrolling # Run MSA scrolling demonstration
 - **Frontend Framework**: React 18.2.0 with modern hooks and state management
 - **Build Tool**: Vite 5.4.20 for fast development and optimized builds
 - **State Management**: Zustand 5.0.6 for global application state
-- **Tree Rendering**: Deck.gl 9.1.14 (GPU-accelerated WebGL) with D3.js 7.9.0 for tree layouts
+- **Tree Rendering**: deck.gl 9.2.5 (GPU-accelerated WebGL) with D3 hierarchy utilities for tree layouts
 - **UI Components**: Radix UI primitives with Tailwind CSS 4.1.13 for styling
 - **MSA Viewer**: Custom deck.gl-based MSA viewer for sequence alignment visualization
 - **Type Safety**: TypeScript 5.8.3 with JSDoc annotations
@@ -448,20 +479,16 @@ npm run demo:msa-scrolling # Run MSA scrolling demonstration
 ```text
 phylo-movies/
 |-- src/                     # Frontend source code
-|   |-- react/               # React components
-|   |   |-- components/      # UI components (HUD, nav, taxa-coloring, etc.)
-|   |   |-- home/            # Home page components
-|   |   `-- App.jsx          # Main app component
-|   |-- js/                  # Core JavaScript modules
-|   |   |-- controllers/     # App controllers (GUI, navigation)
-|   |   |-- core/            # Core systems (store, TransitionIndexResolver)
-|   |   |-- treeVisualisation/ # Tree rendering (DeckGL, D3.js)
-|   |   |-- timeline/        # Timeline management
-|   |   |-- treeColoring/    # Taxa coloring system
-|   |   `-- utils/           # Utility functions
-|   |-- components/          # shadcn/ui components
-|   |-- lib/                 # Library utilities
-|   `-- index.css            # Global styles
+|   |-- components/          # React UI surfaces and shadcn/ui primitives
+|   |-- domain/              # Frontend scientific/domain contracts and pure helpers
+|   |-- pages/               # Workspace setup, docs-only, and splash routes
+|   |-- services/            # Browser storage, API URL resolution, media helpers
+|   |-- state/               # Zustand store, slices, and selectors
+|   |-- timeline/            # Timeline construction, timing math, and renderer glue
+|   |-- treeVisualisation/   # Tree layout, deck.gl layer data, interpolation, and viewport logic
+|   |-- msaViewer/           # deck.gl alignment viewer
+|   |-- css/                 # Tailwind entry point and scoped CSS
+|   `-- main.jsx             # Browser application entry point
 |-- engine/
 |   `-- BranchArchitect/     # Python backend (git submodule)
 |       |-- brancharchitect/ # Core library (tree models, interpolation, lattice solvers)
@@ -471,6 +498,8 @@ phylo-movies/
 |-- electron-app/            # Electron desktop wrapper
 |-- publication_data/        # Datasets from the PhyloMovies manuscript
 |-- test/                    # Frontend test suites
+|-- docs/                    # Terminology, design notes, and technical spikes
+|-- knowledge/               # Separate Markdown knowledge system; see knowledge/AGENTS.md
 |-- start.sh                 # One-command startup (backend + frontend)
 |-- dist/                    # Production build output (generated)
 |-- package.json             # npm dependencies and scripts
