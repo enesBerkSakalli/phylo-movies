@@ -2,6 +2,7 @@
  * AnimationStageDetector.js
  * Detects the current animation stage based on element presence between tree states.
  */
+import { summarizeTransitionLifecycles } from '../TransitionChangeModel.js';
 
 export const ANIMATION_STAGES = {
   COLLAPSE: 'COLLAPSE',  // Elements exiting (branches disappearing)
@@ -10,12 +11,21 @@ export const ANIMATION_STAGES = {
 };
 
 /**
- * Detects animation stage by comparing node IDs between source and target data.
+ * Detects animation stage by comparing semantic branch lifecycles first, then node IDs.
  * @param {Object} dataFrom - Source tree data with nodes array
  * @param {Object} dataTo - Target tree data with nodes array
+ * @param {Object|null} transitionChangeModel - Optional branch lifecycle model
  * @returns {string} One of ANIMATION_STAGES values
  */
-export function detectAnimationStage(dataFrom, dataTo) {
+export function detectAnimationStage(dataFrom, dataTo, transitionChangeModel = null) {
+  const lifecycleSummary = summarizeTransitionLifecycles(transitionChangeModel);
+  if (lifecycleSummary.hasCollapseChanges) {
+    return ANIMATION_STAGES.COLLAPSE;
+  }
+  if (lifecycleSummary.hasExpandChanges) {
+    return ANIMATION_STAGES.EXPAND;
+  }
+
   if (!dataFrom?.nodes || !dataTo?.nodes) {
     return ANIMATION_STAGES.REORDER;
   }

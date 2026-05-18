@@ -10,6 +10,14 @@ export const LINK_LIFECYCLES = Object.freeze({
 });
 
 const DEFAULT_ZERO_EPSILON = 1e-6;
+const COLLAPSE_LIFECYCLES = new Set([
+  LINK_LIFECYCLES.EXITING,
+  LINK_LIFECYCLES.ZEROING
+]);
+const EXPAND_LIFECYCLES = new Set([
+  LINK_LIFECYCLES.ENTERING,
+  LINK_LIFECYCLES.REVIVING
+]);
 
 export function buildTransitionChangeModel(dataFrom, dataTo, options = {}) {
   const zeroEpsilon = Number.isFinite(options.zeroEpsilon)
@@ -44,7 +52,7 @@ export function buildTransitionChangeModel(dataFrom, dataTo, options = {}) {
     });
   }
 
-  return {
+  const result = {
     zeroEpsilon,
     linkChanges,
     hasLifecycleChanges,
@@ -55,6 +63,8 @@ export function buildTransitionChangeModel(dataFrom, dataTo, options = {}) {
       return this.getLinkChange(linkOrKey)?.lifecycle || LINK_LIFECYCLES.UNCHANGED;
     }
   };
+  result.lifecycleSummary = summarizeTransitionLifecycles(result);
+  return result;
 }
 
 export function createLifecycleClocks(timeFactor) {
@@ -65,6 +75,33 @@ export function createLifecycleClocks(timeFactor) {
     moveT: phase(t, 0.3, 0.75),
     expandT: phase(t, 0.55, 0.9),
     settleT: phase(t, 0.85, 1.0)
+  };
+}
+
+export function summarizeTransitionLifecycles(transitionChangeModel) {
+  const counts = {
+    [LINK_LIFECYCLES.UNCHANGED]: 0,
+    [LINK_LIFECYCLES.ENTERING]: 0,
+    [LINK_LIFECYCLES.EXITING]: 0,
+    [LINK_LIFECYCLES.ZEROING]: 0,
+    [LINK_LIFECYCLES.REVIVING]: 0,
+    [LINK_LIFECYCLES.LENGTH_CHANGING]: 0
+  };
+
+  for (const change of iterateLinkChanges(transitionChangeModel)) {
+    const lifecycle = change?.lifecycle || LINK_LIFECYCLES.UNCHANGED;
+    counts[lifecycle] = (counts[lifecycle] ?? 0) + 1;
+  }
+
+  const hasCollapseChanges = [...COLLAPSE_LIFECYCLES].some((lifecycle) => counts[lifecycle] > 0);
+  const hasExpandChanges = [...EXPAND_LIFECYCLES].some((lifecycle) => counts[lifecycle] > 0);
+
+  return {
+    counts,
+    hasCollapseChanges,
+    hasExpandChanges,
+    hasStructuralChanges: hasCollapseChanges || hasExpandChanges,
+    hasLengthChanges: counts[LINK_LIFECYCLES.LENGTH_CHANGING] > 0
   };
 }
 
@@ -86,6 +123,15 @@ export function getVisibleBranchLength(link) {
   }
 
   return 0;
+}
+
+function iterateLinkChanges(transitionChangeModel) {
+  const changes = transitionChangeModel?.linkChanges;
+  if (!changes) return [];
+  if (changes instanceof Map) return changes.values();
+  if (Array.isArray(changes)) return changes;
+  if (typeof changes.values === 'function') return changes.values();
+  return [];
 }
 
 function createLinkMap(links) {

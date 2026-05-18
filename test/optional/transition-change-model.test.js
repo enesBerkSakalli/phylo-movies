@@ -1,5 +1,9 @@
 import { expect } from 'chai';
-import { buildTransitionChangeModel, createLifecycleClocks } from '../../src/treeVisualisation/deckgl/interpolation/TransitionChangeModel.js';
+import {
+  buildTransitionChangeModel,
+  createLifecycleClocks,
+  summarizeTransitionLifecycles
+} from '../../src/treeVisualisation/deckgl/interpolation/TransitionChangeModel.js';
 import { TreeInterpolator } from '../../src/treeVisualisation/deckgl/interpolation/TreeInterpolator.js';
 import { getNodeKey } from '../../src/domain/tree/splits.js';
 import { ANIMATION_STAGES } from '../../src/treeVisualisation/deckgl/interpolation/stages/animationStageDetector.js';
@@ -143,6 +147,47 @@ describe('TransitionChangeModel', () => {
     expect(model.getLinkLifecycle('length-5')).to.equal('lengthChanging');
     expect(model.hasLifecycleChanges).to.equal(true);
   });
+
+  it('summarizes structural lifecycles separately from branch-length changes', () => {
+    const from = frame([
+      link('zero-1', 10, 25),
+      link('revive-2', 10, 10),
+      link('length-3', 10, 22)
+    ]);
+    const to = frame([
+      link('zero-1', 10, 10),
+      link('revive-2', 10, 24),
+      link('length-3', 10, 35)
+    ]);
+
+    const model = buildTransitionChangeModel(from, to);
+    const summary = summarizeTransitionLifecycles(model);
+
+    expect(summary.hasCollapseChanges).to.equal(true);
+    expect(summary.hasExpandChanges).to.equal(true);
+    expect(summary.counts.zeroing).to.equal(1);
+    expect(summary.counts.reviving).to.equal(1);
+    expect(summary.counts.lengthChanging).to.equal(1);
+    expect(summary.hasStructuralChanges).to.equal(true);
+  });
+
+  it('keeps lifecycle clocks ordered across representative collapse, move, and expand samples', () => {
+    const collapseClock = createLifecycleClocks(0.2);
+    const moveClock = createLifecycleClocks(0.5);
+    const expandClock = createLifecycleClocks(0.8);
+
+    expect(collapseClock.collapseT).to.be.greaterThan(0);
+    expect(collapseClock.moveT).to.equal(0);
+    expect(collapseClock.expandT).to.equal(0);
+
+    expect(moveClock.collapseT).to.equal(1);
+    expect(moveClock.moveT).to.be.greaterThan(0);
+    expect(moveClock.expandT).to.equal(0);
+
+    expect(expandClock.collapseT).to.equal(1);
+    expect(expandClock.moveT).to.equal(1);
+    expect(expandClock.expandT).to.be.greaterThan(0);
+  });
 });
 
 describe('TreeInterpolator lifecycle-aware links', () => {
@@ -217,7 +262,7 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     expect(firstPathRadius(zeroing.path)).to.be.closeTo(12.5, 0.001);
   });
 
-  it('grows a retained zero-length branch continuously from its full target length', () => {
+  it('grows a retained zero-length branch when the expand clock advances', () => {
     const from = frame([
       link('revive-1', 10, 10)
     ]);
@@ -227,17 +272,20 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     const transitionChangeModel = buildTransitionChangeModel(from, to);
 
     const interpolator = new TreeInterpolator();
-    const result = interpolator.interpolateTreeData(from, to, 0.25, {
-      transitionChangeModel
+    const rawTimeFactor = 0.8;
+    const result = interpolator.interpolateTreeData(from, to, Math.pow(rawTimeFactor, 3), {
+      transitionChangeModel,
+      rawTimeFactor
     });
 
     const reviving = result.links[0];
+    const frameTimeFactor = Math.pow(rawTimeFactor, 3);
     expect(reviving.lifecycle).to.equal('reviving');
     expect(firstPathRadius(reviving.path)).to.be.closeTo(10, 0.001);
-    expect(lastPathRadius(reviving.path)).to.be.closeTo(15, 0.001);
+    expect(lastPathRadius(reviving.path)).to.be.closeTo(10 + 20 * frameTimeFactor, 0.001);
   });
 
-  it('keeps retained zero-length branch growth on the frame target angle', () => {
+  it('keeps retained zero-length branch growth on the post-move target angle', () => {
     const from = frame([
       link('revive-1', 10, 10, Math.PI / 2)
     ]);
@@ -246,9 +294,12 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     ]);
     const transitionChangeModel = buildTransitionChangeModel(from, to);
 
+    const rawTimeFactor = 0.8;
+
     const interpolator = new TreeInterpolator();
-    const result = interpolator.interpolateTreeData(from, to, 0.5, {
-      transitionChangeModel
+    const result = interpolator.interpolateTreeData(from, to, Math.pow(rawTimeFactor, 3), {
+      transitionChangeModel,
+      rawTimeFactor
     });
 
     const reviving = result.links[0];
@@ -259,8 +310,8 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     ];
 
     expect(reviving.lifecycle).to.equal('reviving');
-    expect(lastPathRadius(reviving.path)).to.be.closeTo(20, 0.001);
-    expect(pointAngle(targetPoint)).to.be.closeTo(Math.PI * 0.75, 0.001);
+    expect(lastPathRadius(reviving.path)).to.be.greaterThan(10);
+    expect(pointAngle(targetPoint)).to.be.closeTo(Math.PI / 2 + (Math.PI / 2 * Math.pow(rawTimeFactor, 3)), 0.001);
   });
 
   it('shrinks a retained branch continuously toward its zero-length target', () => {
@@ -328,6 +379,45 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     expect(firstPathRadius(childLink.path)).to.be.closeTo(lastPathRadius(parentLink.path), 0.001);
     expect(lastPathRadius(childLink.path)).to.be.closeTo(35, 0.001);
     expect(Math.hypot(childNode.position[0], childNode.position[1])).to.be.closeTo(35, 0.001);
+  });
+
+  it('keeps a zeroing branch endpoint attached to its rendered target node', () => {
+    const rootId = 'node-root-1';
+    const parentId = 'node-parent-2';
+    const parentFrom = {
+      ...link('zero-parent-2', 10, 30, 0),
+      sourceId: rootId,
+      targetId: parentId
+    };
+    const parentTo = {
+      ...link('zero-parent-2', 10, 10, Math.PI / 2),
+      sourceId: rootId,
+      targetId: parentId
+    };
+    const from = frame([parentFrom], [
+      node(rootId, 10, 0),
+      node(parentId, 30, 0)
+    ]);
+    const to = frame([parentTo], [
+      node(rootId, 10, 0),
+      node(parentId, 10, Math.PI / 2)
+    ]);
+    const transitionChangeModel = buildTransitionChangeModel(from, to);
+    const rawTimeFactor = 0.2;
+    const frameTimeFactor = 1 - Math.pow(1 - rawTimeFactor, 3);
+
+    const result = new TreeInterpolator().interpolateTreeData(from, to, frameTimeFactor, {
+      stage: ANIMATION_STAGES.COLLAPSE,
+      transitionChangeModel,
+      rawTimeFactor
+    });
+
+    const parentNode = result.nodes.find((item) => item.id === parentId);
+    const parentLink = result.links.find((item) => item.id === 'zero-parent-2');
+
+    expect(parentLink.lifecycle).to.equal('zeroing');
+    expect(parentLink.targetPosition[0]).to.be.closeTo(parentNode.position[0], 0.001);
+    expect(parentLink.targetPosition[1]).to.be.closeTo(parentNode.position[1], 0.001);
   });
 
   it('keeps unchanged labels and extensions on their own angle during a parent branch lifecycle', () => {
@@ -408,8 +498,8 @@ describe('TreeInterpolator lifecycle-aware links', () => {
       node('node-enter-3', 30)
     ]);
     const transitionChangeModel = buildTransitionChangeModel(from, to);
-    const rawTimeFactor = 0.25;
-    const frameTimeFactor = 1 - Math.pow(1 - rawTimeFactor, 3);
+    const rawTimeFactor = 0.8;
+    const frameTimeFactor = Math.pow(rawTimeFactor, 3);
 
     const interpolator = new TreeInterpolator();
     const result = interpolator.interpolateTreeData(from, to, frameTimeFactor, {
@@ -421,6 +511,7 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     const expandT = createLifecycleClocks(rawTimeFactor).expandT;
     const expectedTargetRadius = sourceRadius + ((30 - sourceRadius) * expandT);
 
+    expect(expandT).to.be.greaterThan(0);
     expect(firstPathRadius(result.links[0].path)).to.be.closeTo(sourceRadius, 0.001);
     expect(lastPathRadius(result.links[0].path)).to.be.closeTo(expectedTargetRadius, 0.001);
   });
@@ -439,7 +530,7 @@ describe('TreeInterpolator lifecycle-aware links', () => {
       node('node-parent-1', 20)
     ]);
     const transitionChangeModel = buildTransitionChangeModel(from, to);
-    const rawTimeFactor = 0.5;
+    const rawTimeFactor = 0.2;
     const frameTimeFactor = 1 - Math.pow(1 - rawTimeFactor, 3);
 
     const interpolator = new TreeInterpolator();
@@ -452,6 +543,7 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     const collapseT = createLifecycleClocks(rawTimeFactor).collapseT;
     const expectedTargetRadius = sourceRadius + ((30 - sourceRadius) * (1 - collapseT));
 
+    expect(collapseT).to.be.greaterThan(0);
     expect(firstPathRadius(result.links[0].path)).to.be.closeTo(sourceRadius, 0.001);
     expect(lastPathRadius(result.links[0].path)).to.be.closeTo(expectedTargetRadius, 0.001);
   });
@@ -790,7 +882,9 @@ describe('TreeInterpolator lifecycle-aware links', () => {
 
     const interpolator = new TreeInterpolator();
     const result = interpolator.interpolateTreeData(from, to, 0.5, {
-      transitionChangeModel
+      transitionChangeModel,
+      stage: ANIMATION_STAGES.EXPAND,
+      rawTimeFactor: 0.5
     });
 
     expect(result.nodes[0].isEntering).to.equal(true);

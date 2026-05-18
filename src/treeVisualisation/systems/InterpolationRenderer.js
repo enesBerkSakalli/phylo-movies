@@ -135,7 +135,7 @@ export class InterpolationRenderer {
     // (We reuse the controller's logic to fetch cached layout data to check stages)
     const { dataFrom, dataTo, transitionChangeModel } = this.controller._getOrCacheInterpolationData(fromTree, toTree, fromIndex, toIndex);
 
-    const stage = detectAnimationStage(dataFrom, dataTo);
+    const stage = detectAnimationStage(dataFrom, dataTo, transitionChangeModel);
     const rawTimeFactor = t;
     t = applyStageEasing(t, stage);
 
@@ -172,7 +172,7 @@ export class InterpolationRenderer {
     }
 
     const { dataFrom, dataTo, transitionChangeModel } = this.controller._getOrCacheInterpolationData(fromTree, toTree, fromIndex, toIndex);
-    const stage = detectAnimationStage(dataFrom, dataTo);
+    const stage = detectAnimationStage(dataFrom, dataTo, transitionChangeModel);
     const rawTimeFactor = t;
     t = applyStageEasing(t, stage);
 
