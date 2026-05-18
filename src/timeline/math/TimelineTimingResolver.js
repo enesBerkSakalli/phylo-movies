@@ -1,4 +1,5 @@
 import { TimelineInterval } from '../time/TimelineInterval.js';
+import { resolveCursorTreeIndex } from '../../domain/indexing/treeIndexSemantics.js';
 
 export class TimelineTimingResolver {
     static hasSemanticTiming(segment) {
@@ -122,7 +123,7 @@ export class TimelineTimingResolver {
             ? interval.toIndex
             : (bias === 'backward'
                 ? interval.fromIndex
-                : (timeFactor < 0.5 ? interval.fromIndex : interval.toIndex));
+                : resolveCursorTreeIndex(interval.fromIndex, interval.toIndex, timeFactor));
 
         return {
             treeIndex,

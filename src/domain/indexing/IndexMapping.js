@@ -1,4 +1,5 @@
 import { useAppStore } from '../../state/phyloStore/store.js';
+import { resolveMsaSourceFrameIndex } from './treeIndexSemantics.js';
 
 // ===========================
 // ANCHOR NAVIGATION UTILITIES
@@ -11,13 +12,7 @@ import { useAppStore } from '../../state/phyloStore/store.js';
  * @returns {number} Index into anchorIndices array (0 if none found before position)
  */
 export function findPreviousAnchorIndex(anchorIndices, position) {
-  if (!anchorIndices?.length) return 0;
-  for (let i = anchorIndices.length - 1; i >= 0; i--) {
-    if (anchorIndices[i] <= position) {
-      return i;
-    }
-  }
-  return 0;
+  return resolveMsaSourceFrameIndex(anchorIndices, position);
 }
 
 /**
@@ -82,18 +77,7 @@ export function getIndexMappings(state = useAppStore.getState()) {
 // - Anchor trees (pivotEdge: null) advance the active MSA window.
 // - Transition frames (pivotEdge: array) stay on the source MSA window.
 export function getMSAFrameIndexForTimelineIndex(sequenceIndex = 0, transitionResolver = null) {
-  const { fullTreeIndex } = getIndexMappingValues(sequenceIndex, 0, transitionResolver);
-
-  // If exactly on a full tree, use its index
-  if (fullTreeIndex >= 0) {
-    return fullTreeIndex;
-  }
-
-  // For interpolations, find the source full tree (last full tree before current position)
-  const seqIndex = sequenceIndex || 0;
-  const fullTreeIndices = transitionResolver?.fullTreeIndices || [];
-
-  return findPreviousAnchorIndex(fullTreeIndices, seqIndex);
+  return resolveMsaSourceFrameIndex(transitionResolver?.fullTreeIndices || [], sequenceIndex);
 }
 
 export function getMSAFrameIndex(state = useAppStore.getState()) {

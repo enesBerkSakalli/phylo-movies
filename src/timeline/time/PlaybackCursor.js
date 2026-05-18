@@ -1,5 +1,6 @@
 import { TIMELINE_AXIS } from './TimelineAxis.js';
 import { TimelinePoint } from './TimelinePoint.js';
+import { resolveCursorTreeIndex } from '../../domain/indexing/treeIndexSemantics.js';
 
 const clamp01 = (value) => {
     if (!Number.isFinite(value)) return 0;
@@ -47,7 +48,7 @@ export class PlaybackCursor {
         const animationProgress = Number.isFinite(treeCount) && treeCount > 1
             ? clamp01(exactFrameIndex / (treeCount - 1))
             : 1;
-        const currentTreeIndex = resolveSemanticTreeIndex(safeFrom, safeTo, safeT);
+        const currentTreeIndex = resolveCursorTreeIndex(safeFrom, safeTo, safeT);
 
         return new PlaybackCursor({
             point: TimelinePoint.from({
@@ -101,10 +102,4 @@ export class PlaybackCursor {
 
 function normalizeOptionalProgress(value) {
     return Number.isFinite(value) ? clamp01(value) : null;
-}
-
-function resolveSemanticTreeIndex(fromIndex, toIndex, timeFactor) {
-    if (timeFactor <= 0) return fromIndex;
-    if (timeFactor >= 1) return toIndex;
-    return timeFactor < 0.5 ? fromIndex : toIndex;
 }

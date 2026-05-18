@@ -15,6 +15,7 @@ import { ViewportManager } from './viewport/ViewportManager.js';
 import { getClipboardLayers } from './utils/ClipboardUtils.js';
 import { createLayoutCacheKey } from './utils/layoutCacheKey.js';
 import { getSplitKey } from '../domain/tree/splits.js';
+import { resolveComparisonActiveTreeIndex } from '../domain/indexing/treeIndexSemantics.js';
 
 export class DeckGLTreeAnimationController extends TreeLayoutController {
 
@@ -481,7 +482,7 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
     const { rightTreeIndex, rightTree, fromTreeIndex, toTreeIndex, rawTimeFactor } = options;
 
     const interpolatedData = this._buildInterpolatedData(fromTree, toTree, easedT, options);
-    const activeTreeIndex = rawTimeFactor < 0.5 ? fromTreeIndex : toTreeIndex;
+    const activeTreeIndex = resolveComparisonActiveTreeIndex(fromTreeIndex, toTreeIndex, rawTimeFactor);
     await this.layerManager.renderComparisonAnimated({
       interpolatedData,
       rightTree,
