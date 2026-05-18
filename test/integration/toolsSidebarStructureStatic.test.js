@@ -72,6 +72,14 @@ describe('tools sidebar structure', () => {
     expect(sidebarSource).toContain('data-[state=open]:bg-sidebar-accent');
   });
 
+  it('keeps sidebar scrolling vertical-only', () => {
+    const sidebarSource = source('src/components/ui/sidebar.tsx');
+
+    expect(sidebarSource).toContain('overflow-y-auto');
+    expect(sidebarSource).toContain('overflow-x-hidden');
+    expect(sidebarSource).not.toContain('flex min-h-0 flex-1 flex-col gap-2 overflow-auto');
+  });
+
   it('uses one expandable-tool chevron convention', () => {
     const expandableToolFiles = [
       'src/components/sidebar/MsaSidebarSection.jsx',
