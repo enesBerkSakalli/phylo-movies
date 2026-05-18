@@ -11,19 +11,30 @@ const {
 describe('Tree Visualisation - State Update Logic', () => {
 
   // Mock State Factory
-  const createMockState = (overrides = {}) => ({
-    currentTreeIndex: 10,
-    markedSubtreeScope: 'current',
-    subtreeHighlightTracking: [],
-    transitionResolver: {
-      isFullTree: () => false,
-      getSourceGlobalIndex: (idx) => idx // Default mapping
-    },
-    upcomingChangesEnabled: true,
-    pivotEdgeTracking: [],
-    fullTreeIndices: [0, 10, 20],
+  const createTransitionResolver = (fullTreeIndices = [0, 10, 20], overrides = {}) => ({
+    isFullTree: () => false,
+    fullTreeIndices,
+    getSourceGlobalIndex: (idx) => idx,
     ...overrides
   });
+
+  const createMockState = (overrides = {}) => {
+    const {
+      fullTreeIndices = [0, 10, 20],
+      transitionResolver,
+      ...stateOverrides
+    } = overrides;
+
+    return {
+      currentTreeIndex: 10,
+      markedSubtreeScope: 'current',
+      subtreeHighlightTracking: [],
+      transitionResolver: transitionResolver || createTransitionResolver(fullTreeIndices),
+      upcomingChangesEnabled: true,
+      pivotEdgeTracking: [],
+      ...stateOverrides
+    };
+  };
 
   describe('resolveMarkedSubtrees (Marked Subtree Detection)', () => {
 
