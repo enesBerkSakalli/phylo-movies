@@ -60,8 +60,7 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
       styleConfig: { labelOffsets: { DEFAULT: 20, EXTENSION: 5 } },
       playhead: {
         animationProgress: 0,
-        timelineProgress: null,
-        currentTreeIndex: 0
+        timelineProgress: null
       },
       currentTreeIndex: 0,
       setAnimationStage: sandbox.stub(),
@@ -105,8 +104,7 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
       styleConfig: { labelOffsets: { DEFAULT: 20, EXTENSION: 5 } },
       playhead: {
         animationProgress: 0,
-        timelineProgress: null,
-        currentTreeIndex: 0
+        timelineProgress: null
       },
       currentTreeIndex: 0,
       // Ensure functions exist if called
@@ -131,7 +129,7 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
 
     expect(global.Worker.calledOnce).to.be.true;
     expect(controller.layoutWorker).to.be.instanceOf(MockWorker);
-    expect(controller.prefetchedLayoutCacheKeys).to.be.instanceOf(Map);
+    expect(controller._layoutPrefetchTokens).to.be.instanceOf(Map);
 
     // Capture the worker instance
     mockWorkerInstance = controller.layoutWorker;
@@ -154,7 +152,7 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
     expect(callArgs.command).to.equal('CALCULATE_LAYOUT');
     expect(callArgs.data.treeData).to.deep.equal({ id: 'tree1' });
     expect(callArgs.data.options.branchTransformation).to.equal('linear');
-    expect(controller.prefetchedLayoutCacheKeys.get(1)).to.equal(callArgs.data.options.layoutCacheKey);
+    expect(controller._layoutPrefetchTokens.get(1)).to.equal(callArgs.requestToken);
   });
 
   it('should skip prefetch if already requested', () => {
@@ -224,7 +222,7 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
 
     expect(console.warn.called).to.be.true;
     // Should remove from prefetch bookkeeping so it can be retried
-    expect(controller.prefetchedLayoutCacheKeys.has(3)).to.be.false;
+    expect(controller._layoutPrefetchTokens.has(3)).to.be.false;
   });
 
   it('should trigger prefetch on animation progress update', () => {

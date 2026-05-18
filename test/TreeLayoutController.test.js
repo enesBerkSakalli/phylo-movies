@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useAppStore } from '../src/state/phyloStore/store.js';
-import { WebGLTreeAnimationController } from '../src/treeVisualisation/WebGLTreeAnimationController.js';
+import { TreeLayoutController } from '../src/treeVisualisation/TreeLayoutController.js';
 
-describe('WebGLTreeAnimationController radii', () => {
+describe('TreeLayoutController radii', () => {
   const initialState = useAppStore.getState();
 
   afterEach(() => {
@@ -10,7 +10,7 @@ describe('WebGLTreeAnimationController radii', () => {
   });
 
   it('places labels and extensions from the actual layout radius', () => {
-    const controller = new WebGLTreeAnimationController(null);
+    const controller = new TreeLayoutController(null);
 
     const radii = controller._getConsistentRadii({
       width: 1000,
@@ -24,8 +24,7 @@ describe('WebGLTreeAnimationController radii', () => {
   });
 
   it('places labels and extensions from the stable global radius when uniform scaling is active', () => {
-    const controller = new WebGLTreeAnimationController(null);
-    controller.uniformScalingEnabled = true;
+    const controller = new TreeLayoutController(null);
     controller.maxGlobalScale = 20;
 
     const radii = controller._getConsistentRadii({
@@ -41,9 +40,7 @@ describe('WebGLTreeAnimationController radii', () => {
   });
 
   it('uses zero maxGlobalScale as an intentional uniform scale input', () => {
-    const controller = new WebGLTreeAnimationController(null);
-    controller.uniformScalingEnabled = true;
-    controller.globalScaleList = [{ value: 0, index: 0 }];
+    const controller = new TreeLayoutController(null);
     controller.maxGlobalScale = 0;
 
     const layout = controller._computeLayout({
@@ -77,9 +74,12 @@ describe('WebGLTreeAnimationController radii', () => {
       transitionResolver: { fullTreeIndices: [0] }
     });
 
-    const controller = new WebGLTreeAnimationController(null);
+    const controller = new TreeLayoutController(null);
     controller.initializeUniformScaling('none');
     expect(controller.maxGlobalScale).toBe(1);
+    expect(controller._transformedCache.size).toBe(0);
+    expect(controller).not.toHaveProperty('globalScaleList');
+    expect(controller).not.toHaveProperty('uniformScalingEnabled');
 
     useAppStore.setState({ branchTransformation: 'linear-scale' });
     controller.calculateLayout(treeList[0], { treeIndex: 0 });
@@ -108,7 +108,7 @@ describe('WebGLTreeAnimationController radii', () => {
       transitionResolver: { fullTreeIndices: [0] }
     });
 
-    const controller = new WebGLTreeAnimationController(null);
+    const controller = new TreeLayoutController(null);
     controller.initializeUniformScaling('none');
     expect(controller.maxGlobalScale).toBe(1);
 
@@ -138,12 +138,42 @@ describe('WebGLTreeAnimationController radii', () => {
       transitionResolver: { fullTreeIndices: [0] }
     });
 
-    const controller = new WebGLTreeAnimationController(null);
+    const controller = new TreeLayoutController(null);
     controller.initializeUniformScaling('none');
 
     const layout = controller.calculateLayout(explicitTree, { treeIndex: 0 });
 
     expect(layout.layoutTree.name).toBe('explicit-root');
+  });
+
+  it('does not clone explicit tree data when no branch transformation is active', () => {
+    const activeTreeList = [{
+      name: 'active-root',
+      length: 0,
+      children: [{ name: 'active-child', length: 1 }]
+    }];
+    const explicitTree = {
+      name: 'explicit-root',
+      length: 0,
+      children: [{ name: 'explicit-child', length: 2 }]
+    };
+    useAppStore.setState({
+      treeList: activeTreeList,
+      branchTransformation: 'none',
+      layoutAngleDegrees: 360,
+      layoutRotationDegrees: 0,
+      transitionResolver: { fullTreeIndices: [0] }
+    });
+
+    const controller = new TreeLayoutController(null);
+
+    expect(controller._getTransformedTreeData(
+      explicitTree,
+      'none',
+      0,
+      'unused',
+      activeTreeList
+    )).toBe(explicitTree);
   });
 
   it('reuses cached layout results for unchanged layout inputs', () => {
@@ -161,7 +191,7 @@ describe('WebGLTreeAnimationController radii', () => {
       transitionResolver: { fullTreeIndices: [0] }
     });
 
-    const controller = new WebGLTreeAnimationController(null);
+    const controller = new TreeLayoutController(null);
     const computeLayout = vi.spyOn(controller, '_computeLayout');
 
     const first = controller.calculateLayout(treeList[0], { treeIndex: 0 });

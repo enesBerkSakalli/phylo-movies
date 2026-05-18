@@ -63,8 +63,6 @@ export class StaticRenderer {
         ? selectCurrentTree(state)
         : treeList[targetIndex];
 
-    this.controller.currentTreeData = targetTreeData;
-
     const currentLayout = this.controller.calculateLayout(targetTreeData, {
       treeIndex: targetIndex
     });

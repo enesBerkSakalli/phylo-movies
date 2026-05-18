@@ -151,7 +151,7 @@ export class ViewportManager {
   // ==========================================================================
 
   getSafeAreaPadding() {
-    return calculateSafeAreaPadding(this.controller.webglContainer);
+    return calculateSafeAreaPadding(this.controller.deckContext?.container);
   }
 
 }

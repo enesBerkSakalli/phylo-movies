@@ -54,6 +54,28 @@ describe('layout worker metadata', () => {
     expect(result.layerData.nodes).toHaveLength(3);
   });
 
+  it('does not treat null maxGlobalScale as uniform scaling', () => {
+    const treeData = {
+      name: '',
+      length: 0,
+      split_indices: [0, 1],
+      children: [
+        { name: 'taxon_1', length: 1, split_indices: [0], children: [] },
+        { name: 'taxon_2', length: 1, split_indices: [1], children: [] }
+      ]
+    };
+
+    const result = calculateLayoutWorkerResult(treeData, {
+      width: 800,
+      height: 600,
+      margin: 60,
+      branchTransformation: 'none',
+      maxGlobalScale: null
+    });
+
+    expect(result.layout.scale).not.toBe(240);
+  });
+
   it('uses the stable global rendered radius for worker label and extension rings', () => {
     const treeData = {
       name: '',

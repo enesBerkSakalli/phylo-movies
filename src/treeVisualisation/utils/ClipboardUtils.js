@@ -76,30 +76,11 @@ function createClipboardVisualLayers(controller, treeIndex, treeData) {
  * Get bounds of the currently rendered main tree
  */
 function getMainTreeBounds(controller) {
-  const state = useAppStore.getState();
-  const linkGeometryMode = state.linkGeometryMode || 'radial-elbow';
-  // Use the current tree data to calculate bounds
-  if (controller.currentTreeData) {
-    const layout = controller.calculateLayout(controller.currentTreeData, {
-      treeIndex: state.currentTreeIndex
-    });
-    if (layout?.layoutTree) {
-      const { extensionRadius, labelRadius } = controller._getConsistentRadii(layout);
-      const layerData = controller.dataConverter.convertTreeToLayerData(
-        layout,
-        {
-          extensionRadius,
-          labelRadius,
-          treeIndex: state.currentTreeIndex,
-          treeSide: 'clipboard',
-          renderMode: 'clipboard',
-          linkGeometryMode
-        }
-      );
-      return calculateVisualBounds(layerData.nodes, layerData.labels);
-    }
+  const layerData = controller._lastLayerData;
+  if (Array.isArray(layerData?.nodes) && layerData.nodes.length > 0) {
+    return calculateVisualBounds(layerData.nodes, layerData.labels);
   }
-  // Fallback to reasonable defaults
+
   return { minX: -500, maxX: 500, minY: -500, maxY: 500 };
 }
 

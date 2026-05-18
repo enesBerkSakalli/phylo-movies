@@ -5,7 +5,7 @@ import calculateScales, { getMaxScaleValue } from "../domain/tree/scaleUtils.js"
 import { createLayoutCacheKey, createTransformCacheKey, createUniformScalingCacheKey } from './utils/layoutCacheKey.js';
 import { createLayoutResult } from './layout/LayoutResultAdapter.js';
 
-export class WebGLTreeAnimationController {
+export class TreeLayoutController {
 
   // ==========================================================================
   // CONSTRUCTOR
@@ -18,10 +18,9 @@ export class WebGLTreeAnimationController {
     this._transformedCache = new Map();
     this._layoutResultCache = new Map();
     this._onResize = null;
+    this.maxGlobalScale = null;
 
-    this.webglContainer = container || null;
-
-    const node = this.webglContainer;
+    const node = container || null;
     const rect = node ? node.getBoundingClientRect() : { width: 800, height: 600 };
     this.width = Math.max(1, rect.width);
     this.height = Math.max(1, rect.height);
@@ -75,9 +74,7 @@ export class WebGLTreeAnimationController {
     const scalingCacheKey = createUniformScalingCacheKey({ state, treeList, branchTransformation });
 
     if (!Array.isArray(treeList) || treeList.length === 0) {
-      this.globalScaleList = [];
-      this.maxGlobalScale = 0;
-      this.uniformScalingEnabled = false;
+      this.maxGlobalScale = null;
       this._scalingState.cacheKey = scalingCacheKey;
       return;
     }
@@ -88,18 +85,16 @@ export class WebGLTreeAnimationController {
 
     const fullTreeIndices = transitionResolver?.fullTreeIndices || Array.from({ length: treeList.length }, (_, i) => i);
     const transformedTreeList = this._getOrCacheTransformedTrees(treeList, branchTransformation, state);
+    const scaleList = calculateScales(transformedTreeList, fullTreeIndices);
 
-    this.globalScaleList = calculateScales(transformedTreeList, fullTreeIndices);
-    this.maxGlobalScale = getMaxScaleValue(this.globalScaleList);
-    this.uniformScalingEnabled = true;
+    this.maxGlobalScale = getMaxScaleValue(scaleList);
 
     this._scalingState.cacheKey = scalingCacheKey;
   }
 
   _isScalingCacheValid(scalingCacheKey) {
     return (
-      this.uniformScalingEnabled &&
-      Number.isFinite(Number(this.maxGlobalScale)) &&
+      hasUniformScaleValue(this.maxGlobalScale) &&
       this._scalingState.cacheKey === scalingCacheKey
     );
   }
@@ -190,6 +185,9 @@ export class WebGLTreeAnimationController {
     ) {
       return cached.transformedList[treeIndex];
     }
+    if (treeData && branchTransformation === 'none') {
+      return treeData;
+    }
     if (treeData) {
       return transformBranchLengths(treeData, branchTransformation);
     }
@@ -203,11 +201,7 @@ export class WebGLTreeAnimationController {
     layoutCalculator.setAngleExtentDegrees(layoutAngleDegrees);
     layoutCalculator.setAngleOffsetDegrees(layoutRotationDegrees);
 
-    const hasUniformScale = this.uniformScalingEnabled &&
-      this.globalScaleList &&
-      Number.isFinite(Number(this.maxGlobalScale));
-
-    const layoutResult = hasUniformScale
+    const layoutResult = hasUniformScaleValue(this.maxGlobalScale)
       ? layoutCalculator.constructRadialTreeWithUniformScaling(this.maxGlobalScale)
       : layoutCalculator.constructRadialTree(false);
 
@@ -248,11 +242,9 @@ export class WebGLTreeAnimationController {
   }
 
   _getStableGlobalRenderedRadius(layout) {
-    if (!this.uniformScalingEnabled) return null;
-
     const maxScale = Number(this.maxGlobalScale);
     const layoutScale = Number(layout?.scale);
-    if (!Number.isFinite(maxScale) || !Number.isFinite(layoutScale)) return null;
+    if (!hasUniformScaleValue(this.maxGlobalScale) || !Number.isFinite(layoutScale)) return null;
 
     return Math.max(0, maxScale * layoutScale);
   }
@@ -265,6 +257,9 @@ export class WebGLTreeAnimationController {
     if (!Array.isArray(treeList)) {
       return [];
     }
+    if (branchTransformation === 'none') {
+      return treeList;
+    }
 
     const transformCacheKey = createTransformCacheKey({ state, treeList, branchTransformation });
     const cached = this._transformedCache.get(transformCacheKey);
@@ -272,9 +267,7 @@ export class WebGLTreeAnimationController {
       return cached.transformedList;
     }
 
-    const transformedList = branchTransformation !== 'none'
-      ? treeList.map(treeData => transformBranchLengths(treeData, branchTransformation))
-      : treeList;
+    const transformedList = treeList.map(treeData => transformBranchLengths(treeData, branchTransformation));
 
     this._transformedCache.set(transformCacheKey, {
       transformedList
@@ -282,4 +275,8 @@ export class WebGLTreeAnimationController {
 
     return transformedList;
   }
+}
+
+function hasUniformScaleValue(value) {
+  return value !== null && value !== undefined && Number.isFinite(Number(value));
 }

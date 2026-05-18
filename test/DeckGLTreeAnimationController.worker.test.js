@@ -43,8 +43,7 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
       styleConfig: { labelOffsets: { DEFAULT: 20, EXTENSION: 5 } },
       playhead: {
         animationProgress: 0,
-        timelineProgress: null,
-        currentTreeIndex: 0
+        timelineProgress: null
       },
       currentTreeIndex: 0
     });
@@ -169,14 +168,12 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
   it('clears prefetch bookkeeping when style changes reset interpolation data', () => {
     controller = new ControllerClass(null);
     controller.renderAllElements = vi.fn();
-    controller.prefetchedLayoutCacheKeys.set(1, 'stale-layout-key');
-    controller._prefetchRequestTokens.set(1, 'stale-token');
+    controller._layoutPrefetchTokens.set(1, 'stale-token');
     const generation = controller._layoutRequestGeneration;
 
     controller._handleStyleChange();
 
-    expect(controller.prefetchedLayoutCacheKeys.size).toBe(0);
-    expect(controller._prefetchRequestTokens.size).toBe(0);
+    expect(controller._layoutPrefetchTokens.size).toBe(0);
     expect(controller._layoutRequestGeneration).toBe(generation + 1);
     expect(controller.renderAllElements).toHaveBeenCalledOnce();
   });
@@ -185,14 +182,12 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     useAppStore.setState({ styleConfig: { labelOffsets: { DEFAULT: 20, EXTENSION: 5 } } });
     controller = new ControllerClass(null);
     controller.renderAllElements = vi.fn();
-    controller.prefetchedLayoutCacheKeys.set(1, 'stale-layout-key');
-    controller._prefetchRequestTokens.set(1, 'stale-token');
+    controller._layoutPrefetchTokens.set(1, 'stale-token');
     const generation = controller._layoutRequestGeneration;
 
     useAppStore.setState({ styleConfig: { labelOffsets: { DEFAULT: 30, EXTENSION: 5 } } });
 
-    expect(controller.prefetchedLayoutCacheKeys.size).toBe(0);
-    expect(controller._prefetchRequestTokens.size).toBe(0);
+    expect(controller._layoutPrefetchTokens.size).toBe(0);
     expect(controller._layoutRequestGeneration).toBe(generation + 1);
     expect(controller.renderAllElements).toHaveBeenCalledOnce();
   });
@@ -277,7 +272,7 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     const secondKey = controller.layoutWorker.messages[1].data.options.layoutCacheKey;
 
     expect(secondKey).not.toBe(firstKey);
-    expect(controller.prefetchedLayoutCacheKeys.get(1)).toBe(secondKey);
+    expect(controller._layoutPrefetchTokens.get(1)).toBe(controller.layoutWorker.messages[1].requestToken);
   });
 
   it('keeps moving taxa tracking out of worker layout prefetch payloads', () => {
