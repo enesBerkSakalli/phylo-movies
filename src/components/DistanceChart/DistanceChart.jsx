@@ -19,77 +19,22 @@ import {
   useAppStore
 } from '../../state/phyloStore/store.js';
 
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '../ui/chart';
+import { ChartContainer, ChartTooltip } from '../ui/chart';
+import {
+  buildSeriesPoints,
+  buildPointValueText,
+  resolveActivePointIndex,
+  resolveCursorX,
+  resolveNavigationTarget,
+} from './distanceChartModel.js';
+import {
+  formatMetricValue,
+  getDistanceChartMetric,
+} from './distanceChartLanguage.js';
 
-const CHART_MARGINS = { top: 4, right: 8, bottom: 4, left: 8 };
-
-// Okabe-Ito palette (colorblind-friendly, bright, non-semantic)
-const METRIC_COLORS = {
-  rfd: '#0072B2',
-  'w-rfd': '#E69F00',
-  scale: '#009E73',
-};
-
-const buildSeriesPoints = (barOptionValue, robinsonFouldsDistances, weightedRobinsonFouldsDistances, scaleList) => {
-  if (barOptionValue === 'rfd') {
-    return {
-      points: (robinsonFouldsDistances || []).map((value, index) => {
-        const y = Number(value);
-        return { x: index + 1, y: Number.isFinite(y) ? y : 0 };
-      }),
-      yMax: 1,
-    };
-  }
-
-  if (barOptionValue === 'w-rfd') {
-    return {
-      points: (weightedRobinsonFouldsDistances || []).map((value, index) => {
-        const y = Number(value);
-        return { x: index + 1, y: Number.isFinite(y) ? y : 0 };
-      }),
-      yMax: 'auto',
-    };
-  }
-
-  if (barOptionValue === 'scale') {
-    return {
-      points: (scaleList || []).map((entry, index) => {
-        const y = Number(entry?.value);
-        return { x: index + 1, y: Number.isFinite(y) ? y : 0 };
-      }),
-      yMax: 'auto',
-    };
-  }
-
-  return { points: [], yMax: 'auto' };
-};
-
-const findActiveAnchorIndex = (anchors, currentTreeIndex) => {
-  const currentIndex = currentTreeIndex ?? 0;
-  let activeIndex = 0;
-
-  for (let i = 0; i < anchors.length; i++) {
-    if (anchors[i] <= currentIndex) {
-      activeIndex = i;
-    } else {
-      break;
-    }
-  }
-
-  return activeIndex;
-};
-
-const resolveCursorX = (barOptionValue, currentTreeIndex, anchors, pointCount) => {
-  if (barOptionValue === 'scale') {
-    return (currentTreeIndex ?? 0) + 1;
-  }
-
-  const lastDistanceIndex = Math.max(0, pointCount - 1);
-  const anchorIndex = findActiveAnchorIndex(anchors, currentTreeIndex);
-  const distanceIndex = Math.min(lastDistanceIndex, anchorIndex);
-
-  return distanceIndex + 1;
-};
+const CHART_MARGINS = { top: 4, right: 8, bottom: 0, left: 2 };
+const X_AXIS_HEIGHT = 16;
+const Y_AXIS_WIDTH = 34;
 
 const useTimelineData = ({
   barOptionValue,
@@ -109,16 +54,14 @@ const useTimelineData = ({
 
     const anchors = fullTreeIndices || [];
     const hasData = points.length > 0;
-    const seriesLength = Math.max(points.length, 1);
-    const currentX = Math.min(
-      Math.max(resolveCursorX(barOptionValue, currentTreeIndex, anchors, seriesLength), 1),
-      seriesLength,
-    );
+    const activePointIndex = resolveActivePointIndex(barOptionValue, currentTreeIndex, anchors, points);
+    const currentX = resolveCursorX(points, activePointIndex);
 
     return {
       points,
       yMax,
       currentX,
+      activePointIndex,
       hasData,
     };
   }, [
@@ -140,7 +83,7 @@ export function DistanceChart() {
   const scaleList = useAppStore(selectScaleList);
   const goToPosition = useAppStore(selectGoToPosition);
 
-  const { points, yMax, currentX, hasData } = useTimelineData({
+  const { points, yMax, currentX, activePointIndex, hasData } = useTimelineData({
     barOptionValue,
     currentTreeIndex,
     fullTreeIndices,
@@ -149,32 +92,61 @@ export function DistanceChart() {
     scaleList,
   });
 
+  const metric = getDistanceChartMetric(barOptionValue);
+  const activePoint = points[activePointIndex] ?? null;
+  const activeValueText = buildPointValueText(metric, activePoint, points.length);
+
   const chartConfig = useMemo(() => ({
-    dist: {
-      label: barOptionValue === 'rfd' ? 'Tree Change' : barOptionValue === 'w-rfd' ? 'Weighted Change' : 'Tree Size',
-      color: METRIC_COLORS[barOptionValue] || METRIC_COLORS.rfd,
+    y: {
+      label: metric.label,
+      color: metric.color,
     },
-  }), [barOptionValue]);
+  }), [metric]);
 
-  const handleClick = useCallback(
-    (data) => {
-      if (!data || !data.activePayload || data.activePayload.length === 0) return;
-      const point = data.activePayload[0].payload;
-      const xNumber = point.x;
-      if (!Number.isFinite(xNumber)) return;
-
-      const idx0 = Math.max(0, Math.round(xNumber) - 1);
-      if (barOptionValue === 'scale') {
-        goToPosition(idx0);
-        return;
-      }
-
-      const target = transitionResolver?.getTreeIndexForDistanceIndex?.(idx0);
+  const navigateToPoint = useCallback(
+    (point) => {
+      const target = resolveNavigationTarget(barOptionValue, point, transitionResolver);
       if (typeof target === 'number') {
         goToPosition(target);
       }
     },
     [barOptionValue, goToPosition, transitionResolver],
+  );
+
+  const handleClick = useCallback(
+    (data) => {
+      if (!data || !data.activePayload || data.activePayload.length === 0) return;
+      navigateToPoint(data.activePayload[0].payload);
+    },
+    [navigateToPoint],
+  );
+
+  const handleKeyDown = useCallback(
+    (event) => {
+      if (!points.length) return;
+
+      let nextIndex = activePointIndex;
+
+      if (event.key === 'ArrowLeft') {
+        nextIndex -= 1;
+      } else if (event.key === 'ArrowRight') {
+        nextIndex += 1;
+      } else if (event.key === 'Home') {
+        nextIndex = 0;
+      } else if (event.key === 'End') {
+        nextIndex = points.length - 1;
+      } else if (event.key === 'Enter' || event.key === ' ') {
+        navigateToPoint(points[activePointIndex]);
+        event.preventDefault();
+        return;
+      } else {
+        return;
+      }
+
+      event.preventDefault();
+      navigateToPoint(points[Math.min(Math.max(nextIndex, 0), points.length - 1)]);
+    },
+    [activePointIndex, navigateToPoint, points],
   );
 
   if (!hasData) {
@@ -188,10 +160,16 @@ export function DistanceChart() {
   return (
     <div
       id="lineChart"
-      className="h-full w-full"
-      role="img"
-      aria-label="Interactive tree difference chart"
-      title="Click points to navigate"
+      className="h-full w-full cursor-pointer rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70"
+      role="slider"
+      tabIndex={0}
+      aria-label={`${metric.label} source-tree metric chart`}
+      aria-orientation="horizontal"
+      aria-valuemin={1}
+      aria-valuemax={points.length}
+      aria-valuenow={activePointIndex + 1}
+      aria-valuetext={activeValueText}
+      onKeyDown={handleKeyDown}
     >
       <ChartContainer config={chartConfig} className="h-full w-full">
         <AreaChart
@@ -209,9 +187,11 @@ export function DistanceChart() {
             tickMargin={4}
             tickCount={8}
             fontSize={9}
+            height={X_AXIS_HEIGHT}
           />
           <YAxis
             type="number"
+            width={Y_AXIS_WIDTH}
             domain={[0, yMax === 'auto' ? 'auto' : yMax]}
             tickLine={false}
             axisLine
@@ -222,25 +202,43 @@ export function DistanceChart() {
           />
           <ChartTooltip
             cursor={false}
-            content={<ChartTooltipContent hideLabel />}
+            content={<DistanceChartTooltip metric={metric} />}
           />
           <Area
             dataKey="y"
             type="stepAfter"
-            fill="var(--color-dist)"
+            fill="var(--color-y)"
             fillOpacity={0.2}
-            stroke="var(--color-dist)"
+            stroke="var(--color-y)"
             strokeWidth={1.5}
             isAnimationActive={false}
           />
           <ReferenceLine
             x={currentX}
-            stroke="var(--color-dist)"
+            stroke="var(--color-y)"
             strokeWidth={2}
             isFront
           />
         </AreaChart>
       </ChartContainer>
+    </div>
+  );
+}
+
+function DistanceChartTooltip({ active, payload, metric }) {
+  if (!active || !payload?.length) return null;
+
+  const item = payload[0];
+  const point = item?.payload;
+  if (!point) return null;
+
+  return (
+    <div className="border-border/50 bg-background grid min-w-[10rem] gap-1 rounded-md border px-2.5 py-1.5 text-xs shadow-xl">
+      <div className="font-medium text-foreground">{metric.label}</div>
+      <div className="text-muted-foreground">{point.contextLabel}</div>
+      <div className="font-mono font-medium tabular-nums text-foreground">
+        {formatMetricValue(item.value)}
+      </div>
     </div>
   );
 }
