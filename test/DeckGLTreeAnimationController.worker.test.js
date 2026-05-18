@@ -219,6 +219,28 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     expect(controller.deckContext.deck.redraw).not.toHaveBeenCalled();
   });
 
+  it('stores the semantic timeline tree index supplied by the animation runner', () => {
+    useAppStore.setState({
+      treeList: [
+        { id: 'tree-0', split_indices: [0], children: [] },
+        { id: 'tree-1', split_indices: [1], children: [] },
+        { id: 'tree-2', split_indices: [2], children: [] },
+        { id: 'tree-3', split_indices: [3], children: [] }
+      ]
+    });
+    controller = new ControllerClass(null);
+
+    controller.animationRunner.updateProgress(0.1, {
+      timelineProgress: 0.4,
+      currentTreeIndex: 2
+    });
+
+    const state = useAppStore.getState();
+    expect(state.playhead.animationProgress).toBe(0.1);
+    expect(state.playhead.timelineProgress).toBe(0.4);
+    expect(state.currentTreeIndex).toBe(2);
+  });
+
   it('keeps interpolation caches when stroke width changes layer data only', () => {
     useAppStore.setState({ strokeWidth: 1 });
     controller = new ControllerClass(null);

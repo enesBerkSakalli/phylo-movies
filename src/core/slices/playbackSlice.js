@@ -60,11 +60,13 @@ export const createPlaybackSlice = (set, get) => ({
         ? timelineProgress
         : (getWeightedTimelineProgressForLinearProgress(initialProgress, totalTrees, movieTimelineManager) ?? initialProgress));
     const safeSpeed = Number.isFinite(animationSpeed) && animationSpeed > 0 ? animationSpeed : 1;
-    const playbackTimeSeconds = getPlaybackTimeSecondsForLinearProgress(
+    const playbackTimeSeconds = getPlaybackTimeSecondsForPlayhead(
       initialProgress,
+      initialTimelineProgress,
       totalTrees,
       transitionDuration,
-      pauseDuration
+      pauseDuration,
+      movieTimelineManager
     );
     const timeOffset = (playbackTimeSeconds / safeSpeed) * 1000;
     const adjustedStartTime = performance.now() - timeOffset;
@@ -258,12 +260,16 @@ export const createPlaybackSlice = (set, get) => ({
     });
   },
 
-  setPlayhead: (nextPlayhead) => {
+  setPlayhead: (nextPlayhead, currentTreeIndexOverride = null) => {
     const playhead = createPlayhead(nextPlayhead);
     const treeCount = get().treeList?.length ?? 0;
+    const maxIndex = Math.max(0, treeCount - 1);
+    const currentTreeIndex = Number.isFinite(currentTreeIndexOverride)
+      ? clamp(Math.floor(currentTreeIndexOverride), 0, maxIndex)
+      : progressToTreeIndex(playhead.animationProgress, treeCount);
     set({
       playhead,
-      currentTreeIndex: progressToTreeIndex(playhead.animationProgress, treeCount)
+      currentTreeIndex
     });
   },
 
@@ -395,4 +401,25 @@ function getPlaybackTimeSecondsForLinearProgress(progress, treeCount, transition
 
   return (fromIndex * (safeTransitionDuration + safePauseDuration)) +
     (timeFactor * safeTransitionDuration);
+}
+
+function getPlaybackTimeSecondsForPlayhead(
+  progress,
+  timelineProgress,
+  treeCount,
+  transitionDuration,
+  pauseDuration,
+  movieTimelineManager
+) {
+  const timelineDurationMs = movieTimelineManager?.timelineData?.totalDuration;
+  if (Number.isFinite(timelineProgress) && Number.isFinite(timelineDurationMs) && timelineDurationMs > 0) {
+    return clamp(timelineProgress, 0, 1) * (timelineDurationMs / 1000);
+  }
+
+  return getPlaybackTimeSecondsForLinearProgress(
+    progress,
+    treeCount,
+    transitionDuration,
+    pauseDuration
+  );
 }
