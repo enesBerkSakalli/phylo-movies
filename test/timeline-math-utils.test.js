@@ -22,6 +22,30 @@ function loadMovieData() {
   throw new Error('No input JSON found for TimelineMathUtils tests.');
 }
 
+function makeSemanticTimingFixture() {
+  const treeList = Array.from({ length: 4 }, (_, index) => ({ id: `tree-${index}` }));
+  const segments = [{
+    isFullTree: false,
+    hasInterpolation: true,
+    interpolationData: [
+      { originalIndex: 0 },
+      { originalIndex: 1 },
+      { originalIndex: 2 },
+      { originalIndex: 3 }
+    ],
+    timing: [
+      { type: 'motion', fromIndex: 0, toIndex: 1, durationMs: 1000 },
+      { type: 'hold', holdIndex: 1, holdKind: 'mover', durationMs: 200 },
+      { type: 'motion', fromIndex: 1, toIndex: 2, durationMs: 1000 },
+      { type: 'motion', fromIndex: 2, toIndex: 3, durationMs: 1000 },
+      { type: 'hold', holdIndex: 3, holdKind: 'pivot', durationMs: 900 }
+    ]
+  }];
+  const timelineData = TimelineDataProcessor.createTimelineData(segments);
+
+  return { treeList, segments, timelineData };
+}
+
 describe('TimelineMathUtils', () => {
   let segments;
   let timelineData;
@@ -126,13 +150,102 @@ describe('TimelineMathUtils', () => {
     expect(durations).to.deep.equal([2000]);
   });
 
-  it('keeps segment duration formulas centralized', () => {
-    const source = fs.readFileSync(path.join(__dirname, '..', 'src', 'timeline', 'math', 'TimelineMathUtils.js'), 'utf8');
-    const anchorDurationFormulaCount = (source.match(/UNIT_DURATION_MS \* 0\.5/g) || []).length;
-    const transitionDurationFormulaCount = (source.match(/interpolationData\.length - 1\) \* TIMELINE_CONSTANTS\.UNIT_DURATION_MS/g) || []).length;
+  it('uses semantic timing intervals for transition segment duration when present', () => {
+    const { segments } = makeSemanticTimingFixture();
 
-    expect(anchorDurationFormulaCount).to.equal(1);
-    expect(transitionDurationFormulaCount).to.equal(1);
+    expect(TimelineMathUtils.calculateSegmentDurations(segments)).to.deep.equal([4100]);
+  });
+
+  it('resolves mover and pivot holds as static completed frames', () => {
+    const { treeList, segments, timelineData } = makeSemanticTimingFixture();
+
+    const moverHold = TimelineMathUtils.getInterpolationDataForTimelineProgress(
+      1100 / timelineData.totalDuration,
+      segments,
+      timelineData,
+      treeList
+    );
+    const pivotHold = TimelineMathUtils.getInterpolationDataForTimelineProgress(
+      3500 / timelineData.totalDuration,
+      segments,
+      timelineData,
+      treeList
+    );
+
+    expect(moverHold).to.deep.equal({
+      fromTree: treeList[1],
+      toTree: treeList[1],
+      timeFactor: 0,
+      fromIndex: 1,
+      toIndex: 1,
+      holdKind: 'mover'
+    });
+    expect(pivotHold).to.deep.equal({
+      fromTree: treeList[3],
+      toTree: treeList[3],
+      timeFactor: 0,
+      fromIndex: 3,
+      toIndex: 3,
+      holdKind: 'pivot'
+    });
+  });
+
+  it('resolves anchor holds as static observed input tree states', () => {
+    const treeList = [{ id: 'anchor' }];
+    const segments = [{
+      isFullTree: true,
+      hasInterpolation: false,
+      interpolationData: [{ originalIndex: 0 }],
+      timing: [{
+        type: 'hold',
+        holdIndex: 0,
+        holdKind: 'anchor',
+        durationMs: 1500
+      }]
+    }];
+    const timelineData = TimelineDataProcessor.createTimelineData(segments);
+
+    const resolved = TimelineMathUtils.getInterpolationDataForTimelineProgress(
+      0.5,
+      segments,
+      timelineData,
+      treeList
+    );
+
+    expect(resolved).to.deep.equal({
+      fromTree: treeList[0],
+      toTree: treeList[0],
+      timeFactor: 0,
+      fromIndex: 0,
+      toIndex: 0,
+      holdKind: 'anchor'
+    });
+  });
+
+  it('uses the timing profile for legacy segments without explicit timing intervals', () => {
+    const durations = TimelineMathUtils.calculateSegmentDurations([
+      {
+        isFullTree: true,
+        hasInterpolation: false,
+        interpolationData: [{ originalIndex: 0 }]
+      },
+      {
+        isFullTree: false,
+        hasInterpolation: true,
+        interpolationData: [
+          { originalIndex: 0 },
+          { originalIndex: 1 },
+          { originalIndex: 2 }
+        ]
+      },
+      {
+        isFullTree: false,
+        hasInterpolation: false,
+        interpolationData: [{ originalIndex: 0 }]
+      }
+    ]);
+
+    expect(durations).to.deep.equal([1500, 2000, 1000]);
   });
 
   it('resolves exact timeline boundaries consistently', () => {

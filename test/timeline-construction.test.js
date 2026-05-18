@@ -34,6 +34,116 @@ function setsToSortedArrays(sets) {
   return (sets || []).map((set) => Array.from(set).sort((a, b) => a - b));
 }
 
+function makeSyntheticTimingMovieData() {
+  const trees = Array.from({ length: 4 }, (_, index) => ({
+    name: `frame-${index}`,
+    length: 0,
+    split_indices: [index],
+    children: []
+  }));
+
+  return {
+    interpolated_trees: trees,
+    tree_metadata: [
+      {
+        tree_pair_key: null,
+        step_in_pair: null,
+        source_tree_global_index: null,
+        frame_type: 'input_tree',
+        state_semantics: 'processed_input_tree',
+        is_observed_input: true
+      },
+      {
+        tree_pair_key: 'pair_7_8',
+        step_in_pair: 1,
+        source_tree_global_index: 0,
+        frame_type: 'interpolation_frame',
+        state_semantics: 'algorithmic_intermediate',
+        is_observed_input: false
+      },
+      {
+        tree_pair_key: 'pair_7_8',
+        step_in_pair: 2,
+        source_tree_global_index: 0,
+        frame_type: 'interpolation_frame',
+        state_semantics: 'algorithmic_intermediate',
+        is_observed_input: false
+      },
+      {
+        tree_pair_key: null,
+        step_in_pair: null,
+        source_tree_global_index: null,
+        frame_type: 'input_tree',
+        state_semantics: 'processed_input_tree',
+        is_observed_input: true
+      }
+    ],
+    split_change_timeline: [
+      { type: 'original', tree_index: 7, global_index: 0, name: 'Source Tree 8' },
+      {
+        type: 'split_event',
+        pair_key: 'pair_7_8',
+        split: [1, 2],
+        step_range_local: [0, 2],
+        step_range_global: [1, 3]
+      },
+      { type: 'original', tree_index: 8, global_index: 3, name: 'Source Tree 9' }
+    ],
+    tree_pair_solutions: {
+      pair_7_8: {
+        spr_move_events: [
+          {
+            pivot_edge: [1, 2],
+            driver_subtree: [1],
+            highlight_group: [[1]],
+            step_range: [0, 0],
+            collapse_path: [],
+            expand_path: [],
+            collapse_hops: 0,
+            expand_hops: 0,
+            total_hops: 0,
+            collapse_branch_length: 0,
+            expand_branch_length: 0,
+            total_branch_length: 0
+          },
+          {
+            pivot_edge: [1, 2],
+            driver_subtree: [2],
+            highlight_group: [[2]],
+            step_range: [0, 2],
+            collapse_path: [],
+            expand_path: [],
+            collapse_hops: 0,
+            expand_hops: 0,
+            total_hops: 0,
+            collapse_branch_length: 0,
+            expand_branch_length: 0,
+            total_branch_length: 0
+          },
+          {
+            pivot_edge: [99],
+            driver_subtree: [99],
+            highlight_group: [[99]],
+            step_range: [0, 1],
+            collapse_path: [],
+            expand_path: [],
+            collapse_hops: 0,
+            expand_hops: 0,
+            total_hops: 0,
+            collapse_branch_length: 0,
+            expand_branch_length: 0,
+            total_branch_length: 0
+          }
+        ],
+        affected_subtrees_by_split: {
+          '[1, 2]': [[[1], [2]]]
+        },
+        attachment_edges_by_split: {}
+      }
+    }
+  };
+}
+
 describe('Timeline construction from backend result', () => {
   it('does not keep unused timeline constants or old anchor label compatibility', () => {
     const constantsSource = fs.readFileSync(path.join(__dirname, '..', 'src', 'timeline', 'constants.js'), 'utf8');
@@ -248,6 +358,42 @@ describe('Timeline construction from backend result', () => {
     expect(segments).to.have.lengthOf(1);
     expect(segments[0].affectedSubtrees).to.deep.equal([[[13], [12]]]);
     expect(segments[0].subtreeMoveCount).to.equal(2);
+  });
+
+  it('adds anchor hold timing for observed input tree delimiters without duplicating trees', () => {
+    const movieData = makeSyntheticTimingMovieData();
+    const segments = TimelineDataProcessor.createSegments(movieData);
+    const anchor = segments.find(segment => segment.isFullTree && segment.globalIndex === 0);
+
+    expect(anchor).to.be.ok;
+    expect(anchor.interpolationData.map(entry => entry.originalIndex)).to.deep.equal([0]);
+    expect(anchor.timing).to.deep.equal([{
+      type: 'hold',
+      holdIndex: 0,
+      holdKind: 'anchor',
+      durationMs: 1500
+    }]);
+  });
+
+  it('builds semantic mover and pivot timing for pair_7_8 from backend metadata', () => {
+    const movieData = makeSyntheticTimingMovieData();
+    const moveEvents = movieData.tree_pair_solutions.pair_7_8.spr_move_events;
+    const segments = TimelineDataProcessor.createSegments(movieData);
+    const transition = segments.find(segment => segment.treePairKey === 'pair_7_8' && !segment.isFullTree);
+
+    for (const event of moveEvents) {
+      expect(event).to.include.keys(['pivot_edge', 'driver_subtree', 'highlight_group', 'step_range']);
+      expect(event).to.not.have.property('moving_taxa');
+    }
+    expect(transition).to.be.ok;
+    expect(transition.interpolationData.map(entry => entry.originalIndex)).to.deep.equal([0, 1, 2, 3]);
+    expect(transition.timing).to.deep.equal([
+      { type: 'motion', fromIndex: 0, toIndex: 1, durationMs: 1000 },
+      { type: 'hold', holdIndex: 1, holdKind: 'mover', durationMs: 200 },
+      { type: 'motion', fromIndex: 1, toIndex: 2, durationMs: 1000 },
+      { type: 'motion', fromIndex: 2, toIndex: 3, durationMs: 1000 },
+      { type: 'hold', holdIndex: 3, holdKind: 'pivot', durationMs: 900 }
+    ]);
   });
 });
 
