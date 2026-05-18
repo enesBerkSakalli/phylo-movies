@@ -21,6 +21,30 @@ cd "$PROJECT_ROOT"
 
 echo "[frontend] Current working directory: $(pwd)"
 
+sanitize_node_runtime_env() {
+  if [ -n "${PATH:-}" ]; then
+    PATH="$(printf '%s' "$PATH" | tr ':' '\n' | grep -vi '/\.console-ninja/' | paste -sd ':' -)"
+    export PATH
+  fi
+
+  if printf '%s' "${NODE_OPTIONS:-}" | grep -Eiq 'console[-_]?ninja|wallaby'; then
+    unset NODE_OPTIONS
+  fi
+
+  while IFS='=' read -r key _; do
+    if printf '%s' "$key" | grep -Eiq 'console[-_]?ninja|wallaby'; then
+      case "$key" in
+        ''|*[!A-Za-z0-9_]*)
+          continue
+          ;;
+      esac
+      unset "$key"
+    fi
+  done < <(env)
+}
+
+sanitize_node_runtime_env
+
 # ============================================================================
 # PREREQUISITES CHECK: Ensure Node.js and npm are installed
 # ============================================================================
