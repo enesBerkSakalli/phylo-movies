@@ -24,7 +24,6 @@ import {
 import { useSidebar } from '../ui/sidebar';
 import { Button } from '../ui/button';
 import { Menu, ChevronUp, ChevronDown } from 'lucide-react';
-
 import { Separator } from '../ui/separator';
 import { AppTooltip } from '../ui/app-tooltip';
 
@@ -53,8 +52,9 @@ export function MoviePlayerBar() {
   const timelineHostRef = useRef(null);
   const playerBarRef = useRef(null);
 
-  const totalSegments = movieTimelineManager?.getSegmentCount?.() ?? 0;
-  const hasTransitionSegments = movieTimelineManager?.hasTransitionSegments?.() ?? false;
+  const hasTimeline = Boolean(movieTimelineManager);
+  const totalSegments = hasTimeline ? movieTimelineManager?.getSegmentCount?.() ?? 0 : 0;
+  const hasTransitionSegments = hasTimeline ? movieTimelineManager?.hasTransitionSegments?.() ?? false : false;
 
   useEffect(() => {
     const container = timelineHostRef.current;
@@ -174,19 +174,26 @@ export function MoviePlayerBar() {
           </div>
 
           <div className="w-full border-b border-border/60 bg-background" role="group" aria-label="Timeline track">
-            <TimelineLegend hasTransitionSegments={hasTransitionSegments} />
-            <div className="interpolation-timeline-container">
-              <div ref={timelineHostRef} className="timeline-visual-layer" />
-            </div>
+            {hasTimeline && <TimelineLegend hasTransitionSegments={hasTransitionSegments} />}
+            {hasTimeline ? (
+              <div className="interpolation-timeline-container">
+                <div ref={timelineHostRef} className="timeline-visual-layer" />
+              </div>
+            ) : (
+              <div
+                className="interpolation-timeline-container flex items-center justify-center text-xs text-muted-foreground/60"
+                role="status"
+                aria-live="polite"
+              >
+                Loading movie timeline...
+              </div>
+            )}
           </div>
 
           <MovieChartSection barOptionValue={barOptionValue} onBarOptionChange={setBarOption} />
         </div>
       </div>
 
-
-
-      {/* Timeline segment tooltip - positioned above segment center */}
       {hoveredSegmentIndex !== null && hoveredSegmentData && hoveredSegmentPosition && (
         <div
           ref={tooltipRef}
