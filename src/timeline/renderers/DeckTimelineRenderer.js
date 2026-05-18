@@ -47,7 +47,7 @@ export class DeckTimelineRenderer {
     this._onResize = () => this._scheduleUpdate();
 
     // Interaction state
-    this._selectedId = null;
+    this._selectedSegmentIndex = null;
     this._lastHoverId = null;
     this._getIsScrubbing = () => false;
     this._setHoveredSegment = () => { };
@@ -111,6 +111,7 @@ export class DeckTimelineRenderer {
     this._setupContainer(container);
     this._createLayers();
     this._createDeck();
+    this._setupAccessibility();
 
     this.setCustomTime(TIMELINE_CONSTANTS.DEFAULT_PROGRESS);
     this._updateLayers();
@@ -165,6 +166,71 @@ export class DeckTimelineRenderer {
     });
   }
 
+  _setupAccessibility() {
+    const target = this.canvas;
+    if (!target?.setAttribute) return;
+
+    target.setAttribute('tabindex', '0');
+    target.setAttribute('role', 'slider');
+    target.setAttribute('aria-label', 'Movie timeline position');
+    target.setAttribute('aria-valuemin', '0');
+    target.setAttribute('aria-valuemax', String(Math.round(this._totalDuration)));
+    this._updateAccessibilityAttributes();
+  }
+
+  _updateAccessibilityAttributes() {
+    const target = this.canvas;
+    if (!target?.setAttribute) return;
+
+    const valueNow = Math.round(this._scrubberMs);
+
+    target.setAttribute('aria-valuenow', String(valueNow));
+    target.setAttribute('aria-valuetext', this._getAccessibilityValueText());
+  }
+
+  _getAccessibilityValueText() {
+    const segmentIndex = this._timeToSegmentIndex(this._scrubberMs, { includeEnd: true });
+    const segment = segmentIndex >= 0 ? this.segments[segmentIndex] : null;
+
+    if (!segment) {
+      return 'No timeline segment selected';
+    }
+
+    const segmentLabel = `Segment ${segmentIndex + 1} of ${this.segments.length}`;
+    if (segment.isFullTree) {
+      const sourceIndex = Number.isInteger(segment.originalTreeIndex)
+        ? segment.originalTreeIndex + 1
+        : segmentIndex + 1;
+      return `${segmentLabel}, source tree ${sourceIndex}`;
+    }
+
+    const frameLabel = this._formatGeneratedFrameRange(segment);
+    const pairLabel = this._formatTreePairLabel(segment.treePairKey);
+
+    return [segmentLabel, frameLabel, pairLabel].filter(Boolean).join(', ');
+  }
+
+  _formatGeneratedFrameRange(segment) {
+    if (Number.isInteger(segment.globalStart) && Number.isInteger(segment.globalEnd)) {
+      return `generated frames ${segment.globalStart}-${segment.globalEnd}`;
+    }
+
+    if (Number.isInteger(segment.localStepStart) && Number.isInteger(segment.localStepEnd)) {
+      return `generated steps ${segment.localStepStart}-${segment.localStepEnd}`;
+    }
+
+    return 'generated frames';
+  }
+
+  _formatTreePairLabel(pairKey) {
+    if (typeof pairKey !== 'string') return null;
+
+    const match = pairKey.match(/^pair_(\d+)_(\d+)$/);
+    if (!match) return `transition ${pairKey}`;
+
+    return `between source trees ${Number(match[1]) + 1} and ${Number(match[2]) + 1}`;
+  }
+
   _bindResizeObservers() {
     window.addEventListener('resize', this._onResize);
     if (typeof ResizeObserver !== 'undefined') {
@@ -183,6 +249,7 @@ export class DeckTimelineRenderer {
    */
   setCustomTime(ms) {
     this._scrubberMs = Math.max(0, Math.min(ms, this._totalDuration));
+    this._updateAccessibilityAttributes();
     this._scheduleUpdate();
   }
 
@@ -208,11 +275,15 @@ export class DeckTimelineRenderer {
   }
 
   /**
-   * Sets the selected segment(s). Only the first ID is used.
-   * @param {number[]|null} ids - Array of segment IDs (1-indexed) or null to clear
+   * Sets the inspected segment. This is user selection, not the active playhead segment.
+   * @param {number|null} segmentIndex - Zero-based segment index or null to clear
    */
-  setSelection(ids) {
-    this._selectedId = Array.isArray(ids) && ids.length ? ids[0] : null;
+  setSelectedSegment(segmentIndex) {
+    this._selectedSegmentIndex = Number.isInteger(segmentIndex) &&
+      segmentIndex >= 0 &&
+      segmentIndex < this.segments.length
+      ? segmentIndex
+      : null;
     this._updateLayers();
   }
 
@@ -312,6 +383,7 @@ export class DeckTimelineRenderer {
       { event: 'mousedown', handler: (e) => this._handleMouseDown(e), target: pointerTarget },
       { event: 'mouseup', handler: () => this._handleMouseUp(), target: window },
       { event: 'click', handler: (e) => this._handleClick(e), target: pointerTarget },
+      { event: 'keydown', handler: (e) => this._handleKeyDown(e), target: pointerTarget },
       { event: 'wheel', handler: (e) => this._handleWheel(e), target: pointerTarget, options: { passive: false } },
       { event: 'mouseleave', handler: () => this._handleMouseLeave(), target: pointerTarget }
     ];
@@ -380,6 +452,7 @@ export class DeckTimelineRenderer {
     const ms = Math.max(0, Math.min(this._xToMs(x), this._totalDuration));
 
     this._scrubberMs = ms;
+    this._updateAccessibilityAttributes();
     this._emit('timechange', { id: 'scrubber', time: ms });
     this._scheduleUpdate();
   }
@@ -412,16 +485,43 @@ export class DeckTimelineRenderer {
     const initialSegIndex = this._timeToSegmentIndex(clickMs);
 
     if (initialSegIndex === -1) {
-      this.setSelection(null);
-      this._emit('select', { id: null });
+      this.setSelectedSegment(null);
+      this._emit('select', { id: null, segmentIndex: null });
       return;
     }
 
     const targetIndex = getTargetSegmentIndex(initialSegIndex, clickMs, this.segments, this.timelineData.cumulativeDurations);
-    const targetId = toTimelineItemId(targetIndex);
+    this._selectSegment(targetIndex, clickMs);
+  }
 
-    this.setSelection([targetId]);
-    this._emit('select', { id: targetId, ms: clickMs, segment: this.segments[targetIndex] });
+  _handleKeyDown(event) {
+    if (event.altKey || event.ctrlKey || event.metaKey) return;
+
+    const targetIndex = this._getKeyboardTargetSegmentIndex(event.key);
+    if (targetIndex === null) return;
+
+    event.preventDefault();
+    const bounds = getSegmentBounds(targetIndex, this.timelineData);
+    const targetMs = bounds ? (bounds.start + bounds.end) / 2 : this._scrubberMs;
+    this._scrubberMs = Math.max(0, Math.min(targetMs, this._totalDuration));
+    this._updateAccessibilityAttributes();
+    this._selectSegment(targetIndex, this._scrubberMs);
+    this._scheduleUpdate();
+  }
+
+  _getKeyboardTargetSegmentIndex(key) {
+    const lastIndex = this.segments.length - 1;
+    if (lastIndex < 0) return null;
+
+    if (key === 'Home') return 0;
+    if (key === 'End') return lastIndex;
+    if (key !== 'ArrowLeft' && key !== 'ArrowRight') return null;
+
+    const currentIndex = Number.isInteger(this._selectedSegmentIndex)
+      ? this._selectedSegmentIndex
+      : Math.max(0, this._timeToSegmentIndex(this._scrubberMs));
+    const delta = key === 'ArrowRight' ? 1 : -1;
+    return Math.max(0, Math.min(lastIndex, currentIndex + delta));
   }
 
   _handleMouseUp() {
@@ -472,18 +572,27 @@ export class DeckTimelineRenderer {
   _handleHoverLayerClick(info) {
     if (!info?.object?.id) return;
 
-    const targetIndex = toSegmentIndex(info.object.id);
+    const targetIndex = Number.isInteger(info.object.segmentIndex)
+      ? info.object.segmentIndex
+      : toSegmentIndex(info.object.id);
     const targetId = info.object.id;
     const segment = this.segments[targetIndex];
 
     if (targetIndex >= 0 && targetIndex < this.segments.length) {
-      this.setSelection([targetId]);
-      this._emit('select', {
-        id: targetId,
-        ms: this._getClickMsFromPickingInfo(info),
-        segment
-      });
+      this._selectSegment(targetIndex, this._getClickMsFromPickingInfo(info), targetId, segment);
     }
+  }
+
+  _selectSegment(segmentIndex, ms, id = toTimelineItemId(segmentIndex), segment = this.segments[segmentIndex]) {
+    if (!Number.isInteger(segmentIndex) || segmentIndex < 0 || segmentIndex >= this.segments.length) return;
+
+    this.setSelectedSegment(segmentIndex);
+    this._emit('select', {
+      id,
+      segmentIndex,
+      ms,
+      segment
+    });
   }
 
   _getClickMsFromPickingInfo(info) {
@@ -525,8 +634,8 @@ export class DeckTimelineRenderer {
   // COORDINATE CONVERSION
   // ==========================================================================
 
-  _timeToSegmentIndex(ms) {
-    return timeToSegmentIndex(ms, this.timelineData);
+  _timeToSegmentIndex(ms, options) {
+    return timeToSegmentIndex(ms, this.timelineData, options);
   }
 
   _xToMs(x) {
@@ -571,7 +680,7 @@ export class DeckTimelineRenderer {
       theme: TIMELINE_THEME,
       timelineData: this.timelineData,
       segments: this.segments,
-      selectedId: this._selectedId,
+      selectedSegmentIndex: this._selectedSegmentIndex,
       lastHoverId: this._lastHoverId,
       rangeStart, rangeEnd
     });

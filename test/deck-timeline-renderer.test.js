@@ -16,6 +16,7 @@ clearTimelineModuleCache();
 
 // Now require the SUT after mocks are in place
 const { DeckTimelineRenderer } = require('../src/timeline/renderers/DeckTimelineRenderer.js');
+const { TIMELINE_THEME } = require('../src/timeline/constants.js');
 
 describe('DeckTimelineRenderer', () => {
   function makeContainer(w = 800, h = 100) {
@@ -40,9 +41,16 @@ describe('DeckTimelineRenderer', () => {
 
   function makeTimelineFixture() {
     const segments = [
-      { isFullTree: true },
-      { isFullTree: false },
-      { isFullTree: true }
+      { isFullTree: true, originalTreeIndex: 0 },
+      {
+        isFullTree: false,
+        treePairKey: 'pair_0_1',
+        globalStart: 1,
+        globalEnd: 9,
+        localStepStart: 0,
+        localStepEnd: 8
+      },
+      { isFullTree: true, originalTreeIndex: 1 }
     ];
     const timelineData = {
       // 3 segments of 1000ms
@@ -137,13 +145,17 @@ describe('DeckTimelineRenderer', () => {
     const container = makeContainer();
     const renderer = new DeckTimelineRenderer(timelineData, segments).init(container);
 
-    renderer.setSelection([2]);
+    renderer.setSelectedSegment(1);
     const anchorSel = renderer.deck.props.layers.find(l => l.id === 'anchor-selection-layer');
     const connSel = renderer.deck.props.layers.find(l => l.id === 'connection-selection-layer');
     expect(anchorSel || connSel).to.exist;
     // At least one selection layer should have data when a selection is set
     const hasData = (layer) => Array.isArray(layer?.props?.data) && layer.props.data.length >= 0;
     expect(hasData(anchorSel) || hasData(connSel)).to.equal(true);
+  });
+
+  it('uses distinct colors for selected segments and the current playhead', () => {
+    expect(TIMELINE_THEME.connectionSelectionRGB).to.not.deep.equal(TIMELINE_THEME.scrubberCoreRGB);
   });
 
   it('binds timeline pointer handlers to the deck canvas', () => {
@@ -154,6 +166,59 @@ describe('DeckTimelineRenderer', () => {
     const boundEvents = renderer.deck.eventListeners.map((entry) => entry.event);
 
     expect(boundEvents).to.include.members(['mousemove', 'mousedown', 'click', 'wheel', 'mouseleave']);
+  });
+
+  it('exposes the deck canvas as a keyboard-focusable timeline control', () => {
+    const { timelineData, segments } = makeTimelineFixture();
+    const container = makeContainer();
+    const renderer = new DeckTimelineRenderer(timelineData, segments).init(container);
+
+    expect(renderer.canvas.getAttribute('tabindex')).to.equal('0');
+    expect(renderer.canvas.getAttribute('role')).to.equal('slider');
+    expect(renderer.canvas.getAttribute('aria-label')).to.equal('Movie timeline position');
+    expect(renderer.canvas.getAttribute('aria-valuemin')).to.equal('0');
+    expect(renderer.canvas.getAttribute('aria-valuemax')).to.equal('3000');
+    expect(renderer.canvas.getAttribute('aria-valuenow')).to.equal('0');
+    expect(renderer.canvas.getAttribute('aria-valuetext')).to.equal('Segment 1 of 3, source tree 1');
+  });
+
+  it('uses semantic segment labels for assistive timeline feedback', () => {
+    const { timelineData, segments } = makeTimelineFixture();
+    const container = makeContainer();
+    const renderer = new DeckTimelineRenderer(timelineData, segments).init(container);
+
+    renderer.setCustomTime(1500);
+
+    expect(renderer.canvas.getAttribute('aria-valuetext')).to.equal(
+      'Segment 2 of 3, generated frames 1-9, between source trees 1 and 2'
+    );
+  });
+
+  it('moves timeline selection with keyboard navigation', () => {
+    const { timelineData, segments } = makeTimelineFixture();
+    const container = makeContainer();
+    const renderer = new DeckTimelineRenderer(timelineData, segments).init(container);
+    const selections = collectSelections(renderer);
+
+    renderer.deck.canvas.dispatchEvent(new global.window.KeyboardEvent('keydown', {
+      bubbles: true,
+      key: 'ArrowRight'
+    }));
+
+    expect(selections).to.have.length(1);
+    expect(selections[0].segmentIndex).to.equal(1);
+    expect(selections[0].id).to.equal(2);
+    expect(renderer._selectedSegmentIndex).to.equal(1);
+
+    renderer.deck.canvas.dispatchEvent(new global.window.KeyboardEvent('keydown', {
+      bubbles: true,
+      key: 'End'
+    }));
+
+    expect(selections).to.have.length(2);
+    expect(selections[1].segmentIndex).to.equal(2);
+    expect(renderer._selectedSegmentIndex).to.equal(2);
+    expect(renderer.canvas.getAttribute('aria-valuenow')).to.equal('2500');
   });
 
   it('publishes hovered segments through a bound hover callback', () => {
@@ -192,7 +257,7 @@ describe('DeckTimelineRenderer', () => {
     expect(selections).to.have.length(1);
     expect(selections[0].id).to.equal(1);
     expect(selections[0].segment).to.equal(segments[0]);
-    expect(renderer._selectedId).to.equal(1);
+    expect(renderer._selectedSegmentIndex).to.equal(0);
   });
 
   it('selects a generated transition segment from a deck canvas click', () => {
@@ -206,7 +271,7 @@ describe('DeckTimelineRenderer', () => {
     expect(selections).to.have.length(1);
     expect(selections[0].id).to.equal(2);
     expect(selections[0].segment).to.equal(segments[1]);
-    expect(renderer._selectedId).to.equal(2);
+    expect(renderer._selectedSegmentIndex).to.equal(1);
   });
 
   it('selects the expected segment in dense timelines', () => {
@@ -227,7 +292,7 @@ describe('DeckTimelineRenderer', () => {
     expect(selections).to.have.length(1);
     expect(selections[0].id).to.equal(52);
     expect(selections[0].segment).to.equal(segments[51]);
-    expect(renderer._selectedId).to.equal(52);
+    expect(renderer._selectedSegmentIndex).to.equal(51);
   });
 
   it('keeps click selection accurate after the timeline host resizes', () => {
@@ -243,7 +308,7 @@ describe('DeckTimelineRenderer', () => {
     expect(selections).to.have.length(1);
     expect(selections[0].id).to.equal(3);
     expect(selections[0].segment).to.equal(segments[2]);
-    expect(renderer._selectedId).to.equal(3);
+    expect(renderer._selectedSegmentIndex).to.equal(2);
   });
 
   it('uses externally bound scrub state for scrubber highlighting', () => {

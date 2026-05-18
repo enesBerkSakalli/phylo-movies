@@ -126,6 +126,15 @@ describe('TimelineMathUtils', () => {
     expect(durations).to.deep.equal([2000]);
   });
 
+  it('keeps segment duration formulas centralized', () => {
+    const source = fs.readFileSync(path.join(__dirname, '..', 'src', 'timeline', 'math', 'TimelineMathUtils.js'), 'utf8');
+    const anchorDurationFormulaCount = (source.match(/UNIT_DURATION_MS \* 0\.5/g) || []).length;
+    const transitionDurationFormulaCount = (source.match(/interpolationData\.length - 1\) \* TIMELINE_CONSTANTS\.UNIT_DURATION_MS/g) || []).length;
+
+    expect(anchorDurationFormulaCount).to.equal(1);
+    expect(transitionDurationFormulaCount).to.equal(1);
+  });
+
   it('resolves exact timeline boundaries consistently', () => {
     const firstInterpolationIndex = segments.findIndex((segment, index) => (
       index > 0 && segment.hasInterpolation && segment.interpolationData.length > 1

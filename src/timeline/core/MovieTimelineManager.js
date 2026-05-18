@@ -6,7 +6,6 @@ import { TimelineScrubController } from './TimelineScrubController.js';
 import { TimelineStateSynchronizer } from './TimelineStateSynchronizer.js';
 import { useAppStore } from '../../state/phyloStore/store.js';
 import { DeckTimelineRenderer } from '../renderers/DeckTimelineRenderer.js';
-import { toSegmentIndex } from '../utils/segmentTiming.js';
 
 // ============================================================================
 // MOVIE TIMELINE MANAGER
@@ -26,7 +25,6 @@ export class MovieTimelineManager {
             throw new Error('MovieTimelineManager requires a non-empty normalized treeList');
         }
 
-        this.movieData = movieData;
         this.treeList = treeList;
         this.transitionResolver = transitionIndexResolver;
         this.isDestroyed = false;
@@ -81,6 +79,10 @@ export class MovieTimelineManager {
                     this._initializeScrubberAPI(controller);
                 }
             }
+
+            if (state.selectedTimelineSegmentIndex !== prevState.selectedTimelineSegmentIndex) {
+                this._syncSelectedSegmentFromStore();
+            }
         });
 
         this._scheduleCurrentPositionUpdate();
@@ -131,6 +133,7 @@ export class MovieTimelineManager {
         if (this.timeline) {
             this._setupEvents();
             this.stateSynchronizer.restoreMountedState(this.timeline, this.scrubController.lastScrubEndTime);
+            this._syncSelectedSegmentFromStore();
         }
     }
 
@@ -199,13 +202,24 @@ export class MovieTimelineManager {
     }
 
     _onTimelineClick(properties) {
-        const segmentIndex = toSegmentIndex(properties.id);
+        const segmentIndex = Number.isInteger(properties.segmentIndex) ? properties.segmentIndex : null;
 
         useAppStore.getState().setSelectedTimelineSegment(segmentIndex);
 
         if (segmentIndex !== null && this.navigationController) {
             this.navigationController.handleTimelineClick(segmentIndex, properties.ms);
         }
+    }
+
+    _syncSelectedSegmentFromStore() {
+        if (!this.timeline) return;
+
+        const { selectedTimelineSegmentIndex } = useAppStore.getState();
+        const isValidSelection = Number.isInteger(selectedTimelineSegmentIndex) &&
+            selectedTimelineSegmentIndex >= 0 &&
+            selectedTimelineSegmentIndex < this.segments.length;
+
+        this.timeline.setSelectedSegment(isValidSelection ? selectedTimelineSegmentIndex : null);
     }
 
     // ==========================================================================

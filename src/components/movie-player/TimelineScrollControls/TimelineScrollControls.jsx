@@ -24,36 +24,36 @@ export function TimelineScrollControls() {
   const controls = [
     {
       id: 'scrollToStartBtn',
-      label: 'Scroll sequence to start',
-      tooltip: 'Scroll to start',
+      label: 'Scroll timeline to start',
+      tooltip: 'Scroll timeline to start',
       Icon: ChevronsLeft,
       onClick: scrollToStartTimeline
     },
     {
       id: 'zoomOutBtn',
-      label: 'Zoom out sequence',
-      tooltip: 'Zoom out sequence',
+      label: 'Zoom out timeline',
+      tooltip: 'Zoom out timeline',
       Icon: ZoomOut,
       onClick: zoomOutTimeline
     },
     {
       id: 'fitToWindowBtn',
-      label: 'Fit entire sequence to window',
-      tooltip: 'Fit entire sequence',
+      label: 'Fit timeline to window',
+      tooltip: 'Fit timeline to window',
       Icon: Scan,
       onClick: fitTimeline
     },
     {
       id: 'zoomInBtn',
-      label: 'Zoom in sequence',
-      tooltip: 'Zoom in sequence',
+      label: 'Zoom in timeline',
+      tooltip: 'Zoom in timeline',
       Icon: ZoomIn,
       onClick: zoomInTimeline
     },
     {
       id: 'scrollToEndBtn',
-      label: 'Scroll sequence to end',
-      tooltip: 'Scroll to end',
+      label: 'Scroll timeline to end',
+      tooltip: 'Scroll timeline to end',
       Icon: ChevronsRight,
       onClick: scrollToEndTimeline
     }
@@ -63,7 +63,7 @@ export function TimelineScrollControls() {
     <div
       className="timeline-view-controls flex items-center gap-0.5 rounded-md bg-muted/40 p-0.5"
       role="group"
-      aria-label="Timeline view controls"
+      aria-label="Timeline viewport controls"
     >
       {controls.map(({ id, label, tooltip, Icon, onClick }) => (
         <AppTooltip key={id} content={tooltip}>
