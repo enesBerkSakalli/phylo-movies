@@ -51,6 +51,7 @@ export function MoviePlayerBar() {
   const leafNamesByIndex = useAppStore(selectLeafNamesByIndex);
   const tooltipRef = useRef(null);
   const timelineHostRef = useRef(null);
+  const playerBarRef = useRef(null);
 
   const totalSegments = movieTimelineManager?.getSegmentCount?.() ?? 0;
   const hasTransitionSegments = movieTimelineManager?.hasTransitionSegments?.() ?? false;
@@ -65,6 +66,31 @@ export function MoviePlayerBar() {
       movieTimelineManager.unmount();
     };
   }, [movieTimelineManager]);
+
+  useEffect(() => {
+    const playerBar = playerBarRef.current;
+    if (!playerBar || typeof document === 'undefined') return undefined;
+
+    const layoutRoot = playerBar.closest('[data-slot="sidebar-wrapper"]') || document.documentElement;
+    const updatePlayerBarHeight = () => {
+      const height = Math.ceil(playerBar.getBoundingClientRect().height);
+      layoutRoot.style.setProperty('--movie-player-bar-height', `${height}px`);
+    };
+
+    updatePlayerBarHeight();
+    window.addEventListener('resize', updatePlayerBarHeight);
+
+    const resizeObserver = typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver(updatePlayerBarHeight)
+      : null;
+    resizeObserver?.observe(playerBar);
+
+    return () => {
+      window.removeEventListener('resize', updatePlayerBarHeight);
+      resizeObserver?.disconnect();
+      layoutRoot.style.removeProperty('--movie-player-bar-height');
+    };
+  }, []);
 
   const getLeafNames = useCallback((indices) => {
     if (!leafNamesByIndex || !Array.isArray(leafNamesByIndex)) return [];
@@ -87,7 +113,7 @@ export function MoviePlayerBar() {
 
   return (
     <>
-      <div className="movie-player-bar sticky bottom-0 z-[1000] bg-card border-t shadow-[0_2px_4px_rgba(0,0,0,0.08)]" role="region" aria-label="Movie timeline controls">
+      <div ref={playerBarRef} className="movie-player-bar relative z-[1000] w-full shrink-0 bg-card border-t shadow-[0_2px_4px_rgba(0,0,0,0.08)]" role="region" aria-label="Movie timeline and playback controls">
         <div className="flex flex-col">
           <div
             className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 border-b border-border/70 bg-muted/20 px-2 py-1"

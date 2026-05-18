@@ -1,7 +1,38 @@
-import { describe, expect, it } from 'vitest';
-import { fitFloatingWindowRect } from '../src/components/ui/floatingWindowGeometry.js';
+import { afterEach, describe, expect, it } from 'vitest';
+import {
+  fitFloatingWindowRect,
+  getFloatingWindowViewportInsets
+} from '../src/components/ui/floatingWindowGeometry.js';
+
+const originalWindow = globalThis.window;
+const originalDocument = globalThis.document;
+
+function rect(left, top, width, height) {
+  return {
+    left,
+    top,
+    width,
+    height,
+    right: left + width,
+    bottom: top + height
+  };
+}
 
 describe('floating window geometry', () => {
+  afterEach(() => {
+    if (originalWindow === undefined) {
+      delete globalThis.window;
+    } else {
+      globalThis.window = originalWindow;
+    }
+
+    if (originalDocument === undefined) {
+      delete globalThis.document;
+    } else {
+      globalThis.document = originalDocument;
+    }
+  });
+
   it('keeps oversized windows inside the viewport', () => {
     const rect = fitFloatingWindowRect(
       { x: 900, y: -50, width: 960, height: 700 },
@@ -88,6 +119,47 @@ describe('floating window geometry', () => {
       height: 702,
       minWidth: 620,
       minHeight: 480,
+    });
+  });
+
+  it('reports a full-width player bar as a bottom viewport inset', () => {
+    globalThis.window = { innerWidth: 1000, innerHeight: 800 };
+    globalThis.document = {
+      querySelector: (selector) => {
+        if (selector === '.movie-player-bar') {
+          return { getBoundingClientRect: () => rect(0, 680, 1000, 120) };
+        }
+        return null;
+      }
+    };
+
+    expect(getFloatingWindowViewportInsets()).toEqual({
+      left: 0,
+      right: 0,
+      top: 0,
+      bottom: 120,
+    });
+  });
+
+  it('combines sidebar and player-bar insets for floating windows', () => {
+    globalThis.window = { innerWidth: 1000, innerHeight: 800 };
+    globalThis.document = {
+      querySelector: (selector) => {
+        if (selector === '[data-slot="sidebar-container"]') {
+          return { getBoundingClientRect: () => rect(0, 0, 224, 680) };
+        }
+        if (selector === '.movie-player-bar') {
+          return { getBoundingClientRect: () => rect(0, 680, 1000, 120) };
+        }
+        return null;
+      }
+    };
+
+    expect(getFloatingWindowViewportInsets()).toEqual({
+      left: 224,
+      right: 0,
+      top: 0,
+      bottom: 120,
     });
   });
 });
