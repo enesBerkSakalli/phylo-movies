@@ -1,6 +1,5 @@
 import { TIMELINE_AXIS } from './TimelineAxis.js';
 import { TimelinePoint } from './TimelinePoint.js';
-import { resolveCursorTreeIndex } from '../../domain/indexing/treeIndexSemantics.js';
 
 const clamp01 = (value) => {
     if (!Number.isFinite(value)) return 0;
@@ -33,32 +32,23 @@ export class PlaybackCursor {
         });
     }
 
-    static fromInterpolation({
-        timelineProgress,
-        fromIndex,
-        toIndex,
-        timeFactor,
-        treeCount,
-        holdKind = null
-    }) {
-        const safeFrom = Number.isInteger(fromIndex) ? fromIndex : 0;
-        const safeTo = Number.isInteger(toIndex) ? toIndex : safeFrom;
-        const safeT = clamp01(timeFactor);
-        const exactFrameIndex = safeFrom + ((safeTo - safeFrom) * safeT);
+    static fromTransitionFrame(transitionFrame, { treeCount, timelineProgress = transitionFrame?.timelineProgress } = {}) {
+        const exactFrameIndex = transitionFrame.sourceTreeIndex +
+            ((transitionFrame.targetTreeIndex - transitionFrame.sourceTreeIndex) * transitionFrame.transitionProgress);
         const animationProgress = Number.isFinite(treeCount) && treeCount > 1
             ? clamp01(exactFrameIndex / (treeCount - 1))
             : 1;
-        const currentTreeIndex = resolveCursorTreeIndex(safeFrom, safeTo, safeT);
+        const normalizedTimelineProgress = normalizeOptionalProgress(timelineProgress) ?? 0;
 
         return new PlaybackCursor({
             point: TimelinePoint.from({
                 [TIMELINE_AXIS.FRAME_INDEX]: exactFrameIndex,
-                [TIMELINE_AXIS.TIMELINE_PROGRESS]: clamp01(timelineProgress)
+                [TIMELINE_AXIS.TIMELINE_PROGRESS]: normalizedTimelineProgress
             }),
             animationProgress,
-            timelineProgress: clamp01(timelineProgress),
-            currentTreeIndex,
-            holdKind
+            timelineProgress: normalizedTimelineProgress,
+            currentTreeIndex: transitionFrame.cursorTreeIndex,
+            holdKind: transitionFrame.holdKind
         });
     }
 

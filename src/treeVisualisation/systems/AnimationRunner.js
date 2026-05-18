@@ -1,9 +1,9 @@
 import { detectAnimationStage } from '../deckgl/interpolation/stages/animationStageDetector.js';
 import { applyStageEasing } from '../deckgl/interpolation/stages/stageEasing.js';
 import { calculatePlaybackState } from '../../domain/animation/AnimationTiming.js';
-import { resolveHighlightTreeIndex } from '../../domain/indexing/treeIndexSemantics.js';
 import { selectActiveTreeList } from '../../state/phyloStore/selectors/treeSelectors.js';
 import { PlaybackCursor } from '../../timeline/time/PlaybackCursor.js';
+import { TransitionFrame } from '../../timeline/time/TransitionFrame.js';
 
 /**
  * AnimationRunner
@@ -160,7 +160,23 @@ export class AnimationRunner {
 
     if (!fromTree) return true; // End of list safety
 
-    const { dataFrom, dataTo, transitionChangeModel } = this.getOrCacheInterpolationData(fromTree, toTree, fromIndex, toIndex);
+    const transitionFrame = TransitionFrame.from({
+      sourceTree: fromTree,
+      targetTree: toTree,
+      sourceTreeIndex: fromIndex,
+      targetTreeIndex: toIndex,
+      transitionProgress: localT,
+      holdKind: playback.holdKind
+    }, {
+      timelineProgress: playback.timelineProgress
+    });
+
+    const { dataFrom, dataTo, transitionChangeModel } = this.getOrCacheInterpolationData(
+      transitionFrame.sourceTree,
+      transitionFrame.targetTree,
+      transitionFrame.sourceTreeIndex,
+      transitionFrame.targetTreeIndex
+    );
 
     // 3. Robustness: Missing Data Policy
     if (!dataFrom || !dataTo) {
@@ -194,15 +210,20 @@ export class AnimationRunner {
     }
 
     this._syncStore(timestamp, progress, stage, isFinished, playback);
-    this.syncHighlightsForIndex(resolveHighlightTreeIndex(fromIndex, toIndex, localT));
+    this.syncHighlightsForIndex(transitionFrame.highlightTreeIndex);
 
     // 5. Easing & Render
     // Check running state again before expensive async render/interpolation.
     if (!this.isRunning || runToken !== this._runToken) return isFinished;
 
     const easedT = applyStageEasing(localT, stage);
+    const renderFrame = transitionFrame.withRenderState({
+      renderProgress: easedT,
+      stage,
+      transitionChangeModel
+    });
 
-    await this._render(state, fromTree, toTree, easedT, fromIndex, toIndex, stage, localT);
+    await this._render(state, renderFrame);
 
     return isFinished;
   }
@@ -225,26 +246,31 @@ export class AnimationRunner {
     }
   }
 
-  async _render(state, fromTree, toTree, easedT, fromIndex, toIndex, stage, rawTimeFactor = easedT) {
+  async _render(state, transitionFrame) {
     if (state.comparisonMode) {
-      const rightParams = getComparisonTarget(state, fromIndex, toIndex);
+      const rightParams = getComparisonTarget(
+        state,
+        transitionFrame.sourceTreeIndex,
+        transitionFrame.targetTreeIndex
+      );
       // Only render comparison if we have a valid right tree
       if (rightParams) {
-        await this.renderComparisonFrame(fromTree, toTree, easedT, {
-          fromTreeIndex: fromIndex,
-          toTreeIndex: toIndex,
-          stage,
-          rawTimeFactor,
-          ...rightParams
-        });
+        await this.renderComparisonFrame(
+          transitionFrame.sourceTree,
+          transitionFrame.targetTree,
+          transitionFrame.renderProgress,
+          transitionFrame.toRenderOptions({
+            ...rightParams
+          })
+        );
       }
     } else {
-      await this.renderSingleFrame(fromTree, toTree, easedT, {
-        fromTreeIndex: fromIndex,
-        toTreeIndex: toIndex,
-        stage,
-        rawTimeFactor
-      });
+      await this.renderSingleFrame(
+        transitionFrame.sourceTree,
+        transitionFrame.targetTree,
+        transitionFrame.renderProgress,
+        transitionFrame.toRenderOptions()
+      );
     }
   }
 }
@@ -281,7 +307,7 @@ function getSemanticTimelinePlaybackState(state, timestamp, treeList) {
 
   if (
     !movieTimelineManager ||
-    typeof movieTimelineManager.getInterpolationDataForTimelineProgress !== 'function' ||
+    typeof movieTimelineManager.getTransitionFrameForTimelineProgress !== 'function' ||
     !Number.isFinite(totalDurationMs) ||
     totalDurationMs <= 0
   ) {
@@ -292,24 +318,15 @@ function getSemanticTimelinePlaybackState(state, timestamp, treeList) {
   const elapsedMs = Math.max(0, timestamp - animationStartTime) * safeSpeed;
   const rawProgress = elapsedMs / totalDurationMs;
   const timelineProgress = Math.max(0, Math.min(1, rawProgress));
-  const interpolation = movieTimelineManager.getInterpolationDataForTimelineProgress(timelineProgress);
+  const transitionFrame = movieTimelineManager.getTransitionFrameForTimelineProgress(timelineProgress);
 
-  if (!interpolation) {
+  if (!transitionFrame) {
     return null;
   }
 
-  const fromIndex = Number.isInteger(interpolation.fromIndex) ? interpolation.fromIndex : 0;
-  const toIndex = Number.isInteger(interpolation.toIndex) ? interpolation.toIndex : fromIndex;
-  const localT = Number.isFinite(interpolation.timeFactor)
-    ? Math.max(0, Math.min(1, interpolation.timeFactor))
-    : 0;
-  const cursor = PlaybackCursor.fromInterpolation({
+  const cursor = PlaybackCursor.fromTransitionFrame(transitionFrame, {
     timelineProgress,
-    fromIndex,
-    toIndex,
-    timeFactor: localT,
-    treeCount: treeList.length,
-    holdKind: interpolation.holdKind
+    treeCount: treeList.length
   });
   const playbackState = cursor.toPlaybackState();
 
@@ -317,10 +334,10 @@ function getSemanticTimelinePlaybackState(state, timestamp, treeList) {
     progress: playbackState.animationProgress,
     timelineProgress: playbackState.timelineProgress,
     isFinished: rawProgress >= 1,
-    fromIndex,
-    toIndex,
-    localT,
-    isInPause: Boolean(interpolation.holdKind),
+    fromIndex: transitionFrame.sourceTreeIndex,
+    toIndex: transitionFrame.targetTreeIndex,
+    localT: transitionFrame.transitionProgress,
+    isInPause: Boolean(transitionFrame.holdKind),
     holdKind: playbackState.holdKind,
     currentTreeIndex: playbackState.currentTreeIndex
   };

@@ -1,6 +1,7 @@
 import { TIMELINE_CONSTANTS, TIMING_PROFILE } from '../constants.js';
 import { TimelineTimingResolver } from './TimelineTimingResolver.js';
 import { getSegmentBounds, timeToSegmentIndex } from '../utils/segmentTiming.js';
+import { TransitionFrame } from '../time/TransitionFrame.js';
 
 /**
  * Timeline math utilities for progress/time conversion, segment lookup, and duration calculations.
@@ -214,18 +215,18 @@ export class TimelineMathUtils {
     }
 
     // ==========================================================================
-    // INTERPOLATION DATA
+    // TRANSITION FRAMES
     // ==========================================================================
 
-    static getInterpolationDataForProgress(progress, treeList) {
+    static getTransitionFrameForProgress(progress, treeList) {
         if (!Array.isArray(treeList) || treeList.length === 0) {
-            return {
-                fromTree: null,
-                toTree: null,
-                timeFactor: 0,
-                fromIndex: -1,
-                toIndex: -1
-            };
+            return TransitionFrame.from({
+                sourceTree: null,
+                targetTree: null,
+                transitionProgress: 0,
+                sourceTreeIndex: -1,
+                targetTreeIndex: -1
+            });
         }
 
         const clampedProgress = this.clampProgress(progress);
@@ -234,16 +235,16 @@ export class TimelineMathUtils {
         const fromIndex = Math.floor(exactIndex);
         const toIndex = Math.min(fromIndex + 1, totalTrees - 1);
 
-        return {
-            fromTree: treeList[fromIndex],
-            toTree: treeList[toIndex],
-            timeFactor: exactIndex - fromIndex,
-            fromIndex,
-            toIndex
-        };
+        return TransitionFrame.from({
+            sourceTree: treeList[fromIndex],
+            targetTree: treeList[toIndex],
+            transitionProgress: exactIndex - fromIndex,
+            sourceTreeIndex: fromIndex,
+            targetTreeIndex: toIndex
+        });
     }
 
-    static getInterpolationDataForTimelineProgress(progress, segments, timelineData, treeList) {
+    static getTransitionFrameForTimelineProgress(progress, segments, timelineData, treeList) {
         if (
             !Array.isArray(segments) ||
             segments.length === 0 ||
@@ -276,22 +277,22 @@ export class TimelineMathUtils {
         ));
 
         if (TimelineTimingResolver.hasSemanticTiming(segment)) {
-            return TimelineTimingResolver.getInterpolationData(
+            return TimelineTimingResolver.getTransitionFrame(
                 segment,
                 localTime,
                 treeList,
-                this._createStaticInterpolationResult.bind(this),
+                this._createStaticTransitionFrame.bind(this),
                 this.clampProgress.bind(this)
             );
         }
 
         if (segment.isFullTree || !segment.hasInterpolation) {
-            return this._createStaticInterpolationResult(segment.interpolationData[0].originalIndex, treeList);
+            return this._createStaticTransitionFrame(segment.interpolationData[0].originalIndex, treeList);
         }
 
         const steps = segment.interpolationData.length;
         if (steps <= 1) {
-            return this._createStaticInterpolationResult(segment.interpolationData[0].originalIndex, treeList);
+            return this._createStaticTransitionFrame(segment.interpolationData[0].originalIndex, treeList);
         }
 
         const localProgress = this.clampProgress((currentTime - segmentStart) / segmentDuration);
@@ -299,13 +300,13 @@ export class TimelineMathUtils {
         const fromStep = Math.floor(exactStep);
         const toStep = Math.min(fromStep + 1, steps - 1);
 
-        return {
-            fromTree: treeList[segment.interpolationData[fromStep].originalIndex],
-            toTree: treeList[segment.interpolationData[toStep].originalIndex],
-            timeFactor: exactStep - fromStep,
-            fromIndex: segment.interpolationData[fromStep].originalIndex,
-            toIndex: segment.interpolationData[toStep].originalIndex
-        };
+        return TransitionFrame.from({
+            sourceTree: treeList[segment.interpolationData[fromStep].originalIndex],
+            targetTree: treeList[segment.interpolationData[toStep].originalIndex],
+            transitionProgress: exactStep - fromStep,
+            sourceTreeIndex: segment.interpolationData[fromStep].originalIndex,
+            targetTreeIndex: segment.interpolationData[toStep].originalIndex
+        });
     }
 
     static getTimelineProgressForTreeIndex(segments, timelineData, treeIndex) {
@@ -383,8 +384,15 @@ export class TimelineMathUtils {
         return (stepIndex / (totalSteps - 1)) * segmentDuration;
     }
 
-    static _createStaticInterpolationResult(idx, treeList, extra = {}) {
+    static _createStaticTransitionFrame(idx, treeList, extra = {}) {
         const tree = treeList?.[idx];
-        return { fromTree: tree, toTree: tree, timeFactor: 0, fromIndex: idx, toIndex: idx, ...extra };
+        return TransitionFrame.from({
+            sourceTree: tree,
+            targetTree: tree,
+            transitionProgress: 0,
+            sourceTreeIndex: idx,
+            targetTreeIndex: idx,
+            ...extra
+        });
     }
 }

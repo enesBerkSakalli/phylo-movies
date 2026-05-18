@@ -94,15 +94,15 @@ describe('TimelineMathUtils', () => {
     expect(TimelineMathUtils.progressToTime(0.5, 0)).to.equal(0);
   });
 
-  it('returns a safe empty interpolation result for empty input', () => {
-    const result = TimelineMathUtils.getInterpolationDataForProgress(0.25, []);
+  it('returns a safe empty transition frame for empty input', () => {
+    const result = TimelineMathUtils.getTransitionFrameForProgress(0.25, []);
 
-    expect(result).to.deep.equal({
-      fromTree: null,
-      toTree: null,
-      timeFactor: 0,
-      fromIndex: -1,
-      toIndex: -1
+    expect(result).to.include({
+      sourceTree: null,
+      targetTree: null,
+      transitionProgress: 0,
+      sourceTreeIndex: -1,
+      targetTreeIndex: -1
     });
   });
 
@@ -159,33 +159,33 @@ describe('TimelineMathUtils', () => {
   it('resolves mover and pivot holds as static completed frames', () => {
     const { treeList, segments, timelineData } = makeSemanticTimingFixture();
 
-    const moverHold = TimelineMathUtils.getInterpolationDataForTimelineProgress(
+    const moverHold = TimelineMathUtils.getTransitionFrameForTimelineProgress(
       1100 / timelineData.totalDuration,
       segments,
       timelineData,
       treeList
     );
-    const pivotHold = TimelineMathUtils.getInterpolationDataForTimelineProgress(
+    const pivotHold = TimelineMathUtils.getTransitionFrameForTimelineProgress(
       3500 / timelineData.totalDuration,
       segments,
       timelineData,
       treeList
     );
 
-    expect(moverHold).to.deep.equal({
-      fromTree: treeList[1],
-      toTree: treeList[1],
-      timeFactor: 0,
-      fromIndex: 1,
-      toIndex: 1,
+    expect(moverHold).to.include({
+      sourceTree: treeList[1],
+      targetTree: treeList[1],
+      transitionProgress: 0,
+      sourceTreeIndex: 1,
+      targetTreeIndex: 1,
       holdKind: 'mover'
     });
-    expect(pivotHold).to.deep.equal({
-      fromTree: treeList[3],
-      toTree: treeList[3],
-      timeFactor: 0,
-      fromIndex: 3,
-      toIndex: 3,
+    expect(pivotHold).to.include({
+      sourceTree: treeList[3],
+      targetTree: treeList[3],
+      transitionProgress: 0,
+      sourceTreeIndex: 3,
+      targetTreeIndex: 3,
       holdKind: 'pivot'
     });
   });
@@ -205,19 +205,19 @@ describe('TimelineMathUtils', () => {
     }];
     const timelineData = TimelineDataProcessor.createTimelineData(segments);
 
-    const resolved = TimelineMathUtils.getInterpolationDataForTimelineProgress(
+    const resolved = TimelineMathUtils.getTransitionFrameForTimelineProgress(
       0.5,
       segments,
       timelineData,
       treeList
     );
 
-    expect(resolved).to.deep.equal({
-      fromTree: treeList[0],
-      toTree: treeList[0],
-      timeFactor: 0,
-      fromIndex: 0,
-      toIndex: 0,
+    expect(resolved).to.include({
+      sourceTree: treeList[0],
+      targetTree: treeList[0],
+      transitionProgress: 0,
+      sourceTreeIndex: 0,
+      targetTreeIndex: 0,
       holdKind: 'anchor'
     });
   });

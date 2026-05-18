@@ -18,9 +18,9 @@ export class TimelineClock {
     return Array.isArray(this.segments) ? this.segments.length : 0;
   }
 
-  getInterpolationDataForProgress(progress) {
+  getTransitionFrameForProgress(progress) {
     if (!this.hasTimeline()) return null;
-    return TimelineMathUtils.getInterpolationDataForTimelineProgress(
+    return TimelineMathUtils.getTransitionFrameForTimelineProgress(
       progress,
       this.segments,
       this.timelineData,

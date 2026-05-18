@@ -98,11 +98,11 @@ describe('InterpolationRenderer timeline progress', () => {
     useAppStore.getState().reset();
   });
 
-  it('does not fall back to linear progress when timeline interpolation is unavailable', async () => {
+  it('does not fall back to linear progress when timeline transition frames are unavailable', async () => {
     useAppStore.setState({
       movieTimelineManager: {
         destroy: () => {},
-        getInterpolationDataForTimelineProgress: () => null
+        getTransitionFrameForTimelineProgress: () => null
       }
     });
 

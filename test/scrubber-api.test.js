@@ -36,8 +36,8 @@ function createTimelineManager(movieData) {
   });
 
   return {
-    getInterpolationDataForTimelineProgress: (progress) =>
-      timelineClock.getInterpolationDataForProgress(progress)
+    getTransitionFrameForTimelineProgress: (progress) =>
+      timelineClock.getTransitionFrameForProgress(progress)
   };
 }
 
@@ -107,7 +107,8 @@ describe('ScrubberAPI', () => {
     resolvers.shift()();
     await Promise.all([firstUpdate, secondUpdate, thirdUpdate]);
 
-    expect(api.lastInterpolationState.progress).to.equal(0.8);
+    expect(api.lastTransitionState.progress).to.equal(0.8);
+    expect(api.lastTransitionState.transitionFrame.cursorTreeIndex).to.equal(2);
     expect(useAppStore.getState().playhead.timelineProgress).to.equal(0.8);
     expect(useAppStore.getState().currentTreeIndex).to.equal(2);
   });
@@ -164,8 +165,8 @@ describe('ScrubberAPI', () => {
 
     const snapshot = await endPromise;
     expect(snapshot.progress).to.equal(0.9);
-    expect(snapshot.interpolationData.fromIndex).to.equal(1);
-    expect(snapshot.interpolationData.toIndex).to.equal(2);
+    expect(snapshot.transitionFrame.sourceTreeIndex).to.equal(1);
+    expect(snapshot.transitionFrame.targetTreeIndex).to.equal(2);
   });
 
   it('reports scrub render failures without throwing away the scrub session', async () => {
@@ -235,7 +236,7 @@ describe('ScrubberAPI', () => {
     });
   });
 
-  it('does not fall back to linear interpolation without timeline interpolation data', async () => {
+  it('does not fall back to linear interpolation without a timeline transition frame', async () => {
     const renderCalls = [];
     const originalError = console.error;
 
@@ -253,7 +254,7 @@ describe('ScrubberAPI', () => {
       await api.updatePosition(0.5);
 
       expect(renderCalls).to.deep.equal([]);
-      expect(api.lastInterpolationState).to.equal(null);
+      expect(api.lastTransitionState).to.equal(null);
     } finally {
       console.error = originalError;
     }

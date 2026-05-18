@@ -1,5 +1,5 @@
 import { TimelineInterval } from '../time/TimelineInterval.js';
-import { resolveCursorTreeIndex } from '../../domain/indexing/treeIndexSemantics.js';
+import { TransitionFrame } from '../time/TransitionFrame.js';
 
 export class TimelineTimingResolver {
     static hasSemanticTiming(segment) {
@@ -66,17 +66,17 @@ export class TimelineTimingResolver {
         return null;
     }
 
-    static getInterpolationData(segment, localTime, treeList, createStaticResult, clampProgress) {
+    static getTransitionFrame(segment, localTime, treeList, createStaticFrame, clampProgress) {
         const resolved = this.resolveInterval(segment.timing, localTime);
         const interval = resolved?.interval;
 
         if (!interval) {
             const fallbackIndex = segment.interpolationData?.[0]?.originalIndex ?? 0;
-            return createStaticResult(fallbackIndex, treeList);
+            return createStaticFrame(fallbackIndex, treeList);
         }
 
         if (TimelineInterval.isHold(interval)) {
-            return createStaticResult(interval.holdIndex, treeList, {
+            return createStaticFrame(interval.holdIndex, treeList, {
                 holdKind: interval.holdKind
             });
         }
@@ -87,13 +87,13 @@ export class TimelineTimingResolver {
             ? clampProgress(resolved.timeInInterval / resolved.duration)
             : 1;
 
-        return {
-            fromTree: treeList[fromIndex],
-            toTree: treeList[toIndex],
-            timeFactor,
-            fromIndex,
-            toIndex
-        };
+        return TransitionFrame.from({
+            sourceTree: treeList[fromIndex],
+            targetTree: treeList[toIndex],
+            transitionProgress: timeFactor,
+            sourceTreeIndex: fromIndex,
+            targetTreeIndex: toIndex
+        });
     }
 
     static getTargetTree(segment, localTime, segmentIndex, segmentProgress, bias, clampProgress) {
@@ -119,11 +119,16 @@ export class TimelineTimingResolver {
         const timeFactor = resolved.duration > 0
             ? clampProgress(resolved.timeInInterval / resolved.duration)
             : 1;
+        const transitionFrame = TransitionFrame.from({
+            sourceTreeIndex: interval.fromIndex,
+            targetTreeIndex: interval.toIndex,
+            transitionProgress: timeFactor
+        });
         const treeIndex = bias === 'forward'
             ? interval.toIndex
             : (bias === 'backward'
                 ? interval.fromIndex
-                : resolveCursorTreeIndex(interval.fromIndex, interval.toIndex, timeFactor));
+                : transitionFrame.cursorTreeIndex);
 
         return {
             treeIndex,

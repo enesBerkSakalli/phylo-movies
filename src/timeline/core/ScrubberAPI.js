@@ -1,8 +1,4 @@
 import { TimelineMathUtils } from '../math/TimelineMathUtils.js';
-import {
-  resolveCursorTreeIndex,
-  resolveHighlightTreeIndex
-} from '../../domain/indexing/treeIndexSemantics.js';
 
 // ============================================================================
 // SCRUBBER API
@@ -15,7 +11,7 @@ export class ScrubberAPI {
     this.timelineManager = timelineManager;
     this.store = store;
     this.currentProgress = 0;
-    this.lastInterpolationState = null;
+    this.lastTransitionState = null;
     this.pendingProgress = null;
     this.processingPromise = null;
   }
@@ -26,7 +22,7 @@ export class ScrubberAPI {
 
   async startScrubbing(progress) {
     this.currentProgress = TimelineMathUtils.clampProgress(progress ?? 0);
-    this.lastInterpolationState = null;
+    this.lastTransitionState = null;
     this.pendingProgress = null;
   }
 
@@ -49,14 +45,14 @@ export class ScrubberAPI {
       await this.processingPromise;
     }
 
-    const snapshot = this.lastInterpolationState;
-    this.lastInterpolationState = null;
+    const snapshot = this.lastTransitionState;
+    this.lastTransitionState = null;
     this.pendingProgress = null;
     return snapshot;
   }
 
   destroy() {
-    this.lastInterpolationState = null;
+    this.lastTransitionState = null;
     this.pendingProgress = null;
     this.processingPromise = null;
     this.treeController = null;
@@ -71,21 +67,16 @@ export class ScrubberAPI {
   async _performScrubUpdate(progress) {
     this.currentProgress = progress;
     try {
-      const interpolationData = await this._getInterpolationData(progress);
-      if (!interpolationData) return;
+      const transitionFrame = await this._getTransitionFrame(progress);
+      if (!transitionFrame) return;
 
       const state = this.store.getState();
       const direction = state.navigationDirection;
-      const primaryTreeIndex = resolveCursorTreeIndex(
-        interpolationData.fromIndex,
-        interpolationData.toIndex,
-        interpolationData.timeFactor
-      );
 
-      state.setTimelineProgress(progress, primaryTreeIndex);
-      await this._renderScrubFrame(interpolationData, direction);
+      state.setTimelineProgress(progress, transitionFrame.cursorTreeIndex);
+      await this._renderScrubFrame(transitionFrame, direction);
 
-      this.lastInterpolationState = { progress, interpolationData, direction };
+      this.lastTransitionState = { progress, transitionFrame, direction };
     } catch (error) {
       console.error('[ScrubberAPI] Scrub update failed:', {
         progress,
@@ -118,37 +109,38 @@ export class ScrubberAPI {
   // RENDERING
   // ==========================================================================
 
-  async _renderScrubFrame(interpolationData, direction) {
-    const { fromTree, toTree, timeFactor, fromIndex, toIndex } = interpolationData;
+  async _renderScrubFrame(transitionFrame, direction) {
     const state = this.store.getState();
-    const semanticTreeIndex = resolveHighlightTreeIndex(fromIndex, toIndex, timeFactor);
 
-    state.updateColorManagerForIndex?.(semanticTreeIndex);
+    state.updateColorManagerForIndex?.(transitionFrame.highlightTreeIndex);
 
-    const options = {
+    const options = transitionFrame.toRenderOptions({
       scrubMode: true,
-      direction,
-      fromTreeIndex: fromIndex,
-      toTreeIndex: toIndex,
-    };
+      direction
+    });
 
     if (state.comparisonMode) {
       const anchors = this.transitionResolver?.fullTreeIndices ?? [];
       options.comparisonMode = true;
-      options.rightTreeIndex = anchors.find((i) => i > fromIndex) ?? anchors[anchors.length - 1];
+      options.rightTreeIndex = anchors.find((i) => i > transitionFrame.sourceTreeIndex) ?? anchors[anchors.length - 1];
     }
 
-    await this.treeController.renderComparisonAwareScrubFrame(fromTree, toTree, timeFactor, options);
+    await this.treeController.renderComparisonAwareScrubFrame(
+      transitionFrame.sourceTree,
+      transitionFrame.targetTree,
+      transitionFrame.renderProgress,
+      options
+    );
   }
   // ==========================================================================
-  // INTERPOLATION DATA
+  // TRANSITION FRAME
   // ==========================================================================
 
-  async _getInterpolationData(progress) {
+  async _getTransitionFrame(progress) {
     if (!this.timelineManager) {
       return null;
     }
 
-    return this.timelineManager.getInterpolationDataForTimelineProgress(progress);
+    return this.timelineManager.getTransitionFrameForTimelineProgress(progress);
   }
 }
