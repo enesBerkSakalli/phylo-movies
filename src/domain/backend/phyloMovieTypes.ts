@@ -7,8 +7,12 @@ export interface TreeNode {
 
 export interface TreeMetadata {
   tree_pair_key: string | null;
+  /** One-based local frame ordinal within a tree-pair interpolation, not a semantic phase id. */
   step_in_pair: number | null;
   source_tree_global_index: number | null;
+  frame_type?: 'input_tree' | 'interpolation_frame';
+  state_semantics?: 'processed_input_tree' | 'algorithmic_intermediate';
+  is_observed_input?: boolean;
 }
 
 export interface SprPathSegment {
@@ -20,7 +24,7 @@ export interface SprMoveEvent {
   pivot_edge: number[];
   /** Planner-selected subtree that physically moves for this SPR event. */
   driver_subtree: number[];
-  /** Visual context for this event; may include related non-driver subtrees. */
+  /** Active mover highlight groups for this event; excludes passive context clades. */
   highlight_group: number[][];
   step_range: [number, number];
   collapse_path: SprPathSegment[];
@@ -75,11 +79,24 @@ export interface PhyloMovieData {
   distances: {
     robinson_foulds: number[];
     weighted_robinson_foulds: number[];
+    semantics?: {
+      robinson_foulds?: {
+        topology?: string;
+        normalization?: string;
+        scope?: string;
+      };
+      weighted_robinson_foulds?: {
+        topology?: string;
+        includes_branch_lengths?: boolean;
+        includes_terminal_and_root_splits?: boolean;
+        scope?: string;
+      };
+    };
   };
   tree_pair_solutions: Record<string, TreePairSolution>;
   pair_interpolation_ranges: Array<[number, number]>;
   pivot_edge_tracking: Array<number[] | null>;
-  /** Per-frame visual/highlight groups, not movement ownership. */
+  /** Per-frame active mover highlight groups. */
   subtree_highlight_tracking: SubtreeHighlightTracking;
   msa: MsaData;
   sorted_leaves: string[];

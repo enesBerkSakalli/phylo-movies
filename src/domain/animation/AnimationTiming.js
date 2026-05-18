@@ -82,3 +82,8 @@ export function calculatePlaybackState({
     isInPause
   };
 }
+
+export function resolveTransitionSemanticIndex(fromIndex, toIndex, timeFactor) {
+  const t = Number.isFinite(timeFactor) ? timeFactor : 0;
+  return t <= 1e-6 ? fromIndex : toIndex;
+}
