@@ -112,6 +112,27 @@ describe('ScrubberAPI', () => {
     expect(useAppStore.getState().currentTreeIndex).to.equal(2);
   });
 
+  it('uses target-frame highlights as soon as scrubbed transition motion begins', async () => {
+    const movieData = createMovieData();
+    const timelineManager = createTimelineManager(movieData);
+    const highlightIndices = [];
+
+    useAppStore.setState({
+      updateColorManagerForCurrentIndex: () => {},
+      updateColorManagerForIndex: (treeIndex) => highlightIndices.push(treeIndex)
+    });
+
+    const treeController = {
+      renderComparisonAwareScrubFrame: async () => {}
+    };
+
+    const api = new ScrubberAPI(treeController, {}, timelineManager, useAppStore);
+    await api.startScrubbing(0);
+    await api.updatePosition(0.1);
+
+    expect(highlightIndices).to.deep.equal([1]);
+  });
+
   it('flushes the latest requested progress before ending a scrub', async () => {
     const movieData = createMovieData();
     const timelineManager = createTimelineManager(movieData);

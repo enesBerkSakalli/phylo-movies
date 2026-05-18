@@ -1,4 +1,5 @@
 import { TimelineMathUtils } from '../math/TimelineMathUtils.js';
+import { resolveTransitionSemanticIndex } from '../../domain/animation/AnimationTiming.js';
 
 // ============================================================================
 // SCRUBBER API
@@ -115,9 +116,9 @@ export class ScrubberAPI {
   async _renderScrubFrame(interpolationData, direction) {
     const { fromTree, toTree, timeFactor, fromIndex, toIndex } = interpolationData;
     const state = this.store.getState();
-    const primaryTreeIndex = timeFactor < 0.5 ? fromIndex : toIndex;
+    const semanticTreeIndex = resolveTransitionSemanticIndex(fromIndex, toIndex, timeFactor);
 
-    state.updateColorManagerForIndex?.(primaryTreeIndex);
+    state.updateColorManagerForIndex?.(semanticTreeIndex);
 
     const options = {
       scrubMode: true,

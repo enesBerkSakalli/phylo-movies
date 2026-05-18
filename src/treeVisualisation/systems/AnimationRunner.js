@@ -1,6 +1,9 @@
 import { detectAnimationStage } from '../deckgl/interpolation/stages/animationStageDetector.js';
 import { applyStageEasing } from '../deckgl/interpolation/stages/stageEasing.js';
-import { calculatePlaybackState } from '../../domain/animation/AnimationTiming.js';
+import {
+  calculatePlaybackState,
+  resolveTransitionSemanticIndex
+} from '../../domain/animation/AnimationTiming.js';
 import { selectActiveTreeList } from '../../state/phyloStore/selectors/treeSelectors.js';
 
 /**
@@ -50,6 +53,7 @@ export class AnimationRunner {
       toIndex: -1,
       fromLayoutCacheKey: null,
       toLayoutCacheKey: null,
+      transitionChangeModel: null,
       stage: null
     };
 
@@ -157,7 +161,7 @@ export class AnimationRunner {
 
     if (!fromTree) return true; // End of list safety
 
-    const { dataFrom, dataTo } = this.getOrCacheInterpolationData(fromTree, toTree, fromIndex, toIndex);
+    const { dataFrom, dataTo, transitionChangeModel } = this.getOrCacheInterpolationData(fromTree, toTree, fromIndex, toIndex);
 
     // 3. Robustness: Missing Data Policy
     if (!dataFrom || !dataTo) {
@@ -174,16 +178,24 @@ export class AnimationRunner {
       this._stageCache.fromIndex === fromIndex &&
       this._stageCache.toIndex === toIndex &&
       this._stageCache.fromLayoutCacheKey === fromLayoutCacheKey &&
-      this._stageCache.toLayoutCacheKey === toLayoutCacheKey
+      this._stageCache.toLayoutCacheKey === toLayoutCacheKey &&
+      this._stageCache.transitionChangeModel === transitionChangeModel
     ) {
       stage = this._stageCache.stage;
     } else {
-      stage = detectAnimationStage(dataFrom, dataTo);
-      this._stageCache = { fromIndex, toIndex, fromLayoutCacheKey, toLayoutCacheKey, stage };
+      stage = detectAnimationStage(dataFrom, dataTo, transitionChangeModel);
+      this._stageCache = {
+        fromIndex,
+        toIndex,
+        fromLayoutCacheKey,
+        toLayoutCacheKey,
+        transitionChangeModel,
+        stage
+      };
     }
 
     this._syncStore(timestamp, progress, stage, isFinished);
-    this.syncHighlightsForIndex(localT < 0.5 ? fromIndex : toIndex);
+    this.syncHighlightsForIndex(resolveTransitionSemanticIndex(fromIndex, toIndex, localT));
 
     // 5. Easing & Render
     // Check running state again before expensive async render/interpolation.
