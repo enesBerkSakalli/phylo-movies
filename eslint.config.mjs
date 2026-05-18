@@ -21,7 +21,7 @@ export default tseslint.config(
     files: [
       'src/**/*.{js,jsx,ts,tsx}',
       'test/**/*.{js,jsx,ts,tsx}',
-      'scripts/**/*.js',
+      'scripts/**/*.{js,mjs}',
       'vite.config.mts',
       'vitest.config.js',
     ],
