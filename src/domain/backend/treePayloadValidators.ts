@@ -7,7 +7,7 @@ import {
   requiredRecord,
   validateInteger,
   validateIndex,
-  validateNullableNumber,
+  validateNullableInteger,
   validateParallelLength,
   validateRangeTuple,
 } from './schemaValidation';
@@ -51,17 +51,35 @@ function validateTreeMetadata(value: unknown, index: number): TreeMetadata {
     throw new Error(`Invalid phyloMovieData payload: tree_metadata[${index}].tree_pair_key must be a string or null`);
   }
 
-  const stepInPair = validateNullableNumber(metadata.step_in_pair, `tree_metadata[${index}].step_in_pair`);
-  const sourceTreeGlobalIndex = validateNullableNumber(
+  const stepInPair = validateNullableInteger(metadata.step_in_pair, `tree_metadata[${index}].step_in_pair`);
+  const sourceTreeGlobalIndex = validateNullableInteger(
     metadata.source_tree_global_index,
     `tree_metadata[${index}].source_tree_global_index`
   );
+  const frameType = validateOptionalTreeFrameType(metadata.frame_type, index);
+  const stateSemantics = validateOptionalTreeStateSemantics(metadata.state_semantics, index);
+  const isObservedInput = validateOptionalBoolean(
+    metadata.is_observed_input,
+    `tree_metadata[${index}].is_observed_input`
+  );
 
-  return {
+  const validated: TreeMetadata = {
     tree_pair_key: metadata.tree_pair_key,
     step_in_pair: stepInPair,
     source_tree_global_index: sourceTreeGlobalIndex,
   };
+
+  if (frameType !== undefined) {
+    validated.frame_type = frameType;
+  }
+  if (stateSemantics !== undefined) {
+    validated.state_semantics = stateSemantics;
+  }
+  if (isObservedInput !== undefined) {
+    validated.is_observed_input = isObservedInput;
+  }
+
+  return validated;
 }
 
 export function validateTreeMetadataList(value: unknown, treeCount: number): TreeMetadata[] {
@@ -128,13 +146,121 @@ export function validatePairInterpolationRanges(value: unknown, treeCount: numbe
 export function validateDistances(value: unknown): PhyloMovieData['distances'] {
   assertRecord(value, 'distances');
 
-  return {
+  const validated: PhyloMovieData['distances'] = {
     robinson_foulds: requiredNumberArray(value.robinson_foulds, 'distances.robinson_foulds'),
     weighted_robinson_foulds: requiredNumberArray(
       value.weighted_robinson_foulds,
       'distances.weighted_robinson_foulds'
     ),
   };
+
+  const semantics = validateDistanceSemantics(value.semantics);
+  if (semantics !== undefined) {
+    validated.semantics = semantics;
+  }
+
+  return validated;
+}
+
+function validateOptionalTreeFrameType(value: unknown, index: number): TreeMetadata['frame_type'] {
+  if (value === undefined) return undefined;
+  if (value !== 'input_tree' && value !== 'interpolation_frame') {
+    throw new Error(
+      `Invalid phyloMovieData payload: tree_metadata[${index}].frame_type must be input_tree or interpolation_frame`
+    );
+  }
+  return value;
+}
+
+function validateOptionalTreeStateSemantics(value: unknown, index: number): TreeMetadata['state_semantics'] {
+  if (value === undefined) return undefined;
+  if (value !== 'processed_input_tree' && value !== 'algorithmic_intermediate') {
+    throw new Error(
+      `Invalid phyloMovieData payload: tree_metadata[${index}].state_semantics must be processed_input_tree or algorithmic_intermediate`
+    );
+  }
+  return value;
+}
+
+function validateOptionalBoolean(value: unknown, fieldName: string): boolean | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== 'boolean') {
+    throw new Error(`Invalid phyloMovieData payload: ${fieldName} must be a boolean`);
+  }
+  return value;
+}
+
+function validateOptionalString(value: unknown, fieldName: string): string | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== 'string') {
+    throw new Error(`Invalid phyloMovieData payload: ${fieldName} must be a string`);
+  }
+  return value;
+}
+
+function validateDistanceSemantics(value: unknown): PhyloMovieData['distances']['semantics'] {
+  if (value === undefined) return undefined;
+  assertRecord(value, 'distances.semantics');
+
+  const semantics: NonNullable<PhyloMovieData['distances']['semantics']> = {};
+
+  if (value.robinson_foulds !== undefined) {
+    assertRecord(value.robinson_foulds, 'distances.semantics.robinson_foulds');
+    semantics.robinson_foulds = {};
+
+    const topology = validateOptionalString(
+      value.robinson_foulds.topology,
+      'distances.semantics.robinson_foulds.topology'
+    );
+    const normalization = validateOptionalString(
+      value.robinson_foulds.normalization,
+      'distances.semantics.robinson_foulds.normalization'
+    );
+    const scope = validateOptionalString(
+      value.robinson_foulds.scope,
+      'distances.semantics.robinson_foulds.scope'
+    );
+
+    if (topology !== undefined) semantics.robinson_foulds.topology = topology;
+    if (normalization !== undefined) semantics.robinson_foulds.normalization = normalization;
+    if (scope !== undefined) semantics.robinson_foulds.scope = scope;
+  }
+
+  if (value.weighted_robinson_foulds !== undefined) {
+    assertRecord(
+      value.weighted_robinson_foulds,
+      'distances.semantics.weighted_robinson_foulds'
+    );
+    semantics.weighted_robinson_foulds = {};
+
+    const topology = validateOptionalString(
+      value.weighted_robinson_foulds.topology,
+      'distances.semantics.weighted_robinson_foulds.topology'
+    );
+    const includesBranchLengths = validateOptionalBoolean(
+      value.weighted_robinson_foulds.includes_branch_lengths,
+      'distances.semantics.weighted_robinson_foulds.includes_branch_lengths'
+    );
+    const includesTerminalAndRootSplits = validateOptionalBoolean(
+      value.weighted_robinson_foulds.includes_terminal_and_root_splits,
+      'distances.semantics.weighted_robinson_foulds.includes_terminal_and_root_splits'
+    );
+    const scope = validateOptionalString(
+      value.weighted_robinson_foulds.scope,
+      'distances.semantics.weighted_robinson_foulds.scope'
+    );
+
+    if (topology !== undefined) semantics.weighted_robinson_foulds.topology = topology;
+    if (includesBranchLengths !== undefined) {
+      semantics.weighted_robinson_foulds.includes_branch_lengths = includesBranchLengths;
+    }
+    if (includesTerminalAndRootSplits !== undefined) {
+      semantics.weighted_robinson_foulds.includes_terminal_and_root_splits = includesTerminalAndRootSplits;
+    }
+    if (scope !== undefined) semantics.weighted_robinson_foulds.scope = scope;
+  }
+
+  return semantics;
 }
 
 export function validateNullableNumberArrayTracking(

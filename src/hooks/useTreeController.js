@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useAppStore } from '../state/phyloStore/store.js';
 import { DeckGLTreeAnimationController } from '../treeVisualisation/DeckGLTreeAnimationController.js';
 import { calculateWindow } from '../domain/msa/msaWindowCalculator.js';
+import { getMsaColumnCount } from '../domain/msa/msaSequenceSummary.js';
 import { getMSAFrameIndex } from '../domain/indexing/IndexMapping.js';
 
 // =============================================================================
@@ -113,7 +114,8 @@ export function useTreeController() {
 
     const syncMsaRegion = ({ force = false } = {}) => {
       const state = useAppStore.getState();
-      if (!state.syncMSAEnabled || !state.transitionResolver || !state.msaColumnCount) {
+      const msaColumnCount = getMsaColumnCount(state.msaSequences);
+      if (!state.syncMSAEnabled || !state.transitionResolver || !msaColumnCount) {
         if (force) {
           state.clearMsaRegion?.();
           state.clearMsaPreviousRegion?.();
@@ -137,7 +139,7 @@ export function useTreeController() {
         frameIndex,
         state.msaStepSize,
         state.msaWindowSize,
-        state.msaColumnCount
+        msaColumnCount
       );
       state.setMsaRegion(windowData.startPosition, windowData.endPosition);
     };
@@ -199,7 +201,7 @@ export function useTreeController() {
         state.syncMSAEnabled !== prevState.syncMSAEnabled ||
         state.msaWindowSize !== prevState.msaWindowSize ||
         state.msaStepSize !== prevState.msaStepSize ||
-        state.msaColumnCount !== prevState.msaColumnCount
+        state.msaSequences !== prevState.msaSequences
       ) {
         syncMsaRegion({ force: true });
         scheduleRender();

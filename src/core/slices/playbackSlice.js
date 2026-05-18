@@ -74,9 +74,8 @@ export const createPlaybackSlice = (set, get) => ({
       animationStartTime: adjustedStartTime,
       ...createPlayheadState({
         animationProgress: initialProgress,
-        timelineProgress: initialTimelineProgress,
-        currentTreeIndex: progressToTreeIndex(initialProgress, totalTrees)
-      })
+        timelineProgress: initialTimelineProgress
+      }, progressToTreeIndex(initialProgress, totalTrees))
     });
   },
 
@@ -95,7 +94,7 @@ export const createPlaybackSlice = (set, get) => ({
       ...createPlayheadState({
         ...getCurrentPlayhead(state),
         timelineProgress: weightedTimelineProgress ?? animationProgress
-      })
+      }, state.currentTreeIndex)
     });
   },
 
@@ -139,9 +138,8 @@ export const createPlaybackSlice = (set, get) => ({
       navigationDirection: navDirection,
       ...createPlayheadState({
         animationProgress: newAnimationProgress,
-        timelineProgress: newTimelineProgress ?? newAnimationProgress,
-        currentTreeIndex: newIndex
-      })
+        timelineProgress: newTimelineProgress ?? newAnimationProgress
+      }, newIndex)
     });
   },
 
@@ -213,7 +211,7 @@ export const createPlaybackSlice = (set, get) => ({
       ...createPlayheadState({
         ...currentPlayhead,
         timelineProgress: newTimelineProgress
-      })
+      }, state.currentTreeIndex)
     });
   },
 
@@ -234,9 +232,8 @@ export const createPlaybackSlice = (set, get) => ({
     set({
       ...createPlayheadState({
         animationProgress: clampedProgress,
-        timelineProgress,
-        currentTreeIndex: clamp(currentTreeIndex, 0, totalTrees - 1)
-      })
+        timelineProgress
+      }, clamp(currentTreeIndex, 0, totalTrees - 1))
     });
   },
 
@@ -256,14 +253,18 @@ export const createPlaybackSlice = (set, get) => ({
       navigationDirection: 'jump',
       ...createPlayheadState({
         animationProgress,
-        timelineProgress: clampedProgress,
-        currentTreeIndex: clampedTreeIndex
-      })
+        timelineProgress: clampedProgress
+      }, clampedTreeIndex)
     });
   },
 
   setPlayhead: (nextPlayhead) => {
-    set(createPlayheadState(nextPlayhead));
+    const playhead = createPlayhead(nextPlayhead);
+    const treeCount = get().treeList?.length ?? 0;
+    set({
+      playhead,
+      currentTreeIndex: progressToTreeIndex(playhead.animationProgress, treeCount)
+    });
   },
 
   // ==========================================================================
@@ -294,22 +295,21 @@ function createPlayhead(playhead = {}) {
   const timelineProgress = Number.isFinite(playhead.timelineProgress)
     ? clamp(playhead.timelineProgress, 0, 1)
     : null;
-  const currentTreeIndex = Number.isFinite(playhead.currentTreeIndex)
-    ? Math.max(0, Math.floor(playhead.currentTreeIndex))
-    : 0;
 
   return {
     animationProgress,
-    timelineProgress,
-    currentTreeIndex
+    timelineProgress
   };
 }
 
-function createPlayheadState(playhead = {}) {
+function createPlayheadState(playhead = {}, currentTreeIndex = 0) {
   const nextPlayhead = createPlayhead(playhead);
+  const nextTreeIndex = Number.isFinite(currentTreeIndex)
+    ? Math.max(0, Math.floor(currentTreeIndex))
+    : 0;
   return {
     playhead: nextPlayhead,
-    currentTreeIndex: nextPlayhead.currentTreeIndex
+    currentTreeIndex: nextTreeIndex
   };
 }
 

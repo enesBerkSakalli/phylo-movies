@@ -89,6 +89,11 @@ export function validateNullableNumber(value: unknown, fieldName: string): numbe
   return value;
 }
 
+export function validateNullableInteger(value: unknown, fieldName: string): number | null {
+  if (value === null) return null;
+  return validateInteger(value, fieldName);
+}
+
 export function validateParallelLength(array: unknown[], fieldName: string, treeCount: number): void {
   if (array.length !== treeCount) {
     throw new Error(

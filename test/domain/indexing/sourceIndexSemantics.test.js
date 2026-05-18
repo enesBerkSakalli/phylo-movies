@@ -11,7 +11,7 @@ describe('source tree index semantics', () => {
       { tree_pair_key: null, step_in_pair: null, source_tree_global_index: null },
       { tree_pair_key: 'pair_5_8', step_in_pair: 1, source_tree_global_index: 3 },
       { tree_pair_key: null, step_in_pair: null, source_tree_global_index: null },
-    ], null, null, [[0, 3], [3, 5]]);
+    ], [[0, 3], [3, 5]]);
 
     expect(resolver.getSourceGlobalIndex(2)).toBe(0);
     expect(resolver.getSourceGlobalIndex(4)).toBe(3);

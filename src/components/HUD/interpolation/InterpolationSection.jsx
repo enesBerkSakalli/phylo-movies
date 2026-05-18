@@ -1,12 +1,10 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { BarChart2 } from 'lucide-react';
 import { Badge } from '../../ui/badge';
 import { AppTooltip } from '../../ui/app-tooltip';
-import { getIndexMappings } from '../../../domain/indexing/IndexMapping';
 import { useAppStore } from '../../../state/phyloStore/store.js';
 import {
   buildSegmentText,
-  selectActiveTreeListLength,
   selectCurrentTreeIndex,
   selectTransitionResolver,
 } from '../shared/hudShared.js';
@@ -14,15 +12,8 @@ import {
 export function InterpolationSection() {
   const currentTreeIndex = useAppStore(selectCurrentTreeIndex);
   const transitionResolver = useAppStore(selectTransitionResolver);
-  const treeListLength = useAppStore(selectActiveTreeListLength);
 
-  const proxyState = useMemo(
-    () => ({ currentTreeIndex, transitionResolver, treeList: { length: treeListLength } }),
-    [currentTreeIndex, transitionResolver, treeListLength]
-  );
-
-  const { sequenceIndex } = getIndexMappings(proxyState);
-  const segmentText = buildSegmentText(sequenceIndex, transitionResolver);
+  const segmentText = buildSegmentText(currentTreeIndex, transitionResolver);
   const tooltipText = getTimelineTooltipText(segmentText);
 
   return (

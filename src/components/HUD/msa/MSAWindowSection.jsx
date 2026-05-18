@@ -1,10 +1,9 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Dna } from 'lucide-react';
 import { AppTooltip } from '../../ui/app-tooltip';
 import { useAppStore } from '../../../state/phyloStore/store.js';
 import {
   buildMsaWindow,
-  selectActiveTreeListLength,
   selectCurrentTreeIndex,
   selectHasMsa,
   selectMsaColumnCount,
@@ -17,17 +16,11 @@ export function MSAWindowSection() {
   const hasMsa = useAppStore(selectHasMsa);
   const currentTreeIndex = useAppStore(selectCurrentTreeIndex);
   const transitionResolver = useAppStore(selectTransitionResolver);
-  const treeListLength = useAppStore(selectActiveTreeListLength);
   const msaWindowSize = useAppStore(selectMsaWindowSize);
   const msaStepSize = useAppStore(selectMsaStepSize);
   const msaColumnCount = useAppStore(selectMsaColumnCount);
 
-  const proxyState = useMemo(
-    () => ({ currentTreeIndex, transitionResolver, treeList: { length: treeListLength } }),
-    [currentTreeIndex, transitionResolver, treeListLength]
-  );
-
-  const msaWindow = buildMsaWindow(hasMsa, proxyState, msaStepSize, msaWindowSize, msaColumnCount);
+  const msaWindow = buildMsaWindow(hasMsa, currentTreeIndex, transitionResolver, msaStepSize, msaWindowSize, msaColumnCount);
 
   return (
     <div className="flex items-center gap-3" id="hud-msa-window-item">

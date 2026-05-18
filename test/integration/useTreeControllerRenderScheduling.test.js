@@ -115,7 +115,7 @@ describe('useTreeController static render scheduling', () => {
       comparisonMode: false,
       transitionResolver: null,
       currentTreeIndex: 0,
-      playhead: { timelineProgress: 0.1, animationProgress: 0.1, currentTreeIndex: 0 },
+      playhead: { timelineProgress: 0.1, animationProgress: 0.1 },
       setRenderInProgress: vi.fn(),
       syncMSAEnabled: false,
       clearMsaRegion: vi.fn(),
@@ -146,7 +146,7 @@ describe('useTreeController static render scheduling', () => {
     expect(controllerInstance.renderTimelineProgress).toHaveBeenCalledWith(0.1);
 
     updateStore({
-      playhead: { timelineProgress: 0.9, animationProgress: 0.9, currentTreeIndex: 0 }
+      playhead: { timelineProgress: 0.9, animationProgress: 0.9 }
     });
     await flushNextRaf();
 

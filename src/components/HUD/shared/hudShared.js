@@ -1,4 +1,4 @@
-import { getMSAFrameIndex } from '../../../domain/indexing/IndexMapping';
+import { getMSAFrameIndexForTimelineIndex } from '../../../domain/indexing/IndexMapping';
 import { calculateWindow } from '../../../domain/msa/msaWindowCalculator';
 import {
   selectActiveTreeListLength,
@@ -108,8 +108,8 @@ export function buildSegmentText(sequenceIndex, transitionResolver) {
   return 'Source tree';
 }
 
-export function buildMsaWindow(hasMsa, indexState, msaStepSize, msaWindowSize, msaColumnCount) {
+export function buildMsaWindow(hasMsa, currentTreeIndex, transitionResolver, msaStepSize, msaWindowSize, msaColumnCount) {
   if (!hasMsa) return null;
-  const frame = getMSAFrameIndex(indexState);
+  const frame = getMSAFrameIndexForTimelineIndex(currentTreeIndex, transitionResolver);
   return calculateWindow(frame, msaStepSize, msaWindowSize, msaColumnCount || 0);
 }

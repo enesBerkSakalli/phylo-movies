@@ -72,7 +72,16 @@ describe('phylo store dataset normalization', () => {
     vi.unstubAllGlobals();
   });
 
-  it('stores derived tree lookup data once during dataset initialization', () => {
+  it('uses stable empty selector defaults before dataset initialization', () => {
+    const state = useAppStore.getState();
+
+    expect(phyloStoreModule.selectFullTreeIndices(state)).toBe(phyloStoreModule.selectFullTreeIndices(state));
+    expect(phyloStoreModule.selectPairInterpolationRanges(state)).toBe(phyloStoreModule.selectPairInterpolationRanges(state));
+    expect(phyloStoreModule.selectDistanceRfd(state)).toBe(phyloStoreModule.selectDistanceRfd(state));
+    expect(phyloStoreModule.selectDistanceWeightedRfd(state)).toBe(phyloStoreModule.selectDistanceWeightedRfd(state));
+  });
+
+  it('stores canonical dataset data and derives tree lookup selectors', () => {
     const movieData = makeMovieData();
 
     useAppStore.getState().initialize(movieData);
@@ -85,21 +94,30 @@ describe('phylo store dataset normalization', () => {
     expect(state.msaSequences).toBe(movieData.msa.sequences);
     expect(state.subtreeHighlightTracking).toEqual([null, [[1]], null]);
     expect(state.splitChangeTimeline).toBe(movieData.split_change_timeline);
-    expect(state.fullTreeIndices).toEqual([0, 2]);
-    expect(state.pairInterpolationRanges).toEqual([[0, 2]]);
-    expect(state.treeIndexByPair).toEqual({ pair_0_2: [1] });
+    expect(state.treeDistances).toBe(movieData.distances);
+    expect(phyloStoreModule.selectFullTreeIndices(state)).toEqual([0, 2]);
+    expect(phyloStoreModule.selectPairInterpolationRanges(state)).toEqual([[0, 2]]);
+    expect(phyloStoreModule.selectDistanceRfd(state)).toBe(movieData.distances.robinson_foulds);
+    expect(phyloStoreModule.selectDistanceWeightedRfd(state)).toBe(movieData.distances.weighted_robinson_foulds);
+    expect(Object.prototype.hasOwnProperty.call(state, 'fullTreeIndices')).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(state, 'pairInterpolationRanges')).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(state, 'treeIndexByPair')).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(state, 'distanceRfd')).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(state, 'distanceWeightedRfd')).toBe(false);
   });
 
-  it('stores scale metadata without the legacy scale duplicate', () => {
+  it('derives scale metadata without storing scale duplicates', () => {
     useAppStore.getState().initialize(makeMovieData());
 
     const legacyScaleKey = ['scale', 'Values'].join('');
     const state = useAppStore.getState();
-    expect(state.scaleList).toEqual([
+    expect(phyloStoreModule.selectScaleList(state)).toEqual([
       { index: 0, value: 0 },
       { index: 2, value: 0 },
     ]);
-    expect(state.maxScale).toBe(0);
+    expect(phyloStoreModule.selectMaxScale(state)).toBe(0);
+    expect(Object.prototype.hasOwnProperty.call(state, 'scaleList')).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(state, 'maxScale')).toBe(false);
     expect(Object.prototype.hasOwnProperty.call(state, legacyScaleKey)).toBe(false);
   });
 
