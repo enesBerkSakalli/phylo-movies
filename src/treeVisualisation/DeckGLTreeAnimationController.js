@@ -99,19 +99,24 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
       renderComparisonFrame: this._renderComparisonFrameForRunner.bind(this),
       setAnimationStage: (stage) => useAppStore.getState().setAnimationStage(stage),
       syncHighlightsForIndex: (treeIndex) => useAppStore.getState().updateColorManagerForIndex?.(treeIndex),
-      updateProgress: (progress) => {
+      updateProgress: (progress, playbackState = {}) => {
         // Manual store update to keep UI in sync without driving logic
         const state = useAppStore.getState();
         const treeList = selectActiveTreeList(state);
         const totalTrees = treeList?.length || 0;
-        const currentTreeIndex = totalTrees > 0
+        const derivedTreeIndex = totalTrees > 0
           ? Math.min(Math.floor(progress * (totalTrees - 1)), totalTrees - 1)
           : 0;
-        const timelineProgress = state.movieTimelineManager?.getTimelineProgressForLinearTreeProgress?.(progress, totalTrees) ?? progress;
+        const currentTreeIndex = Number.isInteger(playbackState.currentTreeIndex)
+          ? playbackState.currentTreeIndex
+          : derivedTreeIndex;
+        const timelineProgress = Number.isFinite(playbackState.timelineProgress)
+          ? playbackState.timelineProgress
+          : (state.movieTimelineManager?.getTimelineProgressForLinearTreeProgress?.(progress, totalTrees) ?? progress);
         state.setPlayhead({
           animationProgress: progress,
           timelineProgress
-        });
+        }, currentTreeIndex);
 
         // Prefetch next frames
         if (this.animationsEnabled && totalTrees > 0) {

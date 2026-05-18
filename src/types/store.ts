@@ -179,7 +179,7 @@ export interface AppStoreState {
   updateTimelineState: (timelineState: any) => void;
   setScrubPosition: (progress: number) => void;
   setTimelineProgress: (progress: number, treeIndex: number) => void;
-  setPlayhead: (playhead: Partial<PlaybackPlayhead>) => void;
+  setPlayhead: (playhead: Partial<PlaybackPlayhead>, currentTreeIndex?: number) => void;
   setRenderInProgress: (inProgress: boolean) => void;
   resetPlayback: () => void;
 

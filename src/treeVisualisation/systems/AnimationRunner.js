@@ -194,7 +194,7 @@ export class AnimationRunner {
       };
     }
 
-    this._syncStore(timestamp, progress, stage, isFinished);
+    this._syncStore(timestamp, progress, stage, isFinished, playback);
     this.syncHighlightsForIndex(resolveTransitionSemanticIndex(fromIndex, toIndex, localT));
 
     // 5. Easing & Render
@@ -208,10 +208,14 @@ export class AnimationRunner {
     return isFinished;
   }
 
-  _syncStore(timestamp, progress, stage, isFinished) {
+  _syncStore(timestamp, progress, stage, isFinished, playback = {}) {
     // Throttle progress updates to ~10fps
     if (isFinished || timestamp - this._lastProgressSyncTime > 100) {
-      this.updateProgress(progress);
+      this.updateProgress(progress, {
+        timelineProgress: playback.timelineProgress,
+        currentTreeIndex: playback.currentTreeIndex,
+        holdKind: playback.holdKind
+      });
       this._lastProgressSyncTime = timestamp;
     }
 
@@ -255,7 +259,12 @@ function getPlaybackState(state, timestamp) {
   const { animationStartTime, animationSpeed, transitionDuration, pauseDuration } = state;
   const treeList = selectActiveTreeList(state);
   // Guard: Invalid config
-  if (!animationStartTime || !treeList || treeList.length === 0) return null;
+  if (!Number.isFinite(animationStartTime) || !treeList || treeList.length === 0) return null;
+
+  const semanticPlayback = getSemanticTimelinePlaybackState(state, timestamp, treeList);
+  if (semanticPlayback) {
+    return semanticPlayback;
+  }
 
   return calculatePlaybackState({
     timestamp,
@@ -265,6 +274,52 @@ function getPlaybackState(state, timestamp) {
     transitionDuration,
     pauseDuration
   });
+}
+
+function getSemanticTimelinePlaybackState(state, timestamp, treeList) {
+  const { animationStartTime, animationSpeed, movieTimelineManager } = state;
+  const totalDurationMs = movieTimelineManager?.timelineData?.totalDuration;
+
+  if (
+    !movieTimelineManager ||
+    typeof movieTimelineManager.getInterpolationDataForTimelineProgress !== 'function' ||
+    !Number.isFinite(totalDurationMs) ||
+    totalDurationMs <= 0
+  ) {
+    return null;
+  }
+
+  const safeSpeed = Number.isFinite(animationSpeed) && animationSpeed > 0 ? animationSpeed : 1;
+  const elapsedMs = Math.max(0, timestamp - animationStartTime) * safeSpeed;
+  const rawProgress = elapsedMs / totalDurationMs;
+  const timelineProgress = Math.max(0, Math.min(1, rawProgress));
+  const interpolation = movieTimelineManager.getInterpolationDataForTimelineProgress(timelineProgress);
+
+  if (!interpolation) {
+    return null;
+  }
+
+  const fromIndex = Number.isInteger(interpolation.fromIndex) ? interpolation.fromIndex : 0;
+  const toIndex = Number.isInteger(interpolation.toIndex) ? interpolation.toIndex : fromIndex;
+  const localT = Number.isFinite(interpolation.timeFactor)
+    ? Math.max(0, Math.min(1, interpolation.timeFactor))
+    : 0;
+  const exactTreeIndex = fromIndex + ((toIndex - fromIndex) * localT);
+  const progress = treeList.length > 1
+    ? Math.max(0, Math.min(1, exactTreeIndex / (treeList.length - 1)))
+    : 1;
+
+  return {
+    progress,
+    timelineProgress,
+    isFinished: rawProgress >= 1,
+    fromIndex,
+    toIndex,
+    localT,
+    isInPause: Boolean(interpolation.holdKind),
+    holdKind: interpolation.holdKind,
+    currentTreeIndex: resolveTransitionSemanticIndex(fromIndex, toIndex, localT)
+  };
 }
 
 /**

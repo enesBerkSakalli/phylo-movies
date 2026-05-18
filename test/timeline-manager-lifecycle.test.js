@@ -418,6 +418,51 @@ describe('MovieTimelineManager lifecycle', () => {
     }
   });
 
+  it('uses semantic timeline duration when playback resumes inside a movie hold', () => {
+    const previousPerformance = global.performance;
+    const now = 10_000;
+    global.performance = {
+      ...(previousPerformance || {}),
+      now: () => now
+    };
+
+    try {
+      const trees = [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }];
+      const timelineProgress = 1100 / 4100;
+      const manager = {
+        timelineData: { totalDuration: 4100 },
+        getInterpolationDataForTimelineProgress: () => ({
+          fromIndex: 1,
+          toIndex: 1,
+          timeFactor: 0,
+          holdKind: 'mover'
+        }),
+        getTimelineProgressForLinearTreeProgress: () => timelineProgress
+      };
+
+      useAppStore.setState({
+        treeList: trees,
+        movieTimelineManager: manager,
+        animationSpeed: 1,
+        transitionDuration: 1,
+        pauseDuration: 0,
+        playhead: {
+          animationProgress: 0,
+          timelineProgress
+        },
+        playing: false
+      });
+
+      useAppStore.getState().play();
+
+      const state = useAppStore.getState();
+      expect(state.playhead.animationProgress).to.equal(1 / 3);
+      expect(state.animationStartTime).to.equal(now - 1100);
+    } finally {
+      global.performance = previousPerformance;
+    }
+  });
+
   it('uses configured transition duration when advancing animation frames', async () => {
     let renderOptions = null;
     let renderedT = null;
@@ -458,6 +503,73 @@ describe('MovieTimelineManager lifecycle', () => {
     expect(renderOptions.fromTreeIndex).to.equal(0);
     expect(renderOptions.toTreeIndex).to.equal(1);
     expect(renderedT).to.equal(0.5);
+  });
+
+  it('uses semantic movie timeline duration when advancing animation frames', async () => {
+    const trees = [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }];
+    let timelineProgressSeen = null;
+    let cacheIndices = null;
+    let renderOptions = null;
+    let syncedProgress = null;
+    let syncedMeta = null;
+    const manager = {
+      timelineData: { totalDuration: 4100 },
+      getInterpolationDataForTimelineProgress: (progress) => {
+        timelineProgressSeen = progress;
+        return {
+          fromIndex: 1,
+          toIndex: 1,
+          timeFactor: 0,
+          holdKind: 'mover'
+        };
+      }
+    };
+
+    const runner = new AnimationRunner({
+      getState: () => ({
+        playing: true,
+        animationStartTime: 1_000,
+        animationSpeed: 1,
+        transitionDuration: 1,
+        pauseDuration: 0,
+        treeList: trees,
+        movieTimelineManager: manager,
+        comparisonMode: false
+      }),
+      getOrCacheInterpolationData: (_fromTree, _toTree, fromIndex, toIndex) => {
+        cacheIndices = { fromIndex, toIndex };
+        return {
+          dataFrom: { nodes: [] },
+          dataTo: { nodes: [] }
+        };
+      },
+      renderSingleFrame: async (_fromTree, _toTree, _easedT, options) => {
+        renderOptions = options;
+      },
+      renderComparisonFrame: async () => {},
+      setAnimationStage: () => {},
+      updateProgress: (progress, meta) => {
+        syncedProgress = progress;
+        syncedMeta = meta;
+      },
+      stopAnimation: () => {}
+    });
+
+    runner.isRunning = true;
+    const shouldStop = await runner._processFrame(2_100);
+
+    expect(shouldStop).to.equal(false);
+    expect(timelineProgressSeen).to.be.closeTo(1100 / 4100, 1e-9);
+    expect(cacheIndices).to.deep.equal({ fromIndex: 1, toIndex: 1 });
+    expect(renderOptions.fromTreeIndex).to.equal(1);
+    expect(renderOptions.toTreeIndex).to.equal(1);
+    expect(renderOptions.rawTimeFactor).to.equal(0);
+    expect(syncedProgress).to.equal(1 / 3);
+    expect(syncedMeta).to.include({
+      timelineProgress: 1100 / 4100,
+      currentTreeIndex: 1,
+      holdKind: 'mover'
+    });
   });
 
   it('syncs highlight state to the rendered playback frame before drawing', async () => {
