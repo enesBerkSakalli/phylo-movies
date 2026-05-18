@@ -87,10 +87,14 @@ export function MoviePlayerBar() {
 
   return (
     <>
-      <div className="movie-player-bar sticky bottom-0 z-[1000] bg-card border-t shadow-[0_2px_4px_rgba(0,0,0,0.08)]" role="region" aria-label="Tree Sequence Controls">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center justify-between" role="group" aria-label="Transport controls and chart controls">
-            <div className="flex items-center gap-1 flex-wrap transition-all duration-300" role="group" aria-label="Transport controls and position">
+      <div className="movie-player-bar sticky bottom-0 z-[1000] bg-card border-t shadow-[0_2px_4px_rgba(0,0,0,0.08)]" role="region" aria-label="Movie timeline controls">
+        <div className="flex flex-col">
+          <div
+            className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 border-b border-border/70 bg-muted/20 px-2 py-1"
+            role="group"
+            aria-label="Primary playback controls"
+          >
+            <div className="flex min-w-0 items-center gap-1" role="group" aria-label="Timeline navigation controls">
               <AppTooltip content="Toggle sidebar">
                 <Button
                   id="nav-toggle-button"
@@ -105,35 +109,34 @@ export function MoviePlayerBar() {
                 </Button>
               </AppTooltip>
 
-              <Separator orientation="vertical" className="h-4 mx-1" />
-
               {toolbarExpanded && (
                 <>
+                  <Separator orientation="vertical" className="mx-1 h-4" />
                   <TimelineScrollControls />
-
-                  <Separator orientation="vertical" className="h-4 mx-1" />
-
-                  <PlaybackSpeedControl
-                    value={animationSpeed}
-                    setValue={setAnimationSpeed}
-                  />
-
-                  <Separator orientation="vertical" className="h-4 mx-1" />
                 </>
               )}
+            </div>
 
+            <div className="justify-self-center rounded-md border border-border/70 bg-background/80 px-1 py-0.5 shadow-sm">
               <TransportControls
                 onBackward={backward}
                 onForward={forward}
               />
+            </div>
 
-              <Separator orientation="vertical" className="h-4 mx-1" />
+            <div className="flex min-w-0 items-center justify-end gap-2" role="group" aria-label="Playback settings">
+              {toolbarExpanded && (
+                <PlaybackSpeedControl
+                  value={animationSpeed}
+                  setValue={setAnimationSpeed}
+                />
+              )}
 
-              <AppTooltip content={toolbarExpanded ? "Collapse toolbar" : "Expand toolbar"}>
+              <AppTooltip content={toolbarExpanded ? "Collapse timeline controls" : "Expand timeline controls"}>
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  aria-label={toolbarExpanded ? "Collapse toolbar" : "Expand toolbar"}
+                  aria-label={toolbarExpanded ? "Collapse timeline controls" : "Expand timeline controls"}
                   aria-expanded={toolbarExpanded}
                   onClick={() => setToolbarExpanded(!toolbarExpanded)}
                   className="hover:bg-accent"
@@ -144,7 +147,7 @@ export function MoviePlayerBar() {
             </div>
           </div>
 
-          <div className="w-full">
+          <div className="w-full border-b border-border/60 bg-background" role="group" aria-label="Timeline track">
             <TimelineLegend hasTransitionSegments={hasTransitionSegments} />
             <div className="interpolation-timeline-container">
               <div ref={timelineHostRef} className="timeline-visual-layer" />
@@ -195,7 +198,7 @@ export function MoviePlayerBar() {
 function TimelineLegend({ hasTransitionSegments }) {
   return (
     <div
-      className="flex items-center gap-4 px-2 pt-1 pb-0.5 text-2xs font-medium text-muted-foreground"
+      className="flex flex-wrap items-center gap-x-3 gap-y-1 px-2 pt-1 pb-0.5 text-2xs font-medium text-muted-foreground"
       role="group"
       aria-label="Timeline legend"
     >
@@ -203,6 +206,7 @@ function TimelineLegend({ hasTransitionSegments }) {
       {hasTransitionSegments && (
         <LegendItem markerClassName="h-1 w-5 rounded bg-amber-600/85" label="Generated frames" />
       )}
+      <LegendItem markerClassName="h-1.5 w-5 rounded bg-emerald-600" label="Selected segment" />
       <LegendItem markerClassName="h-5 w-1 rounded bg-primary" label="Current position" />
     </div>
   );

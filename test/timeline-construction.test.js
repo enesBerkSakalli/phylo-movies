@@ -66,6 +66,33 @@ describe('Timeline construction from backend result', () => {
     expect(remainingAnchorLabelCompatibility).to.deep.equal([]);
   });
 
+  it('keeps the rendered timeline target at an accessible height', () => {
+    const cssSource = fs.readFileSync(path.join(__dirname, '..', 'src', 'css', 'movie-timeline', 'container.css'), 'utf8');
+    const defaultHeightMatch = cssSource.match(/--timeline-height,\s*(\d+)px/);
+
+    expect(defaultHeightMatch).to.not.equal(null);
+    expect(Number(defaultHeightMatch[1])).to.be.at.least(44);
+  });
+
+  it('allows timeline legend items to wrap on narrow viewports', () => {
+    const source = fs.readFileSync(path.join(__dirname, '..', 'src', 'components', 'movie-player', 'MoviePlayerBar.jsx'), 'utf8');
+    const legendClassMatch = source.match(/function TimelineLegend[\s\S]*?className="([^"]*)"[\s\S]*?aria-label="Timeline legend"/);
+
+    expect(legendClassMatch).to.not.equal(null);
+    expect(legendClassMatch[1]).to.include('flex-wrap');
+  });
+
+  it('keeps player-bar controls separated into clear workflow lanes', () => {
+    const playerBarSource = fs.readFileSync(path.join(__dirname, '..', 'src', 'components', 'movie-player', 'MoviePlayerBar.jsx'), 'utf8');
+    const chartSource = fs.readFileSync(path.join(__dirname, '..', 'src', 'components', 'movie-player', 'MovieChartSection', 'MovieChartSection.jsx'), 'utf8');
+
+    expect(playerBarSource).to.include('aria-label="Primary playback controls"');
+    expect(playerBarSource).to.include('aria-label="Timeline navigation controls"');
+    expect(playerBarSource).to.include('aria-label="Playback settings"');
+    expect(playerBarSource).to.include('aria-label="Timeline track"');
+    expect(chartSource).to.include('aria-label="Chart controls"');
+  });
+
   it('creates segments and consistent timeline data', () => {
     const { data, source } = loadMovieData();
 

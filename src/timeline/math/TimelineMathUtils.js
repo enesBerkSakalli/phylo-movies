@@ -50,7 +50,7 @@ export class TimelineMathUtils {
                     return { segmentIndex: i, timeInSegment: 0, segment };
                 }
             } else if (segment.hasInterpolation && segment.interpolationData?.length > 1) {
-                const segmentDuration = this._getSegmentDuration(segment);
+                const segmentDuration = this.calculateSegmentDuration(segment);
                 for (let j = 0; j < segment.interpolationData.length; j++) {
                     if (segment.interpolationData[j].originalIndex === treeIndex) {
                         return {
@@ -170,15 +170,17 @@ export class TimelineMathUtils {
     // ==========================================================================
 
     static calculateSegmentDurations(segments) {
-        return segments.map((segment) => {
-            if (segment.isFullTree) {
-                return TIMELINE_CONSTANTS.UNIT_DURATION_MS * 0.5;
-            }
-            if (segment.hasInterpolation && segment.interpolationData?.length > 1) {
-                return (segment.interpolationData.length - 1) * TIMELINE_CONSTANTS.UNIT_DURATION_MS;
-            }
-            return TIMELINE_CONSTANTS.UNIT_DURATION_MS;
-        });
+        return segments.map((segment) => this.calculateSegmentDuration(segment));
+    }
+
+    static calculateSegmentDuration(segment) {
+        if (segment.isFullTree) {
+            return TIMELINE_CONSTANTS.UNIT_DURATION_MS * 0.5;
+        }
+        if (segment.hasInterpolation && segment.interpolationData?.length > 1) {
+            return (segment.interpolationData.length - 1) * TIMELINE_CONSTANTS.UNIT_DURATION_MS;
+        }
+        return TIMELINE_CONSTANTS.UNIT_DURATION_MS;
     }
 
     // ==========================================================================
@@ -315,16 +317,6 @@ export class TimelineMathUtils {
             arr[i] = acc;
         }
         return arr;
-    }
-
-    static _getSegmentDuration(segment) {
-        if (segment.isFullTree) {
-            return TIMELINE_CONSTANTS.UNIT_DURATION_MS * 0.5;
-        }
-        if (segment.hasInterpolation && segment.interpolationData?.length > 1) {
-            return (segment.interpolationData.length - 1) * TIMELINE_CONSTANTS.UNIT_DURATION_MS;
-        }
-        return TIMELINE_CONSTANTS.UNIT_DURATION_MS;
     }
 
     static _getInterpolationTimeInSegment(stepIndex, totalSteps, segmentDuration) {

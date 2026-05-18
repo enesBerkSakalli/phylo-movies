@@ -14,7 +14,7 @@ export const TIMELINE_THEME = {
     connectionWidth: 4,
     connectionHoverWidth: 6,
     connectionSelectionWidth: 8,
-    connectionSelectionRGB: [64, 128, 255],
+    connectionSelectionRGB: [5, 150, 105],
     connectionHoverRGB: [128, 128, 128],
     connectionNeutralRGB: [217, 119, 6],
     stripTrackRGB: [217, 119, 6],

@@ -223,13 +223,14 @@ function calculateConnectionGaps(i, segments, anchorRadius, gapDefault) {
   };
 }
 
-export function createAnchor(id, x0, x1, width, height, theme, zoomScale, snap) {
+export function createAnchor(segmentIndex, id, x0, x1, width, height, theme, zoomScale, snap) {
   const center = (x0 + x1) / 2;
   const radius = calculateRadius(theme.anchorRadiusVar, height, zoomScale);
   const centeredX = toCanvasCentered(center, width);
   const clampedX = clampToViewport(centeredX, radius, width);
 
   return {
+    segmentIndex,
     id,
     position: [snap(clampedX), 0],
     fillColor: rgba(...theme.anchorFillRGB),
@@ -274,6 +275,7 @@ export function createConnection(i, id, x0, x1, width, height, anchorRadiusVar, 
   if (xEnd <= xStart) return null;
 
   return {
+    segmentIndex: i,
     id,
     path: [[xStart, 0], [xEnd, 0]],
     color: rgba(...connectionNeutralRGB, 220)

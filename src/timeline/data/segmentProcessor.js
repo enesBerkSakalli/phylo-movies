@@ -15,7 +15,7 @@ const MIN_SEPARATOR_HEIGHT = 6;
  */
 export function processSegments({
   startIdx, endIdx, width, height, visStart, visEnd, zoomScale, theme,
-  timelineData, segments, selectedId, lastHoverId, rangeStart, rangeEnd
+  timelineData, segments, selectedSegmentIndex, lastHoverId, rangeStart, rangeEnd
 }) {
   if (!timelineData?.cumulativeDurations || !Array.isArray(segments) || segments.length === 0) {
     return {
@@ -53,7 +53,7 @@ export function processSegments({
     if (bounds.end < visStart || bounds.start > visEnd) continue;
 
     const segmentId = toTimelineItemId(i);
-    const state = segmentId === selectedId ? 'selected' : segmentId === lastHoverId ? 'hovered' : 'normal';
+    const state = i === selectedSegmentIndex ? 'selected' : segmentId === lastHoverId ? 'hovered' : 'normal';
 
     const startX = msToX(bounds.start, rangeStart, rangeEnd, width);
     const endX = msToX(bounds.end, rangeStart, rangeEnd, width);
@@ -72,7 +72,7 @@ export function processSegments({
       }
 
       const anchor = createAnchor(
-        segmentId, startX, endX, width, height,
+        i, segmentId, startX, endX, width, height,
         theme, zoomScale, snap
       );
       if (anchor) anchorTrees[state].push(anchor);

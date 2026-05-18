@@ -71,6 +71,10 @@ export function TransportControls({
     goToNextAnchor();
   }, [goToNextAnchor, stopAnimationPlayback]);
 
+  const playbackLabel = playing ? 'Pause sequence' : 'Play sequence';
+  const comparisonLabel = comparisonMode ? 'Hide comparison view' : 'Show comparison view';
+  const viewLinkLabel = viewsConnected ? 'Unlink tree views' : 'Link tree views';
+
   return (
     <div className="flex shrink-0 items-center gap-0.5" role="group" aria-label="Playback controls">
       <AppTooltip content="Previous source tree">
@@ -101,13 +105,13 @@ export function TransportControls({
         </Button>
       </AppTooltip>
 
-      <AppTooltip content="Play/Pause animation">
+      <AppTooltip content={playbackLabel}>
         <Button
           className="transport-button"
           id="play-button"
           variant="ghost"
           size="icon"
-          aria-label="Play/Pause animation"
+          aria-label={playbackLabel}
           disabled={!canTogglePlayback}
           onClick={onPlayClick}
           data-state={playing ? 'playing' : 'paused'}
@@ -144,13 +148,13 @@ export function TransportControls({
         </Button>
       </AppTooltip>
 
-      <AppTooltip content="Toggle comparison mode">
+      <AppTooltip content={comparisonLabel}>
         <Button
           className="transport-button"
           id="compare-button"
           variant="ghost"
           size="icon"
-          aria-label="Toggle comparison mode"
+          aria-label={comparisonLabel}
           disabled={!hasAnimationSequence && !comparisonMode}
           onClick={toggleComparisonMode}
           data-state={comparisonMode ? 'active' : 'inactive'}
@@ -160,13 +164,13 @@ export function TransportControls({
       </AppTooltip>
 
       {comparisonMode && (
-        <AppTooltip content="Toggle view linking (draw connectors between trees)">
+        <AppTooltip content={viewLinkLabel}>
           <Button
             className="transport-button"
             id="link-views-button"
             variant="ghost"
             size="icon"
-            aria-label="Toggle view linking"
+            aria-label={viewLinkLabel}
             disabled={!hasAnimationSequence}
             onClick={() => setViewsConnected(!viewsConnected)}
             data-state={viewsConnected ? 'active' : 'inactive'}
