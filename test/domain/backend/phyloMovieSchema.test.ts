@@ -517,6 +517,214 @@ describe('validatePhyloMovieData', () => {
     });
   });
 
+  it('rejects split events whose pair key does not match adjacent original timeline entries', () => {
+    expect(() => validatePhyloMovieData(makePayload({
+      interpolated_trees: [minimalTree, minimalTree, minimalTree],
+      tree_metadata: [
+        {
+          tree_pair_key: null,
+          step_in_pair: null,
+          source_tree_global_index: null,
+        },
+        {
+          tree_pair_key: 'pair_7_8',
+          step_in_pair: 1,
+          source_tree_global_index: 0,
+        },
+        {
+          tree_pair_key: null,
+          step_in_pair: null,
+          source_tree_global_index: null,
+        },
+      ],
+      tree_pair_solutions: {
+        pair_7_8: {
+          affected_subtrees_by_split: {
+            '[0, 1]': [[[0], [1]]],
+          },
+          attachment_edges_by_split: {},
+        },
+      },
+      pair_interpolation_ranges: [[0, 2]],
+      pivot_edge_tracking: [null, [0, 1], null],
+      subtree_highlight_tracking: [null, [[0]], null],
+      split_change_timeline: [
+        {
+          type: 'original',
+          tree_index: 0,
+          global_index: 0,
+          name: '',
+        },
+        {
+          type: 'split_event',
+          pair_key: 'pair_7_8',
+          split: [0, 1],
+          step_range_local: [0, 0],
+          step_range_global: [1, 1],
+        },
+        {
+          type: 'original',
+          tree_index: 1,
+          global_index: 2,
+          name: '',
+        },
+      ],
+    }))).toThrow(/pair_key must match adjacent original tree_index values/);
+  });
+
+  it('rejects original timeline entries whose tree_index order disagrees with global_index order', () => {
+    expect(() => validatePhyloMovieData(makePayload({
+      interpolated_trees: [minimalTree, minimalTree, minimalTree],
+      tree_metadata: [
+        {
+          tree_pair_key: null,
+          step_in_pair: null,
+          source_tree_global_index: null,
+        },
+        {
+          tree_pair_key: 'pair_0_1',
+          step_in_pair: 1,
+          source_tree_global_index: 0,
+        },
+        {
+          tree_pair_key: null,
+          step_in_pair: null,
+          source_tree_global_index: null,
+        },
+      ],
+      pair_interpolation_ranges: [[0, 2]],
+      pivot_edge_tracking: [null, [0, 1], null],
+      subtree_highlight_tracking: [null, [[0]], null],
+      split_change_timeline: [
+        {
+          type: 'original',
+          tree_index: 1,
+          global_index: 0,
+          name: '',
+        },
+        {
+          type: 'split_event',
+          pair_key: 'pair_0_1',
+          split: [0, 1],
+          step_range_local: [0, 0],
+          step_range_global: [1, 1],
+        },
+        {
+          type: 'original',
+          tree_index: 0,
+          global_index: 2,
+          name: '',
+        },
+      ],
+    }))).toThrow(/original entries must have increasing global_index when sorted by tree_index/);
+  });
+
+  it('rejects metadata source frame indices that do not point to input tree frames', () => {
+    expect(() => validatePhyloMovieData(makePayload({
+      interpolated_trees: [minimalTree, minimalTree, minimalTree],
+      tree_metadata: [
+        {
+          tree_pair_key: null,
+          step_in_pair: null,
+          source_tree_global_index: null,
+        },
+        {
+          tree_pair_key: 'pair_0_1',
+          step_in_pair: 1,
+          source_tree_global_index: 1,
+        },
+        {
+          tree_pair_key: null,
+          step_in_pair: null,
+          source_tree_global_index: null,
+        },
+      ],
+      pair_interpolation_ranges: [[0, 2]],
+      pivot_edge_tracking: [null, [0, 1], null],
+      subtree_highlight_tracking: [null, [[0]], null],
+      split_change_timeline: [
+        {
+          type: 'original',
+          tree_index: 0,
+          global_index: 0,
+          name: '',
+        },
+        {
+          type: 'split_event',
+          pair_key: 'pair_0_1',
+          split: [0, 1],
+          step_range_local: [0, 0],
+          step_range_global: [1, 1],
+        },
+        {
+          type: 'original',
+          tree_index: 1,
+          global_index: 2,
+          name: '',
+        },
+      ],
+    }))).toThrow(/source_tree_global_index must reference an input tree frame/);
+  });
+
+  it('rejects metadata pair keys that disagree with split event pair keys', () => {
+    expect(() => validatePhyloMovieData(makePayload({
+      interpolated_trees: [minimalTree, minimalTree, minimalTree],
+      tree_metadata: [
+        {
+          tree_pair_key: null,
+          step_in_pair: null,
+          source_tree_global_index: null,
+        },
+        {
+          tree_pair_key: 'pair_7_8',
+          step_in_pair: 1,
+          source_tree_global_index: 0,
+        },
+        {
+          tree_pair_key: null,
+          step_in_pair: null,
+          source_tree_global_index: null,
+        },
+      ],
+      tree_pair_solutions: {
+        pair_0_1: {
+          affected_subtrees_by_split: {
+            '[0, 1]': [[[0], [1]]],
+          },
+          attachment_edges_by_split: {},
+        },
+        pair_7_8: {
+          affected_subtrees_by_split: {},
+          attachment_edges_by_split: {},
+        },
+      },
+      pair_interpolation_ranges: [[0, 2]],
+      pivot_edge_tracking: [null, [0, 1], null],
+      subtree_highlight_tracking: [null, [[0]], null],
+      split_change_timeline: [
+        {
+          type: 'original',
+          tree_index: 0,
+          global_index: 0,
+          name: '',
+        },
+        {
+          type: 'split_event',
+          pair_key: 'pair_0_1',
+          split: [0, 1],
+          step_range_local: [0, 0],
+          step_range_global: [1, 1],
+        },
+        {
+          type: 'original',
+          tree_index: 1,
+          global_index: 2,
+          name: '',
+        },
+      ],
+    }))).toThrow(/tree_metadata\[1\]\.tree_pair_key must match split_change_timeline pair_key/);
+  });
+
   it('rejects split_change_timeline gaps in transition coverage', () => {
     expect(() => validatePhyloMovieData(makePayload({
       interpolated_trees: [minimalTree, minimalTree, minimalTree],

@@ -105,13 +105,6 @@ export function useTreeController() {
       });
     };
 
-    const syncColorManager = () => {
-      const state = useAppStore.getState();
-      if (!state.playing && state.updateColorManagerForCurrentIndex) {
-        state.updateColorManagerForCurrentIndex();
-      }
-    };
-
     const syncMsaRegion = ({ force = false } = {}) => {
       const state = useAppStore.getState();
       const msaColumnCount = getMsaColumnCount(state.msaSequences);
@@ -166,15 +159,15 @@ export function useTreeController() {
         controllerRef.current = state.treeControllers[0] ?? null;
       }
 
-      if (state.currentTreeIndex !== prevState.currentTreeIndex) {
+      const frameIndexChanged = state.currentTreeIndex !== prevState.currentTreeIndex;
+
+      if (frameIndexChanged) {
         if (!isTimelineScrubbing) {
-          syncColorManager();
           syncMsaRegion();
-          scheduleRender();
         }
       }
 
-      if (state.playhead !== prevState.playhead) {
+      if (state.playhead !== prevState.playhead && !frameIndexChanged) {
         if (!isTimelineScrubbing) {
           syncMsaRegion();
           scheduleRender();

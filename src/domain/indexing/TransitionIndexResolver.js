@@ -59,7 +59,11 @@ export default class TransitionIndexResolver {
         const clampedIndex = Math.min(Math.max(0, position), this.treeMetadata.length - 1);
         const meta = this.treeMetadata[clampedIndex];
 
-        if (meta && typeof meta.source_tree_global_index === 'number') {
+        if (
+            meta &&
+            typeof meta.source_tree_global_index === 'number' &&
+            this._getFullTreeIndicesSet().has(meta.source_tree_global_index)
+        ) {
             return meta.source_tree_global_index;
         }
 

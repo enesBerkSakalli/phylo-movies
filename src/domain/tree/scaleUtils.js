@@ -32,6 +32,34 @@ export function formatScaleValue(value, decimals = 3) {
 }
 
 /**
+ * Creates a lookup map from scale list entries for O(1) access by frame index.
+ */
+export function buildScaleLookup(scaleList) {
+  const map = new Map();
+
+  if (!Array.isArray(scaleList)) return map;
+
+  scaleList.forEach((item, index) => {
+    const itemIndex = typeof item === 'object' && item !== null && 'index' in item
+      ? item.index
+      : index;
+    const itemValue = typeof item === 'object' && item !== null && 'value' in item
+      ? item.value
+      : item;
+    map.set(itemIndex, Number(itemValue) || 0);
+  });
+
+  return map;
+}
+
+export function getScaleValue(scaleList, sourceFrameIndex) {
+  if (!Number.isInteger(sourceFrameIndex)) return null;
+
+  const value = buildScaleLookup(scaleList).get(sourceFrameIndex);
+  return Number.isFinite(value) ? value : null;
+}
+
+/**
  * Calculate scales only for full tree indices.
  * @param {Array} treeList - Array of tree objects
  * @param {Array} fullTreeIndices - Array of indices for full trees

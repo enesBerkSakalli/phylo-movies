@@ -119,6 +119,19 @@ describe('TreeLayoutController radii', () => {
     expect(layout.layoutTree.name).toBe('new-root');
   });
 
+  it('clears transformed tree datasets independently of layout results', () => {
+    const controller = new TreeLayoutController(null);
+    controller._transformedCache.set('dataset-a', {
+      transformedList: [{ id: 'old-tree' }]
+    });
+    controller._layoutResultCache.set('layout-a', { id: 'layout' });
+
+    controller.clearTransformedCache();
+
+    expect(controller._transformedCache.size).toBe(0);
+    expect(controller._layoutResultCache.size).toBe(1);
+  });
+
   it('does not replace explicit tree data with the indexed active tree', () => {
     const activeTreeList = [{
       name: 'active-root',

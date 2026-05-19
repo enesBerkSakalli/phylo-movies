@@ -106,6 +106,40 @@ export function applyOffset(layerData, offsetX, offsetY) {
   });
 }
 
+export function cloneLayerData(layerData) {
+  return {
+    nodes: cloneLayerElements(layerData.nodes),
+    links: cloneLayerElements(layerData.links),
+    extensions: cloneLayerElements(layerData.extensions),
+    labels: cloneLayerElements(layerData.labels),
+    connectors: cloneLayerElements(layerData.connectors)
+  };
+}
+
+function cloneLayerElements(elements = []) {
+  return elements.map((element) => cloneLayerElement(element));
+}
+
+function cloneLayerElement(element) {
+  const clone = { ...element };
+  copyVectorField(clone, element, 'position');
+  copyVectorField(clone, element, 'renderPosition');
+  copyVectorField(clone, element, 'sourcePosition');
+  copyVectorField(clone, element, 'targetPosition');
+  if (ArrayBuffer.isView(element.path)) {
+    clone.path = new element.path.constructor(element.path);
+  } else if (Array.isArray(element.path)) {
+    clone.path = element.path.map((point) => Array.isArray(point) ? [...point] : point);
+  }
+  return clone;
+}
+
+function copyVectorField(target, source, field) {
+  if (Array.isArray(source[field])) {
+    target[field] = [...source[field]];
+  }
+}
+
 function offsetFlatPath(path, offsetX, offsetY) {
   if (!ArrayBuffer.isView(path)) return;
   for (let i = 0; i < path.length; i += 3) {

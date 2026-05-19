@@ -366,6 +366,7 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
     this.interpolationCache?.reset();
     this.treeInterpolator?.resetCaches?.();
     this.clearLayoutCache?.();
+    this.clearTransformedCache?.();
     this._layoutPrefetchTokens?.clear();
     this._layoutRequestGeneration += 1;
   }

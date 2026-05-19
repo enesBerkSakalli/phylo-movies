@@ -6,7 +6,8 @@ import {
   applyOffset,
   combineLayerData,
   buildPositionMap,
-  calculateComparisonFrameGeometry
+  calculateComparisonFrameGeometry,
+  cloneLayerData
 } from './ComparisonUtils.js';
 import { measureFrameStepAsync } from '../performance/frameInstrumentation.js';
 
@@ -20,6 +21,10 @@ export class ComparisonModeRenderer {
   constructor(controller) {
     this.controller = controller;
     this._lastFittedIndices = null;
+    this._animatedRightBaseCache = new Map();
+    this._animatedRightPreparedCache = new Map();
+    this._objectCacheIds = new WeakMap();
+    this._nextObjectCacheId = 1;
   }
 
   resetAutoFit() {
@@ -184,58 +189,54 @@ export class ComparisonModeRenderer {
       return;
     }
 
-    const rightLayout = this.controller.calculateLayout(rightTreeData, {
-      treeIndex: rightIndex
-    });
-
-    if (!rightLayout) {
-         console.warn('[ComparisonModeRenderer] Right layout calculation failed, skipping renderAnimated');
-         return;
-    }
-
-    const { extensionRadius, labelRadius } = this.controller._getConsistentRadii(
-      rightLayout
-    );
-
-    const rightLayerData = this.controller.dataConverter.convertTreeToLayerData(
-      rightLayout,
-      {
-        extensionRadius,
-        labelRadius,
-        treeIndex: rightIndex,
-        treeSide: 'right',
-        renderMode: 'comparison',
-        linkGeometryMode: useAppStore.getState().linkGeometryMode || 'radial-elbow'
-      }
-    );
-
-    const canvasWidth = this.controller.deckContext.getCanvasDimensions().width;
     const {
       leftTreeOffsetX = 0,
       leftTreeOffsetY = 0,
       viewsConnected,
+      linkGeometryMode = 'radial-elbow',
       fontSize = '2.6em'
     } = useAppStore.getState();
+    const rightBase = this._getAnimatedRightBaseLayerData({
+      rightTreeData,
+      rightIndex,
+      linkGeometryMode
+    });
+
+    if (!rightBase) {
+         console.warn('[ComparisonModeRenderer] Right layout calculation failed, skipping renderAnimated');
+         return;
+    }
+
+    const canvasWidth = this.controller.deckContext.getCanvasDimensions().width;
     const rightTreeOffset = this.controller.viewportManager.getRightTreeOffset();
 
     const comparisonGeometry = calculateComparisonFrameGeometry({
       leftLayerData: interpolatedData,
-      rightLayerData,
+      rightLayerData: rightBase.layerData,
       canvasWidth,
       rightTreeOffset,
       leftTreeOffsetX,
       leftTreeOffsetY,
       fontSize
     });
+    const rightFrame = this._getPreparedAnimatedRightFrame({
+      base: rightBase,
+      comparisonGeometry,
+      canvasWidth,
+      rightTreeOffset,
+      leftTreeOffsetX,
+      leftTreeOffsetY,
+      viewsConnected,
+      fontSize
+    });
 
     // Apply independent offsets to both trees
     applyOffset(interpolatedData, leftTreeOffsetX, leftTreeOffsetY);
-    applyOffset(rightLayerData, comparisonGeometry.rightOffset, comparisonGeometry.rightOffsetY);
 
     const connectors = viewsConnected
       ? this._buildConnectors(
         buildPositionMap(interpolatedData.nodes, interpolatedData.labels),
-        buildPositionMap(rightLayerData.nodes, rightLayerData.labels),
+        rightFrame.positionMap,
         comparisonGeometry.leftCenter,
         comparisonGeometry.rightCenter,
         comparisonGeometry.leftSafeRadius,
@@ -246,9 +247,8 @@ export class ComparisonModeRenderer {
 
     // Tag data with side for interactive picking/dragging
     tagTreeSide(interpolatedData, 'left');
-    tagTreeSide(rightLayerData, 'right');
 
-    const combinedData = combineLayerData(interpolatedData, rightLayerData, connectors);
+    const combinedData = combineLayerData(interpolatedData, rightFrame.layerData, connectors);
 
     this.controller._updateLayersEfficiently(combinedData);
 
@@ -307,5 +307,130 @@ export class ComparisonModeRenderer {
       leftRadius,
       rightRadius
     });
+  }
+
+  _getAnimatedRightBaseLayerData({ rightTreeData, rightIndex, linkGeometryMode }) {
+    this._ensureAnimatedRightCaches();
+    const state = useAppStore.getState();
+    const layoutCacheKey = this.controller._createLayoutCacheKey?.(rightIndex, state);
+    const preLayoutCacheKey = layoutCacheKey
+      ? this._createAnimatedRightBaseCacheKey({ rightIndex, layoutCacheKey, linkGeometryMode })
+      : null;
+
+    if (preLayoutCacheKey) {
+      const cached = this._animatedRightBaseCache.get(preLayoutCacheKey);
+      if (cached) return cached;
+    }
+
+    const rightLayout = this.controller.calculateLayout(rightTreeData, {
+      treeIndex: rightIndex
+    });
+
+    if (!rightLayout) return null;
+
+    const { extensionRadius, labelRadius } = this.controller._getConsistentRadii(
+      rightLayout
+    );
+    const resolvedLayoutCacheKey = layoutCacheKey
+      ?? rightLayout.layoutCacheKey
+      ?? this._getObjectCacheId(rightLayout);
+    const cacheKey = preLayoutCacheKey
+      ?? this._createAnimatedRightBaseCacheKey({
+        rightIndex,
+        layoutCacheKey: resolvedLayoutCacheKey,
+        linkGeometryMode
+      });
+    const cached = this._animatedRightBaseCache.get(cacheKey);
+    if (cached) return cached;
+
+    const layerData = this.controller.dataConverter.convertTreeToLayerData(
+      rightLayout,
+      {
+        extensionRadius,
+        labelRadius,
+        treeIndex: rightIndex,
+        treeSide: 'right',
+        renderMode: 'comparison',
+        linkGeometryMode
+      }
+    );
+    const entry = {
+      cacheKey,
+      layerData
+    };
+    this._setBoundedCacheEntry(this._animatedRightBaseCache, cacheKey, entry);
+    return entry;
+  }
+
+  _getPreparedAnimatedRightFrame({
+    base,
+    comparisonGeometry,
+    canvasWidth,
+    rightTreeOffset,
+    leftTreeOffsetX,
+    leftTreeOffsetY,
+    viewsConnected,
+    fontSize
+  }) {
+    this._ensureAnimatedRightCaches();
+    const preparedCacheKey = [
+      base.cacheKey,
+      canvasWidth,
+      rightTreeOffset?.x ?? 0,
+      rightTreeOffset?.y ?? 0,
+      leftTreeOffsetX,
+      leftTreeOffsetY,
+      comparisonGeometry.rightOffset,
+      comparisonGeometry.rightOffsetY,
+      fontSize,
+      viewsConnected ? 'connected' : 'disconnected'
+    ].join('|');
+
+    const cached = this._animatedRightPreparedCache.get(preparedCacheKey);
+    if (cached) return cached;
+
+    const layerData = cloneLayerData(base.layerData);
+    applyOffset(layerData, comparisonGeometry.rightOffset, comparisonGeometry.rightOffsetY);
+    tagTreeSide(layerData, 'right');
+
+    const entry = {
+      layerData,
+      positionMap: viewsConnected ? buildPositionMap(layerData.nodes, layerData.labels) : null
+    };
+    this._setBoundedCacheEntry(this._animatedRightPreparedCache, preparedCacheKey, entry);
+    return entry;
+  }
+
+  _createAnimatedRightBaseCacheKey({ rightIndex, layoutCacheKey, linkGeometryMode }) {
+    return [
+      rightIndex,
+      layoutCacheKey,
+      linkGeometryMode
+    ].join('|');
+  }
+
+  _getObjectCacheId(value) {
+    this._ensureAnimatedRightCaches();
+    if (!value || typeof value !== 'object') return String(value);
+    let id = this._objectCacheIds.get(value);
+    if (!id) {
+      id = `object-${this._nextObjectCacheId++}`;
+      this._objectCacheIds.set(value, id);
+    }
+    return id;
+  }
+
+  _setBoundedCacheEntry(cache, key, value) {
+    if (!cache.has(key) && cache.size >= 32) {
+      cache.clear();
+    }
+    cache.set(key, value);
+  }
+
+  _ensureAnimatedRightCaches() {
+    this._animatedRightBaseCache ??= new Map();
+    this._animatedRightPreparedCache ??= new Map();
+    this._objectCacheIds ??= new WeakMap();
+    this._nextObjectCacheId ??= 1;
   }
 }

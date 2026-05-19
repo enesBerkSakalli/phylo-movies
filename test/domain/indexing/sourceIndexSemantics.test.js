@@ -5,7 +5,6 @@ import {
   findPreviousInputTreeSequenceIndex,
   getMSAFrameIndexForTimelineIndex
 } from '../../../src/domain/indexing/IndexMapping.js';
-import { resolveInputTreeIndex } from '../../../src/components/TreeStatsPanel/Shared/utils.ts';
 
 describe('source input tree index semantics', () => {
   it('returns the source global tree index from backend metadata', () => {
@@ -22,12 +21,14 @@ describe('source input tree index semantics', () => {
     expect(resolver.getSourceGlobalIndex(4)).toBe(3);
   });
 
-  it('does not remap a source global index through fullTreeIndices again', () => {
-    const resolver = {
-      getSourceGlobalIndex: () => 3,
-    };
+  it('does not return a source global tree index outside input tree frames', () => {
+    const resolver = new TransitionIndexResolver([
+      { source_tree_global_index: null },
+      { source_tree_global_index: 99 },
+      { source_tree_global_index: null },
+    ], [[0, 2]]);
 
-    expect(resolveInputTreeIndex(4, [0, 3, 5], resolver, 6)).toBe(3);
+    expect(resolver.getSourceGlobalIndex(1)).toBe(1);
   });
 
   it('names previous and next observed-tree navigation as input-tree navigation', () => {

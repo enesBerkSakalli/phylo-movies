@@ -89,6 +89,7 @@ export function validateSplitChangeTimeline(
   const inputTreeIndices = collectInputTreeIndices(pairInterpolationRanges, treeCount);
   const expectedTransitionIndices = collectTransitionIndices(pairInterpolationRanges);
   const originalIndices = new Set<number>();
+  const originalEntries: OriginalTimelineEntry[] = [];
   const coveredTransitionIndices = new Map<number, string>();
 
   for (const [index, entry] of entries.entries()) {
@@ -103,6 +104,7 @@ export function validateSplitChangeTimeline(
         );
       }
       originalIndices.add(original.global_index);
+      originalEntries.push(original);
       validated.push(original);
       continue;
     }
@@ -130,6 +132,8 @@ export function validateSplitChangeTimeline(
     throw new Error(`Invalid phyloMovieData payload: ${fieldName}.type must be "original" or "split_event"`);
   }
 
+  validateSplitEventPairKeys(validated, originalEntries);
+
   for (const inputTreeIndex of inputTreeIndices) {
     if (!originalIndices.has(inputTreeIndex)) {
       throw new Error(
@@ -147,6 +151,43 @@ export function validateSplitChangeTimeline(
   }
 
   return validated;
+}
+
+function validateSplitEventPairKeys(
+  entries: SplitChangeTimelineEntry[],
+  originalEntries: OriginalTimelineEntry[]
+): void {
+  const expectedPairKeyByFrameIndex = new Map<number, string>();
+  const sortedOriginals = [...originalEntries].sort((a, b) => a.tree_index - b.tree_index);
+
+  for (let index = 0; index < sortedOriginals.length - 1; index += 1) {
+    const source = sortedOriginals[index];
+    const target = sortedOriginals[index + 1];
+    const expectedPairKey = `pair_${source.tree_index}_${target.tree_index}`;
+
+    if (target.global_index <= source.global_index) {
+      throw new Error(
+        'Invalid phyloMovieData payload: split_change_timeline original entries must have increasing global_index when sorted by tree_index'
+      );
+    }
+
+    for (let frameIndex = source.global_index + 1; frameIndex < target.global_index; frameIndex += 1) {
+      expectedPairKeyByFrameIndex.set(frameIndex, expectedPairKey);
+    }
+  }
+
+  entries.forEach((entry, index) => {
+    if (entry.type !== 'split_event') return;
+
+    for (let frameIndex = entry.step_range_global[0]; frameIndex <= entry.step_range_global[1]; frameIndex += 1) {
+      const expectedPairKey = expectedPairKeyByFrameIndex.get(frameIndex);
+      if (expectedPairKey && entry.pair_key !== expectedPairKey) {
+        throw new Error(
+          `Invalid phyloMovieData payload: split_change_timeline[${index}].pair_key must match adjacent original tree_index values (${expectedPairKey})`
+        );
+      }
+    }
+  });
 }
 
 function collectInputTreeIndices(pairInterpolationRanges: Array<[number, number]>, treeCount: number): Set<number> {

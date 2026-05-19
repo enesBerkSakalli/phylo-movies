@@ -1,7 +1,7 @@
 // utils.ts - Pure utility functions for scale and histogram calculations
 
 import { bin as d3Bin } from 'd3-array';
-import type { TreeNode, HistogramData, HistogramBin, ScaleListItem } from './types';
+import type { TreeNode, HistogramData, HistogramBin } from './types';
 
 /**
  * Clamps a value between min and max
@@ -97,58 +97,4 @@ export const buildHistogram = (lengths: number[]): HistogramData => {
   const maxCount = binned.reduce((acc, bucket) => Math.max(acc, bucket.length), 0);
 
   return { bins, maxCount, mean, min: minLen, max: maxLen };
-};
-
-/**
- * Creates a lookup map from scale list for O(1) access by index
- */
-export const buildScaleLookup = (scaleList: ScaleListItem[] | null | undefined): Map<number, number> => {
-  const map = new Map<number, number>();
-
-  if (!Array.isArray(scaleList)) return map;
-
-  scaleList.forEach((item, i) => {
-    const idx = typeof item === 'object' && item !== null && 'index' in item ? item.index! : i;
-    const val = typeof item === 'object' && item !== null && 'value' in item ? item.value! : (item as number);
-    map.set(idx, Number(val) || 0);
-  });
-
-  return map;
-};
-
-/**
- * Resolves the input-tree index based on current position and transition state.
- * Uses input trees (not transition frames) to avoid jitter in histogram during animation.
- */
-export const resolveInputTreeIndex = (
-  currentTreeIndex: number,
-  fullTreeIndices: number[] | null | undefined,
-  transitionResolver: { getSourceGlobalIndex?: (index: number) => number } | null | undefined,
-  scaleListLength: number
-): number => {
-  try {
-    const sourceGlobalIndex = transitionResolver?.getSourceGlobalIndex?.(currentTreeIndex);
-
-    if (Number.isFinite(sourceGlobalIndex) && sourceGlobalIndex! >= 0) {
-      return clamp(sourceGlobalIndex!, 0, Math.max(0, scaleListLength - 1));
-    }
-
-    // Find the most recent input tree at or before current position.
-    if (Array.isArray(fullTreeIndices) && fullTreeIndices.length > 0) {
-      let chosen = fullTreeIndices[0];
-      for (const fi of fullTreeIndices) {
-        if (fi <= currentTreeIndex) {
-          chosen = fi;
-        } else {
-          break;
-        }
-      }
-      return chosen;
-    }
-
-    // Fallback: clamp current index
-    return clamp(currentTreeIndex, 0, Math.max(0, scaleListLength - 1));
-  } catch {
-    return clamp(currentTreeIndex || 0, 0, Math.max(0, scaleListLength - 1));
-  }
 };

@@ -90,8 +90,6 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
 
     colorManager.updateMarkedSubtrees(asSets);
 
-    renderTreeControllers(get());
-
     set((s) => ({ colorVersion: s.colorVersion + 1 }));
   },
 
@@ -121,15 +119,11 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
     const {
       currentTreeIndex,
       pivotEdgesEnabled,
+      colorManager,
       getMarkedSubtreeData,
       getCurrentPivotEdge,
-      updateColorManagerMarkedSubtrees,
-      updateColorManagerPivotEdge,
-      updateColorManagerHistorySubtrees,
       getSubtreeHistoryData,
-      updateColorManagerSourceDestinationEdges,
       getSourceDestinationEdgeData,
-      updateColorManagerMovingSubtree,
       getCurrentMovingSubtreeData,
       updateUpcomingChanges,
       manuallyMarkedNodes
@@ -138,14 +132,36 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
     const targetIndex = Number.isInteger(indexOverride) ? indexOverride : currentTreeIndex;
     const manual = toManualMarkedSets(manuallyMarkedNodes);
     const markedSubtreeData = getMarkedSubtreeData(targetIndex);
-
-    updateColorManagerMarkedSubtrees([...manual, ...markedSubtreeData]);
-    updateColorManagerPivotEdge(pivotEdgesEnabled ? getCurrentPivotEdge(targetIndex) : []);
-    updateColorManagerHistorySubtrees(getSubtreeHistoryData(targetIndex));
+    const pivotEdge = pivotEdgesEnabled ? getCurrentPivotEdge(targetIndex) : [];
+    const normalizedPivotEdge = Array.isArray(pivotEdge) || pivotEdge instanceof Set ? pivotEdge : [];
+    const subtreeHistoryData = getSubtreeHistoryData(targetIndex);
     const { source, dest } = getSourceDestinationEdgeData(targetIndex);
-    updateColorManagerSourceDestinationEdges(source, dest);
-    updateColorManagerMovingSubtree(getCurrentMovingSubtreeData(targetIndex));
+    const movingSubtreeData = getCurrentMovingSubtreeData(targetIndex);
+
+    colorManager?.updateMarkedSubtrees?.(toSubtreeSets([...manual, ...markedSubtreeData]));
+    colorManager?.updatePivotEdge?.(normalizedPivotEdge);
+    colorManager?.updateHistorySubtrees?.(toSubtreeSets(subtreeHistoryData));
+    colorManager?.updateSourceEdgeLeaves?.(toSubtreeSets(source));
+    colorManager?.updateDestinationEdgeLeaves?.(toSubtreeSets(dest));
+    colorManager?.updateCurrentMovingSubtree?.(movingSubtreeData);
     updateUpcomingChanges(targetIndex);
+
+    if (colorManager) {
+      set((s) => ({ colorVersion: s.colorVersion + 1 }));
+    }
+
+    const { changePulseEnabled, startPulseAnimation, stopPulseAnimation } = get();
+    if (changePulseEnabled && colorManager) {
+      const pivotEdgeCount = normalizedPivotEdge instanceof Set ? normalizedPivotEdge.size : normalizedPivotEdge.length;
+      const hasChanges = pivotEdgeCount > 0 || colorManager.markedSubtreeSets?.length > 0;
+      if (hasChanges) {
+        startPulseAnimation();
+      } else {
+        stopPulseAnimation();
+      }
+    }
+
+    renderTreeControllers(get());
   },
 
   updateColorManagerForCurrentIndex: () => {
