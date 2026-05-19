@@ -95,3 +95,6 @@ publication_data/norovirus/recan_recombination_analysis
 scripts/rewrite-git-authors.sh
 Paper_Submission_TODO.md
 .qwen
+
+# Private knowledge wiki repo; keep out of the public application repo.
+/knowledge/
