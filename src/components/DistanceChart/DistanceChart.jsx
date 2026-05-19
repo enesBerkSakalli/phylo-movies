@@ -14,6 +14,8 @@ import {
   selectDistanceWeightedRfd,
   selectFullTreeIndices,
   selectGoToPosition,
+  selectMovieTimelineManager,
+  selectPairInterpolationRanges,
   selectScaleList,
   selectTransitionResolver,
   useAppStore
@@ -42,6 +44,7 @@ const useTimelineData = ({
   fullTreeIndices,
   robinsonFouldsDistances,
   weightedRobinsonFouldsDistances,
+  pairInterpolationRanges,
   scaleList,
 }) =>
   useMemo(() => {
@@ -50,11 +53,12 @@ const useTimelineData = ({
       robinsonFouldsDistances,
       weightedRobinsonFouldsDistances,
       scaleList,
+      pairInterpolationRanges,
     );
 
-    const anchors = fullTreeIndices || [];
+    const inputTreeIndices = fullTreeIndices || [];
     const hasData = points.length > 0;
-    const activePointIndex = resolveActivePointIndex(barOptionValue, currentTreeIndex, anchors, points);
+    const activePointIndex = resolveActivePointIndex(barOptionValue, currentTreeIndex, inputTreeIndices, points);
     const currentX = resolveCursorX(points, activePointIndex);
 
     return {
@@ -70,6 +74,7 @@ const useTimelineData = ({
     fullTreeIndices,
     robinsonFouldsDistances,
     weightedRobinsonFouldsDistances,
+    pairInterpolationRanges,
     scaleList,
   ]);
 
@@ -78,6 +83,8 @@ export function DistanceChart() {
   const currentTreeIndex = useAppStore(selectCurrentTreeIndex);
   const transitionResolver = useAppStore(selectTransitionResolver);
   const fullTreeIndices = useAppStore(selectFullTreeIndices);
+  const pairInterpolationRanges = useAppStore(selectPairInterpolationRanges);
+  const movieTimelineManager = useAppStore(selectMovieTimelineManager);
   const robinsonFouldsDistances = useAppStore(selectDistanceRfd);
   const weightedRobinsonFouldsDistances = useAppStore(selectDistanceWeightedRfd);
   const scaleList = useAppStore(selectScaleList);
@@ -89,6 +96,7 @@ export function DistanceChart() {
     fullTreeIndices,
     robinsonFouldsDistances,
     weightedRobinsonFouldsDistances,
+    pairInterpolationRanges,
     scaleList,
   });
 
@@ -105,12 +113,12 @@ export function DistanceChart() {
 
   const navigateToPoint = useCallback(
     (point) => {
-      const target = resolveNavigationTarget(barOptionValue, point, transitionResolver);
-      if (typeof target === 'number') {
-        goToPosition(target);
+      const target = resolveNavigationTarget(barOptionValue, point, transitionResolver, movieTimelineManager);
+      if (target && Number.isInteger(target.treeIndex)) {
+        goToPosition(target.treeIndex, undefined, target.seekOptions);
       }
     },
-    [barOptionValue, goToPosition, transitionResolver],
+    [barOptionValue, goToPosition, movieTimelineManager, transitionResolver],
   );
 
   const handleClick = useCallback(
@@ -163,7 +171,7 @@ export function DistanceChart() {
       className="h-full w-full cursor-pointer rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70"
       role="slider"
       tabIndex={0}
-      aria-label={`${metric.label} source-tree metric chart`}
+      aria-label={`${metric.label} input-tree metric chart`}
       aria-orientation="horizontal"
       aria-valuemin={1}
       aria-valuemax={points.length}

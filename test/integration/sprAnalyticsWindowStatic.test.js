@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { ANALYTICS_WINDOW_BOUNDS } from '../../src/components/TreeStatsPanel/AnalyticsDashboard.contract';
+import { SPR_MOVE_EVENT_TABLE_COPY } from '../../src/components/TreeStatsPanel/SubtreeAnalytics/SprMoveEventTable.contract';
 
 describe('SPR analytics window shell', () => {
   it('uses a draggable RND analysis window, not a modal dialog', () => {
@@ -25,15 +27,10 @@ describe('SPR analytics window shell', () => {
   });
 
   it('keeps the move ledger compact enough for the default analysis window', () => {
-    const tableSource = fs.readFileSync(
-      path.join(process.cwd(), 'src/components/TreeStatsPanel/SubtreeAnalytics/SprMoveEventTable.tsx'),
-      'utf8',
-    );
-
-    expect(tableSource).toContain('min-w-[820px]');
-    expect(tableSource).not.toContain('min-w-[1180px]');
-    expect(tableSource).toContain('RF Distance');
-    expect(tableSource).toContain('Weighted RF');
+    expect(ANALYTICS_WINDOW_BOUNDS.minWidth).toBeGreaterThanOrEqual(620);
+    expect(SPR_MOVE_EVENT_TABLE_COPY.minWidthClassName).toBe('min-w-[820px]');
+    expect(SPR_MOVE_EVENT_TABLE_COPY.metrics.rfDistance).toBe('RF Distance');
+    expect(SPR_MOVE_EVENT_TABLE_COPY.metrics.weightedRf).toBe('Weighted RF');
   });
 
   it('uses TanStack global filtering for the SPR move ledger search', () => {
@@ -43,8 +40,9 @@ describe('SPR analytics window shell', () => {
     );
 
     expect(tableSource).toContain("@tanstack/react-table");
+    expect(tableSource).toContain("globalFilterFn");
     expect(tableSource).toContain("getFilteredRowModel");
-    expect(tableSource).toContain("Search movements");
-    expect(tableSource).toContain("No movements match this search.");
+    expect(SPR_MOVE_EVENT_TABLE_COPY.searchLabel).toBe('Search movements');
+    expect(SPR_MOVE_EVENT_TABLE_COPY.noSearchResults).toBe('No movements match this search.');
   });
 });

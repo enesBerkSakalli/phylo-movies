@@ -44,6 +44,10 @@ import {
     hasFloatingWindowRectChanged,
     toFloatingWindowRect,
 } from '../ui/floatingWindowGeometry.js';
+import {
+    ANALYTICS_WINDOW_BOUNDS,
+    SPR_ANALYTICS_COPY,
+} from './AnalyticsDashboard.contract';
 
 // ==========================================================================
 // STORE SELECTORS
@@ -55,12 +59,6 @@ interface AnalyticsDashboardProps {
     onClose?: () => void;
     onFocus?: () => void;
 }
-
-const ANALYTICS_WINDOW_BOUNDS = {
-    minWidth: 620,
-    minHeight: 480,
-    margin: 24,
-};
 
 const fitAnalyticsWindowRect = (rect: { x: number; y: number; width: number; height: number }) => {
     const viewport = getBrowserViewportSize();
@@ -207,12 +205,12 @@ export const AnalyticsDashboard = ({ isOpen = false, isActive = false, onOpen, o
         <>
             <SidebarMenuItem>
                 <SidebarMenuButton
-                    tooltip="Open moving subtrees"
-                    aria-label="Open moving subtrees"
+                    tooltip={SPR_ANALYTICS_COPY.openLabel}
+                    aria-label={SPR_ANALYTICS_COPY.openLabel}
                     onClick={onOpen}
                 >
                     <Activity className="text-primary" />
-                    <span>Moving Subtrees</span>
+                    <span>{SPR_ANALYTICS_COPY.title}</span>
                 </SidebarMenuButton>
             </SidebarMenuItem>
 
@@ -247,9 +245,9 @@ export const AnalyticsDashboard = ({ isOpen = false, isActive = false, onOpen, o
                             <div className="flex items-center gap-2 min-w-0">
                                 <Activity className="size-4 text-primary shrink-0" aria-hidden />
                                 <div className="flex flex-col min-w-0">
-                                    <div className="text-xs font-bold leading-tight tracking-tight uppercase">Moving Subtrees</div>
+                                    <div className="text-xs font-bold leading-tight tracking-tight uppercase">{SPR_ANALYTICS_COPY.title}</div>
                                     <div className="text-[9px] text-muted-foreground/80 leading-tight font-medium truncate">
-                                        Quantifies which taxa or clades change attachment across neighboring trees.
+                                        {SPR_ANALYTICS_COPY.description}
                                     </div>
                                 </div>
                             </div>
@@ -267,9 +265,9 @@ export const AnalyticsDashboard = ({ isOpen = false, isActive = false, onOpen, o
                         <div className="flex flex-col flex-1 min-h-0 overflow-hidden p-4">
                             <Tabs defaultValue="overview" className="flex flex-col flex-1 min-h-0 overflow-hidden">
                                 <TabsList className="w-full justify-start mb-4 shrink-0 bg-muted/30 p-1">
-                                    <TabsTrigger value="overview" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">Overview</TabsTrigger>
-                                    <TabsTrigger value="events" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">Movement Events</TabsTrigger>
-                                    <TabsTrigger value="details" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">Recurrent Subtrees</TabsTrigger>
+                                    <TabsTrigger value="overview" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">{SPR_ANALYTICS_COPY.tabs.overview}</TabsTrigger>
+                                    <TabsTrigger value="events" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">{SPR_ANALYTICS_COPY.tabs.events}</TabsTrigger>
+                                    <TabsTrigger value="details" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">{SPR_ANALYTICS_COPY.tabs.details}</TabsTrigger>
                                 </TabsList>
 
                                 <TabsContent value="overview" className="flex-1 min-h-0 mt-0 focus-visible:outline-none">
@@ -278,10 +276,10 @@ export const AnalyticsDashboard = ({ isOpen = false, isActive = false, onOpen, o
                                             <Card className="bg-primary/5 border-primary/20 p-3 flex flex-col gap-2">
                                                 <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-wider text-primary">
                                                     <BookOpen className="size-3" />
-                                                    What is being counted?
+                                                    {SPR_ANALYTICS_COPY.countedTitle}
                                                 </div>
                                                 <p className="text-2xs leading-relaxed text-muted-foreground">
-                                                    A movement is one subtree that changes attachment between two neighboring trees. Each row shows what moved, where it moved from, and where it moved to.
+                                                    {SPR_ANALYTICS_COPY.countedDescription}
                                                 </p>
                                             </Card>
 
@@ -304,10 +302,10 @@ export const AnalyticsDashboard = ({ isOpen = false, isActive = false, onOpen, o
                                                 <CardHeader className="pb-3 bg-muted/20 shrink-0">
                                                     <CardTitle className="flex items-center gap-2 text-base font-bold">
                                                         <Activity className="size-4 text-primary" />
-                                                        Moving Subtrees Across Tree Pairs
+                                                        {SPR_ANALYTICS_COPY.activityTitle}
                                                     </CardTitle>
                                                     <CardDescription className="text-xs">
-                                                        Movement events and unique moved subtrees per neighboring tree pair.
+                                                        {SPR_ANALYTICS_COPY.activityDescription}
                                                     </CardDescription>
                                                 </CardHeader>
                                                 <CardContent className="flex-1 min-h-0 p-2">
@@ -319,10 +317,10 @@ export const AnalyticsDashboard = ({ isOpen = false, isActive = false, onOpen, o
                                                 <CardHeader className="pb-3 bg-muted/20 shrink-0">
                                                     <CardTitle className="flex items-center gap-2 text-base font-bold">
                                                         <BarChart className="size-4 text-primary" />
-                                                        Recurrent Moving Subtrees
+                                                        {SPR_ANALYTICS_COPY.recurrenceChartTitle}
                                                     </CardTitle>
                                                     <CardDescription className="text-xs">
-                                                        Recurrent moved subtrees ranked by how often they move.
+                                                        {SPR_ANALYTICS_COPY.recurrenceChartDescription}
                                                     </CardDescription>
                                                 </CardHeader>
                                                 <CardContent className="flex-1 min-h-0 p-2">
@@ -338,10 +336,10 @@ export const AnalyticsDashboard = ({ isOpen = false, isActive = false, onOpen, o
                                         <CardHeader className="pb-3 bg-muted/20 shrink-0">
                                             <CardTitle className="flex items-center gap-2 text-base font-bold">
                                                 <Activity className="size-4 text-primary" />
-                                                Movement Events
+                                                {SPR_ANALYTICS_COPY.eventTitle}
                                             </CardTitle>
                                             <CardDescription className="text-xs flex items-center justify-between gap-2">
-                                                <span>One row per movement, including moved subtree, pivot, and from/to attachments.</span>
+                                                <span>{SPR_ANALYTICS_COPY.eventDescription}</span>
                                                 <Button
                                                     type="button"
                                                     variant="outline"
@@ -370,10 +368,10 @@ export const AnalyticsDashboard = ({ isOpen = false, isActive = false, onOpen, o
                                         <CardHeader className="pb-3 bg-muted/20 shrink-0">
                                             <CardTitle className="flex items-center gap-2 text-base font-bold">
                                                 <ListTree className="size-4 text-primary" />
-                                                Recurrent Moved Subtrees
+                                                {SPR_ANALYTICS_COPY.recurrenceTableTitle}
                                             </CardTitle>
                                             <CardDescription className="text-xs flex items-center justify-between gap-2">
-                                                <span>Moved subtrees summarized from movements, ranked by repeat count.</span>
+                                                <span>{SPR_ANALYTICS_COPY.recurrenceTableDescription}</span>
                                                 <div className="flex items-center gap-2 shrink-0">
                                                     {movedSubtreeRecurrences.length > 5 && (
                                                         <span className="flex items-center gap-1 text-muted-foreground/60 shrink-0 ml-2">

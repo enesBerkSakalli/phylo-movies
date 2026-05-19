@@ -22,6 +22,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from '../ui/sidebar';
+import { TOOLS_SIDEBAR_GROUP_LABELS } from './ToolsSidebar.contract.js';
 
 export function ToolsSidebar({
   fileName,
@@ -61,7 +62,7 @@ export function ToolsSidebar({
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Dataset</SidebarGroupLabel>
+          <SidebarGroupLabel>{TOOLS_SIDEBAR_GROUP_LABELS[0]}</SidebarGroupLabel>
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton
@@ -79,7 +80,7 @@ export function ToolsSidebar({
         <SidebarSeparator />
 
         <SidebarGroup>
-          <SidebarGroupLabel>Tree View</SidebarGroupLabel>
+          <SidebarGroupLabel>{TOOLS_SIDEBAR_GROUP_LABELS[1]}</SidebarGroupLabel>
           <SidebarMenu>
             <TreeStructureGroup />
             <VisualStyle />
@@ -90,7 +91,7 @@ export function ToolsSidebar({
         <SidebarSeparator />
 
         <SidebarGroup>
-          <SidebarGroupLabel>Analysis</SidebarGroupLabel>
+          <SidebarGroupLabel>{TOOLS_SIDEBAR_GROUP_LABELS[2]}</SidebarGroupLabel>
           <SidebarMenu>
             <AnalyticsDashboard
               isOpen={sprAnalyticsOpen}
@@ -106,7 +107,7 @@ export function ToolsSidebar({
         <SidebarSeparator />
 
         <SidebarGroup>
-          <SidebarGroupLabel>Color & Focus</SidebarGroupLabel>
+          <SidebarGroupLabel>{TOOLS_SIDEBAR_GROUP_LABELS[3]}</SidebarGroupLabel>
           <SidebarMenu>
             <VisualElements />
             <TaxaGroupsLegend />

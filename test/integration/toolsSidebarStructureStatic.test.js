@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { TOOLS_SIDEBAR_GROUP_LABELS } from '../../src/components/sidebar/ToolsSidebar.contract.js';
 
 const repoRoot = process.cwd();
 
@@ -31,14 +32,18 @@ describe('tools sidebar structure', () => {
 
   it('orders tools by the research workflow', () => {
     const sidebarSource = source('src/components/sidebar/ToolsSidebar.jsx');
-    const labels = [...sidebarSource.matchAll(/<SidebarGroupLabel>(.*?)<\/SidebarGroupLabel>/g)].map((match) => match[1]);
 
-    expect(labels).toEqual([
+    expect(TOOLS_SIDEBAR_GROUP_LABELS).toEqual([
       'Dataset',
       'Tree View',
       'Analysis',
       'Color & Focus',
     ]);
+    const labelUsePositions = [0, 1, 2, 3]
+      .map((index) => sidebarSource.indexOf(`TOOLS_SIDEBAR_GROUP_LABELS[${index}]`));
+
+    expect(labelUsePositions.every((position) => position >= 0)).toBe(true);
+    expect(labelUsePositions).toEqual([...labelUsePositions].sort((a, b) => a - b));
   });
 
   it('keeps visual element and visual effect sections scoped to their responsibility', () => {

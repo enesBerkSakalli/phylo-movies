@@ -1,17 +1,17 @@
 export const DISTANCE_CHART_METRICS = {
   rfd: {
     label: 'Topology Change',
-    description: 'RF distance between neighboring source trees',
+    description: 'RF distance between neighboring input trees',
     color: '#0072B2',
   },
   'w-rfd': {
     label: 'Branch-Weighted Change',
-    description: 'Weighted RF distance between neighboring source trees',
+    description: 'Weighted RF distance between neighboring input trees',
     color: '#E69F00',
   },
   scale: {
     label: 'Tree Size',
-    description: 'Longest root-to-leaf distance for each source tree',
+    description: 'Longest root-to-leaf distance for each input tree',
     color: '#009E73',
   },
 };
@@ -34,10 +34,10 @@ export const formatMetricValue = (value) => {
   });
 };
 
-export const formatDistancePointLabel = (sampleIndex) => (
-  `Source trees ${sampleIndex + 1} to ${sampleIndex + 2}`
+export const formatDistancePointLabel = (sourceInputTreeIndex, targetInputTreeIndex) => (
+  `source input tree ${sourceInputTreeIndex + 1} to target input tree ${targetInputTreeIndex + 1}`
 );
 
-export const formatScalePointLabel = (sourceOrdinal) => (
-  `Source tree ${sourceOrdinal}`
+export const formatScalePointLabel = (inputTreeOrdinal) => (
+  `Input tree ${inputTreeOrdinal}`
 );

@@ -13,6 +13,7 @@ import { formatSubtreeLabel } from '../../../domain/spr/sprAnalytics';
 import { Search, X } from 'lucide-react';
 import type { SprMoveEventRow } from './types';
 import { buildSprMoveEventSearchText } from './sprMoveEventSearch';
+import { SPR_MOVE_EVENT_TABLE_COPY } from './SprMoveEventTable.contract';
 
 interface SprMoveEventTableProps {
     events: SprMoveEventRow[];
@@ -104,8 +105,8 @@ export const SprMoveEventTable = ({ events, leafNamesByIndex, selectedMovedSubtr
                     <Input
                         value={globalFilter}
                         onChange={(event) => setGlobalFilter(event.target.value)}
-                        placeholder="Search movements by taxa, pair, pivot, from/to..."
-                        aria-label="Search movements"
+                        placeholder={SPR_MOVE_EVENT_TABLE_COPY.searchPlaceholder}
+                        aria-label={SPR_MOVE_EVENT_TABLE_COPY.searchLabel}
                         className="h-8 pl-7 pr-8 text-xs"
                     />
                     {hasSearch ? (
@@ -115,7 +116,7 @@ export const SprMoveEventTable = ({ events, leafNamesByIndex, selectedMovedSubtr
                             size="icon-xs"
                             className="absolute right-1 top-1/2 size-6 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                             onClick={() => setGlobalFilter('')}
-                            aria-label="Clear movement search"
+                            aria-label={SPR_MOVE_EVENT_TABLE_COPY.clearSearchLabel}
                         >
                             <X className="size-3" />
                         </Button>
@@ -127,17 +128,17 @@ export const SprMoveEventTable = ({ events, leafNamesByIndex, selectedMovedSubtr
             </div>
 
             <div className="min-h-0 flex-1 overflow-auto">
-                <table className="min-w-[820px] w-full table-fixed text-xs">
+                <table className={`${SPR_MOVE_EVENT_TABLE_COPY.minWidthClassName} w-full table-fixed text-xs`}>
                     <thead className="bg-muted/40 text-muted-foreground font-bold sticky top-0 z-10">
                         <tr>
-                            <th className="w-20 px-3 py-2 text-left font-bold uppercase tracking-wider text-2xs">Movement</th>
-                            <th className="w-16 px-3 py-2 text-left font-bold uppercase tracking-wider text-2xs">Pair</th>
-                            <th className="w-28 px-3 py-2 text-left font-bold uppercase tracking-wider text-2xs">Moved Subtree</th>
-                            <th className="w-28 px-3 py-2 text-left font-bold uppercase tracking-wider text-2xs">Pivot</th>
-                            <th className="w-28 px-3 py-2 text-left font-bold uppercase tracking-wider text-2xs">From</th>
-                            <th className="w-28 px-3 py-2 text-left font-bold uppercase tracking-wider text-2xs">To</th>
-                            <th className="w-14 px-3 py-2 text-right font-bold uppercase tracking-wider text-2xs">Steps</th>
-                            <th className="w-40 px-3 py-2 text-right font-bold uppercase tracking-wider text-2xs">Metrics</th>
+                            <th className="w-20 px-3 py-2 text-left font-bold uppercase tracking-wider text-2xs">{SPR_MOVE_EVENT_TABLE_COPY.columns.movement}</th>
+                            <th className="w-16 px-3 py-2 text-left font-bold uppercase tracking-wider text-2xs">{SPR_MOVE_EVENT_TABLE_COPY.columns.pair}</th>
+                            <th className="w-28 px-3 py-2 text-left font-bold uppercase tracking-wider text-2xs">{SPR_MOVE_EVENT_TABLE_COPY.columns.movedSubtree}</th>
+                            <th className="w-28 px-3 py-2 text-left font-bold uppercase tracking-wider text-2xs">{SPR_MOVE_EVENT_TABLE_COPY.columns.pivot}</th>
+                            <th className="w-28 px-3 py-2 text-left font-bold uppercase tracking-wider text-2xs">{SPR_MOVE_EVENT_TABLE_COPY.columns.from}</th>
+                            <th className="w-28 px-3 py-2 text-left font-bold uppercase tracking-wider text-2xs">{SPR_MOVE_EVENT_TABLE_COPY.columns.to}</th>
+                            <th className="w-14 px-3 py-2 text-right font-bold uppercase tracking-wider text-2xs">{SPR_MOVE_EVENT_TABLE_COPY.columns.steps}</th>
+                            <th className="w-40 px-3 py-2 text-right font-bold uppercase tracking-wider text-2xs">{SPR_MOVE_EVENT_TABLE_COPY.columns.metrics}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-border/10">
@@ -189,15 +190,15 @@ export const SprMoveEventTable = ({ events, leafNamesByIndex, selectedMovedSubtr
                                     <td className="px-3 py-3 text-right font-mono tabular-nums">
                                         <div className="flex flex-col gap-0.5">
                                             <div>
-                                                <span className="text-muted-foreground/70 font-sans">Hops</span> {event.totalPathHops}
+                                                <span className="text-muted-foreground/70 font-sans">{SPR_MOVE_EVENT_TABLE_COPY.metrics.hops}</span> {event.totalPathHops}
                                                 <span className="mx-1 text-muted-foreground/50">/</span>
-                                                <span className="text-muted-foreground/70 font-sans">Length</span> {formatMetric(event.totalPathLength)}
+                                                <span className="text-muted-foreground/70 font-sans">{SPR_MOVE_EVENT_TABLE_COPY.metrics.length}</span> {formatMetric(event.totalPathLength)}
                                             </div>
                                             <div>
-                                                <span className="text-muted-foreground/70 font-sans">RF Distance</span> {formatMetric(event.rfDistance)}
+                                                <span className="text-muted-foreground/70 font-sans">{SPR_MOVE_EVENT_TABLE_COPY.metrics.rfDistance}</span> {formatMetric(event.rfDistance)}
                                             </div>
                                             <div>
-                                                <span className="text-muted-foreground/70 font-sans">Weighted RF</span> {formatMetric(event.weightedRfDistance)}
+                                                <span className="text-muted-foreground/70 font-sans">{SPR_MOVE_EVENT_TABLE_COPY.metrics.weightedRf}</span> {formatMetric(event.weightedRfDistance)}
                                             </div>
                                         </div>
                                     </td>
@@ -208,8 +209,8 @@ export const SprMoveEventTable = ({ events, leafNamesByIndex, selectedMovedSubtr
                             <tr>
                                 <td colSpan={8} className="px-4 py-12 text-center text-muted-foreground italic">
                                     {hasSearch
-                                        ? 'No movements match this search.'
-                                        : 'No movements available for this dataset.'}
+                                        ? SPR_MOVE_EVENT_TABLE_COPY.noSearchResults
+                                        : SPR_MOVE_EVENT_TABLE_COPY.noMovements}
                                 </td>
                             </tr>
                         )}
