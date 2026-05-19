@@ -21,6 +21,18 @@ Structure:
   `npm run test:all`.
 - `test/data/` contains fixtures.
 
+Generated frontend response fixtures are owned by:
+
+```sh
+npm run fixtures:list
+npm run fixtures:generate
+npm run fixtures:check
+```
+
+`fixtures:generate` rewrites committed JSON from fixed tree inputs through the
+current BranchArchitect backend serializer. `fixtures:check` is non-mutating and
+fails when a committed fixture is stale.
+
 `npm run test:structure` fails if a test file is neither in the default suite
 nor under `test/optional/`.
 
