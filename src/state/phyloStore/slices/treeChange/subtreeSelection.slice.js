@@ -18,8 +18,8 @@ export const createSubtreeSelectionSlice = (set, get) => ({
   // ACTIONS
   // ==========================================================================
   getCurrentPivotEdge: (indexOverride = null) => {
-    const { currentTreeIndex, pivotEdgeTracking } = get();
-    const index = indexOverride ?? currentTreeIndex;
+    const { frameIndex, pivotEdgeTracking } = get();
+    const index = indexOverride ?? frameIndex;
     return pivotEdgeTracking[index] || [];
   },
 
@@ -28,20 +28,20 @@ export const createSubtreeSelectionSlice = (set, get) => ({
   },
 
   getSubtreeHistoryData: (indexOverride = null) => {
-    const { currentTreeIndex } = get();
-    const index = indexOverride ?? currentTreeIndex;
+    const { frameIndex } = get();
+    const index = indexOverride ?? frameIndex;
     return getSubtreeHistoryAtIndex(get(), index);
   },
 
   getCurrentMovingSubtreeData: (indexOverride = null) => {
-    const { currentTreeIndex } = get();
-    const index = indexOverride ?? currentTreeIndex;
+    const { frameIndex } = get();
+    const index = indexOverride ?? frameIndex;
     return getMovingSubtreeAtIndex(get(), index);
   },
 
   getSourceDestinationEdgeData: (indexOverride = null) => {
-    const { currentTreeIndex } = get();
-    const index = indexOverride ?? currentTreeIndex;
+    const { frameIndex } = get();
+    const index = indexOverride ?? frameIndex;
     return getSourceDestinationEdgesAtIndex(get(), index);
   },
 

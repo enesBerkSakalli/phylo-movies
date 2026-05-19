@@ -121,7 +121,7 @@ describe('deck.gl layer render context', () => {
         { tree_pair_key: 'pair_0_1', step_in_pair: 1, source_tree_global_index: 0 },
       ],
       transitionResolver: { fullTreeIndices: [0] },
-      currentTreeIndex: 0,
+      frameIndex: 0,
       showNodeContextMenu,
     });
 
@@ -156,7 +156,7 @@ describe('deck.gl layer render context', () => {
 
     useAppStore.setState({
       treeList: [tree],
-      currentTreeIndex: 0,
+      frameIndex: 0,
       showNodeContextMenu,
     });
 

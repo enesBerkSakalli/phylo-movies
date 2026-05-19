@@ -25,7 +25,7 @@ export interface PlaybackPlayhead {
 }
 
 export interface PlaybackCursorState extends PlaybackPlayhead {
-  currentTreeIndex: number;
+  frameIndex: number;
   holdKind?: string | null;
 }
 
@@ -58,7 +58,7 @@ export interface AppStoreState {
   animationSpeed: number;
   transitionDuration: number;
   pauseDuration: number;
-  currentTreeIndex: number;
+  frameIndex: number;
   navigationDirection: 'forward' | 'backward' | 'jump';
   currentSegmentIndex: number;
   totalSegments: number;
@@ -190,7 +190,7 @@ export interface AppStoreState {
   updateTimelineState: (timelineState: any) => void;
   setScrubPosition: (progress: number) => void;
   setTimelineProgress: (progress: number, treeIndex: number) => void;
-  setPlayhead: (playhead: PlaybackPlayheadUpdate, currentTreeIndex?: number) => void;
+  setPlayhead: (playhead: PlaybackPlayheadUpdate, frameIndex?: number) => void;
   setRenderInProgress: (inProgress: boolean) => void;
   resetPlayback: () => void;
 

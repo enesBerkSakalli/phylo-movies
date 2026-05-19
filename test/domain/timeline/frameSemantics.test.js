@@ -68,14 +68,14 @@ describe('backend frame semantics', () => {
     expect(getSourceFrameIndexForFrameIndex(treeMetadata, 99)).toBe(null);
   });
 
-  it('treats legacy metadata without frame_type as input frames when no source frame is present', () => {
-    const legacyMetadata = [
+  it('requires explicit input-tree frame_type for input frame resolution', () => {
+    const incompleteMetadata = [
       { tree_pair_key: null, step_in_pair: null, source_tree_global_index: null },
       { tree_pair_key: 'pair_0_3', step_in_pair: 1, source_tree_global_index: 0 },
       { tree_pair_key: null, step_in_pair: null, source_tree_global_index: null },
     ];
 
-    expect(getSourceFrameIndexForFrameIndex(legacyMetadata, 1)).toBe(0);
-    expect(getSourceFrameIndexForFrameIndex(legacyMetadata, 2)).toBe(2);
+    expect(getSourceFrameIndexForFrameIndex(incompleteMetadata, 1)).toBe(null);
+    expect(getSourceFrameIndexForFrameIndex(incompleteMetadata, 2)).toBe(null);
   });
 });

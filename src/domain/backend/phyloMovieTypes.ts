@@ -10,9 +10,9 @@ export interface TreeMetadata {
   /** One-based local frame ordinal within a tree-pair interpolation, not a semantic phase id. */
   step_in_pair: number | null;
   source_tree_global_index: number | null;
-  frame_type?: 'input_tree' | 'interpolation_frame';
-  state_semantics?: 'processed_input_tree' | 'algorithmic_intermediate';
-  is_observed_input?: boolean;
+  frame_type: 'input_tree' | 'interpolation_frame';
+  state_semantics: 'processed_input_tree' | 'algorithmic_intermediate';
+  is_observed_input: boolean;
 }
 
 export interface SprPathSegment {
@@ -99,7 +99,6 @@ export interface PhyloMovieData {
   /** Per-frame active mover highlight groups. */
   subtree_highlight_tracking: SubtreeHighlightTracking;
   msa: MsaData;
-  sorted_leaves: string[];
   file_name: string;
   split_change_timeline: SplitChangeTimelineEntry[];
 }

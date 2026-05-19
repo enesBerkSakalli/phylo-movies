@@ -1,5 +1,6 @@
 import type { MsaData, PhyloMovieData, TreeMetadata, TreeNode } from './phyloMovieTypes';
 import {
+  assertExactRecordKeys,
   assertFiniteNumber,
   assertRecord,
   requiredArray,
@@ -14,6 +15,7 @@ import {
 
 function validateTreeNode(value: unknown, fieldName: string): TreeNode {
   assertRecord(value, fieldName);
+  assertExactRecordKeys(value, fieldName, ['name', 'length', 'split_indices', 'children']);
 
   if (typeof value.name !== 'string') {
     throw new Error(`Invalid phyloMovieData payload: ${fieldName}.name must be a string`);
@@ -46,6 +48,14 @@ export function validateTreeList(value: unknown): TreeNode[] {
 
 function validateTreeMetadata(value: unknown, index: number): TreeMetadata {
   const metadata = requiredRecord(value, `tree_metadata[${index}]`);
+  assertExactRecordKeys(metadata, `tree_metadata[${index}]`, [
+    'tree_pair_key',
+    'step_in_pair',
+    'source_tree_global_index',
+    'frame_type',
+    'state_semantics',
+    'is_observed_input',
+  ]);
 
   if (metadata.tree_pair_key !== null && typeof metadata.tree_pair_key !== 'string') {
     throw new Error(`Invalid phyloMovieData payload: tree_metadata[${index}].tree_pair_key must be a string or null`);
@@ -56,30 +66,21 @@ function validateTreeMetadata(value: unknown, index: number): TreeMetadata {
     metadata.source_tree_global_index,
     `tree_metadata[${index}].source_tree_global_index`
   );
-  const frameType = validateOptionalTreeFrameType(metadata.frame_type, index);
-  const stateSemantics = validateOptionalTreeStateSemantics(metadata.state_semantics, index);
-  const isObservedInput = validateOptionalBoolean(
+  const frameType = validateTreeFrameType(metadata.frame_type, index);
+  const stateSemantics = validateTreeStateSemantics(metadata.state_semantics, index);
+  const isObservedInput = validateBoolean(
     metadata.is_observed_input,
     `tree_metadata[${index}].is_observed_input`
   );
 
-  const validated: TreeMetadata = {
+  return {
     tree_pair_key: metadata.tree_pair_key,
     step_in_pair: stepInPair,
     source_tree_global_index: sourceTreeGlobalIndex,
+    frame_type: frameType,
+    state_semantics: stateSemantics,
+    is_observed_input: isObservedInput,
   };
-
-  if (frameType !== undefined) {
-    validated.frame_type = frameType;
-  }
-  if (stateSemantics !== undefined) {
-    validated.state_semantics = stateSemantics;
-  }
-  if (isObservedInput !== undefined) {
-    validated.is_observed_input = isObservedInput;
-  }
-
-  return validated;
 }
 
 export function validateTreeMetadataList(value: unknown, treeCount: number): TreeMetadata[] {
@@ -94,10 +95,14 @@ export function validateTreeMetadataList(value: unknown, treeCount: number): Tre
 
 export function validateMsa(value: unknown): MsaData {
   assertRecord(value, 'msa');
+  assertExactRecordKeys(value, 'msa', ['sequences', 'window_size', 'step_size']);
 
   const sequences = value.sequences;
   let validatedSequences: Record<string, string> | null = null;
-  if (sequences !== undefined && sequences !== null) {
+  if (sequences === undefined) {
+    throw new Error('Invalid phyloMovieData payload: msa.sequences must be an object or null');
+  }
+  if (sequences !== null) {
     assertRecord(sequences, 'msa.sequences');
     validatedSequences = {};
     for (const [name, sequence] of Object.entries(sequences)) {
@@ -127,6 +132,9 @@ export function validateMsa(value: unknown): MsaData {
 
 export function validatePairInterpolationRanges(value: unknown, treeCount: number): Array<[number, number]> {
   const ranges = requiredArray(value, 'pair_interpolation_ranges');
+  if (treeCount > 0 && ranges.length === 0) {
+    throw new Error('Invalid phyloMovieData payload: pair_interpolation_ranges must not be empty');
+  }
   const validated: Array<[number, number]> = [];
 
   for (const [index, range] of ranges.entries()) {
@@ -145,6 +153,11 @@ export function validatePairInterpolationRanges(value: unknown, treeCount: numbe
 
 export function validateDistances(value: unknown): PhyloMovieData['distances'] {
   assertRecord(value, 'distances');
+  assertExactRecordKeys(value, 'distances', [
+    'robinson_foulds',
+    'weighted_robinson_foulds',
+    'semantics',
+  ]);
 
   const validated: PhyloMovieData['distances'] = {
     robinson_foulds: requiredNumberArray(value.robinson_foulds, 'distances.robinson_foulds'),
@@ -162,8 +175,7 @@ export function validateDistances(value: unknown): PhyloMovieData['distances'] {
   return validated;
 }
 
-function validateOptionalTreeFrameType(value: unknown, index: number): TreeMetadata['frame_type'] {
-  if (value === undefined) return undefined;
+function validateTreeFrameType(value: unknown, index: number): TreeMetadata['frame_type'] {
   if (value !== 'input_tree' && value !== 'interpolation_frame') {
     throw new Error(
       `Invalid phyloMovieData payload: tree_metadata[${index}].frame_type must be input_tree or interpolation_frame`
@@ -172,12 +184,18 @@ function validateOptionalTreeFrameType(value: unknown, index: number): TreeMetad
   return value;
 }
 
-function validateOptionalTreeStateSemantics(value: unknown, index: number): TreeMetadata['state_semantics'] {
-  if (value === undefined) return undefined;
+function validateTreeStateSemantics(value: unknown, index: number): TreeMetadata['state_semantics'] {
   if (value !== 'processed_input_tree' && value !== 'algorithmic_intermediate') {
     throw new Error(
       `Invalid phyloMovieData payload: tree_metadata[${index}].state_semantics must be processed_input_tree or algorithmic_intermediate`
     );
+  }
+  return value;
+}
+
+function validateBoolean(value: unknown, fieldName: string): boolean {
+  if (typeof value !== 'boolean') {
+    throw new Error(`Invalid phyloMovieData payload: ${fieldName} must be a boolean`);
   }
   return value;
 }
@@ -201,11 +219,20 @@ function validateOptionalString(value: unknown, fieldName: string): string | und
 function validateDistanceSemantics(value: unknown): PhyloMovieData['distances']['semantics'] {
   if (value === undefined) return undefined;
   assertRecord(value, 'distances.semantics');
+  assertExactRecordKeys(value, 'distances.semantics', [
+    'robinson_foulds',
+    'weighted_robinson_foulds',
+  ]);
 
   const semantics: NonNullable<PhyloMovieData['distances']['semantics']> = {};
 
   if (value.robinson_foulds !== undefined) {
     assertRecord(value.robinson_foulds, 'distances.semantics.robinson_foulds');
+    assertExactRecordKeys(value.robinson_foulds, 'distances.semantics.robinson_foulds', [
+      'topology',
+      'normalization',
+      'scope',
+    ]);
     semantics.robinson_foulds = {};
 
     const topology = validateOptionalString(
@@ -231,6 +258,12 @@ function validateDistanceSemantics(value: unknown): PhyloMovieData['distances'][
       value.weighted_robinson_foulds,
       'distances.semantics.weighted_robinson_foulds'
     );
+    assertExactRecordKeys(value.weighted_robinson_foulds, 'distances.semantics.weighted_robinson_foulds', [
+      'topology',
+      'includes_branch_lengths',
+      'includes_terminal_and_root_splits',
+      'scope',
+    ]);
     semantics.weighted_robinson_foulds = {};
 
     const topology = validateOptionalString(

@@ -4,7 +4,7 @@ import type {
   TreeMetadata,
   TreePairSolution,
 } from './phyloMovieTypes';
-import { assertRecord, requiredStringArray } from './schemaValidation';
+import { assertExactRecordKeys, assertRecord } from './schemaValidation';
 import {
   validateDistances,
   validateMsa,
@@ -35,6 +35,18 @@ export type {
 
 export function validatePhyloMovieData(data: unknown): PhyloMovieData {
   assertRecord(data, 'phyloMovieData');
+  assertExactRecordKeys(data, 'phyloMovieData', [
+    'interpolated_trees',
+    'tree_metadata',
+    'distances',
+    'tree_pair_solutions',
+    'pair_interpolation_ranges',
+    'pivot_edge_tracking',
+    'subtree_highlight_tracking',
+    'msa',
+    'file_name',
+    'split_change_timeline',
+  ]);
 
   const interpolatedTrees = validateTreeList(data.interpolated_trees);
   const treeMetadata = validateTreeMetadataList(data.tree_metadata, interpolatedTrees.length);
@@ -51,7 +63,6 @@ export function validatePhyloMovieData(data: unknown): PhyloMovieData {
     data.subtree_highlight_tracking,
     interpolatedTrees.length
   );
-  const sortedLeaves = requiredStringArray(data.sorted_leaves, 'sorted_leaves');
   const msa = validateMsa(data.msa);
   const splitChangeTimeline = validateSplitChangeTimeline(
     data.split_change_timeline,
@@ -78,7 +89,6 @@ export function validatePhyloMovieData(data: unknown): PhyloMovieData {
     pair_interpolation_ranges: pairInterpolationRanges,
     pivot_edge_tracking: pivotEdgeTracking,
     subtree_highlight_tracking: subtreeHighlightTracking,
-    sorted_leaves: sortedLeaves,
     msa,
     file_name: data.file_name,
     split_change_timeline: splitChangeTimeline,
@@ -91,7 +101,7 @@ function validateTreeMetadataTimelineContracts(
   treePairSolutions: Record<string, TreePairSolution>,
   splitChangeTimeline: SplitChangeTimelineEntry[]
 ): void {
-  const inputFrameIndices = collectInputFrameIndices(pairInterpolationRanges, treeMetadata.length);
+  const inputFrameIndices = collectInputFrameIndices(pairInterpolationRanges);
   const pairKeyByFrameIndex = collectSplitEventPairKeysByFrameIndex(splitChangeTimeline);
 
   treeMetadata.forEach((metadata, frameIndex) => {
@@ -118,18 +128,13 @@ function validateTreeMetadataTimelineContracts(
   });
 }
 
-function collectInputFrameIndices(pairInterpolationRanges: Array<[number, number]>, treeCount: number): Set<number> {
+function collectInputFrameIndices(pairInterpolationRanges: Array<[number, number]>): Set<number> {
   const inputFrameIndices = new Set<number>();
 
   pairInterpolationRanges.forEach(([start, end]) => {
     inputFrameIndices.add(start);
     inputFrameIndices.add(end);
   });
-
-  if (!inputFrameIndices.size && treeCount > 0) {
-    inputFrameIndices.add(0);
-    inputFrameIndices.add(treeCount - 1);
-  }
 
   return inputFrameIndices;
 }

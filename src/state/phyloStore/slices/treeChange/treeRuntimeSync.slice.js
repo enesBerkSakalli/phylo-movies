@@ -117,7 +117,7 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
 
   updateColorManagerForIndex: (indexOverride = null) => {
     const {
-      currentTreeIndex,
+      frameIndex,
       pivotEdgesEnabled,
       colorManager,
       getMarkedSubtreeData,
@@ -129,7 +129,7 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
       manuallyMarkedNodes
     } = get();
 
-    const targetIndex = Number.isInteger(indexOverride) ? indexOverride : currentTreeIndex;
+    const targetIndex = Number.isInteger(indexOverride) ? indexOverride : frameIndex;
     const manual = toManualMarkedSets(manuallyMarkedNodes);
     const markedSubtreeData = getMarkedSubtreeData(targetIndex);
     const pivotEdge = pivotEdgesEnabled ? getCurrentPivotEdge(targetIndex) : [];

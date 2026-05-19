@@ -29,7 +29,7 @@ export class TimelineStateSynchronizer {
     const currentTime = TimelineMathUtils.progressToTime(progress, this.timelineData.totalDuration);
     timeline.setCustomTime(currentTime);
 
-    const { treeIndex, segmentIndex } = TimelineMathUtils.getTargetTreeForTime(
+    const { frameIndex, segmentIndex } = TimelineMathUtils.getTargetFrameForTime(
       this.segments,
       currentTime,
       this.timelineData.segmentDurations,
@@ -42,7 +42,7 @@ export class TimelineStateSynchronizer {
       return null;
     }
 
-    return { currentTime, treeIndex, segment, preservingScrubPosition };
+    return { currentTime, frameIndex, segment, preservingScrubPosition };
   }
 
   restoreMountedState(timeline, lastScrubEndTime) {
@@ -53,7 +53,7 @@ export class TimelineStateSynchronizer {
     this.syncRendererFromStore(timeline, lastScrubEndTime);
   }
 
-  updateStoreTimelineState(time, segment, currentTreeIndex) {
+  updateStoreTimelineState(time, segment, frameIndex) {
     const totalProgress = TimelineMathUtils.timeToProgress(time, this.timelineData.totalDuration);
     const segmentIndex = this.segments.indexOf(segment);
     if (segmentIndex === -1) return;
@@ -63,7 +63,7 @@ export class TimelineStateSynchronizer {
 
     if (segment.hasInterpolation && segment.interpolationData?.length > 1) {
       treesInSegment = segment.interpolationData.length;
-      treeInSegment = TimelineMathUtils.calculateTreePositionInSegment(segment, currentTreeIndex).treeInSegment;
+      treeInSegment = TimelineMathUtils.calculateFramePositionInSegment(segment, frameIndex).treeInSegment;
     } else {
       treeInSegment = TIMELINE_CONSTANTS.DEFAULT_TREE_IN_SEGMENT;
       treesInSegment = TIMELINE_CONSTANTS.DEFAULT_TREES_IN_SEGMENT;

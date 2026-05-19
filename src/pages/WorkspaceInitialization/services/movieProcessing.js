@@ -138,6 +138,7 @@ export async function processMovieData(formData, onProgress, options = {}) {
     // Live backend contract: metadata, zero or more tree chunks, then complete.
     let streamMetadata = null;
     let streamedTrees = [];
+    let expectedTreeTotal = null;
 
     // High-water mark prevents the progress bar from ever going backward
     let highWaterMark = 10;
@@ -186,6 +187,7 @@ export async function processMovieData(formData, onProgress, options = {}) {
         }
         streamMetadata = result.metadata;
         streamedTrees = [];
+        expectedTreeTotal = null;
         reportProgress(highWaterMark, 'Streaming trees...');
       } catch (err) {
         rejectOnce(new Error('Failed to parse metadata event: ' + err.message));
@@ -219,6 +221,12 @@ export async function processMovieData(formData, onProgress, options = {}) {
           rejectOnce(new Error('Invalid tree chunk indexes from tree processing stream'));
           return;
         }
+        if (expectedTreeTotal === null) {
+          expectedTreeTotal = total;
+        } else if (total !== expectedTreeTotal) {
+          rejectOnce(new Error('Tree chunk total changed during tree processing stream'));
+          return;
+        }
         if (startIndex !== streamedTrees.length || endIndex !== startIndex + chunk.trees.length) {
           rejectOnce(new Error('Tree chunk indexes do not match received tree count'));
           return;
@@ -244,17 +252,12 @@ export async function processMovieData(formData, onProgress, options = {}) {
           return;
         }
 
-        const completeData = completion.data;
         if (!streamMetadata) {
           rejectOnce(new Error('Complete event received before metadata event'));
           return;
         }
-        if (!completeData || !Number.isInteger(completeData.tree_count)) {
-          rejectOnce(new Error('Unexpected complete event from tree processing stream'));
-          return;
-        }
-        if (completeData.tree_count !== streamedTrees.length) {
-          rejectOnce(new Error(`Tree stream ended after ${streamedTrees.length} trees, expected ${completeData.tree_count}`));
+        if (expectedTreeTotal !== null && expectedTreeTotal !== streamedTrees.length) {
+          rejectOnce(new Error(`Tree stream ended after ${streamedTrees.length} trees, expected ${expectedTreeTotal}`));
           return;
         }
 

@@ -96,7 +96,7 @@ describe('timeline time domain', () => {
       cursor: {
         animationProgress: 1 / 3,
         timelineProgress: 0.25,
-        currentTreeIndex: 1,
+        frameIndex: 1,
         holdKind: 'mover',
       },
     });
@@ -106,10 +106,10 @@ describe('timeline time domain', () => {
     const cursor = PlaybackCursor.fromPlayhead({
       animationProgress: 1.4,
       timelineProgress: null,
-      currentTreeIndex: 2.8,
+      frameIndex: 2.8,
     });
 
-    expect(cursor.currentTreeIndex).toBe(2);
+    expect(cursor.frameIndex).toBe(2);
     expect(cursor.toPlayhead()).toEqual({
       animationProgress: 1,
       timelineProgress: null,

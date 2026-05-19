@@ -123,6 +123,6 @@ export class TransitionFrame {
 
 }
 
-function normalizeIndex(value, fallback) {
-    return Number.isInteger(value) ? value : fallback;
+function normalizeIndex(value, defaultIndex) {
+    return Number.isInteger(value) ? value : defaultIndex;
 }

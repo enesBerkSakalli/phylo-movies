@@ -14,8 +14,8 @@ import { selectFullTreeIndices, selectTreePairKeyAtIndex } from '../selectors/tr
 // ============================================================================
 
 export function calculateChangePreviews(state, indexOverride = null) {
-  const { upcomingChangesEnabled, currentTreeIndex: stateCurrentTreeIndex, pivotEdgeTracking } = state;
-  const currentTreeIndex = Number.isInteger(indexOverride) ? indexOverride : stateCurrentTreeIndex;
+  const { upcomingChangesEnabled, frameIndex: stateFrameIndex, pivotEdgeTracking } = state;
+  const frameIndex = Number.isInteger(indexOverride) ? indexOverride : stateFrameIndex;
 
   if (!upcomingChangesEnabled) {
     return { upcoming: [], completed: [] };
@@ -26,19 +26,19 @@ export function calculateChangePreviews(state, indexOverride = null) {
     return { upcoming: [], completed: [] };
   }
 
-  const previousInputTreeIndex = findPreviousInputTreeSequenceIndex(inputTreeIndices, currentTreeIndex);
-  const nextInputTreeIndex = findNextInputTreeSequenceIndex(inputTreeIndices, currentTreeIndex);
-  const currentEdge = pivotEdgeTracking[currentTreeIndex];
+  const previousInputTreeIndex = findPreviousInputTreeSequenceIndex(inputTreeIndices, frameIndex);
+  const nextInputTreeIndex = findNextInputTreeSequenceIndex(inputTreeIndices, frameIndex);
+  const currentEdge = pivotEdgeTracking[frameIndex];
   // Must use toSubtreeKey to match how collectUniqueEdges generates keys (was JSON.stringify which caused mismatch)
   const currentKey = currentEdge?.length > 0 ? toSubtreeKey(currentEdge) : null;
 
-  const completed = collectUniqueEdges(pivotEdgeTracking, previousInputTreeIndex + 1, currentTreeIndex, currentKey);
+  const completed = collectUniqueEdges(pivotEdgeTracking, previousInputTreeIndex + 1, frameIndex, currentKey);
 
   if (nextInputTreeIndex === null) {
     return { upcoming: [], completed };
   }
 
-  const upcoming = collectUniqueEdges(pivotEdgeTracking, currentTreeIndex + 1, nextInputTreeIndex, currentKey);
+  const upcoming = collectUniqueEdges(pivotEdgeTracking, frameIndex + 1, nextInputTreeIndex, currentKey);
 
   return { upcoming, completed };
 }
@@ -63,8 +63,8 @@ export function clearEdgePreviews(colorManager) {
 // ============================================================================
 
 export function resolveMarkedSubtrees(state, indexOverride = null) {
-  const { currentTreeIndex, transitionResolver, markedSubtreeScope } = state;
-  const index = indexOverride ?? currentTreeIndex;
+  const { frameIndex, transitionResolver, markedSubtreeScope } = state;
+  const index = indexOverride ?? frameIndex;
 
   if (transitionResolver?.isFullTree?.(index)) return [];
 

@@ -28,12 +28,12 @@ export class TimelineClock {
     );
   }
 
-  getTimelineProgressForTreeIndex(treeIndex) {
+  getTimelineProgressForFrameIndex(frameIndex) {
     if (!this.hasTimeline()) return null;
-    return TimelineMathUtils.getTimelineProgressForTreeIndex(
+    return TimelineMathUtils.getTimelineProgressForFrameIndex(
       this.segments,
       this.timelineData,
-      treeIndex
+      frameIndex
     );
   }
 

@@ -18,7 +18,7 @@ export { selectContextMenuNode } from './selectContextMenuNode.js';
 export { selectContextMenuOpen } from './selectContextMenuOpen.js';
 export { selectContextMenuPosition } from './selectContextMenuPosition.js';
 export { selectCurrentTree } from './selectCurrentTree.js';
-export { selectCurrentTreeIndex } from './selectCurrentTreeIndex.js';
+export { selectFrameIndex } from './selectFrameIndex.js';
 export { selectDimmingEnabled } from './selectDimmingEnabled.js';
 export { selectDimmingOpacity } from './selectDimmingOpacity.js';
 export { selectDistanceRfd } from './selectDistanceRfd.js';

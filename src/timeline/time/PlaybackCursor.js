@@ -10,14 +10,14 @@ export class PlaybackCursor {
     static fromPlayhead({
         animationProgress = 0,
         timelineProgress = null,
-        currentTreeIndex = 0
+        frameIndex = 0
     } = {}) {
-        const safeTreeIndex = Number.isFinite(currentTreeIndex)
-            ? Math.max(0, Math.floor(currentTreeIndex))
+        const safeFrameIndex = Number.isFinite(frameIndex)
+            ? Math.max(0, Math.floor(frameIndex))
             : 0;
         const normalizedTimelineProgress = normalizeOptionalProgress(timelineProgress);
         const pointValues = {
-            [TIMELINE_AXIS.FRAME_INDEX]: safeTreeIndex
+            [TIMELINE_AXIS.FRAME_INDEX]: safeFrameIndex
         };
 
         if (normalizedTimelineProgress !== null) {
@@ -28,7 +28,7 @@ export class PlaybackCursor {
             point: TimelinePoint.from(pointValues),
             animationProgress: clamp01(animationProgress),
             timelineProgress: normalizedTimelineProgress,
-            currentTreeIndex: safeTreeIndex
+            frameIndex: safeFrameIndex
         });
     }
 
@@ -47,7 +47,7 @@ export class PlaybackCursor {
             }),
             animationProgress,
             timelineProgress: normalizedTimelineProgress,
-            currentTreeIndex: transitionFrame.cursorTreeIndex,
+            frameIndex: transitionFrame.cursorTreeIndex,
             holdKind: transitionFrame.holdKind
         });
     }
@@ -56,13 +56,13 @@ export class PlaybackCursor {
         point,
         animationProgress,
         timelineProgress,
-        currentTreeIndex,
+        frameIndex,
         holdKind = null
     }) {
         this.point = point;
         this.animationProgress = clamp01(animationProgress);
         this.timelineProgress = normalizeOptionalProgress(timelineProgress);
-        this.currentTreeIndex = Number.isInteger(currentTreeIndex) ? currentTreeIndex : 0;
+        this.frameIndex = Number.isInteger(frameIndex) ? frameIndex : 0;
         this.holdKind = holdKind;
     }
 
@@ -77,7 +77,7 @@ export class PlaybackCursor {
         return {
             animationProgress: this.animationProgress,
             timelineProgress: this.timelineProgress,
-            currentTreeIndex: this.currentTreeIndex,
+            frameIndex: this.frameIndex,
             holdKind: this.holdKind
         };
     }
