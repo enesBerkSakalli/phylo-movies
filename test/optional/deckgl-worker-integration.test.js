@@ -62,7 +62,7 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
         animationProgress: 0,
         timelineProgress: null
       },
-      currentTreeIndex: 0,
+      frameIndex: 0,
       setAnimationStage: sandbox.stub(),
       stop: sandbox.stub(),
       play: sandbox.stub(),
@@ -106,7 +106,7 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
         animationProgress: 0,
         timelineProgress: null
       },
-      currentTreeIndex: 0,
+      frameIndex: 0,
       // Ensure functions exist if called
       setAnimationStage: sandbox.stub(),
       stop: sandbox.stub(),

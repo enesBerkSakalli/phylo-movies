@@ -272,7 +272,7 @@ const buildOptions = (overrides = {}) => {
     pivotEdge: [99],
     colorManager: makeColorManager(),
     subtreeHighlightTracking: [[[10, 11]]],
-    currentTreeIndex: 0,
+    frameIndex: 0,
     markedSubtreesEnabled: true,
     linkConnectionOpacity: 0.6,
     leftCenter: [0, 0],

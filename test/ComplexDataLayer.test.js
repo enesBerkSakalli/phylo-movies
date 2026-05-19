@@ -214,7 +214,7 @@ describe('Complex Data Layer Integration', () => {
         pivotEdge: pivotEdge,
         colorManager: mockColorManager,
         subtreeHighlightTracking: [movingSubtree], // "Current tree" structure
-        currentTreeIndex: 0,
+        frameIndex: 0,
         markedSubtreesEnabled: true,
         leftCenter: [-200, 0],
         rightCenter: [200, 0],

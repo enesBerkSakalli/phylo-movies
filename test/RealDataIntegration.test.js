@@ -122,7 +122,7 @@ describe('Real Data Integration (test/data/ostrich_bug_response.json)', () => {
             pivotEdge: pivotEdge,
             colorManager: mockColorManager,
             subtreeHighlightTracking: subtreeHighlightTracking,
-            currentTreeIndex: 0,
+            frameIndex: 0,
             markedSubtreesEnabled: true,
             leftCenter: [-300, 0],
             rightCenter: [300, 0],

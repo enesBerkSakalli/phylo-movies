@@ -26,7 +26,7 @@ describe('Tree Visualisation - State Update Logic', () => {
     } = overrides;
 
     return {
-      currentTreeIndex: 10,
+      frameIndex: 10,
       markedSubtreeScope: 'current',
       subtreeHighlightTracking: [],
       transitionResolver: transitionResolver || createTransitionResolver(fullTreeIndices),
@@ -50,7 +50,7 @@ describe('Tree Visualisation - State Update Logic', () => {
       const index = 10;
       const subtrees = [[1, 2], [3]];
       const state = createMockState({
-        currentTreeIndex: index,
+        frameIndex: index,
         subtreeHighlightTracking: { [index]: subtrees },
         markedSubtreeScope: 'current'
       });
@@ -67,7 +67,7 @@ describe('Tree Visualisation - State Update Logic', () => {
       const sourceIndex = 5;
       const subtrees = [[1, 2, 3]];
       const state = createMockState({
-        currentTreeIndex: index,
+        frameIndex: index,
         subtreeHighlightTracking: { [sourceIndex]: subtrees }, // Data at source only
         transitionResolver: {
           isFullTree: () => false,
@@ -90,7 +90,7 @@ describe('Tree Visualisation - State Update Logic', () => {
         const treeMetadata = [];
         treeMetadata[index] = { tree_pair_key: pairKey };
         const state = createMockState({
-            currentTreeIndex: index,
+            frameIndex: index,
             markedSubtreeScope: 'all', // CAUSES SWITCH
             pivotEdgeTracking: { [index]: activeEdge },
             treeMetadata,
@@ -117,7 +117,7 @@ describe('Tree Visualisation - State Update Logic', () => {
         const treeMetadata = [];
         treeMetadata[index] = { tree_pair_key: pairKey };
         const state = createMockState({
-            currentTreeIndex: index,
+            frameIndex: index,
             markedSubtreeScope: 'all',
             pivotEdgeTracking: { [index]: activeEdge },
             treeMetadata,
@@ -141,7 +141,7 @@ describe('Tree Visualisation - State Update Logic', () => {
     });
 
     it('should handle missing transitionResolver gracefully', () => {
-        const state = { currentTreeIndex: 0 }; // No resolver
+        const state = { frameIndex: 0 }; // No resolver
         const result = resolveMarkedSubtrees(state);
         expect(result).to.deep.equal([]);
     });
@@ -177,7 +177,7 @@ describe('Tree Visualisation - State Update Logic', () => {
         ];
 
         const state = createMockState({
-            currentTreeIndex: 5,
+            frameIndex: 5,
             pivotEdgeTracking: edges,
             fullTreeIndices: [0, 10]
         });
@@ -199,7 +199,7 @@ describe('Tree Visualisation - State Update Logic', () => {
          edges[8] = [9, 10];
 
          const state = createMockState({
-             currentTreeIndex: 5,
+             frameIndex: 5,
              pivotEdgeTracking: edges,
              fullTreeIndices: [0, 10]
          });
@@ -225,7 +225,7 @@ describe('Tree Visualisation - State Update Logic', () => {
         ];
 
         const state = createMockState({
-            currentTreeIndex: 5,
+            frameIndex: 5,
             pivotEdgeTracking: edges,
             fullTreeIndices: [0, 10]
         });

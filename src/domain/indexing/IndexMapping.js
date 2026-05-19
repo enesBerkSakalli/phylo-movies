@@ -67,7 +67,7 @@ export function getIndexMappingValues(sequenceIndex = 0, totalSequenceLength = 0
 
 export function getIndexMappings(state = useAppStore.getState()) {
   return getIndexMappingValues(
-    state.currentTreeIndex || 0,
+    state.frameIndex || 0,
     state.treeList?.length || 0,
     state.transitionResolver
   );
@@ -82,7 +82,7 @@ export function getMSAFrameIndexForTimelineIndex(sequenceIndex = 0, transitionRe
 
 export function getMSAFrameIndex(state = useAppStore.getState()) {
   return getMSAFrameIndexForTimelineIndex(
-    state.currentTreeIndex || 0,
+    state.frameIndex || 0,
     state.transitionResolver
   );
 }

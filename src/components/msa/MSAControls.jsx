@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import {
   selectClearMsaRowOrder,
   selectCurrentTree,
-  selectCurrentTreeIndex,
+  selectFrameIndex,
   selectSetMsaRowOrder,
   selectTreeControllers,
   useAppStore
@@ -20,7 +20,7 @@ export function MSAControls() {
   const { processedData, showLetters, setShowLetters, colorScheme, setColorScheme } = useMSA();
   const treeControllers = useAppStore(selectTreeControllers);
   const currentTree = useAppStore(selectCurrentTree);
-  const currentTreeIndex = useAppStore(selectCurrentTreeIndex);
+  const frameIndex = useAppStore(selectFrameIndex);
   const setMsaRowOrder = useAppStore(selectSetMsaRowOrder);
   const clearMsaRowOrder = useAppStore(selectClearMsaRowOrder);
 
@@ -29,7 +29,7 @@ export function MSAControls() {
     if (!controller) return;
     if (!currentTree) return;
 
-    const layout = controller.calculateLayout(currentTree, { treeIndex: currentTreeIndex });
+    const layout = controller.calculateLayout(currentTree, { treeIndex: frameIndex });
     if (!Array.isArray(layout?.leaves)) return;
 
     const leaves = [...layout.leaves].sort((a, b) => (a.angle ?? 0) - (b.angle ?? 0));

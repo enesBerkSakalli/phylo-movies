@@ -22,7 +22,7 @@ export class TreeNodeInteractionHandler {
     const layerData = info?.object;
     const treeContext = this._getTreeContext(layerData, state);
     const treeData = treeContext?.tree ?? selectCurrentTree(state);
-    const treeIndex = treeContext?.treeIndex ?? state.currentTreeIndex;
+    const treeIndex = treeContext?.treeIndex ?? state.frameIndex;
     const treeNode = this._findContextNodeFromLayerData(layerData, treeData, treeIndex);
 
     let x, y;

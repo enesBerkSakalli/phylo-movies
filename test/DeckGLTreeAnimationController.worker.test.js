@@ -45,7 +45,7 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
         animationProgress: 0,
         timelineProgress: null
       },
-      currentTreeIndex: 0
+      frameIndex: 0
     });
   });
 
@@ -243,13 +243,13 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
 
     controller.animationRunner.updateProgress(0.1, {
       timelineProgress: 0.4,
-      currentTreeIndex: 2
+      frameIndex: 2
     });
 
     const state = useAppStore.getState();
     expect(state.playhead.animationProgress).toBe(0.1);
     expect(state.playhead.timelineProgress).toBe(0.4);
-    expect(state.currentTreeIndex).toBe(2);
+    expect(state.frameIndex).toBe(2);
   });
 
   it('keeps interpolation caches when stroke width changes layer data only', () => {

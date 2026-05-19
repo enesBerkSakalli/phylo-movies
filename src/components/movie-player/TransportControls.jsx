@@ -6,7 +6,7 @@ import { ChevronsLeft, ChevronLeft, Play, Pause, ChevronRight, ChevronsRight, Gi
 import {
   selectActiveTreeListLength,
   selectComparisonMode,
-  selectCurrentTreeIndex,
+  selectFrameIndex,
   selectGoToNextInputTree,
   selectGoToPreviousInputTree,
   selectPlaying,
@@ -25,7 +25,7 @@ export function TransportControls({
   onForward,
 }) {
   const playing = useAppStore(selectPlaying);
-  const currentTreeIndex = useAppStore(selectCurrentTreeIndex);
+  const frameIndex = useAppStore(selectFrameIndex);
   const treeListLen = useAppStore(selectActiveTreeListLength);
   const comparisonMode = useAppStore(selectComparisonMode);
   const toggleComparisonMode = useAppStore(selectToggleComparisonMode);
@@ -39,8 +39,8 @@ export function TransportControls({
   const hasSequence = treeListLen > 0;
   const hasAnimationSequence = treeListLen > 1;
   const canTogglePlayback = hasAnimationSequence || playing;
-  const canStepBackward = hasAnimationSequence && currentTreeIndex > 0;
-  const canStepForward = hasAnimationSequence && currentTreeIndex < treeListLen - 1;
+  const canStepBackward = hasAnimationSequence && frameIndex > 0;
+  const canStepForward = hasAnimationSequence && frameIndex < treeListLen - 1;
 
   // Get input-tree indices for disabled state calculation.
   const inputTreeIndices = useMemo(() => {
@@ -49,12 +49,12 @@ export function TransportControls({
 
   // Check if we can navigate to previous/next input tree.
   const canGoToPreviousInputTree = useMemo(() => {
-    return inputTreeIndices.some(idx => idx < currentTreeIndex);
-  }, [inputTreeIndices, currentTreeIndex]);
+    return inputTreeIndices.some(idx => idx < frameIndex);
+  }, [inputTreeIndices, frameIndex]);
 
   const canGoToNextInputTree = useMemo(() => {
-    return inputTreeIndices.some(idx => idx > currentTreeIndex);
-  }, [inputTreeIndices, currentTreeIndex]);
+    return inputTreeIndices.some(idx => idx > frameIndex);
+  }, [inputTreeIndices, frameIndex]);
 
   const onPlayClick = useCallback(async () => {
     try {
