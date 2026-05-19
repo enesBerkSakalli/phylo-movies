@@ -32,7 +32,7 @@ export function SlidingWindowSection({ hasMsa, disabled }) {
       </div>
 
       <p className="text-2xs text-muted-foreground leading-relaxed">
-        The alignment is divided into overlapping sliding windows. Each window yields one anchor tree. When stride &lt; window size, consecutive windows share alignment columns.
+        The alignment is divided into overlapping sliding windows. Each window yields one input tree. When stride &lt; window size, consecutive windows share alignment columns.
       </p>
 
       <FormField

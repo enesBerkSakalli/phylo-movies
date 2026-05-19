@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import TransitionIndexResolver from '../../../src/domain/indexing/TransitionIndexResolver.js';
-import { getMSAFrameIndexForTimelineIndex } from '../../../src/domain/indexing/IndexMapping.js';
-import { resolveAnchorIndex } from '../../../src/components/TreeStatsPanel/Shared/utils.ts';
+import {
+  findNextInputTreeSequenceIndex,
+  findPreviousInputTreeSequenceIndex,
+  getMSAFrameIndexForTimelineIndex
+} from '../../../src/domain/indexing/IndexMapping.js';
+import { resolveInputTreeIndex } from '../../../src/components/TreeStatsPanel/Shared/utils.ts';
 
-describe('source tree index semantics', () => {
+describe('source input tree index semantics', () => {
   it('returns the source global tree index from backend metadata', () => {
     const resolver = new TransitionIndexResolver([
       { tree_pair_key: null, step_in_pair: null, source_tree_global_index: null },
@@ -23,7 +27,14 @@ describe('source tree index semantics', () => {
       getSourceGlobalIndex: () => 3,
     };
 
-    expect(resolveAnchorIndex(4, [0, 3, 5], resolver, 6)).toBe(3);
+    expect(resolveInputTreeIndex(4, [0, 3, 5], resolver, 6)).toBe(3);
+  });
+
+  it('names previous and next observed-tree navigation as input-tree navigation', () => {
+    const inputTreeIndices = [0, 3, 5];
+
+    expect(findPreviousInputTreeSequenceIndex(inputTreeIndices, 4)).toBe(3);
+    expect(findNextInputTreeSequenceIndex(inputTreeIndices, 4)).toBe(5);
   });
 
   it('keeps generated timeline frames on the previous MSA source frame', () => {

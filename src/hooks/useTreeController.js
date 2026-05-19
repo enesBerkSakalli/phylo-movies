@@ -240,9 +240,9 @@ export function useTreeController() {
 // =============================================================================
 
 async function renderComparisonMode(controller, transitionResolver, currentTreeIndex) {
-  const full = transitionResolver?.fullTreeIndices || [];
-  const sourceAnchorIndex = transitionResolver?.getSourceGlobalIndex(currentTreeIndex) ?? 0;
-  const rightIndex = full.find((i) => i > sourceAnchorIndex) ?? full[full.length - 1];
+  const inputTreeIndices = transitionResolver?.fullTreeIndices || [];
+  const sourceInputTreeIndex = transitionResolver?.getSourceGlobalIndex(currentTreeIndex) ?? 0;
+  const rightIndex = inputTreeIndices.find((i) => i > sourceInputTreeIndex) ?? inputTreeIndices[inputTreeIndices.length - 1];
 
   await controller.renderAllElements({
     leftIndex: currentTreeIndex,

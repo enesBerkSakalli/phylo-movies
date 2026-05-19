@@ -13,7 +13,7 @@ export const TIMING_PROFILE = {
     motionStepMs: 1000,
     moverHoldMs: 200,
     pivotHoldMs: 900,
-    anchorHoldMs: 1500
+    inputTreeHoldMs: 1500
 };
 
 export const TIMELINE_THEME = {
@@ -26,15 +26,15 @@ export const TIMELINE_THEME = {
     stripTrackRGB: [217, 119, 6],
     stripTrackAlpha: 230,
     stripTrackWidth: 4,
-    anchorStrokeWidth: 3,
-    anchorFillRGB: [240, 240, 245],
-    anchorStrokeRGB: [60, 60, 80],
-    anchorRadiusVar: 7,
-    anchorDenseThresholdPx: 18,
-    anchorTickRGB: [60, 60, 80],
-    anchorTickAlpha: 180,
-    anchorTickWidth: 2,
-    activeAnchorTickWidth: 4,
+    inputTreeStrokeWidth: 3,
+    inputTreeFillRGB: [240, 240, 245],
+    inputTreeStrokeRGB: [60, 60, 80],
+    inputTreeRadiusVar: 7,
+    inputTreeDenseThresholdPx: 18,
+    inputTreeTickRGB: [60, 60, 80],
+    inputTreeTickAlpha: 180,
+    inputTreeTickWidth: 2,
+    activeInputTreeTickWidth: 4,
     separatorRGB: [0, 0, 0],
     separatorWidthMax: 2,
     separatorWidthMin: 1,

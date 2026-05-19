@@ -4,36 +4,36 @@ import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
 import { AppTooltip } from '../../ui/app-tooltip';
 
-export function ClipboardSection({ clipboardTreeIndex, anchorIndices, onShowAnchor, onClear }) {
-  const hasAnchors = anchorIndices.length > 0;
+export function ClipboardSection({ clipboardTreeIndex, inputTreeIndices, onShowInputTree, onClear }) {
+  const hasInputTrees = inputTreeIndices.length > 0;
   const isShowing = clipboardTreeIndex !== null;
 
-  const currentAnchorPosition = isShowing
-    ? anchorIndices.indexOf(clipboardTreeIndex)
+  const currentInputTreePosition = isShowing
+    ? inputTreeIndices.indexOf(clipboardTreeIndex)
     : -1;
 
-  const handlePrevAnchor = () => {
-    if (!hasAnchors) return;
-    if (currentAnchorPosition <= 0) {
-      onShowAnchor(anchorIndices[0]);
+  const handlePreviousInputTree = () => {
+    if (!hasInputTrees) return;
+    if (currentInputTreePosition <= 0) {
+      onShowInputTree(inputTreeIndices[0]);
     } else {
-      onShowAnchor(anchorIndices[currentAnchorPosition - 1]);
+      onShowInputTree(inputTreeIndices[currentInputTreePosition - 1]);
     }
   };
 
-  const handleNextAnchor = () => {
-    if (!hasAnchors) return;
-    if (currentAnchorPosition < 0 || currentAnchorPosition >= anchorIndices.length - 1) {
-      onShowAnchor(anchorIndices[anchorIndices.length - 1]);
+  const handleNextInputTree = () => {
+    if (!hasInputTrees) return;
+    if (currentInputTreePosition < 0 || currentInputTreePosition >= inputTreeIndices.length - 1) {
+      onShowInputTree(inputTreeIndices[inputTreeIndices.length - 1]);
     } else {
-      onShowAnchor(anchorIndices[currentAnchorPosition + 1]);
+      onShowInputTree(inputTreeIndices[currentInputTreePosition + 1]);
     }
   };
 
   const getClipboardLabel = () => {
     if (!isShowing) return 'Off';
-    const anchorPos = anchorIndices.indexOf(clipboardTreeIndex);
-    if (anchorPos >= 0) return `Source ${anchorPos + 1}`;
+    const inputTreePosition = inputTreeIndices.indexOf(clipboardTreeIndex);
+    if (inputTreePosition >= 0) return `Input ${inputTreePosition + 1}`;
     return `Tree ${clipboardTreeIndex + 1}`;
   };
 
@@ -43,14 +43,14 @@ export function ClipboardSection({ clipboardTreeIndex, anchorIndices, onShowAnch
       <div className="flex flex-col gap-0">
         <span className="text-2xs font-medium text-muted-foreground uppercase tracking-wider">Compare with</span>
         <div className="flex items-center gap-1 mt-1">
-          <AppTooltip content="Previous source tree to compare">
+          <AppTooltip content="Previous input tree to compare">
             <Button
               variant="ghost"
               size="icon"
               className="h-5 w-5 hover:bg-accent rounded-sm"
-              onClick={handlePrevAnchor}
-              disabled={!hasAnchors}
-              aria-label="Previous source tree to compare"
+              onClick={handlePreviousInputTree}
+              disabled={!hasInputTrees}
+              aria-label="Previous input tree to compare"
             >
               <ChevronLeft className="size-3" />
             </Button>
@@ -63,14 +63,14 @@ export function ClipboardSection({ clipboardTreeIndex, anchorIndices, onShowAnch
             {getClipboardLabel()}
           </Badge>
 
-          <AppTooltip content="Next source tree to compare">
+          <AppTooltip content="Next input tree to compare">
             <Button
               variant="ghost"
               size="icon"
               className="h-5 w-5 hover:bg-accent rounded-sm"
-              onClick={handleNextAnchor}
-              disabled={!hasAnchors}
-              aria-label="Next source tree to compare"
+              onClick={handleNextInputTree}
+              disabled={!hasInputTrees}
+              aria-label="Next input tree to compare"
             >
               <ChevronRight className="size-3" />
             </Button>

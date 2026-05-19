@@ -29,8 +29,8 @@ describe('TimelineNavigationController', () => {
       ...initialState,
     };
 
-    state.goToPosition = (position, direction) => {
-      state.goToPositionCalls.push({ position, direction });
+    state.goToPosition = (position, direction, options) => {
+      state.goToPositionCalls.push({ position, direction, options });
     };
 
     state.setClipboardTreeIndex = (index) => {
@@ -45,7 +45,7 @@ describe('TimelineNavigationController', () => {
     };
   }
 
-  it('navigates to anchor segments and updates the clipboard', () => {
+  it('navigates to input-tree segments and updates the clipboard', () => {
     const store = makeStore({ currentTreeIndex: 1 });
     let updateCalls = 0;
     const controller = new TimelineNavigationController({
@@ -63,7 +63,7 @@ describe('TimelineNavigationController', () => {
     controller.handleTimelineClick(0);
 
     expect(store.getState().setClipboardTreeIndexCalls).to.deep.equal([4]);
-    expect(store.getState().goToPositionCalls).to.deep.equal([{ position: 4, direction: 'forward' }]);
+    expect(store.getState().goToPositionCalls).to.deep.equal([{ position: 4, direction: 'forward', options: undefined }]);
     expect(scheduledFrames).to.have.length(1);
 
     scheduledFrames[0]();
@@ -87,7 +87,7 @@ describe('TimelineNavigationController', () => {
     controller.handleTimelineClick(0);
 
     expect(store.getState().setClipboardTreeIndexCalls).to.deep.equal([]);
-    expect(store.getState().goToPositionCalls).to.deep.equal([{ position: 2, direction: 'backward' }]);
+    expect(store.getState().goToPositionCalls).to.deep.equal([{ position: 2, direction: 'backward', options: undefined }]);
   });
 
   it('uses click time to resolve the nearest transition frame', () => {
@@ -116,25 +116,39 @@ describe('TimelineNavigationController', () => {
 
     controller.handleTimelineClick(0, 2600);
 
-    expect(store.getState().goToPositionCalls).to.deep.equal([{ position: 4, direction: 'forward' }]);
+    expect(store.getState().goToPositionCalls).to.have.length(1);
+    expect(store.getState().goToPositionCalls[0]).to.deep.include({ position: 4, direction: 'forward' });
+    expect(store.getState().goToPositionCalls[0].options.timelineProgress).to.be.closeTo(2600 / 3000, 0.000001);
   });
 
-  it('uses jump direction when clicking the already active tree', () => {
+  it('uses jump direction and preserves exact timeline position when clicking the already active tree', () => {
     const store = makeStore({ currentTreeIndex: 3 });
     const controller = new TimelineNavigationController({
       segments: [
         {
           index: 0,
-          isFullTree: true,
-          interpolationData: [{ originalIndex: 3 }]
+          isFullTree: false,
+          hasInterpolation: true,
+          interpolationData: [
+            { originalIndex: 2 },
+            { originalIndex: 3 },
+            { originalIndex: 4 }
+          ]
         }
       ],
+      timelineData: {
+        totalDuration: 3000,
+        segmentDurations: [3000],
+        cumulativeDurations: [3000]
+      },
       store,
       onTimelinePositionUpdated: () => {}
     });
 
-    controller.handleTimelineClick(0);
+    controller.handleTimelineClick(0, 1500);
 
-    expect(store.getState().goToPositionCalls).to.deep.equal([{ position: 3, direction: 'jump' }]);
+    expect(store.getState().goToPositionCalls).to.have.length(1);
+    expect(store.getState().goToPositionCalls[0]).to.deep.include({ position: 3, direction: 'jump' });
+    expect(store.getState().goToPositionCalls[0].options.timelineProgress).to.be.closeTo(0.5, 0.000001);
   });
 });

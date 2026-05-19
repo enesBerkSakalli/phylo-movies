@@ -65,7 +65,7 @@ export class TreeLayoutController {
 
   /**
    * Initializes the uniform scaling system using global maximum scale.
-   * Ensures consistent radii across Anchor and Transition trees.
+   * Ensures consistent radii across input and transition trees.
    */
   initializeUniformScaling(branchTransformation = 'none') {
     const state = useAppStore.getState();

@@ -6,7 +6,7 @@ import {
   collectUniqueSubtrees,
   collectUniqueEdges
 } from '../../../domain/tree/splits.js';
-import { findPreviousAnchorSequenceIndex, findNextAnchorSequenceIndex } from '../../../domain/indexing/IndexMapping.js';
+import { findPreviousInputTreeSequenceIndex, findNextInputTreeSequenceIndex } from '../../../domain/indexing/IndexMapping.js';
 import { selectFullTreeIndices, selectTreePairKeyAtIndex } from '../selectors/treeSelectors.js';
 
 // ============================================================================
@@ -21,24 +21,24 @@ export function calculateChangePreviews(state, indexOverride = null) {
     return { upcoming: [], completed: [] };
   }
 
-  const anchors = selectFullTreeIndices(state);
-  if (!anchors.length || !pivotEdgeTracking?.length) {
+  const inputTreeIndices = selectFullTreeIndices(state);
+  if (!inputTreeIndices.length || !pivotEdgeTracking?.length) {
     return { upcoming: [], completed: [] };
   }
 
-  const prevAnchor = findPreviousAnchorSequenceIndex(anchors, currentTreeIndex);
-  const nextAnchor = findNextAnchorSequenceIndex(anchors, currentTreeIndex);
+  const previousInputTreeIndex = findPreviousInputTreeSequenceIndex(inputTreeIndices, currentTreeIndex);
+  const nextInputTreeIndex = findNextInputTreeSequenceIndex(inputTreeIndices, currentTreeIndex);
   const currentEdge = pivotEdgeTracking[currentTreeIndex];
   // Must use toSubtreeKey to match how collectUniqueEdges generates keys (was JSON.stringify which caused mismatch)
   const currentKey = currentEdge?.length > 0 ? toSubtreeKey(currentEdge) : null;
 
-  const completed = collectUniqueEdges(pivotEdgeTracking, prevAnchor + 1, currentTreeIndex, currentKey);
+  const completed = collectUniqueEdges(pivotEdgeTracking, previousInputTreeIndex + 1, currentTreeIndex, currentKey);
 
-  if (nextAnchor === null) {
+  if (nextInputTreeIndex === null) {
     return { upcoming: [], completed };
   }
 
-  const upcoming = collectUniqueEdges(pivotEdgeTracking, currentTreeIndex + 1, nextAnchor, currentKey);
+  const upcoming = collectUniqueEdges(pivotEdgeTracking, currentTreeIndex + 1, nextInputTreeIndex, currentKey);
 
   return { upcoming, completed };
 }
@@ -111,18 +111,18 @@ export function getAffectedSubtreesForPivotEdge(state, index) {
 }
 
 /**
- * Retrieves the history of subtrees for a given index, relative to the last anchor frame.
+ * Retrieves the history of subtrees for a given index, relative to the last input tree.
  */
 export function getSubtreeHistoryAtIndex(state, index) {
   if (state.transitionResolver?.isFullTree?.(index)) return [];
   const tracking = state.subtreeHighlightTracking;
   if (!Array.isArray(tracking) || tracking.length === 0) return [];
 
-  const anchors = selectFullTreeIndices(state);
-  if (!anchors.length) return [];
+  const inputTreeIndices = selectFullTreeIndices(state);
+  if (!inputTreeIndices.length) return [];
 
-  const prevAnchor = findPreviousAnchorSequenceIndex(anchors, index);
-  const start = Math.max(prevAnchor + 1, 0);
+  const previousInputTreeIndex = findPreviousInputTreeSequenceIndex(inputTreeIndices, index);
+  const start = Math.max(previousInputTreeIndex + 1, 0);
   const end = Math.min(index, tracking.length);
   if (end <= start) return [];
 

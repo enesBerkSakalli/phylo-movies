@@ -86,7 +86,7 @@ function makeCurrentTimingPayload() {
     },
     file_name: 'current-contract.nwk',
     split_change_timeline: [
-      { type: 'original', tree_index: 7, global_index: 0, name: 'Source Tree 8' },
+      { type: 'original', tree_index: 7, global_index: 0, name: 'Input Tree 8' },
       {
         type: 'split_event',
         pair_key: 'pair_7_8',
@@ -94,7 +94,7 @@ function makeCurrentTimingPayload() {
         step_range_local: [0, 1],
         step_range_global: [1, 2],
       },
-      { type: 'original', tree_index: 8, global_index: 3, name: 'Source Tree 9' },
+      { type: 'original', tree_index: 8, global_index: 3, name: 'Input Tree 9' },
     ],
   };
 }

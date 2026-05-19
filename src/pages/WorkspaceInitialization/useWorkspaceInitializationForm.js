@@ -162,7 +162,7 @@ export function useWorkspaceInitializationForm() {
       // Build form data based on file type:
       // - 'msa' files use msaFile field and need window/step parameters
       // - 'newick' files use treesFile field (pre-computed trees)
-      // - 'tree-msa' files pair supplied anchor trees with an alignment
+      // - 'tree-msa' files pair supplied input trees with an alignment
       const formData = {
         msaFile: example.fileType === 'msa' ? file : pairedMsaFile,
         treesFile: example.fileType === 'newick' || example.fileType === 'tree-msa' ? file : null,

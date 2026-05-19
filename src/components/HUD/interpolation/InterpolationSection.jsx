@@ -37,11 +37,11 @@ export function InterpolationSection() {
 }
 
 function getTimelineTooltipText(segmentText) {
-  if (segmentText === 'Source tree') {
+  if (segmentText === 'Input tree') {
     return 'An observed tree from one alignment window or uploaded tree set.';
   }
   if (segmentText === 'Generated frame') {
     return 'A generated tree frame in the sequence.';
   }
-  return 'Generated frames between neighboring source trees.';
+  return 'Generated frames between a source input tree and target input tree.';
 }

@@ -7,8 +7,8 @@ import {
   selectActiveTreeListLength,
   selectComparisonMode,
   selectCurrentTreeIndex,
-  selectGoToNextAnchor,
-  selectGoToPreviousAnchor,
+  selectGoToNextInputTree,
+  selectGoToPreviousInputTree,
   selectPlaying,
   selectSetViewsConnected,
   selectStartAnimationPlayback,
@@ -18,6 +18,7 @@ import {
   selectViewsConnected,
   useAppStore
 } from '../../state/phyloStore/store.js';
+import { TRANSPORT_CONTROL_GROUP_LABELS } from './TransportControls.contract.js';
 
 export function TransportControls({
   onBackward,
@@ -32,8 +33,8 @@ export function TransportControls({
   const setViewsConnected = useAppStore(selectSetViewsConnected);
   const startAnimationPlayback = useAppStore(selectStartAnimationPlayback);
   const stopAnimationPlayback = useAppStore(selectStopAnimationPlayback);
-  const goToNextAnchor = useAppStore(selectGoToNextAnchor);
-  const goToPreviousAnchor = useAppStore(selectGoToPreviousAnchor);
+  const goToNextInputTree = useAppStore(selectGoToNextInputTree);
+  const goToPreviousInputTree = useAppStore(selectGoToPreviousInputTree);
   const transitionResolver = useAppStore(selectTransitionResolver);
   const hasSequence = treeListLen > 0;
   const hasAnimationSequence = treeListLen > 1;
@@ -41,19 +42,19 @@ export function TransportControls({
   const canStepBackward = hasAnimationSequence && currentTreeIndex > 0;
   const canStepForward = hasAnimationSequence && currentTreeIndex < treeListLen - 1;
 
-  // Get anchor-tree indices for disabled state calculation.
-  const anchorIndices = useMemo(() => {
+  // Get input-tree indices for disabled state calculation.
+  const inputTreeIndices = useMemo(() => {
     return transitionResolver?.fullTreeIndices || [];
   }, [transitionResolver]);
 
-  // Check if we can navigate to previous/next anchor tree.
-  const canGoToPreviousAnchor = useMemo(() => {
-    return anchorIndices.some(idx => idx < currentTreeIndex);
-  }, [anchorIndices, currentTreeIndex]);
+  // Check if we can navigate to previous/next input tree.
+  const canGoToPreviousInputTree = useMemo(() => {
+    return inputTreeIndices.some(idx => idx < currentTreeIndex);
+  }, [inputTreeIndices, currentTreeIndex]);
 
-  const canGoToNextAnchor = useMemo(() => {
-    return anchorIndices.some(idx => idx > currentTreeIndex);
-  }, [anchorIndices, currentTreeIndex]);
+  const canGoToNextInputTree = useMemo(() => {
+    return inputTreeIndices.some(idx => idx > currentTreeIndex);
+  }, [inputTreeIndices, currentTreeIndex]);
 
   const onPlayClick = useCallback(async () => {
     try {
@@ -62,32 +63,32 @@ export function TransportControls({
     } catch { }
   }, [playing, startAnimationPlayback, stopAnimationPlayback]);
 
-  const onPreviousAnchor = useCallback(() => {
+  const onPreviousInputTree = useCallback(() => {
     stopAnimationPlayback();
-    goToPreviousAnchor();
-  }, [goToPreviousAnchor, stopAnimationPlayback]);
+    goToPreviousInputTree();
+  }, [goToPreviousInputTree, stopAnimationPlayback]);
 
-  const onNextAnchor = useCallback(() => {
+  const onNextInputTree = useCallback(() => {
     stopAnimationPlayback();
-    goToNextAnchor();
-  }, [goToNextAnchor, stopAnimationPlayback]);
+    goToNextInputTree();
+  }, [goToNextInputTree, stopAnimationPlayback]);
 
   const playbackLabel = playing ? 'Pause sequence' : 'Play sequence';
   const comparisonLabel = comparisonMode ? 'Hide comparison view' : 'Show comparison view';
   const viewLinkLabel = viewsConnected ? 'Unlink tree views' : 'Link tree views';
 
   return (
-    <div className="flex shrink-0 items-center gap-1" role="group" aria-label="Playback and comparison controls">
-      <div className="flex items-center gap-0.5" role="group" aria-label="Movie playback controls">
-        <AppTooltip content="Previous source tree">
+    <div className="flex shrink-0 items-center gap-1" role="group" aria-label={TRANSPORT_CONTROL_GROUP_LABELS.root}>
+      <div className="flex items-center gap-0.5" role="group" aria-label={TRANSPORT_CONTROL_GROUP_LABELS.playback}>
+        <AppTooltip content="Previous input tree">
           <Button
             className="transport-button"
-            id="backwardAnchorButton"
+            id="backwardInputTreeButton"
             variant="ghost"
             size="icon"
-            aria-label="Previous source tree"
-            disabled={!hasSequence || !canGoToPreviousAnchor}
-            onClick={onPreviousAnchor}
+            aria-label="Previous input tree"
+            disabled={!hasSequence || !canGoToPreviousInputTree}
+            onClick={onPreviousInputTree}
           >
             <ChevronsLeft className="size-4" />
           </Button>
@@ -136,15 +137,15 @@ export function TransportControls({
           </Button>
         </AppTooltip>
 
-        <AppTooltip content="Next source tree">
+        <AppTooltip content="Next input tree">
           <Button
             className="transport-button"
-            id="forwardAnchorButton"
+            id="forwardInputTreeButton"
             variant="ghost"
             size="icon"
-            aria-label="Next source tree"
-            disabled={!hasSequence || !canGoToNextAnchor}
-            onClick={onNextAnchor}
+            aria-label="Next input tree"
+            disabled={!hasSequence || !canGoToNextInputTree}
+            onClick={onNextInputTree}
           >
             <ChevronsRight className="size-4" />
           </Button>
@@ -153,7 +154,7 @@ export function TransportControls({
 
       <Separator orientation="vertical" className="h-5" />
 
-      <div className="flex items-center gap-0.5" role="group" aria-label="Comparison view controls">
+      <div className="flex items-center gap-0.5" role="group" aria-label={TRANSPORT_CONTROL_GROUP_LABELS.comparison}>
         <AppTooltip content={comparisonLabel}>
           <Button
             className="transport-button"

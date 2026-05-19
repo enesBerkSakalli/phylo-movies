@@ -57,27 +57,27 @@ function createScatterplotLayer(id, data, options = {}) {
 // TIMELINE LAYER FACTORIES
 // ==========================================================================
 
-export function createAnchorLayer(anchorPoints, anchorStrokeWidth) {
-  return createScatterplotLayer('anchor-layer', anchorPoints, {
+export function createInputTreeLayer(inputTreePoints, inputTreeStrokeWidth) {
+  return createScatterplotLayer('input-tree-layer', inputTreePoints, {
     getPosition: d => d.position,
     getFillColor: d => d.fillColor,
     getLineColor: d => d.borderColor,
     stroked: true,
     filled: true,
     getRadius: d => d.radius,
-    getLineWidth: d => d.lineWidth ?? anchorStrokeWidth,
+    getLineWidth: d => d.lineWidth ?? inputTreeStrokeWidth,
     radiusUnits: 'pixels'
   });
 }
 
-export function createAnchorTickLayer(anchorTicks, theme, active = false) {
+export function createInputTreeTickLayer(inputTreeTicks, theme, active = false) {
   return createPathLayer(
-    active ? 'active-anchor-tick-layer' : 'anchor-tick-layer',
-    anchorTicks,
+    active ? 'active-input-tree-tick-layer' : 'input-tree-tick-layer',
+    inputTreeTicks,
     active
       ? [theme.scrubberCoreRGB[0], theme.scrubberCoreRGB[1], theme.scrubberCoreRGB[2], 255]
-      : [theme.anchorTickRGB[0], theme.anchorTickRGB[1], theme.anchorTickRGB[2], theme.anchorTickAlpha],
-    active ? theme.activeAnchorTickWidth : theme.anchorTickWidth,
+      : [theme.inputTreeTickRGB[0], theme.inputTreeTickRGB[1], theme.inputTreeTickRGB[2], theme.inputTreeTickAlpha],
+    active ? theme.activeInputTreeTickWidth : theme.inputTreeTickWidth,
     { capRounded: true }
   );
 }
@@ -99,8 +99,8 @@ export function createConnectionLayer(connections, connectionWidth) {
   });
 }
 
-export function createAnchorHoverLayer(hoverAnchors, hoverRGB, onClick = null) {
-  return createScatterplotLayer('anchor-hover-layer', hoverAnchors, {
+export function createInputTreeHoverLayer(hoverInputTrees, hoverRGB, onClick = null) {
+  return createScatterplotLayer('input-tree-hover-layer', hoverInputTrees, {
     getPosition: d => d.position,
     getFillColor: d => d.fillColor,
     getLineColor: [hoverRGB[0], hoverRGB[1], hoverRGB[2], 160],
@@ -123,8 +123,8 @@ export function createConnectionHoverLayer(hoverConnections, hoverRGB, connectio
   });
 }
 
-export function createAnchorSelectionLayer(selectionAnchors, theme) {
-  return createScatterplotLayer('anchor-selection-layer', selectionAnchors, {
+export function createInputTreeSelectionLayer(selectionInputTrees, theme) {
+  return createScatterplotLayer('input-tree-selection-layer', selectionInputTrees, {
     getPosition: d => d.position,
     getFillColor: d => d.fillColor,
     getLineColor: [theme.connectionSelectionRGB[0], theme.connectionSelectionRGB[1], theme.connectionSelectionRGB[2], 230],
@@ -204,28 +204,28 @@ function clampToViewport(x, radius, width) {
   return Math.max(-halfWidth + radius, Math.min(halfWidth - radius, x));
 }
 
-function calculateRadius(anchorRadiusVar, height, zoomScale) {
-  const baseRadius = Number.isFinite(anchorRadiusVar)
-    ? anchorRadiusVar
+function calculateRadius(inputTreeRadiusVar, height, zoomScale) {
+  const baseRadius = Number.isFinite(inputTreeRadiusVar)
+    ? inputTreeRadiusVar
     : Math.max(3, Math.min(6, Math.floor(height * 0.18)));
   const maxRadius = Math.floor(height * 0.25);
   const minRadius = 1;
   return Math.max(minRadius, Math.min(maxRadius, baseRadius * zoomScale));
 }
 
-function calculateConnectionGaps(i, segments, anchorRadius, gapDefault) {
-  const leftNeighborIsAnchor = (i > 0) && segments[i - 1]?.isFullTree;
-  const rightNeighborIsAnchor = (i < segments.length - 1) && segments[i + 1]?.isFullTree;
+function calculateConnectionGaps(i, segments, inputTreeRadius, gapDefault) {
+  const leftNeighborIsInputTree = (i > 0) && segments[i - 1]?.isFullTree;
+  const rightNeighborIsInputTree = (i < segments.length - 1) && segments[i + 1]?.isFullTree;
 
   return {
-    leftGap: leftNeighborIsAnchor ? anchorRadius : gapDefault,
-    rightGap: rightNeighborIsAnchor ? anchorRadius : gapDefault
+    leftGap: leftNeighborIsInputTree ? inputTreeRadius : gapDefault,
+    rightGap: rightNeighborIsInputTree ? inputTreeRadius : gapDefault
   };
 }
 
-export function createAnchor(segmentIndex, id, x0, x1, width, height, theme, zoomScale, snap) {
+export function createInputTreeMarker(segmentIndex, id, x0, x1, width, height, theme, zoomScale, snap) {
   const center = (x0 + x1) / 2;
-  const radius = calculateRadius(theme.anchorRadiusVar, height, zoomScale);
+  const radius = calculateRadius(theme.inputTreeRadiusVar, height, zoomScale);
   const centeredX = toCanvasCentered(center, width);
   const clampedX = clampToViewport(centeredX, radius, width);
 
@@ -233,14 +233,14 @@ export function createAnchor(segmentIndex, id, x0, x1, width, height, theme, zoo
     segmentIndex,
     id,
     position: [snap(clampedX), 0],
-    fillColor: rgba(...theme.anchorFillRGB),
-    borderColor: rgba(...theme.anchorStrokeRGB),
+    fillColor: rgba(...theme.inputTreeFillRGB),
+    borderColor: rgba(...theme.inputTreeStrokeRGB),
     radius,
-    lineWidth: theme.anchorStrokeWidth
+    lineWidth: theme.inputTreeStrokeWidth
   };
 }
 
-export function createAnchorTick(x0, x1, width, height, theme, snap) {
+export function createInputTreeTick(x0, x1, width, height, theme, snap) {
   const center = (x0 + x1) / 2;
   const x = snap(toCanvasCentered(center, width));
   const halfHeight = Math.max(5, Math.min(11, height * 0.34));
@@ -265,9 +265,9 @@ export function createStripTrack(width, snap) {
   };
 }
 
-export function createConnection(i, id, x0, x1, width, height, anchorRadiusVar, zoomScale, gapDefault, connectionNeutralRGB, snap, segments) {
-  const anchorRadius = calculateRadius(anchorRadiusVar, height, zoomScale);
-  const { leftGap, rightGap } = calculateConnectionGaps(i, segments, anchorRadius, gapDefault);
+export function createConnection(i, id, x0, x1, width, height, inputTreeRadiusVar, zoomScale, gapDefault, connectionNeutralRGB, snap, segments) {
+  const inputTreeRadius = calculateRadius(inputTreeRadiusVar, height, zoomScale);
+  const { leftGap, rightGap } = calculateConnectionGaps(i, segments, inputTreeRadius, gapDefault);
 
   const xStart = snap(toCanvasCentered(x0, width) + leftGap);
   const xEnd = snap(toCanvasCentered(x1, width) - rightGap);

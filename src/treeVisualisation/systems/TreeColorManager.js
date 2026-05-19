@@ -286,7 +286,7 @@ export class TreeColorManager {
 
   /**
    * Update upcoming change edges (lighter/dashed preview)
-   * @param {Array} upcomingEdges - Array of edge arrays that will be active before next anchor
+   * @param {Array} upcomingEdges - Array of edge arrays that will be active before next input tree
    */
   updateUpcomingChangeEdges(upcomingEdges) {
     if (Array.isArray(upcomingEdges)) {
@@ -298,7 +298,7 @@ export class TreeColorManager {
 
   /**
    * Update completed change edges (grayed out/muted)
-   * @param {Array} completedEdges - Array of edge arrays that have been processed since last anchor
+   * @param {Array} completedEdges - Array of edge arrays that have been processed since last input tree
    */
   updateCompletedChangeEdges(completedEdges) {
     if (Array.isArray(completedEdges)) {
@@ -439,7 +439,7 @@ export class TreeColorManager {
   }
 
   /**
-   * Check if a branch is an upcoming change edge (will be active before next anchor)
+   * Check if a branch is an upcoming change edge (will be active before next input tree)
    */
   isUpcomingChangeEdge(linkData) {
     if (!this.upcomingChangeEdges || this.upcomingChangeEdges.length === 0) {
@@ -456,7 +456,7 @@ export class TreeColorManager {
   }
 
   /**
-   * Check if a branch is a completed change edge (was active since last anchor)
+   * Check if a branch is a completed change edge (was active since last input tree)
    */
   isCompletedChangeEdge(linkData) {
     if (!this.completedChangeEdges || this.completedChangeEdges.length === 0) {

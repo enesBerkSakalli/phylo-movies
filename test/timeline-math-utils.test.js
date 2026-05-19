@@ -190,8 +190,8 @@ describe('TimelineMathUtils', () => {
     });
   });
 
-  it('resolves anchor holds as static observed input tree states', () => {
-    const treeList = [{ id: 'anchor' }];
+  it('resolves input-tree holds as static observed input tree states', () => {
+    const treeList = [{ id: 'input-tree' }];
     const segments = [{
       isFullTree: true,
       hasInterpolation: false,
@@ -199,7 +199,7 @@ describe('TimelineMathUtils', () => {
       timing: [{
         type: 'hold',
         holdIndex: 0,
-        holdKind: 'anchor',
+        holdKind: 'input_tree',
         durationMs: 1500
       }]
     }];
@@ -218,7 +218,7 @@ describe('TimelineMathUtils', () => {
       transitionProgress: 0,
       sourceTreeIndex: 0,
       targetTreeIndex: 0,
-      holdKind: 'anchor'
+      holdKind: 'input_tree'
     });
   });
 

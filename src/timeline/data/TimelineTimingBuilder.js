@@ -3,15 +3,15 @@ import { toBackendSplitKey } from '../../domain/tree/splits.js';
 import { TimelineInterval, TIMELINE_HOLD_KIND } from '../time/TimelineInterval.js';
 
 export class TimelineTimingBuilder {
-    static buildAnchorTiming(globalIndex) {
+    static buildInputTreeTiming(globalIndex) {
         if (!Number.isInteger(globalIndex)) {
             return [];
         }
 
         return [TimelineInterval.hold({
             holdIndex: globalIndex,
-            holdKind: TIMELINE_HOLD_KIND.ANCHOR,
-            durationMs: TIMING_PROFILE.anchorHoldMs
+            holdKind: TIMELINE_HOLD_KIND.INPUT_TREE,
+            durationMs: TIMING_PROFILE.inputTreeHoldMs
         })];
     }
 

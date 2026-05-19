@@ -5,10 +5,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 
 export function MovieChartSection({ barOptionValue, onBarOptionChange }) {
   return (
-    <div className="w-full bg-muted/10 px-2 py-1" role="region" aria-label="Source-tree metric chart">
+    <div className="w-full bg-muted/10 px-2 py-1" role="region" aria-label="Input-tree metric chart">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
         <div className="min-w-0 truncate text-2xs font-medium uppercase tracking-wider text-muted-foreground">
-          Source-tree metrics
+          Input-tree metrics
         </div>
 
         <div className="shrink-0" role="group" aria-label="Chart controls">
@@ -24,7 +24,7 @@ export function MovieChartSection({ barOptionValue, onBarOptionChange }) {
               ))}
             </SelectContent>
           </Select>
-          <div id="chart-select-help" className="sr-only">Choose the source-tree metric shown in the chart.</div>
+          <div id="chart-select-help" className="sr-only">Choose the input-tree metric shown in the chart.</div>
         </div>
       </div>
 

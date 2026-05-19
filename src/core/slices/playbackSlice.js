@@ -125,23 +125,42 @@ export const createPlaybackSlice = (set, get) => ({
   // ==========================================================================
   setNavigationDirection: (direction) => set({ navigationDirection: direction }),
 
-  goToPosition: (position, direction) => {
-    const { treeList, currentTreeIndex, renderInProgress, movieTimelineManager } = get();
+  goToPosition: (position, direction, options = {}) => {
+    const { treeList, currentTreeIndex, renderInProgress, movieTimelineManager, playing } = get();
     if (renderInProgress || !treeList?.length) return;
 
     const newIndex = clamp(position, 0, treeList.length - 1);
-    if (newIndex === currentTreeIndex) return;
+    const totalTrees = treeList.length;
+    const explicitTimelineProgress = getTimelineProgressOption(options);
+    const newAnimationProgress = totalTrees > 1 ? newIndex / (totalTrees - 1) : 0;
+    const newTimelineProgress = explicitTimelineProgress
+      ?? getWeightedTimelineProgressForTreeIndex(movieTimelineManager, newIndex)
+      ?? newAnimationProgress;
+
+    if (newIndex === currentTreeIndex) {
+      if (playing || explicitTimelineProgress !== null) {
+        set({
+          playing: false,
+          animationStartTime: null,
+          navigationDirection: direction || 'jump',
+          ...createPlayheadState({
+            animationProgress: newAnimationProgress,
+            timelineProgress: newTimelineProgress
+          }, newIndex)
+        });
+      }
+      return;
+    }
 
     const navDirection = direction || (newIndex > currentTreeIndex ? 'forward' : 'backward');
-    const totalTrees = treeList.length;
-    const newAnimationProgress = totalTrees > 1 ? newIndex / (totalTrees - 1) : 0;
-    const newTimelineProgress = getWeightedTimelineProgressForTreeIndex(movieTimelineManager, newIndex);
 
     set({
+      playing: false,
+      animationStartTime: null,
       navigationDirection: navDirection,
       ...createPlayheadState({
         animationProgress: newAnimationProgress,
-        timelineProgress: newTimelineProgress ?? newAnimationProgress
+        timelineProgress: newTimelineProgress
       }, newIndex)
     });
   },
@@ -164,28 +183,28 @@ export const createPlaybackSlice = (set, get) => ({
     goToPosition(currentTreeIndex - 1);
   },
 
-  goToNextAnchor: () => {
+  goToNextInputTree: () => {
     const { currentTreeIndex, transitionResolver, goToPosition, renderInProgress } = get();
     if (renderInProgress) return;
 
-    const anchors = transitionResolver?.fullTreeIndices || [];
-    const nextAnchor = anchors.find(idx => idx > currentTreeIndex);
-    if (nextAnchor !== undefined) goToPosition(nextAnchor, 'forward');
+    const inputTreeIndices = transitionResolver?.fullTreeIndices || [];
+    const nextInputTreeIndex = inputTreeIndices.find(idx => idx > currentTreeIndex);
+    if (nextInputTreeIndex !== undefined) goToPosition(nextInputTreeIndex, 'forward');
   },
 
-  goToPreviousAnchor: () => {
+  goToPreviousInputTree: () => {
     const { currentTreeIndex, transitionResolver, goToPosition, renderInProgress } = get();
     if (renderInProgress) return;
 
-    const anchors = transitionResolver?.fullTreeIndices || [];
-    let prevAnchor = null;
-    for (let i = anchors.length - 1; i >= 0; i--) {
-      if (anchors[i] < currentTreeIndex) {
-        prevAnchor = anchors[i];
+    const inputTreeIndices = transitionResolver?.fullTreeIndices || [];
+    let previousInputTreeIndex = null;
+    for (let i = inputTreeIndices.length - 1; i >= 0; i--) {
+      if (inputTreeIndices[i] < currentTreeIndex) {
+        previousInputTreeIndex = inputTreeIndices[i];
         break;
       }
     }
-    if (prevAnchor !== null) goToPosition(prevAnchor, 'backward');
+    if (previousInputTreeIndex !== null) goToPosition(previousInputTreeIndex, 'backward');
   },
 
   // ==========================================================================
@@ -339,6 +358,11 @@ function progressToTreeIndex(progress, treeCount) {
 
 function getWeightedTimelineProgressForTreeIndex(movieTimelineManager, treeIndex) {
   return movieTimelineManager?.getTimelineProgressForTreeIndex?.(treeIndex) ?? null;
+}
+
+function getTimelineProgressOption(options) {
+  const progress = options?.timelineProgress;
+  return Number.isFinite(progress) ? clamp(progress, 0, 1) : null;
 }
 
 function getWeightedTimelineProgressForLinearProgress(progress, treeCount, movieTimelineManager) {

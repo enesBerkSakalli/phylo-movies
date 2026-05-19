@@ -31,6 +31,10 @@ export interface PlaybackCursorState extends PlaybackPlayhead {
 
 export type PlaybackPlayheadUpdate = Partial<PlaybackCursorState>;
 
+export interface PlaybackSeekOptions {
+  timelineProgress?: number | null;
+}
+
 export interface AppStoreState {
   // From treeDataset.slice
   treeList: any[];
@@ -178,11 +182,11 @@ export interface AppStoreState {
   setAnimationSpeed: (newSpeed: number) => void;
   adjustAnimationStartTime: (deltaMs: number) => void;
   setNavigationDirection: (direction: 'forward' | 'backward' | 'jump') => void;
-  goToPosition: (position: number, direction?: 'forward' | 'backward' | 'jump') => void;
+  goToPosition: (position: number, direction?: 'forward' | 'backward' | 'jump', options?: PlaybackSeekOptions) => void;
   forward: () => void;
   backward: () => void;
-  goToNextAnchor: () => void;
-  goToPreviousAnchor: () => void;
+  goToNextInputTree: () => void;
+  goToPreviousInputTree: () => void;
   updateTimelineState: (timelineState: any) => void;
   setScrubPosition: (progress: number) => void;
   setTimelineProgress: (progress: number, treeIndex: number) => void;

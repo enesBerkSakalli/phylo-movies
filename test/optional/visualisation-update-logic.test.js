@@ -157,15 +157,15 @@ describe('Tree Visualisation - State Update Logic', () => {
       expect(result.completed).to.deep.equal([]);
     });
 
-    it('should return empty arrays if no anchor data', () => {
+    it('should return empty arrays if no input-tree data', () => {
         const state = createMockState({ fullTreeIndices: [] });
         const result = calculateChangePreviews(state);
         expect(result.upcoming).to.deep.equal([]);
         expect(result.completed).to.deep.equal([]);
     });
 
-    it('should calculate completed edges from previous anchor to current', () => {
-        // Range: Prev Anchor (0) -> Current (5). Completed: 1, 2, 3, 4
+    it('should calculate completed edges from previous input tree to current', () => {
+        // Range: previous input tree (0) -> current (5). Completed: 1, 2, 3, 4
         // Logic: collectUniqueEdges(start=1, end=5)
         const edges = [
             null,
@@ -190,8 +190,8 @@ describe('Tree Visualisation - State Update Logic', () => {
         expect(keys).to.include('3,4');
     });
 
-    it('should calculate upcoming edges from current to next anchor', () => {
-         // Range: Current (5) -> Next Anchor (10). Upcoming: 6, 7, 8, 9
+    it('should calculate upcoming edges from current to next input tree', () => {
+         // Range: current (5) -> next input tree (10). Upcoming: 6, 7, 8, 9
          const edges = [];
          for(let i=0; i<15; i++) edges.push(null);
 

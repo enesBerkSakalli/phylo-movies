@@ -203,7 +203,7 @@ describe('ScrubberAPI', () => {
     }
   });
 
-  it('uses the injected transition resolver for comparison scrub anchors', async () => {
+  it('uses the injected transition resolver for comparison scrub input trees', async () => {
     const movieData = createMovieData();
     const timelineManager = createTimelineManager(movieData);
     const renderCalls = [];
