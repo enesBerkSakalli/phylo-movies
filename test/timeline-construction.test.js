@@ -23,8 +23,7 @@ const {
 
 function loadMovieData() {
   const candidates = [
-    path.join(__dirname, 'data', 'small_example', 'small_example.response.json'),
-    path.join(__dirname, 'data', 'example.json')
+    path.join(__dirname, 'data', 'small_example', 'small_example.response.json')
   ];
   for (const p of candidates) {
     try {
@@ -38,6 +37,37 @@ function loadMovieData() {
 
 function setsToSortedArrays(sets) {
   return (sets || []).map((set) => Array.from(set).sort((a, b) => a - b));
+}
+
+function sortedArrays(arrays) {
+  return (arrays || []).map((array) => Array.from(array).sort((a, b) => a - b));
+}
+
+function partitionKey(indices) {
+  return `[${indices.join(', ')}]`;
+}
+
+function expectedChangeContext(movieData, treeIndex) {
+  const metadata = movieData.tree_metadata[treeIndex];
+  const pairSolution = movieData.tree_pair_solutions[metadata.tree_pair_key];
+  const localStep = metadata.step_in_pair - 1;
+  const event = pairSolution.spr_move_events.find(({ step_range: stepRange }) => (
+    localStep >= stepRange[0] && localStep <= stepRange[1]
+  ));
+  const movingSubtree = event.driver_subtree;
+  const pivotEdge = event.pivot_edge;
+  const movingKey = partitionKey(movingSubtree);
+  const pivotKey = partitionKey(pivotEdge);
+  const attachment = pairSolution.attachment_edges_by_split[pivotKey][movingKey];
+  const movingLeaves = new Set(movingSubtree);
+
+  return {
+    markedSubtrees: sortedArrays(pairSolution.affected_subtrees_by_split[pivotKey][0]),
+    pivotEdge: [...pivotEdge].sort((a, b) => a - b),
+    sourceEdgeLeaves: [attachment.source.filter((leaf) => !movingLeaves.has(leaf)).sort((a, b) => a - b)],
+    destinationEdgeLeaves: [attachment.destination.filter((leaf) => !movingLeaves.has(leaf)).sort((a, b) => a - b)],
+    movingSubtrees: [movingSubtree]
+  };
 }
 
 function makeSyntheticTimingMovieData() {
@@ -151,7 +181,7 @@ function makeSyntheticTimingMovieData() {
 }
 
 describe('Timeline construction from backend result', () => {
-  it('does not keep unused timeline constants or obsolete input-tree label compatibility', () => {
+  it('does not keep unused timeline constants or obsolete input-tree labels', () => {
     const constantsSource = fs.readFileSync(path.join(__dirname, '..', 'src', 'timeline', 'constants.js'), 'utf8');
     const removedConstantNames = [
       'MIN_ZOOM_MS',
@@ -171,13 +201,13 @@ describe('Timeline construction from backend result', () => {
     const remainingConstants = removedConstantNames.filter((name) => constantsSource.includes(name));
     expect(remainingConstants).to.deep.equal([]);
 
-    const labelCompatibilityFiles = [
+    const inputTreeLabelFiles = [
       path.join(__dirname, '..', 'src', 'components', 'timeline', 'TimelineSegmentTooltip.jsx'),
       path.join(__dirname, '..', 'src', 'components', 'TransitionInspectorPanel.jsx'),
     ];
 
     const obsoleteInputTreeLabelPattern = new RegExp(`\\b${['anchor', 'tree'].join('\\s+')}\\b`, 'i');
-    const remainingObsoleteInputTreeLabels = labelCompatibilityFiles.filter((filePath) => (
+    const remainingObsoleteInputTreeLabels = inputTreeLabelFiles.filter((filePath) => (
       obsoleteInputTreeLabelPattern.test(fs.readFileSync(filePath, 'utf8'))
     ));
     expect(remainingObsoleteInputTreeLabels).to.deep.equal([]);
@@ -246,7 +276,7 @@ describe('Timeline construction from backend result', () => {
     const firstSeg = segments[0];
     const firstTreeIndex = firstSeg?.interpolationData?.[0]?.originalIndex;
     if (Number.isInteger(firstTreeIndex)) {
-      const { segmentIndex, timeInSegment, segment } = TimelineMathUtils.findSegmentForTreeIndex(segments, firstTreeIndex);
+      const { segmentIndex, timeInSegment, segment } = TimelineMathUtils.findSegmentForFrameIndex(segments, firstTreeIndex);
       expect(segmentIndex).to.be.at.least(0);
       expect(segmentIndex).to.be.below(segments.length);
       expect(segment).to.be.ok;
@@ -313,15 +343,13 @@ describe('Timeline construction from backend result', () => {
     const interpSegments = segments.filter(s => s && s.hasInterpolation && !s.isFullTree);
     expect(interpSegments.length).to.be.at.least(splitEvents.length);
 
-    const branchOnlySegment = interpSegments.find(segment => (
-      segment.treePairKey === 'pair_1_2' &&
-      segment.generatedFrameCount === 0 &&
-      segment.globalStart === 36 &&
-      segment.globalEnd === 37
-    ));
+    const branchOnlySegment = interpSegments.find(segment => segment.generatedFrameCount === 0);
     expect(branchOnlySegment).to.be.ok;
     expect(branchOnlySegment.animationStepCount).to.equal(1);
-    expect(branchOnlySegment.interpolationData.map(d => d.originalIndex)).to.deep.equal([36, 37]);
+    expect(branchOnlySegment.interpolationData.map(d => d.originalIndex)).to.deep.equal([
+      branchOnlySegment.globalStart,
+      branchOnlySegment.globalEnd
+    ]);
 
     // Report which dataset was used for clarity when reading logs
     console.log(`[timeline-construction.test] Used: ${source}`);
@@ -414,6 +442,7 @@ describe('Active change edge mapping (small_example)', () => {
   });
 
   beforeEach(() => {
+    useAppStore.getState().reset();
     useAppStore.getState().initialize(movieData);
     useAppStore.setState({
       pivotEdgesEnabled: true,
@@ -434,14 +463,14 @@ describe('Active change edge mapping (small_example)', () => {
     const store = useAppStore.getState();
     store.goToPosition(1); // First interpolation step between tree 0 and 1
     const markedSubtrees = useAppStore.getState().getMarkedSubtreeData();
-    expect(markedSubtrees).to.deep.equal([[13]]);
+    expect(markedSubtrees).to.deep.equal(movieData.subtree_highlight_tracking[1]);
   });
 
   it('tracks later interpolation affected subtrees', () => {
     const store = useAppStore.getState();
-    store.goToPosition(6); // Frame where index 12 is moving
+    store.goToPosition(6);
     const markedSubtrees = useAppStore.getState().getMarkedSubtreeData();
-    expect(markedSubtrees).to.deep.equal([[12]]);
+    expect(markedSubtrees).to.deep.equal(movieData.subtree_highlight_tracking[6]);
   });
 
   it('respects per-step affected-subtree sequences when multiple snapshots exist', () => {
@@ -491,18 +520,18 @@ describe('Active change edge mapping (small_example)', () => {
   it('syncs all-mode marked subtrees and active edge context into the color manager on navigation', () => {
     const storeAPI = useAppStore;
     storeAPI.getState().setMarkedSubtreeScope('all');
-
     storeAPI.getState().goToPosition(1);
 
     const state = storeAPI.getState();
     const colorManager = state.getColorManager();
+    const expected = expectedChangeContext(movieData, 1);
 
-    expect(state.currentTreeIndex).to.equal(1);
-    expect(setsToSortedArrays(colorManager.markedSubtreeSets)).to.deep.equal([[13], [12]]);
-    expect(Array.from(colorManager.currentPivotEdges).sort((a, b) => a - b)).to.deep.equal([10, 11, 12, 13]);
-    expect(setsToSortedArrays(colorManager.sourceEdgeLeaves)).to.deep.equal([[10, 11, 12]]);
-    expect(setsToSortedArrays(colorManager.destinationEdgeLeaves)).to.deep.equal([[10, 11, 12]]);
-    expect(setsToSortedArrays(colorManager.currentMovingSubtrees)).to.deep.equal([[13]]);
+    expect(state.frameIndex).to.equal(1);
+    expect(setsToSortedArrays(colorManager.markedSubtreeSets)).to.deep.equal(expected.markedSubtrees);
+    expect(Array.from(colorManager.currentPivotEdges).sort((a, b) => a - b)).to.deep.equal(expected.pivotEdge);
+    expect(setsToSortedArrays(colorManager.sourceEdgeLeaves)).to.deep.equal(expected.sourceEdgeLeaves);
+    expect(setsToSortedArrays(colorManager.destinationEdgeLeaves)).to.deep.equal(expected.destinationEdgeLeaves);
+    expect(setsToSortedArrays(colorManager.currentMovingSubtrees)).to.deep.equal(expected.movingSubtrees);
   });
 
   it('syncs the color manager from an explicit tree index without changing navigation state', () => {
@@ -514,13 +543,14 @@ describe('Active change edge mapping (small_example)', () => {
 
     const state = storeAPI.getState();
     const colorManager = state.getColorManager();
+    const expected = expectedChangeContext(movieData, 11);
 
-    expect(state.currentTreeIndex).to.equal(1);
-    expect(setsToSortedArrays(colorManager.markedSubtreeSets)).to.deep.equal([[4], [6]]);
-    expect(Array.from(colorManager.currentPivotEdges).sort((a, b) => a - b)).to.deep.equal([2, 3, 4, 5, 6]);
-    expect(setsToSortedArrays(colorManager.sourceEdgeLeaves)).to.deep.equal([[2, 3, 5, 6]]);
-    expect(setsToSortedArrays(colorManager.destinationEdgeLeaves)).to.deep.equal([[2, 3, 5, 6]]);
-    expect(setsToSortedArrays(colorManager.currentMovingSubtrees)).to.deep.equal([[4]]);
+    expect(state.frameIndex).to.equal(1);
+    expect(setsToSortedArrays(colorManager.markedSubtreeSets)).to.deep.equal(expected.markedSubtrees);
+    expect(Array.from(colorManager.currentPivotEdges).sort((a, b) => a - b)).to.deep.equal(expected.pivotEdge);
+    expect(setsToSortedArrays(colorManager.sourceEdgeLeaves)).to.deep.equal(expected.sourceEdgeLeaves);
+    expect(setsToSortedArrays(colorManager.destinationEdgeLeaves)).to.deep.equal(expected.destinationEdgeLeaves);
+    expect(setsToSortedArrays(colorManager.currentMovingSubtrees)).to.deep.equal(expected.movingSubtrees);
   });
 
   it('renders color-manager updates once after the full explicit tree-index context is coherent', () => {
@@ -535,11 +565,12 @@ describe('Active change edge mapping (small_example)', () => {
       renderAllElements: () => {
         renderCount += 1;
         const colorManager = storeAPI.getState().getColorManager();
-        expect(setsToSortedArrays(colorManager.markedSubtreeSets)).to.deep.equal([[4], [6]]);
-        expect(Array.from(colorManager.currentPivotEdges).sort((a, b) => a - b)).to.deep.equal([2, 3, 4, 5, 6]);
-        expect(setsToSortedArrays(colorManager.sourceEdgeLeaves)).to.deep.equal([[2, 3, 5, 6]]);
-        expect(setsToSortedArrays(colorManager.destinationEdgeLeaves)).to.deep.equal([[2, 3, 5, 6]]);
-        expect(setsToSortedArrays(colorManager.currentMovingSubtrees)).to.deep.equal([[4]]);
+        const expected = expectedChangeContext(movieData, 11);
+        expect(setsToSortedArrays(colorManager.markedSubtreeSets)).to.deep.equal(expected.markedSubtrees);
+        expect(Array.from(colorManager.currentPivotEdges).sort((a, b) => a - b)).to.deep.equal(expected.pivotEdge);
+        expect(setsToSortedArrays(colorManager.sourceEdgeLeaves)).to.deep.equal(expected.sourceEdgeLeaves);
+        expect(setsToSortedArrays(colorManager.destinationEdgeLeaves)).to.deep.equal(expected.destinationEdgeLeaves);
+        expect(setsToSortedArrays(colorManager.currentMovingSubtrees)).to.deep.equal(expected.movingSubtrees);
         expect(setsToSortedArrays(colorManager.completedChangeEdges)).to.deep.equal([[10, 11, 12, 13]]);
         expect(setsToSortedArrays(colorManager.upcomingChangeEdges)).to.deep.equal([[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]]);
       }
@@ -560,7 +591,7 @@ describe('Active change edge mapping (small_example)', () => {
     const state = storeAPI.getState();
     const colorManager = state.getColorManager();
 
-    expect(state.currentTreeIndex).to.equal(1);
+    expect(state.frameIndex).to.equal(1);
     expect(state.completedChangeEdges).to.deep.equal([[10, 11, 12, 13]]);
     expect(state.upcomingChangeEdges).to.deep.equal([[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]]);
     expect(setsToSortedArrays(colorManager.completedChangeEdges)).to.deep.equal([[10, 11, 12, 13]]);

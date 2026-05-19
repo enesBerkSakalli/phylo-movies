@@ -23,8 +23,7 @@ const { useAppStore } = require('../src/state/phyloStore/store.js');
 
 function loadMovieData() {
   const candidates = [
-    path.join(__dirname, 'data', 'small_example', 'small_example.response.json'),
-    path.join(__dirname, 'data', 'example.json')
+    path.join(__dirname, 'data', 'small_example', 'small_example.response.json')
   ];
 
   for (const filePath of candidates) {
@@ -68,7 +67,7 @@ describe('MovieTimelineManager lifecycle', () => {
         animationProgress: 0,
         timelineProgress: null
       },
-      currentTreeIndex: 0,
+      frameIndex: 0,
       treeList: [],
       movieTimelineManager: null,
       hoveredSegmentIndex: null,
@@ -90,7 +89,33 @@ describe('MovieTimelineManager lifecycle', () => {
     expect(manager.timeline).to.equal(null);
     expect(manager.container).to.equal(null);
     expect(manager.getSegmentCount()).to.be.greaterThan(0);
-    expect(manager.getTimelineProgressForTreeIndex(0)).to.be.a('number');
+    expect(manager.getTimelineProgressForFrameIndex(0)).to.be.a('number');
+
+    manager.destroy();
+  });
+
+  it('exposes canonical timeline cursor lookups before mounting', () => {
+    const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] }, movieData.interpolated_trees);
+
+    const startCursor = manager.getCursorAtMovieTime(0);
+    const progressCursor = manager.getCursorAtTimelineProgress(startCursor.timelineProgress);
+    const frameCursor = manager.getCursorForFrame(22, { occurrence: 'last' });
+
+    expect(startCursor).to.include({
+      frameIndex: 0,
+      inputTreeIndex: 0,
+      sourceFrameIndex: 0,
+      msaWindowIndex: 0,
+      movieTimeMs: 0
+    });
+    expect(progressCursor.frameIndex).to.equal(startCursor.frameIndex);
+    expect(frameCursor).to.include({
+      frameIndex: 22,
+      inputTreeIndex: 1,
+      sourceFrameIndex: 22,
+      msaWindowIndex: 1
+    });
+    expect(manager.getFrameOccurrences(22).length).to.be.greaterThan(1);
 
     manager.destroy();
   });
@@ -357,7 +382,7 @@ describe('MovieTimelineManager lifecycle', () => {
         animationProgress: 0.3125,
         timelineProgress
       });
-      expect(state.currentTreeIndex).to.equal(1);
+      expect(state.frameIndex).to.equal(1);
       expect(state.animationStartTime).to.equal(now - 1250);
     } finally {
       global.performance = previousPerformance;
@@ -570,7 +595,7 @@ describe('MovieTimelineManager lifecycle', () => {
     expect(syncedProgress).to.equal(1 / 3);
     expect(syncedMeta).to.include({
       timelineProgress: 1100 / 4100,
-      currentTreeIndex: 1,
+      frameIndex: 1,
       holdKind: 'mover'
     });
   });
@@ -874,13 +899,13 @@ describe('MovieTimelineManager lifecycle', () => {
         animationProgress: 0,
         timelineProgress: null
       },
-      currentTreeIndex: 0
+      frameIndex: 0
     });
 
     useAppStore.getState().setScrubPosition(0.25);
 
     const state = useAppStore.getState();
-    expect(state.currentTreeIndex).to.equal(1);
+    expect(state.frameIndex).to.equal(1);
     expect(state.playhead).to.deep.equal({
       animationProgress: 0.25,
       timelineProgress: 0.6
@@ -922,7 +947,7 @@ describe('MovieTimelineManager lifecycle', () => {
         animationProgress: 0.4,
         timelineProgress: 0.7
       },
-      currentTreeIndex: 2
+      frameIndex: 2
     });
 
     const previousPlayhead = useAppStore.getState().playhead;

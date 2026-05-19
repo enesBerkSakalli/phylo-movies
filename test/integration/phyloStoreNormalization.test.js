@@ -8,17 +8,47 @@ import * as phyloStoreModule from '../../src/state/phyloStore/store.js';
 const { useAppStore } = phyloStoreModule;
 const repoRoot = fileURLToPath(new URL('../..', import.meta.url));
 
-const tree0 = { name: '', length: 0, split_indices: [0, 1], children: [] };
-const tree1 = { name: '', length: 0, split_indices: [0, 1], children: [] };
-const tree2 = { name: '', length: 0, split_indices: [0, 1], children: [] };
+const tree0 = {
+  name: '',
+  length: 0,
+  split_indices: [0, 1],
+  children: [
+    { name: 'taxon-a', length: 0, split_indices: [0], children: [] },
+    { name: 'taxon-b', length: 0, split_indices: [1], children: [] },
+  ],
+};
+const tree1 = tree0;
+const tree2 = tree0;
+
+function inputTreeMetadata() {
+  return {
+    tree_pair_key: null,
+    step_in_pair: null,
+    source_tree_global_index: null,
+    frame_type: 'input_tree',
+    state_semantics: 'processed_input_tree',
+    is_observed_input: true,
+  };
+}
+
+function interpolationFrameMetadata() {
+  return {
+    tree_pair_key: 'pair_0_1',
+    step_in_pair: 1,
+    source_tree_global_index: 0,
+    frame_type: 'interpolation_frame',
+    state_semantics: 'algorithmic_intermediate',
+    is_observed_input: false,
+  };
+}
 
 function makeBackendMovieData() {
   return {
     interpolated_trees: [tree0, tree1, tree2],
     tree_metadata: [
-      { tree_pair_key: null, step_in_pair: null, source_tree_global_index: null },
-      { tree_pair_key: 'pair_0_1', step_in_pair: 1, source_tree_global_index: 0 },
-      { tree_pair_key: null, step_in_pair: null, source_tree_global_index: null },
+      inputTreeMetadata(),
+      interpolationFrameMetadata(),
+      inputTreeMetadata(),
     ],
     distances: {
       robinson_foulds: [1],
@@ -44,16 +74,12 @@ function makeBackendMovieData() {
     ],
     pivot_edge_tracking: [null, [0], null],
     subtree_highlight_tracking: [null, [[1]], null],
-    sorted_leaves: ['taxon-a', 'taxon-b'],
     msa: {
       sequences: null,
       window_size: 1,
       step_size: 1,
     },
     file_name: 'normalization-test.json',
-    pipeline_info: { model_used: 'iqtree' },
-    warnings: ['example warning'],
-    tree_count: 3,
   };
 }
 
@@ -90,6 +116,7 @@ describe('phylo store dataset normalization', () => {
     expect(state.treeList).toBe(movieData.interpolated_trees);
     expect(state.treeMetadata).toBe(movieData.tree_metadata);
     expect(state.leafNamesByIndex).toEqual(['taxon-a', 'taxon-b']);
+    expect(movieData).not.toHaveProperty(['sorted', 'leaves'].join('_'));
     expect(Object.prototype.hasOwnProperty.call(state, 'movieData')).toBe(false);
     expect(state.msaSequences).toBe(movieData.msa.sequences);
     expect(state.subtreeHighlightTracking).toEqual([null, [[1]], null]);
@@ -230,7 +257,7 @@ describe('phylo store dataset normalization', () => {
     const selectorFallbackChecks = [
       ['selectContextMenuNode.js', '?? null'],
       ['selectContextMenuPosition.js', '??'],
-      ['selectCurrentTree.js', 'typeof currentTreeIndex'],
+      ['selectCurrentTree.js', 'typeof frameIndex'],
       ['selectFileName.js', 'typeof state.fileName'],
       ['selectLabelsVisible.js', '!== false'],
       ['selectMovieTimelineManager.js', '?? null'],

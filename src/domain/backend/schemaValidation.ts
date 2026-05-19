@@ -8,6 +8,21 @@ export function assertRecord(value: unknown, fieldName: string): asserts value i
   }
 }
 
+export function assertExactRecordKeys(
+  value: Record<string, unknown>,
+  fieldName: string,
+  allowedKeys: readonly string[]
+): void {
+  const allowed = new Set(allowedKeys);
+  const unexpectedKey = Object.keys(value).find((key) => !allowed.has(key));
+
+  if (unexpectedKey !== undefined) {
+    throw new Error(
+      `Invalid phyloMovieData payload: ${fieldName}.${unexpectedKey} is not part of the backend contract`
+    );
+  }
+}
+
 function assertArray(value: unknown, fieldName: string): asserts value is unknown[] {
   if (!Array.isArray(value)) {
     throw new Error(`Invalid phyloMovieData payload: ${fieldName} must be an array`);
@@ -27,16 +42,6 @@ export function requiredNumberArray(value: unknown, fieldName: string): number[]
     }
   }
   return array as number[];
-}
-
-export function requiredStringArray(value: unknown, fieldName: string): string[] {
-  const array = requiredArray(value, fieldName);
-  for (const [index, item] of array.entries()) {
-    if (typeof item !== 'string') {
-      throw new Error(`Invalid phyloMovieData payload: ${fieldName}[${index}] must be a string`);
-    }
-  }
-  return array as string[];
 }
 
 export function requiredRecord(value: unknown, fieldName: string): Record<string, unknown> {

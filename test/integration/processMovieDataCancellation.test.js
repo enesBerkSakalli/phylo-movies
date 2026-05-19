@@ -101,9 +101,7 @@ describe('processMovieData cancellation', () => {
       end_index: 2,
       total: 2,
     }));
-    eventSource.emit('complete', JSON.stringify({
-      data: { tree_count: 2 },
-    }));
+    eventSource.emit('complete', JSON.stringify({ data: null }));
 
     await expect(processing).resolves.toEqual({
       ...metadata,
@@ -137,11 +135,40 @@ describe('processMovieData cancellation', () => {
       end_index: '1',
       total: 1,
     }));
-    eventSource.emit('complete', JSON.stringify({
-      data: { tree_count: 1 },
-    }));
+    eventSource.emit('complete', JSON.stringify({ data: null }));
 
     await expect(processing).rejects.toThrow('Invalid tree chunk indexes from tree processing stream');
+    expect(eventSource.close).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects completion when the streamed chunks are incomplete', async () => {
+    const { processMovieData } = await import('../../src/pages/WorkspaceInitialization/services/movieProcessing.js');
+
+    const processing = processMovieData(
+      { treesFile: new File(['(a);'], 'tree.nwk') },
+      vi.fn()
+    );
+
+    await vi.waitFor(() => {
+      expect(MockEventSource.instances).toHaveLength(1);
+    });
+
+    const eventSource = MockEventSource.instances[0];
+    eventSource.emit('metadata', JSON.stringify({
+      metadata: {
+        file_name: 'tree.nwk',
+        tree_metadata: [],
+      },
+    }));
+    eventSource.emit('trees_chunk', JSON.stringify({
+      trees: [{ name: 'a' }],
+      start_index: 0,
+      end_index: 1,
+      total: 2,
+    }));
+    eventSource.emit('complete', JSON.stringify({ data: null }));
+
+    await expect(processing).rejects.toThrow('Tree stream ended after 1 trees, expected 2');
     expect(eventSource.close).toHaveBeenCalledTimes(1);
   });
 

@@ -22,22 +22,22 @@ export class TimelineNavigationController {
     if (!segment) return;
 
     if (segment.isFullTree) {
-      const originalIndex = segment.interpolationData?.[0]?.originalIndex ?? segment.index;
+      const originalIndex = this._resolveSegmentFrameIndex(segment);
       this.store.getState().setClipboardTreeIndex(originalIndex);
     }
 
-    const targetTreeIndex = this._resolveTargetTreeIndex(segmentIndex, clickTimeMs);
+    const targetFrameIndex = this._resolveTargetFrameIndex(segmentIndex, clickTimeMs);
     const seekOptions = this._resolveSeekOptions(segmentIndex, clickTimeMs);
-    this.navigateToTree(targetTreeIndex, seekOptions);
+    this.navigateToFrame(targetFrameIndex, seekOptions);
     requestAnimationFrame(() => this.onTimelinePositionUpdated?.());
   }
 
-  navigateToTree(targetTreeIndex, seekOptions = undefined) {
-    const { currentTreeIndex, goToPosition } = this.store.getState();
-    const direction = targetTreeIndex === currentTreeIndex
+  navigateToFrame(targetFrameIndex, seekOptions = undefined) {
+    const { frameIndex, goToPosition } = this.store.getState();
+    const direction = targetFrameIndex === frameIndex
       ? 'jump'
-      : (targetTreeIndex > currentTreeIndex ? 'forward' : 'backward');
-    goToPosition(targetTreeIndex, direction, seekOptions);
+      : (targetFrameIndex > frameIndex ? 'forward' : 'backward');
+    goToPosition(targetFrameIndex, direction, seekOptions);
   }
 
   _validateSegment(segmentIndex) {
@@ -45,26 +45,29 @@ export class TimelineNavigationController {
     return this.segments[segmentIndex];
   }
 
-  _resolveTargetTreeIndex(segmentIndex, clickTimeMs) {
+  _resolveTargetFrameIndex(segmentIndex, clickTimeMs) {
     const segment = this.segments[segmentIndex];
-    const fallbackIndex = segment.interpolationData?.[0]?.originalIndex ?? segment.index;
+    const segmentFrameIndex = this._resolveSegmentFrameIndex(segment);
+
+    if (!Number.isFinite(clickTimeMs)) {
+      return segmentFrameIndex;
+    }
 
     if (
-      !Number.isFinite(clickTimeMs) ||
       !this.timelineData ||
       !Array.isArray(this.timelineData.segmentDurations) ||
       !Array.isArray(this.timelineData.cumulativeDurations)
     ) {
-      return fallbackIndex;
+      throw new Error('[TimelineNavigationController] timeline timing data is required');
     }
 
     const bounds = getSegmentBounds(segmentIndex, this.timelineData);
     if (!bounds || bounds.end < bounds.start) {
-      return fallbackIndex;
+      throw new Error('[TimelineNavigationController] segment timing bounds are required');
     }
 
     const boundedTime = this._boundClickTimeToSegment(clickTimeMs, bounds.start, bounds.end);
-    const target = TimelineMathUtils.getTargetTreeForTime(
+    const target = TimelineMathUtils.getTargetFrameForTime(
       this.segments,
       boundedTime,
       this.timelineData.segmentDurations,
@@ -72,11 +75,19 @@ export class TimelineNavigationController {
       this.timelineData.cumulativeDurations
     );
 
-    if (target.segmentIndex !== segmentIndex || !Number.isInteger(target.treeIndex)) {
-      return fallbackIndex;
+    if (target.segmentIndex !== segmentIndex || !Number.isInteger(target.frameIndex)) {
+      throw new Error('[TimelineNavigationController] clicked timeline segment resolved outside its segment');
     }
 
-    return target.treeIndex;
+    return target.frameIndex;
+  }
+
+  _resolveSegmentFrameIndex(segment) {
+    const frameIndex = segment?.interpolationData?.[0]?.originalIndex ?? segment?.index;
+    if (!Number.isInteger(frameIndex)) {
+      throw new Error('[TimelineNavigationController] segment frame index is required');
+    }
+    return frameIndex;
   }
 
   _boundClickTimeToSegment(clickTimeMs, segmentStart, segmentEnd) {

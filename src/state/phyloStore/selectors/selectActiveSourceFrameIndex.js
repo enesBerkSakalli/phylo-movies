@@ -1,8 +1,8 @@
 import { getSourceFrameIndexForFrameIndex } from '../../../timeline/time/frameSemantics.js';
-import { selectCurrentTreeIndex } from './selectCurrentTreeIndex.js';
+import { selectFrameIndex } from './selectFrameIndex.js';
 
 export const selectActiveSourceFrameIndex = (state) => {
-  const frameIndex = selectCurrentTreeIndex(state);
+  const frameIndex = selectFrameIndex(state);
   const metadataSourceFrameIndex = getSourceFrameIndexForFrameIndex(state.treeMetadata, frameIndex);
   if (Number.isInteger(metadataSourceFrameIndex)) return metadataSourceFrameIndex;
 

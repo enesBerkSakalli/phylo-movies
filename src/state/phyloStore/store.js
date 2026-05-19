@@ -51,7 +51,7 @@ export const useAppStore = create((set, get) => ({
 
 // Set up ColorManager subscription after store creation
 useAppStore.subscribe((state, prevState) => {
-  if (state.currentTreeIndex !== prevState.currentTreeIndex) {
+  if (state.frameIndex !== prevState.frameIndex) {
     if (state.movieTimelineManager?.scrubController?.isScrubbing) {
       return;
     }

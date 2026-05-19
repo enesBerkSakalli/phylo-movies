@@ -1,5 +1,7 @@
 import { TimelineDataProcessor } from '../data/TimelineDataProcessor.js';
+import { TimelineDataset } from '../data/TimelineDataset.js';
 import { TimelineClock } from './TimelineClock.js';
+import { TimelineConductor } from './TimelineConductor.js';
 import { ScrubberAPI } from './ScrubberAPI.js';
 import { TimelineNavigationController } from './TimelineNavigationController.js';
 import { TimelineScrubController } from './TimelineScrubController.js';
@@ -34,6 +36,11 @@ export class MovieTimelineManager {
         this._timelineUpdateFrameId = null;
         this.segments = TimelineDataProcessor.createSegments(movieData);
         this.timelineData = TimelineDataProcessor.createTimelineData(this.segments);
+        this.timelineDataset = TimelineDataset.fromMovieData(movieData, {
+            segments: this.segments,
+            timelineData: this.timelineData
+        });
+        this.timelineConductor = TimelineConductor.fixed(this.timelineDataset);
         this.timelineClock = new TimelineClock({
             segments: this.segments,
             timelineData: this.timelineData,
@@ -66,7 +73,7 @@ export class MovieTimelineManager {
         this._initializeScrubberAPI();
 
         this.unsubscribeFromStore = useAppStore.subscribe((state, prevState) => {
-            if (state.currentTreeIndex !== prevState.currentTreeIndex ||
+            if (state.frameIndex !== prevState.frameIndex ||
                 state.playhead !== prevState.playhead) {
                 if (!this.scrubController?.isScrubbing) {
                     this._scheduleCurrentPositionUpdate();
@@ -234,7 +241,7 @@ export class MovieTimelineManager {
 
         const syncState = this.stateSynchronizer.syncRendererFromStore(this.timeline, this.scrubController.lastScrubEndTime);
         if (syncState && !syncState.preservingScrubPosition) {
-            this.stateSynchronizer.updateStoreTimelineState(syncState.currentTime, syncState.segment, syncState.treeIndex);
+            this.stateSynchronizer.updateStoreTimelineState(syncState.currentTime, syncState.segment, syncState.frameIndex);
         }
     }
 
@@ -291,12 +298,28 @@ export class MovieTimelineManager {
         return this.timelineClock?.getTransitionFrameForProgress(progress) ?? null;
     }
 
-    getTimelineProgressForTreeIndex(treeIndex) {
-        return this.timelineClock?.getTimelineProgressForTreeIndex(treeIndex) ?? null;
+    getTimelineProgressForFrameIndex(frameIndex) {
+        return this.timelineClock?.getTimelineProgressForFrameIndex(frameIndex) ?? null;
     }
 
     getTimelineProgressForLinearTreeProgress(progress, treeCount) {
         return this.timelineClock?.getTimelineProgressForLinearTreeProgress(progress, treeCount) ?? null;
+    }
+
+    getCursorAtMovieTime(movieTimeMs, options = {}) {
+        return this.timelineConductor?.setMovieTimeMs(movieTimeMs, options) ?? null;
+    }
+
+    getCursorAtTimelineProgress(timelineProgress, options = {}) {
+        return this.timelineConductor?.setTimelineProgress(timelineProgress, options) ?? null;
+    }
+
+    getCursorForFrame(frameIndex, options = {}) {
+        return this.timelineConductor?.setFrameIndex(frameIndex, options) ?? null;
+    }
+
+    getFrameOccurrences(frameIndex) {
+        return this.timelineDataset?.getOccurrencesForFrame(frameIndex) ?? [];
     }
 
     // ==========================================================================
@@ -317,6 +340,8 @@ export class MovieTimelineManager {
 
         this.segments = null;
         this.timelineData = null;
+        this.timelineDataset = null;
+        this.timelineConductor = null;
         this.timelineClock = null;
         this.navigationController = null;
         this.scrubberAPI = null;

@@ -24,6 +24,10 @@ function createTimelineManager(movieData) {
           { originalIndex: 0 },
           { originalIndex: 1 },
           { originalIndex: 2 }
+        ],
+        timing: [
+          { type: 'motion', fromIndex: 0, toIndex: 1, durationMs: 1500 },
+          { type: 'motion', fromIndex: 1, toIndex: 2, durationMs: 1500 }
         ]
       }
     ],
@@ -58,6 +62,10 @@ describe('ScrubberAPI', () => {
       pivotEdgesEnabled: false,
       markedSubtreesEnabled: true
     });
+  });
+
+  afterEach(() => {
+    useAppStore.getState().reset();
   });
 
   it('serializes scrub renders and collapses pending updates to the latest progress', async () => {
@@ -110,28 +118,37 @@ describe('ScrubberAPI', () => {
     expect(api.lastTransitionState.progress).to.equal(0.8);
     expect(api.lastTransitionState.transitionFrame.cursorTreeIndex).to.equal(2);
     expect(useAppStore.getState().playhead.timelineProgress).to.equal(0.8);
-    expect(useAppStore.getState().currentTreeIndex).to.equal(2);
+    expect(useAppStore.getState().frameIndex).to.equal(2);
   });
 
   it('uses target-frame highlights as soon as scrubbed transition motion begins', async () => {
     const movieData = createMovieData();
     const timelineManager = createTimelineManager(movieData);
     const highlightIndices = [];
+    const originalUpdateCurrent = useAppStore.getState().updateColorManagerForCurrentIndex;
+    const originalUpdateForIndex = useAppStore.getState().updateColorManagerForIndex;
 
-    useAppStore.setState({
-      updateColorManagerForCurrentIndex: () => {},
-      updateColorManagerForIndex: (treeIndex) => highlightIndices.push(treeIndex)
-    });
+    try {
+      useAppStore.setState({
+        updateColorManagerForCurrentIndex: () => {},
+        updateColorManagerForIndex: (treeIndex) => highlightIndices.push(treeIndex)
+      });
 
-    const treeController = {
-      renderComparisonAwareScrubFrame: async () => {}
-    };
+      const treeController = {
+        renderComparisonAwareScrubFrame: async () => {}
+      };
 
-    const api = new ScrubberAPI(treeController, {}, timelineManager, useAppStore);
-    await api.startScrubbing(0);
-    await api.updatePosition(0.1);
+      const api = new ScrubberAPI(treeController, {}, timelineManager, useAppStore);
+      await api.startScrubbing(0);
+      await api.updatePosition(0.1);
 
-    expect(highlightIndices).to.deep.equal([1]);
+      expect(highlightIndices).to.deep.equal([1]);
+    } finally {
+      useAppStore.setState({
+        updateColorManagerForCurrentIndex: originalUpdateCurrent,
+        updateColorManagerForIndex: originalUpdateForIndex,
+      });
+    }
   });
 
   it('flushes the latest requested progress before ending a scrub', async () => {

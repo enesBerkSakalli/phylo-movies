@@ -7,6 +7,8 @@ export const createDatasetLifecycleSlice = (set, get) => ({
   // ==========================================================================
   reset: () => {
     const { resetMsaData, resetColors, resetPlayback, resetControllers, resetComparison } = get();
+    const existingManager = get().movieTimelineManager;
+    existingManager?.destroy();
 
     resetControllers();
     resetPlayback();
@@ -26,6 +28,7 @@ export const createDatasetLifecycleSlice = (set, get) => ({
       subtreeHighlightTracking: [],
       splitChangeTimeline: [],
       transitionResolver: null,
+      movieTimelineManager: null,
       selectedTimelineSegmentIndex: null,
     });
   },
@@ -43,10 +46,10 @@ export const createDatasetLifecycleSlice = (set, get) => ({
       tree_pair_solutions: treePairSolutions,
       pivot_edge_tracking: pivotEdgeTracking,
       split_change_timeline: splitChangeTimeline,
-      sorted_leaves: leafNamesByIndex,
       distances,
       subtree_highlight_tracking: subtreeHighlightTracking,
     } = movieData;
+    const leafNamesByIndex = deriveLeafNamesByIndex(interpolatedTrees[0]);
 
     const resolver = createTransitionResolver(movieData, treeMetadata);
 
@@ -89,7 +92,7 @@ export const createDatasetLifecycleSlice = (set, get) => ({
         animationProgress: 0,
         timelineProgress: null
       },
-      currentTreeIndex: 0,
+      frameIndex: 0,
       playing: false,
     });
 
@@ -102,4 +105,24 @@ function createTransitionResolver(movieData, treeMetadata) {
     treeMetadata,
     movieData.pair_interpolation_ranges
   );
+}
+
+function deriveLeafNamesByIndex(tree) {
+  const namesByIndex = [];
+
+  function visit(node) {
+    if (!node || typeof node !== 'object') return;
+    const children = Array.isArray(node.children) ? node.children : [];
+    if (children.length === 0) {
+      const splitIndices = Array.isArray(node.split_indices) ? node.split_indices : [];
+      if (splitIndices.length === 1 && Number.isInteger(splitIndices[0]) && typeof node.name === 'string') {
+        namesByIndex[splitIndices[0]] = node.name;
+      }
+      return;
+    }
+    children.forEach(visit);
+  }
+
+  visit(tree);
+  return namesByIndex;
 }

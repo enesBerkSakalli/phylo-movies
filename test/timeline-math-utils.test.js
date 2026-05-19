@@ -7,8 +7,7 @@ const { TimelineMathUtils } = require('../src/timeline/math/TimelineMathUtils.js
 
 function loadMovieData() {
   const candidates = [
-    path.join(__dirname, 'data', 'small_example', 'small_example.response.json'),
-    path.join(__dirname, 'data', 'example.json')
+    path.join(__dirname, 'data', 'small_example', 'small_example.response.json')
   ];
 
   for (const filePath of candidates) {
@@ -56,7 +55,7 @@ describe('TimelineMathUtils', () => {
     timelineData = TimelineDataProcessor.createTimelineData(segments);
   });
 
-  it('round-trips interpolation tree lookup through getTargetTreeForTime', () => {
+  it('round-trips interpolation frame lookup through getTargetFrameForTime', () => {
     segments.forEach((segment, segmentIndex) => {
       if (!segment.hasInterpolation || segment.interpolationData.length <= 1) {
         return;
@@ -71,9 +70,9 @@ describe('TimelineMathUtils', () => {
           return;
         }
 
-        const lookup = TimelineMathUtils.findSegmentForTreeIndex(segments, entry.originalIndex);
+        const lookup = TimelineMathUtils.findSegmentForFrameIndex(segments, entry.originalIndex);
         const absoluteTime = segmentStartTime + lookup.timeInSegment;
-        const resolved = TimelineMathUtils.getTargetTreeForTime(
+        const resolved = TimelineMathUtils.getTargetFrameForTime(
           segments,
           absoluteTime,
           timelineData.segmentDurations,
@@ -83,7 +82,7 @@ describe('TimelineMathUtils', () => {
 
         expect(lookup.segmentIndex).to.equal(segmentIndex);
         expect(resolved.segmentIndex).to.equal(segmentIndex);
-        expect(resolved.treeIndex).to.equal(entry.originalIndex);
+        expect(resolved.frameIndex).to.equal(entry.originalIndex);
       });
     });
   });
@@ -106,7 +105,7 @@ describe('TimelineMathUtils', () => {
     });
   });
 
-  it('maps linear tree progress onto weighted timeline progress', () => {
+  it('maps linear frame progress onto weighted timeline progress', () => {
     const firstInterpolationIndex = segments.findIndex(segment => (
       segment.hasInterpolation && segment.interpolationData.length > 1
     ));
@@ -122,7 +121,7 @@ describe('TimelineMathUtils', () => {
     );
 
     const currentTime = TimelineMathUtils.progressToTime(weightedProgress, timelineData.totalDuration);
-    const resolved = TimelineMathUtils.getTargetTreeForTime(
+    const resolved = TimelineMathUtils.getTargetFrameForTime(
       segments,
       currentTime,
       timelineData.segmentDurations,
@@ -130,11 +129,11 @@ describe('TimelineMathUtils', () => {
       timelineData.cumulativeDurations
     );
 
-    expect(resolved.treeIndex).to.equal(entry.originalIndex);
+    expect(resolved.frameIndex).to.equal(entry.originalIndex);
     expect(weightedProgress).to.not.equal(linearProgress);
   });
 
-  it('uses interpolation intervals, not frame count, for transition segment duration', () => {
+  it('uses explicit interpolation intervals, not frame count, for transition segment duration', () => {
     const durations = TimelineMathUtils.calculateSegmentDurations([
       {
         isFullTree: false,
@@ -143,6 +142,10 @@ describe('TimelineMathUtils', () => {
           { originalIndex: 0 },
           { originalIndex: 1 },
           { originalIndex: 2 }
+        ],
+        timing: [
+          { type: 'motion', fromIndex: 0, toIndex: 1, durationMs: 700 },
+          { type: 'motion', fromIndex: 1, toIndex: 2, durationMs: 1300 }
         ]
       }
     ]);
@@ -222,30 +225,22 @@ describe('TimelineMathUtils', () => {
     });
   });
 
-  it('returns a safe static frame when timeline progress resolves outside segment data', () => {
+  it('rejects timeline progress resolution when segment timing is missing', () => {
     const treeList = [{ id: 'tree-0' }];
-    const resolved = TimelineMathUtils.getTransitionFrameForTimelineProgress(
+    expect(() => TimelineMathUtils.getTransitionFrameForTimelineProgress(
       0.5,
       [{ interpolationData: [{ originalIndex: 0 }], isFullTree: true }],
       {
         totalDuration: 1000,
         segmentDurations: [1000],
-        cumulativeDurations: []
+        cumulativeDurations: [1000]
       },
       treeList
-    );
-
-    expect(resolved).to.include({
-      sourceTree: treeList[0],
-      targetTree: treeList[0],
-      transitionProgress: 0,
-      sourceTreeIndex: 0,
-      targetTreeIndex: 0
-    });
+    )).to.throw(/timeline segment timing is required/);
   });
 
-  it('uses the timing profile for legacy segments without explicit timing intervals', () => {
-    const durations = TimelineMathUtils.calculateSegmentDurations([
+  it('rejects segments without explicit timing intervals', () => {
+    expect(() => TimelineMathUtils.calculateSegmentDurations([
       {
         isFullTree: true,
         hasInterpolation: false,
@@ -265,9 +260,7 @@ describe('TimelineMathUtils', () => {
         hasInterpolation: false,
         interpolationData: [{ originalIndex: 0 }]
       }
-    ]);
-
-    expect(durations).to.deep.equal([1500, 2000, 1000]);
+    ])).to.throw(/timeline segment timing is required/);
   });
 
   it('resolves exact timeline boundaries consistently', () => {
@@ -276,7 +269,7 @@ describe('TimelineMathUtils', () => {
     ));
     const boundaryTime = timelineData.cumulativeDurations[firstInterpolationIndex - 1];
     const firstInterpolationSegment = segments[firstInterpolationIndex];
-    const atBoundary = TimelineMathUtils.getTargetTreeForTime(
+    const atBoundary = TimelineMathUtils.getTargetFrameForTime(
       segments,
       boundaryTime,
       timelineData.segmentDurations,
@@ -285,12 +278,12 @@ describe('TimelineMathUtils', () => {
     );
 
     expect(atBoundary.segmentIndex).to.equal(firstInterpolationIndex);
-    expect(atBoundary.treeIndex).to.equal(firstInterpolationSegment.interpolationData[0].originalIndex);
+    expect(atBoundary.frameIndex).to.equal(firstInterpolationSegment.interpolationData[0].originalIndex);
 
     const lastSegmentIndex = segments.length - 1;
     const lastSegment = segments[lastSegmentIndex];
     const lastEntry = lastSegment.interpolationData[lastSegment.interpolationData.length - 1];
-    const atTimelineEnd = TimelineMathUtils.getTargetTreeForTime(
+    const atTimelineEnd = TimelineMathUtils.getTargetFrameForTime(
       segments,
       timelineData.totalDuration,
       timelineData.segmentDurations,
@@ -299,6 +292,6 @@ describe('TimelineMathUtils', () => {
     );
 
     expect(atTimelineEnd.segmentIndex).to.equal(lastSegmentIndex);
-    expect(atTimelineEnd.treeIndex).to.equal(lastEntry.originalIndex);
+    expect(atTimelineEnd.frameIndex).to.equal(lastEntry.originalIndex);
   });
 });

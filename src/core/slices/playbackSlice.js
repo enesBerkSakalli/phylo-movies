@@ -21,7 +21,7 @@ export const createPlaybackSlice = (set, get) => ({
   // ==========================================================================
   // STATE: Navigation
   // ==========================================================================
-  currentTreeIndex: 0,
+  frameIndex: 0,
   navigationDirection: 'forward', // 'forward', 'backward', or 'jump'
 
 
@@ -60,6 +60,12 @@ export const createPlaybackSlice = (set, get) => ({
       : (typeof timelineProgress === 'number'
         ? timelineProgress
         : (getWeightedTimelineProgressForLinearProgress(initialProgress, totalTrees, movieTimelineManager) ?? initialProgress));
+    const initialCursor = getCursorAtTimelineProgress(movieTimelineManager, initialTimelineProgress);
+    const initialFrameIndex = resolveCursorFrameIndex(
+      initialCursor,
+      progressToFrameIndex(initialProgress, totalTrees),
+      totalTrees
+    );
     const safeSpeed = Number.isFinite(animationSpeed) && animationSpeed > 0 ? animationSpeed : 1;
     const playbackTimeSeconds = getPlaybackTimeSecondsForPlayhead(
       initialProgress,
@@ -78,7 +84,7 @@ export const createPlaybackSlice = (set, get) => ({
       ...createPlayheadState({
         animationProgress: initialProgress,
         timelineProgress: initialTimelineProgress
-      }, progressToTreeIndex(initialProgress, totalTrees))
+      }, initialFrameIndex)
     });
   },
 
@@ -97,7 +103,7 @@ export const createPlaybackSlice = (set, get) => ({
       ...createPlayheadState({
         ...getCurrentPlayhead(state),
         timelineProgress: weightedTimelineProgress ?? animationProgress
-      }, state.currentTreeIndex)
+      }, state.frameIndex)
     });
   },
 
@@ -126,18 +132,23 @@ export const createPlaybackSlice = (set, get) => ({
   setNavigationDirection: (direction) => set({ navigationDirection: direction }),
 
   goToPosition: (position, direction, options = {}) => {
-    const { treeList, currentTreeIndex, renderInProgress, movieTimelineManager, playing } = get();
+    const { treeList, frameIndex, renderInProgress, movieTimelineManager, playing } = get();
     if (renderInProgress || !treeList?.length) return;
 
-    const newIndex = clamp(position, 0, treeList.length - 1);
+    const requestedFrameIndex = clamp(position, 0, treeList.length - 1);
     const totalTrees = treeList.length;
     const explicitTimelineProgress = getTimelineProgressOption(options);
-    const newAnimationProgress = totalTrees > 1 ? newIndex / (totalTrees - 1) : 0;
+    const cursor = explicitTimelineProgress !== null
+      ? getCursorAtTimelineProgress(movieTimelineManager, explicitTimelineProgress)
+      : getCursorForFrame(movieTimelineManager, requestedFrameIndex, direction);
+    const newIndex = resolveCursorFrameIndex(cursor, requestedFrameIndex, totalTrees);
+    const newAnimationProgress = getAnimationProgressForFrameIndex(newIndex, totalTrees);
     const newTimelineProgress = explicitTimelineProgress
-      ?? getWeightedTimelineProgressForTreeIndex(movieTimelineManager, newIndex)
+      ?? getCursorTimelineProgress(cursor)
+      ?? getWeightedTimelineProgressForFrameIndex(movieTimelineManager, newIndex)
       ?? newAnimationProgress;
 
-    if (newIndex === currentTreeIndex) {
+    if (newIndex === frameIndex) {
       if (playing || explicitTimelineProgress !== null) {
         set({
           playing: false,
@@ -148,11 +159,12 @@ export const createPlaybackSlice = (set, get) => ({
             timelineProgress: newTimelineProgress
           }, newIndex)
         });
+        syncColorManagerForFrame(get, newIndex);
       }
       return;
     }
 
-    const navDirection = direction || (newIndex > currentTreeIndex ? 'forward' : 'backward');
+    const navDirection = direction || (newIndex > frameIndex ? 'forward' : 'backward');
 
     set({
       playing: false,
@@ -163,13 +175,14 @@ export const createPlaybackSlice = (set, get) => ({
         timelineProgress: newTimelineProgress
       }, newIndex)
     });
+    syncColorManagerForFrame(get, newIndex);
   },
 
   forward: () => {
-    const { currentTreeIndex, treeList, goToPosition, renderInProgress } = get();
+    const { frameIndex, treeList, goToPosition, renderInProgress } = get();
     if (renderInProgress) return;
 
-    const nextIndex = currentTreeIndex + 1;
+    const nextIndex = frameIndex + 1;
     if (nextIndex < treeList.length) {
       goToPosition(nextIndex);
     } else {
@@ -178,28 +191,28 @@ export const createPlaybackSlice = (set, get) => ({
   },
 
   backward: () => {
-    const { currentTreeIndex, goToPosition, renderInProgress } = get();
+    const { frameIndex, goToPosition, renderInProgress } = get();
     if (renderInProgress) return;
-    goToPosition(currentTreeIndex - 1);
+    goToPosition(frameIndex - 1);
   },
 
   goToNextInputTree: () => {
-    const { currentTreeIndex, transitionResolver, goToPosition, renderInProgress } = get();
+    const { frameIndex, transitionResolver, goToPosition, renderInProgress } = get();
     if (renderInProgress) return;
 
     const inputTreeIndices = transitionResolver?.fullTreeIndices || [];
-    const nextInputTreeIndex = inputTreeIndices.find(idx => idx > currentTreeIndex);
+    const nextInputTreeIndex = inputTreeIndices.find(idx => idx > frameIndex);
     if (nextInputTreeIndex !== undefined) goToPosition(nextInputTreeIndex, 'forward');
   },
 
   goToPreviousInputTree: () => {
-    const { currentTreeIndex, transitionResolver, goToPosition, renderInProgress } = get();
+    const { frameIndex, transitionResolver, goToPosition, renderInProgress } = get();
     if (renderInProgress) return;
 
     const inputTreeIndices = transitionResolver?.fullTreeIndices || [];
     let previousInputTreeIndex = null;
     for (let i = inputTreeIndices.length - 1; i >= 0; i--) {
-      if (inputTreeIndices[i] < currentTreeIndex) {
+      if (inputTreeIndices[i] < frameIndex) {
         previousInputTreeIndex = inputTreeIndices[i];
         break;
       }
@@ -233,7 +246,7 @@ export const createPlaybackSlice = (set, get) => ({
       ...createPlayheadState({
         ...currentPlayhead,
         timelineProgress: newTimelineProgress
-      }, state.currentTreeIndex)
+      }, state.frameIndex)
     });
   },
 
@@ -243,8 +256,8 @@ export const createPlaybackSlice = (set, get) => ({
 
     const clampedProgress = clamp(progress, 0, 1);
     const totalTrees = treeList.length;
-    const exactTreeIndex = clampedProgress * (totalTrees - 1);
-    const currentTreeIndex = Math.floor(exactTreeIndex);
+    const exactFrameIndex = clampedProgress * (totalTrees - 1);
+    const frameIndex = Math.floor(exactFrameIndex);
     const timelineProgress = getWeightedTimelineProgressForLinearProgress(
       clampedProgress,
       totalTrees,
@@ -255,46 +268,51 @@ export const createPlaybackSlice = (set, get) => ({
       ...createPlayheadState({
         animationProgress: clampedProgress,
         timelineProgress
-      }, clamp(currentTreeIndex, 0, totalTrees - 1))
+      }, clamp(frameIndex, 0, totalTrees - 1))
     });
   },
 
-  setTimelineProgress: (progress, treeIndex) => {
+  setTimelineProgress: (progress, frameIndex) => {
     const { treeList, movieTimelineManager } = get();
-    const maxIndex = Math.max(0, treeList.length - 1);
     const clampedProgress = clamp(progress, 0, 1);
-    const rawTreeIndex = Number.isFinite(treeIndex) ? treeIndex : 0;
-    const clampedTreeIndex = Math.round(clamp(rawTreeIndex, 0, maxIndex));
+    const cursor = getCursorAtTimelineProgress(movieTimelineManager, clampedProgress);
+    const requestedFrameIndex = Number.isFinite(frameIndex) ? frameIndex : null;
+    const clampedFrameIndex = resolveCursorFrameIndex(
+      cursor,
+      requestedFrameIndex,
+      treeList.length,
+      Boolean(movieTimelineManager)
+    );
     const animationProgress = getLinearProgressForTimelineProgress(
       movieTimelineManager,
       clampedProgress,
       treeList.length
-    ) ?? (maxIndex > 0 ? clampedTreeIndex / maxIndex : 0);
+    ) ?? getAnimationProgressForFrameIndex(clampedFrameIndex, treeList.length);
 
     set({
       navigationDirection: 'jump',
       ...createPlayheadState({
         animationProgress,
-        timelineProgress: clampedProgress
-      }, clampedTreeIndex)
+        timelineProgress: getCursorTimelineProgress(cursor) ?? clampedProgress
+      }, clampedFrameIndex)
     });
   },
 
-  setPlayhead: (nextPlayhead, currentTreeIndexOverride = null) => {
+  setPlayhead: (nextPlayhead, frameIndexOverride = null) => {
     const treeCount = get().treeList?.length ?? 0;
     const maxIndex = Math.max(0, treeCount - 1);
-    const inferredTreeIndex = progressToTreeIndex(nextPlayhead?.animationProgress, treeCount);
-    const playheadTreeIndex = Number.isFinite(nextPlayhead?.currentTreeIndex)
-      ? clamp(Math.floor(nextPlayhead.currentTreeIndex), 0, maxIndex)
+    const inferredFrameIndex = progressToFrameIndex(nextPlayhead?.animationProgress, treeCount);
+    const playheadFrameIndex = Number.isFinite(nextPlayhead?.frameIndex)
+      ? clamp(Math.floor(nextPlayhead.frameIndex), 0, maxIndex)
       : null;
-    const requestedTreeIndex = Number.isFinite(currentTreeIndexOverride)
-      ? clamp(Math.floor(currentTreeIndexOverride), 0, maxIndex)
-      : (playheadTreeIndex ?? inferredTreeIndex);
-    const cursor = createPlaybackCursor(nextPlayhead, requestedTreeIndex);
+    const requestedFrameIndex = Number.isFinite(frameIndexOverride)
+      ? clamp(Math.floor(frameIndexOverride), 0, maxIndex)
+      : (playheadFrameIndex ?? inferredFrameIndex);
+    const cursor = createPlaybackCursor(nextPlayhead, requestedFrameIndex);
 
     set({
       playhead: cursor.toPlayhead(),
-      currentTreeIndex: cursor.currentTreeIndex
+      frameIndex: cursor.frameIndex
     });
   },
 
@@ -319,22 +337,22 @@ export const createPlaybackSlice = (set, get) => ({
   }),
 });
 
-function createPlaybackCursor(playhead = {}, currentTreeIndex = 0) {
+function createPlaybackCursor(playhead = {}, frameIndex = 0) {
   return PlaybackCursor.fromPlayhead({
     ...playhead,
-    currentTreeIndex
+    frameIndex
   });
 }
 
-function createPlayhead(playhead = {}, currentTreeIndex = 0) {
-  return createPlaybackCursor(playhead, currentTreeIndex).toPlayhead();
+function createPlayhead(playhead = {}, frameIndex = 0) {
+  return createPlaybackCursor(playhead, frameIndex).toPlayhead();
 }
 
-function createPlayheadState(playhead = {}, currentTreeIndex = 0) {
-  const cursor = createPlaybackCursor(playhead, currentTreeIndex);
+function createPlayheadState(playhead = {}, frameIndex = 0) {
+  const cursor = createPlaybackCursor(playhead, frameIndex);
   return {
     playhead: cursor.toPlayhead(),
-    currentTreeIndex: cursor.currentTreeIndex
+    frameIndex: cursor.frameIndex
   };
 }
 
@@ -345,10 +363,10 @@ function areTimelineProgressValuesEqual(currentProgress, nextProgress) {
 }
 
 function getCurrentPlayhead(state) {
-  return createPlayhead(state.playhead, state.currentTreeIndex);
+  return createPlayhead(state.playhead, state.frameIndex);
 }
 
-function progressToTreeIndex(progress, treeCount) {
+function progressToFrameIndex(progress, treeCount) {
   if (!Number.isFinite(progress) || !Number.isFinite(treeCount) || treeCount <= 0) {
     return 0;
   }
@@ -356,8 +374,13 @@ function progressToTreeIndex(progress, treeCount) {
   return clamp(Math.floor(progress * Math.max(0, treeCount - 1)), 0, Math.max(0, treeCount - 1));
 }
 
-function getWeightedTimelineProgressForTreeIndex(movieTimelineManager, treeIndex) {
-  return movieTimelineManager?.getTimelineProgressForTreeIndex?.(treeIndex) ?? null;
+function getAnimationProgressForFrameIndex(frameIndex, treeCount) {
+  if (!Number.isFinite(treeCount) || treeCount <= 1) return 0;
+  return clamp(frameIndex, 0, treeCount - 1) / (treeCount - 1);
+}
+
+function getWeightedTimelineProgressForFrameIndex(movieTimelineManager, frameIndex) {
+  return movieTimelineManager?.getTimelineProgressForFrameIndex?.(frameIndex) ?? null;
 }
 
 function getTimelineProgressOption(options) {
@@ -367,6 +390,36 @@ function getTimelineProgressOption(options) {
 
 function getWeightedTimelineProgressForLinearProgress(progress, treeCount, movieTimelineManager) {
   return movieTimelineManager?.getTimelineProgressForLinearTreeProgress?.(progress, treeCount) ?? null;
+}
+
+function getCursorAtTimelineProgress(movieTimelineManager, timelineProgress) {
+  if (!Number.isFinite(timelineProgress)) return null;
+  return movieTimelineManager?.getCursorAtTimelineProgress?.(timelineProgress) ?? null;
+}
+
+function getCursorForFrame(movieTimelineManager, frameIndex, direction) {
+  const occurrence = direction === 'backward' ? 'last' : 'first';
+  return movieTimelineManager?.getCursorForFrame?.(frameIndex, { occurrence }) ?? null;
+}
+
+function getCursorTimelineProgress(cursor) {
+  return Number.isFinite(cursor?.timelineProgress) ? clamp(cursor.timelineProgress, 0, 1) : null;
+}
+
+function syncColorManagerForFrame(get, frameIndex) {
+  get().updateColorManagerForIndex?.(frameIndex);
+}
+
+function resolveCursorFrameIndex(cursor, requestedFrameIndex, frameCount, requireCursor = false) {
+  const maxIndex = Math.max(0, (Number.isFinite(frameCount) ? frameCount : 0) - 1);
+  if (Number.isInteger(cursor?.frameIndex)) {
+    return clamp(Math.floor(cursor.frameIndex), 0, maxIndex);
+  }
+  if (requireCursor) {
+    throw new Error('[playbackSlice] playback cursor frameIndex is required');
+  }
+  const candidate = Number.isFinite(requestedFrameIndex) ? requestedFrameIndex : 0;
+  return clamp(Math.floor(candidate), 0, maxIndex);
 }
 
 function getLinearProgressForTimelineProgress(movieTimelineManager, timelineProgress, treeCount) {
@@ -384,9 +437,9 @@ function getLinearProgressForTimelineProgress(movieTimelineManager, timelineProg
 
   const safeToIndex = Number.isFinite(toIndex) ? toIndex : fromIndex;
   const safeTransitionProgress = Number.isFinite(transitionProgress) ? clamp(transitionProgress, 0, 1) : 0;
-  const exactTreeIndex = fromIndex + ((safeToIndex - fromIndex) * safeTransitionProgress);
+  const exactFrameIndex = fromIndex + ((safeToIndex - fromIndex) * safeTransitionProgress);
 
-  return clamp(exactTreeIndex / (treeCount - 1), 0, 1);
+  return clamp(exactFrameIndex / (treeCount - 1), 0, 1);
 }
 
 function getPlaybackDurationSeconds(treeCount, transitionDuration = 1, pauseDuration = 0) {
@@ -419,9 +472,9 @@ function getPlaybackTimeSecondsForLinearProgress(progress, treeCount, transition
   const safePauseDuration = Number.isFinite(pauseDuration) && pauseDuration > 0
     ? pauseDuration
     : 0;
-  const exactTreeIndex = clampedProgress * segmentCount;
-  const fromIndex = Math.min(Math.floor(exactTreeIndex), segmentCount - 1);
-  const timeFactor = exactTreeIndex - fromIndex;
+  const exactFrameIndex = clampedProgress * segmentCount;
+  const fromIndex = Math.min(Math.floor(exactFrameIndex), segmentCount - 1);
+  const timeFactor = exactFrameIndex - fromIndex;
 
   return (fromIndex * (safeTransitionDuration + safePauseDuration)) +
     (timeFactor * safeTransitionDuration);

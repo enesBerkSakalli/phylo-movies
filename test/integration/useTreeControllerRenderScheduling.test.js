@@ -114,7 +114,7 @@ describe('useTreeController static render scheduling', () => {
       playing: false,
       comparisonMode: false,
       transitionResolver: null,
-      currentTreeIndex: 0,
+      frameIndex: 0,
       playhead: { timelineProgress: 0.1, animationProgress: 0.1 },
       setRenderInProgress: vi.fn(),
       syncMSAEnabled: false,
@@ -171,7 +171,7 @@ describe('useTreeController static render scheduling', () => {
   it('leaves frame-index color sync to the store subscriber', async () => {
     const { root } = await renderHookHarness();
 
-    updateStore({ currentTreeIndex: 1 });
+    updateStore({ frameIndex: 1 });
 
     expect(storeState.updateColorManagerForCurrentIndex).not.toHaveBeenCalled();
 
@@ -187,7 +187,7 @@ describe('useTreeController static render scheduling', () => {
     expect(controllerInstance.renderTimelineProgress).toHaveBeenCalledTimes(1);
 
     updateStore({
-      currentTreeIndex: 1,
+      frameIndex: 1,
       playhead: { timelineProgress: 0.5, animationProgress: 0.5 }
     });
     await flushNextRaf();

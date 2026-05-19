@@ -25,7 +25,7 @@ describe('PlaybackProgressSynchronizer', () => {
     expect(setPlayhead).toHaveBeenCalledWith({
       animationProgress: 0.25,
       timelineProgress: 0.6,
-      currentTreeIndex: 1
+      frameIndex: 1
     });
     expect(prefetchFrame).toHaveBeenNthCalledWith(1, 2);
     expect(prefetchFrame).toHaveBeenNthCalledWith(2, 3);
@@ -46,13 +46,13 @@ describe('PlaybackProgressSynchronizer', () => {
 
     syncProgress(0.1, {
       timelineProgress: 0.4,
-      currentTreeIndex: 2
+      frameIndex: 2
     });
 
     expect(setPlayhead).toHaveBeenCalledWith({
       animationProgress: 0.1,
       timelineProgress: 0.4,
-      currentTreeIndex: 2
+      frameIndex: 2
     });
     expect(prefetchFrame).toHaveBeenNthCalledWith(1, 3);
     expect(prefetchFrame).toHaveBeenNthCalledWith(2, 4);

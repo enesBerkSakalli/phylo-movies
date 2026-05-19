@@ -16,18 +16,18 @@ describe('distanceChartModel', () => {
     ]);
 
     expect(points.map((point) => point.x)).toEqual([1, 2, 3]);
-    expect(points.map((point) => point.treeIndex)).toEqual([0, 10, 20]);
+    expect(points.map((point) => point.frameIndex)).toEqual([0, 10, 20]);
     expect(points.map((point) => point.contextLabel)).toEqual([
       'Input tree 1',
       'Input tree 2',
       'Input tree 3',
     ]);
     const movieTimelineManager = {
-      getTimelineProgressForTreeIndex: vi.fn(() => 0.42),
+      getTimelineProgressForFrameIndex: vi.fn(() => 0.42),
     };
 
     expect(resolveNavigationTarget('scale', points[1], null, movieTimelineManager)).toEqual({
-      treeIndex: 10,
+      frameIndex: 10,
       seekOptions: { timelineProgress: 0.42 },
     });
   });
@@ -61,20 +61,20 @@ describe('distanceChartModel', () => {
     expect(findActiveInputTreeIndex([0, 3, 5], 4)).toBe(1);
   });
 
-  it('returns tree-index plus timeline seek options for distance chart navigation', () => {
+  it('returns frame-index plus timeline seek options for distance chart navigation', () => {
     const { points } = buildSeriesPoints('rfd', [0.1, 0.4], [], [], [[7, 8], [8, 9]]);
     const transitionResolver = {
       getTreeIndexForDistanceIndex: vi.fn((index) => index === 1 ? 12 : 0),
     };
     const movieTimelineManager = {
-      getTimelineProgressForTreeIndex: vi.fn(() => 0.65),
+      getTimelineProgressForFrameIndex: vi.fn(() => 0.65),
     };
 
     expect(resolveNavigationTarget('rfd', points[1], transitionResolver, movieTimelineManager)).toEqual({
-      treeIndex: 12,
+      frameIndex: 12,
       seekOptions: { timelineProgress: 0.65 },
     });
     expect(transitionResolver.getTreeIndexForDistanceIndex).toHaveBeenCalledWith(1);
-    expect(movieTimelineManager.getTimelineProgressForTreeIndex).toHaveBeenCalledWith(12);
+    expect(movieTimelineManager.getTimelineProgressForFrameIndex).toHaveBeenCalledWith(12);
   });
 });

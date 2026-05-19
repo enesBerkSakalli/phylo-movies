@@ -1,6 +1,7 @@
 import type { AttachmentEdges, SprMoveEvent, SprPathSegment, TreePairSolution } from './phyloMovieTypes';
 import { isCanonicalBackendSplitKey } from '../tree/splits.js';
 import {
+  assertExactRecordKeys,
   assertFiniteNumber,
   assertRecord,
   requiredArray,
@@ -51,6 +52,7 @@ function validateAttachmentEdgesBySplit(
     for (const [moverKey, attachment] of Object.entries(subtreeEntries)) {
       assertCanonicalBackendSplitKey(moverKey, `${fieldName}.${pivotKey}`);
       const attachmentEdges = requiredRecord(attachment, `${fieldName}.${pivotKey}.${moverKey}`);
+      assertExactRecordKeys(attachmentEdges, `${fieldName}.${pivotKey}.${moverKey}`, ['source', 'destination']);
       validated[pivotKey][moverKey] = {
         source: requiredNumberArray(attachmentEdges.source, `${fieldName}.${pivotKey}.${moverKey}.source`),
         destination: requiredNumberArray(attachmentEdges.destination, `${fieldName}.${pivotKey}.${moverKey}.destination`),
@@ -68,6 +70,7 @@ function validateFiniteNumber(value: unknown, fieldName: string): number {
 
 function validateSprPathSegment(value: unknown, fieldName: string): SprPathSegment {
   const segment = requiredRecord(value, fieldName);
+  assertExactRecordKeys(segment, fieldName, ['split', 'branch_length']);
   return {
     split: requiredNumberArray(segment.split, `${fieldName}.split`),
     branch_length: validateFiniteNumber(segment.branch_length, `${fieldName}.branch_length`),
@@ -86,6 +89,20 @@ function validateHighlightGroup(value: unknown, fieldName: string): number[][] {
 
 function validateSprMoveEvent(value: unknown, fieldName: string): SprMoveEvent {
   const event = requiredRecord(value, fieldName);
+  assertExactRecordKeys(event, fieldName, [
+    'pivot_edge',
+    'driver_subtree',
+    'highlight_group',
+    'step_range',
+    'collapse_path',
+    'expand_path',
+    'collapse_hops',
+    'expand_hops',
+    'total_hops',
+    'collapse_branch_length',
+    'expand_branch_length',
+    'total_branch_length',
+  ]);
 
   return {
     pivot_edge: requiredNumberArray(event.pivot_edge, `${fieldName}.pivot_edge`),
@@ -115,6 +132,11 @@ export function validateTreePairSolutions(value: unknown): Record<string, TreePa
   for (const [pairKey, solution] of Object.entries(pairSolutions)) {
     assertRecord(solution, `tree_pair_solutions.${pairKey}`);
     const fieldName = `tree_pair_solutions.${pairKey}`;
+    assertExactRecordKeys(solution, fieldName, [
+      'affected_subtrees_by_split',
+      'attachment_edges_by_split',
+      'spr_move_events',
+    ]);
     const validatedSolution: TreePairSolution = {
       affected_subtrees_by_split: validateAffectedSubtreesBySplit(
         solution.affected_subtrees_by_split,

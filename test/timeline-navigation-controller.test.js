@@ -22,7 +22,7 @@ describe('TimelineNavigationController', () => {
 
   function makeStore(initialState = {}) {
     const state = {
-      currentTreeIndex: 0,
+      frameIndex: 0,
       clipboardTreeIndex: null,
       goToPositionCalls: [],
       setClipboardTreeIndexCalls: [],
@@ -46,7 +46,7 @@ describe('TimelineNavigationController', () => {
   }
 
   it('navigates to input-tree segments and updates the clipboard', () => {
-    const store = makeStore({ currentTreeIndex: 1 });
+    const store = makeStore({ frameIndex: 1 });
     let updateCalls = 0;
     const controller = new TimelineNavigationController({
       segments: [
@@ -71,7 +71,7 @@ describe('TimelineNavigationController', () => {
   });
 
   it('navigates to transition segments without updating the clipboard', () => {
-    const store = makeStore({ currentTreeIndex: 5 });
+    const store = makeStore({ frameIndex: 5 });
     const controller = new TimelineNavigationController({
       segments: [
         {
@@ -91,7 +91,7 @@ describe('TimelineNavigationController', () => {
   });
 
   it('uses click time to resolve the nearest transition frame', () => {
-    const store = makeStore({ currentTreeIndex: 0 });
+    const store = makeStore({ frameIndex: 0 });
     const controller = new TimelineNavigationController({
       segments: [
         {
@@ -102,6 +102,10 @@ describe('TimelineNavigationController', () => {
             { originalIndex: 2 },
             { originalIndex: 3 },
             { originalIndex: 4 }
+          ],
+          timing: [
+            { type: 'motion', fromIndex: 2, toIndex: 3, durationMs: 1500 },
+            { type: 'motion', fromIndex: 3, toIndex: 4, durationMs: 1500 }
           ]
         }
       ],
@@ -122,7 +126,7 @@ describe('TimelineNavigationController', () => {
   });
 
   it('uses jump direction and preserves exact timeline position when clicking the already active tree', () => {
-    const store = makeStore({ currentTreeIndex: 3 });
+    const store = makeStore({ frameIndex: 3 });
     const controller = new TimelineNavigationController({
       segments: [
         {
@@ -133,6 +137,10 @@ describe('TimelineNavigationController', () => {
             { originalIndex: 2 },
             { originalIndex: 3 },
             { originalIndex: 4 }
+          ],
+          timing: [
+            { type: 'motion', fromIndex: 2, toIndex: 3, durationMs: 1500 },
+            { type: 'motion', fromIndex: 3, toIndex: 4, durationMs: 1500 }
           ]
         }
       ],
@@ -150,5 +158,32 @@ describe('TimelineNavigationController', () => {
     expect(store.getState().goToPositionCalls).to.have.length(1);
     expect(store.getState().goToPositionCalls[0]).to.deep.include({ position: 3, direction: 'jump' });
     expect(store.getState().goToPositionCalls[0].options.timelineProgress).to.be.closeTo(0.5, 0.000001);
+  });
+
+  it('throws when a timed click targets a segment without timing intervals', () => {
+    const store = makeStore({ frameIndex: 0 });
+    const controller = new TimelineNavigationController({
+      segments: [
+        {
+          index: 0,
+          isFullTree: false,
+          hasInterpolation: true,
+          interpolationData: [
+            { originalIndex: 2 },
+            { originalIndex: 3 }
+          ]
+        }
+      ],
+      timelineData: {
+        totalDuration: 1000,
+        segmentDurations: [1000],
+        cumulativeDurations: [1000]
+      },
+      store,
+      onTimelinePositionUpdated: () => {}
+    });
+
+    expect(() => controller.handleTimelineClick(0, 500)).to.throw(/timeline segment timing is required/);
+    expect(store.getState().goToPositionCalls).to.deep.equal([]);
   });
 });

@@ -78,7 +78,6 @@ function makeCurrentTimingPayload() {
     pair_interpolation_ranges: [[0, 3]],
     pivot_edge_tracking: [null, [0, 1], [0, 1], null],
     subtree_highlight_tracking: [null, [[0]], [[1]], null],
-    sorted_leaves: ['LBPenguin', 'oystercatcher'],
     msa: {
       sequences: null,
       window_size: 1,

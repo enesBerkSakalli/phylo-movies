@@ -102,7 +102,7 @@ export class TimelineScrubController {
     }
 
     const currentTime = TimelineMathUtils.progressToTime(finalProgress, this.timelineData.totalDuration);
-    const target = TimelineMathUtils.getTargetTreeForTime(
+    const target = TimelineMathUtils.getTargetFrameForTime(
       this.segments,
       currentTime,
       this.timelineData.segmentDurations,
@@ -110,7 +110,7 @@ export class TimelineScrubController {
       this.timelineData.cumulativeDurations
     );
 
-    this.store.getState().setTimelineProgress(finalProgress, target?.treeIndex);
+    this.store.getState().setTimelineProgress(finalProgress, target?.frameIndex);
   }
 
   resetOnUnmount() {

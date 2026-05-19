@@ -1,4 +1,4 @@
-import { TIMELINE_CONSTANTS, TIMING_PROFILE } from '../constants.js';
+import { TIMELINE_CONSTANTS } from '../constants.js';
 import { TimelineTimingResolver } from './TimelineTimingResolver.js';
 import { getSegmentBounds, timeToSegmentIndex } from '../utils/segmentTiming.js';
 import { TransitionFrame } from '../time/TransitionFrame.js';
@@ -43,40 +43,23 @@ export class TimelineMathUtils {
     // SEGMENT LOOKUP
     // ==========================================================================
 
-    static findSegmentForTreeIndex(segments, treeIndex) {
+    static findSegmentForFrameIndex(segments, frameIndex) {
         for (let i = 0; i < segments.length; i++) {
             const segment = segments[i];
 
-            if (segment.isFullTree) {
-                if (segment.interpolationData?.[0]?.originalIndex === treeIndex) {
-                    return { segmentIndex: i, timeInSegment: 0, segment };
-                }
-            } else if (segment.hasInterpolation && segment.interpolationData?.length > 1) {
-                if (TimelineTimingResolver.hasSemanticTiming(segment)) {
-                    const segmentDuration = this.calculateSegmentDuration(segment);
-                    const timeInSegment = TimelineTimingResolver.getTimeForTreeIndex(
-                        segment,
-                        treeIndex,
-                        segmentDuration,
-                        this.EPSILON_MS
-                    );
-                    if (timeInSegment !== null) {
-                        return { segmentIndex: i, timeInSegment, segment };
-                    }
-                }
+            if (!TimelineTimingResolver.hasSemanticTiming(segment)) {
+                throw new Error('[TimelineMathUtils] timeline segment timing is required');
+            }
 
-                const segmentDuration = this.calculateSegmentDuration(segment);
-                for (let j = 0; j < segment.interpolationData.length; j++) {
-                    if (segment.interpolationData[j].originalIndex === treeIndex) {
-                        return {
-                            segmentIndex: i,
-                            timeInSegment: this._getInterpolationTimeInSegment(j, segment.interpolationData.length, segmentDuration),
-                            segment
-                        };
-                    }
-                }
-            } else if (segment.interpolationData?.[0]?.originalIndex === treeIndex) {
-                return { segmentIndex: i, timeInSegment: TIMELINE_CONSTANTS.DEFAULT_PROGRESS, segment };
+            const segmentDuration = this.calculateSegmentDuration(segment);
+            const timeInSegment = TimelineTimingResolver.getTimeForFrameIndex(
+                segment,
+                frameIndex,
+                segmentDuration,
+                this.EPSILON_MS
+            );
+            if (timeInSegment !== null) {
+                return { segmentIndex: i, timeInSegment, segment };
             }
         }
 
@@ -88,13 +71,13 @@ export class TimelineMathUtils {
     }
 
     // ==========================================================================
-    // TREE INDEX RESOLUTION
+    // FRAME INDEX RESOLUTION
     // ==========================================================================
 
-    static getTargetTreeForTime(segments, currentTime, segmentDurations, bias = 'nearest', cumulativeDurations = null) {
+    static getTargetFrameForTime(segments, currentTime, segmentDurations, bias = 'nearest', cumulativeDurations = null) {
         if (!Array.isArray(segments) || segments.length === 0 || !Array.isArray(segmentDurations) || segmentDurations.length === 0) {
             return {
-                treeIndex: null,
+                frameIndex: null,
                 segmentIndex: TIMELINE_CONSTANTS.DEFAULT_SEGMENT_INDEX,
                 segmentProgress: TIMELINE_CONSTANTS.DEFAULT_PROGRESS
             };
@@ -115,17 +98,9 @@ export class TimelineMathUtils {
 
         if (!segment || !Number.isFinite(segmentDuration) || segmentDuration <= 0) {
             return {
-                treeIndex: null,
+                frameIndex: null,
                 segmentIndex: TIMELINE_CONSTANTS.DEFAULT_SEGMENT_INDEX,
                 segmentProgress: TIMELINE_CONSTANTS.DEFAULT_PROGRESS
-            };
-        }
-
-        if (segment.isFullTree) {
-            return {
-                treeIndex: segment.interpolationData[0].originalIndex,
-                segmentIndex,
-                segmentProgress: 0.5
             };
         }
 
@@ -136,7 +111,7 @@ export class TimelineMathUtils {
         const segmentProgress = (clampedTime - segmentStartTime) / segmentDuration;
 
         if (TimelineTimingResolver.hasSemanticTiming(segment)) {
-            return TimelineTimingResolver.getTargetTree(
+            return TimelineTimingResolver.getTargetFrame(
                 segment,
                 clampedTime - segmentStartTime,
                 segmentIndex,
@@ -146,39 +121,14 @@ export class TimelineMathUtils {
             );
         }
 
-        if (segment.hasInterpolation && segment.interpolationData.length > 1) {
-            const exactPosition = segmentProgress * (segment.interpolationData.length - 1);
-            let stepIndex;
-
-            if (bias === 'forward') {
-                stepIndex = Math.ceil(exactPosition - 1e-8);
-            } else if (bias === 'backward') {
-                stepIndex = Math.floor(exactPosition + 1e-8);
-            } else {
-                stepIndex = Math.round(exactPosition);
-            }
-
-            const clampedStepIndex = Math.max(0, Math.min(stepIndex, segment.interpolationData.length - 1));
-
-            return {
-                treeIndex: segment.interpolationData[clampedStepIndex].originalIndex,
-                segmentIndex,
-                segmentProgress: this.clampProgress(segmentProgress)
-            };
-        }
-
-        return {
-            treeIndex: segment.interpolationData[0].originalIndex,
-            segmentIndex,
-            segmentProgress: TIMELINE_CONSTANTS.DEFAULT_PROGRESS
-        };
+        throw new Error('[TimelineMathUtils] timeline segment timing is required');
     }
 
-    static calculateTreePositionInSegment(segment, currentTreeIndex) {
+    static calculateFramePositionInSegment(segment, frameIndex) {
         const treesInSegment = segment.interpolationData.length;
 
         if (treesInSegment > 1) {
-            const foundIndex = segment.interpolationData.findIndex(item => item.originalIndex === currentTreeIndex);
+            const foundIndex = segment.interpolationData.findIndex(item => item.originalIndex === frameIndex);
             const treeInSegment = foundIndex !== -1
                 ? foundIndex + TIMELINE_CONSTANTS.INDEX_OFFSET_UI
                 : TIMELINE_CONSTANTS.DEFAULT_TREE_IN_SEGMENT;
@@ -201,17 +151,10 @@ export class TimelineMathUtils {
 
     static calculateSegmentDuration(segment) {
         const semanticDuration = TimelineTimingResolver.calculateTimingDuration(segment);
-        if (semanticDuration !== null) {
-            return semanticDuration;
+        if (semanticDuration === null) {
+            throw new Error('[TimelineMathUtils] timeline segment timing is required');
         }
-
-        if (segment.isFullTree) {
-            return TIMING_PROFILE.inputTreeHoldMs;
-        }
-        if (segment.hasInterpolation && segment.interpolationData?.length > 1) {
-            return (segment.interpolationData.length - 1) * TIMING_PROFILE.motionStepMs;
-        }
-        return TIMING_PROFILE.motionStepMs;
+        return semanticDuration;
     }
 
     // ==========================================================================
@@ -265,7 +208,7 @@ export class TimelineMathUtils {
         const segment = segments[segmentIndex];
 
         if (!segment) {
-            return this._createStaticTransitionFrame(0, treeList);
+            throw new Error('[TimelineMathUtils] timeline segment is required');
         }
 
         const bounds = getSegmentBounds(segmentIndex, timelineData);
@@ -276,42 +219,22 @@ export class TimelineMathUtils {
             Number.isFinite(segmentDuration) ? segmentDuration : 0
         ));
 
-        if (TimelineTimingResolver.hasSemanticTiming(segment)) {
-            return TimelineTimingResolver.getTransitionFrame(
-                segment,
-                localTime,
-                treeList,
-                this._createStaticTransitionFrame.bind(this),
-                this.clampProgress.bind(this)
-            );
+        if (!TimelineTimingResolver.hasSemanticTiming(segment)) {
+            throw new Error('[TimelineMathUtils] timeline segment timing is required');
         }
 
-        if (segment.isFullTree || !segment.hasInterpolation) {
-            return this._createStaticTransitionFrame(segment.interpolationData[0].originalIndex, treeList);
-        }
-
-        const steps = segment.interpolationData.length;
-        if (steps <= 1) {
-            return this._createStaticTransitionFrame(segment.interpolationData[0].originalIndex, treeList);
-        }
-
-        const localProgress = this.clampProgress((currentTime - segmentStart) / segmentDuration);
-        const exactStep = localProgress * (steps - 1);
-        const fromStep = Math.floor(exactStep);
-        const toStep = Math.min(fromStep + 1, steps - 1);
-
-        return TransitionFrame.from({
-            sourceTree: treeList[segment.interpolationData[fromStep].originalIndex],
-            targetTree: treeList[segment.interpolationData[toStep].originalIndex],
-            transitionProgress: exactStep - fromStep,
-            sourceTreeIndex: segment.interpolationData[fromStep].originalIndex,
-            targetTreeIndex: segment.interpolationData[toStep].originalIndex
-        });
+        return TimelineTimingResolver.getTransitionFrame(
+            segment,
+            localTime,
+            treeList,
+            this._createStaticTransitionFrame.bind(this),
+            this.clampProgress.bind(this)
+        );
     }
 
-    static getTimelineProgressForTreeIndex(segments, timelineData, treeIndex) {
+    static getTimelineProgressForFrameIndex(segments, timelineData, frameIndex) {
         if (
-            !Number.isInteger(treeIndex) ||
+            !Number.isInteger(frameIndex) ||
             !Array.isArray(segments) ||
             !timelineData ||
             !Number.isFinite(timelineData.totalDuration) ||
@@ -320,7 +243,7 @@ export class TimelineMathUtils {
             return null;
         }
 
-        const lookup = this.findSegmentForTreeIndex(segments, treeIndex);
+        const lookup = this.findSegmentForFrameIndex(segments, frameIndex);
         if (lookup.segmentIndex < 0 || !lookup.segment) {
             return null;
         }
@@ -332,20 +255,20 @@ export class TimelineMathUtils {
 
     static getTimelineProgressForLinearTreeProgress(progress, treeCount, segments, timelineData) {
         if (!Number.isFinite(treeCount) || treeCount <= 1) {
-            return this.getTimelineProgressForTreeIndex(segments, timelineData, 0);
+            return this.getTimelineProgressForFrameIndex(segments, timelineData, 0);
         }
 
         const clampedProgress = this.clampProgress(progress);
-        const exactTreeIndex = clampedProgress * (treeCount - 1);
-        const fromIndex = Math.floor(exactTreeIndex);
+        const exactFrameIndex = clampedProgress * (treeCount - 1);
+        const fromIndex = Math.floor(exactFrameIndex);
         const toIndex = Math.min(fromIndex + 1, treeCount - 1);
-        const timeFactor = exactTreeIndex - fromIndex;
+        const timeFactor = exactFrameIndex - fromIndex;
 
-        const fromProgress = this.getTimelineProgressForTreeIndex(segments, timelineData, fromIndex);
-        const toProgress = this.getTimelineProgressForTreeIndex(segments, timelineData, toIndex);
+        const fromProgress = this.getTimelineProgressForFrameIndex(segments, timelineData, fromIndex);
+        const toProgress = this.getTimelineProgressForFrameIndex(segments, timelineData, toIndex);
 
         if (fromProgress == null || toProgress == null) {
-            return clampedProgress;
+            throw new Error('[TimelineMathUtils] timeline progress for frame index is required');
         }
 
         return fromProgress + ((toProgress - fromProgress) * timeFactor);
@@ -363,25 +286,6 @@ export class TimelineMathUtils {
             arr[i] = acc;
         }
         return arr;
-    }
-
-    static _getInterpolationTimeInSegment(stepIndex, totalSteps, segmentDuration) {
-        if (totalSteps <= 1 || !Number.isFinite(segmentDuration) || segmentDuration <= 0) {
-            return TIMELINE_CONSTANTS.DEFAULT_PROGRESS;
-        }
-
-        if (stepIndex <= 0) {
-            return TIMELINE_CONSTANTS.DEFAULT_PROGRESS;
-        }
-
-        if (stepIndex >= totalSteps - 1) {
-            return Math.max(
-                TIMELINE_CONSTANTS.DEFAULT_PROGRESS,
-                segmentDuration - this.EPSILON_MS
-            );
-        }
-
-        return (stepIndex / (totalSteps - 1)) * segmentDuration;
     }
 
     static _createStaticTransitionFrame(idx, treeList, extra = {}) {

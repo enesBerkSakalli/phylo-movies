@@ -40,23 +40,23 @@ export class TimelineTimingResolver {
         return null;
     }
 
-    static getTimeForTreeIndex(segment, treeIndex, segmentDuration, epsilonMs) {
+    static getTimeForFrameIndex(segment, frameIndex, segmentDuration, epsilonMs) {
         let elapsed = 0;
 
         for (const interval of segment.timing) {
             const duration = TimelineInterval.durationMs(interval);
 
             if (TimelineInterval.isMotion(interval)) {
-                if (interval.fromIndex === treeIndex) {
+                if (interval.fromIndex === frameIndex) {
                     return elapsed;
                 }
-                if (interval.toIndex === treeIndex) {
+                if (interval.toIndex === frameIndex) {
                     const targetTime = elapsed + duration;
                     return targetTime >= segmentDuration
                         ? Math.max(0, segmentDuration - epsilonMs)
                         : targetTime;
                 }
-            } else if (TimelineInterval.isHold(interval) && interval.holdIndex === treeIndex) {
+            } else if (TimelineInterval.isHold(interval) && interval.holdIndex === frameIndex) {
                 return elapsed;
             }
 
@@ -71,8 +71,7 @@ export class TimelineTimingResolver {
         const interval = resolved?.interval;
 
         if (!interval) {
-            const fallbackIndex = segment.interpolationData?.[0]?.originalIndex ?? 0;
-            return createStaticFrame(fallbackIndex, treeList);
+            throw new Error('[TimelineTimingResolver] timeline interval is required');
         }
 
         if (TimelineInterval.isHold(interval)) {
@@ -96,21 +95,17 @@ export class TimelineTimingResolver {
         });
     }
 
-    static getTargetTree(segment, localTime, segmentIndex, segmentProgress, bias, clampProgress) {
+    static getTargetFrame(segment, localTime, segmentIndex, segmentProgress, bias, clampProgress) {
         const resolved = this.resolveInterval(segment.timing, localTime);
         const interval = resolved?.interval;
 
         if (!interval) {
-            return {
-                treeIndex: segment.interpolationData?.[0]?.originalIndex ?? null,
-                segmentIndex,
-                segmentProgress: clampProgress(segmentProgress)
-            };
+            throw new Error('[TimelineTimingResolver] timeline interval is required');
         }
 
         if (TimelineInterval.isHold(interval)) {
             return {
-                treeIndex: interval.holdIndex,
+                frameIndex: interval.holdIndex,
                 segmentIndex,
                 segmentProgress: clampProgress(segmentProgress)
             };
@@ -124,14 +119,14 @@ export class TimelineTimingResolver {
             targetTreeIndex: interval.toIndex,
             transitionProgress: timeFactor
         });
-        const treeIndex = bias === 'forward'
+        const frameIndex = bias === 'forward'
             ? interval.toIndex
             : (bias === 'backward'
                 ? interval.fromIndex
                 : transitionFrame.cursorTreeIndex);
 
         return {
-            treeIndex,
+            frameIndex,
             segmentIndex,
             segmentProgress: clampProgress(segmentProgress)
         };

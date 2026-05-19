@@ -5,6 +5,7 @@ import type {
   TreePairSolution,
 } from './phyloMovieTypes';
 import {
+  assertExactRecordKeys,
   requiredArray,
   requiredNumberArray,
   requiredRecord,
@@ -19,6 +20,7 @@ function validateOriginalTimelineEntry(
   treeCount: number
 ): OriginalTimelineEntry {
   const fieldName = `split_change_timeline[${index}]`;
+  assertExactRecordKeys(value, fieldName, ['type', 'tree_index', 'global_index', 'name']);
   const treeIndex = validateInteger(value.tree_index, `${fieldName}.tree_index`);
   if (treeIndex < 0) {
     throw new Error(`Invalid phyloMovieData payload: ${fieldName}.tree_index must be non-negative`);
@@ -44,6 +46,13 @@ function validateSplitEventTimelineEntry(
   treePairSolutions: Record<string, TreePairSolution>
 ): SplitEventTimelineEntry {
   const fieldName = `split_change_timeline[${index}]`;
+  assertExactRecordKeys(value, fieldName, [
+    'type',
+    'pair_key',
+    'split',
+    'step_range_local',
+    'step_range_global',
+  ]);
   if (typeof value.pair_key !== 'string') {
     throw new Error(`Invalid phyloMovieData payload: ${fieldName}.pair_key must be a string`);
   }
@@ -86,7 +95,7 @@ export function validateSplitChangeTimeline(
 ): SplitChangeTimelineEntry[] {
   const entries = requiredArray(value, 'split_change_timeline');
   const validated: SplitChangeTimelineEntry[] = [];
-  const inputTreeIndices = collectInputTreeIndices(pairInterpolationRanges, treeCount);
+  const inputTreeIndices = collectInputTreeIndices(pairInterpolationRanges);
   const expectedTransitionIndices = collectTransitionIndices(pairInterpolationRanges);
   const originalIndices = new Set<number>();
   const originalEntries: OriginalTimelineEntry[] = [];
@@ -190,16 +199,12 @@ function validateSplitEventPairKeys(
   });
 }
 
-function collectInputTreeIndices(pairInterpolationRanges: Array<[number, number]>, treeCount: number): Set<number> {
+function collectInputTreeIndices(pairInterpolationRanges: Array<[number, number]>): Set<number> {
   const inputTrees = new Set<number>();
 
   for (const [start, end] of pairInterpolationRanges) {
     inputTrees.add(start);
     inputTrees.add(end);
-  }
-
-  if (inputTrees.size === 0 && treeCount > 0) {
-    inputTrees.add(0);
   }
 
   return inputTrees;

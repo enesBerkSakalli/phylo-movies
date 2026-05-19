@@ -7,8 +7,7 @@ function isInputFrame(treeMetadata, frameIndex) {
   const metadata = getFrameMetadata(treeMetadata, frameIndex);
   if (!metadata) return false;
   if (metadata.frame_type === 'input_tree') return true;
-  if (metadata.frame_type === 'interpolation_frame') return false;
-  return metadata.source_tree_global_index == null;
+  return false;
 }
 
 export function getSourceFrameIndexForFrameIndex(treeMetadata, frameIndex) {
@@ -18,5 +17,5 @@ export function getSourceFrameIndexForFrameIndex(treeMetadata, frameIndex) {
   const metadata = getFrameMetadata(treeMetadata, frameIndex);
   const sourceFrameIndex = metadata?.source_tree_global_index;
   if (!Number.isInteger(sourceFrameIndex)) return null;
-  return treeMetadata[sourceFrameIndex] ? sourceFrameIndex : null;
+  return isInputFrame(treeMetadata, sourceFrameIndex) ? sourceFrameIndex : null;
 }
