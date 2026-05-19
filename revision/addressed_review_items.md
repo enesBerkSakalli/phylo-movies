@@ -107,6 +107,7 @@ This checklist summarizes reviewer and editor concerns that have already been ad
 
 ## Still Needs Final Confirmation Before Resubmission
 
+- [ ] Work through `revision/REVIEWER_RESPONSE_EVIDENCE_MATRIX.md` and close or explicitly defer every non-closed row.
 - [ ] Final desktop release artifacts need to be built and tested on current macOS.
 - [ ] The final manuscript text must be checked to ensure all drafted text edits are actually applied.
 - [ ] Narrated/captioned demo videos still need to be produced or linked.
