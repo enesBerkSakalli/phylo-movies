@@ -120,11 +120,9 @@ cd "$HOST_DIR" # Go back to electron-app/
 echo "Copying build artifacts to $FRONTEND_DIST..."
 cp -r "$PROJECT_ROOT/dist" "$FRONTEND_DIST"
 
-# -----------------------------------------------------------------------------
-# 3.1 Inject Example Custom Data
-# -----------------------------------------------------------------------------
-# Copy example datasets that are referenced in exampleDatasets.js
-"$PROJECT_ROOT/scripts/copy-examples.sh" "$FRONTEND_DIST"
+# Example datasets are copied into dist/ by the root build from publication_data/.
+# frontend-dist is a generated packaging artifact; publication_data/ remains the
+# only source of truth.
 
 echo "Frontend prepared successfully."
 

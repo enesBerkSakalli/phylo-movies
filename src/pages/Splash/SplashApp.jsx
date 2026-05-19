@@ -6,6 +6,7 @@ const SplashApp = () => {
   const [status, setStatus] = useState('Initializing...');
   const [progress, setProgress] = useState(0);
   const [isFading, setIsFading] = useState(false);
+  const appVersion = import.meta.env.VITE_APP_VERSION || '0.64.0';
 
   useEffect(() => {
     // Listen for status updates from main process
@@ -45,7 +46,7 @@ const SplashApp = () => {
       </div>
 
       <div className="absolute bottom-6 text-[9px] text-slate-300 tracking-tight">
-        v0.64.0
+        v{appVersion}
       </div>
     </div>
   );

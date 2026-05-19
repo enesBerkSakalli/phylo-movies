@@ -42,6 +42,11 @@ let backendPort = DEFAULT_PORT;
 let backendRootDir = null;
 let launchLogPath = null;
 
+function getWindowIconPath() {
+  const iconPath = path.join(__dirname, 'build', 'icon.png');
+  return fs.existsSync(iconPath) ? iconPath : undefined;
+}
+
 function logToFile(message) {
   try {
     if (!launchLogPath) {
@@ -68,6 +73,7 @@ function createSplashWindow() {
     center: true,
     alwaysOnTop: true,
     skipTaskbar: true,
+    icon: getWindowIconPath(),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -409,6 +415,7 @@ function createWindow() {
     minWidth: 800,
     minHeight: 600,
     title: 'Phylo-Movies',
+    icon: getWindowIconPath(),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,

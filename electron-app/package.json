@@ -14,7 +14,7 @@
     "start": "electron .",
     "dev": "NODE_ENV=development electron .",
     "setup:backend": "cd ../engine/BranchArchitect && poetry install",
-    "build:frontend": "cd .. && ELECTRON_BUILD=true npm run build && rm -rf electron-app/frontend-dist && cp -r dist electron-app/frontend-dist && mkdir -p electron-app/frontend-dist/examples/norovirus/augur_subsampling && cp publication_data/norovirus/augur_subsampling/noro_virus_example_350_gappyout_final.fasta electron-app/frontend-dist/examples/norovirus/augur_subsampling/",
+    "build:frontend": "cd .. && ELECTRON_BUILD=true npm run build && rm -rf electron-app/frontend-dist && cp -r dist electron-app/frontend-dist",
     "build:backend": "cd ../engine/BranchArchitect && PYINSTALLER_CONFIG_DIR=/tmp/pyi-config poetry run pyinstaller brancharchitect.spec --distpath dist --workpath /tmp/pyinstaller-work --noconfirm --clean && tar -czf dist/brancharchitect-server.tar.gz -C dist brancharchitect-server",
     "test:sse": "bash sse_smoke.sh",
     "build:mac": "bash build.sh mac",
@@ -48,6 +48,7 @@
       "main.js",
       "preload.js",
       "splash-preload.js",
+      "build/icon.png",
       "frontend-dist/**/*"
     ],
     "extraResources": [
@@ -97,7 +98,8 @@
           ]
         }
       ],
-      "category": "Science"
+      "category": "Science",
+      "icon": "build/icon.png"
     }
   }
 }

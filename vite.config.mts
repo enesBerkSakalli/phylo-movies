@@ -86,6 +86,7 @@ function servePublicationData() {
 export default defineConfig(async (): Promise<UserConfig> => {
   // Use relative paths for Electron builds
   const isElectronBuild = process.env.ELECTRON_BUILD === 'true';
+  const packageJson = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'package.json'), 'utf8'));
 
   return {
     root: 'src',
@@ -97,6 +98,9 @@ export default defineConfig(async (): Promise<UserConfig> => {
       tailwindcss(),
       servePublicationData()
     ],
+    define: {
+      'import.meta.env.VITE_APP_VERSION': JSON.stringify(packageJson.version)
+    },
     envPrefix: ['VITE_'],
     css: {
       modules: {

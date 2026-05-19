@@ -9,13 +9,19 @@ electron-app/
 ├── main.js              # Electron main process
 ├── preload.js           # Secure IPC bridge
 ├── package.json         # Electron dependencies
-├── frontend-dist/       # Built React app (copied during build)
-└── BranchArchitect/     # BranchArchitect engine (git submodule)
-    ├── brancharchitect/ # Python tree transformation library
-    ├── webapp/          # Flask server
-    ├── msa_to_trees/    # MSA processing module
-    └── pyproject.toml   # Python dependencies (Poetry)
+└── frontend-dist/       # Built React app (generated during build; disposable)
+
+../engine/BranchArchitect/
+├── brancharchitect/     # Python tree transformation library
+├── webapp/              # Flask server
+├── msa_to_trees/        # MSA processing module
+├── pyproject.toml       # Python dependencies (Poetry)
+└── poetry.lock          # Locked backend dependency graph
 ```
+
+`frontend-dist/` is generated from the repository root build. Any packaged
+example files under `frontend-dist/examples/` are copied from
+`../publication_data/`; do not edit them as source data.
 
 ## Development Setup
 
@@ -62,7 +68,7 @@ pip install poetry
 #### 3. Install Python Engine Dependencies
 
 ```bash
-cd electron-app/BranchArchitect
+cd engine/BranchArchitect
 poetry install
 ```
 
@@ -83,7 +89,7 @@ npm run dev
 
 Terminal 2 - Start the Flask engine:
 ```bash
-cd electron-app/BranchArchitect
+cd engine/BranchArchitect
 ./start_movie_server.sh
 ```
 
@@ -98,7 +104,7 @@ npm run dev
 ### 1. Bundle the Python engine
 
 ```bash
-cd electron-app/BranchArchitect
+cd engine/BranchArchitect
 poetry run pyinstaller brancharchitect.spec --clean
 ```
 
@@ -116,5 +122,8 @@ Output will be in `electron-app/release/`.
 ## Notes
 
 - The frontend is built from the parent `phylo-movies` directory
-- The engine is bundled using PyInstaller with all Python dependencies
+- The engine is bundled from `engine/BranchArchitect` using PyInstaller with
+  all Python dependencies
+- `electron-app/package.json` and `electron-app/package-lock.json` are the
+  canonical Electron dependency files
 - App size will be ~200-400MB due to scientific Python libraries
