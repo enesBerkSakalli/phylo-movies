@@ -266,6 +266,8 @@ The repository intentionally uses separate toolchains for the browser app, Pytho
 | Desktop wrapper | `electron-app` | `npm install` | `npm run test:sse` after backend setup; use `npm run build:mac`, `npm run build:win`, or `npm run build:linux` for packaging checks | Electron shell and packaged backend/frontend integration |
 | Full stack container | repository root | Docker | `docker compose up --build` | nginx frontend plus BranchArchitect backend in one container |
 
+See `DEPENDENCY_STRUCTURE.md` for the repository dependency-file ownership map.
+
 Root `npm run validate` validates the frontend application only. It does not hide backend or Electron failures; validate those layers explicitly when their code or contracts change.
 
 ---
@@ -512,17 +514,8 @@ phylo-movies/
 
 The `publication_data/` directory contains the datasets used in the PhyloMovies manuscript, enabling full reproduction of the published results:
 
-- **`norovirus/`** — Norovirus recombination analysis data:
-  - `README.md` and `RECOMBINATION_DATA_HYGIENE_AUDIT.md` — Publication-layer map and current hygiene findings
-  - `augur_subsampling/` — Subsampled alignment and trees used for the sliding-window demonstration
-  - `recan_recombination_analysis/` — Derived ReCAN validation workspace; audit before using outputs in publication artifacts
-- **`bootstrap_example/`** — Rogue taxon detection via bootstrap replicates:
-  - `README.md` — Relationship map for the Aberer/RogueNaRok-derived demo files
-  - `125/` and `24/` — Bootstrap replicate trees (200 replicates each) with SPR event frequency summaries
-  - `limitation test/` — Edge-case scenarios for the lattice solver
-- **`rogue_taxa/`** — Rogue-taxon scripts and provenance notes:
-  - `epas1_pipeline/` — EPAS1 sliding-window helper scripts and configuration
-  - `selected_external_files/` — Curated third-party files only; the full Aberer/RogueNaRok online-data archive is not vendored because it is external data
+- **`recombination_norovirus/`** — Norovirus recombination source alignments, source-preparation files, ReCAN scripts, and promoted validation outputs
+- **`bootstrap_rogue_taxa/`** — Aberer/RogueNaRok-derived source alignments, IQ-TREE/RAxML bootstrap-ordering scripts, and promoted IQ-TREE result trees
 - **`figure_example/`** — Tree files used to generate publication figures (e.g., `paper_example.tree`)
 
 These datasets are referenced in the demo videos and can be loaded directly into the application to explore the use cases described in the paper.
