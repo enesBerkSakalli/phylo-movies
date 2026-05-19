@@ -73,7 +73,6 @@ echo "[prereq] Node.js $NODE_VERSION and npm v$NPM_VERSION detected"
 # ============================================================================
 
 ENGINE_DIR="$PROJECT_ROOT/engine/BranchArchitect"
-ENGINE_REPO="https://github.com/EnesSakalliUniWien/BranchArchitect.git"
 ENGINE_PORT=5002
 
 echo "[engine] Checking if BranchArchitect engine exists at $ENGINE_DIR..."
@@ -102,15 +101,29 @@ if ! command -v poetry &> /dev/null; then
   exit 1
 fi
 
-# Install Python dependencies (always run - it's fast if nothing changed)
-echo "[engine] Installing Python dependencies with Poetry..."
+# Install Python dependencies only when the local virtualenv is missing or stale.
 cd "$ENGINE_DIR"
-poetry install --no-interaction
-if [ $? -ne 0 ]; then
-  echo "[engine] ERROR: Failed to install Python dependencies"
-  exit 1
+VENV_DIR="$ENGINE_DIR/.venv"
+NEEDS_POETRY_INSTALL=false
+if [ ! -d "$VENV_DIR" ]; then
+  NEEDS_POETRY_INSTALL=true
+elif [ "$ENGINE_DIR/pyproject.toml" -nt "$VENV_DIR" ]; then
+  NEEDS_POETRY_INSTALL=true
+elif [ -f "$ENGINE_DIR/poetry.lock" ] && [ "$ENGINE_DIR/poetry.lock" -nt "$VENV_DIR" ]; then
+  NEEDS_POETRY_INSTALL=true
 fi
-echo "[engine] Python dependencies installed successfully"
+
+if [ "$NEEDS_POETRY_INSTALL" = true ]; then
+  echo "[engine] Installing Python dependencies with Poetry..."
+  poetry install --no-interaction
+  if [ $? -ne 0 ]; then
+    echo "[engine] ERROR: Failed to install Python dependencies"
+    exit 1
+  fi
+  echo "[engine] Python dependencies installed successfully"
+else
+  echo "[engine] Python dependencies are up to date; skipping Poetry install."
+fi
 cd "$PROJECT_ROOT"
 
 # Always start the backend through the project launcher so stdout/stderr are owned.
