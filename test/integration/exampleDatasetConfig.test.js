@@ -41,6 +41,25 @@ describe('example dataset configuration', () => {
       ]);
   });
 
+  it('keeps the paper figure example label aligned with the source tree file', () => {
+    const paperExample = EXAMPLE_DATASETS.find((example) => example.id === 'paper-example');
+
+    expect(paperExample).toBeDefined();
+
+    const publicationRelativePath = paperExample.filePath.replace(/^.*examples\//, 'publication_data/');
+    const treeFile = path.join(process.cwd(), publicationRelativePath);
+    const treeLines = fs.readFileSync(treeFile, 'utf8').trim().split(/\r?\n/).filter(Boolean);
+    const taxa = new Set(
+      treeLines.flatMap((line) => (
+        Array.from(line.matchAll(/(?<=[(,])([^(),:;]+):/g), (match) => match[1])
+      ))
+    );
+
+    expect(treeLines).toHaveLength(2);
+    expect(taxa.size).toBe(14);
+    expect(paperExample.description).toContain('14 taxa');
+  });
+
   it('keeps bootstrap example copy aligned with publication tree counts', () => {
     const bootstrapExamples = EXAMPLE_DATASETS.filter((example) => example.id.startsWith('bootstrap-'));
 
@@ -50,16 +69,17 @@ describe('example dataset configuration', () => {
     ]);
 
     for (const example of bootstrapExamples) {
+      const publicationRelativePath = example.filePath.replace(/^.*examples\//, 'publication_data/');
       const treeFile = path.join(
         process.cwd(),
-        'publication_data/bootstrap_example',
-        example.id.replace('bootstrap-', ''),
-        example.fileName,
+        publicationRelativePath,
       );
       const treeCount = fs.readFileSync(treeFile, 'utf8').trim().split(/\r?\n/).filter(Boolean).length;
 
       expect(treeCount).toBe(200);
-      expect(example.description).toContain('200 bootstrap replicates');
+      expect(example.description).toContain('IQ-TREE default mode');
+      expect(example.filePath).toContain('bootstrap_example/iqtree_reinference/current_results');
+      expect(example.fileName).toContain('source-');
     }
   });
 });

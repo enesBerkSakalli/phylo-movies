@@ -1,0 +1,47 @@
+# Current Result Verification
+
+Status: **PASS**
+
+Verified at: `2026-05-19T11:17:10+02:00`
+
+Source run: `run_20260518T202621+0200_iqtree-default_bs200_seed42_ds24-125_full-iqtree-default-j4-redo`
+
+## Checks
+
+| Dataset | Taxa | Sites | Order rows | Ranked trees | Taxa check | Branch lengths | Line refs | Sort order |
+| --- | ---: | ---: | ---: | ---: | --- | --- | --- | --- |
+| 24 | 24 | 14190 | 200 | 200 | PASS | PASS | PASS | PASS |
+| 125 | 125 | 29149 | 200 | 200 | PASS | PASS | PASS | PASS |
+
+## Ordering Semantics
+
+- `display_order`: 1-based visual/order position in the promoted Phylo-Movies tree sequence.
+- `ranked_newick_line`: 1-based line number in `all_trees_*.nwk`; this should equal `display_order`.
+- `bootstrap_replicate_id`: original RAxML replicate alignment ID, such as `BS183`.
+- `bootstrap_replicate_index_zero_based`: numeric replicate index from `bootstrap.BS<N>`.
+- `composition_distance_to_source_alignment`: Euclidean distance from the source alignment composition vector over `(A, C, G, T, AmbiguousOrGap)`.
+- `sort_direction`: `ascending`; smaller composition distance appears earlier.
+
+This order is a deterministic visualization/order heuristic for the bootstrap replicate tree sequence. It is not a biological time axis, likelihood rank, support value, or rogue-taxon severity score.
+
+## Promoted Outputs
+
+### Dataset 24
+
+- Ranked trees: `dataset_24_source-24_taxa24_sites14190/ranked/all_trees_24_source-24_taxa24_sites14190.nwk`
+- Ordering table: `dataset_24_source-24_taxa24_sites14190/ranked/composition_ranked_bootstrap_replicates_24_source-24_taxa24_sites14190.tsv`
+- Ranked trees SHA256: `7eeb64282fd3a15530688e302dcf7e909cfe8fdce302cd50f13aec81ab2fee10`
+- Ordering table SHA256: `247e0bfc5e4840ad80b3788056f0a453f1d6a04edfe85d9baf3aa3021c6a2965`
+
+### Dataset 125
+
+- Ranked trees: `dataset_125_source-125_taxa125_sites29149/ranked/all_trees_125_source-125_taxa125_sites29149.nwk`
+- Ordering table: `dataset_125_source-125_taxa125_sites29149/ranked/composition_ranked_bootstrap_replicates_125_source-125_taxa125_sites29149.tsv`
+- Ranked trees SHA256: `78a2f421d8f1b5fabe416f34644d016b14345d3b6946963601c533311ba1693f`
+- Ordering table SHA256: `d5396248117d2c64afc247c8693d47c6936a271b4b4452762085920601cfc76a`
+
+## Notes
+
+- Publication-facing results are the ranked Newick files and semantic ordering tables.
+- IQ-TREE inference artifacts are log/provenance only and remain in ignored staging.
+- Bootstrap replicate alignments remain in ignored staging because they are bulky derived MSA intermediates.
