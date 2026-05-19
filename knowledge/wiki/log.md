@@ -3,8 +3,9 @@ title: "Knowledge Wiki Log"
 type: log
 status: active
 created: 2026-05-16
-updated: 2026-05-16
-sources: []
+updated: 2026-05-18
+sources:
+  - ../AGENTS.md
 ---
 
 # Knowledge Wiki Log
@@ -142,4 +143,70 @@ Append-only chronological log of wiki operations.
   - `engine/BranchArchitect/webapp/services/trees/frontend_builder.py`
 - Outputs:
   - [[tree-node-highlight-timing-flow]]
+- Secrets used: none
+
+## [2026-05-18] maintenance | Parallel wiki ambiguity audit and cleanup
+
+- Operation ID: `op-20260518-wiki-ambiguity-cleanup`
+- Inputs:
+  - `knowledge/AGENTS.md`
+  - `knowledge/wiki/**/*.md`
+  - `knowledge/sources/manifest.md`
+  - `docs/terminology.md`
+  - `README.md`
+  - `plans/DEPENDENCY_MAP.md`
+  - `start.sh`
+  - `src/timeline/data/TimelineDataProcessor.js`
+  - `src/timeline/data/TimelineTimingBuilder.js`
+  - `src/timeline/math/TimelineMathUtils.js`
+  - `src/timeline/math/TimelineTimingResolver.js`
+  - `src/timeline/constants.js`
+- Outputs:
+  - [[src-0001-llm-wiki-gist]]
+  - [[contradictions]]
+  - [[open-questions]]
+  - [[index]]
+  - [[project-terminology]]
+  - [[src-0002-project-terminology]]
+  - [[src-0005-dependency-map]]
+  - [[repository-architecture]]
+  - [[timeline-subsystem-review]]
+  - [[render-node-link-id-call-map]]
+  - [[phylogenetic-tree-morphing]]
+  - [[brancharchitect]]
+- Notes:
+  - Three read-only audit agents checked structure/link hygiene, source/citation
+    integrity, and stale or ambiguous claims before cleanup edits.
+  - The historical log entry for `op-20260516-timeline-review` mentions
+    `src/timeline/events/eventHandlers.js`; that file is now absent, so current
+	  synthesis pages point to the renderer and timing modules instead.
+- Secrets used: none
+
+## [2026-05-18] analysis | Timeline analytics next steps
+
+- Operation ID: `op-20260518-timeline-analytics-next-steps`
+- Inputs:
+  - Four read-only review-agent summaries for temporal-tool references, Moving
+    Subtrees analytics, MovieTimelineCharts, and shared timeline contracts
+  - `src/domain/spr/sprAnalytics.js`
+  - `test/domain/tree/spr-analytics-utils.test.js`
+  - `src/components/TreeStatsPanel/SubtreeAnalytics/SprActivityTimeline.tsx`
+  - `src/components/TreeStatsPanel/SubtreeAnalytics/SprMoveEventTable.tsx`
+  - `src/components/DistanceChart/distanceChartModel.js`
+  - `src/components/DistanceChart/DistanceChart.jsx`
+  - `src/components/movie-player/MovieChartSection/MovieChartSection.jsx`
+  - `src/timeline/time/PlaybackCursor.js`
+  - `src/timeline/data/TimelineDataProcessor.js`
+  - `src/timeline/core/MovieTimelineManager.js`
+  - `src/domain/indexing/TransitionIndexResolver.js`
+- Outputs:
+  - [[timeline-analytics-next-steps]]
+  - [[index]]
+  - [[open-questions]]
+- Notes:
+  - The page records the decision to fix the shared temporal contract before
+    adding more chart UI.
+  - It records `normalizeSubtreeIndices()` no-mutation handling,
+    target/input-tree analytics terminology, and durable seek behavior as
+    completed.
 - Secrets used: none

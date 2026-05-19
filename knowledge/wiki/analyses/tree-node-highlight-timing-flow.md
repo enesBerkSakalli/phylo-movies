@@ -3,7 +3,7 @@ title: "Tree Node Highlight Timing Flow"
 type: analysis
 status: active
 created: 2026-05-16
-updated: 2026-05-16
+updated: 2026-05-18
 sources:
   - ../../../engine/BranchArchitect/brancharchitect/movie_pipeline/tree_interpolation_pipeline.py
   - ../../../engine/BranchArchitect/webapp/services/trees/frontend_builder.py
@@ -82,7 +82,7 @@ The relevant backend-to-frontend meanings are:
   events.
 - `subtree_highlight_tracking` carries moving-subtree highlight state per
   frame.
-- `split_change_timeline` is the weighted timeline input used to build anchor
+- `split_change_timeline` is the weighted timeline input used to build input-tree
   and transition segments.
 
 ## Node Rendering

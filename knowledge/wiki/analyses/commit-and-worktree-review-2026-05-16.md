@@ -3,7 +3,7 @@ title: "Commit and Worktree Review 2026-05-16"
 type: analysis
 status: active
 created: 2026-05-16
-updated: 2026-05-16
+updated: 2026-05-18
 sources:
   - ../../../src/domain/tree/splits.js
   - ../../../src/treeVisualisation/layout/LayoutBaseUtils.js
@@ -25,12 +25,13 @@ sources:
 
 ## Summary
 
-The recent commit history and current uncommitted diff show a cleanup phase:
-legacy render-layer shims are being removed, identity generation is moving into
-domain/layout contracts, timeline segment timing is being centralized, and
-interpolation hot paths are getting allocation and cache improvements.
+This page is a historical snapshot of the commit history and uncommitted diff
+reviewed on 2026-05-16. At that point, legacy render-layer shims were being
+removed, identity generation was moving into domain/layout contracts, timeline
+segment timing was being centralized, and interpolation hot paths were getting
+allocation and cache improvements.
 
-The current wiki-impacting changes are:
+The snapshot's wiki-impacting changes were:
 
 - [[render-node-link-id-call-map]] must treat `src/domain/tree/splits.js` and
   layout-prepared IDs as the identity source of truth.
@@ -56,9 +57,9 @@ The current wiki-impacting changes are:
 | `5659ed4` | Update BranchArchitect submodule. | Backend source of transition data changed by submodule pointer. |
 | `18026aa` | Clarify SPR movement labels. | Terminology docs should keep UI labels aligned with movement semantics. |
 
-## Current Worktree Review
+## Worktree Snapshot Review
 
-The dirty worktree contains 38 changed paths, with roughly balanced additions
+The reviewed dirty worktree contained 38 changed paths, with roughly balanced additions
 and deletions. The changes cluster into four areas.
 
 ### Render Identity
@@ -101,15 +102,15 @@ The new timing helper centralizes:
 - conversion from zero-based segment indexes to one-based renderer item IDs
 - conversion from renderer item IDs back to segment indexes
 
-Callers updated in the worktree include `MovieTimelineManager`,
+Callers updated in the reviewed snapshot included `MovieTimelineManager`,
 `TimelineNavigationController`, `TimelineStateSynchronizer`,
 `TimelineMathUtils`, `DeckTimelineRenderer`, `segmentProcessor.js`,
-`eventHandlers.js`, and `segmentUtils.js`.
+and `segmentUtils.js`.
 
 The boundary policy remains subtle:
 
 - default lookup prefers the last segment when adjacent segments share a
-  cumulative time, preserving zero-duration anchor behavior
+  cumulative time, preserving shared-boundary input-tree behavior
 - math callers can request first-boundary behavior
 - math callers can include the exact timeline end when resolving the final
   segment
@@ -142,8 +143,9 @@ The current diff extends guardrails around the new contracts:
 
 ## Review Findings
 
-No blocking wiki-level contradictions were found. The documentation gap was
-that the wiki still named deleted helper modules as authorities.
+No blocking wiki-level contradictions were found in this 2026-05-16 snapshot.
+The documentation gap was that the wiki still named deleted helper modules as
+authorities.
 
 Residual implementation risks to track:
 

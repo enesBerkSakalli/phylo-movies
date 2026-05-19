@@ -3,9 +3,10 @@ title: "Timeline Subsystem Review"
 type: analysis
 status: active
 created: 2026-05-16
-updated: 2026-05-16
+updated: 2026-05-18
 sources:
   - ../../../src/timeline/data/TimelineDataProcessor.js
+  - ../../../src/timeline/data/TimelineTimingBuilder.js
   - ../../../src/timeline/core/MovieTimelineManager.js
   - ../../../src/timeline/core/TimelineClock.js
   - ../../../src/timeline/core/TimelineScrubController.js
@@ -13,10 +14,12 @@ sources:
   - ../../../src/timeline/core/TimelineStateSynchronizer.js
   - ../../../src/timeline/core/ScrubberAPI.js
   - ../../../src/timeline/math/TimelineMathUtils.js
+  - ../../../src/timeline/math/TimelineTimingResolver.js
+  - ../../../src/timeline/constants.js
   - ../../../src/timeline/renderers/DeckTimelineRenderer.js
   - ../../../src/timeline/data/segmentProcessor.js
-  - ../../../src/timeline/events/eventHandlers.js
   - ../../../src/timeline/utils/segmentTiming.js
+  - ../../../src/timeline/utils/segmentUtils.js
   - ../../../src/timeline/utils/layerFactories.js
   - ../../../src/core/slices/playbackSlice.js
   - ../../../test/segment-timing.test.js
@@ -47,7 +50,7 @@ zero-based/one-based segment ID conversion in
 ```mermaid
 flowchart TD
   A["movieData.split_change_timeline"] --> B["TimelineDataProcessor.createSegments()"]
-  B --> C["segments: anchor and transition records"]
+  B --> C["segments: input-tree and transition records"]
   C --> D["TimelineDataProcessor.createTimelineData()"]
   D --> E["segmentDurations + cumulativeDurations + totalDuration"]
   C --> F["MovieTimelineManager"]
@@ -58,7 +61,7 @@ flowchart TD
   S --> G
   S --> K
   G --> H
-  H --> I["deck.gl layers: anchors, transitions, scrubber"]
+  H --> I["deck.gl layers: input trees, transitions, scrubber"]
   F --> J["TimelineClock"]
   F --> K["TimelineStateSynchronizer"]
   F --> L["TimelineScrubController"]
@@ -74,12 +77,12 @@ flowchart TD
 `movieData.split_change_timeline`. It converts backend entries into frontend
 timeline segments.
 
-Anchor segments:
+Input-tree segments:
 
 - are created from entries where `entry.type === 'original'`
-- set `segmentType: 'anchor'`
+- set `segmentType: 'anchor'` as the implementation tag
 - set `isFullTree: true`
-- carry one `interpolationData` entry pointing to the anchor tree's global
+- carry one `interpolationData` entry pointing to the input tree's global
   array index
 - represent observed input trees in the UI
 
@@ -90,8 +93,10 @@ Transition segments:
 - set `isFullTree: false`
 - copy `globalStart`, `globalEnd`, `localStepStart`, and `localStepEnd`
 - collect all interpolated tree frames in the global range
-- resolve `jumping_subtree_solutions` via `getBackendSplitMapValue()`
-- compute `subtreeMoveCount` from flattened jumping-subtree solutions
+- resolve `affected_subtrees_by_split` from `tree_pair_solutions[pairKey]` via
+  `getBackendSplitMapValue()`
+- compute `subtreeMoveCount` as the distinct taxa count from flattened affected
+  subtree sets
 
 `TimelineDataProcessor.createTimelineData()` then computes:
 
@@ -99,11 +104,14 @@ Transition segments:
 - `cumulativeDurations`
 - `totalDuration`
 
-The duration model lives in `TimelineMathUtils.calculateSegmentDurations()`:
+The duration model lives across `TimelineTimingBuilder`,
+`TimelineTimingResolver`, and `TimelineMathUtils.calculateSegmentDurations()`:
 
-- anchor tree segments receive half a unit duration
-- transition segments receive one unit per interpolation step
-- fallback segments receive one unit duration
+- input-tree segments use `TIMING_PROFILE.inputTreeHoldMs`
+- transition motion intervals use `TIMING_PROFILE.motionStepMs`
+- semantic transition holds can be added for mover and pivot moments with
+  `TIMING_PROFILE.moverHoldMs` and `TIMING_PROFILE.pivotHoldMs`
+- fallback segments use `TIMING_PROFILE.motionStepMs`
 
 ## Timeline Math
 
@@ -180,8 +188,8 @@ It maintains:
 
 `processSegments()` converts visible timeline segments into render data:
 
-- anchor circles for sparse anchor timelines
-- anchor ticks and strip tracks for dense anchor timelines
+- input-tree circles for sparse timelines
+- input-tree ticks and strip tracks for dense timelines
 - transition connection lines
 - separator ticks
 - hover and selection overlays
@@ -218,7 +226,7 @@ Mouse up:
 Clicking:
 
 - resolves the clicked segment
-- uses `getTargetSegmentIndex()` so anchor clicks near adjacent transition
+- uses `getTargetSegmentIndex()` so input-tree clicks near adjacent transition
   centers can target the adjacent transition
 - emits `select`
 
@@ -280,7 +288,7 @@ available.
 
 ## Strengths
 
-- The terminology aligns with [[project-terminology]]: anchor trees, transition
+- The terminology aligns with [[project-terminology]]: input trees, transition
   frames, and timeline segments are separated.
 - `TimelineMathUtils` centralizes progress, time, and tree-index conversion.
 - `MovieTimelineManager` composes focused controllers rather than carrying all
@@ -288,7 +296,8 @@ available.
 - Scrub updates are throttled and coalesced, which protects render performance.
 - `DeckTimelineRenderer` virtualizes visible segment processing by computing a
   buffered visible range.
-- The renderer has a dense-anchor fallback mode using strip tracks and ticks.
+- The renderer has a dense input-tree fallback mode using strip tracks and
+  ticks.
 
 ## Risks
 
@@ -301,15 +310,12 @@ available.
 - `timeToSegmentIndex()` has option-sensitive boundary semantics. Callers need
   to choose deliberately between default UI behavior, first-boundary math
   behavior, and timeline-end inclusion.
-- `eventHandlers.js` reaches into renderer private fields such as `_xToMs`,
-  `_scrubberMs`, `_rangeStart`, and `_rangeEnd`. This is pragmatic but makes
-  the renderer/event boundary informal.
 - `TimelineDataProcessor` assumes `tree_metadata[arrayIdx]` exists when an
   interpolated tree exists. If backend payload validation weakens, metadata
   holes could propagate into segment records.
-- `subtreeMoveCount` is computed with `Array.from(solutions.flat(2)).length`,
-  which counts flattened values rather than distinct moved subtrees. This may
-  be fine for display density, but the name can imply semantic move count.
+- `subtreeMoveCount` is now a distinct taxa count derived from affected subtree
+  sets. The name can still be ambiguous because it is not a count of SPR move
+  events.
 - Timeline rendering and store synchronization depend on `requestAnimationFrame`
   scheduling. This improves UI smoothness but requires tests to control RAF
   behavior carefully.
@@ -334,15 +340,16 @@ Relevant tests include:
 - [[phylogenetic-tree-morphing]]
 - [[repository-architecture]]
 - [[render-node-link-id-call-map]]
+- [[tree-node-highlight-timing-flow]]
 
 ## Open Questions
 
 - Should timeline progress and linear animation progress be wrapped in separate
   typed value objects or naming conventions to prevent accidental mixing?
-- Should event handlers call a public renderer interaction API instead of
-  private fields?
+- Should low-level pointer handling remain inside `DeckTimelineRenderer`, or
+  should it move behind a smaller public interaction helper?
 - Should the timeline public API reject invalid UI item IDs before
   `toSegmentIndex()` converts them into array indexes?
-- Should `subtreeMoveCount` be renamed or recalculated as a distinct subtree
-  count?
+- Should `subtreeMoveCount` be renamed to indicate that it counts distinct
+  affected taxa rather than SPR move events?
 - Should timeline segment records have a documented schema page?

@@ -17,7 +17,7 @@ We demonstrate its utility in two contexts: identifying recombination breakpoint
 
 The method and case studies are described in the bioRxiv preprint [Animating Phylogenetic Trees from Sliding-Window Analyses](https://doi.org/10.64898/2026.04.01.715821).
 
-Project terminology is standardized in [docs/terminology.md](docs/terminology.md). In short: observed input trees are **anchor trees**, generated intermediate states are **transition frames**, moving topology-defined groups are **subtrees**, and `split` names are reserved for backend/API representations.
+Project terminology is standardized in [docs/terminology.md](docs/terminology.md). In short: observed trees are **input trees**, generated intermediate states are **transition frames**, moving topology-defined groups are **subtrees**, and `split` names are reserved for backend/API representations.
 
 ## Availability and Implementation
 
@@ -27,7 +27,7 @@ Project information page is published at [enesberksakalli.github.io/phylo-movies
 The software consists of two components:
 
 - **Frontend** (JavaScript/React): The browser-based visualization, animation, and UI layer in `src/`.
-- **Backend** ([BranchArchitect](https://github.com/EnesSakalliUniWien/BranchArchitect)): A Python engine included as a git submodule in `engine/BranchArchitect/`. It computes SPR (Subtree Prune and Regraft) paths between anchor trees, identifies which subtrees move, and generates transition frames that the frontend renders as smooth morphing animations. BranchArchitect exposes a Flask API (port 5002) that the frontend calls to retrieve tree data, interpolation sequences, and MSA window mappings.
+- **Backend** ([BranchArchitect](https://github.com/EnesSakalliUniWien/BranchArchitect)): A Python engine included as a git submodule in `engine/BranchArchitect/`. It computes SPR (Subtree Prune and Regraft) paths between input trees, identifies which subtrees move, and generates transition frames that the frontend renders as smooth morphing animations. BranchArchitect exposes a Flask API (port 5002) that the frontend calls to retrieve tree data, interpolation sequences, and MSA window mappings.
 
 All test datasets required to reproduce the preprint benchmarks are located in `publication_data/`.
 
@@ -55,8 +55,8 @@ The software metadata and preferred citation are also available in `CITATION.cff
 
 ### Interactive Tree Visualization
 
-- **Interpolated tree morphing**: Generate transition frames between neighboring anchor trees to study incremental topological changes.
-- **Anchor trees vs. transition frames**: Toggle between observed anchor trees and generated transition frames to isolate where backend split events move subtrees.
+- **Interpolated tree morphing**: Generate transition frames between neighboring input trees to study incremental topological changes.
+- **Input trees vs. transition frames**: Toggle between observed input trees and generated transition frames to isolate where backend split events move subtrees.
 - **Adjustable rendering parameters**: Control branch thickness, font size, and color schemes to highlight specific taxa.
 - **Zoom and pan controls**: Inspect large trees using standard mouse or trackpad gestures.
 
@@ -436,7 +436,7 @@ Formatting policy: Prettier owns whitespace, wrapping, quote style, and trailing
 
 - **Language**: Python 3.11+, managed with Poetry
 - **Web Framework**: Flask, serving endpoints at `/treedata/stream`, `/stream/progress/<channel_id>`, and `/about`
-- **Tree Transformations**: SPR-based interpolation via lattice solvers that compute minimal subtree migrations between anchor trees
+- **Tree Transformations**: SPR-based interpolation via lattice solvers that compute minimal subtree migrations between input trees
 - **Pipeline**: Parse Newick → midpoint rooting → lattice solving (jumping taxa) → leaf ordering → 4-phase interpolation (collapse → reorder → expand → snap)
 - **MSA Support**: Sliding-window tree inference from FASTA alignments via the bundled `msa_to_trees` package
 - **Testing**: pytest + hypothesis + mypy
@@ -513,11 +513,16 @@ phylo-movies/
 The `publication_data/` directory contains the datasets used in the PhyloMovies manuscript, enabling full reproduction of the published results:
 
 - **`norovirus/`** — Norovirus recombination analysis data:
+  - `README.md` and `RECOMBINATION_DATA_HYGIENE_AUDIT.md` — Publication-layer map and current hygiene findings
   - `augur_subsampling/` — Subsampled alignment and trees used for the sliding-window demonstration
-  - `recan_recombination_analysis/` — ReCAN recombination detection outputs
+  - `recan_recombination_analysis/` — Derived ReCAN validation workspace; audit before using outputs in publication artifacts
 - **`bootstrap_example/`** — Rogue taxon detection via bootstrap replicates:
+  - `README.md` — Relationship map for the Aberer/RogueNaRok-derived demo files
   - `125/` and `24/` — Bootstrap replicate trees (200 replicates each) with SPR event frequency summaries
   - `limitation test/` — Edge-case scenarios for the lattice solver
+- **`rogue_taxa/`** — Rogue-taxon scripts and provenance notes:
+  - `epas1_pipeline/` — EPAS1 sliding-window helper scripts and configuration
+  - `selected_external_files/` — Curated third-party files only; the full Aberer/RogueNaRok online-data archive is not vendored because it is external data
 - **`figure_example/`** — Tree files used to generate publication figures (e.g., `paper_example.tree`)
 
 These datasets are referenced in the demo videos and can be loaded directly into the application to explore the use cases described in the paper.

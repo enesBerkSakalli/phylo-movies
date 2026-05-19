@@ -3,8 +3,9 @@ title: "Open Questions"
 type: maintenance
 status: active
 created: 2026-05-16
-updated: 2026-05-16
-sources: []
+updated: 2026-05-18
+sources:
+  - ../AGENTS.md
 ---
 
 # Open Questions
@@ -28,3 +29,13 @@ Questions worth investigating as the knowledge wiki grows.
   layout node IDs are prepared before normalization?
 - Should timeline segment records and one-based renderer item IDs get a stable
   schema page?
+- Should connector keys use the same split-hash format as render IDs, or should
+  the raw comparison-connector key space stay separate? See
+  [[render-node-link-id-call-map]].
+- Should timeline progress and linear animation progress be wrapped in separate
+  typed value objects or naming conventions? See [[timeline-subsystem-review]].
+- Should `currentTreeIndex` and rendered highlight index remain separate public
+  concepts in UI documentation? See [[tree-node-highlight-timing-flow]].
+- Should Moving Subtrees and MovieTimelineCharts start with a narrow
+  `SprTemporalIndex` or a broader `MovieTransitionCatalog`? See
+  [[timeline-analytics-next-steps]].

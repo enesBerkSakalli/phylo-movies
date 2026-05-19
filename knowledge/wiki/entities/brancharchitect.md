@@ -3,7 +3,7 @@ title: "BranchArchitect"
 type: entity
 status: active
 created: 2026-05-16
-updated: 2026-05-16
+updated: 2026-05-18
 sources:
   - ../../../README.md
   - ../../../plans/DEPENDENCY_MAP.md
@@ -24,7 +24,7 @@ Sources: `README.md`, `plans/DEPENDENCY_MAP.md`.
   `plans/DEPENDENCY_MAP.md`.
 - It exposes a Flask API on port 5002 for frontend requests. Sources:
   `README.md`, `plans/DEPENDENCY_MAP.md`.
-- It computes SPR paths between anchor trees and generates transition frames for
+- It computes SPR paths between input trees and generates transition frames for
   frontend morphing animations. Source: `README.md`.
 - It has a Poetry/Python dependency tree distinct from the frontend and
   Electron dependency trees. Source: `plans/DEPENDENCY_MAP.md`.

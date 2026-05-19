@@ -62,7 +62,7 @@ We thank the editor and reviewers for their constructive assessment. In the revi
 
 **Comment 10:** The MSA Viewer does not appear animated in sync with the tree, even when alignment-window following is on.
 
-**Response:** We strengthened the synchronization logic so the MSA window is initialized when the controller mounts and is force-updated when the transition resolver, sync toggle, window size, step size, or alignment length changes. We will also clarify in the manuscript that interpolated frames between two source windows retain the current source-window alignment interval until the next full-tree window is reached.
+**Response:** We strengthened the synchronization logic so the MSA window is initialized when the controller mounts and is force-updated when the transition resolver, sync toggle, window size, step size, or alignment length changes. We will also clarify in the manuscript that interpolated frames retain the source input tree's alignment interval until the next input tree is reached.
 
 **Comment 11:** JavaScript source code is well documented and follows style conventions.
 
@@ -92,7 +92,7 @@ We thank the editor and reviewers for their constructive assessment. In the revi
 
 **Comment 3:** FastTree is surprising because it is less accurate and older; IQ-TREE has a fast option.
 
-**Response:** We will clarify that FastTree is used as a rapid exploratory default for bundled sliding-window tree generation, not as a requirement of Phylo-Movies or a recommendation over more accurate inference methods. Phylo-Movies accepts precomputed ordered Newick trees, so users can infer window trees with IQ-TREE, IQ-TREE `-fast`, RAxML-NG, or other tools and use Phylo-Movies only for animation and visualization. We will add this distinction to the Methods and Discussion.
+**Response:** We will clarify that FastTree is used as a rapid exploratory default for bundled sliding-window tree generation, not as a requirement of Phylo-Movies or a recommendation over more accurate inference methods. Phylo-Movies accepts precomputed ordered Newick trees, so users can infer window trees with IQ-TREE, IQ-TREE `-fast`, RAxML-NG, or other tools and use Phylo-Movies only for animation and visualization. For the revised rogue-taxon publication examples, we will regenerate the bootstrap tree sets with IQ-TREE while retaining FastTree as an optional exploratory mode in the reproducibility tooling. We will add this distinction to the Methods and Discussion.
 
 **Comment 4:** "Preceding tree" adds too much terminology; use one term.
 

@@ -3,9 +3,11 @@ title: "PhyloMovies Dependency Map"
 type: source
 status: active
 created: 2026-05-16
-updated: 2026-05-16
+updated: 2026-05-18
 sources:
   - ../../../plans/DEPENDENCY_MAP.md
+  - ../../../README.md
+  - ../../../start.sh
 ---
 
 # PhyloMovies Dependency Map
@@ -28,6 +30,10 @@ common dependency-editing locations. Source: `plans/DEPENDENCY_MAP.md`.
   engine. Source: `plans/DEPENDENCY_MAP.md`.
 - Development proxy routes include `/treedata`, `/stream`, `/msa`, and
   `/about`. Source: `plans/DEPENDENCY_MAP.md`.
+- The dependency map's `start_frontend.sh` script name is stale relative to the
+  current README and repository root, which identify `start.sh` as the
+  one-command startup script. Sources: `plans/DEPENDENCY_MAP.md`, `README.md`,
+  repository file tree.
 
 ## Evidence
 
@@ -44,7 +50,6 @@ file locations for common dependency tasks.
 
 ## Open Questions
 
-- The map references `start_frontend.sh`, while the README emphasizes
-  `start.sh`; the wiki should verify the current canonical startup script before
-  reusing this detail broadly.
 - Should runtime routes be turned into an entity page for the backend API?
+- Should `plans/DEPENDENCY_MAP.md` be refreshed or superseded now that the
+  startup-script name has drifted from the current repository?

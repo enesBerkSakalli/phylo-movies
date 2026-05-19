@@ -1,0 +1,41 @@
+# config.yaml - EPAS1 Rogue Taxon Analysis
+ref:
+  fasta: data/ref/GRCh38.primary_assembly.genome.fa
+  region: "chr2:46290000-46390000"   # 100 kb EPAS1 window
+
+samples:
+  tibetan:
+    source: data/vcf/TIBETAN.chr2.vcf.gz
+    sample_id: TIB1
+  han:
+    source: data/vcf/1000G.chr2.GRCh38.vcf.gz
+    sample_id: HG00096
+  ceu:
+    source: data/vcf/1000G.chr2.GRCh38.vcf.gz
+    sample_id: HG00097
+  yri:
+    source: data/vcf/1000G.chr2.GRCh38.vcf.gz
+    sample_id: HG00099
+  denisovan:
+    source: data/archaic/AltaiDenisovan.chr2.vcf.gz
+    sample_id: null
+  neanderthal:
+    source: data/archaic/AltaiNeanderthal.chr2.vcf.gz
+    sample_id: null
+  # chimp:       { source: data/fasta/chimp_chr2_hg38_lifted.fa }   # optional
+
+params:
+  mask_lowqual: false  # Disabled for test data
+  min_dp: 1
+  min_qual: 1
+  haplotype: "1"             # use "2" for the other haplotype; run twice for split-screen
+  windows:
+    size: 5000               # 5 kb
+    step: 1000               # 1 kb step for higher resolution
+    # max_windows: 10        # uncomment to hard-cap N windows
+  min_var_sites: 20
+  tree:
+    program: fasttree        # Using fasttree for speed
+    model: GTR+G
+    sh_alrt: 0               # set 1000 on final pass for supports
+    threads: 4

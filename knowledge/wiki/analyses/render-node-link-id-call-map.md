@@ -3,7 +3,7 @@ title: "Render Node and Link ID Call Map"
 type: analysis
 status: active
 created: 2026-05-16
-updated: 2026-05-16
+updated: 2026-05-18
 sources:
   - ../../../src/domain/tree/splits.js
   - ../../../src/treeVisualisation/layout/LayoutBaseUtils.js
@@ -226,6 +226,14 @@ Connectors are separate from ordinary tree links.
 - The wiki graph `node-*` and `link-*` identifier protocol in
   `knowledge/tools/environment.md` is documentation only right now; it is not
   implemented as an app graph export path.
+
+## Connections
+
+- [[tree-node-highlight-timing-flow]] covers how render identity, node
+  highlighting, timing, and deck.gl layer responsibilities meet during
+  transition playback.
+- [[timeline-subsystem-review]] covers timeline segment construction and
+  renderer coordination around these IDs.
 
 ## Open Questions
 

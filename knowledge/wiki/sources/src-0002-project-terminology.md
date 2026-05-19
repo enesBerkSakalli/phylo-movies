@@ -3,7 +3,7 @@ title: "Project Terminology"
 type: source
 status: active
 created: 2026-05-16
-updated: 2026-05-16
+updated: 2026-05-18
 sources:
   - ../../../docs/terminology.md
 ---
@@ -19,18 +19,18 @@ that should not be merged casually. Source: `docs/terminology.md`.
 
 ## Key Claims
 
-- Observed input trees are [[project-terminology|anchor trees]], while generated
-  intermediate states are transition frames. Source: `docs/terminology.md`.
+- Observed trees in the timeline are input trees, while generated intermediate
+  states are transition frames. Source: `docs/terminology.md`.
 - A timeline segment is a rendered scrubber interval and must not be confused
   with a biological grouping or alignment window. Source: `docs/terminology.md`.
-- A sliding window is an MSA region used to infer one anchor tree. Source:
+- A sliding window is an MSA region used to infer one input tree. Source:
   `docs/terminology.md`.
 - The app-preferred term for topology-defined moving groups is subtree, while
   split is reserved for backend/API representations. Source:
   `docs/terminology.md`.
-- `spr_move_events` and `jumping_subtree_solutions` are related but separate
-  runtime contracts and should not be merged casually. Source:
-  `docs/terminology.md`.
+- `spr_move_events`, `affected_subtrees_by_split`,
+  `attachment_edges_by_split`, and `tree_pair_solutions` are current serialized
+  contracts and should not be merged casually. Source: `docs/terminology.md`.
 
 ## Evidence
 

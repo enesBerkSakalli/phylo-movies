@@ -3,7 +3,7 @@ title: "Phylogenetic Tree Morphing"
 type: concept
 status: active
 created: 2026-05-16
-updated: 2026-05-16
+updated: 2026-05-18
 sources:
   - ../../../README.md
   - ../../../docs/velocity-normalisation-design.md
@@ -14,7 +14,7 @@ sources:
 ## Summary
 
 Phylogenetic tree morphing in PhyloMovies means animating transformations
-between neighboring anchor trees so users can inspect interpretable subtree
+between neighboring input trees so users can inspect interpretable subtree
 migrations rather than only comparing summary distances. Sources: `README.md`,
 `docs/velocity-normalisation-design.md`.
 

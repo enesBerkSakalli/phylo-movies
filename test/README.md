@@ -16,8 +16,9 @@ Structure:
 
 - Root `test/*.test.js` files are default-suite tests only.
 - `test/domain/` and `test/integration/` are default Vitest suites.
-- `test/optional/` contains non-default or legacy tests that are intentionally
-  excluded from `npm run test:all`.
+- `test/optional/` contains supplemental Mocha tests that are tracked
+  separately by `npm run test:structure` but still run as part of
+  `npm run test:all`.
 - `test/data/` contains fixtures.
 
 `npm run test:structure` fails if a test file is neither in the default suite

@@ -3,7 +3,7 @@ title: "Knowledge Wiki Index"
 type: index
 status: active
 created: 2026-05-16
-updated: 2026-05-16
+updated: 2026-05-18
 sources:
   - ../sources/manifest.md
 ---
@@ -35,6 +35,7 @@ This index is the first page to read before answering questions against the wiki
 
 | Page | Source |
 |---|---|
+| [[src-0001-llm-wiki-gist]] | Karpathy LLM Wiki gist |
 | [[src-0002-project-terminology]] | `docs/terminology.md` |
 | [[src-0003-readme]] | `README.md` |
 | [[src-0004-velocity-normalisation-design]] | `docs/velocity-normalisation-design.md` |
@@ -47,13 +48,15 @@ This index is the first page to read before answering questions against the wiki
 |---|---|
 | [[render-node-link-id-call-map]] | Code call map for render node IDs, link IDs, endpoint IDs, and connector IDs. |
 | [[timeline-subsystem-review]] | Code review and data-flow map for timeline construction, rendering, scrubbing, navigation, and store synchronization. |
-| [[commit-and-worktree-review-2026-05-16]] | Review of recent commits and current uncommitted changes affecting render identity, timeline timing, connector cleanup, and tests. |
+| [[timeline-analytics-next-steps]] | Next implementation plan for joining Moving Subtrees analytics to movie-time charts through a canonical temporal contract. |
+| [[commit-and-worktree-review-2026-05-16]] | Historical 2026-05-16 snapshot of commits and uncommitted changes affecting render identity, timeline timing, connector cleanup, and tests. |
 | [[tree-node-highlight-timing-flow]] | Narrow data-flow map and invariants for nodes, highlighting, timing, playback sync, and deck.gl layer responsibilities. |
 
 ## Maintenance
 
 - [[contradictions]] tracks conflicting claims.
 - [[open-questions]] tracks research gaps and follow-up questions.
+- [[log]] records ingests, analyses, queries, lint passes, and corrections.
 
 ## External Tooling Candidates
 

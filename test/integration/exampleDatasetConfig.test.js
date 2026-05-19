@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { EXAMPLE_DATASETS } from '../../src/pages/WorkspaceInitialization/exampleDatasets.js';
 
 describe('example dataset configuration', () => {
   it('copies publication example assets into production builds', () => {
@@ -13,28 +14,19 @@ describe('example dataset configuration', () => {
   });
 
   it('keeps the norovirus example on the default IQ-TREE fast-search path', () => {
-    const source = fs.readFileSync(
-      path.join(process.cwd(), 'src/pages/WorkspaceInitialization/exampleDatasets.js'),
-      'utf8',
-    );
+    const norovirusExample = EXAMPLE_DATASETS.find((example) => example.id === 'norovirus-350');
 
-    const norovirusBlock = source.match(/id: 'norovirus-350',[\s\S]*?badge: 'Publication'/)?.[0] ?? '';
-
-    expect(norovirusBlock).toContain("treeInferenceEngine: 'iqtree'");
-    expect(norovirusBlock).toContain('iqtreeFastSearch: true');
-    expect(norovirusBlock).toContain('useGtr: true');
-    expect(norovirusBlock).toContain('useGamma: true');
+    expect(norovirusExample?.parameters).toMatchObject({
+      treeInferenceEngine: 'iqtree',
+      iqtreeFastSearch: true,
+      useGtr: true,
+      useGamma: true,
+    });
   });
 
   it('keeps every IQ-TREE example on the fast-search path unless explicitly disabled', () => {
-    const source = fs.readFileSync(
-      path.join(process.cwd(), 'src/pages/WorkspaceInitialization/exampleDatasets.js'),
-      'utf8',
-    );
-    const exampleBlocks = Array.from(source.matchAll(/id: '([^']+)',[\s\S]*?badge: '[^']+'/g))
-      .map((match) => ({ id: match[1], source: match[0] }));
-    const iqtreeExamples = exampleBlocks.filter((example) => (
-      example.source.includes("treeInferenceEngine: 'iqtree'")
+    const iqtreeExamples = EXAMPLE_DATASETS.filter((example) => (
+      example.parameters?.treeInferenceEngine === 'iqtree'
     ));
 
     expect(iqtreeExamples.map((example) => example.id)).toEqual([
@@ -42,10 +34,32 @@ describe('example dataset configuration', () => {
       'quick-msa-demo',
     ]);
     expect(iqtreeExamples
-      .filter((example) => example.source.includes('iqtreeFastSearch: true'))
+      .filter((example) => example.parameters?.iqtreeFastSearch === true)
       .map((example) => example.id)).toEqual([
         'norovirus-350',
         'quick-msa-demo',
       ]);
+  });
+
+  it('keeps bootstrap example copy aligned with publication tree counts', () => {
+    const bootstrapExamples = EXAMPLE_DATASETS.filter((example) => example.id.startsWith('bootstrap-'));
+
+    expect(bootstrapExamples.map((example) => example.id)).toEqual([
+      'bootstrap-24',
+      'bootstrap-125',
+    ]);
+
+    for (const example of bootstrapExamples) {
+      const treeFile = path.join(
+        process.cwd(),
+        'publication_data/bootstrap_example',
+        example.id.replace('bootstrap-', ''),
+        example.fileName,
+      );
+      const treeCount = fs.readFileSync(treeFile, 'utf8').trim().split(/\r?\n/).filter(Boolean).length;
+
+      expect(treeCount).toBe(200);
+      expect(example.description).toContain('200 bootstrap replicates');
+    }
   });
 });

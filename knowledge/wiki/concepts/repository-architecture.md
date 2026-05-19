@@ -3,10 +3,11 @@ title: "Repository Architecture"
 type: concept
 status: active
 created: 2026-05-16
-updated: 2026-05-16
+updated: 2026-05-18
 sources:
   - ../../../plans/DEPENDENCY_MAP.md
   - ../../../README.md
+  - ../../../start.sh
 ---
 
 # Repository Architecture
@@ -28,6 +29,10 @@ submodule, and an optional Electron desktop wrapper. Sources:
   Source: `plans/DEPENDENCY_MAP.md`.
 - Development uses Vite proxy routes to reach the backend for tree, stream,
   MSA, and about endpoints. Source: `plans/DEPENDENCY_MAP.md`.
+- `start.sh` is the current one-command startup script. `plans/DEPENDENCY_MAP.md`
+  still names `start_frontend.sh`, so treat that source as stale for startup
+  script names. Sources: `README.md`, `plans/DEPENDENCY_MAP.md`, repository file
+  tree.
 
 ## Evidence
 
@@ -44,5 +49,5 @@ See [[src-0005-dependency-map]] and [[src-0003-readme]].
 
 ## Open Questions
 
-- Verify whether `start_frontend.sh` or `start.sh` is the current canonical
-  startup script before adding runbook pages.
+- Should `plans/DEPENDENCY_MAP.md` be refreshed or superseded before adding
+  runbook pages?

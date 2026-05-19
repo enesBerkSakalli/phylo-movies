@@ -192,7 +192,7 @@ PhyloMovies is a **scientific phylogenetic tool**, not a consumer media player o
 
 ### C. The "Mental Model"
 
-Scientists look for **transitions** and **anchors**. The UI should emphasize the relationship between trees (the "Morph") as a traversal through tree space. Every visual change is a mapping of taxa between different topological configurations.
+Scientists look for **transitions** between observed **input trees**. The UI should emphasize the relationship between trees (the "Morph") as a traversal through tree space. Every visual change is a mapping of taxa between different topological configurations.
 
 ### E. The Simplification Trap
 
