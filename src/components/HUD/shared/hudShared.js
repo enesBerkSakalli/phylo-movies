@@ -53,59 +53,59 @@ function getCoordinateValue(sequenceIndex, totalSequenceLength, playhead) {
 }
 
 function buildReadablePositionText(sequenceIndex, totalSequenceLength, transitionResolver) {
-  const anchorIndices = transitionResolver?.fullTreeIndices || [];
+  const inputTreeIndices = transitionResolver?.fullTreeIndices || [];
   const safeSequenceIndex = Number.isFinite(sequenceIndex) ? sequenceIndex : 0;
 
-  if (!anchorIndices.length) {
+  if (!inputTreeIndices.length) {
     return `Frame ${safeSequenceIndex + 1} of ${Math.max(1, totalSequenceLength)}`;
   }
 
-  const anchorAtPosition = anchorIndices.indexOf(safeSequenceIndex);
-  if (anchorAtPosition >= 0) {
-    return `Source ${anchorAtPosition + 1}/${anchorIndices.length}`;
+  const inputTreeAtPosition = inputTreeIndices.indexOf(safeSequenceIndex);
+  if (inputTreeAtPosition >= 0) {
+    return `Input tree ${inputTreeAtPosition + 1}/${inputTreeIndices.length}`;
   }
 
-  let previousAnchorIdx = -1;
-  for (let i = anchorIndices.length - 1; i >= 0; i--) {
-    if (anchorIndices[i] < safeSequenceIndex) {
-      previousAnchorIdx = i;
+  let previousInputTreeOrdinal = -1;
+  for (let i = inputTreeIndices.length - 1; i >= 0; i--) {
+    if (inputTreeIndices[i] < safeSequenceIndex) {
+      previousInputTreeOrdinal = i;
       break;
     }
   }
 
-  const nextAnchorIdx = previousAnchorIdx + 1;
-  if (previousAnchorIdx >= 0 && nextAnchorIdx < anchorIndices.length) {
-    const from = anchorIndices[previousAnchorIdx];
-    const to = anchorIndices[nextAnchorIdx];
+  const nextInputTreeOrdinal = previousInputTreeOrdinal + 1;
+  if (previousInputTreeOrdinal >= 0 && nextInputTreeOrdinal < inputTreeIndices.length) {
+    const from = inputTreeIndices[previousInputTreeOrdinal];
+    const to = inputTreeIndices[nextInputTreeOrdinal];
     const frameCount = Math.max(1, to - from - 1);
     const frameNumber = Math.max(1, Math.min(frameCount, safeSequenceIndex - from));
-    return `${previousAnchorIdx + 1}->${nextAnchorIdx + 1} frame ${frameNumber}/${frameCount}`;
+    return `source input tree ${previousInputTreeOrdinal + 1} -> target input tree ${nextInputTreeOrdinal + 1}, frame ${frameNumber}/${frameCount}`;
   }
 
   return `Frame ${safeSequenceIndex + 1} of ${Math.max(1, totalSequenceLength)}`;
 }
 
 export function buildSegmentText(sequenceIndex, transitionResolver) {
-  const anchorIndices = transitionResolver?.fullTreeIndices || [];
-  if (!anchorIndices.length) return 'Generated frame';
+  const inputTreeIndices = transitionResolver?.fullTreeIndices || [];
+  if (!inputTreeIndices.length) return 'Generated frame';
 
-  const anchorAtPosition = anchorIndices.indexOf(sequenceIndex);
-  if (anchorAtPosition >= 0) return 'Source tree';
+  const inputTreeAtPosition = inputTreeIndices.indexOf(sequenceIndex);
+  if (inputTreeAtPosition >= 0) return 'Input tree';
 
-  let previousAnchorIdx = 0;
-  for (let i = anchorIndices.length - 1; i >= 0; i--) {
-    if (anchorIndices[i] <= sequenceIndex) {
-      previousAnchorIdx = i;
+  let previousInputTreeOrdinal = 0;
+  for (let i = inputTreeIndices.length - 1; i >= 0; i--) {
+    if (inputTreeIndices[i] <= sequenceIndex) {
+      previousInputTreeOrdinal = i;
       break;
     }
   }
-  const nextAnchorIdx = previousAnchorIdx + 1;
+  const nextInputTreeOrdinal = previousInputTreeOrdinal + 1;
 
-  if (nextAnchorIdx < anchorIndices.length) {
-    return `Between ${previousAnchorIdx + 1} -> ${nextAnchorIdx + 1}`;
+  if (nextInputTreeOrdinal < inputTreeIndices.length) {
+    return `source input tree ${previousInputTreeOrdinal + 1} -> target input tree ${nextInputTreeOrdinal + 1}`;
   }
 
-  return 'Source tree';
+  return 'Input tree';
 }
 
 export function buildMsaWindow(hasMsa, currentTreeIndex, transitionResolver, msaStepSize, msaWindowSize, msaColumnCount) {

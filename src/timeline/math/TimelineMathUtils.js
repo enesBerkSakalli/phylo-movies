@@ -206,7 +206,7 @@ export class TimelineMathUtils {
         }
 
         if (segment.isFullTree) {
-            return TIMING_PROFILE.anchorHoldMs;
+            return TIMING_PROFILE.inputTreeHoldMs;
         }
         if (segment.hasInterpolation && segment.interpolationData?.length > 1) {
             return (segment.interpolationData.length - 1) * TIMING_PROFILE.motionStepMs;

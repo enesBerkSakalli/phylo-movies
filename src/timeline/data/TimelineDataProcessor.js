@@ -2,9 +2,9 @@
  * TimelineDataProcessor - Handles data transformation for timeline visualization.
  *
  * Terminology:
- * - anchor tree: observed input tree from a sliding window or bootstrap replicate
- * - transition frame: generated interpolated state between anchor trees
- * - timeline segment: scrubber interval containing either an anchor tree or transition frames
+ * - input tree: observed tree from a sliding window or bootstrap replicate
+ * - transition frame: generated interpolated state between source and target input trees
+ * - timeline segment: scrubber interval containing either an input tree or transition frames
  */
 import { TimelineMathUtils } from '../math/TimelineMathUtils.js';
 import { TimelineTimingBuilder } from './TimelineTimingBuilder.js';
@@ -123,22 +123,22 @@ export class TimelineDataProcessor {
     }
 
     static _appendOriginalTreeSegment(entry, tree_metadata, interpolated_trees, segments) {
-        // Anchor tree segment - use global_index for array access.
+        // Input-tree segment - use global_index for array access.
         const globalIndex = entry.global_index;
         const arrayIdx = globalIndex; // global_index is already 0-indexed in the data
-        const treeIndex = entry.tree_index; // Original anchor tree number (0, 1, 2).
+        const treeIndex = entry.tree_index; // Original input tree number (0, 1, 2).
 
         if (interpolated_trees?.[arrayIdx] != null) {
             const metadata = tree_metadata[arrayIdx];
             segments.push({
                 index: segments.length,
-                treeName: entry.name || `Source Tree ${treeIndex + 1}`,
+                treeName: entry.name || `Input Tree ${treeIndex + 1}`,
                 hasInterpolation: false,
                 isFullTree: true,
                 subtreeMoveCount: 0,
                 globalIndex,
-                originalTreeIndex: treeIndex,  // Original anchor tree index (0-based)
-                timing: TimelineTimingBuilder.buildAnchorTiming(globalIndex),
+                originalTreeIndex: treeIndex,  // Original input tree index (0-based)
+                timing: TimelineTimingBuilder.buildInputTreeTiming(globalIndex),
                 interpolationData: [{
                     metadata,
                     tree: interpolated_trees[arrayIdx],

@@ -120,9 +120,9 @@ export class ScrubberAPI {
     });
 
     if (state.comparisonMode) {
-      const anchors = this.transitionResolver?.fullTreeIndices ?? [];
+      const inputTreeIndices = this.transitionResolver?.fullTreeIndices ?? [];
       options.comparisonMode = true;
-      options.rightTreeIndex = anchors.find((i) => i > transitionFrame.sourceTreeIndex) ?? anchors[anchors.length - 1];
+      options.rightTreeIndex = inputTreeIndices.find((i) => i > transitionFrame.sourceTreeIndex) ?? inputTreeIndices[inputTreeIndices.length - 1];
     }
 
     await this.treeController.renderComparisonAwareScrubFrame(

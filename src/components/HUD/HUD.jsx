@@ -31,7 +31,7 @@ export function HUD() {
   const setClipboardTreeIndex = useAppStore(selectSetClipboardTreeIndex);
   const clearClipboard = useAppStore(selectClearClipboard);
 
-  const anchorIndices = useMemo(
+  const inputTreeIndices = useMemo(
     () => transitionResolver?.fullTreeIndices || [],
     [transitionResolver]
   );
@@ -87,8 +87,8 @@ export function HUD() {
 
           <ClipboardSection
             clipboardTreeIndex={clipboardTreeIndex}
-            anchorIndices={anchorIndices}
-            onShowAnchor={setClipboardTreeIndex}
+            inputTreeIndices={inputTreeIndices}
+            onShowInputTree={setClipboardTreeIndex}
             onClear={clearClipboard}
           />
 

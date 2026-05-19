@@ -6,7 +6,7 @@ export const TIMELINE_AXIS_TYPE = {
 
 export const TIMELINE_AXIS = {
     FRAME_INDEX: 'frame_index',
-    ANCHOR_INDEX: 'anchor_index',
+    INPUT_TREE_INDEX: 'input_tree_index',
     PAIR_STEP: 'pair_step',
     MOVIE_TIME_MS: 'movie_time_ms',
     TIMELINE_PROGRESS: 'timeline_progress',
@@ -18,8 +18,8 @@ export const TIMELINE_AXIS_DEFINITIONS = Object.freeze({
         name: TIMELINE_AXIS.FRAME_INDEX,
         type: TIMELINE_AXIS_TYPE.SEQUENCE
     }),
-    [TIMELINE_AXIS.ANCHOR_INDEX]: Object.freeze({
-        name: TIMELINE_AXIS.ANCHOR_INDEX,
+    [TIMELINE_AXIS.INPUT_TREE_INDEX]: Object.freeze({
+        name: TIMELINE_AXIS.INPUT_TREE_INDEX,
         type: TIMELINE_AXIS_TYPE.SEQUENCE
     }),
     [TIMELINE_AXIS.PAIR_STEP]: Object.freeze({

@@ -14,6 +14,12 @@ global.cancelAnimationFrame = dom.window.cancelAnimationFrame || ((id) => clearT
 const { TimelineDataProcessor } = require('../src/timeline/data/TimelineDataProcessor.js');
 const { TimelineMathUtils } = require('../src/timeline/math/TimelineMathUtils.js');
 const { useAppStore } = require('../src/state/phyloStore/store.js');
+const {
+  MOVIE_PLAYER_ARIA_LABELS,
+} = require('../src/components/movie-player/MoviePlayerBar.contract.js');
+const {
+  TRANSPORT_CONTROL_GROUP_LABELS,
+} = require('../src/components/movie-player/TransportControls.contract.js');
 
 function loadMovieData() {
   const candidates = [
@@ -79,15 +85,15 @@ function makeSyntheticTimingMovieData() {
       }
     ],
     split_change_timeline: [
-      { type: 'original', tree_index: 7, global_index: 0, name: 'Source Tree 8' },
+      { type: 'original', tree_index: 7, global_index: 0, name: 'Input Tree 8' },
       {
         type: 'split_event',
         pair_key: 'pair_7_8',
         split: [1, 2],
-        step_range_local: [0, 2],
-        step_range_global: [1, 3]
+        step_range_local: [0, 1],
+        step_range_global: [1, 2]
       },
-      { type: 'original', tree_index: 8, global_index: 3, name: 'Source Tree 9' }
+      { type: 'original', tree_index: 8, global_index: 3, name: 'Input Tree 9' }
     ],
     tree_pair_solutions: {
       pair_7_8: {
@@ -110,7 +116,7 @@ function makeSyntheticTimingMovieData() {
             pivot_edge: [1, 2],
             driver_subtree: [2],
             highlight_group: [[2]],
-            step_range: [0, 2],
+            step_range: [0, 1],
             collapse_path: [],
             expand_path: [],
             collapse_hops: 0,
@@ -145,7 +151,7 @@ function makeSyntheticTimingMovieData() {
 }
 
 describe('Timeline construction from backend result', () => {
-  it('does not keep unused timeline constants or old anchor label compatibility', () => {
+  it('does not keep unused timeline constants or obsolete input-tree label compatibility', () => {
     const constantsSource = fs.readFileSync(path.join(__dirname, '..', 'src', 'timeline', 'constants.js'), 'utf8');
     const removedConstantNames = [
       'MIN_ZOOM_MS',
@@ -170,10 +176,11 @@ describe('Timeline construction from backend result', () => {
       path.join(__dirname, '..', 'src', 'components', 'TransitionInspectorPanel.jsx'),
     ];
 
-    const remainingAnchorLabelCompatibility = labelCompatibilityFiles.filter((filePath) => (
-      /\bAnchor Tree\b/.test(fs.readFileSync(filePath, 'utf8'))
+    const obsoleteInputTreeLabelPattern = new RegExp(`\\b${['anchor', 'tree'].join('\\s+')}\\b`, 'i');
+    const remainingObsoleteInputTreeLabels = labelCompatibilityFiles.filter((filePath) => (
+      obsoleteInputTreeLabelPattern.test(fs.readFileSync(filePath, 'utf8'))
     ));
-    expect(remainingAnchorLabelCompatibility).to.deep.equal([]);
+    expect(remainingObsoleteInputTreeLabels).to.deep.equal([]);
   });
 
   it('keeps the rendered timeline target at an accessible height', () => {
@@ -186,20 +193,22 @@ describe('Timeline construction from backend result', () => {
 
   it('allows timeline legend items to wrap on narrow viewports', () => {
     const source = fs.readFileSync(path.join(__dirname, '..', 'src', 'components', 'movie-player', 'MoviePlayerBar.jsx'), 'utf8');
-    const legendClassMatch = source.match(/function TimelineLegend[\s\S]*?className="([^"]*)"[\s\S]*?aria-label="Timeline legend"/);
+    const legendClassMatch = source.match(/function TimelineLegend[\s\S]*?className="([^"]*)"/);
 
     expect(legendClassMatch).to.not.equal(null);
     expect(legendClassMatch[1]).to.include('flex-wrap');
+    expect(MOVIE_PLAYER_ARIA_LABELS.timelineLegend).to.equal('Timeline legend');
   });
 
   it('keeps player-bar controls separated into clear workflow lanes', () => {
-    const playerBarSource = fs.readFileSync(path.join(__dirname, '..', 'src', 'components', 'movie-player', 'MoviePlayerBar.jsx'), 'utf8');
     const chartSource = fs.readFileSync(path.join(__dirname, '..', 'src', 'components', 'movie-player', 'MovieChartSection', 'MovieChartSection.jsx'), 'utf8');
 
-    expect(playerBarSource).to.include('aria-label="Primary playback controls"');
-    expect(playerBarSource).to.include('aria-label="Timeline navigation controls"');
-    expect(playerBarSource).to.include('aria-label="Playback settings"');
-    expect(playerBarSource).to.include('aria-label="Timeline track"');
+    expect(MOVIE_PLAYER_ARIA_LABELS.primaryControls).to.equal('Primary playback controls');
+    expect(MOVIE_PLAYER_ARIA_LABELS.timelineNavigation).to.equal('Timeline navigation controls');
+    expect(MOVIE_PLAYER_ARIA_LABELS.playbackSettings).to.equal('Playback settings');
+    expect(MOVIE_PLAYER_ARIA_LABELS.timelineTrack).to.equal('Timeline track');
+    expect(TRANSPORT_CONTROL_GROUP_LABELS.playback).to.equal('Movie playback controls');
+    expect(TRANSPORT_CONTROL_GROUP_LABELS.comparison).to.equal('Comparison view controls');
     expect(chartSource).to.include('aria-label="Chart controls"');
   });
 
@@ -289,14 +298,14 @@ describe('Timeline construction from backend result', () => {
       }
     }
 
-    // Anchors: ensure number and indices match original events from backend
+    // Input trees: ensure number and indices match original events from backend
     const originals = (data.split_change_timeline || []).filter(e => e && e.type === 'original');
     const originalIndices = new Set(originals.map(e => e.global_index));
-    const anchorSegments = segments.filter(s => s && s.isFullTree);
-    const anchorIndices = new Set(anchorSegments.map(s => s.interpolationData?.[0]?.originalIndex).filter(Number.isInteger));
-    expect(anchorIndices.size).to.equal(originalIndices.size);
+    const inputTreeSegments = segments.filter(s => s && s.isFullTree);
+    const inputTreeIndices = new Set(inputTreeSegments.map(s => s.interpolationData?.[0]?.originalIndex).filter(Number.isInteger));
+    expect(inputTreeIndices.size).to.equal(originalIndices.size);
     for (const idx of originalIndices) {
-      expect(anchorIndices.has(idx)).to.equal(true);
+      expect(inputTreeIndices.has(idx)).to.equal(true);
     }
 
     // Interpolation segments include split events plus topology-preserving branch-length updates.
@@ -360,17 +369,17 @@ describe('Timeline construction from backend result', () => {
     expect(segments[0].subtreeMoveCount).to.equal(2);
   });
 
-  it('adds anchor hold timing for observed input tree delimiters without duplicating trees', () => {
+  it('adds input-tree hold timing for observed input tree delimiters without duplicating trees', () => {
     const movieData = makeSyntheticTimingMovieData();
     const segments = TimelineDataProcessor.createSegments(movieData);
-    const anchor = segments.find(segment => segment.isFullTree && segment.globalIndex === 0);
+    const inputTree = segments.find(segment => segment.isFullTree && segment.globalIndex === 0);
 
-    expect(anchor).to.be.ok;
-    expect(anchor.interpolationData.map(entry => entry.originalIndex)).to.deep.equal([0]);
-    expect(anchor.timing).to.deep.equal([{
+    expect(inputTree).to.be.ok;
+    expect(inputTree.interpolationData.map(entry => entry.originalIndex)).to.deep.equal([0]);
+    expect(inputTree.timing).to.deep.equal([{
       type: 'hold',
       holdIndex: 0,
-      holdKind: 'anchor',
+      holdKind: 'input_tree',
       durationMs: 1500
     }]);
   });
@@ -386,13 +395,12 @@ describe('Timeline construction from backend result', () => {
       expect(event).to.not.have.property('moving_taxa');
     }
     expect(transition).to.be.ok;
-    expect(transition.interpolationData.map(entry => entry.originalIndex)).to.deep.equal([0, 1, 2, 3]);
+    expect(transition.interpolationData.map(entry => entry.originalIndex)).to.deep.equal([0, 1, 2]);
     expect(transition.timing).to.deep.equal([
       { type: 'motion', fromIndex: 0, toIndex: 1, durationMs: 1000 },
       { type: 'hold', holdIndex: 1, holdKind: 'mover', durationMs: 200 },
       { type: 'motion', fromIndex: 1, toIndex: 2, durationMs: 1000 },
-      { type: 'motion', fromIndex: 2, toIndex: 3, durationMs: 1000 },
-      { type: 'hold', holdIndex: 3, holdKind: 'pivot', durationMs: 900 }
+      { type: 'hold', holdIndex: 2, holdKind: 'pivot', durationMs: 900 }
     ]);
   });
 });
@@ -417,7 +425,7 @@ describe('Active change edge mapping (small_example)', () => {
     useAppStore.getState().reset();
   });
 
-  it('leaves source and destination tree indices unmarked', () => {
+  it('leaves input-tree endpoint frames unmarked', () => {
     const markedSubtrees = useAppStore.getState().getMarkedSubtreeData();
     expect(markedSubtrees).to.deep.equal([]);
   });

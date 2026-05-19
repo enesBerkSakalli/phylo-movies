@@ -4,7 +4,7 @@ if (typeof document !== 'undefined') {
 }
 import { Deck, OrthographicView } from '@deck.gl/core';
 import { TIMELINE_CONSTANTS, TIMELINE_THEME } from '../constants.js';
-import { createPathLayer, createStripTrackLayer, createAnchorTickLayer, createAnchorLayer, createConnectionLayer, createAnchorHoverLayer, createConnectionHoverLayer, createAnchorSelectionLayer, createConnectionSelectionLayer, createSeparatorLayer, createScrubberLayer, getDevicePixelRatio, calculateSeparatorWidth } from '../utils/layerFactories.js';
+import { createPathLayer, createStripTrackLayer, createInputTreeTickLayer, createInputTreeLayer, createConnectionLayer, createInputTreeHoverLayer, createConnectionHoverLayer, createInputTreeSelectionLayer, createConnectionSelectionLayer, createSeparatorLayer, createScrubberLayer, getDevicePixelRatio, calculateSeparatorWidth } from '../utils/layerFactories.js';
 import { msToX, xToMs, calculateZoomScale } from '../math/coordinateUtils.js';
 import { getSegmentBounds, timeToSegmentIndex, toSegmentIndex, toTimelineItemId } from '../utils/segmentTiming.js';
 import { getTargetSegmentIndex } from '../utils/segmentUtils.js';
@@ -14,7 +14,7 @@ const HOVER_CLEAR_DELAY_MS = 150;
 
 /**
  * WebGL-based timeline renderer using deck.gl.
- * Renders segments as anchors (circles) and connections (lines), with scrubber, hover, and selection states.
+ * Renders input trees as circles and transition intervals as connection lines, with scrubber, hover, and selection states.
  * Supports zoom, pan, and scrubbing interactions.
  */
 export class DeckTimelineRenderer {
@@ -72,11 +72,11 @@ export class DeckTimelineRenderer {
     // Layer instances (initialized in init())
     this.separatorLayer = null;
     this.connectionLayer = null;
-    this.anchorLayer = null;
+    this.inputTreeLayer = null;
     this.connectionHoverLayer = null;
-    this.anchorHoverLayer = null;
+    this.inputTreeHoverLayer = null;
     this.connectionSelectionLayer = null;
-    this.anchorSelectionLayer = null;
+    this.inputTreeSelectionLayer = null;
     this.scrubberLayer = null;
   }
 
@@ -136,14 +136,14 @@ export class DeckTimelineRenderer {
   _createLayers() {
     this.separatorLayer = createSeparatorLayer([], TIMELINE_THEME);
     this.stripTrackLayer = createStripTrackLayer([], TIMELINE_THEME);
-    this.anchorTickLayer = createAnchorTickLayer([], TIMELINE_THEME);
-    this.activeAnchorTickLayer = createAnchorTickLayer([], TIMELINE_THEME, true);
+    this.inputTreeTickLayer = createInputTreeTickLayer([], TIMELINE_THEME);
+    this.activeInputTreeTickLayer = createInputTreeTickLayer([], TIMELINE_THEME, true);
     this.connectionLayer = createConnectionLayer([], TIMELINE_THEME.connectionWidth);
-    this.anchorLayer = createAnchorLayer([], TIMELINE_THEME.anchorStrokeWidth);
+    this.inputTreeLayer = createInputTreeLayer([], TIMELINE_THEME.inputTreeStrokeWidth);
     this.connectionHoverLayer = createConnectionHoverLayer([], TIMELINE_THEME.connectionHoverRGB, TIMELINE_THEME.connectionHoverWidth, this._boundHoverClick);
-    this.anchorHoverLayer = createAnchorHoverLayer([], TIMELINE_THEME.connectionHoverRGB, this._boundHoverClick);
+    this.inputTreeHoverLayer = createInputTreeHoverLayer([], TIMELINE_THEME.connectionHoverRGB, this._boundHoverClick);
     this.connectionSelectionLayer = createConnectionSelectionLayer([], TIMELINE_THEME);
-    this.anchorSelectionLayer = createAnchorSelectionLayer([], TIMELINE_THEME);
+    this.inputTreeSelectionLayer = createInputTreeSelectionLayer([], TIMELINE_THEME);
     this.scrubberLayer = createPathLayer('scrubber-layer', [], [0, 0, 0, 0], 1);
   }
 
@@ -201,7 +201,7 @@ export class DeckTimelineRenderer {
       const sourceIndex = Number.isInteger(segment.originalTreeIndex)
         ? segment.originalTreeIndex + 1
         : segmentIndex + 1;
-      return `${segmentLabel}, source tree ${sourceIndex}`;
+      return `${segmentLabel}, input tree ${sourceIndex}`;
     }
 
     const frameLabel = this._formatGeneratedFrameRange(segment);
@@ -228,7 +228,7 @@ export class DeckTimelineRenderer {
     const match = pairKey.match(/^pair_(\d+)_(\d+)$/);
     if (!match) return `transition ${pairKey}`;
 
-    return `between source trees ${Number(match[1]) + 1} and ${Number(match[2]) + 1}`;
+    return `from source input tree ${Number(match[1]) + 1} to target input tree ${Number(match[2]) + 1}`;
   }
 
   _bindResizeObservers() {
@@ -673,7 +673,7 @@ export class DeckTimelineRenderer {
     const { rangeStart, rangeEnd, visStart, visEnd, startIdx, endIdx, zoomScale } = this._computeVisibleRange();
 
     const {
-      anchorTicks, stripTracks, separators, anchorPoints, activeAnchorTicks, selectionAnchors, hoverAnchors,
+      inputTreeTicks, stripTracks, separators, inputTreePoints, activeInputTreeTicks, selectionInputTrees, hoverInputTrees,
       connections, selectionConnections, hoverConnections
     } = processSegments({
       startIdx, endIdx, width, height, visStart, visEnd, zoomScale,
@@ -686,7 +686,7 @@ export class DeckTimelineRenderer {
     });
 
     const layers = this._buildLayers({
-      anchorTicks, stripTracks, separators, anchorPoints, activeAnchorTicks, selectionAnchors, hoverAnchors,
+      inputTreeTicks, stripTracks, separators, inputTreePoints, activeInputTreeTicks, selectionInputTrees, hoverInputTrees,
       connections, selectionConnections, hoverConnections,
       width, height
     });
@@ -711,7 +711,7 @@ export class DeckTimelineRenderer {
     return { rangeStart, rangeEnd, visStart, visEnd, startIdx, endIdx, zoomScale };
   }
 
-  _buildLayers({ anchorTicks, stripTracks, separators, anchorPoints, activeAnchorTicks, selectionAnchors, hoverAnchors, connections, selectionConnections, hoverConnections, width, height }) {
+  _buildLayers({ inputTreeTicks, stripTracks, separators, inputTreePoints, activeInputTreeTicks, selectionInputTrees, hoverInputTrees, connections, selectionConnections, hoverConnections, width, height }) {
     const theme = TIMELINE_THEME;
     const separatorWidth = calculateSeparatorWidth(this.segments?.length || 0, theme);
 
@@ -726,7 +726,7 @@ export class DeckTimelineRenderer {
         updateTriggers: { getColor: [theme.separatorAlpha, theme.separatorDenseAlpha] }
       }),
       this.stripTrackLayer.clone({ data: stripTracks }),
-      this.anchorTickLayer.clone({ data: anchorTicks }),
+      this.inputTreeTickLayer.clone({ data: inputTreeTicks }),
       this.connectionLayer.clone({ data: connections, widthMinPixels: theme.connectionWidth }),
       this.connectionHoverLayer.clone({
         data: hoverConnections,
@@ -741,15 +741,15 @@ export class DeckTimelineRenderer {
         updateTriggers: { getColor: selectionColor }
       }),
       this.scrubberLayer.clone(createScrubberLayer(this._scrubberMs, this._rangeStart, this._rangeEnd, width, height, theme, this.isScrubbing())),
-      this.activeAnchorTickLayer.clone({ data: activeAnchorTicks }),
-      this.anchorLayer.clone({ data: anchorPoints, lineWidthMinPixels: theme.anchorStrokeWidth }),
-      this.anchorHoverLayer.clone({
-        data: hoverAnchors,
+      this.activeInputTreeTickLayer.clone({ data: activeInputTreeTicks }),
+      this.inputTreeLayer.clone({ data: inputTreePoints, lineWidthMinPixels: theme.inputTreeStrokeWidth }),
+      this.inputTreeHoverLayer.clone({
+        data: hoverInputTrees,
         getLineColor: hoverColor,
         updateTriggers: { getLineColor: hoverColor }
       }),
-      this.anchorSelectionLayer.clone({
-        data: selectionAnchors,
+      this.inputTreeSelectionLayer.clone({
+        data: selectionInputTrees,
         getLineColor: selectionColor,
         updateTriggers: { getLineColor: selectionColor }
       })

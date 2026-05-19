@@ -2,22 +2,22 @@ import { getSegmentBounds } from './segmentTiming.js';
 
 export function getTargetSegmentIndex(initialSegIndex, clickMs, segments, cumulativeDurations) {
   const segment = segments[initialSegIndex];
-  // If the initially clicked segment is not a full tree (anchor), it's unambiguous.
+  // If the initially clicked segment is not a full input tree, it's unambiguous.
   if (!segment?.isFullTree) {
     return initialSegIndex;
   }
 
-  // For anchor segments, calculate if the click is closer to the anchor center
+  // For input-tree segments, calculate if the click is closer to the input-tree center
   // or to an adjacent connection center
   const timelineData = { cumulativeDurations };
   const bounds = getSegmentBounds(initialSegIndex, timelineData);
   if (!bounds) return initialSegIndex;
 
-  const anchorCenter = (bounds.start + bounds.end) / 2;
-  const anchorDist = Math.abs(clickMs - anchorCenter);
+  const inputTreeCenter = (bounds.start + bounds.end) / 2;
+  const inputTreeDist = Math.abs(clickMs - inputTreeCenter);
 
   let targetIndex = initialSegIndex;
-  let minDist = anchorDist;
+  let minDist = inputTreeDist;
 
   // Check the previous segment (left connection)
   if (initialSegIndex > 0 && !segments[initialSegIndex - 1]?.isFullTree) {

@@ -4,7 +4,7 @@ export const TIMELINE_INTERVAL_TYPE = {
 };
 
 export const TIMELINE_HOLD_KIND = {
-    ANCHOR: 'anchor',
+    INPUT_TREE: 'input_tree',
     MOVER: 'mover',
     PIVOT: 'pivot'
 };

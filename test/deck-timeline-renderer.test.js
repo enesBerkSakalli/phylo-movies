@@ -114,13 +114,13 @@ describe('DeckTimelineRenderer', () => {
     const renderer = new DeckTimelineRenderer(timelineData, segments).init(container);
 
     const stripTrackLayer = renderer.deck.props.layers.find(l => l.id === 'strip-track-layer');
-    const tickLayer = renderer.deck.props.layers.find(l => l.id === 'anchor-tick-layer');
-    const anchorLayer = renderer.deck.props.layers.find(l => l.id === 'anchor-layer');
+    const tickLayer = renderer.deck.props.layers.find(l => l.id === 'input-tree-tick-layer');
+    const inputTreeLayer = renderer.deck.props.layers.find(l => l.id === 'input-tree-layer');
     expect(stripTrackLayer).to.exist;
     expect(stripTrackLayer.props.data).to.have.length(0);
     expect(tickLayer).to.exist;
     expect(tickLayer.props.data).to.have.length(100);
-    expect(anchorLayer.props.data).to.have.length(0);
+    expect(inputTreeLayer.props.data).to.have.length(0);
   });
 
   it('draws a transition strip for dense timelines with transition frames', () => {
@@ -146,12 +146,12 @@ describe('DeckTimelineRenderer', () => {
     const renderer = new DeckTimelineRenderer(timelineData, segments).init(container);
 
     renderer.setSelectedSegment(1);
-    const anchorSel = renderer.deck.props.layers.find(l => l.id === 'anchor-selection-layer');
+    const inputTreeSelection = renderer.deck.props.layers.find(l => l.id === 'input-tree-selection-layer');
     const connSel = renderer.deck.props.layers.find(l => l.id === 'connection-selection-layer');
-    expect(anchorSel || connSel).to.exist;
+    expect(inputTreeSelection || connSel).to.exist;
     // At least one selection layer should have data when a selection is set
     const hasData = (layer) => Array.isArray(layer?.props?.data) && layer.props.data.length >= 0;
-    expect(hasData(anchorSel) || hasData(connSel)).to.equal(true);
+    expect(hasData(inputTreeSelection) || hasData(connSel)).to.equal(true);
   });
 
   it('uses distinct colors for selected segments and the current playhead', () => {
@@ -179,7 +179,7 @@ describe('DeckTimelineRenderer', () => {
     expect(renderer.canvas.getAttribute('aria-valuemin')).to.equal('0');
     expect(renderer.canvas.getAttribute('aria-valuemax')).to.equal('3000');
     expect(renderer.canvas.getAttribute('aria-valuenow')).to.equal('0');
-    expect(renderer.canvas.getAttribute('aria-valuetext')).to.equal('Segment 1 of 3, source tree 1');
+    expect(renderer.canvas.getAttribute('aria-valuetext')).to.equal('Segment 1 of 3, input tree 1');
   });
 
   it('uses semantic segment labels for assistive timeline feedback', () => {
@@ -190,7 +190,7 @@ describe('DeckTimelineRenderer', () => {
     renderer.setCustomTime(1500);
 
     expect(renderer.canvas.getAttribute('aria-valuetext')).to.equal(
-      'Segment 2 of 3, generated frames 1-9, between source trees 1 and 2'
+      'Segment 2 of 3, generated frames 1-9, from source input tree 1 to target input tree 2'
     );
   });
 
@@ -246,7 +246,7 @@ describe('DeckTimelineRenderer', () => {
     expect(hoverUpdates[0].position.y).to.equal(0);
   });
 
-  it('selects an anchor/source segment from a deck canvas click', () => {
+  it('selects an input-tree segment from a deck canvas click', () => {
     const { timelineData, segments } = makeTimelineFixture();
     const container = makeContainer();
     const renderer = new DeckTimelineRenderer(timelineData, segments).init(container);

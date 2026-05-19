@@ -2,42 +2,42 @@ import { useAppStore } from '../../state/phyloStore/store.js';
 import { resolveMsaSourceFrameIndex } from './treeIndexSemantics.js';
 
 // ===========================
-// ANCHOR NAVIGATION UTILITIES
+// INPUT-TREE NAVIGATION UTILITIES
 // ===========================
 
 /**
- * Find the index (into anchorIndices array) of the last anchor tree at or before the given position.
- * @param {Array<number>} anchorIndices - Sorted sequence indices for anchor trees
+ * Find the ordinal position of the last input tree at or before the given sequence position.
+ * @param {Array<number>} inputTreeIndices - Sorted sequence indices for input trees
  * @param {number} position - Current sequence position
- * @returns {number} Index into anchorIndices array (0 if none found before position)
+ * @returns {number} Index into inputTreeIndices array (0 if none found before position)
  */
-export function findPreviousAnchorIndex(anchorIndices, position) {
-  return resolveMsaSourceFrameIndex(anchorIndices, position);
+export function findPreviousInputTreeOrdinal(inputTreeIndices, position) {
+  return resolveMsaSourceFrameIndex(inputTreeIndices, position);
 }
 
 /**
- * Find the sequence index of the previous anchor tree.
- * @param {Array<number>} anchorIndices - Sorted sequence indices for anchor trees
+ * Find the sequence index of the previous input tree.
+ * @param {Array<number>} inputTreeIndices - Sorted sequence indices for input trees
  * @param {number} position - Current sequence position
- * @returns {number} Sequence index of previous anchor tree
+ * @returns {number} Sequence index of previous input tree
  */
-export function findPreviousAnchorSequenceIndex(anchorIndices, position) {
-  if (!anchorIndices?.length) return 0;
-  const idx = findPreviousAnchorIndex(anchorIndices, position);
-  return anchorIndices[idx] ?? 0;
+export function findPreviousInputTreeSequenceIndex(inputTreeIndices, position) {
+  if (!inputTreeIndices?.length) return 0;
+  const idx = findPreviousInputTreeOrdinal(inputTreeIndices, position);
+  return inputTreeIndices[idx] ?? 0;
 }
 
 /**
- * Find the sequence index of the next anchor tree after the given position.
- * @param {Array<number>} anchorIndices - Sorted sequence indices for anchor trees
+ * Find the sequence index of the next input tree after the given position.
+ * @param {Array<number>} inputTreeIndices - Sorted sequence indices for input trees
  * @param {number} position - Current sequence position
- * @returns {number|null} Sequence index of next anchor, or null if none exists
+ * @returns {number|null} Sequence index of next input tree, or null if none exists
  */
-export function findNextAnchorSequenceIndex(anchorIndices, position) {
-  if (!anchorIndices?.length) return null;
-  for (const anchorIdx of anchorIndices) {
-    if (anchorIdx > position) {
-      return anchorIdx;
+export function findNextInputTreeSequenceIndex(inputTreeIndices, position) {
+  if (!inputTreeIndices?.length) return null;
+  for (const inputTreeIndex of inputTreeIndices) {
+    if (inputTreeIndex > position) {
+      return inputTreeIndex;
     }
   }
   return null;
@@ -74,7 +74,7 @@ export function getIndexMappings(state = useAppStore.getState()) {
 }
 
 // MSA window index:
-// - Anchor trees (pivotEdge: null) advance the active MSA window.
+// - Input trees (pivotEdge: null) advance the active MSA window.
 // - Transition frames (pivotEdge: array) stay on the source MSA window.
 export function getMSAFrameIndexForTimelineIndex(sequenceIndex = 0, transitionResolver = null) {
   return resolveMsaSourceFrameIndex(transitionResolver?.fullTreeIndices || [], sequenceIndex);

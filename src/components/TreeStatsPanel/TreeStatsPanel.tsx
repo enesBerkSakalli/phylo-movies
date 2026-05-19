@@ -25,7 +25,7 @@ import { SidebarMenuItem, SidebarMenuButton, SidebarMenuSub, SidebarMenuSubItem 
  * - Relative scale magnitude indicator
  * - Taxa groups legend
  *
- * This component uses anchor trees (not transition frames) for histogram calculations
+ * This component uses input trees (not transition frames) for histogram calculations
  * to prevent visual jitter during animation playback.
  */
 export const TreeStatsPanel: React.FC = () => {

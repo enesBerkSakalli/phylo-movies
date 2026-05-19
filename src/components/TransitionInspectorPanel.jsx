@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Anchor, ArrowRightLeft, Dna, Gauge, GitBranch, X } from 'lucide-react';
+import { ArrowRightLeft, Dna, Gauge, GitBranch, X } from 'lucide-react';
 import { calculateWindow } from '../domain/msa/msaWindowCalculator';
 import { formatScaleValue } from '../domain/tree/scaleUtils';
 import { useAppStore } from '../state/phyloStore/store.js';
@@ -61,8 +61,8 @@ export function TransitionInspectorPanel() {
   if (!segment) return null;
 
   const totalSegments = movieTimelineManager?.getSegmentCount?.() ?? 0;
-  const isAnchor = segment.isFullTree;
-  const Icon = isAnchor ? Anchor : ArrowRightLeft;
+  const isInputTree = segment.isFullTree;
+  const Icon = isInputTree ? GitBranch : ArrowRightLeft;
 
   return (
     <aside
@@ -76,8 +76,8 @@ export function TransitionInspectorPanel() {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <h2 className="truncate text-sm font-semibold">Transition Inspector</h2>
-            <Badge variant={isAnchor ? 'outline' : 'secondary'} className="text-2xs">
-              {isAnchor ? 'Source tree' : 'Generated frames'}
+            <Badge variant={isInputTree ? 'outline' : 'secondary'} className="text-2xs">
+              {isInputTree ? 'Input tree' : 'Generated frames'}
             </Badge>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
@@ -99,7 +99,7 @@ export function TransitionInspectorPanel() {
       <div className="flex-1 space-y-4 overflow-y-auto p-4 text-sm">
         <Section title="Selection">
           <KeyValue label="Name" value={details.name} />
-          <KeyValue label="Pair" value={details.pairLabel} />
+          <KeyValue label="Direction" value={details.directionLabel} />
           <KeyValue label="Global frames" value={details.globalRangeLabel} />
           <KeyValue label="Local steps" value={details.localStepLabel} />
         </Section>
@@ -115,7 +115,7 @@ export function TransitionInspectorPanel() {
         <Section title="Metrics">
           <Metric icon={GitBranch} label="RF distance" value={details.rfLabel} />
           <Metric icon={GitBranch} label="Weighted RF" value={details.weightedRfLabel} />
-          <Metric icon={Gauge} label="Source scale" value={details.scaleLabel} />
+          <Metric icon={Gauge} label="Source input tree scale" value={details.scaleLabel} />
         </Section>
 
         <Section title="Alignment">
@@ -205,7 +205,9 @@ function buildInspectorDetails({
 
   return {
     name: formatTreeName(segment),
-    pairLabel: pair ? `${pair.sourceTreeIndex + 1} -> ${pair.destinationTreeIndex + 1}` : segment.treePairKey,
+    directionLabel: pair
+      ? `source input tree ${pair.sourceTreeIndex + 1} -> target input tree ${pair.targetTreeIndex + 1}`
+      : segment.treePairKey,
     globalRangeLabel: formatRange(segment.globalStart, segment.globalEnd),
     localStepLabel: formatRange(segment.localStepStart, segment.localStepEnd),
     movingTaxaLabel: formatCount(segment.subtreeMoveCount, 'taxon', 'taxa'),
@@ -237,7 +239,7 @@ function parsePairKey(pairKey) {
   if (!match) return null;
   return {
     sourceTreeIndex: Number(match[1]),
-    destinationTreeIndex: Number(match[2]),
+    targetTreeIndex: Number(match[2]),
   };
 }
 
@@ -294,7 +296,7 @@ function formatTreeName(segment) {
     return segment.treeName;
   }
   if (segment.isFullTree && Number.isInteger(segment.originalTreeIndex)) {
-    return `Source Tree ${segment.originalTreeIndex + 1}`;
+    return `Input Tree ${segment.originalTreeIndex + 1}`;
   }
   return segment.isFullTree ? null : 'Generated transition frames';
 }

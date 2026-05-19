@@ -2,8 +2,8 @@
  * Owns segment-click navigation policy for the timeline.
  *
  * Responsibilities:
- * - interpret clicked segments as anchor or transition navigation
- * - update clipboard state for anchor trees
+ * - interpret clicked segments as input-tree or transition navigation
+ * - update clipboard state for input trees
  * - dispatch directional navigation through the store
  */
 import { TimelineMathUtils } from '../math/TimelineMathUtils.js';
@@ -27,16 +27,17 @@ export class TimelineNavigationController {
     }
 
     const targetTreeIndex = this._resolveTargetTreeIndex(segmentIndex, clickTimeMs);
-    this.navigateToTree(targetTreeIndex);
+    const seekOptions = this._resolveSeekOptions(segmentIndex, clickTimeMs);
+    this.navigateToTree(targetTreeIndex, seekOptions);
     requestAnimationFrame(() => this.onTimelinePositionUpdated?.());
   }
 
-  navigateToTree(targetTreeIndex) {
+  navigateToTree(targetTreeIndex, seekOptions = undefined) {
     const { currentTreeIndex, goToPosition } = this.store.getState();
     const direction = targetTreeIndex === currentTreeIndex
       ? 'jump'
       : (targetTreeIndex > currentTreeIndex ? 'forward' : 'backward');
-    goToPosition(targetTreeIndex, direction);
+    goToPosition(targetTreeIndex, direction, seekOptions);
   }
 
   _validateSegment(segmentIndex) {
@@ -87,5 +88,19 @@ export class TimelineNavigationController {
     const start = segmentStart + TimelineMathUtils.EPSILON_MS;
     const end = segmentEnd - TimelineMathUtils.EPSILON_MS;
     return Math.max(start, Math.min(clickTimeMs, end));
+  }
+
+  _resolveSeekOptions(segmentIndex, clickTimeMs) {
+    if (!Number.isFinite(clickTimeMs) || !Number.isFinite(this.timelineData?.totalDuration) || this.timelineData.totalDuration <= 0) {
+      return undefined;
+    }
+
+    const bounds = getSegmentBounds(segmentIndex, this.timelineData);
+    if (!bounds || bounds.end < bounds.start) return undefined;
+
+    const boundedTime = this._boundClickTimeToSegment(clickTimeMs, bounds.start, bounds.end);
+    return {
+      timelineProgress: boundedTime / this.timelineData.totalDuration,
+    };
   }
 }

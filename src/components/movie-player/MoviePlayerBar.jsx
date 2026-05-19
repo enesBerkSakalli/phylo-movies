@@ -26,6 +26,10 @@ import { Button } from '../ui/button';
 import { Menu, ChevronUp, ChevronDown } from 'lucide-react';
 import { Separator } from '../ui/separator';
 import { AppTooltip } from '../ui/app-tooltip';
+import {
+  MOVIE_PLAYER_ARIA_LABELS,
+  TIMELINE_LEGEND_ITEMS,
+} from './MoviePlayerBar.contract.js';
 
 // ==========================================================================
 // CONSTANTS
@@ -113,14 +117,14 @@ export function MoviePlayerBar() {
 
   return (
     <>
-      <div ref={playerBarRef} className="movie-player-bar relative z-[1000] w-full shrink-0 bg-card border-t shadow-[0_2px_4px_rgba(0,0,0,0.08)]" role="region" aria-label="Movie timeline and playback controls">
+      <div ref={playerBarRef} className="movie-player-bar relative z-[1000] w-full shrink-0 bg-card border-t shadow-[0_2px_4px_rgba(0,0,0,0.08)]" role="region" aria-label={MOVIE_PLAYER_ARIA_LABELS.root}>
         <div className="flex flex-col">
           <div
             className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 border-b border-border/70 bg-muted/20 px-2 py-1"
             role="group"
-            aria-label="Primary playback controls"
+            aria-label={MOVIE_PLAYER_ARIA_LABELS.primaryControls}
           >
-            <div className="flex min-w-0 items-center gap-1" role="group" aria-label="Timeline navigation controls">
+            <div className="flex min-w-0 items-center gap-1" role="group" aria-label={MOVIE_PLAYER_ARIA_LABELS.timelineNavigation}>
               <AppTooltip content="Toggle sidebar">
                 <Button
                   id="nav-toggle-button"
@@ -150,7 +154,7 @@ export function MoviePlayerBar() {
               />
             </div>
 
-            <div className="flex min-w-0 items-center justify-end gap-2" role="group" aria-label="Playback settings">
+            <div className="flex min-w-0 items-center justify-end gap-2" role="group" aria-label={MOVIE_PLAYER_ARIA_LABELS.playbackSettings}>
               {toolbarExpanded && (
                 <PlaybackSpeedControl
                   value={animationSpeed}
@@ -173,7 +177,7 @@ export function MoviePlayerBar() {
             </div>
           </div>
 
-          <div className="w-full border-b border-border/60 bg-background" role="group" aria-label="Timeline track">
+          <div className="w-full border-b border-border/60 bg-background" role="group" aria-label={MOVIE_PLAYER_ARIA_LABELS.timelineTrack}>
             {hasTimeline && <TimelineLegend hasTransitionSegments={hasTransitionSegments} />}
             {hasTimeline ? (
               <div className="interpolation-timeline-container">
@@ -185,7 +189,7 @@ export function MoviePlayerBar() {
                 role="status"
                 aria-live="polite"
               >
-                Loading movie timeline...
+                {MOVIE_PLAYER_ARIA_LABELS.loadingTimeline}
               </div>
             )}
           </div>
@@ -233,14 +237,14 @@ function TimelineLegend({ hasTransitionSegments }) {
     <div
       className="flex flex-wrap items-center gap-x-3 gap-y-1 px-2 pt-1 pb-0.5 text-2xs font-medium text-muted-foreground"
       role="group"
-      aria-label="Timeline legend"
+      aria-label={MOVIE_PLAYER_ARIA_LABELS.timelineLegend}
     >
-      <LegendItem markerClassName="h-2.5 w-2.5 rounded-full border-2 border-foreground/70 bg-background" label="Source trees" />
+      <LegendItem markerClassName="h-2.5 w-2.5 rounded-full border-2 border-foreground/70 bg-background" label={TIMELINE_LEGEND_ITEMS.inputTrees} />
       {hasTransitionSegments && (
-        <LegendItem markerClassName="h-1 w-5 rounded bg-amber-600/85" label="Generated frames" />
+        <LegendItem markerClassName="h-1 w-5 rounded bg-amber-600/85" label={TIMELINE_LEGEND_ITEMS.generatedFrames} />
       )}
-      <LegendItem markerClassName="h-1.5 w-5 rounded bg-emerald-600" label="Selected segment" />
-      <LegendItem markerClassName="h-5 w-1 rounded bg-primary" label="Current position" />
+      <LegendItem markerClassName="h-1.5 w-5 rounded bg-emerald-600" label={TIMELINE_LEGEND_ITEMS.selectedSegment} />
+      <LegendItem markerClassName="h-5 w-1 rounded bg-primary" label={TIMELINE_LEGEND_ITEMS.currentPosition} />
     </div>
   );
 }

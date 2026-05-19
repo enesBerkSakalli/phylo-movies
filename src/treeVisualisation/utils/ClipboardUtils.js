@@ -88,7 +88,7 @@ function getMainTreeBounds(controller) {
  * Create clipboard label TextLayer
  * @param {number} treeIndex - Tree index for label text
  * @param {Object} bounds - Visual bounds of clipboard tree {minX, maxX, minY, maxY}
- * @param {Array} fullTreeIndices - Array of full tree indices from store for anchor detection
+ * @param {Array} fullTreeIndices - Array of full tree indices from store for input-tree detection
  * @param {number} xOffset - X offset for clipboard position
  * @param {number} yOffset - Y offset for clipboard position
  * @returns {TextLayer|null} Label layer or null
@@ -101,10 +101,10 @@ export function createClipboardLabelLayer(treeIndex, bounds, fullTreeIndices = [
   const avgX = (bounds.minX + bounds.maxX) / 2;
 
   let labelText = `Tree #${treeIndex + 1}`;
-  // Check if it is one of the original anchor trees.
-  const anchorIndex = fullTreeIndices.indexOf(treeIndex);
-  if (anchorIndex >= 0) {
-      labelText = `Anchor tree ${anchorIndex + 1}`; // 1-based index for user
+  // Check if it is one of the original input trees.
+  const inputTreeOrdinal = fullTreeIndices.indexOf(treeIndex);
+  if (inputTreeOrdinal >= 0) {
+      labelText = `Input tree ${inputTreeOrdinal + 1}`; // 1-based index for user
   }
 
   return new TextLayer({

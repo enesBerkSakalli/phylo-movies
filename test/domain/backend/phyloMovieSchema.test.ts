@@ -463,7 +463,7 @@ describe('validatePhyloMovieData', () => {
     }))).toThrow(/spr_move_events\[0\]\.highlight_group must be an array/);
   });
 
-  it('validates split_change_timeline against anchor-inclusive pair ranges', () => {
+  it('validates split_change_timeline against input-tree-inclusive pair ranges', () => {
     const result = validatePhyloMovieData(makePayload({
       interpolated_trees: [minimalTree, minimalTree, minimalTree],
       tree_metadata: [

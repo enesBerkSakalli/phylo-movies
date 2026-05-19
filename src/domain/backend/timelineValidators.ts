@@ -86,7 +86,7 @@ export function validateSplitChangeTimeline(
 ): SplitChangeTimelineEntry[] {
   const entries = requiredArray(value, 'split_change_timeline');
   const validated: SplitChangeTimelineEntry[] = [];
-  const anchorIndices = collectAnchorIndices(pairInterpolationRanges, treeCount);
+  const inputTreeIndices = collectInputTreeIndices(pairInterpolationRanges, treeCount);
   const expectedTransitionIndices = collectTransitionIndices(pairInterpolationRanges);
   const originalIndices = new Set<number>();
   const coveredTransitionIndices = new Map<number, string>();
@@ -97,9 +97,9 @@ export function validateSplitChangeTimeline(
 
     if (record.type === 'original') {
       const original = validateOriginalTimelineEntry(record, index, treeCount);
-      if (!anchorIndices.has(original.global_index)) {
+      if (!inputTreeIndices.has(original.global_index)) {
         throw new Error(
-          `Invalid phyloMovieData payload: ${fieldName}.global_index must reference an anchor tree`
+          `Invalid phyloMovieData payload: ${fieldName}.global_index must reference an input tree`
         );
       }
       originalIndices.add(original.global_index);
@@ -112,7 +112,7 @@ export function validateSplitChangeTimeline(
       for (let treeIndex = splitEvent.step_range_global[0]; treeIndex <= splitEvent.step_range_global[1]; treeIndex += 1) {
         if (!expectedTransitionIndices.has(treeIndex)) {
           throw new Error(
-            `Invalid phyloMovieData payload: ${fieldName}.step_range_global includes anchor or out-of-range tree index ${treeIndex}`
+            `Invalid phyloMovieData payload: ${fieldName}.step_range_global includes input-tree or out-of-range tree index ${treeIndex}`
           );
         }
         const previousField = coveredTransitionIndices.get(treeIndex);
@@ -130,10 +130,10 @@ export function validateSplitChangeTimeline(
     throw new Error(`Invalid phyloMovieData payload: ${fieldName}.type must be "original" or "split_event"`);
   }
 
-  for (const anchorIndex of anchorIndices) {
-    if (!originalIndices.has(anchorIndex)) {
+  for (const inputTreeIndex of inputTreeIndices) {
+    if (!originalIndices.has(inputTreeIndex)) {
       throw new Error(
-        `Invalid phyloMovieData payload: split_change_timeline missing original entry for anchor tree index ${anchorIndex}`
+        `Invalid phyloMovieData payload: split_change_timeline missing original entry for input tree index ${inputTreeIndex}`
       );
     }
   }
@@ -149,19 +149,19 @@ export function validateSplitChangeTimeline(
   return validated;
 }
 
-function collectAnchorIndices(pairInterpolationRanges: Array<[number, number]>, treeCount: number): Set<number> {
-  const anchors = new Set<number>();
+function collectInputTreeIndices(pairInterpolationRanges: Array<[number, number]>, treeCount: number): Set<number> {
+  const inputTrees = new Set<number>();
 
   for (const [start, end] of pairInterpolationRanges) {
-    anchors.add(start);
-    anchors.add(end);
+    inputTrees.add(start);
+    inputTrees.add(end);
   }
 
-  if (anchors.size === 0 && treeCount > 0) {
-    anchors.add(0);
+  if (inputTrees.size === 0 && treeCount > 0) {
+    inputTrees.add(0);
   }
 
-  return anchors;
+  return inputTrees;
 }
 
 function collectTransitionIndices(pairInterpolationRanges: Array<[number, number]>): Set<number> {

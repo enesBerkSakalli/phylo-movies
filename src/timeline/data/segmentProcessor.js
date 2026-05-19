@@ -1,4 +1,4 @@
-import { getDevicePixelRatio, createSnapFunction, createAnchor, createAnchorTick, createConnection, createStripTrack } from '../utils/layerFactories.js';
+import { getDevicePixelRatio, createSnapFunction, createInputTreeMarker, createInputTreeTick, createConnection, createStripTrack } from '../utils/layerFactories.js';
 import { msToX } from '../math/coordinateUtils.js';
 import { getSegmentBounds, toTimelineItemId } from '../utils/segmentTiming.js';
 
@@ -9,8 +9,8 @@ const MIN_SEPARATOR_HEIGHT = 6;
  * Converts timeline segments into visual elements for rendering.
  *
  * Timeline structure:
- * - Anchor trees (isFullTree=true): Original phylogenetic trees, shown as circles
- * - Transitions (isFullTree=false): Interpolated sequences between anchors, shown as lines
+ * - Input trees (isFullTree=true): Observed phylogenetic trees, shown as circles
+ * - Transitions (isFullTree=false): Interpolated sequences between input trees, shown as lines
  * - Separators: Vertical ticks marking segment boundaries
  */
 export function processSegments({
@@ -19,13 +19,13 @@ export function processSegments({
 }) {
   if (!timelineData?.cumulativeDurations || !Array.isArray(segments) || segments.length === 0) {
     return {
-      anchorTicks: [],
+      inputTreeTicks: [],
       stripTracks: [],
       separators: [],
-      anchorPoints: [],
-      activeAnchorTicks: [],
-      selectionAnchors: [],
-      hoverAnchors: [],
+      inputTreePoints: [],
+      activeInputTreeTicks: [],
+      selectionInputTrees: [],
+      hoverInputTrees: [],
       connections: [],
       selectionConnections: [],
       hoverConnections: []
@@ -34,8 +34,8 @@ export function processSegments({
 
   const snap = createSnapFunction(getDevicePixelRatio());
 
-  const anchorTrees = { normal: [], selected: [], hovered: [] };
-  const anchorTicks = { normal: [], active: [] };
+  const inputTrees = { normal: [], selected: [], hovered: [] };
+  const inputTreeTicks = { normal: [], active: [] };
   const transitions = { normal: [], selected: [], hovered: [] };
   const separators = [];
   const hasTransitions = segments.some(segment => segment && !segment.isFullTree);
@@ -63,36 +63,36 @@ export function processSegments({
 
     if (segment.isFullTree) {
       if (markerProfile.mode === 'strip') {
-        const tick = createAnchorTick(startX, endX, width, height, theme, snap);
+        const tick = createInputTreeTick(startX, endX, width, height, theme, snap);
         if (tick) {
           const bucket = state === 'selected' || state === 'hovered' ? 'active' : 'normal';
-          anchorTicks[bucket].push(tick);
+          inputTreeTicks[bucket].push(tick);
         }
         continue;
       }
 
-      const anchor = createAnchor(
+      const inputTreeMarker = createInputTreeMarker(
         i, segmentId, startX, endX, width, height,
         theme, zoomScale, snap
       );
-      if (anchor) anchorTrees[state].push(anchor);
+      if (inputTreeMarker) inputTrees[state].push(inputTreeMarker);
     } else {
       const connection = createConnection(
         i, segmentId, startX, endX, width, height,
-        theme.anchorRadiusVar, zoomScale, theme.gapDefault, theme.connectionNeutralRGB, snap, segments
+        theme.inputTreeRadiusVar, zoomScale, theme.gapDefault, theme.connectionNeutralRGB, snap, segments
       );
       if (connection) transitions[state].push(connection);
     }
   }
 
   return {
-    anchorTicks: anchorTicks.normal,
+    inputTreeTicks: inputTreeTicks.normal,
     stripTracks,
     separators,
-    anchorPoints: anchorTrees.normal,
-    activeAnchorTicks: anchorTicks.active,
-    selectionAnchors: anchorTrees.selected,
-    hoverAnchors: anchorTrees.hovered,
+    inputTreePoints: inputTrees.normal,
+    activeInputTreeTicks: inputTreeTicks.active,
+    selectionInputTrees: inputTrees.selected,
+    hoverInputTrees: inputTrees.hovered,
     connections: transitions.normal,
     selectionConnections: transitions.selected,
     hoverConnections: transitions.hovered
@@ -100,12 +100,12 @@ export function processSegments({
 }
 
 function getMarkerProfile(segments, width, theme) {
-  const anchorCount = segments.reduce((count, segment) => count + (segment?.isFullTree ? 1 : 0), 0);
-  if (anchorCount <= 1) return { mode: 'circle', anchorCount };
+  const inputTreeCount = segments.reduce((count, segment) => count + (segment?.isFullTree ? 1 : 0), 0);
+  if (inputTreeCount <= 1) return { mode: 'circle', inputTreeCount };
 
-  const pixelsPerAnchor = width / anchorCount;
-  if (pixelsPerAnchor < theme.anchorDenseThresholdPx) return { mode: 'strip', anchorCount };
-  return { mode: 'circle', anchorCount };
+  const pixelsPerInputTree = width / inputTreeCount;
+  if (pixelsPerInputTree < theme.inputTreeDenseThresholdPx) return { mode: 'strip', inputTreeCount };
+  return { mode: 'circle', inputTreeCount };
 }
 
 function createSeparator(x, width, height, snap, markerMode) {

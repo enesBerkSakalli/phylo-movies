@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Anchor, ArrowRightLeft, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowRightLeft, ChevronDown, ChevronUp, GitBranch } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 
@@ -9,7 +9,7 @@ import { Button } from '../ui/button';
 
 /**
  * Timeline segment tooltip content component.
- * Displays information about anchor trees or transitions between them.
+ * Displays information about input trees or transitions between them.
  *
  * @param {Object} props
  * @param {Object} props.segment - The segment data object
@@ -22,19 +22,19 @@ export function TimelineSegmentTooltip({ segment, segmentIndex, totalSegments, g
 
   if (!segment) return null;
 
-  const isAnchor = segment.isFullTree;
+  const isInputTree = segment.isFullTree;
 
   return (
     <div className="space-y-2 w-full">
       <TooltipHeader
-        isAnchor={isAnchor}
+        isInputTree={isInputTree}
         segmentIndex={segmentIndex}
         totalSegments={totalSegments}
       />
 
       <div className="space-y-1 text-xs">
-        {isAnchor ? (
-          <AnchorContent segment={segment} />
+        {isInputTree ? (
+          <InputTreeContent segment={segment} />
         ) : (
           <TransitionContent
             segment={segment}
@@ -55,9 +55,9 @@ export function TimelineSegmentTooltip({ segment, segmentIndex, totalSegments, g
 /**
  * Header section with icon, title, and segment counter.
  */
-function TooltipHeader({ isAnchor, segmentIndex, totalSegments }) {
-  const Icon = isAnchor ? Anchor : ArrowRightLeft;
-  const title = isAnchor ? 'Source tree' : 'Generated frames';
+function TooltipHeader({ isInputTree, segmentIndex, totalSegments }) {
+  const Icon = isInputTree ? GitBranch : ArrowRightLeft;
+  const title = isInputTree ? 'Input tree' : 'Generated frames';
 
   return (
     <div className="flex items-center gap-2 pb-2 border-b border-border">
@@ -71,10 +71,10 @@ function TooltipHeader({ isAnchor, segmentIndex, totalSegments }) {
 }
 
 /**
- * Content for anchor-tree segments.
+ * Content for input-tree segments.
  * Displays tree name and original index.
  */
-function AnchorContent({ segment }) {
+function InputTreeContent({ segment }) {
   return (
     <div className="text-muted-foreground">
       {segment.treeName}
