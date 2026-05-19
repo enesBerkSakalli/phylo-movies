@@ -1,0 +1,57 @@
+============================================================
+BOOTSTRAP ORDERING ANALYSIS - RUN LOG
+============================================================
+
+Run timestamp: 20260518T202621+0200
+Run ID: run_20260518T202621+0200_iqtree-default_bs200_seed42_ds24-125_full-iqtree-default-j4-redo
+Generated staging directory: publication_data/bootstrap_rogue_taxa/runs/run_20260518T202621+0200_iqtree-default_bs200_seed42_ds24-125_full-iqtree-default-j4-redo
+Staging retention: regenerated on demand; not retained in publication_data
+
+PARAMETERS
+----------------------------------------
+Tree inference program: iqtree
+IQ-TREE mode: default
+Number of bootstrap replicates: 200
+Random seed: 42
+Number of threads per inference job: 1
+Parallel replicate jobs: 4
+
+BOOTSTRAP ALIGNMENT GENERATION
+----------------------------------------
+Method: RAxML -f j (bootstrap alignment generation)
+  - Creates resampled alignments by sampling columns with replacement
+  - Each replicate has same dimensions as original alignment
+
+COMPOSITION DISTANCE METRIC
+----------------------------------------
+Formula: Euclidean distance of nucleotide composition vectors
+  - Composition vector: (count_A, count_C, count_G, count_T, count_AmbiguousOrGap)
+  - Distance = sqrt(sum((comp_replicate - comp_original)^2))
+  - Lower distance = replicate more similar to original
+
+DATASETS PROCESSED
+----------------------------------------
+  24: /Users/berksakalli/Projects/rogue_taxa_analysis/online-data/data/datasets/alignments/24
+    Taxa: 24, Sites: 14190
+    Original composition (A,C,G,T,AmbiguousOrGap): [65249, 68794, 46443, 71488, 88586]
+  125: /Users/berksakalli/Projects/rogue_taxa_analysis/online-data/data/datasets/alignments/125
+    Taxa: 125, Sites: 29149
+    Original composition (A,C,G,T,AmbiguousOrGap): [752084, 612788, 411853, 674581, 1192319]
+
+TREE INFERENCE
+----------------------------------------
+Program: IQ-TREE 2
+Model: GTR+G; mode: default
+Command pattern: iqtree2 -s <replicate_alignment> -st DNA -m GTR+G -T <threads> -seed <seed> -pre <prefix> -quiet --redo
+
+OUTPUT FILES
+----------------------------------------
+Run-level files:
+  - RUN_MANIFEST.json: Machine-readable run provenance
+  - run_log.txt: Human-readable run summary
+Per dataset folder:
+  - DATASET_MANIFEST.json: Dataset-level provenance
+  - ranked/bootstrap_order_<name>.tsv: Ranked replicates by composition distance
+  - ranked/all_trees_<name>.nwk: All trees in ranked order (one per line)
+  - bootstrap_alignments/bootstrap.BS<N>: Bootstrap replicate alignments
+  - trees/rep_<NNNNNN>/: Per-replicate tree inference files

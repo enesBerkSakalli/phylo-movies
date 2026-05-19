@@ -78,7 +78,7 @@ describe('example dataset configuration', () => {
 
       expect(treeCount).toBe(200);
       expect(example.description).toContain('IQ-TREE default mode');
-      expect(example.filePath).toContain('bootstrap_example/iqtree_reinference/current_results');
+      expect(example.filePath).toContain('bootstrap_rogue_taxa/current_results');
       expect(example.fileName).toContain('source-');
     }
   });

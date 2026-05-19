@@ -1,0 +1,49 @@
+alignment_index	sequence_id	role	reference_group
+0	PV275065_P4_GII-4	reference	GII.P4-GII.4 non-recombinant
+1	KJ196287_P4_GII-4	reference	GII.P4-GII.4 non-recombinant
+2	KJ541743_P4_GII-4	reference	GII.P4-GII.4 non-recombinant
+3	HM748971_P4_GII-4	reference	GII.P4-GII.4 non-recombinant
+4	MK753028_P4_GII-4	reference	GII.P4-GII.4 non-recombinant
+5	MK753015_P2_GII-2	reference	GII.P2-GII.2 non-recombinant
+6	MH218734_P2_GII-2	reference	GII.P2-GII.2 non-recombinant
+7	LC122855_P2_GII-2	reference	GII.P2-GII.2 non-recombinant
+8	MN447470_P16_GII-16	reference	GII.P16-GII.16 non-recombinant (P16 polymerase donor)
+9	MT729791_P17_GII-17	reference	GII.P17-GII.17 non-recombinant
+10	LC369214_P17_GII-17	reference	GII.P17-GII.17 non-recombinant
+11	MK282257_P17_GII-17	reference	GII.P17-GII.17 non-recombinant
+12	PV588655_P17_GII-17	reference	GII.P17-GII.17 non-recombinant
+13	PV588657_P17_GII-17	reference	GII.P17-GII.17 non-recombinant
+14	LC122831_P3_GII-3	reference	GII.P3-GII.3 non-recombinant
+15	KJ194500_P3_GII-3	reference	GII.P3-GII.3 non-recombinant
+16	MW305726_P3_GII-3	reference	GII.P3-GII.3 non-recombinant
+17	MW305727_P3_GII-3	reference	GII.P3-GII.3 non-recombinant
+18	MW305731_P3_GII-3	reference	GII.P3-GII.3 non-recombinant
+19	LC122922_P7_GII-6	reference	GII.P7-GII.6 non-recombinant
+20	JX846927_P7_GII-6	reference	GII.P7-GII.6 non-recombinant
+21	PV174243_P7_GII-6	reference	GII.P7-GII.6 non-recombinant
+22	MW305511_P7_GII-6	reference	GII.P7-GII.6 non-recombinant
+23	MW305523_P7_GII-6	reference	GII.P7-GII.6 non-recombinant
+24	KJ196295_P7_GII-7	reference	GII.P7-GII.7 non-recombinant
+25	MK753032_P16_GII-4	query	query
+26	PP661667_P16_GII-4	reference	GII.P16-GII.4 same recombinant genotype controls
+27	PX563327_P16_GII-4	reference	GII.P16-GII.4 same recombinant genotype controls
+28	PQ215539_P16_GII-4	reference	GII.P16-GII.4 same recombinant genotype controls
+29	PP549880_P16_GII-4	reference	GII.P16-GII.4 same recombinant genotype controls
+30	MT726225_P31_GII-4	reference	GII.P31-GII.4 recombinant controls
+31	MW661281_P31_GII-4	reference	GII.P31-GII.4 recombinant controls
+32	PV275055_P31_GII-4	reference	GII.P31-GII.4 recombinant controls
+33	LC744879_P31_GII-4	reference	GII.P31-GII.4 recombinant controls
+34	KJ196296_P31_GII-4	reference	GII.P31-GII.4 recombinant controls
+35	MW661277_P16_GII-2	reference	GII.P16-GII.2 recombinant controls
+36	OL898507_P16_GII-2	reference	GII.P16-GII.2 recombinant controls
+37	MK614137_P16_GII-2	reference	GII.P16-GII.2 recombinant controls
+38	MG745992_P16_GII-2	reference	GII.P16-GII.2 recombinant controls
+39	LC209479_P16_GII-2	reference	GII.P16-GII.2 recombinant controls
+40	MH218573_P21_GII-3	reference	GII.P21-GII.3 recombinant controls
+41	MH218577_P21_GII-3	reference	GII.P21-GII.3 recombinant controls
+42	MH218584_P21_GII-3	reference	GII.P21-GII.3 recombinant controls
+43	OR536485_P21_GII-3	reference	GII.P21-GII.3 recombinant controls
+44	OR536471_P21_GII-3	reference	GII.P21-GII.3 recombinant controls
+45	LC122751_P12_GII-3	reference	GII.P12-GII.3 recombinant controls
+46	LC122743_P12_GII-3	reference	GII.P12-GII.3 recombinant controls
+47	LC726063_P12_GII-3	reference	GII.P12-GII.3 recombinant controls

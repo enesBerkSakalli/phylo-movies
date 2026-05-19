@@ -11,9 +11,9 @@ export const EXAMPLE_DATASETS = [
     id: 'norovirus-350',
     name: 'Norovirus GII.17',
     description: 'Human norovirus GII.17 pandemic variant phylogeny (350 sequences, full genome alignment)',
-    fileName: 'noro_virus_example_350_gappyout_final.fasta',
+    fileName: 'subsampled_350_gappyout_final.fasta',
     // Path maps to publication_data/ via Vite plugin (see vite.config.mts)
-    filePath: import.meta.env.BASE_URL + 'examples/norovirus/augur_subsampling/noro_virus_example_350_gappyout_final.fasta',
+    filePath: import.meta.env.BASE_URL + 'examples/recombination_norovirus/source_preparation/augur_subsampling/03_trimmed/subsampled_350_gappyout_final.fasta',
     fileType: 'msa',
     parameters: {
       windowSize: 750,
@@ -73,7 +73,7 @@ export const EXAMPLE_DATASETS = [
     name: 'IQ-TREE Bootstrap Trees (24 taxa)',
     description: 'Composition-ranked rogue-taxon bootstrap tree sequence inferred with IQ-TREE default mode (200 trees, 24 taxa, source alignment 14,190 sites)',
     fileName: 'all_trees_24_source-24_taxa24_sites14190.nwk',
-    filePath: import.meta.env.BASE_URL + 'examples/bootstrap_example/iqtree_reinference/current_results/dataset_24_source-24_taxa24_sites14190/ranked/all_trees_24_source-24_taxa24_sites14190.nwk',
+    filePath: import.meta.env.BASE_URL + 'examples/bootstrap_rogue_taxa/current_results/dataset_24_source-24_taxa24_sites14190/ranked/all_trees_24_source-24_taxa24_sites14190.nwk',
     fileType: 'newick',
     parameters: {
       windowSize: null,
@@ -91,7 +91,7 @@ export const EXAMPLE_DATASETS = [
     name: 'IQ-TREE Bootstrap Trees (125 taxa)',
     description: 'Composition-ranked rogue-taxon bootstrap tree sequence inferred with IQ-TREE default mode (200 trees, 125 taxa, source alignment 29,149 sites)',
     fileName: 'all_trees_125_source-125_taxa125_sites29149.nwk',
-    filePath: import.meta.env.BASE_URL + 'examples/bootstrap_example/iqtree_reinference/current_results/dataset_125_source-125_taxa125_sites29149/ranked/all_trees_125_source-125_taxa125_sites29149.nwk',
+    filePath: import.meta.env.BASE_URL + 'examples/bootstrap_rogue_taxa/current_results/dataset_125_source-125_taxa125_sites29149/ranked/all_trees_125_source-125_taxa125_sites29149.nwk',
     fileType: 'newick',
     parameters: {
       windowSize: null,
