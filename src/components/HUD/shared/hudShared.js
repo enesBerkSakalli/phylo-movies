@@ -4,7 +4,7 @@ import {
   selectActiveTreeListLength,
   selectClearClipboard,
   selectClipboardTreeIndex,
-  selectCurrentTreeIndex,
+  selectFrameIndex,
   selectGoToPosition,
   selectHasMsa,
   selectMsaColumnCount,
@@ -19,7 +19,7 @@ export {
   selectActiveTreeListLength,
   selectClearClipboard,
   selectClipboardTreeIndex,
-  selectCurrentTreeIndex,
+  selectFrameIndex,
   selectGoToPosition,
   selectHasMsa,
   selectMsaColumnCount,
@@ -108,8 +108,8 @@ export function buildSegmentText(sequenceIndex, transitionResolver) {
   return 'Input tree';
 }
 
-export function buildMsaWindow(hasMsa, currentTreeIndex, transitionResolver, msaStepSize, msaWindowSize, msaColumnCount) {
+export function buildMsaWindow(hasMsa, frameIndex, transitionResolver, msaStepSize, msaWindowSize, msaColumnCount) {
   if (!hasMsa) return null;
-  const frame = getMSAFrameIndexForTimelineIndex(currentTreeIndex, transitionResolver);
+  const frame = getMSAFrameIndexForTimelineIndex(frameIndex, transitionResolver);
   return calculateWindow(frame, msaStepSize, msaWindowSize, msaColumnCount || 0);
 }

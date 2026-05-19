@@ -25,7 +25,7 @@ export function buildSubtreeConnectors(options) {
     pivotEdge,
     colorManager,
     subtreeHighlightTracking,
-    currentTreeIndex,
+    frameIndex,
     markedSubtreesEnabled = true,
     linkConnectionOpacity = 0.6,
     leftCenter = DEFAULT_CENTER,
@@ -41,7 +41,7 @@ export function buildSubtreeConnectors(options) {
   }
 
   const jumpingSubtreeSets = toConnectorSubtreeSetList(flattenedSubtrees);
-  const currentSubtreeSets = normalizeConnectorSubtreeHighlightsToSets(subtreeHighlightTracking?.[currentTreeIndex]);
+  const currentSubtreeSets = normalizeConnectorSubtreeHighlightsToSets(subtreeHighlightTracking?.[frameIndex]);
   const rawConnections = buildRawConnectorConnections({
     leftPositions,
     rightPositions,

@@ -233,7 +233,7 @@ export class AnimationRunner {
     if (isFinished || timestamp - this._lastProgressSyncTime > 100) {
       this.updateProgress(progress, {
         timelineProgress: playback.timelineProgress,
-        currentTreeIndex: playback.currentTreeIndex,
+        frameIndex: playback.frameIndex,
         holdKind: playback.holdKind
       });
       this._lastProgressSyncTime = timestamp;
@@ -339,7 +339,7 @@ function getSemanticTimelinePlaybackState(state, timestamp, treeList) {
     localT: transitionFrame.transitionProgress,
     isInPause: Boolean(transitionFrame.holdKind),
     holdKind: playbackState.holdKind,
-    currentTreeIndex: playbackState.currentTreeIndex
+    frameIndex: playbackState.frameIndex
   };
 }
 

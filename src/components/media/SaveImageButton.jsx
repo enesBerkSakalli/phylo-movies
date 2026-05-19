@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '../ui/button';
 import { AppTooltip } from '../ui/app-tooltip';
 import { Download } from 'lucide-react';
-import { selectCurrentTreeIndex, selectTreeControllers, useAppStore } from '../../state/phyloStore/store.js';
+import { selectFrameIndex, selectTreeControllers, useAppStore } from '../../state/phyloStore/store.js';
 
 
 // ==========================================================================
@@ -10,7 +10,7 @@ import { selectCurrentTreeIndex, selectTreeControllers, useAppStore } from '../.
 // ==========================================================================
 export function SaveImageButton({ disabled = false }) {
   const treeControllers = useAppStore(selectTreeControllers);
-  const currentTreeIndex = useAppStore(selectCurrentTreeIndex);
+  const frameIndex = useAppStore(selectFrameIndex);
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSaveImage = async () => {
@@ -31,7 +31,7 @@ export function SaveImageButton({ disabled = false }) {
         return;
       }
 
-      const fileName = `phylo-movie-export-${currentTreeIndex + 1}.png`;
+      const fileName = `phylo-movie-export-${frameIndex + 1}.png`;
 
       // Create a proxy 2D canvas to fix WebGL color drift issues
       // Direct toBlob() on WebGL canvas causes color shifts due to premultiplied alpha

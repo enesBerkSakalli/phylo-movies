@@ -64,7 +64,7 @@ export const buildSeriesPoints = (
         x: index + 1,
         y: safeNumber(entry?.value),
         sampleIndex: index,
-        treeIndex: Number.isInteger(entry?.index) ? entry.index : index,
+        frameIndex: Number.isInteger(entry?.index) ? entry.index : index,
         contextLabel: formatScalePointLabel(index + 1),
       })),
       yMax: 'auto',
@@ -74,8 +74,8 @@ export const buildSeriesPoints = (
   return { points: [], yMax: 'auto' };
 };
 
-export const findActiveInputTreeIndex = (inputTreeIndices, currentTreeIndex) => {
-  const currentIndex = currentTreeIndex ?? 0;
+export const findActiveInputTreeIndex = (inputTreeIndices, frameIndex) => {
+  const currentIndex = frameIndex ?? 0;
   let activeIndex = 0;
 
   for (let i = 0; i < inputTreeIndices.length; i++) {
@@ -89,16 +89,16 @@ export const findActiveInputTreeIndex = (inputTreeIndices, currentTreeIndex) => 
   return activeIndex;
 };
 
-export const resolveActivePointIndex = (barOptionValue, currentTreeIndex, inputTreeIndices, points) => {
+export const resolveActivePointIndex = (barOptionValue, frameIndex, inputTreeIndices, points) => {
   if (!points.length) return 0;
 
   if (barOptionValue === 'scale') {
-    const scaleInputTreeIndices = points.map((point) => point.treeIndex);
-    return findActiveInputTreeIndex(scaleInputTreeIndices, currentTreeIndex);
+    const scaleFrameIndices = points.map((point) => point.frameIndex);
+    return findActiveInputTreeIndex(scaleFrameIndices, frameIndex);
   }
 
   const lastDistanceIndex = Math.max(0, points.length - 1);
-  const inputTreeIndex = findActiveInputTreeIndex(inputTreeIndices, currentTreeIndex);
+  const inputTreeIndex = findActiveInputTreeIndex(inputTreeIndices, frameIndex);
   return Math.min(lastDistanceIndex, inputTreeIndex);
 };
 
@@ -106,12 +106,12 @@ export const resolveCursorX = (points, activePointIndex) => (
   points[activePointIndex]?.x ?? 1
 );
 
-const buildNavigationTarget = (treeIndex, movieTimelineManager) => {
-  if (!Number.isInteger(treeIndex)) return null;
+const buildNavigationTarget = (frameIndex, movieTimelineManager) => {
+  if (!Number.isInteger(frameIndex)) return null;
 
-  const timelineProgress = movieTimelineManager?.getTimelineProgressForTreeIndex?.(treeIndex);
+  const timelineProgress = movieTimelineManager?.getTimelineProgressForFrameIndex?.(frameIndex);
   return {
-    treeIndex,
+    frameIndex,
     seekOptions: Number.isFinite(timelineProgress) ? { timelineProgress } : undefined,
   };
 };
@@ -120,12 +120,12 @@ export const resolveNavigationTarget = (barOptionValue, point, transitionResolve
   if (!point) return null;
 
   if (barOptionValue === 'scale') {
-    return buildNavigationTarget(point.treeIndex, movieTimelineManager);
+    return buildNavigationTarget(point.frameIndex, movieTimelineManager);
   }
 
-  const target = transitionResolver?.getTreeIndexForDistanceIndex?.(point.sampleIndex)
+  const targetFrameIndex = transitionResolver?.getTreeIndexForDistanceIndex?.(point.sampleIndex)
     ?? point.sourceInputTreeIndex;
-  return buildNavigationTarget(target, movieTimelineManager);
+  return buildNavigationTarget(targetFrameIndex, movieTimelineManager);
 };
 
 export const buildPointValueText = (metric, point, pointCount) => {

@@ -4,7 +4,7 @@ import { AppTooltip } from '../../ui/app-tooltip';
 import { useAppStore } from '../../../state/phyloStore/store.js';
 import {
   buildMsaWindow,
-  selectCurrentTreeIndex,
+  selectFrameIndex,
   selectHasMsa,
   selectMsaColumnCount,
   selectMsaStepSize,
@@ -14,13 +14,13 @@ import {
 
 export function MSAWindowSection() {
   const hasMsa = useAppStore(selectHasMsa);
-  const currentTreeIndex = useAppStore(selectCurrentTreeIndex);
+  const frameIndex = useAppStore(selectFrameIndex);
   const transitionResolver = useAppStore(selectTransitionResolver);
   const msaWindowSize = useAppStore(selectMsaWindowSize);
   const msaStepSize = useAppStore(selectMsaStepSize);
   const msaColumnCount = useAppStore(selectMsaColumnCount);
 
-  const msaWindow = buildMsaWindow(hasMsa, currentTreeIndex, transitionResolver, msaStepSize, msaWindowSize, msaColumnCount);
+  const msaWindow = buildMsaWindow(hasMsa, frameIndex, transitionResolver, msaStepSize, msaWindowSize, msaColumnCount);
 
   return (
     <div className="flex items-center gap-3" id="hud-msa-window-item">

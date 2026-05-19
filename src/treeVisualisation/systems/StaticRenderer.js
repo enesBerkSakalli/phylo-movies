@@ -23,27 +23,27 @@ export class StaticRenderer {
 
     const { treeIndex, leftIndex, rightIndex, comparisonMode } = options;
     const state = useAppStore.getState();
-    const { currentTreeIndex, transitionResolver, comparisonMode: comparisonModeFromStore } = state;
+    const { frameIndex, transitionResolver, comparisonMode: comparisonModeFromStore } = state;
     const treeList = selectActiveTreeList(state);
     const linkGeometryMode = this.controller._getLinkGeometryMode?.(state) ?? 'radial-elbow';
 
     // Handle comparison mode (explicit or inferred from store)
     const useComparison = comparisonMode ?? comparisonModeFromStore;
     if (useComparison) {
-      return this._renderComparisonModeStatic(leftIndex, rightIndex, currentTreeIndex, transitionResolver);
+      return this._renderComparisonModeStatic(leftIndex, rightIndex, frameIndex, transitionResolver);
     }
 
     // Single tree mode
-    this._renderSingleTree(treeIndex, currentTreeIndex, treeList, state, linkGeometryMode);
+    this._renderSingleTree(treeIndex, frameIndex, treeList, state, linkGeometryMode);
   }
 
   /*
    * Helper to render comparison mode static view.
    */
-  _renderComparisonModeStatic(leftIndex, rightIndex, currentTreeIndex, transitionResolver) {
+  _renderComparisonModeStatic(leftIndex, rightIndex, frameIndex, transitionResolver) {
     const full = Array.isArray(transitionResolver?.fullTreeIndices) ? transitionResolver.fullTreeIndices : [];
-    const computedRight = full.find((i) => i > currentTreeIndex) ?? full[full.length - 1] ?? currentTreeIndex;
-    const leftIdx = Number.isInteger(leftIndex) ? leftIndex : currentTreeIndex;
+    const computedRight = full.find((i) => i > frameIndex) ?? full[full.length - 1] ?? frameIndex;
+    const leftIdx = Number.isInteger(leftIndex) ? leftIndex : frameIndex;
     const rightIdx = Number.isInteger(rightIndex) ? rightIndex : computedRight;
 
     return this.controller.layerManager.renderComparisonStatic(leftIdx, rightIdx);
@@ -52,15 +52,15 @@ export class StaticRenderer {
   /*
    * Helper to render a single tree in static mode.
    */
-  _renderSingleTree(treeIndex, currentTreeIndex, treeList, state, linkGeometryMode = 'radial-elbow') {
+  _renderSingleTree(treeIndex, frameIndex, treeList, state, linkGeometryMode = 'radial-elbow') {
     if (!treeList?.length) return;
 
     const targetIndex = Number.isInteger(treeIndex)
       ? Math.min(Math.max(treeIndex, 0), treeList.length - 1)
-      : currentTreeIndex;
+      : frameIndex;
 
     const targetTreeData =
-      targetIndex === currentTreeIndex
+      targetIndex === frameIndex
         ? selectCurrentTree(state)
         : treeList[targetIndex];
 

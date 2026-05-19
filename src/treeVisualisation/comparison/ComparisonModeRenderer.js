@@ -278,12 +278,12 @@ export class ComparisonModeRenderer {
    */
   _buildConnectors(leftPositions, rightPositions, leftCenter = [0, 0], rightCenter = [0, 0], leftRadius, rightRadius, activeTreeIndex = null) {
     const state = useAppStore.getState();
-    const currentTreeIndex = Number.isInteger(activeTreeIndex)
+    const frameIndex = Number.isInteger(activeTreeIndex)
       ? activeTreeIndex
-      : (state?.currentTreeIndex ?? 0);
+      : (state?.frameIndex ?? 0);
     const pivotEdgeTracking = state?.pivotEdgeTracking || [];
-    const pivotEdge = pivotEdgeTracking[currentTreeIndex];
-    const pairKey = selectTreePairKeyAtIndex(state, currentTreeIndex);
+    const pivotEdge = pivotEdgeTracking[frameIndex];
+    const pairKey = selectTreePairKeyAtIndex(state, frameIndex);
     const affectedSubtreesBySplit = pairKey
       ? state?.pairSolutions?.[pairKey]?.affected_subtrees_by_split || {}
       : {};
@@ -299,7 +299,7 @@ export class ComparisonModeRenderer {
       pivotEdge,
       colorManager: state?.colorManager,
       subtreeHighlightTracking: state?.subtreeHighlightTracking || [],
-      currentTreeIndex,
+      frameIndex,
       markedSubtreesEnabled: state?.markedSubtreesEnabled ?? true,
       linkConnectionOpacity: state?.linkConnectionOpacity ?? 0.6,
       leftCenter,

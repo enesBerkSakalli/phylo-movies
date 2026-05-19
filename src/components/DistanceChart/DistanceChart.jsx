@@ -9,7 +9,7 @@ import {
 } from 'recharts';
 import {
   selectBarOptionValue,
-  selectCurrentTreeIndex,
+  selectFrameIndex,
   selectDistanceRfd,
   selectDistanceWeightedRfd,
   selectFullTreeIndices,
@@ -40,7 +40,7 @@ const Y_AXIS_WIDTH = 34;
 
 const useTimelineData = ({
   barOptionValue,
-  currentTreeIndex,
+  frameIndex,
   fullTreeIndices,
   robinsonFouldsDistances,
   weightedRobinsonFouldsDistances,
@@ -58,7 +58,7 @@ const useTimelineData = ({
 
     const inputTreeIndices = fullTreeIndices || [];
     const hasData = points.length > 0;
-    const activePointIndex = resolveActivePointIndex(barOptionValue, currentTreeIndex, inputTreeIndices, points);
+    const activePointIndex = resolveActivePointIndex(barOptionValue, frameIndex, inputTreeIndices, points);
     const currentX = resolveCursorX(points, activePointIndex);
 
     return {
@@ -70,7 +70,7 @@ const useTimelineData = ({
     };
   }, [
     barOptionValue,
-    currentTreeIndex,
+    frameIndex,
     fullTreeIndices,
     robinsonFouldsDistances,
     weightedRobinsonFouldsDistances,
@@ -80,7 +80,7 @@ const useTimelineData = ({
 
 export function DistanceChart() {
   const barOptionValue = useAppStore(selectBarOptionValue);
-  const currentTreeIndex = useAppStore(selectCurrentTreeIndex);
+  const frameIndex = useAppStore(selectFrameIndex);
   const transitionResolver = useAppStore(selectTransitionResolver);
   const fullTreeIndices = useAppStore(selectFullTreeIndices);
   const pairInterpolationRanges = useAppStore(selectPairInterpolationRanges);
@@ -92,7 +92,7 @@ export function DistanceChart() {
 
   const { points, yMax, currentX, activePointIndex, hasData } = useTimelineData({
     barOptionValue,
-    currentTreeIndex,
+    frameIndex,
     fullTreeIndices,
     robinsonFouldsDistances,
     weightedRobinsonFouldsDistances,
@@ -114,8 +114,8 @@ export function DistanceChart() {
   const navigateToPoint = useCallback(
     (point) => {
       const target = resolveNavigationTarget(barOptionValue, point, transitionResolver, movieTimelineManager);
-      if (target && Number.isInteger(target.treeIndex)) {
-        goToPosition(target.treeIndex, undefined, target.seekOptions);
+      if (target && Number.isInteger(target.frameIndex)) {
+        goToPosition(target.frameIndex, undefined, target.seekOptions);
       }
     },
     [barOptionValue, goToPosition, movieTimelineManager, transitionResolver],

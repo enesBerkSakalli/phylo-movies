@@ -7,14 +7,14 @@ import { useAppStore } from '../../../state/phyloStore/store.js';
 import {
   buildInterpolationText,
   selectActiveTreeListLength,
-  selectCurrentTreeIndex,
+  selectFrameIndex,
   selectGoToPosition,
   selectPlayhead,
   selectTransitionResolver,
 } from '../shared/hudShared.js';
 
 export function InterpolationCoordinateSection() {
-  const currentTreeIndex = useAppStore(selectCurrentTreeIndex);
+  const frameIndex = useAppStore(selectFrameIndex);
   const playhead = useAppStore(selectPlayhead);
   const transitionResolver = useAppStore(selectTransitionResolver);
   const treeListLength = useAppStore(selectActiveTreeListLength);
@@ -22,7 +22,7 @@ export function InterpolationCoordinateSection() {
 
   const { interpolationText, sequenceIndex } = useMemo(() => {
     const { sequenceIndex, totalSequenceLength } = getIndexMappingValues(
-      currentTreeIndex,
+      frameIndex,
       treeListLength,
       transitionResolver
     );
@@ -30,7 +30,7 @@ export function InterpolationCoordinateSection() {
       interpolationText: buildInterpolationText(sequenceIndex, totalSequenceLength, transitionResolver, playhead),
       sequenceIndex,
     };
-  }, [currentTreeIndex, treeListLength, transitionResolver, playhead]);
+  }, [frameIndex, treeListLength, transitionResolver, playhead]);
 
   const sliderMax = Math.max(0, treeListLength - 1);
   const sliderValue = Math.min(sliderMax, Math.max(0, sequenceIndex || 0));

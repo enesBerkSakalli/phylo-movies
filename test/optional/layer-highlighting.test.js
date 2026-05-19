@@ -796,7 +796,7 @@ describe('Scrubbing Highlighting Integration', () => {
   it('should use correct highlighting when scrubbing to different positions', () => {
     // Simulate scrubbing to tree index 5 - ColorManager is updated with tree 5's data
     const tree5Subtrees = [new Set([50, 51, 52])];
-    mockStoreState.currentTreeIndex = 0; // Store still has stale index
+    mockStoreState.frameIndex = 0; // Store still has stale index
     mockStoreState.getMarkedSubtreeData = () => [new Set([1, 2, 3])]; // Store has stale data
     mockStoreState.getColorManager = () => createMockColorManager({
       markedSubtreeSets: tree5Subtrees // ColorManager has correct data

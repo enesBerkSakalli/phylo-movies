@@ -83,7 +83,7 @@ export function useTreeController() {
           state.setRenderInProgress(true);
           try {
             if (state.comparisonMode) {
-              await renderComparisonMode(controller, state.transitionResolver, state.currentTreeIndex);
+              await renderComparisonMode(controller, state.transitionResolver, state.frameIndex);
             } else if (state.playhead?.timelineProgress != null && typeof controller.renderTimelineProgress === 'function') {
               await controller.renderTimelineProgress(state.playhead.timelineProgress);
             } else {
@@ -159,7 +159,7 @@ export function useTreeController() {
         controllerRef.current = state.treeControllers[0] ?? null;
       }
 
-      const frameIndexChanged = state.currentTreeIndex !== prevState.currentTreeIndex;
+      const frameIndexChanged = state.frameIndex !== prevState.frameIndex;
 
       if (frameIndexChanged) {
         if (!isTimelineScrubbing) {
@@ -232,13 +232,13 @@ export function useTreeController() {
 // HELPERS
 // =============================================================================
 
-async function renderComparisonMode(controller, transitionResolver, currentTreeIndex) {
+async function renderComparisonMode(controller, transitionResolver, frameIndex) {
   const inputTreeIndices = transitionResolver?.fullTreeIndices || [];
-  const sourceInputTreeIndex = transitionResolver?.getSourceGlobalIndex(currentTreeIndex) ?? 0;
+  const sourceInputTreeIndex = transitionResolver?.getSourceGlobalIndex(frameIndex) ?? 0;
   const rightIndex = inputTreeIndices.find((i) => i > sourceInputTreeIndex) ?? inputTreeIndices[inputTreeIndices.length - 1];
 
   await controller.renderAllElements({
-    leftIndex: currentTreeIndex,
+    leftIndex: frameIndex,
     rightIndex,
     comparisonMode: true
   });

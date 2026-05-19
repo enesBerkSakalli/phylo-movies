@@ -79,7 +79,7 @@ export class LayerStyles {
       const visualScale = this._calculateVisualScale(state);
       // Use ColorManager as single source of truth for marked subtree data
       // This ensures correct highlighting during scrubbing when ColorManager is updated
-      // with the scrub position's tree index but store's currentTreeIndex is stale
+      // with the scrub position's tree index but store's frameIndex is stale
       const markedSubtreeData = colorManager?.markedSubtreeSets || [];
       this._nodeHelpers.nodeSize = state.nodeSize ?? this._cache.nodeSize ?? 1;
       this._renderCache = {

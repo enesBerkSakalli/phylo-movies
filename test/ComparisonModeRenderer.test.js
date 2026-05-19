@@ -73,7 +73,7 @@ describe('ComparisonModeRenderer', () => {
     };
 
     useAppStore.setState({
-      currentTreeIndex: 0,
+      frameIndex: 0,
       viewsConnected: true,
       leftTreeOffsetX: 0,
       leftTreeOffsetY: 0,
@@ -121,7 +121,7 @@ describe('ComparisonModeRenderer', () => {
     const convertTreeToLayerData = vi.fn(() => rightData);
 
     useAppStore.setState({
-      currentTreeIndex: 0,
+      frameIndex: 0,
       viewsConnected: true,
       leftTreeOffsetX: 0,
       leftTreeOffsetY: 0,
@@ -179,7 +179,7 @@ describe('ComparisonModeRenderer', () => {
     let layoutCacheKey = 'right-layout-cache-key-a';
 
     useAppStore.setState({
-      currentTreeIndex: 0,
+      frameIndex: 0,
       viewsConnected: true,
       leftTreeOffsetX: 0,
       leftTreeOffsetY: 0,

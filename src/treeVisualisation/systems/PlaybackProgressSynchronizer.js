@@ -16,12 +16,12 @@ export function createPlaybackProgressSynchronizer({
     state.setPlayhead({
       animationProgress: syncState.animationProgress,
       timelineProgress: syncState.timelineProgress,
-      currentTreeIndex: syncState.currentTreeIndex
+      frameIndex: syncState.frameIndex
     });
 
     if (isPrefetchEnabled() && syncState.totalTrees > 0) {
-      prefetchFrame(syncState.currentTreeIndex + 1);
-      prefetchFrame(syncState.currentTreeIndex + 2);
+      prefetchFrame(syncState.frameIndex + 1);
+      prefetchFrame(syncState.frameIndex + 2);
     }
   };
 }
@@ -36,8 +36,8 @@ export function resolvePlaybackProgressSyncState({
   const derivedTreeIndex = totalTrees > 0
     ? Math.min(Math.floor(progress * (totalTrees - 1)), totalTrees - 1)
     : 0;
-  const currentTreeIndex = Number.isInteger(playbackState.currentTreeIndex)
-    ? playbackState.currentTreeIndex
+  const frameIndex = Number.isInteger(playbackState.frameIndex)
+    ? playbackState.frameIndex
     : derivedTreeIndex;
   const timelineProgress = Number.isFinite(playbackState.timelineProgress)
     ? playbackState.timelineProgress
@@ -46,7 +46,7 @@ export function resolvePlaybackProgressSyncState({
   return {
     animationProgress: progress,
     timelineProgress,
-    currentTreeIndex,
+    frameIndex,
     totalTrees
   };
 }
