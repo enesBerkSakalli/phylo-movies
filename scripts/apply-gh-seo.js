@@ -238,6 +238,7 @@ function applyIndexSeo(indexHtml) {
     <link rel="canonical" href="${PRIMARY_URL}">
     <link rel="alternate" hreflang="en" href="${PRIMARY_URL}">
     <link rel="alternate" hreflang="x-default" href="${PRIMARY_URL}">
+    <link rel="apple-touch-icon" sizes="180x180" href="/phylo-movies/icons/apple-touch-icon.png">
     <link rel="manifest" href="/phylo-movies/site.webmanifest">
     <link rel="bookmark" href="${README_URL}">
     <script type="application/ld+json">
@@ -297,6 +298,16 @@ function writeWebManifest() {
         src: '/phylo-movies/icons/phylo-tree-icon.svg',
         sizes: 'any',
         type: 'image/svg+xml'
+      },
+      {
+        src: '/phylo-movies/icons/icon-192.png',
+        sizes: '192x192',
+        type: 'image/png'
+      },
+      {
+        src: '/phylo-movies/icons/icon-512.png',
+        sizes: '512x512',
+        type: 'image/png'
       }
     ]
   };

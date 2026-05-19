@@ -1,0 +1,27 @@
+{
+  "source": "assets/brand/phylo-movies-mark.svg",
+  "source_sha256": "f7078d33844374831178a5f701b097ed1cce18caabb4a4a34a1d64ca637743e9",
+  "generated_outputs": [
+    "electron-app/build/icon.icns",
+    "electron-app/build/icon.ico",
+    "electron-app/build/icon.iconset/icon_128x128.png",
+    "electron-app/build/icon.iconset/icon_128x128@2x.png",
+    "electron-app/build/icon.iconset/icon_16x16.png",
+    "electron-app/build/icon.iconset/icon_16x16@2x.png",
+    "electron-app/build/icon.iconset/icon_256x256.png",
+    "electron-app/build/icon.iconset/icon_256x256@2x.png",
+    "electron-app/build/icon.iconset/icon_32x32.png",
+    "electron-app/build/icon.iconset/icon_32x32@2x.png",
+    "electron-app/build/icon.iconset/icon_512x512.png",
+    "electron-app/build/icon.iconset/icon_512x512@2x.png",
+    "electron-app/build/icon.png",
+    "electron-app/build/icon_16.png",
+    "src/public/icons/apple-touch-icon.png",
+    "src/public/icons/favicon-16.png",
+    "src/public/icons/favicon-32.png",
+    "src/public/icons/icon-192.png",
+    "src/public/icons/icon-512.png",
+    "src/public/icons/phylo-tree-icon.svg"
+  ],
+  "generator": "scripts/generate-brand-icons.mjs"
+}
