@@ -1,13 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   buildSeriesPoints,
+  findActiveInputTreeIndex,
   resolveActivePointIndex,
   resolveCursorX,
   resolveNavigationTarget,
 } from '../../src/components/DistanceChart/distanceChartModel.js';
 
 describe('distanceChartModel', () => {
-  it('keeps scale point display order separate from source tree navigation target', () => {
+  it('keeps scale point display order separate from input tree navigation target', () => {
     const { points } = buildSeriesPoints('scale', [], [], [
       { index: 0, value: 12 },
       { index: 10, value: 18 },
@@ -17,23 +18,33 @@ describe('distanceChartModel', () => {
     expect(points.map((point) => point.x)).toEqual([1, 2, 3]);
     expect(points.map((point) => point.treeIndex)).toEqual([0, 10, 20]);
     expect(points.map((point) => point.contextLabel)).toEqual([
-      'Source tree 1',
-      'Source tree 2',
-      'Source tree 3',
+      'Input tree 1',
+      'Input tree 2',
+      'Input tree 3',
     ]);
-    expect(resolveNavigationTarget('scale', points[1], null)).toBe(10);
+    const movieTimelineManager = {
+      getTimelineProgressForTreeIndex: vi.fn(() => 0.42),
+    };
+
+    expect(resolveNavigationTarget('scale', points[1], null, movieTimelineManager)).toEqual({
+      treeIndex: 10,
+      seekOptions: { timelineProgress: 0.42 },
+    });
   });
 
-  it('labels distance points as source-tree comparisons', () => {
-    const { points } = buildSeriesPoints('rfd', [0.1, 0.4], [], []);
+  it('labels distance points from pair interpolation ranges when available', () => {
+    const { points } = buildSeriesPoints('rfd', [0.1], [], [], [[7, 8]]);
 
     expect(points.map((point) => point.contextLabel)).toEqual([
-      'Source trees 1 to 2',
-      'Source trees 2 to 3',
+      'source input tree 8 to target input tree 9',
     ]);
+    expect(points[0]).toMatchObject({
+      sourceInputTreeIndex: 7,
+      targetInputTreeIndex: 8,
+    });
   });
 
-  it('resolves the scale cursor from source tree indices instead of chart ordinals', () => {
+  it('resolves the scale cursor from input tree indices instead of chart ordinals', () => {
     const { points } = buildSeriesPoints('scale', [], [], [
       { index: 0, value: 12 },
       { index: 10, value: 18 },
@@ -46,13 +57,24 @@ describe('distanceChartModel', () => {
     expect(resolveCursorX(points, activePointIndex)).toBe(2);
   });
 
-  it('keeps distance chart navigation delegated to the transition resolver', () => {
-    const { points } = buildSeriesPoints('rfd', [0.1, 0.4], [], []);
+  it('names active observed-tree lookup as input-tree lookup', () => {
+    expect(findActiveInputTreeIndex([0, 3, 5], 4)).toBe(1);
+  });
+
+  it('returns tree-index plus timeline seek options for distance chart navigation', () => {
+    const { points } = buildSeriesPoints('rfd', [0.1, 0.4], [], [], [[7, 8], [8, 9]]);
     const transitionResolver = {
       getTreeIndexForDistanceIndex: vi.fn((index) => index === 1 ? 12 : 0),
     };
+    const movieTimelineManager = {
+      getTimelineProgressForTreeIndex: vi.fn(() => 0.65),
+    };
 
-    expect(resolveNavigationTarget('rfd', points[1], transitionResolver)).toBe(12);
+    expect(resolveNavigationTarget('rfd', points[1], transitionResolver, movieTimelineManager)).toEqual({
+      treeIndex: 12,
+      seekOptions: { timelineProgress: 0.65 },
+    });
     expect(transitionResolver.getTreeIndexForDistanceIndex).toHaveBeenCalledWith(1);
+    expect(movieTimelineManager.getTimelineProgressForTreeIndex).toHaveBeenCalledWith(12);
   });
 });

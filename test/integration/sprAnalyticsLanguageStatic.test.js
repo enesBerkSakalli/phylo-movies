@@ -1,10 +1,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { SPR_ANALYTICS_COPY } from '../../src/components/TreeStatsPanel/AnalyticsDashboard.contract';
+import { SPR_SUMMARY_LABELS } from '../../src/components/TreeStatsPanel/SubtreeAnalytics/SprSummaryMetrics.contract';
+import { SPR_MOVE_EVENT_TABLE_COPY } from '../../src/components/TreeStatsPanel/SubtreeAnalytics/SprMoveEventTable.contract';
 
 const SPR_FILES = [
+  'src/components/TreeStatsPanel/AnalyticsDashboard.contract.ts',
   'src/components/TreeStatsPanel/AnalyticsDashboard.tsx',
+  'src/components/TreeStatsPanel/SubtreeAnalytics/SprMoveEventTable.contract.ts',
   'src/components/TreeStatsPanel/SubtreeAnalytics/SprSummaryMetrics.tsx',
+  'src/components/TreeStatsPanel/SubtreeAnalytics/SprSummaryMetrics.contract.ts',
   'src/components/TreeStatsPanel/SubtreeAnalytics/MovedSubtreeRecurrenceTable.tsx',
   'src/components/TreeStatsPanel/SubtreeAnalytics/SprMoveEventTable.tsx',
   'src/components/TreeStatsPanel/SubtreeAnalytics/SprActivityTimeline.tsx',
@@ -14,6 +20,14 @@ const SPR_FILES = [
   'src/components/appearance/color/ColoringPanel.jsx',
   'src/components/appearance/FocusHighlightingSection.jsx',
 ];
+
+function collectCopyText(value) {
+  if (value == null) return '';
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value)) return value.map(collectCopyText).join('\n');
+  if (typeof value === 'object') return Object.values(value).map(collectCopyText).join('\n');
+  return String(value);
+}
 
 describe('SPR analytics phylogenetic language', () => {
   it('uses subtree terminology instead of generic group labels', () => {
@@ -37,44 +51,40 @@ describe('SPR analytics phylogenetic language', () => {
       expect(source).not.toContain(phrase);
     });
 
-    expect(source).toContain('Moved Subtree');
-    expect(source).toContain('Recurrent Subtrees');
+    expect([
+      SPR_ANALYTICS_COPY.title,
+      SPR_ANALYTICS_COPY.tabs.details,
+      SPR_MOVE_EVENT_TABLE_COPY.columns.movedSubtree,
+    ]).toEqual([
+      'Moving Subtrees',
+      'Recurrent Subtrees',
+      'Moved Subtree',
+    ]);
   });
 
   it('uses movement terminology instead of exposing event-ledger setup in the UI', () => {
-    const dashboardSource = fs.readFileSync(
-      path.join(process.cwd(), 'src/components/TreeStatsPanel/AnalyticsDashboard.tsx'),
-      'utf8',
-    );
-    const summarySource = fs.readFileSync(
-      path.join(process.cwd(), 'src/components/TreeStatsPanel/SubtreeAnalytics/SprSummaryMetrics.tsx'),
-      'utf8',
-    );
-    const tableSource = fs.readFileSync(
-      path.join(process.cwd(), 'src/components/TreeStatsPanel/SubtreeAnalytics/SprMoveEventTable.tsx'),
-      'utf8',
-    );
     const timelineTooltipSource = fs.readFileSync(
       path.join(process.cwd(), 'src/components/timeline/TimelineSegmentTooltip.jsx'),
       'utf8',
     );
 
-    expect(dashboardSource).toContain('<span>Moving Subtrees</span>');
-    expect(dashboardSource).toContain('Quantifies which taxa or clades change attachment across neighboring trees.');
-    expect(dashboardSource).toContain('TabsTrigger value="events"');
-    expect(dashboardSource).toContain('>Movement Events</TabsTrigger>');
-    expect(dashboardSource).toContain('A movement is one subtree that changes attachment between two neighboring trees.');
-    expect(dashboardSource).not.toContain('event ledger');
-    expect(dashboardSource).not.toContain('backend driver subtree');
+    expect(SPR_ANALYTICS_COPY).toMatchObject({
+      title: 'Moving Subtrees',
+      description: 'Quantifies which taxa or subtrees change attachment across neighboring trees.',
+      countedDescription: 'A movement is one subtree that changes attachment between two neighboring trees. Each row shows what moved, where it moved from, and where it moved to.',
+    });
+    expect(SPR_ANALYTICS_COPY.tabs.events).toBe('Movement Events');
+    const analyticsCopyText = collectCopyText(SPR_ANALYTICS_COPY);
+    expect(analyticsCopyText).not.toContain('event ledger');
+    expect(analyticsCopyText).not.toContain('backend driver subtree');
 
-    expect(summarySource).toContain('label="Movement Events"');
-    expect(summarySource).not.toContain('label="SPR Movements"');
-    expect(summarySource).not.toContain('label="SPR Move Events"');
+    expect(SPR_SUMMARY_LABELS.movementEvents).toBe('Movement Events');
+    expect(Object.values(SPR_SUMMARY_LABELS)).not.toContain('SPR Movements');
+    expect(Object.values(SPR_SUMMARY_LABELS)).not.toContain('SPR Move Events');
 
-    expect(tableSource).toContain('aria-label="Search movements"');
-    expect(tableSource).toContain('No movements match this search.');
-    expect(tableSource).toContain('>Movement</th>');
-    expect(tableSource).not.toContain('Search SPR move events');
+    expect(SPR_MOVE_EVENT_TABLE_COPY.searchLabel).toBe('Search movements');
+    expect(SPR_MOVE_EVENT_TABLE_COPY.noSearchResults).toBe('No movements match this search.');
+    expect(SPR_MOVE_EVENT_TABLE_COPY.columns.movement).toBe('Movement');
 
     expect(timelineTooltipSource).toContain('Moved subtrees');
     expect(timelineTooltipSource).not.toContain('Moved groups');

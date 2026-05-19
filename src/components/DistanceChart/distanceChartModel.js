@@ -9,31 +9,51 @@ const safeNumber = (value, fallback = 0) => {
   return Number.isFinite(numberValue) ? numberValue : fallback;
 };
 
-const buildDistancePoints = (values) => (
-  (values || []).map((value, index) => ({
-    x: index + 1,
-    y: safeNumber(value),
-    sampleIndex: index,
-    contextLabel: formatDistancePointLabel(index),
-  }))
+const resolveDistancePair = (sampleIndex, pairInterpolationRanges = []) => {
+  const range = pairInterpolationRanges[sampleIndex];
+  if (Array.isArray(range) && Number.isInteger(range[0]) && Number.isInteger(range[1])) {
+    return {
+      sourceInputTreeIndex: range[0],
+      targetInputTreeIndex: range[1],
+    };
+  }
+
+  return {
+    sourceInputTreeIndex: sampleIndex,
+    targetInputTreeIndex: sampleIndex + 1,
+  };
+};
+
+const buildDistancePoints = (values, pairInterpolationRanges = []) => (
+  (values || []).map((value, index) => {
+    const pair = resolveDistancePair(index, pairInterpolationRanges);
+    return {
+      x: index + 1,
+      y: safeNumber(value),
+      sampleIndex: index,
+      ...pair,
+      contextLabel: formatDistancePointLabel(pair.sourceInputTreeIndex, pair.targetInputTreeIndex),
+    };
+  })
 );
 
 export const buildSeriesPoints = (
   barOptionValue,
   robinsonFouldsDistances,
   weightedRobinsonFouldsDistances,
-  scaleList
+  scaleList,
+  pairInterpolationRanges = []
 ) => {
   if (barOptionValue === 'rfd') {
     return {
-      points: buildDistancePoints(robinsonFouldsDistances),
+      points: buildDistancePoints(robinsonFouldsDistances, pairInterpolationRanges),
       yMax: 1,
     };
   }
 
   if (barOptionValue === 'w-rfd') {
     return {
-      points: buildDistancePoints(weightedRobinsonFouldsDistances),
+      points: buildDistancePoints(weightedRobinsonFouldsDistances, pairInterpolationRanges),
       yMax: 'auto',
     };
   }
@@ -54,12 +74,12 @@ export const buildSeriesPoints = (
   return { points: [], yMax: 'auto' };
 };
 
-export const findActiveAnchorIndex = (anchors, currentTreeIndex) => {
+export const findActiveInputTreeIndex = (inputTreeIndices, currentTreeIndex) => {
   const currentIndex = currentTreeIndex ?? 0;
   let activeIndex = 0;
 
-  for (let i = 0; i < anchors.length; i++) {
-    if (anchors[i] <= currentIndex) {
+  for (let i = 0; i < inputTreeIndices.length; i++) {
+    if (inputTreeIndices[i] <= currentIndex) {
       activeIndex = i;
     } else {
       break;
@@ -69,32 +89,43 @@ export const findActiveAnchorIndex = (anchors, currentTreeIndex) => {
   return activeIndex;
 };
 
-export const resolveActivePointIndex = (barOptionValue, currentTreeIndex, anchors, points) => {
+export const resolveActivePointIndex = (barOptionValue, currentTreeIndex, inputTreeIndices, points) => {
   if (!points.length) return 0;
 
   if (barOptionValue === 'scale') {
-    const scaleAnchors = points.map((point) => point.treeIndex);
-    return findActiveAnchorIndex(scaleAnchors, currentTreeIndex);
+    const scaleInputTreeIndices = points.map((point) => point.treeIndex);
+    return findActiveInputTreeIndex(scaleInputTreeIndices, currentTreeIndex);
   }
 
   const lastDistanceIndex = Math.max(0, points.length - 1);
-  const anchorIndex = findActiveAnchorIndex(anchors, currentTreeIndex);
-  return Math.min(lastDistanceIndex, anchorIndex);
+  const inputTreeIndex = findActiveInputTreeIndex(inputTreeIndices, currentTreeIndex);
+  return Math.min(lastDistanceIndex, inputTreeIndex);
 };
 
 export const resolveCursorX = (points, activePointIndex) => (
   points[activePointIndex]?.x ?? 1
 );
 
-export const resolveNavigationTarget = (barOptionValue, point, transitionResolver) => {
+const buildNavigationTarget = (treeIndex, movieTimelineManager) => {
+  if (!Number.isInteger(treeIndex)) return null;
+
+  const timelineProgress = movieTimelineManager?.getTimelineProgressForTreeIndex?.(treeIndex);
+  return {
+    treeIndex,
+    seekOptions: Number.isFinite(timelineProgress) ? { timelineProgress } : undefined,
+  };
+};
+
+export const resolveNavigationTarget = (barOptionValue, point, transitionResolver, movieTimelineManager) => {
   if (!point) return null;
 
   if (barOptionValue === 'scale') {
-    return Number.isInteger(point.treeIndex) ? point.treeIndex : null;
+    return buildNavigationTarget(point.treeIndex, movieTimelineManager);
   }
 
-  const target = transitionResolver?.getTreeIndexForDistanceIndex?.(point.sampleIndex);
-  return typeof target === 'number' ? target : null;
+  const target = transitionResolver?.getTreeIndexForDistanceIndex?.(point.sampleIndex)
+    ?? point.sourceInputTreeIndex;
+  return buildNavigationTarget(target, movieTimelineManager);
 };
 
 export const buildPointValueText = (metric, point, pointCount) => {

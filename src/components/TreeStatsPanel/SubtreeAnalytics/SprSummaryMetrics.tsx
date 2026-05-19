@@ -5,6 +5,7 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from '../../ui/tooltip';
+import { SPR_SUMMARY_LABELS } from './SprSummaryMetrics.contract';
 
 interface SprSummaryMetricsProps {
     uniqueMovedSubtreeCount: number;
@@ -61,42 +62,42 @@ export const SprSummaryMetrics = ({
     <div className="grid grid-cols-3 gap-3 mb-4">
         <SummaryTile
             icon={<Hash className="size-3 text-primary" />}
-            label="Unique Moved Subtrees"
+            label={SPR_SUMMARY_LABELS.uniqueMovedSubtrees}
         >
             <div className="text-2xl font-black tracking-tighter tabular-nums">{uniqueMovedSubtreeCount}</div>
         </SummaryTile>
 
         <SummaryTile
             icon={<Zap className="size-3 text-primary" />}
-            label="Movement Events"
+            label={SPR_SUMMARY_LABELS.movementEvents}
         >
             <div className="text-2xl font-black tracking-tighter tabular-nums">{sprMovementCount}</div>
         </SummaryTile>
 
         <SummaryTile
             icon={<ListTree className="size-3 text-primary" />}
-            label="Solver Steps"
+            label={SPR_SUMMARY_LABELS.solverSteps}
         >
             <div className="text-2xl font-black tracking-tighter tabular-nums">{transitionEventCount}</div>
         </SummaryTile>
 
         <SummaryTile
             icon={<Activity className="size-3 text-primary" />}
-            label="Tree Pairs With Moves"
+            label={SPR_SUMMARY_LABELS.treePairsWithMoves}
         >
             <div className="text-2xl font-black tracking-tighter tabular-nums">{activePairCount}</div>
         </SummaryTile>
 
         <SummaryTile
             icon={<Split className="size-3 text-primary" />}
-            label="Single-Taxon Moves"
+            label={SPR_SUMMARY_LABELS.singleTaxonMoves}
         >
             <div className="text-2xl font-black tracking-tighter tabular-nums">{singleTaxonMoveEventPercentage.toFixed(1)}%</div>
         </SummaryTile>
 
         <SummaryTile
             icon={<Info className="size-3 text-primary" />}
-            label="Top Subtree Share"
+            label={SPR_SUMMARY_LABELS.topSubtreeShare}
         >
             {topMovedSubtreePercentage !== null ? (
                 <Tooltip>

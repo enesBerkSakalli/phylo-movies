@@ -17,7 +17,7 @@ function normalizeSubtreeIndices(subtreeSplitIndices) {
 
   if (!Array.isArray(values)) return [];
 
-  return values
+  return Array.from(values)
     .filter(Number.isFinite)
     .sort((a, b) => a - b);
 }
@@ -74,8 +74,8 @@ export function buildSprMoveEventRows(pairSolutions, options = {}) {
     .flatMap(([pairKey, solution], entryIndex) => {
       const parsedPair = parsePairKey(pairKey);
       const pairIndex = resolvePairArrayIndex(pairKey, parsedPair, entryIndex, pairInterpolationRanges);
-      const sourceTreeIndex = parsedPair?.sourceTreeIndex ?? null;
-      const destinationTreeIndex = parsedPair?.destinationTreeIndex ?? null;
+      const sourceInputTreeIndex = parsedPair?.sourceInputTreeIndex ?? null;
+      const targetInputTreeIndex = parsedPair?.targetInputTreeIndex ?? null;
       const measuredEvents = Array.isArray(solution?.spr_move_events)
         ? solution.spr_move_events
         : [];
@@ -116,12 +116,12 @@ export function buildSprMoveEventRows(pairSolutions, options = {}) {
           eventId: `${pairKey}:${eventIndex}`,
           pairKey,
           pairIndex,
-          sourceTreeIndex,
-          destinationTreeIndex,
+          sourceInputTreeIndex,
+          targetInputTreeIndex,
           pairLabel: formatPairLabel({
             pairKey,
-            sourceTreeIndex,
-            destinationTreeIndex,
+            sourceInputTreeIndex,
+            targetInputTreeIndex,
           }),
           eventIndex,
           signature,
@@ -268,8 +268,8 @@ export function calculateSprPairActivity(pairSolutions, options = {}) {
       return {
         pairKey,
         pairIndex,
-        sourceTreeIndex: parsedPair?.sourceTreeIndex ?? null,
-        destinationTreeIndex: parsedPair?.destinationTreeIndex ?? null,
+        sourceInputTreeIndex: parsedPair?.sourceInputTreeIndex ?? null,
+        targetInputTreeIndex: parsedPair?.targetInputTreeIndex ?? null,
         interpolationRange: Array.isArray(pairInterpolationRanges[pairIndex])
           ? pairInterpolationRanges[pairIndex]
           : null,
@@ -334,7 +334,7 @@ export function calculateSprDatasetSummary(pairSolutions, options = {}) {
 }
 
 /**
- * Format pair activity rows for charting SPR activity over neighboring anchor-tree pairs.
+ * Format pair activity rows for charting SPR activity over neighboring input-tree pairs.
  *
  * SPR activity is represented as move events per pair. RFD and W-RFD are carried
  * as topology-distance context, not folded into the activity score.
@@ -435,16 +435,17 @@ function selectFarthestMovedSubtree(movedSubtrees) {
 }
 
 function resolvePairArrayIndex(pairKey, parsedPair, entryIndex, pairInterpolationRanges) {
-  if (parsedPair && Array.isArray(pairInterpolationRanges)) {
+  if (parsedPair && Array.isArray(pairInterpolationRanges) && pairInterpolationRanges.length > 0) {
     const rangeIndex = pairInterpolationRanges.findIndex((range) => (
       Array.isArray(range)
-      && range[0] === parsedPair.sourceTreeIndex
-      && range[1] === parsedPair.destinationTreeIndex
+      && range[0] === parsedPair.sourceInputTreeIndex
+      && range[1] === parsedPair.targetInputTreeIndex
     ));
     if (rangeIndex >= 0) return rangeIndex;
+    return entryIndex;
   }
 
-  if (parsedPair?.sourceTreeIndex !== undefined) return parsedPair.sourceTreeIndex;
+  if (parsedPair?.sourceInputTreeIndex !== undefined) return parsedPair.sourceInputTreeIndex;
   return entryIndex;
 }
 
@@ -570,9 +571,9 @@ function countSplitChangeTimelineEventsByPair(splitChangeTimeline) {
 }
 
 function formatPairLabel(row) {
-  if (row?.sourceTreeIndex !== null && row?.sourceTreeIndex !== undefined
-    && row?.destinationTreeIndex !== null && row?.destinationTreeIndex !== undefined) {
-    return `${row.sourceTreeIndex} -> ${row.destinationTreeIndex}`;
+  if (row?.sourceInputTreeIndex !== null && row?.sourceInputTreeIndex !== undefined
+    && row?.targetInputTreeIndex !== null && row?.targetInputTreeIndex !== undefined) {
+    return `source input tree ${row.sourceInputTreeIndex + 1} to target input tree ${row.targetInputTreeIndex + 1}`;
   }
   return row?.pairKey || '';
 }
@@ -581,7 +582,7 @@ function parsePairKey(pairKey) {
   const match = /^pair_(\d+)_(\d+)$/.exec(pairKey);
   if (!match) return null;
   return {
-    sourceTreeIndex: Number(match[1]),
-    destinationTreeIndex: Number(match[2]),
+    sourceInputTreeIndex: Number(match[1]),
+    targetInputTreeIndex: Number(match[2]),
   };
 }

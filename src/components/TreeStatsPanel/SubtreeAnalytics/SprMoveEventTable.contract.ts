@@ -1,0 +1,24 @@
+export const SPR_MOVE_EVENT_TABLE_COPY = {
+    searchLabel: 'Search movements',
+    searchPlaceholder: 'Search movements by taxa, pair, pivot, from/to...',
+    clearSearchLabel: 'Clear movement search',
+    noSearchResults: 'No movements match this search.',
+    noMovements: 'No movements available for this dataset.',
+    columns: {
+        movement: 'Movement',
+        pair: 'Pair',
+        movedSubtree: 'Moved Subtree',
+        pivot: 'Pivot',
+        from: 'From',
+        to: 'To',
+        steps: 'Steps',
+        metrics: 'Metrics',
+    },
+    metrics: {
+        hops: 'Hops',
+        length: 'Length',
+        rfDistance: 'RF Distance',
+        weightedRf: 'Weighted RF',
+    },
+    minWidthClassName: 'min-w-[820px]',
+};

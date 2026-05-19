@@ -19,6 +19,9 @@ export interface SprMoveEventRow {
     eventId: string;
     pairLabel: string;
     pairKey: string;
+    pairIndex: number;
+    sourceInputTreeIndex: number | null;
+    targetInputTreeIndex: number | null;
     eventIndex: number;
     signature: string;
     splitIndices: number[];
