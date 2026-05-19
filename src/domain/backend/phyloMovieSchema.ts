@@ -1,4 +1,9 @@
-import type { PhyloMovieData } from './phyloMovieTypes';
+import type {
+  PhyloMovieData,
+  SplitChangeTimelineEntry,
+  TreeMetadata,
+  TreePairSolution,
+} from './phyloMovieTypes';
 import { assertRecord, requiredStringArray } from './schemaValidation';
 import {
   validateDistances,
@@ -54,6 +59,12 @@ export function validatePhyloMovieData(data: unknown): PhyloMovieData {
     pairInterpolationRanges,
     treePairSolutions
   );
+  validateTreeMetadataTimelineContracts(
+    treeMetadata,
+    pairInterpolationRanges,
+    treePairSolutions,
+    splitChangeTimeline
+  );
 
   if (typeof data.file_name !== 'string') {
     throw new Error('Invalid phyloMovieData payload: file_name must be a string');
@@ -72,4 +83,75 @@ export function validatePhyloMovieData(data: unknown): PhyloMovieData {
     file_name: data.file_name,
     split_change_timeline: splitChangeTimeline,
   };
+}
+
+function validateTreeMetadataTimelineContracts(
+  treeMetadata: TreeMetadata[],
+  pairInterpolationRanges: Array<[number, number]>,
+  treePairSolutions: Record<string, TreePairSolution>,
+  splitChangeTimeline: SplitChangeTimelineEntry[]
+): void {
+  const inputFrameIndices = collectInputFrameIndices(pairInterpolationRanges, treeMetadata.length);
+  const pairKeyByFrameIndex = collectSplitEventPairKeysByFrameIndex(splitChangeTimeline);
+
+  treeMetadata.forEach((metadata, frameIndex) => {
+    const sourceFrameIndex = metadata.source_tree_global_index;
+    if (sourceFrameIndex !== null && !inputFrameIndices.has(sourceFrameIndex)) {
+      throw new Error(
+        `Invalid phyloMovieData payload: tree_metadata[${frameIndex}].source_tree_global_index must reference an input tree frame`
+      );
+    }
+
+    const metadataPairKey = metadata.tree_pair_key;
+    if (metadataPairKey !== null && !treePairSolutions[metadataPairKey]) {
+      throw new Error(
+        `Invalid phyloMovieData payload: tree_metadata[${frameIndex}].tree_pair_key must reference tree_pair_solutions`
+      );
+    }
+
+    const expectedPairKey = pairKeyByFrameIndex.get(frameIndex);
+    if (expectedPairKey && metadataPairKey !== expectedPairKey) {
+      throw new Error(
+        `Invalid phyloMovieData payload: tree_metadata[${frameIndex}].tree_pair_key must match split_change_timeline pair_key (${expectedPairKey})`
+      );
+    }
+  });
+}
+
+function collectInputFrameIndices(pairInterpolationRanges: Array<[number, number]>, treeCount: number): Set<number> {
+  const inputFrameIndices = new Set<number>();
+
+  pairInterpolationRanges.forEach(([start, end]) => {
+    inputFrameIndices.add(start);
+    inputFrameIndices.add(end);
+  });
+
+  if (!inputFrameIndices.size && treeCount > 0) {
+    inputFrameIndices.add(0);
+    inputFrameIndices.add(treeCount - 1);
+  }
+
+  return inputFrameIndices;
+}
+
+function collectSplitEventPairKeysByFrameIndex(
+  splitChangeTimeline: SplitChangeTimelineEntry[]
+): Map<number, string> {
+  const pairKeyByFrameIndex = new Map<number, string>();
+
+  splitChangeTimeline.forEach((entry) => {
+    if (entry.type !== 'split_event') return;
+
+    for (let frameIndex = entry.step_range_global[0]; frameIndex <= entry.step_range_global[1]; frameIndex += 1) {
+      const existingPairKey = pairKeyByFrameIndex.get(frameIndex);
+      if (existingPairKey && existingPairKey !== entry.pair_key) {
+        throw new Error(
+          `Invalid phyloMovieData payload: split_change_timeline has conflicting pair_key values for frame ${frameIndex}`
+        );
+      }
+      pairKeyByFrameIndex.set(frameIndex, entry.pair_key);
+    }
+  });
+
+  return pairKeyByFrameIndex;
 }

@@ -265,7 +265,7 @@ export class TimelineMathUtils {
         const segment = segments[segmentIndex];
 
         if (!segment) {
-            return this._createStaticInterpolationResult(0, treeList);
+            return this._createStaticTransitionFrame(0, treeList);
         }
 
         const bounds = getSegmentBounds(segmentIndex, timelineData);

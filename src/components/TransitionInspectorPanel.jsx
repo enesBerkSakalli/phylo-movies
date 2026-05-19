@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { ArrowRightLeft, Dna, Gauge, GitBranch, X } from 'lucide-react';
 import { calculateWindow } from '../domain/msa/msaWindowCalculator';
-import { formatScaleValue } from '../domain/tree/scaleUtils';
+import { formatScaleValue, getScaleValue } from '../domain/tree/scaleUtils';
 import { useAppStore } from '../state/phyloStore/store.js';
 import {
   selectDistanceRfd,
@@ -267,22 +267,6 @@ function resolveMsaFrameIndex(segment, pair) {
     return segment.originalTreeIndex;
   }
   return Number.isInteger(pair?.sourceTreeIndex) ? pair.sourceTreeIndex : null;
-}
-
-function getScaleValue(scaleList, sourceGlobalIndex) {
-  if (!Array.isArray(scaleList) || !Number.isInteger(sourceGlobalIndex)) return null;
-
-  const match = scaleList.find((item, index) => {
-    const itemIndex = typeof item === 'object' && item !== null && 'index' in item
-      ? item.index
-      : index;
-    return itemIndex === sourceGlobalIndex;
-  });
-
-  if (typeof match === 'object' && match !== null && 'value' in match) {
-    return Number(match.value);
-  }
-  return Number(match);
 }
 
 function getPairMetric(values, pair) {

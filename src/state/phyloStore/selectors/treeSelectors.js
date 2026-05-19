@@ -1,4 +1,5 @@
 export { selectAnimationSpeed } from './selectAnimationSpeed.js';
+export { selectActiveSourceFrameIndex } from './selectActiveSourceFrameIndex.js';
 export { selectActiveTreeList } from './selectActiveTreeList.js';
 export { selectActiveTreeListLength } from './selectActiveTreeListLength.js';
 export { selectBackward } from './selectBackward.js';

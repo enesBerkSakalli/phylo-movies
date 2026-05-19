@@ -17,7 +17,7 @@ function makeBackendMovieData() {
     interpolated_trees: [tree0, tree1, tree2],
     tree_metadata: [
       { tree_pair_key: null, step_in_pair: null, source_tree_global_index: null },
-      { tree_pair_key: 'pair_0_2', step_in_pair: 1, source_tree_global_index: 0 },
+      { tree_pair_key: 'pair_0_1', step_in_pair: 1, source_tree_global_index: 0 },
       { tree_pair_key: null, step_in_pair: null, source_tree_global_index: null },
     ],
     distances: {
@@ -25,7 +25,7 @@ function makeBackendMovieData() {
       weighted_robinson_foulds: [1],
     },
     tree_pair_solutions: {
-      pair_0_2: {
+      pair_0_1: {
         affected_subtrees_by_split: {},
         attachment_edges_by_split: {},
       },
@@ -35,7 +35,7 @@ function makeBackendMovieData() {
       { type: 'original', global_index: 0, tree_index: 0, name: 'Input tree 1' },
       {
         type: 'split_event',
-        pair_key: 'pair_0_2',
+        pair_key: 'pair_0_1',
         split: [0],
         step_range_global: [1, 1],
         step_range_local: [1, 1],
@@ -150,7 +150,7 @@ describe('phylo store dataset normalization', () => {
     expect(interpolatedContext).toMatchObject({
       treeIndex: 1,
       tree: tree1,
-      pairKey: 'pair_0_2',
+      pairKey: 'pair_0_1',
       isOriginal: false,
       isFullTree: false,
     });

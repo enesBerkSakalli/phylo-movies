@@ -167,4 +167,35 @@ describe('useTreeController static render scheduling', () => {
       root.unmount();
     });
   });
+
+  it('leaves frame-index color sync to the store subscriber', async () => {
+    const { root } = await renderHookHarness();
+
+    updateStore({ currentTreeIndex: 1 });
+
+    expect(storeState.updateColorManagerForCurrentIndex).not.toHaveBeenCalled();
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it('does not schedule a second hook render when navigation changes frame index and playhead together', async () => {
+    const { root } = await renderHookHarness();
+
+    await flushNextRaf();
+    expect(controllerInstance.renderTimelineProgress).toHaveBeenCalledTimes(1);
+
+    updateStore({
+      currentTreeIndex: 1,
+      playhead: { timelineProgress: 0.5, animationProgress: 0.5 }
+    });
+    await flushNextRaf();
+
+    expect(controllerInstance.renderTimelineProgress).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
 });

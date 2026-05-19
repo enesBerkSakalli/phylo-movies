@@ -70,6 +70,7 @@ export const createTreeHighlightStateSlice = (set, get) => ({
     set({ pivotEdgesEnabled: enabled });
     const { updateColorManagerPivotEdge, getCurrentPivotEdge } = get();
     updateColorManagerPivotEdge(enabled ? getCurrentPivotEdge() : []);
+    renderTreeControllers(get());
   },
 
   setMarkedSubtreesEnabled: (enabled) => {
@@ -88,6 +89,7 @@ export const createTreeHighlightStateSlice = (set, get) => ({
     const manual = toManualMarkedSets(manuallyMarkedNodes);
     updateColorManagerMarkedSubtrees([...manual, ...getMarkedSubtreeData()]);
     updateColorManagerHistorySubtrees(enabled ? getSubtreeHistoryData() : []);
+    renderTreeControllers(get());
   },
 
   setUpcomingChangesEnabled: (enabled) => {

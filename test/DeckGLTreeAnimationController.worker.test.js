@@ -78,6 +78,17 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     expect(setPrecomputedData).not.toHaveBeenCalled();
   });
 
+  it('clears transformed tree datasets when interpolation caches reset', () => {
+    controller = new ControllerClass(null);
+    controller._transformedCache.set('dataset-a', {
+      transformedList: [{ id: 'old-tree' }]
+    });
+
+    controller.resetInterpolationCaches();
+
+    expect(controller._transformedCache.size).toBe(0);
+  });
+
   it('includes comparison connectors when fitting the current tree data', () => {
     const controller = Object.create(ControllerClass.prototype);
     const node = { id: 'node-1', position: [0, 0, 0] };

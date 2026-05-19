@@ -523,6 +523,33 @@ describe('Active change edge mapping (small_example)', () => {
     expect(setsToSortedArrays(colorManager.currentMovingSubtrees)).to.deep.equal([[4]]);
   });
 
+  it('renders color-manager updates once after the full explicit tree-index context is coherent', () => {
+    const storeAPI = useAppStore;
+    storeAPI.getState().setMarkedSubtreeScope('all');
+    storeAPI.setState({ upcomingChangesEnabled: true });
+    storeAPI.getState().goToPosition(1);
+
+    let renderCount = 0;
+    storeAPI.getState().setTreeControllers([{
+      destroy: () => {},
+      renderAllElements: () => {
+        renderCount += 1;
+        const colorManager = storeAPI.getState().getColorManager();
+        expect(setsToSortedArrays(colorManager.markedSubtreeSets)).to.deep.equal([[4], [6]]);
+        expect(Array.from(colorManager.currentPivotEdges).sort((a, b) => a - b)).to.deep.equal([2, 3, 4, 5, 6]);
+        expect(setsToSortedArrays(colorManager.sourceEdgeLeaves)).to.deep.equal([[2, 3, 5, 6]]);
+        expect(setsToSortedArrays(colorManager.destinationEdgeLeaves)).to.deep.equal([[2, 3, 5, 6]]);
+        expect(setsToSortedArrays(colorManager.currentMovingSubtrees)).to.deep.equal([[4]]);
+        expect(setsToSortedArrays(colorManager.completedChangeEdges)).to.deep.equal([[10, 11, 12, 13]]);
+        expect(setsToSortedArrays(colorManager.upcomingChangeEdges)).to.deep.equal([[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]]);
+      }
+    }]);
+
+    storeAPI.getState().updateColorManagerForIndex(11);
+
+    expect(renderCount).to.equal(1);
+  });
+
   it('calculates upcoming and completed previews from the explicit sync index', () => {
     const storeAPI = useAppStore;
     storeAPI.setState({ upcomingChangesEnabled: true });

@@ -3,12 +3,10 @@
 import React from 'react';
 import {
   selectActiveTreeList,
+  selectActiveSourceFrameIndex,
   selectBranchTransformation,
-  selectCurrentTreeIndex,
-  selectFullTreeIndices,
   selectMaxScale,
   selectScaleList,
-  selectTransitionResolver,
   useAppStore
 } from '../../state/phyloStore/store.js';
 import { useScaleMetrics } from './ScaleTracking/useScaleMetrics';
@@ -30,12 +28,10 @@ import { SidebarMenuItem, SidebarMenuButton, SidebarMenuSub, SidebarMenuSubItem 
  */
 export const TreeStatsPanel: React.FC = () => {
   // Zustand state: Use granular selectors to minimize re-renders
-  const currentTreeIndex = useAppStore(selectCurrentTreeIndex);
+  const activeSourceFrameIndex = useAppStore(selectActiveSourceFrameIndex);
   const treeList = useAppStore(selectActiveTreeList);
   const scaleList = useAppStore(selectScaleList);
   const maxScale = useAppStore(selectMaxScale);
-  const fullTreeIndices = useAppStore(selectFullTreeIndices);
-  const transitionResolver = useAppStore(selectTransitionResolver);
   const branchTransformation = useAppStore(selectBranchTransformation);
 
   // Compute scale metrics and histogram (memoized)
@@ -47,12 +43,10 @@ export const TreeStatsPanel: React.FC = () => {
     histogramMax,
     histogramStats
   } = useScaleMetrics({
-    currentTreeIndex,
+    sourceFrameIndex: activeSourceFrameIndex ?? 0,
     treeList,
     scaleList,
     maxScale,
-    fullTreeIndices,
-    transitionResolver,
   });
 
   const showBranchLengths = branchTransformation !== 'ignore' && histogramBins.length > 0;

@@ -59,6 +59,10 @@ export class TreeLayoutController {
     this._layoutResultCache?.clear();
   }
 
+  clearTransformedCache() {
+    this._transformedCache?.clear();
+  }
+
   // ==========================================================================
   // UNIFORM SCALING
   // ==========================================================================

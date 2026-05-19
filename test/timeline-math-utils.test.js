@@ -222,6 +222,28 @@ describe('TimelineMathUtils', () => {
     });
   });
 
+  it('returns a safe static frame when timeline progress resolves outside segment data', () => {
+    const treeList = [{ id: 'tree-0' }];
+    const resolved = TimelineMathUtils.getTransitionFrameForTimelineProgress(
+      0.5,
+      [{ interpolationData: [{ originalIndex: 0 }], isFullTree: true }],
+      {
+        totalDuration: 1000,
+        segmentDurations: [1000],
+        cumulativeDurations: []
+      },
+      treeList
+    );
+
+    expect(resolved).to.include({
+      sourceTree: treeList[0],
+      targetTree: treeList[0],
+      transitionProgress: 0,
+      sourceTreeIndex: 0,
+      targetTreeIndex: 0
+    });
+  });
+
   it('uses the timing profile for legacy segments without explicit timing intervals', () => {
     const durations = TimelineMathUtils.calculateSegmentDurations([
       {
