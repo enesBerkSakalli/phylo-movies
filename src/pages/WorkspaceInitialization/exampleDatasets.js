@@ -53,7 +53,7 @@ export const EXAMPLE_DATASETS = [
   {
     id: 'paper-example',
     name: 'Paper Figure Example',
-    description: 'Simple 2-tree example used in publication figures (12 taxa)',
+    description: 'Simple 2-tree example used in publication figures (14 taxa)',
     fileName: 'paper_example.tree',
     filePath: import.meta.env.BASE_URL + 'examples/figure_example/paper_example.tree',
     fileType: 'newick',
@@ -70,10 +70,10 @@ export const EXAMPLE_DATASETS = [
   },
   {
     id: 'bootstrap-24',
-    name: 'Bootstrap Trees (24 taxa)',
-    description: 'Palaeognath phylogeny with 200 bootstrap replicates (24 taxa, birds & crocodilians)',
-    fileName: 'all_trees_24.nwk',
-    filePath: import.meta.env.BASE_URL + 'examples/bootstrap_example/24/all_trees_24.nwk',
+    name: 'IQ-TREE Bootstrap Trees (24 taxa)',
+    description: 'Composition-ranked rogue-taxon bootstrap tree sequence inferred with IQ-TREE default mode (200 trees, 24 taxa, source alignment 14,190 sites)',
+    fileName: 'all_trees_24_source-24_taxa24_sites14190.nwk',
+    filePath: import.meta.env.BASE_URL + 'examples/bootstrap_example/iqtree_reinference/current_results/dataset_24_source-24_taxa24_sites14190/ranked/all_trees_24_source-24_taxa24_sites14190.nwk',
     fileType: 'newick',
     parameters: {
       windowSize: null,
@@ -84,14 +84,14 @@ export const EXAMPLE_DATASETS = [
       usePseudo: false,
     },
     citation: PUBLICATION_CITATION,
-    badge: 'Publication',
+    badge: 'IQ-TREE',
   },
   {
     id: 'bootstrap-125',
-    name: 'Bootstrap Trees (125 taxa)',
-    description: 'Large-scale phylogeny with 200 bootstrap replicates (125 sequences)',
-    fileName: 'all_trees_125.nwk',
-    filePath: import.meta.env.BASE_URL + 'examples/bootstrap_example/125/all_trees_125.nwk',
+    name: 'IQ-TREE Bootstrap Trees (125 taxa)',
+    description: 'Composition-ranked rogue-taxon bootstrap tree sequence inferred with IQ-TREE default mode (200 trees, 125 taxa, source alignment 29,149 sites)',
+    fileName: 'all_trees_125_source-125_taxa125_sites29149.nwk',
+    filePath: import.meta.env.BASE_URL + 'examples/bootstrap_example/iqtree_reinference/current_results/dataset_125_source-125_taxa125_sites29149/ranked/all_trees_125_source-125_taxa125_sites29149.nwk',
     fileType: 'newick',
     parameters: {
       windowSize: null,
@@ -102,7 +102,7 @@ export const EXAMPLE_DATASETS = [
       usePseudo: false,
     },
     citation: PUBLICATION_CITATION,
-    badge: 'Publication',
+    badge: 'IQ-TREE',
   },
 ];
 

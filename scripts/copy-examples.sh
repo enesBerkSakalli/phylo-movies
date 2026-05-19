@@ -26,19 +26,15 @@ cp "$SOURCE/quick_msa_demo/quick_msa_demo_30taxa_10trees.nwk" \
 cp "$SOURCE/quick_msa_demo/quick_msa_demo_30taxa_10windows.fasta" \
    "$DEST/examples/quick_msa_demo/"
 
-# Paper figure example (12 taxa, 2 trees)
+# Paper figure example (14 taxa, 2 trees)
 mkdir -p "$DEST/examples/figure_example"
 cp "$SOURCE/figure_example/paper_example.tree" \
    "$DEST/examples/figure_example/"
 
-# Bootstrap example - 24 taxa
-mkdir -p "$DEST/examples/bootstrap_example/24"
-cp "$SOURCE/bootstrap_example/24/all_trees_24.nwk" \
-   "$DEST/examples/bootstrap_example/24/"
-
-# Bootstrap example - 125 taxa
-mkdir -p "$DEST/examples/bootstrap_example/125"
-cp "$SOURCE/bootstrap_example/125/all_trees_125.nwk" \
-   "$DEST/examples/bootstrap_example/125/"
+# Current IQ-TREE rogue-taxon bootstrap examples
+mkdir -p "$DEST/examples/bootstrap_example/iqtree_reinference"
+rm -rf "$DEST/examples/bootstrap_example/iqtree_reinference/current_results"
+cp -R "$SOURCE/bootstrap_example/iqtree_reinference/current_results" \
+   "$DEST/examples/bootstrap_example/iqtree_reinference/"
 
 echo "Done. Copied 5 example datasets."

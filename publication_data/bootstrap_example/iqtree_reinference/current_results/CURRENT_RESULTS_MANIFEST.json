@@ -1,0 +1,53 @@
+{
+  "datasets": [
+    {
+      "all_trees_lines": 200,
+      "bad_branch_length_trees": [],
+      "bad_ranked_newick_line_refs": [],
+      "bad_sort_order": [],
+      "bad_taxa": [],
+      "dataset": "24",
+      "dataset_directory": "dataset_24_source-24_taxa24_sites14190",
+      "expected_sites": 14190,
+      "expected_taxa": 24,
+      "order_rows": 200,
+      "ranked_order_file": "dataset_24_source-24_taxa24_sites14190/ranked/composition_ranked_bootstrap_replicates_24_source-24_taxa24_sites14190.tsv",
+      "ranked_order_sha256": "247e0bfc5e4840ad80b3788056f0a453f1d6a04edfe85d9baf3aa3021c6a2965",
+      "ranked_trees_file": "dataset_24_source-24_taxa24_sites14190/ranked/all_trees_24_source-24_taxa24_sites14190.nwk",
+      "ranked_trees_sha256": "7eeb64282fd3a15530688e302dcf7e909cfe8fdce302cd50f13aec81ab2fee10"
+    },
+    {
+      "all_trees_lines": 200,
+      "bad_branch_length_trees": [],
+      "bad_ranked_newick_line_refs": [],
+      "bad_sort_order": [],
+      "bad_taxa": [],
+      "dataset": "125",
+      "dataset_directory": "dataset_125_source-125_taxa125_sites29149",
+      "expected_sites": 29149,
+      "expected_taxa": 125,
+      "order_rows": 200,
+      "ranked_order_file": "dataset_125_source-125_taxa125_sites29149/ranked/composition_ranked_bootstrap_replicates_125_source-125_taxa125_sites29149.tsv",
+      "ranked_order_sha256": "d5396248117d2c64afc247c8693d47c6936a271b4b4452762085920601cfc76a",
+      "ranked_trees_file": "dataset_125_source-125_taxa125_sites29149/ranked/all_trees_125_source-125_taxa125_sites29149.nwk",
+      "ranked_trees_sha256": "78a2f421d8f1b5fabe416f34644d016b14345d3b6946963601c533311ba1693f"
+    }
+  ],
+  "inference_artifacts": "kept in staging and documented as log/provenance only",
+  "iqtree_mode": "default",
+  "n_replicates": 200,
+  "ordering_semantics": "ORDERING_SEMANTICS.md",
+  "promoted_at": "2026-05-19T11:17:10+02:00",
+  "publication_outputs": "ranked Newick tree files and semantic composition-ranked bootstrap replicate tables",
+  "publication_status": "current_results",
+  "schema_version": "1.0",
+  "seed": 42,
+  "source_run_directory": "/Users/berksakalli/Projects/phylo-movies/publication_data/bootstrap_example/iqtree_reinference/runs/run_20260518T202621+0200_iqtree-default_bs200_seed42_ds24-125_full-iqtree-default-j4-redo",
+  "source_run_id": "run_20260518T202621+0200_iqtree-default_bs200_seed42_ds24-125_full-iqtree-default-j4-redo",
+  "status": "PASS",
+  "tree_program": "iqtree",
+  "verification": {
+    "json": "verification/verification.json",
+    "report": "verification/VERIFICATION.md"
+  }
+}

@@ -1,0 +1,98 @@
+{
+  "datasets": [
+    {
+      "bootstrap_alignment_directory": "bootstrap_alignments",
+      "composition_labels": [
+        "A",
+        "C",
+        "G",
+        "T",
+        "AMBIGUOUS_OR_GAP"
+      ],
+      "dataset": "24",
+      "dataset_directory": "dataset_24_source-24_taxa24_sites14190",
+      "dataset_label": "dataset_24_source-24_taxa24_sites14190",
+      "iqtree_mode": "default",
+      "jobs": 4,
+      "n_replicates_completed": 200,
+      "n_replicates_requested": 200,
+      "n_sites": 14190,
+      "n_taxa": 24,
+      "original_composition": [
+        65249,
+        68794,
+        46443,
+        71488,
+        88586
+      ],
+      "ranked_outputs": {
+        "all_trees": "ranked/all_trees_24_source-24_taxa24_sites14190.nwk",
+        "all_trees_sha256": "7eeb64282fd3a15530688e302dcf7e909cfe8fdce302cd50f13aec81ab2fee10",
+        "bootstrap_order": "ranked/bootstrap_order_24_source-24_taxa24_sites14190.tsv",
+        "bootstrap_order_sha256": "fd0de9bca959c60f3e1feb01091f8174317efb0804a931149d465caf1cf3f2e7"
+      },
+      "schema_version": "1.0",
+      "seed": 42,
+      "source_alignment": "/Users/berksakalli/Projects/rogue_taxa_analysis/online-data/data/datasets/alignments/24",
+      "source_alignment_sha256": "53041f44bd12a63ca75c5cb98e79b03261f3414eba156656b7908f69e7b8f462",
+      "source_file_basename": "24",
+      "threads": 1,
+      "tree_directory": "trees",
+      "tree_program": "iqtree"
+    },
+    {
+      "bootstrap_alignment_directory": "bootstrap_alignments",
+      "composition_labels": [
+        "A",
+        "C",
+        "G",
+        "T",
+        "AMBIGUOUS_OR_GAP"
+      ],
+      "dataset": "125",
+      "dataset_directory": "dataset_125_source-125_taxa125_sites29149",
+      "dataset_label": "dataset_125_source-125_taxa125_sites29149",
+      "iqtree_mode": "default",
+      "jobs": 4,
+      "n_replicates_completed": 200,
+      "n_replicates_requested": 200,
+      "n_sites": 29149,
+      "n_taxa": 125,
+      "original_composition": [
+        752084,
+        612788,
+        411853,
+        674581,
+        1192319
+      ],
+      "ranked_outputs": {
+        "all_trees": "ranked/all_trees_125_source-125_taxa125_sites29149.nwk",
+        "all_trees_sha256": "78a2f421d8f1b5fabe416f34644d016b14345d3b6946963601c533311ba1693f",
+        "bootstrap_order": "ranked/bootstrap_order_125_source-125_taxa125_sites29149.tsv",
+        "bootstrap_order_sha256": "626057794e463823c41f178fd0dfd72d0a9f19b36c975fc50c53230d75b12c69"
+      },
+      "schema_version": "1.0",
+      "seed": 42,
+      "source_alignment": "/Users/berksakalli/Projects/rogue_taxa_analysis/online-data/data/datasets/alignments/125",
+      "source_alignment_sha256": "404de7c92c5955cdd1f10fde5b539cb2a9e31051961ad8fb565805ba8d82edca",
+      "source_file_basename": "125",
+      "threads": 1,
+      "tree_directory": "trees",
+      "tree_program": "iqtree"
+    }
+  ],
+  "iqtree_mode": "default",
+  "jobs": 4,
+  "n_replicates": 200,
+  "outputs": {
+    "run_log": "run_log.txt",
+    "run_manifest": "RUN_MANIFEST.json"
+  },
+  "run_id": "run_20260518T202621+0200_iqtree-default_bs200_seed42_ds24-125_full-iqtree-default-j4-redo",
+  "schema_version": "1.0",
+  "seed": 42,
+  "source_root": "/Users/berksakalli/Projects/rogue_taxa_analysis/online-data/data/datasets/alignments",
+  "threads": 1,
+  "timestamp_local": "20260518T202621+0200",
+  "tree_program": "iqtree"
+}
