@@ -37,10 +37,7 @@ coverage/
 phylomovie/services/reports/auto
 phylo-io
 backend/logs/debug_log.html
-backend/browser-logs-mcp
-backend/browser-tools-mcp
 backend/logs
-backend/memory-bank-mcp
 backend/msa_uploads
 backend/phylomovie/msa_uploads
 backend/phylomovie/services
@@ -78,9 +75,14 @@ engine/BranchArchitect/**/*.pyc
 publication_data/MBE_DATA_CHECKLIST.md
 publication_data/audit_mbe_compliance.py
 publication_data/intro.md
-publication_data/norovirus/augur_subsampling/scripts/analyze_dataset_for_paper.py
 /data/
 bun.lock
-publication_data/norovirus/recan_recombination_analysis
+publication_data/norovirus/recan_recombination_analysis/runs/
+publication_data/norovirus/recan_recombination_analysis/*.csv
+publication_data/norovirus/recan_recombination_analysis/*.fasta
+publication_data/norovirus/recan_recombination_analysis/*.png
+publication_data/norovirus/recan_recombination_analysis/legacy_stale_outputs/*
+!publication_data/norovirus/recan_recombination_analysis/legacy_stale_outputs/README.md
+publication_data/norovirus/augur_subsampling/paper_text_draft.tex
 Paper_Submission_TODO.md
 
