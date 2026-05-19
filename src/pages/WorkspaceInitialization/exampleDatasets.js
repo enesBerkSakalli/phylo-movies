@@ -31,7 +31,7 @@ export const EXAMPLE_DATASETS = [
   {
     id: 'quick-msa-demo',
     name: 'Quick MSA Demo',
-    description: 'Synthetic 30-taxon alignment with 10 supplied anchor trees for fast alignment-sync testing',
+    description: 'Synthetic 30-taxon alignment with 10 supplied input trees for fast alignment-sync testing',
     fileName: 'quick_msa_demo_30taxa_10trees.nwk',
     filePath: import.meta.env.BASE_URL + 'examples/quick_msa_demo/quick_msa_demo_30taxa_10trees.nwk',
     msaFileName: 'quick_msa_demo_30taxa_10windows.fasta',
@@ -71,7 +71,7 @@ export const EXAMPLE_DATASETS = [
   {
     id: 'bootstrap-24',
     name: 'Bootstrap Trees (24 taxa)',
-    description: 'Palaeognath phylogeny with 100 bootstrap replicates (24 taxa, birds & crocodilians)',
+    description: 'Palaeognath phylogeny with 200 bootstrap replicates (24 taxa, birds & crocodilians)',
     fileName: 'all_trees_24.nwk',
     filePath: import.meta.env.BASE_URL + 'examples/bootstrap_example/24/all_trees_24.nwk',
     fileType: 'newick',
@@ -89,7 +89,7 @@ export const EXAMPLE_DATASETS = [
   {
     id: 'bootstrap-125',
     name: 'Bootstrap Trees (125 taxa)',
-    description: 'Large-scale phylogeny with 100 bootstrap replicates (125 sequences)',
+    description: 'Large-scale phylogeny with 200 bootstrap replicates (125 sequences)',
     fileName: 'all_trees_125.nwk',
     filePath: import.meta.env.BASE_URL + 'examples/bootstrap_example/125/all_trees_125.nwk',
     fileType: 'newick',

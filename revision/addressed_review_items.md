@@ -51,10 +51,10 @@ This checklist summarizes reviewer and editor concerns that have already been ad
   - Evidence: `README.md` notes that hundreds of taxa are interactive on typical laptops, while thousands depend on labels, effects, hardware, and transition-frame count.
 
 - [x] Clarified sliding-window terminology.
-  - Evidence: `docs/terminology.md` standardizes "sliding window", "anchor tree", "transition frame", and related terms; the response draft notes "small sliding-window step sizes".
+  - Evidence: `docs/terminology.md` standardizes "sliding window", "input tree", "transition frame", and related terms; the response draft notes "small sliding-window step sizes".
 
 - [x] Reduced ambiguous terminology in repository documentation.
-  - Evidence: `README.md` points to standardized terminology and distinguishes anchor trees from transition frames.
+  - Evidence: `README.md` points to standardized terminology and distinguishes input trees from transition frames.
 
 ## Usability And Visualization
 
@@ -68,7 +68,7 @@ This checklist summarizes reviewer and editor concerns that have already been ad
   - Evidence: `revision/MBE_revision_response_draft.md` states that the coordinate tooltip was expanded to explain the timeline coordinate and full-precision value.
 
 - [x] Clarified MSA synchronization behavior.
-  - Evidence: `revision/MBE_revision_response_draft.md` explains initialization and update behavior, and clarifies that interpolated frames retain the source-window alignment interval until the next full-tree window is reached.
+  - Evidence: `revision/MBE_revision_response_draft.md` explains initialization and update behavior, and clarifies that interpolated frames retain the source input tree's alignment interval until the next input tree is reached.
 
 - [x] Added reviewer-facing acknowledgement that rectangular layouts are useful and that the current release focuses on radial animated layouts.
   - Evidence: `revision/MBE_revision_response_draft.md`.

@@ -115,7 +115,7 @@ function tagTreeSide(layerData, side) {
 
 ## 🟡 MEDIUM (Called per transition, not per frame)
 
-### 5. find() for anchor index lookup
+### 5. find() for input-tree index lookup
 
 **Files:** Multiple locations use same pattern:
 - [AnimationRunner.js](src/js/treeVisualisation/systems/AnimationRunner.js#L262)
@@ -128,17 +128,17 @@ function tagTreeSide(layerData, side) {
 const rightIdx = full.find((i) => i > fromIndex) ?? full[full.length - 1];
 ```
 
-**Impact:** Anchor arrays typically <100 elements, so not critical. BUT called repeatedly.
+**Impact:** Input-tree index arrays typically <100 elements, so not critical. BUT called repeatedly.
 
 **Replacement:**
 ```js
-// Pre-build anchor lookup when transitionResolver changes
-class AnchorIndex {
-  constructor(anchors) {
-    this._sorted = [...anchors].sort((a, b) => a - b);
+// Pre-build input-tree lookup when transitionResolver changes
+class InputTreeIndex {
+  constructor(inputTreeIndices) {
+    this._sorted = [...inputTreeIndices].sort((a, b) => a - b);
   }
 
-  findNextAnchor(afterIndex) {
+  findNextInputTree(afterIndex) {
     // Binary search O(log n)
     let lo = 0, hi = this._sorted.length;
     while (lo < hi) {
@@ -289,7 +289,7 @@ const clipNodes = nodes?.map(n => ({ ...n, treeSide: 'clipboard' }));
 | 🔴 HIGH   | LabelLayers.js             | Double filter()    | ✅ FIXED - partitionLabels() |
 | 🔴 HIGH   | StaticRenderer.js          | Spread + forEach   | ✅ FIXED - tagTreeSide()     |
 | 🔴 HIGH   | ComparisonModeRenderer.js  | Spread + forEach   | ✅ FIXED - tagTreeSide()     |
-| 🟡 MED    | Multiple                   | find() for anchors | ⏳ Pending                   |
+| 🟡 MED    | Multiple                   | find() for input trees | ⏳ Pending                   |
 | 🟡 MED    | NodeGeometryBuilder        | forEach → for-i    | ⏳ Pending                   |
 | 🟡 MED    | TreeNodeInteractionHandler | find() for picking | ⏳ Pending                   |
 | 🟢 LOW    | animationStageDetector     | Set creation       | Already cached              |
@@ -317,9 +317,9 @@ const clipNodes = nodes?.map(n => ({ ...n, treeSide: 'clipboard' }));
 3. [ ] Create `partitionLabels()` single-pass function
 4. [ ] Update LabelLayers to use partitioned data
 
-### Phase 3: Anchor Index (2 hours)
-5. [ ] Create `AnchorIndex` class with binary search
-6. [ ] Update all find() calls for anchor lookup
+### Phase 3: Input-Tree Index (2 hours)
+5. [ ] Create `InputTreeIndex` class with binary search
+6. [ ] Update all find() calls for input-tree lookup
 
 ### Phase 4: Spatial Picking (Optional, 3 hours)
 7. [ ] Add rbush or custom grid index for node picking

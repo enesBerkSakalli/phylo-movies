@@ -70,12 +70,12 @@ function printGroup(label, files) {
 
 printGroup('Default Mocha specs', mochaSpecs);
 printGroup('Default Vitest specs', vitestSpecs);
-printGroup('Optional Mocha specs', optionalSpecs);
+printGroup('Supplemental Mocha specs', optionalSpecs);
 
 if (orphanSpecs.length > 0) {
   printGroup('Orphan specs', orphanSpecs);
   if (checkMode) {
-    console.error('\nFound test files that are neither default nor optional. Move them or add them to a suite.');
+    console.error('\nFound test files that are neither default nor supplemental. Move them or add them to a suite.');
     process.exit(1);
   }
 } else {

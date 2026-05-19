@@ -33,7 +33,7 @@ A comprehensive guide to common antipatterns in phylogenetic and hierarchical tr
 | Antipattern                                       | Problem                            | Better Approach                                 |
 | ------------------------------------------------- | ---------------------------------- | ----------------------------------------------- |
 | **Linear position interpolation**                 | Nodes "cut through" other branches | Arc-based or hierarchical path interpolation    |
-| **Interpolating between incompatible topologies** | Meaningless intermediate states    | Anchor/mover decomposition (lattice solver)     |
+| **Interpolating between incompatible topologies** | Meaningless intermediate states    | Fixed-context/mover decomposition (lattice solver) |
 | **No easing functions**                           | Mechanical, unnatural motion       | Ease-in-out for organic movement                |
 | **Animating everything simultaneously**           | Cognitive overload                 | Staged animations (collapse → reorder → expand) |
 | **No scrubbing support**                          | Users can't inspect transitions    | Bi-directional interpolation cache              |
@@ -81,7 +81,7 @@ A comprehensive guide to common antipatterns in phylogenetic and hierarchical tr
 
 | Feature                        | Implementation                                              |
 | ------------------------------ | ----------------------------------------------------------- |
-| **Leaf ordering optimization** | `TreeOrderOptimizer` places anchors center, movers at edges |
+| **Leaf ordering optimization** | `TreeOrderOptimizer` places fixed input-tree context centrally, movers at edges |
 | **Staged animations**          | 5-step surgery (zero → collapse → reorder → graft → expand) |
 | **Layout caching**             | `InterpolationCache` with Web Worker background computation |
 | **Stable keys**                | `KeyGenerator` uses `split_indices` for deck.gl layer keys  |
