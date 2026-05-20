@@ -5,15 +5,13 @@ import { AppTooltip } from '../../ui/app-tooltip';
 import { useAppStore } from '../../../state/phyloStore/store.js';
 import {
   buildSegmentText,
-  selectFrameIndex,
-  selectTransitionResolver,
+  selectTimelineCursor,
 } from '../shared/hudShared.js';
 
 export function InterpolationSection() {
-  const frameIndex = useAppStore(selectFrameIndex);
-  const transitionResolver = useAppStore(selectTransitionResolver);
+  const timelineCursor = useAppStore(selectTimelineCursor);
 
-  const segmentText = buildSegmentText(frameIndex, transitionResolver);
+  const segmentText = buildSegmentText(timelineCursor);
   const tooltipText = getTimelineTooltipText(segmentText);
 
   return (

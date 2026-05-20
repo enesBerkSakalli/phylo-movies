@@ -3,11 +3,12 @@ import { toBackendSplitKey } from '../../domain/tree/splits.js';
 import { TimelineInterval, TIMELINE_HOLD_KIND } from '../time/TimelineInterval.js';
 
 export class TimelineTimingBuilder {
+    /**
+     * Build playback intervals only. Multiple holds may land on the same frame;
+     * semantic SPR/event identity still comes from temporal_events via
+     * TimelineEventIndex, not from segment.timing.
+     */
     static buildInputTreeTiming(globalIndex) {
-        if (!Number.isInteger(globalIndex)) {
-            return [];
-        }
-
         return [TimelineInterval.hold({
             holdIndex: globalIndex,
             holdKind: TIMELINE_HOLD_KIND.INPUT_TREE,
@@ -17,61 +18,56 @@ export class TimelineTimingBuilder {
 
     static buildTransitionTiming({
         interpolationData,
-        pairKey,
+        pairId,
+        isNoOpPair = false,
         splitEvent = null,
         sourceGlobalIndex = null,
-        tree_pair_solutions = null
+        sprEvents = []
     }) {
-        if (!Array.isArray(interpolationData) || interpolationData.length === 0) {
-            return [];
-        }
-
         const frameIndices = interpolationData
-            .map(entry => entry?.originalIndex)
+            .map(entry => entry.originalIndex)
             .filter(Number.isInteger);
         const frameIndexSet = new Set(frameIndices);
-        const holdsByIndex = new Map();
+        const holdIntervalsByIndex = new Map();
 
-        if (splitEvent?.step_range_global?.length >= 2) {
-            this._addHoldInterval(
-                holdsByIndex,
-                splitEvent.step_range_global[1],
-                TIMELINE_HOLD_KIND.PIVOT,
-                TIMING_PROFILE.pivotHoldMs,
-                frameIndexSet
-            );
+        if (isNoOpPair) {
+            return [TimelineInterval.hold({
+                holdIndex: frameIndices[frameIndices.length - 1],
+                holdKind: TIMELINE_HOLD_KIND.NO_OP_PAIR,
+                durationMs: TIMING_PROFILE.noOpPairHoldMs
+            })];
         }
 
-        const pairSolution = typeof pairKey === 'string'
-            ? tree_pair_solutions?.[pairKey]
-            : null;
-        const moveEvents = Array.isArray(pairSolution?.spr_move_events)
-            ? pairSolution.spr_move_events
-            : [];
-        const pivotKey = Array.isArray(splitEvent?.split)
-            ? toBackendSplitKey(splitEvent.split)
-            : null;
+        const moveEvents = sprEvents;
+        const pivotKey = splitEvent === null ? null : toBackendSplitKey(splitEvent.split);
 
-        for (const moveEvent of moveEvents) {
-            if (pivotKey && toBackendSplitKey(moveEvent?.pivot_edge) !== pivotKey) {
-                continue;
-            }
+        const timingMoveEvents = moveEvents.filter((moveEvent) => (
+            moveEvent.pair_id === pairId &&
+            (pivotKey === null || toBackendSplitKey(moveEvent.pivot_edge) === pivotKey)
+        ));
 
-            const moveRange = moveEvent?.step_range;
-            if (!Array.isArray(moveRange) || moveRange.length < 2) {
-                continue;
-            }
-
+        for (const moveEvent of timingMoveEvents) {
+            const moveRange = moveEvent.local_step_range;
             const holdIndex = this._localPairStepToGlobalIndex(
                 moveRange[1],
                 splitEvent,
                 sourceGlobalIndex
             );
             this._addHoldInterval(
-                holdsByIndex,
+                holdIntervalsByIndex,
                 holdIndex,
                 TIMELINE_HOLD_KIND.MOVER,
                 TIMING_PROFILE.moverHoldMs,
+                frameIndexSet
+            );
+        }
+
+        if (splitEvent !== null) {
+            this._addHoldInterval(
+                holdIntervalsByIndex,
+                splitEvent.frame_range[1],
+                TIMELINE_HOLD_KIND.PIVOT,
+                TIMING_PROFILE.pivotHoldMs,
                 frameIndexSet
             );
         }
@@ -87,9 +83,9 @@ export class TimelineTimingBuilder {
                 durationMs: TIMING_PROFILE.motionStepMs
             }));
 
-            const hold = holdsByIndex.get(toIndex);
-            if (hold) {
-                timing.push(hold);
+            const holds = holdIntervalsByIndex.get(toIndex);
+            if (holds) {
+                timing.push(...holds);
             }
         }
 
@@ -105,23 +101,12 @@ export class TimelineTimingBuilder {
             return sourceGlobalIndex + localStep + 1;
         }
 
-        const localRange = splitEvent?.step_range_local;
-        const globalRange = splitEvent?.step_range_global;
-        if (
-            Array.isArray(localRange) &&
-            localRange.length >= 2 &&
-            Array.isArray(globalRange) &&
-            globalRange.length >= 2 &&
-            Number.isInteger(localRange[0]) &&
-            Number.isInteger(globalRange[0])
-        ) {
-            return globalRange[0] + (localStep - localRange[0]);
-        }
-
-        return null;
+        const localRange = splitEvent.local_step_range;
+        const globalRange = splitEvent.frame_range;
+        return globalRange[0] + (localStep - localRange[0]);
     }
 
-    static _addHoldInterval(holdsByIndex, holdIndex, holdKind, durationMs, frameIndexSet) {
+    static _addHoldInterval(holdIntervalsByIndex, holdIndex, holdKind, durationMs, frameIndexSet) {
         if (
             !Number.isInteger(holdIndex) ||
             !frameIndexSet.has(holdIndex) ||
@@ -131,13 +116,16 @@ export class TimelineTimingBuilder {
             return;
         }
 
-        const existing = holdsByIndex.get(holdIndex);
-        if (!existing || durationMs > existing.durationMs) {
-            holdsByIndex.set(holdIndex, TimelineInterval.hold({
-                holdIndex,
-                holdKind,
-                durationMs
-            }));
+        const hold = TimelineInterval.hold({
+            holdIndex,
+            holdKind,
+            durationMs
+        });
+        const existing = holdIntervalsByIndex.get(holdIndex);
+        if (existing) {
+            existing.push(hold);
+        } else {
+            holdIntervalsByIndex.set(holdIndex, [hold]);
         }
     }
 }

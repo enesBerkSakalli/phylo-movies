@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildSubtreeConnectors } from '../src/treeVisualisation/deckgl/data/transforms/SubtreeConnectorBuilder.js';
+import { toSubtreeKey } from '../src/domain/tree/splits.js';
 
 const repoRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const builderSourcePath = join(
@@ -367,7 +368,7 @@ describe('SubtreeConnectorBuilder', function () {
 
     const leafInfo = { id: 'leaf-10', split_indices: [10] };
     const subtreeInfo = { id: 'subtree-10-11', split_indices: [10, 11] };
-    const leftPositions = new Map([['10-11', subtreeInfo]]);
+    const leftPositions = new Map([[toSubtreeKey([11, 10]), subtreeInfo]]);
 
     expect(
       resolver.resolveConnectorColorEntry(
@@ -390,25 +391,28 @@ describe('SubtreeConnectorBuilder', function () {
     expect(builderSource).not.toMatch(/function\s+getColorEntry\s*\(/);
   });
 
-  it('indexes connector leaves by name through a dedicated helper', async function () {
+  it('indexes connector leaves by split key through a dedicated helper', async function () {
     const leafIndex = await importConnectorLeafIndex();
 
     expect(leafIndex).not.toBeNull();
 
-    const leafA = { id: 'leaf-a', isLeaf: true, name: 'A' };
-    const leafB = { id: 'leaf-b', isLeaf: true, name: 'B' };
-    const internalA = { id: 'internal-a', isLeaf: false, name: 'A' };
-    const namelessLeaf = { id: 'nameless', isLeaf: true };
+    const leafA = { id: 'leaf-a', isLeaf: true, name: 'A', split_indices: [10] };
+    const leafB = { id: 'leaf-b', isLeaf: true, name: 'B', split_indices: [12] };
+    const duplicateNameLeaf = { id: 'leaf-a-duplicate-name', isLeaf: true, name: 'A', split_indices: [11] };
+    const internalA = { id: 'internal-a', isLeaf: false, name: 'A', split_indices: [10, 11] };
+    const splitlessLeaf = { id: 'splitless', isLeaf: true, name: 'C' };
     const positions = new Map([
-      ['10', leafA],
-      ['10-11', internalA],
-      ['11', namelessLeaf],
-      ['12', leafB],
+      [toSubtreeKey([10]), leafA],
+      [toSubtreeKey([10, 11]), internalA],
+      [toSubtreeKey([11]), duplicateNameLeaf],
+      ['splitless', splitlessLeaf],
+      [toSubtreeKey([12]), leafB],
     ]);
 
-    expect(Array.from(leafIndex.indexConnectorLeavesByName(positions).entries())).toEqual([
-      ['A', { key: '10', info: leafA }],
-      ['B', { key: '12', info: leafB }],
+    expect(Array.from(leafIndex.indexConnectorLeavesBySplitKey(positions).entries())).toEqual([
+      [toSubtreeKey([10]), { key: toSubtreeKey([10]), info: leafA }],
+      [toSubtreeKey([11]), { key: toSubtreeKey([11]), info: duplicateNameLeaf }],
+      [toSubtreeKey([12]), { key: toSubtreeKey([12]), info: leafB }],
     ]);
 
     const leafIndexSource = readFileSync(leafIndexSourcePath, 'utf8');
@@ -432,32 +436,42 @@ describe('SubtreeConnectorBuilder', function () {
 
     const leftInfo = makeLeaf(10, 'A', [-30, -20, 0]);
     const rightInfo = makeLeaf(10, 'A', [130, -20, 0]);
-    const rightLeavesByName = new Map([
-      ['A', { key: '10', info: rightInfo }],
+    const rightLeavesBySplitKey = new Map([
+      [toSubtreeKey([10]), { key: toSubtreeKey([10]), info: rightInfo }],
     ]);
 
     expect(leafPairCandidates.getConnectorLeafPairCandidate({
-      key: '10',
+      key: toSubtreeKey([10]),
       leftInfo,
-      rightLeavesByName,
+      rightLeavesBySplitKey,
       jumpingSubtreeSets: [new Set([10, 11])],
     })).toEqual({
-      leftKey: '10',
-      rightKey: '10',
+      leftKey: toSubtreeKey([10]),
+      rightKey: toSubtreeKey([10]),
       leftInfo,
       rightInfo,
       splitIndices: [10],
       source: [-30, -20, 0],
       target: [130, -20, 0],
+    });
+    expect(leafPairCandidates.getConnectorLeafPairCandidate({
+      key: toSubtreeKey([10]),
+      leftInfo: { ...leftInfo, name: null },
+      rightLeavesBySplitKey,
+      jumpingSubtreeSets: [new Set([10, 11])],
+    })).toMatchObject({
+      leftKey: toSubtreeKey([10]),
+      rightKey: toSubtreeKey([10]),
+      splitIndices: [10],
     });
     expect(leafPairCandidates.getConnectorLeafPairCandidate({
       key: 'raw-left-key',
       leftInfo,
-      rightLeavesByName,
+      rightLeavesBySplitKey,
       jumpingSubtreeSets: [new Set([10, 11])],
     })).toEqual({
       leftKey: 'raw-left-key',
-      rightKey: '10',
+      rightKey: toSubtreeKey([10]),
       leftInfo,
       rightInfo,
       splitIndices: [10],
@@ -465,22 +479,22 @@ describe('SubtreeConnectorBuilder', function () {
       target: [130, -20, 0],
     });
     expect(leafPairCandidates.getConnectorLeafPairCandidate({
-      key: '12',
+      key: toSubtreeKey([12]),
       leftInfo: makeLeaf(12, 'Missing', [30, -20, 0]),
-      rightLeavesByName,
+      rightLeavesBySplitKey,
       jumpingSubtreeSets: [new Set([10, 11])],
     })).toBeNull();
     expect(leafPairCandidates.getConnectorLeafPairCandidate({
-      key: '10',
-      leftInfo: makeLeaf(10, 'Missing', [-30, -20, 0]),
-      rightLeavesByName,
+      key: toSubtreeKey([11]),
+      leftInfo: makeLeaf(11, 'A', [-30, -20, 0]),
+      rightLeavesBySplitKey,
       jumpingSubtreeSets: [new Set([10, 11])],
     })).toBeNull();
 
     const rawSource = readFileSync(rawConnectionsSourcePath, 'utf8');
     const leafPairCandidatesSource = readFileSync(leafPairCandidatesSourcePath, 'utf8');
     expect(rawSource).toMatch(/from\s+['"]\.\/ConnectorLeafPairCandidates\.js['"]/);
-    expect(rawSource).not.toMatch(/rightLeavesByName\.get/);
+    expect(rawSource).not.toMatch(/rightLeavesByName/);
     expect(rawSource).not.toMatch(/rightMatch\.info\.position/);
     expect(leafPairCandidatesSource).not.toMatch(/ConnectorSplitEligibility\.js/);
     expect(leafPairCandidatesSource).not.toMatch(/getEligibleConnectorSplitIndices/);
@@ -561,7 +575,7 @@ describe('SubtreeConnectorBuilder', function () {
 
     const leafInfo = makeLeaf(10, 'A', [-30, -20, 0]);
     const subtreeInfo = { id: 'subtree-10-11', split_indices: [10, 11] };
-    const leftPositions = new Map([['10-11', subtreeInfo]]);
+    const leftPositions = new Map([[toSubtreeKey([10, 11]), subtreeInfo]]);
     const getNodeColor = vi.fn(() => '#ff0000');
 
     expect(visualState.resolveConnectorVisualState({

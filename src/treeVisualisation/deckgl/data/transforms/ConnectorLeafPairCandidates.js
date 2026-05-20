@@ -1,10 +1,10 @@
-import { getSplitIndices, isSubset } from '../../../../domain/tree/splits.js';
+import { getSplitIndices, getSplitKey, isSubset } from '../../../../domain/tree/splits.js';
 
 export function getConnectorLeafPairCandidate(params) {
   const {
     key,
     leftInfo,
-    rightLeavesByName,
+    rightLeavesBySplitKey,
     jumpingSubtreeSets,
   } = params;
 
@@ -13,7 +13,7 @@ export function getConnectorLeafPairCandidate(params) {
   const splitIndices = resolveCandidateSplitIndices(leftInfo, jumpingSubtreeSets);
   if (!splitIndices) return null;
 
-  const rightMatch = rightLeavesByName.get(leftInfo.name);
+  const rightMatch = rightLeavesBySplitKey.get(getSplitKey(leftInfo));
   if (!rightMatch || !hasConnectorLeafPosition(rightMatch.info)) return null;
 
   return {
@@ -28,7 +28,7 @@ export function getConnectorLeafPairCandidate(params) {
 }
 
 function hasConnectorLeafPosition(info) {
-  return Boolean(info.isLeaf && info.name && info.position && info.position.length >= 2);
+  return Boolean(info.isLeaf && info.position && info.position.length >= 2);
 }
 
 function resolveCandidateSplitIndices(info, subtreeSets) {

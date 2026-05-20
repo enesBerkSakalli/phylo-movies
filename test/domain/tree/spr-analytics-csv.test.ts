@@ -63,7 +63,10 @@ describe('createSprMoveEventCsv', () => {
       {
         eventId: 'pair_0_1:0',
         pairLabel: 'source input tree 1 to target input tree 2',
-        pairKey: 'pair_0_1',
+        pairId: 'pair_0_1',
+        pairIndex: 0,
+        sourceInputTreeIndex: 0,
+        targetInputTreeIndex: 1,
         eventIndex: 0,
         signature: '1',
         splitIndices: [1],
@@ -102,7 +105,10 @@ describe('createSprMoveEventCsv', () => {
       {
         eventId: 'pair_0_1:0',
         pairLabel: 'source input tree 1 to target input tree 2',
-        pairKey: 'pair_0_1',
+        pairId: 'pair_0_1',
+        pairIndex: 0,
+        sourceInputTreeIndex: 0,
+        targetInputTreeIndex: 1,
         eventIndex: 0,
         signature: '1',
         splitIndices: [1],

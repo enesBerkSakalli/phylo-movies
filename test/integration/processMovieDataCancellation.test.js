@@ -28,6 +28,44 @@ class MockEventSource {
   }
 }
 
+function makeStreamMetadata(fileName = 'tree.nwk') {
+  return {
+    file_name: fileName,
+    frames: [
+      {
+        frame_index: 0,
+        frame_type: 'input_tree',
+        state_semantics: 'processed_input_tree',
+        is_observed_input: true,
+        input_tree_index: 0,
+        pair_id: null,
+        pair_ordinal: null,
+        local_step_index: null,
+        source_frame_index: null,
+        target_frame_index: null,
+      },
+      {
+        frame_index: 1,
+        frame_type: 'input_tree',
+        state_semantics: 'processed_input_tree',
+        is_observed_input: true,
+        input_tree_index: 1,
+        pair_id: null,
+        pair_ordinal: null,
+        local_step_index: null,
+        source_frame_index: null,
+        target_frame_index: null,
+      },
+    ],
+    pairs: [],
+    temporal_events: [],
+    pivot_edge_tracking: [null, null],
+    subtree_highlight_tracking: [null, null],
+    pair_metrics: { rows: [], semantics: {} },
+    msa: { sequences: null, window_size: 1, step_size: 1 },
+  };
+}
+
 describe('processMovieData cancellation', () => {
   beforeEach(() => {
     MockEventSource.instances = [];
@@ -83,10 +121,7 @@ describe('processMovieData cancellation', () => {
     });
 
     const eventSource = MockEventSource.instances[0];
-    const metadata = {
-      file_name: 'tree.nwk',
-      tree_metadata: [],
-    };
+    const metadata = makeStreamMetadata();
 
     eventSource.emit('metadata', JSON.stringify({ metadata }));
     eventSource.emit('trees_chunk', JSON.stringify({
@@ -125,8 +160,7 @@ describe('processMovieData cancellation', () => {
     const eventSource = MockEventSource.instances[0];
     eventSource.emit('metadata', JSON.stringify({
       metadata: {
-        file_name: 'tree.nwk',
-        tree_metadata: [],
+        ...makeStreamMetadata(),
       },
     }));
     eventSource.emit('trees_chunk', JSON.stringify({
@@ -156,8 +190,7 @@ describe('processMovieData cancellation', () => {
     const eventSource = MockEventSource.instances[0];
     eventSource.emit('metadata', JSON.stringify({
       metadata: {
-        file_name: 'tree.nwk',
-        tree_metadata: [],
+        ...makeStreamMetadata(),
       },
     }));
     eventSource.emit('trees_chunk', JSON.stringify({

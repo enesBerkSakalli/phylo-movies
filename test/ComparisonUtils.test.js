@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import * as ComparisonUtils from '../src/treeVisualisation/comparison/ComparisonUtils.js';
+import { toSubtreeKey } from '../src/domain/tree/splits.js';
 
 const { applyOffset, buildPositionMap, combineLayerData } = ComparisonUtils;
 
@@ -61,7 +62,7 @@ describe('ComparisonUtils', () => {
       name: 'A'
     }];
 
-    const entry = buildPositionMap(nodes, labels).get('0');
+    const entry = buildPositionMap(nodes, labels).get(toSubtreeKey([0]));
 
     expect(entry).toMatchObject({
       id: 'n0',

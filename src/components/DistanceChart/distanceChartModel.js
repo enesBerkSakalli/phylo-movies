@@ -4,67 +4,59 @@ import {
   formatScalePointLabel,
 } from './distanceChartLanguage.js';
 
-const safeNumber = (value, fallback = 0) => {
+const safeNumber = (value, defaultValue = 0) => {
   const numberValue = Number(value);
-  return Number.isFinite(numberValue) ? numberValue : fallback;
+  return Number.isFinite(numberValue) ? numberValue : defaultValue;
 };
 
-const resolveDistancePair = (sampleIndex, pairInterpolationRanges = []) => {
-  const range = pairInterpolationRanges[sampleIndex];
-  if (Array.isArray(range) && Number.isInteger(range[0]) && Number.isInteger(range[1])) {
-    return {
-      sourceInputTreeIndex: range[0],
-      targetInputTreeIndex: range[1],
-    };
-  }
+const resolveDistancePair = (pair) => ({
+    sourceInputTreeIndex: pair.source_input_tree_index,
+    targetInputTreeIndex: pair.target_input_tree_index,
+    sourceFrameIndex: pair.source_frame_index,
+});
 
-  return {
-    sourceInputTreeIndex: sampleIndex,
-    targetInputTreeIndex: sampleIndex + 1,
-  };
-};
-
-const buildDistancePoints = (values, pairInterpolationRanges = []) => (
-  (values || []).map((value, index) => {
-    const pair = resolveDistancePair(index, pairInterpolationRanges);
+const buildDistancePoints = (pairMetrics, pairs, metricKey) => {
+  const pairById = new Map(pairs.map((pair) => [pair.pair_id, pair]));
+  return pairMetrics.rows.map((metricRow, index) => {
+    const pair = resolveDistancePair(pairById.get(metricRow.pair_id));
     return {
       x: index + 1,
-      y: safeNumber(value),
-      sampleIndex: index,
+      y: safeNumber(metricRow[metricKey]),
+      sampleIndex: metricRow.pair_ordinal,
+      pairId: metricRow.pair_id,
       ...pair,
       contextLabel: formatDistancePointLabel(pair.sourceInputTreeIndex, pair.targetInputTreeIndex),
     };
-  })
-);
+  });
+};
 
 export const buildSeriesPoints = (
   barOptionValue,
-  robinsonFouldsDistances,
-  weightedRobinsonFouldsDistances,
+  pairMetrics,
   scaleList,
-  pairInterpolationRanges = []
+  pairs
 ) => {
   if (barOptionValue === 'rfd') {
     return {
-      points: buildDistancePoints(robinsonFouldsDistances, pairInterpolationRanges),
+      points: buildDistancePoints(pairMetrics, pairs, 'robinson_foulds'),
       yMax: 1,
     };
   }
 
   if (barOptionValue === 'w-rfd') {
     return {
-      points: buildDistancePoints(weightedRobinsonFouldsDistances, pairInterpolationRanges),
+      points: buildDistancePoints(pairMetrics, pairs, 'weighted_robinson_foulds'),
       yMax: 'auto',
     };
   }
 
   if (barOptionValue === 'scale') {
     return {
-      points: (scaleList || []).map((entry, index) => ({
+      points: scaleList.map((entry, index) => ({
         x: index + 1,
-        y: safeNumber(entry?.value),
+        y: safeNumber(entry.value),
         sampleIndex: index,
-        frameIndex: Number.isInteger(entry?.index) ? entry.index : index,
+        frameIndex: entry.index,
         contextLabel: formatScalePointLabel(index + 1),
       })),
       yMax: 'auto',
@@ -89,16 +81,17 @@ export const findActiveInputTreeIndex = (inputTreeIndices, frameIndex) => {
   return activeIndex;
 };
 
-export const resolveActivePointIndex = (barOptionValue, frameIndex, inputTreeIndices, points) => {
+export const resolveActivePointIndex = (barOptionValue, timelineCursor, inputTreeIndices, points) => {
   if (!points.length) return 0;
 
   if (barOptionValue === 'scale') {
     const scaleFrameIndices = points.map((point) => point.frameIndex);
-    return findActiveInputTreeIndex(scaleFrameIndices, frameIndex);
+    return findActiveInputTreeIndex(scaleFrameIndices, timelineCursor?.sourceFrameIndex);
   }
 
   const lastDistanceIndex = Math.max(0, points.length - 1);
-  const inputTreeIndex = findActiveInputTreeIndex(inputTreeIndices, frameIndex);
+  const cursorInputTreeIndex = timelineCursor?.sourceInputTreeIndex ?? timelineCursor?.inputTreeIndex;
+  const inputTreeIndex = findActiveInputTreeIndex(inputTreeIndices, cursorInputTreeIndex);
   return Math.min(lastDistanceIndex, inputTreeIndex);
 };
 
@@ -106,26 +99,22 @@ export const resolveCursorX = (points, activePointIndex) => (
   points[activePointIndex]?.x ?? 1
 );
 
-const buildNavigationTarget = (frameIndex, movieTimelineManager) => {
+const buildNavigationTarget = (frameIndex) => {
   if (!Number.isInteger(frameIndex)) return null;
 
-  const timelineProgress = movieTimelineManager?.getTimelineProgressForFrameIndex?.(frameIndex);
   return {
     frameIndex,
-    seekOptions: Number.isFinite(timelineProgress) ? { timelineProgress } : undefined,
   };
 };
 
-export const resolveNavigationTarget = (barOptionValue, point, transitionResolver, movieTimelineManager) => {
+export const resolveNavigationTarget = (barOptionValue, point) => {
   if (!point) return null;
 
   if (barOptionValue === 'scale') {
-    return buildNavigationTarget(point.frameIndex, movieTimelineManager);
+    return buildNavigationTarget(point.frameIndex);
   }
 
-  const targetFrameIndex = transitionResolver?.getTreeIndexForDistanceIndex?.(point.sampleIndex)
-    ?? point.sourceInputTreeIndex;
-  return buildNavigationTarget(targetFrameIndex, movieTimelineManager);
+  return buildNavigationTarget(point.sourceFrameIndex);
 };
 
 export const buildPointValueText = (metric, point, pointCount) => {

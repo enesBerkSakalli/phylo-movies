@@ -197,7 +197,7 @@ export class DeckTimelineRenderer {
     }
 
     const segmentLabel = `Segment ${segmentIndex + 1} of ${this.segments.length}`;
-    if (segment.isFullTree) {
+    if (segment.isInputTreeSegment) {
       const sourceIndex = Number.isInteger(segment.originalTreeIndex)
         ? segment.originalTreeIndex + 1
         : segmentIndex + 1;
@@ -205,7 +205,7 @@ export class DeckTimelineRenderer {
     }
 
     const frameLabel = this._formatGeneratedFrameRange(segment);
-    const pairLabel = this._formatTreePairLabel(segment.treePairKey);
+    const pairLabel = this._formatPairLabel(segment);
 
     return [segmentLabel, frameLabel, pairLabel].filter(Boolean).join(', ');
   }
@@ -222,13 +222,14 @@ export class DeckTimelineRenderer {
     return 'generated frames';
   }
 
-  _formatTreePairLabel(pairKey) {
-    if (typeof pairKey !== 'string') return null;
-
-    const match = pairKey.match(/^pair_(\d+)_(\d+)$/);
-    if (!match) return `transition ${pairKey}`;
-
-    return `from source input tree ${Number(match[1]) + 1} to target input tree ${Number(match[2]) + 1}`;
+  _formatPairLabel(segment) {
+    if (
+      Number.isInteger(segment.sourceInputTreeIndex) &&
+      Number.isInteger(segment.targetInputTreeIndex)
+    ) {
+      return `from source input tree ${segment.sourceInputTreeIndex + 1} to target input tree ${segment.targetInputTreeIndex + 1}`;
+    }
+    return `transition ${segment.pairId}`;
   }
 
   _bindResizeObservers() {

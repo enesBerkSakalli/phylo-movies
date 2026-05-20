@@ -1,13 +1,12 @@
-import { TimelineMathUtils } from '../math/TimelineMathUtils.js';
+import { selectInputFrameIndices } from '../../state/phyloStore/selectors/treeSelectors.js';
 
 // ============================================================================
 // SCRUBBER API
 // ============================================================================
 
 export class ScrubberAPI {
-  constructor(treeController, transitionResolver, timelineManager = null, store) {
+  constructor(treeController, timelineManager = null, store) {
     this.treeController = treeController;
-    this.transitionResolver = transitionResolver;
     this.timelineManager = timelineManager;
     this.store = store;
     this.currentProgress = 0;
@@ -21,13 +20,13 @@ export class ScrubberAPI {
   // ==========================================================================
 
   async startScrubbing(progress) {
-    this.currentProgress = TimelineMathUtils.clampProgress(progress ?? 0);
+    this.currentProgress = clampProgress(progress ?? 0);
     this.lastTransitionState = null;
     this.pendingProgress = null;
   }
 
   async updatePosition(progress) {
-    const clampedProgress = TimelineMathUtils.clampProgress(progress);
+    const clampedProgress = clampProgress(progress);
     this.currentProgress = clampedProgress;
     this.pendingProgress = clampedProgress;
     await this._flushPendingUpdates();
@@ -35,7 +34,7 @@ export class ScrubberAPI {
 
   async endScrubbing(finalProgress = null) {
     if (finalProgress !== null) {
-      const clamped = TimelineMathUtils.clampProgress(finalProgress);
+      const clamped = clampProgress(finalProgress);
       if (Math.abs(clamped - this.currentProgress) > 1e-6 || this.pendingProgress !== null) {
         this.currentProgress = clamped;
         this.pendingProgress = clamped;
@@ -56,7 +55,6 @@ export class ScrubberAPI {
     this.pendingProgress = null;
     this.processingPromise = null;
     this.treeController = null;
-    this.transitionResolver = null;
     this.store = null;
   }
 
@@ -120,7 +118,7 @@ export class ScrubberAPI {
     });
 
     if (state.comparisonMode) {
-      const inputTreeIndices = this.transitionResolver?.fullTreeIndices ?? [];
+      const inputTreeIndices = selectInputFrameIndices(state);
       options.comparisonMode = true;
       options.rightTreeIndex = inputTreeIndices.find((i) => i > transitionFrame.sourceTreeIndex) ?? inputTreeIndices[inputTreeIndices.length - 1];
     }
@@ -143,4 +141,9 @@ export class ScrubberAPI {
 
     return this.timelineManager.getTransitionFrameForTimelineProgress(progress);
   }
+}
+
+function clampProgress(value) {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.min(1, value));
 }

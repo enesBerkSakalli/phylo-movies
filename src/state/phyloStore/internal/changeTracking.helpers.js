@@ -7,7 +7,7 @@ import {
   collectUniqueEdges
 } from '../../../domain/tree/splits.js';
 import { findPreviousInputTreeSequenceIndex, findNextInputTreeSequenceIndex } from '../../../domain/indexing/IndexMapping.js';
-import { selectFullTreeIndices, selectTreePairKeyAtIndex } from '../selectors/treeSelectors.js';
+import { selectInputFrameIndices, selectPairById, selectTimelineFrameAtIndex } from '../selectors/treeSelectors.js';
 
 // ============================================================================
 // SYSTEM HELPERS (Rendering, Persistence, Storage)
@@ -21,8 +21,8 @@ export function calculateChangePreviews(state, indexOverride = null) {
     return { upcoming: [], completed: [] };
   }
 
-  const inputTreeIndices = selectFullTreeIndices(state);
-  if (!inputTreeIndices.length || !pivotEdgeTracking?.length) {
+  const inputTreeIndices = selectInputFrameIndices(state);
+  if (!inputTreeIndices.length || !pivotEdgeTracking.length) {
     return { upcoming: [], completed: [] };
   }
 
@@ -30,7 +30,9 @@ export function calculateChangePreviews(state, indexOverride = null) {
   const nextInputTreeIndex = findNextInputTreeSequenceIndex(inputTreeIndices, frameIndex);
   const currentEdge = pivotEdgeTracking[frameIndex];
   // Must use toSubtreeKey to match how collectUniqueEdges generates keys (was JSON.stringify which caused mismatch)
-  const currentKey = currentEdge?.length > 0 ? toSubtreeKey(currentEdge) : null;
+  const currentKey = Array.isArray(currentEdge) && currentEdge.length > 0
+    ? toSubtreeKey(currentEdge)
+    : null;
 
   const completed = collectUniqueEdges(pivotEdgeTracking, previousInputTreeIndex + 1, frameIndex, currentKey);
 
@@ -63,21 +65,13 @@ export function clearEdgePreviews(colorManager) {
 // ============================================================================
 
 export function resolveMarkedSubtrees(state, indexOverride = null) {
-  const { frameIndex, transitionResolver, markedSubtreeScope } = state;
+  const { frameIndex, markedSubtreeScope } = state;
   const index = indexOverride ?? frameIndex;
 
-  if (transitionResolver?.isFullTree?.(index)) return [];
+  if (isInputFrame(state, index)) return [];
 
   if (markedSubtreeScope === 'current') {
-    let subtree = getSubtreeAtIndex(state, index);
-
-    // If no subtree data at current index (interpolated frame), try mapping to source tree
-    if ((!subtree || subtree.length === 0) && transitionResolver?.getSourceGlobalIndex) {
-      const sourceIndex = transitionResolver.getSourceGlobalIndex(index);
-      if (sourceIndex !== index) {
-        subtree = getSubtreeAtIndex(state, sourceIndex);
-      }
-    }
+    const subtree = getSubtreeAtIndex(state, index);
 
     // Normalize before returning to ensure we don't return raw ambiguous arrays
     return parseSubtreeHighlightEntry(subtree);
@@ -89,23 +83,22 @@ export function resolveMarkedSubtrees(state, indexOverride = null) {
 }
 
 export function getSubtreeAtIndex(state, index) {
-  const subtree = state.subtreeHighlightTracking?.[index];
+  const subtree = state.subtreeHighlightTracking[index];
   return Array.isArray(subtree) ? subtree : [];
 }
 
 export function getMovingSubtreeAtIndex(state, index) {
-  const subtree = state.subtreeHighlightTracking?.[index];
+  const subtree = state.subtreeHighlightTracking[index];
   return parseSubtreeHighlightEntry(subtree);
 }
 
 export function getAffectedSubtreesForPivotEdge(state, index) {
-  const edge = state.pivotEdgeTracking?.[index];
+  const edge = state.pivotEdgeTracking[index];
   if (!Array.isArray(edge) || edge.length === 0) return [];
 
-  const pairKey = selectTreePairKeyAtIndex(state, index);
-  if (!pairKey) return [];
-  const affectedSubtreesBySplit = state.pairSolutions?.[pairKey]?.affected_subtrees_by_split;
-  if (!affectedSubtreesBySplit) return [];
+  const pairId = selectTimelineFrameAtIndex(state, index)?.pair_id ?? null;
+  if (!pairId) return [];
+  const affectedSubtreesBySplit = selectPairById(state)[pairId].solution.affected_subtrees_by_split;
 
   return flattenSplitSets(getBackendSplitMapValue(affectedSubtreesBySplit, edge));
 }
@@ -114,11 +107,11 @@ export function getAffectedSubtreesForPivotEdge(state, index) {
  * Retrieves the history of subtrees for a given index, relative to the last input tree.
  */
 export function getSubtreeHistoryAtIndex(state, index) {
-  if (state.transitionResolver?.isFullTree?.(index)) return [];
+  if (isInputFrame(state, index)) return [];
   const tracking = state.subtreeHighlightTracking;
-  if (!Array.isArray(tracking) || tracking.length === 0) return [];
+  if (tracking.length === 0) return [];
 
-  const inputTreeIndices = selectFullTreeIndices(state);
+  const inputTreeIndices = selectInputFrameIndices(state);
   if (!inputTreeIndices.length) return [];
 
   const previousInputTreeIndex = findPreviousInputTreeSequenceIndex(inputTreeIndices, index);
@@ -146,21 +139,18 @@ export function getSubtreeHistoryAtIndex(state, index) {
  * Filters out moving nodes from the edge definitions.
  */
 export function getSourceDestinationEdgesAtIndex(state, index) {
-  if (state.transitionResolver?.isFullTree?.(index)) return { source: [], dest: [] };
+  if (isInputFrame(state, index)) return { source: [], dest: [] };
 
-  const pivotEdge = state.pivotEdgeTracking?.[index];
-  const subtrees = state.subtreeHighlightTracking?.[index];
+  const pivotEdge = state.pivotEdgeTracking[index];
+  const subtrees = state.subtreeHighlightTracking[index];
 
-  // Guard clauses for missing data
   if (!Array.isArray(pivotEdge) || pivotEdge.length === 0) return { source: [], dest: [] };
   if (!Array.isArray(subtrees) || subtrees.length === 0) return { source: [], dest: [] };
 
-  // Retrieve Pair Solutions
-  const pairKey = selectTreePairKeyAtIndex(state, index);
-  const pairSolution = pairKey ? state.pairSolutions?.[pairKey] : null;
-  if (!pairSolution) return { source: [], dest: [] };
+  const pairId = selectTimelineFrameAtIndex(state, index)?.pair_id ?? null;
+  if (!pairId) return { source: [], dest: [] };
 
-  const attachmentEdgesBySplit = pairSolution.attachment_edges_by_split || {};
+  const attachmentEdgesBySplit = selectPairById(state)[pairId].solution.attachment_edges_by_split;
   const attachmentEdgesForPivot = getBackendSplitMapValue(attachmentEdgesBySplit, pivotEdge);
   if (!attachmentEdgesForPivot) return { source: [], dest: [] };
 
@@ -182,8 +172,8 @@ function resolveEdgeMappings(subtreeList, attachmentEdgesForPivot, movingSet) {
 
   for (const subtree of subtreeList) {
     const attachmentEdges = getBackendSplitMapValue(attachmentEdgesForPivot, subtree);
-    const sourceEdge = attachmentEdges?.source;
-    const destEdge = attachmentEdges?.destination;
+    const sourceEdge = attachmentEdges.source;
+    const destEdge = attachmentEdges.destination;
 
     if (sourceEdge) {
       const trimmed = filterMovingNodes(sourceEdge, movingSet);
@@ -200,7 +190,11 @@ function resolveEdgeMappings(subtreeList, attachmentEdgesForPivot, movingSet) {
 }
 
 function filterMovingNodes(edge, movingSet) {
-  return Array.isArray(edge) ? edge.filter((leaf) => !movingSet.has(leaf)) : [];
+  return edge.filter((leaf) => !movingSet.has(leaf));
+}
+
+function isInputFrame(state, index) {
+  return selectInputFrameIndices(state).includes(index);
 }
 
 export function toSubtreeSets(input) {

@@ -23,9 +23,8 @@ const mockColorManager = {
 };
 
 describe('Real Data Integration (test/data/ostrich_bug_response.json)', () => {
-    const pairEntry = Object.entries(realData.tree_pair_solutions || {}).find(([, solution]) => {
-        const affectedSubtreesBySplit = solution?.affected_subtrees_by_split;
-        if (!affectedSubtreesBySplit) return false;
+    const pairEntry = realData.pairs.find((pair) => {
+        const affectedSubtreesBySplit = pair.solution.affected_subtrees_by_split;
         return Object.values(affectedSubtreesBySplit).some((subtreeSets) => flattenSplitSets(subtreeSets).length > 0);
     });
 
@@ -33,13 +32,14 @@ describe('Real Data Integration (test/data/ostrich_bug_response.json)', () => {
         throw new Error('No affected_subtrees_by_split found in test/data/ostrich_bug_response.json');
     }
 
-    const [PAIR_KEY, pairSolution] = pairEntry;
+    const PAIR_ID = pairEntry.pair_id;
+    const pairSolution = pairEntry.solution;
     const sourceTree = realData.interpolated_trees[0]; // Tree 0
     const affectedSubtreesBySplit = pairSolution.affected_subtrees_by_split;
     const firstAffectedSubtreeEntry = Object.entries(affectedSubtreesBySplit).find(([, subtreeSets]) => flattenSplitSets(subtreeSets).length > 0);
 
     if (!firstAffectedSubtreeEntry) {
-        throw new Error(`No usable affected subtree entry found for ${PAIR_KEY}`);
+        throw new Error(`No usable affected subtree entry found for ${PAIR_ID}`);
     }
 
     const [edgeKey, solutionSets] = firstAffectedSubtreeEntry;

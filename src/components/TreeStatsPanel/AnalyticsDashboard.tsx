@@ -18,14 +18,12 @@ import {
 } from './SubtreeAnalytics/sprAnalyticsCsv';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import {
-    selectDistanceRfd,
-    selectDistanceWeightedRfd,
     selectFileName,
     selectLeafNamesByIndex,
     selectMarkedNodes,
-    selectPairInterpolationRanges,
-    selectPairSolutions,
-    selectSplitChangeTimeline,
+    selectPairMetrics,
+    selectPairs,
+    selectTemporalEvents,
     useAppStore
 } from '../../state/phyloStore/store.js';
 import {
@@ -103,38 +101,33 @@ interface SprDatasetSummary {
 export const AnalyticsDashboard = ({ isOpen = false, isActive = false, onOpen, onClose, onFocus }: AnalyticsDashboardProps) => {
     const [windowRect, setWindowRect] = React.useState(getInitialWindowRect);
     const fittedWindow = fitAnalyticsWindowRect(windowRect);
-    const pairSolutions = useAppStore(selectPairSolutions);
+    const pairs = useAppStore(selectPairs);
     const leafNamesByIndex = useAppStore(selectLeafNamesByIndex);
     const fileName = useAppStore(selectFileName) || 'dataset';
-    const robinsonFouldsDistances = useAppStore(selectDistanceRfd);
-    const weightedRobinsonFouldsDistances = useAppStore(selectDistanceWeightedRfd);
-    const pairInterpolationRanges = useAppStore(selectPairInterpolationRanges);
-    const splitChangeTimeline = useAppStore(selectSplitChangeTimeline);
+    const pairMetrics = useAppStore(selectPairMetrics);
+    const temporalEvents = useAppStore(selectTemporalEvents);
     const selectedMovedSubtreeIndices = useAppStore(selectMarkedNodes);
 
     const sprOptions = useMemo(() => ({
-        robinsonFouldsDistances,
-        weightedRobinsonFouldsDistances,
-        pairInterpolationRanges,
-        splitChangeTimeline,
-    }), [robinsonFouldsDistances, weightedRobinsonFouldsDistances, pairInterpolationRanges, splitChangeTimeline]);
+        pairMetrics,
+        temporalEvents,
+    }), [pairMetrics, temporalEvents]);
 
     const movedSubtreeRecurrences = useMemo(() => {
-        if (!pairSolutions || Object.keys(pairSolutions).length === 0) return [];
-        return calculateSprMovedSubtreeRecurrences(pairSolutions);
-    }, [pairSolutions]);
+        return calculateSprMovedSubtreeRecurrences(pairs, sprOptions);
+    }, [pairs, sprOptions]);
 
     const sprSummary = useMemo<SprDatasetSummary>(() => {
-        return calculateSprDatasetSummary(pairSolutions, sprOptions) as SprDatasetSummary;
-    }, [pairSolutions, sprOptions]);
+        return calculateSprDatasetSummary(pairs, sprOptions) as SprDatasetSummary;
+    }, [pairs, sprOptions]);
 
     const pairActivityRows = useMemo(() => {
-        return calculateSprPairActivity(pairSolutions, sprOptions);
-    }, [pairSolutions, sprOptions]);
+        return calculateSprPairActivity(pairs, sprOptions);
+    }, [pairs, sprOptions]);
 
     const sprMoveEvents = useMemo(() => {
-        return buildSprMoveEventRows(pairSolutions, sprOptions);
-    }, [pairSolutions, sprOptions]);
+        return buildSprMoveEventRows(pairs, sprOptions);
+    }, [pairs, sprOptions]);
 
     const singleTaxonMoveEventPercentage = sprSummary.sprMoveEventCount > 0
         ? (sprSummary.singleTaxonMoveEventCount / sprSummary.sprMoveEventCount) * 100

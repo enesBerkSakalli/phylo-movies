@@ -163,7 +163,7 @@ export const SprMoveEventTable = ({ events, leafNamesByIndex, selectedMovedSubtr
                                     </td>
                                     <td className="px-3 py-3 font-semibold">
                                         <div>{event.pairLabel}</div>
-                                        <div className="text-2xs font-normal text-muted-foreground/70">{event.pairKey}</div>
+                                        <div className="text-2xs font-normal text-muted-foreground/70">{event.pairId}</div>
                                     </td>
                                     <td className="px-3 py-3" title={fullSubtreeLabel}>
                                         <div className="truncate font-medium">{subtreeLabel}</div>

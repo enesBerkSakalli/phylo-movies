@@ -116,11 +116,10 @@ describe('deck.gl layer render context', () => {
 
     useAppStore.setState({
       treeList: [treeA, treeB],
-      treeMetadata: [
-        { tree_pair_key: null, step_in_pair: null, source_tree_global_index: null },
-        { tree_pair_key: 'pair_0_1', step_in_pair: 1, source_tree_global_index: 0 },
+      timelineFrames: [
+        { frame_index: 0, frame_type: 'input_tree', pair_id: null },
+        { frame_index: 1, frame_type: 'interpolation_frame', pair_id: 'pair_0_1' },
       ],
-      transitionResolver: { fullTreeIndices: [0] },
       frameIndex: 0,
       showNodeContextMenu,
     });

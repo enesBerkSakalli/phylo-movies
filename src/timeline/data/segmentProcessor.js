@@ -9,8 +9,8 @@ const MIN_SEPARATOR_HEIGHT = 6;
  * Converts timeline segments into visual elements for rendering.
  *
  * Timeline structure:
- * - Input trees (isFullTree=true): Observed phylogenetic trees, shown as circles
- * - Transitions (isFullTree=false): Interpolated sequences between input trees, shown as lines
+ * - Input trees (isInputTreeSegment=true): Observed phylogenetic trees, shown as circles
+ * - Transitions (isInputTreeSegment=false): Interpolated sequences between input trees, shown as lines
  * - Separators: Vertical ticks marking segment boundaries
  */
 export function processSegments({
@@ -38,7 +38,7 @@ export function processSegments({
   const inputTreeTicks = { normal: [], active: [] };
   const transitions = { normal: [], selected: [], hovered: [] };
   const separators = [];
-  const hasTransitions = segments.some(segment => segment && !segment.isFullTree);
+  const hasTransitions = segments.some(segment => segment && !segment.isInputTreeSegment);
   const markerProfile = getMarkerProfile(segments, width, theme);
   const stripTracks = markerProfile.mode === 'strip' && hasTransitions
     ? [createStripTrack(width, snap)]
@@ -61,7 +61,7 @@ export function processSegments({
     const separator = createSeparator(startX, width, height, snap, markerProfile.mode);
     if (separator) separators.push(separator);
 
-    if (segment.isFullTree) {
+    if (segment.isInputTreeSegment) {
       if (markerProfile.mode === 'strip') {
         const tick = createInputTreeTick(startX, endX, width, height, theme, snap);
         if (tick) {
@@ -100,7 +100,7 @@ export function processSegments({
 }
 
 function getMarkerProfile(segments, width, theme) {
-  const inputTreeCount = segments.reduce((count, segment) => count + (segment?.isFullTree ? 1 : 0), 0);
+  const inputTreeCount = segments.reduce((count, segment) => count + (segment?.isInputTreeSegment ? 1 : 0), 0);
   if (inputTreeCount <= 1) return { mode: 'circle', inputTreeCount };
 
   const pixelsPerInputTree = width / inputTreeCount;

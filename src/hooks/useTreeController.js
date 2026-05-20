@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { useAppStore } from '../state/phyloStore/store.js';
+import { selectInputFrameIndices } from '../state/phyloStore/selectors/treeSelectors.js';
 import { DeckGLTreeAnimationController } from '../treeVisualisation/DeckGLTreeAnimationController.js';
 import { calculateWindow } from '../domain/msa/msaWindowCalculator.js';
 import { getMsaColumnCount } from '../domain/msa/msaSequenceSummary.js';
-import { getMSAFrameIndex } from '../domain/indexing/IndexMapping.js';
 
 // =============================================================================
 // HOOK
@@ -83,7 +83,7 @@ export function useTreeController() {
           state.setRenderInProgress(true);
           try {
             if (state.comparisonMode) {
-              await renderComparisonMode(controller, state.transitionResolver, state.frameIndex);
+              await renderComparisonMode(controller, state, state.frameIndex, state.timelineCursor);
             } else if (state.playhead?.timelineProgress != null && typeof controller.renderTimelineProgress === 'function') {
               await controller.renderTimelineProgress(state.playhead.timelineProgress);
             } else {
@@ -108,7 +108,7 @@ export function useTreeController() {
     const syncMsaRegion = ({ force = false } = {}) => {
       const state = useAppStore.getState();
       const msaColumnCount = getMsaColumnCount(state.msaSequences);
-      if (!state.syncMSAEnabled || !state.transitionResolver || !msaColumnCount) {
+      if (!state.syncMSAEnabled || !msaColumnCount) {
         if (force) {
           state.clearMsaRegion?.();
           state.clearMsaPreviousRegion?.();
@@ -116,8 +116,8 @@ export function useTreeController() {
         return;
       }
 
-      const frameIndex = getMSAFrameIndex();
-      if (frameIndex < 0) return;
+      const frameIndex = state.timelineCursor?.msaWindowIndex;
+      if (!Number.isInteger(frameIndex) || frameIndex < 0) return;
       if (!force && frameIndex === prevMsaFrameRef.current) return;
 
       prevMsaFrameRef.current = frameIndex;
@@ -160,16 +160,15 @@ export function useTreeController() {
       }
 
       const frameIndexChanged = state.frameIndex !== prevState.frameIndex;
+      const timelineCursorChanged = state.timelineCursor !== prevState.timelineCursor;
 
-      if (frameIndexChanged) {
-        if (!isTimelineScrubbing) {
-          syncMsaRegion();
-        }
+      if (frameIndexChanged || timelineCursorChanged) {
+        syncMsaRegion();
       }
 
-      if (state.playhead !== prevState.playhead && !frameIndexChanged) {
+      if (state.playhead !== prevState.playhead && !frameIndexChanged && !timelineCursorChanged) {
+        syncMsaRegion();
         if (!isTimelineScrubbing) {
-          syncMsaRegion();
           scheduleRender();
         }
       }
@@ -190,7 +189,7 @@ export function useTreeController() {
       }
 
       if (
-        state.transitionResolver !== prevState.transitionResolver ||
+        state.movieTimelineManager !== prevState.movieTimelineManager ||
         state.syncMSAEnabled !== prevState.syncMSAEnabled ||
         state.msaWindowSize !== prevState.msaWindowSize ||
         state.msaStepSize !== prevState.msaStepSize ||
@@ -232,9 +231,9 @@ export function useTreeController() {
 // HELPERS
 // =============================================================================
 
-async function renderComparisonMode(controller, transitionResolver, frameIndex) {
-  const inputTreeIndices = transitionResolver?.fullTreeIndices || [];
-  const sourceInputTreeIndex = transitionResolver?.getSourceGlobalIndex(frameIndex) ?? 0;
+async function renderComparisonMode(controller, state, frameIndex, timelineCursor) {
+  const inputTreeIndices = selectInputFrameIndices(state);
+  const sourceInputTreeIndex = timelineCursor?.sourceFrameIndex ?? frameIndex;
   const rightIndex = inputTreeIndices.find((i) => i > sourceInputTreeIndex) ?? inputTreeIndices[inputTreeIndices.length - 1];
 
   await controller.renderAllElements({

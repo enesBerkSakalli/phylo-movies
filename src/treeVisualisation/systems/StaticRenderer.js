@@ -1,4 +1,4 @@
-import { selectActiveTreeList, selectCurrentTree, useAppStore } from '../../state/phyloStore/store.js';
+import { selectActiveTreeList, selectCurrentTree, selectInputFrameIndices, useAppStore } from '../../state/phyloStore/store.js';
 import { tagTreeSide } from '../utils/layerDataUtils.js';
 
 /**
@@ -23,14 +23,14 @@ export class StaticRenderer {
 
     const { treeIndex, leftIndex, rightIndex, comparisonMode } = options;
     const state = useAppStore.getState();
-    const { frameIndex, transitionResolver, comparisonMode: comparisonModeFromStore } = state;
+    const { frameIndex, comparisonMode: comparisonModeFromStore } = state;
     const treeList = selectActiveTreeList(state);
     const linkGeometryMode = this.controller._getLinkGeometryMode?.(state) ?? 'radial-elbow';
 
     // Handle comparison mode (explicit or inferred from store)
     const useComparison = comparisonMode ?? comparisonModeFromStore;
     if (useComparison) {
-      return this._renderComparisonModeStatic(leftIndex, rightIndex, frameIndex, transitionResolver);
+      return this._renderComparisonModeStatic(leftIndex, rightIndex, frameIndex, state);
     }
 
     // Single tree mode
@@ -40,9 +40,11 @@ export class StaticRenderer {
   /*
    * Helper to render comparison mode static view.
    */
-  _renderComparisonModeStatic(leftIndex, rightIndex, frameIndex, transitionResolver) {
-    const full = Array.isArray(transitionResolver?.fullTreeIndices) ? transitionResolver.fullTreeIndices : [];
-    const computedRight = full.find((i) => i > frameIndex) ?? full[full.length - 1] ?? frameIndex;
+  _renderComparisonModeStatic(leftIndex, rightIndex, frameIndex, state) {
+    const inputFrameIndices = selectInputFrameIndices(state);
+    const computedRight = inputFrameIndices.find((i) => i > frameIndex)
+      ?? inputFrameIndices[inputFrameIndices.length - 1]
+      ?? frameIndex;
     const leftIdx = Number.isInteger(leftIndex) ? leftIndex : frameIndex;
     const rightIdx = Number.isInteger(rightIndex) ? rightIndex : computedRight;
 

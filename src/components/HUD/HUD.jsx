@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import Draggable from 'react-draggable';
 import { useAppStore } from '../../state/phyloStore/store.js';
 import { GripVertical, Eye, X } from 'lucide-react';
@@ -13,9 +13,9 @@ import { MSAWindowSection } from './msa/MSAWindowSection.jsx';
 import {
   selectClearClipboard,
   selectClipboardTreeIndex,
+  selectInputFrameIndices,
   selectHasMsa,
   selectSetClipboardTreeIndex,
-  selectTransitionResolver,
 } from './shared/hudShared.js';
 
 // ==========================================================================
@@ -25,16 +25,11 @@ import {
 export function HUD() {
   const [isVisible, setIsVisible] = useState(true);
   const hasMsa = useAppStore(selectHasMsa);
-  const transitionResolver = useAppStore(selectTransitionResolver);
+  const inputTreeIndices = useAppStore(selectInputFrameIndices);
 
   const clipboardTreeIndex = useAppStore(selectClipboardTreeIndex);
   const setClipboardTreeIndex = useAppStore(selectSetClipboardTreeIndex);
   const clearClipboard = useAppStore(selectClearClipboard);
-
-  const inputTreeIndices = useMemo(
-    () => transitionResolver?.fullTreeIndices || [],
-    [transitionResolver]
-  );
 
   if (!isVisible) {
     return (

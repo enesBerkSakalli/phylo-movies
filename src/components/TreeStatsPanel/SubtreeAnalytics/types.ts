@@ -12,13 +12,13 @@ export interface SprMovedSubtreeRecurrence {
     totalPathLength: number;
     averagePathLength: number;
     pairCount?: number;
-    pairKeys?: string[];
+    pairIds?: string[];
 }
 
 export interface SprMoveEventRow {
     eventId: string;
     pairLabel: string;
-    pairKey: string;
+    pairId: string;
     pairIndex: number;
     sourceInputTreeIndex: number | null;
     targetInputTreeIndex: number | null;

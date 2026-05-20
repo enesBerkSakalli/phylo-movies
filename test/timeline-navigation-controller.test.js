@@ -45,6 +45,13 @@ describe('TimelineNavigationController', () => {
     };
   }
 
+  function makeTimelineDataset(resolve) {
+    return {
+      getCursorInSegmentAtMovieTime: (segmentIndex, movieTimeMs) => resolve(movieTimeMs, segmentIndex),
+      getSegmentBounds: () => ({ start: 0, end: 3000, duration: 3000 }),
+    };
+  }
+
   it('navigates to input-tree segments and updates the clipboard', () => {
     const store = makeStore({ frameIndex: 1 });
     let updateCalls = 0;
@@ -52,7 +59,7 @@ describe('TimelineNavigationController', () => {
       segments: [
         {
           index: 0,
-          isFullTree: true,
+          isInputTreeSegment: true,
           interpolationData: [{ originalIndex: 4 }]
         }
       ],
@@ -76,7 +83,7 @@ describe('TimelineNavigationController', () => {
       segments: [
         {
           index: 0,
-          isFullTree: false,
+          isInputTreeSegment: false,
           interpolationData: [{ originalIndex: 2 }]
         }
       ],
@@ -96,7 +103,7 @@ describe('TimelineNavigationController', () => {
       segments: [
         {
           index: 0,
-          isFullTree: false,
+          isInputTreeSegment: false,
           hasInterpolation: true,
           interpolationData: [
             { originalIndex: 2 },
@@ -114,6 +121,11 @@ describe('TimelineNavigationController', () => {
         segmentDurations: [3000],
         cumulativeDurations: [3000]
       },
+      timelineDataset: makeTimelineDataset((movieTimeMs) => ({
+        frameIndex: movieTimeMs < 2250 ? 3 : 4,
+        segmentIndex: 0,
+        timelineProgress: movieTimeMs / 3000,
+      })),
       store,
       onTimelinePositionUpdated: () => {}
     });
@@ -131,7 +143,7 @@ describe('TimelineNavigationController', () => {
       segments: [
         {
           index: 0,
-          isFullTree: false,
+          isInputTreeSegment: false,
           hasInterpolation: true,
           interpolationData: [
             { originalIndex: 2 },
@@ -149,6 +161,11 @@ describe('TimelineNavigationController', () => {
         segmentDurations: [3000],
         cumulativeDurations: [3000]
       },
+      timelineDataset: makeTimelineDataset(() => ({
+        frameIndex: 3,
+        segmentIndex: 0,
+        timelineProgress: 0.5,
+      })),
       store,
       onTimelinePositionUpdated: () => {}
     });
@@ -166,7 +183,7 @@ describe('TimelineNavigationController', () => {
       segments: [
         {
           index: 0,
-          isFullTree: false,
+          isInputTreeSegment: false,
           hasInterpolation: true,
           interpolationData: [
             { originalIndex: 2 },
@@ -179,11 +196,14 @@ describe('TimelineNavigationController', () => {
         segmentDurations: [1000],
         cumulativeDurations: [1000]
       },
+      timelineDataset: makeTimelineDataset(() => {
+        throw new Error('[TimelineDataset] segment timing bounds are required');
+      }),
       store,
       onTimelinePositionUpdated: () => {}
     });
 
-    expect(() => controller.handleTimelineClick(0, 500)).to.throw(/timeline segment timing is required/);
+    expect(() => controller.handleTimelineClick(0, 500)).to.throw(/segment timing bounds are required/);
     expect(store.getState().goToPositionCalls).to.deep.equal([]);
   });
 });

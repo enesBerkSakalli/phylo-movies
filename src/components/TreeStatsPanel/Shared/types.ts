@@ -39,7 +39,3 @@ export interface ScaleListItem {
   index?: number;
   value?: number;
 }
-
-export interface TransitionResolver {
-  getSourceGlobalIndex?: (index: number) => number;
-}

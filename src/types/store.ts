@@ -1,5 +1,5 @@
 // types/store.ts - Type definitions for the Zustand store
-import type { PhyloMovieData, SplitChangeTimelineEntry } from '../domain/backend/phyloMovieTypes';
+import type { PhyloMovieData, TemporalEvent, TimelineFrame, TimelinePair } from '../domain/backend/phyloMovieTypes';
 
 export interface ContextMenuPosition {
   x: number;
@@ -29,6 +29,26 @@ export interface PlaybackCursorState extends PlaybackPlayhead {
   holdKind?: string | null;
 }
 
+export interface TimelineCursorState {
+  frameIndex: number;
+  inputTreeIndex: number | null;
+  sourceFrameIndex: number | null;
+  targetFrameIndex: number | null;
+  msaWindowIndex: number | null;
+  pairId: string | null;
+  pairOrdinal: number | null;
+  sourceInputTreeIndex: number | null;
+  targetInputTreeIndex: number | null;
+  movieTimeMs: number;
+  timelineProgress: number;
+  segmentIndex: number | null;
+  segmentProgress: number | null;
+  occurrenceIndex: number | null;
+  occurrenceInFrameIndex: number | null;
+  occurrenceRole: string | null;
+  holdKind: string | null;
+}
+
 export type PlaybackPlayheadUpdate = Partial<PlaybackCursorState>;
 
 export interface PlaybackSeekOptions {
@@ -38,22 +58,22 @@ export interface PlaybackSeekOptions {
 export interface AppStoreState {
   // From treeDataset.slice
   treeList: any[];
-  treeMetadata: any[];
+  timelineFrames: TimelineFrame[];
   leafNamesByIndex: string[];
   fileName: string | null;
   datasetVersion: number;
-  transitionResolver: any;
-  treeDistances: PhyloMovieData['distances'] | null;
-  pairSolutions: any;
+  pairMetrics: PhyloMovieData['pair_metrics'] | null;
+  pairs: TimelinePair[];
   pivotEdgeTracking: any[];
   subtreeHighlightTracking: any[];
-  splitChangeTimeline: SplitChangeTimelineEntry[];
+  temporalEvents: TemporalEvent[];
 
   // From datasetLifecycle.slice
 
   // From playbackSlice
   playing: boolean;
   playhead: PlaybackPlayhead;
+  timelineCursor: TimelineCursorState | null;
   animationStartTime: number | null;
   animationSpeed: number;
   transitionDuration: number;
@@ -172,9 +192,9 @@ export interface AppStoreState {
     treeIndex: number;
     tree: any;
     metadata: any;
-    pairKey: string | null;
+    pairId: string | null;
     isOriginal: boolean;
-    isFullTree: boolean;
+    isInputTree: boolean;
   } | null;
 
   play: () => void;

@@ -79,23 +79,22 @@ describe('MovieTimelineManager lifecycle', () => {
   });
 
   it('requires an explicit normalized tree list', () => {
-    expect(() => new MovieTimelineManager(movieData, { fullTreeIndices: [] }))
+    expect(() => new MovieTimelineManager(movieData))
       .to.throw('MovieTimelineManager requires a non-empty normalized treeList');
   });
 
   it('can exist before a host container is available', () => {
-    const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] }, movieData.interpolated_trees);
+    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
 
     expect(manager.timeline).to.equal(null);
     expect(manager.container).to.equal(null);
     expect(manager.getSegmentCount()).to.be.greaterThan(0);
-    expect(manager.getTimelineProgressForFrameIndex(0)).to.be.a('number');
 
     manager.destroy();
   });
 
   it('exposes canonical timeline cursor lookups before mounting', () => {
-    const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] }, movieData.interpolated_trees);
+    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
 
     const startCursor = manager.getCursorAtMovieTime(0);
     const progressCursor = manager.getCursorAtTimelineProgress(startCursor.timelineProgress);
@@ -121,7 +120,7 @@ describe('MovieTimelineManager lifecycle', () => {
   });
 
   it('mounts into an explicit host and unmounts cleanly', () => {
-    const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] }, movieData.interpolated_trees);
+    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
     const host = makeContainer();
 
     manager.mount(host);
@@ -142,7 +141,7 @@ describe('MovieTimelineManager lifecycle', () => {
   });
 
   it('keeps timeline viewport controls behind the manager API', () => {
-    const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] }, movieData.interpolated_trees);
+    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
     const calls = [];
 
     manager.timeline = {
@@ -202,7 +201,7 @@ describe('MovieTimelineManager lifecycle', () => {
   });
 
   it('remounts into a new host without leaving stale DOM behind', () => {
-    const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] }, movieData.interpolated_trees);
+    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
     const firstHost = makeContainer(640, 60);
     const secondHost = makeContainer(720, 90);
 
@@ -221,7 +220,7 @@ describe('MovieTimelineManager lifecycle', () => {
   });
 
   it('clears transient tooltip and hover state on unmount', () => {
-    const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] }, movieData.interpolated_trees);
+    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
     const host = makeContainer();
 
     useAppStore.setState({
@@ -244,7 +243,7 @@ describe('MovieTimelineManager lifecycle', () => {
   });
 
   it('stores clicked timeline selection by segment index only', () => {
-    const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] }, movieData.interpolated_trees);
+    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
     const selectedSegment = manager.getSegment(1);
 
     manager._onTimelineClick({
@@ -272,7 +271,7 @@ describe('MovieTimelineManager lifecycle', () => {
   });
 
   it('keeps clicked inspector selection visually pinned while playhead sync changes current position', () => {
-    const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] }, movieData.interpolated_trees);
+    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
     const host = makeContainer();
 
     useAppStore.setState({
@@ -295,7 +294,7 @@ describe('MovieTimelineManager lifecycle', () => {
   });
 
   it('restores scrubber position and inspected segment selection on remount from store state', () => {
-    const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] }, movieData.interpolated_trees);
+    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
     const firstHost = makeContainer(640, 60);
     const secondHost = makeContainer(640, 60);
 
@@ -326,7 +325,7 @@ describe('MovieTimelineManager lifecycle', () => {
   });
 
   it('syncs renderer inspected selection when the store selection is cleared', () => {
-    const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] }, movieData.interpolated_trees);
+    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
     const host = makeContainer();
 
     useAppStore.setState({ selectedTimelineSegmentIndex: 1 });
@@ -988,7 +987,7 @@ describe('MovieTimelineManager lifecycle', () => {
     global.cancelAnimationFrame = () => {};
 
     try {
-      const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] }, movieData.interpolated_trees);
+      const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
       frameCallbacks.pop()?.(0);
       scheduledCount = 0;
 
@@ -1021,7 +1020,7 @@ describe('MovieTimelineManager lifecycle', () => {
   });
 
   it('binds renderer scrub state to the scrub controller', async () => {
-    const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] }, movieData.interpolated_trees);
+    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
     const host = makeContainer();
 
     manager.mount(host);
@@ -1037,7 +1036,7 @@ describe('MovieTimelineManager lifecycle', () => {
   });
 
   it('treats unmount after destroy as a no-op', () => {
-    const manager = new MovieTimelineManager(movieData, { fullTreeIndices: [] }, movieData.interpolated_trees);
+    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
     const host = makeContainer();
 
     manager.mount(host);

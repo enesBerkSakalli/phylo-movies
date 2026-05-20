@@ -1,161 +1,128 @@
 import { describe, expect, it } from 'vitest';
 import { validatePhyloMovieData } from '../../../src/domain/backend/phyloMovieSchema';
-import { phyloData } from '../../../src/services/data/dataService';
+import { phyloData } from '../../../src/services/data/dataService.js';
 
-const minimalTree = {
+const tree = {
   name: 'root',
   length: 0,
-  split_indices: [0, 1],
+  split_indices: [0, 1, 2],
   children: [
-    {
-      name: 'taxon-a',
-      length: 1,
-      split_indices: [0],
-      children: [],
-    },
-    {
-      name: 'taxon-b',
-      length: 1,
-      split_indices: [1],
-      children: [],
-    },
+    { name: 'A', length: 1, split_indices: [0], children: [] },
+    { name: 'B', length: 1, split_indices: [1], children: [] },
+    { name: 'C', length: 1, split_indices: [2], children: [] },
   ],
 };
 
-function inputTreeMetadata() {
-  return {
-    tree_pair_key: null,
-    step_in_pair: null,
-    source_tree_global_index: null,
-    frame_type: 'input_tree',
-    state_semantics: 'processed_input_tree',
-    is_observed_input: true,
-  };
-}
-
-function interpolationFrameMetadata(
-  treePairKey = 'pair_0_1',
-  stepInPair = 1,
-  sourceTreeGlobalIndex = 0
-) {
-  return {
-    tree_pair_key: treePairKey,
-    step_in_pair: stepInPair,
-    source_tree_global_index: sourceTreeGlobalIndex,
-    frame_type: 'interpolation_frame',
-    state_semantics: 'algorithmic_intermediate',
-    is_observed_input: false,
-  };
+function clone<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T;
 }
 
 function makePayload(overrides: Record<string, unknown> = {}) {
   return {
-    interpolated_trees: [minimalTree],
-    tree_metadata: [inputTreeMetadata()],
-    distances: {
-      robinson_foulds: [],
-      weighted_robinson_foulds: [],
-    },
-    tree_pair_solutions: {
-      pair_0_1: {
-        affected_subtrees_by_split: {
-          '[0, 1]': [[[2], [3, 4]]],
-        },
-        attachment_edges_by_split: {},
+    interpolated_trees: [tree, tree, tree],
+    frames: [
+      {
+        frame_index: 0,
+        frame_type: 'input_tree',
+        state_semantics: 'processed_input_tree',
+        is_observed_input: true,
+        input_tree_index: 0,
+        pair_id: null,
+        pair_ordinal: null,
+        local_step_index: null,
+        source_frame_index: null,
+        target_frame_index: null,
       },
-    },
-    pair_interpolation_ranges: [[0, 0]],
-    pivot_edge_tracking: [null],
-    subtree_highlight_tracking: [null],
-    msa: {
-      sequences: {
-        'taxon-a': 'ACGT',
-      },
-      window_size: 4,
-      step_size: 1,
-    },
-    file_name: 'example.nwk',
-    split_change_timeline: [{
-      type: 'original',
-      tree_index: 0,
-      global_index: 0,
-      name: '',
-    }],
-    ...overrides,
-  };
-}
-
-describe('validatePhyloMovieData', () => {
-  it('accepts a valid backend movie payload', () => {
-    const result = validatePhyloMovieData(makePayload());
-
-    expect(result.interpolated_trees).toHaveLength(1);
-    expect(result.tree_metadata).toHaveLength(1);
-    expect(result.tree_metadata[0].source_tree_global_index).toBeNull();
-    expect(result.file_name).toBe('example.nwk');
-    expect(result.msa?.sequences?.['taxon-a']).toBe('ACGT');
-  });
-
-  it('validates the explicit backend movie contract through service validation', () => {
-    const result = phyloData.validate(makePayload({
-      subtree_highlight_tracking: [[[0]]],
-    }));
-
-    expect(result.subtree_highlight_tracking).toEqual([[[0]]]);
-    expect(result).not.toHaveProperty('split_change_events');
-  });
-
-  it('rejects top-level fields outside the app contract', () => {
-    expect(() => phyloData.validate(makePayload({
-      pipeline_info: { model_used: 'iqtree' },
-    }))).toThrow(/phyloMovieData\.pipeline_info is not part of the backend contract/);
-  });
-
-  it('rejects metadata fields outside the app contract', () => {
-    expect(() => validatePhyloMovieData(makePayload({
-      tree_metadata: [{
-        tree_pair_key: 'pair_0_1',
-        step_in_pair: 2,
-        source_tree_global_index: 0,
+      {
+        frame_index: 1,
         frame_type: 'interpolation_frame',
         state_semantics: 'algorithmic_intermediate',
         is_observed_input: false,
-        unused_extra_field: 'ignored',
-      }],
-    }))).toThrow(/tree_metadata\[0\]\.unused_extra_field is not part of the backend contract/);
-  });
-
-  it('keeps explicit distance semantics in the app contract', () => {
-    const result = validatePhyloMovieData(makePayload({
-      distances: {
-        robinson_foulds: [1],
-        weighted_robinson_foulds: [1.5],
-        semantics: {
-          robinson_foulds: {
-            topology: 'rooted_clades',
-            normalization: 'symmetric_difference_over_union',
-            scope: 'adjacent_processed_input_trees',
+        input_tree_index: null,
+        pair_id: 'pair_0_1',
+        pair_ordinal: 0,
+        local_step_index: 0,
+        source_frame_index: 0,
+        target_frame_index: 2,
+      },
+      {
+        frame_index: 2,
+        frame_type: 'input_tree',
+        state_semantics: 'processed_input_tree',
+        is_observed_input: true,
+        input_tree_index: 1,
+        pair_id: null,
+        pair_ordinal: null,
+        local_step_index: null,
+        source_frame_index: null,
+        target_frame_index: null,
+      },
+    ],
+    pairs: [
+      {
+        pair_id: 'pair_0_1',
+        pair_ordinal: 0,
+        source_input_tree_index: 0,
+        target_input_tree_index: 1,
+        source_frame_index: 0,
+        target_frame_index: 2,
+        generated_frame_range: [1, 1],
+        solution: {
+          affected_subtrees_by_split: {
+            '[0, 1, 2]': [[[1]]],
           },
-          weighted_robinson_foulds: {
-            topology: 'rooted_clades',
-            includes_branch_lengths: true,
-            includes_terminal_and_root_splits: true,
-            scope: 'adjacent_processed_input_trees',
+          attachment_edges_by_split: {
+            '[0, 1, 2]': {
+              '[1]': {
+                source: [0, 1],
+                destination: [1, 2],
+              },
+            },
           },
         },
       },
-      msa: {
-        sequences: {
-          'taxon-a': 'ACGT',
-        },
-        window_size: 4,
-        step_size: 1,
+    ],
+    temporal_events: [
+      {
+        event_id: 'pair_0_1:split:0',
+        event_type: 'split_change',
+        pair_id: 'pair_0_1',
+        pair_ordinal: 0,
+        local_step_range: [0, 0],
+        frame_range: [1, 1],
+        split: [0, 1, 2],
       },
-    }));
-
-    expect(result.distances).toEqual({
-      robinson_foulds: [1],
-      weighted_robinson_foulds: [1.5],
+      {
+        event_id: 'pair_0_1:spr:0',
+        event_type: 'spr_move',
+        pair_id: 'pair_0_1',
+        pair_ordinal: 0,
+        local_step_range: [0, 0],
+        frame_range: [1, 1],
+        pivot_edge: [0, 1, 2],
+        driver_subtree: [1],
+        highlight_group: [[1]],
+        collapse_path: [{ split: [0, 1], branch_length: 0.25 }],
+        expand_path: [{ split: [1, 2], branch_length: 0.5 }],
+        collapse_hops: 1,
+        expand_hops: 1,
+        total_hops: 2,
+        collapse_branch_length: 0.25,
+        expand_branch_length: 0.5,
+        total_branch_length: 0.75,
+      },
+    ],
+    pivot_edge_tracking: [null, [0, 1, 2], null],
+    subtree_highlight_tracking: [null, [[1]], null],
+    pair_metrics: {
+      rows: [
+        {
+          pair_id: 'pair_0_1',
+          pair_ordinal: 0,
+          robinson_foulds: 0.5,
+          weighted_robinson_foulds: 1.25,
+        },
+      ],
       semantics: {
         robinson_foulds: {
           topology: 'rooted_clades',
@@ -169,645 +136,346 @@ describe('validatePhyloMovieData', () => {
           scope: 'adjacent_processed_input_trees',
         },
       },
-    });
-    expect(result.msa).toEqual({
-      sequences: {
-        'taxon-a': 'ACGT',
-      },
-      window_size: 4,
+    },
+    msa: {
+      sequences: null,
+      window_size: 1,
       step_size: 1,
+    },
+    file_name: 'normalized-contract.nwk',
+    ...overrides,
+  };
+}
+
+function makeInputOnlyPayload(inputCount: number) {
+  const interpolatedTrees = Array.from({ length: inputCount }, () => tree);
+  const frames = interpolatedTrees.map((_, index) => ({
+    frame_index: index,
+    frame_type: 'input_tree',
+    state_semantics: 'processed_input_tree',
+    is_observed_input: true,
+    input_tree_index: index,
+    pair_id: null,
+    pair_ordinal: null,
+    local_step_index: null,
+    source_frame_index: null,
+    target_frame_index: null,
+  }));
+  const pairs = frames.slice(0, -1).map((frame, index) => ({
+    pair_id: `pair_${index}_${index + 1}`,
+    pair_ordinal: index,
+    source_input_tree_index: index,
+    target_input_tree_index: index + 1,
+    source_frame_index: frame.frame_index,
+    target_frame_index: frames[index + 1].frame_index,
+    generated_frame_range: null,
+    solution: {
+      affected_subtrees_by_split: {},
+      attachment_edges_by_split: {},
+    },
+  }));
+
+  return makePayload({
+    interpolated_trees: interpolatedTrees,
+    frames,
+    pairs,
+    temporal_events: [],
+    pivot_edge_tracking: Array.from({ length: inputCount }, () => null),
+    subtree_highlight_tracking: Array.from({ length: inputCount }, () => null),
+    pair_metrics: {
+      ...makePayload().pair_metrics,
+      rows: pairs.map((pair) => ({
+        pair_id: pair.pair_id,
+        pair_ordinal: pair.pair_ordinal,
+        robinson_foulds: 0,
+        weighted_robinson_foulds: 0,
+      })),
+    },
+  });
+}
+
+describe('validatePhyloMovieData', () => {
+  it('accepts the normalized backend movie contract', () => {
+    const result = validatePhyloMovieData(makePayload());
+
+    expect(result.frames).toHaveLength(3);
+    expect(result.pairs[0]).toMatchObject({
+      pair_id: 'pair_0_1',
+      source_input_tree_index: 0,
+      target_input_tree_index: 1,
+      source_frame_index: 0,
+      target_frame_index: 2,
+    });
+    expect(result.temporal_events.map((event) => event.event_type)).toEqual([
+      'split_change',
+      'spr_move',
+    ]);
+    expect(result.pair_metrics.rows[0]).toMatchObject({
+      pair_id: 'pair_0_1',
+      robinson_foulds: 0.5,
+      weighted_robinson_foulds: 1.25,
     });
   });
 
-  it('rejects distance and MSA fields outside the app contract', () => {
-    expect(() => validatePhyloMovieData(makePayload({
-      distances: {
-        robinson_foulds: [1],
-        weighted_robinson_foulds: [1.5],
-        cosine_distance: [0.25],
-      },
-    }))).toThrow(/distances\.cosine_distance is not part of the backend contract/);
-
-    expect(() => validatePhyloMovieData(makePayload({
-      distances: {
-        robinson_foulds: [1],
-        weighted_robinson_foulds: [1.5],
-        semantics: {
-          robinson_foulds: {
-            topology: 'rooted_clades',
-            unused_metric_field: 'ignored',
-          },
-        },
-      },
-    }))).toThrow(/distances\.semantics\.robinson_foulds\.unused_metric_field is not part of the backend contract/);
-
-    expect(() => validatePhyloMovieData(makePayload({
-      msa: {
-        sequences: null,
-        window_size: 4,
-        step_size: 1,
-        alignment_length: 4,
-      },
-    }))).toThrow(/msa\.alignment_length is not part of the backend contract/);
+  it('validates the same contract through the data service', () => {
+    expect(phyloData.validate(makePayload()).pairs[0].pair_id).toBe('pair_0_1');
   });
 
-  it('requires positive integer MSA window dimensions', () => {
-    expect(() => validatePhyloMovieData(makePayload({
-      msa: {
-        window_size: 4,
-        step_size: 1,
-      },
-    }))).toThrow(/msa\.sequences must be an object or null/);
-
-    expect(() => validatePhyloMovieData(makePayload({
-      msa: {
-        sequences: null,
-        window_size: 0,
-        step_size: 1,
-      },
-    }))).toThrow(/msa\.window_size must be positive/);
-
-    expect(() => validatePhyloMovieData(makePayload({
-      msa: {
-        sequences: null,
-        window_size: 1,
-        step_size: 1.5,
-      },
-    }))).toThrow(/msa\.step_size must be an integer/);
+  it('rejects legacy top-level temporal fields', () => {
+    for (const key of [
+      'tree_metadata',
+      'tree_pair_solutions',
+      'split_change_timeline',
+      'pair_interpolation_ranges',
+      'distances',
+    ]) {
+      expect(() => validatePhyloMovieData(makePayload({ [key]: [] })))
+        .toThrow(new RegExp(`phyloMovieData\\.${key} is not part of the backend contract`));
+    }
   });
 
-  it('rejects missing required fields', () => {
-    const payload = makePayload();
-    delete (payload as Record<string, unknown>).interpolated_trees;
+  it('rejects fields outside normalized row contracts', () => {
+    const payload = clone(makePayload());
+    (payload.frames as Array<Record<string, unknown>>)[1].tree_pair_key = 'pair_0_1';
 
-    expect(() => validatePhyloMovieData(payload)).toThrow(/interpolated_trees must be an array/);
+    expect(() => validatePhyloMovieData(payload))
+      .toThrow(/frames\[1\]\.tree_pair_key is not part of the backend contract/);
   });
 
-  it('rejects wrong array field types', () => {
-    expect(() => validatePhyloMovieData(makePayload({
-      tree_metadata: {},
-    }))).toThrow(/tree_metadata must be an array/);
+  it('requires frame rows to be parallel to streamed trees', () => {
+    const payload = makePayload({ frames: [] });
+
+    expect(() => validatePhyloMovieData(payload))
+      .toThrow(/frames length \(0\) must match interpolated_trees length \(3\)/);
   });
 
-  it('rejects wrong object field types', () => {
-    expect(() => validatePhyloMovieData(makePayload({
-      distances: [],
-    }))).toThrow(/distances must be an object/);
+  it('requires generated frames to reference the matching pair row', () => {
+    const payload = clone(makePayload());
+    (payload.frames as Array<Record<string, unknown>>)[1].pair_id = 'pair_missing';
+
+    expect(() => validatePhyloMovieData(payload))
+      .toThrow(/frames\[1\]\.pair_id must reference pairs/);
   });
 
-  it('rejects tree metadata whose length does not match interpolated_trees', () => {
-    expect(() => validatePhyloMovieData(makePayload({
-      tree_metadata: [],
-    }))).toThrow(/tree_metadata length \(0\) must match interpolated_trees length \(1\)/);
+  it('requires pair rows to anchor to input frames', () => {
+    const payload = clone(makePayload());
+    (payload.pairs as Array<Record<string, unknown>>)[0].source_frame_index = 1;
+    (payload.frames as Array<Record<string, unknown>>)[1].source_frame_index = 1;
+
+    expect(() => validatePhyloMovieData(payload))
+      .toThrow(/pairs\[0\]\.source_frame_index must reference an input frame/);
   });
 
-  it('requires tree metadata indices to be integers', () => {
-    expect(() => validatePhyloMovieData(makePayload({
-      tree_metadata: [interpolationFrameMetadata('pair_0_1', 1.5, 0)],
-    }))).toThrow(/tree_metadata\[0\]\.step_in_pair must be an integer/);
+  it('uses the pairs array as the only ordinal truth', () => {
+    const payload = clone(makePayload());
+    (payload.pairs as Array<Record<string, unknown>>)[0].pair_ordinal = 5;
+    (payload.frames as Array<Record<string, unknown>>)[1].pair_ordinal = 5;
+    (payload.temporal_events as Array<Record<string, unknown>>).forEach((event) => {
+      event.pair_ordinal = 5;
+    });
+    ((payload.pair_metrics as Record<string, unknown>).rows as Array<Record<string, unknown>>)[0].pair_ordinal = 5;
 
-    expect(() => validatePhyloMovieData(makePayload({
-      tree_metadata: [interpolationFrameMetadata('pair_0_1', 1, 0.5)],
-    }))).toThrow(/tree_metadata\[0\]\.source_tree_global_index must be an integer/);
+    expect(() => validatePhyloMovieData(payload))
+      .toThrow(/pairs\[0\]\.pair_ordinal must equal adjacent input-frame ordinal 0/);
   });
 
-  it('requires explicit tree metadata frame semantics', () => {
-    expect(() => validatePhyloMovieData(makePayload({
-      tree_metadata: [{
-        tree_pair_key: null,
-        step_in_pair: null,
-        source_tree_global_index: null,
-        state_semantics: 'processed_input_tree',
-        is_observed_input: true,
-      }],
-    }))).toThrow(/tree_metadata\[0\]\.frame_type must be input_tree or interpolation_frame/);
-
-    expect(() => validatePhyloMovieData(makePayload({
-      tree_metadata: [{
-        tree_pair_key: null,
-        step_in_pair: null,
-        source_tree_global_index: null,
-        frame_type: 'input_tree',
-        is_observed_input: true,
-      }],
-    }))).toThrow(/tree_metadata\[0\]\.state_semantics must be processed_input_tree or algorithmic_intermediate/);
-
-    expect(() => validatePhyloMovieData(makePayload({
-      tree_metadata: [{
-        tree_pair_key: null,
-        step_in_pair: null,
-        source_tree_global_index: null,
-        frame_type: 'input_tree',
-        state_semantics: 'processed_input_tree',
-      }],
-    }))).toThrow(/tree_metadata\[0\]\.is_observed_input must be a boolean/);
-  });
-
-  it('rejects malformed recursive tree nodes', () => {
-    expect(() => validatePhyloMovieData(makePayload({
-      interpolated_trees: [{
-        name: '',
-        length: 0,
-        split_indices: [0],
-      }],
-    }))).toThrow(/interpolated_trees\[0\]\.children must be an array/);
-  });
-
-  it('rejects tree nodes without stable split indices', () => {
-    expect(() => validatePhyloMovieData(makePayload({
-      interpolated_trees: [{
-        name: '',
-        length: 0,
-        split_indices: [],
-        children: [],
-      }],
-    }))).toThrow(/split_indices must not be empty/);
-  });
-
-  it('rejects tree node fields outside the app contract', () => {
-    expect(() => validatePhyloMovieData(makePayload({
-      interpolated_trees: [{
-        ...minimalTree,
-        values: { legacy: true },
-      }],
-    }))).toThrow(/interpolated_trees\[0\]\.values is not part of the backend contract/);
-  });
-
-  it('rejects split_change_tracking without pivot_edge_tracking', () => {
-    const payload = makePayload({
-      pivot_edge_tracking: undefined,
-      split_change_tracking: [null],
+  it('rejects duplicate pair identifiers', () => {
+    const payload = clone(makePayload());
+    (payload.pairs as Array<Record<string, unknown>>).push({
+      ...(payload.pairs as Array<Record<string, unknown>>)[0],
+      pair_ordinal: 1,
     });
 
-    expect(() => validatePhyloMovieData(payload)).toThrow(/phyloMovieData\.split_change_tracking is not part of the backend contract/);
+    expect(() => validatePhyloMovieData(payload))
+      .toThrow(/pairs\[1\]\.pair_id must be unique/);
   });
 
-  it('rejects legacy subtree API payloads without the canonical highlight key', () => {
-    const legacySubtreeApiKey = ['subtree', 'tracking'].join('_');
-    const payload = makePayload({
-      subtree_highlight_tracking: undefined,
-      [legacySubtreeApiKey]: [null],
-    });
+  it('rejects missing pair between adjacent input frames', () => {
+    const payload = makeInputOnlyPayload(2);
+    payload.pairs = [];
+    payload.pair_metrics.rows = [];
 
-    expect(() => validatePhyloMovieData(payload)).toThrow(/phyloMovieData\.subtree_tracking is not part of the backend contract/);
+    expect(() => validatePhyloMovieData(payload))
+      .toThrow(/missing pair for adjacent input frames 0 -> 1/);
   });
 
-  it('rejects flat subtree_highlight_tracking entries', () => {
-    expect(() => validatePhyloMovieData(makePayload({
-      subtree_highlight_tracking: [[2, 3]],
-    }))).toThrow(/subtree_highlight_tracking\[0\]\[0\] must be an array/);
+  it('rejects duplicate pairs for the same adjacent input frames', () => {
+    const payload = makeInputOnlyPayload(3);
+    payload.pairs[1] = {
+      ...payload.pairs[0],
+      pair_id: 'pair_0_1_duplicate',
+      pair_ordinal: 1,
+    };
+    payload.pair_metrics.rows[1] = {
+      ...payload.pair_metrics.rows[0],
+      pair_id: 'pair_0_1_duplicate',
+      pair_ordinal: 1,
+    };
+
+    expect(() => validatePhyloMovieData(payload))
+      .toThrow(/duplicate pair for adjacent input frames 0 -> 1/);
   });
 
-  it('rejects tracking data whose length does not match interpolated_trees', () => {
-    expect(() => validatePhyloMovieData(makePayload({
-      pivot_edge_tracking: [null, [0, 1]],
-    }))).toThrow(/pivot_edge_tracking length \(2\) must match interpolated_trees length \(1\)/);
+  it('rejects pair rows whose ordinal does not match adjacent input-frame order', () => {
+    const payload = makeInputOnlyPayload(3);
+    payload.pairs[0].pair_ordinal = 1;
+    payload.pair_metrics.rows[0].pair_ordinal = 1;
 
-    expect(() => validatePhyloMovieData(makePayload({
-      subtree_highlight_tracking: [null, [[0]]],
-    }))).toThrow(/subtree_highlight_tracking length \(2\) must match interpolated_trees length \(1\)/);
+    expect(() => validatePhyloMovieData(payload))
+      .toThrow(/pairs\[0\]\.pair_ordinal must equal adjacent input-frame ordinal 0/);
   });
 
-  it('rejects missing explicit pair interpolation ranges', () => {
-    expect(() => validatePhyloMovieData(makePayload({
-      pair_interpolation_ranges: [],
-    }))).toThrow(/pair_interpolation_ranges must not be empty/);
+  it('rejects pair rows whose anchors do not match adjacent input frames', () => {
+    const payload = makeInputOnlyPayload(3);
+    payload.pairs[0].target_frame_index = 2;
+
+    expect(() => validatePhyloMovieData(payload))
+      .toThrow(/pairs\[0\] must connect adjacent input frames 0 -> 1/);
   });
 
-  it('rejects flat affected_subtrees_by_split entries', () => {
-    expect(() => validatePhyloMovieData(makePayload({
-      tree_pair_solutions: {
-        pair_0_1: {
-          affected_subtrees_by_split: {
-            '[0, 1]': [[2, 3]],
-          },
-          attachment_edges_by_split: {},
-        },
+  it('rejects shuffled pair rows instead of silently reordering them', () => {
+    const payload = makeInputOnlyPayload(3);
+    payload.pairs = [payload.pairs[1], payload.pairs[0]];
+
+    expect(() => validatePhyloMovieData(payload))
+      .toThrow(/pairs\[0\]\.pair_ordinal must equal adjacent input-frame ordinal 0/);
+  });
+
+  it('requires temporal events to reference the canonical pair row', () => {
+    const payload = clone(makePayload());
+    (payload.temporal_events as Array<Record<string, unknown>>)[0].pair_id = 'pair_missing';
+
+    expect(() => validatePhyloMovieData(payload))
+      .toThrow(/temporal_events\[0\]\.pair_id must reference pairs/);
+  });
+
+  it('rejects temporal event frame ranges outside the owning pair range', () => {
+    const payload = clone(makePayload());
+    (payload.temporal_events as Array<Record<string, unknown>>)[0].frame_range = [0, 0];
+
+    expect(() => validatePhyloMovieData(payload))
+      .toThrow(/temporal_events\[0\].*frame_range.*inside pair_0_1 generated frame range 1 -> 1/);
+  });
+
+  it('rejects temporal event local step ranges outside the owning pair rows', () => {
+    const payload = clone(makePayload());
+    (payload.temporal_events as Array<Record<string, unknown>>)[0].local_step_range = [1, 1];
+
+    expect(() => validatePhyloMovieData(payload))
+      .toThrow(/temporal_events\[0\].*local_step_range.*inside pair_0_1 local step range 0 -> 0/);
+  });
+
+  it('rejects temporal event frame ranges that do not match their local-step rows', () => {
+    const payload = clone(makePayload());
+    payload.interpolated_trees = [tree, tree, tree, tree];
+    payload.frames = [
+      payload.frames[0],
+      payload.frames[1],
+      {
+        ...payload.frames[1],
+        frame_index: 2,
+        local_step_index: 1,
       },
-    }))).toThrow(/affected_subtrees_by_split/);
+      {
+        ...payload.frames[2],
+        frame_index: 3,
+        input_tree_index: 1,
+      },
+    ];
+    payload.pairs[0] = {
+      ...payload.pairs[0],
+      target_frame_index: 3,
+      generated_frame_range: [1, 2],
+    };
+    payload.frames[1].target_frame_index = 3;
+    payload.frames[2].target_frame_index = 3;
+    payload.temporal_events[0].frame_range = [1, 1];
+    payload.temporal_events[0].local_step_range = [1, 1];
+    payload.temporal_events[1].frame_range = [1, 1];
+    payload.temporal_events[1].local_step_range = [0, 0];
+    payload.pivot_edge_tracking = [null, [0, 1, 2], [0, 1, 2], null];
+    payload.subtree_highlight_tracking = [null, [[1]], [[1]], null];
+
+    expect(() => validatePhyloMovieData(payload))
+      .toThrow(/temporal_events\[0\].*frame_range must match local_step_range rows for pair_0_1/);
+  });
+
+  it('rejects temporal events that reference nonexistent pair frame rows', () => {
+    const payload = clone(makePayload());
+    (payload.pairs as Array<Record<string, unknown>>)[0].generated_frame_range = null;
+
+    expect(() => validatePhyloMovieData(payload))
+      .toThrow(/temporal_events\[0\].*cannot exist because pair_0_1 has no generated frames/);
+  });
+
+  it('accepts valid temporal event ranges inside the owning pair rows', () => {
+    const result = validatePhyloMovieData(makePayload());
+
+    expect(result.temporal_events[0]).toMatchObject({
+      pair_id: 'pair_0_1',
+      local_step_range: [0, 0],
+      frame_range: [1, 1],
+    });
+  });
+
+  it('rejects old SPR movement fields on temporal events', () => {
+    const payload = clone(makePayload());
+    (payload.temporal_events as Array<Record<string, unknown>>)[1].moving_subtree = [1];
+
+    expect(() => validatePhyloMovieData(payload))
+      .toThrow(/temporal_events\[1\]\.moving_subtree is not part of the backend contract/);
+  });
+
+  it('requires pair metrics to reference pair rows', () => {
+    const payload = clone(makePayload());
+    ((payload.pair_metrics as Record<string, unknown>).rows as Array<Record<string, unknown>>)[0].pair_id = 'pair_missing';
+
+    expect(() => validatePhyloMovieData(payload))
+      .toThrow(/pair_metrics\.rows\[0\]\.pair_id must reference pairs/);
+  });
+
+  it('rejects missing pair metric rows', () => {
+    const payload = clone(makePayload());
+    ((payload.pair_metrics as Record<string, unknown>).rows as Array<Record<string, unknown>>) = [];
+
+    expect(() => validatePhyloMovieData(payload))
+      .toThrow(/pair_metrics.rows is missing row for pair_0_1/);
+  });
+
+  it('rejects duplicate pair metric rows', () => {
+    const payload = clone(makePayload());
+    const rows = (payload.pair_metrics as Record<string, unknown>).rows as Array<Record<string, unknown>>;
+    rows.push({ ...rows[0] });
+
+    expect(() => validatePhyloMovieData(payload))
+      .toThrow(/pair_metrics\.rows\[1\]\.pair_id must be unique/);
+  });
+
+  it('rejects pair metric rows with the wrong ordinal', () => {
+    const payload = clone(makePayload());
+    ((payload.pair_metrics as Record<string, unknown>).rows as Array<Record<string, unknown>>)[0].pair_ordinal = 1;
+
+    expect(() => validatePhyloMovieData(payload))
+      .toThrow(/pair_metrics\.rows\[0\]\.pair_ordinal must match pair_0_1 ordinal 0/);
   });
 
   it('rejects noncanonical backend split-map keys', () => {
-    expect(() => validatePhyloMovieData(makePayload({
-      tree_pair_solutions: {
-        pair_0_1: {
-          affected_subtrees_by_split: {
-            '[1,0]': [[[0]]],
-          },
-          attachment_edges_by_split: {},
-        },
-      },
-    }))).toThrow(/canonical backend split key/);
+    const payload = clone(makePayload());
+    ((payload.pairs as Array<Record<string, unknown>>)[0].solution as Record<string, unknown>).affected_subtrees_by_split = {
+      '1,0': [[[1]]],
+    };
 
-    expect(() => validatePhyloMovieData(makePayload({
-      tree_pair_solutions: {
-        pair_0_1: {
-          affected_subtrees_by_split: {
-            '[0, 1]': [[[0]]],
-          },
-          attachment_edges_by_split: {
-            '[0, 1]': {
-              '[1,0]': {
-                source: [1],
-                destination: [2],
-              },
-            },
-          },
-        },
-      },
-    }))).toThrow(/canonical backend split key/);
+    expect(() => validatePhyloMovieData(payload))
+      .toThrow(/canonical backend split key/);
   });
 
-  it('requires affected_subtrees_by_split even when SPR move events are present', () => {
+  it('requires explicit MSA and tracking shapes', () => {
     expect(() => validatePhyloMovieData(makePayload({
-      tree_pair_solutions: {
-        pair_0_1: {
-          attachment_edges_by_split: {},
-          spr_move_events: [{
-            pivot_edge: [0, 1],
-            driver_subtree: [0],
-            highlight_group: [[0]],
-            step_range: [0, 0],
-            collapse_path: [],
-            expand_path: [],
-            collapse_hops: 0,
-            expand_hops: 0,
-            total_hops: 0,
-            collapse_branch_length: 0,
-            expand_branch_length: 0,
-            total_branch_length: 0,
-          }],
-        },
-      },
-    }))).toThrow(/affected_subtrees_by_split must be an object/);
-  });
+      pivot_edge_tracking: [null],
+    }))).toThrow(/pivot_edge_tracking length \(1\) must match interpolated_trees length \(3\)/);
 
-  it('keeps SPR move path metrics on validated tree pair solutions', () => {
-    const result = validatePhyloMovieData(makePayload({
-      tree_pair_solutions: {
-        pair_0_1: {
-          affected_subtrees_by_split: {
-            '[0, 1]': [[[0]]],
-          },
-          attachment_edges_by_split: {},
-          spr_move_events: [{
-            pivot_edge: [0, 1],
-            driver_subtree: [0],
-            highlight_group: [[0]],
-            step_range: [0, 0],
-            collapse_path: [{
-              split: [0, 1],
-              branch_length: 0.25,
-            }],
-            expand_path: [{
-              split: [0],
-              branch_length: 0.5,
-            }],
-            collapse_hops: 1,
-            expand_hops: 2,
-            total_hops: 3,
-            collapse_branch_length: 0.25,
-            expand_branch_length: 0.5,
-            total_branch_length: 0.75,
-          }],
-        },
-      },
-    }));
-
-    expect(result.tree_pair_solutions.pair_0_1.spr_move_events?.[0]).toMatchObject({
-      driver_subtree: [0],
-      highlight_group: [[0]],
-      collapse_hops: 1,
-      expand_hops: 2,
-      total_hops: 3,
-      total_branch_length: 0.75,
-    });
-  });
-
-  it('rejects legacy SPR moving_subtree event fields', () => {
     expect(() => validatePhyloMovieData(makePayload({
-      tree_pair_solutions: {
-        pair_0_1: {
-          affected_subtrees_by_split: {
-            '[0, 1]': [[[0]]],
-          },
-          attachment_edges_by_split: {},
-          spr_move_events: [{
-            pivot_edge: [0, 1],
-            moving_subtree: [0],
-            highlight_group: [[0]],
-            step_range: [0, 0],
-            collapse_path: [],
-            expand_path: [],
-            collapse_hops: 0,
-            expand_hops: 0,
-            total_hops: 0,
-            collapse_branch_length: 0,
-            expand_branch_length: 0,
-            total_branch_length: 0,
-          }],
-        },
-      },
-    }))).toThrow(/spr_move_events\[0\]\.moving_subtree is not part of the backend contract/);
-  });
-
-  it('rejects legacy SPR moving_subtree_group event fields', () => {
-    expect(() => validatePhyloMovieData(makePayload({
-      tree_pair_solutions: {
-        pair_0_1: {
-          affected_subtrees_by_split: {
-            '[0, 1]': [[[0], [1]]],
-          },
-          attachment_edges_by_split: {},
-          spr_move_events: [{
-            pivot_edge: [0, 1],
-            driver_subtree: [0],
-            moving_subtree_group: [[0], [1]],
-            step_range: [0, 0],
-            collapse_path: [],
-            expand_path: [],
-            collapse_hops: 0,
-            expand_hops: 0,
-            total_hops: 0,
-            collapse_branch_length: 0,
-            expand_branch_length: 0,
-            total_branch_length: 0,
-          }],
-        },
-      },
-    }))).toThrow(/spr_move_events\[0\]\.moving_subtree_group is not part of the backend contract/);
-  });
-
-  it('validates split_change_timeline against input-tree-inclusive pair ranges', () => {
-    const result = validatePhyloMovieData(makePayload({
-      interpolated_trees: [minimalTree, minimalTree, minimalTree],
-      tree_metadata: [
-        inputTreeMetadata(),
-        interpolationFrameMetadata(),
-        inputTreeMetadata(),
-      ],
-      pair_interpolation_ranges: [[0, 2]],
-      pivot_edge_tracking: [null, [0, 1], null],
-      subtree_highlight_tracking: [null, [[0]], null],
-      split_change_timeline: [
-        {
-          type: 'original',
-          tree_index: 0,
-          global_index: 0,
-          name: '',
-        },
-        {
-          type: 'split_event',
-          pair_key: 'pair_0_1',
-          split: [0, 1],
-          step_range_local: [0, 0],
-          step_range_global: [1, 1],
-        },
-        {
-          type: 'original',
-          tree_index: 1,
-          global_index: 2,
-          name: '',
-        },
-      ],
-    }));
-
-    expect(result.split_change_timeline).toHaveLength(3);
-    expect(result.split_change_timeline[1]).toMatchObject({
-      type: 'split_event',
-      pair_key: 'pair_0_1',
-      step_range_global: [1, 1],
-    });
-  });
-
-  it('rejects split events whose pair key does not match adjacent original timeline entries', () => {
-    expect(() => validatePhyloMovieData(makePayload({
-      interpolated_trees: [minimalTree, minimalTree, minimalTree],
-      tree_metadata: [
-        inputTreeMetadata(),
-        interpolationFrameMetadata('pair_7_8'),
-        inputTreeMetadata(),
-      ],
-      tree_pair_solutions: {
-        pair_7_8: {
-          affected_subtrees_by_split: {
-            '[0, 1]': [[[0], [1]]],
-          },
-          attachment_edges_by_split: {},
-        },
-      },
-      pair_interpolation_ranges: [[0, 2]],
-      pivot_edge_tracking: [null, [0, 1], null],
-      subtree_highlight_tracking: [null, [[0]], null],
-      split_change_timeline: [
-        {
-          type: 'original',
-          tree_index: 0,
-          global_index: 0,
-          name: '',
-        },
-        {
-          type: 'split_event',
-          pair_key: 'pair_7_8',
-          split: [0, 1],
-          step_range_local: [0, 0],
-          step_range_global: [1, 1],
-        },
-        {
-          type: 'original',
-          tree_index: 1,
-          global_index: 2,
-          name: '',
-        },
-      ],
-    }))).toThrow(/pair_key must match adjacent original tree_index values/);
-  });
-
-  it('rejects original timeline entries whose tree_index order disagrees with global_index order', () => {
-    expect(() => validatePhyloMovieData(makePayload({
-      interpolated_trees: [minimalTree, minimalTree, minimalTree],
-      tree_metadata: [
-        inputTreeMetadata(),
-        interpolationFrameMetadata(),
-        inputTreeMetadata(),
-      ],
-      pair_interpolation_ranges: [[0, 2]],
-      pivot_edge_tracking: [null, [0, 1], null],
-      subtree_highlight_tracking: [null, [[0]], null],
-      split_change_timeline: [
-        {
-          type: 'original',
-          tree_index: 1,
-          global_index: 0,
-          name: '',
-        },
-        {
-          type: 'split_event',
-          pair_key: 'pair_0_1',
-          split: [0, 1],
-          step_range_local: [0, 0],
-          step_range_global: [1, 1],
-        },
-        {
-          type: 'original',
-          tree_index: 0,
-          global_index: 2,
-          name: '',
-        },
-      ],
-    }))).toThrow(/original entries must have increasing global_index when sorted by tree_index/);
-  });
-
-  it('rejects metadata source frame indices that do not point to input tree frames', () => {
-    expect(() => validatePhyloMovieData(makePayload({
-      interpolated_trees: [minimalTree, minimalTree, minimalTree],
-      tree_metadata: [
-        inputTreeMetadata(),
-        interpolationFrameMetadata('pair_0_1', 1, 1),
-        inputTreeMetadata(),
-      ],
-      pair_interpolation_ranges: [[0, 2]],
-      pivot_edge_tracking: [null, [0, 1], null],
-      subtree_highlight_tracking: [null, [[0]], null],
-      split_change_timeline: [
-        {
-          type: 'original',
-          tree_index: 0,
-          global_index: 0,
-          name: '',
-        },
-        {
-          type: 'split_event',
-          pair_key: 'pair_0_1',
-          split: [0, 1],
-          step_range_local: [0, 0],
-          step_range_global: [1, 1],
-        },
-        {
-          type: 'original',
-          tree_index: 1,
-          global_index: 2,
-          name: '',
-        },
-      ],
-    }))).toThrow(/source_tree_global_index must reference an input tree frame/);
-  });
-
-  it('rejects metadata pair keys that disagree with split event pair keys', () => {
-    expect(() => validatePhyloMovieData(makePayload({
-      interpolated_trees: [minimalTree, minimalTree, minimalTree],
-      tree_metadata: [
-        inputTreeMetadata(),
-        interpolationFrameMetadata('pair_7_8'),
-        inputTreeMetadata(),
-      ],
-      tree_pair_solutions: {
-        pair_0_1: {
-          affected_subtrees_by_split: {
-            '[0, 1]': [[[0], [1]]],
-          },
-          attachment_edges_by_split: {},
-        },
-        pair_7_8: {
-          affected_subtrees_by_split: {},
-          attachment_edges_by_split: {},
-        },
-      },
-      pair_interpolation_ranges: [[0, 2]],
-      pivot_edge_tracking: [null, [0, 1], null],
-      subtree_highlight_tracking: [null, [[0]], null],
-      split_change_timeline: [
-        {
-          type: 'original',
-          tree_index: 0,
-          global_index: 0,
-          name: '',
-        },
-        {
-          type: 'split_event',
-          pair_key: 'pair_0_1',
-          split: [0, 1],
-          step_range_local: [0, 0],
-          step_range_global: [1, 1],
-        },
-        {
-          type: 'original',
-          tree_index: 1,
-          global_index: 2,
-          name: '',
-        },
-      ],
-    }))).toThrow(/tree_metadata\[1\]\.tree_pair_key must match split_change_timeline pair_key/);
-  });
-
-  it('rejects split_change_timeline gaps in transition coverage', () => {
-    expect(() => validatePhyloMovieData(makePayload({
-      interpolated_trees: [minimalTree, minimalTree, minimalTree],
-      tree_metadata: [
-        inputTreeMetadata(),
-        interpolationFrameMetadata(),
-        inputTreeMetadata(),
-      ],
-      pair_interpolation_ranges: [[0, 2]],
-      pivot_edge_tracking: [null, [0, 1], null],
-      subtree_highlight_tracking: [null, [[0]], null],
-      split_change_timeline: [
-        {
-          type: 'original',
-          tree_index: 0,
-          global_index: 0,
-          name: '',
-        },
-        {
-          type: 'original',
-          tree_index: 1,
-          global_index: 2,
-          name: '',
-        },
-      ],
-    }))).toThrow(/missing split event coverage for tree index 1/);
-  });
-
-  it('rejects overlapping split_change_timeline transition ranges', () => {
-    expect(() => validatePhyloMovieData(makePayload({
-      interpolated_trees: [minimalTree, minimalTree, minimalTree, minimalTree],
-      tree_metadata: [
-        inputTreeMetadata(),
-        interpolationFrameMetadata(),
-        interpolationFrameMetadata('pair_0_1', 2, 0),
-        inputTreeMetadata(),
-      ],
-      pair_interpolation_ranges: [[0, 3]],
-      pivot_edge_tracking: [null, [0, 1], [0, 1], null],
-      subtree_highlight_tracking: [null, [[0]], [[0]], null],
-      split_change_timeline: [
-        {
-          type: 'original',
-          tree_index: 0,
-          global_index: 0,
-          name: '',
-        },
-        {
-          type: 'split_event',
-          pair_key: 'pair_0_1',
-          split: [0, 1],
-          step_range_local: [0, 1],
-          step_range_global: [1, 2],
-        },
-        {
-          type: 'split_event',
-          pair_key: 'pair_0_1',
-          split: [0, 1],
-          step_range_local: [1, 1],
-          step_range_global: [2, 2],
-        },
-        {
-          type: 'original',
-          tree_index: 1,
-          global_index: 3,
-          name: '',
-        },
-      ],
-    }))).toThrow(/overlaps tree index 2/);
+      msa: { sequences: null, window_size: 0, step_size: 1 },
+    }))).toThrow(/msa\.window_size must be positive/);
   });
 });

@@ -1,5 +1,5 @@
 import { getConnectorLeafPairCandidate } from './ConnectorLeafPairCandidates.js';
-import { indexConnectorLeavesByName } from './ConnectorLeafIndex.js';
+import { indexConnectorLeavesBySplitKey } from './ConnectorLeafIndex.js';
 import { createRawConnectorConnectionFromCandidate } from './ConnectorRawConnectionFactory.js';
 import { resolveConnectorVisualState } from './ConnectorVisualState.js';
 
@@ -13,14 +13,14 @@ export function buildRawConnectorConnections(params) {
     markedSubtreesEnabled,
     linkConnectionOpacity,
   } = params;
-  const rightLeavesByName = indexConnectorLeavesByName(rightPositions);
+  const rightLeavesBySplitKey = indexConnectorLeavesBySplitKey(rightPositions);
   const connections = [];
 
   for (const [key, leftInfo] of leftPositions.entries()) {
     const candidate = getConnectorLeafPairCandidate({
       key,
       leftInfo,
-      rightLeavesByName,
+      rightLeavesBySplitKey,
       jumpingSubtreeSets,
     });
     if (!candidate) continue;

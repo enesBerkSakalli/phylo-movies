@@ -9,15 +9,12 @@ import {
 } from 'recharts';
 import {
   selectBarOptionValue,
-  selectFrameIndex,
-  selectDistanceRfd,
-  selectDistanceWeightedRfd,
-  selectFullTreeIndices,
+  selectInputFrameIndices,
   selectGoToPosition,
-  selectMovieTimelineManager,
-  selectPairInterpolationRanges,
+  selectPairMetrics,
+  selectPairs,
   selectScaleList,
-  selectTransitionResolver,
+  selectTimelineCursor,
   useAppStore
 } from '../../state/phyloStore/store.js';
 
@@ -40,25 +37,22 @@ const Y_AXIS_WIDTH = 34;
 
 const useTimelineData = ({
   barOptionValue,
-  frameIndex,
-  fullTreeIndices,
-  robinsonFouldsDistances,
-  weightedRobinsonFouldsDistances,
-  pairInterpolationRanges,
+  timelineCursor,
+  inputFrameIndices,
+  pairMetrics,
+  pairs,
   scaleList,
 }) =>
   useMemo(() => {
     const { points, yMax } = buildSeriesPoints(
       barOptionValue,
-      robinsonFouldsDistances,
-      weightedRobinsonFouldsDistances,
+      pairMetrics,
       scaleList,
-      pairInterpolationRanges,
+      pairs,
     );
 
-    const inputTreeIndices = fullTreeIndices || [];
     const hasData = points.length > 0;
-    const activePointIndex = resolveActivePointIndex(barOptionValue, frameIndex, inputTreeIndices, points);
+    const activePointIndex = resolveActivePointIndex(barOptionValue, timelineCursor, inputFrameIndices, points);
     const currentX = resolveCursorX(points, activePointIndex);
 
     return {
@@ -70,33 +64,28 @@ const useTimelineData = ({
     };
   }, [
     barOptionValue,
-    frameIndex,
-    fullTreeIndices,
-    robinsonFouldsDistances,
-    weightedRobinsonFouldsDistances,
-    pairInterpolationRanges,
+    timelineCursor,
+    inputFrameIndices,
+    pairMetrics,
+    pairs,
     scaleList,
   ]);
 
 export function DistanceChart() {
   const barOptionValue = useAppStore(selectBarOptionValue);
-  const frameIndex = useAppStore(selectFrameIndex);
-  const transitionResolver = useAppStore(selectTransitionResolver);
-  const fullTreeIndices = useAppStore(selectFullTreeIndices);
-  const pairInterpolationRanges = useAppStore(selectPairInterpolationRanges);
-  const movieTimelineManager = useAppStore(selectMovieTimelineManager);
-  const robinsonFouldsDistances = useAppStore(selectDistanceRfd);
-  const weightedRobinsonFouldsDistances = useAppStore(selectDistanceWeightedRfd);
+  const timelineCursor = useAppStore(selectTimelineCursor);
+  const inputFrameIndices = useAppStore(selectInputFrameIndices);
+  const pairs = useAppStore(selectPairs);
+  const pairMetrics = useAppStore(selectPairMetrics);
   const scaleList = useAppStore(selectScaleList);
   const goToPosition = useAppStore(selectGoToPosition);
 
   const { points, yMax, currentX, activePointIndex, hasData } = useTimelineData({
     barOptionValue,
-    frameIndex,
-    fullTreeIndices,
-    robinsonFouldsDistances,
-    weightedRobinsonFouldsDistances,
-    pairInterpolationRanges,
+    timelineCursor,
+    inputFrameIndices,
+    pairMetrics,
+    pairs,
     scaleList,
   });
 
@@ -113,12 +102,12 @@ export function DistanceChart() {
 
   const navigateToPoint = useCallback(
     (point) => {
-      const target = resolveNavigationTarget(barOptionValue, point, transitionResolver, movieTimelineManager);
+      const target = resolveNavigationTarget(barOptionValue, point);
       if (target && Number.isInteger(target.frameIndex)) {
         goToPosition(target.frameIndex, undefined, target.seekOptions);
       }
     },
-    [barOptionValue, goToPosition, movieTimelineManager, transitionResolver],
+    [barOptionValue, goToPosition],
   );
 
   const handleClick = useCallback(

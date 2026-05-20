@@ -1,28 +1,32 @@
 import { selectTreeContext } from '../../selectors/treeSelectors.js';
 
+const EMPTY_PAIR_METRICS = Object.freeze({
+  rows: Object.freeze([]),
+  semantics: Object.freeze({}),
+});
+
 export const createTreeDatasetSlice = (_set, get) => ({
   // ==========================================================================
   // STATE: Core Data
   // ==========================================================================
   treeList: [],
-  treeMetadata: [],
+  timelineFrames: [],
   leafNamesByIndex: [],
   fileName: null,
   datasetVersion: 0,
-  transitionResolver: null,
 
   // ==========================================================================
   // STATE: Distances & Scales
   // ==========================================================================
-  treeDistances: null,
+  pairMetrics: EMPTY_PAIR_METRICS,
 
   // ==========================================================================
   // STATE: Change Tracking
   // ==========================================================================
-  pairSolutions: {},
+  pairs: [],
   pivotEdgeTracking: [],
   subtreeHighlightTracking: [],
-  splitChangeTimeline: [],
+  temporalEvents: [],
 
   getTreeContext: (index) => {
     return selectTreeContext(get(), index);

@@ -1,7 +1,7 @@
 import { detectAnimationStage } from '../deckgl/interpolation/stages/animationStageDetector.js';
 import { applyStageEasing } from '../deckgl/interpolation/stages/stageEasing.js';
 import { calculatePlaybackState } from '../../domain/animation/AnimationTiming.js';
-import { selectActiveTreeList } from '../../state/phyloStore/selectors/treeSelectors.js';
+import { selectActiveTreeList, selectInputFrameIndices } from '../../state/phyloStore/selectors/treeSelectors.js';
 import { PlaybackCursor } from '../../timeline/time/PlaybackCursor.js';
 import { TransitionFrame } from '../../timeline/time/TransitionFrame.js';
 
@@ -354,12 +354,12 @@ function getActiveTreeSequence(state) {
  * Encapsulates logic for finding the comparison tree
  */
 function getComparisonTarget(state, fromIndex, toIndex) {
-  const { transitionResolver } = state;
   const treeList = selectActiveTreeList(state);
-  const full = Array.isArray(transitionResolver?.fullTreeIndices) ? transitionResolver.fullTreeIndices : [];
+  const inputFrameIndices = selectInputFrameIndices(state);
 
-  // Find the next full tree in the sequence to compare against
-  const rightIdx = full.find((i) => i > fromIndex) ?? full[full.length - 1] ?? toIndex;
+  const rightIdx = inputFrameIndices.find((i) => i > fromIndex)
+    ?? inputFrameIndices[inputFrameIndices.length - 1]
+    ?? toIndex;
   const rightTree = treeList[rightIdx];
 
   return rightTree ? { rightTree, rightTreeIndex: rightIdx } : null;

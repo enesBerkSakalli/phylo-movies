@@ -56,10 +56,10 @@ describe('scaleUtils', () => {
       expect(result[1].index).toBe(2);
     });
 
-    it('requires explicit full tree indices', () => {
+    it('requires explicit input frame indices', () => {
       const tree = { length: 0, children: [{ length: 10 }] };
 
-      expect(() => calculateScales([tree])).toThrow('fullTreeIndices');
+      expect(() => calculateScales([tree])).toThrow('inputFrameIndices');
     });
   });
 

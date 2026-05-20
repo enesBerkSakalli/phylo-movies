@@ -232,7 +232,7 @@ export class TimelineMathUtils {
         );
     }
 
-    static getTimelineProgressForFrameIndex(segments, timelineData, frameIndex) {
+    static getTimelineProgressAtFrame(segments, timelineData, frameIndex) {
         if (
             !Number.isInteger(frameIndex) ||
             !Array.isArray(segments) ||
@@ -255,7 +255,7 @@ export class TimelineMathUtils {
 
     static getTimelineProgressForLinearTreeProgress(progress, treeCount, segments, timelineData) {
         if (!Number.isFinite(treeCount) || treeCount <= 1) {
-            return this.getTimelineProgressForFrameIndex(segments, timelineData, 0);
+            return this.getTimelineProgressAtFrame(segments, timelineData, 0);
         }
 
         const clampedProgress = this.clampProgress(progress);
@@ -264,8 +264,8 @@ export class TimelineMathUtils {
         const toIndex = Math.min(fromIndex + 1, treeCount - 1);
         const timeFactor = exactFrameIndex - fromIndex;
 
-        const fromProgress = this.getTimelineProgressForFrameIndex(segments, timelineData, fromIndex);
-        const toProgress = this.getTimelineProgressForFrameIndex(segments, timelineData, toIndex);
+        const fromProgress = this.getTimelineProgressAtFrame(segments, timelineData, fromIndex);
+        const toProgress = this.getTimelineProgressAtFrame(segments, timelineData, toIndex);
 
         if (fromProgress == null || toProgress == null) {
             throw new Error('[TimelineMathUtils] timeline progress for frame index is required');

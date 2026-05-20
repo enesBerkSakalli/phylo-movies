@@ -1,21 +1,19 @@
-function getFrameMetadata(treeMetadata, frameIndex) {
-  if (!Array.isArray(treeMetadata) || !Number.isInteger(frameIndex)) return null;
-  return treeMetadata[frameIndex] ?? null;
+import { isInputFrameRow } from '../data/timelineFrameIndex.js';
+
+function getFrame(frames, frameIndex) {
+  return frames[frameIndex] ?? null;
 }
 
-function isInputFrame(treeMetadata, frameIndex) {
-  const metadata = getFrameMetadata(treeMetadata, frameIndex);
-  if (!metadata) return false;
-  if (metadata.frame_type === 'input_tree') return true;
-  return false;
+function isInputFrame(frames, frameIndex) {
+  const frame = getFrame(frames, frameIndex);
+  return frame ? isInputFrameRow(frame) : false;
 }
 
-export function getSourceFrameIndexForFrameIndex(treeMetadata, frameIndex) {
-  if (!Array.isArray(treeMetadata) || !Number.isInteger(frameIndex)) return null;
-  if (isInputFrame(treeMetadata, frameIndex)) return frameIndex;
+export function getSourceFrameIndexForFrameIndex(frames, frameIndex) {
+  if (isInputFrame(frames, frameIndex)) return frameIndex;
 
-  const metadata = getFrameMetadata(treeMetadata, frameIndex);
-  const sourceFrameIndex = metadata?.source_tree_global_index;
+  const frame = getFrame(frames, frameIndex);
+  const sourceFrameIndex = frame ? frame.source_frame_index : null;
   if (!Number.isInteger(sourceFrameIndex)) return null;
-  return isInputFrame(treeMetadata, sourceFrameIndex) ? sourceFrameIndex : null;
+  return isInputFrame(frames, sourceFrameIndex) ? sourceFrameIndex : null;
 }

@@ -54,7 +54,7 @@ export function buildSprMoveEventSearchText(
     return [
         event.eventId,
         event.pairLabel,
-        event.pairKey,
+        event.pairId,
         String(event.eventIndex),
         event.signature,
         formatSubtreeSearchLabel(event.splitIndices, leafNamesByIndex),

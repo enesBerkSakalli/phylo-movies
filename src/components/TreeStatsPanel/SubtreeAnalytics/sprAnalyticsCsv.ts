@@ -47,7 +47,7 @@ export const createSprMovedSubtreeRecurrenceCsv = (
             item.splitIndices.length,
             item.count,
             formatFixed(item.percentage),
-            item.pairCount ?? item.pairKeys?.length ?? '',
+            item.pairCount ?? item.pairIds?.length ?? '',
             item.totalPathHops,
             formatFixed(item.averagePathHops),
             formatFixed(item.totalPathLength),
@@ -85,7 +85,7 @@ export const createSprMoveEventCsv = (
     const headers = [
         'Movement ID',
         'Tree Pair',
-        'Pair Key',
+        'Pair ID',
         'Movement Index',
         'Moved Subtree',
         'Context Subtree',
@@ -105,7 +105,7 @@ export const createSprMoveEventCsv = (
     const rows = events.map((event) => [
         event.eventId,
         event.pairLabel,
-        event.pairKey,
+        event.pairId,
         event.eventIndex,
         formatLabel(event.splitIndices, leafNamesByIndex),
         formatLabel(event.contextSplitIndices, leafNamesByIndex),

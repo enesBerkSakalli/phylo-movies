@@ -1,4 +1,4 @@
-import { selectActiveTreeList, useAppStore } from '../state/phyloStore/store.js';
+import { selectActiveTreeList, selectInputFrameIndices, useAppStore } from '../state/phyloStore/store.js';
 import { transformBranchLengths } from "../domain/tree/branchTransform.js";
 import { TidyTreeLayout } from "./layout/TidyTreeLayout.js";
 import calculateScales, { getMaxScaleValue } from "../domain/tree/scaleUtils.js";
@@ -74,7 +74,6 @@ export class TreeLayoutController {
   initializeUniformScaling(branchTransformation = 'none') {
     const state = useAppStore.getState();
     const treeList = selectActiveTreeList(state);
-    const { transitionResolver } = state;
     const scalingCacheKey = createUniformScalingCacheKey({ state, treeList, branchTransformation });
 
     if (!Array.isArray(treeList) || treeList.length === 0) {
@@ -87,9 +86,9 @@ export class TreeLayoutController {
       return;
     }
 
-    const fullTreeIndices = transitionResolver?.fullTreeIndices || Array.from({ length: treeList.length }, (_, i) => i);
+    const inputFrameIndices = selectInputFrameIndices(state);
     const transformedTreeList = this._getOrCacheTransformedTrees(treeList, branchTransformation, state);
-    const scaleList = calculateScales(transformedTreeList, fullTreeIndices);
+    const scaleList = calculateScales(transformedTreeList, inputFrameIndices);
 
     this.maxGlobalScale = getMaxScaleValue(scaleList);
 

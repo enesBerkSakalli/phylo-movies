@@ -1,6 +1,6 @@
 import { buildSubtreeConnectors } from '../deckgl/data/transforms/SubtreeConnectorBuilder.js';
 import { useAppStore } from '../../state/phyloStore/store.js';
-import { selectTreePairKeyAtIndex } from '../../state/phyloStore/selectors/treeSelectors.js';
+import { selectPairById, selectTimelineFrameAtIndex } from '../../state/phyloStore/selectors/treeSelectors.js';
 import { tagTreeSide } from '../utils/layerDataUtils.js';
 import {
   applyOffset,
@@ -280,12 +280,12 @@ export class ComparisonModeRenderer {
     const state = useAppStore.getState();
     const frameIndex = Number.isInteger(activeTreeIndex)
       ? activeTreeIndex
-      : (state?.frameIndex ?? 0);
-    const pivotEdgeTracking = state?.pivotEdgeTracking || [];
+      : state.frameIndex;
+    const pivotEdgeTracking = state.pivotEdgeTracking;
     const pivotEdge = pivotEdgeTracking[frameIndex];
-    const pairKey = selectTreePairKeyAtIndex(state, frameIndex);
-    const affectedSubtreesBySplit = pairKey
-      ? state?.pairSolutions?.[pairKey]?.affected_subtrees_by_split || {}
+    const pairId = selectTimelineFrameAtIndex(state, frameIndex)?.pair_id ?? null;
+    const affectedSubtreesBySplit = pairId
+      ? selectPairById(state)[pairId].solution.affected_subtrees_by_split
       : {};
 
     if (!Array.isArray(pivotEdge) || pivotEdge.length === 0) {
@@ -297,11 +297,11 @@ export class ComparisonModeRenderer {
       rightPositions,
       affectedSubtreesBySplit,
       pivotEdge,
-      colorManager: state?.colorManager,
-      subtreeHighlightTracking: state?.subtreeHighlightTracking || [],
+      colorManager: state.colorManager,
+      subtreeHighlightTracking: state.subtreeHighlightTracking,
       frameIndex,
-      markedSubtreesEnabled: state?.markedSubtreesEnabled ?? true,
-      linkConnectionOpacity: state?.linkConnectionOpacity ?? 0.6,
+      markedSubtreesEnabled: state.markedSubtreesEnabled,
+      linkConnectionOpacity: state.linkConnectionOpacity,
       leftCenter,
       rightCenter,
       leftRadius,
