@@ -1,4 +1,4 @@
-import { getSplitIndices } from '../../domain/tree/splits.js';
+import { getSplitIndices, getSplitKey } from '../../domain/tree/splits.js';
 import {
   calculatePositionCenter,
   calculateSafeVisualRadius,
@@ -176,27 +176,27 @@ export function buildPositionMap(nodes, labels = []) {
   const labelPositionByLeaf = new Map();
 
   labels.forEach(label => {
-    const splitIndices = getSplitIndices(label);
-    if (Array.isArray(splitIndices) && splitIndices.length > 0) {
-      labelPositionByLeaf.set(splitIndices.join('-'), label.position);
+    const splitKey = getSplitKey(label);
+    if (splitKey) {
+      labelPositionByLeaf.set(splitKey, label.position);
     }
   });
 
   nodes.forEach(node => {
     const splitIndices = getSplitIndices(node);
-    if (Array.isArray(splitIndices) && splitIndices.length > 0) {
-      const key = splitIndices.join('-');
+    const splitKey = getSplitKey(node);
+    if (Array.isArray(splitIndices) && splitKey) {
       let position = node.position;
 
       // For leaf nodes, use label position (tip)
       if (node.isLeaf) {
-        const labelPos = labelPositionByLeaf.get(key);
+        const labelPos = labelPositionByLeaf.get(splitKey);
         if (labelPos) {
           position = labelPos;
         }
       }
 
-      positionMap.set(key, {
+      positionMap.set(splitKey, {
         id: node.id,
         parentId: node.parentId ?? null,
         position,

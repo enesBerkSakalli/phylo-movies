@@ -4,6 +4,13 @@ import { TreeLayoutController } from '../src/treeVisualisation/TreeLayoutControl
 
 describe('TreeLayoutController radii', () => {
   const initialState = useAppStore.getState();
+  const timelineFrames = [
+    {
+      frame_index: 0,
+      frame_type: 'input_tree',
+      is_observed_input: true,
+    },
+  ];
 
   afterEach(() => {
     useAppStore.setState(initialState, true);
@@ -68,10 +75,10 @@ describe('TreeLayoutController radii', () => {
     }];
     useAppStore.setState({
       treeList,
+      timelineFrames,
       branchTransformation: 'none',
       layoutAngleDegrees: 360,
       layoutRotationDegrees: 0,
-      transitionResolver: { fullTreeIndices: [0] }
     });
 
     const controller = new TreeLayoutController(null);
@@ -102,17 +109,17 @@ describe('TreeLayoutController radii', () => {
     }];
     useAppStore.setState({
       treeList: firstTreeList,
+      timelineFrames,
       branchTransformation: 'none',
       layoutAngleDegrees: 360,
       layoutRotationDegrees: 0,
-      transitionResolver: { fullTreeIndices: [0] }
     });
 
     const controller = new TreeLayoutController(null);
     controller.initializeUniformScaling('none');
     expect(controller.maxGlobalScale).toBe(1);
 
-    useAppStore.setState({ treeList: nextTreeList });
+    useAppStore.setState({ treeList: nextTreeList, timelineFrames });
     const layout = controller.calculateLayout(nextTreeList[0], { treeIndex: 0 });
 
     expect(controller.maxGlobalScale).toBe(5);
@@ -145,10 +152,10 @@ describe('TreeLayoutController radii', () => {
     };
     useAppStore.setState({
       treeList: activeTreeList,
+      timelineFrames,
       branchTransformation: 'none',
       layoutAngleDegrees: 360,
       layoutRotationDegrees: 0,
-      transitionResolver: { fullTreeIndices: [0] }
     });
 
     const controller = new TreeLayoutController(null);
@@ -172,10 +179,10 @@ describe('TreeLayoutController radii', () => {
     };
     useAppStore.setState({
       treeList: activeTreeList,
+      timelineFrames,
       branchTransformation: 'none',
       layoutAngleDegrees: 360,
       layoutRotationDegrees: 0,
-      transitionResolver: { fullTreeIndices: [0] }
     });
 
     const controller = new TreeLayoutController(null);
@@ -197,11 +204,11 @@ describe('TreeLayoutController radii', () => {
     }];
     useAppStore.setState({
       treeList,
+      timelineFrames,
       branchTransformation: 'none',
       layoutAngleDegrees: 360,
       layoutRotationDegrees: 0,
       styleConfig: { labelOffsets: { DEFAULT: 1, EXTENSION: 1 } },
-      transitionResolver: { fullTreeIndices: [0] }
     });
 
     const controller = new TreeLayoutController(null);

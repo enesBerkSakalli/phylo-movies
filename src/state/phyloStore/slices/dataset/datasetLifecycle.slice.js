@@ -1,5 +1,9 @@
-import TransitionIndexResolver from '../../../../domain/indexing/TransitionIndexResolver.js';
 import { MovieTimelineManager } from '../../../../timeline/core/MovieTimelineManager.js';
+
+const EMPTY_PAIR_METRICS = Object.freeze({
+  rows: Object.freeze([]),
+  semantics: Object.freeze({}),
+});
 
 export const createDatasetLifecycleSlice = (set, get) => ({
   // ==========================================================================
@@ -18,17 +22,17 @@ export const createDatasetLifecycleSlice = (set, get) => ({
 
     set({
       treeList: [],
-      treeMetadata: [],
+      timelineFrames: [],
       leafNamesByIndex: [],
       fileName: null,
       datasetVersion: (get().datasetVersion ?? 0) + 1,
-      treeDistances: null,
-      pairSolutions: {},
+      pairMetrics: EMPTY_PAIR_METRICS,
+      pairs: [],
       pivotEdgeTracking: [],
       subtreeHighlightTracking: [],
-      splitChangeTimeline: [],
-      transitionResolver: null,
+      temporalEvents: [],
       movieTimelineManager: null,
+      timelineCursor: null,
       selectedTimelineSegmentIndex: null,
     });
   },
@@ -42,16 +46,14 @@ export const createDatasetLifecycleSlice = (set, get) => ({
 
     const {
       interpolated_trees: interpolatedTrees,
-      tree_metadata: treeMetadata,
-      tree_pair_solutions: treePairSolutions,
+      frames,
+      pairs,
       pivot_edge_tracking: pivotEdgeTracking,
-      split_change_timeline: splitChangeTimeline,
-      distances,
+      temporal_events: temporalEvents,
+      pair_metrics: pairMetrics,
       subtree_highlight_tracking: subtreeHighlightTracking,
     } = movieData;
     const leafNamesByIndex = deriveLeafNamesByIndex(interpolatedTrees[0]);
-
-    const resolver = createTransitionResolver(movieData, treeMetadata);
 
     const {
       sequences: msaSequences,
@@ -72,21 +74,22 @@ export const createDatasetLifecycleSlice = (set, get) => ({
     const existingManager = get().movieTimelineManager;
     existingManager?.destroy();
 
-    const movieTimelineManager = new MovieTimelineManager(movieData, resolver, interpolatedTrees);
+    const movieTimelineManager = new MovieTimelineManager(movieData, interpolatedTrees);
+    const timelineCursor = movieTimelineManager.getCursorForFrame(0);
 
     set({
       movieTimelineManager,
+      timelineCursor,
       treeList: interpolatedTrees,
-      treeMetadata,
+      timelineFrames: frames,
       leafNamesByIndex,
       fileName,
       datasetVersion,
-      treeDistances: distances,
-      pairSolutions: treePairSolutions,
+      pairMetrics,
+      pairs,
       pivotEdgeTracking,
       subtreeHighlightTracking,
-      splitChangeTimeline,
-      transitionResolver: resolver,
+      temporalEvents,
       selectedTimelineSegmentIndex: null,
       playhead: {
         animationProgress: 0,
@@ -99,13 +102,6 @@ export const createDatasetLifecycleSlice = (set, get) => ({
     initializeColors();
   },
 });
-
-function createTransitionResolver(movieData, treeMetadata) {
-  return new TransitionIndexResolver(
-    treeMetadata,
-    movieData.pair_interpolation_ranges
-  );
-}
 
 function deriveLeafNamesByIndex(tree) {
   const namesByIndex = [];

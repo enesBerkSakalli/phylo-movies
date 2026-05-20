@@ -5,7 +5,10 @@ import type { SprMoveEventRow } from '../../../src/components/TreeStatsPanel/Sub
 const baseEvent: SprMoveEventRow = {
   eventId: 'SPR-12',
   pairLabel: '3 -> 4',
-  pairKey: 'pair_2_3',
+  pairId: 'pair_2_3',
+  pairIndex: 2,
+  sourceInputTreeIndex: 2,
+  targetInputTreeIndex: 3,
   eventIndex: 12,
   signature: '2,5',
   splitIndices: [2, 5],

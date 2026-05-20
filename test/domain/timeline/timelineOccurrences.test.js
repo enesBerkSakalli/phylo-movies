@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { TimelineDataProcessor } from '../../../src/timeline/data/TimelineDataProcessor.js';
-import { buildTimelineFrameRows } from '../../../src/timeline/data/TimelineFrameRows.js';
+import { buildTimelineFrameViews } from '../../../src/timeline/data/TimelineFrameView.js';
 import { buildTimelineOccurrences } from '../../../src/timeline/data/TimelineOccurrences.js';
 import { smallExampleMovieData } from '../../fixtures/timeline/generatedMovieData.js';
 
 function build(movieData) {
   const segments = TimelineDataProcessor.createSegments(movieData);
   const timelineData = TimelineDataProcessor.createTimelineData(segments);
-  const frameRows = buildTimelineFrameRows(movieData);
-  return buildTimelineOccurrences({ segments, timelineData, frameRows });
+  const frameViews = buildTimelineFrameViews(movieData);
+  return buildTimelineOccurrences({ segments, timelineData, frameViews });
 }
 
 describe('buildTimelineOccurrences', () => {
@@ -19,7 +19,7 @@ describe('buildTimelineOccurrences', () => {
     const frame23 = occurrencesByFrameIndex.get(23);
 
     expect(frame22.map((occurrence) => occurrence.role)).toEqual(
-      expect.arrayContaining(['hold', 'motion_source'])
+      expect.arrayContaining(['motion_target', 'hold'])
     );
     expect(frame22.find((occurrence) => occurrence.holdKind === 'input_tree')).toMatchObject({
       frameIndex: 22,
@@ -29,8 +29,13 @@ describe('buildTimelineOccurrences', () => {
       movieTimeEndMs: expect.any(Number),
     });
     expect(frame23.map((occurrence) => occurrence.role)).toEqual(
-      expect.arrayContaining(['motion_target', 'hold', 'motion_source'])
+      expect.arrayContaining(['hold', 'motion_source'])
     );
+    expect(frame23.find((occurrence) => occurrence.holdKind === 'no_op_pair')).toMatchObject({
+      frameIndex: 23,
+      inputTreeIndex: 2,
+      sourceFrameIndex: 23,
+    });
   });
 
   it('records movie-time and normalized-progress ranges per occurrence', () => {

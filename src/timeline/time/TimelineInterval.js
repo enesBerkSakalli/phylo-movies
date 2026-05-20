@@ -6,7 +6,8 @@ export const TIMELINE_INTERVAL_TYPE = {
 export const TIMELINE_HOLD_KIND = {
     INPUT_TREE: 'input_tree',
     MOVER: 'mover',
-    PIVOT: 'pivot'
+    PIVOT: 'pivot',
+    NO_OP_PAIR: 'no_op_pair'
 };
 
 export class TimelineInterval {

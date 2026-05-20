@@ -60,19 +60,19 @@ export function getScaleValue(scaleList, sourceFrameIndex) {
 }
 
 /**
- * Calculate scales only for full tree indices.
+ * Calculate scales only for input frame indices.
  * @param {Array} treeList - Array of tree objects
- * @param {Array} fullTreeIndices - Array of indices for full trees
- * @returns {Array} Array of scale objects for full trees
+ * @param {Array} inputFrameIndices - Array of indices for input trees
+ * @returns {Array} Array of scale objects for input trees
  */
-export default function calculateScales(treeList, fullTreeIndices) {
-  if (!Array.isArray(fullTreeIndices)) {
-    throw new TypeError('calculateScales requires explicit fullTreeIndices');
+export default function calculateScales(treeList, inputFrameIndices) {
+  if (!Array.isArray(inputFrameIndices)) {
+    throw new TypeError('calculateScales requires explicit inputFrameIndices');
   }
 
   let scaleList = [];
-  for (let i = 0; i < fullTreeIndices.length; i++) {
-    const idx = fullTreeIndices[i];
+  for (let i = 0; i < inputFrameIndices.length; i++) {
+    const idx = inputFrameIndices[i];
     const scale = _calculateScale(treeList[idx]);
     scaleList.push({ value: scale, index: idx });
   }

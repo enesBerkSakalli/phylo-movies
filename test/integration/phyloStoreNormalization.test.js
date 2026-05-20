@@ -20,40 +20,109 @@ const tree0 = {
 const tree1 = tree0;
 const tree2 = tree0;
 
-function inputTreeMetadata() {
-  return {
-    tree_pair_key: null,
-    step_in_pair: null,
-    source_tree_global_index: null,
-    frame_type: 'input_tree',
-    state_semantics: 'processed_input_tree',
-    is_observed_input: true,
-  };
-}
-
-function interpolationFrameMetadata() {
-  return {
-    tree_pair_key: 'pair_0_1',
-    step_in_pair: 1,
-    source_tree_global_index: 0,
-    frame_type: 'interpolation_frame',
-    state_semantics: 'algorithmic_intermediate',
-    is_observed_input: false,
-  };
-}
-
 function makeBackendMovieData() {
   return {
     interpolated_trees: [tree0, tree1, tree2],
-    tree_metadata: [
-      inputTreeMetadata(),
-      interpolationFrameMetadata(),
-      inputTreeMetadata(),
+    frames: [
+      {
+        frame_index: 0,
+        frame_type: 'input_tree',
+        state_semantics: 'processed_input_tree',
+        is_observed_input: true,
+        input_tree_index: 0,
+        pair_id: null,
+        pair_ordinal: null,
+        local_step_index: null,
+        source_frame_index: null,
+        target_frame_index: null,
+      },
+      {
+        frame_index: 1,
+        frame_type: 'interpolation_frame',
+        state_semantics: 'algorithmic_intermediate',
+        is_observed_input: false,
+        input_tree_index: null,
+        pair_id: 'pair_0_1',
+        pair_ordinal: 0,
+        local_step_index: 0,
+        source_frame_index: 0,
+        target_frame_index: 2,
+      },
+      {
+        frame_index: 2,
+        frame_type: 'input_tree',
+        state_semantics: 'processed_input_tree',
+        is_observed_input: true,
+        input_tree_index: 1,
+        pair_id: null,
+        pair_ordinal: null,
+        local_step_index: null,
+        source_frame_index: null,
+        target_frame_index: null,
+      },
     ],
-    distances: {
-      robinson_foulds: [1],
-      weighted_robinson_foulds: [1],
+    pairs: [
+      {
+        pair_id: 'pair_0_1',
+        pair_ordinal: 0,
+        source_input_tree_index: 0,
+        target_input_tree_index: 1,
+        source_frame_index: 0,
+        target_frame_index: 2,
+        generated_frame_range: [1, 1],
+        solution: {
+          affected_subtrees_by_split: {},
+          attachment_edges_by_split: {},
+        },
+      },
+    ],
+    temporal_events: [
+      {
+        event_id: 'pair_0_1:split:0',
+        event_type: 'split_change',
+        pair_id: 'pair_0_1',
+        pair_ordinal: 0,
+        local_step_range: [0, 0],
+        frame_range: [1, 1],
+        split: [0],
+      },
+    ],
+    pair_metrics: {
+      rows: [{
+        pair_id: 'pair_0_1',
+        pair_ordinal: 0,
+        robinson_foulds: 1,
+        weighted_robinson_foulds: 1,
+      }],
+      semantics: {
+        robinson_foulds: {
+          topology: 'rooted_clades',
+          normalization: 'symmetric_difference_over_union',
+          scope: 'adjacent_processed_input_trees',
+        },
+        weighted_robinson_foulds: {
+          topology: 'rooted_clades',
+          includes_branch_lengths: true,
+          includes_terminal_and_root_splits: true,
+          scope: 'adjacent_processed_input_trees',
+        },
+      },
     },
+    pivot_edge_tracking: [null, [0], null],
+    subtree_highlight_tracking: [null, [[1]], null],
+    msa: {
+      sequences: null,
+      window_size: 1,
+      step_size: 1,
+    },
+    file_name: 'normalization-test.json',
+  };
+}
+
+function legacyBackendMovieData() {
+  return {
+    interpolated_trees: [tree0, tree1, tree2],
+    tree_metadata: [],
     tree_pair_solutions: {
       pair_0_1: {
         affected_subtrees_by_split: {},
@@ -101,10 +170,9 @@ describe('phylo store dataset normalization', () => {
   it('uses stable empty selector defaults before dataset initialization', () => {
     const state = useAppStore.getState();
 
-    expect(phyloStoreModule.selectFullTreeIndices(state)).toBe(phyloStoreModule.selectFullTreeIndices(state));
-    expect(phyloStoreModule.selectPairInterpolationRanges(state)).toBe(phyloStoreModule.selectPairInterpolationRanges(state));
-    expect(phyloStoreModule.selectDistanceRfd(state)).toBe(phyloStoreModule.selectDistanceRfd(state));
-    expect(phyloStoreModule.selectDistanceWeightedRfd(state)).toBe(phyloStoreModule.selectDistanceWeightedRfd(state));
+    expect(phyloStoreModule.selectInputFrameIndices(state)).toBe(phyloStoreModule.selectInputFrameIndices(state));
+    expect(phyloStoreModule.selectPairMetrics(state)).toBe(phyloStoreModule.selectPairMetrics(state));
+    expect(phyloStoreModule.selectPairById(state)).toBe(phyloStoreModule.selectPairById(state));
   });
 
   it('stores canonical dataset data and derives tree lookup selectors', () => {
@@ -114,23 +182,34 @@ describe('phylo store dataset normalization', () => {
 
     const state = useAppStore.getState();
     expect(state.treeList).toBe(movieData.interpolated_trees);
-    expect(state.treeMetadata).toBe(movieData.tree_metadata);
+    expect(state.timelineFrames).toBe(movieData.frames);
     expect(state.leafNamesByIndex).toEqual(['taxon-a', 'taxon-b']);
     expect(movieData).not.toHaveProperty(['sorted', 'leaves'].join('_'));
     expect(Object.prototype.hasOwnProperty.call(state, 'movieData')).toBe(false);
     expect(state.msaSequences).toBe(movieData.msa.sequences);
     expect(state.subtreeHighlightTracking).toEqual([null, [[1]], null]);
-    expect(state.splitChangeTimeline).toBe(movieData.split_change_timeline);
-    expect(state.treeDistances).toBe(movieData.distances);
-    expect(phyloStoreModule.selectFullTreeIndices(state)).toEqual([0, 2]);
-    expect(phyloStoreModule.selectPairInterpolationRanges(state)).toEqual([[0, 2]]);
-    expect(phyloStoreModule.selectDistanceRfd(state)).toBe(movieData.distances.robinson_foulds);
-    expect(phyloStoreModule.selectDistanceWeightedRfd(state)).toBe(movieData.distances.weighted_robinson_foulds);
-    expect(Object.prototype.hasOwnProperty.call(state, 'fullTreeIndices')).toBe(false);
+    expect(state.temporalEvents).toBe(movieData.temporal_events);
+    expect(state.pairMetrics).toBe(movieData.pair_metrics);
+    expect(state.pairs).toBe(movieData.pairs);
+    expect(phyloStoreModule.selectPairById(state).pair_0_1).toBe(movieData.pairs[0]);
+    expect(phyloStoreModule.selectInputFrameIndices(state)).toEqual([0, 2]);
+    expect(phyloStoreModule.selectPairMetrics(state).rows).toEqual([{
+      pair_id: 'pair_0_1',
+      pair_ordinal: 0,
+      robinson_foulds: 1,
+      weighted_robinson_foulds: 1,
+    }]);
+    expect(Object.prototype.hasOwnProperty.call(state, 'inputFrameIndices')).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(state, 'pairById')).toBe(false);
     expect(Object.prototype.hasOwnProperty.call(state, 'pairInterpolationRanges')).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(state, 'transitionResolver')).toBe(false);
     expect(Object.prototype.hasOwnProperty.call(state, 'treeIndexByPair')).toBe(false);
     expect(Object.prototype.hasOwnProperty.call(state, 'distanceRfd')).toBe(false);
     expect(Object.prototype.hasOwnProperty.call(state, 'distanceWeightedRfd')).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(state, 'treeMetadata')).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(state, 'pairSolutions')).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(state, 'splitChangeTimeline')).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(state, 'treeDistances')).toBe(false);
   });
 
   it('derives scale metadata without storing scale duplicates', () => {
@@ -170,16 +249,16 @@ describe('phylo store dataset normalization', () => {
     expect(originalContext).toMatchObject({
       treeIndex: 0,
       tree: tree0,
-      pairKey: null,
+      pairId: null,
       isOriginal: true,
-      isFullTree: true,
+      isInputTree: true,
     });
     expect(interpolatedContext).toMatchObject({
       treeIndex: 1,
       tree: tree1,
-      pairKey: 'pair_0_1',
+      pairId: 'pair_0_1',
       isOriginal: false,
-      isFullTree: false,
+      isInputTree: false,
     });
   });
 
@@ -262,16 +341,67 @@ describe('phylo store dataset normalization', () => {
       ['selectLabelsVisible.js', '!== false'],
       ['selectMovieTimelineManager.js', '?? null'],
       ['selectMsaWindow.js', '?? null'],
-      ['selectPairSolutions.js', '?? {}'],
+      ['selectPairs.js', '??'],
+      ['selectPairById.js', '??'],
       ['selectPlayhead.js', '??'],
       ['selectTaxaColoringWindow.js', '?? null'],
       ['selectTaxaGrouping.js', '?? null'],
-      ['selectTransitionResolver.js', '?? null'],
     ];
 
     const violations = selectorFallbackChecks.flatMap(([fileName, legacyPattern]) => {
       const source = readFileSync(join(repoRoot, 'src/state/phyloStore/selectors', fileName), 'utf8');
       return source.includes(legacyPattern) ? [`${fileName}: ${legacyPattern}`] : [];
+    });
+
+    expect(violations).toEqual([]);
+  });
+
+  it('keeps timeline frame index helpers on the validated backend row contract only', () => {
+    const source = readFileSync(
+      join(repoRoot, 'src/timeline/data/timelineFrameIndex.js'),
+      'utf8',
+    );
+
+    expect(source).not.toContain('frameType');
+    expect(source).not.toContain('frameIndex');
+    expect(source).not.toContain('isObservedInput');
+  });
+
+  it('does not keep unused pair-frame-range selectors', () => {
+    expect(phyloStoreModule).not.toHaveProperty('selectPairFrameRanges');
+    expect(existsSync(join(repoRoot, 'src/state/phyloStore/selectors/selectPairFrameRanges.js'))).toBe(false);
+  });
+
+  it('does not keep pair-id wrapper selectors over timeline frames', () => {
+    expect(phyloStoreModule).not.toHaveProperty('selectPairIdAtIndex');
+    expect(existsSync(join(repoRoot, 'src/state/phyloStore/selectors/selectPairIdAtIndex.js'))).toBe(false);
+  });
+
+  it('names the canonical input-frame selector by the timeline contract', () => {
+    const legacySelectorName = ['select', 'Full', 'Tree', 'Indices'].join('');
+    const legacySelectorFile = `${legacySelectorName}.js`;
+
+    expect(phyloStoreModule).toHaveProperty('selectInputFrameIndices');
+    expect(phyloStoreModule).not.toHaveProperty(legacySelectorName);
+    expect(existsSync(join(repoRoot, 'src/state/phyloStore/selectors', legacySelectorFile))).toBe(false);
+    expect(existsSync(join(repoRoot, 'src/state/phyloStore/selectors/selectInputFrameIndices.js'))).toBe(true);
+  });
+
+  it('keeps timeline segment semantics on input-tree language', () => {
+    const sourceChecks = [
+      'src/timeline/data/TimelineSegmentBuilder.js',
+      'src/timeline/data/segmentProcessor.js',
+      'src/timeline/core/TimelineNavigationController.js',
+      'src/timeline/renderers/DeckTimelineRenderer.js',
+      'src/timeline/utils/layerFactories.js',
+      'src/timeline/utils/segmentUtils.js',
+      'src/components/timeline/TimelineSegmentTooltip.jsx',
+      'src/components/TransitionInspectorPanel.jsx',
+    ];
+
+    const violations = sourceChecks.flatMap((file) => {
+      const source = readFileSync(join(repoRoot, file), 'utf8');
+      return source.includes('isFullTree') ? [`${file}: isFullTree`] : [];
     });
 
     expect(violations).toEqual([]);
@@ -322,6 +452,11 @@ describe('phylo store dataset normalization', () => {
     });
 
     expect(violations).toEqual([]);
+  });
+
+  it('rejects the old backend temporal contract before store initialization', () => {
+    expect(() => phyloData.validate(legacyBackendMovieData()))
+      .toThrow(/tree_metadata is not part of the backend contract/);
   });
 
   it('keeps store-internal calls on the composed Zustand store contract', () => {

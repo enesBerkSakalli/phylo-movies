@@ -24,7 +24,7 @@ function loadMovieData() {
 function makeSemanticTimingFixture() {
   const treeList = Array.from({ length: 4 }, (_, index) => ({ id: `tree-${index}` }));
   const segments = [{
-    isFullTree: false,
+    isInputTreeSegment: false,
     hasInterpolation: true,
     interpolationData: [
       { originalIndex: 0 },
@@ -136,7 +136,7 @@ describe('TimelineMathUtils', () => {
   it('uses explicit interpolation intervals, not frame count, for transition segment duration', () => {
     const durations = TimelineMathUtils.calculateSegmentDurations([
       {
-        isFullTree: false,
+        isInputTreeSegment: false,
         hasInterpolation: true,
         interpolationData: [
           { originalIndex: 0 },
@@ -196,7 +196,7 @@ describe('TimelineMathUtils', () => {
   it('resolves input-tree holds as static observed input tree states', () => {
     const treeList = [{ id: 'input-tree' }];
     const segments = [{
-      isFullTree: true,
+      isInputTreeSegment: true,
       hasInterpolation: false,
       interpolationData: [{ originalIndex: 0 }],
       timing: [{
@@ -229,7 +229,7 @@ describe('TimelineMathUtils', () => {
     const treeList = [{ id: 'tree-0' }];
     expect(() => TimelineMathUtils.getTransitionFrameForTimelineProgress(
       0.5,
-      [{ interpolationData: [{ originalIndex: 0 }], isFullTree: true }],
+      [{ interpolationData: [{ originalIndex: 0 }], isInputTreeSegment: true }],
       {
         totalDuration: 1000,
         segmentDurations: [1000],
@@ -242,12 +242,12 @@ describe('TimelineMathUtils', () => {
   it('rejects segments without explicit timing intervals', () => {
     expect(() => TimelineMathUtils.calculateSegmentDurations([
       {
-        isFullTree: true,
+        isInputTreeSegment: true,
         hasInterpolation: false,
         interpolationData: [{ originalIndex: 0 }]
       },
       {
-        isFullTree: false,
+        isInputTreeSegment: false,
         hasInterpolation: true,
         interpolationData: [
           { originalIndex: 0 },
@@ -256,7 +256,7 @@ describe('TimelineMathUtils', () => {
         ]
       },
       {
-        isFullTree: false,
+        isInputTreeSegment: false,
         hasInterpolation: false,
         interpolationData: [{ originalIndex: 0 }]
       }

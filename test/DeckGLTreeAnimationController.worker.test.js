@@ -20,8 +20,10 @@ class MockWorker {
 describe('DeckGLTreeAnimationController worker cache ordering', () => {
   let ControllerClass;
   let controller;
+  const initialStoreState = useAppStore.getState();
 
   beforeEach(async () => {
+    useAppStore.setState({ ...initialStoreState }, true);
     vi.stubGlobal('Worker', MockWorker);
     vi.stubGlobal('requestAnimationFrame', (callback) => {
       callback();
@@ -54,6 +56,7 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     controller = null;
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
+    useAppStore.setState({ ...initialStoreState }, true);
   });
 
   it('ignores stale worker success responses after interpolation caches reset', () => {

@@ -1,4 +1,3 @@
-import { getMSAFrameIndexForTimelineIndex } from '../../../domain/indexing/IndexMapping';
 import { calculateWindow } from '../../../domain/msa/msaWindowCalculator';
 import {
   selectActiveTreeListLength,
@@ -7,12 +6,12 @@ import {
   selectFrameIndex,
   selectGoToPosition,
   selectHasMsa,
+  selectInputFrameIndices,
   selectMsaColumnCount,
   selectMsaStepSize,
   selectMsaWindowSize,
-  selectPlayhead,
   selectSetClipboardTreeIndex,
-  selectTransitionResolver
+  selectTimelineCursor
 } from '../../../state/phyloStore/store.js';
 
 export {
@@ -22,61 +21,54 @@ export {
   selectFrameIndex,
   selectGoToPosition,
   selectHasMsa,
+  selectInputFrameIndices,
   selectMsaColumnCount,
   selectMsaStepSize,
   selectMsaWindowSize,
-  selectPlayhead,
   selectSetClipboardTreeIndex,
-  selectTransitionResolver
+  selectTimelineCursor
 };
 
 const clamp01 = (value) => Math.max(0, Math.min(1, value || 0));
 
-export function buildInterpolationText(sequenceIndex, totalSequenceLength, transitionResolver, playhead) {
-  const coordinateValue = getCoordinateValue(sequenceIndex, totalSequenceLength, playhead);
+export function buildInterpolationText(sequenceIndex, totalSequenceLength, inputTreeIndices, timelineCursor) {
+  const coordinateValue = getCoordinateValue(sequenceIndex, totalSequenceLength, timelineCursor);
   return {
-    display: buildReadablePositionText(sequenceIndex, totalSequenceLength, transitionResolver),
+    display: buildReadablePositionText(sequenceIndex, totalSequenceLength, inputTreeIndices, timelineCursor),
     fullPrecision: coordinateValue.toString()
   };
 }
 
-function getCoordinateValue(sequenceIndex, totalSequenceLength, playhead) {
-  const explicitValue = typeof playhead?.timelineProgress === 'number' ? playhead.timelineProgress : null;
+function getCoordinateValue(sequenceIndex, totalSequenceLength, timelineCursor) {
+  const explicitValue = typeof timelineCursor?.timelineProgress === 'number' ? timelineCursor.timelineProgress : null;
   if (explicitValue != null) return clamp01(explicitValue);
-
-  if (typeof playhead?.animationProgress === 'number') {
-    return clamp01(playhead.animationProgress);
-  }
 
   const derivedValue = totalSequenceLength > 1 ? (sequenceIndex / (totalSequenceLength - 1)) : 0;
   return clamp01(derivedValue);
 }
 
-function buildReadablePositionText(sequenceIndex, totalSequenceLength, transitionResolver) {
-  const inputTreeIndices = transitionResolver?.fullTreeIndices || [];
+function buildReadablePositionText(sequenceIndex, totalSequenceLength, inputTreeIndices, timelineCursor) {
+  const inputFrames = Array.isArray(inputTreeIndices) ? inputTreeIndices : [];
   const safeSequenceIndex = Number.isFinite(sequenceIndex) ? sequenceIndex : 0;
 
-  if (!inputTreeIndices.length) {
+  if (!inputFrames.length) {
     return `Frame ${safeSequenceIndex + 1} of ${Math.max(1, totalSequenceLength)}`;
   }
 
-  const inputTreeAtPosition = inputTreeIndices.indexOf(safeSequenceIndex);
-  if (inputTreeAtPosition >= 0) {
-    return `Input tree ${inputTreeAtPosition + 1}/${inputTreeIndices.length}`;
+  if (timelineCursor?.isObservedInput && Number.isInteger(timelineCursor.inputTreeIndex)) {
+    return `Input tree ${timelineCursor.inputTreeIndex + 1}/${inputFrames.length}`;
   }
 
-  let previousInputTreeOrdinal = -1;
-  for (let i = inputTreeIndices.length - 1; i >= 0; i--) {
-    if (inputTreeIndices[i] < safeSequenceIndex) {
-      previousInputTreeOrdinal = i;
-      break;
-    }
-  }
+  const previousInputTreeOrdinal = Number.isInteger(timelineCursor?.sourceInputTreeIndex)
+    ? timelineCursor.sourceInputTreeIndex
+    : -1;
 
-  const nextInputTreeOrdinal = previousInputTreeOrdinal + 1;
-  if (previousInputTreeOrdinal >= 0 && nextInputTreeOrdinal < inputTreeIndices.length) {
-    const from = inputTreeIndices[previousInputTreeOrdinal];
-    const to = inputTreeIndices[nextInputTreeOrdinal];
+  const nextInputTreeOrdinal = Number.isInteger(timelineCursor?.targetInputTreeIndex)
+    ? timelineCursor.targetInputTreeIndex
+    : previousInputTreeOrdinal + 1;
+  if (previousInputTreeOrdinal >= 0 && nextInputTreeOrdinal < inputFrames.length) {
+    const from = inputFrames[previousInputTreeOrdinal];
+    const to = inputFrames[nextInputTreeOrdinal];
     const frameCount = Math.max(1, to - from - 1);
     const frameNumber = Math.max(1, Math.min(frameCount, safeSequenceIndex - from));
     return `source input tree ${previousInputTreeOrdinal + 1} -> target input tree ${nextInputTreeOrdinal + 1}, frame ${frameNumber}/${frameCount}`;
@@ -85,31 +77,20 @@ function buildReadablePositionText(sequenceIndex, totalSequenceLength, transitio
   return `Frame ${safeSequenceIndex + 1} of ${Math.max(1, totalSequenceLength)}`;
 }
 
-export function buildSegmentText(sequenceIndex, transitionResolver) {
-  const inputTreeIndices = transitionResolver?.fullTreeIndices || [];
-  if (!inputTreeIndices.length) return 'Generated frame';
-
-  const inputTreeAtPosition = inputTreeIndices.indexOf(sequenceIndex);
-  if (inputTreeAtPosition >= 0) return 'Input tree';
-
-  let previousInputTreeOrdinal = 0;
-  for (let i = inputTreeIndices.length - 1; i >= 0; i--) {
-    if (inputTreeIndices[i] <= sequenceIndex) {
-      previousInputTreeOrdinal = i;
-      break;
-    }
+export function buildSegmentText(timelineCursor) {
+  if (timelineCursor?.isObservedInput) return 'Input tree';
+  if (
+    Number.isInteger(timelineCursor?.sourceInputTreeIndex) &&
+    Number.isInteger(timelineCursor?.targetInputTreeIndex)
+  ) {
+    return `source input tree ${timelineCursor.sourceInputTreeIndex + 1} -> target input tree ${timelineCursor.targetInputTreeIndex + 1}`;
   }
-  const nextInputTreeOrdinal = previousInputTreeOrdinal + 1;
-
-  if (nextInputTreeOrdinal < inputTreeIndices.length) {
-    return `source input tree ${previousInputTreeOrdinal + 1} -> target input tree ${nextInputTreeOrdinal + 1}`;
-  }
-
-  return 'Input tree';
+  return 'Generated frame';
 }
 
-export function buildMsaWindow(hasMsa, frameIndex, transitionResolver, msaStepSize, msaWindowSize, msaColumnCount) {
+export function buildMsaWindow(hasMsa, msaWindowIndex, msaStepSize, msaWindowSize, msaColumnCount) {
   if (!hasMsa) return null;
-  const frame = getMSAFrameIndexForTimelineIndex(frameIndex, transitionResolver);
-  return calculateWindow(frame, msaStepSize, msaWindowSize, msaColumnCount || 0);
+  if (!Number.isInteger(msaWindowIndex)) return null;
+  if (!Number.isFinite(msaColumnCount) || msaColumnCount <= 0) return null;
+  return calculateWindow(msaWindowIndex, msaStepSize, msaWindowSize, msaColumnCount || 0);
 }

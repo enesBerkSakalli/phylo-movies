@@ -3,7 +3,9 @@ import React, { useMemo } from 'react';
 import {
   selectLeafNamesByIndex,
   selectMarkedNodes,
-  selectPairSolutions,
+  selectPairMetrics,
+  selectPairs,
+  selectTemporalEvents,
   selectSetManuallyMarkedNodes,
   useAppStore
 } from '../../../state/phyloStore/store.js';
@@ -33,17 +35,19 @@ import { cn } from '../../../lib/utils';
  */
 export const MovedSubtreeRecurrenceList = () => {
   // Get data from store
-  const pairSolutions = useAppStore(selectPairSolutions);
+  const pairs = useAppStore(selectPairs);
+  const pairMetrics = useAppStore(selectPairMetrics);
+  const temporalEvents = useAppStore(selectTemporalEvents);
   const leafNamesByIndex = useAppStore(selectLeafNamesByIndex);
   const setManuallyMarkedNodes = useAppStore(selectSetManuallyMarkedNodes);
   const markedNodes = useAppStore(selectMarkedNodes);
 
   // Calculate recurrences (memoized)
   const topSubtrees = useMemo(() => {
-    if (!pairSolutions || Object.keys(pairSolutions).length === 0) return [];
-    const movedSubtreeRecurrences = calculateSprMovedSubtreeRecurrences(pairSolutions);
+    if (!Array.isArray(pairs) || pairs.length === 0) return [];
+    const movedSubtreeRecurrences = calculateSprMovedSubtreeRecurrences(pairs, { temporalEvents, pairMetrics });
     return getTopSprMovedSubtreeRecurrences(movedSubtreeRecurrences, 5);
-  }, [pairSolutions]);
+  }, [pairs, pairMetrics, temporalEvents]);
 
   if (!topSubtrees.length) return null;
 

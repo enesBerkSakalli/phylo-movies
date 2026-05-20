@@ -2,35 +2,31 @@ import React, { useCallback, useMemo } from 'react';
 import { Film } from 'lucide-react';
 import { Slider } from '../../ui/slider';
 import { AppTooltip } from '../../ui/app-tooltip';
-import { getIndexMappingValues } from '../../../domain/indexing/IndexMapping';
 import { useAppStore } from '../../../state/phyloStore/store.js';
 import {
   buildInterpolationText,
   selectActiveTreeListLength,
   selectFrameIndex,
+  selectInputFrameIndices,
   selectGoToPosition,
-  selectPlayhead,
-  selectTransitionResolver,
+  selectTimelineCursor,
 } from '../shared/hudShared.js';
 
 export function InterpolationCoordinateSection() {
   const frameIndex = useAppStore(selectFrameIndex);
-  const playhead = useAppStore(selectPlayhead);
-  const transitionResolver = useAppStore(selectTransitionResolver);
+  const timelineCursor = useAppStore(selectTimelineCursor);
+  const inputTreeIndices = useAppStore(selectInputFrameIndices);
   const treeListLength = useAppStore(selectActiveTreeListLength);
   const goToPosition = useAppStore(selectGoToPosition);
 
   const { interpolationText, sequenceIndex } = useMemo(() => {
-    const { sequenceIndex, totalSequenceLength } = getIndexMappingValues(
-      frameIndex,
-      treeListLength,
-      transitionResolver
-    );
+    const sequenceIndex = timelineCursor?.frameIndex ?? frameIndex;
+    const totalSequenceLength = treeListLength;
     return {
-      interpolationText: buildInterpolationText(sequenceIndex, totalSequenceLength, transitionResolver, playhead),
+      interpolationText: buildInterpolationText(sequenceIndex, totalSequenceLength, inputTreeIndices, timelineCursor),
       sequenceIndex,
     };
-  }, [frameIndex, treeListLength, transitionResolver, playhead]);
+  }, [frameIndex, inputTreeIndices, treeListLength, timelineCursor]);
 
   const sliderMax = Math.max(0, treeListLength - 1);
   const sliderValue = Math.min(sliderMax, Math.max(0, sequenceIndex || 0));

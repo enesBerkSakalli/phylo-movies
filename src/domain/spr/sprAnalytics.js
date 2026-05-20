@@ -3,6 +3,7 @@ import {
   parseBackendSplitKey,
   toBackendSplitKey,
 } from '../tree/splits.js';
+import { TimelineEventIndex } from '../../timeline/data/TimelineEventIndex.js';
 
 /**
  * Normalize a moving subtree split into a stable, sorted list of leaf indices.
@@ -14,8 +15,6 @@ function normalizeSubtreeIndices(subtreeSplitIndices) {
   const values = subtreeSplitIndices instanceof Set
     ? Array.from(subtreeSplitIndices)
     : subtreeSplitIndices;
-
-  if (!Array.isArray(values)) return [];
 
   return Array.from(values)
     .filter(Number.isFinite)
@@ -35,8 +34,6 @@ function getSubtreeSignature(subtreeSplitIndices) {
 }
 
 function normalizeHighlightGroup(highlightGroup) {
-  if (!Array.isArray(highlightGroup)) return [];
-
   return highlightGroup
     .map(normalizeSubtreeIndices)
     .filter((subtree) => subtree.length > 0);
@@ -51,42 +48,36 @@ function flattenHighlightGroup(highlightGroup) {
 /**
  * Build the canonical SPR move-event ledger.
  *
- * One row represents one backend spr_move_events entry. Pair solutions without
- * spr_move_events do not produce SPR analytics rows.
+ * One row represents one normalized temporal_events spr_move entry. Pairs
+ * without spr_move events do not produce SPR analytics rows.
  *
- * @param {Object} pairSolutions - Map of pairKey -> TreePairSolution
+ * @param {Array} pairs - Normalized pair rows
  * @param {Object} options
- * @param {Array<number>} options.robinsonFouldsDistances
- * @param {Array<number>} options.weightedRobinsonFouldsDistances
- * @param {Array<[number, number]>} options.pairInterpolationRanges
+ * @param {Array} options.temporalEvents
+ * @param {Object} options.pairMetrics
  * @returns {Array}
  */
-export function buildSprMoveEventRows(pairSolutions, options = {}) {
-  if (!pairSolutions || typeof pairSolutions !== 'object') return [];
-
+export function buildSprMoveEventRows(pairs, options = {}) {
   const {
-    robinsonFouldsDistances = [],
-    weightedRobinsonFouldsDistances = [],
-    pairInterpolationRanges = [],
+    temporalEvents,
+    pairMetrics,
   } = options;
+  const metricByPairId = buildMetricByPairId(pairMetrics);
+  const eventIndex = TimelineEventIndex.from({ pairs, temporalEvents });
 
-  return Object.entries(pairSolutions)
-    .flatMap(([pairKey, solution], entryIndex) => {
-      const parsedPair = parsePairKey(pairKey);
-      const pairIndex = resolvePairArrayIndex(pairKey, parsedPair, entryIndex, pairInterpolationRanges);
-      const sourceInputTreeIndex = parsedPair?.sourceInputTreeIndex ?? null;
-      const targetInputTreeIndex = parsedPair?.targetInputTreeIndex ?? null;
-      const measuredEvents = Array.isArray(solution?.spr_move_events)
-        ? solution.spr_move_events
-        : [];
-      const rawEvents = measuredEvents.map((event, eventIndex) => ({
-        event,
-        eventIndex,
-      }));
+  return pairs
+    .flatMap((pair, entryIndex) => {
+      const pairId = pair.pair_id;
+      const pairIndex = Number.isInteger(pair.pair_ordinal) ? pair.pair_ordinal : entryIndex;
+      const sourceInputTreeIndex = pair.source_input_tree_index;
+      const targetInputTreeIndex = pair.target_input_tree_index;
+      const solution = pair.solution;
+      const rawEvents = eventIndex.getEventsForPair(pairId, 'spr_move');
+      const metric = getPairMetric(metricByPairId, pairId);
 
-      return rawEvents.map(({ event, eventIndex }) => {
-        const driverSplitIndices = normalizeSubtreeIndices(event?.driver_subtree);
-        const highlightGroup = normalizeHighlightGroup(event?.highlight_group);
+      return rawEvents.map((event, eventIndex) => {
+        const driverSplitIndices = normalizeSubtreeIndices(event.driver_subtree);
+        const highlightGroup = normalizeHighlightGroup(event.highlight_group);
         const eventGroup = highlightGroup.length > 0
           ? highlightGroup
           : (driverSplitIndices.length > 0 ? [driverSplitIndices] : []);
@@ -97,7 +88,7 @@ export function buildSprMoveEventRows(pairSolutions, options = {}) {
         const signature = getSubtreeSignature(splitIndices);
         if (!signature) return null;
 
-        const pivotEdge = normalizeSubtreeIndices(event?.pivot_edge);
+        const pivotEdge = normalizeSubtreeIndices(event.pivot_edge);
         const pivotKey = pivotEdge.length > 0 ? toBackendSplitKey(pivotEdge) : null;
         const attachmentContext = pivotKey
           ? resolveMoveAttachmentContext(
@@ -108,18 +99,19 @@ export function buildSprMoveEventRows(pairSolutions, options = {}) {
             contextSplitIndices
           )
           : null;
-        const stepRange = normalizeStepRange(event?.step_range);
-        const collapsePathLength = numberOrNull(event?.collapse_branch_length) ?? 0;
-        const expandPathLength = numberOrNull(event?.expand_branch_length) ?? 0;
+        const stepRange = normalizeStepRange(event.local_step_range);
+        const collapsePathLength = event.collapse_branch_length;
+        const expandPathLength = event.expand_branch_length;
 
         return {
-          eventId: `${pairKey}:${eventIndex}`,
-          pairKey,
+          eventId: event.event_id,
+          pairId,
           pairIndex,
+          pairOrdinal: pairIndex,
           sourceInputTreeIndex,
           targetInputTreeIndex,
           pairLabel: formatPairLabel({
-            pairKey,
+            pairId,
             sourceInputTreeIndex,
             targetInputTreeIndex,
           }),
@@ -132,22 +124,22 @@ export function buildSprMoveEventRows(pairSolutions, options = {}) {
           groupSize: eventGroup.length,
           taxaCount: splitIndices.length,
           pivotEdge,
-          sourceAttachment: attachmentContext?.sourceAttachment ?? [],
-          destinationAttachment: attachmentContext?.destinationAttachment ?? [],
+          sourceAttachment: attachmentContext.sourceAttachment,
+          destinationAttachment: attachmentContext.destinationAttachment,
           stepRange,
-          collapseHops: numberOrNull(event?.collapse_hops) ?? 0,
-          expandHops: numberOrNull(event?.expand_hops) ?? 0,
+          frameRange: normalizeStepRange(event.frame_range),
+          collapseHops: event.collapse_hops,
+          expandHops: event.expand_hops,
           totalPathHops: resolvePathHops(event),
           collapsePathLength,
           expandPathLength,
           totalPathLength: resolvePathLength(event),
-          collapsePath: Array.isArray(event?.collapse_path) ? event.collapse_path : [],
-          expandPath: Array.isArray(event?.expand_path) ? event.expand_path : [],
-          interpolationRange: Array.isArray(pairInterpolationRanges[pairIndex])
-            ? pairInterpolationRanges[pairIndex]
-            : null,
-          rfDistance: numberOrNull(robinsonFouldsDistances[pairIndex]),
-          weightedRfDistance: numberOrNull(weightedRobinsonFouldsDistances[pairIndex]),
+          collapsePath: event.collapse_path,
+          expandPath: event.expand_path,
+          interpolationRange: [pair.source_frame_index, pair.target_frame_index],
+          generatedFrameRange: pair.generated_frame_range,
+          rfDistance: metric.robinson_foulds,
+          weightedRfDistance: metric.weighted_robinson_foulds,
         };
       }).filter(Boolean);
     })
@@ -160,11 +152,11 @@ export function buildSprMoveEventRows(pairSolutions, options = {}) {
 /**
  * Calculates recurrence rows for each unique moved subtree across SPR move events.
  *
- * @param {Object} pairSolutions - Map of pairKey -> TreePairSolution
+ * @param {Array} pairs - Normalized pair rows
  * @returns {Array} Sorted array of moved subtree recurrence objects
  */
-export function calculateSprMovedSubtreeRecurrences(pairSolutions) {
-  return aggregateMovedSubtreeRows(buildSprMoveEventRows(pairSolutions));
+export function calculateSprMovedSubtreeRecurrences(pairs, options = {}) {
+  return aggregateMovedSubtreeRows(buildSprMoveEventRows(pairs, options));
 }
 
 function aggregateMovedSubtreeRows(eventRows) {
@@ -182,14 +174,14 @@ function aggregateMovedSubtreeRows(eventRows) {
         count: 0,
         totalPathHops: 0,
         totalPathLength: 0,
-        pairKeys: new Set(),
+        pairIds: new Set(),
         attachmentContexts: [],
       });
     }
 
     const movedSubtree = freqMap.get(event.signature);
     movedSubtree.count++;
-    movedSubtree.pairKeys.add(event.pairKey);
+    movedSubtree.pairIds.add(event.pairId);
     movedSubtree.totalPathHops += event.totalPathHops;
     movedSubtree.totalPathLength += event.totalPathLength;
     if (event.sourceAttachment.length > 0 || event.destinationAttachment.length > 0 || event.pivotEdge.length > 0) {
@@ -218,44 +210,39 @@ function aggregateMovedSubtreeRows(eventRows) {
       averagePathLength: item.count > 0
         ? item.totalPathLength / item.count
         : 0,
-      pairCount: item.pairKeys.size,
-      pairKeys: Array.from(item.pairKeys).sort(),
+      pairCount: item.pairIds.size,
+      pairIds: Array.from(item.pairIds).sort(),
     }));
 }
 
 /**
  * Build per-pair SPR activity rows with distance, transition-event, and size-class context.
  *
- * @param {Object} pairSolutions - Map of pairKey -> TreePairSolution
+ * @param {Array} pairs - Normalized pair rows
  * @param {Object} options
- * @param {Array<number>} options.robinsonFouldsDistances
- * @param {Array<number>} options.weightedRobinsonFouldsDistances
- * @param {Array<[number, number]>} options.pairInterpolationRanges
+ * @param {Array} options.temporalEvents
+ * @param {Object} options.pairMetrics
  * @returns {Array}
  */
-export function calculateSprPairActivity(pairSolutions, options = {}) {
-  if (!pairSolutions || typeof pairSolutions !== 'object') return [];
-
+export function calculateSprPairActivity(pairs, options = {}) {
   const {
-    robinsonFouldsDistances = [],
-    weightedRobinsonFouldsDistances = [],
-    pairInterpolationRanges = [],
-    splitChangeTimeline = [],
+    temporalEvents,
+    pairMetrics,
   } = options;
+  const metricByPairId = buildMetricByPairId(pairMetrics);
+  const eventIndex = TimelineEventIndex.from({ pairs, temporalEvents });
 
-  const eventRows = buildSprMoveEventRows(pairSolutions, options);
-  const transitionEventCounts = countSplitChangeTimelineEventsByPair(splitChangeTimeline);
+  const eventRows = buildSprMoveEventRows(pairs, options);
   const eventsByPair = eventRows.reduce((map, event) => {
-    if (!map.has(event.pairKey)) map.set(event.pairKey, []);
-    map.get(event.pairKey).push(event);
+    map.get(event.pairId).push(event);
     return map;
-  }, new Map());
+  }, new Map(pairs.map((pair) => [pair.pair_id, []])));
 
-  return Object.keys(pairSolutions)
-    .map((pairKey, entryIndex) => {
-      const parsedPair = parsePairKey(pairKey);
-      const pairIndex = resolvePairArrayIndex(pairKey, parsedPair, entryIndex, pairInterpolationRanges);
-      const events = eventsByPair.get(pairKey) ?? [];
+  return pairs
+    .map((pair, entryIndex) => {
+      const pairId = pair.pair_id;
+      const pairIndex = Number.isInteger(pair.pair_ordinal) ? pair.pair_ordinal : entryIndex;
+      const events = eventsByPair.get(pairId);
       const movedSubtrees = aggregateMovedSubtreeRows(events);
       const sprMoveEventCount = events.length;
       const singleTaxonMoveEventCount = events
@@ -264,21 +251,22 @@ export function calculateSprPairActivity(pairSolutions, options = {}) {
         .filter((event) => event.splitIndices.length > 1).length;
       const topMovedSubtree = movedSubtrees[0] || null;
       const pathStats = summarizeSprEventRows(events);
+      const metric = getPairMetric(metricByPairId, pairId);
 
       return {
-        pairKey,
+        pairId,
         pairIndex,
-        sourceInputTreeIndex: parsedPair?.sourceInputTreeIndex ?? null,
-        targetInputTreeIndex: parsedPair?.targetInputTreeIndex ?? null,
-        interpolationRange: Array.isArray(pairInterpolationRanges[pairIndex])
-          ? pairInterpolationRanges[pairIndex]
-          : null,
-        rfDistance: numberOrNull(robinsonFouldsDistances[pairIndex]),
-        weightedRfDistance: numberOrNull(weightedRobinsonFouldsDistances[pairIndex]),
+        pairOrdinal: pairIndex,
+        sourceInputTreeIndex: pair.source_input_tree_index,
+        targetInputTreeIndex: pair.target_input_tree_index,
+        interpolationRange: [pair.source_frame_index, pair.target_frame_index],
+        generatedFrameRange: pair.generated_frame_range,
+        rfDistance: metric.robinson_foulds,
+        weightedRfDistance: metric.weighted_robinson_foulds,
         uniqueMovedSubtreeCount: movedSubtrees.length,
         singleTaxonMoveEventCount,
         multiTaxonMoveEventCount,
-        transitionEventCount: transitionEventCounts.get(pairKey) ?? 0,
+        transitionEventCount: eventIndex.countEventsForPair(pairId, 'split_change'),
         sprMoveEventCount,
         totalPathHops: pathStats.totalPathHops,
         averagePathHops: pathStats.averagePathHops,
@@ -295,13 +283,13 @@ export function calculateSprPairActivity(pairSolutions, options = {}) {
 /**
  * Summarize dataset-level SPR activity without conflating transition events and moved subtrees.
  *
- * @param {Object} pairSolutions - Map of pairKey -> TreePairSolution
+ * @param {Array} pairs - Normalized pair rows
  * @param {Object} options - Same options accepted by calculateSprPairActivity
  * @returns {Object}
  */
-export function calculateSprDatasetSummary(pairSolutions, options = {}) {
-  const pairActivity = calculateSprPairActivity(pairSolutions, options);
-  const movedSubtreeRecurrences = calculateSprMovedSubtreeRecurrences(pairSolutions);
+export function calculateSprDatasetSummary(pairs, options = {}) {
+  const pairActivity = calculateSprPairActivity(pairs, options);
+  const movedSubtreeRecurrences = calculateSprMovedSubtreeRecurrences(pairs, options);
   const sprMoveEventCount = pairActivity
     .reduce((sum, row) => sum + row.sprMoveEventCount, 0);
   const totalPathHops = pairActivity
@@ -319,7 +307,7 @@ export function calculateSprDatasetSummary(pairSolutions, options = {}) {
       .reduce((sum, row) => sum + row.singleTaxonMoveEventCount, 0),
     multiTaxonMoveEventCount: pairActivity
       .reduce((sum, row) => sum + row.multiTaxonMoveEventCount, 0),
-    topMovedSubtreeSharePercentage: movedSubtreeRecurrences[0]?.percentage ?? 0,
+    topMovedSubtreeSharePercentage: movedSubtreeRecurrences[0] ? movedSubtreeRecurrences[0].percentage : 0,
     sprMoveEventCount,
     totalPathHops,
     averagePathHops: sprMoveEventCount > 0
@@ -343,17 +331,15 @@ export function calculateSprDatasetSummary(pairSolutions, options = {}) {
  * @returns {Array}
  */
 export function buildSprActivityTimelinePoints(pairActivityRows) {
-  if (!Array.isArray(pairActivityRows)) return [];
-
   return pairActivityRows.map((row) => ({
     pairIndex: row.pairIndex,
-    pairKey: row.pairKey,
+    pairId: row.pairId,
     pairLabel: formatPairLabel(row),
     sprMoveEvents: row.sprMoveEventCount,
     uniqueMovedSubtrees: row.uniqueMovedSubtreeCount,
     singleTaxonMoveEventCount: row.singleTaxonMoveEventCount,
     multiTaxonMoveEventCount: row.multiTaxonMoveEventCount,
-    topMovedSubtreeSignature: row.topMovedSubtree?.signature ?? null,
+    topMovedSubtreeSignature: row.topMovedSubtree ? row.topMovedSubtree.signature : null,
   }));
 }
 
@@ -392,7 +378,7 @@ export function formatSubtreeLabel(splitIndices, leafNames = []) {
 }
 
 function summarizeSprEventRows(events) {
-  if (!Array.isArray(events) || events.length === 0) {
+  if (events.length === 0) {
     return {
       totalPathHops: 0,
       averagePathHops: 0,
@@ -416,7 +402,7 @@ function summarizeSprEventRows(events) {
 }
 
 function selectFarthestMovedSubtree(movedSubtrees) {
-  if (!Array.isArray(movedSubtrees) || movedSubtrees.length === 0) return null;
+  if (movedSubtrees.length === 0) return null;
 
   const candidates = movedSubtrees.filter((movedSubtree) => movedSubtree.count > 0);
   if (candidates.length === 0) return null;
@@ -434,37 +420,12 @@ function selectFarthestMovedSubtree(movedSubtrees) {
     })[0];
 }
 
-function resolvePairArrayIndex(pairKey, parsedPair, entryIndex, pairInterpolationRanges) {
-  if (parsedPair && Array.isArray(pairInterpolationRanges) && pairInterpolationRanges.length > 0) {
-    const rangeIndex = pairInterpolationRanges.findIndex((range) => (
-      Array.isArray(range)
-      && range[0] === parsedPair.sourceInputTreeIndex
-      && range[1] === parsedPair.targetInputTreeIndex
-    ));
-    if (rangeIndex >= 0) return rangeIndex;
-    return entryIndex;
-  }
-
-  if (parsedPair?.sourceInputTreeIndex !== undefined) return parsedPair.sourceInputTreeIndex;
-  return entryIndex;
-}
-
 function resolvePathHops(event) {
-  const total = numberOrNull(event?.total_hops);
-  if (total !== null) return total;
-
-  const collapse = numberOrNull(event?.collapse_hops) ?? 0;
-  const expand = numberOrNull(event?.expand_hops) ?? 0;
-  return collapse + expand;
+  return event.total_hops;
 }
 
 function resolvePathLength(event) {
-  const total = numberOrNull(event?.total_branch_length);
-  if (total !== null) return total;
-
-  const collapse = numberOrNull(event?.collapse_branch_length) ?? 0;
-  const expand = numberOrNull(event?.expand_branch_length) ?? 0;
-  return collapse + expand;
+  return event.total_branch_length;
 }
 
 function resolveMoveAttachmentContext(solution, pivotKey, splitIndices, highlightGroup, contextSplitIndices) {
@@ -516,14 +477,12 @@ function resolveGroupAttachmentContext(solution, pivotKey, highlightGroup, group
 }
 
 function resolveAttachmentContext(solution, pivotKey, splitIndices, excludedIndices = splitIndices) {
-  const attachmentEdgesBySplit = getBackendSplitMapValue(solution?.attachment_edges_by_split, pivotKey);
-  if (!attachmentEdgesBySplit) return null;
+  const attachmentEdgesBySplit = getBackendSplitMapValue(solution.attachment_edges_by_split, pivotKey);
 
   const moverKey = toBackendSplitKey(splitIndices);
   const attachmentEdges = getBackendSplitMapValue(attachmentEdgesBySplit, moverKey);
-  const sourceEdge = attachmentEdges?.source;
-  const destinationEdge = attachmentEdges?.destination;
-  if (!Array.isArray(sourceEdge) && !Array.isArray(destinationEdge)) return null;
+  const sourceEdge = attachmentEdges.source;
+  const destinationEdge = attachmentEdges.destination;
 
   const movingSet = new Set(excludedIndices);
   return {
@@ -535,19 +494,15 @@ function resolveAttachmentContext(solution, pivotKey, splitIndices, excludedIndi
 
 function mergeIndexLists(lists) {
   return normalizeSubtreeIndices(
-    Array.from(new Set(lists.flatMap((list) => (
-      Array.isArray(list) ? list : []
-    ))))
+    Array.from(new Set(lists.flatMap((list) => list)))
   );
 }
 
 function filterMovingNodes(edge, movingSet) {
-  if (!Array.isArray(edge)) return [];
   return normalizeSubtreeIndices(edge).filter((leaf) => !movingSet.has(leaf));
 }
 
 function normalizeStepRange(stepRange) {
-  if (!Array.isArray(stepRange) || stepRange.length < 2) return null;
   const start = numberOrNull(stepRange[0]);
   const end = numberOrNull(stepRange[1]);
   return start !== null && end !== null ? [start, end] : null;
@@ -558,31 +513,25 @@ function numberOrNull(value) {
   return Number.isFinite(number) ? number : null;
 }
 
-function countSplitChangeTimelineEventsByPair(splitChangeTimeline) {
-  const counts = new Map();
-  if (!Array.isArray(splitChangeTimeline)) return counts;
-
-  for (const entry of splitChangeTimeline) {
-    if (entry?.type !== 'split_event' || typeof entry.pair_key !== 'string') continue;
-    counts.set(entry.pair_key, (counts.get(entry.pair_key) ?? 0) + 1);
+function buildMetricByPairId(pairMetrics) {
+  const metrics = new Map();
+  for (const row of pairMetrics.rows) {
+    metrics.set(row.pair_id, row);
   }
-
-  return counts;
+  return metrics;
 }
 
 function formatPairLabel(row) {
-  if (row?.sourceInputTreeIndex !== null && row?.sourceInputTreeIndex !== undefined
-    && row?.targetInputTreeIndex !== null && row?.targetInputTreeIndex !== undefined) {
+  if (row.sourceInputTreeIndex !== null && row.targetInputTreeIndex !== null) {
     return `source input tree ${row.sourceInputTreeIndex + 1} to target input tree ${row.targetInputTreeIndex + 1}`;
   }
-  return row?.pairKey || '';
+  return row.pairId;
 }
 
-function parsePairKey(pairKey) {
-  const match = /^pair_(\d+)_(\d+)$/.exec(pairKey);
-  if (!match) return null;
-  return {
-    sourceInputTreeIndex: Number(match[1]),
-    targetInputTreeIndex: Number(match[2]),
-  };
+function getPairMetric(metricByPairId, pairId) {
+  const metric = metricByPairId.get(pairId);
+  if (!metric) {
+    throw new Error(`[sprAnalytics] pair_metrics is missing row for ${pairId}`);
+  }
+  return metric;
 }

@@ -1,12 +1,12 @@
 import { TIMELINE_CONSTANTS } from '../constants.js';
-import { TimelineMathUtils } from '../math/TimelineMathUtils.js';
 
 const SCRUB_GRACE_PERIOD_MS = 150;
 
 export class TimelineStateSynchronizer {
-  constructor(timelineData, segments, store) {
-    this.timelineData = timelineData;
-    this.segments = segments;
+  constructor({ timelineDataset, store }) {
+    this.timelineDataset = timelineDataset;
+    this.timelineData = timelineDataset.timelineData;
+    this.segments = timelineDataset.segments;
     this.store = store;
   }
 
@@ -26,23 +26,23 @@ export class TimelineStateSynchronizer {
     if (!timeline || !this.timelineData) return null;
 
     const { progress, preservingScrubPosition } = this.getEffectivePlaybackState(lastScrubEndTime);
-    const currentTime = TimelineMathUtils.progressToTime(progress, this.timelineData.totalDuration);
+    const cursor = this.timelineDataset.getCursorAtTimelineProgress(progress, { bias: 'nearest' });
+    if (!cursor) return null;
+
+    const currentTime = cursor.movieTimeMs;
     timeline.setCustomTime(currentTime);
 
-    const { frameIndex, segmentIndex } = TimelineMathUtils.getTargetFrameForTime(
-      this.segments,
-      currentTime,
-      this.timelineData.segmentDurations,
-      'nearest',
-      this.timelineData.cumulativeDurations
-    );
-
-    const segment = this._validateSegment(segmentIndex);
+    const segment = this._validateSegment(cursor.segmentIndex);
     if (!segment) {
       return null;
     }
 
-    return { currentTime, frameIndex, segment, preservingScrubPosition };
+    return {
+      currentTime,
+      frameIndex: cursor.frameIndex,
+      segment,
+      preservingScrubPosition
+    };
   }
 
   restoreMountedState(timeline, lastScrubEndTime) {
@@ -54,7 +54,7 @@ export class TimelineStateSynchronizer {
   }
 
   updateStoreTimelineState(time, segment, frameIndex) {
-    const totalProgress = TimelineMathUtils.timeToProgress(time, this.timelineData.totalDuration);
+    const totalProgress = this.timelineDataset.getTimelineProgressAtMovieTime(time);
     const segmentIndex = this.segments.indexOf(segment);
     if (segmentIndex === -1) return;
 
@@ -62,8 +62,9 @@ export class TimelineStateSynchronizer {
     let treesInSegment;
 
     if (segment.hasInterpolation && segment.interpolationData?.length > 1) {
-      treesInSegment = segment.interpolationData.length;
-      treeInSegment = TimelineMathUtils.calculateFramePositionInSegment(segment, frameIndex).treeInSegment;
+      const position = this.timelineDataset.getFramePositionInSegment(segmentIndex, frameIndex);
+      treeInSegment = position.treeInSegment;
+      treesInSegment = position.treesInSegment;
     } else {
       treeInSegment = TIMELINE_CONSTANTS.DEFAULT_TREE_IN_SEGMENT;
       treesInSegment = TIMELINE_CONSTANTS.DEFAULT_TREES_IN_SEGMENT;
@@ -84,11 +85,9 @@ export class TimelineStateSynchronizer {
   }
 
   _mapAnimationProgressToTimelineProgress(animationProgress, treeCount) {
-    return TimelineMathUtils.getTimelineProgressForLinearTreeProgress(
+    return this.timelineDataset.getTimelineProgressForLinearTreeProgress(
       animationProgress,
-      treeCount,
-      this.segments,
-      this.timelineData
+      treeCount
     );
   }
 }

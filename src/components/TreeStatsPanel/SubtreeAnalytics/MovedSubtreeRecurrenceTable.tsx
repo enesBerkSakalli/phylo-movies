@@ -85,7 +85,7 @@ export const MovedSubtreeRecurrenceTable = ({ recurrences, leafNamesByIndex }: M
                                 <Badge variant={isActive ? 'default' : 'secondary'} className="font-mono tabular-nums">{item.count}</Badge>
                             </td>
                             <td className="px-4 py-2 text-right font-mono text-muted-foreground tabular-nums">
-                                {item.pairCount ?? item.pairKeys?.length ?? '-'}
+                                {item.pairCount ?? item.pairIds?.length ?? '-'}
                             </td>
                             <td className="px-4 py-2 text-right font-mono text-muted-foreground tabular-nums">
                                 <Tooltip>

@@ -22,7 +22,7 @@ export function TimelineSegmentTooltip({ segment, segmentIndex, totalSegments, g
 
   if (!segment) return null;
 
-  const isInputTree = segment.isFullTree;
+  const isInputTree = segment.isInputTreeSegment;
 
   return (
     <div className="space-y-2 w-full">

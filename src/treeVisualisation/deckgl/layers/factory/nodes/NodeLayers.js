@@ -31,17 +31,17 @@ export function getNodesLayerProps(nodes = [], state, layerStyles) {
     autoHighlight: true,
     highlightColor: HOVER_HIGHLIGHT_COLOR,
     getPosition: d => {
-      const p = d?.position;
+      const p = d?.renderPosition;
       if (!Array.isArray(p) || !Number.isFinite(p[0]) || !Number.isFinite(p[1])) {
-        throw new Error('Invalid node layer data: position must contain finite x/y values');
+        throw new Error('Invalid node layer data: renderPosition must contain finite x/y values');
       }
 
       const historyOffset = getNodeHistoryZOffset(cached, d);
       if (!historyOffset) {
-        return d.renderPosition;
+        return p;
       }
 
-      return addZOffset(d.renderPosition, historyOffset);
+      return addZOffset(p, historyOffset);
     },
     getRadius: d => layerStyles.getNodeRadius(d, MIN_NODE_RADIUS, cached),
     getFillColor: d => layerStyles.getNodeColor(d, cached),

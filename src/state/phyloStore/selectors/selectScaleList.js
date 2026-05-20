@@ -1,21 +1,21 @@
 import calculateScales from '../../../domain/tree/scaleUtils.js';
 import { selectActiveTreeList } from './selectActiveTreeList.js';
-import { selectFullTreeIndices } from './selectFullTreeIndices.js';
+import { selectInputFrameIndices } from './selectInputFrameIndices.js';
 
 let cachedTreeList = null;
-let cachedFullTreeIndices = null;
+let cachedInputFrameIndices = null;
 let cachedScaleList = [];
 
 export const selectScaleList = (state) => {
   const treeList = selectActiveTreeList(state);
-  const fullTreeIndices = selectFullTreeIndices(state);
+  const inputFrameIndices = selectInputFrameIndices(state);
 
-  if (treeList === cachedTreeList && fullTreeIndices === cachedFullTreeIndices) {
+  if (treeList === cachedTreeList && inputFrameIndices === cachedInputFrameIndices) {
     return cachedScaleList;
   }
 
   cachedTreeList = treeList;
-  cachedFullTreeIndices = fullTreeIndices;
-  cachedScaleList = treeList.length ? calculateScales(treeList, fullTreeIndices) : [];
+  cachedInputFrameIndices = inputFrameIndices;
+  cachedScaleList = treeList.length ? calculateScales(treeList, inputFrameIndices) : [];
   return cachedScaleList;
 };

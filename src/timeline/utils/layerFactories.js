@@ -214,8 +214,8 @@ function calculateRadius(inputTreeRadiusVar, height, zoomScale) {
 }
 
 function calculateConnectionGaps(i, segments, inputTreeRadius, gapDefault) {
-  const leftNeighborIsInputTree = (i > 0) && segments[i - 1]?.isFullTree;
-  const rightNeighborIsInputTree = (i < segments.length - 1) && segments[i + 1]?.isFullTree;
+  const leftNeighborIsInputTree = (i > 0) && segments[i - 1]?.isInputTreeSegment;
+  const rightNeighborIsInputTree = (i < segments.length - 1) && segments[i + 1]?.isInputTreeSegment;
 
   return {
     leftGap: leftNeighborIsInputTree ? inputTreeRadius : gapDefault,

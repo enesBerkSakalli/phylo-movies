@@ -27,6 +27,7 @@ class MockDeckGLTreeAnimationController {
         resetAutoFit: vi.fn()
       }
     };
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     controllerInstance = this;
   }
 }
@@ -37,10 +38,6 @@ vi.mock('../../src/treeVisualisation/DeckGLTreeAnimationController.js', () => ({
 
 vi.mock('../../src/domain/msa/msaWindowCalculator.js', () => ({
   calculateWindow: vi.fn(() => ({ startPosition: 1, endPosition: 10 }))
-}));
-
-vi.mock('../../src/domain/indexing/IndexMapping.js', () => ({
-  getMSAFrameIndex: vi.fn(() => -1)
 }));
 
 vi.mock('../../src/state/phyloStore/store.js', () => ({
@@ -113,8 +110,15 @@ describe('useTreeController static render scheduling', () => {
       movieTimelineManager: null,
       playing: false,
       comparisonMode: false,
-      transitionResolver: null,
       frameIndex: 0,
+      timelineCursor: {
+        frameIndex: 0,
+        inputTreeIndex: 0,
+        sourceFrameIndex: 0,
+        msaWindowIndex: 0,
+        movieTimeMs: 0,
+        timelineProgress: 0.1,
+      },
       playhead: { timelineProgress: 0.1, animationProgress: 0.1 },
       setRenderInProgress: vi.fn(),
       syncMSAEnabled: false,
@@ -174,6 +178,74 @@ describe('useTreeController static render scheduling', () => {
     updateStore({ frameIndex: 1 });
 
     expect(storeState.updateColorManagerForCurrentIndex).not.toHaveBeenCalled();
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it('syncs MSA region while timeline scrubbing', async () => {
+    storeState = {
+      ...storeState,
+      movieTimelineManager: {
+        scrubController: { isScrubbing: true },
+      },
+      syncMSAEnabled: true,
+      msaSequences: {
+        taxonA: 'ACGTACGTACGT',
+      },
+      msaStepSize: 50,
+      msaWindowSize: 100,
+      msaRegion: null,
+      setMsaRegion: vi.fn(),
+      setMsaPreviousRegion: vi.fn(),
+    };
+    const { root } = await renderHookHarness();
+    storeState.setMsaRegion.mockClear();
+
+    updateStore({
+      timelineCursor: {
+        ...storeState.timelineCursor,
+        frameIndex: 1,
+        msaWindowIndex: 1,
+      },
+    });
+
+    expect(storeState.setMsaRegion).toHaveBeenCalledWith(1, 10);
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it('does not sync MSA region to fractional transition positions', async () => {
+    storeState = {
+      ...storeState,
+      movieTimelineManager: {
+        scrubController: { isScrubbing: true },
+      },
+      syncMSAEnabled: true,
+      msaSequences: {
+        taxonA: 'ACGTACGTACGT',
+      },
+      msaStepSize: 50,
+      msaWindowSize: 100,
+      msaRegion: null,
+      setMsaRegion: vi.fn(),
+      setMsaPreviousRegion: vi.fn(),
+    };
+    const { root } = await renderHookHarness();
+    storeState.setMsaRegion.mockClear();
+
+    updateStore({
+      timelineCursor: {
+        ...storeState.timelineCursor,
+        frameIndex: 1,
+        msaWindowIndex: 0.5,
+      },
+    });
+
+    expect(storeState.setMsaRegion).not.toHaveBeenCalled();
 
     await act(async () => {
       root.unmount();

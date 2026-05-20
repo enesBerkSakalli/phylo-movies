@@ -7,6 +7,7 @@ import {
   selectActiveTreeListLength,
   selectComparisonMode,
   selectFrameIndex,
+  selectInputFrameIndices,
   selectGoToNextInputTree,
   selectGoToPreviousInputTree,
   selectPlaying,
@@ -14,7 +15,6 @@ import {
   selectStartAnimationPlayback,
   selectStopAnimationPlayback,
   selectToggleComparisonMode,
-  selectTransitionResolver,
   selectViewsConnected,
   useAppStore
 } from '../../state/phyloStore/store.js';
@@ -35,17 +35,12 @@ export function TransportControls({
   const stopAnimationPlayback = useAppStore(selectStopAnimationPlayback);
   const goToNextInputTree = useAppStore(selectGoToNextInputTree);
   const goToPreviousInputTree = useAppStore(selectGoToPreviousInputTree);
-  const transitionResolver = useAppStore(selectTransitionResolver);
+  const inputTreeIndices = useAppStore(selectInputFrameIndices);
   const hasSequence = treeListLen > 0;
   const hasAnimationSequence = treeListLen > 1;
   const canTogglePlayback = hasAnimationSequence || playing;
   const canStepBackward = hasAnimationSequence && frameIndex > 0;
   const canStepForward = hasAnimationSequence && frameIndex < treeListLen - 1;
-
-  // Get input-tree indices for disabled state calculation.
-  const inputTreeIndices = useMemo(() => {
-    return transitionResolver?.fullTreeIndices || [];
-  }, [transitionResolver]);
 
   // Check if we can navigate to previous/next input tree.
   const canGoToPreviousInputTree = useMemo(() => {

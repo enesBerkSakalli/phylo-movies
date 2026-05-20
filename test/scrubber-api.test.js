@@ -2,6 +2,7 @@ const { expect } = require('chai');
 
 const { ScrubberAPI } = require('../src/timeline/core/ScrubberAPI.js');
 const { TimelineClock } = require('../src/timeline/core/TimelineClock.js');
+const { TimelineDataset } = require('../src/timeline/data/TimelineDataset.js');
 const { useAppStore } = require('../src/state/phyloStore/store.js');
 
 function createMovieData() {
@@ -10,33 +11,86 @@ function createMovieData() {
       { id: 'tree-0' },
       { id: 'tree-1' },
       { id: 'tree-2' }
-    ]
+    ],
+    frames: [
+      {
+        frame_index: 0,
+        frame_type: 'input_tree',
+        state_semantics: 'processed_input_tree',
+        is_observed_input: true,
+        input_tree_index: 0,
+        pair_id: null,
+        pair_ordinal: null,
+        local_step_index: null,
+        source_frame_index: null,
+        target_frame_index: null,
+      },
+      {
+        frame_index: 1,
+        frame_type: 'interpolation_frame',
+        state_semantics: 'algorithmic_intermediate',
+        is_observed_input: false,
+        input_tree_index: null,
+        pair_id: 'pair_0_1',
+        pair_ordinal: 0,
+        local_step_index: 0,
+        source_frame_index: 0,
+        target_frame_index: 2,
+      },
+      {
+        frame_index: 2,
+        frame_type: 'input_tree',
+        state_semantics: 'processed_input_tree',
+        is_observed_input: true,
+        input_tree_index: 1,
+        pair_id: null,
+        pair_ordinal: null,
+        local_step_index: null,
+        source_frame_index: null,
+        target_frame_index: null,
+      }
+    ],
+    pairs: [{
+      pair_id: 'pair_0_1',
+      pair_ordinal: 0,
+      source_input_tree_index: 0,
+      target_input_tree_index: 1,
+      source_frame_index: 0,
+      target_frame_index: 2,
+      generated_frame_range: [1, 1],
+      solution: {
+        affected_subtrees_by_split: {},
+        attachment_edges_by_split: {},
+      },
+    }],
   };
 }
 
 function createTimelineManager(movieData) {
-  const timelineClock = new TimelineClock({
-    segments: [
-      {
-        isFullTree: false,
-        hasInterpolation: true,
-        interpolationData: [
-          { originalIndex: 0 },
-          { originalIndex: 1 },
-          { originalIndex: 2 }
-        ],
-        timing: [
-          { type: 'motion', fromIndex: 0, toIndex: 1, durationMs: 1500 },
-          { type: 'motion', fromIndex: 1, toIndex: 2, durationMs: 1500 }
-        ]
-      }
+  const segments = [{
+    isInputTreeSegment: false,
+    hasInterpolation: true,
+    interpolationData: [
+      { originalIndex: 0 },
+      { originalIndex: 1 },
+      { originalIndex: 2 }
     ],
-    timelineData: {
-      totalDuration: 3000,
-      segmentDurations: [3000],
-      cumulativeDurations: [3000]
-    },
-    treeList: movieData.interpolated_trees
+    timing: [
+      { type: 'motion', fromIndex: 0, toIndex: 1, durationMs: 1500 },
+      { type: 'motion', fromIndex: 1, toIndex: 2, durationMs: 1500 }
+    ]
+  }];
+  const timelineData = {
+    totalDuration: 3000,
+    segmentDurations: [3000],
+    cumulativeDurations: [3000]
+  };
+  const timelineDataset = TimelineDataset.fromMovieData(movieData, {
+    segments,
+    timelineData
+  });
+  const timelineClock = new TimelineClock({
+    timelineDataset
   });
 
   return {
@@ -57,7 +111,11 @@ describe('ScrubberAPI', () => {
       comparisonMode: false,
       movieData,
       treeList: movieData.interpolated_trees,
-      transitionResolver: { fullTreeIndices: [0, 2] },
+      timelineFrames: [
+        { frame_index: 0, frame_type: 'input_tree', is_observed_input: true },
+        { frame_index: 1, frame_type: 'interpolation_frame', is_observed_input: false, pair_id: 'pair_0_1' },
+        { frame_index: 2, frame_type: 'input_tree', is_observed_input: true },
+      ],
       colorManager: null,
       pivotEdgesEnabled: false,
       markedSubtreesEnabled: true
@@ -91,7 +149,7 @@ describe('ScrubberAPI', () => {
       }
     };
 
-    const api = new ScrubberAPI(treeController, {}, timelineManager, useAppStore);
+    const api = new ScrubberAPI(treeController, timelineManager, useAppStore);
     await api.startScrubbing(0);
 
     const firstUpdate = api.updatePosition(0.2);
@@ -138,7 +196,7 @@ describe('ScrubberAPI', () => {
         renderComparisonAwareScrubFrame: async () => {}
       };
 
-      const api = new ScrubberAPI(treeController, {}, timelineManager, useAppStore);
+      const api = new ScrubberAPI(treeController, timelineManager, useAppStore);
       await api.startScrubbing(0);
       await api.updatePosition(0.1);
 
@@ -164,7 +222,7 @@ describe('ScrubberAPI', () => {
       }
     };
 
-    const api = new ScrubberAPI(treeController, {}, timelineManager, useAppStore);
+    const api = new ScrubberAPI(treeController, timelineManager, useAppStore);
     await api.startScrubbing(0);
 
     const updatePromise = api.updatePosition(0.2);
@@ -204,7 +262,7 @@ describe('ScrubberAPI', () => {
         }
       };
 
-      const api = new ScrubberAPI(treeController, {}, timelineManager, useAppStore);
+      const api = new ScrubberAPI(treeController, timelineManager, useAppStore);
       await api.startScrubbing(0);
 
       await api.updatePosition(0.5);
@@ -220,14 +278,13 @@ describe('ScrubberAPI', () => {
     }
   });
 
-  it('uses the injected transition resolver for comparison scrub input trees', async () => {
+  it('uses timeline frames for comparison scrub input trees', async () => {
     const movieData = createMovieData();
     const timelineManager = createTimelineManager(movieData);
     const renderCalls = [];
 
     useAppStore.setState({
       comparisonMode: true,
-      transitionResolver: { fullTreeIndices: [99] }
     });
 
     const treeController = {
@@ -236,12 +293,7 @@ describe('ScrubberAPI', () => {
       }
     };
 
-    const api = new ScrubberAPI(
-      treeController,
-      { fullTreeIndices: [0, 2] },
-      timelineManager,
-      useAppStore
-    );
+    const api = new ScrubberAPI(treeController, timelineManager, useAppStore);
 
     await api.startScrubbing(0);
     await api.updatePosition(0.2);
@@ -266,7 +318,7 @@ describe('ScrubberAPI', () => {
         }
       };
 
-      const api = new ScrubberAPI(treeController, {}, null, useAppStore);
+      const api = new ScrubberAPI(treeController, null, useAppStore);
       await api.startScrubbing(0);
       await api.updatePosition(0.5);
 

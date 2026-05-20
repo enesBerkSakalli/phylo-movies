@@ -4,14 +4,13 @@ import { calculateWindow } from '../domain/msa/msaWindowCalculator';
 import { formatScaleValue, getScaleValue } from '../domain/tree/scaleUtils';
 import { useAppStore } from '../state/phyloStore/store.js';
 import {
-  selectDistanceRfd,
-  selectDistanceWeightedRfd,
   selectHasMsa,
   selectLeafNamesByIndex,
   selectMovieTimelineManager,
   selectMsaColumnCount,
   selectMsaStepSize,
   selectMsaWindowSize,
+  selectPairMetrics,
   selectScaleList,
   selectSelectedTimelineSegmentIndex,
   selectSetSelectedTimelineSegment,
@@ -25,8 +24,7 @@ export function TransitionInspectorPanel() {
   const setSelectedTimelineSegment = useAppStore(selectSetSelectedTimelineSegment);
   const movieTimelineManager = useAppStore(selectMovieTimelineManager);
   const leafNamesByIndex = useAppStore(selectLeafNamesByIndex);
-  const distanceRfd = useAppStore(selectDistanceRfd);
-  const distanceWeightedRfd = useAppStore(selectDistanceWeightedRfd);
+  const pairMetrics = useAppStore(selectPairMetrics);
   const scaleList = useAppStore(selectScaleList);
   const hasMsa = useAppStore(selectHasMsa);
   const msaStepSize = useAppStore(selectMsaStepSize);
@@ -39,8 +37,7 @@ export function TransitionInspectorPanel() {
   const details = useMemo(() => buildInspectorDetails({
     segment,
     leafNamesByIndex,
-    distanceRfd,
-    distanceWeightedRfd,
+    pairMetrics,
     scaleList,
     hasMsa,
     msaStepSize,
@@ -49,8 +46,7 @@ export function TransitionInspectorPanel() {
   }), [
     segment,
     leafNamesByIndex,
-    distanceRfd,
-    distanceWeightedRfd,
+    pairMetrics,
     scaleList,
     hasMsa,
     msaStepSize,
@@ -61,7 +57,7 @@ export function TransitionInspectorPanel() {
   if (!segment) return null;
 
   const totalSegments = movieTimelineManager?.getSegmentCount?.() ?? 0;
-  const isInputTree = segment.isFullTree;
+  const isInputTree = segment.isInputTreeSegment;
   const Icon = isInputTree ? GitBranch : ArrowRightLeft;
 
   return (
@@ -183,8 +179,7 @@ function SubtreeList({ groups }) {
 function buildInspectorDetails({
   segment,
   leafNamesByIndex,
-  distanceRfd,
-  distanceWeightedRfd,
+  pairMetrics,
   scaleList,
   hasMsa,
   msaStepSize,
@@ -195,19 +190,20 @@ function buildInspectorDetails({
 
   const getLeafNames = (indices) => getLeafNamesByIndices(indices, leafNamesByIndex);
   const subtreeGroups = extractMovingSubtreeGroups(segment.affectedSubtrees, getLeafNames);
-  const pair = parsePairKey(segment.treePairKey);
+  const pair = resolvePairContext(segment);
+  const metric = pair ? getPairMetric(pairMetrics, pair) : null;
   const sourceGlobalIndex = resolveSourceGlobalIndex(segment);
   const scaleValue = getScaleValue(scaleList, sourceGlobalIndex);
   const msaFrameIndex = resolveMsaFrameIndex(segment, pair);
-  const msaWindow = hasMsa && Number.isInteger(msaFrameIndex)
+  const msaWindow = hasMsa && Number.isFinite(msaFrameIndex) && Number.isFinite(msaColumnCount) && msaColumnCount > 0
     ? calculateWindow(msaFrameIndex, msaStepSize, msaWindowSize, msaColumnCount || 0)
     : null;
 
   return {
     name: formatTreeName(segment),
     directionLabel: pair
-      ? `source input tree ${pair.sourceTreeIndex + 1} -> target input tree ${pair.targetTreeIndex + 1}`
-      : segment.treePairKey,
+      ? `source input tree ${pair.sourceInputTreeIndex + 1} -> target input tree ${pair.targetInputTreeIndex + 1}`
+      : segment.pairId,
     globalRangeLabel: formatRange(segment.globalStart, segment.globalEnd),
     localStepLabel: formatRange(segment.localStepStart, segment.localStepEnd),
     movingTaxaLabel: formatCount(segment.subtreeMoveCount, 'taxon', 'taxa'),
@@ -216,8 +212,8 @@ function buildInspectorDetails({
     pivotEdgeLabel: Array.isArray(segment.pivotEdge) && segment.pivotEdge.length
       ? formatCount(segment.pivotEdge.length, 'taxon', 'taxa')
       : null,
-    rfLabel: formatNumber(getPairMetric(distanceRfd, pair), 3),
-    weightedRfLabel: formatNumber(getPairMetric(distanceWeightedRfd, pair), 3),
+    rfLabel: formatNumber(metric?.robinson_foulds, 3),
+    weightedRfLabel: formatNumber(metric?.weighted_robinson_foulds, 3),
     scaleLabel: Number.isFinite(scaleValue) ? formatScaleValue(scaleValue) : null,
     msaWindowLabel: msaWindow
       ? `${msaWindow.startPosition}-${msaWindow.midPosition}-${msaWindow.endPosition}`
@@ -234,21 +230,24 @@ function getLeafNamesByIndices(indices, leafNamesByIndex) {
     .map((index) => leafNamesByIndex[index]);
 }
 
-function parsePairKey(pairKey) {
-  const match = /^pair_(\d+)_(\d+)$/.exec(pairKey || '');
-  if (!match) return null;
-  return {
-    sourceTreeIndex: Number(match[1]),
-    targetTreeIndex: Number(match[2]),
-  };
+function resolvePairContext(segment) {
+  if (
+    Number.isInteger(segment?.sourceInputTreeIndex) &&
+    Number.isInteger(segment?.targetInputTreeIndex)
+  ) {
+    return {
+      pairId: segment.pairId,
+      sourceInputTreeIndex: segment.sourceInputTreeIndex,
+      targetInputTreeIndex: segment.targetInputTreeIndex,
+      pairOrdinal: segment.pairOrdinal,
+    };
+  }
+  return null;
 }
 
 function resolveSourceGlobalIndex(segment) {
   if (Number.isInteger(segment.globalIndex)) return segment.globalIndex;
   if (Number.isInteger(segment.sourceGlobalIndex)) return segment.sourceGlobalIndex;
-  if (Number.isInteger(segment.interpolationData?.[0]?.metadata?.source_tree_global_index)) {
-    return segment.interpolationData[0].metadata.source_tree_global_index;
-  }
   return null;
 }
 
@@ -263,26 +262,25 @@ function resolveAnimationStepCount(segment) {
 }
 
 function resolveMsaFrameIndex(segment, pair) {
-  if (segment.isFullTree && Number.isInteger(segment.originalTreeIndex)) {
+  if (segment.isInputTreeSegment && Number.isInteger(segment.originalTreeIndex)) {
     return segment.originalTreeIndex;
   }
-  return Number.isInteger(pair?.sourceTreeIndex) ? pair.sourceTreeIndex : null;
+  return Number.isInteger(pair?.sourceInputTreeIndex) ? pair.sourceInputTreeIndex : null;
 }
 
-function getPairMetric(values, pair) {
-  if (!Array.isArray(values) || !Number.isInteger(pair?.sourceTreeIndex)) return null;
-  const value = values[pair.sourceTreeIndex];
-  return Number.isFinite(value) ? value : null;
+function getPairMetric(pairMetrics, pair) {
+  const metric = pairMetrics.rows[pair.pairOrdinal];
+  return metric.pair_id === pair.pairId ? metric : null;
 }
 
 function formatTreeName(segment) {
   if (typeof segment.treeName === 'string' && segment.treeName.trim()) {
     return segment.treeName;
   }
-  if (segment.isFullTree && Number.isInteger(segment.originalTreeIndex)) {
+  if (segment.isInputTreeSegment && Number.isInteger(segment.originalTreeIndex)) {
     return `Input Tree ${segment.originalTreeIndex + 1}`;
   }
-  return segment.isFullTree ? null : 'Generated transition frames';
+  return segment.isInputTreeSegment ? null : 'Generated transition frames';
 }
 
 function formatRange(start, end) {

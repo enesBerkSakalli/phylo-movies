@@ -1,4 +1,4 @@
-import { isSubset } from '../../../../domain/tree/splits.js';
+import { isSubset, toSubtreeKey } from '../../../../domain/tree/splits.js';
 
 export function resolveConnectorColorEntry(leftInfo, splitIndices, jumpingSubtreeSets, leftPositions) {
   let matchingSubtree = null;
@@ -10,8 +10,7 @@ export function resolveConnectorColorEntry(leftInfo, splitIndices, jumpingSubtre
   }
 
   if (matchingSubtree && splitIndices.length < matchingSubtree.size) {
-    const subtreeArray = Array.from(matchingSubtree).sort((a, b) => a - b);
-    const internalInfo = leftPositions.get(subtreeArray.join('-'));
+    const internalInfo = leftPositions.get(toSubtreeKey(matchingSubtree));
     if (internalInfo) return internalInfo;
   }
 

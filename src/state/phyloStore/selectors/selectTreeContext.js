@@ -1,6 +1,5 @@
 import { selectActiveTreeList } from './selectActiveTreeList.js';
-import { selectFullTreeIndices } from './selectFullTreeIndices.js';
-import { selectTreeMetadataAtIndex } from './selectTreeMetadataAtIndex.js';
+import { selectTimelineFrameAtIndex } from './selectTimelineFrameAtIndex.js';
 
 export const selectTreeContext = (state, index) => {
   const treeIndex = Number(index);
@@ -9,15 +8,16 @@ export const selectTreeContext = (state, index) => {
   const tree = selectActiveTreeList(state)[treeIndex] ?? null;
   if (!tree) return null;
 
-  const metadata = selectTreeMetadataAtIndex(state, treeIndex);
-  const pairKey = metadata?.tree_pair_key ?? null;
+  const frame = selectTimelineFrameAtIndex(state, treeIndex);
+  const pairId = frame?.pair_id ?? null;
+  const isInputTree = frame?.frame_type === 'input_tree' || frame?.is_observed_input === true;
 
   return {
     treeIndex,
     tree,
-    metadata,
-    pairKey,
-    isOriginal: pairKey === null,
-    isFullTree: selectFullTreeIndices(state).includes(treeIndex),
+    frame,
+    pairId,
+    isOriginal: pairId === null,
+    isInputTree,
   };
 };

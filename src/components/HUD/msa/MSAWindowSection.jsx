@@ -4,23 +4,27 @@ import { AppTooltip } from '../../ui/app-tooltip';
 import { useAppStore } from '../../../state/phyloStore/store.js';
 import {
   buildMsaWindow,
-  selectFrameIndex,
   selectHasMsa,
   selectMsaColumnCount,
   selectMsaStepSize,
   selectMsaWindowSize,
-  selectTransitionResolver,
+  selectTimelineCursor,
 } from '../shared/hudShared.js';
 
 export function MSAWindowSection() {
   const hasMsa = useAppStore(selectHasMsa);
-  const frameIndex = useAppStore(selectFrameIndex);
-  const transitionResolver = useAppStore(selectTransitionResolver);
+  const timelineCursor = useAppStore(selectTimelineCursor);
   const msaWindowSize = useAppStore(selectMsaWindowSize);
   const msaStepSize = useAppStore(selectMsaStepSize);
   const msaColumnCount = useAppStore(selectMsaColumnCount);
 
-  const msaWindow = buildMsaWindow(hasMsa, frameIndex, transitionResolver, msaStepSize, msaWindowSize, msaColumnCount);
+  const msaWindow = buildMsaWindow(
+    hasMsa,
+    timelineCursor?.msaWindowIndex,
+    msaStepSize,
+    msaWindowSize,
+    msaColumnCount
+  );
 
   return (
     <div className="flex items-center gap-3" id="hud-msa-window-item">

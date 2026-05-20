@@ -4823,419 +4823,245 @@
       ]
     }
   ],
-  "tree_metadata": [
+  "frames": [
     {
-      "tree_pair_key": null,
-      "step_in_pair": null,
-      "source_tree_global_index": null,
+      "frame_index": 0,
       "frame_type": "input_tree",
       "state_semantics": "processed_input_tree",
-      "is_observed_input": true
+      "is_observed_input": true,
+      "input_tree_index": 0,
+      "pair_id": null,
+      "pair_ordinal": null,
+      "local_step_index": null,
+      "source_frame_index": null,
+      "target_frame_index": null
     },
     {
-      "tree_pair_key": "pair_0_1",
-      "step_in_pair": 1,
-      "source_tree_global_index": 0,
+      "frame_index": 1,
       "frame_type": "interpolation_frame",
       "state_semantics": "algorithmic_intermediate",
-      "is_observed_input": false
+      "is_observed_input": false,
+      "input_tree_index": null,
+      "pair_id": "pair_0_1",
+      "pair_ordinal": 0,
+      "local_step_index": 0,
+      "source_frame_index": 0,
+      "target_frame_index": 9
     },
     {
-      "tree_pair_key": "pair_0_1",
-      "step_in_pair": 2,
-      "source_tree_global_index": 0,
+      "frame_index": 2,
       "frame_type": "interpolation_frame",
       "state_semantics": "algorithmic_intermediate",
-      "is_observed_input": false
+      "is_observed_input": false,
+      "input_tree_index": null,
+      "pair_id": "pair_0_1",
+      "pair_ordinal": 0,
+      "local_step_index": 1,
+      "source_frame_index": 0,
+      "target_frame_index": 9
     },
     {
-      "tree_pair_key": "pair_0_1",
-      "step_in_pair": 3,
-      "source_tree_global_index": 0,
+      "frame_index": 3,
       "frame_type": "interpolation_frame",
       "state_semantics": "algorithmic_intermediate",
-      "is_observed_input": false
+      "is_observed_input": false,
+      "input_tree_index": null,
+      "pair_id": "pair_0_1",
+      "pair_ordinal": 0,
+      "local_step_index": 2,
+      "source_frame_index": 0,
+      "target_frame_index": 9
     },
     {
-      "tree_pair_key": "pair_0_1",
-      "step_in_pair": 4,
-      "source_tree_global_index": 0,
+      "frame_index": 4,
       "frame_type": "interpolation_frame",
       "state_semantics": "algorithmic_intermediate",
-      "is_observed_input": false
+      "is_observed_input": false,
+      "input_tree_index": null,
+      "pair_id": "pair_0_1",
+      "pair_ordinal": 0,
+      "local_step_index": 3,
+      "source_frame_index": 0,
+      "target_frame_index": 9
     },
     {
-      "tree_pair_key": "pair_0_1",
-      "step_in_pair": 5,
-      "source_tree_global_index": 0,
+      "frame_index": 5,
       "frame_type": "interpolation_frame",
       "state_semantics": "algorithmic_intermediate",
-      "is_observed_input": false
+      "is_observed_input": false,
+      "input_tree_index": null,
+      "pair_id": "pair_0_1",
+      "pair_ordinal": 0,
+      "local_step_index": 4,
+      "source_frame_index": 0,
+      "target_frame_index": 9
     },
     {
-      "tree_pair_key": "pair_0_1",
-      "step_in_pair": 6,
-      "source_tree_global_index": 0,
+      "frame_index": 6,
       "frame_type": "interpolation_frame",
       "state_semantics": "algorithmic_intermediate",
-      "is_observed_input": false
+      "is_observed_input": false,
+      "input_tree_index": null,
+      "pair_id": "pair_0_1",
+      "pair_ordinal": 0,
+      "local_step_index": 5,
+      "source_frame_index": 0,
+      "target_frame_index": 9
     },
     {
-      "tree_pair_key": "pair_0_1",
-      "step_in_pair": 7,
-      "source_tree_global_index": 0,
+      "frame_index": 7,
       "frame_type": "interpolation_frame",
       "state_semantics": "algorithmic_intermediate",
-      "is_observed_input": false
+      "is_observed_input": false,
+      "input_tree_index": null,
+      "pair_id": "pair_0_1",
+      "pair_ordinal": 0,
+      "local_step_index": 6,
+      "source_frame_index": 0,
+      "target_frame_index": 9
     },
     {
-      "tree_pair_key": "pair_0_1",
-      "step_in_pair": 8,
-      "source_tree_global_index": 0,
+      "frame_index": 8,
       "frame_type": "interpolation_frame",
       "state_semantics": "algorithmic_intermediate",
-      "is_observed_input": false
+      "is_observed_input": false,
+      "input_tree_index": null,
+      "pair_id": "pair_0_1",
+      "pair_ordinal": 0,
+      "local_step_index": 7,
+      "source_frame_index": 0,
+      "target_frame_index": 9
     },
     {
-      "tree_pair_key": null,
-      "step_in_pair": null,
-      "source_tree_global_index": null,
+      "frame_index": 9,
       "frame_type": "input_tree",
       "state_semantics": "processed_input_tree",
-      "is_observed_input": true
+      "is_observed_input": true,
+      "input_tree_index": 1,
+      "pair_id": null,
+      "pair_ordinal": null,
+      "local_step_index": null,
+      "source_frame_index": null,
+      "target_frame_index": null
     }
   ],
-  "tree_pair_solutions": {
-    "pair_0_1": {
-      "affected_subtrees_by_split": {
-        "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]": [
-          [
+  "pairs": [
+    {
+      "pair_id": "pair_0_1",
+      "pair_ordinal": 0,
+      "source_input_tree_index": 0,
+      "target_input_tree_index": 1,
+      "source_frame_index": 0,
+      "target_frame_index": 9,
+      "generated_frame_range": [
+        1,
+        8
+      ],
+      "solution": {
+        "affected_subtrees_by_split": {
+          "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]": [
             [
-              10
-            ],
-            [
-              8,
-              9
-            ],
-            [
-              17,
-              18
+              [
+                10
+              ],
+              [
+                8,
+                9
+              ],
+              [
+                17,
+                18
+              ]
             ]
           ]
-        ]
-      },
-      "attachment_edges_by_split": {
-        "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]": {
-          "[10]": {
-            "source": [
-              8,
-              9,
-              10
-            ],
-            "destination": [
-              0,
-              1,
-              2,
-              3,
-              4,
-              5,
-              6,
-              7,
-              8,
-              9,
-              10,
-              11,
-              12,
-              13,
-              14,
-              15,
-              16,
-              17,
-              18
-            ]
-          },
-          "[8, 9]": {
-            "source": [
-              8,
-              9,
-              10
-            ],
-            "destination": [
-              8,
-              9,
-              14,
-              15,
-              16
-            ]
-          },
-          "[17, 18]": {
-            "source": [
-              11,
-              12,
-              13,
-              14,
-              15,
-              16,
-              17,
-              18
-            ],
-            "destination": [
-              0,
-              1,
-              2,
-              3,
-              4,
-              5,
-              6,
-              7,
-              17,
-              18
-            ]
+        },
+        "attachment_edges_by_split": {
+          "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]": {
+            "[10]": {
+              "source": [
+                8,
+                9,
+                10
+              ],
+              "destination": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ]
+            },
+            "[8, 9]": {
+              "source": [
+                8,
+                9,
+                10
+              ],
+              "destination": [
+                8,
+                9,
+                14,
+                15,
+                16
+              ]
+            },
+            "[17, 18]": {
+              "source": [
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18
+              ],
+              "destination": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                17,
+                18
+              ]
+            }
           }
         }
-      },
-      "spr_move_events": [
-        {
-          "pivot_edge": [
-            0,
-            1,
-            2,
-            3,
-            4,
-            5,
-            6,
-            7,
-            8,
-            9,
-            10,
-            11,
-            12,
-            13,
-            14,
-            15,
-            16,
-            17,
-            18
-          ],
-          "driver_subtree": [
-            8,
-            9
-          ],
-          "highlight_group": [
-            [
-              8,
-              9
-            ],
-            [
-              10
-            ]
-          ],
-          "step_range": [
-            0,
-            4
-          ],
-          "collapse_path": [
-            {
-              "split": [
-                8,
-                9,
-                10
-              ],
-              "branch_length": 1.0
-            },
-            {
-              "split": [
-                11,
-                12,
-                13,
-                14,
-                15,
-                16
-              ],
-              "branch_length": 1.0
-            },
-            {
-              "split": [
-                11,
-                12,
-                13,
-                14,
-                15,
-                16,
-                17,
-                18
-              ],
-              "branch_length": 1.0
-            },
-            {
-              "split": [
-                0,
-                1,
-                2,
-                3,
-                4,
-                5,
-                6,
-                7,
-                8,
-                9,
-                10
-              ],
-              "branch_length": 1.0
-            }
-          ],
-          "expand_path": [
-            {
-              "split": [
-                8,
-                9,
-                11,
-                12,
-                13,
-                14,
-                15,
-                16
-              ],
-              "branch_length": 1.0
-            },
-            {
-              "split": [
-                8,
-                9,
-                14,
-                15,
-                16
-              ],
-              "branch_length": 1.0
-            }
-          ],
-          "collapse_hops": 4,
-          "expand_hops": 2,
-          "total_hops": 6,
-          "collapse_branch_length": 4.0,
-          "expand_branch_length": 2.0,
-          "total_branch_length": 6.0
-        },
-        {
-          "pivot_edge": [
-            0,
-            1,
-            2,
-            3,
-            4,
-            5,
-            6,
-            7,
-            8,
-            9,
-            10,
-            11,
-            12,
-            13,
-            14,
-            15,
-            16,
-            17,
-            18
-          ],
-          "driver_subtree": [
-            17,
-            18
-          ],
-          "highlight_group": [
-            [
-              17,
-              18
-            ]
-          ],
-          "step_range": [
-            5,
-            7
-          ],
-          "collapse_path": [],
-          "expand_path": [
-            {
-              "split": [
-                0,
-                1,
-                2,
-                3,
-                4,
-                5,
-                6,
-                7,
-                8,
-                9,
-                11,
-                12,
-                13,
-                14,
-                15,
-                16,
-                17,
-                18
-              ],
-              "branch_length": 1.0
-            },
-            {
-              "split": [
-                0,
-                1,
-                2,
-                3,
-                4,
-                5,
-                6,
-                7,
-                17,
-                18
-              ],
-              "branch_length": 1.0
-            },
-            {
-              "split": [
-                8,
-                9,
-                11,
-                12,
-                13,
-                14,
-                15,
-                16
-              ],
-              "branch_length": 1.0
-            },
-            {
-              "split": [
-                8,
-                9,
-                14,
-                15,
-                16
-              ],
-              "branch_length": 1.0
-            }
-          ],
-          "collapse_hops": 0,
-          "expand_hops": 4,
-          "total_hops": 4,
-          "collapse_branch_length": 0,
-          "expand_branch_length": 4.0,
-          "total_branch_length": 4.0
-        }
-      ]
+      }
     }
-  },
-  "split_change_timeline": [
+  ],
+  "temporal_events": [
     {
-      "type": "original",
-      "tree_index": 0,
-      "global_index": 0,
-      "name": ""
-    },
-    {
-      "type": "split_event",
-      "pair_key": "pair_0_1",
+      "event_id": "pair_0_1:split:0",
+      "event_type": "split_change",
+      "pair_id": "pair_0_1",
+      "pair_ordinal": 0,
+      "local_step_range": [
+        0,
+        7
+      ],
+      "frame_range": [
+        1,
+        8
+      ],
       "split": [
         0,
         1,
@@ -5256,21 +5082,251 @@
         16,
         17,
         18
-      ],
-      "step_range_local": [
-        0,
-        7
-      ],
-      "step_range_global": [
-        1,
-        8
       ]
     },
     {
-      "type": "original",
-      "tree_index": 1,
-      "global_index": 9,
-      "name": ""
+      "event_id": "pair_0_1:spr:0",
+      "event_type": "spr_move",
+      "pair_id": "pair_0_1",
+      "pair_ordinal": 0,
+      "local_step_range": [
+        0,
+        4
+      ],
+      "frame_range": [
+        1,
+        5
+      ],
+      "pivot_edge": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+      ],
+      "driver_subtree": [
+        8,
+        9
+      ],
+      "highlight_group": [
+        [
+          8,
+          9
+        ],
+        [
+          10
+        ]
+      ],
+      "collapse_path": [
+        {
+          "split": [
+            8,
+            9,
+            10
+          ],
+          "branch_length": 1.0
+        },
+        {
+          "split": [
+            11,
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
+          "branch_length": 1.0
+        },
+        {
+          "split": [
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18
+          ],
+          "branch_length": 1.0
+        },
+        {
+          "split": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "branch_length": 1.0
+        }
+      ],
+      "expand_path": [
+        {
+          "split": [
+            8,
+            9,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
+          "branch_length": 1.0
+        },
+        {
+          "split": [
+            8,
+            9,
+            14,
+            15,
+            16
+          ],
+          "branch_length": 1.0
+        }
+      ],
+      "collapse_hops": 4,
+      "expand_hops": 2,
+      "total_hops": 6,
+      "collapse_branch_length": 4.0,
+      "expand_branch_length": 2.0,
+      "total_branch_length": 6.0
+    },
+    {
+      "event_id": "pair_0_1:spr:1",
+      "event_type": "spr_move",
+      "pair_id": "pair_0_1",
+      "pair_ordinal": 0,
+      "local_step_range": [
+        5,
+        7
+      ],
+      "frame_range": [
+        6,
+        8
+      ],
+      "pivot_edge": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18
+      ],
+      "driver_subtree": [
+        17,
+        18
+      ],
+      "highlight_group": [
+        [
+          17,
+          18
+        ]
+      ],
+      "collapse_path": [],
+      "expand_path": [
+        {
+          "split": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18
+          ],
+          "branch_length": 1.0
+        },
+        {
+          "split": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            17,
+            18
+          ],
+          "branch_length": 1.0
+        },
+        {
+          "split": [
+            8,
+            9,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
+          "branch_length": 1.0
+        },
+        {
+          "split": [
+            8,
+            9,
+            14,
+            15,
+            16
+          ],
+          "branch_length": 1.0
+        }
+      ],
+      "collapse_hops": 0,
+      "expand_hops": 4,
+      "total_hops": 4,
+      "collapse_branch_length": 0,
+      "expand_branch_length": 4.0,
+      "total_branch_length": 4.0
     }
   ],
   "pivot_edge_tracking": [
@@ -5506,24 +5562,14 @@
     ],
     null
   ],
-  "pair_interpolation_ranges": [
-    [
-      0,
-      9
-    ]
-  ],
-  "msa": {
-    "sequences": null,
-    "window_size": 1,
-    "step_size": 1
-  },
-  "file_name": "ostrich_bug_example.tree",
-  "distances": {
-    "robinson_foulds": [
-      0.3076923076923077
-    ],
-    "weighted_robinson_foulds": [
-      8.0
+  "pair_metrics": {
+    "rows": [
+      {
+        "pair_id": "pair_0_1",
+        "pair_ordinal": 0,
+        "robinson_foulds": 0.3076923076923077,
+        "weighted_robinson_foulds": 8.0
+      }
     ],
     "semantics": {
       "robinson_foulds": {
@@ -5538,5 +5584,11 @@
         "scope": "adjacent_processed_input_trees"
       }
     }
-  }
+  },
+  "msa": {
+    "sequences": null,
+    "window_size": 1,
+    "step_size": 1
+  },
+  "file_name": "ostrich_bug_example.tree"
 }

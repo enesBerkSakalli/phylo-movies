@@ -1,10 +1,10 @@
 import { TimelineInterval } from '../time/TimelineInterval.js';
 
-export function buildTimelineOccurrences({ segments, timelineData, frameRows }) {
+export function buildTimelineOccurrences({ segments, timelineData, frameViews }) {
     const occurrences = [];
     const occurrencesByFrameIndex = new Map();
-    const frameRowsByIndex = new Map(
-        (Array.isArray(frameRows) ? frameRows : []).map((row) => [row.frameIndex, row])
+    const frameViewsByIndex = new Map(
+        (Array.isArray(frameViews) ? frameViews : []).map((row) => [row.frameIndex, row])
     );
     const totalDuration = Number.isFinite(timelineData?.totalDuration)
         ? timelineData.totalDuration
@@ -41,7 +41,7 @@ export function buildTimelineOccurrences({ segments, timelineData, frameRows }) 
                 addOccurrence({
                     occurrences,
                     occurrencesByFrameIndex,
-                    frameRowsByIndex,
+                    frameViewsByIndex,
                     frameIndex: interval.fromIndex,
                     role: 'motion_source',
                     targetFrameIndex: interval.toIndex,
@@ -51,7 +51,7 @@ export function buildTimelineOccurrences({ segments, timelineData, frameRows }) 
                 addOccurrence({
                     occurrences,
                     occurrencesByFrameIndex,
-                    frameRowsByIndex,
+                    frameViewsByIndex,
                     frameIndex: interval.toIndex,
                     role: 'motion_target',
                     sourceMotionFrameIndex: interval.fromIndex,
@@ -62,7 +62,7 @@ export function buildTimelineOccurrences({ segments, timelineData, frameRows }) 
                 addOccurrence({
                     occurrences,
                     occurrencesByFrameIndex,
-                    frameRowsByIndex,
+                    frameViewsByIndex,
                     frameIndex: interval.holdIndex,
                     role: 'hold',
                     holdKind: interval.holdKind,
@@ -80,13 +80,13 @@ export function buildTimelineOccurrences({ segments, timelineData, frameRows }) 
 function addOccurrence({
     occurrences,
     occurrencesByFrameIndex,
-    frameRowsByIndex,
+    frameViewsByIndex,
     frameIndex,
     ...fields
 }) {
     if (!Number.isInteger(frameIndex)) return;
 
-    const frameRow = frameRowsByIndex.get(frameIndex) ?? { frameIndex };
+    const frameRow = frameViewsByIndex.get(frameIndex) ?? { frameIndex };
     const frameOccurrences = occurrencesByFrameIndex.get(frameIndex) ?? [];
     const occurrence = {
         occurrenceIndex: occurrences.length,

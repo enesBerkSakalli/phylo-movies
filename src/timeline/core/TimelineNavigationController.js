@@ -6,11 +6,9 @@
  * - update clipboard state for input trees
  * - dispatch directional navigation through the store
  */
-import { TimelineMathUtils } from '../math/TimelineMathUtils.js';
-import { getSegmentBounds } from '../utils/segmentTiming.js';
-
 export class TimelineNavigationController {
-  constructor({ segments, timelineData, store, onTimelinePositionUpdated }) {
+  constructor({ timelineDataset, segments, timelineData, store, onTimelinePositionUpdated }) {
+    this.timelineDataset = timelineDataset;
     this.segments = segments;
     this.timelineData = timelineData;
     this.store = store;
@@ -21,7 +19,7 @@ export class TimelineNavigationController {
     const segment = this._validateSegment(segmentIndex);
     if (!segment) return;
 
-    if (segment.isFullTree) {
+    if (segment.isInputTreeSegment) {
       const originalIndex = this._resolveSegmentFrameIndex(segment);
       this.store.getState().setClipboardTreeIndex(originalIndex);
     }
@@ -61,25 +59,9 @@ export class TimelineNavigationController {
       throw new Error('[TimelineNavigationController] timeline timing data is required');
     }
 
-    const bounds = getSegmentBounds(segmentIndex, this.timelineData);
-    if (!bounds || bounds.end < bounds.start) {
-      throw new Error('[TimelineNavigationController] segment timing bounds are required');
-    }
+    const target = this.timelineDataset.getCursorInSegmentAtMovieTime(segmentIndex, clickTimeMs, { bias: 'nearest' });
 
-    const boundedTime = this._boundClickTimeToSegment(clickTimeMs, bounds.start, bounds.end);
-    const target = TimelineMathUtils.getTargetFrameForTime(
-      this.segments,
-      boundedTime,
-      this.timelineData.segmentDurations,
-      'nearest',
-      this.timelineData.cumulativeDurations
-    );
-
-    if (target.segmentIndex !== segmentIndex || !Number.isInteger(target.frameIndex)) {
-      throw new Error('[TimelineNavigationController] clicked timeline segment resolved outside its segment');
-    }
-
-    return target.frameIndex;
+    return target?.frameIndex;
   }
 
   _resolveSegmentFrameIndex(segment) {
@@ -90,28 +72,17 @@ export class TimelineNavigationController {
     return frameIndex;
   }
 
-  _boundClickTimeToSegment(clickTimeMs, segmentStart, segmentEnd) {
-    const duration = segmentEnd - segmentStart;
-    if (duration <= TimelineMathUtils.EPSILON_MS) {
-      return segmentStart;
-    }
-
-    const start = segmentStart + TimelineMathUtils.EPSILON_MS;
-    const end = segmentEnd - TimelineMathUtils.EPSILON_MS;
-    return Math.max(start, Math.min(clickTimeMs, end));
-  }
-
   _resolveSeekOptions(segmentIndex, clickTimeMs) {
     if (!Number.isFinite(clickTimeMs) || !Number.isFinite(this.timelineData?.totalDuration) || this.timelineData.totalDuration <= 0) {
       return undefined;
     }
 
-    const bounds = getSegmentBounds(segmentIndex, this.timelineData);
+    const bounds = this.timelineDataset.getSegmentBounds(segmentIndex);
     if (!bounds || bounds.end < bounds.start) return undefined;
 
-    const boundedTime = this._boundClickTimeToSegment(clickTimeMs, bounds.start, bounds.end);
+    const cursor = this.timelineDataset.getCursorInSegmentAtMovieTime(segmentIndex, clickTimeMs, { bias: 'nearest' });
     return {
-      timelineProgress: boundedTime / this.timelineData.totalDuration,
+      timelineProgress: cursor.timelineProgress,
     };
   }
 }

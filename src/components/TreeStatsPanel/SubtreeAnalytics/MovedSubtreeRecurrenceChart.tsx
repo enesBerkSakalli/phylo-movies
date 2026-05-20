@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { selectLeafNamesByIndex, selectPairSolutions, useAppStore } from '../../../state/phyloStore/store.js';
+import { selectLeafNamesByIndex, selectPairMetrics, selectPairs, selectTemporalEvents, useAppStore } from '../../../state/phyloStore/store.js';
 import { calculateSprMovedSubtreeRecurrences, getTopSprMovedSubtreeRecurrences, formatSubtreeLabel } from '../../../domain/spr/sprAnalytics';
 import { SYSTEM_TREE_COLORS } from '../../../constants/TreeColors';
 import { Badge } from '../../ui/badge';
@@ -11,6 +11,7 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from '../../ui/tooltip';
+import type { SprMovedSubtreeRecurrence } from './types';
 
 /**
  * MovedSubtreeRecurrenceChart
@@ -24,23 +25,25 @@ import {
  * - No Visual Inflation: Progress component uses semantic height; no minimum bar height distorts small values
  */
 export const MovedSubtreeRecurrenceChart = () => {
-    const pairSolutions = useAppStore(selectPairSolutions);
+    const pairs = useAppStore(selectPairs);
+    const pairMetrics = useAppStore(selectPairMetrics);
+    const temporalEvents = useAppStore(selectTemporalEvents);
     const leafNamesByIndex = useAppStore(selectLeafNamesByIndex);
 
     const data = useMemo(() => {
-        if (!pairSolutions || Object.keys(pairSolutions).length === 0) return [];
+        if (!Array.isArray(pairs) || pairs.length === 0) return [];
 
-        const movedSubtreeRecurrences = calculateSprMovedSubtreeRecurrences(pairSolutions);
+        const movedSubtreeRecurrences = calculateSprMovedSubtreeRecurrences(pairs, { temporalEvents, pairMetrics });
         const topSubtrees = getTopSprMovedSubtreeRecurrences(movedSubtreeRecurrences, 10);
 
-        return topSubtrees.map((item: any, idx: number) => ({
+        return topSubtrees.map((item: SprMovedSubtreeRecurrence, idx: number) => ({
             rank: idx + 1,
             subtree: formatSubtreeLabel(item.splitIndices, leafNamesByIndex),
             taxaCount: item.splitIndices.length,
             count: item.count,
             percentage: item.percentage
         }));
-    }, [pairSolutions, leafNamesByIndex]);
+    }, [pairs, pairMetrics, temporalEvents, leafNamesByIndex]);
 
     if (!data || data.length === 0) {
         return (

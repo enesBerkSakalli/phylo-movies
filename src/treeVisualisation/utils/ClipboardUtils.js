@@ -1,6 +1,6 @@
 import { TextLayer } from '@deck.gl/layers';
 import { CLIPBOARD_LAYER_ID_PREFIX } from '../deckgl/layers/config/layerConfigs.js';
-import { useAppStore } from '../../state/phyloStore/store.js';
+import { selectInputFrameIndices, useAppStore } from '../../state/phyloStore/store.js';
 import { calculateVisualBounds } from './TreeBoundsUtils.js';
 
 /**
@@ -45,8 +45,9 @@ function createClipboardVisualLayers(controller, treeIndex, treeData) {
     }
   );
 
-  const { transitionResolver, clipboardOffsetX = 0, clipboardOffsetY = 0 } = useAppStore.getState();
-  const fullTreeIndices = transitionResolver?.fullTreeIndices || [];
+  const state = useAppStore.getState();
+  const { clipboardOffsetX = 0, clipboardOffsetY = 0 } = state;
+  const inputFrameIndices = selectInputFrameIndices(state);
 
   // Calculate clipboard tree VISUAL bounds (including labels)
   const clipboardBounds = calculateVisualBounds(layerData.nodes, layerData.labels);
@@ -64,7 +65,7 @@ function createClipboardVisualLayers(controller, treeIndex, treeData) {
   const labelLayer = createClipboardLabelLayer(
     treeIndex,
     clipboardBounds,
-    fullTreeIndices,
+    inputFrameIndices,
     xOffset,
     yOffset
   );
@@ -88,12 +89,12 @@ function getMainTreeBounds(controller) {
  * Create clipboard label TextLayer
  * @param {number} treeIndex - Tree index for label text
  * @param {Object} bounds - Visual bounds of clipboard tree {minX, maxX, minY, maxY}
- * @param {Array} fullTreeIndices - Array of full tree indices from store for input-tree detection
+ * @param {Array} inputFrameIndices - Array of input frame indices from store for input-tree detection
  * @param {number} xOffset - X offset for clipboard position
  * @param {number} yOffset - Y offset for clipboard position
  * @returns {TextLayer|null} Label layer or null
  */
-export function createClipboardLabelLayer(treeIndex, bounds, fullTreeIndices = [], xOffset = 0, yOffset = 0) {
+export function createClipboardLabelLayer(treeIndex, bounds, inputFrameIndices = [], xOffset = 0, yOffset = 0) {
   if (!bounds) return null;
 
   // Position label above the tree VISUAL bounds
@@ -102,7 +103,7 @@ export function createClipboardLabelLayer(treeIndex, bounds, fullTreeIndices = [
 
   let labelText = `Tree #${treeIndex + 1}`;
   // Check if it is one of the original input trees.
-  const inputTreeOrdinal = fullTreeIndices.indexOf(treeIndex);
+  const inputTreeOrdinal = inputFrameIndices.indexOf(treeIndex);
   if (inputTreeOrdinal >= 0) {
       labelText = `Input tree ${inputTreeOrdinal + 1}`; // 1-based index for user
   }

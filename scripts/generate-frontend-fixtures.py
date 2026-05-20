@@ -131,7 +131,7 @@ def _select_fixtures(names: Iterable[str] | None) -> Iterable[FixtureSpec]:
 
 def _render_fixture(fixture: FixtureSpec) -> str:
     payload = _build_payload(fixture)
-    _assert_no_legacy_contract_fields(payload, fixture.name)
+    _assert_normalized_contract_fields(payload, fixture.name)
     if fixture.pretty:
         return json.dumps(payload, indent=2) + "\n"
     return json.dumps(payload, separators=(",", ":")) + "\n"
@@ -170,11 +170,42 @@ def _build_payload(fixture: FixtureSpec) -> dict:
     }
 
 
-def _assert_no_legacy_contract_fields(payload: dict, fixture_name: str) -> None:
-    legacy_leaf_order_field = "sorted" + "_leaves"
-    if legacy_leaf_order_field in payload:
+def _assert_normalized_contract_fields(payload: dict, fixture_name: str) -> None:
+    expected_keys = {
+        "interpolated_trees",
+        "frames",
+        "pairs",
+        "temporal_events",
+        "pivot_edge_tracking",
+        "subtree_highlight_tracking",
+        "pair_metrics",
+        "msa",
+        "file_name",
+    }
+    legacy_fields = {
+        "tree_metadata",
+        "tree_pair_solutions",
+        "split_change_timeline",
+        "pair_interpolation_ranges",
+        "distances",
+        "split_change_events",
+        "sorted" + "_leaves",
+    }
+
+    actual_keys = set(payload)
+    if actual_keys != expected_keys:
+        missing = sorted(expected_keys - actual_keys)
+        extra = sorted(actual_keys - expected_keys)
         raise RuntimeError(
-            f"fixture {fixture_name!r} generated legacy leaf-order field"
+            f"fixture {fixture_name!r} generated invalid normalized keys: "
+            f"missing={missing}, extra={extra}"
+        )
+
+    leaked_legacy_fields = sorted(legacy_fields & actual_keys)
+    if leaked_legacy_fields:
+        raise RuntimeError(
+            f"fixture {fixture_name!r} generated legacy fields: "
+            f"{leaked_legacy_fields}"
         )
 
 

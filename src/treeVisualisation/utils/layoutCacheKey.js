@@ -1,7 +1,7 @@
 import {
   selectActiveTreeList,
   selectFileName,
-  selectFullTreeIndices
+  selectInputFrameIndices
 } from '../../state/phyloStore/selectors/treeSelectors.js';
 
 const datasetIds = new WeakMap();
@@ -63,11 +63,11 @@ export function createUniformScalingCacheKey({
   branchTransformation = state?.branchTransformation ?? 'none'
 } = {}) {
   const resolvedTreeList = resolveTreeList(state, treeList);
-  const fullTreeIndices = selectFullTreeIndices(state);
+  const inputFrameIndices = selectInputFrameIndices(state);
   return [
     `dataset=${getDatasetCacheId(state, resolvedTreeList)}`,
     `branch=${branchTransformation}`,
-    `full=${Array.isArray(fullTreeIndices) ? fullTreeIndices.join(',') : ''}`
+    `inputFrames=${Array.isArray(inputFrameIndices) ? inputFrameIndices.join(',') : ''}`
   ].join('|');
 }
 

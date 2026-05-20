@@ -22,13 +22,12 @@ import { DeckTimelineRenderer } from '../renderers/DeckTimelineRenderer.js';
  * - store subscription wiring
  */
 export class MovieTimelineManager {
-    constructor(movieData, transitionIndexResolver, treeList) {
+    constructor(movieData, treeList) {
         if (!Array.isArray(treeList) || treeList.length === 0) {
             throw new Error('MovieTimelineManager requires a non-empty normalized treeList');
         }
 
         this.treeList = treeList;
-        this.transitionResolver = transitionIndexResolver;
         this.isDestroyed = false;
         this.container = null;
         this.scrubberAPI = null;
@@ -42,18 +41,21 @@ export class MovieTimelineManager {
         });
         this.timelineConductor = TimelineConductor.fixed(this.timelineDataset);
         this.timelineClock = new TimelineClock({
-            segments: this.segments,
-            timelineData: this.timelineData,
-            treeList: this.treeList
+            timelineDataset: this.timelineDataset
         });
-        this.stateSynchronizer = new TimelineStateSynchronizer(this.timelineData, this.segments, useAppStore);
+        this.stateSynchronizer = new TimelineStateSynchronizer({
+            timelineDataset: this.timelineDataset,
+            store: useAppStore
+        });
         this.navigationController = new TimelineNavigationController({
+            timelineDataset: this.timelineDataset,
             segments: this.segments,
             timelineData: this.timelineData,
             store: useAppStore,
             onTimelinePositionUpdated: () => this.updateCurrentPosition()
         });
         this.scrubController = new TimelineScrubController({
+            timelineDataset: this.timelineDataset,
             timelineData: this.timelineData,
             segments: this.segments,
             store: useAppStore,
@@ -108,7 +110,7 @@ export class MovieTimelineManager {
         const controller = controllerOverride || this._selectScrubberController();
         if (!controller) return;
 
-        this.scrubberAPI = new ScrubberAPI(controller, this.transitionResolver, this, useAppStore);
+        this.scrubberAPI = new ScrubberAPI(controller, this, useAppStore);
     }
 
     _selectScrubberController() {
@@ -263,7 +265,7 @@ export class MovieTimelineManager {
     }
 
     hasTransitionSegments() {
-        return Array.isArray(this.segments) && this.segments.some(segment => segment && !segment.isFullTree);
+        return Array.isArray(this.segments) && this.segments.some(segment => segment && !segment.isInputTreeSegment);
     }
 
     zoomIn(factor = 0.2) {
@@ -296,10 +298,6 @@ export class MovieTimelineManager {
 
     getTransitionFrameForTimelineProgress(progress) {
         return this.timelineClock?.getTransitionFrameForProgress(progress) ?? null;
-    }
-
-    getTimelineProgressForFrameIndex(frameIndex) {
-        return this.timelineClock?.getTimelineProgressForFrameIndex(frameIndex) ?? null;
     }
 
     getTimelineProgressForLinearTreeProgress(progress, treeCount) {

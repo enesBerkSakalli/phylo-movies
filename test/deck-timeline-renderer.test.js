@@ -41,16 +41,18 @@ describe('DeckTimelineRenderer', () => {
 
   function makeTimelineFixture() {
     const segments = [
-      { isFullTree: true, originalTreeIndex: 0 },
+      { isInputTreeSegment: true, originalTreeIndex: 0 },
       {
-        isFullTree: false,
-        treePairKey: 'pair_0_1',
+        isInputTreeSegment: false,
+        pairId: 'pair_0_1',
+        sourceInputTreeIndex: 0,
+        targetInputTreeIndex: 1,
         globalStart: 1,
         globalEnd: 9,
         localStepStart: 0,
         localStepEnd: 8
       },
-      { isFullTree: true, originalTreeIndex: 1 }
+      { isInputTreeSegment: true, originalTreeIndex: 1 }
     ];
     const timelineData = {
       // 3 segments of 1000ms
@@ -104,7 +106,7 @@ describe('DeckTimelineRenderer', () => {
   });
 
   it('draws input-window ticks without a transition strip for dense tree-only timelines', () => {
-    const segments = Array.from({ length: 100 }, () => ({ isFullTree: true }));
+    const segments = Array.from({ length: 100 }, () => ({ isInputTreeSegment: true }));
     const timelineData = {
       segmentDurations: segments.map(() => 1000),
       totalDuration: 100000,
@@ -125,7 +127,7 @@ describe('DeckTimelineRenderer', () => {
 
   it('draws a transition strip for dense timelines with transition frames', () => {
     const segments = Array.from({ length: 100 }, (_, index) => ({
-      isFullTree: index % 2 === 0
+      isInputTreeSegment: index % 2 === 0
     }));
     const timelineData = {
       segmentDurations: segments.map(() => 1000),
@@ -276,7 +278,7 @@ describe('DeckTimelineRenderer', () => {
 
   it('selects the expected segment in dense timelines', () => {
     const segments = Array.from({ length: 100 }, (_, index) => ({
-      isFullTree: index % 2 === 0
+      isInputTreeSegment: index % 2 === 0
     }));
     const timelineData = {
       segmentDurations: segments.map(() => 1000),

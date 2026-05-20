@@ -94,14 +94,13 @@ describe('Tree Visualisation - Subtree Highlight Parsing', () => {
       // Mock State Construction for getSourceDestinationEdgesAtIndex
       const mockStructure = {
           subtreeHighlightTracking: [],
-          activeChangeEdgeTracking: [],
-          pairSolutions: {},
-          treeMetadata: [],
-          transitionResolver: { isFullTree: () => false }
+          pivotEdgeTracking: [],
+          pairs: [],
+          timelineFrames: [{ frame_index: 0, frame_type: 'interpolation_frame', is_observed_input: false, pair_id: null }]
       };
 
       it('should return empty if no active edge', () => {
-          const state = { ...mockStructure, activeChangeEdgeTracking: [null] };
+          const state = { ...mockStructure, pivotEdgeTracking: [null] };
           const result = getSourceDestinationEdgesAtIndex(state, 0);
           expect(result.source).to.be.empty;
           expect(result.dest).to.be.empty;
@@ -115,15 +114,16 @@ describe('Tree Visualisation - Subtree Highlight Parsing', () => {
           
           const index = 0;
           const activeEdge = [1, 2];
-          const pairKey = "pair_1";
+          const pairId = "pair_1";
           
           // Mock State
           const state = {
               subtreeHighlightTracking: [ [[1, 2]] ], // The moving subtree is {1,2}
               pivotEdgeTracking: [ activeEdge ],
-              treeMetadata: [ { tree_pair_key: pairKey } ],
-              pairSolutions: {
-                  [pairKey]: {
+              timelineFrames: [ { pair_id: pairId } ],
+              pairs: [{
+                  pair_id: pairId,
+                  solution: {
                       // Map active activeEdge to attachment edges.
                       attachment_edges_by_split: {
                           "[1, 2]": {
@@ -134,7 +134,7 @@ describe('Tree Visualisation - Subtree Highlight Parsing', () => {
                           }
                       }
                   }
-              }
+              }]
           };
 
           const result = getSourceDestinationEdgesAtIndex(state, index);
@@ -155,14 +155,15 @@ describe('Tree Visualisation - Subtree Highlight Parsing', () => {
         // Scenario: Multiple subtrees active [ [1], [2] ]
         const index = 0;
         const subtrees = [[1], [2]]; // Two distinct moving subtrees
-        const pairKey = "pair_multi";
+        const pairId = "pair_multi";
         
         const state = {
             subtreeHighlightTracking: [ subtrees ],
             pivotEdgeTracking: [ [1, 2] ], // pivot edge lookup key
-            treeMetadata: [{ tree_pair_key: pairKey }],
-            pairSolutions: {
-                [pairKey]: {
+            timelineFrames: [{ pair_id: pairId }],
+            pairs: [{
+                pair_id: pairId,
+                solution: {
                     attachment_edges_by_split: {
                         "[1, 2]": {
                             "[1]": {
@@ -176,7 +177,7 @@ describe('Tree Visualisation - Subtree Highlight Parsing', () => {
                         }
                     }
                 }
-            }
+            }]
         };
 
         const result = getSourceDestinationEdgesAtIndex(state, index);

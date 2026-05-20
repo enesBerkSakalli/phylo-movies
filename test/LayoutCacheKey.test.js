@@ -59,9 +59,6 @@ describe('layout cache key', () => {
       ...baseState,
       treeList,
       subtreeHighlightTracking: [[[5], [3]], null],
-      transitionResolver: {
-        getSourceTreeIndex: () => 0
-      }
     };
     const key = createLayoutCacheKey({
       state: transitionState,
@@ -74,7 +71,6 @@ describe('layout cache key', () => {
       state: {
         ...transitionState,
         subtreeHighlightTracking: null,
-        transitionResolver: null
       },
       treeIndex: 1,
       width: 800,

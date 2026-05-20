@@ -1,5 +1,4 @@
 import { TIMELINE_CONSTANTS } from '../constants.js';
-import { TimelineMathUtils } from '../math/TimelineMathUtils.js';
 
 /**
  * Owns the scrub gesture state machine for the timeline.
@@ -10,7 +9,8 @@ import { TimelineMathUtils } from '../math/TimelineMathUtils.js';
  * - keep scrub-specific transient state out of the manager
  */
 export class TimelineScrubController {
-  constructor({ timelineData, segments, store, getTimelineRenderer, getScrubberAPI, stopPlayback }) {
+  constructor({ timelineDataset, timelineData, segments, store, getTimelineRenderer, getScrubberAPI, stopPlayback }) {
+    this.timelineDataset = timelineDataset;
     this.timelineData = timelineData;
     this.segments = segments;
     this.store = store;
@@ -101,16 +101,9 @@ export class TimelineScrubController {
       return;
     }
 
-    const currentTime = TimelineMathUtils.progressToTime(finalProgress, this.timelineData.totalDuration);
-    const target = TimelineMathUtils.getTargetFrameForTime(
-      this.segments,
-      currentTime,
-      this.timelineData.segmentDurations,
-      'nearest',
-      this.timelineData.cumulativeDurations
-    );
+    const cursor = this.timelineDataset.getCursorAtTimelineProgress(finalProgress, { bias: 'nearest' });
 
-    this.store.getState().setTimelineProgress(finalProgress, target?.frameIndex);
+    this.store.getState().setTimelineProgress(finalProgress, cursor.frameIndex);
   }
 
   resetOnUnmount() {
@@ -132,6 +125,6 @@ export class TimelineScrubController {
   }
 
   _timeToProgress(time) {
-    return TimelineMathUtils.timeToProgress(time, this.timelineData.totalDuration);
+    return this.timelineDataset.getTimelineProgressAtMovieTime(time);
   }
 }
