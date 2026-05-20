@@ -9,7 +9,7 @@
  * @returns {string} Either 'dna' or 'protein'
  */
 function guessTypeFromSeqs(recs) {
-  const letters = new Set('ACGTU-');
+  const letters = new Set('ACGTURYSWKMBDHVN-.');
   for (const r of recs) {
     for (const ch of r.seq) {
       if (!letters.has(ch)) return 'protein';

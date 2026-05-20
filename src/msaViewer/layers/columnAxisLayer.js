@@ -21,8 +21,8 @@ export function buildColumnAxis(cellSize, viewState, visibleRange, rows, zoomSca
   const { c0, c1 } = visibleRange;
   const data = [];
 
-  // Position axis centered in the top view (AXIS_HEIGHT is 20)
-  const axisY = 10;
+  // Position axis centered in world coordinates for the zoom-locked top view.
+  const axisY = 10 / Math.max(0.01, zoomScale || 1);
 
   const pixelsPerCell = optionsCellSize * zoomScale;
 
@@ -53,7 +53,7 @@ export function buildColumnAxis(cellSize, viewState, visibleRange, rows, zoomSca
  * @param {number} zoomScale - The current zoom scale factor
  * @returns {TextLayer} The column axis layer
  */
-export function createColumnAxisLayer(axisData, zoomScale) {
+export function createColumnAxisLayer(axisData, _zoomScale) {
   return new TextLayer({
     id: 'columnAxis',
     data: axisData,

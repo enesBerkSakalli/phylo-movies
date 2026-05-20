@@ -19,16 +19,16 @@
  * Calculate MSA position window based on tree index and step size
  * Mirrors backend: windowing.py::create_windows_from_parameters()
  *
- * @param {number} currentFullTreeDataIdx - 0-based index of current full tree data (frame index)
+ * @param {number} currentInputFrameIndex - 0-based index of current input-tree frame
  * @param {number} msaStepSize - Step size for MSA window advancement
  * @param {number} msaWindowSize - Size of the MSA window
  * @param {number} alignmentLength - Total length of the MSA alignment
  * @returns {Object} Window object with startPosition, midPosition, and endPosition (all 1-based)
  */
-export function calculateWindow(currentFullTreeDataIdx, msaStepSize, msaWindowSize, alignmentLength) {
+export function calculateWindow(currentInputFrameIndex, msaStepSize, msaWindowSize, alignmentLength) {
     // Validate inputs
-    if (currentFullTreeDataIdx < 0) {
-        console.warn("[calculateWindow] Invalid currentFullTreeDataIdx:", currentFullTreeDataIdx);
+    if (currentInputFrameIndex < 0) {
+        console.warn("[calculateWindow] Invalid currentInputFrameIndex:", currentInputFrameIndex);
         // Return a default window if the index is invalid
         const defaultEndPosition = (msaWindowSize && msaWindowSize > 0) ? Math.ceil(msaWindowSize / 2) : 100;
         return { startPosition: 1, midPosition: 1, endPosition: Math.max(1, defaultEndPosition) };
@@ -46,7 +46,7 @@ export function calculateWindow(currentFullTreeDataIdx, msaStepSize, msaWindowSi
 
     // Match backend calculation (0-indexed)
     // Backend: center_pos = frame_index * step_size
-    const centerPos0 = currentFullTreeDataIdx * msaStepSize;
+    const centerPos0 = currentInputFrameIndex * msaStepSize;
 
     // Backend: left_half = int(window_size / 2), right_half = ceil(window_size / 2)
     const leftHalf = Math.floor(msaWindowSize / 2);
@@ -55,8 +55,8 @@ export function calculateWindow(currentFullTreeDataIdx, msaStepSize, msaWindowSi
     // Backend: start_pos = max(0, center_pos - left_half)
     // Backend: end_pos = min(alignment_length, center_pos + right_half)
     // Note: Backend end_pos is EXCLUSIVE, so we use it directly for display
-    const startPos0 = Math.max(0, centerPos0 - leftHalf);
-    const endPos0 = Math.min(alignmentLength, centerPos0 + rightHalf);
+    const startPos0 = Math.max(0, Math.floor(centerPos0 - leftHalf));
+    const endPos0 = Math.min(alignmentLength, Math.ceil(centerPos0 + rightHalf));
 
     // Convert to 1-based for display (frontend convention)
     // startPosition is 1-based inclusive
@@ -66,7 +66,7 @@ export function calculateWindow(currentFullTreeDataIdx, msaStepSize, msaWindowSi
 
     // midPosition is the algorithm's center point, but clamp it to be within the visible window
     // This ensures the displayed mid is always between start and end
-    const rawMidPosition = centerPos0 + 1;
+    const rawMidPosition = Math.round(centerPos0 + 1);
     const midPosition = Math.max(startPosition, Math.min(endPosition, rawMidPosition));
 
     return {

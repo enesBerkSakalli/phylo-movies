@@ -13,7 +13,7 @@ import {
 } from '../../state/phyloStore/store.js';
 import { processMsaSequences } from '../../msaViewer/utils/dataUtils';
 import { SYSTEM_TREE_COLORS } from '../../constants/TreeColors';
-import { getGroupForTaxon } from '../../treeColoring/utils/GroupingUtils';
+import { getTaxonColor } from '../../treeColoring/utils/GroupingUtils';
 import { MSAContext } from './MSAContextValue.js';
 
 export function MSAProvider({ children }) {
@@ -85,47 +85,17 @@ export function MSAProvider({ children }) {
     }
   }, [hasMsa, msaSequences, msaRowOrder]);
 
-  // Map each taxon id to its assigned color (group > per-taxon palette)
+  // Map each taxon id to its assigned color (group/csv/taxon coloring)
   const rowColorMap = useMemo(() => {
     if (!processedData?.sequences) return {};
     const map = {};
-
-    const csvMap = taxaGrouping?.csvTaxaMap;
-    const getCsvGroup = (taxon) => {
-      if (!csvMap) return null;
-      if (csvMap instanceof Map) return csvMap.get(taxon);
-      if (typeof csvMap === 'object') return csvMap[taxon];
-      return null;
-    };
+    const systemKeys = ['markedColor', 'pivotEdgeColor', 'strokeColor', 'defaultColor'];
 
     processedData.sequences.forEach((seq) => {
       const id = seq.id;
-      let color = null;
+      let color = getTaxonColor(id, taxaGrouping, null);
 
-      if (taxaGrouping && taxaGrouping.mode !== 'taxa') {
-        let group = null;
-        if (taxaGrouping.mode === 'groups') {
-          group = getGroupForTaxon(
-            id,
-            taxaGrouping.separators || taxaGrouping.separator,
-            taxaGrouping.strategyType,
-            {
-              segmentIndex: taxaGrouping.segmentIndex,
-              useRegex: taxaGrouping.useRegex,
-              regexPattern: taxaGrouping.regexPattern,
-            }
-          );
-        } else if (taxaGrouping.mode === 'csv') {
-          group = getCsvGroup(id);
-        }
-        if (group && taxaGrouping.groupColorMap?.[group]) {
-          color = taxaGrouping.groupColorMap[group];
-        }
-      }
-
-      // Per-taxon explicit color (only if not a system key)
       if (!color) {
-        const systemKeys = ['markedColor', 'pivotEdgeColor', 'strokeColor', 'defaultColor'];
         if (!systemKeys.includes(id) && systemTreeColors.colors[id]) {
           color = systemTreeColors.colors[id];
         }
