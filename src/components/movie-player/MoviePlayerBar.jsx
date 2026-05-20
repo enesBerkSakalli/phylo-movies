@@ -4,6 +4,7 @@ import { MovieChartSection } from './MovieChartSection/MovieChartSection.jsx';
 import { TransportControls } from './TransportControls.jsx';
 import { TimelineScrollControls } from './TimelineScrollControls/TimelineScrollControls.jsx';
 import { PlaybackSpeedControl } from './PlaybackSpeedControl/PlaybackSpeedControl.jsx';
+import { TimelineStatusStrip } from './TimelineStatusStrip.jsx';
 import { TimelineSegmentTooltip } from '../timeline/TimelineSegmentTooltip.jsx';
 import {
   selectAnimationSpeed,
@@ -24,7 +25,6 @@ import {
 import { useSidebar } from '../ui/sidebar';
 import { Button } from '../ui/button';
 import { Menu, ChevronUp, ChevronDown } from 'lucide-react';
-import { Separator } from '../ui/separator';
 import { AppTooltip } from '../ui/app-tooltip';
 import {
   MOVIE_PLAYER_ARIA_LABELS,
@@ -139,12 +139,7 @@ export function MoviePlayerBar() {
                 </Button>
               </AppTooltip>
 
-              {toolbarExpanded && (
-                <>
-                  <Separator orientation="vertical" className="mx-1 h-4" />
-                  <TimelineScrollControls />
-                </>
-              )}
+              {hasTimeline && <TimelineStatusStrip />}
             </div>
 
             <div className="justify-self-center rounded-md border border-border/70 bg-background/80 px-1 py-0.5 shadow-sm">
@@ -178,7 +173,12 @@ export function MoviePlayerBar() {
           </div>
 
           <div className="w-full border-b border-border/60 bg-background" role="group" aria-label={MOVIE_PLAYER_ARIA_LABELS.timelineTrack}>
-            {hasTimeline && <TimelineLegend hasTransitionSegments={hasTransitionSegments} />}
+            {hasTimeline && (
+              <TimelineLayerControls
+                hasTransitionSegments={hasTransitionSegments}
+                showViewportControls={toolbarExpanded}
+              />
+            )}
             {hasTimeline ? (
               <div className="interpolation-timeline-container">
                 <div ref={timelineHostRef} className="timeline-visual-layer" />
@@ -232,10 +232,19 @@ export function MoviePlayerBar() {
   );
 }
 
+function TimelineLayerControls({ hasTransitionSegments, showViewportControls }) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 bg-muted/10 px-2 py-1">
+      <TimelineLegend hasTransitionSegments={hasTransitionSegments} />
+      {showViewportControls && <TimelineScrollControls />}
+    </div>
+  );
+}
+
 function TimelineLegend({ hasTransitionSegments }) {
   return (
     <div
-      className="flex flex-wrap items-center gap-x-3 gap-y-1 px-2 pt-1 pb-0.5 text-2xs font-medium text-muted-foreground"
+      className="flex flex-wrap items-center gap-x-3 gap-y-1 text-2xs font-medium text-muted-foreground"
       role="group"
       aria-label={MOVIE_PLAYER_ARIA_LABELS.timelineLegend}
     >
