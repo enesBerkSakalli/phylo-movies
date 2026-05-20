@@ -25,6 +25,22 @@ export function resolveMsaSourceFrameIndex(sourceTreeSequenceIndices = [], seque
   return 0;
 }
 
+export function findPreviousInputTreeSequenceIndex(inputTreeIndices, position) {
+  if (!inputTreeIndices?.length) return 0;
+  const ordinal = resolveMsaSourceFrameIndex(inputTreeIndices, position);
+  return inputTreeIndices[ordinal] ?? 0;
+}
+
+export function findNextInputTreeSequenceIndex(inputTreeIndices, position) {
+  if (!inputTreeIndices?.length) return null;
+  for (const inputTreeIndex of inputTreeIndices) {
+    if (inputTreeIndex > position) {
+      return inputTreeIndex;
+    }
+  }
+  return null;
+}
+
 function resolveMidpointTreeIndex(fromIndex, toIndex, timeFactor) {
   const { from, to, t } = normalizeTransitionIndexInputs(fromIndex, toIndex, timeFactor);
   if (t <= 0) return from;
