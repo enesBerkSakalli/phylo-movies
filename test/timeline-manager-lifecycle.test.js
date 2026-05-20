@@ -119,6 +119,29 @@ describe('MovieTimelineManager lifecycle', () => {
     manager.destroy();
   });
 
+  it('exposes timeline-owned status snapshots before mounting', () => {
+    const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
+    const cursor = manager.getCursorForFrame(22, { occurrence: 'last' });
+
+    const status = manager.getTimelineStatusSnapshot({
+      timelineCursor: cursor,
+      hasMsa: true,
+      msaStepSize: 50,
+      msaWindowSize: 100,
+      msaColumnCount: 1000
+    });
+
+    expect(status.position.display).to.equal('Input tree 2/10');
+    expect(status.segment.text).to.equal('Input tree');
+    expect(status.msaWindow).to.deep.equal({
+      startPosition: 1,
+      midPosition: 51,
+      endPosition: 100
+    });
+
+    manager.destroy();
+  });
+
   it('mounts into an explicit host and unmounts cleanly', () => {
     const manager = new MovieTimelineManager(movieData, movieData.interpolated_trees);
     const host = makeContainer();

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { buildMsaWindow } from '../../../src/components/HUD/shared/hudShared.js';
+import { buildMsaWindow } from '../../../src/timeline/view/timelineStatusModel.js';
 
-describe('HUD MSA window model', () => {
+describe('timeline MSA window status model', () => {
   it('does not build a displayed MSA window without alignment columns', () => {
     expect(buildMsaWindow(true, 0, 50, 100, 0)).toBeNull();
   });

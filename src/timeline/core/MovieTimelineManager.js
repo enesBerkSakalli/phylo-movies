@@ -8,6 +8,7 @@ import { TimelineScrubController } from './TimelineScrubController.js';
 import { TimelineStateSynchronizer } from './TimelineStateSynchronizer.js';
 import { useAppStore } from '../../state/phyloStore/store.js';
 import { DeckTimelineRenderer } from '../renderers/DeckTimelineRenderer.js';
+import { buildTimelineStatusSnapshot } from '../view/timelineStatusModel.js';
 
 // ============================================================================
 // MOVIE TIMELINE MANAGER
@@ -318,6 +319,32 @@ export class MovieTimelineManager {
 
     getFrameOccurrences(frameIndex) {
         return this.timelineDataset?.getOccurrencesForFrame(frameIndex) ?? [];
+    }
+
+    getTimelineStatusSnapshot({
+        frameIndex = null,
+        timelineCursor = null,
+        inputFrameIndices = null,
+        hasMsa = false,
+        msaStepSize = null,
+        msaWindowSize = null,
+        msaColumnCount = null,
+    } = {}) {
+        const resolvedCursor = timelineCursor ??
+            (Number.isInteger(frameIndex) ? this.getCursorForFrame(frameIndex) : null);
+        const resolvedFrameIndex = resolvedCursor?.frameIndex ??
+            (Number.isInteger(frameIndex) ? frameIndex : 0);
+
+        return buildTimelineStatusSnapshot({
+            frameIndex: resolvedFrameIndex,
+            treeListLength: this.treeList?.length ?? 0,
+            inputFrameIndices: inputFrameIndices ?? this.timelineDataset?.getInputFrameIndices?.() ?? [],
+            timelineCursor: resolvedCursor,
+            hasMsa,
+            msaStepSize,
+            msaWindowSize,
+            msaColumnCount,
+        });
     }
 
     // ==========================================================================

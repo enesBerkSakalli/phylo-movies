@@ -49,7 +49,35 @@ describe('movie timeline player bar semantics', () => {
 
     expect(existsSync(toolbarPath)).toBe(true);
     expect(playerBarSource).toContain('TimelineScrollControls');
-    expect(playerBarSource).toContain('MOVIE_PLAYER_ARIA_LABELS.timelineNavigation');
     expect(playerBarSource).toContain('MOVIE_PLAYER_ARIA_LABELS.timelineTrack');
+    expect(playerBarSource).toContain('<TimelineLayerControls');
+    expect(playerBarSource.indexOf('<TimelineLayerControls')).toBeLessThan(
+      playerBarSource.indexOf('className="interpolation-timeline-container"')
+    );
+    expect(playerBarSource).toContain('<TimelineScrollControls />');
+  });
+
+  it('renders timeline status in the movie player instead of the floating HUD', () => {
+    const playerBarSource = readRepoFile('src', 'components', 'movie-player', 'MoviePlayerBar.jsx');
+    const managerSource = readRepoFile('src', 'timeline', 'core', 'MovieTimelineManager.js');
+    const statusStripPath = join(repoRoot, 'src', 'components', 'movie-player', 'TimelineStatusStrip.jsx');
+    const statusStripSource = existsSync(statusStripPath) ? readFileSync(statusStripPath, 'utf8') : '';
+
+    expect(existsSync(statusStripPath)).toBe(true);
+    expect(playerBarSource).toContain('TimelineStatusStrip');
+    expect(managerSource).toContain('getTimelineStatusSnapshot');
+    expect(managerSource).toContain('buildTimelineStatusSnapshot');
+    expect(statusStripSource).toContain('selectMovieTimelineManager');
+    expect(statusStripSource).toContain('getTimelineStatusSnapshot');
+    expect(statusStripSource).toContain('buildTimelineStatusSnapshot');
+    expect(statusStripSource).toContain('Movie timeline status');
+    expect(statusStripSource).toContain('border-border/40 bg-muted/20 backdrop-blur-sm');
+    expect(statusStripSource).toContain('text-xs font-bold leading-tight tracking-tight uppercase');
+    expect(statusStripSource).toContain('text-[10px] text-muted-foreground/80 leading-tight font-medium');
+    expect(statusStripSource).not.toContain('Tree Type');
+    expect(statusStripSource).not.toContain('Badge');
+    expect(playerBarSource.indexOf('<TimelineStatusStrip />')).toBeLessThan(
+      playerBarSource.indexOf('MOVIE_PLAYER_ARIA_LABELS.playbackSettings')
+    );
   });
 });

@@ -8,7 +8,6 @@ import { CanvasCaptureControls } from './components/deckgl/CanvasCaptureControls
 import { MsaRndWindow } from './components/msa/MsaRndWindow.jsx';
 import { MSAProvider } from './components/msa/MSAContext';
 import { TaxaColoringRndWindow } from './components/taxa-coloring/TaxaColoringRndWindow.jsx';
-import { ClipboardDismissButton } from './components/HUD/clipboard/ClipboardDismissButton.jsx';
 import { NodeContextMenu } from './components/NodeContextMenu.jsx';
 import { TransitionInspectorPanel } from './components/TransitionInspectorPanel.jsx';
 import { Toaster } from './components/ui/sonner';
@@ -102,7 +101,6 @@ export function App() {
               <DeckGLCanvas />
               <TreeViewportControls />
               <CanvasCaptureControls />
-              <ClipboardDismissButton />
               <HUD />
               <TransitionInspectorPanel />
             </div>
