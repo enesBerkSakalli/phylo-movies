@@ -132,7 +132,6 @@ export { selectTreeContext } from './selectTreeContext.js';
 export { selectTreeControllers } from './selectTreeControllers.js';
 export { selectTimelineFrameAtIndex } from './selectTimelineFrameAtIndex.js';
 export { selectTimelineFrames } from './selectTimelineFrames.js';
-export { selectUpdateTaxaColors } from './selectUpdateTaxaColors.js';
 export { selectUpcomingChangesEnabled } from './selectUpcomingChangesEnabled.js';
 export { selectViewsConnected } from './selectViewsConnected.js';
 export { selectZoomInTimeline } from './selectZoomInTimeline.js';
