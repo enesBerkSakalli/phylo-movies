@@ -9,6 +9,9 @@ not be edited as source data.
 
 - `PUBLICATION_DATA_RELATIONSHIP_MAP.md` maps the retained source layers,
   scripts, promoted results, and provenance files.
+- `PUBLICATION_ARCHIVE.md` defines the public archive boundary and release
+  verification checks.
+- `REGENERATE.md` is the top-level regeneration and verification entry point.
 - `publication_data.env` defines shared workflow constants consumed by shell
   entry points and Python scripts.
 - `environment.yml` defines the shared publication-analysis conda environment.

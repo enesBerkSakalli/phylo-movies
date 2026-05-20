@@ -87,6 +87,8 @@ For promoted results:
 
 For regeneration:
 
+- `REGENERATE.md`
+- `PUBLICATION_ARCHIVE.md`
 - `publication_data.env`
 - `environment.yml`
 - `bootstrap_rogue_taxa/REGENERATE.md`

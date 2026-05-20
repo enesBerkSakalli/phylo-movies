@@ -10,7 +10,7 @@ current repository and app-distributed data surfaces.
 | Surface | Path | Purpose |
 | --- | --- | --- |
 | bioRxiv upload package | `/Users/berksakalli/Projects/Phylo-Movies-animated-visualisation-of-phylogenetic-trees-from-sliding-window-analyses/Phylo_Movies__animated_visualisation_of_phylogenetic_trees_from_sliding_window_analyses.zip` | Manuscript source package uploaded with the preprint. |
-| Current publication data | `publication_data/` | Full local publication-data layer, including source/intermediate/generated material. |
+| Current publication data | `publication_data/` | Canonical publication-data archive root. |
 | Generated web build examples | `dist/examples/` | Disposable build artifact copied from `publication_data/`; not a source-data location. |
 | Generated Electron frontend examples | `electron-app/frontend-dist/examples/` | Disposable build artifact copied from `publication_data/`; not a source-data location. |
 
@@ -19,7 +19,7 @@ current repository and app-distributed data surfaces.
 | Surface | Size | File count | Notes |
 | --- | ---: | ---: | --- |
 | bioRxiv upload package | 30 MB zip, 87 MB unpacked working folder | 42 files in zip | Manuscript `.tex`, `.bib`, class/style files, figures, and build PDFs. |
-| `publication_data/` | 1.9 GB | 5665 files | Full local working/publication layer; includes generated run staging and caches unless cleaned. |
+| `publication_data/` | 139 MB | 81 files | Clean publication-data archive root; generated run staging and caches are excluded. |
 | `dist/examples/` | generated, currently removed from working tree | copied during build | Disposable app-facing example artifact. |
 | `electron-app/frontend-dist/examples/` | generated, currently removed from working tree | copied during Electron build | Disposable desktop app-facing example artifact. |
 
@@ -52,7 +52,7 @@ or treat those folders as source data.
 during development.
 
 Consequence: local development can access much more than production builds,
-including intermediate files and generated run folders.
+including retained source, preprocessing, script, and promoted-result files.
 
 ### Production Web / GitHub Pages
 
@@ -73,16 +73,16 @@ but those files must always be regenerated from `publication_data/`.
 The Electron frontend build uses the same copied `examples/` surface. It is a
 packaging artifact only; the source of truth remains `publication_data/`.
 
-## Current Gaps
+## Current Closure Status
 
-| Gap | Why it matters | Fix before public archive |
-| --- | --- | --- |
-| bioRxiv upload package contains no data archive. | The manuscript data-availability statement depends entirely on the GitHub/release archive. | Create a distinct publication-data release archive or include `publication_data/` in the repository release. |
-| `dist/examples/` and `electron-app/frontend-dist/examples/` can be mistaken for source data. | Duplicate folders create ambiguity about which files are authoritative. | Treat both as ignored/generated build artifacts and delete them from the working tree after build/test work. |
-| Development `/examples/` exposes all `publication_data/`, production `/examples/` exposes only selected files. | Behavior differs between developer and user builds. | Make the intended difference explicit or introduce a curated `publication_data/distribution_examples/` source for both dev and build. |
-| Generated example folders can become stale. | A stale build artifact may omit new manifests or current results. | Regenerate from `publication_data/` when building; never review stale generated copies. |
-| Rogue-taxon source alignments are still not distributed through the app examples. | App users can view promoted IQ-TREE trees, but cannot regenerate the bootstrap examples from the app bundle. | Put selected source MSAs in a publication source-alignment layer and include them in the publication-data archive, not necessarily in the app demo bundle. |
-| `publication_data/` currently includes generated run folders and `__pycache__` files. | A public archive would be noisy and too large. | Exclude generated staging/caches; promote only source inputs, scripts, current results, manifests, and logs. |
+| Former gap | Current resolution |
+| --- | --- |
+| bioRxiv upload package contains no data archive. | `publication_data/` is now the canonical publication-data archive root; the release/archive boundary is defined in `publication_data/PUBLICATION_ARCHIVE.md`. |
+| `dist/examples/` and `electron-app/frontend-dist/examples/` can be mistaken for source data. | `publication_data/README.md`, `publication_data/REGENERATE.md`, and `publication_data/PUBLICATION_ARCHIVE.md` state that generated app examples are disposable build artifacts. |
+| Development `/examples/` exposes all `publication_data/`, production `/examples/` exposes only selected files. | This difference is now explicit: production app examples are curated demo payloads copied by `scripts/copy-examples.sh`; reproducibility data remain in `publication_data/`. |
+| Generated example folders can become stale. | Build/copy scripts regenerate app examples from `publication_data/`; generated examples are not reviewed as source data. |
+| Rogue-taxon source alignments are not distributed through app examples. | Selected source MSAs are retained under `publication_data/bootstrap_rogue_taxa/source_alignments/` and included in the publication-data archive contract. |
+| `publication_data/` included generated run folders and caches. | The committed archive root is cleaned to source inputs, retained preprocessing files, scripts, promoted current results, manifests, and logs. Verification commands are in `publication_data/PUBLICATION_ARCHIVE.md`. |
 
 ## Recommended Distribution Model
 
@@ -94,17 +94,13 @@ Use three explicit layers:
 | Publication-data archive | Reviewers/readers who want reproducibility | Source MSAs, selected metadata, scripts, promoted current results, manifests, checksums, and `REGENERATE.md`. |
 | Generated staging | Maintainers only | Timestamped run folders, intermediate bootstrap replicate MSAs, per-replicate IQ-TREE logs, caches, and stale outputs. Not distributed except as needed through an external archive. |
 
-## Immediate Decision
+## Remaining Outside This Data-Archive Boundary
 
-Before moving more files, the repository should define:
+The data-archive boundary is now defined. Remaining resubmission work is outside
+this specific row:
 
-1. `publication_data/source_alignments/` as the source MSA layer.
-2. `publication_data/REGENERATE.md` as the user-facing regeneration entry
-   point.
-3. `scripts/copy-examples.sh` as app-demo-only, not publication-archive logic;
-   generated output should stay ignored and disposable.
-4. A release/archive checklist that excludes `runs/`, `__pycache__/`, stale
-   quarantined outputs, and old test-data working folders.
-
-Only after that should we copy the selected rogue-taxon source alignments and
-normalize the ReCAN script names.
+1. choose the final release target, such as GitHub release attachment and/or
+   Zenodo DOI;
+2. mirror the archive/regeneration wording in the manuscript Data Availability
+   statement;
+3. run the final release checklist immediately before upload.
