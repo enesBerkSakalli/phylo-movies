@@ -246,7 +246,6 @@ export interface AppStoreState {
   setTaxaColoringWindow: (partial: any) => void;
   setTaxaGrouping: (grouping: any) => void;
   setMonophyleticColoring: (enabled: boolean) => void;
-  updateTaxaColors: (newColorMap: any) => void;
 
   setSubtreeHighlightOpacity: (opacity: number) => void;
 

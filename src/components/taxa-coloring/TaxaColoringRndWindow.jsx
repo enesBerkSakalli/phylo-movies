@@ -10,11 +10,9 @@ import {
   selectTaxaColoringOpen,
   selectTaxaColoringWindow,
   selectTaxaGrouping,
-  selectUpdateTaxaColors,
   useAppStore
 } from '../../state/phyloStore/store.js';
 import { TaxaColoringWindow } from './TaxaColoringWindow.jsx';
-import { applyColoringData } from '../../treeColoring/utils/GroupingUtils.js';
 import { SYSTEM_TREE_COLORS } from '../../constants/TreeColors.js';
 import {
   Tooltip,
@@ -60,7 +58,6 @@ export function TaxaColoringRndWindow({ isActive = false, onFocus } = {}) {
 
   const taxaNames = useAppStore(selectLeafNamesByIndex);
   const taxaGrouping = useAppStore(selectTaxaGrouping);
-  const updateTaxaColors = useAppStore(selectUpdateTaxaColors);
   const setTaxaGrouping = useAppStore(selectSetTaxaGrouping);
 
   // Stable initial state reference to prevent unnecessary re-renders
@@ -102,9 +99,6 @@ export function TaxaColoringRndWindow({ isActive = false, onFocus } = {}) {
   const handleApply = useCallback((colorData) => {
     if (!taxaNames.length) return;
 
-    const newColorMap = applyColoringData(colorData, taxaNames, colorData.taxaColorMap);
-    updateTaxaColors(newColorMap);
-
     // Persist grouping info for UI (tooltips) and window state restoration
     setTaxaGrouping({
       mode: colorData?.mode || 'taxa',
@@ -122,7 +116,7 @@ export function TaxaColoringRndWindow({ isActive = false, onFocus } = {}) {
       csvData: colorData?.csvData || null,
       csvFileName: colorData?.csvFileName || null,
     });
-  }, [taxaNames, updateTaxaColors, setTaxaGrouping]);
+  }, [taxaNames, setTaxaGrouping]);
 
   const handleClose = useCallback(() => setOpen(false), [setOpen]);
 

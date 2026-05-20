@@ -21,20 +21,19 @@ export const createTaxonomyColoringSlice = (set, get) => ({
       ? { ...grouping, groupColorMap: normalizedGroupMap || {} }
       : null;
 
-    set({ taxaGrouping: normalized });
+    set((s) => ({
+      taxaGrouping: normalized,
+      taxaColorVersion: s.taxaColorVersion + 1,
+    }));
+    const { colorManager } = get();
+    colorManager?.refreshColorCategories?.();
+    renderTreeControllers(get());
   },
 
   setMonophyleticColoring: (enabled) => {
     set((s) => ({ monophyleticColoringEnabled: enabled, taxaColorVersion: s.taxaColorVersion + 1 }));
     const { colorManager } = get();
     colorManager?.setMonophyleticColoring(enabled);
-    renderTreeControllers(get());
-  },
-
-  updateTaxaColors: (newColorMap) => {
-    set((s) => ({ taxaColorVersion: s.taxaColorVersion + 1 }));
-    const { colorManager } = get();
-    colorManager?.refreshColorCategories?.();
     renderTreeControllers(get());
   },
 });
