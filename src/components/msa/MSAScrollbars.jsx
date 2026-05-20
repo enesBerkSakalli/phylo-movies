@@ -1,8 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { useMSA } from './useMSA.js';
 import { MSA_VIEWER_CONSTANTS } from '../../msaViewer/config.js';
-
-const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+import {
+  calculateScrollbarGeometry,
+  getKeyboardScrollTarget,
+  getTrackClickTarget,
+} from './scrollbarUtils.js';
 
 /**
  * Custom scrollbar overlays that show viewport position within the MSA alignment
@@ -23,34 +26,24 @@ export function MSAScrollbars({ layoutMetrics = null }) {
     activeDragCleanupRef.current?.();
   }, []);
 
-  // Memoize calculations - will return defaults if data not available
   const { rows, cols, r0, r1, c0, c1, hThumbWidth, hThumbLeft, vThumbHeight, vThumbTop } = useMemo(() => {
-    if (!processedData || !visibleRange) {
-      return { rows: 0, cols: 0, r0: 0, r1: 0, c0: 0, c1: 0, hThumbWidth: 0, hThumbLeft: 0, vThumbHeight: 0, vThumbTop: 0 };
-    }
-
-    const { rows, cols } = processedData;
-    const { r0, r1, c0, c1 } = visibleRange;
-
-    // Calculate thumb sizes and positions (as percentages)
-    const visibleCols = c1 - c0 + 1;
-    const visibleRows = r1 - r0 + 1;
-
-    const hThumbWidth = Math.min(100, Math.max(10, (visibleCols / cols) * 100)); // min 10%
-    const hThumbLeft = Math.min(100 - hThumbWidth, (c0 / cols) * 100);
-
-    const vThumbHeight = Math.min(100, Math.max(10, (visibleRows / rows) * 100)); // min 10%
-    const vThumbTop = Math.min(100 - vThumbHeight, (r0 / rows) * 100);
-
-    return { rows, cols, r0, r1, c0, c1, hThumbWidth, hThumbLeft, vThumbHeight, vThumbTop };
+    return calculateScrollbarGeometry({
+      rows: processedData?.rows ?? 0,
+      cols: processedData?.cols ?? 0,
+      visibleRange,
+    });
   }, [processedData, visibleRange]);
 
   // Handle horizontal track click
   const handleHTrackClick = useCallback((e) => {
     if (!hTrackRef.current || !scrollToPosition || !cols) return;
     const rect = hTrackRef.current.getBoundingClientRect();
-    const clickRatio = (e.clientX - rect.left) / rect.width;
-    const targetCol = clamp(Math.floor(clickRatio * cols), 0, cols - 1);
+    const targetCol = getTrackClickTarget({
+      pointerClientPosition: e.clientX,
+      trackStart: rect.left,
+      trackSize: rect.width,
+      itemCount: cols,
+    });
     scrollToPosition({ col: targetCol });
   }, [cols, scrollToPosition]);
 
@@ -58,77 +51,45 @@ export function MSAScrollbars({ layoutMetrics = null }) {
   const handleVTrackClick = useCallback((e) => {
     if (!vTrackRef.current || !scrollToPosition || !rows) return;
     const rect = vTrackRef.current.getBoundingClientRect();
-    const clickRatio = (e.clientY - rect.top) / rect.height;
-    const targetRow = clamp(Math.floor(clickRatio * rows), 0, rows - 1);
+    const targetRow = getTrackClickTarget({
+      pointerClientPosition: e.clientY,
+      trackStart: rect.top,
+      trackSize: rect.height,
+      itemCount: rows,
+    });
     scrollToPosition({ row: targetRow });
   }, [rows, scrollToPosition]);
 
   const handleHKeyDown = useCallback((e) => {
     if (!scrollToPosition || !cols) return;
 
-    const visibleCols = Math.max(1, c1 - c0 + 1);
-    let targetCol;
-
-    switch (e.key) {
-      case 'ArrowLeft':
-        targetCol = c0 - 1;
-        break;
-      case 'ArrowRight':
-        targetCol = c0 + 1;
-        break;
-      case 'PageUp':
-      case 'PageLeft':
-        targetCol = c0 - visibleCols;
-        break;
-      case 'PageDown':
-      case 'PageRight':
-        targetCol = c0 + visibleCols;
-        break;
-      case 'Home':
-        targetCol = 0;
-        break;
-      case 'End':
-        targetCol = cols - 1;
-        break;
-      default:
-        return;
-    }
+    const targetCol = getKeyboardScrollTarget({
+      axis: 'horizontal',
+      key: e.key,
+      rangeStart: c0,
+      rangeEnd: c1,
+      itemCount: cols,
+    });
+    if (targetCol === null) return;
 
     e.preventDefault();
-    scrollToPosition({ col: clamp(targetCol, 0, cols - 1) });
+    scrollToPosition({ col: targetCol });
   }, [c0, c1, cols, scrollToPosition]);
 
   const handleVKeyDown = useCallback((e) => {
     if (!scrollToPosition || !rows) return;
 
-    const visibleRows = Math.max(1, r1 - r0 + 1);
-    let targetRow;
-
-    switch (e.key) {
-      case 'ArrowUp':
-        targetRow = r0 - 1;
-        break;
-      case 'ArrowDown':
-        targetRow = r0 + 1;
-        break;
-      case 'PageUp':
-        targetRow = r0 - visibleRows;
-        break;
-      case 'PageDown':
-        targetRow = r0 + visibleRows;
-        break;
-      case 'Home':
-        targetRow = 0;
-        break;
-      case 'End':
-        targetRow = rows - 1;
-        break;
-      default:
-        return;
-    }
+    const targetRow = getKeyboardScrollTarget({
+      axis: 'vertical',
+      key: e.key,
+      rangeStart: r0,
+      rangeEnd: r1,
+      itemCount: rows,
+    });
+    if (targetRow === null) return;
 
     e.preventDefault();
-    scrollToPosition({ row: clamp(targetRow, 0, rows - 1) });
+    scrollToPosition({ row: targetRow });
   }, [r0, r1, rows, scrollToPosition]);
 
   // Handle horizontal thumb drag
@@ -144,8 +105,12 @@ export function MSAScrollbars({ layoutMetrics = null }) {
 
     const onPointerMove = (moveEvent) => {
       const rect = track.getBoundingClientRect();
-      const ratio = Math.max(0, Math.min(1, (moveEvent.clientX - rect.left) / rect.width));
-      const targetCol = clamp(Math.floor(ratio * cols), 0, cols - 1);
+      const targetCol = getTrackClickTarget({
+        pointerClientPosition: moveEvent.clientX,
+        trackStart: rect.left,
+        trackSize: rect.width,
+        itemCount: cols,
+      });
       scrollToPosition?.({ col: targetCol });
     };
 
@@ -179,8 +144,12 @@ export function MSAScrollbars({ layoutMetrics = null }) {
 
     const onPointerMove = (moveEvent) => {
       const rect = track.getBoundingClientRect();
-      const ratio = Math.max(0, Math.min(1, (moveEvent.clientY - rect.top) / rect.height));
-      const targetRow = clamp(Math.floor(ratio * rows), 0, rows - 1);
+      const targetRow = getTrackClickTarget({
+        pointerClientPosition: moveEvent.clientY,
+        trackStart: rect.top,
+        trackSize: rect.height,
+        itemCount: rows,
+      });
       scrollToPosition?.({ row: targetRow });
     };
 

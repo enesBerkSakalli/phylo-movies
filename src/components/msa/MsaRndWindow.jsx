@@ -21,7 +21,7 @@ import {
 } from '../ui/floatingWindowGeometry.js';
 
 const MSA_WINDOW_BOUNDS = {
-  minWidth: 600,
+  minWidth: 840,
   minHeight: 400,
   margin: 16,
 };
@@ -50,15 +50,15 @@ function MSAWindowContent() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden rounded-md border border-border/40">
-      <div className="msa-rnd-header flex items-center justify-between gap-2 px-2 py-2 border-b border-border/40 bg-muted/20 backdrop-blur-sm cursor-move select-none shrink-0">
-        <div className="flex items-center gap-2">
-          <Columns className="size-4 text-primary" aria-hidden />
-          <div className="flex flex-col">
-            <div className="text-xs font-bold leading-tight tracking-tight uppercase">MSA Viewer</div>
-            <div className="text-[9px] text-muted-foreground/80 leading-tight font-medium" aria-live="polite">{summary}</div>
+      <div className="msa-rnd-header flex items-center justify-between gap-2 px-2 py-1 border-b border-border/40 bg-muted/20 backdrop-blur-sm cursor-move select-none shrink-0">
+        <div className="flex min-w-0 items-center gap-2">
+          <Columns className="size-3.5 shrink-0 text-primary" aria-hidden />
+          <div className="flex min-w-0 items-center gap-2">
+            <div className="shrink-0 text-xs font-bold leading-tight tracking-tight uppercase">MSA Viewer</div>
+            <div className="min-w-0 truncate text-[10px] text-muted-foreground/80 leading-tight font-medium" aria-live="polite">{summary}</div>
           </div>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex shrink-0 items-center gap-1">
           <Button variant="ghost" size="icon-xs" onClick={closeMsaViewer} aria-label="Close MSA viewer" className="hover:bg-destructive/10 hover:text-destructive transition-colors">
             <X className="size-4" />
           </Button>

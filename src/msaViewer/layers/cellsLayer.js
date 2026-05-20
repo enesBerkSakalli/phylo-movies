@@ -40,13 +40,36 @@ export function buildCellData(cellSize, sequences, visibleRange, maxCells) {
         kind: 'cell',
         row: r,
         col: c,
-        ch: seq.seq[c] || '-',
+        ch: step === 1 ? (seq.seq[c] || '-') : getDominantResidue(sequences, r, c, step, r1, c1),
         polygon: [[x, y], [x + w, y], [x + w, y + h], [x, y + h]]
       });
     }
   }
 
   return data;
+}
+
+function getDominantResidue(sequences, startRow, startCol, step, maxRow, maxCol) {
+  const counts = new Map();
+  let bestChar = '-';
+  let bestCount = 0;
+
+  for (let r = startRow; r <= Math.min(maxRow, startRow + step - 1); r++) {
+    const seq = sequences[r]?.seq;
+    if (!seq) continue;
+
+    for (let c = startCol; c <= Math.min(maxCol, startCol + step - 1); c++) {
+      const ch = seq[c] || '-';
+      const count = (counts.get(ch) || 0) + 1;
+      counts.set(ch, count);
+      if (count > bestCount) {
+        bestChar = ch;
+        bestCount = count;
+      }
+    }
+  }
+
+  return bestChar;
 }
 
 /**

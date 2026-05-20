@@ -14,7 +14,7 @@ import {
   selectTreeControllers,
   useAppStore
 } from '../../state/phyloStore/store.js';
-import { MSARegionOverrides, MSAViewActions, MSAVisibleRange } from './controls';
+import { MSARegionOverrides, MSAViewActions } from './controls';
 
 export function MSAControls() {
   const { processedData, showLetters, setShowLetters, colorScheme, setColorScheme } = useMSA();
@@ -54,7 +54,7 @@ export function MSAControls() {
   };
 
   return (
-    <div className="px-2 py-1 flex flex-wrap items-center gap-2 bg-muted/30 border-b border-border/60 shrink-0 overflow-x-auto overflow-y-hidden">
+    <div className="px-2 py-1 flex flex-wrap items-center gap-2 bg-muted/30 border-b border-border/60 shrink-0 overflow-visible">
       <MSARegionOverrides />
 
       <Separator orientation="vertical" className="h-4 mx-2 opacity-40" />
@@ -70,17 +70,13 @@ export function MSAControls() {
         <Button size="xs" variant="outline" onClick={handleResetOrder} className="h-7 border-border/40 text-muted-foreground hover:text-foreground text-[11px]">Reset Order</Button>
       </div>
 
-      <MSAVisibleRange />
-
-      <Separator orientation="vertical" className="h-4 mx-2 opacity-40" />
-
       <div className="flex items-center gap-2">
         <Label htmlFor="msa-color-scheme" className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Coloring</Label>
         <Select value={colorScheme} onValueChange={setColorScheme}>
           <SelectTrigger id="msa-color-scheme" className="w-[160px] h-7 text-xs bg-background/50 border-border/40">
             <SelectValue placeholder="Color Scheme" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="z-[2000]">
             <SelectItem value="none">None (Empty)</SelectItem>
             <SelectItem value="default">Default</SelectItem>
             <SelectItem value="clustal">Clustal</SelectItem>
