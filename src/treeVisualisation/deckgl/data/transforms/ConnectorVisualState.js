@@ -10,7 +10,7 @@ export function resolveConnectorVisualState(params) {
     leftPositions,
     currentSubtreeSets,
     colorManager,
-    markedSubtreesEnabled,
+    subtreeHighlightsEnabled,
     linkConnectionOpacity,
   } = params;
 
@@ -30,7 +30,7 @@ export function resolveConnectorVisualState(params) {
     colorEntry,
     movementState.isMoving,
     colorManager,
-    markedSubtreesEnabled,
+    subtreeHighlightsEnabled,
     linkConnectionOpacity
   );
 

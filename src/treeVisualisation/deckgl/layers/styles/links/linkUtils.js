@@ -27,22 +27,22 @@ export const getLifecycleLinkHighlight = (link) => {
 export const hasLifecycleHighlightedLinks = (links) =>
   Array.isArray(links) && links.some((link) => getLifecycleLinkHighlight(link) !== null);
 
-export const getMarkedHighlightColor = (link, cm, mode = 'solid', markedColor) => {
+export const getSubtreeHighlightRgb = (link, cm, mode = 'solid', subtreeHighlightColor) => {
   if (mode === 'contrast') {
     const baseRgb = colorToRgb(cm.getBranchColor(link));
     return getContrastingHighlightColor(baseRgb);
   } else if (mode === 'taxa') {
     return colorToRgb(cm.getBranchColor(link));
   } else {
-    // 'solid' mode - default Red
-    return colorToRgb(markedColor || SYSTEM_TREE_COLORS.markedColor);
+    // 'solid' mode - default subtree highlight color
+    return colorToRgb(subtreeHighlightColor || SYSTEM_TREE_COLORS.subtreeHighlightColor);
   }
 };
 
 export const shouldHighlightLink = (link, cached) => {
-  const { markedSubtreesEnabled, markedSubtreeData } = cached;
+  const { subtreeHighlightsEnabled, highlightedSubtreeData } = cached;
 
-  return markedSubtreesEnabled !== false && markedSubtreeData && isLinkInSubtree(link, markedSubtreeData);
+  return subtreeHighlightsEnabled !== false && highlightedSubtreeData && isLinkInSubtree(link, highlightedSubtreeData);
 };
 
 export const getHistoryOutlineStyle = (link, cm, upcomingChangesEnabled, baseOpacity, historyColor) => {
@@ -69,6 +69,6 @@ export const getHistoryOutlineStyle = (link, cm, upcomingChangesEnabled, baseOpa
 
 export const getInnerLinkColor = (link, cached) => {
   const { colorManager: cm } = cached;
-  // This already includes precedence logic: Marked (Red) > Active (Blue) > Base
+  // This already includes precedence logic from TreeColorManager.
   return colorToRgb(cm.getBranchColorForInnerLine(link));
 };

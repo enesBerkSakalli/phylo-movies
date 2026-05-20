@@ -26,7 +26,7 @@ export function buildSubtreeConnectors(options) {
     colorManager,
     subtreeHighlightTracking,
     frameIndex,
-    markedSubtreesEnabled = true,
+    subtreeHighlightsEnabled = true,
     linkConnectionOpacity = 0.6,
     leftCenter = DEFAULT_CENTER,
     rightCenter = DEFAULT_CENTER,
@@ -48,7 +48,7 @@ export function buildSubtreeConnectors(options) {
     jumpingSubtreeSets,
     currentSubtreeSets,
     colorManager,
-    markedSubtreesEnabled,
+    subtreeHighlightsEnabled,
     linkConnectionOpacity,
   });
   if (!rawConnections.length) {

@@ -77,7 +77,7 @@ function expectedChangeContext(movieData, treeIndex) {
   const movingLeaves = new Set(movingSubtree);
 
   return {
-    markedSubtrees: sortedArrays(pair.solution.affected_subtrees_by_split[pivotKey][0]),
+    highlightedSubtrees: sortedArrays(pair.solution.affected_subtrees_by_split[pivotKey][0]),
     pivotEdge: [...pivotEdge].sort((a, b) => a - b),
     sourceEdgeLeaves: [attachment.source.filter((leaf) => !movingLeaves.has(leaf)).sort((a, b) => a - b)],
     destinationEdgeLeaves: [attachment.destination.filter((leaf) => !movingLeaves.has(leaf)).sort((a, b) => a - b)],
@@ -660,7 +660,7 @@ describe('Active change edge mapping from normalized rows', () => {
     useAppStore.getState().initialize(movieData);
     useAppStore.setState({
       pivotEdgesEnabled: true,
-      markedSubtreesEnabled: true,
+      subtreeHighlightsEnabled: true,
     });
   });
 
@@ -668,21 +668,21 @@ describe('Active change edge mapping from normalized rows', () => {
     useAppStore.getState().reset();
   });
 
-  it('leaves input-tree endpoint frames unmarked', () => {
-    expect(useAppStore.getState().getMarkedSubtreeData()).to.deep.equal([]);
+  it('leaves input-tree endpoint frames without subtree highlights', () => {
+    expect(useAppStore.getState().getSubtreeHighlightData()).to.deep.equal([]);
   });
 
-  it('provides current marked subtrees from per-frame highlight tracking', () => {
+  it('provides current highlighted subtrees from per-frame highlight tracking', () => {
     const store = useAppStore.getState();
     store.goToPosition(1);
-    expect(useAppStore.getState().getMarkedSubtreeData()).to.deep.equal(
+    expect(useAppStore.getState().getSubtreeHighlightData()).to.deep.equal(
       movieData.subtree_highlight_tracking[1]
     );
   });
 
-  it('syncs all-mode marked subtrees and active edge context into the color manager', () => {
+  it('syncs all-mode highlighted subtrees and active edge context into the color manager', () => {
     const storeAPI = useAppStore;
-    storeAPI.getState().setMarkedSubtreeScope('all');
+    storeAPI.getState().setSubtreeHighlightScope('all');
     storeAPI.getState().goToPosition(1);
 
     const state = storeAPI.getState();
@@ -690,16 +690,16 @@ describe('Active change edge mapping from normalized rows', () => {
     const expected = expectedChangeContext(movieData, 1);
 
     expect(state.frameIndex).to.equal(1);
-    expect(setsToSortedArrays(colorManager.markedSubtreeSets)).to.deep.equal(expected.markedSubtrees);
+    expect(setsToSortedArrays(colorManager.highlightedSubtreeSets)).to.deep.equal(expected.highlightedSubtrees);
     expect(Array.from(colorManager.currentPivotEdges).sort((a, b) => a - b)).to.deep.equal(expected.pivotEdge);
     expect(setsToSortedArrays(colorManager.sourceEdgeLeaves)).to.deep.equal(expected.sourceEdgeLeaves);
     expect(setsToSortedArrays(colorManager.destinationEdgeLeaves)).to.deep.equal(expected.destinationEdgeLeaves);
-    expect(setsToSortedArrays(colorManager.currentMovingSubtrees)).to.deep.equal(expected.movingSubtrees);
+    expect(setsToSortedArrays(colorManager.activeMoverSubtrees)).to.deep.equal(expected.movingSubtrees);
   });
 
   it('syncs the color manager from an explicit frame index without changing navigation state', () => {
     const storeAPI = useAppStore;
-    storeAPI.getState().setMarkedSubtreeScope('all');
+    storeAPI.getState().setSubtreeHighlightScope('all');
     storeAPI.getState().goToPosition(1);
 
     storeAPI.getState().updateColorManagerForIndex(11);
@@ -709,11 +709,11 @@ describe('Active change edge mapping from normalized rows', () => {
     const expected = expectedChangeContext(movieData, 11);
 
     expect(state.frameIndex).to.equal(1);
-    expect(setsToSortedArrays(colorManager.markedSubtreeSets)).to.deep.equal(expected.markedSubtrees);
+    expect(setsToSortedArrays(colorManager.highlightedSubtreeSets)).to.deep.equal(expected.highlightedSubtrees);
     expect(Array.from(colorManager.currentPivotEdges).sort((a, b) => a - b)).to.deep.equal(expected.pivotEdge);
     expect(setsToSortedArrays(colorManager.sourceEdgeLeaves)).to.deep.equal(expected.sourceEdgeLeaves);
     expect(setsToSortedArrays(colorManager.destinationEdgeLeaves)).to.deep.equal(expected.destinationEdgeLeaves);
-    expect(setsToSortedArrays(colorManager.currentMovingSubtrees)).to.deep.equal(expected.movingSubtrees);
+    expect(setsToSortedArrays(colorManager.activeMoverSubtrees)).to.deep.equal(expected.movingSubtrees);
   });
 
   it('calculates upcoming and completed previews from the explicit sync index', () => {

@@ -123,7 +123,7 @@ describe('Real Data Integration (test/data/ostrich_bug_response.json)', () => {
             colorManager: mockColorManager,
             subtreeHighlightTracking: subtreeHighlightTracking,
             frameIndex: 0,
-            markedSubtreesEnabled: true,
+            subtreeHighlightsEnabled: true,
             leftCenter: [-300, 0],
             rightCenter: [300, 0],
             leftRadius: leftLayout.max_radius,

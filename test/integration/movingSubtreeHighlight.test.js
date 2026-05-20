@@ -3,17 +3,17 @@ import { getMovingSubtreeAtIndex } from '../../src/state/phyloStore/internal/cha
 import { TreeColorManager } from '../../src/treeVisualisation/systems/TreeColorManager.js';
 
 describe('moving subtree highlighting', () => {
-  it('stores marked subtrees under the current ColorManager contract name', () => {
+  it('stores highlighted subtrees under the current ColorManager contract name', () => {
     const colorManager = new TreeColorManager();
     const oldMarkedSubtreeField = ['sharedMarked', 'JumpingSubtrees'].join('');
 
-    expect(colorManager.markedSubtreeSets).toEqual([]);
+    expect(colorManager.highlightedSubtreeSets).toEqual([]);
     expect(Object.prototype.hasOwnProperty.call(colorManager, oldMarkedSubtreeField)).toBe(false);
 
-    colorManager.updateMarkedSubtrees([[1, 2]]);
+    colorManager.updateHighlightedSubtrees([[1, 2]]);
 
-    expect(colorManager.markedSubtreeSets).toHaveLength(1);
-    expect([...colorManager.markedSubtreeSets[0]]).toEqual([1, 2]);
+    expect(colorManager.highlightedSubtreeSets).toHaveLength(1);
+    expect([...colorManager.highlightedSubtreeSets[0]]).toEqual([1, 2]);
     expect(Object.prototype.hasOwnProperty.call(colorManager, oldMarkedSubtreeField)).toBe(false);
   });
 
@@ -26,10 +26,10 @@ describe('moving subtree highlighting', () => {
 
     const movingSubtrees = getMovingSubtreeAtIndex(state, 0);
     const colorManager = new TreeColorManager();
-    colorManager.updateCurrentMovingSubtree(movingSubtrees);
+    colorManager.updateActiveMoverSubtrees(movingSubtrees);
 
-    expect(colorManager.isLinkMovingSubtree({ split_indices: [1] })).toBe(true);
-    expect(colorManager.isLinkMovingSubtree({ split_indices: [2] })).toBe(true);
-    expect(colorManager.isLinkMovingSubtree({ split_indices: [1, 2] })).toBe(false);
+    expect(colorManager.isLinkInActiveMoverSubtree({ split_indices: [1] })).toBe(true);
+    expect(colorManager.isLinkInActiveMoverSubtree({ split_indices: [2] })).toBe(true);
+    expect(colorManager.isLinkInActiveMoverSubtree({ split_indices: [1, 2] })).toBe(false);
   });
 });

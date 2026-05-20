@@ -6,9 +6,9 @@ import { SYSTEM_TREE_COLORS } from '../../../../../constants/TreeColors.js';
  * Checks if a node should be highlighted due to persistent subtree marking.
  */
 export function shouldHighlightNode(nodeData, cached) {
-  const { markedSubtreesEnabled, markedSubtreeData } = cached;
+  const { subtreeHighlightsEnabled, highlightedSubtreeData } = cached;
 
-  return markedSubtreesEnabled !== false && markedSubtreeData && isNodeInSubtree(nodeData, markedSubtreeData);
+  return subtreeHighlightsEnabled !== false && highlightedSubtreeData && isNodeInSubtree(nodeData, highlightedSubtreeData);
 }
 
 /**
@@ -44,7 +44,7 @@ export function getPivotEdgeColor() {
  * @returns {Array} [r, g, b] color array
  */
 export function getHighlightColor(nodeData, cached) {
-  const { highlightColorMode, colorManager: cm, markedColor } = cached;
+  const { highlightColorMode, colorManager: cm, subtreeHighlightColor } = cached;
   const mode = highlightColorMode || 'solid';
 
   if (mode === 'contrast') {
@@ -58,10 +58,10 @@ export function getHighlightColor(nodeData, cached) {
   }
 
   // 'solid' mode or default
-  return colorToRgb(markedColor || SYSTEM_TREE_COLORS.markedColor);
+  return colorToRgb(subtreeHighlightColor || SYSTEM_TREE_COLORS.subtreeHighlightColor);
 }
 
 export function isHistorySubtreeNode(nodeData, cached) {
-  const { colorManager: cm, markedSubtreesEnabled } = cached;
-  return markedSubtreesEnabled !== false && cm?.isNodeHistorySubtree?.(nodeData);
+  const { colorManager: cm, subtreeHighlightsEnabled } = cached;
+  return subtreeHighlightsEnabled !== false && cm?.isNodeHistorySubtree?.(nodeData);
 }

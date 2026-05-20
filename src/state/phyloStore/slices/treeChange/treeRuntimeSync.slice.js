@@ -35,20 +35,20 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
     set({
       colorManager,
       pivotEdgeColor: get().pivotEdgeColor,
-      markedColor: get().markedColor,
-      markedSubtreeScope: 'current',
+      subtreeHighlightColor: get().subtreeHighlightColor,
+      subtreeHighlightScope: 'current',
       taxaGrouping: null,
     });
 
     setTimeout(() => {
       const {
-        getMarkedSubtreeData,
-        updateColorManagerMarkedSubtrees,
+        getSubtreeHighlightData,
+        updateColorManagerHighlightedSubtrees,
         updateColorManagerPivotEdge,
         getCurrentPivotEdge
       } = get();
 
-      updateColorManagerMarkedSubtrees(getMarkedSubtreeData());
+      updateColorManagerHighlightedSubtrees(getSubtreeHighlightData());
       updateColorManagerPivotEdge(getCurrentPivotEdge());
     }, 0);
   },
@@ -74,7 +74,7 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
 
     const { changePulseEnabled, startPulseAnimation, stopPulseAnimation } = get();
     if (changePulseEnabled) {
-      const hasChanges = normalized.length > 0 || colorManager.markedSubtreeSets?.length > 0;
+      const hasChanges = normalized.length > 0 || colorManager.highlightedSubtreeSets?.length > 0;
       if (hasChanges) {
         startPulseAnimation();
       } else {
@@ -83,12 +83,12 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
     }
   },
 
-  updateColorManagerMarkedSubtrees: (subtrees) => {
+  updateColorManagerHighlightedSubtrees: (subtrees) => {
     const { colorManager } = get();
-    if (!colorManager?.updateMarkedSubtrees) return;
+    if (!colorManager?.updateHighlightedSubtrees) return;
     const asSets = toSubtreeSets(subtrees);
 
-    colorManager.updateMarkedSubtrees(asSets);
+    colorManager.updateHighlightedSubtrees(asSets);
 
     set((s) => ({ colorVersion: s.colorVersion + 1 }));
   },
@@ -108,10 +108,10 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
     set((s) => ({ colorVersion: s.colorVersion + 1 }));
   },
 
-  updateColorManagerMovingSubtree: (subtree) => {
+  updateColorManagerActiveMoverSubtrees: (subtree) => {
     const { colorManager } = get();
-    if (!colorManager?.updateCurrentMovingSubtree) return;
-    colorManager.updateCurrentMovingSubtree(subtree);
+    if (!colorManager?.updateActiveMoverSubtrees) return;
+    colorManager.updateActiveMoverSubtrees(subtree);
     set((s) => ({ colorVersion: s.colorVersion + 1 }));
   },
 
@@ -120,30 +120,30 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
       frameIndex,
       pivotEdgesEnabled,
       colorManager,
-      getMarkedSubtreeData,
+      getSubtreeHighlightData,
       getCurrentPivotEdge,
       getSubtreeHistoryData,
       getSourceDestinationEdgeData,
-      getCurrentMovingSubtreeData,
+      getActiveMoverSubtreeData,
       updateUpcomingChanges,
       manuallyMarkedNodes
     } = get();
 
     const targetIndex = Number.isInteger(indexOverride) ? indexOverride : frameIndex;
     const manual = toManualMarkedSets(manuallyMarkedNodes);
-    const markedSubtreeData = getMarkedSubtreeData(targetIndex);
+    const highlightedSubtreeData = getSubtreeHighlightData(targetIndex);
     const pivotEdge = pivotEdgesEnabled ? getCurrentPivotEdge(targetIndex) : [];
     const normalizedPivotEdge = Array.isArray(pivotEdge) || pivotEdge instanceof Set ? pivotEdge : [];
     const subtreeHistoryData = getSubtreeHistoryData(targetIndex);
     const { source, dest } = getSourceDestinationEdgeData(targetIndex);
-    const movingSubtreeData = getCurrentMovingSubtreeData(targetIndex);
+    const movingSubtreeData = getActiveMoverSubtreeData(targetIndex);
 
-    colorManager?.updateMarkedSubtrees?.(toSubtreeSets([...manual, ...markedSubtreeData]));
+    colorManager?.updateHighlightedSubtrees?.(toSubtreeSets([...manual, ...highlightedSubtreeData]));
     colorManager?.updatePivotEdge?.(normalizedPivotEdge);
     colorManager?.updateHistorySubtrees?.(toSubtreeSets(subtreeHistoryData));
     colorManager?.updateSourceEdgeLeaves?.(toSubtreeSets(source));
     colorManager?.updateDestinationEdgeLeaves?.(toSubtreeSets(dest));
-    colorManager?.updateCurrentMovingSubtree?.(movingSubtreeData);
+    colorManager?.updateActiveMoverSubtrees?.(movingSubtreeData);
     updateUpcomingChanges(targetIndex);
 
     if (colorManager) {
@@ -153,7 +153,7 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
     const { changePulseEnabled, startPulseAnimation, stopPulseAnimation } = get();
     if (changePulseEnabled && colorManager) {
       const pivotEdgeCount = normalizedPivotEdge instanceof Set ? normalizedPivotEdge.size : normalizedPivotEdge.length;
-      const hasChanges = pivotEdgeCount > 0 || colorManager.markedSubtreeSets?.length > 0;
+      const hasChanges = pivotEdgeCount > 0 || colorManager.highlightedSubtreeSets?.length > 0;
       if (hasChanges) {
         startPulseAnimation();
       } else {
@@ -177,7 +177,7 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
     const { changePulseEnabled, colorManager } = get();
     if (!changePulseEnabled) return;
 
-    const hasChanges = colorManager?.hasPivotEdges?.() || colorManager?.markedSubtreeSets?.length > 0;
+    const hasChanges = colorManager?.hasPivotEdges?.() || colorManager?.highlightedSubtreeSets?.length > 0;
     if (!hasChanges || pulseController?.isRunning) return;
 
     if (!pulseController) {
@@ -186,7 +186,7 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
         shouldContinue: () => {
           const s = get();
           const cm = s.colorManager;
-          return s.changePulseEnabled && (cm?.hasPivotEdges?.() || cm?.markedSubtreeSets?.length > 0);
+          return s.changePulseEnabled && (cm?.hasPivotEdges?.() || cm?.highlightedSubtreeSets?.length > 0);
         }
       });
     }

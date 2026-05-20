@@ -1,5 +1,6 @@
 import { isNodeVisuallyHighlighted } from '../../../../systems/tree_color/visualHighlights.js';
 import { shouldHighlightNode, isHistorySubtreeNode, isNodePivotEdge } from './nodeUtils.js';
+import { getActiveMoverEmphasis } from '../activeMoverEmphasis.js';
 
 export function getNodeRadius(node, minRadius = 1, cached, helpers) {
   const { colorManager: cm, upcomingChangesEnabled, densityScale, metricScale = 1.0 } = cached;
@@ -20,10 +21,10 @@ export function getNodeRadius(node, minRadius = 1, cached, helpers) {
     } else if (isNodePivotEdge(nodeData, cached)) {
       radius = getScaledRadius(1.5);
     } else if (shouldHighlightNode(nodeData, cached)) {
-      radius = getScaledRadius(1.6);
+      radius = getScaledRadius(1.6) * getActiveMoverEmphasis(nodeData, cached, 'node');
     } else if (isHistorySubtreeNode(nodeData, cached)) {
       radius = getScaledRadius(1.15);
-    } else if (isNodeVisuallyHighlighted(nodeData, cm, cached.markedSubtreesEnabled)) {
+    } else if (isNodeVisuallyHighlighted(nodeData, cm, cached.subtreeHighlightsEnabled)) {
       radius = getScaledRadius(1.5);
     }
   }

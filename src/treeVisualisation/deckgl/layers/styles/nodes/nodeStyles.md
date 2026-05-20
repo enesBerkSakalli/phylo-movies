@@ -17,7 +17,7 @@ Resolves node fill color with highlighting and dimming support.
 1. **Completed Change Edge** → Blue (100% opacity)
 2. **Upcoming Change Edge** → Blue (60% opacity)
 3. **Active Change Edge** → Blue with dimming
-4. **Marked Subtree** → Red/Contrast/Taxa based on mode
+4. **Subtree Highlight** -> Accent/Contrast/Taxa based on mode
 5. **Default** → Base taxa/monophyletic color
 
 **Returns:** `[r, g, b, opacity]` RGBA array for Deck.gl
@@ -30,7 +30,7 @@ Resolves node border/stroke color.
 
 **Priority Chain:**
 1. **History Mode** → Darkened blue (70% brightness)
-2. **Marked Subtree** → Highlight color
+2. **Subtree Highlight** -> Highlight color
 3. **History Subtree** → Stroke color
 4. **Active Edge** → Pulsing base color
 5. **Default** → Stroke color
@@ -51,7 +51,7 @@ Resolves node radius with size multipliers for different states.
 | Entering/Exiting | 0.7×       |
 | Completed Change | 1.5×       |
 | Active Edge      | 1.5×       |
-| Marked Subtree   | 1.6×       |
+| Subtree Highlight | 1.6x       |
 | History Subtree  | 1.3×       |
 | Highlighted      | 1.5×       |
 | Default          | 1.0×       |
@@ -95,8 +95,8 @@ nodeStyles.js
 | `dimmingOpacity`         | Dimming opacity value           |
 | `subtreeDimmingEnabled`  | Subtree-specific dimming        |
 | `subtreeDimmingOpacity`  | Subtree dimming opacity         |
-| `markedSubtreeData`      | Array of marked subtree sets    |
-| `markedSubtreesEnabled`  | Marked highlighting toggle      |
+| `highlightedSubtreeData` | Array of highlighted subtree sets |
+| `subtreeHighlightsEnabled` | Subtree highlighting toggle    |
 | `highlightColorMode`     | 'solid' \| 'contrast' \| 'taxa' |
 | `pulseOpacity`           | Current pulse animation value   |
 | `densityScale`           | Tree density scaling factor     |

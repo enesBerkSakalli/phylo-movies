@@ -11,8 +11,8 @@ export const createTreeHighlightStateSlice = (set, get) => ({
   // ==========================================================================
   pivotEdgesEnabled: true,
   pivotEdgeColor: SYSTEM_TREE_COLORS.pivotEdgeColor,
-  markedSubtreesEnabled: true,
-  markedColor: SYSTEM_TREE_COLORS.markedColor,
+  subtreeHighlightsEnabled: true,
+  subtreeHighlightColor: SYSTEM_TREE_COLORS.subtreeHighlightColor,
   dimmingEnabled: true,
   dimmingOpacity: 0.3,
   subtreeDimmingEnabled: false,
@@ -51,7 +51,7 @@ export const createTreeHighlightStateSlice = (set, get) => ({
 
   updateChangeColor: (colorType, newColor) => {
     const isSystemKey = colorType in SYSTEM_TREE_COLORS ||
-      ['pivotEdgeColor', 'markedColor', 'defaultColor', 'strokeColor'].includes(colorType);
+      ['pivotEdgeColor', 'subtreeHighlightColor', 'defaultColor', 'strokeColor'].includes(colorType);
 
     if (isSystemKey) {
       Object.assign(SYSTEM_TREE_COLORS, { [colorType]: newColor });
@@ -64,7 +64,7 @@ export const createTreeHighlightStateSlice = (set, get) => ({
   },
 
   setPivotEdgeColor: (color) => get().updateChangeColor('pivotEdgeColor', color),
-  setMarkedColor: (color) => get().updateChangeColor('markedColor', color),
+  setSubtreeHighlightColor: (color) => get().updateChangeColor('subtreeHighlightColor', color),
 
   setPivotEdgesEnabled: (enabled) => {
     set({ pivotEdgesEnabled: enabled });
@@ -73,21 +73,21 @@ export const createTreeHighlightStateSlice = (set, get) => ({
     renderTreeControllers(get());
   },
 
-  setMarkedSubtreesEnabled: (enabled) => {
-    set({ markedSubtreesEnabled: enabled });
+  setSubtreeHighlightsEnabled: (enabled) => {
+    set({ subtreeHighlightsEnabled: enabled });
     const { colorManager } = get();
-    if (colorManager.setMarkedSubtreesColoring) {
-      colorManager.setMarkedSubtreesColoring(enabled);
+    if (colorManager.setSubtreeHighlightsEnabled) {
+      colorManager.setSubtreeHighlightsEnabled(enabled);
     }
     const {
-      updateColorManagerMarkedSubtrees,
-      getMarkedSubtreeData,
+      updateColorManagerHighlightedSubtrees,
+      getSubtreeHighlightData,
       manuallyMarkedNodes,
       updateColorManagerHistorySubtrees,
       getSubtreeHistoryData
     } = get();
     const manual = toManualMarkedSets(manuallyMarkedNodes);
-    updateColorManagerMarkedSubtrees([...manual, ...getMarkedSubtreeData()]);
+    updateColorManagerHighlightedSubtrees([...manual, ...getSubtreeHighlightData()]);
     updateColorManagerHistorySubtrees(enabled ? getSubtreeHistoryData() : []);
     renderTreeControllers(get());
   },

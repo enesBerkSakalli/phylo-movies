@@ -64,13 +64,13 @@ export function clearEdgePreviews(colorManager) {
 // STATE SELECTORS & LOGIC
 // ============================================================================
 
-export function resolveMarkedSubtrees(state, indexOverride = null) {
-  const { frameIndex, markedSubtreeScope } = state;
+export function resolveSubtreeHighlights(state, indexOverride = null) {
+  const { frameIndex, subtreeHighlightScope } = state;
   const index = indexOverride ?? frameIndex;
 
   if (isInputFrame(state, index)) return [];
 
-  if (markedSubtreeScope === 'current') {
+  if (subtreeHighlightScope === 'current') {
     const subtree = getSubtreeAtIndex(state, index);
 
     // Normalize before returning to ensure we don't return raw ambiguous arrays

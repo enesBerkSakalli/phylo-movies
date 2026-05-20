@@ -274,7 +274,7 @@ const buildOptions = (overrides = {}) => {
     colorManager: makeColorManager(),
     subtreeHighlightTracking: [[[10, 11]]],
     frameIndex: 0,
-    markedSubtreesEnabled: true,
+    subtreeHighlightsEnabled: true,
     linkConnectionOpacity: 0.6,
     leftCenter: [0, 0],
     rightCenter: [160, 0],
@@ -585,7 +585,7 @@ describe('SubtreeConnectorBuilder', function () {
       leftPositions,
       currentSubtreeSets: [new Set([10, 11])],
       colorManager: makeColorManager({ getNodeColor }),
-      markedSubtreesEnabled: true,
+      subtreeHighlightsEnabled: true,
       linkConnectionOpacity: 0.6,
     })).toEqual({
       colorEntry: subtreeInfo,
@@ -662,7 +662,7 @@ describe('SubtreeConnectorBuilder', function () {
       jumpingSubtreeSets: [new Set([10])],
       currentSubtreeSets: [new Set([10])],
       colorManager: makeColorManager(),
-      markedSubtreesEnabled: true,
+      subtreeHighlightsEnabled: true,
       linkConnectionOpacity: 0.6,
     });
 
@@ -1027,14 +1027,14 @@ describe('SubtreeConnectorBuilder', function () {
     expect(connectors[0].color[3]).toBe(Math.round(0.25 * 255));
   });
 
-  it('keeps moving connectors active when marked subtree coloring is disabled', function () {
+  it('keeps moving connectors active when subtree highlight coloring is disabled', function () {
     const getNodeColor = vi.fn(() => '#ff0000');
 
     const connectors = buildSubtreeConnectors(buildOptions({
       affectedSubtreesBySplit: { '[99]': [[10]] },
       subtreeHighlightTracking: [[[10]]],
       colorManager: makeColorManager({ getNodeColor }),
-      markedSubtreesEnabled: false,
+      subtreeHighlightsEnabled: false,
     }));
 
     expect(connectors).toHaveLength(1);

@@ -4,14 +4,14 @@ import {
   getMovingSubtreeAtIndex,
   getSubtreeHistoryAtIndex,
   getSourceDestinationEdgesAtIndex,
-  resolveMarkedSubtrees
+  resolveSubtreeHighlights
 } from '../../internal/changeTracking.helpers.js';
 
 export const createSubtreeSelectionSlice = (set, get) => ({
   // ==========================================================================
   // STATE
   // ==========================================================================
-  markedSubtreeScope: 'current', // 'all' | 'current'
+  subtreeHighlightScope: 'current', // 'all' | 'current'
   manuallyMarkedNodes: [],
 
   // ==========================================================================
@@ -23,8 +23,8 @@ export const createSubtreeSelectionSlice = (set, get) => ({
     return pivotEdgeTracking[index] || [];
   },
 
-  getMarkedSubtreeData: (indexOverride = null) => {
-    return resolveMarkedSubtrees(get(), indexOverride);
+  getSubtreeHighlightData: (indexOverride = null) => {
+    return resolveSubtreeHighlights(get(), indexOverride);
   },
 
   getSubtreeHistoryData: (indexOverride = null) => {
@@ -33,7 +33,7 @@ export const createSubtreeSelectionSlice = (set, get) => ({
     return getSubtreeHistoryAtIndex(get(), index);
   },
 
-  getCurrentMovingSubtreeData: (indexOverride = null) => {
+  getActiveMoverSubtreeData: (indexOverride = null) => {
     const { frameIndex } = get();
     const index = indexOverride ?? frameIndex;
     return getMovingSubtreeAtIndex(get(), index);
@@ -45,12 +45,12 @@ export const createSubtreeSelectionSlice = (set, get) => ({
     return getSourceDestinationEdgesAtIndex(get(), index);
   },
 
-  setMarkedSubtreeScope: (scope) => {
+  setSubtreeHighlightScope: (scope) => {
     if (scope !== 'all' && scope !== 'current') return;
-    set({ markedSubtreeScope: scope });
-    const { markedSubtreesEnabled, getMarkedSubtreeData, updateColorManagerMarkedSubtrees, manuallyMarkedNodes } = get();
-    if (markedSubtreesEnabled) {
-      updateColorManagerMarkedSubtrees([...toManualMarkedSets(manuallyMarkedNodes), ...getMarkedSubtreeData()]);
+    set({ subtreeHighlightScope: scope });
+    const { subtreeHighlightsEnabled, getSubtreeHighlightData, updateColorManagerHighlightedSubtrees, manuallyMarkedNodes } = get();
+    if (subtreeHighlightsEnabled) {
+      updateColorManagerHighlightedSubtrees([...toManualMarkedSets(manuallyMarkedNodes), ...getSubtreeHighlightData()]);
     }
     renderTreeControllers(get());
   },
@@ -58,9 +58,9 @@ export const createSubtreeSelectionSlice = (set, get) => ({
   setManuallyMarkedNodes: (nodeIds = []) => {
     const nodes = Array.isArray(nodeIds) ? nodeIds.filter(Boolean) : [];
     set({ manuallyMarkedNodes: nodes });
-    const { getMarkedSubtreeData, updateColorManagerMarkedSubtrees } = get();
+    const { getSubtreeHighlightData, updateColorManagerHighlightedSubtrees } = get();
     const manual = toManualMarkedSets(nodes);
-    updateColorManagerMarkedSubtrees([...manual, ...getMarkedSubtreeData()]);
+    updateColorManagerHighlightedSubtrees([...manual, ...getSubtreeHighlightData()]);
     renderTreeControllers(get());
   },
 });

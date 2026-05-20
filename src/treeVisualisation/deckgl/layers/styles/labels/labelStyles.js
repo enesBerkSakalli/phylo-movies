@@ -1,6 +1,7 @@
 import { shouldHighlightNode, isHistorySubtreeNode } from '../nodes/nodeUtils.js';
 import { getNodeBasedRgba } from '../nodes/nodeStyles.js';
 import { MARKED_LABEL_SCALE, HISTORY_LABEL_SCALE } from '../../config/LabelConfig.js';
+import { getSubtleActiveMoverEmphasis } from '../activeMoverEmphasis.js';
 
 /**
  * Calculates label size based on state (highlighting, history, etc.)
@@ -12,8 +13,8 @@ export function getLabelSize(label, fontSize, cached) {
 
   const nodeData = label;
 
-  if (cached?.markedSubtreeData && shouldHighlightNode(nodeData, cached)) {
-    return baseSize * MARKED_LABEL_SCALE; // Scaled for marked labels
+  if (cached?.highlightedSubtreeData && shouldHighlightNode(nodeData, cached)) {
+    return baseSize * MARKED_LABEL_SCALE * getSubtleActiveMoverEmphasis(nodeData, cached, 'node');
   }
 
   if (isHistorySubtreeNode(nodeData, cached)) {

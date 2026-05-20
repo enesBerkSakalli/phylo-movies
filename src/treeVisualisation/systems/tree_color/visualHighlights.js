@@ -8,38 +8,38 @@
  * (i.e., is visually distinguished)
  * @param {Object} link - Link data
  * @param {Object} colorManager - ColorManager instance
- * @param {boolean} markedSubtreesEnabled - Whether marked subtree coloring is enabled
+ * @param {boolean} subtreeHighlightsEnabled - Whether subtree highlight coloring is enabled
  * @returns {boolean} True if link appears highlighted
  */
-export function isLinkVisuallyHighlighted(link, colorManager, markedSubtreesEnabled = true) {
+export function isLinkVisuallyHighlighted(link, colorManager, subtreeHighlightsEnabled = true) {
   if (!colorManager) return false;
 
-  // Check if link is in a marked subtree using fast path (only if coloring is enabled)
-  const isMarked = markedSubtreesEnabled !== false && colorManager.isLinkInMarkedSubtreeFast?.(link);
+  // Check if link is in a highlighted subtree using fast path (only if coloring is enabled)
+  const isHighlightedSubtree = subtreeHighlightsEnabled !== false && colorManager.isLinkInHighlightedSubtreeFast?.(link);
 
   // Check if link IS the pivot edge
   const isPivotEdge = colorManager.isPivotEdge?.(link);
 
-  return isMarked || isPivotEdge;
+  return isHighlightedSubtree || isPivotEdge;
 }
 
 /**
- * Check if a node is visually highlighted (marked or active edge)
+ * Check if a node is visually highlighted (subtree highlight or active edge)
  * @param {Object} nodeData - Node data
  * @param {Object} colorManager - ColorManager instance
- * @param {boolean} markedSubtreesEnabled - Whether marked subtree coloring is enabled
+ * @param {boolean} subtreeHighlightsEnabled - Whether subtree highlight coloring is enabled
  * @returns {boolean} True if node appears highlighted
  */
-export function isNodeVisuallyHighlighted(nodeData, colorManager, markedSubtreesEnabled = true) {
+export function isNodeVisuallyHighlighted(nodeData, colorManager, subtreeHighlightsEnabled = true) {
   if (!colorManager) return false;
 
-  // Use fast path for marked subtree check (only if coloring is enabled)
-  const isMarked = markedSubtreesEnabled !== false && colorManager.isNodeInMarkedSubtreeFast?.(nodeData);
+  // Use fast path for subtree highlight check (only if coloring is enabled)
+  const isHighlightedSubtree = subtreeHighlightsEnabled !== false && colorManager.isNodeInHighlightedSubtreeFast?.(nodeData);
 
   // Check if node IS the pivot edge by comparing colors
   const baseColor = colorManager.getNodeBaseColor?.(nodeData);
   const highlightedColor = colorManager.getNodeColor?.(nodeData);
   const isPivotEdgeNode = baseColor !== highlightedColor;
 
-  return isMarked || isPivotEdgeNode;
+  return isHighlightedSubtree || isPivotEdgeNode;
 }

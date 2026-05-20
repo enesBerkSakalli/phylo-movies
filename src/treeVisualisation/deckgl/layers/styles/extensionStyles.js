@@ -1,5 +1,6 @@
 import { getNodeBasedRgba } from './nodes/nodeStyles.js';
 import { isNodeInSubtree } from '../../../../domain/tree/splits.js';
+import { getActiveMoverEmphasis } from './activeMoverEmphasis.js';
 
 export function getExtensionColor(extension, cached, helpers) {
   const color = getNodeBasedRgba(extension, extension.opacity, cached, helpers);
@@ -14,7 +15,7 @@ export function getExtensionColor(extension, cached, helpers) {
 }
 
 export function getExtensionWidth(extension, baseStrokeWidth, cached) {
-  const { markedSubtreeData, markedSubtreesEnabled, metricScale = 1.0 } = cached || {};
+  const { highlightedSubtreeData, subtreeHighlightsEnabled, metricScale = 1.0 } = cached || {};
   const nodeData = extension;
 
   // History highlighting for extensions deactivated
@@ -22,9 +23,9 @@ export function getExtensionWidth(extension, baseStrokeWidth, cached) {
   //   return baseStrokeWidth * 2.6;
   // }
 
-  if (markedSubtreesEnabled !== false && markedSubtreeData && extension) {
-    if (isNodeInSubtree(nodeData, markedSubtreeData)) {
-      return baseStrokeWidth * 3 * metricScale; // Thick for marked extensions
+  if (subtreeHighlightsEnabled !== false && highlightedSubtreeData && extension) {
+    if (isNodeInSubtree(nodeData, highlightedSubtreeData)) {
+      return baseStrokeWidth * 3 * getActiveMoverEmphasis(nodeData, cached, 'node') * metricScale;
     }
   }
 

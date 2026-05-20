@@ -27,15 +27,15 @@ function makeLayerStyles(cached) {
 function makeColorManager() {
   const isSplit = (datum, value) => Array.isArray(datum?.split_indices) && datum.split_indices[0] === value;
   return {
-    markedSubtreeSets: [new Set([3])],
+    highlightedSubtreeSets: [new Set([3])],
     hasPivotEdges: () => true,
     hasUpcomingChangeEdges: () => false,
     hasCompletedChangeEdges: () => false,
     isNodeHistorySubtree: (datum) => isSplit(datum, 2),
     isLinkHistorySubtree: (datum) => isSplit(datum, 2),
-    isNodeMovingSubtree: (datum) => isSplit(datum, 3),
-    isNodeInMarkedSubtreeFast: (datum) => isSplit(datum, 3),
-    isLinkInMarkedSubtreeFast: (datum) => isSplit(datum, 3)
+    isNodeInActiveMoverSubtree: (datum) => isSplit(datum, 3),
+    isNodeInHighlightedSubtreeFast: (datum) => isSplit(datum, 3),
+    isLinkInHighlightedSubtreeFast: (datum) => isSplit(datum, 3)
   };
 }
 
@@ -43,8 +43,8 @@ describe('tree deck.gl layer topology', () => {
   it('orders semantic tree buckets from base through history to marked before labels', () => {
     const cached = {
       colorManager: makeColorManager(),
-      markedSubtreeData: [new Set([3])],
-      markedSubtreesEnabled: true
+      highlightedSubtreeData: [new Set([3])],
+      subtreeHighlightsEnabled: true
     };
     const layerStyles = makeLayerStyles(cached);
     const data = {

@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import * as changeTrackingHelpers from '../../src/state/phyloStore/internal/changeTracking.helpers.js';
 
 const {
-  resolveMarkedSubtrees,
+  resolveSubtreeHighlights,
   calculateChangePreviews,
   renderTreeControllers,
 } = changeTrackingHelpers;
@@ -41,7 +41,7 @@ describe('Tree Visualisation - State Update Logic', () => {
 
     return {
       frameIndex,
-      markedSubtreeScope: 'current',
+      subtreeHighlightScope: 'current',
       subtreeHighlightTracking: [],
       timelineFrames: createTimelineFrames(inputFrameIndices, frameIndex),
       upcomingChangesEnabled: true,
@@ -50,13 +50,13 @@ describe('Tree Visualisation - State Update Logic', () => {
     };
   };
 
-  describe('resolveMarkedSubtrees (Marked Subtree Detection)', () => {
+  describe('resolveSubtreeHighlights (subtree highlight detection)', () => {
 
     it('should return empty array if current frame is an input tree', () => {
       const state = createMockState({
         frameIndex: 10,
       });
-      const result = resolveMarkedSubtrees(state);
+      const result = resolveSubtreeHighlights(state);
       expect(result).to.deep.equal([]);
     });
 
@@ -66,10 +66,10 @@ describe('Tree Visualisation - State Update Logic', () => {
       const state = createMockState({
         frameIndex: index,
         subtreeHighlightTracking: { [index]: subtrees },
-        markedSubtreeScope: 'current'
+        subtreeHighlightScope: 'current'
       });
 
-      const result = resolveMarkedSubtrees(state);
+      const result = resolveSubtreeHighlights(state);
       // Expected: [[1, 2], [3]] (Normalized)
       expect(result).to.have.lengthOf(2);
       expect(result[0]).to.deep.equal([1, 2]);
@@ -84,7 +84,7 @@ describe('Tree Visualisation - State Update Logic', () => {
         const pairId = 'pair_1';
         const state = createMockState({
             frameIndex: index,
-            markedSubtreeScope: 'all', // CAUSES SWITCH
+            subtreeHighlightScope: 'all', // CAUSES SWITCH
             pivotEdgeTracking: { [index]: activeEdge },
             timelineFrames: createTimelineFrames([0, 10, 20], index, pairId),
             pairs: [{
@@ -97,7 +97,7 @@ describe('Tree Visualisation - State Update Logic', () => {
             }]
         });
 
-        const result = resolveMarkedSubtrees(state);
+        const result = resolveSubtreeHighlights(state);
         // Expected: [[10, 11], [12]]
         expect(result).to.have.lengthOf(2);
         expect(result[0]).to.deep.equal([10, 11]);
@@ -110,7 +110,7 @@ describe('Tree Visualisation - State Update Logic', () => {
         const pairId = 'pair_1';
         const state = createMockState({
             frameIndex: index,
-            markedSubtreeScope: 'all',
+            subtreeHighlightScope: 'all',
             pivotEdgeTracking: { [index]: activeEdge },
             timelineFrames: createTimelineFrames([0, 10, 20], index, pairId),
             pairs: [{
@@ -123,7 +123,7 @@ describe('Tree Visualisation - State Update Logic', () => {
             }]
         });
 
-        const result = resolveMarkedSubtrees(state);
+        const result = resolveSubtreeHighlights(state);
 
         expect(result).to.deep.equal([[10]]);
     });
@@ -138,9 +138,9 @@ describe('Tree Visualisation - State Update Logic', () => {
         const state = createMockState({
           frameIndex: index,
           subtreeHighlightTracking: { [index]: [[1, 2]] },
-          markedSubtreeScope: 'current'
+          subtreeHighlightScope: 'current'
         });
-        const result = resolveMarkedSubtrees(state);
+        const result = resolveSubtreeHighlights(state);
         expect(result).to.deep.equal([[1, 2]]);
     });
 

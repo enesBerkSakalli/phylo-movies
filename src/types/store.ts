@@ -126,7 +126,7 @@ export interface AppStoreState {
   taxaColorVersion: number;
 
   // From treeHighlightOpacity.slice
-  markedSubtreeOpacity: number;
+  subtreeHighlightOpacity: number;
 
   // From msaSync.slice
   msaSequences: Record<string, string> | null;
@@ -150,14 +150,14 @@ export interface AppStoreState {
   linkConnectionOpacity: number;
 
   // From subtreeSelection.slice
-  markedSubtreeScope: string;
+  subtreeHighlightScope: string;
   manuallyMarkedNodes: any[];
 
   // From treeHighlightState.slice
   pivotEdgesEnabled: boolean;
   pivotEdgeColor: string;
-  markedSubtreesEnabled: boolean;
-  markedColor: string;
+  subtreeHighlightsEnabled: boolean;
+  subtreeHighlightColor: string;
   dimmingEnabled: boolean;
   dimmingOpacity: number;
   subtreeDimmingEnabled: boolean;
@@ -248,7 +248,7 @@ export interface AppStoreState {
   setMonophyleticColoring: (enabled: boolean) => void;
   updateTaxaColors: (newColorMap: any) => void;
 
-  setMarkedSubtreeOpacity: (opacity: number) => void;
+  setSubtreeHighlightOpacity: (opacity: number) => void;
 
   setMsaData: (data: {
     windowSize: number;
@@ -278,11 +278,11 @@ export interface AppStoreState {
   resetComparison: () => void;
 
   getCurrentPivotEdge: (indexOverride?: number | null) => any[];
-  getMarkedSubtreeData: (indexOverride?: number | null) => any;
+  getSubtreeHighlightData: (indexOverride?: number | null) => any;
   getSubtreeHistoryData: (indexOverride?: number | null) => any;
-  getCurrentMovingSubtreeData: (indexOverride?: number | null) => any;
+  getActiveMoverSubtreeData: (indexOverride?: number | null) => any;
   getSourceDestinationEdgeData: (indexOverride?: number | null) => { source: any[]; dest: any[] };
-  setMarkedSubtreeScope: (scope: string) => void;
+  setSubtreeHighlightScope: (scope: string) => void;
   setManuallyMarkedNodes: (nodeIds: any[]) => void;
 
   setDimmingEnabled: (enabled: boolean) => void;
@@ -291,9 +291,9 @@ export interface AppStoreState {
   setSubtreeDimmingOpacity: (opacity: number) => void;
   updateChangeColor: (colorType: string, newColor: string) => void;
   setPivotEdgeColor: (color: string) => void;
-  setMarkedColor: (color: string) => void;
+  setSubtreeHighlightColor: (color: string) => void;
   setPivotEdgesEnabled: (enabled: boolean) => void;
-  setMarkedSubtreesEnabled: (enabled: boolean) => void;
+  setSubtreeHighlightsEnabled: (enabled: boolean) => void;
   setUpcomingChangesEnabled: (enabled: boolean) => void;
   updateUpcomingChanges: (index?: number | null) => void;
   setHighlightColorMode: (mode: string) => void;
@@ -306,10 +306,10 @@ export interface AppStoreState {
   initializeColors: () => void;
   resetColors: () => void;
   updateColorManagerPivotEdge: (edge: any) => void;
-  updateColorManagerMarkedSubtrees: (subtrees: any[]) => void;
+  updateColorManagerHighlightedSubtrees: (subtrees: any[]) => void;
   updateColorManagerHistorySubtrees: (subtrees: any[]) => void;
   updateColorManagerSourceDestinationEdges: (sourceEdges: any[], destEdges: any[]) => void;
-  updateColorManagerMovingSubtree: (subtree: any) => void;
+  updateColorManagerActiveMoverSubtrees: (subtree: any) => void;
   updateColorManagerForIndex: (index?: number | null) => void;
   updateColorManagerForCurrentIndex: () => void;
   getPulseOpacity: () => number;

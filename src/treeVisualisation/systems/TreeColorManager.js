@@ -4,7 +4,7 @@
  * Handles threetypes of coloring:
  * 1. Base coloring (monophyletic groups, taxa colors)
  * 2. Pivot edge highlighting (blue) - edges from lattice tracking
- * 3. Marked subtree highlighting (red) - from computed subtrees
+ * 3. Subtree highlighting - from computed subtrees
  *
  * Used by LayerStyles.js to provide colors for DeckGL layers
  */
@@ -31,16 +31,16 @@ import {
 export class TreeColorManager {
   constructor() {
     this.monophyleticColoringEnabled = true;
-    this.markedSubtreesColoringEnabled = true; // Controls whether marked subtrees get red color
+    this.subtreeHighlightsEnabled = true; // Controls whether highlighted subtrees get accent color
     this.currentPivotEdges = new Set();
     this.upcomingChangeEdges = []; // Array of Sets for upcoming edges
     this.completedChangeEdges = []; // Array of Sets for completed edges
-    this.markedSubtreeSets = []; // Marked subtree sets used for highlighting and dimming
-    this._markedLeavesUnion = new Set(); // Pre-built union of all marked leaf indices for O(1) rejection
+    this.highlightedSubtreeSets = []; // Subtree sets used for highlighting and dimming
+    this._highlightedLeavesUnion = new Set(); // Pre-built union of highlighted leaf indices for O(1) rejection
     this.historySubtrees = []; // Subtrees that already moved in the current transition
     this.sourceEdgeLeaves = [];
     this.destinationEdgeLeaves = [];
-    this.currentMovingSubtrees = [];
+    this.activeMoverSubtrees = [];
   }
 
   /**
@@ -59,16 +59,16 @@ export class TreeColorManager {
 
   /**
    * Get branch color with highlighting logic
-   * Priority: Marked (red, if enabled) > Pivot edge (blue) > Base color
+   * Priority: subtree highlight > pivot edge > base color
    * @param {Object} linkData - Normalized link data
    * @returns {string} Hex color code
    */
   getBranchColorWithHighlights(linkData) {
-    const isMarked = this.isLinkInMarkedSubtreeFast(linkData);
+    const isHighlightedSubtree = this.isLinkInHighlightedSubtreeFast(linkData);
     const isPivotEdge = isLinkPivotEdge(linkData, this.currentPivotEdges);
 
-    if (isMarked) {
-      return SYSTEM_TREE_COLORS.markedColor;
+    if (isHighlightedSubtree) {
+      return SYSTEM_TREE_COLORS.subtreeHighlightColor;
     } else if (isPivotEdge) {
       return SYSTEM_TREE_COLORS.pivotEdgeColor;
     } else {
@@ -78,7 +78,7 @@ export class TreeColorManager {
 
   /**
    * Get branch color for the inner/main line
-   * Pivot edges get highlight color, marked branches keep base color
+   * Pivot edges get highlight color, highlighted branches keep base color
    * @param {Object} linkData - Normalized link data
    * @returns {string} Hex color code
    */
@@ -88,7 +88,7 @@ export class TreeColorManager {
     if (isPivotEdge) {
       return SYSTEM_TREE_COLORS.pivotEdgeColor;
     } else {
-      // Marked branches keep their base color (taxa/monophyletic)
+      // Highlighted branches keep their base color (taxa/monophyletic)
       return getBaseBranchColor(linkData, this.monophyleticColoringEnabled);
     }
   }
@@ -114,11 +114,11 @@ export class TreeColorManager {
    */
   getNodeColor(nodeData, pivotEdges = []) {
     const edgeSet = toSplitSet(pivotEdges, this.currentPivotEdges);
-    const marked = this.isNodeInMarkedSubtreeFast(nodeData);
+    const isHighlightedSubtree = this.isNodeInHighlightedSubtreeFast(nodeData);
     const isPivotEdgeNode = nodeOrParentMatchesPivotEdge(nodeData, edgeSet);
 
-    if (marked) {
-      return SYSTEM_TREE_COLORS.markedColor;
+    if (isHighlightedSubtree) {
+      return SYSTEM_TREE_COLORS.subtreeHighlightColor;
     } else if (isPivotEdgeNode) {
       return SYSTEM_TREE_COLORS.pivotEdgeColor;
     } else {
@@ -141,40 +141,40 @@ export class TreeColorManager {
   // =======================
 
   /**
-   * Update marked subtree sets used for red highlighting and dimming.
+   * Update subtree sets used for highlighting and dimming.
    * Pre-converts to Sets and builds a union index for O(1) rejection in hot paths.
    */
-  updateMarkedSubtrees(markedSubtrees) {
+  updateHighlightedSubtrees(highlightedSubtrees) {
     let subtrees = [];
-    if (Array.isArray(markedSubtrees)) {
-      subtrees = markedSubtrees;
-    } else if (markedSubtrees instanceof Set) {
-      subtrees = [markedSubtrees];
+    if (Array.isArray(highlightedSubtrees)) {
+      subtrees = highlightedSubtrees;
+    } else if (highlightedSubtrees instanceof Set) {
+      subtrees = [highlightedSubtrees];
     }
 
     // Cache as Sets immediately to avoid recreation in render checks
-    this.markedSubtreeSets = subtrees.map(s =>
+    this.highlightedSubtreeSets = subtrees.map(s =>
       s instanceof Set ? s : new Set(s)
     );
 
-    // Build union of all marked leaf indices for fast O(1) rejection
+    // Build union of all highlighted leaf indices for fast O(1) rejection
     // A node can only be in a subtree if ALL its leaves are in this union
-    this._markedLeavesUnion = new Set();
-    for (const subtree of this.markedSubtreeSets) {
+    this._highlightedLeavesUnion = new Set();
+    for (const subtree of this.highlightedSubtreeSets) {
       for (const leafIdx of subtree) {
-        this._markedLeavesUnion.add(leafIdx);
+        this._highlightedLeavesUnion.add(leafIdx);
       }
     }
   }
 
   /**
-   * Fast check if a node could possibly be in any marked subtree.
+   * Fast check if a node could possibly be in any highlighted subtree.
    * Uses pre-built union for O(1) rejection - if any leaf is NOT in union, node can't be in subtree.
    * @param {Object} nodeData - Node with normalized split_indices
    * @returns {boolean} True if node is definitely in a subtree, false if definitely not or needs full check
    */
-  isNodeInMarkedSubtreeFast(nodeData) {
-    if (!this.markedSubtreesColoringEnabled || this._markedLeavesUnion.size === 0) {
+  isNodeInHighlightedSubtreeFast(nodeData) {
+    if (!this.subtreeHighlightsEnabled || this._highlightedLeavesUnion.size === 0) {
       return false;
     }
     const splits = getSplitIndices(nodeData);
@@ -182,22 +182,22 @@ export class TreeColorManager {
 
     // Fast rejection: if any leaf is NOT in union, node can't be in any subtree
     for (let i = 0; i < splits.length; i++) {
-      if (!this._markedLeavesUnion.has(splits[i])) {
+      if (!this._highlightedLeavesUnion.has(splits[i])) {
         return false;
       }
     }
 
     // All leaves are in union - do full subset check against individual subtrees
-    return isNodeInSubtree(nodeData, this.markedSubtreeSets);
+    return isNodeInSubtree(nodeData, this.highlightedSubtreeSets);
   }
 
   /**
-   * Fast check if a link's target is in any marked subtree.
+   * Fast check if a link's target is in any highlighted subtree.
    * @param {Object} linkData - Link with normalized split metadata
    * @returns {boolean} True if link split is in a subtree
    */
-  isLinkInMarkedSubtreeFast(linkData) {
-    if (!this.markedSubtreesColoringEnabled || this._markedLeavesUnion.size === 0) {
+  isLinkInHighlightedSubtreeFast(linkData) {
+    if (!this.subtreeHighlightsEnabled || this._highlightedLeavesUnion.size === 0) {
       return false;
     }
     const splits = getLinkSplitIndices(linkData);
@@ -205,13 +205,13 @@ export class TreeColorManager {
 
     // Fast rejection: if any leaf is NOT in union, link can't be in any subtree
     for (let i = 0; i < splits.length; i++) {
-      if (!this._markedLeavesUnion.has(splits[i])) {
+      if (!this._highlightedLeavesUnion.has(splits[i])) {
         return false;
       }
     }
 
     // All leaves are in union - do full subset check
-    return isLinkInSubtree(linkData, this.markedSubtreeSets);
+    return isLinkInSubtree(linkData, this.highlightedSubtreeSets);
   }
 
   /**
@@ -250,14 +250,14 @@ export class TreeColorManager {
     this.destinationEdgeLeaves = edges.map(s => (s instanceof Set ? s : new Set(s)));
   }
 
-  updateCurrentMovingSubtree(subtree) {
+  updateActiveMoverSubtrees(subtree) {
     if (subtree instanceof Set) {
-      this.currentMovingSubtrees = [subtree];
+      this.activeMoverSubtrees = [subtree];
     } else if (Array.isArray(subtree)) {
       if (subtree.length > 0 && typeof subtree[0] === 'number') {
-        this.currentMovingSubtrees = [new Set(subtree)];
+        this.activeMoverSubtrees = [new Set(subtree)];
       } else {
-        this.currentMovingSubtrees = subtree
+        this.activeMoverSubtrees = subtree
           .map((entry) => {
             if (entry instanceof Set) return entry;
             if (Array.isArray(entry)) return new Set(entry);
@@ -266,15 +266,15 @@ export class TreeColorManager {
           .filter(Boolean);
       }
     } else {
-      this.currentMovingSubtrees = [];
+      this.activeMoverSubtrees = [];
     }
   }
 
   /**
-   * Check if a node is the root of any marked subtree set.
+   * Check if a node is the root of any highlighted subtree set.
    */
-  isNodeMarkedSubtreeRoot(nodeData) {
-    return isNodeSubtreeRoot(nodeData, this.markedSubtreeSets);
+  isNodeHighlightedSubtreeRoot(nodeData) {
+    return isNodeSubtreeRoot(nodeData, this.highlightedSubtreeSets);
   }
 
   /**
@@ -330,14 +330,14 @@ export class TreeColorManager {
     return isNodeInSubtree(nodeData, this.destinationEdgeLeaves);
   }
 
-  isNodeMovingSubtree(nodeData) {
-    if (!this.currentMovingSubtrees || this.currentMovingSubtrees.length === 0) return false;
-    return isNodeInSubtree(nodeData, this.currentMovingSubtrees);
+  isNodeInActiveMoverSubtree(nodeData) {
+    if (!this.activeMoverSubtrees || this.activeMoverSubtrees.length === 0) return false;
+    return isNodeInSubtree(nodeData, this.activeMoverSubtrees);
   }
 
-  isLinkMovingSubtree(linkData) {
-    if (!this.currentMovingSubtrees || this.currentMovingSubtrees.length === 0) return false;
-    return isLinkInSubtree(linkData, this.currentMovingSubtrees);
+  isLinkInActiveMoverSubtree(linkData) {
+    if (!this.activeMoverSubtrees || this.activeMoverSubtrees.length === 0) return false;
+    return isLinkInSubtree(linkData, this.activeMoverSubtrees);
   }
   /**
    * Enable/disable monophyletic group coloring
@@ -354,18 +354,18 @@ export class TreeColorManager {
   }
 
   /**
-   * Enable/disable marked subtrees coloring (red highlight)
-   * When disabled, subtrees still exist for dimming but don't get red color
+   * Enable/disable subtree highlight coloring.
+   * When disabled, subtrees still exist for dimming but don't get accent color.
    */
-  setMarkedSubtreesColoring(enabled) {
-    this.markedSubtreesColoringEnabled = enabled;
+  setSubtreeHighlightsEnabled(enabled) {
+    this.subtreeHighlightsEnabled = enabled;
   }
 
   /**
-   * Get marked subtrees coloring status
+   * Get subtree highlight coloring status.
    */
-  isMarkedSubtreesColoringEnabled() {
-    return this.markedSubtreesColoringEnabled;
+  areSubtreeHighlightsEnabled() {
+    return this.subtreeHighlightsEnabled;
   }
 
   // =======================
