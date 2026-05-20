@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
+import { ViewportManager } from '../src/treeVisualisation/viewport/ViewportManager.js';
 import {
   calculateFocusViewport,
   VIEWPORT_BRANCH_FIT_PADDING,
@@ -9,9 +10,8 @@ import {
   VIEWPORT_LOW_DENSITY_NODE_THRESHOLD,
   VIEWPORT_LOW_DENSITY_PADDING,
   VIEWPORT_MEDIUM_DENSITY_NODE_THRESHOLD,
-  VIEWPORT_MEDIUM_DENSITY_PADDING,
-  ViewportManager
-} from '../src/treeVisualisation/viewport/ViewportManager.js';
+  VIEWPORT_MEDIUM_DENSITY_PADDING
+} from '../src/treeVisualisation/viewport/viewportFit.js';
 import {
   calculateBranchBounds,
   calculateMaxPositionRadius,
@@ -149,7 +149,7 @@ describe('ViewportManager', () => {
 
   it('keeps density padding on the normalized node array contract', () => {
     const source = readFileSync(
-      new URL('../src/treeVisualisation/viewport/ViewportManager.js', import.meta.url),
+      new URL('../src/treeVisualisation/viewport/viewportFit.js', import.meta.url),
       'utf8'
     );
 
