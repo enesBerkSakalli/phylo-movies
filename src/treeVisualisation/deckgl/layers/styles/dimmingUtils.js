@@ -7,7 +7,7 @@ export function applyDimmingWithCache(
   dimmingOpacity,
   subtreeDimmingEnabled,
   subtreeDimmingOpacity,
-  markedSubtreeData
+  highlightedSubtreeData
 ) {
   let isSourceOrDest = false;
   if (isNode) {
@@ -27,12 +27,12 @@ export function applyDimmingWithCache(
     }
   }
 
-  // Subtree dimming - dim elements NOT in the marked subtree
+  // Subtree dimming - dim elements NOT in the highlighted subtree
   // Use ColorManager's fast path for O(1) rejection
-  if (subtreeDimmingEnabled && colorManager?._markedLeavesUnion?.size > 0) {
+  if (subtreeDimmingEnabled && colorManager?._highlightedLeavesUnion?.size > 0) {
     const isInSubtree = isNode
-      ? colorManager.isNodeInMarkedSubtreeFast(entity)
-      : colorManager.isLinkInMarkedSubtreeFast(entity);
+      ? colorManager.isNodeInHighlightedSubtreeFast(entity)
+      : colorManager.isLinkInHighlightedSubtreeFast(entity);
 
     if (!isInSubtree) {
       opacity = Math.round(opacity * subtreeDimmingOpacity);

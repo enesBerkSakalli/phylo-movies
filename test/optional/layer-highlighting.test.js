@@ -59,7 +59,7 @@ let mockStoreState = {
   getPulseOpacity: () => 1.0,
   getColorManager: () => ({
     hasPivotEdges: () => false,
-    markedSubtreeSets: [],
+    highlightedSubtreeSets: [],
     getBranchColor: () => '#000000',
     getBranchColorForInnerLine: () => '#000000',
     getBranchColorWithHighlights: () => '#000000',
@@ -120,10 +120,10 @@ const { shouldHighlightNode } = require('../../src/treeVisualisation/deckgl/laye
 
 /**
  * Helper to create a mock ColorManager with the required fast subtree methods.
- * This ensures mocks include _markedLeavesUnion and fast path methods.
+ * This ensures mocks include _highlightedLeavesUnion and fast path methods.
  */
 function createMockColorManager(overrides = {}) {
-  const subtrees = overrides.markedSubtreeSets || [];
+  const subtrees = overrides.highlightedSubtreeSets || [];
   // Build union of all leaf indices
   const union = new Set();
   for (const subtree of subtrees) {
@@ -134,9 +134,9 @@ function createMockColorManager(overrides = {}) {
 
   const base = {
     hasPivotEdges: () => false,
-    markedSubtreeSets: subtrees,
-    _markedLeavesUnion: union,
-    markedSubtreesColoringEnabled: true,
+    highlightedSubtreeSets: subtrees,
+    _highlightedLeavesUnion: union,
+    subtreeHighlightsEnabled: true,
     getBranchColor: () => '#000000',
     getBranchColorForInnerLine: () => '#000000',
     getBranchColorWithHighlights: () => '#000000',
@@ -148,67 +148,67 @@ function createMockColorManager(overrides = {}) {
     isNodeDestinationEdge: () => false,
     isPivotEdge: () => false,
     isNodePivotEdge: () => false,
-    isNodeInMarkedSubtreeFast: function(nodeData) {
-      if (this._markedLeavesUnion.size === 0) return false;
+    isNodeInHighlightedSubtreeFast: function(nodeData) {
+      if (this._highlightedLeavesUnion.size === 0) return false;
       const splits = getSplitIndices(nodeData);
       if (!splits?.length) return false;
       for (let i = 0; i < splits.length; i++) {
-        if (!this._markedLeavesUnion.has(splits[i])) return false;
+        if (!this._highlightedLeavesUnion.has(splits[i])) return false;
       }
-      return isNodeInSubtree(nodeData, this.markedSubtreeSets);
+      return isNodeInSubtree(nodeData, this.highlightedSubtreeSets);
     },
-    isLinkInMarkedSubtreeFast: function(linkData) {
-      if (this._markedLeavesUnion.size === 0) return false;
+    isLinkInHighlightedSubtreeFast: function(linkData) {
+      if (this._highlightedLeavesUnion.size === 0) return false;
       const splits = getLinkSplitIndices(linkData);
       if (!splits?.length) return false;
       for (let i = 0; i < splits.length; i++) {
-        if (!this._markedLeavesUnion.has(splits[i])) return false;
+        if (!this._highlightedLeavesUnion.has(splits[i])) return false;
       }
-      return isLinkInSubtree(linkData, this.markedSubtreeSets);
+      return isLinkInSubtree(linkData, this.highlightedSubtreeSets);
     }
   };
 
   // Apply overrides, but rebuild union if subtrees change
   const result = { ...base, ...overrides };
-  if (overrides.markedSubtreeSets && !overrides._markedLeavesUnion) {
+  if (overrides.highlightedSubtreeSets && !overrides._highlightedLeavesUnion) {
     const newUnion = new Set();
-    for (const subtree of overrides.markedSubtreeSets) {
+    for (const subtree of overrides.highlightedSubtreeSets) {
       for (const idx of subtree) {
         newUnion.add(idx);
       }
     }
-    result._markedLeavesUnion = newUnion;
+    result._highlightedLeavesUnion = newUnion;
   }
   return result;
 }
 
-describe('marked subtree highlight helpers', () => {
-  it('keeps marked subtree link highlighting behind the marked-subtree toggle', () => {
+describe('subtree highlight helpers', () => {
+  it('keeps link subtree highlighting behind the subtree highlight toggle', () => {
     const link = { split_indices: [3] };
     const cached = {
-      markedSubtreesEnabled: false,
-      markedSubtreeData: [new Set([3])],
+      subtreeHighlightsEnabled: false,
+      highlightedSubtreeData: [new Set([3])],
       colorManager: createMockColorManager()
     };
 
     expect(shouldHighlightLink(link, cached)).to.equal(false);
 
-    cached.markedSubtreesEnabled = true;
+    cached.subtreeHighlightsEnabled = true;
 
     expect(shouldHighlightLink(link, cached)).to.equal(true);
   });
 
-  it('keeps marked subtree node highlighting behind the marked-subtree toggle', () => {
+  it('keeps node subtree highlighting behind the subtree highlight toggle', () => {
     const node = { split_indices: [6] };
     const cached = {
-      markedSubtreesEnabled: false,
-      markedSubtreeData: [new Set([6])],
+      subtreeHighlightsEnabled: false,
+      highlightedSubtreeData: [new Set([6])],
       colorManager: createMockColorManager()
     };
 
     expect(shouldHighlightNode(node, cached)).to.equal(false);
 
-    cached.markedSubtreesEnabled = true;
+    cached.subtreeHighlightsEnabled = true;
 
     expect(shouldHighlightNode(node, cached)).to.equal(true);
   });
@@ -324,11 +324,11 @@ describe('Layer Highlighting Configuration', () => {
       expect(layer.visible).to.equal(true);
     });
 
-    it('should show link outlines when marked components exist', () => {
+    it('should show link outlines when highlighted components exist', () => {
       const stateWithMarked = {
         ...mockStoreState,
         getColorManager: () => createMockColorManager({
-          markedSubtreeSets: [new Set([1, 2, 3])],
+          highlightedSubtreeSets: [new Set([1, 2, 3])],
           getBranchColorWithHighlights: () => '#10b981'
         })
       };
@@ -416,12 +416,12 @@ describe('Layer Highlighting Configuration', () => {
   });
 
   describe('subtree dimming', () => {
-    it('should dim nodes not in marked subtree when subtreeDimmingEnabled', () => {
+    it('should dim nodes not in highlighted subtree when subtreeDimmingEnabled', () => {
       // Mutate the mock store so LayerStyles.getCachedState() observes subtree settings
       mockStoreState.subtreeDimmingEnabled = true;
       mockStoreState.subtreeDimmingOpacity = 0.5;
       mockStoreState.getColorManager = () => createMockColorManager({
-        markedSubtreeSets: [new Set([1, 2, 3])]
+        highlightedSubtreeSets: [new Set([1, 2, 3])]
       });
 
       const nodes = [
@@ -437,12 +437,12 @@ describe('Layer Highlighting Configuration', () => {
       expect(outsideColor[3]).to.be.lessThan(insideColor[3]);
     });
 
-    it('should dim extensions not in marked subtree when subtreeDimmingEnabled', () => {
+    it('should dim extensions not in highlighted subtree when subtreeDimmingEnabled', () => {
       // Mutate the mock store so LayerStyles.getCachedState() observes subtree settings
       mockStoreState.subtreeDimmingEnabled = true;
       mockStoreState.subtreeDimmingOpacity = 0.5;
       mockStoreState.getColorManager = () => createMockColorManager({
-        markedSubtreeSets: [new Set([1, 2, 3])]
+        highlightedSubtreeSets: [new Set([1, 2, 3])]
       });
 
       const extensions = [
@@ -460,13 +460,13 @@ describe('Layer Highlighting Configuration', () => {
   });
 
   describe('coloring toggle independence', () => {
-    it('keeps subtree dimming active when marked coloring is disabled', () => {
+    it('keeps subtree dimming active when subtree highlight coloring is disabled', () => {
       mockStoreState.subtreeDimmingEnabled = true;
       mockStoreState.subtreeDimmingOpacity = 0.5;
-      mockStoreState.markedSubtreesEnabled = false;
+      mockStoreState.subtreeHighlightsEnabled = false;
       // ColorManager has the subtree data (single source of truth)
       mockStoreState.getColorManager = () => createMockColorManager({
-        markedSubtreeSets: [new Set([1])]
+        highlightedSubtreeSets: [new Set([1])]
       });
 
       const nodes = [
@@ -481,34 +481,34 @@ describe('Layer Highlighting Configuration', () => {
       expect(outsideColor[3]).to.be.lessThan(insideColor[3]);
     });
 
-    it('removes marked highlight scaling when coloring is disabled', () => {
-      // Note: This test verifies that the markedSubtreesEnabled flag affects the
-      // shouldHighlightMarkedNode check (1.6x scaling), but isNodeVisuallyHighlighted
-      // still checks ColorManager.markedSubtreeSets directly (1.5x scaling).
-      // This is expected behavior - the toggle controls the "marked" visual treatment
+    it('removes subtree highlight scaling when coloring is disabled', () => {
+      // Note: This test verifies that the subtreeHighlightsEnabled flag affects the
+      // shouldApplySubtreeHighlightSizing check (1.6x scaling), but isNodeVisuallyHighlighted
+      // still checks ColorManager.highlightedSubtreeSets directly (1.5x scaling).
+      // This is expected behavior - the toggle controls the subtree highlight treatment
       // but not the general "highlighted" treatment.
-      mockStoreState.markedSubtreesEnabled = true;
+      mockStoreState.subtreeHighlightsEnabled = true;
       mockStoreState.dimmingEnabled = false;
       mockStoreState.subtreeDimmingEnabled = false;
       // ColorManager has the subtree data for radius scaling
       mockStoreState.getColorManager = () => createMockColorManager({
-        markedSubtreeSets: [new Set([1])]
+        highlightedSubtreeSets: [new Set([1])]
       });
 
-      const markedNode = { position: [0, 0, 0], split_indices: [1], radius: 4, opacity: 1 };
+      const highlightedNode = { position: [0, 0, 0], split_indices: [1], radius: 4, opacity: 1 };
 
       const cachedWithColor = layerStyles.getCachedState();
-      const radiusWithColoring = layerStyles.getNodeRadius(markedNode, 3, cachedWithColor);
+      const radiusWithColoring = layerStyles.getNodeRadius(highlightedNode, 3, cachedWithColor);
 
       layerStyles.clearRenderCache();
-      mockStoreState.markedSubtreesEnabled = false;
+      mockStoreState.subtreeHighlightsEnabled = false;
 
       const cachedWithoutColor = layerStyles.getCachedState();
-      const radiusWithoutColoring = layerStyles.getNodeRadius(markedNode, 3, cachedWithoutColor);
+      const radiusWithoutColoring = layerStyles.getNodeRadius(highlightedNode, 3, cachedWithoutColor);
 
-      // With markedSubtreesEnabled=true: 4 * 1.6 = 6.4 (marked scaling)
-      // With markedSubtreesEnabled=false: 4 * 1.5 = 6 (highlighted scaling via isNodeVisuallyHighlighted)
-      // The marked scaling (1.6x) is larger than highlighted scaling (1.5x)
+      // With subtreeHighlightsEnabled=true: 4 * 1.6 = 6.4 (subtree highlight scaling)
+      // With subtreeHighlightsEnabled=false: 4 * 1.5 = 6 (highlighted scaling via isNodeVisuallyHighlighted)
+      // The subtree highlight scaling (1.6x) is larger than highlighted scaling (1.5x)
       expect(radiusWithColoring).to.be.greaterThan(radiusWithoutColoring);
     });
   });
@@ -538,15 +538,15 @@ describe('LayerStyles.getCachedState() - ColorManager as Single Source of Truth'
     layerStyles.destroy();
   });
 
-  it('should get markedSubtreeData from ColorManager, not from store', () => {
+  it('should get highlightedSubtreeData from ColorManager, not from store', () => {
     // Set up ColorManager with specific subtree data
     const colorManagerSubtrees = [new Set([10, 20, 30])];
 
     // Set up store with DIFFERENT subtree data (simulating stale store state)
-    mockStoreState.getMarkedSubtreeData = () => [new Set([1, 2, 3])]; // This should be ignored
+    mockStoreState.getSubtreeHighlightData = () => [new Set([1, 2, 3])]; // This should be ignored
     mockStoreState.getColorManager = () => ({
       hasPivotEdges: () => false,
-      markedSubtreeSets: colorManagerSubtrees,
+      highlightedSubtreeSets: colorManagerSubtrees,
       getBranchColor: () => '#000000',
       getBranchColorForInnerLine: () => '#000000',
       getBranchColorWithHighlights: () => '#000000',
@@ -557,9 +557,9 @@ describe('LayerStyles.getCachedState() - ColorManager as Single Source of Truth'
 
     const cached = layerStyles.getCachedState();
 
-    // markedSubtreeData should come from ColorManager, not store
-    expect(cached.markedSubtreeData).to.equal(colorManagerSubtrees);
-    expect(cached.markedSubtreeData).to.not.deep.equal([new Set([1, 2, 3])]);
+    // highlightedSubtreeData should come from ColorManager, not store
+    expect(cached.highlightedSubtreeData).to.equal(colorManagerSubtrees);
+    expect(cached.highlightedSubtreeData).to.not.deep.equal([new Set([1, 2, 3])]);
   });
 
   it('should return empty array when ColorManager is null', () => {
@@ -567,13 +567,13 @@ describe('LayerStyles.getCachedState() - ColorManager as Single Source of Truth'
 
     const cached = layerStyles.getCachedState();
 
-    expect(cached.markedSubtreeData).to.deep.equal([]);
+    expect(cached.highlightedSubtreeData).to.deep.equal([]);
   });
 
-  it('should return empty array when ColorManager.markedSubtreeSets is undefined', () => {
+  it('should return empty array when ColorManager.highlightedSubtreeSets is undefined', () => {
     mockStoreState.getColorManager = () => ({
       hasPivotEdges: () => false,
-      // markedSubtreeSets is undefined
+      // highlightedSubtreeSets is undefined
       getBranchColor: () => '#000000',
       getBranchColorForInnerLine: () => '#000000',
       getBranchColorWithHighlights: () => '#000000',
@@ -584,7 +584,7 @@ describe('LayerStyles.getCachedState() - ColorManager as Single Source of Truth'
 
     const cached = layerStyles.getCachedState();
 
-    expect(cached.markedSubtreeData).to.deep.equal([]);
+    expect(cached.highlightedSubtreeData).to.deep.equal([]);
   });
 
   it('should properly clear and rebuild cache', () => {
@@ -592,7 +592,7 @@ describe('LayerStyles.getCachedState() - ColorManager as Single Source of Truth'
     const initialSubtrees = [new Set([1, 2])];
     mockStoreState.getColorManager = () => ({
       hasPivotEdges: () => false,
-      markedSubtreeSets: initialSubtrees,
+      highlightedSubtreeSets: initialSubtrees,
       getBranchColor: () => '#000000',
       getBranchColorForInnerLine: () => '#000000',
       getBranchColorWithHighlights: () => '#000000',
@@ -602,7 +602,7 @@ describe('LayerStyles.getCachedState() - ColorManager as Single Source of Truth'
     });
 
     const cached1 = layerStyles.getCachedState();
-    expect(cached1.markedSubtreeData).to.equal(initialSubtrees);
+    expect(cached1.highlightedSubtreeData).to.equal(initialSubtrees);
 
     // Clear cache
     layerStyles.clearRenderCache();
@@ -611,7 +611,7 @@ describe('LayerStyles.getCachedState() - ColorManager as Single Source of Truth'
     const updatedSubtrees = [new Set([5, 6, 7])];
     mockStoreState.getColorManager = () => ({
       hasPivotEdges: () => false,
-      markedSubtreeSets: updatedSubtrees,
+      highlightedSubtreeSets: updatedSubtrees,
       getBranchColor: () => '#000000',
       getBranchColorForInnerLine: () => '#000000',
       getBranchColorWithHighlights: () => '#000000',
@@ -622,8 +622,8 @@ describe('LayerStyles.getCachedState() - ColorManager as Single Source of Truth'
 
     // Second call should get new data
     const cached2 = layerStyles.getCachedState();
-    expect(cached2.markedSubtreeData).to.equal(updatedSubtrees);
-    expect(cached2.markedSubtreeData).to.not.equal(initialSubtrees);
+    expect(cached2.highlightedSubtreeData).to.equal(updatedSubtrees);
+    expect(cached2.highlightedSubtreeData).to.not.equal(initialSubtrees);
   });
 
   it('should cache state within same render cycle', () => {
@@ -633,7 +633,7 @@ describe('LayerStyles.getCachedState() - ColorManager as Single Source of Truth'
       callCount++;
       return {
         hasPivotEdges: () => false,
-        markedSubtreeSets: subtrees,
+        highlightedSubtreeSets: subtrees,
         getBranchColor: () => '#000000',
         getBranchColorForInnerLine: () => '#000000',
         getBranchColorWithHighlights: () => '#000000',
@@ -663,7 +663,7 @@ describe('dimmingUtils.applyDimmingWithCache() - Dimming Data Consistency', () =
 
   it('should use ColorManager subtree data for dimming', () => {
     const colorManager = createMockColorManager({
-      markedSubtreeSets: [new Set([1, 2, 3])]
+      highlightedSubtreeSets: [new Set([1, 2, 3])]
     });
 
     // Node inside subtree (split_indices contains 1)
@@ -675,14 +675,14 @@ describe('dimmingUtils.applyDimmingWithCache() - Dimming Data Consistency', () =
       255, colorManager, nodeInside, true,
       false, 0.3, // dimmingEnabled, dimmingOpacity
       true, 0.5,  // subtreeDimmingEnabled, subtreeDimmingOpacity
-      [] // markedSubtreeData parameter (should be ignored)
+      [] // highlightedSubtreeData parameter (should be ignored)
     );
 
     const opacityOutside = applyDimmingWithCache(
       255, colorManager, nodeOutside, true,
       false, 0.3,
       true, 0.5,
-      [] // markedSubtreeData parameter (should be ignored)
+      [] // highlightedSubtreeData parameter (should be ignored)
     );
 
     // Node inside subtree should have full opacity
@@ -691,22 +691,22 @@ describe('dimmingUtils.applyDimmingWithCache() - Dimming Data Consistency', () =
     expect(opacityOutside).to.equal(Math.round(255 * 0.5));
   });
 
-  it('should ignore markedSubtreeData parameter and use ColorManager', () => {
+  it('should ignore highlightedSubtreeData parameter and use ColorManager', () => {
     const colorManager = createMockColorManager({
-      markedSubtreeSets: [new Set([100])] // ColorManager says node 100 is in subtree
+      highlightedSubtreeSets: [new Set([100])] // ColorManager says node 100 is in subtree
     });
 
     // Node with split_indices [100] - in ColorManager's subtree
     const node = { split_indices: [100] };
 
-    // Pass DIFFERENT data in markedSubtreeData parameter (should be ignored)
-    const staleMarkedData = [new Set([1, 2, 3])]; // This would NOT include node 100
+    // Pass DIFFERENT data in highlightedSubtreeData parameter (should be ignored)
+    const staleHighlightedData = [new Set([1, 2, 3])]; // This would NOT include node 100
 
     const opacity = applyDimmingWithCache(
       255, colorManager, node, true,
       false, 0.3,
       true, 0.5,
-      staleMarkedData // This should be ignored
+      staleHighlightedData // This should be ignored
     );
 
     // Node should NOT be dimmed because ColorManager says it's in subtree
@@ -720,7 +720,7 @@ describe('dimmingUtils.applyDimmingWithCache() - Dimming Data Consistency', () =
       255, null, node, true,
       false, 0.3,
       true, 0.5,
-      [new Set([1])] // markedSubtreeData parameter
+      [new Set([1])] // highlightedSubtreeData parameter
     );
 
     // No dimming should occur when ColorManager is null
@@ -729,7 +729,7 @@ describe('dimmingUtils.applyDimmingWithCache() - Dimming Data Consistency', () =
 
   it('should return full opacity when ColorManager has empty subtrees', () => {
     const colorManager = createMockColorManager({
-      markedSubtreeSets: [] // Empty
+      highlightedSubtreeSets: [] // Empty
     });
 
     const node = { split_indices: [1] };
@@ -747,7 +747,7 @@ describe('dimmingUtils.applyDimmingWithCache() - Dimming Data Consistency', () =
 
   it('should apply pivot edge dimming correctly', () => {
     const colorManager = createMockColorManager({
-      markedSubtreeSets: [],
+      highlightedSubtreeSets: [],
       hasPivotEdges: () => true,
       isNodeDownstreamOfAnyPivotEdge: (node) => node.isDownstream
     });
@@ -797,28 +797,28 @@ describe('Scrubbing Highlighting Integration', () => {
     // Simulate scrubbing to tree index 5 - ColorManager is updated with tree 5's data
     const tree5Subtrees = [new Set([50, 51, 52])];
     mockStoreState.frameIndex = 0; // Store still has stale index
-    mockStoreState.getMarkedSubtreeData = () => [new Set([1, 2, 3])]; // Store has stale data
+    mockStoreState.getSubtreeHighlightData = () => [new Set([1, 2, 3])]; // Store has stale data
     mockStoreState.getColorManager = () => createMockColorManager({
-      markedSubtreeSets: tree5Subtrees // ColorManager has correct data
+      highlightedSubtreeSets: tree5Subtrees // ColorManager has correct data
     });
 
     const cached = layerStyles.getCachedState();
 
     // Should use ColorManager's data (tree 5), not store's stale data
-    expect(cached.markedSubtreeData).to.equal(tree5Subtrees);
-    expect(cached.markedSubtreeData[0].has(50)).to.be.true;
-    expect(cached.markedSubtreeData[0].has(1)).to.be.false;
+    expect(cached.highlightedSubtreeData).to.equal(tree5Subtrees);
+    expect(cached.highlightedSubtreeData[0].has(50)).to.be.true;
+    expect(cached.highlightedSubtreeData[0].has(1)).to.be.false;
   });
 
   it('should update highlighting as scrub position changes', () => {
     // First scrub position - tree index 3
     const tree3Subtrees = [new Set([30, 31])];
     mockStoreState.getColorManager = () => createMockColorManager({
-      markedSubtreeSets: tree3Subtrees
+      highlightedSubtreeSets: tree3Subtrees
     });
 
     const cached1 = layerStyles.getCachedState();
-    expect(cached1.markedSubtreeData[0].has(30)).to.be.true;
+    expect(cached1.highlightedSubtreeData[0].has(30)).to.be.true;
 
     // Clear cache (simulating new render frame)
     layerStyles.clearRenderCache();
@@ -826,12 +826,12 @@ describe('Scrubbing Highlighting Integration', () => {
     // Second scrub position - tree index 7
     const tree7Subtrees = [new Set([70, 71, 72])];
     mockStoreState.getColorManager = () => createMockColorManager({
-      markedSubtreeSets: tree7Subtrees
+      highlightedSubtreeSets: tree7Subtrees
     });
 
     const cached2 = layerStyles.getCachedState();
-    expect(cached2.markedSubtreeData[0].has(70)).to.be.true;
-    expect(cached2.markedSubtreeData[0].has(30)).to.be.false;
+    expect(cached2.highlightedSubtreeData[0].has(70)).to.be.true;
+    expect(cached2.highlightedSubtreeData[0].has(30)).to.be.false;
   });
 
   it('should correctly dim nodes based on scrub position subtree data', () => {
@@ -840,7 +840,7 @@ describe('Scrubbing Highlighting Integration', () => {
 
     // Scrub position has subtree with nodes 100, 101
     mockStoreState.getColorManager = () => createMockColorManager({
-      markedSubtreeSets: [new Set([100, 101])]
+      highlightedSubtreeSets: [new Set([100, 101])]
     });
 
     const nodeInSubtree = { position: [0, 0, 0], split_indices: [100], opacity: 1 };
@@ -859,7 +859,7 @@ describe('Scrubbing Highlighting Integration', () => {
     mockStoreState.subtreeDimmingOpacity = 0.4;
 
     mockStoreState.getColorManager = () => createMockColorManager({
-      markedSubtreeSets: [new Set([200, 201])]
+      highlightedSubtreeSets: [new Set([200, 201])]
     });
 
     const linkInSubtree = {

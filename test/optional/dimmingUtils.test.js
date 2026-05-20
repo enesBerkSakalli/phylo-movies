@@ -17,25 +17,25 @@ describe('dimmingUtils', () => {
         hasPivotEdges: () => false,
         isNodeDownstreamOfAnyPivotEdge: () => false,
         isDownstreamOfAnyPivotEdge: () => false,
-        markedSubtreeSets: [],
-        _markedLeavesUnion: new Set(),
+        highlightedSubtreeSets: [],
+        _highlightedLeavesUnion: new Set(),
         // Fast path methods for optimized subtree membership checks
-        isNodeInMarkedSubtreeFast: function(entity) {
-          if (this._markedLeavesUnion.size === 0) return false;
+        isNodeInHighlightedSubtreeFast: function(entity) {
+          if (this._highlightedLeavesUnion.size === 0) return false;
           const splits = entity?.data?.split_indices || entity?.split_indices;
           if (!splits?.length) return false;
           for (const idx of splits) {
-            if (!this._markedLeavesUnion.has(idx)) return false;
+            if (!this._highlightedLeavesUnion.has(idx)) return false;
           }
           // All splits in union - check full subset
-          for (const subtree of this.markedSubtreeSets) {
+          for (const subtree of this.highlightedSubtreeSets) {
             const subtreeSet = subtree instanceof Set ? subtree : new Set(subtree);
             if (splits.every(idx => subtreeSet.has(idx))) return true;
           }
           return false;
         },
-        isLinkInMarkedSubtreeFast: function(linkData) {
-          return this.isNodeInMarkedSubtreeFast(linkData?.target);
+        isLinkInHighlightedSubtreeFast: function(linkData) {
+          return this.isNodeInHighlightedSubtreeFast(linkData?.target);
         }
       };
     });
@@ -54,7 +54,7 @@ describe('dimmingUtils', () => {
         dimmingOpacity,
         false, // subtreeDimmingEnabled
         subtreeDimmingOpacity,
-        [] // markedSubtreeData
+        [] // highlightedSubtreeData
       );
 
       // Should remain full opacity (source nodes are exempt from pivot edge dimming)
@@ -65,11 +65,11 @@ describe('dimmingUtils', () => {
       // Setup: Node is Source, Subtree Dimming ON, Node NOT in subtree
       mockColorManager.isNodeSourceEdge = () => true;
 
-      // Set up marked subtree with different leaf indices than the node
+      // Set up highlighted subtree with different leaf indices than the node
       // Node has split_indices [1, 2, 3], subtree has [7, 8, 9]
-      const markedSubtreeData = [new Set([7, 8, 9])];
-      mockColorManager.markedSubtreeSets = markedSubtreeData;
-      mockColorManager._markedLeavesUnion = new Set([7, 8, 9]); // Union of all marked leaves
+      const highlightedSubtreeData = [new Set([7, 8, 9])];
+      mockColorManager.highlightedSubtreeSets = highlightedSubtreeData;
+      mockColorManager._highlightedLeavesUnion = new Set([7, 8, 9]); // Union of all highlighted leaves
 
       const result = applyDimmingWithCache(
         baseOpacity,
@@ -80,7 +80,7 @@ describe('dimmingUtils', () => {
         dimmingOpacity,
         true, // subtreeDimmingEnabled
         subtreeDimmingOpacity,
-        markedSubtreeData
+        highlightedSubtreeData
       );
 
       // Should be dimmed! (Source nodes are NOT exempt from Subtree Dimming)
@@ -110,13 +110,13 @@ describe('dimmingUtils', () => {
          expect(result).to.equal(expected);
     });
 
-     it('should not dim nodes inside the marked subtree when subtree dimming is enabled', () => {
+     it('should not dim nodes inside the highlighted subtree when subtree dimming is enabled', () => {
          // This is tricky because we can't easily mock isNodeInSubtree since it's a direct import.
          // However, isNodeInSubtree typically checks if the node ID is in the set or similar.
          // Let's assume the entity structure matches what isNodeInSubtree expects.
          // Ideally we successfully mock the data structure so it returns true.
          // If isNodeInSubtree checks id equality:
-         const markedSubtreeData = [nodeEntity]; // Assuming simple check
+         const highlightedSubtreeData = [nodeEntity]; // Assuming simple check
          // But wait, isNodeInSubtree might be more complex.
          // Let's check imports in dimmingUtils.js: `import { isLinkInSubtree, isNodeInSubtree } from './subtreeMatching.js';`
          // We might need to ensure our test data satisfies `isNodeInSubtree`.

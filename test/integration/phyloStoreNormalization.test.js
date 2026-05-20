@@ -227,15 +227,15 @@ describe('phylo store dataset normalization', () => {
     expect(Object.prototype.hasOwnProperty.call(state, legacyScaleKey)).toBe(false);
   });
 
-  it('stores marked subtree scope without the legacy mode contract', () => {
+  it('stores subtree highlight scope without the legacy mode contract', () => {
     const state = useAppStore.getState();
 
-    expect(state.markedSubtreeScope).toBe('current');
-    expect(typeof state.setMarkedSubtreeScope).toBe('function');
+    expect(state.subtreeHighlightScope).toBe('current');
+    expect(typeof state.setSubtreeHighlightScope).toBe('function');
     expect(Object.prototype.hasOwnProperty.call(state, 'markedSubtreeMode')).toBe(false);
     expect(Object.prototype.hasOwnProperty.call(state, 'setMarkedSubtreeMode')).toBe(false);
-    expect(typeof phyloStoreModule.selectMarkedSubtreeScope).toBe('function');
-    expect(typeof phyloStoreModule.selectSetMarkedSubtreeScope).toBe('function');
+    expect(typeof phyloStoreModule.selectSubtreeHighlightScope).toBe('function');
+    expect(typeof phyloStoreModule.selectSetSubtreeHighlightScope).toBe('function');
     expect(phyloStoreModule).not.toHaveProperty('selectMarkedSubtreeMode');
     expect(phyloStoreModule).not.toHaveProperty('selectSetMarkedSubtreeMode');
   });

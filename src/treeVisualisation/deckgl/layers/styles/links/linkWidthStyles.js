@@ -1,6 +1,7 @@
 
 import { isLinkVisuallyHighlighted } from '../../../../systems/tree_color/visualHighlights.js';
 import { getLifecycleLinkHighlight, shouldHighlightLink } from './linkUtils.js';
+import { getSubtleActiveMoverEmphasis } from '../activeMoverEmphasis.js';
 
 export function getLinkWidth(link, cached, helpers) {
   const baseWidth = helpers.getBaseStrokeWidth();
@@ -31,20 +32,16 @@ export function getLinkWidth(link, cached, helpers) {
     return getScaledWidth(1.2) * metricScale; // Medium for upcoming
   }
 
-  // Check if link is part of a marked subtree highlight
-  // Static, very thick stroke to ensure visibility without pulsing
-  // Pivot edge takes precedence
   if (shouldHighlightLink(link, cached) && !cm?.isPivotEdge?.(link)) {
-    // Only thicken the inner line in High Contrast Mode
+    const emphasis = getSubtleActiveMoverEmphasis(link, cached, 'link');
     if (cached.highlightColorMode === 'contrast') {
-      return getScaledWidth(2.0) * metricScale;
+      return getScaledWidth(2.0) * emphasis * metricScale;
     }
-    // In other modes ('taxa', 'solid'), keep standard width
-    return baseWidth * metricScale;
+    return baseWidth * emphasis * metricScale;
   }
 
   // Check if link should be highlighted (current active)
-  const isHighlighted = isLinkVisuallyHighlighted(link, cm, cached.markedSubtreesEnabled);
+  const isHighlighted = isLinkVisuallyHighlighted(link, cm, cached.subtreeHighlightsEnabled);
 
   const calculatedWidth = isHighlighted ? getScaledWidth(2.0) : baseWidth; // Thick for current
   return calculatedWidth * metricScale;

@@ -23,7 +23,7 @@ describe('getNodeBasedRgba', () => {
       isNodePivotEdge: () => false,
       hasPivotEdges: () => false,
       isNodeDownstreamOfAnyPivotEdge: () => false,
-      markedSubtreeSets: []
+      highlightedSubtreeSets: []
     };
 
     cached = {
@@ -32,10 +32,10 @@ describe('getNodeBasedRgba', () => {
       dimmingOpacity: 0.3,
       subtreeDimmingEnabled: false,
       subtreeDimmingOpacity: 0.3,
-      markedSubtreeData: null,
-      markedSubtreesEnabled: false, // disable subtree checks to avoid split index lookups
+      highlightedSubtreeData: null,
+      subtreeHighlightsEnabled: false, // disable subtree checks to avoid split index lookups
       highlightColorMode: 'solid',
-      markedColor: '#10b981'
+      subtreeHighlightColor: '#10b981'
     };
   });
 

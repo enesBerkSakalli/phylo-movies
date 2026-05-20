@@ -10,7 +10,7 @@ export function buildRawConnectorConnections(params) {
     jumpingSubtreeSets,
     currentSubtreeSets,
     colorManager,
-    markedSubtreesEnabled,
+    subtreeHighlightsEnabled,
     linkConnectionOpacity,
   } = params;
   const rightLeavesBySplitKey = indexConnectorLeavesBySplitKey(rightPositions);
@@ -32,7 +32,7 @@ export function buildRawConnectorConnections(params) {
       leftPositions,
       currentSubtreeSets,
       colorManager,
-      markedSubtreesEnabled,
+      subtreeHighlightsEnabled,
       linkConnectionOpacity,
     });
 

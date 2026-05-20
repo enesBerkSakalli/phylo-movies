@@ -5,10 +5,10 @@ import { SYSTEM_TREE_COLORS } from '../../../../constants/TreeColors.js';
 /**
  * Compute RGBA color for a connector based on movement state and colorManager.
  */
-export function computeConnectionColor(colorEntry, isMoving, colorManager, markedSubtreesEnabled, linkConnectionOpacity) {
+export function computeConnectionColor(colorEntry, isMoving, colorManager, subtreeHighlightsEnabled, linkConnectionOpacity) {
   const monophyleticEnabled = colorManager?.isMonophyleticColoringEnabled?.() ?? true;
   const fallbackHex = SYSTEM_TREE_COLORS.pivotEdgeColor || '#2196f3';
-  const colorHex = isMoving && markedSubtreesEnabled
+  const colorHex = isMoving && subtreeHighlightsEnabled
     ? colorManager?.getNodeColor?.(colorEntry)
     : getBaseNodeColor(colorEntry, monophyleticEnabled);
   const [r, g, b] = colorToRgb(colorHex || fallbackHex);

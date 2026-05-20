@@ -97,7 +97,7 @@ export const MovedSubtreeRecurrenceChart = () => {
                                         className="h-2 bg-secondary/50"
                                         style={{
                                             // Override indicator color via CSS variable
-                                            '--progress-color': SYSTEM_TREE_COLORS.markedColor
+                                            '--progress-color': SYSTEM_TREE_COLORS.subtreeHighlightColor
                                         } as React.CSSProperties}
                                     />
                                 </div>

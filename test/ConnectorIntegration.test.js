@@ -45,7 +45,7 @@ describe('Connector Integration', function () {
       colorManager: mockColorManager,
       subtreeHighlightTracking: [[0]],
       frameIndex: 0,
-      markedSubtreesEnabled: true,
+      subtreeHighlightsEnabled: true,
       linkConnectionOpacity: 0.6,
       leftCenter,
       rightCenter,

@@ -213,7 +213,7 @@ function partitionTreeLayerData(data, cached = {}) {
   }
   for (const extension of data.extensions) {
     const bucket = classifyNodeLike(extension, cached);
-    if (bucket === 'marked' && cm?.isNodeMovingSubtree?.(extension)) {
+    if (bucket === 'marked' && cm?.isNodeInActiveMoverSubtree?.(extension)) {
       extensions.movingMarked.push(extension);
     } else {
       extensions[bucket].push(extension);
@@ -225,14 +225,14 @@ function partitionTreeLayerData(data, cached = {}) {
 
 function classifyNodeLike(datum, cached) {
   const cm = cached?.colorManager;
-  if (cm?.isNodeInMarkedSubtreeFast?.(datum)) return 'marked';
+  if (cm?.isNodeInHighlightedSubtreeFast?.(datum)) return 'marked';
   if (cm?.isNodeHistorySubtree?.(datum)) return 'history';
   return 'base';
 }
 
 function classifyLink(link, cached) {
   const cm = cached?.colorManager;
-  if (cm?.isLinkInMarkedSubtreeFast?.(link)) return 'marked';
+  if (cm?.isLinkInHighlightedSubtreeFast?.(link)) return 'marked';
   if (cm?.isLinkHistorySubtree?.(link)) return 'history';
   return 'base';
 }

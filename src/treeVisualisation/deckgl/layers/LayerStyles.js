@@ -76,11 +76,12 @@ export class LayerStyles {
       const colorManager = state.getColorManager?.();
       const pulseEnabled = state.changePulseEnabled ?? true;
       const metricScale = Number.isFinite(state.metricScale) ? state.metricScale : 1;
+      const taxaCount = selectLeafNamesByIndex(state).length;
       const visualScale = this._calculateVisualScale(state);
-      // Use ColorManager as single source of truth for marked subtree data
+      // Use ColorManager as single source of truth for subtree highlight data
       // This ensures correct highlighting during scrubbing when ColorManager is updated
       // with the scrub position's tree index but store's frameIndex is stale
-      const markedSubtreeData = colorManager?.markedSubtreeSets || [];
+      const highlightedSubtreeData = colorManager?.highlightedSubtreeSets || [];
       this._nodeHelpers.nodeSize = state.nodeSize ?? this._cache.nodeSize ?? 1;
       this._renderCache = {
         state,
@@ -89,16 +90,18 @@ export class LayerStyles {
         dimmingOpacity: state.dimmingOpacity,
         subtreeDimmingEnabled: state.subtreeDimmingEnabled,
         subtreeDimmingOpacity: state.subtreeDimmingOpacity,
-        markedSubtreeData,
-        markedSubtreesEnabled: state.markedSubtreesEnabled ?? true,
-        markedSubtreeOpacity: state.markedSubtreeOpacity ?? 0.8,
+        highlightedSubtreeData,
+        subtreeHighlightsEnabled: state.subtreeHighlightsEnabled ?? true,
+        subtreeHighlightScope: state.subtreeHighlightScope ?? 'current',
+        subtreeHighlightOpacity: state.subtreeHighlightOpacity ?? 0.8,
         pulseOpacity: pulseEnabled ? (state.getPulseOpacity?.() ?? 1.0) : 1.0,
         dashingEnabled: state.pivotEdgeDashingEnabled ?? true,
         upcomingChangesEnabled: state.upcomingChangesEnabled ?? false,
         highlightColorMode: state.highlightColorMode ?? 'contrast',
-        markedColor: state.markedColor ?? '#10b981',
+        subtreeHighlightColor: state.subtreeHighlightColor ?? '#10b981',
         linkConnectionOpacity: state.linkConnectionOpacity ?? 0.6,
         metricScale,
+        taxaCount,
         visualScale,
         // Density-based scaling: reduce highlight thickness for dense trees
         densityScale: this._calculateDensityScale(state)
@@ -155,12 +158,12 @@ export class LayerStyles {
         state.dimmingOpacity !== prevState.dimmingOpacity ||
         state.subtreeDimmingEnabled !== prevState.subtreeDimmingEnabled ||
         state.subtreeDimmingOpacity !== prevState.subtreeDimmingOpacity ||
-        state.markedSubtreesEnabled !== prevState.markedSubtreesEnabled ||
-        state.markedSubtreeOpacity !== prevState.markedSubtreeOpacity ||
+        state.subtreeHighlightsEnabled !== prevState.subtreeHighlightsEnabled ||
+        state.subtreeHighlightOpacity !== prevState.subtreeHighlightOpacity ||
         state.pivotEdgeDashingEnabled !== prevState.pivotEdgeDashingEnabled ||
         state.upcomingChangesEnabled !== prevState.upcomingChangesEnabled ||
         state.highlightColorMode !== prevState.highlightColorMode ||
-        state.markedColor !== prevState.markedColor ||
+        state.subtreeHighlightColor !== prevState.subtreeHighlightColor ||
         state.linkConnectionOpacity !== prevState.linkConnectionOpacity ||
         state.changePulseEnabled !== prevState.changePulseEnabled ||
         state.changePulsePhase !== prevState.changePulsePhase ||
@@ -344,7 +347,7 @@ export class LayerStyles {
   }
 
   /**
-   * Get label size from store (optionally per-label for marked highlighting)
+   * Get label size from store (optionally per-label for subtree highlighting)
    * @param {Object} label - Optional label data for dynamic sizing
    * @param {Object} cached - Optional cached state
    * @returns {number} Label size in pixels

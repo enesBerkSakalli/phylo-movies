@@ -46,7 +46,7 @@ function resolveHistoryNodeColor(nodeData, cached, baseOpacity) {
 }
 
 /**
- * Resolves the base RGB color for a node, considering highlights and marked subtrees.
+ * Resolves the base RGB color for a node, considering highlights and highlighted subtrees.
  * @param {Object} nodeData - Normalized node data
  * @param {Object} cached - Cached state from LayerStyles
  * @param {Object} cm - ColorManager instance
@@ -62,7 +62,7 @@ function resolveBaseNodeColor(nodeData, cached, cm) {
 }
 
 export function getNodeColor(node, cached, helpers) {
-  const { colorManager: cm, dimmingEnabled, dimmingOpacity, markedSubtreeData, subtreeDimmingEnabled, subtreeDimmingOpacity } = cached;
+  const { colorManager: cm, dimmingEnabled, dimmingOpacity, highlightedSubtreeData, subtreeDimmingEnabled, subtreeDimmingOpacity } = cached;
 
   // 0. Explicit Color Override (ConnectorLayers pattern)
   // Check raw node first (deck.gl datum)
@@ -97,7 +97,7 @@ export function getNodeColor(node, cached, helpers) {
       dimmingOpacity,
       subtreeDimmingEnabled,
       subtreeDimmingOpacity,
-      markedSubtreeData
+      highlightedSubtreeData
     );
     _nodeColorOut[0] = pivotColor[0];
     _nodeColorOut[1] = pivotColor[1];
@@ -120,7 +120,7 @@ export function getNodeColor(node, cached, helpers) {
     dimmingOpacity,
     subtreeDimmingEnabled,
     subtreeDimmingOpacity,
-    markedSubtreeData
+    highlightedSubtreeData
   );
 
   _nodeColorOut[0] = rgb[0];
@@ -183,7 +183,7 @@ export function getNodeBorderColor(node, cached, helpers) {
   }
 
   // Apply dimming
-  const { dimmingEnabled, dimmingOpacity, subtreeDimmingEnabled, subtreeDimmingOpacity, markedSubtreeData } = cached;
+  const { dimmingEnabled, dimmingOpacity, subtreeDimmingEnabled, subtreeDimmingOpacity, highlightedSubtreeData } = cached;
 
   opacity = applyDimmingWithCache(
     opacity,
@@ -194,7 +194,7 @@ export function getNodeBorderColor(node, cached, helpers) {
     dimmingOpacity,
     subtreeDimmingEnabled,
     subtreeDimmingOpacity,
-    markedSubtreeData
+    highlightedSubtreeData
   );
 
   _borderColorOut[0] = rgb[0];
@@ -205,11 +205,11 @@ export function getNodeBorderColor(node, cached, helpers) {
 }
 
 export function getNodeBasedRgba(entity, baseEntityOpacity, cached, helpers) {
-  const { colorManager: cm, dimmingEnabled, dimmingOpacity, subtreeDimmingEnabled, subtreeDimmingOpacity, markedSubtreeData } = cached;
+  const { colorManager: cm, dimmingEnabled, dimmingOpacity, subtreeDimmingEnabled, subtreeDimmingOpacity, highlightedSubtreeData } = cached;
 
   const node = entity;
 
-  const isHighlighted = shouldHighlightNode(node, cached) || isNodeVisuallyHighlighted(node, cm, cached.markedSubtreesEnabled);
+  const isHighlighted = shouldHighlightNode(node, cached) || isNodeVisuallyHighlighted(node, cm, cached.subtreeHighlightsEnabled);
 
   // Use the same color resolution as nodes for consistency
   const rgb = isHighlighted
@@ -226,7 +226,7 @@ export function getNodeBasedRgba(entity, baseEntityOpacity, cached, helpers) {
     dimmingOpacity,
     subtreeDimmingEnabled,
     subtreeDimmingOpacity,
-    markedSubtreeData
+    highlightedSubtreeData
   );
 
   _nodeBasedOut[0] = rgb[0];

@@ -24,8 +24,8 @@ describe('Label Sizing Logic (TDD)', () => {
     nodeUtilsMock.isHistorySubtreeNode = () => false;
 
     cachedState = {
-      markedSubtreeData: [], // effectively empty, but present
-      markedSubtreesEnabled: true,
+      highlightedSubtreeData: [], // effectively empty, but present
+      subtreeHighlightsEnabled: true,
     };
   });
 
@@ -34,9 +34,9 @@ describe('Label Sizing Logic (TDD)', () => {
     expect(size).to.equal(EXPECTED_BASE_PIXELS);
   });
 
-  it('calculates marked subtree label size', () => {
+  it('calculates subtree highlight label size', () => {
     nodeUtilsMock.shouldHighlightNode = () => true;
-    cachedState.markedSubtreeData = ['some-tree'];
+    cachedState.highlightedSubtreeData = ['some-tree'];
 
     const size = getLabelSize({ id: 'node1' }, DEFAULT_FONT_SIZE, cachedState);
     expect(size).to.equal(EXPECTED_BASE_PIXELS * 1.2);
@@ -51,7 +51,7 @@ describe('Label Sizing Logic (TDD)', () => {
 
   it('keeps labels visible inside actively moving subtrees', () => {
     cachedState.colorManager = {
-      isNodeMovingSubtree: (node) => node?.id === 'moving-label'
+      isNodeInActiveMoverSubtree: (node) => node?.id === 'moving-label'
     };
 
     const size = getLabelSize({ id: 'moving-label' }, DEFAULT_FONT_SIZE, cachedState);

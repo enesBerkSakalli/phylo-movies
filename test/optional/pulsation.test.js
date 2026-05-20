@@ -5,7 +5,7 @@ const proxyquire = require('proxyquire');
 const linkUtilsMock = {
   shouldHighlightLink: () => false,
   getHistoryOutlineStyle: () => null,
-  getMarkedHighlightColor: () => [255, 0, 0],
+  getSubtreeHighlightRgb: () => [255, 0, 0],
 };
 
 const visualHighlightsMock = {
@@ -49,14 +49,14 @@ describe('Link Outline Pulsation Logic', () => {
       isUpcomingChangeEdge: () => false,
       getBranchColorWithHighlights: () => '#0000FF',
       // We'll add this method to simulate our proposed fix check
-      isLinkMovingSubtree: () => false,
+      isLinkInActiveMoverSubtree: () => false,
     };
 
     cachedState = {
       colorManager: colorManagerMock,
       pulseOpacity: 0.5, // Halfway pulse
       upcomingChangesEnabled: false,
-      markedSubtreesEnabled: true,
+      subtreeHighlightsEnabled: true,
       highlightColorMode: 'solid'
     };
 
@@ -75,15 +75,13 @@ describe('Link Outline Pulsation Logic', () => {
     expect(width).to.equal(10);
   });
 
-  it('Moving subtree (if active) currently pulses', () => {
-    // Setup: It's active (because moving subtrees are considered active currently)
+  it('active mover edges use the active-edge pulse when not subtree-highlighted', () => {
+    // Setup: It is active because moving subtrees can also be active edges.
     colorManagerMock.isActiveChangeEdge = () => true;
-    // And it IS a moving subtree
-    colorManagerMock.isLinkMovingSubtree = () => true;
+    // And it is an active mover subtree, but not a subtree-highlight outline.
+    colorManagerMock.isLinkInActiveMoverSubtree = () => true;
 
     const width = getLinkOutlineWidth({}, cachedState, cachedState.helpers);
-    // NEW BEHAVIOR: Static width (base*2 + 8 = 12, mimicking marked subtree style)
-    // We expect it NOT to be 10 (which is the pulse value for 0.5 opacity)
-    expect(width).to.equal(12);
+    expect(width).to.equal(10);
   });
 });

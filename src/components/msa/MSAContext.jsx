@@ -89,7 +89,7 @@ export function MSAProvider({ children }) {
   const rowColorMap = useMemo(() => {
     if (!processedData?.sequences) return {};
     const map = {};
-    const systemKeys = ['markedColor', 'pivotEdgeColor', 'strokeColor', 'defaultColor'];
+    const systemKeys = ['subtreeHighlightColor', 'pivotEdgeColor', 'strokeColor', 'defaultColor'];
 
     processedData.sequences.forEach((seq) => {
       const id = seq.id;

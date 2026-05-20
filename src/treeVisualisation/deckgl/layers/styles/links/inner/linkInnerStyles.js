@@ -11,7 +11,7 @@ const _dashOut = [0, 0];
 
 
 export function getLinkColor(link, cached, helpers) {
-  const { colorManager: cm, dimmingEnabled, dimmingOpacity, upcomingChangesEnabled, markedSubtreeData } = cached;
+  const { colorManager: cm, dimmingEnabled, dimmingOpacity, upcomingChangesEnabled, highlightedSubtreeData } = cached;
   const lifecycleHighlight = getLifecycleLinkHighlight(link);
 
   if (lifecycleHighlight) {
@@ -63,7 +63,7 @@ export function getLinkColor(link, cached, helpers) {
     dimmingOpacity,
     subtreeDimmingEnabled,
     subtreeDimmingOpacity,
-    markedSubtreeData
+    highlightedSubtreeData
   );
 
 

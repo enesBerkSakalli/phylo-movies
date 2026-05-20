@@ -118,7 +118,7 @@ describe('ScrubberAPI', () => {
       ],
       colorManager: null,
       pivotEdgesEnabled: false,
-      markedSubtreesEnabled: true
+      subtreeHighlightsEnabled: true
     });
   });
 

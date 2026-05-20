@@ -300,7 +300,7 @@ export class ComparisonModeRenderer {
       colorManager: state.colorManager,
       subtreeHighlightTracking: state.subtreeHighlightTracking,
       frameIndex,
-      markedSubtreesEnabled: state.markedSubtreesEnabled,
+      subtreeHighlightsEnabled: state.subtreeHighlightsEnabled,
       linkConnectionOpacity: state.linkConnectionOpacity,
       leftCenter,
       rightCenter,

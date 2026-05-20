@@ -6,9 +6,10 @@ import {
   getLifecycleLinkHighlight,
   shouldHighlightLink,
   getHistoryOutlineStyle,
-  getMarkedHighlightColor
+  getSubtreeHighlightRgb
 } from '../linkUtils.js';
 import { isLinkVisuallyHighlighted } from '../../../../../systems/tree_color/visualHighlights.js';
+import { getActiveMoverEmphasis } from '../../activeMoverEmphasis.js';
 
 // Reusable output buffers to avoid per-call array allocations
 const _outlineColorOut = [0, 0, 0, 0];
@@ -43,8 +44,8 @@ export function getLinkOutlineColor(link, cached) {
     colorManager: cm,
     pulseOpacity,
     upcomingChangesEnabled,
-    markedSubtreeData,
-    markedSubtreeOpacity,
+    highlightedSubtreeData,
+    subtreeHighlightOpacity,
   } = cached;
   const lifecycleHighlight = getLifecycleLinkHighlight(link);
   const historyColor = colorToRgb(SYSTEM_TREE_COLORS.pivotEdgeColor);
@@ -78,22 +79,19 @@ export function getLinkOutlineColor(link, cached) {
       hasOutline = true;
     }
 
-    // Check if link is part of a marked subtree highlight
-    // Priority: Marked (Red) > Pivot (Blue)
-    // We allow Marked highlight even if it's part of the pivot edge, so the specific affected subtree stands out
-    // from the broader pivot edge.
+    // Let the active mover highlight stand out from the broader pivot edge.
     else if (shouldHighlightLink(link, cached)) {
       const mode = cached.highlightColorMode || 'solid';
-      rgb = getMarkedHighlightColor(link, cm, mode, cached.markedColor);
+      rgb = getSubtreeHighlightRgb(link, cm, mode, cached.subtreeHighlightColor);
 
       // Apply adjustable opacity from slider
-      const sensitivity = markedSubtreeOpacity ?? 0.8;
+      const sensitivity = subtreeHighlightOpacity ?? 0.8;
       glowOpacity = Math.round(baseOpacity * 255 * sensitivity);
       hasOutline = true;
     }
 
     // Current Pivot Edge: strong pulsing glow
-    else if (isLinkVisuallyHighlighted(link, cm, cached.markedSubtreesEnabled)) {
+    else if (isLinkVisuallyHighlighted(link, cm, cached.subtreeHighlightsEnabled)) {
       rgb = colorToRgb(cm.getBranchColorWithHighlights(link));
       glowOpacity = Math.round(baseOpacity * 128 * pulseOpacity);
       hasOutline = true;
@@ -120,7 +118,7 @@ export function getLinkOutlineColor(link, cached) {
     dimmingOpacity,
     subtreeDimmingEnabled,
     subtreeDimmingOpacity,
-    markedSubtreeData
+    highlightedSubtreeData
   );
 
 
@@ -155,22 +153,14 @@ export function getLinkOutlineWidth(link, cached, helpers) {
     return (baseWidth + 4) * metricScale;
   }
 
-  // Check if link is part of a marked subtree highlight
-  // Moderate glow width (reduced from baseWidth * 2 + 8 for less aggressive highlighting)
   if (shouldHighlightLink(link, cached)) {
-    return (baseWidth * 1.5 + 4) * metricScale; // Balanced glow for visibility without being too prominent
+    const emphasis = getActiveMoverEmphasis(link, cached, 'link');
+    return (baseWidth * 1.5 + 4) * emphasis * metricScale;
   }
 
   // Only show outline for highlighted branches
-  if (!isLinkVisuallyHighlighted(link, cm, cached.markedSubtreesEnabled)) {
+  if (!isLinkVisuallyHighlighted(link, cm, cached.subtreeHighlightsEnabled)) {
     return 0;
-  }
-
-  // Current: large pulsing glow
-
-  // FIXED: Moving subtrees should have static highlight (like marked subtrees), not pulse
-  if (cm.isLinkMovingSubtree?.(link)) {
-    return (baseWidth * 2 + 8) * metricScale; // Static bold glow
   }
 
   const highlightedWidth = baseWidth * 2;

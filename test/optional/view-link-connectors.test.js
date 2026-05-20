@@ -14,7 +14,7 @@ const { expect } = require('chai');
  * This mirrors the subset check in ComparisonModeRenderer._buildConnectors
  *
  * @param {Map} leftPositions - Position map with leaf info
- * @param {Array} markedComponents - Array of Sets representing marked subtrees
+ * @param {Array} markedComponents - Array of Sets representing highlighted subtrees
  * @returns {Array} Leaves that are part of any marked component
  */
 function filterLeavesInMarkedComponents(leftPositions, markedComponents) {

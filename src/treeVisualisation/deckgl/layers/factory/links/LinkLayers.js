@@ -17,10 +17,10 @@ import { hasLifecycleHighlightedLinks } from '../../styles/links/linkUtils.js';
 export function getLinkOutlinesLayerProps(links, state, layerStyles) {
   const {
     colorVersion, strokeWidth, changePulsePhase, changePulseEnabled,
-    pivotEdgeDashingEnabled, upcomingChangesEnabled, markedSubtreesEnabled,
+    pivotEdgeDashingEnabled, upcomingChangesEnabled, subtreeHighlightsEnabled,
     highlightColorMode,
     dimmingEnabled, dimmingOpacity, subtreeDimmingEnabled, subtreeDimmingOpacity,
-    markedSubtreeOpacity, metricScale
+    subtreeHighlightOpacity, metricScale
   } = state || {};
 
   const colorManager = state?.getColorManager?.();
@@ -29,7 +29,7 @@ export function getLinkOutlinesLayerProps(links, state, layerStyles) {
   // Only show outlines when there are active highlights/changes to minimize overhead
   const hasHighlights = !!(
     colorManager?.hasPivotEdges?.() ||
-    (colorManager?.markedSubtreeSets?.length > 0) ||
+    (colorManager?.highlightedSubtreeSets?.length > 0) ||
     (upcomingChangesEnabled && colorManager?.hasUpcomingChangeEdges?.()) ||
     (upcomingChangesEnabled && colorManager?.hasCompletedChangeEdges?.()) ||
     hasLifecycleHighlightedLinks(links)
@@ -49,13 +49,13 @@ export function getLinkOutlinesLayerProps(links, state, layerStyles) {
     updateTriggers: {
       getColor: [
         colorVersion, changePulsePhase, changePulseEnabled, upcomingChangesEnabled,
-        markedSubtreesEnabled, highlightColorMode, dimmingEnabled, dimmingOpacity,
+        subtreeHighlightsEnabled, highlightColorMode, dimmingEnabled, dimmingOpacity,
         subtreeDimmingEnabled, subtreeDimmingOpacity,
-        markedSubtreeOpacity
+        subtreeHighlightOpacity
       ],
       getWidth: [
         colorVersion, strokeWidth, changePulsePhase, changePulseEnabled,
-        upcomingChangesEnabled, markedSubtreesEnabled, highlightColorMode, metricScale
+        upcomingChangesEnabled, subtreeHighlightsEnabled, highlightColorMode, metricScale
       ],
       getDashArray: [colorVersion, pivotEdgeDashingEnabled, upcomingChangesEnabled],
       getPath: [links]
@@ -70,7 +70,7 @@ export function getLinkOutlinesLayerProps(links, state, layerStyles) {
 export function getLinksLayerProps(links, state, layerStyles) {
   const {
     taxaColorVersion, colorVersion, strokeWidth, pivotEdgeDashingEnabled,
-    upcomingChangesEnabled, markedSubtreesEnabled, highlightColorMode,
+    upcomingChangesEnabled, subtreeHighlightsEnabled, highlightColorMode,
     dimmingEnabled, dimmingOpacity, subtreeDimmingEnabled, subtreeDimmingOpacity,
     metricScale
   } = state || {};
@@ -87,12 +87,12 @@ export function getLinksLayerProps(links, state, layerStyles) {
     dashJustified: false,
     updateTriggers: {
       getColor: [
-        colorVersion, taxaColorVersion, upcomingChangesEnabled, markedSubtreesEnabled,
+        colorVersion, taxaColorVersion, upcomingChangesEnabled, subtreeHighlightsEnabled,
         highlightColorMode, dimmingEnabled, dimmingOpacity, subtreeDimmingEnabled,
         subtreeDimmingOpacity
       ],
       getWidth: [
-        colorVersion, strokeWidth, upcomingChangesEnabled, markedSubtreesEnabled,
+        colorVersion, strokeWidth, upcomingChangesEnabled, subtreeHighlightsEnabled,
         highlightColorMode, metricScale
       ],
       getDashArray: [colorVersion, pivotEdgeDashingEnabled, upcomingChangesEnabled],
