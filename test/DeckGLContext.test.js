@@ -1,8 +1,10 @@
 // @vitest-environment jsdom
 
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
+import { Deck } from '@deck.gl/core';
 import { DeckGLContext } from '../src/treeVisualisation/deckgl/context/DeckGLContext.js';
 import { VIEW_IDS } from '../src/treeVisualisation/deckgl/context/viewConstants.js';
+import { useAppStore } from '../src/state/phyloStore/store.js';
 
 vi.mock('@deck.gl/core', async () => {
   const actual = await vi.importActual('@deck.gl/core');
@@ -17,7 +19,10 @@ vi.mock('@deck.gl/core', async () => {
 });
 
 describe('DeckGLContext view state handling', () => {
+  const initialStoreState = useAppStore.getState();
+
   beforeEach(() => {
+    useAppStore.setState({ ...initialStoreState }, true);
     vi.stubGlobal('requestAnimationFrame', (callback) => {
       callback();
       return 1;
@@ -27,6 +32,7 @@ describe('DeckGLContext view state handling', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
+    useAppStore.setState({ ...initialStoreState }, true);
   });
 
   function createContext() {
@@ -56,6 +62,23 @@ describe('DeckGLContext view state handling', () => {
     expect(context.viewStates[VIEW_IDS.ORTHO].zoom).toBe(0);
   });
 
+  it('notifies view state listeners with the latest pending view id', () => {
+    const rafCallbacks = [];
+    vi.stubGlobal('requestAnimationFrame', (callback) => {
+      rafCallbacks.push(callback);
+      return rafCallbacks.length;
+    });
+    const context = createContext();
+    const listener = vi.fn();
+    context.addViewStateListener(listener);
+
+    context._handleViewStateChange({ zoom: 2 }, VIEW_IDS.ORTHO);
+    context._handleViewStateChange({ zoom: 4 }, VIEW_IDS.ORBIT);
+    rafCallbacks[0]();
+
+    expect(listener).toHaveBeenCalledWith(expect.objectContaining({ zoom: 4 }));
+  });
+
   it('initializes against a native HTMLElement container', () => {
     const container = document.createElement('div');
     const oldChild = document.createElement('span');
@@ -66,6 +89,17 @@ describe('DeckGLContext view state handling', () => {
 
     expect(container.contains(oldChild)).toBe(false);
     expect(container.querySelector('canvas')).toBe(context.canvas);
+  });
+
+  it('puts controller config on the active view instead of using Deck top-level controller', () => {
+    const container = document.createElement('div');
+    const context = new DeckGLContext(container);
+
+    context.initialize();
+
+    const deckProps = Deck.mock.calls.at(-1)[0];
+    expect(deckProps).not.toHaveProperty('controller');
+    expect(deckProps.views[0].props.controller).toEqual(context.getControllerConfig());
   });
 
   it('zooms the active view around its current target', () => {
@@ -88,5 +122,31 @@ describe('DeckGLContext view state handling', () => {
 
     expect(context.viewStates[VIEW_IDS.ORTHO].zoom).toBe(0);
     expect(context.viewStates[VIEW_IDS.ORTHO].target).toEqual([0, 0, 0]);
+  });
+
+  it('escapes tooltip taxon and grouping values before returning HTML', () => {
+    const context = createContext();
+    useAppStore.setState({
+      taxaGrouping: {
+        mode: 'csv',
+        csvData: {
+          taxaData: {
+            '<img src=x onerror=alert(1)>': {
+              '<b>Group</b>': '<script>alert(1)</script>'
+            }
+          }
+        }
+      }
+    });
+
+    const tooltip = context._getTooltip({
+      object: { text: '<img src=x onerror=alert(1)>' }
+    });
+
+    expect(tooltip.html).toContain('&lt;img src=x onerror=alert(1)&gt;');
+    expect(tooltip.html).toContain('&lt;b&gt;Group&lt;/b&gt;');
+    expect(tooltip.html).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
+    expect(tooltip.html).not.toContain('<img');
+    expect(tooltip.html).not.toContain('<script>');
   });
 });

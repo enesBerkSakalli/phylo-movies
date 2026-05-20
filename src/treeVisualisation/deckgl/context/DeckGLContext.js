@@ -1,14 +1,26 @@
 import {
-  Deck,
-  OrthographicView,
-  OrbitView,
-  LinearInterpolator
+  Deck
 } from '@deck.gl/core';
 import { easeInOutCubic } from '../../../domain/math/mathUtils.js';
-import { VIEW_IDS, DEFAULT_ORTHO_STATE, DEFAULT_ORBIT_STATE } from './viewConstants.js';
 import { useAppStore } from '../../../state/phyloStore/store.js';
-import { getGroupForTaxon } from '../../../treeColoring/utils/GroupingUtils.js';
 import { measureFrameStep } from '../../performance/frameInstrumentation.js';
+import { createTaxonTooltip } from './tooltipUtils.js';
+import {
+  createDeckInterpolators,
+  createDeckViews,
+  createInitialViewStates,
+  getActiveViewId,
+  getDefaultViewStateFor,
+  clampViewZoom
+} from './cameraState.js';
+import {
+  createDeckCanvas,
+  getCanvasDimensions,
+  getDeckCursor,
+  getDefaultControllerConfig,
+  isTreeNodeLayer,
+  removeChildren
+} from './deckContextUtils.js';
 
 /**
  * DeckGLContext - Manages the Deck.gl instance lifecycle
@@ -29,10 +41,10 @@ export class DeckGLContext {
     this._viewStateListeners = new Set();
     this._layerListeners = new Set();
     this._resizeListeners = new Set();
-    this._controllerConfigListeners = new Set();
 
     // OPTIMIZATION: Throttle view state notifications
     this._viewStateNotifyPending = false;
+    this._pendingViewStateId = null;
 
     // Event callbacks
     this._onWebGLInitialized = null;
@@ -45,24 +57,16 @@ export class DeckGLContext {
     this._controllerConfigCallback = null;
 
     this.cameraMode = 'orthographic'; // 'orthographic' | 'orbit'
+    this._controllerConfig = this._getControllerConfig();
 
     // One view active at a time, but we keep both defined to swap instantly
-    this.views = {
-      orthographic: new OrthographicView({ id: VIEW_IDS.ORTHO, controller: true }),
-      orbit: new OrbitView({ id: VIEW_IDS.ORBIT, fov: 50, near: 0.1, far: 10000, controller: true })
-    };
+    this.views = createDeckViews(this._controllerConfig);
 
     // Persist last view state per camera so toggling cameras keeps position
-    this.viewStates = {
-      [VIEW_IDS.ORTHO]: { ...DEFAULT_ORTHO_STATE, ...(options.initialOrthoState || {}) },
-      [VIEW_IDS.ORBIT]: { ...DEFAULT_ORBIT_STATE, ...(options.initialOrbitState || {}) }
-    };
+    this.viewStates = createInitialViewStates(options);
 
     // Interpolators for animated transitions (LinearInterpolator for non-geospatial views)
-    this.interpolatorOrtho = new LinearInterpolator({ transitionProps: ['target', 'zoom'] });
-    this.interpolatorOrbit = new LinearInterpolator({
-      transitionProps: ['target', 'zoom', 'rotationOrbit', 'rotationX']
-    });
+    this.interpolators = createDeckInterpolators();
 
     // Default transition tuning
     this._defaultEasing = easeInOutCubic;
@@ -85,7 +89,6 @@ export class DeckGLContext {
     this.deck = new Deck({
       canvas: this.canvas,
       views: [this.views[this.cameraMode]],
-      controller: this._getControllerConfig(),
       viewState: initialViewState,
       _backgroundColor: [255, 255, 255, 255],
       useDevicePixels: true,
@@ -117,27 +120,11 @@ export class DeckGLContext {
   }
 
   _createCanvas() {
-    if (!this.container) {
-      throw new Error('DeckGLContext: container element is required to initialize deck.gl');
-    }
-
-    this.canvas = document.createElement('canvas');
-    this.canvas.style.width = '100%';
-    this.canvas.style.height = '100%';
-    this.canvas.style.display = 'block';
-    this.container.appendChild(this.canvas);
+    this.canvas = createDeckCanvas(this.container);
   }
 
   _getControllerConfig() {
-    return {
-      doubleClickZoom: false,
-      touchZoom: true,
-      touchRotate: true,
-      scrollZoom: true,
-      dragPan: true,
-      dragRotate: true,
-      keyboard: true
-    };
+    return this._controllerConfig || getDefaultControllerConfig();
   }
 
   // ==========================================================================
@@ -211,6 +198,7 @@ export class DeckGLContext {
     const id = viewId || this._activeViewId();
     this.viewStates[id] = { ...this.viewStates[id], ...viewState };
     this.deck.setProps({ viewState: this.viewStates[id] });
+    this._pendingViewStateId = id;
 
     // OPTIMIZATION: Throttle listener notifications to ~60fps
     // This prevents flooding listeners during rapid pan/zoom
@@ -218,7 +206,9 @@ export class DeckGLContext {
       this._viewStateNotifyPending = true;
       requestAnimationFrame(() => {
         this._viewStateNotifyPending = false;
-        this._notifyViewStateListeners(this.viewStates[id]);
+        const notifyId = this._pendingViewStateId || this._activeViewId();
+        this._pendingViewStateId = null;
+        this._notifyViewStateListeners(this.viewStates[notifyId]);
       });
     }
   }
@@ -272,140 +262,12 @@ export class DeckGLContext {
   }
 
   _getCursor(isDragging, isHovering) {
-    if (isDragging) return 'grabbing';
-    if (isHovering) return 'pointer';
-    return 'default';
+    return getDeckCursor(isDragging, isHovering);
   }
 
   _getTooltip(info) {
-    const obj = info?.object;
-    if (!obj) return null;
-
-    // Prioritize explicit label text, fallback to node name
-    const taxonName = obj.text || obj.name;
-    if (!taxonName) return null;
-
-    // Build tooltip content with all available info
     const taxaGrouping = useAppStore.getState().taxaGrouping;
-    const tooltipLines = [taxonName];
-
-    if (taxaGrouping) {
-      const taxonInfo = this._getAllTaxonInfo(taxonName, taxaGrouping);
-
-      // Add all available fields
-      for (const [key, value] of Object.entries(taxonInfo)) {
-        if (value != null) {
-          tooltipLines.push(`${key}: ${value}`);
-        }
-      }
-    }
-
-    return {
-      html: this._formatTooltipHtml(tooltipLines),
-      style: {
-        fontSize: '11px',
-        padding: '6px 10px',
-        backgroundColor: 'rgba(30, 30, 30, 0.95)',
-        color: '#fff',
-        borderRadius: '6px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-        maxWidth: '300px'
-      }
-    };
-  }
-
-  /**
-   * Format tooltip lines as styled HTML
-   * @param {string[]} lines - Array of lines to display
-   * @returns {string} HTML string for tooltip
-   */
-  _formatTooltipHtml(lines) {
-    if (lines.length === 0) return '';
-
-    const [title, ...details] = lines;
-    let html = `<div style="font-weight: 600; margin-bottom: ${details.length ? '4px' : '0'}; font-size: 12px;">${title}</div>`;
-
-    if (details.length > 0) {
-      html += '<div style="font-size: 10px; opacity: 0.9; line-height: 1.4;">';
-      html += details.map(line => {
-        const colonIdx = line.indexOf(':');
-        if (colonIdx > 0) {
-          const key = line.substring(0, colonIdx);
-          const value = line.substring(colonIdx + 1).trim();
-          return `<div><span style="opacity: 0.7;">${key}:</span> ${value}</div>`;
-        }
-        return `<div>${line}</div>`;
-      }).join('');
-      html += '</div>';
-    }
-
-    return html;
-  }
-
-  /**
-   * Get all available information for a taxon based on current grouping configuration
-   * @param {string} taxonName - The taxon name
-   * @param {Object} taxaGrouping - The taxa grouping configuration from store
-   * @returns {Object} Object with all available info fields
-   */
-  _getAllTaxonInfo(taxonName, taxaGrouping) {
-    if (!taxaGrouping) return {};
-
-    const { mode, separators, strategyType, segmentIndex, useRegex, regexPattern, csvTaxaMap, csvData, csvColumn } = taxaGrouping;
-    const info = {};
-
-    if (mode === 'taxa') {
-      // Individual taxa mode - no additional group info
-      return info;
-    }
-
-    if (mode === 'csv') {
-      // CSV-based grouping: show all column values for this taxon
-      if (csvData?.taxaData) {
-        // taxaData is Map or Object: taxon -> {col1: val1, col2: val2, ...}
-        let taxonData;
-        if (csvData.taxaData instanceof Map) {
-          taxonData = csvData.taxaData.get(taxonName);
-        } else if (typeof csvData.taxaData === 'object') {
-          taxonData = csvData.taxaData[taxonName];
-        }
-
-        if (taxonData && typeof taxonData === 'object') {
-          // Add all column values
-          for (const [colName, value] of Object.entries(taxonData)) {
-            info[colName] = value;
-          }
-        }
-      } else if (csvTaxaMap) {
-        // Fallback: just show the current column mapping
-        let groupValue;
-        if (csvTaxaMap instanceof Map) {
-          groupValue = csvTaxaMap.get(taxonName);
-        } else if (typeof csvTaxaMap === 'object') {
-          groupValue = csvTaxaMap[taxonName];
-        }
-        if (groupValue) {
-          info[csvColumn || 'Group'] = groupValue;
-        }
-      }
-      return info;
-    }
-
-    if (mode === 'groups') {
-      // Pattern-based grouping: compute and show the group
-      const options = { segmentIndex, useRegex, regexPattern };
-      const groupName = getGroupForTaxon(taxonName, separators, strategyType, options);
-      if (groupName) {
-        info['Group'] = groupName;
-        // Show the strategy used
-        if (strategyType) {
-          info['Strategy'] = strategyType;
-        }
-      }
-      return info;
-    }
-
-    return info;
+    return createTaxonTooltip(info, taxaGrouping);
   }
 
   // ==========================================================================
@@ -445,8 +307,10 @@ export class DeckGLContext {
     if (this._controllerConfigCallback) {
       this._controllerConfigCallback(config);
     }
+    this._controllerConfig = config;
+    this.views = createDeckViews(config);
     if (this.deck) {
-      this.deck.setProps({ controller: config });
+      this.deck.setProps({ views: [this.views[this.cameraMode]] });
     }
   }
 
@@ -455,17 +319,7 @@ export class DeckGLContext {
   }
 
   getCanvasDimensions() {
-    if (this.canvas) {
-      const w = this.canvas.clientWidth || this.canvas.width || 800;
-      const h = this.canvas.clientHeight || this.canvas.height || 600;
-      return { width: w, height: h };
-    }
-    const node = this.container?.node?.();
-    if (node) {
-      const rect = node.getBoundingClientRect();
-      return { width: rect.width || 800, height: rect.height || 600 };
-    }
-    return { width: 800, height: 600 };
+    return getCanvasDimensions(this.canvas, this.container);
   }
 
   // ==========================================================================
@@ -605,7 +459,11 @@ export class DeckGLContext {
     this._onDrag = null;
     this._onDragEnd = null;
     this._controllerConfigCallback = null;
+    this._viewStateNotifyPending = false;
+    this._pendingViewStateId = null;
     this._viewStateListeners.clear();
+    this._layerListeners.clear();
+    this._resizeListeners.clear();
   }
 
   // ==========================================================================
@@ -613,25 +471,19 @@ export class DeckGLContext {
   // ==========================================================================
 
   _activeViewId() {
-    return this.cameraMode === 'orthographic' ? VIEW_IDS.ORTHO : VIEW_IDS.ORBIT;
+    return getActiveViewId(this.cameraMode);
   }
 
   _interpolatorFor(id) {
-    return id === VIEW_IDS.ORTHO ? this.interpolatorOrtho : this.interpolatorOrbit;
+    return id === getActiveViewId('orthographic') ? this.interpolators.orthographic : this.interpolators.orbit;
   }
 
   _defaultViewStateFor(id) {
-    return id === VIEW_IDS.ORTHO
-      ? { ...DEFAULT_ORTHO_STATE }
-      : { ...DEFAULT_ORBIT_STATE };
+    return getDefaultViewStateFor(id);
   }
 
   _clampZoom(viewId, zoom) {
-    const viewState = this.viewStates[viewId];
-    const minZoom = viewState.minZoom ?? -Infinity;
-    const maxZoom = viewState.maxZoom ?? Infinity;
-    const value = Number.isFinite(zoom) ? zoom : viewState.zoom;
-    return Math.max(minZoom, Math.min(maxZoom, value));
+    return clampViewZoom(this.viewStates[viewId], zoom);
   }
 
   _applyViewState(id, patch, transitionProps) {
@@ -679,19 +531,4 @@ export class DeckGLContext {
   }
 
 
-}
-
-function removeChildren(element) {
-  if (!element) return;
-  if (typeof element.replaceChildren === 'function') {
-    element.replaceChildren();
-    return;
-  }
-  while (element.firstChild) {
-    element.removeChild(element.firstChild);
-  }
-}
-
-function isTreeNodeLayer(layerId) {
-  return layerId === 'phylo-nodes' || layerId?.startsWith('phylo-nodes-');
 }
