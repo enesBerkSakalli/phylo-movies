@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   findNextInputTreeSequenceIndex,
   findPreviousInputTreeSequenceIndex,
-} from '../../../src/domain/indexing/IndexMapping.js';
+} from '../../../src/domain/indexing/treeIndexSemantics.js';
 
 describe('source input tree index semantics', () => {
   it('names previous and next observed-tree navigation as input-tree navigation', () => {

@@ -6,7 +6,7 @@ import {
   collectUniqueSubtrees,
   collectUniqueEdges
 } from '../../../domain/tree/splits.js';
-import { findPreviousInputTreeSequenceIndex, findNextInputTreeSequenceIndex } from '../../../domain/indexing/IndexMapping.js';
+import { findPreviousInputTreeSequenceIndex, findNextInputTreeSequenceIndex } from '../../../domain/indexing/treeIndexSemantics.js';
 import { selectInputFrameIndices, selectPairById, selectTimelineFrameAtIndex } from '../selectors/treeSelectors.js';
 
 // ============================================================================
