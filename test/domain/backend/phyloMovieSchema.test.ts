@@ -217,6 +217,57 @@ describe('validatePhyloMovieData', () => {
     });
   });
 
+  it('accepts structured branch annotation fields on tree nodes', () => {
+    const annotatedTree = {
+      ...tree,
+      annotations: {
+        fields: {
+          'label.raw_internal': {
+            path: ['label', 'raw_internal'],
+            label: 'Raw Internal Label',
+            value: '88.5/99',
+            value_type: 'string',
+            role: 'source_annotation',
+          },
+          'support.iqtree.sh_alrt': {
+            path: ['support', 'iqtree', 'sh_alrt'],
+            label: 'SH-aLRT',
+            value: 88.5,
+            value_type: 'number',
+            role: 'branch_support',
+            unit: 'percent',
+            analysis: { type: 'tree_inference', method: 'iqtree', mode: 'sh_alrt_ufboot' },
+          },
+          'support.iqtree.ufboot': {
+            path: ['support', 'iqtree', 'ufboot'],
+            label: 'UFBoot',
+            value: 99,
+            value_type: 'integer',
+            role: 'branch_support',
+            unit: 'percent',
+            analysis: { type: 'tree_inference', method: 'iqtree', mode: 'sh_alrt_ufboot' },
+          },
+        },
+      },
+      children: tree.children.map((child) => ({
+        ...child,
+        annotations: {
+          fields: {},
+        },
+      })),
+    };
+
+    const result = validatePhyloMovieData(makePayload({
+      interpolated_trees: [annotatedTree, annotatedTree, annotatedTree],
+    }));
+
+    expect(result.interpolated_trees[0].annotations?.fields['support.iqtree.ufboot']).toMatchObject({
+      role: 'branch_support',
+      value: 99,
+      analysis: { method: 'iqtree' },
+    });
+  });
+
   it('validates the same contract through the data service', () => {
     expect(phyloData.validate(makePayload()).pairs[0].pair_id).toBe('pair_0_1');
   });
@@ -424,6 +475,14 @@ describe('validatePhyloMovieData', () => {
 
     expect(() => validatePhyloMovieData(payload))
       .toThrow(/temporal_events\[1\]\.moving_subtree is not part of the backend contract/);
+  });
+
+  it('rejects SPR movement events without a pivot edge', () => {
+    const payload = clone(makePayload());
+    (payload.temporal_events as Array<Record<string, unknown>>)[1].pivot_edge = [];
+
+    expect(() => validatePhyloMovieData(payload))
+      .toThrow(/temporal_events\[1\]\.pivot_edge must contain at least one number/);
   });
 
   it('requires pair metrics to reference pair rows', () => {

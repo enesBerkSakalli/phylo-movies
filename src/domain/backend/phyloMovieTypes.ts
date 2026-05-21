@@ -1,7 +1,37 @@
+export type AnnotationValue = string | number | boolean | Array<string | number | boolean>;
+export type AnnotationValueType = 'string' | 'number' | 'integer' | 'boolean' | 'array';
+
+export interface AnnotationAnalysis {
+  type: string;
+  method?: string;
+  mode?: string;
+}
+
+export interface AnnotationField {
+  path: string[];
+  label: string;
+  value: AnnotationValue;
+  value_type: AnnotationValueType;
+  role: string;
+  unit?: string;
+  analysis?: AnnotationAnalysis;
+}
+
+export interface TreeNodeAnnotations {
+  fields: Record<string, AnnotationField>;
+}
+
+export interface BranchSupport {
+  primary: number;
+  kind: string;
+  [key: string]: unknown;
+}
+
 export interface TreeNode {
   name: string;
   length: number;
   split_indices: number[];
+  annotations?: TreeNodeAnnotations;
   children: TreeNode[];
 }
 
@@ -63,7 +93,7 @@ export interface SprMoveTemporalEvent extends TemporalEventBase {
   pivot_edge: number[];
   /** Planner-selected subtree that physically moves for this SPR event. */
   driver_subtree: number[];
-  /** Active mover highlight groups for this event; excludes passive context clades. */
+  /** Active mover highlight groups for this event; excludes passive context subtrees. */
   highlight_group: number[][];
   collapse_path: SprPathSegment[];
   expand_path: SprPathSegment[];

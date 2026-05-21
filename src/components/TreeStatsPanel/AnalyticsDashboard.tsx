@@ -19,20 +19,21 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import {
     selectFileName,
+    selectActiveTreeList,
     selectLeafNamesByIndex,
     selectMarkedNodes,
     selectPairMetrics,
     selectPairs,
     selectTemporalEvents,
+    selectTimelineFrames,
     useAppStore
 } from '../../state/phyloStore/store.js';
 import {
-    buildSprMoveEventRows,
-    calculateSprDatasetSummary,
-    calculateSprMovedSubtreeRecurrences,
-    calculateSprPairActivity,
+    buildSprAnalyticsModel,
     formatSubtreeLabel,
 } from '../../domain/spr/sprAnalytics';
+import type { SprAnalyticsModel } from '../../domain/spr/sprAnalytics';
+import { buildBranchSupportIndex } from '../../domain/tree/branchSupportIndex';
 import { Button } from '../ui/button';
 import { SidebarMenuItem, SidebarMenuButton } from '../ui/sidebar';
 import {
@@ -74,100 +75,9 @@ const fitAnalyticsWindowRect = (rect: { x: number; y: number; width: number; hei
 
 const getInitialWindowRect = () => toFloatingWindowRect(fitAnalyticsWindowRect({ x: 280, y: 40, width: 900, height: 720 }));
 
-interface SprDatasetSummary {
-    pairCount: number;
-    activePairCount: number;
-    transitionEventCount: number;
-    uniqueMovedSubtreeCount: number;
-    singleTaxonMoveEventCount: number;
-    multiTaxonMoveEventCount: number;
-    topMovedSubtreeSharePercentage: number;
-    sprMoveEventCount: number;
-    totalPathHops: number;
-    averagePathHops: number;
-    totalPathLength: number;
-    averagePathLength: number;
-    farthestMovedSubtree: {
-        signature: string;
-        splitIndices: number[];
-        count: number;
-        totalPathHops: number;
-        averagePathHops: number;
-        totalPathLength: number;
-        averagePathLength: number;
-    } | null;
-}
-
 export const AnalyticsDashboard = ({ isOpen = false, isActive = false, onOpen, onClose, onFocus }: AnalyticsDashboardProps) => {
     const [windowRect, setWindowRect] = React.useState(getInitialWindowRect);
     const fittedWindow = fitAnalyticsWindowRect(windowRect);
-    const pairs = useAppStore(selectPairs);
-    const leafNamesByIndex = useAppStore(selectLeafNamesByIndex);
-    const fileName = useAppStore(selectFileName) || 'dataset';
-    const pairMetrics = useAppStore(selectPairMetrics);
-    const temporalEvents = useAppStore(selectTemporalEvents);
-    const selectedMovedSubtreeIndices = useAppStore(selectMarkedNodes);
-
-    const sprOptions = useMemo(() => ({
-        pairMetrics,
-        temporalEvents,
-    }), [pairMetrics, temporalEvents]);
-
-    const movedSubtreeRecurrences = useMemo(() => {
-        return calculateSprMovedSubtreeRecurrences(pairs, sprOptions);
-    }, [pairs, sprOptions]);
-
-    const sprSummary = useMemo<SprDatasetSummary>(() => {
-        return calculateSprDatasetSummary(pairs, sprOptions) as SprDatasetSummary;
-    }, [pairs, sprOptions]);
-
-    const pairActivityRows = useMemo(() => {
-        return calculateSprPairActivity(pairs, sprOptions);
-    }, [pairs, sprOptions]);
-
-    const sprMoveEvents = useMemo(() => {
-        return buildSprMoveEventRows(pairs, sprOptions);
-    }, [pairs, sprOptions]);
-
-    const singleTaxonMoveEventPercentage = sprSummary.sprMoveEventCount > 0
-        ? (sprSummary.singleTaxonMoveEventCount / sprSummary.sprMoveEventCount) * 100
-        : 0;
-
-    const farthestMovedSubtree = useMemo(() => {
-        if (!sprSummary.farthestMovedSubtree) return null;
-
-        const fullLabel = formatSubtreeLabel(sprSummary.farthestMovedSubtree.splitIndices, leafNamesByIndex);
-        const label = fullLabel.length > 28
-            ? `${fullLabel.slice(0, 25)}...`
-            : fullLabel;
-
-        return {
-            label,
-            fullLabel,
-            totalPathHops: sprSummary.farthestMovedSubtree.totalPathHops,
-            totalPathLength: sprSummary.farthestMovedSubtree.totalPathLength,
-            averagePathHops: sprSummary.farthestMovedSubtree.averagePathHops,
-            averagePathLength: sprSummary.farthestMovedSubtree.averagePathLength,
-        };
-    }, [sprSummary.farthestMovedSubtree, leafNamesByIndex]);
-
-    const recurrenceCsvContent = useMemo(() => {
-        return createSprMovedSubtreeRecurrenceCsv(movedSubtreeRecurrences, leafNamesByIndex);
-    }, [movedSubtreeRecurrences, leafNamesByIndex]);
-
-    const eventCsvContent = useMemo(() => {
-        return createSprMoveEventCsv(sprMoveEvents, leafNamesByIndex);
-    }, [sprMoveEvents, leafNamesByIndex]);
-
-    const handleExportRecurrenceCsv = () => {
-        if (!recurrenceCsvContent) return;
-        downloadCsvFile(recurrenceCsvContent, createSprMovedSubtreeRecurrenceExportName(fileName));
-    };
-
-    const handleExportEventCsv = () => {
-        if (!eventCsvContent) return;
-        downloadCsvFile(eventCsvContent, createSprMoveEventExportName(fileName));
-    };
 
     const portalRoot = typeof document !== 'undefined'
         ? document.body
@@ -255,150 +165,230 @@ export const AnalyticsDashboard = ({ isOpen = false, isActive = false, onOpen, o
                             </Button>
                         </div>
 
-                        <div className="flex flex-col flex-1 min-h-0 overflow-hidden p-4">
-                            <Tabs defaultValue="overview" className="flex flex-col flex-1 min-h-0 overflow-hidden">
-                                <TabsList className="w-full justify-start mb-4 shrink-0 bg-muted/30 p-1">
-                                    <TabsTrigger value="overview" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">{SPR_ANALYTICS_COPY.tabs.overview}</TabsTrigger>
-                                    <TabsTrigger value="events" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">{SPR_ANALYTICS_COPY.tabs.events}</TabsTrigger>
-                                    <TabsTrigger value="details" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">{SPR_ANALYTICS_COPY.tabs.details}</TabsTrigger>
-                                </TabsList>
-
-                                <TabsContent value="overview" className="flex-1 min-h-0 mt-0 focus-visible:outline-none">
-                                    <ScrollArea className="h-full">
-                                        <div className="pb-6 space-y-4 pr-3">
-                                            <Card className="bg-primary/5 border-primary/20 p-3 flex flex-col gap-2">
-                                                <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-wider text-primary">
-                                                    <BookOpen className="size-3" />
-                                                    {SPR_ANALYTICS_COPY.countedTitle}
-                                                </div>
-                                                <p className="text-2xs leading-relaxed text-muted-foreground">
-                                                    {SPR_ANALYTICS_COPY.countedDescription}
-                                                </p>
-                                            </Card>
-
-                                            <SprSummaryMetrics
-                                                uniqueMovedSubtreeCount={sprSummary.uniqueMovedSubtreeCount}
-                                                sprMovementCount={sprSummary.sprMoveEventCount}
-                                                transitionEventCount={sprSummary.transitionEventCount}
-                                                activePairCount={sprSummary.activePairCount}
-                                                singleTaxonMoveEventPercentage={singleTaxonMoveEventPercentage}
-                                                topMovedSubtreePercentage={sprSummary.topMovedSubtreeSharePercentage}
-                                                sprMoveEventCount={sprSummary.sprMoveEventCount}
-                                                totalPathHops={sprSummary.totalPathHops}
-                                                averagePathHops={sprSummary.averagePathHops}
-                                                totalPathLength={sprSummary.totalPathLength}
-                                                averagePathLength={sprSummary.averagePathLength}
-                                                farthestMovedSubtree={farthestMovedSubtree}
-                                            />
-
-                                            <Card className="shadow-sm bg-muted/10 h-80 flex flex-col">
-                                                <CardHeader className="pb-3 bg-muted/20 shrink-0">
-                                                    <CardTitle className="flex items-center gap-2 text-base font-bold">
-                                                        <Activity className="size-4 text-primary" />
-                                                        {SPR_ANALYTICS_COPY.activityTitle}
-                                                    </CardTitle>
-                                                    <CardDescription className="text-xs">
-                                                        {SPR_ANALYTICS_COPY.activityDescription}
-                                                    </CardDescription>
-                                                </CardHeader>
-                                                <CardContent className="flex-1 min-h-0 p-2">
-                                                    <SprActivityTimeline rows={pairActivityRows} />
-                                                </CardContent>
-                                            </Card>
-
-                                            <Card className="shadow-sm bg-muted/10 h-96 flex flex-col">
-                                                <CardHeader className="pb-3 bg-muted/20 shrink-0">
-                                                    <CardTitle className="flex items-center gap-2 text-base font-bold">
-                                                        <BarChart className="size-4 text-primary" />
-                                                        {SPR_ANALYTICS_COPY.recurrenceChartTitle}
-                                                    </CardTitle>
-                                                    <CardDescription className="text-xs">
-                                                        {SPR_ANALYTICS_COPY.recurrenceChartDescription}
-                                                    </CardDescription>
-                                                </CardHeader>
-                                                <CardContent className="flex-1 min-h-0 p-2">
-                                                    <MovedSubtreeRecurrenceChart />
-                                                </CardContent>
-                                            </Card>
-                                        </div>
-                                    </ScrollArea>
-                                </TabsContent>
-
-                                <TabsContent value="events" className="flex-1 min-h-0 mt-0 focus-visible:outline-none flex flex-col">
-                                    <Card className="shadow-sm bg-muted/10 flex-1 flex flex-col min-h-0">
-                                        <CardHeader className="pb-3 bg-muted/20 shrink-0">
-                                            <CardTitle className="flex items-center gap-2 text-base font-bold">
-                                                <Activity className="size-4 text-primary" />
-                                                {SPR_ANALYTICS_COPY.eventTitle}
-                                            </CardTitle>
-                                            <CardDescription className="text-xs flex items-center justify-between gap-2">
-                                                <span>{SPR_ANALYTICS_COPY.eventDescription}</span>
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="xs"
-                                                    className="gap-1 shrink-0"
-                                                    onClick={handleExportEventCsv}
-                                                    disabled={sprMoveEvents.length === 0}
-                                                >
-                                                    <Download className="size-3" />
-                                                    Export CSV
-                                                </Button>
-                                            </CardDescription>
-                                        </CardHeader>
-                                        <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
-                                            <SprMoveEventTable
-                                                events={sprMoveEvents}
-                                                leafNamesByIndex={leafNamesByIndex}
-                                                selectedMovedSubtreeIndices={selectedMovedSubtreeIndices}
-                                            />
-                                        </CardContent>
-                                    </Card>
-                                </TabsContent>
-
-                                <TabsContent value="details" className="flex-1 min-h-0 mt-0 focus-visible:outline-none flex flex-col">
-                                    <Card className="shadow-sm bg-muted/10 flex-1 flex flex-col min-h-0">
-                                        <CardHeader className="pb-3 bg-muted/20 shrink-0">
-                                            <CardTitle className="flex items-center gap-2 text-base font-bold">
-                                                <ListTree className="size-4 text-primary" />
-                                                {SPR_ANALYTICS_COPY.recurrenceTableTitle}
-                                            </CardTitle>
-                                            <CardDescription className="text-xs flex items-center justify-between gap-2">
-                                                <span>{SPR_ANALYTICS_COPY.recurrenceTableDescription}</span>
-                                                <div className="flex items-center gap-2 shrink-0">
-                                                    {movedSubtreeRecurrences.length > 5 && (
-                                                        <span className="flex items-center gap-1 text-muted-foreground/60 shrink-0 ml-2">
-                                                            <ChevronDown className="size-3 animate-bounce" />
-                                                            <span className="text-2xs">{movedSubtreeRecurrences.length} items · scroll</span>
-                                                        </span>
-                                                    )}
-                                                    <Button
-                                                        type="button"
-                                                        variant="outline"
-                                                        size="xs"
-                                                        className="gap-1"
-                                                        onClick={handleExportRecurrenceCsv}
-                                                        disabled={movedSubtreeRecurrences.length === 0}
-                                                    >
-                                                        <Download className="size-3" />
-                                                        Export CSV
-                                                    </Button>
-                                                </div>
-                                            </CardDescription>
-                                        </CardHeader>
-                                        <CardContent className="p-0 flex-1 min-h-0 overflow-y-auto">
-                                            <MovedSubtreeRecurrenceTable recurrences={movedSubtreeRecurrences} leafNamesByIndex={leafNamesByIndex} />
-                                        </CardContent>
-                                    </Card>
-                                </TabsContent>
-                            </Tabs>
-                        </div>
+                        <AnalyticsDashboardBody />
                     </div>
                 </Rnd>
                 ,
                 portalRoot
             )}
         </>
+    );
+};
+
+const AnalyticsDashboardBody = () => {
+    const pairs = useAppStore(selectPairs);
+    const leafNamesByIndex = useAppStore(selectLeafNamesByIndex);
+    const fileName = useAppStore(selectFileName) || 'dataset';
+    const pairMetrics = useAppStore(selectPairMetrics);
+    const temporalEvents = useAppStore(selectTemporalEvents);
+    const interpolatedTrees = useAppStore(selectActiveTreeList);
+    const frames = useAppStore(selectTimelineFrames);
+    const selectedMovedSubtreeIndices = useAppStore(selectMarkedNodes);
+
+    const branchSupportIndex = useMemo(() => buildBranchSupportIndex({
+        interpolatedTrees,
+        frames,
+    }), [interpolatedTrees, frames]);
+
+    const sprOptions = useMemo(() => ({
+        pairMetrics,
+        temporalEvents,
+        branchSupportIndex,
+    }), [pairMetrics, temporalEvents, branchSupportIndex]);
+
+    const analyticsModel = useMemo<SprAnalyticsModel>(() => {
+        return buildSprAnalyticsModel(pairs, sprOptions);
+    }, [pairs, sprOptions]);
+
+    const {
+        eventRows: sprMoveEvents,
+        movedSubtreeRecurrences,
+        pairActivityRows,
+        summary: sprSummary,
+    } = analyticsModel;
+
+    const singleTaxonMoveEventPercentage = sprSummary.sprMoveEventCount > 0
+        ? (sprSummary.singleTaxonMoveEventCount / sprSummary.sprMoveEventCount) * 100
+        : 0;
+
+    const farthestMovedSubtree = useMemo(() => {
+        if (!sprSummary.farthestMovedSubtree) return null;
+
+        const fullLabel = formatSubtreeLabel(sprSummary.farthestMovedSubtree.splitIndices, leafNamesByIndex);
+        const label = fullLabel.length > 28
+            ? `${fullLabel.slice(0, 25)}...`
+            : fullLabel;
+
+        return {
+            label,
+            fullLabel,
+            totalPathHops: sprSummary.farthestMovedSubtree.totalPathHops,
+            totalPathLength: sprSummary.farthestMovedSubtree.totalPathLength,
+            averagePathHops: sprSummary.farthestMovedSubtree.averagePathHops,
+            averagePathLength: sprSummary.farthestMovedSubtree.averagePathLength,
+        };
+    }, [sprSummary.farthestMovedSubtree, leafNamesByIndex]);
+
+    const recurrenceCsvContent = useMemo(() => {
+        return createSprMovedSubtreeRecurrenceCsv(movedSubtreeRecurrences, leafNamesByIndex);
+    }, [movedSubtreeRecurrences, leafNamesByIndex]);
+
+    const eventCsvContent = useMemo(() => {
+        return createSprMoveEventCsv(sprMoveEvents, leafNamesByIndex);
+    }, [sprMoveEvents, leafNamesByIndex]);
+
+    const handleExportRecurrenceCsv = () => {
+        if (!recurrenceCsvContent) return;
+        downloadCsvFile(recurrenceCsvContent, createSprMovedSubtreeRecurrenceExportName(fileName));
+    };
+
+    const handleExportEventCsv = () => {
+        if (!eventCsvContent) return;
+        downloadCsvFile(eventCsvContent, createSprMoveEventExportName(fileName));
+    };
+
+    return (
+        <div className="flex flex-col flex-1 min-h-0 overflow-hidden p-4">
+            <Tabs defaultValue="overview" className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <TabsList className="w-full justify-start mb-4 shrink-0 bg-muted/30 p-1">
+                    <TabsTrigger value="overview" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">{SPR_ANALYTICS_COPY.tabs.overview}</TabsTrigger>
+                    <TabsTrigger value="events" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">{SPR_ANALYTICS_COPY.tabs.events}</TabsTrigger>
+                    <TabsTrigger value="details" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">{SPR_ANALYTICS_COPY.tabs.details}</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="overview" className="flex-1 min-h-0 mt-0 focus-visible:outline-none">
+                    <ScrollArea className="h-full">
+                        <div className="pb-6 space-y-4 pr-3">
+                            <Card className="bg-primary/5 border-primary/20 p-3 flex flex-col gap-2">
+                                <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-wider text-primary">
+                                    <BookOpen className="size-3" />
+                                    {SPR_ANALYTICS_COPY.countedTitle}
+                                </div>
+                                <p className="text-2xs leading-relaxed text-muted-foreground">
+                                    {SPR_ANALYTICS_COPY.countedDescription}
+                                </p>
+                            </Card>
+
+                            <SprSummaryMetrics
+                                uniqueMovedSubtreeCount={sprSummary.uniqueMovedSubtreeCount}
+                                sprMovementCount={sprSummary.sprMoveEventCount}
+                                transitionEventCount={sprSummary.transitionEventCount}
+                                activePairCount={sprSummary.activePairCount}
+                                singleTaxonMoveEventPercentage={singleTaxonMoveEventPercentage}
+                                topMovedSubtreePercentage={sprSummary.topMovedSubtreeSharePercentage}
+                                sprMoveEventCount={sprSummary.sprMoveEventCount}
+                                totalPathHops={sprSummary.totalPathHops}
+                                averagePathHops={sprSummary.averagePathHops}
+                                totalPathLength={sprSummary.totalPathLength}
+                                averagePathLength={sprSummary.averagePathLength}
+                                farthestMovedSubtree={farthestMovedSubtree}
+                            />
+
+                            <Card className="shadow-sm bg-muted/10 h-80 flex flex-col">
+                                <CardHeader className="pb-3 bg-muted/20 shrink-0">
+                                    <CardTitle className="flex items-center gap-2 text-base font-bold">
+                                        <Activity className="size-4 text-primary" />
+                                        {SPR_ANALYTICS_COPY.activityTitle}
+                                    </CardTitle>
+                                    <CardDescription className="text-xs">
+                                        {SPR_ANALYTICS_COPY.activityDescription}
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="flex-1 min-h-0 p-2">
+                                    <SprActivityTimeline rows={pairActivityRows} />
+                                </CardContent>
+                            </Card>
+
+                            <Card className="shadow-sm bg-muted/10 h-96 flex flex-col">
+                                <CardHeader className="pb-3 bg-muted/20 shrink-0">
+                                    <CardTitle className="flex items-center gap-2 text-base font-bold">
+                                        <BarChart className="size-4 text-primary" />
+                                        {SPR_ANALYTICS_COPY.recurrenceChartTitle}
+                                    </CardTitle>
+                                    <CardDescription className="text-xs">
+                                        {SPR_ANALYTICS_COPY.recurrenceChartDescription}
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="flex-1 min-h-0 p-2">
+                                    <MovedSubtreeRecurrenceChart
+                                        recurrences={movedSubtreeRecurrences}
+                                        leafNamesByIndex={leafNamesByIndex}
+                                    />
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </ScrollArea>
+                </TabsContent>
+
+                <TabsContent value="events" className="flex-1 min-h-0 mt-0 focus-visible:outline-none flex flex-col">
+                    <Card className="shadow-sm bg-muted/10 flex-1 flex flex-col min-h-0">
+                        <CardHeader className="pb-3 bg-muted/20 shrink-0">
+                            <CardTitle className="flex items-center gap-2 text-base font-bold">
+                                <Activity className="size-4 text-primary" />
+                                {SPR_ANALYTICS_COPY.eventTitle}
+                            </CardTitle>
+                            <CardDescription className="text-xs flex items-center justify-between gap-2">
+                                <span>{SPR_ANALYTICS_COPY.eventDescription}</span>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="xs"
+                                    className="gap-1 shrink-0"
+                                    onClick={handleExportEventCsv}
+                                    disabled={sprMoveEvents.length === 0}
+                                >
+                                    <Download className="size-3" />
+                                    Export CSV
+                                </Button>
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
+                            <SprMoveEventTable
+                                events={sprMoveEvents}
+                                leafNamesByIndex={leafNamesByIndex}
+                                selectedMovedSubtreeIndices={selectedMovedSubtreeIndices}
+                            />
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="details" className="flex-1 min-h-0 mt-0 focus-visible:outline-none flex flex-col">
+                    <Card className="shadow-sm bg-muted/10 flex-1 flex flex-col min-h-0">
+                        <CardHeader className="pb-3 bg-muted/20 shrink-0">
+                            <CardTitle className="flex items-center gap-2 text-base font-bold">
+                                <ListTree className="size-4 text-primary" />
+                                {SPR_ANALYTICS_COPY.recurrenceTableTitle}
+                            </CardTitle>
+                            <CardDescription className="text-xs flex items-center justify-between gap-2">
+                                <span>{SPR_ANALYTICS_COPY.recurrenceTableDescription}</span>
+                                <div className="flex items-center gap-2 shrink-0">
+                                    {movedSubtreeRecurrences.length > 5 && (
+                                        <span className="flex items-center gap-1 text-muted-foreground/60 shrink-0 ml-2">
+                                            <ChevronDown className="size-3 animate-bounce" />
+                                            <span className="text-2xs">{movedSubtreeRecurrences.length} items · scroll</span>
+                                        </span>
+                                    )}
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="xs"
+                                        className="gap-1"
+                                        onClick={handleExportRecurrenceCsv}
+                                        disabled={movedSubtreeRecurrences.length === 0}
+                                    >
+                                        <Download className="size-3" />
+                                        Export CSV
+                                    </Button>
+                                </div>
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="p-0 flex-1 min-h-0 overflow-y-auto">
+                            <MovedSubtreeRecurrenceTable recurrences={movedSubtreeRecurrences} leafNamesByIndex={leafNamesByIndex} />
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+            </Tabs>
+        </div>
     );
 };
 
