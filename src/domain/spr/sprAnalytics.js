@@ -3,6 +3,7 @@ import {
   parseBackendSplitKey,
   toBackendSplitKey,
 } from '../tree/splits.js';
+import { classifyMovementSupport } from '../tree/branchSupportIndex.js';
 import { TimelineEventIndex } from '../../timeline/data/TimelineEventIndex.js';
 
 /**
@@ -58,12 +59,46 @@ function flattenHighlightGroup(highlightGroup) {
  * @returns {Array}
  */
 export function buildSprMoveEventRows(pairs, options = {}) {
+  const context = createSprAnalyticsContext(pairs, options);
+  return buildSprMoveEventRowsFromContext(pairs, options, context);
+}
+
+export function buildSprAnalyticsModel(pairs, options = {}) {
+  const context = createSprAnalyticsContext(pairs, options);
+  const eventRows = buildSprMoveEventRowsFromContext(pairs, options, context);
+  const movedSubtreeRecurrences = aggregateMovedSubtreeRows(eventRows);
+  const pairActivityRows = buildSprPairActivityRows(pairs, eventRows, context);
+  const summary = summarizeSprDatasetRows(pairActivityRows, movedSubtreeRecurrences);
+
+  return {
+    eventRows,
+    movedSubtreeRecurrences,
+    pairActivityRows,
+    summary,
+  };
+}
+
+function createSprAnalyticsContext(pairs, options) {
   const {
     temporalEvents,
     pairMetrics,
   } = options;
-  const metricByPairId = buildMetricByPairId(pairMetrics);
-  const eventIndex = TimelineEventIndex.from({ pairs, temporalEvents });
+
+  return {
+    metricByPairId: buildMetricByPairId(pairMetrics),
+    eventIndex: TimelineEventIndex.from({ pairs, temporalEvents }),
+  };
+}
+
+function buildSprMoveEventRowsFromContext(pairs, options, context) {
+  const {
+    branchSupportIndex,
+    supportThreshold = 70,
+  } = options;
+  const {
+    metricByPairId,
+    eventIndex,
+  } = context;
 
   return pairs
     .flatMap((pair, entryIndex) => {
@@ -89,19 +124,37 @@ export function buildSprMoveEventRows(pairs, options = {}) {
         if (!signature) return null;
 
         const pivotEdge = normalizeSubtreeIndices(event.pivot_edge);
-        const pivotKey = pivotEdge.length > 0 ? toBackendSplitKey(pivotEdge) : null;
-        const attachmentContext = pivotKey
-          ? resolveMoveAttachmentContext(
-            solution,
-            pivotKey,
-            splitIndices,
-            eventGroup,
-            contextSplitIndices
-          )
-          : null;
+        if (pivotEdge.length === 0) {
+          throw new Error(`[sprAnalytics] spr_move ${event.event_id} in ${pairId} must include a non-empty pivot_edge`);
+        }
+
+        const pivotKey = toBackendSplitKey(pivotEdge);
+        const attachmentContext = resolveMoveAttachmentContext(
+          solution,
+          pivotKey,
+          splitIndices,
+          eventGroup,
+          contextSplitIndices
+        );
+        if (!attachmentContext) {
+          throw new Error(`[sprAnalytics] spr_move ${event.event_id} in ${pairId} could not resolve attachment context for pivot_edge ${pivotKey}`);
+        }
+
         const stepRange = normalizeStepRange(event.local_step_range);
         const collapsePathLength = event.collapse_branch_length;
         const expandPathLength = event.expand_branch_length;
+        const sourceAttachmentSupport = branchSupportIndex?.getSupport?.(
+          sourceInputTreeIndex,
+          attachmentContext.sourceAttachment
+        ) ?? null;
+        const destinationAttachmentSupport = branchSupportIndex?.getSupport?.(
+          targetInputTreeIndex,
+          attachmentContext.destinationAttachment
+        ) ?? null;
+        const movedSubtreeSupport = branchSupportIndex?.getSupport?.(
+          targetInputTreeIndex,
+          splitIndices
+        ) ?? null;
 
         return {
           eventId: event.event_id,
@@ -126,6 +179,14 @@ export function buildSprMoveEventRows(pairs, options = {}) {
           pivotEdge,
           sourceAttachment: attachmentContext.sourceAttachment,
           destinationAttachment: attachmentContext.destinationAttachment,
+          sourceAttachmentSupport,
+          destinationAttachmentSupport,
+          movedSubtreeSupport,
+          supportClass: classifyMovementSupport(
+            sourceAttachmentSupport,
+            destinationAttachmentSupport,
+            supportThreshold
+          ),
           stepRange,
           frameRange: normalizeStepRange(event.frame_range),
           collapseHops: event.collapse_hops,
@@ -225,14 +286,16 @@ function aggregateMovedSubtreeRows(eventRows) {
  * @returns {Array}
  */
 export function calculateSprPairActivity(pairs, options = {}) {
-  const {
-    temporalEvents,
-    pairMetrics,
-  } = options;
-  const metricByPairId = buildMetricByPairId(pairMetrics);
-  const eventIndex = TimelineEventIndex.from({ pairs, temporalEvents });
+  const context = createSprAnalyticsContext(pairs, options);
+  const eventRows = buildSprMoveEventRowsFromContext(pairs, options, context);
+  return buildSprPairActivityRows(pairs, eventRows, context);
+}
 
-  const eventRows = buildSprMoveEventRows(pairs, options);
+function buildSprPairActivityRows(pairs, eventRows, context) {
+  const {
+    metricByPairId,
+    eventIndex,
+  } = context;
   const eventsByPair = eventRows.reduce((map, event) => {
     map.get(event.pairId).push(event);
     return map;
@@ -288,8 +351,10 @@ export function calculateSprPairActivity(pairs, options = {}) {
  * @returns {Object}
  */
 export function calculateSprDatasetSummary(pairs, options = {}) {
-  const pairActivity = calculateSprPairActivity(pairs, options);
-  const movedSubtreeRecurrences = calculateSprMovedSubtreeRecurrences(pairs, options);
+  return buildSprAnalyticsModel(pairs, options).summary;
+}
+
+function summarizeSprDatasetRows(pairActivity, movedSubtreeRecurrences) {
   const sprMoveEventCount = pairActivity
     .reduce((sum, row) => sum + row.sprMoveEventCount, 0);
   const totalPathHops = pairActivity
@@ -478,9 +543,12 @@ function resolveGroupAttachmentContext(solution, pivotKey, highlightGroup, group
 
 function resolveAttachmentContext(solution, pivotKey, splitIndices, excludedIndices = splitIndices) {
   const attachmentEdgesBySplit = getBackendSplitMapValue(solution.attachment_edges_by_split, pivotKey);
+  if (!attachmentEdgesBySplit) return null;
 
   const moverKey = toBackendSplitKey(splitIndices);
   const attachmentEdges = getBackendSplitMapValue(attachmentEdgesBySplit, moverKey);
+  if (!attachmentEdges) return null;
+
   const sourceEdge = attachmentEdges.source;
   const destinationEdge = attachmentEdges.destination;
 

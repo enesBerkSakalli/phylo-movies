@@ -44,6 +44,14 @@ export function requiredNumberArray(value: unknown, fieldName: string): number[]
   return array as number[];
 }
 
+export function requiredNonEmptyNumberArray(value: unknown, fieldName: string): number[] {
+  const array = requiredNumberArray(value, fieldName);
+  if (array.length === 0) {
+    throw new Error(`Invalid phyloMovieData payload: ${fieldName} must contain at least one number`);
+  }
+  return array;
+}
+
 export function requiredRecord(value: unknown, fieldName: string): Record<string, unknown> {
   assertRecord(value, fieldName);
   return value;

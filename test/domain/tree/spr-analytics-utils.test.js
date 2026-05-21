@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import * as sprAnalytics from '../../../src/domain/spr/sprAnalytics.js';
 
 const {
+  buildSprAnalyticsModel,
   buildSprMoveEventRows,
   buildSprActivityTimelinePoints,
   calculateSprDatasetSummary,
@@ -205,7 +206,20 @@ const analyticsOptions = { temporalEvents, pairMetrics };
 
 describe('SPR analytics model', () => {
   it('builds an auditable SPR move event ledger from normalized temporal events', () => {
-    const events = buildSprMoveEventRows(pairs, analyticsOptions);
+    const branchSupportIndex = {
+      getSupport(inputTreeIndex, splitIndices) {
+        const key = `${inputTreeIndex}:${splitIndices.join(',')}`;
+        return {
+          '0:7,8': { raw: '41', kind: 'bootstrap', primary: 41, bootstrap: 41 },
+          '1:5,6': { raw: '93', kind: 'bootstrap', primary: 93, bootstrap: 93 },
+        }[key] ?? null;
+      },
+    };
+    const events = buildSprMoveEventRows(pairs, {
+      ...analyticsOptions,
+      branchSupportIndex,
+      supportThreshold: 70,
+    });
 
     expect(events).toHaveLength(4);
     expect(events[0]).toMatchObject({
@@ -229,6 +243,9 @@ describe('SPR analytics model', () => {
       totalPathLength: 0.6,
       rfDistance: 0.25,
       weightedRfDistance: 1.25,
+      sourceAttachmentSupport: { raw: '41', kind: 'bootstrap', primary: 41, bootstrap: 41 },
+      destinationAttachmentSupport: { raw: '93', kind: 'bootstrap', primary: 93, bootstrap: 93 },
+      supportClass: 'mixed_support',
     });
     expect(events[0]).not.toHaveProperty('pairKey');
     expect(events[0]).not.toHaveProperty('destinationTreeIndex');
@@ -360,6 +377,48 @@ describe('SPR analytics model', () => {
       totalPathLength: 1.2,
       averagePathLength: 1.2,
     });
+  });
+
+  it('builds a full analytics model from one canonical event ledger', () => {
+    const model = buildSprAnalyticsModel(pairs, analyticsOptions);
+
+    expect(model.eventRows).toHaveLength(4);
+    expect(model.movedSubtreeRecurrences[0]).toMatchObject({
+      signature: '1',
+      count: 2,
+      percentage: 50,
+    });
+    expect(model.pairActivityRows[0].events[0]).toBe(model.eventRows[0]);
+    expect(model.summary).toMatchObject({
+      pairCount: 2,
+      activePairCount: 2,
+      sprMoveEventCount: 4,
+      uniqueMovedSubtreeCount: 3,
+    });
+  });
+
+  it('reports malformed SPR events without a pivot edge before resolving attachments', () => {
+    const malformedEvents = [{
+      ...temporalEvents[3],
+      pivot_edge: [],
+    }];
+
+    expect(() => buildSprMoveEventRows([pairs[0]], {
+      temporalEvents: malformedEvents,
+      pairMetrics: { rows: [pairMetrics.rows[0]], semantics: {} },
+    })).toThrow(/must include a non-empty pivot_edge/);
+  });
+
+  it('reports SPR events whose attachment context cannot be resolved', () => {
+    const malformedEvents = [{
+      ...temporalEvents[3],
+      pivot_edge: [999],
+    }];
+
+    expect(() => buildSprMoveEventRows([pairs[0]], {
+      temporalEvents: malformedEvents,
+      pairMetrics: { rows: [pairMetrics.rows[0]], semantics: {} },
+    })).toThrow(/could not resolve attachment context/);
   });
 
   it('keeps backend highlight context separate from the physical moved subtree', () => {

@@ -45,4 +45,27 @@ describe('SPR analytics window shell', () => {
     expect(SPR_MOVE_EVENT_TABLE_COPY.searchLabel).toBe('Search movements');
     expect(SPR_MOVE_EVENT_TABLE_COPY.noSearchResults).toBe('No movements match this search.');
   });
+
+  it('mounts expensive SPR analytics only inside the open floating window', () => {
+    const dashboardSource = fs.readFileSync(
+      path.join(process.cwd(), 'src/components/TreeStatsPanel/AnalyticsDashboard.tsx'),
+      'utf8',
+    );
+    const chartSource = fs.readFileSync(
+      path.join(process.cwd(), 'src/components/TreeStatsPanel/SubtreeAnalytics/MovedSubtreeRecurrenceChart.tsx'),
+      'utf8',
+    );
+    const shellSource = dashboardSource.slice(
+      dashboardSource.indexOf('export const AnalyticsDashboard'),
+      dashboardSource.indexOf('const AnalyticsDashboardBody'),
+    );
+
+    expect(dashboardSource).toContain('const AnalyticsDashboardBody = () =>');
+    expect(dashboardSource).toContain('{isOpen && portalRoot && createPortal(');
+    expect(dashboardSource).toContain('<AnalyticsDashboardBody />');
+    expect(shellSource).not.toContain('useAppStore(');
+    expect(shellSource).not.toContain('buildSprAnalyticsModel');
+    expect(chartSource).not.toContain('useAppStore(');
+    expect(chartSource).not.toContain('calculateSprMovedSubtreeRecurrences');
+  });
 });

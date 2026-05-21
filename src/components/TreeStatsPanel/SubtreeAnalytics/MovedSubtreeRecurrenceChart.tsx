@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
-import { selectLeafNamesByIndex, selectPairMetrics, selectPairs, selectTemporalEvents, useAppStore } from '../../../state/phyloStore/store.js';
-import { calculateSprMovedSubtreeRecurrences, getTopSprMovedSubtreeRecurrences, formatSubtreeLabel } from '../../../domain/spr/sprAnalytics';
+import { getTopSprMovedSubtreeRecurrences, formatSubtreeLabel } from '../../../domain/spr/sprAnalytics';
 import { SYSTEM_TREE_COLORS } from '../../../constants/TreeColors';
 import { Badge } from '../../ui/badge';
 import { Card, CardContent } from '../../ui/card';
@@ -11,7 +10,12 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from '../../ui/tooltip';
-import type { SprMovedSubtreeRecurrence } from './types';
+import type { SprMovedSubtreeRecurrence } from '../../../domain/spr/sprAnalytics';
+
+interface MovedSubtreeRecurrenceChartProps {
+    recurrences: SprMovedSubtreeRecurrence[];
+    leafNamesByIndex: string[];
+}
 
 /**
  * MovedSubtreeRecurrenceChart
@@ -24,17 +28,12 @@ import type { SprMovedSubtreeRecurrence } from './types';
  * - Linear Scale: Bar width = percentage of movements, ensuring proportional ink
  * - No Visual Inflation: Progress component uses semantic height; no minimum bar height distorts small values
  */
-export const MovedSubtreeRecurrenceChart = () => {
-    const pairs = useAppStore(selectPairs);
-    const pairMetrics = useAppStore(selectPairMetrics);
-    const temporalEvents = useAppStore(selectTemporalEvents);
-    const leafNamesByIndex = useAppStore(selectLeafNamesByIndex);
-
+export const MovedSubtreeRecurrenceChart = ({
+    recurrences,
+    leafNamesByIndex,
+}: MovedSubtreeRecurrenceChartProps) => {
     const data = useMemo(() => {
-        if (!Array.isArray(pairs) || pairs.length === 0) return [];
-
-        const movedSubtreeRecurrences = calculateSprMovedSubtreeRecurrences(pairs, { temporalEvents, pairMetrics });
-        const topSubtrees = getTopSprMovedSubtreeRecurrences(movedSubtreeRecurrences, 10);
+        const topSubtrees = getTopSprMovedSubtreeRecurrences(recurrences, 10);
 
         return topSubtrees.map((item: SprMovedSubtreeRecurrence, idx: number) => ({
             rank: idx + 1,
@@ -43,7 +42,7 @@ export const MovedSubtreeRecurrenceChart = () => {
             count: item.count,
             percentage: item.percentage
         }));
-    }, [pairs, pairMetrics, temporalEvents, leafNamesByIndex]);
+    }, [recurrences, leafNamesByIndex]);
 
     if (!data || data.length === 0) {
         return (

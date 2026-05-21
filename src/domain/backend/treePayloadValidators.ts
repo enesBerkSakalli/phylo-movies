@@ -3,6 +3,10 @@ import type {
   PairMetricRow,
   PairMetrics,
   PhyloMovieData,
+  AnnotationAnalysis,
+  AnnotationField,
+  AnnotationValue,
+  AnnotationValueType,
   SplitChangeTemporalEvent,
   SprMoveTemporalEvent,
   TemporalEvent,
@@ -15,6 +19,7 @@ import {
   assertFiniteNumber,
   assertRecord,
   requiredArray,
+  requiredNonEmptyNumberArray,
   requiredNumberArray,
   requiredRecord,
   validateIndex,
@@ -27,7 +32,7 @@ import { validateHighlightGroup, validatePairSolution, validateSprPath } from '.
 
 function validateTreeNode(value: unknown, fieldName: string): TreeNode {
   assertRecord(value, fieldName);
-  assertExactRecordKeys(value, fieldName, ['name', 'length', 'split_indices', 'children']);
+  assertExactRecordKeys(value, fieldName, ['name', 'length', 'split_indices', 'annotations', 'children']);
 
   if (typeof value.name !== 'string') {
     throw new Error(`Invalid phyloMovieData payload: ${fieldName}.name must be a string`);
@@ -44,13 +49,142 @@ function validateTreeNode(value: unknown, fieldName: string): TreeNode {
   const validatedChildren = children.map((child, index) =>
     validateTreeNode(child, `${fieldName}.children[${index}]`)
   );
+  const annotations = value.annotations === undefined
+    ? undefined
+    : validateTreeNodeAnnotations(value.annotations, `${fieldName}.annotations`);
 
   return {
     name: value.name,
     length: value.length,
     split_indices: splitIndices,
+    ...(annotations === undefined ? {} : { annotations }),
     children: validatedChildren,
   };
+}
+
+function validateTreeNodeAnnotations(value: unknown, fieldName: string): TreeNode['annotations'] {
+  assertRecord(value, fieldName);
+  assertExactRecordKeys(value, fieldName, ['fields']);
+
+  const fieldsRecord = requiredRecord(value.fields, `${fieldName}.fields`);
+  const fields: Record<string, AnnotationField> = {};
+  for (const [key, fieldValue] of Object.entries(fieldsRecord)) {
+    fields[key] = validateAnnotationField(fieldValue, `${fieldName}.fields.${key}`, key);
+  }
+
+  return { fields };
+}
+
+function validateAnnotationField(value: unknown, fieldName: string, fieldKey: string): AnnotationField {
+  assertRecord(value, fieldName);
+  assertExactRecordKeys(value, fieldName, ['path', 'label', 'value', 'value_type', 'role', 'unit', 'analysis']);
+
+  const path = validateStringArray(value.path, `${fieldName}.path`);
+  if (path.length === 0) {
+    throw new Error(`Invalid phyloMovieData payload: ${fieldName}.path must not be empty`);
+  }
+  const derivedKey = path.join('.');
+  if (derivedKey !== fieldKey) {
+    throw new Error(`Invalid phyloMovieData payload: ${fieldName}.path must match field key`);
+  }
+
+  if (typeof value.label !== 'string' || value.label.length === 0) {
+    throw new Error(`Invalid phyloMovieData payload: ${fieldName}.label must be a non-empty string`);
+  }
+  if (typeof value.role !== 'string' || value.role.length === 0) {
+    throw new Error(`Invalid phyloMovieData payload: ${fieldName}.role must be a non-empty string`);
+  }
+
+  const valueType = validateAnnotationValueType(value.value_type, `${fieldName}.value_type`);
+  const annotationValue = validateAnnotationValue(value.value, valueType, `${fieldName}.value`);
+
+  const unit = value.unit === undefined ? undefined : validateRequiredString(value.unit, `${fieldName}.unit`);
+  const analysis = value.analysis === undefined
+    ? undefined
+    : validateAnnotationAnalysis(value.analysis, `${fieldName}.analysis`);
+
+  return {
+    path,
+    label: value.label,
+    value: annotationValue,
+    value_type: valueType,
+    role: value.role,
+    ...(unit === undefined ? {} : { unit }),
+    ...(analysis === undefined ? {} : { analysis }),
+  };
+}
+
+function validateAnnotationAnalysis(value: unknown, fieldName: string): AnnotationAnalysis {
+  assertRecord(value, fieldName);
+  assertExactRecordKeys(value, fieldName, ['type', 'method', 'mode']);
+
+  if (typeof value.type !== 'string' || value.type.length === 0) {
+    throw new Error(`Invalid phyloMovieData payload: ${fieldName}.type must be a non-empty string`);
+  }
+
+  const method = value.method === undefined ? undefined : validateRequiredString(value.method, `${fieldName}.method`);
+  const mode = value.mode === undefined ? undefined : validateRequiredString(value.mode, `${fieldName}.mode`);
+
+  return {
+    type: value.type,
+    ...(method === undefined ? {} : { method }),
+    ...(mode === undefined ? {} : { mode }),
+  };
+}
+
+function validateAnnotationValue(value: unknown, valueType: AnnotationValueType, fieldName: string): AnnotationValue {
+  if (valueType === 'array') {
+    const items = requiredArray(value, fieldName);
+    return items.map((item, index) => validateAnnotationArrayItem(item, `${fieldName}[${index}]`));
+  }
+
+  if (valueType === 'number') {
+    assertFiniteNumber(value, fieldName);
+    return value;
+  }
+  if (valueType === 'integer') {
+    return validateInteger(value, fieldName);
+  }
+  if (valueType === 'boolean') {
+    if (typeof value !== 'boolean') {
+      throw new Error(`Invalid phyloMovieData payload: ${fieldName} must be a boolean`);
+    }
+    return value;
+  }
+  if (typeof value !== 'string') {
+    throw new Error(`Invalid phyloMovieData payload: ${fieldName} must be a string`);
+  }
+  return value;
+}
+
+function validateAnnotationArrayItem(value: unknown, fieldName: string): string | number | boolean {
+  if (typeof value === 'string' || typeof value === 'boolean') return value;
+  assertFiniteNumber(value, fieldName);
+  return value;
+}
+
+function validateAnnotationValueType(value: unknown, fieldName: string): AnnotationValueType {
+  if (value === 'string' || value === 'number' || value === 'integer' || value === 'boolean' || value === 'array') {
+    return value;
+  }
+  throw new Error(`Invalid phyloMovieData payload: ${fieldName} must be a supported annotation value type`);
+}
+
+function validateStringArray(value: unknown, fieldName: string): string[] {
+  const items = requiredArray(value, fieldName);
+  return items.map((item, index) => {
+    if (typeof item !== 'string' || item.length === 0) {
+      throw new Error(`Invalid phyloMovieData payload: ${fieldName}[${index}] must be a non-empty string`);
+    }
+    return item;
+  });
+}
+
+function validateRequiredString(value: unknown, fieldName: string): string {
+  if (typeof value !== 'string' || value.length === 0) {
+    throw new Error(`Invalid phyloMovieData payload: ${fieldName} must be a non-empty string`);
+  }
+  return value;
 }
 
 export function validateTreeList(value: unknown): TreeNode[] {
@@ -286,7 +420,7 @@ function validateSprMoveTemporalEvent(
   return {
     ...validateTemporalEventBase(event, fieldName, treeCount),
     event_type: 'spr_move',
-    pivot_edge: requiredNumberArray(event.pivot_edge, `${fieldName}.pivot_edge`),
+    pivot_edge: requiredNonEmptyNumberArray(event.pivot_edge, `${fieldName}.pivot_edge`),
     driver_subtree: requiredNumberArray(event.driver_subtree, `${fieldName}.driver_subtree`),
     highlight_group: validateHighlightGroup(event.highlight_group, `${fieldName}.highlight_group`),
     collapse_path: validateSprPath(event.collapse_path, `${fieldName}.collapse_path`),
