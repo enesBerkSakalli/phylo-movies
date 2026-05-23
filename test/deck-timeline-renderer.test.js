@@ -248,6 +248,52 @@ describe('DeckTimelineRenderer', () => {
     expect(hoverUpdates[0].position.y).to.equal(0);
   });
 
+  it('refreshes hover placement while the same segment remains hovered', () => {
+    const { timelineData, segments } = makeTimelineFixture();
+    const container = makeContainer();
+    let left = 0;
+    let top = 0;
+    const originalGetRect = container.getBoundingClientRect;
+    container.getBoundingClientRect = () => {
+      const rect = originalGetRect();
+      return {
+        ...rect,
+        left,
+        top,
+        right: left + rect.width,
+        bottom: top + rect.height
+      };
+    };
+    const renderer = new DeckTimelineRenderer(timelineData, segments).init(container);
+    const hoverUpdates = [];
+
+    renderer.bindHoverState({
+      setHoveredSegment: (segmentIndex, segment, position) => {
+        hoverUpdates.push({ segmentIndex, segment, position });
+      }
+    });
+
+    renderer.deck.canvas.dispatchEvent(new global.window.MouseEvent('mousemove', {
+      bubbles: true,
+      clientX: 100,
+      clientY: 10
+    }));
+
+    left = 40;
+    top = 12;
+    renderer.deck.canvas.dispatchEvent(new global.window.MouseEvent('mousemove', {
+      bubbles: true,
+      clientX: 140,
+      clientY: 22
+    }));
+
+    expect(hoverUpdates).to.have.length(2);
+    expect(hoverUpdates[1].segmentIndex).to.equal(0);
+    expect(hoverUpdates[1].segment).to.equal(segments[0]);
+    expect(hoverUpdates[1].position.x).to.be.closeTo(40 + (400 / 3), 1e-6);
+    expect(hoverUpdates[1].position.y).to.equal(12);
+  });
+
   it('selects an input-tree segment from a deck canvas click', () => {
     const { timelineData, segments } = makeTimelineFixture();
     const container = makeContainer();
