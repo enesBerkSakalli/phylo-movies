@@ -62,7 +62,6 @@ describe('tools sidebar structure', () => {
       'src/components/appearance/PivotEdgeEffectsSection.jsx',
       'src/components/TreeStatsPanel/TreeStatsPanel.tsx',
       'src/components/TreeStatsPanel/Shared/TaxaLegend.tsx',
-      'src/components/TreeStatsPanel/SubtreeAnalytics/MovedSubtreeRecurrenceList.tsx',
     ];
 
     const defaultOpenFiles = expandableToolFiles
@@ -96,7 +95,6 @@ describe('tools sidebar structure', () => {
       'src/components/appearance/PivotEdgeEffectsSection.jsx',
       'src/components/TreeStatsPanel/TreeStatsPanel.tsx',
       'src/components/TreeStatsPanel/Shared/TaxaLegend.tsx',
-      'src/components/TreeStatsPanel/SubtreeAnalytics/MovedSubtreeRecurrenceList.tsx',
     ];
 
     const filesWithRightChevron = expandableToolFiles

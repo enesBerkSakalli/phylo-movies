@@ -21,10 +21,8 @@ export const SPR_ANALYTICS_COPY = {
     countedDescription: 'A movement is one subtree that changes attachment between two neighboring trees. Each row shows what moved, where it moved from, and where it moved to.',
     activityTitle: 'Moving Subtrees Across Tree Pairs',
     activityDescription: 'Movement events and unique moved subtrees per neighboring tree pair.',
-    recurrenceChartTitle: 'Recurrent Moving Subtrees',
-    recurrenceChartDescription: 'Recurrent moved subtrees ranked by how often they move.',
     eventTitle: SPR_ANALYTICS_LABELS.movementEvents,
     eventDescription: 'One row per movement, including moved subtree, pivot, and from/to attachments.',
-    recurrenceTableTitle: 'Recurrent Moved Subtrees',
+    recurrenceTableTitle: 'Subtree Recurrence',
     recurrenceTableDescription: 'Moved subtrees summarized from movements, ranked by repeat count.',
 };

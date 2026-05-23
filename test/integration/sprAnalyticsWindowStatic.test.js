@@ -51,10 +51,6 @@ describe('SPR analytics window shell', () => {
       path.join(process.cwd(), 'src/components/TreeStatsPanel/AnalyticsDashboard.tsx'),
       'utf8',
     );
-    const chartSource = fs.readFileSync(
-      path.join(process.cwd(), 'src/components/TreeStatsPanel/SubtreeAnalytics/MovedSubtreeRecurrenceChart.tsx'),
-      'utf8',
-    );
     const shellSource = dashboardSource.slice(
       dashboardSource.indexOf('export const AnalyticsDashboard'),
       dashboardSource.indexOf('const AnalyticsDashboardBody'),
@@ -65,7 +61,6 @@ describe('SPR analytics window shell', () => {
     expect(dashboardSource).toContain('<AnalyticsDashboardBody />');
     expect(shellSource).not.toContain('useAppStore(');
     expect(shellSource).not.toContain('buildSprAnalyticsModel');
-    expect(chartSource).not.toContain('useAppStore(');
-    expect(chartSource).not.toContain('calculateSprMovedSubtreeRecurrences');
+    expect(dashboardSource).not.toContain('MovedSubtreeRecurrenceChart');
   });
 });
