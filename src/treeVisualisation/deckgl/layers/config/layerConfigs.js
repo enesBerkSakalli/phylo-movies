@@ -95,6 +95,17 @@ export const LAYER_CONFIGS = {
       fontSettings: { sdf: true } // Enable SDF globally for all text layers
     }
   },
+  supportLabels: {
+    id: `${LAYER_ID_PREFIX}-support-labels`,
+    LayerClass: TextLayer,
+    defaultProps: {
+      sizeUnits: 'common',
+      getAlignmentBaseline: 'center',
+      billboard: true,
+      characterSet: 'auto',
+      fontSettings: { sdf: true }
+    }
+  },
   connectors: {
     id: `${LAYER_ID_PREFIX}-connectors`,
     LayerClass: PathLayer,
@@ -129,6 +140,10 @@ export const CLIPBOARD_LAYER_CONFIGS = {
   labels: {
     ...LAYER_CONFIGS.labels,
     id: `${CLIPBOARD_LAYER_ID_PREFIX}-labels`
+  },
+  supportLabels: {
+    ...LAYER_CONFIGS.supportLabels,
+    id: `${CLIPBOARD_LAYER_ID_PREFIX}-support-labels`
   },
   labelDots: {
     id: `${CLIPBOARD_LAYER_ID_PREFIX}-label-dots`,

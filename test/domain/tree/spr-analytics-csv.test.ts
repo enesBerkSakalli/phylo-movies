@@ -126,9 +126,12 @@ describe('createSprMoveEventCsv', () => {
 
     const row = csv.split('\n')[1].split(',');
 
-    expect(row[13]).toBe('');
-    expect(row[14]).toBe('');
-    expect(row[15]).toBe('1');
+    expect(row[10]).toBe('');
+    expect(row[11]).toBe('');
+    expect(row[12]).toBe('');
+    expect(row[17]).toBe('');
+    expect(row[18]).toBe('');
+    expect(row[15]).toBe('0');
   });
 
   it('uses movement terminology in exported filenames', () => {

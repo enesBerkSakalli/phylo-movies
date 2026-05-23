@@ -1,3 +1,5 @@
+import type { BranchSupport } from '../../../domain/backend/phyloMovieTypes';
+
 export interface SprMovedSubtreeRecurrence {
     signature: string;
     splitIndices: number[];
@@ -32,6 +34,10 @@ export interface SprMoveEventRow {
     pivotEdge: number[];
     sourceAttachment: number[];
     destinationAttachment: number[];
+    sourceAttachmentSupport?: BranchSupport | null;
+    destinationAttachmentSupport?: BranchSupport | null;
+    movedSubtreeSupport?: BranchSupport | null;
+    supportClass?: string;
     stepRange: [number, number] | null;
     totalPathHops: number;
     totalPathLength: number;

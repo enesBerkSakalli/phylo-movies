@@ -105,6 +105,7 @@ export interface AppStoreState {
   nodeSize: number;
   styleConfig: any;
   labelsVisible: boolean;
+  branchAnnotationLabelKey: string;
 
   // From treeLayout.slice
   branchTransformation: string;
@@ -233,6 +234,7 @@ export interface AppStoreState {
   setStrokeWidth: (width: number) => void;
   setNodeSize: (size: number) => void;
   setLabelsVisible: (visible: boolean) => void;
+  setBranchAnnotationLabelKey: (valueKey: string) => void;
 
   setBranchTransformation: (transform: string) => void;
   setLinkGeometryMode: (mode: 'radial-elbow' | 'straight') => void;

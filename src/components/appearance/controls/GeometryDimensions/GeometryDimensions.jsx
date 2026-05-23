@@ -3,7 +3,7 @@ import { LabeledSlider } from '../../../ui/labeled-slider';
 import { SidebarMenuSub, SidebarMenuSubItem } from '../../../ui/sidebar';
 import { Label } from '../../../ui/label';
 import { Switch } from '../../../ui/switch';
-import { Info } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../ui/select';
 
 const clampValue = (value, fallback) => {
   const numeric = Number(value);
@@ -20,6 +20,9 @@ export function GeometryDimensions({
   treeControllers,
   labelsVisible,
   onToggleLabels,
+  branchAnnotationLabelKey,
+  branchAnnotationOptions,
+  onChangeBranchAnnotationLabelKey,
 }) {
   const isRenderingRef = useRef(false);
   const needsRenderRef = useRef(false);
@@ -123,9 +126,26 @@ export function GeometryDimensions({
                 onCheckedChange={onToggleLabels}
               />
             </div>
-            <div className="flex items-start gap-2 text-2xs text-muted-foreground/80 italic leading-relaxed">
-              <Info className="size-3 shrink-0 mt-0.5" />
-              <span>When hidden, labels are replaced with dots at leaf positions.</span>
+            <div className="space-y-2">
+              <Label htmlFor="branch-support-label-key" className="text-xs font-medium text-foreground/80">
+                Branch Annotation
+              </Label>
+              <Select
+                value={branchAnnotationLabelKey || 'none'}
+                onValueChange={onChangeBranchAnnotationLabelKey}
+                disabled={!Array.isArray(branchAnnotationOptions) || branchAnnotationOptions.length <= 1}
+              >
+                <SelectTrigger id="branch-support-label-key" className="h-8 text-xs bg-background/50 border-border/40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(branchAnnotationOptions || [{ value: 'none', label: 'None' }]).map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>

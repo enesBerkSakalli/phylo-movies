@@ -51,6 +51,7 @@ export class LinkDataBuilder {
       path: linkPath,
       name: link.name,
       targetName: link.targetName,
+      annotations: link.annotations ?? null,
       isLeaf: link.isLeaf === true,
       isInternal: link.isInternal === true,
       split_indices: link.targetSplitIndices,

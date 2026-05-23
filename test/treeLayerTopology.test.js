@@ -98,4 +98,79 @@ describe('tree deck.gl layer topology', () => {
     expect(event.stopPropagation).toHaveBeenCalledTimes(1);
     expect(event.preventDefault).toHaveBeenCalledTimes(1);
   });
+
+  it('adds support labels on internal branches when enabled', () => {
+    const layerStyles = makeLayerStyles({ colorManager: makeColorManager() });
+    const data = {
+      connectors: [],
+      links: [
+        {
+          id: 'link-internal',
+          split_indices: [1, 2],
+          sourcePosition: [0, 0, 0],
+          targetPosition: [2, 0, 0],
+          path: new Float32Array([0, 0, 0, 2, 0, 0]),
+          isLeaf: false,
+          annotations: {
+            fields: {
+              'support.bootstrap.value': {
+                path: ['support', 'bootstrap', 'value'],
+                label: 'Bootstrap',
+                value: 95,
+                value_type: 'integer',
+                role: 'branch_support',
+                unit: 'percent',
+                analysis: { type: 'tree_inference', method: 'bootstrap' }
+              }
+            }
+          }
+        },
+        {
+          id: 'link-leaf',
+          split_indices: [1],
+          sourcePosition: [2, 0, 0],
+          targetPosition: [3, 0, 0],
+          path: new Float32Array([2, 0, 0, 3, 0, 0]),
+          isLeaf: true,
+          annotations: {
+            fields: {
+              'support.bootstrap.value': {
+                path: ['support', 'bootstrap', 'value'],
+                label: 'Bootstrap',
+                value: 100,
+                value_type: 'integer',
+                role: 'branch_support',
+                unit: 'percent',
+                analysis: { type: 'tree_inference', method: 'bootstrap' }
+              }
+            }
+          }
+        }
+      ],
+      extensions: [],
+      nodes: [],
+      labels: []
+    };
+
+    const layers = createTreeLayerSet({
+      data,
+      state: {
+        branchAnnotationLabelKey: 'support.bootstrap.value',
+        labelsVisible: true,
+        leafNamesByIndex: [],
+        fontSize: '1.8em'
+      },
+      layerStyles,
+      skipEmpty: true
+    });
+
+    const supportLayer = layers.find((layer) => layer.id === 'phylo-support-labels');
+
+    expect(supportLayer).toBeTruthy();
+    expect(supportLayer.props.data).toHaveLength(1);
+    expect(supportLayer.props.getText(supportLayer.props.data[0])).toBe('95');
+    expect(supportLayer.props.getPosition(supportLayer.props.data[0])).toEqual([1.64, 0, 0.18]);
+    expect(supportLayer.props.getColor).toEqual([17, 24, 39, 235]);
+    expect(supportLayer.props.outlineColor).toEqual([255, 255, 255, 225]);
+  });
 });

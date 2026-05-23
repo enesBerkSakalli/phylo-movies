@@ -11,6 +11,7 @@ export const SPR_MOVE_EVENT_TABLE_COPY = {
         pivot: 'Pivot',
         from: 'From',
         to: 'To',
+        support: 'Support',
         steps: 'Steps',
         metrics: 'Metrics',
     },
