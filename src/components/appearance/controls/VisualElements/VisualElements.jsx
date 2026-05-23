@@ -4,7 +4,7 @@ import { SidebarMenuItem, SidebarMenuButton } from '../../../ui/sidebar';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../../../ui/collapsible';
 import { ChevronDown, Palette } from 'lucide-react';
 
-export function VisualElements() {
+export function VisualElements({ onOpenTaxaColoring }) {
   return (
     <Collapsible asChild className="group/collapsible">
       <SidebarMenuItem>
@@ -16,7 +16,7 @@ export function VisualElements() {
           </SidebarMenuButton>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <ColoringPanel />
+          <ColoringPanel onOpenTaxaColoring={onOpenTaxaColoring} />
         </CollapsibleContent>
       </SidebarMenuItem>
     </Collapsible>

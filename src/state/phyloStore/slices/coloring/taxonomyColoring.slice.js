@@ -25,8 +25,6 @@ export const createTaxonomyColoringSlice = (set, get) => ({
       taxaGrouping: normalized,
       taxaColorVersion: s.taxaColorVersion + 1,
     }));
-    const { colorManager } = get();
-    colorManager?.refreshColorCategories?.();
     renderTreeControllers(get());
   },
 

@@ -168,6 +168,7 @@ export function TaxaColoringRndWindow({ isActive = false, onFocus } = {}) {
                 variant="ghost"
                 size="icon"
                 onClick={handleClose}
+                aria-label="Close taxa coloring window"
                 className="size-8 rounded-md hover:bg-destructive/10 hover:text-destructive transition-colors"
               >
                 <X className="size-4" />

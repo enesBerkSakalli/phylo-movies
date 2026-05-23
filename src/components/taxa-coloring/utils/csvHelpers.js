@@ -14,7 +14,7 @@ export function loadCSVColumn(csvData, colName, taxaNames) {
   // Ensure map is a valid Map instance (contains CSV_NAME -> GROUP_VALUE)
   let rawMap = csvData.allGroupings[colName];
   if (!(rawMap instanceof Map)) {
-    rawMap = new Map();
+    rawMap = rawMap && typeof rawMap === "object" ? new Map(Object.entries(rawMap)) : new Map();
   }
 
   const groups = csvData.columnGroups?.[colName] || [];

@@ -32,6 +32,7 @@ export function ToolsSidebar({
   onOpenSprAnalytics,
   onCloseSprAnalytics,
   onFocusSprAnalytics,
+  onOpenTaxaColoring,
 }) {
   const navigate = useNavigate();
   const handleReturnHome = React.useCallback(() => {
@@ -109,7 +110,7 @@ export function ToolsSidebar({
         <SidebarGroup>
           <SidebarGroupLabel>{TOOLS_SIDEBAR_GROUP_LABELS[3]}</SidebarGroupLabel>
           <SidebarMenu>
-            <VisualElements />
+            <VisualElements onOpenTaxaColoring={onOpenTaxaColoring} />
             <TaxaGroupsLegend />
             <Appearance />
           </SidebarMenu>

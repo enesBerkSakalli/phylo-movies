@@ -23,6 +23,7 @@ import {
   selectFileName,
   selectInitialize,
   selectReset,
+  selectSetTaxaColoringOpen,
   useAppStore
 } from './state/phyloStore/store.js';
 import { phyloData } from './services/data/dataService.js';
@@ -33,6 +34,7 @@ export function App() {
   const fileName = useAppStore(selectFileName) || 'Loading...';
   const initializeStore = useAppStore(selectInitialize);
   const resetStore = useAppStore(selectReset);
+  const setTaxaColoringOpen = useAppStore(selectSetTaxaColoringOpen);
   const [sprAnalyticsOpen, setSprAnalyticsOpen] = React.useState(false);
   const [activeFloatingWindow, setActiveFloatingWindow] = React.useState(null);
 
@@ -48,6 +50,10 @@ export function App() {
     setSprAnalyticsOpen(true);
     setActiveFloatingWindow('spr-analytics');
   }, []);
+  const openTaxaColoringWindow = React.useCallback(() => {
+    setTaxaColoringOpen(true);
+    setActiveFloatingWindow('taxa-coloring');
+  }, [setTaxaColoringOpen]);
   const closeSprAnalyticsWindow = React.useCallback(() => {
     setSprAnalyticsOpen(false);
     setActiveFloatingWindow((activeWindow) => activeWindow === 'spr-analytics' ? null : activeWindow);
@@ -93,6 +99,7 @@ export function App() {
             onOpenSprAnalytics={openSprAnalyticsWindow}
             onCloseSprAnalytics={closeSprAnalyticsWindow}
             onFocusSprAnalytics={focusSprAnalyticsWindow}
+            onOpenTaxaColoring={openTaxaColoringWindow}
           />
 
           <SidebarInset className="min-w-0 overflow-hidden">
