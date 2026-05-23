@@ -570,7 +570,7 @@ describe('phylo store dataset normalization', () => {
         patterns: ['controller?.renderAllElements?.('],
       },
       {
-        file: 'src/components/deckgl/TreeViewportControls.jsx',
+        file: 'src/components/deckgl/TreeCanvasControls.jsx',
         patterns: [
           'controller?.fitTreeToViewport?.(',
           'controller?.zoomOut?.(',

@@ -13,7 +13,7 @@ export const VIEWPORT_FIT_OBSTRUCTION_SELECTORS = Object.freeze([
   '.movie-player-bar',
   '#top-scale-bar-container',
   '[role="group"][aria-label="Tree viewport controls"]',
-  '[role="group"][aria-label="Canvas capture controls"]',
+  '[role="group"][aria-label="Canvas export controls"]',
   '[role="complementary"][aria-label="Comparison Panel"]',
   '.phylo-hud',
   '.phylo-hud-restore',

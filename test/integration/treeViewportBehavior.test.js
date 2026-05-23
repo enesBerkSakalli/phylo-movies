@@ -158,7 +158,7 @@ describe('tree viewport behavior', () => {
 
   it('labels the manual viewport control as fitting visible content', () => {
     const source = readFileSync(
-      join(process.cwd(), 'src/components/deckgl/TreeViewportControls.jsx'),
+      join(process.cwd(), 'src/components/deckgl/TreeCanvasControls.jsx'),
       'utf8'
     );
 

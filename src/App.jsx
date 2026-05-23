@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { MoviePlayerBar } from './components/movie-player/MoviePlayerBar.jsx';
 import { ToolsSidebar } from './components/sidebar/ToolsSidebar.jsx';
 import { DeckGLCanvas } from './components/deckgl/DeckGLCanvas.jsx';
-import { TreeViewportControls } from './components/deckgl/TreeViewportControls.jsx';
-import { CanvasCaptureControls } from './components/deckgl/CanvasCaptureControls.jsx';
+import { TreeCanvasControls } from './components/deckgl/TreeCanvasControls.jsx';
 import { MsaRndWindow } from './components/msa/MsaRndWindow.jsx';
 import { MSAProvider } from './components/msa/MSAContext';
 import { TaxaColoringRndWindow } from './components/taxa-coloring/TaxaColoringRndWindow.jsx';
@@ -16,7 +15,6 @@ import { HUD } from './components/HUD/HUD.jsx';
 import {
   SidebarProvider,
   SidebarInset,
-  SidebarTrigger,
 } from './components/ui/sidebar';
 
 import {
@@ -103,11 +101,9 @@ export function App() {
           />
 
           <SidebarInset className="min-w-0 overflow-hidden">
-            <SidebarTrigger className="absolute top-2 left-2 z-[1200]" />
             <div className="relative min-h-0 flex-1 overflow-hidden">
               <DeckGLCanvas />
-              <TreeViewportControls />
-              <CanvasCaptureControls />
+              <TreeCanvasControls />
               <HUD />
               <TransitionInspectorPanel />
             </div>
