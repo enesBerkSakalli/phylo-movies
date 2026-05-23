@@ -2,6 +2,10 @@ import React, { useState } from 'react';
 import { ArrowRightLeft, ChevronDown, ChevronUp, GitBranch } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
+import {
+  extractAffectedSubtreeGroups,
+  formatPivotEdgePreview,
+} from './timelineSegmentTooltipUtils.js';
 
 // =============================================================================
 // MAIN COMPONENT
@@ -89,7 +93,7 @@ function InputTreeContent({ segment }) {
 
 /**
  * Content for transition segments.
- * Displays moving subtrees, step count, and taxa count.
+ * Displays affected subtrees, pivot edge, step count, and taxa count.
  */
 function TransitionContent({ segment, getLeafNames, isExpanded, onToggleExpanded }) {
   const generatedFrames = Number.isInteger(segment.generatedFrameCount)
@@ -103,10 +107,13 @@ function TransitionContent({ segment, getLeafNames, isExpanded, onToggleExpanded
     ? segment.subtreeMoveCount
     : 0;
 
-  const subtreeGroups = extractMovingSubtreeGroups(segment.affectedSubtrees, getLeafNames);
+  const subtreeGroups = extractAffectedSubtreeGroups(segment.affectedSubtrees, getLeafNames);
+  const pivotEdgePreview = formatPivotEdgePreview(segment.pivotEdge);
 
   return (
     <>
+      <PivotEdgeSection pivotEdgePreview={pivotEdgePreview} />
+
       <MovingSubtreesSection
         subtreeGroups={subtreeGroups}
         isExpanded={isExpanded}
@@ -121,8 +128,23 @@ function TransitionContent({ segment, getLeafNames, isExpanded, onToggleExpanded
   );
 }
 
+function PivotEdgeSection({ pivotEdgePreview }) {
+  if (!pivotEdgePreview) return null;
+
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <span className="text-muted-foreground font-medium text-2xs uppercase tracking-wider">
+        Pivot edge
+      </span>
+      <span className="min-w-0 truncate font-mono text-2xs text-foreground" title={pivotEdgePreview}>
+        {pivotEdgePreview}
+      </span>
+    </div>
+  );
+}
+
 /**
- * Section displaying moving subtrees with expandable list.
+ * Section displaying affected subtrees with expandable list.
  */
 function MovingSubtreesSection({ subtreeGroups, isExpanded, onToggleExpanded }) {
   const MAX_VISIBLE = 3;
@@ -134,7 +156,7 @@ function MovingSubtreesSection({ subtreeGroups, isExpanded, onToggleExpanded }) 
       {/* Section header with expand/collapse button */}
       <div className="flex items-center justify-between">
         <span className="text-muted-foreground font-medium text-2xs uppercase tracking-wider">
-          Moved subtrees
+          Affected subtrees
         </span>
         {hasManyGroups && (
           <Button
@@ -184,57 +206,6 @@ function SubtreeBadge({ names }) {
       {displayText}
     </Badge>
   );
-}
-
-// =============================================================================
-// HELPER FUNCTIONS
-// =============================================================================
-
-/**
- * Extracts affected subtree groups from the segment data.
- *
- * @param {Array} affectedSubtrees - Array of affected subtree groups with leaf indices
- * @param {Function} getLeafNamesByIndices - Function to convert indices to names
- * @returns {Array<string[]>} Array of leaf name arrays for each subtree group
- */
-export function extractMovingSubtreeGroups(affectedSubtrees, getLeafNamesByIndices) {
-  if (!affectedSubtrees?.length || !getLeafNamesByIndices) {
-    return [];
-  }
-
-  const subtreeGroups = [];
-
-  for (const item of affectedSubtrees) {
-    if (!Array.isArray(item)) continue;
-
-    // Check depth: is this a group of indices [1, 2] or a solution containing groups [[1, 2]]?
-    const firstElement = item[0];
-
-    if (Array.isArray(firstElement)) {
-      // 3D Structure: Item is a solution containing groups
-      // e.g. [[1, 2], [3]]
-      for (const group of item) {
-        if (Array.isArray(group) && group.length > 0) {
-          const leafNames = getLeafNamesByIndices(group);
-          if (leafNames?.length > 0) {
-            subtreeGroups.push(leafNames);
-          }
-        }
-      }
-    } else {
-      // 2D Structure: Item is a single group of indices
-      // e.g. [1, 2]
-      // or empty array
-      if (item.length > 0) {
-        const leafNames = getLeafNamesByIndices(item);
-        if (leafNames?.length > 0) {
-          subtreeGroups.push(leafNames);
-        }
-      }
-    }
-  }
-
-  return subtreeGroups;
 }
 
 /**

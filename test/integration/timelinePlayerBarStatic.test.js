@@ -20,8 +20,8 @@ describe('movie timeline player bar semantics', () => {
       'Input trees',
       'Generated frames',
       'Selected segment',
-      'Current position',
     ]);
+    expect(TIMELINE_LEGEND_ITEMS).not.toHaveProperty('currentPosition');
   });
 
   it('renders an explicit timeline loading state before the manager mounts', () => {
@@ -38,6 +38,13 @@ describe('movie timeline player bar semantics', () => {
 
   it('keeps the timeline viewport toolbar component present', () => {
     const playerBarSource = readRepoFile('src', 'components', 'movie-player', 'MoviePlayerBar.jsx');
+    const toolbarSource = readRepoFile(
+      'src',
+      'components',
+      'movie-player',
+      'TimelineScrollControls',
+      'TimelineScrollControls.jsx'
+    );
     const toolbarPath = join(
       repoRoot,
       'src',
@@ -55,6 +62,10 @@ describe('movie timeline player bar semantics', () => {
       playerBarSource.indexOf('className="interpolation-timeline-container"')
     );
     expect(playerBarSource).toContain('<TimelineScrollControls />');
+    expect(toolbarSource).toContain('opacity-45');
+    expect(toolbarSource).toContain('hover:opacity-100');
+    expect(toolbarSource).toContain('focus-within:opacity-100');
+    expect(toolbarSource).not.toContain('bg-muted/40');
   });
 
   it('renders timeline status in the movie player instead of the floating HUD', () => {
@@ -71,9 +82,16 @@ describe('movie timeline player bar semantics', () => {
     expect(statusStripSource).toContain('getTimelineStatusSnapshot');
     expect(statusStripSource).toContain('buildTimelineStatusSnapshot');
     expect(statusStripSource).toContain('Movie timeline status');
+    expect(statusStripSource).toContain('flex-nowrap overflow-hidden');
     expect(statusStripSource).toContain('border-border/40 bg-muted/20 backdrop-blur-sm');
     expect(statusStripSource).toContain('text-xs font-bold leading-tight tracking-tight uppercase');
     expect(statusStripSource).toContain('text-[10px] text-muted-foreground/80 leading-tight font-medium');
+    expect(statusStripSource).toContain('inline-flex w-[18rem] max-w-[40vw] shrink-0');
+    expect(statusStripSource).toContain('inline-flex w-[10rem] shrink-0');
+    expect(statusStripSource).toContain('inline-flex w-[14rem] shrink-0');
+    expect(statusStripSource).toContain("Window size {msaWindowSize ?? '-'}");
+    expect(statusStripSource).toContain("Step size {msaStepSize ?? '-'}");
+    expect(statusStripSource).toContain('text-[10px] text-foreground leading-tight font-semibold');
     expect(statusStripSource).not.toContain('Tree Type');
     expect(statusStripSource).not.toContain('Badge');
     expect(playerBarSource.indexOf('<TimelineStatusStrip />')).toBeLessThan(
