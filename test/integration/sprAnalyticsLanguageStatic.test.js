@@ -86,8 +86,9 @@ describe('SPR analytics phylogenetic language', () => {
     expect(SPR_MOVE_EVENT_TABLE_COPY.noSearchResults).toBe('No movements match this search.');
     expect(SPR_MOVE_EVENT_TABLE_COPY.columns.movement).toBe('Movement');
 
-    expect(timelineTooltipSource).toContain('Moved subtrees');
+    expect(timelineTooltipSource).toContain('Affected subtrees');
     expect(timelineTooltipSource).not.toContain('Moved groups');
+    expect(timelineTooltipSource).not.toContain('Moved subtrees');
   });
 
   it('makes the main recurrent-subtree table highlightable like the sidebar summary', () => {

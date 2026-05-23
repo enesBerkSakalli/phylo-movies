@@ -12,5 +12,4 @@ export const TIMELINE_LEGEND_ITEMS = {
   inputTrees: 'Input trees',
   generatedFrames: 'Generated frames',
   selectedSegment: 'Selected segment',
-  currentPosition: 'Current position',
 };

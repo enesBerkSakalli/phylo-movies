@@ -253,7 +253,6 @@ function TimelineLegend({ hasTransitionSegments }) {
         <LegendItem markerClassName="h-1 w-5 rounded bg-amber-600/85" label={TIMELINE_LEGEND_ITEMS.generatedFrames} />
       )}
       <LegendItem markerClassName="h-1.5 w-5 rounded bg-emerald-600" label={TIMELINE_LEGEND_ITEMS.selectedSegment} />
-      <LegendItem markerClassName="h-5 w-1 rounded bg-primary" label={TIMELINE_LEGEND_ITEMS.currentPosition} />
     </div>
   );
 }

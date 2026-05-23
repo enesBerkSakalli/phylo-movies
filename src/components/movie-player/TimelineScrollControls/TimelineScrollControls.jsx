@@ -61,7 +61,7 @@ export function TimelineScrollControls() {
 
   return (
     <div
-      className="timeline-view-controls flex items-center gap-0.5 rounded-md bg-muted/40 p-0.5"
+      className="timeline-view-controls flex items-center gap-px rounded-md border border-transparent bg-transparent p-0.5 opacity-45 transition-opacity duration-150 hover:border-border/40 hover:bg-background/70 hover:opacity-100 focus-within:border-border/40 focus-within:bg-background/70 focus-within:opacity-100"
       role="group"
       aria-label="Timeline viewport controls"
     >
@@ -75,9 +75,9 @@ export function TimelineScrollControls() {
             aria-label={label}
             disabled={disabled}
             onClick={onClick}
-            className="text-muted-foreground hover:text-foreground"
+            className="size-6 text-muted-foreground/80 hover:text-foreground focus-visible:text-foreground"
           >
-            <Icon className="size-3.5" aria-hidden />
+            <Icon className="size-3" aria-hidden />
           </Button>
         </AppTooltip>
       ))}

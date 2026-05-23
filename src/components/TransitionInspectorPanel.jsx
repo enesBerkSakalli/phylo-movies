@@ -17,7 +17,10 @@ import {
 } from '../state/phyloStore/store.js';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
-import { extractMovingSubtreeGroups } from './timeline/TimelineSegmentTooltip.jsx';
+import {
+  extractAffectedSubtreeGroups,
+  formatPivotEdgePreview,
+} from './timeline/timelineSegmentTooltipUtils.js';
 
 export function TransitionInspectorPanel() {
   const segmentIndex = useAppStore(selectSelectedTimelineSegmentIndex);
@@ -104,7 +107,7 @@ export function TransitionInspectorPanel() {
           <KeyValue label="Moving taxa" value={details.movingTaxaLabel} />
           <KeyValue label="Generated frames" value={details.generatedFrameLabel} />
           <KeyValue label="Animation steps" value={details.animationStepLabel} />
-          <KeyValue label="Changing split" value={details.pivotEdgeLabel} />
+          <KeyValue label="Pivot edge" value={details.pivotEdgeLabel} />
           <SubtreeList groups={details.subtreeGroups} />
         </Section>
 
@@ -189,7 +192,7 @@ function buildInspectorDetails({
   if (!segment) return null;
 
   const getLeafNames = (indices) => getLeafNamesByIndices(indices, leafNamesByIndex);
-  const subtreeGroups = extractMovingSubtreeGroups(segment.affectedSubtrees, getLeafNames);
+  const subtreeGroups = extractAffectedSubtreeGroups(segment.affectedSubtrees, getLeafNames);
   const pair = resolvePairContext(segment);
   const metric = pair ? getPairMetric(pairMetrics, pair) : null;
   const sourceGlobalIndex = resolveSourceGlobalIndex(segment);
@@ -209,9 +212,7 @@ function buildInspectorDetails({
     movingTaxaLabel: formatCount(segment.subtreeMoveCount, 'taxon', 'taxa'),
     generatedFrameLabel: formatCount(resolveGeneratedFrameCount(segment), 'frame', 'frames'),
     animationStepLabel: formatCount(resolveAnimationStepCount(segment), 'step', 'steps'),
-    pivotEdgeLabel: Array.isArray(segment.pivotEdge) && segment.pivotEdge.length
-      ? formatCount(segment.pivotEdge.length, 'taxon', 'taxa')
-      : null,
+    pivotEdgeLabel: formatPivotEdgeLabel(segment.pivotEdge),
     rfLabel: formatNumber(metric?.robinson_foulds, 3),
     weightedRfLabel: formatNumber(metric?.weighted_robinson_foulds, 3),
     scaleLabel: Number.isFinite(scaleValue) ? formatScaleValue(scaleValue) : null,
@@ -291,6 +292,14 @@ function formatRange(start, end) {
 function formatCount(value, singular, plural) {
   if (!Number.isFinite(value)) return null;
   return `${value} ${value === 1 ? singular : plural}`;
+}
+
+function formatPivotEdgeLabel(pivotEdge) {
+  const preview = formatPivotEdgePreview(pivotEdge);
+  if (!preview) return null;
+
+  const countLabel = formatCount(pivotEdge.length, 'taxon', 'taxa');
+  return `${preview} (${countLabel})`;
 }
 
 function formatNumber(value, decimals) {
