@@ -39,14 +39,6 @@ const targetedContractChecks = [
     ],
   },
   {
-    file: 'src/components/TreeStatsPanel/SubtreeAnalytics/MovedSubtreeRecurrenceChart.tsx',
-    snippets: ['calculateSprMovedSubtreeRecurrences(pairs, { temporalEvents })'],
-  },
-  {
-    file: 'src/components/TreeStatsPanel/SubtreeAnalytics/MovedSubtreeRecurrenceList.tsx',
-    snippets: ['calculateSprMovedSubtreeRecurrences(pairs, { temporalEvents })'],
-  },
-  {
     file: 'src/components/DistanceChart/DistanceChart.jsx',
     snippets: [
       'selectDistanceRfd',

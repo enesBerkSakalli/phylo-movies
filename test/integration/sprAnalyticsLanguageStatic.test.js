@@ -14,8 +14,6 @@ const SPR_FILES = [
   'src/components/TreeStatsPanel/SubtreeAnalytics/MovedSubtreeRecurrenceTable.tsx',
   'src/components/TreeStatsPanel/SubtreeAnalytics/SprMoveEventTable.tsx',
   'src/components/TreeStatsPanel/SubtreeAnalytics/SprActivityTimeline.tsx',
-  'src/components/TreeStatsPanel/SubtreeAnalytics/MovedSubtreeRecurrenceList.tsx',
-  'src/components/TreeStatsPanel/SubtreeAnalytics/MovedSubtreeRecurrenceChart.tsx',
   'src/components/TreeStatsPanel/SubtreeAnalytics/sprAnalyticsCsv.ts',
   'src/components/appearance/color/ColoringPanel.jsx',
   'src/components/appearance/FocusHighlightingSection.jsx',

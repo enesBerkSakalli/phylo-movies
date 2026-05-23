@@ -1,11 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { type ReactNode, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Rnd } from 'react-rnd';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { ScrollArea } from '../ui/scroll-area';
-import { BarChart, Activity, ListTree, BookOpen, ChevronDown, Download, X } from 'lucide-react';
+import { Activity, ListTree, BookOpen, Download, X } from 'lucide-react';
 import { SprActivityTimeline } from './SubtreeAnalytics/SprActivityTimeline';
-import { MovedSubtreeRecurrenceChart } from './SubtreeAnalytics/MovedSubtreeRecurrenceChart';
 import { MovedSubtreeRecurrenceTable } from './SubtreeAnalytics/MovedSubtreeRecurrenceTable';
 import { SprMoveEventTable } from './SubtreeAnalytics/SprMoveEventTable';
 import { SprSummaryMetrics } from './SubtreeAnalytics/SprSummaryMetrics';
@@ -16,7 +15,7 @@ import {
     createSprMoveEventExportName,
     downloadCsvFile,
 } from './SubtreeAnalytics/sprAnalyticsCsv';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import {
     selectFileName,
     selectActiveTreeList,
@@ -48,9 +47,6 @@ import {
     SPR_ANALYTICS_COPY,
 } from './AnalyticsDashboard.contract';
 
-// ==========================================================================
-// STORE SELECTORS
-// ==========================================================================
 interface AnalyticsDashboardProps {
     isOpen?: boolean;
     isActive?: boolean;
@@ -141,15 +137,21 @@ export const AnalyticsDashboard = ({ isOpen = false, isActive = false, onOpen, o
                     }}
                     dragHandleClassName="spr-analytics-drag-handle"
                     cancel=".spr-analytics-no-drag"
-                    className={`fixed ${isActive ? 'z-[1200]' : 'z-[1100]'} pointer-events-auto shadow-2xl border border-border/60 rounded-md bg-card overflow-hidden`}
+                    onFocusCapture={onFocus}
+                    role="region"
+                    aria-labelledby="spr-analytics-title"
+                    aria-describedby="spr-analytics-description"
+                    className={`fixed ${isActive ? 'z-[1200]' : 'z-[1100]'} pointer-events-auto overflow-hidden rounded-md border border-border bg-card shadow-xl`}
                 >
-                <div className="flex flex-col h-full overflow-hidden bg-card">
-                    <div className="spr-analytics-drag-handle flex items-center justify-between gap-2 px-3 py-2 border-b border-border/40 bg-muted/20 backdrop-blur-sm shrink-0 cursor-move select-none">
+                    <div className="flex h-full flex-col overflow-hidden bg-card">
+                        <div className="spr-analytics-drag-handle flex shrink-0 cursor-move select-none items-center justify-between gap-2 border-b border-border bg-muted/30 px-3 py-2">
                             <div className="flex items-center gap-2 min-w-0">
                                 <Activity className="size-4 text-primary shrink-0" aria-hidden />
                                 <div className="flex flex-col min-w-0">
-                                    <div className="text-xs font-bold leading-tight tracking-tight uppercase">{SPR_ANALYTICS_COPY.title}</div>
-                                    <div className="text-[9px] text-muted-foreground/80 leading-tight font-medium truncate">
+                                    <div id="spr-analytics-title" className="truncate text-sm font-semibold leading-tight">
+                                        {SPR_ANALYTICS_COPY.title}
+                                    </div>
+                                    <div id="spr-analytics-description" className="truncate text-xs leading-tight text-muted-foreground">
                                         {SPR_ANALYTICS_COPY.description}
                                     </div>
                                 </div>
@@ -161,7 +163,7 @@ export const AnalyticsDashboard = ({ isOpen = false, isActive = false, onOpen, o
                                 aria-label="Close moving subtrees"
                                 className="spr-analytics-no-drag hover:bg-destructive/10 hover:text-destructive transition-colors"
                             >
-                                <X className="size-4" />
+                                <X className="size-4" aria-hidden />
                             </Button>
                         </div>
 
@@ -248,23 +250,23 @@ const AnalyticsDashboardBody = () => {
     };
 
     return (
-        <div className="flex flex-col flex-1 min-h-0 overflow-hidden p-4">
-            <Tabs defaultValue="overview" className="flex flex-col flex-1 min-h-0 overflow-hidden">
-                <TabsList className="w-full justify-start mb-4 shrink-0 bg-muted/30 p-1">
-                    <TabsTrigger value="overview" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">{SPR_ANALYTICS_COPY.tabs.overview}</TabsTrigger>
-                    <TabsTrigger value="events" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">{SPR_ANALYTICS_COPY.tabs.events}</TabsTrigger>
-                    <TabsTrigger value="details" className="px-6 py-2 text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">{SPR_ANALYTICS_COPY.tabs.details}</TabsTrigger>
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4">
+            <Tabs defaultValue="overview" className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                <TabsList className="mb-4 grid w-full shrink-0 grid-cols-3" aria-label="Moving subtree analytics views">
+                    <TabsTrigger value="overview" className="text-xs font-medium">{SPR_ANALYTICS_COPY.tabs.overview}</TabsTrigger>
+                    <TabsTrigger value="events" className="text-xs font-medium">{SPR_ANALYTICS_COPY.tabs.events}</TabsTrigger>
+                    <TabsTrigger value="details" className="text-xs font-medium">{SPR_ANALYTICS_COPY.tabs.details}</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="overview" className="flex-1 min-h-0 mt-0 focus-visible:outline-none">
+                <TabsContent value="overview" className="mt-0 min-h-0 flex-1 focus-visible:outline-none">
                     <ScrollArea className="h-full">
-                        <div className="pb-6 space-y-4 pr-3">
-                            <Card className="bg-primary/5 border-primary/20 p-3 flex flex-col gap-2">
-                                <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-wider text-primary">
-                                    <BookOpen className="size-3" />
+                        <div className="flex flex-col gap-4 pb-6 pr-3">
+                            <Card className="gap-2 border-primary/20 bg-primary/5 p-3 shadow-none">
+                                <div className="flex items-center gap-2 text-xs font-semibold text-primary">
+                                    <BookOpen className="size-3.5" aria-hidden />
                                     {SPR_ANALYTICS_COPY.countedTitle}
                                 </div>
-                                <p className="text-2xs leading-relaxed text-muted-foreground">
+                                <p className="text-xs leading-relaxed text-muted-foreground">
                                     {SPR_ANALYTICS_COPY.countedDescription}
                                 </p>
                             </Card>
@@ -284,112 +286,135 @@ const AnalyticsDashboardBody = () => {
                                 farthestMovedSubtree={farthestMovedSubtree}
                             />
 
-                            <Card className="shadow-sm bg-muted/10 h-80 flex flex-col">
-                                <CardHeader className="pb-3 bg-muted/20 shrink-0">
-                                    <CardTitle className="flex items-center gap-2 text-base font-bold">
-                                        <Activity className="size-4 text-primary" />
-                                        {SPR_ANALYTICS_COPY.activityTitle}
-                                    </CardTitle>
-                                    <CardDescription className="text-xs">
-                                        {SPR_ANALYTICS_COPY.activityDescription}
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="flex-1 min-h-0 p-2">
+                            <AnalyticsSectionCard
+                                title={SPR_ANALYTICS_COPY.activityTitle}
+                                description={SPR_ANALYTICS_COPY.activityDescription}
+                                icon={<Activity className="size-4 text-primary" aria-hidden />}
+                                className="h-80"
+                                contentClassName="p-2"
+                            >
+                                <div className="h-full min-h-0">
                                     <SprActivityTimeline rows={pairActivityRows} />
-                                </CardContent>
-                            </Card>
-
-                            <Card className="shadow-sm bg-muted/10 h-96 flex flex-col">
-                                <CardHeader className="pb-3 bg-muted/20 shrink-0">
-                                    <CardTitle className="flex items-center gap-2 text-base font-bold">
-                                        <BarChart className="size-4 text-primary" />
-                                        {SPR_ANALYTICS_COPY.recurrenceChartTitle}
-                                    </CardTitle>
-                                    <CardDescription className="text-xs">
-                                        {SPR_ANALYTICS_COPY.recurrenceChartDescription}
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="flex-1 min-h-0 p-2">
-                                    <MovedSubtreeRecurrenceChart
-                                        recurrences={movedSubtreeRecurrences}
-                                        leafNamesByIndex={leafNamesByIndex}
-                                    />
-                                </CardContent>
-                            </Card>
+                                </div>
+                            </AnalyticsSectionCard>
                         </div>
                     </ScrollArea>
                 </TabsContent>
 
-                <TabsContent value="events" className="flex-1 min-h-0 mt-0 focus-visible:outline-none flex flex-col">
-                    <Card className="shadow-sm bg-muted/10 flex-1 flex flex-col min-h-0">
-                        <CardHeader className="pb-3 bg-muted/20 shrink-0">
-                            <CardTitle className="flex items-center gap-2 text-base font-bold">
-                                <Activity className="size-4 text-primary" />
-                                {SPR_ANALYTICS_COPY.eventTitle}
-                            </CardTitle>
-                            <CardDescription className="text-xs flex items-center justify-between gap-2">
-                                <span>{SPR_ANALYTICS_COPY.eventDescription}</span>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="xs"
-                                    className="gap-1 shrink-0"
-                                    onClick={handleExportEventCsv}
-                                    disabled={sprMoveEvents.length === 0}
-                                >
-                                    <Download className="size-3" />
-                                    Export CSV
-                                </Button>
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
+                <TabsContent value="events" className="mt-0 flex min-h-0 flex-1 flex-col focus-visible:outline-none">
+                    <AnalyticsSectionCard
+                        title={SPR_ANALYTICS_COPY.eventTitle}
+                        description={SPR_ANALYTICS_COPY.eventDescription}
+                        icon={<Activity className="size-4 text-primary" aria-hidden />}
+                        className="min-h-0 flex-1"
+                        contentClassName="overflow-hidden p-0"
+                        action={(
+                            <ExportCsvButton
+                                onClick={handleExportEventCsv}
+                                disabled={sprMoveEvents.length === 0}
+                                label="Export movement events CSV"
+                            />
+                        )}
+                    >
+                        <div className="h-full min-h-0">
                             <SprMoveEventTable
                                 events={sprMoveEvents}
                                 leafNamesByIndex={leafNamesByIndex}
                                 selectedMovedSubtreeIndices={selectedMovedSubtreeIndices}
                             />
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </AnalyticsSectionCard>
                 </TabsContent>
 
-                <TabsContent value="details" className="flex-1 min-h-0 mt-0 focus-visible:outline-none flex flex-col">
-                    <Card className="shadow-sm bg-muted/10 flex-1 flex flex-col min-h-0">
-                        <CardHeader className="pb-3 bg-muted/20 shrink-0">
-                            <CardTitle className="flex items-center gap-2 text-base font-bold">
-                                <ListTree className="size-4 text-primary" />
-                                {SPR_ANALYTICS_COPY.recurrenceTableTitle}
-                            </CardTitle>
-                            <CardDescription className="text-xs flex items-center justify-between gap-2">
-                                <span>{SPR_ANALYTICS_COPY.recurrenceTableDescription}</span>
-                                <div className="flex items-center gap-2 shrink-0">
-                                    {movedSubtreeRecurrences.length > 5 && (
-                                        <span className="flex items-center gap-1 text-muted-foreground/60 shrink-0 ml-2">
-                                            <ChevronDown className="size-3 animate-bounce" />
-                                            <span className="text-2xs">{movedSubtreeRecurrences.length} items · scroll</span>
-                                        </span>
-                                    )}
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="xs"
-                                        className="gap-1"
-                                        onClick={handleExportRecurrenceCsv}
-                                        disabled={movedSubtreeRecurrences.length === 0}
-                                    >
-                                        <Download className="size-3" />
-                                        Export CSV
-                                    </Button>
-                                </div>
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="p-0 flex-1 min-h-0 overflow-y-auto">
-                            <MovedSubtreeRecurrenceTable recurrences={movedSubtreeRecurrences} leafNamesByIndex={leafNamesByIndex} />
-                        </CardContent>
-                    </Card>
+                <TabsContent value="details" className="mt-0 flex min-h-0 flex-1 flex-col focus-visible:outline-none">
+                    <AnalyticsSectionCard
+                        title={SPR_ANALYTICS_COPY.recurrenceTableTitle}
+                        description={SPR_ANALYTICS_COPY.recurrenceTableDescription}
+                        icon={<ListTree className="size-4 text-primary" aria-hidden />}
+                        className="min-h-0 flex-1"
+                        contentClassName="overflow-y-auto p-0"
+                        action={(
+                            <div className="flex items-center gap-2">
+                                {movedSubtreeRecurrences.length > 0 && (
+                                    <span className="text-xs text-muted-foreground">
+                                        {movedSubtreeRecurrences.length} rows
+                                    </span>
+                                )}
+                                <ExportCsvButton
+                                    onClick={handleExportRecurrenceCsv}
+                                    disabled={movedSubtreeRecurrences.length === 0}
+                                    label="Export recurrent subtrees CSV"
+                                />
+                            </div>
+                        )}
+                    >
+                        <MovedSubtreeRecurrenceTable recurrences={movedSubtreeRecurrences} leafNamesByIndex={leafNamesByIndex} />
+                    </AnalyticsSectionCard>
                 </TabsContent>
             </Tabs>
         </div>
     );
 };
+
+interface AnalyticsSectionCardProps {
+    title: string;
+    description: string;
+    icon: ReactNode;
+    children: ReactNode;
+    action?: ReactNode;
+    className?: string;
+    contentClassName?: string;
+}
+
+const AnalyticsSectionCard = ({
+    title,
+    description,
+    icon,
+    children,
+    action,
+    className = '',
+    contentClassName = '',
+}: AnalyticsSectionCardProps) => (
+    <Card className={`flex min-h-0 flex-col gap-0 bg-muted/10 py-0 shadow-sm ${className}`}>
+        <CardHeader className="shrink-0 border-b border-border/40 bg-muted/20 p-3">
+            <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                {icon}
+                {title}
+            </CardTitle>
+            <CardDescription className="text-xs leading-relaxed">
+                {description}
+            </CardDescription>
+            {action && (
+                <CardAction className="spr-analytics-no-drag">
+                    {action}
+                </CardAction>
+            )}
+        </CardHeader>
+        <CardContent className={`min-h-0 flex-1 ${contentClassName}`}>
+            {children}
+        </CardContent>
+    </Card>
+);
+
+interface ExportCsvButtonProps {
+    onClick: () => void;
+    disabled: boolean;
+    label: string;
+}
+
+const ExportCsvButton = ({ onClick, disabled, label }: ExportCsvButtonProps) => (
+    <Button
+        type="button"
+        variant="outline"
+        size="xs"
+        className="gap-1"
+        onClick={onClick}
+        disabled={disabled}
+        aria-label={label}
+    >
+        <Download className="size-3" aria-hidden />
+        Export CSV
+    </Button>
+);
 
 export default AnalyticsDashboard;
