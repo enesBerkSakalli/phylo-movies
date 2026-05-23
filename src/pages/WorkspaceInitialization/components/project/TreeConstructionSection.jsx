@@ -11,8 +11,10 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../
 export function TreeConstructionSection({ hasMsa, hasTrees, disabled }) {
   const { control, watch } = useFormContext();
   const treeInferenceEngine = watch('treeInferenceEngine') || 'iqtree';
+  const iqtreeSupportMode = watch('iqtreeSupportMode') || 'none';
   const isFastTree = treeInferenceEngine === 'fasttree';
   const isIqTree = treeInferenceEngine === 'iqtree';
+  const hasIqTreeSupport = iqtreeSupportMode !== 'none';
 
   return (
     <div className={`space-y-4 p-4 rounded-xl border transition-all duration-300 ${!hasMsa ? 'bg-muted/30 opacity-60 border-dashed' : 'bg-card border-solid shadow-sm'}`}>
@@ -88,6 +90,62 @@ export function TreeConstructionSection({ hasMsa, hasTrees, disabled }) {
                 </FormLabel>
                 <FormDescription className="text-2xs leading-tight">
                   IQ-TREE -fast mode optimizes two starting trees with NNI search. Disable for a slower, more thorough search.
+                </FormDescription>
+              </div>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={control}
+          name="iqtreeSupportMode"
+          render={({ field }) => (
+            <FormItem className="space-y-2">
+              <FormLabel className={`text-sm font-normal ${!hasMsa || !isIqTree ? 'text-muted-foreground' : ''}`}>
+                Branch Support
+              </FormLabel>
+              <Select
+                value={field.value || 'none'}
+                onValueChange={field.onChange}
+                disabled={disabled || !hasMsa || !isIqTree}
+              >
+                <FormControl>
+                  <SelectTrigger className="h-9 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="ufboot">UFBoot</SelectItem>
+                  <SelectItem value="sh_alrt">SH-aLRT</SelectItem>
+                  <SelectItem value="sh_alrt_ufboot">SH-aLRT + UFBoot</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormDescription className="text-2xs leading-tight">
+                Adds IQ-TREE support labels to inferred window trees so movement analytics can report support for source and destination attachments.
+              </FormDescription>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={control}
+          name="iqtreeBnni"
+          render={({ field }) => (
+            <FormItem className="flex items-start space-x-3 space-y-0">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                  disabled={disabled || !hasMsa || !isIqTree || !hasIqTreeSupport}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel className={`text-sm font-normal cursor-pointer ${!hasMsa || !isIqTree || !hasIqTreeSupport ? 'text-muted-foreground' : ''}`}>
+                  Bootstrap NNI
+                </FormLabel>
+                <FormDescription className="text-2xs leading-tight">
+                  Enables IQ-TREE -bnni for support-aware runs.
                 </FormDescription>
               </div>
             </FormItem>

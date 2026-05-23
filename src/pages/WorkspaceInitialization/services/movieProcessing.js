@@ -41,6 +41,10 @@ export async function processMovieData(formData, onProgress, options = {}) {
   body.append('midpointRooting', formData.midpointRooting ? 'on' : '');
   body.append('treeInferenceEngine', formData.treeInferenceEngine || 'iqtree');
   body.append('iqtreeFastSearch', formData.iqtreeFastSearch ? 'on' : '');
+  body.append('iqtreeSupportMode', formData.iqtreeSupportMode || 'none');
+  body.append('iqtreeUfbootReplicates', String(formData.iqtreeUfbootReplicates ?? 1000));
+  body.append('iqtreeShAlrtReplicates', String(formData.iqtreeShAlrtReplicates ?? 1000));
+  body.append('iqtreeBnni', formData.iqtreeBnni ? 'on' : '');
   // Tree inference model options (checkboxes: "on" = enabled)
   body.append('useGtr', formData.useGtr ? 'on' : '');
   body.append('useGamma', formData.useGamma ? 'on' : '');

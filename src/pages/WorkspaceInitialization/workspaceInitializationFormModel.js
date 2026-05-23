@@ -20,6 +20,10 @@ export const workspaceInitializationFormSchema = z.object({
   // Tree inference model options (MSA → trees pipeline)
   treeInferenceEngine: z.enum(['iqtree', 'fasttree']).default('iqtree'),
   iqtreeFastSearch: z.boolean().default(true), // IQ-TREE -fast search mode
+  iqtreeSupportMode: z.enum(['none', 'ufboot', 'sh_alrt', 'sh_alrt_ufboot']).default('none'),
+  iqtreeUfbootReplicates: z.coerce.number().int().min(100).max(100000).default(1000),
+  iqtreeShAlrtReplicates: z.coerce.number().int().min(100).max(100000).default(1000),
+  iqtreeBnni: z.boolean().default(false),
   useGtr: z.boolean().default(true),  // GTR (General Time Reversible) model
   useGamma: z.boolean().default(true), // Gamma rate heterogeneity
   usePseudo: z.boolean().default(false), // Pseudocounts for gappy alignments

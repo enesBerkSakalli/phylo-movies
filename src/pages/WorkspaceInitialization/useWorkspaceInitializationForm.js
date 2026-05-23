@@ -37,6 +37,10 @@ export function useWorkspaceInitializationForm() {
       // Tree inference model options (enabled by default for viral data)
       treeInferenceEngine: 'iqtree',
       iqtreeFastSearch: true,
+      iqtreeSupportMode: 'none',
+      iqtreeUfbootReplicates: 1000,
+      iqtreeShAlrtReplicates: 1000,
+      iqtreeBnni: false,
       useGtr: true,   // GTR (General Time Reversible) model - more realistic
       useGamma: true, // Gamma rate heterogeneity - accounts for rate variation
       usePseudo: false, // Pseudocounts - off by default, enable for gappy alignments
