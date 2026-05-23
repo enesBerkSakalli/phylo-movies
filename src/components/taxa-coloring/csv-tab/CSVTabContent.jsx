@@ -10,6 +10,7 @@ export function CSVTabContent({
   csvFileName,
   csvColumn,
   csvValidation,
+  csvError,
   csvGroups,
   colorManager,
   colorVersion,
@@ -20,10 +21,15 @@ export function CSVTabContent({
   handleColorChange
 }) {
   return (
-    <div className="space-y-4">
-      <CSVUpload onFile={onFile} csvFileName={csvFileName} onReset={resetCSV} />
+    <div className="flex flex-col gap-4">
+      <CSVUpload
+        onFile={onFile}
+        csvFileName={csvFileName}
+        onReset={resetCSV}
+        errorMessage={csvError}
+      />
       {csvData && (
-        <div className="space-y-3">
+        <div className="flex flex-col gap-3">
           <CSVColumnSelector
             csvData={csvData}
             csvColumn={csvColumn}

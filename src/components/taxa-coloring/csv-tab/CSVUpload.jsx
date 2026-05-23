@@ -7,7 +7,7 @@ import { Label } from "../../ui/label";
 
 const MAX_CSV_SIZE = 5 * 1024 * 1024;
 
-export function CSVUpload({ onFile, csvFileName, onReset }) {
+export function CSVUpload({ onFile, csvFileName, onReset, errorMessage }) {
   const inputRef = useRef(null);
   const [dragOver, setDragOver] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
@@ -58,7 +58,7 @@ export function CSVUpload({ onFile, csvFileName, onReset }) {
               onClick={() => {
                 setHasError(false);
                 setStatusMessage("CSV file cleared.");
-                onReset();
+                onReset?.();
               }}
               className="group/reset size-8 rounded-md hover:bg-destructive/10 hover:text-destructive"
               aria-label="Remove selected CSV file"
@@ -71,14 +71,19 @@ export function CSVUpload({ onFile, csvFileName, onReset }) {
     );
   }
 
+  const visibleStatusMessage = hasError
+    ? statusMessage
+    : errorMessage || statusMessage;
+  const visibleStatusIsError = hasError || Boolean(errorMessage);
+
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="flex gap-3 rounded-lg border border-border/50 bg-muted/20 p-3">
           <div className="mt-1 rounded-md bg-primary/10 p-2 text-primary">
             <Info className="size-3.5" />
           </div>
-          <div className="space-y-1">
+          <div className="flex flex-col gap-1">
             <p className="text-[11px] font-bold leading-none">Format Requirements</p>
             <p className="text-2xs leading-tight text-muted-foreground">
               One column must contain exactly the same taxa names as in your tree. Other columns define colors/groups.
@@ -89,8 +94,8 @@ export function CSVUpload({ onFile, csvFileName, onReset }) {
           <div className="mt-1 rounded-md bg-accent p-2 text-accent-foreground">
             <FileText className="size-3.5" />
           </div>
-          <div className="space-y-1">
-            <p className="text-[11px] font-bold leading-none">Pro-Tip: Mapping</p>
+          <div className="flex flex-col gap-1">
+            <p className="text-[11px] font-bold leading-none">Mapping</p>
             <p className="text-2xs leading-tight text-muted-foreground">
               Values like "High", "Low" or "Group A" will be automatically detected as distinct coloring subtrees.
             </p>
@@ -117,13 +122,13 @@ export function CSVUpload({ onFile, csvFileName, onReset }) {
         }}
       >
         <CardContent className="flex flex-col items-center justify-center px-6 py-6 text-center">
-          <div className="mb-3 rounded-xl bg-primary/10 p-3 transition-transform group-hover/drop:scale-110 group-hover/drop:rotate-3">
+          <div className="mb-3 rounded-md bg-primary/10 p-3">
             <Upload className="size-6 text-primary" />
           </div>
 
-          <div className="mb-5 space-y-2">
+          <div className="mb-5 flex flex-col gap-2">
             <h3 className="text-sm font-bold tracking-tight">Import Taxa Mapping</h3>
-            <div id={helpId} className="space-y-1">
+            <div id={helpId} className="flex flex-col gap-1">
               <p className="mx-auto max-w-[280px] text-[11px] leading-tight text-muted-foreground">
                 Drag and drop your <code className="rounded bg-muted px-1 font-mono font-bold text-primary">.csv</code> file here, or use the browse button.
               </p>
@@ -140,7 +145,7 @@ export function CSVUpload({ onFile, csvFileName, onReset }) {
             <Button
               variant="default"
               size="sm"
-              className="h-8 px-5 font-bold shadow-md"
+              className="h-8 px-5 font-bold"
               onClick={() => inputRef.current?.click()}
             >
               Browse CSV
@@ -162,9 +167,9 @@ export function CSVUpload({ onFile, csvFileName, onReset }) {
       <p
         id={statusId}
         aria-live="polite"
-        className={`text-center text-xs ${statusMessage ? (hasError ? "text-destructive" : "text-muted-foreground") : "sr-only"}`}
+        className={`text-center text-xs ${visibleStatusMessage ? (visibleStatusIsError ? "text-destructive" : "text-muted-foreground") : "sr-only"}`}
       >
-        {statusMessage || "No CSV file selected."}
+        {visibleStatusMessage || "No CSV file selected."}
       </p>
 
       <p className="text-center text-2xs italic text-muted-foreground/60">

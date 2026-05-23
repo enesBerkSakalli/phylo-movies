@@ -35,23 +35,26 @@ export function MSARegionOverrides() {
     setEndValue('');
   };
 
+  const canSetRegion = Boolean(startValue && endValue);
+  const canClearRegion = Boolean(msaRegion || startValue || endValue);
+
   return (
-    <div className="flex items-center gap-2">
-      <LabelledRangeInputs
+    <div className="flex items-center gap-2" role="group" aria-label="Alignment region override">
+      <MsaRegionInputs
         startValue={startValue}
         endValue={endValue}
         setStartValue={setStartValue}
         setEndValue={setEndValue}
       />
       <div className="flex items-center gap-1 ml-1">
-        <Button size="xs" onClick={handleSetRegion} disabled={!startValue || !endValue} className="h-7 px-3">Set</Button>
-        <Button size="xs" variant="ghost" onClick={handleClearRegion} className="h-7 text-muted-foreground hover:text-foreground">Clear</Button>
+        <Button type="button" size="xs" onClick={handleSetRegion} disabled={!canSetRegion} className="h-7 px-3">Set</Button>
+        <Button type="button" size="xs" variant="ghost" onClick={handleClearRegion} disabled={!canClearRegion} className="h-7 text-muted-foreground hover:text-foreground">Clear</Button>
       </div>
     </div>
   );
 }
 
-function LabelledRangeInputs({ startValue, endValue, setStartValue, setEndValue }) {
+function MsaRegionInputs({ startValue, endValue, setStartValue, setEndValue }) {
   return (
     <>
       <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Region</span>

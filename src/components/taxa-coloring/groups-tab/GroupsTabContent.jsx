@@ -1,5 +1,4 @@
 import React from "react";
-// Card imports removed
 import { StrategySelector } from "./StrategySelector.jsx";
 import { ColorSchemeSelector } from "../shared/ColorSchemeSelector.jsx";
 import { EmptyStateAlert } from "../shared/EmptyStateAlert.jsx";
@@ -20,7 +19,7 @@ export function GroupsTabContent({
   onStrategyChange
 }) {
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4">
       <StrategySelector
         selectedStrategy={selectedStrategy}
         separators={separators}
@@ -38,7 +37,7 @@ export function GroupsTabContent({
         <EmptyStateAlert mode="groups" />
       ) : (
         <div className="rounded-md border border-border/30 bg-accent/5 px-3 py-3">
-          <div className="mb-3 space-y-1 px-1">
+          <div className="mb-3 flex flex-col gap-1 px-1">
             <h3 className="text-[13px] font-bold leading-none">Group Customization ({groups.length})</h3>
             <p className="text-2xs text-muted-foreground">Colors assigned to detected subtrees.</p>
           </div>

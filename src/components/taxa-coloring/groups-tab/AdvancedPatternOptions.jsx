@@ -3,7 +3,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "..
 import { Label } from "../../ui/label";
 import { Input } from "../../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
-// Switch removed as it is now encapsulated in ToggleWithLabel
 import { Alert, AlertDescription } from "../../ui/alert";
 import { Info } from "lucide-react";
 import { ToggleWithLabel } from "../../ui/toggle-with-label";
