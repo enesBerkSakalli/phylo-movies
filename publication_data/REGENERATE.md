@@ -16,6 +16,22 @@ Create or update the publication-analysis environment:
 conda env create -f publication_data/environment.yml
 ```
 
+If conda is not installed on the host, use the publication container instead:
+
+```bash
+docker compose --profile publication build publication-env
+docker compose --profile publication run --rm publication-env bash
+```
+
+Inside that shell, the `phylomovies-publication` conda environment and native
+tools are already available:
+
+```bash
+conda run -n phylomovies-publication raxmlHPC -v
+conda run -n phylomovies-publication iqtree2 --version
+conda run -n phylomovies-publication FastTree -expert
+```
+
 The shared shell defaults are stored in:
 
 ```text
@@ -44,6 +60,15 @@ Run a quick smoke check:
 
 ```bash
 conda run -n phylomovies-publication \
+  ./publication_data/bootstrap_rogue_taxa/scripts/bootstrap_ordering/run_bootstrap_rogue_taxa.sh \
+  --smoke --run-label archive-smoke
+```
+
+Or run the same command through the publication container:
+
+```bash
+docker compose --profile publication run --rm publication-env \
+  conda run -n phylomovies-publication \
   ./publication_data/bootstrap_rogue_taxa/scripts/bootstrap_ordering/run_bootstrap_rogue_taxa.sh \
   --smoke --run-label archive-smoke
 ```
