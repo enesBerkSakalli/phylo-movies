@@ -1,5 +1,6 @@
 import { selectActiveTreeList, selectCurrentTree, selectInputFrameIndices, useAppStore } from '../../state/phyloStore/store.js';
 import { tagTreeSide } from '../utils/layerDataUtils.js';
+import { VIEWPORT_FIT_MODES } from '../viewport/viewportFit.js';
 
 /**
  * Handles the static rendering of trees (non-animated states).
@@ -92,8 +93,8 @@ export class StaticRenderer {
 
     if (this.controller._lastFocusedTreeIndex === null) {
       this.controller.viewportManager.focusOnTree(layerData.nodes, layerData.labels, {
-        includeLabels: state.labelsVisible !== false,
-        links: layerData.links
+        fitMode: VIEWPORT_FIT_MODES.BRANCH,
+        links: [...layerData.links, ...layerData.extensions]
       });
       this.controller._lastFocusedTreeIndex = targetIndex;
     }

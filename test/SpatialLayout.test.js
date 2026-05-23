@@ -4,13 +4,11 @@ import { afterEach, describe, expect, it } from 'vitest';
 import * as spatialLayout from '../src/treeVisualisation/spatial/layout.js';
 
 const {
-  clampSafeAreaPadding,
+  calculateUnobstructedFitAreas,
+  calculateViewportFitAreas,
   calculateRectOverlap,
-  calculateSafeAreaPadding,
-  calculateSafeAreaPaddingForRect,
-  classifySafeAreaBar,
-  normalizeSafeArea,
-  scaleSafeAreaToMinimumVisibleViewport
+  VIEWPORT_FIT_OBSTRUCTION_PADDING_PX,
+  VIEWPORT_FIT_OBSTRUCTION_SELECTORS
 } = spatialLayout;
 
 function rect(left, top, width, height) {
@@ -33,20 +31,23 @@ function elementWithRect({ className, id, bounds }) {
   return el;
 }
 
-describe('spatial safe-area layout helpers', () => {
+describe('spatial viewport fit layout helpers', () => {
   afterEach(() => {
     document.body.innerHTML = '';
   });
 
-  it('exposes named safe-area policy constants', () => {
-    expect(spatialLayout.SAFE_AREA_UI_SELECTORS).toEqual([
+  it('exposes named viewport fit obstruction policy constants', () => {
+    expect(VIEWPORT_FIT_OBSTRUCTION_SELECTORS).toEqual([
       '.movie-player-bar',
-      '#top-scale-bar-container'
+      '#top-scale-bar-container',
+      '[role="group"][aria-label="Tree viewport controls"]',
+      '[role="group"][aria-label="Canvas capture controls"]',
+      '[role="complementary"][aria-label="Comparison Panel"]',
+      '.phylo-hud',
+      '.phylo-hud-restore',
+      '[aria-label="Transition Inspector"]'
     ]);
-    expect(spatialLayout.SAFE_AREA_EDGE_THRESHOLD_PX).toBe(24);
-    expect(spatialLayout.SAFE_AREA_EXTRA_PADDING_PX).toBe(20);
-    expect(spatialLayout.SAFE_AREA_MIN_VISIBLE_FRACTION).toBe(0.4);
-    expect(spatialLayout.SAFE_AREA_BAR_COVERAGE_FRACTION).toBe(0.5);
+    expect(VIEWPORT_FIT_OBSTRUCTION_PADDING_PX).toBe(20);
   });
 
   it('calculates rectangle overlap without DOM access', () => {
@@ -61,104 +62,41 @@ describe('spatial safe-area layout helpers', () => {
     )).toEqual({ x: 0, y: 0 });
   });
 
-  it('classifies safe-area bars by canvas coverage', () => {
-    const canvasRect = rect(0, 0, 1000, 800);
-
-    expect(classifySafeAreaBar(rect(0, 740, 501, 60), canvasRect)).toEqual({
-      horizontal: true,
-      vertical: false
-    });
-    expect(classifySafeAreaBar(rect(960, 0, 40, 401), canvasRect)).toEqual({
-      horizontal: false,
-      vertical: true
-    });
-    expect(classifySafeAreaBar(rect(960, 740, 40, 60), canvasRect)).toEqual({
-      horizontal: false,
-      vertical: false
+  it('calculates unobstructed fit areas around floating viewport UI', () => {
+    expect(calculateUnobstructedFitAreas(1000, 800, [
+      rect(760, 0, 240, 120),
+      rect(0, 480, 220, 160),
+    ])[0]).toEqual({
+      left: 220,
+      top: 120,
+      width: 780,
+      height: 680
     });
   });
 
-  it('calculates raw edge padding for one overlapping safe-area element', () => {
-    const canvasRect = rect(0, 0, 1000, 800);
-
-    expect(calculateSafeAreaPaddingForRect(rect(0, 740, 1000, 60), canvasRect)).toEqual({
-      top: 0,
-      right: 0,
-      bottom: 60,
-      left: 0
-    });
-    expect(calculateSafeAreaPaddingForRect(rect(0, 0, 40, 800), canvasRect)).toEqual({
-      top: 0,
-      right: 0,
-      bottom: 0,
-      left: 40
-    });
-  });
-
-  it('clamps raw safe-area padding to canvas dimensions', () => {
-    expect(clampSafeAreaPadding({
-      top: 900,
-      right: 1200,
-      bottom: -10,
-      left: Number.NaN
-    }, 1000, 800)).toEqual({
-      top: 800,
-      right: 1000,
-      bottom: 0,
-      left: 0
-    });
-  });
-
-  it('scales opposing safe-area padding to preserve the minimum visible viewport', () => {
-    expect(scaleSafeAreaToMinimumVisibleViewport({
-      top: 700,
-      right: 500,
-      bottom: 700,
-      left: 500
-    }, 1000, 800)).toEqual({
-      top: 240,
-      right: 300,
-      bottom: 240,
-      left: 300
-    });
-  });
-
-  it('adds extra bottom padding for an overlapping movie player bar', () => {
-    const container = elementWithRect({ bounds: rect(0, 0, 1000, 800) });
+  it('calculates viewport fit areas from overlapping canvas UI', () => {
+    const container = elementWithRect({ bounds: rect(100, 50, 1000, 800) });
     elementWithRect({
       className: 'movie-player-bar',
-      bounds: rect(0, 740, 1000, 60)
+      bounds: rect(100, 790, 1000, 60)
     });
-
-    expect(calculateSafeAreaPadding(container)).toEqual({
-      top: 0,
-      right: 0,
-      bottom: 80,
-      left: 0
+    const controls = elementWithRect({
+      bounds: rect(900, 60, 180, 70)
     });
-  });
-
-  it('ignores overlapping elements that do not cover enough of an edge', () => {
-    const container = elementWithRect({ bounds: rect(0, 0, 1000, 800) });
-    elementWithRect({
-      className: 'movie-player-bar',
-      bounds: rect(0, 740, 400, 60)
+    controls.setAttribute('role', 'group');
+    controls.setAttribute('aria-label', 'Tree viewport controls');
+    const panel = elementWithRect({
+      className: 'phylo-hud',
+      bounds: rect(116, 550, 180, 120)
     });
+    panel.setAttribute('role', 'complementary');
+    panel.setAttribute('aria-label', 'Comparison Panel');
 
-    expect(calculateSafeAreaPadding(container)).toBeNull();
-  });
-
-  it('scales normalized padding to keep the minimum visible viewport area', () => {
-    expect(normalizeSafeArea({
-      top: 700,
-      right: 500,
-      bottom: 700,
-      left: 500
-    }, 1000, 800)).toEqual({
-      top: 240,
-      right: 300,
-      bottom: 240,
-      left: 300
+    expect(calculateViewportFitAreas(container)[0]).toEqual({
+      left: 216,
+      top: 100,
+      width: 784,
+      height: 620
     });
   });
 });

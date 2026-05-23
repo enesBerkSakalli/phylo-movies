@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAppStore } from '../src/state/phyloStore/store.js';
+import { VIEWPORT_FIT_MODES } from '../src/treeVisualisation/viewport/viewportFit.js';
 
 class MockWorker {
   constructor() {
@@ -97,11 +98,13 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     const node = { id: 'node-1', position: [0, 0, 0] };
     const label = { id: 'label-1', position: [1, 1, 0] };
     const link = { id: 'link-1', path: new Float32Array([0, 0, 0, 1, 1, 0]) };
+    const extension = { id: 'extension-1', path: new Float32Array([1, 1, 0, 5, 5, 0]) };
     const connector = { id: 'connector-1', path: new Float32Array([1, 1, 0, 10, 10, 0]) };
     controller._lastLayerData = {
       nodes: [node],
       labels: [label],
       links: [link],
+      extensions: [extension],
       connectors: [connector],
     };
     controller.viewportManager = {
@@ -111,10 +114,10 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     controller.fitTreeToViewport();
 
     expect(controller.viewportManager.focusOnTree).toHaveBeenCalledWith([node], [label], {
-      includeLabels: true,
+      fitMode: VIEWPORT_FIT_MODES.LABELS,
       duration: 350,
       padding: undefined,
-      links: [link, connector],
+      links: [link, extension, connector],
     });
   });
 

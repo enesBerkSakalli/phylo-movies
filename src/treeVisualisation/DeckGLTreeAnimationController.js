@@ -12,6 +12,7 @@ import { selectActiveTreeList, useAppStore } from '../state/phyloStore/store.js'
 import { TreeNodeInteractionHandler } from './interaction/TreeNodeInteractionHandler.js';
 import { handleDragStart, handleDrag, handleDragEnd, handleContainerResize } from './interaction/InteractionHandlers.js';
 import { ViewportManager } from './viewport/ViewportManager.js';
+import { VIEWPORT_FIT_MODES } from './viewport/viewportFit.js';
 import { getClipboardLayers } from './utils/ClipboardUtils.js';
 import { createLayoutCacheKey } from './utils/layoutCacheKey.js';
 import { getSplitKey } from '../domain/tree/splits.js';
@@ -261,13 +262,15 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
   fitTreeToViewport(options = {}) {
     const nodes = this._lastLayerData?.nodes;
     if (!Array.isArray(nodes) || nodes.length === 0 || !this.viewportManager) return;
+    this._hasUserViewportInteraction = true;
     const links = [
       ...(this._lastLayerData.links || []),
+      ...(this._lastLayerData.extensions || []),
       ...(this._lastLayerData.connectors || [])
     ];
 
     this.viewportManager.focusOnTree(nodes, this._lastLayerData.labels, {
-      includeLabels: options.includeLabels !== false,
+      fitMode: options.fitMode ?? VIEWPORT_FIT_MODES.LABELS,
       duration: options.duration ?? 350,
       padding: options.padding,
       links

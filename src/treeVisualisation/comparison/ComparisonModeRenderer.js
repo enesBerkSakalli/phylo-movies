@@ -2,6 +2,7 @@ import { buildSubtreeConnectors } from '../deckgl/data/transforms/SubtreeConnect
 import { useAppStore } from '../../state/phyloStore/store.js';
 import { selectPairById, selectPivotEdgeForFrame, selectTimelineFrameAtIndex } from '../../state/phyloStore/selectors/treeSelectors.js';
 import { tagTreeSide } from '../utils/layerDataUtils.js';
+import { VIEWPORT_FIT_MODES } from '../viewport/viewportFit.js';
 import {
   applyOffset,
   combineLayerData,
@@ -159,7 +160,8 @@ export class ComparisonModeRenderer {
 
     if (indicesChanged) {
       this.controller.viewportManager.focusOnTree(combinedData.nodes, combinedData.labels, {
-        links: [...combinedData.links, ...combinedData.connectors]
+        fitMode: VIEWPORT_FIT_MODES.BRANCH,
+        links: [...combinedData.links, ...combinedData.extensions, ...combinedData.connectors]
       });
       this._lastFittedIndices = { left: leftIndex, right: rightIndex };
     }
@@ -261,7 +263,12 @@ export class ComparisonModeRenderer {
       this.controller.viewportManager.focusOnTree(
         combinedData.nodes,
         combinedData.labels,
-        { allowDuringPlayback: true, duration: 0, links: [...combinedData.links, ...combinedData.connectors] }
+        {
+          fitMode: VIEWPORT_FIT_MODES.BRANCH,
+          allowDuringPlayback: true,
+          duration: 0,
+          links: [...combinedData.links, ...combinedData.extensions, ...combinedData.connectors]
+        }
       );
       this._lastFittedIndices = { left: -1, right: rightIndex };
     }

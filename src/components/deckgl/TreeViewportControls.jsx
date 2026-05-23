@@ -8,7 +8,7 @@ export function TreeViewportControls() {
   const controller = useAppStore(selectPrimaryTreeController);
   const disabled = !controller;
 
-  const fitTree = useCallback(() => {
+  const fitVisibleContent = useCallback(() => {
     if (!controller) return;
     controller.fitTreeToViewport();
   }, [controller]);
@@ -34,14 +34,14 @@ export function TreeViewportControls() {
       role="group"
       aria-label="Tree viewport controls"
     >
-      <AppTooltip content="Fit tree to viewport" side="bottom">
+      <AppTooltip content="Fit all visible content" side="bottom">
         <Button
           type="button"
           variant="ghost"
           size="icon-xs"
-          aria-label="Fit tree to viewport"
+          aria-label="Fit all visible content"
           disabled={disabled}
-          onClick={fitTree}
+          onClick={fitVisibleContent}
         >
           <Maximize2 className="size-3.5" aria-hidden />
         </Button>

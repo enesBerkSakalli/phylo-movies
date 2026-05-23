@@ -10,11 +10,16 @@ describe('ComparisonModeRenderer', () => {
   });
 
   it('passes connector Bezier paths into branch-focused fit', async () => {
+    const leftExtension = {
+      sourcePosition: [0, 0, 0],
+      targetPosition: [0, 200, 0],
+      path: [[0, 0, 0], [0, 200, 0]]
+    };
     const leftData = {
       nodes: [{ id: 'node-0', position: [0, 0, 0], renderPosition: [0, 0, 0.1], split_indices: [0], isLeaf: true, name: 'A' }],
       links: [],
       labels: [],
-      extensions: [],
+      extensions: [leftExtension],
     };
     const rightData = {
       nodes: [{ id: 'node-0', position: [100, 0, 0], renderPosition: [100, 0, 0.1], split_indices: [0], isLeaf: true, name: 'A' }],
@@ -38,7 +43,7 @@ describe('ComparisonModeRenderer', () => {
       calculateLayout: (tree) => ({ tree, width: 100, height: 100 }),
       _getConsistentRadii: () => ({ extensionRadius: 10, labelRadius: 20 }),
       dataConverter: {
-        convertTreeToLayerData: (tree) => tree.side === 'left' ? leftData : rightData,
+        convertTreeToLayerData: (layout) => layout.tree.side === 'left' ? leftData : rightData,
       },
       deckContext: {
         getCanvasDimensions: () => ({ width: 800, height: 600 }),
@@ -55,6 +60,7 @@ describe('ComparisonModeRenderer', () => {
 
     expect(focusOnTree).toHaveBeenCalledOnce();
     expect(focusOnTree.mock.calls[0][2].links).toContain(connector);
+    expect(focusOnTree.mock.calls[0][2].links).toContain(leftExtension);
     expect(renderer._buildConnectors.mock.calls[0][6]).toBe(0);
   });
 
