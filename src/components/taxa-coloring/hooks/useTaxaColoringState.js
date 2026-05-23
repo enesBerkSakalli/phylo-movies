@@ -56,6 +56,7 @@ export function useTaxaColoringState(taxaNames, originalColorMap, initialStatePa
     csvTaxaMap,
     csvColumn,
     csvValidation,
+    csvError,
     onFile,
     onColumnChange,
     resetCSV
@@ -241,6 +242,7 @@ export function useTaxaColoringState(taxaNames, originalColorMap, initialStatePa
     csvGroups,
     csvColumn,
     csvValidation,
+    csvError,
     colorManager: mgr,
     colorVersion: version, // Expose version to force re-renders in child components
     applyScheme,

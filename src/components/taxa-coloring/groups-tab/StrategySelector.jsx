@@ -1,7 +1,6 @@
 import React from "react";
 import { Button } from "../../ui/button";
 import { Separator } from "../../ui/separator";
-// Card imports removed
 import {
   Select,
   SelectContent,
@@ -52,8 +51,7 @@ export function StrategySelector({
   return (
     <div className="space-y-3">
       <div className="rounded-md border border-border/30 bg-accent/5 p-3">
-        <div className="flex flex-col gap-3">
-          {/* Header Row: Title & Strategy Buttons */}
+          <div className="flex flex-col gap-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="space-y-1 min-w-[120px]">
                <h3 className="text-sm font-medium leading-none">Grouping Pattern</h3>
@@ -76,7 +74,6 @@ export function StrategySelector({
 
           <Separator className="bg-border/30" />
 
-          {/* Controls Row: Separators/Segment Index */}
           <div className="grid gap-4">
              {selectedStrategy !== "first-letter" && selectedStrategy !== "segment" && !useRegex && (
                 <div className="flex items-center gap-3">
@@ -139,8 +136,6 @@ export function StrategySelector({
           </div>
         </div>
       </div>
-
-
     </div>
   );
 }

@@ -182,7 +182,6 @@ export function TaxaColoringRndWindow({ isActive = false, onFocus } = {}) {
             taxaNames={taxaNames}
             originalColorMap={baselineColorMap}
             onApply={handleApply}
-            onClose={handleClose}
             initialState={initialState}
           />
         </div>

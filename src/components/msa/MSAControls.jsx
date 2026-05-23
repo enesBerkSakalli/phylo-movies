@@ -10,6 +10,7 @@ import {
   selectClearMsaRowOrder,
   selectCurrentTree,
   selectFrameIndex,
+  selectMsaRowOrder,
   selectSetMsaRowOrder,
   selectTreeControllers,
   useAppStore
@@ -21,6 +22,7 @@ export function MSAControls() {
   const treeControllers = useAppStore(selectTreeControllers);
   const currentTree = useAppStore(selectCurrentTree);
   const frameIndex = useAppStore(selectFrameIndex);
+  const msaRowOrder = useAppStore(selectMsaRowOrder);
   const setMsaRowOrder = useAppStore(selectSetMsaRowOrder);
   const clearMsaRowOrder = useAppStore(selectClearMsaRowOrder);
 
@@ -53,24 +55,31 @@ export function MSAControls() {
     clearMsaRowOrder();
   };
 
+  const canMatchTreeOrder = Boolean(treeControllers[0] && currentTree);
+  const canResetOrder = Array.isArray(msaRowOrder) && msaRowOrder.length > 0;
+
   return (
-    <div className="px-2 py-1 flex flex-wrap items-center gap-2 bg-muted/30 border-b border-border/60 shrink-0 overflow-visible">
+    <div
+      className="flex shrink-0 flex-wrap items-center gap-2 overflow-visible border-b border-border/60 bg-muted/30 px-2 py-1"
+      role="toolbar"
+      aria-label="Alignment viewer controls"
+    >
       <MSARegionOverrides />
 
       <Separator orientation="vertical" className="h-4 mx-2 opacity-40" />
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1" role="group" aria-label="Alignment viewport controls">
         <MSAViewActions />
       </div>
 
       <Separator orientation="vertical" className="h-4 mx-2 opacity-40" />
 
-      <div className="flex items-center gap-2">
-        <Button size="xs" variant="secondary" onClick={handleMatchTreeOrder} className="h-7 text-[11px] font-medium">Match Tree Order</Button>
-        <Button size="xs" variant="outline" onClick={handleResetOrder} className="h-7 border-border/40 text-muted-foreground hover:text-foreground text-[11px]">Reset Order</Button>
+      <div className="flex items-center gap-2" role="group" aria-label="Alignment row order controls">
+        <Button type="button" size="xs" variant="secondary" onClick={handleMatchTreeOrder} disabled={!canMatchTreeOrder} className="h-7 text-[11px] font-medium">Match Tree Order</Button>
+        <Button type="button" size="xs" variant="outline" onClick={handleResetOrder} disabled={!canResetOrder} className="h-7 border-border/40 text-[11px] text-muted-foreground hover:text-foreground">Reset Order</Button>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2" role="group" aria-label="Alignment coloring controls">
         <Label htmlFor="msa-color-scheme" className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Coloring</Label>
         <Select value={colorScheme} onValueChange={setColorScheme}>
           <SelectTrigger id="msa-color-scheme" className="w-[160px] h-7 text-xs bg-background/50 border-border/40">
@@ -102,7 +111,7 @@ export function MSAControls() {
 
       <Separator orientation="vertical" className="h-4 mx-2 opacity-40" />
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2" role="group" aria-label="Alignment residue display controls">
         <Switch id="msa-toggle-letters" checked={showLetters} onCheckedChange={setShowLetters} aria-label="Toggle residue letters" className="scale-75" />
         <Label htmlFor="msa-toggle-letters" className="text-xs">Letters</Label>
       </div>
