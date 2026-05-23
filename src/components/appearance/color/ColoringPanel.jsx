@@ -18,13 +18,15 @@ import {
   selectSetMonophyleticColoring,
   selectSetPivotEdgeColor,
   selectSetPivotEdgesEnabled,
+  selectLeafNamesByIndex,
   selectSetTaxaColoringOpen,
+  selectTaxaColoringOpen,
   selectTreeControllers,
   useAppStore
 } from '../../../state/phyloStore/store.js';
 import { Switch } from '../../ui/switch';
 import { Input } from '../../ui/input';
-import { Palette, Info, Settings2, RefreshCw } from 'lucide-react';
+import { Palette, Settings2, RefreshCw } from 'lucide-react';
 import {
   SidebarMenuSub,
   SidebarMenuSubItem,
@@ -33,15 +35,19 @@ import { Slider } from '../../ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { Label } from '../../ui/label';
 import { Button } from '../../ui/button';
+import { Separator } from '../../ui/separator';
 import { Highlighter, X } from 'lucide-react';
 
-export function ColoringPanel() {
+export function ColoringPanel({ onOpenTaxaColoring }) {
   const monophyletic = useAppStore(selectMonophyleticColoringEnabled);
   const pivotEdgesEnabled = useAppStore(selectPivotEdgesEnabled);
   const treeControllers = useAppStore(selectTreeControllers);
   const pivotEdgeColor = useAppStore(selectPivotEdgeColor);
   const subtreeHighlightColor = useAppStore(selectSubtreeHighlightColor);
+  const taxaNames = useAppStore(selectLeafNamesByIndex) || [];
+  const taxaColoringOpen = useAppStore(selectTaxaColoringOpen);
   const setTaxaColoringOpen = useAppStore(selectSetTaxaColoringOpen);
+  const hasTaxa = taxaNames.length > 0;
 
   const setMonophyleticColoring = useAppStore(selectSetMonophyleticColoring);
   const setPivotEdgesEnabled = useAppStore(selectSetPivotEdgesEnabled);
@@ -83,26 +89,32 @@ export function ColoringPanel() {
     await rerenderControllers();
   }, [setSubtreeHighlightsEnabled, rerenderControllers]);
 
+  const openTaxaColoring = useCallback(() => {
+    if (!hasTaxa) return;
+    if (onOpenTaxaColoring) {
+      onOpenTaxaColoring();
+      return;
+    }
+    setTaxaColoringOpen(true);
+  }, [hasTaxa, onOpenTaxaColoring, setTaxaColoringOpen]);
+
   return (
     <SidebarMenuSub>
-      <SidebarMenuSubItem className="px-1 py-1">
+      <SidebarMenuSubItem>
         <Button
           id="taxa-coloring-button"
-          onClick={() => setTaxaColoringOpen(true)}
-          variant="secondary"
-          className="w-full justify-start h-9 font-medium border-border/40"
+          type="button"
+          onClick={openTaxaColoring}
+          disabled={!hasTaxa}
+          aria-label={hasTaxa ? 'Open taxa coloring window' : 'Taxa coloring unavailable until taxa are loaded'}
+          variant={taxaColoringOpen ? 'secondary' : 'outline'}
+          className="w-full justify-start h-8 text-xs font-normal"
         >
-          <Palette className="size-4 mr-2 text-primary" />
+          <Palette data-icon="inline-start" className="text-primary" />
           <span>Taxa Colors</span>
         </Button>
-        <div className="px-2 mt-2 mb-1">
-          <p className="text-2xs text-muted-foreground/80 leading-tight italic flex gap-2 items-start">
-            <Info className="size-3 shrink-0 mt-1" />
-            <span>Set colors for taxa or groups in a separate window.</span>
-          </p>
-        </div>
       </SidebarMenuSubItem>
-      <div className="h-px bg-muted/30 my-2 mx-2" />
+      <Separator className="my-2 mx-2" />
       <SidebarMenuSubItem>
         <div className="flex items-center justify-between px-2 py-2 w-full">
           <div className="flex items-center gap-2 overflow-hidden">
