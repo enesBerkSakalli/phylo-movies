@@ -144,7 +144,6 @@ export interface PhyloMovieData {
   frames: TimelineFrame[];
   pairs: TimelinePair[];
   temporal_events: TemporalEvent[];
-  pivot_edge_tracking: Array<number[] | null>;
   /** Per-frame active mover highlight groups. */
   subtree_highlight_tracking: SubtreeHighlightTracking;
   pair_metrics: PairMetrics;

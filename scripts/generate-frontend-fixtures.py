@@ -176,7 +176,6 @@ def _assert_normalized_contract_fields(payload: dict, fixture_name: str) -> None
         "frames",
         "pairs",
         "temporal_events",
-        "pivot_edge_tracking",
         "subtree_highlight_tracking",
         "pair_metrics",
         "msa",
@@ -190,6 +189,7 @@ def _assert_normalized_contract_fields(payload: dict, fixture_name: str) -> None
         "distances",
         "split_change_events",
         "sorted" + "_leaves",
+        "pivot_edge_tracking",
     }
 
     actual_keys = set(payload)

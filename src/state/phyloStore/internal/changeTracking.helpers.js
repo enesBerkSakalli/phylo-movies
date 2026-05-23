@@ -4,17 +4,16 @@ import {
   getBackendSplitMapValue,
   parseSubtreeHighlightEntry,
   collectUniqueSubtrees,
-  collectUniqueEdges
 } from '../../../domain/tree/splits.js';
 import { findPreviousInputTreeSequenceIndex, findNextInputTreeSequenceIndex } from '../../../domain/indexing/treeIndexSemantics.js';
-import { selectInputFrameIndices, selectPairById, selectTimelineFrameAtIndex } from '../selectors/treeSelectors.js';
+import { selectInputFrameIndices, selectPairById, selectPivotEdgeForFrame, selectTimelineFrameAtIndex } from '../selectors/treeSelectors.js';
 
 // ============================================================================
 // SYSTEM HELPERS (Rendering, Persistence, Storage)
 // ============================================================================
 
 export function calculateChangePreviews(state, indexOverride = null) {
-  const { upcomingChangesEnabled, frameIndex: stateFrameIndex, pivotEdgeTracking } = state;
+  const { upcomingChangesEnabled, frameIndex: stateFrameIndex } = state;
   const frameIndex = Number.isInteger(indexOverride) ? indexOverride : stateFrameIndex;
 
   if (!upcomingChangesEnabled) {
@@ -22,25 +21,25 @@ export function calculateChangePreviews(state, indexOverride = null) {
   }
 
   const inputTreeIndices = selectInputFrameIndices(state);
-  if (!inputTreeIndices.length || !pivotEdgeTracking.length) {
+  if (!inputTreeIndices.length) {
     return { upcoming: [], completed: [] };
   }
 
   const previousInputTreeIndex = findPreviousInputTreeSequenceIndex(inputTreeIndices, frameIndex);
   const nextInputTreeIndex = findNextInputTreeSequenceIndex(inputTreeIndices, frameIndex);
-  const currentEdge = pivotEdgeTracking[frameIndex];
+  const currentEdge = selectPivotEdgeForFrame(state, frameIndex);
   // Must use toSubtreeKey to match how collectUniqueEdges generates keys (was JSON.stringify which caused mismatch)
   const currentKey = Array.isArray(currentEdge) && currentEdge.length > 0
     ? toSubtreeKey(currentEdge)
     : null;
 
-  const completed = collectUniqueEdges(pivotEdgeTracking, previousInputTreeIndex + 1, frameIndex, currentKey);
+  const completed = collectUniquePivotEdges(state, previousInputTreeIndex + 1, frameIndex, currentKey);
 
   if (nextInputTreeIndex === null) {
     return { upcoming: [], completed };
   }
 
-  const upcoming = collectUniqueEdges(pivotEdgeTracking, frameIndex + 1, nextInputTreeIndex, currentKey);
+  const upcoming = collectUniquePivotEdges(state, frameIndex + 1, nextInputTreeIndex, currentKey);
 
   return { upcoming, completed };
 }
@@ -93,7 +92,7 @@ export function getMovingSubtreeAtIndex(state, index) {
 }
 
 export function getAffectedSubtreesForPivotEdge(state, index) {
-  const edge = state.pivotEdgeTracking[index];
+  const edge = selectPivotEdgeForFrame(state, index);
   if (!Array.isArray(edge) || edge.length === 0) return [];
 
   const pairId = selectTimelineFrameAtIndex(state, index)?.pair_id ?? null;
@@ -141,7 +140,7 @@ export function getSubtreeHistoryAtIndex(state, index) {
 export function getSourceDestinationEdgesAtIndex(state, index) {
   if (isInputFrame(state, index)) return { source: [], dest: [] };
 
-  const pivotEdge = state.pivotEdgeTracking[index];
+  const pivotEdge = selectPivotEdgeForFrame(state, index);
   const subtrees = state.subtreeHighlightTracking[index];
 
   if (!Array.isArray(pivotEdge) || pivotEdge.length === 0) return { source: [], dest: [] };
@@ -195,6 +194,18 @@ function filterMovingNodes(edge, movingSet) {
 
 function isInputFrame(state, index) {
   return selectInputFrameIndices(state).includes(index);
+}
+
+function collectUniquePivotEdges(state, start, end, excludeKey) {
+  const map = new Map();
+  for (let frameIndex = start; frameIndex < end; frameIndex += 1) {
+    const pivotEdge = selectPivotEdgeForFrame(state, frameIndex);
+    if (pivotEdge.length > 0) {
+      const key = toSubtreeKey(pivotEdge);
+      if (key !== excludeKey && !map.has(key)) map.set(key, pivotEdge);
+    }
+  }
+  return Array.from(map.values());
 }
 
 export function toSubtreeSets(input) {

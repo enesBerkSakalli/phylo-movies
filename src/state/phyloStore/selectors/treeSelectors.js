@@ -66,6 +66,7 @@ export { selectPairs } from './selectPairs.js';
 export { selectTemporalEvents } from './selectTemporalEvents.js';
 export { selectPivotEdgeColor } from './selectPivotEdgeColor.js';
 export { selectPivotEdgeDashingEnabled } from './selectPivotEdgeDashingEnabled.js';
+export { selectPivotEdgeForFrame } from './selectPivotEdgeForFrame.js';
 export { selectPivotEdgesEnabled } from './selectPivotEdgesEnabled.js';
 export { selectPlaying } from './selectPlaying.js';
 export { selectPlayhead } from './selectPlayhead.js';

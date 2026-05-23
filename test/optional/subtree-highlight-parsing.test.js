@@ -94,13 +94,13 @@ describe('Tree Visualisation - Subtree Highlight Parsing', () => {
       // Mock State Construction for getSourceDestinationEdgesAtIndex
       const mockStructure = {
           subtreeHighlightTracking: [],
-          pivotEdgeTracking: [],
+          temporalEvents: [],
           pairs: [],
           timelineFrames: [{ frame_index: 0, frame_type: 'interpolation_frame', is_observed_input: false, pair_id: null }]
       };
 
       it('should return empty if no active edge', () => {
-          const state = { ...mockStructure, pivotEdgeTracking: [null] };
+          const state = { ...mockStructure };
           const result = getSourceDestinationEdgesAtIndex(state, 0);
           expect(result.source).to.be.empty;
           expect(result.dest).to.be.empty;
@@ -119,8 +119,8 @@ describe('Tree Visualisation - Subtree Highlight Parsing', () => {
           // Mock State
           const state = {
               subtreeHighlightTracking: [ [[1, 2]] ], // The moving subtree is {1,2}
-              pivotEdgeTracking: [ activeEdge ],
-              timelineFrames: [ { pair_id: pairId } ],
+              temporalEvents: [makeSplitChangeEvent(pairId, index, activeEdge)],
+              timelineFrames: [ { frame_type: 'interpolation_frame', is_observed_input: false, pair_id: pairId } ],
               pairs: [{
                   pair_id: pairId,
                   solution: {
@@ -159,8 +159,8 @@ describe('Tree Visualisation - Subtree Highlight Parsing', () => {
         
         const state = {
             subtreeHighlightTracking: [ subtrees ],
-            pivotEdgeTracking: [ [1, 2] ], // pivot edge lookup key
-            timelineFrames: [{ pair_id: pairId }],
+            temporalEvents: [makeSplitChangeEvent(pairId, index, [1, 2])],
+            timelineFrames: [{ frame_type: 'interpolation_frame', is_observed_input: false, pair_id: pairId }],
             pairs: [{
                 pair_id: pairId,
                 solution: {
@@ -193,8 +193,17 @@ describe('Tree Visualisation - Subtree Highlight Parsing', () => {
         const flatSource = result.source.flat();
         expect(flatSource).to.include(5);
         expect(flatSource).to.include(6);
-      });
   });
+});
+
+function makeSplitChangeEvent(pairId, frameIndex, split) {
+  return {
+    event_type: 'split_change',
+    pair_id: pairId,
+    frame_range: [frameIndex, frameIndex],
+    split,
+  };
+}
   
   describe('Focus Trees Data Integrity', () => {
     it('should have loaded the focus trees json', () => {

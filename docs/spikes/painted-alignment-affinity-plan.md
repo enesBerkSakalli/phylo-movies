@@ -325,11 +325,11 @@ Recombinant:         ██████████████░░░░░�
 
 ## Integration with Pivot Edge
 
-The pivot edge (`pivotEdgeTracking`) tells us which taxa are currently "in motion":
+The active pivot edge is derived from `temporal_events` for the current frame:
 
 ```javascript
-export function getMovingTaxaForTree(treeIndex, pivotEdgeTracking) {
-  const pivotEdge = pivotEdgeTracking[treeIndex];
+export function getMovingTaxaForTree(state, treeIndex) {
+  const pivotEdge = selectPivotEdgeForFrame(state, treeIndex);
   if (!pivotEdge) return new Set(); // Original tree, no movers
   return new Set(pivotEdge); // Taxa IDs in the pivot
 }

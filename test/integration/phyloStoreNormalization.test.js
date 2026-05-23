@@ -108,7 +108,6 @@ function makeBackendMovieData() {
         },
       },
     },
-    pivot_edge_tracking: [null, [0], null],
     subtree_highlight_tracking: [null, [[1]], null],
     msa: {
       sequences: null,
@@ -141,7 +140,6 @@ function legacyBackendMovieData() {
       },
       { type: 'original', global_index: 2, tree_index: 1, name: 'Input tree 2' },
     ],
-    pivot_edge_tracking: [null, [0], null],
     subtree_highlight_tracking: [null, [[1]], null],
     msa: {
       sequences: null,
@@ -210,6 +208,7 @@ describe('phylo store dataset normalization', () => {
     expect(Object.prototype.hasOwnProperty.call(state, 'pairSolutions')).toBe(false);
     expect(Object.prototype.hasOwnProperty.call(state, 'splitChangeTimeline')).toBe(false);
     expect(Object.prototype.hasOwnProperty.call(state, 'treeDistances')).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(state, 'pivotEdgeTracking')).toBe(false);
   });
 
   it('derives scale metadata without storing scale duplicates', () => {
