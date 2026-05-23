@@ -52,6 +52,7 @@ export const unwrapAngle = (angle, reference) => {
  */
 export function crossesAngle(startAngle, endAngle, targetAngle = 0) {
   const TAU = Math.PI * 2;
+  const EPSILON = 1e-10;
 
   // Normalize all angles to [0, 2π)
   const normalize = (a) => ((a % TAU) + TAU) % TAU;
@@ -60,7 +61,7 @@ export function crossesAngle(startAngle, endAngle, targetAngle = 0) {
   const target = normalize(targetAngle);
 
   // If start equals end, no crossing
-  if (Math.abs(start - end) < 1e-10) return false;
+  if (Math.abs(start - end) < EPSILON) return false;
 
   // Determine if we're going clockwise or counter-clockwise
   const delta = endAngle - startAngle;
@@ -68,20 +69,20 @@ export function crossesAngle(startAngle, endAngle, targetAngle = 0) {
   if (delta > 0) {
     // Counter-clockwise (increasing angle)
     if (start <= end) {
-      // Normal case: check if target is in [start, end]
-      return target >= start && target <= end;
+      // Normal case: check if target is inside (start, end)
+      return target > start + EPSILON && target < end - EPSILON;
     } else {
-      // Wrapped case: path goes through 0, check if target is in [start, 2π) or [0, end]
-      return target >= start || target <= end;
+      // Wrapped case: path goes through 0, check if target is inside (start, 2π) or (0, end)
+      return target > start + EPSILON || target < end - EPSILON;
     }
   } else {
     // Clockwise (decreasing angle)
     if (start >= end) {
-      // Normal case: check if target is in [end, start]
-      return target >= end && target <= start;
+      // Normal case: check if target is inside (end, start)
+      return target > end + EPSILON && target < start - EPSILON;
     } else {
-      // Wrapped case: path goes through 0, check if target is in [0, start] or [end, 2π)
-      return target <= start || target >= end;
+      // Wrapped case: path goes through 0, check if target is inside (0, start) or (end, 2π)
+      return target < start - EPSILON || target > end + EPSILON;
     }
   }
 }

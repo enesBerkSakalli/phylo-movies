@@ -24,6 +24,12 @@ describe('VelocityNormalizer', () => {
       expect(computeAngularDistance(from, to)).toBeCloseTo(Math.PI / 2, 10);
     });
 
+    it('does not treat starting on the root angle as crossing through it', () => {
+      const from = { angle: 0 };
+      const to = { angle: Math.PI / 4 };
+      expect(computeAngularDistance(from, to)).toBeCloseTo(Math.PI / 4, 10);
+    });
+
     it('larger angular change produces larger distance', () => {
       const short = computeAngularDistance(
         { angle: Math.PI / 4 },

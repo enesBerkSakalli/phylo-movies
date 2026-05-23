@@ -133,14 +133,14 @@ describe('TreeInterpolator label radius smoothing', () => {
         max_radius: 40,
         nodes: [],
         links: [],
-        labels: [label('label-1', 60, 0)],
+        labels: [label('label-1', 60, Math.PI / 2)],
         extensions: [],
       },
       {
         max_radius: 40,
         nodes: [],
         links: [],
-        labels: [label('label-1', 60, Math.PI / 2)],
+        labels: [label('label-1', 60, Math.PI)],
         extensions: [],
       },
       0.5
@@ -176,6 +176,45 @@ describe('TreeInterpolator label radius smoothing', () => {
 
     const normalizedAngle = normalizeAngle(result.labels[0].angle);
     expect(Math.abs(normalizedAngle - Math.PI / 2)).toBeGreaterThan(0.5);
+  });
+
+  it('derives link source and target positions from node velocity entries', () => {
+    const interpolator = new TreeInterpolator();
+    const fromParentAngle = Math.PI / 4;
+    const toParentAngle = (3 * Math.PI) / 4;
+    const fromChildAngle = Math.PI / 4;
+    const toChildAngle = Math.PI / 3;
+
+    const result = interpolator.interpolateTreeData(
+      {
+        max_radius: 120,
+        nodes: [node('parent', 40, fromParentAngle), node('child', 80, fromChildAngle)],
+        links: [link('parent-child', 40, 80, fromParentAngle, fromChildAngle, 'parent', 'child')],
+        labels: [],
+        extensions: [],
+      },
+      {
+        max_radius: 120,
+        nodes: [node('parent', 40, toParentAngle), node('child', 80, toChildAngle)],
+        links: [link('parent-child', 40, 80, toParentAngle, toChildAngle, 'parent', 'child')],
+        labels: [],
+        extensions: [],
+      },
+      0.25
+    );
+
+    const parent = result.nodes.find((item) => item.id === 'parent');
+    const child = result.nodes.find((item) => item.id === 'child');
+    const interpolatedLink = result.links[0];
+
+    expectPointCloseTo(interpolatedLink.sourcePosition, parent.position);
+    expectPointCloseTo(interpolatedLink.targetPosition, child.position);
+    expectPointCloseTo(pathPoint(interpolatedLink.path, 0), parent.position, 5);
+    expectPointCloseTo(
+      pathPoint(interpolatedLink.path, interpolatedLink.path.length - 3),
+      child.position,
+      5
+    );
   });
 
   it('reuses element lookup maps across frames for the same layout data', () => {
@@ -248,7 +287,7 @@ function node(id, radius, angle, splitIndices = [1]) {
   };
 }
 
-function link(id, sourceRadius, targetRadius, sourceAngle, targetAngle) {
+function link(id, sourceRadius, targetRadius, sourceAngle, targetAngle, sourceId = null, targetId = null) {
   const sourcePosition = position(sourceRadius, sourceAngle);
   const targetPosition = position(targetRadius, targetAngle);
 
@@ -256,6 +295,8 @@ function link(id, sourceRadius, targetRadius, sourceAngle, targetAngle) {
     id,
     splitKey: id,
     split_indices: [1],
+    sourceId,
+    targetId,
     radialLength: Math.max(0, targetRadius - sourceRadius),
     opacity: 1,
     sourcePosition,
@@ -273,6 +314,13 @@ function expectPathCloseTo(path, expected) {
   expect(actual).toHaveLength(expected.length);
   actual.forEach((value, index) => {
     expect(value).toBeCloseTo(expected[index], 6);
+  });
+}
+
+function expectPointCloseTo(actual, expected, precision = 6) {
+  expect(actual).toHaveLength(expected.length);
+  actual.forEach((value, index) => {
+    expect(value).toBeCloseTo(expected[index], precision);
   });
 }
 
