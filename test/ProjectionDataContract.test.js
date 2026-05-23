@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
-  applySafeAreaToTarget
+  applyFitAreaToTarget
 } from '../src/treeVisualisation/spatial/projections.js';
 
-describe('applySafeAreaToTarget', () => {
+describe('applyFitAreaToTarget', () => {
   it('surfaces unexpected viewport unprojection failures', () => {
     const error = new Error('unproject failed');
     const view = {
@@ -14,15 +14,13 @@ describe('applySafeAreaToTarget', () => {
       })
     };
 
-    expect(() => applySafeAreaToTarget(
+    expect(() => applyFitAreaToTarget(
       view,
       [10, 20, 0],
       2,
-      { top: 0, right: 0, bottom: 100, left: 0 },
+      { left: 0, top: 0, width: 1000, height: 700 },
       1000,
       800,
-      1000,
-      700,
       { target: [0, 0, 0], zoom: 0 }
     )).toThrow(error);
   });

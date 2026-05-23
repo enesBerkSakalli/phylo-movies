@@ -1,72 +1,78 @@
-/**
- * Calculate visual bounds including node radii and estimated label dimensions
- * @param {Array} nodes
- * @param {Array} labels
- */
-export function calculateVisualBounds(nodes, labels) {
-  if (nodes.length === 0) {
-    return { minX: 0, maxX: 0, minY: 0, maxY: 0 };
+import {
+  LABEL_BOUNDS_CHAR_WIDTH_RATIO,
+  LABEL_BOUNDS_LINE_HEIGHT_RATIO,
+  LABEL_BOUNDS_MAX_WIDTH_PX,
+  resolveLabelBoundsSize
+} from '../spatial/bounds.js';
+
+export function mergeBounds(...boundsList) {
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  let hasBounds = false;
+
+  for (const bounds of boundsList) {
+    if (bounds === null) continue;
+    hasBounds = true;
+    if (bounds.minX < minX) minX = bounds.minX;
+    if (bounds.maxX > maxX) maxX = bounds.maxX;
+    if (bounds.minY < minY) minY = bounds.minY;
+    if (bounds.maxY > maxY) maxY = bounds.maxY;
   }
+
+  return hasBounds ? { minX, maxX, minY, maxY } : { minX: 0, maxX: 0, minY: 0, maxY: 0 };
+}
+
+export function calculateNodeBounds(nodes) {
+  if (nodes.length === 0) return null;
 
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
 
-  // 1. Include Nodes with Radius
   for (const node of nodes) {
     const [x, y] = node.position;
-    const r = node.radius || 2; // Default radius if missing
+    const radius = node.radius || 2;
 
-    if (x - r < minX) minX = x - r;
-    if (x + r > maxX) maxX = x + r;
-    if (y - r < minY) minY = y - r;
-    if (y + r > maxY) maxY = y + r;
+    if (x - radius < minX) minX = x - radius;
+    if (x + radius > maxX) maxX = x + radius;
+    if (y - radius < minY) minY = y - radius;
+    if (y + radius > maxY) maxY = y + radius;
   }
 
-  // 2. Include Labels
-  if (labels.length > 0) {
-    const CHAR_WIDTH = 10;
-    const FONT_HEIGHT = 16;
+  return { minX, maxX, minY, maxY };
+}
 
-    for (const label of labels) {
-      const [x, y] = label.position;
-      const text = label.text || '';
-      const width = text.length * CHAR_WIDTH;
+export function calculateLabelBounds(labels, options = {}) {
+  if (labels.length === 0) return null;
 
-      const rotationRad = label.rotation || 0;
-      const anchor = label.textAnchor || 'start';
+  const sizePx = resolveLabelBoundsSize(options.labelSizePx, options.getLabelSize);
+  const charWidth = LABEL_BOUNDS_CHAR_WIDTH_RATIO * sizePx;
+  const fontHeight = LABEL_BOUNDS_LINE_HEIGHT_RATIO * sizePx;
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
 
-      // Local X range
-      let xStartLocal = 0;
-      let xEndLocal = width;
-      if (anchor === 'end') {
-          xStartLocal = -width;
-          xEndLocal = 0;
-      }
+  for (const label of labels) {
+    const [x, y] = label.position;
+    const text = label.text || '';
+    const width = Math.min(LABEL_BOUNDS_MAX_WIDTH_PX, text.length * charWidth);
+    const rotationRad = label.rotation || 0;
+    const anchor = label.textAnchor || 'start';
+    const xStartLocal = anchor === 'end' ? -width : 0;
+    const xEndLocal = anchor === 'end' ? 0 : width;
+    const halfHeight = fontHeight / 2;
+    const cornersLocal = [
+      [xStartLocal, -halfHeight],
+      [xEndLocal, -halfHeight],
+      [xEndLocal, halfHeight],
+      [xStartLocal, halfHeight]
+    ];
 
-      // Local Y range (assume centered height)
-      const hHalf = FONT_HEIGHT / 2;
+    for (const [lx, ly] of cornersLocal) {
+      const rx = lx * Math.cos(rotationRad) - ly * Math.sin(rotationRad);
+      const ry = lx * Math.sin(rotationRad) + ly * Math.cos(rotationRad);
+      const wx = x + rx;
+      const wy = y + ry;
 
-      // Corners in local space
-      const cornersLocal = [
-          [xStartLocal, -hHalf],
-          [xEndLocal, -hHalf],
-          [xEndLocal, hHalf],
-          [xStartLocal, hHalf]
-      ];
-
-      // Transform to World
-      for (const [lx, ly] of cornersLocal) {
-          // Rotate: x' = x cos - y sin, y' = x sin + y cos
-          const rx = lx * Math.cos(rotationRad) - ly * Math.sin(rotationRad);
-          const ry = lx * Math.sin(rotationRad) + ly * Math.cos(rotationRad);
-
-          const wx = x + rx;
-          const wy = y + ry;
-
-          if (wx < minX) minX = wx;
-          if (wx > maxX) maxX = wx;
-          if (wy < minY) minY = wy;
-          if (wy > maxY) maxY = wy;
-      }
+      if (wx < minX) minX = wx;
+      if (wx > maxX) maxX = wx;
+      if (wy < minY) minY = wy;
+      if (wy > maxY) maxY = wy;
     }
   }
 

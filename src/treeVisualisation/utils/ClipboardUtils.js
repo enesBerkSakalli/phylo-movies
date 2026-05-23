@@ -1,7 +1,7 @@
 import { TextLayer } from '@deck.gl/layers';
 import { CLIPBOARD_LAYER_ID_PREFIX } from '../deckgl/layers/config/layerConfigs.js';
 import { selectInputFrameIndices, useAppStore } from '../../state/phyloStore/store.js';
-import { calculateVisualBounds } from './TreeBoundsUtils.js';
+import { calculateLabelBounds, calculateNodeBounds, mergeBounds } from './TreeBoundsUtils.js';
 
 /**
  * Get clipboard layers if clipboard is active
@@ -49,10 +49,11 @@ function createClipboardVisualLayers(controller, treeIndex, treeData) {
   const { clipboardOffsetX = 0, clipboardOffsetY = 0 } = state;
   const inputFrameIndices = selectInputFrameIndices(state);
 
-  // Calculate clipboard tree VISUAL bounds (including labels)
-  const clipboardBounds = calculateVisualBounds(layerData.nodes, layerData.labels);
+  const clipboardBounds = mergeBounds(
+    calculateNodeBounds(layerData.nodes),
+    calculateLabelBounds(layerData.labels)
+  );
 
-  // Get current main tree VISUAL bounds
   const mainTreeBounds = getMainTreeBounds(controller);
 
   // Position clipboard to the TOP LEFT ABOVE the main tree
@@ -79,7 +80,10 @@ function createClipboardVisualLayers(controller, treeIndex, treeData) {
 function getMainTreeBounds(controller) {
   const layerData = controller._lastLayerData;
   if (Array.isArray(layerData?.nodes) && layerData.nodes.length > 0) {
-    return calculateVisualBounds(layerData.nodes, layerData.labels);
+    return mergeBounds(
+      calculateNodeBounds(layerData.nodes),
+      calculateLabelBounds(layerData.labels)
+    );
   }
 
   return { minX: -500, maxX: 500, minY: -500, maxY: 500 };
@@ -88,7 +92,7 @@ function getMainTreeBounds(controller) {
 /**
  * Create clipboard label TextLayer
  * @param {number} treeIndex - Tree index for label text
- * @param {Object} bounds - Visual bounds of clipboard tree {minX, maxX, minY, maxY}
+ * @param {Object} bounds - Rendered clipboard content bounds {minX, maxX, minY, maxY}
  * @param {Array} inputFrameIndices - Array of input frame indices from store for input-tree detection
  * @param {number} xOffset - X offset for clipboard position
  * @param {number} yOffset - Y offset for clipboard position
@@ -97,7 +101,6 @@ function getMainTreeBounds(controller) {
 export function createClipboardLabelLayer(treeIndex, bounds, inputFrameIndices = [], xOffset = 0, yOffset = 0) {
   if (!bounds) return null;
 
-  // Position label above the tree VISUAL bounds
   const minY = bounds.minY;
   const avgX = (bounds.minX + bounds.maxX) / 2;
 

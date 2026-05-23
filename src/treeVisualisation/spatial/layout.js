@@ -5,35 +5,23 @@
  *
  * Concepts:
  * - Compositing: combining multiple visual layers.
- * - Safe Area: The region of the canvas not obscured by UI.
+ * - Fit Area: A canvas sub-rectangle not obscured by UI.
  * - DOM Intersections: Calculating overlap between 2D DOMRects.
  */
 
-export const SAFE_AREA_UI_SELECTORS = Object.freeze([
+export const VIEWPORT_FIT_OBSTRUCTION_SELECTORS = Object.freeze([
   '.movie-player-bar',
-  '#top-scale-bar-container'
+  '#top-scale-bar-container',
+  '[role="group"][aria-label="Tree viewport controls"]',
+  '[role="group"][aria-label="Canvas capture controls"]',
+  '[role="complementary"][aria-label="Comparison Panel"]',
+  '.phylo-hud',
+  '.phylo-hud-restore',
+  '[aria-label="Transition Inspector"]'
 ]);
-export const SAFE_AREA_EDGE_THRESHOLD_PX = 24;
-export const SAFE_AREA_EXTRA_PADDING_PX = 20;
-export const SAFE_AREA_MIN_VISIBLE_FRACTION = 0.4;
-export const SAFE_AREA_BAR_COVERAGE_FRACTION = 0.5;
+export const VIEWPORT_FIT_OBSTRUCTION_PADDING_PX = 20;
 
-function createEmptySafeAreaPadding() {
-  return { top: 0, right: 0, bottom: 0, left: 0 };
-}
-
-function hasSafeAreaPadding(padding) {
-  return Boolean(padding.top || padding.right || padding.bottom || padding.left);
-}
-
-function mergeSafeAreaPadding(target, next) {
-  target.top = Math.max(target.top, next.top);
-  target.right = Math.max(target.right, next.right);
-  target.bottom = Math.max(target.bottom, next.bottom);
-  target.left = Math.max(target.left, next.left);
-}
-
-function clampSafeAreaValue(value, max) {
+function clampFitAreaValue(value, max) {
   return Math.max(0, Math.min(Number.isFinite(value) ? value : 0, max));
 }
 
@@ -44,115 +32,99 @@ export function calculateRectOverlap(rect, bounds) {
   };
 }
 
-export function classifySafeAreaBar(rect, canvasRect) {
+function rectanglesIntersect(a, b) {
+  return Math.min(a.left + a.width, b.left + b.width) > Math.max(a.left, b.left)
+    && Math.min(a.top + a.height, b.top + b.height) > Math.max(a.top, b.top);
+}
+
+function clampLocalRect(rect, canvasWidth, canvasHeight) {
+  const left = clampFitAreaValue(rect.left, canvasWidth);
+  const top = clampFitAreaValue(rect.top, canvasHeight);
+  const right = clampFitAreaValue(rect.left + rect.width, canvasWidth);
+  const bottom = clampFitAreaValue(rect.top + rect.height, canvasHeight);
+
   return {
-    horizontal: rect.width > canvasRect.width * SAFE_AREA_BAR_COVERAGE_FRACTION,
-    vertical: rect.height > canvasRect.height * SAFE_AREA_BAR_COVERAGE_FRACTION
+    left,
+    top,
+    width: Math.max(0, right - left),
+    height: Math.max(0, bottom - top)
   };
 }
 
-export function calculateSafeAreaPaddingForRect(rect, canvasRect) {
-  const padding = createEmptySafeAreaPadding();
-  const overlap = calculateRectOverlap(rect, canvasRect);
-  if (overlap.x <= 0 || overlap.y <= 0) return padding;
+function toExpandedCanvasLocalRect(rect, canvasRect, padding = VIEWPORT_FIT_OBSTRUCTION_PADDING_PX) {
+  return clampLocalRect({
+    left: rect.left - canvasRect.left - padding,
+    top: rect.top - canvasRect.top - padding,
+    width: rect.width + padding * 2,
+    height: rect.height + padding * 2
+  }, canvasRect.width, canvasRect.height);
+}
 
-  const { horizontal, vertical } = classifySafeAreaBar(rect, canvasRect);
+function normalizeRectEdges(values) {
+  return [...new Set(values.map((value) => Math.round(value)))].sort((a, b) => a - b);
+}
 
-  if (horizontal) {
-    if (rect.top <= canvasRect.top + SAFE_AREA_EDGE_THRESHOLD_PX) {
-      padding.top = Math.min(rect.bottom - canvasRect.top, canvasRect.height);
-    }
-    if (rect.bottom >= canvasRect.bottom - SAFE_AREA_EDGE_THRESHOLD_PX) {
-      padding.bottom = Math.min(canvasRect.bottom - rect.top, canvasRect.height);
+export function calculateUnobstructedFitAreas(canvasWidth, canvasHeight, obstructions = []) {
+  const canvasArea = { left: 0, top: 0, width: canvasWidth, height: canvasHeight };
+  const blockingRects = obstructions
+    .map((rect) => clampLocalRect(rect, canvasWidth, canvasHeight))
+    .filter((rect) => rect.width > 0 && rect.height > 0);
+
+  if (blockingRects.length === 0) return [canvasArea];
+
+  const xEdges = normalizeRectEdges([
+    0,
+    canvasWidth,
+    ...blockingRects.flatMap((rect) => [rect.left, rect.left + rect.width])
+  ]);
+  const yEdges = normalizeRectEdges([
+    0,
+    canvasHeight,
+    ...blockingRects.flatMap((rect) => [rect.top, rect.top + rect.height])
+  ]);
+  const candidates = [];
+
+  for (let leftIndex = 0; leftIndex < xEdges.length - 1; leftIndex += 1) {
+    for (let rightIndex = leftIndex + 1; rightIndex < xEdges.length; rightIndex += 1) {
+      for (let topIndex = 0; topIndex < yEdges.length - 1; topIndex += 1) {
+        for (let bottomIndex = topIndex + 1; bottomIndex < yEdges.length; bottomIndex += 1) {
+          const candidate = {
+            left: xEdges[leftIndex],
+            top: yEdges[topIndex],
+            width: xEdges[rightIndex] - xEdges[leftIndex],
+            height: yEdges[bottomIndex] - yEdges[topIndex]
+          };
+          if (candidate.width <= 0 || candidate.height <= 0) continue;
+          if (blockingRects.some((rect) => rectanglesIntersect(candidate, rect))) continue;
+          candidates.push(candidate);
+        }
+      }
     }
   }
 
-  if (vertical) {
-    if (rect.left <= canvasRect.left + SAFE_AREA_EDGE_THRESHOLD_PX) {
-      padding.left = Math.min(rect.right - canvasRect.left, canvasRect.width);
-    }
-    if (rect.right >= canvasRect.right - SAFE_AREA_EDGE_THRESHOLD_PX) {
-      padding.right = Math.min(canvasRect.right - rect.left, canvasRect.width);
-    }
-  }
-
-  return padding;
+  return candidates.sort((a, b) => (b.width * b.height) - (a.width * a.height));
 }
 
-export function clampSafeAreaPadding(safeArea, canvasWidth, canvasHeight) {
-  if (!safeArea) return createEmptySafeAreaPadding();
-
-  return {
-    top: clampSafeAreaValue(safeArea.top, canvasHeight),
-    right: clampSafeAreaValue(safeArea.right, canvasWidth),
-    bottom: clampSafeAreaValue(safeArea.bottom, canvasHeight),
-    left: clampSafeAreaValue(safeArea.left, canvasWidth)
-  };
-}
-
-function scaleOpposingPadding(first, second, maxTotal) {
-  if (first + second <= maxTotal) return [first, second];
-
-  const scale = maxTotal / Math.max(1, first + second);
-  return [first * scale, second * scale];
-}
-
-export function scaleSafeAreaToMinimumVisibleViewport(padding, canvasWidth, canvasHeight) {
-  const maxTotalX = canvasWidth * (1 - SAFE_AREA_MIN_VISIBLE_FRACTION);
-  const maxTotalY = canvasHeight * (1 - SAFE_AREA_MIN_VISIBLE_FRACTION);
-  const [left, right] = scaleOpposingPadding(padding.left, padding.right, maxTotalX);
-  const [top, bottom] = scaleOpposingPadding(padding.top, padding.bottom, maxTotalY);
-
-  return { top, right, bottom, left };
-}
-
-/**
- * Scans the DOM for specific UI elements that float over the canvas
- * and calculates the "Safe Padding" needed to avoid them.
- *
- * @param {HTMLElement} containerElement
- * @returns {Object|null} Padding {top, right, bottom, left} or null
- */
-export function calculateSafeAreaPadding(containerElement) {
+export function calculateViewportFitAreas(containerElement) {
   if (typeof document === 'undefined') return null;
   if (!containerElement?.getBoundingClientRect) return null;
 
   const canvasRect = containerElement.getBoundingClientRect();
   if (!canvasRect?.width || !canvasRect?.height) return null;
 
-  const padding = createEmptySafeAreaPadding();
-
-  SAFE_AREA_UI_SELECTORS.forEach((selector) => {
-    const el = document.querySelector(selector);
-    if (!el?.getBoundingClientRect) return;
-    const rect = el.getBoundingClientRect();
-    if (rect.width <= 0 || rect.height <= 0) return;
-
-    mergeSafeAreaPadding(padding, calculateSafeAreaPaddingForRect(rect, canvasRect));
+  const elements = new Set();
+  VIEWPORT_FIT_OBSTRUCTION_SELECTORS.forEach((selector) => {
+    document.querySelectorAll(selector).forEach((element) => elements.add(element));
   });
 
-  if (!hasSafeAreaPadding(padding)) return null;
+  const obstructions = [...elements].flatMap((element) => {
+    if (!element?.getBoundingClientRect) return [];
+    const rect = element.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return [];
+    const overlap = calculateRectOverlap(rect, canvasRect);
+    if (overlap.x <= 0 || overlap.y <= 0) return [];
+    return [toExpandedCanvasLocalRect(rect, canvasRect)];
+  });
 
-  return {
-    top: padding.top ? padding.top + SAFE_AREA_EXTRA_PADDING_PX : 0,
-    right: padding.right ? padding.right + SAFE_AREA_EXTRA_PADDING_PX : 0,
-    bottom: padding.bottom ? padding.bottom + SAFE_AREA_EXTRA_PADDING_PX : 0,
-    left: padding.left ? padding.left + SAFE_AREA_EXTRA_PADDING_PX : 0
-  };
-}
-
-/**
- * Normalizes specific pixel padding values against logical canvas limits.
- *
- * @param {Object} safeArea
- * @param {number} canvasWidth
- * @param {number} canvasHeight
- * @returns {Object} Normalized padding
- */
-export function normalizeSafeArea(safeArea, canvasWidth, canvasHeight) {
-  return scaleSafeAreaToMinimumVisibleViewport(
-    clampSafeAreaPadding(safeArea, canvasWidth, canvasHeight),
-    canvasWidth,
-    canvasHeight
-  );
+  return calculateUnobstructedFitAreas(canvasRect.width, canvasRect.height, obstructions);
 }

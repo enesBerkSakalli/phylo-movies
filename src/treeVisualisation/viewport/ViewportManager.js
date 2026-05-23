@@ -6,8 +6,8 @@
  */
 import { useAppStore } from '../../state/phyloStore/store.js';
 import { areBoundsInView } from '../spatial/bounds.js';
-import { calculateSafeAreaPadding } from '../spatial/layout.js';
-import { calculateFocusViewport } from './viewportFit.js';
+import { calculateViewportFitAreas } from '../spatial/layout.js';
+import { calculateFocusViewport, VIEWPORT_FIT_MODES } from './viewportFit.js';
 
 export class ViewportManager {
 
@@ -46,9 +46,9 @@ export class ViewportManager {
   focusOnTree(nodes, labels, options = {}) {
     const { playing } = useAppStore.getState();
     if (playing && !options.allowDuringPlayback) return;
-    const includeLabels = options.includeLabels === true;
+    const fitMode = options.fitMode ?? VIEWPORT_FIT_MODES.BRANCH;
     const { width: canvasWidth, height: canvasHeight } = this.controller.deckContext.getCanvasDimensions();
-    const safeArea = this.getSafeAreaPadding();
+    const fitAreas = this.getViewportFitAreas();
     const getLabelSize = options.getLabelSize ?? this.controller.layerManager.layerStyles.getLabelSize?.bind(
       this.controller.layerManager.layerStyles
     );
@@ -58,13 +58,13 @@ export class ViewportManager {
       nodes,
       labels,
       links: options.links,
-      includeLabels,
+      fitMode,
       padding: options.padding,
       labelSizePx: options.labelSizePx,
       getLabelSize,
       canvasWidth,
       canvasHeight,
-      safeArea,
+      fitAreas,
       activeView,
       currentViewState
     });
@@ -82,8 +82,8 @@ export class ViewportManager {
   // HELPER METHODS
   // ==========================================================================
 
-  getSafeAreaPadding() {
-    return calculateSafeAreaPadding(this.controller.deckContext?.container);
+  getViewportFitAreas() {
+    return calculateViewportFitAreas(this.controller.deckContext?.container);
   }
 
 }
