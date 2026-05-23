@@ -1,10 +1,9 @@
 import React from 'react';
-import { CardFooter } from "../../../../components/ui/card";
 import { Button } from "../../../../components/ui/button";
 
 export function ProjectActionFooter({ disabled, reset, canSubmit }) {
   return (
-    <CardFooter className="flex justify-end gap-3 px-0 pb-0 pt-4 bg-transparent border-t">
+    <div className="flex justify-end gap-3 border-t bg-transparent pt-4">
       <Button
         type="button"
         variant="outline"
@@ -19,10 +18,10 @@ export function ProjectActionFooter({ disabled, reset, canSubmit }) {
         type="submit"
         size="sm"
         disabled={disabled || !canSubmit}
-        className="px-6 shadow-md hover:shadow-lg transition-all"
+        className="px-6"
       >
         Create Visualization
       </Button>
-    </CardFooter>
+    </div>
   );
 }

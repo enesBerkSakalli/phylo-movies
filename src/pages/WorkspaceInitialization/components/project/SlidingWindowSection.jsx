@@ -3,31 +3,27 @@ import { useFormContext } from 'react-hook-form';
 import { SlidersHorizontal } from "lucide-react";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "../../../../components/ui/form";
 import { Input } from "../../../../components/ui/input";
-import { Badge } from "../../../../components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../../../components/ui/tooltip";
+import { cn } from '../../../../lib/utils';
 import { STEP_MAX, STEP_MIN, WINDOW_MAX, WINDOW_MIN } from "../../workspaceInitializationFormModel.js";
+import { MsaRequiredBadge } from './MsaRequiredBadge.jsx';
 
 export function SlidingWindowSection({ hasMsa, disabled }) {
   const { control } = useFormContext();
 
   return (
-    <div className={`space-y-4 p-4 rounded-xl border transition-all duration-300 ${!hasMsa ? 'bg-muted/30 opacity-60 border-dashed' : 'bg-card border-solid shadow-sm'}`}>
-      <div className="flex items-center justify-between mb-2">
+    <section
+      className={cn(
+        'flex flex-col gap-4 rounded-md border p-4 transition-colors',
+        !hasMsa ? 'border-dashed bg-muted/30 opacity-60' : 'bg-card'
+      )}
+    >
+      <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <SlidersHorizontal className={`size-4 ${!hasMsa ? 'text-muted-foreground' : 'text-primary'}`} />
-          <span className="text-sm font-bold">Overlapping Sliding Windows</span>
+          <SlidersHorizontal className={cn('size-4', !hasMsa ? 'text-muted-foreground' : 'text-primary')} />
+          <h3 className="text-sm font-semibold">Overlapping Sliding Windows</h3>
         </div>
         {!hasMsa && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Badge variant="secondary" className="text-2xs h-5 py-0 cursor-help uppercase tracking-tighter">MSA Required</Badge>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="text-xs">Sliding window settings only apply when an MSA file is uploaded.</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <MsaRequiredBadge description="Sliding window settings only apply when an MSA file is uploaded." />
         )}
       </div>
 
@@ -39,7 +35,7 @@ export function SlidingWindowSection({ hasMsa, disabled }) {
         control={control}
         name="windowSize"
         render={({ field }) => (
-          <FormItem>
+          <FormItem className="flex flex-col gap-2">
             <FormLabel className={!hasMsa ? 'text-muted-foreground' : ''}>Window Size (sites)</FormLabel>
             <FormControl>
               <Input
@@ -66,7 +62,7 @@ export function SlidingWindowSection({ hasMsa, disabled }) {
         control={control}
         name="stepSize"
         render={({ field }) => (
-          <FormItem>
+          <FormItem className="flex flex-col gap-2">
             <FormLabel className={!hasMsa ? 'text-muted-foreground' : ''}>Step Size (sites)</FormLabel>
             <FormControl>
               <Input
@@ -88,6 +84,6 @@ export function SlidingWindowSection({ hasMsa, disabled }) {
           </FormItem>
         )}
       />
-    </div>
+    </section>
   );
 }

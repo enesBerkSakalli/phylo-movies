@@ -1,8 +1,9 @@
 import React from "react";
-import { Card, CardContent } from "../../components/ui/card";
+import { Card, CardContent, CardHeader } from "../../components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "../../components/ui/alert";
 import { Form } from "../../components/ui/form";
-import { Tabs, TabsList, TabsTrigger } from "../../components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
+import { TooltipProvider } from "../../components/ui/tooltip";
 
 import { useWorkspaceInitializationForm } from './useWorkspaceInitializationForm.js';
 import { WorkspaceInitializationHero } from './components/WorkspaceInitializationHero.jsx';
@@ -26,51 +27,57 @@ export function WorkspaceInitializationPage() {
   const disabled = submitting || loadingExample;
 
   return (
-    <div className="fixed inset-0 overflow-y-auto overflow-x-hidden bg-background">
-      <main className="container mx-auto max-w-4xl py-8 space-y-8">
-        <WorkspaceInitializationHero />
+    <TooltipProvider>
+      <div className="fixed inset-0 overflow-y-auto overflow-x-hidden bg-background">
+        <main className="container mx-auto flex max-w-4xl flex-col gap-8 px-4 py-6 sm:py-8">
+          <WorkspaceInitializationHero />
 
-        <Card className="shadow-lg border-muted">
-          <Tabs defaultValue="upload" className="w-full">
-            <div className="px-4 pt-4">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="upload">New Project</TabsTrigger>
-                <TabsTrigger value="example">Load Example</TabsTrigger>
-              </TabsList>
-            </div>
+          <Card className="gap-0 border-muted py-0 shadow-sm">
+            <Tabs defaultValue="upload" className="w-full gap-0">
+              <CardHeader className="border-b border-border/40 p-4">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="upload">New Project</TabsTrigger>
+                  <TabsTrigger value="example">Load Example</TabsTrigger>
+                </TabsList>
+              </CardHeader>
 
-            <CardContent className="p-4">
-              {alert && (
-                <Alert variant="destructive" className="mb-6">
-                  <AlertTitle>Error</AlertTitle>
-                  <AlertDescription>{alert.message}</AlertDescription>
-                </Alert>
-              )}
+              <CardContent className="p-4 sm:p-6">
+                {alert && (
+                  <Alert variant="destructive" className="mb-6">
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>{alert.message}</AlertDescription>
+                  </Alert>
+                )}
 
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleSubmit)}>
-                  <NewProjectTab
-                    disabled={disabled}
-                    reset={reset}
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(handleSubmit)}>
+                    <TabsContent value="upload" className="m-0">
+                      <NewProjectTab
+                        disabled={disabled}
+                        reset={reset}
+                      />
+                    </TabsContent>
+                  </form>
+                </Form>
+
+                <TabsContent value="example" className="m-0">
+                  <ExampleTab
+                    loadingExample={loadingExample}
+                    loadingExampleId={loadingExampleId}
+                    submitting={submitting}
+                    handleLoadExample={handleLoadExample}
                   />
-                </form>
-              </Form>
+                </TabsContent>
+              </CardContent>
+            </Tabs>
+          </Card>
 
-              <ExampleTab
-                loadingExample={loadingExample}
-                loadingExampleId={loadingExampleId}
-                submitting={submitting}
-                handleLoadExample={handleLoadExample}
-              />
-            </CardContent>
-          </Tabs>
-        </Card>
-
-        {(submitting || loadingExample) && (
-          <ProcessingOverlay operationState={operationState} />
-        )}
-      </main>
-    </div>
+          {(submitting || loadingExample) && (
+            <ProcessingOverlay operationState={operationState} />
+          )}
+        </main>
+      </div>
+    </TooltipProvider>
   );
 }
 

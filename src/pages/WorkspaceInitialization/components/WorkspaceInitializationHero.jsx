@@ -3,12 +3,12 @@ import phyloTreeIcon from '/icons/phylo-tree-icon.svg';
 
 export function WorkspaceInitializationHero() {
   return (
-    <div className="text-center space-y-4">
+    <div className="flex flex-col items-center gap-4 text-center">
       <div className="flex justify-center">
         <img src={phyloTreeIcon} alt="" className="size-16" />
       </div>
-      <div className="space-y-4 max-w-3xl mx-auto">
-        <h2 className="text-3xl font-bold tracking-tight">Phylogenetic Tree Animation</h2>
+      <div className="mx-auto flex max-w-3xl flex-col gap-4">
+        <h1 className="text-3xl font-bold tracking-tight">Phylogenetic Tree Animation</h1>
         <p className="text-muted-foreground text-lg leading-relaxed">
           Visualize topological transitions between phylogenetic trees through smooth morphing animations.
           Track structural rearrangements across tree sequences or sliding-window phylogenies.
