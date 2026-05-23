@@ -221,36 +221,26 @@ export class PolarLinkInterpolator {
   }
 
   _interpolateLinkDatum(fromLink, toLink, t, options = {}) {
-    const path = this.pathInterpolator.interpolatePath(fromLink, toLink, t, {
-      velocityEntry: options.velocityEntry ?? null,
-      linkGeometryMode: options.linkGeometryMode
-    });
-    const sourcePosition = this.nodeInterpolator.interpolatePosition(
-      fromLink.polarData?.source,
-      toLink.polarData?.source,
+    const sourcePosition = this._interpolateLinkEndpointPosition(
+      fromLink,
+      toLink,
+      'source',
       t,
-      options.velocityEntry ?? null
+      options
     );
-    const targetPosition = this.nodeInterpolator.interpolatePosition(
-      fromLink.polarData?.target,
-      toLink.polarData?.target,
+    const targetPosition = this._interpolateLinkEndpointPosition(
+      fromLink,
+      toLink,
+      'target',
       t,
-      options.velocityEntry ?? null
+      options
     );
 
-    return {
-      ...toLink,
-      path,
-      sourcePosition,
-      targetPosition,
-      polarData: toLink.polarData,
-      split_indices: toLink.split_indices,
-      splitKey: toLink.splitKey,
-      children: toLink.children,
-      targetName: toLink.targetName,
+    return this._createLinkDatumFromPositions(toLink, sourcePosition, targetPosition, {
+      ...options,
       lifecycle: options.lifecycle || LINK_LIFECYCLES.UNCHANGED,
       transitionPhase: options.transitionPhase ?? t
-    };
+    });
   }
 
   _createLinkDatumFromPositions(link, sourcePosition, targetPosition, options = {}) {

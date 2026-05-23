@@ -348,10 +348,14 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     const result = controller._buildInterpolatedData({ id: 'a' }, { id: 'b' }, 0.5, {
       fromTreeIndex: 0,
       toTreeIndex: 1,
+      stage: 'COLLAPSE',
     });
 
     expect(controller.treeInterpolator.setRootAngle).toHaveBeenCalledWith(Math.PI / 2);
     expect(controller.treeInterpolator.interpolateTreeData).toHaveBeenCalledOnce();
+    expect(controller.treeInterpolator.interpolateTreeData.mock.calls[0][3]).toMatchObject({
+      stage: 'COLLAPSE',
+    });
     expect(result).toBe(interpolatedData);
   });
 

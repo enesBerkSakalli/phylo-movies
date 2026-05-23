@@ -530,6 +530,7 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
 
     this._syncInterpolatorRootAngle();
     const interpolatedData = this.treeInterpolator.interpolateTreeData(dataFrom, dataTo, t, {
+      stage: options.stage,
       transitionChangeModel,
       rawTimeFactor: options.rawTimeFactor,
       linkGeometryMode: this._getLinkGeometryMode()
