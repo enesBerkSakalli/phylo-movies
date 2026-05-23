@@ -6,6 +6,7 @@ import {
   getSourceDestinationEdgesAtIndex,
   resolveSubtreeHighlights
 } from '../../internal/changeTracking.helpers.js';
+import { selectPivotEdgeForFrame } from '../../selectors/treeSelectors.js';
 
 export const createSubtreeSelectionSlice = (set, get) => ({
   // ==========================================================================
@@ -18,9 +19,9 @@ export const createSubtreeSelectionSlice = (set, get) => ({
   // ACTIONS
   // ==========================================================================
   getCurrentPivotEdge: (indexOverride = null) => {
-    const { frameIndex, pivotEdgeTracking } = get();
+    const { frameIndex } = get();
     const index = indexOverride ?? frameIndex;
-    return pivotEdgeTracking[index] || [];
+    return selectPivotEdgeForFrame(get(), index);
   },
 
   getSubtreeHighlightData: (indexOverride = null) => {

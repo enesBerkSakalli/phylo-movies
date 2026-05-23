@@ -8,7 +8,6 @@ import { assertExactRecordKeys, assertRecord } from './schemaValidation';
 import {
   validateFrames,
   validateMsa,
-  validateNullableNumberArrayTracking,
   validatePairs,
   validatePairMetrics,
   validateSubtreeHighlightTracking,
@@ -39,7 +38,6 @@ export function validatePhyloMovieData(data: unknown): PhyloMovieData {
     'frames',
     'pairs',
     'temporal_events',
-    'pivot_edge_tracking',
     'subtree_highlight_tracking',
     'pair_metrics',
     'msa',
@@ -50,11 +48,6 @@ export function validatePhyloMovieData(data: unknown): PhyloMovieData {
   const frames = validateFrames(data.frames, interpolatedTrees.length);
   const pairs = validatePairs(data.pairs, interpolatedTrees.length);
   const temporalEvents = validateTemporalEvents(data.temporal_events, interpolatedTrees.length);
-  const pivotEdgeTracking = validateNullableNumberArrayTracking(
-    data.pivot_edge_tracking,
-    'pivot_edge_tracking',
-    interpolatedTrees.length
-  );
   const subtreeHighlightTracking = validateSubtreeHighlightTracking(
     data.subtree_highlight_tracking,
     interpolatedTrees.length
@@ -73,7 +66,6 @@ export function validatePhyloMovieData(data: unknown): PhyloMovieData {
     frames,
     pairs,
     temporal_events: temporalEvents,
-    pivot_edge_tracking: pivotEdgeTracking,
     subtree_highlight_tracking: subtreeHighlightTracking,
     pair_metrics: pairMetrics,
     msa,

@@ -24,7 +24,6 @@ export const createTreeDatasetSlice = (_set, get) => ({
   // STATE: Change Tracking
   // ==========================================================================
   pairs: [],
-  pivotEdgeTracking: [],
   subtreeHighlightTracking: [],
   temporalEvents: [],
 

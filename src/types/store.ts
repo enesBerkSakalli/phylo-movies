@@ -64,7 +64,6 @@ export interface AppStoreState {
   datasetVersion: number;
   pairMetrics: PhyloMovieData['pair_metrics'] | null;
   pairs: TimelinePair[];
-  pivotEdgeTracking: any[];
   subtreeHighlightTracking: any[];
   temporalEvents: TemporalEvent[];
 

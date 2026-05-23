@@ -581,20 +581,6 @@ export function validatePairMetrics(value: unknown): PhyloMovieData['pair_metric
   };
 }
 
-export function validateNullableNumberArrayTracking(
-  value: unknown,
-  fieldName: string,
-  treeCount: number
-): Array<number[] | null> {
-  const tracking = requiredArray(value, fieldName);
-  validateParallelLength(tracking, fieldName, treeCount);
-  for (const [index, entry] of tracking.entries()) {
-    if (entry === null) continue;
-    requiredNumberArray(entry, `${fieldName}[${index}]`);
-  }
-  return tracking as Array<number[] | null>;
-}
-
 export function validateSubtreeHighlightTracking(value: unknown, treeCount: number): Array<number[][] | null> {
   const fieldName = 'subtree_highlight_tracking';
   const tracking = requiredArray(value, fieldName);

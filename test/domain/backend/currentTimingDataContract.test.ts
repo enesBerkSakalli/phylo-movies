@@ -119,7 +119,6 @@ function makeCurrentTimingPayload() {
         total_branch_length: 0,
       },
     ],
-    pivot_edge_tracking: [null, [0, 1], [0, 1], null],
     subtree_highlight_tracking: [null, [[0]], [[1]], null],
     pair_metrics: {
       rows: [{

@@ -137,7 +137,6 @@ function makeTwoInputPairMovieData({ weightedRfDistance }) {
       },
     }],
     temporal_events: [],
-    pivot_edge_tracking: [null, null],
     subtree_highlight_tracking: [null, null],
     pair_metrics: {
       rows: [{
@@ -298,7 +297,6 @@ function makeSyntheticTimingMovieData() {
         total_branch_length: 0,
       },
     ],
-    pivot_edge_tracking: [null, [1, 2], [1, 2], null],
     subtree_highlight_tracking: [null, [[1]], [[2]], null],
     pair_metrics: {
       rows: [{

@@ -59,7 +59,6 @@ function makeStreamMetadata(fileName = 'tree.nwk') {
     ],
     pairs: [],
     temporal_events: [],
-    pivot_edge_tracking: [null, null],
     subtree_highlight_tracking: [null, null],
     pair_metrics: { rows: [], semantics: {} },
     msa: { sequences: null, window_size: 1, step_size: 1 },

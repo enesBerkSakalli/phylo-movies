@@ -27,7 +27,7 @@ describe('Tree Visualisation - State Update Logic', () => {
         frame_type: 'interpolation_frame',
         is_observed_input: false,
         input_tree_index: null,
-        pair_id: index === frameIndex ? pairId : null,
+        pair_id: pairId,
       };
     });
   };
@@ -39,15 +39,15 @@ describe('Tree Visualisation - State Update Logic', () => {
       ...stateOverrides
     } = overrides;
 
-    return {
-      frameIndex,
-      subtreeHighlightScope: 'current',
-      subtreeHighlightTracking: [],
-      timelineFrames: createTimelineFrames(inputFrameIndices, frameIndex),
-      upcomingChangesEnabled: true,
-      pivotEdgeTracking: [],
-      ...stateOverrides
-    };
+      return {
+        frameIndex,
+        subtreeHighlightScope: 'current',
+        subtreeHighlightTracking: [],
+        timelineFrames: createTimelineFrames(inputFrameIndices, frameIndex),
+        upcomingChangesEnabled: true,
+        temporalEvents: [],
+        ...stateOverrides
+      };
   };
 
   describe('resolveSubtreeHighlights (subtree highlight detection)', () => {
@@ -85,8 +85,8 @@ describe('Tree Visualisation - State Update Logic', () => {
         const state = createMockState({
             frameIndex: index,
             subtreeHighlightScope: 'all', // CAUSES SWITCH
-            pivotEdgeTracking: { [index]: activeEdge },
             timelineFrames: createTimelineFrames([0, 10, 20], index, pairId),
+            temporalEvents: [makeSplitChangeEvent(pairId, index, activeEdge)],
             pairs: [{
                 pair_id: pairId,
                 solution: {
@@ -111,8 +111,8 @@ describe('Tree Visualisation - State Update Logic', () => {
         const state = createMockState({
             frameIndex: index,
             subtreeHighlightScope: 'all',
-            pivotEdgeTracking: { [index]: activeEdge },
             timelineFrames: createTimelineFrames([0, 10, 20], index, pairId),
+            temporalEvents: [makeSplitChangeEvent(pairId, index, activeEdge)],
             pairs: [{
                 pair_id: pairId,
                 solution: {
@@ -176,8 +176,9 @@ describe('Tree Visualisation - State Update Logic', () => {
 
         const state = createMockState({
             frameIndex: 5,
-            pivotEdgeTracking: edges,
-            inputFrameIndices: [0, 10]
+            inputFrameIndices: [0, 10],
+            timelineFrames: createTimelineFrames([0, 10], 5, 'pair_0_1'),
+            temporalEvents: makeSplitChangeEvents('pair_0_1', edges),
         });
 
         const result = calculateChangePreviews(state);
@@ -198,8 +199,9 @@ describe('Tree Visualisation - State Update Logic', () => {
 
          const state = createMockState({
              frameIndex: 5,
-             pivotEdgeTracking: edges,
-             inputFrameIndices: [0, 10]
+             inputFrameIndices: [0, 10],
+             timelineFrames: createTimelineFrames([0, 10], 5, 'pair_0_1'),
+             temporalEvents: makeSplitChangeEvents('pair_0_1', edges),
          });
 
          const result = calculateChangePreviews(state);
@@ -223,8 +225,9 @@ describe('Tree Visualisation - State Update Logic', () => {
 
         const state = createMockState({
             frameIndex: 5,
-            pivotEdgeTracking: edges,
-            inputFrameIndices: [0, 10]
+            inputFrameIndices: [0, 10],
+            timelineFrames: createTimelineFrames([0, 10], 5, 'pair_0_1'),
+            temporalEvents: makeSplitChangeEvents('pair_0_1', edges),
         });
 
         const result = calculateChangePreviews(state);
@@ -260,7 +263,24 @@ describe('Tree Visualisation - State Update Logic', () => {
       });
 
       expect(renderCount).to.equal(0);
-    });
   });
+});
+
+function makeSplitChangeEvent(pairId, frameIndex, split) {
+  return {
+    event_type: 'split_change',
+    pair_id: pairId,
+    frame_range: [frameIndex, frameIndex],
+    split,
+  };
+}
+
+function makeSplitChangeEvents(pairId, frameEdges) {
+  return frameEdges.flatMap((split, frameIndex) => (
+    Array.isArray(split)
+      ? [makeSplitChangeEvent(pairId, frameIndex, split)]
+      : []
+  ));
+}
 
 });

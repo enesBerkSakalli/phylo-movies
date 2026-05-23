@@ -1,6 +1,6 @@
 import { buildSubtreeConnectors } from '../deckgl/data/transforms/SubtreeConnectorBuilder.js';
 import { useAppStore } from '../../state/phyloStore/store.js';
-import { selectPairById, selectTimelineFrameAtIndex } from '../../state/phyloStore/selectors/treeSelectors.js';
+import { selectPairById, selectPivotEdgeForFrame, selectTimelineFrameAtIndex } from '../../state/phyloStore/selectors/treeSelectors.js';
 import { tagTreeSide } from '../utils/layerDataUtils.js';
 import {
   applyOffset,
@@ -281,8 +281,7 @@ export class ComparisonModeRenderer {
     const frameIndex = Number.isInteger(activeTreeIndex)
       ? activeTreeIndex
       : state.frameIndex;
-    const pivotEdgeTracking = state.pivotEdgeTracking;
-    const pivotEdge = pivotEdgeTracking[frameIndex];
+    const pivotEdge = selectPivotEdgeForFrame(state, frameIndex);
     const pairId = selectTimelineFrameAtIndex(state, frameIndex)?.pair_id ?? null;
     const affectedSubtreesBySplit = pairId
       ? selectPairById(state)[pairId].solution.affected_subtrees_by_split

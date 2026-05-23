@@ -17,7 +17,7 @@ This project uses the terms below consistently in user-facing text, docs, tests,
 |------|---------|-----------------|
 | Subtree | A topology-defined set of taxa or descendants that moves, is highlighted, or is matched during an SPR transition. This is the default app term. | A generic alignment region or timeline range. |
 | Clade | Biological prose where monophyly is the point. Use sparingly in implementation docs unless contrasting with subtree. | The app's moving/highlighted group abstraction. |
-| Split | The internal/backend representation of a bipartition, usually serialized as `split`, `split_indices`, `pivot_edge`, or `split_change_timeline`. | User-facing descriptions of moving groups. |
+| Split | The internal/backend representation of a bipartition, usually serialized as `split`, `split_indices`, or `pivot_edge`. | User-facing descriptions of moving groups. |
 | Partition | Generic programming/data partitioning only. Do not use it as a synonym for split or subtree. | Phylogenetic topology concepts unless an external algorithm explicitly says partition. |
 
 ## Serialized Contract Names
@@ -25,12 +25,14 @@ This project uses the terms below consistently in user-facing text, docs, tests,
 These fields are part of the current serialized API:
 
 - `split_indices`
-- `split_change_timeline`
+- `frames`
+- `pairs`
+- `temporal_events`
 - `pivot_edge`
 - `subtree_highlight_tracking`
 - `affected_subtrees_by_split`
 - `attachment_edges_by_split`
-- `tree_pair_solutions`
+- `pair_metrics`
 
 When wrapping those fields in frontend code, use names that describe the app concept. For example, keep `split_indices` at the parser boundary, but prefer `subtree`, `subtreeHighlightTracking`, `pivotEdge`, `inputTree`, and `transitionFrame` in local variables where that is what the value represents.
 
@@ -40,8 +42,8 @@ The backend currently exposes two related tree-pair contracts that should not be
 
 | Field | Use For | Notes |
 |-------|---------|-------|
-| `spr_move_events` | Per-SPR movement analytics: moved subtree ownership, visual highlight group, step range, path hops, and branch-length metrics. | New code should use `driver_subtree` for the physically moved subtree and `highlight_group` for visual context. |
+| `temporal_events` with `event_type: "spr_move"` | Per-SPR movement analytics: moved subtree ownership, visual highlight group, step range, path hops, and branch-length metrics. | New code should use `driver_subtree` for the physically moved subtree and `highlight_group` for visual context. |
 | `affected_subtrees_by_split` | Transition topology data used by timeline construction, comparison connectors, and all-mode subtree highlighting. | Maps each active split / pivot edge to the subtrees affected during that transition. |
 | `attachment_edges_by_split` | Source and destination attachment context for moved subtrees. | Maps each active split / pivot edge and moved subtree to one `{ source, destination }` attachment-edge object. |
 
-`moving_subtree` and `moving_subtree_group` are no longer accepted inside `spr_move_events`. Regenerate or migrate older saved payloads so each event provides explicit `driver_subtree` and `highlight_group` fields.
+`moving_subtree` and `moving_subtree_group` are no longer accepted inside SPR movement events. Regenerate or migrate older saved payloads so each event provides explicit `driver_subtree` and `highlight_group` fields.

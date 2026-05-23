@@ -112,7 +112,6 @@ function makePayload(overrides: Record<string, unknown> = {}) {
         total_branch_length: 0.75,
       },
     ],
-    pivot_edge_tracking: [null, [0, 1, 2], null],
     subtree_highlight_tracking: [null, [[1]], null],
     pair_metrics: {
       rows: [
@@ -180,7 +179,6 @@ function makeInputOnlyPayload(inputCount: number) {
     frames,
     pairs,
     temporal_events: [],
-    pivot_edge_tracking: Array.from({ length: inputCount }, () => null),
     subtree_highlight_tracking: Array.from({ length: inputCount }, () => null),
     pair_metrics: {
       ...makePayload().pair_metrics,
@@ -444,7 +442,6 @@ describe('validatePhyloMovieData', () => {
     payload.temporal_events[0].local_step_range = [1, 1];
     payload.temporal_events[1].frame_range = [1, 1];
     payload.temporal_events[1].local_step_range = [0, 0];
-    payload.pivot_edge_tracking = [null, [0, 1, 2], [0, 1, 2], null];
     payload.subtree_highlight_tracking = [null, [[1]], [[1]], null];
 
     expect(() => validatePhyloMovieData(payload))
@@ -528,10 +525,10 @@ describe('validatePhyloMovieData', () => {
       .toThrow(/canonical backend split key/);
   });
 
-  it('requires explicit MSA and tracking shapes', () => {
+  it('rejects deleted duplicate pivot tracking and requires explicit MSA shapes', () => {
     expect(() => validatePhyloMovieData(makePayload({
-      pivot_edge_tracking: [null],
-    }))).toThrow(/pivot_edge_tracking length \(1\) must match interpolated_trees length \(3\)/);
+      pivot_edge_tracking: [null, [0, 1, 2], null],
+    }))).toThrow(/phyloMovieData\.pivot_edge_tracking is not part of the backend contract/);
 
     expect(() => validatePhyloMovieData(makePayload({
       msa: { sequences: null, window_size: 0, step_size: 1 },
