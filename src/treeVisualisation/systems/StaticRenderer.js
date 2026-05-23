@@ -91,7 +91,7 @@ export class StaticRenderer {
 
     this.controller._updateLayersEfficiently(layerData);
 
-    if (this.controller._lastFocusedTreeIndex === null) {
+    if (this.controller._lastFocusedTreeIndex !== targetIndex) {
       this.controller.viewportManager.focusOnTree(layerData.nodes, layerData.labels, {
         fitMode: VIEWPORT_FIT_MODES.BRANCH,
         links: [...layerData.links, ...layerData.extensions]

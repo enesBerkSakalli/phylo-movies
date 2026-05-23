@@ -127,6 +127,41 @@ describe('tree viewport behavior', () => {
     expect(controller._lastFocusedTreeIndex).toBe(0);
   });
 
+  it('automatic static fit updates when the rendered tree index changes', () => {
+    const treeOneNode = { id: 'node-1', position: [200, 50, 0] };
+    const controller = {
+      _lastFocusedTreeIndex: 0,
+      calculateLayout: vi.fn(() => ({ layoutTree: {}, max_radius: 10 })),
+      _getConsistentRadii: vi.fn(() => ({ extensionRadius: 15, labelRadius: 35 })),
+      dataConverter: {
+        convertTreeToLayerData: vi.fn(() => ({
+          nodes: [treeOneNode],
+          labels: [],
+          links: [],
+          extensions: [],
+        })),
+      },
+      _updateLayersEfficiently: vi.fn(),
+      viewportManager: {
+        focusOnTree: vi.fn(),
+      },
+    };
+
+    new StaticRenderer(controller)._renderSingleTree(
+      1,
+      0,
+      [{ id: 'tree-0' }, { id: 'tree-1' }],
+      { frameIndex: 0 },
+      'radial-elbow'
+    );
+
+    expect(controller.viewportManager.focusOnTree).toHaveBeenCalledWith([treeOneNode], [], {
+      fitMode: VIEWPORT_FIT_MODES.BRANCH,
+      links: [],
+    });
+    expect(controller._lastFocusedTreeIndex).toBe(1);
+  });
+
   it('manual fit includes labels by default', () => {
     const controller = Object.create(ControllerClass.prototype);
     const node = { id: 'node-1', position: [0, 0, 0] };

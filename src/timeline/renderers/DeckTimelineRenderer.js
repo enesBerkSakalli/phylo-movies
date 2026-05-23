@@ -425,26 +425,31 @@ export class DeckTimelineRenderer {
       if (id != null) {
         this._clearHoverTimeout();
         this._emit('itemover', { item: id, event });
-
-        const segment = this.segments[segIndex];
-        const bounds = getSegmentBounds(segIndex, this.timelineData);
-        if (!bounds) return;
-
-        const startX = this._msToX(bounds.start);
-        const endX = this._msToX(bounds.end);
-        const centerX = (startX + endX) / 2;
-
-        this.setHoveredSegment(segIndex, segment, {
-          x: rect.left + centerX,
-          y: rect.top
-        });
+        this._publishHoveredSegment(segIndex, rect);
       }
 
       this._lastHoverId = id;
       this._scheduleUpdate();
+    } else if (id != null) {
+      this._publishHoveredSegment(segIndex, rect);
     }
 
     this._emit('mouseMove', { event });
+  }
+
+  _publishHoveredSegment(segIndex, rect) {
+    const segment = this.segments[segIndex];
+    const bounds = getSegmentBounds(segIndex, this.timelineData);
+    if (!segment || !bounds) return;
+
+    const startX = this._msToX(bounds.start);
+    const endX = this._msToX(bounds.end);
+    const centerX = (startX + endX) / 2;
+
+    this.setHoveredSegment(segIndex, segment, {
+      x: rect.left + centerX,
+      y: rect.top
+    });
   }
 
   _handleTimelineScrubMove(event) {

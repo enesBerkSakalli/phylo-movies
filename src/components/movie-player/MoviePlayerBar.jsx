@@ -59,6 +59,7 @@ export function MoviePlayerBar() {
   const hasTimeline = Boolean(movieTimelineManager);
   const totalSegments = hasTimeline ? movieTimelineManager?.getSegmentCount?.() ?? 0 : 0;
   const hasTransitionSegments = hasTimeline ? movieTimelineManager?.hasTransitionSegments?.() ?? false : false;
+  const tooltipPosition = getTimelineTooltipPosition(hoveredSegmentPosition);
 
   useEffect(() => {
     const container = timelineHostRef.current;
@@ -198,13 +199,13 @@ export function MoviePlayerBar() {
         </div>
       </div>
 
-      {hoveredSegmentIndex !== null && hoveredSegmentData && hoveredSegmentPosition && (
+      {hoveredSegmentIndex !== null && hoveredSegmentData && tooltipPosition && (
         <div
           ref={tooltipRef}
           style={{
             position: 'fixed',
-            left: `${hoveredSegmentPosition.x}px`,
-            top: `${hoveredSegmentPosition.y - TOOLTIP_Y_OFFSET}px`,
+            left: `${tooltipPosition.x}px`,
+            top: `${tooltipPosition.y - TOOLTIP_Y_OFFSET}px`,
             transform: 'translate(-50%, -100%)',
             zIndex: 10000,
             pointerEvents: 'auto',
@@ -230,6 +231,17 @@ export function MoviePlayerBar() {
       )}
     </>
   );
+}
+
+function getTimelineTooltipPosition(position) {
+  const x = Number(position?.x);
+  const y = Number(position?.y);
+
+  if (!Number.isFinite(x) || !Number.isFinite(y)) {
+    return null;
+  }
+
+  return { x, y };
 }
 
 function TimelineLayerControls({ hasTransitionSegments, showViewportControls }) {
