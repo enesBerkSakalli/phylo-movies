@@ -43,3 +43,16 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+
+  # ── Publication data regeneration: conda/bioconda toolchain ───────────────
+  publication-env:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.publication
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    profiles:
+      - publication
+    environment:
+      PHYLOMOVIES_PUBLICATION_ENV: phylomovies-publication

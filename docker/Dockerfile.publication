@@ -1,0 +1,20 @@
+# ==============================================================================
+#  Phylo-Movies — Publication analysis environment
+#
+#  Builds the conda environment used to regenerate publication data, including
+#  native phylogenetics binaries from bioconda: RAxML, IQ-TREE, and FastTree.
+# ==============================================================================
+
+FROM condaforge/miniforge3:24.11.3-0
+
+WORKDIR /workspace
+
+COPY publication_data/environment.yml /tmp/phylomovies-publication.yml
+
+RUN conda env create -f /tmp/phylomovies-publication.yml \
+    && conda clean --all --force-pkgs-dirs --yes
+
+ENV PHYLOMOVIES_PUBLICATION_ENV=phylomovies-publication
+ENV PATH=/opt/conda/envs/phylomovies-publication/bin:/opt/conda/bin:${PATH}
+
+CMD ["bash"]

@@ -36,10 +36,29 @@ Create or update the shared environment:
 conda env create -f publication_data/environment.yml
 ```
 
+If the host does not have conda, use the repository publication container:
+
+```bash
+docker compose --profile publication build publication-env
+docker compose --profile publication run --rm publication-env bash
+```
+
+The container mounts the repository at `/workspace` and contains the same
+`phylomovies-publication` environment defined by `publication_data/environment.yml`.
+
 Run a quick smoke regeneration:
 
 ```bash
 conda run -n phylomovies-publication \
+  ./publication_data/bootstrap_rogue_taxa/scripts/bootstrap_ordering/run_bootstrap_rogue_taxa.sh \
+  --smoke --run-label separated-source-smoke
+```
+
+Container form:
+
+```bash
+docker compose --profile publication run --rm publication-env \
+  conda run -n phylomovies-publication \
   ./publication_data/bootstrap_rogue_taxa/scripts/bootstrap_ordering/run_bootstrap_rogue_taxa.sh \
   --smoke --run-label separated-source-smoke
 ```

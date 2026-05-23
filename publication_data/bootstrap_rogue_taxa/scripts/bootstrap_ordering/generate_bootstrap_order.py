@@ -10,6 +10,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from collections import Counter
 from datetime import datetime
 
+from brancharchitect.parser import parse_newick
 from order_schema import ORDERING_FIELDNAMES, ORDERING_SEMANTICS
 
 
@@ -162,6 +163,112 @@ def calculate_composition(alignment_array):
 
 def euclidean_distance(left, right):
     return math.sqrt(sum((a - b) ** 2 for a, b in zip(left, right)))
+
+
+def canonical_split_key(split_taxa, all_taxa):
+    split = tuple(sorted(set(split_taxa)))
+    all_names = tuple(sorted(set(all_taxa)))
+    complement = tuple(name for name in all_names if name not in set(split))
+    if not split:
+        return ""
+    if not complement:
+        return "|".join(split)
+    if len(split) < len(complement):
+        canonical = split
+    elif len(complement) < len(split):
+        canonical = complement
+    else:
+        canonical = min(split, complement)
+    return "|".join(canonical)
+
+
+def _tree_split_keys(tree, all_taxa):
+    taxa_by_index = {index: name for name, index in tree.taxa_encoding.items()}
+    root_split = set(tree.split_indices.indices)
+    keys = set()
+    for node in tree.traverse():
+        if node.is_leaf():
+            continue
+        split = set(node.split_indices.indices)
+        if not split or split == root_split:
+            continue
+        split_names = [taxa_by_index[index] for index in sorted(split)]
+        key = canonical_split_key(split_names, all_taxa)
+        if key:
+            keys.add(key)
+    return keys
+
+
+def calculate_split_support_from_newicks(newick_strings, all_taxa):
+    counts = Counter()
+    replicate_total = len(newick_strings)
+    for newick in newick_strings:
+        tree = parse_newick(newick, order=all_taxa)
+        counts.update(_tree_split_keys(tree, all_taxa))
+
+    support = {}
+    for key, count in sorted(counts.items()):
+        taxa_names = key.split("|") if key else []
+        support[key] = {
+            "split_key": key,
+            "taxa_names": taxa_names,
+            "replicate_count": count,
+            "replicate_total": replicate_total,
+            "support_percent": 100 * count / replicate_total if replicate_total else 0,
+        }
+    return support
+
+
+def _format_support_label(value):
+    return f"{value:.6g}"
+
+
+def annotate_newick_with_split_support(newick, all_taxa, split_support):
+    tree = parse_newick(newick, order=all_taxa)
+    taxa_by_index = {index: name for name, index in tree.taxa_encoding.items()}
+    root_split = set(tree.split_indices.indices)
+    for node in tree.traverse():
+        if node.is_leaf():
+            continue
+        split = set(node.split_indices.indices)
+        if not split or split == root_split:
+            continue
+        split_names = [taxa_by_index[index] for index in sorted(split)]
+        key = canonical_split_key(split_names, all_taxa)
+        support = split_support.get(key)
+        if support:
+            node.name = _format_support_label(support["support_percent"])
+            node.values.update(
+                {
+                    "support_kind": "bootstrap_replicate_split_frequency",
+                    "bootstrap_frequency": _format_support_label(
+                        support["support_percent"]
+                    ),
+                    "replicate_count": support["replicate_count"],
+                    "replicate_total": support["replicate_total"],
+                }
+            )
+    return tree.to_newick(lengths=True)
+
+
+def write_split_support_table(path, split_support):
+    with open(path, "w") as f:
+        f.write("\t".join([
+            "split_key",
+            "taxa_names",
+            "replicate_count",
+            "replicate_total",
+            "support_percent",
+        ]) + "\n")
+        for key in sorted(split_support):
+            row = split_support[key]
+            f.write(
+                f"{row['split_key']}\t"
+                f"{','.join(row['taxa_names'])}\t"
+                f"{row['replicate_count']}\t"
+                f"{row['replicate_total']}\t"
+                f"{row['support_percent']:.6f}\n"
+            )
 
 
 def tool_version(executable, version_args):
@@ -436,7 +543,8 @@ def write_run_log(log_path, datasets, args, run_info):
         f.write(
             "  - ranked/composition_ranked_bootstrap_replicates_<name>.tsv: Semantic ordering table\n"
         )
-        f.write("  - ranked/all_trees_<name>.nwk: All trees in ranked order (one per line)\n")
+        f.write("  - ranked/split_support_<name>.tsv: Split-frequency support across inferred bootstrap trees\n")
+        f.write("  - ranked/all_trees_<name>.nwk: Support-annotated trees in ranked order (one per line)\n")
         f.write("  - bootstrap_alignments/bootstrap.BS<N>: Bootstrap replicate alignments\n")
         f.write("  - trees/rep_<NNNNNN>/: Per-replicate tree inference files\n")
 
@@ -690,6 +798,13 @@ def main():
 
         # Sort by distance, then replicate index for deterministic ties.
         sorted_replicates = sorted(distances, key=lambda x: (x["distance"], x["index"]))
+        inferred_tree_strings = []
+        for item in distances:
+            with open(item["tree_path"], "r") as tree_f:
+                inferred_tree_strings.append(tree_f.read().strip())
+        split_support = calculate_split_support_from_newicks(inferred_tree_strings, names)
+        split_support_file = os.path.join(ranked_dir, f"split_support_{output_label}.tsv")
+        write_split_support_table(split_support_file, split_support)
 
         print(f"  Sorted replicates (first {min(5, len(sorted_replicates))}):")
         for i in range(min(5, len(sorted_replicates))):
@@ -720,6 +835,11 @@ def main():
             for item in sorted_replicates:
                 with open(item["tree_path"], "r") as tree_f:
                     tree_content = tree_f.read().strip()
+                    tree_content = annotate_newick_with_split_support(
+                        tree_content,
+                        names,
+                        split_support,
+                    )
                     f.write(tree_content + "\n")
         print(f"  Saved all trees to {all_trees_file}\n")
 
@@ -745,6 +865,15 @@ def main():
                 "composition_ranked_bootstrap_replicates_sha256": sha256_file(out_file),
                 "all_trees": os.path.relpath(all_trees_file, ds_dir),
                 "all_trees_sha256": sha256_file(all_trees_file),
+                "split_support": os.path.relpath(split_support_file, ds_dir),
+                "split_support_sha256": sha256_file(split_support_file),
+            },
+            "support": {
+                "mode": "bootstrap_replicate_split_frequency",
+                "primary": "bootstrap_frequency",
+                "n_replicates": len(sorted_replicates),
+                "split_support_table": os.path.relpath(split_support_file, ds_dir),
+                "annotated_trees": True,
             },
             "ordering_semantics": ORDERING_SEMANTICS,
             "tree_program": args.tree_program,
