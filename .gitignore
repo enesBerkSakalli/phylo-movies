@@ -12,6 +12,7 @@ env
 
 # Local agent/planning artifacts
 docs/superpowers/
+.playwright-mcp/
 
 # local env files
 .env.local
