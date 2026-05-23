@@ -4,8 +4,8 @@ import { FileUploadZone } from "../../../../components/ui/file-upload-zone";
 
 export function ProjectFileSection({ treesFile, msaFile, setTreesFile, setMsaFile, disabled }) {
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2 text-muted-foreground mb-1">
+    <section className="flex flex-col gap-4">
+      <div className="flex items-center gap-2 text-muted-foreground">
         <LayoutPanelLeft className="size-4" />
         <h3 className="text-sm font-semibold uppercase tracking-wider">File Selection</h3>
       </div>
@@ -31,6 +31,6 @@ export function ProjectFileSection({ treesFile, msaFile, setTreesFile, setMsaFil
           onFileSelect={setMsaFile}
         />
       </div>
-    </div>
+    </section>
   );
 }

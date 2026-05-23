@@ -2,11 +2,11 @@ import React from 'react';
 import { useFormContext } from 'react-hook-form';
 import { GitBranch, Trees } from "lucide-react";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "../../../../components/ui/form";
-import { Badge } from "../../../../components/ui/badge";
 import { Checkbox } from "../../../../components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../../components/ui/select";
 import { Switch } from "../../../../components/ui/switch";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../../../components/ui/tooltip";
+import { cn } from '../../../../lib/utils';
+import { MsaRequiredBadge } from './MsaRequiredBadge.jsx';
 
 export function TreeConstructionSection({ hasMsa, hasTrees, disabled }) {
   const { control, watch } = useFormContext();
@@ -17,34 +17,30 @@ export function TreeConstructionSection({ hasMsa, hasTrees, disabled }) {
   const hasIqTreeSupport = iqtreeSupportMode !== 'none';
 
   return (
-    <div className={`space-y-4 p-4 rounded-xl border transition-all duration-300 ${!hasMsa ? 'bg-muted/30 opacity-60 border-dashed' : 'bg-card border-solid shadow-sm'}`}>
-      <div className="flex items-center justify-between mb-2">
+    <section
+      className={cn(
+        'flex flex-col gap-4 rounded-md border p-4 transition-colors',
+        !hasMsa ? 'border-dashed bg-muted/30 opacity-60' : 'bg-card'
+      )}
+    >
+      <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Trees className={`size-4 ${!hasMsa ? 'text-muted-foreground' : 'text-primary'}`} />
-          <span className="text-sm font-bold">
+          <Trees className={cn('size-4', !hasMsa ? 'text-muted-foreground' : 'text-primary')} />
+          <h3 className="text-sm font-semibold">
             Tree Construction
-          </span>
+          </h3>
         </div>
         {!hasMsa && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Badge variant="secondary" className="text-2xs h-5 py-0 cursor-help uppercase tracking-tighter">MSA Required</Badge>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="text-xs">Tree construction settings only apply when an MSA file is uploaded.</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <MsaRequiredBadge description="Tree construction settings only apply when an MSA file is uploaded." />
         )}
       </div>
 
-      <div className="space-y-3">
+      <div className="flex flex-col gap-3">
         <FormField
           control={control}
           name="treeInferenceEngine"
           render={({ field }) => (
-            <FormItem className="space-y-2">
+            <FormItem className="flex flex-col gap-2">
               <FormLabel className={`text-sm font-normal ${!hasMsa ? 'text-muted-foreground' : ''}`}>
                 Inference Engine
               </FormLabel>
@@ -76,7 +72,7 @@ export function TreeConstructionSection({ hasMsa, hasTrees, disabled }) {
           control={control}
           name="iqtreeFastSearch"
           render={({ field }) => (
-            <FormItem className="flex items-start space-x-3 space-y-0">
+            <FormItem className="flex items-start gap-3">
               <FormControl>
                 <Checkbox
                   checked={field.value}
@@ -84,7 +80,7 @@ export function TreeConstructionSection({ hasMsa, hasTrees, disabled }) {
                   disabled={disabled || !hasMsa || !isIqTree}
                 />
               </FormControl>
-              <div className="space-y-1 leading-none">
+              <div className="flex flex-col gap-1 leading-none">
                 <FormLabel className={`text-sm font-normal cursor-pointer ${!hasMsa || !isIqTree ? 'text-muted-foreground' : ''}`}>
                   Fast Search
                 </FormLabel>
@@ -100,7 +96,7 @@ export function TreeConstructionSection({ hasMsa, hasTrees, disabled }) {
           control={control}
           name="iqtreeSupportMode"
           render={({ field }) => (
-            <FormItem className="space-y-2">
+            <FormItem className="flex flex-col gap-2">
               <FormLabel className={`text-sm font-normal ${!hasMsa || !isIqTree ? 'text-muted-foreground' : ''}`}>
                 Branch Support
               </FormLabel>
@@ -132,7 +128,7 @@ export function TreeConstructionSection({ hasMsa, hasTrees, disabled }) {
           control={control}
           name="iqtreeBnni"
           render={({ field }) => (
-            <FormItem className="flex items-start space-x-3 space-y-0">
+            <FormItem className="flex items-start gap-3">
               <FormControl>
                 <Checkbox
                   checked={field.value}
@@ -140,7 +136,7 @@ export function TreeConstructionSection({ hasMsa, hasTrees, disabled }) {
                   disabled={disabled || !hasMsa || !isIqTree || !hasIqTreeSupport}
                 />
               </FormControl>
-              <div className="space-y-1 leading-none">
+              <div className="flex flex-col gap-1 leading-none">
                 <FormLabel className={`text-sm font-normal cursor-pointer ${!hasMsa || !isIqTree || !hasIqTreeSupport ? 'text-muted-foreground' : ''}`}>
                   Bootstrap NNI
                 </FormLabel>
@@ -156,8 +152,8 @@ export function TreeConstructionSection({ hasMsa, hasTrees, disabled }) {
           control={control}
           name="midpointRooting"
           render={({ field }) => (
-            <FormItem className="rounded-lg border bg-muted/20 p-4 flex items-center justify-between gap-4 h-fit space-y-0 transition-colors hover:bg-muted/30">
-              <div className="space-y-1">
+            <FormItem className="flex h-fit items-center justify-between gap-4 rounded-md border bg-muted/20 p-4 transition-colors hover:bg-muted/30">
+              <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-2">
                   <GitBranch className="size-4 text-primary" />
                   <FormLabel className="font-medium cursor-pointer text-sm">
@@ -183,7 +179,7 @@ export function TreeConstructionSection({ hasMsa, hasTrees, disabled }) {
           control={control}
           name="useGtr"
           render={({ field }) => (
-            <FormItem className="space-y-2">
+            <FormItem className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <FormLabel className={`text-sm font-normal ${!hasMsa ? 'text-muted-foreground' : ''}`}>
                   Substitution Model
@@ -213,7 +209,7 @@ export function TreeConstructionSection({ hasMsa, hasTrees, disabled }) {
           control={control}
           name="useGamma"
           render={({ field }) => (
-            <FormItem className="flex items-start space-x-3 space-y-0">
+            <FormItem className="flex items-start gap-3">
               <FormControl>
                 <Checkbox
                   checked={field.value}
@@ -221,7 +217,7 @@ export function TreeConstructionSection({ hasMsa, hasTrees, disabled }) {
                   disabled={disabled || !hasMsa}
                 />
               </FormControl>
-              <div className="space-y-1 leading-none">
+              <div className="flex flex-col gap-1 leading-none">
                 <FormLabel className={`text-sm font-normal cursor-pointer ${!hasMsa ? 'text-muted-foreground' : ''}`}>
                   Gamma Rate Heterogeneity
                 </FormLabel>
@@ -237,7 +233,7 @@ export function TreeConstructionSection({ hasMsa, hasTrees, disabled }) {
           control={control}
           name="usePseudo"
           render={({ field }) => (
-            <FormItem className="flex items-start space-x-3 space-y-0">
+            <FormItem className="flex items-start gap-3">
               <FormControl>
                 <Checkbox
                   checked={field.value}
@@ -245,7 +241,7 @@ export function TreeConstructionSection({ hasMsa, hasTrees, disabled }) {
                   disabled={disabled || !hasMsa || !isFastTree}
                 />
               </FormControl>
-              <div className="space-y-1 leading-none">
+              <div className="flex flex-col gap-1 leading-none">
                 <FormLabel className={`text-sm font-normal cursor-pointer ${!hasMsa || !isFastTree ? 'text-muted-foreground' : ''}`}>
                   Pseudocounts
                 </FormLabel>
@@ -261,7 +257,7 @@ export function TreeConstructionSection({ hasMsa, hasTrees, disabled }) {
           control={control}
           name="noMl"
           render={({ field }) => (
-            <FormItem className="flex items-start space-x-3 space-y-0">
+            <FormItem className="flex items-start gap-3">
               <FormControl>
                 <Checkbox
                   checked={field.value}
@@ -269,7 +265,7 @@ export function TreeConstructionSection({ hasMsa, hasTrees, disabled }) {
                   disabled={disabled || !hasMsa || !isFastTree}
                 />
               </FormControl>
-              <div className="space-y-1 leading-none">
+              <div className="flex flex-col gap-1 leading-none">
                 <FormLabel className={`text-sm font-normal cursor-pointer ${!hasMsa || !isFastTree ? 'text-muted-foreground' : ''}`}>
                   Skip ML Optimization
                 </FormLabel>
@@ -287,6 +283,6 @@ export function TreeConstructionSection({ hasMsa, hasTrees, disabled }) {
           ? "Inference options apply only when an MSA file is provided. Midpoint rooting still applies to uploaded trees."
           : "Upload an MSA to infer trees here, or upload precomputed trees and use midpoint rooting only."}
       </p>
-    </div>
+    </section>
   );
 }

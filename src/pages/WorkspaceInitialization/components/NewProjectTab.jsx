@@ -1,6 +1,5 @@
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { TabsContent } from "../../../components/ui/tabs";
 
 import { ProjectFileSection } from './project/ProjectFileSection.jsx';
 import { SlidingWindowSection } from './project/SlidingWindowSection.jsx';
@@ -21,7 +20,7 @@ export function NewProjectTab({
   const canSubmit = hasMsa || hasTrees;
 
   return (
-    <TabsContent value="upload" className="space-y-8 mt-0 animate-in fade-in slide-in-from-bottom-2 duration-500">
+    <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
       <ProjectFileSection
         treesFile={treesFile}
         msaFile={msaFile}
@@ -47,6 +46,6 @@ export function NewProjectTab({
         reset={reset}
         canSubmit={canSubmit}
       />
-    </TabsContent>
+    </div>
   );
 }
