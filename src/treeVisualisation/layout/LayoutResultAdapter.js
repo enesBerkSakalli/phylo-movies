@@ -38,6 +38,7 @@ function normalizeLayoutNode(node, parent = null, path = []) {
     parentId,
     name,
     length: data.length ?? 0,
+    annotations: data.annotations ?? null,
     split_indices: splitIndices,
     depth: node?.depth ?? 0,
     height: node?.height ?? 0,
@@ -82,6 +83,7 @@ function collectLayoutData(node, nodes, leaves, links) {
       sourceSplitIndices: node.split_indices,
       targetSplitIndices: child.split_indices,
       split_indices: child.split_indices,
+      annotations: child.annotations ?? null,
       name: child.name,
       targetName: child.name,
       depth: child.depth,
@@ -101,7 +103,8 @@ function toLinkEndpoint(node) {
     y: node.y,
     angle: node.angle,
     radius: node.radius,
-    split_indices: node.split_indices
+    split_indices: node.split_indices,
+    annotations: node.annotations ?? null,
   };
 }
 

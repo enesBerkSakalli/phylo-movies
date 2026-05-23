@@ -1,10 +1,13 @@
 import { useMemo } from 'react';
 import {
+  selectActiveTreeList,
+  selectBranchAnnotationLabelKey,
   selectFontSize,
   selectLabelsVisible,
   selectLayoutAngleDegrees,
   selectLayoutRotationDegrees,
   selectNodeSize,
+  selectSetBranchAnnotationLabelKey,
   selectSetFontSize,
   selectSetLabelsVisible,
   selectSetLayoutAngleDegrees,
@@ -15,6 +18,7 @@ import {
   selectTreeControllers,
   useAppStore
 } from '../../../../state/phyloStore/store.js';
+import { getAvailableBranchAnnotationOptions } from '../../../../domain/tree/branchSupportIndex.js';
 import { SidebarMenuItem, SidebarMenuButton } from '../../../ui/sidebar';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../../../ui/collapsible';
 import { ChevronDown, Circle, RotateCw } from 'lucide-react';
@@ -35,14 +39,31 @@ export function GeometryDimensionsSection() {
   const setStrokeWidth = useAppStore(selectSetStrokeWidth);
   const setFontSize = useAppStore(selectSetFontSize);
   const treeControllers = useAppStore(selectTreeControllers);
+  const activeTreeList = useAppStore(selectActiveTreeList);
   const labelsVisible = useAppStore(selectLabelsVisible);
   const setLabelsVisible = useAppStore(selectSetLabelsVisible);
+  const branchAnnotationLabelKey = useAppStore(selectBranchAnnotationLabelKey);
+  const setBranchAnnotationLabelKey = useAppStore(selectSetBranchAnnotationLabelKey);
 
   const fontSizeNumber = useMemo(() => toNumericFontSize(fontSize), [fontSize]);
 
   const handleToggleLabels = async (value) => {
     try { 
       setLabelsVisible(!!value); 
+      for (const controller of treeControllers) {
+        await controller.renderAllElements();
+      }
+    } catch { }
+  };
+
+  const branchAnnotationOptions = useMemo(
+    () => getAvailableBranchAnnotationOptions(activeTreeList),
+    [activeTreeList]
+  );
+
+  const handleChangeBranchAnnotationLabelKey = async (valueKey) => {
+    try {
+      setBranchAnnotationLabelKey(valueKey);
       for (const controller of treeControllers) {
         await controller.renderAllElements();
       }
@@ -70,6 +91,9 @@ export function GeometryDimensionsSection() {
             treeControllers={treeControllers}
             labelsVisible={labelsVisible}
             onToggleLabels={handleToggleLabels}
+            branchAnnotationLabelKey={branchAnnotationLabelKey}
+            branchAnnotationOptions={branchAnnotationOptions}
+            onChangeBranchAnnotationLabelKey={handleChangeBranchAnnotationLabelKey}
           />
         </CollapsibleContent>
       </SidebarMenuItem>

@@ -4,9 +4,11 @@ import { getConnectorsLayerProps } from './connectors/ConnectorLayers.js';
 import { getExtensionsLayerProps } from './extensions/ExtensionLayers.js';
 import { getLabelDotsLayerProps, LABEL_DOTS_CONFIG } from './labels/LabelDotsLayer.js';
 import { getLabelsLayerProps } from './labels/LabelLayers.js';
+import { buildSupportLabelData, getSupportLabelsLayerProps } from './labels/SupportLabelLayers.js';
 import { getLinkOutlinesLayerProps, getLinksLayerProps } from './links/LinkLayers.js';
 import { getNodesLayerProps } from './nodes/NodeLayers.js';
 import { withSideSuffix } from '../styles/labels/labelUtils.js';
+import { BRANCH_ANNOTATION_NONE } from '../../../../domain/tree/branchSupportIndex.js';
 
 export const DEFAULT_LAYER_SET_CONFIGS = {
   ...LAYER_CONFIGS,
@@ -62,6 +64,9 @@ export function createTreeLayerSet({
   const extensions = addTreeSide(data.extensions, treeSide);
   const connectors = addTreeSide(data.connectors, treeSide);
   const labelsVisible = state.labelsVisible !== false;
+  const supportValueKey = state.branchAnnotationLabelKey ?? BRANCH_ANNOTATION_NONE;
+  const supportLabelsVisible = supportValueKey !== BRANCH_ANNOTATION_NONE;
+  const supportLabels = supportLabelsVisible ? buildSupportLabelData(links, supportValueKey) : [];
   const cached = layerStyles.getCachedState(state);
   const partitioned = partitionTreeLayerData({
     nodes,
@@ -140,6 +145,13 @@ export function createTreeLayerSet({
       config: semanticConfig(configs.nodes, 'marked'),
       props: getNodesLayerProps(partitioned.nodes.marked, state, layerStyles),
       modelMatrix
+    }),
+    supportLabelsVisible && shouldCreateLayer(supportLabels, skipEmpty) && createConfiguredLayer({
+      config: configs.supportLabels,
+      props: getSupportLabelsLayerProps(supportLabels, state),
+      modelMatrix,
+      sideSuffixData: supportLabels,
+      useSideSuffix
     }),
     labelsVisible && shouldCreateLayer(partitioned.labels.base, skipEmpty) && createConfiguredLayer({
       config: semanticConfig(configs.labels, 'base'),

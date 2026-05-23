@@ -191,26 +191,41 @@ function collectSupport(node, allTaxaIndices, map) {
   children.forEach((child) => collectSupport(child, allTaxaIndices, map));
 }
 
-function getInputFrameRows(frames, treeCount) {
-  if (Array.isArray(frames) && frames.length > 0) {
-    return frames.filter((frame) => frame?.frame_type === 'input_tree' || frame?.is_observed_input === true);
+function getInputFrameRows(frames) {
+  if (!Array.isArray(frames)) {
+    throw new Error('buildBranchSupportIndex requires canonical timeline frames');
   }
 
-  return Array.from({ length: treeCount }, (_, index) => ({
-    frame_index: index,
-    input_tree_index: index,
-  }));
+  return frames.filter((frame, index) => {
+    if (!frame || typeof frame !== 'object') {
+      throw new Error(`buildBranchSupportIndex frames[${index}] must be a timeline frame row`);
+    }
+    return frame.frame_type === 'input_tree' || frame.is_observed_input === true;
+  });
 }
 
-export function buildBranchSupportIndex({ interpolatedTrees = [], frames = [] } = {}) {
-  const supportByInputTree = new Map();
-  const inputFrames = getInputFrameRows(frames, interpolatedTrees.length);
+export function buildBranchSupportIndex({ interpolatedTrees, frames } = {}) {
+  if (!Array.isArray(interpolatedTrees)) {
+    throw new Error('buildBranchSupportIndex requires canonical interpolated_trees');
+  }
 
-  inputFrames.forEach((frame, fallbackIndex) => {
-    const frameIndex = Number.isInteger(frame.frame_index) ? frame.frame_index : fallbackIndex;
-    const inputTreeIndex = Number.isInteger(frame.input_tree_index) ? frame.input_tree_index : fallbackIndex;
+  const supportByInputTree = new Map();
+  const inputFrames = getInputFrameRows(frames);
+
+  inputFrames.forEach((frame, index) => {
+    if (!Number.isInteger(frame.frame_index)) {
+      throw new Error(`buildBranchSupportIndex input frame ${index} must include frame_index`);
+    }
+    if (!Number.isInteger(frame.input_tree_index)) {
+      throw new Error(`buildBranchSupportIndex input frame ${index} must include input_tree_index`);
+    }
+
+    const frameIndex = frame.frame_index;
+    const inputTreeIndex = frame.input_tree_index;
     const tree = interpolatedTrees[frameIndex];
-    if (!tree) return;
+    if (!tree) {
+      throw new Error(`buildBranchSupportIndex input frame ${index} references missing interpolated_trees[${frameIndex}]`);
+    }
 
     const allTaxaIndices = normalizeIndices(tree.split_indices);
     const supportBySplit = new Map();

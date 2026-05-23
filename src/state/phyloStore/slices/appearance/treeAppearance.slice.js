@@ -7,6 +7,7 @@ export const createTreeAppearanceSlice = (set) => ({
   nodeSize: 0.5,
   styleConfig: { labelOffsets: { DEFAULT: 1, EXTENSION: 1 } },
   labelsVisible: true, // Whether node/taxa labels are displayed
+  branchAnnotationLabelKey: 'none', // Parsed branch annotation field shown on internal branches
 
   // ==========================================================================
   // ACTIONS
@@ -29,4 +30,8 @@ export const createTreeAppearanceSlice = (set) => ({
   },
 
   setLabelsVisible: (visible) => set({ labelsVisible: !!visible }),
+  setBranchAnnotationLabelKey: (valueKey) => {
+    const branchAnnotationLabelKey = typeof valueKey === 'string' && valueKey.length > 0 ? valueKey : 'none';
+    set({ branchAnnotationLabelKey });
+  },
 });

@@ -38,6 +38,7 @@ export { selectHoveredSegmentPosition } from './selectHoveredSegmentPosition.js'
 export { selectInitialize } from './selectInitialize.js';
 export { selectIsMsaViewerOpen } from './selectIsMsaViewerOpen.js';
 export { selectLabelsVisible } from './selectLabelsVisible.js';
+export { selectBranchAnnotationLabelKey } from './selectBranchAnnotationLabelKey.js';
 export { selectLayoutAngleDegrees } from './selectLayoutAngleDegrees.js';
 export { selectLayoutRotationDegrees } from './selectLayoutRotationDegrees.js';
 export { selectLinkGeometryMode } from './selectLinkGeometryMode.js';
@@ -89,6 +90,7 @@ export { selectSetHoveredSegment } from './selectSetHoveredSegment.js';
 export { selectSelectedTimelineSegmentIndex } from './selectSelectedTimelineSegmentIndex.js';
 export { selectSetSelectedTimelineSegment } from './selectSetSelectedTimelineSegment.js';
 export { selectSetLabelsVisible } from './selectSetLabelsVisible.js';
+export { selectSetBranchAnnotationLabelKey } from './selectSetBranchAnnotationLabelKey.js';
 export { selectSetLayoutAngleDegrees } from './selectSetLayoutAngleDegrees.js';
 export { selectSetLayoutRotationDegrees } from './selectSetLayoutRotationDegrees.js';
 export { selectSetLinkGeometryMode } from './selectSetLinkGeometryMode.js';

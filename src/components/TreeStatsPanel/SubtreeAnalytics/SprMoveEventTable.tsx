@@ -14,6 +14,7 @@ import { Search, X } from 'lucide-react';
 import type { SprMoveEventRow } from './types';
 import { buildSprMoveEventSearchText } from './sprMoveEventSearch';
 import { SPR_MOVE_EVENT_TABLE_COPY } from './SprMoveEventTable.contract';
+import { formatSupportValue } from '../../../domain/tree/branchSupportIndex';
 
 interface SprMoveEventTableProps {
     events: SprMoveEventRow[];
@@ -58,6 +59,19 @@ const getSignature = (indices?: number[]): string | null => {
 const formatStepRange = (stepRange: [number, number] | null): string => (
     Array.isArray(stepRange) ? `${stepRange[0]}-${stepRange[1]}` : '-'
 );
+
+const formatSupportClass = (supportClass: string | undefined): string => {
+    switch (supportClass) {
+        case 'high_support_conflict':
+            return 'high';
+        case 'mixed_support':
+            return 'mixed';
+        case 'low_support':
+            return 'low';
+        default:
+            return 'missing';
+    }
+};
 
 const sprMoveEventFilter: FilterFn<SprMoveEventRow> = (row, columnId, filterValue) => {
     const query = String(filterValue ?? '').trim().toLowerCase();
@@ -137,6 +151,7 @@ export const SprMoveEventTable = ({ events, leafNamesByIndex, selectedMovedSubtr
                             <th className="w-28 px-3 py-2 text-left font-bold uppercase tracking-wider text-2xs">{SPR_MOVE_EVENT_TABLE_COPY.columns.pivot}</th>
                             <th className="w-28 px-3 py-2 text-left font-bold uppercase tracking-wider text-2xs">{SPR_MOVE_EVENT_TABLE_COPY.columns.from}</th>
                             <th className="w-28 px-3 py-2 text-left font-bold uppercase tracking-wider text-2xs">{SPR_MOVE_EVENT_TABLE_COPY.columns.to}</th>
+                            <th className="w-24 px-3 py-2 text-right font-bold uppercase tracking-wider text-2xs">{SPR_MOVE_EVENT_TABLE_COPY.columns.support}</th>
                             <th className="w-14 px-3 py-2 text-right font-bold uppercase tracking-wider text-2xs">{SPR_MOVE_EVENT_TABLE_COPY.columns.steps}</th>
                             <th className="w-40 px-3 py-2 text-right font-bold uppercase tracking-wider text-2xs">{SPR_MOVE_EVENT_TABLE_COPY.columns.metrics}</th>
                         </tr>
@@ -186,6 +201,10 @@ export const SprMoveEventTable = ({ events, leafNamesByIndex, selectedMovedSubtr
                                     <td className="px-3 py-3" title={formatAttachment(event.destinationAttachment, leafNamesByIndex)}>
                                         <div className="truncate">{formatCompactAttachment(event.destinationAttachment, leafNamesByIndex)}</div>
                                     </td>
+                                    <td className="px-3 py-3 text-right font-mono tabular-nums">
+                                        <div>{formatSupportValue(event.sourceAttachmentSupport)} → {formatSupportValue(event.destinationAttachmentSupport)}</div>
+                                        <div className="text-2xs font-sans text-muted-foreground/70">{formatSupportClass(event.supportClass)}</div>
+                                    </td>
                                     <td className="px-3 py-3 text-right font-mono tabular-nums">{formatStepRange(event.stepRange)}</td>
                                     <td className="px-3 py-3 text-right font-mono tabular-nums">
                                         <div className="flex flex-col gap-0.5">
@@ -207,7 +226,7 @@ export const SprMoveEventTable = ({ events, leafNamesByIndex, selectedMovedSubtr
                         })}
                         {filteredRows.length === 0 && (
                             <tr>
-                                <td colSpan={8} className="px-4 py-12 text-center text-muted-foreground italic">
+                                <td colSpan={9} className="px-4 py-12 text-center text-muted-foreground italic">
                                     {hasSearch
                                         ? SPR_MOVE_EVENT_TABLE_COPY.noSearchResults
                                         : SPR_MOVE_EVENT_TABLE_COPY.noMovements}
