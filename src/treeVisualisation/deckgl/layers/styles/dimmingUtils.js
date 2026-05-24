@@ -7,14 +7,10 @@ export function applyDimmingWithCache(
   dimmingOpacity,
   subtreeDimmingEnabled,
   subtreeDimmingOpacity,
-  highlightedSubtreeData
+  _highlightedSubtreeData
 ) {
-  let isSourceOrDest = false;
-  if (isNode) {
-    const isSource = colorManager?.isNodeSourceEdge?.(entity);
-    const isDestination = colorManager?.isNodeDestinationEdge?.(entity);
-    isSourceOrDest = isSource || isDestination;
-  }
+  const isSourceOrDest = isNode &&
+    Boolean(colorManager?.isNodeSourceEdge?.(entity) || colorManager?.isNodeDestinationEdge?.(entity));
 
   // Pivot edge dimming
   if (!isSourceOrDest && dimmingEnabled && colorManager?.hasPivotEdges?.()) {

@@ -3,15 +3,13 @@ const proxyquire = require('proxyquire');
 
 // Mock dependencies
 const linkUtilsMock = {
-  shouldHighlightLink: () => false,
-  getHistoryOutlineStyle: () => null,
   getSubtreeHighlightRgb: () => [255, 0, 0],
 };
 
 const visualHighlightsMock = {
   isLinkVisuallyHighlighted: (link, cm) => {
     // Mimic the logic: marked OR activeEdge
-    return cm.isActiveChangeEdge(link);
+    return cm.isPivotEdge(link);
   }
 };
 
@@ -44,7 +42,7 @@ describe('Link Outline Pulsation Logic', () => {
 
   beforeEach(() => {
     colorManagerMock = {
-      isActiveChangeEdge: () => false,
+      isPivotEdge: () => false,
       isCompletedChangeEdge: () => false,
       isUpcomingChangeEdge: () => false,
       getBranchColorWithHighlights: () => '#0000FF',
@@ -68,20 +66,18 @@ describe('Link Outline Pulsation Logic', () => {
 
   it('Standard active edge should pulse', () => {
     // Setup: It IS an active change edge
-    colorManagerMock.isActiveChangeEdge = () => true;
+    colorManagerMock.isPivotEdge = () => true;
 
     // Pulse calculation: base(2)*2 + 4 + (4 * 0.5) = 4 + 4 + 2 = 10
     const width = getLinkOutlineWidth({}, cachedState, cachedState.helpers);
     expect(width).to.equal(10);
   });
 
-  it('active mover edges use the active-edge pulse when not subtree-highlighted', () => {
-    // Setup: It is active because moving subtrees can also be active edges.
-    colorManagerMock.isActiveChangeEdge = () => true;
-    // And it is an active mover subtree, but not a subtree-highlight outline.
+  it('active mover edges use active-mover precedence over the pivot pulse', () => {
+    colorManagerMock.isPivotEdge = () => true;
     colorManagerMock.isLinkInActiveMoverSubtree = () => true;
 
     const width = getLinkOutlineWidth({}, cachedState, cachedState.helpers);
-    expect(width).to.equal(10);
+    expect(width).to.equal(7);
   });
 });

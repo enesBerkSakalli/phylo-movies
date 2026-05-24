@@ -14,11 +14,11 @@
 Resolves node fill color with highlighting and dimming support.
 
 **Priority Chain:**
-1. **Completed Change Edge** → Blue (100% opacity)
-2. **Upcoming Change Edge** → Blue (60% opacity)
-3. **Active Change Edge** → Blue with dimming
-4. **Subtree Highlight** -> Accent/Contrast/Taxa based on mode
-5. **Default** → Base taxa/monophyletic color
+1. **Completed Change Edge** -> Blue (100% opacity)
+2. **Upcoming Change Edge** -> Blue (60% opacity)
+3. **Active Pivot Edge** -> Blue with dimming
+4. **Active Mover / Subtree Highlight** -> Accent/contrast/taxa based on mode
+5. **Default** -> Base taxa/monophyletic color
 
 **Returns:** `[r, g, b, opacity]` RGBA array for Deck.gl
 
@@ -29,11 +29,11 @@ Resolves node fill color with highlighting and dimming support.
 Resolves node border/stroke color.
 
 **Priority Chain:**
-1. **History Mode** → Darkened blue (70% brightness)
-2. **Subtree Highlight** -> Highlight color
-3. **History Subtree** → Stroke color
-4. **Active Edge** → Pulsing base color
-5. **Default** → Stroke color
+1. **History Mode** -> Darkened blue (70% brightness)
+2. **Active Pivot Edge** -> Pivot color
+3. **Active Mover / Subtree Highlight** -> Highlight color
+4. **History Subtree** -> Reduced-opacity stroke color
+5. **Default** -> Stroke color
 
 **Returns:** `[r, g, b, opacity]` RGBA array
 
@@ -52,8 +52,7 @@ Resolves node radius with size multipliers for different states.
 | Completed Change | 1.5×       |
 | Active Edge      | 1.5×       |
 | Subtree Highlight | 1.6x       |
-| History Subtree  | 1.3×       |
-| Highlighted      | 1.5×       |
+| History Subtree  | 1.15×      |
 | Default          | 1.0×       |
 
 ---
@@ -64,6 +63,11 @@ Resolves color for entities that use node coloring (e.g., labels).
 
 Used by label styles to inherit node-based colors.
 
+Default visual role classification comes from
+`src/treeVisualisation/deckgl/layers/styles/highlightResolver.js`. Node render
+accessors should switch on `TREE_HIGHLIGHT_ROLE` rather than rechecking backend
+movement fields directly.
+
 ---
 
 ## Dependencies
@@ -73,12 +77,9 @@ nodeStyles.js
 ├── colorUtils.js          # colorToRgb
 ├── TreeColors.js          # SYSTEM_TREE_COLORS
 ├── dimmingUtils.js        # applyDimmingWithCache
-├── visualHighlights.js    # isNodeVisuallyHighlighted
+├── highlightResolver.js   # resolveTreeElementHighlight
 ├── nodeUtils.js           # Helper functions
-│   ├── shouldHighlightNode
-│   ├── isHistorySubtreeNode
 │   ├── getHighlightColor
-│   ├── isNodePivotEdge
 │   └── getPivotEdgeColor
 └── nodeRadiusStyles.js    # getNodeRadius
 ```

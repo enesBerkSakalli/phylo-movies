@@ -1,6 +1,5 @@
-import { isNodeVisuallyHighlighted } from '../../../../systems/tree_color/visualHighlights.js';
-import { shouldHighlightNode, isHistorySubtreeNode, isNodePivotEdge } from './nodeUtils.js';
 import { getActiveMoverEmphasis } from '../activeMoverEmphasis.js';
+import { resolveTreeElementHighlight, TREE_HIGHLIGHT_ROLE } from '../highlightResolver.js';
 
 export function getNodeRadius(node, minRadius = 1, cached, helpers) {
   const { colorManager: cm, upcomingChangesEnabled, densityScale, metricScale = 1.0 } = cached;
@@ -13,19 +12,24 @@ export function getNodeRadius(node, minRadius = 1, cached, helpers) {
     radius *= 0.7;
   } else if (cm) {
     const nodeData = node;
+    const highlight = resolveTreeElementHighlight(nodeData, cached, 'node');
     const scale = densityScale !== undefined ? densityScale : 1.0;
     const getScaledRadius = (multiplier) => baseRadius * (1 + (multiplier - 1) * scale);
 
-    if (upcomingChangesEnabled && cm.isNodeCompletedChangeEdge?.(nodeData)) {
+    if (upcomingChangesEnabled && highlight.role === TREE_HIGHLIGHT_ROLE.COMPLETED_CHANGE) {
       radius = getScaledRadius(1.5);
-    } else if (isNodePivotEdge(nodeData, cached)) {
+    } else if (highlight.role === TREE_HIGHLIGHT_ROLE.PIVOT_EDGE) {
       radius = getScaledRadius(1.5);
-    } else if (shouldHighlightNode(nodeData, cached)) {
-      radius = getScaledRadius(1.6) * getActiveMoverEmphasis(nodeData, cached, 'node');
-    } else if (isHistorySubtreeNode(nodeData, cached)) {
+    } else if (
+      highlight.role === TREE_HIGHLIGHT_ROLE.ACTIVE_MOVER ||
+      highlight.role === TREE_HIGHLIGHT_ROLE.SUBTREE_HIGHLIGHT
+    ) {
+      const emphasis = highlight.role === TREE_HIGHLIGHT_ROLE.ACTIVE_MOVER
+        ? getActiveMoverEmphasis(nodeData, cached, 'node')
+        : 1;
+      radius = getScaledRadius(1.6) * emphasis;
+    } else if (highlight.role === TREE_HIGHLIGHT_ROLE.HISTORY_SUBTREE) {
       radius = getScaledRadius(1.15);
-    } else if (isNodeVisuallyHighlighted(nodeData, cm, cached.subtreeHighlightsEnabled)) {
-      radius = getScaledRadius(1.5);
     }
   }
 
