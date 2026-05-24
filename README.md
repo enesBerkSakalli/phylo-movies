@@ -166,14 +166,31 @@ It will check for prerequisites (Node.js, npm, Poetry), install Python and JS de
 
 Use when modifying code or running tests with hot reload.
 
-1. Start the dev server:
+For full-stack workflows, prefer `./start.sh`. It starts both required services and is the expected local command for interpolation, example processing, and MSA workflows.
+
+If you intentionally want to run services separately:
+
+1. Start the BranchArchitect backend:
+
+   ```bash
+   cd engine/BranchArchitect
+   ./start_movie_server.sh
+   ```
+
+   The backend listens on `http://127.0.0.1:5002/`.
+
+2. In another terminal, start the Vite frontend:
 
    ```bash
    npm run dev
    ```
 
-2. Open `http://localhost:5173/` or `http://localhost:5173/visualization`.
-3. Development mode provides HMR, source maps, and error overlays out of the box.
+   The frontend listens on `http://127.0.0.1:5173/`.
+
+3. Open `http://localhost:5173/` or `http://localhost:5173/visualization`.
+4. Development mode provides HMR, source maps, and error overlays out of the box.
+
+> **Backend flag:** `npm run dev` starts the frontend only. If the backend is not reachable at `http://127.0.0.1:5002/about`, the dev server prints a warning and the workspace screen shows a backend-not-connected banner.
 
 #### Method 4: Production build (custom hosting)
 
@@ -334,7 +351,7 @@ Access at `http://localhost:4173/`
 
 **6. Test with example data:**
 
-- Start dev server: `npm run dev`
+- Start the full stack: `./start.sh`
 - Navigate to `http://localhost:5173/`
 - Click "Load Example" button
 - Should load example phylogenetic tree visualization
@@ -368,7 +385,8 @@ npm run validate
 The main root-level commands are:
 
 ```bash
-npm run dev          # Start the Vite frontend dev server
+./start.sh            # Start full local stack: backend on 5002 and frontend on 5173
+npm run dev          # Start the Vite frontend only; backend workflows also need BranchArchitect on port 5002
 npm run build        # Build the frontend and copy example data
 npm run preview      # Preview the production build
 npm run lint         # Run ESLint

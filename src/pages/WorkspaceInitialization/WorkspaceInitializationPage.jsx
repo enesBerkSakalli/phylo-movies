@@ -18,6 +18,7 @@ export function WorkspaceInitializationPage() {
     loadingExample,
     loadingExampleId,
     operationState,
+    backendStatus,
     alert,
     handleSubmit,
     handleLoadExample,
@@ -42,6 +43,18 @@ export function WorkspaceInitializationPage() {
               </CardHeader>
 
               <CardContent className="p-4 sm:p-6">
+                {backendStatus.state === 'unavailable' && (
+                  <Alert className="mb-6 border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
+                    <AlertTitle>Backend not connected</AlertTitle>
+                    <AlertDescription className="text-amber-900 dark:text-amber-100/90">
+                      BranchArchitect is not reachable on port 5002. Start the full stack with{' '}
+                      <code>./start.sh</code>, or run{' '}
+                      <code>cd engine/BranchArchitect && ./start_movie_server.sh</code> for
+                      interpolation, examples, and MSA workflows.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 {alert && (
                   <Alert variant="destructive" className="mb-6">
                     <AlertTitle>Error</AlertTitle>

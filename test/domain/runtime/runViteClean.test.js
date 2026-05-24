@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  formatBackendUnavailableWarning,
   resolveViteArgs,
   sanitizeNodeRuntimeEnv,
+  shouldCheckBackendHealth,
   stripConsoleNinjaHooks
 } from '../../../scripts/run-vite-clean.mjs';
 
@@ -40,5 +42,20 @@ describe('clean Vite runtime wrapper', () => {
   it('defaults bare npm run dev to IPv4 localhost', () => {
     expect(resolveViteArgs([])).toEqual(['--host', '127.0.0.1']);
     expect(resolveViteArgs(['preview'])).toEqual(['preview']);
+  });
+
+  it('checks backend health for frontend dev-server runs only', () => {
+    expect(shouldCheckBackendHealth(resolveViteArgs([]))).toBe(true);
+    expect(shouldCheckBackendHealth(['--port', '5173'])).toBe(true);
+    expect(shouldCheckBackendHealth(['build'])).toBe(false);
+    expect(shouldCheckBackendHealth(['preview'])).toBe(false);
+  });
+
+  it('explains that npm run dev is frontend-only when the backend is unavailable', () => {
+    const warning = formatBackendUnavailableWarning('http://127.0.0.1:5002/about');
+
+    expect(warning).toContain('npm run dev starts the Vite frontend only');
+    expect(warning).toContain('./start.sh');
+    expect(warning).toContain('start_movie_server.sh');
   });
 });
