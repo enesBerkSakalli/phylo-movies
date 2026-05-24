@@ -47,3 +47,9 @@ The backend currently exposes two related tree-pair contracts that should not be
 | `attachment_edges_by_split` | Source and destination attachment context for moved subtrees. | Maps each active split / pivot edge and moved subtree to one `{ source, destination }` attachment-edge object. |
 
 `moving_subtree` and `moving_subtree_group` are no longer accepted inside SPR movement events. Regenerate or migrate older saved payloads so each event provides explicit `driver_subtree` and `highlight_group` fields.
+
+For the default tree-view visual contract, see
+[Highlight Visual Contract](highlight-visual-contract.md). In short,
+`subtree_highlight_tracking` and the active `pivot_edge` are visual by default,
+while `attachment_edges_by_split` is contextual unless a selected, explain, or
+debug mode explicitly opts into showing it.

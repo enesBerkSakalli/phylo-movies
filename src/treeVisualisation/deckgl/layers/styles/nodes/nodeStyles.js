@@ -1,8 +1,8 @@
 import { colorToRgb } from '../../../../../services/ui/colorUtils.js';
 import { SYSTEM_TREE_COLORS } from '../../../../../constants/TreeColors.js';
 import { applyDimmingWithCache } from '../dimmingUtils.js';
-import { isNodeVisuallyHighlighted } from '../../../../systems/tree_color/visualHighlights.js';
-import { shouldHighlightNode, isHistorySubtreeNode, getHighlightColor, isNodePivotEdge, getPivotEdgeColor } from './nodeUtils.js';
+import { getHighlightColor, getPivotEdgeColor } from './nodeUtils.js';
+import { resolveTreeElementHighlight, TREE_HIGHLIGHT_ROLE } from '../highlightResolver.js';
 // Re-export from dedicated file
 export { getNodeRadius } from './nodeRadiusStyles.js';
 export { getNodeLineWidth } from './nodeWidthStyles.js';
@@ -15,25 +15,24 @@ const _nodeBasedOut = [0, 0, 0, 0];
 
 /**
  * Checks for history and upcoming change states and returns the appropriate color.
- * @param {Object} nodeData - The node data
  * @param {Object} cached - Cached state
  * @param {number} baseOpacity - The base opacity
  * @returns {Array|null} [r, g, b, a] color array or null if no history state applies
  */
-function resolveHistoryNodeColor(nodeData, cached, baseOpacity) {
-  const { colorManager: cm, upcomingChangesEnabled } = cached;
+function resolveHistoryNodeColor(cached, baseOpacity, highlight = null) {
+  const { upcomingChangesEnabled } = cached;
 
   if (upcomingChangesEnabled) {
     const historyColor = colorToRgb(SYSTEM_TREE_COLORS.pivotEdgeColor);
 
-    if (cm.isNodeCompletedChangeEdge(nodeData)) {
+    if (highlight?.role === TREE_HIGHLIGHT_ROLE.COMPLETED_CHANGE) {
       _historyColorOut[0] = historyColor[0];
       _historyColorOut[1] = historyColor[1];
       _historyColorOut[2] = historyColor[2];
       _historyColorOut[3] = baseOpacity;
       return _historyColorOut;
     }
-    if (cm.isNodeUpcomingChangeEdge(nodeData)) {
+    if (highlight?.role === TREE_HIGHLIGHT_ROLE.UPCOMING_CHANGE) {
       // Upcoming changes are semi-transparent
       _historyColorOut[0] = historyColor[0];
       _historyColorOut[1] = historyColor[1];
@@ -52,13 +51,15 @@ function resolveHistoryNodeColor(nodeData, cached, baseOpacity) {
  * @param {Object} cm - ColorManager instance
  * @returns {Array} [r, g, b] color array
  */
-function resolveBaseNodeColor(nodeData, cached, cm) {
-  const isHighlighted = shouldHighlightNode(nodeData, cached);
+function resolveBaseNodeColor(nodeData, cached, cm, highlight = null) {
+  const isHighlighted =
+    highlight?.role === TREE_HIGHLIGHT_ROLE.ACTIVE_MOVER ||
+    highlight?.role === TREE_HIGHLIGHT_ROLE.SUBTREE_HIGHLIGHT;
 
   if (isHighlighted) {
     return getHighlightColor(nodeData, cached);
   }
-  return colorToRgb(cm.getNodeColor(nodeData) || '#000000');
+  return colorToRgb(cm?.getNodeColor?.(nodeData) || '#000000');
 }
 
 export function getNodeColor(node, cached, helpers) {
@@ -77,15 +78,16 @@ export function getNodeColor(node, cached, helpers) {
 
   const nodeData = node;
   const baseOpacity = helpers.getBaseOpacity(node.opacity);
+  const highlight = resolveTreeElementHighlight(nodeData, cached, 'node');
 
   // 1. History & Change Management State
-  const historyColor = resolveHistoryNodeColor(nodeData, cached, baseOpacity);
+  const historyColor = resolveHistoryNodeColor(cached, baseOpacity, highlight);
   if (historyColor) {
     return historyColor;
   }
 
   // 2. Pivot Edge - blue color (same as links)
-  const isPivot = isNodePivotEdge(nodeData, cached);
+  const isPivot = highlight.role === TREE_HIGHLIGHT_ROLE.PIVOT_EDGE;
   if (isPivot) {
     const pivotColor = getPivotEdgeColor();
     const opacity = applyDimmingWithCache(
@@ -107,7 +109,7 @@ export function getNodeColor(node, cached, helpers) {
   }
 
   // 3. Base Color Resolution
-  const rgb = resolveBaseNodeColor(nodeData, cached, cm);
+  const rgb = resolveBaseNodeColor(nodeData, cached, cm, highlight);
 
   // 4. Opacity & Dimming Calculation
   let opacity = baseOpacity;
@@ -135,9 +137,10 @@ export function getNodeBorderColor(node, cached, helpers) {
   const nodeData = node;
 
   const baseOpacity = helpers.getBaseOpacity(node.opacity);
+  const highlight = resolveTreeElementHighlight(nodeData, cached, 'node');
 
   // 1. History Borders
-  const historyColor = resolveHistoryNodeColor(nodeData, cached, baseOpacity);
+  const historyColor = resolveHistoryNodeColor(cached, baseOpacity, highlight);
   if (historyColor) {
     // Darken: ~70% brightness
     _borderColorOut[0] = Math.round(historyColor[0] * 0.7);
@@ -149,8 +152,10 @@ export function getNodeBorderColor(node, cached, helpers) {
 
   // 2. Determine Border Color
   let rgb;
-  const isHighlighted = shouldHighlightNode(nodeData, cached);
-  const isActive = isNodePivotEdge(nodeData, cached);
+  const isHighlighted =
+    highlight.role === TREE_HIGHLIGHT_ROLE.ACTIVE_MOVER ||
+    highlight.role === TREE_HIGHLIGHT_ROLE.SUBTREE_HIGHLIGHT;
+  const isActive = highlight.role === TREE_HIGHLIGHT_ROLE.PIVOT_EDGE;
 
   if (isActive) {
     rgb = getPivotEdgeColor();
@@ -173,7 +178,7 @@ export function getNodeBorderColor(node, cached, helpers) {
     const nodeOpacityFloat = node.opacity !== undefined ? node.opacity : 1;
 
     // Check history subtree status for opacity fix
-    if (isHistorySubtreeNode(nodeData, cached)) {
+    if (highlight.role === TREE_HIGHLIGHT_ROLE.HISTORY_SUBTREE) {
       opacity = Math.round(nodeOpacityFloat * 160); // Reduced from 200 for subtler effect
     } else {
       // Standard nodes use base opacity (255)
@@ -208,13 +213,22 @@ export function getNodeBasedRgba(entity, baseEntityOpacity, cached, helpers) {
   const { colorManager: cm, dimmingEnabled, dimmingOpacity, subtreeDimmingEnabled, subtreeDimmingOpacity, highlightedSubtreeData } = cached;
 
   const node = entity;
+  const highlight = resolveTreeElementHighlight(node, cached, 'node');
 
-  const isHighlighted = shouldHighlightNode(node, cached) || isNodeVisuallyHighlighted(node, cm, cached.subtreeHighlightsEnabled);
+  const isHighlighted =
+    highlight.role === TREE_HIGHLIGHT_ROLE.ACTIVE_MOVER ||
+    highlight.role === TREE_HIGHLIGHT_ROLE.SUBTREE_HIGHLIGHT;
+  const isActive = highlight.role === TREE_HIGHLIGHT_ROLE.PIVOT_EDGE;
 
   // Use the same color resolution as nodes for consistency
-  const rgb = isHighlighted
-    ? colorToRgb(getHighlightColor(node, cached) || '#000000')
-    : colorToRgb(cm.getNodeColor(node) || '#000000');
+  let rgb;
+  if (isActive) {
+    rgb = getPivotEdgeColor();
+  } else if (isHighlighted) {
+    rgb = colorToRgb(getHighlightColor(node, cached) || '#000000');
+  } else {
+    rgb = colorToRgb(cm?.getNodeColor?.(node) || '#000000');
+  }
 
   let opacity = helpers.getBaseOpacity(baseEntityOpacity);
   opacity = applyDimmingWithCache(

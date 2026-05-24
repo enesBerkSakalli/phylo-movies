@@ -115,8 +115,10 @@ const {
   isNodeInSubtree,
   isLinkInSubtree
 } = require('../../src/domain/tree/splits.js');
-const { shouldHighlightLink } = require('../../src/treeVisualisation/deckgl/layers/styles/links/linkUtils.js');
-const { shouldHighlightNode } = require('../../src/treeVisualisation/deckgl/layers/styles/nodes/nodeUtils.js');
+const {
+  resolveTreeElementHighlight,
+  TREE_HIGHLIGHT_ROLE
+} = require('../../src/treeVisualisation/deckgl/layers/styles/highlightResolver.js');
 
 /**
  * Helper to create a mock ColorManager with the required fast subtree methods.
@@ -183,7 +185,7 @@ function createMockColorManager(overrides = {}) {
 }
 
 describe('subtree highlight helpers', () => {
-  it('keeps link subtree highlighting behind the subtree highlight toggle', () => {
+  it('keeps link subtree highlight roles behind the subtree highlight toggle', () => {
     const link = { split_indices: [3] };
     const cached = {
       subtreeHighlightsEnabled: false,
@@ -191,14 +193,14 @@ describe('subtree highlight helpers', () => {
       colorManager: createMockColorManager()
     };
 
-    expect(shouldHighlightLink(link, cached)).to.equal(false);
+    expect(resolveTreeElementHighlight(link, cached, 'link').role).to.equal(TREE_HIGHLIGHT_ROLE.BASE);
 
     cached.subtreeHighlightsEnabled = true;
 
-    expect(shouldHighlightLink(link, cached)).to.equal(true);
+    expect(resolveTreeElementHighlight(link, cached, 'link').role).to.equal(TREE_HIGHLIGHT_ROLE.SUBTREE_HIGHLIGHT);
   });
 
-  it('keeps node subtree highlighting behind the subtree highlight toggle', () => {
+  it('keeps node subtree highlight roles behind the subtree highlight toggle', () => {
     const node = { split_indices: [6] };
     const cached = {
       subtreeHighlightsEnabled: false,
@@ -206,11 +208,11 @@ describe('subtree highlight helpers', () => {
       colorManager: createMockColorManager()
     };
 
-    expect(shouldHighlightNode(node, cached)).to.equal(false);
+    expect(resolveTreeElementHighlight(node, cached, 'node').role).to.equal(TREE_HIGHLIGHT_ROLE.BASE);
 
     cached.subtreeHighlightsEnabled = true;
 
-    expect(shouldHighlightNode(node, cached)).to.equal(true);
+    expect(resolveTreeElementHighlight(node, cached, 'node').role).to.equal(TREE_HIGHLIGHT_ROLE.SUBTREE_HIGHLIGHT);
   });
 });
 

@@ -1,4 +1,3 @@
-import { isLinkInSubtree } from '../../../../../domain/tree/splits.js';
 import { colorToRgb, getContrastingHighlightColor } from '../../../../../services/ui/colorUtils.js';
 import { SYSTEM_TREE_COLORS } from '../../../../../constants/TreeColors.js';
 
@@ -37,34 +36,6 @@ export const getSubtreeHighlightRgb = (link, cm, mode = 'solid', subtreeHighligh
     // 'solid' mode - default subtree highlight color
     return colorToRgb(subtreeHighlightColor || SYSTEM_TREE_COLORS.subtreeHighlightColor);
   }
-};
-
-export const shouldHighlightLink = (link, cached) => {
-  const { subtreeHighlightsEnabled, highlightedSubtreeData } = cached;
-
-  return subtreeHighlightsEnabled !== false && highlightedSubtreeData && isLinkInSubtree(link, highlightedSubtreeData);
-};
-
-export const getHistoryOutlineStyle = (link, cm, upcomingChangesEnabled, baseOpacity, historyColor) => {
-  if (!upcomingChangesEnabled) return null;
-
-  // Done: strong static glow (same intensity as current)
-  if (cm?.isCompletedChangeEdge?.(link)) {
-    return {
-      rgb: historyColor,
-      glowOpacity: Math.round(baseOpacity * 180) // Strong glow
-    };
-  }
-
-  // Next: medium static glow
-  if (cm?.isUpcomingChangeEdge?.(link)) {
-    return {
-      rgb: historyColor,
-      glowOpacity: Math.round(baseOpacity * 120) // Medium glow
-    };
-  }
-
-  return null;
 };
 
 export const getInnerLinkColor = (link, cached) => {

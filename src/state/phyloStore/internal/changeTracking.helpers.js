@@ -72,7 +72,8 @@ export function resolveSubtreeHighlights(state, indexOverride = null) {
   if (subtreeHighlightScope === 'current') {
     const subtree = getSubtreeAtIndex(state, index);
 
-    // Normalize before returning to ensure we don't return raw ambiguous arrays
+    // Normalize before returning so rendering receives explicit subtree groups,
+    // not backend-compatible single/multi-subtree variants.
     return parseSubtreeHighlightEntry(subtree);
   }
 
@@ -212,9 +213,14 @@ export function toSubtreeSets(input) {
   if (!Array.isArray(input)) return [];
   if (input.length === 0) return [];
 
-  return input.map((s) => {
-    if (s instanceof Set) return s;
-    if (Array.isArray(s)) return new Set(s);
-    return new Set();
-  });
+  return input.reduce((sets, s) => {
+    if (s instanceof Set) {
+      sets.push(s);
+      return sets;
+    }
+    if (Array.isArray(s)) {
+      sets.push(new Set(s));
+    }
+    return sets;
+  }, []);
 }

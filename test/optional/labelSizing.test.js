@@ -1,15 +1,10 @@
 const { expect } = require('chai');
-const proxyquire = require('proxyquire');
+const proxyquire = require('proxyquire').noCallThru();
 
-// Mock dependencies
-const nodeUtilsMock = {
-  shouldHighlightNode: () => false,
-  isHistorySubtreeNode: () => false,
-};
-
-// Import the module under test with mocks
 const { getLabelSize } = proxyquire('../../src/treeVisualisation/deckgl/layers/styles/labels/labelStyles.js', {
-  '../nodes/nodeUtils.js': nodeUtilsMock,
+  '../nodes/nodeStyles.js': {
+    getNodeBasedRgba: () => [0, 0, 0, 255],
+  },
 });
 
 describe('Label Sizing Logic (TDD)', () => {
@@ -19,13 +14,18 @@ describe('Label Sizing Logic (TDD)', () => {
   let cachedState;
 
   beforeEach(() => {
-    // Reset mock behaviors and state
-    nodeUtilsMock.shouldHighlightNode = () => false;
-    nodeUtilsMock.isHistorySubtreeNode = () => false;
-
     cachedState = {
       highlightedSubtreeData: [], // effectively empty, but present
       subtreeHighlightsEnabled: true,
+      colorManager: {
+        isNodeCompletedChangeEdge: () => false,
+        isNodeUpcomingChangeEdge: () => false,
+        isNodePivotEdge: () => false,
+        isNodeHistorySubtree: () => false,
+        isNodeSourceEdge: () => false,
+        isNodeDestinationEdge: () => false,
+        isNodeInActiveMoverSubtree: () => false,
+      },
     };
   });
 
@@ -35,15 +35,14 @@ describe('Label Sizing Logic (TDD)', () => {
   });
 
   it('calculates subtree highlight label size', () => {
-    nodeUtilsMock.shouldHighlightNode = () => true;
-    cachedState.highlightedSubtreeData = ['some-tree'];
+    cachedState.highlightedSubtreeData = [new Set([1])];
 
-    const size = getLabelSize({ id: 'node1' }, DEFAULT_FONT_SIZE, cachedState);
+    const size = getLabelSize({ id: 'node1', split_indices: [1] }, DEFAULT_FONT_SIZE, cachedState);
     expect(size).to.equal(EXPECTED_BASE_PIXELS * 1.2);
   });
 
   it('calculates history subtree label size (x1.1)', () => {
-    nodeUtilsMock.isHistorySubtreeNode = () => true;
+    cachedState.colorManager.isNodeHistorySubtree = () => true;
 
     const size = getLabelSize({ id: 'node1' }, DEFAULT_FONT_SIZE, cachedState);
     expect(size).to.equal(EXPECTED_BASE_PIXELS * 1.1);
@@ -51,11 +50,12 @@ describe('Label Sizing Logic (TDD)', () => {
 
   it('keeps labels visible inside actively moving subtrees', () => {
     cachedState.colorManager = {
+      ...cachedState.colorManager,
       isNodeInActiveMoverSubtree: (node) => node?.id === 'moving-label'
     };
 
     const size = getLabelSize({ id: 'moving-label' }, DEFAULT_FONT_SIZE, cachedState);
-    expect(size).to.equal(EXPECTED_BASE_PIXELS);
+    expect(size).to.equal(EXPECTED_BASE_PIXELS * 1.2);
   });
 
 });

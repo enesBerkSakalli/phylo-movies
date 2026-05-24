@@ -1,13 +1,14 @@
 import { getNodeBasedRgba } from './nodes/nodeStyles.js';
-import { isNodeInSubtree } from '../../../../domain/tree/splits.js';
 import { getActiveMoverEmphasis } from './activeMoverEmphasis.js';
+import { resolveTreeElementHighlight, TREE_HIGHLIGHT_ROLE } from './highlightResolver.js';
 
 export function getExtensionColor(extension, cached, helpers) {
   const color = getNodeBasedRgba(extension, extension.opacity, cached, helpers);
 
   // History highlighting for extensions deactivated
   const nodeData = extension;
-  if (nodeData && cached?.colorManager?.isNodeHistorySubtree?.(nodeData)) {
+  const highlight = resolveTreeElementHighlight(nodeData, cached, 'node');
+  if (highlight.role === TREE_HIGHLIGHT_ROLE.HISTORY_SUBTREE) {
     color[3] = Math.min(255, Math.round(color[3] * 1.3));
   }
 
@@ -15,7 +16,7 @@ export function getExtensionColor(extension, cached, helpers) {
 }
 
 export function getExtensionWidth(extension, baseStrokeWidth, cached) {
-  const { highlightedSubtreeData, subtreeHighlightsEnabled, metricScale = 1.0 } = cached || {};
+  const { metricScale = 1.0 } = cached || {};
   const nodeData = extension;
 
   // History highlighting for extensions deactivated
@@ -23,10 +24,15 @@ export function getExtensionWidth(extension, baseStrokeWidth, cached) {
   //   return baseStrokeWidth * 2.6;
   // }
 
-  if (subtreeHighlightsEnabled !== false && highlightedSubtreeData && extension) {
-    if (isNodeInSubtree(nodeData, highlightedSubtreeData)) {
-      return baseStrokeWidth * 3 * getActiveMoverEmphasis(nodeData, cached, 'node') * metricScale;
-    }
+  const highlight = resolveTreeElementHighlight(nodeData, cached, 'node');
+  if (
+    highlight.role === TREE_HIGHLIGHT_ROLE.ACTIVE_MOVER ||
+    highlight.role === TREE_HIGHLIGHT_ROLE.SUBTREE_HIGHLIGHT
+  ) {
+    const emphasis = highlight.role === TREE_HIGHLIGHT_ROLE.ACTIVE_MOVER
+      ? getActiveMoverEmphasis(nodeData, cached, 'node')
+      : 1;
+    return baseStrokeWidth * 3 * emphasis * metricScale;
   }
 
   return baseStrokeWidth * metricScale; // Match link width for consistent appearance
