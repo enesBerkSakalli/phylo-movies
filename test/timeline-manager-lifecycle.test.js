@@ -734,7 +734,7 @@ describe('MovieTimelineManager lifecycle', () => {
 
     expect(renderedTValues).to.have.lengthOf(2);
     expect(renderedTValues[0]).to.equal(0.0625);
-    expect(renderedTValues[1]).to.be.greaterThan(0.5);
+    expect(renderedTValues[1]).to.equal(renderedTValues[0]);
   });
 
   it('uses transition lifecycle data when choosing the playback animation stage', async () => {
@@ -783,7 +783,57 @@ describe('MovieTimelineManager lifecycle', () => {
     await runner._processFrame(1_500);
 
     expect(stages).to.deep.equal(['COLLAPSE', 'REORDER']);
-    expect(renderedTValues[0]).to.be.greaterThan(renderedTValues[1]);
+    expect(renderedTValues[1]).to.be.at.least(renderedTValues[0]);
+  });
+
+  it('updates playback animation stage by current lifecycle clock phase without moving render progress backward', async () => {
+    const stages = [];
+    const renderedTValues = [];
+    const transitionChangeModel = {
+      linkChanges: new Map([
+        ['zeroing-1', { lifecycle: 'zeroing' }],
+        ['reviving-2', { lifecycle: 'reviving' }]
+      ]),
+      hasLifecycleChanges: true
+    };
+
+    const runner = new AnimationRunner({
+      getState: () => ({
+        playing: true,
+        animationStartTime: 1_000,
+        animationSpeed: 1,
+        transitionDuration: 1,
+        pauseDuration: 0,
+        treeList: [{ id: 'a' }, { id: 'b' }],
+        comparisonMode: false
+      }),
+      getOrCacheInterpolationData: () => ({
+        dataFrom: { layoutCacheKey: 'from', nodes: [{ id: 'node-a' }] },
+        dataTo: { layoutCacheKey: 'to', nodes: [{ id: 'node-a' }] },
+        transitionChangeModel
+      }),
+      renderSingleFrame: async (_fromTree, _toTree, easedT) => {
+        renderedTValues.push(easedT);
+      },
+      renderComparisonFrame: async () => {},
+      setAnimationStage: (nextStage) => {
+        stages.push(nextStage);
+      },
+      updateProgress: () => {},
+      stopAnimation: () => {}
+    });
+
+    runner.isRunning = true;
+    await runner._processFrame(1_390);
+    await runner._processFrame(1_400);
+    await runner._processFrame(1_550);
+    await runner._processFrame(1_560);
+
+    expect(stages).to.deep.equal(['COLLAPSE', 'REORDER', 'EXPAND']);
+    expect(renderedTValues).to.have.lengthOf(4);
+    for (let index = 1; index < renderedTValues.length; index += 1) {
+      expect(renderedTValues[index]).to.be.at.least(renderedTValues[index - 1]);
+    }
   });
 
   it('does not force a redraw after animation render updates layers', async () => {

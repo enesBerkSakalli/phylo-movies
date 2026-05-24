@@ -35,6 +35,8 @@ export class PlaybackCursor {
     static fromTransitionFrame(transitionFrame, { treeCount, timelineProgress = transitionFrame?.timelineProgress } = {}) {
         const exactFrameIndex = transitionFrame.sourceTreeIndex +
             ((transitionFrame.targetTreeIndex - transitionFrame.sourceTreeIndex) * transitionFrame.transitionProgress);
+        // animationProgress is the legacy linear frame axis. timelineProgress is
+        // weighted movie time and remains the canonical scrub/playback axis.
         const animationProgress = Number.isFinite(treeCount) && treeCount > 1
             ? clamp01(exactFrameIndex / (treeCount - 1))
             : 1;

@@ -181,6 +181,8 @@ export class ComparisonModeRenderer {
   }
 
   async _renderAnimated(interpolatedData, rightTreeData, rightIndex, options = {}) {
+    if (isRenderCancelled(options)) return;
+
     // Guard against null/undefined data
     if (!interpolatedData || !rightTreeData) {
       console.warn('ComparisonModeRenderer.renderAnimated: Missing data', {
@@ -208,6 +210,7 @@ export class ComparisonModeRenderer {
          console.warn('[ComparisonModeRenderer] Right layout calculation failed, skipping renderAnimated');
          return;
     }
+    if (isRenderCancelled(options)) return;
 
     const canvasWidth = this.controller.deckContext.getCanvasDimensions().width;
     const rightTreeOffset = this.controller.viewportManager.getRightTreeOffset();
@@ -251,6 +254,7 @@ export class ComparisonModeRenderer {
     tagTreeSide(interpolatedData, 'left');
 
     const combinedData = combineLayerData(interpolatedData, rightFrame.layerData, connectors);
+    if (isRenderCancelled(options)) return;
 
     this.controller._updateLayersEfficiently(combinedData);
 
@@ -439,4 +443,8 @@ export class ComparisonModeRenderer {
     this._objectCacheIds ??= new WeakMap();
     this._nextObjectCacheId ??= 1;
   }
+}
+
+function isRenderCancelled(options = {}) {
+  return typeof options.isCancelled === 'function' && options.isCancelled();
 }

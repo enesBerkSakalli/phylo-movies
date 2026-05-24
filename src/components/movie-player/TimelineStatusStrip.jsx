@@ -1,8 +1,9 @@
 import React, { useMemo } from 'react';
-import { Columns, Film } from 'lucide-react';
+import { Activity, Columns, Film } from 'lucide-react';
 import { AppTooltip } from '../ui/app-tooltip';
 import {
   selectActiveTreeListLength,
+  selectCurrentAnimationStage,
   selectFrameIndex,
   selectHasMsa,
   selectInputFrameIndices,
@@ -20,6 +21,7 @@ export function TimelineStatusStrip() {
   const timelineCursor = useAppStore(selectTimelineCursor);
   const inputFrameIndices = useAppStore(selectInputFrameIndices);
   const treeListLength = useAppStore(selectActiveTreeListLength);
+  const currentAnimationStage = useAppStore(selectCurrentAnimationStage);
   const movieTimelineManager = useAppStore(selectMovieTimelineManager);
   const hasMsa = useAppStore(selectHasMsa);
   const msaWindowSize = useAppStore(selectMsaWindowSize);
@@ -62,6 +64,8 @@ export function TimelineStatusStrip() {
     >
       <CursorStatus status={status} />
 
+      <AnimationStageStatus stage={currentAnimationStage} />
+
       {hasMsa && (
         <>
           <StatusItem icon={Columns} label="Alignment">
@@ -100,6 +104,40 @@ function CursorStatus({ status }) {
       </AppTooltip>
     </StatusItem>
   );
+}
+
+function AnimationStageStatus({ stage }) {
+  if (!stage) return null;
+
+  const label = formatAnimationStage(stage);
+
+  return (
+    <StatusItem icon={Activity} label="Motion">
+      <AppTooltip
+        content={`Current topology-change phase: ${label}`}
+        contentClassName="border-border/60 bg-popover text-2xs font-mono text-popover-foreground"
+      >
+        <span className="inline-flex w-[7rem] shrink-0 items-center justify-center rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-primary cursor-help">
+          <span className="truncate text-center text-[10px] text-foreground leading-tight font-semibold">
+            {label}
+          </span>
+        </span>
+      </AppTooltip>
+    </StatusItem>
+  );
+}
+
+function formatAnimationStage(stage) {
+  switch (stage) {
+    case 'COLLAPSE':
+      return 'Collapse';
+    case 'EXPAND':
+      return 'Expand';
+    case 'REORDER':
+      return 'Reorder';
+    default:
+      return String(stage);
+  }
 }
 
 function StatusItem({ icon: Icon, label, children }) {

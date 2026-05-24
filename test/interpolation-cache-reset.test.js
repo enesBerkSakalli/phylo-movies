@@ -119,4 +119,41 @@ describe('InterpolationRenderer timeline progress', () => {
     expect(renderProgress.called).to.equal(false);
     expect(controller.renderAllElements.called).to.equal(false);
   });
+
+  it('does not paint a frame cancelled while waiting for controller readiness', async () => {
+    let resolveReady;
+    let cancelled = false;
+    const controller = {
+      ready: false,
+      readyPromise: new Promise((resolve) => {
+        resolveReady = resolve;
+      }),
+      _getOrCacheInterpolationData: sinon.spy(),
+      _syncInterpolatorRootAngle: sinon.spy(),
+      _getLinkGeometryMode: () => 'radial-elbow',
+      treeInterpolator: {
+        interpolateTreeData: sinon.spy()
+      },
+      _updateLayersEfficiently: sinon.spy()
+    };
+    const renderer = new InterpolationRenderer(controller);
+    const renderPromise = renderer.renderSingleInterpolatedFrame(
+      { id: 'from' },
+      { id: 'to' },
+      0.5,
+      {
+        fromTreeIndex: 0,
+        toTreeIndex: 1,
+        isCancelled: () => cancelled
+      }
+    );
+
+    cancelled = true;
+    resolveReady();
+    await renderPromise;
+
+    expect(controller._getOrCacheInterpolationData.called).to.equal(false);
+    expect(controller.treeInterpolator.interpolateTreeData.called).to.equal(false);
+    expect(controller._updateLayersEfficiently.called).to.equal(false);
+  });
 });
