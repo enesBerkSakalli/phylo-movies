@@ -483,7 +483,7 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
 
   // Exposed for AnimationRunner
   async _renderComparisonFrameForRunner(fromTree, toTree, easedT, options) {
-    const { rightTreeIndex, rightTree } = options;
+    const { cachedInputs = null, isCancelled = null, rightTreeIndex, rightTree } = options;
     const transitionFrame = TransitionFrame.from({
       sourceTree: fromTree,
       targetTree: toTree,
@@ -496,17 +496,34 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
       transitionChangeModel: options.transitionChangeModel
     });
 
-    const interpolatedData = this._buildInterpolatedData(
-      transitionFrame.sourceTree,
-      transitionFrame.targetTree,
-      transitionFrame.renderProgress,
-      transitionFrame.toRenderOptions(options)
-    );
+    if (isRenderCancelled(isCancelled)) return;
+
+    const renderOptions = transitionFrame.toRenderOptions(options);
+    const interpolatedData = cachedInputs?.dataFrom && cachedInputs?.dataTo
+      ? this._buildInterpolatedDataFromInputs(
+        cachedInputs.dataFrom,
+        cachedInputs.dataTo,
+        transitionFrame.renderProgress,
+        {
+          ...renderOptions,
+          transitionChangeModel: cachedInputs.transitionChangeModel ?? renderOptions.transitionChangeModel
+        }
+      )
+      : this._buildInterpolatedData(
+        transitionFrame.sourceTree,
+        transitionFrame.targetTree,
+        transitionFrame.renderProgress,
+        renderOptions
+      );
+
+    if (isRenderCancelled(isCancelled)) return;
+
     await this.layerManager.renderComparisonAnimated({
       interpolatedData,
       rightTree,
       rightIndex: rightTreeIndex,
-      activeTreeIndex: transitionFrame.comparisonActiveTreeIndex
+      activeTreeIndex: transitionFrame.comparisonActiveTreeIndex,
+      isCancelled
     });
   }
 
@@ -528,6 +545,19 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
       return { nodes: [], links: [], labels: [], extensions: [] };
     }
 
+    return this._buildInterpolatedDataFromInputs(dataFrom, dataTo, t, {
+      ...options,
+      transitionChangeModel
+    });
+  }
+
+  _buildInterpolatedDataFromInputs(dataFrom, dataTo, t, options = {}) {
+    if (!dataFrom || !dataTo) {
+      console.warn('[DeckGLTreeAnimationController] Layout calculation failed in _buildInterpolatedDataFromInputs, returning empty substitute');
+      return { nodes: [], links: [], labels: [], extensions: [] };
+    }
+
+    const transitionChangeModel = options.transitionChangeModel ?? null;
     this._syncInterpolatorRootAngle();
     const interpolatedData = this.treeInterpolator.interpolateTreeData(dataFrom, dataTo, t, {
       stage: options.stage,
@@ -608,4 +638,8 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
     }
     this.renderAllElements();
   }
+}
+
+function isRenderCancelled(isCancelled) {
+  return typeof isCancelled === 'function' && isCancelled();
 }

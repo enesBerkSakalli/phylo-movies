@@ -1,5 +1,8 @@
-import { detectAnimationStage } from '../deckgl/interpolation/stages/animationStageDetector.js';
-import { applyStageEasing } from '../deckgl/interpolation/stages/stageEasing.js';
+import {
+  detectAnimationStage,
+  detectCurrentAnimationStage
+} from '../deckgl/interpolation/stages/animationStageDetector.js';
+import { applyRenderProgressEasing } from '../deckgl/interpolation/stages/stageEasing.js';
 import { calculatePlaybackState } from '../../domain/animation/AnimationTiming.js';
 import { selectActiveTreeList, selectInputFrameIndices } from '../../state/phyloStore/selectors/treeSelectors.js';
 import { PlaybackCursor } from '../../timeline/time/PlaybackCursor.js';
@@ -81,6 +84,10 @@ export class AnimationRunner {
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
+    }
+    if (this._lastAnimationStage !== null) {
+      this.setAnimationStage(null);
+      this._lastAnimationStage = null;
     }
   }
 
@@ -189,7 +196,12 @@ export class AnimationRunner {
     let stage;
     const fromLayoutCacheKey = dataFrom.layoutCacheKey ?? null;
     const toLayoutCacheKey = dataTo.layoutCacheKey ?? null;
-    if (
+    const hasFrameSensitiveLifecycleStage = isFrameSensitiveLifecycleStage(transitionChangeModel);
+
+    if (transitionFrame.isStatic || playback.isInPause) {
+      stage = null;
+    } else if (
+      !hasFrameSensitiveLifecycleStage &&
       this._stageCache.fromIndex === fromIndex &&
       this._stageCache.toIndex === toIndex &&
       this._stageCache.fromLayoutCacheKey === fromLayoutCacheKey &&
@@ -198,15 +210,17 @@ export class AnimationRunner {
     ) {
       stage = this._stageCache.stage;
     } else {
-      stage = detectAnimationStage(dataFrom, dataTo, transitionChangeModel);
-      this._stageCache = {
-        fromIndex,
-        toIndex,
-        fromLayoutCacheKey,
-        toLayoutCacheKey,
-        transitionChangeModel,
-        stage
-      };
+      stage = detectCurrentAnimationStage(dataFrom, dataTo, transitionChangeModel, localT);
+      if (!hasFrameSensitiveLifecycleStage) {
+        this._stageCache = {
+          fromIndex,
+          toIndex,
+          fromLayoutCacheKey,
+          toLayoutCacheKey,
+          transitionChangeModel,
+          stage
+        };
+      }
     }
 
     this._syncStore(timestamp, progress, stage, isFinished, playback);
@@ -216,14 +230,25 @@ export class AnimationRunner {
     // Check running state again before expensive async render/interpolation.
     if (!this.isRunning || runToken !== this._runToken) return isFinished;
 
-    const easedT = applyStageEasing(localT, stage);
+    const renderStage = resolveRenderStage({
+      dataFrom,
+      dataTo,
+      transitionChangeModel,
+      currentStage: stage,
+      hasFrameSensitiveLifecycleStage
+    });
+    const easedT = applyRenderProgressEasing(localT);
     const renderFrame = transitionFrame.withRenderState({
       renderProgress: easedT,
-      stage,
+      stage: renderStage,
       transitionChangeModel
     });
 
-    await this._render(state, renderFrame);
+    await this._render(state, renderFrame, runToken, {
+      dataFrom,
+      dataTo,
+      transitionChangeModel
+    });
 
     return isFinished;
   }
@@ -246,7 +271,9 @@ export class AnimationRunner {
     }
   }
 
-  async _render(state, transitionFrame) {
+  async _render(state, transitionFrame, runToken = this._runToken, cachedInputs = null) {
+    const isCancelled = () => !this.isRunning || runToken !== this._runToken;
+
     if (state.comparisonMode) {
       const rightParams = getComparisonTarget(
         state,
@@ -260,7 +287,9 @@ export class AnimationRunner {
           transitionFrame.targetTree,
           transitionFrame.renderProgress,
           transitionFrame.toRenderOptions({
-            ...rightParams
+            ...rightParams,
+            cachedInputs,
+            isCancelled
           })
         );
       }
@@ -269,7 +298,7 @@ export class AnimationRunner {
         transitionFrame.sourceTree,
         transitionFrame.targetTree,
         transitionFrame.renderProgress,
-        transitionFrame.toRenderOptions()
+        transitionFrame.toRenderOptions({ isCancelled })
       );
     }
   }
@@ -348,6 +377,25 @@ function getSemanticTimelinePlaybackState(state, timestamp, treeList) {
  */
 function getActiveTreeSequence(state) {
   return selectActiveTreeList(state);
+}
+
+function isFrameSensitiveLifecycleStage(transitionChangeModel) {
+  return Boolean(
+    transitionChangeModel?.lifecycleSummary?.hasStructuralChanges ??
+    transitionChangeModel?.hasLifecycleChanges
+  );
+}
+
+function resolveRenderStage({
+  dataFrom,
+  dataTo,
+  transitionChangeModel,
+  currentStage,
+  hasFrameSensitiveLifecycleStage
+}) {
+  if (currentStage === null) return null;
+  if (!hasFrameSensitiveLifecycleStage) return currentStage;
+  return detectAnimationStage(dataFrom, dataTo, transitionChangeModel);
 }
 
 /**

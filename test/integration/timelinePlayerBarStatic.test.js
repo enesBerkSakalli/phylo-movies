@@ -79,6 +79,8 @@ describe('movie timeline player bar semantics', () => {
     expect(managerSource).toContain('getTimelineStatusSnapshot');
     expect(managerSource).toContain('buildTimelineStatusSnapshot');
     expect(statusStripSource).toContain('selectMovieTimelineManager');
+    expect(statusStripSource).toContain('selectCurrentAnimationStage');
+    expect(statusStripSource).toContain('AnimationStageStatus');
     expect(statusStripSource).toContain('getTimelineStatusSnapshot');
     expect(statusStripSource).toContain('buildTimelineStatusSnapshot');
     expect(statusStripSource).toContain('Movie timeline status');

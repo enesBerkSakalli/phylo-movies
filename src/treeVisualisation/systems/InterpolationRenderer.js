@@ -1,6 +1,6 @@
 import { selectActiveTreeList, useAppStore } from '../../state/phyloStore/store.js';
 import { detectAnimationStage } from '../deckgl/interpolation/stages/animationStageDetector.js';
-import { applyStageEasing } from '../deckgl/interpolation/stages/stageEasing.js';
+import { applyRenderProgressEasing } from '../deckgl/interpolation/stages/stageEasing.js';
 import { TransitionFrame } from '../../timeline/time/TransitionFrame.js';
 
 /**
@@ -19,6 +19,7 @@ export class InterpolationRenderer {
     if (!this.controller.ready) {
       await this.controller.readyPromise;
     }
+    if (isRenderCancelled(options)) return;
 
     const transitionFrame = createRenderFrame(fromTreeData, toTreeData, timeFactor, options);
     const t = transitionFrame.isStatic ? 0 : transitionFrame.renderProgress;
@@ -34,6 +35,7 @@ export class InterpolationRenderer {
     const transitionChangeModel = transitionFrame.transitionChangeModel || cachedInputs.transitionChangeModel;
 
     if (!dataFrom || !dataTo) return;
+    if (isRenderCancelled(options)) return;
 
     // Perform Geometry Interpolation
     this.controller._syncInterpolatorRootAngle?.();
@@ -49,6 +51,7 @@ export class InterpolationRenderer {
       }
     );
     interpolatedData.targetData = dataTo; // Add target data for movement arrow endpoints
+    if (isRenderCancelled(options)) return;
 
     // Update Visuals
     this.controller._updateLayersEfficiently(interpolatedData);
@@ -72,6 +75,7 @@ export class InterpolationRenderer {
     if (!this.controller.ready) {
       await this.controller.readyPromise;
     }
+    if (isRenderCancelled(options)) return;
 
     const { comparisonMode, rightTreeIndex } = options;
     const transitionFrame = createRenderFrame(fromTreeData, toTreeData, timeFactor, options);
@@ -87,11 +91,13 @@ export class InterpolationRenderer {
           transitionFrame.renderProgress,
           transitionFrame.toRenderOptions(options)
         );
+        if (isRenderCancelled(options)) return;
         await this.controller.layerManager.renderComparisonAnimated({
           interpolatedData,
           rightTree,
           rightIndex: rightTreeIndex,
-          activeTreeIndex: transitionFrame.comparisonActiveTreeIndex
+          activeTreeIndex: transitionFrame.comparisonActiveTreeIndex,
+          isCancelled: options.isCancelled
         });
         return;
       }
@@ -160,7 +166,7 @@ export class InterpolationRenderer {
 
     const stage = detectAnimationStage(dataFrom, dataTo, transitionChangeModel);
     const renderFrame = transitionFrame.withRenderState({
-      renderProgress: applyStageEasing(t, stage),
+      renderProgress: applyRenderProgressEasing(t),
       stage,
       transitionChangeModel
     });
@@ -201,7 +207,7 @@ export class InterpolationRenderer {
     );
     const stage = detectAnimationStage(dataFrom, dataTo, transitionChangeModel);
     const renderFrame = transitionFrame.withRenderState({
-      renderProgress: applyStageEasing(transitionFrame.transitionProgress, stage),
+      renderProgress: applyRenderProgressEasing(transitionFrame.transitionProgress),
       stage,
       transitionChangeModel
     });
@@ -213,6 +219,10 @@ export class InterpolationRenderer {
       renderFrame.toRenderOptions()
     );
   }
+}
+
+function isRenderCancelled(options = {}) {
+  return typeof options.isCancelled === 'function' && options.isCancelled();
 }
 
 function createRenderFrame(fromTreeData, toTreeData, timeFactor, options = {}) {

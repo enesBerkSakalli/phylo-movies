@@ -51,6 +51,8 @@ export class TransitionFrame {
         stage = null,
         transitionChangeModel = null
     } = {}) {
+        // Semantic progress drives topology/lifecycle clocks. Render progress is
+        // allowed to be eased, but must not replace semantic transitionProgress.
         this.sourceTree = sourceTree;
         this.targetTree = targetTree ?? sourceTree;
         this.sourceTreeIndex = normalizeIndex(sourceTreeIndex, 0);
@@ -116,6 +118,8 @@ export class TransitionFrame {
             toTreeIndex: this.targetTreeIndex,
             stage: this.stage,
             transitionChangeModel: this.transitionChangeModel,
+            // Interpolators need the uneased transition clock for branch
+            // lifecycle thresholds while renderProgress can move geometry.
             rawTimeFactor: this.transitionProgress,
             ...extra
         };

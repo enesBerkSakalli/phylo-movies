@@ -258,6 +258,50 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     expect(state.frameIndex).toBe(2);
   });
 
+  it('uses runner-resolved interpolation inputs for comparison animation frames', async () => {
+    controller = Object.create(ControllerClass.prototype);
+    const dataFrom = { max_radius: 100, nodes: [], links: [], labels: [], extensions: [] };
+    const dataTo = { max_radius: 120, nodes: [], links: [], labels: [], extensions: [] };
+    const transitionChangeModel = { hasLifecycleChanges: true };
+    const interpolatedData = { max_radius: 110, nodes: [], links: [], labels: [], extensions: [] };
+    const buildInterpolationInputs = vi.fn();
+    const renderComparisonAnimated = vi.fn(() => Promise.resolve());
+    const interpolateTreeData = vi.fn(() => interpolatedData);
+
+    controller.width = 800;
+    controller.height = 600;
+    controller.interpolationCache = { buildInterpolationInputs };
+    controller.treeInterpolator = { interpolateTreeData };
+    controller.layerManager = { renderComparisonAnimated, destroy: vi.fn() };
+    controller.animationRunner = { stop: vi.fn() };
+    controller._syncInterpolatorRootAngle = vi.fn();
+    controller._getLinkGeometryMode = vi.fn(() => 'radial-elbow');
+
+    await controller._renderComparisonFrameForRunner(
+      { id: 'from-tree' },
+      { id: 'to-tree' },
+      0.5,
+      {
+        fromTreeIndex: 0,
+        toTreeIndex: 1,
+        rawTimeFactor: 0.5,
+        rightTree: { id: 'right-tree' },
+        rightTreeIndex: 1,
+        cachedInputs: { dataFrom, dataTo, transitionChangeModel }
+      }
+    );
+
+    expect(buildInterpolationInputs).not.toHaveBeenCalled();
+    expect(interpolateTreeData).toHaveBeenCalledWith(dataFrom, dataTo, 0.5, expect.objectContaining({
+      transitionChangeModel,
+      rawTimeFactor: 0.5
+    }));
+    expect(renderComparisonAnimated).toHaveBeenCalledWith(expect.objectContaining({
+      interpolatedData,
+      rightIndex: 1
+    }));
+  });
+
   it('keeps interpolation caches when stroke width changes layer data only', () => {
     useAppStore.setState({ strokeWidth: 1 });
     controller = new ControllerClass(null);

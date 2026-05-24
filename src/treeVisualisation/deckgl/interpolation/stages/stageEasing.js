@@ -55,5 +55,10 @@ export function applyStageEasing(t, stage) {
   }
 }
 
+export function applyRenderProgressEasing(t) {
+  const clampedT = Math.max(0, Math.min(1, t));
+  return easeInOut(clampedT);
+}
+
 // Export individual easing functions for direct use if needed
 export { easeIn, easeOut, easeInOut };

@@ -2,7 +2,7 @@
  * AnimationStageDetector.js
  * Detects the current animation stage based on element presence between tree states.
  */
-import { summarizeTransitionLifecycles } from '../TransitionChangeModel.js';
+import { createLifecycleClocks, summarizeTransitionLifecycles } from '../TransitionChangeModel.js';
 
 export const ANIMATION_STAGES = {
   COLLAPSE: 'COLLAPSE',  // Elements exiting (branches disappearing)
@@ -51,4 +51,42 @@ export function detectAnimationStage(dataFrom, dataTo, transitionChangeModel = n
   if (entering > 0) return ANIMATION_STAGES.EXPAND;
   // Same nodes, just reordering
   return ANIMATION_STAGES.REORDER;
+}
+
+/**
+ * Detects the active animation phase for one frame of a transition.
+ *
+ * `detectAnimationStage` is transition-wide: if a pair contains any collapsing
+ * lifecycle it returns COLLAPSE for the whole pair. Playback needs the current
+ * lifecycle clock phase so mixed collapse/move/expand transitions can report
+ * and ease the active phase instead of the whole transition category.
+ */
+export function detectCurrentAnimationStage(
+  dataFrom,
+  dataTo,
+  transitionChangeModel = null,
+  timeFactor = null
+) {
+  const lifecycleSummary = transitionChangeModel?.lifecycleSummary
+    ?? summarizeTransitionLifecycles(transitionChangeModel);
+
+  if (
+    lifecycleSummary.hasStructuralChanges &&
+    Number.isFinite(timeFactor)
+  ) {
+    const clocks = createLifecycleClocks(timeFactor);
+    if (lifecycleSummary.hasCollapseChanges && isClockActive(clocks.collapseT)) {
+      return ANIMATION_STAGES.COLLAPSE;
+    }
+    if (lifecycleSummary.hasExpandChanges && isClockActive(clocks.expandT)) {
+      return ANIMATION_STAGES.EXPAND;
+    }
+    return ANIMATION_STAGES.REORDER;
+  }
+
+  return detectAnimationStage(dataFrom, dataTo, transitionChangeModel);
+}
+
+function isClockActive(value) {
+  return Number.isFinite(value) && value > 0 && value < 1;
 }

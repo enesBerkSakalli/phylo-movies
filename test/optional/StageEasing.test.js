@@ -1,5 +1,11 @@
 const { expect } = require('chai');
-const { applyStageEasing, easeIn, easeOut, easeInOut } = require('../../src/treeVisualisation/deckgl/interpolation/stages/stageEasing.js');
+const {
+  applyRenderProgressEasing,
+  applyStageEasing,
+  easeIn,
+  easeOut,
+  easeInOut
+} = require('../../src/treeVisualisation/deckgl/interpolation/stages/stageEasing.js');
 const { ANIMATION_STAGES } = require('../../src/treeVisualisation/deckgl/interpolation/stages/animationStageDetector.js');
 
 describe('StageEasing', () => {
@@ -80,6 +86,21 @@ describe('StageEasing', () => {
       const before = easeInOut(0.3);
       const after = easeInOut(0.7);
       expect(before + after).to.be.closeTo(1, 0.0001);
+    });
+  });
+
+  describe('applyRenderProgressEasing()', () => {
+    it('uses one continuous easing curve independent of animation stage labels', () => {
+      const values = [0.39, 0.4, 0.55, 0.56].map(applyRenderProgressEasing);
+
+      for (let index = 1; index < values.length; index += 1) {
+        expect(values[index]).to.be.at.least(values[index - 1]);
+      }
+    });
+
+    it('matches reorder easing for the shared geometry clock', () => {
+      expect(applyRenderProgressEasing(0.25)).to.equal(easeInOut(0.25));
+      expect(applyRenderProgressEasing(0.75)).to.equal(easeInOut(0.75));
     });
   });
 });
