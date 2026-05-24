@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 
 import { workspaceInitializationFormSchema } from './workspaceInitializationFormModel.js';
 import { getExampleById } from './exampleDatasets.js';
+import { resolveApiUrl } from '../../services/data/apiConfig.js';
 import {
   processMovieData,
   finalizeMovieData,
@@ -12,6 +13,8 @@ import {
   hideElectronLoading,
   updateElectronProgress
 } from './services/movieProcessing.js';
+
+const BACKEND_STATUS_TIMEOUT_MS = 1500;
 
 /**
  * Custom hook to manage the workspace initialization upload form.
@@ -25,6 +28,7 @@ export function useWorkspaceInitializationForm() {
   const [loadingExampleId, setLoadingExampleId] = useState(null);
   const [alert, setAlert] = useState(null);
   const [operationState, setOperationState] = useState({ percent: 0, message: '' });
+  const [backendStatus, setBackendStatus] = useState({ state: 'checking' });
 
   const form = useForm({
     resolver: zodResolver(workspaceInitializationFormSchema),
@@ -57,6 +61,38 @@ export function useWorkspaceInitializationForm() {
       operationRef.current.id += 1;
       operationRef.current.controller?.abort();
       hideElectronLoading();
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), BACKEND_STATUS_TIMEOUT_MS);
+
+    async function checkBackendStatus() {
+      try {
+        const aboutUrl = await resolveApiUrl('/about');
+        const response = await fetch(aboutUrl, {
+          signal: controller.signal,
+          cache: 'no-store',
+        });
+        if (!response.ok) {
+          throw new Error(`Backend health check failed with ${response.status}`);
+        }
+        if (!cancelled) setBackendStatus({ state: 'ready' });
+      } catch {
+        if (!cancelled) setBackendStatus({ state: 'unavailable' });
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    }
+
+    checkBackendStatus();
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+      controller.abort();
     };
   }, []);
 
@@ -223,6 +259,7 @@ export function useWorkspaceInitializationForm() {
     loadingExample,
     loadingExampleId,
     operationState,
+    backendStatus,
     alert,
     showAlert,
     clearAlert,
