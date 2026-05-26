@@ -2,7 +2,7 @@ import React from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../../ui/accordion";
 import { Label } from "../../ui/label";
 import { Input } from "../../ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
 import { Alert, AlertDescription } from "../../ui/alert";
 import { Info } from "lucide-react";
 import { ToggleWithLabel } from "../../ui/toggle-with-label";
@@ -57,12 +57,14 @@ export function AdvancedPatternOptions({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="0">First (0)</SelectItem>
-                  <SelectItem value="1">Second (1)</SelectItem>
-                  <SelectItem value="2">Third (2)</SelectItem>
-                  <SelectItem value="3">Fourth (3)</SelectItem>
-                  <SelectItem value="-1">Last (-1)</SelectItem>
-                  <SelectItem value="-2">Second to Last (-2)</SelectItem>
+                  <SelectGroup>
+                    <SelectItem value="0">First (0)</SelectItem>
+                    <SelectItem value="1">Second (1)</SelectItem>
+                    <SelectItem value="2">Third (2)</SelectItem>
+                    <SelectItem value="3">Fourth (3)</SelectItem>
+                    <SelectItem value="-1">Last (-1)</SelectItem>
+                    <SelectItem value="-2">Second to Last (-2)</SelectItem>
+                  </SelectGroup>
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">

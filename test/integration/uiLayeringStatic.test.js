@@ -36,11 +36,15 @@ describe('UI layering contract', () => {
       'src/components/taxa-coloring/TaxaColoringRndWindow.jsx',
       'src/components/TreeStatsPanel/AnalyticsDashboard.tsx',
     ];
+    const layerSource = readFileSync(join(repoRoot, 'src/components/ui/floating-window-layer.js'), 'utf8');
+
+    expect(layerSource).toContain('z-[1100]');
+    expect(layerSource).toContain('z-[1200]');
 
     const missingLayer = floatingWindowFiles
       .map((file) => join(repoRoot, file))
       .filter((file) => existsSync(file))
-      .filter((file) => !readFileSync(file, 'utf8').includes('z-[1100]') && !readFileSync(file, 'utf8').includes('z-[1200]'))
+      .filter((file) => !readFileSync(file, 'utf8').includes('getFloatingWindowLayerClass'))
       .map((file) => relative(repoRoot, file));
 
     expect(missingLayer).toEqual([]);

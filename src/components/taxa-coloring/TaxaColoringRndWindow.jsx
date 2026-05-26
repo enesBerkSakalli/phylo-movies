@@ -2,6 +2,8 @@ import React, { useMemo, useCallback } from 'react';
 import { Rnd } from 'react-rnd';
 import { Button } from '../ui/button';
 import { Palette, X } from 'lucide-react';
+import { AppTooltip } from '../ui/app-tooltip';
+import { cn } from '../../lib/utils';
 import {
   selectLeafNamesByIndex,
   selectSetTaxaColoringOpen,
@@ -15,19 +17,16 @@ import {
 import { TaxaColoringWindow } from './TaxaColoringWindow.jsx';
 import { SYSTEM_TREE_COLORS } from '../../constants/TreeColors.js';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "../ui/tooltip";
-import {
   fitFloatingWindowRect,
   getBrowserViewportSize,
-  getFloatingWindowViewportInsets,
   hasFloatingWindowRectChanged,
   toFloatingWindowRect,
 } from '../ui/floatingWindowGeometry.js';
+import {
+  FLOATING_WINDOW_SURFACE_CLASS,
+  getFloatingWindowLayerClass,
+} from '../ui/floating-window-layer.js';
 
-// Stable empty object to avoid creating new objects on each render
 const EMPTY_INITIAL_STATE = {};
 const TAXA_COLORING_WINDOW_BOUNDS = {
   minWidth: 500,
@@ -37,15 +36,10 @@ const TAXA_COLORING_WINDOW_BOUNDS = {
 
 function fitTaxaColoringWindowRect(rect) {
   const viewport = getBrowserViewportSize();
-  const insets = getFloatingWindowViewportInsets();
   return fitFloatingWindowRect(rect, {
     ...TAXA_COLORING_WINDOW_BOUNDS,
     viewportWidth: viewport.width,
     viewportHeight: viewport.height,
-    leftInset: insets.left,
-    rightInset: insets.right,
-    topInset: insets.top,
-    bottomInset: insets.bottom,
   });
 }
 
@@ -60,7 +54,6 @@ export function TaxaColoringRndWindow({ isActive = false, onFocus } = {}) {
   const taxaGrouping = useAppStore(selectTaxaGrouping);
   const setTaxaGrouping = useAppStore(selectSetTaxaGrouping);
 
-  // Stable initial state reference to prevent unnecessary re-renders
   const initialState = useMemo(() => taxaGrouping || EMPTY_INITIAL_STATE, [taxaGrouping]);
 
   React.useEffect(() => {
@@ -83,14 +76,11 @@ export function TaxaColoringRndWindow({ isActive = false, onFocus } = {}) {
     if (isOpen) onFocus?.();
   }, [isOpen, onFocus]);
 
-  // Create a clean color map for the UI to use as a baseline.
-  // We strictly isolate taxon names from system colors to prevent collisions.
   const baselineColorMap = useMemo(() => {
     const map = {};
     const currentTaxaMap = taxaGrouping?.taxaColorMap || {};
 
     taxaNames.forEach((taxon) => {
-      // Use assigned color if it exists, otherwise use system default
       map[taxon] = currentTaxaMap[taxon] || SYSTEM_TREE_COLORS.defaultColor || "#000000";
     });
     return map;
@@ -99,7 +89,6 @@ export function TaxaColoringRndWindow({ isActive = false, onFocus } = {}) {
   const handleApply = useCallback((colorData) => {
     if (!taxaNames.length) return;
 
-    // Persist grouping info for UI (tooltips) and window state restoration
     setTaxaGrouping({
       mode: colorData?.mode || 'taxa',
       separators: colorData?.separators || null,
@@ -109,8 +98,7 @@ export function TaxaColoringRndWindow({ isActive = false, onFocus } = {}) {
       regexPattern: colorData?.regexPattern,
       csvTaxaMap: (colorData?.csvTaxaMap instanceof Map) ? Object.fromEntries(colorData.csvTaxaMap) : (colorData?.csvTaxaMap || null),
       groupColorMap: colorData?.groupColorMap || null,
-      taxaColorMap: colorData?.taxaColorMap || null, // Persist taxa colors for restoration
-      // CSV-specific fields for full state restoration
+      taxaColorMap: colorData?.taxaColorMap || null,
       csvGroups: colorData?.csvGroups || null,
       csvColumn: colorData?.csvColumn || null,
       csvData: colorData?.csvData || null,
@@ -148,36 +136,41 @@ export function TaxaColoringRndWindow({ isActive = false, onFocus } = {}) {
       onDragStop={onDragStop}
       onResizeStop={onResizeStop}
       dragHandleClassName="taxa-coloring-drag-handle"
-      className={`fixed ${isActive ? 'z-[1200]' : 'z-[1100]'} pointer-events-auto shadow-2xl border border-border/60 rounded-xl bg-card/95 overflow-hidden`}
-      style={{ backdropFilter: 'blur(12px)' }}
+      role="region"
+      aria-labelledby="taxa-coloring-title"
+      aria-describedby="taxa-coloring-description"
+      className={cn(
+        FLOATING_WINDOW_SURFACE_CLASS,
+        'backdrop-blur-md',
+        getFloatingWindowLayerClass(isActive)
+      )}
     >
       <div className="flex h-full flex-col">
-        <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-border/40 bg-card/50 taxa-coloring-drag-handle cursor-move select-none transition-colors hover:bg-card/70 group/header">
-          <div className="flex items-center gap-3 text-sm font-semibold">
-            <div className="flex aspect-square size-9 items-center justify-center rounded-lg bg-primary/10 text-primary shadow-inner group-hover/header:rotate-12 transition-transform duration-300">
-               <Palette className="size-5" />
-            </div>
-            <div className="flex flex-col gap-1 leading-none">
-              <span className="text-foreground">Taxa Coloring</span>
-              <span className="text-2xs font-normal text-muted-foreground/80 tracking-wide uppercase">Assignment Manager</span>
+        <div className="taxa-coloring-drag-handle flex shrink-0 cursor-move select-none items-center justify-between gap-2 border-b border-border bg-muted/30 px-3 py-2">
+          <div className="flex min-w-0 items-center gap-2">
+            <Palette className="size-4 shrink-0 text-primary" aria-hidden />
+            <div className="flex min-w-0 flex-col">
+              <div id="taxa-coloring-title" className="truncate text-sm font-semibold leading-tight">
+                Taxa Colors
+              </div>
+              <div id="taxa-coloring-description" className="truncate text-xs leading-tight text-muted-foreground">
+                Assign colors to taxa, name patterns, or CSV groups.
+              </div>
             </div>
           </div>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleClose}
-                aria-label="Close taxa coloring window"
-                className="size-8 rounded-md hover:bg-destructive/10 hover:text-destructive transition-colors"
-              >
-                <X className="size-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent variant="destructive">Close Coloring Window</TooltipContent>
-          </Tooltip>
+          <AppTooltip content="Close taxa coloring window">
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              onClick={handleClose}
+              aria-label="Close taxa coloring window"
+              className="hover:bg-destructive/10 hover:text-destructive transition-colors"
+            >
+              <X aria-hidden />
+            </Button>
+          </AppTooltip>
         </div>
-        <div className="flex-1 min-h-0 overflow-hidden bg-background/50">
+        <div className="min-h-0 flex-1 overflow-hidden bg-background/50">
           <TaxaColoringWindow
             taxaNames={taxaNames}
             originalColorMap={baselineColorMap}

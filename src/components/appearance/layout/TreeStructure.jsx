@@ -6,7 +6,7 @@ import {
   selectSetLinkGeometryMode,
   useAppStore
 } from '../../../state/phyloStore/store.js';
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '../../ui/select';
+import { Select, SelectTrigger, SelectContent, SelectGroup, SelectItem, SelectValue } from '../../ui/select';
 import { SidebarMenuSub, SidebarMenuSubItem } from '../../ui/sidebar';
 import { GitGraph } from 'lucide-react';
 
@@ -17,10 +17,7 @@ export function TreeStructure() {
   const setLinkGeometryMode = useAppStore(selectSetLinkGeometryMode);
 
   const handleBranchOptionChange = useCallback(
-    (rawValue) => {
-      const normalized = rawValue === 'use' || !rawValue ? 'none' : rawValue;
-      setBranchTransformation(normalized);
-    },
+    (nextValue) => setBranchTransformation(nextValue),
     [setBranchTransformation]
   );
 
@@ -40,19 +37,24 @@ export function TreeStructure() {
             <span className="text-[11px] font-medium uppercase tracking-wider">Branch Lengths</span>
           </div>
           <Select
-            value={branchTransformation && branchTransformation !== 'none' ? branchTransformation : 'use'}
+            value={branchTransformation || 'none'}
             onValueChange={handleBranchOptionChange}
           >
             <SelectTrigger className="h-8 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="use">Use Branch Lengths</SelectItem>
-              <SelectItem value="ignore">Ignore Branch Lengths</SelectItem>
-              <SelectItem value="log">Log Scale</SelectItem>
-              <SelectItem value="sqrt">Square Root Scale</SelectItem>
-              <SelectItem value="power2">Square Values (x²)</SelectItem>
-              <SelectItem value="linear-scale">Double Lengths (2x)</SelectItem>
+              <SelectGroup>
+                <SelectItem value="none">Use Branch Lengths</SelectItem>
+                <SelectItem value="normalized-sqrt">Normalized Square Root</SelectItem>
+                <SelectItem value="normalized">Normalize Tree Size</SelectItem>
+                <SelectItem value="normalized-log">Normalized Log Scale</SelectItem>
+                <SelectItem value="ignore">Ignore Branch Lengths</SelectItem>
+                <SelectItem value="log">Log Scale</SelectItem>
+                <SelectItem value="sqrt">Square Root Scale</SelectItem>
+                <SelectItem value="power2">Square Values (x²)</SelectItem>
+                <SelectItem value="linear-scale">Double Lengths (2x)</SelectItem>
+              </SelectGroup>
             </SelectContent>
           </Select>
 
@@ -68,8 +70,10 @@ export function TreeStructure() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="radial-elbow">Radial Elbow</SelectItem>
-              <SelectItem value="straight">Straight Lines</SelectItem>
+              <SelectGroup>
+                <SelectItem value="radial-elbow">Radial Elbow</SelectItem>
+                <SelectItem value="straight">Straight Lines</SelectItem>
+              </SelectGroup>
             </SelectContent>
           </Select>
         </div>

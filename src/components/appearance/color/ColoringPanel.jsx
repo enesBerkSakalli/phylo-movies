@@ -32,7 +32,7 @@ import {
   SidebarMenuSubItem,
 } from '../../ui/sidebar';
 import { Slider } from '../../ui/slider';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { Label } from '../../ui/label';
 import { Button } from '../../ui/button';
 import { Separator } from '../../ui/separator';
@@ -119,7 +119,7 @@ export function ColoringPanel({ onOpenTaxaColoring }) {
         <div className="flex items-center justify-between px-2 py-2 w-full">
           <div className="flex items-center gap-2 overflow-hidden">
             <Settings2 className="size-4 text-muted-foreground shrink-0" />
-            <span className="text-xs text-foreground/70 truncate">Group Branches</span>
+            <span className="text-xs text-foreground/70 truncate">Group Branch Colors</span>
           </div>
           <Switch
             id="monophyletic-coloring"
@@ -132,7 +132,7 @@ export function ColoringPanel({ onOpenTaxaColoring }) {
         <div className="flex items-center justify-between px-2 py-2 w-full">
           <div className="flex items-center gap-2 overflow-hidden">
             <RefreshCw className="size-4 text-primary/80 shrink-0" />
-            <span className="text-xs text-foreground/70 truncate">Changes</span>
+            <span className="text-xs text-foreground/70 truncate">Change Edges</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="size-5 rounded-md border border-border/60 overflow-hidden shrink-0 group-hover:border-primary/40 transition-colors">
@@ -159,7 +159,7 @@ export function ColoringPanel({ onOpenTaxaColoring }) {
           <div className="flex items-center justify-between px-2 py-2 w-full">
             <div className="flex items-center gap-2 overflow-hidden">
               <Highlighter className="size-4 text-primary/80 shrink-0" />
-              <span className="text-xs text-foreground/70 truncate">Subtree Highlight</span>
+              <span className="text-xs text-foreground/70 truncate">Subtree Highlighting</span>
             </div>
             <Switch
               id="enable-subtree-highlights"
@@ -193,8 +193,10 @@ export function ColoringPanel({ onOpenTaxaColoring }) {
                     <SelectValue placeholder="Select mode" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Affected Edges</SelectItem>
-                    <SelectItem value="current">Current Subtree</SelectItem>
+                    <SelectGroup>
+                      <SelectItem value="all">All Affected Edges</SelectItem>
+                      <SelectItem value="current">Current Subtree</SelectItem>
+                    </SelectGroup>
                   </SelectContent>
                 </Select>
               </div>
@@ -206,9 +208,11 @@ export function ColoringPanel({ onOpenTaxaColoring }) {
                     <SelectValue placeholder="Select color mode" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="solid">Solid Color</SelectItem>
-                    <SelectItem value="taxa">Taxa Color</SelectItem>
-                    <SelectItem value="contrast">High Contrast</SelectItem>
+                    <SelectGroup>
+                      <SelectItem value="solid">Solid Color</SelectItem>
+                      <SelectItem value="taxa">Taxa Color</SelectItem>
+                      <SelectItem value="contrast">High Contrast</SelectItem>
+                    </SelectGroup>
                   </SelectContent>
                 </Select>
                 {highlightColorMode === 'solid' && (
@@ -236,7 +240,7 @@ export function ColoringPanel({ onOpenTaxaColoring }) {
                   onClick={() => setManuallyMarkedNodes([])}
                   className="w-full mt-1 h-7 text-2xs uppercase font-bold tracking-tight border-muted-foreground/20 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-all bg-background/40"
                 >
-                  <X className="w-3 h-3 mr-2" />
+                  <X className="mr-2 size-3" />
                   Clear Highlighted Subtree
                 </Button>
               )}

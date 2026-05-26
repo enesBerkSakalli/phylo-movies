@@ -168,6 +168,7 @@ describe('phylo store dataset normalization', () => {
   it('uses stable empty selector defaults before dataset initialization', () => {
     const state = useAppStore.getState();
 
+    expect(state.branchTransformation).toBe('normalized-sqrt');
     expect(phyloStoreModule.selectInputFrameIndices(state)).toBe(phyloStoreModule.selectInputFrameIndices(state));
     expect(phyloStoreModule.selectPairMetrics(state)).toBe(phyloStoreModule.selectPairMetrics(state));
     expect(phyloStoreModule.selectPairById(state)).toBe(phyloStoreModule.selectPairById(state));
@@ -554,7 +555,7 @@ describe('phylo store dataset normalization', () => {
         patterns: ['store.treeControllers || []', 'controller?.renderAllElements'],
       },
       {
-        file: 'src/components/appearance/Appearance.jsx',
+        file: 'src/components/appearance/FocusAndChangeEffects.jsx',
         patterns: ['c?.setCameraMode?.(', 'controller?.renderAllElements?.('],
       },
       {

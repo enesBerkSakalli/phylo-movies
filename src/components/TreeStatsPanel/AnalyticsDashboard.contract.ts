@@ -22,7 +22,7 @@ export const SPR_ANALYTICS_COPY = {
     activityTitle: 'Moving Subtrees Across Tree Pairs',
     activityDescription: 'Movement events and unique moved subtrees per neighboring tree pair.',
     eventTitle: SPR_ANALYTICS_LABELS.movementEvents,
-    eventDescription: 'One row per movement, including moved subtree, pivot, and from/to attachments.',
+    eventDescription: 'One row per movement, showing what moved, the pivot/from/to edges, and source-to-target values for the selected branch annotation.',
     recurrenceTableTitle: 'Subtree Recurrence',
     recurrenceTableDescription: 'Moved subtrees summarized from movements, ranked by repeat count.',
 };

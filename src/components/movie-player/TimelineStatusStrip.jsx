@@ -86,7 +86,7 @@ function CursorStatus({ status }) {
     <StatusItem icon={Film} label="Cursor">
       <AppTooltip
         content={
-          <div className="space-y-1">
+          <div className="flex flex-col gap-1">
             <div>{status.segment.tooltip}</div>
             <div>Sequence position, 0=start and 1=end:</div>
             <div className="font-bold text-primary tabular-nums">

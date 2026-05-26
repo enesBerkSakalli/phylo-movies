@@ -8,8 +8,13 @@ describe('MSA window layering', () => {
       path.join(process.cwd(), 'src/components/msa/MsaRndWindow.jsx'),
       'utf8',
     );
+    const layerSource = fs.readFileSync(
+      path.join(process.cwd(), 'src/components/ui/floating-window-layer.js'),
+      'utf8',
+    );
 
-    expect(source).toContain('z-[1100]');
+    expect(source).toContain('getFloatingWindowLayerClass');
+    expect(layerSource).toContain('z-[1100]');
     expect(source).not.toContain('z-40');
   });
 

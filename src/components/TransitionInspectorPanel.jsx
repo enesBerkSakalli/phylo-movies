@@ -95,7 +95,7 @@ export function TransitionInspectorPanel() {
         </Button>
       </div>
 
-      <div className="flex-1 space-y-4 overflow-y-auto p-4 text-sm">
+      <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4 text-sm">
         <Section title="Selection">
           <KeyValue label="Name" value={details.name} />
           <KeyValue label="Direction" value={details.directionLabel} />
@@ -127,11 +127,11 @@ export function TransitionInspectorPanel() {
 
 function Section({ title, children }) {
   return (
-    <section className="space-y-2">
+    <section className="flex flex-col gap-2">
       <h3 className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
         {title}
       </h3>
-      <div className="space-y-2 rounded-md border border-border/70 bg-background/60 p-3">
+      <div className="flex flex-col gap-2 rounded-md border border-border/70 bg-background/60 p-3">
         {children}
       </div>
     </section>

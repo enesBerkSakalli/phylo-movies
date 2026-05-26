@@ -4,14 +4,14 @@ import { SidebarMenuItem, SidebarMenuButton } from '../../../ui/sidebar';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../../../ui/collapsible';
 import { ChevronDown, Palette } from 'lucide-react';
 
-export function VisualElements({ onOpenTaxaColoring }) {
+export function TaxaAndHighlightsSection({ onOpenTaxaColoring }) {
   return (
     <Collapsible asChild className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton tooltip="Colors & Highlights">
+          <SidebarMenuButton tooltip="Taxa colors and highlights">
             <Palette className="text-primary" />
-            <span>Colors & Highlights</span>
+            <span>Taxa & Highlights</span>
             <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
           </SidebarMenuButton>
         </CollapsibleTrigger>
@@ -22,5 +22,3 @@ export function VisualElements({ onOpenTaxaColoring }) {
     </Collapsible>
   );
 }
-
-export default VisualElements;

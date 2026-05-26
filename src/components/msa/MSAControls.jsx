@@ -5,7 +5,7 @@ import { Switch } from '../ui/switch';
 import { Badge } from '../ui/badge';
 import { Label } from '../ui/label';
 import { Separator } from '../ui/separator';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import {
   selectClearMsaRowOrder,
   selectCurrentTree,
@@ -86,25 +86,27 @@ export function MSAControls() {
             <SelectValue placeholder="Color Scheme" />
           </SelectTrigger>
           <SelectContent className="z-[2000]">
-            <SelectItem value="none">None (Empty)</SelectItem>
-            <SelectItem value="default">Default</SelectItem>
-            <SelectItem value="clustal">Clustal</SelectItem>
-            <SelectItem value="clustal2">Clustal2</SelectItem>
-            <SelectItem value="hydrophobicity">Hydrophobicity</SelectItem>
-            <SelectItem value="zappo">Zappo</SelectItem>
-            <SelectItem value="taylor">Taylor</SelectItem>
-            <SelectItem value="buried">Buried</SelectItem>
-            <SelectItem value="cinema">Cinema</SelectItem>
-            <SelectItem value="helix">Helix</SelectItem>
-            <SelectItem value="lesk">Lesk</SelectItem>
-            <SelectItem value="mae">Mae</SelectItem>
-            <SelectItem value="strand">Strand</SelectItem>
-            <SelectItem value="turn">Turn</SelectItem>
-            <SelectItem value="nucleotide">Nucleotide (DNA)</SelectItem>
-            <SelectItem value="purine">Purine (DNA)</SelectItem>
-            <SelectItem value="identity">Identity to Consensus</SelectItem>
-            <SelectItem value="similarity">Similarity to Consensus</SelectItem>
-            <SelectItem value="grayscale">Grayscale</SelectItem>
+            <SelectGroup>
+              <SelectItem value="none">None (Empty)</SelectItem>
+              <SelectItem value="default">Default</SelectItem>
+              <SelectItem value="clustal">Clustal</SelectItem>
+              <SelectItem value="clustal2">Clustal2</SelectItem>
+              <SelectItem value="hydrophobicity">Hydrophobicity</SelectItem>
+              <SelectItem value="zappo">Zappo</SelectItem>
+              <SelectItem value="taylor">Taylor</SelectItem>
+              <SelectItem value="buried">Buried</SelectItem>
+              <SelectItem value="cinema">Cinema</SelectItem>
+              <SelectItem value="helix">Helix</SelectItem>
+              <SelectItem value="lesk">Lesk</SelectItem>
+              <SelectItem value="mae">Mae</SelectItem>
+              <SelectItem value="strand">Strand</SelectItem>
+              <SelectItem value="turn">Turn</SelectItem>
+              <SelectItem value="nucleotide">Nucleotide (DNA)</SelectItem>
+              <SelectItem value="purine">Purine (DNA)</SelectItem>
+              <SelectItem value="identity">Identity to Consensus</SelectItem>
+              <SelectItem value="similarity">Similarity to Consensus</SelectItem>
+              <SelectItem value="grayscale">Grayscale</SelectItem>
+            </SelectGroup>
           </SelectContent>
         </Select>
       </div>

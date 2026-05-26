@@ -1,4 +1,4 @@
-import type { BranchSupport } from '../backend/phyloMovieTypes';
+import type { BranchAnnotationValue, BranchSupport } from '../backend/phyloMovieTypes';
 
 export interface SprMovedSubtreeAttachmentContext {
   pivotEdge: number[];
@@ -46,8 +46,12 @@ export interface SprMoveEventRow {
   destinationAttachment: number[];
   sourceAttachmentSupport: BranchSupport | null;
   destinationAttachmentSupport: BranchSupport | null;
-  movedSubtreeSupport: BranchSupport | null;
-  supportClass: string;
+  sourceMovedSubtreeBranchValue: BranchAnnotationValue | null;
+  destinationMovedSubtreeBranchValue: BranchAnnotationValue | null;
+  sourceAncestorBranchValue: BranchAnnotationValue | null;
+  destinationAncestorBranchValue: BranchAnnotationValue | null;
+  branchValueClass: string;
+  contextBranchValueClass: string;
   stepRange: [number, number] | null;
   frameRange: [number, number] | null;
   collapseHops: number;
@@ -124,18 +128,41 @@ export interface SprAnalyticsOptions {
   };
   branchSupportIndex?: {
     getSupport?: (inputTreeIndex: number | null, splitIndices: number[]) => BranchSupport | null;
+    getBranchValue?: (
+      inputTreeIndex: number | null,
+      splitIndices: number[],
+      valueKey?: string
+    ) => BranchAnnotationValue | null;
+    getNearestAncestorBranchValue?: (
+      inputTreeIndex: number | null,
+      splitIndices: number[],
+      valueKey?: string
+    ) => BranchAnnotationValue | null;
   };
-  supportThreshold?: number;
+  branchAnnotationValueKey?: string;
+  branchValueThreshold?: number;
 }
 
-export function buildSprMoveEventRows(pairs: unknown[], options?: SprAnalyticsOptions): SprMoveEventRow[];
-export function buildSprAnalyticsModel(pairs: unknown[], options?: SprAnalyticsOptions): SprAnalyticsModel;
+export function buildSprMoveEventRows(
+  pairs: unknown[],
+  options?: SprAnalyticsOptions
+): SprMoveEventRow[];
+export function buildSprAnalyticsModel(
+  pairs: unknown[],
+  options?: SprAnalyticsOptions
+): SprAnalyticsModel;
 export function calculateSprMovedSubtreeRecurrences(
   pairs: unknown[],
   options?: SprAnalyticsOptions
 ): SprMovedSubtreeRecurrence[];
-export function calculateSprPairActivity(pairs: unknown[], options?: SprAnalyticsOptions): SprPairActivityRow[];
-export function calculateSprDatasetSummary(pairs: unknown[], options?: SprAnalyticsOptions): SprDatasetSummary;
+export function calculateSprPairActivity(
+  pairs: unknown[],
+  options?: SprAnalyticsOptions
+): SprPairActivityRow[];
+export function calculateSprDatasetSummary(
+  pairs: unknown[],
+  options?: SprAnalyticsOptions
+): SprDatasetSummary;
 export function buildSprActivityTimelinePoints(pairActivityRows: SprPairActivityRow[]): Array<{
   pairIndex: number;
   pairId: string;

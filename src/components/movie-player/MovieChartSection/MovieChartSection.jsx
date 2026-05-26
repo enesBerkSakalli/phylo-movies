@@ -1,7 +1,7 @@
 import React from 'react';
 import { DistanceChart } from '../../DistanceChart/DistanceChart.jsx';
 import { DISTANCE_CHART_METRIC_OPTIONS } from '../../DistanceChart/distanceChartLanguage.js';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
 
 export function MovieChartSection({ barOptionValue, onBarOptionChange }) {
   return (
@@ -17,11 +17,13 @@ export function MovieChartSection({ barOptionValue, onBarOptionChange }) {
               <SelectValue placeholder="Metric" />
             </SelectTrigger>
             <SelectContent className="z-[2000]">
-              {DISTANCE_CHART_METRIC_OPTIONS.map(({ value, label, description }) => (
-                <SelectItem key={value} value={value} title={description}>
-                  {label}
-                </SelectItem>
-              ))}
+              <SelectGroup>
+                {DISTANCE_CHART_METRIC_OPTIONS.map(({ value, label, description }) => (
+                  <SelectItem key={value} value={value} title={description}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
             </SelectContent>
           </Select>
           <div id="chart-select-help" className="sr-only">Choose the input-tree metric shown in the chart.</div>

@@ -3,7 +3,7 @@ import {
   parseBackendSplitKey,
   toBackendSplitKey,
 } from '../tree/splits.js';
-import { classifyMovementSupport } from '../tree/branchSupportIndex.js';
+import { classifyMovementBranchValues } from '../tree/branchSupportIndex.js';
 import { TimelineEventIndex } from '../../timeline/data/TimelineEventIndex.js';
 
 /**
@@ -93,7 +93,8 @@ function createSprAnalyticsContext(pairs, options) {
 function buildSprMoveEventRowsFromContext(pairs, options, context) {
   const {
     branchSupportIndex,
-    supportThreshold = 70,
+    branchAnnotationValueKey,
+    branchValueThreshold = 70,
   } = options;
   const {
     metricByPairId,
@@ -151,9 +152,25 @@ function buildSprMoveEventRowsFromContext(pairs, options, context) {
           targetInputTreeIndex,
           attachmentContext.destinationAttachment
         ) ?? null;
-        const movedSubtreeSupport = branchSupportIndex?.getSupport?.(
+        const sourceMovedSubtreeBranchValue = branchSupportIndex?.getBranchValue?.(
+          sourceInputTreeIndex,
+          splitIndices,
+          branchAnnotationValueKey
+        ) ?? null;
+        const destinationMovedSubtreeBranchValue = branchSupportIndex?.getBranchValue?.(
           targetInputTreeIndex,
-          splitIndices
+          splitIndices,
+          branchAnnotationValueKey
+        ) ?? null;
+        const sourceAncestorBranchValue = branchSupportIndex?.getNearestAncestorBranchValue?.(
+          sourceInputTreeIndex,
+          splitIndices,
+          branchAnnotationValueKey
+        ) ?? null;
+        const destinationAncestorBranchValue = branchSupportIndex?.getNearestAncestorBranchValue?.(
+          targetInputTreeIndex,
+          splitIndices,
+          branchAnnotationValueKey
         ) ?? null;
 
         return {
@@ -181,11 +198,19 @@ function buildSprMoveEventRowsFromContext(pairs, options, context) {
           destinationAttachment: attachmentContext.destinationAttachment,
           sourceAttachmentSupport,
           destinationAttachmentSupport,
-          movedSubtreeSupport,
-          supportClass: classifyMovementSupport(
-            sourceAttachmentSupport,
-            destinationAttachmentSupport,
-            supportThreshold
+          sourceMovedSubtreeBranchValue,
+          destinationMovedSubtreeBranchValue,
+          sourceAncestorBranchValue,
+          destinationAncestorBranchValue,
+          branchValueClass: classifyMovementBranchValues(
+            sourceMovedSubtreeBranchValue,
+            destinationMovedSubtreeBranchValue,
+            branchValueThreshold
+          ),
+          contextBranchValueClass: classifyMovementBranchValues(
+            sourceAncestorBranchValue,
+            destinationAncestorBranchValue,
+            branchValueThreshold
           ),
           stepRange,
           frameRange: normalizeStepRange(event.frame_range),
