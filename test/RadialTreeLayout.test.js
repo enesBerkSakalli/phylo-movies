@@ -361,6 +361,70 @@ describe('RadialTreeLayout - Geometry & Calculations', () => {
       expect(l.root.children[0].radius).to.equal(2);
       expect(l.root.children[1].radius).to.equal(3);
     });
+
+    it('should use visual branch lengths for geometry while preserving metric lengths', () => {
+      const visualTree = {
+        length: 0,
+        metricBranchLength: 0,
+        visualBranchLength: 0,
+        children: [
+          {
+            length: 0.0001,
+            metricBranchLength: 0.0001,
+            visualBranchLength: 5
+          }
+        ]
+      };
+      const l = new RadialTreeLayout(visualTree);
+
+      l.calcRadius(l.root, 0);
+
+      expect(l.root.children[0].radius).to.equal(5);
+      expect(l.root.children[0].data.length).to.equal(0.0001);
+      expect(l.root.children[0].data.metricBranchLength).to.equal(0.0001);
+      expect(l.root.children[0].data.visualBranchLength).to.equal(5);
+    });
+
+    it('should clamp negative branch lengths before radial accumulation', () => {
+      const negativeTree = {
+        length: 0,
+        children: [
+          {
+            length: 1,
+            children: [
+              { length: -2 }
+            ]
+          }
+        ]
+      };
+      const l = new RadialTreeLayout(negativeTree);
+
+      l.calcRadius(l.root, 0);
+
+      expect(l.root.children[0].radius).to.equal(1);
+      expect(l.root.children[0].children[0].radius).to.equal(1);
+      expect(l.root.children[0].children[0].metricBranchLength).to.equal(-2);
+      expect(l.root.children[0].children[0].visualBranchLength).to.equal(0);
+    });
+
+    it('should not apply a minimum visual branch length to radial geometry', () => {
+      const tinyTree = {
+        length: 0,
+        children: [
+          { length: 0.0001 },
+          { length: 0 }
+        ]
+      };
+      const l = new RadialTreeLayout(tinyTree);
+
+      l.calcRadius(l.root, 0);
+
+      expect(l.root.children[0].metricBranchLength).to.equal(0.0001);
+      expect(l.root.children[0].visualBranchLength).to.equal(0.0001);
+      expect(l.root.children[0].radius).to.equal(0.0001);
+      expect(l.root.children[1].visualBranchLength).to.equal(0);
+      expect(l.root.children[1].radius).to.equal(0);
+    });
   });
 
   describe('generateCoordinates (Polar to Cartesian)', () => {
@@ -406,17 +470,26 @@ describe('RadialTreeLayout - Geometry & Calculations', () => {
   });
 
   describe('constructRadialTreeWithUniformScaling', () => {
-    it('should calculate scale based on minWindow / (2 * maxGlobalScale)', () => {
+    it('should apply only baseline uniform scale', () => {
       // Window 1000x1000, maxGlobalScale=50
       // Scale = 1000 / 100 = 10
       const maxGlobalScale = 50;
       layout.constructRadialTreeWithUniformScaling(maxGlobalScale);
 
       expect(layout.scale).to.equal(10);
+      expect(layout.uniformScale).to.equal(10);
 
       // Check if radius was scaled
-      // Child A (len 10) * 10 = 100
+      // Child A (len 10) * uniform scale 10 = 100
       expect(layout.root.children[0].radius).to.equal(100);
+    });
+
+    it('should not boost very small globally scaled trees in geometry', () => {
+      layout.constructRadialTreeWithUniformScaling(100);
+
+      expect(layout.uniformScale).to.equal(5);
+      expect(layout.scale).to.equal(5);
+      expect(layout.getMaxRadius(layout.root)).to.equal(100);
     });
   });
 });

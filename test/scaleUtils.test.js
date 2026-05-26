@@ -18,6 +18,18 @@ describe('scaleUtils', () => {
       expect(result[0].value).toBe(10);
     });
 
+    it('uses visual branch lengths because scale is display geometry', () => {
+      const tree = {
+        length: 1,
+        visualBranchLength: 100,
+        children: [
+          { length: 0.0001, visualBranchLength: 5 }
+        ]
+      };
+      const result = calculateScales([tree], [0]);
+      expect(result[0].value).toBe(5);
+    });
+
     it('calculates max depth for a nested tree', () => {
       // Depth: Root(0) -> A(5) -> B(3) = 8
       // Depth: Root(0) -> C(2) = 2
@@ -61,6 +73,20 @@ describe('scaleUtils', () => {
 
       expect(() => calculateScales([tree])).toThrow('inputFrameIndices');
     });
+
+    it('clamps negative branch lengths without increasing exact zero branches', () => {
+      const tree = {
+        length: 0,
+        children: [
+          { length: -0.5 },
+          { length: 0 }
+        ]
+      };
+
+      const result = calculateScales([tree], [0]);
+
+      expect(result[0].value).toBe(0);
+    });
   });
 
   describe('getMaxScaleValue', () => {
@@ -73,4 +99,5 @@ describe('scaleUtils', () => {
       expect(getMaxScaleValue([])).toBe(1);
     });
   });
+
 });

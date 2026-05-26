@@ -20,7 +20,7 @@ const addZOffset = (position, offset) => {
  */
 export function getNodesLayerProps(nodes = [], state, layerStyles) {
   const { taxaColorVersion, colorVersion, nodeSize, upcomingChangesEnabled, highlightColorMode, metricScale } = state || {};
-  const taxaCount = selectLeafNamesByIndex(state).length;
+  const taxaCount = (selectLeafNamesByIndex(state || {}) ?? []).length;
 
   // Get cached state once for all accessors
   const cached = layerStyles.getCachedState(state);
@@ -48,8 +48,8 @@ export function getNodesLayerProps(nodes = [], state, layerStyles) {
     getLineColor: d => layerStyles.getNodeBorderColor(d, cached),
     getLineWidth: d => layerStyles.getNodeLineWidth(d, cached),
     updateTriggers: {
-      getFillColor: [colorVersion, taxaColorVersion, upcomingChangesEnabled, highlightColorMode],
-      getLineColor: [colorVersion, taxaColorVersion, upcomingChangesEnabled, highlightColorMode],
+      getFillColor: [colorVersion, taxaColorVersion, upcomingChangesEnabled, highlightColorMode, taxaCount],
+      getLineColor: [colorVersion, taxaColorVersion, upcomingChangesEnabled, highlightColorMode, taxaCount],
       getPosition: [colorVersion],
       getRadius: [nodeSize, colorVersion, metricScale, taxaCount]
     }

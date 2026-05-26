@@ -1,18 +1,21 @@
 import { getActiveMoverEmphasis } from '../activeMoverEmphasis.js';
 import { resolveTreeElementHighlight, TREE_HIGHLIGHT_ROLE } from '../highlightResolver.js';
+import { getReadableMetricScale } from '../readableMetricScale.js';
 
 export function getNodeRadius(node, minRadius = 1, cached, helpers) {
-  const { colorManager: cm, upcomingChangesEnabled, densityScale, metricScale = 1.0 } = cached;
+  const { colorManager: cm, upcomingChangesEnabled, densityScale } = cached;
+  const metricScale = getReadableMetricScale(cached);
   const nodeSize = helpers.nodeSize || 1;
   const visualScale = Number.isFinite(cached?.visualScale) ? cached.visualScale : 1;
   const baseRadius = (node.dotSize || node.radius || minRadius) * nodeSize * visualScale;
+  const nodeData = node;
+  const highlight = resolveTreeElementHighlight(nodeData, cached, 'node');
+
   let radius = baseRadius;
 
   if (node.isEntering || node.isExiting) {
     radius *= 0.7;
   } else if (cm) {
-    const nodeData = node;
-    const highlight = resolveTreeElementHighlight(nodeData, cached, 'node');
     const scale = densityScale !== undefined ? densityScale : 1.0;
     const getScaledRadius = (multiplier) => baseRadius * (1 + (multiplier - 1) * scale);
 

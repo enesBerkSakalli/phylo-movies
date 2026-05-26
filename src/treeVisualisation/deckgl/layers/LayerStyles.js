@@ -1,5 +1,6 @@
 import { useAppStore } from '../../../state/phyloStore/store.js';
 import { selectLeafNamesByIndex } from '../../../state/phyloStore/selectors/treeSelectors.js';
+import { calculateTaxaVisualScale } from '../../utils/visualScale.js';
 import { resetTaxonColorCache } from '../../systems/tree_color/monophyleticColoring.js';
 import {
   getLinkColor as resolveLinkColor,
@@ -25,6 +26,7 @@ import {
   getExtensionColor as resolveExtensionColor,
   getExtensionWidth as resolveExtensionWidth
 } from './styles/extensionStyles.js';
+import { getReadableMetricScale } from './styles/readableMetricScale.js';
 
 /**
  * LayerStyles - Centralized style management for Deck.gl layers
@@ -76,6 +78,7 @@ export class LayerStyles {
       const colorManager = state.getColorManager?.();
       const pulseEnabled = state.changePulseEnabled ?? true;
       const metricScale = Number.isFinite(state.metricScale) ? state.metricScale : 1;
+      const readableMetricScale = getReadableMetricScale({ metricScale });
       const taxaCount = selectLeafNamesByIndex(state).length;
       const visualScale = this._calculateVisualScale(state);
       // Use ColorManager as single source of truth for subtree highlight data
@@ -101,6 +104,7 @@ export class LayerStyles {
         subtreeHighlightColor: state.subtreeHighlightColor ?? '#10b981',
         linkConnectionOpacity: state.linkConnectionOpacity ?? 0.6,
         metricScale,
+        readableMetricScale,
         taxaCount,
         visualScale,
         // Density-based scaling: reduce highlight thickness for dense trees
@@ -372,8 +376,7 @@ export class LayerStyles {
 
   _calculateVisualScale(state) {
     const taxaCount = selectLeafNamesByIndex(state).length;
-    if (taxaCount <= 50) return 1;
-    return Math.max(0.5, Math.min(1.0, Math.sqrt(50 / taxaCount)));
+    return calculateTaxaVisualScale(taxaCount);
   }
 
   /**

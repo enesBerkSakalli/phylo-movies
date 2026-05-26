@@ -125,6 +125,7 @@ export class TidyTreeLayout {
     const uniformScale = calculateUniformScale(minWindowSize, maxGlobalScale);
     this.scaleRadius(this.root, uniformScale);
     this.generateCoordinates(this.root);
+    this.uniformScale = uniformScale;
     this.scale = uniformScale;
 
     return this.root;
@@ -169,6 +170,7 @@ export default function createTidyTreeLayout(
     const uniformScale = normalizeUniformScale(options.uniformScale);
     treeLayout.scaleRadius(root_, uniformScale);
     treeLayout.generateCoordinates(root_);
+    treeLayout.uniformScale = uniformScale;
     treeLayout.scale = uniformScale;
   } else {
     root_ = treeLayout.constructRadialTree(false);
@@ -180,5 +182,6 @@ export default function createTidyTreeLayout(
     height,
     margin,
     scale: treeLayout.scale,
+    uniformScale: treeLayout.uniformScale,
   });
 }

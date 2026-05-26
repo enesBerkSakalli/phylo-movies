@@ -1,8 +1,12 @@
+export const DEFAULT_BRANCH_TRANSFORMATION = 'normalized-sqrt';
+
 function invalidateTreeLayout(get) {
   const state = get();
   state.resetInterpolationCaches();
 
   for (const controller of state.treeControllers) {
+    controller._lastFocusedTreeIndex = null;
+    controller.layerManager?.comparisonRenderer?.resetAutoFit?.();
     Promise.resolve(controller.renderAllElements()).catch((error) => {
       console.warn('[treeLayout] Failed to render layout update:', error);
     });
@@ -13,7 +17,7 @@ export const createTreeLayoutSlice = (set, get) => ({
   // ==========================================================================
   // STATE
   // ==========================================================================
-  branchTransformation: 'none',
+  branchTransformation: DEFAULT_BRANCH_TRANSFORMATION,
   linkGeometryMode: 'radial-elbow',
   layoutAngleDegrees: 360,
   layoutRotationDegrees: 0,

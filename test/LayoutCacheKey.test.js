@@ -41,6 +41,10 @@ describe('layout cache key', () => {
       ...baseOptions,
       state: { ...baseState, styleConfig: { labelOffsets: { DEFAULT: 20, EXTENSION: 10 } } }
     })).not.toBe(baseKey);
+    expect(createLayoutCacheKey({
+      ...baseOptions,
+      state: { ...baseState, fontSize: '2.4em' }
+    })).not.toBe(baseKey);
     expect(createLayoutCacheKey({ ...baseOptions, maxGlobalScale: 20 })).not.toBe(baseKey);
   });
 

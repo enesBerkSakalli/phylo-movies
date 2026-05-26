@@ -102,6 +102,23 @@ describe('normalized render contract', () => {
     expect(LAYER_CONFIGS.connectors.defaultProps._pathType).toBe('open');
   });
 
+  it('uses deck.gl screen-space floors for small rendered tree elements', () => {
+    expect(LAYER_CONFIGS.links.defaultProps).toMatchObject({
+      widthUnits: 'common',
+      widthMinPixels: 1,
+    });
+    expect(LAYER_CONFIGS.links.defaultProps).not.toHaveProperty('widthMaxPixels');
+    expect(LAYER_CONFIGS.links.defaultProps).not.toHaveProperty('billboard');
+    expect(LAYER_CONFIGS.nodes.defaultProps).toMatchObject({
+      radiusUnits: 'common',
+      radiusMinPixels: 2,
+      billboard: true,
+    });
+    expect(LAYER_CONFIGS.nodes.defaultProps).not.toHaveProperty('radiusMaxPixels');
+    expect(LAYER_CONFIGS.nodes.defaultProps).not.toHaveProperty('lineWidthMinPixels');
+    expect(LAYER_CONFIGS.nodes.defaultProps).not.toHaveProperty('lineWidthMaxPixels');
+  });
+
   it('does not enable picking on comparison connector lines', () => {
     expect(LAYER_CONFIGS.connectors.defaultProps.pickable).toBe(false);
   });
@@ -174,6 +191,49 @@ describe('normalized render contract', () => {
     expect(layout.links[0].targetId).toBe('node-prepared-leaf');
   });
 
+  it('publishes metric and visual branch lengths in normalized layout data', () => {
+    const root = hierarchy({
+      name: 'root',
+      length: 0,
+      split_indices: [0, 1],
+      children: [
+        {
+          name: 'Taxon_A',
+          length: 0.0001,
+          metricBranchLength: 0.0001,
+          visualBranchLength: 5,
+          split_indices: [0],
+          children: [],
+        },
+      ],
+    });
+    root.each((node) => {
+      node.x = node.depth;
+      node.y = node.depth + 1;
+      node.radius = node.depth === 0 ? 0 : 5;
+      node.angle = node.depth;
+    });
+    assignLayoutNodeIds(root);
+
+    const layout = createLayoutResult(root, { max_radius: 5, width: 100, height: 100, margin: 0, scale: 1 });
+    const leafNode = layout.nodes.find((node) => node.name === 'Taxon_A');
+
+    expect(leafNode).toMatchObject({
+      length: 0.0001,
+      metricBranchLength: 0.0001,
+      visualBranchLength: 5,
+      polarPosition: 5,
+    });
+    expect(layout.links[0]).toMatchObject({
+      metricBranchLength: 0.0001,
+      visualBranchLength: 5,
+    });
+    expect(layout.links[0].target).toMatchObject({
+      metricBranchLength: 0.0001,
+      visualBranchLength: 5,
+    });
+  });
+
   it('builders emit normalized metadata without legacy hierarchy references', () => {
     const root = hierarchy({
       name: 'root',
@@ -242,6 +302,80 @@ describe('normalized render contract', () => {
     expect(labels[0]).not.toHaveProperty('leaf');
     expect(labels[0]).not.toHaveProperty('data');
     expect(extensions[0]).not.toHaveProperty('leaf');
+  });
+
+  it('publishes branch-length metadata in DeckGL node and link data', () => {
+    const root = hierarchy({
+      name: 'root',
+      length: 0,
+      metricBranchLength: 0,
+      visualBranchLength: 0,
+      split_indices: [0, 1],
+      children: [
+        {
+          name: 'Taxon_A',
+          length: 0.0001,
+          metricBranchLength: 0.0001,
+          visualBranchLength: 5,
+          split_indices: [0],
+          children: [],
+        },
+      ],
+    });
+    root.each((node) => {
+      node.x = node.depth;
+      node.y = node.depth + 1;
+      node.radius = node.depth === 0 ? 0 : 5;
+      node.angle = node.depth;
+    });
+    assignLayoutNodeIds(root);
+
+    const layout = createLayoutResult(root, { max_radius: 5, width: 600, height: 600, margin: 0, scale: 1 });
+    const nodes = new NodeDataBuilder().convertNodes(layout.nodes, {
+      canvasWidth: layout.width,
+      canvasHeight: layout.height,
+    });
+    const links = new LinkDataBuilder().convertLinks(layout.links);
+
+    expect(nodes.find((node) => node.name === 'Taxon_A')).toMatchObject({
+      length: 0.0001,
+      metricBranchLength: 0.0001,
+      visualBranchLength: 5,
+    });
+    expect(links[0]).toMatchObject({
+      length: 0.0001,
+      metricBranchLength: 0.0001,
+      visualBranchLength: 5,
+    });
+  });
+
+  it('sizes internal node dots smaller than leaf dots for dense tree readability', () => {
+    const root = hierarchy({
+      name: 'root',
+      split_indices: [0, 1],
+      children: [
+        { name: 'Taxon_A', split_indices: [0], children: [] },
+      ],
+    });
+    root.each((node) => {
+      node.x = node.depth;
+      node.y = node.depth + 1;
+      node.radius = node.depth;
+      node.angle = node.depth;
+    });
+    assignLayoutNodeIds(root);
+
+    const layout = createLayoutResult(root, { max_radius: 1, width: 600, height: 600, margin: 0, scale: 1 });
+    const nodes = new NodeDataBuilder().convertNodes(layout.nodes, {
+      canvasWidth: layout.width,
+      canvasHeight: layout.height,
+    });
+
+    const internalNode = nodes.find((node) => node.name === 'root');
+    const leafNode = nodes.find((node) => node.name === 'Taxon_A');
+
+    expect(internalNode.dotSize).toBeLessThan(leafNode.dotSize);
+    expect(internalNode.dotSize).toBeGreaterThanOrEqual(1);
   });
 
   it('builders reuse normalized layout ids instead of recalculating render ids', () => {

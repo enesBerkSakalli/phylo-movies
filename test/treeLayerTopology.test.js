@@ -82,6 +82,40 @@ describe('tree deck.gl layer topology', () => {
     ]);
   });
 
+  it('keeps every visible taxon label in deck.gl label layers', () => {
+    const labelCount = 160;
+    const layerStyles = makeLayerStyles({ colorManager: null });
+    const data = {
+      connectors: [],
+      links: [],
+      extensions: [],
+      nodes: [],
+      labels: Array.from({ length: labelCount }, (_value, split) => ({
+        split_indices: [split],
+        position: [split, split, 0],
+        text: `n${split}`
+      }))
+    };
+
+    const layers = createTreeLayerSet({
+      data,
+      state: { labelsVisible: true, leafNamesByIndex: [] },
+      layerStyles,
+      skipEmpty: true
+    });
+
+    const labelLayers = layers.filter((layer) => layer.id.startsWith('phylo-labels-'));
+    const renderedLabelCount = labelLayers.reduce((total, layer) => (
+      total + layer.props.data.length
+    ), 0);
+
+    expect(renderedLabelCount).toBe(labelCount);
+    for (const layer of labelLayers) {
+      expect(layer.props.collisionEnabled).toBeUndefined();
+      expect(layer.props.getCollisionPriority).toBeUndefined();
+    }
+  });
+
   it('routes clicks from semantic node layers through the node picking handler', () => {
     const context = new DeckGLContext(document.createElement('div'));
     const onNodeClick = vi.fn();
