@@ -20,6 +20,29 @@ This project uses the terms below consistently in user-facing text, docs, tests,
 | Split | The internal/backend representation of a bipartition, usually serialized as `split`, `split_indices`, or `pivot_edge`. | User-facing descriptions of moving groups. |
 | Partition | Generic programming/data partitioning only. Do not use it as a synonym for split or subtree. | Phylogenetic topology concepts unless an external algorithm explicitly says partition. |
 
+## Branch Length Terms
+
+| Term | Use For | Avoid Using For |
+|------|---------|-----------------|
+| Metric branch length | The backend/scientific branch length from the tree payload. In serialized tree nodes this is `length`, and frontend transforms must preserve it. | Any readability warp, normalized radius, or screen-space distance. |
+| Visual branch length | The frontend display length derived from the metric branch length for geometry. In transformed tree nodes this is `visualBranchLength`, and layout scale/radius code may use it instead of `length`. | Backend correctness, biological branch weights, or persisted source data. |
+| Metric radius | A conceptual accumulated path length in backend units. Use only when discussing scientific branch-length sums. | Deck.gl coordinates or rendered radial distance. |
+| Visual radius | The accumulated display distance used to place nodes on screen after visual branch-length transforms. | Backend tree-state semantics. |
+
+Branch-length transforms must keep metric data and display geometry separate:
+
+```text
+metric branch length: l
+visual branch length: d(l)
+```
+
+The backend decides the valid tree states: which splits exist, which branches
+collapse or expand, and what metric branch weights each frame has. The frontend
+decides how those metric branch lengths become radial distance and screen
+position. Very small valid metric lengths, such as `0.0001`, can make a tree
+look collapsed around the root; the frontend may therefore render a warped
+`visualBranchLength` while preserving the original `length`.
+
 ## Serialized Contract Names
 
 These fields are part of the current serialized API:

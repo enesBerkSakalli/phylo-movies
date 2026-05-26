@@ -5,6 +5,7 @@ import { applyDimmingWithCache } from '../../dimmingUtils.js';
 import { getSubtreeHighlightRgb } from '../linkUtils.js';
 import { getActiveMoverEmphasis } from '../../activeMoverEmphasis.js';
 import { resolveTreeElementHighlight, TREE_HIGHLIGHT_ROLE } from '../../highlightResolver.js';
+import { getReadableMetricScale } from '../../readableMetricScale.js';
 
 // Reusable output buffers to avoid per-call array allocations
 const _outlineColorOut = [0, 0, 0, 0];
@@ -124,7 +125,8 @@ export function getLinkOutlineColor(link, cached) {
 }
 
 export function getLinkOutlineWidth(link, cached, helpers) {
-  const { colorManager: cm, pulseOpacity, upcomingChangesEnabled, metricScale = 1.0 } = cached;
+  const { colorManager: cm, pulseOpacity, upcomingChangesEnabled } = cached;
+  const metricScale = getReadableMetricScale(cached);
   const baseWidth = helpers.getBaseStrokeWidth();
   const highlight = resolveTreeElementHighlight(link, cached, 'link');
 

@@ -48,7 +48,9 @@ export class ViewportManager {
     if (playing && !options.allowDuringPlayback) return;
     const fitMode = options.fitMode ?? VIEWPORT_FIT_MODES.BRANCH;
     const { width: canvasWidth, height: canvasHeight } = this.controller.deckContext.getCanvasDimensions();
-    const fitAreas = this.getViewportFitAreas();
+    const fitAreas = this.getViewportFitAreas({
+      obstructionScope: options.obstructionScope
+    });
     const getLabelSize = options.getLabelSize ?? this.controller.layerManager.layerStyles.getLabelSize?.bind(
       this.controller.layerManager.layerStyles
     );
@@ -65,6 +67,8 @@ export class ViewportManager {
       canvasWidth,
       canvasHeight,
       fitAreas,
+      maxFitAreaCenterDriftRatio: options.maxFitAreaCenterDriftRatio,
+      maxZoomOverAutoVisibleFit: options.maxZoomOverAutoVisibleFit,
       activeView,
       currentViewState
     });
@@ -82,8 +86,10 @@ export class ViewportManager {
   // HELPER METHODS
   // ==========================================================================
 
-  getViewportFitAreas() {
-    return calculateViewportFitAreas(this.controller.deckContext?.container);
+  getViewportFitAreas(options = {}) {
+    return calculateViewportFitAreas(this.controller.deckContext?.container, {
+      obstructionScope: options.obstructionScope
+    });
   }
 
 }

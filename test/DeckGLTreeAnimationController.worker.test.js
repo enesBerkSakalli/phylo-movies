@@ -403,6 +403,31 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     expect(result).toBe(interpolatedData);
   });
 
+  it('does not shrink node and link styles again for small rendered trees', () => {
+    const controller = Object.create(ControllerClass.prototype);
+    controller.width = 800;
+    controller.height = 600;
+    controller._syncInterpolatorRootAngle = vi.fn();
+    controller._getLinkGeometryMode = () => 'radial-elbow';
+    controller.treeInterpolator = {
+      interpolateTreeData: vi.fn(() => ({
+        nodes: [],
+        links: [],
+        labels: [],
+        extensions: [],
+        max_radius: 40,
+      })),
+    };
+
+    const interpolatedData = controller._buildInterpolatedDataFromInputs(
+      { max_radius: 40 },
+      { max_radius: 40 },
+      0
+    );
+
+    expect(interpolatedData.metricScale).toBe(1);
+  });
+
   it('does not re-prefetch when only moving taxa tracking changes', () => {
     controller = new ControllerClass(null);
 

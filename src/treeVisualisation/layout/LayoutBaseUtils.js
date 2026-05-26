@@ -1,4 +1,8 @@
 import { getNodeKey } from '../../domain/tree/splits.js';
+import {
+  getMetricBranchLength,
+  getReadableVisualBranchLength
+} from '../../domain/tree/branchTransform.js';
 
 const DEFAULT_WIDTH = 800;
 const DEFAULT_HEIGHT = 600;
@@ -85,8 +89,10 @@ export function setRadiusPreservation(layout, preserve) {
 
 export function calculateBranchLengthRadii(layout, node, radius = 0) {
   const data = node.data || {};
-  const length = Number(data.length ?? 0) || 0;
-  const effectiveLength = node.parent ? length : 0;
+  const visualBranchLength = getReadableVisualBranchLength(data);
+  const effectiveLength = node.parent ? visualBranchLength : 0;
+  node.metricBranchLength = getMetricBranchLength(data);
+  node.visualBranchLength = visualBranchLength;
 
   const nodeKey = node.id;
   if (nodeKey && layout.preserveRadius && layout.previousNodeRadii.has(nodeKey)) {

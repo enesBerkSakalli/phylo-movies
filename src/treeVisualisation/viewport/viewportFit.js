@@ -7,10 +7,17 @@ import { applyFitAreaToTarget } from '../spatial/projections.js';
 
 export const VIEWPORT_FIT_MODES = Object.freeze({
   BRANCH: 'branch',
-  LABELS: 'labels'
+  LABELS: 'labels',
+  AUTO_VISIBLE: 'auto-visible'
 });
+export const VIEWPORT_AUTO_VISIBLE_FIT_PADDING = 1.2;
 export const VIEWPORT_LABEL_FIT_PADDING = 1.25;
 export const VIEWPORT_BRANCH_FIT_PADDING = 1.12;
+export const VIEWPORT_AUTO_FIT_CENTER_DRIFT_LIMIT_RATIO = 0.2;
+export const VIEWPORT_AUTOMATIC_BRANCH_DETAIL_ZOOM_DELTA = 1.0;
+export const VIEWPORT_AUTO_VISIBLE_HIGH_DENSITY_PADDING = 0.55;
+export const VIEWPORT_AUTO_VISIBLE_MEDIUM_DENSITY_PADDING = 0.28;
+export const VIEWPORT_AUTO_VISIBLE_LOW_DENSITY_PADDING = 0.1;
 export const VIEWPORT_HIGH_DENSITY_NODE_THRESHOLD = 400;
 export const VIEWPORT_MEDIUM_DENSITY_NODE_THRESHOLD = 200;
 export const VIEWPORT_LOW_DENSITY_NODE_THRESHOLD = 100;
@@ -29,6 +36,8 @@ export function calculateFocusViewport({
   canvasWidth,
   canvasHeight,
   fitAreas,
+  maxFitAreaCenterDriftRatio,
+  maxZoomOverAutoVisibleFit,
   activeView,
   currentViewState
 }) {
@@ -41,11 +50,19 @@ export function calculateFocusViewport({
     getLabelSize
   });
   const densityPadding = calculateDensityPadding(nodes);
-  const fitPadding = fitMode === VIEWPORT_FIT_MODES.LABELS
-    ? VIEWPORT_LABEL_FIT_PADDING
-    : VIEWPORT_BRANCH_FIT_PADDING;
-  const effectivePadding = padding ?? (fitPadding + densityPadding);
-  const fitArea = selectFitAreaForBounds(bounds, fitAreas, effectivePadding, canvasWidth, canvasHeight);
+  const autoVisiblePadding = fitMode === VIEWPORT_FIT_MODES.AUTO_VISIBLE
+    ? calculateAutoVisibleDensityPadding(nodes)
+    : 0;
+  const fitPadding = getFitPaddingForMode(fitMode);
+  const effectivePadding = padding ?? (fitPadding + densityPadding + autoVisiblePadding);
+  const fitArea = selectFitAreaForBounds(
+    bounds,
+    fitAreas,
+    effectivePadding,
+    canvasWidth,
+    canvasHeight,
+    { maxCenterDriftRatio: maxFitAreaCenterDriftRatio }
+  );
 
   const centerX = (bounds.minX + bounds.maxX) / 2;
   const centerY = (bounds.minY + bounds.maxY) / 2;
@@ -54,7 +71,27 @@ export function calculateFocusViewport({
 
   const fitWidth = Math.max(1, fitArea.width);
   const fitHeight = Math.max(1, fitArea.height);
-  const zoom = Math.log2(Math.min(fitWidth / (w * effectivePadding), fitHeight / (h * effectivePadding)));
+  let zoom = Math.log2(Math.min(fitWidth / (w * effectivePadding), fitHeight / (h * effectivePadding)));
+
+  const maxBranchZoomDelta = Number(maxZoomOverAutoVisibleFit);
+  if (
+    fitMode === VIEWPORT_FIT_MODES.BRANCH &&
+    labels.length > 0 &&
+    Number.isFinite(maxBranchZoomDelta)
+  ) {
+    const autoVisibleZoom = calculateAutoVisibleReferenceZoom({
+      nodes,
+      labels,
+      links,
+      labelSizePx,
+      getLabelSize,
+      canvasWidth,
+      canvasHeight,
+      fitAreas,
+      maxFitAreaCenterDriftRatio
+    });
+    zoom = Math.min(zoom, autoVisibleZoom + Math.max(0, maxBranchZoomDelta));
+  }
 
   const target = applyFitAreaToTarget(
     activeView,
@@ -81,7 +118,7 @@ export function calculateFitBoundsForMode({
     return calculateBranchBounds(nodes, links);
   }
 
-  if (fitMode === VIEWPORT_FIT_MODES.LABELS) {
+  if (fitMode === VIEWPORT_FIT_MODES.LABELS || fitMode === VIEWPORT_FIT_MODES.AUTO_VISIBLE) {
     return mergeBounds(
       calculateBranchBounds(nodes, links),
       calculateLabelBounds(labels, { labelSizePx, getLabelSize })
@@ -91,14 +128,56 @@ export function calculateFitBoundsForMode({
   throw new Error(`Unknown viewport fit mode: ${fitMode}`);
 }
 
-export function selectFitAreaForBounds(bounds, fitAreas, effectivePadding, canvasWidth, canvasHeight) {
+function calculateAutoVisibleReferenceZoom({
+  nodes,
+  labels,
+  links,
+  labelSizePx,
+  getLabelSize,
+  canvasWidth,
+  canvasHeight,
+  fitAreas,
+  maxFitAreaCenterDriftRatio
+}) {
+  const bounds = calculateFitBoundsForMode({
+    fitMode: VIEWPORT_FIT_MODES.AUTO_VISIBLE,
+    nodes,
+    labels,
+    links,
+    labelSizePx,
+    getLabelSize
+  });
+  const effectivePadding = getFitPaddingForMode(VIEWPORT_FIT_MODES.AUTO_VISIBLE) +
+    calculateDensityPadding(nodes) +
+    calculateAutoVisibleDensityPadding(nodes);
+  const fitArea = selectFitAreaForBounds(
+    bounds,
+    fitAreas,
+    effectivePadding,
+    canvasWidth,
+    canvasHeight,
+    { maxCenterDriftRatio: maxFitAreaCenterDriftRatio }
+  );
+  const w = Math.max(1e-6, bounds.maxX - bounds.minX);
+  const h = Math.max(1e-6, bounds.maxY - bounds.minY);
+  const fitWidth = Math.max(1, fitArea.width);
+  const fitHeight = Math.max(1, fitArea.height);
+
+  return Math.log2(Math.min(fitWidth / (w * effectivePadding), fitHeight / (h * effectivePadding)));
+}
+
+export function selectFitAreaForBounds(bounds, fitAreas, effectivePadding, canvasWidth, canvasHeight, options = {}) {
   const areas = normalizeFitAreas(fitAreas, canvasWidth, canvasHeight);
   const w = Math.max(1e-6, bounds.maxX - bounds.minX);
   const h = Math.max(1e-6, bounds.maxY - bounds.minY);
   const canvasCenterX = canvasWidth / 2;
   const canvasCenterY = canvasHeight / 2;
+  const maxCenterDriftRatio = Number.isFinite(options.maxCenterDriftRatio)
+    ? Math.max(0, options.maxCenterDriftRatio)
+    : Infinity;
+  const maxCenterDistance = Math.hypot(canvasWidth, canvasHeight) * maxCenterDriftRatio;
 
-  return areas.reduce((best, area) => {
+  const scoredAreas = areas.map((area) => {
     const scale = Math.min(
       area.width / (w * effectivePadding),
       area.height / (h * effectivePadding)
@@ -113,11 +192,25 @@ export function selectFitAreaForBounds(bounds, fitAreas, effectivePadding, canva
       areaSize: area.width * area.height,
       distanceFromCenter
     };
+    return scored;
+  });
+  const eligibleAreas = Number.isFinite(maxCenterDistance)
+    ? scoredAreas.filter((scored) => scored.distanceFromCenter <= maxCenterDistance)
+    : scoredAreas;
+  const candidates = eligibleAreas.length > 0 ? eligibleAreas : scoredAreas;
+
+  return candidates.reduce((best, scored) => {
     if (!best) return scored;
     if (scored.scale !== best.scale) return scored.scale > best.scale ? scored : best;
     if (scored.areaSize !== best.areaSize) return scored.areaSize > best.areaSize ? scored : best;
     return scored.distanceFromCenter < best.distanceFromCenter ? scored : best;
   }, null).area;
+}
+
+function getFitPaddingForMode(fitMode) {
+  if (fitMode === VIEWPORT_FIT_MODES.LABELS) return VIEWPORT_LABEL_FIT_PADDING;
+  if (fitMode === VIEWPORT_FIT_MODES.AUTO_VISIBLE) return VIEWPORT_AUTO_VISIBLE_FIT_PADDING;
+  return VIEWPORT_BRANCH_FIT_PADDING;
 }
 
 function normalizeFitAreas(fitAreas, canvasWidth, canvasHeight) {
@@ -151,5 +244,13 @@ function calculateDensityPadding(nodes) {
   if (leafCount > VIEWPORT_HIGH_DENSITY_NODE_THRESHOLD) return VIEWPORT_HIGH_DENSITY_PADDING;
   if (leafCount > VIEWPORT_MEDIUM_DENSITY_NODE_THRESHOLD) return VIEWPORT_MEDIUM_DENSITY_PADDING;
   if (leafCount > VIEWPORT_LOW_DENSITY_NODE_THRESHOLD) return VIEWPORT_LOW_DENSITY_PADDING;
+  return 0;
+}
+
+function calculateAutoVisibleDensityPadding(nodes) {
+  const leafCount = nodes.length;
+  if (leafCount > VIEWPORT_HIGH_DENSITY_NODE_THRESHOLD) return VIEWPORT_AUTO_VISIBLE_HIGH_DENSITY_PADDING;
+  if (leafCount > VIEWPORT_MEDIUM_DENSITY_NODE_THRESHOLD) return VIEWPORT_AUTO_VISIBLE_MEDIUM_DENSITY_PADDING;
+  if (leafCount > VIEWPORT_LOW_DENSITY_NODE_THRESHOLD) return VIEWPORT_AUTO_VISIBLE_LOW_DENSITY_PADDING;
   return 0;
 }

@@ -76,7 +76,7 @@ describe('layout worker metadata', () => {
     expect(result.layout.scale).not.toBe(240);
   });
 
-  it('uses the stable global rendered radius for worker label and extension rings', () => {
+  it('uses the effective rendered tree radius for worker label and extension rings', () => {
     const treeData = {
       name: '',
       length: 0,
@@ -98,9 +98,63 @@ describe('layout worker metadata', () => {
       labelOffsets: { DEFAULT: 2, EXTENSION: 1 }
     });
 
-    const stableRadius = result.layout.scale * 10;
-    expect(result.layout.max_radius).toBeLessThan(stableRadius);
-    expect(result.layerData.extensions[0].polarData.target.radius).toBe(stableRadius + 1);
-    expect(result.layerData.labels[0].polarPosition).toBe(stableRadius + 3);
+    expect(result.layerData.extensions[0].polarData.target.radius).toBe(result.layout.max_radius + 1);
+    expect(result.layerData.labels[0].polarPosition).toBe(result.layout.max_radius + 3);
+  });
+
+  it('expands dense worker label rings without dropping labels', () => {
+    const leafCount = 160;
+    const treeData = {
+      name: '',
+      length: 0,
+      split_indices: Array.from({ length: leafCount }, (_value, index) => index),
+      children: Array.from({ length: leafCount }, (_value, index) => ({
+        name: `taxon_${index}`,
+        length: 1,
+        split_indices: [index],
+        children: []
+      }))
+    };
+
+    const result = calculateLayoutWorkerResult(treeData, {
+      width: 800,
+      height: 600,
+      margin: 60,
+      branchTransformation: 'none',
+      layoutAngleDegrees: 360,
+      layoutRotationDegrees: 0,
+      labelOffsets: { DEFAULT: 1, EXTENSION: 1 },
+      fontSize: '1.8em'
+    });
+
+    expect(result.layerData.labels).toHaveLength(leafCount);
+    expect(result.layerData.labels[0].polarPosition).toBeGreaterThan(result.layout.max_radius + 2);
+    expect(result.layerData.extensions[0].polarData.target.radius).toBeCloseTo(
+      result.layerData.labels[0].polarPosition - 1
+    );
+  });
+
+  it('ignores worker-provided minimum visual branch length for coordinate geometry', () => {
+    const treeData = {
+      name: '',
+      length: 0,
+      split_indices: [0],
+      children: [
+        { name: 'taxon_1', length: 0.001, split_indices: [0], children: [] }
+      ]
+    };
+
+    const result = calculateLayoutWorkerResult(treeData, {
+      width: 800,
+      height: 600,
+      margin: 60,
+      branchTransformation: 'none',
+      maxGlobalScale: 10,
+      minVisualBranchLength: 0.05
+    });
+    const leaf = result.layout.nodes.find((node) => node.name === 'taxon_1');
+
+    expect(leaf.metricBranchLength).toBe(0.001);
+    expect(leaf.visualBranchLength).toBe(0.001);
   });
 });

@@ -64,13 +64,13 @@ describe('TidyTreeLayout', () => {
     // Should not throw, or throw readable error
     try {
       createTidyTreeLayout(null, 'none', {});
-    } catch (e) {
+    } catch (_e) {
       // It might throw depending on d3.hierarchy behavior
     }
   });
 
   // New test for class-level method constructRadialTreeWithUniformScaling
-  it('constructRadialTreeWithUniformScaling applies global scale correctly', () => {
+  it('constructRadialTreeWithUniformScaling applies only baseline uniform scale', () => {
     // Instantiate CLASS directly (not the factory function)
     const layoutEngine = new TidyTreeLayout(mockData);
     layoutEngine.setDimension(1000, 1000);
@@ -86,6 +86,19 @@ describe('TidyTreeLayout', () => {
     layoutEngine.constructRadialTreeWithUniformScaling(maxGlobalScale);
 
     expect(layoutEngine.scale).toBe(10);
+    expect(layoutEngine.uniformScale).toBe(10);
+  });
+
+  it('does not boost very small globally scaled trees in geometry', () => {
+    const layoutEngine = new TidyTreeLayout(mockData);
+    layoutEngine.setDimension(1000, 1000);
+    layoutEngine.setMargin(0);
+
+    layoutEngine.constructRadialTreeWithUniformScaling(100);
+
+    expect(layoutEngine.uniformScale).toBe(5);
+    expect(layoutEngine.scale).toBe(5);
+    expect(layoutEngine.getMaxRadius(layoutEngine.root)).toBe(100);
   });
 
   it('constructRadialTreeWithUniformScaling handles 0 or invalid max scale gracefully', () => {

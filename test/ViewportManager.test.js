@@ -5,6 +5,12 @@ import {
   calculateFocusViewport,
   selectFitAreaForBounds,
   VIEWPORT_FIT_MODES,
+  VIEWPORT_AUTOMATIC_BRANCH_DETAIL_ZOOM_DELTA,
+  VIEWPORT_AUTO_FIT_CENTER_DRIFT_LIMIT_RATIO,
+  VIEWPORT_AUTO_VISIBLE_FIT_PADDING,
+  VIEWPORT_AUTO_VISIBLE_HIGH_DENSITY_PADDING,
+  VIEWPORT_AUTO_VISIBLE_LOW_DENSITY_PADDING,
+  VIEWPORT_AUTO_VISIBLE_MEDIUM_DENSITY_PADDING,
   VIEWPORT_BRANCH_FIT_PADDING,
   VIEWPORT_HIGH_DENSITY_NODE_THRESHOLD,
   VIEWPORT_HIGH_DENSITY_PADDING,
@@ -87,6 +93,41 @@ describe('ViewportManager', () => {
     expect(transitionTo.mock.calls[0][0].zoom).toBeGreaterThan(1.5);
   });
 
+  it('forwards automatic visible-fit zoom caps from the viewport manager', () => {
+    const transitionTo = vi.fn();
+    const manager = new ViewportManager({
+      deckContext: {
+        container: null,
+        getCanvasDimensions: () => ({ width: 1200, height: 800 }),
+        getActiveView: () => null,
+        getViewState: () => ({ target: [0, 0, 0], zoom: 0 }),
+        transitionTo,
+      },
+      layerManager: {
+        layerStyles: {
+          getLabelSize: () => 16,
+        },
+      },
+    });
+
+    manager.focusOnTree(
+      [
+        { position: [-12, 0, 0] },
+        { position: [12, 0, 0] },
+      ],
+      [
+        { position: [3000, 0, 0], text: 'Norovirus-like dense label ring' },
+      ],
+      {
+        duration: 0,
+        maxZoomOverAutoVisibleFit: 1,
+      }
+    );
+
+    expect(transitionTo).toHaveBeenCalledOnce();
+    expect(transitionTo.mock.calls[0][0].zoom).toBeLessThan(0);
+  });
+
   it('manual label fit includes label bounds exactly once', () => {
     const result = calculateFocusViewport({
       nodes: [
@@ -159,6 +200,20 @@ describe('ViewportManager', () => {
     )).toEqual({ left: 100, top: 150, width: 300, height: 500 });
   });
 
+  it('can cap automatic fit-area center drift before choosing maximum scale', () => {
+    expect(selectFitAreaForBounds(
+      { minX: -100, maxX: 100, minY: -100, maxY: 100 },
+      [
+        { left: 0, top: 0, width: 300, height: 300 },
+        { left: 400, top: 300, width: 200, height: 200 },
+      ],
+      1,
+      1000,
+      800,
+      { maxCenterDriftRatio: 0.2 }
+    )).toEqual({ left: 400, top: 300, width: 200, height: 200 });
+  });
+
   it('long labels at a stable global label radius do not shrink automatic branch fit', () => {
     const branchFit = calculateFocusViewport({
       nodes: [
@@ -201,6 +256,147 @@ describe('ViewportManager', () => {
 
     expect(branchFit.zoom).toBeGreaterThan(labelFit.zoom + 4);
     expect(branchFit.target).toEqual([0, 0, 0]);
+  });
+
+  it('caps automatic branch zoom against visible label-ring fit when requested', () => {
+    const branchFit = calculateFocusViewport({
+      nodes: [
+        { position: [-12, 0, 0] },
+        { position: [12, 0, 0] },
+      ],
+      labels: [
+        {
+          position: [650, 0, 0],
+          text: 'Norovirus-like dense label ring',
+        },
+      ],
+      fitMode: VIEWPORT_FIT_MODES.BRANCH,
+      padding: 1,
+      canvasWidth: 1200,
+      canvasHeight: 800,
+      fitAreas: null,
+      activeView: null,
+      currentViewState: { target: [0, 0, 0], zoom: 0 },
+    });
+    const cappedFit = calculateFocusViewport({
+      nodes: [
+        { position: [-12, 0, 0] },
+        { position: [12, 0, 0] },
+      ],
+      labels: [
+        {
+          position: [650, 0, 0],
+          text: 'Norovirus-like dense label ring',
+        },
+      ],
+      fitMode: VIEWPORT_FIT_MODES.BRANCH,
+      padding: 1,
+      canvasWidth: 1200,
+      canvasHeight: 800,
+      fitAreas: null,
+      maxZoomOverAutoVisibleFit: 1,
+      activeView: null,
+      currentViewState: { target: [0, 0, 0], zoom: 0 },
+    });
+    const autoVisibleFit = calculateFocusViewport({
+      nodes: [
+        { position: [-12, 0, 0] },
+        { position: [12, 0, 0] },
+      ],
+      labels: [
+        {
+          position: [650, 0, 0],
+          text: 'Norovirus-like dense label ring',
+        },
+      ],
+      fitMode: VIEWPORT_FIT_MODES.AUTO_VISIBLE,
+      canvasWidth: 1200,
+      canvasHeight: 800,
+      fitAreas: null,
+      activeView: null,
+      currentViewState: { target: [0, 0, 0], zoom: 0 },
+    });
+
+    expect(branchFit.zoom).toBeGreaterThan(autoVisibleFit.zoom + 4);
+    expect(cappedFit.zoom).toBeCloseTo(autoVisibleFit.zoom + 1, 10);
+    expect(cappedFit.target).toEqual([0, 0, 0]);
+  });
+
+  it('auto-visible fit includes labels with a tighter default margin than manual label fit', () => {
+    const autoVisibleFit = calculateFocusViewport({
+      nodes: [
+        { position: [-12, 0, 0] },
+        { position: [12, 0, 0] },
+      ],
+      labels: [
+        {
+          position: [600, 0, 0],
+          text: 'Dataset maximum radius label with a very long taxon name',
+        },
+      ],
+      fitMode: VIEWPORT_FIT_MODES.AUTO_VISIBLE,
+      canvasWidth: 1200,
+      canvasHeight: 800,
+      fitAreas: null,
+      activeView: null,
+      currentViewState: { target: [0, 0, 0], zoom: 0 },
+    });
+    const labelFit = calculateFocusViewport({
+      nodes: [
+        { position: [-12, 0, 0] },
+        { position: [12, 0, 0] },
+      ],
+      labels: [
+        {
+          position: [600, 0, 0],
+          text: 'Dataset maximum radius label with a very long taxon name',
+        },
+      ],
+      fitMode: VIEWPORT_FIT_MODES.LABELS,
+      canvasWidth: 1200,
+      canvasHeight: 800,
+      fitAreas: null,
+      activeView: null,
+      currentViewState: { target: [0, 0, 0], zoom: 0 },
+    });
+
+    expect(autoVisibleFit.target).toEqual(labelFit.target);
+    expect(autoVisibleFit.zoom).toBeGreaterThan(labelFit.zoom);
+  });
+
+  it('adds extra automatic visible-content margin for dense trees', () => {
+    const denseNodes = Array.from({ length: VIEWPORT_HIGH_DENSITY_NODE_THRESHOLD + 1 }, (_, index) => ({
+      position: [index, 0, 0],
+    }));
+    const labels = [
+      {
+        position: [500, 0, 0],
+        text: 'dense tree edge label',
+      },
+    ];
+    const autoVisibleFit = calculateFocusViewport({
+      nodes: denseNodes,
+      labels,
+      fitMode: VIEWPORT_FIT_MODES.AUTO_VISIBLE,
+      canvasWidth: 1000,
+      canvasHeight: 1000,
+      fitAreas: null,
+      activeView: null,
+      currentViewState: { target: [0, 0, 0], zoom: 0 },
+    });
+    const manualLabelFit = calculateFocusViewport({
+      nodes: denseNodes,
+      labels,
+      fitMode: VIEWPORT_FIT_MODES.LABELS,
+      canvasWidth: 1000,
+      canvasHeight: 1000,
+      fitAreas: null,
+      activeView: null,
+      currentViewState: { target: [0, 0, 0], zoom: 0 },
+    });
+
+    expect(autoVisibleFit.target).toEqual(manualLabelFit.target);
+    expect(autoVisibleFit.zoom).toBeLessThan(manualLabelFit.zoom);
   });
 
   it('includes link path geometry in branch-focused fit bounds', () => {
@@ -277,8 +473,18 @@ describe('ViewportManager', () => {
 
   it('pins viewport fit padding constants', () => {
     expect(VIEWPORT_LABEL_FIT_PADDING).toBe(1.25);
-    expect(VIEWPORT_FIT_MODES).toEqual({ BRANCH: 'branch', LABELS: 'labels' });
+    expect(VIEWPORT_FIT_MODES).toEqual({
+      BRANCH: 'branch',
+      LABELS: 'labels',
+      AUTO_VISIBLE: 'auto-visible',
+    });
+    expect(VIEWPORT_AUTO_VISIBLE_FIT_PADDING).toBe(1.2);
+    expect(VIEWPORT_AUTO_VISIBLE_HIGH_DENSITY_PADDING).toBe(0.55);
+    expect(VIEWPORT_AUTO_VISIBLE_MEDIUM_DENSITY_PADDING).toBe(0.28);
+    expect(VIEWPORT_AUTO_VISIBLE_LOW_DENSITY_PADDING).toBe(0.1);
     expect(VIEWPORT_BRANCH_FIT_PADDING).toBe(1.12);
+    expect(VIEWPORT_AUTO_FIT_CENTER_DRIFT_LIMIT_RATIO).toBe(0.2);
+    expect(VIEWPORT_AUTOMATIC_BRANCH_DETAIL_ZOOM_DELTA).toBe(1);
     expect(VIEWPORT_HIGH_DENSITY_NODE_THRESHOLD).toBe(400);
     expect(VIEWPORT_MEDIUM_DENSITY_NODE_THRESHOLD).toBe(200);
     expect(VIEWPORT_LOW_DENSITY_NODE_THRESHOLD).toBe(100);

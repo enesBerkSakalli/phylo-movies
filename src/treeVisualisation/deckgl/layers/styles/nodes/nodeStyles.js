@@ -3,6 +3,7 @@ import { SYSTEM_TREE_COLORS } from '../../../../../constants/TreeColors.js';
 import { applyDimmingWithCache } from '../dimmingUtils.js';
 import { getHighlightColor, getPivotEdgeColor } from './nodeUtils.js';
 import { resolveTreeElementHighlight, TREE_HIGHLIGHT_ROLE } from '../highlightResolver.js';
+import { applyDenseInternalNodeOpacity } from '../denseVisualDeclutter.js';
 // Re-export from dedicated file
 export { getNodeRadius } from './nodeRadiusStyles.js';
 export { getNodeLineWidth } from './nodeWidthStyles.js';
@@ -124,6 +125,7 @@ export function getNodeColor(node, cached, helpers) {
     subtreeDimmingOpacity,
     highlightedSubtreeData
   );
+  opacity = applyDenseInternalNodeOpacity(opacity, nodeData, cached, highlight);
 
   _nodeColorOut[0] = rgb[0];
   _nodeColorOut[1] = rgb[1];
@@ -201,6 +203,7 @@ export function getNodeBorderColor(node, cached, helpers) {
     subtreeDimmingOpacity,
     highlightedSubtreeData
   );
+  opacity = applyDenseInternalNodeOpacity(opacity, nodeData, cached, highlight);
 
   _borderColorOut[0] = rgb[0];
   _borderColorOut[1] = rgb[1];

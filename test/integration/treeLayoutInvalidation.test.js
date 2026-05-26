@@ -10,6 +10,8 @@ describe('tree layout store invalidation', () => {
 
   it('resets interpolation caches and renders controllers when branch transformation changes', () => {
     const controller = {
+      _lastFocusedTreeIndex: 0,
+      layerManager: { comparisonRenderer: { resetAutoFit: vi.fn() } },
       resetInterpolationCaches: vi.fn(),
       renderAllElements: vi.fn()
     };
@@ -21,6 +23,8 @@ describe('tree layout store invalidation', () => {
     useAppStore.getState().setBranchTransformation('log');
 
     expect(controller.resetInterpolationCaches).toHaveBeenCalledOnce();
+    expect(controller._lastFocusedTreeIndex).toBeNull();
+    expect(controller.layerManager.comparisonRenderer.resetAutoFit).toHaveBeenCalledOnce();
     expect(controller.renderAllElements).toHaveBeenCalledOnce();
   });
 

@@ -386,7 +386,7 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
     if (!treeList || !treeList[treeIndex]) return;
 
     const treeData = treeList[treeIndex];
-    const { branchTransformation, layoutAngleDegrees, layoutRotationDegrees, styleConfig } = state;
+    const { branchTransformation, fontSize, layoutAngleDegrees, layoutRotationDegrees, styleConfig } = state;
     const offsets = styleConfig?.labelOffsets || { DEFAULT: 20, EXTENSION: 5 };
     const linkGeometryMode = this._getLinkGeometryMode(state);
 
@@ -412,6 +412,7 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
           layoutAngleDegrees,
           layoutRotationDegrees,
           labelOffsets: offsets,
+          fontSize,
           treeIndex,
           treeSide: 'left',
           renderMode: 'animation',
@@ -566,21 +567,9 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
       linkGeometryMode: this._getLinkGeometryMode()
     });
 
-    // --- Adaptive Visual Scaling ---
-    // Interpolate max_radius from cached metadata
-    const rFrom = Number(dataFrom.max_radius);
-    const rTo = Number(dataTo.max_radius);
-    const currentMaxRadius = Number.isFinite(interpolatedData.max_radius)
-      ? interpolatedData.max_radius
-      : (Number.isFinite(rFrom) && Number.isFinite(rTo) ? rFrom + (rTo - rFrom) * t : 300);
-
-    // Calculate metricScale: min(1.0, currentMaxRadius / idealRadius)
-    // Ideal radius is roughly half the screen dimension (e.g. 300-400px)
-    // We use a safe default of 300px if width is missing
-    const idealRadius = Math.min(this.width || 800, this.height || 600) / 2.5;
-
-    // Pass scale to layers (clamped to 1.0 max, and 0.05 min to prevent invisibility)
-    interpolatedData.metricScale = Math.max(0.05, Math.min(1.0, currentMaxRadius / idealRadius));
+    // Geometry scaling already protects small trees. Keep stroke/node styling stable
+    // so low-branch-length trees are not shrunk a second time.
+    interpolatedData.metricScale = 1;
 
     return interpolatedData;
   }

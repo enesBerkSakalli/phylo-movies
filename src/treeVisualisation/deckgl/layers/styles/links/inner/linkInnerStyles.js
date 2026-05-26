@@ -4,6 +4,7 @@ import { calculateFlightDashArray } from '../dashUtils.js';
 import { applyDimmingWithCache } from '../../dimmingUtils.js';
 import { getInnerLinkColor } from '../linkUtils.js';
 import { resolveTreeElementHighlight, TREE_HIGHLIGHT_ROLE } from '../../highlightResolver.js';
+import { applyDenseBaseOpacity } from '../../denseVisualDeclutter.js';
 
 // Reusable output buffers to avoid per-call array allocations
 const _linkColorOut = [0, 0, 0, 0];
@@ -66,6 +67,7 @@ export function getLinkColor(link, cached, helpers) {
     subtreeDimmingOpacity,
     highlightedSubtreeData
   );
+  opacity = applyDenseBaseOpacity(opacity, cached, highlight);
 
 
 

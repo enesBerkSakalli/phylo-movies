@@ -1,6 +1,11 @@
 import { selectActiveTreeList, selectCurrentTree, selectInputFrameIndices, useAppStore } from '../../state/phyloStore/store.js';
+import { VIEWPORT_FIT_OBSTRUCTION_SCOPES } from '../spatial/layout.js';
 import { tagTreeSide } from '../utils/layerDataUtils.js';
-import { VIEWPORT_FIT_MODES } from '../viewport/viewportFit.js';
+import {
+  VIEWPORT_AUTOMATIC_BRANCH_DETAIL_ZOOM_DELTA,
+  VIEWPORT_AUTO_FIT_CENTER_DRIFT_LIMIT_RATIO,
+  VIEWPORT_FIT_MODES
+} from '../viewport/viewportFit.js';
 
 /**
  * Handles the static rendering of trees (non-animated states).
@@ -94,7 +99,10 @@ export class StaticRenderer {
     if (this.controller._lastFocusedTreeIndex !== targetIndex) {
       this.controller.viewportManager.focusOnTree(layerData.nodes, layerData.labels, {
         fitMode: VIEWPORT_FIT_MODES.BRANCH,
-        links: [...layerData.links, ...layerData.extensions]
+        obstructionScope: VIEWPORT_FIT_OBSTRUCTION_SCOPES.CANVAS,
+        maxFitAreaCenterDriftRatio: VIEWPORT_AUTO_FIT_CENTER_DRIFT_LIMIT_RATIO,
+        maxZoomOverAutoVisibleFit: VIEWPORT_AUTOMATIC_BRANCH_DETAIL_ZOOM_DELTA,
+        links: layerData.links
       });
       this.controller._lastFocusedTreeIndex = targetIndex;
     }

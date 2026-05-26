@@ -22,10 +22,17 @@ export class NodeGeometryBuilder {
       leafSizeFactor: 0.01, // 1% of short side
       leafMinPx: 1,
       leafMaxPx: 7,
-      // Internal nodes are a fixed ratio smaller than leaves
-      ratio: 1.0,
+      // Internal nodes are intentionally smaller so dense clades do not mask short branches.
+      internalSizeRatio: 0.6,
+      internalMinPx: 1,
+      internalMaxPx: 5,
       ...radiusConfig
     };
+    const legacyRatio = Number(radiusConfig.ratio);
+    const configuredInternalRatio = Number(radiusConfig.internalSizeRatio);
+    const internalSizeRatio = Number.isFinite(configuredInternalRatio) && configuredInternalRatio > 0
+      ? configuredInternalRatio
+      : (Number.isFinite(legacyRatio) && legacyRatio > 0 ? legacyRatio : config.internalSizeRatio);
 
     // Compute final uniform sizes
     const baseLeafPx = Math.max(
@@ -33,7 +40,10 @@ export class NodeGeometryBuilder {
       Math.min(config.leafMaxPx, Math.round(shortSide * config.leafSizeFactor))
     );
 
-    const internalPx = Math.max(1, Math.round(baseLeafPx * config.ratio));
+    const internalPx = Math.max(
+      config.internalMinPx,
+      Math.min(config.internalMaxPx, Math.round(baseLeafPx * internalSizeRatio))
+    );
 
     // Assign fixed radii: leaves same size, internal smaller
     nodes.forEach(node => {

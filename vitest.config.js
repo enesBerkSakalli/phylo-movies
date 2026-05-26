@@ -39,6 +39,7 @@ export default defineConfig({
       'test/TidyTreeLayout.test.js',
       'test/treeHighlightState.test.js',
       'test/treeLayerTopology.test.js',
+      'test/TreeScalingDiagnostics.test.js',
       'test/TreeInterpolatorLabelRadius.test.js',
       'test/TimelineSegmentTooltip.test.js',
       'test/ViewportManager.test.js',

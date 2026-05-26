@@ -3,6 +3,8 @@
  * Provides utilities for handling scale calculations, formatting, and visualization.
  */
 
+import { getReadableVisualBranchLength } from './branchTransform.js';
+
 /**
  * Get the maximum scale value from the scale list
  * @param {Array} scaleList - Array of scale objects
@@ -90,6 +92,8 @@ function _calculateScale(node, isRoot = true) {
       }
     });
   }
-  maxRadius = maxRadius + (isRoot ? 0 : (parseFloat(node.length) || 0));
+  maxRadius = maxRadius + (
+    isRoot ? 0 : getReadableVisualBranchLength(node)
+  );
   return maxRadius;
 }

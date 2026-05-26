@@ -5,8 +5,12 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { handleContainerResize } from '../../src/treeVisualisation/interaction/InteractionHandlers.js';
 import { useAppStore } from '../../src/state/phyloStore/store.js';
+import { VIEWPORT_FIT_OBSTRUCTION_SCOPES } from '../../src/treeVisualisation/spatial/layout.js';
 import { StaticRenderer } from '../../src/treeVisualisation/systems/StaticRenderer.js';
-import { VIEWPORT_FIT_MODES } from '../../src/treeVisualisation/viewport/viewportFit.js';
+import {
+  VIEWPORT_AUTOMATIC_BRANCH_DETAIL_ZOOM_DELTA,
+  VIEWPORT_FIT_MODES
+} from '../../src/treeVisualisation/viewport/viewportFit.js';
 
 class MockWorker {
   constructor() {
@@ -85,7 +89,7 @@ describe('tree viewport behavior', () => {
     controller.destroy();
   });
 
-  it('automatic static fit remains branch-focused when labels are visible', () => {
+  it('automatic static fit uses branch geometry while still rendering labels', () => {
     const node = { id: 'node-1', position: [0, 0, 0] };
     const label = {
       id: 'label-1',
@@ -122,7 +126,10 @@ describe('tree viewport behavior', () => {
 
     expect(controller.viewportManager.focusOnTree).toHaveBeenCalledWith([node], [label], {
       fitMode: VIEWPORT_FIT_MODES.BRANCH,
-      links: [link, extension],
+      obstructionScope: VIEWPORT_FIT_OBSTRUCTION_SCOPES.CANVAS,
+      maxFitAreaCenterDriftRatio: 0.2,
+      maxZoomOverAutoVisibleFit: VIEWPORT_AUTOMATIC_BRANCH_DETAIL_ZOOM_DELTA,
+      links: [link],
     });
     expect(controller._lastFocusedTreeIndex).toBe(0);
   });
@@ -157,6 +164,9 @@ describe('tree viewport behavior', () => {
 
     expect(controller.viewportManager.focusOnTree).toHaveBeenCalledWith([treeOneNode], [], {
       fitMode: VIEWPORT_FIT_MODES.BRANCH,
+      obstructionScope: VIEWPORT_FIT_OBSTRUCTION_SCOPES.CANVAS,
+      maxFitAreaCenterDriftRatio: 0.2,
+      maxZoomOverAutoVisibleFit: VIEWPORT_AUTOMATIC_BRANCH_DETAIL_ZOOM_DELTA,
       links: [],
     });
     expect(controller._lastFocusedTreeIndex).toBe(1);
@@ -218,7 +228,7 @@ describe('tree viewport behavior', () => {
     expect(controller.renderAllElements).toHaveBeenCalledOnce();
   });
 
-  it('resize before interaction refits the next static render with branch-focused bounds', async () => {
+  it('resize before interaction refits the next static render with branch bounds', async () => {
     useAppStore.setState({ playing: false });
     const node = { id: 'node-1', position: [0, 0, 0] };
     const label = { id: 'label-1', position: [900, 0, 0], text: 'Visible long label' };
@@ -259,7 +269,10 @@ describe('tree viewport behavior', () => {
 
     expect(controller.viewportManager.focusOnTree).toHaveBeenCalledWith([node], [label], {
       fitMode: VIEWPORT_FIT_MODES.BRANCH,
-      links: [link, extension],
+      obstructionScope: VIEWPORT_FIT_OBSTRUCTION_SCOPES.CANVAS,
+      maxFitAreaCenterDriftRatio: 0.2,
+      maxZoomOverAutoVisibleFit: VIEWPORT_AUTOMATIC_BRANCH_DETAIL_ZOOM_DELTA,
+      links: [link],
     });
   });
 

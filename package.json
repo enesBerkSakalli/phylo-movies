@@ -47,6 +47,7 @@
     "test:backend-required": "mocha --require @babel/register 'test/integration.test.js'",
     "test:unit": "mocha --require @babel/register 'test/parser.test.js' 'test/fileUpload.test.js'",
     "test:msa": "vitest run 'test/MSADeckGLViewerLifecycle.test.js' 'test/domain/msa/msaCellsLayer.test.js' 'test/domain/msa/msaColumnAxisLayer.test.js' 'test/domain/msa/msaContextColors.test.js' 'test/domain/msa/msaDataUtils.test.js' 'test/domain/msa/msaHudWindow.test.js' 'test/domain/msa/msaRegionRange.test.js' 'test/domain/msa/msaScrollbarUtils.test.js' 'test/domain/msa/msaViewerCamera.test.js' 'test/domain/msa/msaViewerRegionUtils.test.js' 'test/domain/msa/msaViewportStatus.test.js' 'test/domain/msa/msaWindowCalculator.test.js' 'test/integration/msaViewerContract.test.js' 'test/integration/msaWindowLayerStatic.test.js'",
+    "diagnose:tree-scaling": "node --no-warnings scripts/diagnose-tree-scaling.mjs",
     "test:tree-animation": "vitest run 'test/DeckGLTreeAnimationController.worker.test.js' 'test/TreeInterpolatorLabelRadius.test.js' 'test/VelocityNormalizer.test.js' 'test/treeHighlightState.test.js' 'test/treeLayerTopology.test.js' 'test/integration/treeLayoutInvalidation.test.js' 'test/integration/treeViewportBehavior.test.js' 'test/integration/useTreeControllerRenderScheduling.test.js'",
     "test:vitest": "vitest run",
     "test:list": "node scripts/list-tests.js",

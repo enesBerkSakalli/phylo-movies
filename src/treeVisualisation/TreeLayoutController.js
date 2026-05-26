@@ -4,6 +4,12 @@ import { TidyTreeLayout } from "./layout/TidyTreeLayout.js";
 import calculateScales, { getMaxScaleValue } from "../domain/tree/scaleUtils.js";
 import { createLayoutCacheKey, createTransformCacheKey, createUniformScalingCacheKey } from './utils/layoutCacheKey.js';
 import { createLayoutResult } from './layout/LayoutResultAdapter.js';
+import {
+  calculateLabelAngleSpan,
+  calculateReadableLabelRadii
+} from './layout/labelRingRadii.js';
+
+const TREE_LAYOUT_MARGIN = 60;
 
 export class TreeLayoutController {
 
@@ -13,7 +19,8 @@ export class TreeLayoutController {
 
   constructor(container = null) {
     this._scalingState = {
-      cacheKey: null
+      cacheKey: null,
+      minWindowSize: null
     };
     this._transformedCache = new Map();
     this._layoutResultCache = new Map();
@@ -79,6 +86,7 @@ export class TreeLayoutController {
     if (!Array.isArray(treeList) || treeList.length === 0) {
       this.maxGlobalScale = null;
       this._scalingState.cacheKey = scalingCacheKey;
+      this._scalingState.minWindowSize = this._getScalingMinWindowSize();
       return;
     }
 
@@ -88,17 +96,36 @@ export class TreeLayoutController {
 
     const inputFrameIndices = selectInputFrameIndices(state);
     const transformedTreeList = this._getOrCacheTransformedTrees(treeList, branchTransformation, state);
-    const scaleList = calculateScales(transformedTreeList, inputFrameIndices);
+    const { maxGlobalScale, minWindowSize } = this._calculateTrajectoryScale(
+      transformedTreeList,
+      inputFrameIndices
+    );
 
-    this.maxGlobalScale = getMaxScaleValue(scaleList);
-
+    this.maxGlobalScale = maxGlobalScale;
     this._scalingState.cacheKey = scalingCacheKey;
+    this._scalingState.minWindowSize = minWindowSize;
   }
 
   _isScalingCacheValid(scalingCacheKey) {
     return (
       hasUniformScaleValue(this.maxGlobalScale) &&
-      this._scalingState.cacheKey === scalingCacheKey
+      this._scalingState.cacheKey === scalingCacheKey &&
+      this._scalingState.minWindowSize === this._getScalingMinWindowSize()
+    );
+  }
+
+  _calculateTrajectoryScale(transformedTreeList, inputFrameIndices) {
+    const minWindowSize = this._getScalingMinWindowSize();
+    const scaleList = calculateScales(transformedTreeList, inputFrameIndices);
+    const maxGlobalScale = getMaxScaleValue(scaleList);
+
+    return { maxGlobalScale, minWindowSize };
+  }
+
+  _getScalingMinWindowSize(margin = TREE_LAYOUT_MARGIN) {
+    return Math.min(
+      Math.max(1, this.width - margin * 2),
+      Math.max(1, this.height - margin * 2)
     );
   }
 
@@ -200,7 +227,7 @@ export class TreeLayoutController {
   _computeLayout(transformedTreeData, layoutAngleDegrees, layoutRotationDegrees) {
     const layoutCalculator = new TidyTreeLayout(transformedTreeData);
     layoutCalculator.setDimension(this.width, this.height);
-    layoutCalculator.setMargin(60);
+    layoutCalculator.setMargin(TREE_LAYOUT_MARGIN);
     layoutCalculator.setAngleExtentDegrees(layoutAngleDegrees);
     layoutCalculator.setAngleOffsetDegrees(layoutRotationDegrees);
 
@@ -213,7 +240,8 @@ export class TreeLayoutController {
       width: this.width,
       height: this.height,
       margin: layoutCalculator.margin,
-      scale: layoutCalculator.scale
+      scale: layoutCalculator.scale,
+      uniformScale: layoutCalculator.uniformScale
     });
   }
 
@@ -225,28 +253,28 @@ export class TreeLayoutController {
    * Calculates label and extension radii with dynamic positioning.
    */
   _getConsistentRadii(layout) {
-    const { styleConfig } = useAppStore.getState();
+    const { fontSize, styleConfig } = useAppStore.getState();
     const offsets = styleConfig?.labelOffsets || { DEFAULT: 20, EXTENSION: 5 };
-    const globalRenderedRadius = this._getStableGlobalRenderedRadius(layout);
     const layoutRadius = Number(layout?.max_radius);
-    const baseRadius = Number.isFinite(globalRenderedRadius)
-      ? globalRenderedRadius
-      : Number.isFinite(layoutRadius)
+    const globalRenderedRadius = this._getStableGlobalRenderedRadius(layout);
+    const baseRadius = Number.isFinite(layoutRadius)
       ? Math.max(0, layoutRadius)
-      : Math.max(0, Math.min(layout.width - layout.margin * 2, layout.height - layout.margin * 2) / 2);
+      : Number.isFinite(globalRenderedRadius)
+        ? globalRenderedRadius
+        : Math.max(0, Math.min(layout.width - layout.margin * 2, layout.height - layout.margin * 2) / 2);
 
-    const extensionRadius = baseRadius + (offsets.EXTENSION ?? 5);
-    const labelRadius = extensionRadius + (offsets.DEFAULT ?? 20);
-
-    return {
-      extensionRadius,
-      labelRadius,
-    };
+    return calculateReadableLabelRadii({
+      baseRadius,
+      labelOffsets: offsets,
+      labelCount: Array.isArray(layout?.leaves) ? layout.leaves.length : 0,
+      fontSize,
+      angleSpanRadians: calculateLabelAngleSpan(layout?.leaves)
+    });
   }
 
   _getStableGlobalRenderedRadius(layout) {
     const maxScale = Number(this.maxGlobalScale);
-    const layoutScale = Number(layout?.scale);
+    const layoutScale = Number(layout?.uniformScale ?? layout?.scale);
     if (!hasUniformScaleValue(this.maxGlobalScale) || !Number.isFinite(layoutScale)) return null;
 
     return Math.max(0, maxScale * layoutScale);

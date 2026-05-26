@@ -3,6 +3,10 @@ import { TidyTreeLayout } from '../layout/TidyTreeLayout.js';
 import { createLayoutResult } from '../layout/LayoutResultAdapter.js';
 import { DeckGLTreeLayerDataFactory } from '../deckgl/DeckGLTreeLayerDataFactory.js';
 import { transformBranchLengths } from '../../domain/tree/branchTransform.js';
+import {
+    calculateLabelAngleSpan,
+    calculateReadableLabelRadii
+} from '../layout/labelRingRadii.js';
 
 const dataFactory = new DeckGLTreeLayerDataFactory();
 
@@ -26,7 +30,6 @@ export function calculateLayoutWorkerResult(treeData, options) {
     if (options.margin !== undefined) {
         layoutEngine.setMargin(options.margin);
     }
-
     const hasMaxGlobalScale = hasUniformScaleValue(options.maxGlobalScale);
     const rootNode = hasMaxGlobalScale
         ? layoutEngine.constructRadialTreeWithUniformScaling(Number(options.maxGlobalScale))
@@ -38,16 +41,25 @@ export function calculateLayoutWorkerResult(treeData, options) {
         height: options.height,
         margin: layoutEngine.margin,
         scale: layoutEngine.scale,
+        uniformScale: layoutEngine.uniformScale,
         layoutCacheKey: options.layoutCacheKey
     });
     const offsets = options.labelOffsets || { DEFAULT: 20, EXTENSION: 5 };
-    const baseRadius = getStableGlobalRenderedRadius({
+    const stableGlobalRadius = getStableGlobalRenderedRadius({
         maxGlobalScale: options.maxGlobalScale,
-        layoutScale: layoutEngine.scale,
+        layoutScale: layoutEngine.uniformScale ?? layoutEngine.scale,
         hasMaxGlobalScale
-    }) ?? maxRadius;
-    const extensionRadius = baseRadius + (offsets.EXTENSION ?? 5);
-    const labelRadius = extensionRadius + (offsets.DEFAULT ?? 20);
+    });
+    const baseRadius = Number.isFinite(maxRadius)
+        ? Math.max(0, maxRadius)
+        : (stableGlobalRadius ?? 0);
+    const { extensionRadius, labelRadius } = calculateReadableLabelRadii({
+        baseRadius,
+        labelOffsets: offsets,
+        labelCount: layoutResult.leaves.length,
+        fontSize: options.fontSize,
+        angleSpanRadians: calculateLabelAngleSpan(layoutResult.leaves)
+    });
 
     // 3. Convert to Layer Data
     // The data factory is purely mathematical, it generates JS Arrays/TypedArrays

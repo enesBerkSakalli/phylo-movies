@@ -1,3 +1,5 @@
+import { getMetricBranchLength, getVisualBranchLength } from '../../domain/tree/branchTransform.js';
+
 export function createLayoutResult(root, metadata = {}) {
   const layoutTree = normalizeLayoutNode(root);
   const nodes = [];
@@ -16,6 +18,7 @@ export function createLayoutResult(root, metadata = {}) {
     height: metadata.height,
     margin: metadata.margin,
     scale: metadata.scale,
+    uniformScale: metadata.uniformScale,
     layoutCacheKey: metadata.layoutCacheKey
   };
 }
@@ -31,6 +34,14 @@ function normalizeLayoutNode(node, parent = null, path = []) {
   const radius = Number.isFinite(node?.radius) ? node.radius : 0;
   const x = Number.isFinite(node?.x) ? node.x : 0;
   const y = Number.isFinite(node?.y) ? node.y : 0;
+  const nodeMetricBranchLength = Number(node?.metricBranchLength);
+  const nodeVisualBranchLength = Number(node?.visualBranchLength);
+  const metricBranchLength = Number.isFinite(nodeMetricBranchLength)
+    ? nodeMetricBranchLength
+    : getMetricBranchLength(data);
+  const visualBranchLength = Number.isFinite(nodeVisualBranchLength)
+    ? nodeVisualBranchLength
+    : getVisualBranchLength(data);
   const children = [];
 
   const normalized = {
@@ -38,6 +49,8 @@ function normalizeLayoutNode(node, parent = null, path = []) {
     parentId,
     name,
     length: data.length ?? 0,
+    metricBranchLength,
+    visualBranchLength,
     annotations: data.annotations ?? null,
     split_indices: splitIndices,
     depth: node?.depth ?? 0,
@@ -83,6 +96,9 @@ function collectLayoutData(node, nodes, leaves, links) {
       sourceSplitIndices: node.split_indices,
       targetSplitIndices: child.split_indices,
       split_indices: child.split_indices,
+      length: child.length,
+      metricBranchLength: child.metricBranchLength,
+      visualBranchLength: child.visualBranchLength,
       annotations: child.annotations ?? null,
       name: child.name,
       targetName: child.name,
@@ -103,6 +119,9 @@ function toLinkEndpoint(node) {
     y: node.y,
     angle: node.angle,
     radius: node.radius,
+    length: node.length,
+    metricBranchLength: node.metricBranchLength,
+    visualBranchLength: node.visualBranchLength,
     split_indices: node.split_indices,
     annotations: node.annotations ?? null,
   };

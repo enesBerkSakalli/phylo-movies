@@ -5,6 +5,7 @@
  * - Leaf Extensions
  */
 import { hasLifecycleHighlightedLinks } from '../../styles/links/linkUtils.js';
+import { selectLeafNamesByIndex } from '../../../../../state/phyloStore/selectors/treeSelectors.js';
 
 // ============================================================================
 // HELPERS
@@ -76,6 +77,7 @@ export function getLinksLayerProps(links, state, layerStyles) {
   } = state || {};
 
   const cached = layerStyles.getCachedState(state);
+  const taxaCount = (selectLeafNamesByIndex(state || {}) ?? []).length;
 
   return {
     data: links,
@@ -89,11 +91,11 @@ export function getLinksLayerProps(links, state, layerStyles) {
       getColor: [
         colorVersion, taxaColorVersion, upcomingChangesEnabled, subtreeHighlightsEnabled,
         highlightColorMode, dimmingEnabled, dimmingOpacity, subtreeDimmingEnabled,
-        subtreeDimmingOpacity
+        subtreeDimmingOpacity, taxaCount
       ],
       getWidth: [
         colorVersion, strokeWidth, upcomingChangesEnabled, subtreeHighlightsEnabled,
-        highlightColorMode, metricScale
+        highlightColorMode, metricScale, taxaCount
       ],
       getDashArray: [colorVersion, pivotEdgeDashingEnabled, upcomingChangesEnabled],
       getPath: [links]

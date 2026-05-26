@@ -9,16 +9,31 @@
  * - DOM Intersections: Calculating overlap between 2D DOMRects.
  */
 
-export const VIEWPORT_FIT_OBSTRUCTION_SELECTORS = Object.freeze([
+export const VIEWPORT_FIT_OBSTRUCTION_SCOPES = Object.freeze({
+  CANVAS: 'canvas',
+  ANCHORED: 'anchored',
+  ALL: 'all'
+});
+
+export const VIEWPORT_FIT_ANCHORED_OBSTRUCTION_SELECTORS = Object.freeze([
   '.movie-player-bar',
   '#top-scale-bar-container',
   '[role="group"][aria-label="Tree viewport controls"]',
-  '[role="group"][aria-label="Canvas export controls"]',
+  '[role="group"][aria-label="Canvas export controls"]'
+]);
+
+export const VIEWPORT_FIT_FLOATING_OBSTRUCTION_SELECTORS = Object.freeze([
   '[role="complementary"][aria-label="Comparison Panel"]',
   '.phylo-hud',
   '.phylo-hud-restore',
   '[aria-label="Transition Inspector"]'
 ]);
+
+export const VIEWPORT_FIT_OBSTRUCTION_SELECTORS = Object.freeze([
+  ...VIEWPORT_FIT_ANCHORED_OBSTRUCTION_SELECTORS,
+  ...VIEWPORT_FIT_FLOATING_OBSTRUCTION_SELECTORS
+]);
+
 export const VIEWPORT_FIT_OBSTRUCTION_PADDING_PX = 20;
 
 function clampFitAreaValue(value, max) {
@@ -105,7 +120,7 @@ export function calculateUnobstructedFitAreas(canvasWidth, canvasHeight, obstruc
   return candidates.sort((a, b) => (b.width * b.height) - (a.width * a.height));
 }
 
-export function calculateViewportFitAreas(containerElement) {
+export function calculateViewportFitAreas(containerElement, options = {}) {
   if (typeof document === 'undefined') return null;
   if (!containerElement?.getBoundingClientRect) return null;
 
@@ -113,7 +128,8 @@ export function calculateViewportFitAreas(containerElement) {
   if (!canvasRect?.width || !canvasRect?.height) return null;
 
   const elements = new Set();
-  VIEWPORT_FIT_OBSTRUCTION_SELECTORS.forEach((selector) => {
+  const selectors = getObstructionSelectors(options.obstructionScope);
+  selectors.forEach((selector) => {
     document.querySelectorAll(selector).forEach((element) => elements.add(element));
   });
 
@@ -127,4 +143,11 @@ export function calculateViewportFitAreas(containerElement) {
   });
 
   return calculateUnobstructedFitAreas(canvasRect.width, canvasRect.height, obstructions);
+}
+
+function getObstructionSelectors(obstructionScope = VIEWPORT_FIT_OBSTRUCTION_SCOPES.ALL) {
+  if (obstructionScope === VIEWPORT_FIT_OBSTRUCTION_SCOPES.CANVAS) return [];
+  return obstructionScope === VIEWPORT_FIT_OBSTRUCTION_SCOPES.ANCHORED
+    ? VIEWPORT_FIT_ANCHORED_OBSTRUCTION_SELECTORS
+    : VIEWPORT_FIT_OBSTRUCTION_SELECTORS;
 }
