@@ -35,6 +35,7 @@ All test datasets required to reproduce the preprint benchmarks are located in `
 
 - The public GitHub Pages deployment is an information and documentation site. It does not run the BranchArchitect backend, so example loading, tree interpolation, and MSA-derived tree construction require the desktop app, Docker image, or local full-stack setup.
 - The bundled tree-inference workflow currently uses FastTree 2 for rapid exploratory sliding-window analyses. For publication-grade inference, users can generate window trees externally with IQ-TREE, RAxML-NG, or another preferred phylogenetic package and load the resulting ordered Newick trees into Phylo-Movies.
+- Phylo-Movies does not currently suppress animated rearrangements in the tree viewer by bootstrap-support or uncertainty thresholds. When the pipeline provides branch-support annotations, the movement events table reports source and destination support values and can filter movements using a user-selected bootstrap threshold; threshold-based pruning, replicate design, and external rogue-taxon scores should still be interpreted alongside the animation.
 - Large datasets are best handled with precomputed trees and conservative rendering settings. The WebGL renderer supports hundreds of taxa interactively on typical laptops; thousands of taxa are possible for inspection but depend strongly on label visibility, branch effects, hardware, and the number of transition frames.
 
 ## Citation
@@ -133,7 +134,7 @@ Download a pre-built installer — no Node.js, Python, or Poetry installation re
 | **Linux**                 | `Phylo-Movies-<version>-linux-x86_64.AppImage` | x86_64              |
 | **Windows**               | `Phylo-Movies-<version>-win-x64.exe`           | x86_64              |
 
-> **Note:** The frontend viewer works without the backend — you can upload Newick tree files and visualize them directly. The BranchArchitect backend is only needed for tree interpolation (morphing animations) and MSA-based workflows. If the desktop app has dependency issues on your system, you can also run the application from source using the methods below.
+> **Note:** Phylo-Movies workflows rely on the bundled BranchArchitect backend for loading datasets, tree processing, interpolation, morphing animations, and MSA-based workflows. If the desktop app has dependency issues on your system, you can also run the full application from source using the methods below.
 
 ---
 

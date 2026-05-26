@@ -3,14 +3,17 @@ message: "If you use this software, please cite it as below."
 authors:
   - family-names: "Sakalli"
     given-names: "Enes Berk"
-    orcid: "https://orcid.org/0000-0000-0000-0000"  # TODO: Replace with your ORCID
-    affiliation: "University of Vienna"
+    affiliation: "Ludwig Boltzmann Institute for Network Medicine, University of Vienna"
     email: "enes.sakalli@univie.ac.at"
-  # TODO: Add co-authors here if applicable
-  # - family-names: "Lastname"
-  #   given-names: "Firstname"
-  #   orcid: "https://orcid.org/0000-0000-0000-0000"
-  #   affiliation: "Institution"
+  - family-names: "Haendeler"
+    given-names: "Simon E."
+    affiliation: "Digital R&D IST, Sanofi"
+  - family-names: "von Haeseler"
+    given-names: "Arndt"
+    affiliation: "Ludwig Boltzmann Institute for Network Medicine, University of Vienna"
+  - family-names: "Schmidt"
+    given-names: "Heiko A."
+    affiliation: "Max Perutz Labs, University of Vienna"
 title: "Phylo-Movies: Interactive Phylogenetic Tree Interpolation and Visualization"
 version: 0.64.0
 date-released: 2026-02-03
@@ -37,20 +40,17 @@ abstract: >-
   genomes and detecting rogue taxa that change position across bootstrap replicates. Phylo-Movies
   complements summary statistics such as Robinson-Foulds distances by showing which lineages move,
   where they move from, and which new groupings they form.
-
-# Software DOI pending archival on Zenodo.
-
 preferred-citation:
   type: article
   authors:
     - family-names: "Sakalli"
-      given-names: "E. B."
+      given-names: "Enes Berk"
     - family-names: "Haendeler"
-      given-names: "S. E."
+      given-names: "Simon E."
     - family-names: "von Haeseler"
-      given-names: "A."
+      given-names: "Arndt"
     - family-names: "Schmidt"
-      given-names: "H. A."
+      given-names: "Heiko A."
   title: "Animating Phylogenetic Trees from Sliding-Window Analyses"
   journal: "bioRxiv"
   year: 2026

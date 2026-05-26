@@ -4,15 +4,15 @@ Manuscript: MBE-26-0127, "Phylo-Movies: Animating Phylogenetic Trees from Slidin
 
 Date: 2026-05-19
 
-We thank the Associate Editor and the reviewers for their constructive and detailed feedback. We were encouraged that the reviewers found Phylo-Movies promising and potentially useful, and we have treated the software-accessibility concerns as the highest-priority revision item. We have also revised the response around the scientific scope of the tool, especially rogue-taxon analysis, and clarified methodological choices including FastTree, externally inferred trees, and scalability.
+We thank the Associate Editor and the reviewers for their constructive and detailed feedback. We were encouraged that the reviewers found Phylo-Movies promising and potentially useful, and we have treated the software-accessibility concerns as the highest-priority revision item. In the repository and revision plan, we have also narrowed the scientific scope of the tool, especially around rogue-taxon analysis, and clarified methodological choices including FastTree, externally inferred trees, and scalability.
 
-In the revised manuscript and repository materials, we distinguish more clearly between the documentation-only GitHub Pages site and the full application, which requires the desktop app, Docker image, or a local full-stack setup. We also clarify that Phylo-Movies is primarily a visualization and diagnostic tool: it complements quantitative summaries such as Robinson-Foulds distances, support values, and rogue-taxon scores rather than replacing them.
+The repository materials now distinguish more clearly between the documentation-only GitHub Pages site and the full application, which requires the desktop app, Docker image, or a local full-stack setup. The revised manuscript will mirror this distinction. We also clarify that Phylo-Movies is primarily a visualization and diagnostic tool: it complements quantitative summaries such as Robinson-Foulds distances, support values, and rogue-taxon scores rather than replacing them.
 
 ## Associate Editor
 
 **Comment:** The reviewers found the tool promising and potentially useful, but identified software or web functionality issues. They requested clearer justification of scientific use cases and impact, particularly for rogue taxon detection, and clarification of methodological choices such as FastTree and scalability. The manuscript would benefit from more concise presentation, clearer terminology, and improved discussion of usability and visualization options.
 
-**Response:** We have addressed these points in three ways. First, the software and documentation now more explicitly separate the GitHub Pages information site from full application workflows that require the BranchArchitect backend. The README describes desktop, Docker, and local installation options, explains why backend-dependent examples do not run on GitHub Pages alone, and includes macOS Gatekeeper guidance for unsigned builds. Second, we revised the scientific framing. Rogue-taxon animations are now described as an exploratory and diagnostic complement to quantitative instability measures, not as a replacement for them. Third, we clarified methodological scope: FastTree is retained only as a rapid exploratory tree-building option, while users can load ordered trees inferred externally with IQ-TREE, IQ-TREE `-fast`, RAxML-NG, or other tools. We also added practical scalability guidance and will streamline redundant method text and terminology in the revised manuscript.
+**Response:** We have addressed the repository/documentation portions of these points and have identified the remaining manuscript and release checks before resubmission. First, the README now separates the GitHub Pages information site from full application workflows that require the BranchArchitect backend. It describes desktop, Docker, and local installation options, explains why backend-dependent examples do not run on GitHub Pages alone, and includes macOS Gatekeeper guidance for unsigned builds. The final release page and manuscript text will be checked to ensure they make the same distinction. Second, the response narrows the scientific framing: rogue-taxon animations are described as an exploratory and diagnostic complement to quantitative instability measures, not as a replacement for them. Third, repository documentation and the response clarify methodological scope: FastTree is retained only as a rapid exploratory tree-building option, while users can load ordered trees inferred externally with IQ-TREE, IQ-TREE `-fast`, RAxML-NG, or other tools. We have also added practical scalability guidance in repository documentation; the final manuscript will still need the corresponding streamlined methods text and terminology.
 
 ## Reviewer 1
 
@@ -22,13 +22,13 @@ In the revised manuscript and repository materials, we distinguish more clearly 
 
 **Comment 2:** Page 3, line 19-20, first column: change "that" to "which".
 
-**Response:** Corrected in the revised manuscript.
+**Response:** This will be corrected in the revised manuscript, and the final manuscript check remains part of the resubmission checklist.
 
 ## Reviewer 2
 
 **Comment 1:** The GitHub-hosted website was not functioning properly. Loading an example file and uploading a downloaded example both produced "Failed to fetch".
 
-**Response:** We have clarified that the GitHub Pages deployment is an information and documentation site, not the full-stack application. Backend-dependent functions such as example loading, tree interpolation, and MSA-derived tree construction require the BranchArchitect backend and therefore require the desktop app, Docker image, or local full-stack setup. We updated the README and revision notes to make this distinction explicit so users do not expect the GitHub Pages site to provide full processing.
+**Response:** We have clarified in the README and revision notes that the GitHub Pages deployment is an information and documentation site, not the full-stack application. Backend-dependent functions such as example loading, tree interpolation, and MSA-derived tree construction require the BranchArchitect backend and therefore require the desktop app, Docker image, or local full-stack setup. The final manuscript and release page will be checked to make this distinction explicit so users do not expect the GitHub Pages site to provide full processing.
 
 **Comment 2:** The user interface was more complicated than expected, although feature-rich and fairly intuitive.
 
@@ -44,7 +44,7 @@ In the revised manuscript and repository materials, we distinguish more clearly 
 
 **Comment 5:** The reviewer was not convinced that visual inspection is the best way to identify rogue taxa. Quantifying instability may be more effective, and many SPRs may reflect phylogenetic uncertainty rather than recombination. There does not seem to be a way to filter uncertainty while retaining animation.
 
-**Response:** We agree with this concern and have narrowed the claim. Phylo-Movies is not intended to replace quantitative rogue-taxon detection or support-based filtering. Instead, it helps users inspect where unstable taxa attach, which neighboring subtrees are affected, and whether repeated movements have a recognizable pattern across an ordered series of trees. We will state explicitly that animated rearrangements can reflect reconstruction uncertainty, model choice, sampling noise, or genuine biological signal, and that interpretation should be combined with support metrics, replicate structure, and external rogue-taxon methods. To support this framing, the revised software work also adds subtree and SPR-move analytics so animation can be interpreted alongside quantitative summaries.
+**Response:** We agree with this concern and have narrowed the claim. Phylo-Movies is not intended to replace quantitative rogue-taxon detection, bootstrap-support filtering, or uncertainty-threshold filtering. In the revised pipeline, branch-support annotations from bootstrap-aware analyses are parsed and integrated into the SPR movement ledger. The movement events table reports source and destination support values for each movement and can filter movements with a user-selected bootstrap threshold, grouping rows as both attachments at or above threshold, one attachment at or above threshold, both below threshold, or support missing. This helps users focus the movement table on support-aware movement classes without implying that the animation itself automatically suppresses uncertain rearrangements. We will state explicitly that animated rearrangements can reflect reconstruction uncertainty, model choice, sampling noise, or genuine biological signal, and that support-aware inspection should be interpreted alongside replicate structure and external rogue-taxon methods. To support this framing, the revised software work also adds subtree and SPR-move analytics so animation can be interpreted alongside quantitative summaries, while threshold-based pruning of the animated tree sequence remains outside the core animation step.
 
 **Comment 6:** On page 2, "Small step sizes" should clarify that this refers to the sliding window.
 
@@ -60,11 +60,11 @@ In the revised manuscript and repository materials, we distinguish more clearly 
 
 **Comment 9:** It does not seem possible to dismiss the HUD. The tooltip for Coordinate in the HUD is blank.
 
-**Response:** We added an explicit HUD hide control with a restore affordance and expanded the Coordinate tooltip to explain the displayed timeline coordinate and full-precision value. This will be included in the revised software release notes.
+**Response:** We added an explicit HUD hide control with a restore affordance and expanded the Coordinate tooltip to explain the displayed timeline coordinate and full-precision value. This remains marked for final UI smoke testing and will be included in the revised software release notes after verification.
 
 **Comment 10:** The MSA Viewer does not seem animated in sync with the tree, even when the Sync Window toggle is on.
 
-**Response:** We strengthened the synchronization logic so the MSA window initializes when the controller mounts and updates when the transition resolver, sync toggle, window size, step size, or alignment length changes. We will also clarify the intended behavior: interpolated transition frames retain the source input tree's alignment interval until the next input tree is reached. This avoids implying base-by-base animation inside generated transition frames.
+**Response:** We strengthened the synchronization logic so the MSA window initializes when the controller mounts and updates when the transition resolver, sync toggle, window size, step size, or alignment length changes. This remains marked for final UI smoke testing. We will also clarify the intended behavior: interpolated transition frames retain the source input tree's alignment interval until the next input tree is reached. This avoids implying base-by-base animation inside generated transition frames.
 
 **Comment 11:** The JavaScript source code appears well documented and adherent to style conventions.
 
