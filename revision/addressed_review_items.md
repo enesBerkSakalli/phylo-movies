@@ -1,6 +1,6 @@
-# Addressed Reviewer Items
+# Addressed Or Tracked Reviewer Items
 
-This checklist summarizes reviewer and editor concerns that have already been addressed in the repository or in the current revision response draft. Items marked as software/documentation are already reflected in code, README, metadata, or revision notes; manuscript-only items are captured in `revision/MBE_revision_response_draft.md` and still need to be mirrored in the final manuscript text where applicable.
+This checklist summarizes reviewer and editor concerns that have either been addressed in repository artifacts or tracked in the current revision response draft. A checked item here does not by itself mean the final resubmission evidence is closed. Use `revision/REVIEWER_RESPONSE_EVIDENCE_MATRIX.md` as the closure source of truth for manuscript text, release artifacts, media/caption work, and final UI verification.
 
 ## Software And Distribution
 
@@ -13,7 +13,7 @@ This checklist summarizes reviewer and editor concerns that have already been ad
 - [x] Documented alternative ways to run the full application.
   - Evidence: `README.md` describes desktop builds, Docker/local backend workflows, and the `start.sh` one-command startup.
 
-- [x] Clarified that Newick tree viewing can work without the backend, while interpolation and MSA workflows require BranchArchitect.
+- [x] Clarified that Phylo-Movies workflows require the BranchArchitect backend for dataset loading, tree processing, interpolation, morphing animations, and MSA-based workflows.
   - Evidence: `README.md` installation notes.
 
 - [x] Added reviewer-facing response text for macOS unsigned-app/Gatekeeper problems.
@@ -32,6 +32,9 @@ This checklist summarizes reviewer and editor concerns that have already been ad
 
 - [x] Added caveats that animated differences can reflect uncertainty, model choice, or sampling noise.
   - Evidence: `revision/MBE_revision_response_draft.md`.
+
+- [x] Clarified bootstrap-support handling in the revised SPR movement ledger.
+  - Evidence: `README.md`, `revision/MBE_revision_response_draft.md`, and `revision/MBE_response_to_reviewers_with_answers.md` state that bootstrap-aware branch-support annotations are integrated into the movement table and can filter movement rows with a user-selected support threshold, while the tree animation itself does not automatically suppress uncertain rearrangements.
 
 - [x] Added educational/workshop use as a planned manuscript use case.
   - Evidence: `revision/MBE_revision_response_draft.md`.
