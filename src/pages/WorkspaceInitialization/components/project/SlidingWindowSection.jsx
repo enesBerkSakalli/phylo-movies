@@ -7,29 +7,33 @@ import { cn } from '../../../../lib/utils';
 import { STEP_MAX, STEP_MIN, WINDOW_MAX, WINDOW_MIN } from "../../workspaceInitializationFormModel.js";
 import { MsaRequiredBadge } from './MsaRequiredBadge.jsx';
 
-export function SlidingWindowSection({ hasMsa, disabled }) {
+export function SlidingWindowSection({ hasMsa, hasTrees = false, disabled, embedded = false }) {
   const { control } = useFormContext();
+  const description = hasTrees
+    ? 'Map alignment columns onto the uploaded tree sequence.'
+    : 'Window and stride used to infer one tree per MSA slice.';
 
   return (
     <section
       className={cn(
-        'flex flex-col gap-4 rounded-md border p-4 transition-colors',
-        !hasMsa ? 'border-dashed bg-muted/30 opacity-60' : 'bg-card'
+        'flex min-w-0 flex-col gap-4 transition-colors',
+        embedded ? '' : 'rounded-md border p-4',
+        !embedded && (!hasMsa ? 'border-dashed bg-muted/30' : 'bg-card')
       )}
     >
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <SlidersHorizontal className={cn('size-4', !hasMsa ? 'text-muted-foreground' : 'text-primary')} />
-          <h3 className="text-sm font-semibold">Overlapping Sliding Windows</h3>
+      {!embedded && (
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <SlidersHorizontal className={cn('size-4', !hasMsa ? 'text-muted-foreground' : 'text-primary')} />
+            <h3 className="text-sm font-semibold">Overlapping Sliding Windows</h3>
+          </div>
+          {!hasMsa && (
+            <MsaRequiredBadge description="Sliding window settings only apply when an MSA file is uploaded." />
+          )}
         </div>
-        {!hasMsa && (
-          <MsaRequiredBadge description="Sliding window settings only apply when an MSA file is uploaded." />
-        )}
-      </div>
+      )}
 
-      <p className="text-2xs text-muted-foreground leading-relaxed">
-        The alignment is divided into overlapping sliding windows. Each window yields one input tree. When stride &lt; window size, consecutive windows share alignment columns.
-      </p>
+      <p className="text-2xs text-muted-foreground leading-relaxed">{description}</p>
 
       <FormField
         control={control}
@@ -51,7 +55,7 @@ export function SlidingWindowSection({ hasMsa, disabled }) {
               />
             </FormControl>
             <FormDescription className="text-2xs leading-tight">
-              Number of nucleotide columns per sliding window.
+              Nucleotide columns per window.
             </FormDescription>
             <FormMessage />
           </FormItem>
@@ -78,7 +82,7 @@ export function SlidingWindowSection({ hasMsa, disabled }) {
               />
             </FormControl>
             <FormDescription className="text-2xs leading-tight">
-              Advancement between consecutive windows (in sites). Step sizes &lt; window size creates overlap.
+              Site stride between windows.
             </FormDescription>
             <FormMessage />
           </FormItem>

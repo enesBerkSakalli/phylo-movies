@@ -85,7 +85,7 @@ const HOW_IT_WORKS = [
 const FAQ_ITEMS = [
   {
     question: 'Is the README already a landing page?',
-    answer: 'It is a strong repository document, but not an ideal search landing page on its own because it mixes many intents at once: installation, architecture, datasets, developer workflow, and citation. A dedicated landing page is better for search and AI retrieval because it leads with the core problem, use cases, publication, and calls to action.'
+    answer: 'The README remains the complete technical reference. This page is a shorter public entry point for the desktop app, publication, downloads, citation, and setup paths.'
   },
   {
     question: 'Do I need the backend to use Phylo-Movies?',
@@ -101,7 +101,7 @@ const FAQ_ITEMS = [
   },
   {
     question: 'Which search intents should this page answer?',
-    answer: 'It should explicitly answer queries around phylogenetic tree interpolation, sliding-window phylogenetics, recombination visualization, rogue taxa detection, and MSA-linked tree analysis.'
+    answer: 'Phylo-Movies supports phylogenetic tree interpolation, sliding-window phylogenetics, recombination visualization, rogue taxa detection, and MSA-linked tree analysis.'
   }
 ];
 
@@ -154,7 +154,7 @@ export function GitHubPagesInfoPage() {
           <CardHeader>
             <CardTitle>Choose How to Use Phylo-Movies</CardTitle>
             <CardDescription>
-              The desktop app should be a primary call to action, not a footnote.
+              Pick the package or setup path that matches your workflow.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-3">
@@ -309,8 +309,7 @@ export function GitHubPagesInfoPage() {
           <CardHeader>
             <CardTitle>Key Use Cases</CardTitle>
             <CardDescription>
-              The landing page should be explicit about the scientific problems
-              the software solves.
+              Common analysis tasks supported by the desktop and full-stack application.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-3">
@@ -327,8 +326,7 @@ export function GitHubPagesInfoPage() {
           <CardHeader>
             <CardTitle>How It Works</CardTitle>
             <CardDescription>
-              Search-oriented landing pages perform better when the workflow is
-              understandable in a few steps.
+              The application converts ordered phylogenetic inputs into inspectable animated transitions.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-muted-foreground">
