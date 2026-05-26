@@ -3,7 +3,7 @@ import { type FileRejection, useDropzone } from "react-dropzone"
 import { File, Upload, X } from "lucide-react"
 
 import { cn } from "../../lib/utils"
-import { Button } from "./button"
+import { Button, buttonVariants } from "./button"
 import { Label } from "./label"
 
 interface FileUploadZoneProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -57,6 +57,18 @@ export const FileUploadZone = React.forwardRef<HTMLDivElement, FileUploadZonePro
     const statusId = `${inputId}-status`
     const [statusMessage, setStatusMessage] = React.useState("")
     const [hasError, setHasError] = React.useState(false)
+    const previousValueNameRef = React.useRef(value?.name ?? null)
+
+    React.useEffect(() => {
+      const previousValueName = previousValueNameRef.current
+      const currentValueName = value?.name ?? null
+      previousValueNameRef.current = currentValueName
+
+      if (previousValueName && !currentValueName) {
+        setHasError(false)
+        setStatusMessage("")
+      }
+    }, [value])
 
     const onDrop = React.useCallback(
       (acceptedFiles: File[]) => {
@@ -95,32 +107,52 @@ export const FileUploadZone = React.forwardRef<HTMLDivElement, FileUploadZonePro
       onFileSelect(null)
     }
 
+    const handleBrowseClick = (e: React.MouseEvent) => {
+      e.stopPropagation()
+      e.preventDefault()
+      if (!disabled) open()
+    }
+
+    const handleBrowseKeyDown = (e: React.KeyboardEvent) => {
+      if (disabled || (e.key !== "Enter" && e.key !== " ")) return
+      e.preventDefault()
+      e.stopPropagation()
+      open()
+    }
+
+    const handleRootClick = () => {
+      if (!disabled) open()
+    }
+
     const statusClassName =
       statusMessage.length === 0 ? "sr-only" : hasError || isDragReject ? "text-destructive" : "text-muted-foreground"
 
     return (
-      <div ref={ref} className={className} {...divProps}>
+      <div ref={ref} className={cn("min-w-0", className)} {...divProps}>
         {label && <Label htmlFor={inputId}>{label}</Label>}
         <div
-          {...getRootProps()}
+          {...getRootProps({ onClick: handleRootClick })}
           className={cn(
-            "relative mt-2 flex items-center justify-center rounded-lg border-2 border-dashed px-6 py-8 transition-colors",
+            "relative mt-2 flex min-h-[12rem] min-w-0 items-center justify-center rounded-lg border-2 border-dashed px-4 py-7 transition-colors sm:px-6 sm:py-8",
             "hover:border-primary/50 hover:bg-accent/50",
             isDragActive && "border-primary bg-accent",
             isDragReject && "border-destructive bg-destructive/10",
-            disabled && "opacity-50",
-            value && "border-solid py-4"
+            !disabled && "cursor-pointer",
+            disabled && "cursor-not-allowed opacity-50",
+            value && "border-solid"
           )}
         >
           <input
             {...getInputProps({
               id: inputId,
               "aria-describedby": `${descriptionId} ${statusId}`,
+              "aria-hidden": true,
+              tabIndex: -1,
             })}
           />
 
           {value ? (
-            <div className="flex w-full items-center gap-3">
+            <div className="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-center">
               <File className="size-5 shrink-0 text-primary" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{value.name}</p>
@@ -128,16 +160,19 @@ export const FileUploadZone = React.forwardRef<HTMLDivElement, FileUploadZonePro
                   {(value.size / 1024).toFixed(1)} KB
                 </p>
               </div>
-              <div className="flex items-center gap-2">
-                <Button
+              <div className="flex shrink-0 items-center gap-2">
+                <button
                   type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={open}
                   disabled={disabled}
+                  onClick={handleBrowseClick}
+                  onKeyDown={handleBrowseKeyDown}
+                  className={cn(
+                    buttonVariants({ variant: "outline", size: "sm" }),
+                    disabled && "pointer-events-none"
+                  )}
                 >
                   Browse files
-                </Button>
+                </button>
                 <Button
                   type="button"
                   variant="ghost"
@@ -147,38 +182,38 @@ export const FileUploadZone = React.forwardRef<HTMLDivElement, FileUploadZonePro
                   disabled={disabled}
                   aria-label="Clear selected file"
                 >
-                  <X className="size-4" />
+                  <X data-icon="inline-start" />
                 </Button>
               </div>
             </div>
           ) : (
-            <div className="space-y-3 text-center">
+            <div className="flex min-w-0 flex-col items-center gap-3 text-center">
               <Upload
                 className={cn(
                   "mx-auto size-8 text-muted-foreground",
                   isDragActive && "text-primary"
                 )}
               />
-              <p className="text-sm">
+              <p className="max-w-full text-wrap text-sm leading-relaxed">
                 <span className="font-medium text-foreground">
-                  {isDragActive ? "Drop file here" : "Drag and drop a file here"}
+                  {isDragActive ? "Drop file here" : "Click to upload or drag and drop"}
                 </span>
-                <span className="text-muted-foreground"> or browse from your device</span>
+                <span className="text-muted-foreground"> from your device</span>
               </p>
-              <Button
+              <button
                 type="button"
-                variant="outline"
-                size="sm"
-                onClick={open}
                 disabled={disabled}
+                onClick={handleBrowseClick}
+                onKeyDown={handleBrowseKeyDown}
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "sm" }),
+                  disabled && "pointer-events-none"
+                )}
               >
                 Browse files
-              </Button>
-              <div id={descriptionId} className="space-y-1">
-                {description && <p className="text-xs text-muted-foreground">{description}</p>}
-                <p className="text-2xs text-muted-foreground/80">
-                  Keyboard: tab to the browse button and press Enter or Space.
-                </p>
+              </button>
+              <div id={descriptionId} className="flex max-w-full flex-col gap-1">
+                {description && <p className="text-wrap text-xs text-muted-foreground">{description}</p>}
               </div>
             </div>
           )}

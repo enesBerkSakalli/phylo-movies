@@ -1,288 +1,92 @@
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { GitBranch, Trees } from "lucide-react";
-import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "../../../../components/ui/form";
-import { Checkbox } from "../../../../components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../../components/ui/select";
-import { Switch } from "../../../../components/ui/switch";
+import { Trees } from "lucide-react";
 import { cn } from '../../../../lib/utils';
 import { MsaRequiredBadge } from './MsaRequiredBadge.jsx';
+import { TreeInferenceEngineField } from './TreeInferenceEngineField.jsx';
+import { IqTreeSearchSection } from './IqTreeSearchSection.jsx';
+import { SubstitutionModelSection } from './SubstitutionModelSection.jsx';
+import { IqTreeSupportSection } from './IqTreeSupportSection.jsx';
+import { FastTreeOptionsSection } from './FastTreeOptionsSection.jsx';
 
-export function TreeConstructionSection({ hasMsa, hasTrees, disabled }) {
-  const { control, watch } = useFormContext();
+export function TreeConstructionSection({ hasMsa, disabled, embedded = false }) {
+  const { watch } = useFormContext();
   const treeInferenceEngine = watch('treeInferenceEngine') || 'iqtree';
   const iqtreeSupportMode = watch('iqtreeSupportMode') || 'none';
   const isFastTree = treeInferenceEngine === 'fasttree';
   const isIqTree = treeInferenceEngine === 'iqtree';
-  const hasIqTreeSupport = iqtreeSupportMode !== 'none';
+  const supportsUfboot = ['ufboot', 'sh_alrt_ufboot'].includes(iqtreeSupportMode);
+  const supportsShAlrt = ['sh_alrt', 'sh_alrt_ufboot'].includes(iqtreeSupportMode);
 
   return (
     <section
       className={cn(
-        'flex flex-col gap-4 rounded-md border p-4 transition-colors',
-        !hasMsa ? 'border-dashed bg-muted/30 opacity-60' : 'bg-card'
+        'flex min-w-0 flex-col gap-4 transition-colors',
+        embedded ? '' : 'rounded-md border p-4',
+        !embedded && (!hasMsa ? 'border-dashed bg-muted/30' : 'bg-card')
       )}
     >
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Trees className={cn('size-4', !hasMsa ? 'text-muted-foreground' : 'text-primary')} />
-          <h3 className="text-sm font-semibold">
-            Tree Construction
-          </h3>
+      {!embedded && (
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Trees className={cn('size-4', !hasMsa ? 'text-muted-foreground' : 'text-primary')} />
+            <h3 className="text-sm font-semibold">
+              Tree Inference
+            </h3>
+          </div>
+          {!hasMsa && (
+            <MsaRequiredBadge description="Inference settings only apply when an MSA file is uploaded." />
+          )}
         </div>
-        {!hasMsa && (
-          <MsaRequiredBadge description="Tree construction settings only apply when an MSA file is uploaded." />
+      )}
+
+      <p className="text-2xs text-muted-foreground leading-relaxed">
+        Engine and inference options for each MSA window.
+      </p>
+
+      <TreeInferenceEngineField
+        hasMsa={hasMsa}
+        disabled={disabled}
+        isFastTree={isFastTree}
+      />
+
+      <div className="flex flex-col gap-3">
+        {isIqTree && (
+          <IqTreeSearchSection
+            hasMsa={hasMsa}
+            disabled={disabled}
+            supportsUfboot={supportsUfboot}
+          />
+        )}
+
+        <SubstitutionModelSection
+          hasMsa={hasMsa}
+          disabled={disabled}
+        />
+
+        {isIqTree && (
+          <IqTreeSupportSection
+            hasMsa={hasMsa}
+            disabled={disabled}
+            supportMode={iqtreeSupportMode}
+            supportsUfboot={supportsUfboot}
+            supportsShAlrt={supportsShAlrt}
+          />
+        )}
+
+        {isFastTree && (
+          <FastTreeOptionsSection
+            hasMsa={hasMsa}
+            disabled={disabled}
+          />
         )}
       </div>
 
-      <div className="flex flex-col gap-3">
-        <FormField
-          control={control}
-          name="treeInferenceEngine"
-          render={({ field }) => (
-            <FormItem className="flex flex-col gap-2">
-              <FormLabel className={`text-sm font-normal ${!hasMsa ? 'text-muted-foreground' : ''}`}>
-                Inference Engine
-              </FormLabel>
-              <Select
-                value={field.value || 'iqtree'}
-                onValueChange={field.onChange}
-                disabled={disabled || !hasMsa}
-              >
-                <FormControl>
-                  <SelectTrigger className="h-9 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="iqtree">IQ-TREE</SelectItem>
-                  <SelectItem value="fasttree">FastTree 2</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormDescription className="text-2xs leading-tight">
-                {isFastTree
-                  ? "FastTree is faster for exploratory sliding-window runs and exposes FastTree-specific pseudocount and no-ML options."
-                  : "IQ-TREE is the default maximum-likelihood engine. Fast search is enabled by default for responsive MSA window inference."}
-              </FormDescription>
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={control}
-          name="iqtreeFastSearch"
-          render={({ field }) => (
-            <FormItem className="flex items-start gap-3">
-              <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                  disabled={disabled || !hasMsa || !isIqTree}
-                />
-              </FormControl>
-              <div className="flex flex-col gap-1 leading-none">
-                <FormLabel className={`text-sm font-normal cursor-pointer ${!hasMsa || !isIqTree ? 'text-muted-foreground' : ''}`}>
-                  Fast Search
-                </FormLabel>
-                <FormDescription className="text-2xs leading-tight">
-                  IQ-TREE -fast mode optimizes two starting trees with NNI search. Disable for a slower, more thorough search.
-                </FormDescription>
-              </div>
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={control}
-          name="iqtreeSupportMode"
-          render={({ field }) => (
-            <FormItem className="flex flex-col gap-2">
-              <FormLabel className={`text-sm font-normal ${!hasMsa || !isIqTree ? 'text-muted-foreground' : ''}`}>
-                Branch Support
-              </FormLabel>
-              <Select
-                value={field.value || 'none'}
-                onValueChange={field.onChange}
-                disabled={disabled || !hasMsa || !isIqTree}
-              >
-                <FormControl>
-                  <SelectTrigger className="h-9 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
-                  <SelectItem value="ufboot">UFBoot</SelectItem>
-                  <SelectItem value="sh_alrt">SH-aLRT</SelectItem>
-                  <SelectItem value="sh_alrt_ufboot">SH-aLRT + UFBoot</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormDescription className="text-2xs leading-tight">
-                Adds IQ-TREE support labels to inferred window trees so movement analytics can report support for source and destination attachments.
-              </FormDescription>
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={control}
-          name="iqtreeBnni"
-          render={({ field }) => (
-            <FormItem className="flex items-start gap-3">
-              <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                  disabled={disabled || !hasMsa || !isIqTree || !hasIqTreeSupport}
-                />
-              </FormControl>
-              <div className="flex flex-col gap-1 leading-none">
-                <FormLabel className={`text-sm font-normal cursor-pointer ${!hasMsa || !isIqTree || !hasIqTreeSupport ? 'text-muted-foreground' : ''}`}>
-                  Bootstrap NNI
-                </FormLabel>
-                <FormDescription className="text-2xs leading-tight">
-                  Enables IQ-TREE -bnni for support-aware runs.
-                </FormDescription>
-              </div>
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={control}
-          name="midpointRooting"
-          render={({ field }) => (
-            <FormItem className="flex h-fit items-center justify-between gap-4 rounded-md border bg-muted/20 p-4 transition-colors hover:bg-muted/30">
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <GitBranch className="size-4 text-primary" />
-                  <FormLabel className="font-medium cursor-pointer text-sm">
-                    Midpoint Rooting
-                  </FormLabel>
-                </div>
-                <FormDescription className="text-2xs leading-tight max-w-[24rem]">
-                  Establish the root at the branch that bisects the tree diameter. Applies to uploaded trees or trees inferred from MSA windows.
-                </FormDescription>
-              </div>
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                  disabled={disabled}
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={control}
-          name="useGtr"
-          render={({ field }) => (
-            <FormItem className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <FormLabel className={`text-sm font-normal ${!hasMsa ? 'text-muted-foreground' : ''}`}>
-                  Substitution Model
-                </FormLabel>
-                <div className="flex items-center gap-2">
-                  <span className={`text-xs font-medium tabular-nums ${!field.value ? 'text-foreground' : 'text-muted-foreground'}`}>JC</span>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      disabled={disabled || !hasMsa}
-                    />
-                  </FormControl>
-                  <span className={`text-xs font-medium tabular-nums ${field.value ? 'text-foreground' : 'text-muted-foreground'}`}>GTR</span>
-                </div>
-              </div>
-              <FormDescription className="text-2xs leading-tight">
-                {field.value 
-                  ? "GTR: General Time Reversible with 6 substitution rates and 4 base frequencies."
-                  : "JC: Jukes-Cantor assumes equal substitution rates and base frequencies."}
-              </FormDescription>
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={control}
-          name="useGamma"
-          render={({ field }) => (
-            <FormItem className="flex items-start gap-3">
-              <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                  disabled={disabled || !hasMsa}
-                />
-              </FormControl>
-              <div className="flex flex-col gap-1 leading-none">
-                <FormLabel className={`text-sm font-normal cursor-pointer ${!hasMsa ? 'text-muted-foreground' : ''}`}>
-                  Gamma Rate Heterogeneity
-                </FormLabel>
-                <FormDescription className="text-2xs leading-tight">
-                  Adds gamma-distributed site-rate variation to the selected engine's substitution model.
-                </FormDescription>
-              </div>
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={control}
-          name="usePseudo"
-          render={({ field }) => (
-            <FormItem className="flex items-start gap-3">
-              <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                  disabled={disabled || !hasMsa || !isFastTree}
-                />
-              </FormControl>
-              <div className="flex flex-col gap-1 leading-none">
-                <FormLabel className={`text-sm font-normal cursor-pointer ${!hasMsa || !isFastTree ? 'text-muted-foreground' : ''}`}>
-                  Pseudocounts
-                </FormLabel>
-                <FormDescription className="text-2xs leading-tight">
-                  FastTree-only regularization for fragmentary sequences with limited overlap.
-                </FormDescription>
-              </div>
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={control}
-          name="noMl"
-          render={({ field }) => (
-            <FormItem className="flex items-start gap-3">
-              <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                  disabled={disabled || !hasMsa || !isFastTree}
-                />
-              </FormControl>
-              <div className="flex flex-col gap-1 leading-none">
-                <FormLabel className={`text-sm font-normal cursor-pointer ${!hasMsa || !isFastTree ? 'text-muted-foreground' : ''}`}>
-                  Skip ML Optimization
-                </FormLabel>
-                <FormDescription className="text-2xs leading-tight">
-                  FastTree-only option that skips maximum-likelihood NNI updates. Faster but less accurate; branch lengths may be negative.
-                </FormDescription>
-              </div>
-            </FormItem>
-          )}
-        />
-      </div>
-
-      <p className="text-2xs text-muted-foreground italic leading-tight">
-        {hasTrees
-          ? "Inference options apply only when an MSA file is provided. Midpoint rooting still applies to uploaded trees."
-          : "Upload an MSA to infer trees here, or upload precomputed trees and use midpoint rooting only."}
-      </p>
+      {!embedded && (
+        <p className="text-2xs text-muted-foreground italic leading-tight">
+          Upload an MSA to infer trees here. If you upload precomputed trees only, this section is skipped.
+        </p>
+      )}
     </section>
   );
 }
