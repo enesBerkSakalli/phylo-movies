@@ -23,35 +23,6 @@ export function getBrowserViewportSize() {
   };
 }
 
-export function getFloatingWindowViewportInsets() {
-  if (typeof window === 'undefined' || typeof document === 'undefined') {
-    return { left: 0, right: 0, top: 0, bottom: 0 };
-  }
-
-  const viewportWidth = positiveNumber(window.innerWidth, DEFAULT_VIEWPORT.width);
-  const viewportHeight = positiveNumber(window.innerHeight, DEFAULT_VIEWPORT.height);
-  const sidebar = document.querySelector('[data-slot="sidebar-container"]');
-  const rect = sidebar?.getBoundingClientRect();
-  const playerBar = document.querySelector('.movie-player-bar');
-  const playerBarRect = playerBar?.getBoundingClientRect();
-
-  const bottom = playerBarRect &&
-    playerBarRect.width > viewportWidth * 0.5 &&
-    playerBarRect.height > 0 &&
-    playerBarRect.bottom >= viewportHeight - 1
-    ? Math.min(viewportHeight, Math.max(0, viewportHeight - playerBarRect.top))
-    : 0;
-
-  if (!rect || rect.width <= 0 || rect.height <= 0 || rect.right <= 0 || rect.left >= viewportWidth) {
-    return { left: 0, right: 0, top: 0, bottom };
-  }
-
-  const left = rect.left <= 0 ? Math.min(viewportWidth, Math.max(0, rect.right)) : 0;
-  const right = rect.right >= viewportWidth ? Math.min(viewportWidth, Math.max(0, viewportWidth - rect.left)) : 0;
-
-  return { left, right, top: 0, bottom };
-}
-
 export function fitFloatingWindowRect(rect = {}, options = {}) {
   const viewportWidth = positiveNumber(options.viewportWidth, DEFAULT_VIEWPORT.width);
   const viewportHeight = positiveNumber(options.viewportHeight, DEFAULT_VIEWPORT.height);

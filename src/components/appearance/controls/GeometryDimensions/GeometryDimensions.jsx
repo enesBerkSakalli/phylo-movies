@@ -3,7 +3,7 @@ import { LabeledSlider } from '../../../ui/labeled-slider';
 import { SidebarMenuSub, SidebarMenuSubItem } from '../../../ui/sidebar';
 import { Label } from '../../../ui/label';
 import { Switch } from '../../../ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '../../../ui/select';
 
 const clampValue = (value, fallback) => {
   const numeric = Number(value);
@@ -67,8 +67,9 @@ export function GeometryDimensions({
     const nextValue = clampValue(Array.isArray(vals) ? vals[0] : null, fontSizeNumber ?? 1.8);
     if (nextValue !== fontSizeNumber) {
       setFontSize(nextValue);
+      renderControllers();
     }
-  }, [fontSizeNumber, setFontSize]);
+  }, [fontSizeNumber, setFontSize, renderControllers]);
 
   return (
     <SidebarMenuSub>
@@ -126,7 +127,7 @@ export function GeometryDimensions({
                 onCheckedChange={onToggleLabels}
               />
             </div>
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="branch-support-label-key" className="text-xs font-medium text-foreground/80">
                 Branch Annotation
               </Label>
@@ -139,11 +140,13 @@ export function GeometryDimensions({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {(branchAnnotationOptions || [{ value: 'none', label: 'None' }]).map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
+                  <SelectGroup>
+                    {(branchAnnotationOptions || [{ value: 'none', label: 'None' }]).map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
                 </SelectContent>
               </Select>
             </div>

@@ -12,12 +12,8 @@ const {
 
 const solution0 = {
   affected_subtrees_by_split: {
-    '[9]': [
-      [[1], [2, 3]],
-    ],
-    '[10]': [
-      [[1]],
-    ],
+    '[9]': [[[1], [2, 3]]],
+    '[10]': [[[1]]],
   },
   attachment_edges_by_split: {
     '[9]': {
@@ -41,9 +37,7 @@ const solution0 = {
 
 const solution1 = {
   affected_subtrees_by_split: {
-    '[8]': [
-      [[4, 5, 6]],
-    ],
+    '[8]': [[[4, 5, 6]]],
   },
   attachment_edges_by_split: {
     '[8]': {
@@ -209,16 +203,64 @@ describe('SPR analytics model', () => {
     const branchSupportIndex = {
       getSupport(inputTreeIndex, splitIndices) {
         const key = `${inputTreeIndex}:${splitIndices.join(',')}`;
-        return {
-          '0:7,8': { raw: '41', kind: 'bootstrap', primary: 41, bootstrap: 41 },
-          '1:5,6': { raw: '93', kind: 'bootstrap', primary: 93, bootstrap: 93 },
-        }[key] ?? null;
+        return (
+          {
+            '0:7,8': { raw: '41', kind: 'bootstrap', primary: 41, bootstrap: 41 },
+            '1:5,6': { raw: '93', kind: 'bootstrap', primary: 93, bootstrap: 93 },
+          }[key] ?? null
+        );
+      },
+      getBranchValue(inputTreeIndex, splitIndices) {
+        const key = `${inputTreeIndex}:${splitIndices.join(',')}`;
+        return (
+          {
+            '0:1': {
+              key: 'support.bootstrap.value',
+              label: 'Bootstrap',
+              value: 61,
+              displayValue: '61',
+              role: 'branch_support',
+              support: { kind: 'bootstrap', primary: 61, bootstrap: 61 },
+            },
+            '1:1': {
+              key: 'support.bootstrap.value',
+              label: 'Bootstrap',
+              value: 79,
+              displayValue: '79',
+              role: 'branch_support',
+              support: { kind: 'bootstrap', primary: 79, bootstrap: 79 },
+            },
+          }[key] ?? null
+        );
+      },
+      getNearestAncestorBranchValue(inputTreeIndex, splitIndices) {
+        const key = `${inputTreeIndex}:${splitIndices.join(',')}`;
+        return (
+          {
+            '0:1': {
+              key: 'support.bootstrap.value',
+              label: 'Bootstrap',
+              value: 72.5,
+              displayValue: '72.5',
+              role: 'branch_support',
+              support: { kind: 'bootstrap', primary: 72.5, bootstrap: 72.5 },
+            },
+            '1:1': {
+              key: 'support.bootstrap.value',
+              label: 'Bootstrap',
+              value: 84,
+              displayValue: '84',
+              role: 'branch_support',
+              support: { kind: 'bootstrap', primary: 84, bootstrap: 84 },
+            },
+          }[key] ?? null
+        );
       },
     };
     const events = buildSprMoveEventRows(pairs, {
       ...analyticsOptions,
       branchSupportIndex,
-      supportThreshold: 70,
+      branchValueThreshold: 70,
     });
 
     expect(events).toHaveLength(4);
@@ -245,7 +287,12 @@ describe('SPR analytics model', () => {
       weightedRfDistance: 1.25,
       sourceAttachmentSupport: { raw: '41', kind: 'bootstrap', primary: 41, bootstrap: 41 },
       destinationAttachmentSupport: { raw: '93', kind: 'bootstrap', primary: 93, bootstrap: 93 },
-      supportClass: 'mixed_support',
+      sourceMovedSubtreeBranchValue: { displayValue: '61', role: 'branch_support' },
+      destinationMovedSubtreeBranchValue: { displayValue: '79', role: 'branch_support' },
+      sourceAncestorBranchValue: { displayValue: '72.5', role: 'branch_support' },
+      destinationAncestorBranchValue: { displayValue: '84', role: 'branch_support' },
+      branchValueClass: 'mixed_value',
+      contextBranchValueClass: 'both_high_value',
     });
     expect(events[0]).not.toHaveProperty('pairKey');
     expect(events[0]).not.toHaveProperty('destinationTreeIndex');
@@ -263,56 +310,62 @@ describe('SPR analytics model', () => {
   });
 
   it('normalizes SPR event arrays without mutating the backend payload', () => {
-    const unsortedPairs = [{
-      pair_id: 'opaque-pair',
-      pair_ordinal: 0,
-      source_input_tree_index: 10,
-      target_input_tree_index: 11,
-      source_frame_index: 50,
-      target_frame_index: 55,
-      generated_frame_range: [51, 54],
-      solution: {
-        affected_subtrees_by_split: {},
-        attachment_edges_by_split: {
-          '[3, 9]': {
-            '[1, 4]': {
-              source: [8, 1, 7],
-              destination: [6, 1, 5],
+    const unsortedPairs = [
+      {
+        pair_id: 'opaque-pair',
+        pair_ordinal: 0,
+        source_input_tree_index: 10,
+        target_input_tree_index: 11,
+        source_frame_index: 50,
+        target_frame_index: 55,
+        generated_frame_range: [51, 54],
+        solution: {
+          affected_subtrees_by_split: {},
+          attachment_edges_by_split: {
+            '[3, 9]': {
+              '[1, 4]': {
+                source: [8, 1, 7],
+                destination: [6, 1, 5],
+              },
             },
           },
         },
       },
-    }];
-    const unsortedTemporalEvents = [{
-      event_id: 'opaque-pair:spr:0',
-      event_type: 'spr_move',
-      pair_id: 'opaque-pair',
-      pair_ordinal: 0,
-      local_step_range: [0, 2],
-      frame_range: [51, 53],
-      pivot_edge: [9, 3],
-      driver_subtree: [4, 1],
-      highlight_group: [[4, 1]],
-      collapse_path: [],
-      expand_path: [],
-      collapse_hops: 1,
-      expand_hops: 1,
-      total_hops: 2,
-      collapse_branch_length: 0.1,
-      expand_branch_length: 0.2,
-      total_branch_length: 0.3,
-    }];
+    ];
+    const unsortedTemporalEvents = [
+      {
+        event_id: 'opaque-pair:spr:0',
+        event_type: 'spr_move',
+        pair_id: 'opaque-pair',
+        pair_ordinal: 0,
+        local_step_range: [0, 2],
+        frame_range: [51, 53],
+        pivot_edge: [9, 3],
+        driver_subtree: [4, 1],
+        highlight_group: [[4, 1]],
+        collapse_path: [],
+        expand_path: [],
+        collapse_hops: 1,
+        expand_hops: 1,
+        total_hops: 2,
+        collapse_branch_length: 0.1,
+        expand_branch_length: 0.2,
+        total_branch_length: 0.3,
+      },
+    ];
     const originalPayload = structuredClone({ unsortedPairs, unsortedTemporalEvents });
 
     const events = buildSprMoveEventRows(unsortedPairs, {
       temporalEvents: unsortedTemporalEvents,
       pairMetrics: {
-        rows: [{
-          pair_id: 'opaque-pair',
-          pair_ordinal: 0,
-          robinson_foulds: 0.7,
-          weighted_robinson_foulds: 7,
-        }],
+        rows: [
+          {
+            pair_id: 'opaque-pair',
+            pair_ordinal: 0,
+            robinson_foulds: 0.7,
+            weighted_robinson_foulds: 7,
+          },
+        ],
         semantics: {},
       },
     });
@@ -398,62 +451,72 @@ describe('SPR analytics model', () => {
   });
 
   it('reports malformed SPR events without a pivot edge before resolving attachments', () => {
-    const malformedEvents = [{
-      ...temporalEvents[3],
-      pivot_edge: [],
-    }];
+    const malformedEvents = [
+      {
+        ...temporalEvents[3],
+        pivot_edge: [],
+      },
+    ];
 
-    expect(() => buildSprMoveEventRows([pairs[0]], {
-      temporalEvents: malformedEvents,
-      pairMetrics: { rows: [pairMetrics.rows[0]], semantics: {} },
-    })).toThrow(/must include a non-empty pivot_edge/);
+    expect(() =>
+      buildSprMoveEventRows([pairs[0]], {
+        temporalEvents: malformedEvents,
+        pairMetrics: { rows: [pairMetrics.rows[0]], semantics: {} },
+      })
+    ).toThrow(/must include a non-empty pivot_edge/);
   });
 
   it('reports SPR events whose attachment context cannot be resolved', () => {
-    const malformedEvents = [{
-      ...temporalEvents[3],
-      pivot_edge: [999],
-    }];
+    const malformedEvents = [
+      {
+        ...temporalEvents[3],
+        pivot_edge: [999],
+      },
+    ];
 
-    expect(() => buildSprMoveEventRows([pairs[0]], {
-      temporalEvents: malformedEvents,
-      pairMetrics: { rows: [pairMetrics.rows[0]], semantics: {} },
-    })).toThrow(/could not resolve attachment context/);
+    expect(() =>
+      buildSprMoveEventRows([pairs[0]], {
+        temporalEvents: malformedEvents,
+        pairMetrics: { rows: [pairMetrics.rows[0]], semantics: {} },
+      })
+    ).toThrow(/could not resolve attachment context/);
   });
 
   it('keeps backend highlight context separate from the physical moved subtree', () => {
-    const groupedPairs = [{
-      ...pairs[0],
-      solution: {
-        affected_subtrees_by_split: {
-          '[9]': [
-            [[1], [2]],
-          ],
-        },
-        attachment_edges_by_split: {
-          '[9]': {
-            '[1]': {
-              source: [1, 7],
-              destination: [1, 9],
-            },
-            '[2]': {
-              source: [2, 8],
-              destination: [2, 10],
+    const groupedPairs = [
+      {
+        ...pairs[0],
+        solution: {
+          affected_subtrees_by_split: {
+            '[9]': [[[1], [2]]],
+          },
+          attachment_edges_by_split: {
+            '[9]': {
+              '[1]': {
+                source: [1, 7],
+                destination: [1, 9],
+              },
+              '[2]': {
+                source: [2, 8],
+                destination: [2, 10],
+              },
             },
           },
         },
       },
-    }];
-    const groupedEvents = [{
-      ...temporalEvents[3],
-      highlight_group: [[1], [2]],
-      collapse_hops: 1,
-      expand_hops: 2,
-      total_hops: 3,
-      collapse_branch_length: 0.1,
-      expand_branch_length: 0.4,
-      total_branch_length: 0.5,
-    }];
+    ];
+    const groupedEvents = [
+      {
+        ...temporalEvents[3],
+        highlight_group: [[1], [2]],
+        collapse_hops: 1,
+        expand_hops: 2,
+        total_hops: 3,
+        collapse_branch_length: 0.1,
+        expand_branch_length: 0.4,
+        total_branch_length: 0.5,
+      },
+    ];
 
     const events = buildSprMoveEventRows(groupedPairs, {
       temporalEvents: groupedEvents,

@@ -12,13 +12,17 @@ import { X, Columns } from 'lucide-react';
 import { useMSA } from './useMSA.js';
 import { MSAControls } from './MSAControls';
 import { MSAViewer } from './MSAViewer';
+import { cn } from '../../lib/utils';
 import {
   fitFloatingWindowRect,
   getBrowserViewportSize,
-  getFloatingWindowViewportInsets,
   hasFloatingWindowRectChanged,
   toFloatingWindowRect,
 } from '../ui/floatingWindowGeometry.js';
+import {
+  FLOATING_WINDOW_SURFACE_CLASS,
+  getFloatingWindowLayerClass,
+} from '../ui/floating-window-layer.js';
 
 const MSA_WINDOW_BOUNDS = {
   minWidth: 840,
@@ -28,15 +32,10 @@ const MSA_WINDOW_BOUNDS = {
 
 function fitMsaWindowRect(rect) {
   const viewport = getBrowserViewportSize();
-  const insets = getFloatingWindowViewportInsets();
   return fitFloatingWindowRect(rect, {
     ...MSA_WINDOW_BOUNDS,
     viewportWidth: viewport.width,
     viewportHeight: viewport.height,
-    leftInset: insets.left,
-    rightInset: insets.right,
-    topInset: insets.top,
-    bottomInset: insets.bottom,
   });
 }
 
@@ -49,18 +48,22 @@ function MSAWindowContent() {
     : 'No alignment loaded';
 
   return (
-    <div className="flex flex-col h-full overflow-hidden rounded-md border border-border/40">
-      <div className="msa-rnd-header flex items-center justify-between gap-2 px-2 py-1 border-b border-border/40 bg-muted/20 backdrop-blur-sm cursor-move select-none shrink-0">
+    <div className="flex h-full flex-col overflow-hidden bg-card">
+      <div className="msa-rnd-header flex items-center justify-between gap-2 px-2 py-1 shrink-0 cursor-move select-none border-b border-border bg-muted/30">
         <div className="flex min-w-0 items-center gap-2">
           <Columns className="size-3.5 shrink-0 text-primary" aria-hidden />
           <div className="flex min-w-0 items-center gap-2">
-            <div className="shrink-0 text-xs font-bold leading-tight tracking-tight uppercase">MSA Viewer</div>
-            <div className="min-w-0 truncate text-[10px] text-muted-foreground/80 leading-tight font-medium" aria-live="polite">{summary}</div>
+            <div id="msa-window-title" className="shrink-0 text-xs font-bold leading-tight uppercase">
+              Sequence Alignment
+            </div>
+            <div id="msa-window-description" className="min-w-0 truncate text-[10px] font-medium leading-tight text-muted-foreground/80" aria-live="polite">
+              {summary}
+            </div>
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <Button variant="ghost" size="icon-xs" onClick={closeMsaViewer} aria-label="Close MSA viewer" className="hover:bg-destructive/10 hover:text-destructive transition-colors">
-            <X className="size-4" />
+            <X aria-hidden />
           </Button>
         </div>
       </div>
@@ -129,7 +132,13 @@ export function MsaRndWindow({ isActive = false, onFocus } = {}) {
         });
         setMsaWindow(toFloatingWindowRect(nextRect));
       }}
-      className={`fixed ${isActive ? 'z-[1200]' : 'z-[1100]'} pointer-events-auto shadow-2xl bg-card`}
+      role="region"
+      aria-labelledby="msa-window-title"
+      aria-describedby="msa-window-description"
+      className={cn(
+        FLOATING_WINDOW_SURFACE_CLASS,
+        getFloatingWindowLayerClass(isActive)
+      )}
     >
       <MSAWindowContent />
     </Rnd>

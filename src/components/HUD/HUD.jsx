@@ -27,7 +27,7 @@ export function HUD() {
 
   if (!isVisible) {
     return (
-      <div className="phylo-hud-restore absolute bottom-48 left-4 z-50 pointer-events-auto">
+      <div className="phylo-hud-restore absolute bottom-4 left-4 z-50 pointer-events-auto sm:bottom-48">
         <AppTooltip content="Show comparison panel">
           <Button
             type="button"
@@ -47,7 +47,7 @@ export function HUD() {
   return (
     <Draggable handle=".hud-drag-handle" bounds="parent">
       <div
-        className="phylo-hud absolute bottom-48 left-4 z-50 pointer-events-auto"
+        className="phylo-hud absolute bottom-4 left-4 z-50 pointer-events-auto sm:bottom-48"
         role="complementary"
         aria-label="Comparison Panel"
       >

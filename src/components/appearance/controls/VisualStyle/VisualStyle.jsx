@@ -74,9 +74,9 @@ export function GeometryDimensionsSection() {
     <Collapsible asChild className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton tooltip="Display Sizes">
+          <SidebarMenuButton tooltip="Geometry and labels">
             <Circle className="text-primary" />
-            <span>Display Sizes</span>
+            <span>Geometry & Labels</span>
             <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
           </SidebarMenuButton>
         </CollapsibleTrigger>

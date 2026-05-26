@@ -93,7 +93,7 @@ export const MovedSubtreeRecurrenceTable = ({ recurrences, leafNamesByIndex }: M
                                         {item.percentage.toFixed(1)}%
                                     </TooltipTrigger>
                                     <TooltipContent side="left" className="text-2xs font-mono bg-popover border-border">
-                                        <div className="space-y-1">
+                                        <div className="flex flex-col gap-1">
                                             <div>Full Precision:</div>
                                             <div className="font-bold text-primary">
                                                 {item.percentage.toFixed(6)}%

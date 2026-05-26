@@ -159,14 +159,33 @@ function selectPrimarySupportField(fields) {
   return fields[0] ?? null;
 }
 
+function buildBranchAnnotationValue(key, field, support = null) {
+  if (!field || typeof field !== 'object') return null;
+  const displayValue = formatAnnotationFieldValue(field);
+  if (!displayValue) return null;
+  return {
+    key,
+    label: optionLabelForField(field, key),
+    value: field.value,
+    displayValue,
+    role: typeof field.role === 'string' ? field.role : 'annotation',
+    support,
+  };
+}
+
 function buildSupportSummary(node) {
   const fields = Object.values(getAnnotationFields(node)).filter(isBranchSupportField);
   if (fields.length === 0) return null;
 
   const primaryField = selectPrimarySupportField(fields);
+  const primaryFieldKey = Object.entries(getAnnotationFields(node))
+    .find(([, field]) => field === primaryField)?.[0] ?? null;
   const summary = {
+    fieldKey: primaryFieldKey,
+    label: primaryFieldKey ? optionLabelForField(primaryField, primaryFieldKey) : 'Branch Support',
     kind: primaryField?.analysis?.method ?? primaryField?.path?.[1] ?? 'branch_support',
     primary: Number(primaryField.value),
+    displayValue: formatAnnotationFieldValue(primaryField),
   };
 
   for (const field of fields) {
@@ -176,19 +195,62 @@ function buildSupportSummary(node) {
   return summary;
 }
 
-function collectSupport(node, allTaxaIndices, map) {
+function branchSupportToAnnotationValue(support) {
+  if (!support || !Number.isFinite(Number(support.primary))) return null;
+  return {
+    key: support.fieldKey ?? 'branch_support.primary',
+    label: support.label ?? 'Branch Support',
+    value: support.primary,
+    displayValue: support.displayValue ?? formatCompactSupportNumber(support.primary) ?? String(support.primary),
+    role: 'branch_support',
+    support,
+  };
+}
+
+function isStrictSuperset(candidate, split) {
+  if (candidate.length <= split.length) return false;
+  const candidateSet = new Set(candidate);
+  return split.every((index) => candidateSet.has(index));
+}
+
+function getBranchValue(record, valueKey) {
+  if (!record) return null;
+  if (valueKey && valueKey !== BRANCH_ANNOTATION_NONE) {
+    return buildBranchAnnotationValue(valueKey, record.fields[valueKey], record.support);
+  }
+  return branchSupportToAnnotationValue(record.support);
+}
+
+function numericBranchValue(branchValue) {
+  const value = Number(branchValue?.value);
+  if (Number.isFinite(value)) return value;
+  const support = Number(branchValue?.support?.primary);
+  return Number.isFinite(support) ? support : null;
+}
+
+function collectSupport(node, allTaxaIndices, supportBySplit, branchRecords) {
   if (!node || typeof node !== 'object') return;
 
+  const splitIndices = normalizeIndices(node.split_indices);
+  const fields = getAnnotationFields(node);
   const support = buildSupportSummary(node);
+  if (splitIndices.length > 0) {
+    branchRecords.push({
+      splitIndices,
+      fields,
+      support,
+    });
+  }
+
   if (support && Number.isFinite(Number(support.primary))) {
     const key = canonicalSupportSplitKey(node.split_indices, allTaxaIndices);
-    if (key && !map.has(key)) {
-      map.set(key, support);
+    if (key && !supportBySplit.has(key)) {
+      supportBySplit.set(key, support);
     }
   }
 
   const children = Array.isArray(node.children) ? node.children : [];
-  children.forEach((child) => collectSupport(child, allTaxaIndices, map));
+  children.forEach((child) => collectSupport(child, allTaxaIndices, supportBySplit, branchRecords));
 }
 
 function getInputFrameRows(frames) {
@@ -229,8 +291,22 @@ export function buildBranchSupportIndex({ interpolatedTrees, frames } = {}) {
 
     const allTaxaIndices = normalizeIndices(tree.split_indices);
     const supportBySplit = new Map();
-    collectSupport(tree, allTaxaIndices, supportBySplit);
-    supportByInputTree.set(inputTreeIndex, { allTaxaIndices, supportBySplit });
+    const branchRecords = [];
+    collectSupport(tree, allTaxaIndices, supportBySplit, branchRecords);
+    branchRecords.sort((left, right) => left.splitIndices.length - right.splitIndices.length);
+    const branchRecordBySplit = new Map();
+    for (const record of branchRecords) {
+      const key = canonicalSupportSplitKey(record.splitIndices, allTaxaIndices);
+      if (key && !branchRecordBySplit.has(key)) {
+        branchRecordBySplit.set(key, record);
+      }
+    }
+    supportByInputTree.set(inputTreeIndex, {
+      allTaxaIndices,
+      supportBySplit,
+      branchRecordBySplit,
+      branchRecords,
+    });
   });
 
   return {
@@ -240,6 +316,31 @@ export function buildBranchSupportIndex({ interpolatedTrees, frames } = {}) {
       const key = canonicalSupportSplitKey(splitIndices, entry.allTaxaIndices);
       return entry.supportBySplit.get(key) ?? null;
     },
+    getBranchValue(inputTreeIndex, splitIndices, valueKey = BRANCH_ANNOTATION_NONE) {
+      const entry = supportByInputTree.get(inputTreeIndex);
+      if (!entry) return null;
+      const key = canonicalSupportSplitKey(splitIndices, entry.allTaxaIndices);
+      return getBranchValue(entry.branchRecordBySplit.get(key), valueKey);
+    },
+    getNearestAncestorBranchValue(inputTreeIndex, splitIndices, valueKey = BRANCH_ANNOTATION_NONE) {
+      const entry = supportByInputTree.get(inputTreeIndex);
+      if (!entry) return null;
+
+      const split = normalizeIndices(splitIndices);
+      if (split.length === 0) return null;
+
+      for (const record of entry.branchRecords) {
+        if (
+          record.splitIndices.length >= entry.allTaxaIndices.length
+          || !isStrictSuperset(record.splitIndices, split)
+        ) {
+          continue;
+        }
+        const value = getBranchValue(record, valueKey);
+        if (value) return value;
+      }
+      return null;
+    },
   };
 }
 
@@ -248,14 +349,14 @@ export function formatSupportValue(support) {
   return Number.isFinite(value) ? value.toFixed(1) : '-';
 }
 
-export function classifyMovementSupport(sourceSupport, destinationSupport, threshold = 70) {
-  const source = Number(sourceSupport?.primary);
-  const destination = Number(destinationSupport?.primary);
-  if (!Number.isFinite(source) || !Number.isFinite(destination)) return 'support_missing';
+export function classifyMovementBranchValues(sourceBranchValue, destinationBranchValue, threshold = 70) {
+  const source = numericBranchValue(sourceBranchValue);
+  const destination = numericBranchValue(destinationBranchValue);
+  if (!Number.isFinite(source) || !Number.isFinite(destination)) return 'value_missing';
 
   const sourceHigh = source >= threshold;
   const destinationHigh = destination >= threshold;
-  if (sourceHigh && destinationHigh) return 'high_support_conflict';
-  if (sourceHigh || destinationHigh) return 'mixed_support';
-  return 'low_support';
+  if (sourceHigh && destinationHigh) return 'both_high_value';
+  if (sourceHigh || destinationHigh) return 'mixed_value';
+  return 'low_value';
 }

@@ -70,6 +70,7 @@ describe('SPR analytics phylogenetic language', () => {
       title: 'Moving Subtrees',
       description: 'Quantifies which taxa or subtrees change attachment across neighboring trees.',
       countedDescription: 'A movement is one subtree that changes attachment between two neighboring trees. Each row shows what moved, where it moved from, and where it moved to.',
+      eventDescription: 'One row per movement, showing what moved, the pivot/from/to edges, and source-to-target values for the selected branch annotation.',
     });
     expect(SPR_ANALYTICS_COPY.tabs.events).toBe('Movement Events');
     const analyticsCopyText = collectCopyText(SPR_ANALYTICS_COPY);
@@ -81,8 +82,10 @@ describe('SPR analytics phylogenetic language', () => {
     expect(Object.values(SPR_SUMMARY_LABELS)).not.toContain('SPR Move Events');
 
     expect(SPR_MOVE_EVENT_TABLE_COPY.searchLabel).toBe('Search movements');
-    expect(SPR_MOVE_EVENT_TABLE_COPY.noSearchResults).toBe('No movements match this search.');
+    expect(SPR_MOVE_EVENT_TABLE_COPY.noSearchResults).toBe('No movements match these filters.');
     expect(SPR_MOVE_EVENT_TABLE_COPY.columns.movement).toBe('Movement');
+    expect(SPR_MOVE_EVENT_TABLE_COPY.columns).not.toHaveProperty('pair');
+    expect(collectCopyText(SPR_MOVE_EVENT_TABLE_COPY)).not.toContain('High conflict');
 
     expect(timelineTooltipSource).toContain('Affected subtrees');
     expect(timelineTooltipSource).not.toContain('Moved groups');

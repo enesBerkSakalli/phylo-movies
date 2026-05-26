@@ -4,6 +4,7 @@ import { Separator } from "../../ui/separator";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -101,11 +102,13 @@ export function StrategySelector({
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="0">First (0)</SelectItem>
-                          <SelectItem value="1">Second (1)</SelectItem>
-                          <SelectItem value="-1">Last (-1)</SelectItem>
-                          <SelectItem value="2">Third (2)</SelectItem>
-                          <SelectItem value="-2">2nd Last (-2)</SelectItem>
+                          <SelectGroup>
+                            <SelectItem value="0">First (0)</SelectItem>
+                            <SelectItem value="1">Second (1)</SelectItem>
+                            <SelectItem value="-1">Last (-1)</SelectItem>
+                            <SelectItem value="2">Third (2)</SelectItem>
+                            <SelectItem value="-2">2nd Last (-2)</SelectItem>
+                          </SelectGroup>
                         </SelectContent>
                       </Select>
                    </div>

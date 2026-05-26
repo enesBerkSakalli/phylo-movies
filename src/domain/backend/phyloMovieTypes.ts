@@ -27,6 +27,15 @@ export interface BranchSupport {
   [key: string]: unknown;
 }
 
+export interface BranchAnnotationValue {
+  key: string;
+  label: string;
+  value: AnnotationValue;
+  displayValue: string;
+  role: string;
+  support?: BranchSupport | null;
+}
+
 export interface TreeNode {
   name: string;
   length: number;

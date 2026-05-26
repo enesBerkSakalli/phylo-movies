@@ -22,7 +22,6 @@ import {
   useAppStore
 } from '../../state/phyloStore/store.js';
 
-import { Button } from '../ui/button';
 import { Slider } from '../ui/slider';
 import { Label } from '../ui/label';
 import {
@@ -32,57 +31,11 @@ import {
   SidebarMenuSubItem
 } from '../ui/sidebar';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../ui/collapsible';
-import { ChevronDown, Link, Box, Info } from 'lucide-react';
+import { ChevronDown, Link } from 'lucide-react';
 import { FocusHighlightingSection } from './FocusHighlightingSection';
 import { PivotEdgeEffectsSection } from './PivotEdgeEffectsSection';
 
-
-// ==========================================================================
-// COMPONENT
-// ==========================================================================
-
-export function PerspectiveSection({ cameraMode, toggleCameraMode, treeControllers }) {
-  return (
-    <Collapsible asChild className="group/collapsible">
-      <SidebarMenuItem>
-        <CollapsibleTrigger asChild>
-          <SidebarMenuButton tooltip="View Mode">
-            <Box className="text-primary" />
-            <span>View Mode</span>
-            <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-          </SidebarMenuButton>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <SidebarMenuSub>
-            <SidebarMenuSubItem>
-              <div className="px-2 py-3">
-                <Button
-                  id="camera-mode-button"
-                  className="w-full text-xs h-9"
-                  variant="outline"
-                  onClick={() => {
-                    try {
-                      const newMode = toggleCameraMode();
-                      treeControllers.forEach((controller) => controller.setCameraMode(newMode));
-                    } catch { }
-                  }}
-                >
-                  <span id="camera-mode-text">{cameraMode === 'orbit' ? 'Switch to 2D' : 'Switch to 3D'}</span>
-                </Button>
-                <div className="flex items-start gap-2 text-2xs text-muted-foreground/80 italic mt-3 leading-relaxed">
-                  <Info className="size-3 shrink-0 mt-1" />
-                  <span>Switch between flat 2D and interactive 3D tree views.</span>
-                </div>
-              </div>
-            </SidebarMenuSubItem>
-          </SidebarMenuSub>
-        </CollapsibleContent>
-      </SidebarMenuItem>
-    </Collapsible>
-  );
-}
-
-export function Appearance() {
+export function FocusAndChangeEffects() {
   const dimming = useAppStore(selectDimmingEnabled);
   const dimmingOpacity = useAppStore(selectDimmingOpacity);
   const subtreeDimming = useAppStore(selectSubtreeDimmingEnabled);
@@ -94,7 +47,6 @@ export function Appearance() {
   const upcomingChangesEnabled = useAppStore(selectUpcomingChangesEnabled);
   const treeControllers = useAppStore(selectTreeControllers);
 
-  // Setter functions - retrieve from store
   const setDimmingEnabled = useAppStore(selectSetDimmingEnabled);
   const setDimmingOpacity = useAppStore(selectSetDimmingOpacity);
   const setSubtreeDimmingEnabled = useAppStore(selectSetSubtreeDimmingEnabled);
@@ -111,24 +63,17 @@ export function Appearance() {
     }
   };
 
-  const toggleDimming = async (value) => {
-    try { setDimmingEnabled(!!value); await rerenderAll(); } catch { }
+  const rerenderAfter = async (applyValue) => {
+    applyValue();
+    await rerenderAll();
   };
-  const handleDimmingOpacityChange = async (value) => {
-    try { setDimmingOpacity(value[0]); await rerenderAll(); } catch { }
-  };
-  const toggleSubtreeDimming = async (value) => {
-    try { setSubtreeDimmingEnabled(!!value); await rerenderAll(); } catch { }
-  };
-  const handleSubtreeDimmingOpacityChange = async (value) => {
-    try { setSubtreeDimmingOpacity(value[0]); await rerenderAll(); } catch { }
-  };
-  const handleLinkOpacityChange = async (value) => {
-    try { setLinkConnectionOpacity(value[0]); await rerenderAll(); } catch { }
-  };
-  const handleConnectorStrokeWidthChange = async (value) => {
-    try { setConnectorStrokeWidth(value[0]); await rerenderAll(); } catch { }
-  };
+
+  const toggleDimming = (value) => rerenderAfter(() => setDimmingEnabled(!!value));
+  const handleDimmingOpacityChange = (value) => rerenderAfter(() => setDimmingOpacity(value[0]));
+  const toggleSubtreeDimming = (value) => rerenderAfter(() => setSubtreeDimmingEnabled(!!value));
+  const handleSubtreeDimmingOpacityChange = (value) => rerenderAfter(() => setSubtreeDimmingOpacity(value[0]));
+  const handleLinkOpacityChange = (value) => rerenderAfter(() => setLinkConnectionOpacity(value[0]));
+  const handleConnectorStrokeWidthChange = (value) => rerenderAfter(() => setConnectorStrokeWidth(value[0]));
 
   const togglePulse = (value) => setPulseEnabled(!!value);
   const toggleDashing = (value) => setDashingEnabled(!!value);
@@ -155,7 +100,7 @@ export function Appearance() {
         onToggleDashing={toggleDashing}
         onToggleUpcomingChanges={toggleUpcomingChanges}
       />
-      <ConnectionsSection
+      <GroupConnectorsSection
         linkConnectionOpacity={linkConnectionOpacity}
         connectorStrokeWidth={connectorStrokeWidth}
         onLinkOpacityChange={handleLinkOpacityChange}
@@ -165,12 +110,7 @@ export function Appearance() {
   );
 }
 
-
-// ==========================================================================
-// SUB-COMPONENTS
-// ==========================================================================
-
-export function ConnectionsSection({ linkConnectionOpacity, connectorStrokeWidth, onLinkOpacityChange, onConnectorStrokeWidthChange }) {
+export function GroupConnectorsSection({ linkConnectionOpacity, connectorStrokeWidth, onLinkOpacityChange, onConnectorStrokeWidthChange }) {
   return (
     <Collapsible asChild className="group/collapsible">
       <SidebarMenuItem>
@@ -222,6 +162,3 @@ export function ConnectionsSection({ linkConnectionOpacity, connectorStrokeWidth
     </Collapsible>
   );
 }
-
-
-export default Appearance;

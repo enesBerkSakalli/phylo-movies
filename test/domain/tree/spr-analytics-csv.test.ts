@@ -89,6 +89,10 @@ describe('createSprMoveEventCsv', () => {
     expect(header).toContain('Context Subtree');
     expect(header).toContain('From Attachment');
     expect(header).toContain('To Attachment');
+    expect(header).toContain('From Moved Subtree Value');
+    expect(header).toContain('To Placement Context Value');
+    expect(header).toContain('Moved Subtree Value Class');
+    expect(header).toContain('Placement Context Value Class');
     expect(header).not.toContain('Measured Path');
     expect(header).not.toContain('Event ID');
     expect(row).toContain('pair_0_1:0');
@@ -129,9 +133,14 @@ describe('createSprMoveEventCsv', () => {
     expect(row[10]).toBe('');
     expect(row[11]).toBe('');
     expect(row[12]).toBe('');
+    expect(row[13]).toBe('');
+    expect(row[14]).toBe('');
+    expect(row[15]).toBe('');
+    expect(row[16]).toBe('');
     expect(row[17]).toBe('');
     expect(row[18]).toBe('');
-    expect(row[15]).toBe('0');
+    expect(row[19]).toBe('');
+    expect(row[20]).toBe('0');
   });
 
   it('uses movement terminology in exported filenames', () => {

@@ -17,8 +17,8 @@ describe('tools sidebar structure', () => {
     expect(appSource).not.toContain('<Sidebar collapsible="icon">');
     expect(appSource).not.toContain('<SidebarGroupLabel>');
     expect(appSource).not.toContain("from './components/nav/ButtonsMSA.jsx'");
-    expect(appSource).not.toContain("from './components/appearance/Appearance.jsx'");
-    expect(appSource).not.toContain("from './components/appearance/controls/VisualElements/VisualElements.jsx'");
+    expect(appSource).not.toContain("from './components/appearance/FocusAndChangeEffects.jsx'");
+    expect(appSource).not.toContain("from './components/appearance/controls/VisualElements/TaxaAndHighlightsSection.jsx'");
   });
 
   it('does not keep the legacy MSA nav button component', () => {
@@ -47,8 +47,8 @@ describe('tools sidebar structure', () => {
   });
 
   it('keeps visual element and visual effect sections scoped to their responsibility', () => {
-    expect(source('src/components/appearance/controls/VisualElements/VisualElements.jsx')).not.toContain('<VisualStyle');
-    expect(source('src/components/appearance/Appearance.jsx')).not.toContain('<PerspectiveSection');
+    expect(source('src/components/appearance/controls/VisualElements/TaxaAndHighlightsSection.jsx')).not.toContain('<VisualStyle');
+    expect(source('src/components/appearance/FocusAndChangeEffects.jsx')).not.toContain('<PerspectiveSection');
   });
 
   it('keeps expandable tool panels closed by default for scanability', () => {
@@ -56,8 +56,8 @@ describe('tools sidebar structure', () => {
       'src/components/sidebar/MsaSidebarSection.jsx',
       'src/components/appearance/layout/TreeStructureGroup.jsx',
       'src/components/appearance/controls/VisualStyle/VisualStyle.jsx',
-      'src/components/appearance/controls/VisualElements/VisualElements.jsx',
-      'src/components/appearance/Appearance.jsx',
+      'src/components/appearance/controls/VisualElements/TaxaAndHighlightsSection.jsx',
+      'src/components/appearance/FocusAndChangeEffects.jsx',
       'src/components/appearance/FocusHighlightingSection.jsx',
       'src/components/appearance/PivotEdgeEffectsSection.jsx',
       'src/components/TreeStatsPanel/TreeStatsPanel.tsx',
@@ -89,8 +89,8 @@ describe('tools sidebar structure', () => {
       'src/components/sidebar/MsaSidebarSection.jsx',
       'src/components/appearance/layout/TreeStructureGroup.jsx',
       'src/components/appearance/controls/VisualStyle/VisualStyle.jsx',
-      'src/components/appearance/controls/VisualElements/VisualElements.jsx',
-      'src/components/appearance/Appearance.jsx',
+      'src/components/appearance/controls/VisualElements/TaxaAndHighlightsSection.jsx',
+      'src/components/appearance/FocusAndChangeEffects.jsx',
       'src/components/appearance/FocusHighlightingSection.jsx',
       'src/components/appearance/PivotEdgeEffectsSection.jsx',
       'src/components/TreeStatsPanel/TreeStatsPanel.tsx',

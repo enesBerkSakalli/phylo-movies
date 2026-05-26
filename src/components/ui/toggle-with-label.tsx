@@ -47,7 +47,7 @@ export const ToggleWithLabel = React.forwardRef<HTMLLabelElement, ToggleWithLabe
           />
         )}
 
-        <div className="flex-1 space-y-0.5">
+        <div className="flex flex-1 flex-col gap-0.5">
           <div className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
             {label}
           </div>

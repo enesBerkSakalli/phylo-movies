@@ -63,15 +63,13 @@ export const TreeStatsPanel: React.FC = () => {
         <CollapsibleContent>
           <SidebarMenuSub>
             <SidebarMenuSubItem>
-              <div className="space-y-4 px-2 py-2">
-                {/* Current scale value and relative magnitude */}
+              <div className="flex flex-col gap-4 px-2 py-2">
                 <CurrentScaleDisplay
                   formattedCurrent={formattedCurrent}
                   formattedMax={formattedMax}
                   magnitudeFactor={scaleRatio}
                 />
 
-                {/* Branch length histogram */}
                 {showBranchLengths ? (
                   <BranchLengthHistogram
                     bins={histogramBins}
