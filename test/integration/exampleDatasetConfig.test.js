@@ -74,9 +74,18 @@ describe('example dataset configuration', () => {
         process.cwd(),
         publicationRelativePath,
       );
-      const treeCount = fs.readFileSync(treeFile, 'utf8').trim().split(/\r?\n/).filter(Boolean).length;
+      const treeContents = fs.readFileSync(treeFile, 'utf8');
+      const treeCount = treeContents.trim().split(/\r?\n/).filter(Boolean).length;
+      const splitSupportFile = path.join(
+        path.dirname(treeFile),
+        path.basename(treeFile).replace(/^all_trees_/, 'split_support_').replace(/\.nwk$/, '.tsv'),
+      );
+      const splitSupportHeader = fs.readFileSync(splitSupportFile, 'utf8').split(/\r?\n/, 1)[0];
 
       expect(treeCount).toBe(200);
+      expect(treeContents).toContain('support_kind=bootstrap_replicate_subtree_frequency');
+      expect(treeContents).toContain('bootstrap_frequency=');
+      expect(splitSupportHeader).toContain('support_percent');
       expect(example.description).toContain('IQ-TREE default mode');
       expect(example.filePath).toContain('bootstrap_rogue_taxa/current_results');
       expect(example.fileName).toContain('source-');

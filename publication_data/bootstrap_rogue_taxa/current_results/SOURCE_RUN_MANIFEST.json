@@ -10,14 +10,24 @@
         "AMBIGUOUS_OR_GAP"
       ],
       "dataset": "24",
-      "dataset_directory": "dataset_24_source-24_taxa24_sites14190",
-      "dataset_label": "dataset_24_source-24_taxa24_sites14190",
+      "dataset_directory": "dataset_24_source-aberer_roguenarok_dataset_24_taxa24_sites14190.phy_taxa24_sites14190",
+      "dataset_label": "dataset_24_source-aberer_roguenarok_dataset_24_taxa24_sites14190.phy_taxa24_sites14190",
       "iqtree_mode": "default",
       "jobs": 4,
       "n_replicates_completed": 200,
       "n_replicates_requested": 200,
       "n_sites": 14190,
       "n_taxa": 24,
+      "ordering_semantics": {
+        "bootstrap_replicate_id": "RAxML replicate alignment ID, e.g. BS183 means bootstrap.BS183.",
+        "bootstrap_replicate_index_zero_based": "Zero-based replicate index from the generated RAxML bootstrap alignment filename.",
+        "composition_distance_to_source_alignment": "Euclidean distance between source-alignment and replicate-alignment composition vectors over A,C,G,T,AmbiguousOrGap.",
+        "display_order": "1-based visual/order position in the promoted Phylo-Movies tree sequence.",
+        "ranked_newick_line": "1-based line number in the matching all_trees Newick file.",
+        "sort_direction": "ascending; smaller distance appears earlier.",
+        "sort_key": "Field used to sort bootstrap replicates into the promoted order.",
+        "source_replicate_alignment_file": "Original generated bootstrap alignment filename in the staging run."
+      },
       "original_composition": [
         65249,
         68794,
@@ -26,16 +36,26 @@
         88586
       ],
       "ranked_outputs": {
-        "all_trees": "ranked/all_trees_24_source-24_taxa24_sites14190.nwk",
-        "all_trees_sha256": "7eeb64282fd3a15530688e302dcf7e909cfe8fdce302cd50f13aec81ab2fee10",
-        "bootstrap_order": "ranked/bootstrap_order_24_source-24_taxa24_sites14190.tsv",
-        "bootstrap_order_sha256": "fd0de9bca959c60f3e1feb01091f8174317efb0804a931149d465caf1cf3f2e7"
+        "all_trees": "ranked/all_trees_24_source-aberer_roguenarok_dataset_24_taxa24_sites14190.phy_taxa24_sites14190.nwk",
+        "all_trees_sha256": "8e8b7cab875416fee4e49c6adab40e781a2149ef00e8a31d274e1877a2c81996",
+        "composition_ranked_bootstrap_replicates": "ranked/composition_ranked_bootstrap_replicates_24_source-aberer_roguenarok_dataset_24_taxa24_sites14190.phy_taxa24_sites14190.tsv",
+        "composition_ranked_bootstrap_replicates_sha256": "d896af72cdea92b09b2938f498d6b7ebf7c745c09ada952edb1d7f67cbf439ae",
+        "split_support": "ranked/split_support_24_source-aberer_roguenarok_dataset_24_taxa24_sites14190.phy_taxa24_sites14190.tsv",
+        "split_support_sha256": "6003d1fa7367c93f3ae7c4a1cf728f7c3cbe4b12e9a0a39005be8720f1eeed09"
       },
       "schema_version": "1.0",
       "seed": 42,
-      "source_alignment": "/Users/berksakalli/Projects/rogue_taxa_analysis/online-data/data/datasets/alignments/24",
+      "source_alignment": "/Users/berksakalli/Projects/phylo-movies/publication_data/bootstrap_rogue_taxa/source_alignments/aberer_roguenarok_dataset_24_taxa24_sites14190.phy",
+      "source_alignment_relative_to_source_root": "aberer_roguenarok_dataset_24_taxa24_sites14190.phy",
       "source_alignment_sha256": "53041f44bd12a63ca75c5cb98e79b03261f3414eba156656b7908f69e7b8f462",
-      "source_file_basename": "24",
+      "source_file_basename": "aberer_roguenarok_dataset_24_taxa24_sites14190.phy",
+      "support": {
+        "annotated_trees": true,
+        "mode": "bootstrap_replicate_clade_frequency",
+        "n_replicates": 200,
+        "primary": "bootstrap_frequency",
+        "split_support_table": "ranked/split_support_24_source-aberer_roguenarok_dataset_24_taxa24_sites14190.phy_taxa24_sites14190.tsv"
+      },
       "threads": 1,
       "tree_directory": "trees",
       "tree_program": "iqtree"
@@ -50,14 +70,24 @@
         "AMBIGUOUS_OR_GAP"
       ],
       "dataset": "125",
-      "dataset_directory": "dataset_125_source-125_taxa125_sites29149",
-      "dataset_label": "dataset_125_source-125_taxa125_sites29149",
+      "dataset_directory": "dataset_125_source-aberer_roguenarok_dataset_125_taxa125_sites29149.phy_taxa125_sites29149",
+      "dataset_label": "dataset_125_source-aberer_roguenarok_dataset_125_taxa125_sites29149.phy_taxa125_sites29149",
       "iqtree_mode": "default",
       "jobs": 4,
       "n_replicates_completed": 200,
       "n_replicates_requested": 200,
       "n_sites": 29149,
       "n_taxa": 125,
+      "ordering_semantics": {
+        "bootstrap_replicate_id": "RAxML replicate alignment ID, e.g. BS183 means bootstrap.BS183.",
+        "bootstrap_replicate_index_zero_based": "Zero-based replicate index from the generated RAxML bootstrap alignment filename.",
+        "composition_distance_to_source_alignment": "Euclidean distance between source-alignment and replicate-alignment composition vectors over A,C,G,T,AmbiguousOrGap.",
+        "display_order": "1-based visual/order position in the promoted Phylo-Movies tree sequence.",
+        "ranked_newick_line": "1-based line number in the matching all_trees Newick file.",
+        "sort_direction": "ascending; smaller distance appears earlier.",
+        "sort_key": "Field used to sort bootstrap replicates into the promoted order.",
+        "source_replicate_alignment_file": "Original generated bootstrap alignment filename in the staging run."
+      },
       "original_composition": [
         752084,
         612788,
@@ -66,16 +96,26 @@
         1192319
       ],
       "ranked_outputs": {
-        "all_trees": "ranked/all_trees_125_source-125_taxa125_sites29149.nwk",
-        "all_trees_sha256": "78a2f421d8f1b5fabe416f34644d016b14345d3b6946963601c533311ba1693f",
-        "bootstrap_order": "ranked/bootstrap_order_125_source-125_taxa125_sites29149.tsv",
-        "bootstrap_order_sha256": "626057794e463823c41f178fd0dfd72d0a9f19b36c975fc50c53230d75b12c69"
+        "all_trees": "ranked/all_trees_125_source-aberer_roguenarok_dataset_125_taxa125_sites29149.phy_taxa125_sites29149.nwk",
+        "all_trees_sha256": "a7bc3b19397cd637886cf9c246b5bd965638fc5526000e1af1611acb26814b8c",
+        "composition_ranked_bootstrap_replicates": "ranked/composition_ranked_bootstrap_replicates_125_source-aberer_roguenarok_dataset_125_taxa125_sites29149.phy_taxa125_sites29149.tsv",
+        "composition_ranked_bootstrap_replicates_sha256": "0027d4b091a50f8c662d65e3a5153ba354d20c77ebdc8578c32091a8f147d8dc",
+        "split_support": "ranked/split_support_125_source-aberer_roguenarok_dataset_125_taxa125_sites29149.phy_taxa125_sites29149.tsv",
+        "split_support_sha256": "53d2aeac78caeb735e539024bcd0f453185aa82a2eb1ef8684eff85d7a48049d"
       },
       "schema_version": "1.0",
       "seed": 42,
-      "source_alignment": "/Users/berksakalli/Projects/rogue_taxa_analysis/online-data/data/datasets/alignments/125",
+      "source_alignment": "/Users/berksakalli/Projects/phylo-movies/publication_data/bootstrap_rogue_taxa/source_alignments/aberer_roguenarok_dataset_125_taxa125_sites29149.phy",
+      "source_alignment_relative_to_source_root": "aberer_roguenarok_dataset_125_taxa125_sites29149.phy",
       "source_alignment_sha256": "404de7c92c5955cdd1f10fde5b539cb2a9e31051961ad8fb565805ba8d82edca",
-      "source_file_basename": "125",
+      "source_file_basename": "aberer_roguenarok_dataset_125_taxa125_sites29149.phy",
+      "support": {
+        "annotated_trees": true,
+        "mode": "bootstrap_replicate_clade_frequency",
+        "n_replicates": 200,
+        "primary": "bootstrap_frequency",
+        "split_support_table": "ranked/split_support_125_source-aberer_roguenarok_dataset_125_taxa125_sites29149.phy_taxa125_sites29149.tsv"
+      },
       "threads": 1,
       "tree_directory": "trees",
       "tree_program": "iqtree"
@@ -88,11 +128,37 @@
     "run_log": "run_log.txt",
     "run_manifest": "RUN_MANIFEST.json"
   },
-  "run_id": "run_20260518T202621+0200_iqtree-default_bs200_seed42_ds24-125_full-iqtree-default-j4-redo",
+  "run_id": "run_20260521T135932+0200_iqtree-default_bs200_seed42_ds24-125_annotations-subtree-bs200",
   "schema_version": "1.0",
   "seed": 42,
-  "source_root": "/Users/berksakalli/Projects/rogue_taxa_analysis/online-data/data/datasets/alignments",
+  "source_root": "/Users/berksakalli/Projects/phylo-movies/publication_data/bootstrap_rogue_taxa/source_alignments",
   "threads": 1,
-  "timestamp_local": "20260518T202621+0200",
+  "timestamp_local": "20260521T135932+0200",
+  "tool_versions": {
+    "fasttree": null,
+    "iqtree": {
+      "executable": "/Users/berksakalli/miniconda3/envs/phylomovies-publication/bin/iqtree2",
+      "output": [
+        "IQ-TREE multicore version 2.4.0 for MacOS ARM 64-bit built Feb 12 2025",
+        "Developed by Bui Quang Minh, Nguyen Lam Tung, Olga Chernomor, Heiko Schmidt,",
+        "Dominik Schrempf, Michael Woodhams, Ly Trong Nhan, Thomas Wong"
+      ],
+      "returncode": 0
+    },
+    "raxml_hpc": {
+      "executable": "/Users/berksakalli/miniconda3/envs/phylomovies-publication/bin/raxmlHPC",
+      "output": [
+        "This is RAxML version 8.2.12 released by Alexandros Stamatakis on May 2018.",
+        "",
+        "With greatly appreciated code contributions by:",
+        "Andre Aberer      (HITS)",
+        "Simon Berger      (HITS)",
+        "Alexey Kozlov     (HITS)",
+        "Kassian Kobert    (HITS)",
+        "David Dao         (KIT and HITS)"
+      ],
+      "returncode": 0
+    }
+  },
   "tree_program": "iqtree"
 }
