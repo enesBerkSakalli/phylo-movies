@@ -2,10 +2,9 @@
 BOOTSTRAP ORDERING ANALYSIS - RUN LOG
 ============================================================
 
-Run timestamp: 20260518T202621+0200
-Run ID: run_20260518T202621+0200_iqtree-default_bs200_seed42_ds24-125_full-iqtree-default-j4-redo
-Generated staging directory: publication_data/bootstrap_rogue_taxa/runs/run_20260518T202621+0200_iqtree-default_bs200_seed42_ds24-125_full-iqtree-default-j4-redo
-Staging retention: regenerated on demand; not retained in publication_data
+Run timestamp: 20260521T135932+0200
+Run ID: run_20260521T135932+0200_iqtree-default_bs200_seed42_ds24-125_annotations-subtree-bs200
+Output directory: publication_data/bootstrap_rogue_taxa/runs/run_20260521T135932+0200_iqtree-default_bs200_seed42_ds24-125_annotations-subtree-bs200
 
 PARAMETERS
 ----------------------------------------
@@ -31,10 +30,10 @@ Formula: Euclidean distance of nucleotide composition vectors
 
 DATASETS PROCESSED
 ----------------------------------------
-  24: /Users/berksakalli/Projects/rogue_taxa_analysis/online-data/data/datasets/alignments/24
+  24: publication_data/bootstrap_rogue_taxa/source_alignments/aberer_roguenarok_dataset_24_taxa24_sites14190.phy
     Taxa: 24, Sites: 14190
     Original composition (A,C,G,T,AmbiguousOrGap): [65249, 68794, 46443, 71488, 88586]
-  125: /Users/berksakalli/Projects/rogue_taxa_analysis/online-data/data/datasets/alignments/125
+  125: publication_data/bootstrap_rogue_taxa/source_alignments/aberer_roguenarok_dataset_125_taxa125_sites29149.phy
     Taxa: 125, Sites: 29149
     Original composition (A,C,G,T,AmbiguousOrGap): [752084, 612788, 411853, 674581, 1192319]
 
@@ -51,7 +50,8 @@ Run-level files:
   - run_log.txt: Human-readable run summary
 Per dataset folder:
   - DATASET_MANIFEST.json: Dataset-level provenance
-  - ranked/bootstrap_order_<name>.tsv: Ranked replicates by composition distance
-  - ranked/all_trees_<name>.nwk: All trees in ranked order (one per line)
+  - ranked/composition_ranked_bootstrap_replicates_<name>.tsv: Semantic ordering table
+  - ranked/split_support_<name>.tsv: Clade-frequency support across inferred bootstrap trees
+  - ranked/all_trees_<name>.nwk: Support-annotated trees in ranked order (one per line)
   - bootstrap_alignments/bootstrap.BS<N>: Bootstrap replicate alignments
   - trees/rep_<NNNNNN>/: Per-replicate tree inference files

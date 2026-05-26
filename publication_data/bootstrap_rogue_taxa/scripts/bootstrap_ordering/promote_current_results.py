@@ -13,6 +13,7 @@ from order_schema import ORDERING_SEMANTICS
 
 LEAF_RE = re.compile(r"(?<=[(,])([^():,;]+):")
 BRANCH_RE = re.compile(r":([-+]?\d+(?:\.\d*)?(?:[eE][-+]?\d+)?)")
+ANNOTATION_RE = re.compile(r"\[[^\]]*\]")
 
 
 def sha256_file(path):
@@ -45,6 +46,26 @@ def find_order_file(source_ds_dir, dataset_id, source_basename, n_taxa, n_sites)
     raise FileNotFoundError(f"Semantic ordering table not found in {source_ds_dir / 'ranked'}")
 
 
+def find_split_support_file(source_ds_dir, dataset_manifest):
+    for relative_path in (
+        dataset_manifest.get("ranked_outputs", {}).get("split_support"),
+        dataset_manifest.get("support", {}).get("split_support_table"),
+    ):
+        if relative_path:
+            candidate = source_ds_dir / relative_path
+            if candidate.exists():
+                return candidate
+    return None
+
+
+def publication_output_label(dataset_id, n_taxa, n_sites):
+    return f"{dataset_id}_source-{dataset_id}_taxa{n_taxa}_sites{n_sites}"
+
+
+def publication_dataset_label(dataset_id, n_taxa, n_sites):
+    return f"dataset_{publication_output_label(dataset_id, n_taxa, n_sites)}"
+
+
 def validate_dataset(dest_ds_dir, order_path, trees_path, expected_taxa):
     order_rows = list(csv.DictReader(order_path.open(), delimiter="\t"))
     tree_lines = [line.strip() for line in trees_path.read_text().splitlines() if line.strip()]
@@ -56,8 +77,9 @@ def validate_dataset(dest_ds_dir, order_path, trees_path, expected_taxa):
     distances = []
 
     for index, tree in enumerate(tree_lines, start=1):
-        leaves = set(LEAF_RE.findall(tree))
-        branches = [float(value) for value in BRANCH_RE.findall(tree)]
+        annotation_free_tree = ANNOTATION_RE.sub("", tree)
+        leaves = set(LEAF_RE.findall(annotation_free_tree))
+        branches = [float(value) for value in BRANCH_RE.findall(annotation_free_tree)]
         if len(leaves) != expected_taxa:
             bad_taxa.append({"ranked_newick_line": index, "taxa": len(leaves)})
         if not branches or any(not math.isfinite(value) for value in branches):
@@ -85,6 +107,7 @@ def validate_dataset(dest_ds_dir, order_path, trees_path, expected_taxa):
     return {
         "order_rows": len(order_rows),
         "all_trees_lines": len(tree_lines),
+        "support_annotated": "support_kind=bootstrap_replicate_" in "\n".join(tree_lines),
         "bad_taxa": bad_taxa,
         "bad_branch_length_trees": bad_branch_lengths,
         "bad_ranked_newick_line_refs": bad_line_refs,
@@ -99,23 +122,54 @@ def promote_dataset(source_run, dest_root, run_manifest, dataset_manifest):
     source_basename = dataset_manifest["source_file_basename"]
     n_taxa = int(dataset_manifest["n_taxa"])
     n_sites = int(dataset_manifest["n_sites"])
-    dataset_label = dataset_manifest["dataset_label"]
-    output_label = f"{dataset_id}_source-{source_basename}_taxa{n_taxa}_sites{n_sites}"
+    source_dataset_label = dataset_manifest["dataset_label"]
+    source_output_label = f"{dataset_id}_source-{source_basename}_taxa{n_taxa}_sites{n_sites}"
+    dataset_label = publication_dataset_label(dataset_id, n_taxa, n_sites)
+    output_label = publication_output_label(dataset_id, n_taxa, n_sites)
 
-    source_ds_dir = source_run / dataset_label
+    source_ds_dir = source_run / source_dataset_label
     dest_ds_dir = dest_root / dataset_label
     ranked_dest = dest_ds_dir / "ranked"
     ranked_dest.mkdir(parents=True, exist_ok=True)
 
-    source_trees = source_ds_dir / "ranked" / f"all_trees_{output_label}.nwk"
-    dest_trees = ranked_dest / source_trees.name
+    source_trees = source_ds_dir / "ranked" / f"all_trees_{source_output_label}.nwk"
+    dest_trees = ranked_dest / f"all_trees_{output_label}.nwk"
     copy_file(source_trees, dest_trees)
 
     source_order = find_order_file(source_ds_dir, dataset_id, source_basename, n_taxa, n_sites)
     dest_order = ranked_dest / f"composition_ranked_bootstrap_replicates_{output_label}.tsv"
     copy_file(source_order, dest_order)
 
+    source_split_support = find_split_support_file(source_ds_dir, dataset_manifest)
+    dest_split_support = None
+    if source_split_support is not None:
+        dest_split_support = ranked_dest / f"split_support_{output_label}.tsv"
+        copy_file(source_split_support, dest_split_support)
+
     validation = validate_dataset(dest_ds_dir, dest_order, dest_trees, n_taxa)
+    support = dict(dataset_manifest.get("support") or {})
+    if dest_split_support is not None:
+        support.update(
+            {
+                "annotated_trees": validation["support_annotated"],
+                "split_support_table": str(dest_split_support.relative_to(dest_ds_dir)),
+            }
+        )
+
+    promoted_outputs = {
+        "ranked_order": str(dest_order.relative_to(dest_ds_dir)),
+        "ranked_order_sha256": validation["ranked_order_sha256"],
+        "ranked_trees": str(dest_trees.relative_to(dest_ds_dir)),
+        "ranked_trees_sha256": validation["ranked_trees_sha256"],
+    }
+    if dest_split_support is not None:
+        promoted_outputs.update(
+            {
+                "split_support": str(dest_split_support.relative_to(dest_ds_dir)),
+                "split_support_sha256": sha256_file(dest_split_support),
+            }
+        )
+
     promoted_manifest = {
         "schema_version": "1.0",
         "publication_status": "current_promoted_result",
@@ -137,18 +191,15 @@ def promote_dataset(source_run, dest_root, run_manifest, dataset_manifest):
         "bootstrap_generator": "RAxML raxmlHPC -f j",
         "n_replicates": run_manifest["n_replicates"],
         "seed": run_manifest["seed"],
-        "promoted_outputs": {
-            "ranked_order": str(dest_order.relative_to(dest_ds_dir)),
-            "ranked_order_sha256": validation["ranked_order_sha256"],
-            "ranked_trees": str(dest_trees.relative_to(dest_ds_dir)),
-            "ranked_trees_sha256": validation["ranked_trees_sha256"],
-        },
+        "promoted_outputs": promoted_outputs,
         "ordering_semantics": ORDERING_SEMANTICS,
         "not_promoted": {
             "bootstrap_replicate_alignments": "Not retained in publication data; regenerated by the workflow when needed.",
             "per_replicate_iqtree_artifacts": "Not retained in publication data; inference details are log/provenance, not publication-facing result files.",
         },
     }
+    if support:
+        promoted_manifest["support"] = support
     write_json(dest_ds_dir / "DATASET_MANIFEST.json", promoted_manifest)
 
     validation.update(
@@ -161,6 +212,13 @@ def promote_dataset(source_run, dest_root, run_manifest, dataset_manifest):
             "ranked_trees_file": str(dest_trees.relative_to(dest_root)),
         }
     )
+    if dest_split_support is not None:
+        validation.update(
+            {
+                "split_support_file": str(dest_split_support.relative_to(dest_root)),
+                "split_support_sha256": sha256_file(dest_split_support),
+            }
+        )
     return validation
 
 
@@ -192,13 +250,14 @@ def write_docs(dest_root, source_run, run_manifest, validations, status):
         "",
         "## Checks",
         "",
-        "| Dataset | Taxa | Sites | Order rows | Ranked trees | Taxa check | Branch lengths | Line refs | Sort order |",
-        "| --- | ---: | ---: | ---: | ---: | --- | --- | --- | --- |",
+        "| Dataset | Taxa | Sites | Order rows | Ranked trees | Support | Taxa check | Branch lengths | Line refs | Sort order |",
+        "| --- | ---: | ---: | ---: | ---: | --- | --- | --- | --- | --- |",
     ]
     for item in validations:
         lines.append(
             f"| {item['dataset']} | {item['expected_taxa']} | {item['expected_sites']} | "
             f"{item['order_rows']} | {item['all_trees_lines']} | "
+            f"{'YES' if item['support_annotated'] else 'NO'} | "
             f"{'PASS' if not item['bad_taxa'] else 'FAIL'} | "
             f"{'PASS' if not item['bad_branch_length_trees'] else 'FAIL'} | "
             f"{'PASS' if not item['bad_ranked_newick_line_refs'] else 'FAIL'} | "
@@ -235,11 +294,19 @@ def write_docs(dest_root, source_run, run_manifest, validations, status):
                 "",
             ]
         )
+        if item.get("split_support_file"):
+            lines.extend(
+                [
+                    f"- Split-support table: `{item['split_support_file']}`",
+                    f"- Split-support table SHA256: `{item['split_support_sha256']}`",
+                    "",
+                ]
+            )
     lines.extend(
         [
             "## Notes",
             "",
-            "- Publication-facing results are the ranked Newick files and semantic ordering tables.",
+            "- Publication-facing results are the ranked Newick files, semantic ordering tables, and split-support tables when support annotations are present.",
             "- IQ-TREE inference artifacts are log/provenance only and are not retained as publication data.",
             "- Bootstrap replicate alignments are bulky derived MSA intermediates regenerated by the workflow when needed.",
         ]
@@ -280,6 +347,15 @@ Reviewer-facing interpretation:
 """
     )
 
+    support = None
+    if any(item.get("support_annotated") for item in validations):
+        support = {
+            "annotated_trees": True,
+            "mode": "bootstrap_replicate_clade_frequency",
+            "n_replicates": run_manifest["n_replicates"],
+            "primary": "bootstrap_frequency",
+        }
+
     current_manifest = {
         "schema_version": "1.0",
         "publication_status": "current_results",
@@ -292,7 +368,7 @@ Reviewer-facing interpretation:
         "iqtree_mode": run_manifest.get("iqtree_mode"),
         "n_replicates": run_manifest["n_replicates"],
         "seed": run_manifest["seed"],
-        "publication_outputs": "ranked Newick tree files and semantic composition-ranked bootstrap replicate tables",
+        "publication_outputs": "ranked Newick tree files, semantic composition-ranked bootstrap replicate tables, and split-support tables when available",
         "inference_artifacts": "not retained in publication data; documented as log/provenance only",
         "ordering_semantics": "ORDERING_SEMANTICS.md",
         "datasets": validations,
@@ -301,6 +377,8 @@ Reviewer-facing interpretation:
             "json": "verification/verification.json",
         },
     }
+    if support is not None:
+        current_manifest["support"] = support
     write_json(dest_root / "CURRENT_RESULTS_MANIFEST.json", current_manifest)
 
     (dest_root / "README.md").write_text(
@@ -319,6 +397,7 @@ Publication-facing files:
 
 - ranked Phylo-Movies Newick tree files
 - semantic composition-ranked bootstrap replicate tables
+- split-support tables when the source run includes embedded support annotations
 - dataset manifests
 - ordering semantics note
 - verification report
@@ -335,6 +414,7 @@ Method summary:
 - bootstrap replicate alignments: RAxML `raxmlHPC -f j`
 - tree inference: IQ-TREE 2 default search mode, not `-fast`
 - replicates: {run_manifest['n_replicates']} per dataset
+- support annotations: bootstrap replicate split frequencies when present in the source run
 - seed: {run_manifest['seed']}
 
 Source alignment provenance:
