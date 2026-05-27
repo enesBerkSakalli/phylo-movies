@@ -28,7 +28,15 @@ function textColorFor(bg) {
  * @param {Object} rowColorMap - Optional map of taxon id -> color string
  * @returns {Array} Row labels data array
  */
-export function buildRowLabels(cellSize, sequences, visibleRange, viewState, zoomScale, viewWidth = 120, rowColorMap = {}) {
+export function buildRowLabels(
+  cellSize,
+  sequences,
+  visibleRange,
+  viewState,
+  zoomScale,
+  viewWidth = 120,
+  rowColorMap = {}
+) {
   if (!sequences || sequences.length === 0) {
     return [];
   }
@@ -54,7 +62,7 @@ export function buildRowLabels(cellSize, sequences, visibleRange, viewState, zoo
     const baseColor = rowColorMap[seq.id];
     const rgb = baseColor ? colorToRgb(baseColor) : [255, 255, 255];
     // Slight brightness boost to match node render intensity (UI contrast)
-    const boosted = baseColor ? rgb.map(v => Math.min(255, Math.round(v * 1.08))) : rgb;
+    const boosted = baseColor ? rgb.map((v) => Math.min(255, Math.round(v * 1.08))) : rgb;
     const bg = baseColor ? [...boosted, 255] : [255, 255, 255, 255]; // full opacity
     const fg = baseColor ? textColorFor(bg) : [0, 0, 0, 255]; // default black
 
@@ -66,7 +74,7 @@ export function buildRowLabels(cellSize, sequences, visibleRange, viewState, zoo
       cellSize, // Pass cellSize for getSize in 'common' units
       backgroundColor: bg,
       textColor: fg,
-      paddingPx: screenPad / 2
+      paddingPx: screenPad / 2,
     });
   }
 
@@ -83,21 +91,22 @@ export function createRowLabelsLayer(labelsData) {
     id: 'rowLabels',
     data: labelsData,
     pickable: true,
-    getText: d => d.text,
-    getPosition: d => d.position,
-    getSize: d => d.cellSize * 0.65, // 65% of row height
-    sizeUnits: 'common',  // Use common units to scale with world space (zoom)
+    getText: (d) => d.text,
+    getPosition: (d) => d.position,
+    getSize: (d) => d.cellSize * 0.65, // 65% of row height
+    sizeUnits: 'common', // Use common units to scale with world space (zoom)
     getTextAnchor: 'end',
     getAlignmentBaseline: 'center',
     background: true,
     padding: 0,
     // Use per-datum padding that scales with zoom (set in buildRowLabels)
-    getBackgroundPadding: d => {
+    getBackgroundPadding: (d) => {
       const p = d.paddingPx ?? 2;
       return [0, p, 0, p];
     },
-    getBackgroundColor: d => d.backgroundColor || [255, 255, 255, 255],
-    getColor: d => d.textColor || [0, 0, 0, 255],
-    fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial'
+    getBackgroundColor: (d) => d.backgroundColor || [255, 255, 255, 255],
+    getColor: (d) => d.textColor || [0, 0, 0, 255],
+    fontFamily:
+      'system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial',
   });
 }

@@ -38,9 +38,9 @@ describe('TimelineEventIndex', () => {
       'pair_0_1:spr:0',
       'pair_0_1:spr:1',
     ]);
-    expect(index.getEventsForPair('pair_0_1', 'split_change').map((event) => event.event_id)).toEqual([
-      'pair_0_1:split:0',
-    ]);
+    expect(
+      index.getEventsForPair('pair_0_1', 'split_change').map((event) => event.event_id)
+    ).toEqual(['pair_0_1:split:0']);
     expect(index.getEventsForPair('pair_1_2', 'spr_move')).toEqual([]);
   });
 

@@ -6,8 +6,8 @@ import fs from 'fs';
 import path from 'path';
 
 function flatPathPoint(path, index) {
-    const offset = index * 3;
-    return [path[offset], path[offset + 1], path[offset + 2]];
+  const offset = index * 3;
+  return [path[offset], path[offset + 1], path[offset + 2]];
 }
 
 // Load Data Dynamically
@@ -19,140 +19,147 @@ const mockColorManager = {
   isNodeActiveEdge: () => false,
   isNodeHistorySubtree: () => false,
   getOutputColor: () => [100, 100, 100],
-  getTypeColor: () => [200, 200, 200]
+  getTypeColor: () => [200, 200, 200],
 };
 
 describe('Real Data Integration (test/data/ostrich_bug_response.json)', () => {
-    const pairEntry = realData.pairs.find((pair) => {
-        const affectedSubtreesBySplit = pair.solution.affected_subtrees_by_split;
-        return Object.values(affectedSubtreesBySplit).some((subtreeSets) => flattenSplitSets(subtreeSets).length > 0);
+  const pairEntry = realData.pairs.find((pair) => {
+    const affectedSubtreesBySplit = pair.solution.affected_subtrees_by_split;
+    return Object.values(affectedSubtreesBySplit).some(
+      (subtreeSets) => flattenSplitSets(subtreeSets).length > 0
+    );
+  });
+
+  if (!pairEntry) {
+    throw new Error('No affected_subtrees_by_split found in test/data/ostrich_bug_response.json');
+  }
+
+  const PAIR_ID = pairEntry.pair_id;
+  const pairSolution = pairEntry.solution;
+  const sourceTree = realData.interpolated_trees[0]; // Tree 0
+  const affectedSubtreesBySplit = pairSolution.affected_subtrees_by_split;
+  const firstAffectedSubtreeEntry = Object.entries(affectedSubtreesBySplit).find(
+    ([, subtreeSets]) => flattenSplitSets(subtreeSets).length > 0
+  );
+
+  if (!firstAffectedSubtreeEntry) {
+    throw new Error(`No usable affected subtree entry found for ${PAIR_ID}`);
+  }
+
+  const [edgeKey, solutionSets] = firstAffectedSubtreeEntry;
+  const pivotEdge = edgeKey
+    .replace(/[\[\]\s]/g, '')
+    .split(',')
+    .filter(Boolean)
+    .map((value) => Number(value));
+  const movingSubtree = flattenSplitSets(solutionSets)[0];
+
+  it('successfully lays out the real Ostrich dataset (Tree 0)', () => {
+    const { nodes, max_radius } = createTidyTreeLayout(sourceTree, 'none', {
+      width: 1000,
+      height: 1000,
     });
 
-    if (!pairEntry) {
-        throw new Error('No affected_subtrees_by_split found in test/data/ostrich_bug_response.json');
-    }
+    let nodeCount = 0;
+    let maxDepth = 0;
 
-    const PAIR_ID = pairEntry.pair_id;
-    const pairSolution = pairEntry.solution;
-    const sourceTree = realData.interpolated_trees[0]; // Tree 0
-    const affectedSubtreesBySplit = pairSolution.affected_subtrees_by_split;
-    const firstAffectedSubtreeEntry = Object.entries(affectedSubtreesBySplit).find(([, subtreeSets]) => flattenSplitSets(subtreeSets).length > 0);
-
-    if (!firstAffectedSubtreeEntry) {
-        throw new Error(`No usable affected subtree entry found for ${PAIR_ID}`);
-    }
-
-    const [edgeKey, solutionSets] = firstAffectedSubtreeEntry;
-    const pivotEdge = edgeKey
-        .replace(/[\[\]\s]/g, '')
-        .split(',')
-        .filter(Boolean)
-        .map((value) => Number(value));
-    const movingSubtree = flattenSplitSets(solutionSets)[0];
-
-    it('successfully lays out the real Ostrich dataset (Tree 0)', () => {
-        const { nodes, max_radius } = createTidyTreeLayout(sourceTree, 'none', { width: 1000, height: 1000 });
-
-        let nodeCount = 0;
-        let maxDepth = 0;
-
-        nodes.forEach(node => {
-            nodeCount++;
-            if (node.depth > maxDepth) maxDepth = node.depth;
-            // Layout Validity Checks
-            expect(node.x).not.toBeNaN();
-            expect(node.y).not.toBeNaN();
-        });
-
-        expect(nodeCount).toBeGreaterThan(20);
-        expect(max_radius).toBeGreaterThan(0);
+    nodes.forEach((node) => {
+      nodeCount++;
+      if (node.depth > maxDepth) maxDepth = node.depth;
+      // Layout Validity Checks
+      expect(node.x).not.toBeNaN();
+      expect(node.y).not.toBeNaN();
     });
 
-    it('generates active bundles for the massive jumping connector [1..19]', () => {
-        // 1. Generate Layouts
-        const layoutOpt = { width: 1000, height: 1000 };
-        const leftLayout = createTidyTreeLayout(sourceTree, 'none', layoutOpt);
-        const rightLayout = createTidyTreeLayout(sourceTree, 'none', layoutOpt);
+    expect(nodeCount).toBeGreaterThan(20);
+    expect(max_radius).toBeGreaterThan(0);
+  });
 
-        // 2. Mock Position Maps
-        const createPosMap = (nodes) => {
-            const map = new Map();
-            nodes.forEach(node => {
-                // Use simple sorting for key generation in map
-                // Note: The builder iterates the map values, so key equality is less critical
-                // unless it does direct lookups (which it does for internal nodes).
-                const indices = node.split_indices || [];
-                const sorted = [...indices].sort((a,b) => a - b);
-                const id = sorted.join('-') || 'root';
-                const parent = nodes.find(candidate => candidate.id === node.parentId);
-                const parentIndices = parent?.split_indices || [];
-                const parentId = parentIndices.length ? [...parentIndices].sort((a,b) => a - b).join('-') : null;
-                const key = JSON.stringify(sorted);
+  it('generates active bundles for the massive jumping connector [1..19]', () => {
+    // 1. Generate Layouts
+    const layoutOpt = { width: 1000, height: 1000 };
+    const leftLayout = createTidyTreeLayout(sourceTree, 'none', layoutOpt);
+    const rightLayout = createTidyTreeLayout(sourceTree, 'none', layoutOpt);
 
-                const info = {
-                    id,
-                    parentId,
-                    split_indices: sorted,
-                    position: node.position,
-                    isLeaf: node.isLeaf,
-                    name: node.name,
-                    depth: node.depth
-                };
+    // 2. Mock Position Maps
+    const createPosMap = (nodes) => {
+      const map = new Map();
+      nodes.forEach((node) => {
+        // Use simple sorting for key generation in map
+        // Note: The builder iterates the map values, so key equality is less critical
+        // unless it does direct lookups (which it does for internal nodes).
+        const indices = node.split_indices || [];
+        const sorted = [...indices].sort((a, b) => a - b);
+        const id = sorted.join('-') || 'root';
+        const parent = nodes.find((candidate) => candidate.id === node.parentId);
+        const parentIndices = parent?.split_indices || [];
+        const parentId = parentIndices.length
+          ? [...parentIndices].sort((a, b) => a - b).join('-')
+          : null;
+        const key = JSON.stringify(sorted);
 
-                map.set(id, info);
-                if (key) map.set(key, info);
-                // Also add join-with-hyphens style if needed by internal lookups
-                if (sorted.length > 0) map.set(sorted.join('-'), info);
-            });
-            return map;
+        const info = {
+          id,
+          parentId,
+          split_indices: sorted,
+          position: node.position,
+          isLeaf: node.isLeaf,
+          name: node.name,
+          depth: node.depth,
         };
 
-        const leftPositions = createPosMap(leftLayout.nodes);
-        const rightPositions = createPosMap(rightLayout.nodes);
+        map.set(id, info);
+        if (key) map.set(key, info);
+        // Also add join-with-hyphens style if needed by internal lookups
+        if (sorted.length > 0) map.set(sorted.join('-'), info);
+      });
+      return map;
+    };
 
-        // We also need to mark it as "currently moving" via subtreeHighlightTracking
-        const subtreeHighlightTracking = [
-            [ movingSubtree ]
-        ];
+    const leftPositions = createPosMap(leftLayout.nodes);
+    const rightPositions = createPosMap(rightLayout.nodes);
 
-        const connectors = buildSubtreeConnectors({
-            leftPositions,
-            rightPositions,
-            affectedSubtreesBySplit,
-            pivotEdge: pivotEdge,
-            colorManager: mockColorManager,
-            subtreeHighlightTracking: subtreeHighlightTracking,
-            frameIndex: 0,
-            subtreeHighlightsEnabled: true,
-            leftCenter: [-300, 0],
-            rightCenter: [300, 0],
-            leftRadius: leftLayout.max_radius,
-            rightRadius: rightLayout.max_radius
-        });
+    // We also need to mark it as "currently moving" via subtreeHighlightTracking
+    const subtreeHighlightTracking = [[movingSubtree]];
 
-        // 4. Assertions
-        // Filter for the active active connectors
-        const activeConns = connectors.filter(c => c.isCurrentlyMoving);
-
-        // With correct subtreeHighlightTracking, we expect active connections
-        expect(activeConns.length).toBeGreaterThan(0);
-
-        // 5. Geometry Check (Middle Point Embedding)
-        const path = activeConns[0].path;
-        expect(path).toBeInstanceOf(Float32Array);
-        const midPoint = flatPathPoint(path, Math.floor((path.length / 3) / 2));
-
-        // Verify Planar
-        expect(midPoint[2]).toBe(0);
-
-        // Verify Outward Push
-        // Since we are moving [1..19] (a large subtree) in the same tree (Tree 0 -> Tree 0),
-        // the bundle point should be pushed away from the structure.
-        const dx = midPoint[0] - (-300);
-        const dy = midPoint[1] - 0;
-        const dist = Math.sqrt(dx*dx + dy*dy);
-
-        // Active bundling should still place the mid-path well away from the centerline origin.
-        expect(dist).toBeGreaterThan(100);
+    const connectors = buildSubtreeConnectors({
+      leftPositions,
+      rightPositions,
+      affectedSubtreesBySplit,
+      pivotEdge: pivotEdge,
+      colorManager: mockColorManager,
+      subtreeHighlightTracking: subtreeHighlightTracking,
+      frameIndex: 0,
+      subtreeHighlightsEnabled: true,
+      leftCenter: [-300, 0],
+      rightCenter: [300, 0],
+      leftRadius: leftLayout.max_radius,
+      rightRadius: rightLayout.max_radius,
     });
+
+    // 4. Assertions
+    // Filter for the active active connectors
+    const activeConns = connectors.filter((c) => c.isCurrentlyMoving);
+
+    // With correct subtreeHighlightTracking, we expect active connections
+    expect(activeConns.length).toBeGreaterThan(0);
+
+    // 5. Geometry Check (Middle Point Embedding)
+    const path = activeConns[0].path;
+    expect(path).toBeInstanceOf(Float32Array);
+    const midPoint = flatPathPoint(path, Math.floor(path.length / 3 / 2));
+
+    // Verify Planar
+    expect(midPoint[2]).toBe(0);
+
+    // Verify Outward Push
+    // Since we are moving [1..19] (a large subtree) in the same tree (Tree 0 -> Tree 0),
+    // the bundle point should be pushed away from the structure.
+    const dx = midPoint[0] - -300;
+    const dy = midPoint[1] - 0;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    // Active bundling should still place the mid-path well away from the centerline origin.
+    expect(dist).toBeGreaterThan(100);
+  });
 });

@@ -34,8 +34,7 @@ export function sanitizeNodeRuntimeEnv(env = process.env) {
   }
 
   if (cleanEnv.PATH) {
-    cleanEnv.PATH = cleanEnv.PATH
-      .split(delimiter)
+    cleanEnv.PATH = cleanEnv.PATH.split(delimiter)
       .filter((entry) => !CONSOLE_NINJA_ENV_PATTERN.test(entry))
       .join(delimiter);
   }
@@ -123,7 +122,7 @@ async function run() {
   const child = spawn(process.execPath, [viteCliPath, ...viteArgs], {
     cwd: projectRoot,
     env: sanitizeNodeRuntimeEnv(),
-    stdio: 'inherit'
+    stdio: 'inherit',
   });
 
   child.on('exit', (code, signal) => {

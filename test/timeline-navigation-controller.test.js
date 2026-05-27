@@ -2,7 +2,9 @@ const { expect } = require('chai');
 
 const scheduledFrames = [];
 
-const { TimelineNavigationController } = require('../src/timeline/core/TimelineNavigationController.js');
+const {
+  TimelineNavigationController,
+} = require('../src/timeline/core/TimelineNavigationController.js');
 
 describe('TimelineNavigationController', () => {
   let originalRequestAnimationFrame;
@@ -41,13 +43,14 @@ describe('TimelineNavigationController', () => {
     return {
       getState() {
         return state;
-      }
+      },
     };
   }
 
   function makeTimelineDataset(resolve) {
     return {
-      getCursorInSegmentAtMovieTime: (segmentIndex, movieTimeMs) => resolve(movieTimeMs, segmentIndex),
+      getCursorInSegmentAtMovieTime: (segmentIndex, movieTimeMs) =>
+        resolve(movieTimeMs, segmentIndex),
       getSegmentBounds: () => ({ start: 0, end: 3000, duration: 3000 }),
     };
   }
@@ -60,17 +63,21 @@ describe('TimelineNavigationController', () => {
         {
           index: 0,
           isInputTreeSegment: true,
-          interpolationData: [{ originalIndex: 4 }]
-        }
+          interpolationData: [{ originalIndex: 4 }],
+        },
       ],
       store,
-      onTimelinePositionUpdated: () => { updateCalls += 1; }
+      onTimelinePositionUpdated: () => {
+        updateCalls += 1;
+      },
     });
 
     controller.handleTimelineClick(0);
 
     expect(store.getState().setClipboardTreeIndexCalls).to.deep.equal([4]);
-    expect(store.getState().goToPositionCalls).to.deep.equal([{ position: 4, direction: 'forward', options: undefined }]);
+    expect(store.getState().goToPositionCalls).to.deep.equal([
+      { position: 4, direction: 'forward', options: undefined },
+    ]);
     expect(scheduledFrames).to.have.length(1);
 
     scheduledFrames[0]();
@@ -84,17 +91,19 @@ describe('TimelineNavigationController', () => {
         {
           index: 0,
           isInputTreeSegment: false,
-          interpolationData: [{ originalIndex: 2 }]
-        }
+          interpolationData: [{ originalIndex: 2 }],
+        },
       ],
       store,
-      onTimelinePositionUpdated: () => {}
+      onTimelinePositionUpdated: () => {},
     });
 
     controller.handleTimelineClick(0);
 
     expect(store.getState().setClipboardTreeIndexCalls).to.deep.equal([]);
-    expect(store.getState().goToPositionCalls).to.deep.equal([{ position: 2, direction: 'backward', options: undefined }]);
+    expect(store.getState().goToPositionCalls).to.deep.equal([
+      { position: 2, direction: 'backward', options: undefined },
+    ]);
   });
 
   it('uses click time to resolve the nearest transition frame', () => {
@@ -105,21 +114,17 @@ describe('TimelineNavigationController', () => {
           index: 0,
           isInputTreeSegment: false,
           hasInterpolation: true,
-          interpolationData: [
-            { originalIndex: 2 },
-            { originalIndex: 3 },
-            { originalIndex: 4 }
-          ],
+          interpolationData: [{ originalIndex: 2 }, { originalIndex: 3 }, { originalIndex: 4 }],
           timing: [
             { type: 'motion', fromIndex: 2, toIndex: 3, durationMs: 1500 },
-            { type: 'motion', fromIndex: 3, toIndex: 4, durationMs: 1500 }
-          ]
-        }
+            { type: 'motion', fromIndex: 3, toIndex: 4, durationMs: 1500 },
+          ],
+        },
       ],
       timelineData: {
         totalDuration: 3000,
         segmentDurations: [3000],
-        cumulativeDurations: [3000]
+        cumulativeDurations: [3000],
       },
       timelineDataset: makeTimelineDataset((movieTimeMs) => ({
         frameIndex: movieTimeMs < 2250 ? 3 : 4,
@@ -127,14 +132,20 @@ describe('TimelineNavigationController', () => {
         timelineProgress: movieTimeMs / 3000,
       })),
       store,
-      onTimelinePositionUpdated: () => {}
+      onTimelinePositionUpdated: () => {},
     });
 
     controller.handleTimelineClick(0, 2600);
 
     expect(store.getState().goToPositionCalls).to.have.length(1);
-    expect(store.getState().goToPositionCalls[0]).to.deep.include({ position: 4, direction: 'forward' });
-    expect(store.getState().goToPositionCalls[0].options.timelineProgress).to.be.closeTo(2600 / 3000, 0.000001);
+    expect(store.getState().goToPositionCalls[0]).to.deep.include({
+      position: 4,
+      direction: 'forward',
+    });
+    expect(store.getState().goToPositionCalls[0].options.timelineProgress).to.be.closeTo(
+      2600 / 3000,
+      0.000001
+    );
   });
 
   it('uses jump direction and preserves exact timeline position when clicking the already active tree', () => {
@@ -145,21 +156,17 @@ describe('TimelineNavigationController', () => {
           index: 0,
           isInputTreeSegment: false,
           hasInterpolation: true,
-          interpolationData: [
-            { originalIndex: 2 },
-            { originalIndex: 3 },
-            { originalIndex: 4 }
-          ],
+          interpolationData: [{ originalIndex: 2 }, { originalIndex: 3 }, { originalIndex: 4 }],
           timing: [
             { type: 'motion', fromIndex: 2, toIndex: 3, durationMs: 1500 },
-            { type: 'motion', fromIndex: 3, toIndex: 4, durationMs: 1500 }
-          ]
-        }
+            { type: 'motion', fromIndex: 3, toIndex: 4, durationMs: 1500 },
+          ],
+        },
       ],
       timelineData: {
         totalDuration: 3000,
         segmentDurations: [3000],
-        cumulativeDurations: [3000]
+        cumulativeDurations: [3000],
       },
       timelineDataset: makeTimelineDataset(() => ({
         frameIndex: 3,
@@ -167,14 +174,20 @@ describe('TimelineNavigationController', () => {
         timelineProgress: 0.5,
       })),
       store,
-      onTimelinePositionUpdated: () => {}
+      onTimelinePositionUpdated: () => {},
     });
 
     controller.handleTimelineClick(0, 1500);
 
     expect(store.getState().goToPositionCalls).to.have.length(1);
-    expect(store.getState().goToPositionCalls[0]).to.deep.include({ position: 3, direction: 'jump' });
-    expect(store.getState().goToPositionCalls[0].options.timelineProgress).to.be.closeTo(0.5, 0.000001);
+    expect(store.getState().goToPositionCalls[0]).to.deep.include({
+      position: 3,
+      direction: 'jump',
+    });
+    expect(store.getState().goToPositionCalls[0].options.timelineProgress).to.be.closeTo(
+      0.5,
+      0.000001
+    );
   });
 
   it('throws when a timed click targets a segment without timing intervals', () => {
@@ -185,25 +198,24 @@ describe('TimelineNavigationController', () => {
           index: 0,
           isInputTreeSegment: false,
           hasInterpolation: true,
-          interpolationData: [
-            { originalIndex: 2 },
-            { originalIndex: 3 }
-          ]
-        }
+          interpolationData: [{ originalIndex: 2 }, { originalIndex: 3 }],
+        },
       ],
       timelineData: {
         totalDuration: 1000,
         segmentDurations: [1000],
-        cumulativeDurations: [1000]
+        cumulativeDurations: [1000],
       },
       timelineDataset: makeTimelineDataset(() => {
         throw new Error('[TimelineDataset] segment timing bounds are required');
       }),
       store,
-      onTimelinePositionUpdated: () => {}
+      onTimelinePositionUpdated: () => {},
     });
 
-    expect(() => controller.handleTimelineClick(0, 500)).to.throw(/segment timing bounds are required/);
+    expect(() => controller.handleTimelineClick(0, 500)).to.throw(
+      /segment timing bounds are required/
+    );
     expect(store.getState().goToPositionCalls).to.deep.equal([]);
   });
 });

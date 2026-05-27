@@ -18,14 +18,14 @@ import {
   nodeOrParentMatchesPivotEdge,
   nodeOrParentMatchesAnyEdge,
   isLinkDownstreamOfChangeEdge,
-  isNodeDownstreamOfChangeEdge
+  isNodeDownstreamOfChangeEdge,
 } from './tree_color/index.js';
 import {
   isLinkInSubtree,
   isNodeInSubtree,
   isNodeSubtreeRoot,
   getLinkSplitIndices,
-  getSplitIndices
+  getSplitIndices,
 } from '../../domain/tree/splits.js';
 
 export class TreeColorManager {
@@ -153,9 +153,7 @@ export class TreeColorManager {
     }
 
     // Cache as Sets immediately to avoid recreation in render checks
-    this.highlightedSubtreeSets = subtrees.map(s =>
-      s instanceof Set ? s : new Set(s)
-    );
+    this.highlightedSubtreeSets = subtrees.map((s) => (s instanceof Set ? s : new Set(s)));
 
     // Build union of all highlighted leaf indices for fast O(1) rejection
     // A node can only be in a subtree if ALL its leaves are in this union
@@ -225,9 +223,7 @@ export class TreeColorManager {
       history = [subtrees];
     }
 
-    this.historySubtrees = history.map(s =>
-      s instanceof Set ? s : new Set(s)
-    );
+    this.historySubtrees = history.map((s) => (s instanceof Set ? s : new Set(s)));
   }
 
   updateSourceEdgeLeaves(sourceEdges) {
@@ -237,7 +233,7 @@ export class TreeColorManager {
     } else if (sourceEdges instanceof Set) {
       edges = [sourceEdges];
     }
-    this.sourceEdgeLeaves = edges.map(s => (s instanceof Set ? s : new Set(s)));
+    this.sourceEdgeLeaves = edges.map((s) => (s instanceof Set ? s : new Set(s)));
   }
 
   updateDestinationEdgeLeaves(destEdges) {
@@ -247,7 +243,7 @@ export class TreeColorManager {
     } else if (destEdges instanceof Set) {
       edges = [destEdges];
     }
-    this.destinationEdgeLeaves = edges.map(s => (s instanceof Set ? s : new Set(s)));
+    this.destinationEdgeLeaves = edges.map((s) => (s instanceof Set ? s : new Set(s)));
   }
 
   updateActiveMoverSubtrees(subtree) {
@@ -290,7 +286,7 @@ export class TreeColorManager {
    */
   updateUpcomingChangeEdges(upcomingEdges) {
     if (Array.isArray(upcomingEdges)) {
-      this.upcomingChangeEdges = upcomingEdges.map(edge => new Set(edge));
+      this.upcomingChangeEdges = upcomingEdges.map((edge) => new Set(edge));
     } else {
       this.upcomingChangeEdges = [];
     }
@@ -302,7 +298,7 @@ export class TreeColorManager {
    */
   updateCompletedChangeEdges(completedEdges) {
     if (Array.isArray(completedEdges)) {
-      this.completedChangeEdges = completedEdges.map(edge => new Set(edge));
+      this.completedChangeEdges = completedEdges.map((edge) => new Set(edge));
     } else {
       this.completedChangeEdges = [];
     }
@@ -416,7 +412,6 @@ export class TreeColorManager {
     }
     return nodeOrParentMatchesPivotEdge(nodeData, this.currentPivotEdges);
   }
-
 
   /**
    * Check if a node is part of an upcoming change edge (node or its parent).

@@ -23,7 +23,7 @@ describe('TreeLayoutController radii', () => {
       width: 1000,
       height: 1000,
       margin: 60,
-      max_radius: 120
+      max_radius: 120,
     });
 
     expect(radii.extensionRadius).toBe(121);
@@ -39,7 +39,7 @@ describe('TreeLayoutController radii', () => {
       height: 1000,
       margin: 60,
       max_radius: 120,
-      scale: 10
+      scale: 10,
     });
 
     expect(radii.extensionRadius).toBe(121);
@@ -53,7 +53,7 @@ describe('TreeLayoutController radii', () => {
     });
     const controller = new TreeLayoutController(null);
     const leaves = Array.from({ length: 350 }, (_value, index) => ({
-      angle: (index / 350) * Math.PI * 2
+      angle: (index / 350) * Math.PI * 2,
     }));
 
     const radii = controller._getConsistentRadii({
@@ -61,7 +61,7 @@ describe('TreeLayoutController radii', () => {
       height: 1000,
       margin: 60,
       max_radius: 200,
-      leaves
+      leaves,
     });
 
     expect(radii.labelRadius).toBeGreaterThan(400);
@@ -73,14 +73,18 @@ describe('TreeLayoutController radii', () => {
     const controller = new TreeLayoutController(null);
     controller.maxGlobalScale = 0;
 
-    const layout = controller._computeLayout({
-      id: 'root',
-      length: 0,
-      children: [
-        { id: 'child1', length: 0 },
-        { id: 'child2', length: 0 }
-      ]
-    }, 360, 0);
+    const layout = controller._computeLayout(
+      {
+        id: 'root',
+        length: 0,
+        children: [
+          { id: 'child1', length: 0 },
+          { id: 'child2', length: 0 },
+        ],
+      },
+      360,
+      0
+    );
 
     expect(layout.scale).toBe(240);
     layout.nodes.forEach((node) => {
@@ -91,11 +95,13 @@ describe('TreeLayoutController radii', () => {
   });
 
   it('recalculates uniform scaling on the first branch transformation change', () => {
-    const treeList = [{
-      id: 'root',
-      length: 0,
-      children: [{ id: 'child', length: 1 }]
-    }];
+    const treeList = [
+      {
+        id: 'root',
+        length: 0,
+        children: [{ id: 'child', length: 1 }],
+      },
+    ];
     useAppStore.setState({
       treeList,
       timelineFrames,
@@ -126,17 +132,17 @@ describe('TreeLayoutController radii', () => {
         length: 0,
         children: [
           { name: 'small-a', length: 1 },
-          { name: 'small-b', length: 4 }
-        ]
+          { name: 'small-b', length: 4 },
+        ],
       },
       {
         name: 'large-root',
         length: 0,
         children: [
           { name: 'large-a', length: 9 },
-          { name: 'large-b', length: 16 }
-        ]
-      }
+          { name: 'large-b', length: 16 },
+        ],
+      },
     ];
     useAppStore.setState({
       treeList,
@@ -171,16 +177,20 @@ describe('TreeLayoutController radii', () => {
   });
 
   it('recalculates transformed trees and scaling when the dataset changes with the same transform', () => {
-    const firstTreeList = [{
-      id: 'old-root',
-      length: 0,
-      children: [{ id: 'old-child', length: 1 }]
-    }];
-    const nextTreeList = [{
-      id: 'new-root',
-      length: 0,
-      children: [{ id: 'new-child', length: 5 }]
-    }];
+    const firstTreeList = [
+      {
+        id: 'old-root',
+        length: 0,
+        children: [{ id: 'old-child', length: 1 }],
+      },
+    ];
+    const nextTreeList = [
+      {
+        id: 'new-root',
+        length: 0,
+        children: [{ id: 'new-child', length: 5 }],
+      },
+    ];
     useAppStore.setState({
       treeList: firstTreeList,
       timelineFrames,
@@ -205,13 +215,13 @@ describe('TreeLayoutController radii', () => {
       {
         name: 'small-root',
         length: 0,
-        children: [{ name: 'small-child', length: 0.001 }]
+        children: [{ name: 'small-child', length: 0.001 }],
       },
       {
         name: 'large-root',
         length: 0,
-        children: [{ name: 'large-child', length: 10 }]
-      }
+        children: [{ name: 'large-child', length: 10 }],
+      },
     ];
     useAppStore.setState({
       treeList,
@@ -259,7 +269,7 @@ describe('TreeLayoutController radii', () => {
   it('clears transformed tree datasets independently of layout results', () => {
     const controller = new TreeLayoutController(null);
     controller._transformedCache.set('dataset-a', {
-      transformedList: [{ id: 'old-tree' }]
+      transformedList: [{ id: 'old-tree' }],
     });
     controller._layoutResultCache.set('layout-a', { id: 'layout' });
 
@@ -270,15 +280,17 @@ describe('TreeLayoutController radii', () => {
   });
 
   it('does not replace explicit tree data with the indexed active tree', () => {
-    const activeTreeList = [{
-      name: 'active-root',
-      length: 0,
-      children: [{ name: 'active-child', length: 1 }]
-    }];
+    const activeTreeList = [
+      {
+        name: 'active-root',
+        length: 0,
+        children: [{ name: 'active-child', length: 1 }],
+      },
+    ];
     const explicitTree = {
       name: 'explicit-root',
       length: 0,
-      children: [{ name: 'explicit-child', length: 2 }]
+      children: [{ name: 'explicit-child', length: 2 }],
     };
     useAppStore.setState({
       treeList: activeTreeList,
@@ -297,15 +309,17 @@ describe('TreeLayoutController radii', () => {
   });
 
   it('does not clone explicit tree data when no branch transformation is active', () => {
-    const activeTreeList = [{
-      name: 'active-root',
-      length: 0,
-      children: [{ name: 'active-child', length: 1 }]
-    }];
+    const activeTreeList = [
+      {
+        name: 'active-root',
+        length: 0,
+        children: [{ name: 'active-child', length: 1 }],
+      },
+    ];
     const explicitTree = {
       name: 'explicit-root',
       length: 0,
-      children: [{ name: 'explicit-child', length: 2 }]
+      children: [{ name: 'explicit-child', length: 2 }],
     };
     useAppStore.setState({
       treeList: activeTreeList,
@@ -317,21 +331,19 @@ describe('TreeLayoutController radii', () => {
 
     const controller = new TreeLayoutController(null);
 
-    expect(controller._getTransformedTreeData(
-      explicitTree,
-      'none',
-      0,
-      'unused',
-      activeTreeList
-    )).toBe(explicitTree);
+    expect(
+      controller._getTransformedTreeData(explicitTree, 'none', 0, 'unused', activeTreeList)
+    ).toBe(explicitTree);
   });
 
   it('reuses cached layout results for unchanged layout inputs', () => {
-    const treeList = [{
-      name: 'root',
-      length: 0,
-      children: [{ name: 'child', length: 1 }]
-    }];
+    const treeList = [
+      {
+        name: 'root',
+        length: 0,
+        children: [{ name: 'child', length: 1 }],
+      },
+    ];
     useAppStore.setState({
       treeList,
       timelineFrames,
@@ -357,7 +369,7 @@ function makeCaterpillarTree(leafCount, internalLength, terminalLength) {
     name: `taxon_${leafCount - 1}`,
     length: terminalLength,
     split_indices: [leafCount - 1],
-    children: []
+    children: [],
   };
   for (let i = leafCount - 2; i >= 0; i -= 1) {
     const split = Array.from({ length: leafCount - i }, (_value, offset) => i + offset);
@@ -367,14 +379,14 @@ function makeCaterpillarTree(leafCount, internalLength, terminalLength) {
       split_indices: split,
       children: [
         { name: `taxon_${i}`, length: terminalLength, split_indices: [i], children: [] },
-        subtree
-      ]
+        subtree,
+      ],
     };
   }
   return {
     name: 'root',
     length: 0,
     split_indices: Array.from({ length: leafCount }, (_value, index) => index),
-    children: [subtree]
+    children: [subtree],
   };
 }

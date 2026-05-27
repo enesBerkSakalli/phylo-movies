@@ -1,10 +1,22 @@
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { SlidersHorizontal } from "lucide-react";
-import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "../../../../components/ui/form";
-import { Input } from "../../../../components/ui/input";
+import { SlidersHorizontal } from 'lucide-react';
+import {
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '../../../../components/ui/form';
+import { Input } from '../../../../components/ui/input';
 import { cn } from '../../../../lib/utils';
-import { STEP_MAX, STEP_MIN, WINDOW_MAX, WINDOW_MIN } from "../../workspaceInitializationFormModel.js";
+import {
+  STEP_MAX,
+  STEP_MIN,
+  WINDOW_MAX,
+  WINDOW_MIN,
+} from '../../workspaceInitializationFormModel.js';
 import { MsaRequiredBadge } from './MsaRequiredBadge.jsx';
 
 export function SlidingWindowSection({ hasMsa, hasTrees = false, disabled, embedded = false }) {
@@ -24,7 +36,9 @@ export function SlidingWindowSection({ hasMsa, hasTrees = false, disabled, embed
       {!embedded && (
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <SlidersHorizontal className={cn('size-4', !hasMsa ? 'text-muted-foreground' : 'text-primary')} />
+            <SlidersHorizontal
+              className={cn('size-4', !hasMsa ? 'text-muted-foreground' : 'text-primary')}
+            />
             <h3 className="text-sm font-semibold">Overlapping Sliding Windows</h3>
           </div>
           {!hasMsa && (
@@ -40,7 +54,9 @@ export function SlidingWindowSection({ hasMsa, hasTrees = false, disabled, embed
         name="windowSize"
         render={({ field }) => (
           <FormItem className="flex flex-col gap-2">
-            <FormLabel className={!hasMsa ? 'text-muted-foreground' : ''}>Window Size (sites)</FormLabel>
+            <FormLabel className={!hasMsa ? 'text-muted-foreground' : ''}>
+              Window Size (sites)
+            </FormLabel>
             <FormControl>
               <Input
                 type="number"
@@ -67,7 +83,9 @@ export function SlidingWindowSection({ hasMsa, hasTrees = false, disabled, embed
         name="stepSize"
         render={({ field }) => (
           <FormItem className="flex flex-col gap-2">
-            <FormLabel className={!hasMsa ? 'text-muted-foreground' : ''}>Step Size (sites)</FormLabel>
+            <FormLabel className={!hasMsa ? 'text-muted-foreground' : ''}>
+              Step Size (sites)
+            </FormLabel>
             <FormControl>
               <Input
                 type="number"

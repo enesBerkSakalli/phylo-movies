@@ -1,4 +1,3 @@
-
 import { expect } from 'chai';
 import sinon from 'sinon';
 import proxyquire from 'proxyquire';
@@ -48,19 +47,14 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
 
     // Mock Store
     mockStore = {
-      treeList: [
-        { id: 'tree0' },
-        { id: 'tree1' },
-        { id: 'tree2' },
-        { id: 'tree3' }
-      ],
+      treeList: [{ id: 'tree0' }, { id: 'tree1' }, { id: 'tree2' }, { id: 'tree3' }],
       branchTransformation: 'linear',
       layoutAngleDegrees: 360,
       layoutRotationDegrees: 0,
       styleConfig: { labelOffsets: { DEFAULT: 20, EXTENSION: 5 } },
       playhead: {
         animationProgress: 0,
-        timelineProgress: null
+        timelineProgress: null,
       },
       frameIndex: 0,
       setAnimationStage: sandbox.stub(),
@@ -70,7 +64,7 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
 
     const mockUseAppStore = {
       getState: sandbox.stub().returns(mockStore),
-      setState: sandbox.stub()
+      setState: sandbox.stub(),
     };
     // Mock the store module
     // We assume default export or named export based on usage
@@ -92,19 +86,14 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
 
     // Seed the store
     useAppStore.setState({
-      treeList: [
-        { id: 'tree0' },
-        { id: 'tree1' },
-        { id: 'tree2' },
-        { id: 'tree3' }
-      ],
+      treeList: [{ id: 'tree0' }, { id: 'tree1' }, { id: 'tree2' }, { id: 'tree3' }],
       branchTransformation: 'linear',
       layoutAngleDegrees: 360,
       layoutRotationDegrees: 0,
       styleConfig: { labelOffsets: { DEFAULT: 20, EXTENSION: 5 } },
       playhead: {
         animationProgress: 0,
-        timelineProgress: null
+        timelineProgress: null,
       },
       frameIndex: 0,
       // Ensure functions exist if called
@@ -120,7 +109,7 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
   afterEach(() => {
     sandbox.restore();
     if (controller) {
-       controller.destroy();
+      controller.destroy();
     }
   });
 
@@ -185,10 +174,10 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
         requestToken,
         status: 'SUCCESS',
         result: {
-           layout: { some: 'layout' },
-           layerData: { some: 'data' }
-        }
-      }
+          layout: { some: 'layout' },
+          layerData: { some: 'data' },
+        },
+      },
     };
 
     // Trigger the onmessage handler
@@ -196,7 +185,9 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
 
     expect(controller.interpolationCache.setPrecomputedData.calledOnce).to.be.true;
     expect(controller.interpolationCache.setPrecomputedData.firstCall.args[0]).to.equal(2);
-    expect(controller.interpolationCache.setPrecomputedData.firstCall.args[1]).to.deep.equal(workerResponse.data.result);
+    expect(controller.interpolationCache.setPrecomputedData.firstCall.args[1]).to.deep.equal(
+      workerResponse.data.result
+    );
   });
 
   it('should handle worker errors gracefully', () => {
@@ -211,8 +202,8 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
         jobId: '3',
         requestToken,
         status: 'ERROR',
-        error: 'Calculation exploded'
-      }
+        error: 'Calculation exploded',
+      },
     };
 
     // Stub console.warn to verify error logging without noisy test output.
@@ -260,5 +251,4 @@ describe('DeckGLTreeAnimationController Worker Integration', () => {
     // Prevent double destroy in afterEach
     controller = null;
   });
-
 });

@@ -59,29 +59,36 @@ describe('TreeInterpolator label radius smoothing', () => {
       nodes: [],
       links: [],
       labels: [],
-      extensions: []
+      extensions: [],
     };
     const toData = {
       max_radius: 200,
       nodes: [],
       links: [],
-      labels: [{
-        id: 'label:a',
-        position: [222, 0, 0],
-        polarPosition: 222,
-        angle: 0,
-        rotation: 0,
-        text: 'A',
-        textAnchor: 'start'
-      }],
-      extensions: [{
-        id: 'extension:a',
-        path: [[200, 0, 0], [205, 0, 0]],
-        polarData: {
-          source: { angle: 0, radius: 200 },
-          target: { angle: 0, radius: 205 }
-        }
-      }]
+      labels: [
+        {
+          id: 'label:a',
+          position: [222, 0, 0],
+          polarPosition: 222,
+          angle: 0,
+          rotation: 0,
+          text: 'A',
+          textAnchor: 'start',
+        },
+      ],
+      extensions: [
+        {
+          id: 'extension:a',
+          path: [
+            [200, 0, 0],
+            [205, 0, 0],
+          ],
+          polarData: {
+            source: { angle: 0, radius: 200 },
+            target: { angle: 0, radius: 205 },
+          },
+        },
+      ],
     };
 
     const result = interpolator.interpolateTreeData(fromData, toData, 0.5);
@@ -161,14 +168,14 @@ describe('TreeInterpolator label radius smoothing', () => {
         max_radius: 40,
         nodes: [],
         links: [],
-        labels: [label('label-1', 60, 80 * Math.PI / 180)],
+        labels: [label('label-1', 60, (80 * Math.PI) / 180)],
         extensions: [],
       },
       {
         max_radius: 40,
         nodes: [],
         links: [],
-        labels: [label('label-1', 60, 100 * Math.PI / 180)],
+        labels: [label('label-1', 60, (100 * Math.PI) / 180)],
         extensions: [],
       },
       0.5
@@ -287,7 +294,15 @@ function node(id, radius, angle, splitIndices = [1]) {
   };
 }
 
-function link(id, sourceRadius, targetRadius, sourceAngle, targetAngle, sourceId = null, targetId = null) {
+function link(
+  id,
+  sourceRadius,
+  targetRadius,
+  sourceAngle,
+  targetAngle,
+  sourceId = null,
+  targetId = null
+) {
   const sourcePosition = position(sourceRadius, sourceAngle);
   const targetPosition = position(targetRadius, targetAngle);
 
@@ -325,11 +340,7 @@ function expectPointCloseTo(actual, expected, precision = 6) {
 }
 
 function position(radius, angle) {
-  return [
-    radius * Math.cos(angle),
-    radius * Math.sin(angle),
-    0,
-  ];
+  return [radius * Math.cos(angle), radius * Math.sin(angle), 0];
 }
 
 function pathPoint(path, offset) {
@@ -345,10 +356,10 @@ function pointAngle(point) {
 }
 
 function shouldFlipLabel(angle) {
-  const normalized = ((angle % (Math.PI * 2)) + (Math.PI * 2)) % (Math.PI * 2);
+  const normalized = ((angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
   return normalized > Math.PI / 2 && normalized < Math.PI * 1.5;
 }
 
 function normalizeAngle(angle) {
-  return ((angle % (Math.PI * 2)) + (Math.PI * 2)) % (Math.PI * 2);
+  return ((angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
 }

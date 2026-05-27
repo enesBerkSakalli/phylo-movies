@@ -5,9 +5,9 @@
 import { createLifecycleClocks, summarizeTransitionLifecycles } from '../TransitionChangeModel.js';
 
 export const ANIMATION_STAGES = {
-  COLLAPSE: 'COLLAPSE',  // Elements exiting (branches disappearing)
-  EXPAND: 'EXPAND',      // Elements entering (branches appearing)
-  REORDER: 'REORDER'     // Same elements, different positions
+  COLLAPSE: 'COLLAPSE', // Elements exiting (branches disappearing)
+  EXPAND: 'EXPAND', // Elements entering (branches appearing)
+  REORDER: 'REORDER', // Same elements, different positions
 };
 
 /**
@@ -30,8 +30,8 @@ export function detectAnimationStage(dataFrom, dataTo, transitionChangeModel = n
     return ANIMATION_STAGES.REORDER;
   }
 
-  const fromIds = new Set(dataFrom.nodes.map(n => n.id));
-  const toIds = new Set(dataTo.nodes.map(n => n.id));
+  const fromIds = new Set(dataFrom.nodes.map((n) => n.id));
+  const toIds = new Set(dataTo.nodes.map((n) => n.id));
 
   // Count exiting (in from but not in to) and entering (in to but not in from)
   let exiting = 0;
@@ -67,13 +67,10 @@ export function detectCurrentAnimationStage(
   transitionChangeModel = null,
   timeFactor = null
 ) {
-  const lifecycleSummary = transitionChangeModel?.lifecycleSummary
-    ?? summarizeTransitionLifecycles(transitionChangeModel);
+  const lifecycleSummary =
+    transitionChangeModel?.lifecycleSummary ?? summarizeTransitionLifecycles(transitionChangeModel);
 
-  if (
-    lifecycleSummary.hasStructuralChanges &&
-    Number.isFinite(timeFactor)
-  ) {
+  if (lifecycleSummary.hasStructuralChanges && Number.isFinite(timeFactor)) {
     const clocks = createLifecycleClocks(timeFactor);
     if (lifecycleSummary.hasCollapseChanges && isClockActive(clocks.collapseT)) {
       return ANIMATION_STAGES.COLLAPSE;

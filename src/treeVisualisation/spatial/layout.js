@@ -12,26 +12,26 @@
 export const VIEWPORT_FIT_OBSTRUCTION_SCOPES = Object.freeze({
   CANVAS: 'canvas',
   ANCHORED: 'anchored',
-  ALL: 'all'
+  ALL: 'all',
 });
 
 export const VIEWPORT_FIT_ANCHORED_OBSTRUCTION_SELECTORS = Object.freeze([
   '.movie-player-bar',
   '#top-scale-bar-container',
   '[role="group"][aria-label="Tree viewport controls"]',
-  '[role="group"][aria-label="Canvas export controls"]'
+  '[role="group"][aria-label="Canvas export controls"]',
 ]);
 
 export const VIEWPORT_FIT_FLOATING_OBSTRUCTION_SELECTORS = Object.freeze([
   '[role="complementary"][aria-label="Comparison Panel"]',
   '.phylo-hud',
   '.phylo-hud-restore',
-  '[aria-label="Transition Inspector"]'
+  '[aria-label="Transition Inspector"]',
 ]);
 
 export const VIEWPORT_FIT_OBSTRUCTION_SELECTORS = Object.freeze([
   ...VIEWPORT_FIT_ANCHORED_OBSTRUCTION_SELECTORS,
-  ...VIEWPORT_FIT_FLOATING_OBSTRUCTION_SELECTORS
+  ...VIEWPORT_FIT_FLOATING_OBSTRUCTION_SELECTORS,
 ]);
 
 export const VIEWPORT_FIT_OBSTRUCTION_PADDING_PX = 20;
@@ -43,13 +43,15 @@ function clampFitAreaValue(value, max) {
 export function calculateRectOverlap(rect, bounds) {
   return {
     x: Math.max(0, Math.min(rect.right, bounds.right) - Math.max(rect.left, bounds.left)),
-    y: Math.max(0, Math.min(rect.bottom, bounds.bottom) - Math.max(rect.top, bounds.top))
+    y: Math.max(0, Math.min(rect.bottom, bounds.bottom) - Math.max(rect.top, bounds.top)),
   };
 }
 
 function rectanglesIntersect(a, b) {
-  return Math.min(a.left + a.width, b.left + b.width) > Math.max(a.left, b.left)
-    && Math.min(a.top + a.height, b.top + b.height) > Math.max(a.top, b.top);
+  return (
+    Math.min(a.left + a.width, b.left + b.width) > Math.max(a.left, b.left) &&
+    Math.min(a.top + a.height, b.top + b.height) > Math.max(a.top, b.top)
+  );
 }
 
 function clampLocalRect(rect, canvasWidth, canvasHeight) {
@@ -62,17 +64,25 @@ function clampLocalRect(rect, canvasWidth, canvasHeight) {
     left,
     top,
     width: Math.max(0, right - left),
-    height: Math.max(0, bottom - top)
+    height: Math.max(0, bottom - top),
   };
 }
 
-function toExpandedCanvasLocalRect(rect, canvasRect, padding = VIEWPORT_FIT_OBSTRUCTION_PADDING_PX) {
-  return clampLocalRect({
-    left: rect.left - canvasRect.left - padding,
-    top: rect.top - canvasRect.top - padding,
-    width: rect.width + padding * 2,
-    height: rect.height + padding * 2
-  }, canvasRect.width, canvasRect.height);
+function toExpandedCanvasLocalRect(
+  rect,
+  canvasRect,
+  padding = VIEWPORT_FIT_OBSTRUCTION_PADDING_PX
+) {
+  return clampLocalRect(
+    {
+      left: rect.left - canvasRect.left - padding,
+      top: rect.top - canvasRect.top - padding,
+      width: rect.width + padding * 2,
+      height: rect.height + padding * 2,
+    },
+    canvasRect.width,
+    canvasRect.height
+  );
 }
 
 function normalizeRectEdges(values) {
@@ -90,12 +100,12 @@ export function calculateUnobstructedFitAreas(canvasWidth, canvasHeight, obstruc
   const xEdges = normalizeRectEdges([
     0,
     canvasWidth,
-    ...blockingRects.flatMap((rect) => [rect.left, rect.left + rect.width])
+    ...blockingRects.flatMap((rect) => [rect.left, rect.left + rect.width]),
   ]);
   const yEdges = normalizeRectEdges([
     0,
     canvasHeight,
-    ...blockingRects.flatMap((rect) => [rect.top, rect.top + rect.height])
+    ...blockingRects.flatMap((rect) => [rect.top, rect.top + rect.height]),
   ]);
   const candidates = [];
 
@@ -107,7 +117,7 @@ export function calculateUnobstructedFitAreas(canvasWidth, canvasHeight, obstruc
             left: xEdges[leftIndex],
             top: yEdges[topIndex],
             width: xEdges[rightIndex] - xEdges[leftIndex],
-            height: yEdges[bottomIndex] - yEdges[topIndex]
+            height: yEdges[bottomIndex] - yEdges[topIndex],
           };
           if (candidate.width <= 0 || candidate.height <= 0) continue;
           if (blockingRects.some((rect) => rectanglesIntersect(candidate, rect))) continue;
@@ -117,7 +127,7 @@ export function calculateUnobstructedFitAreas(canvasWidth, canvasHeight, obstruc
     }
   }
 
-  return candidates.sort((a, b) => (b.width * b.height) - (a.width * a.height));
+  return candidates.sort((a, b) => b.width * b.height - a.width * a.height);
 }
 
 export function calculateViewportFitAreas(containerElement, options = {}) {

@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import {
   buildTransitionChangeModel,
   createLifecycleClocks,
-  summarizeTransitionLifecycles
+  summarizeTransitionLifecycles,
 } from '../../src/treeVisualisation/deckgl/interpolation/TransitionChangeModel.js';
 import { TreeInterpolator } from '../../src/treeVisualisation/deckgl/interpolation/TreeInterpolator.js';
 import { getNodeKey } from '../../src/domain/tree/splits.js';
@@ -18,12 +18,16 @@ function link(id, sourceRadius, targetRadius, angle = 0) {
     opacity: 1,
     polarData: {
       source: { angle, radius: sourceRadius },
-      target: { angle, radius: targetRadius }
+      target: { angle, radius: targetRadius },
     },
     path: new Float32Array([
-      sourceRadius * Math.cos(angle), sourceRadius * Math.sin(angle), 0,
-      targetRadius * Math.cos(angle), targetRadius * Math.sin(angle), 0
-    ])
+      sourceRadius * Math.cos(angle),
+      sourceRadius * Math.sin(angle),
+      0,
+      targetRadius * Math.cos(angle),
+      targetRadius * Math.sin(angle),
+      0,
+    ]),
   };
 }
 
@@ -34,38 +38,36 @@ function node(id, radius, angle = 0, splitIndices = [Number(id.replace(/\D/g, ''
     angle,
     polarPosition: radius,
     radius,
-    position: [
-      radius * Math.cos(angle),
-      radius * Math.sin(angle),
-      0
-    ],
-    split_indices: splitIndices
+    position: [radius * Math.cos(angle), radius * Math.sin(angle), 0],
+    split_indices: splitIndices,
   };
 }
 
-function extension(id, sourceRadius, targetRadius, angle = 0, splitIndices = [Number(id.replace(/\D/g, '')) || 1]) {
+function extension(
+  id,
+  sourceRadius,
+  targetRadius,
+  angle = 0,
+  splitIndices = [Number(id.replace(/\D/g, '')) || 1]
+) {
   return {
     id,
     split_indices: splitIndices,
     opacity: 1,
-    sourcePosition: [
-      sourceRadius * Math.cos(angle),
-      sourceRadius * Math.sin(angle),
-      0
-    ],
-    targetPosition: [
-      targetRadius * Math.cos(angle),
-      targetRadius * Math.sin(angle),
-      0
-    ],
+    sourcePosition: [sourceRadius * Math.cos(angle), sourceRadius * Math.sin(angle), 0],
+    targetPosition: [targetRadius * Math.cos(angle), targetRadius * Math.sin(angle), 0],
     polarData: {
       source: { angle, radius: sourceRadius },
-      target: { angle, radius: targetRadius }
+      target: { angle, radius: targetRadius },
     },
     path: new Float32Array([
-      sourceRadius * Math.cos(angle), sourceRadius * Math.sin(angle), 0,
-      targetRadius * Math.cos(angle), targetRadius * Math.sin(angle), 0
-    ])
+      sourceRadius * Math.cos(angle),
+      sourceRadius * Math.sin(angle),
+      0,
+      targetRadius * Math.cos(angle),
+      targetRadius * Math.sin(angle),
+      0,
+    ]),
   };
 }
 
@@ -74,17 +76,13 @@ function label(id, radius, angle = 0, splitIndices = [Number(id.replace(/\D/g, '
     id,
     split_indices: splitIndices,
     opacity: 1,
-    position: [
-      radius * Math.cos(angle),
-      radius * Math.sin(angle),
-      0
-    ],
+    position: [radius * Math.cos(angle), radius * Math.sin(angle), 0],
     polarPosition: radius,
     distance: radius,
     angle,
     rotation: -angle,
     textAnchor: 'start',
-    text: id
+    text: id,
   };
 }
 
@@ -127,14 +125,14 @@ describe('TransitionChangeModel', () => {
       link('exit-2', 10, 30),
       link('zero-3', 10, 25),
       link('revive-4', 10, 10),
-      link('length-5', 10, 22)
+      link('length-5', 10, 22),
     ]);
     const to = frame([
       link('stable-1', 10, 20),
       link('enter-6', 10, 28),
       link('zero-3', 10, 10),
       link('revive-4', 10, 24),
-      link('length-5', 10, 35)
+      link('length-5', 10, 35),
     ]);
 
     const model = buildTransitionChangeModel(from, to);
@@ -152,13 +150,9 @@ describe('TransitionChangeModel', () => {
     const from = frame([
       link('zero-1', 10, 25),
       link('revive-2', 10, 10),
-      link('length-3', 10, 22)
+      link('length-3', 10, 22),
     ]);
-    const to = frame([
-      link('zero-1', 10, 10),
-      link('revive-2', 10, 24),
-      link('length-3', 10, 35)
-    ]);
+    const to = frame([link('zero-1', 10, 10), link('revive-2', 10, 24), link('length-3', 10, 35)]);
 
     const model = buildTransitionChangeModel(from, to);
     const summary = summarizeTransitionLifecycles(model);
@@ -192,21 +186,13 @@ describe('TransitionChangeModel', () => {
 
 describe('TreeInterpolator lifecycle-aware links', () => {
   it('keeps lifecycle branch growth and collapse within visible bounds', () => {
-    const from = frame([
-      link('exit-1', 10, 30),
-      link('zero-2', 10, 30),
-      link('stable-3', 10, 30)
-    ]);
-    const to = frame([
-      link('enter-4', 10, 30),
-      link('zero-2', 10, 10),
-      link('stable-3', 20, 40)
-    ]);
+    const from = frame([link('exit-1', 10, 30), link('zero-2', 10, 30), link('stable-3', 10, 30)]);
+    const to = frame([link('enter-4', 10, 30), link('zero-2', 10, 10), link('stable-3', 20, 40)]);
     const transitionChangeModel = buildTransitionChangeModel(from, to);
 
     const interpolator = new TreeInterpolator();
     const result = interpolator.interpolateTreeData(from, to, 0.25, {
-      transitionChangeModel
+      transitionChangeModel,
     });
 
     const byId = new Map(result.links.map((item) => [item.id, item]));
@@ -223,19 +209,15 @@ describe('TreeInterpolator lifecycle-aware links', () => {
   });
 
   it('fades structural link enter and exit only when explicitly requested', () => {
-    const from = frame([
-      link('exit-1', 10, 30)
-    ]);
-    const to = frame([
-      link('enter-2', 10, 30)
-    ]);
+    const from = frame([link('exit-1', 10, 30)]);
+    const to = frame([link('enter-2', 10, 30)]);
     const transitionChangeModel = buildTransitionChangeModel(from, to);
 
     const interpolator = new TreeInterpolator();
     const result = interpolator.interpolateTreeData(from, to, 0.25, {
       transitionChangeModel,
       enterTimeFactor: 0.25,
-      exitTimeFactor: 0.25
+      exitTimeFactor: 0.25,
     });
 
     const byId = new Map(result.links.map((item) => [item.id, item]));
@@ -244,17 +226,13 @@ describe('TreeInterpolator lifecycle-aware links', () => {
   });
 
   it('keeps lifecycle link anchors on the frame-time geometry', () => {
-    const from = frame([
-      link('zero-1', 10, 30)
-    ]);
-    const to = frame([
-      link('zero-1', 20, 20)
-    ]);
+    const from = frame([link('zero-1', 10, 30)]);
+    const to = frame([link('zero-1', 20, 20)]);
     const transitionChangeModel = buildTransitionChangeModel(from, to);
 
     const interpolator = new TreeInterpolator();
     const result = interpolator.interpolateTreeData(from, to, 0.25, {
-      transitionChangeModel
+      transitionChangeModel,
     });
 
     const zeroing = result.links[0];
@@ -263,19 +241,15 @@ describe('TreeInterpolator lifecycle-aware links', () => {
   });
 
   it('grows a retained zero-length branch when the expand clock advances', () => {
-    const from = frame([
-      link('revive-1', 10, 10)
-    ]);
-    const to = frame([
-      link('revive-1', 10, 30)
-    ]);
+    const from = frame([link('revive-1', 10, 10)]);
+    const to = frame([link('revive-1', 10, 30)]);
     const transitionChangeModel = buildTransitionChangeModel(from, to);
 
     const interpolator = new TreeInterpolator();
     const rawTimeFactor = 0.8;
     const result = interpolator.interpolateTreeData(from, to, Math.pow(rawTimeFactor, 3), {
       transitionChangeModel,
-      rawTimeFactor
+      rawTimeFactor,
     });
 
     const reviving = result.links[0];
@@ -286,12 +260,8 @@ describe('TreeInterpolator lifecycle-aware links', () => {
   });
 
   it('keeps retained zero-length branch growth on the post-move target angle', () => {
-    const from = frame([
-      link('revive-1', 10, 10, Math.PI / 2)
-    ]);
-    const to = frame([
-      link('revive-1', 10, 30, Math.PI)
-    ]);
+    const from = frame([link('revive-1', 10, 10, Math.PI / 2)]);
+    const to = frame([link('revive-1', 10, 30, Math.PI)]);
     const transitionChangeModel = buildTransitionChangeModel(from, to);
 
     const rawTimeFactor = 0.8;
@@ -299,19 +269,22 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     const interpolator = new TreeInterpolator();
     const result = interpolator.interpolateTreeData(from, to, Math.pow(rawTimeFactor, 3), {
       transitionChangeModel,
-      rawTimeFactor
+      rawTimeFactor,
     });
 
     const reviving = result.links[0];
     const targetPoint = [
       reviving.path[reviving.path.length - 3],
       reviving.path[reviving.path.length - 2],
-      reviving.path[reviving.path.length - 1]
+      reviving.path[reviving.path.length - 1],
     ];
 
     expect(reviving.lifecycle).to.equal('reviving');
     expect(lastPathRadius(reviving.path)).to.be.greaterThan(10);
-    expect(pointAngle(targetPoint)).to.be.closeTo(Math.PI / 2 + (Math.PI / 2 * Math.pow(rawTimeFactor, 3)), 0.001);
+    expect(pointAngle(targetPoint)).to.be.closeTo(
+      Math.PI / 2 + (Math.PI / 2) * Math.pow(rawTimeFactor, 3),
+      0.001
+    );
   });
 
   it('derives lifecycle target node positions from rendered link endpoints', () => {
@@ -320,25 +293,19 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     const zeroingFrom = {
       ...link('zero-target-2', 10, 30),
       sourceId: rootId,
-      targetId
+      targetId,
     };
     const zeroingTo = {
       ...link('zero-target-2', 20, 20),
       sourceId: rootId,
-      targetId
+      targetId,
     };
-    const from = frame([zeroingFrom], [
-      node(rootId, 10),
-      node(targetId, 30)
-    ]);
-    const to = frame([zeroingTo], [
-      node(rootId, 20),
-      node(targetId, 20)
-    ]);
+    const from = frame([zeroingFrom], [node(rootId, 10), node(targetId, 30)]);
+    const to = frame([zeroingTo], [node(rootId, 20), node(targetId, 20)]);
     const transitionChangeModel = buildTransitionChangeModel(from, to);
 
     const result = new TreeInterpolator().interpolateTreeData(from, to, 0.25, {
-      transitionChangeModel
+      transitionChangeModel,
     });
 
     const targetNode = result.nodes.find((item) => item.id === targetId);
@@ -352,17 +319,13 @@ describe('TreeInterpolator lifecycle-aware links', () => {
   });
 
   it('shrinks a retained branch continuously toward its zero-length target', () => {
-    const from = frame([
-      link('zero-1', 10, 30)
-    ]);
-    const to = frame([
-      link('zero-1', 10, 10)
-    ]);
+    const from = frame([link('zero-1', 10, 30)]);
+    const to = frame([link('zero-1', 10, 10)]);
     const transitionChangeModel = buildTransitionChangeModel(from, to);
 
     const interpolator = new TreeInterpolator();
     const result = interpolator.interpolateTreeData(from, to, 0.25, {
-      transitionChangeModel
+      transitionChangeModel,
     });
 
     const zeroing = result.links[0];
@@ -375,37 +338,35 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     const parentFrom = {
       ...link('zero-parent-2', 10, 30),
       sourceId: 'node-root-1',
-      targetId: 'node-parent-2'
+      targetId: 'node-parent-2',
     };
     const parentTo = {
       ...link('zero-parent-2', 20, 20),
       sourceId: 'node-root-1',
-      targetId: 'node-parent-2'
+      targetId: 'node-parent-2',
     };
     const childFrom = {
       ...link('stable-child-3', 30, 40),
       sourceId: 'node-parent-2',
-      targetId: 'node-child-3'
+      targetId: 'node-child-3',
     };
     const childTo = {
       ...link('stable-child-3', 20, 30),
       sourceId: 'node-parent-2',
-      targetId: 'node-child-3'
+      targetId: 'node-child-3',
     };
-    const from = frame([parentFrom, childFrom], [
-      node('node-root-1', 10),
-      node('node-parent-2', 30),
-      node('node-child-3', 40)
-    ]);
-    const to = frame([parentTo, childTo], [
-      node('node-root-1', 20),
-      node('node-parent-2', 20),
-      node('node-child-3', 30)
-    ]);
+    const from = frame(
+      [parentFrom, childFrom],
+      [node('node-root-1', 10), node('node-parent-2', 30), node('node-child-3', 40)]
+    );
+    const to = frame(
+      [parentTo, childTo],
+      [node('node-root-1', 20), node('node-parent-2', 20), node('node-child-3', 30)]
+    );
     const transitionChangeModel = buildTransitionChangeModel(from, to);
 
     const result = new TreeInterpolator().interpolateTreeData(from, to, 0.5, {
-      transitionChangeModel
+      transitionChangeModel,
     });
 
     const parentLink = result.links.find((item) => item.id === 'zero-parent-2');
@@ -424,21 +385,15 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     const parentFrom = {
       ...link('zero-parent-2', 10, 30, 0),
       sourceId: rootId,
-      targetId: parentId
+      targetId: parentId,
     };
     const parentTo = {
       ...link('zero-parent-2', 10, 10, Math.PI / 2),
       sourceId: rootId,
-      targetId: parentId
+      targetId: parentId,
     };
-    const from = frame([parentFrom], [
-      node(rootId, 10, 0),
-      node(parentId, 30, 0)
-    ]);
-    const to = frame([parentTo], [
-      node(rootId, 10, 0),
-      node(parentId, 10, Math.PI / 2)
-    ]);
+    const from = frame([parentFrom], [node(rootId, 10, 0), node(parentId, 30, 0)]);
+    const to = frame([parentTo], [node(rootId, 10, 0), node(parentId, 10, Math.PI / 2)]);
     const transitionChangeModel = buildTransitionChangeModel(from, to);
     const rawTimeFactor = 0.2;
     const frameTimeFactor = 1 - Math.pow(1 - rawTimeFactor, 3);
@@ -446,7 +401,7 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     const result = new TreeInterpolator().interpolateTreeData(from, to, frameTimeFactor, {
       stage: ANIMATION_STAGES.COLLAPSE,
       transitionChangeModel,
-      rawTimeFactor
+      rawTimeFactor,
     });
 
     const parentNode = result.nodes.find((item) => item.id === parentId);
@@ -462,35 +417,29 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     const parentFrom = {
       ...link('zero-parent-2', 10, 30, 0),
       sourceId: getNodeKey({ split_indices: [1] }),
-      targetId: parentId
+      targetId: parentId,
     };
     const parentTo = {
       ...link('zero-parent-2', 20, 20, Math.PI / 2),
       sourceId: getNodeKey({ split_indices: [1] }),
-      targetId: parentId
+      targetId: parentId,
     };
     const from = frame(
       [parentFrom],
-      [
-        node(getNodeKey({ split_indices: [1] }), 10, 0, [1]),
-        node(parentId, 30, 0, [2])
-      ],
+      [node(getNodeKey({ split_indices: [1] }), 10, 0, [1]), node(parentId, 30, 0, [2])],
       [extension('ext-parent-2', 30, 55, 0, [2])],
       [label('label-parent-2', 55, 0, [2])]
     );
     const to = frame(
       [parentTo],
-      [
-        node(getNodeKey({ split_indices: [1] }), 20, 0, [1]),
-        node(parentId, 20, Math.PI / 2, [2])
-      ],
+      [node(getNodeKey({ split_indices: [1] }), 20, 0, [1]), node(parentId, 20, Math.PI / 2, [2])],
       [extension('ext-parent-2', 20, 55, 0, [2])],
       [label('label-parent-2', 55, 0, [2])]
     );
     const transitionChangeModel = buildTransitionChangeModel(from, to);
 
     const result = new TreeInterpolator().interpolateTreeData(from, to, 0.5, {
-      transitionChangeModel
+      transitionChangeModel,
     });
 
     expect(result.labels[0].angle).to.be.closeTo(0, 0.001);
@@ -501,20 +450,15 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     const entering = {
       ...link('enter-3', 20, 30),
       sourceId: 'node-parent-1',
-      targetId: 'node-enter-3'
+      targetId: 'node-enter-3',
     };
-    const from = frame([], [
-      node('node-parent-1', 10)
-    ]);
-    const to = frame([entering], [
-      node('node-parent-1', 20),
-      node('node-enter-3', 30)
-    ]);
+    const from = frame([], [node('node-parent-1', 10)]);
+    const to = frame([entering], [node('node-parent-1', 20), node('node-enter-3', 30)]);
     const transitionChangeModel = buildTransitionChangeModel(from, to);
 
     const interpolator = new TreeInterpolator();
     const result = interpolator.interpolateTreeData(from, to, 0.5, {
-      transitionChangeModel
+      transitionChangeModel,
     });
 
     expect(result.links[0].lifecycle).to.equal('entering');
@@ -525,15 +469,10 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     const entering = {
       ...link('enter-3', 20, 30),
       sourceId: 'node-parent-1',
-      targetId: 'node-enter-3'
+      targetId: 'node-enter-3',
     };
-    const from = frame([], [
-      node('node-parent-1', 10)
-    ]);
-    const to = frame([entering], [
-      node('node-parent-1', 20),
-      node('node-enter-3', 30)
-    ]);
+    const from = frame([], [node('node-parent-1', 10)]);
+    const to = frame([entering], [node('node-parent-1', 20), node('node-enter-3', 30)]);
     const transitionChangeModel = buildTransitionChangeModel(from, to);
     const rawTimeFactor = 0.8;
     const frameTimeFactor = Math.pow(rawTimeFactor, 3);
@@ -541,12 +480,12 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     const interpolator = new TreeInterpolator();
     const result = interpolator.interpolateTreeData(from, to, frameTimeFactor, {
       transitionChangeModel,
-      rawTimeFactor
+      rawTimeFactor,
     });
 
-    const sourceRadius = 10 + ((20 - 10) * frameTimeFactor);
+    const sourceRadius = 10 + (20 - 10) * frameTimeFactor;
     const expandT = createLifecycleClocks(rawTimeFactor).expandT;
-    const expectedTargetRadius = sourceRadius + ((30 - sourceRadius) * expandT);
+    const expectedTargetRadius = sourceRadius + (30 - sourceRadius) * expandT;
 
     expect(expandT).to.be.greaterThan(0);
     expect(firstPathRadius(result.links[0].path)).to.be.closeTo(sourceRadius, 0.001);
@@ -557,15 +496,10 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     const exiting = {
       ...link('exit-3', 20, 30),
       sourceId: 'node-parent-1',
-      targetId: 'node-exit-3'
+      targetId: 'node-exit-3',
     };
-    const from = frame([exiting], [
-      node('node-parent-1', 10),
-      node('node-exit-3', 30)
-    ]);
-    const to = frame([], [
-      node('node-parent-1', 20)
-    ]);
+    const from = frame([exiting], [node('node-parent-1', 10), node('node-exit-3', 30)]);
+    const to = frame([], [node('node-parent-1', 20)]);
     const transitionChangeModel = buildTransitionChangeModel(from, to);
     const rawTimeFactor = 0.2;
     const frameTimeFactor = 1 - Math.pow(1 - rawTimeFactor, 3);
@@ -573,12 +507,12 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     const interpolator = new TreeInterpolator();
     const result = interpolator.interpolateTreeData(from, to, frameTimeFactor, {
       transitionChangeModel,
-      rawTimeFactor
+      rawTimeFactor,
     });
 
-    const sourceRadius = 10 + ((20 - 10) * frameTimeFactor);
+    const sourceRadius = 10 + (20 - 10) * frameTimeFactor;
     const collapseT = createLifecycleClocks(rawTimeFactor).collapseT;
-    const expectedTargetRadius = sourceRadius + ((30 - sourceRadius) * (1 - collapseT));
+    const expectedTargetRadius = sourceRadius + (30 - sourceRadius) * (1 - collapseT);
 
     expect(collapseT).to.be.greaterThan(0);
     expect(firstPathRadius(result.links[0].path)).to.be.closeTo(sourceRadius, 0.001);
@@ -589,15 +523,10 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     const exiting = {
       ...link('exit-3', 20, 30, 0),
       sourceId: 'node-parent-1',
-      targetId: 'node-exit-3'
+      targetId: 'node-exit-3',
     };
-    const from = frame([exiting], [
-      node('node-parent-1', 20, 0),
-      node('node-exit-3', 30, 0)
-    ]);
-    const to = frame([], [
-      node('node-parent-1', 20, Math.PI / 2)
-    ]);
+    const from = frame([exiting], [node('node-parent-1', 20, 0), node('node-exit-3', 30, 0)]);
+    const to = frame([], [node('node-parent-1', 20, Math.PI / 2)]);
     const transitionChangeModel = buildTransitionChangeModel(from, to);
     const rawTimeFactor = 0.2;
     const frameTimeFactor = 1 - Math.pow(1 - rawTimeFactor, 3);
@@ -605,7 +534,7 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     const result = new TreeInterpolator().interpolateTreeData(from, to, frameTimeFactor, {
       stage: ANIMATION_STAGES.COLLAPSE,
       transitionChangeModel,
-      rawTimeFactor
+      rawTimeFactor,
     });
 
     const clocks = createLifecycleClocks(rawTimeFactor);
@@ -623,15 +552,13 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     const entering = {
       ...link('enter-3', 20, 30, Math.PI / 2),
       sourceId: 'node-parent-1',
-      targetId: 'node-enter-3'
+      targetId: 'node-enter-3',
     };
-    const from = frame([], [
-      node('node-parent-1', 10, 0)
-    ]);
-    const to = frame([entering], [
-      node('node-parent-1', 20, 0),
-      node('node-enter-3', 30, Math.PI / 2)
-    ]);
+    const from = frame([], [node('node-parent-1', 10, 0)]);
+    const to = frame(
+      [entering],
+      [node('node-parent-1', 20, 0), node('node-enter-3', 30, Math.PI / 2)]
+    );
     const transitionChangeModel = buildTransitionChangeModel(from, to);
     const rawTimeFactor = 0.25;
     const frameTimeFactor = 1 - Math.pow(1 - rawTimeFactor, 3);
@@ -639,15 +566,24 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     const interpolator = new TreeInterpolator();
     const result = interpolator.interpolateTreeData(from, to, frameTimeFactor, {
       transitionChangeModel,
-      rawTimeFactor
+      rawTimeFactor,
     });
 
     const expandT = createLifecycleClocks(rawTimeFactor).expandT;
     expect(expandT).to.equal(0);
     expect(maxDistanceFromFirstPoint(result.links[0].path)).to.be.lessThan(0.001);
-    expect(result.links[0].targetPosition[0]).to.be.closeTo(result.links[0].sourcePosition[0], 0.001);
-    expect(result.links[0].targetPosition[1]).to.be.closeTo(result.links[0].sourcePosition[1], 0.001);
-    expect(result.links[0].polarData.target.radius).to.be.closeTo(result.links[0].polarData.source.radius, 0.001);
+    expect(result.links[0].targetPosition[0]).to.be.closeTo(
+      result.links[0].sourcePosition[0],
+      0.001
+    );
+    expect(result.links[0].targetPosition[1]).to.be.closeTo(
+      result.links[0].sourcePosition[1],
+      0.001
+    );
+    expect(result.links[0].polarData.target.radius).to.be.closeTo(
+      result.links[0].polarData.source.radius,
+      0.001
+    );
     expect(result.links[0].radialLength).to.be.closeTo(0, 0.001);
   });
 
@@ -655,15 +591,13 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     const entering = {
       ...link('enter-3', 20, 30, Math.PI / 2),
       sourceId: 'node-parent-1',
-      targetId: 'node-enter-3'
+      targetId: 'node-enter-3',
     };
-    const from = frame([], [
-      node('node-parent-1', 10, 0)
-    ]);
-    const to = frame([entering], [
-      node('node-parent-1', 20, 0),
-      node('node-enter-3', 30, Math.PI / 2)
-    ]);
+    const from = frame([], [node('node-parent-1', 10, 0)]);
+    const to = frame(
+      [entering],
+      [node('node-parent-1', 20, 0), node('node-enter-3', 30, Math.PI / 2)]
+    );
     const transitionChangeModel = buildTransitionChangeModel(from, to);
     const rawTimeFactor = 0.25;
     const frameTimeFactor = 1 - Math.pow(1 - rawTimeFactor, 3);
@@ -671,7 +605,7 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     const interpolator = new TreeInterpolator();
     const result = interpolator.interpolateTreeData(from, to, frameTimeFactor, {
       transitionChangeModel,
-      rawTimeFactor
+      rawTimeFactor,
     });
 
     const enteringNode = result.nodes.find((item) => item.id === 'node-enter-3');
@@ -679,66 +613,66 @@ describe('TreeInterpolator lifecycle-aware links', () => {
 
     expect(enteringNode.position[0]).to.be.closeTo(enteringLink.targetPosition[0], 0.001);
     expect(enteringNode.position[1]).to.be.closeTo(enteringLink.targetPosition[1], 0.001);
-    expect(pointAngle(enteringNode.position)).to.be.closeTo(pointAngle(enteringLink.targetPosition), 0.001);
+    expect(pointAngle(enteringNode.position)).to.be.closeTo(
+      pointAngle(enteringLink.targetPosition),
+      0.001
+    );
   });
 
   it('keeps nested entering child branch sources attached to the growing parent branch', () => {
     const parentLink = {
       ...link('enter-parent-2', 20, 30),
       sourceId: 'node-root-1',
-      targetId: 'node-parent-2'
+      targetId: 'node-parent-2',
     };
     const childLink = {
       ...link('enter-child-3', 30, 40),
       sourceId: 'node-parent-2',
-      targetId: 'node-child-3'
+      targetId: 'node-child-3',
     };
-    const from = frame([], [
-      node('node-root-1', 10)
-    ]);
-    const to = frame([parentLink, childLink], [
-      node('node-root-1', 20),
-      node('node-parent-2', 30),
-      node('node-child-3', 40)
-    ]);
+    const from = frame([], [node('node-root-1', 10)]);
+    const to = frame(
+      [parentLink, childLink],
+      [node('node-root-1', 20), node('node-parent-2', 30), node('node-child-3', 40)]
+    );
     const transitionChangeModel = buildTransitionChangeModel(from, to);
 
     const interpolator = new TreeInterpolator();
     const result = interpolator.interpolateTreeData(from, to, 0.5, {
-      transitionChangeModel
+      transitionChangeModel,
     });
 
     const byId = new Map(result.links.map((item) => [item.id, item]));
     const parentTargetRadius = lastPathRadius(byId.get('enter-parent-2').path);
 
     expect(parentTargetRadius).to.be.lessThan(30);
-    expect(firstPathRadius(byId.get('enter-child-3').path)).to.be.closeTo(parentTargetRadius, 0.001);
+    expect(firstPathRadius(byId.get('enter-child-3').path)).to.be.closeTo(
+      parentTargetRadius,
+      0.001
+    );
   });
 
   it('keeps nested exiting child branch sources attached to the collapsing parent branch', () => {
     const parentLink = {
       ...link('exit-parent-2', 10, 30),
       sourceId: 'node-root-1',
-      targetId: 'node-parent-2'
+      targetId: 'node-parent-2',
     };
     const childLink = {
       ...link('exit-child-3', 30, 40),
       sourceId: 'node-parent-2',
-      targetId: 'node-child-3'
+      targetId: 'node-child-3',
     };
-    const from = frame([parentLink, childLink], [
-      node('node-root-1', 10),
-      node('node-parent-2', 30),
-      node('node-child-3', 40)
-    ]);
-    const to = frame([], [
-      node('node-root-1', 20)
-    ]);
+    const from = frame(
+      [parentLink, childLink],
+      [node('node-root-1', 10), node('node-parent-2', 30), node('node-child-3', 40)]
+    );
+    const to = frame([], [node('node-root-1', 20)]);
     const transitionChangeModel = buildTransitionChangeModel(from, to);
 
     const interpolator = new TreeInterpolator();
     const result = interpolator.interpolateTreeData(from, to, 0.5, {
-      transitionChangeModel
+      transitionChangeModel,
     });
 
     const byId = new Map(result.links.map((item) => [item.id, item]));
@@ -752,38 +686,36 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     const parentFrom = {
       ...link('zero-parent-2', 10, 30),
       sourceId: 'node-root-1',
-      targetId: 'node-parent-2'
+      targetId: 'node-parent-2',
     };
     const parentTo = {
       ...link('zero-parent-2', 20, 20),
       sourceId: 'node-root-1',
-      targetId: 'node-parent-2'
+      targetId: 'node-parent-2',
     };
     const childFrom = {
       ...link('stable-child-3', 30, 40),
       sourceId: 'node-parent-2',
-      targetId: 'node-child-3'
+      targetId: 'node-child-3',
     };
     const childTo = {
       ...link('stable-child-3', 20, 30),
       sourceId: 'node-parent-2',
-      targetId: 'node-child-3'
+      targetId: 'node-child-3',
     };
-    const from = frame([parentFrom, childFrom], [
-      node('node-root-1', 10),
-      node('node-parent-2', 30),
-      node('node-child-3', 40)
-    ]);
-    const to = frame([parentTo, childTo], [
-      node('node-root-1', 20),
-      node('node-parent-2', 20),
-      node('node-child-3', 30)
-    ]);
+    const from = frame(
+      [parentFrom, childFrom],
+      [node('node-root-1', 10), node('node-parent-2', 30), node('node-child-3', 40)]
+    );
+    const to = frame(
+      [parentTo, childTo],
+      [node('node-root-1', 20), node('node-parent-2', 20), node('node-child-3', 30)]
+    );
     const transitionChangeModel = buildTransitionChangeModel(from, to);
 
     const interpolator = new TreeInterpolator();
     const result = interpolator.interpolateTreeData(from, to, 0.5, {
-      transitionChangeModel
+      transitionChangeModel,
     });
 
     const byId = new Map(result.links.map((item) => [item.id, item]));
@@ -792,7 +724,10 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     expect(byId.get('zero-parent-2').lifecycle).to.equal('zeroing');
     expect(byId.get('stable-child-3').lifecycle).to.equal('unchanged');
     expect(parentTargetRadius).to.be.lessThan(25);
-    expect(firstPathRadius(byId.get('stable-child-3').path)).to.be.closeTo(parentTargetRadius, 0.001);
+    expect(firstPathRadius(byId.get('stable-child-3').path)).to.be.closeTo(
+      parentTargetRadius,
+      0.001
+    );
     expect(lastPathRadius(byId.get('stable-child-3').path)).to.be.closeTo(35, 0.001);
   });
 
@@ -803,46 +738,38 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     const parentFrom = {
       ...link('zero-parent-2', 10, 30),
       sourceId: rootId,
-      targetId: parentId
+      targetId: parentId,
     };
     const parentTo = {
       ...link('zero-parent-2', 20, 20),
       sourceId: rootId,
-      targetId: parentId
+      targetId: parentId,
     };
     const childFrom = {
       ...link('stable-child-3', 30, 40),
       sourceId: parentId,
-      targetId: leafId
+      targetId: leafId,
     };
     const childTo = {
       ...link('stable-child-3', 20, 30),
       sourceId: parentId,
-      targetId: leafId
+      targetId: leafId,
     };
     const from = frame(
       [parentFrom, childFrom],
-      [
-        node(rootId, 10, 0, [1]),
-        node(parentId, 30, 0, [2]),
-        node(leafId, 40, 0, [3])
-      ],
+      [node(rootId, 10, 0, [1]), node(parentId, 30, 0, [2]), node(leafId, 40, 0, [3])],
       [extension('ext-3', 40, 55, 0, [3])]
     );
     const to = frame(
       [parentTo, childTo],
-      [
-        node(rootId, 20, 0, [1]),
-        node(parentId, 20, 0, [2]),
-        node(leafId, 30, 0, [3])
-      ],
+      [node(rootId, 20, 0, [1]), node(parentId, 20, 0, [2]), node(leafId, 30, 0, [3])],
       [extension('ext-3', 30, 55, 0, [3])]
     );
     const transitionChangeModel = buildTransitionChangeModel(from, to);
 
     const interpolator = new TreeInterpolator();
     const result = interpolator.interpolateTreeData(from, to, 0.5, {
-      transitionChangeModel
+      transitionChangeModel,
     });
 
     const leaf = result.nodes.find((item) => item.id === leafId);
@@ -863,29 +790,29 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     const parentFrom = {
       ...link('zero-parent-2', 10, 30, fromAngle),
       sourceId: rootId,
-      targetId: parentId
+      targetId: parentId,
     };
     const parentTo = {
       ...link('zero-parent-2', 20, 20, parentToAngle),
       sourceId: rootId,
-      targetId: parentId
+      targetId: parentId,
     };
     const childFrom = {
       ...link('stable-child-3', 30, 40, fromAngle),
       sourceId: parentId,
-      targetId: leafId
+      targetId: leafId,
     };
     const childTo = {
       ...link('stable-child-3', 20, 30, leafToAngle),
       sourceId: parentId,
-      targetId: leafId
+      targetId: leafId,
     };
     const from = frame(
       [parentFrom, childFrom],
       [
         node(rootId, 10, fromAngle, [1]),
         node(parentId, 30, fromAngle, [2]),
-        node(leafId, 40, fromAngle, [3])
+        node(leafId, 40, fromAngle, [3]),
       ],
       [extension('ext-3', 40, 55, fromAngle, [3])],
       [label('label-3', 55, fromAngle, [3])]
@@ -895,7 +822,7 @@ describe('TreeInterpolator lifecycle-aware links', () => {
       [
         node(rootId, 20, parentToAngle, [1]),
         node(parentId, 20, parentToAngle, [2]),
-        node(leafId, 30, leafToAngle, [3])
+        node(leafId, 30, leafToAngle, [3]),
       ],
       [extension('ext-3', 30, 55, leafToAngle, [3])],
       [label('label-3', 55, leafToAngle, [3])]
@@ -904,7 +831,7 @@ describe('TreeInterpolator lifecycle-aware links', () => {
 
     const interpolator = new TreeInterpolator();
     const result = interpolator.interpolateTreeData(from, to, 0.5, {
-      transitionChangeModel
+      transitionChangeModel,
     });
 
     const leaf = result.nodes.find((item) => item.id === leafId);
@@ -925,7 +852,7 @@ describe('TreeInterpolator lifecycle-aware links', () => {
     const result = interpolator.interpolateTreeData(from, to, 0.5, {
       transitionChangeModel,
       stage: ANIMATION_STAGES.EXPAND,
-      rawTimeFactor: 0.5
+      rawTimeFactor: 0.5,
     });
 
     expect(result.nodes[0].isEntering).to.equal(true);

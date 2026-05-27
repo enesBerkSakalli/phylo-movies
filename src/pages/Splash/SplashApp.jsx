@@ -28,11 +28,7 @@ const SplashApp = () => {
       style={{ WebkitAppRegion: 'drag' }}
     >
       <div className="relative mb-12">
-        <img
-          src={phyloTreeIcon}
-          alt="Phylo-Movies"
-          className="w-40 h-40"
-        />
+        <img src={phyloTreeIcon} alt="Phylo-Movies" className="w-40 h-40" />
       </div>
 
       <div className="w-64 flex flex-col items-center">
@@ -40,9 +36,7 @@ const SplashApp = () => {
           value={progress}
           className="h-0.5 bg-slate-200 mb-3 [&>div]:bg-gradient-to-r [&>div]:from-blue-500 [&>div]:to-cyan-400"
         />
-        <p className="text-[10px] text-slate-400 tracking-wider h-4">
-          {status}
-        </p>
+        <p className="text-[10px] text-slate-400 tracking-wider h-4">{status}</p>
       </div>
 
       <div className="absolute bottom-6 text-[9px] text-slate-300 tracking-tight">

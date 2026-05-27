@@ -15,7 +15,14 @@ import { TextLayer } from '@deck.gl/layers';
  * @param {number} optionsCellSize - Cell size from options
  * @returns {Array} Column axis data
  */
-export function buildColumnAxis(cellSize, viewState, visibleRange, rows, zoomScale, optionsCellSize) {
+export function buildColumnAxis(
+  cellSize,
+  viewState,
+  visibleRange,
+  rows,
+  zoomScale,
+  optionsCellSize
+) {
   // if (viewState.zoom <= -2) return []; // Removed to ensure no info lost
 
   const { c0, c1 } = visibleRange;
@@ -33,13 +40,13 @@ export function buildColumnAxis(cellSize, viewState, visibleRange, rows, zoomSca
 
   // Round up to nice intervals
   const niceSteps = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000];
-  step = niceSteps.find(n => n >= step) || niceSteps[niceSteps.length - 1];
+  step = niceSteps.find((n) => n >= step) || niceSteps[niceSteps.length - 1];
 
   for (let c = c0; c <= c1; c++) {
     if ((c + 1) % step === 0) {
       data.push({
         text: `${c + 1}`,
-        position: [c * cellSize + cellSize / 2, axisY, 0]
+        position: [c * cellSize + cellSize / 2, axisY, 0],
       });
     }
   }
@@ -58,14 +65,15 @@ export function createColumnAxisLayer(axisData, _zoomScale) {
     id: 'columnAxis',
     data: axisData,
     pickable: false,
-    getText: d => d.text,
-    getPosition: d => d.position,
+    getText: (d) => d.text,
+    getPosition: (d) => d.position,
     getSize: 10,
-    sizeUnits: 'pixels',  // Use pixel units for consistent sizing
+    sizeUnits: 'pixels', // Use pixel units for consistent sizing
     getTextAnchor: 'middle',
     getAlignmentBaseline: 'center',
     background: true,
     getBackgroundColor: [255, 255, 255, 180],
-    fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial'
+    fontFamily:
+      'system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial',
   });
 }

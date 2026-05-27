@@ -1,9 +1,4 @@
-import type {
-  PhyloMovieData,
-  TemporalEvent,
-  TimelineFrame,
-  TimelinePair,
-} from './phyloMovieTypes';
+import type { PhyloMovieData, TemporalEvent, TimelineFrame, TimelinePair } from './phyloMovieTypes';
 import { assertExactRecordKeys, assertRecord } from './schemaValidation';
 import {
   validateFrames,
@@ -88,7 +83,9 @@ function validateTimelineContracts(
 
   pairs.forEach((pair, index) => {
     if (pair.pair_ordinal !== index) {
-      throw new Error(`Invalid phyloMovieData payload: pairs[${index}].pair_ordinal must equal adjacent input-frame ordinal ${index}`);
+      throw new Error(
+        `Invalid phyloMovieData payload: pairs[${index}].pair_ordinal must equal adjacent input-frame ordinal ${index}`
+      );
     }
     if (pairIds.has(pair.pair_id)) {
       throw new Error(`Invalid phyloMovieData payload: pairs[${index}].pair_id must be unique`);
@@ -96,18 +93,26 @@ function validateTimelineContracts(
     pairIds.add(pair.pair_id);
 
     if (!inputFrameIndices.has(pair.source_frame_index)) {
-      throw new Error(`Invalid phyloMovieData payload: pairs[${index}].source_frame_index must reference an input frame`);
+      throw new Error(
+        `Invalid phyloMovieData payload: pairs[${index}].source_frame_index must reference an input frame`
+      );
     }
     if (!inputFrameIndices.has(pair.target_frame_index)) {
-      throw new Error(`Invalid phyloMovieData payload: pairs[${index}].target_frame_index must reference an input frame`);
+      throw new Error(
+        `Invalid phyloMovieData payload: pairs[${index}].target_frame_index must reference an input frame`
+      );
     }
     if (pair.target_frame_index < pair.source_frame_index) {
-      throw new Error(`Invalid phyloMovieData payload: pairs[${index}].target_frame_index must be after source_frame_index`);
+      throw new Error(
+        `Invalid phyloMovieData payload: pairs[${index}].target_frame_index must be after source_frame_index`
+      );
     }
 
     const adjacencyKey = frameAdjacencyKey(pair.source_frame_index, pair.target_frame_index);
     if (pairByAdjacency.has(adjacencyKey)) {
-      throw new Error(`Invalid phyloMovieData payload: duplicate pair for adjacent input frames ${pair.source_frame_index} -> ${pair.target_frame_index}`);
+      throw new Error(
+        `Invalid phyloMovieData payload: duplicate pair for adjacent input frames ${pair.source_frame_index} -> ${pair.target_frame_index}`
+      );
     }
     pairByAdjacency.set(adjacencyKey, pair);
 
@@ -116,14 +121,14 @@ function validateTimelineContracts(
     if (
       expectedSourceFrame &&
       expectedTargetFrame &&
-      (
-        pair.source_frame_index !== expectedSourceFrame.frame_index ||
+      (pair.source_frame_index !== expectedSourceFrame.frame_index ||
         pair.target_frame_index !== expectedTargetFrame.frame_index ||
         pair.source_input_tree_index !== expectedSourceFrame.input_tree_index ||
-        pair.target_input_tree_index !== expectedTargetFrame.input_tree_index
-      )
+        pair.target_input_tree_index !== expectedTargetFrame.input_tree_index)
     ) {
-      throw new Error(`Invalid phyloMovieData payload: pairs[${index}] must connect adjacent input frames ${expectedSourceFrame.frame_index} -> ${expectedTargetFrame.frame_index}`);
+      throw new Error(
+        `Invalid phyloMovieData payload: pairs[${index}] must connect adjacent input frames ${expectedSourceFrame.frame_index} -> ${expectedTargetFrame.frame_index}`
+      );
     }
   });
 
@@ -131,28 +136,44 @@ function validateTimelineContracts(
 
   frames.forEach((frame, index) => {
     if (frame.frame_type === 'input_tree' || frame.is_observed_input) {
-      if (frame.pair_id !== null || frame.pair_ordinal !== null || frame.local_step_index !== null) {
-        throw new Error(`Invalid phyloMovieData payload: frames[${index}] input frames must not reference a pair`);
+      if (
+        frame.pair_id !== null ||
+        frame.pair_ordinal !== null ||
+        frame.local_step_index !== null
+      ) {
+        throw new Error(
+          `Invalid phyloMovieData payload: frames[${index}] input frames must not reference a pair`
+        );
       }
       if (frame.input_tree_index === null) {
-        throw new Error(`Invalid phyloMovieData payload: frames[${index}].input_tree_index is required for input frames`);
+        throw new Error(
+          `Invalid phyloMovieData payload: frames[${index}].input_tree_index is required for input frames`
+        );
       }
       return;
     }
 
     if (frame.pair_id === null || !pairIds.has(frame.pair_id)) {
-      throw new Error(`Invalid phyloMovieData payload: frames[${index}].pair_id must reference pairs`);
+      throw new Error(
+        `Invalid phyloMovieData payload: frames[${index}].pair_id must reference pairs`
+      );
     }
     const pair = pairById.get(frame.pair_id);
     if (!pair) return;
     if (frame.pair_ordinal !== pair.pair_ordinal) {
-      throw new Error(`Invalid phyloMovieData payload: frames[${index}].pair_ordinal must match pairs`);
+      throw new Error(
+        `Invalid phyloMovieData payload: frames[${index}].pair_ordinal must match pairs`
+      );
     }
     if (frame.source_frame_index !== pair.source_frame_index) {
-      throw new Error(`Invalid phyloMovieData payload: frames[${index}].source_frame_index must match pairs`);
+      throw new Error(
+        `Invalid phyloMovieData payload: frames[${index}].source_frame_index must match pairs`
+      );
     }
     if (frame.target_frame_index !== pair.target_frame_index) {
-      throw new Error(`Invalid phyloMovieData payload: frames[${index}].target_frame_index must match pairs`);
+      throw new Error(
+        `Invalid phyloMovieData payload: frames[${index}].target_frame_index must match pairs`
+      );
     }
   });
 
@@ -163,12 +184,16 @@ function validateTimelineContracts(
     const pair = pairByAdjacency.get(expectedKey);
 
     if (!pair) {
-      throw new Error(`Invalid phyloMovieData payload: missing pair for adjacent input frames ${sourceFrame.frame_index} -> ${targetFrame.frame_index}`);
+      throw new Error(
+        `Invalid phyloMovieData payload: missing pair for adjacent input frames ${sourceFrame.frame_index} -> ${targetFrame.frame_index}`
+      );
     }
 
     const pairIndex = pairs.indexOf(pair);
     if (pairIndex !== ordinal) {
-      throw new Error(`Invalid phyloMovieData payload: pairs[${pairIndex}] must appear at adjacent input-frame ordinal ${ordinal}`);
+      throw new Error(
+        `Invalid phyloMovieData payload: pairs[${pairIndex}] must appear at adjacent input-frame ordinal ${ordinal}`
+      );
     }
     if (
       pair.pair_ordinal !== ordinal ||
@@ -177,17 +202,22 @@ function validateTimelineContracts(
       pair.source_input_tree_index !== sourceFrame.input_tree_index ||
       pair.target_input_tree_index !== targetFrame.input_tree_index
     ) {
-      throw new Error(`Invalid phyloMovieData payload: pairs[${pairIndex}] must connect adjacent input frames ${sourceFrame.frame_index} -> ${targetFrame.frame_index}`);
+      throw new Error(
+        `Invalid phyloMovieData payload: pairs[${pairIndex}] must connect adjacent input frames ${sourceFrame.frame_index} -> ${targetFrame.frame_index}`
+      );
     }
   }
 
-  const pairGeneratedBounds = new Map<string, {
-    frameStart: number;
-    frameEnd: number;
-    localStart: number;
-    localEnd: number;
-    frameByLocalStep: Map<number, number>;
-  } | null>();
+  const pairGeneratedBounds = new Map<
+    string,
+    {
+      frameStart: number;
+      frameEnd: number;
+      localStart: number;
+      localEnd: number;
+      frameByLocalStep: Map<number, number>;
+    } | null
+  >();
   pairs.forEach((pair, index) => {
     pairGeneratedBounds.set(pair.pair_id, validatePairGeneratedRows(pair, frames, index));
   });
@@ -195,32 +225,50 @@ function validateTimelineContracts(
   temporalEvents.forEach((event, index) => {
     const pair = pairById.get(event.pair_id);
     if (!pair) {
-      throw new Error(`Invalid phyloMovieData payload: temporal_events[${index}].pair_id must reference pairs`);
+      throw new Error(
+        `Invalid phyloMovieData payload: temporal_events[${index}].pair_id must reference pairs`
+      );
     }
     if (pair && event.pair_ordinal !== pair.pair_ordinal) {
-      throw new Error(`Invalid phyloMovieData payload: temporal_events[${index}].pair_ordinal must match pairs`);
+      throw new Error(
+        `Invalid phyloMovieData payload: temporal_events[${index}].pair_ordinal must match pairs`
+      );
     }
-    validateTemporalEventRange(event, index, pair, pairGeneratedBounds.get(event.pair_id) ?? null, frames);
+    validateTemporalEventRange(
+      event,
+      index,
+      pair,
+      pairGeneratedBounds.get(event.pair_id) ?? null,
+      frames
+    );
   });
 
   const metricByPairId = new Map<string, PhyloMovieData['pair_metrics']['rows'][number]>();
   pairMetricRows.forEach((row, index) => {
     const pair = pairById.get(row.pair_id);
     if (!pair) {
-      throw new Error(`Invalid phyloMovieData payload: pair_metrics.rows[${index}].pair_id must reference pairs`);
+      throw new Error(
+        `Invalid phyloMovieData payload: pair_metrics.rows[${index}].pair_id must reference pairs`
+      );
     }
     if (metricByPairId.has(row.pair_id)) {
-      throw new Error(`Invalid phyloMovieData payload: pair_metrics.rows[${index}].pair_id must be unique`);
+      throw new Error(
+        `Invalid phyloMovieData payload: pair_metrics.rows[${index}].pair_id must be unique`
+      );
     }
     if (pair && row.pair_ordinal !== pair.pair_ordinal) {
-      throw new Error(`Invalid phyloMovieData payload: pair_metrics.rows[${index}].pair_ordinal must match ${pair.pair_id} ordinal ${pair.pair_ordinal}`);
+      throw new Error(
+        `Invalid phyloMovieData payload: pair_metrics.rows[${index}].pair_ordinal must match ${pair.pair_id} ordinal ${pair.pair_ordinal}`
+      );
     }
     metricByPairId.set(row.pair_id, row);
   });
 
   pairs.forEach((pair) => {
     if (!metricByPairId.has(pair.pair_id)) {
-      throw new Error(`Invalid phyloMovieData payload: pair_metrics.rows is missing row for ${pair.pair_id}`);
+      throw new Error(
+        `Invalid phyloMovieData payload: pair_metrics.rows is missing row for ${pair.pair_id}`
+      );
     }
   });
 }
@@ -229,11 +277,7 @@ function frameAdjacencyKey(sourceFrameIndex: number, targetFrameIndex: number): 
   return `${sourceFrameIndex}->${targetFrameIndex}`;
 }
 
-function validatePairGeneratedRows(
-  pair: TimelinePair,
-  frames: TimelineFrame[],
-  pairIndex: number
-) {
+function validatePairGeneratedRows(pair: TimelinePair, frames: TimelineFrame[], pairIndex: number) {
   if (pair.generated_frame_range === null) {
     return null;
   }
@@ -243,11 +287,15 @@ function validatePairGeneratedRows(
   for (let frameIndex = frameStart; frameIndex <= frameEnd; frameIndex += 1) {
     const frame = frames[frameIndex];
     if (!frame || frame.pair_id !== pair.pair_id) {
-      throw new Error(`Invalid phyloMovieData payload: pairs[${pairIndex}].generated_frame_range must reference generated frames for ${pair.pair_id}`);
+      throw new Error(
+        `Invalid phyloMovieData payload: pairs[${pairIndex}].generated_frame_range must reference generated frames for ${pair.pair_id}`
+      );
     }
     const localStep = frame.local_step_index;
     if (!Number.isInteger(localStep)) {
-      throw new Error(`Invalid phyloMovieData payload: frames[${frameIndex}].local_step_index is required for generated pair frame ${pair.pair_id}`);
+      throw new Error(
+        `Invalid phyloMovieData payload: frames[${frameIndex}].local_step_index is required for generated pair frame ${pair.pair_id}`
+      );
     }
     localSteps.push(localStep as number);
   }
@@ -291,29 +339,39 @@ function validateTemporalEventRange(
 ): void {
   if (!pair) return;
   if (generatedBounds === null) {
-    throw new Error(`Invalid phyloMovieData payload: temporal_events[${index}] cannot exist because ${pair.pair_id} has no generated frames`);
+    throw new Error(
+      `Invalid phyloMovieData payload: temporal_events[${index}] cannot exist because ${pair.pair_id} has no generated frames`
+    );
   }
 
   const [eventFrameStart, eventFrameEnd] = event.frame_range;
   if (eventFrameStart < generatedBounds.frameStart || eventFrameEnd > generatedBounds.frameEnd) {
-    throw new Error(`Invalid phyloMovieData payload: temporal_events[${index}].frame_range must be inside ${pair.pair_id} generated frame range ${generatedBounds.frameStart} -> ${generatedBounds.frameEnd}`);
+    throw new Error(
+      `Invalid phyloMovieData payload: temporal_events[${index}].frame_range must be inside ${pair.pair_id} generated frame range ${generatedBounds.frameStart} -> ${generatedBounds.frameEnd}`
+    );
   }
 
   for (let frameIndex = eventFrameStart; frameIndex <= eventFrameEnd; frameIndex += 1) {
     const frame = frames[frameIndex];
     if (!frame || frame.pair_id !== pair.pair_id || frame.pair_ordinal !== pair.pair_ordinal) {
-      throw new Error(`Invalid phyloMovieData payload: temporal_events[${index}].frame_range must reference real frames for ${pair.pair_id}`);
+      throw new Error(
+        `Invalid phyloMovieData payload: temporal_events[${index}].frame_range must reference real frames for ${pair.pair_id}`
+      );
     }
   }
 
   const [localStart, localEnd] = event.local_step_range;
   if (localStart < generatedBounds.localStart || localEnd > generatedBounds.localEnd) {
-    throw new Error(`Invalid phyloMovieData payload: temporal_events[${index}].local_step_range must be inside ${pair.pair_id} local step range ${generatedBounds.localStart} -> ${generatedBounds.localEnd}`);
+    throw new Error(
+      `Invalid phyloMovieData payload: temporal_events[${index}].local_step_range must be inside ${pair.pair_id} local step range ${generatedBounds.localStart} -> ${generatedBounds.localEnd}`
+    );
   }
 
   const expectedFrameStart = generatedBounds.frameByLocalStep.get(localStart);
   const expectedFrameEnd = generatedBounds.frameByLocalStep.get(localEnd);
   if (expectedFrameStart !== eventFrameStart || expectedFrameEnd !== eventFrameEnd) {
-    throw new Error(`Invalid phyloMovieData payload: temporal_events[${index}].frame_range must match local_step_range rows for ${pair.pair_id}`);
+    throw new Error(
+      `Invalid phyloMovieData payload: temporal_events[${index}].frame_range must match local_step_range rows for ${pair.pair_id}`
+    );
   }
 }

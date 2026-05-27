@@ -23,13 +23,7 @@ const DeckGLCanvas = React.memo(function DeckGLCanvas() {
     return <div id="webgl-container" style={{ width: '100%', height: '100%' }} />;
   }
 
-  return (
-    <div
-      id="webgl-container"
-      ref={containerRef}
-      style={{ width: '100%', height: '100%' }}
-    />
-  );
+  return <div id="webgl-container" ref={containerRef} style={{ width: '100%', height: '100%' }} />;
 });
 
 export { DeckGLCanvas };

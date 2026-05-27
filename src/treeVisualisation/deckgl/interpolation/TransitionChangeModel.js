@@ -6,18 +6,12 @@ export const LINK_LIFECYCLES = Object.freeze({
   EXITING: 'exiting',
   ZEROING: 'zeroing',
   REVIVING: 'reviving',
-  LENGTH_CHANGING: 'lengthChanging'
+  LENGTH_CHANGING: 'lengthChanging',
 });
 
 const DEFAULT_ZERO_EPSILON = 1e-6;
-const COLLAPSE_LIFECYCLES = new Set([
-  LINK_LIFECYCLES.EXITING,
-  LINK_LIFECYCLES.ZEROING
-]);
-const EXPAND_LIFECYCLES = new Set([
-  LINK_LIFECYCLES.ENTERING,
-  LINK_LIFECYCLES.REVIVING
-]);
+const COLLAPSE_LIFECYCLES = new Set([LINK_LIFECYCLES.EXITING, LINK_LIFECYCLES.ZEROING]);
+const EXPAND_LIFECYCLES = new Set([LINK_LIFECYCLES.ENTERING, LINK_LIFECYCLES.REVIVING]);
 
 export function buildTransitionChangeModel(dataFrom, dataTo, options = {}) {
   const zeroEpsilon = Number.isFinite(options.zeroEpsilon)
@@ -48,7 +42,7 @@ export function buildTransitionChangeModel(dataFrom, dataTo, options = {}) {
       fromLink,
       toLink,
       fromLength,
-      toLength
+      toLength,
     });
   }
 
@@ -61,7 +55,7 @@ export function buildTransitionChangeModel(dataFrom, dataTo, options = {}) {
     },
     getLinkLifecycle(linkOrKey) {
       return this.getLinkChange(linkOrKey)?.lifecycle || LINK_LIFECYCLES.UNCHANGED;
-    }
+    },
   };
   result.lifecycleSummary = summarizeTransitionLifecycles(result);
   return result;
@@ -74,7 +68,7 @@ export function createLifecycleClocks(timeFactor) {
     collapseT: phase(t, 0.15, 0.4),
     moveT: phase(t, 0.3, 0.75),
     expandT: phase(t, 0.55, 0.9),
-    settleT: phase(t, 0.85, 1.0)
+    settleT: phase(t, 0.85, 1.0),
   };
 }
 
@@ -85,7 +79,7 @@ export function summarizeTransitionLifecycles(transitionChangeModel) {
     [LINK_LIFECYCLES.EXITING]: 0,
     [LINK_LIFECYCLES.ZEROING]: 0,
     [LINK_LIFECYCLES.REVIVING]: 0,
-    [LINK_LIFECYCLES.LENGTH_CHANGING]: 0
+    [LINK_LIFECYCLES.LENGTH_CHANGING]: 0,
   };
 
   for (const change of iterateLinkChanges(transitionChangeModel)) {
@@ -101,7 +95,7 @@ export function summarizeTransitionLifecycles(transitionChangeModel) {
     hasCollapseChanges,
     hasExpandChanges,
     hasStructuralChanges: hasCollapseChanges || hasExpandChanges,
-    hasLengthChanges: counts[LINK_LIFECYCLES.LENGTH_CHANGING] > 0
+    hasLengthChanges: counts[LINK_LIFECYCLES.LENGTH_CHANGING] > 0,
   };
 }
 

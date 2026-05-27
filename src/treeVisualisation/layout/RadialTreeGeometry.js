@@ -1,4 +1,4 @@
-import { shortestAngle } from "../../domain/math/mathUtils.js";
+import { shortestAngle } from '../../domain/math/mathUtils.js';
 
 /* ─────────────────────────── ANGLE & COORDINATE HELPERS ─────────────────────────── */
 
@@ -27,7 +27,7 @@ export function polarToCartesian(radius, angle, center = { x: 0, y: 0, z: 0 }) {
   return {
     x: center.x + radius * Math.cos(angle),
     y: center.y + radius * Math.sin(angle),
-    z: center.z ?? 0
+    z: center.z ?? 0,
   };
 }
 /* ─────────────────────────── INTERPOLATION ─────────────────────────── */
@@ -44,15 +44,13 @@ export function polarToCartesian(radius, angle, center = { x: 0, y: 0, z: 0 }) {
  */
 export function createPolarInterpolator(oldAngle, oldRadius, newAngle, newRadius, options = {}) {
   const useShortestAngle = options?.useShortestAngle !== false;
-  const angleDiff = useShortestAngle
-    ? shortestAngle(oldAngle, newAngle)
-    : (newAngle - oldAngle);
+  const angleDiff = useShortestAngle ? shortestAngle(oldAngle, newAngle) : newAngle - oldAngle;
   const radiusDiff = newRadius - oldRadius;
 
   return function (t) {
     return {
       angle: oldAngle + angleDiff * t,
-      radius: oldRadius + radiusDiff * t
+      radius: oldRadius + radiusDiff * t,
     };
   };
 }
@@ -68,7 +66,6 @@ export function createPolarInterpolator(oldAngle, oldRadius, newAngle, newRadius
  * @returns {Object} {movePoint, arcEndPoint, lineEndPoint, arcProperties}
  */
 export function calculateBranchCoordinates(d, center = { x: 0, y: 0, z: 0 }) {
-
   const source = d.source;
   const target = d.target;
 
@@ -88,7 +85,7 @@ export function calculateBranchCoordinates(d, center = { x: 0, y: 0, z: 0 }) {
       movePoint,
       arcEndPoint: null,
       lineEndPoint,
-      arcProperties: null
+      arcProperties: null,
     };
   }
 
@@ -107,8 +104,8 @@ export function calculateBranchCoordinates(d, center = { x: 0, y: 0, z: 0 }) {
       startAngle: source.angle,
       endAngle: target.angle,
       angleDiff: diff, // signed shortest diff
-      center
-    }
+      center,
+    },
   };
 }
 
@@ -135,7 +132,6 @@ export function calculateInterpolatedBranchCoordinates(
   center = { x: 0, y: 0, z: 0 },
   options = {}
 ) {
-
   // Prev values fallback to current
   const pSA = prevSourceAngle !== undefined ? prevSourceAngle : d.source.angle;
   const pSR = prevSourceRadius !== undefined ? prevSourceRadius : d.source.radius;
@@ -168,7 +164,7 @@ export function calculateInterpolatedBranchCoordinates(
       movePoint,
       arcEndPoint: null,
       lineEndPoint,
-      arcProperties: null
+      arcProperties: null,
     };
   }
 
@@ -186,7 +182,7 @@ export function calculateInterpolatedBranchCoordinates(
       startAngle: sAngle,
       endAngle: tAngle,
       angleDiff: diff,
-      center
-    }
+      center,
+    },
   };
 }

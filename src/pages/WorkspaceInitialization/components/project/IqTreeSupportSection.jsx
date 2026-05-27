@@ -1,11 +1,25 @@
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck } from 'lucide-react';
 
-import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "../../../../components/ui/form";
-import { Checkbox } from "../../../../components/ui/checkbox";
-import { Input } from "../../../../components/ui/input";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "../../../../components/ui/select";
+import {
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '../../../../components/ui/form';
+import { Checkbox } from '../../../../components/ui/checkbox';
+import { Input } from '../../../../components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../../../components/ui/select';
 import { cn } from '../../../../lib/utils';
 import { TreeInferenceOptionGroup } from './TreeInferenceOptionGroup.jsx';
 
@@ -30,7 +44,7 @@ export function IqTreeSupportSection({
         name="iqtreeSupportMode"
         render={({ field }) => (
           <FormItem className="flex flex-col gap-2">
-            <FormLabel className={cn("text-sm font-normal", !hasMsa && "text-muted-foreground")}>
+            <FormLabel className={cn('text-sm font-normal', !hasMsa && 'text-muted-foreground')}>
               Support Mode
             </FormLabel>
             <Select
@@ -95,7 +109,12 @@ export function IqTreeSupportSection({
                   />
                 </FormControl>
                 <div className="flex flex-col gap-1 leading-none">
-                  <FormLabel className={cn("cursor-pointer text-sm font-normal", !hasMsa && "text-muted-foreground")}>
+                  <FormLabel
+                    className={cn(
+                      'cursor-pointer text-sm font-normal',
+                      !hasMsa && 'text-muted-foreground'
+                    )}
+                  >
                     Bootstrap NNI
                   </FormLabel>
                   <FormDescription className="text-2xs leading-tight">
@@ -118,7 +137,7 @@ function ReplicateInput({ control, name, label, disabled }) {
       name={name}
       render={({ field }) => (
         <FormItem className="flex flex-col gap-2">
-          <FormLabel className={cn("text-sm font-normal", disabled && "text-muted-foreground")}>
+          <FormLabel className={cn('text-sm font-normal', disabled && 'text-muted-foreground')}>
             {label}
           </FormLabel>
           <FormControl>

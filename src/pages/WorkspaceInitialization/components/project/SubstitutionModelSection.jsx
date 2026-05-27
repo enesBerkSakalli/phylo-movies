@@ -1,10 +1,16 @@
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { Microscope } from "lucide-react";
+import { Microscope } from 'lucide-react';
 
-import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "../../../../components/ui/form";
-import { Checkbox } from "../../../../components/ui/checkbox";
-import { Switch } from "../../../../components/ui/switch";
+import {
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+} from '../../../../components/ui/form';
+import { Checkbox } from '../../../../components/ui/checkbox';
+import { Switch } from '../../../../components/ui/switch';
 import { cn } from '../../../../lib/utils';
 import { TreeInferenceOptionGroup } from './TreeInferenceOptionGroup.jsx';
 
@@ -23,11 +29,18 @@ export function SubstitutionModelSection({ hasMsa, disabled }) {
         render={({ field }) => (
           <FormItem className="flex flex-col gap-2">
             <div className="flex items-center justify-between gap-3">
-              <FormLabel className={cn("text-sm font-normal", !hasMsa && "text-muted-foreground")}>
+              <FormLabel className={cn('text-sm font-normal', !hasMsa && 'text-muted-foreground')}>
                 Substitution Model
               </FormLabel>
               <div className="flex items-center gap-2">
-                <span className={cn("text-xs font-medium tabular-nums", !field.value ? "text-foreground" : "text-muted-foreground")}>JC</span>
+                <span
+                  className={cn(
+                    'text-xs font-medium tabular-nums',
+                    !field.value ? 'text-foreground' : 'text-muted-foreground'
+                  )}
+                >
+                  JC
+                </span>
                 <FormControl>
                   <Switch
                     checked={field.value}
@@ -35,13 +48,20 @@ export function SubstitutionModelSection({ hasMsa, disabled }) {
                     disabled={disabled || !hasMsa}
                   />
                 </FormControl>
-                <span className={cn("text-xs font-medium tabular-nums", field.value ? "text-foreground" : "text-muted-foreground")}>GTR</span>
+                <span
+                  className={cn(
+                    'text-xs font-medium tabular-nums',
+                    field.value ? 'text-foreground' : 'text-muted-foreground'
+                  )}
+                >
+                  GTR
+                </span>
               </div>
             </div>
             <FormDescription className="text-2xs leading-tight">
               {field.value
-                ? "GTR estimates rates and base frequencies."
-                : "JC assumes equal rates and frequencies."}
+                ? 'GTR estimates rates and base frequencies.'
+                : 'JC assumes equal rates and frequencies.'}
             </FormDescription>
           </FormItem>
         )}
@@ -60,7 +80,12 @@ export function SubstitutionModelSection({ hasMsa, disabled }) {
               />
             </FormControl>
             <div className="flex flex-col gap-1 leading-none">
-              <FormLabel className={cn("cursor-pointer text-sm font-normal", !hasMsa && "text-muted-foreground")}>
+              <FormLabel
+                className={cn(
+                  'cursor-pointer text-sm font-normal',
+                  !hasMsa && 'text-muted-foreground'
+                )}
+              >
                 Gamma Rate Heterogeneity
               </FormLabel>
               <FormDescription className="text-2xs leading-tight">

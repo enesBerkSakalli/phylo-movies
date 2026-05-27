@@ -109,11 +109,11 @@ describe('normalized temporal contract', () => {
   it('names the frontend timeline row projection as frame views', () => {
     const frameViewSource = readFileSync(
       join(repoRoot, 'src/timeline/data/TimelineFrameView.js'),
-      'utf8',
+      'utf8'
     );
     const datasetSource = readFileSync(
       join(repoRoot, 'src/timeline/data/TimelineDataset.js'),
-      'utf8',
+      'utf8'
     );
 
     expect(frameViewSource).toContain('buildTimelineFrameViews');

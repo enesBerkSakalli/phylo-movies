@@ -10,7 +10,7 @@
 import { expect } from 'chai';
 import {
   computeExtensionChangeMetrics,
-  classifyExtensionChanges
+  classifyExtensionChanges,
 } from '../helpers/extensionChangeMetrics.js';
 
 /**
@@ -26,7 +26,7 @@ function createMockLeaf(id, angle, radius) {
     split_indices: [parseInt(id.replace('leaf', ''), 10)],
     isLeaf: true,
     angle,
-    radius
+    radius,
   };
 }
 
@@ -37,25 +37,22 @@ function createMockLeaf(id, angle, radius) {
  * @returns {Object} Mock normalized layout object
  */
 function createMockLayout(leafSpecs, maxRadius = null) {
-  const leaves = leafSpecs.map(spec =>
-    createMockLeaf(spec.id, spec.angle, spec.radius)
-  );
+  const leaves = leafSpecs.map((spec) => createMockLeaf(spec.id, spec.angle, spec.radius));
 
   // Calculate max_radius if not provided
-  const calculatedMaxRadius = maxRadius !== null
-    ? maxRadius
-    : leaves.reduce((max, leaf) => Math.max(max, Math.abs(leaf.radius)), 0);
+  const calculatedMaxRadius =
+    maxRadius !== null
+      ? maxRadius
+      : leaves.reduce((max, leaf) => Math.max(max, Math.abs(leaf.radius)), 0);
 
   return {
     leaves,
-    max_radius: calculatedMaxRadius
+    max_radius: calculatedMaxRadius,
   };
 }
 
 describe('extension change metrics', () => {
-
   describe('computeExtensionChangeMetrics - Input Validation', () => {
-
     it('should return empty result when layoutFrom is null', () => {
       const layoutTo = createMockLayout([{ id: 'leaf1', angle: 0, radius: 1 }]);
       const result = computeExtensionChangeMetrics(null, layoutTo);
@@ -63,7 +60,7 @@ describe('extension change metrics', () => {
       expect(result).to.deep.equal({
         averageChange: 0,
         compared: 0,
-        totalWeightedChange: 0
+        totalWeightedChange: 0,
       });
     });
 
@@ -74,7 +71,7 @@ describe('extension change metrics', () => {
       expect(result).to.deep.equal({
         averageChange: 0,
         compared: 0,
-        totalWeightedChange: 0
+        totalWeightedChange: 0,
       });
     });
 
@@ -85,7 +82,7 @@ describe('extension change metrics', () => {
       expect(result).to.deep.equal({
         averageChange: 0,
         compared: 0,
-        totalWeightedChange: 0
+        totalWeightedChange: 0,
       });
     });
 
@@ -96,7 +93,7 @@ describe('extension change metrics', () => {
       expect(result).to.deep.equal({
         averageChange: 0,
         compared: 0,
-        totalWeightedChange: 0
+        totalWeightedChange: 0,
       });
     });
 
@@ -107,7 +104,7 @@ describe('extension change metrics', () => {
       expect(result).to.deep.equal({
         averageChange: 0,
         compared: 0,
-        totalWeightedChange: 0
+        totalWeightedChange: 0,
       });
     });
 
@@ -118,7 +115,7 @@ describe('extension change metrics', () => {
       expect(result).to.deep.equal({
         averageChange: 0,
         compared: 0,
-        totalWeightedChange: 0
+        totalWeightedChange: 0,
       });
     });
 
@@ -130,7 +127,7 @@ describe('extension change metrics', () => {
       expect(result).to.deep.equal({
         averageChange: 0,
         compared: 0,
-        totalWeightedChange: 0
+        totalWeightedChange: 0,
       });
     });
 
@@ -154,15 +151,14 @@ describe('extension change metrics', () => {
   });
 
   describe('computeExtensionChangeMetrics - Correctness', () => {
-
     it('should detect no change when layouts are identical', () => {
       const layoutFrom = createMockLayout([
         { id: 'leaf1', angle: 0, radius: 1 },
-        { id: 'leaf2', angle: Math.PI / 2, radius: 1.5 }
+        { id: 'leaf2', angle: Math.PI / 2, radius: 1.5 },
       ]);
       const layoutTo = createMockLayout([
         { id: 'leaf1', angle: 0, radius: 1 },
-        { id: 'leaf2', angle: Math.PI / 2, radius: 1.5 }
+        { id: 'leaf2', angle: Math.PI / 2, radius: 1.5 },
       ]);
 
       const result = computeExtensionChangeMetrics(layoutFrom, layoutTo);
@@ -173,12 +169,8 @@ describe('extension change metrics', () => {
     });
 
     it('should detect radius change only', () => {
-      const layoutFrom = createMockLayout([
-        { id: 'leaf1', angle: 0, radius: 1 }
-      ]);
-      const layoutTo = createMockLayout([
-        { id: 'leaf1', angle: 0, radius: 2 }
-      ]);
+      const layoutFrom = createMockLayout([{ id: 'leaf1', angle: 0, radius: 1 }]);
+      const layoutTo = createMockLayout([{ id: 'leaf1', angle: 0, radius: 2 }]);
 
       const result = computeExtensionChangeMetrics(layoutFrom, layoutTo);
 
@@ -191,12 +183,8 @@ describe('extension change metrics', () => {
     });
 
     it('should detect angle change only', () => {
-      const layoutFrom = createMockLayout([
-        { id: 'leaf1', angle: 0, radius: 1 }
-      ]);
-      const layoutTo = createMockLayout([
-        { id: 'leaf1', angle: Math.PI / 2, radius: 1 }
-      ]);
+      const layoutFrom = createMockLayout([{ id: 'leaf1', angle: 0, radius: 1 }]);
+      const layoutTo = createMockLayout([{ id: 'leaf1', angle: Math.PI / 2, radius: 1 }]);
 
       const result = computeExtensionChangeMetrics(layoutFrom, layoutTo);
 
@@ -208,12 +196,8 @@ describe('extension change metrics', () => {
     });
 
     it('should detect both radius and angle changes', () => {
-      const layoutFrom = createMockLayout([
-        { id: 'leaf1', angle: 0, radius: 1 }
-      ]);
-      const layoutTo = createMockLayout([
-        { id: 'leaf1', angle: Math.PI / 2, radius: 2 }
-      ]);
+      const layoutFrom = createMockLayout([{ id: 'leaf1', angle: 0, radius: 1 }]);
+      const layoutTo = createMockLayout([{ id: 'leaf1', angle: Math.PI / 2, radius: 2 }]);
 
       const result = computeExtensionChangeMetrics(layoutFrom, layoutTo);
 
@@ -225,12 +209,8 @@ describe('extension change metrics', () => {
     });
 
     it('should use shortest angular path (positive wrap)', () => {
-      const layoutFrom = createMockLayout([
-        { id: 'leaf1', angle: 0.1, radius: 1 }
-      ]);
-      const layoutTo = createMockLayout([
-        { id: 'leaf1', angle: 2 * Math.PI - 0.1, radius: 1 }
-      ]);
+      const layoutFrom = createMockLayout([{ id: 'leaf1', angle: 0.1, radius: 1 }]);
+      const layoutTo = createMockLayout([{ id: 'leaf1', angle: 2 * Math.PI - 0.1, radius: 1 }]);
 
       const result = computeExtensionChangeMetrics(layoutFrom, layoutTo);
 
@@ -242,12 +222,8 @@ describe('extension change metrics', () => {
     });
 
     it('should use shortest angular path (negative wrap)', () => {
-      const layoutFrom = createMockLayout([
-        { id: 'leaf1', angle: 2 * Math.PI - 0.1, radius: 1 }
-      ]);
-      const layoutTo = createMockLayout([
-        { id: 'leaf1', angle: 0.1, radius: 1 }
-      ]);
+      const layoutFrom = createMockLayout([{ id: 'leaf1', angle: 2 * Math.PI - 0.1, radius: 1 }]);
+      const layoutTo = createMockLayout([{ id: 'leaf1', angle: 0.1, radius: 1 }]);
 
       const result = computeExtensionChangeMetrics(layoutFrom, layoutTo);
 
@@ -259,11 +235,11 @@ describe('extension change metrics', () => {
     it('should average changes across multiple leaves', () => {
       const layoutFrom = createMockLayout([
         { id: 'leaf1', angle: 0, radius: 1 },
-        { id: 'leaf2', angle: 0, radius: 1 }
+        { id: 'leaf2', angle: 0, radius: 1 },
       ]);
       const layoutTo = createMockLayout([
         { id: 'leaf1', angle: 0, radius: 2 }, // Change: 0.3
-        { id: 'leaf2', angle: 0, radius: 1 }  // Change: 0
+        { id: 'leaf2', angle: 0, radius: 1 }, // Change: 0
       ]);
 
       const result = computeExtensionChangeMetrics(layoutFrom, layoutTo);
@@ -274,16 +250,12 @@ describe('extension change metrics', () => {
     });
 
     it('should respect custom radiusWeight and angleWeight', () => {
-      const layoutFrom = createMockLayout([
-        { id: 'leaf1', angle: 0, radius: 1 }
-      ]);
-      const layoutTo = createMockLayout([
-        { id: 'leaf1', angle: Math.PI, radius: 2 }
-      ]);
+      const layoutFrom = createMockLayout([{ id: 'leaf1', angle: 0, radius: 1 }]);
+      const layoutTo = createMockLayout([{ id: 'leaf1', angle: Math.PI, radius: 2 }]);
 
       const result = computeExtensionChangeMetrics(layoutFrom, layoutTo, {
         radiusWeight: 1.0,
-        angleWeight: 0.0
+        angleWeight: 0.0,
       });
 
       // Only radius matters: (1/2) * 1.0 = 0.5
@@ -291,16 +263,12 @@ describe('extension change metrics', () => {
     });
 
     it('should respect angleWeight preference over radiusWeight', () => {
-      const layoutFrom = createMockLayout([
-        { id: 'leaf1', angle: 0, radius: 1 }
-      ]);
-      const layoutTo = createMockLayout([
-        { id: 'leaf1', angle: Math.PI, radius: 2 }
-      ]);
+      const layoutFrom = createMockLayout([{ id: 'leaf1', angle: 0, radius: 1 }]);
+      const layoutTo = createMockLayout([{ id: 'leaf1', angle: Math.PI, radius: 2 }]);
 
       const result = computeExtensionChangeMetrics(layoutFrom, layoutTo, {
         radiusWeight: 0.0,
-        angleWeight: 1.0
+        angleWeight: 1.0,
       });
 
       // Only angle matters: π/π * 1.0 = 1.0
@@ -309,14 +277,9 @@ describe('extension change metrics', () => {
   });
 
   describe('computeExtensionChangeMetrics - Edge Cases', () => {
-
     it('should handle zero radius in layoutFrom', () => {
-      const layoutFrom = createMockLayout([
-        { id: 'leaf1', angle: 0, radius: 0 }
-      ]);
-      const layoutTo = createMockLayout([
-        { id: 'leaf1', angle: 0, radius: 1 }
-      ]);
+      const layoutFrom = createMockLayout([{ id: 'leaf1', angle: 0, radius: 0 }]);
+      const layoutTo = createMockLayout([{ id: 'leaf1', angle: 0, radius: 1 }]);
 
       const result = computeExtensionChangeMetrics(layoutFrom, layoutTo);
 
@@ -328,12 +291,8 @@ describe('extension change metrics', () => {
     });
 
     it('should handle zero radius in layoutTo', () => {
-      const layoutFrom = createMockLayout([
-        { id: 'leaf1', angle: 0, radius: 1 }
-      ]);
-      const layoutTo = createMockLayout([
-        { id: 'leaf1', angle: 0, radius: 0 }
-      ]);
+      const layoutFrom = createMockLayout([{ id: 'leaf1', angle: 0, radius: 1 }]);
+      const layoutTo = createMockLayout([{ id: 'leaf1', angle: 0, radius: 0 }]);
 
       const result = computeExtensionChangeMetrics(layoutFrom, layoutTo);
 
@@ -344,12 +303,8 @@ describe('extension change metrics', () => {
     });
 
     it('should handle both radii being zero', () => {
-      const layoutFrom = createMockLayout([
-        { id: 'leaf1', angle: 0, radius: 0 }
-      ], 0);
-      const layoutTo = createMockLayout([
-        { id: 'leaf1', angle: Math.PI, radius: 0 }
-      ], 0);
+      const layoutFrom = createMockLayout([{ id: 'leaf1', angle: 0, radius: 0 }], 0);
+      const layoutTo = createMockLayout([{ id: 'leaf1', angle: Math.PI, radius: 0 }], 0);
 
       const result = computeExtensionChangeMetrics(layoutFrom, layoutTo);
 
@@ -368,12 +323,8 @@ describe('extension change metrics', () => {
     });
 
     it('should handle negative radius values gracefully', () => {
-      const layoutFrom = createMockLayout([
-        { id: 'leaf1', angle: 0, radius: -1 }
-      ]);
-      const layoutTo = createMockLayout([
-        { id: 'leaf1', angle: 0, radius: 1 }
-      ]);
+      const layoutFrom = createMockLayout([{ id: 'leaf1', angle: 0, radius: -1 }]);
+      const layoutTo = createMockLayout([{ id: 'leaf1', angle: 0, radius: 1 }]);
 
       const result = computeExtensionChangeMetrics(layoutFrom, layoutTo);
 
@@ -383,12 +334,8 @@ describe('extension change metrics', () => {
     });
 
     it('should handle very large radius values', () => {
-      const layoutFrom = createMockLayout([
-        { id: 'leaf1', angle: 0, radius: 1e6 }
-      ]);
-      const layoutTo = createMockLayout([
-        { id: 'leaf1', angle: 0, radius: 1e6 + 1 }
-      ]);
+      const layoutFrom = createMockLayout([{ id: 'leaf1', angle: 0, radius: 1e6 }]);
+      const layoutTo = createMockLayout([{ id: 'leaf1', angle: 0, radius: 1e6 + 1 }]);
 
       const result = computeExtensionChangeMetrics(layoutFrom, layoutTo);
 
@@ -398,12 +345,8 @@ describe('extension change metrics', () => {
     });
 
     it('should handle NaN in angle (should be treated as 0 or skipped)', () => {
-      const layoutFrom = createMockLayout([
-        { id: 'leaf1', angle: NaN, radius: 1 }
-      ]);
-      const layoutTo = createMockLayout([
-        { id: 'leaf1', angle: 0, radius: 1 }
-      ]);
+      const layoutFrom = createMockLayout([{ id: 'leaf1', angle: NaN, radius: 1 }]);
+      const layoutTo = createMockLayout([{ id: 'leaf1', angle: 0, radius: 1 }]);
 
       // Should not throw, behavior depends on implementation
       const result = computeExtensionChangeMetrics(layoutFrom, layoutTo);
@@ -412,12 +355,8 @@ describe('extension change metrics', () => {
     });
 
     it('should handle NaN in radius', () => {
-      const layoutFrom = createMockLayout([
-        { id: 'leaf1', angle: 0, radius: NaN }
-      ]);
-      const layoutTo = createMockLayout([
-        { id: 'leaf1', angle: 0, radius: 1 }
-      ]);
+      const layoutFrom = createMockLayout([{ id: 'leaf1', angle: 0, radius: NaN }]);
+      const layoutTo = createMockLayout([{ id: 'leaf1', angle: 0, radius: 1 }]);
 
       const result = computeExtensionChangeMetrics(layoutFrom, layoutTo);
       expect(result).to.be.an('object');
@@ -425,12 +364,8 @@ describe('extension change metrics', () => {
     });
 
     it('should handle angle exactly at π boundary', () => {
-      const layoutFrom = createMockLayout([
-        { id: 'leaf1', angle: Math.PI, radius: 1 }
-      ]);
-      const layoutTo = createMockLayout([
-        { id: 'leaf1', angle: -Math.PI, radius: 1 }
-      ]);
+      const layoutFrom = createMockLayout([{ id: 'leaf1', angle: Math.PI, radius: 1 }]);
+      const layoutTo = createMockLayout([{ id: 'leaf1', angle: -Math.PI, radius: 1 }]);
 
       const result = computeExtensionChangeMetrics(layoutFrom, layoutTo);
 
@@ -440,15 +375,14 @@ describe('extension change metrics', () => {
   });
 
   describe('computeExtensionChangeMetrics - Multi-Leaf Scenarios', () => {
-
     it('should handle partial overlap of leaf sets', () => {
       const layoutFrom = createMockLayout([
         { id: 'leaf1', angle: 0, radius: 1 },
-        { id: 'leaf2', angle: 0, radius: 1 }
+        { id: 'leaf2', angle: 0, radius: 1 },
       ]);
       const layoutTo = createMockLayout([
         { id: 'leaf2', angle: 0, radius: 2 },
-        { id: 'leaf3', angle: 0, radius: 1 }
+        { id: 'leaf3', angle: 0, radius: 1 },
       ]);
 
       const result = computeExtensionChangeMetrics(layoutFrom, layoutTo);
@@ -459,12 +393,8 @@ describe('extension change metrics', () => {
     });
 
     it('should handle completely disjoint leaf sets', () => {
-      const layoutFrom = createMockLayout([
-        { id: 'leaf1', angle: 0, radius: 1 }
-      ]);
-      const layoutTo = createMockLayout([
-        { id: 'leaf2', angle: 0, radius: 1 }
-      ]);
+      const layoutFrom = createMockLayout([{ id: 'leaf1', angle: 0, radius: 1 }]);
+      const layoutTo = createMockLayout([{ id: 'leaf2', angle: 0, radius: 1 }]);
 
       const result = computeExtensionChangeMetrics(layoutFrom, layoutTo);
 
@@ -478,15 +408,17 @@ describe('extension change metrics', () => {
         leafSpecs.push({
           id: `leaf${i}`,
           angle: (i / 1000) * 2 * Math.PI,
-          radius: 1
+          radius: 1,
         });
       }
 
       const layoutFrom = createMockLayout(leafSpecs);
-      const layoutTo = createMockLayout(leafSpecs.map(spec => ({
-        ...spec,
-        radius: spec.radius + 0.1
-      })));
+      const layoutTo = createMockLayout(
+        leafSpecs.map((spec) => ({
+          ...spec,
+          radius: spec.radius + 0.1,
+        }))
+      );
 
       const startTime = Date.now();
       const result = computeExtensionChangeMetrics(layoutFrom, layoutTo);
@@ -501,13 +433,13 @@ describe('extension change metrics', () => {
         { id: 'leaf1', angle: 0, radius: 1 },
         { id: 'leaf2', angle: 0, radius: 1 },
         { id: 'leaf3', angle: 0, radius: 1 },
-        { id: 'leaf4', angle: 0, radius: 1 }
+        { id: 'leaf4', angle: 0, radius: 1 },
       ]);
       const layoutTo = createMockLayout([
-        { id: 'leaf1', angle: 0, radius: 2 },     // Change: 0.3
-        { id: 'leaf2', angle: 0, radius: 1 },     // Change: 0
+        { id: 'leaf1', angle: 0, radius: 2 }, // Change: 0.3
+        { id: 'leaf2', angle: 0, radius: 1 }, // Change: 0
         { id: 'leaf3', angle: Math.PI, radius: 1 }, // Change: 0.4
-        { id: 'leaf4', angle: 0, radius: 1.5 }    // Change: 0.15
+        { id: 'leaf4', angle: 0, radius: 1.5 }, // Change: 0.15
       ]);
 
       const result = computeExtensionChangeMetrics(layoutFrom, layoutTo);
@@ -519,14 +451,9 @@ describe('extension change metrics', () => {
   });
 
   describe('computeExtensionChangeMetrics - Options Robustness', () => {
-
     it('should handle missing options parameter', () => {
-      const layoutFrom = createMockLayout([
-        { id: 'leaf1', angle: 0, radius: 1 }
-      ]);
-      const layoutTo = createMockLayout([
-        { id: 'leaf1', angle: 0, radius: 2 }
-      ]);
+      const layoutFrom = createMockLayout([{ id: 'leaf1', angle: 0, radius: 1 }]);
+      const layoutTo = createMockLayout([{ id: 'leaf1', angle: 0, radius: 2 }]);
 
       const result = computeExtensionChangeMetrics(layoutFrom, layoutTo);
 
@@ -536,46 +463,34 @@ describe('extension change metrics', () => {
     });
 
     it('should handle options with only radiusWeight', () => {
-      const layoutFrom = createMockLayout([
-        { id: 'leaf1', angle: 0, radius: 1 }
-      ]);
-      const layoutTo = createMockLayout([
-        { id: 'leaf1', angle: Math.PI, radius: 2 }
-      ]);
+      const layoutFrom = createMockLayout([{ id: 'leaf1', angle: 0, radius: 1 }]);
+      const layoutTo = createMockLayout([{ id: 'leaf1', angle: Math.PI, radius: 2 }]);
 
       const result = computeExtensionChangeMetrics(layoutFrom, layoutTo, {
-        radiusWeight: 0.8
+        radiusWeight: 0.8,
       });
 
       expect(result.averageChange).to.be.greaterThan(0);
     });
 
     it('should handle options with only angleWeight', () => {
-      const layoutFrom = createMockLayout([
-        { id: 'leaf1', angle: 0, radius: 1 }
-      ]);
-      const layoutTo = createMockLayout([
-        { id: 'leaf1', angle: Math.PI, radius: 2 }
-      ]);
+      const layoutFrom = createMockLayout([{ id: 'leaf1', angle: 0, radius: 1 }]);
+      const layoutTo = createMockLayout([{ id: 'leaf1', angle: Math.PI, radius: 2 }]);
 
       const result = computeExtensionChangeMetrics(layoutFrom, layoutTo, {
-        angleWeight: 0.8
+        angleWeight: 0.8,
       });
 
       expect(result.averageChange).to.be.greaterThan(0);
     });
 
     it('should handle weights summing to more than 1', () => {
-      const layoutFrom = createMockLayout([
-        { id: 'leaf1', angle: 0, radius: 1 }
-      ]);
-      const layoutTo = createMockLayout([
-        { id: 'leaf1', angle: Math.PI, radius: 2 }
-      ]);
+      const layoutFrom = createMockLayout([{ id: 'leaf1', angle: 0, radius: 1 }]);
+      const layoutTo = createMockLayout([{ id: 'leaf1', angle: Math.PI, radius: 2 }]);
 
       const result = computeExtensionChangeMetrics(layoutFrom, layoutTo, {
         radiusWeight: 0.8,
-        angleWeight: 0.8
+        angleWeight: 0.8,
       });
 
       // Should still produce valid result
@@ -583,32 +498,24 @@ describe('extension change metrics', () => {
     });
 
     it('should handle zero weights', () => {
-      const layoutFrom = createMockLayout([
-        { id: 'leaf1', angle: 0, radius: 1 }
-      ]);
-      const layoutTo = createMockLayout([
-        { id: 'leaf1', angle: Math.PI, radius: 2 }
-      ]);
+      const layoutFrom = createMockLayout([{ id: 'leaf1', angle: 0, radius: 1 }]);
+      const layoutTo = createMockLayout([{ id: 'leaf1', angle: Math.PI, radius: 2 }]);
 
       const result = computeExtensionChangeMetrics(layoutFrom, layoutTo, {
         radiusWeight: 0,
-        angleWeight: 0
+        angleWeight: 0,
       });
 
       expect(result.averageChange).to.equal(0);
     });
 
     it('should handle negative weights gracefully', () => {
-      const layoutFrom = createMockLayout([
-        { id: 'leaf1', angle: 0, radius: 1 }
-      ]);
-      const layoutTo = createMockLayout([
-        { id: 'leaf1', angle: Math.PI, radius: 2 }
-      ]);
+      const layoutFrom = createMockLayout([{ id: 'leaf1', angle: 0, radius: 1 }]);
+      const layoutTo = createMockLayout([{ id: 'leaf1', angle: Math.PI, radius: 2 }]);
 
       const result = computeExtensionChangeMetrics(layoutFrom, layoutTo, {
         radiusWeight: -0.5,
-        angleWeight: 0.5
+        angleWeight: 0.5,
       });
 
       // Should handle gracefully (may clamp or use absolute)
@@ -617,7 +524,6 @@ describe('extension change metrics', () => {
   });
 
   describe('classifyExtensionChanges - Input Validation', () => {
-
     it('should classify target leaves as entering when layoutFrom is null', () => {
       const layoutTo = createMockLayout([{ id: 'leaf1', angle: 0, radius: 1 }]);
       const result = classifyExtensionChanges(null, layoutTo);
@@ -647,18 +553,15 @@ describe('extension change metrics', () => {
       expect(result).to.deep.equal({
         enter: [],
         update: [],
-        exit: []
+        exit: [],
       });
     });
   });
 
   describe('classifyExtensionChanges - Correctness', () => {
-
     it('should classify entering leaves', () => {
       const layoutFrom = createMockLayout([]);
-      const layoutTo = createMockLayout([
-        { id: 'leaf1', angle: 0, radius: 1 }
-      ]);
+      const layoutTo = createMockLayout([{ id: 'leaf1', angle: 0, radius: 1 }]);
 
       const result = classifyExtensionChanges(layoutFrom, layoutTo);
 
@@ -669,9 +572,7 @@ describe('extension change metrics', () => {
     });
 
     it('should classify exiting leaves', () => {
-      const layoutFrom = createMockLayout([
-        { id: 'leaf1', angle: 0, radius: 1 }
-      ]);
+      const layoutFrom = createMockLayout([{ id: 'leaf1', angle: 0, radius: 1 }]);
       const layoutTo = createMockLayout([]);
 
       const result = classifyExtensionChanges(layoutFrom, layoutTo);
@@ -683,12 +584,8 @@ describe('extension change metrics', () => {
     });
 
     it('should classify updating leaves', () => {
-      const layoutFrom = createMockLayout([
-        { id: 'leaf1', angle: 0, radius: 1 }
-      ]);
-      const layoutTo = createMockLayout([
-        { id: 'leaf1', angle: Math.PI, radius: 2 }
-      ]);
+      const layoutFrom = createMockLayout([{ id: 'leaf1', angle: 0, radius: 1 }]);
+      const layoutTo = createMockLayout([{ id: 'leaf1', angle: Math.PI, radius: 2 }]);
 
       const result = classifyExtensionChanges(layoutFrom, layoutTo);
 
@@ -701,11 +598,11 @@ describe('extension change metrics', () => {
     it('should classify mixed changes', () => {
       const layoutFrom = createMockLayout([
         { id: 'leaf1', angle: 0, radius: 1 },
-        { id: 'leaf2', angle: 0, radius: 1 }
+        { id: 'leaf2', angle: 0, radius: 1 },
       ]);
       const layoutTo = createMockLayout([
         { id: 'leaf2', angle: Math.PI, radius: 2 },
-        { id: 'leaf3', angle: 0, radius: 1 }
+        { id: 'leaf3', angle: 0, radius: 1 },
       ]);
 
       const result = classifyExtensionChanges(layoutFrom, layoutTo);
@@ -720,9 +617,7 @@ describe('extension change metrics', () => {
 
     it('should return leaf nodes from layoutTo for enter', () => {
       const layoutFrom = createMockLayout([]);
-      const layoutTo = createMockLayout([
-        { id: 'leaf1', angle: 0, radius: 1 }
-      ]);
+      const layoutTo = createMockLayout([{ id: 'leaf1', angle: 0, radius: 1 }]);
 
       const result = classifyExtensionChanges(layoutFrom, layoutTo);
 
@@ -731,12 +626,8 @@ describe('extension change metrics', () => {
     });
 
     it('should return leaf nodes from layoutTo for update', () => {
-      const layoutFrom = createMockLayout([
-        { id: 'leaf1', angle: 0, radius: 1 }
-      ]);
-      const layoutTo = createMockLayout([
-        { id: 'leaf1', angle: Math.PI, radius: 2 }
-      ]);
+      const layoutFrom = createMockLayout([{ id: 'leaf1', angle: 0, radius: 1 }]);
+      const layoutTo = createMockLayout([{ id: 'leaf1', angle: Math.PI, radius: 2 }]);
 
       const result = classifyExtensionChanges(layoutFrom, layoutTo);
 
@@ -745,9 +636,7 @@ describe('extension change metrics', () => {
     });
 
     it('should return leaf nodes from layoutFrom for exit', () => {
-      const layoutFrom = createMockLayout([
-        { id: 'leaf1', angle: 0, radius: 1 }
-      ]);
+      const layoutFrom = createMockLayout([{ id: 'leaf1', angle: 0, radius: 1 }]);
       const layoutTo = createMockLayout([]);
 
       const result = classifyExtensionChanges(layoutFrom, layoutTo);
@@ -758,17 +647,16 @@ describe('extension change metrics', () => {
   });
 
   describe('classifyExtensionChanges - Consistency with computeExtensionChangeMetrics', () => {
-
     it('should have update count match compared count', () => {
       const layoutFrom = createMockLayout([
         { id: 'leaf1', angle: 0, radius: 1 },
         { id: 'leaf2', angle: 0, radius: 1 },
-        { id: 'leaf3', angle: 0, radius: 1 }
+        { id: 'leaf3', angle: 0, radius: 1 },
       ]);
       const layoutTo = createMockLayout([
         { id: 'leaf2', angle: Math.PI, radius: 2 },
         { id: 'leaf3', angle: 0, radius: 1 },
-        { id: 'leaf4', angle: 0, radius: 1 }
+        { id: 'leaf4', angle: 0, radius: 1 },
       ]);
 
       const metrics = computeExtensionChangeMetrics(layoutFrom, layoutTo);
@@ -780,11 +668,11 @@ describe('extension change metrics', () => {
     it('should identify same leaves as updating', () => {
       const layoutFrom = createMockLayout([
         { id: 'leaf1', angle: 0, radius: 1 },
-        { id: 'leaf2', angle: 0, radius: 1 }
+        { id: 'leaf2', angle: 0, radius: 1 },
       ]);
       const layoutTo = createMockLayout([
         { id: 'leaf1', angle: Math.PI, radius: 2 },
-        { id: 'leaf3', angle: 0, radius: 1 }
+        { id: 'leaf3', angle: 0, radius: 1 },
       ]);
 
       const metrics = computeExtensionChangeMetrics(layoutFrom, layoutTo);
@@ -798,15 +686,14 @@ describe('extension change metrics', () => {
   });
 
   describe('Integration - Real-world Scenarios', () => {
-
     it('should classify gentle animation scenario (avgChange ≤ 0.05)', () => {
       const layoutFrom = createMockLayout([
         { id: 'leaf1', angle: 0, radius: 1 },
-        { id: 'leaf2', angle: Math.PI / 4, radius: 1 }
+        { id: 'leaf2', angle: Math.PI / 4, radius: 1 },
       ]);
       const layoutTo = createMockLayout([
         { id: 'leaf1', angle: 0.05, radius: 1.05 },
-        { id: 'leaf2', angle: Math.PI / 4 + 0.05, radius: 1.05 }
+        { id: 'leaf2', angle: Math.PI / 4 + 0.05, radius: 1.05 },
       ]);
 
       const result = computeExtensionChangeMetrics(layoutFrom, layoutTo);
@@ -817,11 +704,11 @@ describe('extension change metrics', () => {
     it('should classify moderate animation scenario', () => {
       const layoutFrom = createMockLayout([
         { id: 'leaf1', angle: 0, radius: 1 },
-        { id: 'leaf2', angle: Math.PI / 4, radius: 1 }
+        { id: 'leaf2', angle: Math.PI / 4, radius: 1 },
       ]);
       const layoutTo = createMockLayout([
         { id: 'leaf1', angle: Math.PI / 8, radius: 1.3 },
-        { id: 'leaf2', angle: Math.PI / 3, radius: 1.3 }
+        { id: 'leaf2', angle: Math.PI / 3, radius: 1.3 },
       ]);
 
       const result = computeExtensionChangeMetrics(layoutFrom, layoutTo);
@@ -833,11 +720,11 @@ describe('extension change metrics', () => {
     it('should classify linear animation scenario (avgChange ≥ 0.2)', () => {
       const layoutFrom = createMockLayout([
         { id: 'leaf1', angle: 0, radius: 1 },
-        { id: 'leaf2', angle: Math.PI / 4, radius: 1 }
+        { id: 'leaf2', angle: Math.PI / 4, radius: 1 },
       ]);
       const layoutTo = createMockLayout([
         { id: 'leaf1', angle: Math.PI, radius: 3 },
-        { id: 'leaf2', angle: Math.PI * 1.5, radius: 3 }
+        { id: 'leaf2', angle: Math.PI * 1.5, radius: 3 },
       ]);
 
       const result = computeExtensionChangeMetrics(layoutFrom, layoutTo);

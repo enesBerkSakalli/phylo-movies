@@ -28,21 +28,25 @@ function walk(relativeDir, predicate, out = []) {
 function getMochaSpecs() {
   const pkg = JSON.parse(readText('package.json'));
   const command = pkg.scripts['test:mocha'] || '';
-  return [...command.matchAll(/'([^']+)'/g)].map(match => match[1]).sort();
+  return [...command.matchAll(/'([^']+)'/g)].map((match) => match[1]).sort();
 }
 
 function getVitestSpecs() {
   const config = readText('vitest.config.js');
   const includes = [...config.matchAll(/'([^']+)'/g)]
-    .map(match => match[1])
-    .filter(include => include.startsWith('test/'));
+    .map((match) => match[1])
+    .filter((include) => include.startsWith('test/'));
   const specs = new Set();
 
   for (const include of includes) {
     if (include === 'test/domain/**/*.test.{js,ts}') {
-      walk('test/domain', file => /\.test\.(js|ts)$/.test(file), []).forEach(file => specs.add(file));
+      walk('test/domain', (file) => /\.test\.(js|ts)$/.test(file), []).forEach((file) =>
+        specs.add(file)
+      );
     } else if (include === 'test/integration/**/*.test.{js,ts}') {
-      walk('test/integration', file => /\.test\.(js|ts)$/.test(file), []).forEach(file => specs.add(file));
+      walk('test/integration', (file) => /\.test\.(js|ts)$/.test(file), []).forEach((file) =>
+        specs.add(file)
+      );
     } else if (!include.includes('*')) {
       specs.add(include);
     }
@@ -52,16 +56,16 @@ function getVitestSpecs() {
 }
 
 function getAllTestFiles() {
-  return walk('test', file => /\.test\.(js|ts)$/.test(file)).sort();
+  return walk('test', (file) => /\.test\.(js|ts)$/.test(file)).sort();
 }
 
 const mochaSpecs = getMochaSpecs();
 const vitestSpecs = getVitestSpecs();
 const defaultSpecs = new Set([...mochaSpecs, ...vitestSpecs]);
-const optionalSpecs = walk('test/optional', file => /\.test\.(js|ts)$/.test(file)).sort();
+const optionalSpecs = walk('test/optional', (file) => /\.test\.(js|ts)$/.test(file)).sort();
 const optionalSet = new Set(optionalSpecs);
 const allSpecs = getAllTestFiles();
-const orphanSpecs = allSpecs.filter(file => !defaultSpecs.has(file) && !optionalSet.has(file));
+const orphanSpecs = allSpecs.filter((file) => !defaultSpecs.has(file) && !optionalSet.has(file));
 
 function printGroup(label, files) {
   console.log(`\n${label} (${files.length})`);
@@ -75,7 +79,9 @@ printGroup('Supplemental Mocha specs', optionalSpecs);
 if (orphanSpecs.length > 0) {
   printGroup('Orphan specs', orphanSpecs);
   if (checkMode) {
-    console.error('\nFound test files that are neither default nor supplemental. Move them or add them to a suite.');
+    console.error(
+      '\nFound test files that are neither default nor supplemental. Move them or add them to a suite.'
+    );
     process.exit(1);
   }
 } else {

@@ -7,14 +7,19 @@ import {
   selectMaxScale,
   selectScaleList,
   selectTimelineCursor,
-  useAppStore
+  useAppStore,
 } from '../../state/phyloStore/store.js';
 import { useScaleMetrics } from './ScaleTracking/useScaleMetrics';
 import { CurrentScaleDisplay } from './ScaleTracking/CurrentScaleDisplay';
 import { BranchLengthHistogram } from './BranchLengths/BranchLengthHistogram';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 import { ChevronDown, BarChart3 } from 'lucide-react';
-import { SidebarMenuItem, SidebarMenuButton, SidebarMenuSub, SidebarMenuSubItem } from '../ui/sidebar';
+import {
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+} from '../ui/sidebar';
 /**
  * TreeStatsPanel component displays phylogenetic scale metrics for the current tree:
  * - Current tree scale (maximum root-to-tip distance)
@@ -40,7 +45,7 @@ export const TreeStatsPanel: React.FC = () => {
     progress: scaleRatio,
     histogramBins,
     histogramMax,
-    histogramStats
+    histogramStats,
   } = useScaleMetrics({
     sourceFrameIndex: timelineCursor?.sourceFrameIndex ?? 0,
     treeList,
@@ -77,7 +82,6 @@ export const TreeStatsPanel: React.FC = () => {
                     stats={histogramStats}
                   />
                 ) : null}
-
               </div>
             </SidebarMenuSubItem>
           </SidebarMenuSub>

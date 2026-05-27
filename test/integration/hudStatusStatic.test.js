@@ -14,7 +14,7 @@ describe('HUD status controls', () => {
     ];
     const sharedSource = readFileSync(
       join(repoRoot, 'src/components/HUD/shared/hudShared.js'),
-      'utf8',
+      'utf8'
     );
 
     legacyTimelineFiles.forEach((file) => {

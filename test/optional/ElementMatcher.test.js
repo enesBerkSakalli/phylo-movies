@@ -1,5 +1,7 @@
 const { expect } = require('chai');
-const { ElementMatcher } = require('../../src/treeVisualisation/deckgl/interpolation/ElementMatcher.js');
+const {
+  ElementMatcher,
+} = require('../../src/treeVisualisation/deckgl/interpolation/ElementMatcher.js');
 
 describe('TreeVisualisation/DeckGL/Interpolation/ElementMatcher', () => {
   let matcher;
@@ -16,7 +18,7 @@ describe('TreeVisualisation/DeckGL/Interpolation/ElementMatcher', () => {
     const interpolateFn = (from, to, t) => ({
       id: to.id,
       val: from.val + (to.val - from.val) * t,
-      type: 'update'
+      type: 'update',
     });
 
     it('should handle matching elements (Update)', () => {
@@ -30,7 +32,7 @@ describe('TreeVisualisation/DeckGL/Interpolation/ElementMatcher', () => {
       expect(result[0]).to.deep.include({
         id: 'A',
         val: 5, // 0 + (10 - 0) * 0.5
-        type: 'update'
+        type: 'update',
       });
     });
 
@@ -45,7 +47,7 @@ describe('TreeVisualisation/DeckGL/Interpolation/ElementMatcher', () => {
       expect(result[0]).to.deep.include({
         id: 'B',
         opacity: 0.5,
-        isEntering: true
+        isEntering: true,
       });
     });
 
@@ -60,7 +62,7 @@ describe('TreeVisualisation/DeckGL/Interpolation/ElementMatcher', () => {
       expect(result[0]).to.deep.include({
         id: 'C',
         opacity: 0.5,
-        isExiting: true
+        isExiting: true,
       });
     });
 
@@ -70,8 +72,8 @@ describe('TreeVisualisation/DeckGL/Interpolation/ElementMatcher', () => {
       const t = 0.25;
 
       const result = matcher.interpolateElements(from, to, t, interpolateFn);
-      const entering = result.find(r => r.id === 'B');
-      const exiting = result.find(r => r.id === 'C');
+      const entering = result.find((r) => r.id === 'B');
+      const exiting = result.find((r) => r.id === 'C');
 
       expect(entering.opacity).to.be.closeTo(0.2, 1e-12);
       expect(exiting.opacity).to.be.closeTo(0.3, 1e-12);
@@ -87,9 +89,9 @@ describe('TreeVisualisation/DeckGL/Interpolation/ElementMatcher', () => {
 
       const result = matcher.interpolateElements(from, to, t, interpolateFn);
 
-      const a = result.find(r => r.id === 'A');
-      const b = result.find(r => r.id === 'B');
-      const c = result.find(r => r.id === 'C');
+      const a = result.find((r) => r.id === 'A');
+      const b = result.find((r) => r.id === 'B');
+      const c = result.find((r) => r.id === 'C');
 
       expect(a).to.exist;
       expect(a.type).to.equal('update');
@@ -118,23 +120,20 @@ describe('TreeVisualisation/DeckGL/Interpolation/ElementMatcher', () => {
         id: 'node_1',
         position: [10, 0, 0],
         radius: 5,
-        split_indices: [1]
+        split_indices: [1],
       };
       const toNode = {
         id: 'node_1',
         position: [20, 0, 0],
         radius: 10,
-        split_indices: [1]
+        split_indices: [1],
       };
 
       const interpolateNodeFn = (from, to, t) => ({
         id: to.id,
-        position: [
-          from.position[0] + (to.position[0] - from.position[0]) * t,
-          0, 0
-        ],
+        position: [from.position[0] + (to.position[0] - from.position[0]) * t, 0, 0],
         radius: from.radius + (to.radius - from.radius) * t,
-        type: 'update'
+        type: 'update',
       });
 
       const result = matcher.interpolateElements([fromNode], [toNode], 0.5, interpolateNodeFn);
@@ -153,13 +152,13 @@ describe('TreeVisualisation/DeckGL/Interpolation/ElementMatcher', () => {
         id: 'link_A_B',
         sourcePosition: [0, 0, 0],
         targetPosition: [10, 0, 0],
-        polarData: { source: { angle: 0 }, target: { angle: 0 } }
+        polarData: { source: { angle: 0 }, target: { angle: 0 } },
       };
       const toLink = {
         id: 'link_A_B',
         sourcePosition: [0, 0, 0],
         targetPosition: [20, 0, 0],
-        polarData: { source: { angle: 0 }, target: { angle: 0 } }
+        polarData: { source: { angle: 0 }, target: { angle: 0 } },
       };
 
       // Simple linear interpolator for test
@@ -167,11 +166,12 @@ describe('TreeVisualisation/DeckGL/Interpolation/ElementMatcher', () => {
         id: to.id,
         targetPosition: [
           from.targetPosition[0] + (to.targetPosition[0] - from.targetPosition[0]) * t,
-          0, 0
+          0,
+          0,
         ],
         polarData: to.polarData, // Preserve metadata
         type: 'update',
-        isLink: true
+        isLink: true,
       });
 
       const result = matcher.interpolateElements([fromLink], [toLink], 0.5, interpolateLinkFn);
@@ -190,7 +190,7 @@ describe('TreeVisualisation/DeckGL/Interpolation/ElementMatcher', () => {
       const interpolateExtFn = (from, to, _t) => ({
         id: to.id,
         targetPosition: [110, 0, 0], // manually solved for t=0.5
-        type: 'update'
+        type: 'update',
       });
 
       const result = matcher.interpolateElements([fromExt], [toExt], 0.5, interpolateExtFn);

@@ -22,7 +22,7 @@ export function buildCellData(cellSize, sequences, visibleRange, maxCells) {
   const { r0, r1, c0, c1 } = visibleRange;
   const nR = r1 - r0 + 1;
   const nC = c1 - c0 + 1;
-  const step = Math.max(1, Math.ceil(Math.sqrt(nR * nC / maxCells)));
+  const step = Math.max(1, Math.ceil(Math.sqrt((nR * nC) / maxCells)));
   const data = [];
 
   for (let r = r0; r <= r1; r += step) {
@@ -33,15 +33,20 @@ export function buildCellData(cellSize, sequences, visibleRange, maxCells) {
 
       const x = c * cellSize;
       const y = r * cellSize;
-      const w = cellSize * Math.min(step, (c1 - c + 1));
-      const h = cellSize * Math.min(step, (r1 - r + 1));
+      const w = cellSize * Math.min(step, c1 - c + 1);
+      const h = cellSize * Math.min(step, r1 - r + 1);
 
       data.push({
         kind: 'cell',
         row: r,
         col: c,
-        ch: step === 1 ? (seq.seq[c] || '-') : getDominantResidue(sequences, r, c, step, r1, c1),
-        polygon: [[x, y], [x + w, y], [x + w, y + h], [x, y + h]]
+        ch: step === 1 ? seq.seq[c] || '-' : getDominantResidue(sequences, r, c, step, r1, c1),
+        polygon: [
+          [x, y],
+          [x + w, y],
+          [x + w, y + h],
+          [x, y + h],
+        ],
       });
     }
   }
@@ -82,7 +87,14 @@ function getDominantResidue(sequences, startRow, startCol, step, maxRow, maxCol)
  * @param {Object} previousSelection - Previous selection state (optional)
  * @returns {PolygonLayer} The cells layer
  */
-export function createCellsLayer(cellData, sequenceType, selection, colorScheme = 'default', consensus = null, previousSelection = null) {
+export function createCellsLayer(
+  cellData,
+  sequenceType,
+  selection,
+  colorScheme = 'default',
+  consensus = null,
+  previousSelection = null
+) {
   const colorFn = getColorScheme(colorScheme, sequenceType);
 
   return new PolygonLayer({
@@ -93,65 +105,67 @@ export function createCellsLayer(cellData, sequenceType, selection, colorScheme 
     extruded: false,
     stroked: false,
     filled: true,
-    getPolygon: d => d.polygon,
-    getFillColor: d => {
+    getPolygon: (d) => d.polygon,
+    getFillColor: (d) => {
       let baseColor;
 
       if (colorScheme === 'identity' && consensus) {
         const consensusChar = consensus[d.col];
         // Dark blue for match, white for mismatch
         if (d.ch === consensusChar && d.ch !== '-' && d.ch !== ' ') {
-           baseColor = [0, 0, 180, 255];
+          baseColor = [0, 0, 180, 255];
         } else {
-           baseColor = [255, 255, 255, 255];
+          baseColor = [255, 255, 255, 255];
         }
       } else if (colorScheme === 'similarity' && consensus) {
-         // Simple similarity: Match = Dark Blue, Mismatch = White
-         // Ideally this would use BLOSUM scores, but for now we'll use Identity as a base
-         // and maybe expand later.
-         const consensusChar = consensus[d.col];
-         if (d.ch === consensusChar && d.ch !== '-' && d.ch !== ' ') {
-            baseColor = [0, 0, 180, 255];
-         } else {
-            baseColor = [255, 255, 255, 255];
-         }
+        // Simple similarity: Match = Dark Blue, Mismatch = White
+        // Ideally this would use BLOSUM scores, but for now we'll use Identity as a base
+        // and maybe expand later.
+        const consensusChar = consensus[d.col];
+        if (d.ch === consensusChar && d.ch !== '-' && d.ch !== ' ') {
+          baseColor = [0, 0, 180, 255];
+        } else {
+          baseColor = [255, 255, 255, 255];
+        }
       } else {
         baseColor = colorFn(d.ch);
       }
 
       // Check if column is in current selection
-      const inCurrentSelection = selection && 
-        d.col >= selection.startCol - 1 && d.col <= selection.endCol - 1;
-      
+      const inCurrentSelection =
+        selection && d.col >= selection.startCol - 1 && d.col <= selection.endCol - 1;
+
       // Check if column is in previous selection
-      const inPreviousSelection = previousSelection && 
-        d.col >= previousSelection.startCol - 1 && d.col <= previousSelection.endCol - 1;
+      const inPreviousSelection =
+        previousSelection &&
+        d.col >= previousSelection.startCol - 1 &&
+        d.col <= previousSelection.endCol - 1;
 
       // Dim colors outside both selections
       if ((selection || previousSelection) && !inCurrentSelection && !inPreviousSelection) {
         // Dim by reducing saturation and brightness
         return [
-          baseColor[0] * 0.3 + 180,  // Blend with gray
+          baseColor[0] * 0.3 + 180, // Blend with gray
           baseColor[1] * 0.3 + 180,
           baseColor[2] * 0.3 + 180,
-          baseColor[3]
+          baseColor[3],
         ];
       }
-      
+
       // Slightly dim previous selection (not as bright as current)
       if (inPreviousSelection && !inCurrentSelection) {
         return [
-          baseColor[0] * 0.7 + 60,  // Slightly faded
+          baseColor[0] * 0.7 + 60, // Slightly faded
           baseColor[1] * 0.7 + 60,
           baseColor[2] * 0.7 + 60,
-          baseColor[3]
+          baseColor[3],
         ];
       }
-      
+
       return baseColor;
     },
     updateTriggers: {
-      getFillColor: [colorScheme, selection, previousSelection, consensus]
-    }
+      getFillColor: [colorScheme, selection, previousSelection, consensus],
+    },
   });
 }

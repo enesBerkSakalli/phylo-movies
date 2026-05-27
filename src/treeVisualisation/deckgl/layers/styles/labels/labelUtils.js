@@ -26,7 +26,6 @@ export function getHistoryOffset(cached, label) {
   return getLabelHistoryZOffset(cached, label);
 }
 
-
 /**
  * Normalizes text anchor values to SVG-compatible values.
  */

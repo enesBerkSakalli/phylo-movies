@@ -62,11 +62,7 @@ describe('MSA context row colors', () => {
     const root = createRoot(container);
 
     await act(async () => {
-      root.render(React.createElement(
-        MSAProvider,
-        null,
-        React.createElement(Consumer),
-      ));
+      root.render(React.createElement(MSAProvider, null, React.createElement(Consumer)));
     });
 
     expect(observedRowColorMap).toEqual({

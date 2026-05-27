@@ -2,7 +2,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 describe('tree animation frame instrumentation', () => {
   afterEach(async () => {
-    const instrumentation = await import('../../src/treeVisualisation/performance/frameInstrumentation.js');
+    const instrumentation =
+      await import('../../src/treeVisualisation/performance/frameInstrumentation.js');
     instrumentation.resetFramePerf();
     delete globalThis.PERF_DEBUG;
     delete globalThis.__PHYLO_FRAME_PERF__;
@@ -12,11 +13,16 @@ describe('tree animation frame instrumentation', () => {
   it('records interpolation, layer update, deck setLayers, and comparison timings when PERF_DEBUG is enabled', async () => {
     globalThis.PERF_DEBUG = true;
 
-    const instrumentation = await import('../../src/treeVisualisation/performance/frameInstrumentation.js');
-    const { TreeInterpolator } = await import('../../src/treeVisualisation/deckgl/interpolation/TreeInterpolator.js');
-    const { LayerManager } = await import('../../src/treeVisualisation/deckgl/layers/LayerManager.js');
-    const { DeckGLContext } = await import('../../src/treeVisualisation/deckgl/context/DeckGLContext.js');
-    const { ComparisonModeRenderer } = await import('../../src/treeVisualisation/comparison/ComparisonModeRenderer.js');
+    const instrumentation =
+      await import('../../src/treeVisualisation/performance/frameInstrumentation.js');
+    const { TreeInterpolator } =
+      await import('../../src/treeVisualisation/deckgl/interpolation/TreeInterpolator.js');
+    const { LayerManager } =
+      await import('../../src/treeVisualisation/deckgl/layers/LayerManager.js');
+    const { DeckGLContext } =
+      await import('../../src/treeVisualisation/deckgl/context/DeckGLContext.js');
+    const { ComparisonModeRenderer } =
+      await import('../../src/treeVisualisation/comparison/ComparisonModeRenderer.js');
 
     const treeInterpolator = new TreeInterpolator();
     const element = {
@@ -24,15 +30,15 @@ describe('tree animation frame instrumentation', () => {
       position: [0, 0, 0],
       polarData: {
         source: { angle: 0, radius: 1 },
-        target: { angle: 0, radius: 1 }
-      }
+        target: { angle: 0, radius: 1 },
+      },
     };
     const data = {
       max_radius: 1,
       nodes: [element],
       links: [],
       labels: [],
-      extensions: []
+      extensions: [],
     };
     treeInterpolator.interpolateTreeData(data, data, 0.5, { stage: 'COLLAPSE' });
 
@@ -54,22 +60,27 @@ describe('tree animation frame instrumentation', () => {
           nodes: [{ id: 'right-node', position: [0, 0, 0], renderPosition: [0, 0, 0.1] }],
           links: [],
           extensions: [],
-          labels: []
-        }))
+          labels: [],
+        })),
       },
       deckContext: {
-        getCanvasDimensions: vi.fn(() => ({ width: 100, height: 100 }))
+        getCanvasDimensions: vi.fn(() => ({ width: 100, height: 100 })),
       },
       viewportManager: {
         getRightTreeOffset: vi.fn(() => ({ x: 0, y: 0 })),
-        focusOnTree: vi.fn()
+        focusOnTree: vi.fn(),
       },
-      _updateLayersEfficiently: vi.fn()
+      _updateLayersEfficiently: vi.fn(),
     };
     comparisonRenderer._buildConnectors = vi.fn(() => []);
     comparisonRenderer._lastFittedIndices = { right: 0 };
     await comparisonRenderer.renderAnimated(
-      { nodes: [{ id: 'left-node', position: [0, 0, 0], renderPosition: [0, 0, 0.1] }], links: [], labels: [], extensions: [] },
+      {
+        nodes: [{ id: 'left-node', position: [0, 0, 0], renderPosition: [0, 0, 0.1] }],
+        links: [],
+        labels: [],
+        extensions: [],
+      },
       { id: 'right-tree' },
       0
     );
@@ -84,8 +95,10 @@ describe('tree animation frame instrumentation', () => {
   });
 
   it('does not record timings unless PERF_DEBUG is enabled', async () => {
-    const instrumentation = await import('../../src/treeVisualisation/performance/frameInstrumentation.js');
-    const { LayerManager } = await import('../../src/treeVisualisation/deckgl/layers/LayerManager.js');
+    const instrumentation =
+      await import('../../src/treeVisualisation/performance/frameInstrumentation.js');
+    const { LayerManager } =
+      await import('../../src/treeVisualisation/deckgl/layers/LayerManager.js');
 
     const layerManager = Object.create(LayerManager.prototype);
     layerManager.createTreeLayers = vi.fn(() => []);

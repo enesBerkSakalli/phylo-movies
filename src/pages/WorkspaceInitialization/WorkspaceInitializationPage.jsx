@@ -1,18 +1,10 @@
-import React from "react";
-import {
-  AlertTriangle,
-  CheckCircle2,
-  CircleDashed,
-} from "lucide-react";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "../../components/ui/alert";
-import { Badge } from "../../components/ui/badge";
-import { Form } from "../../components/ui/form";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
-import { TooltipProvider } from "../../components/ui/tooltip";
+import React from 'react';
+import { AlertTriangle, CheckCircle2, CircleDashed } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
+import { Badge } from '../../components/ui/badge';
+import { Form } from '../../components/ui/form';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
+import { TooltipProvider } from '../../components/ui/tooltip';
 
 import { useWorkspaceInitializationForm } from './useWorkspaceInitializationForm.js';
 import { NewProjectTab } from './components/NewProjectTab.jsx';
@@ -81,15 +73,23 @@ export function WorkspaceInitializationPage() {
               <EngineIcon />
               <AlertTitle>BranchArchitect backend: {engineStatus.badge}</AlertTitle>
               <AlertDescription>
-                Dataset loading, tree processing, interpolation, and MSA workflows require the desktop engine or local full-stack backend.
+                Dataset loading, tree processing, interpolation, and MSA workflows require the
+                desktop engine or local full-stack backend.
                 {backendStatus.state === 'unavailable' && (
-                  <> Start the desktop backend or run <code>./start.sh</code>.</>
+                  <>
+                    {' '}
+                    Start the desktop backend or run <code>./start.sh</code>.
+                  </>
                 )}
               </AlertDescription>
             </Alert>
           )}
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex min-w-0 flex-1 flex-col gap-0">
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="flex min-w-0 flex-1 flex-col gap-0"
+          >
             <section className="border-b border-border/60 px-4 py-3 sm:px-6 lg:px-8 xl:px-10">
               <div className="flex min-w-0 justify-start">
                 <TabsList className="grid w-full grid-cols-2 sm:w-[28rem]">
@@ -111,10 +111,7 @@ export function WorkspaceInitializationPage() {
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleSubmit)}>
                   <TabsContent value="upload" className="m-0">
-                    <NewProjectTab
-                      disabled={disabled}
-                      reset={reset}
-                    />
+                    <NewProjectTab disabled={disabled} reset={reset} />
                   </TabsContent>
                 </form>
               </Form>
@@ -130,9 +127,7 @@ export function WorkspaceInitializationPage() {
             </section>
           </Tabs>
 
-          {(submitting || loadingExample) && (
-            <ProcessingOverlay operationState={operationState} />
-          )}
+          {(submitting || loadingExample) && <ProcessingOverlay operationState={operationState} />}
         </main>
       </div>
     </TooltipProvider>

@@ -2,7 +2,7 @@ const { expect } = require('chai');
 const { JSDOM } = require('jsdom');
 const { clearTimelineModuleCache, installDeckGLMocks } = require('./helpers/deckGLMocks.js');
 // Ignore CSS imports from the renderer in test environment
-require.extensions['.css'] = () => { };
+require.extensions['.css'] = () => {};
 
 // Minimal DOM for renderer sizing
 const dom = new JSDOM('<!doctype html><html><body></body></html>');
@@ -29,7 +29,7 @@ describe('DeckTimelineRenderer', () => {
       top: 0,
       left: 0,
       right: width,
-      bottom: height
+      bottom: height,
     });
     container.setTestSize = (nextWidth, nextHeight = height) => {
       width = nextWidth;
@@ -50,26 +50,28 @@ describe('DeckTimelineRenderer', () => {
         globalStart: 1,
         globalEnd: 9,
         localStepStart: 0,
-        localStepEnd: 8
+        localStepEnd: 8,
       },
-      { isInputTreeSegment: true, originalTreeIndex: 1 }
+      { isInputTreeSegment: true, originalTreeIndex: 1 },
     ];
     const timelineData = {
       // 3 segments of 1000ms
       segmentDurations: [1000, 1000, 1000],
       totalDuration: 3000,
-      cumulativeDurations: [1000, 2000, 3000]
+      cumulativeDurations: [1000, 2000, 3000],
     };
     return { timelineData, segments };
   }
 
   function clickTimeline(renderer, ms) {
     const x = (ms / renderer.timelineData.totalDuration) * renderer._width;
-    renderer.deck.canvas.dispatchEvent(new global.window.MouseEvent('click', {
-      bubbles: true,
-      clientX: x,
-      clientY: 10
-    }));
+    renderer.deck.canvas.dispatchEvent(
+      new global.window.MouseEvent('click', {
+        bubbles: true,
+        clientX: x,
+        clientY: 10,
+      })
+    );
   }
 
   function collectSelections(renderer) {
@@ -96,7 +98,7 @@ describe('DeckTimelineRenderer', () => {
     renderer.setCustomTime(1500);
     renderer._updateLayers();
     // Find scrubber layer by id
-    const scrubber = renderer.deck.props.layers.find(l => l.id === 'scrubber-layer');
+    const scrubber = renderer.deck.props.layers.find((l) => l.id === 'scrubber-layer');
     expect(scrubber).to.exist;
     const path = scrubber.props.data?.[0]?.path;
     expect(Array.isArray(path)).to.equal(true);
@@ -110,14 +112,14 @@ describe('DeckTimelineRenderer', () => {
     const timelineData = {
       segmentDurations: segments.map(() => 1000),
       totalDuration: 100000,
-      cumulativeDurations: segments.map((_, index) => (index + 1) * 1000)
+      cumulativeDurations: segments.map((_, index) => (index + 1) * 1000),
     };
     const container = makeContainer(800, 120);
     const renderer = new DeckTimelineRenderer(timelineData, segments).init(container);
 
-    const stripTrackLayer = renderer.deck.props.layers.find(l => l.id === 'strip-track-layer');
-    const tickLayer = renderer.deck.props.layers.find(l => l.id === 'input-tree-tick-layer');
-    const inputTreeLayer = renderer.deck.props.layers.find(l => l.id === 'input-tree-layer');
+    const stripTrackLayer = renderer.deck.props.layers.find((l) => l.id === 'strip-track-layer');
+    const tickLayer = renderer.deck.props.layers.find((l) => l.id === 'input-tree-tick-layer');
+    const inputTreeLayer = renderer.deck.props.layers.find((l) => l.id === 'input-tree-layer');
     expect(stripTrackLayer).to.exist;
     expect(stripTrackLayer.props.data).to.have.length(0);
     expect(tickLayer).to.exist;
@@ -127,17 +129,17 @@ describe('DeckTimelineRenderer', () => {
 
   it('draws a transition strip for dense timelines with transition frames', () => {
     const segments = Array.from({ length: 100 }, (_, index) => ({
-      isInputTreeSegment: index % 2 === 0
+      isInputTreeSegment: index % 2 === 0,
     }));
     const timelineData = {
       segmentDurations: segments.map(() => 1000),
       totalDuration: 100000,
-      cumulativeDurations: segments.map((_, index) => (index + 1) * 1000)
+      cumulativeDurations: segments.map((_, index) => (index + 1) * 1000),
     };
     const container = makeContainer(800, 120);
     const renderer = new DeckTimelineRenderer(timelineData, segments).init(container);
 
-    const stripTrackLayer = renderer.deck.props.layers.find(l => l.id === 'strip-track-layer');
+    const stripTrackLayer = renderer.deck.props.layers.find((l) => l.id === 'strip-track-layer');
     expect(stripTrackLayer).to.exist;
     expect(stripTrackLayer.props.data).to.have.length(1);
   });
@@ -148,8 +150,10 @@ describe('DeckTimelineRenderer', () => {
     const renderer = new DeckTimelineRenderer(timelineData, segments).init(container);
 
     renderer.setSelectedSegment(1);
-    const inputTreeSelection = renderer.deck.props.layers.find(l => l.id === 'input-tree-selection-layer');
-    const connSel = renderer.deck.props.layers.find(l => l.id === 'connection-selection-layer');
+    const inputTreeSelection = renderer.deck.props.layers.find(
+      (l) => l.id === 'input-tree-selection-layer'
+    );
+    const connSel = renderer.deck.props.layers.find((l) => l.id === 'connection-selection-layer');
     expect(inputTreeSelection || connSel).to.exist;
     // At least one selection layer should have data when a selection is set
     const hasData = (layer) => Array.isArray(layer?.props?.data) && layer.props.data.length >= 0;
@@ -167,7 +171,13 @@ describe('DeckTimelineRenderer', () => {
 
     const boundEvents = renderer.deck.eventListeners.map((entry) => entry.event);
 
-    expect(boundEvents).to.include.members(['mousemove', 'mousedown', 'click', 'wheel', 'mouseleave']);
+    expect(boundEvents).to.include.members([
+      'mousemove',
+      'mousedown',
+      'click',
+      'wheel',
+      'mouseleave',
+    ]);
   });
 
   it('exposes the deck canvas as a keyboard-focusable timeline control', () => {
@@ -202,20 +212,24 @@ describe('DeckTimelineRenderer', () => {
     const renderer = new DeckTimelineRenderer(timelineData, segments).init(container);
     const selections = collectSelections(renderer);
 
-    renderer.deck.canvas.dispatchEvent(new global.window.KeyboardEvent('keydown', {
-      bubbles: true,
-      key: 'ArrowRight'
-    }));
+    renderer.deck.canvas.dispatchEvent(
+      new global.window.KeyboardEvent('keydown', {
+        bubbles: true,
+        key: 'ArrowRight',
+      })
+    );
 
     expect(selections).to.have.length(1);
     expect(selections[0].segmentIndex).to.equal(1);
     expect(selections[0].id).to.equal(2);
     expect(renderer._selectedSegmentIndex).to.equal(1);
 
-    renderer.deck.canvas.dispatchEvent(new global.window.KeyboardEvent('keydown', {
-      bubbles: true,
-      key: 'End'
-    }));
+    renderer.deck.canvas.dispatchEvent(
+      new global.window.KeyboardEvent('keydown', {
+        bubbles: true,
+        key: 'End',
+      })
+    );
 
     expect(selections).to.have.length(2);
     expect(selections[1].segmentIndex).to.equal(2);
@@ -232,14 +246,16 @@ describe('DeckTimelineRenderer', () => {
     renderer.bindHoverState({
       setHoveredSegment: (segmentIndex, segment, position) => {
         hoverUpdates.push({ segmentIndex, segment, position });
-      }
+      },
     });
 
-    renderer.deck.canvas.dispatchEvent(new global.window.MouseEvent('mousemove', {
-      bubbles: true,
-      clientX: 100,
-      clientY: 10
-    }));
+    renderer.deck.canvas.dispatchEvent(
+      new global.window.MouseEvent('mousemove', {
+        bubbles: true,
+        clientX: 100,
+        clientY: 10,
+      })
+    );
 
     expect(hoverUpdates).to.have.length(1);
     expect(hoverUpdates[0].segmentIndex).to.equal(0);
@@ -261,7 +277,7 @@ describe('DeckTimelineRenderer', () => {
         left,
         top,
         right: left + rect.width,
-        bottom: top + rect.height
+        bottom: top + rect.height,
       };
     };
     const renderer = new DeckTimelineRenderer(timelineData, segments).init(container);
@@ -270,27 +286,31 @@ describe('DeckTimelineRenderer', () => {
     renderer.bindHoverState({
       setHoveredSegment: (segmentIndex, segment, position) => {
         hoverUpdates.push({ segmentIndex, segment, position });
-      }
+      },
     });
 
-    renderer.deck.canvas.dispatchEvent(new global.window.MouseEvent('mousemove', {
-      bubbles: true,
-      clientX: 100,
-      clientY: 10
-    }));
+    renderer.deck.canvas.dispatchEvent(
+      new global.window.MouseEvent('mousemove', {
+        bubbles: true,
+        clientX: 100,
+        clientY: 10,
+      })
+    );
 
     left = 40;
     top = 12;
-    renderer.deck.canvas.dispatchEvent(new global.window.MouseEvent('mousemove', {
-      bubbles: true,
-      clientX: 140,
-      clientY: 22
-    }));
+    renderer.deck.canvas.dispatchEvent(
+      new global.window.MouseEvent('mousemove', {
+        bubbles: true,
+        clientX: 140,
+        clientY: 22,
+      })
+    );
 
     expect(hoverUpdates).to.have.length(2);
     expect(hoverUpdates[1].segmentIndex).to.equal(0);
     expect(hoverUpdates[1].segment).to.equal(segments[0]);
-    expect(hoverUpdates[1].position.x).to.be.closeTo(40 + (400 / 3), 1e-6);
+    expect(hoverUpdates[1].position.x).to.be.closeTo(40 + 400 / 3, 1e-6);
     expect(hoverUpdates[1].position.y).to.equal(12);
   });
 
@@ -324,12 +344,12 @@ describe('DeckTimelineRenderer', () => {
 
   it('selects the expected segment in dense timelines', () => {
     const segments = Array.from({ length: 100 }, (_, index) => ({
-      isInputTreeSegment: index % 2 === 0
+      isInputTreeSegment: index % 2 === 0,
     }));
     const timelineData = {
       segmentDurations: segments.map(() => 1000),
       totalDuration: 100000,
-      cumulativeDurations: segments.map((_, index) => (index + 1) * 1000)
+      cumulativeDurations: segments.map((_, index) => (index + 1) * 1000),
     };
     const container = makeContainer(800, 120);
     const renderer = new DeckTimelineRenderer(timelineData, segments).init(container);
@@ -368,7 +388,7 @@ describe('DeckTimelineRenderer', () => {
     renderer.bindScrubState({ getIsScrubbing: () => scrubState.active });
     renderer._updateLayers();
 
-    let scrubber = renderer.deck.props.layers.find(l => l.id === 'scrubber-layer');
+    let scrubber = renderer.deck.props.layers.find((l) => l.id === 'scrubber-layer');
     expect(scrubber.props.widthMinPixels).to.equal(7);
     expect(renderer.isScrubbing()).to.equal(false);
 
@@ -376,7 +396,7 @@ describe('DeckTimelineRenderer', () => {
     renderer.syncScrubState();
     renderer._updateLayers();
 
-    scrubber = renderer.deck.props.layers.find(l => l.id === 'scrubber-layer');
+    scrubber = renderer.deck.props.layers.find((l) => l.id === 'scrubber-layer');
     expect(scrubber.props.widthMinPixels).to.equal(10);
     expect(renderer.isScrubbing()).to.equal(true);
   });

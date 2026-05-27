@@ -26,10 +26,7 @@ describe('RadialTreeLayout - indexLeafNodes', () => {
     it('should index leaves left-to-right in children order', () => {
       const tree = {
         name: 'root',
-        children: [
-          { name: 'A' },
-          { name: 'B' }
-        ]
+        children: [{ name: 'A' }, { name: 'B' }],
       };
 
       const count = layout.indexLeafNodes(tree);
@@ -42,10 +39,7 @@ describe('RadialTreeLayout - indexLeafNodes', () => {
     it('should not assign index to internal nodes', () => {
       const tree = {
         name: 'root',
-        children: [
-          { name: 'A' },
-          { name: 'B' }
-        ]
+        children: [{ name: 'A' }, { name: 'B' }],
       };
 
       layout.indexLeafNodes(tree);
@@ -66,19 +60,13 @@ describe('RadialTreeLayout - indexLeafNodes', () => {
         children: [
           {
             name: 'int1',
-            children: [
-              { name: 'A' },
-              { name: 'B' }
-            ]
+            children: [{ name: 'A' }, { name: 'B' }],
           },
           {
             name: 'int2',
-            children: [
-              { name: 'C' },
-              { name: 'D' }
-            ]
-          }
-        ]
+            children: [{ name: 'C' }, { name: 'D' }],
+          },
+        ],
       };
 
       const count = layout.indexLeafNodes(tree);
@@ -102,17 +90,14 @@ describe('RadialTreeLayout - indexLeafNodes', () => {
           { name: 'A' },
           {
             name: 'int1',
-            children: [
-              { name: 'B' },
-              { name: 'C' }
-            ]
-          }
-        ]
+            children: [{ name: 'B' }, { name: 'C' }],
+          },
+        ],
       };
 
       const count = layout.indexLeafNodes(tree);
 
-      expect(tree.children[0].index).to.equal(0);             // A
+      expect(tree.children[0].index).to.equal(0); // A
       expect(tree.children[1].children[0].index).to.equal(1); // B
       expect(tree.children[1].children[1].index).to.equal(2); // C
       expect(count).to.equal(3);
@@ -128,13 +113,11 @@ describe('RadialTreeLayout - indexLeafNodes', () => {
             children: [
               {
                 name: 'int2',
-                children: [
-                  { name: 'A' }
-                ]
-              }
-            ]
-          }
-        ]
+                children: [{ name: 'A' }],
+              },
+            ],
+          },
+        ],
       };
 
       const count = layout.indexLeafNodes(tree);
@@ -148,13 +131,7 @@ describe('RadialTreeLayout - indexLeafNodes', () => {
     it('should correctly index nodes with many children', () => {
       const tree = {
         name: 'root',
-        children: [
-          { name: 'A' },
-          { name: 'B' },
-          { name: 'C' },
-          { name: 'D' },
-          { name: 'E' }
-        ]
+        children: [{ name: 'A' }, { name: 'B' }, { name: 'C' }, { name: 'D' }, { name: 'E' }],
       };
 
       const count = layout.indexLeafNodes(tree);
@@ -172,10 +149,7 @@ describe('RadialTreeLayout - indexLeafNodes', () => {
     it('should respect custom starting index', () => {
       const tree = {
         name: 'root',
-        children: [
-          { name: 'A' },
-          { name: 'B' }
-        ]
+        children: [{ name: 'A' }, { name: 'B' }],
       };
 
       const count = layout.indexLeafNodes(tree, 5);
@@ -190,11 +164,7 @@ describe('RadialTreeLayout - indexLeafNodes', () => {
     it('should maintain consistent ordering when called multiple times', () => {
       const tree = {
         name: 'root',
-        children: [
-          { name: 'A' },
-          { name: 'B' },
-          { name: 'C' }
-        ]
+        children: [{ name: 'A' }, { name: 'B' }, { name: 'C' }],
       };
 
       // First call
@@ -226,20 +196,18 @@ describe('RadialTreeLayout - indexLeafNodes', () => {
           { name: 'A' },
           {
             name: 'int1',
-            children: [
-              { name: 'C' }
-            ]
+            children: [{ name: 'C' }],
           },
-          { name: 'B' }
-        ]
+          { name: 'B' },
+        ],
       };
 
       layout.indexLeafNodes(tree);
 
       // Depth-first: A (0), then descend into int1 -> C (1), then B (2)
-      expect(tree.children[0].index).to.equal(0);             // A
+      expect(tree.children[0].index).to.equal(0); // A
       expect(tree.children[1].children[0].index).to.equal(1); // C
-      expect(tree.children[2].index).to.equal(2);             // B
+      expect(tree.children[2].index).to.equal(2); // B
     });
   });
 
@@ -247,7 +215,7 @@ describe('RadialTreeLayout - indexLeafNodes', () => {
     it('should handle empty children array', () => {
       const tree = {
         name: 'root',
-        children: []
+        children: [],
       };
 
       const count = layout.indexLeafNodes(tree);
@@ -268,15 +236,12 @@ describe('RadialTreeLayout - indexLeafNodes', () => {
     it('should handle mixed undefined and defined children correctly', () => {
       const tree = {
         name: 'root',
-        children: [
-          { name: 'A' },
-          { name: 'int1', children: [{ name: 'B' }] }
-        ]
+        children: [{ name: 'A' }, { name: 'int1', children: [{ name: 'B' }] }],
       };
 
       const count = layout.indexLeafNodes(tree);
 
-      expect(tree.children[0].index).to.equal(0);             // A (no children property)
+      expect(tree.children[0].index).to.equal(0); // A (no children property)
       expect(tree.children[1].children[0].index).to.equal(1); // B
       expect(count).to.equal(2);
     });
@@ -295,14 +260,14 @@ describe('RadialTreeLayout - Geometry & Calculations', () => {
         {
           id: 'A',
           length: 10,
-          children: []
+          children: [],
         },
         {
           id: 'B',
           length: 20,
-          children: []
-        }
-      ]
+          children: [],
+        },
+      ],
     };
     layout = new RadialTreeLayout(mockRoot);
     // Set standard dimensions for predictable testing
@@ -327,12 +292,16 @@ describe('RadialTreeLayout - Geometry & Calculations', () => {
     it('should handle nested accumulation', () => {
       const deepTree = {
         length: 0,
-        children: [{
-          length: 5,
-          children: [{
-            length: 3
-          }]
-        }]
+        children: [
+          {
+            length: 5,
+            children: [
+              {
+                length: 3,
+              },
+            ],
+          },
+        ],
       };
       const l = new RadialTreeLayout(deepTree);
       l.calcRadius(l.root, 0);
@@ -348,10 +317,7 @@ describe('RadialTreeLayout - Geometry & Calculations', () => {
     it('should ignore root branch length when accumulating radii', () => {
       const stemTree = {
         length: 5,
-        children: [
-          { length: 2 },
-          { length: 3 }
-        ]
+        children: [{ length: 2 }, { length: 3 }],
       };
       const l = new RadialTreeLayout(stemTree);
 
@@ -371,9 +337,9 @@ describe('RadialTreeLayout - Geometry & Calculations', () => {
           {
             length: 0.0001,
             metricBranchLength: 0.0001,
-            visualBranchLength: 5
-          }
-        ]
+            visualBranchLength: 5,
+          },
+        ],
       };
       const l = new RadialTreeLayout(visualTree);
 
@@ -391,11 +357,9 @@ describe('RadialTreeLayout - Geometry & Calculations', () => {
         children: [
           {
             length: 1,
-            children: [
-              { length: -2 }
-            ]
-          }
-        ]
+            children: [{ length: -2 }],
+          },
+        ],
       };
       const l = new RadialTreeLayout(negativeTree);
 
@@ -410,10 +374,7 @@ describe('RadialTreeLayout - Geometry & Calculations', () => {
     it('should not apply a minimum visual branch length to radial geometry', () => {
       const tinyTree = {
         length: 0,
-        children: [
-          { length: 0.0001 },
-          { length: 0 }
-        ]
+        children: [{ length: 0.0001 }, { length: 0 }],
       };
       const l = new RadialTreeLayout(tinyTree);
 
@@ -436,7 +397,7 @@ describe('RadialTreeLayout - Geometry & Calculations', () => {
       // Let's use d3.hierarchy logic or the internal root.
 
       const root = {
-        each: (cb) => cb(node)
+        each: (cb) => cb(node),
       };
 
       layout.generateCoordinates(root);

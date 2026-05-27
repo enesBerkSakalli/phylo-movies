@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { LabeledSlider } from '../../../ui/labeled-slider';
 import { SidebarMenuSub, SidebarMenuSubItem } from '../../../ui/sidebar';
-import {  Compass } from 'lucide-react';
+import { Compass } from 'lucide-react';
 
 export function LayoutTransform({
   layoutAngleDegrees,
@@ -9,15 +9,21 @@ export function LayoutTransform({
   layoutRotationDegrees,
   setLayoutRotationDegrees,
 }) {
-  const handleAngleChange = useCallback((vals) => {
-    const v = Array.isArray(vals) ? vals[0] : 360;
-    setLayoutAngleDegrees(v);
-  }, [setLayoutAngleDegrees]);
+  const handleAngleChange = useCallback(
+    (vals) => {
+      const v = Array.isArray(vals) ? vals[0] : 360;
+      setLayoutAngleDegrees(v);
+    },
+    [setLayoutAngleDegrees]
+  );
 
-  const handleRotationChange = useCallback((vals) => {
-    const v = Array.isArray(vals) ? vals[0] : 0;
-    setLayoutRotationDegrees(v);
-  }, [setLayoutRotationDegrees]);
+  const handleRotationChange = useCallback(
+    (vals) => {
+      const v = Array.isArray(vals) ? vals[0] : 0;
+      setLayoutRotationDegrees(v);
+    },
+    [setLayoutRotationDegrees]
+  );
 
   return (
     <SidebarMenuSub>

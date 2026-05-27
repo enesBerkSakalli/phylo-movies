@@ -2,8 +2,11 @@ import React, { useState } from 'react';
 import { Button } from '../ui/button';
 import { AppTooltip } from '../ui/app-tooltip';
 import { Download } from 'lucide-react';
-import { selectFrameIndex, selectTreeControllers, useAppStore } from '../../state/phyloStore/store.js';
-
+import {
+  selectFrameIndex,
+  selectTreeControllers,
+  useAppStore,
+} from '../../state/phyloStore/store.js';
 
 // ==========================================================================
 // STORE SELECTORS
@@ -18,7 +21,7 @@ export function SaveImageButton({ disabled = false }) {
     try {
       // If no controller exists, we can't save
       if (!treeControllers.length) {
-        console.error("No tree controller available for saving PNG.");
+        console.error('No tree controller available for saving PNG.');
         return;
       }
 
@@ -27,7 +30,9 @@ export function SaveImageButton({ disabled = false }) {
       const canvas = treeController.deckContext?.canvas;
 
       if (!canvas) {
-        console.error("Deck.gl canvas not found for saving PNG. DeckGLContext has not exposed a canvas.");
+        console.error(
+          'Deck.gl canvas not found for saving PNG. DeckGLContext has not exposed a canvas.'
+        );
         return;
       }
 
@@ -51,7 +56,7 @@ export function SaveImageButton({ disabled = false }) {
       // Export from the proxy canvas for accurate colors
       proxyCanvas.toBlob((blob) => {
         if (!blob) {
-          console.error("Failed to create image blob");
+          console.error('Failed to create image blob');
           return;
         }
 
@@ -67,7 +72,7 @@ export function SaveImageButton({ disabled = false }) {
         URL.revokeObjectURL(url);
       }, 'image/png');
     } catch (error) {
-      console.error("Error saving image:", error);
+      console.error('Error saving image:', error);
     } finally {
       setIsSaving(false);
     }

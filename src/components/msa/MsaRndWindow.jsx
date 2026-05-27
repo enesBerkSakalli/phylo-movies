@@ -5,7 +5,7 @@ import {
   selectIsMsaViewerOpen,
   selectMsaWindow,
   selectSetMsaWindow,
-  useAppStore
+  useAppStore,
 } from '../../state/phyloStore/store.js';
 import { Button } from '../ui/button';
 import { X, Columns } from 'lucide-react';
@@ -53,16 +53,29 @@ function MSAWindowContent() {
         <div className="flex min-w-0 items-center gap-2">
           <Columns className="size-3.5 shrink-0 text-primary" aria-hidden />
           <div className="flex min-w-0 items-center gap-2">
-            <div id="msa-window-title" className="shrink-0 text-xs font-bold leading-tight uppercase">
+            <div
+              id="msa-window-title"
+              className="shrink-0 text-xs font-bold leading-tight uppercase"
+            >
               Sequence Alignment
             </div>
-            <div id="msa-window-description" className="min-w-0 truncate text-[10px] font-medium leading-tight text-muted-foreground/80" aria-live="polite">
+            <div
+              id="msa-window-description"
+              className="min-w-0 truncate text-[10px] font-medium leading-tight text-muted-foreground/80"
+              aria-live="polite"
+            >
               {summary}
             </div>
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1">
-          <Button variant="ghost" size="icon-xs" onClick={closeMsaViewer} aria-label="Close MSA viewer" className="hover:bg-destructive/10 hover:text-destructive transition-colors">
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            onClick={closeMsaViewer}
+            aria-label="Close MSA viewer"
+            className="hover:bg-destructive/10 hover:text-destructive transition-colors"
+          >
             <X aria-hidden />
           </Button>
         </div>
@@ -135,10 +148,7 @@ export function MsaRndWindow({ isActive = false, onFocus } = {}) {
       role="region"
       aria-labelledby="msa-window-title"
       aria-describedby="msa-window-description"
-      className={cn(
-        FLOATING_WINDOW_SURFACE_CLASS,
-        getFloatingWindowLayerClass(isActive)
-      )}
+      className={cn(FLOATING_WINDOW_SURFACE_CLASS, getFloatingWindowLayerClass(isActive))}
     >
       <MSAWindowContent />
     </Rnd>

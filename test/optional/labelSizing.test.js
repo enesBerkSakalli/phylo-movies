@@ -1,11 +1,14 @@
 const { expect } = require('chai');
 const proxyquire = require('proxyquire').noCallThru();
 
-const { getLabelSize } = proxyquire('../../src/treeVisualisation/deckgl/layers/styles/labels/labelStyles.js', {
-  '../nodes/nodeStyles.js': {
-    getNodeBasedRgba: () => [0, 0, 0, 255],
-  },
-});
+const { getLabelSize } = proxyquire(
+  '../../src/treeVisualisation/deckgl/layers/styles/labels/labelStyles.js',
+  {
+    '../nodes/nodeStyles.js': {
+      getNodeBasedRgba: () => [0, 0, 0, 255],
+    },
+  }
+);
 
 describe('Label Sizing Logic (TDD)', () => {
   const DEFAULT_FONT_SIZE = 2.6; // Typical store value
@@ -51,11 +54,10 @@ describe('Label Sizing Logic (TDD)', () => {
   it('keeps labels visible inside actively moving subtrees', () => {
     cachedState.colorManager = {
       ...cachedState.colorManager,
-      isNodeInActiveMoverSubtree: (node) => node?.id === 'moving-label'
+      isNodeInActiveMoverSubtree: (node) => node?.id === 'moving-label',
     };
 
     const size = getLabelSize({ id: 'moving-label' }, DEFAULT_FONT_SIZE, cachedState);
     expect(size).to.equal(EXPECTED_BASE_PIXELS * 1.2);
   });
-
 });

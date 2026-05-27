@@ -1,12 +1,7 @@
 import { getSplitIndices, getSplitKey, isSubset } from '../../../../domain/tree/splits.js';
 
 export function getConnectorLeafPairCandidate(params) {
-  const {
-    key,
-    leftInfo,
-    rightLeavesBySplitKey,
-    jumpingSubtreeSets,
-  } = params;
+  const { key, leftInfo, rightLeavesBySplitKey, jumpingSubtreeSets } = params;
 
   if (!hasConnectorLeafPosition(leftInfo)) return null;
 

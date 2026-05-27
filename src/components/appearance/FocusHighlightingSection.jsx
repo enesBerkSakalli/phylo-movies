@@ -3,7 +3,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarMenuSub,
-  SidebarMenuSubItem
+  SidebarMenuSubItem,
 } from '../ui/sidebar';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../ui/collapsible';
 import { Separator } from '../ui/separator';
@@ -11,8 +11,14 @@ import { ChevronDown, Eye } from 'lucide-react';
 import { ToggleWithSlider } from './ToggleWithSlider';
 
 export function FocusHighlightingSection({
-  dimming, dimmingOpacity, subtreeDimming, subtreeDimmingOpacity,
-  onToggleDimming, onDimmingOpacityChange, onToggleSubtreeDimming, onSubtreeDimmingOpacityChange
+  dimming,
+  dimmingOpacity,
+  subtreeDimming,
+  subtreeDimmingOpacity,
+  onToggleDimming,
+  onDimmingOpacityChange,
+  onToggleSubtreeDimming,
+  onSubtreeDimmingOpacityChange,
 }) {
   return (
     <Collapsible asChild className="group/collapsible">

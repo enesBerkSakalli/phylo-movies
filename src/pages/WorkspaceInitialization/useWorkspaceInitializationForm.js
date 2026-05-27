@@ -11,7 +11,7 @@ import {
   finalizeMovieData,
   showElectronLoading,
   hideElectronLoading,
-  updateElectronProgress
+  updateElectronProgress,
 } from './services/movieProcessing.js';
 
 const BACKEND_STATUS_TIMEOUT_MS = 1500;
@@ -45,12 +45,12 @@ export function useWorkspaceInitializationForm() {
       iqtreeUfbootReplicates: 1000,
       iqtreeShAlrtReplicates: 1000,
       iqtreeBnni: false,
-      useGtr: true,   // GTR (General Time Reversible) model - more realistic
+      useGtr: true, // GTR (General Time Reversible) model - more realistic
       useGamma: true, // Gamma rate heterogeneity - accounts for rate variation
       usePseudo: false, // Pseudocounts - off by default, enable for gappy alignments
       noMl: true,
     },
-    mode: "onBlur",
+    mode: 'onBlur',
   });
 
   const { reset: resetForm } = form;
@@ -101,7 +101,7 @@ export function useWorkspaceInitializationForm() {
       if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL) {
         return import.meta.env.BASE_URL;
       }
-    } catch { }
+    } catch {}
     return '/';
   }, []);
 
@@ -136,24 +136,22 @@ export function useWorkspaceInitializationForm() {
       // Process data via server stream
       const resultData = await processMovieData(
         formData,
-        (progress) => setOperationStateIfCurrent(operationRef, operation, progress, setOperationState),
+        (progress) =>
+          setOperationStateIfCurrent(operationRef, operation, progress, setOperationState),
         { signal: operation.controller.signal }
       );
       if (!isCurrentOperation(operationRef, operation)) return;
 
       // Finalize saving
-      await finalizeMovieData(
-        resultData,
-        formData,
-        (progress) => setOperationStateIfCurrent(operationRef, operation, progress, setOperationState)
+      await finalizeMovieData(resultData, formData, (progress) =>
+        setOperationStateIfCurrent(operationRef, operation, progress, setOperationState)
       );
       if (!isCurrentOperation(operationRef, operation)) return;
 
       // Brief delay to show completion sentiment
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise((resolve) => setTimeout(resolve, 300));
       if (!isCurrentOperation(operationRef, operation)) return;
       navigate('/visualization');
-
     } catch (err) {
       if (!isCurrentOperation(operationRef, operation) || err?.name === 'AbortError') return;
       console.error('[useWorkspaceInitializationForm] Submission error:', err);
@@ -212,7 +210,8 @@ export function useWorkspaceInitializationForm() {
       // Process through the standard pipeline
       const resultData = await processMovieData(
         formData,
-        (progress) => setOperationStateIfCurrent(operationRef, operation, progress, setOperationState),
+        (progress) =>
+          setOperationStateIfCurrent(operationRef, operation, progress, setOperationState),
         { signal: operation.controller.signal }
       );
       if (!isCurrentOperation(operationRef, operation)) return;
@@ -221,18 +220,15 @@ export function useWorkspaceInitializationForm() {
       resultData.file_name = example.fileName;
 
       // Finalize saving
-      await finalizeMovieData(
-        resultData,
-        formData,
-        (progress) => setOperationStateIfCurrent(operationRef, operation, progress, setOperationState)
+      await finalizeMovieData(resultData, formData, (progress) =>
+        setOperationStateIfCurrent(operationRef, operation, progress, setOperationState)
       );
       if (!isCurrentOperation(operationRef, operation)) return;
 
       // Brief delay to show completion
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise((resolve) => setTimeout(resolve, 300));
       if (!isCurrentOperation(operationRef, operation)) return;
       navigate('/visualization');
-
     } catch (err) {
       if (!isCurrentOperation(operationRef, operation) || err?.name === 'AbortError') return;
       console.error('[useWorkspaceInitializationForm] Failed to load example:', err);

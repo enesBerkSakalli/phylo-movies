@@ -26,7 +26,6 @@ export function getLabelHistoryZOffset(cached, label) {
   return cached?.colorManager?.isNodeHistorySubtree?.(label) ? HISTORY_LABEL_Z_OFFSET : 0;
 }
 
-
 /**
  * Checks if a value is a TypedArray (e.g., Float32Array).
  *

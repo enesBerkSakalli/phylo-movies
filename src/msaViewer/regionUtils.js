@@ -5,9 +5,8 @@ export function normalizeViewerRegion(startCol, endCol, columnCount = 0) {
 
   const min = Math.min(start, end);
   const max = Math.max(start, end);
-  const upperBound = Number.isFinite(columnCount) && columnCount > 0
-    ? columnCount
-    : Number.MAX_SAFE_INTEGER;
+  const upperBound =
+    Number.isFinite(columnCount) && columnCount > 0 ? columnCount : Number.MAX_SAFE_INTEGER;
 
   return {
     startCol: clamp(Math.round(min), 1, upperBound),
@@ -28,7 +27,7 @@ export function resolveRegionTargetColumn(region, align = 'center') {
       return endCol - 1;
     case 'center':
     default:
-      return ((startCol + endCol) / 2) - 0.5;
+      return (startCol + endCol) / 2 - 0.5;
   }
 }
 

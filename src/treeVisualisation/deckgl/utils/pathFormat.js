@@ -19,8 +19,5 @@ export function twoPointFloat32Path(from, to) {
     return new Float32Array(0);
   }
 
-  return new Float32Array([
-    from[0], from[1], from[2] ?? 0,
-    to[0], to[1], to[2] ?? 0,
-  ]);
+  return new Float32Array([from[0], from[1], from[2] ?? 0, to[0], to[1], to[2] ?? 0]);
 }

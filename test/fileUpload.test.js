@@ -1,8 +1,6 @@
 const { expect } = require('chai');
 
-const {
-  getNodeKey,
-} = require('../src/domain/tree/splits.js');
+const { getNodeKey } = require('../src/domain/tree/splits.js');
 
 describe('render split keys', () => {
   it('generates node keys from split_indices only', () => {

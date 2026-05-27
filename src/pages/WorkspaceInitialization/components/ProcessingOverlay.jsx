@@ -1,7 +1,7 @@
 import React from 'react';
-import { Card, CardContent } from "../../../components/ui/card";
-import { Loader2 } from "lucide-react";
-import { Progress } from "../../../components/ui/progress";
+import { Card, CardContent } from '../../../components/ui/card';
+import { Loader2 } from 'lucide-react';
+import { Progress } from '../../../components/ui/progress';
 
 /**
  * ProcessingOverlay
@@ -32,13 +32,12 @@ export function ProcessingOverlay({ operationState }) {
             </div>
           </div>
           <div className="flex flex-col gap-2">
-            <Progress
-              value={operationState.percent}
-              className="h-1.5 overflow-hidden bg-muted"
-            />
+            <Progress value={operationState.percent} className="h-1.5 overflow-hidden bg-muted" />
             <div className="flex justify-between items-center px-1">
-               <p className="text-2xs uppercase tracking-tighter text-muted-foreground">Status: Active</p>
-               <p className="text-2xs font-medium tabular-nums text-primary">
+              <p className="text-2xs uppercase tracking-tighter text-muted-foreground">
+                Status: Active
+              </p>
+              <p className="text-2xs font-medium tabular-nums text-primary">
                 {Math.round(operationState.percent)}%
               </p>
             </div>

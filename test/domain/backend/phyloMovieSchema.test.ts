@@ -255,15 +255,19 @@ describe('validatePhyloMovieData', () => {
       })),
     };
 
-    const result = validatePhyloMovieData(makePayload({
-      interpolated_trees: [annotatedTree, annotatedTree, annotatedTree],
-    }));
+    const result = validatePhyloMovieData(
+      makePayload({
+        interpolated_trees: [annotatedTree, annotatedTree, annotatedTree],
+      })
+    );
 
-    expect(result.interpolated_trees[0].annotations?.fields['support.iqtree.ufboot']).toMatchObject({
-      role: 'branch_support',
-      value: 99,
-      analysis: { method: 'iqtree' },
-    });
+    expect(result.interpolated_trees[0].annotations?.fields['support.iqtree.ufboot']).toMatchObject(
+      {
+        role: 'branch_support',
+        value: 99,
+        analysis: { method: 'iqtree' },
+      }
+    );
   });
 
   it('validates the same contract through the data service', () => {
@@ -278,8 +282,9 @@ describe('validatePhyloMovieData', () => {
       'pair_interpolation_ranges',
       'distances',
     ]) {
-      expect(() => validatePhyloMovieData(makePayload({ [key]: [] })))
-        .toThrow(new RegExp(`phyloMovieData\\.${key} is not part of the backend contract`));
+      expect(() => validatePhyloMovieData(makePayload({ [key]: [] }))).toThrow(
+        new RegExp(`phyloMovieData\\.${key} is not part of the backend contract`)
+      );
     }
   });
 
@@ -287,23 +292,26 @@ describe('validatePhyloMovieData', () => {
     const payload = clone(makePayload());
     (payload.frames as Array<Record<string, unknown>>)[1].tree_pair_key = 'pair_0_1';
 
-    expect(() => validatePhyloMovieData(payload))
-      .toThrow(/frames\[1\]\.tree_pair_key is not part of the backend contract/);
+    expect(() => validatePhyloMovieData(payload)).toThrow(
+      /frames\[1\]\.tree_pair_key is not part of the backend contract/
+    );
   });
 
   it('requires frame rows to be parallel to streamed trees', () => {
     const payload = makePayload({ frames: [] });
 
-    expect(() => validatePhyloMovieData(payload))
-      .toThrow(/frames length \(0\) must match interpolated_trees length \(3\)/);
+    expect(() => validatePhyloMovieData(payload)).toThrow(
+      /frames length \(0\) must match interpolated_trees length \(3\)/
+    );
   });
 
   it('requires generated frames to reference the matching pair row', () => {
     const payload = clone(makePayload());
     (payload.frames as Array<Record<string, unknown>>)[1].pair_id = 'pair_missing';
 
-    expect(() => validatePhyloMovieData(payload))
-      .toThrow(/frames\[1\]\.pair_id must reference pairs/);
+    expect(() => validatePhyloMovieData(payload)).toThrow(
+      /frames\[1\]\.pair_id must reference pairs/
+    );
   });
 
   it('requires pair rows to anchor to input frames', () => {
@@ -311,8 +319,9 @@ describe('validatePhyloMovieData', () => {
     (payload.pairs as Array<Record<string, unknown>>)[0].source_frame_index = 1;
     (payload.frames as Array<Record<string, unknown>>)[1].source_frame_index = 1;
 
-    expect(() => validatePhyloMovieData(payload))
-      .toThrow(/pairs\[0\]\.source_frame_index must reference an input frame/);
+    expect(() => validatePhyloMovieData(payload)).toThrow(
+      /pairs\[0\]\.source_frame_index must reference an input frame/
+    );
   });
 
   it('uses the pairs array as the only ordinal truth', () => {
@@ -322,10 +331,13 @@ describe('validatePhyloMovieData', () => {
     (payload.temporal_events as Array<Record<string, unknown>>).forEach((event) => {
       event.pair_ordinal = 5;
     });
-    ((payload.pair_metrics as Record<string, unknown>).rows as Array<Record<string, unknown>>)[0].pair_ordinal = 5;
+    (
+      (payload.pair_metrics as Record<string, unknown>).rows as Array<Record<string, unknown>>
+    )[0].pair_ordinal = 5;
 
-    expect(() => validatePhyloMovieData(payload))
-      .toThrow(/pairs\[0\]\.pair_ordinal must equal adjacent input-frame ordinal 0/);
+    expect(() => validatePhyloMovieData(payload)).toThrow(
+      /pairs\[0\]\.pair_ordinal must equal adjacent input-frame ordinal 0/
+    );
   });
 
   it('rejects duplicate pair identifiers', () => {
@@ -335,8 +347,7 @@ describe('validatePhyloMovieData', () => {
       pair_ordinal: 1,
     });
 
-    expect(() => validatePhyloMovieData(payload))
-      .toThrow(/pairs\[1\]\.pair_id must be unique/);
+    expect(() => validatePhyloMovieData(payload)).toThrow(/pairs\[1\]\.pair_id must be unique/);
   });
 
   it('rejects missing pair between adjacent input frames', () => {
@@ -344,8 +355,9 @@ describe('validatePhyloMovieData', () => {
     payload.pairs = [];
     payload.pair_metrics.rows = [];
 
-    expect(() => validatePhyloMovieData(payload))
-      .toThrow(/missing pair for adjacent input frames 0 -> 1/);
+    expect(() => validatePhyloMovieData(payload)).toThrow(
+      /missing pair for adjacent input frames 0 -> 1/
+    );
   });
 
   it('rejects duplicate pairs for the same adjacent input frames', () => {
@@ -361,8 +373,9 @@ describe('validatePhyloMovieData', () => {
       pair_ordinal: 1,
     };
 
-    expect(() => validatePhyloMovieData(payload))
-      .toThrow(/duplicate pair for adjacent input frames 0 -> 1/);
+    expect(() => validatePhyloMovieData(payload)).toThrow(
+      /duplicate pair for adjacent input frames 0 -> 1/
+    );
   });
 
   it('rejects pair rows whose ordinal does not match adjacent input-frame order', () => {
@@ -370,48 +383,54 @@ describe('validatePhyloMovieData', () => {
     payload.pairs[0].pair_ordinal = 1;
     payload.pair_metrics.rows[0].pair_ordinal = 1;
 
-    expect(() => validatePhyloMovieData(payload))
-      .toThrow(/pairs\[0\]\.pair_ordinal must equal adjacent input-frame ordinal 0/);
+    expect(() => validatePhyloMovieData(payload)).toThrow(
+      /pairs\[0\]\.pair_ordinal must equal adjacent input-frame ordinal 0/
+    );
   });
 
   it('rejects pair rows whose anchors do not match adjacent input frames', () => {
     const payload = makeInputOnlyPayload(3);
     payload.pairs[0].target_frame_index = 2;
 
-    expect(() => validatePhyloMovieData(payload))
-      .toThrow(/pairs\[0\] must connect adjacent input frames 0 -> 1/);
+    expect(() => validatePhyloMovieData(payload)).toThrow(
+      /pairs\[0\] must connect adjacent input frames 0 -> 1/
+    );
   });
 
   it('rejects shuffled pair rows instead of silently reordering them', () => {
     const payload = makeInputOnlyPayload(3);
     payload.pairs = [payload.pairs[1], payload.pairs[0]];
 
-    expect(() => validatePhyloMovieData(payload))
-      .toThrow(/pairs\[0\]\.pair_ordinal must equal adjacent input-frame ordinal 0/);
+    expect(() => validatePhyloMovieData(payload)).toThrow(
+      /pairs\[0\]\.pair_ordinal must equal adjacent input-frame ordinal 0/
+    );
   });
 
   it('requires temporal events to reference the canonical pair row', () => {
     const payload = clone(makePayload());
     (payload.temporal_events as Array<Record<string, unknown>>)[0].pair_id = 'pair_missing';
 
-    expect(() => validatePhyloMovieData(payload))
-      .toThrow(/temporal_events\[0\]\.pair_id must reference pairs/);
+    expect(() => validatePhyloMovieData(payload)).toThrow(
+      /temporal_events\[0\]\.pair_id must reference pairs/
+    );
   });
 
   it('rejects temporal event frame ranges outside the owning pair range', () => {
     const payload = clone(makePayload());
     (payload.temporal_events as Array<Record<string, unknown>>)[0].frame_range = [0, 0];
 
-    expect(() => validatePhyloMovieData(payload))
-      .toThrow(/temporal_events\[0\].*frame_range.*inside pair_0_1 generated frame range 1 -> 1/);
+    expect(() => validatePhyloMovieData(payload)).toThrow(
+      /temporal_events\[0\].*frame_range.*inside pair_0_1 generated frame range 1 -> 1/
+    );
   });
 
   it('rejects temporal event local step ranges outside the owning pair rows', () => {
     const payload = clone(makePayload());
     (payload.temporal_events as Array<Record<string, unknown>>)[0].local_step_range = [1, 1];
 
-    expect(() => validatePhyloMovieData(payload))
-      .toThrow(/temporal_events\[0\].*local_step_range.*inside pair_0_1 local step range 0 -> 0/);
+    expect(() => validatePhyloMovieData(payload)).toThrow(
+      /temporal_events\[0\].*local_step_range.*inside pair_0_1 local step range 0 -> 0/
+    );
   });
 
   it('rejects temporal event frame ranges that do not match their local-step rows', () => {
@@ -444,16 +463,18 @@ describe('validatePhyloMovieData', () => {
     payload.temporal_events[1].local_step_range = [0, 0];
     payload.subtree_highlight_tracking = [null, [[1]], [[1]], null];
 
-    expect(() => validatePhyloMovieData(payload))
-      .toThrow(/temporal_events\[0\].*frame_range must match local_step_range rows for pair_0_1/);
+    expect(() => validatePhyloMovieData(payload)).toThrow(
+      /temporal_events\[0\].*frame_range must match local_step_range rows for pair_0_1/
+    );
   });
 
   it('rejects temporal events that reference nonexistent pair frame rows', () => {
     const payload = clone(makePayload());
     (payload.pairs as Array<Record<string, unknown>>)[0].generated_frame_range = null;
 
-    expect(() => validatePhyloMovieData(payload))
-      .toThrow(/temporal_events\[0\].*cannot exist because pair_0_1 has no generated frames/);
+    expect(() => validatePhyloMovieData(payload)).toThrow(
+      /temporal_events\[0\].*cannot exist because pair_0_1 has no generated frames/
+    );
   });
 
   it('accepts valid temporal event ranges inside the owning pair rows', () => {
@@ -470,68 +491,89 @@ describe('validatePhyloMovieData', () => {
     const payload = clone(makePayload());
     (payload.temporal_events as Array<Record<string, unknown>>)[1].moving_subtree = [1];
 
-    expect(() => validatePhyloMovieData(payload))
-      .toThrow(/temporal_events\[1\]\.moving_subtree is not part of the backend contract/);
+    expect(() => validatePhyloMovieData(payload)).toThrow(
+      /temporal_events\[1\]\.moving_subtree is not part of the backend contract/
+    );
   });
 
   it('rejects SPR movement events without a pivot edge', () => {
     const payload = clone(makePayload());
     (payload.temporal_events as Array<Record<string, unknown>>)[1].pivot_edge = [];
 
-    expect(() => validatePhyloMovieData(payload))
-      .toThrow(/temporal_events\[1\]\.pivot_edge must contain at least one number/);
+    expect(() => validatePhyloMovieData(payload)).toThrow(
+      /temporal_events\[1\]\.pivot_edge must contain at least one number/
+    );
   });
 
   it('requires pair metrics to reference pair rows', () => {
     const payload = clone(makePayload());
-    ((payload.pair_metrics as Record<string, unknown>).rows as Array<Record<string, unknown>>)[0].pair_id = 'pair_missing';
+    (
+      (payload.pair_metrics as Record<string, unknown>).rows as Array<Record<string, unknown>>
+    )[0].pair_id = 'pair_missing';
 
-    expect(() => validatePhyloMovieData(payload))
-      .toThrow(/pair_metrics\.rows\[0\]\.pair_id must reference pairs/);
+    expect(() => validatePhyloMovieData(payload)).toThrow(
+      /pair_metrics\.rows\[0\]\.pair_id must reference pairs/
+    );
   });
 
   it('rejects missing pair metric rows', () => {
     const payload = clone(makePayload());
     ((payload.pair_metrics as Record<string, unknown>).rows as Array<Record<string, unknown>>) = [];
 
-    expect(() => validatePhyloMovieData(payload))
-      .toThrow(/pair_metrics.rows is missing row for pair_0_1/);
+    expect(() => validatePhyloMovieData(payload)).toThrow(
+      /pair_metrics.rows is missing row for pair_0_1/
+    );
   });
 
   it('rejects duplicate pair metric rows', () => {
     const payload = clone(makePayload());
-    const rows = (payload.pair_metrics as Record<string, unknown>).rows as Array<Record<string, unknown>>;
+    const rows = (payload.pair_metrics as Record<string, unknown>).rows as Array<
+      Record<string, unknown>
+    >;
     rows.push({ ...rows[0] });
 
-    expect(() => validatePhyloMovieData(payload))
-      .toThrow(/pair_metrics\.rows\[1\]\.pair_id must be unique/);
+    expect(() => validatePhyloMovieData(payload)).toThrow(
+      /pair_metrics\.rows\[1\]\.pair_id must be unique/
+    );
   });
 
   it('rejects pair metric rows with the wrong ordinal', () => {
     const payload = clone(makePayload());
-    ((payload.pair_metrics as Record<string, unknown>).rows as Array<Record<string, unknown>>)[0].pair_ordinal = 1;
+    (
+      (payload.pair_metrics as Record<string, unknown>).rows as Array<Record<string, unknown>>
+    )[0].pair_ordinal = 1;
 
-    expect(() => validatePhyloMovieData(payload))
-      .toThrow(/pair_metrics\.rows\[0\]\.pair_ordinal must match pair_0_1 ordinal 0/);
+    expect(() => validatePhyloMovieData(payload)).toThrow(
+      /pair_metrics\.rows\[0\]\.pair_ordinal must match pair_0_1 ordinal 0/
+    );
   });
 
   it('rejects noncanonical backend split-map keys', () => {
     const payload = clone(makePayload());
-    ((payload.pairs as Array<Record<string, unknown>>)[0].solution as Record<string, unknown>).affected_subtrees_by_split = {
+    (
+      (payload.pairs as Array<Record<string, unknown>>)[0].solution as Record<string, unknown>
+    ).affected_subtrees_by_split = {
       '1,0': [[[1]]],
     };
 
-    expect(() => validatePhyloMovieData(payload))
-      .toThrow(/canonical backend split key/);
+    expect(() => validatePhyloMovieData(payload)).toThrow(/canonical backend split key/);
   });
 
   it('rejects deleted duplicate pivot tracking and requires explicit MSA shapes', () => {
-    expect(() => validatePhyloMovieData(makePayload({
-      pivot_edge_tracking: [null, [0, 1, 2], null],
-    }))).toThrow(/phyloMovieData\.pivot_edge_tracking is not part of the backend contract/);
+    expect(() =>
+      validatePhyloMovieData(
+        makePayload({
+          pivot_edge_tracking: [null, [0, 1, 2], null],
+        })
+      )
+    ).toThrow(/phyloMovieData\.pivot_edge_tracking is not part of the backend contract/);
 
-    expect(() => validatePhyloMovieData(makePayload({
-      msa: { sequences: null, window_size: 0, step_size: 1 },
-    }))).toThrow(/msa\.window_size must be positive/);
+    expect(() =>
+      validatePhyloMovieData(
+        makePayload({
+          msa: { sequences: null, window_size: 0, step_size: 1 },
+        })
+      )
+    ).toThrow(/msa\.window_size must be positive/);
   });
 });

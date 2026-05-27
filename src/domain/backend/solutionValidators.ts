@@ -10,7 +10,9 @@ import {
 
 function assertCanonicalBackendSplitKey(key: string, fieldName: string): void {
   if (!isCanonicalBackendSplitKey(key)) {
-    throw new Error(`Invalid phyloMovieData payload: ${fieldName} key "${key}" must be a canonical backend split key`);
+    throw new Error(
+      `Invalid phyloMovieData payload: ${fieldName} key "${key}" must be a canonical backend split key`
+    );
   }
 }
 
@@ -26,9 +28,9 @@ function validateAffectedSubtreesBySplit(
     const sets = requiredArray(subtreeSets, `${fieldName}.${pivotKey}`);
     validated[pivotKey] = sets.map((set, setIndex) => {
       const subtrees = requiredArray(set, `${fieldName}.${pivotKey}[${setIndex}]`);
-      return subtrees.map((subtree, subtreeIndex) => (
+      return subtrees.map((subtree, subtreeIndex) =>
         requiredNumberArray(subtree, `${fieldName}.${pivotKey}[${setIndex}][${subtreeIndex}]`)
-      ));
+      );
     });
   }
 
@@ -50,10 +52,19 @@ function validateAttachmentEdgesBySplit(
     for (const [moverKey, attachment] of Object.entries(subtreeEntries)) {
       assertCanonicalBackendSplitKey(moverKey, `${fieldName}.${pivotKey}`);
       const attachmentEdges = requiredRecord(attachment, `${fieldName}.${pivotKey}.${moverKey}`);
-      assertExactRecordKeys(attachmentEdges, `${fieldName}.${pivotKey}.${moverKey}`, ['source', 'destination']);
+      assertExactRecordKeys(attachmentEdges, `${fieldName}.${pivotKey}.${moverKey}`, [
+        'source',
+        'destination',
+      ]);
       validated[pivotKey][moverKey] = {
-        source: requiredNumberArray(attachmentEdges.source, `${fieldName}.${pivotKey}.${moverKey}.source`),
-        destination: requiredNumberArray(attachmentEdges.destination, `${fieldName}.${pivotKey}.${moverKey}.destination`),
+        source: requiredNumberArray(
+          attachmentEdges.source,
+          `${fieldName}.${pivotKey}.${moverKey}.source`
+        ),
+        destination: requiredNumberArray(
+          attachmentEdges.destination,
+          `${fieldName}.${pivotKey}.${moverKey}.destination`
+        ),
       };
     }
   }

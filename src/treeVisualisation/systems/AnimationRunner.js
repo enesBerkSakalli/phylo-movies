@@ -1,10 +1,13 @@
 import {
   detectAnimationStage,
-  detectCurrentAnimationStage
+  detectCurrentAnimationStage,
 } from '../deckgl/interpolation/stages/animationStageDetector.js';
 import { applyRenderProgressEasing } from '../deckgl/interpolation/stages/stageEasing.js';
 import { calculatePlaybackState } from '../../domain/animation/AnimationTiming.js';
-import { selectActiveTreeList, selectInputFrameIndices } from '../../state/phyloStore/selectors/treeSelectors.js';
+import {
+  selectActiveTreeList,
+  selectInputFrameIndices,
+} from '../../state/phyloStore/selectors/treeSelectors.js';
 import { PlaybackCursor } from '../../timeline/time/PlaybackCursor.js';
 import { TransitionFrame } from '../../timeline/time/TransitionFrame.js';
 
@@ -29,7 +32,7 @@ export class AnimationRunner {
     setAnimationStage,
     syncHighlightsForIndex = () => {},
     updateProgress,
-    stopAnimation
+    stopAnimation,
   }) {
     // Dependencies
     this.getState = getState;
@@ -56,7 +59,7 @@ export class AnimationRunner {
       fromLayoutCacheKey: null,
       toLayoutCacheKey: null,
       transitionChangeModel: null,
-      stage: null
+      stage: null,
     };
 
     // Bind loop to preserve 'this' context
@@ -92,7 +95,9 @@ export class AnimationRunner {
   }
 
   _scheduleFrame(runToken) {
-    this.animationFrameId = requestAnimationFrame((timestamp) => this._onFrame(timestamp, runToken));
+    this.animationFrameId = requestAnimationFrame((timestamp) =>
+      this._onFrame(timestamp, runToken)
+    );
   }
 
   /**
@@ -128,10 +133,9 @@ export class AnimationRunner {
 
       if (shouldStop) {
         this.stopAnimation(); // Dispatch 'playing: false' to store
-        this.stop();          // Stop local loop
+        this.stop(); // Stop local loop
         return;
       }
-
     } catch (err) {
       if (runToken !== this._runToken) return;
       console.error('[AnimationRunner] Frame error:', err);
@@ -167,16 +171,19 @@ export class AnimationRunner {
 
     if (!fromTree) return true; // End of list safety
 
-    const transitionFrame = TransitionFrame.from({
-      sourceTree: fromTree,
-      targetTree: toTree,
-      sourceTreeIndex: fromIndex,
-      targetTreeIndex: toIndex,
-      transitionProgress: localT,
-      holdKind: playback.holdKind
-    }, {
-      timelineProgress: playback.timelineProgress
-    });
+    const transitionFrame = TransitionFrame.from(
+      {
+        sourceTree: fromTree,
+        targetTree: toTree,
+        sourceTreeIndex: fromIndex,
+        targetTreeIndex: toIndex,
+        transitionProgress: localT,
+        holdKind: playback.holdKind,
+      },
+      {
+        timelineProgress: playback.timelineProgress,
+      }
+    );
 
     const { dataFrom, dataTo, transitionChangeModel } = this.getOrCacheInterpolationData(
       transitionFrame.sourceTree,
@@ -218,7 +225,7 @@ export class AnimationRunner {
           fromLayoutCacheKey,
           toLayoutCacheKey,
           transitionChangeModel,
-          stage
+          stage,
         };
       }
     }
@@ -235,19 +242,19 @@ export class AnimationRunner {
       dataTo,
       transitionChangeModel,
       currentStage: stage,
-      hasFrameSensitiveLifecycleStage
+      hasFrameSensitiveLifecycleStage,
     });
     const easedT = applyRenderProgressEasing(localT);
     const renderFrame = transitionFrame.withRenderState({
       renderProgress: easedT,
       stage: renderStage,
-      transitionChangeModel
+      transitionChangeModel,
     });
 
     await this._render(state, renderFrame, runToken, {
       dataFrom,
       dataTo,
-      transitionChangeModel
+      transitionChangeModel,
     });
 
     return isFinished;
@@ -259,7 +266,7 @@ export class AnimationRunner {
       this.updateProgress(progress, {
         timelineProgress: playback.timelineProgress,
         frameIndex: playback.frameIndex,
-        holdKind: playback.holdKind
+        holdKind: playback.holdKind,
       });
       this._lastProgressSyncTime = timestamp;
     }
@@ -289,7 +296,7 @@ export class AnimationRunner {
           transitionFrame.toRenderOptions({
             ...rightParams,
             cachedInputs,
-            isCancelled
+            isCancelled,
           })
         );
       }
@@ -326,7 +333,7 @@ function getPlaybackState(state, timestamp) {
     speed: animationSpeed,
     totalItems: treeList.length,
     transitionDuration,
-    pauseDuration
+    pauseDuration,
   });
 }
 
@@ -347,7 +354,8 @@ function getSemanticTimelinePlaybackState(state, timestamp, treeList) {
   const elapsedMs = Math.max(0, timestamp - animationStartTime) * safeSpeed;
   const rawProgress = elapsedMs / totalDurationMs;
   const timelineProgress = Math.max(0, Math.min(1, rawProgress));
-  const transitionFrame = movieTimelineManager.getTransitionFrameForTimelineProgress(timelineProgress);
+  const transitionFrame =
+    movieTimelineManager.getTransitionFrameForTimelineProgress(timelineProgress);
 
   if (!transitionFrame) {
     return null;
@@ -355,7 +363,7 @@ function getSemanticTimelinePlaybackState(state, timestamp, treeList) {
 
   const cursor = PlaybackCursor.fromTransitionFrame(transitionFrame, {
     timelineProgress,
-    treeCount: treeList.length
+    treeCount: treeList.length,
   });
   const playbackState = cursor.toPlaybackState();
 
@@ -368,7 +376,7 @@ function getSemanticTimelinePlaybackState(state, timestamp, treeList) {
     localT: transitionFrame.transitionProgress,
     isInPause: Boolean(transitionFrame.holdKind),
     holdKind: playbackState.holdKind,
-    frameIndex: playbackState.frameIndex
+    frameIndex: playbackState.frameIndex,
   };
 }
 
@@ -391,7 +399,7 @@ function resolveRenderStage({
   dataTo,
   transitionChangeModel,
   currentStage,
-  hasFrameSensitiveLifecycleStage
+  hasFrameSensitiveLifecycleStage,
 }) {
   if (currentStage === null) return null;
   if (!hasFrameSensitiveLifecycleStage) return currentStage;
@@ -405,9 +413,10 @@ function getComparisonTarget(state, fromIndex, toIndex) {
   const treeList = selectActiveTreeList(state);
   const inputFrameIndices = selectInputFrameIndices(state);
 
-  const rightIdx = inputFrameIndices.find((i) => i > fromIndex)
-    ?? inputFrameIndices[inputFrameIndices.length - 1]
-    ?? toIndex;
+  const rightIdx =
+    inputFrameIndices.find((i) => i > fromIndex) ??
+    inputFrameIndices[inputFrameIndices.length - 1] ??
+    toIndex;
   const rightTree = treeList[rightIdx];
 
   return rightTree ? { rightTree, rightTreeIndex: rightIdx } : null;

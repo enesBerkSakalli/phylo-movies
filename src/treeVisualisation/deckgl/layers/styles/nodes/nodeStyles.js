@@ -64,7 +64,14 @@ function resolveBaseNodeColor(nodeData, cached, cm, highlight = null) {
 }
 
 export function getNodeColor(node, cached, helpers) {
-  const { colorManager: cm, dimmingEnabled, dimmingOpacity, highlightedSubtreeData, subtreeDimmingEnabled, subtreeDimmingOpacity } = cached;
+  const {
+    colorManager: cm,
+    dimmingEnabled,
+    dimmingOpacity,
+    highlightedSubtreeData,
+    subtreeDimmingEnabled,
+    subtreeDimmingOpacity,
+  } = cached;
 
   // 0. Explicit Color Override (ConnectorLayers pattern)
   // Check raw node first (deck.gl datum)
@@ -190,7 +197,13 @@ export function getNodeBorderColor(node, cached, helpers) {
   }
 
   // Apply dimming
-  const { dimmingEnabled, dimmingOpacity, subtreeDimmingEnabled, subtreeDimmingOpacity, highlightedSubtreeData } = cached;
+  const {
+    dimmingEnabled,
+    dimmingOpacity,
+    subtreeDimmingEnabled,
+    subtreeDimmingOpacity,
+    highlightedSubtreeData,
+  } = cached;
 
   opacity = applyDimmingWithCache(
     opacity,
@@ -213,7 +226,14 @@ export function getNodeBorderColor(node, cached, helpers) {
 }
 
 export function getNodeBasedRgba(entity, baseEntityOpacity, cached, helpers) {
-  const { colorManager: cm, dimmingEnabled, dimmingOpacity, subtreeDimmingEnabled, subtreeDimmingOpacity, highlightedSubtreeData } = cached;
+  const {
+    colorManager: cm,
+    dimmingEnabled,
+    dimmingOpacity,
+    subtreeDimmingEnabled,
+    subtreeDimmingOpacity,
+    highlightedSubtreeData,
+  } = cached;
 
   const node = entity;
   const highlight = resolveTreeElementHighlight(node, cached, 'node');

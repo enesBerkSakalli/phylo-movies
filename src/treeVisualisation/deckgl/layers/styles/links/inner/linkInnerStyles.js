@@ -10,10 +10,14 @@ import { applyDenseBaseOpacity } from '../../denseVisualDeclutter.js';
 const _linkColorOut = [0, 0, 0, 0];
 const _dashOut = [0, 0];
 
-
-
 export function getLinkColor(link, cached, helpers) {
-  const { colorManager: cm, dimmingEnabled, dimmingOpacity, upcomingChangesEnabled, highlightedSubtreeData } = cached;
+  const {
+    colorManager: cm,
+    dimmingEnabled,
+    dimmingOpacity,
+    upcomingChangesEnabled,
+    highlightedSubtreeData,
+  } = cached;
   const highlight = resolveTreeElementHighlight(link, cached, 'link');
 
   if (highlight.role === TREE_HIGHLIGHT_ROLE.LIFECYCLE) {
@@ -69,16 +73,12 @@ export function getLinkColor(link, cached, helpers) {
   );
   opacity = applyDenseBaseOpacity(opacity, cached, highlight);
 
-
-
   _linkColorOut[0] = rgb[0];
   _linkColorOut[1] = rgb[1];
   _linkColorOut[2] = rgb[2];
   _linkColorOut[3] = opacity;
   return _linkColorOut;
 }
-
-
 
 export function getLinkDashArray(link, cached) {
   const { dashingEnabled, upcomingChangesEnabled } = cached;

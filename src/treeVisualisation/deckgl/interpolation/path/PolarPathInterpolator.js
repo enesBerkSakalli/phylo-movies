@@ -4,7 +4,11 @@
  */
 import { calculateInterpolatedBranchCoordinates } from '../../../layout/RadialTreeGeometry.js';
 import { shortestAngle, crossesAngle, longArcDelta } from '../../../../domain/math/mathUtils.js';
-import { ARC_SEGMENT_COUNT, LINK_GEOMETRY_MODES, normalizeLinkGeometryMode } from '../../builders/geometry/links/LinkGeometryBuilder.js';
+import {
+  ARC_SEGMENT_COUNT,
+  LINK_GEOMETRY_MODES,
+  normalizeLinkGeometryMode,
+} from '../../builders/geometry/links/LinkGeometryBuilder.js';
 import { rootAwareAngleDelta } from '../../../utils/polarGeometry.js';
 import { twoPointFloat32Path } from '../../utils/pathFormat.js';
 
@@ -33,12 +37,12 @@ export class PolarPathInterpolator {
    * @throws {Error} If polarData is missing
    */
   interpolatePath(fromLink, toLink, timeFactor, options = {}) {
-    const pathOptions = options && (
-      Object.prototype.hasOwnProperty.call(options, 'velocityEntry') ||
-      Object.prototype.hasOwnProperty.call(options, 'linkGeometryMode')
-    )
-      ? options
-      : { velocityEntry: options };
+    const pathOptions =
+      options &&
+      (Object.prototype.hasOwnProperty.call(options, 'velocityEntry') ||
+        Object.prototype.hasOwnProperty.call(options, 'linkGeometryMode'))
+        ? options
+        : { velocityEntry: options };
 
     // Fail-fast: polar data is required
     if (!fromLink?.polarData || !toLink?.polarData) {
@@ -66,9 +70,11 @@ export class PolarPathInterpolator {
     const interpTargetAngle = fromTargetAngle + targetDelta * angularT;
 
     // Interpolate radii on the base eased timeline.
-    const interpSourceRadius = fromLink.polarData.source.radius +
+    const interpSourceRadius =
+      fromLink.polarData.source.radius +
       (toLink.polarData.source.radius - fromLink.polarData.source.radius) * t;
-    const interpTargetRadius = fromLink.polarData.target.radius +
+    const interpTargetRadius =
+      fromLink.polarData.target.radius +
       (toLink.polarData.target.radius - fromLink.polarData.target.radius) * t;
 
     // Build link data for geometry calculation with interpolated values
@@ -77,14 +83,14 @@ export class PolarPathInterpolator {
         angle: interpSourceAngle,
         radius: interpSourceRadius,
         x: interpSourceRadius * Math.cos(interpSourceAngle),
-        y: interpSourceRadius * Math.sin(interpSourceAngle)
+        y: interpSourceRadius * Math.sin(interpSourceAngle),
       },
       target: {
         angle: interpTargetAngle,
         radius: interpTargetRadius,
         x: interpTargetRadius * Math.cos(interpTargetAngle),
-        y: interpTargetRadius * Math.sin(interpTargetAngle)
-      }
+        y: interpTargetRadius * Math.sin(interpTargetAngle),
+      },
     };
 
     if (normalizeLinkGeometryMode(pathOptions.linkGeometryMode) === LINK_GEOMETRY_MODES.STRAIGHT) {

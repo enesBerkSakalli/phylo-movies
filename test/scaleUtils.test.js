@@ -22,9 +22,7 @@ describe('scaleUtils', () => {
       const tree = {
         length: 1,
         visualBranchLength: 100,
-        children: [
-          { length: 0.0001, visualBranchLength: 5 }
-        ]
+        children: [{ length: 0.0001, visualBranchLength: 5 }],
       };
       const result = calculateScales([tree], [0]);
       expect(result[0].value).toBe(5);
@@ -36,10 +34,7 @@ describe('scaleUtils', () => {
       // Max should be 8
       const tree = {
         length: 0,
-        children: [
-          { length: 5, children: [{ length: 3 }] },
-          { length: 2 }
-        ]
+        children: [{ length: 5, children: [{ length: 3 }] }, { length: 2 }],
       };
       const result = calculateScales([tree], [0]);
       expect(result[0].value).toBe(8);
@@ -58,7 +53,7 @@ describe('scaleUtils', () => {
       const list = [
         { length: 0, children: [{ length: 10 }] },
         { length: 0, children: [{ length: 20 }] },
-        { length: 0, children: [{ length: 30 }] }
+        { length: 0, children: [{ length: 30 }] },
       ];
       // Only calc for index 0 and 2
       const result = calculateScales(list, [0, 2]);
@@ -77,10 +72,7 @@ describe('scaleUtils', () => {
     it('clamps negative branch lengths without increasing exact zero branches', () => {
       const tree = {
         length: 0,
-        children: [
-          { length: -0.5 },
-          { length: 0 }
-        ]
+        children: [{ length: -0.5 }, { length: 0 }],
       };
 
       const result = calculateScales([tree], [0]);
@@ -99,5 +91,4 @@ describe('scaleUtils', () => {
       expect(getMaxScaleValue([])).toBe(1);
     });
   });
-
 });

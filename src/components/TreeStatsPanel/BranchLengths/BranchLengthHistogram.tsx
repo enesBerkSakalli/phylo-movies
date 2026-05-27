@@ -5,11 +5,7 @@ import { Palette } from 'lucide-react';
 import { formatScaleValue } from '../../../domain/tree/scaleUtils.js';
 import { Label } from '../../ui/label';
 import { Separator } from '../../ui/separator';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '../../ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../../ui/tooltip';
 import type { HistogramBin, HistogramStats } from '../Shared/types';
 
 interface BranchLengthHistogramProps {
@@ -27,17 +23,13 @@ export const BranchLengthHistogram: React.FC<BranchLengthHistogramProps> = ({
   bins,
   maxCount,
   stats,
-  showHeader = true
+  showHeader = true,
 }) => {
   const columnCount = Math.max(bins.length, 1);
   const hasData = bins.length > 0;
 
   return (
-    <div
-      className="flex flex-col gap-2 w-full"
-      role="figure"
-      aria-label="Branch length spread"
-    >
+    <div className="flex flex-col gap-2 w-full" role="figure" aria-label="Branch length spread">
       {showHeader && (
         <>
           <Label className="text-2xs font-bold uppercase tracking-wider text-muted-foreground/70">
@@ -55,22 +47,17 @@ export const BranchLengthHistogram: React.FC<BranchLengthHistogramProps> = ({
         aria-label="Distribution bars"
         style={{
           height: 72,
-          gridTemplateColumns: `repeat(${columnCount}, minmax(3px, 1fr))`
+          gridTemplateColumns: `repeat(${columnCount}, minmax(3px, 1fr))`,
         }}
       >
         {hasData ? (
           bins.map((bin, idx) => {
-            const heightPx = maxCount > 0
-              ? Math.max(4, (bin.count / maxCount) * 58)
-              : 0;
+            const heightPx = maxCount > 0 ? Math.max(4, (bin.count / maxCount) * 58) : 0;
 
             return (
               <Tooltip key={`${idx}-${bin.from}`}>
                 <TooltipTrigger asChild>
-                  <div
-                    className="flex flex-col items-center"
-                    style={{ minWidth: 3 }}
-                  >
+                  <div className="flex flex-col items-center" style={{ minWidth: 3 }}>
                     <div
                       role="img"
                       aria-label={`Range ${formatScaleValue(bin.from)} to ${formatScaleValue(bin.to)}, count ${bin.count}`}
@@ -83,7 +70,9 @@ export const BranchLengthHistogram: React.FC<BranchLengthHistogramProps> = ({
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-xs tabular-nums">
                   <div className="flex flex-col gap-1">
-                    <span>Range: {formatScaleValue(bin.from)} – {formatScaleValue(bin.to)}</span>
+                    <span>
+                      Range: {formatScaleValue(bin.from)} – {formatScaleValue(bin.to)}
+                    </span>
                     <span>Count: {bin.count}</span>
                   </div>
                 </TooltipContent>
@@ -99,10 +88,16 @@ export const BranchLengthHistogram: React.FC<BranchLengthHistogramProps> = ({
       {hasData && (
         <div className="flex items-center justify-between text-2xs text-muted-foreground/80 font-medium tabular-nums px-1">
           <div className="flex gap-2">
-            <span>MIN: <span className="text-foreground/70">{formatScaleValue(stats.min)}</span></span>
-            <span>AVG: <span className="text-foreground/70">{formatScaleValue(stats.mean)}</span></span>
+            <span>
+              MIN: <span className="text-foreground/70">{formatScaleValue(stats.min)}</span>
+            </span>
+            <span>
+              AVG: <span className="text-foreground/70">{formatScaleValue(stats.mean)}</span>
+            </span>
           </div>
-          <span>MAX: <span className="text-foreground/70">{formatScaleValue(stats.max)}</span></span>
+          <span>
+            MAX: <span className="text-foreground/70">{formatScaleValue(stats.max)}</span>
+          </span>
         </div>
       )}
     </div>

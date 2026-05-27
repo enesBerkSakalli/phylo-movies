@@ -1,9 +1,9 @@
 // Default system colors that shouldn't be overridden by taxon names
 export const SYSTEM_COLOR_DEFAULTS = {
-  defaultColor: "#000000",
-  subtreeHighlightColor: "#10b981",
-  strokeColor: "#000000",
-  pivotEdgeColor: "#2196f3"
+  defaultColor: '#000000',
+  subtreeHighlightColor: '#10b981',
+  strokeColor: '#000000',
+  pivotEdgeColor: '#2196f3',
 };
 
 // Runtime container for system-level tree colors only.

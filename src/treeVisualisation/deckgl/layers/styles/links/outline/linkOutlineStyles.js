@@ -153,9 +153,10 @@ export function getLinkOutlineWidth(link, cached, helpers) {
     highlight.role === TREE_HIGHLIGHT_ROLE.ACTIVE_MOVER ||
     highlight.role === TREE_HIGHLIGHT_ROLE.SUBTREE_HIGHLIGHT
   ) {
-    const emphasis = highlight.role === TREE_HIGHLIGHT_ROLE.ACTIVE_MOVER
-      ? getActiveMoverEmphasis(link, cached, 'link')
-      : 1;
+    const emphasis =
+      highlight.role === TREE_HIGHLIGHT_ROLE.ACTIVE_MOVER
+        ? getActiveMoverEmphasis(link, cached, 'link')
+        : 1;
     return (baseWidth * 1.5 + 4) * emphasis * metricScale;
   }
 
@@ -168,7 +169,7 @@ export function getLinkOutlineWidth(link, cached, helpers) {
   const minGlow = 4;
   const maxGlow = 8;
   const glowRange = maxGlow - minGlow;
-  const pulseGlow = minGlow + (glowRange * pulseOpacity);
+  const pulseGlow = minGlow + glowRange * pulseOpacity;
 
   return (highlightedWidth + pulseGlow) * metricScale;
 }

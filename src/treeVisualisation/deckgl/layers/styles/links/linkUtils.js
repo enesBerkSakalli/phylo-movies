@@ -10,13 +10,13 @@ export const getLifecycleLinkHighlight = (link) => {
     case 'reviving':
       return {
         kind: 'expanding',
-        rgb: EXPANDING_LIFECYCLE_COLOR
+        rgb: EXPANDING_LIFECYCLE_COLOR,
       };
     case 'exiting':
     case 'zeroing':
       return {
         kind: 'collapsing',
-        rgb: COLLAPSING_LIFECYCLE_COLOR
+        rgb: COLLAPSING_LIFECYCLE_COLOR,
       };
     default:
       return null;

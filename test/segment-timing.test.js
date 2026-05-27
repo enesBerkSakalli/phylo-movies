@@ -16,8 +16,16 @@ describe('segmentTiming utilities', () => {
 
   it('resolves segment bounds from cumulative timing data', () => {
     expect(getSegmentBounds(0, timelineData)).to.deep.equal({ start: 0, end: 500, duration: 500 });
-    expect(getSegmentBounds(1, timelineData)).to.deep.equal({ start: 500, end: 1500, duration: 1000 });
-    expect(getSegmentBounds(2, timelineData)).to.deep.equal({ start: 1500, end: 1500, duration: 0 });
+    expect(getSegmentBounds(1, timelineData)).to.deep.equal({
+      start: 500,
+      end: 1500,
+      duration: 1000,
+    });
+    expect(getSegmentBounds(2, timelineData)).to.deep.equal({
+      start: 1500,
+      end: 1500,
+      duration: 0,
+    });
     expect(getSegmentBounds(9, timelineData)).to.equal(null);
   });
 

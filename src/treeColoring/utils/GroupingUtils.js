@@ -37,7 +37,7 @@ export function getGroupForTaxon(taxon, separators, strategyType, options = {}) 
   if (!taxon) return null;
 
   // Handle first-letter grouping
-  if (strategyType === "first-letter") {
+  if (strategyType === 'first-letter') {
     return taxon.charAt(0).toUpperCase();
   }
 
@@ -54,7 +54,7 @@ export function getGroupForTaxon(taxon, separators, strategyType, options = {}) 
 
   // Auto-detect separator if not provided
   let usedSeparators = separators;
-  if (!separators && strategyType !== "first-letter") {
+  if (!separators && strategyType !== 'first-letter') {
     const detectedList = detectBestSeparators([taxon]);
     const bestSeparator = detectedList.length > 0 ? detectedList[0].separator : null;
     usedSeparators = bestSeparator ? [bestSeparator] : null;
@@ -119,14 +119,17 @@ export function detectBestSeparators(taxaNames) {
   const separatorChars = ['_', '-', '.', ' ', '|', ':', '@', '#'];
   const results = [];
 
-  separatorChars.forEach(char => {
-    const withSeparator = taxaNames.filter(name => name.includes(char));
+  separatorChars.forEach((char) => {
+    const withSeparator = taxaNames.filter((name) => name.includes(char));
     const usage = (withSeparator.length / taxaNames.length) * 100;
 
     if (usage >= 10 && withSeparator.length >= 2) {
       // Calculate score based on usage and group balance
-      const avgOccurrences = withSeparator.reduce((sum, name) =>
-        sum + (name.match(new RegExp(escapeRegex(char), 'g')) || []).length, 0) / withSeparator.length;
+      const avgOccurrences =
+        withSeparator.reduce(
+          (sum, name) => sum + (name.match(new RegExp(escapeRegex(char), 'g')) || []).length,
+          0
+        ) / withSeparator.length;
 
       const score = usage * (1 + avgOccurrences / 10);
       results.push({ separator: char, usage, avgOccurrences, score });
@@ -150,8 +153,11 @@ export function generateGroups(taxaNames, separators, strategy, options = {}) {
   let usedSeparators = separators;
 
   // Auto-detect separators if not provided and not first-letter strategy
-  if ((!separators || (Array.isArray(separators) && separators.length === 0)) &&
-      strategy !== "first-letter" && !options.useRegex) {
+  if (
+    (!separators || (Array.isArray(separators) && separators.length === 0)) &&
+    strategy !== 'first-letter' &&
+    !options.useRegex
+  ) {
     const detected = detectBestSeparators(taxaNames);
     usedSeparators = detected.length > 0 ? [detected[0].separator] : null;
     if (!usedSeparators) {
@@ -161,16 +167,19 @@ export function generateGroups(taxaNames, separators, strategy, options = {}) {
         analyzed: true,
         ungroupedCount: taxaNames.length,
         ungroupedPercent: 100,
-        detectedSeparators: detected
+        detectedSeparators: detected,
       };
     }
   }
 
   // Normalize to array
-  const separatorsArray = Array.isArray(usedSeparators) ? usedSeparators :
-                         usedSeparators ? [usedSeparators] : null;
+  const separatorsArray = Array.isArray(usedSeparators)
+    ? usedSeparators
+    : usedSeparators
+      ? [usedSeparators]
+      : null;
 
-  taxaNames.forEach(taxon => {
+  taxaNames.forEach((taxon) => {
     const groupName = getGroupForTaxon(taxon, separatorsArray, strategy, options);
     if (groupName) {
       if (!groups.has(groupName)) {
@@ -186,7 +195,7 @@ export function generateGroups(taxaNames, separators, strategy, options = {}) {
     .map(([name, members]) => ({
       name,
       count: members.length,
-      members
+      members,
     }))
     .sort((a, b) => b.count - a.count); // Sort by count descending
 
@@ -200,7 +209,7 @@ export function generateGroups(taxaNames, separators, strategy, options = {}) {
     ungroupedCount,
     ungroupedPercent: Math.round(ungroupedPercent * 10) / 10,
     totalTaxa: taxaNames.length,
-    detectedSeparators: !separators ? detectBestSeparators(taxaNames) : []
+    detectedSeparators: !separators ? detectBestSeparators(taxaNames) : [],
   };
 }
 
@@ -214,21 +223,21 @@ export function generateGroups(taxaNames, separators, strategy, options = {}) {
 export function applyColoringData(colorData, leaveOrder, defaultColorMap) {
   const newColorMap = {};
   const safeDefaultColorMap = defaultColorMap || {};
-  const fallbackColor = safeDefaultColorMap.defaultColor || "#000000";
+  const fallbackColor = safeDefaultColorMap.defaultColor || '#000000';
 
-  if (colorData.mode === "taxa") {
+  if (colorData.mode === 'taxa') {
     // Direct taxa coloring
     for (const [taxon, color] of Object.entries(colorData.taxaColorMap || {})) {
       newColorMap[taxon] = color;
     }
-  } else if (colorData.mode === "groups") {
+  } else if (colorData.mode === 'groups') {
     // Group-based coloring from pattern detection
     const separators = colorData.separators || colorData.separator;
     const groupColorMap = colorData.groupColorMap || {};
     const options = {
       segmentIndex: colorData.segmentIndex,
       useRegex: colorData.useRegex,
-      regexPattern: colorData.regexPattern
+      regexPattern: colorData.regexPattern,
     };
 
     leaveOrder.forEach((taxon) => {
@@ -243,7 +252,7 @@ export function applyColoringData(colorData, leaveOrder, defaultColorMap) {
         newColorMap[taxon] = safeDefaultColorMap[taxon] || fallbackColor;
       }
     });
-  } else if (colorData.mode === "csv") {
+  } else if (colorData.mode === 'csv') {
     // CSV-based group coloring
     // Handle csvTaxaMap as either Map or Object (from serialized state)
     const csvMap = colorData.csvTaxaMap;
@@ -278,7 +287,7 @@ export function applyColoringData(colorData, leaveOrder, defaultColorMap) {
 /**
  * Get the color for a single taxon based on taxaGrouping config
  * This is the single source of truth for taxon color resolution.
- * 
+ *
  * @param {string} taxonName - The taxon name to get color for
  * @param {Object} taxaGrouping - The taxaGrouping object from store (mode, groupColorMap, etc.)
  * @param {string} defaultColor - Default color if no group/taxa color found
@@ -289,7 +298,18 @@ export function getTaxonColor(taxonName, taxaGrouping, defaultColor = null) {
     return defaultColor;
   }
 
-  const { mode, groupColorMap, taxaColorMap, csvTaxaMap, separators, separator, strategyType, segmentIndex, useRegex, regexPattern } = taxaGrouping;
+  const {
+    mode,
+    groupColorMap,
+    taxaColorMap,
+    csvTaxaMap,
+    separators,
+    separator,
+    strategyType,
+    segmentIndex,
+    useRegex,
+    regexPattern,
+  } = taxaGrouping;
 
   if (mode === 'taxa') {
     // Direct taxa coloring

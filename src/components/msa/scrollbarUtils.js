@@ -18,25 +18,14 @@ export function calculateScrollbarGeometry({ rows, cols, visibleRange }) {
   return { rows, cols, r0, r1, c0, c1, hThumbWidth, hThumbLeft, vThumbHeight, vThumbTop };
 }
 
-export function getTrackClickTarget({
-  pointerClientPosition,
-  trackStart,
-  trackSize,
-  itemCount,
-}) {
+export function getTrackClickTarget({ pointerClientPosition, trackStart, trackSize, itemCount }) {
   if (!itemCount || !trackSize) return 0;
 
   const clickRatio = (pointerClientPosition - trackStart) / trackSize;
   return clamp(Math.floor(clickRatio * itemCount), 0, itemCount - 1);
 }
 
-export function getKeyboardScrollTarget({
-  axis,
-  key,
-  rangeStart,
-  rangeEnd,
-  itemCount,
-}) {
+export function getKeyboardScrollTarget({ axis, key, rangeStart, rangeEnd, itemCount }) {
   if (!itemCount) return null;
 
   const visibleItems = Math.max(1, rangeEnd - rangeStart + 1);

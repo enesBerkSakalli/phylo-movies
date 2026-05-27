@@ -20,8 +20,8 @@ import { getSplitIndices } from '../../../domain/tree/splits.js';
 // This avoids repeated store.getState() and getTaxonColor() calls.
 // =============================================================================
 
-let _taxonColorCache = null;  // Map<taxonName, color|null>
-let _cachedTaxaGrouping = null;  // Reference to detect config changes
+let _taxonColorCache = null; // Map<taxonName, color|null>
+let _cachedTaxaGrouping = null; // Reference to detect config changes
 
 /**
  * Reset the taxon color cache. Call at the start of each render cycle.
@@ -87,7 +87,7 @@ function _collectLeafNamesRecursive(node) {
   }
 
   const leaves = [];
-  node.children.forEach(child => {
+  node.children.forEach((child) => {
     leaves.push(..._collectLeafNamesRecursive(child));
   });
   return leaves;
@@ -134,10 +134,10 @@ export function checkMonophyletic(node) {
   }
 
   // Get effective colors for all leaves (null means default/no group)
-  const leafColors = subtreeLeaves.map(leafName => getEffectiveTaxonColor(leafName));
+  const leafColors = subtreeLeaves.map((leafName) => getEffectiveTaxonColor(leafName));
 
   // Filter out nulls (taxa with no specific color)
-  const nonNullColors = leafColors.filter(c => c !== null);
+  const nonNullColors = leafColors.filter((c) => c !== null);
 
   // If some leaves have no color, it's not monophyletic for coloring purposes
   if (nonNullColors.length !== leafColors.length) {
@@ -219,12 +219,7 @@ function isLeafNode(node) {
 }
 
 function getNodeName(node) {
-  return (
-    node?.name ||
-    node?.text ||
-    node?.targetName ||
-    ''
-  );
+  return node?.name || node?.text || node?.targetName || '';
 }
 
 function getLeafNamesFromSplitIndices(node) {
@@ -234,7 +229,5 @@ function getLeafNamesFromSplitIndices(node) {
   const leafNamesByIndex = selectLeafNamesByIndex(useAppStore.getState());
   if (!Array.isArray(leafNamesByIndex) || leafNamesByIndex.length === 0) return [];
 
-  return splitIndices
-    .map((index) => leafNamesByIndex[index])
-    .filter(Boolean);
+  return splitIndices.map((index) => leafNamesByIndex[index]).filter(Boolean);
 }

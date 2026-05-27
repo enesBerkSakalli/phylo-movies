@@ -12,12 +12,36 @@ const Module = require('module');
 
 // ---- Minimal deck.gl mocks ----
 const mockDeckGLCore = {
-  Deck: class { constructor(props) { this.props = props || {}; } setProps(p) { this.props = { ...this.props, ...p }; } finalize() { } },
-  OrthographicView: class { constructor(opts) { this.opts = opts; } },
-  OrbitView: class { constructor(opts) { this.opts = opts; } },
-  LinearInterpolator: class { constructor(opts) { this.opts = opts; } },
-  FlyToInterpolator: class { constructor(opts) { this.opts = opts; } },
-  COORDINATE_SYSTEM: { CARTESIAN: 1 }
+  Deck: class {
+    constructor(props) {
+      this.props = props || {};
+    }
+    setProps(p) {
+      this.props = { ...this.props, ...p };
+    }
+    finalize() {}
+  },
+  OrthographicView: class {
+    constructor(opts) {
+      this.opts = opts;
+    }
+  },
+  OrbitView: class {
+    constructor(opts) {
+      this.opts = opts;
+    }
+  },
+  LinearInterpolator: class {
+    constructor(opts) {
+      this.opts = opts;
+    }
+  },
+  FlyToInterpolator: class {
+    constructor(opts) {
+      this.opts = opts;
+    }
+  },
+  COORDINATE_SYSTEM: { CARTESIAN: 1 },
 };
 
 class MockLayer {
@@ -31,16 +55,18 @@ class MockLayer {
 }
 
 const mockDeckGLLayers = {
-  PathLayer: class PathLayer extends MockLayer { },
-  ScatterplotLayer: class ScatterplotLayer extends MockLayer { },
-  TextLayer: class TextLayer extends MockLayer { }
+  PathLayer: class PathLayer extends MockLayer {},
+  ScatterplotLayer: class ScatterplotLayer extends MockLayer {},
+  TextLayer: class TextLayer extends MockLayer {},
 };
 
 // Mock deck.gl extensions
 const mockDeckGLExtensions = {
   PathStyleExtension: class PathStyleExtension {
-    constructor(opts) { this.opts = opts; }
-  }
+    constructor(opts) {
+      this.opts = opts;
+    }
+  },
 };
 
 // Mock zustand store
@@ -69,13 +95,13 @@ let mockStoreState = {
     isPivotEdge: () => false,
     isNodePivotEdge: () => false,
     isNodeSourceEdge: () => false,
-    isNodeDestinationEdge: () => false
-  })
+    isNodeDestinationEdge: () => false,
+  }),
 };
 
 const mockUseAppStore = {
   getState: () => mockStoreState,
-  subscribe: () => () => { }
+  subscribe: () => () => {},
 };
 
 // Patch module loader
@@ -84,17 +110,19 @@ Module._load = function (request, _parent, _isMain) {
   if (request === '@deck.gl/core') return mockDeckGLCore;
   if (request === '@deck.gl/layers') return mockDeckGLLayers;
   if (request === '@deck.gl/extensions') return mockDeckGLExtensions;
-  if (request.includes('store.js') || request.includes('store')) return { useAppStore: mockUseAppStore };
-  if (request.includes('colorUtils')) return {
-    colorToRgb: (hex) => {
-      if (Array.isArray(hex)) return hex;
-      // Basic hex -> RGB for testing
-      const trimmed = (hex || '').replace('#', '');
-      const num = parseInt(trimmed || '000000', 16);
-      return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
-    },
-    getContrastingHighlightColor: () => [255, 255, 255]
-  };
+  if (request.includes('store.js') || request.includes('store'))
+    return { useAppStore: mockUseAppStore };
+  if (request.includes('colorUtils'))
+    return {
+      colorToRgb: (hex) => {
+        if (Array.isArray(hex)) return hex;
+        // Basic hex -> RGB for testing
+        const trimmed = (hex || '').replace('#', '');
+        const num = parseInt(trimmed || '000000', 16);
+        return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+      },
+      getContrastingHighlightColor: () => [255, 255, 255],
+    };
   if (request.includes('mathUtils')) return { easeInOutCubic: (t) => t };
   return originalLoad.apply(this, arguments);
 };
@@ -102,22 +130,24 @@ Module._load = function (request, _parent, _isMain) {
 // Now require the SUT - using modular layer factories
 const {
   getLinkOutlinesLayerProps,
-  getLinksLayerProps
+  getLinksLayerProps,
 } = require('../../src/treeVisualisation/deckgl/layers/factory/links/LinkLayers.js');
-const { getNodesLayerProps } = require('../../src/treeVisualisation/deckgl/layers/factory/nodes/NodeLayers.js');
-const { getExtensionsLayerProps } = require('../../src/treeVisualisation/deckgl/layers/factory/extensions/ExtensionLayers.js');
 const {
-  LayerStyles
-} = require('../../src/treeVisualisation/deckgl/layers/LayerStyles.js');
+  getNodesLayerProps,
+} = require('../../src/treeVisualisation/deckgl/layers/factory/nodes/NodeLayers.js');
+const {
+  getExtensionsLayerProps,
+} = require('../../src/treeVisualisation/deckgl/layers/factory/extensions/ExtensionLayers.js');
+const { LayerStyles } = require('../../src/treeVisualisation/deckgl/layers/LayerStyles.js');
 const {
   getLinkSplitIndices,
   getSplitIndices,
   isNodeInSubtree,
-  isLinkInSubtree
+  isLinkInSubtree,
 } = require('../../src/domain/tree/splits.js');
 const {
   resolveTreeElementHighlight,
-  TREE_HIGHLIGHT_ROLE
+  TREE_HIGHLIGHT_ROLE,
 } = require('../../src/treeVisualisation/deckgl/layers/styles/highlightResolver.js');
 
 /**
@@ -150,7 +180,7 @@ function createMockColorManager(overrides = {}) {
     isNodeDestinationEdge: () => false,
     isPivotEdge: () => false,
     isNodePivotEdge: () => false,
-    isNodeInHighlightedSubtreeFast: function(nodeData) {
+    isNodeInHighlightedSubtreeFast: function (nodeData) {
       if (this._highlightedLeavesUnion.size === 0) return false;
       const splits = getSplitIndices(nodeData);
       if (!splits?.length) return false;
@@ -159,7 +189,7 @@ function createMockColorManager(overrides = {}) {
       }
       return isNodeInSubtree(nodeData, this.highlightedSubtreeSets);
     },
-    isLinkInHighlightedSubtreeFast: function(linkData) {
+    isLinkInHighlightedSubtreeFast: function (linkData) {
       if (this._highlightedLeavesUnion.size === 0) return false;
       const splits = getLinkSplitIndices(linkData);
       if (!splits?.length) return false;
@@ -167,7 +197,7 @@ function createMockColorManager(overrides = {}) {
         if (!this._highlightedLeavesUnion.has(splits[i])) return false;
       }
       return isLinkInSubtree(linkData, this.highlightedSubtreeSets);
-    }
+    },
   };
 
   // Apply overrides, but rebuild union if subtrees change
@@ -190,14 +220,18 @@ describe('subtree highlight helpers', () => {
     const cached = {
       subtreeHighlightsEnabled: false,
       highlightedSubtreeData: [new Set([3])],
-      colorManager: createMockColorManager()
+      colorManager: createMockColorManager(),
     };
 
-    expect(resolveTreeElementHighlight(link, cached, 'link').role).to.equal(TREE_HIGHLIGHT_ROLE.BASE);
+    expect(resolveTreeElementHighlight(link, cached, 'link').role).to.equal(
+      TREE_HIGHLIGHT_ROLE.BASE
+    );
 
     cached.subtreeHighlightsEnabled = true;
 
-    expect(resolveTreeElementHighlight(link, cached, 'link').role).to.equal(TREE_HIGHLIGHT_ROLE.SUBTREE_HIGHLIGHT);
+    expect(resolveTreeElementHighlight(link, cached, 'link').role).to.equal(
+      TREE_HIGHLIGHT_ROLE.SUBTREE_HIGHLIGHT
+    );
   });
 
   it('keeps node subtree highlight roles behind the subtree highlight toggle', () => {
@@ -205,14 +239,18 @@ describe('subtree highlight helpers', () => {
     const cached = {
       subtreeHighlightsEnabled: false,
       highlightedSubtreeData: [new Set([6])],
-      colorManager: createMockColorManager()
+      colorManager: createMockColorManager(),
     };
 
-    expect(resolveTreeElementHighlight(node, cached, 'node').role).to.equal(TREE_HIGHLIGHT_ROLE.BASE);
+    expect(resolveTreeElementHighlight(node, cached, 'node').role).to.equal(
+      TREE_HIGHLIGHT_ROLE.BASE
+    );
 
     cached.subtreeHighlightsEnabled = true;
 
-    expect(resolveTreeElementHighlight(node, cached, 'node').role).to.equal(TREE_HIGHLIGHT_ROLE.SUBTREE_HIGHLIGHT);
+    expect(resolveTreeElementHighlight(node, cached, 'node').role).to.equal(
+      TREE_HIGHLIGHT_ROLE.SUBTREE_HIGHLIGHT
+    );
   });
 });
 
@@ -234,14 +272,22 @@ describe('Layer Highlighting Configuration', () => {
       changePulseEnabled: false,
       pivotEdgeDashingEnabled: false,
       getPulseOpacity: () => 1.0,
-      getColorManager: () => createMockColorManager()
+      getColorManager: () => createMockColorManager(),
     };
     layerStyles = new LayerStyles();
   });
 
   describe('autoHighlight configuration', () => {
     it('should keep main links non-pickable', () => {
-      const links = [{ path: [[0, 0, 0], [1, 1, 0]], split_indices: [1] }];
+      const links = [
+        {
+          path: [
+            [0, 0, 0],
+            [1, 1, 0],
+          ],
+          split_indices: [1],
+        },
+      ];
       const layer = getLinksLayerProps(links, mockStoreState, layerStyles);
 
       expect(layer.pickable).to.equal(false);
@@ -258,7 +304,15 @@ describe('Layer Highlighting Configuration', () => {
     });
 
     it('should NOT enable autoHighlight on non-pickable layers (outlines)', () => {
-      const links = [{ path: [[0, 0, 0], [1, 1, 0]], split_indices: [1] }];
+      const links = [
+        {
+          path: [
+            [0, 0, 0],
+            [1, 1, 0],
+          ],
+          split_indices: [1],
+        },
+      ];
       const layer = getLinkOutlinesLayerProps(links, mockStoreState, layerStyles);
 
       expect(layer.pickable).to.equal(false);
@@ -269,7 +323,15 @@ describe('Layer Highlighting Configuration', () => {
 
   describe('updateTriggers stability', () => {
     it('should use scalar colorVersion in links updateTriggers', () => {
-      const links = [{ path: [[0, 0, 0], [1, 1, 0]], split_indices: [1] }];
+      const links = [
+        {
+          path: [
+            [0, 0, 0],
+            [1, 1, 0],
+          ],
+          split_indices: [1],
+        },
+      ];
       const layer = getLinksLayerProps(links, mockStoreState, layerStyles);
 
       const colorTrigger = layer.updateTriggers.getColor;
@@ -277,7 +339,7 @@ describe('Layer Highlighting Configuration', () => {
       expect(colorTrigger).to.be.an('array');
       expect(colorTrigger).to.not.deep.include(links);
       // Should include version numbers
-      expect(colorTrigger.some(v => typeof v === 'number')).to.be.true;
+      expect(colorTrigger.some((v) => typeof v === 'number')).to.be.true;
     });
 
     it('should use scalar colorVersion in nodes updateTriggers', () => {
@@ -295,7 +357,15 @@ describe('Layer Highlighting Configuration', () => {
       // Simulate color version increment
       mockStoreState.colorVersion = initialVersion + 1;
 
-      const links = [{ path: [[0, 0, 0], [1, 1, 0]], split_indices: [1] }];
+      const links = [
+        {
+          path: [
+            [0, 0, 0],
+            [1, 1, 0],
+          ],
+          split_indices: [1],
+        },
+      ];
       const layer = getLinksLayerProps(links, mockStoreState, layerStyles);
 
       const colorTrigger = layer.updateTriggers.getColor;
@@ -305,7 +375,15 @@ describe('Layer Highlighting Configuration', () => {
 
   describe('conditional layer visibility', () => {
     it('should hide link outlines when no highlights are active', () => {
-      const links = [{ path: [[0, 0, 0], [1, 1, 0]], split_indices: [1] }];
+      const links = [
+        {
+          path: [
+            [0, 0, 0],
+            [1, 1, 0],
+          ],
+          split_indices: [1],
+        },
+      ];
       const layer = getLinkOutlinesLayerProps(links, mockStoreState, layerStyles);
 
       expect(layer.visible).to.equal(false);
@@ -314,13 +392,22 @@ describe('Layer Highlighting Configuration', () => {
     it('should show link outlines when pivot edges exist', () => {
       const stateWithHighlights = {
         ...mockStoreState,
-        getColorManager: () => createMockColorManager({
-          hasPivotEdges: () => true,
-          getBranchColorWithHighlights: () => '#2196f3'
-        })
+        getColorManager: () =>
+          createMockColorManager({
+            hasPivotEdges: () => true,
+            getBranchColorWithHighlights: () => '#2196f3',
+          }),
       };
 
-      const links = [{ path: [[0, 0, 0], [1, 1, 0]], split_indices: [1] }];
+      const links = [
+        {
+          path: [
+            [0, 0, 0],
+            [1, 1, 0],
+          ],
+          split_indices: [1],
+        },
+      ];
       const layer = getLinkOutlinesLayerProps(links, stateWithHighlights, layerStyles);
 
       expect(layer.visible).to.equal(true);
@@ -329,13 +416,22 @@ describe('Layer Highlighting Configuration', () => {
     it('should show link outlines when highlighted components exist', () => {
       const stateWithMarked = {
         ...mockStoreState,
-        getColorManager: () => createMockColorManager({
-          highlightedSubtreeSets: [new Set([1, 2, 3])],
-          getBranchColorWithHighlights: () => '#10b981'
-        })
+        getColorManager: () =>
+          createMockColorManager({
+            highlightedSubtreeSets: [new Set([1, 2, 3])],
+            getBranchColorWithHighlights: () => '#10b981',
+          }),
       };
 
-      const links = [{ path: [[0, 0, 0], [1, 1, 0]], split_indices: [1] }];
+      const links = [
+        {
+          path: [
+            [0, 0, 0],
+            [1, 1, 0],
+          ],
+          split_indices: [1],
+        },
+      ];
       const layer = getLinkOutlinesLayerProps(links, stateWithMarked, layerStyles);
 
       expect(layer.visible).to.equal(true);
@@ -343,22 +439,31 @@ describe('Layer Highlighting Configuration', () => {
 
     it('should show link outlines when lifecycle links are expanding or collapsing', () => {
       const links = [
-        { path: [[0, 0, 0], [1, 1, 0]], split_indices: [1], lifecycle: 'reviving' }
+        {
+          path: [
+            [0, 0, 0],
+            [1, 1, 0],
+          ],
+          split_indices: [1],
+          lifecycle: 'reviving',
+        },
       ];
       const layer = getLinkOutlinesLayerProps(links, mockStoreState, layerStyles);
 
       expect(layer.visible).to.equal(true);
     });
-
   });
 
   describe('lifecycle link highlighting', () => {
     it('colors and thickens expanding lifecycle links', () => {
       const link = {
-        path: [[0, 0, 0], [1, 1, 0]],
+        path: [
+          [0, 0, 0],
+          [1, 1, 0],
+        ],
         split_indices: [1],
         lifecycle: 'reviving',
-        opacity: 1
+        opacity: 1,
       };
       const linksLayer = getLinksLayerProps([link], mockStoreState, layerStyles);
       const outlineLayer = getLinkOutlinesLayerProps([link], mockStoreState, layerStyles);
@@ -371,10 +476,13 @@ describe('Layer Highlighting Configuration', () => {
 
     it('colors and thickens collapsing lifecycle links', () => {
       const link = {
-        path: [[0, 0, 0], [1, 1, 0]],
+        path: [
+          [0, 0, 0],
+          [1, 1, 0],
+        ],
         split_indices: [1],
         lifecycle: 'zeroing',
-        opacity: 1
+        opacity: 1,
       };
       const linksLayer = getLinksLayerProps([link], mockStoreState, layerStyles);
       const outlineLayer = getLinkOutlinesLayerProps([link], mockStoreState, layerStyles);
@@ -387,10 +495,13 @@ describe('Layer Highlighting Configuration', () => {
 
     it('does not lifecycle-highlight unchanged links', () => {
       const link = {
-        path: [[0, 0, 0], [1, 1, 0]],
+        path: [
+          [0, 0, 0],
+          [1, 1, 0],
+        ],
         split_indices: [1],
         lifecycle: 'unchanged',
-        opacity: 1
+        opacity: 1,
       };
       const linksLayer = getLinksLayerProps([link], mockStoreState, layerStyles);
       const outlineLayer = getLinkOutlinesLayerProps([link], mockStoreState, layerStyles);
@@ -422,13 +533,14 @@ describe('Layer Highlighting Configuration', () => {
       // Mutate the mock store so LayerStyles.getCachedState() observes subtree settings
       mockStoreState.subtreeDimmingEnabled = true;
       mockStoreState.subtreeDimmingOpacity = 0.5;
-      mockStoreState.getColorManager = () => createMockColorManager({
-        highlightedSubtreeSets: [new Set([1, 2, 3])]
-      });
+      mockStoreState.getColorManager = () =>
+        createMockColorManager({
+          highlightedSubtreeSets: [new Set([1, 2, 3])],
+        });
 
       const nodes = [
         { position: [0, 0, 0], split_indices: [4], opacity: 1 }, // outside
-        { position: [0, 0, 0], split_indices: [1], opacity: 1 }  // inside
+        { position: [0, 0, 0], split_indices: [1], opacity: 1 }, // inside
       ];
 
       const layer = getNodesLayerProps(nodes, mockStoreState, layerStyles);
@@ -443,13 +555,28 @@ describe('Layer Highlighting Configuration', () => {
       // Mutate the mock store so LayerStyles.getCachedState() observes subtree settings
       mockStoreState.subtreeDimmingEnabled = true;
       mockStoreState.subtreeDimmingOpacity = 0.5;
-      mockStoreState.getColorManager = () => createMockColorManager({
-        highlightedSubtreeSets: [new Set([1, 2, 3])]
-      });
+      mockStoreState.getColorManager = () =>
+        createMockColorManager({
+          highlightedSubtreeSets: [new Set([1, 2, 3])],
+        });
 
       const extensions = [
-        { path: [[0, 0, 0], [1, 1, 0]], split_indices: [4], opacity: 1 }, // outside
-        { path: [[0, 0, 0], [1, 1, 0]], split_indices: [1], opacity: 1 }  // inside
+        {
+          path: [
+            [0, 0, 0],
+            [1, 1, 0],
+          ],
+          split_indices: [4],
+          opacity: 1,
+        }, // outside
+        {
+          path: [
+            [0, 0, 0],
+            [1, 1, 0],
+          ],
+          split_indices: [1],
+          opacity: 1,
+        }, // inside
       ];
 
       const layer = getExtensionsLayerProps(extensions, mockStoreState, layerStyles);
@@ -467,13 +594,14 @@ describe('Layer Highlighting Configuration', () => {
       mockStoreState.subtreeDimmingOpacity = 0.5;
       mockStoreState.subtreeHighlightsEnabled = false;
       // ColorManager has the subtree data (single source of truth)
-      mockStoreState.getColorManager = () => createMockColorManager({
-        highlightedSubtreeSets: [new Set([1])]
-      });
+      mockStoreState.getColorManager = () =>
+        createMockColorManager({
+          highlightedSubtreeSets: [new Set([1])],
+        });
 
       const nodes = [
         { position: [0, 0, 0], split_indices: [2], opacity: 1 },
-        { position: [0, 0, 0], split_indices: [1], opacity: 1 }
+        { position: [0, 0, 0], split_indices: [1], opacity: 1 },
       ];
 
       const cached = layerStyles.getCachedState();
@@ -493,9 +621,10 @@ describe('Layer Highlighting Configuration', () => {
       mockStoreState.dimmingEnabled = false;
       mockStoreState.subtreeDimmingEnabled = false;
       // ColorManager has the subtree data for radius scaling
-      mockStoreState.getColorManager = () => createMockColorManager({
-        highlightedSubtreeSets: [new Set([1])]
-      });
+      mockStoreState.getColorManager = () =>
+        createMockColorManager({
+          highlightedSubtreeSets: [new Set([1])],
+        });
 
       const highlightedNode = { position: [0, 0, 0], split_indices: [1], radius: 4, opacity: 1 };
 
@@ -506,7 +635,11 @@ describe('Layer Highlighting Configuration', () => {
       mockStoreState.subtreeHighlightsEnabled = false;
 
       const cachedWithoutColor = layerStyles.getCachedState();
-      const radiusWithoutColoring = layerStyles.getNodeRadius(highlightedNode, 3, cachedWithoutColor);
+      const radiusWithoutColoring = layerStyles.getNodeRadius(
+        highlightedNode,
+        3,
+        cachedWithoutColor
+      );
 
       // With subtreeHighlightsEnabled=true: 4 * 1.6 = 6.4 (subtree highlight scaling)
       // With subtreeHighlightsEnabled=false: 4 * 1.5 = 6 (highlighted scaling via isNodeVisuallyHighlighted)
@@ -554,7 +687,7 @@ describe('LayerStyles.getCachedState() - ColorManager as Single Source of Truth'
       getBranchColorWithHighlights: () => '#000000',
       getNodeColor: () => '#000000',
       isDownstreamOfAnyPivotEdge: () => false,
-      isNodeDownstreamOfAnyPivotEdge: () => false
+      isNodeDownstreamOfAnyPivotEdge: () => false,
     });
 
     const cached = layerStyles.getCachedState();
@@ -581,7 +714,7 @@ describe('LayerStyles.getCachedState() - ColorManager as Single Source of Truth'
       getBranchColorWithHighlights: () => '#000000',
       getNodeColor: () => '#000000',
       isDownstreamOfAnyPivotEdge: () => false,
-      isNodeDownstreamOfAnyPivotEdge: () => false
+      isNodeDownstreamOfAnyPivotEdge: () => false,
     });
 
     const cached = layerStyles.getCachedState();
@@ -600,7 +733,7 @@ describe('LayerStyles.getCachedState() - ColorManager as Single Source of Truth'
       getBranchColorWithHighlights: () => '#000000',
       getNodeColor: () => '#000000',
       isDownstreamOfAnyPivotEdge: () => false,
-      isNodeDownstreamOfAnyPivotEdge: () => false
+      isNodeDownstreamOfAnyPivotEdge: () => false,
     });
 
     const cached1 = layerStyles.getCachedState();
@@ -619,7 +752,7 @@ describe('LayerStyles.getCachedState() - ColorManager as Single Source of Truth'
       getBranchColorWithHighlights: () => '#000000',
       getNodeColor: () => '#000000',
       isDownstreamOfAnyPivotEdge: () => false,
-      isNodeDownstreamOfAnyPivotEdge: () => false
+      isNodeDownstreamOfAnyPivotEdge: () => false,
     });
 
     // Second call should get new data
@@ -641,7 +774,7 @@ describe('LayerStyles.getCachedState() - ColorManager as Single Source of Truth'
         getBranchColorWithHighlights: () => '#000000',
         getNodeColor: () => '#000000',
         isDownstreamOfAnyPivotEdge: () => false,
-        isNodeDownstreamOfAnyPivotEdge: () => false
+        isNodeDownstreamOfAnyPivotEdge: () => false,
       };
     };
 
@@ -661,11 +794,13 @@ describe('LayerStyles.getCachedState() - ColorManager as Single Source of Truth'
  * Validates: Requirements 1.4, 2.4
  */
 describe('dimmingUtils.applyDimmingWithCache() - Dimming Data Consistency', () => {
-  const { applyDimmingWithCache } = require('../../src/treeVisualisation/deckgl/layers/styles/dimmingUtils.js');
+  const {
+    applyDimmingWithCache,
+  } = require('../../src/treeVisualisation/deckgl/layers/styles/dimmingUtils.js');
 
   it('should use ColorManager subtree data for dimming', () => {
     const colorManager = createMockColorManager({
-      highlightedSubtreeSets: [new Set([1, 2, 3])]
+      highlightedSubtreeSets: [new Set([1, 2, 3])],
     });
 
     // Node inside subtree (split_indices contains 1)
@@ -674,16 +809,26 @@ describe('dimmingUtils.applyDimmingWithCache() - Dimming Data Consistency', () =
     const nodeOutside = { split_indices: [99] };
 
     const opacityInside = applyDimmingWithCache(
-      255, colorManager, nodeInside, true,
-      false, 0.3, // dimmingEnabled, dimmingOpacity
-      true, 0.5,  // subtreeDimmingEnabled, subtreeDimmingOpacity
+      255,
+      colorManager,
+      nodeInside,
+      true,
+      false,
+      0.3, // dimmingEnabled, dimmingOpacity
+      true,
+      0.5, // subtreeDimmingEnabled, subtreeDimmingOpacity
       [] // highlightedSubtreeData parameter (should be ignored)
     );
 
     const opacityOutside = applyDimmingWithCache(
-      255, colorManager, nodeOutside, true,
-      false, 0.3,
-      true, 0.5,
+      255,
+      colorManager,
+      nodeOutside,
+      true,
+      false,
+      0.3,
+      true,
+      0.5,
       [] // highlightedSubtreeData parameter (should be ignored)
     );
 
@@ -695,7 +840,7 @@ describe('dimmingUtils.applyDimmingWithCache() - Dimming Data Consistency', () =
 
   it('should ignore highlightedSubtreeData parameter and use ColorManager', () => {
     const colorManager = createMockColorManager({
-      highlightedSubtreeSets: [new Set([100])] // ColorManager says node 100 is in subtree
+      highlightedSubtreeSets: [new Set([100])], // ColorManager says node 100 is in subtree
     });
 
     // Node with split_indices [100] - in ColorManager's subtree
@@ -705,9 +850,14 @@ describe('dimmingUtils.applyDimmingWithCache() - Dimming Data Consistency', () =
     const staleHighlightedData = [new Set([1, 2, 3])]; // This would NOT include node 100
 
     const opacity = applyDimmingWithCache(
-      255, colorManager, node, true,
-      false, 0.3,
-      true, 0.5,
+      255,
+      colorManager,
+      node,
+      true,
+      false,
+      0.3,
+      true,
+      0.5,
       staleHighlightedData // This should be ignored
     );
 
@@ -719,9 +869,14 @@ describe('dimmingUtils.applyDimmingWithCache() - Dimming Data Consistency', () =
     const node = { split_indices: [1] };
 
     const opacity = applyDimmingWithCache(
-      255, null, node, true,
-      false, 0.3,
-      true, 0.5,
+      255,
+      null,
+      node,
+      true,
+      false,
+      0.3,
+      true,
+      0.5,
       [new Set([1])] // highlightedSubtreeData parameter
     );
 
@@ -731,17 +886,12 @@ describe('dimmingUtils.applyDimmingWithCache() - Dimming Data Consistency', () =
 
   it('should return full opacity when ColorManager has empty subtrees', () => {
     const colorManager = createMockColorManager({
-      highlightedSubtreeSets: [] // Empty
+      highlightedSubtreeSets: [], // Empty
     });
 
     const node = { split_indices: [1] };
 
-    const opacity = applyDimmingWithCache(
-      255, colorManager, node, true,
-      false, 0.3,
-      true, 0.5,
-      []
-    );
+    const opacity = applyDimmingWithCache(255, colorManager, node, true, false, 0.3, true, 0.5, []);
 
     // No dimming when no subtrees are marked
     expect(opacity).to.equal(255);
@@ -751,23 +901,33 @@ describe('dimmingUtils.applyDimmingWithCache() - Dimming Data Consistency', () =
     const colorManager = createMockColorManager({
       highlightedSubtreeSets: [],
       hasPivotEdges: () => true,
-      isNodeDownstreamOfAnyPivotEdge: (node) => node.isDownstream
+      isNodeDownstreamOfAnyPivotEdge: (node) => node.isDownstream,
     });
 
     const downstreamNode = { split_indices: [1], isDownstream: true };
     const upstreamNode = { split_indices: [2], isDownstream: false };
 
     const opacityDownstream = applyDimmingWithCache(
-      255, colorManager, downstreamNode, true,
-      true, 0.3, // dimmingEnabled
-      false, 0.5,
+      255,
+      colorManager,
+      downstreamNode,
+      true,
+      true,
+      0.3, // dimmingEnabled
+      false,
+      0.5,
       []
     );
 
     const opacityUpstream = applyDimmingWithCache(
-      255, colorManager, upstreamNode, true,
-      true, 0.3,
-      false, 0.5,
+      255,
+      colorManager,
+      upstreamNode,
+      true,
+      true,
+      0.3,
+      false,
+      0.5,
       []
     );
 
@@ -800,9 +960,10 @@ describe('Scrubbing Highlighting Integration', () => {
     const tree5Subtrees = [new Set([50, 51, 52])];
     mockStoreState.frameIndex = 0; // Store still has stale index
     mockStoreState.getSubtreeHighlightData = () => [new Set([1, 2, 3])]; // Store has stale data
-    mockStoreState.getColorManager = () => createMockColorManager({
-      highlightedSubtreeSets: tree5Subtrees // ColorManager has correct data
-    });
+    mockStoreState.getColorManager = () =>
+      createMockColorManager({
+        highlightedSubtreeSets: tree5Subtrees, // ColorManager has correct data
+      });
 
     const cached = layerStyles.getCachedState();
 
@@ -815,9 +976,10 @@ describe('Scrubbing Highlighting Integration', () => {
   it('should update highlighting as scrub position changes', () => {
     // First scrub position - tree index 3
     const tree3Subtrees = [new Set([30, 31])];
-    mockStoreState.getColorManager = () => createMockColorManager({
-      highlightedSubtreeSets: tree3Subtrees
-    });
+    mockStoreState.getColorManager = () =>
+      createMockColorManager({
+        highlightedSubtreeSets: tree3Subtrees,
+      });
 
     const cached1 = layerStyles.getCachedState();
     expect(cached1.highlightedSubtreeData[0].has(30)).to.be.true;
@@ -827,9 +989,10 @@ describe('Scrubbing Highlighting Integration', () => {
 
     // Second scrub position - tree index 7
     const tree7Subtrees = [new Set([70, 71, 72])];
-    mockStoreState.getColorManager = () => createMockColorManager({
-      highlightedSubtreeSets: tree7Subtrees
-    });
+    mockStoreState.getColorManager = () =>
+      createMockColorManager({
+        highlightedSubtreeSets: tree7Subtrees,
+      });
 
     const cached2 = layerStyles.getCachedState();
     expect(cached2.highlightedSubtreeData[0].has(70)).to.be.true;
@@ -841,9 +1004,10 @@ describe('Scrubbing Highlighting Integration', () => {
     mockStoreState.subtreeDimmingOpacity = 0.4;
 
     // Scrub position has subtree with nodes 100, 101
-    mockStoreState.getColorManager = () => createMockColorManager({
-      highlightedSubtreeSets: [new Set([100, 101])]
-    });
+    mockStoreState.getColorManager = () =>
+      createMockColorManager({
+        highlightedSubtreeSets: [new Set([100, 101])],
+      });
 
     const nodeInSubtree = { position: [0, 0, 0], split_indices: [100], opacity: 1 };
     const nodeOutsideSubtree = { position: [0, 0, 0], split_indices: [999], opacity: 1 };
@@ -860,19 +1024,26 @@ describe('Scrubbing Highlighting Integration', () => {
     mockStoreState.subtreeDimmingEnabled = true;
     mockStoreState.subtreeDimmingOpacity = 0.4;
 
-    mockStoreState.getColorManager = () => createMockColorManager({
-      highlightedSubtreeSets: [new Set([200, 201])]
-    });
+    mockStoreState.getColorManager = () =>
+      createMockColorManager({
+        highlightedSubtreeSets: [new Set([200, 201])],
+      });
 
     const linkInSubtree = {
-      path: [[0, 0, 0], [1, 1, 0]],
+      path: [
+        [0, 0, 0],
+        [1, 1, 0],
+      ],
       split_indices: [200],
-      opacity: 1
+      opacity: 1,
     };
     const linkOutsideSubtree = {
-      path: [[0, 0, 0], [1, 1, 0]],
+      path: [
+        [0, 0, 0],
+        [1, 1, 0],
+      ],
       split_indices: [888],
-      opacity: 1
+      opacity: 1,
     };
 
     const cached = layerStyles.getCachedState();

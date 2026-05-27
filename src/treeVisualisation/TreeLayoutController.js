@@ -1,18 +1,22 @@
-import { selectActiveTreeList, selectInputFrameIndices, useAppStore } from '../state/phyloStore/store.js';
-import { transformBranchLengths } from "../domain/tree/branchTransform.js";
-import { TidyTreeLayout } from "./layout/TidyTreeLayout.js";
-import calculateScales, { getMaxScaleValue } from "../domain/tree/scaleUtils.js";
-import { createLayoutCacheKey, createTransformCacheKey, createUniformScalingCacheKey } from './utils/layoutCacheKey.js';
-import { createLayoutResult } from './layout/LayoutResultAdapter.js';
 import {
-  calculateLabelAngleSpan,
-  calculateReadableLabelRadii
-} from './layout/labelRingRadii.js';
+  selectActiveTreeList,
+  selectInputFrameIndices,
+  useAppStore,
+} from '../state/phyloStore/store.js';
+import { transformBranchLengths } from '../domain/tree/branchTransform.js';
+import { TidyTreeLayout } from './layout/TidyTreeLayout.js';
+import calculateScales, { getMaxScaleValue } from '../domain/tree/scaleUtils.js';
+import {
+  createLayoutCacheKey,
+  createTransformCacheKey,
+  createUniformScalingCacheKey,
+} from './utils/layoutCacheKey.js';
+import { createLayoutResult } from './layout/LayoutResultAdapter.js';
+import { calculateLabelAngleSpan, calculateReadableLabelRadii } from './layout/labelRingRadii.js';
 
 const TREE_LAYOUT_MARGIN = 60;
 
 export class TreeLayoutController {
-
   // ==========================================================================
   // CONSTRUCTOR
   // ==========================================================================
@@ -20,7 +24,7 @@ export class TreeLayoutController {
   constructor(container = null) {
     this._scalingState = {
       cacheKey: null,
-      minWindowSize: null
+      minWindowSize: null,
     };
     this._transformedCache = new Map();
     this._layoutResultCache = new Map();
@@ -95,7 +99,11 @@ export class TreeLayoutController {
     }
 
     const inputFrameIndices = selectInputFrameIndices(state);
-    const transformedTreeList = this._getOrCacheTransformedTrees(treeList, branchTransformation, state);
+    const transformedTreeList = this._getOrCacheTransformedTrees(
+      treeList,
+      branchTransformation,
+      state
+    );
     const { maxGlobalScale, minWindowSize } = this._calculateTrajectoryScale(
       transformedTreeList,
       inputFrameIndices
@@ -123,10 +131,7 @@ export class TreeLayoutController {
   }
 
   _getScalingMinWindowSize(margin = TREE_LAYOUT_MARGIN) {
-    return Math.min(
-      Math.max(1, this.width - margin * 2),
-      Math.max(1, this.height - margin * 2)
-    );
+    return Math.min(Math.max(1, this.width - margin * 2), Math.max(1, this.height - margin * 2));
   }
 
   // ==========================================================================
@@ -139,11 +144,7 @@ export class TreeLayoutController {
   calculateLayout(treeData, options = {}) {
     const { treeIndex } = options;
     const state = useAppStore.getState();
-    const {
-      branchTransformation,
-      layoutAngleDegrees,
-      layoutRotationDegrees,
-    } = state;
+    const { branchTransformation, layoutAngleDegrees, layoutRotationDegrees } = state;
     const treeList = selectActiveTreeList(state);
 
     // initializeUniformScaling is cache-guarded and also catches dataset reference changes.
@@ -166,14 +167,18 @@ export class TreeLayoutController {
       state,
       treeList,
       treeData,
-      treeIndex
+      treeIndex,
     });
     if (layoutCacheKey) {
       const cachedLayout = this._layoutResultCache.get(layoutCacheKey);
       if (cachedLayout) return cachedLayout;
     }
 
-    const layout = this._computeLayout(transformedTreeData, layoutAngleDegrees, layoutRotationDegrees);
+    const layout = this._computeLayout(
+      transformedTreeData,
+      layoutAngleDegrees,
+      layoutRotationDegrees
+    );
     if (layoutCacheKey && layout) {
       layout.layoutCacheKey = layoutCacheKey;
       this._layoutResultCache.set(layoutCacheKey, layout);
@@ -197,22 +202,21 @@ export class TreeLayoutController {
       treeIndex,
       width: this.width,
       height: this.height,
-      maxGlobalScale: this.maxGlobalScale
+      maxGlobalScale: this.maxGlobalScale,
     });
   }
 
-  _getTransformedTreeData(treeData, branchTransformation, treeIndex, transformCacheKey, treeList = null) {
+  _getTransformedTreeData(
+    treeData,
+    branchTransformation,
+    treeIndex,
+    transformCacheKey,
+    treeList = null
+  ) {
     const cached = this._transformedCache.get(transformCacheKey);
-    const canUseIndexedCache = (
-      typeof treeIndex === 'number' &&
-      Array.isArray(treeList) &&
-      treeList[treeIndex] === treeData
-    );
-    if (
-      cached &&
-      cached.transformedList &&
-      canUseIndexedCache
-    ) {
+    const canUseIndexedCache =
+      typeof treeIndex === 'number' && Array.isArray(treeList) && treeList[treeIndex] === treeData;
+    if (cached && cached.transformedList && canUseIndexedCache) {
       return cached.transformedList[treeIndex];
     }
     if (treeData && branchTransformation === 'none') {
@@ -241,7 +245,7 @@ export class TreeLayoutController {
       height: this.height,
       margin: layoutCalculator.margin,
       scale: layoutCalculator.scale,
-      uniformScale: layoutCalculator.uniformScale
+      uniformScale: layoutCalculator.uniformScale,
     });
   }
 
@@ -261,14 +265,17 @@ export class TreeLayoutController {
       ? Math.max(0, layoutRadius)
       : Number.isFinite(globalRenderedRadius)
         ? globalRenderedRadius
-        : Math.max(0, Math.min(layout.width - layout.margin * 2, layout.height - layout.margin * 2) / 2);
+        : Math.max(
+            0,
+            Math.min(layout.width - layout.margin * 2, layout.height - layout.margin * 2) / 2
+          );
 
     return calculateReadableLabelRadii({
       baseRadius,
       labelOffsets: offsets,
       labelCount: Array.isArray(layout?.leaves) ? layout.leaves.length : 0,
       fontSize,
-      angleSpanRadians: calculateLabelAngleSpan(layout?.leaves)
+      angleSpanRadians: calculateLabelAngleSpan(layout?.leaves),
     });
   }
 
@@ -298,10 +305,12 @@ export class TreeLayoutController {
       return cached.transformedList;
     }
 
-    const transformedList = treeList.map(treeData => transformBranchLengths(treeData, branchTransformation));
+    const transformedList = treeList.map((treeData) =>
+      transformBranchLengths(treeData, branchTransformation)
+    );
 
     this._transformedCache.set(transformCacheKey, {
-      transformedList
+      transformedList,
     });
 
     return transformedList;

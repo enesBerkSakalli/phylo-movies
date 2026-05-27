@@ -12,7 +12,7 @@ import {
   selectTaxaColoringOpen,
   selectTaxaColoringWindow,
   selectTaxaGrouping,
-  useAppStore
+  useAppStore,
 } from '../../state/phyloStore/store.js';
 import { TaxaColoringWindow } from './TaxaColoringWindow.jsx';
 import { SYSTEM_TREE_COLORS } from '../../constants/TreeColors.js';
@@ -81,47 +81,59 @@ export function TaxaColoringRndWindow({ isActive = false, onFocus } = {}) {
     const currentTaxaMap = taxaGrouping?.taxaColorMap || {};
 
     taxaNames.forEach((taxon) => {
-      map[taxon] = currentTaxaMap[taxon] || SYSTEM_TREE_COLORS.defaultColor || "#000000";
+      map[taxon] = currentTaxaMap[taxon] || SYSTEM_TREE_COLORS.defaultColor || '#000000';
     });
     return map;
   }, [taxaNames, taxaGrouping]);
 
-  const handleApply = useCallback((colorData) => {
-    if (!taxaNames.length) return;
+  const handleApply = useCallback(
+    (colorData) => {
+      if (!taxaNames.length) return;
 
-    setTaxaGrouping({
-      mode: colorData?.mode || 'taxa',
-      separators: colorData?.separators || null,
-      strategyType: colorData?.strategyType || null,
-      segmentIndex: colorData?.segmentIndex,
-      useRegex: colorData?.useRegex,
-      regexPattern: colorData?.regexPattern,
-      csvTaxaMap: (colorData?.csvTaxaMap instanceof Map) ? Object.fromEntries(colorData.csvTaxaMap) : (colorData?.csvTaxaMap || null),
-      groupColorMap: colorData?.groupColorMap || null,
-      taxaColorMap: colorData?.taxaColorMap || null,
-      csvGroups: colorData?.csvGroups || null,
-      csvColumn: colorData?.csvColumn || null,
-      csvData: colorData?.csvData || null,
-      csvFileName: colorData?.csvFileName || null,
-    });
-  }, [taxaNames, setTaxaGrouping]);
+      setTaxaGrouping({
+        mode: colorData?.mode || 'taxa',
+        separators: colorData?.separators || null,
+        strategyType: colorData?.strategyType || null,
+        segmentIndex: colorData?.segmentIndex,
+        useRegex: colorData?.useRegex,
+        regexPattern: colorData?.regexPattern,
+        csvTaxaMap:
+          colorData?.csvTaxaMap instanceof Map
+            ? Object.fromEntries(colorData.csvTaxaMap)
+            : colorData?.csvTaxaMap || null,
+        groupColorMap: colorData?.groupColorMap || null,
+        taxaColorMap: colorData?.taxaColorMap || null,
+        csvGroups: colorData?.csvGroups || null,
+        csvColumn: colorData?.csvColumn || null,
+        csvData: colorData?.csvData || null,
+        csvFileName: colorData?.csvFileName || null,
+      });
+    },
+    [taxaNames, setTaxaGrouping]
+  );
 
   const handleClose = useCallback(() => setOpen(false), [setOpen]);
 
-  const onDragStop = useCallback((_e, d) => {
-    const nextRect = fitTaxaColoringWindowRect({ ...fittedWindow, x: d.x, y: d.y });
-    setWindowState(toFloatingWindowRect(nextRect));
-  }, [fittedWindow, setWindowState]);
+  const onDragStop = useCallback(
+    (_e, d) => {
+      const nextRect = fitTaxaColoringWindowRect({ ...fittedWindow, x: d.x, y: d.y });
+      setWindowState(toFloatingWindowRect(nextRect));
+    },
+    [fittedWindow, setWindowState]
+  );
 
-  const onResizeStop = useCallback((_e, _dir, ref, _delta, pos) => {
-    const nextRect = fitTaxaColoringWindowRect({
-      width: parseInt(ref.style.width, 10),
-      height: parseInt(ref.style.height, 10),
-      x: pos.x,
-      y: pos.y,
-    });
-    setWindowState(toFloatingWindowRect(nextRect));
-  }, [setWindowState]);
+  const onResizeStop = useCallback(
+    (_e, _dir, ref, _delta, pos) => {
+      const nextRect = fitTaxaColoringWindowRect({
+        width: parseInt(ref.style.width, 10),
+        height: parseInt(ref.style.height, 10),
+        x: pos.x,
+        y: pos.y,
+      });
+      setWindowState(toFloatingWindowRect(nextRect));
+    },
+    [setWindowState]
+  );
 
   if (!isOpen || !taxaNames.length) return null;
 
@@ -150,10 +162,16 @@ export function TaxaColoringRndWindow({ isActive = false, onFocus } = {}) {
           <div className="flex min-w-0 items-center gap-2">
             <Palette className="size-4 shrink-0 text-primary" aria-hidden />
             <div className="flex min-w-0 flex-col">
-              <div id="taxa-coloring-title" className="truncate text-sm font-semibold leading-tight">
+              <div
+                id="taxa-coloring-title"
+                className="truncate text-sm font-semibold leading-tight"
+              >
                 Taxa Colors
               </div>
-              <div id="taxa-coloring-description" className="truncate text-xs leading-tight text-muted-foreground">
+              <div
+                id="taxa-coloring-description"
+                className="truncate text-xs leading-tight text-muted-foreground"
+              >
                 Assign colors to taxa, name patterns, or CSV groups.
               </div>
             </div>

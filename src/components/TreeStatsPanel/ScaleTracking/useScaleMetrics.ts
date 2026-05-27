@@ -2,11 +2,7 @@
 
 import { useMemo } from 'react';
 import { buildScaleLookup, formatScaleValue } from '../../../domain/tree/scaleUtils.js';
-import {
-  collectBranchLengths,
-  buildHistogram,
-  clamp
-} from '../Shared/utils';
+import { collectBranchLengths, buildHistogram, clamp } from '../Shared/utils';
 import type { ScaleMetrics, TreeNode, ScaleListItem } from '../Shared/types';
 
 interface UseScaleMetricsParams {

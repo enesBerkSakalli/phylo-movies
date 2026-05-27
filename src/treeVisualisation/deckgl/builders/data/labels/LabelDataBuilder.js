@@ -3,7 +3,7 @@ import {
   labelRotation,
   labelTextAnchor,
   positionFromPolar,
-  shouldFlipLabel
+  shouldFlipLabel,
 } from '../../../../utils/polarGeometry.js';
 
 /**
@@ -20,9 +20,7 @@ export class LabelDataBuilder {
   convertLabels(leaves, extensionRadius) {
     if (!extensionRadius) return [];
 
-    return leaves
-      .map(leaf => this._createLabelData(leaf, extensionRadius))
-      .filter(Boolean);
+    return leaves.map((leaf) => this._createLabelData(leaf, extensionRadius)).filter(Boolean);
   }
 
   /**
@@ -37,7 +35,10 @@ export class LabelDataBuilder {
       !Number.isFinite(angleRad) ||
       !Number.isFinite(labelRadius)
     ) {
-      console.warn('[LabelDataBuilder] Skipping label with invalid layout coordinates:', leaf.split_indices);
+      console.warn(
+        '[LabelDataBuilder] Skipping label with invalid layout coordinates:',
+        leaf.split_indices
+      );
       return null;
     }
 
@@ -67,8 +68,7 @@ export class LabelDataBuilder {
       distance: distance,
       polarPosition: labelRadius,
       textAnchor: textAnchor,
-      rotation: rotation // in RADIANS
+      rotation: rotation, // in RADIANS
     };
   }
-
 }

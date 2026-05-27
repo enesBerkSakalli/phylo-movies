@@ -1,10 +1,13 @@
-import { PulseAnimationController, calculatePulseOpacity } from '../../../../animation/PulseAnimationController.js';
+import {
+  PulseAnimationController,
+  calculatePulseOpacity,
+} from '../../../../animation/PulseAnimationController.js';
 import { TreeColorManager } from '../../../../treeVisualisation/systems/TreeColorManager.js';
 import {
   calculateChangePreviews,
   renderTreeControllers,
   toManualMarkedSets,
-  toSubtreeSets
+  toSubtreeSets,
 } from '../../internal/changeTracking.helpers.js';
 
 let pulseController = null;
@@ -25,7 +28,8 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
 
   getColorManager: () => get().colorManager,
 
-  calculateHighlightChangePreviews: (indexOverride = null) => calculateChangePreviews(get(), indexOverride),
+  calculateHighlightChangePreviews: (indexOverride = null) =>
+    calculateChangePreviews(get(), indexOverride),
 
   initializeColors: () => {
     const colorManager = new TreeColorManager();
@@ -45,7 +49,7 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
         getSubtreeHighlightData,
         updateColorManagerHighlightedSubtrees,
         updateColorManagerPivotEdge,
-        getCurrentPivotEdge
+        getCurrentPivotEdge,
       } = get();
 
       updateColorManagerHighlightedSubtrees(getSubtreeHighlightData());
@@ -126,19 +130,22 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
       getSourceDestinationEdgeData,
       getActiveMoverSubtreeData,
       updateUpcomingChanges,
-      manuallyMarkedNodes
+      manuallyMarkedNodes,
     } = get();
 
     const targetIndex = Number.isInteger(indexOverride) ? indexOverride : frameIndex;
     const manual = toManualMarkedSets(manuallyMarkedNodes);
     const highlightedSubtreeData = getSubtreeHighlightData(targetIndex);
     const pivotEdge = pivotEdgesEnabled ? getCurrentPivotEdge(targetIndex) : [];
-    const normalizedPivotEdge = Array.isArray(pivotEdge) || pivotEdge instanceof Set ? pivotEdge : [];
+    const normalizedPivotEdge =
+      Array.isArray(pivotEdge) || pivotEdge instanceof Set ? pivotEdge : [];
     const subtreeHistoryData = getSubtreeHistoryData(targetIndex);
     const { source, dest } = getSourceDestinationEdgeData(targetIndex);
     const movingSubtreeData = getActiveMoverSubtreeData(targetIndex);
 
-    colorManager?.updateHighlightedSubtrees?.(toSubtreeSets([...manual, ...highlightedSubtreeData]));
+    colorManager?.updateHighlightedSubtrees?.(
+      toSubtreeSets([...manual, ...highlightedSubtreeData])
+    );
     colorManager?.updatePivotEdge?.(normalizedPivotEdge);
     colorManager?.updateHistorySubtrees?.(toSubtreeSets(subtreeHistoryData));
     colorManager?.updateSourceEdgeLeaves?.(toSubtreeSets(source));
@@ -152,7 +159,8 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
 
     const { changePulseEnabled, startPulseAnimation, stopPulseAnimation } = get();
     if (changePulseEnabled && colorManager) {
-      const pivotEdgeCount = normalizedPivotEdge instanceof Set ? normalizedPivotEdge.size : normalizedPivotEdge.length;
+      const pivotEdgeCount =
+        normalizedPivotEdge instanceof Set ? normalizedPivotEdge.size : normalizedPivotEdge.length;
       const hasChanges = pivotEdgeCount > 0 || colorManager.highlightedSubtreeSets?.length > 0;
       if (hasChanges) {
         startPulseAnimation();
@@ -177,7 +185,8 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
     const { changePulseEnabled, colorManager } = get();
     if (!changePulseEnabled) return;
 
-    const hasChanges = colorManager?.hasPivotEdges?.() || colorManager?.highlightedSubtreeSets?.length > 0;
+    const hasChanges =
+      colorManager?.hasPivotEdges?.() || colorManager?.highlightedSubtreeSets?.length > 0;
     if (!hasChanges || pulseController?.isRunning) return;
 
     if (!pulseController) {
@@ -186,8 +195,11 @@ export const createTreeRuntimeSyncSlice = (set, get) => ({
         shouldContinue: () => {
           const s = get();
           const cm = s.colorManager;
-          return s.changePulseEnabled && (cm?.hasPivotEdges?.() || cm?.highlightedSubtreeSets?.length > 0);
-        }
+          return (
+            s.changePulseEnabled &&
+            (cm?.hasPivotEdges?.() || cm?.highlightedSubtreeSets?.length > 0)
+          );
+        },
       });
     }
     pulseController.start();

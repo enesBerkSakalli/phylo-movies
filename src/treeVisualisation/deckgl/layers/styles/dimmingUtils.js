@@ -9,8 +9,11 @@ export function applyDimmingWithCache(
   subtreeDimmingOpacity,
   _highlightedSubtreeData
 ) {
-  const isSourceOrDest = isNode &&
-    Boolean(colorManager?.isNodeSourceEdge?.(entity) || colorManager?.isNodeDestinationEdge?.(entity));
+  const isSourceOrDest =
+    isNode &&
+    Boolean(
+      colorManager?.isNodeSourceEdge?.(entity) || colorManager?.isNodeDestinationEdge?.(entity)
+    );
 
   // Pivot edge dimming
   if (!isSourceOrDest && dimmingEnabled && colorManager?.hasPivotEdges?.()) {

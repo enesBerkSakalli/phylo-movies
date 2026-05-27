@@ -3,14 +3,14 @@ import {
   selectCameraMode,
   selectToggleCameraMode,
   selectTreeControllers,
-  useAppStore
+  useAppStore,
 } from '../../state/phyloStore/store.js';
 import { Button } from '../ui/button';
 import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarMenuSub,
-  SidebarMenuSubItem
+  SidebarMenuSubItem,
 } from '../ui/sidebar';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../ui/collapsible';
 import { Box, ChevronDown, Info } from 'lucide-react';
@@ -24,7 +24,7 @@ export function ViewModeSection() {
     try {
       const newMode = toggleCameraMode();
       treeControllers.forEach((controller) => controller.setCameraMode(newMode));
-    } catch { }
+    } catch {}
   };
 
   return (
@@ -47,7 +47,9 @@ export function ViewModeSection() {
                   variant="outline"
                   onClick={handleCameraModeToggle}
                 >
-                  <span id="camera-mode-text">{cameraMode === 'orbit' ? 'Switch to 2D' : 'Switch to 3D'}</span>
+                  <span id="camera-mode-text">
+                    {cameraMode === 'orbit' ? 'Switch to 2D' : 'Switch to 3D'}
+                  </span>
                 </Button>
                 <div className="flex items-start gap-2 text-2xs leading-relaxed text-muted-foreground/80 italic">
                   <Info className="mt-1 size-3 shrink-0" />

@@ -5,10 +5,9 @@ import { EXAMPLE_DATASETS } from '../../src/pages/WorkspaceInitialization/exampl
 
 describe('example dataset configuration', () => {
   it('copies publication example assets into production builds', () => {
-    const packageJson = JSON.parse(fs.readFileSync(
-      path.join(process.cwd(), 'package.json'),
-      'utf8',
-    ));
+    const packageJson = JSON.parse(
+      fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf8')
+    );
 
     expect(packageJson.scripts.build).toContain('./scripts/copy-examples.sh dist');
   });
@@ -25,20 +24,19 @@ describe('example dataset configuration', () => {
   });
 
   it('keeps every IQ-TREE example on the fast-search path unless explicitly disabled', () => {
-    const iqtreeExamples = EXAMPLE_DATASETS.filter((example) => (
-      example.parameters?.treeInferenceEngine === 'iqtree'
-    ));
+    const iqtreeExamples = EXAMPLE_DATASETS.filter(
+      (example) => example.parameters?.treeInferenceEngine === 'iqtree'
+    );
 
     expect(iqtreeExamples.map((example) => example.id)).toEqual([
       'norovirus-350',
       'quick-msa-demo',
     ]);
-    expect(iqtreeExamples
-      .filter((example) => example.parameters?.iqtreeFastSearch === true)
-      .map((example) => example.id)).toEqual([
-        'norovirus-350',
-        'quick-msa-demo',
-      ]);
+    expect(
+      iqtreeExamples
+        .filter((example) => example.parameters?.iqtreeFastSearch === true)
+        .map((example) => example.id)
+    ).toEqual(['norovirus-350', 'quick-msa-demo']);
   });
 
   it('keeps the paper figure example label aligned with the source tree file', () => {
@@ -46,13 +44,16 @@ describe('example dataset configuration', () => {
 
     expect(paperExample).toBeDefined();
 
-    const publicationRelativePath = paperExample.filePath.replace(/^.*examples\//, 'publication_data/');
+    const publicationRelativePath = paperExample.filePath.replace(
+      /^.*examples\//,
+      'publication_data/'
+    );
     const treeFile = path.join(process.cwd(), publicationRelativePath);
     const treeLines = fs.readFileSync(treeFile, 'utf8').trim().split(/\r?\n/).filter(Boolean);
     const taxa = new Set(
-      treeLines.flatMap((line) => (
+      treeLines.flatMap((line) =>
         Array.from(line.matchAll(/(?<=[(,])([^(),:;]+):/g), (match) => match[1])
-      ))
+      )
     );
 
     expect(treeLines).toHaveLength(2);
@@ -61,7 +62,9 @@ describe('example dataset configuration', () => {
   });
 
   it('keeps bootstrap example copy aligned with publication tree counts', () => {
-    const bootstrapExamples = EXAMPLE_DATASETS.filter((example) => example.id.startsWith('bootstrap-'));
+    const bootstrapExamples = EXAMPLE_DATASETS.filter((example) =>
+      example.id.startsWith('bootstrap-')
+    );
 
     expect(bootstrapExamples.map((example) => example.id)).toEqual([
       'bootstrap-24',
@@ -69,16 +72,19 @@ describe('example dataset configuration', () => {
     ]);
 
     for (const example of bootstrapExamples) {
-      const publicationRelativePath = example.filePath.replace(/^.*examples\//, 'publication_data/');
-      const treeFile = path.join(
-        process.cwd(),
-        publicationRelativePath,
+      const publicationRelativePath = example.filePath.replace(
+        /^.*examples\//,
+        'publication_data/'
       );
+      const treeFile = path.join(process.cwd(), publicationRelativePath);
       const treeContents = fs.readFileSync(treeFile, 'utf8');
       const treeCount = treeContents.trim().split(/\r?\n/).filter(Boolean).length;
       const splitSupportFile = path.join(
         path.dirname(treeFile),
-        path.basename(treeFile).replace(/^all_trees_/, 'split_support_').replace(/\.nwk$/, '.tsv'),
+        path
+          .basename(treeFile)
+          .replace(/^all_trees_/, 'split_support_')
+          .replace(/\.nwk$/, '.tsv')
       );
       const splitSupportHeader = fs.readFileSync(splitSupportFile, 'utf8').split(/\r?\n/, 1)[0];
 

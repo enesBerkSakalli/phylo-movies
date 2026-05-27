@@ -30,13 +30,13 @@ export function handleDragStart(controller, info) {
     side: treeSide,
     startOffset,
     startPos: { x: info.x, y: info.y },
-    controllerConfig: controllerConfig ? { ...controllerConfig } : null
+    controllerConfig: controllerConfig ? { ...controllerConfig } : null,
   };
 
   // Prevent map panning while dragging a tree - use callback mechanism for React compatibility
   deckContext.setControllerConfig({
     ...(controllerConfig || deckContext.getControllerConfig()),
-    dragPan: false
+    dragPan: false,
   });
   return true;
 }
@@ -103,9 +103,10 @@ export function handleContainerResize(controller) {
   if (controller._resizeRenderScheduled) return;
   controller._resizeRenderScheduled = true;
 
-  const schedule = typeof requestAnimationFrame === 'function'
-    ? requestAnimationFrame
-    : (cb) => setTimeout(cb, 16);
+  const schedule =
+    typeof requestAnimationFrame === 'function'
+      ? requestAnimationFrame
+      : (cb) => setTimeout(cb, 16);
 
   schedule(async () => {
     controller._resizeRenderScheduled = false;

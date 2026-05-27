@@ -25,7 +25,7 @@ export class TreeInterpolator {
     this.linkInterpolator = new PolarLinkInterpolator({
       elementMatcher: this.elementMatcher,
       pathInterpolator: this.pathInterpolator,
-      nodeInterpolator: this.nodeInterpolator
+      nodeInterpolator: this.nodeInterpolator,
     });
     this._elementMapCache = new WeakMap();
     this._rootAngle = 0;
@@ -72,7 +72,8 @@ export class TreeInterpolator {
     // Velocity normalisation: only during REORDER and only for angle.
     // Radial interpolation stays on the base eased timeline.
     let velocityMaps = null;
-    const isReorder = !interpolationOptions.stage || interpolationOptions.stage === ANIMATION_STAGES.REORDER;
+    const isReorder =
+      !interpolationOptions.stage || interpolationOptions.stage === ANIMATION_STAGES.REORDER;
 
     if (isReorder) {
       const rootAngle = this._rootAngle;
@@ -82,10 +83,14 @@ export class TreeInterpolator {
         nodes: computeAngularDistances(nodeFromMap, nodeToMap, rootAngle),
         labels: computeAngularDistances(labelFromMap, labelToMap, rootAngle),
         links: computeAngularDistances(
-          this._polarAngleMap(linkFromMap), this._polarAngleMap(linkToMap), rootAngle
+          this._polarAngleMap(linkFromMap),
+          this._polarAngleMap(linkToMap),
+          rootAngle
         ),
         extensions: computeAngularDistances(
-          this._polarAngleMap(extFromMap), this._polarAngleMap(extToMap), rootAngle
+          this._polarAngleMap(extFromMap),
+          this._polarAngleMap(extToMap),
+          rootAngle
         ),
       };
 
@@ -98,25 +103,30 @@ export class TreeInterpolator {
       fromMap: nodeFromMap,
       toMap: nodeToMap,
       velocityMap: velocityMaps?.nodes ?? null,
-      ...structuralOpacity
-    });
-    const interpolatedLinks = this.linkInterpolator.interpolateLinks(dataFrom.links, dataTo.links, t, {
-      fromMap: linkFromMap,
-      toMap: linkToMap,
-      velocityMap: velocityMaps?.links ?? null,
       ...structuralOpacity,
-      nodeFromMap,
-      nodeToMap,
-      nodeVelocityMap: velocityMaps?.nodes ?? null,
-      transitionChangeModel: interpolationOptions.transitionChangeModel,
-      rawTimeFactor: interpolationOptions.rawTimeFactor,
-      linkGeometryMode: interpolationOptions.linkGeometryMode
     });
+    const interpolatedLinks = this.linkInterpolator.interpolateLinks(
+      dataFrom.links,
+      dataTo.links,
+      t,
+      {
+        fromMap: linkFromMap,
+        toMap: linkToMap,
+        velocityMap: velocityMaps?.links ?? null,
+        ...structuralOpacity,
+        nodeFromMap,
+        nodeToMap,
+        nodeVelocityMap: velocityMaps?.nodes ?? null,
+        transitionChangeModel: interpolationOptions.transitionChangeModel,
+        rawTimeFactor: interpolationOptions.rawTimeFactor,
+        linkGeometryMode: interpolationOptions.linkGeometryMode,
+      }
+    );
     const interpolatedLabels = this._interpolateLabels(dataFrom.labels, dataTo.labels, t, {
       fromMap: labelFromMap,
       toMap: labelToMap,
       velocityMap: velocityMaps?.labels ?? null,
-      ...structuralOpacity
+      ...structuralOpacity,
     });
     const interpolatedExtensions = this._interpolateExtensions(
       dataFrom.extensions,
@@ -126,13 +136,21 @@ export class TreeInterpolator {
         fromMap: extFromMap,
         toMap: extToMap,
         velocityMap: velocityMaps?.extensions ?? null,
-        ...structuralOpacity
+        ...structuralOpacity,
       }
     );
     const maxRadius = this.outerRadiusInterpolator.interpolateMaxRadius(dataFrom, dataTo, t);
-    const { labelRadius, extensionRadius } = this.outerRadiusInterpolator.interpolateRadii(dataFrom, dataTo, t, maxRadius);
+    const { labelRadius, extensionRadius } = this.outerRadiusInterpolator.interpolateRadii(
+      dataFrom,
+      dataTo,
+      t,
+      maxRadius
+    );
 
-    const endpointAlignedNodes = alignNodesToRenderedLinkTargets(interpolatedNodes, interpolatedLinks);
+    const endpointAlignedNodes = alignNodesToRenderedLinkTargets(
+      interpolatedNodes,
+      interpolatedLinks
+    );
 
     return {
       max_radius: maxRadius,
@@ -142,8 +160,11 @@ export class TreeInterpolator {
         ? this.outerRadiusInterpolator.applyLabelRadius(interpolatedLabels, labelRadius)
         : interpolatedLabels,
       extensions: Number.isFinite(extensionRadius)
-        ? this.outerRadiusInterpolator.applyExtensionTargetRadius(interpolatedExtensions, extensionRadius)
-        : interpolatedExtensions
+        ? this.outerRadiusInterpolator.applyExtensionTargetRadius(
+            interpolatedExtensions,
+            extensionRadius
+          )
+        : interpolatedExtensions,
     };
   }
 
@@ -157,7 +178,7 @@ export class TreeInterpolator {
     const result = new Map();
     for (const [id, el] of elementMap) {
       result.set(id, {
-        angle: el.polarData?.target?.angle ?? 0
+        angle: el.polarData?.target?.angle ?? 0,
       });
     }
     return result;
@@ -183,7 +204,7 @@ export class TreeInterpolator {
       timeFactor,
       (from, to, t, fromNode, toNode, velocityEntry) =>
         this.nodeInterpolator.interpolateNode(fromNode, toNode, t, velocityEntry),
-      options,
+      options
     );
   }
 
@@ -198,7 +219,7 @@ export class TreeInterpolator {
       timeFactor,
       (from, to, t, fromLabel, toLabel, velocityEntry) =>
         this.labelInterpolator.interpolateLabel(fromLabel, toLabel, t, velocityEntry),
-      options,
+      options
     );
   }
 
@@ -213,7 +234,7 @@ export class TreeInterpolator {
       timeFactor,
       (from, to, t, fromExt, toExt, velocityEntry) =>
         this.extensionInterpolator.interpolateExtension(fromExt, toExt, t, velocityEntry),
-      options,
+      options
     );
   }
 
@@ -234,25 +255,19 @@ function normalizeInterpolationOptions(options = {}) {
   return {
     stage: input.stage ?? null,
     transitionChangeModel: input.transitionChangeModel ?? null,
-    rawTimeFactor: Number.isFinite(input.rawTimeFactor)
-      ? input.rawTimeFactor
-      : null,
-    enterTimeFactor: Number.isFinite(input.enterTimeFactor)
-      ? input.enterTimeFactor
-      : null,
-    exitTimeFactor: Number.isFinite(input.exitTimeFactor)
-      ? input.exitTimeFactor
-      : null,
+    rawTimeFactor: Number.isFinite(input.rawTimeFactor) ? input.rawTimeFactor : null,
+    enterTimeFactor: Number.isFinite(input.enterTimeFactor) ? input.enterTimeFactor : null,
+    exitTimeFactor: Number.isFinite(input.exitTimeFactor) ? input.exitTimeFactor : null,
     hasExplicitEnterTimeFactor: Number.isFinite(input.enterTimeFactor),
     hasExplicitExitTimeFactor: Number.isFinite(input.exitTimeFactor),
-    linkGeometryMode: input.linkGeometryMode || 'radial-elbow'
+    linkGeometryMode: input.linkGeometryMode || 'radial-elbow',
   };
 }
 
 function structuralOpacityOptions(options) {
   const result = {
     hasExplicitEnterTimeFactor: options.hasExplicitEnterTimeFactor,
-    hasExplicitExitTimeFactor: options.hasExplicitExitTimeFactor
+    hasExplicitExitTimeFactor: options.hasExplicitExitTimeFactor,
   };
 
   if (options.hasExplicitEnterTimeFactor) {
@@ -289,7 +304,7 @@ function alignNodesToRenderedLinkTargets(nodes, links) {
     const position = [
       linkTargetPosition[0],
       linkTargetPosition[1],
-      Number.isFinite(linkTargetPosition[2]) ? linkTargetPosition[2] : 0
+      Number.isFinite(linkTargetPosition[2]) ? linkTargetPosition[2] : 0,
     ];
 
     return {
@@ -297,7 +312,7 @@ function alignNodesToRenderedLinkTargets(nodes, links) {
       position,
       renderPosition: [position[0], position[1], position[2] + Z_NODE],
       angle: Math.atan2(position[1], position[0]),
-      polarPosition: Math.hypot(position[0], position[1])
+      polarPosition: Math.hypot(position[0], position[1]),
     };
   });
 
@@ -305,7 +320,5 @@ function alignNodesToRenderedLinkTargets(nodes, links) {
 }
 
 function isFinitePoint(point) {
-  return Array.isArray(point) &&
-    Number.isFinite(point[0]) &&
-    Number.isFinite(point[1]);
+  return Array.isArray(point) && Number.isFinite(point[0]) && Number.isFinite(point[1]);
 }

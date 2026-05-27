@@ -8,7 +8,7 @@ export function calculatePlaybackState({
   speed,
   totalItems,
   transitionDuration = 1.0, // Default 1s per transition
-  pauseDuration = 0.0       // Default 0s pause
+  pauseDuration = 0.0, // Default 0s pause
 }) {
   if (!startTime || totalItems <= 1) {
     const endIdx = Math.max(0, totalItems - 1);
@@ -18,15 +18,15 @@ export function calculatePlaybackState({
       fromIndex: endIdx,
       toIndex: endIdx,
       localT: 0,
-      isInPause: false
+      isInPause: false,
     };
   }
 
   const segmentCount = totalItems - 1;
 
   // Calculate total duration: T * N + P * (N-1)
-  const totalDuration = (segmentCount * transitionDuration) +
-                        (Math.max(0, segmentCount - 1) * pauseDuration);
+  const totalDuration =
+    segmentCount * transitionDuration + Math.max(0, segmentCount - 1) * pauseDuration;
 
   const elapsedSeconds = (timestamp - startTime) / 1000;
   const effectiveTime = elapsedSeconds * speed;
@@ -50,7 +50,7 @@ export function calculatePlaybackState({
   } else {
     // Earlier segments
     segmentIndex = Math.floor(clampedTime / segmentWithPause);
-    timeInSegment = clampedTime - (segmentIndex * segmentWithPause);
+    timeInSegment = clampedTime - segmentIndex * segmentWithPause;
   }
 
   segmentIndex = Math.max(0, Math.min(segmentIndex, segmentCount - 1));
@@ -79,6 +79,6 @@ export function calculatePlaybackState({
     fromIndex,
     toIndex,
     localT,
-    isInPause
+    isInPause,
   };
 }

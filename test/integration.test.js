@@ -13,33 +13,21 @@ describe('extension change metrics – deltas and classification', () => {
   });
 
   const mkLayout = (leaves) => ({
-    max_radius: Math.max(...leaves.map(l => l.radius)),
+    max_radius: Math.max(...leaves.map((l) => l.radius)),
     leaves,
   });
 
   it('computes average weighted change between two layouts', () => {
-    const layoutA = mkLayout([
-      mkLeaf(1, 0.0, 10),
-      mkLeaf(2, Math.PI / 2, 15),
-    ]);
-    const layoutB = mkLayout([
-      mkLeaf(1, 0.1, 12),
-      mkLeaf(2, Math.PI / 2 + 0.2, 14),
-    ]);
+    const layoutA = mkLayout([mkLeaf(1, 0.0, 10), mkLeaf(2, Math.PI / 2, 15)]);
+    const layoutB = mkLayout([mkLeaf(1, 0.1, 12), mkLeaf(2, Math.PI / 2 + 0.2, 14)]);
     const m = computeExtensionChangeMetrics(layoutA, layoutB);
     expect(m.compared).to.equal(2);
     expect(m.averageChange).to.be.greaterThan(0);
   });
 
   it('classifies enter/update/exit between layouts', () => {
-    const layoutA = mkLayout([
-      mkLeaf(1, 0.0, 10),
-      mkLeaf(2, Math.PI / 2, 15),
-    ]);
-    const layoutB = mkLayout([
-      mkLeaf(1, 0.1, 12),
-      mkLeaf(3, 1.0, 9),
-    ]);
+    const layoutA = mkLayout([mkLeaf(1, 0.0, 10), mkLeaf(2, Math.PI / 2, 15)]);
+    const layoutB = mkLayout([mkLeaf(1, 0.1, 12), mkLeaf(3, 1.0, 9)]);
     const { enter, update, exit } = classifyExtensionChanges(layoutA, layoutB);
     // id 1 updates; id 2 exits; id 3 enters
     expect(update).to.have.length(1);

@@ -1,4 +1,3 @@
-
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { InterpolationCache } from '../../src/treeVisualisation/deckgl/interpolation/InterpolationCache.js';
@@ -19,9 +18,12 @@ describe('InterpolationCache', () => {
       calculateLayout: sandbox.stub(),
       getConsistentRadii: sandbox.stub().returns({ extensionRadius: 10, labelRadius: 20 }),
       convertTreeToLayerData: sandbox.stub().returns({ some: 'layerData' }),
-      getLayoutCacheKey: sandbox.stub().callsFake((treeIndex) => (
-        `layout-${treeIndex}-${dimensions.width}-${dimensions.height}-${branchTransformation}`
-      ))
+      getLayoutCacheKey: sandbox
+        .stub()
+        .callsFake(
+          (treeIndex) =>
+            `layout-${treeIndex}-${dimensions.width}-${dimensions.height}-${branchTransformation}`
+        ),
     };
 
     cache = new InterpolationCache(dependencies);
@@ -71,13 +73,17 @@ describe('InterpolationCache', () => {
     cache.getOrCacheInterpolationData(tree1, tree2, 0, 1);
 
     expect(dependencies.calculateLayout.firstCall.args[1]).to.include({
-      treeIndex: 0
+      treeIndex: 0,
     });
-    expect(dependencies.calculateLayout.firstCall.args[1]).not.to.have.property('rotationAlignmentExcludeTaxa');
+    expect(dependencies.calculateLayout.firstCall.args[1]).not.to.have.property(
+      'rotationAlignmentExcludeTaxa'
+    );
     expect(dependencies.calculateLayout.secondCall.args[1]).to.include({
-      treeIndex: 1
+      treeIndex: 1,
     });
-    expect(dependencies.calculateLayout.secondCall.args[1]).not.to.have.property('rotationAlignmentExcludeTaxa');
+    expect(dependencies.calculateLayout.secondCall.args[1]).not.to.have.property(
+      'rotationAlignmentExcludeTaxa'
+    );
   });
 
   it('should return cached data on subsequent identical calls', () => {
@@ -147,7 +153,9 @@ describe('InterpolationCache', () => {
     const tree1 = { id: 1 };
     const tree2 = { id: 2 };
     let layoutVersion = 'initial';
-    dependencies.getLayoutCacheKey = sandbox.stub().callsFake((treeIndex) => `layout-${treeIndex}-${layoutVersion}`);
+    dependencies.getLayoutCacheKey = sandbox
+      .stub()
+      .callsFake((treeIndex) => `layout-${treeIndex}-${layoutVersion}`);
     cache = new InterpolationCache(dependencies);
 
     dependencies.calculateLayout.returns({});
@@ -166,20 +174,28 @@ describe('InterpolationCache', () => {
   it('ignores precomputed worker data with stale layout cache keys', () => {
     const tree1 = { id: 1 };
     const tree2 = { id: 2 };
-    const layout1 = { layoutTree: tree1, width: 800, height: 600, layoutCacheKey: 'current-0', max_radius: 42 };
-    dependencies.getLayoutCacheKey = sandbox.stub().callsFake((treeIndex) => `current-${treeIndex}`);
+    const layout1 = {
+      layoutTree: tree1,
+      width: 800,
+      height: 600,
+      layoutCacheKey: 'current-0',
+      max_radius: 42,
+    };
+    dependencies.getLayoutCacheKey = sandbox
+      .stub()
+      .callsFake((treeIndex) => `current-${treeIndex}`);
     cache = new InterpolationCache(dependencies);
 
     cache.setPrecomputedData(0, {
-      layerData: { layoutCacheKey: 'stale-0', source: 'stale-from' }
+      layerData: { layoutCacheKey: 'stale-0', source: 'stale-from' },
     });
     cache.setPrecomputedData(1, {
-      layerData: { layoutCacheKey: 'current-1', source: 'precomputed-to' }
+      layerData: { layoutCacheKey: 'current-1', source: 'precomputed-to' },
     });
     dependencies.calculateLayout.withArgs(tree1).returns(layout1);
     dependencies.convertTreeToLayerData.withArgs(layout1).returns({
       layoutCacheKey: 'current-0',
-      source: 'recalculated-from'
+      source: 'recalculated-from',
     });
 
     const result = cache.getOrCacheInterpolationData(tree1, tree2, 0, 1);
@@ -188,16 +204,30 @@ describe('InterpolationCache', () => {
     expect(dependencies.calculateLayout.firstCall.args[0]).to.equal(tree1);
     expect(result).to.deep.equal({
       dataFrom: { layoutCacheKey: 'current-0', source: 'recalculated-from', max_radius: 42 },
-      dataTo: { layoutCacheKey: 'current-1', source: 'precomputed-to' }
+      dataTo: { layoutCacheKey: 'current-1', source: 'precomputed-to' },
     });
   });
 
   it('preserves layout cache keys on synchronously calculated layer data', () => {
     const tree1 = { id: 1 };
     const tree2 = { id: 2 };
-    const layout1 = { layoutTree: tree1, width: 800, height: 600, layoutCacheKey: 'current-0', max_radius: 42 };
-    const layout2 = { layoutTree: tree2, width: 800, height: 600, layoutCacheKey: 'current-1', max_radius: 84 };
-    dependencies.getLayoutCacheKey = sandbox.stub().callsFake((treeIndex) => `current-${treeIndex}`);
+    const layout1 = {
+      layoutTree: tree1,
+      width: 800,
+      height: 600,
+      layoutCacheKey: 'current-0',
+      max_radius: 42,
+    };
+    const layout2 = {
+      layoutTree: tree2,
+      width: 800,
+      height: 600,
+      layoutCacheKey: 'current-1',
+      max_radius: 84,
+    };
+    dependencies.getLayoutCacheKey = sandbox
+      .stub()
+      .callsFake((treeIndex) => `current-${treeIndex}`);
     cache = new InterpolationCache(dependencies);
 
     dependencies.calculateLayout.withArgs(tree1).returns(layout1);
@@ -209,7 +239,7 @@ describe('InterpolationCache', () => {
 
     expect(result).to.deep.equal({
       dataFrom: { source: 'from', max_radius: 42, layoutCacheKey: 'current-0' },
-      dataTo: { source: 'to', max_radius: 84, layoutCacheKey: 'current-1' }
+      dataTo: { source: 'to', max_radius: 84, layoutCacheKey: 'current-1' },
     });
   });
 
@@ -231,12 +261,11 @@ describe('InterpolationCache', () => {
   });
 
   it('should handle missing layout gracefully', () => {
-     // simulate calculateLayout returning null
-     dependencies.calculateLayout.returns(null);
+    // simulate calculateLayout returning null
+    dependencies.calculateLayout.returns(null);
 
-     const result = cache.getOrCacheInterpolationData({}, {}, 0, 1);
+    const result = cache.getOrCacheInterpolationData({}, {}, 0, 1);
 
-     expect(result).to.deep.equal({ dataFrom: null, dataTo: null });
+    expect(result).to.deep.equal({ dataFrom: null, dataTo: null });
   });
-
 });

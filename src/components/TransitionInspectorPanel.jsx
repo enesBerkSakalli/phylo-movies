@@ -34,28 +34,32 @@ export function TransitionInspectorPanel() {
   const msaWindowSize = useAppStore(selectMsaWindowSize);
   const msaColumnCount = useAppStore(selectMsaColumnCount);
   const segment = Number.isInteger(segmentIndex)
-    ? movieTimelineManager?.getSegment?.(segmentIndex) ?? null
+    ? (movieTimelineManager?.getSegment?.(segmentIndex) ?? null)
     : null;
 
-  const details = useMemo(() => buildInspectorDetails({
-    segment,
-    leafNamesByIndex,
-    pairMetrics,
-    scaleList,
-    hasMsa,
-    msaStepSize,
-    msaWindowSize,
-    msaColumnCount,
-  }), [
-    segment,
-    leafNamesByIndex,
-    pairMetrics,
-    scaleList,
-    hasMsa,
-    msaStepSize,
-    msaWindowSize,
-    msaColumnCount,
-  ]);
+  const details = useMemo(
+    () =>
+      buildInspectorDetails({
+        segment,
+        leafNamesByIndex,
+        pairMetrics,
+        scaleList,
+        hasMsa,
+        msaStepSize,
+        msaWindowSize,
+        msaColumnCount,
+      }),
+    [
+      segment,
+      leafNamesByIndex,
+      pairMetrics,
+      scaleList,
+      hasMsa,
+      msaStepSize,
+      msaWindowSize,
+      msaColumnCount,
+    ]
+  );
 
   if (!segment) return null;
 
@@ -80,7 +84,8 @@ export function TransitionInspectorPanel() {
             </Badge>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            Segment {segmentIndex + 1}{totalSegments ? ` of ${totalSegments}` : ''}
+            Segment {segmentIndex + 1}
+            {totalSegments ? ` of ${totalSegments}` : ''}
           </p>
         </div>
         <Button
@@ -142,7 +147,9 @@ function KeyValue({ label, value }) {
   return (
     <div className="grid grid-cols-[6.5rem_1fr] gap-3 text-xs">
       <span className="text-muted-foreground">{label}</span>
-      <span className="min-w-0 break-words font-medium text-foreground">{value ?? 'Unavailable'}</span>
+      <span className="min-w-0 break-words font-medium text-foreground">
+        {value ?? 'Unavailable'}
+      </span>
     </div>
   );
 }
@@ -168,12 +175,18 @@ function SubtreeList({ groups }) {
   return (
     <div className="flex flex-wrap gap-1.5 pt-1">
       {visibleGroups.map((names, index) => (
-        <Badge key={`${names.join('|')}-${index}`} variant="secondary" className="max-w-full text-2xs">
+        <Badge
+          key={`${names.join('|')}-${index}`}
+          variant="secondary"
+          className="max-w-full text-2xs"
+        >
           <span className="truncate">{formatSubtreeNames(names)}</span>
         </Badge>
       ))}
       {hiddenCount > 0 && (
-        <Badge variant="outline" className="text-2xs">+{hiddenCount} more</Badge>
+        <Badge variant="outline" className="text-2xs">
+          +{hiddenCount} more
+        </Badge>
       )}
     </div>
   );
@@ -198,9 +211,13 @@ function buildInspectorDetails({
   const sourceGlobalIndex = resolveSourceGlobalIndex(segment);
   const scaleValue = getScaleValue(scaleList, sourceGlobalIndex);
   const msaFrameIndex = resolveMsaFrameIndex(segment, pair);
-  const msaWindow = hasMsa && Number.isFinite(msaFrameIndex) && Number.isFinite(msaColumnCount) && msaColumnCount > 0
-    ? calculateWindow(msaFrameIndex, msaStepSize, msaWindowSize, msaColumnCount || 0)
-    : null;
+  const msaWindow =
+    hasMsa &&
+    Number.isFinite(msaFrameIndex) &&
+    Number.isFinite(msaColumnCount) &&
+    msaColumnCount > 0
+      ? calculateWindow(msaFrameIndex, msaStepSize, msaWindowSize, msaColumnCount || 0)
+      : null;
 
   return {
     name: formatTreeName(segment),
@@ -259,7 +276,9 @@ function resolveGeneratedFrameCount(segment) {
 
 function resolveAnimationStepCount(segment) {
   if (Number.isInteger(segment.animationStepCount)) return segment.animationStepCount;
-  return Array.isArray(segment.interpolationData) ? Math.max(0, segment.interpolationData.length - 1) : null;
+  return Array.isArray(segment.interpolationData)
+    ? Math.max(0, segment.interpolationData.length - 1)
+    : null;
 }
 
 function resolveMsaFrameIndex(segment, pair) {

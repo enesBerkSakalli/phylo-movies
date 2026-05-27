@@ -4,9 +4,11 @@ const {
   applyStageEasing,
   easeIn,
   easeOut,
-  easeInOut
+  easeInOut,
 } = require('../../src/treeVisualisation/deckgl/interpolation/stages/stageEasing.js');
-const { ANIMATION_STAGES } = require('../../src/treeVisualisation/deckgl/interpolation/stages/animationStageDetector.js');
+const {
+  ANIMATION_STAGES,
+} = require('../../src/treeVisualisation/deckgl/interpolation/stages/animationStageDetector.js');
 
 describe('StageEasing', () => {
   describe('applyStageEasing()', () => {

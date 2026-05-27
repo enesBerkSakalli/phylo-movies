@@ -26,12 +26,15 @@ describe('Color System TDD (Performance & Quality)', () => {
         if (contrast <= 45) {
           failures.push({
             color: color.toString({ format: 'hex' }),
-            contrast: contrast
+            contrast: contrast,
           });
         }
       }
 
-      expect(failures.length, `Found ${failures.length} colors with poor contrast (< 45 Lc)`).to.equal(0);
+      expect(
+        failures.length,
+        `Found ${failures.length} colors with poor contrast (< 45 Lc)`
+      ).to.equal(0);
     });
   });
 
@@ -41,14 +44,14 @@ describe('Color System TDD (Performance & Quality)', () => {
       const dummyTargets = Array.from({ length: 10 }, (_, i) => ({ name: `Group ${i}` }));
       colorManager.applyColorScheme('default', dummyTargets, true); // true = isGroup
 
-      const colors = Object.values(colorManager.groupColorMap).map(rgb =>
-        new Color('srgb', [rgb[0] / 255, rgb[1] / 255, rgb[2] / 255])
+      const colors = Object.values(colorManager.groupColorMap).map(
+        (rgb) => new Color('srgb', [rgb[0] / 255, rgb[1] / 255, rgb[2] / 255])
       );
 
       let minDistance = Infinity;
       for (let i = 0; i < colors.length; i++) {
         for (let j = i + 1; j < colors.length; j++) {
-          const d = colors[i].deltaE(colors[j], "2000");
+          const d = colors[i].deltaE(colors[j], '2000');
           if (d < minDistance) minDistance = d;
         }
       }
@@ -71,16 +74,19 @@ describe('Color System TDD (Performance & Quality)', () => {
       expect(colors.length).to.equal(10); // Should use all 10
 
       // Verify they are all unique
-      const uniqueStrings = new Set(colors.map(c => c.join(',')));
+      const uniqueStrings = new Set(colors.map((c) => c.join(',')));
       expect(uniqueStrings.size).to.equal(10, 'Should retain 10 unique colors');
 
       // Verify all pass contrast (using new threshold of 45 for visual elements)
       const white = new Color('white');
-      colors.forEach(rgb => {
-        const color = new Color("srgb", [rgb[0] / 255, rgb[1] / 255, rgb[2] / 255]);
-        const contrast = Math.abs(white.contrast(color, "APCA"));
+      colors.forEach((rgb) => {
+        const color = new Color('srgb', [rgb[0] / 255, rgb[1] / 255, rgb[2] / 255]);
+        const contrast = Math.abs(white.contrast(color, 'APCA'));
         // We allow >= 44.9 due to floating point
-        expect(contrast).to.be.at.least(44.9, `Color ${color.toString()} should meet contrast specs`);
+        expect(contrast).to.be.at.least(
+          44.9,
+          `Color ${color.toString()} should meet contrast specs`
+        );
       });
     });
   });

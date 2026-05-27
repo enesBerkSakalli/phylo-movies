@@ -6,29 +6,28 @@
 // Lightweight perf counters used by tests/scripts; gated by PERF_DEBUG for timings
 const perfCounters = {
   layerCreations: 0,
-  creationTimes: []
+  creationTimes: [],
 };
 
 function isPerfEnabled() {
   // Supports both bundler env and runtime toggles
-  const envFlag =
-    typeof process !== 'undefined' && process?.env?.PERF_DEBUG;
-  const runtimeFlag =
-    typeof globalThis !== 'undefined' && globalThis?.PERF_DEBUG;
+  const envFlag = typeof process !== 'undefined' && process?.env?.PERF_DEBUG;
+  const runtimeFlag = typeof globalThis !== 'undefined' && globalThis?.PERF_DEBUG;
   return !!(envFlag || runtimeFlag);
 }
 
 export function createLayer(config, props = {}) {
-
   const perfEnabled = isPerfEnabled();
   const start = perfEnabled
-    ? (typeof performance !== 'undefined' && performance?.now ? performance.now() : Date.now())
+    ? typeof performance !== 'undefined' && performance?.now
+      ? performance.now()
+      : Date.now()
     : null;
 
   const defaultProps = config.defaultProps || {};
 
   // ID policy: allow props.id, otherwise config.id
-  const id = (props.id ?? config.id);
+  const id = props.id ?? config.id;
   if (typeof id !== 'string' || id.length === 0) {
     throw new Error('[createLayer] Invalid layer id');
   }
@@ -36,7 +35,7 @@ export function createLayer(config, props = {}) {
   // Merge nested props that should not be clobbered
   const mergedParameters = {
     ...(defaultProps.parameters || {}),
-    ...(props.parameters || {})
+    ...(props.parameters || {}),
   };
 
   // Merge extensions: concat, de-dup by constructor name
@@ -55,7 +54,7 @@ export function createLayer(config, props = {}) {
 
   const mergedUpdateTriggers = {
     ...(defaultProps.updateTriggers || {}),
-    ...(props.updateTriggers || {})
+    ...(props.updateTriggers || {}),
   };
 
   const layerProps = {
@@ -64,14 +63,15 @@ export function createLayer(config, props = {}) {
     id,
     parameters: mergedParameters,
     extensions: dedupedExtensions,
-    updateTriggers: mergedUpdateTriggers
+    updateTriggers: mergedUpdateTriggers,
   };
 
   const layer = new config.LayerClass(layerProps);
 
   perfCounters.layerCreations += 1;
   if (perfEnabled && start !== null) {
-    const end = typeof performance !== 'undefined' && performance?.now ? performance.now() : Date.now();
+    const end =
+      typeof performance !== 'undefined' && performance?.now ? performance.now() : Date.now();
     perfCounters.creationTimes.push(Math.max(0, end - start));
   }
 
@@ -86,6 +86,6 @@ export function resetPerf() {
 export function getPerfSnapshot() {
   return {
     layerCreations: perfCounters.layerCreations,
-    creationTimes: [...perfCounters.creationTimes]
+    creationTimes: [...perfCounters.creationTimes],
   };
 }

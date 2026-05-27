@@ -12,7 +12,7 @@ const legacyTerms = [
   'MarkedSubtrees',
   'markedColor',
   'currentMovingSubtrees',
-  'CurrentMovingSubtree'
+  'CurrentMovingSubtree',
 ];
 
 function sourceFiles(dir) {

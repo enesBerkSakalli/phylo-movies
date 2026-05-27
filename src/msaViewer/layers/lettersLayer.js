@@ -15,10 +15,15 @@ import { TextLayer } from '@deck.gl/layers';
  * @param {number} zoomScale - Current zoom scale factor
  * @returns {Array} Text data array
  */
-export function buildTextData(cellSize, sequences, visibleRange, showLetters, optionsCellSize, zoomScale) {
-  if (!showLetters ||
-      (optionsCellSize * zoomScale < 8) ||
-      !sequences || sequences.length === 0) {
+export function buildTextData(
+  cellSize,
+  sequences,
+  visibleRange,
+  showLetters,
+  optionsCellSize,
+  zoomScale
+) {
+  if (!showLetters || optionsCellSize * zoomScale < 8 || !sequences || sequences.length === 0) {
     return [];
   }
 
@@ -37,7 +42,7 @@ export function buildTextData(cellSize, sequences, visibleRange, showLetters, op
           kind: 'text',
           position: [c * cellSize + cellSize / 2, r * cellSize + cellSize / 2, 0],
           text: ch,
-          cellSize // Pass cellSize for getSize in 'common' units
+          cellSize, // Pass cellSize for getSize in 'common' units
         });
       }
     }
@@ -56,12 +61,12 @@ export function createLettersLayer(textData) {
     id: 'letters',
     data: textData,
     pickable: false,
-    getText: d => d.text,
-    getPosition: d => d.position,
+    getText: (d) => d.text,
+    getPosition: (d) => d.position,
     sizeUnits: 'common',
-    getSize: d => d.cellSize * 0.65, // 65% of cell height for breathing room
-    sizeMinPixels: 6,     // Readability floor
-    sizeMaxPixels: 16,    // Aesthetic ceiling
+    getSize: (d) => d.cellSize * 0.65, // 65% of cell height for breathing room
+    sizeMinPixels: 6, // Readability floor
+    sizeMaxPixels: 16, // Aesthetic ceiling
     getColor: [0, 0, 0, 255],
     getTextAnchor: 'middle',
     getAlignmentBaseline: 'center',

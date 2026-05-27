@@ -119,11 +119,11 @@ export const createSprMoveEventCsv = (
     event.destinationMovedSubtreeBranchValue?.displayValue ?? '',
     event.sourceAncestorBranchValue?.displayValue ?? '',
     event.destinationAncestorBranchValue?.displayValue ?? '',
-    event.sourceMovedSubtreeBranchValue?.label
-      ?? event.destinationMovedSubtreeBranchValue?.label
-      ?? event.sourceAncestorBranchValue?.label
-      ?? event.destinationAncestorBranchValue?.label
-      ?? '',
+    event.sourceMovedSubtreeBranchValue?.label ??
+      event.destinationMovedSubtreeBranchValue?.label ??
+      event.sourceAncestorBranchValue?.label ??
+      event.destinationAncestorBranchValue?.label ??
+      '',
     event.branchValueClass ?? '',
     event.contextBranchValueClass ?? '',
     formatStepRange(event.stepRange),

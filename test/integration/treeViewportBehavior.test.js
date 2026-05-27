@@ -9,7 +9,7 @@ import { VIEWPORT_FIT_OBSTRUCTION_SCOPES } from '../../src/treeVisualisation/spa
 import { StaticRenderer } from '../../src/treeVisualisation/systems/StaticRenderer.js';
 import {
   VIEWPORT_AUTOMATIC_BRANCH_DETAIL_ZOOM_DELTA,
-  VIEWPORT_FIT_MODES
+  VIEWPORT_FIT_MODES,
 } from '../../src/treeVisualisation/viewport/viewportFit.js';
 
 class MockWorker {

@@ -5,8 +5,16 @@ import {
   parseSubtreeHighlightEntry,
   collectUniqueSubtrees,
 } from '../../../domain/tree/splits.js';
-import { findPreviousInputTreeSequenceIndex, findNextInputTreeSequenceIndex } from '../../../domain/indexing/treeIndexSemantics.js';
-import { selectInputFrameIndices, selectPairById, selectPivotEdgeForFrame, selectTimelineFrameAtIndex } from '../selectors/treeSelectors.js';
+import {
+  findPreviousInputTreeSequenceIndex,
+  findNextInputTreeSequenceIndex,
+} from '../../../domain/indexing/treeIndexSemantics.js';
+import {
+  selectInputFrameIndices,
+  selectPairById,
+  selectPivotEdgeForFrame,
+  selectTimelineFrameAtIndex,
+} from '../selectors/treeSelectors.js';
 
 // ============================================================================
 // SYSTEM HELPERS (Rendering, Persistence, Storage)
@@ -29,11 +37,15 @@ export function calculateChangePreviews(state, indexOverride = null) {
   const nextInputTreeIndex = findNextInputTreeSequenceIndex(inputTreeIndices, frameIndex);
   const currentEdge = selectPivotEdgeForFrame(state, frameIndex);
   // Must use toSubtreeKey to match how collectUniqueEdges generates keys (was JSON.stringify which caused mismatch)
-  const currentKey = Array.isArray(currentEdge) && currentEdge.length > 0
-    ? toSubtreeKey(currentEdge)
-    : null;
+  const currentKey =
+    Array.isArray(currentEdge) && currentEdge.length > 0 ? toSubtreeKey(currentEdge) : null;
 
-  const completed = collectUniquePivotEdges(state, previousInputTreeIndex + 1, frameIndex, currentKey);
+  const completed = collectUniquePivotEdges(
+    state,
+    previousInputTreeIndex + 1,
+    frameIndex,
+    currentKey
+  );
 
   if (nextInputTreeIndex === null) {
     return { upcoming: [], completed };

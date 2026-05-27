@@ -1,16 +1,16 @@
-import React, { useEffect, useMemo, useState, useId } from "react";
-import { Button } from "../../ui/button";
-import { Input } from "../../ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "../../ui/popover";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../../ui/tooltip";
-import { CATEGORICAL_PALETTES } from "../../../constants/ColorPalettes.js";
+import React, { useEffect, useMemo, useState, useId } from 'react';
+import { Button } from '../../ui/button';
+import { Input } from '../../ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '../../ui/popover';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../../ui/tooltip';
+import { CATEGORICAL_PALETTES } from '../../../constants/ColorPalettes.js';
 
 const HEX_COLOR_PATTERN = /^#[0-9A-Fa-f]{6}$/;
 
 export function ColorSwatchInput({ label, color, onChange }) {
   const [open, setOpen] = useState(false);
   const controlId = useId();
-  const displayColor = HEX_COLOR_PATTERN.test(color || "") ? color : "#000000";
+  const displayColor = HEX_COLOR_PATTERN.test(color || '') ? color : '#000000';
   const [customColor, setCustomColor] = useState(displayColor);
 
   useEffect(() => {
@@ -22,7 +22,9 @@ export function ColorSwatchInput({ label, color, onChange }) {
   // Quick colors: first 4 palettes, first 5 colors each
   const quickColors = useMemo(() => {
     const set = new Set();
-    Object.values(CATEGORICAL_PALETTES).slice(0, 4).forEach(p => p.slice(0, 5).forEach(c => set.add(c)));
+    Object.values(CATEGORICAL_PALETTES)
+      .slice(0, 4)
+      .forEach((p) => p.slice(0, 5).forEach((c) => set.add(c)));
     return Array.from(set);
   }, []);
 
@@ -56,7 +58,9 @@ export function ColorSwatchInput({ label, color, onChange }) {
           </PopoverTrigger>
           <PopoverContent className="z-[1300] w-64 space-y-4 p-4 border-border/60" align="start">
             <div className="space-y-2">
-              <p className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground/70">Quick Colors</p>
+              <p className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground/70">
+                Quick Colors
+              </p>
               <div className="grid grid-cols-10 gap-2">
                 {quickColors.map((c) => (
                   <Tooltip key={c}>
@@ -68,17 +72,24 @@ export function ColorSwatchInput({ label, color, onChange }) {
                         className="h-5 w-5 border border-input p-0 hover:scale-110 transition-transform active:scale-95"
                         style={{ backgroundColor: c }}
                         aria-label={`Apply ${c} to ${label}`}
-                        onClick={() => { commitColor(c); setOpen(false); }}
+                        onClick={() => {
+                          commitColor(c);
+                          setOpen(false);
+                        }}
                       />
                     </TooltipTrigger>
-                    <TooltipContent side="top" className="text-2xs py-1 px-2">{c}</TooltipContent>
+                    <TooltipContent side="top" className="text-2xs py-1 px-2">
+                      {c}
+                    </TooltipContent>
                   </Tooltip>
                 ))}
               </div>
             </div>
 
             <div className="space-y-2 pt-1 border-t border-border/40">
-              <p className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground/70">Custom Color</p>
+              <p className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground/70">
+                Custom Color
+              </p>
               <div className="flex items-center gap-2">
                 <div className="relative group">
                   <Input
@@ -97,14 +108,23 @@ export function ColorSwatchInput({ label, color, onChange }) {
                   onChange={handleCustomColorChange}
                   className="h-8 font-mono text-[11px] uppercase"
                 />
-                <Button size="sm" variant="secondary" className="h-8 px-3 text-xs" onClick={() => setOpen(false)}>Done</Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="h-8 px-3 text-xs"
+                  onClick={() => setOpen(false)}
+                >
+                  Done
+                </Button>
               </div>
             </div>
           </PopoverContent>
         </Popover>
         <div className="flex flex-col min-w-0 leading-tight">
           <span className="text-[10.5px] font-medium text-foreground truncate">{label}</span>
-          <span className="text-[9px] font-mono text-muted-foreground/70 uppercase tracking-tighter">{displayColor}</span>
+          <span className="text-[9px] font-mono text-muted-foreground/70 uppercase tracking-tighter">
+            {displayColor}
+          </span>
         </div>
       </div>
     </div>

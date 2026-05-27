@@ -9,7 +9,15 @@ import { TIMELINE_CONSTANTS } from '../constants.js';
  * - keep scrub-specific transient state out of the manager
  */
 export class TimelineScrubController {
-  constructor({ timelineDataset, timelineData, segments, store, getTimelineRenderer, getScrubberAPI, stopPlayback }) {
+  constructor({
+    timelineDataset,
+    timelineData,
+    segments,
+    store,
+    getTimelineRenderer,
+    getScrubberAPI,
+    stopPlayback,
+  }) {
     this.timelineDataset = timelineDataset;
     this.timelineData = timelineData;
     this.segments = segments;
@@ -87,9 +95,7 @@ export class TimelineScrubController {
 
     const scrubberAPI = this.getScrubberAPI();
     const finalProgress = this._timeToProgress(finalTimeMs);
-    const lastState = scrubberAPI
-      ? await scrubberAPI.endScrubbing(finalProgress)
-      : null;
+    const lastState = scrubberAPI ? await scrubberAPI.endScrubbing(finalProgress) : null;
 
     this.isScrubbing = false;
     this.lastScrubEndTime = performance.now();
@@ -97,11 +103,15 @@ export class TimelineScrubController {
     this._clearPendingFrame();
 
     if (lastState?.transitionFrame) {
-      this.store.getState().setTimelineProgress(finalProgress, lastState.transitionFrame.cursorTreeIndex);
+      this.store
+        .getState()
+        .setTimelineProgress(finalProgress, lastState.transitionFrame.cursorTreeIndex);
       return;
     }
 
-    const cursor = this.timelineDataset.getCursorAtTimelineProgress(finalProgress, { bias: 'nearest' });
+    const cursor = this.timelineDataset.getCursorAtTimelineProgress(finalProgress, {
+      bias: 'nearest',
+    });
 
     this.store.getState().setTimelineProgress(finalProgress, cursor.frameIndex);
   }

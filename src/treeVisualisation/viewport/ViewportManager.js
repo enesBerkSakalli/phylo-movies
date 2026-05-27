@@ -10,7 +10,6 @@ import { calculateViewportFitAreas } from '../spatial/layout.js';
 import { calculateFocusViewport, VIEWPORT_FIT_MODES } from './viewportFit.js';
 
 export class ViewportManager {
-
   // ==========================================================================
   // CONSTRUCTOR
   // ==========================================================================
@@ -47,13 +46,16 @@ export class ViewportManager {
     const { playing } = useAppStore.getState();
     if (playing && !options.allowDuringPlayback) return;
     const fitMode = options.fitMode ?? VIEWPORT_FIT_MODES.BRANCH;
-    const { width: canvasWidth, height: canvasHeight } = this.controller.deckContext.getCanvasDimensions();
+    const { width: canvasWidth, height: canvasHeight } =
+      this.controller.deckContext.getCanvasDimensions();
     const fitAreas = this.getViewportFitAreas({
-      obstructionScope: options.obstructionScope
+      obstructionScope: options.obstructionScope,
     });
-    const getLabelSize = options.getLabelSize ?? this.controller.layerManager.layerStyles.getLabelSize?.bind(
-      this.controller.layerManager.layerStyles
-    );
+    const getLabelSize =
+      options.getLabelSize ??
+      this.controller.layerManager.layerStyles.getLabelSize?.bind(
+        this.controller.layerManager.layerStyles
+      );
     const activeView = this.controller.deckContext.getActiveView();
     const currentViewState = this.controller.deckContext.getViewState();
     const { target, zoom } = calculateFocusViewport({
@@ -70,7 +72,7 @@ export class ViewportManager {
       maxFitAreaCenterDriftRatio: options.maxFitAreaCenterDriftRatio,
       maxZoomOverAutoVisibleFit: options.maxZoomOverAutoVisibleFit,
       activeView,
-      currentViewState
+      currentViewState,
     });
 
     this.controller.deckContext.transitionTo({
@@ -78,7 +80,7 @@ export class ViewportManager {
       zoom,
       duration: options.duration ?? 550,
       easing: options.easing, // DeckGLContext will use default if undefined
-      interpolator: options.interpolator
+      interpolator: options.interpolator,
     });
   }
 
@@ -88,8 +90,7 @@ export class ViewportManager {
 
   getViewportFitAreas(options = {}) {
     return calculateViewportFitAreas(this.controller.deckContext?.container, {
-      obstructionScope: options.obstructionScope
+      obstructionScope: options.obstructionScope,
     });
   }
-
 }

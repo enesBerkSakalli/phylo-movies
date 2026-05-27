@@ -8,7 +8,7 @@ import { validatePhyloMovieData } from '../../domain/backend/phyloMovieSchema.ts
 
 // Storage keys
 const STORAGE_KEYS = {
-  PHYLO_DATA: "phyloMovieData"
+  PHYLO_DATA: 'phyloMovieData',
 };
 
 /**
@@ -30,8 +30,13 @@ const storage = {
     } catch (error) {
       // Handle IndexedDB quota/memory errors
       if (error.name === 'DataCloneError' || error.message?.includes('out of memory')) {
-        console.error(`[DataService] Data too large to store in IndexedDB. Trees: ${value?.interpolated_trees?.length || 'unknown'}`);
-        throw new Error(`Dataset too large for browser storage. Try reducing the number of trees or window size.`, { cause: error });
+        console.error(
+          `[DataService] Data too large to store in IndexedDB. Trees: ${value?.interpolated_trees?.length || 'unknown'}`
+        );
+        throw new Error(
+          `Dataset too large for browser storage. Try reducing the number of trees or window size.`,
+          { cause: error }
+        );
       }
       console.error(`[DataService] Error storing ${key}:`, error);
       throw error;
@@ -44,7 +49,7 @@ const storage = {
     } catch (error) {
       console.error(`[DataService] Error removing ${key}:`, error);
     }
-  }
+  },
 };
 
 /**
@@ -55,7 +60,7 @@ export const phyloData = {
     const data = await storage.get(STORAGE_KEYS.PHYLO_DATA);
 
     if (!data) {
-      console.warn("[DataService] No phyloMovieData found");
+      console.warn('[DataService] No phyloMovieData found');
       return null;
     }
 
@@ -79,5 +84,5 @@ export const phyloData = {
 
   validate(data) {
     return validatePhyloMovieData(data);
-  }
+  },
 };

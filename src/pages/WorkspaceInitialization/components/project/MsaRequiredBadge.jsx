@@ -1,10 +1,6 @@
 import React from 'react';
 import { Badge } from '../../../../components/ui/badge';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '../../../../components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../../../../components/ui/tooltip';
 
 export function MsaRequiredBadge({ description }) {
   return (

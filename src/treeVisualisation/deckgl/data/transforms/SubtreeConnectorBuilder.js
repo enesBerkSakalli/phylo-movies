@@ -1,12 +1,12 @@
 import { flattenSplitSets, getBackendSplitMapValue } from '../../../../domain/tree/splits.js';
 import {
   normalizeConnectorSubtreeHighlightsToSets,
-  toConnectorSubtreeSetList
+  toConnectorSubtreeSetList,
 } from './ConnectorSplitNormalization.js';
 import { buildRawConnectorConnections } from './ConnectorRawConnections.js';
 import {
   sortConnectorConnectionsByAngle,
-  splitActivePassiveConnectorConnections
+  splitActivePassiveConnectorConnections,
 } from './ConnectorConnectionOrdering.js';
 import { groupPassiveConnectorConnections } from './ConnectorPassiveGroups.js';
 import { buildConnectorPathConnections } from './ConnectorPathBuilder.js';
@@ -41,7 +41,9 @@ export function buildSubtreeConnectors(options) {
   }
 
   const jumpingSubtreeSets = toConnectorSubtreeSetList(flattenedSubtrees);
-  const currentSubtreeSets = normalizeConnectorSubtreeHighlightsToSets(subtreeHighlightTracking?.[frameIndex]);
+  const currentSubtreeSets = normalizeConnectorSubtreeHighlightsToSets(
+    subtreeHighlightTracking?.[frameIndex]
+  );
   const rawConnections = buildRawConnectorConnections({
     leftPositions,
     rightPositions,
@@ -55,9 +57,18 @@ export function buildSubtreeConnectors(options) {
     return [];
   }
 
-  const sortedConnections = sortConnectorConnectionsByAngle(rawConnections, leftCenter, rightCenter);
-  const { activeConnections, passiveConnections } = splitActivePassiveConnectorConnections(sortedConnections);
-  const passiveConnectionGroups = groupPassiveConnectorConnections(passiveConnections, leftPositions, rightPositions);
+  const sortedConnections = sortConnectorConnectionsByAngle(
+    rawConnections,
+    leftCenter,
+    rightCenter
+  );
+  const { activeConnections, passiveConnections } =
+    splitActivePassiveConnectorConnections(sortedConnections);
+  const passiveConnectionGroups = groupPassiveConnectorConnections(
+    passiveConnections,
+    leftPositions,
+    rightPositions
+  );
   return buildConnectorPathConnections({
     activeConnections,
     passiveConnectionGroups,

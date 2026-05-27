@@ -1,4 +1,4 @@
-import { hierarchy } from "d3-hierarchy";
+import { hierarchy } from 'd3-hierarchy';
 import { transformBranchLengths } from '../../domain/tree/branchTransform.js';
 import { createLayoutResult } from './LayoutResultAdapter.js';
 import {
@@ -19,7 +19,7 @@ import {
   setAngleOffsetRadians,
   setLayoutDimensions,
   setLayoutMargin,
-  setRadiusPreservation
+  setRadiusPreservation,
 } from './LayoutBaseUtils.js';
 
 /** Class for calculating radial tree layout coordinates. */
@@ -90,7 +90,6 @@ export class RadialTreeLayout {
   calcRadius(node, radius = 0) {
     calculateBranchLengthRadii(this, node, radius);
   }
-
 
   /**
    * Set radius preservation mode for IT → C transitions
@@ -233,11 +232,7 @@ export class RadialTreeLayout {
       const maxRadius = this.getMaxRadius(this.root);
 
       // Use standard scaling
-      this.scale = this.calculateContainerScale(
-        minWindowSize,
-        maxRadius,
-        2.0
-      );
+      this.scale = this.calculateContainerScale(minWindowSize, maxRadius, 2.0);
 
       this.scaleRadius(this.root, this.scale);
     }
@@ -250,21 +245,21 @@ export class RadialTreeLayout {
     return this.root;
   }
 
-
   /**
    * Calculate the scale factor to fit tree within container dimensions
    */
   calculateContainerScale(minWindowSize, maxRadius, factor) {
-    return calculateContainerScale(this.containerWidth, this.containerHeight, minWindowSize, maxRadius, factor);
+    return calculateContainerScale(
+      this.containerWidth,
+      this.containerHeight,
+      minWindowSize,
+      maxRadius,
+      factor
+    );
   }
-
 }
 
-export default function createRadialTreeLayout(
-  tree,
-  branchTransformation = 'none',
-  options = {}
-) {
+export default function createRadialTreeLayout(tree, branchTransformation = 'none', options = {}) {
   // Apply branch length transformation before layout
   const transformedTree = transformBranchLengths(tree, branchTransformation);
   const treeLayout = new RadialTreeLayout(transformedTree);
@@ -297,6 +292,6 @@ export default function createRadialTreeLayout(
     height,
     margin,
     scale: treeLayout.scale,
-    uniformScale: treeLayout.uniformScale
+    uniformScale: treeLayout.uniformScale,
   });
 }

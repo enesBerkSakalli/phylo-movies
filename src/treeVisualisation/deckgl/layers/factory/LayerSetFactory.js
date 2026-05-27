@@ -12,7 +12,7 @@ import { BRANCH_ANNOTATION_NONE } from '../../../../domain/tree/branchSupportInd
 
 export const DEFAULT_LAYER_SET_CONFIGS = {
   ...LAYER_CONFIGS,
-  labelDots: LABEL_DOTS_CONFIG
+  labelDots: LABEL_DOTS_CONFIG,
 };
 
 const addTreeSide = (items, treeSide) => {
@@ -25,7 +25,7 @@ const shouldCreateLayer = (data, skipEmpty) => {
 
 const semanticConfig = (config, suffix) => ({
   ...config,
-  id: `${config.id}-${suffix}`
+  id: `${config.id}-${suffix}`,
 });
 
 const withOptionalModelMatrix = (props, modelMatrix) => {
@@ -37,11 +37,12 @@ const createConfiguredLayer = ({
   props,
   modelMatrix,
   sideSuffixData = null,
-  useSideSuffix = true
+  useSideSuffix = true,
 }) => {
-  const layerConfig = useSideSuffix && sideSuffixData
-    ? { ...config, id: withSideSuffix(config.id, sideSuffixData) }
-    : config;
+  const layerConfig =
+    useSideSuffix && sideSuffixData
+      ? { ...config, id: withSideSuffix(config.id, sideSuffixData) }
+      : config;
 
   return createLayer(layerConfig, withOptionalModelMatrix(props, modelMatrix));
 };
@@ -54,7 +55,7 @@ export function createTreeLayerSet({
   modelMatrix = null,
   treeSide = null,
   skipEmpty = false,
-  useSideSuffix = true
+  useSideSuffix = true,
 }) {
   if (!data) return [];
 
@@ -68,133 +69,164 @@ export function createTreeLayerSet({
   const supportLabelsVisible = supportValueKey !== BRANCH_ANNOTATION_NONE;
   const supportLabels = supportLabelsVisible ? buildSupportLabelData(links, supportValueKey) : [];
   const cached = layerStyles.getCachedState(state);
-  const partitioned = partitionTreeLayerData({
-    nodes,
-    links,
-    labels,
-    extensions
-  }, cached);
+  const partitioned = partitionTreeLayerData(
+    {
+      nodes,
+      links,
+      labels,
+      extensions,
+    },
+    cached
+  );
 
   return [
-    shouldCreateLayer(connectors, skipEmpty) && createConfiguredLayer({
-      config: configs.connectors,
-      props: getConnectorsLayerProps(connectors, state),
-      modelMatrix
-    }),
-    shouldCreateLayer(partitioned.links.base, skipEmpty) && createConfiguredLayer({
-      config: semanticConfig(configs.linkOutlines, 'base'),
-      props: getLinkOutlinesLayerProps(partitioned.links.base, state, layerStyles),
-      modelMatrix
-    }),
-    shouldCreateLayer(partitioned.links.history, skipEmpty) && createConfiguredLayer({
-      config: semanticConfig(configs.linkOutlines, 'history'),
-      props: getLinkOutlinesLayerProps(partitioned.links.history, state, layerStyles),
-      modelMatrix
-    }),
-    shouldCreateLayer(partitioned.links.marked, skipEmpty) && createConfiguredLayer({
-      config: semanticConfig(configs.linkOutlines, 'marked'),
-      props: getLinkOutlinesLayerProps(partitioned.links.marked, state, layerStyles),
-      modelMatrix
-    }),
-    shouldCreateLayer(partitioned.links.base, skipEmpty) && createConfiguredLayer({
-      config: semanticConfig(configs.links, 'base'),
-      props: getLinksLayerProps(partitioned.links.base, state, layerStyles),
-      modelMatrix
-    }),
-    shouldCreateLayer(partitioned.links.history, skipEmpty) && createConfiguredLayer({
-      config: semanticConfig(configs.links, 'history'),
-      props: getLinksLayerProps(partitioned.links.history, state, layerStyles),
-      modelMatrix
-    }),
-    shouldCreateLayer(partitioned.links.marked, skipEmpty) && createConfiguredLayer({
-      config: semanticConfig(configs.links, 'marked'),
-      props: getLinksLayerProps(partitioned.links.marked, state, layerStyles),
-      modelMatrix
-    }),
-    shouldCreateLayer(partitioned.extensions.base, skipEmpty) && createConfiguredLayer({
-      config: semanticConfig(configs.extensions, 'base'),
-      props: getExtensionsLayerProps(partitioned.extensions.base, state, layerStyles),
-      modelMatrix
-    }),
-    shouldCreateLayer(partitioned.extensions.history, skipEmpty) && createConfiguredLayer({
-      config: semanticConfig(configs.extensions, 'history'),
-      props: getExtensionsLayerProps(partitioned.extensions.history, state, layerStyles),
-      modelMatrix
-    }),
-    shouldCreateLayer(partitioned.extensions.marked, skipEmpty) && createConfiguredLayer({
-      config: semanticConfig(configs.extensions, 'marked'),
-      props: getExtensionsLayerProps(partitioned.extensions.marked, state, layerStyles),
-      modelMatrix
-    }),
-    shouldCreateLayer(partitioned.extensions.movingMarked, skipEmpty) && createConfiguredLayer({
-      config: semanticConfig(configs.extensions, 'moving-marked'),
-      props: getExtensionsLayerProps(partitioned.extensions.movingMarked, state, layerStyles),
-      modelMatrix
-    }),
-    shouldCreateLayer(partitioned.nodes.base, skipEmpty) && createConfiguredLayer({
-      config: semanticConfig(configs.nodes, 'base'),
-      props: getNodesLayerProps(partitioned.nodes.base, state, layerStyles),
-      modelMatrix
-    }),
-    shouldCreateLayer(partitioned.nodes.history, skipEmpty) && createConfiguredLayer({
-      config: semanticConfig(configs.nodes, 'history'),
-      props: getNodesLayerProps(partitioned.nodes.history, state, layerStyles),
-      modelMatrix
-    }),
-    shouldCreateLayer(partitioned.nodes.marked, skipEmpty) && createConfiguredLayer({
-      config: semanticConfig(configs.nodes, 'marked'),
-      props: getNodesLayerProps(partitioned.nodes.marked, state, layerStyles),
-      modelMatrix
-    }),
-    supportLabelsVisible && shouldCreateLayer(supportLabels, skipEmpty) && createConfiguredLayer({
-      config: configs.supportLabels,
-      props: getSupportLabelsLayerProps(supportLabels, state),
-      modelMatrix,
-      sideSuffixData: supportLabels,
-      useSideSuffix
-    }),
-    labelsVisible && shouldCreateLayer(partitioned.labels.base, skipEmpty) && createConfiguredLayer({
-      config: semanticConfig(configs.labels, 'base'),
-      props: getLabelsLayerProps(partitioned.labels.base, state, layerStyles),
-      modelMatrix,
-      sideSuffixData: partitioned.labels.base,
-      useSideSuffix
-    }),
-    labelsVisible && shouldCreateLayer(partitioned.labels.history, skipEmpty) && createConfiguredLayer({
-      config: semanticConfig(configs.labels, 'history'),
-      props: getLabelsLayerProps(partitioned.labels.history, state, layerStyles),
-      modelMatrix,
-      sideSuffixData: partitioned.labels.history,
-      useSideSuffix
-    }),
-    labelsVisible && shouldCreateLayer(partitioned.labels.marked, skipEmpty) && createConfiguredLayer({
-      config: semanticConfig(configs.labels, 'marked'),
-      props: getLabelsLayerProps(partitioned.labels.marked, state, layerStyles),
-      modelMatrix,
-      sideSuffixData: partitioned.labels.marked,
-      useSideSuffix
-    }),
-    !labelsVisible && shouldCreateLayer(partitioned.labels.base, skipEmpty) && createConfiguredLayer({
-      config: semanticConfig(configs.labelDots, 'base'),
-      props: getLabelDotsLayerProps(partitioned.labels.base, state, layerStyles),
-      modelMatrix,
-      sideSuffixData: partitioned.labels.base,
-      useSideSuffix
-    }),
-    !labelsVisible && shouldCreateLayer(partitioned.labels.history, skipEmpty) && createConfiguredLayer({
-      config: semanticConfig(configs.labelDots, 'history'),
-      props: getLabelDotsLayerProps(partitioned.labels.history, state, layerStyles),
-      modelMatrix,
-      sideSuffixData: partitioned.labels.history,
-      useSideSuffix
-    }),
-    !labelsVisible && shouldCreateLayer(partitioned.labels.marked, skipEmpty) && createConfiguredLayer({
-      config: semanticConfig(configs.labelDots, 'marked'),
-      props: getLabelDotsLayerProps(partitioned.labels.marked, state, layerStyles),
-      modelMatrix,
-      sideSuffixData: partitioned.labels.marked,
-      useSideSuffix
-    })
+    shouldCreateLayer(connectors, skipEmpty) &&
+      createConfiguredLayer({
+        config: configs.connectors,
+        props: getConnectorsLayerProps(connectors, state),
+        modelMatrix,
+      }),
+    shouldCreateLayer(partitioned.links.base, skipEmpty) &&
+      createConfiguredLayer({
+        config: semanticConfig(configs.linkOutlines, 'base'),
+        props: getLinkOutlinesLayerProps(partitioned.links.base, state, layerStyles),
+        modelMatrix,
+      }),
+    shouldCreateLayer(partitioned.links.history, skipEmpty) &&
+      createConfiguredLayer({
+        config: semanticConfig(configs.linkOutlines, 'history'),
+        props: getLinkOutlinesLayerProps(partitioned.links.history, state, layerStyles),
+        modelMatrix,
+      }),
+    shouldCreateLayer(partitioned.links.marked, skipEmpty) &&
+      createConfiguredLayer({
+        config: semanticConfig(configs.linkOutlines, 'marked'),
+        props: getLinkOutlinesLayerProps(partitioned.links.marked, state, layerStyles),
+        modelMatrix,
+      }),
+    shouldCreateLayer(partitioned.links.base, skipEmpty) &&
+      createConfiguredLayer({
+        config: semanticConfig(configs.links, 'base'),
+        props: getLinksLayerProps(partitioned.links.base, state, layerStyles),
+        modelMatrix,
+      }),
+    shouldCreateLayer(partitioned.links.history, skipEmpty) &&
+      createConfiguredLayer({
+        config: semanticConfig(configs.links, 'history'),
+        props: getLinksLayerProps(partitioned.links.history, state, layerStyles),
+        modelMatrix,
+      }),
+    shouldCreateLayer(partitioned.links.marked, skipEmpty) &&
+      createConfiguredLayer({
+        config: semanticConfig(configs.links, 'marked'),
+        props: getLinksLayerProps(partitioned.links.marked, state, layerStyles),
+        modelMatrix,
+      }),
+    shouldCreateLayer(partitioned.extensions.base, skipEmpty) &&
+      createConfiguredLayer({
+        config: semanticConfig(configs.extensions, 'base'),
+        props: getExtensionsLayerProps(partitioned.extensions.base, state, layerStyles),
+        modelMatrix,
+      }),
+    shouldCreateLayer(partitioned.extensions.history, skipEmpty) &&
+      createConfiguredLayer({
+        config: semanticConfig(configs.extensions, 'history'),
+        props: getExtensionsLayerProps(partitioned.extensions.history, state, layerStyles),
+        modelMatrix,
+      }),
+    shouldCreateLayer(partitioned.extensions.marked, skipEmpty) &&
+      createConfiguredLayer({
+        config: semanticConfig(configs.extensions, 'marked'),
+        props: getExtensionsLayerProps(partitioned.extensions.marked, state, layerStyles),
+        modelMatrix,
+      }),
+    shouldCreateLayer(partitioned.extensions.movingMarked, skipEmpty) &&
+      createConfiguredLayer({
+        config: semanticConfig(configs.extensions, 'moving-marked'),
+        props: getExtensionsLayerProps(partitioned.extensions.movingMarked, state, layerStyles),
+        modelMatrix,
+      }),
+    shouldCreateLayer(partitioned.nodes.base, skipEmpty) &&
+      createConfiguredLayer({
+        config: semanticConfig(configs.nodes, 'base'),
+        props: getNodesLayerProps(partitioned.nodes.base, state, layerStyles),
+        modelMatrix,
+      }),
+    shouldCreateLayer(partitioned.nodes.history, skipEmpty) &&
+      createConfiguredLayer({
+        config: semanticConfig(configs.nodes, 'history'),
+        props: getNodesLayerProps(partitioned.nodes.history, state, layerStyles),
+        modelMatrix,
+      }),
+    shouldCreateLayer(partitioned.nodes.marked, skipEmpty) &&
+      createConfiguredLayer({
+        config: semanticConfig(configs.nodes, 'marked'),
+        props: getNodesLayerProps(partitioned.nodes.marked, state, layerStyles),
+        modelMatrix,
+      }),
+    supportLabelsVisible &&
+      shouldCreateLayer(supportLabels, skipEmpty) &&
+      createConfiguredLayer({
+        config: configs.supportLabels,
+        props: getSupportLabelsLayerProps(supportLabels, state),
+        modelMatrix,
+        sideSuffixData: supportLabels,
+        useSideSuffix,
+      }),
+    labelsVisible &&
+      shouldCreateLayer(partitioned.labels.base, skipEmpty) &&
+      createConfiguredLayer({
+        config: semanticConfig(configs.labels, 'base'),
+        props: getLabelsLayerProps(partitioned.labels.base, state, layerStyles),
+        modelMatrix,
+        sideSuffixData: partitioned.labels.base,
+        useSideSuffix,
+      }),
+    labelsVisible &&
+      shouldCreateLayer(partitioned.labels.history, skipEmpty) &&
+      createConfiguredLayer({
+        config: semanticConfig(configs.labels, 'history'),
+        props: getLabelsLayerProps(partitioned.labels.history, state, layerStyles),
+        modelMatrix,
+        sideSuffixData: partitioned.labels.history,
+        useSideSuffix,
+      }),
+    labelsVisible &&
+      shouldCreateLayer(partitioned.labels.marked, skipEmpty) &&
+      createConfiguredLayer({
+        config: semanticConfig(configs.labels, 'marked'),
+        props: getLabelsLayerProps(partitioned.labels.marked, state, layerStyles),
+        modelMatrix,
+        sideSuffixData: partitioned.labels.marked,
+        useSideSuffix,
+      }),
+    !labelsVisible &&
+      shouldCreateLayer(partitioned.labels.base, skipEmpty) &&
+      createConfiguredLayer({
+        config: semanticConfig(configs.labelDots, 'base'),
+        props: getLabelDotsLayerProps(partitioned.labels.base, state, layerStyles),
+        modelMatrix,
+        sideSuffixData: partitioned.labels.base,
+        useSideSuffix,
+      }),
+    !labelsVisible &&
+      shouldCreateLayer(partitioned.labels.history, skipEmpty) &&
+      createConfiguredLayer({
+        config: semanticConfig(configs.labelDots, 'history'),
+        props: getLabelDotsLayerProps(partitioned.labels.history, state, layerStyles),
+        modelMatrix,
+        sideSuffixData: partitioned.labels.history,
+        useSideSuffix,
+      }),
+    !labelsVisible &&
+      shouldCreateLayer(partitioned.labels.marked, skipEmpty) &&
+      createConfiguredLayer({
+        config: semanticConfig(configs.labelDots, 'marked'),
+        props: getLabelDotsLayerProps(partitioned.labels.marked, state, layerStyles),
+        modelMatrix,
+        sideSuffixData: partitioned.labels.marked,
+        useSideSuffix,
+      }),
   ].filter(Boolean);
 }
 
@@ -203,7 +235,7 @@ function createBuckets(extra = {}) {
     base: [],
     history: [],
     marked: [],
-    ...extra
+    ...extra,
   };
 }
 

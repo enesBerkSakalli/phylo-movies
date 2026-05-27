@@ -20,12 +20,12 @@ function collectSourceFiles(directory) {
 
 describe('UI layering contract', () => {
   it('uses bracketed arbitrary z-index classes for large z-index values', () => {
-    const invalidClasses = collectSourceFiles(join(repoRoot, 'src'))
-      .flatMap((file) => {
-        const source = readFileSync(file, 'utf8');
-        return [...source.matchAll(/\bz-(?:[1-9]\d{2,})\b/g)]
-          .map((match) => `${relative(repoRoot, file)}: ${match[0]}`);
-      });
+    const invalidClasses = collectSourceFiles(join(repoRoot, 'src')).flatMap((file) => {
+      const source = readFileSync(file, 'utf8');
+      return [...source.matchAll(/\bz-(?:[1-9]\d{2,})\b/g)].map(
+        (match) => `${relative(repoRoot, file)}: ${match[0]}`
+      );
+    });
 
     expect(invalidClasses).toEqual([]);
   });
@@ -36,7 +36,10 @@ describe('UI layering contract', () => {
       'src/components/taxa-coloring/TaxaColoringRndWindow.jsx',
       'src/components/TreeStatsPanel/AnalyticsDashboard.tsx',
     ];
-    const layerSource = readFileSync(join(repoRoot, 'src/components/ui/floating-window-layer.js'), 'utf8');
+    const layerSource = readFileSync(
+      join(repoRoot, 'src/components/ui/floating-window-layer.js'),
+      'utf8'
+    );
 
     expect(layerSource).toContain('z-[1100]');
     expect(layerSource).toContain('z-[1200]');
@@ -65,7 +68,11 @@ describe('UI layering contract', () => {
       .filter((file) => existsSync(file))
       .filter((file) => {
         const source = readFileSync(file, 'utf8');
-        return !source.includes('isActive') || !source.includes('onFocus') || !source.includes('onMouseDown={onFocus}');
+        return (
+          !source.includes('isActive') ||
+          !source.includes('onFocus') ||
+          !source.includes('onMouseDown={onFocus}')
+        );
       })
       .map((file) => relative(repoRoot, file));
 

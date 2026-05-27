@@ -88,12 +88,14 @@ function makeBackendMovieData() {
       },
     ],
     pair_metrics: {
-      rows: [{
-        pair_id: 'pair_0_1',
-        pair_ordinal: 0,
-        robinson_foulds: 1,
-        weighted_robinson_foulds: 1,
-      }],
+      rows: [
+        {
+          pair_id: 'pair_0_1',
+          pair_ordinal: 0,
+          robinson_foulds: 1,
+          weighted_robinson_foulds: 1,
+        },
+      ],
       semantics: {
         robinson_foulds: {
           topology: 'rooted_clades',
@@ -169,8 +171,12 @@ describe('phylo store dataset normalization', () => {
     const state = useAppStore.getState();
 
     expect(state.branchTransformation).toBe('normalized-sqrt');
-    expect(phyloStoreModule.selectInputFrameIndices(state)).toBe(phyloStoreModule.selectInputFrameIndices(state));
-    expect(phyloStoreModule.selectPairMetrics(state)).toBe(phyloStoreModule.selectPairMetrics(state));
+    expect(phyloStoreModule.selectInputFrameIndices(state)).toBe(
+      phyloStoreModule.selectInputFrameIndices(state)
+    );
+    expect(phyloStoreModule.selectPairMetrics(state)).toBe(
+      phyloStoreModule.selectPairMetrics(state)
+    );
     expect(phyloStoreModule.selectPairById(state)).toBe(phyloStoreModule.selectPairById(state));
   });
 
@@ -192,12 +198,14 @@ describe('phylo store dataset normalization', () => {
     expect(state.pairs).toBe(movieData.pairs);
     expect(phyloStoreModule.selectPairById(state).pair_0_1).toBe(movieData.pairs[0]);
     expect(phyloStoreModule.selectInputFrameIndices(state)).toEqual([0, 2]);
-    expect(phyloStoreModule.selectPairMetrics(state).rows).toEqual([{
-      pair_id: 'pair_0_1',
-      pair_ordinal: 0,
-      robinson_foulds: 1,
-      weighted_robinson_foulds: 1,
-    }]);
+    expect(phyloStoreModule.selectPairMetrics(state).rows).toEqual([
+      {
+        pair_id: 'pair_0_1',
+        pair_ordinal: 0,
+        robinson_foulds: 1,
+        weighted_robinson_foulds: 1,
+      },
+    ]);
     expect(Object.prototype.hasOwnProperty.call(state, 'inputFrameIndices')).toBe(false);
     expect(Object.prototype.hasOwnProperty.call(state, 'pairById')).toBe(false);
     expect(Object.prototype.hasOwnProperty.call(state, 'pairInterpolationRanges')).toBe(false);
@@ -305,7 +313,7 @@ describe('phylo store dataset normalization', () => {
 
     const interactionSliceSource = readFileSync(
       join(repoRoot, 'src/state/phyloStore/slices/interaction/treeInteraction.slice.js'),
-      'utf8',
+      'utf8'
     );
     expect(interactionSliceSource).not.toContain('_treeData');
     expect(interactionSliceSource).not.toContain('Legacy caller payload');
@@ -349,7 +357,10 @@ describe('phylo store dataset normalization', () => {
     ];
 
     const violations = selectorFallbackChecks.flatMap(([fileName, legacyPattern]) => {
-      const source = readFileSync(join(repoRoot, 'src/state/phyloStore/selectors', fileName), 'utf8');
+      const source = readFileSync(
+        join(repoRoot, 'src/state/phyloStore/selectors', fileName),
+        'utf8'
+      );
       return source.includes(legacyPattern) ? [`${fileName}: ${legacyPattern}`] : [];
     });
 
@@ -357,10 +368,7 @@ describe('phylo store dataset normalization', () => {
   });
 
   it('keeps timeline frame index helpers on the validated backend row contract only', () => {
-    const source = readFileSync(
-      join(repoRoot, 'src/timeline/data/timelineFrameIndex.js'),
-      'utf8',
-    );
+    const source = readFileSync(join(repoRoot, 'src/timeline/data/timelineFrameIndex.js'), 'utf8');
 
     expect(source).not.toContain('frameType');
     expect(source).not.toContain('frameIndex');
@@ -369,12 +377,16 @@ describe('phylo store dataset normalization', () => {
 
   it('does not keep unused pair-frame-range selectors', () => {
     expect(phyloStoreModule).not.toHaveProperty('selectPairFrameRanges');
-    expect(existsSync(join(repoRoot, 'src/state/phyloStore/selectors/selectPairFrameRanges.js'))).toBe(false);
+    expect(
+      existsSync(join(repoRoot, 'src/state/phyloStore/selectors/selectPairFrameRanges.js'))
+    ).toBe(false);
   });
 
   it('does not keep pair-id wrapper selectors over timeline frames', () => {
     expect(phyloStoreModule).not.toHaveProperty('selectPairIdAtIndex');
-    expect(existsSync(join(repoRoot, 'src/state/phyloStore/selectors/selectPairIdAtIndex.js'))).toBe(false);
+    expect(
+      existsSync(join(repoRoot, 'src/state/phyloStore/selectors/selectPairIdAtIndex.js'))
+    ).toBe(false);
   });
 
   it('names the canonical input-frame selector by the timeline contract', () => {
@@ -383,8 +395,12 @@ describe('phylo store dataset normalization', () => {
 
     expect(phyloStoreModule).toHaveProperty('selectInputFrameIndices');
     expect(phyloStoreModule).not.toHaveProperty(legacySelectorName);
-    expect(existsSync(join(repoRoot, 'src/state/phyloStore/selectors', legacySelectorFile))).toBe(false);
-    expect(existsSync(join(repoRoot, 'src/state/phyloStore/selectors/selectInputFrameIndices.js'))).toBe(true);
+    expect(existsSync(join(repoRoot, 'src/state/phyloStore/selectors', legacySelectorFile))).toBe(
+      false
+    );
+    expect(
+      existsSync(join(repoRoot, 'src/state/phyloStore/selectors/selectInputFrameIndices.js'))
+    ).toBe(true);
   });
 
   it('keeps timeline segment semantics on input-tree language', () => {
@@ -455,8 +471,9 @@ describe('phylo store dataset normalization', () => {
   });
 
   it('rejects the old backend temporal contract before store initialization', () => {
-    expect(() => phyloData.validate(legacyBackendMovieData()))
-      .toThrow(/tree_metadata is not part of the backend contract/);
+    expect(() => phyloData.validate(legacyBackendMovieData())).toThrow(
+      /tree_metadata is not part of the backend contract/
+    );
   });
 
   it('keeps store-internal calls on the composed Zustand store contract', () => {

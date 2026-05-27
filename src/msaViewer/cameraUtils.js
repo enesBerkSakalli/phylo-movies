@@ -39,11 +39,7 @@ export function getFitAlignmentViewState({
   };
 }
 
-export function deriveSynchronizedViewStates({
-  mainViewState,
-  labelsWidth,
-  axisHeight,
-}) {
+export function deriveSynchronizedViewStates({ mainViewState, labelsWidth, axisHeight }) {
   const scale = getZoomScale(mainViewState?.zoom);
   const main = {
     ...mainViewState,
@@ -67,12 +63,7 @@ export function deriveSynchronizedViewStates({
   };
 }
 
-export function getScrollViewState({
-  currentViewState,
-  cellSize,
-  row,
-  col,
-}) {
+export function getScrollViewState({ currentViewState, cellSize, row, col }) {
   const target = normalizeTarget(currentViewState?.target);
 
   if (col !== undefined && col !== null) {

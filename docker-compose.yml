@@ -16,10 +16,10 @@ services:
   app:
     build: .
     ports:
-      - "8080:8080"
+      - '8080:8080'
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/about"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:8080/about']
       interval: 30s
       timeout: 5s
       retries: 3
@@ -31,14 +31,14 @@ services:
       context: .
       dockerfile: docker/Dockerfile.backend
     ports:
-      - "5002:5002"
+      - '5002:5002'
     volumes:
       - ./engine/BranchArchitect:/app/engine/BranchArchitect
     profiles:
       - dev
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5002/about"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:5002/about']
       interval: 15s
       timeout: 5s
       retries: 3

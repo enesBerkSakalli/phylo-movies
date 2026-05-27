@@ -63,12 +63,13 @@ function findPair(movieData, pairId) {
 function expectedChangeContext(movieData, treeIndex) {
   const frame = movieData.frames[treeIndex];
   const pair = findPair(movieData, frame.pair_id);
-  const event = movieData.temporal_events.find((entry) => (
-    entry.event_type === 'spr_move' &&
-    entry.pair_id === frame.pair_id &&
-    frame.local_step_index >= entry.local_step_range[0] &&
-    frame.local_step_index <= entry.local_step_range[1]
-  ));
+  const event = movieData.temporal_events.find(
+    (entry) =>
+      entry.event_type === 'spr_move' &&
+      entry.pair_id === frame.pair_id &&
+      frame.local_step_index >= entry.local_step_range[0] &&
+      frame.local_step_index <= entry.local_step_range[1]
+  );
   const movingSubtree = event.driver_subtree;
   const pivotEdge = event.pivot_edge;
   const movingKey = partitionKey(movingSubtree);
@@ -79,8 +80,12 @@ function expectedChangeContext(movieData, treeIndex) {
   return {
     highlightedSubtrees: sortedArrays(pair.solution.affected_subtrees_by_split[pivotKey][0]),
     pivotEdge: [...pivotEdge].sort((a, b) => a - b),
-    sourceEdgeLeaves: [attachment.source.filter((leaf) => !movingLeaves.has(leaf)).sort((a, b) => a - b)],
-    destinationEdgeLeaves: [attachment.destination.filter((leaf) => !movingLeaves.has(leaf)).sort((a, b) => a - b)],
+    sourceEdgeLeaves: [
+      attachment.source.filter((leaf) => !movingLeaves.has(leaf)).sort((a, b) => a - b),
+    ],
+    destinationEdgeLeaves: [
+      attachment.destination.filter((leaf) => !movingLeaves.has(leaf)).sort((a, b) => a - b),
+    ],
     movingSubtrees: [movingSubtree],
   };
 }
@@ -123,28 +128,32 @@ function makeTwoInputPairMovieData({ weightedRfDistance }) {
         target_frame_index: null,
       },
     ],
-    pairs: [{
-      pair_id: 'pair_0_1',
-      pair_ordinal: 0,
-      source_input_tree_index: 0,
-      target_input_tree_index: 1,
-      source_frame_index: 0,
-      target_frame_index: 1,
-      generated_frame_range: null,
-      solution: {
-        affected_subtrees_by_split: {},
-        attachment_edges_by_split: {},
+    pairs: [
+      {
+        pair_id: 'pair_0_1',
+        pair_ordinal: 0,
+        source_input_tree_index: 0,
+        target_input_tree_index: 1,
+        source_frame_index: 0,
+        target_frame_index: 1,
+        generated_frame_range: null,
+        solution: {
+          affected_subtrees_by_split: {},
+          attachment_edges_by_split: {},
+        },
       },
-    }],
+    ],
     temporal_events: [],
     subtree_highlight_tracking: [null, null],
     pair_metrics: {
-      rows: [{
-        pair_id: 'pair_0_1',
-        pair_ordinal: 0,
-        robinson_foulds: 0,
-        weighted_robinson_foulds: weightedRfDistance,
-      }],
+      rows: [
+        {
+          pair_id: 'pair_0_1',
+          pair_ordinal: 0,
+          robinson_foulds: 0,
+          weighted_robinson_foulds: weightedRfDistance,
+        },
+      ],
       semantics: {},
     },
     msa: { sequences: null, window_size: 1, step_size: 1 },
@@ -299,12 +308,14 @@ function makeSyntheticTimingMovieData() {
     ],
     subtree_highlight_tracking: [null, [[1]], [[2]], null],
     pair_metrics: {
-      rows: [{
-        pair_id: 'opaque-pair',
-        pair_ordinal: 0,
-        robinson_foulds: 1,
-        weighted_robinson_foulds: 1,
-      }],
+      rows: [
+        {
+          pair_id: 'opaque-pair',
+          pair_ordinal: 0,
+          robinson_foulds: 1,
+          weighted_robinson_foulds: 1,
+        },
+      ],
       semantics: {},
     },
     msa: { sequences: null, window_size: 1, step_size: 1 },
@@ -314,7 +325,10 @@ function makeSyntheticTimingMovieData() {
 
 describe('Timeline construction from normalized backend result', () => {
   it('does not keep unused timeline constants or obsolete input-tree labels', () => {
-    const constantsSource = fs.readFileSync(path.join(__dirname, '..', 'src', 'timeline', 'constants.js'), 'utf8');
+    const constantsSource = fs.readFileSync(
+      path.join(__dirname, '..', 'src', 'timeline', 'constants.js'),
+      'utf8'
+    );
     const removedConstantNames = [
       'MIN_ZOOM_MS',
       'ZOOM_PERCENTAGE_UI',
@@ -330,7 +344,9 @@ describe('Timeline construction from normalized backend result', () => {
       'FALLBACK_MAX_EDGES',
     ];
 
-    const remainingConstants = removedConstantNames.filter((name) => constantsSource.includes(name));
+    const remainingConstants = removedConstantNames.filter((name) =>
+      constantsSource.includes(name)
+    );
     expect(remainingConstants).to.deep.equal([]);
 
     const inputTreeLabelFiles = [
@@ -338,15 +354,21 @@ describe('Timeline construction from normalized backend result', () => {
       path.join(__dirname, '..', 'src', 'components', 'TransitionInspectorPanel.jsx'),
     ];
 
-    const obsoleteInputTreeLabelPattern = new RegExp(`\\b${['anchor', 'tree'].join('\\s+')}\\b`, 'i');
-    const remainingObsoleteInputTreeLabels = inputTreeLabelFiles.filter((filePath) => (
+    const obsoleteInputTreeLabelPattern = new RegExp(
+      `\\b${['anchor', 'tree'].join('\\s+')}\\b`,
+      'i'
+    );
+    const remainingObsoleteInputTreeLabels = inputTreeLabelFiles.filter((filePath) =>
       obsoleteInputTreeLabelPattern.test(fs.readFileSync(filePath, 'utf8'))
-    ));
+    );
     expect(remainingObsoleteInputTreeLabels).to.deep.equal([]);
   });
 
   it('keeps the rendered timeline target at an accessible height', () => {
-    const cssSource = fs.readFileSync(path.join(__dirname, '..', 'src', 'css', 'movie-timeline', 'container.css'), 'utf8');
+    const cssSource = fs.readFileSync(
+      path.join(__dirname, '..', 'src', 'css', 'movie-timeline', 'container.css'),
+      'utf8'
+    );
     const defaultHeightMatch = cssSource.match(/--timeline-height,\s*(\d+)px/);
 
     expect(defaultHeightMatch).to.not.equal(null);
@@ -354,7 +376,10 @@ describe('Timeline construction from normalized backend result', () => {
   });
 
   it('allows timeline legend items to wrap on narrow viewports', () => {
-    const source = fs.readFileSync(path.join(__dirname, '..', 'src', 'components', 'movie-player', 'MoviePlayerBar.jsx'), 'utf8');
+    const source = fs.readFileSync(
+      path.join(__dirname, '..', 'src', 'components', 'movie-player', 'MoviePlayerBar.jsx'),
+      'utf8'
+    );
     const legendClassMatch = source.match(/function TimelineLegend[\s\S]*?className="([^"]*)"/);
 
     expect(legendClassMatch).to.not.equal(null);
@@ -363,7 +388,18 @@ describe('Timeline construction from normalized backend result', () => {
   });
 
   it('keeps player-bar controls separated into clear workflow lanes', () => {
-    const chartSource = fs.readFileSync(path.join(__dirname, '..', 'src', 'components', 'movie-player', 'MovieChartSection', 'MovieChartSection.jsx'), 'utf8');
+    const chartSource = fs.readFileSync(
+      path.join(
+        __dirname,
+        '..',
+        'src',
+        'components',
+        'movie-player',
+        'MovieChartSection',
+        'MovieChartSection.jsx'
+      ),
+      'utf8'
+    );
 
     expect(MOVIE_PLAYER_ARIA_LABELS.primaryControls).to.equal('Primary playback controls');
     expect(MOVIE_PLAYER_ARIA_LABELS.timelineNavigation).to.equal('Timeline navigation controls');
@@ -394,9 +430,14 @@ describe('Timeline construction from normalized backend result', () => {
     expect(timeline.cumulativeDurations.at(-1)).to.equal(timeline.totalDuration);
 
     const firstEvent = data.temporal_events.find((event) => event.event_type === 'split_change');
-    const firstInterpSeg = segments.find((segment) => segment.hasInterpolation && !segment.isInputTreeSegment);
+    const firstInterpSeg = segments.find(
+      (segment) => segment.hasInterpolation && !segment.isInputTreeSegment
+    );
     const idxs = firstInterpSeg.interpolationData.map((entry) => entry.originalIndex);
-    const expectedContextStart = Math.max(data.pairs[0].source_frame_index, firstEvent.frame_range[0] - 1);
+    const expectedContextStart = Math.max(
+      data.pairs[0].source_frame_index,
+      firstEvent.frame_range[0] - 1
+    );
 
     expect(Math.min(...idxs)).to.equal(expectedContextStart);
     expect(Math.max(...idxs)).to.equal(firstEvent.frame_range[1]);
@@ -457,7 +498,11 @@ describe('Timeline construction from normalized backend result', () => {
     const dataset = TimelineDataset.fromMovieData(data, { segments, timelineData: timeline });
     const missingOccurrences = data.pairs.flatMap((pair) => {
       const missing = [];
-      for (let frameIndex = pair.source_frame_index; frameIndex <= pair.target_frame_index; frameIndex += 1) {
+      for (
+        let frameIndex = pair.source_frame_index;
+        frameIndex <= pair.target_frame_index;
+        frameIndex += 1
+      ) {
         if (dataset.getOccurrencesForFrame(frameIndex).length === 0) {
           missing.push(`${pair.pair_id}:${frameIndex}`);
         }
@@ -477,7 +522,11 @@ describe('Timeline construction from normalized backend result', () => {
 
     const missingEdges = data.pairs.flatMap((pair) => {
       const missing = [];
-      for (let frameIndex = pair.source_frame_index; frameIndex < pair.target_frame_index; frameIndex += 1) {
+      for (
+        let frameIndex = pair.source_frame_index;
+        frameIndex < pair.target_frame_index;
+        frameIndex += 1
+      ) {
         const edge = `${frameIndex}->${frameIndex + 1}`;
         const noOpHoldTarget = `${pair.pair_id}:${frameIndex + 1}`;
         if (!motionEdges.has(edge) && !noOpHoldTargets.has(noOpHoldTarget)) {
@@ -494,19 +543,22 @@ describe('Timeline construction from normalized backend result', () => {
     const movieData = makeSyntheticTimingMovieData();
     const segments = TimelineDataProcessor.createSegments(movieData);
     const motionEdges = collectMotionEdges(segments);
-    const fulfillmentSegment = segments.find((segment) => (
-      segment.pairId === 'opaque-pair' &&
-      !segment.isInputTreeSegment &&
-      segment.globalStart === 2 &&
-      segment.globalEnd === 3
-    ));
+    const fulfillmentSegment = segments.find(
+      (segment) =>
+        segment.pairId === 'opaque-pair' &&
+        !segment.isInputTreeSegment &&
+        segment.globalStart === 2 &&
+        segment.globalEnd === 3
+    );
 
     expect(motionEdges.has('2->3')).to.equal(true);
     expect(fulfillmentSegment).to.include({
       treeName: 'Transition fulfillment opaque-pair',
       subtreeMoveCount: 0,
     });
-    expect(fulfillmentSegment.interpolationData.map((entry) => entry.originalIndex)).to.deep.equal([2, 3]);
+    expect(fulfillmentSegment.interpolationData.map((entry) => entry.originalIndex)).to.deep.equal([
+      2, 3,
+    ]);
   });
 
   it('canonicalizes transition splits before affected-subtree lookup', () => {
@@ -552,27 +604,31 @@ describe('Timeline construction from normalized backend result', () => {
           target_frame_index: null,
         },
       ],
-      pairs: [{
-        ...makeSyntheticTimingMovieData().pairs[0],
-        source_frame_index: 0,
-        target_frame_index: 2,
-        generated_frame_range: [1, 1],
-        solution: {
-          affected_subtrees_by_split: {
-            '[10, 11]': [[[13], [12]]],
+      pairs: [
+        {
+          ...makeSyntheticTimingMovieData().pairs[0],
+          source_frame_index: 0,
+          target_frame_index: 2,
+          generated_frame_range: [1, 1],
+          solution: {
+            affected_subtrees_by_split: {
+              '[10, 11]': [[[13], [12]]],
+            },
+            attachment_edges_by_split: {},
           },
-          attachment_edges_by_split: {},
         },
-      }],
-      temporal_events: [{
-        event_id: 'opaque-pair:split:0',
-        event_type: 'split_change',
-        pair_id: 'opaque-pair',
-        pair_ordinal: 0,
-        local_step_range: [0, 0],
-        frame_range: [1, 1],
-        split: [11, 10],
-      }],
+      ],
+      temporal_events: [
+        {
+          event_id: 'opaque-pair:split:0',
+          event_type: 'split_change',
+          pair_id: 'opaque-pair',
+          pair_ordinal: 0,
+          local_step_range: [0, 0],
+          frame_range: [1, 1],
+          split: [11, 10],
+        },
+      ],
     };
 
     const segments = TimelineDataProcessor.createSegments(movieData);
@@ -585,15 +641,19 @@ describe('Timeline construction from normalized backend result', () => {
   it('adds input-tree hold timing for observed input tree delimiters without duplicating trees', () => {
     const movieData = makeSyntheticTimingMovieData();
     const segments = TimelineDataProcessor.createSegments(movieData);
-    const inputTree = segments.find((segment) => segment.isInputTreeSegment && segment.globalIndex === 0);
+    const inputTree = segments.find(
+      (segment) => segment.isInputTreeSegment && segment.globalIndex === 0
+    );
 
     expect(inputTree.interpolationData.map((entry) => entry.originalIndex)).to.deep.equal([0]);
-    expect(inputTree.timing).to.deep.equal([{
-      type: 'hold',
-      holdIndex: 0,
-      holdKind: 'input_tree',
-      durationMs: 1500,
-    }]);
+    expect(inputTree.timing).to.deep.equal([
+      {
+        type: 'hold',
+        holdIndex: 0,
+        holdKind: 'input_tree',
+        durationMs: 1500,
+      },
+    ]);
   });
 
   it('uses a short static hold for exact no-op adjacent input pairs', () => {
@@ -602,12 +662,14 @@ describe('Timeline construction from normalized backend result', () => {
     const transition = segments.find((segment) => segment.pairId === 'pair_0_1');
 
     expect(transition.isNoOpPair).to.equal(true);
-    expect(transition.timing).to.deep.equal([{
-      type: 'hold',
-      holdIndex: 1,
-      holdKind: 'no_op_pair',
-      durationMs: 300,
-    }]);
+    expect(transition.timing).to.deep.equal([
+      {
+        type: 'hold',
+        holdIndex: 1,
+        holdKind: 'no_op_pair',
+        durationMs: 300,
+      },
+    ]);
   });
 
   it('keeps branch-length-only pairs as motion when weighted distance changes', () => {
@@ -616,25 +678,36 @@ describe('Timeline construction from normalized backend result', () => {
     const transition = segments.find((segment) => segment.pairId === 'pair_0_1');
 
     expect(transition.isNoOpPair).to.equal(false);
-    expect(transition.timing).to.deep.equal([{
-      type: 'motion',
-      fromIndex: 0,
-      toIndex: 1,
-      durationMs: 1000,
-    }]);
+    expect(transition.timing).to.deep.equal([
+      {
+        type: 'motion',
+        fromIndex: 0,
+        toIndex: 1,
+        durationMs: 1000,
+      },
+    ]);
   });
 
   it('builds semantic mover and pivot timing from temporal SPR events', () => {
     const movieData = makeSyntheticTimingMovieData();
     const moveEvents = movieData.temporal_events.filter((event) => event.event_type === 'spr_move');
     const segments = TimelineDataProcessor.createSegments(movieData);
-    const transition = segments.find((segment) => segment.pairId === 'opaque-pair' && !segment.isInputTreeSegment);
+    const transition = segments.find(
+      (segment) => segment.pairId === 'opaque-pair' && !segment.isInputTreeSegment
+    );
 
     for (const event of moveEvents) {
-      expect(event).to.include.keys(['pivot_edge', 'driver_subtree', 'highlight_group', 'local_step_range']);
+      expect(event).to.include.keys([
+        'pivot_edge',
+        'driver_subtree',
+        'highlight_group',
+        'local_step_range',
+      ]);
       expect(event).to.not.have.property('moving_taxa');
     }
-    expect(transition.interpolationData.map((entry) => entry.originalIndex)).to.deep.equal([0, 1, 2]);
+    expect(transition.interpolationData.map((entry) => entry.originalIndex)).to.deep.equal([
+      0, 1, 2,
+    ]);
     expect(transition.timing).to.deep.equal([
       { type: 'motion', fromIndex: 0, toIndex: 1, durationMs: 1000 },
       { type: 'hold', holdIndex: 1, holdKind: 'mover', durationMs: 200 },
@@ -688,11 +761,21 @@ describe('Active change edge mapping from normalized rows', () => {
     const expected = expectedChangeContext(movieData, 1);
 
     expect(state.frameIndex).to.equal(1);
-    expect(setsToSortedArrays(colorManager.highlightedSubtreeSets)).to.deep.equal(expected.highlightedSubtrees);
-    expect(Array.from(colorManager.currentPivotEdges).sort((a, b) => a - b)).to.deep.equal(expected.pivotEdge);
-    expect(setsToSortedArrays(colorManager.sourceEdgeLeaves)).to.deep.equal(expected.sourceEdgeLeaves);
-    expect(setsToSortedArrays(colorManager.destinationEdgeLeaves)).to.deep.equal(expected.destinationEdgeLeaves);
-    expect(setsToSortedArrays(colorManager.activeMoverSubtrees)).to.deep.equal(expected.movingSubtrees);
+    expect(setsToSortedArrays(colorManager.highlightedSubtreeSets)).to.deep.equal(
+      expected.highlightedSubtrees
+    );
+    expect(Array.from(colorManager.currentPivotEdges).sort((a, b) => a - b)).to.deep.equal(
+      expected.pivotEdge
+    );
+    expect(setsToSortedArrays(colorManager.sourceEdgeLeaves)).to.deep.equal(
+      expected.sourceEdgeLeaves
+    );
+    expect(setsToSortedArrays(colorManager.destinationEdgeLeaves)).to.deep.equal(
+      expected.destinationEdgeLeaves
+    );
+    expect(setsToSortedArrays(colorManager.activeMoverSubtrees)).to.deep.equal(
+      expected.movingSubtrees
+    );
   });
 
   it('syncs the color manager from an explicit frame index without changing navigation state', () => {
@@ -707,11 +790,21 @@ describe('Active change edge mapping from normalized rows', () => {
     const expected = expectedChangeContext(movieData, 11);
 
     expect(state.frameIndex).to.equal(1);
-    expect(setsToSortedArrays(colorManager.highlightedSubtreeSets)).to.deep.equal(expected.highlightedSubtrees);
-    expect(Array.from(colorManager.currentPivotEdges).sort((a, b) => a - b)).to.deep.equal(expected.pivotEdge);
-    expect(setsToSortedArrays(colorManager.sourceEdgeLeaves)).to.deep.equal(expected.sourceEdgeLeaves);
-    expect(setsToSortedArrays(colorManager.destinationEdgeLeaves)).to.deep.equal(expected.destinationEdgeLeaves);
-    expect(setsToSortedArrays(colorManager.activeMoverSubtrees)).to.deep.equal(expected.movingSubtrees);
+    expect(setsToSortedArrays(colorManager.highlightedSubtreeSets)).to.deep.equal(
+      expected.highlightedSubtrees
+    );
+    expect(Array.from(colorManager.currentPivotEdges).sort((a, b) => a - b)).to.deep.equal(
+      expected.pivotEdge
+    );
+    expect(setsToSortedArrays(colorManager.sourceEdgeLeaves)).to.deep.equal(
+      expected.sourceEdgeLeaves
+    );
+    expect(setsToSortedArrays(colorManager.destinationEdgeLeaves)).to.deep.equal(
+      expected.destinationEdgeLeaves
+    );
+    expect(setsToSortedArrays(colorManager.activeMoverSubtrees)).to.deep.equal(
+      expected.movingSubtrees
+    );
   });
 
   it('calculates upcoming and completed previews from the explicit sync index', () => {
@@ -728,6 +821,8 @@ describe('Active change edge mapping from normalized rows', () => {
     expect(state.completedChangeEdges).to.deep.equal([[10, 11, 12, 13]]);
     expect(state.upcomingChangeEdges).to.deep.equal([[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]]);
     expect(setsToSortedArrays(colorManager.completedChangeEdges)).to.deep.equal([[10, 11, 12, 13]]);
-    expect(setsToSortedArrays(colorManager.upcomingChangeEdges)).to.deep.equal([[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]]);
+    expect(setsToSortedArrays(colorManager.upcomingChangeEdges)).to.deep.equal([
+      [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+    ]);
   });
 });

@@ -2,7 +2,17 @@ import React, { useCallback, useMemo } from 'react';
 import { Button } from '../ui/button';
 import { AppTooltip } from '../ui/app-tooltip';
 import { Separator } from '../ui/separator';
-import { ChevronsLeft, ChevronLeft, Play, Pause, ChevronRight, ChevronsRight, GitCompare, Link2, Link2Off } from 'lucide-react';
+import {
+  ChevronsLeft,
+  ChevronLeft,
+  Play,
+  Pause,
+  ChevronRight,
+  ChevronsRight,
+  GitCompare,
+  Link2,
+  Link2Off,
+} from 'lucide-react';
 import {
   selectActiveTreeListLength,
   selectComparisonMode,
@@ -16,14 +26,11 @@ import {
   selectStopAnimationPlayback,
   selectToggleComparisonMode,
   selectViewsConnected,
-  useAppStore
+  useAppStore,
 } from '../../state/phyloStore/store.js';
 import { TRANSPORT_CONTROL_GROUP_LABELS } from './TransportControls.contract.js';
 
-export function TransportControls({
-  onBackward,
-  onForward,
-}) {
+export function TransportControls({ onBackward, onForward }) {
   const playing = useAppStore(selectPlaying);
   const frameIndex = useAppStore(selectFrameIndex);
   const treeListLen = useAppStore(selectActiveTreeListLength);
@@ -44,18 +51,18 @@ export function TransportControls({
 
   // Check if we can navigate to previous/next input tree.
   const canGoToPreviousInputTree = useMemo(() => {
-    return inputTreeIndices.some(idx => idx < frameIndex);
+    return inputTreeIndices.some((idx) => idx < frameIndex);
   }, [inputTreeIndices, frameIndex]);
 
   const canGoToNextInputTree = useMemo(() => {
-    return inputTreeIndices.some(idx => idx > frameIndex);
+    return inputTreeIndices.some((idx) => idx > frameIndex);
   }, [inputTreeIndices, frameIndex]);
 
   const onPlayClick = useCallback(async () => {
     try {
       if (playing) stopAnimationPlayback();
       else await startAnimationPlayback();
-    } catch { }
+    } catch {}
   }, [playing, startAnimationPlayback, stopAnimationPlayback]);
 
   const onPreviousInputTree = useCallback(() => {
@@ -73,8 +80,16 @@ export function TransportControls({
   const viewLinkLabel = viewsConnected ? 'Unlink tree views' : 'Link tree views';
 
   return (
-    <div className="flex shrink-0 items-center gap-1" role="group" aria-label={TRANSPORT_CONTROL_GROUP_LABELS.root}>
-      <div className="flex items-center gap-0.5" role="group" aria-label={TRANSPORT_CONTROL_GROUP_LABELS.playback}>
+    <div
+      className="flex shrink-0 items-center gap-1"
+      role="group"
+      aria-label={TRANSPORT_CONTROL_GROUP_LABELS.root}
+    >
+      <div
+        className="flex items-center gap-0.5"
+        role="group"
+        aria-label={TRANSPORT_CONTROL_GROUP_LABELS.playback}
+      >
         <AppTooltip content="Previous input tree">
           <Button
             className="transport-button"
@@ -149,7 +164,11 @@ export function TransportControls({
 
       <Separator orientation="vertical" className="h-5" />
 
-      <div className="flex items-center gap-0.5" role="group" aria-label={TRANSPORT_CONTROL_GROUP_LABELS.comparison}>
+      <div
+        className="flex items-center gap-0.5"
+        role="group"
+        aria-label={TRANSPORT_CONTROL_GROUP_LABELS.comparison}
+      >
         <AppTooltip content={comparisonLabel}>
           <Button
             className="transport-button"

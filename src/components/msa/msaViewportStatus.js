@@ -67,7 +67,7 @@ export function buildMsaWindowStatus(timelineCursor, msaStepSize, msaWindowSize,
     timelineCursor.msaWindowIndex,
     msaStepSize,
     msaWindowSize,
-    msaColumnCount,
+    msaColumnCount
   );
 
   return {

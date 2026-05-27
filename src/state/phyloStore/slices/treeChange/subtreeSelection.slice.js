@@ -4,7 +4,7 @@ import {
   getMovingSubtreeAtIndex,
   getSubtreeHistoryAtIndex,
   getSourceDestinationEdgesAtIndex,
-  resolveSubtreeHighlights
+  resolveSubtreeHighlights,
 } from '../../internal/changeTracking.helpers.js';
 import { selectPivotEdgeForFrame } from '../../selectors/treeSelectors.js';
 
@@ -49,9 +49,17 @@ export const createSubtreeSelectionSlice = (set, get) => ({
   setSubtreeHighlightScope: (scope) => {
     if (scope !== 'all' && scope !== 'current') return;
     set({ subtreeHighlightScope: scope });
-    const { subtreeHighlightsEnabled, getSubtreeHighlightData, updateColorManagerHighlightedSubtrees, manuallyMarkedNodes } = get();
+    const {
+      subtreeHighlightsEnabled,
+      getSubtreeHighlightData,
+      updateColorManagerHighlightedSubtrees,
+      manuallyMarkedNodes,
+    } = get();
     if (subtreeHighlightsEnabled) {
-      updateColorManagerHighlightedSubtrees([...toManualMarkedSets(manuallyMarkedNodes), ...getSubtreeHighlightData()]);
+      updateColorManagerHighlightedSubtrees([
+        ...toManualMarkedSets(manuallyMarkedNodes),
+        ...getSubtreeHighlightData(),
+      ]);
     }
     renderTreeControllers(get());
   },

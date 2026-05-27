@@ -34,7 +34,7 @@ import Color from 'colorjs.io';
 // APCA 45 is sufficient for visual elements (nodes, branches, labels with outlines)
 // APCA 60 is recommended for body text, but too aggressive for visualization colors
 const TARGET_LC = 45;
-const WHITE = new Color("white");
+const WHITE = new Color('white');
 
 /**
  * Ensures a color meets the minimum APCA contrast against white.
@@ -47,26 +47,26 @@ function fixContrast(hexStr) {
   try {
     color = new Color(hexStr);
   } catch (e) {
-    console.warn("Invalid color:", hexStr);
-    return "#000000";
+    console.warn('Invalid color:', hexStr);
+    return '#000000';
   }
 
   const original = color.clone();
 
   // Check contrast
-  if (Math.abs(WHITE.contrast(color, "APCA")) >= TARGET_LC) {
+  if (Math.abs(WHITE.contrast(color, 'APCA')) >= TARGET_LC) {
     return hexStr; // Already valid
   }
 
   // Fix it
-  color = color.to("oklch");
+  color = color.to('oklch');
   let safety = 0;
-  while (Math.abs(WHITE.contrast(color, "APCA")) < TARGET_LC && safety < 100) {
+  while (Math.abs(WHITE.contrast(color, 'APCA')) < TARGET_LC && safety < 100) {
     color.l -= 0.01;
     safety++;
   }
 
-  const fixedHex = color.to("srgb").toString({ format: "hex" });
+  const fixedHex = color.to('srgb').toString({ format: 'hex' });
   return fixedHex;
 }
 
@@ -139,16 +139,26 @@ export const Tableau10 = createAccessiblePalette(schemeTableau10);
  * We treat this as a "backup" source but fix it for accessibility.
  */
 export const Tableau20 = createAccessiblePalette([
-  "#4E79A7", "#A0CBE8",
-  "#F28E2B", "#FFBE7D",
-  "#59A14F", "#8CD17D",
-  "#B6992D", "#F1CE63",
-  "#499894", "#86BCB6",
-  "#E15759", "#FF9D9A",
-  "#B07AA1", "#D4A6C8",
-  "#9D7660", "#D7B5A6",
-  "#79706E", "#BAB0AC",
-  "#D37295", "#FABFD2"
+  '#4E79A7',
+  '#A0CBE8',
+  '#F28E2B',
+  '#FFBE7D',
+  '#59A14F',
+  '#8CD17D',
+  '#B6992D',
+  '#F1CE63',
+  '#499894',
+  '#86BCB6',
+  '#E15759',
+  '#FF9D9A',
+  '#B07AA1',
+  '#D4A6C8',
+  '#9D7660',
+  '#D7B5A6',
+  '#79706E',
+  '#BAB0AC',
+  '#D37295',
+  '#FABFD2',
 ]);
 
 /**
@@ -191,45 +201,92 @@ export const Category10 = createAccessiblePalette(schemeCategory10);
 // These were manually optimized, but we run them through the fixer just in case.
 
 export const TolBrightWhiteBG = createAccessiblePalette([
-  "#D96622", "#0077BB", "#0088AA", "#008877",
-  "#CC3311", "#EE3377", "#777777"
+  '#D96622',
+  '#0077BB',
+  '#0088AA',
+  '#008877',
+  '#CC3311',
+  '#EE3377',
+  '#777777',
 ]);
 
 export const TolMutedWhiteBG = createAccessiblePalette([
-  "#CC6677", "#332288", "#BBAA33", "#117733",
-  "#66AADD", "#882255", "#44AA99", "#8A8A33", "#AA4499"
+  '#CC6677',
+  '#332288',
+  '#BBAA33',
+  '#117733',
+  '#66AADD',
+  '#882255',
+  '#44AA99',
+  '#8A8A33',
+  '#AA4499',
 ]);
 
 export const WongWhiteBG = createAccessiblePalette([
-  "#D55E00", "#0072B2", "#009E73", "#CC79A7",
-  "#E69F00", "#56B4E9", "#999900", "#777777"
+  '#D55E00',
+  '#0072B2',
+  '#009E73',
+  '#CC79A7',
+  '#E69F00',
+  '#56B4E9',
+  '#999900',
+  '#777777',
 ]);
 
 export const OkabeItoWhiteBG = createAccessiblePalette([
-  "#D55E00", "#0072B2", "#009E73", "#CC79A7",
-  "#E69F00", "#4C9ED9", "#B3A800", "#444444"
+  '#D55E00',
+  '#0072B2',
+  '#009E73',
+  '#CC79A7',
+  '#E69F00',
+  '#4C9ED9',
+  '#B3A800',
+  '#444444',
 ]);
-
 
 // ============================================
 // SPECIALIZED PALETTES
 // ============================================
 
 export const PhyloOptimized = createAccessiblePalette([
-  "#C0392B", "#2980B9", "#27AE60", "#8E44AD",
-  "#D35400", "#16A085", "#F39C12", "#2C3E50",
-  "#7F8C8D", "#E74C3C", "#9B59B6"
+  '#C0392B',
+  '#2980B9',
+  '#27AE60',
+  '#8E44AD',
+  '#D35400',
+  '#16A085',
+  '#F39C12',
+  '#2C3E50',
+  '#7F8C8D',
+  '#E74C3C',
+  '#9B59B6',
   // Removed duplicate #C0392B
 ]);
 
 export const HighContrast = createAccessiblePalette([
-  "#E31A1C", "#1F78B4", "#33A02C", "#6A3D9A", "#FF7F00",
-  "#B15928", "#A6CEE3", "#B2DF8A", "#FDBF6F", "#CAB2D6"
+  '#E31A1C',
+  '#1F78B4',
+  '#33A02C',
+  '#6A3D9A',
+  '#FF7F00',
+  '#B15928',
+  '#A6CEE3',
+  '#B2DF8A',
+  '#FDBF6F',
+  '#CAB2D6',
 ]);
 
 export const BlueShadesWhiteBG = createAccessiblePalette([
-  "#A6C8FF", "#82B1FF", "#5E9BFF", "#3B85FF", "#1976D2",
-  "#1565C0", "#0D47A1", "#0A3A79", "#072D62", "#04214A"
+  '#A6C8FF',
+  '#82B1FF',
+  '#5E9BFF',
+  '#3B85FF',
+  '#1976D2',
+  '#1565C0',
+  '#0D47A1',
+  '#0A3A79',
+  '#072D62',
+  '#04214A',
 ]);
 
 /**
@@ -239,14 +296,38 @@ export const BlueShadesWhiteBG = createAccessiblePalette([
  */
 export const Extended30 = createAccessiblePalette([
   // Core distinguishable colors
-  "#E41A1C", "#377EB8", "#4DAF4A", "#984EA3", "#FF7F00",
-  "#A65628", "#F781BF", "#999999", "#66C2A5", "#FC8D62",
+  '#E41A1C',
+  '#377EB8',
+  '#4DAF4A',
+  '#984EA3',
+  '#FF7F00',
+  '#A65628',
+  '#F781BF',
+  '#999999',
+  '#66C2A5',
+  '#FC8D62',
   // Extended set
-  "#8DA0CB", "#E78AC3", "#A6D854", "#FFD92F", "#E5C494",
-  "#B3B3B3", "#1B9E77", "#D95F02", "#7570B3", "#E7298A",
+  '#8DA0CB',
+  '#E78AC3',
+  '#A6D854',
+  '#FFD92F',
+  '#E5C494',
+  '#B3B3B3',
+  '#1B9E77',
+  '#D95F02',
+  '#7570B3',
+  '#E7298A',
   // Additional distinct colors
-  "#66A61E", "#E6AB02", "#A6761D", "#666666", "#1F78B4",
-  "#33A02C", "#FB9A99", "#B2DF8A", "#FDBF6F", "#CAB2D6"
+  '#66A61E',
+  '#E6AB02',
+  '#A6761D',
+  '#666666',
+  '#1F78B4',
+  '#33A02C',
+  '#FB9A99',
+  '#B2DF8A',
+  '#FDBF6F',
+  '#CAB2D6',
 ]);
 
 // ============================================
@@ -267,11 +348,10 @@ export const Turbo = sampleInterpolator(interpolateTurbo, 10);
 // ============================================
 
 // CoolWarm equivalent -> RdBu (Red-Blue) reversed usually
-export const CoolWarmWhiteBG = sampleInterpolator(t => interpolateRdBu(1 - t), 9);
+export const CoolWarmWhiteBG = sampleInterpolator((t) => interpolateRdBu(1 - t), 9);
 
 // PurpleGreen -> PRGn
 export const PurpleGreenWhiteBG = sampleInterpolator(interpolatePRGn, 9);
-
 
 // ============================================
 // PALETTE COLLECTIONS
@@ -302,12 +382,12 @@ export const SEQUENTIAL_PALETTES = {
   TurboWhiteBG,
   Viridis,
   Cividis,
-  Turbo
+  Turbo,
 };
 
 export const DIVERGING_PALETTES = {
   CoolWarmWhiteBG,
-  PurpleGreenWhiteBG
+  PurpleGreenWhiteBG,
 };
 
 export const ALL_PALETTES = {
@@ -325,41 +405,162 @@ export function getPaletteInfo(name) {
   // Simple Metadata Lookup (Static)
   const meta = {
     // Categorical
-    Extended30: { type: 'categorical', colorBlindSafe: false, maxColors: 30, description: 'Large palette for many groups (30 colors)' },
-    Tableau10: { type: 'categorical', colorBlindSafe: true, maxColors: 10, description: 'Standard professional palette (Tableau)' },
-    Tableau20: { type: 'categorical', colorBlindSafe: false, maxColors: 20, description: 'Extended professional palette' },
-    Paired: { type: 'categorical', colorBlindSafe: false, maxColors: 12, description: 'Light/dark pairs (ColorBrewer)' },
-    Set3: { type: 'categorical', colorBlindSafe: false, maxColors: 12, description: 'Pastel colors (ColorBrewer)' },
-    Set1: { type: 'categorical', colorBlindSafe: false, maxColors: 9, description: 'Bold colors (ColorBrewer)' },
-    Dark2: { type: 'categorical', colorBlindSafe: true, maxColors: 8, description: 'Dark colors (ColorBrewer)' },
-    Accent: { type: 'categorical', colorBlindSafe: false, maxColors: 8, description: 'Accent colors (ColorBrewer)' },
-    Category10: { type: 'categorical', colorBlindSafe: false, maxColors: 10, description: 'Classic D3 palette' },
-    OkabeItoWhiteBG: { type: 'categorical', colorBlindSafe: true, maxColors: 8, description: 'Universal design (Optimized for White)' },
-    WongWhiteBG: { type: 'categorical', colorBlindSafe: true, maxColors: 8, description: 'Nature palette (Optimized for White)' },
-    TolBrightWhiteBG: { type: 'categorical', colorBlindSafe: true, maxColors: 7, description: 'Distinct & Bright (Optimized for White)' },
-    TolMutedWhiteBG: { type: 'categorical', colorBlindSafe: true, maxColors: 9, description: 'Soft & Distinct (Optimized for White)' },
-    HighContrast: { type: 'categorical', colorBlindSafe: false, maxColors: 10, description: 'Maximum distinctness' },
-    PhyloOptimized: { type: 'categorical', colorBlindSafe: false, maxColors: 11, description: 'Tree-specific colors (No Neon)' },
-    BlueShadesWhiteBG: { type: 'categorical', colorBlindSafe: true, maxColors: 10, description: 'Blue tints (Optimized for White)' },
+    Extended30: {
+      type: 'categorical',
+      colorBlindSafe: false,
+      maxColors: 30,
+      description: 'Large palette for many groups (30 colors)',
+    },
+    Tableau10: {
+      type: 'categorical',
+      colorBlindSafe: true,
+      maxColors: 10,
+      description: 'Standard professional palette (Tableau)',
+    },
+    Tableau20: {
+      type: 'categorical',
+      colorBlindSafe: false,
+      maxColors: 20,
+      description: 'Extended professional palette',
+    },
+    Paired: {
+      type: 'categorical',
+      colorBlindSafe: false,
+      maxColors: 12,
+      description: 'Light/dark pairs (ColorBrewer)',
+    },
+    Set3: {
+      type: 'categorical',
+      colorBlindSafe: false,
+      maxColors: 12,
+      description: 'Pastel colors (ColorBrewer)',
+    },
+    Set1: {
+      type: 'categorical',
+      colorBlindSafe: false,
+      maxColors: 9,
+      description: 'Bold colors (ColorBrewer)',
+    },
+    Dark2: {
+      type: 'categorical',
+      colorBlindSafe: true,
+      maxColors: 8,
+      description: 'Dark colors (ColorBrewer)',
+    },
+    Accent: {
+      type: 'categorical',
+      colorBlindSafe: false,
+      maxColors: 8,
+      description: 'Accent colors (ColorBrewer)',
+    },
+    Category10: {
+      type: 'categorical',
+      colorBlindSafe: false,
+      maxColors: 10,
+      description: 'Classic D3 palette',
+    },
+    OkabeItoWhiteBG: {
+      type: 'categorical',
+      colorBlindSafe: true,
+      maxColors: 8,
+      description: 'Universal design (Optimized for White)',
+    },
+    WongWhiteBG: {
+      type: 'categorical',
+      colorBlindSafe: true,
+      maxColors: 8,
+      description: 'Nature palette (Optimized for White)',
+    },
+    TolBrightWhiteBG: {
+      type: 'categorical',
+      colorBlindSafe: true,
+      maxColors: 7,
+      description: 'Distinct & Bright (Optimized for White)',
+    },
+    TolMutedWhiteBG: {
+      type: 'categorical',
+      colorBlindSafe: true,
+      maxColors: 9,
+      description: 'Soft & Distinct (Optimized for White)',
+    },
+    HighContrast: {
+      type: 'categorical',
+      colorBlindSafe: false,
+      maxColors: 10,
+      description: 'Maximum distinctness',
+    },
+    PhyloOptimized: {
+      type: 'categorical',
+      colorBlindSafe: false,
+      maxColors: 11,
+      description: 'Tree-specific colors (No Neon)',
+    },
+    BlueShadesWhiteBG: {
+      type: 'categorical',
+      colorBlindSafe: true,
+      maxColors: 10,
+      description: 'Blue tints (Optimized for White)',
+    },
 
     // Sequential
-    ViridisWhiteBG: { type: 'sequential', colorBlindSafe: true, maxColors: 8, description: 'Scientific standard' },
-    CividisWhiteBG: { type: 'sequential', colorBlindSafe: true, maxColors: 8, description: 'Color-blind safe' },
-    TurboWhiteBG: { type: 'sequential', colorBlindSafe: false, maxColors: 8, description: 'Rainbow-like' },
-    Viridis: { type: 'sequential', colorBlindSafe: true, maxColors: 10, description: 'Scientific standard' },
-    Cividis: { type: 'sequential', colorBlindSafe: true, maxColors: 10, description: 'Color-blind safe' },
-    Turbo: { type: 'sequential', colorBlindSafe: false, maxColors: 10, description: 'Rainbow-like' },
-
+    ViridisWhiteBG: {
+      type: 'sequential',
+      colorBlindSafe: true,
+      maxColors: 8,
+      description: 'Scientific standard',
+    },
+    CividisWhiteBG: {
+      type: 'sequential',
+      colorBlindSafe: true,
+      maxColors: 8,
+      description: 'Color-blind safe',
+    },
+    TurboWhiteBG: {
+      type: 'sequential',
+      colorBlindSafe: false,
+      maxColors: 8,
+      description: 'Rainbow-like',
+    },
+    Viridis: {
+      type: 'sequential',
+      colorBlindSafe: true,
+      maxColors: 10,
+      description: 'Scientific standard',
+    },
+    Cividis: {
+      type: 'sequential',
+      colorBlindSafe: true,
+      maxColors: 10,
+      description: 'Color-blind safe',
+    },
+    Turbo: {
+      type: 'sequential',
+      colorBlindSafe: false,
+      maxColors: 10,
+      description: 'Rainbow-like',
+    },
 
     // Diverging
-    CoolWarmWhiteBG: { type: 'diverging', colorBlindSafe: false, maxColors: 9, description: 'Diverging Blue-Red' },
-    PurpleGreenWhiteBG: { type: 'diverging', colorBlindSafe: true, maxColors: 9, description: 'Diverging Purple-Green' },
+    CoolWarmWhiteBG: {
+      type: 'diverging',
+      colorBlindSafe: false,
+      maxColors: 9,
+      description: 'Diverging Blue-Red',
+    },
+    PurpleGreenWhiteBG: {
+      type: 'diverging',
+      colorBlindSafe: true,
+      maxColors: 9,
+      description: 'Diverging Purple-Green',
+    },
   };
 
-  return meta[name] || {
-    type: 'categorical',
-    colorBlindSafe: false,
-    maxColors: (ALL_PALETTES[name] || []).length,
-    description: 'Custom palette'
-  };
+  return (
+    meta[name] || {
+      type: 'categorical',
+      colorBlindSafe: false,
+      maxColors: (ALL_PALETTES[name] || []).length,
+      description: 'Custom palette',
+    }
+  );
 }

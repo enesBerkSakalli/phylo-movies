@@ -1,4 +1,4 @@
-import { cluster, hierarchy } from "d3-hierarchy";
+import { cluster, hierarchy } from 'd3-hierarchy';
 import { transformBranchLengths } from '../../domain/tree/branchTransform.js';
 import { createLayoutResult } from './LayoutResultAdapter.js';
 import {
@@ -19,7 +19,7 @@ import {
   setAngleOffsetRadians,
   setLayoutDimensions,
   setLayoutMargin,
-  setRadiusPreservation
+  setRadiusPreservation,
 } from './LayoutBaseUtils.js';
 
 /**
@@ -83,7 +83,13 @@ export class TidyTreeLayout {
   }
 
   calculateContainerScale(minWindowSize, maxRadius, factor) {
-    return calculateContainerScale(this.containerWidth, this.containerHeight, minWindowSize, maxRadius, factor);
+    return calculateContainerScale(
+      this.containerWidth,
+      this.containerHeight,
+      minWindowSize,
+      maxRadius,
+      factor
+    );
   }
 
   cacheLeafCounts() {
@@ -136,7 +142,10 @@ export class TidyTreeLayout {
     this.applyTidyLayout();
 
     if (!useUniformScaling) {
-      const minWindowSize = this.getMinContainerDimension(this.containerWidth, this.containerHeight);
+      const minWindowSize = this.getMinContainerDimension(
+        this.containerWidth,
+        this.containerHeight
+      );
       // Use projected radii for fit so scaling matches rendered positions
       const maxRadius = this.getMaxRadius(this.root);
       this.scale = this.calculateContainerScale(minWindowSize, maxRadius, 2.0);
@@ -148,11 +157,7 @@ export class TidyTreeLayout {
   }
 }
 
-export default function createTidyTreeLayout(
-  tree,
-  branchTransformation = 'none',
-  options = {}
-) {
+export default function createTidyTreeLayout(tree, branchTransformation = 'none', options = {}) {
   const transformedTree = transformBranchLengths(tree, branchTransformation);
   const treeLayout = new TidyTreeLayout(transformedTree);
   const { width, height, margin } = normalizeLayoutOptions(options);

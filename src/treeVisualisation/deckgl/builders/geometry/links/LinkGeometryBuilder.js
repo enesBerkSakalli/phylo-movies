@@ -69,8 +69,16 @@ export class LinkGeometryBuilder {
     const source = linkData?.source || {};
     const target = linkData?.target || {};
     return twoPointFloat32Path(
-      [finiteCoordinate(source.x, source.radius * Math.cos(source.angle)), finiteCoordinate(source.y, source.radius * Math.sin(source.angle)), 0],
-      [finiteCoordinate(target.x, target.radius * Math.cos(target.angle)), finiteCoordinate(target.y, target.radius * Math.sin(target.angle)), 0]
+      [
+        finiteCoordinate(source.x, source.radius * Math.cos(source.angle)),
+        finiteCoordinate(source.y, source.radius * Math.sin(source.angle)),
+        0,
+      ],
+      [
+        finiteCoordinate(target.x, target.radius * Math.cos(target.angle)),
+        finiteCoordinate(target.y, target.radius * Math.sin(target.angle)),
+        0,
+      ]
     );
   }
 
@@ -87,7 +95,7 @@ export class LinkGeometryBuilder {
     path[offset++] = branchCoords.movePoint.y;
     path[offset++] = 0;
 
-    const delta = Number.isFinite(angleDiff) ? angleDiff : (endAngle - startAngle);
+    const delta = Number.isFinite(angleDiff) ? angleDiff : endAngle - startAngle;
 
     for (let i = 0; i <= segmentCount; i++) {
       const t = i / segmentCount;
@@ -111,9 +119,8 @@ export class LinkGeometryBuilder {
   setSegmentCount(count) {
     this.segmentCount = Math.max(1, Math.floor(count));
   }
-
 }
 
 function finiteCoordinate(value, fallback = 0) {
-  return Number.isFinite(value) ? value : (Number.isFinite(fallback) ? fallback : 0);
+  return Number.isFinite(value) ? value : Number.isFinite(fallback) ? fallback : 0;
 }

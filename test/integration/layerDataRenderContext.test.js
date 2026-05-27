@@ -104,8 +104,14 @@ describe('deck.gl layer render context', () => {
       labelRadius: 50,
     });
 
-    expect(layerData.nodes.some((node) => node.isLeaf && node.split_indices?.[0] === 0)).toBe(false);
-    expect(layerData.nodes.every((node) => node.position[0] !== 0 || node.position[1] !== 0 || node.split_indices?.length > 1)).toBe(true);
+    expect(layerData.nodes.some((node) => node.isLeaf && node.split_indices?.[0] === 0)).toBe(
+      false
+    );
+    expect(
+      layerData.nodes.every(
+        (node) => node.position[0] !== 0 || node.position[1] !== 0 || node.split_indices?.length > 1
+      )
+    ).toBe(true);
     expect(warn).toHaveBeenCalled();
   });
 
@@ -129,20 +135,26 @@ describe('deck.gl layer render context', () => {
       calculateLayout: vi.fn(() => layout),
     });
     handler.handleNodeClick(
-      { object: { treeIndex: 1, treeSide: 'right', split_indices: [1], position: [999, 999, 0] }, x: 10, y: 20 },
+      {
+        object: { treeIndex: 1, treeSide: 'right', split_indices: [1], position: [999, 999, 0] },
+        x: 10,
+        y: 20,
+      },
       { center: { x: 12, y: 34 } },
       null
     );
 
     const contextNode = showNodeContextMenu.mock.calls[0][0];
-    expect(contextNode).toEqual(expect.objectContaining({
-      name: 'taxon-b',
-      split_indices: [1],
-      depth: 1,
-      treeIndex: 1,
-      treeSide: 'right',
-      splitKey: expect.any(String),
-    }));
+    expect(contextNode).toEqual(
+      expect.objectContaining({
+        name: 'taxon-b',
+        split_indices: [1],
+        depth: 1,
+        treeIndex: 1,
+        treeSide: 'right',
+        splitKey: expect.any(String),
+      })
+    );
     expect(contextNode).not.toHaveProperty('data');
     expect(contextNode).not.toHaveProperty('parent');
     expect(contextNode?.descendants).toBeUndefined();

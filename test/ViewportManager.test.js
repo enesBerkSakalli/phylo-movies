@@ -18,7 +18,7 @@ import {
   VIEWPORT_LOW_DENSITY_NODE_THRESHOLD,
   VIEWPORT_LOW_DENSITY_PADDING,
   VIEWPORT_MEDIUM_DENSITY_NODE_THRESHOLD,
-  VIEWPORT_MEDIUM_DENSITY_PADDING
+  VIEWPORT_MEDIUM_DENSITY_PADDING,
 } from '../src/treeVisualisation/viewport/viewportFit.js';
 import {
   calculateBranchBounds,
@@ -28,7 +28,7 @@ import {
   calculatePositionCenter,
   calculateSafeVisualRadius,
   calculateTreeVisualRadius,
-  mergeBounds
+  mergeBounds,
 } from '../src/treeVisualisation/utils/TreeBoundsUtils.js';
 
 describe('ViewportManager', () => {
@@ -83,9 +83,7 @@ describe('ViewportManager', () => {
         { position: [-100, -100, 0], radius: 2 },
         { position: [100, 100, 0], radius: 2 },
       ],
-      [
-        { position: [1200, 0, 0], text: 'A label that should not determine the default fit' },
-      ],
+      [{ position: [1200, 0, 0], text: 'A label that should not determine the default fit' }],
       { duration: 0 }
     );
 
@@ -111,13 +109,8 @@ describe('ViewportManager', () => {
     });
 
     manager.focusOnTree(
-      [
-        { position: [-12, 0, 0] },
-        { position: [12, 0, 0] },
-      ],
-      [
-        { position: [3000, 0, 0], text: 'Norovirus-like dense label ring' },
-      ],
+      [{ position: [-12, 0, 0] }, { position: [12, 0, 0] }],
+      [{ position: [3000, 0, 0], text: 'Norovirus-like dense label ring' }],
       {
         duration: 0,
         maxZoomOverAutoVisibleFit: 1,
@@ -130,13 +123,8 @@ describe('ViewportManager', () => {
 
   it('manual label fit includes label bounds exactly once', () => {
     const result = calculateFocusViewport({
-      nodes: [
-        { position: [0, 0, 0] },
-        { position: [10, 0, 0] },
-      ],
-      labels: [
-        { position: [100, 0, 0], text: 'abcdefghij' },
-      ],
+      nodes: [{ position: [0, 0, 0] }, { position: [10, 0, 0] }],
+      labels: [{ position: [100, 0, 0], text: 'abcdefghij' }],
       fitMode: VIEWPORT_FIT_MODES.LABELS,
       padding: 1,
       labelSizePx: 16,
@@ -153,10 +141,7 @@ describe('ViewportManager', () => {
 
   it('fits into the best unobstructed viewport area when UI overlays cover the canvas', () => {
     const result = calculateFocusViewport({
-      nodes: [
-        { position: [-50, -50, 0] },
-        { position: [50, 50, 0] },
-      ],
+      nodes: [{ position: [-50, -50, 0] }, { position: [50, 50, 0] }],
       labels: [],
       fitAreas: [
         { left: 0, top: 0, width: 240, height: 600 },
@@ -172,10 +157,10 @@ describe('ViewportManager', () => {
             return [
               viewState.target[0] + (x - 500) / scale,
               viewState.target[1] + (y - 400) / scale,
-              0
+              0,
             ];
-          }
-        })
+          },
+        }),
       },
       currentViewState: { target: [0, 0, 0], zoom: 0 },
     });
@@ -188,38 +173,39 @@ describe('ViewportManager', () => {
   });
 
   it('chooses fit areas by maximum branch scale before raw area', () => {
-    expect(selectFitAreaForBounds(
-      { minX: -10, maxX: 10, minY: -100, maxY: 100 },
-      [
-        { left: 0, top: 0, width: 900, height: 120 },
-        { left: 100, top: 150, width: 300, height: 500 },
-      ],
-      1,
-      1000,
-      800
-    )).toEqual({ left: 100, top: 150, width: 300, height: 500 });
+    expect(
+      selectFitAreaForBounds(
+        { minX: -10, maxX: 10, minY: -100, maxY: 100 },
+        [
+          { left: 0, top: 0, width: 900, height: 120 },
+          { left: 100, top: 150, width: 300, height: 500 },
+        ],
+        1,
+        1000,
+        800
+      )
+    ).toEqual({ left: 100, top: 150, width: 300, height: 500 });
   });
 
   it('can cap automatic fit-area center drift before choosing maximum scale', () => {
-    expect(selectFitAreaForBounds(
-      { minX: -100, maxX: 100, minY: -100, maxY: 100 },
-      [
-        { left: 0, top: 0, width: 300, height: 300 },
-        { left: 400, top: 300, width: 200, height: 200 },
-      ],
-      1,
-      1000,
-      800,
-      { maxCenterDriftRatio: 0.2 }
-    )).toEqual({ left: 400, top: 300, width: 200, height: 200 });
+    expect(
+      selectFitAreaForBounds(
+        { minX: -100, maxX: 100, minY: -100, maxY: 100 },
+        [
+          { left: 0, top: 0, width: 300, height: 300 },
+          { left: 400, top: 300, width: 200, height: 200 },
+        ],
+        1,
+        1000,
+        800,
+        { maxCenterDriftRatio: 0.2 }
+      )
+    ).toEqual({ left: 400, top: 300, width: 200, height: 200 });
   });
 
   it('long labels at a stable global label radius do not shrink automatic branch fit', () => {
     const branchFit = calculateFocusViewport({
-      nodes: [
-        { position: [-12, 0, 0] },
-        { position: [12, 0, 0] },
-      ],
+      nodes: [{ position: [-12, 0, 0] }, { position: [12, 0, 0] }],
       labels: [
         {
           position: [600, 0, 0],
@@ -235,10 +221,7 @@ describe('ViewportManager', () => {
       currentViewState: { target: [0, 0, 0], zoom: 0 },
     });
     const labelFit = calculateFocusViewport({
-      nodes: [
-        { position: [-12, 0, 0] },
-        { position: [12, 0, 0] },
-      ],
+      nodes: [{ position: [-12, 0, 0] }, { position: [12, 0, 0] }],
       labels: [
         {
           position: [600, 0, 0],
@@ -260,10 +243,7 @@ describe('ViewportManager', () => {
 
   it('caps automatic branch zoom against visible label-ring fit when requested', () => {
     const branchFit = calculateFocusViewport({
-      nodes: [
-        { position: [-12, 0, 0] },
-        { position: [12, 0, 0] },
-      ],
+      nodes: [{ position: [-12, 0, 0] }, { position: [12, 0, 0] }],
       labels: [
         {
           position: [650, 0, 0],
@@ -279,10 +259,7 @@ describe('ViewportManager', () => {
       currentViewState: { target: [0, 0, 0], zoom: 0 },
     });
     const cappedFit = calculateFocusViewport({
-      nodes: [
-        { position: [-12, 0, 0] },
-        { position: [12, 0, 0] },
-      ],
+      nodes: [{ position: [-12, 0, 0] }, { position: [12, 0, 0] }],
       labels: [
         {
           position: [650, 0, 0],
@@ -299,10 +276,7 @@ describe('ViewportManager', () => {
       currentViewState: { target: [0, 0, 0], zoom: 0 },
     });
     const autoVisibleFit = calculateFocusViewport({
-      nodes: [
-        { position: [-12, 0, 0] },
-        { position: [12, 0, 0] },
-      ],
+      nodes: [{ position: [-12, 0, 0] }, { position: [12, 0, 0] }],
       labels: [
         {
           position: [650, 0, 0],
@@ -324,10 +298,7 @@ describe('ViewportManager', () => {
 
   it('auto-visible fit includes labels with a tighter default margin than manual label fit', () => {
     const autoVisibleFit = calculateFocusViewport({
-      nodes: [
-        { position: [-12, 0, 0] },
-        { position: [12, 0, 0] },
-      ],
+      nodes: [{ position: [-12, 0, 0] }, { position: [12, 0, 0] }],
       labels: [
         {
           position: [600, 0, 0],
@@ -342,10 +313,7 @@ describe('ViewportManager', () => {
       currentViewState: { target: [0, 0, 0], zoom: 0 },
     });
     const labelFit = calculateFocusViewport({
-      nodes: [
-        { position: [-12, 0, 0] },
-        { position: [12, 0, 0] },
-      ],
+      nodes: [{ position: [-12, 0, 0] }, { position: [12, 0, 0] }],
       labels: [
         {
           position: [600, 0, 0],
@@ -365,9 +333,12 @@ describe('ViewportManager', () => {
   });
 
   it('adds extra automatic visible-content margin for dense trees', () => {
-    const denseNodes = Array.from({ length: VIEWPORT_HIGH_DENSITY_NODE_THRESHOLD + 1 }, (_, index) => ({
-      position: [index, 0, 0],
-    }));
+    const denseNodes = Array.from(
+      { length: VIEWPORT_HIGH_DENSITY_NODE_THRESHOLD + 1 },
+      (_, index) => ({
+        position: [index, 0, 0],
+      })
+    );
     const labels = [
       {
         position: [500, 0, 0],
@@ -442,19 +413,12 @@ describe('ViewportManager', () => {
 
   it('includes animated flat typed path geometry in branch bounds', () => {
     const bounds = calculateBranchBounds(
-      [
-        { position: [0, 0, 0] },
-        { position: [10, 0, 0] },
-      ],
+      [{ position: [0, 0, 0] }, { position: [10, 0, 0] }],
       [
         {
           sourcePosition: [0, 0, 0],
           targetPosition: [10, 0, 0],
-          path: new Float32Array([
-            0, 0, 0,
-            5, 100, 0,
-            10, 0, 0,
-          ]),
+          path: new Float32Array([0, 0, 0, 5, 100, 0, 10, 0, 0]),
         },
       ]
     );
@@ -525,39 +489,38 @@ describe('ViewportManager', () => {
 
 describe('TreeBoundsUtils normalized data contract', () => {
   it('keeps empty normalized arrays as zero bounds', () => {
-    expect(
-      mergeBounds(calculateNodeBounds([]), calculateLabelBounds([]))
-    ).toEqual({ minX: 0, maxX: 0, minY: 0, maxY: 0 });
+    expect(mergeBounds(calculateNodeBounds([]), calculateLabelBounds([]))).toEqual({
+      minX: 0,
+      maxX: 0,
+      minY: 0,
+      maxY: 0,
+    });
     expect(calculateBranchBounds([], [])).toEqual({ minX: 0, maxX: 0, minY: 0, maxY: 0 });
     expect(calculatePositionCenter([])).toEqual([0, 0]);
     expect(calculateMaxPositionRadius([])).toBe(0);
   });
 
   it('calculates branch bounds from normalized nodes and links', () => {
-    expect(calculateBranchBounds(
-      [
-        { position: [10, 20, 0] },
-        { position: [-5, 8, 0] }
-      ],
-      [
-        {
-          sourcePosition: [1, 2, 0],
-          targetPosition: [30, -10, 0]
-        }
-      ]
-    )).toEqual({
+    expect(
+      calculateBranchBounds(
+        [{ position: [10, 20, 0] }, { position: [-5, 8, 0] }],
+        [
+          {
+            sourcePosition: [1, 2, 0],
+            targetPosition: [30, -10, 0],
+          },
+        ]
+      )
+    ).toEqual({
       minX: -5,
       maxX: 30,
       minY: -10,
-      maxY: 20
+      maxY: 20,
     });
   });
 
   it('calculates centers and radii from normalized positions', () => {
-    const items = [
-      { position: [0, 0, 0] },
-      { position: [10, 20, 0] }
-    ];
+    const items = [{ position: [0, 0, 0] }, { position: [10, 20, 0] }];
 
     expect(calculatePositionCenter(items)).toEqual([5, 10]);
     expect(calculateMaxPositionRadius(items, [0, 0])).toBeCloseTo(Math.hypot(10, 20));
@@ -565,10 +528,9 @@ describe('TreeBoundsUtils normalized data contract', () => {
 
   it('calculates label text bounds from the shared label size heuristic', () => {
     expect(calculateLabelBounds([], { labelSizePx: 10 })).toBeNull();
-    expect(calculateLabelBounds(
-      [{ position: [10, 20, 0], text: 'abc' }],
-      { labelSizePx: 10 }
-    )).toEqual({
+    expect(
+      calculateLabelBounds([{ position: [10, 20, 0], text: 'abc' }], { labelSizePx: 10 })
+    ).toEqual({
       minX: 10,
       maxX: 28,
       minY: 14,
@@ -580,17 +542,19 @@ describe('TreeBoundsUtils normalized data contract', () => {
     const error = new Error('label size failed');
 
     expect(() => calculateLabelBounds(null)).toThrow();
-    expect(() => calculateLabelBounds(
-      [{ position: [0, 0, 0], text: 'abc' }],
-      { getLabelSize: () => { throw error; } }
-    )).toThrow(error);
+    expect(() =>
+      calculateLabelBounds([{ position: [0, 0, 0], text: 'abc' }], {
+        getLabelSize: () => {
+          throw error;
+        },
+      })
+    ).toThrow(error);
   });
 
   it('caps individual label text width at the named maximum', () => {
-    expect(calculateLabelBounds(
-      [{ position: [0, 0, 0], text: 'x'.repeat(400) }],
-      { labelSizePx: 10 }
-    )).toEqual({
+    expect(
+      calculateLabelBounds([{ position: [0, 0, 0], text: 'x'.repeat(400) }], { labelSizePx: 10 })
+    ).toEqual({
       minX: 0,
       maxX: 2000,
       minY: -6,
@@ -602,7 +566,7 @@ describe('TreeBoundsUtils normalized data contract', () => {
     const layerData = {
       nodes: [{ position: [3, 4, 0] }],
       labels: [{ position: [0, 10, 0], text: 'abcd' }],
-      extensions: [{ sourcePosition: [0, 12, 0], targetPosition: [0, 20, 0] }]
+      extensions: [{ sourcePosition: [0, 12, 0], targetPosition: [0, 20, 0] }],
     };
 
     expect(calculateTreeVisualRadius(layerData, [0, 0], 10)).toBe(44);

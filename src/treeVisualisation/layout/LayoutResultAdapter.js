@@ -19,7 +19,7 @@ export function createLayoutResult(root, metadata = {}) {
     margin: metadata.margin,
     scale: metadata.scale,
     uniformScale: metadata.uniformScale,
-    layoutCacheKey: metadata.layoutCacheKey
+    layoutCacheKey: metadata.layoutCacheKey,
   };
 }
 
@@ -65,7 +65,7 @@ function normalizeLayoutNode(node, parent = null, path = []) {
     isInternal: Array.isArray(node?.children) && node.children.length > 0,
     path: currentPath,
     children,
-    child_split_indices: []
+    child_split_indices: [],
   };
 
   if (Array.isArray(node?.children)) {
@@ -75,8 +75,8 @@ function normalizeLayoutNode(node, parent = null, path = []) {
   }
 
   normalized.child_split_indices = children
-    .map(child => child.split_indices)
-    .filter(indices => Array.isArray(indices) && indices.length > 0);
+    .map((child) => child.split_indices)
+    .filter((indices) => Array.isArray(indices) && indices.length > 0);
 
   return normalized;
 }
@@ -106,7 +106,7 @@ function collectLayoutData(node, nodes, leaves, links) {
       isLeaf: child.isLeaf,
       isInternal: child.isInternal,
       source: toLinkEndpoint(node),
-      target: toLinkEndpoint(child)
+      target: toLinkEndpoint(child),
     });
     collectLayoutData(child, nodes, leaves, links);
   }

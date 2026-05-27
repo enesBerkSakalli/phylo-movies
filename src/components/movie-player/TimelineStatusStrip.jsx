@@ -39,11 +39,13 @@ export function TimelineStatusStrip() {
       msaColumnCount,
     };
 
-    return movieTimelineManager?.getTimelineStatusSnapshot?.(statusRequest) ??
+    return (
+      movieTimelineManager?.getTimelineStatusSnapshot?.(statusRequest) ??
       buildTimelineStatusSnapshot({
         ...statusRequest,
         treeListLength,
-      });
+      })
+    );
   }, [
     frameIndex,
     hasMsa,

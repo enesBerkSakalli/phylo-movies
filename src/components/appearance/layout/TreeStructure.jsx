@@ -4,9 +4,16 @@ import {
   selectLinkGeometryMode,
   selectSetBranchTransformation,
   selectSetLinkGeometryMode,
-  useAppStore
+  useAppStore,
 } from '../../../state/phyloStore/store.js';
-import { Select, SelectTrigger, SelectContent, SelectGroup, SelectItem, SelectValue } from '../../ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectValue,
+} from '../../ui/select';
 import { SidebarMenuSub, SidebarMenuSubItem } from '../../ui/sidebar';
 import { GitGraph } from 'lucide-react';
 
@@ -36,10 +43,7 @@ export function TreeStructure() {
             <GitGraph className="size-3.5" />
             <span className="text-[11px] font-medium uppercase tracking-wider">Branch Lengths</span>
           </div>
-          <Select
-            value={branchTransformation || 'none'}
-            onValueChange={handleBranchOptionChange}
-          >
+          <Select value={branchTransformation || 'none'} onValueChange={handleBranchOptionChange}>
             <SelectTrigger className="h-8 text-xs">
               <SelectValue />
             </SelectTrigger>

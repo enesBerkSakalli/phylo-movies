@@ -37,7 +37,7 @@ export class PolarNodeInterpolator {
       // Preserve properties from target
       name: toNode.name,
       isLeaf: toNode.isLeaf,
-      split_indices: toNode.split_indices
+      split_indices: toNode.split_indices,
     };
   }
 
@@ -53,7 +53,7 @@ export class PolarNodeInterpolator {
   interpolatePosition(fromNode, toNode, t, velocityEntry = null) {
     return interpolatePolarPosition(fromNode, toNode, t, {
       velocityEntry,
-      rootAngle: this._rootAngle
+      rootAngle: this._rootAngle,
     });
   }
 

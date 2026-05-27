@@ -15,34 +15,34 @@ export function parseGroupCSV(csvContent) {
     if (!csvContent || csvContent.trim() === '') {
       return {
         success: false,
-        error: 'CSV file is empty'
+        error: 'CSV file is empty',
       };
     }
 
     // Split into lines and filter empty lines
-    const lines = csvContent.split(/\r?\n/).filter(line => line.trim());
+    const lines = csvContent.split(/\r?\n/).filter((line) => line.trim());
 
     if (lines.length < 2) {
       return {
         success: false,
-        error: 'CSV must contain header and at least one data row'
+        error: 'CSV must contain header and at least one data row',
       };
     }
 
     // Parse header
     const headerRaw = parseCSVLine(lines[0]);
-    const header = headerRaw.map(h => h.trim());
-    const headerLower = header.map(h => h.toLowerCase());
+    const header = headerRaw.map((h) => h.trim());
+    const headerLower = header.map((h) => h.toLowerCase());
 
     // Find taxon column
-    const taxonIndex = headerLower.findIndex(h =>
-      h === 'taxon' || h === 'taxa' || h === 'name' || h === 'species' || h === 'id'
+    const taxonIndex = headerLower.findIndex(
+      (h) => h === 'taxon' || h === 'taxa' || h === 'name' || h === 'species' || h === 'id'
     );
 
     if (taxonIndex === -1) {
       return {
         success: false,
-        error: 'CSV must have a taxon/taxa/name/species/id column'
+        error: 'CSV must have a taxon/taxa/name/species/id column',
       };
     }
 
@@ -53,7 +53,7 @@ export function parseGroupCSV(csvContent) {
         groupingColumns.push({
           index,
           name: col,
-          displayName: col.charAt(0).toUpperCase() + col.slice(1)
+          displayName: col.charAt(0).toUpperCase() + col.slice(1),
         });
       }
     });
@@ -61,7 +61,7 @@ export function parseGroupCSV(csvContent) {
     if (groupingColumns.length === 0) {
       return {
         success: false,
-        error: 'CSV must have at least one grouping column besides the taxon column'
+        error: 'CSV must have at least one grouping column besides the taxon column',
       };
     }
 
@@ -71,7 +71,7 @@ export function parseGroupCSV(csvContent) {
     const errors = [];
 
     // Initialize grouping maps for each column
-    groupingColumns.forEach(col => {
+    groupingColumns.forEach((col) => {
       allGroupings[col.name] = new Map();
     });
 
@@ -95,7 +95,7 @@ export function parseGroupCSV(csvContent) {
 
       // Store all column values for this taxon
       const taxonGroups = {};
-      groupingColumns.forEach(col => {
+      groupingColumns.forEach((col) => {
         if (values.length > col.index) {
           const groupValue = values[col.index]?.trim() || 'Unassigned';
           taxonGroups[col.name] = groupValue;
@@ -109,13 +109,13 @@ export function parseGroupCSV(csvContent) {
     if (taxaData.size === 0) {
       return {
         success: false,
-        error: 'No valid taxa data found in CSV'
+        error: 'No valid taxa data found in CSV',
       };
     }
 
     // Create groups array for each column
     const columnGroups = {};
-    groupingColumns.forEach(col => {
+    groupingColumns.forEach((col) => {
       const groupMap = new Map();
       for (const [taxon, group] of allGroupings[col.name]) {
         if (!groupMap.has(group)) {
@@ -127,7 +127,7 @@ export function parseGroupCSV(csvContent) {
       columnGroups[col.name] = Array.from(groupMap.entries()).map(([name, members]) => ({
         name,
         count: members.length,
-        members
+        members,
       }));
     });
 
@@ -139,13 +139,13 @@ export function parseGroupCSV(csvContent) {
         allGroupings, // Object with Maps for each column
         columnGroups, // Object with groups array for each column
         totalTaxa: taxaData.size,
-        warnings: errors.length > 0 ? errors : null
-      }
+        warnings: errors.length > 0 ? errors : null,
+      },
     };
   } catch (error) {
     return {
       success: false,
-      error: `Failed to parse CSV: ${error.message}`
+      error: `Failed to parse CSV: ${error.message}`,
     };
   }
 }
@@ -197,7 +197,7 @@ function parseCSVLine(line) {
 export function validateCSVTaxa(csvTaxaGroups, availableTaxa) {
   // Create lowercase lookup map: lowercase -> original_canonical_name
   const availableLowerMap = new Map();
-  availableTaxa.forEach(name => {
+  availableTaxa.forEach((name) => {
     const lower = name.toLowerCase();
     // Only store first occurrence if there are duplicates (unlikely in tree)
     if (!availableLowerMap.has(lower)) {
@@ -211,7 +211,7 @@ export function validateCSVTaxa(csvTaxaGroups, availableTaxa) {
 
   for (const [csvTaxon] of csvTaxaGroups) {
     const csvTaxonLower = csvTaxon.toLowerCase();
-    
+
     if (availableLowerMap.has(csvTaxonLower)) {
       const treeOfficialName = availableLowerMap.get(csvTaxonLower);
       matched.push(treeOfficialName);
@@ -226,7 +226,6 @@ export function validateCSVTaxa(csvTaxaGroups, availableTaxa) {
     matched,
     unmatched,
     canonicalMapping,
-    matchPercentage: Math.round((matched.length / csvTaxaGroups.size) * 100)
+    matchPercentage: Math.round((matched.length / csvTaxaGroups.size) * 100),
   };
 }
-

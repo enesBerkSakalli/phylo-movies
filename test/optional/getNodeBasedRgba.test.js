@@ -5,7 +5,7 @@ import { getNodeBasedRgba } from '../../src/treeVisualisation/deckgl/layers/styl
 const helpers = {
   getBaseOpacity(value) {
     return value !== undefined ? Math.round(value * 255) : 255;
-  }
+  },
 };
 
 describe('getNodeBasedRgba', () => {
@@ -23,7 +23,7 @@ describe('getNodeBasedRgba', () => {
       isNodePivotEdge: () => false,
       hasPivotEdges: () => false,
       isNodeDownstreamOfAnyPivotEdge: () => false,
-      highlightedSubtreeSets: []
+      highlightedSubtreeSets: [],
     };
 
     cached = {
@@ -35,7 +35,7 @@ describe('getNodeBasedRgba', () => {
       highlightedSubtreeData: null,
       subtreeHighlightsEnabled: false, // disable subtree checks to avoid split index lookups
       highlightColorMode: 'solid',
-      subtreeHighlightColor: '#10b981'
+      subtreeHighlightColor: '#10b981',
     };
   });
 

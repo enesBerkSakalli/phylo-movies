@@ -1,7 +1,7 @@
 import {
   selectActiveTreeList,
   selectFileName,
-  selectInputFrameIndices
+  selectInputFrameIndices,
 } from '../../state/phyloStore/selectors/treeSelectors.js';
 
 const datasetIds = new WeakMap();
@@ -32,7 +32,7 @@ function normalizedOffsets(state) {
   const offsets = state?.styleConfig?.labelOffsets || {};
   return {
     label: finiteNumber(offsets.DEFAULT, 20),
-    extension: finiteNumber(offsets.EXTENSION, 5)
+    extension: finiteNumber(offsets.EXTENSION, 5),
   };
 }
 
@@ -66,26 +66,26 @@ function getDatasetCacheId(state = {}, treeList = null) {
 export function createUniformScalingCacheKey({
   state = {},
   treeList = null,
-  branchTransformation = state?.branchTransformation ?? 'none'
+  branchTransformation = state?.branchTransformation ?? 'none',
 } = {}) {
   const resolvedTreeList = resolveTreeList(state, treeList);
   const inputFrameIndices = selectInputFrameIndices(state);
   return [
     `dataset=${getDatasetCacheId(state, resolvedTreeList)}`,
     `branch=${branchTransformation}`,
-    `inputFrames=${Array.isArray(inputFrameIndices) ? inputFrameIndices.join(',') : ''}`
+    `inputFrames=${Array.isArray(inputFrameIndices) ? inputFrameIndices.join(',') : ''}`,
   ].join('|');
 }
 
 export function createTransformCacheKey({
   state = {},
   treeList = null,
-  branchTransformation = state?.branchTransformation ?? 'none'
+  branchTransformation = state?.branchTransformation ?? 'none',
 } = {}) {
   const resolvedTreeList = resolveTreeList(state, treeList);
   return [
     `dataset=${getDatasetCacheId(state, resolvedTreeList)}`,
-    `branch=${branchTransformation}`
+    `branch=${branchTransformation}`,
   ].join('|');
 }
 
@@ -95,7 +95,7 @@ export function createLayoutCacheKey({
   treeIndex = 'none',
   width = 0,
   height = 0,
-  maxGlobalScale = null
+  maxGlobalScale = null,
 } = {}) {
   const resolvedTreeList = resolveTreeList(state, treeList);
   const offsets = normalizedOffsets(state);
@@ -113,6 +113,6 @@ export function createLayoutCacheKey({
     `labelOffset=${offsets.label}`,
     `extensionOffset=${offsets.extension}`,
     `fontSize=${normalizedFontSize(state)}`,
-    `maxGlobalScale=${scale}`
+    `maxGlobalScale=${scale}`,
   ].join('|');
 }

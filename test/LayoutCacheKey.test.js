@@ -8,7 +8,7 @@ describe('layout cache key', () => {
     branchTransformation: 'none',
     layoutAngleDegrees: 360,
     layoutRotationDegrees: 0,
-    styleConfig: { labelOffsets: { DEFAULT: 20, EXTENSION: 5 } }
+    styleConfig: { labelOffsets: { DEFAULT: 20, EXTENSION: 5 } },
   };
 
   const baseOptions = {
@@ -16,35 +16,51 @@ describe('layout cache key', () => {
     treeIndex: 0,
     width: 800,
     height: 600,
-    maxGlobalScale: 12
+    maxGlobalScale: 12,
   };
 
   it('changes for each layout-affecting input', () => {
     const baseKey = createLayoutCacheKey(baseOptions);
 
-    expect(createLayoutCacheKey({ ...baseOptions, state: { ...baseState, datasetVersion: 2 } })).not.toBe(baseKey);
+    expect(
+      createLayoutCacheKey({ ...baseOptions, state: { ...baseState, datasetVersion: 2 } })
+    ).not.toBe(baseKey);
     expect(createLayoutCacheKey({ ...baseOptions, treeIndex: 1 })).not.toBe(baseKey);
-    expect(createLayoutCacheKey({ ...baseOptions, state: { ...baseState, branchTransformation: 'log' } })).not.toBe(baseKey);
+    expect(
+      createLayoutCacheKey({ ...baseOptions, state: { ...baseState, branchTransformation: 'log' } })
+    ).not.toBe(baseKey);
     expect(createLayoutCacheKey({ ...baseOptions, width: 900 })).not.toBe(baseKey);
     expect(createLayoutCacheKey({ ...baseOptions, height: 700 })).not.toBe(baseKey);
-    expect(createLayoutCacheKey({ ...baseOptions, state: { ...baseState, layoutAngleDegrees: 180 } })).not.toBe(baseKey);
-    expect(createLayoutCacheKey({ ...baseOptions, state: { ...baseState, layoutRotationDegrees: 45 } })).not.toBe(baseKey);
-    expect(createLayoutCacheKey({
-      ...baseOptions,
-      state: { ...baseState, linkGeometryMode: 'straight' }
-    })).not.toBe(baseKey);
-    expect(createLayoutCacheKey({
-      ...baseOptions,
-      state: { ...baseState, styleConfig: { labelOffsets: { DEFAULT: 30, EXTENSION: 5 } } }
-    })).not.toBe(baseKey);
-    expect(createLayoutCacheKey({
-      ...baseOptions,
-      state: { ...baseState, styleConfig: { labelOffsets: { DEFAULT: 20, EXTENSION: 10 } } }
-    })).not.toBe(baseKey);
-    expect(createLayoutCacheKey({
-      ...baseOptions,
-      state: { ...baseState, fontSize: '2.4em' }
-    })).not.toBe(baseKey);
+    expect(
+      createLayoutCacheKey({ ...baseOptions, state: { ...baseState, layoutAngleDegrees: 180 } })
+    ).not.toBe(baseKey);
+    expect(
+      createLayoutCacheKey({ ...baseOptions, state: { ...baseState, layoutRotationDegrees: 45 } })
+    ).not.toBe(baseKey);
+    expect(
+      createLayoutCacheKey({
+        ...baseOptions,
+        state: { ...baseState, linkGeometryMode: 'straight' },
+      })
+    ).not.toBe(baseKey);
+    expect(
+      createLayoutCacheKey({
+        ...baseOptions,
+        state: { ...baseState, styleConfig: { labelOffsets: { DEFAULT: 30, EXTENSION: 5 } } },
+      })
+    ).not.toBe(baseKey);
+    expect(
+      createLayoutCacheKey({
+        ...baseOptions,
+        state: { ...baseState, styleConfig: { labelOffsets: { DEFAULT: 20, EXTENSION: 10 } } },
+      })
+    ).not.toBe(baseKey);
+    expect(
+      createLayoutCacheKey({
+        ...baseOptions,
+        state: { ...baseState, fontSize: '2.4em' },
+      })
+    ).not.toBe(baseKey);
     expect(createLayoutCacheKey({ ...baseOptions, maxGlobalScale: 20 })).not.toBe(baseKey);
   });
 
@@ -69,7 +85,7 @@ describe('layout cache key', () => {
       treeIndex: 1,
       width: 800,
       height: 600,
-      maxGlobalScale: 12
+      maxGlobalScale: 12,
     });
     const keyWithoutTracking = createLayoutCacheKey({
       state: {
@@ -79,7 +95,7 @@ describe('layout cache key', () => {
       treeIndex: 1,
       width: 800,
       height: 600,
-      maxGlobalScale: 12
+      maxGlobalScale: 12,
     });
 
     expect(key).toBe(keyWithoutTracking);

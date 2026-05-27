@@ -4,27 +4,27 @@ import { calculateTaxaVisualScale } from '../../utils/visualScale.js';
 import { resetTaxonColorCache } from '../../systems/tree_color/monophyleticColoring.js';
 import {
   getLinkColor as resolveLinkColor,
-  getLinkDashArray as resolveLinkDashArray
+  getLinkDashArray as resolveLinkDashArray,
 } from './styles/links/inner/linkInnerStyles.js';
 import { getLinkWidth as resolveLinkWidth } from './styles/links/linkWidthStyles.js';
 import {
   getLinkOutlineDashArray as resolveLinkOutlineDashArray,
   getLinkOutlineColor as resolveLinkOutlineColor,
-  getLinkOutlineWidth as resolveLinkOutlineWidth
+  getLinkOutlineWidth as resolveLinkOutlineWidth,
 } from './styles/links/outline/linkOutlineStyles.js';
 import {
   getNodeColor as resolveNodeColor,
   getNodeBorderColor as resolveNodeBorderColor,
   getNodeRadius as resolveNodeRadius,
-  getNodeLineWidth as resolveNodeLineWidth
+  getNodeLineWidth as resolveNodeLineWidth,
 } from './styles/nodes/nodeStyles.js';
 import {
   getLabelColor as resolveLabelColor,
-  getLabelSize as resolveLabelSize
+  getLabelSize as resolveLabelSize,
 } from './styles/labels/labelStyles.js';
 import {
   getExtensionColor as resolveExtensionColor,
-  getExtensionWidth as resolveExtensionWidth
+  getExtensionWidth as resolveExtensionWidth,
 } from './styles/extensionStyles.js';
 import { getReadableMetricScale } from './styles/readableMetricScale.js';
 
@@ -42,7 +42,7 @@ export class LayerStyles {
     this._cache = {
       strokeWidth: null,
       fontSize: null,
-      nodeSize: null
+      nodeSize: null,
     };
 
     // Per-render-cycle cache to avoid repeated store access
@@ -108,7 +108,7 @@ export class LayerStyles {
         taxaCount,
         visualScale,
         // Density-based scaling: reduce highlight thickness for dense trees
-        densityScale: this._calculateDensityScale(state)
+        densityScale: this._calculateDensityScale(state),
       };
     }
     return this._renderCache;
@@ -361,7 +361,6 @@ export class LayerStyles {
     const fontSize = resolved.state?.fontSize ?? this._cache.fontSize ?? '2.6em';
     return resolveLabelSize(label, fontSize, resolved);
   }
-
 
   /**
    * Calculate density scaling factor for highlights

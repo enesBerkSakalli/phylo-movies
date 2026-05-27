@@ -26,7 +26,7 @@ const PUBLICATION_AUTHORS = [
   'E. B. Sakalli',
   'S. E. Haendeler',
   'A. von Haeseler',
-  'H. A. Schmidt'
+  'H. A. Schmidt',
 ];
 const PRIMARY_URL = `${SITE_ROOT}/`;
 const PAGE_TITLE = IS_DOCS_ONLY
@@ -47,24 +47,28 @@ const OG_IMAGE_HEIGHT = '930';
 const FAQ_ITEMS = [
   {
     question: 'What does Phylo-Movies do?',
-    answer: 'Phylo-Movies visualizes topological changes between phylogenetic trees by animating subtree movements across sliding-window analyses, bootstrap replicates, and related workflows.'
+    answer:
+      'Phylo-Movies visualizes topological changes between phylogenetic trees by animating subtree movements across sliding-window analyses, bootstrap replicates, and related workflows.',
   },
   {
     question: 'When do I need the backend?',
-    answer: 'You need the BranchArchitect backend for uploaded tree files, interpolation, morphing animations, and MSA-driven workflows. The GitHub Pages site is documentation-only and does not provide standalone processing.'
+    answer:
+      'You need the BranchArchitect backend for uploaded tree files, interpolation, morphing animations, and MSA-driven workflows. The GitHub Pages site is documentation-only and does not provide standalone processing.',
   },
   {
     question: 'Is Phylo-Movies available as a desktop app?',
-    answer: 'Yes. Phylo-Movies is distributed both as a desktop application and as a browser-based tool. The landing page links directly to desktop releases for macOS, Windows, and Linux.'
+    answer:
+      'Yes. Phylo-Movies is distributed both as a desktop application and as a browser-based tool. The landing page links directly to desktop releases for macOS, Windows, and Linux.',
   },
   {
     question: 'Which problems is Phylo-Movies useful for?',
-    answer: 'Typical use cases include recombination breakpoint exploration, rogue taxon detection across bootstrap trees, and qualitative inspection of local phylogenetic conflict.'
+    answer:
+      'Typical use cases include recombination breakpoint exploration, rogue taxon detection across bootstrap trees, and qualitative inspection of local phylogenetic conflict.',
   },
   {
     question: 'How should I cite Phylo-Movies?',
-    answer: `Cite the bioRxiv preprint ${PUBLICATION_TITLE} using DOI ${PUBLICATION_DOI}.`
-  }
+    answer: `Cite the bioRxiv preprint ${PUBLICATION_TITLE} using DOI ${PUBLICATION_DOI}.`,
+  },
 ];
 
 const STRUCTURED_DATA = [
@@ -80,9 +84,9 @@ const STRUCTURED_DATA = [
       'Tree morphing',
       'Multiple sequence alignment',
       'Recombination detection',
-      'Rogue taxa analysis'
+      'Rogue taxa analysis',
     ],
-    keywords: KEYWORDS.split(',').map((keyword) => keyword.trim())
+    keywords: KEYWORDS.split(',').map((keyword) => keyword.trim()),
   },
   {
     '@context': 'https://schema.org',
@@ -99,7 +103,7 @@ const STRUCTURED_DATA = [
     citation: PUBLICATION_DOI_URL,
     sameAs: [REPOSITORY_URL, README_URL, RELEASES_URL, PUBLICATION_URL, PUBLICATION_DOI_URL],
     subjectOf: PUBLICATION_URL,
-    keywords: KEYWORDS.split(',').map((keyword) => keyword.trim())
+    keywords: KEYWORDS.split(',').map((keyword) => keyword.trim()),
   },
   {
     '@context': 'https://schema.org',
@@ -114,7 +118,7 @@ const STRUCTURED_DATA = [
     codeRepository: REPOSITORY_URL,
     screenshot: SOCIAL_IMAGE_URL,
     citation: PUBLICATION_DOI_URL,
-    keywords: KEYWORDS.split(',').map((keyword) => keyword.trim())
+    keywords: KEYWORDS.split(',').map((keyword) => keyword.trim()),
   },
   {
     '@context': 'https://schema.org',
@@ -126,7 +130,7 @@ const STRUCTURED_DATA = [
     identifier: PUBLICATION_DOI,
     isPartOf: {
       '@type': 'Periodical',
-      name: 'bioRxiv'
+      name: 'bioRxiv',
     },
     datePublished: PUBLICATION_DATE,
     author: PUBLICATION_AUTHORS.map((name) => ({ '@type': 'Person', name })),
@@ -135,23 +139,25 @@ const STRUCTURED_DATA = [
       'Sliding-window analyses',
       'Tree morphing',
       'Recombination detection',
-      'Rogue taxa'
-    ]
+      'Rogue taxa',
+    ],
   },
   ...(IS_DOCS_ONLY
-    ? [{
-        '@context': 'https://schema.org',
-        '@type': 'FAQPage',
-        mainEntity: FAQ_ITEMS.map(({ question, answer }) => ({
-          '@type': 'Question',
-          name: question,
-          acceptedAnswer: {
-            '@type': 'Answer',
-            text: answer
-          }
-        }))
-      }]
-    : [])
+    ? [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: FAQ_ITEMS.map(({ question, answer }) => ({
+            '@type': 'Question',
+            name: question,
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: answer,
+            },
+          })),
+        },
+      ]
+    : []),
 ];
 
 function assertFileExists(filePath) {
@@ -196,9 +202,9 @@ function applyIndexSeo(indexHtml) {
   let html = replaceTitleTag(indexHtml, PAGE_TITLE);
   html = replaceDescriptionMeta(html, DESCRIPTION);
   const structuredDataJson = JSON.stringify(STRUCTURED_DATA, null, 2);
-  const citationAuthorTags = PUBLICATION_AUTHORS
-    .map((author) => `    <meta name="citation_author" content="${author}">`)
-    .join('\n');
+  const citationAuthorTags = PUBLICATION_AUTHORS.map(
+    (author) => `    <meta name="citation_author" content="${author}">`
+  ).join('\n');
 
   const injection = `
     <meta name="keywords" content="${KEYWORDS}">
@@ -252,7 +258,10 @@ ${structuredDataJson}
 function applySplashNoIndex(splashHtml) {
   if (!splashHtml.includes('</head>')) return splashHtml;
   if (/<meta\s+name=["']robots["']/i.test(splashHtml)) return splashHtml;
-  return splashHtml.replace('</head>', '    <meta name="robots" content="noindex, nofollow">\n  </head>');
+  return splashHtml.replace(
+    '</head>',
+    '    <meta name="robots" content="noindex, nofollow">\n  </head>'
+  );
 }
 
 function writeRobotsTxt() {
@@ -265,15 +274,15 @@ Sitemap: ${SITE_ROOT}/sitemap.xml`;
 
 function writeSitemapXml() {
   const today = new Date().toISOString().slice(0, 10);
-  const urls = IS_DOCS_ONLY
-    ? [`${SITE_ROOT}/`]
-    : [`${SITE_ROOT}/`, `${SITE_ROOT}/visualization`];
+  const urls = IS_DOCS_ONLY ? [`${SITE_ROOT}/`] : [`${SITE_ROOT}/`, `${SITE_ROOT}/visualization`];
 
   const entries = urls
-    .map((url) => `  <url>
+    .map(
+      (url) => `  <url>
     <loc>${url}</loc>
     <lastmod>${today}</lastmod>
-  </url>`)
+  </url>`
+    )
     .join('\n');
 
   const content = `<?xml version="1.0" encoding="UTF-8"?>
@@ -297,19 +306,19 @@ function writeWebManifest() {
       {
         src: '/phylo-movies/icons/phylo-tree-icon.svg',
         sizes: 'any',
-        type: 'image/svg+xml'
+        type: 'image/svg+xml',
       },
       {
         src: '/phylo-movies/icons/icon-192.png',
         sizes: '192x192',
-        type: 'image/png'
+        type: 'image/png',
       },
       {
         src: '/phylo-movies/icons/icon-512.png',
         sizes: '512x512',
-        type: 'image/png'
-      }
-    ]
+        type: 'image/png',
+      },
+    ],
   };
   writeTextFile(path.join(DIST_DIR, 'site.webmanifest'), JSON.stringify(manifest, null, 2));
 }

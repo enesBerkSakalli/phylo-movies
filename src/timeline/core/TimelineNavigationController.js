@@ -32,9 +32,12 @@ export class TimelineNavigationController {
 
   navigateToFrame(targetFrameIndex, seekOptions = undefined) {
     const { frameIndex, goToPosition } = this.store.getState();
-    const direction = targetFrameIndex === frameIndex
-      ? 'jump'
-      : (targetFrameIndex > frameIndex ? 'forward' : 'backward');
+    const direction =
+      targetFrameIndex === frameIndex
+        ? 'jump'
+        : targetFrameIndex > frameIndex
+          ? 'forward'
+          : 'backward';
     goToPosition(targetFrameIndex, direction, seekOptions);
   }
 
@@ -59,7 +62,9 @@ export class TimelineNavigationController {
       throw new Error('[TimelineNavigationController] timeline timing data is required');
     }
 
-    const target = this.timelineDataset.getCursorInSegmentAtMovieTime(segmentIndex, clickTimeMs, { bias: 'nearest' });
+    const target = this.timelineDataset.getCursorInSegmentAtMovieTime(segmentIndex, clickTimeMs, {
+      bias: 'nearest',
+    });
 
     return target?.frameIndex;
   }
@@ -73,14 +78,20 @@ export class TimelineNavigationController {
   }
 
   _resolveSeekOptions(segmentIndex, clickTimeMs) {
-    if (!Number.isFinite(clickTimeMs) || !Number.isFinite(this.timelineData?.totalDuration) || this.timelineData.totalDuration <= 0) {
+    if (
+      !Number.isFinite(clickTimeMs) ||
+      !Number.isFinite(this.timelineData?.totalDuration) ||
+      this.timelineData.totalDuration <= 0
+    ) {
       return undefined;
     }
 
     const bounds = this.timelineDataset.getSegmentBounds(segmentIndex);
     if (!bounds || bounds.end < bounds.start) return undefined;
 
-    const cursor = this.timelineDataset.getCursorInSegmentAtMovieTime(segmentIndex, clickTimeMs, { bias: 'nearest' });
+    const cursor = this.timelineDataset.getCursorInSegmentAtMovieTime(segmentIndex, clickTimeMs, {
+      bias: 'nearest',
+    });
     return {
       timelineProgress: cursor.timelineProgress,
     };

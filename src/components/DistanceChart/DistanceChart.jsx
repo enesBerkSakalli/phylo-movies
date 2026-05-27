@@ -1,12 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ReferenceLine,
-  XAxis,
-  YAxis,
-} from 'recharts';
+import { Area, AreaChart, CartesianGrid, ReferenceLine, XAxis, YAxis } from 'recharts';
 import {
   selectBarOptionValue,
   selectInputFrameIndices,
@@ -15,7 +8,7 @@ import {
   selectPairs,
   selectScaleList,
   selectTimelineCursor,
-  useAppStore
+  useAppStore,
 } from '../../state/phyloStore/store.js';
 
 import { ChartContainer, ChartTooltip } from '../ui/chart';
@@ -26,10 +19,7 @@ import {
   resolveCursorX,
   resolveNavigationTarget,
 } from './distanceChartModel.js';
-import {
-  formatMetricValue,
-  getDistanceChartMetric,
-} from './distanceChartLanguage.js';
+import { formatMetricValue, getDistanceChartMetric } from './distanceChartLanguage.js';
 
 const CHART_MARGINS = { top: 4, right: 8, bottom: 0, left: 2 };
 const X_AXIS_HEIGHT = 16;
@@ -44,15 +34,15 @@ const useTimelineData = ({
   scaleList,
 }) =>
   useMemo(() => {
-    const { points, yMax } = buildSeriesPoints(
-      barOptionValue,
-      pairMetrics,
-      scaleList,
-      pairs,
-    );
+    const { points, yMax } = buildSeriesPoints(barOptionValue, pairMetrics, scaleList, pairs);
 
     const hasData = points.length > 0;
-    const activePointIndex = resolveActivePointIndex(barOptionValue, timelineCursor, inputFrameIndices, points);
+    const activePointIndex = resolveActivePointIndex(
+      barOptionValue,
+      timelineCursor,
+      inputFrameIndices,
+      points
+    );
     const currentX = resolveCursorX(points, activePointIndex);
 
     return {
@@ -62,14 +52,7 @@ const useTimelineData = ({
       activePointIndex,
       hasData,
     };
-  }, [
-    barOptionValue,
-    timelineCursor,
-    inputFrameIndices,
-    pairMetrics,
-    pairs,
-    scaleList,
-  ]);
+  }, [barOptionValue, timelineCursor, inputFrameIndices, pairMetrics, pairs, scaleList]);
 
 export function DistanceChart() {
   const barOptionValue = useAppStore(selectBarOptionValue);
@@ -93,12 +76,15 @@ export function DistanceChart() {
   const activePoint = points[activePointIndex] ?? null;
   const activeValueText = buildPointValueText(metric, activePoint, points.length);
 
-  const chartConfig = useMemo(() => ({
-    y: {
-      label: metric.label,
-      color: metric.color,
-    },
-  }), [metric]);
+  const chartConfig = useMemo(
+    () => ({
+      y: {
+        label: metric.label,
+        color: metric.color,
+      },
+    }),
+    [metric]
+  );
 
   const navigateToPoint = useCallback(
     (point) => {
@@ -107,7 +93,7 @@ export function DistanceChart() {
         goToPosition(target.frameIndex, undefined, target.seekOptions);
       }
     },
-    [barOptionValue, goToPosition],
+    [barOptionValue, goToPosition]
   );
 
   const handleClick = useCallback(
@@ -115,7 +101,7 @@ export function DistanceChart() {
       if (!data || !data.activePayload || data.activePayload.length === 0) return;
       navigateToPoint(data.activePayload[0].payload);
     },
-    [navigateToPoint],
+    [navigateToPoint]
   );
 
   const handleKeyDown = useCallback(
@@ -143,7 +129,7 @@ export function DistanceChart() {
       event.preventDefault();
       navigateToPoint(points[Math.min(Math.max(nextIndex, 0), points.length - 1)]);
     },
-    [activePointIndex, navigateToPoint, points],
+    [activePointIndex, navigateToPoint, points]
   );
 
   if (!hasData) {
@@ -169,11 +155,7 @@ export function DistanceChart() {
       onKeyDown={handleKeyDown}
     >
       <ChartContainer config={chartConfig} className="h-full w-full">
-        <AreaChart
-          data={points}
-          margin={CHART_MARGINS}
-          onClick={handleClick}
-        >
+        <AreaChart data={points} margin={CHART_MARGINS} onClick={handleClick}>
           <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-muted/20" />
           <XAxis
             dataKey="x"
@@ -197,10 +179,7 @@ export function DistanceChart() {
             fontSize={9}
             tickFormatter={(value) => value.toLocaleString(undefined, { maximumFractionDigits: 1 })}
           />
-          <ChartTooltip
-            cursor={false}
-            content={<DistanceChartTooltip metric={metric} />}
-          />
+          <ChartTooltip cursor={false} content={<DistanceChartTooltip metric={metric} />} />
           <Area
             dataKey="y"
             type="stepAfter"
@@ -210,12 +189,7 @@ export function DistanceChart() {
             strokeWidth={1.5}
             isAnimationActive={false}
           />
-          <ReferenceLine
-            x={currentX}
-            stroke="var(--color-y)"
-            strokeWidth={2}
-            isFront
-          />
+          <ReferenceLine x={currentX} stroke="var(--color-y)" strokeWidth={2} isFront />
         </AreaChart>
       </ChartContainer>
     </div>

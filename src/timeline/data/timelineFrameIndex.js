@@ -7,7 +7,5 @@ export function getFrameViewIndex(frameRow) {
 }
 
 export function selectInputFrameIndicesFromRows(frameRows) {
-  return frameRows
-    .filter(isInputFrameRow)
-    .map(getFrameViewIndex);
+  return frameRows.filter(isInputFrameRow).map(getFrameViewIndex);
 }

@@ -8,7 +8,7 @@ import {
   toSplitSet,
   getSplitIndices,
   getLinkSplitIndices,
-  isSubsetOfAny
+  isSubsetOfAny,
 } from '../../../domain/tree/splits.js';
 
 export { splitsEqual, toSplitSet };

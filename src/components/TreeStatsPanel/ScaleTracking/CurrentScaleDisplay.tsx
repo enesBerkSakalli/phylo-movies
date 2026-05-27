@@ -5,11 +5,7 @@ import { Badge } from '../../ui/badge';
 import { Label } from '../../ui/label';
 import { Progress } from '../../ui/progress';
 import { Separator } from '../../ui/separator';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '../../ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../../ui/tooltip';
 import { Ruler } from 'lucide-react';
 
 interface CurrentScaleDisplayProps {

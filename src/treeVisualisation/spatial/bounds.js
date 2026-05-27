@@ -23,8 +23,8 @@ export function calculateViewportBoundsPadding(viewBounds, paddingFactor) {
   const [viewMinX, viewMinY, viewMaxX, viewMaxY] = viewBounds;
 
   return {
-    x: (viewMaxX - viewMinX) * (paddingFactor - 1) / 2,
-    y: (viewMaxY - viewMinY) * (paddingFactor - 1) / 2
+    x: ((viewMaxX - viewMinX) * (paddingFactor - 1)) / 2,
+    y: ((viewMaxY - viewMinY) * (paddingFactor - 1)) / 2,
   };
 }
 

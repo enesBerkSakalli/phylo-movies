@@ -15,9 +15,7 @@ export class LinkDataBuilder {
    * @returns {Array} Array of link data objects
    */
   convertLinks(links, options = {}) {
-    return links
-      .map(link => this.createLinkData(link, options))
-      .filter(Boolean);
+    return links.map((link) => this.createLinkData(link, options)).filter(Boolean);
   }
 
   /**
@@ -26,13 +24,16 @@ export class LinkDataBuilder {
    */
   createLinkData(link, options = {}) {
     if (!hasFiniteCoordinates(link.source) || !hasFiniteCoordinates(link.target)) {
-      console.warn('[LinkDataBuilder] Skipping link with invalid layout coordinates:', link.targetSplitIndices);
+      console.warn(
+        '[LinkDataBuilder] Skipping link with invalid layout coordinates:',
+        link.targetSplitIndices
+      );
       return null;
     }
 
     const linkData = this._extractLinkCoordinates(link);
     const linkPath = this.geometryBuilder.createLinkPath(linkData, {
-      geometryMode: options.linkGeometryMode
+      geometryMode: options.linkGeometryMode,
     });
     const splitKey = getSplitKey({ split_indices: link.targetSplitIndices });
     const linkKey = splitKey ? `link-${splitKey}` : null;
@@ -64,7 +65,7 @@ export class LinkDataBuilder {
       targetId,
       sourceSplitIndices: link.sourceSplitIndices,
       targetSplitIndices: link.targetSplitIndices,
-      polarData: this._extractPolarData(link)
+      polarData: this._extractPolarData(link),
     };
   }
 
@@ -78,14 +79,14 @@ export class LinkDataBuilder {
         x: link.source.x,
         y: link.source.y,
         angle: link.source.angle,
-        radius: link.source.radius
+        radius: link.source.radius,
       },
       target: {
         x: link.target.x,
         y: link.target.y,
         angle: link.target.angle,
-        radius: link.target.radius
-      }
+        radius: link.target.radius,
+      },
     };
   }
 
@@ -97,12 +98,12 @@ export class LinkDataBuilder {
     return {
       source: {
         angle: link.source.angle,
-        radius: link.source.radius
+        radius: link.source.radius,
       },
       target: {
         angle: link.target.angle,
-        radius: link.target.radius
-      }
+        radius: link.target.radius,
+      },
     };
   }
 

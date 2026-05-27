@@ -6,7 +6,11 @@ import { DeckGLTreeLayerDataFactory } from '../deckgl/DeckGLTreeLayerDataFactory
 import { calculateReadableLabelRadius, calculateLabelAngleSpan } from '../layout/labelRingRadii.js';
 import { TreeLayoutController } from '../TreeLayoutController.js';
 import { calculateTaxaVisualScale } from '../utils/visualScale.js';
-import { calculateBranchBounds, calculateLabelBounds, mergeBounds } from '../utils/TreeBoundsUtils.js';
+import {
+  calculateBranchBounds,
+  calculateLabelBounds,
+  mergeBounds,
+} from '../utils/TreeBoundsUtils.js';
 import { calculateFocusViewport, VIEWPORT_FIT_MODES } from '../viewport/viewportFit.js';
 
 const DEFAULT_WIDTH = 1234;
@@ -22,7 +26,9 @@ export function createTreeScalingDiagnostics(movieData, options = {}) {
       : [];
 
   if (treeList.length === 0) {
-    throw new Error('Tree scaling diagnostics require movieData.interpolated_trees or movieData.treeList');
+    throw new Error(
+      'Tree scaling diagnostics require movieData.interpolated_trees or movieData.treeList'
+    );
   }
 
   const width = normalizePositiveNumber(options.width, DEFAULT_WIDTH);
@@ -47,16 +53,16 @@ export function createTreeScalingDiagnostics(movieData, options = {}) {
       styleConfig: { labelOffsets },
       labelsVisible: options.labelsVisible ?? true,
       frameIndex: 0,
-      playing: false
+      playing: false,
     });
 
     const state = useAppStore.getState();
     const inputFrameIndices = selectInputFrameIndices(state);
     const originalScaleList = calculateScales(treeList, inputFrameIndices);
     const originalMaxGlobalScale = getMaxScaleValue(originalScaleList);
-    const transformedTreeList = treeList.map((tree) => (
+    const transformedTreeList = treeList.map((tree) =>
       branchTransformation === 'none' ? tree : transformBranchLengths(tree, branchTransformation)
-    ));
+    );
     const rawScaleList = calculateScales(transformedTreeList, inputFrameIndices);
     const rawMaxGlobalScale = getMaxScaleValue(rawScaleList);
     const controller = new TreeLayoutController(null);
@@ -64,24 +70,30 @@ export function createTreeScalingDiagnostics(movieData, options = {}) {
     controller.initializeUniformScaling(branchTransformation);
 
     const dataFactory = new DeckGLTreeLayerDataFactory();
-    const treeIndices = normalizeTreeIndices(options.treeIndices, treeList.length, inputFrameIndices);
-    const trees = treeIndices.map((treeIndex) => analyzeTreeIndex({
-      treeIndex,
-      treeList,
-      transformedTreeList,
-      inputFrameIndices,
-      originalScaleList,
-      originalMaxGlobalScale,
-      rawScaleList,
-      rawMaxGlobalScale,
-      controller,
-      dataFactory,
-      width,
-      height,
-      fontSize,
-      labelOffsets,
-      linkGeometryMode
-    }));
+    const treeIndices = normalizeTreeIndices(
+      options.treeIndices,
+      treeList.length,
+      inputFrameIndices
+    );
+    const trees = treeIndices.map((treeIndex) =>
+      analyzeTreeIndex({
+        treeIndex,
+        treeList,
+        transformedTreeList,
+        inputFrameIndices,
+        originalScaleList,
+        originalMaxGlobalScale,
+        rawScaleList,
+        rawMaxGlobalScale,
+        controller,
+        dataFactory,
+        width,
+        height,
+        fontSize,
+        labelOffsets,
+        linkGeometryMode,
+      })
+    );
 
     return {
       dataset: {
@@ -96,16 +108,16 @@ export function createTreeScalingDiagnostics(movieData, options = {}) {
         branchTransformation,
         layoutAngleDegrees,
         layoutRotationDegrees,
-        linkGeometryMode
+        linkGeometryMode,
       },
       global: {
         originalMaxGlobalScale,
         activeMaxGlobalScale: rawMaxGlobalScale,
         rawMaxGlobalScale,
         maxGlobalScale: controller.maxGlobalScale,
-        minVisualBranchLength: 0
+        minVisualBranchLength: 0,
       },
-      trees
+      trees,
     };
   } finally {
     useAppStore.setState(previousState, true);
@@ -127,7 +139,7 @@ function analyzeTreeIndex({
   height,
   fontSize,
   labelOffsets,
-  linkGeometryMode
+  linkGeometryMode,
 }) {
   const layout = controller.calculateLayout(treeList[treeIndex], { treeIndex });
   const radii = controller._getConsistentRadii(layout);
@@ -136,26 +148,29 @@ function analyzeTreeIndex({
     treeIndex,
     treeSide: 'left',
     renderMode: 'diagnostic',
-    linkGeometryMode
+    linkGeometryMode,
   });
   const leafCount = layout.leaves.length;
   const angleSpanRadians = calculateLabelAngleSpan(layout.leaves);
-  const extensionOffset = normalizeFiniteNumber(labelOffsets?.EXTENSION, DEFAULT_LABEL_OFFSETS.EXTENSION);
+  const extensionOffset = normalizeFiniteNumber(
+    labelOffsets?.EXTENSION,
+    DEFAULT_LABEL_OFFSETS.EXTENSION
+  );
   const labelOffset = normalizeFiniteNumber(labelOffsets?.DEFAULT, DEFAULT_LABEL_OFFSETS.DEFAULT);
   const compactExtensionRadius = layout.max_radius + extensionOffset;
   const compactLabelRadius = compactExtensionRadius + labelOffset;
   const readableLabelRadius = calculateReadableLabelRadius({
     labelCount: leafCount,
     fontSize,
-    angleSpanRadians
+    angleSpanRadians,
   });
   const getLabelSize = () => estimateRenderedLabelSize(fontSize, leafCount);
 
   const branchOnlyBounds = calculateBranchBounds(layerData.nodes, layerData.links);
-  const branchWithExtensionsBounds = calculateBranchBounds(
-    layerData.nodes,
-    [...layerData.links, ...layerData.extensions]
-  );
+  const branchWithExtensionsBounds = calculateBranchBounds(layerData.nodes, [
+    ...layerData.links,
+    ...layerData.extensions,
+  ]);
   const labelBounds = calculateLabelBounds(layerData.labels, { getLabelSize });
   const autoVisibleBounds = mergeBounds(branchWithExtensionsBounds, labelBounds);
 
@@ -167,24 +182,24 @@ function analyzeTreeIndex({
     fitAreas: null,
     activeView: null,
     currentViewState: { target: [0, 0, 0], zoom: 0 },
-    getLabelSize
+    getLabelSize,
   };
   const branchOnlyFit = calculateFocusViewport({
     ...viewportInputs,
     labels: [],
     links: layerData.links,
-    fitMode: VIEWPORT_FIT_MODES.BRANCH
+    fitMode: VIEWPORT_FIT_MODES.BRANCH,
   });
   const branchWithExtensionsFit = calculateFocusViewport({
     ...viewportInputs,
     labels: [],
     links: [...layerData.links, ...layerData.extensions],
-    fitMode: VIEWPORT_FIT_MODES.BRANCH
+    fitMode: VIEWPORT_FIT_MODES.BRANCH,
   });
   const autoVisibleFit = calculateFocusViewport({
     ...viewportInputs,
     links: [...layerData.links, ...layerData.extensions],
-    fitMode: VIEWPORT_FIT_MODES.AUTO_VISIBLE
+    fitMode: VIEWPORT_FIT_MODES.AUTO_VISIBLE,
   });
 
   const originalRootToTipMax = getScaleForTree(originalScaleList, treeList, treeIndex);
@@ -199,18 +214,20 @@ function analyzeTreeIndex({
       activeRootToTipMax: rawRootToTipMax,
       rawRootToTipMax,
       flooredRootToTipMax,
-      rawToGlobalRatio: rawMaxGlobalScale > 0 && Number.isFinite(rawRootToTipMax)
-        ? rawRootToTipMax / rawMaxGlobalScale
-        : null,
-      originalToGlobalRatio: originalMaxGlobalScale > 0 && Number.isFinite(originalRootToTipMax)
-        ? originalRootToTipMax / originalMaxGlobalScale
-        : null,
+      rawToGlobalRatio:
+        rawMaxGlobalScale > 0 && Number.isFinite(rawRootToTipMax)
+          ? rawRootToTipMax / rawMaxGlobalScale
+          : null,
+      originalToGlobalRatio:
+        originalMaxGlobalScale > 0 && Number.isFinite(originalRootToTipMax)
+          ? originalRootToTipMax / originalMaxGlobalScale
+          : null,
       activeToOriginalRootTipRatio: safeRatio(rawRootToTipMax, originalRootToTipMax),
       maxRadius: layout.max_radius,
       uniformScale: layout.uniformScale ?? null,
       readableScale: layout.scale ?? null,
       nodeCount: layerData.nodes.length,
-      linkCount: layerData.links.length
+      linkCount: layerData.links.length,
     },
     labelRing: {
       leafCount,
@@ -225,7 +242,7 @@ function analyzeTreeIndex({
       extensionInflation: safeRatio(radii.extensionRadius, compactExtensionRadius),
       labelInflation: safeRatio(radii.labelRadius, compactLabelRadius),
       labelCount: layerData.labels.length,
-      extensionCount: layerData.extensions.length
+      extensionCount: layerData.extensions.length,
     },
     viewport: {
       branchOnlyBounds: summarizeBounds(branchOnlyBounds),
@@ -239,8 +256,8 @@ function analyzeTreeIndex({
       autoVisibleZoomDelta: autoVisibleFit.zoom - branchOnlyFit.zoom,
       branchOnlyTarget: branchOnlyFit.target,
       branchWithExtensionsTarget: branchWithExtensionsFit.target,
-      autoVisibleTarget: autoVisibleFit.target
-    }
+      autoVisibleTarget: autoVisibleFit.target,
+    },
   };
 }
 
@@ -256,14 +273,15 @@ function normalizeTimelineFrames(frames, treeList) {
   return treeList.map((_tree, index) => ({
     frame_index: index,
     frame_type: 'input_tree',
-    is_observed_input: true
+    is_observed_input: true,
   }));
 }
 
 function normalizeTreeIndices(treeIndices, treeCount, inputFrameIndices) {
-  const requested = Array.isArray(treeIndices) && treeIndices.length > 0
-    ? treeIndices
-    : defaultTreeIndices(treeCount, inputFrameIndices);
+  const requested =
+    Array.isArray(treeIndices) && treeIndices.length > 0
+      ? treeIndices
+      : defaultTreeIndices(treeCount, inputFrameIndices);
   return [...new Set(requested)]
     .map((index) => Number(index))
     .filter((index) => Number.isInteger(index) && index >= 0 && index < treeCount);
@@ -283,7 +301,8 @@ function deriveLeafNamesByIndex(tree) {
   visitLeaves(tree, (leaf) => {
     const splitIndices = Array.isArray(leaf?.split_indices) ? leaf.split_indices : [];
     if (splitIndices.length === 1 && Number.isInteger(splitIndices[0])) {
-      namesByIndex[splitIndices[0]] = typeof leaf.name === 'string' ? leaf.name : String(splitIndices[0]);
+      namesByIndex[splitIndices[0]] =
+        typeof leaf.name === 'string' ? leaf.name : String(splitIndices[0]);
     }
   });
   return namesByIndex;
@@ -301,7 +320,7 @@ function visitLeaves(node, callback) {
 
 function estimateRenderedLabelSize(fontSize, labelCount) {
   const numericFontSize = typeof fontSize === 'string' ? parseFloat(fontSize) : Number(fontSize);
-  const baseSize = (numericFontSize * 12) || 24;
+  const baseSize = numericFontSize * 12 || 24;
   return baseSize * calculateTaxaVisualScale(labelCount);
 }
 
@@ -316,7 +335,7 @@ function summarizeBounds(bounds) {
     maxY: bounds.maxY,
     width,
     height,
-    radius: Math.hypot(width, height) / 2
+    radius: Math.hypot(width, height) / 2,
   };
 }
 

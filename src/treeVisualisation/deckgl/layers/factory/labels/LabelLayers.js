@@ -5,7 +5,7 @@ import { selectLeafNamesByIndex } from '../../../../../state/phyloStore/selector
 import {
   getHistoryOffset,
   addZOffset,
-  normalizeTextAnchor
+  normalizeTextAnchor,
 } from '../../styles/labels/labelUtils.js';
 
 export function getLabelsLayerProps(labels, state, layerStyles) {
@@ -19,28 +19,28 @@ export function getLabelsLayerProps(labels, state, layerStyles) {
   return {
     data: labels,
     pickable: true,
-    fontWeight: 'bold',  // Bold to match node visual intensity
-    getPosition: d => addZOffset(d.position, getHistoryOffset(cached, d)),
-    getText: d => d.text,
-    getSize: d => layerStyles.getLabelSize(d, cached),
-    getColor: d => {
+    fontWeight: 'bold', // Bold to match node visual intensity
+    getPosition: (d) => addZOffset(d.position, getHistoryOffset(cached, d)),
+    getText: (d) => d.text,
+    getSize: (d) => layerStyles.getLabelSize(d, cached),
+    getColor: (d) => {
       const color = layerStyles.getLabelColor(d, cached);
       return color;
     },
     // Convert rotation from radians to degrees (deck.gl expects degrees)
-    getAngle: d => ((d.rotation ?? 0) * 180) / Math.PI,
-    getTextAnchor: d => normalizeTextAnchor(d.textAnchor),
+    getAngle: (d) => ((d.rotation ?? 0) * 180) / Math.PI,
+    getTextAnchor: (d) => normalizeTextAnchor(d.textAnchor),
 
     // SDF disabled - bitmap fonts render cleaner at small sizes when zoomed out
     characterSet: 'auto',
     fontSettings: {
-      sdf: false
+      sdf: false,
     },
 
     updateTriggers: {
       getColor: [colorVersion, taxaColorVersion, highlightColorMode],
       getSize: [fontSize, colorVersion, taxaColorVersion, taxaCount],
-      getPosition: [colorVersion]
-    }
+      getPosition: [colorVersion],
+    },
   };
 }

@@ -47,8 +47,25 @@ export function MSARegionOverrides() {
         setEndValue={setEndValue}
       />
       <div className="flex items-center gap-1 ml-1">
-        <Button type="button" size="xs" onClick={handleSetRegion} disabled={!canSetRegion} className="h-7 px-3">Set</Button>
-        <Button type="button" size="xs" variant="ghost" onClick={handleClearRegion} disabled={!canClearRegion} className="h-7 text-muted-foreground hover:text-foreground">Clear</Button>
+        <Button
+          type="button"
+          size="xs"
+          onClick={handleSetRegion}
+          disabled={!canSetRegion}
+          className="h-7 px-3"
+        >
+          Set
+        </Button>
+        <Button
+          type="button"
+          size="xs"
+          variant="ghost"
+          onClick={handleClearRegion}
+          disabled={!canClearRegion}
+          className="h-7 text-muted-foreground hover:text-foreground"
+        >
+          Clear
+        </Button>
       </div>
     </div>
   );
@@ -57,7 +74,9 @@ export function MSARegionOverrides() {
 function MsaRegionInputs({ startValue, endValue, setStartValue, setEndValue }) {
   return (
     <>
-      <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Region</span>
+      <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+        Region
+      </span>
       <div className="flex items-center gap-1">
         <Input
           id="msa-start"

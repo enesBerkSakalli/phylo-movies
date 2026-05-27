@@ -1,7 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import createTidyTreeLayout, { TidyTreeLayout } from '../src/treeVisualisation/layout/TidyTreeLayout.js';
+import createTidyTreeLayout, {
+  TidyTreeLayout,
+} from '../src/treeVisualisation/layout/TidyTreeLayout.js';
 import { buildSubtreeConnectors } from '../src/treeVisualisation/deckgl/data/transforms/SubtreeConnectorBuilder.js';
-import { chooseBundlePoint, ensureOutside } from '../src/treeVisualisation/deckgl/data/transforms/ComparisonGeometryUtils.js';
+import {
+  chooseBundlePoint,
+  ensureOutside,
+} from '../src/treeVisualisation/deckgl/data/transforms/ComparisonGeometryUtils.js';
 import { calculateBranchCoordinates } from '../src/treeVisualisation/layout/RadialTreeGeometry.js';
 
 function flatPathPoint(path, index) {
@@ -12,22 +17,20 @@ function flatPathPoint(path, index) {
 // Mock Data Utilities
 function createMockNode(id, length = 1, children = []) {
   const numericId = Number(id);
-  const childSplits = children.flatMap(child => child.split_indices || []);
-  const split_indices = childSplits.length > 0
-    ? childSplits
-    : (Number.isFinite(numericId) ? [numericId] : []);
+  const childSplits = children.flatMap((child) => child.split_indices || []);
+  const split_indices =
+    childSplits.length > 0 ? childSplits : Number.isFinite(numericId) ? [numericId] : [];
 
   return {
     id,
     name: id,
     length,
     split_indices,
-    children
+    children,
   };
 }
 
 describe('Complex Data Layer Integration', () => {
-
   describe('Phylogenetic Tree Layout (TidyTreeLayout)', () => {
     it('correctly handles complex nested hierarchies with accumulating branch lengths', () => {
       // Tree structure:
@@ -37,26 +40,21 @@ describe('Complex Data Layer Integration', () => {
       //  L B (Len 20) -> B1 (Len 10) -> B1_1 (Len 5)
 
       const treeData = createMockNode('root', 0, [
-        createMockNode('A', 10, [
-          createMockNode('A1', 5),
-          createMockNode('A2', 5)
-        ]),
-        createMockNode('B', 20, [
-          createMockNode('B1', 10, [
-            createMockNode('B1_1', 5)
-          ])
-        ])
+        createMockNode('A', 10, [createMockNode('A1', 5), createMockNode('A2', 5)]),
+        createMockNode('B', 20, [createMockNode('B1', 10, [createMockNode('B1_1', 5)])]),
       ]);
 
       const { nodes: layoutNodes, max_radius } = createTidyTreeLayout(treeData, 'none', {
         width: 1000,
         height: 1000,
-        uniformScale: 1 // Keep scale 1:1 for easy radius math
+        uniformScale: 1, // Keep scale 1:1 for easy radius math
       });
 
       // BFS to find nodes
       const nodes = {};
-      layoutNodes.forEach(n => { nodes[n.name] = n; });
+      layoutNodes.forEach((n) => {
+        nodes[n.name] = n;
+      });
 
       // Check Root
       // Root radius should be exactly 0 (fixed in previous step)
@@ -89,14 +87,19 @@ describe('Complex Data Layer Integration', () => {
       const treeData = createMockNode('root', 0, [
         createMockNode('Crowded', 1, leafGroup),
         createMockNode('Sparse1', 1, [createMockNode('S1')]),
-        createMockNode('Sparse2', 1, [createMockNode('S2')])
+        createMockNode('Sparse2', 1, [createMockNode('S2')]),
       ]);
 
-      const { nodes: layoutNodes } = createTidyTreeLayout(treeData, 'none', { width: 1000, height: 1000 });
+      const { nodes: layoutNodes } = createTidyTreeLayout(treeData, 'none', {
+        width: 1000,
+        height: 1000,
+      });
 
       // Calculate angular sector size for "Crowded" vs "Sparse1"
       const nodes = {};
-      layoutNodes.forEach(n => { nodes[n.name] = n; });
+      layoutNodes.forEach((n) => {
+        nodes[n.name] = n;
+      });
 
       // We need to look at the leaves to see the spread
       const crowdedNode = nodes['Crowded'];
@@ -106,8 +109,8 @@ describe('Complex Data Layer Integration', () => {
       // The layout assigns x (angle) to all nodes
       // We expect the children of Crowded to span a large delta
       const crowdedChildren = crowdedNode.children;
-      const minAngle = Math.min(...crowdedChildren.map(c => c.angle));
-      const maxAngle = Math.max(...crowdedChildren.map(c => c.angle));
+      const minAngle = Math.min(...crowdedChildren.map((c) => c.angle));
+      const maxAngle = Math.max(...crowdedChildren.map((c) => c.angle));
       const crowdedSector = maxAngle - minAngle;
 
       // Sparse children (only 1) implies the sector is effectively just its own width,
@@ -134,20 +137,14 @@ describe('Complex Data Layer Integration', () => {
       // Root -> (Stay1, MoveGroup[1, 2])
       const leftTreeData = createMockNode('rootL', 0, [
         createMockNode('Stay1', 10),
-        createMockNode('MoveParent', 10, [
-          createMockNode('1', 10),
-          createMockNode('2', 10)
-        ])
+        createMockNode('MoveParent', 10, [createMockNode('1', 10), createMockNode('2', 10)]),
       ]);
 
       // Setup Right Tree (Dest)
       // Root -> (Stay1, NewHome[1, 2])
       const rightTreeData = createMockNode('rootR', 0, [
         createMockNode('Stay1', 10),
-        createMockNode('NewHome', 10, [
-          createMockNode('1', 10),
-          createMockNode('2', 10)
-        ])
+        createMockNode('NewHome', 10, [createMockNode('1', 10), createMockNode('2', 10)]),
       ]);
 
       // 1. Layout
@@ -158,9 +155,9 @@ describe('Complex Data Layer Integration', () => {
       // 2. Mock Position Maps (simulating what happens in ComparisonModeRenderer)
       const mockPositionMap = (nodes) => {
         const map = new Map();
-        nodes.forEach(node => {
+        nodes.forEach((node) => {
           const key = node.split_indices?.length ? node.split_indices.join('-') : node.name;
-          const parent = nodes.find(candidate => candidate.id === node.parentId);
+          const parent = nodes.find((candidate) => candidate.id === node.parentId);
           const parentId = parent?.split_indices?.length ? parent.split_indices.join('-') : null;
 
           if (node.isLeaf) {
@@ -171,7 +168,7 @@ describe('Complex Data Layer Integration', () => {
               name: node.name,
               position: node.position,
               split_indices: node.split_indices,
-              depth: node.depth
+              depth: node.depth,
             });
             return;
           }
@@ -183,7 +180,7 @@ describe('Complex Data Layer Integration', () => {
             name: node.name,
             position: node.position,
             split_indices: node.split_indices,
-            depth: node.depth
+            depth: node.depth,
           });
         });
         return map;
@@ -204,7 +201,7 @@ describe('Complex Data Layer Integration', () => {
         isNodeHistorySubtree: () => false,
         getNodeColor: () => '#646464',
         getOutputColor: () => [100, 100, 100],
-        getTypeColor: () => [200, 200, 200]
+        getTypeColor: () => [200, 200, 200],
       };
 
       const connectors = buildSubtreeConnectors({
@@ -219,7 +216,7 @@ describe('Complex Data Layer Integration', () => {
         leftCenter: [-200, 0],
         rightCenter: [200, 0],
         leftRadius: 250,
-        rightRadius: 250
+        rightRadius: 250,
       });
 
       // 4. Assertions
@@ -229,7 +226,7 @@ describe('Complex Data Layer Integration', () => {
       // active only when also present in the current subtree highlight entry.
 
       // Verify Active Connectors
-      const activeConns = connectors.filter(c => c.id.includes('active'));
+      const activeConns = connectors.filter((c) => c.id.includes('active'));
       expect(activeConns.length).toBeGreaterThan(0);
 
       // We have 2 moving leaves, so we expect output paths.
@@ -247,7 +244,7 @@ describe('Complex Data Layer Integration', () => {
       expect(path).toBeInstanceOf(Float32Array);
       expect(path.length).toBeGreaterThan(20);
       const firstPt = flatPathPoint(path, 0);
-      const midPt = flatPathPoint(path, Math.floor((path.length / 3) / 2));
+      const midPt = flatPathPoint(path, Math.floor(path.length / 3 / 2));
 
       // Basic sanity check: z is 0
       expect(firstPt[2]).toBe(0);
@@ -260,5 +257,4 @@ describe('Complex Data Layer Integration', () => {
       expect(activeConns[0].color).toEqual([100, 100, 100, 255]);
     });
   });
-
 });

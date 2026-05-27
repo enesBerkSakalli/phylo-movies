@@ -25,7 +25,7 @@ function normalizeAngleSpan(angleSpanRadians) {
 
 export function estimateLabelSize(fontSize, labelCount) {
   const numericFontSize = typeof fontSize === 'string' ? parseFloat(fontSize) : Number(fontSize);
-  const baseSize = (numericFontSize * LABEL_FONT_SIZE_UNIT) || DEFAULT_LABEL_SIZE;
+  const baseSize = numericFontSize * LABEL_FONT_SIZE_UNIT || DEFAULT_LABEL_SIZE;
   return baseSize * calculateTaxaVisualScale(labelCount);
 }
 
@@ -53,7 +53,7 @@ export function calculateReadableLabelRadius({
   labelCount,
   fontSize,
   angleSpanRadians = TAU,
-  spacingFactor = LABEL_TANGENTIAL_SPACING_FACTOR
+  spacingFactor = LABEL_TANGENTIAL_SPACING_FACTOR,
 } = {}) {
   const count = Number(labelCount);
   if (!Number.isFinite(count) || count <= DENSE_LABEL_THRESHOLD) return null;
@@ -68,7 +68,7 @@ export function calculateReadableLabelRadii({
   labelOffsets,
   labelCount,
   fontSize,
-  angleSpanRadians
+  angleSpanRadians,
 } = {}) {
   const base = Math.max(0, finiteNumber(baseRadius, 0));
   const extensionOffset = finiteNumber(labelOffsets?.EXTENSION, 5);
@@ -78,13 +78,13 @@ export function calculateReadableLabelRadii({
   const readableLabelRadius = calculateReadableLabelRadius({
     labelCount,
     fontSize,
-    angleSpanRadians
+    angleSpanRadians,
   });
   const labelRadius = Math.max(compactLabelRadius, readableLabelRadius ?? compactLabelRadius);
   const extensionRadius = Math.max(compactExtensionRadius, labelRadius - labelOffset);
 
   return {
     extensionRadius,
-    labelRadius
+    labelRadius,
   };
 }

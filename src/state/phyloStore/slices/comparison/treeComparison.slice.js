@@ -44,14 +44,15 @@ export const createComparisonViewSlice = (set, get) => ({
   // ==========================================================================
   // ACTIONS: Reset
   // ==========================================================================
-  resetComparison: () => set({
-    comparisonMode: false,
-    leftTreeOffsetX: 0,
-    leftTreeOffsetY: 0,
-    rightTreeOffsetX: 0,
-    rightTreeOffsetY: 0,
-    viewsConnected: false,
-    connectorStrokeWidth: 1,
-    linkConnectionOpacity: 0.6,
-  }),
+  resetComparison: () =>
+    set({
+      comparisonMode: false,
+      leftTreeOffsetX: 0,
+      leftTreeOffsetY: 0,
+      rightTreeOffsetX: 0,
+      rightTreeOffsetY: 0,
+      viewsConnected: false,
+      connectorStrokeWidth: 1,
+      linkConnectionOpacity: 0.6,
+    }),
 });

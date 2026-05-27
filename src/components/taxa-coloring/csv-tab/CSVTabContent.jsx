@@ -1,9 +1,9 @@
-import React from "react";
-import { CSVUpload } from "./CSVUpload.jsx";
-import { CSVColumnSelector } from "./CSVColumnSelector.jsx";
-import { CSVPreview } from "./CSVPreview.jsx";
-import { ColorSchemeSelector } from "../shared/ColorSchemeSelector.jsx";
-import { CSVGroupColors } from "./CSVGroupColors.jsx";
+import React from 'react';
+import { CSVUpload } from './CSVUpload.jsx';
+import { CSVColumnSelector } from './CSVColumnSelector.jsx';
+import { CSVPreview } from './CSVPreview.jsx';
+import { ColorSchemeSelector } from '../shared/ColorSchemeSelector.jsx';
+import { CSVGroupColors } from './CSVGroupColors.jsx';
 
 export function CSVTabContent({
   csvData,
@@ -18,7 +18,7 @@ export function CSVTabContent({
   onColumnChange,
   resetCSV,
   applyScheme,
-  handleColorChange
+  handleColorChange,
 }) {
   return (
     <div className="flex flex-col gap-4">
@@ -37,7 +37,7 @@ export function CSVTabContent({
           />
           <CSVPreview csvValidation={csvValidation} csvGroups={csvGroups} />
           <ColorSchemeSelector
-            onApply={(id) => applyScheme(id, "csv")}
+            onApply={(id) => applyScheme(id, 'csv')}
             description="Apply palettes to CSV-defined groups."
           />
           <CSVGroupColors

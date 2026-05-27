@@ -199,9 +199,7 @@ describe('branch annotation indexing', () => {
   it('formats support and classifies source and destination branch values', () => {
     expect(formatSupportValue({ primary: 88.345 })).toBe('88.3');
     expect(formatSupportValue(null)).toBe('-');
-    expect(classifyMovementBranchValues({ value: 91 }, { value: 88 }, 70)).toBe(
-      'both_high_value'
-    );
+    expect(classifyMovementBranchValues({ value: 91 }, { value: 88 }, 70)).toBe('both_high_value');
     expect(classifyMovementBranchValues({ value: 91 }, { value: 88 }, 90)).toBe('mixed_value');
     expect(classifyMovementBranchValues({ value: 91 }, { value: 35 }, 70)).toBe('mixed_value');
     expect(classifyMovementBranchValues({ value: 20 }, { value: 35 }, 70)).toBe('low_value');

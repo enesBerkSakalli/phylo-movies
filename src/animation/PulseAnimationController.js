@@ -16,7 +16,7 @@ export function calculatePulseOpacity(phase, enabled = true) {
   if (!enabled) return 1.0;
   const range = PULSE_MAX_OPACITY - PULSE_MIN_OPACITY;
   const sineValue = Math.sin(phase * Math.PI * 2);
-  return PULSE_MIN_OPACITY + (range * (0.5 + 0.5 * sineValue));
+  return PULSE_MIN_OPACITY + range * (0.5 + 0.5 * sineValue);
 }
 
 export class PulseAnimationController {

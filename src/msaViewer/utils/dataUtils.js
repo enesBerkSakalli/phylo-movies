@@ -30,7 +30,7 @@ function convertMsaSequencesToRows(sequences) {
 
   return Object.entries(sequences).map(([name, seq]) => ({
     id: name,
-    seq: seq.toUpperCase()
+    seq: seq.toUpperCase(),
   }));
 }
 
@@ -53,7 +53,7 @@ export function processMsaSequences(sequences) {
     sequences: seqs,
     type: dataType,
     rows: seqs.length,
-    cols: seqs.length > 0 ? seqs[0].seq.length : 0
+    cols: seqs.length > 0 ? seqs[0].seq.length : 0,
   };
 }
 

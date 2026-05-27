@@ -30,5 +30,8 @@ function getDenseBaseOpacityScale(cached) {
   const visualScale = Number(cached?.visualScale);
   if (!Number.isFinite(visualScale) || visualScale >= 1) return 1;
 
-  return Math.max(MIN_DENSE_BASE_OPACITY_SCALE, Math.min(1, visualScale * DENSE_BASE_OPACITY_MULTIPLIER));
+  return Math.max(
+    MIN_DENSE_BASE_OPACITY_SCALE,
+    Math.min(1, visualScale * DENSE_BASE_OPACITY_MULTIPLIER)
+  );
 }

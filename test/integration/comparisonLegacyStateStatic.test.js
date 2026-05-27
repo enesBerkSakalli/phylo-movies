@@ -7,7 +7,15 @@ const repoRoot = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
 
 const sourceChecks = [
   {
-    file: join(repoRoot, 'src', 'state', 'phyloStore', 'slices', 'comparison', 'treeComparison.slice.js'),
+    file: join(
+      repoRoot,
+      'src',
+      'state',
+      'phyloStore',
+      'slices',
+      'comparison',
+      'treeComparison.slice.js'
+    ),
     terms: [
       ['viewLink', 'Mapping'],
       ['screenPositions', 'Left'],
@@ -59,7 +67,13 @@ const sourceChecks = [
 
 describe('comparison legacy state plumbing', () => {
   it('does not keep unused view-link, screen-position, or view-offset state', () => {
-    const legacyMapper = join(repoRoot, 'src', 'domain', 'view', ['viewLink', 'Mapper.js'].join(''));
+    const legacyMapper = join(
+      repoRoot,
+      'src',
+      'domain',
+      'view',
+      ['viewLink', 'Mapper.js'].join('')
+    );
     expect(existsSync(legacyMapper), relative(repoRoot, legacyMapper)).toBe(false);
 
     for (const { file, terms } of sourceChecks) {
@@ -67,7 +81,10 @@ describe('comparison legacy state plumbing', () => {
 
       for (const parts of terms) {
         const term = parts.join('');
-        expect(source.includes(term), `${relative(repoRoot, file)} should not contain ${term}`).toBe(false);
+        expect(
+          source.includes(term),
+          `${relative(repoRoot, file)} should not contain ${term}`
+        ).toBe(false);
       }
     }
   });

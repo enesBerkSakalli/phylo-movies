@@ -29,7 +29,7 @@ export const createMsaViewerSlice = (set, get) => ({
     set({
       msaSequences: sequences ?? null,
       msaWindowSize: windowSize,
-      msaStepSize: stepSize
+      msaStepSize: stepSize,
     });
   },
 
@@ -40,7 +40,7 @@ export const createMsaViewerSlice = (set, get) => ({
       msaStepSize: 50,
       msaRegion: null,
       msaPreviousRegion: null,
-      msaRowOrder: null
+      msaRowOrder: null,
     });
   },
 
@@ -78,7 +78,11 @@ export const createMsaViewerSlice = (set, get) => ({
       return;
     }
 
-    if (!msaPreviousRegion || msaPreviousRegion.start !== nextRegion.start || msaPreviousRegion.end !== nextRegion.end) {
+    if (
+      !msaPreviousRegion ||
+      msaPreviousRegion.start !== nextRegion.start ||
+      msaPreviousRegion.end !== nextRegion.end
+    ) {
       set({ msaPreviousRegion: nextRegion });
     }
   },
@@ -103,8 +107,9 @@ export const createMsaViewerSlice = (set, get) => ({
   // ==========================================================================
   openMsaViewer: () => set({ isMsaViewerOpen: true }),
   closeMsaViewer: () => set({ isMsaViewerOpen: false }),
-  setMsaWindow: (partial) => set((state) => ({
-    msaWindow: { ...state.msaWindow, ...partial }
-  })),
+  setMsaWindow: (partial) =>
+    set((state) => ({
+      msaWindow: { ...state.msaWindow, ...partial },
+    })),
   setSyncMSAEnabled: (enabled) => set({ syncMSAEnabled: !!enabled }),
 });

@@ -10,7 +10,12 @@ import { StaticRenderer } from './systems/StaticRenderer.js';
 import { TreeLayoutController } from './TreeLayoutController.js';
 import { selectActiveTreeList, useAppStore } from '../state/phyloStore/store.js';
 import { TreeNodeInteractionHandler } from './interaction/TreeNodeInteractionHandler.js';
-import { handleDragStart, handleDrag, handleDragEnd, handleContainerResize } from './interaction/InteractionHandlers.js';
+import {
+  handleDragStart,
+  handleDrag,
+  handleDragEnd,
+  handleContainerResize,
+} from './interaction/InteractionHandlers.js';
 import { ViewportManager } from './viewport/ViewportManager.js';
 import { VIEWPORT_FIT_MODES } from './viewport/viewportFit.js';
 import { getClipboardLayers } from './utils/ClipboardUtils.js';
@@ -19,7 +24,6 @@ import { getSplitKey } from '../domain/tree/splits.js';
 import { TransitionFrame } from '../timeline/time/TransitionFrame.js';
 
 export class DeckGLTreeAnimationController extends TreeLayoutController {
-
   // ==========================================================================
   // CONSTRUCTOR
   // ==========================================================================
@@ -40,11 +44,13 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
       getConsistentRadii: this._getConsistentRadii.bind(this),
       convertTreeToLayerData: this.dataConverter.convertTreeToLayerData.bind(this.dataConverter),
       getLayoutCacheKey: (treeIndex) => this._createLayoutCacheKey(treeIndex),
-      getLinkGeometryMode: () => this._getLinkGeometryMode()
+      getLinkGeometryMode: () => this._getLinkGeometryMode(),
     });
 
     // --- WORKER INITIALIZATION ---
-    this.layoutWorker = new Worker(new URL('./workers/layout.worker.js', import.meta.url), { type: 'module' });
+    this.layoutWorker = new Worker(new URL('./workers/layout.worker.js', import.meta.url), {
+      type: 'module',
+    });
     this._layoutPrefetchTokens = new Map();
     this._layoutRequestGeneration = 0;
 
@@ -52,7 +58,10 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
       const { jobId, requestToken, status, result, error } = event.data;
       const treeIndex = parseInt(jobId, 10);
       const expectedToken = this._layoutPrefetchTokens.get(treeIndex);
-      if (requestToken !== expectedToken || requestToken !== this._createLayoutRequestToken(treeIndex)) {
+      if (
+        requestToken !== expectedToken ||
+        requestToken !== this._createLayoutRequestToken(treeIndex)
+      ) {
         return;
       }
 
@@ -98,18 +107,21 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
     const syncPlaybackProgress = createPlaybackProgressSynchronizer({
       getState: () => useAppStore.getState(),
       isPrefetchEnabled: () => this.animationsEnabled,
-      prefetchFrame: (treeIndex) => this._prefetchFrame(treeIndex)
+      prefetchFrame: (treeIndex) => this._prefetchFrame(treeIndex),
     });
 
     this.animationRunner = new AnimationRunner({
       getState: () => useAppStore.getState(),
       getOrCacheInterpolationData: this._getOrCacheInterpolationData.bind(this),
-      renderSingleFrame: this.interpolationRenderer.renderSingleInterpolatedFrame.bind(this.interpolationRenderer),
+      renderSingleFrame: this.interpolationRenderer.renderSingleInterpolatedFrame.bind(
+        this.interpolationRenderer
+      ),
       renderComparisonFrame: this._renderComparisonFrameForRunner.bind(this),
       setAnimationStage: (stage) => useAppStore.getState().setAnimationStage(stage),
-      syncHighlightsForIndex: (treeIndex) => useAppStore.getState().updateColorManagerForIndex?.(treeIndex),
+      syncHighlightsForIndex: (treeIndex) =>
+        useAppStore.getState().updateColorManagerForIndex?.(treeIndex),
       updateProgress: syncPlaybackProgress,
-      stopAnimation: () => useAppStore.getState().stop()
+      stopAnimation: () => useAppStore.getState().stop(),
     });
 
     // Viewport manager for camera and screen projections
@@ -118,13 +130,12 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
     this.layerManager.layerStyles.setStyleChangeCallback({
       onLayoutChange: () => this._handleStyleChange(),
       onLayerDataChange: () => this._handleLayerDataChange(),
-      onPaintChange: () => this._handlePaintChange()
+      onPaintChange: () => this._handlePaintChange(),
     });
 
     // NOTE: deckContext is initialized via mount(container)
     this.deckContext = null;
   }
-
 
   _resetReadyPromise() {
     this.ready = false;
@@ -248,8 +259,6 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
     this._resetReadyPromise();
   }
 
-
-
   // ==========================================================================
   // PUBLIC API
   // ==========================================================================
@@ -266,14 +275,14 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
     const links = [
       ...(this._lastLayerData.links || []),
       ...(this._lastLayerData.extensions || []),
-      ...(this._lastLayerData.connectors || [])
+      ...(this._lastLayerData.connectors || []),
     ];
 
     this.viewportManager.focusOnTree(nodes, this._lastLayerData.labels, {
       fitMode: options.fitMode ?? VIEWPORT_FIT_MODES.LABELS,
       duration: options.duration ?? 350,
       padding: options.padding,
-      links
+      links,
     });
   }
 
@@ -310,13 +319,15 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
     const hasTreeIndex = Number.isInteger(contextNode.treeIndex);
     const hasTreeSide = typeof contextNode.treeSide === 'string' && contextNode.treeSide.length > 0;
 
-    return nodes.find((node) => {
-      const nodeSplitKey = node?.splitKey || getSplitKey(node);
-      if (nodeSplitKey !== targetSplitKey) return false;
-      if (hasTreeIndex && node?.treeIndex !== contextNode.treeIndex) return false;
-      if (hasTreeSide && node?.treeSide !== contextNode.treeSide) return false;
-      return true;
-    }) || null;
+    return (
+      nodes.find((node) => {
+        const nodeSplitKey = node?.splitKey || getSplitKey(node);
+        if (nodeSplitKey !== targetSplitKey) return false;
+        if (hasTreeIndex && node?.treeIndex !== contextNode.treeIndex) return false;
+        if (hasTreeSide && node?.treeSide !== contextNode.treeSide) return false;
+        return true;
+      }) || null
+    );
   }
 
   zoomIn() {
@@ -386,7 +397,13 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
     if (!treeList || !treeList[treeIndex]) return;
 
     const treeData = treeList[treeIndex];
-    const { branchTransformation, fontSize, layoutAngleDegrees, layoutRotationDegrees, styleConfig } = state;
+    const {
+      branchTransformation,
+      fontSize,
+      layoutAngleDegrees,
+      layoutRotationDegrees,
+      styleConfig,
+    } = state;
     const offsets = styleConfig?.labelOffsets || { DEFAULT: 20, EXTENSION: 5 };
     const linkGeometryMode = this._getLinkGeometryMode(state);
 
@@ -418,9 +435,9 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
           renderMode: 'animation',
           linkGeometryMode,
           layoutCacheKey,
-          maxGlobalScale: this.maxGlobalScale // Pass global scale for consistent sizing
-        }
-      }
+          maxGlobalScale: this.maxGlobalScale, // Pass global scale for consistent sizing
+        },
+      },
     };
 
     this.layoutWorker.postMessage(payload);
@@ -434,7 +451,7 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
       treeIndex,
       width: this.width,
       height: this.height,
-      maxGlobalScale: this.maxGlobalScale
+      maxGlobalScale: this.maxGlobalScale,
     });
   }
 
@@ -485,37 +502,42 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
   // Exposed for AnimationRunner
   async _renderComparisonFrameForRunner(fromTree, toTree, easedT, options) {
     const { cachedInputs = null, isCancelled = null, rightTreeIndex, rightTree } = options;
-    const transitionFrame = TransitionFrame.from({
-      sourceTree: fromTree,
-      targetTree: toTree,
-      sourceTreeIndex: options.fromTreeIndex,
-      targetTreeIndex: options.toTreeIndex,
-      transitionProgress: options.rawTimeFactor ?? easedT
-    }, {
-      renderProgress: easedT,
-      stage: options.stage,
-      transitionChangeModel: options.transitionChangeModel
-    });
+    const transitionFrame = TransitionFrame.from(
+      {
+        sourceTree: fromTree,
+        targetTree: toTree,
+        sourceTreeIndex: options.fromTreeIndex,
+        targetTreeIndex: options.toTreeIndex,
+        transitionProgress: options.rawTimeFactor ?? easedT,
+      },
+      {
+        renderProgress: easedT,
+        stage: options.stage,
+        transitionChangeModel: options.transitionChangeModel,
+      }
+    );
 
     if (isRenderCancelled(isCancelled)) return;
 
     const renderOptions = transitionFrame.toRenderOptions(options);
-    const interpolatedData = cachedInputs?.dataFrom && cachedInputs?.dataTo
-      ? this._buildInterpolatedDataFromInputs(
-        cachedInputs.dataFrom,
-        cachedInputs.dataTo,
-        transitionFrame.renderProgress,
-        {
-          ...renderOptions,
-          transitionChangeModel: cachedInputs.transitionChangeModel ?? renderOptions.transitionChangeModel
-        }
-      )
-      : this._buildInterpolatedData(
-        transitionFrame.sourceTree,
-        transitionFrame.targetTree,
-        transitionFrame.renderProgress,
-        renderOptions
-      );
+    const interpolatedData =
+      cachedInputs?.dataFrom && cachedInputs?.dataTo
+        ? this._buildInterpolatedDataFromInputs(
+            cachedInputs.dataFrom,
+            cachedInputs.dataTo,
+            transitionFrame.renderProgress,
+            {
+              ...renderOptions,
+              transitionChangeModel:
+                cachedInputs.transitionChangeModel ?? renderOptions.transitionChangeModel,
+            }
+          )
+        : this._buildInterpolatedData(
+            transitionFrame.sourceTree,
+            transitionFrame.targetTree,
+            transitionFrame.renderProgress,
+            renderOptions
+          );
 
     if (isRenderCancelled(isCancelled)) return;
 
@@ -524,7 +546,7 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
       rightTree,
       rightIndex: rightTreeIndex,
       activeTreeIndex: transitionFrame.comparisonActiveTreeIndex,
-      isCancelled
+      isCancelled,
     });
   }
 
@@ -534,27 +556,32 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
 
   _buildInterpolatedData(fromTreeData, toTreeData, t, options = {}) {
     const { fromTreeIndex, toTreeIndex } = options;
-    const { dataFrom, dataTo, transitionChangeModel } = this.interpolationCache.buildInterpolationInputs(
-      fromTreeData,
-      toTreeData,
-      fromTreeIndex,
-      toTreeIndex
-    );
+    const { dataFrom, dataTo, transitionChangeModel } =
+      this.interpolationCache.buildInterpolationInputs(
+        fromTreeData,
+        toTreeData,
+        fromTreeIndex,
+        toTreeIndex
+      );
 
     if (!dataFrom || !dataTo) {
-      console.warn('[DeckGLTreeAnimationController] Layout calculation failed in _buildInterpolatedData, returning empty substitute');
+      console.warn(
+        '[DeckGLTreeAnimationController] Layout calculation failed in _buildInterpolatedData, returning empty substitute'
+      );
       return { nodes: [], links: [], labels: [], extensions: [] };
     }
 
     return this._buildInterpolatedDataFromInputs(dataFrom, dataTo, t, {
       ...options,
-      transitionChangeModel
+      transitionChangeModel,
     });
   }
 
   _buildInterpolatedDataFromInputs(dataFrom, dataTo, t, options = {}) {
     if (!dataFrom || !dataTo) {
-      console.warn('[DeckGLTreeAnimationController] Layout calculation failed in _buildInterpolatedDataFromInputs, returning empty substitute');
+      console.warn(
+        '[DeckGLTreeAnimationController] Layout calculation failed in _buildInterpolatedDataFromInputs, returning empty substitute'
+      );
       return { nodes: [], links: [], labels: [], extensions: [] };
     }
 
@@ -564,7 +591,7 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
       stage: options.stage,
       transitionChangeModel,
       rawTimeFactor: options.rawTimeFactor,
-      linkGeometryMode: this._getLinkGeometryMode()
+      linkGeometryMode: this._getLinkGeometryMode(),
     });
 
     // Geometry scaling already protects small trees. Keep stroke/node styling stable
@@ -575,12 +602,13 @@ export class DeckGLTreeAnimationController extends TreeLayoutController {
   }
 
   _getOrCacheInterpolationData(fromTreeData, toTreeData, fromTreeIndex, toTreeIndex) {
-    const { dataFrom, dataTo, transitionChangeModel } = this.interpolationCache.getOrCacheInterpolationData(
-      fromTreeData,
-      toTreeData,
-      fromTreeIndex,
-      toTreeIndex
-    );
+    const { dataFrom, dataTo, transitionChangeModel } =
+      this.interpolationCache.getOrCacheInterpolationData(
+        fromTreeData,
+        toTreeData,
+        fromTreeIndex,
+        toTreeIndex
+      );
 
     if (!dataFrom || !dataTo) {
       console.warn('[DeckGLTreeAnimationController] Layout calculation failed, skipping frame');

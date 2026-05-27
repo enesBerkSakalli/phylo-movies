@@ -24,14 +24,17 @@ function filterLeavesInMarkedComponents(leftPositions, markedComponents) {
     if (!leftInfo?.isLeaf || !leftInfo.name) continue;
 
     // Parse split indices from key (format: "10" or "10-11-12")
-    const splitIndices = key.split('-').map(Number).filter(n => !isNaN(n));
+    const splitIndices = key
+      .split('-')
+      .map(Number)
+      .filter((n) => !isNaN(n));
     if (splitIndices.length === 0) continue;
 
     // Check if this leaf's split is a subset of ANY marked component
     let isMarked = false;
     for (const component of markedComponents) {
       const markedSet = component instanceof Set ? component : new Set(component);
-      const isSubset = splitIndices.every(leaf => markedSet.has(leaf));
+      const isSubset = splitIndices.every((leaf) => markedSet.has(leaf));
       const isProperSubset = splitIndices.length <= markedSet.size && isSubset;
       if (isProperSubset) {
         isMarked = true;
@@ -54,7 +57,7 @@ function isComponentMarkedSubset(splitIndices, markedSet) {
   if (splitIndices.length === 0) return false;
 
   // Check if splitIndices is a subset of markedSet
-  const isSubset = splitIndices.every(leaf => markedSet.has(leaf));
+  const isSubset = splitIndices.every((leaf) => markedSet.has(leaf));
   const isProperSubset = splitIndices.length <= markedSet.size && isSubset;
   return isProperSubset;
 }
@@ -65,8 +68,8 @@ describe('View Link Connectors - Subset Logic', () => {
       // Marked components represent the specific moving subtrees (red highlighting)
       // In this example, leaves 10,11 are one moved subtree, leaves 12,13 are another.
       const markedComponents = [
-        new Set([10, 11]),  // First moved subtree
-        new Set([12, 13]),  // Second moved subtree
+        new Set([10, 11]), // First moved subtree
+        new Set([12, 13]), // Second moved subtree
       ];
 
       // Position map with various leaves
@@ -75,17 +78,22 @@ describe('View Link Connectors - Subset Logic', () => {
         ['11', { isLeaf: true, name: 'Leaf11', position: [0, 10] }],
         ['12', { isLeaf: true, name: 'Leaf12', position: [0, 20] }],
         ['13', { isLeaf: true, name: 'Leaf13', position: [0, 30] }],
-        ['5', { isLeaf: true, name: 'Leaf5', position: [0, 40] }],   // NOT in any marked
-        ['6', { isLeaf: true, name: 'Leaf6', position: [0, 50] }],   // NOT in any marked
+        ['5', { isLeaf: true, name: 'Leaf5', position: [0, 40] }], // NOT in any marked
+        ['6', { isLeaf: true, name: 'Leaf6', position: [0, 50] }], // NOT in any marked
         ['10-11', { isLeaf: false, name: null, position: [0, 60] }], // Internal node
       ]);
 
       const result = filterLeavesInMarkedComponents(leftPositions, markedComponents);
 
       expect(result).to.have.lengthOf(4);
-      expect(result.map(r => r.name)).to.include.members(['Leaf10', 'Leaf11', 'Leaf12', 'Leaf13']);
-      expect(result.map(r => r.name)).to.not.include('Leaf5');
-      expect(result.map(r => r.name)).to.not.include('Leaf6');
+      expect(result.map((r) => r.name)).to.include.members([
+        'Leaf10',
+        'Leaf11',
+        'Leaf12',
+        'Leaf13',
+      ]);
+      expect(result.map((r) => r.name)).to.not.include('Leaf5');
+      expect(result.map((r) => r.name)).to.not.include('Leaf6');
     });
 
     it('only connects leaves within marked components, not entire active subtree', () => {
@@ -93,28 +101,26 @@ describe('View Link Connectors - Subset Logic', () => {
       // But marked is only [10,11] (the specific moved subtree)
       // Connectors should only show for 10,11
       const markedComponents = [
-        new Set([10, 11]),  // Only this subtree is actively moved
+        new Set([10, 11]), // Only this subtree is actively moved
       ];
 
       const leftPositions = new Map([
         ['10', { isLeaf: true, name: 'Leaf10', position: [0, 0] }],
         ['11', { isLeaf: true, name: 'Leaf11', position: [0, 10] }],
-        ['12', { isLeaf: true, name: 'Leaf12', position: [0, 20] }],  // In active edge but NOT marked
-        ['13', { isLeaf: true, name: 'Leaf13', position: [0, 30] }],  // In active edge but NOT marked
+        ['12', { isLeaf: true, name: 'Leaf12', position: [0, 20] }], // In active edge but NOT marked
+        ['13', { isLeaf: true, name: 'Leaf13', position: [0, 30] }], // In active edge but NOT marked
       ]);
 
       const result = filterLeavesInMarkedComponents(leftPositions, markedComponents);
 
       expect(result).to.have.lengthOf(2);
-      expect(result.map(r => r.name)).to.deep.equal(['Leaf10', 'Leaf11']);
+      expect(result.map((r) => r.name)).to.deep.equal(['Leaf10', 'Leaf11']);
     });
 
     it('returns empty array when no marked components', () => {
       const markedComponents = [];
 
-      const leftPositions = new Map([
-        ['10', { isLeaf: true, name: 'Leaf10', position: [0, 0] }],
-      ]);
+      const leftPositions = new Map([['10', { isLeaf: true, name: 'Leaf10', position: [0, 0] }]]);
 
       const result = filterLeavesInMarkedComponents(leftPositions, markedComponents);
       expect(result).to.have.lengthOf(0);
@@ -137,7 +143,7 @@ describe('View Link Connectors - Subset Logic', () => {
 
       const leftPositions = new Map([
         ['10', { isLeaf: true, name: 'Leaf10', position: [0, 0] }],
-        ['10-11', { isLeaf: false, name: null, position: [0, 10] }],   // Internal
+        ['10-11', { isLeaf: false, name: null, position: [0, 10] }], // Internal
         ['10-11-12', { isLeaf: false, name: null, position: [0, 20] }], // Internal
       ]);
 
@@ -156,14 +162,14 @@ describe('View Link Connectors - Subset Logic', () => {
     });
 
     it('returns true when split is proper subset', () => {
-      const split = [10];  // Single leaf
+      const split = [10]; // Single leaf
       const markedSet = new Set([10, 11, 12, 13]);
 
       expect(isComponentMarkedSubset(split, markedSet)).to.be.true;
     });
 
     it('returns false when split has elements not in marked set', () => {
-      const split = [10, 11, 99];  // 99 is not in marked set
+      const split = [10, 11, 99]; // 99 is not in marked set
       const markedSet = new Set([10, 11, 12, 13]);
 
       expect(isComponentMarkedSubset(split, markedSet)).to.be.false;
@@ -194,20 +200,22 @@ describe('View Link Connectors - Subset Logic', () => {
 
       // Test cases: [split_indices, expected_result]
       const testCases = [
-        [[10], true],              // Single leaf in moved subtree
-        [[11], true],              // Single leaf in moved subtree
-        [[10, 11], true],          // Internal node split - subset
-        [[10, 11, 12, 13], true],  // Exact match (root of moving subtree)
-        [[5], false],              // Leaf outside moved subtree
-        [[5, 6], false],           // Internal node outside moved subtree
-        [[10, 99], false],         // Partial overlap - NOT a subset
-        [[], false],               // Empty split
+        [[10], true], // Single leaf in moved subtree
+        [[11], true], // Single leaf in moved subtree
+        [[10, 11], true], // Internal node split - subset
+        [[10, 11, 12, 13], true], // Exact match (root of moving subtree)
+        [[5], false], // Leaf outside moved subtree
+        [[5, 6], false], // Internal node outside moved subtree
+        [[10, 99], false], // Partial overlap - NOT a subset
+        [[], false], // Empty split
       ];
 
       testCases.forEach(([split, expected]) => {
         const result = isComponentMarkedSubset(split, markedSet);
-        expect(result).to.equal(expected,
-          `Split [${split.join(',')}] should ${expected ? '' : 'NOT '}be subset of marked`);
+        expect(result).to.equal(
+          expected,
+          `Split [${split.join(',')}] should ${expected ? '' : 'NOT '}be subset of marked`
+        );
       });
     });
   });

@@ -1,10 +1,15 @@
-import { selectActiveTreeList, selectCurrentTree, selectInputFrameIndices, useAppStore } from '../../state/phyloStore/store.js';
+import {
+  selectActiveTreeList,
+  selectCurrentTree,
+  selectInputFrameIndices,
+  useAppStore,
+} from '../../state/phyloStore/store.js';
 import { VIEWPORT_FIT_OBSTRUCTION_SCOPES } from '../spatial/layout.js';
 import { tagTreeSide } from '../utils/layerDataUtils.js';
 import {
   VIEWPORT_AUTOMATIC_BRANCH_DETAIL_ZOOM_DELTA,
   VIEWPORT_AUTO_FIT_CENTER_DRIFT_LIMIT_RATIO,
-  VIEWPORT_FIT_MODES
+  VIEWPORT_FIT_MODES,
 } from '../viewport/viewportFit.js';
 
 /**
@@ -48,9 +53,10 @@ export class StaticRenderer {
    */
   _renderComparisonModeStatic(leftIndex, rightIndex, frameIndex, state) {
     const inputFrameIndices = selectInputFrameIndices(state);
-    const computedRight = inputFrameIndices.find((i) => i > frameIndex)
-      ?? inputFrameIndices[inputFrameIndices.length - 1]
-      ?? frameIndex;
+    const computedRight =
+      inputFrameIndices.find((i) => i > frameIndex) ??
+      inputFrameIndices[inputFrameIndices.length - 1] ??
+      frameIndex;
     const leftIdx = Number.isInteger(leftIndex) ? leftIndex : frameIndex;
     const rightIdx = Number.isInteger(rightIndex) ? rightIndex : computedRight;
 
@@ -68,28 +74,23 @@ export class StaticRenderer {
       : frameIndex;
 
     const targetTreeData =
-      targetIndex === frameIndex
-        ? selectCurrentTree(state)
-        : treeList[targetIndex];
+      targetIndex === frameIndex ? selectCurrentTree(state) : treeList[targetIndex];
 
     const currentLayout = this.controller.calculateLayout(targetTreeData, {
-      treeIndex: targetIndex
+      treeIndex: targetIndex,
     });
     if (!currentLayout) return;
 
     const { extensionRadius, labelRadius } = this.controller._getConsistentRadii(currentLayout);
 
-    const layerData = this.controller.dataConverter.convertTreeToLayerData(
-      currentLayout,
-      {
-        extensionRadius,
-        labelRadius,
-        treeIndex: targetIndex,
-        treeSide: 'left',
-        renderMode: 'single',
-        linkGeometryMode
-      }
-    );
+    const layerData = this.controller.dataConverter.convertTreeToLayerData(currentLayout, {
+      extensionRadius,
+      labelRadius,
+      treeIndex: targetIndex,
+      treeSide: 'left',
+      renderMode: 'single',
+      linkGeometryMode,
+    });
 
     // Tag data for interactive picking/dragging (always 'left' in single mode)
     tagTreeSide(layerData, 'left');
@@ -102,10 +103,9 @@ export class StaticRenderer {
         obstructionScope: VIEWPORT_FIT_OBSTRUCTION_SCOPES.CANVAS,
         maxFitAreaCenterDriftRatio: VIEWPORT_AUTO_FIT_CENTER_DRIFT_LIMIT_RATIO,
         maxZoomOverAutoVisibleFit: VIEWPORT_AUTOMATIC_BRANCH_DETAIL_ZOOM_DELTA,
-        links: layerData.links
+        links: layerData.links,
       });
       this.controller._lastFocusedTreeIndex = targetIndex;
     }
-
   }
 }

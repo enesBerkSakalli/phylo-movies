@@ -9,7 +9,8 @@ export const createTaxonomyColoringPanelSlice = (set) => ({
   // ACTIONS
   // ==========================================================================
   setTaxaColoringOpen: (isOpen) => set({ taxaColoringOpen: !!isOpen }),
-  setTaxaColoringWindow: (partial) => set((state) => ({
-    taxaColoringWindow: { ...state.taxaColoringWindow, ...partial }
-  })),
+  setTaxaColoringWindow: (partial) =>
+    set((state) => ({
+      taxaColoringWindow: { ...state.taxaColoringWindow, ...partial },
+    })),
 });

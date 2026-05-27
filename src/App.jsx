@@ -12,23 +12,19 @@ import { TransitionInspectorPanel } from './components/TransitionInspectorPanel.
 import { Toaster } from './components/ui/sonner';
 import { TooltipProvider } from './components/ui/tooltip';
 import { HUD } from './components/HUD/HUD.jsx';
-import {
-  SidebarProvider,
-  SidebarInset,
-} from './components/ui/sidebar';
+import { SidebarProvider, SidebarInset } from './components/ui/sidebar';
 
 import {
   selectFileName,
   selectInitialize,
   selectReset,
   selectSetTaxaColoringOpen,
-  useAppStore
+  useAppStore,
 } from './state/phyloStore/store.js';
 import { phyloData } from './services/data/dataService.js';
 import { useTreeController } from './hooks/useTreeController.js';
 
 export function App() {
-
   const fileName = useAppStore(selectFileName) || 'Loading...';
   const initializeStore = useAppStore(selectInitialize);
   const resetStore = useAppStore(selectReset);
@@ -42,8 +38,14 @@ export function App() {
   const navigate = useNavigate();
   const [error, setError] = React.useState(null);
   const focusMsaWindow = React.useCallback(() => setActiveFloatingWindow('msa'), []);
-  const focusTaxaColoringWindow = React.useCallback(() => setActiveFloatingWindow('taxa-coloring'), []);
-  const focusSprAnalyticsWindow = React.useCallback(() => setActiveFloatingWindow('spr-analytics'), []);
+  const focusTaxaColoringWindow = React.useCallback(
+    () => setActiveFloatingWindow('taxa-coloring'),
+    []
+  );
+  const focusSprAnalyticsWindow = React.useCallback(
+    () => setActiveFloatingWindow('spr-analytics'),
+    []
+  );
   const openSprAnalyticsWindow = React.useCallback(() => {
     setSprAnalyticsOpen(true);
     setActiveFloatingWindow('spr-analytics');
@@ -54,7 +56,9 @@ export function App() {
   }, [setTaxaColoringOpen]);
   const closeSprAnalyticsWindow = React.useCallback(() => {
     setSprAnalyticsOpen(false);
-    setActiveFloatingWindow((activeWindow) => activeWindow === 'spr-analytics' ? null : activeWindow);
+    setActiveFloatingWindow((activeWindow) =>
+      activeWindow === 'spr-analytics' ? null : activeWindow
+    );
   }, []);
 
   useEffect(() => {
@@ -72,7 +76,6 @@ export function App() {
 
         // Initialize store directly
         initializeStore(parsedData);
-
       } catch (err) {
         console.error('[App bootstrap] Failed to initialize data:', err);
         setError(err.message || 'Failed to load data');
@@ -111,10 +114,7 @@ export function App() {
         </div>
 
         <MSAProvider>
-          <MsaRndWindow
-            isActive={activeFloatingWindow === 'msa'}
-            onFocus={focusMsaWindow}
-          />
+          <MsaRndWindow isActive={activeFloatingWindow === 'msa'} onFocus={focusMsaWindow} />
         </MSAProvider>
         <TaxaColoringRndWindow
           isActive={activeFloatingWindow === 'taxa-coloring'}

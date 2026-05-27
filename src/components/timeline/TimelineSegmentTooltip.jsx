@@ -83,9 +83,7 @@ function InputTreeContent({ segment }) {
     <div className="text-muted-foreground">
       {segment.treeName}
       {typeof segment.originalTreeIndex === 'number' && (
-        <span className="ml-2 text-xs opacity-70">
-          (#{segment.originalTreeIndex + 1})
-        </span>
+        <span className="ml-2 text-xs opacity-70">(#{segment.originalTreeIndex + 1})</span>
       )}
     </div>
   );
@@ -98,14 +96,16 @@ function InputTreeContent({ segment }) {
 function TransitionContent({ segment, getLeafNames, isExpanded, onToggleExpanded }) {
   const generatedFrames = Number.isInteger(segment.generatedFrameCount)
     ? segment.generatedFrameCount
-    : (Array.isArray(segment.interpolationData) ? segment.interpolationData.length : 1);
+    : Array.isArray(segment.interpolationData)
+      ? segment.interpolationData.length
+      : 1;
   const animationSteps = Number.isInteger(segment.animationStepCount)
     ? segment.animationStepCount
-    : (Array.isArray(segment.interpolationData) ? Math.max(0, segment.interpolationData.length - 1) : 0);
+    : Array.isArray(segment.interpolationData)
+      ? Math.max(0, segment.interpolationData.length - 1)
+      : 0;
 
-  const taxaCount = typeof segment.subtreeMoveCount === 'number'
-    ? segment.subtreeMoveCount
-    : 0;
+  const taxaCount = typeof segment.subtreeMoveCount === 'number' ? segment.subtreeMoveCount : 0;
 
   const subtreeGroups = extractAffectedSubtreeGroups(segment.affectedSubtrees, getLeafNames);
   const pivotEdgePreview = formatPivotEdgePreview(segment.pivotEdge);
@@ -122,7 +122,9 @@ function TransitionContent({ segment, getLeafNames, isExpanded, onToggleExpanded
 
       <div className="flex items-center justify-between pt-1 text-muted-foreground border-t border-border/50 mt-1">
         <span>{generatedFrames} generated frames</span>
-        <span>{animationSteps} steps, {taxaCount} taxa</span>
+        <span>
+          {animationSteps} steps, {taxaCount} taxa
+        </span>
       </div>
     </>
   );
@@ -136,7 +138,10 @@ function PivotEdgeSection({ pivotEdgePreview }) {
       <span className="text-muted-foreground font-medium text-2xs uppercase tracking-wider">
         Pivot edge
       </span>
-      <span className="min-w-0 truncate font-mono text-2xs text-foreground" title={pivotEdgePreview}>
+      <span
+        className="min-w-0 truncate font-mono text-2xs text-foreground"
+        title={pivotEdgePreview}
+      >
         {pivotEdgePreview}
       </span>
     </div>
@@ -199,10 +204,7 @@ function SubtreeBadge({ names }) {
   const displayText = formatSubtreeNames(names);
 
   return (
-    <Badge
-      variant="secondary"
-      className="text-2xs px-2 py-0 h-5 font-medium whitespace-nowrap"
-    >
+    <Badge variant="secondary" className="text-2xs px-2 py-0 h-5 font-medium whitespace-nowrap">
       {displayText}
     </Badge>
   );

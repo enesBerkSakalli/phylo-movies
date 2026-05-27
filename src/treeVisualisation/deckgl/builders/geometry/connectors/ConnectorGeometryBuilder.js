@@ -27,7 +27,7 @@ export function calculateRadialBundlePoint(points, treeCenter) {
 
   // 3. Find the maximum radius in this group of points (relative to tree center)
   let maxRadius = 0;
-  points.forEach(p => {
+  points.forEach((p) => {
     const r = Math.sqrt(Math.pow(p[0] - treeCenter[0], 2) + Math.pow(p[1] - treeCenter[1], 2));
     if (r > maxRadius) maxRadius = r;
   });
@@ -39,7 +39,7 @@ export function calculateRadialBundlePoint(points, treeCenter) {
   return [
     treeCenter[0] + Math.cos(angle) * bundleRadius,
     treeCenter[1] + Math.sin(angle) * bundleRadius,
-    0
+    0,
   ];
 }
 
@@ -52,7 +52,14 @@ export function calculateRadialBundlePoint(points, treeCenter) {
  * @param {number} [samples=24] - Number of points in resulting path
  * @returns {Float32Array} Flat XYZ points along the curve
  */
-export function buildBundledBezierPath(from, to, srcBundlePoint, dstBundlePoint, samples = 24, options = {}) {
+export function buildBundledBezierPath(
+  from,
+  to,
+  srcBundlePoint,
+  dstBundlePoint,
+  samples = 24,
+  options = {}
+) {
   if (!from || !to) return new Float32Array(0);
 
   // Bundling strength - allow override for active edges
@@ -68,20 +75,20 @@ export function buildBundledBezierPath(from, to, srcBundlePoint, dstBundlePoint,
   if (options.sourceCenter && options.targetCenter) {
     const sc = options.sourceCenter;
     const tc = options.targetCenter;
-    
+
     // Radial vector from source center to start point
     let dx1 = p0[0] - sc[0];
     let dy1 = p0[1] - sc[1];
     const len1 = Math.sqrt(dx1 * dx1 + dy1 * dy1) || 1;
-    
+
     // Radial vector from target center to end point
     let dx2 = p3[0] - tc[0];
     let dy2 = p3[1] - tc[1];
     const len2 = Math.sqrt(dx2 * dx2 + dy2 * dy2) || 1;
 
     // Control point distance (handle length) - proportional to distance
-    // We want to shoot "outward" 
-    const handleLen = Math.min(len1, len2) * 0.5; 
+    // We want to shoot "outward"
+    const handleLen = Math.min(len1, len2) * 0.5;
 
     cp1_indiv = [p0[0] + (dx1 / len1) * handleLen, p0[1] + (dy1 / len1) * handleLen];
     cp2_indiv = [p3[0] + (dx2 / len2) * handleLen, p3[1] + (dy2 / len2) * handleLen];
@@ -103,12 +110,12 @@ export function buildBundledBezierPath(from, to, srcBundlePoint, dstBundlePoint,
 
   const p1 = [
     lerp(cp1_indiv[0], cp1_bundle[0], BUNDLING_STRENGTH),
-    lerp(cp1_indiv[1], cp1_bundle[1], BUNDLING_STRENGTH)
+    lerp(cp1_indiv[1], cp1_bundle[1], BUNDLING_STRENGTH),
   ];
 
   const p2 = [
     lerp(cp2_indiv[0], cp2_bundle[0], BUNDLING_STRENGTH),
-    lerp(cp2_indiv[1], cp2_bundle[1], BUNDLING_STRENGTH)
+    lerp(cp2_indiv[1], cp2_bundle[1], BUNDLING_STRENGTH),
   ];
 
   // Create cubic Bezier curve

@@ -10,11 +10,13 @@ describe('clipboard comparison controls', () => {
     const appSource = readFileSync(join(repoRoot, 'src/App.jsx'), 'utf8');
     const clipboardSectionSource = readFileSync(
       join(repoRoot, 'src/components/HUD/clipboard/ClipboardSection.jsx'),
-      'utf8',
+      'utf8'
     );
 
     expect(appSource).not.toContain('ClipboardDismissButton');
-    expect(existsSync(join(repoRoot, 'src/components/HUD/clipboard/ClipboardDismissButton.jsx'))).toBe(false);
+    expect(
+      existsSync(join(repoRoot, 'src/components/HUD/clipboard/ClipboardDismissButton.jsx'))
+    ).toBe(false);
     expect(clipboardSectionSource).toContain('aria-label="Hide comparison tree"');
   });
 });

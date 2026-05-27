@@ -28,9 +28,17 @@ export function fitFloatingWindowRect(rect = {}, options = {}) {
   const viewportHeight = positiveNumber(options.viewportHeight, DEFAULT_VIEWPORT.height);
   const margin = Math.max(0, finiteNumber(options.margin, 24));
   const leftInset = clamp(finiteNumber(options.leftInset, 0), 0, Math.max(0, viewportWidth - 1));
-  const rightInset = clamp(finiteNumber(options.rightInset, 0), 0, Math.max(0, viewportWidth - leftInset - 1));
+  const rightInset = clamp(
+    finiteNumber(options.rightInset, 0),
+    0,
+    Math.max(0, viewportWidth - leftInset - 1)
+  );
   const topInset = clamp(finiteNumber(options.topInset, 0), 0, Math.max(0, viewportHeight - 1));
-  const bottomInset = clamp(finiteNumber(options.bottomInset, 0), 0, Math.max(0, viewportHeight - topInset - 1));
+  const bottomInset = clamp(
+    finiteNumber(options.bottomInset, 0),
+    0,
+    Math.max(0, viewportHeight - topInset - 1)
+  );
   const minX = leftInset + margin;
   const minY = topInset + margin;
   const maxWidth = Math.max(1, viewportWidth - leftInset - rightInset - margin * 2);
@@ -53,8 +61,10 @@ export function toFloatingWindowRect(fittedRect) {
 }
 
 export function hasFloatingWindowRectChanged(rect, fittedRect) {
-  return rect.x !== fittedRect.x
-    || rect.y !== fittedRect.y
-    || rect.width !== fittedRect.width
-    || rect.height !== fittedRect.height;
+  return (
+    rect.x !== fittedRect.x ||
+    rect.y !== fittedRect.y ||
+    rect.width !== fittedRect.width ||
+    rect.height !== fittedRect.height
+  );
 }

@@ -8,7 +8,7 @@ export const createContextMenuSlice = (set) => ({
   // ==========================================================================
   contextMenuOpen: false,
   contextMenuPosition: { x: 0, y: 0 },
-  contextMenuNode: null,      // Normalized node data for the clicked tree element
+  contextMenuNode: null, // Normalized node data for the clicked tree element
 
   // ==========================================================================
   // ACTIONS

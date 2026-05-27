@@ -4,9 +4,28 @@ if (typeof document !== 'undefined') {
 }
 import { Deck, OrthographicView } from '@deck.gl/core';
 import { TIMELINE_CONSTANTS, TIMELINE_THEME } from '../constants.js';
-import { createPathLayer, createStripTrackLayer, createInputTreeTickLayer, createInputTreeLayer, createConnectionLayer, createInputTreeHoverLayer, createConnectionHoverLayer, createInputTreeSelectionLayer, createConnectionSelectionLayer, createSeparatorLayer, createScrubberLayer, getDevicePixelRatio, calculateSeparatorWidth } from '../utils/layerFactories.js';
+import {
+  createPathLayer,
+  createStripTrackLayer,
+  createInputTreeTickLayer,
+  createInputTreeLayer,
+  createConnectionLayer,
+  createInputTreeHoverLayer,
+  createConnectionHoverLayer,
+  createInputTreeSelectionLayer,
+  createConnectionSelectionLayer,
+  createSeparatorLayer,
+  createScrubberLayer,
+  getDevicePixelRatio,
+  calculateSeparatorWidth,
+} from '../utils/layerFactories.js';
 import { msToX, xToMs, calculateZoomScale } from '../math/coordinateUtils.js';
-import { getSegmentBounds, timeToSegmentIndex, toSegmentIndex, toTimelineItemId } from '../utils/segmentTiming.js';
+import {
+  getSegmentBounds,
+  timeToSegmentIndex,
+  toSegmentIndex,
+  toTimelineItemId,
+} from '../utils/segmentTiming.js';
 import { getTargetSegmentIndex } from '../utils/segmentUtils.js';
 import { processSegments } from '../data/segmentProcessor.js';
 
@@ -18,7 +37,6 @@ const HOVER_CLEAR_DELAY_MS = 150;
  * Supports zoom, pan, and scrubbing interactions.
  */
 export class DeckTimelineRenderer {
-
   // ==========================================================================
   // CONSTRUCTOR
   // ==========================================================================
@@ -50,7 +68,7 @@ export class DeckTimelineRenderer {
     this._selectedSegmentIndex = null;
     this._lastHoverId = null;
     this._getIsScrubbing = () => false;
-    this._setHoveredSegment = () => { };
+    this._setHoveredSegment = () => {};
     this._scrubThresholdPx = 10;
     this._wasScrubbingOnMouseDown = false;
     this._hoverTimeoutId = null;
@@ -85,13 +103,19 @@ export class DeckTimelineRenderer {
       throw new Error('[DeckTimelineRenderer] Invalid timelineData: must be an object');
     }
     if (typeof timelineData.totalDuration !== 'number' || timelineData.totalDuration <= 0) {
-      throw new Error('[DeckTimelineRenderer] Invalid timelineData.totalDuration: must be a positive number');
+      throw new Error(
+        '[DeckTimelineRenderer] Invalid timelineData.totalDuration: must be a positive number'
+      );
     }
     if (!Array.isArray(timelineData.segmentDurations)) {
-      throw new Error('[DeckTimelineRenderer] Invalid timelineData.segmentDurations: must be an array');
+      throw new Error(
+        '[DeckTimelineRenderer] Invalid timelineData.segmentDurations: must be an array'
+      );
     }
     if (!Array.isArray(timelineData.cumulativeDurations)) {
-      throw new Error('[DeckTimelineRenderer] Invalid timelineData.cumulativeDurations: must be an array');
+      throw new Error(
+        '[DeckTimelineRenderer] Invalid timelineData.cumulativeDurations: must be an array'
+      );
     }
     if (!Array.isArray(segments)) {
       throw new Error('[DeckTimelineRenderer] Invalid segments: must be an array');
@@ -123,13 +147,17 @@ export class DeckTimelineRenderer {
   }
 
   _setupContainer(container) {
-    if (!window.getComputedStyle(container).position || window.getComputedStyle(container).position === 'static') {
+    if (
+      !window.getComputedStyle(container).position ||
+      window.getComputedStyle(container).position === 'static'
+    ) {
       container.style.position = 'relative';
     }
     this.container = container;
 
     this.canvas = document.createElement('div');
-    this.canvas.style.cssText = 'position:absolute;left:0;right:0;top:0;bottom:0;z-index:2;pointer-events:auto;';
+    this.canvas.style.cssText =
+      'position:absolute;left:0;right:0;top:0;bottom:0;z-index:2;pointer-events:auto;';
     container.appendChild(this.canvas);
   }
 
@@ -140,8 +168,17 @@ export class DeckTimelineRenderer {
     this.activeInputTreeTickLayer = createInputTreeTickLayer([], TIMELINE_THEME, true);
     this.connectionLayer = createConnectionLayer([], TIMELINE_THEME.connectionWidth);
     this.inputTreeLayer = createInputTreeLayer([], TIMELINE_THEME.inputTreeStrokeWidth);
-    this.connectionHoverLayer = createConnectionHoverLayer([], TIMELINE_THEME.connectionHoverRGB, TIMELINE_THEME.connectionHoverWidth, this._boundHoverClick);
-    this.inputTreeHoverLayer = createInputTreeHoverLayer([], TIMELINE_THEME.connectionHoverRGB, this._boundHoverClick);
+    this.connectionHoverLayer = createConnectionHoverLayer(
+      [],
+      TIMELINE_THEME.connectionHoverRGB,
+      TIMELINE_THEME.connectionHoverWidth,
+      this._boundHoverClick
+    );
+    this.inputTreeHoverLayer = createInputTreeHoverLayer(
+      [],
+      TIMELINE_THEME.connectionHoverRGB,
+      this._boundHoverClick
+    );
     this.connectionSelectionLayer = createConnectionSelectionLayer([], TIMELINE_THEME);
     this.inputTreeSelectionLayer = createInputTreeSelectionLayer([], TIMELINE_THEME);
     this.scrubberLayer = createPathLayer('scrubber-layer', [], [0, 0, 0, 0], 1);
@@ -161,8 +198,8 @@ export class DeckTimelineRenderer {
       height,
       useDevicePixels: getDevicePixelRatio(),
       layers: [],
-      onViewStateChange: () => { },
-      glOptions: { alpha: true, preserveDrawingBuffer: true }
+      onViewStateChange: () => {},
+      glOptions: { alpha: true, preserveDrawingBuffer: true },
     });
   }
 
@@ -255,12 +292,13 @@ export class DeckTimelineRenderer {
   }
 
   bindScrubState({ getIsScrubbing } = {}) {
-    this._getIsScrubbing = typeof getIsScrubbing === 'function' ? getIsScrubbing : (() => false);
+    this._getIsScrubbing = typeof getIsScrubbing === 'function' ? getIsScrubbing : () => false;
     this._scheduleUpdate();
   }
 
   bindHoverState({ setHoveredSegment } = {}) {
-    this._setHoveredSegment = typeof setHoveredSegment === 'function' ? setHoveredSegment : (() => { });
+    this._setHoveredSegment =
+      typeof setHoveredSegment === 'function' ? setHoveredSegment : () => {};
   }
 
   setHoveredSegment(segmentIndex, segmentData = null, position = null) {
@@ -280,11 +318,10 @@ export class DeckTimelineRenderer {
    * @param {number|null} segmentIndex - Zero-based segment index or null to clear
    */
   setSelectedSegment(segmentIndex) {
-    this._selectedSegmentIndex = Number.isInteger(segmentIndex) &&
-      segmentIndex >= 0 &&
-      segmentIndex < this.segments.length
-      ? segmentIndex
-      : null;
+    this._selectedSegmentIndex =
+      Number.isInteger(segmentIndex) && segmentIndex >= 0 && segmentIndex < this.segments.length
+        ? segmentIndex
+        : null;
     this._updateLayers();
   }
 
@@ -380,13 +417,22 @@ export class DeckTimelineRenderer {
   _bindMouseEvents() {
     const pointerTarget = this.deck?.canvas ?? this.canvas;
     const eventConfigs = [
-      { event: 'mousemove', handler: (e) => this._handleMouseMoveOrScrub(e), target: pointerTarget },
+      {
+        event: 'mousemove',
+        handler: (e) => this._handleMouseMoveOrScrub(e),
+        target: pointerTarget,
+      },
       { event: 'mousedown', handler: (e) => this._handleMouseDown(e), target: pointerTarget },
       { event: 'mouseup', handler: () => this._handleMouseUp(), target: window },
       { event: 'click', handler: (e) => this._handleClick(e), target: pointerTarget },
       { event: 'keydown', handler: (e) => this._handleKeyDown(e), target: pointerTarget },
-      { event: 'wheel', handler: (e) => this._handleWheel(e), target: pointerTarget, options: { passive: false } },
-      { event: 'mouseleave', handler: () => this._handleMouseLeave(), target: pointerTarget }
+      {
+        event: 'wheel',
+        handler: (e) => this._handleWheel(e),
+        target: pointerTarget,
+        options: { passive: false },
+      },
+      { event: 'mouseleave', handler: () => this._handleMouseLeave(), target: pointerTarget },
     ];
 
     eventConfigs.forEach(({ event, handler, target, options }) => {
@@ -448,7 +494,7 @@ export class DeckTimelineRenderer {
 
     this.setHoveredSegment(segIndex, segment, {
       x: rect.left + centerX,
-      y: rect.top
+      y: rect.top,
     });
   }
 
@@ -496,7 +542,12 @@ export class DeckTimelineRenderer {
       return;
     }
 
-    const targetIndex = getTargetSegmentIndex(initialSegIndex, clickMs, this.segments, this.timelineData.cumulativeDurations);
+    const targetIndex = getTargetSegmentIndex(
+      initialSegIndex,
+      clickMs,
+      this.segments,
+      this.timelineData.cumulativeDurations
+    );
     this._selectSegment(targetIndex, clickMs);
   }
 
@@ -589,27 +640,33 @@ export class DeckTimelineRenderer {
     }
   }
 
-  _selectSegment(segmentIndex, ms, id = toTimelineItemId(segmentIndex), segment = this.segments[segmentIndex]) {
-    if (!Number.isInteger(segmentIndex) || segmentIndex < 0 || segmentIndex >= this.segments.length) return;
+  _selectSegment(
+    segmentIndex,
+    ms,
+    id = toTimelineItemId(segmentIndex),
+    segment = this.segments[segmentIndex]
+  ) {
+    if (!Number.isInteger(segmentIndex) || segmentIndex < 0 || segmentIndex >= this.segments.length)
+      return;
 
     this.setSelectedSegment(segmentIndex);
     this._emit('select', {
       id,
       segmentIndex,
       ms,
-      segment
+      segment,
     });
   }
 
   _getClickMsFromPickingInfo(info) {
     const coordinateX = Array.isArray(info?.coordinate) ? info.coordinate[0] : null;
     if (Number.isFinite(coordinateX)) {
-      return this._xToMs(coordinateX + (this._width / 2));
+      return this._xToMs(coordinateX + this._width / 2);
     }
 
     const positionX = Array.isArray(info?.object?.position) ? info.object.position[0] : null;
     if (Number.isFinite(positionX)) {
-      return this._xToMs(positionX + (this._width / 2));
+      return this._xToMs(positionX + this._width / 2);
     }
 
     const path = info?.object?.path;
@@ -617,7 +674,7 @@ export class DeckTimelineRenderer {
       const startX = path[0]?.[0];
       const endX = path[path.length - 1]?.[0];
       if (Number.isFinite(startX) && Number.isFinite(endX)) {
-        return this._xToMs(((startX + endX) / 2) + (this._width / 2));
+        return this._xToMs((startX + endX) / 2 + this._width / 2);
       }
     }
 
@@ -676,25 +733,50 @@ export class DeckTimelineRenderer {
     const height = Math.max(1, Math.round(rect.height));
     this._width = width;
 
-    const { rangeStart, rangeEnd, visStart, visEnd, startIdx, endIdx, zoomScale } = this._computeVisibleRange();
+    const { rangeStart, rangeEnd, visStart, visEnd, startIdx, endIdx, zoomScale } =
+      this._computeVisibleRange();
 
     const {
-      inputTreeTicks, stripTracks, separators, inputTreePoints, activeInputTreeTicks, selectionInputTrees, hoverInputTrees,
-      connections, selectionConnections, hoverConnections
+      inputTreeTicks,
+      stripTracks,
+      separators,
+      inputTreePoints,
+      activeInputTreeTicks,
+      selectionInputTrees,
+      hoverInputTrees,
+      connections,
+      selectionConnections,
+      hoverConnections,
     } = processSegments({
-      startIdx, endIdx, width, height, visStart, visEnd, zoomScale,
+      startIdx,
+      endIdx,
+      width,
+      height,
+      visStart,
+      visEnd,
+      zoomScale,
       theme: TIMELINE_THEME,
       timelineData: this.timelineData,
       segments: this.segments,
       selectedSegmentIndex: this._selectedSegmentIndex,
       lastHoverId: this._lastHoverId,
-      rangeStart, rangeEnd
+      rangeStart,
+      rangeEnd,
     });
 
     const layers = this._buildLayers({
-      inputTreeTicks, stripTracks, separators, inputTreePoints, activeInputTreeTicks, selectionInputTrees, hoverInputTrees,
-      connections, selectionConnections, hoverConnections,
-      width, height
+      inputTreeTicks,
+      stripTracks,
+      separators,
+      inputTreePoints,
+      activeInputTreeTicks,
+      selectionInputTrees,
+      hoverInputTrees,
+      connections,
+      selectionConnections,
+      hoverConnections,
+      width,
+      height,
     });
 
     this.deck.setProps({ width, height, layers });
@@ -709,7 +791,10 @@ export class DeckTimelineRenderer {
     const visEnd = rangeEnd + buffer;
 
     const startIdx = Math.max(0, timeToSegmentIndex(Math.max(0, visStart), this.timelineData) - 1);
-    const rawEndIdx = timeToSegmentIndex(Math.min(this._totalDuration - 1, visEnd), this.timelineData);
+    const rawEndIdx = timeToSegmentIndex(
+      Math.min(this._totalDuration - 1, visEnd),
+      this.timelineData
+    );
     const endIdx = Math.min(this.segments.length - 1, rawEndIdx + 1);
 
     const zoomScale = calculateZoomScale(rangeStart, rangeEnd, this._totalDuration);
@@ -717,19 +802,42 @@ export class DeckTimelineRenderer {
     return { rangeStart, rangeEnd, visStart, visEnd, startIdx, endIdx, zoomScale };
   }
 
-  _buildLayers({ inputTreeTicks, stripTracks, separators, inputTreePoints, activeInputTreeTicks, selectionInputTrees, hoverInputTrees, connections, selectionConnections, hoverConnections, width, height }) {
+  _buildLayers({
+    inputTreeTicks,
+    stripTracks,
+    separators,
+    inputTreePoints,
+    activeInputTreeTicks,
+    selectionInputTrees,
+    hoverInputTrees,
+    connections,
+    selectionConnections,
+    hoverConnections,
+    width,
+    height,
+  }) {
     const theme = TIMELINE_THEME;
     const separatorWidth = calculateSeparatorWidth(this.segments?.length || 0, theme);
 
     // Cache color arrays for updateTriggers (stable references for comparison)
-    const hoverColor = [theme.connectionHoverRGB[0], theme.connectionHoverRGB[1], theme.connectionHoverRGB[2], 160];
-    const selectionColor = [theme.connectionSelectionRGB[0], theme.connectionSelectionRGB[1], theme.connectionSelectionRGB[2], 230];
+    const hoverColor = [
+      theme.connectionHoverRGB[0],
+      theme.connectionHoverRGB[1],
+      theme.connectionHoverRGB[2],
+      160,
+    ];
+    const selectionColor = [
+      theme.connectionSelectionRGB[0],
+      theme.connectionSelectionRGB[1],
+      theme.connectionSelectionRGB[2],
+      230,
+    ];
 
     return [
       this.separatorLayer.clone({
         data: separators,
         widthMinPixels: separatorWidth,
-        updateTriggers: { getColor: [theme.separatorAlpha, theme.separatorDenseAlpha] }
+        updateTriggers: { getColor: [theme.separatorAlpha, theme.separatorDenseAlpha] },
       }),
       this.stripTrackLayer.clone({ data: stripTracks }),
       this.inputTreeTickLayer.clone({ data: inputTreeTicks }),
@@ -738,27 +846,40 @@ export class DeckTimelineRenderer {
         data: hoverConnections,
         getColor: hoverColor,
         widthMinPixels: theme.connectionHoverWidth,
-        updateTriggers: { getColor: hoverColor }
+        updateTriggers: { getColor: hoverColor },
       }),
       this.connectionSelectionLayer.clone({
         data: selectionConnections,
         getColor: selectionColor,
         widthMinPixels: theme.connectionSelectionWidth,
-        updateTriggers: { getColor: selectionColor }
+        updateTriggers: { getColor: selectionColor },
       }),
-      this.scrubberLayer.clone(createScrubberLayer(this._scrubberMs, this._rangeStart, this._rangeEnd, width, height, theme, this.isScrubbing())),
+      this.scrubberLayer.clone(
+        createScrubberLayer(
+          this._scrubberMs,
+          this._rangeStart,
+          this._rangeEnd,
+          width,
+          height,
+          theme,
+          this.isScrubbing()
+        )
+      ),
       this.activeInputTreeTickLayer.clone({ data: activeInputTreeTicks }),
-      this.inputTreeLayer.clone({ data: inputTreePoints, lineWidthMinPixels: theme.inputTreeStrokeWidth }),
+      this.inputTreeLayer.clone({
+        data: inputTreePoints,
+        lineWidthMinPixels: theme.inputTreeStrokeWidth,
+      }),
       this.inputTreeHoverLayer.clone({
         data: hoverInputTrees,
         getLineColor: hoverColor,
-        updateTriggers: { getLineColor: hoverColor }
+        updateTriggers: { getLineColor: hoverColor },
       }),
       this.inputTreeSelectionLayer.clone({
         data: selectionInputTrees,
         getLineColor: selectionColor,
-        updateTriggers: { getLineColor: selectionColor }
-      })
+        updateTriggers: { getLineColor: selectionColor },
+      }),
     ];
   }
 

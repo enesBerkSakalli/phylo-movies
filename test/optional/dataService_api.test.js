@@ -20,8 +20,8 @@ describe('DataService - API Integration', () => {
   it('should use absolute Electron URL in Electron Mode', async () => {
     global.window = {
       electronAPI: {
-        getBackendUrl: async () => 'http://localhost:9999'
-      }
+        getBackendUrl: async () => 'http://localhost:9999',
+      },
     };
 
     const url = await resolveApiUrl('/treedata/stream');

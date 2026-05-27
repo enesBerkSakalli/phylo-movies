@@ -1,15 +1,13 @@
-
 import { describe, it, expect } from 'vitest';
 import {
   signedShortestAngle,
   polarToCartesian,
   createPolarInterpolator,
-  calculateBranchCoordinates
+  calculateBranchCoordinates,
 } from '../src/treeVisualisation/layout/RadialTreeGeometry.js';
 import { LinkGeometryBuilder } from '../src/treeVisualisation/deckgl/builders/geometry/links/LinkGeometryBuilder.js';
 
 describe('RadialTreeGeometry', () => {
-
   describe('signedShortestAngle', () => {
     it('calculates small positive differences', () => {
       expect(signedShortestAngle(0, 0.1)).toBeCloseTo(0.1);
@@ -67,7 +65,7 @@ describe('RadialTreeGeometry', () => {
     it('returns straight line for very small angle delta', () => {
       const d = {
         source: { radius: 10, angle: 0 },
-        target: { radius: 20, angle: 0.00001 }
+        target: { radius: 20, angle: 0.00001 },
       };
       const res = calculateBranchCoordinates(d);
       expect(res.arcProperties).toBeNull();
@@ -78,7 +76,7 @@ describe('RadialTreeGeometry', () => {
     it('returns arc props for normal branch', () => {
       const d = {
         source: { radius: 10, angle: 0 },
-        target: { radius: 20, angle: Math.PI / 2 }
+        target: { radius: 20, angle: Math.PI / 2 },
       };
       const res = calculateBranchCoordinates(d);
       expect(res.arcProperties).toBeDefined();
@@ -92,10 +90,12 @@ describe('RadialTreeGeometry', () => {
   describe('LinkGeometryBuilder', () => {
     it('can render direct straight source-to-target link geometry', () => {
       const builder = new LinkGeometryBuilder({ geometryMode: 'straight' });
-      const path = Array.from(builder.createLinkPath({
-        source: { radius: 10, angle: 0, x: 10, y: 0 },
-        target: { radius: 20, angle: Math.PI / 2, x: 0, y: 20 },
-      }));
+      const path = Array.from(
+        builder.createLinkPath({
+          source: { radius: 10, angle: 0, x: 10, y: 0 },
+          target: { radius: 20, angle: Math.PI / 2, x: 0, y: 20 },
+        })
+      );
 
       expect(path).toHaveLength(6);
       expect(path).toEqual([10, 0, 0, 0, 20, 0]);

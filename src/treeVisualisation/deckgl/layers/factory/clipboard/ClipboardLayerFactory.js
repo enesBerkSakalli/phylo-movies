@@ -10,6 +10,6 @@ export function createClipboardLayers({ data, state, layerStyles, modelMatrix })
     modelMatrix,
     treeSide: 'clipboard',
     skipEmpty: true,
-    useSideSuffix: false
+    useSideSuffix: false,
   });
 }

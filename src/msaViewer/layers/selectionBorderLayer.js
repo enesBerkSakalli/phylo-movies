@@ -25,19 +25,21 @@ export function buildSelectionBorder(cellSize, selection, rows, cols) {
   // Convert to 0-based indices and adjust for inclusive end
   const startX = (startCol - 1) * cellSize;
   const endX = endCol * cellSize;
-  const startY = 0;  // Top of the alignment
-  const endY = rows * cellSize;  // Bottom of the alignment
+  const startY = 0; // Top of the alignment
+  const endY = rows * cellSize; // Bottom of the alignment
 
   // Create a border rectangle around the selected region
-  const borderWidth = 2;  // Border thickness in pixels
-  const borderData = [{
-    polygon: [
-      [startX - borderWidth, startY - borderWidth],
-      [endX + borderWidth, startY - borderWidth],
-      [endX + borderWidth, endY + borderWidth],
-      [startX - borderWidth, endY + borderWidth]
-    ]
-  }];
+  const borderWidth = 2; // Border thickness in pixels
+  const borderData = [
+    {
+      polygon: [
+        [startX - borderWidth, startY - borderWidth],
+        [endX + borderWidth, startY - borderWidth],
+        [endX + borderWidth, endY + borderWidth],
+        [startX - borderWidth, endY + borderWidth],
+      ],
+    },
+  ];
 
   return borderData;
 }
@@ -55,7 +57,7 @@ export function createSelectionBorderLayer(borderData) {
     stroked: true,
     filled: false,
     lineWidthMinPixels: 3,
-    getPolygon: d => d.polygon,
+    getPolygon: (d) => d.polygon,
     // High-contrast black for the active MSA selection box
     getLineColor: [0, 0, 0, 255],
   });
@@ -74,7 +76,7 @@ export function createPreviousSelectionBorderLayer(borderData) {
     stroked: true,
     filled: false,
     lineWidthMinPixels: 2,
-    getPolygon: d => d.polygon,
-    getLineColor: [128, 128, 128, 180],  // Gray with transparency
+    getPolygon: (d) => d.polygon,
+    getLineColor: [128, 128, 128, 180], // Gray with transparency
   });
 }

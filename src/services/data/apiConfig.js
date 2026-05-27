@@ -17,7 +17,10 @@ export async function getApiBaseUrl() {
         return url.endsWith('/') ? url.slice(0, -1) : url;
       }
     } catch (err) {
-      console.warn('Failed to get backend URL from Electron IPC, falling back to relative paths.', err);
+      console.warn(
+        'Failed to get backend URL from Electron IPC, falling back to relative paths.',
+        err
+      );
     }
   }
 
@@ -41,5 +44,5 @@ export async function resolveApiUrl(endpoint) {
  * @returns {boolean}
  */
 export function isElectron() {
-  return typeof window !== 'undefined' && !!(window.electronAPI);
+  return typeof window !== 'undefined' && !!window.electronAPI;
 }

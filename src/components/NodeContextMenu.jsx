@@ -7,7 +7,7 @@ import {
   selectHideNodeContextMenu,
   selectSetManuallyMarkedNodes,
   selectTreeControllers,
-  useAppStore
+  useAppStore,
 } from '../state/phyloStore/store.js';
 
 import { SubtreeExtractor } from '../domain/tree/subtreeExtractor.js';
@@ -100,19 +100,22 @@ export function NodeContextMenu() {
 
     try {
       const newick = SubtreeExtractor.nodeToNewick(node);
-      navigator.clipboard.writeText(newick).then(() => {
-        const nodeName = node.name || `Node (depth ${node.depth})`;
-        toast.success(`Subtree copied from ${nodeName}`);
-      }).catch(() => {
-        // Fallback for clipboard API failure
-        const textarea = document.createElement('textarea');
-        textarea.value = newick;
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textarea);
-        toast.success('Subtree copied (fallback)');
-      });
+      navigator.clipboard
+        .writeText(newick)
+        .then(() => {
+          const nodeName = node.name || `Node (depth ${node.depth})`;
+          toast.success(`Subtree copied from ${nodeName}`);
+        })
+        .catch(() => {
+          // Fallback for clipboard API failure
+          const textarea = document.createElement('textarea');
+          textarea.value = newick;
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textarea);
+          toast.success('Subtree copied (fallback)');
+        });
     } catch (error) {
       console.error('Failed to extract subtree:', error);
       toast.error('Failed to extract subtree');
@@ -164,17 +167,20 @@ Descendants: ${stats.totalNodes}
 Leaves: ${stats.leafCount}
 Max Depth: ${stats.maxDepth}`;
 
-      navigator.clipboard.writeText(info).then(() => {
-        toast.success('Node info copied to clipboard');
-      }).catch(() => {
-        const textarea = document.createElement('textarea');
-        textarea.value = info;
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textarea);
-        toast.success('Node info copied (fallback)');
-      });
+      navigator.clipboard
+        .writeText(info)
+        .then(() => {
+          toast.success('Node info copied to clipboard');
+        })
+        .catch(() => {
+          const textarea = document.createElement('textarea');
+          textarea.value = info;
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textarea);
+          toast.success('Node info copied (fallback)');
+        });
     } catch (error) {
       console.error('Failed to copy node info:', error);
       toast.error('Failed to copy node info');
@@ -216,12 +222,8 @@ Max Depth: ${stats.maxDepth}`;
     >
       {/* Header */}
       <div className="flex flex-col gap-1 border-b border-border bg-muted/50 px-3 py-2">
-        <span className="text-sm font-semibold text-foreground truncate">
-          {nodeName}
-        </span>
-        <span className="text-xs text-muted-foreground">
-          {nodeStats}
-        </span>
+        <span className="text-sm font-semibold text-foreground truncate">{nodeName}</span>
+        <span className="text-xs text-muted-foreground">{nodeStats}</span>
       </div>
 
       {/* Menu Items */}
@@ -237,16 +239,8 @@ Max Depth: ${stats.maxDepth}`;
           label="Highlight Descendants"
           onClick={handleHighlightDescendants}
         />
-        <MenuItem
-          icon={Crosshair}
-          label="Focus on Node"
-          onClick={handleFocusOnNode}
-        />
-        <MenuItem
-          icon={Info}
-          label="Copy Node Info"
-          onClick={handleCopyInfo}
-        />
+        <MenuItem icon={Crosshair} label="Focus on Node" onClick={handleFocusOnNode} />
+        <MenuItem icon={Info} label="Copy Node Info" onClick={handleCopyInfo} />
       </div>
     </div>
   );

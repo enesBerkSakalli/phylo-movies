@@ -1,11 +1,22 @@
 import React from 'react';
 import { DistanceChart } from '../../DistanceChart/DistanceChart.jsx';
 import { DISTANCE_CHART_METRIC_OPTIONS } from '../../DistanceChart/distanceChartLanguage.js';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../ui/select';
 
 export function MovieChartSection({ barOptionValue, onBarOptionChange }) {
   return (
-    <div className="w-full bg-muted/10 px-2 py-1" role="region" aria-label="Input-tree metric chart">
+    <div
+      className="w-full bg-muted/10 px-2 py-1"
+      role="region"
+      aria-label="Input-tree metric chart"
+    >
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
         <div className="min-w-0 truncate text-2xs font-medium uppercase tracking-wider text-muted-foreground">
           Input-tree metrics
@@ -26,7 +37,9 @@ export function MovieChartSection({ barOptionValue, onBarOptionChange }) {
               </SelectGroup>
             </SelectContent>
           </Select>
-          <div id="chart-select-help" className="sr-only">Choose the input-tree metric shown in the chart.</div>
+          <div id="chart-select-help" className="sr-only">
+            Choose the input-tree metric shown in the chart.
+          </div>
         </div>
       </div>
 

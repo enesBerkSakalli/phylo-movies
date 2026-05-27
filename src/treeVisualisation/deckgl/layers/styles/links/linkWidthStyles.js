@@ -39,9 +39,10 @@ export function getLinkWidth(link, cached, helpers) {
     highlight.role === TREE_HIGHLIGHT_ROLE.ACTIVE_MOVER ||
     highlight.role === TREE_HIGHLIGHT_ROLE.SUBTREE_HIGHLIGHT
   ) {
-    const emphasis = highlight.role === TREE_HIGHLIGHT_ROLE.ACTIVE_MOVER
-      ? getSubtleActiveMoverEmphasis(link, cached, 'link')
-      : 1;
+    const emphasis =
+      highlight.role === TREE_HIGHLIGHT_ROLE.ACTIVE_MOVER
+        ? getSubtleActiveMoverEmphasis(link, cached, 'link')
+        : 1;
     if (cached.highlightColorMode === 'contrast') {
       return getScaledWidth(2.0) * emphasis * metricScale;
     }

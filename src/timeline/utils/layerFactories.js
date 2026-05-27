@@ -8,7 +8,7 @@ import { rgba } from '../../msaViewer/utils/colorUtils.js';
 // ==========================================================================
 
 export function getDevicePixelRatio() {
-  return (typeof window !== 'undefined' && window.devicePixelRatio) ? window.devicePixelRatio : 1;
+  return typeof window !== 'undefined' && window.devicePixelRatio ? window.devicePixelRatio : 1;
 }
 
 export function createSnapFunction(dpr) {
@@ -23,19 +23,19 @@ export function createPathLayer(id, data, color, width, options = {}) {
   const props = {
     id,
     data,
-    getPath: d => d.path,
+    getPath: (d) => d.path,
     widthMinPixels: width,
     coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
     parameters: {
       depthCompare: 'always',
-      depthWriteEnabled: false
+      depthWriteEnabled: false,
     },
-    ...options
+    ...options,
   };
   if (Array.isArray(color)) {
     props.getColor = color;
   } else if (!props.getColor) {
-    props.getColor = d => d.color;
+    props.getColor = (d) => d.color;
   }
   return new PathLayer(props);
 }
@@ -47,9 +47,9 @@ function createScatterplotLayer(id, data, options = {}) {
     coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
     parameters: {
       depthCompare: 'always',
-      depthWriteEnabled: false
+      depthWriteEnabled: false,
     },
-    ...options
+    ...options,
   });
 }
 
@@ -59,14 +59,14 @@ function createScatterplotLayer(id, data, options = {}) {
 
 export function createInputTreeLayer(inputTreePoints, inputTreeStrokeWidth) {
   return createScatterplotLayer('input-tree-layer', inputTreePoints, {
-    getPosition: d => d.position,
-    getFillColor: d => d.fillColor,
-    getLineColor: d => d.borderColor,
+    getPosition: (d) => d.position,
+    getFillColor: (d) => d.fillColor,
+    getLineColor: (d) => d.borderColor,
     stroked: true,
     filled: true,
-    getRadius: d => d.radius,
-    getLineWidth: d => d.lineWidth ?? inputTreeStrokeWidth,
-    radiusUnits: 'pixels'
+    getRadius: (d) => d.radius,
+    getLineWidth: (d) => d.lineWidth ?? inputTreeStrokeWidth,
+    radiusUnits: 'pixels',
   });
 }
 
@@ -76,7 +76,12 @@ export function createInputTreeTickLayer(inputTreeTicks, theme, active = false) 
     inputTreeTicks,
     active
       ? [theme.scrubberCoreRGB[0], theme.scrubberCoreRGB[1], theme.scrubberCoreRGB[2], 255]
-      : [theme.inputTreeTickRGB[0], theme.inputTreeTickRGB[1], theme.inputTreeTickRGB[2], theme.inputTreeTickAlpha],
+      : [
+          theme.inputTreeTickRGB[0],
+          theme.inputTreeTickRGB[1],
+          theme.inputTreeTickRGB[2],
+          theme.inputTreeTickAlpha,
+        ],
     active ? theme.activeInputTreeTickWidth : theme.inputTreeTickWidth,
     { capRounded: true }
   );
@@ -95,53 +100,69 @@ export function createStripTrackLayer(stripTracks, theme) {
 export function createConnectionLayer(connections, connectionWidth) {
   return createPathLayer('connection-layer', connections, null, connectionWidth, {
     capRounded: true,
-    jointRounded: true
+    jointRounded: true,
   });
 }
 
 export function createInputTreeHoverLayer(hoverInputTrees, hoverRGB, onClick = null) {
   return createScatterplotLayer('input-tree-hover-layer', hoverInputTrees, {
-    getPosition: d => d.position,
-    getFillColor: d => d.fillColor,
+    getPosition: (d) => d.position,
+    getFillColor: (d) => d.fillColor,
     getLineColor: [hoverRGB[0], hoverRGB[1], hoverRGB[2], 160],
     stroked: true,
     filled: true,
-    getRadius: d => d.radius + 1,
+    getRadius: (d) => d.radius + 1,
     lineWidthMinPixels: 2,
     radiusUnits: 'pixels',
     pickable: !!onClick,
-    onClick
+    onClick,
   });
 }
 
-export function createConnectionHoverLayer(hoverConnections, hoverRGB, connectionHoverWidth, onClick = null) {
-  return createPathLayer('connection-hover-layer', hoverConnections, [hoverRGB[0], hoverRGB[1], hoverRGB[2], 160], connectionHoverWidth, {
-    capRounded: true,
-    jointRounded: true,
-    pickable: !!onClick,
-    onClick
-  });
+export function createConnectionHoverLayer(
+  hoverConnections,
+  hoverRGB,
+  connectionHoverWidth,
+  onClick = null
+) {
+  return createPathLayer(
+    'connection-hover-layer',
+    hoverConnections,
+    [hoverRGB[0], hoverRGB[1], hoverRGB[2], 160],
+    connectionHoverWidth,
+    {
+      capRounded: true,
+      jointRounded: true,
+      pickable: !!onClick,
+      onClick,
+    }
+  );
 }
 
 export function createInputTreeSelectionLayer(selectionInputTrees, theme) {
   return createScatterplotLayer('input-tree-selection-layer', selectionInputTrees, {
-    getPosition: d => d.position,
-    getFillColor: d => d.fillColor,
-    getLineColor: [theme.connectionSelectionRGB[0], theme.connectionSelectionRGB[1], theme.connectionSelectionRGB[2], 230],
+    getPosition: (d) => d.position,
+    getFillColor: (d) => d.fillColor,
+    getLineColor: [
+      theme.connectionSelectionRGB[0],
+      theme.connectionSelectionRGB[1],
+      theme.connectionSelectionRGB[2],
+      230,
+    ],
     stroked: true,
     filled: true,
-    getRadius: d => d.radius + 1,
+    getRadius: (d) => d.radius + 1,
     lineWidthMinPixels: 2,
-    radiusUnits: 'pixels'
+    radiusUnits: 'pixels',
   });
 }
 
 export function createSeparatorLayer(separators, theme, widthOverride = 1) {
   return createPathLayer('separator-layer', separators, null, widthOverride, {
-    getColor: d => {
+    getColor: (d) => {
       const alpha = d.markerMode === 'circle' ? theme.separatorAlpha : theme.separatorDenseAlpha;
       return [theme.separatorRGB[0], theme.separatorRGB[1], theme.separatorRGB[2], alpha];
-    }
+    },
   });
 }
 
@@ -159,10 +180,21 @@ export function calculateSeparatorWidth(segmentCount, theme) {
 }
 
 export function createConnectionSelectionLayer(selectionConnections, theme) {
-  return createPathLayer('connection-selection-layer', selectionConnections, [theme.connectionSelectionRGB[0], theme.connectionSelectionRGB[1], theme.connectionSelectionRGB[2], 230], theme.connectionSelectionWidth, {
-    capRounded: true,
-    jointRounded: true
-  });
+  return createPathLayer(
+    'connection-selection-layer',
+    selectionConnections,
+    [
+      theme.connectionSelectionRGB[0],
+      theme.connectionSelectionRGB[1],
+      theme.connectionSelectionRGB[2],
+      230,
+    ],
+    theme.connectionSelectionWidth,
+    {
+      capRounded: true,
+      jointRounded: true,
+    }
+  );
 }
 
 // ==========================================================================
@@ -175,7 +207,7 @@ export function createScrubberLayer(ms, rangeStart, rangeEnd, width, height, the
   const scrubX = snap(msToX(ms, rangeStart, rangeEnd, width));
   const scrubPoly = [
     [scrubX - width / 2, -height / 2],
-    [scrubX - width / 2, height / 2]
+    [scrubX - width / 2, height / 2],
   ];
   const coreRGB = theme.scrubberCoreRGB;
   const coreColor = [coreRGB[0], coreRGB[1], coreRGB[2], 255];
@@ -186,10 +218,9 @@ export function createScrubberLayer(ms, rangeStart, rangeEnd, width, height, the
     getColor: coreColor,
     widthMinPixels: isScrubbing ? 10 : 7,
     getLineColor: [255, 255, 255, 180],
-    lineWidthMinPixels: 1
+    lineWidthMinPixels: 1,
   };
 }
-
 
 // ==========================================================================
 // GEOMETRY DATA FACTORIES
@@ -214,16 +245,26 @@ function calculateRadius(inputTreeRadiusVar, height, zoomScale) {
 }
 
 function calculateConnectionGaps(i, segments, inputTreeRadius, gapDefault) {
-  const leftNeighborIsInputTree = (i > 0) && segments[i - 1]?.isInputTreeSegment;
-  const rightNeighborIsInputTree = (i < segments.length - 1) && segments[i + 1]?.isInputTreeSegment;
+  const leftNeighborIsInputTree = i > 0 && segments[i - 1]?.isInputTreeSegment;
+  const rightNeighborIsInputTree = i < segments.length - 1 && segments[i + 1]?.isInputTreeSegment;
 
   return {
     leftGap: leftNeighborIsInputTree ? inputTreeRadius : gapDefault,
-    rightGap: rightNeighborIsInputTree ? inputTreeRadius : gapDefault
+    rightGap: rightNeighborIsInputTree ? inputTreeRadius : gapDefault,
   };
 }
 
-export function createInputTreeMarker(segmentIndex, id, x0, x1, width, height, theme, zoomScale, snap) {
+export function createInputTreeMarker(
+  segmentIndex,
+  id,
+  x0,
+  x1,
+  width,
+  height,
+  theme,
+  zoomScale,
+  snap
+) {
   const center = (x0 + x1) / 2;
   const radius = calculateRadius(theme.inputTreeRadiusVar, height, zoomScale);
   const centeredX = toCanvasCentered(center, width);
@@ -236,7 +277,7 @@ export function createInputTreeMarker(segmentIndex, id, x0, x1, width, height, t
     fillColor: rgba(...theme.inputTreeFillRGB),
     borderColor: rgba(...theme.inputTreeStrokeRGB),
     radius,
-    lineWidth: theme.inputTreeStrokeWidth
+    lineWidth: theme.inputTreeStrokeWidth,
   };
 }
 
@@ -248,8 +289,8 @@ export function createInputTreeTick(x0, x1, width, height, theme, snap) {
   return {
     path: [
       [x, -halfHeight],
-      [x, halfHeight]
-    ]
+      [x, halfHeight],
+    ],
   };
 }
 
@@ -260,12 +301,25 @@ export function createStripTrack(width, snap) {
   return {
     path: [
       [left, 0],
-      [right, 0]
-    ]
+      [right, 0],
+    ],
   };
 }
 
-export function createConnection(i, id, x0, x1, width, height, inputTreeRadiusVar, zoomScale, gapDefault, connectionNeutralRGB, snap, segments) {
+export function createConnection(
+  i,
+  id,
+  x0,
+  x1,
+  width,
+  height,
+  inputTreeRadiusVar,
+  zoomScale,
+  gapDefault,
+  connectionNeutralRGB,
+  snap,
+  segments
+) {
   const inputTreeRadius = calculateRadius(inputTreeRadiusVar, height, zoomScale);
   const { leftGap, rightGap } = calculateConnectionGaps(i, segments, inputTreeRadius, gapDefault);
 
@@ -277,7 +331,10 @@ export function createConnection(i, id, x0, x1, width, height, inputTreeRadiusVa
   return {
     segmentIndex: i,
     id,
-    path: [[xStart, 0], [xEnd, 0]],
-    color: rgba(...connectionNeutralRGB, 220)
+    path: [
+      [xStart, 0],
+      [xEnd, 0],
+    ],
+    color: rgba(...connectionNeutralRGB, 220),
   };
 }

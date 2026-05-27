@@ -1,7 +1,7 @@
-import { ScrollArea } from "../../ui/scroll-area";
-import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../ui/tooltip";
-import { CheckCircle2, AlertTriangle } from "lucide-react";
+import { ScrollArea } from '../../ui/scroll-area';
+import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../ui/tooltip';
+import { CheckCircle2, AlertTriangle } from 'lucide-react';
 
 export function CSVPreview({ csvValidation, csvGroups }) {
   if (!csvValidation) return null;
@@ -17,7 +17,7 @@ export function CSVPreview({ csvValidation, csvGroups }) {
             ) : (
               <AlertTriangle className="size-3 text-foreground" />
             )}
-            {ok ? "Mapping Preview" : "Partial Mapping"}
+            {ok ? 'Mapping Preview' : 'Partial Mapping'}
           </CardTitle>
           <TooltipProvider>
             <Tooltip>
@@ -38,7 +38,10 @@ export function CSVPreview({ csvValidation, csvGroups }) {
           <ScrollArea className="h-40">
             <div className="divide-y divide-border/20">
               {csvGroups.map((g) => (
-                <div key={g.name} className="p-1.5 px-2.5 hover:bg-accent/30 transition-colors group">
+                <div
+                  key={g.name}
+                  className="p-1.5 px-2.5 hover:bg-accent/30 transition-colors group"
+                >
                   <div className="flex items-center justify-between mb-0.5">
                     <span className="text-[11px] font-bold truncate pr-2">{g.name}</span>
                     <span className="text-2xs font-mono text-muted-foreground bg-muted/40 px-2 rounded uppercase tabular-nums">
@@ -46,7 +49,8 @@ export function CSVPreview({ csvValidation, csvGroups }) {
                     </span>
                   </div>
                   <div className="text-2xs text-muted-foreground/70 truncate italic">
-                    {g.members.slice(0, 4).join(", ")}{g.members.length > 4 ? "..." : ""}
+                    {g.members.slice(0, 4).join(', ')}
+                    {g.members.length > 4 ? '...' : ''}
                   </div>
                 </div>
               ))}

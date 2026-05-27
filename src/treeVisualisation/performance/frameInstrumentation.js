@@ -1,17 +1,13 @@
 const framePerfCounters = new Map();
 
 function isFramePerfEnabled() {
-  const envFlag =
-    typeof process !== 'undefined' && process?.env?.PERF_DEBUG;
-  const runtimeFlag =
-    typeof globalThis !== 'undefined' && globalThis?.PERF_DEBUG;
+  const envFlag = typeof process !== 'undefined' && process?.env?.PERF_DEBUG;
+  const runtimeFlag = typeof globalThis !== 'undefined' && globalThis?.PERF_DEBUG;
   return !!(envFlag || runtimeFlag);
 }
 
 function now() {
-  return typeof performance !== 'undefined' && performance?.now
-    ? performance.now()
-    : Date.now();
+  return typeof performance !== 'undefined' && performance?.now ? performance.now() : Date.now();
 }
 
 function recordFrameTiming(name, durationMs) {
@@ -20,7 +16,7 @@ function recordFrameTiming(name, durationMs) {
     totalMs: 0,
     minMs: Number.POSITIVE_INFINITY,
     maxMs: 0,
-    lastMs: 0
+    lastMs: 0,
   };
   const duration = Math.max(0, durationMs);
   framePerfCounters.set(name, {
@@ -28,7 +24,7 @@ function recordFrameTiming(name, durationMs) {
     totalMs: previous.totalMs + duration,
     minMs: Math.min(previous.minMs, duration),
     maxMs: Math.max(previous.maxMs, duration),
-    lastMs: duration
+    lastMs: duration,
   });
 }
 
@@ -71,7 +67,7 @@ export function getFramePerfSnapshot() {
       minMs: counter.count > 0 ? counter.minMs : 0,
       maxMs: counter.maxMs,
       lastMs: counter.lastMs,
-      averageMs: counter.count > 0 ? counter.totalMs / counter.count : 0
+      averageMs: counter.count > 0 ? counter.totalMs / counter.count : 0,
     };
   }
   return snapshot;
@@ -81,7 +77,7 @@ export function installFramePerfGlobal() {
   if (typeof globalThis === 'undefined') return;
   globalThis.__PHYLO_FRAME_PERF__ = {
     getSnapshot: getFramePerfSnapshot,
-    reset: resetFramePerf
+    reset: resetFramePerf,
   };
 }
 

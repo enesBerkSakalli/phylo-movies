@@ -4,7 +4,7 @@ const path = require('path');
 const { JSDOM } = require('jsdom');
 const { clearTimelineModuleCache, installDeckGLMocks } = require('./helpers/deckGLMocks.js');
 
-require.extensions['.css'] = () => { };
+require.extensions['.css'] = () => {};
 
 const dom = new JSDOM('<!doctype html><html><body></body></html>');
 global.window = dom.window;
@@ -22,14 +22,12 @@ const { TransitionFrame } = require('../src/timeline/time/TransitionFrame.js');
 const { useAppStore } = require('../src/state/phyloStore/store.js');
 
 function loadMovieData() {
-  const candidates = [
-    path.join(__dirname, 'data', 'small_example', 'small_example.response.json')
-  ];
+  const candidates = [path.join(__dirname, 'data', 'small_example', 'small_example.response.json')];
 
   for (const filePath of candidates) {
     try {
       return JSON.parse(fs.readFileSync(filePath, 'utf8'));
-    } catch { }
+    } catch {}
   }
 
   throw new Error('No input JSON found for timeline manager lifecycle test.');
@@ -43,7 +41,7 @@ function makeContainer(width = 800, height = 80) {
     top: 0,
     left: 0,
     right: width,
-    bottom: height
+    bottom: height,
   });
   global.document.body.appendChild(container);
   return container;
@@ -65,7 +63,7 @@ describe('MovieTimelineManager lifecycle', () => {
       pauseDuration: 0,
       playhead: {
         animationProgress: 0,
-        timelineProgress: null
+        timelineProgress: null,
       },
       frameIndex: 0,
       treeList: [],
@@ -74,13 +72,14 @@ describe('MovieTimelineManager lifecycle', () => {
       hoveredSegmentData: null,
       hoveredSegmentPosition: null,
       selectedTimelineSegmentIndex: null,
-      isTooltipHovered: false
+      isTooltipHovered: false,
     });
   });
 
   it('requires an explicit normalized tree list', () => {
-    expect(() => new MovieTimelineManager(movieData))
-      .to.throw('MovieTimelineManager requires a non-empty normalized treeList');
+    expect(() => new MovieTimelineManager(movieData)).to.throw(
+      'MovieTimelineManager requires a non-empty normalized treeList'
+    );
   });
 
   it('can exist before a host container is available', () => {
@@ -105,14 +104,14 @@ describe('MovieTimelineManager lifecycle', () => {
       inputTreeIndex: 0,
       sourceFrameIndex: 0,
       msaWindowIndex: 0,
-      movieTimeMs: 0
+      movieTimeMs: 0,
     });
     expect(progressCursor.frameIndex).to.equal(startCursor.frameIndex);
     expect(frameCursor).to.include({
       frameIndex: 22,
       inputTreeIndex: 1,
       sourceFrameIndex: 22,
-      msaWindowIndex: 1
+      msaWindowIndex: 1,
     });
     expect(manager.getFrameOccurrences(22).length).to.be.greaterThan(1);
 
@@ -128,7 +127,7 @@ describe('MovieTimelineManager lifecycle', () => {
       hasMsa: true,
       msaStepSize: 50,
       msaWindowSize: 100,
-      msaColumnCount: 1000
+      msaColumnCount: 1000,
     });
 
     expect(status.position.display).to.equal('Input tree 2/10');
@@ -136,7 +135,7 @@ describe('MovieTimelineManager lifecycle', () => {
     expect(status.msaWindow).to.deep.equal({
       startPosition: 1,
       midPosition: 51,
-      endPosition: 100
+      endPosition: 100,
     });
 
     manager.destroy();
@@ -174,7 +173,7 @@ describe('MovieTimelineManager lifecycle', () => {
       moveTo: (time) => calls.push(['moveTo', time]),
       getTotalDuration: () => 5000,
       getVisibleTimeRange: () => ({ min: 1000, max: 3000 }),
-      destroy: () => calls.push(['destroy'])
+      destroy: () => calls.push(['destroy']),
     };
 
     manager.zoomIn();
@@ -203,8 +202,8 @@ describe('MovieTimelineManager lifecycle', () => {
         zoomOut: () => calls.push('zoomOut'),
         fit: () => calls.push('fit'),
         scrollToStart: () => calls.push('scrollToStart'),
-        scrollToEnd: () => calls.push('scrollToEnd')
-      }
+        scrollToEnd: () => calls.push('scrollToEnd'),
+      },
     });
 
     const store = useAppStore.getState();
@@ -214,13 +213,7 @@ describe('MovieTimelineManager lifecycle', () => {
     store.scrollToStartTimeline();
     store.scrollToEndTimeline();
 
-    expect(calls).to.deep.equal([
-      'zoomIn',
-      'zoomOut',
-      'fit',
-      'scrollToStart',
-      'scrollToEnd'
-    ]);
+    expect(calls).to.deep.equal(['zoomIn', 'zoomOut', 'fit', 'scrollToStart', 'scrollToEnd']);
   });
 
   it('remounts into a new host without leaving stale DOM behind', () => {
@@ -250,7 +243,7 @@ describe('MovieTimelineManager lifecycle', () => {
       hoveredSegmentIndex: 2,
       hoveredSegmentData: { treeName: 'Example' },
       hoveredSegmentPosition: { x: 120, y: 40 },
-      isTooltipHovered: true
+      isTooltipHovered: true,
     });
 
     manager.mount(host);
@@ -272,12 +265,14 @@ describe('MovieTimelineManager lifecycle', () => {
     manager._onTimelineClick({
       segmentIndex: 1,
       ms: 0,
-      segment: { stale: 'renderer payload should not be stored' }
+      segment: { stale: 'renderer payload should not be stored' },
     });
 
     const state = useAppStore.getState();
     expect(state.selectedTimelineSegmentIndex).to.equal(1);
-    expect(Object.prototype.hasOwnProperty.call(state, 'selectedTimelineSegmentData')).to.equal(false);
+    expect(Object.prototype.hasOwnProperty.call(state, 'selectedTimelineSegmentData')).to.equal(
+      false
+    );
     expect(manager.getSegment(state.selectedTimelineSegmentIndex)).to.equal(selectedSegment);
 
     manager.destroy();
@@ -290,7 +285,9 @@ describe('MovieTimelineManager lifecycle', () => {
 
     const state = useAppStore.getState();
     expect(state.selectedTimelineSegmentIndex).to.equal(null);
-    expect(Object.prototype.hasOwnProperty.call(state, 'selectedTimelineSegmentData')).to.equal(false);
+    expect(Object.prototype.hasOwnProperty.call(state, 'selectedTimelineSegmentData')).to.equal(
+      false
+    );
   });
 
   it('keeps clicked inspector selection visually pinned while playhead sync changes current position', () => {
@@ -303,8 +300,8 @@ describe('MovieTimelineManager lifecycle', () => {
       playing: true,
       playhead: {
         animationProgress: 0.9,
-        timelineProgress: null
-      }
+        timelineProgress: null,
+      },
     });
 
     manager.mount(host);
@@ -325,9 +322,9 @@ describe('MovieTimelineManager lifecycle', () => {
       playing: false,
       playhead: {
         animationProgress: 0.1,
-        timelineProgress: 0.6
+        timelineProgress: 0.6,
       },
-      selectedTimelineSegmentIndex: 2
+      selectedTimelineSegmentIndex: 2,
     });
 
     manager.mount(firstHost);
@@ -368,7 +365,7 @@ describe('MovieTimelineManager lifecycle', () => {
     const now = 10_000;
     global.performance = {
       ...(previousPerformance || {}),
-      now: () => now
+      now: () => now,
     };
 
     try {
@@ -380,10 +377,10 @@ describe('MovieTimelineManager lifecycle', () => {
           return TransitionFrame.from({
             sourceTreeIndex: 1,
             targetTreeIndex: 2,
-            transitionProgress: 0.25
+            transitionProgress: 0.25,
           });
         },
-        getTimelineProgressForLinearTreeProgress: () => timelineProgress
+        getTimelineProgressForLinearTreeProgress: () => timelineProgress,
       };
 
       useAppStore.setState({
@@ -392,9 +389,9 @@ describe('MovieTimelineManager lifecycle', () => {
         animationSpeed: 1,
         playhead: {
           animationProgress: 0,
-          timelineProgress
+          timelineProgress,
         },
-        playing: false
+        playing: false,
       });
 
       useAppStore.getState().play();
@@ -402,7 +399,7 @@ describe('MovieTimelineManager lifecycle', () => {
       const state = useAppStore.getState();
       expect(state.playhead).to.deep.equal({
         animationProgress: 0.3125,
-        timelineProgress
+        timelineProgress,
       });
       expect(state.frameIndex).to.equal(1);
       expect(state.animationStartTime).to.equal(now - 1250);
@@ -416,19 +413,20 @@ describe('MovieTimelineManager lifecycle', () => {
     const now = 10_000;
     global.performance = {
       ...(previousPerformance || {}),
-      now: () => now
+      now: () => now,
     };
 
     try {
       const trees = [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }, { id: 'e' }];
       const timelineProgress = 0.42;
       const manager = {
-        getTransitionFrameForTimelineProgress: () => TransitionFrame.from({
-          sourceTreeIndex: 1,
-          targetTreeIndex: 2,
-          transitionProgress: 0.25
-        }),
-        getTimelineProgressForLinearTreeProgress: () => timelineProgress
+        getTransitionFrameForTimelineProgress: () =>
+          TransitionFrame.from({
+            sourceTreeIndex: 1,
+            targetTreeIndex: 2,
+            transitionProgress: 0.25,
+          }),
+        getTimelineProgressForLinearTreeProgress: () => timelineProgress,
       };
 
       useAppStore.setState({
@@ -439,9 +437,9 @@ describe('MovieTimelineManager lifecycle', () => {
         pauseDuration: 0.5,
         playhead: {
           animationProgress: 0,
-          timelineProgress
+          timelineProgress,
         },
-        playing: false
+        playing: false,
       });
 
       useAppStore.getState().play();
@@ -456,7 +454,7 @@ describe('MovieTimelineManager lifecycle', () => {
         speed: state.animationSpeed,
         totalItems: trees.length,
         transitionDuration: state.transitionDuration,
-        pauseDuration: state.pauseDuration
+        pauseDuration: state.pauseDuration,
       });
       expect(resumedPlayback.fromIndex).to.equal(1);
       expect(resumedPlayback.toIndex).to.equal(2);
@@ -471,7 +469,7 @@ describe('MovieTimelineManager lifecycle', () => {
     const now = 10_000;
     global.performance = {
       ...(previousPerformance || {}),
-      now: () => now
+      now: () => now,
     };
 
     try {
@@ -479,13 +477,14 @@ describe('MovieTimelineManager lifecycle', () => {
       const timelineProgress = 1100 / 4100;
       const manager = {
         timelineData: { totalDuration: 4100 },
-        getTransitionFrameForTimelineProgress: () => TransitionFrame.from({
-          sourceTreeIndex: 1,
-          targetTreeIndex: 1,
-          transitionProgress: 0,
-          holdKind: 'mover'
-        }),
-        getTimelineProgressForLinearTreeProgress: () => timelineProgress
+        getTransitionFrameForTimelineProgress: () =>
+          TransitionFrame.from({
+            sourceTreeIndex: 1,
+            targetTreeIndex: 1,
+            transitionProgress: 0,
+            holdKind: 'mover',
+          }),
+        getTimelineProgressForLinearTreeProgress: () => timelineProgress,
       };
 
       useAppStore.setState({
@@ -496,9 +495,9 @@ describe('MovieTimelineManager lifecycle', () => {
         pauseDuration: 0,
         playhead: {
           animationProgress: 0,
-          timelineProgress
+          timelineProgress,
         },
-        playing: false
+        playing: false,
       });
 
       useAppStore.getState().play();
@@ -524,11 +523,11 @@ describe('MovieTimelineManager lifecycle', () => {
         transitionDuration: 2,
         pauseDuration: 0,
         treeList: [{ id: 'a' }, { id: 'b' }, { id: 'c' }],
-        comparisonMode: false
+        comparisonMode: false,
       }),
       getOrCacheInterpolationData: () => ({
         dataFrom: { nodes: [] },
-        dataTo: { nodes: [] }
+        dataTo: { nodes: [] },
       }),
       renderSingleFrame: async (_fromTree, _toTree, easedT, options) => {
         renderedT = easedT;
@@ -540,7 +539,7 @@ describe('MovieTimelineManager lifecycle', () => {
         syncedProgress = progress;
       },
       stopAnimation: () => {},
-      requestRedraw: () => {}
+      requestRedraw: () => {},
     });
 
     runner.isRunning = true;
@@ -570,9 +569,9 @@ describe('MovieTimelineManager lifecycle', () => {
           sourceTreeIndex: 1,
           targetTreeIndex: 1,
           transitionProgress: 0,
-          holdKind: 'mover'
+          holdKind: 'mover',
         });
-      }
+      },
     };
 
     const runner = new AnimationRunner({
@@ -584,13 +583,13 @@ describe('MovieTimelineManager lifecycle', () => {
         pauseDuration: 0,
         treeList: trees,
         movieTimelineManager: manager,
-        comparisonMode: false
+        comparisonMode: false,
       }),
       getOrCacheInterpolationData: (_fromTree, _toTree, fromIndex, toIndex) => {
         cacheIndices = { fromIndex, toIndex };
         return {
           dataFrom: { nodes: [] },
-          dataTo: { nodes: [] }
+          dataTo: { nodes: [] },
         };
       },
       renderSingleFrame: async (_fromTree, _toTree, _easedT, options) => {
@@ -602,7 +601,7 @@ describe('MovieTimelineManager lifecycle', () => {
         syncedProgress = progress;
         syncedMeta = meta;
       },
-      stopAnimation: () => {}
+      stopAnimation: () => {},
     });
 
     runner.isRunning = true;
@@ -618,7 +617,7 @@ describe('MovieTimelineManager lifecycle', () => {
     expect(syncedMeta).to.include({
       timelineProgress: 1100 / 4100,
       frameIndex: 1,
-      holdKind: 'mover'
+      holdKind: 'mover',
     });
   });
 
@@ -634,11 +633,11 @@ describe('MovieTimelineManager lifecycle', () => {
         transitionDuration: 2,
         pauseDuration: 0,
         treeList: [{ id: 'a' }, { id: 'b' }],
-        comparisonMode: false
+        comparisonMode: false,
       }),
       getOrCacheInterpolationData: () => ({
         dataFrom: { nodes: [] },
-        dataTo: { nodes: [] }
+        dataTo: { nodes: [] },
       }),
       renderSingleFrame: async () => {
         renderOrder.push('render');
@@ -650,7 +649,7 @@ describe('MovieTimelineManager lifecycle', () => {
         renderOrder.push('sync');
       },
       updateProgress: () => {},
-      stopAnimation: () => {}
+      stopAnimation: () => {},
     });
 
     runner.isRunning = true;
@@ -671,18 +670,18 @@ describe('MovieTimelineManager lifecycle', () => {
         transitionDuration: 2,
         pauseDuration: 0,
         treeList: [{ id: 'a' }, { id: 'b' }],
-        comparisonMode: false
+        comparisonMode: false,
       }),
       getOrCacheInterpolationData: () => ({
         dataFrom: { nodes: [] },
-        dataTo: { nodes: [] }
+        dataTo: { nodes: [] },
       }),
       renderSingleFrame: async () => {},
       renderComparisonFrame: async () => {},
       setAnimationStage: () => {},
       syncHighlightsForIndex: (treeIndex) => highlightIndices.push(treeIndex),
       updateProgress: () => {},
-      stopAnimation: () => {}
+      stopAnimation: () => {},
     });
 
     runner.isRunning = true;
@@ -703,20 +702,20 @@ describe('MovieTimelineManager lifecycle', () => {
         transitionDuration: 2,
         pauseDuration: 0,
         treeList: [{ id: 'a' }, { id: 'b' }],
-        comparisonMode: false
+        comparisonMode: false,
       }),
       getOrCacheInterpolationData: () => {
         callCount += 1;
         if (callCount === 1) {
           return {
             dataFrom: { layoutCacheKey: 'from-1', nodes: [{ id: 'node-a' }] },
-            dataTo: { layoutCacheKey: 'to-1', nodes: [{ id: 'node-a' }] }
+            dataTo: { layoutCacheKey: 'to-1', nodes: [{ id: 'node-a' }] },
           };
         }
 
         return {
           dataFrom: { layoutCacheKey: 'from-2', nodes: [{ id: 'node-a' }, { id: 'node-b' }] },
-          dataTo: { layoutCacheKey: 'to-2', nodes: [{ id: 'node-a' }] }
+          dataTo: { layoutCacheKey: 'to-2', nodes: [{ id: 'node-a' }] },
         };
       },
       renderSingleFrame: async (_fromTree, _toTree, easedT) => {
@@ -725,7 +724,7 @@ describe('MovieTimelineManager lifecycle', () => {
       renderComparisonFrame: async () => {},
       setAnimationStage: () => {},
       updateProgress: () => {},
-      stopAnimation: () => {}
+      stopAnimation: () => {},
     });
 
     runner.isRunning = true;
@@ -750,21 +749,20 @@ describe('MovieTimelineManager lifecycle', () => {
         transitionDuration: 2,
         pauseDuration: 0,
         treeList: [{ id: 'a' }, { id: 'b' }],
-        comparisonMode: false
+        comparisonMode: false,
       }),
       getOrCacheInterpolationData: () => {
         callCount += 1;
         return {
           dataFrom: { layoutCacheKey: 'from', nodes: [{ id: 'node-a' }] },
           dataTo: { layoutCacheKey: 'to', nodes: [{ id: 'node-a' }] },
-          transitionChangeModel: callCount === 1
-            ? {
-                linkChanges: new Map([
-                  ['zeroing-1', { lifecycle: 'zeroing' }]
-                ]),
-                hasLifecycleChanges: true
-              }
-            : null
+          transitionChangeModel:
+            callCount === 1
+              ? {
+                  linkChanges: new Map([['zeroing-1', { lifecycle: 'zeroing' }]]),
+                  hasLifecycleChanges: true,
+                }
+              : null,
         };
       },
       renderSingleFrame: async (_fromTree, _toTree, easedT) => {
@@ -775,7 +773,7 @@ describe('MovieTimelineManager lifecycle', () => {
         stages.push(nextStage);
       },
       updateProgress: () => {},
-      stopAnimation: () => {}
+      stopAnimation: () => {},
     });
 
     runner.isRunning = true;
@@ -792,9 +790,9 @@ describe('MovieTimelineManager lifecycle', () => {
     const transitionChangeModel = {
       linkChanges: new Map([
         ['zeroing-1', { lifecycle: 'zeroing' }],
-        ['reviving-2', { lifecycle: 'reviving' }]
+        ['reviving-2', { lifecycle: 'reviving' }],
       ]),
-      hasLifecycleChanges: true
+      hasLifecycleChanges: true,
     };
 
     const runner = new AnimationRunner({
@@ -805,12 +803,12 @@ describe('MovieTimelineManager lifecycle', () => {
         transitionDuration: 1,
         pauseDuration: 0,
         treeList: [{ id: 'a' }, { id: 'b' }],
-        comparisonMode: false
+        comparisonMode: false,
       }),
       getOrCacheInterpolationData: () => ({
         dataFrom: { layoutCacheKey: 'from', nodes: [{ id: 'node-a' }] },
         dataTo: { layoutCacheKey: 'to', nodes: [{ id: 'node-a' }] },
-        transitionChangeModel
+        transitionChangeModel,
       }),
       renderSingleFrame: async (_fromTree, _toTree, easedT) => {
         renderedTValues.push(easedT);
@@ -820,7 +818,7 @@ describe('MovieTimelineManager lifecycle', () => {
         stages.push(nextStage);
       },
       updateProgress: () => {},
-      stopAnimation: () => {}
+      stopAnimation: () => {},
     });
 
     runner.isRunning = true;
@@ -854,11 +852,11 @@ describe('MovieTimelineManager lifecycle', () => {
           transitionDuration: 2,
           pauseDuration: 0,
           treeList: [{ id: 'a' }, { id: 'b' }, { id: 'c' }],
-          comparisonMode: false
+          comparisonMode: false,
         }),
         getOrCacheInterpolationData: () => ({
           dataFrom: { nodes: [] },
-          dataTo: { nodes: [] }
+          dataTo: { nodes: [] },
         }),
         renderSingleFrame: async () => {
           renderCount += 1;
@@ -869,7 +867,7 @@ describe('MovieTimelineManager lifecycle', () => {
         stopAnimation: () => {},
         requestRedraw: () => {
           redrawCount += 1;
-        }
+        },
       });
 
       runner.isRunning = true;
@@ -912,11 +910,11 @@ describe('MovieTimelineManager lifecycle', () => {
           transitionDuration: 2,
           pauseDuration: 0,
           treeList: [{ id: 'a' }, { id: 'b' }, { id: 'c' }],
-          comparisonMode: false
+          comparisonMode: false,
         }),
         getOrCacheInterpolationData: () => ({
           dataFrom: { nodes: [] },
-          dataTo: { nodes: [] }
+          dataTo: { nodes: [] },
         }),
         renderSingleFrame: async () => {
           renderCount += 1;
@@ -928,7 +926,7 @@ describe('MovieTimelineManager lifecycle', () => {
         stopAnimation: () => {},
         requestRedraw: () => {
           redrawCount += 1;
-        }
+        },
       });
 
       runner.start();
@@ -961,7 +959,7 @@ describe('MovieTimelineManager lifecycle', () => {
         expect(progress).to.equal(0.25);
         expect(treeCount).to.equal(trees.length);
         return 0.6;
-      }
+      },
     };
 
     useAppStore.setState({
@@ -969,9 +967,9 @@ describe('MovieTimelineManager lifecycle', () => {
       movieTimelineManager: manager,
       playhead: {
         animationProgress: 0,
-        timelineProgress: null
+        timelineProgress: null,
       },
-      frameIndex: 0
+      frameIndex: 0,
     });
 
     useAppStore.getState().setScrubPosition(0.25);
@@ -980,7 +978,7 @@ describe('MovieTimelineManager lifecycle', () => {
     expect(state.frameIndex).to.equal(1);
     expect(state.playhead).to.deep.equal({
       animationProgress: 0.25,
-      timelineProgress: 0.6
+      timelineProgress: 0.6,
     });
   });
 
@@ -989,8 +987,8 @@ describe('MovieTimelineManager lifecycle', () => {
       playing: true,
       playhead: {
         animationProgress: 0,
-        timelineProgress: 0.2
-      }
+        timelineProgress: 0.2,
+      },
     });
 
     useAppStore.getState().updateTimelineState({
@@ -998,7 +996,7 @@ describe('MovieTimelineManager lifecycle', () => {
       totalSegments: 4,
       treeInSegment: 2,
       treesInSegment: 3,
-      timelineProgress: 0.7
+      timelineProgress: 0.7,
     });
 
     const state = useAppStore.getState();
@@ -1017,9 +1015,9 @@ describe('MovieTimelineManager lifecycle', () => {
       treesInSegment: 3,
       playhead: {
         animationProgress: 0.4,
-        timelineProgress: 0.7
+        timelineProgress: 0.7,
       },
-      frameIndex: 2
+      frameIndex: 2,
     });
 
     const previousPlayhead = useAppStore.getState().playhead;
@@ -1034,7 +1032,7 @@ describe('MovieTimelineManager lifecycle', () => {
         totalSegments: 4,
         treeInSegment: 2,
         treesInSegment: 3,
-        timelineProgress: 0.7
+        timelineProgress: 0.7,
       });
     } finally {
       unsubscribe();
@@ -1065,13 +1063,13 @@ describe('MovieTimelineManager lifecycle', () => {
       scheduledCount = 0;
 
       useAppStore.setState({
-        playhead: { animationProgress: 0.1, timelineProgress: 0.1 }
+        playhead: { animationProgress: 0.1, timelineProgress: 0.1 },
       });
       useAppStore.setState({
-        playhead: { animationProgress: 0.2, timelineProgress: 0.2 }
+        playhead: { animationProgress: 0.2, timelineProgress: 0.2 },
       });
       useAppStore.setState({
-        playhead: { animationProgress: 0.3, timelineProgress: 0.3 }
+        playhead: { animationProgress: 0.3, timelineProgress: 0.3 },
       });
 
       expect(scheduledCount).to.equal(1);
@@ -1080,7 +1078,7 @@ describe('MovieTimelineManager lifecycle', () => {
       scheduledCount = 0;
 
       useAppStore.setState({
-        playhead: { animationProgress: 0.4, timelineProgress: 0.4 }
+        playhead: { animationProgress: 0.4, timelineProgress: 0.4 },
       });
 
       expect(scheduledCount).to.equal(1);

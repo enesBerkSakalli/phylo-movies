@@ -1,11 +1,16 @@
 import React from 'react';
-import { Rocket } from "lucide-react";
-import { Button } from "../../../../components/ui/button";
-import { cn } from "../../../../lib/utils";
+import { Rocket } from 'lucide-react';
+import { Button } from '../../../../components/ui/button';
+import { cn } from '../../../../lib/utils';
 
 export function ProjectActions({ disabled, reset, canSubmit, className }) {
   return (
-    <div className={cn("flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end", className)}>
+    <div
+      className={cn(
+        'flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end',
+        className
+      )}
+    >
       <Button
         type="button"
         variant="outline"

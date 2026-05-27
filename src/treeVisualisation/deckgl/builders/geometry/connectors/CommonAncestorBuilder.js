@@ -15,7 +15,9 @@ export function findLowestCommonAncestorById(entries, entryById) {
 
   let commonAncestors = getLineageById(entries[0], entryById);
   for (let i = 1; i < entries.length; i++) {
-    const currentIds = new Set(getLineageById(entries[i], entryById).map(getEntryId).filter(Boolean));
+    const currentIds = new Set(
+      getLineageById(entries[i], entryById).map(getEntryId).filter(Boolean)
+    );
     commonAncestors = commonAncestors.filter((ancestor) => currentIds.has(getEntryId(ancestor)));
     if (commonAncestors.length === 0) return null;
   }

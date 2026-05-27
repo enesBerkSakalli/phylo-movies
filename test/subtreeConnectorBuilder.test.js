@@ -269,7 +269,14 @@ const buildOptions = (overrides = {}) => {
   return {
     leftPositions,
     rightPositions,
-    affectedSubtreesBySplit: { '[99]': [[[10, 11], [12, 13]]] },
+    affectedSubtreesBySplit: {
+      '[99]': [
+        [
+          [10, 11],
+          [12, 13],
+        ],
+      ],
+    },
     pivotEdge: [99],
     colorManager: makeColorManager(),
     subtreeHighlightTracking: [[[10, 11]]],
@@ -332,7 +339,11 @@ describe('SubtreeConnectorBuilder', function () {
     expect(normalization.normalizeConnectorSplitValue('taxon-a')).toBe('taxon-a');
     expect(normalization.normalizeConnectorSplitValue(null)).toBeNull();
     expect(normalization.normalizeConnectorSplitValue(undefined)).toBeNull();
-    expect(normalization.normalizeConnectorSplitArray(['10', 11, null, 'taxon-a'])).toEqual([10, 11, 'taxon-a']);
+    expect(normalization.normalizeConnectorSplitArray(['10', 11, null, 'taxon-a'])).toEqual([
+      10,
+      11,
+      'taxon-a',
+    ]);
     expect(normalization.normalizeConnectorSplitArray(new Set([10]))).toEqual([]);
   });
 
@@ -341,13 +352,41 @@ describe('SubtreeConnectorBuilder', function () {
 
     expect(normalization).not.toBeNull();
     expect(normalization.normalizeConnectorSubtreeHighlightsToSets(null)).toEqual([]);
-    expect(normalization.normalizeConnectorSubtreeHighlightsToSets([]).map((set) => Array.from(set))).toEqual([[]]);
-    expect(normalization.normalizeConnectorSubtreeHighlightsToSets(['10', 11]).map((set) => Array.from(set))).toEqual([[10, 11]]);
-    expect(normalization.normalizeConnectorSubtreeHighlightsToSets([['10', 11], [12, '13']]).map((set) => Array.from(set))).toEqual([[10, 11], [12, 13]]);
+    expect(
+      normalization.normalizeConnectorSubtreeHighlightsToSets([]).map((set) => Array.from(set))
+    ).toEqual([[]]);
+    expect(
+      normalization
+        .normalizeConnectorSubtreeHighlightsToSets(['10', 11])
+        .map((set) => Array.from(set))
+    ).toEqual([[10, 11]]);
+    expect(
+      normalization
+        .normalizeConnectorSubtreeHighlightsToSets([
+          ['10', 11],
+          [12, '13'],
+        ])
+        .map((set) => Array.from(set))
+    ).toEqual([
+      [10, 11],
+      [12, 13],
+    ]);
 
     const existingSet = new Set([10, 11]);
-    expect(normalization.normalizeConnectorSubtreeHighlightsToSets(existingSet)).toEqual([existingSet]);
-    expect(normalization.toConnectorSubtreeSetList([['10', 11], [12, '13']]).map((set) => Array.from(set))).toEqual([[10, 11], [12, 13]]);
+    expect(normalization.normalizeConnectorSubtreeHighlightsToSets(existingSet)).toEqual([
+      existingSet,
+    ]);
+    expect(
+      normalization
+        .toConnectorSubtreeSetList([
+          ['10', 11],
+          [12, '13'],
+        ])
+        .map((set) => Array.from(set))
+    ).toEqual([
+      [10, 11],
+      [12, 13],
+    ]);
   });
 
   it('keeps connector split normalization outside the builder', function () {
@@ -371,12 +410,7 @@ describe('SubtreeConnectorBuilder', function () {
     const leftPositions = new Map([[toSubtreeKey([11, 10]), subtreeInfo]]);
 
     expect(
-      resolver.resolveConnectorColorEntry(
-        leafInfo,
-        [10],
-        [new Set([10, 11])],
-        leftPositions
-      )
+      resolver.resolveConnectorColorEntry(leafInfo, [10], [new Set([10, 11])], leftPositions)
     ).toBe(subtreeInfo);
   });
 
@@ -398,7 +432,12 @@ describe('SubtreeConnectorBuilder', function () {
 
     const leafA = { id: 'leaf-a', isLeaf: true, name: 'A', split_indices: [10] };
     const leafB = { id: 'leaf-b', isLeaf: true, name: 'B', split_indices: [12] };
-    const duplicateNameLeaf = { id: 'leaf-a-duplicate-name', isLeaf: true, name: 'A', split_indices: [11] };
+    const duplicateNameLeaf = {
+      id: 'leaf-a-duplicate-name',
+      isLeaf: true,
+      name: 'A',
+      split_indices: [11],
+    };
     const internalA = { id: 'internal-a', isLeaf: false, name: 'A', split_indices: [10, 11] };
     const splitlessLeaf = { id: 'splitless', isLeaf: true, name: 'C' };
     const positions = new Map([
@@ -440,12 +479,14 @@ describe('SubtreeConnectorBuilder', function () {
       [toSubtreeKey([10]), { key: toSubtreeKey([10]), info: rightInfo }],
     ]);
 
-    expect(leafPairCandidates.getConnectorLeafPairCandidate({
-      key: toSubtreeKey([10]),
-      leftInfo,
-      rightLeavesBySplitKey,
-      jumpingSubtreeSets: [new Set([10, 11])],
-    })).toEqual({
+    expect(
+      leafPairCandidates.getConnectorLeafPairCandidate({
+        key: toSubtreeKey([10]),
+        leftInfo,
+        rightLeavesBySplitKey,
+        jumpingSubtreeSets: [new Set([10, 11])],
+      })
+    ).toEqual({
       leftKey: toSubtreeKey([10]),
       rightKey: toSubtreeKey([10]),
       leftInfo,
@@ -454,22 +495,26 @@ describe('SubtreeConnectorBuilder', function () {
       source: [-30, -20, 0],
       target: [130, -20, 0],
     });
-    expect(leafPairCandidates.getConnectorLeafPairCandidate({
-      key: toSubtreeKey([10]),
-      leftInfo: { ...leftInfo, name: null },
-      rightLeavesBySplitKey,
-      jumpingSubtreeSets: [new Set([10, 11])],
-    })).toMatchObject({
+    expect(
+      leafPairCandidates.getConnectorLeafPairCandidate({
+        key: toSubtreeKey([10]),
+        leftInfo: { ...leftInfo, name: null },
+        rightLeavesBySplitKey,
+        jumpingSubtreeSets: [new Set([10, 11])],
+      })
+    ).toMatchObject({
       leftKey: toSubtreeKey([10]),
       rightKey: toSubtreeKey([10]),
       splitIndices: [10],
     });
-    expect(leafPairCandidates.getConnectorLeafPairCandidate({
-      key: 'raw-left-key',
-      leftInfo,
-      rightLeavesBySplitKey,
-      jumpingSubtreeSets: [new Set([10, 11])],
-    })).toEqual({
+    expect(
+      leafPairCandidates.getConnectorLeafPairCandidate({
+        key: 'raw-left-key',
+        leftInfo,
+        rightLeavesBySplitKey,
+        jumpingSubtreeSets: [new Set([10, 11])],
+      })
+    ).toEqual({
       leftKey: 'raw-left-key',
       rightKey: toSubtreeKey([10]),
       leftInfo,
@@ -478,18 +523,22 @@ describe('SubtreeConnectorBuilder', function () {
       source: [-30, -20, 0],
       target: [130, -20, 0],
     });
-    expect(leafPairCandidates.getConnectorLeafPairCandidate({
-      key: toSubtreeKey([12]),
-      leftInfo: makeLeaf(12, 'Missing', [30, -20, 0]),
-      rightLeavesBySplitKey,
-      jumpingSubtreeSets: [new Set([10, 11])],
-    })).toBeNull();
-    expect(leafPairCandidates.getConnectorLeafPairCandidate({
-      key: toSubtreeKey([11]),
-      leftInfo: makeLeaf(11, 'A', [-30, -20, 0]),
-      rightLeavesBySplitKey,
-      jumpingSubtreeSets: [new Set([10, 11])],
-    })).toBeNull();
+    expect(
+      leafPairCandidates.getConnectorLeafPairCandidate({
+        key: toSubtreeKey([12]),
+        leftInfo: makeLeaf(12, 'Missing', [30, -20, 0]),
+        rightLeavesBySplitKey,
+        jumpingSubtreeSets: [new Set([10, 11])],
+      })
+    ).toBeNull();
+    expect(
+      leafPairCandidates.getConnectorLeafPairCandidate({
+        key: toSubtreeKey([11]),
+        leftInfo: makeLeaf(11, 'A', [-30, -20, 0]),
+        rightLeavesBySplitKey,
+        jumpingSubtreeSets: [new Set([10, 11])],
+      })
+    ).toBeNull();
 
     const rawSource = readFileSync(rawConnectionsSourcePath, 'utf8');
     const leafPairCandidatesSource = readFileSync(leafPairCandidatesSourcePath, 'utf8');
@@ -516,45 +565,53 @@ describe('SubtreeConnectorBuilder', function () {
       isNodeHistorySubtree: (entry) => entry === colorEntry,
     });
 
-    expect(movementState.resolveConnectorMovementState({
-      splitIndices: [10],
-      currentSubtreeSets: [new Set([10, 11])],
-      colorEntry,
-      colorManager: makeColorManager(),
-    })).toEqual({
+    expect(
+      movementState.resolveConnectorMovementState({
+        splitIndices: [10],
+        currentSubtreeSets: [new Set([10, 11])],
+        colorEntry,
+        colorManager: makeColorManager(),
+      })
+    ).toEqual({
       isCurrentSubtree: true,
       isPivotEdge: false,
       isHistorySubtree: false,
       isMoving: true,
     });
-    expect(movementState.resolveConnectorMovementState({
-      splitIndices: [12],
-      currentSubtreeSets: [new Set([10, 11])],
-      colorEntry,
-      colorManager: pivotManager,
-    })).toEqual({
+    expect(
+      movementState.resolveConnectorMovementState({
+        splitIndices: [12],
+        currentSubtreeSets: [new Set([10, 11])],
+        colorEntry,
+        colorManager: pivotManager,
+      })
+    ).toEqual({
       isCurrentSubtree: false,
       isPivotEdge: true,
       isHistorySubtree: false,
       isMoving: true,
     });
-    expect(movementState.resolveConnectorMovementState({
-      splitIndices: [12],
-      currentSubtreeSets: [new Set([10, 11])],
-      colorEntry,
-      colorManager: historyManager,
-    })).toEqual({
+    expect(
+      movementState.resolveConnectorMovementState({
+        splitIndices: [12],
+        currentSubtreeSets: [new Set([10, 11])],
+        colorEntry,
+        colorManager: historyManager,
+      })
+    ).toEqual({
       isCurrentSubtree: false,
       isPivotEdge: false,
       isHistorySubtree: true,
       isMoving: true,
     });
-    expect(movementState.resolveConnectorMovementState({
-      splitIndices: [12],
-      currentSubtreeSets: [new Set([10, 11])],
-      colorEntry,
-      colorManager: null,
-    }).isMoving).toBe(false);
+    expect(
+      movementState.resolveConnectorMovementState({
+        splitIndices: [12],
+        currentSubtreeSets: [new Set([10, 11])],
+        colorEntry,
+        colorManager: null,
+      }).isMoving
+    ).toBe(false);
 
     const rawSource = readFileSync(rawConnectionsSourcePath, 'utf8');
     const movementStateSource = readFileSync(movementStateSourcePath, 'utf8');
@@ -578,16 +635,18 @@ describe('SubtreeConnectorBuilder', function () {
     const leftPositions = new Map([[toSubtreeKey([10, 11]), subtreeInfo]]);
     const getNodeColor = vi.fn(() => '#ff0000');
 
-    expect(visualState.resolveConnectorVisualState({
-      leftInfo: leafInfo,
-      splitIndices: [10],
-      jumpingSubtreeSets: [new Set([10, 11])],
-      leftPositions,
-      currentSubtreeSets: [new Set([10, 11])],
-      colorManager: makeColorManager({ getNodeColor }),
-      subtreeHighlightsEnabled: true,
-      linkConnectionOpacity: 0.6,
-    })).toEqual({
+    expect(
+      visualState.resolveConnectorVisualState({
+        leftInfo: leafInfo,
+        splitIndices: [10],
+        jumpingSubtreeSets: [new Set([10, 11])],
+        leftPositions,
+        currentSubtreeSets: [new Set([10, 11])],
+        colorManager: makeColorManager({ getNodeColor }),
+        subtreeHighlightsEnabled: true,
+        linkConnectionOpacity: 0.6,
+      })
+    ).toEqual({
       colorEntry: subtreeInfo,
       movementState: {
         isCurrentSubtree: true,
@@ -631,10 +690,9 @@ describe('SubtreeConnectorBuilder', function () {
       isMoving: true,
     };
 
-    expect(rawConnectionFactory.createRawConnectorConnectionFromCandidate(
-      candidate,
-      visualState
-    )).toEqual({
+    expect(
+      rawConnectionFactory.createRawConnectorConnectionFromCandidate(candidate, visualState)
+    ).toEqual({
       id: 'connector-10-10',
       source: [-30, -20, 0],
       target: [130, -20, 0],
@@ -743,10 +801,12 @@ describe('SubtreeConnectorBuilder', function () {
 
     const withId = { id: 'leaf-10', name: 'A' };
     const withoutId = { name: 'missing-id' };
-    const indexed = infoIndex.buildConnectorInfoById(new Map([
-      ['10', withId],
-      ['missing', withoutId],
-    ]));
+    const indexed = infoIndex.buildConnectorInfoById(
+      new Map([
+        ['10', withId],
+        ['missing', withoutId],
+      ])
+    );
 
     expect(indexed).toBeInstanceOf(Map);
     expect(indexed.get('leaf-10')).toBe(withId);
@@ -899,11 +959,13 @@ describe('SubtreeConnectorBuilder', function () {
       sourceInfo: leftPositions.get('12'),
       targetInfo: rightPositions.get('12'),
     };
-    const passiveConnectionGroups = [{
-      leftCenterEntry: passiveConnection.sourceInfo,
-      rightCenterEntry: passiveConnection.targetInfo,
-      connections: [passiveConnection],
-    }];
+    const passiveConnectionGroups = [
+      {
+        leftCenterEntry: passiveConnection.sourceInfo,
+        rightCenterEntry: passiveConnection.targetInfo,
+        connections: [passiveConnection],
+      },
+    ];
 
     let paths;
     expect(() => {
@@ -952,10 +1014,12 @@ describe('SubtreeConnectorBuilder', function () {
   });
 
   it('builds connectors when positions are Maps', function () {
-    const connectors = buildSubtreeConnectors(buildOptions({
-      affectedSubtreesBySplit: { '[99]': [[10]] },
-      subtreeHighlightTracking: [[[10]]],
-    }));
+    const connectors = buildSubtreeConnectors(
+      buildOptions({
+        affectedSubtreesBySplit: { '[99]': [[10]] },
+        subtreeHighlightTracking: [[[10]]],
+      })
+    );
 
     expect(Array.isArray(connectors)).toBe(true);
     expect(connectors).toHaveLength(1);
@@ -968,28 +1032,34 @@ describe('SubtreeConnectorBuilder', function () {
   });
 
   it('returns no connectors when the active pivot edge is absent', function () {
-    const connectors = buildSubtreeConnectors(buildOptions({
-      pivotEdge: [],
-    }));
+    const connectors = buildSubtreeConnectors(
+      buildOptions({
+        pivotEdge: [],
+      })
+    );
 
     expect(connectors).toEqual([]);
   });
 
   it('returns no connectors when the active pivot edge has no affected-subtree entry', function () {
-    const connectors = buildSubtreeConnectors(buildOptions({
-      affectedSubtreesBySplit: { '[88]': [[10, 11]] },
-      pivotEdge: [99],
-    }));
+    const connectors = buildSubtreeConnectors(
+      buildOptions({
+        affectedSubtreesBySplit: { '[88]': [[10, 11]] },
+        pivotEdge: [99],
+      })
+    );
 
     expect(connectors).toEqual([]);
   });
 
   it('canonicalizes pivot splits before affected-subtree lookup', function () {
-    const connectors = buildSubtreeConnectors(buildOptions({
-      affectedSubtreesBySplit: { '[10, 11]': [[10]] },
-      pivotEdge: [11, 10],
-      subtreeHighlightTracking: [[[10]]],
-    }));
+    const connectors = buildSubtreeConnectors(
+      buildOptions({
+        affectedSubtreesBySplit: { '[10, 11]': [[10]] },
+        pivotEdge: [11, 10],
+        subtreeHighlightTracking: [[[10]]],
+      })
+    );
 
     expect(connectors).toHaveLength(1);
     expect(connectors[0].sourceInfo.name).toBe('A');
@@ -997,15 +1067,29 @@ describe('SubtreeConnectorBuilder', function () {
   });
 
   it('builds all affected-subtree connectors while only the current moved subtree is active', function () {
-    const connectors = buildSubtreeConnectors(buildOptions({
-      affectedSubtreesBySplit: { '[99]': [[[10, 11], [12, 13]]] },
-      subtreeHighlightTracking: [[[10, 11]]],
-    }));
+    const connectors = buildSubtreeConnectors(
+      buildOptions({
+        affectedSubtreesBySplit: {
+          '[99]': [
+            [
+              [10, 11],
+              [12, 13],
+            ],
+          ],
+        },
+        subtreeHighlightTracking: [[[10, 11]]],
+      })
+    );
 
     const active = connectors.filter((connector) => connector.isCurrentlyMoving);
     const passive = connectors.filter((connector) => !connector.isCurrentlyMoving);
 
-    expect(connectors.map((connector) => connector.sourceInfo.name).sort()).toEqual(['A', 'B', 'C', 'D']);
+    expect(connectors.map((connector) => connector.sourceInfo.name).sort()).toEqual([
+      'A',
+      'B',
+      'C',
+      'D',
+    ]);
     expect(active.map((connector) => connector.sourceInfo.name).sort()).toEqual(['A', 'B']);
     expect(passive.map((connector) => connector.sourceInfo.name).sort()).toEqual(['C', 'D']);
     expect(active.every((connector) => connector.id.includes('-active-'))).toBe(true);
@@ -1015,11 +1099,13 @@ describe('SubtreeConnectorBuilder', function () {
   });
 
   it('uses link opacity for passive affected-subtree connectors', function () {
-    const connectors = buildSubtreeConnectors(buildOptions({
-      affectedSubtreesBySplit: { '[99]': [[10]] },
-      subtreeHighlightTracking: [[]],
-      linkConnectionOpacity: 0.25,
-    }));
+    const connectors = buildSubtreeConnectors(
+      buildOptions({
+        affectedSubtreesBySplit: { '[99]': [[10]] },
+        subtreeHighlightTracking: [[]],
+        linkConnectionOpacity: 0.25,
+      })
+    );
 
     expect(connectors).toHaveLength(1);
     expect(connectors[0].isCurrentlyMoving).toBe(false);
@@ -1030,12 +1116,14 @@ describe('SubtreeConnectorBuilder', function () {
   it('keeps moving connectors active when subtree highlight coloring is disabled', function () {
     const getNodeColor = vi.fn(() => '#ff0000');
 
-    const connectors = buildSubtreeConnectors(buildOptions({
-      affectedSubtreesBySplit: { '[99]': [[10]] },
-      subtreeHighlightTracking: [[[10]]],
-      colorManager: makeColorManager({ getNodeColor }),
-      subtreeHighlightsEnabled: false,
-    }));
+    const connectors = buildSubtreeConnectors(
+      buildOptions({
+        affectedSubtreesBySplit: { '[99]': [[10]] },
+        subtreeHighlightTracking: [[[10]]],
+        colorManager: makeColorManager({ getNodeColor }),
+        subtreeHighlightsEnabled: false,
+      })
+    );
 
     expect(connectors).toHaveLength(1);
     expect(connectors[0].isCurrentlyMoving).toBe(true);

@@ -24,8 +24,8 @@ class MockDeckGLTreeAnimationController {
     this.destroy = vi.fn();
     this.layerManager = {
       comparisonRenderer: {
-        resetAutoFit: vi.fn()
-      }
+        resetAutoFit: vi.fn(),
+      },
     };
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     controllerInstance = this;
@@ -33,11 +33,11 @@ class MockDeckGLTreeAnimationController {
 }
 
 vi.mock('../../src/treeVisualisation/DeckGLTreeAnimationController.js', () => ({
-  DeckGLTreeAnimationController: MockDeckGLTreeAnimationController
+  DeckGLTreeAnimationController: MockDeckGLTreeAnimationController,
 }));
 
 vi.mock('../../src/domain/msa/msaWindowCalculator.js', () => ({
-  calculateWindow: vi.fn(() => ({ startPosition: 1, endPosition: 10 }))
+  calculateWindow: vi.fn(() => ({ startPosition: 1, endPosition: 10 })),
 }));
 
 vi.mock('../../src/state/phyloStore/store.js', () => ({
@@ -46,8 +46,8 @@ vi.mock('../../src/state/phyloStore/store.js', () => ({
     subscribe: (listener) => {
       subscribers.add(listener);
       return () => subscribers.delete(listener);
-    }
-  }
+    },
+  },
 }));
 
 function deferred() {
@@ -62,7 +62,7 @@ function updateStore(patch) {
   const prevState = storeState;
   storeState = {
     ...storeState,
-    ...patch
+    ...patch,
   };
   for (const subscriber of subscribers) {
     subscriber(storeState, prevState);
@@ -124,13 +124,16 @@ describe('useTreeController static render scheduling', () => {
       syncMSAEnabled: false,
       clearMsaRegion: vi.fn(),
       clearMsaPreviousRegion: vi.fn(),
-      updateColorManagerForCurrentIndex: vi.fn()
+      updateColorManagerForCurrentIndex: vi.fn(),
     };
 
-    vi.stubGlobal('requestAnimationFrame', vi.fn((callback) => {
-      rafQueue.push(callback);
-      return rafQueue.length;
-    }));
+    vi.stubGlobal(
+      'requestAnimationFrame',
+      vi.fn((callback) => {
+        rafQueue.push(callback);
+        return rafQueue.length;
+      })
+    );
     vi.stubGlobal('cancelAnimationFrame', vi.fn());
   });
 
@@ -150,7 +153,7 @@ describe('useTreeController static render scheduling', () => {
     expect(controllerInstance.renderTimelineProgress).toHaveBeenCalledWith(0.1);
 
     updateStore({
-      playhead: { timelineProgress: 0.9, animationProgress: 0.9 }
+      playhead: { timelineProgress: 0.9, animationProgress: 0.9 },
     });
     await flushNextRaf();
 
@@ -260,7 +263,7 @@ describe('useTreeController static render scheduling', () => {
 
     updateStore({
       frameIndex: 1,
-      playhead: { timelineProgress: 0.5, animationProgress: 0.5 }
+      playhead: { timelineProgress: 0.5, animationProgress: 0.5 },
     });
     await flushNextRaf();
 

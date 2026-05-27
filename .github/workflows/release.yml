@@ -106,4 +106,3 @@ jobs:
           # To eliminate the warning entirely, add these secrets:
           #   CSC_LINK, CSC_KEY_PASSWORD, APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID
           # and change mac.identity in electron-app/package.json from "-" to null.
-

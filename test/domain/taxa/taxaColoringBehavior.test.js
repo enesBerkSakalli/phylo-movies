@@ -71,10 +71,12 @@ describe('taxa coloring CSV restore behavior', () => {
     const { map, groups, validation } = loadCSVColumn(csvData, 'clade', ['TaxonA', 'TaxonB']);
 
     expect(validation.isValid).toBe(true);
-    expect(map).toEqual(new Map([
-      ['TaxonA', 'Alpha'],
-      ['TaxonB', 'Beta'],
-    ]));
+    expect(map).toEqual(
+      new Map([
+        ['TaxonA', 'Alpha'],
+        ['TaxonB', 'Beta'],
+      ])
+    );
     expect(groups).toHaveLength(2);
   });
 });
@@ -99,15 +101,17 @@ describe('ColorSwatchInput', () => {
     roots.push(root);
 
     await act(async () => {
-      root.render(React.createElement(
-        TooltipProvider,
-        null,
-        React.createElement(ColorSwatchInput, {
-          label: 'TaxonA',
-          color: '#000000',
-          onChange,
-        }),
-      ));
+      root.render(
+        React.createElement(
+          TooltipProvider,
+          null,
+          React.createElement(ColorSwatchInput, {
+            label: 'TaxonA',
+            color: '#000000',
+            onChange,
+          })
+        )
+      );
     });
 
     const trigger = document.querySelector('button[aria-label="Select color for TaxonA"]');
@@ -120,7 +124,9 @@ describe('ColorSwatchInput', () => {
 
   it('does not commit incomplete custom hex colors while typing', async () => {
     const { onChange } = await renderOpenSwatch();
-    const textInput = Array.from(document.querySelectorAll('input')).find((input) => input.type === 'text');
+    const textInput = Array.from(document.querySelectorAll('input')).find(
+      (input) => input.type === 'text'
+    );
 
     await act(async () => {
       Simulate.change(textInput, { target: { value: '#' } });
@@ -151,6 +157,8 @@ describe('ColorSwatchInput', () => {
   it('renders the color popover above floating taxa windows', async () => {
     await renderOpenSwatch();
 
-    expect(document.querySelector('[data-slot="popover-content"]')?.className).toContain('z-[1300]');
+    expect(document.querySelector('[data-slot="popover-content"]')?.className).toContain(
+      'z-[1300]'
+    );
   });
 });

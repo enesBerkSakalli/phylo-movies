@@ -18,9 +18,10 @@ export function getActiveMoverEmphasis(entity, cached, kind) {
   if (cached?.subtreeHighlightScope === 'all') return 1;
 
   const colorManager = cached?.colorManager;
-  const isActiveMover = kind === 'link'
-    ? colorManager?.isLinkInActiveMoverSubtree?.(entity)
-    : colorManager?.isNodeInActiveMoverSubtree?.(entity);
+  const isActiveMover =
+    kind === 'link'
+      ? colorManager?.isLinkInActiveMoverSubtree?.(entity)
+      : colorManager?.isNodeInActiveMoverSubtree?.(entity);
 
   if (!isActiveMover) return 1;
 
@@ -38,5 +39,5 @@ export function getActiveMoverEmphasis(entity, cached, kind) {
 
 export function getSubtleActiveMoverEmphasis(entity, cached, kind) {
   const emphasis = getActiveMoverEmphasis(entity, cached, kind);
-  return 1 + ((emphasis - 1) * 0.2);
+  return 1 + (emphasis - 1) * 0.2;
 }

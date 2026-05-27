@@ -22,13 +22,29 @@ import {
 } from './msaViewportStatus.js';
 
 export function MSAViewer() {
-  const { processedData, msaRegion, msaPreviousRegion, showLetters, viewAction, colorScheme, setVisibleRange, rowColorMap, visibleRange, scrollAction } = useMSA();
+  const {
+    processedData,
+    msaRegion,
+    msaPreviousRegion,
+    showLetters,
+    viewAction,
+    colorScheme,
+    setVisibleRange,
+    rowColorMap,
+    visibleRange,
+    scrollAction,
+  } = useMSA();
   const syncMSAEnabled = useAppStore(selectSyncMsaEnabled);
   const timelineCursor = useAppStore(selectTimelineCursor);
   const msaStepSize = useAppStore(selectMsaStepSize);
   const msaWindowSize = useAppStore(selectMsaWindowSize);
   const msaColumnCount = useAppStore(selectMsaColumnCount);
-  const windowStatus = buildMsaWindowStatus(timelineCursor, msaStepSize, msaWindowSize, msaColumnCount);
+  const windowStatus = buildMsaWindowStatus(
+    timelineCursor,
+    msaStepSize,
+    msaWindowSize,
+    msaColumnCount
+  );
   const treeStatus = buildMsaTreeStatus(timelineCursor);
   const [layoutMetrics, setLayoutMetrics] = useState(null);
   const containerRef = useRef(null);
@@ -123,7 +139,11 @@ export function MSAViewer() {
     if (!containerRef.current || viewerRef.current) return undefined;
 
     const { showLetters, colorScheme, rowColorMap } = latestViewerInputsRef.current;
-    const viewer = new MSADeckGLViewer(containerRef.current, { showLetters, colorScheme, rowColorMap });
+    const viewer = new MSADeckGLViewer(containerRef.current, {
+      showLetters,
+      colorScheme,
+      rowColorMap,
+    });
     viewerRef.current = viewer;
 
     viewer.onViewStateChange = ({ range, layoutMetrics }) => {
@@ -227,9 +247,13 @@ export function MSAViewer() {
       {visibleRange && Number.isFinite(visibleRange.r0) && Number.isFinite(visibleRange.c0) && (
         <div className="absolute left-3 top-3 z-10 rounded-md border border-border/60 bg-background/85 px-3 py-2 text-[11px] text-foreground shadow-md backdrop-blur-sm tabular-nums">
           <div className="flex items-center gap-2">
-            <span>Rows: {visibleRange.r0 + 1}-{visibleRange.r1 + 1}</span>
+            <span>
+              Rows: {visibleRange.r0 + 1}-{visibleRange.r1 + 1}
+            </span>
             <span className="text-muted-foreground/60">|</span>
-            <span>Cols: {visibleRange.c0 + 1}-{visibleRange.c1 + 1}</span>
+            <span>
+              Cols: {visibleRange.c0 + 1}-{visibleRange.c1 + 1}
+            </span>
             {windowStatus && (
               <>
                 <span className="text-muted-foreground/60">|</span>
@@ -271,9 +295,8 @@ function MSATreeStatus({ status }) {
   const tooltip = formatMsaTreeStatusTooltip(status);
   const label = formatMsaTreeStatusLabel(status);
   const sourceLabel = String(status.sourceInputTreeIndex + 1);
-  const targetLabel = status.targetInputTreeIndex === null
-    ? null
-    : String(status.targetInputTreeIndex + 1);
+  const targetLabel =
+    status.targetInputTreeIndex === null ? null : String(status.targetInputTreeIndex + 1);
 
   return (
     <AppTooltip content={tooltip} contentClassName="text-2xs">
@@ -282,12 +305,16 @@ function MSATreeStatus({ status }) {
         aria-label={`${tooltip}; ${label}`}
       >
         <GitBranch className="size-3.5 shrink-0" aria-hidden />
-        <span className="min-w-[1.25rem] shrink-0 text-center font-semibold leading-none">{sourceLabel}</span>
+        <span className="min-w-[1.25rem] shrink-0 text-center font-semibold leading-none">
+          {sourceLabel}
+        </span>
         {status.kind === 'transition' && (
           <>
             <ArrowRight className="size-3 shrink-0 text-muted-foreground" aria-hidden />
             <GitBranch className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
-            <span className="min-w-[1.25rem] shrink-0 text-center font-semibold leading-none text-muted-foreground">{targetLabel}</span>
+            <span className="min-w-[1.25rem] shrink-0 text-center font-semibold leading-none text-muted-foreground">
+              {targetLabel}
+            </span>
           </>
         )}
       </span>

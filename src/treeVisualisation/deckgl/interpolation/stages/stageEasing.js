@@ -28,9 +28,7 @@ function easeIn(t) {
  * Best for REORDER - smooth position transitions
  */
 function easeInOut(t) {
-  return t < 0.5
-    ? 4 * Math.pow(t, 3)
-    : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  return t < 0.5 ? 4 * Math.pow(t, 3) : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
 /**

@@ -42,10 +42,15 @@ export function getBundleAncestor(entry, entryById, targetDepth = 2) {
   return current;
 }
 
-export const chooseBundlePoint = (connections, fallbackEntry, center, radius, isLeft, entryById = null) => {
-  const entries = connections
-    .map(c => (isLeft ? c.sourceInfo : c.targetInfo))
-    .filter(Boolean);
+export const chooseBundlePoint = (
+  connections,
+  fallbackEntry,
+  center,
+  radius,
+  isLeft,
+  entryById = null
+) => {
+  const entries = connections.map((c) => (isLeft ? c.sourceInfo : c.targetInfo)).filter(Boolean);
   const lca = entryById ? findLowestCommonAncestorById(entries, entryById) : null;
   const lcaPosition = getPosition(lca);
 
@@ -74,7 +79,7 @@ export const chooseBundlePoint = (connections, fallbackEntry, center, radius, is
     return ensureOutside(fallbackPosition, center, radius || 0, 20);
   }
 
-  const points = connections.map(c => (isLeft ? c.source : c.target));
+  const points = connections.map((c) => (isLeft ? c.source : c.target));
   return ensureOutside(calculateRadialBundlePoint(points, center), center, radius || 0, 10);
 };
 

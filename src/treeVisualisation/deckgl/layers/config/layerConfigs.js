@@ -30,7 +30,7 @@ const pathLayerDefaults = {
   widthUnits: 'common',
   widthMinPixels: 1,
   jointRounded: false, // Optimization: save attribute slots
-  capRounded: false     // Optimization: save attribute slots
+  capRounded: false, // Optimization: save attribute slots
 };
 
 /**
@@ -50,8 +50,8 @@ export const LAYER_CONFIGS = {
       ...pathLayerDefaults,
       // Disable rounded caps for dashed lines - rounded caps can fill gaps
       capRounded: false,
-      extensions: [pathStyleExtension] // Enable dashing support for outline
-    }
+      extensions: [pathStyleExtension], // Enable dashing support for outline
+    },
   },
   links: {
     id: `${LAYER_ID_PREFIX}-links`,
@@ -60,8 +60,8 @@ export const LAYER_CONFIGS = {
       ...pathLayerDefaults,
       // Disable rounded caps for dashed lines - rounded caps can fill gaps
       capRounded: false,
-      extensions: [pathStyleExtension] // Enable dashing support
-    }
+      extensions: [pathStyleExtension], // Enable dashing support
+    },
   },
   extensions: {
     id: `${LAYER_ID_PREFIX}-extensions`,
@@ -69,8 +69,8 @@ export const LAYER_CONFIGS = {
     defaultProps: {
       ...pathLayerDefaults,
       capRounded: false,
-      extensions: [pathStyleExtension]
-    }
+      extensions: [pathStyleExtension],
+    },
   },
   nodes: {
     id: `${LAYER_ID_PREFIX}-nodes`,
@@ -81,19 +81,19 @@ export const LAYER_CONFIGS = {
       radiusMinPixels: 2,
       stroked: true,
       billboard: true,
-      pointSize: 10
-    }
+      pointSize: 10,
+    },
   },
   labels: {
     id: `${LAYER_ID_PREFIX}-labels`,
     LayerClass: TextLayer,
     defaultProps: {
-      sizeUnits: 'common',  // Labels stay fixed screen size like nodes and links
+      sizeUnits: 'common', // Labels stay fixed screen size like nodes and links
       getAlignmentBaseline: 'center',
       billboard: true,
       characterSet: 'auto',
-      fontSettings: { sdf: true } // Enable SDF globally for all text layers
-    }
+      fontSettings: { sdf: true }, // Enable SDF globally for all text layers
+    },
   },
   supportLabels: {
     id: `${LAYER_ID_PREFIX}-support-labels`,
@@ -103,8 +103,8 @@ export const LAYER_CONFIGS = {
       getAlignmentBaseline: 'center',
       billboard: true,
       characterSet: 'auto',
-      fontSettings: { sdf: true }
-    }
+      fontSettings: { sdf: true },
+    },
   },
   connectors: {
     id: `${LAYER_ID_PREFIX}-connectors`,
@@ -112,9 +112,9 @@ export const LAYER_CONFIGS = {
     defaultProps: {
       ...pathLayerDefaults,
       widthMinPixels: 1,
-      pickable: false
-    }
-  }
+      pickable: false,
+    },
+  },
 };
 
 /**
@@ -123,27 +123,27 @@ export const LAYER_CONFIGS = {
 export const CLIPBOARD_LAYER_CONFIGS = {
   linkOutlines: {
     ...LAYER_CONFIGS.linkOutlines,
-    id: `${CLIPBOARD_LAYER_ID_PREFIX}-link-outlines`
+    id: `${CLIPBOARD_LAYER_ID_PREFIX}-link-outlines`,
   },
   links: {
     ...LAYER_CONFIGS.links,
-    id: `${CLIPBOARD_LAYER_ID_PREFIX}-links`
+    id: `${CLIPBOARD_LAYER_ID_PREFIX}-links`,
   },
   extensions: {
     ...LAYER_CONFIGS.extensions,
-    id: `${CLIPBOARD_LAYER_ID_PREFIX}-extensions`
+    id: `${CLIPBOARD_LAYER_ID_PREFIX}-extensions`,
   },
   nodes: {
     ...LAYER_CONFIGS.nodes,
-    id: `${CLIPBOARD_LAYER_ID_PREFIX}-nodes`
+    id: `${CLIPBOARD_LAYER_ID_PREFIX}-nodes`,
   },
   labels: {
     ...LAYER_CONFIGS.labels,
-    id: `${CLIPBOARD_LAYER_ID_PREFIX}-labels`
+    id: `${CLIPBOARD_LAYER_ID_PREFIX}-labels`,
   },
   supportLabels: {
     ...LAYER_CONFIGS.supportLabels,
-    id: `${CLIPBOARD_LAYER_ID_PREFIX}-support-labels`
+    id: `${CLIPBOARD_LAYER_ID_PREFIX}-support-labels`,
   },
   labelDots: {
     id: `${CLIPBOARD_LAYER_ID_PREFIX}-label-dots`,
@@ -153,11 +153,11 @@ export const CLIPBOARD_LAYER_CONFIGS = {
       radiusMinPixels: 2,
       radiusMaxPixels: 6,
       stroked: false,
-      billboard: true
-    }
+      billboard: true,
+    },
   },
   connectors: {
     ...LAYER_CONFIGS.connectors,
-    id: `${CLIPBOARD_LAYER_ID_PREFIX}-connectors`
-  }
+    id: `${CLIPBOARD_LAYER_ID_PREFIX}-connectors`,
+  },
 };
