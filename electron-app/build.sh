@@ -8,7 +8,6 @@ set -e # Exit immediately if a command exits with a non-zero status
 # Directories
 HOST_DIR=$(pwd)
 PROJECT_ROOT="$(cd .. && pwd)" # Assumes we are in electron-app/
-BACKEND_DIR="$PROJECT_ROOT/engine/BranchArchitect"
 FRONTEND_DIST="./frontend-dist"
 
 echo "=========================================="
@@ -22,86 +21,13 @@ echo "=========================================="
 echo "[1/4] Cleaning previous builds..."
 rm -rf "$FRONTEND_DIST"
 rm -rf release
-rm -rf "$BACKEND_DIR/dist"
-rm -rf "$BACKEND_DIR/build"
 echo "Clean complete."
 
 # -----------------------------------------------------------------------------
 # 2. Build Python Backend (Flask)
 # -----------------------------------------------------------------------------
 echo "[2/4] Building Python backend..."
-cd "$BACKEND_DIR"
-
-# Use dedicated Python 3.11 build environment for PyInstaller compatibility
-BUILD_VENV="$BACKEND_DIR/.venv-build"
-
-# Find Python 3.11 from multiple sources (Homebrew, setup-python, system)
-if [ -f "/opt/homebrew/opt/python@3.11/bin/python3.11" ]; then
-    PYTHON_BUILD="/opt/homebrew/opt/python@3.11/bin/python3.11"
-elif command -v python3.11 >/dev/null 2>&1; then
-    PYTHON_BUILD="$(command -v python3.11)"
-elif command -v python3 >/dev/null 2>&1; then
-    PYTHON_BUILD="$(command -v python3)"
-else
-    echo "Error: No suitable Python found. Install Python 3.11."
-    exit 1
-fi
-echo "Using Python build interpreter: $PYTHON_BUILD"
-
-# Determine venv activation path (Unix: bin, Windows: Scripts)
-if [[ "$(uname -s)" == MINGW* || "$(uname -s)" == CYGWIN* || "$(uname -s)" == MSYS* ]]; then
-    VENV_BIN="Scripts"
-else
-    VENV_BIN="bin"
-fi
-
-if [ ! -d "$BUILD_VENV" ]; then
-    echo "Creating Python 3.11 build environment..."
-    if [ ! -f "$PYTHON_BUILD" ] && ! command -v "$PYTHON_BUILD" >/dev/null 2>&1; then
-        echo "Error: Python not found at $PYTHON_BUILD"
-        exit 1
-    fi
-    "$PYTHON_BUILD" -m venv "$BUILD_VENV"
-    source "$BUILD_VENV/$VENV_BIN/activate"
-    python -m pip install --upgrade pip
-    python -m pip install poetry
-    # Poetry auto-detects the activated venv; disable its own venv creation
-    poetry config virtualenvs.create false --local
-    poetry install --with build
-else
-    source "$BUILD_VENV/$VENV_BIN/activate"
-    # Ensure poetry and build dependencies are available in existing env
-    if ! command -v poetry >/dev/null 2>&1; then
-        python -m pip install --upgrade pip
-        python -m pip install poetry
-    fi
-    poetry config virtualenvs.create false --local
-    if ! poetry run pyinstaller --version >/dev/null 2>&1; then
-        echo "PyInstaller missing in build environment. Installing build dependencies..."
-        poetry install --with build
-    fi
-fi
-
-echo "Using Python: $(python --version)"
-echo "Using PyInstaller from build environment..."
-
-echo "Running PyInstaller..."
-# Builds the single-file executable into BranchArchitect/dist/brancharchitect-server
-PYINSTALLER_CONFIG_DIR=/tmp/pyi-config \
-poetry run pyinstaller brancharchitect.spec \
-    --distpath dist \
-    --workpath build/work \
-    --noconfirm \
-    --clean
-
-deactivate 2>/dev/null || true
-
-echo "Archiving backend for Electron packaging..."
-rm -f dist/brancharchitect-server.tar.gz
-tar -czf dist/brancharchitect-server.tar.gz -C dist brancharchitect-server
-
-cd "$HOST_DIR" # Go back to electron-app/
-echo "Backend build complete."
+bash "$HOST_DIR/build-backend.sh"
 
 # -----------------------------------------------------------------------------
 # 3. Build React Frontend (Vite)
