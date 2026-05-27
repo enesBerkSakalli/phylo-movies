@@ -1,6 +1,6 @@
 {
   "name": "phylo-movies-desktop",
-  "version": "0.64.0",
+  "version": "0.92.0",
   "description": "Phylo-Movies Desktop Application - Electron wrapper",
   "author": "Enes Berk Sakalli <enes.sakalli@univie.ac.at>",
   "license": "MIT",
