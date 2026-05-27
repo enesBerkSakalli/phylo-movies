@@ -2,11 +2,14 @@ import {
   LABEL_BOUNDS_CHAR_WIDTH_RATIO,
   LABEL_BOUNDS_LINE_HEIGHT_RATIO,
   LABEL_BOUNDS_MAX_WIDTH_PX,
-  resolveLabelBoundsSize
+  resolveLabelBoundsSize,
 } from '../spatial/bounds.js';
 
 export function mergeBounds(...boundsList) {
-  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  let minX = Infinity,
+    maxX = -Infinity,
+    minY = Infinity,
+    maxY = -Infinity;
   let hasBounds = false;
 
   for (const bounds of boundsList) {
@@ -24,7 +27,10 @@ export function mergeBounds(...boundsList) {
 export function calculateNodeBounds(nodes) {
   if (nodes.length === 0) return null;
 
-  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  let minX = Infinity,
+    maxX = -Infinity,
+    minY = Infinity,
+    maxY = -Infinity;
 
   for (const node of nodes) {
     const [x, y] = node.position;
@@ -45,7 +51,10 @@ export function calculateLabelBounds(labels, options = {}) {
   const sizePx = resolveLabelBoundsSize(options.labelSizePx, options.getLabelSize);
   const charWidth = LABEL_BOUNDS_CHAR_WIDTH_RATIO * sizePx;
   const fontHeight = LABEL_BOUNDS_LINE_HEIGHT_RATIO * sizePx;
-  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  let minX = Infinity,
+    maxX = -Infinity,
+    minY = Infinity,
+    maxY = -Infinity;
 
   for (const label of labels) {
     const [x, y] = label.position;
@@ -60,7 +69,7 @@ export function calculateLabelBounds(labels, options = {}) {
       [xStartLocal, -halfHeight],
       [xEndLocal, -halfHeight],
       [xEndLocal, halfHeight],
-      [xStartLocal, halfHeight]
+      [xStartLocal, halfHeight],
     ];
 
     for (const [lx, ly] of cornersLocal) {
@@ -85,7 +94,10 @@ export function calculateLabelBounds(labels, options = {}) {
  * @param {Array} links
  */
 export function calculateBranchBounds(nodes, links = []) {
-  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  let minX = Infinity,
+    maxX = -Infinity,
+    minY = Infinity,
+    maxY = -Infinity;
   let hasPoint = false;
 
   const includePoint = (point) => {

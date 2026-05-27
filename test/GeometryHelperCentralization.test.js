@@ -35,8 +35,8 @@ describe('geometry helper centralization', () => {
           /function getLifecycleClock\b/,
           /function getLifecycleLengthScale\b/,
           /function lifecycleTargetReferenceLink\b/,
-          /function shouldAttachLifecycleEndpoints\b/
-        ]
+          /function shouldAttachLifecycleEndpoints\b/,
+        ],
       },
       {
         file: 'src/treeVisualisation/deckgl/builders/data/labels/LabelDataBuilder.js',
@@ -44,9 +44,9 @@ describe('geometry helper centralization', () => {
           /_shouldFlipLabel\b/,
           /_calculateTextAnchor\b/,
           /_calculateLabelRotation\b/,
-          /_calculateLabelPosition\b/
-        ]
-      }
+          /_calculateLabelPosition\b/,
+        ],
+      },
     ];
 
     const violations = [];

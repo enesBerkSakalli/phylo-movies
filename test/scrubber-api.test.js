@@ -7,11 +7,7 @@ const { useAppStore } = require('../src/state/phyloStore/store.js');
 
 function createMovieData() {
   return {
-    interpolated_trees: [
-      { id: 'tree-0' },
-      { id: 'tree-1' },
-      { id: 'tree-2' }
-    ],
+    interpolated_trees: [{ id: 'tree-0' }, { id: 'tree-1' }, { id: 'tree-2' }],
     frames: [
       {
         frame_index: 0,
@@ -48,54 +44,54 @@ function createMovieData() {
         local_step_index: null,
         source_frame_index: null,
         target_frame_index: null,
-      }
-    ],
-    pairs: [{
-      pair_id: 'pair_0_1',
-      pair_ordinal: 0,
-      source_input_tree_index: 0,
-      target_input_tree_index: 1,
-      source_frame_index: 0,
-      target_frame_index: 2,
-      generated_frame_range: [1, 1],
-      solution: {
-        affected_subtrees_by_split: {},
-        attachment_edges_by_split: {},
       },
-    }],
+    ],
+    pairs: [
+      {
+        pair_id: 'pair_0_1',
+        pair_ordinal: 0,
+        source_input_tree_index: 0,
+        target_input_tree_index: 1,
+        source_frame_index: 0,
+        target_frame_index: 2,
+        generated_frame_range: [1, 1],
+        solution: {
+          affected_subtrees_by_split: {},
+          attachment_edges_by_split: {},
+        },
+      },
+    ],
   };
 }
 
 function createTimelineManager(movieData) {
-  const segments = [{
-    isInputTreeSegment: false,
-    hasInterpolation: true,
-    interpolationData: [
-      { originalIndex: 0 },
-      { originalIndex: 1 },
-      { originalIndex: 2 }
-    ],
-    timing: [
-      { type: 'motion', fromIndex: 0, toIndex: 1, durationMs: 1500 },
-      { type: 'motion', fromIndex: 1, toIndex: 2, durationMs: 1500 }
-    ]
-  }];
+  const segments = [
+    {
+      isInputTreeSegment: false,
+      hasInterpolation: true,
+      interpolationData: [{ originalIndex: 0 }, { originalIndex: 1 }, { originalIndex: 2 }],
+      timing: [
+        { type: 'motion', fromIndex: 0, toIndex: 1, durationMs: 1500 },
+        { type: 'motion', fromIndex: 1, toIndex: 2, durationMs: 1500 },
+      ],
+    },
+  ];
   const timelineData = {
     totalDuration: 3000,
     segmentDurations: [3000],
-    cumulativeDurations: [3000]
+    cumulativeDurations: [3000],
   };
   const timelineDataset = TimelineDataset.fromMovieData(movieData, {
     segments,
-    timelineData
+    timelineData,
   });
   const timelineClock = new TimelineClock({
-    timelineDataset
+    timelineDataset,
   });
 
   return {
     getTransitionFrameForTimelineProgress: (progress) =>
-      timelineClock.getTransitionFrameForProgress(progress)
+      timelineClock.getTransitionFrameForProgress(progress),
   };
 }
 
@@ -113,12 +109,17 @@ describe('ScrubberAPI', () => {
       treeList: movieData.interpolated_trees,
       timelineFrames: [
         { frame_index: 0, frame_type: 'input_tree', is_observed_input: true },
-        { frame_index: 1, frame_type: 'interpolation_frame', is_observed_input: false, pair_id: 'pair_0_1' },
+        {
+          frame_index: 1,
+          frame_type: 'interpolation_frame',
+          is_observed_input: false,
+          pair_id: 'pair_0_1',
+        },
         { frame_index: 2, frame_type: 'input_tree', is_observed_input: true },
       ],
       colorManager: null,
       pivotEdgesEnabled: false,
-      subtreeHighlightsEnabled: true
+      subtreeHighlightsEnabled: true,
     });
   });
 
@@ -146,7 +147,7 @@ describe('ScrubberAPI', () => {
             resolve();
           });
         });
-      }
+      },
     };
 
     const api = new ScrubberAPI(treeController, timelineManager, useAppStore);
@@ -189,11 +190,11 @@ describe('ScrubberAPI', () => {
     try {
       useAppStore.setState({
         updateColorManagerForCurrentIndex: () => {},
-        updateColorManagerForIndex: (treeIndex) => highlightIndices.push(treeIndex)
+        updateColorManagerForIndex: (treeIndex) => highlightIndices.push(treeIndex),
       });
 
       const treeController = {
-        renderComparisonAwareScrubFrame: async () => {}
+        renderComparisonAwareScrubFrame: async () => {},
       };
 
       const api = new ScrubberAPI(treeController, timelineManager, useAppStore);
@@ -219,7 +220,7 @@ describe('ScrubberAPI', () => {
         await new Promise((resolve) => {
           resolvers.push(resolve);
         });
-      }
+      },
     };
 
     const api = new ScrubberAPI(treeController, timelineManager, useAppStore);
@@ -259,7 +260,7 @@ describe('ScrubberAPI', () => {
       const treeController = {
         renderComparisonAwareScrubFrame: async () => {
           throw renderError;
-        }
+        },
       };
 
       const api = new ScrubberAPI(treeController, timelineManager, useAppStore);
@@ -290,7 +291,7 @@ describe('ScrubberAPI', () => {
     const treeController = {
       renderComparisonAwareScrubFrame: async (...args) => {
         renderCalls.push(args);
-      }
+      },
     };
 
     const api = new ScrubberAPI(treeController, timelineManager, useAppStore);
@@ -301,7 +302,7 @@ describe('ScrubberAPI', () => {
     expect(renderCalls).to.have.length(1);
     expect(renderCalls[0][3]).to.include({
       comparisonMode: true,
-      rightTreeIndex: 2
+      rightTreeIndex: 2,
     });
   });
 
@@ -315,7 +316,7 @@ describe('ScrubberAPI', () => {
       const treeController = {
         renderComparisonAwareScrubFrame: async (...args) => {
           renderCalls.push(args);
-        }
+        },
       };
 
       const api = new ScrubberAPI(treeController, null, useAppStore);

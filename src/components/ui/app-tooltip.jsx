@@ -1,12 +1,7 @@
 import React from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 
-export function AppTooltip({
-  children,
-  content,
-  side = 'top',
-  contentClassName,
-}) {
+export function AppTooltip({ children, content, side = 'top', contentClassName }) {
   if (!content) return children;
 
   return (

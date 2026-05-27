@@ -7,49 +7,47 @@ const EMPTY_EVENTS = Object.freeze([]);
  * identity for analytics and future event/lane views.
  */
 export class TimelineEventIndex {
-    static from({ pairs, temporalEvents }) {
-        const eventsByPairAndType = new Map(
-            pairs.map((pair) => [pair.pair_id, new Map()])
-        );
+  static from({ pairs, temporalEvents }) {
+    const eventsByPairAndType = new Map(pairs.map((pair) => [pair.pair_id, new Map()]));
 
-        temporalEvents.forEach((event) => {
-            const eventsByType = eventsByPairAndType.get(event.pair_id);
-            let events = eventsByType.get(event.event_type);
-            if (!events) {
-                events = [];
-                eventsByType.set(event.event_type, events);
-            }
-            events.push(event);
-        });
+    temporalEvents.forEach((event) => {
+      const eventsByType = eventsByPairAndType.get(event.pair_id);
+      let events = eventsByType.get(event.event_type);
+      if (!events) {
+        events = [];
+        eventsByType.set(event.event_type, events);
+      }
+      events.push(event);
+    });
 
-        eventsByPairAndType.forEach((eventsByType) => {
-            eventsByType.forEach((events) => {
-                events.sort(compareTemporalEvents);
-            });
-        });
+    eventsByPairAndType.forEach((eventsByType) => {
+      eventsByType.forEach((events) => {
+        events.sort(compareTemporalEvents);
+      });
+    });
 
-        return new TimelineEventIndex(eventsByPairAndType);
-    }
+    return new TimelineEventIndex(eventsByPairAndType);
+  }
 
-    constructor(eventsByPairAndType) {
-        this.eventsByPairAndType = eventsByPairAndType;
-    }
+  constructor(eventsByPairAndType) {
+    this.eventsByPairAndType = eventsByPairAndType;
+  }
 
-    getEventsForPair(pairId, eventType) {
-        return this.eventsByPairAndType.get(pairId)?.get(eventType) ?? EMPTY_EVENTS;
-    }
+  getEventsForPair(pairId, eventType) {
+    return this.eventsByPairAndType.get(pairId)?.get(eventType) ?? EMPTY_EVENTS;
+  }
 
-    countEventsForPair(pairId, eventType) {
-        return this.getEventsForPair(pairId, eventType).length;
-    }
+  countEventsForPair(pairId, eventType) {
+    return this.getEventsForPair(pairId, eventType).length;
+  }
 }
 
 function compareTemporalEvents(a, b) {
-    const frameStartDifference = a.frame_range[0] - b.frame_range[0];
-    if (frameStartDifference !== 0) return frameStartDifference;
+  const frameStartDifference = a.frame_range[0] - b.frame_range[0];
+  if (frameStartDifference !== 0) return frameStartDifference;
 
-    const frameEndDifference = a.frame_range[1] - b.frame_range[1];
-    if (frameEndDifference !== 0) return frameEndDifference;
+  const frameEndDifference = a.frame_range[1] - b.frame_range[1];
+  if (frameEndDifference !== 0) return frameEndDifference;
 
-    return a.event_id.localeCompare(b.event_id);
+  return a.event_id.localeCompare(b.event_id);
 }

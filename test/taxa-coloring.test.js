@@ -7,7 +7,7 @@ import {
   generateGroups,
   getGroupForTaxon,
   applyColoringData,
-  detectBestSeparators
+  detectBestSeparators,
 } from '../src/treeColoring/utils/GroupingUtils.js';
 
 describe('GroupingUtils', () => {
@@ -18,7 +18,7 @@ describe('GroupingUtils', () => {
       'Species_B_1',
       'Species_B_2',
       'Species_C_1',
-      'Ungrouped'
+      'Ungrouped',
     ];
 
     it('should generate groups using prefix strategy with underscore separator', () => {
@@ -43,7 +43,7 @@ describe('GroupingUtils', () => {
 
       expect(result.groups.length).toBeGreaterThan(0);
       // All taxa start with 'S' or 'U'
-      const groupNames = result.groups.map(g => g.name);
+      const groupNames = result.groups.map((g) => g.name);
       expect(groupNames).toContain('S');
       expect(groupNames).toContain('U');
     });
@@ -52,7 +52,7 @@ describe('GroupingUtils', () => {
       const result = generateGroups(taxaNames.slice(0, 5), ['_'], 'suffix');
 
       expect(result.groups).toHaveLength(2); // Groups "1" and "2"
-      const groupNames = result.groups.map(g => g.name);
+      const groupNames = result.groups.map((g) => g.name);
       expect(groupNames).toContain('1');
       expect(groupNames).toContain('2');
     });
@@ -91,7 +91,7 @@ describe('GroupingUtils', () => {
     it('should handle regex pattern', () => {
       const result = getGroupForTaxon('Species_A_1', null, 'prefix', {
         useRegex: true,
-        regexPattern: '([A-Za-z]+)_'
+        regexPattern: '([A-Za-z]+)_',
       });
       expect(result).toBe('Species');
     });
@@ -130,9 +130,9 @@ describe('GroupingUtils', () => {
       const colorData = {
         mode: 'taxa',
         taxaColorMap: {
-          'Species_A_1': '#FF0000',
-          'Species_A_2': '#00FF00'
-        }
+          Species_A_1: '#FF0000',
+          Species_A_2: '#00FF00',
+        },
       };
 
       const result = applyColoringData(colorData, leaveOrder, defaultColorMap);
@@ -148,8 +148,8 @@ describe('GroupingUtils', () => {
         separators: ['_'],
         strategyType: 'prefix',
         groupColorMap: {
-          'Species': '#FF0000'
-        }
+          Species: '#FF0000',
+        },
       };
 
       const result = applyColoringData(colorData, leaveOrder, defaultColorMap);
@@ -163,16 +163,16 @@ describe('GroupingUtils', () => {
       const csvTaxaMap = new Map([
         ['Species_A_1', 'GroupA'],
         ['Species_A_2', 'GroupA'],
-        ['Species_B_1', 'GroupB']
+        ['Species_B_1', 'GroupB'],
       ]);
 
       const colorData = {
         mode: 'csv',
         csvTaxaMap,
         groupColorMap: {
-          'GroupA': '#FF0000',
-          'GroupB': '#00FF00'
-        }
+          GroupA: '#FF0000',
+          GroupB: '#00FF00',
+        },
       };
 
       const result = applyColoringData(colorData, leaveOrder, defaultColorMap);
@@ -185,18 +185,18 @@ describe('GroupingUtils', () => {
     it('should apply csv mode coloring with Object (serialized state)', () => {
       // This tests the fix for Issue 3: Object instead of Map
       const csvTaxaMap = {
-        'Species_A_1': 'GroupA',
-        'Species_A_2': 'GroupA',
-        'Species_B_1': 'GroupB'
+        Species_A_1: 'GroupA',
+        Species_A_2: 'GroupA',
+        Species_B_1: 'GroupB',
       };
 
       const colorData = {
         mode: 'csv',
         csvTaxaMap,
         groupColorMap: {
-          'GroupA': '#FF0000',
-          'GroupB': '#00FF00'
-        }
+          GroupA: '#FF0000',
+          GroupB: '#00FF00',
+        },
       };
 
       const result = applyColoringData(colorData, leaveOrder, defaultColorMap);
@@ -211,7 +211,7 @@ describe('GroupingUtils', () => {
         mode: 'groups',
         separators: ['_'],
         strategyType: 'prefix',
-        groupColorMap: {} // No colors defined
+        groupColorMap: {}, // No colors defined
       };
 
       const result = applyColoringData(colorData, leaveOrder, defaultColorMap);
@@ -231,9 +231,9 @@ describe('Group State Persistence', () => {
       useRegex: false,
       regexPattern: '',
       groupColorMap: {
-        'Species': '#FF0000',
-        'Genus': '#00FF00'
-      }
+        Species: '#FF0000',
+        Genus: '#00FF00',
+      },
     };
 
     // Simulate serialization (what happens when storing to Zustand)
@@ -249,12 +249,12 @@ describe('Group State Persistence', () => {
   it('should handle csvTaxaMap serialization from Map to Object', () => {
     const csvTaxaMap = new Map([
       ['Taxon1', 'GroupA'],
-      ['Taxon2', 'GroupB']
+      ['Taxon2', 'GroupB'],
     ]);
 
     // This is what TaxaColoring.jsx does
     const serialized = {
-      csvTaxaMap: Object.fromEntries(csvTaxaMap)
+      csvTaxaMap: Object.fromEntries(csvTaxaMap),
     };
 
     // Verify it's now an Object

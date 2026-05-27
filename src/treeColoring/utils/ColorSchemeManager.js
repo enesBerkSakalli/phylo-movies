@@ -39,18 +39,18 @@ export class ColorSchemeManager {
 
     // If we have more targets than colors in the palette, dynamically generate exactly enough
     if (numTargets > baseScheme.length) {
-      console.log(`[ColorSchemeManager] Palette "${schemeName}" has ${baseScheme.length} colors but need ${numTargets}. Generating dynamic palette.`);
+      console.log(
+        `[ColorSchemeManager] Palette "${schemeName}" has ${baseScheme.length} colors but need ${numTargets}. Generating dynamic palette.`
+      );
       baseScheme = generatePalette(numTargets, 'sinebow');
     }
 
     // Convert to RGB arrays
-    const rgbScheme = baseScheme.map(c => this._ensureRgb(c));
+    const rgbScheme = baseScheme.map((c) => this._ensureRgb(c));
 
     // For groups, maximize perceptual distance between successive colors
     // For taxa, use the palette order directly
-    let scheme = isGroup
-      ? this._orderPaletteForMaxDistance(rgbScheme, numTargets)
-      : rgbScheme;
+    let scheme = isGroup ? this._orderPaletteForMaxDistance(rgbScheme, numTargets) : rgbScheme;
 
     // Ensure we always have a valid scheme with enough colors
     if (!scheme || scheme.length === 0) {
@@ -61,9 +61,11 @@ export class ColorSchemeManager {
     // If scheme still has fewer colors than targets after ordering (due to duplicates),
     // supplement with dynamically generated colors to ensure every target gets a unique color
     if (scheme.length < numTargets) {
-      console.log(`[ColorSchemeManager] Ordered scheme has ${scheme.length} colors but need ${numTargets}. Supplementing.`);
+      console.log(
+        `[ColorSchemeManager] Ordered scheme has ${scheme.length} colors but need ${numTargets}. Supplementing.`
+      );
       const supplemental = generatePalette(numTargets - scheme.length, 'sinebow');
-      const supplementalRgb = supplemental.map(c => this._ensureRgb(c));
+      const supplementalRgb = supplemental.map((c) => this._ensureRgb(c));
       scheme = [...scheme, ...supplementalRgb];
     }
 
@@ -94,8 +96,10 @@ export class ColorSchemeManager {
     if (n === 0) return [];
 
     // Pre-convert to Color objects for Perf (avoid re-parsing in loops)
-    const colorObjs = uniquePalette.map(c => new Color("srgb", [c[0] / 255, c[1] / 255, c[2] / 255]));
-    const white = new Color("white");
+    const colorObjs = uniquePalette.map(
+      (c) => new Color('srgb', [c[0] / 255, c[1] / 255, c[2] / 255])
+    );
+    const white = new Color('white');
 
     // APCA 45 is sufficient for visual elements (nodes, branches) with outlined labels
     // 60 was too aggressive and caused colors to be over-darkened (washed out/muddy)
@@ -104,15 +108,15 @@ export class ColorSchemeManager {
 
     for (let i = 0; i < n; i++) {
       let color = colorObjs[i];
-      const contrast = Math.abs(white.contrast(color, "APCA"));
+      const contrast = Math.abs(white.contrast(color, 'APCA'));
 
       if (contrast < minLc) {
         // Fix it by darkening
         // Convert to Oklch for perceptual darkening
-        let fixed = color.to("oklch");
+        let fixed = color.to('oklch');
         let safety = 0;
         // Loop until it passes or safety break
-        while (Math.abs(white.contrast(fixed, "APCA")) < minLc && safety < 50) {
+        while (Math.abs(white.contrast(fixed, 'APCA')) < minLc && safety < 50) {
           fixed.l -= 0.01;
           safety++;
         }
@@ -133,8 +137,11 @@ export class ColorSchemeManager {
     let bestBgDist = -Infinity;
 
     for (const i of validIdxArray) {
-      const d = colorObjs[i].deltaE(white, "2000");
-      if (d > bestBgDist) { bestBgDist = d; seedIndex = i; }
+      const d = colorObjs[i].deltaE(white, '2000');
+      if (d > bestBgDist) {
+        bestBgDist = d;
+        seedIndex = i;
+      }
     }
 
     const chosenIndices = [seedIndex];
@@ -156,17 +163,20 @@ export class ColorSchemeManager {
         // Find min distance to ANY already chosen color
         let minPeerDist = Infinity;
         for (const chosenIdx of chosenIndices) {
-          const d = candidateColor.deltaE(colorObjs[chosenIdx], "2000");
+          const d = candidateColor.deltaE(colorObjs[chosenIdx], '2000');
           if (d < minPeerDist) minPeerDist = d;
         }
 
         // Distance to background (ensure it stays distinct from BG too)
-        const bgDist = candidateColor.deltaE(white, "2000");
+        const bgDist = candidateColor.deltaE(white, '2000');
 
         // Score: We want to maximize the MIN distance (Maximin)
         const score = Math.min(minPeerDist, bgDist);
 
-        if (score > bestScore) { bestScore = score; bestIdx = idx; }
+        if (score > bestScore) {
+          bestScore = score;
+          bestIdx = idx;
+        }
       }
 
       if (bestIdx !== null) {
@@ -183,16 +193,15 @@ export class ColorSchemeManager {
 
     // Return the chosen colors (converted back to [r,g,b] from potentially modified Color objects)
     // Use toGamut to clamp out-of-gamut colors to valid sRGB range
-    return chosenIndices.map(i => {
-      const srgb = colorObjs[i].to("srgb").toGamut({ space: "srgb" });
+    return chosenIndices.map((i) => {
+      const srgb = colorObjs[i].to('srgb').toGamut({ space: 'srgb' });
       return [
         Math.max(0, Math.min(255, Math.round(srgb.coords[0] * 255))),
         Math.max(0, Math.min(255, Math.round(srgb.coords[1] * 255))),
-        Math.max(0, Math.min(255, Math.round(srgb.coords[2] * 255)))
+        Math.max(0, Math.min(255, Math.round(srgb.coords[2] * 255))),
       ];
     });
   }
-
 
   // =====================
   // Color Systems
@@ -207,7 +216,7 @@ export class ColorSchemeManager {
   getRandomColor() {
     // We try to generate a valid color.
     // If we fail after N attempts, we force adjustment.
-    const white = new Color("white");
+    const white = new Color('white');
     const targetLc = 45;
 
     // Random Oklch parameters - optimized for vibrant, readable colors
@@ -222,19 +231,19 @@ export class ColorSchemeManager {
     let attempts = 0;
     while (attempts < 10) {
       const h = Math.random() * 360;
-      const c = 0.15 + Math.random() * 0.20; // 0.15 - 0.35 (More vibrant colors)
-      let l = 0.35 + Math.random() * 0.30; // 0.35 - 0.65 (Wider lightness range)
+      const c = 0.15 + Math.random() * 0.2; // 0.15 - 0.35 (More vibrant colors)
+      let l = 0.35 + Math.random() * 0.3; // 0.35 - 0.65 (Wider lightness range)
 
-      color = new Color("oklch", [l, c, h]);
-      const contrast = Math.abs(white.contrast(color, "APCA"));
+      color = new Color('oklch', [l, c, h]);
+      const contrast = Math.abs(white.contrast(color, 'APCA'));
 
       if (contrast >= targetLc) {
         // Clamp to sRGB gamut to avoid out-of-range values
-        const srgb = color.to("srgb").toGamut({ space: "srgb" });
+        const srgb = color.to('srgb').toGamut({ space: 'srgb' });
         return [
           Math.max(0, Math.min(255, Math.round(srgb.coords[0] * 255))),
           Math.max(0, Math.min(255, Math.round(srgb.coords[1] * 255))),
-          Math.max(0, Math.min(255, Math.round(srgb.coords[2] * 255)))
+          Math.max(0, Math.min(255, Math.round(srgb.coords[2] * 255))),
         ];
       }
 
@@ -248,20 +257,20 @@ export class ColorSchemeManager {
     // Reduce L until it passes
     if (color) {
       let safety = 0;
-      while (Math.abs(white.contrast(color, "APCA")) < targetLc && safety < 20) {
+      while (Math.abs(white.contrast(color, 'APCA')) < targetLc && safety < 20) {
         color.oklch.l -= 0.02;
         safety++;
       }
     } else {
-      color = new Color("black");
+      color = new Color('black');
     }
 
     // Clamp to sRGB gamut to avoid out-of-range values
-    const srgb = color.to("srgb").toGamut({ space: "srgb" });
+    const srgb = color.to('srgb').toGamut({ space: 'srgb' });
     return [
       Math.max(0, Math.min(255, Math.round(srgb.coords[0] * 255))),
       Math.max(0, Math.min(255, Math.round(srgb.coords[1] * 255))),
-      Math.max(0, Math.min(255, Math.round(srgb.coords[2] * 255)))
+      Math.max(0, Math.min(255, Math.round(srgb.coords[2] * 255))),
     ];
   }
 

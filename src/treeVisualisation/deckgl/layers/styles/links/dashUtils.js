@@ -35,7 +35,7 @@ export function calculateFlightDashArray(path) {
   const pathLength = calculatePathLength(path);
 
   // Flight pattern: small dots with wide gaps
-  
+
   // HANDLING SHORT PATHS:
   // If the path is short, the previous "wide gap" logic (dot * 3.5)
   // prevented any second dot from appearing.

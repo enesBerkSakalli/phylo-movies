@@ -1,4 +1,3 @@
-
 import { describe, it, expect } from 'vitest';
 import { buildSubtreeConnectors } from '../src/treeVisualisation/deckgl/data/transforms/SubtreeConnectorBuilder.js';
 
@@ -8,7 +7,7 @@ const mockColorManager = {
   getConnectionColor: () => [255, 0, 0, 255],
   isMonophyleticColoringEnabled: () => true,
   isNodeActiveEdge: () => false,
-  isNodeHistorySubtree: () => false
+  isNodeHistorySubtree: () => false,
 };
 
 describe('Connector Integration', function () {
@@ -22,7 +21,7 @@ describe('Connector Integration', function () {
       isLeaf: true,
       name: 'CommonLeaf',
       depth: 1,
-      position: [-150, 0, 0]
+      position: [-150, 0, 0],
     });
 
     const rightCenter = [200, 0];
@@ -34,7 +33,7 @@ describe('Connector Integration', function () {
       isLeaf: true,
       name: 'CommonLeaf',
       depth: 1,
-      position: [150, 0, 0]
+      position: [150, 0, 0],
     });
 
     const connectors = buildSubtreeConnectors({
@@ -50,7 +49,7 @@ describe('Connector Integration', function () {
       leftCenter,
       rightCenter,
       leftRadius: 50,
-      rightRadius: 50
+      rightRadius: 50,
     });
 
     expect(connectors.length).toBe(1);

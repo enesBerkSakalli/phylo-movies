@@ -13,12 +13,7 @@
 export function tagTreeSide(layerData, side) {
   if (!layerData) return;
 
-  const arrays = [
-    layerData.nodes,
-    layerData.links,
-    layerData.labels,
-    layerData.extensions
-  ];
+  const arrays = [layerData.nodes, layerData.links, layerData.labels, layerData.extensions];
 
   for (let a = 0; a < arrays.length; a++) {
     const arr = arrays[a];

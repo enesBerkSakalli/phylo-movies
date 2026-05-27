@@ -10,7 +10,7 @@ describe('MSA cells layer data', () => {
         { id: 'taxon-b', seq: 'CC' },
       ],
       { r0: 0, r1: 1, c0: 0, c1: 1 },
-      1,
+      1
     );
 
     expect(data).toHaveLength(1);

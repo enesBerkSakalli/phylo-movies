@@ -132,15 +132,15 @@ describe('DeckGLContext view state handling', () => {
         csvData: {
           taxaData: {
             '<img src=x onerror=alert(1)>': {
-              '<b>Group</b>': '<script>alert(1)</script>'
-            }
-          }
-        }
-      }
+              '<b>Group</b>': '<script>alert(1)</script>',
+            },
+          },
+        },
+      },
     });
 
     const tooltip = context._getTooltip({
-      object: { text: '<img src=x onerror=alert(1)>' }
+      object: { text: '<img src=x onerror=alert(1)>' },
     });
 
     expect(tooltip.html).toContain('&lt;img src=x onerror=alert(1)&gt;');

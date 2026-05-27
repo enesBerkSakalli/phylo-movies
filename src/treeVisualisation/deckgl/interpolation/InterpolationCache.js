@@ -7,7 +7,7 @@ export class InterpolationCache {
     getConsistentRadii,
     convertTreeToLayerData,
     getLayoutCacheKey,
-    getLinkGeometryMode = () => 'radial-elbow'
+    getLinkGeometryMode = () => 'radial-elbow',
   }) {
     if (typeof getLayoutCacheKey !== 'function') {
       throw new Error('InterpolationCache requires getLayoutCacheKey');
@@ -34,7 +34,14 @@ export class InterpolationCache {
 
   _createMemoizedFunction() {
     this._memoizedGet = memoizeOne(
-      (fromTreeData, toTreeData, fromTreeIndex, toTreeIndex, fromLayoutCacheKey, toLayoutCacheKey) => {
+      (
+        fromTreeData,
+        toTreeData,
+        fromTreeIndex,
+        toTreeIndex,
+        fromLayoutCacheKey,
+        toLayoutCacheKey
+      ) => {
         // Layout cache keys carry the render-affecting inputs that invalidate cached layer data.
         const { dataFrom, dataTo, transitionChangeModel } = this.buildInterpolationInputs(
           fromTreeData,
@@ -94,7 +101,12 @@ export class InterpolationCache {
       const layoutFrom = this._calculateLayout(fromTreeData, fromTreeIndex);
       if (layoutFrom) {
         const { extensionRadius, labelRadius } = this.getConsistentRadii(layoutFrom);
-        dataFrom = this._convertLayoutToLayerData(layoutFrom, extensionRadius, labelRadius, fromTreeIndex);
+        dataFrom = this._convertLayoutToLayerData(
+          layoutFrom,
+          extensionRadius,
+          labelRadius,
+          fromTreeIndex
+        );
       }
     }
 
@@ -105,7 +117,12 @@ export class InterpolationCache {
       const layoutTo = this._calculateLayout(toTreeData, toTreeIndex);
       if (layoutTo) {
         const { extensionRadius, labelRadius } = this.getConsistentRadii(layoutTo);
-        dataTo = this._convertLayoutToLayerData(layoutTo, extensionRadius, labelRadius, toTreeIndex);
+        dataTo = this._convertLayoutToLayerData(
+          layoutTo,
+          extensionRadius,
+          labelRadius,
+          toTreeIndex
+        );
       }
     }
 
@@ -123,29 +140,25 @@ export class InterpolationCache {
 
   _hasMatchingLayoutCacheKey(precomputed, expectedLayoutCacheKey) {
     return Boolean(
-      precomputed?.layerData &&
-      precomputed.layerData.layoutCacheKey === expectedLayoutCacheKey
+      precomputed?.layerData && precomputed.layerData.layoutCacheKey === expectedLayoutCacheKey
     );
   }
 
   _calculateLayout(treeData, treeIndex) {
     return this.calculateLayout(treeData, {
-      treeIndex
+      treeIndex,
     });
   }
 
   _convertLayoutToLayerData(layout, extensionRadius, labelRadius, treeIndex) {
-    const layerData = this.convertTreeToLayerData(
-      layout,
-      {
-        extensionRadius,
-        labelRadius,
-        treeIndex,
-        treeSide: 'left',
-        renderMode: 'animation',
-        linkGeometryMode: this.getLinkGeometryMode()
-      }
-    );
+    const layerData = this.convertTreeToLayerData(layout, {
+      extensionRadius,
+      labelRadius,
+      treeIndex,
+      treeSide: 'left',
+      renderMode: 'animation',
+      linkGeometryMode: this.getLinkGeometryMode(),
+    });
     if (layerData && typeof layerData === 'object') {
       layerData.max_radius = layout.max_radius;
       layerData.layoutCacheKey = layout.layoutCacheKey;

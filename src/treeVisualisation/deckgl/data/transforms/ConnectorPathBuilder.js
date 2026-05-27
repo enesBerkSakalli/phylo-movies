@@ -78,8 +78,22 @@ function buildBundledConnectorPaths(params) {
       return [];
     }
 
-    let srcBundlePoint = chooseBundlePoint(connections, null, leftCenter, leftRadius, true, leftInfoById);
-    let dstBundlePoint = chooseBundlePoint(connections, null, rightCenter, rightRadius, false, rightInfoById);
+    let srcBundlePoint = chooseBundlePoint(
+      connections,
+      null,
+      leftCenter,
+      leftRadius,
+      true,
+      leftInfoById
+    );
+    let dstBundlePoint = chooseBundlePoint(
+      connections,
+      null,
+      rightCenter,
+      rightRadius,
+      false,
+      rightInfoById
+    );
 
     if (outwardPushFactor) {
       srcBundlePoint = pushOutward(srcBundlePoint, leftCenter, outwardPushFactor);
@@ -140,7 +154,14 @@ function buildBundledConnectorPaths(params) {
   return results;
 }
 
-function buildPathForConnection(connection, srcBundlePoint, dstBundlePoint, leftCenter, rightCenter, bundlingStrength) {
+function buildPathForConnection(
+  connection,
+  srcBundlePoint,
+  dstBundlePoint,
+  leftCenter,
+  rightCenter,
+  bundlingStrength
+) {
   return buildBundledBezierPath(
     connection.source,
     connection.target,

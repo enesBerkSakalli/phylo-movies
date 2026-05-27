@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import createTidyTreeLayout, { TidyTreeLayout } from '../src/treeVisualisation/layout/TidyTreeLayout.js';
+import createTidyTreeLayout, {
+  TidyTreeLayout,
+} from '../src/treeVisualisation/layout/TidyTreeLayout.js';
 
 describe('TidyTreeLayout', () => {
   // Simple mock hierarchy
@@ -10,14 +12,14 @@ describe('TidyTreeLayout', () => {
       {
         id: 'child1',
         length: 10,
-        children: []
+        children: [],
       },
       {
         id: 'child2',
         length: 20,
-        children: []
-      }
-    ]
+        children: [],
+      },
+    ],
   };
 
   it('initializes and calculates coordinates', () => {
@@ -53,7 +55,7 @@ describe('TidyTreeLayout', () => {
     const layout = createTidyTreeLayout(mockData, 'none', {
       width: 1000,
       height: 1000,
-      uniformScale: 5
+      uniformScale: 5,
     });
 
     // Logic check: uniform scale sets scale directly
@@ -117,8 +119,8 @@ describe('TidyTreeLayout', () => {
       length: 0,
       children: [
         { id: 'child1', length: 0 },
-        { id: 'child2', length: 0 }
-      ]
+        { id: 'child2', length: 0 },
+      ],
     };
     const layoutEngine = new TidyTreeLayout(zeroLengthTree);
     layoutEngine.setDimension(800, 600);
@@ -160,9 +162,7 @@ describe('TidyTreeLayout', () => {
       layoutEngine.setDimension(800, 600);
       layoutEngine.setMargin(60);
       const root = layoutEngine.constructRadialTree(false);
-      return Object.fromEntries(
-        root.leaves().map((leaf) => [leaf.data.name, leaf.rotatedAngle])
-      );
+      return Object.fromEntries(root.leaves().map((leaf) => [leaf.data.name, leaf.rotatedAngle]));
     };
 
     const angles = buildAngles();

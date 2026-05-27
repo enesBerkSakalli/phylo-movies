@@ -15,7 +15,8 @@ export function isLinkVisuallyHighlighted(link, colorManager, subtreeHighlightsE
   if (!colorManager) return false;
 
   // Check if link is in a highlighted subtree using fast path (only if coloring is enabled)
-  const isHighlightedSubtree = subtreeHighlightsEnabled !== false && colorManager.isLinkInHighlightedSubtreeFast?.(link);
+  const isHighlightedSubtree =
+    subtreeHighlightsEnabled !== false && colorManager.isLinkInHighlightedSubtreeFast?.(link);
 
   // Check if link IS the pivot edge
   const isPivotEdge = colorManager.isPivotEdge?.(link);
@@ -34,7 +35,8 @@ export function isNodeVisuallyHighlighted(nodeData, colorManager, subtreeHighlig
   if (!colorManager) return false;
 
   // Use fast path for subtree highlight check (only if coloring is enabled)
-  const isHighlightedSubtree = subtreeHighlightsEnabled !== false && colorManager.isNodeInHighlightedSubtreeFast?.(nodeData);
+  const isHighlightedSubtree =
+    subtreeHighlightsEnabled !== false && colorManager.isNodeInHighlightedSubtreeFast?.(nodeData);
 
   // Check if node IS the pivot edge by comparing colors
   const baseColor = colorManager.getNodeBaseColor?.(nodeData);

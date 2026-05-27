@@ -2,7 +2,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-export function assertRecord(value: unknown, fieldName: string): asserts value is Record<string, unknown> {
+export function assertRecord(
+  value: unknown,
+  fieldName: string
+): asserts value is Record<string, unknown> {
   if (!isRecord(value)) {
     throw new Error(`Invalid phyloMovieData payload: ${fieldName} must be an object`);
   }
@@ -47,7 +50,9 @@ export function requiredNumberArray(value: unknown, fieldName: string): number[]
 export function requiredNonEmptyNumberArray(value: unknown, fieldName: string): number[] {
   const array = requiredNumberArray(value, fieldName);
   if (array.length === 0) {
-    throw new Error(`Invalid phyloMovieData payload: ${fieldName} must contain at least one number`);
+    throw new Error(
+      `Invalid phyloMovieData payload: ${fieldName} must contain at least one number`
+    );
   }
   return array;
 }
@@ -90,7 +95,9 @@ export function validateRangeTuple(value: unknown, fieldName: string): [number, 
   const start = validateInteger(range[0], `${fieldName}[0]`);
   const end = validateInteger(range[1], `${fieldName}[1]`);
   if (start > end) {
-    throw new Error(`Invalid phyloMovieData payload: ${fieldName} start must be less than or equal to end`);
+    throw new Error(
+      `Invalid phyloMovieData payload: ${fieldName} start must be less than or equal to end`
+    );
   }
 
   return [start, end];
@@ -107,7 +114,11 @@ export function validateNullableInteger(value: unknown, fieldName: string): numb
   return validateInteger(value, fieldName);
 }
 
-export function validateParallelLength(array: unknown[], fieldName: string, treeCount: number): void {
+export function validateParallelLength(
+  array: unknown[],
+  fieldName: string,
+  treeCount: number
+): void {
   if (array.length !== treeCount) {
     throw new Error(
       `Invalid phyloMovieData payload: ${fieldName} length (${array.length}) must match interpolated_trees length (${treeCount})`

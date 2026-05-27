@@ -1,11 +1,18 @@
-import React from "react";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../../ui/accordion";
-import { Label } from "../../ui/label";
-import { Input } from "../../ui/input";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
-import { Alert, AlertDescription } from "../../ui/alert";
-import { Info } from "lucide-react";
-import { ToggleWithLabel } from "../../ui/toggle-with-label";
+import React from 'react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../../ui/accordion';
+import { Label } from '../../ui/label';
+import { Input } from '../../ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../ui/select';
+import { Alert, AlertDescription } from '../../ui/alert';
+import { Info } from 'lucide-react';
+import { ToggleWithLabel } from '../../ui/toggle-with-label';
 
 export function AdvancedPatternOptions({
   strategy,
@@ -15,9 +22,9 @@ export function AdvancedPatternOptions({
   onSegmentIndexChange,
   onUseRegexChange,
   onRegexPatternChange,
-  hideSegmentPicker = false
+  hideSegmentPicker = false,
 }) {
-  const showSegmentPicker = strategy === "segment" && !hideSegmentPicker;
+  const showSegmentPicker = strategy === 'segment' && !hideSegmentPicker;
   const [regexError, setRegexError] = React.useState(null);
 
   const validateRegex = (pattern) => {
@@ -43,7 +50,6 @@ export function AdvancedPatternOptions({
       <AccordionItem value="advanced">
         <AccordionTrigger className="text-sm font-medium">Advanced Options</AccordionTrigger>
         <AccordionContent className="space-y-4 pt-2">
-
           {showSegmentPicker && !useRegex && (
             <div className="space-y-2">
               <Label htmlFor="segment-index" className="text-sm">
@@ -90,19 +96,18 @@ export function AdvancedPatternOptions({
                 </Label>
                 <Input
                   id="regex-pattern"
-                  value={regexPattern || ""}
+                  value={regexPattern || ''}
                   onChange={(e) => handleRegexChange(e.target.value)}
                   placeholder="^([A-Z][a-z]+)_.*"
-                  className={regexError ? "border-destructive" : ""}
+                  className={regexError ? 'border-destructive' : ''}
                 />
-                {regexError && (
-                  <p className="text-xs text-destructive">{regexError}</p>
-                )}
+                {regexError && <p className="text-xs text-destructive">{regexError}</p>}
                 <Alert>
                   <Info className="h-4 w-4" />
                   <AlertDescription className="text-xs">
-                    Use capture group (parentheses) to extract the group name.
-                    Example: <code className="font-mono bg-muted px-1 rounded">^([A-Z][a-z]+)</code> extracts genus from <code className="font-mono bg-muted px-1 rounded">Homo_sapiens</code>
+                    Use capture group (parentheses) to extract the group name. Example:{' '}
+                    <code className="font-mono bg-muted px-1 rounded">^([A-Z][a-z]+)</code> extracts
+                    genus from <code className="font-mono bg-muted px-1 rounded">Homo_sapiens</code>
                   </AlertDescription>
                 </Alert>
               </div>

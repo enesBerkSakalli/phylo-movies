@@ -9,7 +9,7 @@ import {
   selectScrollToStartTimeline,
   selectZoomInTimeline,
   selectZoomOutTimeline,
-  useAppStore
+  useAppStore,
 } from '../../../state/phyloStore/store.js';
 
 export function TimelineScrollControls() {
@@ -27,36 +27,36 @@ export function TimelineScrollControls() {
       label: 'Scroll timeline to start',
       tooltip: 'Scroll timeline to start',
       Icon: ChevronsLeft,
-      onClick: scrollToStartTimeline
+      onClick: scrollToStartTimeline,
     },
     {
       id: 'zoomOutBtn',
       label: 'Zoom out timeline',
       tooltip: 'Zoom out timeline',
       Icon: ZoomOut,
-      onClick: zoomOutTimeline
+      onClick: zoomOutTimeline,
     },
     {
       id: 'fitToWindowBtn',
       label: 'Fit timeline to window',
       tooltip: 'Fit timeline to window',
       Icon: Scan,
-      onClick: fitTimeline
+      onClick: fitTimeline,
     },
     {
       id: 'zoomInBtn',
       label: 'Zoom in timeline',
       tooltip: 'Zoom in timeline',
       Icon: ZoomIn,
-      onClick: zoomInTimeline
+      onClick: zoomInTimeline,
     },
     {
       id: 'scrollToEndBtn',
       label: 'Scroll timeline to end',
       tooltip: 'Scroll timeline to end',
       Icon: ChevronsRight,
-      onClick: scrollToEndTimeline
-    }
+      onClick: scrollToEndTimeline,
+    },
   ];
 
   return (

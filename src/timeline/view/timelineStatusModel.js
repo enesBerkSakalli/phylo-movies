@@ -13,7 +13,12 @@ export function buildTimelineStatusSnapshot({
   msaColumnCount = null,
 }) {
   const sequenceIndex = timelineCursor?.frameIndex ?? frameIndex;
-  const position = buildInterpolationText(sequenceIndex, treeListLength, inputFrameIndices, timelineCursor);
+  const position = buildInterpolationText(
+    sequenceIndex,
+    treeListLength,
+    inputFrameIndices,
+    timelineCursor
+  );
   const segmentText = buildSegmentText(timelineCursor);
 
   return {
@@ -34,23 +39,39 @@ export function buildTimelineStatusSnapshot({
   };
 }
 
-export function buildInterpolationText(sequenceIndex, totalSequenceLength, inputTreeIndices, timelineCursor) {
+export function buildInterpolationText(
+  sequenceIndex,
+  totalSequenceLength,
+  inputTreeIndices,
+  timelineCursor
+) {
   const coordinateValue = getCoordinateValue(sequenceIndex, totalSequenceLength, timelineCursor);
   return {
-    display: buildReadablePositionText(sequenceIndex, totalSequenceLength, inputTreeIndices, timelineCursor),
-    fullPrecision: coordinateValue.toString()
+    display: buildReadablePositionText(
+      sequenceIndex,
+      totalSequenceLength,
+      inputTreeIndices,
+      timelineCursor
+    ),
+    fullPrecision: coordinateValue.toString(),
   };
 }
 
 function getCoordinateValue(sequenceIndex, totalSequenceLength, timelineCursor) {
-  const explicitValue = typeof timelineCursor?.timelineProgress === 'number' ? timelineCursor.timelineProgress : null;
+  const explicitValue =
+    typeof timelineCursor?.timelineProgress === 'number' ? timelineCursor.timelineProgress : null;
   if (explicitValue != null) return clamp01(explicitValue);
 
-  const derivedValue = totalSequenceLength > 1 ? (sequenceIndex / (totalSequenceLength - 1)) : 0;
+  const derivedValue = totalSequenceLength > 1 ? sequenceIndex / (totalSequenceLength - 1) : 0;
   return clamp01(derivedValue);
 }
 
-function buildReadablePositionText(sequenceIndex, totalSequenceLength, inputTreeIndices, timelineCursor) {
+function buildReadablePositionText(
+  sequenceIndex,
+  totalSequenceLength,
+  inputTreeIndices,
+  timelineCursor
+) {
   const inputFrames = Array.isArray(inputTreeIndices) ? inputTreeIndices : [];
   const safeSequenceIndex = Number.isFinite(sequenceIndex) ? sequenceIndex : 0;
 

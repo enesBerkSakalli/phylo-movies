@@ -69,7 +69,7 @@ describe('SPR move event search text', () => {
         destinationAttachment: [0, 1, 2, 3, 4],
         highlightGroup: [[0, 1, 2, 3, 4]],
       },
-      ['Root', 'Anchor', 'Ostrich', 'Tinamous', 'HiddenMoa'],
+      ['Root', 'Anchor', 'Ostrich', 'Tinamous', 'HiddenMoa']
     );
 
     expect(text).toContain('ostrich');

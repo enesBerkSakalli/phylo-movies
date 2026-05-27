@@ -23,7 +23,7 @@ export function getTargetSegmentIndex(initialSegIndex, clickMs, segments, cumula
   if (initialSegIndex > 0 && !segments[initialSegIndex - 1]?.isInputTreeSegment) {
     const prevBounds = getSegmentBounds(initialSegIndex - 1, timelineData);
     const prevDist = prevBounds
-      ? Math.abs(clickMs - ((prevBounds.start + prevBounds.end) / 2))
+      ? Math.abs(clickMs - (prevBounds.start + prevBounds.end) / 2)
       : null;
 
     if (prevDist !== null && prevDist < minDist) {
@@ -36,7 +36,7 @@ export function getTargetSegmentIndex(initialSegIndex, clickMs, segments, cumula
   if (initialSegIndex < segments.length - 1 && !segments[initialSegIndex + 1]?.isInputTreeSegment) {
     const nextBounds = getSegmentBounds(initialSegIndex + 1, timelineData);
     const nextDist = nextBounds
-      ? Math.abs(clickMs - ((nextBounds.start + nextBounds.end) / 2))
+      ? Math.abs(clickMs - (nextBounds.start + nextBounds.end) / 2)
       : null;
 
     if (nextDist !== null && nextDist < minDist) {

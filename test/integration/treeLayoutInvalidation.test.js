@@ -13,11 +13,11 @@ describe('tree layout store invalidation', () => {
       _lastFocusedTreeIndex: 0,
       layerManager: { comparisonRenderer: { resetAutoFit: vi.fn() } },
       resetInterpolationCaches: vi.fn(),
-      renderAllElements: vi.fn()
+      renderAllElements: vi.fn(),
     };
     useAppStore.setState({
       treeControllers: [controller],
-      branchTransformation: 'none'
+      branchTransformation: 'none',
     });
 
     useAppStore.getState().setBranchTransformation('log');
@@ -31,11 +31,11 @@ describe('tree layout store invalidation', () => {
   it('does not invalidate when the layout value is unchanged', () => {
     const controller = {
       resetInterpolationCaches: vi.fn(),
-      renderAllElements: vi.fn()
+      renderAllElements: vi.fn(),
     };
     useAppStore.setState({
       treeControllers: [controller],
-      layoutRotationDegrees: 0
+      layoutRotationDegrees: 0,
     });
 
     useAppStore.getState().setLayoutRotationDegrees(0);

@@ -11,11 +11,7 @@ describe('frame index vocabulary', () => {
   it('does not keep legacy frame cursor aliases in source or tests', () => {
     const files = SEARCH_ROOTS.flatMap((root) => listFiles(join(repoRoot, root)));
 
-    const legacyTerms = [
-      'activeFrameIndex',
-      'currentTreeIndex',
-      'selectCurrentTreeIndex',
-    ];
+    const legacyTerms = ['activeFrameIndex', 'currentTreeIndex', 'selectCurrentTreeIndex'];
     const offenders = files
       .map((file) => relative(repoRoot, file))
       .filter((file) => file !== 'test/integration/frameIndexVocabularyStatic.test.js')

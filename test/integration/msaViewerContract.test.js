@@ -10,7 +10,7 @@ let msaContext;
 const viewerInstances = [];
 
 vi.mock('../../src/components/msa/useMSA.js', () => ({
-  useMSA: () => msaContext
+  useMSA: () => msaContext,
 }));
 
 vi.mock('../../src/msaViewer/MSADeckGLViewer', () => ({
@@ -31,17 +31,17 @@ vi.mock('../../src/msaViewer/MSADeckGLViewer', () => ({
       this.setRowColorMap = vi.fn();
       viewerInstances.push(this);
     }
-  }
+  },
 }));
 
 const processedData = {
   sequences: [
     { id: 'taxon-a', seq: 'ACGT' },
-    { id: 'taxon-b', seq: 'ACGA' }
+    { id: 'taxon-b', seq: 'ACGA' },
   ],
   type: 'dna',
   rows: 2,
-  cols: 4
+  cols: 4,
 };
 
 function createContext(overrides = {}) {
@@ -57,7 +57,7 @@ function createContext(overrides = {}) {
     visibleRange: { r0: 0, r1: 1, c0: 0, c1: 1 },
     scrollAction: null,
     scrollToPosition: vi.fn(),
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -148,7 +148,7 @@ describe('MSA viewer contract', () => {
       processedData: null,
       msaRegion: null,
       msaPreviousRegion: null,
-      visibleRange: null
+      visibleRange: null,
     });
     await act(async () => {
       root.render(React.createElement(MSAViewer));
@@ -165,11 +165,15 @@ describe('MSA viewer contract', () => {
     const { MSAViewer } = await import('../../src/components/msa/MSAViewer.jsx');
     const setVisibleRange = vi.fn();
     const rafCallbacks = [];
-    const requestAnimationFrameSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
-      rafCallbacks.push(callback);
-      return rafCallbacks.length;
-    });
-    const cancelAnimationFrameSpy = vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
+    const requestAnimationFrameSpy = vi
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((callback) => {
+        rafCallbacks.push(callback);
+        return rafCallbacks.length;
+      });
+    const cancelAnimationFrameSpy = vi
+      .spyOn(window, 'cancelAnimationFrame')
+      .mockImplementation(() => {});
 
     try {
       msaContext = createContext({ setVisibleRange });
@@ -179,14 +183,14 @@ describe('MSA viewer contract', () => {
       await act(async () => {
         viewer.onViewStateChange({
           range: { r0: 0, r1: 1, c0: 0, c1: 1 },
-          layoutMetrics: { labelsWidth: 72, axisHeight: 20 }
+          layoutMetrics: { labelsWidth: 72, axisHeight: 20 },
         });
       });
 
       await act(async () => {
         viewer.onViewStateChange({
           range: { r0: 0, r1: 1, c0: 1, c1: 2 },
-          layoutMetrics: { labelsWidth: 96, axisHeight: 24 }
+          layoutMetrics: { labelsWidth: 96, axisHeight: 24 },
         });
       });
 
@@ -219,8 +223,8 @@ describe('MSA viewer contract', () => {
       React.createElement(MSAScrollbars, {
         layoutMetrics: {
           labelsWidth: 72,
-          axisHeight: 20
-        }
+          axisHeight: 20,
+        },
       })
     );
 
@@ -239,7 +243,7 @@ describe('MSA viewer contract', () => {
 
     msaContext = createContext({
       processedData: { ...processedData, rows: 100, cols: 100 },
-      visibleRange: { r0: 95, r1: 99, c0: 95, c1: 99 }
+      visibleRange: { r0: 95, r1: 99, c0: 95, c1: 99 },
     });
     const { container, root } = await renderReact(React.createElement(MSAScrollbars));
 
@@ -264,7 +268,7 @@ describe('MSA viewer contract', () => {
     msaContext = createContext({
       processedData: { ...processedData, rows: 100, cols: 100 },
       visibleRange: { r0: 10, r1: 19, c0: 10, c1: 19 },
-      scrollToPosition
+      scrollToPosition,
     });
     const { container, root } = await renderReact(React.createElement(MSAScrollbars));
     const scrollbars = container.querySelectorAll('[role="scrollbar"]');
@@ -274,26 +278,52 @@ describe('MSA viewer contract', () => {
     expect(scrollbars[1].tabIndex).to.equal(0);
 
     await act(async () => {
-      scrollbars[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
-      scrollbars[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+      scrollbars[0].dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })
+      );
+      scrollbars[1].dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true })
+      );
     });
 
     expect(scrollToPosition).toHaveBeenCalledWith({ col: 11 });
     expect(scrollToPosition).toHaveBeenCalledWith({ row: 11 });
 
-    hThumb.getBoundingClientRect = () => ({ left: 0, top: 0, width: 10, height: 10, right: 10, bottom: 10 });
-    scrollbars[0].getBoundingClientRect = () => ({ left: 0, top: 0, width: 200, height: 12, right: 200, bottom: 12 });
-    const PointerEventCtor = window.PointerEvent ?? class TestPointerEvent extends MouseEvent {
-      constructor(type, init = {}) {
-        super(type, init);
-        Object.defineProperty(this, 'pointerId', { value: init.pointerId ?? 0 });
-      }
-    };
+    hThumb.getBoundingClientRect = () => ({
+      left: 0,
+      top: 0,
+      width: 10,
+      height: 10,
+      right: 10,
+      bottom: 10,
+    });
+    scrollbars[0].getBoundingClientRect = () => ({
+      left: 0,
+      top: 0,
+      width: 200,
+      height: 12,
+      right: 200,
+      bottom: 12,
+    });
+    const PointerEventCtor =
+      window.PointerEvent ??
+      class TestPointerEvent extends MouseEvent {
+        constructor(type, init = {}) {
+          super(type, init);
+          Object.defineProperty(this, 'pointerId', { value: init.pointerId ?? 0 });
+        }
+      };
 
     await act(async () => {
-      hThumb.dispatchEvent(new PointerEventCtor('pointerdown', { pointerId: 1, clientX: 20, bubbles: true }));
-      window.dispatchEvent(new PointerEventCtor('pointermove', { pointerId: 1, clientX: 100, bubbles: true }));
-      window.dispatchEvent(new PointerEventCtor('pointerup', { pointerId: 1, clientX: 100, bubbles: true }));
+      hThumb.dispatchEvent(
+        new PointerEventCtor('pointerdown', { pointerId: 1, clientX: 20, bubbles: true })
+      );
+      window.dispatchEvent(
+        new PointerEventCtor('pointermove', { pointerId: 1, clientX: 100, bubbles: true })
+      );
+      window.dispatchEvent(
+        new PointerEventCtor('pointerup', { pointerId: 1, clientX: 100, bubbles: true })
+      );
     });
 
     expect(scrollToPosition).toHaveBeenCalledWith({ col: 50 });
@@ -311,25 +341,35 @@ describe('MSA viewer contract', () => {
     msaContext = createContext({
       processedData: { ...processedData, rows: 100, cols: 100 },
       visibleRange: { r0: 10, r1: 19, c0: 10, c1: 19 },
-      scrollToPosition: vi.fn()
+      scrollToPosition: vi.fn(),
     });
     const { container, root } = await renderReact(React.createElement(MSAScrollbars));
     const scrollbars = container.querySelectorAll('[role="scrollbar"]');
     const hThumb = scrollbars[0].firstElementChild;
-    const PointerEventCtor = window.PointerEvent ?? class TestPointerEvent extends MouseEvent {
-      constructor(type, init = {}) {
-        super(type, init);
-        Object.defineProperty(this, 'pointerId', { value: init.pointerId ?? 0 });
-      }
-    };
+    const PointerEventCtor =
+      window.PointerEvent ??
+      class TestPointerEvent extends MouseEvent {
+        constructor(type, init = {}) {
+          super(type, init);
+          Object.defineProperty(this, 'pointerId', { value: init.pointerId ?? 0 });
+        }
+      };
 
     await act(async () => {
-      hThumb.dispatchEvent(new PointerEventCtor('pointerdown', { pointerId: 1, clientX: 20, bubbles: true }));
+      hThumb.dispatchEvent(
+        new PointerEventCtor('pointerdown', { pointerId: 1, clientX: 20, bubbles: true })
+      );
     });
 
-    const pointerMoveListener = addEventListenerSpy.mock.calls.find(([type]) => type === 'pointermove')?.[1];
-    const pointerUpListener = addEventListenerSpy.mock.calls.find(([type]) => type === 'pointerup')?.[1];
-    const pointerCancelListener = addEventListenerSpy.mock.calls.find(([type]) => type === 'pointercancel')?.[1];
+    const pointerMoveListener = addEventListenerSpy.mock.calls.find(
+      ([type]) => type === 'pointermove'
+    )?.[1];
+    const pointerUpListener = addEventListenerSpy.mock.calls.find(
+      ([type]) => type === 'pointerup'
+    )?.[1];
+    const pointerCancelListener = addEventListenerSpy.mock.calls.find(
+      ([type]) => type === 'pointercancel'
+    )?.[1];
 
     await act(async () => {
       root.unmount();
@@ -350,13 +390,27 @@ describe('MSA viewer contract', () => {
     msaContext = createContext({
       processedData: { ...processedData, rows: 100, cols: 100 },
       visibleRange: { r0: 10, r1: 19, c0: 10, c1: 19 },
-      scrollToPosition
+      scrollToPosition,
     });
     const { container, root } = await renderReact(React.createElement(MSAScrollbars));
     const scrollbars = container.querySelectorAll('[role="scrollbar"]');
 
-    scrollbars[0].getBoundingClientRect = () => ({ left: 0, top: 0, width: 200, height: 12, right: 200, bottom: 12 });
-    scrollbars[1].getBoundingClientRect = () => ({ left: 0, top: 0, width: 12, height: 200, right: 12, bottom: 200 });
+    scrollbars[0].getBoundingClientRect = () => ({
+      left: 0,
+      top: 0,
+      width: 200,
+      height: 12,
+      right: 200,
+      bottom: 12,
+    });
+    scrollbars[1].getBoundingClientRect = () => ({
+      left: 0,
+      top: 0,
+      width: 12,
+      height: 200,
+      right: 12,
+      bottom: 200,
+    });
 
     await act(async () => {
       scrollbars[0].dispatchEvent(new MouseEvent('click', { clientX: 200, bubbles: true }));

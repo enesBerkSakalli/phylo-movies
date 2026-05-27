@@ -1,4 +1,4 @@
-import { validateCSVTaxa } from "../../../treeColoring/utils/CSVParser.js";
+import { validateCSVTaxa } from '../../../treeColoring/utils/CSVParser.js';
 
 // Load and validate CSV column data
 export function loadCSVColumn(csvData, colName, taxaNames) {
@@ -7,14 +7,14 @@ export function loadCSVColumn(csvData, colName, taxaNames) {
     return {
       map: new Map(),
       groups: [],
-      validation: { isValid: false, matched: [], unmatched: [], matchPercentage: 0 }
+      validation: { isValid: false, matched: [], unmatched: [], matchPercentage: 0 },
     };
   }
 
   // Ensure map is a valid Map instance (contains CSV_NAME -> GROUP_VALUE)
   let rawMap = csvData.allGroupings[colName];
   if (!(rawMap instanceof Map)) {
-    rawMap = rawMap && typeof rawMap === "object" ? new Map(Object.entries(rawMap)) : new Map();
+    rawMap = rawMap && typeof rawMap === 'object' ? new Map(Object.entries(rawMap)) : new Map();
   }
 
   const groups = csvData.columnGroups?.[colName] || [];
@@ -30,9 +30,9 @@ export function loadCSVColumn(csvData, colName, taxaNames) {
     }
   }
 
-  return { 
-    map: canonicalMap, 
-    groups, 
-    validation 
+  return {
+    map: canonicalMap,
+    groups,
+    validation,
   };
 }

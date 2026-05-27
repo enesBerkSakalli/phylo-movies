@@ -2,7 +2,7 @@ import { getSplitIndices, getSplitKey } from '../../domain/tree/splits.js';
 import {
   calculatePositionCenter,
   calculateSafeVisualRadius,
-  calculateTreeVisualRadius
+  calculateTreeVisualRadius,
 } from '../utils/TreeBoundsUtils.js';
 
 /**
@@ -21,7 +21,12 @@ import {
  * @param {number} [rightRadius=0] - Right tree radius in world-space units
  * @returns {number} Right tree offset in world-space units
  */
-export function calculateRightOffset(canvasWidth, rightTreeOffset, leftRadius = 0, rightRadius = 0) {
+export function calculateRightOffset(
+  canvasWidth,
+  rightTreeOffset,
+  leftRadius = 0,
+  rightRadius = 0
+) {
   // Use tree radii if available; fall back to canvas-based estimate at zoom=0
   const effectiveLeftRadius = leftRadius > 0 ? leftRadius : canvasWidth / 4;
   const effectiveRightRadius = rightRadius > 0 ? rightRadius : canvasWidth / 4;
@@ -38,7 +43,7 @@ export function calculateComparisonFrameGeometry({
   rightTreeOffset = { x: 0, y: 0 },
   leftTreeOffsetX = 0,
   leftTreeOffsetY = 0,
-  fontSize = '2.6em'
+  fontSize = '2.6em',
 }) {
   const leftCenterBase = calculatePositionCenter(leftLayerData.nodes);
   const rightCenterBase = calculatePositionCenter(rightLayerData.nodes);
@@ -49,8 +54,16 @@ export function calculateComparisonFrameGeometry({
   const rightOffsetY = rightTreeOffset.y;
   const leftCenter = [leftCenterBase[0] + leftTreeOffsetX, leftCenterBase[1] + leftTreeOffsetY];
   const rightCenter = [rightCenterBase[0] + rightOffset, rightCenterBase[1] + rightOffsetY];
-  const leftSafeRadius = calculateSafeVisualRadius(leftLayerData.nodes, leftLayerData.labels, leftCenter);
-  const rightSafeRadius = calculateSafeVisualRadius(rightLayerData.nodes, rightLayerData.labels, rightCenter);
+  const leftSafeRadius = calculateSafeVisualRadius(
+    leftLayerData.nodes,
+    leftLayerData.labels,
+    leftCenter
+  );
+  const rightSafeRadius = calculateSafeVisualRadius(
+    rightLayerData.nodes,
+    rightLayerData.labels,
+    rightCenter
+  );
 
   return {
     leftCenterBase,
@@ -63,7 +76,7 @@ export function calculateComparisonFrameGeometry({
     leftCenter,
     rightCenter,
     leftSafeRadius,
-    rightSafeRadius
+    rightSafeRadius,
   };
 }
 
@@ -74,34 +87,50 @@ export function calculateComparisonFrameGeometry({
  * @param {number} offsetY - Y offset
  */
 export function applyOffset(layerData, offsetX, offsetY) {
-  layerData.nodes.forEach(node => {
+  layerData.nodes.forEach((node) => {
     node.position = [node.position[0] + offsetX, node.position[1] + offsetY, node.position[2]];
     node.renderPosition = [
       node.renderPosition[0] + offsetX,
       node.renderPosition[1] + offsetY,
-      node.renderPosition[2]
+      node.renderPosition[2],
     ];
   });
 
-  layerData.links.forEach(link => {
-    link.sourcePosition = [link.sourcePosition[0] + offsetX, link.sourcePosition[1] + offsetY, link.sourcePosition[2]];
-    link.targetPosition = [link.targetPosition[0] + offsetX, link.targetPosition[1] + offsetY, link.targetPosition[2]];
+  layerData.links.forEach((link) => {
+    link.sourcePosition = [
+      link.sourcePosition[0] + offsetX,
+      link.sourcePosition[1] + offsetY,
+      link.sourcePosition[2],
+    ];
+    link.targetPosition = [
+      link.targetPosition[0] + offsetX,
+      link.targetPosition[1] + offsetY,
+      link.targetPosition[2],
+    ];
 
     if (link.path) {
       offsetFlatPath(link.path, offsetX, offsetY);
     }
   });
 
-  layerData.extensions.forEach(ext => {
-    ext.sourcePosition = [ext.sourcePosition[0] + offsetX, ext.sourcePosition[1] + offsetY, ext.sourcePosition[2]];
-    ext.targetPosition = [ext.targetPosition[0] + offsetX, ext.targetPosition[1] + offsetY, ext.targetPosition[2]];
+  layerData.extensions.forEach((ext) => {
+    ext.sourcePosition = [
+      ext.sourcePosition[0] + offsetX,
+      ext.sourcePosition[1] + offsetY,
+      ext.sourcePosition[2],
+    ];
+    ext.targetPosition = [
+      ext.targetPosition[0] + offsetX,
+      ext.targetPosition[1] + offsetY,
+      ext.targetPosition[2],
+    ];
 
     if (ext.path) {
       offsetFlatPath(ext.path, offsetX, offsetY);
     }
   });
 
-  layerData.labels.forEach(label => {
+  layerData.labels.forEach((label) => {
     label.position = [label.position[0] + offsetX, label.position[1] + offsetY, label.position[2]];
   });
 }
@@ -112,7 +141,7 @@ export function cloneLayerData(layerData) {
     links: cloneLayerElements(layerData.links),
     extensions: cloneLayerElements(layerData.extensions),
     labels: cloneLayerElements(layerData.labels),
-    connectors: cloneLayerElements(layerData.connectors)
+    connectors: cloneLayerElements(layerData.connectors),
   };
 }
 
@@ -129,7 +158,7 @@ function cloneLayerElement(element) {
   if (ArrayBuffer.isView(element.path)) {
     clone.path = new element.path.constructor(element.path);
   } else if (Array.isArray(element.path)) {
-    clone.path = element.path.map((point) => Array.isArray(point) ? [...point] : point);
+    clone.path = element.path.map((point) => (Array.isArray(point) ? [...point] : point));
   }
   return clone;
 }
@@ -161,7 +190,7 @@ export function combineLayerData(leftData, rightData, connectors = []) {
     links: [...leftData.links, ...rightData.links],
     extensions: [...leftData.extensions, ...rightData.extensions],
     labels: [...leftData.labels, ...rightData.labels],
-    connectors
+    connectors,
   };
 }
 
@@ -175,14 +204,14 @@ export function buildPositionMap(nodes, labels = []) {
   const positionMap = new Map();
   const labelPositionByLeaf = new Map();
 
-  labels.forEach(label => {
+  labels.forEach((label) => {
     const splitKey = getSplitKey(label);
     if (splitKey) {
       labelPositionByLeaf.set(splitKey, label.position);
     }
   });
 
-  nodes.forEach(node => {
+  nodes.forEach((node) => {
     const splitIndices = getSplitIndices(node);
     const splitKey = getSplitKey(node);
     if (Array.isArray(splitIndices) && splitKey) {
@@ -203,7 +232,7 @@ export function buildPositionMap(nodes, labels = []) {
         split_indices: splitIndices,
         isLeaf: node.isLeaf,
         name: node.name ? String(node.name) : null,
-        depth: node.depth
+        depth: node.depth,
       });
     }
   });

@@ -11,11 +11,23 @@ const legacyModules = [
     importPath: ['domain', 'tree', ['subtree', 'FrequencyUtils'].join('')].join('/'),
   },
   {
-    filePath: join(repoRoot, 'src', 'treeVisualisation', 'utils', ['Change', 'Metric', 'Utils.js'].join('')),
+    filePath: join(
+      repoRoot,
+      'src',
+      'treeVisualisation',
+      'utils',
+      ['Change', 'Metric', 'Utils.js'].join('')
+    ),
     importPath: ['treeVisualisation', 'utils', ['Change', 'Metric', 'Utils'].join('')].join('/'),
   },
   {
-    filePath: join(repoRoot, 'src', 'treeVisualisation', 'utils', ['split', 'Matching.js'].join('')),
+    filePath: join(
+      repoRoot,
+      'src',
+      'treeVisualisation',
+      'utils',
+      ['split', 'Matching.js'].join('')
+    ),
     importPath: ['utils', ['split', 'Matching.js'].join('')].join('/'),
   },
 ];
@@ -25,9 +37,7 @@ const obsoleteDiagnostics = [
   join(repoRoot, 'test', ['reproduce', 'tooltip', 'issue.test.js'].join('_')),
 ];
 
-const obsoleteShimFiles = [
-  join(repoRoot, 'src', 'lib', 'shims', 'child-process-browser.js'),
-];
+const obsoleteShimFiles = [join(repoRoot, 'src', 'lib', 'shims', 'child-process-browser.js')];
 
 function collectSourceFiles(directory) {
   return readdirSync(directory).flatMap((entry) => {
@@ -59,7 +69,9 @@ describe('legacy module aliases', () => {
 
     const aliasReferences = files
       .filter((file) => file !== currentTestFile)
-      .filter((file) => sourceAliasPatterns.some((pattern) => pattern.test(readFileSync(file, 'utf8'))))
+      .filter((file) =>
+        sourceAliasPatterns.some((pattern) => pattern.test(readFileSync(file, 'utf8')))
+      )
       .map((file) => relative(repoRoot, file));
 
     expect(aliasReferences).toEqual([]);
@@ -72,7 +84,9 @@ describe('legacy module aliases', () => {
     ];
 
     for (const legacyModule of legacyModules) {
-      expect(existsSync(legacyModule.filePath), relative(repoRoot, legacyModule.filePath)).toBe(false);
+      expect(existsSync(legacyModule.filePath), relative(repoRoot, legacyModule.filePath)).toBe(
+        false
+      );
 
       const importReferences = files
         .filter((file) => file !== fileURLToPath(import.meta.url))
@@ -117,7 +131,9 @@ describe('legacy module aliases', () => {
     expect(viteConfigSource).not.toContain('child-process-browser');
     expect(viteConfigSource).not.toContain('node:child_process');
     expect(viteConfigSource).not.toMatch(/\bchild_process\s*:/);
-    expect(viteConfigSource).not.toMatch(/\bdefine\s*:\s*\{[\s\S]*\bglobal\s*:\s*['"]globalThis['"]/);
+    expect(viteConfigSource).not.toMatch(
+      /\bdefine\s*:\s*\{[\s\S]*\bglobal\s*:\s*['"]globalThis['"]/
+    );
     expect(viteConfigSource).not.toMatch(/\bdefine\s*:\s*\{[\s\S]*['"]process\.env['"]\s*:/);
   });
 
@@ -125,11 +141,11 @@ describe('legacy module aliases', () => {
     const routerSource = readFileSync(join(repoRoot, 'src', 'Router.jsx'), 'utf8');
     const docsLandingSource = readFileSync(
       join(repoRoot, 'src', 'pages', 'GitHubPages', 'GitHubPagesInfoPage.jsx'),
-      'utf8',
+      'utf8'
     );
     const workspaceLandingSource = readFileSync(
       join(repoRoot, 'src', 'pages', 'WorkspaceInitialization', 'WorkspaceInitializationPage.jsx'),
-      'utf8',
+      'utf8'
     );
     const seoScriptSource = readFileSync(join(repoRoot, 'scripts', 'apply-gh-seo.js'), 'utf8');
     const readmeSource = readFileSync(join(repoRoot, 'README.md'), 'utf8');

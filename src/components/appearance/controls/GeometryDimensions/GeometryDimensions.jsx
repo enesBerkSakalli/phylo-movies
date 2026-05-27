@@ -3,7 +3,14 @@ import { LabeledSlider } from '../../../ui/labeled-slider';
 import { SidebarMenuSub, SidebarMenuSubItem } from '../../../ui/sidebar';
 import { Label } from '../../../ui/label';
 import { Switch } from '../../../ui/switch';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '../../../ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../../ui/select';
 
 const clampValue = (value, fallback) => {
   const numeric = Number(value);
@@ -41,35 +48,44 @@ export function GeometryDimensions({
           await controller.renderAllElements();
         }
       } while (needsRenderRef.current);
-    } catch {}
-    finally {
+    } catch {
+    } finally {
       isRenderingRef.current = false;
     }
   }, [treeControllers]);
 
-  const handleNodeSizeChange = useCallback((vals) => {
-    const nextValue = clampValue(Array.isArray(vals) ? vals[0] : null, nodeSize ?? 1);
-    if (nextValue !== nodeSize) {
-      setNodeSize(nextValue);
-      renderControllers();
-    }
-  }, [nodeSize, setNodeSize, renderControllers]);
+  const handleNodeSizeChange = useCallback(
+    (vals) => {
+      const nextValue = clampValue(Array.isArray(vals) ? vals[0] : null, nodeSize ?? 1);
+      if (nextValue !== nodeSize) {
+        setNodeSize(nextValue);
+        renderControllers();
+      }
+    },
+    [nodeSize, setNodeSize, renderControllers]
+  );
 
-  const handleStrokeWidthChange = useCallback((vals) => {
-    const nextValue = clampValue(Array.isArray(vals) ? vals[0] : null, strokeWidth ?? 1);
-    if (nextValue !== strokeWidth) {
-      setStrokeWidth(nextValue);
-      renderControllers();
-    }
-  }, [strokeWidth, setStrokeWidth, renderControllers]);
+  const handleStrokeWidthChange = useCallback(
+    (vals) => {
+      const nextValue = clampValue(Array.isArray(vals) ? vals[0] : null, strokeWidth ?? 1);
+      if (nextValue !== strokeWidth) {
+        setStrokeWidth(nextValue);
+        renderControllers();
+      }
+    },
+    [strokeWidth, setStrokeWidth, renderControllers]
+  );
 
-  const handleFontSizeChange = useCallback((vals) => {
-    const nextValue = clampValue(Array.isArray(vals) ? vals[0] : null, fontSizeNumber ?? 1.8);
-    if (nextValue !== fontSizeNumber) {
-      setFontSize(nextValue);
-      renderControllers();
-    }
-  }, [fontSizeNumber, setFontSize, renderControllers]);
+  const handleFontSizeChange = useCallback(
+    (vals) => {
+      const nextValue = clampValue(Array.isArray(vals) ? vals[0] : null, fontSizeNumber ?? 1.8);
+      if (nextValue !== fontSizeNumber) {
+        setFontSize(nextValue);
+        renderControllers();
+      }
+    },
+    [fontSizeNumber, setFontSize, renderControllers]
+  );
 
   return (
     <SidebarMenuSub>
@@ -120,32 +136,40 @@ export function GeometryDimensions({
 
           <div className="border-t border-border/20 pt-4 mt-2">
             <div className="flex items-center justify-between mb-3">
-              <Label htmlFor="labels-toggle" className="text-xs font-medium text-foreground/80">Show Labels</Label>
-              <Switch
-                id="labels-toggle"
-                checked={labelsVisible}
-                onCheckedChange={onToggleLabels}
-              />
+              <Label htmlFor="labels-toggle" className="text-xs font-medium text-foreground/80">
+                Show Labels
+              </Label>
+              <Switch id="labels-toggle" checked={labelsVisible} onCheckedChange={onToggleLabels} />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="branch-support-label-key" className="text-xs font-medium text-foreground/80">
+              <Label
+                htmlFor="branch-support-label-key"
+                className="text-xs font-medium text-foreground/80"
+              >
                 Branch Annotation
               </Label>
               <Select
                 value={branchAnnotationLabelKey || 'none'}
                 onValueChange={onChangeBranchAnnotationLabelKey}
-                disabled={!Array.isArray(branchAnnotationOptions) || branchAnnotationOptions.length <= 1}
+                disabled={
+                  !Array.isArray(branchAnnotationOptions) || branchAnnotationOptions.length <= 1
+                }
               >
-                <SelectTrigger id="branch-support-label-key" className="h-8 text-xs bg-background/50 border-border/40">
+                <SelectTrigger
+                  id="branch-support-label-key"
+                  className="h-8 text-xs bg-background/50 border-border/40"
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    {(branchAnnotationOptions || [{ value: 'none', label: 'None' }]).map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
+                    {(branchAnnotationOptions || [{ value: 'none', label: 'None' }]).map(
+                      (option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      )
+                    )}
                   </SelectGroup>
                 </SelectContent>
               </Select>

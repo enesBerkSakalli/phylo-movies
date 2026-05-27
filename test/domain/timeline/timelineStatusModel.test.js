@@ -21,7 +21,9 @@ describe('timeline status model', () => {
     expect(status.position.display).toBe('Input tree 2/3');
     expect(status.position.fullPrecision).toBe('0.5');
     expect(status.segment.text).toBe('Input tree');
-    expect(status.segment.tooltip).toBe('An observed tree from one alignment window or uploaded tree set.');
+    expect(status.segment.tooltip).toBe(
+      'An observed tree from one alignment window or uploaded tree set.'
+    );
   });
 
   it('builds generated-frame status between source and target input trees', () => {
@@ -39,7 +41,9 @@ describe('timeline status model', () => {
 
     expect(status.position.display).toBe('source input tree 1 -> target input tree 2, frame 2/2');
     expect(status.segment.text).toBe('source input tree 1 -> target input tree 2');
-    expect(status.segment.tooltip).toBe('Generated frames between a source input tree and target input tree.');
+    expect(status.segment.tooltip).toBe(
+      'Generated frames between a source input tree and target input tree.'
+    );
   });
 
   it('builds MSA status only when a valid discrete window exists', () => {

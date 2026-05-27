@@ -102,7 +102,10 @@ function safeLeaves(layout) {
 
 function leafKey(leaf) {
   if (!leaf || !Array.isArray(leaf.split_indices) || leaf.split_indices.length === 0) return null;
-  return leaf.split_indices.slice().sort((a, b) => a - b).join(',');
+  return leaf.split_indices
+    .slice()
+    .sort((a, b) => a - b)
+    .join(',');
 }
 
 if (typeof module !== 'undefined') {

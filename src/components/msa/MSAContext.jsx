@@ -9,7 +9,7 @@ import {
   selectSetMsaRegion,
   selectTaxaColorVersion,
   selectTaxaGrouping,
-  useAppStore
+  useAppStore,
 } from '../../state/phyloStore/store.js';
 import { processMsaSequences } from '../../msaViewer/utils/dataUtils';
 import { SYSTEM_TREE_COLORS } from '../../constants/TreeColors';
@@ -42,10 +42,13 @@ export function MSAProvider({ children }) {
     setScrollAction({ ...position, id: Date.now() });
   }, []);
 
-  const systemTreeColors = useMemo(() => ({
-    version: taxaColorVersion,
-    colors: { ...SYSTEM_TREE_COLORS },
-  }), [taxaColorVersion]);
+  const systemTreeColors = useMemo(
+    () => ({
+      version: taxaColorVersion,
+      colors: { ...SYSTEM_TREE_COLORS },
+    }),
+    [taxaColorVersion]
+  );
 
   // Process data
   const processedData = useMemo(() => {
@@ -74,7 +77,7 @@ export function MSAProvider({ children }) {
         return {
           ...parsed,
           sequences: reordered,
-          rows: reordered.length
+          rows: reordered.length,
         };
       }
 
@@ -106,45 +109,44 @@ export function MSAProvider({ children }) {
     return map;
   }, [processedData, taxaGrouping, systemTreeColors]);
 
-  const value = useMemo(() => ({
-    processedData,
-    msaRegion,
-    setMsaRegion,
-    clearMsaRegion,
-    msaPreviousRegion,
-    showLetters,
-    setShowLetters,
-    colorScheme,
-    setColorScheme,
-    viewAction,
-    triggerViewAction,
-    visibleRange,
-    setVisibleRange,
-    rowColorMap,
-    scrollAction,
-    scrollToPosition,
-  }), [
-    processedData,
-    msaRegion,
-    setMsaRegion,
-    clearMsaRegion,
-    msaPreviousRegion,
-    showLetters,
-    setShowLetters,
-    colorScheme,
-    setColorScheme,
-    viewAction,
-    triggerViewAction,
-    visibleRange,
-    setVisibleRange,
-    rowColorMap,
-    scrollAction,
-    scrollToPosition
-  ]);
-
-  return (
-    <MSAContext.Provider value={value}>
-      {children}
-    </MSAContext.Provider>
+  const value = useMemo(
+    () => ({
+      processedData,
+      msaRegion,
+      setMsaRegion,
+      clearMsaRegion,
+      msaPreviousRegion,
+      showLetters,
+      setShowLetters,
+      colorScheme,
+      setColorScheme,
+      viewAction,
+      triggerViewAction,
+      visibleRange,
+      setVisibleRange,
+      rowColorMap,
+      scrollAction,
+      scrollToPosition,
+    }),
+    [
+      processedData,
+      msaRegion,
+      setMsaRegion,
+      clearMsaRegion,
+      msaPreviousRegion,
+      showLetters,
+      setShowLetters,
+      colorScheme,
+      setColorScheme,
+      viewAction,
+      triggerViewAction,
+      visibleRange,
+      setVisibleRange,
+      rowColorMap,
+      scrollAction,
+      scrollToPosition,
+    ]
   );
+
+  return <MSAContext.Provider value={value}>{children}</MSAContext.Provider>;
 }

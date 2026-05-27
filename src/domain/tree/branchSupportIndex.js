@@ -28,9 +28,7 @@ export function canonicalSupportSplitKey(splitIndices, allTaxaIndices) {
   if (complement.length === 0) return split.join(',');
   if (split.length < complement.length) return split.join(',');
   if (complement.length < split.length) return complement.join(',');
-  return compareIndexLists(split, complement) <= 0
-    ? split.join(',')
-    : complement.join(',');
+  return compareIndexLists(split, complement) <= 0 ? split.join(',') : complement.join(',');
 }
 
 function getAnnotationFields(node) {
@@ -50,7 +48,9 @@ function formatScalarAnnotationValue(value) {
   const numeric = Number(value);
   if (Number.isFinite(numeric)) {
     const rounded = Math.round(numeric * 10000) / 10000;
-    return Number.isInteger(rounded) ? String(rounded) : String(rounded).replace(/0+$/, '').replace(/\.$/, '');
+    return Number.isInteger(rounded)
+      ? String(rounded)
+      : String(rounded).replace(/0+$/, '').replace(/\.$/, '');
   }
   if (typeof value === 'boolean') return value ? 'true' : 'false';
   if (typeof value === 'string') return value;
@@ -84,9 +84,10 @@ function pathLabel(path = []) {
 function optionLabelForField(field, key) {
   const path = Array.isArray(field?.path) && field.path.length > 0 ? field.path : key.split('.');
   const parentPath = path.slice(0, -1);
-  const leafLabel = typeof field?.label === 'string' && field.label.length > 0
-    ? field.label
-    : titleCase(path[path.length - 1] ?? key);
+  const leafLabel =
+    typeof field?.label === 'string' && field.label.length > 0
+      ? field.label
+      : titleCase(path[path.length - 1] ?? key);
   const prefix = pathLabel(parentPath);
   return prefix ? `${prefix} / ${leafLabel}` : leafLabel;
 }
@@ -178,8 +179,9 @@ function buildSupportSummary(node) {
   if (fields.length === 0) return null;
 
   const primaryField = selectPrimarySupportField(fields);
-  const primaryFieldKey = Object.entries(getAnnotationFields(node))
-    .find(([, field]) => field === primaryField)?.[0] ?? null;
+  const primaryFieldKey =
+    Object.entries(getAnnotationFields(node)).find(([, field]) => field === primaryField)?.[0] ??
+    null;
   const summary = {
     fieldKey: primaryFieldKey,
     label: primaryFieldKey ? optionLabelForField(primaryField, primaryFieldKey) : 'Branch Support',
@@ -201,7 +203,10 @@ function branchSupportToAnnotationValue(support) {
     key: support.fieldKey ?? 'branch_support.primary',
     label: support.label ?? 'Branch Support',
     value: support.primary,
-    displayValue: support.displayValue ?? formatCompactSupportNumber(support.primary) ?? String(support.primary),
+    displayValue:
+      support.displayValue ??
+      formatCompactSupportNumber(support.primary) ??
+      String(support.primary),
     role: 'branch_support',
     support,
   };
@@ -286,7 +291,9 @@ export function buildBranchSupportIndex({ interpolatedTrees, frames } = {}) {
     const inputTreeIndex = frame.input_tree_index;
     const tree = interpolatedTrees[frameIndex];
     if (!tree) {
-      throw new Error(`buildBranchSupportIndex input frame ${index} references missing interpolated_trees[${frameIndex}]`);
+      throw new Error(
+        `buildBranchSupportIndex input frame ${index} references missing interpolated_trees[${frameIndex}]`
+      );
     }
 
     const allTaxaIndices = normalizeIndices(tree.split_indices);
@@ -331,8 +338,8 @@ export function buildBranchSupportIndex({ interpolatedTrees, frames } = {}) {
 
       for (const record of entry.branchRecords) {
         if (
-          record.splitIndices.length >= entry.allTaxaIndices.length
-          || !isStrictSuperset(record.splitIndices, split)
+          record.splitIndices.length >= entry.allTaxaIndices.length ||
+          !isStrictSuperset(record.splitIndices, split)
         ) {
           continue;
         }
@@ -349,7 +356,11 @@ export function formatSupportValue(support) {
   return Number.isFinite(value) ? value.toFixed(1) : '-';
 }
 
-export function classifyMovementBranchValues(sourceBranchValue, destinationBranchValue, threshold = 70) {
+export function classifyMovementBranchValues(
+  sourceBranchValue,
+  destinationBranchValue,
+  threshold = 70
+) {
   const source = numericBranchValue(sourceBranchValue);
   const destination = numericBranchValue(destinationBranchValue);
   if (!Number.isFinite(source) || !Number.isFinite(destination)) return 'value_missing';

@@ -36,9 +36,10 @@ export function getExtensionWidth(extension, baseStrokeWidth, cached) {
     highlight.role === TREE_HIGHLIGHT_ROLE.ACTIVE_MOVER ||
     highlight.role === TREE_HIGHLIGHT_ROLE.SUBTREE_HIGHLIGHT
   ) {
-    const emphasis = highlight.role === TREE_HIGHLIGHT_ROLE.ACTIVE_MOVER
-      ? getActiveMoverEmphasis(nodeData, cached, 'node')
-      : 1;
+    const emphasis =
+      highlight.role === TREE_HIGHLIGHT_ROLE.ACTIVE_MOVER
+        ? getActiveMoverEmphasis(nodeData, cached, 'node')
+        : 1;
     return baseDisplayWidth * 3 * emphasis * metricScale;
   }
 

@@ -46,7 +46,7 @@ export function getDefaultControllerConfig() {
     scrollZoom: true,
     dragPan: true,
     dragRotate: true,
-    keyboard: true
+    keyboard: true,
   };
 }
 

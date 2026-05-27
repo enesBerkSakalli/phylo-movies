@@ -16,7 +16,7 @@ import {
   selectSetStrokeWidth,
   selectStrokeWidth,
   selectTreeControllers,
-  useAppStore
+  useAppStore,
 } from '../../../../state/phyloStore/store.js';
 import { getAvailableBranchAnnotationOptions } from '../../../../domain/tree/branchSupportIndex.js';
 import { SidebarMenuItem, SidebarMenuButton } from '../../../ui/sidebar';
@@ -48,12 +48,12 @@ export function GeometryDimensionsSection() {
   const fontSizeNumber = useMemo(() => toNumericFontSize(fontSize), [fontSize]);
 
   const handleToggleLabels = async (value) => {
-    try { 
-      setLabelsVisible(!!value); 
+    try {
+      setLabelsVisible(!!value);
       for (const controller of treeControllers) {
         await controller.renderAllElements();
       }
-    } catch { }
+    } catch {}
   };
 
   const branchAnnotationOptions = useMemo(
@@ -67,7 +67,7 @@ export function GeometryDimensionsSection() {
       for (const controller of treeControllers) {
         await controller.renderAllElements();
       }
-    } catch { }
+    } catch {}
   };
 
   return (

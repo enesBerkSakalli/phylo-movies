@@ -8,14 +8,14 @@ describe('NodeLayers accessors', () => {
     const renderPosition = [10, 20, 0.1];
     const node = {
       position: [10, 20, 0],
-      renderPosition
+      renderPosition,
     };
     const layerStyles = {
       getCachedState: () => ({ colorManager: null }),
       getNodeRadius: () => 3,
       getNodeColor: () => [1, 2, 3, 255],
       getNodeBorderColor: () => [1, 2, 3, 255],
-      getNodeLineWidth: () => 1
+      getNodeLineWidth: () => 1,
     };
 
     const props = getNodesLayerProps([node], { leafNamesByIndex: [] }, layerStyles);
@@ -26,18 +26,18 @@ describe('NodeLayers accessors', () => {
   it('offsets the normalized render position for history nodes', () => {
     const node = {
       position: [10, 20, 0],
-      renderPosition: [10, 20, 0.1]
+      renderPosition: [10, 20, 0.1],
     };
     const layerStyles = {
       getCachedState: () => ({
         colorManager: {
-          isNodeHistorySubtree: () => true
-        }
+          isNodeHistorySubtree: () => true,
+        },
       }),
       getNodeRadius: () => 3,
       getNodeColor: () => [1, 2, 3, 255],
       getNodeBorderColor: () => [1, 2, 3, 255],
-      getNodeLineWidth: () => 1
+      getNodeLineWidth: () => 1,
     };
 
     const props = getNodesLayerProps([node], { leafNamesByIndex: [] }, layerStyles);
@@ -48,14 +48,14 @@ describe('NodeLayers accessors', () => {
   it('validates the render position passed to deck.gl', () => {
     const node = {
       position: [10, 20, 0],
-      renderPosition: null
+      renderPosition: null,
     };
     const layerStyles = {
       getCachedState: () => ({ colorManager: null }),
       getNodeRadius: () => 3,
       getNodeColor: () => [1, 2, 3, 255],
       getNodeBorderColor: () => [1, 2, 3, 255],
-      getNodeLineWidth: () => 1
+      getNodeLineWidth: () => 1,
     };
 
     const props = getNodesLayerProps([node], { leafNamesByIndex: [] }, layerStyles);

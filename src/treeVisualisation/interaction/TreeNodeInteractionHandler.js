@@ -36,7 +36,9 @@ export class TreeNodeInteractionHandler {
     } else {
       x = info.x || 0;
       y = info.y || 0;
-      console.warn('TreeNodeInteractionHandler: Canvas is null and event.center is missing. Context menu position might be incorrect.');
+      console.warn(
+        'TreeNodeInteractionHandler: Canvas is null and event.center is missing. Context menu position might be incorrect.'
+      );
     }
 
     if (state.showNodeContextMenu) {
@@ -59,18 +61,20 @@ export class TreeNodeInteractionHandler {
     if (!targetSplitKey) return null;
 
     const currentLayout = this.layoutCalculator.calculateLayout(treeData, {
-      treeIndex
+      treeIndex,
     });
 
     const allNodes = currentLayout?.nodes;
     if (!Array.isArray(allNodes)) return null;
 
-    const layoutNode = allNodes.find(node => getSplitKey(node?.split_indices) === targetSplitKey);
-    return layoutNode ? toContextMenuNode(layoutNode, null, {
-      splitKey: layerData?.splitKey || targetSplitKey,
-      treeIndex,
-      treeSide: layerData?.treeSide
-    }) : null;
+    const layoutNode = allNodes.find((node) => getSplitKey(node?.split_indices) === targetSplitKey);
+    return layoutNode
+      ? toContextMenuNode(layoutNode, null, {
+          splitKey: layerData?.splitKey || targetSplitKey,
+          treeIndex,
+          treeSide: layerData?.treeSide,
+        })
+      : null;
   }
 
   _getTreeContext(layerData, state) {
@@ -85,14 +89,16 @@ export class TreeNodeInteractionHandler {
 function toContextMenuNode(node, path = null, renderContext = null) {
   const currentPath = path || getNodePath(node);
   const children = Array.isArray(node.children)
-    ? node.children.map(child => toContextMenuNode(child, [...currentPath, getNodeName(child)]))
+    ? node.children.map((child) => toContextMenuNode(child, [...currentPath, getNodeName(child)]))
     : [];
 
-  const context = renderContext ? {
-    splitKey: renderContext.splitKey,
-    treeIndex: renderContext.treeIndex,
-    treeSide: renderContext.treeSide,
-  } : {};
+  const context = renderContext
+    ? {
+        splitKey: renderContext.splitKey,
+        treeIndex: renderContext.treeIndex,
+        treeSide: renderContext.treeSide,
+      }
+    : {};
 
   return {
     name: node.name,

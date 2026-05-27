@@ -5,13 +5,9 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarMenuSub,
-  SidebarMenuSubItem
+  SidebarMenuSubItem,
 } from '../../ui/sidebar';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger
-} from '../../ui/collapsible';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../../ui/collapsible';
 import { ScrollArea } from '../../ui/scroll-area';
 /**
  * Taxa groups legend - displays color-coded groups when taxa coloring is applied.
@@ -29,9 +25,9 @@ export const TaxaGroupsLegend: React.FC = () => {
   const namedGroups = mode === 'csv' ? csvGroups : mode === 'groups' ? groups : null;
   const groupNames = Array.isArray(namedGroups)
     ? namedGroups
-        .map((group: { name?: unknown } | string) => (
+        .map((group: { name?: unknown } | string) =>
           typeof group === 'string' ? group : String(group.name ?? '')
-        ))
+        )
         .filter(Boolean)
     : Object.keys(groupColorMap || {});
 
@@ -70,7 +66,10 @@ export const TaxaGroupsLegend: React.FC = () => {
                           className="size-2 rounded-sm ring-1 ring-border/20 group-hover/legend:scale-110 transition-transform shrink-0 shadow-sm"
                           style={{ background: color }}
                         />
-                        <span className="text-[11px] leading-none truncate font-medium" title={name}>
+                        <span
+                          className="text-[11px] leading-none truncate font-medium"
+                          title={name}
+                        >
                           {name}
                         </span>
                       </div>

@@ -1,10 +1,6 @@
 const { expect } = require('chai');
 
-const {
-  shortestAngle,
-  clamp,
-  easeInOutCubic,
-} = require('../src/domain/math/mathUtils.js');
+const { shortestAngle, clamp, easeInOutCubic } = require('../src/domain/math/mathUtils.js');
 
 describe('Utils/MathUtils', () => {
   it('shortestAngle should take minimal wrapped difference', () => {

@@ -26,13 +26,13 @@ export function toSplitSet(input, fallback = null) {
 export function splitsEqual(splitArray, splitSet) {
   if (!Array.isArray(splitArray) || !(splitSet instanceof Set)) return false;
   if (splitArray.length !== splitSet.size) return false;
-  return splitArray.every(el => splitSet.has(el));
+  return splitArray.every((el) => splitSet.has(el));
 }
 
 export function isSubset(smaller, larger) {
   if (!Array.isArray(smaller) || smaller.length === 0) return false;
   const largerSet = larger instanceof Set ? larger : new Set(larger);
-  return smaller.length <= largerSet.size && smaller.every(x => largerSet.has(x));
+  return smaller.length <= largerSet.size && smaller.every((x) => largerSet.has(x));
 }
 
 export function isSubsetOfAny(element, targetSets) {
@@ -52,7 +52,7 @@ export function flattenSplitSets(entries) {
   const recurse = (items) => {
     if (!Array.isArray(items)) return;
 
-    items.forEach(item => {
+    items.forEach((item) => {
       if (item instanceof Set) {
         flattened.push(item);
       } else if (Array.isArray(item)) {
@@ -130,9 +130,7 @@ export function parseBackendSplitKey(splitKey) {
 export function getBackendSplitMapValue(map, split) {
   if (!map || typeof map !== 'object') return undefined;
 
-  const directKey = typeof split === 'string'
-    ? split
-    : toBackendSplitKey(split);
+  const directKey = typeof split === 'string' ? split : toBackendSplitKey(split);
   if (!isCanonicalBackendSplitKey(directKey)) return undefined;
   if (Object.prototype.hasOwnProperty.call(map, directKey)) {
     return map[directKey];
@@ -142,9 +140,12 @@ export function getBackendSplitMapValue(map, split) {
 }
 
 function normalizeNumericSplit(split) {
-  const values = split instanceof Set
-    ? Array.from(split)
-    : (typeof split === 'string' ? parseBackendSplitKey(split) : split);
+  const values =
+    split instanceof Set
+      ? Array.from(split)
+      : typeof split === 'string'
+        ? parseBackendSplitKey(split)
+        : split;
 
   if (!Array.isArray(values)) return [];
 
@@ -187,7 +188,7 @@ function getSplitHash(indices) {
     v1 = ((v1 >> 16) ^ v1) * 0x45d9f3b;
     v1 = (v1 >> 16) ^ v1;
 
-    let v2 = index ^ 0xDEADBEEF;
+    let v2 = index ^ 0xdeadbeef;
     v2 = ((v2 >> 16) ^ v2) * 0x119de1f3;
     v2 = ((v2 >> 16) ^ v2) * 0x119de1f3;
     v2 = (v2 >> 16) ^ v2;

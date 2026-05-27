@@ -1,22 +1,26 @@
-
 import { describe, it, expect } from 'vitest';
 import { LayerStyles } from '../src/treeVisualisation/deckgl/layers/LayerStyles.js';
 import { getLinkColor } from '../src/treeVisualisation/deckgl/layers/styles/links/inner/linkInnerStyles.js';
 import { getLinkWidth } from '../src/treeVisualisation/deckgl/layers/styles/links/linkWidthStyles.js';
 import { getLinkOutlineWidth } from '../src/treeVisualisation/deckgl/layers/styles/links/outline/linkOutlineStyles.js';
-import { getNodeColor, getNodeBorderColor } from '../src/treeVisualisation/deckgl/layers/styles/nodes/nodeStyles.js';
+import {
+  getNodeColor,
+  getNodeBorderColor,
+} from '../src/treeVisualisation/deckgl/layers/styles/nodes/nodeStyles.js';
 import { getNodeRadius } from '../src/treeVisualisation/deckgl/layers/styles/nodes/nodeRadiusStyles.js';
 import { getLabelSize } from '../src/treeVisualisation/deckgl/layers/styles/labels/labelStyles.js';
-import { getExtensionColor, getExtensionWidth } from '../src/treeVisualisation/deckgl/layers/styles/extensionStyles.js';
+import {
+  getExtensionColor,
+  getExtensionWidth,
+} from '../src/treeVisualisation/deckgl/layers/styles/extensionStyles.js';
 import { MIN_READABLE_METRIC_SCALE } from '../src/treeVisualisation/deckgl/layers/styles/readableMetricScale.js';
 
 describe('Adaptive Visual Scaling', () => {
-
   // Mock helpers to simulate user configuration
   const helpers = {
     getBaseStrokeWidth: () => 2.0, // User preference
     getBaseOpacity: (opacity = 1) => Math.round((opacity ?? 1) * 255),
-    nodeSize: 1.0 // User preference multiplier
+    nodeSize: 1.0, // User preference multiplier
   };
 
   // Mock color manager (minimal)
@@ -29,8 +33,8 @@ describe('Adaptive Visual Scaling', () => {
     isNodeSourceEdge: () => false,
     isNodeDestinationEdge: () => false,
     getBranchColorForInnerLine: () => '#000000',
-    getNodeBaseColor: () => '#000',      // Needed for isNodeVisuallyHighlighted
-    getNodeColor: () => '#000'           // Needed for isNodeVisuallyHighlighted
+    getNodeBaseColor: () => '#000', // Needed for isNodeVisuallyHighlighted
+    getNodeColor: () => '#000', // Needed for isNodeVisuallyHighlighted
   };
 
   describe('Render State Scaling', () => {
@@ -38,7 +42,7 @@ describe('Adaptive Visual Scaling', () => {
       const layerStyles = new LayerStyles();
       const cached = layerStyles.getCachedState({
         metricScale: 0.25,
-        leafNamesByIndex: []
+        leafNamesByIndex: [],
       });
 
       expect(cached.metricScale).toBeCloseTo(0.25);
@@ -49,7 +53,7 @@ describe('Adaptive Visual Scaling', () => {
     it('should leave visual scale unchanged for sparse trees', () => {
       const layerStyles = new LayerStyles();
       const cached = layerStyles.getCachedState({
-        leafNamesByIndex: new Array(25)
+        leafNamesByIndex: new Array(25),
       });
 
       expect(cached.visualScale).toBeCloseTo(1);
@@ -59,7 +63,7 @@ describe('Adaptive Visual Scaling', () => {
     it('should reduce visual scale for dense trees', () => {
       const layerStyles = new LayerStyles();
       const cached = layerStyles.getCachedState({
-        leafNamesByIndex: new Array(200)
+        leafNamesByIndex: new Array(200),
       });
 
       expect(cached.visualScale).toBeCloseTo(Math.pow(50 / 200, 0.6));
@@ -73,10 +77,10 @@ describe('Adaptive Visual Scaling', () => {
         colorManager: mockColorManager,
         upcomingChangesEnabled: false,
         densityScale: 1.0,
-        metricScale: 0.5 // Simulated collapsed tree (50% scale)
+        metricScale: 0.5, // Simulated collapsed tree (50% scale)
       };
       const link = {
-        split_indices: []
+        split_indices: [],
       };
 
       // Base width is 2.0
@@ -89,7 +93,7 @@ describe('Adaptive Visual Scaling', () => {
       const customHelpers = { ...helpers, getBaseStrokeWidth: () => 4.0 };
       const cached = {
         colorManager: mockColorManager,
-        metricScale: 0.5
+        metricScale: 0.5,
       };
       const link = { split_indices: [] };
       const width = getLinkWidth(link, cached, customHelpers);
@@ -115,10 +119,10 @@ describe('Adaptive Visual Scaling', () => {
       const cached = {
         colorManager: {
           ...mockColorManager,
-          isCompletedChangeEdge: () => true
+          isCompletedChangeEdge: () => true,
         },
         upcomingChangesEnabled: true,
-        metricScale: 0.5
+        metricScale: 0.5,
       };
       const link = { split_indices: [] };
       const width = getLinkOutlineWidth(link, cached, helpers);
@@ -128,7 +132,7 @@ describe('Adaptive Visual Scaling', () => {
     it('should enforce a readable metric-scale floor before deck.gl pixel clamping', () => {
       const cached = {
         colorManager: mockColorManager,
-        metricScale: 0.01
+        metricScale: 0.01,
       };
       const link = { split_indices: [] };
 
@@ -140,7 +144,7 @@ describe('Adaptive Visual Scaling', () => {
       const cached = {
         colorManager: mockColorManager,
         metricScale: 1,
-        visualScale: 0.3
+        visualScale: 0.3,
       };
       const link = { split_indices: [] };
 
@@ -151,11 +155,11 @@ describe('Adaptive Visual Scaling', () => {
     it('should fade unhighlighted base links for dense trees without changing deck.gl floors', () => {
       const cached = {
         colorManager: mockColorManager,
-        visualScale: 0.3
+        visualScale: 0.3,
       };
       const link = {
         opacity: 1,
-        split_indices: []
+        split_indices: [],
       };
 
       const color = [...getLinkColor(link, cached, helpers)];
@@ -168,12 +172,12 @@ describe('Adaptive Visual Scaling', () => {
     it('should scale radius by metricScale', () => {
       const cached = {
         colorManager: mockColorManager,
-        metricScale: 0.5
+        metricScale: 0.5,
       };
       // Mock node with normalized split metadata
       const node = {
         radius: 5,
-        data: { split_indices: [] }
+        data: { split_indices: [] },
       };
 
       // Base radius = 5 * nodeSize(1) = 5
@@ -186,11 +190,11 @@ describe('Adaptive Visual Scaling', () => {
       const customHelpers = { ...helpers, nodeSize: 2.0 }; // User wants 2x nodes
       const cached = {
         colorManager: mockColorManager,
-        metricScale: 0.5
+        metricScale: 0.5,
       };
       const node = {
         radius: 5,
-        data: { split_indices: [] }
+        data: { split_indices: [] },
       };
 
       // Base = 5 * 2 = 10
@@ -203,7 +207,7 @@ describe('Adaptive Visual Scaling', () => {
       const cached = { colorManager: mockColorManager };
       const node = {
         radius: 5,
-        data: { split_indices: [] }
+        data: { split_indices: [] },
       };
       const radius = getNodeRadius(node, 3, cached, helpers);
       expect(radius).toBeCloseTo(5.0);
@@ -213,15 +217,15 @@ describe('Adaptive Visual Scaling', () => {
       const cached = {
         colorManager: {
           ...mockColorManager,
-          isNodeCompletedChangeEdge: () => true
+          isNodeCompletedChangeEdge: () => true,
         },
         upcomingChangesEnabled: true,
         densityScale: 1.0,
-        metricScale: 0.5
+        metricScale: 0.5,
       };
       const node = {
         radius: 5,
-        data: { split_indices: [] }
+        data: { split_indices: [] },
       };
       const radius = getNodeRadius(node, 3, cached, helpers);
       expect(radius).toBeCloseTo(3.75);
@@ -231,11 +235,11 @@ describe('Adaptive Visual Scaling', () => {
       const cached = {
         colorManager: mockColorManager,
         metricScale: 0.5,
-        visualScale: 0.5
+        visualScale: 0.5,
       };
       const node = {
         radius: 5,
-        data: { split_indices: [] }
+        data: { split_indices: [] },
       };
 
       const radius = getNodeRadius(node, 3, cached, helpers);
@@ -246,11 +250,11 @@ describe('Adaptive Visual Scaling', () => {
     it('should keep tiny metric-scale nodes above the readable style floor', () => {
       const cached = {
         colorManager: mockColorManager,
-        metricScale: 0.01
+        metricScale: 0.01,
       };
       const node = {
         radius: 5,
-        data: { split_indices: [] }
+        data: { split_indices: [] },
       };
 
       const radius = getNodeRadius(node, 3, cached, helpers);
@@ -260,13 +264,13 @@ describe('Adaptive Visual Scaling', () => {
     it('should soften unhighlighted internal node dots in dense trees without hiding them', () => {
       const cached = {
         colorManager: mockColorManager,
-        visualScale: 0.3
+        visualScale: 0.3,
       };
       const node = {
         isLeaf: false,
         radius: 5,
         opacity: 1,
-        data: { split_indices: [] }
+        data: { split_indices: [] },
       };
 
       const radius = getNodeRadius(node, 3, cached, helpers);
@@ -281,13 +285,13 @@ describe('Adaptive Visual Scaling', () => {
     it('should keep leaf node dots visible in dense trees', () => {
       const cached = {
         colorManager: mockColorManager,
-        visualScale: 0.3
+        visualScale: 0.3,
       };
       const node = {
         isLeaf: true,
         radius: 5,
         opacity: 1,
-        data: { split_indices: [] }
+        data: { split_indices: [] },
       };
 
       const radius = getNodeRadius(node, 3, cached, helpers);
@@ -301,7 +305,7 @@ describe('Adaptive Visual Scaling', () => {
   describe('Extension Width Scaling', () => {
     it('should scale width by metricScale', () => {
       const cached = {
-        metricScale: 0.5
+        metricScale: 0.5,
       };
       const extension = { split_indices: [] };
 
@@ -312,7 +316,7 @@ describe('Adaptive Visual Scaling', () => {
 
     it('should keep tiny metric-scale extension lines above the readable style floor', () => {
       const cached = {
-        metricScale: 0.01
+        metricScale: 0.01,
       };
       const extension = { split_indices: [] };
 
@@ -324,7 +328,7 @@ describe('Adaptive Visual Scaling', () => {
     it('should reduce extension width for dense trees', () => {
       const cached = {
         metricScale: 1,
-        visualScale: 0.3
+        visualScale: 0.3,
       };
       const extension = { split_indices: [] };
 
@@ -335,12 +339,12 @@ describe('Adaptive Visual Scaling', () => {
     it('should fade unhighlighted base extensions for dense trees', () => {
       const cached = {
         colorManager: mockColorManager,
-        visualScale: 0.3
+        visualScale: 0.3,
       };
       const extension = {
         opacity: 1,
         split_indices: [],
-        isLeaf: true
+        isLeaf: true,
       };
 
       const color = [...getExtensionColor(extension, cached, helpers)];
@@ -352,7 +356,7 @@ describe('Adaptive Visual Scaling', () => {
   describe('Label Size Scaling', () => {
     it('should apply adaptive visual scale to base label size', () => {
       const cached = {
-        visualScale: 0.5
+        visualScale: 0.5,
       };
 
       const size = getLabelSize({ id: 'node1' }, '2em', cached);

@@ -52,10 +52,7 @@ export function timeToSegmentIndex(ms, timelineData, options = {}) {
 
   if (preferLastAtSameTime && ans !== -1) {
     const targetTime = cumulativeDurations[ans];
-    while (
-      ans + 1 < cumulativeDurations.length &&
-      cumulativeDurations[ans + 1] === targetTime
-    ) {
+    while (ans + 1 < cumulativeDurations.length && cumulativeDurations[ans + 1] === targetTime) {
       ans++;
     }
   }
@@ -64,13 +61,9 @@ export function timeToSegmentIndex(ms, timelineData, options = {}) {
 }
 
 export function toTimelineItemId(segmentIndex) {
-  return Number.isInteger(segmentIndex)
-    ? segmentIndex + TIMELINE_CONSTANTS.INDEX_OFFSET_UI
-    : null;
+  return Number.isInteger(segmentIndex) ? segmentIndex + TIMELINE_CONSTANTS.INDEX_OFFSET_UI : null;
 }
 
 export function toSegmentIndex(itemId) {
-  return Number.isInteger(itemId)
-    ? itemId - TIMELINE_CONSTANTS.INDEX_OFFSET_UI
-    : null;
+  return Number.isInteger(itemId) ? itemId - TIMELINE_CONSTANTS.INDEX_OFFSET_UI : null;
 }

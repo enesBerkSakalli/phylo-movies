@@ -3,7 +3,7 @@ import { useAppStore } from '../src/state/phyloStore/store.js';
 import {
   handleContainerResize,
   handleDrag,
-  handleDragStart
+  handleDragStart,
 } from '../src/treeVisualisation/interaction/InteractionHandlers.js';
 
 describe('InteractionHandlers', () => {
@@ -14,7 +14,7 @@ describe('InteractionHandlers', () => {
     useAppStore.setState({
       playing: false,
       rightTreeOffsetX: 0,
-      rightTreeOffsetY: 0
+      rightTreeOffsetY: 0,
     });
   });
 
@@ -27,10 +27,10 @@ describe('InteractionHandlers', () => {
       _resizeRenderScheduled: false,
       layerManager: {
         comparisonRenderer: {
-          resetAutoFit: vi.fn()
-        }
+          resetAutoFit: vi.fn(),
+        },
       },
-      renderAllElements: vi.fn(() => Promise.resolve())
+      renderAllElements: vi.fn(() => Promise.resolve()),
     };
 
     handleContainerResize(controller);
@@ -47,22 +47,22 @@ describe('InteractionHandlers', () => {
   it('updates explicit right-tree offsets during comparison drag', () => {
     useAppStore.setState({
       rightTreeOffsetX: 10,
-      rightTreeOffsetY: 20
+      rightTreeOffsetY: 20,
     });
 
     const controller = {
       deckContext: {
         getControllerConfig: vi.fn(() => ({ dragPan: true })),
         setControllerConfig: vi.fn(),
-        getViewState: vi.fn(() => ({ zoom: 0 }))
+        getViewState: vi.fn(() => ({ zoom: 0 })),
       },
-      renderAllElements: vi.fn()
+      renderAllElements: vi.fn(),
     };
 
     const started = handleDragStart(controller, {
       object: { treeSide: 'right' },
       x: 100,
-      y: 50
+      y: 50,
     });
     handleDrag(controller, { x: 125, y: 40 });
 

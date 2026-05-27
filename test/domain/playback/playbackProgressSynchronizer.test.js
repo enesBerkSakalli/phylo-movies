@@ -9,14 +9,14 @@ describe('PlaybackProgressSynchronizer', () => {
     const state = {
       treeList: [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }, { id: 'e' }],
       movieTimelineManager: {
-        getTimelineProgressForLinearTreeProgress
+        getTimelineProgressForLinearTreeProgress,
       },
-      setPlayhead
+      setPlayhead,
     };
     const syncProgress = createPlaybackProgressSynchronizer({
       getState: () => state,
       isPrefetchEnabled: () => true,
-      prefetchFrame
+      prefetchFrame,
     });
 
     syncProgress(0.25);
@@ -25,7 +25,7 @@ describe('PlaybackProgressSynchronizer', () => {
     expect(setPlayhead).toHaveBeenCalledWith({
       animationProgress: 0.25,
       timelineProgress: 0.6,
-      frameIndex: 1
+      frameIndex: 1,
     });
     expect(prefetchFrame).toHaveBeenNthCalledWith(1, 2);
     expect(prefetchFrame).toHaveBeenNthCalledWith(2, 3);
@@ -36,23 +36,23 @@ describe('PlaybackProgressSynchronizer', () => {
     const prefetchFrame = vi.fn();
     const state = {
       treeList: [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }],
-      setPlayhead
+      setPlayhead,
     };
     const syncProgress = createPlaybackProgressSynchronizer({
       getState: () => state,
       isPrefetchEnabled: () => true,
-      prefetchFrame
+      prefetchFrame,
     });
 
     syncProgress(0.1, {
       timelineProgress: 0.4,
-      frameIndex: 2
+      frameIndex: 2,
     });
 
     expect(setPlayhead).toHaveBeenCalledWith({
       animationProgress: 0.1,
       timelineProgress: 0.4,
-      frameIndex: 2
+      frameIndex: 2,
     });
     expect(prefetchFrame).toHaveBeenNthCalledWith(1, 3);
     expect(prefetchFrame).toHaveBeenNthCalledWith(2, 4);

@@ -89,10 +89,7 @@ const formatMovementLabel = (eventOrdinal: number): string => `#${eventOrdinal +
 
 const clampBranchValueThreshold = (threshold: number): number => {
   if (!Number.isFinite(threshold)) return DEFAULT_BRANCH_VALUE_THRESHOLD;
-  return Math.min(
-    BRANCH_VALUE_THRESHOLD_MAX,
-    Math.max(BRANCH_VALUE_THRESHOLD_MIN, threshold)
-  );
+  return Math.min(BRANCH_VALUE_THRESHOLD_MAX, Math.max(BRANCH_VALUE_THRESHOLD_MIN, threshold));
 };
 
 const formatBranchValueThreshold = (threshold: number): string => {
@@ -196,7 +193,9 @@ const formatBranchValueTitlePart = (
     | SprMoveEventRow['sourceAncestorBranchValue']
 ): string => {
   const formattedValue = formatBranchValue(value);
-  return value?.label ? `${label} ${formattedValue} (${value.label})` : `${label} ${formattedValue}`;
+  return value?.label
+    ? `${label} ${formattedValue} (${value.label})`
+    : `${label} ${formattedValue}`;
 };
 
 const formatBranchValueTitle = (
@@ -271,9 +270,7 @@ export const SprMoveEventTable = ({
       rows = rows.filter(({ event }) => event.branchValueClass === subtreeBranchValueFilter);
     }
     if (contextBranchValueFilter !== BRANCH_VALUE_FILTER_ALL) {
-      rows = rows.filter(
-        ({ event }) => event.contextBranchValueClass === contextBranchValueFilter
-      );
+      rows = rows.filter(({ event }) => event.contextBranchValueClass === contextBranchValueFilter);
     }
     if (queryTerms.length === 0) return rows;
     return rows.filter(({ searchText }) => queryTerms.every((term) => searchText.includes(term)));
@@ -298,8 +295,8 @@ export const SprMoveEventTable = ({
   );
   const hasSearch = globalFilter.trim().length > 0;
   const hasBranchValueFilter =
-    subtreeBranchValueFilter !== BRANCH_VALUE_FILTER_ALL
-    || contextBranchValueFilter !== BRANCH_VALUE_FILTER_ALL;
+    subtreeBranchValueFilter !== BRANCH_VALUE_FILTER_ALL ||
+    contextBranchValueFilter !== BRANCH_VALUE_FILTER_ALL;
   const movementCountLabel = `${filteredEventRows.length} / ${events.length} movements`;
   const handleBranchValueThresholdInputChange = React.useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -725,8 +722,7 @@ function MovementTableEmptyState({ hasFilter }: { hasFilter: boolean }) {
       </div>
       {hasFilter ? (
         <div className="text-2xs">
-          Try a taxon name, branch value, attachment label, movement ID, or different value
-          filter.
+          Try a taxon name, branch value, attachment label, movement ID, or different value filter.
         </div>
       ) : null}
     </div>

@@ -20,7 +20,7 @@ describe('dimmingUtils', () => {
         highlightedSubtreeSets: [],
         _highlightedLeavesUnion: new Set(),
         // Fast path methods for optimized subtree membership checks
-        isNodeInHighlightedSubtreeFast: function(entity) {
+        isNodeInHighlightedSubtreeFast: function (entity) {
           if (this._highlightedLeavesUnion.size === 0) return false;
           const splits = entity?.data?.split_indices || entity?.split_indices;
           if (!splits?.length) return false;
@@ -30,13 +30,13 @@ describe('dimmingUtils', () => {
           // All splits in union - check full subset
           for (const subtree of this.highlightedSubtreeSets) {
             const subtreeSet = subtree instanceof Set ? subtree : new Set(subtree);
-            if (splits.every(idx => subtreeSet.has(idx))) return true;
+            if (splits.every((idx) => subtreeSet.has(idx))) return true;
           }
           return false;
         },
-        isLinkInHighlightedSubtreeFast: function(linkData) {
+        isLinkInHighlightedSubtreeFast: function (linkData) {
           return this.isNodeInHighlightedSubtreeFast(linkData?.target);
-        }
+        },
       };
     });
 
@@ -89,43 +89,43 @@ describe('dimmingUtils', () => {
     });
 
     it('should dim unrelated nodes when pivot edge dimming is enabled', () => {
-         // Setup: Node unrelated, Pivot Edge Dimming ON, Node NOT downstream
-         mockColorManager.hasPivotEdges = () => true;
-         mockColorManager.isNodeDownstreamOfAnyPivotEdge = () => false;
+      // Setup: Node unrelated, Pivot Edge Dimming ON, Node NOT downstream
+      mockColorManager.hasPivotEdges = () => true;
+      mockColorManager.isNodeDownstreamOfAnyPivotEdge = () => false;
 
-         const result = applyDimmingWithCache(
-           baseOpacity,
-           mockColorManager,
-           nodeEntity,
-           true, // isNode
-           true, // dimmingEnabled
-           dimmingOpacity,
-           false, // subtreeDimmingEnabled
-           subtreeDimmingOpacity,
-           []
-         );
+      const result = applyDimmingWithCache(
+        baseOpacity,
+        mockColorManager,
+        nodeEntity,
+        true, // isNode
+        true, // dimmingEnabled
+        dimmingOpacity,
+        false, // subtreeDimmingEnabled
+        subtreeDimmingOpacity,
+        []
+      );
 
-         // Should be dimmed
-         const expected = Math.round(baseOpacity * dimmingOpacity);
-         expect(result).to.equal(expected);
+      // Should be dimmed
+      const expected = Math.round(baseOpacity * dimmingOpacity);
+      expect(result).to.equal(expected);
     });
 
-     it('should not dim nodes inside the highlighted subtree when subtree dimming is enabled', () => {
-         // This is tricky because we can't easily mock isNodeInSubtree since it's a direct import.
-         // However, isNodeInSubtree typically checks if the node ID is in the set or similar.
-         // Let's assume the entity structure matches what isNodeInSubtree expects.
-         // Ideally we successfully mock the data structure so it returns true.
-         // If isNodeInSubtree checks id equality:
-         const highlightedSubtreeData = [nodeEntity]; // Assuming simple check
-         // But wait, isNodeInSubtree might be more complex.
-         // Let's check imports in dimmingUtils.js: `import { isLinkInSubtree, isNodeInSubtree } from './subtreeMatching.js';`
-         // We might need to ensure our test data satisfies `isNodeInSubtree`.
-         // For now, let's skip this specific test case or rely on basic array inclusion if that's how it works
-         // OR just trust the previous test confirmed the FAILURE case (which was the bug).
-         // The bug was that Source nodes returned early. The previous test proves they don't anymore.
+    it('should not dim nodes inside the highlighted subtree when subtree dimming is enabled', () => {
+      // This is tricky because we can't easily mock isNodeInSubtree since it's a direct import.
+      // However, isNodeInSubtree typically checks if the node ID is in the set or similar.
+      // Let's assume the entity structure matches what isNodeInSubtree expects.
+      // Ideally we successfully mock the data structure so it returns true.
+      // If isNodeInSubtree checks id equality:
+      const highlightedSubtreeData = [nodeEntity]; // Assuming simple check
+      // But wait, isNodeInSubtree might be more complex.
+      // Let's check imports in dimmingUtils.js: `import { isLinkInSubtree, isNodeInSubtree } from './subtreeMatching.js';`
+      // We might need to ensure our test data satisfies `isNodeInSubtree`.
+      // For now, let's skip this specific test case or rely on basic array inclusion if that's how it works
+      // OR just trust the previous test confirmed the FAILURE case (which was the bug).
+      // The bug was that Source nodes returned early. The previous test proves they don't anymore.
 
-         // Let's just rely on the fix verification test (Case 2).
-         expect(true).to.be.true;
-     });
+      // Let's just rely on the fix verification test (Case 2).
+      expect(true).to.be.true;
+    });
   });
 });

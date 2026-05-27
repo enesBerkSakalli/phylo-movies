@@ -5,7 +5,14 @@ import { Switch } from '../ui/switch';
 import { Badge } from '../ui/badge';
 import { Label } from '../ui/label';
 import { Separator } from '../ui/separator';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select';
 import {
   selectClearMsaRowOrder,
   selectCurrentTree,
@@ -13,7 +20,7 @@ import {
   selectMsaRowOrder,
   selectSetMsaRowOrder,
   selectTreeControllers,
-  useAppStore
+  useAppStore,
 } from '../../state/phyloStore/store.js';
 import { MSARegionOverrides, MSAViewActions } from './controls';
 
@@ -68,21 +75,59 @@ export function MSAControls() {
 
       <Separator orientation="vertical" className="h-4 mx-2 opacity-40" />
 
-      <div className="flex items-center gap-1" role="group" aria-label="Alignment viewport controls">
+      <div
+        className="flex items-center gap-1"
+        role="group"
+        aria-label="Alignment viewport controls"
+      >
         <MSAViewActions />
       </div>
 
       <Separator orientation="vertical" className="h-4 mx-2 opacity-40" />
 
-      <div className="flex items-center gap-2" role="group" aria-label="Alignment row order controls">
-        <Button type="button" size="xs" variant="secondary" onClick={handleMatchTreeOrder} disabled={!canMatchTreeOrder} className="h-7 text-[11px] font-medium">Match Tree Order</Button>
-        <Button type="button" size="xs" variant="outline" onClick={handleResetOrder} disabled={!canResetOrder} className="h-7 border-border/40 text-[11px] text-muted-foreground hover:text-foreground">Reset Order</Button>
+      <div
+        className="flex items-center gap-2"
+        role="group"
+        aria-label="Alignment row order controls"
+      >
+        <Button
+          type="button"
+          size="xs"
+          variant="secondary"
+          onClick={handleMatchTreeOrder}
+          disabled={!canMatchTreeOrder}
+          className="h-7 text-[11px] font-medium"
+        >
+          Match Tree Order
+        </Button>
+        <Button
+          type="button"
+          size="xs"
+          variant="outline"
+          onClick={handleResetOrder}
+          disabled={!canResetOrder}
+          className="h-7 border-border/40 text-[11px] text-muted-foreground hover:text-foreground"
+        >
+          Reset Order
+        </Button>
       </div>
 
-      <div className="flex items-center gap-2" role="group" aria-label="Alignment coloring controls">
-        <Label htmlFor="msa-color-scheme" className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Coloring</Label>
+      <div
+        className="flex items-center gap-2"
+        role="group"
+        aria-label="Alignment coloring controls"
+      >
+        <Label
+          htmlFor="msa-color-scheme"
+          className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider"
+        >
+          Coloring
+        </Label>
         <Select value={colorScheme} onValueChange={setColorScheme}>
-          <SelectTrigger id="msa-color-scheme" className="w-[160px] h-7 text-xs bg-background/50 border-border/40">
+          <SelectTrigger
+            id="msa-color-scheme"
+            className="w-[160px] h-7 text-xs bg-background/50 border-border/40"
+          >
             <SelectValue placeholder="Color Scheme" />
           </SelectTrigger>
           <SelectContent className="z-[2000]">
@@ -113,16 +158,32 @@ export function MSAControls() {
 
       <Separator orientation="vertical" className="h-4 mx-2 opacity-40" />
 
-      <div className="flex items-center gap-2" role="group" aria-label="Alignment residue display controls">
-        <Switch id="msa-toggle-letters" checked={showLetters} onCheckedChange={setShowLetters} aria-label="Toggle residue letters" className="scale-75" />
-        <Label htmlFor="msa-toggle-letters" className="text-xs">Letters</Label>
+      <div
+        className="flex items-center gap-2"
+        role="group"
+        aria-label="Alignment residue display controls"
+      >
+        <Switch
+          id="msa-toggle-letters"
+          checked={showLetters}
+          onCheckedChange={setShowLetters}
+          aria-label="Toggle residue letters"
+          className="scale-75"
+        />
+        <Label htmlFor="msa-toggle-letters" className="text-xs">
+          Letters
+        </Label>
       </div>
 
       <div className="ml-auto">
         {processedData ? (
-          <Badge variant="secondary" className="text-xs">{processedData.type.toUpperCase()}</Badge>
+          <Badge variant="secondary" className="text-xs">
+            {processedData.type.toUpperCase()}
+          </Badge>
         ) : (
-          <Badge variant="destructive" className="text-xs">No data</Badge>
+          <Badge variant="destructive" className="text-xs">
+            No data
+          </Badge>
         )}
       </div>
     </div>

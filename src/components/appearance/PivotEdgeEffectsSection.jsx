@@ -4,12 +4,19 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarMenuSub,
-  SidebarMenuSubItem
+  SidebarMenuSubItem,
 } from '../ui/sidebar';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../ui/collapsible';
 import { ChevronDown, Activity } from 'lucide-react';
 
-export function PivotEdgeEffectsSection({ pulseEnabled, dashingEnabled, upcomingChangesEnabled, onTogglePulse, onToggleDashing, onToggleUpcomingChanges }) {
+export function PivotEdgeEffectsSection({
+  pulseEnabled,
+  dashingEnabled,
+  upcomingChangesEnabled,
+  onTogglePulse,
+  onToggleDashing,
+  onToggleUpcomingChanges,
+}) {
   return (
     <Collapsible asChild className="group/collapsible">
       <SidebarMenuItem>
@@ -24,9 +31,30 @@ export function PivotEdgeEffectsSection({ pulseEnabled, dashingEnabled, upcoming
           <SidebarMenuSub>
             <SidebarMenuSubItem>
               <div className="flex flex-col gap-3 px-1 py-3">
-                <ToggleWithLabel id="pulse-animation" label="Pulse" description="Animate changed edges" checked={!!pulseEnabled} onCheckedChange={onTogglePulse} switchPosition="left" />
-                <ToggleWithLabel id="dashing" label="Dashed Edges" description="Draw changed edges as dashed lines" checked={dashingEnabled !== false} onCheckedChange={onToggleDashing} switchPosition="left" />
-                <ToggleWithLabel id="upcoming-changes" label="Past/Future Changes" description="Show previous and upcoming changes" checked={!!upcomingChangesEnabled} onCheckedChange={onToggleUpcomingChanges} switchPosition="left" />
+                <ToggleWithLabel
+                  id="pulse-animation"
+                  label="Pulse"
+                  description="Animate changed edges"
+                  checked={!!pulseEnabled}
+                  onCheckedChange={onTogglePulse}
+                  switchPosition="left"
+                />
+                <ToggleWithLabel
+                  id="dashing"
+                  label="Dashed Edges"
+                  description="Draw changed edges as dashed lines"
+                  checked={dashingEnabled !== false}
+                  onCheckedChange={onToggleDashing}
+                  switchPosition="left"
+                />
+                <ToggleWithLabel
+                  id="upcoming-changes"
+                  label="Past/Future Changes"
+                  description="Show previous and upcoming changes"
+                  checked={!!upcomingChangesEnabled}
+                  onCheckedChange={onToggleUpcomingChanges}
+                  switchPosition="left"
+                />
               </div>
             </SidebarMenuSubItem>
           </SidebarMenuSub>

@@ -1,6 +1,11 @@
 import { isSubset, toSubtreeKey } from '../../../../domain/tree/splits.js';
 
-export function resolveConnectorColorEntry(leftInfo, splitIndices, jumpingSubtreeSets, leftPositions) {
+export function resolveConnectorColorEntry(
+  leftInfo,
+  splitIndices,
+  jumpingSubtreeSets,
+  leftPositions
+) {
   let matchingSubtree = null;
   for (const subtreeSet of jumpingSubtreeSets) {
     if (isSubset(splitIndices, subtreeSet)) {

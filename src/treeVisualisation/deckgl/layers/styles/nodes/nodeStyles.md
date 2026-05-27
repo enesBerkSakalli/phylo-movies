@@ -3,6 +3,7 @@
 > Style resolution for Deck.gl node layers in phylogenetic tree visualization.
 
 ## File Location
+
 `src/treeVisualisation/deckgl/layers/styles/nodes/nodeStyles.js`
 
 ---
@@ -14,6 +15,7 @@
 Resolves node fill color with highlighting and dimming support.
 
 **Priority Chain:**
+
 1. **Completed Change Edge** -> Blue (100% opacity)
 2. **Upcoming Change Edge** -> Blue (60% opacity)
 3. **Active Pivot Edge** -> Blue with dimming
@@ -29,6 +31,7 @@ Resolves node fill color with highlighting and dimming support.
 Resolves node border/stroke color.
 
 **Priority Chain:**
+
 1. **History Mode** -> Darkened blue (70% brightness)
 2. **Active Pivot Edge** -> Pivot color
 3. **Active Mover / Subtree Highlight** -> Highlight color
@@ -41,19 +44,19 @@ Resolves node border/stroke color.
 
 ### `getNodeRadius(node, minRadius, cached, helpers)`
 
-*Re-exported from `nodeRadiusStyles.js`*
+_Re-exported from `nodeRadiusStyles.js`_
 
 Resolves node radius with size multipliers for different states.
 
 **Size Multipliers:**
-| State            | Multiplier |
+| State | Multiplier |
 | ---------------- | ---------- |
-| Entering/Exiting | 0.7×       |
-| Completed Change | 1.5×       |
-| Active Edge      | 1.5×       |
-| Subtree Highlight | 1.6x       |
-| History Subtree  | 1.15×      |
-| Default          | 1.0×       |
+| Entering/Exiting | 0.7× |
+| Completed Change | 1.5× |
+| Active Edge | 1.5× |
+| Subtree Highlight | 1.6x |
+| History Subtree | 1.15× |
+| Default | 1.0× |
 
 ---
 
@@ -88,16 +91,16 @@ nodeStyles.js
 
 ## Cached State Properties Used
 
-| Property                 | Description                     |
-| ------------------------ | ------------------------------- |
-| `colorManager`           | TreeColorManager instance       |
-| `upcomingChangesEnabled` | History mode toggle             |
-| `dimmingEnabled`         | Global dimming toggle           |
-| `dimmingOpacity`         | Dimming opacity value           |
-| `subtreeDimmingEnabled`  | Subtree-specific dimming        |
-| `subtreeDimmingOpacity`  | Subtree dimming opacity         |
-| `highlightedSubtreeData` | Array of highlighted subtree sets |
-| `subtreeHighlightsEnabled` | Subtree highlighting toggle    |
-| `highlightColorMode`     | 'solid' \| 'contrast' \| 'taxa' |
-| `pulseOpacity`           | Current pulse animation value   |
-| `densityScale`           | Tree density scaling factor     |
+| Property                   | Description                       |
+| -------------------------- | --------------------------------- |
+| `colorManager`             | TreeColorManager instance         |
+| `upcomingChangesEnabled`   | History mode toggle               |
+| `dimmingEnabled`           | Global dimming toggle             |
+| `dimmingOpacity`           | Dimming opacity value             |
+| `subtreeDimmingEnabled`    | Subtree-specific dimming          |
+| `subtreeDimmingOpacity`    | Subtree dimming opacity           |
+| `highlightedSubtreeData`   | Array of highlighted subtree sets |
+| `subtreeHighlightsEnabled` | Subtree highlighting toggle       |
+| `highlightColorMode`       | 'solid' \| 'contrast' \| 'taxa'   |
+| `pulseOpacity`             | Current pulse animation value     |
+| `densityScale`             | Tree density scaling factor       |

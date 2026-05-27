@@ -2,7 +2,7 @@ import { SYSTEM_TREE_COLORS } from '../../../../constants/TreeColors.js';
 import {
   clearEdgePreviews,
   renderTreeControllers,
-  toManualMarkedSets
+  toManualMarkedSets,
 } from '../../internal/changeTracking.helpers.js';
 
 export const createTreeHighlightStateSlice = (set, get) => ({
@@ -27,31 +27,38 @@ export const createTreeHighlightStateSlice = (set, get) => ({
   // ==========================================================================
   // ACTIONS
   // ==========================================================================
-  setDimmingEnabled: (enabled) => set((s) => ({
-    dimmingEnabled: enabled,
-    subtreeDimmingEnabled: enabled ? false : s.subtreeDimmingEnabled,
-    colorVersion: s.colorVersion + 1
-  })),
+  setDimmingEnabled: (enabled) =>
+    set((s) => ({
+      dimmingEnabled: enabled,
+      subtreeDimmingEnabled: enabled ? false : s.subtreeDimmingEnabled,
+      colorVersion: s.colorVersion + 1,
+    })),
 
-  setDimmingOpacity: (opacity) => set((s) => ({
-    dimmingOpacity: Math.max(0, Math.min(1, opacity)),
-    colorVersion: s.colorVersion + 1
-  })),
+  setDimmingOpacity: (opacity) =>
+    set((s) => ({
+      dimmingOpacity: Math.max(0, Math.min(1, opacity)),
+      colorVersion: s.colorVersion + 1,
+    })),
 
-  setSubtreeDimmingEnabled: (enabled) => set((s) => ({
-    subtreeDimmingEnabled: enabled,
-    dimmingEnabled: enabled ? false : s.dimmingEnabled,
-    colorVersion: s.colorVersion + 1
-  })),
+  setSubtreeDimmingEnabled: (enabled) =>
+    set((s) => ({
+      subtreeDimmingEnabled: enabled,
+      dimmingEnabled: enabled ? false : s.dimmingEnabled,
+      colorVersion: s.colorVersion + 1,
+    })),
 
-  setSubtreeDimmingOpacity: (opacity) => set((s) => ({
-    subtreeDimmingOpacity: Math.max(0, Math.min(1, opacity)),
-    colorVersion: s.colorVersion + 1
-  })),
+  setSubtreeDimmingOpacity: (opacity) =>
+    set((s) => ({
+      subtreeDimmingOpacity: Math.max(0, Math.min(1, opacity)),
+      colorVersion: s.colorVersion + 1,
+    })),
 
   updateChangeColor: (colorType, newColor) => {
-    const isSystemKey = colorType in SYSTEM_TREE_COLORS ||
-      ['pivotEdgeColor', 'subtreeHighlightColor', 'defaultColor', 'strokeColor'].includes(colorType);
+    const isSystemKey =
+      colorType in SYSTEM_TREE_COLORS ||
+      ['pivotEdgeColor', 'subtreeHighlightColor', 'defaultColor', 'strokeColor'].includes(
+        colorType
+      );
 
     if (isSystemKey) {
       Object.assign(SYSTEM_TREE_COLORS, { [colorType]: newColor });
@@ -84,7 +91,7 @@ export const createTreeHighlightStateSlice = (set, get) => ({
       getSubtreeHighlightData,
       manuallyMarkedNodes,
       updateColorManagerHistorySubtrees,
-      getSubtreeHistoryData
+      getSubtreeHistoryData,
     } = get();
     const manual = toManualMarkedSets(manuallyMarkedNodes);
     updateColorManagerHighlightedSubtrees([...manual, ...getSubtreeHighlightData()]);

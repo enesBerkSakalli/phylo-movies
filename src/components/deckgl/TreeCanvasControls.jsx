@@ -6,7 +6,7 @@ import { AppTooltip } from '../ui/app-tooltip';
 import {
   selectActiveTreeListLength,
   selectPrimaryTreeController,
-  useAppStore
+  useAppStore,
 } from '../../state/phyloStore/store.js';
 import { RecordingControls } from '../media/RecordingControls.jsx';
 import { SaveImageButton } from '../media/SaveImageButton.jsx';

@@ -67,21 +67,19 @@ describe('buildTimelineFrameViews', () => {
   it('reads pair context from pair rows instead of parsing pair identifiers', () => {
     const movieData = {
       ...smallExampleMovieData,
-      frames: smallExampleMovieData.frames.map((frame) => (
-        frame.pair_id === 'pair_0_1'
-          ? { ...frame, pair_id: 'opaque-transition-a' }
-          : frame
-      )),
-      pairs: smallExampleMovieData.pairs.map((pair) => (
+      frames: smallExampleMovieData.frames.map((frame) =>
+        frame.pair_id === 'pair_0_1' ? { ...frame, pair_id: 'opaque-transition-a' } : frame
+      ),
+      pairs: smallExampleMovieData.pairs.map((pair) =>
         pair.pair_id === 'pair_0_1'
           ? {
-            ...pair,
-            pair_id: 'opaque-transition-a',
-            source_input_tree_index: 10,
-            target_input_tree_index: 11,
-          }
+              ...pair,
+              pair_id: 'opaque-transition-a',
+              source_input_tree_index: 10,
+              target_input_tree_index: 11,
+            }
           : pair
-      )),
+      ),
     };
 
     expect(buildTimelineFrameViews(movieData)[7]).toMatchObject({

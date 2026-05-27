@@ -35,11 +35,15 @@ export class CanvasRecorder {
     const { treeControllers } = useAppStore.getState();
     const primaryController = treeControllers[0] ?? null;
 
-    const canvas = primaryController?.deckContext?.canvas || document.querySelector('#webgl-container canvas');
+    const canvas =
+      primaryController?.deckContext?.canvas || document.querySelector('#webgl-container canvas');
     if (!canvas) {
-      throw new Error('Visualization canvas not found. Make sure the movie has finished rendering.');
+      throw new Error(
+        'Visualization canvas not found. Make sure the movie has finished rendering.'
+      );
     }
-    this.deck = primaryController?.deckContext?.getDeck?.() || primaryController?.deckContext?.deck || null;
+    this.deck =
+      primaryController?.deckContext?.getDeck?.() || primaryController?.deckContext?.deck || null;
     return canvas;
   }
 
@@ -55,7 +59,7 @@ export class CanvasRecorder {
       'video/mp4',
       'video/webm;codecs=vp9',
       'video/webm;codecs=vp8',
-      'video/webm'
+      'video/webm',
     ];
 
     let options = { videoBitsPerSecond: this.videoBitsPerSecond };
@@ -75,9 +79,11 @@ export class CanvasRecorder {
     }
 
     if (selectedType) {
-        options.mimeType = selectedType;
+      options.mimeType = selectedType;
     } else {
-        console.warn('[CanvasRecorder] No preferred mimeType supported, letting browser choose default.');
+      console.warn(
+        '[CanvasRecorder] No preferred mimeType supported, letting browser choose default.'
+      );
     }
 
     this.mediaRecorder = new MediaRecorder(this.stream, options);
@@ -162,7 +168,7 @@ export class CanvasRecorder {
       this.mediaRecorder.onstop = async () => {
         try {
           const blob = new Blob(this.recordedChunks, {
-            type: this.mediaRecorder.mimeType || 'video/webm'
+            type: this.mediaRecorder.mimeType || 'video/webm',
           });
 
           this.recordedBlob = blob;
@@ -197,7 +203,7 @@ export class CanvasRecorder {
     }
 
     if (this.stream) {
-      this.stream.getTracks().forEach(track => track.stop());
+      this.stream.getTracks().forEach((track) => track.stop());
       this.stream = null;
     }
 
@@ -259,5 +265,4 @@ export class CanvasRecorder {
   _notifyError(error) {
     console.error('[CanvasRecorder] Recording error:', error);
   }
-
 }

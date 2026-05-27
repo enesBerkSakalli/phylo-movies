@@ -10,31 +10,36 @@ const visualHighlightsMock = {
   isLinkVisuallyHighlighted: (link, cm) => {
     // Mimic the logic: marked OR activeEdge
     return cm.isPivotEdge(link);
-  }
+  },
 };
 
 const dashUtilsMock = {
-  calculateFlightDashArray: () => [5, 5]
+  calculateFlightDashArray: () => [5, 5],
 };
 
 const dimmingUtilsMock = {
-  applyDimmingWithCache: (opacity) => opacity
+  applyDimmingWithCache: (opacity) => opacity,
 };
 
 const colorUtilsMock = {
   colorToRgb: () => [0, 0, 255], // Blue for active
-  getContrastingHighlightColor: () => [255, 255, 255]
+  getContrastingHighlightColor: () => [255, 255, 255],
 };
 
 // Import the module under test with mocks
-const { getLinkOutlineWidth } = proxyquire('../../src/treeVisualisation/deckgl/layers/styles/links/outline/linkOutlineStyles.js', {
-  '../linkUtils.js': linkUtilsMock,
-  '../../../../../systems/tree_color/visualHighlights.js': visualHighlightsMock,
-  '../dashUtils.js': dashUtilsMock,
-  '../../dimmingUtils.js': dimmingUtilsMock,
-  '../../../../../../services/ui/colorUtils.js': colorUtilsMock,
-  '../../../../../../constants/TreeColors.js': { SYSTEM_TREE_COLORS: { activeChangeEdgeColor: '#0000FF' } }
-});
+const { getLinkOutlineWidth } = proxyquire(
+  '../../src/treeVisualisation/deckgl/layers/styles/links/outline/linkOutlineStyles.js',
+  {
+    '../linkUtils.js': linkUtilsMock,
+    '../../../../../systems/tree_color/visualHighlights.js': visualHighlightsMock,
+    '../dashUtils.js': dashUtilsMock,
+    '../../dimmingUtils.js': dimmingUtilsMock,
+    '../../../../../../services/ui/colorUtils.js': colorUtilsMock,
+    '../../../../../../constants/TreeColors.js': {
+      SYSTEM_TREE_COLORS: { activeChangeEdgeColor: '#0000FF' },
+    },
+  }
+);
 
 describe('Link Outline Pulsation Logic', () => {
   let cachedState;
@@ -55,12 +60,12 @@ describe('Link Outline Pulsation Logic', () => {
       pulseOpacity: 0.5, // Halfway pulse
       upcomingChangesEnabled: false,
       subtreeHighlightsEnabled: true,
-      highlightColorMode: 'solid'
+      highlightColorMode: 'solid',
     };
 
     // Helpers mock
     cachedState.helpers = {
-      getBaseStrokeWidth: () => 2
+      getBaseStrokeWidth: () => 2,
     };
   });
 

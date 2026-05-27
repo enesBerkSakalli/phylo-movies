@@ -42,7 +42,7 @@ export class LayerManager {
       ...storeState,
       interpolationTime: interpolationTime ?? storeState.interpolationTime ?? 0,
       metricScale: Number.isFinite(data?.metricScale) ? data.metricScale : 1,
-      zoom: data?.zoom ?? storeState.viewState?.zoom // Prefer zoom from data/overrides, fallback to store
+      zoom: data?.zoom ?? storeState.viewState?.zoom, // Prefer zoom from data/overrides, fallback to store
     };
 
     // Clear render cache before creating layers (ensures fresh state snapshot)
@@ -51,7 +51,7 @@ export class LayerManager {
     const filteredLayers = createTreeLayerSet({
       data: { nodes, links, labels, extensions, connectors: connectors || [] },
       state,
-      layerStyles: this.layerStyles
+      layerStyles: this.layerStyles,
     });
 
     // Cache is cleared at start of next createTreeLayers() call, no need to clear here
@@ -89,12 +89,7 @@ export class LayerManager {
    */
   createClipboardLayers(data, zOffset = DEFAULT_CLIPBOARD_Z_OFFSET, xOffset = 0, yOffset = 0) {
     // Optimization: Use modelMatrix/GPU for offsetting instead of CPU cloning
-    const modelMatrix = [
-      1, 0, 0, 0,
-      0, 1, 0, 0,
-      0, 0, 1, 0,
-      xOffset, yOffset, zOffset, 1
-    ];
+    const modelMatrix = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, xOffset, yOffset, zOffset, 1];
 
     const state = useAppStore.getState();
 
@@ -105,7 +100,7 @@ export class LayerManager {
       data: { nodes, links, labels, extensions, connectors },
       state,
       layerStyles: this.layerStyles,
-      modelMatrix
+      modelMatrix,
     });
 
     this.layerStyles.clearRenderCache();
@@ -126,11 +121,17 @@ export class LayerManager {
     return this.comparisonRenderer.renderStatic(leftIndex, rightIndex);
   }
 
-  renderComparisonAnimated({ interpolatedData, rightTree, rightIndex, activeTreeIndex, isCancelled }) {
+  renderComparisonAnimated({
+    interpolatedData,
+    rightTree,
+    rightIndex,
+    activeTreeIndex,
+    isCancelled,
+  }) {
     if (!this.comparisonRenderer) return null;
     return this.comparisonRenderer.renderAnimated(interpolatedData, rightTree, rightIndex, {
       activeTreeIndex,
-      isCancelled
+      isCancelled,
     });
   }
 

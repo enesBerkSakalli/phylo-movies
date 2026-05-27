@@ -5,7 +5,7 @@ const {
   areBoundsInView,
   calculateViewportBoundsPadding,
   isBoundsInsidePaddedViewport,
-  resolveLabelBoundsSize
+  resolveLabelBoundsSize,
 } = spatialBounds;
 
 describe('viewport bounds helpers', () => {
@@ -27,25 +27,26 @@ describe('viewport bounds helpers', () => {
     const viewBounds = [0, 0, 100, 100];
     const padding = { x: 10, y: 20 };
 
-    expect(isBoundsInsidePaddedViewport(
-      { minX: -10, maxX: 110, minY: -20, maxY: 120 },
-      viewBounds,
-      padding
-    )).toBe(true);
-    expect(isBoundsInsidePaddedViewport(
-      { minX: -11, maxX: 110, minY: -20, maxY: 120 },
-      viewBounds,
-      padding
-    )).toBe(false);
+    expect(
+      isBoundsInsidePaddedViewport(
+        { minX: -10, maxX: 110, minY: -20, maxY: 120 },
+        viewBounds,
+        padding
+      )
+    ).toBe(true);
+    expect(
+      isBoundsInsidePaddedViewport(
+        { minX: -11, maxX: 110, minY: -20, maxY: 120 },
+        viewBounds,
+        padding
+      )
+    ).toBe(false);
   });
 });
 
 describe('areBoundsInView', () => {
   it('returns false when no viewport bounds API is available', () => {
-    expect(areBoundsInView(
-      { minX: 0, maxX: 1, minY: 0, maxY: 1 },
-      null
-    )).toBe(false);
+    expect(areBoundsInView({ minX: 0, maxX: 1, minY: 0, maxY: 1 }, null)).toBe(false);
   });
 
   it('checks bounds against padded viewport bounds', () => {
@@ -53,14 +54,8 @@ describe('areBoundsInView', () => {
       getBounds: () => [0, 0, 100, 100],
     };
 
-    expect(areBoundsInView(
-      { minX: 5, maxX: 95, minY: 5, maxY: 95 },
-      viewport
-    )).toBe(true);
-    expect(areBoundsInView(
-      { minX: -10, maxX: 95, minY: 5, maxY: 95 },
-      viewport
-    )).toBe(false);
+    expect(areBoundsInView({ minX: 5, maxX: 95, minY: 5, maxY: 95 }, viewport)).toBe(true);
+    expect(areBoundsInView({ minX: -10, maxX: 95, minY: 5, maxY: 95 }, viewport)).toBe(false);
   });
 
   it('surfaces unexpected viewport bounds failures', () => {
@@ -71,10 +66,7 @@ describe('areBoundsInView', () => {
       },
     };
 
-    expect(() => areBoundsInView(
-      { minX: 0, maxX: 1, minY: 0, maxY: 1 },
-      viewport
-    )).toThrow(error);
+    expect(() => areBoundsInView({ minX: 0, maxX: 1, minY: 0, maxY: 1 }, viewport)).toThrow(error);
   });
 });
 
@@ -89,14 +81,20 @@ describe('label bounds constants', () => {
 describe('label bounds size helper', () => {
   it('resolves label bounds size from explicit size, provider, then default', () => {
     expect(typeof resolveLabelBoundsSize).toBe('function');
-    expect(resolveLabelBoundsSize(12, () => {
-      throw new Error('provider should not be called');
-    })).toBe(12);
-    expect(resolveLabelBoundsSize(0, () => {
-      throw new Error('provider should not be called');
-    })).toBe(0);
+    expect(
+      resolveLabelBoundsSize(12, () => {
+        throw new Error('provider should not be called');
+      })
+    ).toBe(12);
+    expect(
+      resolveLabelBoundsSize(0, () => {
+        throw new Error('provider should not be called');
+      })
+    ).toBe(0);
     expect(resolveLabelBoundsSize(undefined, () => 14)).toBe(14);
     expect(resolveLabelBoundsSize(null, () => 14)).toBe(14);
-    expect(resolveLabelBoundsSize(undefined, null)).toBe(spatialBounds.LABEL_BOUNDS_DEFAULT_SIZE_PX);
+    expect(resolveLabelBoundsSize(undefined, null)).toBe(
+      spatialBounds.LABEL_BOUNDS_DEFAULT_SIZE_PX
+    );
   });
 });

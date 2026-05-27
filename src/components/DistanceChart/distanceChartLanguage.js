@@ -21,9 +21,8 @@ export const DISTANCE_CHART_METRIC_OPTIONS = ['rfd', 'w-rfd', 'scale'].map((valu
   ...DISTANCE_CHART_METRICS[value],
 }));
 
-export const getDistanceChartMetric = (value) => (
-  DISTANCE_CHART_METRICS[value] || DISTANCE_CHART_METRICS.rfd
-);
+export const getDistanceChartMetric = (value) =>
+  DISTANCE_CHART_METRICS[value] || DISTANCE_CHART_METRICS.rfd;
 
 export const formatMetricValue = (value) => {
   const numberValue = Number(value);
@@ -34,10 +33,7 @@ export const formatMetricValue = (value) => {
   });
 };
 
-export const formatDistancePointLabel = (sourceInputTreeIndex, targetInputTreeIndex) => (
-  `source input tree ${sourceInputTreeIndex + 1} to target input tree ${targetInputTreeIndex + 1}`
-);
+export const formatDistancePointLabel = (sourceInputTreeIndex, targetInputTreeIndex) =>
+  `source input tree ${sourceInputTreeIndex + 1} to target input tree ${targetInputTreeIndex + 1}`;
 
-export const formatScalePointLabel = (inputTreeOrdinal) => (
-  `Input tree ${inputTreeOrdinal}`
-);
+export const formatScalePointLabel = (inputTreeOrdinal) => `Input tree ${inputTreeOrdinal}`;

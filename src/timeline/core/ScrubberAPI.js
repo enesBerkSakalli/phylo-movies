@@ -78,7 +78,7 @@ export class ScrubberAPI {
     } catch (error) {
       console.error('[ScrubberAPI] Scrub update failed:', {
         progress,
-        error
+        error,
       });
     }
   }
@@ -114,13 +114,15 @@ export class ScrubberAPI {
 
     const options = transitionFrame.toRenderOptions({
       scrubMode: true,
-      direction
+      direction,
     });
 
     if (state.comparisonMode) {
       const inputTreeIndices = selectInputFrameIndices(state);
       options.comparisonMode = true;
-      options.rightTreeIndex = inputTreeIndices.find((i) => i > transitionFrame.sourceTreeIndex) ?? inputTreeIndices[inputTreeIndices.length - 1];
+      options.rightTreeIndex =
+        inputTreeIndices.find((i) => i > transitionFrame.sourceTreeIndex) ??
+        inputTreeIndices[inputTreeIndices.length - 1];
     }
 
     await this.treeController.renderComparisonAwareScrubFrame(

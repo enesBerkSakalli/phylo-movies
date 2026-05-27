@@ -40,7 +40,7 @@ async function assertPngSize(relativePath, expectedSize) {
   const metadata = await sharp(path.join(root, relativePath)).metadata();
   if (metadata.width !== expectedSize || metadata.height !== expectedSize) {
     throw new Error(
-      `${relativePath} expected ${expectedSize}x${expectedSize}, got ${metadata.width}x${metadata.height}`,
+      `${relativePath} expected ${expectedSize}x${expectedSize}, got ${metadata.width}x${metadata.height}`
     );
   }
 }
@@ -52,9 +52,7 @@ async function main() {
   const sourceHash = crypto.createHash('sha256').update(sourceBuffer).digest('hex');
 
   if (manifest.source_sha256 !== sourceHash) {
-    throw new Error(
-      `Brand manifest source hash is stale. Run npm run generate:brand.`,
-    );
+    throw new Error(`Brand manifest source hash is stale. Run npm run generate:brand.`);
   }
 
   for (const output of manifest.generated_outputs) {

@@ -13,21 +13,48 @@ describe('ComparisonModeRenderer', () => {
     const leftExtension = {
       sourcePosition: [0, 0, 0],
       targetPosition: [0, 200, 0],
-      path: [[0, 0, 0], [0, 200, 0]]
+      path: [
+        [0, 0, 0],
+        [0, 200, 0],
+      ],
     };
     const leftData = {
-      nodes: [{ id: 'node-0', position: [0, 0, 0], renderPosition: [0, 0, 0.1], split_indices: [0], isLeaf: true, name: 'A' }],
+      nodes: [
+        {
+          id: 'node-0',
+          position: [0, 0, 0],
+          renderPosition: [0, 0, 0.1],
+          split_indices: [0],
+          isLeaf: true,
+          name: 'A',
+        },
+      ],
       links: [],
       labels: [],
       extensions: [leftExtension],
     };
     const rightData = {
-      nodes: [{ id: 'node-0', position: [100, 0, 0], renderPosition: [100, 0, 0.1], split_indices: [0], isLeaf: true, name: 'A' }],
+      nodes: [
+        {
+          id: 'node-0',
+          position: [100, 0, 0],
+          renderPosition: [100, 0, 0.1],
+          split_indices: [0],
+          isLeaf: true,
+          name: 'A',
+        },
+      ],
       links: [],
       labels: [],
       extensions: [],
     };
-    const connector = { path: [[0, 0, 0], [50, 400, 0], [100, 0, 0]] };
+    const connector = {
+      path: [
+        [0, 0, 0],
+        [50, 400, 0],
+        [100, 0, 0],
+      ],
+    };
     const focusOnTree = vi.fn();
 
     useAppStore.setState({
@@ -43,7 +70,7 @@ describe('ComparisonModeRenderer', () => {
       calculateLayout: (tree) => ({ tree, width: 100, height: 100 }),
       _getConsistentRadii: () => ({ extensionRadius: 10, labelRadius: 20 }),
       dataConverter: {
-        convertTreeToLayerData: (layout) => layout.tree.side === 'left' ? leftData : rightData,
+        convertTreeToLayerData: (layout) => (layout.tree.side === 'left' ? leftData : rightData),
       },
       deckContext: {
         getCanvasDimensions: () => ({ width: 800, height: 600 }),
@@ -66,13 +93,31 @@ describe('ComparisonModeRenderer', () => {
 
   it('uses the rendered animated tree index for comparison connectors', async () => {
     const leftData = {
-      nodes: [{ id: 'node-0', position: [0, 0, 0], renderPosition: [0, 0, 0.1], split_indices: [0], isLeaf: true, name: 'A' }],
+      nodes: [
+        {
+          id: 'node-0',
+          position: [0, 0, 0],
+          renderPosition: [0, 0, 0.1],
+          split_indices: [0],
+          isLeaf: true,
+          name: 'A',
+        },
+      ],
       links: [],
       labels: [],
       extensions: [],
     };
     const rightData = {
-      nodes: [{ id: 'node-0', position: [100, 0, 0], renderPosition: [100, 0, 0.1], split_indices: [0], isLeaf: true, name: 'A' }],
+      nodes: [
+        {
+          id: 'node-0',
+          position: [100, 0, 0],
+          renderPosition: [100, 0, 0.1],
+          split_indices: [0],
+          isLeaf: true,
+          name: 'A',
+        },
+      ],
       links: [],
       labels: [],
       extensions: [],
@@ -113,7 +158,16 @@ describe('ComparisonModeRenderer', () => {
 
   it('reuses static right-hand animated comparison data across frames', async () => {
     const rightData = {
-      nodes: [{ id: 'right-node', position: [100, 0, 0], renderPosition: [100, 0, 0.1], split_indices: [0], isLeaf: true, name: 'A' }],
+      nodes: [
+        {
+          id: 'right-node',
+          position: [100, 0, 0],
+          renderPosition: [100, 0, 0.1],
+          split_indices: [0],
+          isLeaf: true,
+          name: 'A',
+        },
+      ],
       links: [],
       labels: [],
       extensions: [],
@@ -121,7 +175,7 @@ describe('ComparisonModeRenderer', () => {
     const rightLayout = {
       layoutCacheKey: 'right-layout-cache-key',
       width: 100,
-      height: 100
+      height: 100,
     };
     const calculateLayout = vi.fn(() => rightLayout);
     const convertTreeToLayerData = vi.fn(() => rightData);
@@ -132,7 +186,7 @@ describe('ComparisonModeRenderer', () => {
       leftTreeOffsetX: 0,
       leftTreeOffsetY: 0,
       linkGeometryMode: 'radial-elbow',
-      fontSize: '2.6em'
+      fontSize: '2.6em',
     });
 
     const renderer = new ComparisonModeRenderer({
@@ -155,7 +209,16 @@ describe('ComparisonModeRenderer', () => {
     renderer._lastFittedIndices = { right: 1 };
 
     const makeLeftData = (x) => ({
-      nodes: [{ id: `left-node-${x}`, position: [x, 0, 0], renderPosition: [x, 0, 0.1], split_indices: [0], isLeaf: true, name: 'A' }],
+      nodes: [
+        {
+          id: `left-node-${x}`,
+          position: [x, 0, 0],
+          renderPosition: [x, 0, 0.1],
+          split_indices: [0],
+          isLeaf: true,
+          name: 'A',
+        },
+      ],
       links: [],
       labels: [],
       extensions: [],
@@ -166,12 +229,23 @@ describe('ComparisonModeRenderer', () => {
 
     expect(calculateLayout).toHaveBeenCalledTimes(1);
     expect(convertTreeToLayerData).toHaveBeenCalledTimes(1);
-    expect(renderer._buildConnectors.mock.calls[0][1]).toBe(renderer._buildConnectors.mock.calls[1][1]);
+    expect(renderer._buildConnectors.mock.calls[0][1]).toBe(
+      renderer._buildConnectors.mock.calls[1][1]
+    );
   });
 
   it('rebuilds static right-hand animated comparison data when the layout cache key changes', async () => {
     const rightData = {
-      nodes: [{ id: 'right-node', position: [100, 0, 0], renderPosition: [100, 0, 0.1], split_indices: [0], isLeaf: true, name: 'A' }],
+      nodes: [
+        {
+          id: 'right-node',
+          position: [100, 0, 0],
+          renderPosition: [100, 0, 0.1],
+          split_indices: [0],
+          isLeaf: true,
+          name: 'A',
+        },
+      ],
       links: [],
       labels: [],
       extensions: [],
@@ -179,7 +253,7 @@ describe('ComparisonModeRenderer', () => {
     const calculateLayout = vi.fn(() => ({
       layoutCacheKey: 'right-layout-cache-key',
       width: 100,
-      height: 100
+      height: 100,
     }));
     const convertTreeToLayerData = vi.fn(() => rightData);
     let layoutCacheKey = 'right-layout-cache-key-a';
@@ -190,7 +264,7 @@ describe('ComparisonModeRenderer', () => {
       leftTreeOffsetX: 0,
       leftTreeOffsetY: 0,
       linkGeometryMode: 'radial-elbow',
-      fontSize: '2.6em'
+      fontSize: '2.6em',
     });
 
     const renderer = new ComparisonModeRenderer({
@@ -213,7 +287,16 @@ describe('ComparisonModeRenderer', () => {
     renderer._lastFittedIndices = { right: 1 };
 
     const leftData = {
-      nodes: [{ id: 'left-node', position: [0, 0, 0], renderPosition: [0, 0, 0.1], split_indices: [0], isLeaf: true, name: 'A' }],
+      nodes: [
+        {
+          id: 'left-node',
+          position: [0, 0, 0],
+          renderPosition: [0, 0, 0.1],
+          split_indices: [0],
+          isLeaf: true,
+          name: 'A',
+        },
+      ],
       links: [],
       labels: [],
       extensions: [],
@@ -221,12 +304,26 @@ describe('ComparisonModeRenderer', () => {
 
     await renderer.renderAnimated(leftData, { side: 'right' }, 1, { activeTreeIndex: 7 });
     layoutCacheKey = 'right-layout-cache-key-b';
-    await renderer.renderAnimated({
-      nodes: [{ id: 'left-node-2', position: [5, 0, 0], renderPosition: [5, 0, 0.1], split_indices: [0], isLeaf: true, name: 'A' }],
-      links: [],
-      labels: [],
-      extensions: [],
-    }, { side: 'right' }, 1, { activeTreeIndex: 7 });
+    await renderer.renderAnimated(
+      {
+        nodes: [
+          {
+            id: 'left-node-2',
+            position: [5, 0, 0],
+            renderPosition: [5, 0, 0.1],
+            split_indices: [0],
+            isLeaf: true,
+            name: 'A',
+          },
+        ],
+        links: [],
+        labels: [],
+        extensions: [],
+      },
+      { side: 'right' },
+      1,
+      { activeTreeIndex: 7 }
+    );
 
     expect(calculateLayout).toHaveBeenCalledTimes(2);
     expect(convertTreeToLayerData).toHaveBeenCalledTimes(2);

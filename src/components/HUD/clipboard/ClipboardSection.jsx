@@ -4,13 +4,16 @@ import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
 import { AppTooltip } from '../../ui/app-tooltip';
 
-export function ClipboardSection({ clipboardTreeIndex, inputTreeIndices, onShowInputTree, onClear }) {
+export function ClipboardSection({
+  clipboardTreeIndex,
+  inputTreeIndices,
+  onShowInputTree,
+  onClear,
+}) {
   const hasInputTrees = inputTreeIndices.length > 0;
   const isShowing = clipboardTreeIndex !== null;
 
-  const currentInputTreePosition = isShowing
-    ? inputTreeIndices.indexOf(clipboardTreeIndex)
-    : -1;
+  const currentInputTreePosition = isShowing ? inputTreeIndices.indexOf(clipboardTreeIndex) : -1;
 
   const handlePreviousInputTree = () => {
     if (!hasInputTrees) return;
@@ -41,7 +44,9 @@ export function ClipboardSection({ clipboardTreeIndex, inputTreeIndices, onShowI
     <div className="flex items-center gap-3" id="hud-clipboard-section">
       <Clipboard className="size-3.5 text-primary" aria-hidden />
       <div className="flex flex-col gap-0">
-        <span className="text-2xs font-medium text-muted-foreground uppercase tracking-wider">Compare with</span>
+        <span className="text-2xs font-medium text-muted-foreground uppercase tracking-wider">
+          Compare with
+        </span>
         <div className="flex items-center gap-1 mt-1">
           <AppTooltip content="Previous input tree to compare">
             <Button

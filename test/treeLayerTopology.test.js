@@ -20,12 +20,13 @@ function makeLayerStyles(cached) {
     getNodeBorderColor: () => [0, 0, 0, 255],
     getNodeLineWidth: () => 1,
     getLabelSize: () => 12,
-    getLabelColor: () => [0, 0, 0, 255]
+    getLabelColor: () => [0, 0, 0, 255],
   };
 }
 
 function makeColorManager() {
-  const isSplit = (datum, value) => Array.isArray(datum?.split_indices) && datum.split_indices[0] === value;
+  const isSplit = (datum, value) =>
+    Array.isArray(datum?.split_indices) && datum.split_indices[0] === value;
   return {
     highlightedSubtreeSets: [new Set([3])],
     hasPivotEdges: () => true,
@@ -35,7 +36,7 @@ function makeColorManager() {
     isLinkHistorySubtree: (datum) => isSplit(datum, 2),
     isNodeInActiveMoverSubtree: (datum) => isSplit(datum, 3),
     isNodeInHighlightedSubtreeFast: (datum) => isSplit(datum, 3),
-    isLinkInHighlightedSubtreeFast: (datum) => isSplit(datum, 3)
+    isLinkInHighlightedSubtreeFast: (datum) => isSplit(datum, 3),
   };
 }
 
@@ -44,22 +45,36 @@ describe('tree deck.gl layer topology', () => {
     const cached = {
       colorManager: makeColorManager(),
       highlightedSubtreeData: [new Set([3])],
-      subtreeHighlightsEnabled: true
+      subtreeHighlightsEnabled: true,
     };
     const layerStyles = makeLayerStyles(cached);
     const data = {
       connectors: [{ path: new Float32Array([0, 0, 0, 1, 1, 0]) }],
-      links: [1, 2, 3].map((split) => ({ split_indices: [split], path: new Float32Array([0, 0, 0, split, split, 0]) })),
-      extensions: [1, 2, 3].map((split) => ({ split_indices: [split], path: new Float32Array([0, 0, 0, split, split, 0]) })),
-      nodes: [1, 2, 3].map((split) => ({ split_indices: [split], position: [split, split, 0], renderPosition: [split, split, 0] })),
-      labels: [1, 2, 3].map((split) => ({ split_indices: [split], position: [split, split, 0], text: `n${split}` }))
+      links: [1, 2, 3].map((split) => ({
+        split_indices: [split],
+        path: new Float32Array([0, 0, 0, split, split, 0]),
+      })),
+      extensions: [1, 2, 3].map((split) => ({
+        split_indices: [split],
+        path: new Float32Array([0, 0, 0, split, split, 0]),
+      })),
+      nodes: [1, 2, 3].map((split) => ({
+        split_indices: [split],
+        position: [split, split, 0],
+        renderPosition: [split, split, 0],
+      })),
+      labels: [1, 2, 3].map((split) => ({
+        split_indices: [split],
+        position: [split, split, 0],
+        text: `n${split}`,
+      })),
     };
 
     const layers = createTreeLayerSet({
       data,
       state: { labelsVisible: true, leafNamesByIndex: [] },
       layerStyles,
-      skipEmpty: true
+      skipEmpty: true,
     });
 
     expect(layers.map((layer) => layer.id)).toEqual([
@@ -78,7 +93,7 @@ describe('tree deck.gl layer topology', () => {
       'phylo-nodes-marked',
       'phylo-labels-base',
       'phylo-labels-history',
-      'phylo-labels-marked'
+      'phylo-labels-marked',
     ]);
   });
 
@@ -93,21 +108,22 @@ describe('tree deck.gl layer topology', () => {
       labels: Array.from({ length: labelCount }, (_value, split) => ({
         split_indices: [split],
         position: [split, split, 0],
-        text: `n${split}`
-      }))
+        text: `n${split}`,
+      })),
     };
 
     const layers = createTreeLayerSet({
       data,
       state: { labelsVisible: true, leafNamesByIndex: [] },
       layerStyles,
-      skipEmpty: true
+      skipEmpty: true,
     });
 
     const labelLayers = layers.filter((layer) => layer.id.startsWith('phylo-labels-'));
-    const renderedLabelCount = labelLayers.reduce((total, layer) => (
-      total + layer.props.data.length
-    ), 0);
+    const renderedLabelCount = labelLayers.reduce(
+      (total, layer) => total + layer.props.data.length,
+      0
+    );
 
     expect(renderedLabelCount).toBe(labelCount);
     for (const layer of labelLayers) {
@@ -122,10 +138,13 @@ describe('tree deck.gl layer topology', () => {
     const event = { stopPropagation: vi.fn(), preventDefault: vi.fn() };
     context.onNodeClick(onNodeClick);
 
-    const handled = context._handleClick({
-      layer: { id: 'phylo-nodes-marked' },
-      object: { split_indices: [3] }
-    }, event);
+    const handled = context._handleClick(
+      {
+        layer: { id: 'phylo-nodes-marked' },
+        object: { split_indices: [3] },
+      },
+      event
+    );
 
     expect(handled).toBe(true);
     expect(onNodeClick).toHaveBeenCalledTimes(1);
@@ -154,10 +173,10 @@ describe('tree deck.gl layer topology', () => {
                 value_type: 'integer',
                 role: 'branch_support',
                 unit: 'percent',
-                analysis: { type: 'tree_inference', method: 'bootstrap' }
-              }
-            }
-          }
+                analysis: { type: 'tree_inference', method: 'bootstrap' },
+              },
+            },
+          },
         },
         {
           id: 'link-leaf',
@@ -175,15 +194,15 @@ describe('tree deck.gl layer topology', () => {
                 value_type: 'integer',
                 role: 'branch_support',
                 unit: 'percent',
-                analysis: { type: 'tree_inference', method: 'bootstrap' }
-              }
-            }
-          }
-        }
+                analysis: { type: 'tree_inference', method: 'bootstrap' },
+              },
+            },
+          },
+        },
       ],
       extensions: [],
       nodes: [],
-      labels: []
+      labels: [],
     };
 
     const layers = createTreeLayerSet({
@@ -192,10 +211,10 @@ describe('tree deck.gl layer topology', () => {
         branchAnnotationLabelKey: 'support.bootstrap.value',
         labelsVisible: true,
         leafNamesByIndex: [],
-        fontSize: '1.8em'
+        fontSize: '1.8em',
       },
       layerStyles,
-      skipEmpty: true
+      skipEmpty: true,
     });
 
     const supportLayer = layers.find((layer) => layer.id === 'phylo-support-labels');

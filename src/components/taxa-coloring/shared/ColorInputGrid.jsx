@@ -1,6 +1,6 @@
-import React, { useMemo } from "react";
-import { ColorSwatchInput } from "./ColorSwatchInput.jsx";
-import { rgbToHex } from "../../../services/ui/colorUtils.js";
+import React, { useMemo } from 'react';
+import { ColorSwatchInput } from './ColorSwatchInput.jsx';
+import { rgbToHex } from '../../../services/ui/colorUtils.js';
 
 export function ColorInputGrid({ items, isGroup, colorManager, onColorChange }) {
   // Sort items alphabetically by name
@@ -18,7 +18,7 @@ export function ColorInputGrid({ items, isGroup, colorManager, onColorChange }) 
         const name = isGroup ? item.name : item;
         const label = isGroup ? `${name} (${item.count})` : name;
         const colorMap = isGroup ? colorManager.groupColorMap : colorManager.taxaColorMap;
-        let currentColor = colorMap?.[name] || "#000000";
+        let currentColor = colorMap?.[name] || '#000000';
 
         if (Array.isArray(currentColor)) {
           currentColor = rgbToHex(currentColor);

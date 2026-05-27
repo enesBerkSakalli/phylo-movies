@@ -68,10 +68,7 @@ export function ToolsSidebar({
             <SidebarGroupLabel>{TOOLS_SIDEBAR_GROUP_LABELS[0]}</SidebarGroupLabel>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton
-                  tooltip="Change dataset"
-                  onClick={handleReturnHome}
-                >
+                <SidebarMenuButton tooltip="Change dataset" onClick={handleReturnHome}>
                   <ArrowLeft className="size-4" />
                   <span>Change Dataset</span>
                 </SidebarMenuButton>

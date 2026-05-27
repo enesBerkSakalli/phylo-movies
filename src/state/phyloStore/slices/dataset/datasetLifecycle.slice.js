@@ -53,11 +53,7 @@ export const createDatasetLifecycleSlice = (set, get) => ({
     } = movieData;
     const leafNamesByIndex = deriveLeafNamesByIndex(interpolatedTrees[0]);
 
-    const {
-      sequences: msaSequences,
-      window_size: windowSize,
-      step_size: stepSize,
-    } = movieData.msa;
+    const { sequences: msaSequences, window_size: windowSize, step_size: stepSize } = movieData.msa;
 
     const { setMsaData, initializeColors } = get();
     setMsaData({
@@ -90,7 +86,7 @@ export const createDatasetLifecycleSlice = (set, get) => ({
       selectedTimelineSegmentIndex: null,
       playhead: {
         animationProgress: 0,
-        timelineProgress: null
+        timelineProgress: null,
       },
       frameIndex: 0,
       playing: false,
@@ -108,7 +104,11 @@ function deriveLeafNamesByIndex(tree) {
     const children = Array.isArray(node.children) ? node.children : [];
     if (children.length === 0) {
       const splitIndices = Array.isArray(node.split_indices) ? node.split_indices : [];
-      if (splitIndices.length === 1 && Number.isInteger(splitIndices[0]) && typeof node.name === 'string') {
+      if (
+        splitIndices.length === 1 &&
+        Number.isInteger(splitIndices[0]) &&
+        typeof node.name === 'string'
+      ) {
         namesByIndex[splitIndices[0]] = node.name;
       }
       return;

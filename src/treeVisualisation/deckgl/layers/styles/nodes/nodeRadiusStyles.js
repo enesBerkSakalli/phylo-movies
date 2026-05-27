@@ -27,9 +27,10 @@ export function getNodeRadius(node, minRadius = 1, cached, helpers) {
       highlight.role === TREE_HIGHLIGHT_ROLE.ACTIVE_MOVER ||
       highlight.role === TREE_HIGHLIGHT_ROLE.SUBTREE_HIGHLIGHT
     ) {
-      const emphasis = highlight.role === TREE_HIGHLIGHT_ROLE.ACTIVE_MOVER
-        ? getActiveMoverEmphasis(nodeData, cached, 'node')
-        : 1;
+      const emphasis =
+        highlight.role === TREE_HIGHLIGHT_ROLE.ACTIVE_MOVER
+          ? getActiveMoverEmphasis(nodeData, cached, 'node')
+          : 1;
       radius = getScaledRadius(1.6) * emphasis;
     } else if (highlight.role === TREE_HIGHLIGHT_ROLE.HISTORY_SUBTREE) {
       radius = getScaledRadius(1.15);

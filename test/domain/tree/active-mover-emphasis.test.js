@@ -8,7 +8,7 @@ import { getNodeRadius } from '../../../src/treeVisualisation/deckgl/layers/styl
 
 const helpers = {
   getBaseStrokeWidth: () => 2,
-  nodeSize: 1
+  nodeSize: 1,
 };
 
 function createActiveMoverColorManager(subtrees = [new Set([1])]) {
@@ -21,14 +21,12 @@ function createActiveMoverColorManager(subtrees = [new Set([1])]) {
     isNodePivotEdge: () => false,
     isNodeSourceEdge: () => false,
     isNodeDestinationEdge: () => false,
-    isLinkInActiveMoverSubtree: (link) => subtrees.some((subtree) =>
-      link.split_indices?.every((index) => subtree.has(index))
-    ),
-    isNodeInActiveMoverSubtree: (node) => subtrees.some((subtree) =>
-      node.split_indices?.every((index) => subtree.has(index))
-    ),
+    isLinkInActiveMoverSubtree: (link) =>
+      subtrees.some((subtree) => link.split_indices?.every((index) => subtree.has(index))),
+    isNodeInActiveMoverSubtree: (node) =>
+      subtrees.some((subtree) => node.split_indices?.every((index) => subtree.has(index))),
     getNodeBaseColor: () => '#000000',
-    getNodeColor: () => '#000000'
+    getNodeColor: () => '#000000',
   };
 }
 
@@ -41,7 +39,7 @@ function currentMoverCached() {
     highlightColorMode: 'solid',
     densityScale: 1,
     taxaCount: 200,
-    metricScale: 1
+    metricScale: 1,
   };
 }
 
@@ -51,7 +49,7 @@ describe('active mover emphasis', () => {
     const cached = layerStyles.getCachedState({
       leafNamesByIndex: new Array(200),
       subtreeHighlightScope: 'all',
-      getColorManager: () => ({ highlightedSubtreeSets: [] })
+      getColorManager: () => ({ highlightedSubtreeSets: [] }),
     });
 
     expect(cached.subtreeHighlightScope).toBe('all');

@@ -1,97 +1,94 @@
-
 import { TidyTreeLayout } from '../layout/TidyTreeLayout.js';
 import { createLayoutResult } from '../layout/LayoutResultAdapter.js';
 import { DeckGLTreeLayerDataFactory } from '../deckgl/DeckGLTreeLayerDataFactory.js';
 import { transformBranchLengths } from '../../domain/tree/branchTransform.js';
-import {
-    calculateLabelAngleSpan,
-    calculateReadableLabelRadii
-} from '../layout/labelRingRadii.js';
+import { calculateLabelAngleSpan, calculateReadableLabelRadii } from '../layout/labelRingRadii.js';
 
 const dataFactory = new DeckGLTreeLayerDataFactory();
 
 export function calculateLayoutWorkerResult(treeData, options) {
-    const transformedData = options.branchTransformation === 'none'
-        ? treeData
-        : transformBranchLengths(treeData, options.branchTransformation);
+  const transformedData =
+    options.branchTransformation === 'none'
+      ? treeData
+      : transformBranchLengths(treeData, options.branchTransformation);
 
-    // 2. Calculate Layout
-    // Note: TidyTreeLayout must not touch the DOM.
-    // We ensure we pass dimensions explicitly rather than relying on container lookups.
-    const layoutEngine = new TidyTreeLayout(transformedData);
-    layoutEngine.setDimension(options.width, options.height);
+  // 2. Calculate Layout
+  // Note: TidyTreeLayout must not touch the DOM.
+  // We ensure we pass dimensions explicitly rather than relying on container lookups.
+  const layoutEngine = new TidyTreeLayout(transformedData);
+  layoutEngine.setDimension(options.width, options.height);
 
-    if (options.layoutAngleDegrees !== undefined) {
-        layoutEngine.setAngleExtentDegrees(options.layoutAngleDegrees);
-    }
-    if (options.layoutRotationDegrees !== undefined) {
-        layoutEngine.setAngleOffsetDegrees(options.layoutRotationDegrees);
-    }
-    if (options.margin !== undefined) {
-        layoutEngine.setMargin(options.margin);
-    }
-    const hasMaxGlobalScale = hasUniformScaleValue(options.maxGlobalScale);
-    const rootNode = hasMaxGlobalScale
-        ? layoutEngine.constructRadialTreeWithUniformScaling(Number(options.maxGlobalScale))
-        : layoutEngine.constructRadialTree(false);
-    const maxRadius = layoutEngine.getMaxRadius(rootNode);
-    const layoutResult = createLayoutResult(rootNode, {
-        max_radius: maxRadius,
-        width: options.width,
-        height: options.height,
-        margin: layoutEngine.margin,
-        scale: layoutEngine.scale,
-        uniformScale: layoutEngine.uniformScale,
-        layoutCacheKey: options.layoutCacheKey
-    });
-    const offsets = options.labelOffsets || { DEFAULT: 20, EXTENSION: 5 };
-    const stableGlobalRadius = getStableGlobalRenderedRadius({
-        maxGlobalScale: options.maxGlobalScale,
-        layoutScale: layoutEngine.uniformScale ?? layoutEngine.scale,
-        hasMaxGlobalScale
-    });
-    const baseRadius = Number.isFinite(maxRadius)
-        ? Math.max(0, maxRadius)
-        : (stableGlobalRadius ?? 0);
-    const { extensionRadius, labelRadius } = calculateReadableLabelRadii({
-        baseRadius,
-        labelOffsets: offsets,
-        labelCount: layoutResult.leaves.length,
-        fontSize: options.fontSize,
-        angleSpanRadians: calculateLabelAngleSpan(layoutResult.leaves)
-    });
+  if (options.layoutAngleDegrees !== undefined) {
+    layoutEngine.setAngleExtentDegrees(options.layoutAngleDegrees);
+  }
+  if (options.layoutRotationDegrees !== undefined) {
+    layoutEngine.setAngleOffsetDegrees(options.layoutRotationDegrees);
+  }
+  if (options.margin !== undefined) {
+    layoutEngine.setMargin(options.margin);
+  }
+  const hasMaxGlobalScale = hasUniformScaleValue(options.maxGlobalScale);
+  const rootNode = hasMaxGlobalScale
+    ? layoutEngine.constructRadialTreeWithUniformScaling(Number(options.maxGlobalScale))
+    : layoutEngine.constructRadialTree(false);
+  const maxRadius = layoutEngine.getMaxRadius(rootNode);
+  const layoutResult = createLayoutResult(rootNode, {
+    max_radius: maxRadius,
+    width: options.width,
+    height: options.height,
+    margin: layoutEngine.margin,
+    scale: layoutEngine.scale,
+    uniformScale: layoutEngine.uniformScale,
+    layoutCacheKey: options.layoutCacheKey,
+  });
+  const offsets = options.labelOffsets || { DEFAULT: 20, EXTENSION: 5 };
+  const stableGlobalRadius = getStableGlobalRenderedRadius({
+    maxGlobalScale: options.maxGlobalScale,
+    layoutScale: layoutEngine.uniformScale ?? layoutEngine.scale,
+    hasMaxGlobalScale,
+  });
+  const baseRadius = Number.isFinite(maxRadius)
+    ? Math.max(0, maxRadius)
+    : (stableGlobalRadius ?? 0);
+  const { extensionRadius, labelRadius } = calculateReadableLabelRadii({
+    baseRadius,
+    labelOffsets: offsets,
+    labelCount: layoutResult.leaves.length,
+    fontSize: options.fontSize,
+    angleSpanRadians: calculateLabelAngleSpan(layoutResult.leaves),
+  });
 
-    // 3. Convert to Layer Data
-    // The data factory is purely mathematical, it generates JS Arrays/TypedArrays
-    const layerData = dataFactory.convertTreeToLayerData(layoutResult, {
-        extensionRadius,
-        labelRadius,
-        treeIndex: options.treeIndex,
-        treeSide: options.treeSide,
-        renderMode: options.renderMode,
-        linkGeometryMode: options.linkGeometryMode || 'radial-elbow'
-    });
+  // 3. Convert to Layer Data
+  // The data factory is purely mathematical, it generates JS Arrays/TypedArrays
+  const layerData = dataFactory.convertTreeToLayerData(layoutResult, {
+    extensionRadius,
+    labelRadius,
+    treeIndex: options.treeIndex,
+    treeSide: options.treeSide,
+    renderMode: options.renderMode,
+    linkGeometryMode: options.linkGeometryMode || 'radial-elbow',
+  });
 
-    if (layerData && typeof layerData === 'object') {
-        layerData.max_radius = maxRadius;
-        layerData.layoutCacheKey = options.layoutCacheKey;
-    }
+  if (layerData && typeof layerData === 'object') {
+    layerData.max_radius = maxRadius;
+    layerData.layoutCacheKey = options.layoutCacheKey;
+  }
 
-    return { layout: layoutResult, layerData };
+  return { layout: layoutResult, layerData };
 }
 
 function getStableGlobalRenderedRadius({ maxGlobalScale, layoutScale, hasMaxGlobalScale }) {
-    if (!hasMaxGlobalScale) return null;
+  if (!hasMaxGlobalScale) return null;
 
-    const maxScale = Number(maxGlobalScale);
-    const scale = Number(layoutScale);
-    if (!Number.isFinite(maxScale) || !Number.isFinite(scale)) return null;
+  const maxScale = Number(maxGlobalScale);
+  const scale = Number(layoutScale);
+  if (!Number.isFinite(maxScale) || !Number.isFinite(scale)) return null;
 
-    return Math.max(0, maxScale * scale);
+  return Math.max(0, maxScale * scale);
 }
 
 function hasUniformScaleValue(value) {
-    return value !== null && value !== undefined && Number.isFinite(Number(value));
+  return value !== null && value !== undefined && Number.isFinite(Number(value));
 }
 
 /**
@@ -102,30 +99,29 @@ function hasUniformScaleValue(value) {
  * }
  */
 if (typeof self !== 'undefined') {
-    self.onmessage = ({ data: payload }) => {
-        const { jobId, requestToken, command, data } = payload;
+  self.onmessage = ({ data: payload }) => {
+    const { jobId, requestToken, command, data } = payload;
 
-        if (command !== 'CALCULATE_LAYOUT') return;
+    if (command !== 'CALCULATE_LAYOUT') return;
 
-        try {
-            const { treeData, options } = data;
-            const result = calculateLayoutWorkerResult(treeData, options);
+    try {
+      const { treeData, options } = data;
+      const result = calculateLayoutWorkerResult(treeData, options);
 
-            self.postMessage({
-                jobId,
-                requestToken,
-                status: 'SUCCESS',
-                result
-            });
-
-        } catch (error) {
-            console.error('Worker Calculation Error:', error);
-            self.postMessage({
-                jobId,
-                requestToken,
-                status: 'ERROR',
-                error: error.message
-            });
-        }
-    };
+      self.postMessage({
+        jobId,
+        requestToken,
+        status: 'SUCCESS',
+        result,
+      });
+    } catch (error) {
+      console.error('Worker Calculation Error:', error);
+      self.postMessage({
+        jobId,
+        requestToken,
+        status: 'ERROR',
+        error: error.message,
+      });
+    }
+  };
 }

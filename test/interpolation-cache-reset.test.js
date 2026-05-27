@@ -1,7 +1,11 @@
 const { expect } = require('chai');
 const sinon = require('sinon');
-const { TreeInterpolator } = require('../src/treeVisualisation/deckgl/interpolation/TreeInterpolator.js');
-const { InterpolationRenderer } = require('../src/treeVisualisation/systems/InterpolationRenderer.js');
+const {
+  TreeInterpolator,
+} = require('../src/treeVisualisation/deckgl/interpolation/TreeInterpolator.js');
+const {
+  InterpolationRenderer,
+} = require('../src/treeVisualisation/systems/InterpolationRenderer.js');
 const { useAppStore } = require('../src/state/phyloStore/store.js');
 
 describe('Interpolation cache reset', () => {
@@ -9,59 +13,77 @@ describe('Interpolation cache reset', () => {
     const interpolator = new TreeInterpolator();
 
     const dataFrom = {
-      nodes: [{
-        id: 'n1',
-        position: [1, 0, 0],
-        angle: 0,
-        polarRadius: 10,
-        radius: 10
-      }],
-      labels: [{
-        id: 'l1',
-        position: [1, 0, 0],
-        angle: 0,
-        polarRadius: 12,
-        rotation: 0
-      }],
-      links: [{
-        id: 'link-1',
-        path: [[0, 0, 0], [1, 0, 0]],
-        sourcePosition: [0, 0, 0],
-        targetPosition: [1, 0, 0],
-        polarData: {
-          source: { angle: 0, radius: 10 },
-          target: { angle: 0, radius: 20 }
-        }
-      }],
-      extensions: []
+      nodes: [
+        {
+          id: 'n1',
+          position: [1, 0, 0],
+          angle: 0,
+          polarRadius: 10,
+          radius: 10,
+        },
+      ],
+      labels: [
+        {
+          id: 'l1',
+          position: [1, 0, 0],
+          angle: 0,
+          polarRadius: 12,
+          rotation: 0,
+        },
+      ],
+      links: [
+        {
+          id: 'link-1',
+          path: [
+            [0, 0, 0],
+            [1, 0, 0],
+          ],
+          sourcePosition: [0, 0, 0],
+          targetPosition: [1, 0, 0],
+          polarData: {
+            source: { angle: 0, radius: 10 },
+            target: { angle: 0, radius: 20 },
+          },
+        },
+      ],
+      extensions: [],
     };
 
     const dataTo = {
-      nodes: [{
-        id: 'n1',
-        position: [1, 0, 0],
-        angle: Math.PI * 2,
-        polarRadius: 10,
-        radius: 10
-      }],
-      labels: [{
-        id: 'l1',
-        position: [1, 0, 0],
-        angle: Math.PI * 2,
-        polarRadius: 12,
-        rotation: Math.PI * 2
-      }],
-      links: [{
-        id: 'link-1',
-        path: [[0, 0, 0], [1, 0, 0]],
-        sourcePosition: [0, 0, 0],
-        targetPosition: [1, 0, 0],
-        polarData: {
-          source: { angle: Math.PI * 2, radius: 10 },
-          target: { angle: Math.PI * 2, radius: 20 }
-        }
-      }],
-      extensions: []
+      nodes: [
+        {
+          id: 'n1',
+          position: [1, 0, 0],
+          angle: Math.PI * 2,
+          polarRadius: 10,
+          radius: 10,
+        },
+      ],
+      labels: [
+        {
+          id: 'l1',
+          position: [1, 0, 0],
+          angle: Math.PI * 2,
+          polarRadius: 12,
+          rotation: Math.PI * 2,
+        },
+      ],
+      links: [
+        {
+          id: 'link-1',
+          path: [
+            [0, 0, 0],
+            [1, 0, 0],
+          ],
+          sourcePosition: [0, 0, 0],
+          targetPosition: [1, 0, 0],
+          polarData: {
+            source: { angle: Math.PI * 2, radius: 10 },
+            target: { angle: Math.PI * 2, radius: 20 },
+          },
+        },
+      ],
+      extensions: [],
     };
 
     interpolator.interpolateTreeData(dataFrom, dataTo, 1);
@@ -83,7 +105,7 @@ describe('Controller cache reset hook', () => {
       resetInterpolationCaches: resetSpy,
       startAnimation: sinon.spy(),
       stopAnimation: sinon.spy(),
-      destroy: sinon.spy()
+      destroy: sinon.spy(),
     };
 
     useAppStore.getState().setTreeControllers([controller]);
@@ -102,14 +124,14 @@ describe('InterpolationRenderer timeline progress', () => {
     useAppStore.setState({
       movieTimelineManager: {
         destroy: () => {},
-        getTransitionFrameForTimelineProgress: () => null
-      }
+        getTransitionFrameForTimelineProgress: () => null,
+      },
     });
 
     const controller = {
       ready: true,
       readyPromise: Promise.resolve(),
-      renderAllElements: sinon.spy()
+      renderAllElements: sinon.spy(),
     };
     const renderer = new InterpolationRenderer(controller);
     const renderProgress = sinon.stub(renderer, 'renderProgress').resolves();
@@ -132,9 +154,9 @@ describe('InterpolationRenderer timeline progress', () => {
       _syncInterpolatorRootAngle: sinon.spy(),
       _getLinkGeometryMode: () => 'radial-elbow',
       treeInterpolator: {
-        interpolateTreeData: sinon.spy()
+        interpolateTreeData: sinon.spy(),
       },
-      _updateLayersEfficiently: sinon.spy()
+      _updateLayersEfficiently: sinon.spy(),
     };
     const renderer = new InterpolationRenderer(controller);
     const renderPromise = renderer.renderSingleInterpolatedFrame(
@@ -144,7 +166,7 @@ describe('InterpolationRenderer timeline progress', () => {
       {
         fromTreeIndex: 0,
         toTreeIndex: 1,
-        isCancelled: () => cancelled
+        isCancelled: () => cancelled,
       }
     );
 

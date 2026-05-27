@@ -1,5 +1,5 @@
-import { resolveApiUrl } from "../../../services/data/apiConfig";
-import { phyloData } from "../../../services/data/dataService.js";
+import { resolveApiUrl } from '../../../services/data/apiConfig';
+import { phyloData } from '../../../services/data/dataService.js';
 
 const UPLOAD_START_TIMEOUT_MS = 2 * 60 * 1000;
 const STREAM_IDLE_TIMEOUT_MS = 15 * 60 * 1000;
@@ -63,7 +63,10 @@ export async function processMovieData(formData, onProgress, options = {}) {
       throw createAbortError();
     }
     if (error?.name === 'AbortError') {
-      throw new Error('The server did not start tree processing in time. Please check that the local processing server is running.', { cause: error });
+      throw new Error(
+        'The server did not start tree processing in time. Please check that the local processing server is running.',
+        { cause: error }
+      );
     }
     throw error;
   } finally {
@@ -79,7 +82,9 @@ export async function processMovieData(formData, onProgress, options = {}) {
       const jd = await resp.json();
       if (jd && jd.error) errorMsg = jd.error;
     } catch {
-      try { errorMsg = await resp.text(); } catch { }
+      try {
+        errorMsg = await resp.text();
+      } catch {}
     }
     throw new Error(errorMsg);
   }
@@ -129,7 +134,11 @@ export async function processMovieData(formData, onProgress, options = {}) {
       if (settled) return;
       if (idleTimeoutId) clearTimeout(idleTimeoutId);
       idleTimeoutId = setTimeout(() => {
-        rejectOnce(new Error('Tree processing stopped sending progress. Please check the local processing server and try again.'));
+        rejectOnce(
+          new Error(
+            'Tree processing stopped sending progress. Please check the local processing server and try again.'
+          )
+        );
       }, STREAM_IDLE_TIMEOUT_MS);
     };
 
@@ -178,7 +187,7 @@ export async function processMovieData(formData, onProgress, options = {}) {
         } else if (level === 'error') {
           console.error(`[Backend] ${log.message}`);
         }
-      } catch { }
+      } catch {}
     });
 
     eventSource.addEventListener('metadata', (event) => {
@@ -261,7 +270,11 @@ export async function processMovieData(formData, onProgress, options = {}) {
           return;
         }
         if (expectedTreeTotal !== null && expectedTreeTotal !== streamedTrees.length) {
-          rejectOnce(new Error(`Tree stream ended after ${streamedTrees.length} trees, expected ${expectedTreeTotal}`));
+          rejectOnce(
+            new Error(
+              `Tree stream ended after ${streamedTrees.length} trees, expected ${expectedTreeTotal}`
+            )
+          );
           return;
         }
 
@@ -331,7 +344,10 @@ export async function finalizeMovieData(data, formData, onProgress) {
     // Handle IndexedDB quota/memory errors with user-friendly message
     if (storageError.name === 'DataCloneError' || storageError.message?.includes('out of memory')) {
       const treeCount = data?.interpolated_trees?.length || 'unknown';
-      throw new Error(`Dataset too large for browser storage (${treeCount} trees). Try reducing window size or number of input trees.`, { cause: storageError });
+      throw new Error(
+        `Dataset too large for browser storage (${treeCount} trees). Try reducing window size or number of input trees.`,
+        { cause: storageError }
+      );
     }
     throw storageError;
   }

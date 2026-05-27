@@ -46,11 +46,16 @@ const pairs = [
 
 describe('distanceChartModel', () => {
   it('keeps scale point display order separate from input tree navigation target', () => {
-    const { points } = buildSeriesPoints('scale', pairMetrics, [
-      { index: 0, value: 12 },
-      { index: 10, value: 18 },
-      { index: 20, value: 15 },
-    ], pairs);
+    const { points } = buildSeriesPoints(
+      'scale',
+      pairMetrics,
+      [
+        { index: 0, value: 12 },
+        { index: 10, value: 18 },
+        { index: 20, value: 15 },
+      ],
+      pairs
+    );
 
     expect(points.map((point) => point.x)).toEqual([1, 2, 3]);
     expect(points.map((point) => point.frameIndex)).toEqual([0, 10, 20]);
@@ -81,11 +86,16 @@ describe('distanceChartModel', () => {
   });
 
   it('resolves the scale cursor from input tree indices instead of chart ordinals', () => {
-    const { points } = buildSeriesPoints('scale', pairMetrics, [
-      { index: 0, value: 12 },
-      { index: 10, value: 18 },
-      { index: 20, value: 15 },
-    ], pairs);
+    const { points } = buildSeriesPoints(
+      'scale',
+      pairMetrics,
+      [
+        { index: 0, value: 12 },
+        { index: 10, value: 18 },
+        { index: 20, value: 15 },
+      ],
+      pairs
+    );
 
     const activePointIndex = resolveActivePointIndex('scale', { sourceFrameIndex: 10 }, [], points);
 

@@ -1,9 +1,5 @@
 import { LINK_LIFECYCLES, createLifecycleClocks } from './TransitionChangeModel.js';
-import {
-  polarToPosition,
-  positionFromPolar,
-  positionToPolar
-} from '../../utils/polarGeometry.js';
+import { polarToPosition, positionFromPolar, positionToPolar } from '../../utils/polarGeometry.js';
 
 const ZERO_LENGTH_EPSILON = 1e-6;
 
@@ -26,9 +22,9 @@ export class PolarLinkInterpolator {
       (from, to, t, fromLink, toLink, velocityEntry) =>
         this._interpolateLinkDatum(fromLink, toLink, t, {
           ...options,
-          velocityEntry
+          velocityEntry,
         }),
-      options,
+      options
     );
   }
 
@@ -37,7 +33,8 @@ export class PolarLinkInterpolator {
     const toMap = options.toMap || this.elementMatcher._createElementMap(toLinks);
     const velocityMap = options.velocityMap || null;
     const model = options.transitionChangeModel;
-    const clocks = options.lifecycleClocks || createLifecycleClocks(options.rawTimeFactor ?? timeFactor);
+    const clocks =
+      options.lifecycleClocks || createLifecycleClocks(options.rawTimeFactor ?? timeFactor);
     const entries = [];
     const incomingLifecycleEntryByTarget = new Map();
     const resolvedEntries = new Map();
@@ -59,7 +56,7 @@ export class PolarLinkInterpolator {
         lengthScale,
         velocityEntry: velocityMap?.get(id) ?? null,
         change,
-        ...flags
+        ...flags,
       };
 
       entries.push(entry);
@@ -98,14 +95,17 @@ export class PolarLinkInterpolator {
       resolvingEntries.add(entry.id);
       const sourceId = linkEndpointNodeId(entry, 'source');
       const parentEntry = sourceId ? incomingLifecycleEntryByTarget.get(sourceId) : null;
-      const parentDatum = parentEntry &&
+      const parentDatum =
+        parentEntry &&
         parentEntry.id !== entry.id &&
         shouldAttachLifecycleEndpoints(parentEntry.lifecycle, entry.lifecycle)
-        ? resolveEntry(parentEntry)
-        : null;
+          ? resolveEntry(parentEntry)
+          : null;
       const computed = this._computeLifecycleEntry(entry, timeFactor, {
         ...options,
-        ...(parentDatum?.targetPosition ? { sourcePositionOverride: parentDatum.targetPosition } : {})
+        ...(parentDatum?.targetPosition
+          ? { sourcePositionOverride: parentDatum.targetPosition }
+          : {}),
       });
       resolvingEntries.delete(entry.id);
       resolvedEntries.set(entry.id, computed);
@@ -123,17 +123,24 @@ export class PolarLinkInterpolator {
       lifecycle: entry.lifecycle,
       transitionPhase: entry.clock,
       velocityEntry: entry.velocityEntry,
-      change: entry.change
+      change: entry.change,
     };
-    const computed = entry.lengthScale !== null
-      ? this._interpolateLifecycleScaledLink(fromLink, toLink, timeFactor, entry.lengthScale, entryOptions)
-      : this._interpolateLinkDatum(fromLink, toLink, timeFactor, entryOptions);
+    const computed =
+      entry.lengthScale !== null
+        ? this._interpolateLifecycleScaledLink(
+            fromLink,
+            toLink,
+            timeFactor,
+            entry.lengthScale,
+            entryOptions
+          )
+        : this._interpolateLinkDatum(fromLink, toLink, timeFactor, entryOptions);
 
     if (entry.isEntering) {
       return {
         ...computed,
         opacity: enteringStructuralOpacity(toLink, options),
-        isEntering: true
+        isEntering: true,
       };
     }
 
@@ -141,7 +148,7 @@ export class PolarLinkInterpolator {
       return {
         ...computed,
         opacity: exitingStructuralOpacity(fromLink, options),
-        isExiting: true
+        isExiting: true,
       };
     }
 
@@ -149,13 +156,9 @@ export class PolarLinkInterpolator {
   }
 
   _interpolateLifecycleScaledLink(fromLink, toLink, frameT, lengthScale, options = {}) {
-    const sourcePosition = options.sourcePositionOverride || this._interpolateLinkEndpointPosition(
-      fromLink,
-      toLink,
-      'source',
-      frameT,
-      options
-    );
+    const sourcePosition =
+      options.sourcePositionOverride ||
+      this._interpolateLinkEndpointPosition(fromLink, toLink, 'source', frameT, options);
     const targetFramePosition = this._interpolateLinkEndpointPosition(
       fromLink,
       toLink,
@@ -163,17 +166,22 @@ export class PolarLinkInterpolator {
       frameT,
       options
     );
-    const targetReferencePosition = this._lifecycleTargetReferencePosition(fromLink, toLink, options.lifecycle, options) ||
+    const targetReferencePosition =
+      this._lifecycleTargetReferencePosition(fromLink, toLink, options.lifecycle, options) ||
       targetFramePosition;
 
     const sourceRadius = Math.hypot(sourcePosition[0], sourcePosition[1]);
-    const targetReferenceRadius = Math.hypot(targetReferencePosition[0], targetReferencePosition[1]);
+    const targetReferenceRadius = Math.hypot(
+      targetReferencePosition[0],
+      targetReferencePosition[1]
+    );
     const targetAngle = Math.atan2(targetFramePosition[1], targetFramePosition[0]);
     const branchLength = Math.max(0, targetReferenceRadius - sourceRadius);
     const scaledBranchLength = branchLength * clampTime(lengthScale);
-    const targetPosition = scaledBranchLength <= ZERO_LENGTH_EPSILON
-      ? sourcePosition
-      : positionFromPolar(sourceRadius + scaledBranchLength, targetAngle, targetFramePosition[2]);
+    const targetPosition =
+      scaledBranchLength <= ZERO_LENGTH_EPSILON
+        ? sourcePosition
+        : positionFromPolar(sourceRadius + scaledBranchLength, targetAngle, targetFramePosition[2]);
 
     return this._createLinkDatumFromPositions(toLink, sourcePosition, targetPosition, options);
   }
@@ -239,7 +247,7 @@ export class PolarLinkInterpolator {
     return this._createLinkDatumFromPositions(toLink, sourcePosition, targetPosition, {
       ...options,
       lifecycle: options.lifecycle || LINK_LIFECYCLES.UNCHANGED,
-      transitionPhase: options.transitionPhase ?? t
+      transitionPhase: options.transitionPhase ?? t,
     });
   }
 
@@ -252,15 +260,15 @@ export class PolarLinkInterpolator {
       polarData: {
         ...link.polarData,
         source: sourcePolar,
-        target: targetPolar
-      }
+        target: targetPolar,
+      },
     };
 
     return {
       ...link,
       path: this.pathInterpolator.interpolatePath(positionedLink, positionedLink, 1, {
         velocityEntry: options.velocityEntry ?? null,
-        linkGeometryMode: options.linkGeometryMode
+        linkGeometryMode: options.linkGeometryMode,
       }),
       sourcePosition,
       targetPosition,
@@ -271,7 +279,7 @@ export class PolarLinkInterpolator {
       children: link.children,
       targetName: link.targetName,
       lifecycle: options.lifecycle || LINK_LIFECYCLES.UNCHANGED,
-      transitionPhase: options.transitionPhase ?? 1
+      transitionPhase: options.transitionPhase ?? 1,
     };
   }
 
@@ -294,7 +302,7 @@ export class PolarLinkInterpolator {
         {
           lifecycle: link.lifecycle,
           transitionPhase: link.transitionPhase,
-          linkGeometryMode: options.linkGeometryMode
+          linkGeometryMode: options.linkGeometryMode,
         }
       );
     });
@@ -416,9 +424,11 @@ function clampTime(timeFactor) {
 }
 
 function pointsMatch(a, b, epsilon = 1e-6) {
-  return Array.isArray(a) &&
+  return (
+    Array.isArray(a) &&
     Array.isArray(b) &&
     Math.abs((a[0] ?? 0) - (b[0] ?? 0)) <= epsilon &&
     Math.abs((a[1] ?? 0) - (b[1] ?? 0)) <= epsilon &&
-    Math.abs((a[2] ?? 0) - (b[2] ?? 0)) <= epsilon;
+    Math.abs((a[2] ?? 0) - (b[2] ?? 0)) <= epsilon
+  );
 }

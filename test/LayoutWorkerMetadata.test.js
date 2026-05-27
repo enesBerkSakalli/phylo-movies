@@ -9,8 +9,8 @@ describe('layout worker metadata', () => {
       split_indices: [0, 1],
       children: [
         { name: 'taxon_1', length: 0.2, split_indices: [0], children: [] },
-        { name: 'taxon_2', length: 0.3, split_indices: [1], children: [] }
-      ]
+        { name: 'taxon_2', length: 0.3, split_indices: [1], children: [] },
+      ],
     };
 
     const result = calculateLayoutWorkerResult(treeData, {
@@ -22,7 +22,7 @@ describe('layout worker metadata', () => {
       layoutRotationDegrees: 0,
       extensionRadius: 245,
       labelRadius: 265,
-      layoutCacheKey: 'layout-key-0'
+      layoutCacheKey: 'layout-key-0',
     });
 
     expect(result.layout.max_radius).toBeGreaterThan(0);
@@ -38,8 +38,8 @@ describe('layout worker metadata', () => {
       split_indices: [0, 1],
       children: [
         { name: 'taxon_1', length: 0, split_indices: [0], children: [] },
-        { name: 'taxon_2', length: 0, split_indices: [1], children: [] }
-      ]
+        { name: 'taxon_2', length: 0, split_indices: [1], children: [] },
+      ],
     };
 
     const result = calculateLayoutWorkerResult(treeData, {
@@ -47,7 +47,7 @@ describe('layout worker metadata', () => {
       height: 600,
       margin: 60,
       branchTransformation: 'none',
-      maxGlobalScale: 0
+      maxGlobalScale: 0,
     });
 
     expect(result.layout.scale).toBe(240);
@@ -61,8 +61,8 @@ describe('layout worker metadata', () => {
       split_indices: [0, 1],
       children: [
         { name: 'taxon_1', length: 1, split_indices: [0], children: [] },
-        { name: 'taxon_2', length: 1, split_indices: [1], children: [] }
-      ]
+        { name: 'taxon_2', length: 1, split_indices: [1], children: [] },
+      ],
     };
 
     const result = calculateLayoutWorkerResult(treeData, {
@@ -70,7 +70,7 @@ describe('layout worker metadata', () => {
       height: 600,
       margin: 60,
       branchTransformation: 'none',
-      maxGlobalScale: null
+      maxGlobalScale: null,
     });
 
     expect(result.layout.scale).not.toBe(240);
@@ -83,8 +83,8 @@ describe('layout worker metadata', () => {
       split_indices: [0, 1],
       children: [
         { name: 'taxon_1', length: 1, split_indices: [0], children: [] },
-        { name: 'taxon_2', length: 1, split_indices: [1], children: [] }
-      ]
+        { name: 'taxon_2', length: 1, split_indices: [1], children: [] },
+      ],
     };
 
     const result = calculateLayoutWorkerResult(treeData, {
@@ -95,10 +95,12 @@ describe('layout worker metadata', () => {
       layoutAngleDegrees: 360,
       layoutRotationDegrees: 0,
       maxGlobalScale: 10,
-      labelOffsets: { DEFAULT: 2, EXTENSION: 1 }
+      labelOffsets: { DEFAULT: 2, EXTENSION: 1 },
     });
 
-    expect(result.layerData.extensions[0].polarData.target.radius).toBe(result.layout.max_radius + 1);
+    expect(result.layerData.extensions[0].polarData.target.radius).toBe(
+      result.layout.max_radius + 1
+    );
     expect(result.layerData.labels[0].polarPosition).toBe(result.layout.max_radius + 3);
   });
 
@@ -112,8 +114,8 @@ describe('layout worker metadata', () => {
         name: `taxon_${index}`,
         length: 1,
         split_indices: [index],
-        children: []
-      }))
+        children: [],
+      })),
     };
 
     const result = calculateLayoutWorkerResult(treeData, {
@@ -124,7 +126,7 @@ describe('layout worker metadata', () => {
       layoutAngleDegrees: 360,
       layoutRotationDegrees: 0,
       labelOffsets: { DEFAULT: 1, EXTENSION: 1 },
-      fontSize: '1.8em'
+      fontSize: '1.8em',
     });
 
     expect(result.layerData.labels).toHaveLength(leafCount);
@@ -139,9 +141,7 @@ describe('layout worker metadata', () => {
       name: '',
       length: 0,
       split_indices: [0],
-      children: [
-        { name: 'taxon_1', length: 0.001, split_indices: [0], children: [] }
-      ]
+      children: [{ name: 'taxon_1', length: 0.001, split_indices: [0], children: [] }],
     };
 
     const result = calculateLayoutWorkerResult(treeData, {
@@ -150,7 +150,7 @@ describe('layout worker metadata', () => {
       margin: 60,
       branchTransformation: 'none',
       maxGlobalScale: 10,
-      minVisualBranchLength: 0.05
+      minVisualBranchLength: 0.05,
     });
     const leaf = result.layout.nodes.find((node) => node.name === 'taxon_1');
 

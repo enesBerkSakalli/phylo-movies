@@ -10,12 +10,12 @@ describe('ComparisonUtils', () => {
       nodes: [
         {
           position: [1, 2, 0],
-          renderPosition: [1, 2, 0.1]
-        }
+          renderPosition: [1, 2, 0.1],
+        },
       ],
       links: [],
       extensions: [],
-      labels: []
+      labels: [],
     };
 
     applyOffset(layerData, 10, 20);
@@ -27,17 +27,21 @@ describe('ComparisonUtils', () => {
   it('offsets flat link and extension paths', () => {
     const layerData = {
       nodes: [],
-      links: [{
-        sourcePosition: [0, 0, 0],
-        targetPosition: [10, 0, 0],
-        path: new Float32Array([0, 0, 0, 10, 0, 0])
-      }],
-      extensions: [{
-        sourcePosition: [1, 1, 0],
-        targetPosition: [2, 2, 0],
-        path: new Float32Array([1, 1, 0, 2, 2, 0])
-      }],
-      labels: []
+      links: [
+        {
+          sourcePosition: [0, 0, 0],
+          targetPosition: [10, 0, 0],
+          path: new Float32Array([0, 0, 0, 10, 0, 0]),
+        },
+      ],
+      extensions: [
+        {
+          sourcePosition: [1, 1, 0],
+          targetPosition: [2, 2, 0],
+          path: new Float32Array([1, 1, 0, 2, 2, 0]),
+        },
+      ],
+      labels: [],
     };
 
     applyOffset(layerData, 5, 6);
@@ -47,20 +51,24 @@ describe('ComparisonUtils', () => {
   });
 
   it('builds normalized position entries without raw node references', () => {
-    const nodes = [{
-      id: 'n0',
-      parentId: null,
-      position: [1, 2, 0],
-      split_indices: [0],
-      isLeaf: true,
-      name: 'A',
-      depth: 1
-    }];
-    const labels = [{
-      position: [3, 4, 0],
-      split_indices: [0],
-      name: 'A'
-    }];
+    const nodes = [
+      {
+        id: 'n0',
+        parentId: null,
+        position: [1, 2, 0],
+        split_indices: [0],
+        isLeaf: true,
+        name: 'A',
+        depth: 1,
+      },
+    ];
+    const labels = [
+      {
+        position: [3, 4, 0],
+        split_indices: [0],
+        name: 'A',
+      },
+    ];
 
     const entry = buildPositionMap(nodes, labels).get(toSubtreeKey([0]));
 
@@ -71,7 +79,7 @@ describe('ComparisonUtils', () => {
       split_indices: [0],
       isLeaf: true,
       name: 'A',
-      depth: 1
+      depth: 1,
     });
     expect(entry).not.toHaveProperty('node');
   });
@@ -80,20 +88,14 @@ describe('ComparisonUtils', () => {
     expect(typeof ComparisonUtils.calculateComparisonFrameGeometry).toBe('function');
 
     const leftLayerData = {
-      nodes: [
-        { position: [0, 0, 0] },
-        { position: [10, 0, 0] }
-      ],
+      nodes: [{ position: [0, 0, 0] }, { position: [10, 0, 0] }],
       labels: [{ position: [30, 0, 0], name: 'left' }],
-      extensions: []
+      extensions: [],
     };
     const rightLayerData = {
-      nodes: [
-        { position: [100, 0, 0] },
-        { position: [120, 0, 0] }
-      ],
+      nodes: [{ position: [100, 0, 0] }, { position: [120, 0, 0] }],
       labels: [{ position: [145, 0, 0], name: 'right' }],
-      extensions: []
+      extensions: [],
     };
 
     const geometry = ComparisonUtils.calculateComparisonFrameGeometry({
@@ -103,7 +105,7 @@ describe('ComparisonUtils', () => {
       rightTreeOffset: { x: 7, y: -3 },
       leftTreeOffsetX: 5,
       leftTreeOffsetY: 11,
-      fontSize: '3em'
+      fontSize: '3em',
     });
 
     expect(leftLayerData.nodes[0].position).toEqual([0, 0, 0]);
@@ -124,13 +126,13 @@ describe('ComparisonUtils', () => {
       nodes: [{ id: 'left-node' }],
       links: [{ id: 'left-link' }],
       extensions: [{ id: 'left-extension' }],
-      labels: [{ id: 'left-label' }]
+      labels: [{ id: 'left-label' }],
     };
     const rightData = {
       nodes: [{ id: 'right-node' }],
       links: [{ id: 'right-link' }],
       extensions: [{ id: 'right-extension' }],
-      labels: [{ id: 'right-label' }]
+      labels: [{ id: 'right-label' }],
     };
     const connectors = [{ id: 'connector' }];
 
@@ -139,7 +141,7 @@ describe('ComparisonUtils', () => {
       links: [...leftData.links, ...rightData.links],
       extensions: [...leftData.extensions, ...rightData.extensions],
       labels: [...leftData.labels, ...rightData.labels],
-      connectors
+      connectors,
     });
   });
 });

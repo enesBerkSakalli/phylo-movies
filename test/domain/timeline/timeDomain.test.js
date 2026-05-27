@@ -50,21 +50,25 @@ describe('timeline time domain', () => {
   });
 
   it('constructs timing intervals without changing the segment timing wire format', () => {
-    expect(TimelineInterval.motion({
-      fromIndex: 1,
-      toIndex: 2,
-      durationMs: 1000,
-    })).toEqual({
+    expect(
+      TimelineInterval.motion({
+        fromIndex: 1,
+        toIndex: 2,
+        durationMs: 1000,
+      })
+    ).toEqual({
       type: TIMELINE_INTERVAL_TYPE.MOTION,
       fromIndex: 1,
       toIndex: 2,
       durationMs: 1000,
     });
-    expect(TimelineInterval.hold({
-      holdIndex: 2,
-      holdKind: TIMELINE_HOLD_KIND.MOVER,
-      durationMs: 200,
-    })).toEqual({
+    expect(
+      TimelineInterval.hold({
+        holdIndex: 2,
+        holdKind: TIMELINE_HOLD_KIND.MOVER,
+        durationMs: 200,
+      })
+    ).toEqual({
       type: TIMELINE_INTERVAL_TYPE.HOLD,
       holdIndex: 2,
       holdKind: 'mover',
@@ -73,16 +77,22 @@ describe('timeline time domain', () => {
   });
 
   it('creates fixed contexts that can carry independent playback cursors', () => {
-    const cursor = PlaybackCursor.fromTransitionFrame(TransitionFrame.from({
-      sourceTreeIndex: 1,
-      targetTreeIndex: 1,
-      transitionProgress: 0,
-      holdKind: TIMELINE_HOLD_KIND.MOVER,
-    }, {
-      timelineProgress: 0.25,
-    }), {
-      treeCount: 4,
-    });
+    const cursor = PlaybackCursor.fromTransitionFrame(
+      TransitionFrame.from(
+        {
+          sourceTreeIndex: 1,
+          targetTreeIndex: 1,
+          transitionProgress: 0,
+          holdKind: TIMELINE_HOLD_KIND.MOVER,
+        },
+        {
+          timelineProgress: 0.25,
+        }
+      ),
+      {
+        treeCount: 4,
+      }
+    );
     const context = TimelineContext.fixed({
       start: 0,
       end: 4100,

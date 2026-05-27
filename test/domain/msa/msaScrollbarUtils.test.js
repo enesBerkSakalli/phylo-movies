@@ -7,11 +7,13 @@ import {
 
 describe('MSA scrollbar utilities', () => {
   it('calculates capped thumb geometry from visible range', () => {
-    expect(calculateScrollbarGeometry({
-      rows: 100,
-      cols: 100,
-      visibleRange: { r0: 95, r1: 99, c0: 95, c1: 99 },
-    })).toMatchObject({
+    expect(
+      calculateScrollbarGeometry({
+        rows: 100,
+        cols: 100,
+        visibleRange: { r0: 95, r1: 99, c0: 95, c1: 99 },
+      })
+    ).toMatchObject({
       hThumbWidth: 10,
       hThumbLeft: 90,
       vThumbHeight: 10,
@@ -20,11 +22,13 @@ describe('MSA scrollbar utilities', () => {
   });
 
   it('returns empty geometry when data is unavailable', () => {
-    expect(calculateScrollbarGeometry({
-      rows: 0,
-      cols: 0,
-      visibleRange: null,
-    })).toEqual({
+    expect(
+      calculateScrollbarGeometry({
+        rows: 0,
+        cols: 0,
+        visibleRange: null,
+      })
+    ).toEqual({
       rows: 0,
       cols: 0,
       r0: 0,
@@ -39,19 +43,23 @@ describe('MSA scrollbar utilities', () => {
   });
 
   it('maps track click position to a clamped zero-based index', () => {
-    expect(getTrackClickTarget({
-      pointerClientPosition: 200,
-      trackStart: 0,
-      trackSize: 200,
-      itemCount: 100,
-    })).toBe(99);
+    expect(
+      getTrackClickTarget({
+        pointerClientPosition: 200,
+        trackStart: 0,
+        trackSize: 200,
+        itemCount: 100,
+      })
+    ).toBe(99);
 
-    expect(getTrackClickTarget({
-      pointerClientPosition: -20,
-      trackStart: 0,
-      trackSize: 200,
-      itemCount: 100,
-    })).toBe(0);
+    expect(
+      getTrackClickTarget({
+        pointerClientPosition: -20,
+        trackStart: 0,
+        trackSize: 200,
+        itemCount: 100,
+      })
+    ).toBe(0);
   });
 
   it('maps keyboard input to horizontal scroll targets', () => {

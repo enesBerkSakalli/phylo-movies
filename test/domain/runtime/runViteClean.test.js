@@ -4,7 +4,7 @@ import {
   resolveViteArgs,
   sanitizeNodeRuntimeEnv,
   shouldCheckBackendHealth,
-  stripConsoleNinjaHooks
+  stripConsoleNinjaHooks,
 } from '../../../scripts/run-vite-clean.mjs';
 
 describe('clean Vite runtime wrapper', () => {
@@ -13,7 +13,7 @@ describe('clean Vite runtime wrapper', () => {
       '#!/usr/bin/env node',
       "/* build-hook-start */try { require('/tmp/wallabyjs.console-ninja/out/buildHook/index.js') } catch {}/* build-hook-end */",
       "import { performance } from 'node:perf_hooks'",
-      'global.__vite_start_time = performance.now()'
+      'global.__vite_start_time = performance.now()',
     ].join('\n');
 
     const cleaned = stripConsoleNinjaHooks(source);
@@ -29,7 +29,7 @@ describe('clean Vite runtime wrapper', () => {
       NODE_OPTIONS: '--require /Users/me/.console-ninja/.bin/loader.js',
       CONSOLE_NINJA_SESSION: 'active',
       WALLABY_PRODUCTION: 'true',
-      SAFE_ENV: 'kept'
+      SAFE_ENV: 'kept',
     });
 
     expect(cleanEnv.PATH).toBe('/usr/local/bin:/usr/bin');

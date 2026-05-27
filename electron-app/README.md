@@ -35,6 +35,7 @@ cd phylo-movies
 ```
 
 This script will:
+
 - Initialise the BranchArchitect submodule if missing
 - Install Poetry if not found
 - Install Python dependencies
@@ -51,6 +52,7 @@ git submodule update --init --recursive
 ```
 
 Or clone with submodules:
+
 ```bash
 git clone --recurse-submodules https://github.com/enesBerkSakalli/phylo-movies.git
 ```
@@ -82,18 +84,21 @@ npm install
 #### 5. Run in development mode
 
 Terminal 1 - Start the React dev server:
+
 ```bash
 cd phylo-movies  # project root
 npm run dev
 ```
 
 Terminal 2 - Start the Flask engine:
+
 ```bash
 cd engine/BranchArchitect
 ./start_movie_server.sh
 ```
 
 Terminal 3 - Start Electron (optional, for desktop mode):
+
 ```bash
 cd electron-app
 npm run dev

@@ -17,17 +17,17 @@ export function getConnectorsLayerProps(connectors, state) {
 
   return {
     data: connectors,
-    getPath: d => d.path,
+    getPath: (d) => d.path,
     widthUnits: 'pixels',
     widthMinPixels: 1,
-    getWidth: d => {
+    getWidth: (d) => {
       // Base width is d.width or defaults
       // Scale it by the global connectorStrokeWidth setting relative to a default base of 2px
       const baseWidth = d.width || (d.isLeafToLeaf ? 2 : 1);
       const scaleFactor = (connectorStrokeWidth || 1) / 1;
       return baseWidth * scaleFactor;
     },
-    getColor: d => {
+    getColor: (d) => {
       const baseColor = d.color || (d.isLeafToLeaf ? [70, 130, 220] : [150, 150, 150]);
       // If baseColor has 4 components, use its alpha (unless overridden)
       // For active edges, we want them to pop, so we use their assigned alpha.
@@ -45,7 +45,7 @@ export function getConnectorsLayerProps(connectors, state) {
     updateTriggers: {
       getPath: connectors.length,
       getWidth: [connectors.length, connectorStrokeWidth],
-      getColor: [connectors.length, linkConnectionOpacity, colorVersion]
-    }
+      getColor: [connectors.length, linkConnectionOpacity, colorVersion],
+    },
   };
 }

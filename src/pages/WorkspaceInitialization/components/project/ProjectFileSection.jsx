@@ -1,6 +1,6 @@
 import React from 'react';
-import { UploadCloud } from "lucide-react";
-import { FileUploadZone } from "../../../../components/ui/file-upload-zone";
+import { UploadCloud } from 'lucide-react';
+import { FileUploadZone } from '../../../../components/ui/file-upload-zone';
 
 export function ProjectFileSection({ treesFile, msaFile, setTreesFile, setMsaFile, disabled }) {
   return (
@@ -32,7 +32,7 @@ export function ProjectFileSection({ treesFile, msaFile, setTreesFile, setMsaFil
           label="Multiple Sequence Alignment"
           description="FASTA, CLUSTAL, or PHYLIP format (optional if trees provided)"
           accept={{
-            'text/plain': ['.fas', '.fasta', '.aln', '.clustal', '.msa', '.phylip', '.phy']
+            'text/plain': ['.fas', '.fasta', '.aln', '.clustal', '.msa', '.phylip', '.phy'],
           }}
           disabled={disabled}
           value={msaFile}

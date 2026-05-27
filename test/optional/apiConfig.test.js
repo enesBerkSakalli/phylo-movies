@@ -56,8 +56,8 @@ describe('apiConfig - Multi-platform URL Resolution', () => {
     it('getApiBaseUrl() should return value from getBackendUrl()', async () => {
       global.window = {
         electronAPI: {
-          getBackendUrl: async () => 'http://localhost:5002'
-        }
+          getBackendUrl: async () => 'http://localhost:5002',
+        },
       };
       const baseUrl = await getApiBaseUrl();
       expect(baseUrl).to.equal('http://localhost:5002');
@@ -66,8 +66,8 @@ describe('apiConfig - Multi-platform URL Resolution', () => {
     it('getApiBaseUrl() should slice trailing slash from backend URL', async () => {
       global.window = {
         electronAPI: {
-          getBackendUrl: async () => 'http://127.0.0.1:5002/'
-        }
+          getBackendUrl: async () => 'http://127.0.0.1:5002/',
+        },
       };
       const baseUrl = await getApiBaseUrl();
       expect(baseUrl).to.equal('http://127.0.0.1:5002');
@@ -76,8 +76,10 @@ describe('apiConfig - Multi-platform URL Resolution', () => {
     it('getApiBaseUrl() should fallback to empty string if IPC call fails', async () => {
       global.window = {
         electronAPI: {
-          getBackendUrl: async () => { throw new Error('IPC Bridge Error'); }
-        }
+          getBackendUrl: async () => {
+            throw new Error('IPC Bridge Error');
+          },
+        },
       };
       const baseUrl = await getApiBaseUrl();
       expect(baseUrl).to.equal('');
@@ -86,8 +88,8 @@ describe('apiConfig - Multi-platform URL Resolution', () => {
     it('resolveApiUrl() should join base URL and endpoint correctly', async () => {
       global.window = {
         electronAPI: {
-          getBackendUrl: async () => 'http://localhost:5002'
-        }
+          getBackendUrl: async () => 'http://localhost:5002',
+        },
       };
       const url = await resolveApiUrl('/treedata/stream');
       expect(url).to.equal('http://localhost:5002/treedata/stream');
@@ -96,8 +98,8 @@ describe('apiConfig - Multi-platform URL Resolution', () => {
     it('resolveApiUrl() should handle endpoints without leading slash in Electron', async () => {
       global.window = {
         electronAPI: {
-          getBackendUrl: async () => 'http://localhost:5002'
-        }
+          getBackendUrl: async () => 'http://localhost:5002',
+        },
       };
       const url = await resolveApiUrl('treedata/stream');
       expect(url).to.equal('http://localhost:5002/treedata/stream');

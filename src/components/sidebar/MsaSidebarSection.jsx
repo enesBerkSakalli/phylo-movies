@@ -3,7 +3,7 @@ import {
   selectOpenMsaViewer,
   selectSetSyncMsaEnabled,
   selectSyncMsaEnabled,
-  useAppStore
+  useAppStore,
 } from '../../state/phyloStore/store.js';
 import { ToggleWithLabel } from '../ui/toggle-with-label';
 import { Badge } from '../ui/badge';
@@ -37,7 +37,10 @@ export function MsaSidebarSection() {
             <span className="truncate">Sequence Alignment</span>
             <div className="ml-auto flex items-center gap-1">
               {hasMsa && (
-                <Badge variant="secondary" className="h-5 px-2 text-2xs font-medium transition-colors">
+                <Badge
+                  variant="secondary"
+                  className="h-5 px-2 text-2xs font-medium transition-colors"
+                >
                   Active
                 </Badge>
               )}
@@ -78,7 +81,10 @@ export function MsaSidebarSection() {
               <SidebarMenuSubItem className="px-2 py-2">
                 <div className="flex items-start gap-2 text-2xs text-muted-foreground italic leading-tight">
                   <Info className="size-3 shrink-0 mt-1" />
-                  <span>This dataset does not include an alignment. Load an alignment demo or upload an alignment file.</span>
+                  <span>
+                    This dataset does not include an alignment. Load an alignment demo or upload an
+                    alignment file.
+                  </span>
                 </div>
               </SidebarMenuSubItem>
             )}

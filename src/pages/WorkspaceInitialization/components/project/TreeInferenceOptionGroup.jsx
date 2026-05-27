@@ -12,9 +12,7 @@ export function TreeInferenceOptionGroup({ icon: Icon, title, description, child
           </p>
         </div>
       </div>
-      <div className="flex flex-col gap-3">
-        {children}
-      </div>
+      <div className="flex flex-col gap-3">{children}</div>
     </section>
   );
 }

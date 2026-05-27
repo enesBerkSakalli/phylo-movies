@@ -1,6 +1,10 @@
 import { buildSubtreeConnectors } from '../deckgl/data/transforms/SubtreeConnectorBuilder.js';
 import { useAppStore } from '../../state/phyloStore/store.js';
-import { selectPairById, selectPivotEdgeForFrame, selectTimelineFrameAtIndex } from '../../state/phyloStore/selectors/treeSelectors.js';
+import {
+  selectPairById,
+  selectPivotEdgeForFrame,
+  selectTimelineFrameAtIndex,
+} from '../../state/phyloStore/selectors/treeSelectors.js';
 import { tagTreeSide } from '../utils/layerDataUtils.js';
 import { VIEWPORT_FIT_MODES } from '../viewport/viewportFit.js';
 import {
@@ -8,7 +12,7 @@ import {
   combineLayerData,
   buildPositionMap,
   calculateComparisonFrameGeometry,
-  cloneLayerData
+  cloneLayerData,
 } from './ComparisonUtils.js';
 import { measureFrameStepAsync } from '../performance/frameInstrumentation.js';
 
@@ -48,7 +52,7 @@ export class ComparisonModeRenderer {
       leftTreeOffsetY = 0,
       viewsConnected,
       linkGeometryMode = 'radial-elbow',
-      fontSize = '2.6em'
+      fontSize = '2.6em',
     } = useAppStore.getState();
 
     const clampIndex = (idx) => {
@@ -68,52 +72,44 @@ export class ComparisonModeRenderer {
         leftIndex: clampedLeftIndex,
         rightIndex: clampedRightIndex,
         hasLeftTree: !!leftTreeData,
-        hasRightTree: !!rightTreeData
+        hasRightTree: !!rightTreeData,
       });
       return;
     }
 
     const leftLayout = this.controller.calculateLayout(leftTreeData, {
-      treeIndex: clampedLeftIndex
+      treeIndex: clampedLeftIndex,
     });
 
     const rightLayout = this.controller.calculateLayout(rightTreeData, {
-      treeIndex: clampedRightIndex
+      treeIndex: clampedRightIndex,
     });
 
     // Safety check for layout
     if (!leftLayout || !rightLayout) {
-        console.warn('[ComparisonModeRenderer] Layout calculation failed, skipping renderStatic');
-        return;
+      console.warn('[ComparisonModeRenderer] Layout calculation failed, skipping renderStatic');
+      return;
     }
 
-    const { extensionRadius, labelRadius } = this.controller._getConsistentRadii(
-      leftLayout
-    );
+    const { extensionRadius, labelRadius } = this.controller._getConsistentRadii(leftLayout);
 
-    const leftLayerData = this.controller.dataConverter.convertTreeToLayerData(
-      leftLayout,
-      {
-        extensionRadius,
-        labelRadius,
-        treeIndex: clampedLeftIndex,
-        treeSide: 'left',
-        renderMode: 'comparison',
-        linkGeometryMode
-      }
-    );
+    const leftLayerData = this.controller.dataConverter.convertTreeToLayerData(leftLayout, {
+      extensionRadius,
+      labelRadius,
+      treeIndex: clampedLeftIndex,
+      treeSide: 'left',
+      renderMode: 'comparison',
+      linkGeometryMode,
+    });
 
-    const rightLayerData = this.controller.dataConverter.convertTreeToLayerData(
-      rightLayout,
-      {
-        extensionRadius,
-        labelRadius,
-        treeIndex: clampedRightIndex,
-        treeSide: 'right',
-        renderMode: 'comparison',
-        linkGeometryMode
-      }
-    );
+    const rightLayerData = this.controller.dataConverter.convertTreeToLayerData(rightLayout, {
+      extensionRadius,
+      labelRadius,
+      treeIndex: clampedRightIndex,
+      treeSide: 'right',
+      renderMode: 'comparison',
+      linkGeometryMode,
+    });
 
     const canvasWidth = this.controller.deckContext.getCanvasDimensions().width;
 
@@ -126,7 +122,7 @@ export class ComparisonModeRenderer {
       rightTreeOffset,
       leftTreeOffsetX,
       leftTreeOffsetY,
-      fontSize
+      fontSize,
     });
 
     // Apply independent offsets to both trees so centers/radii match screen coords
@@ -136,14 +132,14 @@ export class ComparisonModeRenderer {
     // Build connectors between trees if views are linked
     const connectors = viewsConnected
       ? this._buildConnectors(
-        buildPositionMap(leftLayerData.nodes, leftLayerData.labels),
-        buildPositionMap(rightLayerData.nodes, rightLayerData.labels),
-        comparisonGeometry.leftCenter,
-        comparisonGeometry.rightCenter,
-        comparisonGeometry.leftSafeRadius,
-        comparisonGeometry.rightSafeRadius,
-        clampedLeftIndex
-      )
+          buildPositionMap(leftLayerData.nodes, leftLayerData.labels),
+          buildPositionMap(rightLayerData.nodes, rightLayerData.labels),
+          comparisonGeometry.leftCenter,
+          comparisonGeometry.rightCenter,
+          comparisonGeometry.leftSafeRadius,
+          comparisonGeometry.rightSafeRadius,
+          clampedLeftIndex
+        )
       : [];
 
     // Tag data with side for interactive picking/dragging
@@ -154,18 +150,18 @@ export class ComparisonModeRenderer {
 
     this.controller._updateLayersEfficiently(combinedData);
 
-    const indicesChanged = this._lastFittedIndices === null ||
+    const indicesChanged =
+      this._lastFittedIndices === null ||
       this._lastFittedIndices.left !== leftIndex ||
       this._lastFittedIndices.right !== rightIndex;
 
     if (indicesChanged) {
       this.controller.viewportManager.focusOnTree(combinedData.nodes, combinedData.labels, {
         fitMode: VIEWPORT_FIT_MODES.BRANCH,
-        links: [...combinedData.links, ...combinedData.extensions, ...combinedData.connectors]
+        links: [...combinedData.links, ...combinedData.extensions, ...combinedData.connectors],
       });
       this._lastFittedIndices = { left: leftIndex, right: rightIndex };
     }
-
   }
 
   /**
@@ -188,7 +184,7 @@ export class ComparisonModeRenderer {
       console.warn('ComparisonModeRenderer.renderAnimated: Missing data', {
         hasInterpolatedData: !!interpolatedData,
         hasRightTreeData: !!rightTreeData,
-        rightIndex
+        rightIndex,
       });
       return;
     }
@@ -198,17 +194,19 @@ export class ComparisonModeRenderer {
       leftTreeOffsetY = 0,
       viewsConnected,
       linkGeometryMode = 'radial-elbow',
-      fontSize = '2.6em'
+      fontSize = '2.6em',
     } = useAppStore.getState();
     const rightBase = this._getAnimatedRightBaseLayerData({
       rightTreeData,
       rightIndex,
-      linkGeometryMode
+      linkGeometryMode,
     });
 
     if (!rightBase) {
-         console.warn('[ComparisonModeRenderer] Right layout calculation failed, skipping renderAnimated');
-         return;
+      console.warn(
+        '[ComparisonModeRenderer] Right layout calculation failed, skipping renderAnimated'
+      );
+      return;
     }
     if (isRenderCancelled(options)) return;
 
@@ -222,7 +220,7 @@ export class ComparisonModeRenderer {
       rightTreeOffset,
       leftTreeOffsetX,
       leftTreeOffsetY,
-      fontSize
+      fontSize,
     });
     const rightFrame = this._getPreparedAnimatedRightFrame({
       base: rightBase,
@@ -232,7 +230,7 @@ export class ComparisonModeRenderer {
       leftTreeOffsetX,
       leftTreeOffsetY,
       viewsConnected,
-      fontSize
+      fontSize,
     });
 
     // Apply independent offsets to both trees
@@ -240,14 +238,14 @@ export class ComparisonModeRenderer {
 
     const connectors = viewsConnected
       ? this._buildConnectors(
-        buildPositionMap(interpolatedData.nodes, interpolatedData.labels),
-        rightFrame.positionMap,
-        comparisonGeometry.leftCenter,
-        comparisonGeometry.rightCenter,
-        comparisonGeometry.leftSafeRadius,
-        comparisonGeometry.rightSafeRadius,
-        options.activeTreeIndex
-      )
+          buildPositionMap(interpolatedData.nodes, interpolatedData.labels),
+          rightFrame.positionMap,
+          comparisonGeometry.leftCenter,
+          comparisonGeometry.rightCenter,
+          comparisonGeometry.leftSafeRadius,
+          comparisonGeometry.rightSafeRadius,
+          options.activeTreeIndex
+        )
       : [];
 
     // Tag data with side for interactive picking/dragging
@@ -260,23 +258,18 @@ export class ComparisonModeRenderer {
 
     // Auto-fit when entering comparison mode or when the right tree index changes.
     // Don't refit every animation frame — that causes camera "jumping".
-    const indicesChanged = this._lastFittedIndices === null ||
-      this._lastFittedIndices.right !== rightIndex;
+    const indicesChanged =
+      this._lastFittedIndices === null || this._lastFittedIndices.right !== rightIndex;
 
     if (indicesChanged) {
-      this.controller.viewportManager.focusOnTree(
-        combinedData.nodes,
-        combinedData.labels,
-        {
-          fitMode: VIEWPORT_FIT_MODES.BRANCH,
-          allowDuringPlayback: true,
-          duration: 0,
-          links: [...combinedData.links, ...combinedData.extensions, ...combinedData.connectors]
-        }
-      );
+      this.controller.viewportManager.focusOnTree(combinedData.nodes, combinedData.labels, {
+        fitMode: VIEWPORT_FIT_MODES.BRANCH,
+        allowDuringPlayback: true,
+        duration: 0,
+        links: [...combinedData.links, ...combinedData.extensions, ...combinedData.connectors],
+      });
       this._lastFittedIndices = { left: -1, right: rightIndex };
     }
-
   }
 
   // ==========================================================================
@@ -287,11 +280,17 @@ export class ComparisonModeRenderer {
    * Build connectors for comparison mode.
    * Delegated to buildSubtreeConnectors transform.
    */
-  _buildConnectors(leftPositions, rightPositions, leftCenter = [0, 0], rightCenter = [0, 0], leftRadius, rightRadius, activeTreeIndex = null) {
+  _buildConnectors(
+    leftPositions,
+    rightPositions,
+    leftCenter = [0, 0],
+    rightCenter = [0, 0],
+    leftRadius,
+    rightRadius,
+    activeTreeIndex = null
+  ) {
     const state = useAppStore.getState();
-    const frameIndex = Number.isInteger(activeTreeIndex)
-      ? activeTreeIndex
-      : state.frameIndex;
+    const frameIndex = Number.isInteger(activeTreeIndex) ? activeTreeIndex : state.frameIndex;
     const pivotEdge = selectPivotEdgeForFrame(state, frameIndex);
     const pairId = selectTimelineFrameAtIndex(state, frameIndex)?.pair_id ?? null;
     const affectedSubtreesBySplit = pairId
@@ -315,7 +314,7 @@ export class ComparisonModeRenderer {
       leftCenter,
       rightCenter,
       leftRadius,
-      rightRadius
+      rightRadius,
     });
   }
 
@@ -333,40 +332,35 @@ export class ComparisonModeRenderer {
     }
 
     const rightLayout = this.controller.calculateLayout(rightTreeData, {
-      treeIndex: rightIndex
+      treeIndex: rightIndex,
     });
 
     if (!rightLayout) return null;
 
-    const { extensionRadius, labelRadius } = this.controller._getConsistentRadii(
-      rightLayout
-    );
-    const resolvedLayoutCacheKey = layoutCacheKey
-      ?? rightLayout.layoutCacheKey
-      ?? this._getObjectCacheId(rightLayout);
-    const cacheKey = preLayoutCacheKey
-      ?? this._createAnimatedRightBaseCacheKey({
+    const { extensionRadius, labelRadius } = this.controller._getConsistentRadii(rightLayout);
+    const resolvedLayoutCacheKey =
+      layoutCacheKey ?? rightLayout.layoutCacheKey ?? this._getObjectCacheId(rightLayout);
+    const cacheKey =
+      preLayoutCacheKey ??
+      this._createAnimatedRightBaseCacheKey({
         rightIndex,
         layoutCacheKey: resolvedLayoutCacheKey,
-        linkGeometryMode
+        linkGeometryMode,
       });
     const cached = this._animatedRightBaseCache.get(cacheKey);
     if (cached) return cached;
 
-    const layerData = this.controller.dataConverter.convertTreeToLayerData(
-      rightLayout,
-      {
-        extensionRadius,
-        labelRadius,
-        treeIndex: rightIndex,
-        treeSide: 'right',
-        renderMode: 'comparison',
-        linkGeometryMode
-      }
-    );
+    const layerData = this.controller.dataConverter.convertTreeToLayerData(rightLayout, {
+      extensionRadius,
+      labelRadius,
+      treeIndex: rightIndex,
+      treeSide: 'right',
+      renderMode: 'comparison',
+      linkGeometryMode,
+    });
     const entry = {
       cacheKey,
-      layerData
+      layerData,
     };
     this._setBoundedCacheEntry(this._animatedRightBaseCache, cacheKey, entry);
     return entry;
@@ -380,7 +374,7 @@ export class ComparisonModeRenderer {
     leftTreeOffsetX,
     leftTreeOffsetY,
     viewsConnected,
-    fontSize
+    fontSize,
   }) {
     this._ensureAnimatedRightCaches();
     const preparedCacheKey = [
@@ -393,7 +387,7 @@ export class ComparisonModeRenderer {
       comparisonGeometry.rightOffset,
       comparisonGeometry.rightOffsetY,
       fontSize,
-      viewsConnected ? 'connected' : 'disconnected'
+      viewsConnected ? 'connected' : 'disconnected',
     ].join('|');
 
     const cached = this._animatedRightPreparedCache.get(preparedCacheKey);
@@ -405,18 +399,14 @@ export class ComparisonModeRenderer {
 
     const entry = {
       layerData,
-      positionMap: viewsConnected ? buildPositionMap(layerData.nodes, layerData.labels) : null
+      positionMap: viewsConnected ? buildPositionMap(layerData.nodes, layerData.labels) : null,
     };
     this._setBoundedCacheEntry(this._animatedRightPreparedCache, preparedCacheKey, entry);
     return entry;
   }
 
   _createAnimatedRightBaseCacheKey({ rightIndex, layoutCacheKey, linkGeometryMode }) {
-    return [
-      rightIndex,
-      layoutCacheKey,
-      linkGeometryMode
-    ].join('|');
+    return [rightIndex, layoutCacheKey, linkGeometryMode].join('|');
   }
 
   _getObjectCacheId(value) {

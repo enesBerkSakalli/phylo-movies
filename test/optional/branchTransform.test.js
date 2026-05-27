@@ -2,7 +2,7 @@ const { expect } = require('chai');
 const {
   getMetricBranchLength,
   getVisualBranchLength,
-  transformBranchLengths
+  transformBranchLengths,
 } = require('../../src/domain/tree/branchTransform.js');
 
 describe('Domain/Tree/BranchTransform', () => {
@@ -13,19 +13,19 @@ describe('Domain/Tree/BranchTransform', () => {
       {
         name: 'child1',
         length: 0.0,
-        children: []
+        children: [],
       },
       {
         name: 'child2',
         length: 0.5,
-        children: []
+        children: [],
       },
       {
         name: 'child3',
         length: -0.1,
-        children: []
-      }
-    ]
+        children: [],
+      },
+    ],
   };
 
   function expectMetricAndVisual(node, metricLength, visualBranchLength) {
@@ -107,7 +107,7 @@ describe('Domain/Tree/BranchTransform', () => {
         {
           name: 'short',
           length: 1,
-          children: []
+          children: [],
         },
         {
           name: 'long-parent',
@@ -116,11 +116,11 @@ describe('Domain/Tree/BranchTransform', () => {
             {
               name: 'long-child',
               length: 2,
-              children: []
-            }
-          ]
-        }
-      ]
+              children: [],
+            },
+          ],
+        },
+      ],
     };
 
     it('normalizes visual lengths to the tree root-to-tip maximum without changing metrics', () => {
@@ -139,7 +139,10 @@ describe('Domain/Tree/BranchTransform', () => {
       expect(result.children[0].metricBranchLength).to.equal(1);
       expect(result.children[0].visualBranchLength).to.be.closeTo(1 / maxPath, 1e-9);
       expect(result.children[1].visualBranchLength).to.be.closeTo(Math.sqrt(2) / maxPath, 1e-9);
-      expect(result.children[1].children[0].visualBranchLength).to.be.closeTo(Math.sqrt(2) / maxPath, 1e-9);
+      expect(result.children[1].children[0].visualBranchLength).to.be.closeTo(
+        Math.sqrt(2) / maxPath,
+        1e-9
+      );
     });
 
     it('keeps exact zero visual lengths at zero during normalization', () => {

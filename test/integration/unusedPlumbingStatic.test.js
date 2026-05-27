@@ -32,8 +32,9 @@ describe('unused plumbing cleanup', () => {
   it('keeps store JSDoc type imports resolvable', () => {
     const storePath = join(repoRoot, 'src', 'state', 'phyloStore', 'store.js');
     const storeSource = readFileSync(storePath, 'utf8');
-    const importPaths = [...storeSource.matchAll(/import\(['"](\.{1,2}\/[^'"]+)['"]\)/g)]
-      .map((match) => match[1]);
+    const importPaths = [...storeSource.matchAll(/import\(['"](\.{1,2}\/[^'"]+)['"]\)/g)].map(
+      (match) => match[1]
+    );
 
     const unresolvedPaths = importPaths
       .map((importPath) => resolve(dirname(storePath), importPath))
@@ -47,7 +48,9 @@ describe('unused plumbing cleanup', () => {
     const helperPath = join(repoRoot, 'test', 'helpers', 'deckGLMocks.js');
     const helperSource = readFileSync(helperPath, 'utf8');
 
-    expect(helperSource).not.toMatch(/module\.exports\s*=\s*\{[\s\S]*\brestoreDeckGLMocks\b[\s\S]*\}/);
+    expect(helperSource).not.toMatch(
+      /module\.exports\s*=\s*\{[\s\S]*\brestoreDeckGLMocks\b[\s\S]*\}/
+    );
   });
 
   it('does not export helpers that are private to their module', () => {
@@ -70,7 +73,9 @@ describe('unused plumbing cleanup', () => {
     const exportedHelpers = privateHelpers.flatMap(([sourcePath, helperNames]) => {
       const source = readFileSync(join(repoRoot, sourcePath), 'utf8');
       return helperNames
-        .filter((helperName) => new RegExp(`\\bexport\\s+function\\s+${helperName}\\b`).test(source))
+        .filter((helperName) =>
+          new RegExp(`\\bexport\\s+function\\s+${helperName}\\b`).test(source)
+        )
         .map((helperName) => `${sourcePath}: ${helperName}`);
     });
 
@@ -78,14 +83,29 @@ describe('unused plumbing cleanup', () => {
   });
 
   it('does not keep unused taxa-coloring separator normalization', () => {
-    const sourcePath = join(repoRoot, 'src', 'components', 'taxa-coloring', 'utils', 'colorManagement.js');
+    const sourcePath = join(
+      repoRoot,
+      'src',
+      'components',
+      'taxa-coloring',
+      'utils',
+      'colorManagement.js'
+    );
     const source = readFileSync(sourcePath, 'utf8');
 
     expect(source).not.toContain('normalizeSeparator');
   });
 
   it('does not keep the unused deck.gl layer factory barrel', () => {
-    const barrelPath = join(repoRoot, 'src', 'treeVisualisation', 'deckgl', 'layers', 'factory', 'index.js');
+    const barrelPath = join(
+      repoRoot,
+      'src',
+      'treeVisualisation',
+      'deckgl',
+      'layers',
+      'factory',
+      'index.js'
+    );
     const optionalLayerTest = readFileSync(
       join(repoRoot, 'test', 'optional', 'layer-highlighting.test.js'),
       'utf8'
@@ -114,8 +134,24 @@ describe('unused plumbing cleanup', () => {
       join(repoRoot, 'engine', 'BranchArchitect', '.venv-build'),
       join(repoRoot, 'engine', 'BranchArchitect', 'webapp', '.venv'),
       join(repoRoot, 'engine', 'BranchArchitect', 'test', 'output'),
-      join(repoRoot, 'engine', 'BranchArchitect', 'brancharchitect', 'static', 'css', 'matrix_enhanced.css'),
-      join(repoRoot, 'engine', 'BranchArchitect', 'brancharchitect', 'static', 'js', 'matrix-utils.js'),
+      join(
+        repoRoot,
+        'engine',
+        'BranchArchitect',
+        'brancharchitect',
+        'static',
+        'css',
+        'matrix_enhanced.css'
+      ),
+      join(
+        repoRoot,
+        'engine',
+        'BranchArchitect',
+        'brancharchitect',
+        'static',
+        'js',
+        'matrix-utils.js'
+      ),
     ];
 
     for (const generatedPath of generatedPaths) {
@@ -127,7 +163,10 @@ describe('unused plumbing cleanup', () => {
     expect(gitignore).toContain('engine/BranchArchitect/webapp/.venv/');
     expect(gitignore).toContain('engine/BranchArchitect/test/output/');
 
-    const branchArchitectGitignore = readFileSync(join(repoRoot, 'engine', 'BranchArchitect', '.gitignore'), 'utf8');
+    const branchArchitectGitignore = readFileSync(
+      join(repoRoot, 'engine', 'BranchArchitect', '.gitignore'),
+      'utf8'
+    );
     expect(branchArchitectGitignore).toContain('/test/output/');
   });
 
@@ -152,7 +191,13 @@ describe('unused plumbing cleanup', () => {
       'utf8'
     );
     const workspaceFormSource = readFileSync(
-      join(repoRoot, 'src', 'pages', 'WorkspaceInitialization', 'useWorkspaceInitializationForm.js'),
+      join(
+        repoRoot,
+        'src',
+        'pages',
+        'WorkspaceInitialization',
+        'useWorkspaceInitializationForm.js'
+      ),
       'utf8'
     );
     const msaScrollbarsSource = readFileSync(

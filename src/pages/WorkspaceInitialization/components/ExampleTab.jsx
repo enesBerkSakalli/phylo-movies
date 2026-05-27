@@ -1,14 +1,7 @@
 import React from 'react';
-import {
-  CheckCircle2,
-  Database,
-  Download,
-  Loader2,
-  Play,
-  XCircle,
-} from "lucide-react";
-import { Button } from "../../../components/ui/button";
-import { Badge } from "../../../components/ui/badge";
+import { CheckCircle2, Database, Download, Loader2, Play, XCircle } from 'lucide-react';
+import { Button } from '../../../components/ui/button';
+import { Badge } from '../../../components/ui/badge';
 import { EXAMPLE_DATASETS } from '../exampleDatasets.js';
 
 export function ExampleTab({ loadingExample, loadingExampleId, submitting, handleLoadExample }) {
@@ -22,7 +15,8 @@ export function ExampleTab({ loadingExample, loadingExampleId, submitting, handl
           </div>
           <h3 className="mt-2 text-xl font-semibold tracking-tight">Choose a dataset to process</h3>
           <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-            Publication and smoke-test datasets are read-only. Loading an example runs the same backend processing path as a new project.
+            Publication and smoke-test datasets are read-only. Loading an example runs the same
+            backend processing path as a new project.
           </p>
         </div>
         <Badge variant="secondary" className="w-fit">
@@ -117,7 +111,11 @@ export function ExampleTab({ loadingExample, loadingExampleId, submitting, handl
                   asChild
                   title={`Download ${example.fileName}`}
                 >
-                  <a href={example.filePath} download={example.fileName} aria-label={`Download ${example.fileName}`}>
+                  <a
+                    href={example.filePath}
+                    download={example.fileName}
+                    aria-label={`Download ${example.fileName}`}
+                  >
                     <Download data-icon="inline-start" />
                   </a>
                 </Button>
@@ -128,20 +126,21 @@ export function ExampleTab({ loadingExample, loadingExampleId, submitting, handl
                     asChild
                     title={`Download ${example.msaFileName}`}
                   >
-                    <a href={example.msaFilePath} download={example.msaFileName} aria-label={`Download ${example.msaFileName}`}>
+                    <a
+                      href={example.msaFilePath}
+                      download={example.msaFileName}
+                      aria-label={`Download ${example.msaFileName}`}
+                    >
                       <Download data-icon="inline-start" />
                     </a>
                   </Button>
                 )}
-                {!example.msaFilePath && (
-                  <span className="size-8" aria-hidden="true" />
-                )}
+                {!example.msaFilePath && <span className="size-8" aria-hidden="true" />}
               </div>
             </div>
           );
         })}
       </div>
-
     </div>
   );
 }

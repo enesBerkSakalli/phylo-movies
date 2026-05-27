@@ -13,9 +13,8 @@ import { TimelineEventIndex } from '../../timeline/data/TimelineEventIndex.js';
  * @returns {Array<number>}
  */
 function normalizeSubtreeIndices(subtreeSplitIndices) {
-  const values = subtreeSplitIndices instanceof Set
-    ? Array.from(subtreeSplitIndices)
-    : subtreeSplitIndices;
+  const values =
+    subtreeSplitIndices instanceof Set ? Array.from(subtreeSplitIndices) : subtreeSplitIndices;
 
   return Array.from(values)
     .filter(Number.isFinite)
@@ -35,15 +34,11 @@ function getSubtreeSignature(subtreeSplitIndices) {
 }
 
 function normalizeHighlightGroup(highlightGroup) {
-  return highlightGroup
-    .map(normalizeSubtreeIndices)
-    .filter((subtree) => subtree.length > 0);
+  return highlightGroup.map(normalizeSubtreeIndices).filter((subtree) => subtree.length > 0);
 }
 
 function flattenHighlightGroup(highlightGroup) {
-  return normalizeSubtreeIndices(
-    Array.from(new Set(highlightGroup.flatMap((subtree) => subtree)))
-  );
+  return normalizeSubtreeIndices(Array.from(new Set(highlightGroup.flatMap((subtree) => subtree))));
 }
 
 /**
@@ -79,10 +74,7 @@ export function buildSprAnalyticsModel(pairs, options = {}) {
 }
 
 function createSprAnalyticsContext(pairs, options) {
-  const {
-    temporalEvents,
-    pairMetrics,
-  } = options;
+  const { temporalEvents, pairMetrics } = options;
 
   return {
     metricByPairId: buildMetricByPairId(pairMetrics),
@@ -91,15 +83,8 @@ function createSprAnalyticsContext(pairs, options) {
 }
 
 function buildSprMoveEventRowsFromContext(pairs, options, context) {
-  const {
-    branchSupportIndex,
-    branchAnnotationValueKey,
-    branchValueThreshold = 70,
-  } = options;
-  const {
-    metricByPairId,
-    eventIndex,
-  } = context;
+  const { branchSupportIndex, branchAnnotationValueKey, branchValueThreshold = 70 } = options;
+  const { metricByPairId, eventIndex } = context;
 
   return pairs
     .flatMap((pair, entryIndex) => {
@@ -111,123 +96,137 @@ function buildSprMoveEventRowsFromContext(pairs, options, context) {
       const rawEvents = eventIndex.getEventsForPair(pairId, 'spr_move');
       const metric = getPairMetric(metricByPairId, pairId);
 
-      return rawEvents.map((event, eventIndex) => {
-        const driverSplitIndices = normalizeSubtreeIndices(event.driver_subtree);
-        const highlightGroup = normalizeHighlightGroup(event.highlight_group);
-        const eventGroup = highlightGroup.length > 0
-          ? highlightGroup
-          : (driverSplitIndices.length > 0 ? [driverSplitIndices] : []);
-        const contextSplitIndices = flattenHighlightGroup(eventGroup);
-        const splitIndices = driverSplitIndices.length > 0
-          ? driverSplitIndices
-          : contextSplitIndices;
-        const signature = getSubtreeSignature(splitIndices);
-        if (!signature) return null;
+      return rawEvents
+        .map((event, eventIndex) => {
+          const driverSplitIndices = normalizeSubtreeIndices(event.driver_subtree);
+          const highlightGroup = normalizeHighlightGroup(event.highlight_group);
+          const eventGroup =
+            highlightGroup.length > 0
+              ? highlightGroup
+              : driverSplitIndices.length > 0
+                ? [driverSplitIndices]
+                : [];
+          const contextSplitIndices = flattenHighlightGroup(eventGroup);
+          const splitIndices =
+            driverSplitIndices.length > 0 ? driverSplitIndices : contextSplitIndices;
+          const signature = getSubtreeSignature(splitIndices);
+          if (!signature) return null;
 
-        const pivotEdge = normalizeSubtreeIndices(event.pivot_edge);
-        if (pivotEdge.length === 0) {
-          throw new Error(`[sprAnalytics] spr_move ${event.event_id} in ${pairId} must include a non-empty pivot_edge`);
-        }
+          const pivotEdge = normalizeSubtreeIndices(event.pivot_edge);
+          if (pivotEdge.length === 0) {
+            throw new Error(
+              `[sprAnalytics] spr_move ${event.event_id} in ${pairId} must include a non-empty pivot_edge`
+            );
+          }
 
-        const pivotKey = toBackendSplitKey(pivotEdge);
-        const attachmentContext = resolveMoveAttachmentContext(
-          solution,
-          pivotKey,
-          splitIndices,
-          eventGroup,
-          contextSplitIndices
-        );
-        if (!attachmentContext) {
-          throw new Error(`[sprAnalytics] spr_move ${event.event_id} in ${pairId} could not resolve attachment context for pivot_edge ${pivotKey}`);
-        }
+          const pivotKey = toBackendSplitKey(pivotEdge);
+          const attachmentContext = resolveMoveAttachmentContext(
+            solution,
+            pivotKey,
+            splitIndices,
+            eventGroup,
+            contextSplitIndices
+          );
+          if (!attachmentContext) {
+            throw new Error(
+              `[sprAnalytics] spr_move ${event.event_id} in ${pairId} could not resolve attachment context for pivot_edge ${pivotKey}`
+            );
+          }
 
-        const stepRange = normalizeStepRange(event.local_step_range);
-        const collapsePathLength = event.collapse_branch_length;
-        const expandPathLength = event.expand_branch_length;
-        const sourceAttachmentSupport = branchSupportIndex?.getSupport?.(
-          sourceInputTreeIndex,
-          attachmentContext.sourceAttachment
-        ) ?? null;
-        const destinationAttachmentSupport = branchSupportIndex?.getSupport?.(
-          targetInputTreeIndex,
-          attachmentContext.destinationAttachment
-        ) ?? null;
-        const sourceMovedSubtreeBranchValue = branchSupportIndex?.getBranchValue?.(
-          sourceInputTreeIndex,
-          splitIndices,
-          branchAnnotationValueKey
-        ) ?? null;
-        const destinationMovedSubtreeBranchValue = branchSupportIndex?.getBranchValue?.(
-          targetInputTreeIndex,
-          splitIndices,
-          branchAnnotationValueKey
-        ) ?? null;
-        const sourceAncestorBranchValue = branchSupportIndex?.getNearestAncestorBranchValue?.(
-          sourceInputTreeIndex,
-          splitIndices,
-          branchAnnotationValueKey
-        ) ?? null;
-        const destinationAncestorBranchValue = branchSupportIndex?.getNearestAncestorBranchValue?.(
-          targetInputTreeIndex,
-          splitIndices,
-          branchAnnotationValueKey
-        ) ?? null;
+          const stepRange = normalizeStepRange(event.local_step_range);
+          const collapsePathLength = event.collapse_branch_length;
+          const expandPathLength = event.expand_branch_length;
+          const sourceAttachmentSupport =
+            branchSupportIndex?.getSupport?.(
+              sourceInputTreeIndex,
+              attachmentContext.sourceAttachment
+            ) ?? null;
+          const destinationAttachmentSupport =
+            branchSupportIndex?.getSupport?.(
+              targetInputTreeIndex,
+              attachmentContext.destinationAttachment
+            ) ?? null;
+          const sourceMovedSubtreeBranchValue =
+            branchSupportIndex?.getBranchValue?.(
+              sourceInputTreeIndex,
+              splitIndices,
+              branchAnnotationValueKey
+            ) ?? null;
+          const destinationMovedSubtreeBranchValue =
+            branchSupportIndex?.getBranchValue?.(
+              targetInputTreeIndex,
+              splitIndices,
+              branchAnnotationValueKey
+            ) ?? null;
+          const sourceAncestorBranchValue =
+            branchSupportIndex?.getNearestAncestorBranchValue?.(
+              sourceInputTreeIndex,
+              splitIndices,
+              branchAnnotationValueKey
+            ) ?? null;
+          const destinationAncestorBranchValue =
+            branchSupportIndex?.getNearestAncestorBranchValue?.(
+              targetInputTreeIndex,
+              splitIndices,
+              branchAnnotationValueKey
+            ) ?? null;
 
-        return {
-          eventId: event.event_id,
-          pairId,
-          pairIndex,
-          pairOrdinal: pairIndex,
-          sourceInputTreeIndex,
-          targetInputTreeIndex,
-          pairLabel: formatPairLabel({
+          return {
+            eventId: event.event_id,
             pairId,
+            pairIndex,
+            pairOrdinal: pairIndex,
             sourceInputTreeIndex,
             targetInputTreeIndex,
-          }),
-          eventIndex,
-          signature,
-          splitIndices,
-          driverSplitIndices,
-          contextSplitIndices,
-          highlightGroup: eventGroup,
-          groupSize: eventGroup.length,
-          taxaCount: splitIndices.length,
-          pivotEdge,
-          sourceAttachment: attachmentContext.sourceAttachment,
-          destinationAttachment: attachmentContext.destinationAttachment,
-          sourceAttachmentSupport,
-          destinationAttachmentSupport,
-          sourceMovedSubtreeBranchValue,
-          destinationMovedSubtreeBranchValue,
-          sourceAncestorBranchValue,
-          destinationAncestorBranchValue,
-          branchValueClass: classifyMovementBranchValues(
+            pairLabel: formatPairLabel({
+              pairId,
+              sourceInputTreeIndex,
+              targetInputTreeIndex,
+            }),
+            eventIndex,
+            signature,
+            splitIndices,
+            driverSplitIndices,
+            contextSplitIndices,
+            highlightGroup: eventGroup,
+            groupSize: eventGroup.length,
+            taxaCount: splitIndices.length,
+            pivotEdge,
+            sourceAttachment: attachmentContext.sourceAttachment,
+            destinationAttachment: attachmentContext.destinationAttachment,
+            sourceAttachmentSupport,
+            destinationAttachmentSupport,
             sourceMovedSubtreeBranchValue,
             destinationMovedSubtreeBranchValue,
-            branchValueThreshold
-          ),
-          contextBranchValueClass: classifyMovementBranchValues(
             sourceAncestorBranchValue,
             destinationAncestorBranchValue,
-            branchValueThreshold
-          ),
-          stepRange,
-          frameRange: normalizeStepRange(event.frame_range),
-          collapseHops: event.collapse_hops,
-          expandHops: event.expand_hops,
-          totalPathHops: resolvePathHops(event),
-          collapsePathLength,
-          expandPathLength,
-          totalPathLength: resolvePathLength(event),
-          collapsePath: event.collapse_path,
-          expandPath: event.expand_path,
-          interpolationRange: [pair.source_frame_index, pair.target_frame_index],
-          generatedFrameRange: pair.generated_frame_range,
-          rfDistance: metric.robinson_foulds,
-          weightedRfDistance: metric.weighted_robinson_foulds,
-        };
-      }).filter(Boolean);
+            branchValueClass: classifyMovementBranchValues(
+              sourceMovedSubtreeBranchValue,
+              destinationMovedSubtreeBranchValue,
+              branchValueThreshold
+            ),
+            contextBranchValueClass: classifyMovementBranchValues(
+              sourceAncestorBranchValue,
+              destinationAncestorBranchValue,
+              branchValueThreshold
+            ),
+            stepRange,
+            frameRange: normalizeStepRange(event.frame_range),
+            collapseHops: event.collapse_hops,
+            expandHops: event.expand_hops,
+            totalPathHops: resolvePathHops(event),
+            collapsePathLength,
+            expandPathLength,
+            totalPathLength: resolvePathLength(event),
+            collapsePath: event.collapse_path,
+            expandPath: event.expand_path,
+            interpolationRange: [pair.source_frame_index, pair.target_frame_index],
+            generatedFrameRange: pair.generated_frame_range,
+            rfDistance: metric.robinson_foulds,
+            weightedRfDistance: metric.weighted_robinson_foulds,
+          };
+        })
+        .filter(Boolean);
     })
     .sort((a, b) => {
       if (a.pairIndex !== b.pairIndex) return a.pairIndex - b.pairIndex;
@@ -270,7 +269,11 @@ function aggregateMovedSubtreeRows(eventRows) {
     movedSubtree.pairIds.add(event.pairId);
     movedSubtree.totalPathHops += event.totalPathHops;
     movedSubtree.totalPathLength += event.totalPathLength;
-    if (event.sourceAttachment.length > 0 || event.destinationAttachment.length > 0 || event.pivotEdge.length > 0) {
+    if (
+      event.sourceAttachment.length > 0 ||
+      event.destinationAttachment.length > 0 ||
+      event.pivotEdge.length > 0
+    ) {
       movedSubtree.attachmentContexts.push({
         pivotEdge: event.pivotEdge,
         sourceAttachment: event.sourceAttachment,
@@ -280,22 +283,15 @@ function aggregateMovedSubtreeRows(eventRows) {
     }
   });
 
-  const totalMoveEvents = Array.from(freqMap.values())
-    .reduce((sum, item) => sum + item.count, 0);
+  const totalMoveEvents = Array.from(freqMap.values()).reduce((sum, item) => sum + item.count, 0);
 
   return Array.from(freqMap.values())
     .sort((a, b) => b.count - a.count)
     .map((item) => ({
       ...item,
-      percentage: totalMoveEvents > 0
-        ? (item.count / totalMoveEvents) * 100
-        : 0,
-      averagePathHops: item.count > 0
-        ? item.totalPathHops / item.count
-        : 0,
-      averagePathLength: item.count > 0
-        ? item.totalPathLength / item.count
-        : 0,
+      percentage: totalMoveEvents > 0 ? (item.count / totalMoveEvents) * 100 : 0,
+      averagePathHops: item.count > 0 ? item.totalPathHops / item.count : 0,
+      averagePathLength: item.count > 0 ? item.totalPathLength / item.count : 0,
       pairCount: item.pairIds.size,
       pairIds: Array.from(item.pairIds).sort(),
     }));
@@ -317,14 +313,14 @@ export function calculateSprPairActivity(pairs, options = {}) {
 }
 
 function buildSprPairActivityRows(pairs, eventRows, context) {
-  const {
-    metricByPairId,
-    eventIndex,
-  } = context;
-  const eventsByPair = eventRows.reduce((map, event) => {
-    map.get(event.pairId).push(event);
-    return map;
-  }, new Map(pairs.map((pair) => [pair.pair_id, []])));
+  const { metricByPairId, eventIndex } = context;
+  const eventsByPair = eventRows.reduce(
+    (map, event) => {
+      map.get(event.pairId).push(event);
+      return map;
+    },
+    new Map(pairs.map((pair) => [pair.pair_id, []]))
+  );
 
   return pairs
     .map((pair, entryIndex) => {
@@ -333,10 +329,12 @@ function buildSprPairActivityRows(pairs, eventRows, context) {
       const events = eventsByPair.get(pairId);
       const movedSubtrees = aggregateMovedSubtreeRows(events);
       const sprMoveEventCount = events.length;
-      const singleTaxonMoveEventCount = events
-        .filter((event) => event.splitIndices.length === 1).length;
-      const multiTaxonMoveEventCount = events
-        .filter((event) => event.splitIndices.length > 1).length;
+      const singleTaxonMoveEventCount = events.filter(
+        (event) => event.splitIndices.length === 1
+      ).length;
+      const multiTaxonMoveEventCount = events.filter(
+        (event) => event.splitIndices.length > 1
+      ).length;
       const topMovedSubtree = movedSubtrees[0] || null;
       const pathStats = summarizeSprEventRows(events);
       const metric = getPairMetric(metricByPairId, pairId);
@@ -380,33 +378,31 @@ export function calculateSprDatasetSummary(pairs, options = {}) {
 }
 
 function summarizeSprDatasetRows(pairActivity, movedSubtreeRecurrences) {
-  const sprMoveEventCount = pairActivity
-    .reduce((sum, row) => sum + row.sprMoveEventCount, 0);
-  const totalPathHops = pairActivity
-    .reduce((sum, row) => sum + row.totalPathHops, 0);
-  const totalPathLength = pairActivity
-    .reduce((sum, row) => sum + row.totalPathLength, 0);
+  const sprMoveEventCount = pairActivity.reduce((sum, row) => sum + row.sprMoveEventCount, 0);
+  const totalPathHops = pairActivity.reduce((sum, row) => sum + row.totalPathHops, 0);
+  const totalPathLength = pairActivity.reduce((sum, row) => sum + row.totalPathLength, 0);
 
   return {
     pairCount: pairActivity.length,
     activePairCount: pairActivity.filter((row) => row.sprMoveEventCount > 0).length,
-    transitionEventCount: pairActivity
-      .reduce((sum, row) => sum + row.transitionEventCount, 0),
+    transitionEventCount: pairActivity.reduce((sum, row) => sum + row.transitionEventCount, 0),
     uniqueMovedSubtreeCount: movedSubtreeRecurrences.length,
-    singleTaxonMoveEventCount: pairActivity
-      .reduce((sum, row) => sum + row.singleTaxonMoveEventCount, 0),
-    multiTaxonMoveEventCount: pairActivity
-      .reduce((sum, row) => sum + row.multiTaxonMoveEventCount, 0),
-    topMovedSubtreeSharePercentage: movedSubtreeRecurrences[0] ? movedSubtreeRecurrences[0].percentage : 0,
+    singleTaxonMoveEventCount: pairActivity.reduce(
+      (sum, row) => sum + row.singleTaxonMoveEventCount,
+      0
+    ),
+    multiTaxonMoveEventCount: pairActivity.reduce(
+      (sum, row) => sum + row.multiTaxonMoveEventCount,
+      0
+    ),
+    topMovedSubtreeSharePercentage: movedSubtreeRecurrences[0]
+      ? movedSubtreeRecurrences[0].percentage
+      : 0,
     sprMoveEventCount,
     totalPathHops,
-    averagePathHops: sprMoveEventCount > 0
-      ? totalPathHops / sprMoveEventCount
-      : 0,
+    averagePathHops: sprMoveEventCount > 0 ? totalPathHops / sprMoveEventCount : 0,
     totalPathLength,
-    averagePathLength: sprMoveEventCount > 0
-      ? totalPathLength / sprMoveEventCount
-      : 0,
+    averagePathLength: sprMoveEventCount > 0 ? totalPathLength / sprMoveEventCount : 0,
     farthestMovedSubtree: selectFarthestMovedSubtree(movedSubtreeRecurrences),
   };
 }
@@ -453,9 +449,7 @@ export function formatSubtreeLabel(splitIndices, leafNames = []) {
   if (!splitIndices || splitIndices.length === 0) return 'Empty Subtree';
 
   if (leafNames && leafNames.length > 0) {
-    const names = splitIndices
-      .map((idx) => leafNames[idx])
-      .filter(Boolean);
+    const names = splitIndices.map((idx) => leafNames[idx]).filter(Boolean);
 
     if (names.length === 0) {
       return `Nodes: ${splitIndices.join(', ')}`;
@@ -477,11 +471,14 @@ function summarizeSprEventRows(events) {
     };
   }
 
-  const totals = events.reduce((sum, event) => {
-    sum.totalPathHops += event.totalPathHops;
-    sum.totalPathLength += event.totalPathLength;
-    return sum;
-  }, { totalPathHops: 0, totalPathLength: 0 });
+  const totals = events.reduce(
+    (sum, event) => {
+      sum.totalPathHops += event.totalPathHops;
+      sum.totalPathLength += event.totalPathLength;
+      return sum;
+    },
+    { totalPathHops: 0, totalPathLength: 0 }
+  );
 
   return {
     totalPathHops: totals.totalPathHops,
@@ -497,17 +494,15 @@ function selectFarthestMovedSubtree(movedSubtrees) {
   const candidates = movedSubtrees.filter((movedSubtree) => movedSubtree.count > 0);
   if (candidates.length === 0) return null;
 
-  return candidates
-    .slice()
-    .sort((a, b) => {
-      const lengthDelta = b.totalPathLength - a.totalPathLength;
-      if (lengthDelta !== 0) return lengthDelta;
+  return candidates.slice().sort((a, b) => {
+    const lengthDelta = b.totalPathLength - a.totalPathLength;
+    if (lengthDelta !== 0) return lengthDelta;
 
-      const hopDelta = b.totalPathHops - a.totalPathHops;
-      if (hopDelta !== 0) return hopDelta;
+    const hopDelta = b.totalPathHops - a.totalPathHops;
+    if (hopDelta !== 0) return hopDelta;
 
-      return b.count - a.count;
-    })[0];
+    return b.count - a.count;
+  })[0];
 }
 
 function resolvePathHops(event) {
@@ -518,21 +513,17 @@ function resolvePathLength(event) {
   return event.total_branch_length;
 }
 
-function resolveMoveAttachmentContext(solution, pivotKey, splitIndices, highlightGroup, contextSplitIndices) {
-  const driverContext = resolveAttachmentContext(
-    solution,
-    pivotKey,
-    splitIndices,
-    splitIndices
-  );
+function resolveMoveAttachmentContext(
+  solution,
+  pivotKey,
+  splitIndices,
+  highlightGroup,
+  contextSplitIndices
+) {
+  const driverContext = resolveAttachmentContext(solution, pivotKey, splitIndices, splitIndices);
   if (driverContext) return driverContext;
 
-  return resolveGroupAttachmentContext(
-    solution,
-    pivotKey,
-    highlightGroup,
-    contextSplitIndices
-  );
+  return resolveGroupAttachmentContext(solution, pivotKey, highlightGroup, contextSplitIndices);
 }
 
 function resolveGroupAttachmentContext(solution, pivotKey, highlightGroup, groupSplitIndices) {
@@ -545,29 +536,30 @@ function resolveGroupAttachmentContext(solution, pivotKey, highlightGroup, group
   if (groupContext) return groupContext;
 
   const contexts = highlightGroup
-    .map((subtree) => resolveAttachmentContext(
-      solution,
-      pivotKey,
-      subtree,
-      groupSplitIndices
-    ))
+    .map((subtree) => resolveAttachmentContext(solution, pivotKey, subtree, groupSplitIndices))
     .filter(Boolean);
 
   if (contexts.length === 0) return null;
 
   return {
     pivotEdge: contexts[0].pivotEdge,
-    sourceAttachment: mergeIndexLists(
-      contexts.map((context) => context.sourceAttachment)
-    ),
+    sourceAttachment: mergeIndexLists(contexts.map((context) => context.sourceAttachment)),
     destinationAttachment: mergeIndexLists(
       contexts.map((context) => context.destinationAttachment)
     ),
   };
 }
 
-function resolveAttachmentContext(solution, pivotKey, splitIndices, excludedIndices = splitIndices) {
-  const attachmentEdgesBySplit = getBackendSplitMapValue(solution.attachment_edges_by_split, pivotKey);
+function resolveAttachmentContext(
+  solution,
+  pivotKey,
+  splitIndices,
+  excludedIndices = splitIndices
+) {
+  const attachmentEdgesBySplit = getBackendSplitMapValue(
+    solution.attachment_edges_by_split,
+    pivotKey
+  );
   if (!attachmentEdgesBySplit) return null;
 
   const moverKey = toBackendSplitKey(splitIndices);
@@ -586,9 +578,7 @@ function resolveAttachmentContext(solution, pivotKey, splitIndices, excludedIndi
 }
 
 function mergeIndexLists(lists) {
-  return normalizeSubtreeIndices(
-    Array.from(new Set(lists.flatMap((list) => list)))
-  );
+  return normalizeSubtreeIndices(Array.from(new Set(lists.flatMap((list) => list))));
 }
 
 function filterMovingNodes(edge, movingSet) {

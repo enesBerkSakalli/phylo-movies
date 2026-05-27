@@ -22,17 +22,21 @@ import {
   selectSetTaxaColoringOpen,
   selectTaxaColoringOpen,
   selectTreeControllers,
-  useAppStore
+  useAppStore,
 } from '../../../state/phyloStore/store.js';
 import { Switch } from '../../ui/switch';
 import { Input } from '../../ui/input';
 import { Palette, Settings2, RefreshCw } from 'lucide-react';
-import {
-  SidebarMenuSub,
-  SidebarMenuSubItem,
-} from '../../ui/sidebar';
+import { SidebarMenuSub, SidebarMenuSubItem } from '../../ui/sidebar';
 import { Slider } from '../../ui/slider';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../ui/select';
 import { Label } from '../../ui/label';
 import { Button } from '../../ui/button';
 import { Separator } from '../../ui/separator';
@@ -72,22 +76,31 @@ export function ColoringPanel({ onOpenTaxaColoring }) {
       for (const controller of treeControllers) {
         await controller.renderAllElements();
       }
-    } catch { }
+    } catch {}
   }, [treeControllers]);
 
-  const onToggleMonophyletic = useCallback(async (v) => {
-    setMonophyleticColoring(!!v);
-    await rerenderControllers();
-  }, [setMonophyleticColoring, rerenderControllers]);
+  const onToggleMonophyletic = useCallback(
+    async (v) => {
+      setMonophyleticColoring(!!v);
+      await rerenderControllers();
+    },
+    [setMonophyleticColoring, rerenderControllers]
+  );
 
-  const onTogglePivotEdges = useCallback(async (v) => {
-    setPivotEdgesEnabled(!!v);
-  }, [setPivotEdgesEnabled]);
+  const onTogglePivotEdges = useCallback(
+    async (v) => {
+      setPivotEdgesEnabled(!!v);
+    },
+    [setPivotEdgesEnabled]
+  );
 
-  const toggleSubtreeHighlights = useCallback(async (v) => {
-    setSubtreeHighlightsEnabled(!!v);
-    await rerenderControllers();
-  }, [setSubtreeHighlightsEnabled, rerenderControllers]);
+  const toggleSubtreeHighlights = useCallback(
+    async (v) => {
+      setSubtreeHighlightsEnabled(!!v);
+      await rerenderControllers();
+    },
+    [setSubtreeHighlightsEnabled, rerenderControllers]
+  );
 
   const openTaxaColoring = useCallback(() => {
     if (!hasTaxa) return;
@@ -106,7 +119,11 @@ export function ColoringPanel({ onOpenTaxaColoring }) {
           type="button"
           onClick={openTaxaColoring}
           disabled={!hasTaxa}
-          aria-label={hasTaxa ? 'Open taxa coloring window' : 'Taxa coloring unavailable until taxa are loaded'}
+          aria-label={
+            hasTaxa
+              ? 'Open taxa coloring window'
+              : 'Taxa coloring unavailable until taxa are loaded'
+          }
           variant={taxaColoringOpen ? 'secondary' : 'outline'}
           className="w-full justify-start h-8 text-xs font-normal"
         >
@@ -172,8 +189,15 @@ export function ColoringPanel({ onOpenTaxaColoring }) {
             <div className="flex flex-col gap-4 mx-2 mb-2 p-2 rounded-md bg-muted/20 border border-border/30">
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="subtree-opacity-slider" className="text-2xs font-bold uppercase tracking-wider text-muted-foreground/80">Highlight Opacity</Label>
-                  <span className="text-xs font-medium tabular-nums text-muted-foreground">{Math.round((subtreeHighlightOpacity ?? 0.8) * 100)}%</span>
+                  <Label
+                    htmlFor="subtree-opacity-slider"
+                    className="text-2xs font-bold uppercase tracking-wider text-muted-foreground/80"
+                  >
+                    Highlight Opacity
+                  </Label>
+                  <span className="text-xs font-medium tabular-nums text-muted-foreground">
+                    {Math.round((subtreeHighlightOpacity ?? 0.8) * 100)}%
+                  </span>
                 </div>
                 <Slider
                   id="subtree-opacity-slider"
@@ -187,8 +211,13 @@ export function ColoringPanel({ onOpenTaxaColoring }) {
               </div>
 
               <div className="flex flex-col gap-2">
-                <Label className="text-2xs font-bold uppercase tracking-wider text-muted-foreground/80">Highlight Scope</Label>
-                <Select value={subtreeHighlightScope || 'current'} onValueChange={setSubtreeHighlightScope}>
+                <Label className="text-2xs font-bold uppercase tracking-wider text-muted-foreground/80">
+                  Highlight Scope
+                </Label>
+                <Select
+                  value={subtreeHighlightScope || 'current'}
+                  onValueChange={setSubtreeHighlightScope}
+                >
                   <SelectTrigger className="w-full h-8 text-xs bg-background/50 border-border/40">
                     <SelectValue placeholder="Select mode" />
                   </SelectTrigger>
@@ -202,7 +231,9 @@ export function ColoringPanel({ onOpenTaxaColoring }) {
               </div>
 
               <div className="flex flex-col gap-2">
-                <Label className="text-2xs font-bold uppercase tracking-wider text-muted-foreground/80">Highlight Style</Label>
+                <Label className="text-2xs font-bold uppercase tracking-wider text-muted-foreground/80">
+                  Highlight Style
+                </Label>
                 <Select value={highlightColorMode || 'solid'} onValueChange={setHighlightColorMode}>
                   <SelectTrigger className="w-full h-8 text-xs bg-background/50 border-border/40">
                     <SelectValue placeholder="Select color mode" />

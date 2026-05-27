@@ -31,7 +31,8 @@ export const createTreeAppearanceSlice = (set) => ({
 
   setLabelsVisible: (visible) => set({ labelsVisible: !!visible }),
   setBranchAnnotationLabelKey: (valueKey) => {
-    const branchAnnotationLabelKey = typeof valueKey === 'string' && valueKey.length > 0 ? valueKey : 'none';
+    const branchAnnotationLabelKey =
+      typeof valueKey === 'string' && valueKey.length > 0 ? valueKey : 'none';
     set({ branchAnnotationLabelKey });
   },
 });

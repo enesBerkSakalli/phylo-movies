@@ -20,89 +20,100 @@ const PREPRINT_PDF_URL = 'https://www.biorxiv.org/content/10.64898/2026.04.01.71
 const USE_CASES = [
   {
     title: 'Recombination Detection',
-    description: 'Inspect where local tree topology shifts across genomic windows instead of relying only on scalar distance summaries.'
+    description:
+      'Inspect where local tree topology shifts across genomic windows instead of relying only on scalar distance summaries.',
   },
   {
     title: 'Rogue Taxa Analysis',
-    description: 'Track taxa that move between subtrees across bootstrap trees and identify which lineages move and where they attach.'
+    description:
+      'Track taxa that move between subtrees across bootstrap trees and identify which lineages move and where they attach.',
   },
   {
     title: 'Sliding-Window Phylogenetics',
-    description: 'Animate changes across ordered tree series generated from overlapping windows in an MSA.'
-  }
+    description:
+      'Animate changes across ordered tree series generated from overlapping windows in an MSA.',
+  },
 ];
 
 const ACCESS_OPTIONS = [
   {
     title: 'Desktop App',
-    description: 'Best default path for end users who want a packaged local application without setting up Node.js or Python.',
+    description:
+      'Best default path for end users who want a packaged local application without setting up Node.js or Python.',
     ctaLabel: 'Download Desktop Releases',
     href: RELEASES_URL,
   },
   {
     title: 'Browser Interface',
-    description: 'Use the web frontend as part of a local or deployed full-stack setup backed by BranchArchitect.',
+    description:
+      'Use the web frontend as part of a local or deployed full-stack setup backed by BranchArchitect.',
     ctaLabel: 'Open README',
     href: README_URL,
   },
   {
     title: 'Full Stack Workflow',
-    description: 'Required for interpolation, morphing animations, and MSA-driven processing via the BranchArchitect backend.',
+    description:
+      'Required for interpolation, morphing animations, and MSA-driven processing via the BranchArchitect backend.',
     ctaLabel: 'View Setup Instructions',
     href: README_URL,
-  }
+  },
 ];
 
 const PLATFORM_DOWNLOADS = [
   {
     platform: 'macOS (Apple Silicon)',
     artifact: 'Phylo-Movies-<version>-mac-arm64.dmg',
-    architecture: 'ARM64 (M1/M2/M3/M4)'
+    architecture: 'ARM64 (M1/M2/M3/M4)',
   },
   {
     platform: 'macOS (Intel)',
     artifact: 'Phylo-Movies-<version>-mac-x64.dmg',
-    architecture: 'x86_64'
+    architecture: 'x86_64',
   },
   {
     platform: 'Linux',
     artifact: 'Phylo-Movies-<version>-linux-x86_64.AppImage',
-    architecture: 'x86_64'
+    architecture: 'x86_64',
   },
   {
     platform: 'Windows',
     artifact: 'Phylo-Movies-<version>-win-x64.exe',
-    architecture: 'x86_64'
-  }
+    architecture: 'x86_64',
+  },
 ];
 
 const HOW_IT_WORKS = [
   'Upload trees directly or derive them from sliding-window MSA workflows.',
   'BranchArchitect computes subtree movements and interpolated intermediate states.',
-  'Phylo-Movies renders animated transitions, linked statistics, and optional MSA context.'
+  'Phylo-Movies renders animated transitions, linked statistics, and optional MSA context.',
 ];
 
 const FAQ_ITEMS = [
   {
     question: 'Is the README already a landing page?',
-    answer: 'The README remains the complete technical reference. This page is a shorter public entry point for the desktop app, publication, downloads, citation, and setup paths.'
+    answer:
+      'The README remains the complete technical reference. This page is a shorter public entry point for the desktop app, publication, downloads, citation, and setup paths.',
   },
   {
     question: 'Do I need the backend to use Phylo-Movies?',
-    answer: 'Yes. Phylo-Movies requires the BranchArchitect backend for uploaded tree files, interpolation, morphing animations, and MSA-driven workflows. The GitHub Pages site is documentation-only, not a standalone processing frontend.'
+    answer:
+      'Yes. Phylo-Movies requires the BranchArchitect backend for uploaded tree files, interpolation, morphing animations, and MSA-driven workflows. The GitHub Pages site is documentation-only, not a standalone processing frontend.',
   },
   {
     question: 'Is Phylo-Movies also a desktop app?',
-    answer: 'Yes. Phylo-Movies is available as a desktop app in addition to the browser-based interface, and the desktop releases are linked directly from this landing page.'
+    answer:
+      'Yes. Phylo-Movies is available as a desktop app in addition to the browser-based interface, and the desktop releases are linked directly from this landing page.',
   },
   {
     question: 'How should I cite the project?',
-    answer: 'Use the bioRxiv preprint Animating Phylogenetic Trees from Sliding-Window Analyses with DOI 10.64898/2026.04.01.715821.'
+    answer:
+      'Use the bioRxiv preprint Animating Phylogenetic Trees from Sliding-Window Analyses with DOI 10.64898/2026.04.01.715821.',
   },
   {
     question: 'Which search intents should this page answer?',
-    answer: 'Phylo-Movies supports phylogenetic tree interpolation, sliding-window phylogenetics, recombination visualization, rogue taxa detection, and MSA-linked tree analysis.'
-  }
+    answer:
+      'Phylo-Movies supports phylogenetic tree interpolation, sliding-window phylogenetics, recombination visualization, rogue taxa detection, and MSA-linked tree analysis.',
+  },
 ];
 
 const DOCKER_QUICKSTART = `git clone --recurse-submodules https://github.com/enesBerkSakalli/phylo-movies.git
@@ -123,12 +134,10 @@ export function GitHubPagesInfoPage() {
               Phylo-Movies: Desktop App and Web Tool for Phylogenetic Tree Interpolation
             </h1>
             <p className="text-muted-foreground text-lg leading-relaxed">
-              Phylo-Movies is available both as a desktop app and as a
-              browser-based phylogenetic tree visualization and interpolation
-              tool for sliding-window analyses, recombination detection, and
-              rogue taxa exploration. This page is the public landing page for
-              the software, publication, citation details, downloads, and setup
-              paths.
+              Phylo-Movies is available both as a desktop app and as a browser-based phylogenetic
+              tree visualization and interpolation tool for sliding-window analyses, recombination
+              detection, and rogue taxa exploration. This page is the public landing page for the
+              software, publication, citation details, downloads, and setup paths.
             </p>
             <div className="flex flex-wrap justify-center gap-3 pt-2">
               <Button asChild>
@@ -193,7 +202,9 @@ export function GitHubPagesInfoPage() {
                   {PLATFORM_DOWNLOADS.map((item) => (
                     <tr key={item.platform} className="border-t">
                       <td className="px-4 py-3 text-foreground">{item.platform}</td>
-                      <td className="px-4 py-3 text-muted-foreground font-mono text-xs">{item.artifact}</td>
+                      <td className="px-4 py-3 text-muted-foreground font-mono text-xs">
+                        {item.artifact}
+                      </td>
                       <td className="px-4 py-3 text-muted-foreground">{item.architecture}</td>
                     </tr>
                   ))}
@@ -214,28 +225,32 @@ export function GitHubPagesInfoPage() {
           <CardHeader>
             <CardTitle>Publication</CardTitle>
             <CardDescription>
-              Method details, benchmarks, and case studies are described in the
-              current bioRxiv preprint.
+              Method details, benchmarks, and case studies are described in the current bioRxiv
+              preprint.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-muted-foreground">
             <p>
-              <strong>Animating Phylogenetic Trees from Sliding-Window Analyses</strong>
-              {' '}presents the Phylo-Movies workflow for recombination-focused
-              sliding-window phylogenetics and rogue-taxon exploration across
-              bootstrap tree sets.
+              <strong>Animating Phylogenetic Trees from Sliding-Window Analyses</strong> presents
+              the Phylo-Movies workflow for recombination-focused sliding-window phylogenetics and
+              rogue-taxon exploration across bootstrap tree sets.
             </p>
+            <p>Authors: E. B. Sakalli, S. E. Haendeler, A. von Haeseler, and H. A. Schmidt.</p>
             <p>
-              Authors: E. B. Sakalli, S. E. Haendeler, A. von Haeseler, and
-              H. A. Schmidt.
-            </p>
-            <p>
-              DOI: <a href={PREPRINT_DOI_URL} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">10.64898/2026.04.01.715821</a>
+              DOI:{' '}
+              <a
+                href={PREPRINT_DOI_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-4"
+              >
+                10.64898/2026.04.01.715821
+              </a>
             </p>
             <div className="rounded-lg border bg-muted p-4 text-xs leading-relaxed text-foreground">
-              Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt,
-              H. A. (2026). <em>Animating Phylogenetic Trees from Sliding-Window
-              Analyses</em>. bioRxiv. doi:10.64898/2026.04.01.715821
+              Sakalli, E. B., Haendeler, S. E., von Haeseler, A., and Schmidt, H. A. (2026).{' '}
+              <em>Animating Phylogenetic Trees from Sliding-Window Analyses</em>. bioRxiv.
+              doi:10.64898/2026.04.01.715821
             </div>
             <div className="flex flex-wrap gap-3 pt-2">
               <Button asChild>
@@ -261,20 +276,18 @@ export function GitHubPagesInfoPage() {
           <CardHeader>
             <CardTitle>What the Tool Does</CardTitle>
             <CardDescription>
-              Phylo-Movies helps inspect topological changes across phylogenetic
-              trees across desktop and browser-based workflows, including
-              sliding-window and bootstrap analyses.
+              Phylo-Movies helps inspect topological changes across phylogenetic trees across
+              desktop and browser-based workflows, including sliding-window and bootstrap analyses.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-muted-foreground">
             <p>
-              The full application combines a React frontend with the
-              BranchArchitect Python backend for interpolation and MSA-based
-              processing.
+              The full application combines a React frontend with the BranchArchitect Python backend
+              for interpolation and MSA-based processing.
             </p>
             <p>
-              This GitHub Pages deployment does not host that backend, so it
-              only explains the project and links to full deployment options.
+              This GitHub Pages deployment does not host that backend, so it only explains the
+              project and links to full deployment options.
             </p>
             <div className="flex flex-wrap gap-3 pt-2">
               <Button asChild>
@@ -288,11 +301,7 @@ export function GitHubPagesInfoPage() {
                 </a>
               </Button>
               <Button variant="outline" asChild>
-                <a
-                  href={RELEASES_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <a href={RELEASES_URL} target="_blank" rel="noopener noreferrer">
                   Desktop Releases
                 </a>
               </Button>
@@ -326,7 +335,8 @@ export function GitHubPagesInfoPage() {
           <CardHeader>
             <CardTitle>How It Works</CardTitle>
             <CardDescription>
-              The application converts ordered phylogenetic inputs into inspectable animated transitions.
+              The application converts ordered phylogenetic inputs into inspectable animated
+              transitions.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-muted-foreground">
@@ -345,8 +355,7 @@ export function GitHubPagesInfoPage() {
           <CardHeader>
             <CardTitle>Run the full application</CardTitle>
             <CardDescription>
-              Recommended path for complete functionality is Docker full-stack
-              deployment.
+              Recommended path for complete functionality is Docker full-stack deployment.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
@@ -354,8 +363,8 @@ export function GitHubPagesInfoPage() {
               <code>{DOCKER_QUICKSTART}</code>
             </pre>
             <p className="text-muted-foreground">
-              Then open <code>http://localhost:8080/</code> to use the app
-              with backend-powered processing.
+              Then open <code>http://localhost:8080/</code> to use the app with backend-powered
+              processing.
             </p>
           </CardContent>
         </Card>
@@ -364,8 +373,8 @@ export function GitHubPagesInfoPage() {
           <CardHeader>
             <CardTitle>Frequently Asked Questions</CardTitle>
             <CardDescription>
-              These entries are also mirrored in machine-readable FAQ schema for
-              search engines and AI retrieval systems.
+              These entries are also mirrored in machine-readable FAQ schema for search engines and
+              AI retrieval systems.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

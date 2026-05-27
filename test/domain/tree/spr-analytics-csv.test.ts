@@ -31,18 +31,21 @@ describe('createSprMovedSubtreeRecurrenceCsv', () => {
   });
 
   it('exports path travel metrics for moved subtrees', () => {
-    const csv = createSprMovedSubtreeRecurrenceCsv([
-      {
-        signature: '1,2',
-        splitIndices: [1, 2],
-        count: 3,
-        percentage: 50,
-        totalPathHops: 7,
-        averagePathHops: 3.5,
-        totalPathLength: 1.25,
-        averagePathLength: 0.625,
-      },
-    ], ['a', 'b', 'c']);
+    const csv = createSprMovedSubtreeRecurrenceCsv(
+      [
+        {
+          signature: '1,2',
+          splitIndices: [1, 2],
+          count: 3,
+          percentage: 50,
+          totalPathHops: 7,
+          averagePathHops: 3.5,
+          totalPathLength: 1.25,
+          averagePathLength: 0.625,
+        },
+      ],
+      ['a', 'b', 'c']
+    );
     const row = csv.split('\n')[1];
 
     expect(row).toContain('7');
@@ -52,35 +55,39 @@ describe('createSprMovedSubtreeRecurrenceCsv', () => {
   });
 
   it('uses moved-subtree terminology in exported filenames', () => {
-    expect(createSprMovedSubtreeRecurrenceExportName('sample.tree', new Date('2026-05-15T00:00:00.000Z')))
-      .toBe('sample-recurrent-moved-subtrees-2026-05-15.csv');
+    expect(
+      createSprMovedSubtreeRecurrenceExportName('sample.tree', new Date('2026-05-15T00:00:00.000Z'))
+    ).toBe('sample-recurrent-moved-subtrees-2026-05-15.csv');
   });
 });
 
 describe('createSprMoveEventCsv', () => {
   it('exports one auditable row per movement', () => {
-    const csv = createSprMoveEventCsv([
-      {
-        eventId: 'pair_0_1:0',
-        pairLabel: 'source input tree 1 to target input tree 2',
-        pairId: 'pair_0_1',
-        pairIndex: 0,
-        sourceInputTreeIndex: 0,
-        targetInputTreeIndex: 1,
-        eventIndex: 0,
-        signature: '1',
-        splitIndices: [1],
-        contextSplitIndices: [1, 2],
-        pivotEdge: [9],
-        sourceAttachment: [7, 8],
-        destinationAttachment: [5, 6],
-        stepRange: [0, 4],
-        totalPathHops: 3,
-        totalPathLength: 0.6,
-        rfDistance: 0.25,
-        weightedRfDistance: 1.25,
-      },
-    ], ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j']);
+    const csv = createSprMoveEventCsv(
+      [
+        {
+          eventId: 'pair_0_1:0',
+          pairLabel: 'source input tree 1 to target input tree 2',
+          pairId: 'pair_0_1',
+          pairIndex: 0,
+          sourceInputTreeIndex: 0,
+          targetInputTreeIndex: 1,
+          eventIndex: 0,
+          signature: '1',
+          splitIndices: [1],
+          contextSplitIndices: [1, 2],
+          pivotEdge: [9],
+          sourceAttachment: [7, 8],
+          destinationAttachment: [5, 6],
+          stepRange: [0, 4],
+          totalPathHops: 3,
+          totalPathLength: 0.6,
+          rfDistance: 0.25,
+          weightedRfDistance: 1.25,
+        },
+      ],
+      ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j']
+    );
 
     const [header, row] = csv.split('\n');
 
@@ -105,28 +112,31 @@ describe('createSprMoveEventCsv', () => {
   });
 
   it('leaves missing optional tree-change metrics blank', () => {
-    const csv = createSprMoveEventCsv([
-      {
-        eventId: 'pair_0_1:0',
-        pairLabel: 'source input tree 1 to target input tree 2',
-        pairId: 'pair_0_1',
-        pairIndex: 0,
-        sourceInputTreeIndex: 0,
-        targetInputTreeIndex: 1,
-        eventIndex: 0,
-        signature: '1',
-        splitIndices: [1],
-        contextSplitIndices: [1],
-        pivotEdge: [9],
-        sourceAttachment: [],
-        destinationAttachment: [],
-        stepRange: null,
-        totalPathHops: 0,
-        totalPathLength: 0,
-        rfDistance: null,
-        weightedRfDistance: null,
-      },
-    ], ['a', 'b']);
+    const csv = createSprMoveEventCsv(
+      [
+        {
+          eventId: 'pair_0_1:0',
+          pairLabel: 'source input tree 1 to target input tree 2',
+          pairId: 'pair_0_1',
+          pairIndex: 0,
+          sourceInputTreeIndex: 0,
+          targetInputTreeIndex: 1,
+          eventIndex: 0,
+          signature: '1',
+          splitIndices: [1],
+          contextSplitIndices: [1],
+          pivotEdge: [9],
+          sourceAttachment: [],
+          destinationAttachment: [],
+          stepRange: null,
+          totalPathHops: 0,
+          totalPathLength: 0,
+          rfDistance: null,
+          weightedRfDistance: null,
+        },
+      ],
+      ['a', 'b']
+    );
 
     const row = csv.split('\n')[1].split(',');
 
@@ -144,7 +154,8 @@ describe('createSprMoveEventCsv', () => {
   });
 
   it('uses movement terminology in exported filenames', () => {
-    expect(createSprMoveEventExportName('sample.tree', new Date('2026-05-15T00:00:00.000Z')))
-      .toBe('sample-spr-movements-2026-05-15.csv');
+    expect(createSprMoveEventExportName('sample.tree', new Date('2026-05-15T00:00:00.000Z'))).toBe(
+      'sample-spr-movements-2026-05-15.csv'
+    );
   });
 });

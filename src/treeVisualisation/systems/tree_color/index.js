@@ -5,7 +5,7 @@ export {
   getSubtreeLeaves,
   checkMonophyletic,
   getBaseBranchColor,
-  getBaseNodeColor
+  getBaseNodeColor,
 } from './monophyleticColoring.js';
 
 export {
@@ -16,5 +16,5 @@ export {
   nodeOrParentMatchesPivotEdge,
   nodeOrParentMatchesAnyEdge,
   isLinkDownstreamOfChangeEdge,
-  isNodeDownstreamOfChangeEdge
+  isNodeDownstreamOfChangeEdge,
 } from './changeEdgeDetection.js';

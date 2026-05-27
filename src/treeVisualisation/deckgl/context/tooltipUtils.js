@@ -36,8 +36,8 @@ export function createTaxonTooltip(info, taxaGrouping) {
       color: '#fff',
       borderRadius: '6px',
       boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-      maxWidth: '300px'
-    }
+      maxWidth: '300px',
+    },
   };
 }
 
@@ -53,15 +53,17 @@ function formatTooltipHtml(lines) {
 
   if (details.length > 0) {
     html += '<div style="font-size: 10px; opacity: 0.9; line-height: 1.4;">';
-    html += details.map(line => {
-      const colonIdx = line.indexOf(':');
-      if (colonIdx > 0) {
-        const key = line.substring(0, colonIdx);
-        const value = line.substring(colonIdx + 1).trim();
-        return `<div><span style="opacity: 0.7;">${escapeTooltipHtml(key)}:</span> ${escapeTooltipHtml(value)}</div>`;
-      }
-      return `<div>${escapeTooltipHtml(line)}</div>`;
-    }).join('');
+    html += details
+      .map((line) => {
+        const colonIdx = line.indexOf(':');
+        if (colonIdx > 0) {
+          const key = line.substring(0, colonIdx);
+          const value = line.substring(colonIdx + 1).trim();
+          return `<div><span style="opacity: 0.7;">${escapeTooltipHtml(key)}:</span> ${escapeTooltipHtml(value)}</div>`;
+        }
+        return `<div>${escapeTooltipHtml(line)}</div>`;
+      })
+      .join('');
     html += '</div>';
   }
 
@@ -71,7 +73,17 @@ function formatTooltipHtml(lines) {
 function getAllTaxonInfo(taxonName, taxaGrouping) {
   if (!taxaGrouping) return {};
 
-  const { mode, separators, strategyType, segmentIndex, useRegex, regexPattern, csvTaxaMap, csvData, csvColumn } = taxaGrouping;
+  const {
+    mode,
+    separators,
+    strategyType,
+    segmentIndex,
+    useRegex,
+    regexPattern,
+    csvTaxaMap,
+    csvData,
+    csvColumn,
+  } = taxaGrouping;
   const info = {};
 
   if (mode === 'taxa') {

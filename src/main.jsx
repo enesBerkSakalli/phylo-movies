@@ -7,8 +7,8 @@ const rootEl = document.getElementById('root');
 let reactRootOwnsDom = false;
 
 // Global error handler for startup issues
-window.onerror = function(message, source, lineno, colno, error) {
-  console.error("Global Error:", message, source, lineno, colno, error);
+window.onerror = function (message, source, lineno, colno, error) {
+  console.error('Global Error:', message, source, lineno, colno, error);
   if (rootEl && !reactRootOwnsDom) {
     rootEl.innerHTML = `
       <div style="color: red; padding: 20px; font-family: monospace;">
@@ -27,6 +27,6 @@ try {
   root.render(<Router />);
 } catch (e) {
   reactRootOwnsDom = false;
-  console.error("[main.jsx] Render failed:", e);
-  window.onerror(e.message, "main.jsx", 0, 0, e);
+  console.error('[main.jsx] Render failed:', e);
+  window.onerror(e.message, 'main.jsx', 0, 0, e);
 }

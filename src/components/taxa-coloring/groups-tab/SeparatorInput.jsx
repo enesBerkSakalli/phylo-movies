@@ -1,17 +1,17 @@
-import React, { useState } from "react";
-import { Input } from "../../ui/input";
-import { Badge } from "../../ui/badge";
-import { Button } from "../../ui/button";
-import { X } from "lucide-react";
+import React, { useState } from 'react';
+import { Input } from '../../ui/input';
+import { Badge } from '../../ui/badge';
+import { Button } from '../../ui/button';
+import { X } from 'lucide-react';
 
 export function SeparatorInput({ separators = [], onChange, detectedSeparators = [] }) {
-  const [inputValue, setInputValue] = useState("");
+  const [inputValue, setInputValue] = useState('');
 
   const handleKeyDown = (e) => {
-    if (e.key === "Enter" || e.key === "," || e.key === " ") {
+    if (e.key === 'Enter' || e.key === ',' || e.key === ' ') {
       e.preventDefault();
       addSeparator();
-    } else if (e.key === "Backspace" && inputValue === "" && separators.length > 0) {
+    } else if (e.key === 'Backspace' && inputValue === '' && separators.length > 0) {
       // Remove last separator on backspace when input is empty
       removeSeparator(separators.length - 1);
     }
@@ -21,7 +21,7 @@ export function SeparatorInput({ separators = [], onChange, detectedSeparators =
     const trimmed = inputValue.trim();
     if (trimmed && !separators.includes(trimmed)) {
       onChange([...separators, trimmed]);
-      setInputValue("");
+      setInputValue('');
     }
   };
 
@@ -33,10 +33,10 @@ export function SeparatorInput({ separators = [], onChange, detectedSeparators =
     const value = e.target.value;
     // If multiple characters pasted, treat each as a separator
     if (value.length > 1 && !inputValue) {
-      const chars = value.split("").filter(c => c.trim());
+      const chars = value.split('').filter((c) => c.trim());
       const unique = [...new Set([...separators, ...chars])];
       onChange(unique);
-      setInputValue("");
+      setInputValue('');
     } else {
       setInputValue(value);
     }
@@ -53,7 +53,7 @@ export function SeparatorInput({ separators = [], onChange, detectedSeparators =
       <div className="flex flex-wrap gap-2 min-h-[40px] p-2 border rounded-md bg-background">
         {separators.map((sep, idx) => (
           <Badge key={idx} variant="secondary" className="gap-1 pr-1">
-            <span className="font-mono">{sep === " " ? "Space" : sep}</span>
+            <span className="font-mono">{sep === ' ' ? 'Space' : sep}</span>
             <Button
               variant="ghost"
               size="icon"
@@ -69,7 +69,7 @@ export function SeparatorInput({ separators = [], onChange, detectedSeparators =
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           onBlur={addSeparator}
-          placeholder={separators.length === 0 ? "Type separators: _, -, ., etc." : ""}
+          placeholder={separators.length === 0 ? 'Type separators: _, -, ., etc.' : ''}
           className="flex-1 min-w-[120px] border-0 shadow-none focus-visible:ring-0 px-0"
         />
       </div>
@@ -84,7 +84,7 @@ export function SeparatorInput({ separators = [], onChange, detectedSeparators =
               className="h-6 px-2 text-xs"
               onClick={() => addDetectedSeparator(item.separator)}
             >
-              <span className="font-mono">{item.separator === " " ? "Space" : item.separator}</span>
+              <span className="font-mono">{item.separator === ' ' ? 'Space' : item.separator}</span>
               <span className="ml-1 text-muted-foreground">({Math.round(item.usage)}%)</span>
             </Button>
           ))}

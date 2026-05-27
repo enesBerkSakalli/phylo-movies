@@ -87,5 +87,5 @@ export default tseslint.config(
       'no-unused-expressions': 'off',
       '@typescript-eslint/no-unused-expressions': 'off',
     },
-  },
+  }
 );

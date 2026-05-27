@@ -22,153 +22,175 @@ export function MSAScrollbars({ layoutMetrics = null }) {
   const labelsWidth = layoutMetrics?.labelsWidth ?? MSA_VIEWER_CONSTANTS.DEFAULT_LABELS_WIDTH;
   const axisHeight = layoutMetrics?.axisHeight ?? MSA_VIEWER_CONSTANTS.AXIS_HEIGHT;
 
-  useEffect(() => () => {
-    activeDragCleanupRef.current?.();
-  }, []);
+  useEffect(
+    () => () => {
+      activeDragCleanupRef.current?.();
+    },
+    []
+  );
 
-  const { rows, cols, r0, r1, c0, c1, hThumbWidth, hThumbLeft, vThumbHeight, vThumbTop } = useMemo(() => {
-    return calculateScrollbarGeometry({
-      rows: processedData?.rows ?? 0,
-      cols: processedData?.cols ?? 0,
-      visibleRange,
-    });
-  }, [processedData, visibleRange]);
+  const { rows, cols, r0, r1, c0, c1, hThumbWidth, hThumbLeft, vThumbHeight, vThumbTop } =
+    useMemo(() => {
+      return calculateScrollbarGeometry({
+        rows: processedData?.rows ?? 0,
+        cols: processedData?.cols ?? 0,
+        visibleRange,
+      });
+    }, [processedData, visibleRange]);
 
   // Handle horizontal track click
-  const handleHTrackClick = useCallback((e) => {
-    if (!hTrackRef.current || !scrollToPosition || !cols) return;
-    const rect = hTrackRef.current.getBoundingClientRect();
-    const targetCol = getTrackClickTarget({
-      pointerClientPosition: e.clientX,
-      trackStart: rect.left,
-      trackSize: rect.width,
-      itemCount: cols,
-    });
-    scrollToPosition({ col: targetCol });
-  }, [cols, scrollToPosition]);
-
-  // Handle vertical track click
-  const handleVTrackClick = useCallback((e) => {
-    if (!vTrackRef.current || !scrollToPosition || !rows) return;
-    const rect = vTrackRef.current.getBoundingClientRect();
-    const targetRow = getTrackClickTarget({
-      pointerClientPosition: e.clientY,
-      trackStart: rect.top,
-      trackSize: rect.height,
-      itemCount: rows,
-    });
-    scrollToPosition({ row: targetRow });
-  }, [rows, scrollToPosition]);
-
-  const handleHKeyDown = useCallback((e) => {
-    if (!scrollToPosition || !cols) return;
-
-    const targetCol = getKeyboardScrollTarget({
-      axis: 'horizontal',
-      key: e.key,
-      rangeStart: c0,
-      rangeEnd: c1,
-      itemCount: cols,
-    });
-    if (targetCol === null) return;
-
-    e.preventDefault();
-    scrollToPosition({ col: targetCol });
-  }, [c0, c1, cols, scrollToPosition]);
-
-  const handleVKeyDown = useCallback((e) => {
-    if (!scrollToPosition || !rows) return;
-
-    const targetRow = getKeyboardScrollTarget({
-      axis: 'vertical',
-      key: e.key,
-      rangeStart: r0,
-      rangeEnd: r1,
-      itemCount: rows,
-    });
-    if (targetRow === null) return;
-
-    e.preventDefault();
-    scrollToPosition({ row: targetRow });
-  }, [r0, r1, rows, scrollToPosition]);
-
-  // Handle horizontal thumb drag
-  const handleHThumbDrag = useCallback((e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDraggingH(true);
-
-    const track = hTrackRef.current;
-    if (!track) return;
-
-    e.currentTarget?.setPointerCapture?.(e.pointerId);
-
-    const onPointerMove = (moveEvent) => {
-      const rect = track.getBoundingClientRect();
+  const handleHTrackClick = useCallback(
+    (e) => {
+      if (!hTrackRef.current || !scrollToPosition || !cols) return;
+      const rect = hTrackRef.current.getBoundingClientRect();
       const targetCol = getTrackClickTarget({
-        pointerClientPosition: moveEvent.clientX,
+        pointerClientPosition: e.clientX,
         trackStart: rect.left,
         trackSize: rect.width,
         itemCount: cols,
       });
-      scrollToPosition?.({ col: targetCol });
-    };
+      scrollToPosition({ col: targetCol });
+    },
+    [cols, scrollToPosition]
+  );
 
-    const onPointerUp = () => {
-      setIsDraggingH(false);
-      window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('pointerup', onPointerUp);
-      window.removeEventListener('pointercancel', onPointerUp);
-      if (activeDragCleanupRef.current === onPointerUp) {
-        activeDragCleanupRef.current = null;
-      }
-    };
-
-    activeDragCleanupRef.current?.();
-    window.addEventListener('pointermove', onPointerMove);
-    window.addEventListener('pointerup', onPointerUp);
-    window.addEventListener('pointercancel', onPointerUp);
-    activeDragCleanupRef.current = onPointerUp;
-  }, [cols, scrollToPosition]);
-
-  // Handle vertical thumb drag
-  const handleVThumbDrag = useCallback((e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDraggingV(true);
-
-    const track = vTrackRef.current;
-    if (!track) return;
-
-    e.currentTarget?.setPointerCapture?.(e.pointerId);
-
-    const onPointerMove = (moveEvent) => {
-      const rect = track.getBoundingClientRect();
+  // Handle vertical track click
+  const handleVTrackClick = useCallback(
+    (e) => {
+      if (!vTrackRef.current || !scrollToPosition || !rows) return;
+      const rect = vTrackRef.current.getBoundingClientRect();
       const targetRow = getTrackClickTarget({
-        pointerClientPosition: moveEvent.clientY,
+        pointerClientPosition: e.clientY,
         trackStart: rect.top,
         trackSize: rect.height,
         itemCount: rows,
       });
-      scrollToPosition?.({ row: targetRow });
-    };
+      scrollToPosition({ row: targetRow });
+    },
+    [rows, scrollToPosition]
+  );
 
-    const onPointerUp = () => {
-      setIsDraggingV(false);
-      window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('pointerup', onPointerUp);
-      window.removeEventListener('pointercancel', onPointerUp);
-      if (activeDragCleanupRef.current === onPointerUp) {
-        activeDragCleanupRef.current = null;
-      }
-    };
+  const handleHKeyDown = useCallback(
+    (e) => {
+      if (!scrollToPosition || !cols) return;
 
-    activeDragCleanupRef.current?.();
-    window.addEventListener('pointermove', onPointerMove);
-    window.addEventListener('pointerup', onPointerUp);
-    window.addEventListener('pointercancel', onPointerUp);
-    activeDragCleanupRef.current = onPointerUp;
-  }, [rows, scrollToPosition]);
+      const targetCol = getKeyboardScrollTarget({
+        axis: 'horizontal',
+        key: e.key,
+        rangeStart: c0,
+        rangeEnd: c1,
+        itemCount: cols,
+      });
+      if (targetCol === null) return;
+
+      e.preventDefault();
+      scrollToPosition({ col: targetCol });
+    },
+    [c0, c1, cols, scrollToPosition]
+  );
+
+  const handleVKeyDown = useCallback(
+    (e) => {
+      if (!scrollToPosition || !rows) return;
+
+      const targetRow = getKeyboardScrollTarget({
+        axis: 'vertical',
+        key: e.key,
+        rangeStart: r0,
+        rangeEnd: r1,
+        itemCount: rows,
+      });
+      if (targetRow === null) return;
+
+      e.preventDefault();
+      scrollToPosition({ row: targetRow });
+    },
+    [r0, r1, rows, scrollToPosition]
+  );
+
+  // Handle horizontal thumb drag
+  const handleHThumbDrag = useCallback(
+    (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDraggingH(true);
+
+      const track = hTrackRef.current;
+      if (!track) return;
+
+      e.currentTarget?.setPointerCapture?.(e.pointerId);
+
+      const onPointerMove = (moveEvent) => {
+        const rect = track.getBoundingClientRect();
+        const targetCol = getTrackClickTarget({
+          pointerClientPosition: moveEvent.clientX,
+          trackStart: rect.left,
+          trackSize: rect.width,
+          itemCount: cols,
+        });
+        scrollToPosition?.({ col: targetCol });
+      };
+
+      const onPointerUp = () => {
+        setIsDraggingH(false);
+        window.removeEventListener('pointermove', onPointerMove);
+        window.removeEventListener('pointerup', onPointerUp);
+        window.removeEventListener('pointercancel', onPointerUp);
+        if (activeDragCleanupRef.current === onPointerUp) {
+          activeDragCleanupRef.current = null;
+        }
+      };
+
+      activeDragCleanupRef.current?.();
+      window.addEventListener('pointermove', onPointerMove);
+      window.addEventListener('pointerup', onPointerUp);
+      window.addEventListener('pointercancel', onPointerUp);
+      activeDragCleanupRef.current = onPointerUp;
+    },
+    [cols, scrollToPosition]
+  );
+
+  // Handle vertical thumb drag
+  const handleVThumbDrag = useCallback(
+    (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDraggingV(true);
+
+      const track = vTrackRef.current;
+      if (!track) return;
+
+      e.currentTarget?.setPointerCapture?.(e.pointerId);
+
+      const onPointerMove = (moveEvent) => {
+        const rect = track.getBoundingClientRect();
+        const targetRow = getTrackClickTarget({
+          pointerClientPosition: moveEvent.clientY,
+          trackStart: rect.top,
+          trackSize: rect.height,
+          itemCount: rows,
+        });
+        scrollToPosition?.({ row: targetRow });
+      };
+
+      const onPointerUp = () => {
+        setIsDraggingV(false);
+        window.removeEventListener('pointermove', onPointerMove);
+        window.removeEventListener('pointerup', onPointerUp);
+        window.removeEventListener('pointercancel', onPointerUp);
+        if (activeDragCleanupRef.current === onPointerUp) {
+          activeDragCleanupRef.current = null;
+        }
+      };
+
+      activeDragCleanupRef.current?.();
+      window.addEventListener('pointermove', onPointerMove);
+      window.addEventListener('pointerup', onPointerUp);
+      window.addEventListener('pointercancel', onPointerUp);
+      activeDragCleanupRef.current = onPointerUp;
+    },
+    [rows, scrollToPosition]
+  );
 
   // Early return AFTER all hooks have been called
   if (!processedData || !visibleRange) return null;

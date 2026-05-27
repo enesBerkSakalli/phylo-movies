@@ -37,7 +37,8 @@ export function interpolatePolarPosition(fromElement, toElement, t, options = {}
   const radius = interpolateScalar(fromRadius, toRadius, t);
   const fromAngle = Number.isFinite(fromElement.angle) ? fromElement.angle : 0;
   const toAngle = Number.isFinite(toElement.angle) ? toElement.angle : 0;
-  const angle = fromAngle + rootAwareAngleDelta(fromAngle, toAngle, options.rootAngle ?? 0) * angularT;
+  const angle =
+    fromAngle + rootAwareAngleDelta(fromAngle, toAngle, options.rootAngle ?? 0) * angularT;
 
   return positionFromPolar(radius, angle, 0);
 }
@@ -47,7 +48,7 @@ export function positionToPolar(position) {
   const y = Array.isArray(position) || ArrayBuffer.isView(position) ? Number(position[1]) : 0;
   return {
     angle: Math.atan2(Number.isFinite(y) ? y : 0, Number.isFinite(x) ? x : 0),
-    radius: Math.hypot(Number.isFinite(x) ? x : 0, Number.isFinite(y) ? y : 0)
+    radius: Math.hypot(Number.isFinite(x) ? x : 0, Number.isFinite(y) ? y : 0),
   };
 }
 
@@ -65,11 +66,7 @@ export function angleFromPosition(position, fallback = 0) {
 export function positionFromPolar(radius, angle, z = 0) {
   const r = Number.isFinite(radius) ? radius : 0;
   const a = Number.isFinite(angle) ? angle : 0;
-  return [
-    r * Math.cos(a),
-    r * Math.sin(a),
-    z ?? 0
-  ];
+  return [r * Math.cos(a), r * Math.sin(a), z ?? 0];
 }
 
 export function polarToPosition(element) {
@@ -133,7 +130,7 @@ export function replaceLastPathPoint(path, point) {
   }
 
   if (Array.isArray(path) && path.length > 0) {
-    const copy = path.map((item) => Array.isArray(item) ? [...item] : item);
+    const copy = path.map((item) => (Array.isArray(item) ? [...item] : item));
     copy[copy.length - 1] = point;
     return copy;
   }

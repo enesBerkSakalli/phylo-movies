@@ -35,7 +35,7 @@ function _cloneTreeNode(node, cloneMap = new WeakMap()) {
 
       if (Array.isArray(value)) {
         // Recursively clone arrays (like children)
-        cloned[key] = value.map(item => _cloneTreeNode(item, cloneMap));
+        cloned[key] = value.map((item) => _cloneTreeNode(item, cloneMap));
       } else if (value && typeof value === 'object') {
         // Recursively clone objects
         cloned[key] = _cloneTreeNode(value, cloneMap);
@@ -131,34 +131,36 @@ function _applyVisualBranchLengthRecursive(node, transformType) {
   if (!node) return;
 
   const hasBranchLength = node.length !== undefined && node.length !== null;
-  const hasMetricBranchLength = node.metricBranchLength !== undefined && node.metricBranchLength !== null;
+  const hasMetricBranchLength =
+    node.metricBranchLength !== undefined && node.metricBranchLength !== null;
 
   if (hasBranchLength || hasMetricBranchLength) {
     const metricBranchLength = getMetricBranchLength(node);
     node.metricBranchLength = metricBranchLength;
-    node.visualBranchLength = transformType === 'none'
-      ? metricBranchLength
-      : _transformSingleValue(metricBranchLength, transformType);
+    node.visualBranchLength =
+      transformType === 'none'
+        ? metricBranchLength
+        : _transformSingleValue(metricBranchLength, transformType);
   }
 
   // Recursively transform children
   if (node.children && Array.isArray(node.children)) {
-    node.children.forEach(child => {
+    node.children.forEach((child) => {
       _applyVisualBranchLengthRecursive(child, transformType);
     });
   }
 }
 
 function normalizeTransformType(transformType) {
-  return typeof transformType === 'string' && transformType.length > 0
-    ? transformType
-    : 'none';
+  return typeof transformType === 'string' && transformType.length > 0 ? transformType : 'none';
 }
 
 function isTreeNormalizedTransform(transformType) {
-  return transformType === 'normalized' ||
+  return (
+    transformType === 'normalized' ||
     transformType === 'normalized-sqrt' ||
-    transformType === 'normalized-log';
+    transformType === 'normalized-log'
+  );
 }
 
 function getBaseTransformType(transformType) {
@@ -268,7 +270,9 @@ function _transformSingleValue(value, transformType) {
 
   // Final safety check: ensure result is a non-negative finite number
   if (!Number.isFinite(result) || result < 0) {
-    console.warn(`[branchTransformUtils] Transformation produced invalid result: ${result}, using fallback`);
+    console.warn(
+      `[branchTransformUtils] Transformation produced invalid result: ${result}, using fallback`
+    );
     return Math.max(0.001, numericValue);
   }
 

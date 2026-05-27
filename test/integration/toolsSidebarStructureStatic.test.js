@@ -18,7 +18,9 @@ describe('tools sidebar structure', () => {
     expect(appSource).not.toContain('<SidebarGroupLabel>');
     expect(appSource).not.toContain("from './components/nav/ButtonsMSA.jsx'");
     expect(appSource).not.toContain("from './components/appearance/FocusAndChangeEffects.jsx'");
-    expect(appSource).not.toContain("from './components/appearance/controls/VisualElements/TaxaAndHighlightsSection.jsx'");
+    expect(appSource).not.toContain(
+      "from './components/appearance/controls/VisualElements/TaxaAndHighlightsSection.jsx'"
+    );
   });
 
   it('does not keep the legacy MSA nav button component', () => {
@@ -39,16 +41,21 @@ describe('tools sidebar structure', () => {
       'Analysis',
       'Color & Focus',
     ]);
-    const labelUsePositions = [0, 1, 2, 3]
-      .map((index) => sidebarSource.indexOf(`TOOLS_SIDEBAR_GROUP_LABELS[${index}]`));
+    const labelUsePositions = [0, 1, 2, 3].map((index) =>
+      sidebarSource.indexOf(`TOOLS_SIDEBAR_GROUP_LABELS[${index}]`)
+    );
 
     expect(labelUsePositions.every((position) => position >= 0)).toBe(true);
     expect(labelUsePositions).toEqual([...labelUsePositions].sort((a, b) => a - b));
   });
 
   it('keeps visual element and visual effect sections scoped to their responsibility', () => {
-    expect(source('src/components/appearance/controls/VisualElements/TaxaAndHighlightsSection.jsx')).not.toContain('<VisualStyle');
-    expect(source('src/components/appearance/FocusAndChangeEffects.jsx')).not.toContain('<PerspectiveSection');
+    expect(
+      source('src/components/appearance/controls/VisualElements/TaxaAndHighlightsSection.jsx')
+    ).not.toContain('<VisualStyle');
+    expect(source('src/components/appearance/FocusAndChangeEffects.jsx')).not.toContain(
+      '<PerspectiveSection'
+    );
   });
 
   it('keeps expandable tool panels closed by default for scanability', () => {
@@ -64,8 +71,9 @@ describe('tools sidebar structure', () => {
       'src/components/TreeStatsPanel/Shared/TaxaLegend.tsx',
     ];
 
-    const defaultOpenFiles = expandableToolFiles
-      .filter((file) => source(file).includes('defaultOpen'));
+    const defaultOpenFiles = expandableToolFiles.filter((file) =>
+      source(file).includes('defaultOpen')
+    );
 
     expect(defaultOpenFiles).toEqual([]);
   });
@@ -97,8 +105,9 @@ describe('tools sidebar structure', () => {
       'src/components/TreeStatsPanel/Shared/TaxaLegend.tsx',
     ];
 
-    const filesWithRightChevron = expandableToolFiles
-      .filter((file) => source(file).includes('ChevronRight'));
+    const filesWithRightChevron = expandableToolFiles.filter((file) =>
+      source(file).includes('ChevronRight')
+    );
 
     expect(filesWithRightChevron).toEqual([]);
   });

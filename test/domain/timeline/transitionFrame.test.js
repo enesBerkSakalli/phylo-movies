@@ -6,16 +6,19 @@ describe('TransitionFrame', () => {
     const sourceTree = { id: 'source' };
     const targetTree = { id: 'target' };
 
-    const frame = TransitionFrame.from({
-      sourceTree,
-      targetTree,
-      sourceTreeIndex: 4,
-      targetTreeIndex: 5,
-      transitionProgress: 0.25,
-      holdKind: 'mover'
-    }, {
-      timelineProgress: 0.4
-    });
+    const frame = TransitionFrame.from(
+      {
+        sourceTree,
+        targetTree,
+        sourceTreeIndex: 4,
+        targetTreeIndex: 5,
+        transitionProgress: 0.25,
+        holdKind: 'mover',
+      },
+      {
+        timelineProgress: 0.4,
+      }
+    );
 
     expect(frame.sourceTree).toBe(sourceTree);
     expect(frame.targetTree).toBe(targetTree);
@@ -35,11 +38,11 @@ describe('TransitionFrame', () => {
     const frame = TransitionFrame.from({
       sourceTreeIndex: 1,
       targetTreeIndex: 2,
-      transitionProgress: 0.25
+      transitionProgress: 0.25,
     }).withRenderState({
       renderProgress: 0.75,
       stage: 'EXPAND',
-      transitionChangeModel
+      transitionChangeModel,
     });
 
     expect(frame.transitionProgress).toBe(0.25);
@@ -52,7 +55,7 @@ describe('TransitionFrame', () => {
       stage: 'EXPAND',
       transitionChangeModel,
       rawTimeFactor: 0.25,
-      scrubMode: true
+      scrubMode: true,
     });
   });
 
@@ -60,7 +63,7 @@ describe('TransitionFrame', () => {
     const frame = TransitionFrame.from({
       sourceTreeIndex: 1,
       targetTreeIndex: 2,
-      transitionProgress: 0.25
+      transitionProgress: 0.25,
     });
 
     expect(frame.toInterpolationData).toBeUndefined();

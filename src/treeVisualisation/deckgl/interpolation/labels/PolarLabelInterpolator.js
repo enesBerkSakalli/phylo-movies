@@ -44,7 +44,7 @@ export class PolarLabelInterpolator {
       ),
       // Preserve properties from the target element
       text: toLabel.text,
-      textAnchor: toLabel.textAnchor
+      textAnchor: toLabel.textAnchor,
     };
   }
 
@@ -55,7 +55,7 @@ export class PolarLabelInterpolator {
   _interpolatePosition(fromLabel, toLabel, t, velocityEntry = null) {
     return interpolatePolarPosition(fromLabel, toLabel, t, {
       velocityEntry,
-      rootAngle: this._rootAngle
+      rootAngle: this._rootAngle,
     });
   }
 

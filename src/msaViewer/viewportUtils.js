@@ -7,17 +7,20 @@ export function getZoomScale(zoom = 0) {
   return Math.pow(2, zoom || 0);
 }
 
-export function clampViewState(viewState, {
-  minZoom,
-  maxZoom,
-  containerWidth,
-  containerHeight,
-  labelsWidth = 0,
-  axisHeight = 0,
-  cellSize,
-  rows,
-  cols
-}) {
+export function clampViewState(
+  viewState,
+  {
+    minZoom,
+    maxZoom,
+    containerWidth,
+    containerHeight,
+    labelsWidth = 0,
+    axisHeight = 0,
+    cellSize,
+    rows,
+    cols,
+  }
+) {
   const clampedZoom = Math.max(minZoom, Math.min(maxZoom, viewState.zoom));
 
   // If no data, just clamp zoom and keep target as-is
@@ -29,10 +32,10 @@ export function clampViewState(viewState, {
   const contentHeight = rows * cellSize;
   const zoomScale = getZoomScale(clampedZoom);
 
-  const viewportWidth = Math.max(1, (containerWidth - labelsWidth));
-  const viewportHeight = Math.max(1, (containerHeight - axisHeight));
-  const halfW = (viewportWidth / zoomScale) / 2;
-  const halfH = (viewportHeight / zoomScale) / 2;
+  const viewportWidth = Math.max(1, containerWidth - labelsWidth);
+  const viewportHeight = Math.max(1, containerHeight - axisHeight);
+  const halfW = viewportWidth / zoomScale / 2;
+  const halfH = viewportHeight / zoomScale / 2;
 
   const minX = Math.min(halfW, contentWidth / 2);
   const maxX = Math.max(contentWidth - halfW, contentWidth / 2);
@@ -42,13 +45,19 @@ export function clampViewState(viewState, {
   const target = [
     Math.max(minX, Math.min(maxX, viewState.target[0])),
     Math.max(minY, Math.min(maxY, viewState.target[1])),
-    0
+    0,
   ];
 
   return { ...viewState, zoom: clampedZoom, target };
 }
 
-export function getVisibleRange(viewState, { containerWidth, containerHeight, labelsWidth = 0, axisHeight = 0 }, cellSize, rows, cols) {
+export function getVisibleRange(
+  viewState,
+  { containerWidth, containerHeight, labelsWidth = 0, axisHeight = 0 },
+  cellSize,
+  rows,
+  cols
+) {
   const zoomScale = getZoomScale(viewState?.zoom || 0);
   const worldPerPixel = 1 / zoomScale;
 

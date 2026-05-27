@@ -19,9 +19,7 @@ export class NodeDataBuilder {
    */
   convertNodes(nodes, options) {
     const nodeDotSizes = this.geometryBuilder.calculateNodeDotSizes(nodes, options);
-    return nodes
-      .map(node => this._createNodeData(node, nodeDotSizes))
-      .filter(Boolean);
+    return nodes.map((node) => this._createNodeData(node, nodeDotSizes)).filter(Boolean);
   }
 
   /**
@@ -30,7 +28,10 @@ export class NodeDataBuilder {
    */
   _createNodeData(node, nodeDotSizes) {
     if (!Number.isFinite(node.x) || !Number.isFinite(node.y)) {
-      console.warn('[NodeDataBuilder] Skipping node with invalid layout coordinates:', node.split_indices);
+      console.warn(
+        '[NodeDataBuilder] Skipping node with invalid layout coordinates:',
+        node.split_indices
+      );
       return null;
     }
 
@@ -64,7 +65,7 @@ export class NodeDataBuilder {
       polarPosition: node.radius,
       split_indices: splitIndices,
       splitKey,
-      child_split_indices: node.child_split_indices
+      child_split_indices: node.child_split_indices,
     };
   }
 }

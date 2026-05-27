@@ -13,13 +13,12 @@ export const createTaxonomyColoringSlice = (set, get) => ({
   // ==========================================================================
   setTaxaGrouping: (grouping) => {
     // Normalize Map to plain object for storage/legend rendering
-    const normalizedGroupMap = grouping?.groupColorMap instanceof Map
-      ? Object.fromEntries(grouping.groupColorMap)
-      : grouping?.groupColorMap;
+    const normalizedGroupMap =
+      grouping?.groupColorMap instanceof Map
+        ? Object.fromEntries(grouping.groupColorMap)
+        : grouping?.groupColorMap;
 
-    const normalized = grouping
-      ? { ...grouping, groupColorMap: normalizedGroupMap || {} }
-      : null;
+    const normalized = grouping ? { ...grouping, groupColorMap: normalizedGroupMap || {} } : null;
 
     set((s) => ({
       taxaGrouping: normalized,
@@ -29,7 +28,10 @@ export const createTaxonomyColoringSlice = (set, get) => ({
   },
 
   setMonophyleticColoring: (enabled) => {
-    set((s) => ({ monophyleticColoringEnabled: enabled, taxaColorVersion: s.taxaColorVersion + 1 }));
+    set((s) => ({
+      monophyleticColoringEnabled: enabled,
+      taxaColorVersion: s.taxaColorVersion + 1,
+    }));
     const { colorManager } = get();
     colorManager?.setMonophyleticColoring(enabled);
     renderTreeControllers(get());

@@ -1,7 +1,7 @@
 import { getNodeKey } from '../../domain/tree/splits.js';
 import {
   getMetricBranchLength,
-  getReadableVisualBranchLength
+  getReadableVisualBranchLength,
 } from '../../domain/tree/branchTransform.js';
 
 const DEFAULT_WIDTH = 800;
@@ -63,7 +63,13 @@ export function getMinContainerDimension(width, height) {
   return Math.min(width, height);
 }
 
-export function calculateContainerScale(containerWidth, containerHeight, minWindowSize, maxRadius, factor) {
+export function calculateContainerScale(
+  containerWidth,
+  containerHeight,
+  minWindowSize,
+  maxRadius,
+  factor
+) {
   const isComparison = containerWidth < 600 || containerHeight < 600;
   const adjustedFactor = isComparison ? factor * 0.8 : factor;
   const safeMaxRadius = Math.max(Number(maxRadius) || 0, MIN_RADIUS);
@@ -74,7 +80,7 @@ export function normalizeLayoutOptions(options = {}) {
   return {
     width: Math.max(options.width || DEFAULT_WIDTH, MIN_DIMENSION),
     height: Math.max(options.height || DEFAULT_HEIGHT, MIN_DIMENSION),
-    margin: options.margin || DEFAULT_MARGIN
+    margin: options.margin || DEFAULT_MARGIN,
   };
 }
 

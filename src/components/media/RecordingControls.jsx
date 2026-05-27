@@ -14,7 +14,7 @@ export function RecordingControls({ disabled = false }) {
       recorderRef.current = new CanvasRecorder({
         autoSave: true,
         framerate: 60,
-        videoBitsPerSecond: 2500000 // 2.5 Mbps for good quality
+        videoBitsPerSecond: 2500000, // 2.5 Mbps for good quality
       });
     }
     return recorderRef.current;

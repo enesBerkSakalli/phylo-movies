@@ -1,19 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import * as splitPrimitives from '../../../src/domain/tree/splits.js';
 
-const {
-  flattenSplitSets,
-  getSplitIndices,
-  toSubtreeKey,
-} = splitPrimitives;
+const { flattenSplitSets, getSplitIndices, toSubtreeKey } = splitPrimitives;
 
 describe('domain tree split primitives', () => {
   it('flattens nested backend split sets while preserving leaf arrays', () => {
-    expect(flattenSplitSets([[[1], [2, 3]], [[[4, 5]]]])).toEqual([
-      [1],
-      [2, 3],
-      [4, 5],
-    ]);
+    expect(flattenSplitSets([[[1], [2, 3]], [[[4, 5]]]])).toEqual([[1], [2, 3], [4, 5]]);
   });
 
   it('reads only normalized split indices from render data', () => {

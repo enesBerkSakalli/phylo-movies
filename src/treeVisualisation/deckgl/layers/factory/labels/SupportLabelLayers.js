@@ -1,4 +1,7 @@
-import { BRANCH_ANNOTATION_NONE, formatBranchAnnotationLabel } from '../../../../../domain/tree/branchSupportIndex.js';
+import {
+  BRANCH_ANNOTATION_NONE,
+  formatBranchAnnotationLabel,
+} from '../../../../../domain/tree/branchSupportIndex.js';
 
 const SUPPORT_LABEL_Z_OFFSET = 0.18;
 const SUPPORT_LABEL_SIZE_SCALE = 6;
@@ -8,16 +11,16 @@ const SUPPORT_LABEL_COLOR = [17, 24, 39, 235];
 const SUPPORT_LABEL_OUTLINE_COLOR = [255, 255, 255, 225];
 
 function isFinitePoint(point) {
-  return Array.isArray(point)
-    && Number.isFinite(point[0])
-    && Number.isFinite(point[1]);
+  return Array.isArray(point) && Number.isFinite(point[0]) && Number.isFinite(point[1]);
 }
 
 function branchNodeAnchor(source, target) {
   return [
     source[0] + (target[0] - source[0]) * SUPPORT_LABEL_TARGET_ANCHOR,
     source[1] + (target[1] - source[1]) * SUPPORT_LABEL_TARGET_ANCHOR,
-    ((source[2] ?? 0) + ((target[2] ?? 0) - (source[2] ?? 0)) * SUPPORT_LABEL_TARGET_ANCHOR) + SUPPORT_LABEL_Z_OFFSET
+    (source[2] ?? 0) +
+      ((target[2] ?? 0) - (source[2] ?? 0)) * SUPPORT_LABEL_TARGET_ANCHOR +
+      SUPPORT_LABEL_Z_OFFSET,
   ];
 }
 
@@ -41,7 +44,7 @@ export function buildSupportLabelData(links = [], supportValueKey = BRANCH_ANNOT
         position: branchNodeAnchor(link.sourcePosition, link.targetPosition),
         treeSide: link.treeSide,
         split_indices: link.split_indices,
-        annotations: link.annotations
+        annotations: link.annotations,
       };
     })
     .filter(Boolean);
@@ -55,8 +58,8 @@ export function getSupportLabelsLayerProps(supportLabels, state) {
     data: supportLabels,
     visible: branchAnnotationLabelKey !== BRANCH_ANNOTATION_NONE,
     pickable: false,
-    getPosition: d => d.position,
-    getText: d => d.text,
+    getPosition: (d) => d.position,
+    getText: (d) => d.text,
     getSize: () => size,
     getColor: SUPPORT_LABEL_COLOR,
     outlineWidth: 2,
@@ -65,12 +68,12 @@ export function getSupportLabelsLayerProps(supportLabels, state) {
     getAlignmentBaseline: 'center',
     characterSet: 'auto',
     fontSettings: {
-      sdf: true
+      sdf: true,
     },
     updateTriggers: {
       getSize: [fontSize],
       getPosition: [supportLabels],
-      getText: [supportLabels]
-    }
+      getText: [supportLabels],
+    },
   };
 }

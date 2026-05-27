@@ -38,7 +38,7 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     useAppStore.setState({
       treeList: [
         { id: 'tree-0', split_indices: [0], children: [] },
-        { id: 'tree-1', split_indices: [1], children: [] }
+        { id: 'tree-1', split_indices: [1], children: [] },
       ],
       branchTransformation: 'linear',
       layoutAngleDegrees: 360,
@@ -46,9 +46,9 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
       styleConfig: { labelOffsets: { DEFAULT: 20, EXTENSION: 5 } },
       playhead: {
         animationProgress: 0,
-        timelineProgress: null
+        timelineProgress: null,
       },
-      frameIndex: 0
+      frameIndex: 0,
     });
   });
 
@@ -75,8 +75,8 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
         jobId: staleMessage.jobId,
         requestToken: staleMessage.requestToken,
         status: 'SUCCESS',
-        result: { layerData: { stale: true } }
-      }
+        result: { layerData: { stale: true } },
+      },
     });
 
     expect(setPrecomputedData).not.toHaveBeenCalled();
@@ -85,7 +85,7 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
   it('clears transformed tree datasets when interpolation caches reset', () => {
     controller = new ControllerClass(null);
     controller._transformedCache.set('dataset-a', {
-      transformedList: [{ id: 'old-tree' }]
+      transformedList: [{ id: 'old-tree' }],
     });
 
     controller.resetInterpolationCaches();
@@ -242,14 +242,14 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
         { id: 'tree-0', split_indices: [0], children: [] },
         { id: 'tree-1', split_indices: [1], children: [] },
         { id: 'tree-2', split_indices: [2], children: [] },
-        { id: 'tree-3', split_indices: [3], children: [] }
-      ]
+        { id: 'tree-3', split_indices: [3], children: [] },
+      ],
     });
     controller = new ControllerClass(null);
 
     controller.animationRunner.updateProgress(0.1, {
       timelineProgress: 0.4,
-      frameIndex: 2
+      frameIndex: 2,
     });
 
     const state = useAppStore.getState();
@@ -277,29 +277,31 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     controller._syncInterpolatorRootAngle = vi.fn();
     controller._getLinkGeometryMode = vi.fn(() => 'radial-elbow');
 
-    await controller._renderComparisonFrameForRunner(
-      { id: 'from-tree' },
-      { id: 'to-tree' },
-      0.5,
-      {
-        fromTreeIndex: 0,
-        toTreeIndex: 1,
-        rawTimeFactor: 0.5,
-        rightTree: { id: 'right-tree' },
-        rightTreeIndex: 1,
-        cachedInputs: { dataFrom, dataTo, transitionChangeModel }
-      }
-    );
+    await controller._renderComparisonFrameForRunner({ id: 'from-tree' }, { id: 'to-tree' }, 0.5, {
+      fromTreeIndex: 0,
+      toTreeIndex: 1,
+      rawTimeFactor: 0.5,
+      rightTree: { id: 'right-tree' },
+      rightTreeIndex: 1,
+      cachedInputs: { dataFrom, dataTo, transitionChangeModel },
+    });
 
     expect(buildInterpolationInputs).not.toHaveBeenCalled();
-    expect(interpolateTreeData).toHaveBeenCalledWith(dataFrom, dataTo, 0.5, expect.objectContaining({
-      transitionChangeModel,
-      rawTimeFactor: 0.5
-    }));
-    expect(renderComparisonAnimated).toHaveBeenCalledWith(expect.objectContaining({
-      interpolatedData,
-      rightIndex: 1
-    }));
+    expect(interpolateTreeData).toHaveBeenCalledWith(
+      dataFrom,
+      dataTo,
+      0.5,
+      expect.objectContaining({
+        transitionChangeModel,
+        rawTimeFactor: 0.5,
+      })
+    );
+    expect(renderComparisonAnimated).toHaveBeenCalledWith(
+      expect.objectContaining({
+        interpolatedData,
+        rightIndex: 1,
+      })
+    );
   });
 
   it('keeps interpolation caches when stroke width changes layer data only', () => {
@@ -321,8 +323,8 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     useAppStore.setState({
       treeList: [
         { id: 'replacement-tree-0', split_indices: [0], children: [] },
-        { id: 'replacement-tree-1', split_indices: [1], children: [] }
-      ]
+        { id: 'replacement-tree-1', split_indices: [1], children: [] },
+      ],
     });
 
     const secondToken = controller._createLayoutRequestToken(1, useAppStore.getState());
@@ -338,7 +340,9 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
 
     const message = controller.layoutWorker.messages[0];
     expect(createLayoutCacheKey).toHaveBeenCalledTimes(1);
-    expect(message.requestToken).toBe(`${controller._layoutRequestGeneration}|${message.data.options.layoutCacheKey}`);
+    expect(message.requestToken).toBe(
+      `${controller._layoutRequestGeneration}|${message.data.options.layoutCacheKey}`
+    );
   });
 
   it('re-prefetches the same tree index when its layout cache key changes', () => {
@@ -355,19 +359,25 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     const secondKey = controller.layoutWorker.messages[1].data.options.layoutCacheKey;
 
     expect(secondKey).not.toBe(firstKey);
-    expect(controller._layoutPrefetchTokens.get(1)).toBe(controller.layoutWorker.messages[1].requestToken);
+    expect(controller._layoutPrefetchTokens.get(1)).toBe(
+      controller.layoutWorker.messages[1].requestToken
+    );
   });
 
   it('keeps moving taxa tracking out of worker layout prefetch payloads', () => {
     useAppStore.setState({
-      subtreeHighlightTracking: [null, [[2, 3], [4]]]
+      subtreeHighlightTracking: [null, [[2, 3], [4]]],
     });
     controller = new ControllerClass(null);
 
     controller._prefetchFrame(1);
 
-    expect(controller.layoutWorker.messages[0].data.options).not.toHaveProperty('rotationAlignmentExcludeTaxa');
-    expect(controller.layoutWorker.messages[0].data.options.layoutCacheKey).not.toContain('rotationAlignmentExcludeTaxa');
+    expect(controller.layoutWorker.messages[0].data.options).not.toHaveProperty(
+      'rotationAlignmentExcludeTaxa'
+    );
+    expect(controller.layoutWorker.messages[0].data.options.layoutCacheKey).not.toContain(
+      'rotationAlignmentExcludeTaxa'
+    );
   });
 
   it('syncs polar interpolation root angle from layout rotation before interpolation', () => {
@@ -380,7 +390,7 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
         dataFrom: { max_radius: 100 },
         dataTo: { max_radius: 120 },
         transitionChangeModel: { changed: true },
-      }))
+      })),
     };
     controller.treeInterpolator = {
       setRootAngle: vi.fn(),
@@ -435,7 +445,7 @@ describe('DeckGLTreeAnimationController worker cache ordering', () => {
     expect(controller.layoutWorker.messages).toHaveLength(1);
 
     useAppStore.setState({
-      subtreeHighlightTracking: [null, [[2, 3], [4]]]
+      subtreeHighlightTracking: [null, [[2, 3], [4]]],
     });
 
     controller._prefetchFrame(1);

@@ -15,9 +15,7 @@ export function getMaxScaleValue(scaleList) {
     return 1;
   }
 
-  return Math.max(...scaleList.map((item) =>
-    typeof item === 'object' ? item.value : item
-  ));
+  return Math.max(...scaleList.map((item) => (typeof item === 'object' ? item.value : item)));
 }
 
 /**
@@ -42,12 +40,10 @@ export function buildScaleLookup(scaleList) {
   if (!Array.isArray(scaleList)) return map;
 
   scaleList.forEach((item, index) => {
-    const itemIndex = typeof item === 'object' && item !== null && 'index' in item
-      ? item.index
-      : index;
-    const itemValue = typeof item === 'object' && item !== null && 'value' in item
-      ? item.value
-      : item;
+    const itemIndex =
+      typeof item === 'object' && item !== null && 'index' in item ? item.index : index;
+    const itemValue =
+      typeof item === 'object' && item !== null && 'value' in item ? item.value : item;
     map.set(itemIndex, Number(itemValue) || 0);
   });
 
@@ -92,8 +88,6 @@ function _calculateScale(node, isRoot = true) {
       }
     });
   }
-  maxRadius = maxRadius + (
-    isRoot ? 0 : getReadableVisualBranchLength(node)
-  );
+  maxRadius = maxRadius + (isRoot ? 0 : getReadableVisualBranchLength(node));
   return maxRadius;
 }

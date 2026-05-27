@@ -26,13 +26,16 @@ export class NodeGeometryBuilder {
       internalSizeRatio: 0.6,
       internalMinPx: 1,
       internalMaxPx: 5,
-      ...radiusConfig
+      ...radiusConfig,
     };
     const legacyRatio = Number(radiusConfig.ratio);
     const configuredInternalRatio = Number(radiusConfig.internalSizeRatio);
-    const internalSizeRatio = Number.isFinite(configuredInternalRatio) && configuredInternalRatio > 0
-      ? configuredInternalRatio
-      : (Number.isFinite(legacyRatio) && legacyRatio > 0 ? legacyRatio : config.internalSizeRatio);
+    const internalSizeRatio =
+      Number.isFinite(configuredInternalRatio) && configuredInternalRatio > 0
+        ? configuredInternalRatio
+        : Number.isFinite(legacyRatio) && legacyRatio > 0
+          ? legacyRatio
+          : config.internalSizeRatio;
 
     // Compute final uniform sizes
     const baseLeafPx = Math.max(
@@ -46,7 +49,7 @@ export class NodeGeometryBuilder {
     );
 
     // Assign fixed radii: leaves same size, internal smaller
-    nodes.forEach(node => {
+    nodes.forEach((node) => {
       const nodeKey = node.id;
       if (!nodeKey) return;
       const isLeaf = node.isLeaf === true;

@@ -4,7 +4,6 @@
  * and managing tree navigation operations
  */
 export class SubtreeExtractor {
-
   /**
    * Extract a subtree starting from a given node
    * @param {Object} node - The root node of the subtree to extract
@@ -21,11 +20,13 @@ export class SubtreeExtractor {
     // Create new tree data object
     const subtreeData = {
       ...originalTreeData,
-      name: originalTreeData?.name ? `${originalTreeData.name}_subtree_${subtreeRootName}` : `subtree_${subtreeRootName}`,
+      name: originalTreeData?.name
+        ? `${originalTreeData.name}_subtree_${subtreeRootName}`
+        : `subtree_${subtreeRootName}`,
       originalTreeName: originalTreeData?.name,
       isSubtree: true,
       subtreeRoot: node.name || 'unnamed_node',
-      parentTreeData: originalTreeData
+      parentTreeData: originalTreeData,
     };
 
     // Convert the subtree back to newick-like format if needed
@@ -50,12 +51,12 @@ export class SubtreeExtractor {
       depth,
       height: node.height ?? 0,
       path: Array.isArray(node.path) ? [...node.path] : undefined,
-      children: []
+      children: [],
     };
 
     // Recursively clone children
     if (Array.isArray(node.children) && node.children.length > 0) {
-      cloned.children = node.children.map(child => this._cloneNode(child, depth + 1));
+      cloned.children = node.children.map((child) => this._cloneNode(child, depth + 1));
     }
 
     return cloned;
@@ -78,7 +79,7 @@ export class SubtreeExtractor {
     }
 
     // Internal node - recursively build newick for children
-    const childrenNewick = node.children.map(child => this._nodeToNewick(child)).join(',');
+    const childrenNewick = node.children.map((child) => this._nodeToNewick(child)).join(',');
     const name = node.name || '';
     const length = node.length ?? '';
 
@@ -96,7 +97,7 @@ export class SubtreeExtractor {
 
     const descendants = [node];
     if (Array.isArray(node.children)) {
-      node.children.forEach(child => {
+      node.children.forEach((child) => {
         descendants.push(...this.getDescendants(child));
       });
     }
@@ -116,7 +117,7 @@ export class SubtreeExtractor {
     }
 
     const leaves = [];
-    node.children.forEach(child => {
+    node.children.forEach((child) => {
       leaves.push(...this.getLeaves(child));
     });
     return leaves;
@@ -135,8 +136,8 @@ export class SubtreeExtractor {
       totalNodes: descendants.length,
       leafCount: leaves.length,
       internalNodes: descendants.length - leaves.length,
-      maxDepth: Math.max(...descendants.map(n => n.depth || 0)),
-      rootName: node.name || 'unnamed'
+      maxDepth: Math.max(...descendants.map((n) => n.depth || 0)),
+      rootName: node.name || 'unnamed',
     };
   }
 
@@ -198,8 +199,14 @@ export class SubtreeExtractor {
     if (!node || typeof node !== 'object') {
       throw new Error('SubtreeExtractor requires a normalized plain tree node');
     }
-    if ('data' in node || typeof node.descendants === 'function' || typeof node.leaves === 'function') {
-      throw new Error('SubtreeExtractor requires a normalized plain tree node, not a D3 hierarchy node');
+    if (
+      'data' in node ||
+      typeof node.descendants === 'function' ||
+      typeof node.leaves === 'function'
+    ) {
+      throw new Error(
+        'SubtreeExtractor requires a normalized plain tree node, not a D3 hierarchy node'
+      );
     }
   }
 }

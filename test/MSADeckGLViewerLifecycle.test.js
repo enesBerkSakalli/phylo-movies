@@ -16,7 +16,7 @@ function makeViewer() {
     rows: 0,
     cols: 0,
     selection: null,
-    viewState: { target: [0, 0, 0], zoom: 0 }
+    viewState: { target: [0, 0, 0], zoom: 0 },
   };
   viewer.adjustLabelWidth = vi.fn();
   viewer.initCameraPosition = vi.fn();
@@ -26,7 +26,10 @@ function makeViewer() {
 
 describe('MSADeckGLViewer lifecycle', () => {
   it('does not carry standalone viewer or minimap leftovers', () => {
-    const source = readFileSync(new URL('../src/msaViewer/MSADeckGLViewer.js', import.meta.url), 'utf8');
+    const source = readFileSync(
+      new URL('../src/msaViewer/MSADeckGLViewer.js', import.meta.url),
+      'utf8'
+    );
     const config = readFileSync(new URL('../src/msaViewer/config.js', import.meta.url), 'utf8');
 
     expect(source).not.toContain('msa_viewer.html');
@@ -37,7 +40,10 @@ describe('MSADeckGLViewer lifecycle', () => {
   });
 
   it('does not delay initial deck setup with a fixed timer', () => {
-    const source = readFileSync(new URL('../src/msaViewer/MSADeckGLViewer.js', import.meta.url), 'utf8');
+    const source = readFileSync(
+      new URL('../src/msaViewer/MSADeckGLViewer.js', import.meta.url),
+      'utf8'
+    );
     const config = readFileSync(new URL('../src/msaViewer/config.js', import.meta.url), 'utf8');
 
     expect(source).not.toContain('_initTimeoutId');
@@ -46,8 +52,14 @@ describe('MSADeckGLViewer lifecycle', () => {
   });
 
   it('attaches custom controller options to the main MSA view', () => {
-    const source = readFileSync(new URL('../src/msaViewer/MSADeckGLViewer.js', import.meta.url), 'utf8');
-    const mainViewControllerConfigs = source.match(/id:\s*'main'[\s\S]*?controller:\s*\{\s*type:\s*OrthographicController[\s\S]*?scrollZoom:\s*false[\s\S]*?keyboard:\s*\{\s*zoomSpeed:\s*0\.08\s*\}/g) || [];
+    const source = readFileSync(
+      new URL('../src/msaViewer/MSADeckGLViewer.js', import.meta.url),
+      'utf8'
+    );
+    const mainViewControllerConfigs =
+      source.match(
+        /id:\s*'main'[\s\S]*?controller:\s*\{\s*type:\s*OrthographicController[\s\S]*?scrollZoom:\s*false[\s\S]*?keyboard:\s*\{\s*zoomSpeed:\s*0\.08\s*\}/g
+      ) || [];
 
     expect(source).not.toMatch(/style:\s*\{\},\s*controller:\s*\{/);
     expect(source).not.toMatch(/id:\s*'main'[\s\S]*?controller:\s*true/);
@@ -61,11 +73,11 @@ describe('MSADeckGLViewer lifecycle', () => {
     viewer._applyProcessedData({
       sequences: [
         { id: 'taxon-a', seq: 'ACGT' },
-        { id: 'taxon-b', seq: 'ACGA' }
+        { id: 'taxon-b', seq: 'ACGA' },
       ],
       type: 'dna',
       rows: 2,
-      cols: 4
+      cols: 4,
     });
 
     expect(viewer.render).toHaveBeenCalledTimes(1);
@@ -84,12 +96,10 @@ describe('MSADeckGLViewer lifecycle', () => {
     viewer.hasUsableContainerSize = vi.fn(() => false);
 
     viewer._applyProcessedData({
-      sequences: [
-        { id: 'taxon-a', seq: 'ACGT' },
-      ],
+      sequences: [{ id: 'taxon-a', seq: 'ACGT' }],
       type: 'dna',
       rows: 1,
-      cols: 4
+      cols: 4,
     });
 
     expect(viewer.initCameraPosition).not.toHaveBeenCalled();

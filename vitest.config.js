@@ -49,5 +49,5 @@ export default defineConfig({
       'test/domain/**/*.test.{js,ts}',
       'test/integration/**/*.test.{js,ts}',
     ],
-  }
+  },
 });

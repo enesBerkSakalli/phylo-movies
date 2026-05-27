@@ -25,7 +25,15 @@
  * @param {Object} currentViewState - Current Deck.gl view state
  * @returns {Array} Adjusted target [x, y, z]
  */
-export function applyFitAreaToTarget(view, baseTarget, zoom, fitArea, canvasWidth, canvasHeight, currentViewState) {
+export function applyFitAreaToTarget(
+  view,
+  baseTarget,
+  zoom,
+  fitArea,
+  canvasWidth,
+  canvasHeight,
+  currentViewState
+) {
   if (!fitArea) return baseTarget;
 
   const fitCenterX = fitArea.left + fitArea.width / 2;
@@ -44,7 +52,16 @@ export function applyFitAreaToTarget(view, baseTarget, zoom, fitArea, canvasWidt
   );
 }
 
-function applyScreenFitCenterToTarget(view, baseTarget, zoom, screenCenterX, screenCenterY, canvasWidth, canvasHeight, currentViewState) {
+function applyScreenFitCenterToTarget(
+  view,
+  baseTarget,
+  zoom,
+  screenCenterX,
+  screenCenterY,
+  canvasWidth,
+  canvasHeight,
+  currentViewState
+) {
   if (typeof view?.makeViewport !== 'function') return baseTarget;
 
   // Construct a hypothetical viewport state at the target zoom/center.
@@ -60,6 +77,6 @@ function applyScreenFitCenterToTarget(view, baseTarget, zoom, screenCenterX, scr
   return [
     baseTarget[0] + (baseTarget[0] - fitCenterWorld[0]),
     baseTarget[1] + (baseTarget[1] - fitCenterWorld[1]),
-    baseTarget[2] ?? 0
+    baseTarget[2] ?? 0,
   ];
 }

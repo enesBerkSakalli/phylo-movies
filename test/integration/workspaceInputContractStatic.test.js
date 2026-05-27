@@ -53,7 +53,15 @@ describe('workspace initialization input contract', () => {
 
   it('keeps sliding-window input limits sourced from the form model constants', () => {
     const slidingWindowSource = readFileSync(
-      join(repoRoot, 'src', 'pages', 'WorkspaceInitialization', 'components', 'project', 'SlidingWindowSection.jsx'),
+      join(
+        repoRoot,
+        'src',
+        'pages',
+        'WorkspaceInitialization',
+        'components',
+        'project',
+        'SlidingWindowSection.jsx'
+      ),
       'utf8'
     );
 

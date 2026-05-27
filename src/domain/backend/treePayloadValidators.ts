@@ -28,11 +28,21 @@ import {
   validateParallelLength,
   validateRangeTuple,
 } from './schemaValidation';
-import { validateHighlightGroup, validatePairSolution, validateSprPath } from './solutionValidators';
+import {
+  validateHighlightGroup,
+  validatePairSolution,
+  validateSprPath,
+} from './solutionValidators';
 
 function validateTreeNode(value: unknown, fieldName: string): TreeNode {
   assertRecord(value, fieldName);
-  assertExactRecordKeys(value, fieldName, ['name', 'length', 'split_indices', 'annotations', 'children']);
+  assertExactRecordKeys(value, fieldName, [
+    'name',
+    'length',
+    'split_indices',
+    'annotations',
+    'children',
+  ]);
 
   if (typeof value.name !== 'string') {
     throw new Error(`Invalid phyloMovieData payload: ${fieldName}.name must be a string`);
@@ -49,9 +59,10 @@ function validateTreeNode(value: unknown, fieldName: string): TreeNode {
   const validatedChildren = children.map((child, index) =>
     validateTreeNode(child, `${fieldName}.children[${index}]`)
   );
-  const annotations = value.annotations === undefined
-    ? undefined
-    : validateTreeNodeAnnotations(value.annotations, `${fieldName}.annotations`);
+  const annotations =
+    value.annotations === undefined
+      ? undefined
+      : validateTreeNodeAnnotations(value.annotations, `${fieldName}.annotations`);
 
   return {
     name: value.name,
@@ -75,9 +86,21 @@ function validateTreeNodeAnnotations(value: unknown, fieldName: string): TreeNod
   return { fields };
 }
 
-function validateAnnotationField(value: unknown, fieldName: string, fieldKey: string): AnnotationField {
+function validateAnnotationField(
+  value: unknown,
+  fieldName: string,
+  fieldKey: string
+): AnnotationField {
   assertRecord(value, fieldName);
-  assertExactRecordKeys(value, fieldName, ['path', 'label', 'value', 'value_type', 'role', 'unit', 'analysis']);
+  assertExactRecordKeys(value, fieldName, [
+    'path',
+    'label',
+    'value',
+    'value_type',
+    'role',
+    'unit',
+    'analysis',
+  ]);
 
   const path = validateStringArray(value.path, `${fieldName}.path`);
   if (path.length === 0) {
@@ -89,7 +112,9 @@ function validateAnnotationField(value: unknown, fieldName: string, fieldKey: st
   }
 
   if (typeof value.label !== 'string' || value.label.length === 0) {
-    throw new Error(`Invalid phyloMovieData payload: ${fieldName}.label must be a non-empty string`);
+    throw new Error(
+      `Invalid phyloMovieData payload: ${fieldName}.label must be a non-empty string`
+    );
   }
   if (typeof value.role !== 'string' || value.role.length === 0) {
     throw new Error(`Invalid phyloMovieData payload: ${fieldName}.role must be a non-empty string`);
@@ -98,10 +123,12 @@ function validateAnnotationField(value: unknown, fieldName: string, fieldKey: st
   const valueType = validateAnnotationValueType(value.value_type, `${fieldName}.value_type`);
   const annotationValue = validateAnnotationValue(value.value, valueType, `${fieldName}.value`);
 
-  const unit = value.unit === undefined ? undefined : validateRequiredString(value.unit, `${fieldName}.unit`);
-  const analysis = value.analysis === undefined
-    ? undefined
-    : validateAnnotationAnalysis(value.analysis, `${fieldName}.analysis`);
+  const unit =
+    value.unit === undefined ? undefined : validateRequiredString(value.unit, `${fieldName}.unit`);
+  const analysis =
+    value.analysis === undefined
+      ? undefined
+      : validateAnnotationAnalysis(value.analysis, `${fieldName}.analysis`);
 
   return {
     path,
@@ -122,8 +149,12 @@ function validateAnnotationAnalysis(value: unknown, fieldName: string): Annotati
     throw new Error(`Invalid phyloMovieData payload: ${fieldName}.type must be a non-empty string`);
   }
 
-  const method = value.method === undefined ? undefined : validateRequiredString(value.method, `${fieldName}.method`);
-  const mode = value.mode === undefined ? undefined : validateRequiredString(value.mode, `${fieldName}.mode`);
+  const method =
+    value.method === undefined
+      ? undefined
+      : validateRequiredString(value.method, `${fieldName}.method`);
+  const mode =
+    value.mode === undefined ? undefined : validateRequiredString(value.mode, `${fieldName}.mode`);
 
   return {
     type: value.type,
@@ -132,7 +163,11 @@ function validateAnnotationAnalysis(value: unknown, fieldName: string): Annotati
   };
 }
 
-function validateAnnotationValue(value: unknown, valueType: AnnotationValueType, fieldName: string): AnnotationValue {
+function validateAnnotationValue(
+  value: unknown,
+  valueType: AnnotationValueType,
+  fieldName: string
+): AnnotationValue {
   if (valueType === 'array') {
     const items = requiredArray(value, fieldName);
     return items.map((item, index) => validateAnnotationArrayItem(item, `${fieldName}[${index}]`));
@@ -164,17 +199,27 @@ function validateAnnotationArrayItem(value: unknown, fieldName: string): string 
 }
 
 function validateAnnotationValueType(value: unknown, fieldName: string): AnnotationValueType {
-  if (value === 'string' || value === 'number' || value === 'integer' || value === 'boolean' || value === 'array') {
+  if (
+    value === 'string' ||
+    value === 'number' ||
+    value === 'integer' ||
+    value === 'boolean' ||
+    value === 'array'
+  ) {
     return value;
   }
-  throw new Error(`Invalid phyloMovieData payload: ${fieldName} must be a supported annotation value type`);
+  throw new Error(
+    `Invalid phyloMovieData payload: ${fieldName} must be a supported annotation value type`
+  );
 }
 
 function validateStringArray(value: unknown, fieldName: string): string[] {
   const items = requiredArray(value, fieldName);
   return items.map((item, index) => {
     if (typeof item !== 'string' || item.length === 0) {
-      throw new Error(`Invalid phyloMovieData payload: ${fieldName}[${index}] must be a non-empty string`);
+      throw new Error(
+        `Invalid phyloMovieData payload: ${fieldName}[${index}] must be a non-empty string`
+      );
     }
     return item;
   });
@@ -231,14 +276,21 @@ export function validateMsa(value: unknown): MsaData {
 
 function validateFrameType(value: unknown, fieldName: string): TimelineFrame['frame_type'] {
   if (value !== 'input_tree' && value !== 'interpolation_frame') {
-    throw new Error(`Invalid phyloMovieData payload: ${fieldName} must be input_tree or interpolation_frame`);
+    throw new Error(
+      `Invalid phyloMovieData payload: ${fieldName} must be input_tree or interpolation_frame`
+    );
   }
   return value;
 }
 
-function validateFrameSemantics(value: unknown, fieldName: string): TimelineFrame['state_semantics'] {
+function validateFrameSemantics(
+  value: unknown,
+  fieldName: string
+): TimelineFrame['state_semantics'] {
   if (value !== 'processed_input_tree' && value !== 'algorithmic_intermediate') {
-    throw new Error(`Invalid phyloMovieData payload: ${fieldName} must be processed_input_tree or algorithmic_intermediate`);
+    throw new Error(
+      `Invalid phyloMovieData payload: ${fieldName} must be processed_input_tree or algorithmic_intermediate`
+    );
   }
   return value;
 }
@@ -284,12 +336,24 @@ function validateFrame(value: unknown, index: number, treeCount: number): Timeli
     frame_type: validateFrameType(frame.frame_type, `${fieldName}.frame_type`),
     state_semantics: validateFrameSemantics(frame.state_semantics, `${fieldName}.state_semantics`),
     is_observed_input: validateBoolean(frame.is_observed_input, `${fieldName}.is_observed_input`),
-    input_tree_index: validateNullableInteger(frame.input_tree_index, `${fieldName}.input_tree_index`),
+    input_tree_index: validateNullableInteger(
+      frame.input_tree_index,
+      `${fieldName}.input_tree_index`
+    ),
     pair_id: validateNullableString(frame.pair_id, `${fieldName}.pair_id`),
     pair_ordinal: validateNullableInteger(frame.pair_ordinal, `${fieldName}.pair_ordinal`),
-    local_step_index: validateNullableInteger(frame.local_step_index, `${fieldName}.local_step_index`),
-    source_frame_index: validateNullableInteger(frame.source_frame_index, `${fieldName}.source_frame_index`),
-    target_frame_index: validateNullableInteger(frame.target_frame_index, `${fieldName}.target_frame_index`),
+    local_step_index: validateNullableInteger(
+      frame.local_step_index,
+      `${fieldName}.local_step_index`
+    ),
+    source_frame_index: validateNullableInteger(
+      frame.source_frame_index,
+      `${fieldName}.source_frame_index`
+    ),
+    target_frame_index: validateNullableInteger(
+      frame.target_frame_index,
+      `${fieldName}.target_frame_index`
+    ),
   };
 }
 
@@ -299,7 +363,11 @@ export function validateFrames(value: unknown, treeCount: number): TimelineFrame
   return frames.map((frame, index) => validateFrame(frame, index, treeCount));
 }
 
-function validateGeneratedFrameRange(value: unknown, fieldName: string, treeCount: number): [number, number] | null {
+function validateGeneratedFrameRange(
+  value: unknown,
+  fieldName: string,
+  treeCount: number
+): [number, number] | null {
   if (value === null) return null;
   const range = validateRangeTuple(value, fieldName);
   validateIndex(range[0], `${fieldName}[0]`, treeCount);
@@ -322,17 +390,37 @@ function validatePair(value: unknown, index: number, treeCount: number): Timelin
   ]);
 
   if (typeof pair.pair_id !== 'string' || pair.pair_id.length === 0) {
-    throw new Error(`Invalid phyloMovieData payload: ${fieldName}.pair_id must be a non-empty string`);
+    throw new Error(
+      `Invalid phyloMovieData payload: ${fieldName}.pair_id must be a non-empty string`
+    );
   }
 
   return {
     pair_id: pair.pair_id,
     pair_ordinal: validateInteger(pair.pair_ordinal, `${fieldName}.pair_ordinal`),
-    source_input_tree_index: validateInteger(pair.source_input_tree_index, `${fieldName}.source_input_tree_index`),
-    target_input_tree_index: validateInteger(pair.target_input_tree_index, `${fieldName}.target_input_tree_index`),
-    source_frame_index: validateIndex(pair.source_frame_index, `${fieldName}.source_frame_index`, treeCount),
-    target_frame_index: validateIndex(pair.target_frame_index, `${fieldName}.target_frame_index`, treeCount),
-    generated_frame_range: validateGeneratedFrameRange(pair.generated_frame_range, `${fieldName}.generated_frame_range`, treeCount),
+    source_input_tree_index: validateInteger(
+      pair.source_input_tree_index,
+      `${fieldName}.source_input_tree_index`
+    ),
+    target_input_tree_index: validateInteger(
+      pair.target_input_tree_index,
+      `${fieldName}.target_input_tree_index`
+    ),
+    source_frame_index: validateIndex(
+      pair.source_frame_index,
+      `${fieldName}.source_frame_index`,
+      treeCount
+    ),
+    target_frame_index: validateIndex(
+      pair.target_frame_index,
+      `${fieldName}.target_frame_index`,
+      treeCount
+    ),
+    generated_frame_range: validateGeneratedFrameRange(
+      pair.generated_frame_range,
+      `${fieldName}.generated_frame_range`,
+      treeCount
+    ),
     solution: validatePairSolution(pair.solution, `${fieldName}.solution`),
   };
 }
@@ -348,10 +436,14 @@ function validateTemporalEventBase(
   treeCount: number
 ) {
   if (typeof event.event_id !== 'string' || event.event_id.length === 0) {
-    throw new Error(`Invalid phyloMovieData payload: ${fieldName}.event_id must be a non-empty string`);
+    throw new Error(
+      `Invalid phyloMovieData payload: ${fieldName}.event_id must be a non-empty string`
+    );
   }
   if (typeof event.pair_id !== 'string' || event.pair_id.length === 0) {
-    throw new Error(`Invalid phyloMovieData payload: ${fieldName}.pair_id must be a non-empty string`);
+    throw new Error(
+      `Invalid phyloMovieData payload: ${fieldName}.pair_id must be a non-empty string`
+    );
   }
   const frameRange = validateRangeTuple(event.frame_range, `${fieldName}.frame_range`);
   validateIndex(frameRange[0], `${fieldName}.frame_range[0]`, treeCount);
@@ -428,9 +520,18 @@ function validateSprMoveTemporalEvent(
     collapse_hops: validateFiniteNumber(event.collapse_hops, `${fieldName}.collapse_hops`),
     expand_hops: validateFiniteNumber(event.expand_hops, `${fieldName}.expand_hops`),
     total_hops: validateFiniteNumber(event.total_hops, `${fieldName}.total_hops`),
-    collapse_branch_length: validateFiniteNumber(event.collapse_branch_length, `${fieldName}.collapse_branch_length`),
-    expand_branch_length: validateFiniteNumber(event.expand_branch_length, `${fieldName}.expand_branch_length`),
-    total_branch_length: validateFiniteNumber(event.total_branch_length, `${fieldName}.total_branch_length`),
+    collapse_branch_length: validateFiniteNumber(
+      event.collapse_branch_length,
+      `${fieldName}.collapse_branch_length`
+    ),
+    expand_branch_length: validateFiniteNumber(
+      event.expand_branch_length,
+      `${fieldName}.expand_branch_length`
+    ),
+    total_branch_length: validateFiniteNumber(
+      event.total_branch_length,
+      `${fieldName}.total_branch_length`
+    ),
   };
 }
 
@@ -449,7 +550,9 @@ export function validateTemporalEvents(value: unknown, treeCount: number): Tempo
     if (record.event_type === 'spr_move') {
       return validateSprMoveTemporalEvent(record, index, treeCount);
     }
-    throw new Error(`Invalid phyloMovieData payload: temporal_events[${index}].event_type must be split_change or spr_move`);
+    throw new Error(
+      `Invalid phyloMovieData payload: temporal_events[${index}].event_type must be split_change or spr_move`
+    );
   });
 }
 
@@ -506,16 +609,12 @@ function validatePairMetricSemantics(value: unknown): PairMetrics['semantics'] {
   }
 
   if (value.weighted_robinson_foulds !== undefined) {
-    assertRecord(
+    assertRecord(value.weighted_robinson_foulds, 'pair_metrics.semantics.weighted_robinson_foulds');
+    assertExactRecordKeys(
       value.weighted_robinson_foulds,
-      'pair_metrics.semantics.weighted_robinson_foulds'
+      'pair_metrics.semantics.weighted_robinson_foulds',
+      ['topology', 'includes_branch_lengths', 'includes_terminal_and_root_splits', 'scope']
     );
-    assertExactRecordKeys(value.weighted_robinson_foulds, 'pair_metrics.semantics.weighted_robinson_foulds', [
-      'topology',
-      'includes_branch_lengths',
-      'includes_terminal_and_root_splits',
-      'scope',
-    ]);
     semantics.weighted_robinson_foulds = {};
 
     const topology = validateOptionalString(
@@ -540,7 +639,8 @@ function validatePairMetricSemantics(value: unknown): PairMetrics['semantics'] {
       semantics.weighted_robinson_foulds.includes_branch_lengths = includesBranchLengths;
     }
     if (includesTerminalAndRootSplits !== undefined) {
-      semantics.weighted_robinson_foulds.includes_terminal_and_root_splits = includesTerminalAndRootSplits;
+      semantics.weighted_robinson_foulds.includes_terminal_and_root_splits =
+        includesTerminalAndRootSplits;
     }
     if (scope !== undefined) semantics.weighted_robinson_foulds.scope = scope;
   }
@@ -559,14 +659,19 @@ function validatePairMetricRow(value: unknown, index: number): PairMetricRow {
   ]);
 
   if (typeof row.pair_id !== 'string' || row.pair_id.length === 0) {
-    throw new Error(`Invalid phyloMovieData payload: ${fieldName}.pair_id must be a non-empty string`);
+    throw new Error(
+      `Invalid phyloMovieData payload: ${fieldName}.pair_id must be a non-empty string`
+    );
   }
 
   return {
     pair_id: row.pair_id,
     pair_ordinal: validateInteger(row.pair_ordinal, `${fieldName}.pair_ordinal`),
     robinson_foulds: validateFiniteNumber(row.robinson_foulds, `${fieldName}.robinson_foulds`),
-    weighted_robinson_foulds: validateFiniteNumber(row.weighted_robinson_foulds, `${fieldName}.weighted_robinson_foulds`),
+    weighted_robinson_foulds: validateFiniteNumber(
+      row.weighted_robinson_foulds,
+      `${fieldName}.weighted_robinson_foulds`
+    ),
   };
 }
 
@@ -575,13 +680,17 @@ export function validatePairMetrics(value: unknown): PhyloMovieData['pair_metric
   assertExactRecordKeys(value, 'pair_metrics', ['rows', 'semantics']);
 
   return {
-    rows: requiredArray(value.rows, 'pair_metrics.rows')
-      .map((row, index) => validatePairMetricRow(row, index)),
+    rows: requiredArray(value.rows, 'pair_metrics.rows').map((row, index) =>
+      validatePairMetricRow(row, index)
+    ),
     semantics: validatePairMetricSemantics(value.semantics),
   };
 }
 
-export function validateSubtreeHighlightTracking(value: unknown, treeCount: number): Array<number[][] | null> {
+export function validateSubtreeHighlightTracking(
+  value: unknown,
+  treeCount: number
+): Array<number[][] | null> {
   const fieldName = 'subtree_highlight_tracking';
   const tracking = requiredArray(value, fieldName);
   validateParallelLength(tracking, fieldName, treeCount);

@@ -19,7 +19,7 @@ import {
   selectSubtreeDimmingOpacity,
   selectTreeControllers,
   selectUpcomingChangesEnabled,
-  useAppStore
+  useAppStore,
 } from '../../state/phyloStore/store.js';
 
 import { Slider } from '../ui/slider';
@@ -28,7 +28,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarMenuSub,
-  SidebarMenuSubItem
+  SidebarMenuSubItem,
 } from '../ui/sidebar';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '../ui/collapsible';
 import { ChevronDown, Link } from 'lucide-react';
@@ -71,9 +71,12 @@ export function FocusAndChangeEffects() {
   const toggleDimming = (value) => rerenderAfter(() => setDimmingEnabled(!!value));
   const handleDimmingOpacityChange = (value) => rerenderAfter(() => setDimmingOpacity(value[0]));
   const toggleSubtreeDimming = (value) => rerenderAfter(() => setSubtreeDimmingEnabled(!!value));
-  const handleSubtreeDimmingOpacityChange = (value) => rerenderAfter(() => setSubtreeDimmingOpacity(value[0]));
-  const handleLinkOpacityChange = (value) => rerenderAfter(() => setLinkConnectionOpacity(value[0]));
-  const handleConnectorStrokeWidthChange = (value) => rerenderAfter(() => setConnectorStrokeWidth(value[0]));
+  const handleSubtreeDimmingOpacityChange = (value) =>
+    rerenderAfter(() => setSubtreeDimmingOpacity(value[0]));
+  const handleLinkOpacityChange = (value) =>
+    rerenderAfter(() => setLinkConnectionOpacity(value[0]));
+  const handleConnectorStrokeWidthChange = (value) =>
+    rerenderAfter(() => setConnectorStrokeWidth(value[0]));
 
   const togglePulse = (value) => setPulseEnabled(!!value);
   const toggleDashing = (value) => setDashingEnabled(!!value);
@@ -110,7 +113,12 @@ export function FocusAndChangeEffects() {
   );
 }
 
-export function GroupConnectorsSection({ linkConnectionOpacity, connectorStrokeWidth, onLinkOpacityChange, onConnectorStrokeWidthChange }) {
+export function GroupConnectorsSection({
+  linkConnectionOpacity,
+  connectorStrokeWidth,
+  onLinkOpacityChange,
+  onConnectorStrokeWidthChange,
+}) {
   return (
     <Collapsible asChild className="group/collapsible">
       <SidebarMenuItem>
@@ -127,8 +135,15 @@ export function GroupConnectorsSection({ linkConnectionOpacity, connectorStrokeW
               <div className="px-1 py-3">
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center justify-between px-1">
-                    <Label htmlFor="connector-opacity-slider" className="text-xs font-medium text-foreground/80">Connector Opacity</Label>
-                    <span className="text-xs font-medium tabular-nums text-muted-foreground">{Math.round((linkConnectionOpacity ?? 0.6) * 100)}%</span>
+                    <Label
+                      htmlFor="connector-opacity-slider"
+                      className="text-xs font-medium text-foreground/80"
+                    >
+                      Connector Opacity
+                    </Label>
+                    <span className="text-xs font-medium tabular-nums text-muted-foreground">
+                      {Math.round((linkConnectionOpacity ?? 0.6) * 100)}%
+                    </span>
                   </div>
                   <Slider
                     id="connector-opacity-slider"
@@ -141,8 +156,15 @@ export function GroupConnectorsSection({ linkConnectionOpacity, connectorStrokeW
                   />
 
                   <div className="flex items-center justify-between px-1 mt-2">
-                    <Label htmlFor="connector-stroke-width-slider" className="text-xs font-medium text-foreground/80">Connector Width</Label>
-                    <span className="text-xs font-medium tabular-nums text-muted-foreground">{connectorStrokeWidth ?? 1}px</span>
+                    <Label
+                      htmlFor="connector-stroke-width-slider"
+                      className="text-xs font-medium text-foreground/80"
+                    >
+                      Connector Width
+                    </Label>
+                    <span className="text-xs font-medium tabular-nums text-muted-foreground">
+                      {connectorStrokeWidth ?? 1}px
+                    </span>
                   </div>
                   <Slider
                     id="connector-stroke-width-slider"

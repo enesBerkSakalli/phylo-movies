@@ -1,6 +1,4 @@
-import {
-  Deck
-} from '@deck.gl/core';
+import { Deck } from '@deck.gl/core';
 import { easeInOutCubic } from '../../../domain/math/mathUtils.js';
 import { useAppStore } from '../../../state/phyloStore/store.js';
 import { measureFrameStep } from '../../performance/frameInstrumentation.js';
@@ -11,7 +9,7 @@ import {
   createInitialViewStates,
   getActiveViewId,
   getDefaultViewStateFor,
-  clampViewZoom
+  clampViewZoom,
 } from './cameraState.js';
 import {
   createDeckCanvas,
@@ -19,7 +17,7 @@ import {
   getDeckCursor,
   getDefaultControllerConfig,
   isTreeNodeLayer,
-  removeChildren
+  removeChildren,
 } from './deckContextUtils.js';
 
 /**
@@ -27,7 +25,6 @@ import {
  * Handles initialization, configuration, and cleanup of the Deck.gl WebGL context
  */
 export class DeckGLContext {
-
   // ==========================================================================
   // CONSTRUCTOR
   // ==========================================================================
@@ -71,7 +68,7 @@ export class DeckGLContext {
     // Default transition tuning
     this._defaultEasing = easeInOutCubic;
     this._durations = {
-      fit: 700
+      fit: 700,
     };
   }
 
@@ -94,7 +91,7 @@ export class DeckGLContext {
       useDevicePixels: true,
       glOptions: {
         antialias: true,
-        preserveDrawingBuffer: true
+        preserveDrawingBuffer: true,
       },
       onViewStateChange: ({ viewState, viewId }) => this._handleViewStateChange(viewState, viewId),
       onClick: (info, event) => this._handleClick(info, event),
@@ -109,7 +106,7 @@ export class DeckGLContext {
       onError: (error) => {
         this._onError?.(error);
         console.error('[DeckGLContext] Deck.gl error:', error);
-      }
+      },
     });
 
     // Ensure deck starts with correct dimensions and stays in sync with container resizing
@@ -285,7 +282,7 @@ export class DeckGLContext {
   setLayers(layers) {
     return measureFrameStep('deckContext.setLayers', () => {
       // Notify listeners (e.g. to update React ref cache)
-      this._layerListeners.forEach(listener => listener(layers));
+      this._layerListeners.forEach((listener) => listener(layers));
 
       this.setProps({ layers });
     });
@@ -332,7 +329,9 @@ export class DeckGLContext {
 
   setCameraMode(mode, { preserveTarget = true } = {}) {
     if (mode !== 'orthographic' && mode !== 'orbit') {
-      console.warn(`[DeckGLContext] Invalid camera mode: ${mode}. Must be 'orthographic' or 'orbit'.`);
+      console.warn(
+        `[DeckGLContext] Invalid camera mode: ${mode}. Must be 'orthographic' or 'orbit'.`
+      );
       return;
     }
     if (mode === this.cameraMode) return;
@@ -347,7 +346,7 @@ export class DeckGLContext {
 
     this.setProps({
       views: [this.views[this.cameraMode]],
-      viewState: this.viewStates[toId]
+      viewState: this.viewStates[toId],
     });
   }
 
@@ -380,7 +379,13 @@ export class DeckGLContext {
   // PUBLIC API - Animated Transitions
   // ==========================================================================
 
-  transitionTo({ target, zoom, duration = this._durations.fit, easing = this._defaultEasing, interpolator } = {}) {
+  transitionTo({
+    target,
+    zoom,
+    duration = this._durations.fit,
+    easing = this._defaultEasing,
+    interpolator,
+  } = {}) {
     const id = this._activeViewId();
     const currentViewState = this.viewStates[id];
     const clampedZoom = this._clampZoom(id, zoom ?? currentViewState.zoom);
@@ -390,11 +395,11 @@ export class DeckGLContext {
       patch.target = target;
     }
 
-    this._applyViewState(
-      id,
-      patch,
-      { transitionDuration: duration, transitionEasing: easing, transitionInterpolator }
-    );
+    this._applyViewState(id, patch, {
+      transitionDuration: duration,
+      transitionEasing: easing,
+      transitionInterpolator,
+    });
   }
 
   zoomBy(delta, { duration = 180, easing = this._defaultEasing } = {}) {
@@ -406,7 +411,7 @@ export class DeckGLContext {
       zoom: currentZoom + delta,
       duration,
       easing,
-      interpolator: this._interpolatorFor(id)
+      interpolator: this._interpolatorFor(id),
     });
   }
 
@@ -414,15 +419,11 @@ export class DeckGLContext {
     const id = this._activeViewId();
     const defaultState = this._defaultViewStateFor(id);
 
-    this._applyViewState(
-      id,
-      defaultState,
-      {
-        transitionDuration: duration,
-        transitionEasing: easing,
-        transitionInterpolator: this._interpolatorFor(id)
-      }
-    );
+    this._applyViewState(id, defaultState, {
+      transitionDuration: duration,
+      transitionEasing: easing,
+      transitionInterpolator: this._interpolatorFor(id),
+    });
   }
 
   // ==========================================================================
@@ -475,7 +476,9 @@ export class DeckGLContext {
   }
 
   _interpolatorFor(id) {
-    return id === getActiveViewId('orthographic') ? this.interpolators.orthographic : this.interpolators.orbit;
+    return id === getActiveViewId('orthographic')
+      ? this.interpolators.orthographic
+      : this.interpolators.orbit;
   }
 
   _defaultViewStateFor(id) {
@@ -517,7 +520,7 @@ export class DeckGLContext {
     const height = Math.max(1, Math.round(rect.height));
 
     const dimensions = { width, height };
-    this._resizeListeners.forEach(listener => listener(dimensions));
+    this._resizeListeners.forEach((listener) => listener(dimensions));
 
     if (!this.deck) return;
 
@@ -529,6 +532,4 @@ export class DeckGLContext {
       }
     }
   }
-
-
 }

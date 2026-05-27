@@ -8,7 +8,7 @@ import {
   positionFromPolar,
   positionToPolar,
   replaceLastPathPoint,
-  shouldFlipLabel
+  shouldFlipLabel,
 } from '../../utils/polarGeometry.js';
 
 export class OuterRadiusInterpolator {
@@ -18,14 +18,21 @@ export class OuterRadiusInterpolator {
 
   interpolateRadii(dataFrom, dataTo, t, maxRadius) {
     const labelRadius = this._interpolateLabelRadius(dataFrom, dataTo, t, maxRadius);
-    const extensionRadius = this._interpolateExtensionRadius(dataFrom, dataTo, t, maxRadius, labelRadius);
+    const extensionRadius = this._interpolateExtensionRadius(
+      dataFrom,
+      dataTo,
+      t,
+      maxRadius,
+      labelRadius
+    );
     return { labelRadius, extensionRadius };
   }
 
   applyLabelRadius(labels, radius) {
     return labels.map((label) => {
       const angle = angleFromPosition(label.position, label.angle);
-      const z = Array.isArray(label.position) && Number.isFinite(label.position[2]) ? label.position[2] : 0;
+      const z =
+        Array.isArray(label.position) && Number.isFinite(label.position[2]) ? label.position[2] : 0;
       const needsFlip = shouldFlipLabel(angle);
 
       return {
@@ -35,7 +42,7 @@ export class OuterRadiusInterpolator {
         distance: radius,
         rotation: labelRotation(angle, needsFlip),
         textAnchor: labelTextAnchor(needsFlip),
-        position: positionFromPolar(radius, angle, z)
+        position: positionFromPolar(radius, angle, z),
       };
     });
   }
@@ -50,7 +57,9 @@ export class OuterRadiusInterpolator {
       const targetPosition = positionFromPolar(radius, angle, targetPoint?.[2] ?? 0);
       const adjustedPath = replaceLastPathPoint(path, targetPosition);
       const adjustedTargetPosition = lastPathPoint(adjustedPath) || targetPosition;
-      const sourcePolar = pathSourcePosition ? positionToPolar(pathSourcePosition) : extension.polarData?.source;
+      const sourcePolar = pathSourcePosition
+        ? positionToPolar(pathSourcePosition)
+        : extension.polarData?.source;
 
       return {
         ...extension,
@@ -59,16 +68,18 @@ export class OuterRadiusInterpolator {
         targetPosition: adjustedTargetPosition,
         polarData: {
           ...extension.polarData,
-          source: sourcePolar ? {
-            ...extension.polarData?.source,
-            ...sourcePolar
-          } : extension.polarData?.source,
+          source: sourcePolar
+            ? {
+                ...extension.polarData?.source,
+                ...sourcePolar,
+              }
+            : extension.polarData?.source,
           target: {
             ...extension.polarData?.target,
             angle,
-            radius
-          }
-        }
+            radius,
+          },
+        },
       };
     });
   }
@@ -164,7 +175,11 @@ export class OuterRadiusInterpolator {
     if (Number.isFinite(polarRadius)) return polarRadius;
 
     const targetPosition = extension?.targetPosition;
-    if (Array.isArray(targetPosition) && Number.isFinite(targetPosition[0]) && Number.isFinite(targetPosition[1])) {
+    if (
+      Array.isArray(targetPosition) &&
+      Number.isFinite(targetPosition[0]) &&
+      Number.isFinite(targetPosition[1])
+    ) {
       return Math.hypot(targetPosition[0], targetPosition[1]);
     }
 

@@ -19,9 +19,10 @@ export function useTreeController() {
   useEffect(() => {
     let disposed = false;
 
-    const schedule = typeof requestAnimationFrame === 'function'
-      ? requestAnimationFrame
-      : (cb) => setTimeout(cb, 16);
+    const schedule =
+      typeof requestAnimationFrame === 'function'
+        ? requestAnimationFrame
+        : (cb) => setTimeout(cb, 16);
 
     const cancelSchedule = (id) => {
       if (typeof cancelAnimationFrame === 'function') {
@@ -84,7 +85,10 @@ export function useTreeController() {
           try {
             if (state.comparisonMode) {
               await renderComparisonMode(controller, state, state.frameIndex, state.timelineCursor);
-            } else if (state.playhead?.timelineProgress != null && typeof controller.renderTimelineProgress === 'function') {
+            } else if (
+              state.playhead?.timelineProgress != null &&
+              typeof controller.renderTimelineProgress === 'function'
+            ) {
               await controller.renderTimelineProgress(state.playhead.timelineProgress);
             } else {
               await controller.renderProgress(state.playhead?.animationProgress ?? 0);
@@ -144,7 +148,10 @@ export function useTreeController() {
     const unsubscribe = useAppStore.subscribe((state, prevState) => {
       const isTimelineScrubbing = state.movieTimelineManager?.scrubController?.isScrubbing ?? false;
 
-      if (state.treeList !== prevState.treeList || state.comparisonMode !== prevState.comparisonMode) {
+      if (
+        state.treeList !== prevState.treeList ||
+        state.comparisonMode !== prevState.comparisonMode
+      ) {
         // Reset comparison auto-fit when toggling comparison mode so the camera
         // refits properly for the new layout (single ↔ side-by-side).
         const ctrl = controllerRef.current || state.treeControllers[0];
@@ -234,11 +241,13 @@ export function useTreeController() {
 async function renderComparisonMode(controller, state, frameIndex, timelineCursor) {
   const inputTreeIndices = selectInputFrameIndices(state);
   const sourceInputTreeIndex = timelineCursor?.sourceFrameIndex ?? frameIndex;
-  const rightIndex = inputTreeIndices.find((i) => i > sourceInputTreeIndex) ?? inputTreeIndices[inputTreeIndices.length - 1];
+  const rightIndex =
+    inputTreeIndices.find((i) => i > sourceInputTreeIndex) ??
+    inputTreeIndices[inputTreeIndices.length - 1];
 
   await controller.renderAllElements({
     leftIndex: frameIndex,
     rightIndex,
-    comparisonMode: true
+    comparisonMode: true,
   });
 }

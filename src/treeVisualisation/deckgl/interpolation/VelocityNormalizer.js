@@ -84,9 +84,10 @@ export function buildGlobalVelocityMaps(angularDistanceMaps, t) {
     for (const id of angularDists.keys()) {
       const aDist = angularDists.get(id) ?? 0;
 
-      const angularT = (aDist < MIN_DIST || globalMaxAngle < MIN_DIST)
-        ? t
-        : Math.min(1, t * globalMaxAngle / aDist);
+      const angularT =
+        aDist < MIN_DIST || globalMaxAngle < MIN_DIST
+          ? t
+          : Math.min(1, (t * globalMaxAngle) / aDist);
 
       velocityMap.set(id, { angularT });
     }

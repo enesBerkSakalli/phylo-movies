@@ -12,7 +12,10 @@ export const clamp = (value: number, min: number, max: number): number =>
 /**
  * Recursively collects all branch lengths from a tree node
  */
-export const collectBranchLengths = (node: TreeNode | null | undefined, lengths: number[] = []): number[] => {
+export const collectBranchLengths = (
+  node: TreeNode | null | undefined,
+  lengths: number[] = []
+): number[] => {
   if (!node || typeof node !== 'object') return lengths;
 
   const len = Number(node.length);
@@ -21,7 +24,7 @@ export const collectBranchLengths = (node: TreeNode | null | undefined, lengths:
   }
 
   if (Array.isArray(node.children)) {
-    node.children.forEach(child => collectBranchLengths(child, lengths));
+    node.children.forEach((child) => collectBranchLengths(child, lengths));
   }
 
   return lengths;
@@ -36,7 +39,7 @@ export const buildHistogram = (lengths: number[]): HistogramData => {
     maxCount: 0,
     mean: 0,
     min: 0,
-    max: 0
+    max: 0,
   };
 
   if (!Array.isArray(lengths) || lengths.length === 0) {
@@ -61,19 +64,19 @@ export const buildHistogram = (lengths: number[]): HistogramData => {
 
   // Few unique values case: create exact bins to avoid empty bins
   const valueCounts = new Map<number, number>();
-  lengths.forEach(v => {
+  lengths.forEach((v) => {
     valueCounts.set(v, (valueCounts.get(v) || 0) + 1);
   });
 
   const uniques = Array.from(valueCounts.keys()).sort((a, b) => a - b);
 
   if (uniques.length <= 6) {
-    const bins: HistogramBin[] = uniques.map(v => ({
+    const bins: HistogramBin[] = uniques.map((v) => ({
       from: v,
       to: v,
       count: valueCounts.get(v) || 0,
     }));
-    const maxCount = Math.max(...bins.map(b => b.count));
+    const maxCount = Math.max(...bins.map((b) => b.count));
 
     return { bins, maxCount, mean, min: minLen, max: maxLen };
   }
@@ -82,13 +85,11 @@ export const buildHistogram = (lengths: number[]): HistogramData => {
   const domainMax = Math.max(minLen + 1e-6, maxLen);
   const thresholdCount = clamp(Math.ceil(Math.sqrt(lengths.length)), 6, 14);
 
-  const binner = d3Bin()
-    .domain([minLen, domainMax])
-    .thresholds(thresholdCount);
+  const binner = d3Bin().domain([minLen, domainMax]).thresholds(thresholdCount);
 
   const binned = binner(lengths);
 
-  const bins: HistogramBin[] = binned.map(bucket => ({
+  const bins: HistogramBin[] = binned.map((bucket) => ({
     from: bucket.x0 ?? 0,
     to: bucket.x1 ?? 0,
     count: bucket.length,

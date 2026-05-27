@@ -4,11 +4,13 @@ import { createTreeScalingDiagnostics } from '../src/treeVisualisation/diagnosti
 
 describe('tree scaling diagnostics', () => {
   it('reports geometry, label-ring, and viewport scaling for movie data', () => {
-    const movieData = JSON.parse(readFileSync('test/data/small_example/small_example.response.json', 'utf8'));
+    const movieData = JSON.parse(
+      readFileSync('test/data/small_example/small_example.response.json', 'utf8')
+    );
     const report = createTreeScalingDiagnostics(movieData, {
       treeIndices: [0, 22],
       width: 1234,
-      height: 777
+      height: 777,
     });
 
     expect(report.global.maxGlobalScale).toBeGreaterThan(0);
@@ -19,8 +21,12 @@ describe('tree scaling diagnostics', () => {
     expect(report.trees[0].branchGeometry.originalRootToTipMax).toBeGreaterThan(0);
     expect(report.trees[0].branchGeometry.activeRootToTipMax).toBeGreaterThan(0);
     expect(report.trees[0].branchGeometry.maxRadius).toBeGreaterThan(0);
-    expect(report.trees[0].labelRing.labelRadius).toBeGreaterThan(report.trees[0].branchGeometry.maxRadius);
-    expect(report.trees[0].viewport.branchOnlyZoom).toBeGreaterThan(report.trees[0].viewport.autoVisibleZoom);
+    expect(report.trees[0].labelRing.labelRadius).toBeGreaterThan(
+      report.trees[0].branchGeometry.maxRadius
+    );
+    expect(report.trees[0].viewport.branchOnlyZoom).toBeGreaterThan(
+      report.trees[0].viewport.autoVisibleZoom
+    );
   });
 
   it('makes label-ring viewport shrinkage measurable for dense trees', () => {
@@ -28,16 +34,16 @@ describe('tree scaling diagnostics', () => {
       interpolated_trees: [makeStarTree(350, 0.01), makeStarTree(350, 2)],
       frames: [
         { frame_index: 0, frame_type: 'input_tree', is_observed_input: true },
-        { frame_index: 1, frame_type: 'input_tree', is_observed_input: true }
+        { frame_index: 1, frame_type: 'input_tree', is_observed_input: true },
       ],
-      msa: {}
+      msa: {},
     };
 
     const report = createTreeScalingDiagnostics(movieData, {
       treeIndices: [0, 1],
       width: 1000,
       height: 800,
-      fontSize: '1.8em'
+      fontSize: '1.8em',
     });
     const firstTree = report.trees[0];
 
@@ -47,8 +53,12 @@ describe('tree scaling diagnostics', () => {
     expect(firstTree.branchGeometry.originalRootToTipMax).toBeCloseTo(0.01);
     expect(firstTree.branchGeometry.activeRootToTipMax).toBeCloseTo(1);
     expect(firstTree.branchGeometry.activeToOriginalRootTipRatio).toBeCloseTo(100);
-    expect(firstTree.branchGeometry.flooredRootToTipMax).toBe(firstTree.branchGeometry.rawRootToTipMax);
-    expect(firstTree.labelRing.readableLabelRadius).toBeGreaterThan(firstTree.labelRing.compactLabelRadius);
+    expect(firstTree.branchGeometry.flooredRootToTipMax).toBe(
+      firstTree.branchGeometry.rawRootToTipMax
+    );
+    expect(firstTree.labelRing.readableLabelRadius).toBeGreaterThan(
+      firstTree.labelRing.compactLabelRadius
+    );
     expect(firstTree.viewport.autoVisibleZoomDelta).toBeLessThan(-0.5);
     expect(firstTree.viewport.autoVisibleZoomDelta).toBeGreaterThan(-1);
   });
@@ -58,22 +68,24 @@ describe('tree scaling diagnostics', () => {
       interpolated_trees: [makeStarTree(20, 0.01), makeStarTree(20, 2)],
       frames: [
         { frame_index: 0, frame_type: 'input_tree', is_observed_input: true },
-        { frame_index: 1, frame_type: 'input_tree', is_observed_input: true }
+        { frame_index: 1, frame_type: 'input_tree', is_observed_input: true },
       ],
-      msa: {}
+      msa: {},
     };
 
     const report = createTreeScalingDiagnostics(movieData, {
       branchTransformation: 'none',
       treeIndices: [0, 1],
       width: 1000,
-      height: 800
+      height: 800,
     });
 
     expect(report.dataset.branchTransformation).toBe('none');
     expect(report.global.activeMaxGlobalScale).toBeCloseTo(report.global.originalMaxGlobalScale);
     for (const tree of report.trees) {
-      expect(tree.branchGeometry.activeRootToTipMax).toBeCloseTo(tree.branchGeometry.originalRootToTipMax);
+      expect(tree.branchGeometry.activeRootToTipMax).toBeCloseTo(
+        tree.branchGeometry.originalRootToTipMax
+      );
       expect(tree.branchGeometry.activeToOriginalRootTipRatio).toBeCloseTo(1);
     }
   });
@@ -88,7 +100,7 @@ function makeStarTree(leafCount, branchLength) {
       name: `taxon_${index}`,
       length: branchLength,
       split_indices: [index],
-      children: []
-    }))
+      children: [],
+    })),
   };
 }

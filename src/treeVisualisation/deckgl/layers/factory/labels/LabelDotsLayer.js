@@ -23,8 +23,8 @@ export const LABEL_DOTS_CONFIG = {
     lineWidthUnits: 'common',
     lineWidthMinPixels: 1,
     lineWidthMaxPixels: 3,
-    billboard: true
-  }
+    billboard: true,
+  },
 };
 
 /**
@@ -43,18 +43,18 @@ export function getLabelDotsLayerProps(labels, state, layerStyles) {
   return {
     data: labels,
     pickable: true,
-    getPosition: d => addZOffset(d.position, getHistoryOffset(cached, d)),
+    getPosition: (d) => addZOffset(d.position, getHistoryOffset(cached, d)),
     // Scale dot radius based on label size (which uses fontSize from state)
-    getRadius: d => layerStyles.getLabelSize(d, cached) * FONT_SIZE_TO_DOT_RADIUS_SCALE,
-    getFillColor: d => layerStyles.getLabelColor(d, cached),
+    getRadius: (d) => layerStyles.getLabelSize(d, cached) * FONT_SIZE_TO_DOT_RADIUS_SCALE,
+    getFillColor: (d) => layerStyles.getLabelColor(d, cached),
     // Black stroke outline
     getLineColor: [0, 0, 0, 255],
-    getLineWidth: d => layerStyles.getLabelSize(d, cached) * FONT_SIZE_TO_DOT_RADIUS_SCALE * 0.15,
+    getLineWidth: (d) => layerStyles.getLabelSize(d, cached) * FONT_SIZE_TO_DOT_RADIUS_SCALE * 0.15,
     updateTriggers: {
       getFillColor: [colorVersion, taxaColorVersion, highlightColorMode],
       getPosition: [colorVersion],
       getRadius: [fontSize, colorVersion, taxaColorVersion, taxaCount],
-      getLineWidth: [fontSize, colorVersion, taxaColorVersion, taxaCount]
-    }
+      getLineWidth: [fontSize, colorVersion, taxaColorVersion, taxaCount],
+    },
   };
 }

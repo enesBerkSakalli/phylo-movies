@@ -1,5 +1,10 @@
 // types/store.ts - Type definitions for the Zustand store
-import type { PhyloMovieData, TemporalEvent, TimelineFrame, TimelinePair } from '../domain/backend/phyloMovieTypes';
+import type {
+  PhyloMovieData,
+  TemporalEvent,
+  TimelineFrame,
+  TimelinePair,
+} from '../domain/backend/phyloMovieTypes';
 
 export interface ContextMenuPosition {
   x: number;
@@ -202,7 +207,11 @@ export interface AppStoreState {
   setAnimationSpeed: (newSpeed: number) => void;
   adjustAnimationStartTime: (deltaMs: number) => void;
   setNavigationDirection: (direction: 'forward' | 'backward' | 'jump') => void;
-  goToPosition: (position: number, direction?: 'forward' | 'backward' | 'jump', options?: PlaybackSeekOptions) => void;
+  goToPosition: (
+    position: number,
+    direction?: 'forward' | 'backward' | 'jump',
+    options?: PlaybackSeekOptions
+  ) => void;
   forward: () => void;
   backward: () => void;
   goToNextInputTree: () => void;
@@ -302,7 +311,10 @@ export interface AppStoreState {
 
   setAnimationStage: (stage: 'COLLAPSE' | 'EXPAND' | 'REORDER' | null) => void;
   getColorManager: () => any;
-  calculateHighlightChangePreviews: (index?: number | null) => { upcoming: any[]; completed: any[] };
+  calculateHighlightChangePreviews: (index?: number | null) => {
+    upcoming: any[];
+    completed: any[];
+  };
   initializeColors: () => void;
   resetColors: () => void;
   updateColorManagerPivotEdge: (edge: any) => void;

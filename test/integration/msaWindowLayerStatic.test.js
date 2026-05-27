@@ -6,11 +6,11 @@ describe('MSA window layering', () => {
   it('keeps the alignment viewer above timeline and HUD controls', () => {
     const source = fs.readFileSync(
       path.join(process.cwd(), 'src/components/msa/MsaRndWindow.jsx'),
-      'utf8',
+      'utf8'
     );
     const layerSource = fs.readFileSync(
       path.join(process.cwd(), 'src/components/ui/floating-window-layer.js'),
-      'utf8',
+      'utf8'
     );
 
     expect(source).toContain('getFloatingWindowLayerClass');
@@ -21,7 +21,7 @@ describe('MSA window layering', () => {
   it('starts with enough minimum width for the MSA toolbar', () => {
     const source = fs.readFileSync(
       path.join(process.cwd(), 'src/components/msa/MsaRndWindow.jsx'),
-      'utf8',
+      'utf8'
     );
 
     expect(source).toContain('minWidth: 840');
@@ -30,7 +30,7 @@ describe('MSA window layering', () => {
   it('keeps MSA select dropdowns above the floating window', () => {
     const source = fs.readFileSync(
       path.join(process.cwd(), 'src/components/msa/MSAControls.jsx'),
-      'utf8',
+      'utf8'
     );
 
     expect(source).toContain('<SelectContent className="z-[2000]">');
@@ -39,7 +39,7 @@ describe('MSA window layering', () => {
   it('does not vertically clip wrapped MSA toolbar controls', () => {
     const source = fs.readFileSync(
       path.join(process.cwd(), 'src/components/msa/MSAControls.jsx'),
-      'utf8',
+      'utf8'
     );
 
     expect(source).toContain('flex-wrap');
@@ -49,11 +49,11 @@ describe('MSA window layering', () => {
   it('keeps visible column status out of the MSA toolbar', () => {
     const controlsSource = fs.readFileSync(
       path.join(process.cwd(), 'src/components/msa/MSAControls.jsx'),
-      'utf8',
+      'utf8'
     );
     const controlsIndexSource = fs.readFileSync(
       path.join(process.cwd(), 'src/components/msa/controls/index.js'),
-      'utf8',
+      'utf8'
     );
 
     expect(controlsSource).not.toContain('MSAVisibleRange');
@@ -63,7 +63,7 @@ describe('MSA window layering', () => {
   it('keeps tree context icons in the viewer status badge', () => {
     const source = fs.readFileSync(
       path.join(process.cwd(), 'src/components/msa/MSAViewer.jsx'),
-      'utf8',
+      'utf8'
     );
 
     expect(source).toContain('buildMsaTreeStatus');
@@ -78,7 +78,7 @@ describe('MSA window layering', () => {
   it('keeps the active MSA window region in the viewer status badge', () => {
     const source = fs.readFileSync(
       path.join(process.cwd(), 'src/components/msa/MSAViewer.jsx'),
-      'utf8',
+      'utf8'
     );
 
     expect(source).toContain('buildMsaWindowStatus');
@@ -91,7 +91,7 @@ describe('MSA window layering', () => {
   it('uses a compact single-row MSA window header', () => {
     const source = fs.readFileSync(
       path.join(process.cwd(), 'src/components/msa/MsaRndWindow.jsx'),
-      'utf8',
+      'utf8'
     );
 
     expect(source).toContain('msa-rnd-header flex items-center justify-between gap-2 px-2 py-1');

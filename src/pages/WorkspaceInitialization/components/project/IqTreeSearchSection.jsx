@@ -1,9 +1,15 @@
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { Gauge } from "lucide-react";
+import { Gauge } from 'lucide-react';
 
-import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "../../../../components/ui/form";
-import { Checkbox } from "../../../../components/ui/checkbox";
+import {
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+} from '../../../../components/ui/form';
+import { Checkbox } from '../../../../components/ui/checkbox';
 import { cn } from '../../../../lib/utils';
 import { TreeInferenceOptionGroup } from './TreeInferenceOptionGroup.jsx';
 
@@ -14,7 +20,7 @@ export function IqTreeSearchSection({ hasMsa, disabled, supportsUfboot }) {
     <TreeInferenceOptionGroup
       icon={Gauge}
       title="Search strategy"
-      description={supportsUfboot ? "UFBoot disables fast search." : "Speed versus thoroughness."}
+      description={supportsUfboot ? 'UFBoot disables fast search.' : 'Speed versus thoroughness.'}
     >
       <FormField
         control={control}
@@ -29,13 +35,18 @@ export function IqTreeSearchSection({ hasMsa, disabled, supportsUfboot }) {
               />
             </FormControl>
             <div className="flex flex-col gap-1 leading-none">
-              <FormLabel className={cn("cursor-pointer text-sm font-normal", (!hasMsa || supportsUfboot) && "text-muted-foreground")}>
+              <FormLabel
+                className={cn(
+                  'cursor-pointer text-sm font-normal',
+                  (!hasMsa || supportsUfboot) && 'text-muted-foreground'
+                )}
+              >
                 IQ-TREE Fast Search
               </FormLabel>
               <FormDescription className="text-2xs leading-tight">
                 {supportsUfboot
-                  ? "UFBoot disables IQ-TREE -fast."
-                  : "Use IQ-TREE -fast for responsive runs."}
+                  ? 'UFBoot disables IQ-TREE -fast.'
+                  : 'Use IQ-TREE -fast for responsive runs.'}
               </FormDescription>
             </div>
           </FormItem>

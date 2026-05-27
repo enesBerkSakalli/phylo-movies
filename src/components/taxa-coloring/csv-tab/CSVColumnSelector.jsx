@@ -1,8 +1,8 @@
-import React from "react";
-import { Button } from "../../ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
-import { LayoutPanelLeft } from "lucide-react";
-import { cn } from "../../../lib/utils";
+import React from 'react';
+import { Button } from '../../ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
+import { LayoutPanelLeft } from 'lucide-react';
+import { cn } from '../../../lib/utils';
 
 export function CSVColumnSelector({ csvData, csvColumn, onColumnChange }) {
   if (!csvData || csvData.groupingColumns.length <= 1) {
@@ -16,7 +16,9 @@ export function CSVColumnSelector({ csvData, csvColumn, onColumnChange }) {
           <div className="size-5 rounded-md bg-primary/10 flex items-center justify-center text-primary">
             <LayoutPanelLeft className="size-3" />
           </div>
-          <CardTitle className="text-xs font-bold uppercase tracking-wider">Group Category</CardTitle>
+          <CardTitle className="text-xs font-bold uppercase tracking-wider">
+            Group Category
+          </CardTitle>
         </div>
       </CardHeader>
       <CardContent className="px-3 pb-3">
@@ -25,13 +27,13 @@ export function CSVColumnSelector({ csvData, csvColumn, onColumnChange }) {
             <Button
               key={c.name}
               size="sm"
-              variant={csvColumn === c.name ? "default" : "ghost"}
+              variant={csvColumn === c.name ? 'default' : 'ghost'}
               onClick={() => onColumnChange(c.name)}
               className={cn(
-                "h-7 text-2xs font-bold uppercase tracking-tight px-3 rounded-md",
+                'h-7 text-2xs font-bold uppercase tracking-tight px-3 rounded-md',
                 csvColumn === c.name
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:bg-accent/50 hover:text-foreground border border-transparent hover:border-border/40"
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground border border-transparent hover:border-border/40'
               )}
             >
               {c.displayName}

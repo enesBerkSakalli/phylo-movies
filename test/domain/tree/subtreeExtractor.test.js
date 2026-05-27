@@ -33,6 +33,8 @@ describe('SubtreeExtractor normalized contract', () => {
       leaves: () => [],
     };
 
-    expect(() => SubtreeExtractor.getSubtreeStats(d3LikeNode)).toThrow(/normalized plain tree node/);
+    expect(() => SubtreeExtractor.getSubtreeStats(d3LikeNode)).toThrow(
+      /normalized plain tree node/
+    );
   });
 });

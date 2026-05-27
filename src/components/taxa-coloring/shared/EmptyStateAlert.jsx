@@ -1,6 +1,6 @@
-import React from "react";
-import { Alert, AlertTitle, AlertDescription } from "../../ui/alert";
-import { Info } from "lucide-react";
+import React from 'react';
+import { Alert, AlertTitle, AlertDescription } from '../../ui/alert';
+import { Info } from 'lucide-react';
 
 export function EmptyStateAlert({ mode }) {
   return (
@@ -11,12 +11,14 @@ export function EmptyStateAlert({ mode }) {
         </div>
         <div>
           <AlertTitle className="text-base font-semibold">
-            {mode === "taxa" ? "No taxa available for coloring" : "No groups found with current settings"}
+            {mode === 'taxa'
+              ? 'No taxa available for coloring'
+              : 'No groups found with current settings'}
           </AlertTitle>
           <AlertDescription className="text-sm text-muted-foreground max-w-[300px]">
-            {mode === "taxa"
-              ? "Load a phylogenetic dataset to start configuring taxa colors."
-              : "Try adjusting your grouping strategy or separators to detect taxa groups."}
+            {mode === 'taxa'
+              ? 'Load a phylogenetic dataset to start configuring taxa colors.'
+              : 'Try adjusting your grouping strategy or separators to detect taxa groups.'}
           </AlertDescription>
         </div>
       </div>

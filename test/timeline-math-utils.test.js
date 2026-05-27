@@ -6,9 +6,7 @@ const { TimelineDataProcessor } = require('../src/timeline/data/TimelineDataProc
 const { TimelineMathUtils } = require('../src/timeline/math/TimelineMathUtils.js');
 
 function loadMovieData() {
-  const candidates = [
-    path.join(__dirname, 'data', 'small_example', 'small_example.response.json')
-  ];
+  const candidates = [path.join(__dirname, 'data', 'small_example', 'small_example.response.json')];
 
   for (const filePath of candidates) {
     try {
@@ -23,23 +21,25 @@ function loadMovieData() {
 
 function makeSemanticTimingFixture() {
   const treeList = Array.from({ length: 4 }, (_, index) => ({ id: `tree-${index}` }));
-  const segments = [{
-    isInputTreeSegment: false,
-    hasInterpolation: true,
-    interpolationData: [
-      { originalIndex: 0 },
-      { originalIndex: 1 },
-      { originalIndex: 2 },
-      { originalIndex: 3 }
-    ],
-    timing: [
-      { type: 'motion', fromIndex: 0, toIndex: 1, durationMs: 1000 },
-      { type: 'hold', holdIndex: 1, holdKind: 'mover', durationMs: 200 },
-      { type: 'motion', fromIndex: 1, toIndex: 2, durationMs: 1000 },
-      { type: 'motion', fromIndex: 2, toIndex: 3, durationMs: 1000 },
-      { type: 'hold', holdIndex: 3, holdKind: 'pivot', durationMs: 900 }
-    ]
-  }];
+  const segments = [
+    {
+      isInputTreeSegment: false,
+      hasInterpolation: true,
+      interpolationData: [
+        { originalIndex: 0 },
+        { originalIndex: 1 },
+        { originalIndex: 2 },
+        { originalIndex: 3 },
+      ],
+      timing: [
+        { type: 'motion', fromIndex: 0, toIndex: 1, durationMs: 1000 },
+        { type: 'hold', holdIndex: 1, holdKind: 'mover', durationMs: 200 },
+        { type: 'motion', fromIndex: 1, toIndex: 2, durationMs: 1000 },
+        { type: 'motion', fromIndex: 2, toIndex: 3, durationMs: 1000 },
+        { type: 'hold', holdIndex: 3, holdKind: 'pivot', durationMs: 900 },
+      ],
+    },
+  ];
   const timelineData = TimelineDataProcessor.createTimelineData(segments);
 
   return { treeList, segments, timelineData };
@@ -61,9 +61,8 @@ describe('TimelineMathUtils', () => {
         return;
       }
 
-      const segmentStartTime = segmentIndex === 0
-        ? 0
-        : timelineData.cumulativeDurations[segmentIndex - 1];
+      const segmentStartTime =
+        segmentIndex === 0 ? 0 : timelineData.cumulativeDurations[segmentIndex - 1];
 
       segment.interpolationData.forEach((entry) => {
         if (entry.originalIndex === segment.contextStart) {
@@ -101,14 +100,14 @@ describe('TimelineMathUtils', () => {
       targetTree: null,
       transitionProgress: 0,
       sourceTreeIndex: -1,
-      targetTreeIndex: -1
+      targetTreeIndex: -1,
     });
   });
 
   it('maps linear frame progress onto weighted timeline progress', () => {
-    const firstInterpolationIndex = segments.findIndex(segment => (
-      segment.hasInterpolation && segment.interpolationData.length > 1
-    ));
+    const firstInterpolationIndex = segments.findIndex(
+      (segment) => segment.hasInterpolation && segment.interpolationData.length > 1
+    );
     const segment = segments[firstInterpolationIndex];
     const entry = segment.interpolationData[segment.interpolationData.length - 1];
     const linearProgress = entry.originalIndex / (loadMovieData().interpolated_trees.length - 1);
@@ -120,7 +119,10 @@ describe('TimelineMathUtils', () => {
       timelineData
     );
 
-    const currentTime = TimelineMathUtils.progressToTime(weightedProgress, timelineData.totalDuration);
+    const currentTime = TimelineMathUtils.progressToTime(
+      weightedProgress,
+      timelineData.totalDuration
+    );
     const resolved = TimelineMathUtils.getTargetFrameForTime(
       segments,
       currentTime,
@@ -138,16 +140,12 @@ describe('TimelineMathUtils', () => {
       {
         isInputTreeSegment: false,
         hasInterpolation: true,
-        interpolationData: [
-          { originalIndex: 0 },
-          { originalIndex: 1 },
-          { originalIndex: 2 }
-        ],
+        interpolationData: [{ originalIndex: 0 }, { originalIndex: 1 }, { originalIndex: 2 }],
         timing: [
           { type: 'motion', fromIndex: 0, toIndex: 1, durationMs: 700 },
-          { type: 'motion', fromIndex: 1, toIndex: 2, durationMs: 1300 }
-        ]
-      }
+          { type: 'motion', fromIndex: 1, toIndex: 2, durationMs: 1300 },
+        ],
+      },
     ]);
 
     expect(durations).to.deep.equal([2000]);
@@ -181,7 +179,7 @@ describe('TimelineMathUtils', () => {
       transitionProgress: 0,
       sourceTreeIndex: 1,
       targetTreeIndex: 1,
-      holdKind: 'mover'
+      holdKind: 'mover',
     });
     expect(pivotHold).to.include({
       sourceTree: treeList[3],
@@ -189,23 +187,27 @@ describe('TimelineMathUtils', () => {
       transitionProgress: 0,
       sourceTreeIndex: 3,
       targetTreeIndex: 3,
-      holdKind: 'pivot'
+      holdKind: 'pivot',
     });
   });
 
   it('resolves input-tree holds as static observed input tree states', () => {
     const treeList = [{ id: 'input-tree' }];
-    const segments = [{
-      isInputTreeSegment: true,
-      hasInterpolation: false,
-      interpolationData: [{ originalIndex: 0 }],
-      timing: [{
-        type: 'hold',
-        holdIndex: 0,
-        holdKind: 'input_tree',
-        durationMs: 1500
-      }]
-    }];
+    const segments = [
+      {
+        isInputTreeSegment: true,
+        hasInterpolation: false,
+        interpolationData: [{ originalIndex: 0 }],
+        timing: [
+          {
+            type: 'hold',
+            holdIndex: 0,
+            holdKind: 'input_tree',
+            durationMs: 1500,
+          },
+        ],
+      },
+    ];
     const timelineData = TimelineDataProcessor.createTimelineData(segments);
 
     const resolved = TimelineMathUtils.getTransitionFrameForTimelineProgress(
@@ -221,52 +223,53 @@ describe('TimelineMathUtils', () => {
       transitionProgress: 0,
       sourceTreeIndex: 0,
       targetTreeIndex: 0,
-      holdKind: 'input_tree'
+      holdKind: 'input_tree',
     });
   });
 
   it('rejects timeline progress resolution when segment timing is missing', () => {
     const treeList = [{ id: 'tree-0' }];
-    expect(() => TimelineMathUtils.getTransitionFrameForTimelineProgress(
-      0.5,
-      [{ interpolationData: [{ originalIndex: 0 }], isInputTreeSegment: true }],
-      {
-        totalDuration: 1000,
-        segmentDurations: [1000],
-        cumulativeDurations: [1000]
-      },
-      treeList
-    )).to.throw(/timeline segment timing is required/);
+    expect(() =>
+      TimelineMathUtils.getTransitionFrameForTimelineProgress(
+        0.5,
+        [{ interpolationData: [{ originalIndex: 0 }], isInputTreeSegment: true }],
+        {
+          totalDuration: 1000,
+          segmentDurations: [1000],
+          cumulativeDurations: [1000],
+        },
+        treeList
+      )
+    ).to.throw(/timeline segment timing is required/);
   });
 
   it('rejects segments without explicit timing intervals', () => {
-    expect(() => TimelineMathUtils.calculateSegmentDurations([
-      {
-        isInputTreeSegment: true,
-        hasInterpolation: false,
-        interpolationData: [{ originalIndex: 0 }]
-      },
-      {
-        isInputTreeSegment: false,
-        hasInterpolation: true,
-        interpolationData: [
-          { originalIndex: 0 },
-          { originalIndex: 1 },
-          { originalIndex: 2 }
-        ]
-      },
-      {
-        isInputTreeSegment: false,
-        hasInterpolation: false,
-        interpolationData: [{ originalIndex: 0 }]
-      }
-    ])).to.throw(/timeline segment timing is required/);
+    expect(() =>
+      TimelineMathUtils.calculateSegmentDurations([
+        {
+          isInputTreeSegment: true,
+          hasInterpolation: false,
+          interpolationData: [{ originalIndex: 0 }],
+        },
+        {
+          isInputTreeSegment: false,
+          hasInterpolation: true,
+          interpolationData: [{ originalIndex: 0 }, { originalIndex: 1 }, { originalIndex: 2 }],
+        },
+        {
+          isInputTreeSegment: false,
+          hasInterpolation: false,
+          interpolationData: [{ originalIndex: 0 }],
+        },
+      ])
+    ).to.throw(/timeline segment timing is required/);
   });
 
   it('resolves exact timeline boundaries consistently', () => {
-    const firstInterpolationIndex = segments.findIndex((segment, index) => (
-      index > 0 && segment.hasInterpolation && segment.interpolationData.length > 1
-    ));
+    const firstInterpolationIndex = segments.findIndex(
+      (segment, index) =>
+        index > 0 && segment.hasInterpolation && segment.interpolationData.length > 1
+    );
     const boundaryTime = timelineData.cumulativeDurations[firstInterpolationIndex - 1];
     const firstInterpolationSegment = segments[firstInterpolationIndex];
     const atBoundary = TimelineMathUtils.getTargetFrameForTime(
@@ -278,7 +281,9 @@ describe('TimelineMathUtils', () => {
     );
 
     expect(atBoundary.segmentIndex).to.equal(firstInterpolationIndex);
-    expect(atBoundary.frameIndex).to.equal(firstInterpolationSegment.interpolationData[0].originalIndex);
+    expect(atBoundary.frameIndex).to.equal(
+      firstInterpolationSegment.interpolationData[0].originalIndex
+    );
 
     const lastSegmentIndex = segments.length - 1;
     const lastSegment = segments[lastSegmentIndex];

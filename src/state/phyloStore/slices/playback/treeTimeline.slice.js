@@ -21,7 +21,7 @@ export const createTimelineSlice = (set, get) => ({
     set({
       hoveredSegmentIndex: segmentIndex,
       hoveredSegmentData: segmentData,
-      hoveredSegmentPosition: position
+      hoveredSegmentPosition: position,
     });
   },
 

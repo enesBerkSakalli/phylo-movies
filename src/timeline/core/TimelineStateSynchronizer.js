@@ -12,12 +12,16 @@ export class TimelineStateSynchronizer {
 
   getEffectivePlaybackState(lastScrubEndTime) {
     const { playhead, playing, treeList } = this.store.getState();
-    const withinGracePeriod = lastScrubEndTime > 0 &&
-      (performance.now() - lastScrubEndTime) < SCRUB_GRACE_PERIOD_MS;
-    const preservingScrubPosition = (withinGracePeriod || !playing) && playhead?.timelineProgress != null;
+    const withinGracePeriod =
+      lastScrubEndTime > 0 && performance.now() - lastScrubEndTime < SCRUB_GRACE_PERIOD_MS;
+    const preservingScrubPosition =
+      (withinGracePeriod || !playing) && playhead?.timelineProgress != null;
     const progress = preservingScrubPosition
       ? playhead.timelineProgress
-      : this._mapAnimationProgressToTimelineProgress(playhead?.animationProgress ?? 0, treeList?.length ?? 0);
+      : this._mapAnimationProgressToTimelineProgress(
+          playhead?.animationProgress ?? 0,
+          treeList?.length ?? 0
+        );
 
     return { progress, preservingScrubPosition };
   }
@@ -41,7 +45,7 @@ export class TimelineStateSynchronizer {
       currentTime,
       frameIndex: cursor.frameIndex,
       segment,
-      preservingScrubPosition
+      preservingScrubPosition,
     };
   }
 
@@ -75,7 +79,7 @@ export class TimelineStateSynchronizer {
       totalSegments: this.segments.length,
       treeInSegment,
       treesInSegment,
-      timelineProgress: totalProgress
+      timelineProgress: totalProgress,
     });
   }
 

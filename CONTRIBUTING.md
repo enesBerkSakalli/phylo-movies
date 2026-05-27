@@ -57,6 +57,7 @@ npm run dev
 ## Testing Requirements
 
 For scientific accuracy, all new features affecting tree topology or metrics must include:
+
 - Unit tests
 - Validation against known datasets (if applicable)
 

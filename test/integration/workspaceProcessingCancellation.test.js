@@ -12,7 +12,7 @@ const processMovieDataMock = vi.fn();
 const finalizeMovieDataMock = vi.fn();
 
 vi.mock('react-router-dom', () => ({
-  useNavigate: () => navigateMock
+  useNavigate: () => navigateMock,
 }));
 
 vi.mock('../../src/pages/WorkspaceInitialization/services/movieProcessing.js', () => ({
@@ -20,11 +20,11 @@ vi.mock('../../src/pages/WorkspaceInitialization/services/movieProcessing.js', (
   finalizeMovieData: (...args) => finalizeMovieDataMock(...args),
   showElectronLoading: vi.fn(),
   hideElectronLoading: vi.fn(),
-  updateElectronProgress: vi.fn()
+  updateElectronProgress: vi.fn(),
 }));
 
 vi.mock('../../src/pages/WorkspaceInitialization/exampleDatasets.js', () => ({
-  getExampleById: vi.fn()
+  getExampleById: vi.fn(),
 }));
 
 function deferred() {
@@ -38,7 +38,8 @@ function deferred() {
 }
 
 async function renderHookHarness() {
-  const { useWorkspaceInitializationForm } = await import('../../src/pages/WorkspaceInitialization/useWorkspaceInitializationForm.js');
+  const { useWorkspaceInitializationForm } =
+    await import('../../src/pages/WorkspaceInitialization/useWorkspaceInitializationForm.js');
   const container = document.createElement('div');
   document.body.appendChild(container);
   const root = createRoot(container);
@@ -81,7 +82,7 @@ describe('workspace initialization cancellation ownership', () => {
         treesFile: new File(['(a);'], 'tree.nwk'),
         msaFile: null,
         windowSize: 10,
-        stepSize: 1
+        stepSize: 1,
       });
       await Promise.resolve();
     });

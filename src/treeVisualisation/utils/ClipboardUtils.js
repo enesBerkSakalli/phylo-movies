@@ -23,7 +23,7 @@ export function getClipboardLayers(controller) {
 function createClipboardVisualLayers(controller, treeIndex, treeData) {
   const linkGeometryMode = useAppStore.getState().linkGeometryMode || 'radial-elbow';
   const layout = controller.calculateLayout(treeData, {
-    treeIndex
+    treeIndex,
   });
 
   if (!layout?.layoutTree) {
@@ -33,17 +33,14 @@ function createClipboardVisualLayers(controller, treeIndex, treeData) {
 
   const { extensionRadius, labelRadius } = controller._getConsistentRadii(layout);
 
-  const layerData = controller.dataConverter.convertTreeToLayerData(
-    layout,
-    {
-      extensionRadius,
-      labelRadius,
-      treeIndex,
-      treeSide: 'clipboard',
-      renderMode: 'clipboard',
-      linkGeometryMode
-    }
-  );
+  const layerData = controller.dataConverter.convertTreeToLayerData(layout, {
+    extensionRadius,
+    labelRadius,
+    treeIndex,
+    treeSide: 'clipboard',
+    renderMode: 'clipboard',
+    linkGeometryMode,
+  });
 
   const state = useAppStore.getState();
   const { clipboardOffsetX = 0, clipboardOffsetY = 0 } = state;
@@ -58,9 +55,9 @@ function createClipboardVisualLayers(controller, treeIndex, treeData) {
 
   // Position clipboard to the TOP LEFT ABOVE the main tree
   // Combined with dynamic user dragging offsets
-  const xOffset = (mainTreeBounds.minX - clipboardBounds.minX) + clipboardOffsetX;
+  const xOffset = mainTreeBounds.minX - clipboardBounds.minX + clipboardOffsetX;
   const gap = 50;
-  const yOffset = (mainTreeBounds.minY - clipboardBounds.maxY - gap) + clipboardOffsetY;
+  const yOffset = mainTreeBounds.minY - clipboardBounds.maxY - gap + clipboardOffsetY;
 
   const treeLayers = controller.layerManager.createClipboardLayers(layerData, 0, xOffset, yOffset);
   const labelLayer = createClipboardLabelLayer(
@@ -98,7 +95,13 @@ function getMainTreeBounds(controller) {
  * @param {number} yOffset - Y offset for clipboard position
  * @returns {TextLayer|null} Label layer or null
  */
-export function createClipboardLabelLayer(treeIndex, bounds, inputFrameIndices = [], xOffset = 0, yOffset = 0) {
+export function createClipboardLabelLayer(
+  treeIndex,
+  bounds,
+  inputFrameIndices = [],
+  xOffset = 0,
+  yOffset = 0
+) {
   if (!bounds) return null;
 
   const minY = bounds.minY;
@@ -108,27 +111,29 @@ export function createClipboardLabelLayer(treeIndex, bounds, inputFrameIndices =
   // Check if it is one of the original input trees.
   const inputTreeOrdinal = inputFrameIndices.indexOf(treeIndex);
   if (inputTreeOrdinal >= 0) {
-      labelText = `Input tree ${inputTreeOrdinal + 1}`; // 1-based index for user
+    labelText = `Input tree ${inputTreeOrdinal + 1}`; // 1-based index for user
   }
 
   return new TextLayer({
     id: `${CLIPBOARD_LAYER_ID_PREFIX}-tree-label`,
-    data: [{
-      text: labelText,
-      // Place well above the visual top (minY).
-      // Visual bounds include label extent, so this should be safe.
-      // Add extra padding (e.g. 50px) to separate from top-most tree label.
-      position: [avgX + xOffset, minY + yOffset - 50, 0],
-      treeSide: 'clipboard'
-    }],
+    data: [
+      {
+        text: labelText,
+        // Place well above the visual top (minY).
+        // Visual bounds include label extent, so this should be safe.
+        // Add extra padding (e.g. 50px) to separate from top-most tree label.
+        position: [avgX + xOffset, minY + yOffset - 50, 0],
+        treeSide: 'clipboard',
+      },
+    ],
     pickable: true,
-    getText: d => d.text,
-    getPosition: d => d.position,
+    getText: (d) => d.text,
+    getPosition: (d) => d.position,
     getSize: 16,
     getColor: [0, 0, 0, 255], // Black
     fontFamily: 'sans-serif',
     fontWeight: 'bold',
     getTextAnchor: 'middle',
-    getAlignmentBaseline: 'bottom'
+    getAlignmentBaseline: 'bottom',
   });
 }

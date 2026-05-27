@@ -46,7 +46,7 @@ function createDeckGLCoreMock() {
         this.opts = opts;
       }
     },
-    COORDINATE_SYSTEM: { CARTESIAN: 1 }
+    COORDINATE_SYSTEM: { CARTESIAN: 1 },
   };
 }
 
@@ -62,10 +62,10 @@ class MockLayer {
 }
 
 const mockDeckGLLayers = {
-  PathLayer: class PathLayer extends MockLayer { },
-  ScatterplotLayer: class ScatterplotLayer extends MockLayer { },
-  TextLayer: class TextLayer extends MockLayer { },
-  PolygonLayer: class PolygonLayer extends MockLayer { },
+  PathLayer: class PathLayer extends MockLayer {},
+  ScatterplotLayer: class ScatterplotLayer extends MockLayer {},
+  TextLayer: class TextLayer extends MockLayer {},
+  PolygonLayer: class PolygonLayer extends MockLayer {},
 };
 
 const mockDeckGLCore = createDeckGLCoreMock();

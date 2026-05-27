@@ -71,8 +71,16 @@ describe('movie timeline player bar semantics', () => {
   it('renders timeline status in the movie player instead of the floating HUD', () => {
     const playerBarSource = readRepoFile('src', 'components', 'movie-player', 'MoviePlayerBar.jsx');
     const managerSource = readRepoFile('src', 'timeline', 'core', 'MovieTimelineManager.js');
-    const statusStripPath = join(repoRoot, 'src', 'components', 'movie-player', 'TimelineStatusStrip.jsx');
-    const statusStripSource = existsSync(statusStripPath) ? readFileSync(statusStripPath, 'utf8') : '';
+    const statusStripPath = join(
+      repoRoot,
+      'src',
+      'components',
+      'movie-player',
+      'TimelineStatusStrip.jsx'
+    );
+    const statusStripSource = existsSync(statusStripPath)
+      ? readFileSync(statusStripPath, 'utf8')
+      : '';
 
     expect(existsSync(statusStripPath)).toBe(true);
     expect(playerBarSource).toContain('TimelineStatusStrip');
@@ -87,7 +95,9 @@ describe('movie timeline player bar semantics', () => {
     expect(statusStripSource).toContain('flex-nowrap overflow-hidden');
     expect(statusStripSource).toContain('border-border/40 bg-muted/20 backdrop-blur-sm');
     expect(statusStripSource).toContain('text-xs font-bold leading-tight tracking-tight uppercase');
-    expect(statusStripSource).toContain('text-[10px] text-muted-foreground/80 leading-tight font-medium');
+    expect(statusStripSource).toContain(
+      'text-[10px] text-muted-foreground/80 leading-tight font-medium'
+    );
     expect(statusStripSource).toContain('inline-flex w-[18rem] max-w-[40vw] shrink-0');
     expect(statusStripSource).toContain('inline-flex w-[10rem] shrink-0');
     expect(statusStripSource).toContain('inline-flex w-[14rem] shrink-0');

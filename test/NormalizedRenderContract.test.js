@@ -147,9 +147,7 @@ describe('normalized render contract', () => {
       name: 'root',
       length: 0,
       split_indices: [0, 1],
-      children: [
-        { name: 'Taxon_A', length: 4, split_indices: [0], children: [] },
-      ],
+      children: [{ name: 'Taxon_A', length: 4, split_indices: [0], children: [] }],
     });
     assignLayoutNodeIds(root);
     const child = root.children[0];
@@ -169,9 +167,7 @@ describe('normalized render contract', () => {
     const root = hierarchy({
       name: 'root',
       split_indices: [0, 1],
-      children: [
-        { name: 'Taxon_A', split_indices: [0], children: [] },
-      ],
+      children: [{ name: 'Taxon_A', split_indices: [0], children: [] }],
     });
     root.each((node) => {
       node.x = node.depth;
@@ -182,7 +178,13 @@ describe('normalized render contract', () => {
     assignLayoutNodeIds(root);
     root.children[0].id = 'node-prepared-leaf';
 
-    const layout = createLayoutResult(root, { max_radius: 1, width: 100, height: 100, margin: 0, scale: 1 });
+    const layout = createLayoutResult(root, {
+      max_radius: 1,
+      width: 100,
+      height: 100,
+      margin: 0,
+      scale: 1,
+    });
 
     expect(layout.nodes.find((node) => node.name === 'Taxon_A')).toMatchObject({
       id: 'node-prepared-leaf',
@@ -215,7 +217,13 @@ describe('normalized render contract', () => {
     });
     assignLayoutNodeIds(root);
 
-    const layout = createLayoutResult(root, { max_radius: 5, width: 100, height: 100, margin: 0, scale: 1 });
+    const layout = createLayoutResult(root, {
+      max_radius: 5,
+      width: 100,
+      height: 100,
+      margin: 0,
+      scale: 1,
+    });
     const leafNode = layout.nodes.find((node) => node.name === 'Taxon_A');
 
     expect(leafNode).toMatchObject({
@@ -251,7 +259,13 @@ describe('normalized render contract', () => {
     });
     assignLayoutNodeIds(root);
 
-    const layout = createLayoutResult(root, { max_radius: 1, width: 100, height: 100, margin: 0, scale: 1 });
+    const layout = createLayoutResult(root, {
+      max_radius: 1,
+      width: 100,
+      height: 100,
+      margin: 0,
+      scale: 1,
+    });
     expect(layout.links[0]).not.toHaveProperty('id');
 
     const nodes = new NodeDataBuilder().convertNodes(layout.nodes, {
@@ -330,7 +344,13 @@ describe('normalized render contract', () => {
     });
     assignLayoutNodeIds(root);
 
-    const layout = createLayoutResult(root, { max_radius: 5, width: 600, height: 600, margin: 0, scale: 1 });
+    const layout = createLayoutResult(root, {
+      max_radius: 5,
+      width: 600,
+      height: 600,
+      margin: 0,
+      scale: 1,
+    });
     const nodes = new NodeDataBuilder().convertNodes(layout.nodes, {
       canvasWidth: layout.width,
       canvasHeight: layout.height,
@@ -353,9 +373,7 @@ describe('normalized render contract', () => {
     const root = hierarchy({
       name: 'root',
       split_indices: [0, 1],
-      children: [
-        { name: 'Taxon_A', split_indices: [0], children: [] },
-      ],
+      children: [{ name: 'Taxon_A', split_indices: [0], children: [] }],
     });
     root.each((node) => {
       node.x = node.depth;
@@ -365,7 +383,13 @@ describe('normalized render contract', () => {
     });
     assignLayoutNodeIds(root);
 
-    const layout = createLayoutResult(root, { max_radius: 1, width: 600, height: 600, margin: 0, scale: 1 });
+    const layout = createLayoutResult(root, {
+      max_radius: 1,
+      width: 600,
+      height: 600,
+      margin: 0,
+      scale: 1,
+    });
     const nodes = new NodeDataBuilder().convertNodes(layout.nodes, {
       canvasWidth: layout.width,
       canvasHeight: layout.height,
@@ -382,9 +406,7 @@ describe('normalized render contract', () => {
     const root = hierarchy({
       name: 'root',
       split_indices: [0, 1],
-      children: [
-        { name: 'Taxon_A', split_indices: [0], children: [] },
-      ],
+      children: [{ name: 'Taxon_A', split_indices: [0], children: [] }],
     });
     root.each((node) => {
       node.x = node.depth;
@@ -394,7 +416,13 @@ describe('normalized render contract', () => {
     });
     assignLayoutNodeIds(root);
 
-    const layout = createLayoutResult(root, { max_radius: 1, width: 100, height: 100, margin: 0, scale: 1 });
+    const layout = createLayoutResult(root, {
+      max_radius: 1,
+      width: 100,
+      height: 100,
+      margin: 0,
+      scale: 1,
+    });
     const leafNode = layout.nodes.find((node) => node.name === 'Taxon_A');
     leafNode.id = 'node-upstream-leaf';
     layout.links[0].targetId = 'node-upstream-leaf';
@@ -428,7 +456,9 @@ describe('normalized render contract', () => {
       expect(source).not.toMatch(/\b(node|leaf|link)\?\./);
       expect(source).not.toMatch(/nodeDotSizes\?\./);
       expect(source).not.toMatch(/nodeDotSizes\.get\([^)]*\)\s*\|\|/);
-      expect(source).not.toMatch(/\b(name|text|targetName|angle|child_split_indices):\s*(node|leaf|link)\.[^,\n]*\|\|/);
+      expect(source).not.toMatch(
+        /\b(name|text|targetName|angle|child_split_indices):\s*(node|leaf|link)\.[^,\n]*\|\|/
+      );
       expect(source).not.toMatch(/const\s+angleRad\s*=\s*leaf\.angle\s*\|\|/);
       expect(source).not.toMatch(/get(Node|Link|Label|Extension)Key/);
     }

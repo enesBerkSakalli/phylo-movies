@@ -10,9 +10,9 @@ const safeNumber = (value, defaultValue = 0) => {
 };
 
 const resolveDistancePair = (pair) => ({
-    sourceInputTreeIndex: pair.source_input_tree_index,
-    targetInputTreeIndex: pair.target_input_tree_index,
-    sourceFrameIndex: pair.source_frame_index,
+  sourceInputTreeIndex: pair.source_input_tree_index,
+  targetInputTreeIndex: pair.target_input_tree_index,
+  sourceFrameIndex: pair.source_frame_index,
 });
 
 const buildDistancePoints = (pairMetrics, pairs, metricKey) => {
@@ -30,12 +30,7 @@ const buildDistancePoints = (pairMetrics, pairs, metricKey) => {
   });
 };
 
-export const buildSeriesPoints = (
-  barOptionValue,
-  pairMetrics,
-  scaleList,
-  pairs
-) => {
+export const buildSeriesPoints = (barOptionValue, pairMetrics, scaleList, pairs) => {
   if (barOptionValue === 'rfd') {
     return {
       points: buildDistancePoints(pairMetrics, pairs, 'robinson_foulds'),
@@ -81,7 +76,12 @@ export const findActiveInputTreeIndex = (inputTreeIndices, frameIndex) => {
   return activeIndex;
 };
 
-export const resolveActivePointIndex = (barOptionValue, timelineCursor, inputTreeIndices, points) => {
+export const resolveActivePointIndex = (
+  barOptionValue,
+  timelineCursor,
+  inputTreeIndices,
+  points
+) => {
   if (!points.length) return 0;
 
   if (barOptionValue === 'scale') {
@@ -90,14 +90,13 @@ export const resolveActivePointIndex = (barOptionValue, timelineCursor, inputTre
   }
 
   const lastDistanceIndex = Math.max(0, points.length - 1);
-  const cursorInputTreeIndex = timelineCursor?.sourceInputTreeIndex ?? timelineCursor?.inputTreeIndex;
+  const cursorInputTreeIndex =
+    timelineCursor?.sourceInputTreeIndex ?? timelineCursor?.inputTreeIndex;
   const inputTreeIndex = findActiveInputTreeIndex(inputTreeIndices, cursorInputTreeIndex);
   return Math.min(lastDistanceIndex, inputTreeIndex);
 };
 
-export const resolveCursorX = (points, activePointIndex) => (
-  points[activePointIndex]?.x ?? 1
-);
+export const resolveCursorX = (points, activePointIndex) => points[activePointIndex]?.x ?? 1;
 
 const buildNavigationTarget = (frameIndex) => {
   if (!Number.isInteger(frameIndex)) return null;

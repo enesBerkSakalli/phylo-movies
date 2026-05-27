@@ -1,34 +1,34 @@
-import React, { useRef, useState } from "react";
-import { CheckCircle2, FileSpreadsheet, FileText, Info, Trash2, Upload } from "lucide-react";
+import React, { useRef, useState } from 'react';
+import { CheckCircle2, FileSpreadsheet, FileText, Info, Trash2, Upload } from 'lucide-react';
 
-import { Button } from "../../ui/button";
-import { Card, CardContent } from "../../ui/card";
-import { Label } from "../../ui/label";
+import { Button } from '../../ui/button';
+import { Card, CardContent } from '../../ui/card';
+import { Label } from '../../ui/label';
 
 const MAX_CSV_SIZE = 5 * 1024 * 1024;
 
 export function CSVUpload({ onFile, csvFileName, onReset, errorMessage }) {
   const inputRef = useRef(null);
   const [dragOver, setDragOver] = useState(false);
-  const [statusMessage, setStatusMessage] = useState("");
+  const [statusMessage, setStatusMessage] = useState('');
   const [hasError, setHasError] = useState(false);
 
-  const inputId = "taxa-csv-upload";
+  const inputId = 'taxa-csv-upload';
   const helpId = `${inputId}-help`;
   const statusId = `${inputId}-status`;
 
   const acceptFile = (file) => {
     if (!file) return;
 
-    if (!file.name.toLowerCase().endsWith(".csv")) {
+    if (!file.name.toLowerCase().endsWith('.csv')) {
       setHasError(true);
-      setStatusMessage("Only .csv files are accepted.");
+      setStatusMessage('Only .csv files are accepted.');
       return;
     }
 
     if (file.size > MAX_CSV_SIZE) {
       setHasError(true);
-      setStatusMessage("File is too large. Maximum size is 5 MB.");
+      setStatusMessage('File is too large. Maximum size is 5 MB.');
       return;
     }
 
@@ -47,7 +47,9 @@ export function CSVUpload({ onFile, csvFileName, onReset, errorMessage }) {
             </div>
             <div>
               <p className="line-clamp-1 text-sm font-bold text-foreground">{csvFileName}</p>
-              <p className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">Active Dataset</p>
+              <p className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Active Dataset
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -57,7 +59,7 @@ export function CSVUpload({ onFile, csvFileName, onReset, errorMessage }) {
               size="icon"
               onClick={() => {
                 setHasError(false);
-                setStatusMessage("CSV file cleared.");
+                setStatusMessage('CSV file cleared.');
                 onReset?.();
               }}
               className="group/reset size-8 rounded-md hover:bg-destructive/10 hover:text-destructive"
@@ -71,9 +73,7 @@ export function CSVUpload({ onFile, csvFileName, onReset, errorMessage }) {
     );
   }
 
-  const visibleStatusMessage = hasError
-    ? statusMessage
-    : errorMessage || statusMessage;
+  const visibleStatusMessage = hasError ? statusMessage : errorMessage || statusMessage;
   const visibleStatusIsError = hasError || Boolean(errorMessage);
 
   return (
@@ -86,7 +86,8 @@ export function CSVUpload({ onFile, csvFileName, onReset, errorMessage }) {
           <div className="flex flex-col gap-1">
             <p className="text-[11px] font-bold leading-none">Format Requirements</p>
             <p className="text-2xs leading-tight text-muted-foreground">
-              One column must contain exactly the same taxa names as in your tree. Other columns define colors/groups.
+              One column must contain exactly the same taxa names as in your tree. Other columns
+              define colors/groups.
             </p>
           </div>
         </div>
@@ -97,7 +98,8 @@ export function CSVUpload({ onFile, csvFileName, onReset, errorMessage }) {
           <div className="flex flex-col gap-1">
             <p className="text-[11px] font-bold leading-none">Mapping</p>
             <p className="text-2xs leading-tight text-muted-foreground">
-              Values like "High", "Low" or "Group A" will be automatically detected as distinct coloring subtrees.
+              Values like "High", "Low" or "Group A" will be automatically detected as distinct
+              coloring subtrees.
             </p>
           </div>
         </div>
@@ -105,10 +107,10 @@ export function CSVUpload({ onFile, csvFileName, onReset, errorMessage }) {
 
       <Card
         className={
-          "group/drop relative border-2 border-dashed transition-all duration-300 " +
+          'group/drop relative border-2 border-dashed transition-all duration-300 ' +
           (dragOver
-            ? "border-primary bg-primary/5 ring-4 ring-primary/10 scale-[1.01]"
-            : "border-muted-foreground/20 hover:border-primary/50 hover:bg-accent/5")
+            ? 'border-primary bg-primary/5 ring-4 ring-primary/10 scale-[1.01]'
+            : 'border-muted-foreground/20 hover:border-primary/50 hover:bg-accent/5')
         }
         onDragOver={(e) => {
           e.preventDefault();
@@ -130,7 +132,9 @@ export function CSVUpload({ onFile, csvFileName, onReset, errorMessage }) {
             <h3 className="text-sm font-bold tracking-tight">Import Taxa Mapping</h3>
             <div id={helpId} className="flex flex-col gap-1">
               <p className="mx-auto max-w-[280px] text-[11px] leading-tight text-muted-foreground">
-                Drag and drop your <code className="rounded bg-muted px-1 font-mono font-bold text-primary">.csv</code> file here, or use the browse button.
+                Drag and drop your{' '}
+                <code className="rounded bg-muted px-1 font-mono font-bold text-primary">.csv</code>{' '}
+                file here, or use the browse button.
               </p>
               <p className="text-2xs text-muted-foreground/80">
                 Keyboard: tab to the browse button and press Enter or Space.
@@ -167,9 +171,9 @@ export function CSVUpload({ onFile, csvFileName, onReset, errorMessage }) {
       <p
         id={statusId}
         aria-live="polite"
-        className={`text-center text-xs ${visibleStatusMessage ? (visibleStatusIsError ? "text-destructive" : "text-muted-foreground") : "sr-only"}`}
+        className={`text-center text-xs ${visibleStatusMessage ? (visibleStatusIsError ? 'text-destructive' : 'text-muted-foreground') : 'sr-only'}`}
       >
-        {visibleStatusMessage || "No CSV file selected."}
+        {visibleStatusMessage || 'No CSV file selected.'}
       </p>
 
       <p className="text-center text-2xs italic text-muted-foreground/60">

@@ -12,7 +12,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Loading progress API
   showLoading: (message) => ipcRenderer.send('loading-show', message),
   hideLoading: () => ipcRenderer.send('loading-hide'),
-  updateProgress: (progress, message) => ipcRenderer.send('loading-progress', { progress, message }),
+  updateProgress: (progress, message) =>
+    ipcRenderer.send('loading-progress', { progress, message }),
 
   // Set progress in dock/taskbar (0-1 for progress, -1 for indeterminate)
   setProgress: (progress) => ipcRenderer.send('set-progress', progress),

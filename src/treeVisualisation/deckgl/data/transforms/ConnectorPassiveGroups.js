@@ -12,8 +12,10 @@ export function groupPassiveConnectorConnections(passiveConnections, leftInfoByI
   passiveConnections.forEach((connection) => {
     const { sourceInfo, targetInfo } = connection;
 
-    const leftBundleEntry = getBundleAncestor(sourceInfo, leftInfoMap, 2) || getParentInfo(sourceInfo, leftInfoMap);
-    const rightBundleEntry = getBundleAncestor(targetInfo, rightInfoMap, 2) || getParentInfo(targetInfo, rightInfoMap);
+    const leftBundleEntry =
+      getBundleAncestor(sourceInfo, leftInfoMap, 2) || getParentInfo(sourceInfo, leftInfoMap);
+    const rightBundleEntry =
+      getBundleAncestor(targetInfo, rightInfoMap, 2) || getParentInfo(targetInfo, rightInfoMap);
 
     const leftKey = leftBundleEntry ? leftBundleEntry.id : ROOT_LEFT_GROUP_ID;
     const rightKey = rightBundleEntry ? rightBundleEntry.id : ROOT_RIGHT_GROUP_ID;

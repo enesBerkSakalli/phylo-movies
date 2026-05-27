@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-    getMovingSubtreeAtIndex,
-    toSubtreeSets,
+  getMovingSubtreeAtIndex,
+  toSubtreeSets,
 } from '../../src/state/phyloStore/internal/changeTracking.helpers.js';
 import { colorToRgb } from '../../src/services/ui/colorUtils.js';
 import { SYSTEM_TREE_COLORS } from '../../src/constants/TreeColors.js';
@@ -25,9 +25,7 @@ describe('moving subtree highlighting', () => {
 
   it('does not merge simultaneous moved subtrees into a larger highlighted clade', () => {
     const state = {
-      subtreeHighlightTracking: [
-        [[1], [2]],
-      ],
+      subtreeHighlightTracking: [[[1], [2]]],
     };
 
     const movingSubtrees = getMovingSubtreeAtIndex(state, 0);

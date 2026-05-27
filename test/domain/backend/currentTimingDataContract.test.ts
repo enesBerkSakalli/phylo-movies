@@ -121,12 +121,14 @@ function makeCurrentTimingPayload() {
     ],
     subtree_highlight_tracking: [null, [[0]], [[1]], null],
     pair_metrics: {
-      rows: [{
-        pair_id: 'pair_7_8',
-        pair_ordinal: 0,
-        robinson_foulds: 1,
-        weighted_robinson_foulds: 1,
-      }],
+      rows: [
+        {
+          pair_id: 'pair_7_8',
+          pair_ordinal: 0,
+          robinson_foulds: 1,
+          weighted_robinson_foulds: 1,
+        },
+      ],
       semantics: {},
     },
     msa: {
@@ -153,7 +155,9 @@ describe('current backend timing data contract', () => {
     expect(event).not.toHaveProperty('moving_taxa');
 
     const segments = TimelineDataProcessor.createSegments(movieData);
-    const transition = segments.find(segment => segment.pairId === 'pair_7_8' && !segment.isInputTreeSegment);
+    const transition = segments.find(
+      (segment) => segment.pairId === 'pair_7_8' && !segment.isInputTreeSegment
+    );
 
     expect(transition?.timing).toEqual([
       { type: 'motion', fromIndex: 0, toIndex: 1, durationMs: 1000 },

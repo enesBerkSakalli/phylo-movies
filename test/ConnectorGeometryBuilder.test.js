@@ -1,6 +1,8 @@
-
 import { describe, it, expect } from 'vitest';
-import { calculateRadialBundlePoint, buildBundledBezierPath } from '../src/treeVisualisation/deckgl/builders/geometry/connectors/ConnectorGeometryBuilder.js';
+import {
+  calculateRadialBundlePoint,
+  buildBundledBezierPath,
+} from '../src/treeVisualisation/deckgl/builders/geometry/connectors/ConnectorGeometryBuilder.js';
 
 function flatPathPoint(path, index) {
   const offset = index * 3;
@@ -8,8 +10,7 @@ function flatPathPoint(path, index) {
 }
 
 describe('ConnectorGeometryBuilder', () => {
-
-    describe('calculateRadialBundlePoint', () => {
+  describe('calculateRadialBundlePoint', () => {
     it('should return treeCenter if no points are provided', () => {
       const center = [100, 100];
       const result = calculateRadialBundlePoint([], center);
@@ -28,20 +29,31 @@ describe('ConnectorGeometryBuilder', () => {
     });
 
     it('should calculate the centroid angle and max radius for multiple points', () => {
-      const points = [[200, 100], [100, 200]];
+      const points = [
+        [200, 100],
+        [100, 200],
+      ];
       const center = [100, 100];
 
       const result = calculateRadialBundlePoint(points, center);
 
       const angle = Math.atan2(result[1] - center[1], result[0] - center[0]);
-      const radius = Math.sqrt(Math.pow(result[0] - center[0], 2) + Math.pow(result[1] - center[1], 2));
+      const radius = Math.sqrt(
+        Math.pow(result[0] - center[0], 2) + Math.pow(result[1] - center[1], 2)
+      );
 
       expect(angle).toBeCloseTo(Math.PI / 4, 2);
       expect(radius).toBeCloseTo(120);
     });
 
     it('uses a deterministic vertical lane when group centroid is centered', () => {
-      const result = calculateRadialBundlePoint([[100, 0], [-100, 0]], [0, 0]);
+      const result = calculateRadialBundlePoint(
+        [
+          [100, 0],
+          [-100, 0],
+        ],
+        [0, 0]
+      );
 
       expect(Math.abs(result[0])).toBeLessThan(1e-6);
       expect(result[1]).toBeLessThan(0);
@@ -50,8 +62,8 @@ describe('ConnectorGeometryBuilder', () => {
 
   describe('buildBundledBezierPath', () => {
     it('should return an empty Float32Array if start or end point is missing', () => {
-      expect(buildBundledBezierPath(null, [0,0], [0,0], [0,0])).toEqual(new Float32Array(0));
-      expect(buildBundledBezierPath([0,0], null, [0,0], [0,0])).toEqual(new Float32Array(0));
+      expect(buildBundledBezierPath(null, [0, 0], [0, 0], [0, 0])).toEqual(new Float32Array(0));
+      expect(buildBundledBezierPath([0, 0], null, [0, 0], [0, 0])).toEqual(new Float32Array(0));
     });
 
     it('should generate a path with the specified number of samples', () => {
@@ -95,7 +107,7 @@ describe('ConnectorGeometryBuilder', () => {
       // Passing centers triggers new logic
       const path = buildBundledBezierPath(from, to, [15, 10], [15, 10], 10, {
         sourceCenter: center,
-        targetCenter: [30, 0] // Target center
+        targetCenter: [30, 0], // Target center
       });
 
       // Check the second point in the path (approximate derivative)

@@ -1,4 +1,3 @@
-
 import { describe, it, expect, beforeEach } from 'vitest';
 import fs from 'fs';
 import path from 'path';
@@ -14,18 +13,18 @@ describe('Real Data Scaling Analysis', () => {
         const rawData = fs.readFileSync(dataPath, 'utf-8');
         realData = JSON.parse(rawData);
       } catch (e) {
-        console.warn("Failed to parse real data: " + e.message);
+        console.warn('Failed to parse real data: ' + e.message);
         realData = null;
       }
     } else {
-      console.warn("Skipping real data test: file not found at " + dataPath);
+      console.warn('Skipping real data test: file not found at ' + dataPath);
       realData = null;
     }
   });
 
   it('should demonstrate visual clutter under uniform scaling', () => {
     if (!realData || !realData.interpolated_trees) {
-      console.warn("No data for test");
+      console.warn('No data for test');
       return;
     }
 
@@ -43,7 +42,9 @@ describe('Real Data Scaling Analysis', () => {
     for (let i = 0; i < trees.length; i++) {
       // Use lightweight config for speed
       const layoutResult = createRadialTreeLayout(trees[i], 'none', {
-        width: 800, height: 600, margin: 10
+        width: 800,
+        height: 600,
+        margin: 10,
       });
       const naturalRadius = layoutResult.max_radius / (layoutResult.scale || 1);
 
@@ -57,10 +58,12 @@ describe('Real Data Scaling Analysis', () => {
       }
     }
     console.log(`\nGlobal Stats:`);
-    console.log(`  Max Natural Radius: ${globalMaxNaturalRadius.toFixed(4)} (Tree ${largeTreeIndex})`);
+    console.log(
+      `  Max Natural Radius: ${globalMaxNaturalRadius.toFixed(4)} (Tree ${largeTreeIndex})`
+    );
     console.log(`  Min Natural Radius: ${minNaturalRadius.toFixed(4)} (Tree ${smallTreeIndex})`);
     // Force clamp ratio to avoid infinity logs if min is 0
-    const ratio = minNaturalRadius > 0 ? (globalMaxNaturalRadius / minNaturalRadius) : 9999;
+    const ratio = minNaturalRadius > 0 ? globalMaxNaturalRadius / minNaturalRadius : 9999;
     console.log(`  Ratio: ${ratio.toFixed(2)}x`);
 
     // 2. Simulate Uniform Scaling
@@ -74,8 +77,10 @@ describe('Real Data Scaling Analysis', () => {
     // 3. Render Small Tree with Uniform Scale
     // We assume 'uniformScale' option is respected by createRadialTreeLayout
     const smallTreeResult = createRadialTreeLayout(trees[smallTreeIndex], 'none', {
-      width: 800, height: 600, margin: 10,
-      uniformScale: uniformScaleFactor
+      width: 800,
+      height: 600,
+      margin: 10,
+      uniformScale: uniformScaleFactor,
     });
 
     const { nodes, links, max_radius } = smallTreeResult;
@@ -85,7 +90,7 @@ describe('Real Data Scaling Analysis', () => {
     // Analyze average branch length VISUAL size
     let totalLength = 0;
     let nonZeroCount = 0;
-    links.forEach(link => {
+    links.forEach((link) => {
       const dx = link.targetPosition[0] - link.sourcePosition[0];
       const dy = link.targetPosition[1] - link.sourcePosition[1];
       const dist = Math.sqrt(dx * dx + dy * dy);
@@ -117,6 +122,5 @@ describe('Real Data Scaling Analysis', () => {
     if (avgLen < 2) {
       console.log(`  [!] Warning: Branches are nearly invisible (< 2px avg)`);
     }
-
   });
 });

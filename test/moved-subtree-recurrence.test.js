@@ -1,13 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import * as sprAnalytics from '../src/domain/spr/sprAnalytics.js';
 
-const {
-  calculateSprMovedSubtreeRecurrences: calculateSubtreeRecurrences,
-  formatSubtreeLabel,
-} = sprAnalytics;
+const { calculateSprMovedSubtreeRecurrences: calculateSubtreeRecurrences, formatSubtreeLabel } =
+  sprAnalytics;
 
 function toBackendSplitKey(split) {
-  return `[${split.slice().sort((a, b) => a - b).join(', ')}]`;
+  return `[${split
+    .slice()
+    .sort((a, b) => a - b)
+    .join(', ')}]`;
 }
 
 function createSprEvent({ pivotEdge, driverSubtree, highlightGroup = [driverSubtree] }) {
@@ -149,7 +150,7 @@ describe('SPR moved subtree recurrences', () => {
       expect(result[0].percentage).toBe(50); // 2 out of 4 total
 
       // Check others
-      const count1Items = result.filter(r => r.count === 1);
+      const count1Items = result.filter((r) => r.count === 1);
       expect(count1Items).toHaveLength(2);
     });
 
@@ -193,21 +194,21 @@ describe('SPR moved subtree recurrences', () => {
 
   describe('formatSubtreeLabel', () => {
     it('should format subtrees with indices when no names provided', () => {
-      expect(formatSubtreeLabel([1, 2])).toBe("Nodes: 1, 2");
-      expect(formatSubtreeLabel([1, 2, 3])).toBe("Nodes: 1, 2, 3");
-      expect(formatSubtreeLabel([1, 2, 3, 4])).toBe("Nodes: 1, 2, 3, 4");
+      expect(formatSubtreeLabel([1, 2])).toBe('Nodes: 1, 2');
+      expect(formatSubtreeLabel([1, 2, 3])).toBe('Nodes: 1, 2, 3');
+      expect(formatSubtreeLabel([1, 2, 3, 4])).toBe('Nodes: 1, 2, 3, 4');
     });
 
     it('should show all leaf names when provided', () => {
       const leaves = ['Zero', 'A', 'B', 'C', 'D', 'E'];
       // Indices: 1, 2 -> A, B
-      expect(formatSubtreeLabel([1, 2], leaves)).toBe("A, B");
+      expect(formatSubtreeLabel([1, 2], leaves)).toBe('A, B');
 
       // Indices: 1, 2, 3, 4 -> A, B, C, D (all names shown)
-      expect(formatSubtreeLabel([1, 2, 3, 4], leaves)).toBe("A, B, C, D");
+      expect(formatSubtreeLabel([1, 2, 3, 4], leaves)).toBe('A, B, C, D');
 
       // All indices
-      expect(formatSubtreeLabel([0, 1, 2, 3, 4, 5], leaves)).toBe("Zero, A, B, C, D, E");
+      expect(formatSubtreeLabel([0, 1, 2, 3, 4, 5], leaves)).toBe('Zero, A, B, C, D, E');
     });
   });
 });

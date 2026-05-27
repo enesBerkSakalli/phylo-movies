@@ -1,16 +1,21 @@
-import React from "react";
-import { Button } from "../ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import { ScrollArea } from "../ui/scroll-area";
+import React from 'react';
+import { Button } from '../ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
+import { ScrollArea } from '../ui/scroll-area';
 
-import { TaxaTabContent } from "./taxa-tab/TaxaTabContent.jsx";
-import { GroupsTabContent } from "./groups-tab/GroupsTabContent.jsx";
-import { CSVTabContent } from "./csv-tab/CSVTabContent.jsx";
-import { useTaxaColoringState } from "./hooks/useTaxaColoringState.js";
-import { RefreshCcw, RotateCcw } from "lucide-react";
+import { TaxaTabContent } from './taxa-tab/TaxaTabContent.jsx';
+import { GroupsTabContent } from './groups-tab/GroupsTabContent.jsx';
+import { CSVTabContent } from './csv-tab/CSVTabContent.jsx';
+import { useTaxaColoringState } from './hooks/useTaxaColoringState.js';
+import { RefreshCcw, RotateCcw } from 'lucide-react';
 
-export function TaxaColoringWindow({ taxaNames = [], originalColorMap = {}, onApply, initialState = {} }) {
+export function TaxaColoringWindow({
+  taxaNames = [],
+  originalColorMap = {},
+  onApply,
+  initialState = {},
+}) {
   const {
     mode,
     setMode,
@@ -37,7 +42,7 @@ export function TaxaColoringWindow({ taxaNames = [], originalColorMap = {}, onAp
     resetAll,
     resetToDefault,
     buildResult,
-    handleColorChange
+    handleColorChange,
   } = useTaxaColoringState(taxaNames, originalColorMap, initialState);
 
   const result = React.useMemo(() => buildResult(), [buildResult]);
@@ -50,15 +55,30 @@ export function TaxaColoringWindow({ taxaNames = [], originalColorMap = {}, onAp
     <Tabs value={mode} onValueChange={setMode} className="flex h-full min-h-0 flex-col gap-0">
       <div className="flex shrink-0 flex-col gap-3 border-b border-border/40 p-3 sm:p-4 md:flex-row md:items-center md:justify-between">
         <TabsList className="grid h-9 w-full grid-cols-3 md:w-auto" aria-label="Taxa coloring mode">
-          <TabsTrigger value="taxa" className="text-xs font-medium">Taxa</TabsTrigger>
-          <TabsTrigger value="groups" className="text-xs font-medium">Pattern</TabsTrigger>
-          <TabsTrigger value="csv" className="text-xs font-medium">CSV</TabsTrigger>
+          <TabsTrigger value="taxa" className="text-xs font-medium">
+            Taxa
+          </TabsTrigger>
+          <TabsTrigger value="groups" className="text-xs font-medium">
+            Pattern
+          </TabsTrigger>
+          <TabsTrigger value="csv" className="text-xs font-medium">
+            CSV
+          </TabsTrigger>
         </TabsList>
 
-        <div className="flex items-center gap-2 md:justify-end" role="group" aria-label="Taxa coloring reset actions">
+        <div
+          className="flex items-center gap-2 md:justify-end"
+          role="group"
+          aria-label="Taxa coloring reset actions"
+        >
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8 gap-2 px-3 text-xs" onClick={resetToDefault}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-2 px-3 text-xs"
+                onClick={resetToDefault}
+              >
                 <RotateCcw className="size-3.5" aria-hidden />
                 Default Colors
               </Button>
@@ -68,7 +88,12 @@ export function TaxaColoringWindow({ taxaNames = [], originalColorMap = {}, onAp
 
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8 gap-2 px-3 text-xs" onClick={resetAll}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-2 px-3 text-xs"
+                onClick={resetAll}
+              >
                 <RefreshCcw className="size-3.5" aria-hidden />
                 Reset Setup
               </Button>
@@ -130,9 +155,7 @@ function TaxaColoringTabPanel({ value, children }) {
   return (
     <TabsContent value={value} className="m-0 min-h-0 flex-1">
       <ScrollArea className="h-full">
-        <div className="px-3 py-3 pr-5 sm:px-4 sm:py-4 sm:pr-6">
-          {children}
-        </div>
+        <div className="px-3 py-3 pr-5 sm:px-4 sm:py-4 sm:pr-6">{children}</div>
       </ScrollArea>
     </TabsContent>
   );

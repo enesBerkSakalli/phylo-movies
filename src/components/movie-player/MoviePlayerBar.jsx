@@ -20,16 +20,13 @@ import {
   selectSetBarOption,
   selectSetHoveredSegment,
   selectSetTooltipHovered,
-  useAppStore
+  useAppStore,
 } from '../../state/phyloStore/store.js';
 import { useSidebar } from '../ui/sidebar';
 import { Button } from '../ui/button';
 import { Menu, ChevronUp, ChevronDown } from 'lucide-react';
 import { AppTooltip } from '../ui/app-tooltip';
-import {
-  MOVIE_PLAYER_ARIA_LABELS,
-  TIMELINE_LEGEND_ITEMS,
-} from './MoviePlayerBar.contract.js';
+import { MOVIE_PLAYER_ARIA_LABELS, TIMELINE_LEGEND_ITEMS } from './MoviePlayerBar.contract.js';
 
 // ==========================================================================
 // CONSTANTS
@@ -57,8 +54,10 @@ export function MoviePlayerBar() {
   const playerBarRef = useRef(null);
 
   const hasTimeline = Boolean(movieTimelineManager);
-  const totalSegments = hasTimeline ? movieTimelineManager?.getSegmentCount?.() ?? 0 : 0;
-  const hasTransitionSegments = hasTimeline ? movieTimelineManager?.hasTransitionSegments?.() ?? false : false;
+  const totalSegments = hasTimeline ? (movieTimelineManager?.getSegmentCount?.() ?? 0) : 0;
+  const hasTransitionSegments = hasTimeline
+    ? (movieTimelineManager?.hasTransitionSegments?.() ?? false)
+    : false;
   const tooltipPosition = getTimelineTooltipPosition(hoveredSegmentPosition);
 
   useEffect(() => {
@@ -76,7 +75,8 @@ export function MoviePlayerBar() {
     const playerBar = playerBarRef.current;
     if (!playerBar || typeof document === 'undefined') return undefined;
 
-    const layoutRoot = playerBar.closest('[data-slot="sidebar-wrapper"]') || document.documentElement;
+    const layoutRoot =
+      playerBar.closest('[data-slot="sidebar-wrapper"]') || document.documentElement;
     const updatePlayerBarHeight = () => {
       const height = Math.ceil(playerBar.getBoundingClientRect().height);
       layoutRoot.style.setProperty('--movie-player-bar-height', `${height}px`);
@@ -85,9 +85,8 @@ export function MoviePlayerBar() {
     updatePlayerBarHeight();
     window.addEventListener('resize', updatePlayerBarHeight);
 
-    const resizeObserver = typeof ResizeObserver !== 'undefined'
-      ? new ResizeObserver(updatePlayerBarHeight)
-      : null;
+    const resizeObserver =
+      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(updatePlayerBarHeight) : null;
     resizeObserver?.observe(playerBar);
 
     return () => {
@@ -97,17 +96,20 @@ export function MoviePlayerBar() {
     };
   }, []);
 
-  const getLeafNames = useCallback((indices) => {
-    if (!leafNamesByIndex || !Array.isArray(leafNamesByIndex)) return [];
+  const getLeafNames = useCallback(
+    (indices) => {
+      if (!leafNamesByIndex || !Array.isArray(leafNamesByIndex)) return [];
 
-    const leafNames = [];
-    for (const idx of indices) {
-      if (Number.isInteger(idx) && idx >= 0 && idx < leafNamesByIndex.length) {
-        leafNames.push(leafNamesByIndex[idx]);
+      const leafNames = [];
+      for (const idx of indices) {
+        if (Number.isInteger(idx) && idx >= 0 && idx < leafNamesByIndex.length) {
+          leafNames.push(leafNamesByIndex[idx]);
+        }
       }
-    }
-    return leafNames;
-  }, [leafNamesByIndex]);
+      return leafNames;
+    },
+    [leafNamesByIndex]
+  );
 
   const { open, toggleSidebar } = useSidebar();
   const handleNavigationToggle = useCallback(() => {
@@ -118,14 +120,23 @@ export function MoviePlayerBar() {
 
   return (
     <>
-      <div ref={playerBarRef} className="movie-player-bar relative z-[1000] w-full shrink-0 bg-card border-t shadow-[0_2px_4px_rgba(0,0,0,0.08)]" role="region" aria-label={MOVIE_PLAYER_ARIA_LABELS.root}>
+      <div
+        ref={playerBarRef}
+        className="movie-player-bar relative z-[1000] w-full shrink-0 bg-card border-t shadow-[0_2px_4px_rgba(0,0,0,0.08)]"
+        role="region"
+        aria-label={MOVIE_PLAYER_ARIA_LABELS.root}
+      >
         <div className="flex flex-col">
           <div
             className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 border-b border-border/70 bg-muted/20 px-2 py-1"
             role="group"
             aria-label={MOVIE_PLAYER_ARIA_LABELS.primaryControls}
           >
-            <div className="flex min-w-0 items-center gap-1" role="group" aria-label={MOVIE_PLAYER_ARIA_LABELS.timelineNavigation}>
+            <div
+              className="flex min-w-0 items-center gap-1"
+              role="group"
+              aria-label={MOVIE_PLAYER_ARIA_LABELS.timelineNavigation}
+            >
               <AppTooltip content="Toggle sidebar">
                 <Button
                   id="nav-toggle-button"
@@ -144,36 +155,48 @@ export function MoviePlayerBar() {
             </div>
 
             <div className="justify-self-center rounded-md border border-border/70 bg-background/80 px-1 py-0.5 shadow-sm">
-              <TransportControls
-                onBackward={backward}
-                onForward={forward}
-              />
+              <TransportControls onBackward={backward} onForward={forward} />
             </div>
 
-            <div className="flex min-w-0 items-center justify-end gap-2" role="group" aria-label={MOVIE_PLAYER_ARIA_LABELS.playbackSettings}>
+            <div
+              className="flex min-w-0 items-center justify-end gap-2"
+              role="group"
+              aria-label={MOVIE_PLAYER_ARIA_LABELS.playbackSettings}
+            >
               {toolbarExpanded && (
-                <PlaybackSpeedControl
-                  value={animationSpeed}
-                  setValue={setAnimationSpeed}
-                />
+                <PlaybackSpeedControl value={animationSpeed} setValue={setAnimationSpeed} />
               )}
 
-              <AppTooltip content={toolbarExpanded ? "Collapse timeline controls" : "Expand timeline controls"}>
+              <AppTooltip
+                content={
+                  toolbarExpanded ? 'Collapse timeline controls' : 'Expand timeline controls'
+                }
+              >
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  aria-label={toolbarExpanded ? "Collapse timeline controls" : "Expand timeline controls"}
+                  aria-label={
+                    toolbarExpanded ? 'Collapse timeline controls' : 'Expand timeline controls'
+                  }
                   aria-expanded={toolbarExpanded}
                   onClick={() => setToolbarExpanded(!toolbarExpanded)}
                   className="hover:bg-accent"
                 >
-                  {toolbarExpanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+                  {toolbarExpanded ? (
+                    <ChevronUp className="size-4" />
+                  ) : (
+                    <ChevronDown className="size-4" />
+                  )}
                 </Button>
               </AppTooltip>
             </div>
           </div>
 
-          <div className="w-full border-b border-border/60 bg-background" role="group" aria-label={MOVIE_PLAYER_ARIA_LABELS.timelineTrack}>
+          <div
+            className="w-full border-b border-border/60 bg-background"
+            role="group"
+            aria-label={MOVIE_PLAYER_ARIA_LABELS.timelineTrack}
+          >
             {hasTimeline && (
               <TimelineLayerControls
                 hasTransitionSegments={hasTransitionSegments}
@@ -210,7 +233,7 @@ export function MoviePlayerBar() {
             zIndex: 10000,
             pointerEvents: 'auto',
             minWidth: '200px',
-            maxWidth: '300px'
+            maxWidth: '300px',
           }}
           className="animate-in fade-in-0 zoom-in-95 duration-200"
           onMouseEnter={() => setTooltipHovered(true)}
@@ -260,11 +283,20 @@ function TimelineLegend({ hasTransitionSegments }) {
       role="group"
       aria-label={MOVIE_PLAYER_ARIA_LABELS.timelineLegend}
     >
-      <LegendItem markerClassName="h-2.5 w-2.5 rounded-full border-2 border-foreground/70 bg-background" label={TIMELINE_LEGEND_ITEMS.inputTrees} />
+      <LegendItem
+        markerClassName="h-2.5 w-2.5 rounded-full border-2 border-foreground/70 bg-background"
+        label={TIMELINE_LEGEND_ITEMS.inputTrees}
+      />
       {hasTransitionSegments && (
-        <LegendItem markerClassName="h-1 w-5 rounded bg-amber-600/85" label={TIMELINE_LEGEND_ITEMS.generatedFrames} />
+        <LegendItem
+          markerClassName="h-1 w-5 rounded bg-amber-600/85"
+          label={TIMELINE_LEGEND_ITEMS.generatedFrames}
+        />
       )}
-      <LegendItem markerClassName="h-1.5 w-5 rounded bg-emerald-600" label={TIMELINE_LEGEND_ITEMS.selectedSegment} />
+      <LegendItem
+        markerClassName="h-1.5 w-5 rounded bg-emerald-600"
+        label={TIMELINE_LEGEND_ITEMS.selectedSegment}
+      />
     </div>
   );
 }

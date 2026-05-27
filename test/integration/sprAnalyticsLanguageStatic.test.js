@@ -29,9 +29,9 @@ function collectCopyText(value) {
 
 describe('SPR analytics phylogenetic language', () => {
   it('uses subtree terminology instead of generic group labels', () => {
-    const source = SPR_FILES
-      .map((file) => fs.readFileSync(path.join(process.cwd(), file), 'utf8'))
-      .join('\n');
+    const source = SPR_FILES.map((file) =>
+      fs.readFileSync(path.join(process.cwd(), file), 'utf8')
+    ).join('\n');
 
     [
       'Moved Group',
@@ -53,24 +53,22 @@ describe('SPR analytics phylogenetic language', () => {
       SPR_ANALYTICS_COPY.title,
       SPR_ANALYTICS_COPY.tabs.details,
       SPR_MOVE_EVENT_TABLE_COPY.columns.movedSubtree,
-    ]).toEqual([
-      'Moving Subtrees',
-      'Recurrent Subtrees',
-      'Moved Subtree',
-    ]);
+    ]).toEqual(['Moving Subtrees', 'Recurrent Subtrees', 'Moved Subtree']);
   });
 
   it('uses movement terminology instead of exposing event-ledger setup in the UI', () => {
     const timelineTooltipSource = fs.readFileSync(
       path.join(process.cwd(), 'src/components/timeline/TimelineSegmentTooltip.jsx'),
-      'utf8',
+      'utf8'
     );
 
     expect(SPR_ANALYTICS_COPY).toMatchObject({
       title: 'Moving Subtrees',
       description: 'Quantifies which taxa or subtrees change attachment across neighboring trees.',
-      countedDescription: 'A movement is one subtree that changes attachment between two neighboring trees. Each row shows what moved, where it moved from, and where it moved to.',
-      eventDescription: 'One row per movement, showing what moved, the pivot/from/to edges, and source-to-target values for the selected branch annotation.',
+      countedDescription:
+        'A movement is one subtree that changes attachment between two neighboring trees. Each row shows what moved, where it moved from, and where it moved to.',
+      eventDescription:
+        'One row per movement, showing what moved, the pivot/from/to edges, and source-to-target values for the selected branch annotation.',
     });
     expect(SPR_ANALYTICS_COPY.tabs.events).toBe('Movement Events');
     const analyticsCopyText = collectCopyText(SPR_ANALYTICS_COPY);
@@ -94,8 +92,11 @@ describe('SPR analytics phylogenetic language', () => {
 
   it('makes the main recurrent-subtree table highlightable like the sidebar summary', () => {
     const source = fs.readFileSync(
-      path.join(process.cwd(), 'src/components/TreeStatsPanel/SubtreeAnalytics/MovedSubtreeRecurrenceTable.tsx'),
-      'utf8',
+      path.join(
+        process.cwd(),
+        'src/components/TreeStatsPanel/SubtreeAnalytics/MovedSubtreeRecurrenceTable.tsx'
+      ),
+      'utf8'
     );
 
     expect(source).toContain('selectSetManuallyMarkedNodes');

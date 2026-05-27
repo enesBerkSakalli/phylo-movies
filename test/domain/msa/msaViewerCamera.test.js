@@ -8,12 +8,14 @@ import {
 
 describe('MSA viewer camera utilities', () => {
   it('initializes the camera on the top-left visible alignment cell', () => {
-    expect(getInitialAlignmentViewState({
-      containerWidth: 500,
-      containerHeight: 300,
-      labelsWidth: 100,
-      axisHeight: 20,
-    })).toEqual({
+    expect(
+      getInitialAlignmentViewState({
+        containerWidth: 500,
+        containerHeight: 300,
+        labelsWidth: 100,
+        axisHeight: 20,
+      })
+    ).toEqual({
       target: [200, 140, 0],
       zoom: 0,
     });
@@ -48,12 +50,14 @@ describe('MSA viewer camera utilities', () => {
   });
 
   it('scrolls only the requested axes while preserving zoom', () => {
-    expect(getScrollViewState({
-      currentViewState: { target: [10, 20, 0], zoom: 2 },
-      cellSize: 12,
-      row: 3,
-      col: 5,
-    })).toEqual({
+    expect(
+      getScrollViewState({
+        currentViewState: { target: [10, 20, 0], zoom: 2 },
+        cellSize: 12,
+        row: 3,
+        col: 5,
+      })
+    ).toEqual({
       target: [66, 42, 0],
       zoom: 2,
     });

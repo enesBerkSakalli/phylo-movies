@@ -15,9 +15,7 @@ export class ExtensionDataBuilder {
   convertExtensions(leaves, extensionRadius) {
     if (!extensionRadius) return [];
 
-    return leaves
-      .map(leaf => this._createExtensionData(leaf, extensionRadius))
-      .filter(Boolean);
+    return leaves.map((leaf) => this._createExtensionData(leaf, extensionRadius)).filter(Boolean);
   }
 
   /**
@@ -32,7 +30,10 @@ export class ExtensionDataBuilder {
       !Number.isFinite(angle) ||
       !Number.isFinite(extensionRadius)
     ) {
-      console.warn('[ExtensionDataBuilder] Skipping extension with invalid layout coordinates:', leaf.split_indices);
+      console.warn(
+        '[ExtensionDataBuilder] Skipping extension with invalid layout coordinates:',
+        leaf.split_indices
+      );
       return null;
     }
 
@@ -64,13 +65,13 @@ export class ExtensionDataBuilder {
       polarData: {
         source: {
           angle,
-          radius: leaf.radius
+          radius: leaf.radius,
         },
         target: {
           angle,
-          radius: extensionRadius
-        }
-      }
+          radius: extensionRadius,
+        },
+      },
     };
   }
 }

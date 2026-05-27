@@ -40,7 +40,9 @@ describe('MSA viewport tree status', () => {
       sourceInputTreeIndex: 2,
       targetInputTreeIndex: 3,
     });
-    expect(formatMsaTreeStatusTooltip(status)).toBe('Transition from input tree 3 to 4; active MSA window 3');
+    expect(formatMsaTreeStatusTooltip(status)).toBe(
+      'Transition from input tree 3 to 4; active MSA window 3'
+    );
     expect(formatMsaTreeStatusLabel(status)).toBe('3 -> 4');
   });
 
@@ -51,12 +53,7 @@ describe('MSA viewport tree status', () => {
   });
 
   it('models the active MSA window column region', () => {
-    const status = buildMsaWindowStatus(
-      { msaWindowIndex: 2 },
-      50,
-      100,
-      1000,
-    );
+    const status = buildMsaWindowStatus({ msaWindowIndex: 2 }, 50, 100, 1000);
 
     expect(status).toEqual({
       windowIndex: 2,

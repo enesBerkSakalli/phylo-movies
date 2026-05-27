@@ -32,7 +32,8 @@ export class InterpolationRenderer {
       transitionFrame.targetTreeIndex
     );
     const { dataFrom, dataTo } = cachedInputs;
-    const transitionChangeModel = transitionFrame.transitionChangeModel || cachedInputs.transitionChangeModel;
+    const transitionChangeModel =
+      transitionFrame.transitionChangeModel || cachedInputs.transitionChangeModel;
 
     if (!dataFrom || !dataTo) return;
     if (isRenderCancelled(options)) return;
@@ -47,7 +48,7 @@ export class InterpolationRenderer {
         stage: transitionFrame.stage,
         transitionChangeModel,
         rawTimeFactor: transitionFrame.transitionProgress,
-        linkGeometryMode: this.controller._getLinkGeometryMode?.() ?? 'radial-elbow'
+        linkGeometryMode: this.controller._getLinkGeometryMode?.() ?? 'radial-elbow',
       }
     );
     interpolatedData.targetData = dataTo; // Add target data for movement arrow endpoints
@@ -61,7 +62,7 @@ export class InterpolationRenderer {
     // Auto-fit should only happen on discrete tree changes (next/prev buttons) or when playback starts,
     // NOT on every animation frame. The bounding box changes subtly during interpolation
     // and constant refitting makes the camera fight against user interaction.
-    // 
+    //
     // If auto-fit on tree change is needed, it should be triggered:
     // - At the START of playback (once)
     // - When user manually navigates to a new tree (not during animation)
@@ -97,7 +98,7 @@ export class InterpolationRenderer {
           rightTree,
           rightIndex: rightTreeIndex,
           activeTreeIndex: transitionFrame.comparisonActiveTreeIndex,
-          isCancelled: options.isCancelled
+          isCancelled: options.isCancelled,
         });
         return;
       }
@@ -152,23 +153,24 @@ export class InterpolationRenderer {
       targetTree: toTree,
       sourceTreeIndex: fromIndex,
       targetTreeIndex: toIndex,
-      transitionProgress: t
+      transitionProgress: t,
     });
 
     // Stage detection logic for visual consistency during scrubbing
     // (We reuse the controller's logic to fetch cached layout data to check stages)
-    const { dataFrom, dataTo, transitionChangeModel } = this.controller._getOrCacheInterpolationData(
-      transitionFrame.sourceTree,
-      transitionFrame.targetTree,
-      transitionFrame.sourceTreeIndex,
-      transitionFrame.targetTreeIndex
-    );
+    const { dataFrom, dataTo, transitionChangeModel } =
+      this.controller._getOrCacheInterpolationData(
+        transitionFrame.sourceTree,
+        transitionFrame.targetTree,
+        transitionFrame.sourceTreeIndex,
+        transitionFrame.targetTreeIndex
+      );
 
     const stage = detectAnimationStage(dataFrom, dataTo, transitionChangeModel);
     const renderFrame = transitionFrame.withRenderState({
       renderProgress: applyRenderProgressEasing(t),
       stage,
-      transitionChangeModel
+      transitionChangeModel,
     });
 
     return this.renderSingleInterpolatedFrame(
@@ -189,7 +191,8 @@ export class InterpolationRenderer {
     }
 
     const state = useAppStore.getState();
-    const transitionFrame = state.movieTimelineManager?.getTransitionFrameForTimelineProgress?.(progress);
+    const transitionFrame =
+      state.movieTimelineManager?.getTransitionFrameForTimelineProgress?.(progress);
 
     if (!transitionFrame?.sourceTree || !transitionFrame?.targetTree) {
       return;
@@ -199,17 +202,18 @@ export class InterpolationRenderer {
       return this.controller.renderAllElements({ treeIndex: transitionFrame.sourceTreeIndex });
     }
 
-    const { dataFrom, dataTo, transitionChangeModel } = this.controller._getOrCacheInterpolationData(
-      transitionFrame.sourceTree,
-      transitionFrame.targetTree,
-      transitionFrame.sourceTreeIndex,
-      transitionFrame.targetTreeIndex
-    );
+    const { dataFrom, dataTo, transitionChangeModel } =
+      this.controller._getOrCacheInterpolationData(
+        transitionFrame.sourceTree,
+        transitionFrame.targetTree,
+        transitionFrame.sourceTreeIndex,
+        transitionFrame.targetTreeIndex
+      );
     const stage = detectAnimationStage(dataFrom, dataTo, transitionChangeModel);
     const renderFrame = transitionFrame.withRenderState({
       renderProgress: applyRenderProgressEasing(transitionFrame.transitionProgress),
       stage,
-      transitionChangeModel
+      transitionChangeModel,
     });
 
     return this.renderSingleInterpolatedFrame(
@@ -227,16 +231,19 @@ function isRenderCancelled(options = {}) {
 
 function createRenderFrame(fromTreeData, toTreeData, timeFactor, options = {}) {
   const transitionProgress = options.rawTimeFactor ?? timeFactor;
-  return TransitionFrame.from({
-    sourceTree: fromTreeData,
-    targetTree: toTreeData,
-    sourceTreeIndex: options.fromTreeIndex,
-    targetTreeIndex: options.toTreeIndex,
-    transitionProgress,
-    holdKind: options.holdKind
-  }, {
-    renderProgress: timeFactor,
-    stage: options.stage,
-    transitionChangeModel: options.transitionChangeModel
-  });
+  return TransitionFrame.from(
+    {
+      sourceTree: fromTreeData,
+      targetTree: toTreeData,
+      sourceTreeIndex: options.fromTreeIndex,
+      targetTreeIndex: options.toTreeIndex,
+      transitionProgress,
+      holdKind: options.holdKind,
+    },
+    {
+      renderProgress: timeFactor,
+      stage: options.stage,
+      transitionChangeModel: options.transitionChangeModel,
+    }
+  );
 }
