@@ -102,6 +102,14 @@ export default defineConfig(async (): Promise<UserConfig> => {
       'import.meta.env.VITE_APP_VERSION': JSON.stringify(packageJson.version)
     },
     envPrefix: ['VITE_'],
+    resolve: {
+      alias: [
+        {
+          find: /^wgsl_reflect$/,
+          replacement: path.resolve(__dirname, 'node_modules/wgsl_reflect/wgsl_reflect.module.js')
+        }
+      ]
+    },
     css: {
       modules: {
         localsConvention: 'camelCase',
