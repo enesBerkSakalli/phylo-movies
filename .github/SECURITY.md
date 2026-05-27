@@ -39,5 +39,6 @@ If you find issues in these areas, please report them immediately.
 
 - Dependencies are pinned via `package-lock.json` (lockfile v3)
 - Python dependencies are pinned via `poetry.lock`
-- CI runs `npm audit` and `poetry run safety check` on PRs
+- Dependency vulnerability reviews are handled before release; add explicit CI
+  audit jobs before claiming every PR is automatically audited.
 - Release builds are performed in CI with isolated environments
