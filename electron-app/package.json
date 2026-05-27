@@ -23,11 +23,11 @@
     "dist": "npm run build:mac"
   },
   "dependencies": {
-    "electron-updater": "^6.1.4"
+    "electron-updater": "^6.8.3"
   },
   "devDependencies": {
-    "electron": "^33.0.0",
-    "electron-builder": "^25.0.0"
+    "electron": "^42.3.0",
+    "electron-builder": "^26.8.1"
   },
   "build": {
     "appId": "com.phylomovies.app",
