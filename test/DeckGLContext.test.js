@@ -10,11 +10,13 @@ vi.mock('@deck.gl/core', async () => {
   const actual = await vi.importActual('@deck.gl/core');
   return {
     ...actual,
-    Deck: vi.fn().mockImplementation(() => ({
-      setProps: vi.fn(),
-      finalize: vi.fn(),
-      redraw: vi.fn(),
-    })),
+    Deck: vi.fn().mockImplementation(function MockDeck() {
+      return {
+        setProps: vi.fn(),
+        finalize: vi.fn(),
+        redraw: vi.fn(),
+      };
+    }),
   };
 });
 

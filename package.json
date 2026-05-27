@@ -22,6 +22,11 @@
   ],
   "private": true,
   "overrides": {
+    "@luma.gl/constants": "9.2.6",
+    "@luma.gl/core": "9.2.6",
+    "@luma.gl/engine": "9.2.6",
+    "@luma.gl/shadertools": "9.2.6",
+    "@luma.gl/webgl": "9.2.6",
     "serialize-javascript": "7.0.5"
   },
   "scripts": {
@@ -81,7 +86,6 @@
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@tanstack/react-table": "^8.21.3",
-    "@vitejs/plugin-react": "^4.5.0",
     "bezier-js": "^6.1.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -112,10 +116,11 @@
     "@babel/preset-react": "^7.26.3",
     "@babel/register": "^7.27.1",
     "@eslint/js": "^10.0.1",
-    "@tailwindcss/vite": "^4.1.13",
+    "@tailwindcss/vite": "^4.3.0",
     "@types/node": "^24.6.0",
     "@types/react": "^18.2.79",
     "@types/react-dom": "^18.2.25",
+    "@vitejs/plugin-react": "^6.0.2",
     "chai": "^4.5.0",
     "eslint": "^10.4.0",
     "eslint-plugin-react-hooks": "^7.1.1",
@@ -133,7 +138,8 @@
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.59.3",
-    "vite": "^5.4.20",
-    "vitest": "^3.2.4"
+    "vite": "^8.0.14",
+    "vitest": "^4.1.7",
+    "wgsl_reflect": "^1.2.1"
   }
 }
