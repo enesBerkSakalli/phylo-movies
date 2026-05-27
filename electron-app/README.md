@@ -37,7 +37,7 @@ cd phylo-movies
 This script will:
 
 - Initialise the BranchArchitect submodule if missing
-- Install Poetry if not found
+- Check for Poetry and print installation instructions if it is missing
 - Install Python dependencies
 - Start the Flask engine (port 5002)
 - Start the Vite frontend (port 5173)
@@ -78,7 +78,7 @@ poetry install
 
 ```bash
 cd electron-app
-npm install
+npm ci
 ```
 
 #### 5. Run in development mode
@@ -106,14 +106,16 @@ npm run dev
 
 ## Building for Distribution
 
-### 1. Bundle the Python engine
+### 1. Install dependencies
 
 ```bash
-cd engine/BranchArchitect
-poetry run pyinstaller brancharchitect.spec --clean
+cd phylo-movies
+npm ci
+cd electron-app
+npm ci
 ```
 
-### 2. Build the frontend and package
+### 2. Build the backend, frontend, and package
 
 ```bash
 cd electron-app
@@ -122,13 +124,18 @@ npm run build:win    # For Windows
 npm run build:linux  # For Linux
 ```
 
+The platform build scripts run `npm run build:backend` automatically. That
+script bundles the Python engine via `build-backend.sh` in a dedicated Python
+3.11 build environment, then packages the frontend and Electron shell.
+
 Output will be in `electron-app/release/`.
 
 ## Notes
 
 - The frontend is built from the parent `phylo-movies` directory
-- The engine is bundled from `engine/BranchArchitect` using PyInstaller with
-  all Python dependencies
+- The engine is bundled from `engine/BranchArchitect` using PyInstaller through
+  `build-backend.sh`; run `npm run build:backend` only when you need to rebuild
+  the packaged backend by itself
 - `electron-app/package.json` and `electron-app/package-lock.json` are the
   canonical Electron dependency files
 - App size will be ~200-400MB due to scientific Python libraries

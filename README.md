@@ -102,8 +102,8 @@ The software metadata and preferred citation are also available in `CITATION.cff
 
 **System Requirements:**
 
-- **Node.js**: Version 18.0.0 or newer (tested with v24.10.0)
-- **npm**: Version 8.0.0 or newer (comes with Node.js)
+- **Node.js**: Version 22.12.0 or newer (tested with v24.10.0)
+- **npm**: Version 10.0.0 or newer (comes with current Node.js releases)
 - **Python**: Version 3.11 or newer (required by the BranchArchitect backend)
 - **Poetry**: Python dependency manager ([install guide](https://python-poetry.org/docs/#installation)) — used to manage BranchArchitect's dependencies
 - **Modern web browser**: Chrome, Firefox, Safari, or Edge with JavaScript enabled
@@ -144,14 +144,14 @@ The following methods require cloning the repository. Start with the base setup:
 #### Base setup
 
 > **Note:** The BranchArchitect backend lives in a **git submodule**.
-> Running `npm install` will automatically initialise it **and** install
-> its Python dependencies (requires [Poetry](https://python-poetry.org/)).
+> Running the root npm dependency install will automatically initialise it
+> **and** install its Python dependencies (requires [Poetry](https://python-poetry.org/)).
 > If you prefer, you can also clone with `--recurse-submodules` upfront.
 
 ```bash
 git clone https://github.com/enesBerkSakalli/phylo-movies.git
 cd phylo-movies
-npm install   # ← automatically fetches the BranchArchitect submodule
+npm ci        # ← automatically fetches the BranchArchitect submodule
 ```
 
 For Electron desktop app development, see the dedicated build script:
@@ -160,7 +160,7 @@ For Electron desktop app development, see the dedicated build script:
 npm run dev:electron   # Launches the Electron app in development mode
 ```
 
-This requires the Electron dependencies installed via `cd electron-app && npm install` and the Python backend prepared with `cd engine/BranchArchitect && poetry install`.
+This requires the Electron dependencies installed via `cd electron-app && npm ci` and the Python backend prepared with `cd engine/BranchArchitect && poetry install`.
 
 #### Method 2: One-command start (recommended for local use)
 
@@ -289,9 +289,9 @@ The repository intentionally uses separate toolchains for the browser app, Pytho
 
 | Layer                | Directory                | Install command  | Validation command                                                                                                                  | Scope                                                        |
 | -------------------- | ------------------------ | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| Frontend             | repository root          | `npm install`    | `npm run validate`                                                                                                                  | ESLint, TypeScript, frontend/domain tests, production build  |
+| Frontend             | repository root          | `npm ci`         | `npm run validate`                                                                                                                  | ESLint, TypeScript, frontend/domain tests, production build  |
 | Backend engine       | `engine/BranchArchitect` | `poetry install` | `poetry run mypy brancharchitect --ignore-missing-imports && poetry run pytest test/ -v --timeout=120`                              | Python typing and BranchArchitect scientific/Flask tests     |
-| Desktop wrapper      | `electron-app`           | `npm install`    | `npm run test:sse` after backend setup; use `npm run build:mac`, `npm run build:win`, or `npm run build:linux` for packaging checks | Electron shell and packaged backend/frontend integration     |
+| Desktop wrapper      | `electron-app`           | `npm ci`         | `npm run test:sse` after backend setup; use `npm run build:mac`, `npm run build:win`, or `npm run build:linux` for packaging checks | Electron shell and packaged backend/frontend integration     |
 | Full stack container | repository root          | Docker           | `docker compose up --build`                                                                                                         | nginx frontend plus BranchArchitect backend in one container |
 
 Root `npm run validate` validates the frontend application only. It does not hide backend or Electron failures; validate those layers explicitly when their code or contracts change.
@@ -305,8 +305,8 @@ After installing, verify everything works correctly:
 **1. Check Node.js and npm versions:**
 
 ```bash
-node --version  # Should show v18.0.0 or higher
-npm --version   # Should show v8.0.0 or higher
+node --version  # Should show v22.12.0 or higher
+npm --version   # Should show v10.0.0 or higher
 ```
 
 **2. Verify dependencies installed:**
@@ -324,7 +324,7 @@ npm run dev
 Expected output should include:
 
 ```text
-VITE v5.4.20  ready in XXX ms
+VITE v8.0.14  ready in XXX ms
 Local: http://localhost:5173/
 ```
 
@@ -453,7 +453,7 @@ Formatting policy: Prettier owns whitespace, wrapping, quote style, and trailing
 **Frontend:**
 
 - **Frontend Framework**: React 18.2.0 with modern hooks and state management
-- **Build Tool**: Vite 5.4.20 for fast development and optimized builds
+- **Build Tool**: Vite 8.0.14 for fast development and optimized builds
 - **State Management**: Zustand 5.0.6 for global application state
 - **Tree Rendering**: deck.gl 9.2.5 (GPU-accelerated WebGL) with D3 hierarchy utilities for tree layouts
 - **UI Components**: Radix UI primitives with Tailwind CSS 4.1.13 for styling
@@ -577,14 +577,14 @@ This project is open source. Please check the license file for specific terms an
 
 **Node.js version issues:**
 
-- Ensure you have Node.js 18+ installed: `node --version`
+- Ensure you have Node.js 22.12+ installed: `node --version`
 - Update Node.js if needed: [nodejs.org/download](https://nodejs.org/download)
 - Consider using [nvm](https://github.com/nvm-sh/nvm) for managing Node versions
 
-**npm install fails:**
+**npm dependency install fails:**
 
 - Clear npm cache: `npm cache clean --force`
-- Delete `node_modules` and `package-lock.json`, then run `npm install` again
+- Delete `node_modules`, then run `npm ci` again
 - Ensure you have write permissions in the project directory
 - Check for disk space issues
 
@@ -596,8 +596,8 @@ This project is open source. Please check the license file for specific terms an
 
 **Build fails:**
 
-- Ensure all dependencies are installed: `npm install`
-- Check Node.js version compatibility (18+)
+- Ensure all dependencies are installed: `npm ci`
+- Check Node.js version compatibility (22.12+)
 - Clear Vite cache: `rm -rf node_modules/.vite`
 - Review error messages for missing dependencies
 
@@ -622,7 +622,7 @@ This project is open source. Please check the license file for specific terms an
 
 - **RAM**: 4GB minimum, 8GB recommended for large datasets
 - **Storage**: 1GB free space for installation and temporary files
-- **Network**: Internet connection required for initial npm install
+- **Network**: Internet connection required for initial npm dependency install
 - **Graphics**: WebGL-capable GPU recommended for optimal performance
 
 ---

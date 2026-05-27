@@ -68,6 +68,13 @@ NODE_VERSION=$(node -v)
 NPM_VERSION=$(npm -v)
 echo "[prereq] Node.js $NODE_VERSION and npm v$NPM_VERSION detected"
 
+if ! node -e "const current = process.versions.node.split('.').map(Number); const required = [22, 12, 0]; process.exit(current[0] > required[0] || (current[0] === required[0] && (current[1] > required[1] || (current[1] === required[1] && current[2] >= required[2]))) ? 0 : 1);"; then
+  echo "[prereq] ERROR: Node.js 22.12.0 or newer is required."
+  echo "[prereq] Current version: $NODE_VERSION"
+  echo "[prereq] Please upgrade Node.js before running Phylo-Movies from source."
+  exit 1
+fi
+
 # ============================================================================
 # ENGINE SETUP: Check and start BranchArchitect Flask server
 # ============================================================================
@@ -184,12 +191,12 @@ echo "[engine] Engine is ready on http://127.0.0.1:$ENGINE_PORT"
 # ============================================================================
 echo "[frontend] Starting Vite frontend dev server..."
 
-# Explicitly change directory before npm install and npm run dev
+# Explicitly change directory before installing frontend dependencies and running Vite
 if [ ! -d "node_modules" ]; then
-  echo "[frontend] node_modules not found, running npm install..."
-  npm install
+  echo "[frontend] node_modules not found, running npm ci..."
+  npm ci
 else
-  echo "[frontend] node_modules found, skipping npm install."
+  echo "[frontend] node_modules found, skipping npm dependency install."
 fi
 
 echo "[frontend] Current working directory before npm run dev: $(pwd)"
