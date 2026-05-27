@@ -7,7 +7,7 @@
 <!-- [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX) -->
 
 <p align="center">
-  <img src="docs/assets/screenshot.png" alt="PhyloMovies – interactive phylogenetic tree viewer with morphing animations" width="100%">
+  <img src="assets/screenshot.png" alt="PhyloMovies – interactive phylogenetic tree viewer with morphing animations" width="100%">
 </p>
 
 > **Keywords:** phylogenetics · tree visualization · tree morphing · SPR · subtree prune and regraft · recombination · multiple sequence alignment · MSA · Robinson-Foulds · sliding window · bootstrap · rogue taxa · bioinformatics · computational biology · deck.gl · React · Electron
@@ -18,7 +18,7 @@ We demonstrate its utility in two contexts: identifying recombination breakpoint
 
 The method and case studies are described in the bioRxiv preprint [Animating Phylogenetic Trees from Sliding-Window Analyses](https://doi.org/10.64898/2026.04.01.715821).
 
-Project terminology is standardized in [docs/architecture/terminology.md](docs/architecture/terminology.md). In short: observed trees are **input trees**, generated intermediate states are **transition frames**, moving topology-defined groups are **subtrees**, and `split` names are reserved for backend/API representations.
+Project terminology is standardized as follows: observed trees are **input trees**, generated intermediate states are **transition frames**, moving topology-defined groups are **subtrees**, and `split` names are reserved for backend/API representations.
 
 ## Availability and Implementation
 
@@ -294,8 +294,6 @@ The repository intentionally uses separate toolchains for the browser app, Pytho
 | Desktop wrapper      | `electron-app`           | `npm install`    | `npm run test:sse` after backend setup; use `npm run build:mac`, `npm run build:win`, or `npm run build:linux` for packaging checks | Electron shell and packaged backend/frontend integration     |
 | Full stack container | repository root          | Docker           | `docker compose up --build`                                                                                                         | nginx frontend plus BranchArchitect backend in one container |
 
-See [docs/development/dependency-structure.md](docs/development/dependency-structure.md) for the repository dependency-file ownership map.
-
 Root `npm run validate` validates the frontend application only. It does not hide backend or Electron failures; validate those layers explicitly when their code or contracts change.
 
 ---
@@ -529,8 +527,6 @@ phylo-movies/
 |-- electron-app/            # Electron desktop wrapper
 |-- publication_data/        # Datasets from the PhyloMovies manuscript
 |-- test/                    # Frontend test suites
-|-- docs/                    # Public architecture/development notes and README assets
-|-- knowledge/               # Separate Markdown knowledge system; see knowledge/AGENTS.md
 |-- start.sh                 # One-command startup (backend + frontend)
 |-- dist/                    # Production build output (generated)
 |-- package.json             # npm dependencies and scripts
